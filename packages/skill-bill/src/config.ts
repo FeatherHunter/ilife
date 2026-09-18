@@ -1,0 +1,74 @@
+/** 饼干记账自己的配置面：那份默认值表 ＋ 读／写／重置三个薄转调。
+ *
+ * 口径出处（「配置的存与生效口径裁定」#675 的解决评论，本票 #677 落地；卡路里那一份是
+ * `packages/skill-calorie/src/config.ts`，本件与它同形）：
+ *   · 每个技能一份 YAML 配置文件，默认 `~/.ilife/bill.yaml`；`ILIFE_CONFIG_DIR` 可覆盖位置；
+ *   · **配置文件是唯一真相**，环境变量不参与配置；
+ *   · 「重置为默认」先自动备份 `.bak`，备份失败即不写盘、原文件保持不动。
+ * 读写实现（受限 YAML 子集解析、键表与类型校验、备份、建目录）住 `base-link-core` 的 `src/config/`
+ * ——#694 已交付。本件只做「饼干记账的那份表 ＋ 转调」，一份实现不抄第二处（结构纪律铁律一）。
+ *
+ * 一处约定照卡路里那份：**空串＝按默认落点**——落点由各取用处按本域常量算（今天写死在哪，
+ * 默认就是哪里），所以空串不是「没配」，而是「用老落点」，老数据不会看起来丢了。
+ *
+ * 键表出处：`docs/research/t692-six-skill-paths-survey.md` 的记账 8 项去掉 1 项包内固定
+ * （包内页面模板目录）＝**上设置页候选 7 项**；其中「产物文件名主体」在源码里是两个值，故键数为 8。
+ */
+import { loadConfig, resetConfig, saveConfig } from 'base-link-core';
+import type { ConfigRecord } from 'base-link-core';
+
+/** 配置文件主体名：`<配置目录>/bill.yaml`。 */
+export const BILL_CONFIG_STEM = 'bill' as const;
+
+/** 饼干记账那份配置表：键即设置页的行，一层嵌套（子集支持范围见 base-link-core README）。 */
+export const BILL_CONFIG_DEFAULTS = {
+  // 库目录留空＝按默认落点（配置目录下的 data/，即 #675 定的 ~/.ilife/data/）。
+  db: { dir: '', name: 'biscuit_accountant.db', goals: 'goals.json' },
+  // 备份目录留空＝库目录下的 backups；主体是那份时间戳文件名的主干。
+  backup: { dir: '', stem: 'biscuit_' },
+  html: { dir: 'biscuit_accountant_html', helpStem: '饼干记账_HELP', quickRefStem: '饼干记账_速查表' },
+};
+
+/** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
+export type BillConfigValues = typeof BILL_CONFIG_DEFAULTS;
+
+/** 读回来的一份配置：文件路径（人话报错要指它）＋数据目录＋取值。 */
+export interface LoadedBillConfig {
+  readonly path: string;
+  readonly dataDir: string;
+  readonly created: boolean;
+  readonly values: BillConfigValues;
+}
+
+/** 每进程只读一次：配置文件的「保存即生效」靠**下一次调用现读**，同一个进程里不反复读盘。 */
+let memo: LoadedBillConfig | null = null;
+
+/** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。 */
+export function loadBillConfig(): LoadedBillConfig {
+  if (memo === null) {
+    const loaded = loadConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS);
+    // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
+    // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
+    memo = {
+      path: loaded.path,
+      dataDir: loaded.dataDir,
+      created: loaded.created,
+      values: loaded.values as unknown as BillConfigValues,
+    };
+  }
+  return memo;
+}
+
+/** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */
+export function saveBillConfig(values: ConfigRecord): { path: string } {
+  const r = saveConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, values);
+  memo = null;
+  return r;
+}
+
+/** 重置为默认（先另存 `<配置目录>/bill.yaml.bak`）。 */
+export function resetBillConfig(): { path: string; backupPath: string | null } {
+  const r = resetConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS);
+  memo = null;
+  return r;
+}

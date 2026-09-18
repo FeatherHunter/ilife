@@ -30,6 +30,8 @@ import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup } from '../help/index.js';
 import { REGISTRY } from './registry.js';
+// #677 · 设置页的三个配置 key 由本文件在**预检与分派层之前**拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
+import { isConfigKey, runConfigKey } from './config.js';
 import { runRecordWrite } from '../record/index.js';
 import { runQueryRead } from '../query/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
@@ -428,13 +430,19 @@ async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：bill-cmd-read <bill.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
   const key = o.key;
-  const dbPath = preflight();
-  void dbPath;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #677：设置页的三个配置 key 在**预检与分派层之前**拦下——读写配置不该要求库目录已配，
+  // 也不进形状表、不进 HELP 与唤醒词计数。用上唯一出口那条规矩：stdout 一行 envelope。
+  if (isConfigKey(key)) {
+    process.stdout.write(runConfigKey(key, params) + '\n');
+    return;
+  }
+  const dbPath = preflight();
+  void dbPath;
   let shape = null;
   try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
   void shape;
