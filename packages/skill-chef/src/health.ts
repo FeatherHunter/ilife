@@ -485,10 +485,13 @@ export function buildChefHealthReport(): ChefHealthReport {
   const scenariosExists = existsSync(scenariosFile);
   items.push({
     id: 'scenarios.file', title: '场景资产',
-    status: scenariosExists ? 'green' : 'yellow',
+    // 档位＝检查表原话「不在＝红」（`docs/research/check-table-671-life-panel-20260917.html` 大厨那两行）。
+    // 本席的实现在中间那几轮曾按「新仓没有这个文件、缺的是生成器输入」下调成黄——那是**改判据**，
+    // 对抗式审查（Standards/Spec 两轴）都点了这一条；按「判据是用户逐条划过的唯一真相」还原成红。
+    status: scenariosExists ? 'green' : 'red',
     message: scenariosExists
       ? '在：' + p(scenariosFile) + '（新仓的场景资产事实源住这里）。'
-      : '不在：' + p(scenariosFile) + '（新仓的场景资产事实源；缺的是生成器输入，功能页照常）。',
+      : '不在：' + p(scenariosFile) + '（新仓的场景资产事实源；缺了 HELP 与场景面取不到）。',
     action: scenariosExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
   });
 

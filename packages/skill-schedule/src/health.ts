@@ -571,11 +571,14 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
   const whitelistExists = existsSync(whitelistSource);
   items.push({
     id: 'whitelist.file', title: '分类允许清单',
-    status: whitelistExists ? 'green' : 'yellow',
+    // 档位与 action 都照检查表原话（`docs/research/check-table-671-life-panel-20260917.html` 作息那行：
+    // 「不在＝红（action 文案逐字有）」）。中间几轮曾按新仓事实下调成黄、并换掉那句逐字 action——
+    // 那是改判据，对抗式审查两轴都点了；这里还原成检查表的写法。
+    status: whitelistExists ? 'green' : 'red',
     message: whitelistExists
       ? '在：' + p(whitelistSource) + '（新仓的分类允许清单住这里：一级固定 ＋ 二级内置默认）。'
       : '不在：' + p(whitelistSource) + '（新仓的分类允许清单；包内源码件，缺了多半是包装坏了）。',
-    action: whitelistExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
+    action: whitelistExists ? '' : '缺失 category_whitelist.yaml,请检查技能目录完整性',
   });
 
   // ⑧ 包内模板目录（作息特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。

@@ -19,6 +19,8 @@ export interface SlotsRegisterOptions {
   readonly order?: number;
   readonly label?: string | (() => string);
   readonly locale?: string;
+  /** 本包自己那条 RPC 通道（单段）：注册时交出去，总管据此**通用地**调配置体检（票 #706）。 */
+  readonly channel?: string;
   readonly inject?: () => Record<string, unknown>;
 }
 

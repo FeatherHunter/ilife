@@ -503,7 +503,10 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const seedExists = existsSync(seedSource);
   items.push({
     id: 'seed.file', title: '种子分类',
-    status: seedExists ? 'green' : 'yellow',
+    // 档位＝检查表原话「不在＝红」（`docs/research/check-table-671-life-panel-20260917.html` 居家那行）。
+    // 中间几轮曾按「新仓没有这个文件、缺的是包内源码件」下调成黄——那是**改判据**，对抗式审查两轴都点了；
+    // 按「判据是用户逐条划过的唯一真相」还原成红。
+    status: seedExists ? 'green' : 'red',
     message: seedExists
       ? '在：' + p(seedSource) + '（新仓的种子分类口径住这里）。'
       : '不在：' + p(seedSource) + '（新仓的种子分类口径；包内源码件，缺了多半是包装坏了）。',

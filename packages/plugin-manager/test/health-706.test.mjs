@@ -275,6 +275,24 @@ describe('#706 配置体检 · 面板侧', () => {
       }
     });
 
+    it('档位照检查表：四条「不在＝红」的包内固定件不许被下调成黄', async () => {
+      // 检查表 `docs/research/check-table-671-life-panel-20260917.html` 对大厨／居家／备忘／作息的
+      // 包内固定件写的是「不在＝红」。这四家的本席机器上那些文件确实不在（新仓还没有 `references/` 与
+      // `公共组件/`），所以今天它们就是红——**这条断言就是防「按后果自行下调档位」再发生**。
+      const { builders, missing } = await loadBuilders();
+      assert.deepEqual(missing, [], '这几家的 dist/health.js 还没构建好：' + missing.join('、'));
+      const mustBeRed = [
+        ['chef', 'scenarios.file'], ['home', 'seed.file'],
+        ['memo', 'scenarios.file'], ['schedule', 'whitelist.file'],
+      ];
+      for (const [skill, id] of mustBeRed) {
+        const item = builders[skill]().items.find((one) => one.id === id);
+        assert.ok(item, skill + ' 缺那条：' + id);
+        if (item.status === 'green') continue; // 把这四个件补进包之后就该是绿，那时这条自动放行
+        assert.equal(item.status, 'red', skill + '/' + id + ' 的档位被下调了（检查表写的是「不在＝红」）');
+      }
+    });
+
     base.cleanup();
   });
 });
