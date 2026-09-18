@@ -64,8 +64,9 @@ describe('#678 原因人话与手工命令', () => {
   });
   it('载体与自有电话名：通道单段、自有动作不占更新包的三个动作名', () => {
     assert.match(MANAGER_RPC.channel, /^\/[A-Za-z0-9._~-]+$/);
-    assert.equal(MANAGER_RPC.path, '/api' + MANAGER_RPC.channel);
-    assert.equal(MANAGER_RPC.endpoint, MANAGER_RPC.channel.slice(1));
+    assert.equal(MANAGER_RPC.base, '/api', '第一段是载体基段');
+    assert.equal(MANAGER_RPC.channel, '/' + MANAGER_RPC.endpoint);
+    assert.equal(MANAGER_RPC.path, MANAGER_RPC.base + MANAGER_RPC.channel);
     for (const name of Object.values(MANAGER_ACTIONS)) {
       assert.match(name, /^ilife-manager\.[A-Za-z]+$/);
       assert.ok(!/update(Status|Check|Install)$/.test(name), '自有动作不许叫更新包那三个动作名');
@@ -170,7 +171,8 @@ describe('#678 面板流程（假传输口）', () => {
     assert.equal(loaded.ok, true);
     assert.equal(loaded.value.pollMs, 250);
     assert.equal(loaded.value.targets.length, 2);
-    assert.equal(seen[0].channel, MANAGER_RPC.channel);
+    assert.equal(seen[0].channel, MANAGER_RPC.base, '第一段必须是载体基段（传成通道名就 404）');
+    assert.equal(seen[0].endpoint, MANAGER_RPC.endpoint);
     assert.equal(seen[0].method, MANAGER_ACTIONS.targets);
   });
   it('查一家：调那一家的查新版电话，回包体原样透传', async () => {

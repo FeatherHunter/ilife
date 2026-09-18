@@ -13,11 +13,13 @@ import type { BlockedReason } from 'dsh-plugin-update';
 
 /** 载体：宿主注册 `connection.fetch.register` 的路径 / 面板 `connection.rpc.call` 的两段参数。 */
 export const MANAGER_RPC = {
+  /** 载体基段（`connection.rpc.call` 的**第一段**参数）。传错第一段就是 404：真机上踩过一次。 */
+  base: '/api',
   /** 单段通道名，须 match `/^\/[A-Za-z0-9._~-]+$/`（cookbook §6）。 */
   channel: '/ilife-manager',
-  /** 面板侧第二段参数（等于注册路径去掉 `/api` 前缀后那一段）。 */
+  /** 面板侧第二段参数（等于通道名去掉前导斜杠那一段）。 */
   endpoint: 'ilife-manager',
-  /** 宿主侧注册的完整路径（`/api` 是 DSH 公开载体）。 */
+  /** 宿主侧注册的完整路径（＝ `base` ＋ `channel`）。 */
   path: '/api/ilife-manager',
 } as const;
 

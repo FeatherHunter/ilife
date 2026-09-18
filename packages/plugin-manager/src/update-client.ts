@@ -59,7 +59,8 @@ async function callManager<T>(call: CallFace | null, method: string, payload: Re
   if (typeof call !== 'function') return failure('internal', { detail: '宿主连接缺席：connection.rpc.call 不可用' });
   let result: Awaited<ReturnType<CallFace>>;
   try {
-    result = await call(MANAGER_RPC.channel, MANAGER_RPC.endpoint, { method, payload });
+    // 第一段是**载体基段**（`/api`）、第二段才是本包端点；传错就是打到一个不存在的路由（真机踩过）。
+    result = await call(MANAGER_RPC.base, MANAGER_RPC.endpoint, { method, payload });
   } catch (error) {
     return failure('check-failed', { detail: String((error as Error)?.message ?? error) });
   }
