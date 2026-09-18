@@ -38,6 +38,8 @@ import { buildHelpLookup } from '../help/index.js';
 import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
 import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
+// #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
+import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { MemoPolicyError } from '../fetch/errors.js';
 import type { MemoDb, NotePatch } from '../fetch/db.js';
 
@@ -478,6 +480,12 @@ async function main() {
   // 读写配置不该要求库已配，它们也不进 `MEMO_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
   if (isConfigKey(o.key)) {
     process.stdout.write(runConfigKey(o.key, params) + '\n');
+    return;
+  }
+  // #706 · 配置体检（`memo.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+  if (isHealthCheckKey(o.key)) {
+    process.stdout.write(runHealthCheckKey(o.key) + '\n');
     return;
   }
   preflight();

@@ -1,22 +1,21 @@
-/** 作息管家自己的配置体检（票 #706）：一份只读的报告，回答「我配的东西现在通不通」。
+/** 备忘录自己的配置体检（票 #706）：一份只读的报告，回答「我配的东西现在通不通」。
  *
  * 口径（票面「开工前的形状裁定」）：
  *   · **判据住技能侧**——每条的有效值（库在哪、产物落哪个目录、包内预置件在不在）只有本包算得出来；
  *     插件包与总管只透传与渲染，不重写这里的任何一个字。
  *   · **只报不改**——不建目录、不写文件、不落那份默认配置；凡是要建目录才算得出的结论，一律当「不在」报。
- *     所以本件**不许**调 `loadScheduleConfig()`（文件不在即落一份默认件），配置一律本件只读解析
+ *     所以本件**不许**调 `loadMemoConfig()`（文件不在即落一份默认件），配置一律本件只读解析
  *     （`base-link-core` 的受限子集解析器**没有对外**，见其包门只有四条）。
  *   · 报告形状见面板侧镜像 `packages/plugin-manager/src/health-contract.ts`（唯一消费者）。
  *
  * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
- * ＋ 作息特有 3 条（飞书 CLI／分类允许清单／包内模板目录）。
- * **本家第 4 条（作息第二份库 `daily_recorder.db`）已由编者从检查表里撤回**，见票 #706 的遗留出口
- * （老技能默认链算出的 `D:\.db\daily_recorder.db` 与实测那个不是同一个文件，事实在核）——故未实现，
- * 报告里也不出现这一项。
+ * ＋ 备忘特有 4 条（附件目录／飞书 CLI／包内模板＋公共组件／场景资产）。
+ * 「附件」那一项的形状跟着 #712 走：附件从「字符串前缀」改成**真目录 ＋ 真包含判定**，
+ * 故这一条照新机制判「配没配、在不在、能不能写」，不再有「只当前缀用」那句。
  *
  * **判据查的路径一律是新仓的**（票面第 2 条「缺配置会怎样按新仓＋新机制写」）：检查表里那些老仓
- * 文件名（例：分类允许清单的老 `category_whitelist.yaml`）只作注释里的出处，不进用户看到的报文。
+ * 文件名（例：场景资产的老 `references/scenarios.yaml`）只作注释里的出处，不进用户看到的报文。
  *
  * 本件与卡路里那份 `packages/skill-calorie/src/health.ts` 同形（同一套受限子集解析、同一套写探针、
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
@@ -24,11 +23,11 @@
 import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
-import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
+import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_STEM } from './config.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -42,21 +41,23 @@ export interface HealthItem {
   readonly source?: string;
 }
 
-export interface ScheduleHealthReport {
+export interface MemoHealthReport {
   readonly skill: string;
   readonly configPath: string;
   readonly dataDir: string;
   readonly items: readonly HealthItem[];
 }
 
-/** 库表数门槛：`src/fetch/db.ts` 三张建表（`schedule_records`／`daily_summary`／`schedule_plans`）齐了算正常。 */
-export const DB_TABLE_THRESHOLD = 3 as const;
+/** 库表数门槛：老库 `init.sql` 两张业务表（`notes`＋`reminders`），新建库时由老技能建。 */
+export const DB_TABLE_THRESHOLD = 2 as const;
 
-const SKILL = 'schedule' as const;
+const SKILL = 'memo' as const;
 
-/** 探测两档超时（与 `src/fetch/feishu.ts` 的 15／30 秒同档）。 */
-const LARK_STATUS_TIMEOUT_MS = 15000 as const;
-const LARK_CALENDAR_TIMEOUT_MS = 30000 as const;
+/** 飞书写权限那一道门要的 scope（与 `src/fetch/feishu.ts` 的 `LARK_WISH_SCOPE` 同值）。 */
+const LARK_SCOPE = 'task' as const;
+
+/** 探测两档超时（与 `src/fetch/feishu.ts` 的 30 秒同档；`auth status` 走它自己的短档）。 */
+const LARK_AUTH_TIMEOUT_MS = 15000 as const;
 
 /** 包根：`dist/health.js` 上一级。 */
 function packageRoot(): string {
@@ -82,8 +83,8 @@ export type ConfigRead =
  * 与 `loadConfig()` 的差别只有一处、也正是本件要的那一处：**文件不在时不落默认件**。
  * 取值语义与它一致：文件里缺的项按默认值补。
  */
-export function readScheduleConfigReadOnly(): ConfigRead {
-  const file = configPaths(SCHEDULE_CONFIG_STEM).configFile;
+export function readMemoConfigReadOnly(): ConfigRead {
+  const file = configPaths(MEMO_CONFIG_STEM).configFile;
   if (!existsSync(file)) return { kind: 'missing' };
   let text: string;
   try {
@@ -243,7 +244,7 @@ function parseScalar(
 /** 把文件里读到的取值投到默认值表的形状上（缺项补默认值；组内只取默认值表认得的键）。 */
 function projectOnDefaults(values: Record<string, unknown>): Record<string, Record<string, unknown>> {
   const out: Record<string, Record<string, unknown>> = {};
-  for (const [group, def] of Object.entries(SCHEDULE_CONFIG_DEFAULTS)) {
+  for (const [group, def] of Object.entries(MEMO_CONFIG_DEFAULTS)) {
     const bucket: Record<string, unknown> = {};
     const got = values[group];
     const source = typeof got === 'object' && got !== null ? (got as Record<string, unknown>) : {};
@@ -271,7 +272,7 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
   return present.has(key) ? '配置文件' : '默认值';
 }
 
-/** 目录那一项的形状是**段串**（本家默认 `schedule_html/help` 两段），段数与 `src/config.ts` 自己的
+/** 目录那一项的形状是**段串**（本家默认 `memo_html` 一段），段数与 `src/config.ts` 自己的
  *  `splitDirSegments` 同一口径。本件不 import 它：health 面与配置面互锁没有好处，而这条规则只有三行。 */
 function splitDirSegments(value: string): string[] {
   return value.split(/[\\/]+/).filter((s) => s.length > 0);
@@ -356,7 +357,7 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
 }
 
 /** lark-cli 在哪：**照 `src/fetch/feishu.ts` 的取法重写一份只读探测**，不 import 那个模块——
- *  它的 `findLarkCli()` 要经 `loadScheduleConfig()` 取显式值，那会在文件不在时落一份默认配置，
+ *  它的 `findLarkCli()` 要经 `loadMemoConfig()` 取显式值，那会在文件不在时落一份默认配置，
  *  与本件的「只报不改」相反。候选顺序与它逐条对齐：配置项 `lark.cliPath` → Windows npm 全局
  *  → `where`／`which` → 固定路径；找不到返 null（不抛）。 */
 function findLarkCli(configured: string): string | null {
@@ -403,12 +404,11 @@ function runLark(cli: string, args: string[], timeoutMs: number): { readonly ok:
   }
 }
 
-/** 飞书三档（老 `setup_scenarios.py` 的 `tier` 三档现成）：找不到 CLI＝missing；已装但未授权或
- *  日历不可写＝partial；已授权且日历可写＝full。能探测到哪一档就报哪一档——CLI 都不在就停在第 1 档，
- *  **不往下起子进程试登录**。 */
+/** 飞书三档：找不到 CLI＝missing；找得到但没登录／没授权＝partial；登录且 task 域可写＝full。
+ *  能探测到哪一档就报哪一档——CLI 都不在就停在第 1 档，**不往下起子进程试登录**。 */
 function larkTier(cli: string | null): 'missing' | 'partial' | 'full' {
   if (cli === null) return 'missing';
-  const status = runLark(cli, ['auth', 'status'], LARK_STATUS_TIMEOUT_MS);
+  const status = runLark(cli, ['auth', 'status'], LARK_AUTH_TIMEOUT_MS);
   if (!status.ok) return 'partial';
   let openId = '';
   try {
@@ -419,19 +419,19 @@ function larkTier(cli: string | null): 'missing' | 'partial' | 'full' {
     return 'partial';
   }
   if (openId === '') return 'partial';
-  return runLark(cli, ['calendar', '+agenda'], LARK_CALENDAR_TIMEOUT_MS).ok ? 'full' : 'partial';
+  return runLark(cli, ['auth', 'check', '--scope', LARK_SCOPE], LARK_AUTH_TIMEOUT_MS).ok ? 'full' : 'partial';
 }
 
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
-export function buildScheduleHealthReport(): ScheduleHealthReport {
-  const paths = configPaths(SCHEDULE_CONFIG_STEM);
+export function buildMemoHealthReport(): MemoHealthReport {
+  const paths = configPaths(MEMO_CONFIG_STEM);
   const items: HealthItem[] = [];
-  const read = readScheduleConfigReadOnly();
+  const read = readMemoConfigReadOnly();
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
   // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
-  const defaultConfigFile = join(homedir(), '.ilife', SCHEDULE_CONFIG_STEM + '.yaml');
+  const defaultConfigFile = join(homedir(), '.ilife', MEMO_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
   const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
   if (read.kind === 'bad') {
@@ -478,14 +478,14 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ③ 库文件：在不在 ＋ 表数够不够。
   const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
-  const dbName = dbNameConfigured !== '' ? dbNameConfigured : String(SCHEDULE_CONFIG_DEFAULTS.db.name);
+  const dbName = dbNameConfigured !== '' ? dbNameConfigured : String(MEMO_CONFIG_DEFAULTS.db.name);
   const dbFile = join(dataDir, dbName);
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
       id: 'db.file', title: '库文件', status: 'red',
       message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对；新装的话，跑一条会写库的命令即会建库。',
+      action: '确认「数据目录」与「库文件名」对不对；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
       source: dbSource,
     });
   } else {
@@ -501,7 +501,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
       items.push({
         id: 'db.file', title: '库文件', status: 'yellow',
         message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
-        action: '待建库（开始初始化）：缺表会让对应的功能报错，跑一次会写库的命令让它补齐。',
+        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
         source: dbSource,
       });
     } else {
@@ -516,7 +516,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
   const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = join(dataDir, ...splitDirSegments(htmlDirValue !== '' ? htmlDirValue : String(SCHEDULE_CONFIG_DEFAULTS.html.dir)));
+  const htmlDir = join(dataDir, ...splitDirSegments(htmlDirValue !== '' ? htmlDirValue : String(MEMO_CONFIG_DEFAULTS.html.dir)));
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
@@ -539,9 +539,28 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     action: '', source: dataDirSource,
   });
 
-  // ⑥ 飞书 CLI（作息特有）：三档——missing＝黄／partial＝黄／full＝绿。三档话术逐字照抄老技能
-  // `scripts/setup_scenarios.py:181-192` 的 `_feishu_item`；装法那句也是老技能自己的
-  // `install_cmds`／`auth_note`（`:206-212`，含「npm 上 lark-cli 是僵尸包」那条警告）。
+  // ⑥ 附件目录（备忘特有，#712 起的形状）：没配＝黄（附件不参与，配了才会把附件一起归档）；
+  // 配了但目录不在＝黄；在且能写＝绿。相对值按进程工作目录解（与 `resolveMediaDir()` 同一口径）。
+  const mediaConfigured = textOf(readValue(values, 'media', 'dir'));
+  const mediaDir = mediaConfigured !== '' ? resolve(mediaConfigured) : '';
+  const mediaVerdict = mediaDir === '' ? { exists: false, writable: false, reason: '' } : dirVerdict(mediaDir);
+  items.push({
+    id: 'media.dir', title: '附件目录',
+    status: mediaDir !== '' && mediaVerdict.exists && mediaVerdict.writable ? 'green' : 'yellow',
+    message: mediaDir === ''
+      ? '还没配：附件不参与（收件时不给附件，笔记照记）。'
+      : !mediaVerdict.exists
+        ? '配了但目录不在：' + p(mediaDir) + '。'
+        : mediaVerdict.writable
+          ? '在且能写：' + p(mediaDir) + '。'
+          : '在，但写不进去：' + p(mediaDir) + '（' + mediaVerdict.reason + '）。',
+    action: mediaDir === ''
+      ? '要把附件一起归档就在配置页填这个目录（绝对路径；相对值按当前工作目录解）。'
+      : mediaVerdict.exists && mediaVerdict.writable ? '' : '建出这个目录（或去掉只读），或把「附件目录」改到别处。',
+    source: sourceOf(present, 'media.dir'),
+  });
+
+  // ⑦ 飞书 CLI（备忘特有）：三档——找不到＝黄；找得到但没登录／没授权＝黄；登录且 task 域可写＝绿。
   const larkConfigured = textOf(readValue(values, 'lark', 'cliPath'));
   const larkCli = findLarkCli(larkConfigured);
   const tier = larkTier(larkCli);
@@ -549,36 +568,18 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
   items.push({
     id: 'lark.cli', title: '飞书 CLI',
     status: tier === 'full' ? 'green' : 'yellow',
-    message: tier === 'full'
-      ? '飞书同步已配置(lark-cli 已授权,日历可写),配合飞书效果最好（' + larkWhere + '）。'
+    message: tier === 'missing'
+      ? '找不到 lark-cli：飞书同步用不了（其余功能不受影响）。'
       : tier === 'partial'
-        ? '飞书同步配置不完整(lark-cli 已装但未授权或日历不可写)。'
-        : '飞书同步未配置(强烈建议配置 · 配合飞书效果最好;不配则飞书同步不可用)。',
-    action: tier === 'full'
-      ? ''
-      : tier === 'partial'
-        ? '说「配置飞书」补全授权'
-        : '说「配置飞书」补装（npm install -g @larksuite/cli；官方包是 @larksuite/cli(bin 名 lark-cli),npm 上 lark-cli 是僵尸包,严禁安装）',
+        ? '找得到 lark-cli，但还没登录或没拿到 task 域授权：飞书同步用不了。'
+        : '已登录且 task 域可写：' + larkWhere + '。',
+    action: tier === 'missing'
+      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是 2017 年僵尸包，别装）。'
+      : tier === 'partial' ? '补授权：lark-cli auth login（授权助手那条命令也能走：memo.auth 的 init／qr／poll）。' : '',
     source: larkConfigured !== '' ? '配置文件' : '默认值',
   });
 
-  // ⑦ 分类允许清单（作息特有）：查的是**新仓这份实现**＝`src/policy/category.ts`
-  // （`LEVEL1_WHITELIST` 一级 8 个固定 ＋ `DEFAULT_WHITELIST` 二级内置默认，见该件 :2-3 的口径）。
-  // 老仓那个 `category_whitelist.yaml`（以及它那句逐字 action，出处 `scripts/setup_scenarios.py:230-231`）
-  // 只作注释里的出处，不出现报文里——新仓没有那个文件，用户 YAML 增量也不迁。
-  // 不在＝黄：包内源码件，缺了多半是包装坏了，重装即补齐。
-  const whitelistSource = join(packageRoot(), 'src', 'policy', 'category.ts');
-  const whitelistExists = existsSync(whitelistSource);
-  items.push({
-    id: 'whitelist.file', title: '分类允许清单',
-    status: whitelistExists ? 'green' : 'yellow',
-    message: whitelistExists
-      ? '在：' + p(whitelistSource) + '（新仓的分类允许清单住这里：一级固定 ＋ 二级内置默认）。'
-      : '不在：' + p(whitelistSource) + '（新仓的分类允许清单；包内源码件，缺了多半是包装坏了）。',
-    action: whitelistExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
-  });
-
-  // ⑧ 包内模板目录（作息特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
+  // ⑧ 包内模板目录（备忘特有）：整页交付模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
   const templatesDir = join(packageRoot(), 'templates');
   const templatesOk = existsSync(templatesDir);
   const templateCount = templatesOk ? templateFileCount(templatesDir) : 0;
@@ -589,6 +590,21 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
       ? '在，' + String(templateCount) + ' 件模板：' + p(templatesDir) + '。'
       : '不在：' + p(templatesDir) + '。',
     action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
+  });
+
+  // ⑨ 场景资产（备忘特有）：查的是**新仓这份事实源**＝`src/help/sceneData.ts`（8 个域数据件
+  // `src/help/scenes/*.ts` 的组装件，生成器 `scripts/gen-help-assets.mjs` 读它；老仓那个
+  // `references/scenarios.yaml` 只作注释里的出处，不出现报文里——新仓没有 `references/` 这个目录）。
+  // 不在＝黄：缺的是生成器输入，功能页照常，重装包即补齐。
+  const scenariosFile = join(packageRoot(), 'src', 'help', 'sceneData.ts');
+  const scenariosExists = existsSync(scenariosFile);
+  items.push({
+    id: 'scenarios.file', title: '场景资产',
+    status: scenariosExists ? 'green' : 'yellow',
+    message: scenariosExists
+      ? '在：' + p(scenariosFile) + '（新仓的场景资产事实源住这里）。'
+      : '不在：' + p(scenariosFile) + '（新仓的场景资产事实源；缺的是生成器输入，功能页照常）。',
+    action: scenariosExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
   });
 
   return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };

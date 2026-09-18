@@ -32,6 +32,8 @@ import { buildHelpLookup } from '../help/index.js';
 import { REGISTRY } from './registry.js';
 // #677 · 设置页的三个配置 key 由本文件在**预检与分派层之前**拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
+// #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
+import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { runRecordWrite } from '../record/index.js';
 import { runQueryRead } from '../query/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
@@ -439,6 +441,12 @@ async function main() {
   // 也不进形状表、不进 HELP 与唤醒词计数。用上唯一出口那条规矩：stdout 一行 envelope。
   if (isConfigKey(key)) {
     process.stdout.write(runConfigKey(key, params) + '\n');
+    return;
+  }
+  // #706 · 配置体检（`bill.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+  if (isHealthCheckKey(key)) {
+    process.stdout.write(runHealthCheckKey(key) + '\n');
     return;
   }
   const dbPath = preflight();
