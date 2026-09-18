@@ -84,6 +84,36 @@
 其中生成物（`src/cli/keys.ts`／`src/cli/registry.ts`／`src/triggers/routes.generated.ts`）按上「范围」一节的
 判据剔在扫描面外、不挂号；其余各件的拆法均不在 #445 写集（本票不改任何件源码），逐件结论待归属票认领。
 
+## 测试面口径（#702 立，只立在本包）
+
+`docs/agents/structure.md` 的「管辖」明写**不管测试文件**——所以这三条是本包自己的口径，不是仓规。
+它管的是**测试打在哪条缝上**（结构面），不管断言写什么、覆盖多少：
+
+1. **断言打在接口上**：测试断言的落点必须是**生产真正走的那条路**——页面走真正的交付出口
+   （`dist/cli/cmd_read.js`／`cmd_write.js` 那条 spawn 路；同逻辑不 spawn 时走同件的 `dispatch(key, params, db)`），
+   算式走**包对外的门**（`dist/index.js`，即 `src/index.ts` 转出的值名）或**能力门**
+   （`dist/<能力>/index.js`，门没有的名字就说明它不在对外面上）。
+   先例＝`test/566-result-title.test.mjs:51` 那条真跑（exit 码 ＋ envelope ＋ `delivery` ＋ 落盘路径四件一起断言）。
+   机器门＝`scripts/check-page-assert.mjs`（`#702` 立）：**spawn 真交付出口又断它成功的件，必须把 stdout 解析成 envelope**——
+   只断 `exit 0` 是假绿。口径窄而准：只 `import { dispatch }` 直调不进判，只断阻断路（非 0）也不判
+   （失败路没有 envelope；`data.output` 只在文件态存在，内联态是设计里就有的，故不要求咬落点）。
+   自证 `--selftest` 五条（只断 exit 码⇒红／断成功且解析 stdout⇒绿／直调 dispatch⇒不进判／只断阻断⇒不判／spawn 别的脚本⇒不进判）。
+2. **生产不走的缝不算缝**：只被 `src/**` 内部消费的件（`render/*` 一族、`analysis/*` 的算式件一类）
+   是**实现**，不是接口。测试直取它 = 断言锁在实现上：实现一搬（#704／#714～#716 那类搬迁票）测试就红，
+   而用户看得见的那条契约其实没动——那正是「假红」。
+3. **算法正本的单元测试**是例外，但要写明白：被测件就是本次断言的正本（例如 `analysis/trend.ts` 的算法读数），
+   在件头注明「这是算法正本的单元测试，不是交付面验收」，并进「同一符号不许从两个 `dist` 路径被取」那道门的账
+   （见下），迁移票点到它时一起收口。
+
+**同一符号只许一条 `dist` 路径**（结构门 `scripts/check-one-path.mjs`，`#702` 立）：
+
+- 绿＝`PASS: 测试面每个符号只有一条 dist 路径`；红＝逐条点名符号与两条路径（`exit 1`）。
+- 三条口径：① **包门豁免**——`../dist/index.js` 与任何路径配对都不判（包门转出包内件是它的本分）；
+  ② **例外从源码派生**——`src/**/*.ts` 里写着 `export { X } from './件.js'` 的**薄转出声明**即放行
+  （不认手写清单：薄转出件被删，例外当场消失，防陈化）；③ 其余即红，修法＝把断言换到生产走的那条缝上。
+- 自证：`node packages/skill-calorie/scripts/check-one-path.mjs --selftest`（三条：薄转出声明在⇒绿／
+  没有声明⇒红／包门配对⇒绿）。
+
 ## 检查脚本
 
 `packages/skill-calorie/scripts/check-warning-line.mjs`：
