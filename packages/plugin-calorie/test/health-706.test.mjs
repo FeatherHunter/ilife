@@ -30,6 +30,14 @@ const EXPECT_IDS = [
   'photos.dir', 'photos.gifs', 'xunji.key', 'xunji.cli', 'xunji.stateDir', 'land.cli', 'xunji.catalog',
 ];
 
+/** 那 12 条的面板标题（独立转写的一份期望值：标题被改坏时必须变红）。 */
+const EXPECT_TITLES = {
+  'config.file': '配置文件', 'db.dir': '数据目录', 'db.file': '库文件', 'html.dir': '产物目录',
+  'value.source': '这个值从哪来', 'photos.dir': '照片目录', 'photos.gifs': '照片 GIF 子目录',
+  'xunji.key': '训记 KEY', 'xunji.cli': '训记 CLI 入口', 'xunji.stateDir': '训记状态文件目录',
+  'land.cli': '跨技能出口（作息／备忘）', 'xunji.catalog': '训记动作库包内预置',
+};
+
 /** 跑一次真出口，返回 `{code, result}`（result＝envelope.data，即那份报告）。 */
 function runCheck(configDir) {
   const run = spawnSync(process.execPath, [CLI, 'calorie.config.check'], {
@@ -66,7 +74,7 @@ describe('#706 配置体检 · 卡路里', () => {
       assert.equal(result.skill, 'calorie');
       assert.deepEqual(result.items.map((i) => i.id).sort(), EXPECT_IDS.slice().sort());
       for (const item of result.items) {
-        assert.ok(item.title.length > 0, item.id + ' 缺标题');
+        assert.equal(item.title, EXPECT_TITLES[item.id], item.id + ' 的标题与检查表对不上（面板上那一行就是这个字）');
         assert.ok(['red', 'yellow', 'green'].includes(item.status), item.id + ' 档位不合法：' + item.status);
         assert.ok(item.message.length > 0, item.id + ' 缺一句话');
         assert.equal(typeof item.action, 'string', item.id + ' 缺「去哪修」字段');
