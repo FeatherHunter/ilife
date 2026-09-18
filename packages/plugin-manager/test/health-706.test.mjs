@@ -11,12 +11,45 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { HEALTH_ENDPOINT, countByStatus, isHealthReport, worstStatus } from '../dist/health-contract.js';
 import { loadHealthReports } from '../dist/health-fetch.js';
-import { lightsOf } from '../dist/health-view.js';
+import { HealthTable, lightsOf } from '../dist/health-view.js';
 import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
+
+const require = createRequire(import.meta.url);
+const React = require(join('..', 'node_modules', 'react'));
+
+/** 把元素树渲成 HTML（够这个组件用：函数组件、style 对象、void 标签）——用来量「哪几条印成了几行」。 */
+function renderHtml(node) {
+  const VOID = new Set(['br', 'hr', 'img', 'input']);
+  const UNITLESS = new Set(['fontWeight', 'lineHeight', 'flex', 'opacity', 'zIndex']);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const kebab = (k) => k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+  const css = (s) => Object.entries(s).filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => kebab(k) + ':' + (typeof v === 'number' && !UNITLESS.has(k) ? v + 'px' : String(v))).join(';');
+  const step = (n) => {
+    if (n === null || n === undefined || n === false || n === true) return '';
+    if (typeof n === 'string' || typeof n === 'number') return esc(n);
+    if (Array.isArray(n)) return n.map(step).join('');
+    const { type, props: p } = n;
+    if (typeof type === 'function') return step(type({ ...p }));
+    if (typeof type !== 'string') return '';
+    const attrs = [];
+    if (p.style) attrs.push('style="' + esc(css(p.style)) + '"');
+    for (const [k, v] of Object.entries(p)) {
+      if (k === 'children' || k === 'style' || k === 'key' || k === 'ref' || typeof v === 'function') continue;
+      if (v === null || v === undefined || v === false) continue;
+      if (v === true) { attrs.push(k); continue; }
+      attrs.push(k + '="' + esc(v) + '"');
+    }
+    const open = '<' + type + (attrs.length ? ' ' + attrs.join(' ') : '');
+    return VOID.has(type) ? open + ' />' : open + '>' + step(p.children) + '</' + type + '>';
+  };
+  return step(node);
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
@@ -171,12 +204,38 @@ describe('#706 配置体检 · 面板侧', () => {
     it('产物里只有一处取数口：总览与各家表都不自己调通道', () => {
       const occurrences = CLIENT.split('config.check').length - 1;
       assert.equal(occurrences, 1, '「config.check」在产物里出现 ' + String(occurrences) + ' 次：取数口必须只有一处');
+      // 只数那个字符串不够（两处都调 loadHealthReports 也仍然只出现一次）。真正要咬的性质是
+      // 「取数的调用点只有一处」——在**源码**上数：取数件里调一次，渲染件里一次都不许有。
+      const PANEL = readFileSync(join(HERE, '..', 'src', 'health-panel.ts'), 'utf8');
+      assert.equal((PANEL.match(/loadHealthReports\(/g) || []).length, 1, '取数件里 loadHealthReports 的调用点必须只有一处');
+      const VIEW = readFileSync(join(HERE, '..', 'src', 'health-view.ts'), 'utf8');
+      assert.equal((VIEW.match(/loadHealthReports|config\.check/g) || []).length, 0, '渲染件不许自己取数（它只吃传进来的报告）');
       assert.ok(CLIENT.includes('体检一次'), '产物里没有那个按钮');
       assert.ok(CLIENT.includes('只看不改'), '产物里没有「只看不改」那句口径');
     });
 
     it('各家注册时交出的通道进了账本投影（channel 是页签槽 options 的一格）', () => {
       assert.ok(CLIENT.includes('channel'), '产物里没有读通道那一格');
+    });
+
+    it('票面第一条（正常的收成一行、有问题的才展开）：绿条不印「一句话」，红黄条才印', () => {
+      const items = [
+        { id: 'a', title: '正常的甲', status: 'green', message: '在且能写。', action: '', source: '配置文件' },
+        { id: 'b', title: '正常的乙', status: 'green', message: '能解析。', action: '', source: '配置文件' },
+        { id: 'c', title: '要处理的丙', status: 'yellow', message: '还没配。', action: '去配置页填。', source: '默认值' },
+      ];
+      const report = { skill: 'x', configPath: 'C:/x.yaml', dataDir: 'C:/data', items };
+      const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
+      // ① 一条不少：三条都印出来了（绿的两条收在「正常 N 条」那一行里，红黄的一条一块）
+      for (const item of items) assert.ok(html.includes(item.title), '面板上没印出这一条：' + item.title);
+      assert.ok(html.includes('正常 2 条'), '正常那一档没收成一行');
+      assert.equal((html.match(/data-ilife-health="item"/g) || []).length, 1, '只有要处理的那一条该展开成块');
+      assert.equal((html.match(/data-ilife-health="ok-item"/g) || []).length, 2, '正常的两条该收在那一行里');
+      // ② 绿条的一句话与「去哪修」都不印（收成一行），红黄条的印
+      assert.ok(!html.includes('在且能写。'), '绿条还印了「一句话」，没收成一行');
+      assert.ok(!html.includes('能解析。'), '绿条还印了「一句话」，没收成一行');
+      assert.ok(html.includes('还没配。'), '红黄条没印「一句话」');
+      assert.ok(html.includes('去哪修：去配置页填。'), '红黄条没印「去哪修」');
     });
   });
 

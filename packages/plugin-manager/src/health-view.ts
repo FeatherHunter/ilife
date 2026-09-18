@@ -204,12 +204,13 @@ export function HealthOverview(props: {
   );
 }
 
-/** 手动展开某一档？——只有红黄要展开细看；绿的行折成一行（票面验收第一条）。 */
-export function visibleItems(report: HealthReport): readonly HealthItem[] {
-  return report.items;
+/** 正正常常的那些：绿条只留「名字」，一句话与「去哪修」都不印（票面验收第一条：正常的收成一行）。 */
+function isAttentionItem(item: HealthItem): boolean {
+  return isAttention(item.status);
 }
 
-/** 一家那张表：每条一行，正常的也都在（绿行字淡一点）。 */
+/** 一家那张表：**要处理的**（红黄）一条一块、整行上底带一句话与「去哪修」；
+ *  **正常的**（绿）收成一行并列的小字，点得到、扫得完（票面验收第一条：正常的收成一行，有问题的才展开）。 */
 export function HealthTable(props: {
   readonly title: string;
   readonly phase: 'idle' | 'running' | 'ready' | 'failed';
@@ -236,12 +237,14 @@ export function HealthTable(props: {
           'div',
           null,
           React.createElement('div', { style: HEALTH_STYLE.meta }, '配置文件 ' + report.configPath + ' · 数据目录 ' + report.dataDir),
-          report.items.map((item) =>
+          report.items.filter(isAttentionItem).map((item) =>
             React.createElement(
               'div',
               {
                 key: item.id,
-                // 红黄两档整行上底：扫一眼先看见「要处理的」，绿行留白（票面验收：正常的收成一行）。
+                'data-ilife-health': 'item',
+                'data-status': item.status,
+                // 红黄两档整行上底：扫一眼先看见「要处理的」。
                 style: {
                   padding: '7px 8px',
                   margin: '2px 0',
@@ -249,9 +252,7 @@ export function HealthTable(props: {
                   borderRadius: 6,
                   fontSize: 12.5,
                   lineHeight: 1.7,
-                  background: isAttention(item.status)
-                    ? 'color-mix(in srgb, ' + STATUS_COLOR[item.status] + ' 14%, transparent)'
-                    : 'transparent',
+                  background: STATUS_TINT[item.status],
                 },
               },
               React.createElement(
@@ -264,16 +265,34 @@ export function HealthTable(props: {
                 }),
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, item.title),
                 React.createElement('span', {
-                  style: { color: isAttention(item.status) ? STATUS_TEXT[item.status] : INK_DIM, fontWeight: 700 },
+                  style: { color: STATUS_TEXT[item.status], fontWeight: 700 },
                 }, STATUS_LABEL[item.status]),
                 item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
               ),
-              React.createElement('div', { style: { color: isAttention(item.status) ? INK : INK_DIM } }, item.message),
+              React.createElement('div', { style: { color: INK } }, item.message),
               item.action.length > 0
                 ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + actionText(item.action))
                 : null,
             ),
           ),
+          // 正常的那一档：一条都不用点开，名字排成一行（`data-ilife-health="ok"` 供判据核对「一条不少」）。
+          report.items.some((item) => !isAttentionItem(item))
+            ? React.createElement(
+                'div',
+                {
+                  'data-ilife-health': 'ok',
+                  style: {
+                    display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 10px',
+                    marginTop: 8, paddingTop: 6, borderTop: '1px solid ' + BORDER,
+                    fontSize: 12, lineHeight: 1.6, color: INK_DIM,
+                  },
+                },
+                React.createElement('span', { style: { fontWeight: 650 } }, '正常 ' + String(countByStatus(report.items).green) + ' 条'),
+                report.items.filter((item) => !isAttentionItem(item)).map((item) =>
+                  React.createElement('span', { key: item.id, 'data-ilife-health': 'ok-item' }, '· ' + item.title),
+                ),
+              )
+            : null,
         )
       : null,
   );
