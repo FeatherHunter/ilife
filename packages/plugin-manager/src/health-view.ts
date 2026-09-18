@@ -131,7 +131,14 @@ export function HealthOverview(props: {
             type: 'button',
             'data-ilife-health': 'light',
             'data-skill': light.id,
-            style: light.status === null ? { ...HEALTH_STYLE.light, ...HEALTH_STYLE.lightIdle } : HEALTH_STYLE.light,
+            // 档位落到按钮自身的边框与底色上：一眼扫过去先看到颜色，再读家名（票面验收：一屏看红黄）。
+            style: light.status === null
+              ? { ...HEALTH_STYLE.light, ...HEALTH_STYLE.lightIdle }
+              : {
+                  ...HEALTH_STYLE.light,
+                  borderColor: STATUS_COLOR[light.status],
+                  background: 'color-mix(in srgb, ' + STATUS_COLOR[light.status] + ' 12%, transparent)',
+                },
             disabled: light.status === null,
             onClick: () => props.onJump(light.id),
             title: light.status === null
@@ -140,22 +147,26 @@ export function HealthOverview(props: {
           },
           React.createElement('span', {
             style: {
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
               borderRadius: '50%',
               background: light.status === null ? INK_DIM : STATUS_COLOR[light.status],
               display: 'inline-block',
             },
           }),
-          React.createElement('span', null, light.title),
-          React.createElement('span', { style: { color: INK_DIM } }, light.status === null ? '—' : countsText(light.counts)),
+          React.createElement('span', { style: { color: INK, fontWeight: 650 } }, light.title),
+          React.createElement(
+            'span',
+            { style: { color: light.status === null ? INK_DIM : STATUS_COLOR[light.status], fontWeight: 700 } },
+            light.status === null ? '—' : countsText(light.counts),
+          ),
         ),
       ),
     ),
     React.createElement(
       'div',
       { style: HEALTH_STYLE.meta },
-      props.error !== null ? props.error : '只看不改：不建目录、不改配置、不重置。灯＝那一家最严重的那一档。点一下跳到那家配置页。',
+      props.error !== null ? props.error : '只看不改 · 灯＝那一家最严重的一档 · 点一下跳到那家配置页',
     ),
   );
 }

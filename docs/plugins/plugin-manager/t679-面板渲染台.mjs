@@ -203,6 +203,12 @@ const tabButtons = [];
 const tabsOnly = tabButtons.filter((b) => /^(●|○) /.test(String(b.props.children || '')));
 
 const renderNow = () => { panel.innerHTML = render(pass()); };
+/** #706：给「点真按钮后让取数落定并重渲」开一道页内口子（渲染台自己不用它，出图页用）。
+ *  渲染台的替身没有真事件环，"then" 不会自己跑——取数完成后调它一次即可把灯与表落到有读数的形态。 */
+window.__T679_SETTLE__ = () => {
+  let settle = 0; while (pendingUpdates > 0 && settle++ < 40) { pendingUpdates = 0; pass(); }
+  renderNow();
+};
 const states = [];
 renderNow();
 states.push(measure('初始'));
