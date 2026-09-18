@@ -115,41 +115,44 @@ describe('check-gate-audit：证据声称 vs 审计日志（严格默认）', ()
     assert.equal(relaxed.status, 0, `留痕后应放行：stderr=${relaxed.stderr}`);
   });
 
-  it('③d 反向对账：窗口内无人声明的 RUN → FAIL；--allow-undeclared 须留痕；--since 可界定窗口', () => {
+  it('③d 默认只对账声明：无人声明的 RUN 不追究；--require-undeclared 才严格；--since／--until 界定范围', () => {
     const evidence = [claimLine('pnpm build', { runId: 'r-build' })];
     const c = writeCase('undeclared', {
       evidence,
       log: [runLine('pnpm build', { runId: 'r-build' }), runLine('pnpm test', { runId: 'r-ghost' })],
     });
-    const bad = runAudit(c.evidencePath, c.logPath, ['--ticket', '88']);
-    assert.notEqual(bad.status, 0, '存在无人声明的条目应 FAIL');
-    assert.match(bad.stderr, /反向对账/);
-    assert.match(bad.stdout, /r-ghost/, '应列出未声明条目');
+    // 默认口径（协议 §2.4 第 3 条，票 #710 降级）：未声明的条目**不**判违规，只列出来给人看。
+    const relaxedByDefault = runAudit(c.evidencePath, c.logPath, ['--ticket', '88']);
+    assert.equal(relaxedByDefault.status, 0, `未声明的运行默认不追究：stderr=${relaxedByDefault.stderr}`);
+    assert.match(relaxedByDefault.stdout, /r-ghost/, '仍应把未声明条目列出来');
+    assert.match(relaxedByDefault.stdout, /默认口径：不追究/, '说明它为何不算 FAIL');
 
-    const noTrace = runAudit(c.evidencePath, c.logPath, ['--ticket', '88', '--allow-undeclared']);
-    assert.notEqual(noTrace.status, 0, '放宽未写进证据 → FAIL');
+    // 严格模式：显式要求才 FAIL。
+    const strict = runAudit(c.evidencePath, c.logPath, ['--ticket', '88', '--require-undeclared']);
+    assert.notEqual(strict.status, 0, '--require-undeclared 下存在无人声明的条目应 FAIL');
+    assert.match(strict.stderr, /反向对账（--require-undeclared）/);
 
-    fs.appendFileSync(c.evidencePath, `${relaxLine('--allow-undeclared')}\n`, 'utf8');
-    const relaxed = runAudit(c.evidencePath, c.logPath, ['--ticket', '88', '--allow-undeclared']);
-    assert.equal(relaxed.status, 0, `留痕后应放行：stderr=${relaxed.stderr}`);
+    // 旧的 `--allow-undeclared` 保留为兼容空开关：不再要求写 GATE-RELAX。
+    const legacy = runAudit(c.evidencePath, c.logPath, ['--ticket', '88', '--allow-undeclared']);
+    assert.equal(legacy.status, 0, `兼容空开关不应要求留痕：stderr=${legacy.stderr}`);
 
-    // --since 界定窗口：未声明条目在窗口之前 → 不需要放宽
+    // --since 界定范围：未声明条目在范围之前 → 严格模式下也不计
     const c2 = writeCase('since', {
       evidence,
       log: [runLine('pnpm test', { runId: 'r-ghost', at: '2026-09-09T11:00:00.000Z' }),
         runLine('pnpm build', { runId: 'r-build', at: '2026-09-09T13:00:00.000Z' })],
     });
-    const windowed = runAudit(c2.evidencePath, c2.logPath, ['--ticket', '88', '--since', '2026-09-09T12:00:00Z']);
-    assert.equal(windowed.status, 0, `窗口外的条目不应计入反向对账：stderr=${windowed.stderr}`);
+    const windowed = runAudit(c2.evidencePath, c2.logPath, ['--ticket', '88', '--require-undeclared', '--since', '2026-09-09T12:00:00Z']);
+    assert.equal(windowed.status, 0, `范围外的条目不应计入反向对账：stderr=${windowed.stderr}`);
 
-    // --until 界定窗口上界（提交后的 git 条目不该被算进本票对账窗口）
+    // --until 界定范围上界（提交后的 git 条目不该被算进本票范围）
     const c3 = writeCase('until', {
       evidence,
       log: [runLine('pnpm build', { runId: 'r-build', at: '2026-09-09T10:00:00.000Z' }),
         runLine('pnpm test', { runId: 'r-ghost', at: '2026-09-09T13:00:00.000Z' })],
     });
-    const upper = runAudit(c3.evidencePath, c3.logPath, ['--ticket', '88', '--until', '2026-09-09T12:00:00Z']);
-    assert.equal(upper.status, 0, `窗口上界之外的条目不应计入反向对账：stderr=${upper.stderr}`);
+    const upper = runAudit(c3.evidencePath, c3.logPath, ['--ticket', '88', '--require-undeclared', '--until', '2026-09-09T12:00:00Z']);
+    assert.equal(upper.status, 0, `范围上界之外的条目不应计入反向对账：stderr=${upper.stderr}`);
   });
 
   it('③e runId 一对一绑定：同 cmd 历史条目不得顶替新声明', () => {

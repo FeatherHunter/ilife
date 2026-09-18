@@ -5,29 +5,35 @@
  * 缺失／反向未声明／未绑定 runId／非 0 退出码 → 默认 exit ≠ 0。
  *
  * 用法：
- *   node tooling/check-gate-audit.mjs --evidence docs/research/t88-impl-governance-fix.md --ticket 88
+ *   node tooling/check-gate-audit.mjs --evidence docs/base/base-render/t693-证据.md --ticket 693
  *   node tooling/check-gate-audit.mjs --evidence <文件> --log .scratch/locks/gate-runs.log --ticket 88 --since <ISO> --until <ISO>
- *   node tooling/check-gate-audit.mjs --evidence <文件> --export docs/research/t88-gate-runs.log   # 导出受跟踪的对账源
+ *   node tooling/check-gate-audit.mjs --evidence <文件> --export docs/research/t88-gate-runs.log   # 导出对账源
  *
- * 对账窗口（共享日志下必须界定）：`--ticket` ＋ `--since`（含）／`--until`（含）——只有窗口内的
- * `RUN` 条目参与「声明认领」与「反向对账」，窗口外的条目（他人票号、提交后的 git 条目）不受影响。
+ * 默认口径＝**只对账声明过的运行**（协议 §2.4；2026-09-18 票 #710 由维护者裁定降级）：证据里写了
+ * `GATE-RUN runId=…` 的那些运行，逐条在审计日志里找**一对一**对应条目；**没声明的运行不追究**
+ * （干活时的调试红、故意变异红都属正常，不必逐条写进证据）。
  *
  * 声明写法（证据文件里，一行一条，`-`／`*`／表格 `|` 前缀可带）：
  *   GATE-RUN runId=<本次运行的 runId> cmd=<命令>        ← 默认口径（runId 必填）
  *   GATE-RUN ticket=88 cmd="pnpm test"                  ← 历史口径（须 --allow-no-runid 且写 GATE-RELAX）
  *
- * 默认（严格）口径 —— 每条都可用对应开关放宽，**但放宽必须写进证据**（见下）：
+ * 默认口径逐条：
  *   ① `--require-claims`（默认开）：证据里没有任何 `GATE-RUN` 声明即 FAIL（`--allow-no-claims` 放宽）。
- *   ② **反向对账**：对账窗口内存在**无人声明**的 `RUN` 条目 → FAIL（`--allow-undeclared` 放宽）。
- *   ③ **runId 一对一绑定**：声明必须引 `runId`，只认 runId 相同的条目；禁止「同 cmd 历史条目顶替」
+ *   ② **runId 一对一绑定**：声明必须引 `runId`，只认 runId 相同的条目；禁止「同 cmd 历史条目顶替」
  *      （`--allow-no-runid` 放宽后，无 runId 的声明只认**无 runId 的历史条目**）。
- *   ④ **看 `exit`**：默认只认领 `exit=0` 的条目（`--allow-nonzero` 放宽）。
- *   ⑤ `--export <路径>`：把本次对账窗口内的 `RUN` 条目导出到**受 git 跟踪**的文件，
+ *   ③ **看 `exit`**：默认只认领 `exit=0` 的条目（`--allow-nonzero` 放宽）。
+ *   ④ `--export <路径>`：把参与本次对账的 `RUN` 条目导出到**受 git 跟踪**的文件，
  *      使对账源不再只存在于 gitignored 的 `.scratch/locks/gate-runs.log`。
  *
- * 放宽留痕：使用任一 `--allow-*` 开关时，证据文件里**必须**有一条
- *   `GATE-RELAX flag=--allow-undeclared reason=<为什么>`
+ * 可选严格模式（旧口径，**默认关**）：`--require-undeclared` ＋ 可选 `--since`／`--until` 界定一段窗口
+ * ⇒ 窗口内存在**无人声明**的 `RUN` 条目即 FAIL。`--allow-undeclared` 保留为兼容用的空开关。
+ * `--since`／`--until` 单独给定时，只界定「哪些条目参与对账」（共享日志下用于排除别人的条目）。
+ *
+ * 放宽留痕：使用 `--allow-no-claims`／`--allow-nonzero`／`--allow-no-runid` 这三个**有实际作用**的
+ * 放宽开关时，证据文件里**必须**有一条
+ *   `GATE-RELAX flag=--allow-nonzero reason=<为什么>`
  * 否则本工具 exit ≠ 0（私自放宽＝协议 §6 的 S1-交付缺陷）。
+ * `--allow-undeclared` 不在此列：默认口径已不追究未声明的运行，它只是个兼容用的空开关。
  *
  * 匹配口径（`cmdMatches`）：
  *   ① 归一化后逐字相等；② 一侧是另一侧的前缀（按 token 边界，例如 `pnpm test` ⊂ `pnpm test test/x.test.mjs`）；
@@ -245,6 +251,7 @@ function parseArgs(argv) {
     export: '',
     requireClaims: true,
     allowNoClaims: false,
+    requireUndeclared: false,
     allowUndeclared: false,
     allowNonzero: false,
     allowNoRunId: false,
@@ -256,6 +263,8 @@ function parseArgs(argv) {
     if (arg === '--help' || arg === '-h') { opts.help = true; return opts; }
     if (arg === '--require-claims') { opts.requireClaims = true; continue; }
     if (arg === '--allow-no-claims') { opts.allowNoClaims = true; continue; }
+    if (arg === '--require-undeclared') { opts.requireUndeclared = true; continue; }
+    // 兼容空开关：默认口径已不再追究未声明的运行（§2.4 第 3 条），旧命令带上它照常通过。
     if (arg === '--allow-undeclared') { opts.allowUndeclared = true; continue; }
     if (arg === '--allow-nonzero') { opts.allowNonzero = true; continue; }
     if (arg === '--allow-no-runid') { opts.allowNoRunId = true; continue; }
@@ -343,19 +352,20 @@ function main() {
 
   const usedRelaxations = [];
   if (opts.allowNoClaims) usedRelaxations.push(RELAXATION_FLAGS.allowNoClaims);
-  if (opts.allowUndeclared) usedRelaxations.push(RELAXATION_FLAGS.allowUndeclared);
+  // `--allow-undeclared` 是旧口径的放宽开关；默认口径已不追究未声明条目，故它不再是「放宽」，也不要求留痕。
   if (opts.allowNonzero) usedRelaxations.push(RELAXATION_FLAGS.allowNonzero);
   if (opts.allowNoRunId) usedRelaxations.push(RELAXATION_FLAGS.allowNoRunId);
   const unrecordedRelaxations = usedRelaxations.filter((f) => !relaxations.has(f));
 
   const problems = [];
   if (result.duplicateRunIds.length > 0) {
-    problems.push(`${result.duplicateRunIds.length} 个 runId 在窗口内重复出现（日志可疑）：`
+    problems.push(`${result.duplicateRunIds.length} 个 runId 在范围内重复出现（日志可疑）：`
       + result.duplicateRunIds.map((d) => `${d.runId}(:${d.lines.join(',')})`).join('、'));
   }
   if (result.missing.length > 0) problems.push(`${result.missing.length}/${claims.length} 条声明在审计日志中找不到对应条目`);
   if (opts.requireClaims && !opts.allowNoClaims && claims.length === 0) problems.push('证据里没有任何 `GATE-RUN runId=… cmd=…` 声明');
-  if (!opts.allowUndeclared && result.undeclared.length > 0) problems.push(`反向对账：窗口内有 ${result.undeclared.length} 条无人声明的 RUN 条目`);
+  // 严格反向对账＝可选开关（`--require-undeclared`）：默认不追究未声明的运行（协议 §2.4 第 3 条）。
+  if (opts.requireUndeclared && result.undeclared.length > 0) problems.push(`反向对账（--require-undeclared）：范围内有 ${result.undeclared.length} 条无人声明的 RUN 条目`);
   if (unrecordedRelaxations.length > 0) problems.push(`放宽未写进证据（缺 GATE-RELAX）：${unrecordedRelaxations.join('、')}`);
 
   if (opts.json) {
@@ -379,11 +389,11 @@ function main() {
     }, null, 2));
   } else {
     console.log(`证据：${evidencePath}`);
-    console.log(`审计：${logPath}（RUN 条目 ${entries.length} 条；窗口内 ${scoped.length} 条${opts.ticket ? `，ticket=${opts.ticket}` : ''}${opts.since ? `，since=${opts.since}` : ''}${opts.until ? `，until=${opts.until}` : ''}）`);
+    console.log(`审计：${logPath}（RUN 条目 ${entries.length} 条；范围内 ${scoped.length} 条${opts.ticket ? `，ticket=${opts.ticket}` : ''}${opts.since ? `，since=${opts.since}` : ''}${opts.until ? `，until=${opts.until}` : ''}）`);
     console.log(`声称运行 ${claims.length} 条${opts.allowNoRunId ? '（--allow-no-runid）' : ''}`);
     for (const c of claims) console.log(`  - 证据 :${c.line} runId=${c.runId || '（无）'} cmd=${c.cmd}${c.ticket ? ` ticket=${c.ticket}` : ''}`);
     if (result.undeclared.length > 0) {
-      console.log(`反向对账：窗口内无人声明的 RUN 条目 ${result.undeclared.length} 条`);
+      console.log(`范围内未声明的 RUN 条目 ${result.undeclared.length} 条${opts.requireUndeclared ? '（严格模式：计入 FAIL）' : '（默认口径：不追究）'}`);
       for (const e of result.undeclared) console.log(`  - 日志 :${e.line} runId=${e.runId || '（无）'} exit=${e.exit} at=${e.at || ''} cmd=${e.cmd}`);
     }
     for (const p of problems) console.error(`FAIL: ${p}`);
@@ -395,7 +405,7 @@ function main() {
   if (opts.export) {
     const exportPath = path.resolve(repoRoot, opts.export);
     const count = exportRuns(exportPath, { entries: scoped, logPath, ticket: opts.ticket, since: opts.since, until: opts.until });
-    if (!opts.json) console.log(`EXPORT: ${exportPath}（窗口内 RUN 条目 ${count} 条，受 git 跟踪）`);
+    if (!opts.json) console.log(`EXPORT: ${exportPath}（范围内 RUN 条目 ${count} 条，受 git 跟踪）`);
   }
 
   const pass = problems.length === 0;
