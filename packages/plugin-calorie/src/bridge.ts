@@ -11,6 +11,7 @@ import { accessSync, constants, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { ConfigSurfaceReply } from './contract.js';
 
 export const SKILL_PACKAGE = 'skill-calorie' as const;
 export const SKILL_CLI = 'packages/skill-calorie/dist/cli/cmd_read.js' as const;
@@ -204,4 +205,34 @@ export function readViaCli(key: string, params: Record<string, unknown> = {}): u
   if (!env || env.key !== key) throw new SkillBridgeError('key-mismatch', '出口回执 key 不符');
   if (env.data === null || env.data === undefined) throw new SkillBridgeError('fetch-failed', '缺失阻断取数，不返空：' + key);
   return env.data;
+}
+
+/** 设置页的三个配置 key。
+ *
+ * **唯一定义地是技能侧** `packages/skill-calorie/src/cli/config.ts` 的 `CONFIG_KEYS`
+ * （那里写了「插件侧镜像同值」）；本处只是镜像，值改一处要两处一起改，
+ * 对齐由 `test/config-surface-676.test.mjs` 的源码文本锁死。
+ *
+ * 为什么走 CLI 而不在插件里读盘：单品插件的冻结边界是「只读消费技能 dist／CLI，纯 CLI 单轨」
+ * （`test/plugin-p10-boundaries.test.mjs`：单品不 import `base-*`、不 import `skill-*`，
+ * 必须经 host.call 与 spawn 到 cmd_read）。配置文件的读写实现住技能的 `src/config.ts`，
+ * 插件只经这三个 key 取用——同一份实现不抄第二处。
+ */
+export const CONFIG_READ_KEY = 'calorie.config.read' as const;
+export const CONFIG_WRITE_KEY = 'calorie.config.write' as const;
+export const CONFIG_RESET_KEY = 'calorie.config.reset' as const;
+
+/** 设置页整面：文件在哪、数据在哪、当前值、是不是这次新建的（取自技能 `calorie.config.read`）。 */
+export function readConfigSurface(): ConfigSurfaceReply {
+  return readViaCli(CONFIG_READ_KEY, {}) as ConfigSurfaceReply;
+}
+
+/** 保存一份配置（技能侧按键覆盖，组里没给的子项保留现值；写出去的是完整一份）。 */
+export function writeConfigValues(values: Record<string, unknown>): { path: string; values: Record<string, unknown> } {
+  return readViaCli(CONFIG_WRITE_KEY, { values }) as { path: string; values: Record<string, unknown> };
+}
+
+/** 重置为默认（技能侧先另存 `<配置目录>/calorie.yaml.bak`）。 */
+export function resetConfigToDefaults(): { path: string; backupPath: string | null } {
+  return readViaCli(CONFIG_RESET_KEY, {}) as { path: string; backupPath: string | null };
 }

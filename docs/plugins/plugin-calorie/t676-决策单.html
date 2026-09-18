@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#676 卡路里设置页 · 决策单</title>
+<style>
+  :root{
+    --ink:#1c2024; --ink2:#5b6570; --line:#e2e6ea; --bg:#f6f7f9; --card:#fff;
+    --accent:#2f6fed; --ok:#12805c; --warn:#b26a00; --bad:#b3261e;
+    --okbg:#e8f6f0; --warnbg:#fff5e5; --badbg:#fdeceb; --accentbg:#eaf1fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--bg);color:var(--ink);
+       font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:24px;line-height:1.35;margin:0 0 6px}
+  .sub{color:var(--ink2);font-size:13.5px;margin:0 0 22px}
+  .strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+        padding:4px 12px;font-size:12.5px;color:var(--ink2)}
+  .chip b{color:var(--ink)}
+  .chip.warn{background:var(--warnbg);border-color:#f0d9b0;color:var(--warn)}
+  .chip.bad{background:var(--badbg);border-color:#f3c9c6;color:var(--bad)}
+  .chip.ok{background:var(--okbg);border-color:#bfe3d5;color:var(--ok)}
+  h2{font-size:17px;margin:34px 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:18px 20px;margin:0 0 16px}
+  .card.q{border-left:5px solid var(--accent)}
+  h3{font-size:15.5px;margin:0 0 4px}
+  .why{color:var(--ink2);font-size:13.5px;margin:0 0 14px}
+  .lbl{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--ink2);
+       text-transform:uppercase;margin:16px 0 8px}
+  ul{margin:0;padding-left:20px}
+  li{margin:0 0 6px}
+  code{font:13px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;
+       background:#eef1f4;border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--ink2);font-weight:600;font-size:12.5px}
+  td.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-all}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 10px;background:#fcfdfe}
+  .opt.rec{border-color:#bcd3f8;background:var(--accentbg)}
+  .opt h4{margin:0 0 8px;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;letter-spacing:.04em}
+  .pill.rec{background:var(--accent);color:#fff}
+  .pill.no{background:#eceff2;color:var(--ink2)}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.pc{grid-template-columns:1fr}}
+  .pc div{font-size:13.5px}
+  .pc .h{font-weight:700;font-size:12px;letter-spacing:.06em;margin-bottom:4px}
+  .pro .h{color:var(--ok)} .con .h{color:var(--bad)}
+  .pc ul{padding-left:18px}
+  .callout{background:var(--warnbg);border:1px solid #f0d9b0;border-radius:10px;
+           padding:14px 18px;font-size:14px;margin:0 0 16px}
+  .callout.bad{background:var(--badbg);border-color:#f3c9c6}
+  .callout strong{color:var(--warn)}
+  .callout.bad strong{color:var(--bad)}
+  .todo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 20px;margin:0 0 8px}
+  .todo li{margin:12px 0}
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);
+         color:var(--ink2);font-size:12.5px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>#676 卡路里设置页 — 两处待你拍板</h1>
+  <p class="sub">做法已定、设计已就绪，卡在一条依赖授权和一条归属裁决上。</p>
+
+  <div class="strip">
+    <span class="chip ok">前置 <b>#694 已落地</b>（代码已提交）</span>
+    <span class="chip bad">本票进度 <b>0%</b> 未动工</span>
+    <span class="chip warn">卡点 <b>2 处</b></span>
+  </div>
+
+  <h2>你要做的三件事</h2>
+  <div class="todo">
+    <ol>
+      <li><b>关掉 #694</b> — 代码已提交，但 issue 仍是 <code>open</code>。它不关，前沿查询永远认为 #676 被阻塞，别的席也接不了这条线。</li>
+      <li><b>决策一：授权一次依赖安装</b> — 这条把我彻底挡住了。</li>
+      <li><b>决策二：拍板技能侧归属</b> — 两张票的「不许动」互相矛盾。</li>
+    </ol>
+  </div>
+
+  <h2>决策一：授权安装 <code>base-link-core</code> 依赖</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">配置要「存到哪、谁来读」已在 #675 冻结：读写件住 <code>base-link-core/src/config/</code>，#694 已把它做出来并提交。设置页要能读改配置，宿主侧就必须 import 它。</p>
+
+    <div class="lbl">关键读数</div>
+    <table>
+      <tr><th>读数</th><th>结果</th></tr>
+      <tr><td><code>packages/plugin-calorie/node_modules/base-link-core</code></td><td class="mono">不存在</td></tr>
+      <tr><td>根 <code>node_modules/base-link-core</code></td><td class="mono">不存在</td></tr>
+      <tr><td>今天谁声明了 <code>base-link-core</code></td><td>五个技能（bill／chef／home／memo／schedule）＋ <code>base-combos</code>；<b>没有任何一个 <code>plugin-*</code> 声明过</b></td></tr>
+    </table>
+    <p class="why" style="margin-top:12px">本票会成为<b>第一处「插件 → 公共层配置件」的连线</b>，要「package.json 加一条 ＋ <code>pnpm install</code> 建 workspace 软链 ＋ tsconfig 补一条 references」三步。而协议 §2.1 写死了：<b>禁止自行安装，缺依赖＝停手上报</b>。所以我停手了。</p>
+
+    <div class="lbl">选项</div>
+
+    <div class="opt rec">
+      <h4>A. 你持锁授权一次安装 <span class="pill rec">推荐</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>一步解锁，我立刻开工</li><li>连线照仓库既有 workspace 规则走，不引入新机制</li><li>后续 #677 记账页可复用同一条线</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>占用一次持锁窗口（分钟级）</li><li>你的授权是唯一合法出口，绕不过</li></ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>B. 划给别的席或你统一补 <span class="pill no">可接受</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>不占你的授权额度</li><li>若你已在别处补同类依赖，可与它合并</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>跨席等待，#676 继续停摆</li><li>#677 也跟着停</li></ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>C. 绕开它，在插件里自己读 YAML <span class="pill no">建议否决</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>不用安装，今天就能开工</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li><b>直接违反 #675 冻结口径</b>（读写件住公共层）</li><li>等于造第二套解析器，两处口径迟早走散</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>决策二：卡路里的「技能侧」归谁</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">要让配置值真正影响技能，技能得从「读环境变量」改成「读配置文件」。两张票对这件事的归属说法相反，且图上缺一张票。</p>
+
+    <div class="lbl">矛盾点</div>
+    <table>
+      <tr><th>票</th><th>它的「不许动」怎么说</th></tr>
+      <tr><td><b>#676</b>（本票）</td><td><code>packages/skill-calorie</code> 的取数与页面产物<b>不改</b></td></tr>
+      <tr><td><b>#695</b>（其余四家技能侧）</td><td>不许改 <code>skill-calorie</code> 与 <code>skill-bill</code>（<b>前者是样板</b>、后者有独立票）</td></tr>
+    </table>
+    <p class="why" style="margin-top:12px">#695 把 skill-calorie 称作「样板」，等于把它的技能侧推给样板票 —— 也就是 #676。但本票自己的「不许动」写着不改它。</p>
+
+    <div class="lbl">尺寸读数（决定体量的关键）</div>
+    <table>
+      <tr><th>读数</th><th>结果</th></tr>
+      <tr><td><code>packages/skill-calorie/test</code> 下写有 <code>SKILLS_DB_PATH</code> 的测试件</td><td class="mono">130 个</td></tr>
+    </table>
+    <p class="why" style="margin-top:12px">把技能侧从环境变量改成读配置，要先迁移这 130 个测试基座。这不是「一票一会话」的体量。</p>
+
+    <div class="lbl">选项</div>
+
+    <div class="opt rec">
+      <h4>A. #676 只做设置面，技能侧另起一票 <span class="pill rec">推荐</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>符合本票书面「不许动」，无需解释性让步</li><li>验收五条能由设置面单独满足，可 100% 关票</li><li>体量可控，形状能先定下来给 #677／#696 抄</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>配置值这一轮进不了技能执行路径（仅 2 项靠 spawn 注入生效）</li><li>要额外起一张票补图上的洞</li></ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>B. #676 连技能侧一起做 <span class="pill no">不建议</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>一轮到位，「存了真生效」不留尾巴</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>要迁 130 个测试基座，远超一票一会话</li><li>违反本票自己的「不许动」</li></ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>C. 把卡路里／记账技能侧并进 #695 <span class="pill no">备选</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>技能侧改动集中一处，一把收口</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>#695 标题写「其余四家」，并进来要改它的范围</li><li>它已是四家体量，再加两家更做不完</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>一个附注（不是决策，但会影响你对效果的预期）</h2>
+  <div class="callout">
+    <strong>12 项候选里，今天只有 2 项有生效接缝。</strong>
+    <p class="why" style="margin:10px 0 8px">按调查，卡路里上设置页候选共 12 项。但技能今天只从环境变量取两个值：</p>
+    <table>
+      <tr><th>有接缝（可做真生效）</th><td class="mono">SKILLS_DB_PATH（库目录）· CALORIE_PHOTOS_DIR（照片目录）</td></tr>
+      <tr><th>无接缝（技能里是代码常量）</th><td>库文件名 · HTML 产物目录名 · GIF 子目录 · 产物名主体三值 · 训记三份状态文件 · 动作库老机器路径 · 两条跨技能出口</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">我的做法：宿主 spawn 技能进程时把配置值注入子进程环境，先把那 2 项做成真生效；余 10 项这一票做「配置文件是唯一真相 ＋ 页面可改可存可重置」，等技能侧那张票再接到执行路径。<b>若你要的是「12 项全都立刻生效」，那就是决策二选 B。</b></p>
+  </div>
+
+  <footer>
+    <p>相关票：<a href="https://github.com/FeatherHunter/ilife/issues/676">#676 卡路里设置页</a> ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/677">#677 记账设置页</a> ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/694">#694 公共层配置件</a> ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/671">#671 爱生活设置面（地图）</a></p>
+    <p>完整读数与设计见 <a href="https://github.com/FeatherHunter/ilife/issues/676#issuecomment-5730675496">#676 上的开工读数评论</a>。</p>
+  </footer>
+
+</div>
+</body>
+</html>

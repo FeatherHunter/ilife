@@ -7,9 +7,9 @@
  * 打包技能提供方见 skill-provider.ts（badge 同形，#56）：单份 SKILL.md 按包名解析，
  * rank 内联 600，名用 skill-calorie；面板/桥行为不受其影响。
  */
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, ok, fail, parseReadPayload } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
 import type { RpcResult } from './contract.js';
-import { SkillBridgeError, readViaCli } from './bridge.js';
+import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults } from './bridge.js';
 import type { HostCtx, RpcHandler } from './dsh-ctx.js';
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 
@@ -22,14 +22,29 @@ interface HostLogger {
   error?(...args: unknown[]): void;
 }
 
-/** RPC 处理函数：endpoint 分发 → 载荷校验 → readViaCli → 信封包装（companion rpc.ts 同形）。 */
+/** RPC 处理函数：endpoint 分发 → 载荷校验 → readViaCli／配置件 → 信封包装（companion rpc.ts 同形）。
+ *
+ * #676 起多三个配置端点（`config.get`／`config.save`／`config.reset`）：设置页只经它们
+ * 读改自家配置，不 spawn 技能进程，也不直读磁盘（client 侧禁 node）。 */
 const handleCalorieRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> => {
-  if (endpoint !== RPC_ENDPOINT_READ) return fail('bad-request', `未知端点：${String(endpoint)}`);
-  const parsed = parseReadPayload(payload ?? {});
-  if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
   try {
-    return ok(readViaCli(parsed.key, parsed.params));
+    if (endpoint === RPC_ENDPOINT_READ) {
+      const parsed = parseReadPayload(payload ?? {});
+      if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
+      return ok(readViaCli(parsed.key, parsed.params));
+    }
+    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(readConfigSurface());
+    if (endpoint === RPC_ENDPOINT_CONFIG_SAVE) {
+      const parsed = parseSavePayload(payload ?? {});
+      if (!parsed) return fail('bad-request', '载荷须为 {values: object}');
+      return ok(writeConfigValues(parsed.values));
+    }
+    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(resetConfigToDefaults());
+    return fail('bad-request', `未知端点：${String(endpoint)}`);
   } catch (e) {
+    // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的
+    // ConfigError 报文原样交出来（已带行号与文件名），readViaCli 把它带在
+    // fetch-failed 的报文里，页面照原样给用户看。
     if (e instanceof SkillBridgeError) return fail(e.code, e.message);
     return fail('internal', e instanceof Error ? e.message : String(e));
   }
@@ -90,9 +105,9 @@ export function apply(ctx: HostCtx): void {
 
 export { SKILL, SLOT_ID, SLOT_ORDER, SLOT_TITLE, PLUGIN, MANAGER_PLUGIN, slotDescriptor, TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
 export type { SlotDescriptor, TabsPort } from './slot.js';
-export { SETTINGS_OWNER, SETTINGS_SLOT, SETTING_ROWS } from './settings.js';
-export type { SettingRow } from './settings.js';
-export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli } from './bridge.js';
+export { SETTINGS_OWNER, SETTINGS_SLOT, CONFIG_STEM, CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
+export type { ConfigItem, ConfigTier, ConfigControl } from './settings.js';
+export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY } from './bridge.js';
 export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, skillFile, parseSkillText, provider as skillProvider } from './skill-provider.js';
-export { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, ok, fail, parseReadPayload } from './contract.js';
-export type { ReadPayload, RpcError, RpcResult } from './contract.js';
+export { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
+export type { ReadPayload, SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './contract.js';

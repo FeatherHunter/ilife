@@ -14,11 +14,19 @@
  * connection.rpc.call 经闭包现取、betterSidebar 经 ctx.get 运行时取）；
  * 取数只经 connection.rpc.call 进 host 通道；缺席/错误纯条件渲染，不返空冒充。
  * 组件 React.createElement 手写，不引入 JSX。
+ *
+ * #676：技能设置页从「只读设置行 + 状态读数」换成**真配置页**——行表来自 settings.ts，
+ * 取值来自宿主侧配置件（`config.get`／`config.save`／`config.reset` 三个端点）。
+ * 本文件仍禁 node：不读盘、不算默认值，默认值由宿主一并送来。
+ * 照 CONTEXT.md，「技能设置页」只配置、不干活：本页没有任何取数／记一餐入口，
+ * 状态读数也已移出（读数属技能功能页）。
  */
 import * as React from 'react';
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
+import type { ConfigSurfaceReply } from './contract.js';
 import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE } from './slot.js';
-import { SETTING_ROWS } from './settings.js';
+import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
+import type { ConfigItem } from './settings.js';
 import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
 
 export const inject = ['slots', 'connection'];
@@ -41,6 +49,7 @@ const S = {
   total: { fontSize: 22, fontWeight: 700, margin: '2px 0 4px' } as React.CSSProperties,
   muted: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12 } as React.CSSProperties,
   error: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: 13 } as React.CSSProperties,
+  okText: { color: 'var(--dsw-alias-state-success-primary, #12805c)', fontSize: 12.5 } as React.CSSProperties,
   rows: { marginTop: 8, borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))', paddingTop: 8 } as React.CSSProperties,
   version: {
     marginTop: 8,
@@ -49,6 +58,50 @@ const S = {
     color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
     fontSize: 12,
   } as React.CSSProperties,
+  info: {
+    margin: '6px 0 0',
+    font: '12px/1.5 ui-monospace,Consolas,monospace',
+    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
+    wordBreak: 'break-all',
+  } as React.CSSProperties,
+  row: { marginTop: 10 } as React.CSSProperties,
+  label: { fontSize: 12.5, fontWeight: 600 } as React.CSSProperties,
+  hint: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 11.5, margin: '1px 0 4px' } as React.CSSProperties,
+  input: {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '4px 8px',
+    borderRadius: 6,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    font: '12.5px/1.5 ui-monospace,Consolas,monospace',
+  } as React.CSSProperties,
+  bar: { marginTop: 14, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } as React.CSSProperties,
+  btn: {
+    padding: '5px 14px',
+    borderRadius: 7,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    fontSize: 12.5,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  btnPrimary: {
+    padding: '5px 14px',
+    borderRadius: 7,
+    border: '1px solid var(--dsw-alias-brand-primary, #2f6fed)',
+    background: 'var(--dsw-alias-brand-primary, #2f6fed)',
+    color: '#fff',
+    fontSize: 12.5,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  adv: {
+    marginTop: 12,
+    paddingTop: 8,
+    borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))',
+  } as React.CSSProperties,
+  advSummary: { cursor: 'pointer', fontSize: 12.5, fontWeight: 600 } as React.CSSProperties,
 };
 
 /** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染＋unknown 降级）。
@@ -251,43 +304,164 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
   );
 }
 
-function controlLabel(control: string): string {
-  if (control === 'switch') return '开关（缺省启用，只读）';
-  if (control === 'text') return '文本（只读）';
-  if (control === 'number') return '数字（只读）';
-  return `${control}（只读）`;
+// ===== #676：技能设置页（只配置，不干活）=====
+
+type ConfigState =
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'ready'; readonly surface: ConfigSurfaceReply }
+  | { readonly kind: 'failed'; readonly message: string };
+
+/** 配置面报错 → 人话指引。
+ *
+ * 报文由技能侧给出：base-link-core 的 `ConfigError` 已经带行号与文件名，技能
+ * `cli/config.ts` 原样交出来，插件 bridge 原样带上（`fetch-failed：出口非 0（1）：<那一句>`）。
+ * 所以这里**不重写报文**，只按报错类补一句「接下来怎么办」——免得两处各写一套人话。
+ */
+export function humanizeConfigFailure(code: string, message: string): string {
+  const text = message.trim().length > 0 ? message.trim() : `（${code}，宿主未给报文）`;
+  if (/解析|YAML|parse/i.test(text)) return `${text}\n改回「键: 值」的写法，或点「重置为默认」重来一份（重置会先留一份 .bak）。`;
+  if (/不认识|未知键|UNKNOWN_KEY/i.test(text)) return `${text}\n本页只认表里这些项；多余的行删掉，或点「重置为默认」。`;
+  if (/类型|TYPE_MISMATCH/i.test(text)) return `${text}\n按本页给的形状填（文本填文本、数字填数字），或点「重置为默认」。`;
+  if (/缺席|missing-cli/.test(text)) return `${text}\n技能出口没找着：先确认技能包已构建（packages/skill-calorie/dist/cli/cmd_read.js）。`;
+  return `${text}\n改不动就点「重置为默认」（会先留一份 .bak），或照报文里的路径手工改配置文件。`;
 }
 
-/** 技能设置页：爱生活页签条下的一页（只读设置行 + 状态读数 + 版本行，禁做假开关）。 */
+type ConfigOutcome =
+  | { readonly ok: true; readonly surface: ConfigSurfaceReply }
+  | { readonly ok: false; readonly message: string };
+
+/** 一次配置 RPC（与 fetchRead 同通道、同超时纪律；永不抛，失败落字）。 */
+async function configRpc(call: unknown, method: string, payload: Record<string, unknown>): Promise<ConfigOutcome> {
+  if (typeof call !== 'function') return { ok: false, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  try {
+    const raw: unknown = await withTimeout(
+      (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method, payload }, AbortSignal.timeout(READ_TIMEOUT_MS)),
+      READ_TIMEOUT_MS,
+    );
+    if (!isRpcResult(raw)) return { ok: false, message: '回执信封异常（非 ok 信封）' };
+    if (!raw.ok) return { ok: false, message: humanizeConfigFailure(raw.error?.code ?? 'unknown', raw.error?.message ?? '') };
+    return { ok: true, surface: raw.value as ConfigSurfaceReply };
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return { ok: false, message: `配置读取超时（${Math.round(READ_TIMEOUT_MS / 1000)}s）：宿主未回` };
+    if (e instanceof Error && e.name === 'TimeoutError') return { ok: false, message: e.message };
+    return { ok: false, message: `配置失败：${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+/** 读设置页整面。 */
+export function fetchConfigSurface(call: unknown): Promise<ConfigOutcome> {
+  return configRpc(call, RPC_ENDPOINT_CONFIG_GET, {});
+}
+
+/** 保存（回全表）。 */
+export function saveConfigSurface(call: unknown, values: Record<string, unknown>): Promise<ConfigOutcome> {
+  return configRpc(call, RPC_ENDPOINT_CONFIG_SAVE, { values });
+}
+
+/** 重置为默认（配置件先落 .bak）。 */
+export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
+  return configRpc(call, RPC_ENDPOINT_CONFIG_RESET, {});
+}
+
+/** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。 */
+export function toDraft(values: Record<string, unknown>): Record<string, string> {
+  const draft: Record<string, string> = {};
+  for (const item of CONFIG_ITEMS) {
+    const v = readPath(values, item.key);
+    draft[item.key] = v === undefined || v === null ? '' : String(v);
+  }
+  return draft;
+}
+
+/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「未配」承担）。 */
+export function fromDraft(draft: Record<string, string>): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  for (const item of CONFIG_ITEMS) {
+    const raw = draft[item.key] ?? '';
+    const value: unknown = item.control === 'number' ? Number(raw) : item.control === 'switch' ? raw === 'true' : raw;
+    writePath(values, item.key, item.control === 'number' && !Number.isFinite(value as number) ? 0 : value);
+  }
+  return values;
+}
+
+/** 一行输入（三种控件对齐受限 YAML 子集：文本／数字／布尔）。 */
+function Row(props: {
+  readonly item: ConfigItem;
+  readonly value: string;
+  readonly disabled: boolean;
+  readonly onChange: (key: string, next: string) => void;
+}): React.ReactElement {
+  const { item } = props;
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
+  const control =
+    item.control === 'switch'
+      ? React.createElement('input', {
+          type: 'checkbox',
+          checked: props.value === 'true',
+          disabled: props.disabled,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
+        })
+      : React.createElement('input', {
+          style: S.input,
+          type: item.control === 'number' ? 'number' : 'text',
+          value: props.value,
+          disabled: props.disabled,
+          spellCheck: false,
+          onChange,
+        });
+  return React.createElement(
+    'div',
+    { style: S.row },
+    React.createElement('div', { style: S.label }, item.title),
+    React.createElement('div', { style: S.hint }, item.hint),
+    control,
+  );
+}
+
+/** 技能设置页：承载卡路里自己的全部可配置项（只配置，不干活）。
+ *
+ * 三态：loading（一次 RPC 内）／ready（真表单）／failed（人话报错 + 指引，不返空、不转圈）。
+ * 没有任何干活入口——查数、记一餐在技能功能页（sidebar槽）。 */
 function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
-  const [state, setState] = React.useState<PanelState>({ kind: 'loading' });
-  // #130 版本态（初值 unknown 骨架；独立单次 RPC，不阻塞数据、不轮询、不抛）。
+  const [state, setState] = React.useState<ConfigState>({ kind: 'loading' });
+  const [draft, setDraft] = React.useState<Record<string, string>>({});
+  const [busy, setBusy] = React.useState(false);
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   const [versions, setVersions] = React.useState<{ readonly plugin: string; readonly skill: string }>({
     plugin: VERSION_UNKNOWN,
     skill: VERSION_UNKNOWN,
   });
+
+  const load = React.useCallback(async () => {
+    setNotice(null);
+    setError(null);
+    const r = await fetchConfigSurface(props.getCall());
+    if (r.ok) {
+      setState({ kind: 'ready', surface: r.surface });
+      setDraft(toDraft(r.surface.values));
+    } else {
+      setState({ kind: 'failed', message: r.message });
+    }
+  }, [props.getCall]);
+
   React.useEffect(() => {
     let alive = true;
-    const date = todayString();
     void (async () => {
-      let r: ReadOutcome;
-      try {
-        r = await fetchRead(props.getCall(), DEFAULT_READ_KEY, { date });
-      } catch (e) {
-        // 调用口同步抛错兜底：fetchRead 之外的错不成不可见 rejection，直接落字。
-        if (!alive) return;
-        setState({ kind: 'error', message: `取数失败：${e instanceof Error ? e.message : String(e)}` });
-        return;
-      }
+      const r = await fetchConfigSurface(props.getCall());
       if (!alive) return;
-      if (r.ok) setState({ kind: 'data', date, total: r.text });
-      else if (r.absent) setState({ kind: 'absent', message: r.message });
-      else setState({ kind: 'error', message: r.message });
+      if (r.ok) {
+        setState({ kind: 'ready', surface: r.surface });
+        setDraft(toDraft(r.surface.values));
+      } else {
+        setState({ kind: 'failed', message: r.message });
+      }
     })();
     return () => {
       alive = false;
     };
   }, [props.getCall]);
+
   React.useEffect(() => {
     let alive = true;
     void (async () => {
@@ -303,29 +477,111 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
       alive = false;
     };
   }, [props.getCall]);
-  const status =
-    state.kind === 'loading'
-      ? React.createElement('div', { style: S.muted }, '状态读取中…')
-      : state.kind === 'data'
-        ? React.createElement(
-            'div',
-            null,
-            React.createElement('div', { style: S.title }, SLOT_TITLE),
-            React.createElement('div', { style: S.total }, `total ${state.total}`),
-            React.createElement('div', { style: S.muted }, `今日 ${state.date}`),
-          )
-        : React.createElement('div', { style: state.kind === 'absent' ? S.muted : S.error }, state.message);
+
+  const onChange = React.useCallback((key: string, next: string) => {
+    setDraft((prev) => ({ ...prev, [key]: next }));
+    setNotice(null);
+    setError(null);
+  }, []);
+
+  const surface = state.kind === 'ready' ? state.surface : null;
+  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values)[i.key] ?? ''));
+
+  const onSave = React.useCallback(async () => {
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    const r = await saveConfigSurface(props.getCall(), fromDraft(draft));
+    setBusy(false);
+    if (r.ok) {
+      setState({ kind: 'ready', surface: r.surface });
+      setDraft(toDraft(r.surface.values));
+      setNotice('已保存，立即生效（不用重启宿主）');
+    } else {
+      setError(r.message);
+    }
+  }, [draft, props.getCall]);
+
+  const onReset = React.useCallback(async () => {
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    const r = await resetConfigSurface(props.getCall());
+    setBusy(false);
+    if (r.ok) {
+      setState({ kind: 'ready', surface: r.surface });
+      setDraft(toDraft(r.surface.values));
+      setNotice('已重置为默认（原配置已另存一份 .bak）');
+    } else {
+      setError(r.message);
+    }
+  }, [props.getCall]);
+
+  const head = React.createElement(
+    'div',
+    null,
+    React.createElement('div', { style: S.title }, `${SLOT_TITLE} · 配置`),
+    surface !== null
+      ? React.createElement(
+          'div',
+          null,
+          React.createElement('div', { style: S.info }, `配置文件 ${surface.path}`),
+          React.createElement('div', { style: S.info }, `数据目录 ${surface.dataDir}`),
+          surface.created ? React.createElement('div', { style: S.muted }, '（这份配置是刚按默认值建出来的）') : null,
+        )
+      : null,
+  );
+
+  if (state.kind === 'loading') {
+    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中…'));
+  }
+
+  if (state.kind === 'failed') {
+    return React.createElement(
+      'div',
+      { style: S.card },
+      React.createElement('div', { style: S.title }, `${SLOT_TITLE} · 配置`),
+      React.createElement('div', { style: S.error }, state.message),
+      React.createElement(
+        'div',
+        { style: S.bar },
+        React.createElement('button', { style: S.btn, type: 'button', onClick: () => void load() }, '重试'),
+        React.createElement('button', { style: S.btn, type: 'button', onClick: () => void onReset() }, '重置为默认'),
+      ),
+      React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
+    );
+  }
+
+  const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT);
+  const advanced = CONFIG_ITEMS.slice(COMMON_ITEM_COUNT);
+  const renderRow = (item: ConfigItem) =>
+    React.createElement(Row, { key: item.key, item, value: draft[item.key] ?? '', disabled: busy, onChange });
+
   return React.createElement(
     'div',
     { style: S.card },
-    status,
+    head,
+    React.createElement('div', { style: S.rows }, common.map(renderRow)),
+    React.createElement(
+      'details',
+      { style: S.adv },
+      React.createElement('summary', { style: S.advSummary }, ADVANCED_GROUP_TITLE),
+      React.createElement('div', { style: S.muted }, ADVANCED_GROUP_NOTE),
+      advanced.map(renderRow),
+    ),
     React.createElement(
       'div',
-      { style: S.rows },
-      SETTING_ROWS.map((row) =>
-        React.createElement('div', { key: row.key }, `${row.title} · ${controlLabel(row.control)}`),
+      { style: S.bar },
+      React.createElement(
+        'button',
+        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
+        busy ? '处理中…' : '保存',
       ),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
     ),
+    notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
+    error !== null ? React.createElement('div', { style: S.error }, error) : null,
     React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
   );
 }
