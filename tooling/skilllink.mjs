@@ -59,6 +59,68 @@ function checkLark() {
   }
 }
 
+// 六家技能的环境项逐包检查（docs/env.md 那张表的可执行版；#707）。
+// 与上面三项的分工：SKILLS_DB_PATH／lark-cli 是全局项，这里只查各家**自己**读的变量。
+// 表里每行 = 包名（仓内 packages/skill-<name>）＋该包自己 src 里读的变量，一个不多一个不少；
+// 实现面的依据（2026-09-18 逐包 grep，见 #707 决议）：
+//   calorie  → CALORIE_PHOTOS_DIR（src/photo/dir.ts）、CALORIE_FORCE_PROD（src/paths.ts）
+//   home     → HOME_FORCE_PROD（src/fetch/paths.ts）；照片变量不适用（本包 src 零命中 HOME_PHOTOS_DIR）
+//   chef     → CHEF_FORCE_PROD（src/fetch/paths.ts）
+//   bill     → BILL_FORCE_PROD（src/fetch/paths.ts）
+//   schedule → SCHEDULE_FORCE_PROD（src/fetch/paths.ts）、LARK_CLI_PATH（src/fetch/feishu.ts）
+//   memo     → MEMO_MEDIA_DIR（src/policy/crud.ts）；无写库哨兵（src 零命中 MEMO_FORCE_PROD）
+// 判据与全局项同口径：写库哨兵缺省 warn→--strict fail；目录/文件给了但不可用一律 fail（给了就是配错）。
+// 目录类不自动建：doctor 只读，不许因体检而写出目录（缺省那条已给创建命令）。
+const SKILL_CHECKS = [
+  { name: '卡路里', pkg: 'skill-calorie', sentinel: 'CALORIE_FORCE_PROD', dirs: [['CALORIE_PHOTOS_DIR', '照片目录']] },
+  { name: '居家', pkg: 'skill-home', sentinel: 'HOME_FORCE_PROD', dirs: [] },
+  { name: '大厨', pkg: 'skill-chef', sentinel: 'CHEF_FORCE_PROD', dirs: [] },
+  { name: '饼干', pkg: 'skill-bill', sentinel: 'BILL_FORCE_PROD', dirs: [] },
+  { name: '作息', pkg: 'skill-schedule', sentinel: 'SCHEDULE_FORCE_PROD', dirs: [], cli: [['LARK_CLI_PATH', '飞书 CLI 路径']] },
+  { name: '备忘录', pkg: 'skill-memo-ilife', sentinel: null, dirs: [['MEMO_MEDIA_DIR', '附件目录']] },
+];
+
+function checkDir(skill, spec) {
+  const [name, label] = spec;
+  const v = process.env[name];
+  if (!v) {
+    if (strict) dies(skill + ' ' + name + ' 未设置（' + label + '，--strict）');
+    else warn(skill + ' ' + name + ' 未设置（' + label + '缺失只挡相关命令，取数不阻断）');
+    return;
+  }
+  try {
+    if (!statSync(v).isDirectory()) return dies(skill + ' ' + name + ' 非目录：' + v);
+    accessSync(v, constants.W_OK);
+    ok(skill + ' ' + name + ' 可写：' + v);
+  } catch (e) { dies(skill + ' ' + name + ' 目录不存在或不可写：' + v + '（可执行：mkdir "' + v + '"）'); }
+}
+
+function checkCliPath(skill, spec) {
+  const [name, label] = spec;
+  const v = process.env[name];
+  if (!v) {
+    if (strict) dies(skill + ' ' + name + ' 未设置（' + label + '，--strict）');
+    else warn(skill + ' ' + name + ' 未设置（' + label + '：缺省回落 PATH 找 lark-cli）');
+    return;
+  }
+  try {
+    accessSync(v, constants.X_OK);
+    ok(skill + ' ' + name + ' 可执行：' + v);
+  } catch (e) { dies(skill + ' ' + name + ' 不可执行：' + v); }
+}
+
+function checkSkills() {
+  for (const c of SKILL_CHECKS) {
+    if (c.sentinel) {
+      if (process.env[c.sentinel] === '1') ok(c.name + ' ' + c.sentinel + '=1（放行写非 tmp 路径）');
+      else if (strict) dies(c.name + ' ' + c.sentinel + '≠1（opt-in，--strict）');
+      else warn(c.name + ' ' + c.sentinel + '≠1（opt-in：非 tmp 写库被拒是预期行为）');
+    }
+    for (const d of c.dirs) checkDir(c.name, d);
+    for (const p of c.cli || []) checkCliPath(c.name, p);
+  }
+}
+
 // STEP 1 读表：combos 段只认 P9 冻结子集（其余行大声失败）；P8 声明段
 // （channels/scenarios/fallbacks/l6_slots）读路径跳过，归 tooling/check-combos.mjs 校验；未知顶层段仍大声失败。
 const COMBOS_SECTIONS = ['combos', 'channels', 'scenarios', 'fallbacks', 'l6_slots'];
@@ -196,6 +258,7 @@ if (cmd === 'doctor') {
   checkNode();
   checkDb();
   checkLark();
+  checkSkills();
   ok('CLI 契约：argv+JSON(stdout)+exit；HTML 用 --html 显式落盘（utf8，路径/编码待定中转方案）');
   if (process.exitCode) console.error('doctor: FAIL');
   else console.log('doctor: PASS');

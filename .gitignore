@@ -22,3 +22,6 @@ packages/*/dist/
 /probe.mjs
 /fieldLabel.ts
 /_t407_audit/
+# Windows 保留名（#707）：PowerShell 的 `2> NUL` 之类重定向写不出真的 NUL 设备时，
+# 会在仓根造出一个名叫 NUL 的普通文件，让全仓搜索直接 exit 2。锚定仓库根，子目录不受影响
+/NUL

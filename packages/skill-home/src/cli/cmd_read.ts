@@ -15,7 +15,9 @@ import {
   listPurchases, addPurchase, purchaseYearStats, listWarranties, addWarranty, addServiceEvent,
   listCerts, addCert, listAccounts, listMembers, addMember, listBorrows, addBorrow,
   statsOverview, highFreq, idleItems, expiringItems,
+  resolveBackupDir, createBackup, listBackups, restoreBackup, exportData,
 } from '../fetch/index.js';
+import type { RestoreOutcome } from '../fetch/backup.js';
 import {
   normalizeLocation, normalizeStatus, isFoodItem,
   validateAddInput, parseUpdateOp, needId,
@@ -110,6 +112,59 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     data: buildHelpItems(all, undefined),
     deliver: { html, targetDir, stem: HELP_FILE_STEM, reuseMs },
   };
+}
+
+/* ── #707 · 备份导出／导入恢复（**在开库之前**走）───────────────────────────────────────────
+ *
+ * 为什么不进 `dispatch`：恢复＝拿备份覆盖 `home.db`，而 `dispatch` 一进来就 `openHomeDb` 并持有句柄；
+ * 库在手里时覆盖库文件＋清 WAL／SHM 会把库写坏。故照 #190 的 help 支，本函数自管短命连接、在 `dispatch` 之前分派。
+ * 认的 (key,kind)：`home.care.query`+`backup-list`／`home.care.write`+`backup`|`export`|`import-preview`|`import`。
+ * 其余一律返回 `null` 照旧走 `dispatch`（含开库）；`dispatch` 里那几条 kind 走到就是路由坏了（fail(1)）。
+ */
+function keepNOf(params: Record<string, unknown>): number | undefined {
+  const v = params.keep_n ?? params.keepN;
+  if (v === undefined) return undefined;
+  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, 'keep_n 须为正整数');
+  return v as number;
+}
+
+function fmtBytes(n: number): string {
+  if (n < 1024) return n + ' 字节';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KiB';
+  return (n / 1024 / 1024).toFixed(1) + ' MiB';
+}
+
+function dispatchBackup(key: string, params: Record<string, unknown>): unknown | null {
+  const kind = typeof params.kind === 'string' ? params.kind : '';
+  if (key === 'home.care.query' && kind === 'backup-list') {
+    const l = listBackups({ keepN: keepNOf(params) });
+    const rows = l.history.map((h) => ({
+      name: h.file + '（' + fmtBytes(h.size) + '，' + h.days_ago + ' 天前）', count: h.size,
+    }));
+    return buildCareList(rows.length ? rows : [{ name: '无备份（目录：' + l.dir + '）', count: 0 }]);
+  }
+  if (key !== 'home.care.write') return null;
+  if (kind === 'backup') {
+    const r = createBackup({ keepN: keepNOf(params) });
+    return buildReceipt('已备份：' + r.items + ' 件 → ' + r.file + '（' + fmtBytes(r.size) + '，保留 ' + r.keep_n + ' 份）');
+  }
+  if (kind === 'export') {
+    const r = exportData({ format: params.format as string | undefined, output: params.output as string | undefined });
+    return buildReceipt('已导出：' + r.format.toUpperCase() + ' ' + r.rows + ' 行 → ' + r.file + '（' + fmtBytes(r.size) + '）');
+  }
+  if (kind !== 'import-preview' && kind !== 'import') return null;
+  const file = params.file;
+  if (typeof file !== 'string' || !file) fail(2, '导入恢复须给 file（备份文件名或绝对路径）');
+  if (kind === 'import-preview') {
+    const p = restoreBackup(file, { dryRun: true });
+    return buildReceipt('dry_run' in p ? p.message : '');
+  }
+  if (params.confirm !== true) {
+    fail(2, '导入恢复会**整库覆盖**，须显式 confirm:true（先跑 kind=import-preview 看预告）');
+  }
+  const r: RestoreOutcome = restoreBackup(file, { keepN: keepNOf(params) });
+  if ('dry_run' in r) fail(1, '内部错误：确认支不该拿到预告结果');
+  return buildReceipt(r.message + '（' + r.before_items + ' → ' + r.items_total + ' 件；恢复前自备份 ' + r.safety_backup + '）');
 }
 
 function dispatch(key: string, params: Record<string, unknown>): unknown {
@@ -693,8 +748,9 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           const st = statsOverview(handle);
           return buildCareList([{ name: '首次使用：' + st.items + ' 件已录', count: st.items }]);
         }
-        // backup-list
-        return buildCareList([{ name: '备份： home.db', count: 1 }]);
+        // #707：backup-list 归 dispatchBackup（在开库之前走）；这里走到就是路由被改坏了。
+        fail(1, '内部错误：care kind=backup-list 须走 dispatchBackup（开库之前）');
+        return null;
       }
       case 'home.care.write': {
         const kind = parseCareKind(params, 'init');
@@ -720,15 +776,9 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           return buildReceipt('已登记家人：#' + id + ' ' + name);
         }
         if (kind === 'init') return buildReceipt('已初始化：home.db 幂等（' + statsOverview(handle).items + ' 件）');
-        if (kind === 'backup' || kind === 'export') {
-          const st = statsOverview(handle);
-          return buildReceipt('已备份：' + st.items + ' 件（home.db，导出 ' + String(params.format ?? 'json') + '）');
-        }
-        if (kind === 'import-preview' || kind === 'import') {
-          const file = params.file as string | undefined;
-          if (!file) fail(2, '导入须预告 file');
-          if (kind === 'import-preview') return buildReceipt('预告通过：' + file + '（确认后 kind=import 落盘）');
-          return buildReceipt('已导入：' + file + '（mode=' + String(params.mode ?? 'skip') + '）');
+        // #707：backup／export／import-preview／import 归 dispatchBackup（在开库之前走）。
+        if (kind === 'backup' || kind === 'export' || kind === 'import-preview' || kind === 'import') {
+          fail(1, '内部错误：care kind=' + kind + ' 须走 dispatchBackup（开库之前）');
         }
         fail(2, '未知 care kind：' + kind); return null;
       }
@@ -775,9 +825,10 @@ async function main() {
   if (typeof timer.unref === 'function') timer.unref();
   let delivery: HomeHtmlDelivery | undefined;
   try {
-    // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；其余 20 键照旧走 dispatch（内部开库）。
+    // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；#707：备份四支同理（恢复要覆盖库文件）。
     const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
-    const env = buildHomeEnvelope(key, help ? help.data : dispatch(key, params));
+    const offline = help ? null : dispatchBackup(key, params);
+    const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
     // 分节页（模板填充后）：`--html` 支与速查支共用这一处，不抄第二份。
     const sectionHtml = (): string => {
       const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
