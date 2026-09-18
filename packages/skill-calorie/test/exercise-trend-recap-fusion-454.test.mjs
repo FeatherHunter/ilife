@@ -34,6 +34,9 @@ import { openDb } from '../dist/index.js';
 import { categoryColor } from '../dist/exercise/categoryColors.js';
 import { buildRecapDoc, buildTrendDoc } from '../dist/render/sportPortDocs.js';
 import { assertDocPage } from './doc-page-assert.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -95,7 +98,7 @@ function mkDir() {
 function runCli(dir, key, params, outName) {
   const out = join(SAMPLES, (outName ?? key.replace(/\./g, '_')) + '.html');
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
   });
   const stdout = String(r.stdout || '').trim();
   const file = existsSync(out) ? readFileSync(out, 'utf8') : null;

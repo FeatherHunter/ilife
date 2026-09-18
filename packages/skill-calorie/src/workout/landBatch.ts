@@ -14,9 +14,9 @@
  * - `dryRun: true` → 过程页（可复制实跑指令先出，**零子进程**，远端未调用）；
  * - 缺省 → 结果页（逐天结局 ＋ 推送回写天数 ＋ 本地远端分清）。
  *
- * 挡板缝（禁真网真 KEY，测试与墙产物用）：`CALORIE_LAND_BATCH_FAIL_DATE`
- * 为某天日期时，那天短路失败（`{code: 4}`，不 spawn，生产调用方永远不设它）。
- * 单日四路挡板（`CALORIE_LAND_*_STUB`）经子进程环境透传，逐天生效。
+ * 挡板缝（#676 已退役）：原先的 `CALORIE_LAND_BATCH_FAIL_DATE` 短路（某天强制失败）与单日四路
+ * `CALORIE_LAND_*_STUB` 环境变量读取全部删除（配置文件是唯一真相）。测试要挡板就把跨技能出口
+ * （配置里的 `land.scheduleCli`／`memoCli`）指到一个 fixture 脚本，让它按天吐出要的回执。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -24,6 +24,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { DatabaseSync } from 'node:sqlite';
 import { todayISO } from '../analysis/utils.js';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { weekOfDate } from '../render/planPlate.js';
 import { dayField, fail } from '../shared/params.js';
 import { R, provided } from '../shared/writeParts.js';
@@ -46,11 +47,15 @@ export const LAND_BATCH_SCOPE_LABEL: Record<LandBatchScope, string> = {
   monthend: '本月底',
 };
 
-/** 单日链子进程限时毫秒（单日实跑可能走远端，与 `xunjiRunner.ts` 同档；超了即 exit 4）。 */
-export const LAND_DAY_TIMEOUT_MS = 300000;
+/** 单日链子进程限时**默认值**毫秒（单日实跑可能走远端，与 `xunjiRunner.ts` 同档；超了即 exit 4）。
+ *  真值见 `landDayTimeoutMs()`（配置 `land.xunjiSeconds`）。 */
+export const LAND_DAY_TIMEOUT_MS = CALORIE_CONFIG_DEFAULTS.land.xunjiSeconds * 1000;
 
-/** 批量挡板缝的环境变量名（唯一定义地；值为某天日期即那天短路失败）。 */
-export const LAND_BATCH_FAIL_DATE_ENV = 'CALORIE_LAND_BATCH_FAIL_DATE';
+/** 单日链限时毫秒：配置 `land.xunjiSeconds`（<1 的坏值回落默认档）。 */
+export function landDayTimeoutMs(): number {
+  const seconds = loadCalorieConfig().values.land.xunjiSeconds;
+  return (seconds >= 1 ? seconds : CALORIE_CONFIG_DEFAULTS.land.xunjiSeconds) * 1000;
+}
 
 /** 单日结局：退出码 ＋ 单日链回执 message ＋ 子进程 stderr 尾行 ＋ 是否走挡板。 */
 export interface LandDayCall {
@@ -137,21 +142,18 @@ function stderrTail(r: { stderr?: unknown }): string {
   return last.slice(0, 300);
 }
 
-/** 调一次单日链（`calorie.workout.land --params {"date"}`；环境透传，单日四路挡板逐天生效）。 */
+/** 调一次单日链（`calorie.workout.land --params {"date"}`）。
+ *  `spawnSync` 不给 `env`：缺省即继承父进程环境。 */
 export function invokeLandDay(date: string, step: string): LandDayCall {
-  const failDate = process.env[LAND_BATCH_FAIL_DATE_ENV];
-  if (failDate !== undefined && failDate !== '' && failDate === date) {
-    return { code: 4, message: '', stderr: '挡板指定失败（' + LAND_BATCH_FAIL_DATE_ENV + '）：' + date, stubbed: true };
-  }
+  const timeoutMs = landDayTimeoutMs();
   const r = spawnSync(process.execPath, [landCliPath(), 'calorie.workout.land', '--params', JSON.stringify({ date })], {
     encoding: 'utf8',
-    timeout: LAND_DAY_TIMEOUT_MS,
-    env: process.env,
+    timeout: timeoutMs,
   });
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(LAND_DAY_TIMEOUT_MS / 1000) + ' 秒）：' + msg);
+    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);

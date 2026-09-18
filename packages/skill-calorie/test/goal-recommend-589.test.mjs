@@ -42,6 +42,9 @@ import { renderGoalRecommendHtml } from '../dist/render/html.js';
 import { seedFull, SEED_TODAY } from '../../../docs/research/t81-seed.mjs';
 import { machineWords } from './visible-text-probe.mjs';
 import { assertDocPage } from './doc-page-assert.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -100,7 +103,7 @@ function runCli(template, name, key, params) {
   const argv = ['--require', PRELOAD, BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out];
   const r = spawnSync(NODE_BIN, argv, {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: runDir, CALORIE_TODAY: SEED_TODAY, FAKE_NOW_ISO: FIXED_NOW },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir), NODE_OPTIONS: freezeClock(SEED_TODAY).NODE_OPTIONS, FAKE_NOW_ISO: FIXED_NOW },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout || '').trim()); } catch { env = null; }

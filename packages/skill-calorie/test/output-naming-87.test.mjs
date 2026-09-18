@@ -26,6 +26,9 @@ import {
   resolveExplicitHtmlPath,
   sanitizeFilenamePart,
 } from '../dist/output.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -50,7 +53,7 @@ function localIso(msAgo) {
 function runCli(dir, args) {
   return spawnSync(NODE_BIN, [BIN, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: dir },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
 }
 
@@ -213,7 +216,7 @@ test('#87 ④b 同秒计数大小写不敏感（旧 glob 在 Windows 走 normcas
 });
 
 // ---------------------------------------------------------------- ⑤ 目录解析（旧 html_dir/html_path）
-test('#87 ⑤ 默认落点：<SKILLS_DB_PATH>/calorie_html/<中文command>_<stamp>[_N].html，目录递归创建', () => {
+test('#87 ⑤ 默认落点：<库目录>/calorie_html/<中文command>_<stamp>[_N].html，目录递归创建', () => {
   const a = tmpDbDir('dir-a');
   const b = tmpDbDir('dir-b');
   const now = new Date(2026, 6, 26, 12, 30, 0);
@@ -222,16 +225,16 @@ test('#87 ⑤ 默认落点：<SKILLS_DB_PATH>/calorie_html/<中文command>_<stam
   assert.ok(existsSync(join(a, 'calorie_html')), 'htmlDir 须建目录');
   const p = resolveDefaultHtmlPath('calorie.view.home', { now, dbDir: a });
   assert.equal(p, join(a, 'calorie_html', '今日总览_20260726_123000.html'));
-  assert.equal(resolveDefaultHtmlPath('calorie.view.home', { now, dbDir: b }), join(b, 'calorie_html', '今日总览_20260726_123000.html'), '跟随传入的 DB 目录（＝SKILLS_DB_PATH）');
+  assert.equal(resolveDefaultHtmlPath('calorie.view.home', { now, dbDir: b }), join(b, 'calorie_html', '今日总览_20260726_123000.html'), '跟随传入的 DB 目录');
   assert.equal(dirname(resolveExplicitHtmlPath(join(a, 'x', 'y', 'z.html'))), join(a, 'x', 'y'), '显式路径建父目录');
   assert.ok(existsSync(join(a, 'x', 'y')));
   const envDir = tmpDbDir('dir-env');
-  const old = process.env.SKILLS_DB_PATH;
+  const old = process.env.ILIFE_CONFIG_DIR;
   try {
-    process.env.SKILLS_DB_PATH = envDir;
-    assert.ok(resolveDefaultHtmlPath('calorie.view.home').startsWith(join(envDir, 'calorie_html')), '缺省参数须跟随 SKILLS_DB_PATH');
+    calorieConfigDir(envDir);
+    assert.ok(resolveDefaultHtmlPath('calorie.view.home').startsWith(join(envDir, 'calorie_html')), '缺省参数须跟随配置里的库目录（db.dir）');
   } finally {
-    if (old === undefined) delete process.env.SKILLS_DB_PATH; else process.env.SKILLS_DB_PATH = old;
+    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
   }
 });
 

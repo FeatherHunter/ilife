@@ -1,9 +1,12 @@
 /** #330 · 唯一出口 cmd_read 的 CLI 前置（纯搬，行为不变）。
  *
- * 参数解析（`parseArgs`／`parseReadArgs`）＋ 启动预检（`preflight`：node 版本与库路径）＋
+ * 参数解析（`parseArgs`／`parseReadArgs`）＋ 启动预检（`preflight`：node 版本与库目录）＋
  * 超时提示（`toast`）。变化频率与交付装配不同，故与 `delivery.ts` 分件（结构标准：按变化频率分）。
  * 对外 4 件（铁律五）：`toast`／`preflight`／`parseReadArgs`／`USAGE`。
+ *
+ * #676 · 库目录不再读环境变量：唯一真相是配置文件（`paths.ts:resolveDbDir`，见那里件头）。
  */
+import { resolveDbDir } from '../paths.js';
 import { fail } from '../shared/params.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -17,9 +20,8 @@ function preflight(): string {
   const major = v[0] as number;
   const minor = v[1] as number;
   if (!(major > 22 || (major === 22 && minor >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p as string;
+  // 库目录来自配置文件（`values.db.dir`，空＝配置数据目录）；配置读不出来即抛，不返空。
+  return resolveDbDir();
 }
 
 interface ReadArgs {

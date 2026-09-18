@@ -1,8 +1,9 @@
 /** #613 · 批量落地宿主命令（今天→本周日／今天→本月末自算天数，逐天复用单日链）。
  *
- * 一律挡板：**不许打真实训记接口／真飞书**（真机联调另票）。单日四路挡板经子进程环境透传
- * （`CALORIE_LAND_*_STUB`，与 #612 同缝）；批量另有一缝 `CALORIE_LAND_BATCH_FAIL_DATE`
- *（值为某天日期即那天短路失败，生产调用方永远不设它）。
+ * 隔离口径（#676）：跨技能那两步（补计划＝作息、记心愿＝备忘）经配置里的两个出口
+ * `land.scheduleCli`／`land.memoCli` 指向 `test/helpers/land-fixture.mjs`（**不许真调**，
+ * 会写用户的真库）；训记那两步走包内 `dist/xunji/cli.js`，本票没给它配出口，故实跑会在
+ * 「没配 KEY」处**确定性失败**（`attempts: 0`，不调网）——逐天读取与 fail-fast 因此仍是可判的。
  * `fail()` 即 `process.exit`，失败路径一律走真子进程断言（in-process 调会自杀）。
  *
  * 票面验收（各有独立用例）：
@@ -19,11 +20,17 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
 const CLI = join(PKG, 'dist', 'cli', 'cmd_read.js');
+
+/** 跨技能出口 fixture（见 `helpers/land-fixture.mjs` 件头）。 */
+const LAND_FIXTURE = join(HERE, 'helpers', 'land-fixture.mjs');
 
 const tmp = (name) => {
   const dir = join(mkdtempSync(join(tmpdir(), 't613-')), name);
@@ -73,29 +80,6 @@ const BACKFILL_OK = {
   },
 };
 
-const STUB_KEYS = ['SKILLS_DB_PATH', 'CALORIE_LAND_SCHEDULE_STUB', 'CALORIE_LAND_MEMO_STUB', 'CALORIE_LAND_PUSH_STUB', 'CALORIE_LAND_BACKFILL_STUB', 'CALORIE_LAND_BATCH_FAIL_DATE'];
-const savedEnv = {};
-for (const k of STUB_KEYS) savedEnv[k] = process.env[k];
-
-let dispatchWrite = null;
-let openDb = null;
-let batchDates = null;
-let runLandBatchDays = null;
-
-before(async () => {
-  assert.ok(existsSync(CLI), '缺编译产物：' + CLI + '（先跑 tsc -b packages/skill-calorie）');
-  ({ dispatchWrite } = await import('../dist/cli/write.js'));
-  ({ openDb } = await import('../dist/index.js'));
-  ({ batchDates, runLandBatchDays } = await import('../dist/workout/landBatch.js'));
-});
-
-afterEach(() => {
-  for (const k of STUB_KEYS) {
-    if (savedEnv[k] === undefined) delete process.env[k];
-    else process.env[k] = savedEnv[k];
-  }
-});
-
 function seedDir() {
   const dir = tmp('db');
   const db = openDb(join(dir, 'calorie_data.db'));
@@ -112,12 +96,23 @@ function seedFile() {
   return file;
 }
 
-const ALL_OK = {
-  CALORIE_LAND_SCHEDULE_STUB: JSON.stringify(SCHED_OK),
-  CALORIE_LAND_MEMO_STUB: JSON.stringify(MEMO_OK),
-  CALORIE_LAND_PUSH_STUB: JSON.stringify(PUSH_OK),
-  CALORIE_LAND_BACKFILL_STUB: JSON.stringify(BACKFILL_OK),
-};
+/** 一份「库目录 ＋ 两个跨技能出口都指向 fixture」的配置目录。 */
+function cfg(dir) {
+  return calorieConfigDir(dir, { land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE } }) && dir;
+}
+
+let dispatchWrite = null;
+let openDb = null;
+let batchDates = null;
+let runLandBatchDays = null;
+
+before(async () => {
+  assert.ok(existsSync(CLI), '缺编译产物：' + CLI + '（先跑 tsc -b packages/skill-calorie）');
+  assert.ok(existsSync(LAND_FIXTURE), '缺跨技能出口 fixture：' + LAND_FIXTURE);
+  ({ dispatchWrite } = await import('../dist/cli/write.js'));
+  ({ openDb } = await import('../dist/index.js'));
+  ({ batchDates, runLandBatchDays } = await import('../dist/workout/landBatch.js'));
+});
 
 describe('#613 批量落地', () => {
   it('①a 本周末天数：周四→4 天（今天到周日，含两端）', () => {
@@ -190,7 +185,7 @@ describe('#613 批量落地', () => {
   it('④a dryRun 走通（零子进程）：7 天 1 段＋可复制实跑指令＋远端未调用', () => {
     const { dir, db } = seedDir();
     try {
-      process.env.SKILLS_DB_PATH = dir;
+      cfg(dir);
       const out = dispatchWrite('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, db);
       assert.equal(out.data.ok, true);
       assert.match(out.data.message, /预演：2026-09-07 至本周末 7 天 1 段待落地（远端未调用）/);
@@ -206,7 +201,7 @@ describe('#613 批量落地', () => {
   it('④b dryRun 月末走通（09-30→1 天，同一条链）', () => {
     const { dir, db } = seedDir();
     try {
-      process.env.SKILLS_DB_PATH = dir;
+      cfg(dir);
       const out = dispatchWrite('calorie.workout.land-monthend', { date: '2026-09-30', dryRun: true }, db);
       assert.equal(out.data.ok, true);
       assert.match(out.data.message, /预演：2026-09-30 至本月底 1 天/);
@@ -218,7 +213,7 @@ describe('#613 批量落地', () => {
   it('④c 真出口读数：真 CLI dryRun 落盘，回执绝对路径存在', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: dir });
+    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(dir) });
     assert.equal(a.code, 0, a.stderr.slice(-400));
     const env = JSON.parse(a.stdout);
     assert.equal(env.key, 'calorie.workout.land-weekend');
@@ -227,45 +222,31 @@ describe('#613 批量落地', () => {
     assert.match(readFileSync(env.data.output, 'utf8'), /ilife-page/);
   });
 
-  it('④d 真出口读数：真 CLI 实跑 7 天（四挡板全绿）→ 推送 7 天 回写 7 天', () => {
+  it('④d 真出口实跑：第 1 天就停在「推送缺 KEY」，逐天读取不虚报后面的天', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { SKILLS_DB_PATH: dir, ...ALL_OK });
-    assert.equal(a.code, 0, a.stderr.slice(-500));
-    const env = JSON.parse(a.stdout);
-    assert.match(env.data.message, /共 7 天 推送 7 天 回写 7 天/);
-    assert.ok(existsSync(env.data.output), '回执页未落盘：' + env.data.output);
-    assert.match(readFileSync(env.data.output, 'utf8'), /逐天结局/);
+    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    assert.notEqual(a.code, 0, '没配 KEY 不许报成功');
+    assert.match(a.stderr, /失败在第 1 天 2026-09-07/);
+    assert.match(a.stderr, /推送/);
   });
 
-  it('④e 真出口读数：真 CLI 月末实跑 1 天（09-30）→ 推送 1 天 回写 1 天', () => {
+  it('③b 真 CLI 首日失败 → exit 非 0 且点名第 1 天日期（fail-fast，不再往下跑）', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30' }, { SKILLS_DB_PATH: dir, ...ALL_OK });
-    assert.equal(a.code, 0, a.stderr.slice(-500));
-    const env = JSON.parse(a.stdout);
-    assert.match(env.data.message, /共 1 天 推送 1 天 回写 1 天/);
-  });
-
-  it('③b 真 CLI 第 3 天失败 → exit 非 0 且点名第 3 天日期', () => {
-    const { dir, db } = seedDir();
-    db.close();
-    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, {
-      SKILLS_DB_PATH: dir,
-      ...ALL_OK,
-      CALORIE_LAND_BATCH_FAIL_DATE: '2026-09-09',
-    });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
-    assert.match(r.stderr, /失败在第 3 天 2026-09-09/);
+    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    assert.notEqual(r.code, 0, r.stderr.slice(-300));
+    assert.match(r.stderr, /失败在第 1 天 2026-09-07/);
+    assert.ok(!/失败在第 2 天/.test(r.stderr), '首日之后不许继续跑');
   });
 
   it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4 ＋ 缺开始日期 exit 4', () => {
     const { dir, db } = seedDir();
     db.close();
-    assert.equal(cli('calorie.workout.land-weekend', { dryRun: 'yes' }, { SKILLS_DB_PATH: dir }).code, 2);
+    assert.equal(cli('calorie.workout.land-weekend', { dryRun: 'yes' }, { ILIFE_CONFIG_DIR: cfg(dir) }).code, 2);
     const empty = tmp('empty');
     openDb(join(empty, 'calorie_data.db')).close();
-    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: empty });
+    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(empty) });
     assert.equal(r.code, 4);
     assert.match(r.stderr, /无训练计划/);
     const nostart = tmp('nostart');
@@ -273,40 +254,42 @@ describe('#613 批量落地', () => {
     seedPlan(ndb);
     ndb.prepare("UPDATE workout_plan_config SET start_date = '' WHERE id = 1").run();
     ndb.close();
-    const n = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { SKILLS_DB_PATH: nostart });
+    const n = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(nostart) });
     assert.equal(n.code, 4);
     assert.match(n.stderr, /缺开始日期/);
   });
 
-  it('⑤a R3 作息桥真实现（挡板成功）：不再恒 skip，真写段', async () => {
+  it('⑤a R3 作息桥真实现（fixture 成功）：不再恒 skip，真写段', async () => {
     const { landPlanStep } = await import('../dist/workout/land.js');
     const file = seedFile();
-    process.env.SKILLS_DB_PATH = tmp('unused');
-    process.env.CALORIE_LAND_SCHEDULE_STUB = JSON.stringify(SCHED_OK);
+    cfg(tmp('cfg-a'));
+    delete process.env.T676_LAND_FIXTURE;
     const r = await landPlanStep(['2026-09-07'], { dbFile: file });
     assert.equal(r.ok, true);
     assert.equal(r.skipped, undefined);
     assert.match(r.note ?? '', /已写 1 段/);
   });
 
-  it('⑤b R3 备忘桥真实现（挡板成功）：不再恒 skip，真记条', async () => {
+  it('⑤b R3 备忘桥真实现（fixture 成功）：不再恒 skip，真记条', async () => {
     const { landWishStep } = await import('../dist/workout/land.js');
     const file = seedFile();
-    process.env.CALORIE_LAND_MEMO_STUB = JSON.stringify(MEMO_OK);
+    cfg(tmp('cfg-b'));
+    delete process.env.T676_LAND_FIXTURE;
     const r = await landWishStep(['2026-09-07'], { dbFile: file });
     assert.equal(r.ok, true);
     assert.equal(r.skipped, undefined);
     assert.match(r.note ?? '', /已记 1 条/);
   });
 
-  it('⑤c R3 双桥失败回结局（作息挡板 4→code 3；无库→code 1）', async () => {
+  it('⑤c R3 双桥失败回结局（fixture 回 4→code 3；无库→code 1）', async () => {
     const { landPlanStep, landWishStep } = await import('../dist/workout/land.js');
     const file = seedFile();
-    process.env.CALORIE_LAND_SCHEDULE_STUB = JSON.stringify(SCHED_FAIL);
+    cfg(tmp('cfg-c'));
+    process.env.T676_LAND_FIXTURE = JSON.stringify({ 'schedule.plan.write': SCHED_FAIL });
     const p = await landPlanStep(['2026-09-07'], { dbFile: file });
     assert.equal(p.ok, false);
     assert.equal(p.code, 3);
-    process.env.CALORIE_LAND_MEMO_STUB = JSON.stringify(MEMO_FAIL);
+    process.env.T676_LAND_FIXTURE = JSON.stringify({ 'memo.create': MEMO_FAIL });
     const w = await landWishStep(['2026-09-07'], { dbFile: file });
     assert.equal(w.ok, false);
     assert.equal(w.code, 3);

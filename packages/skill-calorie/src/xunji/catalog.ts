@@ -6,9 +6,9 @@
  * 读不出来（文件不在／解析失败／`actions` 不是数组）＝「库缺失」，**不是「库是空的」**：
  * 调用方按「无法验证」报（`valid: null`），不许当成「动作不合法」（老 `catalog.py:44-89` 同口径）。
  *
- * 库路径两档（#606 票内定的口径，见证据件 §三）：
- *   ① **默认**＝包内预置快照 `src/xunji/data/训记官方动作.json`（`XUNJI_CATALOG.preset`）——
- *      同一句动作名在任何一台机器上算出同一个结果；
+ * 库路径两档（#606 票内定的口径，见证据件 §三；#676 起默认档改成读配置）：
+ *   ① **默认**＝配置里的 `xunji.catalog`；空串时回落到包内预置快照 `src/xunji/data/训记官方动作.json`
+ *      （`XUNJI_CATALOG.preset`）——同一句动作名在任何一台机器上算出同一个结果；
  *   ② **显式覆盖**＝调用方把老机器路径（`%USERPROFILE%\.minimax\训记官方动作.json`）传进来
  *      （`XUNJI_CATALOG.machine`；子命令读法 `verify --catalog <路径>`）。
  *      **模块不隐式读机器路径**：那会让「这台机器放没放库」变成第二套口径，与编辑器库面（吃预置库）分叉。
@@ -17,6 +17,7 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
+import { loadCalorieConfig } from '../config.js';
 
 /** 包根：本模块往上两级（源码态 `src/xunji` 与构建态 `dist/xunji` 都成立，与渲染层模板装载器同法）。 */
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -29,6 +30,12 @@ export const XUNJI_CATALOG = {
   /** ② 显式覆盖：老的机器路径（只作**可传的一个值**，模块不隐式读它）。 */
   machine: join(homedir(), '.minimax', '训记官方动作.json'),
 } as const;
+
+/** 库来源的缺省落点：配置里 `xunji.catalog` 非空即用它，空串＝包内预置快照（#676 起配置是唯一真相）。 */
+export function defaultCatalogPath(): string {
+  const configured = loadCalorieConfig().values.xunji.catalog;
+  return configured !== '' ? configured : XUNJI_CATALOG.preset;
+}
 
 /** 一次读库的读数：`loaded=false` 时 `reason` 一定写清「读哪一份、为什么没读到」。 */
 export interface CatalogRead {
@@ -85,8 +92,8 @@ function errorText(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-/** 读一份库文件（默认＝包内预置快照）。缺文件／解析失败／形状不对一律**不抛错**，读成 `loaded=false`。 */
-export function readMovementCatalog(path: string = XUNJI_CATALOG.preset): CatalogRead {
+/** 读一份库文件（缺省＝配置里的 `xunji.catalog`，空＝包内预置快照）。缺文件／解析失败／形状不对一律**不抛错**，读成 `loaded=false`。 */
+export function readMovementCatalog(path: string = defaultCatalogPath()): CatalogRead {
   let raw: string;
   try {
     raw = readFileSync(path, 'utf8');
@@ -124,7 +131,7 @@ function sourceOf(opts: VerifyOptions): CatalogSource {
       set: new Set(names),
     };
   }
-  const path = opts.catalogPath ?? XUNJI_CATALOG.preset;
+  const path = opts.catalogPath ?? defaultCatalogPath();
   const read = readMovementCatalog(path);
   return { loaded: read.loaded, path, error: read.reason, names: [...read.names], set: new Set(read.names) };
 }

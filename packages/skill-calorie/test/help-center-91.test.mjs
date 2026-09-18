@@ -23,6 +23,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { buildHelpSceneData, COPY_RUNTIME_JS } from '../dist/render/index.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -44,7 +47,7 @@ function run(dir, params, extraArgs = []) {
   const args = ['calorie.help.center'];
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   args.push(...extraArgs);
-  return spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+  return spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
 }
 
 function runOk(dir, params, extraArgs = []) {
@@ -53,15 +56,15 @@ function runOk(dir, params, extraArgs = []) {
   return { env: JSON.parse(String(r.stdout)), stdout: String(r.stdout), stderr: String(r.stderr) };
 }
 
-/** #344 ① · 进程内调 `dispatch` 时，落盘目录来自 `SKILLS_DB_PATH`（`dist/photo/help.js` 的
- *  `join(resolveDbDir(), …)`）。这条用例必须**自己显式指**本用例的 tmp 目录：不指就等于把「往哪儿落盘」
- *  交给宿主机的 ambient 值——本机 `SKILLS_DB_PATH` 恰好设了才绿，CI（无该变量）必红
- *  「SKILLS_DB_PATH 未设置：拒绝隐式落盘」。用后原样恢复，不留痕。 */
+/** #344 ① · 进程内调 `dispatch` 时，落盘目录来自配置（`dist/photo/help.js` 的
+ *  `join(resolveDbDir(), …)`；#676 起唯一真相是配置文件，不再是环境变量）。这条用例必须**自己显式指**
+ *  本用例的 tmp 配置目录：不指就等于把「往哪儿落盘」交给宿主机的 ambient 值——本机恰好设了才绿，
+ *  CI（无隔离口）必红「测试缺隔离」。用后原样恢复，不留痕。 */
 function withDbDir(dir, fn) {
-  const saved = process.env.SKILLS_DB_PATH;
-  process.env.SKILLS_DB_PATH = dir;
+  const saved = process.env.ILIFE_CONFIG_DIR;
+  calorieConfigDir(dir);
   try { return fn(); } finally {
-    if (saved === undefined) delete process.env.SKILLS_DB_PATH; else process.env.SKILLS_DB_PATH = saved;
+    if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = saved;
   }
 }
 

@@ -20,6 +20,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -54,7 +57,7 @@ function mkEnv() {
 function run(dir, params) {
   assert.ok(dir.startsWith(tmpdir()), 'SKILLS_DB_PATH 必须指向 tmp：' + dir);
   return spawnSync(NODE_BIN, [BIN, 'calorie.body.composition-add', '--params', JSON.stringify(params)],
-    { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+    { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
 }
 
 /** `body_composition` 全部行（含废弃行——票面说「该表行数不变」，就按整表数）。 */

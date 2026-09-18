@@ -31,10 +31,12 @@ import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding } from 'base-paint/sa
 import { CALORIE_COMBOS } from './cli/keys.js';
 import { CalorieRenderError } from './render/errors.js';
 import { resolveDbDir } from './paths.js';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from './config.js';
 import { HELP_FILE_STEM } from './photo/helpFile.js';
 import { SHEET_FILE_STEM } from './photo/helpPaths.js';
 
-export const HTML_DIR_NAME = 'calorie_html';
+/** HTML 产物目录名：默认值表里的那一项就是唯一定义地（本常量是它的具名引用，不是第二份）。 */
+export const HTML_DIR_NAME = CALORIE_CONFIG_DEFAULTS.html.dir;
 export const HTML_EXT = '.html';
 /** 照片 HELP（`calorie.help.center` 的 `q` 那支）**自己的**产物名主体：与主 HELP（`卡路里_HELP`）分名。
  *  老命名规则里这支走的是「按 `<中文command>` 自动命名」的兜底（主体＝`看身材照`，与业务命令同名），
@@ -107,9 +109,15 @@ export function htmlFileName(command: string, opts: { dir: string; now: Date }):
     : command + '_' + stamp + '_' + String(n + 1) + HTML_EXT;
 }
 
-/** 旧版 `html_dir()`：`<SKILLS_DB_PATH>/calorie_html`，递归创建。 */
+/** 产物目录名：配置里 `html.dir` 非空即用它，空串＝`HTML_DIR_NAME`（老落点名，故老数据不会看起来丢了）。 */
+function htmlDirName(): string {
+  const configured = loadCalorieConfig().values.html.dir;
+  return configured !== '' ? configured : HTML_DIR_NAME;
+}
+
+/** 旧版 `html_dir()`：`<库目录>/calorie_html`（目录名可配），递归创建。 */
 export function htmlDir(dbDir: string = resolveDbDir()): string {
-  const d = join(dbDir, HTML_DIR_NAME);
+  const d = join(dbDir, htmlDirName());
   mkdirSync(d, { recursive: true });
   return d;
 }

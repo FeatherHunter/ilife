@@ -29,8 +29,11 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
+import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
-process.env.CALORIE_TODAY = '2026-09-07';
+pinProcessClock('2026-09-07'); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -132,7 +135,7 @@ function runWord(dir, cli) {
   const toks = tokenize(cli);
   return spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
   });
 }
 
@@ -499,7 +502,7 @@ test('#386 第六组：本图范围全部产物都是完整文档（首尾完整
 /* ── 真库只读：本文件全部跑动都指向临时夹具目录 ───────────────────────── */
 
 test('#386 真库只读：本文件从不把 SKILLS_DB_PATH 指向真库', () => {
-  const real = process.env.SKILLS_DB_PATH ?? null;
+  const real = process.env.ILIFE_CONFIG_DIR ?? null;
   const dirs = [products().dir, mkDir('t386-guard', 0)];
   for (const d of dirs) {
     assert.ok(d.startsWith(tmpdir()), '夹具目录不在系统临时根下：' + d);

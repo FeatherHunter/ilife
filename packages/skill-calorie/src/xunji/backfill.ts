@@ -16,7 +16,8 @@
 
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
-import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import { resolveDbDir, resolveDbFileName } from '../paths.js';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { openDb } from '../schema.js';
 import { fetchTrains } from './fetch.js';
 import type { FetchOptions, FetchOutcome } from './fetch.js';
@@ -24,8 +25,14 @@ import { xunjiResponseToRows } from './rows.js';
 import { upsertXunjiRows } from './store.js';
 import type { XunjiFailure } from './retry.js';
 
-/** 回写默认天数（照签名 `days=1`，不照文档「默认 2」；唯一定义地）。 */
-export const BACKFILL_DEFAULT_DAYS = 1;
+/** 回写默认天数的**默认档**（照签名 `days=1`，不照文档「默认 2」；默认值表里的那一项就是唯一定义地）。 */
+export const BACKFILL_DEFAULT_DAYS = CALORIE_CONFIG_DEFAULTS.xunji.backfillDays;
+
+/** 回写默认天数：配置里 `xunji.backfillDays`（<1 的坏值回落到默认档，写入口已按 ≥1 整数校验）。 */
+export function backfillDefaultDays(): number {
+  const configured = loadCalorieConfig().values.xunji.backfillDays;
+  return configured >= 1 ? configured : BACKFILL_DEFAULT_DAYS;
+}
 
 /** 回写的注入缝（测试挡板从这里进；生产缺省＝真拉取＋真开库）。 */
 export interface BackfillDeps {
@@ -35,7 +42,7 @@ export interface BackfillDeps {
   readonly fetchOpts?: FetchOptions;
   /** 开库（缺省 `openDb`：可写打开＋迁移；回写是写路径，不走只读口）。 */
   readonly openDb?: (dbFile: string) => DatabaseSync;
-  /** 库文件（缺省 `SKILLS_DB_PATH/calorie_data.db`；测试传 tmp）。 */
+  /** 库文件（缺省 `<配置 db.dir／数据目录>/<配置 db.name>`；测试传 tmp）。 */
   readonly dbFile?: string;
 }
 
@@ -126,7 +133,7 @@ export async function backfillOneDay(dateStr: string, deps: BackfillDeps = {}): 
   let db: DatabaseSync | null = null;
   let openErr: string | null = null;
   try {
-    db = (deps.openDb ?? openDb)(deps.dbFile ?? join(resolveDbDir(), DB_FILENAME));
+    db = (deps.openDb ?? openDb)(deps.dbFile ?? join(resolveDbDir(), resolveDbFileName()));
   } catch (e) {
     openErr = e instanceof Error ? e.message : String(e);
   }
@@ -175,7 +182,7 @@ export async function backfillOneDay(dateStr: string, deps: BackfillDeps = {}): 
 /** 回写 `[end-days+1, end]` 区间（`endDateStr` 空即今天；`days` 须为 ≥1 整数）。 */
 export async function backfillRange(
   endDateStr: string | null,
-  days: number = BACKFILL_DEFAULT_DAYS,
+  days: number = backfillDefaultDays(),
   deps: BackfillDeps = {},
 ): Promise<BackfillRangeResult> {
   if (!Number.isInteger(days) || days < 1) throw new Error('days 须为 ≥1 整数（实际：' + String(days) + '）');

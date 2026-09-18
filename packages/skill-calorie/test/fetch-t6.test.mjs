@@ -22,6 +22,10 @@ import {
 } from '../dist/fetch/index.js';
 import { readMovementCatalog, verifyMovements } from '../dist/xunji/index.js';
 import { openDb } from '../dist/index.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 // DSH 宿主下 process.execPath 可能指向宿主二进制而非 node，此时回退 PATH 查 node
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';

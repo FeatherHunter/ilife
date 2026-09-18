@@ -31,9 +31,12 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
+import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const TODAY = '2026-09-07';
-process.env.CALORIE_TODAY = TODAY;
+pinProcessClock(TODAY); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -215,7 +218,7 @@ function runWord(seedDir, cli, tag, recordId) {
   const toks = tokenize(fillPlaceholders(cli, recordId));
   const r = spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
   });
   const outDir = join(dir, 'calorie_html');
   return {
@@ -609,7 +612,7 @@ group(6, '写类 13 词产物是完整文档（不是片段），与 #264 判据
 test('#267 真库只读：本文件从不把 SKILLS_DB_PATH 指向真库', () => {
   RESULT.total += 1;
   try {
-    const real = process.env.SKILLS_DB_PATH ?? null;
+    const real = process.env.ILIFE_CONFIG_DIR ?? null;
     for (const [tag, dir] of [['满库', full().seedDir], ['空库', empty().seedDir]]) {
       assert.ok(dir.startsWith(tmpdir()), tag + '夹具目录不在系统临时根下：' + dir);
       if (real !== null && existsSync(join(real, DB_FILENAME))) {
@@ -621,7 +624,7 @@ test('#267 真库只读：本文件从不把 SKILLS_DB_PATH 指向真库', () =>
     assert.ok(existsSync(ROOT), '仓根不可达');
     assert.ok(existsSync(BIN), 'dist/cli/cmd_read.js 不在（先 pnpm build）');
     RESULT.passed += 1;
-    say('G7', '夹具根=' + tmpdir() + ' 真库SKILLS_DB_PATH=' + (real ?? '（未设）') + ' 真库零接触=是');
+    say('G7', '夹具根=' + tmpdir() + ' 真库ILIFE_CONFIG_DIR=' + (real ?? '（未设）') + ' 真库零接触=是');
   } catch (err) {
     RESULT.failed.push('G7');
     throw err;

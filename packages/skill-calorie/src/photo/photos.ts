@@ -1,13 +1,14 @@
 /** T4 #23 · body_photo_tracker 取数+写数（对照老家 scripts/body_photo_tracker.py）。
  *
- * 铁律：照片二进制只存路径 + 元数据（body_photos.photo_path 仅文件名，目录由
- * CALORIE_PHOTOS_DIR 解析；缺失直接抛，不静默落盘）。gif 规划器只出任务描述
+ * 铁律：照片二进制只存路径 + 元数据（body_photos.photo_path 仅文件名，目录由配置文件的
+ * `photos.dir` 解析；缺失直接抛，不静默落盘）。gif 规划器只出任务描述
  * （planGif），不跑图像处理。getLatestWeight 归 T3（weight_log），此处不碰。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { FetchError } from '../fetch/errors.js';
+import { loadCalorieConfig } from '../config.js';
 
 export const TAG_SEP = ',';
 export const TAG_MAX_LEN = 20;
@@ -44,10 +45,20 @@ export function tagsContain(tagStr: string | null | undefined, tag: string): boo
   return parseTags(tagStr).includes(tag);
 }
 
-/** 照片目录解析：显式传参 > CALORIE_PHOTOS_DIR；缺失抛（不静默落盘）。 */
+/** 配置里的照片目录（**唯一真相**：`calorie.yaml` 的 `photos.dir`；空串＝这一项还没配）。 */
+export function configuredPhotosDir(): string {
+  return loadCalorieConfig().values.photos.dir;
+}
+
+/** 照片目录解析：显式传参 > 配置文件 `photos.dir`；缺失抛（不静默落盘），报错写明去哪配。 */
 export function resolvePhotosDir(dir?: string | null): string {
-  const raw = dir ?? process.env.CALORIE_PHOTOS_DIR ?? '';
-  if (!raw) throw new FetchError('照片目录未配置：请传参或设置 CALORIE_PHOTOS_DIR');
+  const raw = (dir ?? configuredPhotosDir()).trim();
+  if (!raw) {
+    throw new FetchError(
+      '照片目录未配置：请先在卡路里设置页里填「照片目录」（配置文件 calorie.yaml 的 photos.dir），'
+        + '或本次调用直接传 photosDir 参数；填了才落盘，不猜路径。',
+    );
+  }
   mkdirSync(raw, { recursive: true });
   return resolve(raw);
 }

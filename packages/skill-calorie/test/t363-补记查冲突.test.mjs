@@ -29,6 +29,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH, compositionsOnDate, measurementsOnDate } from '../dist/fetch/body.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -102,7 +105,7 @@ function rowsOf(dir, sql, ...args) {
 /** 真出口：跑一条写命令（SKILLS_DB_PATH 指 tmp 库），回执、落盘页、可见文本一并取回。 */
 function runWrite(dir, key, params) {
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params)], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
   let env = null;
   try { env = JSON.parse(r.stdout); } catch { /* 非 0 退出时 stdout 可能不是 JSON */ }

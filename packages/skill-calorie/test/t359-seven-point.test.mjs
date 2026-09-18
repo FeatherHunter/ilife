@@ -19,6 +19,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { CALIPER_FIELDS } from '../dist/fetch/body.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -71,7 +74,7 @@ function dbLatestCalipers(dir) {
 
 /** 走 CLI 真出口读整页；回 envelope。 */
 function readPage(dir) {
-  const r = spawnSync(NODE_BIN, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+  const r = spawnSync(NODE_BIN, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
   assert.equal(r.status, 0, '读命令 exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
   return JSON.parse(r.stdout);
 }

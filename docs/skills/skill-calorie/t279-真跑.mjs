@@ -18,6 +18,9 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+// #676 · 卡路里技能侧的落点改成读配置文件（环境变量读取已删），本跑法跟着换隔离口：
+// 配置目录与钉钟都走 `packages/skill-calorie/test/helpers/config-test.mjs`（测试侧同一个基座）。
+import { calorieConfigDir, freezeClock } from '../../../packages/skill-calorie/test/helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..', '..', '..');
@@ -219,7 +222,7 @@ export function totalRoutes() { return routesMod.ALL_ROUTES.length; }
 /* ── 真出口 ───────────────────────────────────────────────────────────────── */
 
 /**
- * 跑一条命令（缺省不给 `--html`，产物落 `<SKILLS_DB_PATH>/calorie_html/`）。
+ * 跑一条命令（缺省不给 `--html`，产物落 `<配置 db.dir>/calorie_html/`）。
  * @returns {{status:number|null, stdout:string, stderr:string, env:any, out:string|null, bytes:number|null, html:string}}
  */
 export function runCli(dir, key, params, env = {}) {
@@ -227,7 +230,7 @@ export function runCli(dir, key, params, env = {}) {
   if (params !== null && params !== undefined) args.push('--params', JSON.stringify(params));
   const r = spawnSync(process.execPath, args, {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY, ...env },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY), ...env },
   });
   let parsed = null;
   try { parsed = JSON.parse(String(r.stdout || '').trim()); } catch { parsed = null; }

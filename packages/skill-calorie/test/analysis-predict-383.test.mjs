@@ -34,8 +34,11 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
+import { calorieConfigDir, configTestBase, pinProcessClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
-process.env.CALORIE_TODAY = '2026-09-07';
+pinProcessClock('2026-09-07'); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -91,7 +94,7 @@ function mkSeededDir() {
 
 function runCli(dir, params, htmlPath) {
   const a = [KEY, '--params', JSON.stringify(params), '--html', htmlPath];
-  return spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+  return spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
 }
 
 /** 模板**未填充**的槽位标记（逐字表＝`base-render/src/spec/template.ts::TEMPLATE_MARKERS` 里由

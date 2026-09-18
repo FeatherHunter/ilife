@@ -54,6 +54,7 @@ import { CALORIE_COPY_ACTION, copyActionHtml } from '../render/copy.js';
 import { GIF_LIMITS, countGifFrames, synthesizeGifFromPhotos } from './gif.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { chipRow, photoUiCss } from './photoUi.js';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import type { GifTask, PhotoCard } from './photo.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
@@ -64,8 +65,14 @@ const DOC_SKILL = 'calorie';
  *  #527：`·` 是符号顶替版面（题名不是并列语义），改空格。 */
 const DOC_TITLE = '卡路里 身材照片';
 
-/** GIF 子目录名（老 `photos_dir / "gifs"` 逐字）。 */
-const GIF_SUB_DIR = 'gifs';
+/** GIF 子目录名的**默认值**（老 `photos_dir / "gifs"` 逐字）；真值见 `gifSubDir()`（可配）。 */
+const GIF_SUB_DIR = CALORIE_CONFIG_DEFAULTS.photos.gifs;
+
+/** GIF 子目录名：配置里 `photos.gifs` 非空即用它，空串＝`GIF_SUB_DIR`（老落点名）。 */
+function gifSubDir(): string {
+  const configured = loadCalorieConfig().values.photos.gifs;
+  return configured !== '' ? configured : GIF_SUB_DIR;
+}
 
 /** 可见文本缺值一律 `—`（t400 裁定 3）；复制数据保留原始空值。 */
 const DASH = '—';
@@ -150,7 +157,7 @@ function synthOf(task: GifTask, cards: readonly PhotoCard[], photosDir: string |
     reason: null,
   };
   if (photosDir === null) {
-    return { ...empty, reason: '未配照片目录（--params photosDir 或环境变量 CALORIE_PHOTOS_DIR），读不到照片文件' };
+    return { ...empty, reason: '未配照片目录（在卡路里设置页里填「照片目录」，或本次调用传 --params photosDir），读不到照片文件' };
   }
   if (taken.length < GIF_LIMITS.minFrames) {
     return {
@@ -158,7 +165,7 @@ function synthOf(task: GifTask, cards: readonly PhotoCard[], photosDir: string |
       reason: '可读照片不足 ' + GIF_LIMITS.minFrames + ' 张（计划 ' + cards.length + ' 张，缺文件 ' + missing.length + ' 张），合成不了多帧 GIF',
     };
   }
-  const dir = join(photosDir, GIF_SUB_DIR);
+  const dir = join(photosDir, gifSubDir());
   const outPath = resolve(join(dir, gifFileNameOf(task)));
   try {
     mkdirSync(dir, { recursive: true });

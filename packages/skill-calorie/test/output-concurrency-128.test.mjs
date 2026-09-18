@@ -25,6 +25,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { Worker } from 'node:worker_threads';
+// #676 · 隔离基座：配置目录指到临时目录（`ILIFE_CONFIG_DIR`），落点跟随它。
+import { calorieConfigDir } from './helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIST_OUTPUT = resolve(HERE, '..', 'dist', 'output.js').replace(/\\/g, '/');
@@ -43,7 +45,8 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 const { dbDir, marker, sab } = workerData;
 const flag = new Int32Array(sab);
-process.env.SKILLS_DB_PATH = dbDir;
+process.env.ILIFE_CONFIG_DIR = dbDir;
+writeFileSync(join(dbDir, 'calorie.yaml'), 'db:\\n  dir: ' + JSON.stringify(dbDir) + '\\n', 'utf8');
 Atomics.add(flag, 1, 1);
 while (Atomics.load(flag, 0) === 0) { Atomics.wait(flag, 0, 0, 20); }
 const pad = 'x'.repeat(1024 * 64);
@@ -100,8 +103,8 @@ test('#128 并发 5 路同键：落点互异且内容各即本次产物（零交
 test('#128 独占语义不变：同一落点意图连写两次 → 两份产物，先写那份不被覆盖', async () => {
   const { deliverHtml } = await import('../dist/output.js');
   const dbDir = tmpDbDir('retry');
-  const old = process.env.SKILLS_DB_PATH;
-  process.env.SKILLS_DB_PATH = dbDir;
+  const old = process.env.ILIFE_CONFIG_DIR;
+  calorieConfigDir(dbDir);
   try {
     const landing = { dir: join(dbDir, 'calorie_html'), stem: '唤醒词HELP' };
     const a = deliverHtml({ key: KEY, params: { q: 'x' }, target: landing, html: '<html>ORIGINAL</html>' });
@@ -114,15 +117,15 @@ test('#128 独占语义不变：同一落点意图连写两次 → 两份产物�
     assert.equal(basename(a.path).startsWith('唤醒词HELP_'), true, '名字用调用者给的主体：' + basename(a.path));
     assert.equal(a.bytes, Buffer.byteLength('<html>ORIGINAL</html>', 'utf8'), 'bytes 为真实落盘字节数');
   } finally {
-    if (old === undefined) delete process.env.SKILLS_DB_PATH; else process.env.SKILLS_DB_PATH = old;
+    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
   }
 });
 
 test('#128 显式 --html 语义不变：逐字覆盖，不参与 _N 重试', async () => {
   const { deliverHtml } = await import('../dist/output.js');
   const dbDir = tmpDbDir('explicit');
-  const old = process.env.SKILLS_DB_PATH;
-  process.env.SKILLS_DB_PATH = dbDir;
+  const old = process.env.ILIFE_CONFIG_DIR;
+  calorieConfigDir(dbDir);
   try {
     const explicit = join(dbDir, '自定义', '报告.html');
     const a = deliverHtml({ key: KEY, params: { q: 'x' }, explicit, html: '<html>A</html>' });
@@ -132,6 +135,6 @@ test('#128 显式 --html 语义不变：逐字覆盖，不参与 _N 重试', asy
     assert.equal(b.path, a.path, '显式覆盖须写同一路径（不派生 _2）');
     assert.equal(readFileSync(explicit, 'utf8'), '<html>B</html>', '后写覆盖前写');
   } finally {
-    if (old === undefined) delete process.env.SKILLS_DB_PATH; else process.env.SKILLS_DB_PATH = old;
+    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
   }
 });

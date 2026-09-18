@@ -33,6 +33,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { assertDocPage } from './doc-page-assert.mjs';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -51,7 +54,7 @@ function mkDir() {
 function runCli(dir, key, params, outName) {
   const out = join(dir, (outName ?? key.replace(/\./g, '_')) + '.html');
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
   const stdout = String(r.stdout || '').trim();
   return {
@@ -85,8 +88,7 @@ function shiftISO(iso, delta) {
 }
 
 function todayISO() {
-  const pin = process.env['CALORIE_TODAY'];
-  if (pin !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(pin)) return pin;
+  // #676：CALORIE_TODAY 已退役，本件只用真实时钟（父进程与子进程同一天，不靠环境变量对齐）。
   return new Date().toISOString().slice(0, 10);
 }
 

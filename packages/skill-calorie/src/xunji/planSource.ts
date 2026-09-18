@@ -2,8 +2,8 @@
  *
  * 口径：
  * - 只读打开（`db/readonly.ts` 的 `openDbReadOnly`：不建表、不迁移；与 `cli/cmd_read.ts:97` 同法）；
- * - 库路径＝`SKILLS_DB_PATH` 下的 `calorie_data.db`（`paths.ts` 的 `resolveDbDir`＋`DB_FILENAME`；
- *   不用 `resolveDbPath`——它会 `mkdir`，只读口不许有落盘副作用）；
+ * - 库路径＝配置里 `db.dir`（空＝数据目录）下的 `db.name`（`paths.ts` 的
+ *   `resolveDbDir`＋`resolveDbFileName`；不用 `resolveDbPath`——它会 `mkdir`，只读口不许有落盘副作用）；
  * - 日期 →（周，日）走渲染门的 `weekOfDate`（新仓口径；老 `calc_plan_week` 的
  *   “超总周数循环”不照抄——新仓 `buildPlanView` 同样不过滤循环周，
  *   对不上就当这天没排练）；
@@ -19,7 +19,7 @@
 
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { getPlan } from '../workout/index.js';
 import { weekOfDate } from '../render/index.js';
@@ -51,7 +51,7 @@ export function resolveDayPlan(dateStr: string, opts: ResolveDayPlanOpts = {}): 
   let dbFile = opts.dbFile;
   if (dbFile === undefined) {
     try {
-      dbFile = join(resolveDbDir(), DB_FILENAME);
+      dbFile = join(resolveDbDir(), resolveDbFileName());
     } catch (e) {
       return { found: false, reason: e instanceof Error ? e.message : String(e) };
     }

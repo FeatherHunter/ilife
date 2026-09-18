@@ -24,6 +24,9 @@ import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { WATER_NAME } from '../dist/fetch/diet.js';
 import { buildSeries } from '../dist/analysis/series.js';
 import { DECLARED_WRITE_KEYS } from './declared.mjs';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -83,8 +86,11 @@ function run(key, params, envExtra) {
   return spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, ...(envExtra || {}) } });
 }
 
+/** 跑一条写命令。`extra.photosDir` 给了就写进**配置**（配置文件是唯一真相），其余键原样进 env。 */
 function runWrite(dir, key, params, extra) {
-  const r = run(key, params, { SKILLS_DB_PATH: dir, ...(extra || {}) });
+  const { photosDir, ...rest } = extra || {};
+  const cfg = photosDir ? calorieConfigDir(dir, { photos: { dir: photosDir } }) : calorieConfigDir(dir);
+  const r = run(key, params, { ILIFE_CONFIG_DIR: cfg, ...rest });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   const env = JSON.parse(r.stdout);
   assert.equal(env.data.ok, true, key + ' data.ok');
@@ -93,7 +99,7 @@ function runWrite(dir, key, params, extra) {
 
 /** 读键（`data.metrics` 形）——口径断言要拿 view 的实测值。 */
 function runView(dir, key, params) {
-  const r = run(key, params, { SKILLS_DB_PATH: dir });
+  const r = run(key, params, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   return JSON.parse(r.stdout).data;
 }
@@ -365,7 +371,7 @@ test('落库 · 身材照 add/tag/remove：body_photos 行与文件同源', () =
   const f2 = join(srcDir, 'b.jpg');
   writeFileSync(f1, 'fake-a');
   writeFileSync(f2, 'fake-b');
-  const extra = { CALORIE_PHOTOS_DIR: photosDir };
+  const extra = { photosDir };
 
   const a = runWrite(dir, 'calorie.photo.add', { srcPaths: [f1, f2], tag: '正面', date: '2026-09-06', time: '08:00:00' }, extra);
   const pid = a.data.receipt.recordId;
@@ -654,7 +660,7 @@ const DELETE_CASES = [
 test('口径 · 删除键数据驱动：prose／items[].status／库内行三源一致（回执 id 定位被删行）', () => {
   for (const c of DELETE_CASES) {
     const dir = mkEnv();
-    const extra = c.photos ? { CALORIE_PHOTOS_DIR: mkdtempSync(join(tmpdir(), 'w40p-dd-photos-')) } : undefined;
+    const extra = c.photos ? { photosDir: mkdtempSync(join(tmpdir(), 'w40p-dd-photos-')) } : undefined;
     const id = c.seed(dir, extra);
     assert.ok(Number.isInteger(id) && id > 0, c.key + ' 建行未取到正整数 id');
 
@@ -708,7 +714,7 @@ test('口径 · 软删运动后逐面排除（#120 口径收敛，supersedes #10
   assert.equal(after.exerciseKcal, null, '软删后 buildSeries.exerciseKcal 应排除该行');
   assert.equal(after.avgExerciseBurn, 0, '软删后 view.deficit.avgExerciseBurn 应排除该行');
   assert.equal(after.deficitToday, before.deficitToday - 300, '软删后 view.home.deficitToday 应减少该日运动消耗');
-  const ve = run('calorie.view.exercise', { start: date, end: date }, { SKILLS_DB_PATH: dir });
+  const ve = run('calorie.view.exercise', { start: date, end: date }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
   assert.equal(ve.status, 4, '列表侧（fetch listWindow 过滤 is_deleted）应看不到软删行：exit=' + ve.status);
   assert.match(ve.stderr || '', /无运动记录/, '列表侧应报「无运动记录」');
 });
@@ -778,7 +784,7 @@ test('口径 · 删除回执可恢复性：文案与库内语义一致（软删�
     const photosDir = mkdtempSync(join(tmpdir(), 'w40p-photos2-'));
     const f1 = join(srcDir, 'a.jpg');
     writeFileSync(f1, 'fake-a');
-    const extra = { CALORIE_PHOTOS_DIR: photosDir };
+    const extra = { photosDir };
     const pa = runWrite(dir, 'calorie.photo.add', { srcPaths: [f1], tag: '正面', date: '2026-09-06' }, extra);
     const pd = runWrite(dir, 'calorie.photo.remove', { id: pa.data.receipt.recordId }, extra);
     assert.ok(pd.data.message.includes(HARD_TAG), 'photo.remove 文案缺 ' + HARD_TAG + '：' + pd.data.message);
@@ -888,7 +894,7 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
     withRead(dir, 'calorie.workout.plan-update', (db) => {
       assert.equal(q1(db, 'SELECT title FROM workout_plan_config WHERE id = 1').title, '新标题', 'plan-update 未落库');
     });
-    const bad = run('calorie.workout.plan-update', { totalWeeks: 9 }, { SKILLS_DB_PATH: dir });
+    const bad = run('calorie.workout.plan-update', { totalWeeks: 9 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
     assert.equal(bad.status, 2, 'plan-update 改总周数应 exit 2，实测 ' + bad.status);
   }
   // update-day：时段改名落库
@@ -925,7 +931,7 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
   {
     const dir = mkEmpty();
     seedPlan(dir);
-    const bare = run('calorie.workout.plan-delete', {}, { SKILLS_DB_PATH: dir });
+    const bare = run('calorie.workout.plan-delete', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
     assert.equal(bare.status, 2, 'plan-delete 无确认应 exit 2，实测 ' + bare.status);
     withRead(dir, 'calorie.workout.plan-delete', (db) => {
       assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plan_config').n, 1, 'plan-delete 裸调不应写库');
@@ -940,27 +946,24 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
 
 // ---------------------------------------------------------------- 落地训练族（5 条会改数据库的命令，#650 补）
 //
-// 挡板下零本地写：四条腿（作息合成写／备忘合成写／训记推送／训记回写）一律走环境变量挡板短路，
-// 真写发生在外部子进程与远端；挡板短路后父进程只读计划＋组回执，本地库一字不动。
-// 故回查断言钉「挡板路径零本地写 ＋ 回执成功」：跑前快照三张表行数，跑后逐行比对；
+// 零本地写：五条命令的跨技能／远端那几步一律**不在父进程写本地库**——补计划／记心愿走配置里的
+// 两个跨技能出口（`land.scheduleCli`／`land.memoCli` 指向 `helpers/land-fixture.mjs`，见 #676），
+// 训记两步走包内 `dist/xunji/cli.js`（本票没给它配出口 ⇒ 没配 KEY 即确定性失败，不调网）。
+// 故回查断言钉「这些路径零本地写」：跑前快照三张表行数，跑后逐行比对；
 // 日后若给任一条加本地写，本断言即红（改断言须写明新增了哪一列，不得删块）。
 const LAND_SCHED_OK = { code: 0, data: { ok: true, message: '批量补计划', achieved: true, errors: [] } };
 const LAND_MEMO_OK = { code: 0, data: { ok: true, message: '已记一条：1', local: 'created', remote: 'synced' } };
-/** 推送／回写挡板读数（单日链缝与 xunji 直调缝同形：同一训记接口的两条进线，共用一份成功读数）。 */
+/** 推送／回写读数（真出口失败形的样本，供对照；本门跑的是**没配 KEY 的真实失败形**）。 */
 const PUSH_OK_DATA = { date: '2026-09-07', session_count: 1, ok_count: 1, fail_count: 0, verify_note: '挡板', results: [{ session_label: '上肢', ok: true, verified: false, resp: { dry_run: false } }] };
 const BACKFILL_OK_DATA = { end_date: '2026-09-07', days: 1, total_inserted: 2, total_updated: 0, results: [{ date: '2026-09-07', fetch_ok: true, trains_count: 2, inserted: 2, updated: 0, skipped_empty: false }] };
-const LAND_PUSH_OK = { code: 0, data: PUSH_OK_DATA };
-const LAND_BACKFILL_OK = { code: 0, data: BACKFILL_OK_DATA };
-const X_PUSH_OK = { code: 0, data: PUSH_OK_DATA };
-const X_BACKFILL_OK = { code: 0, data: BACKFILL_OK_DATA };
 
-/** 落地四路挡板（跑道环境变量缝；生产调用方永远不设）。 */
-const LAND_STUBS = {
-  CALORIE_LAND_SCHEDULE_STUB: JSON.stringify(LAND_SCHED_OK),
-  CALORIE_LAND_MEMO_STUB: JSON.stringify(LAND_MEMO_OK),
-  CALORIE_LAND_PUSH_STUB: JSON.stringify(LAND_PUSH_OK),
-  CALORIE_LAND_BACKFILL_STUB: JSON.stringify(LAND_BACKFILL_OK),
-};
+/** 跨技能出口 fixture 的路径（配置里两个出口都指它）。 */
+const LAND_FIXTURE = join(HERE, 'helpers', 'land-fixture.mjs');
+
+/** 一份「库目录 ＋ 两个跨技能出口指向 fixture」的配置目录。 */
+function cfgLand(dir) {
+  return calorieConfigDir(dir, { land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE } });
+}
 
 /** 本地库快照（JSON 定序）：三张相关表逐行（改值／增删都看得见）＋其余表行数（表外写也看得见）。
  * 跑前直读、跑后经 `withRead` 重算比对。 */
@@ -993,27 +996,29 @@ function snapLocal(dir) {
   }
 }
 
-test('落库 · 落地训练族 5 条命令：挡板路径零本地写 ＋ 回执成功', () => {
-  // land：单日四步（非预演，四挡板全绿；T2 计划 2026-09-07 周一有上肢 1 段）
+test('落库 · 落地训练族 5 条命令：跨技能／远端路径零本地写（失败形同样零写）', () => {
+  // land：单日四步（非预演；补计划／记心愿经 fixture 成功，推送那步没配 KEY ⇒ 确定性失败）
   {
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const a = runWrite(dir, 'calorie.workout.land', { date: '2026-09-07' }, LAND_STUBS);
-    assert.match(a.data.message, /已落地 2026-09-07/, 'land 回执非成功形：' + a.data.message);
+    const r = run('calorie.workout.land', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    assert.notEqual(r.status, 0, 'land 没配 KEY 不许报成功');
+    assert.match(r.stderr, /失败在推送/, 'land 失败须点名推送那一步：' + String(r.stderr).slice(-300));
     withRead(dir, 'calorie.workout.land', (db) => {
-      assert.deepEqual(snapJson(db), before, 'land 挡板路径改了本地库');
+      assert.deepEqual(snapJson(db), before, 'land 路径改了本地库');
     });
   }
-  // land-weekend：周一锚点 → 周一至周日逐天复用单日链（子进程透传环境，挡板逐天生效）
+  // land-weekend：周一锚点 → 周一至周日逐天复用单日链（子进程透传配置，逐天同一份真相）
   {
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const a = runWrite(dir, 'calorie.workout.land-weekend', { date: '2026-09-07' }, LAND_STUBS);
-    assert.match(a.data.message, /已批量/, 'land-weekend 回执非成功形：' + a.data.message);
+    const r = run('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    assert.notEqual(r.status, 0, 'land-weekend 没配 KEY 不许报成功');
+    assert.match(r.stderr, /失败在第 1 天/, 'land-weekend 须点名第 1 天：' + String(r.stderr).slice(-300));
     withRead(dir, 'calorie.workout.land-weekend', (db) => {
-      assert.deepEqual(snapJson(db), before, 'land-weekend 挡板路径改了本地库');
+      assert.deepEqual(snapJson(db), before, 'land-weekend 路径改了本地库');
     });
   }
   // land-monthend：月末锚点 → 只跑 1 天（`t613` 同形，避免整月子进程拖慢本门）
@@ -1021,32 +1026,35 @@ test('落库 · 落地训练族 5 条命令：挡板路径零本地写 ＋ 回�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const a = runWrite(dir, 'calorie.workout.land-monthend', { date: '2026-09-30' }, LAND_STUBS);
-    assert.match(a.data.message, /已批量/, 'land-monthend 回执非成功形：' + a.data.message);
+    const r = run('calorie.workout.land-monthend', { date: '2026-09-30' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    assert.notEqual(r.status, 0, 'land-monthend 没配 KEY 不许报成功');
+    assert.match(r.stderr, /失败在第 1 天/, 'land-monthend 须点名第 1 天：' + String(r.stderr).slice(-300));
     withRead(dir, 'calorie.workout.land-monthend', (db) => {
-      assert.deepEqual(snapJson(db), before, 'land-monthend 挡板路径改了本地库');
+      assert.deepEqual(snapJson(db), before, 'land-monthend 路径改了本地库');
     });
   }
-  // xunji-push：训记推送薄包装（挡板短路，不起子进程）
+  // xunji-push：训记推送薄包装（真出口：没配 KEY 走 key 档 exit 3，不调网）
   {
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const a = runWrite(dir, 'calorie.workout.xunji-push', { date: '2026-09-07' }, { CALORIE_XUNJI_STUB: JSON.stringify(X_PUSH_OK) });
-    assert.match(a.data.message, /已同步 2026-09-07/, 'xunji-push 回执非成功形：' + a.data.message);
+    const r = run('calorie.workout.xunji-push', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    assert.equal(r.status, 3, 'xunji-push 缺 KEY 须退 3：' + String(r.stderr).slice(-300));
+    assert.match(r.stderr, /KEY/, 'xunji-push 失败须点名 KEY：' + String(r.stderr).slice(-300));
     withRead(dir, 'calorie.workout.xunji-push', (db) => {
-      assert.deepEqual(snapJson(db), before, 'xunji-push 挡板路径改了本地库');
+      assert.deepEqual(snapJson(db), before, 'xunji-push 路径改了本地库');
     });
   }
-  // xunji-backfill：拉取回写薄包装（挡板短路，真回写发生在外部子进程）
+  // xunji-backfill：拉取回写薄包装（真出口：没配 KEY 即失败；真回写发生在外部子进程）
   {
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const a = runWrite(dir, 'calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { CALORIE_XUNJI_STUB: JSON.stringify(X_BACKFILL_OK) });
-    assert.match(a.data.message, /已拉训记实绩并回写/, 'xunji-backfill 回执非成功形：' + a.data.message);
+    const r = run('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    assert.notEqual(r.status, 0, 'xunji-backfill 没配 KEY 不许报成功');
+    assert.match(r.stderr, /KEY/, 'xunji-backfill 失败须点名 KEY：' + String(r.stderr).slice(-300));
     withRead(dir, 'calorie.workout.xunji-backfill', (db) => {
-      assert.deepEqual(snapJson(db), before, 'xunji-backfill 挡板路径改了本地库');
+      assert.deepEqual(snapJson(db), before, 'xunji-backfill 路径改了本地库');
     });
   }
 });

@@ -11,20 +11,29 @@
  * ③ 回执渲染器不调外部：调用与回执收进同一条宿主命令（调用方 `xunjiPush.ts`／`xunjiBackfill.ts`），
  *    页上读数一律来自本次调用的 stdout JSON，不读外部预制的 `--results-json`。
  *
- * 挡板缝（禁真训记接口／真飞书，测试与墙产物用）：环境变量 `CALORIE_XUNJI_STUB` 为非空时不 spawn，
- * 生产调用方永远不设它。值为 JSON（`{code, data}`），原样走码翻译与页组装，页上标「挡板数据」。
- * 口径先例同 `CALORIE_TODAY`（`analysis/utils.ts:132-139`：演示／测试钉住今天，真实使用不设）。
+ * 挡板缝（#676 已退役）：原先由环境变量 `CALORIE_XUNJI_STUB` 短路，现已删除（配置文件是唯一真相）。
+ * 测试要挡板时把**跨技能出口**（配置里的 `land.scheduleCli`／`memoCli`）指到一个 fixture 脚本，
+ * 让它吐出原来挡板吐的那份回执；训记这两条走的是包内训记模块的命令行入口，本票不给它配出口。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { fail } from '../shared/params.js';
 
-/** 子进程限时毫秒（xunji 侧单次 30 秒超时＋2 次退避；一天多段串行时仍应收敛，超了即 exit 4）。 */
-export const XUNJI_SPAWN_TIMEOUT_MS = 300000;
+/** 子进程限时**默认值**毫秒（xunji 侧单次 30 秒超时＋2 次退避；一天多段串行时仍应收敛，超了即 exit 4）。
+ *  真值见 `xunjiSpawnTimeoutMs()`（配置 `land.xunjiSeconds`）。 */
+export const XUNJI_SPAWN_TIMEOUT_MS = CALORIE_CONFIG_DEFAULTS.land.xunjiSeconds * 1000;
 
-/** 挡板缝的环境变量名（唯一定义地；调用方与测试只认这一处）。 */
+/** 外调限时毫秒：配置 `land.xunjiSeconds`（<1 的坏值回落默认档）。 */
+export function xunjiSpawnTimeoutMs(): number {
+  const seconds = loadCalorieConfig().values.land.xunjiSeconds;
+  return (seconds >= 1 ? seconds : CALORIE_CONFIG_DEFAULTS.land.xunjiSeconds) * 1000;
+}
+
+/** 挡板缝的名字（**#676 退役**：读取已删）。保留名字是因为「数据来源」那一行的人话仍引用它；
+ *  挡板退役后 `stubbed` 恒 false，那一行不再出现。 */
 export const XUNJI_STUB_ENV = 'CALORIE_XUNJI_STUB';
 
 /** 一次外调的结局：退出码 ＋ stdout JSON（解析不出为 null）＋ 子进程 stderr 尾行 ＋ 是否走挡板。 */
@@ -43,21 +52,6 @@ export function xunjiCliPath(): string {
   return cli as string;
 }
 
-/** 挡板 JSON 的形状守卫：`{code: number, data?: unknown}`，坏了即 exit 4（挡板坏了不许当成功跑）。 */
-function stubOf(raw: string, step: string): XunjiCall {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (e) {
-    fail(4, step + '挡板数据不是合法 JSON（' + XUNJI_STUB_ENV + '）：' + (e instanceof Error ? e.message : String(e)));
-  }
-  const o = parsed as { code?: unknown; data?: unknown };
-  if (typeof o !== 'object' || o === null || typeof o.code !== 'number' || !Number.isInteger(o.code)) {
-    fail(4, step + '挡板数据形状不对（要 {code: 整数, data?: 任意}）：' + raw.slice(0, 120));
-  }
-  return { code: o.code as number, data: (o as { data?: unknown }).data ?? null, stderr: '', stubbed: true };
-}
-
 /** stderr 尾行（失败点名用；截 300 字，空即 ''）。 */
 function stderrTail(r: { stderr?: unknown }): string {
   const lines = String(r.stderr ?? '').split('\n').map((l) => l.trim()).filter((l) => l !== '');
@@ -65,20 +59,19 @@ function stderrTail(r: { stderr?: unknown }): string {
   return last.slice(0, 300);
 }
 
-/** 调一次训记子命令（`argv` 不含程序名，如 `['push-plan', '--date', '2026-09-07']`）。 */
+/** 调一次训记子命令（`argv` 不含程序名，如 `['push-plan', '--date', '2026-09-07']`）。
+ *  `spawnSync` 不给 `env`：缺省即继承父进程环境，与原来的逐字透传行为一致。 */
 export function invokeXunji(argv: readonly string[], step: string): XunjiCall {
-  const stubRaw = process.env[XUNJI_STUB_ENV];
-  if (stubRaw !== undefined && stubRaw !== '') return stubOf(stubRaw, step);
   const cli = xunjiCliPath();
+  const timeoutMs = xunjiSpawnTimeoutMs();
   const r = spawnSync(process.execPath, [cli, ...argv], {
     encoding: 'utf8',
-    timeout: XUNJI_SPAWN_TIMEOUT_MS,
-    env: process.env,
+    timeout: timeoutMs,
   });
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(XUNJI_SPAWN_TIMEOUT_MS / 1000) + ' 秒）：' + msg);
+    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);

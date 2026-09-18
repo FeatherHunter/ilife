@@ -22,6 +22,10 @@ import { healthDashboard } from '../dist/analysis/dashboard.js';
 import { diagnose, DIAGNOSE_KINDS } from '../dist/analysis/anomaly/index.js';
 import { parseRange, query5dims, deriveReview, nutritionMatchRate } from '../dist/analysis/review.js';
 import { scanMovement, scanAllMovements, scanPlan, isSafeVariant, worstSeverity, rulesFor } from '../dist/analysis/contraindications.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't25-')), 't.db'));
 const seedGoal = (db, cal = 1800) => { db.prepare('INSERT OR REPLACE INTO daily_goal (id, calorie_goal) VALUES (1, ?)').run(cal); };

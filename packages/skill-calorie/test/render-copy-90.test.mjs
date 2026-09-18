@@ -30,6 +30,9 @@ import {
   copyActionHtml, copyRuntimeScriptHtml,
   renderHelpLookupHtml,
 } from '../dist/render/index.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -310,7 +313,7 @@ test('冻结表与既有 actionBar／errorReceipt id 不撞名（页面内唯一
 test('calorie.help.center q 支已下线：exit 2＋指路 lookup（红点：q 支回潮）', () => {
   const dir = mkdtempSync(join(tmpdir(), 't90-cli2-'));
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.center', '--params', JSON.stringify({ q: '记身材照' })],
-    { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+    { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
   assert.equal(r.status, 2, 'exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-400));
   assert.match(String(r.stderr), /下线/);
   assert.match(String(r.stderr), /calorie\.help\.lookup/);

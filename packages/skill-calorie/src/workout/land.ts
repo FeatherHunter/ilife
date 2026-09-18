@@ -22,7 +22,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { todayISO } from '../analysis/utils.js';
-import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { weekOfDate } from '../render/planPlate.js';
 import { dayField, fail } from '../shared/params.js';
@@ -58,7 +58,7 @@ export interface LandBridgeDeps {
 function openPlanDb(dbFile: string | undefined): { db: DatabaseSync | null; reason: string | null } {
   let file: string;
   try {
-    file = dbFile ?? join(resolveDbDir(), DB_FILENAME);
+    file = dbFile ?? join(resolveDbDir(), resolveDbFileName());
   } catch (e) {
     return { db: null, reason: e instanceof Error ? e.message : String(e) };
   }

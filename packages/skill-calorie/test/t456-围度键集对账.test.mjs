@@ -18,6 +18,10 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { MEASUREMENT_FIELDS } from '../dist/fetch/body.js';
 import { WAIST_DIVERGENCE_ORDER } from '../dist/analysis/cross.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const sorted = (xs) => [...xs].sort();
 const diff = (a, b) => sorted(a).filter((x) => !b.includes(x));

@@ -15,6 +15,9 @@ import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { openDb } from '../dist/index.js';
 import { seedFull } from '../../../docs/research/t81-seed.mjs';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -24,7 +27,7 @@ const DB_FILENAME = 'calorie_data.db';
 function runCli(dir, key, params) {
   const args = params === undefined ? [key] : [key, '--params', JSON.stringify(params)];
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }

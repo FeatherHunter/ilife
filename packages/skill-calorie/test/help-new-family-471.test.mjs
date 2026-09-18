@@ -31,6 +31,9 @@ import {
   HELP_NEW_ALIASES_META_ID, HELP_NEW_ALIASES_META_TITLE, buildHelpNewAliases, buildHelpSceneData,
   helpNewAliasesMetaBlock, newAliasesTitle, renderHelpCenterHtml, renderNewAliasesHtml,
 } from '../dist/photo/helpCenter.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -91,7 +94,7 @@ function esc(s) {
 
 function runLookup(word, dbDir) {
   return spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: word })], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dbDir }, maxBuffer: 1 << 30,
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dbDir) }, maxBuffer: 1 << 30,
   });
 }
 

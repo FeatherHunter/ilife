@@ -14,6 +14,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { CALORIE_COMBOS, calorieShapeFor } from '../dist/cli/keys.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -94,7 +97,10 @@ function run(bin, key, params, envExtra, html) {
 }
 
 function runOk(dir, key, params, extra) {
-  const r = run(BIN, key, params, { SKILLS_DB_PATH: dir, ...(extra || {}) });
+  // #676 · 调用方已经在 `extra` 里给了配置目录（例如带 `photos.dir` 的那一份）就用它的：
+  // 这里再 `calorieConfigDir(dir)` 会把那份 yaml **重写**成不带照片目录的，调用方白给。
+  const cfg = (extra || {}).ILIFE_CONFIG_DIR ?? calorieConfigDir(dir);
+  const r = run(BIN, key, params, { ILIFE_CONFIG_DIR: cfg, ...(extra || {}) });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-500));
   const env = JSON.parse(r.stdout);
   assert.equal(env.version, '0.1.0');
@@ -136,7 +142,7 @@ test('T8 四主视图 parity：envelope stat + metrics 全 number + HTML 快照'
   assert.equal(t.shape, 'list');
   assert.ok(t.data.total >= 4);
   const p = join(dir, 'home.html');
-  const r = spawnSync(NODE_BIN, [BIN, 'calorie.view.home', '--params', JSON.stringify({ date: d(7) }), '--html', p], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir } });
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.view.home', '--params', JSON.stringify({ date: d(7) }), '--html', p], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
   assert.equal(r.status, 0);
   const html = readFileSync(p, 'utf8');
   // #492：标题按窗口词口径（多日窗「近 N 天总览」），日期区间改住副题——两处都断言，
@@ -175,7 +181,7 @@ test('T9 目标分析盘 parity：12 键抽查 stat + 缺失阻断', () => {
   assert.equal(sc.data.metrics.total, 1);
   const emptyDir = mkdtempSync(join(tmpdir(), 't11-empty-'));
   openDb(join(emptyDir, 'calorie_data.db')).close();
-  const miss = run(BIN, 'calorie.view.goal-config', undefined, { SKILLS_DB_PATH: emptyDir });
+  const miss = run(BIN, 'calorie.view.goal-config', undefined, { ILIFE_CONFIG_DIR: calorieConfigDir(emptyDir) });
   assert.equal(miss.status, 4);
   assert.equal(miss.stdout, '');
   assert.match(miss.stderr, /缺失|取数/);
@@ -185,7 +191,7 @@ test('T9 目标分析盘 parity：12 键抽查 stat + 缺失阻断', () => {
     ['calorie.view.goal-recommend', { profile: 'cut' }],
     ['calorie.photo.gif', { tag: '正面' }],
   ]) {
-    const r = run(BIN, k, p, { SKILLS_DB_PATH: emptyDir });
+    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(emptyDir) });
     assert.equal(r.status, 4, k + ' 空库未阻断');
     assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
     assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
@@ -201,7 +207,7 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 只内嵌图片', a
   const added = addPhotos(db, photosDir, { srcPaths: [src('a.jpg'), src('b.jpg')], tag: '正面', today: d(6), nowTime: '08:00:00' });
   db.close();
   assert.equal(added.length, 2);
-  const envExtra = { SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir, ...CLOCK };
+  const envExtra = { ILIFE_CONFIG_DIR: calorieConfigDir(dir, { photos: { dir: photosDir } }), ...CLOCK };
   const g = runOk(dir, 'calorie.photo.list', { tag: '正面' }, envExtra);
   assert.equal(g.data.total, 2);
   const v = runOk(dir, 'calorie.photo.detail', { id: added[0].id }, envExtra);
@@ -241,10 +247,10 @@ test('T2+T6 parity：唤醒词 HELP 现找 + 热量历史 + CLI 契约', () => {
   // `days` 参数确有效：同一当刻下更小窗口的结果严格更小（只剩锚当日一条），非「只要不抛错」。
   const narrow = runOk(dir, 'calorie.history', { days: 1 }, CLOCK);
   assert.ok(narrow.data.total < hist.data.total, 'days 参数须实际收窄窗口');
-  assert.equal(run(BIN, 'calorie.help.lookup', {}, { SKILLS_DB_PATH: dir }).status, 2);
-  assert.equal(run(BIN, 'calorie.nope', undefined, { SKILLS_DB_PATH: dir }).status, 3);
-  assert.equal(run(BIN, 'calorie.view.home', undefined, { SKILLS_DB_PATH: '' }).status, 1);
-  assert.equal(run(BIN, undefined, undefined, { SKILLS_DB_PATH: dir }).status, 2);
-  const bad = run(BIN, 'calorie.view.home', '--params', { SKILLS_DB_PATH: dir });
+  assert.equal(run(BIN, 'calorie.help.lookup', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run(BIN, 'calorie.nope', undefined, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 3);
+  assert.equal(run(BIN, 'calorie.view.home', undefined, { ILIFE_CONFIG_DIR: '' }).status, 1);
+  assert.equal(run(BIN, undefined, undefined, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  const bad = run(BIN, 'calorie.view.home', '--params', { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
   assert.notEqual(bad.status, 0);
 });

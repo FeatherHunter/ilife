@@ -38,6 +38,9 @@ import { addPhotos } from '../dist/photo/photos.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from '../dist/photo/galleryDoc.js';
 import { embedPhotos } from '../dist/photo/photoThumb.js';
 import { buildGalleryData } from '../dist/photo/photo.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -77,7 +80,7 @@ function seedIso(size = 560 * 1024) {
 function runList(iso, params) {
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.photo.list', '--params', JSON.stringify(params)], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: iso.dbDir, CALORIE_PHOTOS_DIR: iso.photosDir },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(iso.dbDir, { photos: { dir: iso.photosDir } }) },
   });
   assert.equal(r.status, 0, 'CLI exit 非 0：' + String(r.stderr ?? '').slice(0, 500));
   return JSON.parse(String(r.stdout).trim());

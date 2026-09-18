@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { calorieConfigDir, freezeClock } from './helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -77,7 +78,7 @@ seedDb.close();
 function runCli(key, paramsJson) {
   const runDir = mkdtempSync(join(tmpdir(), 't380-out-'));
   copyFileSync(dbPath, join(runDir, basename(dbPath)));
-  return { r: spawnSync(process.execPath, [CLI, key, '--params', paramsJson], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: runDir, CALORIE_PHOTOS_DIR: photos, CALORIE_TODAY: '2026-09-07' } }), runDir };
+  return { r: spawnSync(process.execPath, [CLI, key, '--params', paramsJson], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir, { photos: { dir: photos } }), ...freezeClock('2026-09-07') } }), runDir };
 }
 
 function checkOne(rec) {

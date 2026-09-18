@@ -28,6 +28,10 @@ import {
   listCompositions, listMeasurements, trendComposition, trendMeasurement,
   compareCompositions, compareMeasurements, latestSource,
 } from '../dist/fetch/body.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const D1 = '2026-09-05';
 const D2 = '2026-09-06';

@@ -10,13 +10,17 @@
  * 备忘 `memo.create category=心愿 due`（逐段）。**不直引对方库，不碰对方包**（作息／备忘包不改）。
  * 训记两步复用 `./xunjiRunner.js`（`#614` 薄命令同跑道，不另起第二条训记跑道）。
  *
- * 挡板缝（禁真网真 KEY，测试与墙产物用）：四个环境变量为非空时不 spawn，生产调用方永远不设它们。
- * 值一律 JSON（`{code, data}`），原样走码直传与页组装。口径先例同 `XUNJI_STUB_ENV`。
+ * #676 · 两个出口与限时的取值改成读配置（配置文件是唯一真相）：
+ *   - 出口：`land.scheduleCli`／`land.memoCli` 非空即用它（用户指到别的装机布局）；空串＝按包布局算；
+ *   - 限时：`land.landSeconds`（毫秒换算在本件做），空／坏值回落默认档；
+ *   - 挡板缝（原先四个 `CALORIE_LAND_*_STUB` 环境变量）**已退役**：读取删除，`stubbed` 恒 false。
+ *     测试要挡板就把上面两个出口指到一个 fixture 脚本，让它吐出原来挡板吐的那份回执。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { fail } from '../shared/params.js';
 import { invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
@@ -24,16 +28,17 @@ import type { XunjiCall } from './xunjiRunner.js';
 export { xunjiExitToCmd };
 export type { XunjiCall };
 
-/** 子进程限时毫秒（跨技能是本地库＋可选远端对齐；60 秒收敛，超了即 exit 4）。 */
-export const LAND_SPAWN_TIMEOUT_MS = 60000;
+/** 子进程限时**默认值**毫秒（跨技能是本地库＋可选远端对齐；60 秒收敛，超了即 exit 4）。
+ *  真值见 `landSpawnTimeoutMs()`（配置 `land.landSeconds`）。 */
+export const LAND_SPAWN_TIMEOUT_MS = CALORIE_CONFIG_DEFAULTS.land.landSeconds * 1000;
 
-/** 挡板缝的环境变量名（唯一定义地；调用方与测试只认这一处）。 */
-export const LAND_SCHEDULE_STUB_ENV = 'CALORIE_LAND_SCHEDULE_STUB';
-export const LAND_MEMO_STUB_ENV = 'CALORIE_LAND_MEMO_STUB';
-export const LAND_PUSH_STUB_ENV = 'CALORIE_LAND_PUSH_STUB';
-export const LAND_BACKFILL_STUB_ENV = 'CALORIE_LAND_BACKFILL_STUB';
+/** 跨技能限时毫秒：配置 `land.landSeconds`（<1 的坏值回落默认档）。 */
+export function landSpawnTimeoutMs(): number {
+  const seconds = loadCalorieConfig().values.land.landSeconds;
+  return (seconds >= 1 ? seconds : CALORIE_CONFIG_DEFAULTS.land.landSeconds) * 1000;
+}
 
-/** 一次跨技能调用的结局：退出码 ＋ 对方回执 data ＋ 子进程 stderr 尾行 ＋ 是否走挡板。 */
+/** 一次跨技能调用的结局：退出码 ＋ 对方回执 data ＋ 子进程 stderr 尾行 ＋ 是否走挡板（挡板退役后恒 false）。 */
 export interface LandCall {
   readonly code: number;
   readonly data: unknown;
@@ -41,35 +46,35 @@ export interface LandCall {
   readonly stubbed: boolean;
 }
 
-/** 作息统一出口（编译产物；不存在＝环境没建好，先拦，不起子进程）。 */
+/** 跨技能出口的取值：配置里给了就用它（存在性先拦），没给按包布局算。
+ *
+ *  「谁在取」这一处是**唯一**的取值点：两个出口（作息／备忘）与测试的 fixture 都走它，
+ *  于是「出口在哪」只有一个定义地，配置项也只有一处读法。 */
+function crossSkillCliPath(configured: string, relative: readonly string[], label: string): string {
+  const cli = configured !== '' ? configured : join(dirname(fileURLToPath(import.meta.url)), ...relative);
+  if (!existsSync(cli)) {
+    fail(4, label + '出口不在（' + cli + '）：先跑对应包的构建再调本命令；'
+      + '若装机布局不同，请在卡路里设置页里把这条出口指到真实路径');
+  }
+  return cli;
+}
+
+/** 作息统一出口（编译产物；缺配置即按包布局算，两条路都要存在）。 */
 export function scheduleCliPath(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const cli = join(here, '..', '..', '..', 'skill-schedule', 'dist', 'cli', 'cmd_read.js');
-  if (!existsSync(cli)) fail(4, '作息出口不在（' + cli + '）：先跑对应包的构建再调本命令');
-  return cli as string;
+  return crossSkillCliPath(
+    loadCalorieConfig().values.land.scheduleCli,
+    ['..', '..', '..', 'skill-schedule', 'dist', 'cli', 'cmd_read.js'],
+    '作息',
+  );
 }
 
 /** 备忘统一出口（同上）。 */
 export function memoCliPath(): string {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const cli = join(here, '..', '..', '..', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
-  if (!existsSync(cli)) fail(4, '备忘出口不在（' + cli + '）：先跑对应包的构建再调本命令');
-  return cli as string;
-}
-
-/** 挡板 JSON 的形状守卫：`{code: number, data?: unknown}`，坏了即 exit 4。 */
-function stubOf(raw: string, step: string, envName: string): LandCall {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (e) {
-    fail(4, step + '挡板数据不是合法 JSON（' + envName + '）：' + (e instanceof Error ? e.message : String(e)));
-  }
-  const o = parsed as { code?: unknown; data?: unknown };
-  if (typeof o !== 'object' || o === null || typeof o.code !== 'number' || !Number.isInteger(o.code)) {
-    fail(4, step + '挡板数据形状不对（要 {code: 整数, data?: 任意}）：' + raw.slice(0, 120));
-  }
-  return { code: o.code as number, data: (o as { data?: unknown }).data ?? null, stderr: '', stubbed: true };
+  return crossSkillCliPath(
+    loadCalorieConfig().values.land.memoCli,
+    ['..', '..', '..', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js'],
+    '备忘',
+  );
 }
 
 /** stderr 尾行（失败点名用；截 300 字，空即 ''）。 */
@@ -94,17 +99,18 @@ function envelopeData(text: string, step: string, key: string): unknown {
   return (o as { data: unknown }).data;
 }
 
-/** 调一次跨技能子命令（argv 首位即对方 key，如 `schedule.plan.write`）。 */
+/** 调一次跨技能子命令（argv 首位即对方 key，如 `schedule.plan.write`）。
+ *  `spawnSync` 不给 `env`：缺省即继承父进程环境，与原来的逐字透传行为一致。 */
 function invokeOther(cli: string, key: string, params: Record<string, unknown>, step: string): LandCall {
+  const timeoutMs = landSpawnTimeoutMs();
   const r = spawnSync(process.execPath, [cli, key, '--params', JSON.stringify(params)], {
     encoding: 'utf8',
-    timeout: LAND_SPAWN_TIMEOUT_MS,
-    env: process.env,
+    timeout: timeoutMs,
   });
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(LAND_SPAWN_TIMEOUT_MS / 1000) + ' 秒）：' + msg);
+    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);
@@ -134,8 +140,6 @@ export function invokeSchedule(
   items: readonly { date: string; time_start: string; time_end: string; title: string; notes?: string }[],
   step: string,
 ): LandCall {
-  const stubRaw = process.env[LAND_SCHEDULE_STUB_ENV];
-  if (stubRaw !== undefined && stubRaw !== '') return stubOf(stubRaw, step, LAND_SCHEDULE_STUB_ENV);
   const cli = scheduleCliPath();
   return invokeOther(cli, 'schedule.plan.write', { op: 'ensure', dates: items }, step);
 }
@@ -145,28 +149,16 @@ export function invokeMemo(
   input: { title: string; body: string; category: string; due: string | null },
   step: string,
 ): LandCall {
-  const stubRaw = process.env[LAND_MEMO_STUB_ENV];
-  if (stubRaw !== undefined && stubRaw !== '') return stubOf(stubRaw, step, LAND_MEMO_STUB_ENV);
   const cli = memoCliPath();
   return invokeOther(cli, 'memo.create', { ...input }, step);
 }
 
-/** 训记推送（挡板优先走本票缝，否则复用 `xunjiRunner` 同跑道，不另起第二条）。 */
+/** 训记推送（复用 `xunjiRunner` 同跑道，不另起第二条）。 */
 export function invokeLandPush(date: string, step: string): XunjiCall {
-  const stubRaw = process.env[LAND_PUSH_STUB_ENV];
-  if (stubRaw !== undefined && stubRaw !== '') {
-    const c = stubOf(stubRaw, step, LAND_PUSH_STUB_ENV);
-    return { code: c.code, data: c.data, stderr: c.stderr, stubbed: true };
-  }
   return invokeXunji(['push-plan', '--date', date], step);
 }
 
 /** 训记回写（同上；单日 `days=1`，与落地天数同源，修掉老 `--days` 与 `--backfill-days` 两张皮）。 */
 export function invokeLandBackfill(end: string, step: string): XunjiCall {
-  const stubRaw = process.env[LAND_BACKFILL_STUB_ENV];
-  if (stubRaw !== undefined && stubRaw !== '') {
-    const c = stubOf(stubRaw, step, LAND_BACKFILL_STUB_ENV);
-    return { code: c.code, data: c.data, stderr: c.stderr, stubbed: true };
-  }
   return invokeXunji(['backfill', '--date', end, '--days', '1'], step);
 }

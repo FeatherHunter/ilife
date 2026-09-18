@@ -25,6 +25,10 @@ import { sourceLine } from '../dist/shared/sourceLine.js';
 import { conclusionLine } from '../dist/shared/conclusionLine.js';
 import { emptyGuide } from '../dist/shared/emptyGuide.js';
 import { EXERCISE_CATEGORY_COLORS, categoryColor } from '../dist/exercise/categoryColors.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');

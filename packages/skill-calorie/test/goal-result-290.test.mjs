@@ -36,6 +36,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { seedFull, SEED_TODAY } from '../../../docs/research/t81-seed.mjs';
 import { machineWords } from './visible-text-probe.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -104,14 +107,16 @@ function mkTemplate() {
 }
 
 /** 真 CLI 跑一件：每件一个独立库副本（同 `t81-seed` 的 harness 口径）。 */
-function runCli(templateDir, name, key, params) {
+/** 真 CLI 跑一件。`noClock: true` 那一趟**不钉钟**（给「无参 ⇒ 随机器钟会漂」那条用例留真实时钟）。 */
+function runCli(templateDir, name, key, params, noClock = false) {
   const runDir = join(templateDir, name);
   mkdirSync(runDir, { recursive: true });
   copyFileSync(join(templateDir, DB_FILENAME), join(runDir, DB_FILENAME));
   const out = join(runDir, name + '.html');
+  const clock = noClock ? { NODE_OPTIONS: '', FAKE_NOW_ISO: '' } : freezeClock(SEED_TODAY);
   const r = spawnSync(process.execPath, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: runDir, CALORIE_TODAY: SEED_TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir), ...clock },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout || '').trim()); } catch { env = null; }
@@ -199,7 +204,7 @@ test('#290 反向锁：片段必红、错配必抛、紧迫度三档真分档、
   assert.deepEqual(again.env?.data?.metrics, CASES.find((c) => c.name === 'expiring-fixed').metrics, '固定 today 两次读数应一致');
 
   /* e) 无 today 会漂（这就是主测必须传显式 today 的原因；假设运行日 ≠ 2026-09-07）。 */
-  const drift = runCli(tpl, 'expiring-drift', 'calorie.view.goal-expiring', {});
+  const drift = runCli(tpl, 'expiring-drift', 'calorie.view.goal-expiring', {}, true);
   assert.equal(drift.status, 0, 'expiring 无参应 exit 0');
   assert.notEqual(drift.env?.data?.metrics?.daysLeft, 115, '无 today 入参时取机器今天，读数应随日期漂（若本断言红，说明机器今天恰是 2026-09-07）');
 });

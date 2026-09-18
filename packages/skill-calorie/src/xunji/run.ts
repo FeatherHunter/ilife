@@ -22,11 +22,11 @@ import { upsertTrains } from './upsert.js';
 import type { UpsertTransport } from './upsert.js';
 import { fetchTrains, parseTrains } from './fetch.js';
 import type { FetchOutcome } from './fetch.js';
-import { BACKFILL_DEFAULT_DAYS, backfillRange } from './backfill.js';
-import { runKeyCommand, type KeyStoreDeps } from './key.js';
+import { backfillDefaultDays, backfillRange } from './backfill.js';
+import { runKeyCommand } from './key.js';
 import { runOverlayPlanCommand, type OverlayDeps } from './overlay-plan.js';
 import { runRunSyncCommand, type RunSyncDeps } from './run-sync.js';
-import { DB_FILENAME, resolveDbDir } from '../paths.js';
+import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { exitForFailure } from './exitMap.js';
 
 /** 一次子命令调用的读数：退出码 ＋ 人话 ＋ 机器读数（＋ 命令行入口要打的那句）。 */
@@ -65,14 +65,13 @@ export interface XunjiCommandDeps {
   readonly respectRateLimit?: boolean;
   /** 拉取限频状态文件（缺省读侧 `xunji_bridge_rate.json`；传 null 即不守不记）。 */
   readonly fetchRateLimitPath?: string | null;
-  /** 回写库文件（缺省 `SKILLS_DB_PATH/calorie_data.db`；测试传 tmp）。 */
+  /** 回写库文件（缺省 `<配置 db.dir／数据目录>/<配置 db.name>`；测试传 tmp）。 */
   readonly dbFile?: string;
   /** 回写开库（缺省 `openDb`；测试给挡板，**不许碰生产库**）。 */
   readonly openDb?: (dbFile: string) => DatabaseSync;
   /** 回写拉取（缺省真拉取；测试给挡板，**不许打真接口**）。 */
   readonly fetchDay?: (dateStr: string) => Promise<FetchOutcome>;
-  /** KEY 存取面（`key set／clear／status`；缺省真环境＋真 PowerShell）＋ 叠加取数面（缺省真拉取＋真 upsert）。 */
-  readonly keyStore?: KeyStoreDeps;
+  /** 叠加取数面（缺省真拉取＋真 upsert）。KEY 存取面无注入缝（#676：唯一真相是配置文件）。 */
   readonly overlay?: OverlayDeps;
   readonly sync?: RunSyncDeps;
 }
@@ -260,7 +259,7 @@ async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string,
     const bad = dateProblem(endStr);
     if (bad !== null) return refusal(sub, bad, { usage: sub.usage });
   }
-  let days = BACKFILL_DEFAULT_DAYS;
+  let days = backfillDefaultDays();
   if (values['--days'] !== undefined) {
     const n = Number(values['--days']);
     if (!Number.isInteger(n) || n < 1) {
@@ -271,7 +270,7 @@ async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string,
   let dbFile = deps.dbFile;
   if (dbFile === undefined) {
     try {
-      dbFile = join(resolveDbDir(), DB_FILENAME);
+      dbFile = join(resolveDbDir(), resolveDbFileName());
     } catch (e) {
       return refusal(sub, e instanceof Error ? e.message : String(e), { usage: sub.usage });
     }
@@ -337,7 +336,7 @@ export async function runXunjiCommand(argv: readonly string[], deps: XunjiComman
   if (sub.name === 'push-plan') return runPushPlan(sub, parsed.values, deps);
   if (sub.name === 'fetch') return runFetch(sub, parsed.values, deps);
   if (sub.name === 'backfill') return runBackfill(sub, parsed.values, deps);
-  if (sub.name === 'key') return runKeyCommand(sub, parsed.values, deps.keyStore);
+  if (sub.name === 'key') return runKeyCommand(sub, parsed.values);
   if (sub.name === 'overlay-plan') return runOverlayPlanCommand(sub, parsed.values, deps.overlay);
   if (sub.name === 'run-sync') return runRunSyncCommand(sub, parsed.values, deps.sync);
   // 声明说已实现却没接上实现＝代码缺陷，直接抛（不许静默当成功）。

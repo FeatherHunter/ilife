@@ -19,6 +19,9 @@ import { routeWakeword } from '../dist/triggers/help-lookup.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { resolveWindow } from '../dist/analysis/series.js';
 import { pinClockTo } from './pin-clock.mjs';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 /** 全量 436 路由查词（#81 SoT）：取首个 exec 项。 */
 function execRoute(word) {
@@ -274,7 +277,7 @@ test('#108 无假数据：8 键空库一律 exit 4 且 stdout 纯净', () => {
     ['calorie.view.dedupe', {}],
   ];
   for (const [k, p] of cases) {
-    const r = run(BIN, k, p, { SKILLS_DB_PATH: dir });
+    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
     assert.equal(r.status, 4, k + ' 空库未阻断（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
     assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
     assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
@@ -283,7 +286,7 @@ test('#108 无假数据：8 键空库一律 exit 4 且 stdout 纯净', () => {
 
 test('#108 命名底座可用：排行动态段落点＋回传一致＋产物为全文档', () => {
   const { dir } = mkDietDb();
-  const r = run(BIN, 'calorie.view.ranking', { start: '2026-09-05', end: '2026-09-07', category: 'high_calorie', topN: 5 }, { SKILLS_DB_PATH: dir });
+  const r = run(BIN, 'calorie.view.ranking', { start: '2026-09-05', end: '2026-09-07', category: 'high_calorie', topN: 5 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
   assert.equal(r.status, 0, 'stderr=' + (r.stderr || '').slice(0, 300));
   const env = JSON.parse(r.stdout);
   const n = basename(env.data.output);

@@ -28,6 +28,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { buildExerciseReceiptDoc } from '../dist/exercise/receipt.js';
 import { fieldLabel } from '../dist/shared/fieldLabel.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -36,10 +39,9 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 const D1 = '2026-09-05';
 const D2 = '2026-09-06';
 const D3 = '2026-09-07';
-/** 复制昨日运动（冻结原文不带日期，目标即今天）要先把种子落在昨天：按 `CALORIE_TODAY` 钉的口径取今天。 */
-const TODAY = /^\d{4}-\d{2}-\d{2}$/.test(process.env['CALORIE_TODAY'] ?? '')
-  ? process.env['CALORIE_TODAY']
-  : new Date().toISOString().slice(0, 10);
+/** 复制昨日运动（冻结原文不带日期，目标即今天）要先把种子落在昨天：按真实时钟取今天
+ *  （#676：CALORIE_TODAY 退役；freezeClock 预载把父／子进程钉在同一天）。 */
+const TODAY = new Date().toISOString().slice(0, 10);
 const YESTERDAY = new Date(Date.parse(TODAY + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10);
 
 /** 冻结参数名清单：写命令回执 `writtenFields` 报的 CLI 参数名（`F.exercise`／`cliNames` 两路实测）＋
@@ -81,7 +83,7 @@ function mkDir() {
 function runCli(dir, key, params) {
   const out = join(dir, key.replace(/\./g, '_') + '-' + Math.random().toString(36).slice(2, 7) + '.html');
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
   const stdout = String(r.stdout || '').trim();
   return {

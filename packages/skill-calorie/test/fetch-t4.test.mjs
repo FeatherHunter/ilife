@@ -25,6 +25,10 @@ import {
   getPhotoRow, listPhotos, daysSinceTagPhoto, addPhotos, deletePhoto,
   updateTag, tagAdd, tagRemove, planGif,
 } from '../dist/photo/photos.js';
+// #676 · 隔离基座：配置目录指到临时目录（`ILIFE_CONFIG_DIR`），缺了就响亮报错。
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const tmpDb = () => {
   const db = openDb(join(mkdtempSync(join(tmpdir(), 't23-')), 't.db'));
@@ -203,10 +207,10 @@ test('photos：标签+目录守卫+增删改查', () => {
   assert.throws(() => validateTags(Array.from({ length: 11 }, (_, i) => 't' + i)), /太多/);
   assert.equal(tagsContain('正面,侧面', '侧面'), true);
   assert.equal(tagsContain('正面', '背面'), false);
-  const saved = process.env.CALORIE_PHOTOS_DIR;
-  delete process.env.CALORIE_PHOTOS_DIR;
-  assert.throws(() => resolvePhotosDir(), /CALORIE_PHOTOS_DIR/);
-  if (saved !== undefined) process.env.CALORIE_PHOTOS_DIR = saved;
+  // #676：照片目录的唯一真相是配置（`photos.dir`）；没配即抛，报错里点名去哪配。
+  const cfgDir = mkdtempSync(join(tmpdir(), 't23-cfg-'));
+  calorieConfigDir(cfgDir);
+  assert.throws(() => resolvePhotosDir(), /照片目录未配置/);
 
   const db = tmpDb();
   const dir = mkdtempSync(join(tmpdir(), 't23-photos-'));

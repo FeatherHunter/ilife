@@ -20,6 +20,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { openDbReadOnly } from '../dist/db/readonly.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -60,7 +63,7 @@ const GOAL_COLS = 'calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal,
 
 test('#127 · 不传 water：营养列更新，其余 7 列逐列不变 + writtenFields 不含 water', () => {
   const ctx = mkEnv();
-  const env = { SKILLS_DB_PATH: ctx.dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
   execOn(ctx.dir, (db) => {
     db.prepare("UPDATE daily_goal SET water_goal = 2300, weight_goal = 68.0, goal_deadline = '2026-12-31', goal_paused = 1, exercise_goal = 300, start_weight = 72.0, start_date = '2026-09-01' WHERE id = 1").run();
   });
@@ -90,7 +93,7 @@ test('#127 · 不传 water：营养列更新，其余 7 列逐列不变 + writte
 
 test('#127 · 传 water：water 更新，体重侧 6 列逐列不变 + writtenFields 含 water', () => {
   const ctx = mkEnv();
-  const env = { SKILLS_DB_PATH: ctx.dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
   execOn(ctx.dir, (db) => {
     db.prepare("UPDATE daily_goal SET water_goal = 2300, weight_goal = 68.0, goal_deadline = '2026-12-31', goal_paused = 1, exercise_goal = 300, start_weight = 72.0, start_date = '2026-09-01' WHERE id = 1").run();
   });
@@ -115,7 +118,7 @@ test('#127 · 首插不传 water：water 取列默认 2000（非 NULL），营�
   const db = openDb(join(dir, 'calorie_data.db'));
   db.prepare('DELETE FROM daily_goal WHERE id = 1').run();
   db.close();
-  const env = { SKILLS_DB_PATH: dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(dir) };
   const src = join(mkdtempSync(join(tmpdir(), 't127-src-')), 'x');
   writeFileSync(src, 'x');
   void src;

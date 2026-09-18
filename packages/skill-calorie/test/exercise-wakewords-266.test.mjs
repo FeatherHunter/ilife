@@ -37,6 +37,10 @@ import { EXERCISE_COMMANDS } from '../dist/exercise/index.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
 import { SCENE_04_EXERCISE } from '../dist/triggers/scene-04-exercise.js';
 import { HELP_LOOKUP, lookupWake } from '../dist/triggers/index.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SKILL_MD = join(HERE, '..', 'SKILL.md');

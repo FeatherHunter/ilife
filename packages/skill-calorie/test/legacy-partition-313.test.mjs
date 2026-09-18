@@ -40,6 +40,10 @@ import { LEGACY_SCENE_10 } from '../dist/cli/legacy/scene-10.js';
 import { mergeLegacyPartition } from '../scripts/gen-cli.mjs';
 import { LEGACY_COMMANDS, DECLARED_CAPABILITY_KEYS } from './declared.mjs';
 import { FROZEN_LEGACY_KEYS, FROZEN_LEGACY_MAX } from './legacy-frozen-295.mjs';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');

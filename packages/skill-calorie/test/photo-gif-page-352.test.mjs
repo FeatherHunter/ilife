@@ -33,6 +33,9 @@ import { GIF_LIMITS, countGifFrames } from '../dist/photo/gif.js';
 import { buildPhotoGifPage } from '../dist/photo/gifDoc.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from '../dist/photo/galleryDoc.js';
 import { rangeOccurrences, visibleText } from './visible-text-probe.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -68,10 +71,10 @@ function seedIso() {
 }
 
 function envOf(iso, withPhotos = true) {
-  const env = { ...process.env, SKILLS_DB_PATH: iso.dbDir, CALORIE_TODAY: TODAY };
-  if (withPhotos) env.CALORIE_PHOTOS_DIR = iso.photosDir;
-  else delete env.CALORIE_PHOTOS_DIR;
-  return env;
+  // 「配了照片目录」与「没配照片目录」两态走**两个配置目录**（配置文件是唯一真相：配没配写在文件里）。
+  const cfgDir = withPhotos ? iso.dbDir : join(iso.root, 'cfg-nophotos');
+  const extra = withPhotos ? { photos: { dir: iso.photosDir } } : { db: { dir: iso.dbDir } };
+  return { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(cfgDir, extra), ...freezeClock(TODAY) };
 }
 
 function runRaw(iso, params, withPhotos = true) {

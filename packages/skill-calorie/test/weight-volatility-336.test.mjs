@@ -12,6 +12,10 @@ import { test } from 'node:test';
 import { openDb, DB_FILENAME } from '../dist/index.js';
 import { viewVolatility, buildVolatilityDoc, buildVolatilityView, parseVolatilityView, weightVolatilityV2 } from '../dist/weight/volatility.js';
 import { metricsOf } from '../dist/shared/docPage.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't336-')), 't.db'));
 

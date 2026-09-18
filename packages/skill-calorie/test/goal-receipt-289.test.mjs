@@ -34,6 +34,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { seedFull, SEED_TODAY } from '../../../docs/research/t81-seed.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -88,7 +91,7 @@ function runOk(dir, key, params, outName) {
   args.push('--html', out);
   const r = spawnSync(NODE_BIN, args, {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: SEED_TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(SEED_TODAY) },
   });
   assert.equal(r.status, 0, key + ' 应 exit 0，实测 ' + r.status + ' ' + String(r.stderr || '').trim().slice(-400));
   assert.ok(existsSync(out), key + ' 未落盘 ' + out);

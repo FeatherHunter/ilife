@@ -129,12 +129,12 @@ export function energyOf(parts: EnergyParts): EnergyResult {
 
 /** 「今天」的**唯一出处**（本地口径：UTC 日，与 T3/T4 同口径）。
  *
- *  #250 · `CALORIE_TODAY`（YYYY-MM-DD）可把「今天」钉到某一天：相对窗口（今日／本周／最近 N 天…）都由它派生，
- *  演示、实跑快照与测试用它把窗口对到种子库的数据日；真实使用**不设**该变量，即按机器时钟。
- *  显式锚点（命令参数 `today`）优先于它，仍由各命令自行传入 `resolveWindow`。 */
+ *  #676：`CALORIE_TODAY` 这颗钉子已按「配置文件是唯一真相、环境变量读取全部删除」的裁定（#675）摘掉——
+ *  真实时钟是唯一来源，本函数不再读任何环境变量。要钉「今天」改用**钉时钟预载件**
+ *  `test/freeze-clock.cjs`（`node --require` 预载 ＋ `FAKE_NOW_ISO`）：它把整个进程的 `Date` 一次盖住，
+ *  除了 `todayISO()`，其它直接读 `new Date()` 的路径（如 `fetch/body.ts` 的 `daysAgo()`）也跟着走。
+ *  显式锚点（命令参数 `today`）仍优先于它，仍由各命令自行传入 `resolveWindow`。 */
 export function todayISO(): string {
-  const pin = process.env['CALORIE_TODAY'];
-  if (pin !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(pin)) return pin;
   return new Date().toISOString().slice(0, 10);
 }
 

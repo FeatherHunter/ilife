@@ -27,6 +27,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { addRecord } from '../dist/exercise/exerciseStore.js';
 import { assertDocPage } from './doc-page-assert.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -57,7 +60,7 @@ function runCli(dir, key, params, outName) {
   const r = spawnSync(NODE_BIN, args, {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
   });
   return {
     status: r.status,

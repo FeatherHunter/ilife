@@ -7,6 +7,10 @@ import { buildSimTargetDoc, buildCalorieGoalDoc, buildCalorieDeficitDoc, buildCa
 import { foldedTable, tableOf } from '../dist/analysis/reportDocParts.js';
 import { lineOf } from '../dist/analysis/reportDocParts.js';
 import { buildReportDoc } from '../dist/analysis/reportDoc.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 function series90() {
   const out = [];

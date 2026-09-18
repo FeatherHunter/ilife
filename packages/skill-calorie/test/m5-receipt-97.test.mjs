@@ -21,6 +21,9 @@ import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { SCENARIOS as PROBE_SCENARIOS, checkM5 } from '../../../docs/research/t97-probe-receipts.mjs';
 import { DECLARED_WRITE_KEYS } from './declared.mjs';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -61,7 +64,7 @@ function mkEnv() {
   const db = openDb(join(dir, 'calorie_data.db'));
   seedDb(db);
   db.close();
-  return { dir, photosDir, src, env: { CALORIE_PHOTOS_DIR: photosDir } };
+  return { dir, photosDir, src, photos: photosDir };
 }
 
 function run(key, params, env) {
@@ -72,7 +75,9 @@ function run(key, params, env) {
 /** 跑一个探针场景（pre 前置写 → 被测键），返回被测键的 envelope 与上下文。 */
 function runScenario(sc) {
   const ctx = mkEnv();
-  const localEnv = { SKILLS_DB_PATH: ctx.dir, ...ctx.env };
+  // 照片目录写进**配置**（配置文件是唯一真相）：`mkEnv` 的 `photos` 给了就带上。
+  const cfg = calorieConfigDir(ctx.dir, ctx.photos ? { photos: { dir: ctx.photos } } : {});
+  const localEnv = { ILIFE_CONFIG_DIR: cfg, ...ctx.env };
   const ids = [];
   for (const [pkey, pparams] of sc.pre ?? []) {
     const r = run(pkey, typeof pparams === 'function' ? pparams(ctx) : pparams, localEnv);
@@ -159,7 +164,7 @@ test('#97 · affectedRows＝库真实行数（只读句柄独立复核，非自�
   {
     const { ctx } = runScenario({ key: 'calorie.diet.add', params: { foodName: '核对', calories: 100, protein: 1, date: '2026-09-07', time: '10:00:00' } });
     const before = countOf(ctx.dir, 'food_log');
-    const r = run('calorie.diet.add', { foodName: '核对2', calories: 100, protein: 1, date: '2026-09-07', time: '10:01:00' }, { SKILLS_DB_PATH: ctx.dir });
+    const r = run('calorie.diet.add', { foodName: '核对2', calories: 100, protein: 1, date: '2026-09-07', time: '10:01:00' }, { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) });
     const rc = JSON.parse(r.stdout).data.receipt;
     assert.equal(rc.affectedRows, 1);
     assert.equal(countOf(ctx.dir, 'food_log') - before, rc.affectedRows);
@@ -167,7 +172,7 @@ test('#97 · affectedRows＝库真实行数（只读句柄独立复核，非自�
   // 条件批量硬删：同日两条一起删 → affectedRows=2
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     for (const t of ['08:00:00', '08:30:00']) {
       const a = run('calorie.diet.add', { foodName: 'a' + t, calories: 1, protein: 1, date: '2026-09-07', time: t }, env);
       assert.equal(a.status, 0, '前置 add exit ' + a.status);
@@ -184,7 +189,7 @@ test('#97 · affectedRows＝库真实行数（只读句柄独立复核，非自�
   // 软删：行仍在库（行数不变），affectedRows 仍计被写行数
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const a = run('calorie.exercise.add', { type: '游泳', calories: 200, date: '2026-09-06' }, env);
     assert.equal(a.status, 0);
     const eid = JSON.parse(a.stdout).data.receipt.recordId;
@@ -200,7 +205,7 @@ test('#97 · affectedRows＝库真实行数（只读句柄独立复核，非自�
   // 下架（软删标志）：1 行
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const a = run('calorie.product.add', { productName: '核对品', calories: 1, protein: 1, fat: 1, carbohydrates: 1, sodium: 1 }, env);
     assert.equal(a.status, 0);
     const pid = JSON.parse(a.stdout).data.receipt.recordId;
@@ -223,7 +228,7 @@ test('#97 · affectedRows＝库真实行数（只读句柄独立复核，非自�
 test('#97 · 重复跳过：affectedRows=0 且写入字段摘要为空（无写入不虚报）', () => {
   const { ctx } = runScenario({ key: 'calorie.diet.add', params: { foodName: '重复项', calories: 200, protein: 35, date: '2026-09-06', time: '12:10:00' } });
   const before = countOf(ctx.dir, 'food_log');
-  const r = run('calorie.diet.add', { foodName: '重复项', calories: 200, protein: 35, date: '2026-09-06', time: '12:10:00' }, { SKILLS_DB_PATH: ctx.dir });
+  const r = run('calorie.diet.add', { foodName: '重复项', calories: 200, protein: 35, date: '2026-09-06', time: '12:10:00' }, { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) });
   assert.equal(r.status, 0);
   const rc = JSON.parse(r.stdout).data.receipt;
   assert.equal(rc.noChange, true);
@@ -245,7 +250,7 @@ test('#97 · P9：stdout 恒为一行 JSON，M5 只落字段不改 stdout 形态
   const { env } = runScenario({ key: 'calorie.weight.log', params: { kg: 70.1, date: '2026-09-06', time: '07:00:00' } });
   assert.equal(env.shape, 'receipt');
   assert.equal(env.data.ok, true);
-  const r = run('calorie.weight.log', { kg: 70.3, date: '2026-09-06', time: '07:05:00' }, { SKILLS_DB_PATH: mkEnv().dir });
+  const r = run('calorie.weight.log', { kg: 70.3, date: '2026-09-06', time: '07:05:00' }, { ILIFE_CONFIG_DIR: calorieConfigDir(mkEnv().dir) });
   assert.equal(r.status, 0);
   assert.equal(r.stdout.trimEnd().split('\n').length, 1, 'stdout 必须一行 JSON');
 });
@@ -266,7 +271,7 @@ function execOn(dir, fn) {
 
 test('#97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 water 不报 water）', () => {
   const ctx = mkEnv();
-  const env = { SKILLS_DB_PATH: ctx.dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
   // 种子 `water_goal` 恰为列默认 2000，先改成可区分的 2300，并给上 weight_goal／goal_deadline
   execOn(ctx.dir, (db) => {
     db.prepare("UPDATE daily_goal SET water_goal = 2300, weight_goal = 68.0, goal_deadline = '2026-12-31' WHERE id = 1").run();
@@ -302,7 +307,7 @@ test('#97 · R-1：goal.set 的 writtenFields ＝ 本次实际 SET 列（不传 
 
 test('#97 · R-3：water.log 重复跳过回传原 id（与 diet.add 同口径，§3.3 record）', () => {
   const ctx = mkEnv();
-  const env = { SKILLS_DB_PATH: ctx.dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
   const p = { ml: 300, date: '2026-09-07', time: '09:00:00' };
   const a = run('calorie.water.log', p, env);
   assert.equal(a.status, 0, 'water.log exit ' + a.status + ' stderr=' + (a.stderr || '').slice(-300));
@@ -323,7 +328,7 @@ test('#97 · R-3：water.log 重复跳过回传原 id（与 diet.add 同口径�
 
 test('#97 · R-3：同值 UPDATE 实测 noChange=false／affectedRows=1（契约 §3.6 措辞锚）', () => {
   const ctx = mkEnv();
-  const env = { SKILLS_DB_PATH: ctx.dir };
+  const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
   const a = run('calorie.weight.log', { kg: 70.4, date: '2026-09-07', time: '07:00:00' }, env);
   assert.equal(a.status, 0);
   const id = JSON.parse(a.stdout).data.receipt.recordId;
@@ -340,7 +345,7 @@ test('#97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS�
   // ① create：diet.add（种子 2 条 food_log → 新 id=3）
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const r = run('calorie.diet.add', { foodName: '独立判定', calories: 210, protein: 12, date: '2026-09-08', time: '12:00:00' }, env);
     assert.equal(r.status, 0, 'diet.add exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-300));
     const e = JSON.parse(r.stdout);
@@ -360,7 +365,7 @@ test('#97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS�
   // ② create（体重）：种子 1 条 weight_log → 新 id=2；bmi／height_cm 为派生列，不入 CLI 摘要（§3.4）
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const r = run('calorie.weight.log', { kg: 71.2, date: '2026-09-08', time: '07:00:00' }, env);
     assert.equal(r.status, 0);
     const rc = JSON.parse(r.stdout).data.receipt;
@@ -374,7 +379,7 @@ test('#97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS�
   // ③ 条件批量硬删：种子 2 条 → affectedRows=2，id 不适用（旧版 id=n/a）
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const r = run('calorie.diet.remove-by-date', { date: '2026-09-05' }, env);
     assert.equal(r.status, 0);
     const rc = JSON.parse(r.stdout).data.receipt;
@@ -390,7 +395,7 @@ test('#97 · 独立判定：四要素逐字对账（不经 checkM5／SCENARIOS�
   // ④ 软删：行仍在库，affectedRows 计被写行数，摘要用库列名（无 CLI 参数）
   {
     const ctx = mkEnv();
-    const env = { SKILLS_DB_PATH: ctx.dir };
+    const env = { ILIFE_CONFIG_DIR: calorieConfigDir(ctx.dir) };
     const a = run('calorie.exercise.add', { type: '独立判定跑', calories: 150, date: '2026-09-08' }, env);
     assert.equal(a.status, 0);
     const eid = JSON.parse(a.stdout).data.receipt.recordId;

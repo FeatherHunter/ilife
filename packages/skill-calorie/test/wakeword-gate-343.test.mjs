@@ -37,6 +37,10 @@ import { test } from 'node:test';
 import { checkWakeWords } from '../scripts/gen-cli.mjs';
 import { loadDecls } from '../scripts/gen-routes.mjs';
 import { REGISTRY } from '../dist/cli/registry.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const PKG = join(import.meta.dirname, '..');
 const SRC = join(PKG, 'src');

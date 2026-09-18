@@ -36,6 +36,9 @@ import { SOURCE_LABELS } from '../dist/kcal.js';
 import { CALIPER_FIELDS, MEASUREMENT_FIELDS } from '../dist/fetch/body.js';
 import { BODY_COMMANDS } from '../dist/body/commands.js';
 import { WIZARD_WRITE_KEYS } from '../dist/body/wizardPlate.js';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -98,7 +101,7 @@ function mkEnv() {
 function run(key, params, dir) {
   assert.ok(dir.startsWith(tmpdir()), 'SKILLS_DB_PATH 必须指向 tmp：' + dir);
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params)], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: '2026-09-14' },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock('2026-09-14') },
   });
   let env = null;
   try { env = JSON.parse(r.stdout); } catch { /* 非 0 时 stdout 未必是 JSON */ }
@@ -128,7 +131,7 @@ function execCommandString(dir, cmd) {
   assert.equal(toks[0], 'calorie-cmd-read', '命令串首个 token 应是出口名：' + cmd);
   assert.ok(toks.length >= 4 && toks[2] === '--params', '命令串应带 `--params` 段：' + cmd);
   const r = spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: '2026-09-14' },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock('2026-09-14') },
   });
   return { status: r.status, stdout: String(r.stdout || ''), stderr: String(r.stderr || '') };
 }
@@ -297,7 +300,7 @@ test('#366 裁定1：皮褶钳模式体脂率带 readonly；非皮褶钳来源�
 test('#366 裁定1：命令行直传 calorie.body.composition-add 维持放行（与 #358 一致）', () => {
   const dir = mkEnv();
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.body.composition-add', '--params', JSON.stringify({ source: 'gym', bodyFatPct: 18.5 })], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
   assert.equal(r.status, 0, '直传放行未被拦：' + String(r.stderr || '').slice(-300));
   const db = openDb(join(dir, DB_FILE));

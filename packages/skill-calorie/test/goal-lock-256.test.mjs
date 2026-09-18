@@ -38,6 +38,9 @@ import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { after, test } from 'node:test';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -143,7 +146,7 @@ function runCli(template, c, anchor) {
   argv.push('--html', out);
   const r = spawnSync(NODE_BIN, argv, {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: runDir, CALORIE_TODAY: day, FAKE_NOW_ISO: day + 'T00:00:00' },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir), NODE_OPTIONS: freezeClock(day).NODE_OPTIONS, FAKE_NOW_ISO: day + 'T00:00:00' },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout || '').trim()); } catch { env = null; }
@@ -370,7 +373,7 @@ function runEmpty(tag, key, params) {
   argv.push('--html', out);
   const r = spawnSync(NODE_BIN, argv, {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: SEED_TODAY, FAKE_NOW_ISO: FAKE_NOW },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), NODE_OPTIONS: freezeClock(SEED_TODAY).NODE_OPTIONS, FAKE_NOW_ISO: FAKE_NOW },
   });
   return { exit: r.status, stderr: String(r.stderr || '').trim(), outPath: out, dbDir: dir, file: existsSync(out) ? readFileSync(out, 'utf8') : null };
 }
@@ -386,7 +389,7 @@ function runNoProfile(tag, wake) {
   const r = spawnSync(NODE_BIN, ['--require', PRELOAD, BIN, 'calorie.view.goal-wizard', '--params',
     JSON.stringify({ profile: 'cut', wake }), '--html', out], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: SEED_TODAY, FAKE_NOW_ISO: FAKE_NOW },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), NODE_OPTIONS: freezeClock(SEED_TODAY).NODE_OPTIONS, FAKE_NOW_ISO: FAKE_NOW },
   });
   return { exit: r.status, stderr: String(r.stderr || '').trim(), outPath: out, dbDir: dir, file: existsSync(out) ? readFileSync(out, 'utf8') : null };
 }

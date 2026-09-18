@@ -2,8 +2,9 @@
  *
  * 一律挡板：**不许打真实训记接口**（真机联调另开票），**不许用真 KEY**
  * （全串永不进仓：测试只用 `FAKE-610-*` 假串，且断言全串不出读数）。
- * 传输／KEY／计划来源／四步／PowerShell／状态文件全从注入缝进；
- * `dist/xunji/cli.js` 只测无网路的拒收路径。
+ * 传输／计划来源／四步／状态文件全从注入缝进；KEY 的唯一真相是**配置文件**里的 `xunji.key`
+ * （#676：读两个环境变量与写用户级系统环境变量都已删），故 KEY 相关的用例走 `ILIFE_CONFIG_DIR`
+ * 指到临时配置目录。`dist/xunji/cli.js` 只测无网路的拒收路径。
  *
  * 四点票面验收（各有独立用例）：
  * ① 无 KEY 退 2（key status／overlay-plan／run-sync 推送步三处）；
@@ -14,10 +15,11 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { calorieConfigDir } from './helpers/config-test.mjs';
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -30,17 +32,18 @@ const tmp = (name) => {
   return dir;
 };
 
-/** 去掉两个 KEY 名的环境表（CLI 子进程用；真 KEY 永不进测试进程）。 */
-function scrubbedEnv() {
-  const env = { ...process.env };
-  delete env.XUNJI_TRAINS_KEY;
-  delete env.XUNJI_API_KEY;
-  return env;
+// 进程内调用也要有隔离基座：训记状态文件的缺省落点会读配置（#676），没设 ILIFE_CONFIG_DIR 即响亮报错。
+process.env.ILIFE_CONFIG_DIR = calorieConfigDir(mkdtempSync(join(tmpdir(), 't610-base-')));
+
+/** 一份临时配置目录（KEY 存在这里的 `calorie.yaml` 里；不给 key 即「没配」）。 */
+function cfgDir(name, key) {
+  const dir = tmp(name);
+  return calorieConfigDir(dir, key === undefined ? {} : { xunji: { key } });
 }
 
-function cli(args) {
+function cli(args, env = {}) {
   try {
-    const stdout = execFileSync(NODE_BIN, [CLI, ...args], { encoding: 'utf8', stdio: 'pipe', env: scrubbedEnv() });
+    const stdout = execFileSync(NODE_BIN, [CLI, ...args], { encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env } });
     return { code: 0, stdout, stderr: '' };
   } catch (e) {
     return { code: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '') };
@@ -95,23 +98,19 @@ describe('#610 密钥与编排', () => {
   });
 
   it('① 无 KEY 退 2：key status（配了退 0）', async () => {
-    const savedPrimary = process.env.XUNJI_TRAINS_KEY;
-    const savedLegacy = process.env.XUNJI_API_KEY;
+    const saved = process.env.ILIFE_CONFIG_DIR;
     try {
-      delete process.env.XUNJI_TRAINS_KEY;
-      delete process.env.XUNJI_API_KEY;
+      process.env.ILIFE_CONFIG_DIR = cfgDir('nokey');
       const missing = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(missing.code, 2, JSON.stringify(missing.data));
       assert.match(missing.message, /未配置训记 KEY/);
-      process.env.XUNJI_TRAINS_KEY = FAKE_KEY;
+      process.env.ILIFE_CONFIG_DIR = cfgDir('withkey', FAKE_KEY);
       const present = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(present.code, 0, JSON.stringify(present.data));
       assert.match(present.message, /KEY 已配置/);
     } finally {
-      if (savedPrimary === undefined) delete process.env.XUNJI_TRAINS_KEY;
-      else process.env.XUNJI_TRAINS_KEY = savedPrimary;
-      if (savedLegacy === undefined) delete process.env.XUNJI_API_KEY;
-      else process.env.XUNJI_API_KEY = savedLegacy;
+      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
+      else process.env.ILIFE_CONFIG_DIR = saved;
     }
   });
 
@@ -146,11 +145,9 @@ describe('#610 密钥与编排', () => {
   });
 
   it('② status 不回显全串：只回前 4＋末 2；短串只回星号', async () => {
-    const savedPrimary = process.env.XUNJI_TRAINS_KEY;
-    const savedLegacy = process.env.XUNJI_API_KEY;
+    const saved = process.env.ILIFE_CONFIG_DIR;
     try {
-      delete process.env.XUNJI_API_KEY;
-      process.env.XUNJI_TRAINS_KEY = FAKE_KEY;
+      process.env.ILIFE_CONFIG_DIR = cfgDir('preview', FAKE_KEY);
       const run = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(run.code, 0);
       assert.equal(run.data.active_key_preview, FAKE_PREVIEW);
@@ -160,46 +157,54 @@ describe('#610 密钥与编排', () => {
       assert.equal(keyMod.previewKey('ABC'), '***', '短串公式会漏全串，只许回星号');
       assert.equal(keyMod.previewKey(''), null);
     } finally {
-      if (savedPrimary === undefined) delete process.env.XUNJI_TRAINS_KEY;
-      else process.env.XUNJI_TRAINS_KEY = savedPrimary;
-      if (savedLegacy === undefined) delete process.env.XUNJI_API_KEY;
-      else process.env.XUNJI_API_KEY = savedLegacy;
+      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
+      else process.env.ILIFE_CONFIG_DIR = saved;
     }
   });
 
-  it('key set／clear 走挡板 PowerShell：写 HKCU 名＋值走 base64（原文不进命令）', async () => {
-    const commands = [];
-    const fakeEnv = {};
-    const store = { env: fakeEnv, execPs: async (c) => { commands.push(c); } };
-    const setRun = await runMod.runXunjiCommand(['key', 'set', 'K-610-SET-SECRET-XYZ'], { keyStore: store });
-    assert.equal(setRun.code, 0, JSON.stringify(setRun.data));
-    assert.equal(fakeEnv.XUNJI_TRAINS_KEY, 'K-610-SET-SECRET-XYZ', 'set 完当进程同步');
-    assert.equal(commands.length, 1);
-    assert.ok(commands[0].includes('XUNJI_TRAINS_KEY'), commands[0]);
-    assert.ok(commands[0].includes(Buffer.from('K-610-SET-SECRET-XYZ', 'utf8').toString('base64')), '值必须走 base64');
-    assert.ok(!commands[0].includes('K-610-SET-SECRET-XYZ'), '原文不许进 PowerShell 命令');
-    const clearRun = await runMod.runXunjiCommand(['key', 'clear'], { keyStore: store });
-    assert.equal(clearRun.code, 0);
-    assert.equal(clearRun.data.had, true);
-    assert.ok(!('XUNJI_TRAINS_KEY' in fakeEnv), 'clear 删当进程');
-    const clearAgain = await runMod.runXunjiCommand(['key', 'clear'], { keyStore: store });
-    assert.equal(clearAgain.code, 0, '本来没设即幂等成功');
-    assert.equal(clearAgain.data.had, false);
+  it('key set／clear 写配置文件（不再写用户级系统环境变量）：下一次读即生效', async () => {
+    const saved = process.env.ILIFE_CONFIG_DIR;
+    try {
+      const dir = cfgDir('setclear');
+      process.env.ILIFE_CONFIG_DIR = dir;
+      const setRun = await runMod.runXunjiCommand(['key', 'set', 'K-610-SET-SECRET-XYZ']);
+      assert.equal(setRun.code, 0, JSON.stringify(setRun.data));
+      const onDisk = readFileSync(join(dir, 'calorie.yaml'), 'utf8');
+      assert.ok(onDisk.includes('K-610-SET-SECRET-XYZ'), 'KEY 没写进配置文件：' + onDisk);
+      const status = await runMod.runXunjiCommand(['key', 'status']);
+      assert.equal(status.code, 0, '写完当次调用即读得到（存了不生效是裁定点名的反例）');
+      assert.ok(!JSON.stringify(status.data).includes('K-610-SET-SECRET-XYZ'), '读数里出现全串');
+      const clearRun = await runMod.runXunjiCommand(['key', 'clear']);
+      assert.equal(clearRun.code, 0);
+      assert.equal(clearRun.data.had, true);
+      assert.ok(!readFileSync(join(dir, 'calorie.yaml'), 'utf8').includes('K-610-SET-SECRET-XYZ'), 'clear 没把配置里的 KEY 抹掉');
+      const clearAgain = await runMod.runXunjiCommand(['key', 'clear']);
+      assert.equal(clearAgain.code, 0, '本来没设即幂等成功');
+      assert.equal(clearAgain.data.had, false);
+    } finally {
+      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
+      else process.env.ILIFE_CONFIG_DIR = saved;
+    }
   });
 
-  it('key 用法错退 1：set 缺值／空值／子动作非法；写失败退 1', async () => {
-    const store = { env: {}, execPs: async () => {} };
-    assert.equal((await runMod.runXunjiCommand(['key', 'set'], { keyStore: store })).code, 1);
-    assert.equal((await runMod.runXunjiCommand(['key', 'set', '   '], { keyStore: store })).code, 1);
-    assert.equal((await runMod.runXunjiCommand(['key', 'explode'], { keyStore: store })).code, 1);
-    const failing = { env: {}, execPs: async () => { throw new Error('ps 炸了'); } };
-    const setFail = await runMod.runXunjiCommand(['key', 'set', 'K-610-X'], { keyStore: failing });
-    assert.equal(setFail.code, 1);
-    assert.match(setFail.message, /写入系统环境失败/);
-    const legacyStore = { env: {}, execPs: async () => {} };
-    const legacySet = await runMod.runXunjiCommand(['key', 'set', 'K-610-L', '--legacy'], { keyStore: legacyStore });
-    assert.equal(legacySet.code, 0);
-    assert.equal(legacyStore.env.XUNJI_API_KEY, 'K-610-L', '--legacy 写兼容名');
+  it('key 用法错退 1：set 缺值／空值／子动作非法；写配置失败退 1', async () => {
+    const saved = process.env.ILIFE_CONFIG_DIR;
+    try {
+      process.env.ILIFE_CONFIG_DIR = cfgDir('badusage');
+      assert.equal((await runMod.runXunjiCommand(['key', 'set'])).code, 1);
+      assert.equal((await runMod.runXunjiCommand(['key', 'set', '   '])).code, 1);
+      assert.equal((await runMod.runXunjiCommand(['key', 'explode'])).code, 1);
+      // 写失败：配置文件里有个不认识的键 ⇒ 读配置即抛 ⇒ 写回去失败（人话交回，不静默）。
+      const broken = cfgDir('brokencfg');
+      writeFileSync(join(broken, 'calorie.yaml'), 'db:\n  dir: ""\nxunji:\n  key: "K-610-X"\n  noSuchKey: 1\n', 'utf8');
+      process.env.ILIFE_CONFIG_DIR = broken;
+      const setFail = await runMod.runXunjiCommand(['key', 'set', 'K-610-X']);
+      assert.equal(setFail.code, 1);
+      assert.match(setFail.message, /写配置文件失败/);
+    } finally {
+      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
+      else process.env.ILIFE_CONFIG_DIR = saved;
+    }
   });
 
   it('③ run-sync 推送失败即非 0 且点名：后步不跑（回写 0 次）', async () => {
@@ -336,16 +341,17 @@ describe('#610 密钥与编排', () => {
   });
 
   it('CLI 拒收路径无网路：key 非法子动作／overlay 缺参／run-sync 坏天数一律退 1', () => {
-    const badAction = cli(['key', 'explode']);
+    const cfg = cfgDir('cli-nokey');
+    const badAction = cli(['key', 'explode'], { ILIFE_CONFIG_DIR: cfg });
     assert.equal(badAction.code, 1);
     assert.match(badAction.stderr, /status\|set\|clear/);
-    const noDate = cli(['overlay-plan']);
+    const noDate = cli(['overlay-plan'], { ILIFE_CONFIG_DIR: cfg });
     assert.equal(noDate.code, 1);
     assert.match(noDate.stderr, /缺参数：--date/);
-    const badDays = cli(['run-sync', '--days', '0']);
+    const badDays = cli(['run-sync', '--days', '0'], { ILIFE_CONFIG_DIR: cfg });
     assert.equal(badDays.code, 1);
     assert.match(badDays.stderr, /天数须为/);
-    const noKey = cli(['key', 'status']);
+    const noKey = cli(['key', 'status'], { ILIFE_CONFIG_DIR: cfg });
     assert.equal(noKey.code, 2, 'CLI 无 KEY 同样退 2');
   });
 });

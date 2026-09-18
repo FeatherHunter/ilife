@@ -17,6 +17,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -325,7 +328,7 @@ describe('#607 推送链', () => {
       '上肢', JSON.stringify([{ name: '俯卧撑', sets: [{ reps: 10, weight: 0, unit: '自重' }] }]),
     );
     db.close();
-    const run = cli(['push-plan', '--date', '2026-07-13', '--dry-run'], { SKILLS_DB_PATH: dir });
+    const run = cli(['push-plan', '--date', '2026-07-13', '--dry-run'], { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
     assert.equal(run.code, 0, run.stderr + run.stdout);
     const data = JSON.parse(run.stdout);
     assert.equal(data.session_count, 1);

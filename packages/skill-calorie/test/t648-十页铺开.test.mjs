@@ -27,6 +27,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -44,7 +47,7 @@ function render(key, params) {
   const out = join(dir, 't648-out.html');
   const r = spawnSync(process.execPath, [CLI, key, '--params', JSON.stringify(params), '--html', out], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_TODAY: SEED_TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(SEED_TODAY) },
   });
   assert.equal(r.status, 0, key + ' 真跑失败：exit=' + r.status + ' :: ' + String(r.stderr).slice(0, 300));
   const html = readFileSync(out, 'utf8');

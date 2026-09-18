@@ -7,6 +7,10 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { buildReportDoc } from '../dist/analysis/reportDoc.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const SERIES = [
   { date: '2026-09-01', calories: 1700, weightKg: 74.0, protein: 120, waterMl: 1800, exerciseKcal: 300, deficit: 400 },

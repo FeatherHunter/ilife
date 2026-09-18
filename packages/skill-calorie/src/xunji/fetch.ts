@@ -6,20 +6,19 @@
  * - 超时缺省 30 秒（老 `:47` 的 `timeout=30`），超时走 `network` 进重试（老 `:107-110`）；
  * - 重试 `max_retries=2`（老 `:113`），分类与退避走 `retry.ts`（软错误同判，老 `:94-101`）；
  * - 限频档 `full=30s／light=15s`（老 `auth.py:42-44`），缺省**不守**（老 `:47` 缺省关）；
- *   开关打开时才看状态文件 `~/.mavis/xunji_bridge_rate.json`（老 `:40` 同路径同键名）；
+ *   开关打开时才看状态文件 `<状态目录>/xunji_bridge_rate.json`（老 `:40` 同件名；目录＝配置 `xunji.stateDir`）；
  * - 无 KEY 直接失败（老 `:66` 的 `require_key` 抛错位），不调网、不重试；
  * - `attempts > 1` 才回写（老 `:114-115`）；
  * - 响应 `gzip` 由运行时自动解（Node 全局 fetch 缺省解压；老 `:89-90` 手工解是 urllib 才要的）。
  *
- * KEY 口径暂住 `upsert.ts`（`XUNJI_KEY_ENV`＋`readKeyFromEnv`；实现归 #610 的 `key.ts`）。
- */
+ * #676 · KEY 口径住 `key.ts`（配置文件里的 `xunji.key`；环境变量读取已删）。 */
 
-import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { classifyStatusBody, classifyThrown, retryWithBackoff, softFailureOf } from './retry.js';
 import type { XunjiCallOutcome } from './retry.js';
-import { XUNJI_KEY_ENV, readKeyFromEnv } from './upsert.js';
+import { xunjiStateDir } from './rateLimit.js';
+import { readKey } from './key.js';
 import type { UpsertTransport } from './upsert.js';
 
 /** 拉取接口地址（老 `fetch.py:43-44` 同值；全模块只此一处）。 */
@@ -28,9 +27,9 @@ export const XUNJI_FETCH_ENDPOINT = 'https://trains.xunjiapp.cn/api_trains_for_l
 /** 拉取限频两档（秒；老 `auth.py:42-44` 同值；全模块只此一处，别处引用）。 */
 export const FETCH_RATE_LIMIT_SECONDS = { full: 30, light: 15 } as const;
 
-/** 缺省限频状态文件（老 `auth.py:40` 同路径；与推送侧 `xunji_push_rate.json` 分开）。 */
+/** 缺省限频状态文件（老 `auth.py:40` 同件名，目录＝`xunjiStateDir()`；与推送侧 `xunji_push_rate.json` 分开）。 */
 export function defaultFetchRateLimitPath(): string {
-  return join(homedir(), '.mavis', 'xunji_bridge_rate.json');
+  return join(xunjiStateDir(), 'xunji_bridge_rate.json');
 }
 
 /** `fetchTrains` 的可注入件（测试挡板从这里进；生产全缺省）。 */
@@ -106,14 +105,13 @@ export async function fetchTrains(dateStr: string, opts: FetchOptions = {}): Pro
     const since = secondsSince(statePath, full, now());
     if (since !== null && since < threshold) await sleep((threshold - since) * 1000);
   }
-  const key = opts.key !== undefined && opts.key !== null && opts.key !== '' ? opts.key : (opts.readKey ?? readKeyFromEnv)();
+  const key = opts.key !== undefined && opts.key !== null && opts.key !== '' ? opts.key : (opts.readKey ?? readKey)();
   if (key === null || key === '') {
     return {
       ok: false,
       failure: {
         error_type: 'auth',
-        message:
-          '未配置训记 KEY（权威名 ' + XUNJI_KEY_ENV.primary + '，兼容名 ' + XUNJI_KEY_ENV.legacy + '；用 key set 设置，归 #610）',
+        message: '未配置训记 KEY（配置文件里的 xunji.key；用 key set <KEY> 写进去）',
         retry_after: null,
         raw_body: null,
         code: null,

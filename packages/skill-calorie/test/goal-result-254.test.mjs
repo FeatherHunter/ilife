@@ -35,6 +35,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { seedFull, SEED_TODAY } from '../../../docs/research/t81-seed.mjs';
 import { machineWords } from './visible-text-probe.mjs';
+import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -111,15 +114,17 @@ function mkTemplate() {
   return dir;
 }
 
-/** 真 CLI 跑一件：每件一个独立库副本（同 `t81-seed` 的 harness 口径）。 */
-function runCli(templateDir, name, key, params) {
+/** 真 CLI 跑一件：每件一个独立库副本（同 `t81-seed` 的 harness 口径）。
+ *  `noClock: true` 那一趟**不钉钟**（给「无参 ⇒ 取机器钟」那条用例留真实时钟）。 */
+function runCli(templateDir, name, key, params, noClock = false) {
   const runDir = join(templateDir, name);
   mkdirSync(runDir, { recursive: true });
   copyFileSync(join(templateDir, DB_FILENAME), join(runDir, DB_FILENAME));
   const out = join(runDir, name + '.html');
+  const clock = noClock ? { NODE_OPTIONS: '', FAKE_NOW_ISO: '' } : freezeClock(SEED_TODAY);
   const r = spawnSync(process.execPath, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: runDir, CALORIE_TODAY: SEED_TODAY },
+    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir), ...clock },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout || '').trim()); } catch { env = null; }
@@ -193,7 +198,7 @@ test('#254 ⑥ 无参随机器钟：daysLeft ＝ 截止日 − 机器今天（�
    * 「无参 ⇒ 取机器钟」那一支。出处：`src/goal/goalExtraPlate.ts:42` 逐字
    * `const t = today ?? new Date().toISOString().slice(0, 10);`——本命令的「今天」只认入参 `today`，
    * **不读** `CALORIE_TODAY`（同仓另注：`goal-weight-deadline-548.test.mjs:124`）。 */
-  const r = runCli(tpl, 'expiring-machine-clock', 'calorie.view.goal-expiring', {});
+  const r = runCli(tpl, 'expiring-machine-clock', 'calorie.view.goal-expiring', {}, true);
   assert.equal(r.status, 0, '无参 expiring 应 exit 0，实测 ' + r.status + '（stderr：' + r.stderr.slice(0, 200) + '）');
   /* 期望值＝**形态**（不写死数字）：截止日取种子库那一条（`SEED_DEADLINE`，出处见其定义处），
    * 机器今天取与实现同一套 ISO 日期（`src/goal/goalExtraPlate.ts:42`），差值算式同实现

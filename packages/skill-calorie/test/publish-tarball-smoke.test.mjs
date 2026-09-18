@@ -32,6 +32,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skillDir = join(here, '..');
@@ -156,7 +159,7 @@ test('S1-② 发布包体干净安装：calorie.help.center exit 0', { timeout: 
     const r = spawnSync(
       NODE,
       [cli, CONTRACT_KEY, '--params', '{}'],
-      { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } },
+      { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(db) } },
     );
     assert.equal(r.status, 0, `安装态 ${CONTRACT_KEY} exit=${r.status}：${(r.stderr || '').slice(-800)}`);
     let env;

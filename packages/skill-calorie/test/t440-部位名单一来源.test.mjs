@@ -29,6 +29,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../dist/fetch/body.js';
 import { WIZARD_MEASURE_CAMEL, WIZARD_MEASURE_LABELS } from '../dist/body/wizardPlate.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -110,7 +113,7 @@ function mkTmpDb() {
 
 function runCli(args, dir) {
   return spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
   });
 }
 

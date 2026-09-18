@@ -11,6 +11,10 @@ import {
   TABLE_DDLS, initDb, openDb, listUserTables, applyMigrations,
   resolveDbDir, assertWritablePath, round2, isClean,
 } from '../dist/index.js';
+// #676 · 隔离基座：配置目录指到临时目录（`ILIFE_CONFIG_DIR`），缺了就响亮报错。
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const tmpDb = (name) => join(mkdtempSync(join(tmpdir(), 't20-')), name);
 const EXPECTED_TABLES = Object.keys(TABLE_DDLS).sort();
@@ -100,11 +104,15 @@ test('触发器：非法 activity_level 与空围度被阻断', () => {
   db.close();
 });
 
-test('路径守卫：缺 env 抛错；非 tmp 无 opt-in 拒绝；tmp 放行', () => {
-  delete process.env.SKILLS_DB_PATH;
-  assert.throws(() => resolveDbDir(), /SKILLS_DB_PATH/);
-  delete process.env.CALORIE_FORCE_PROD;
-  assert.throws(() => assertWritablePath('D:/.db/calorie_data.db'), /CALORIE_FORCE_PROD/);
+test('路径守卫：配置缺项即按默认数据目录；非 tmp 一律拒绝；tmp 放行', () => {
+  // #676：库落点的唯一真相是配置文件（`values.db.dir`，空＝配置数据目录），环境变量读取已删。
+  // 隔离口＝`ILIFE_CONFIG_DIR`（`base-link-core` 的配置目录覆盖），缺了它测试里直接响亮报错。
+  const dir = mkdtempSync(join(tmpdir(), 'db-guard-'));
+  calorieConfigDir(dir);
+  assert.equal(resolveDbDir(), dir, '配置里 db.dir 非空即用它');
+  calorieConfigDir(join(dir, 'no-db-dir'), { db: { dir: '' } });
+  assert.equal(resolveDbDir(), join(dir, 'no-db-dir', 'data'), 'db.dir 空串＝按默认数据目录落');
+  assert.throws(() => assertWritablePath('D:/.db/calorie_data.db'), /非 tmp 路径/);
   const p = tmpDb('ok.db');
   assertWritablePath(p); // 不抛
   const db = openDb(p);

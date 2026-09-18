@@ -17,6 +17,10 @@ import { buildLongTrendView } from '../dist/render/trendMiscPort.js';
 import { buildCalorieTrendDoc, buildLongTrendDoc } from '../dist/render/trendMiscPortDocs.js';
 import { buildMultiTrendView } from '../dist/analysis/multiTrend.js';
 import { buildMultiTrendDoc } from '../dist/analysis/multiTrendPage.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 // 日合计：09-01:650 09-02:500 09-05:650 09-06:850 09-07:1189（合计 3839）
 const MEALS = [

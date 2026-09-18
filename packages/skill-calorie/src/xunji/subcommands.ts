@@ -141,12 +141,11 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
   },
   {
     name: 'key',
-    does: 'KEY 管理（看状态／写入／清除）',
-    usage: 'xunji key status|set|clear [--legacy]',
+    does: 'KEY 管理（看状态／写入／清除）——KEY 存在配置文件里（#676）',
+    usage: 'xunji key status|set|clear',
     args: [
       { flag: '<子动作>', value: 'status|set|clear', required: true, note: '要做的那一步' },
       { flag: '<KEY 值>', value: 'KEY 值', required: false, note: '只有 `key set` 要给（不回显、不进仓）' },
-      { flag: '--legacy', value: '', required: false, note: '操作兼容名 XUNJI_API_KEY（默认操作 XUNJI_TRAINS_KEY）' },
     ],
     exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error, XUNJI_EXIT_CODES.auth],
     example: 'python scripts/xunji_bridge.py key status',

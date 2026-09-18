@@ -25,6 +25,10 @@ import {
 // 本件取值语句一字未动，只把 import 路径换成正本件。
 import { ALL_ROUTES } from '../dist/triggers/routes.generated.js';
 import { SCENE_06_GOAL } from '../dist/triggers/scene-06-goal.js';
+import { configTestBase } from './helpers/config-test.mjs';
+
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const FROZEN = SCENE_06_GOAL.map((t) => t.wake_word);
 

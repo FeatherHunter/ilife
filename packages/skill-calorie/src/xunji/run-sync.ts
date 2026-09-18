@@ -4,8 +4,8 @@
  * - 四步顺序固定（老 `sync_plan.py:329-332`）：补计划（飞书日历）→ 记心愿（飞书 task）→
  *   推送（串行 N 天 `push-plan`，45 秒限频）→ 回写（一次 `backfill --days N`）；
  * - 天数缺省 3、起始偏移缺省 0（今天）、`dry-run` 只建状态文件不实际跑（老 `run_sync.py:168-175`）；
- * - 状态文件与老同路径同写法（`~/.mavis/xunji_bridge_sync_state.json`，原子写，
- *   供外部轮询；老 `run_sync.py:32／52-58`）；
+ * - 状态文件与老同件名同写法（`<状态目录>/xunji_bridge_sync_state.json`，目录＝配置 `xunji.stateDir`，
+ *   空＝`~/.mavis`；原子写，供外部轮询；老 `run_sync.py:32／52-58`）；
  * - 推送逐天记结果、回写记汇总（老 `:184-190／:221-225` 的摘要形状）。
  *
  * 修掉的老缺陷（不照抄）：老 `run_sync.py` 只在超时／抛错时判失败，子进程的 rc
@@ -18,11 +18,11 @@
  * `skipped` 不算失败；#614 接线后由调用方注入真实现（见证据件过渡债务 R3）。
  */
 
-import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { backfillRange, todayLocalISO } from './backfill.js';
 import type { BackfillDeps } from './backfill.js';
+import { xunjiStateDir } from './rateLimit.js';
 import { pushDayPlan } from './push.js';
 import type { PushDayDeps, PushDaySummary } from './push.js';
 import { resolveDayPlan } from './planSource.js';
@@ -111,9 +111,9 @@ export interface RunSyncState {
   readonly failed_code: 1 | 2 | 3 | null;
 }
 
-/** 缺省状态文件（老 `run_sync.py:32` 同路径；外部轮询读它）。 */
+/** 缺省状态文件（老 `run_sync.py:32` 同件名；目录＝`xunjiStateDir()`，外部轮询读它）。 */
 export function defaultRunSyncStatePath(): string {
-  return join(homedir(), '.mavis', 'xunji_bridge_sync_state.json');
+  return join(xunjiStateDir(), 'xunji_bridge_sync_state.json');
 }
 
 function nowISO(): string {

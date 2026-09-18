@@ -12,6 +12,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { DB_FILENAME } from '../dist/paths.js';
+import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
+process.env.ILIFE_CONFIG_DIR = configTestBase();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const CLI = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -103,7 +106,7 @@ test('#41 M3：真 CLI 串行冒烟 18 新键（exit 0 + envelope stat + --html 
   for (const [key, params] of CASES) {
     const html = join(dir, String(key).replace(/[^a-z0-9]+/gi, '_') + '.html');
     const r = spawnSync(NODE, [CLI, key, '--params', JSON.stringify(params), '--html', html], {
-      env: { ...process.env, SKILLS_DB_PATH: dir },
+      env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
       encoding: 'utf8',
     });
     assert.equal(r.status, 0, key + ' exit=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 500));

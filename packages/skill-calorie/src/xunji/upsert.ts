@@ -11,19 +11,19 @@
  * - 响应 `gzip` 由运行时自动解（Node 全局 fetch 缺省解压；老 `:112-114` 手工解是 urllib 才要的）。
  *
  * KEY 口径（只读参照 `auth.py:35-55`；**定义住 `key.ts`**，本件只薄转出保既有引用不断）：
- * - 缺省读环境变量：`XUNJI_TRAINS_KEY` 优先，空时回退 `XUNJI_API_KEY`（老 `get_key` 同序）；
+ * - 缺省读**配置文件**里的 `xunji.key`（#676：环境变量读取已删，见 `key.ts` 件头）；
  * - 调用方可显式传 `key` 或换 `readKey`（测试挡板从这里进；真 KEY 永不进仓）。
  */
 
 import { randomUUID } from 'node:crypto';
 import { buildUpsertPayload } from './request.js';
 import type { XunjiResItem } from './request.js';
-import { XUNJI_KEY_ENV, readKeyFromEnv } from './key.js';
+import { XUNJI_KEY_FIELD, readKey } from './key.js';
 import { classifyStatusBody, classifyThrown, retryWithBackoff, softFailureOf } from './retry.js';
 import type { XunjiCallOutcome, XunjiFailure } from './retry.js';
 
-/** KEY 两名＋缺省读法薄转出（定义见 `key.ts`；`fetch.ts` 经由本件不断）。 */
-export { XUNJI_KEY_ENV, readKeyFromEnv };
+/** KEY 落点名＋缺省读法薄转出（定义见 `key.ts`）。 */
+export { XUNJI_KEY_FIELD, readKey };
 
 /** upsert 接口地址（老 `upsert.py:53-54` 同值；全模块只此一处）。 */
 export const XUNJI_UPSERT_ENDPOINT = 'https://trains.xunjiapp.cn/api_upsert_trains_for_llm_v2';
@@ -74,8 +74,7 @@ export type UpsertOutcome = XunjiCallOutcome;
 function authMissing(): UpsertOutcome {
   const failure: XunjiFailure = {
     error_type: 'auth',
-    message:
-      '未配置训记 KEY（权威名 ' + XUNJI_KEY_ENV.primary + '，兼容名 ' + XUNJI_KEY_ENV.legacy + '；用 key set 设置，归 #610）',
+    message: '未配置训记 KEY（配置项 ' + XUNJI_KEY_FIELD + '；用 key set <KEY> 写进配置文件）',
     retry_after: null,
     raw_body: null,
     code: null,
@@ -94,7 +93,7 @@ export async function upsertTrains(resList: readonly XunjiResItem[], opts: Upser
       attempts: 0,
     };
   }
-  const key = opts.key !== undefined && opts.key !== null && opts.key !== '' ? opts.key : (opts.readKey ?? readKeyFromEnv)();
+  const key = opts.key !== undefined && opts.key !== null && opts.key !== '' ? opts.key : (opts.readKey ?? readKey)();
   if (key === null || key === '') return authMissing();
   const transport = opts.transport ?? defaultTransport;
   const timeoutMs = opts.timeoutMs ?? 30000;
