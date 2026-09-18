@@ -65,6 +65,13 @@ function isAttention(status: HealthStatus): boolean {
   return status === 'red' || status === 'yellow';
 }
 
+/** 「去哪修」那一行的正文：各家交回来的 action 里若已自带「去哪修：」，这里剥掉一层——
+ *  面板已经带了这个前缀，两边都写就会印成「去哪修：去哪修：…」。只剥开头那一次，别的一字不动。 */
+export function actionText(action: string): string {
+  const trimmed = action.trim();
+  return trimmed.startsWith('去哪修：') ? trimmed.slice(4).trim() : trimmed;
+}
+
 /** 一盏灯：一家一名一档（数到几个红黄绿）。点一下把面板切到那家的页签。 */
 export interface HealthLightRow {
   readonly id: string;
@@ -242,7 +249,7 @@ export function HealthTable(props: {
               ),
               React.createElement('div', { style: { color: isAttention(item.status) ? INK : INK_DIM } }, item.message),
               item.action.length > 0
-                ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + item.action)
+                ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + actionText(item.action))
                 : null,
             ),
           ),

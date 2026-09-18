@@ -62,5 +62,16 @@ export function useHealthPanel(getCall: () => HealthCallFace | null, tabs: reado
       setRunning(false);
     })();
   }, [getCall, tabs]);
-  return { rows, error, running, run };
+  const face: HealthPanelFace = { rows, error, running, run };
+  // 出图页的取数口（渲染台的 hooks 替身没有真事件环，页内点按钮那条路不落定取数）。
+  // 只在有人预先挂了 `__T706_FACE_SINK__` 时写一次，浏览器里没人挂它，等于没有这一行。
+  const sink = (globalThis as { __T706_FACE_SINK__?: (value: HealthPanelFace) => void }).__T706_FACE_SINK__;
+  if (typeof sink === 'function') {
+    try {
+      sink(face);
+    } catch {
+      /* 出图口的错不影响正经渲染 */
+    }
+  }
+  return face;
 }
