@@ -16,6 +16,9 @@
  * `-recap`（看运动复盘→运动复盘（本周））原来用的是新拟入口词，`-goal` 原来**没有这个字段**（速查表退回列命令键）。
  * `-strength`（看力量训练总览）／`-cardio`（看有氧训练总览）／`-records`（看运动记录（有备注））三条原本就是真词，未动；
  * 票面六行表里 `-strength`／`-cardio` 那两行的新拟词（看力量总览／看有氧总览）住 `routes.ts` 的 `new` 表，不在本文件。
+ *
+ * #703 · 写命令的**信封形状**不写在声明上（写命令一律 `receipt` 形，那件事实的唯一定义地在生成器
+ * `scripts/gen-cli.mjs` 合成的 `cli/keys.ts`）。本能力的写命令没有整页回执，故不挂 `doc:`。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewExerciseCardio } from './cardio.js';
@@ -36,7 +39,7 @@ export const EXERCISE_COMMANDS = [
   { kind: 'read', key: 'calorie.view.exercise-records', shape: 'stat', title: '运动记录', wakeWord: '看运动记录（有备注）', run: viewExerciseRecords, example: 'calorie-cmd-read calorie.view.exercise-records --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.exercise-strength', shape: 'stat', title: '力量训练总览', wakeWord: '看力量训练总览', run: viewExerciseStrength, example: 'calorie-cmd-read calorie.view.exercise-strength --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.exercise-trend', shape: 'stat', title: '运动趋势', wakeWord: '看运动趋势', run: viewExerciseTrend, example: 'calorie-cmd-read calorie.view.exercise-trend --params \'{"window":"7d"}\'' },
-  { kind: 'write', key: 'calorie.exercise.add', shape: 'receipt', title: '记运动', wakeWord: '记运动', run: writeExerciseLog, example: 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'' },
-  { kind: 'write', key: 'calorie.exercise.remove', shape: 'receipt', title: '删运动', wakeWord: '删运动记录', run: writeExerciseRemove, example: 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'' },
-  { kind: 'write', key: 'calorie.exercise.update', shape: 'receipt', title: '改运动', wakeWord: '改运动记录', run: writeExerciseUpdate, example: 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'' },
+  { kind: 'write', key: 'calorie.exercise.add', title: '记运动', wakeWord: '记运动', run: writeExerciseLog, example: 'calorie-cmd-read calorie.exercise.add --params \'{"type":"慢跑","calories":320,"minutes":30}\'' },
+  { kind: 'write', key: 'calorie.exercise.remove', title: '删运动', wakeWord: '删运动记录', run: writeExerciseRemove, example: 'calorie-cmd-read calorie.exercise.remove --params \'{"id":1}\'' },
+  { kind: 'write', key: 'calorie.exercise.update', title: '改运动', wakeWord: '改运动记录', run: writeExerciseUpdate, example: 'calorie-cmd-read calorie.exercise.update --params \'{"id":1,"minutes":40}\'' },
 ] satisfies readonly CommandSpec[];

@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
-import { runBodyView } from '../dist/body/index.js';
+import { dispatch } from '../dist/cli/cmd_read.js';
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't536-')), 't.db'));
 
@@ -54,7 +54,7 @@ const visible = (html) => html
   .replace(/<[^>]*>/g, ' ')
   .replace(/\s+/g, ' ');
 
-const run = (db, key, params) => runBodyView(key, params, db).html;
+const run = (db, key, params) => dispatch(key, params, db).html;
 
 test('#536 对比体脂：页头人话＋期别区间写「至」＋基准行有说明＋接了手机端配方', () => {
   const db = tmpDb();

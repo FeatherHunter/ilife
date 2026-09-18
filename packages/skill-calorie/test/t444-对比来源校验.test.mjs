@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
-import { runBodyView } from '../dist/body/index.js';
+import { dispatch } from '../dist/cli/cmd_read.js';
 import { assertSourceFilter } from '../dist/fetch/body.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -108,7 +108,7 @@ test('#444 口径：三来源＋all 放行，未知来源拒（与 #398 同一�
 
 test('#444 对比体脂未知来源：直调抛错点名未知名与合法值', () => {
   const dir = mkTmpDb();
-  assert.throws(() => withDb(dir, (db) => runBodyView(COMP, { ...P, source: 'nope' }, db)),
+  assert.throws(() => withDb(dir, (db) => dispatch(COMP, { ...P, source: 'nope' }, db)),
     (e) => /未知来源: nope/.test(e.message) && /home_caliper \/ hospital \/ gym/.test(e.message),
     '须点名未知名 nope 与合法值集合');
 });

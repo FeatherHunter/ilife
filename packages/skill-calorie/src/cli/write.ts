@@ -1,20 +1,17 @@
 /** #40 · 卡路里写键分发（单条 CRUD 可执行链）：唯一出口 cmd_read 的写分支（memo.create/update/remove 范式）。
  *
- * 会改数据库的命令一律出整页文档（#253F2 当刻实况：46 条；六个装配口共认 40 条，链外 6 条
- * 各由能力目录自己的实现出整页）：先调现行 fetch 层库函数写库，再用 render/receipt.ts（T10）
+ * 会改数据库的命令一律出整页文档（#253F2 当刻实况：46 条；41 条挂整页回执，另 5 条由能力目录
+ * 自己的实现出整页）：先调现行 fetch 层库函数写库，再用 render/receipt.ts（T10）
  * buildCrudReceipt（照片键用 photo/photo.ts 三回执）组装回执；envelope 数据为
  * { ok: true, message, receipt }（ok/message 过 envelope 全字段，receipt carry T10 形状）。
  * 本文件不写 render/ 新视图、不碰 envelope 键表（#41 边界）；HTML 为 dispatch 内联
- * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）——**唯一例外**是
- * #179 接线的场景 07 三条写入词（设置档案／设活动量／改档案）：它们的回执页换成
- * 能力目录 `src/profile/` 那两页整页装配（见 `profileReceiptDoc`）；
- * #269 接线的饮食 13 条：回执页换成能力目录 `src/diet/receipt.ts` 整页装配；
- * #337 接线的体重 4 条：回执页换成能力目录 `src/weight/receipt.ts` 整页装配。
- * T351 接线的训练计划 10 条：回执页换成能力目录 `src/workout/receipt.ts` 整页装配。
- * #365 接线的身体细节 4 条（覆盖七条写词）：回执页换成能力目录 `src/body/receipt.ts` 整页装配。
- * #253 接线的目标管理 5 条（覆盖十条写词：定／改营养目标、定／改饮水目标、定／改体重目标、
- * 暂停所有目标、重启所有目标）：回执页换成能力目录 `src/goal/receipt.ts` 整页装配（链上第六个装配口）。
- * 其余 6 条（46 − 3 − 14 − 4 − 10 − 4 − 5：calorie.exercise.* 三条、calorie.photo.* 三条）各自由能力目录自己的实现出整页，不经这条链。
+ * receipt 小节（沿 cmd_read history/help 内联先例，不新增模板）——**整页那一路**（#703 起）由
+ * **命令声明**给出的端口决定（`WriteCommandSpec.doc`，住各能力目录的 `commands.ts`）：
+ * #179 档案 3 条／#269 饮食 13 条／#337 体重 4 条／T351 训练计划 10 条／#365 身体细节 4 条
+ * （覆盖七条写词）／#253 目标管理 5 条（覆盖十条写词）各自把自家 `receipt.ts` 的整页出口挂在
+ * 自己的写声明上；本文件只认声明的 `doc` 位，一家都不点名（第 7 个带整页回执的能力不必改这里）。
+ * 其余 6 条（calorie.exercise.* 三条、calorie.photo.* 三条）与训练计划那族里的落地／训记 5 条
+ * 没有挂 `doc`，各自由能力目录自己的实现出整页（或落回上面那节内联小节），不经这条路。
  * 退出码沿 T11 冻结：缺参/坏参 fail(2)；未知键上游拦（exit 3）；缺失阻断 fail(4)；
  * envelope/落盘 fail(5)。库函数 FetchError 透传（main 映射 exit 4）；body.ts
  * ValidationError 在此转 bad-input（exit 2）。
@@ -43,26 +40,9 @@ import {
 import { withM5 } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 
-// #179 · 场景 07 三条写入词的回执页：整页装配住在能力目录 `src/profile/`（写前页在 setup.ts）。
-// #330 · 按命令选整页的端口也住能力目录（`src/profile/receipt.ts`，经 `src/profile/index.ts` 转出）：
-// 分派层只调门，不再写任何命令名字面量。
-import { profileReceiptDoc } from '../profile/index.js';
-// #269 · 饮食 13 条会改数据库的命令的回执页：整页装配住能力目录 `src/diet/receipt.ts`
-//（经本文件直引，不经 `src/diet/index.ts` 转出；#276 需要的新增分支由本票留空）。
-import { dietReceiptDoc } from '../diet/receipt.js';
-// #337 · 体重 4 条会改数据库的命令的回执页：整页装配住能力目录 `src/weight/receipt.ts`
-//（经 `src/weight/index.ts` 转出；与档案 3 条、饮食 13 条同形）。
-import { weightReceiptDoc } from '../weight/index.js';
-// T351 视觉修复·实施兵B · 训练计划 10 条会改数据库的命令的回执页：整页装配住能力目录 `src/workout/receipt.ts`
-//（经本文件直引，不经 `src/workout/index.ts` 转出；与饮食 13 条同形）。
-import { workoutReceiptDoc } from '../workout/receipt.js';
-// #365 · 身体细节 7 条写词的回执页：整页装配住能力目录 `src/body/receipt.ts`
-//（经 `src/body/index.ts` 转出；与体重 4 条同形，接成链上第五个装配口）。
-import { bodyReceiptDoc } from '../body/index.js';
-// #253 · 目标管理 5 条会改数据库的命令的回执页：整页装配住能力目录 `src/goal/receipt.ts`
-//（经本文件直引，不经 `src/goal/index.ts` 转出——该件明文不转出域内件；与饮食 13 条同形，
-// 接成链上第六个装配口）。
-import { goalReceiptDoc } from '../goal/receipt.js';
+// #703 · 六个整页回执端口（#179 档案／#269 饮食／#337 体重／T351 训练计划／#365 身体细节／#253 目标管理）
+// 的接线已上移各能力的**写声明**（`WriteCommandSpec.doc`）：本文件不再逐家列名，只认声明的 `doc` 位，
+// 第 7 个带整页回执的能力只改自己目录里的声明。
 import { isCalorieWriteKey } from './keys.js';
 // #294 · 命令索引：命中即走能力目录里的实现，未命中的老键落下面的 dispatchInner switch。
 import { REGISTRY } from './registry.js';
@@ -84,13 +64,10 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
     const spec = REGISTRY[key];
     const res = spec && spec.kind === 'write' ? spec.run(params, db) : dispatchInner(key, params, db);
     const receipt = withM5(res.data.receipt, { affectedRows: totalChanges(db) - before });
-    // #269 · 饮食 13 条切整页装配（`assembleDocPage`，与档案 3 条同路）；其余键原样放行。
-    // #276 插入点：如需新增命令的整页分派，在本行下方按 `?? 下一个Doc(...)` 续接（本票留空）。
-    // #337 · 体重 4 条切整页装配（与档案 3 条、饮食 13 条同路；具名键集在 `src/weight/receipt.ts`）。
-    // T351 视觉修复·实施兵B · 训练计划 10 条切整页装配（与饮食 13 条同路；具名键集在 `src/workout/receipt.ts`）。
-    // #365 · 身体细节 7 条切整页装配（链上第五个装配口；具名键集在 `src/body/receipt.ts`）。
-    // #253 · 目标管理 5 条切整页装配（链上第六个装配口；具名键集在 `src/goal/receipt.ts`）。
-    return { data: { ...res.data, receipt }, html: profileReceiptDoc(key, params, receipt, db) ?? dietReceiptDoc(key, params, receipt, db) ?? weightReceiptDoc(key, params, receipt, db) ?? workoutReceiptDoc(key, params, receipt, db) ?? bodyReceiptDoc(key, params, receipt, db) ?? goalReceiptDoc(key, params, receipt, db) ?? res.html };
+    // #703 · 整页回执端口住**命令声明**（`WriteCommandSpec.doc`）：一次查表，不再逐家列名。
+    // 原 #276 那句「在本行下方续接下一个 Doc(...)」的插入点随之退役——新能力改自己目录里的声明即可。
+    const doc = spec && spec.kind === 'write' ? spec.doc : undefined;
+    return { data: { ...res.data, receipt }, html: doc ? (doc(key, params, receipt, db) ?? res.html) : res.html };
   } catch (e) {
     if (e instanceof ValidationError) throw new CalorieRenderError('bad-input', e.message);
     throw e;

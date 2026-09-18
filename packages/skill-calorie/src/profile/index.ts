@@ -1,41 +1,17 @@
-/** 基础信息能力对外的门（HELP 场景 07「基础信息」）：命令分派两件 ＋ 整页回执端口一件 ＋ 命令声明一件。
+/** 基础信息能力对外的门（HELP 场景 07「基础信息」）：命令声明 ＋ 整页回执端口。
  *
- * 对外四件（铁律五「不多于五个」）：
+ * #703：门上的读／写命令入口（原 `runProfileView`／`runProfileWrite`）已删——生产一次都不走它们，
+ * 真正分派走生成物 `cli/registry.ts`（`cmd_read.ts`／`write.ts` 查表后直接调声明的 `run`）。
+ *
+ * 对外两件（铁律五「不多于五个」）：
  *   ① `PROFILE_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
- *   ② `runProfileView`／③ `runProfileWrite`——读／写命令入口（查不到档案键即抛，不当静默兜底）；
- *   ④ `profileReceiptDoc`——档案写命令整页回执的端口：分派层（`src/cli/write.ts`）在用。
+ *   ② `profileReceiptDoc`——档案写命令整页回执的端口。#703 起它的接线住写声明那一行（`doc:` 位）；
  *      两页装配（`setup.ts`／`update.ts` 的两函数）是本目录内件，由 `receipt.ts` 直引，
  *      不再经这道门转出（#330 起：免得同一件回执页有两份出口）。
  *
  * 域内其他件（取数 `view.ts`、写链 `setup.ts`／`update.ts`／`labels.ts`、读写入口 `read.ts`／`write.ts`、
- * 回执端口实现 `receipt.ts` 的键集数据位）
- * **不出这个目录**，故不在这里转出；`src/index.ts`／`src/render/index.ts` 另按原样转出「档案视图」，
- * 既有调用方导入面不变。
+ * 回执端口实现 `receipt.ts` 的键集数据位）**不出这个目录**，故不在这里转出。
  */
-import type { DatabaseSync } from 'node:sqlite';
-import { CalorieRenderError } from '../render/errors.js';
-import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
-import { PROFILE_COMMANDS } from './commands.js';
 
 export { PROFILE_COMMANDS } from './commands.js';
 export { profileReceiptDoc } from './receipt.js';
-
-const BY_KEY = new Map(PROFILE_COMMANDS.map((c) => [c.key, c]));
-
-/** 读命令入口：命中即走它的处理函数；键不属基础信息（或其实是写键）即抛——**不猜**。 */
-export function runProfileView(key: string, params: Record<string, unknown>, db: DatabaseSync): ViewOut {
-  const spec = BY_KEY.get(key);
-  if (!spec || spec.kind !== 'read') {
-    throw new CalorieRenderError('bad-input', '不是基础信息的读命令：' + key);
-  }
-  return spec.run(params, db);
-}
-
-/** 写命令入口：同上。 */
-export function runProfileWrite(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
-  const spec = BY_KEY.get(key);
-  if (!spec || spec.kind !== 'write') {
-    throw new CalorieRenderError('bad-input', '不是基础信息的写命令：' + key);
-  }
-  return spec.run(params, db);
-}

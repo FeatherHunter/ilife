@@ -32,7 +32,7 @@ import { dispatch } from '../dist/cli/cmd_read.js';
 import { dispatchWrite } from '../dist/cli/write.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS, isCalorieWriteKey } from '../dist/cli/keys.js';
-import { runWeightView, runWeightWrite, WEIGHT_COMMANDS } from '../dist/weight/index.js';
+import { WEIGHT_COMMANDS } from '../dist/weight/index.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { DECLARED_CAPABILITY_KEYS, DECLARED_KEYS, LEGACY_COMMANDS } from './declared.mjs';
@@ -231,17 +231,16 @@ test('#320 老路已无活口：未搬迁清单是空集，注册表键集即全
   }
 });
 
-test('#294 能力那道门：同键同结果，非本能力的键即抛', () => {
+test('#703 真出口：体重键的读／写照旧走得通（门上那道 run* 已删）', () => {
+  // #703 · 原先这条断言的是「能力门与分派层同键同结果」＋「门对非本能力的键即抛」：两件都是**门上
+  // run* 的行为**，门上的入口删掉后它们随之退役（生产从来不走那条路）。真出口那一半留在这里。
   const db = mkDb();
   try {
-    const viaDoor = runWeightView('calorie.view.weight', { start: '2026-09-05', end: '2026-09-07' }, db);
-    const viaDispatch = dispatch('calorie.view.weight', { start: '2026-09-05', end: '2026-09-07' }, db);
-    assert.deepEqual(viaDoor, viaDispatch, '门的产物与分派层不一致');
-
-    assert.equal(runWeightWrite('calorie.weight.log', { kg: 70.0, date: '2026-09-09' }, db).data.ok, true);
-    assert.throws(() => runWeightView('calorie.view.home', {}, db), /不是体重的读命令/, '门对非本能力的键必须抛');
-    // 写命令的字段校验走 `fail()`（process.exit），不在此断言——它由出口级测试（spawn）覆盖，
-    // 在本进程里断言会把测试进程一起带走。
+    const read = dispatch('calorie.view.weight', { start: '2026-09-05', end: '2026-09-07' }, db);
+    assert.ok(read.html.includes('ilife-page'), '体重盘未走通真出口');
+    assert.equal(dispatchWrite('calorie.weight.log', { kg: 70.0, date: '2026-09-09' }, db).data.ok, true);
+    // 非本能力的键那条不再有对应物：真出口对未登记键走 `fail()`（process.exit），本进程里断言会把
+    // 测试进程一起带走——它由出口级测试（spawn）覆盖。
   } finally {
     db.close();
   }
@@ -255,11 +254,13 @@ test('#294 对账：注册表每条声明与 cli/keys.ts 的登记逐条一致',
     const spec = REGISTRY[key];
     const reg = CALORIE_COMBOS[key];
     assert.ok(reg, '注册表的键未登记进 CALORIE_COMBOS：' + key);
-    assert.equal(spec.shape, reg.shape, '形状不一致：' + key);
+    // #703 · 写声明不再自带 `shape`（与 `kind: 'write'` 是同一件事实）：写键的形状事实住生成物
+    // `CALORIE_WRITE_COMBOS`（由生成器合成），读键仍在声明上。
+    assert.equal(spec.kind === 'write' ? 'receipt' : spec.shape, reg.shape, '形状不一致：' + key);
     assert.equal(spec.title, reg.title, '标题不一致：' + key);
     assert.equal(spec.kind === 'write', isCalorieWriteKey(key), 'kind 与写键表不一致：' + key);
     if (spec.kind === 'write') {
-      assert.equal(spec.shape, 'receipt', '写命令一律 receipt 形：' + key);
+      assert.equal(CALORIE_WRITE_COMBOS[key].shape, 'receipt', '写命令一律 receipt 形：' + key);
       assert.ok(CALORIE_WRITE_COMBOS[key], '写键未登记：' + key);
     }
     assert.equal(typeof spec.run, 'function', '声明缺处理函数：' + key);

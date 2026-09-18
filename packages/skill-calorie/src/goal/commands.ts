@@ -22,18 +22,22 @@
  * 子功能与命令的对应（HELP 下一级 → 命令）：定目标＝`calorie.goal.set`／`.water`／`.weight`／`.exercise`；
  * 改目标＝`calorie.goal.pause`／`.resume`；看目标＝`calorie.view.goal*` 九条（含 #320 补搬的
  * `view.goal-weight`）。
+ *
+ * #703 · 写命令的**信封形状**不写在声明上（写命令一律 `receipt` 形，那件事实的唯一定义地在生成器
+ * `scripts/gen-cli.mjs` 合成的 `cli/keys.ts`）；带整页回执的写命令另在声明上挂 `doc:` 那一位。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewGoal, viewGoalConfig, viewGoalExpiring, viewGoalPredict, viewGoalRecommend, viewGoalStatus, viewGoalVsActual, viewGoalWeight, viewGoalWizard } from './read.js';
 import { writeGoalExercise, writeGoalPause, writeGoalResume, writeGoalSet, writeGoalWater, writeGoalWeight } from './write.js';
+import { goalReceiptDoc } from './receipt.js';
 
 export const GOAL_COMMANDS = [
-  { kind: 'write', key: 'calorie.goal.pause', shape: 'receipt', title: '暂停目标', wakeWord: '暂停所有目标', run: writeGoalPause, example: 'calorie-cmd-read calorie.goal.pause' },
-  { kind: 'write', key: 'calorie.goal.resume', shape: 'receipt', title: '重启目标', wakeWord: '重启所有目标', run: writeGoalResume, example: 'calorie-cmd-read calorie.goal.resume' },
-  { kind: 'write', key: 'calorie.goal.set', shape: 'receipt', title: '定营养目标', wakeWord: '定营养目标', run: writeGoalSet, example: 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'' },
-  { kind: 'write', key: 'calorie.goal.water', shape: 'receipt', title: '定饮水目标', wakeWord: '定饮水目标', run: writeGoalWater, example: 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'' },
-  { kind: 'write', key: 'calorie.goal.weight', shape: 'receipt', title: '定体重目标', wakeWord: '定体重目标', run: writeGoalWeight, example: 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68}\'' },
-  { kind: 'write', key: 'calorie.goal.exercise', shape: 'receipt', title: '定运动目标', wakeWord: '定运动目标', run: writeGoalExercise, example: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
+  { kind: 'write', key: 'calorie.goal.pause', title: '暂停目标', wakeWord: '暂停所有目标', run: writeGoalPause, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.pause' },
+  { kind: 'write', key: 'calorie.goal.resume', title: '重启目标', wakeWord: '重启所有目标', run: writeGoalResume, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.resume' },
+  { kind: 'write', key: 'calorie.goal.set', title: '定营养目标', wakeWord: '定营养目标', run: writeGoalSet, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.set --params \'{"calorie":1800,"protein":150,"carbs":200,"fat":50}\'' },
+  { kind: 'write', key: 'calorie.goal.water', title: '定饮水目标', wakeWord: '定饮水目标', run: writeGoalWater, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.water --params \'{"water":2000}\'' },
+  { kind: 'write', key: 'calorie.goal.weight', title: '定体重目标', wakeWord: '定体重目标', run: writeGoalWeight, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.weight --params \'{"kg":68}\'' },
+  { kind: 'write', key: 'calorie.goal.exercise', title: '定运动目标', wakeWord: '定运动目标', run: writeGoalExercise, doc: goalReceiptDoc, example: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
   { kind: 'read', key: 'calorie.view.goal', shape: 'stat', title: '目标分析', wakeWord: '看目标完成度', run: viewGoal, example: 'calorie-cmd-read calorie.view.goal --params \'{"window":"7d"}\'' },
   { kind: 'read', key: 'calorie.view.goal-config', shape: 'stat', title: '目标配置', wakeWord: '看目标配置', run: viewGoalConfig, example: 'calorie-cmd-read calorie.view.goal-config' },
   { kind: 'read', key: 'calorie.view.goal-expiring', shape: 'stat', title: '即将到期目标', wakeWord: '看即将到期的目标', run: viewGoalExpiring, example: 'calorie-cmd-read calorie.view.goal-expiring' },

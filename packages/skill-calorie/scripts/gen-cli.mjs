@@ -96,8 +96,13 @@ async function loadCapability(name) {
     // `wakeWord` **可缺**（缺了速查表退回命令名），但**写了就必须是真词**——生成期由 `wakeWordGate()`
     // 逐条查「这个词路由回本键」（#343：票面原话「让主张由机器拦，而不是只写在文件头注释里」）；
     // 其余五个字段必填。
-    for (const field of ['kind', 'key', 'shape', 'title', 'example']) {
+    for (const field of ['kind', 'key', 'title', 'example']) {
       if (typeof spec?.[field] !== 'string') throw new Error(name + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
+    }
+    // #703 · 信封形状：读声明的 `shape` 仍是声明面的事实（list／detail／stat／analysis／fallback），
+    // 写声明的形状不写在声明上——写命令一律 receipt 形，那件事的唯一定义地是本文件（`WRITE_SHAPE`）。
+    if (spec.kind === 'read' && typeof spec.shape !== 'string') {
+      throw new Error(name + ' 的读声明缺 shape：' + JSON.stringify(spec));
     }
   }
   return { name, exportName, list };
@@ -133,8 +138,11 @@ async function loadLegacyScene(file) {
   for (const spec of list) {
     // `wakeWord` **可缺**（缺了速查表退回命令名），但**写了就必须是真词**（同上，见 `wakeWordGate()`）；
     // 其余五个字段必填。
-    for (const field of ['kind', 'key', 'shape', 'title', 'example']) {
+    for (const field of ['kind', 'key', 'title', 'example']) {
       if (typeof spec?.[field] !== 'string') throw new Error('legacy/' + file + ' 的声明缺 ' + field + '：' + JSON.stringify(spec));
+    }
+    if (spec.kind === 'read' && typeof spec.shape !== 'string') {
+      throw new Error('legacy/' + file + ' 的读声明缺 shape：' + JSON.stringify(spec));
     }
   }
   return { name: 'legacy/' + file, exportName, list };
@@ -187,7 +195,7 @@ function merge(legacy, capabilities) {
     out.set(decl.key, {
       kind: decl.kind,
       key: decl.key,
-      shape: decl.shape,
+      shape: decl.kind === 'write' ? WRITE_SHAPE : decl.shape,
       title: decl.title,
       wakeWord: typeof decl.wakeWord === 'string' ? decl.wakeWord : undefined,
       flows: Array.isArray(decl.flows) ? decl.flows : undefined,
@@ -203,6 +211,9 @@ function merge(legacy, capabilities) {
   all.sort((a, b) => rank(a) - rank(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   return all;
 }
+
+/** #703 · 写命令的信封形状（唯一事实源）：写声明的形状不写在声明上，由本文件合成两处派生品。 */
+const WRITE_SHAPE = 'receipt';
 
 const q = (s) => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 
@@ -232,7 +243,7 @@ function renderKeysTs(entries) {
   L.push('export const COMBO_KEY_RE = /^[a-z][a-z0-9-]*\\.[a-z0-9][a-z0-9-.]*$/;');
   L.push('');
   L.push('export const CALORIE_WRITE_COMBOS = {');
-  for (const e of writes) L.push('  ' + q(e.key) + ": { shape: 'receipt' as EnvelopeShape, title: " + q(e.title) + ' },');
+  for (const e of writes) L.push('  ' + q(e.key) + ": { shape: " + q(WRITE_SHAPE) + ' as EnvelopeShape, title: ' + q(e.title) + ' },');
   L.push('} as const;');
   L.push('');
   L.push('export type CalorieWriteKey = keyof typeof CALORIE_WRITE_COMBOS;');
@@ -565,10 +576,14 @@ function extractExportedArray(srcText, rel) {
   throw new Error('声明源静态解析失败：' + rel + '（数组括号不配平）');
 }
 
-/** #325 · 把源里的声明数组求值成事实（只取生成器关心的字段：`run:` 这类运行时引用先剥掉，
- * 剩下全是字面量才求值）。求值失败抛（fail closed）。 */
+/** #325 · 把源里的声明数组求值成事实（只取生成器关心的字段：`run:`／`doc:` 这类运行时引用先剥掉，
+ * 剩下全是字面量才求值）。求值失败抛（fail closed）。
+ * #703 · `doc:`（整页回执端口）与 `run:` 同类：它是运行时引用、不是派生品要用的事实
+ * （`normFacts()` 在 dist 那一侧也按「函数不算事实」过滤掉它），故与 `run` 同一条剥法。 */
 function evalDeclArrayText(arrText, rel) {
-  const cleaned = arrText.replace(/\brun\s*:\s*[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*\s*,?/g, '');
+  const runtimeRef = (field) =>
+    new RegExp('\\b' + field + '\\s*:\\s*[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*\\s*,?', 'g');
+  const cleaned = arrText.replace(runtimeRef('run'), '').replace(runtimeRef('doc'), '');
   try {
     const v = new Function('return (' + cleaned + '\n)')();
     if (!Array.isArray(v)) throw new Error('求值结果不是数组');

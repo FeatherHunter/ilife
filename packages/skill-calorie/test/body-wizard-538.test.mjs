@@ -17,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
-import { runBodyView } from '../dist/body/index.js';
+import { dispatch } from '../dist/cli/cmd_read.js';
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't538-')), 't.db'));
 
@@ -40,7 +40,7 @@ function seed(db) {
   ).run('2026-09-05', 100, 85, 90, 95, 110, 55, 55.5, 36, 36.5, 30, 30.5, 25, 25.5);
 }
 
-const run = (db, key, params) => runBodyView(key, params, db).html;
+const run = (db, key, params) => dispatch(key, params, db).html;
 
 test('#538 记体脂（皮褶钳）：内部叫法出页面＋中文来源＋公式不上屏＋一个复制区', () => {
   const db = tmpDb();

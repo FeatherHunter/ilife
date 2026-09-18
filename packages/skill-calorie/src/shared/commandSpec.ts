@@ -58,11 +58,16 @@ export interface ReadCommandSpec {
   readonly run: ViewHandler;
 }
 
-/** 写命令的声明（写命令一律 receipt 形，见 `cli/keys.ts` 的 `CALORIE_WRITE_COMBOS`）。 */
+/** 写命令的声明。
+ *
+ * **信封形状不写在这里**（#703）：写命令一律 `receipt` 形，那件事实的唯一定义地在生成器
+ * （`scripts/gen-cli.mjs` 合成 `cli/keys.ts` 的 `CALORIE_WRITE_COMBOS` 与 YAML 目录那一处）。
+ * 声明上原来那个 `shape: 'receipt'` 与 `kind: 'write'` 是同一件事实的两种说法（铁律二），
+ * 本票删掉前者、换来 `doc?` 这一位——字段数仍是不多不少的 8 个（铁律五「一个类型的字段不多于八个」）。
+ */
 export interface WriteCommandSpec {
   readonly kind: 'write';
   readonly key: string;
-  readonly shape: 'receipt';
   readonly title: string;
   readonly wakeWord?: string;
   /** #338 · 这条命令服务的工作流程名（口径、取值与「为什么是表」见 `ReadCommandSpec.flows`）。 */
@@ -70,6 +75,17 @@ export interface WriteCommandSpec {
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: WriteHandler;
+  /** #703 · **整页回执端口**：给定时用它出这一条的整页；返 `null` 即让路，落回命令自己产出的片段。
+   *  签名与六家既有回执件逐字相同（键／本次参数／已注入影响行数的回执／库句柄），故声明直接点名它们。
+   *  为什么住声明：整页分派原先是 `cli/write.ts` 里一行六个 `??` 的硬接线，第 7 个带整页回执的能力
+   *  必须改那个文件；搬到声明上之后，分派层一次查表，新能力只改自己目录里的声明。
+   *  类型内联、不新增导出名（本件对外已有 8 个名字，再加一个就是第十个的第 9 个）。 */
+  readonly doc?: (
+    key: string,
+    params: Record<string, unknown>,
+    receipt: CrudReceipt,
+    db: DatabaseSync,
+  ) => string | null;
 }
 
 export type CommandSpec = ReadCommandSpec | WriteCommandSpec;

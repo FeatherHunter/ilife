@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/schema.js';
-import { runWeightView } from '../dist/weight/index.js';
+import { dispatch } from '../dist/cli/cmd_read.js';
 
 const TODAY = '2026-09-07';
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't334-')), 't.db'));
@@ -40,7 +40,7 @@ function seed(db) {
   for (let k = 0; k < 10; k++) db.prepare("INSERT INTO exercise_log (date, exercise_type, calories_burned) VALUES ('2026-08-" + String(k + 1).padStart(2, '0') + "', '跑步', 500)").run();
 }
 
-const run = (db, params) => runWeightView('calorie.view.weight-compare', params, db);
+const run = (db, params) => dispatch('calorie.view.weight-compare', params, db);
 const isDoc = (html) => html.startsWith('<!doctype html>') && html.includes('ilife-page');
 /** **可见面**的正文（去掉页内样式、脚本载荷、复制区、标签本身）：分隔符判据只认这里。
  *  为什么要去样式：形状词汇的类名与 CSS 文件注释里带着 `·`（如 `weightUi.ts` 件头那几行），

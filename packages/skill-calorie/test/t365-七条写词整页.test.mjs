@@ -41,6 +41,7 @@ import { SOURCE_LABELS } from '../dist/kcal.js';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH, measureCamelName } from '../dist/fetch/body.js';
 import { CALIPER_SITE_LABELS } from '../dist/body/bodyPlate.js';
 import { BODY_COMMANDS } from '../dist/body/commands.js';
+import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { bodyReceiptDoc } from '../dist/body/index.js';
 import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../dist/shared/operationHead.js';
 import { buildCrudReceipt, withM5 } from '../dist/render/receipt.js';
@@ -520,24 +521,30 @@ test('#365 撤销入口：回执不带撤销指令就不出（真出口 7 件产
     + ' actionId=' + btn[1]);
 });
 
-/* ── 组装口：链上第五个口 ＋ 行为层负向（端口缺席必落回片段） ── */
+/* ── 组装口：端口住写声明 ＋ 行为层负向（端口缺席必落回片段） ── */
 
-test('#365 组装口：`cli/write.ts` 的链上第五个口是 bodyReceiptDoc，且在 `?? res.html` 之前', () => {
+test('#703 组装口：整页端口住写声明（`WriteCommandSpec.doc`），分派层只认声明', () => {
+  // #365 原先这条断言的是「`cli/write.ts` 里那串 `??` 的链上第五个口是 bodyReceiptDoc」。#703 把整页
+  // 端口搬进**写声明**（`doc:` 位）之后，那串链与它的位次都不存在了，改断新接线的三件事：
+  // ① 分派层不再点名任何回执件；② 分派层认声明的 `doc` 位；③ body 那 4 条写声明的 `doc:` 挂在声明行上。
   const src = readFileSync(WRITE_TS, 'utf8');
-  const line = src.split('\n').find((l) => l.includes('?? res.html'));
-  assert.ok(line, 'chains 行必须在：' + src.slice(0, 200));
-  const at = line.indexOf('bodyReceiptDoc(key, params, receipt, db)');
-  assert.ok(at > 0, '链上应有 bodyReceiptDoc 那一口：' + line.trim());
-  assert.ok(line.indexOf('workoutReceiptDoc(') < at, 'body 口排在训练计划之后（第五个口）');
-  assert.ok(at < line.indexOf('?? res.html'), 'body 口排在 `?? res.html` 之前');
-  for (const dom of ['profileReceiptDoc', 'dietReceiptDoc', 'weightReceiptDoc', 'workoutReceiptDoc']) {
-    assert.ok(line.includes(dom), '既有四口一字不动：' + dom);
+  for (const dom of ['profileReceiptDoc', 'dietReceiptDoc', 'weightReceiptDoc', 'workoutReceiptDoc', 'bodyReceiptDoc', 'goalReceiptDoc']) {
+    assert.ok(!src.includes(dom), '分派层不再点名回执件：' + dom);
+  }
+  assert.ok(src.includes('spec.doc'), '分派层应认声明的 `doc` 位');
+  const declSrc = readFileSync(join(HERE, '..', 'src', 'body', 'commands.ts'), 'utf8');
+  const writes = BODY_COMMANDS.filter((c) => c.kind === 'write');
+  assert.equal(writes.length, 4, 'body 写声明仍是 4 条');
+  for (const c of writes) {
+    assert.equal(typeof c.doc, 'function', c.key + ' 声明缺 `doc:` 位（整页端口）');
+    const line = declSrc.split('\n').find((l) => l.includes("key: '" + c.key + "'"));
+    assert.ok(line && line.includes('doc: bodyReceiptDoc'), c.key + ' 的声明行应挂 bodyReceiptDoc：' + line);
   }
   // 行为层负向：端口缺席（非 body 键）＝ 落回片段的形态（本票的 7 条键不再走这条）
   const dir = mkTmpDb();
   const seg = runWrite(dir, KEY_C_ADD, { source: 'gym', bodyFatPct: 18.5, date: '2026-09-11' });
   assert.ok(!seg.html.includes('data-slot="ilife:calorie:receipt"'), '七条写词不再落片段');
-  console.log('T365-PORT 链上第五口=bodyReceiptDoc 位次=' + at + ' 片段标记缺席=true');
+  console.log('T703-PORT 端口住声明=true 分派层零点名=true 片段标记缺席=true');
 });
 
 /* ── 不许动：登记形状仍是 receipt 形 ＋ 另外 32 条写命令行为不变 ── */
@@ -547,7 +554,9 @@ test('#365 不许动：body 4 条写命令仍 receipt 形；别的域写命令�
   assert.deepEqual([...writes.map((c) => c.key)].sort(), [KEY_C_ADD, KEY_C_RM, KEY_M_ADD, KEY_M_RM].sort(),
     'body 写命令清单就是这 4 条（注册表是命令名权威源）');
   assert.equal(writes.length, 4, 'body 写命令仍是 4 条');
-  for (const c of writes) assert.equal(c.shape, 'receipt', c.key + ' 登记形状仍是 receipt 形');
+  // #703 · 写声明的 `shape` 已删（与 `kind: 'write'` 是同一件事实，铁律二）：形状改从唯一定义地
+  // （生成物 `cli/keys.ts` 的 `CALORIE_WRITE_COMBOS`）读，断言的事实不变。
+  for (const c of writes) assert.equal(CALORIE_WRITE_COMBOS[c.key].shape, 'receipt', c.key + ' 登记形状仍是 receipt 形');
 
   // 别的域：体重那条仍出体重整页（body 口不吃它的键）
   const dir = mkTmpDb();

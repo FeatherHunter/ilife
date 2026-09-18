@@ -21,6 +21,9 @@
  *   ＋ `productImport.ts`（`product.import`：批量导入食品，读写分开的写入侧）；
  *   看营养＝`nutrition.ts`（`view.nutrition-ratio`／`view.nutrition-detail`／`view.batch-import-preview`）；
  *   看排行＝`ranking.ts`（`view.ranking`）；饮食复盘＝`review.ts`（`view.diet-review`）。
+ *
+ * #703 · 写命令的**信封形状**不写在声明上（写命令一律 `receipt` 形，那件事实的唯一定义地在生成器
+ * `scripts/gen-cli.mjs` 合成的 `cli/keys.ts`）；带整页回执的写命令另在声明上挂 `doc:` 那一位。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import {
@@ -35,21 +38,22 @@ import { writeProductImport } from './productImport.js';
 import { viewRanking } from './ranking.js';
 import { viewDietReview } from './review.js';
 import { viewToday, viewTodayWater } from './today.js';
+import { dietReceiptDoc } from './receipt.js';
 
 export const DIET_COMMANDS = [
-  { kind: 'write', key: 'calorie.diet.add', shape: 'receipt', title: '记一餐', wakeWord: '记一餐', run: writeDietAdd, example: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'' },
-  { kind: 'write', key: 'calorie.diet.batch', shape: 'receipt', title: '批量记饮食', wakeWord: '批量补记饮食', run: writeDietBatch, example: 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'' },
-  { kind: 'write', key: 'calorie.diet.copy', shape: 'receipt', title: '复制饮食', wakeWord: '复制昨日饮食', run: writeDietCopy, example: 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'' },
-  { kind: 'write', key: 'calorie.diet.remove', shape: 'receipt', title: '删饮食', wakeWord: '删饮食记录', run: writeDietRemove, example: 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'' },
-  { kind: 'write', key: 'calorie.diet.remove-by-date', shape: 'receipt', title: '按日删饮食', wakeWord: '删某日饮食', run: writeDietRemoveByDate, example: 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\'' },
-  { kind: 'write', key: 'calorie.diet.remove-by-range', shape: 'receipt', title: '按范围删饮食', wakeWord: '批量删饮食', run: writeDietRemoveByRange, example: 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\'' },
-  { kind: 'write', key: 'calorie.diet.remove-by-type', shape: 'receipt', title: '按餐别删饮食', wakeWord: '删一餐', run: writeDietRemoveByType, example: 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\'' },
-  { kind: 'write', key: 'calorie.diet.update', shape: 'receipt', title: '改饮食', wakeWord: '改饮食记录', run: writeDietUpdate, example: 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'' },
-  { kind: 'write', key: 'calorie.diet.update-by-date', shape: 'receipt', title: '按日改饮食', wakeWord: '改某日饮食', run: writeDietUpdateByDate, example: 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\'' },
-  { kind: 'write', key: 'calorie.product.add', shape: 'receipt', title: '存食品', wakeWord: '存食品', run: writeProductAdd, example: 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'' },
-  { kind: 'write', key: 'calorie.product.deprecate', shape: 'receipt', title: '下架食品', wakeWord: '下架食品', run: writeProductDeprecate, example: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
-  { kind: 'write', key: 'calorie.product.import', shape: 'receipt', title: '批量导入食品', wakeWord: '批量导入食品', run: writeProductImport, example: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
-  { kind: 'write', key: 'calorie.product.update', shape: 'receipt', title: '改食品', wakeWord: '改食品', run: writeProductUpdate, example: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
+  { kind: 'write', key: 'calorie.diet.add', title: '记一餐', wakeWord: '记一餐', run: writeDietAdd, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.add --params \'{"foodName":"鸡胸","calories":200,"protein":35}\'' },
+  { kind: 'write', key: 'calorie.diet.batch', title: '批量记饮食', wakeWord: '批量补记饮食', run: writeDietBatch, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.batch --params \'{"items":[{"foodName":"粥","calories":150,"protein":3}]}\'' },
+  { kind: 'write', key: 'calorie.diet.copy', title: '复制饮食', wakeWord: '复制昨日饮食', run: writeDietCopy, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.copy --params \'{"from":"<日期>"}\'' },
+  { kind: 'write', key: 'calorie.diet.remove', title: '删饮食', wakeWord: '删饮食记录', run: writeDietRemove, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.remove --params \'{"id":1}\'' },
+  { kind: 'write', key: 'calorie.diet.remove-by-date', title: '按日删饮食', wakeWord: '删某日饮食', run: writeDietRemoveByDate, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.remove-by-date --params \'{"date":"<日期>"}\'' },
+  { kind: 'write', key: 'calorie.diet.remove-by-range', title: '按范围删饮食', wakeWord: '批量删饮食', run: writeDietRemoveByRange, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.remove-by-range --params \'{"start":"<日期>","end":"<日期>"}\'' },
+  { kind: 'write', key: 'calorie.diet.remove-by-type', title: '按餐别删饮食', wakeWord: '删一餐', run: writeDietRemoveByType, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.remove-by-type --params \'{"mealType":"早餐","date":"<日期>"}\'' },
+  { kind: 'write', key: 'calorie.diet.update', title: '改饮食', wakeWord: '改饮食记录', run: writeDietUpdate, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.update --params \'{"id":1,"grams":150}\'' },
+  { kind: 'write', key: 'calorie.diet.update-by-date', title: '按日改饮食', wakeWord: '改某日饮食', run: writeDietUpdateByDate, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.diet.update-by-date --params \'{"note":"食堂","date":"<日期>"}\'' },
+  { kind: 'write', key: 'calorie.product.add', title: '存食品', wakeWord: '存食品', run: writeProductAdd, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.product.add --params \'{"productName":"鸡胸肉","calories":165,"protein":31,"fat":3.6,"carbohydrates":0,"sodium":70}\'' },
+  { kind: 'write', key: 'calorie.product.deprecate', title: '下架食品', wakeWord: '下架食品', run: writeProductDeprecate, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.product.deprecate --params \'{"id":1}\'' },
+  { kind: 'write', key: 'calorie.product.import', title: '批量导入食品', wakeWord: '批量导入食品', run: writeProductImport, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.product.import --params \'{"items":[{"productName":"测试导入燕麦","calories":389,"protein":13,"fat":7,"carbohydrates":66,"sodium":5}]}\'' },
+  { kind: 'write', key: 'calorie.product.update', title: '改食品', wakeWord: '改食品', run: writeProductUpdate, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.product.update --params \'{"id":1,"note":"新版"}\'' },
   { kind: 'read', key: 'calorie.today', shape: 'list', title: '今日饮食', wakeWord: '看今日饮食', run: viewToday, example: 'calorie-cmd-read calorie.today --params \'{"date":"今日"}\'' },
   { kind: 'read', key: 'calorie.view.batch-import-preview', shape: 'stat', title: '批量导入预览', wakeWord: '看批量导入预览', run: viewBatchImportPreview, example: 'calorie-cmd-read calorie.view.batch-import-preview --params \'{"items":[{"foodName":"粥","calories":150,"protein":3,"date":"<日期>"}]}\'' },
   /* #277 · 「拍营养表」两条词的第一步：识别在模型侧，模型照 `docs/skills/skill-calorie/t276-营养表映射.md`
@@ -68,5 +72,5 @@ export const DIET_COMMANDS = [
   { kind: 'read', key: 'calorie.view.search', shape: 'stat', title: '查食品', wakeWord: '查食品', run: viewSearch, example: 'calorie-cmd-read calorie.view.search --params \'{"keyword":"鸡胸"}\'' },
   { kind: 'read', key: 'calorie.view.source-stats', shape: 'stat', title: '食品来源统计', wakeWord: '看食品来源统计', run: viewSourceStats, example: 'calorie-cmd-read calorie.view.source-stats' },
   { kind: 'read', key: 'calorie.view.today-water', shape: 'stat', title: '今日饮水', wakeWord: '看今日喝水', run: viewTodayWater, example: 'calorie-cmd-read calorie.view.today-water --params \'{"date":"今日"}\'' },
-  { kind: 'write', key: 'calorie.water.log', shape: 'receipt', title: '记喝水', wakeWord: '记喝水', run: writeWaterLog, example: 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'' },
+  { kind: 'write', key: 'calorie.water.log', title: '记喝水', wakeWord: '记喝水', run: writeWaterLog, doc: dietReceiptDoc, example: 'calorie-cmd-read calorie.water.log --params \'{"ml":300}\'' },
 ] satisfies readonly CommandSpec[];

@@ -8,11 +8,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { openDb } from '../dist/schema.js';
-import { runGoalView } from '../dist/goal/index.js';
+import { dispatch } from '../dist/cli/cmd_read.js';
 
 const TODAY = '2026-09-07';
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't390-')), 't.db'));
-const run = (db, params) => runGoalView('calorie.view.goal-weight', params, db);
+const run = (db, params) => dispatch('calorie.view.goal-weight', params, db);
 const isDoc = (html) => html.startsWith('<!doctype html>') && html.includes('ilife-page');
 
 function seedMain(db) {
