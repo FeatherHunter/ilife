@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#705 决策问答 · 没有调用方的四处</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a21; --panel2:#1c212a; --line:#2a313d;
+    --fg:#e8edf4; --fg2:#b9c3d1; --muted:#7e8a9c;
+    --accent:#5b9bff; --ok:#3ecf8e; --warn:#f0b429; --bad:#ff6b6b; --keep:#a78bfa;
+    --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei UI","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:16px}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:var(--mono);font-size:.88em;background:#0b0e13;border:1px solid var(--line);
+    border-radius:5px;padding:.08em .38em;color:#cfe0ff;white-space:nowrap}
+  .wrap{display:grid;grid-template-columns:216px minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;padding:28px 22px 96px}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;gap:0}.toc{position:static!important;display:none}}
+
+  /* ── 左侧导航 ── */
+  .toc{position:sticky;top:20px;align-self:start;font-size:13px;border-left:2px solid var(--line);padding-left:14px}
+  .toc .t{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc li{margin:0 0 2px}
+  .toc a{display:flex;gap:8px;padding:5px 0;color:var(--fg2);border-radius:4px}
+  .toc a:hover{color:#fff;text-decoration:none}
+  .toc a .n{font-family:var(--mono);color:var(--muted);min-width:20px}
+  .toc a.go .n{color:var(--ok)} .toc a.del .n{color:var(--bad)} .toc a.hold .n{color:var(--keep)}
+
+  /* ── 头部 ── */
+  header{margin:0 0 26px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-size:27px;line-height:1.35;margin:0 0 10px;font-weight:650}
+  .sub{color:var(--fg2);margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg2);
+    border-radius:999px;padding:3px 11px}
+  .chip b{color:var(--fg);font-weight:600}
+
+  /* ── 通用块 ── */
+  section{margin:0 0 34px}
+  h2{font-size:19px;margin:0 0 14px;padding-bottom:9px;border-bottom:1px solid var(--line);font-weight:620}
+  h3{font-size:15px;margin:22px 0 8px;font-weight:640}
+  p{margin:0 0 11px}
+  ul{margin:0 0 11px;padding-left:22px} li{margin:4px 0}
+  .note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--bad);
+    border-radius:0 8px 8px 0;padding:14px 18px}
+  .note.warn{border-left-color:var(--warn)}
+  .note h3{margin-top:0}
+  .note p:last-child,.note ul:last-child{margin-bottom:0}
+
+  /* ── 结论条 ── */
+  .verdict{display:flex;align-items:flex-start;gap:11px;border-radius:8px;padding:12px 16px;margin:14px 0 0;
+    border:1px solid var(--line);background:var(--panel2)}
+  .verdict .tag{font-size:11px;font-weight:700;letter-spacing:.08em;border-radius:5px;padding:2px 8px;white-space:nowrap}
+  .v-go{border-left:3px solid var(--ok)}    .v-go .tag{background:rgba(62,207,142,.16);color:var(--ok)}
+  .v-del{border-left:3px solid var(--bad)}  .v-del .tag{background:rgba(255,107,107,.16);color:var(--bad)}
+  .v-hold{border-left:3px solid var(--keep)}.v-hold .tag{background:rgba(167,139,250,.16);color:var(--keep)}
+
+  /* ── 选项表 ── */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.05em;background:#12161d}
+  tr.rec{background:rgba(62,207,142,.07)}
+  tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+  tr.no td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+  .mark{font-weight:700;font-size:12px;white-space:nowrap}
+  .mark.y{color:var(--ok)} .mark.n{color:var(--bad)} .mark.m{color:var(--warn)}
+
+  /* ── 决策卡 ── */
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:20px 22px;margin:0 0 16px}
+  .card > .hd{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}
+  .qid{font-family:var(--mono);font-size:12px;font-weight:700;color:#0f1115;background:var(--accent);
+    border-radius:5px;padding:2px 8px}
+  .card h3{margin:0;font-size:17px;flex:1 1 320px}
+  .pill{font-size:11px;border-radius:5px;padding:2px 9px;border:1px solid var(--line);color:var(--fg2);white-space:nowrap}
+  .pill.del{background:rgba(255,107,107,.14);color:#ff9b9b;border-color:rgba(255,107,107,.3)}
+  .pill.hold{background:rgba(167,139,250,.14);color:#c4b5fd;border-color:rgba(167,139,250,.3)}
+  .pill.go{background:rgba(62,207,142,.14);color:#7ee2b8;border-color:rgba(62,207,142,.3)}
+  .why{color:var(--fg2)}
+  .why b,.card b{color:var(--fg)}
+  .label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+  .facts{border-left:2px solid var(--line);padding-left:16px;margin:0 0 4px}
+  .facts li::marker{color:var(--muted)}
+  .cost{color:var(--fg2);font-size:13.5px}
+  .cost strong{color:var(--warn);font-weight:600}
+
+  /* ── 总表 / 收尾 ── */
+  .final td:first-child{font-family:var(--mono);color:var(--muted);width:52px}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:0}
+  .steps li{counter-increment:s;position:relative;padding:0 0 12px 38px;color:var(--fg2)}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:3px;width:22px;height:22px;border-radius:50%;
+    background:var(--panel2);border:1px solid var(--line);color:var(--accent);font:600 12px/20px var(--mono);text-align:center}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;margin-top:8px}
+  @media print{
+    body{background:#fff;color:#000;font-size:12px}
+    :root{--bg:#fff;--panel:#fff;--panel2:#f6f7f9;--fg:#000;--fg2:#333;--muted:#666;--line:#ccc}
+    .wrap{grid-template-columns:1fr;max-width:none}
+    .toc,.noprint{display:none!important}
+    .card,table,.note,.verdict{page-break-inside:avoid;border-color:#bbb}
+    code,.mono{background:#f2f3f5;color:#111}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc noprint" aria-label="决策清单">
+  <p class="t">决策清单</p>
+  <ol>
+    <li><a href="#premise"><span class="n">!</span>三处前提更正</a></li>
+    <li><a href="#q1" class="del"><span class="n">Q1</span>pageKit</a></li>
+    <li><a href="#q2" class="del"><span class="n">Q2</span>conclusionLine</a></li>
+    <li><a href="#q3" class="del"><span class="n">Q3</span>三个老模板</a></li>
+    <li><a href="#q4" class="hold"><span class="n">Q4</span>四个转发</a></li>
+    <li><a href="#q5" class="go"><span class="n">Q5</span>棘轮退役范围</a></li>
+    <li><a href="#q6" class="go"><span class="n">Q6</span>谁拍板</a></li>
+    <li><a href="#q7" class="del"><span class="n">Q7</span>测试改法</a></li>
+    <li><a href="#q8" class="go"><span class="n">Q8</span>执行时机</a></li>
+    <li><a href="#q9" class="hold"><span class="n">Q9</span>额外三项</a></li>
+    <li><a href="#final"><span class="n">→</span>总结与下一步</a></li>
+  </ol>
+</nav>
+
+<main>
+<header>
+  <p class="kicker">wayfinder · grilling · HITL 裁定票</p>
+  <h1>#705 没有调用方的四处：删除或搬回各自的能力目录</h1>
+  <p class="sub">卡路里包（<code>packages/skill-calorie</code>）结构整改的第四张裁定票。本页把 9 件事摆成可逐条点头的形式：每条给出<b>票面原话</b>、<b>我复核到的当刻事实</b>、<b>推荐答案</b>与<b>代价</b>。</p>
+  <div class="meta">
+    <span class="chip">母图 <b>#699</b></span>
+    <span class="chip">票 <b>#705</b> · wayfinder:grilling</span>
+    <span class="chip">复核方式 逐条只读实测</span>
+    <span class="chip">净效果 <b>生产行为零变化</b></span>
+    <span class="chip">等你 <b>逐条裁定</b></span>
+  </div>
+</header>
+
+<section id="premise">
+  <div class="note">
+    <h3>先说三件必须更正的前提（它们改变了 Q3、Q4、Q9 的题形）</h3>
+    <ul>
+      <li><b>票面说那四个「纯转发」没有调用方 —— 不成立。</b>它们正被 <code>src/workout/plan.ts</code>、<code>src/workout/wizard.ts</code> 调用，是生产路径。删掉会直接改生产行为。</li>
+      <li><b>「额外三项迁移」里有两项不能搬。</b><code>contentSuffix</code> 只有一个调用方且在包根；<code>sceneEnvelope</code>、<code>sourceLine</code> 搬了会让共用位反向依赖能力目录，撞结构标准的「依赖方向」。</li>
+      <li><b>Q2 多出一个票面没提的选项。</b><code>conclusionLine</code> 产出的 class 与公共层 <code>base-render/src/blocks.ts:308</code> 的 <code>renderConclusionBar()</code> <b>逐字节相同</b>，而后者是全仓 20 多页在用的那一个。</li>
+    </ul>
+    <p style="margin-top:10px;color:var(--fg2)">其余四条票面读数（<code>pageKit</code> 零 import、<code>conclusionLine</code> 只有一件测试读、<code>render/html.ts:72/90/105</code> 生产零调用、<code>cli/legacy/</code> 23 件全空且棘轮两边都是 0）<b>逐条成立</b>，未作改动。</p>
+  </div>
+</section>
+
+<section id="q1">
+  <div class="card">
+    <div class="hd"><span class="qid">Q1</span><h3><code>src/shared/pageKit.ts</code>：撤件，还是回某个能力的家？</h3>
+      <span class="pill del">建议：撤件</span></div>
+    <p class="why"><b>前因。</b>票面判据只有一句：结构标准要求共用件<b>写得出「哪两个能力在用」</b>，写不出来就不该占共用位。所以真正要回答的是「这件的第二个用法在哪」。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li><b>全仓零 import</b> —— 连一件测试都不读它。<code>SHAPES</code>／<code>pageBaseCss</code>／<code>payloadFold</code> 三个导出从诞生起<b>没有任何机器消费者</b>。</li>
+      <li>它自称的下游是 #526～#529 四票「照抄本件」，但那四票<b>一票都没照抄</b>，都直接用了公共层。</li>
+      <li>它自称的落点 <code>.scratch/t525/</code> 在 <code>.gitignore</code> 里，盘上<b>不存在</b>。</li>
+      <li>它想干的两件活<b>已经在别处干完了</b>：<code>renderDisclosure</code> 住 <code>base-render/src/blocks.ts:956</code>；样式段拼法就是 <code>assembleDocPage({pageUi:true})</code> 本身。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>撤件，知识留在交付文档</td><td>失掉一份「机器可读的形状清单」</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>保留</td><td>继续违背票面自己引的结构标准；零收益</td><td class="mark n">否</td></tr>
+      <tr class="no"><td>搬进某个能力目录</td><td><b>没有家</b>——零调用方，搬了只是换个地方放</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-del"><span class="tag">推荐</span><div><b>撤件。</b><code>SHAPES</code> 那张「债 → 件名」表留在 <code>docs/skills/skill-calorie/t525-共享形状与样板页.md</code> §二（逐条已同源在仓内），<code>payloadFold</code> 的用法留在该文档 §4.1 照抄指引。<br><span class="cost">代价细说：「机器可读」这个卖点是假的——没有任何程序读过 <code>SHAPES</code>。留 markdown 一处即可，不必养第二个会走散的副本。</span></div></div>
+  </div>
+</section>
+
+<section id="q2">
+  <div class="card">
+    <div class="hd"><span class="qid">Q2</span><h3><code>src/shared/conclusionLine.ts</code>：撤件、回家，还是并进公共层？</h3>
+      <span class="pill del">建议：撤件</span></div>
+    <p class="why"><b>前因。</b>本件把「一句话结论条」的形状定在技能层共用位。票面问的是撤件还是回家；复核发现<b>第三个选项</b>——它要定形状的对象在公共层已经有了。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li><code>src/</code> 侧<b>零调用方</b>；唯一消费者是 <code>test/fusion-shared-422.test.mjs</code>。</li>
+      <li>输出 <code>&lt;p class="ilife-block-conclusion"&gt;</code>；公共层 <code>blocks.ts:308</code> 的 <code>renderConclusionBar(text)</code> <b>产出同一串</b>，连样式也在 <code>blocks.ts:1411</code>。</li>
+      <li>本件比公共层多出来的只有一条：<b>空串／全空白串一律报错</b>。这条校验的消费者是零。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>撤件（形状归位公共层）</td><td>要改 <code>fusion-shared-422</code> 的 4 处（见 <a href="#q7">Q7</a>）</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>并进公共层</td><td>零调用方<b>不需要搬</b>；且公共层已有同形实现，并进去＝第二份定义</td><td class="mark n">否</td></tr>
+      <tr class="no"><td>回某个能力的家</td><td>同样是没有家</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-del"><span class="tag">推荐</span><div><b>撤件，测试跟着改</b>（改法见 Q7）。<br><span class="cost">代价细说：会丢掉「技能层那道更严的空串校验」。但调用方只要给空串，公共层照样抛错——<b>校验没消失，只是换了个住处</b>，与「一面墙上只挂一只钟」是同一条纪律。</span></div></div>
+  </div>
+</section>
+
+<section id="q3">
+  <div class="card">
+    <div class="hd"><span class="qid">Q3</span><h3><code>src/render/html.ts:72/90/105</code> 三个老模板函数：删，还是按台账销账留着？</h3>
+      <span class="pill del">建议：删</span></div>
+    <p class="why"><b>前因。</b>这三个函数（<code>renderDietHtml</code>／<code>renderExerciseHtml</code>／<code>renderGoalHtml</code>）是 T8 时代的主视图输出。今天每一条读命令都有自己的整页装配件，它们只剩一件测试在打。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li>生产<b>零调用</b>：<code>src/</code> 内除 barrel <code>render/index.ts:23</code> 那一行，无人引用。</li>
+      <li>唯一消费者：<code>test/render-t8.test.mjs</code> 的 3 处断言（<code>:113</code>／<code>:129</code>／<code>:144</code>）。</li>
+      <li><b>删的收益里有一条不是清账而是修 bug</b>：<code>renderGoalHtml:109-111</code> 把 <code>calorie_goal</code>／<code>protein_goal</code>／<code>water_goal</code> 三个<b>常量名直接印给用户看</b>——本仓明令禁止可见文本出现 snake_case，这是漏网的一处，而它只活在这个没人调用的分支里。</li>
+      <li>那个违规就是既有测试断言住的：<code>render-t8.test.mjs:145-146</code> 断言输出含「热量目标」，<code>:146</code> 那行正是这一处。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>删 3 个函数 ＋ barrel 一行 ＋ 3 处断言</td><td>约 46 行；<code>render-t8</code> 里 3 个用例要各摘一段（用例本身留）</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>销账留着</td><td>把一处可见文案违规长期挂在没人看得见的路径上</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-del"><span class="tag">推荐</span><div><b>删除</b>，连带 <code>render/index.ts:23</code> 那一行与 <code>render-t8.test.mjs</code> 的三处断言。<br><span class="cost">代价细说：删掉后「没人调用所以不会暴露」的违规会随函数一起不存在——<b>这正好是目的</b>。台账「按票面留着」那一条随票面注销（票面自己把它交出来裁了）。</span></div></div>
+  </div>
+</section>
+
+<section id="q4">
+  <div class="card">
+    <div class="hd"><span class="qid">Q4</span><h3><code>src/render/html.ts:509-538</code> 四个转发：删掉让调用方直连，还是留着？</h3>
+      <span class="pill hold">建议：留着，本项退回母图</span></div>
+    <p class="why"><b>前因。</b>票面把这一条列为「没有调用方」的第四处。复核发现<b>前提不成立</b>——这四个函数是热的。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li>生产调用方：<code>src/workout/plan.ts:10,30,40,53</code>、<code>src/workout/wizard.ts:11,29</code>。</li>
+      <li>测试调用方：<code>test/render-t41.test.mjs:142,149,168</code>。</li>
+      <li>它们不是「纯转发」而是<b>适配层</b>：调用方不传 <code>opts</code> 时由它们补 <code>key</code> 与 <code>command</code> 缺省值（<code>calorie-cmd-read calorie.view.plan</code> 这类命令原文）。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>留着，退出本票范围</td><td>少清一层；但不承担任何风险</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>删掉，调用方直连</td><td>4 个缺省命令原文要摊到 <code>workout/</code> 各处自己拼 —— 撞「一处定义」</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-hold"><span class="tag">推荐</span><div><b>留着</b>，并把票面这一条改成「不是本票范围」，退回母图 <b>#699</b> 归 <b>#704</b>（页面件搬回各自能力目录）时再判它该不该并进 <code>workout/</code>。<br><span class="cost">代价细说：铁律五的删除检验是「删掉它，外面说不出少了什么」。这里外面<b>说得出来</b>：少了四个缺省值。所以它不算白占一层——判定依据是票面前提失效，不是它变好了。</span></div></div>
+  </div>
+</section>
+
+<section id="q5">
+  <div class="card">
+    <div class="hd"><span class="qid">Q5</span><h3><code>cli/legacy/</code> 的 23 件空分片与那套棘轮：退役到什么程度？</h3>
+      <span class="pill go">建议：现在退役</span></div>
+    <p class="why"><b>前因。</b>当初把 92 条未搬迁命令按场景切成 <code>scene-01..10.ts</code>，是为了让并发的多席各自只改自己那一片。今天 92 条<b>全部搬完</b>，这 23 件只剩文件头注释，棘轮冻住的是一份空清单。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li>23 件：顶层 12（<code>index.ts</code>＋<code>types.ts</code>＋<code>scene-01..10.ts</code>）＋ <code>routes/</code> 11 件，<b>10 个命令分片与 10 个路由分片全空</b>。</li>
+      <li><code>src/</code> 侧零引用；5 件测试读它。</li>
+      <li>棘轮冻结值 <code>test/legacy-frozen-295.mjs:117/123</code>＝<code>92</code>／<code>119</code>，两边实测<b>都是 0</b>。</li>
+      <li><code>test/cmd-registry-294.test.mjs:216</code> 已经断言「未搬迁清单不再是空集即红」——<b>老路已经关死了</b>。</li>
+      <li>要动的面：<code>src/cli/legacy/**</code> 23 件、<code>test/declared.mjs</code>、<code>legacy-partition-313.test.mjs</code>、<code>legacy-ratchet-295.test.mjs</code>、<code>legacy-frozen-295.mjs</code>、<code>cmd-registry-294.test.mjs:216</code>、<code>scripts/gen-cli.mjs</code> 的 legacy 入口（<code>scanLegacySceneNames</code>／<code>mergeLegacyPartition</code>／<code>legacySources</code>）。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>现在退役</td><td>「92 条一条不丢」改由 <code>FROZEN_LEGACY_KEYS</code> 直接对 <code>REGISTRY</code> 成立</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>等别的票</td><td>把一件已经查清的事再拖一轮，没有收益</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-go"><span class="tag">推荐</span><div><b>现在退役</b>，范围＝上列七处一起动。<br><span class="cost">代价细说：「不丢命令」这条事实<b>不依赖这 23 个空文件</b>——它靠 <code>FROZEN_LEGACY_KEYS</code>（92 键）与 <code>REGISTRY</code>（全部已搬键）对账即可成立。会失掉的是「场景分区」这层容器本身，而分区存在的唯一理由是并发窗口，窗口已经关了。</span></div></div>
+  </div>
+</section>
+
+<section id="q6">
+  <div class="card">
+    <div class="hd"><span class="qid">Q6</span><h3>退役由谁拍板，要不要留一张决策记录？</h3>
+      <span class="pill go">建议：你当场拍 ＋ 落一张短记录</span></div>
+    <p class="why"><b>前因。</b>票面把它单列成「规矩问题」：一句话的授权，不该留给下一位路过的人猜。问的是<b>谁有权决定</b>，不是技术细节。</p>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>你当场拍 ＋ 一张 <code>docs/adr/</code> 短记录</td><td>多写一页记录；落点与标题先报你过目</td><td class="mark y">推荐</td></tr>
+      <tr><td>转派母图编排者拍</td><td>把查清的事再走一轮协调</td><td class="mark m">可</td></tr>
+      <tr><td>先立决策记录新票再动手</td><td>记录与实施分票，来回一轮</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-go"><span class="tag">推荐</span><div><b>本票当场拍（你点头即生效），另在 <code>docs/adr/</code> 落一张短决策记录。</b><br><span class="cost">代价细说：删掉一条「曾经拦过人」的棘轮，符合决策记录的门槛——<b>难反悔</b>（92 条未搬迁命令的时代结束了）＋ <b>将来读者会问「为什么没有棘轮了」</b>＋ <b>是真实取舍</b>。一张纸省掉将来无数个「这能不能删」的猜测。</span></div></div>
+  </div>
+</section>
+
+<section id="q7">
+  <div class="card">
+    <div class="hd"><span class="qid">Q7</span><h3>连带的两件测试怎么改，本票范围划到哪？</h3>
+      <span class="pill del">建议：都纳入本票，逐用例摘而非整件删</span></div>
+    <p class="why"><b>前因。</b>Q2、Q3 的删除会让两件测试变红。判「整件作废」还是「只作废其中一段」决定了本票会不会顺手删掉有效覆盖。</p>
+    <div class="label">当刻事实</div>
+    <ul class="facts">
+      <li><code>test/render-t8.test.mjs</code>（160 行，7 个用例）：只有 3 个用例打那三个函数（<code>:93</code>／<code>:121</code>／<code>:136</code>），另 4 个（键表、缺失阻断、总览）与它们无关。</li>
+      <li><code>:93</code> 那一段里 <b>其余断言是真的有效覆盖</b>：「15:00 苹果进加餐」「pct 求和＝100」「水行不计入分布」——这些必须留下。</li>
+      <li><code>test/fusion-shared-422.test.mjs</code> 有 4 处引用 <code>conclusionLine</code>：<code>:25</code> import、<code>:41</code> 文件名单、<code>:156-161</code> 一整个用例、<code>:243-245</code>「定义地数＝1」断言。</li>
+      <li>另两件（<code>render-t41</code>、<code>t550-复制日志场景标识</code>）<b>不随本票改动</b>——Q4 留着、Q9 不搬。</li>
+    </ul>
+    <div class="label">推荐改法</div>
+    <table>
+      <tr><th>测试件</th><th>怎么改</th></tr>
+      <tr><td><code>render-t8.test.mjs</code></td><td>删 <code>:93</code>／<code>:121</code>／<code>:136</code> 三处「打 HTML 输出」的断言（<b>用例本身保留</b>，其中 <code>:93</code> 的分布断言逐条留下）</td></tr>
+      <tr><td><code>fusion-shared-422.test.mjs</code></td><td>删 <code>:25</code> import、<code>:41</code> 文件名单、<code>:156-161</code> 用例；<code>:243-245</code> <b>改写成钉技能层零命中</b>（「结论条的定义权威不在本层」）——门留着，方向调转</td></tr>
+    </table>
+    <div class="verdict v-del"><span class="tag">推荐</span><div><b>都纳入本票，按上表逐处摘。</b><br><span class="cost">代价细说：会失去的覆盖只有「已经没人调用的那三个函数」和「已归位公共层的结论条」两处——两者的形状由公共层自己的测试与页面产物承担。保留 <code>:243-245</code> 那条门很值：它正是防止「结论条」将来再冒出第二份定义的那道闸。</span></div></div>
+  </div>
+</section>
+
+<section id="q8">
+  <div class="card">
+    <div class="hd"><span class="qid">Q8</span><h3>执行时机：本票当场做，还是只出决议另开实施票？</h3>
+      <span class="pill go">建议：当场做</span></div>
+    <p class="why"><b>前因。</b>票面的「产出」写的是决议表，「验收」写的却是实施后的读数（两个门两绿、测试全绿、改坏必红／改回必绿）。两种读法只能选一种。</p>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>当场做</td><td>本票同时装决议与改动，评审面长一点</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>只出决议</td><td>另开票要走一遍必报五步＋协调，多一轮</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-go"><span class="tag">推荐</span><div><b>本票当场做。</b><br><span class="cost">代价细说：四处处置里三处是纯删除、一处是「不动」，<b>没有架构分叉</b>，实施风险低于「再开一票」的协调成本；而验收段本来就写成了实施后的形态。</span></div></div>
+  </div>
+</section>
+
+<section id="q9">
+  <div class="card">
+    <div class="hd"><span class="qid">Q9</span><h3>额外三项迁移（<code>contentSuffix→cli/</code>、<code>sceneEnvelope→render/</code>、<code>sourceLine→diet/</code>）：并入、另开票，还是撤销？</h3>
+      <span class="pill hold">建议：三项全撤销</span></div>
+    <p class="why"><b>前因。</b>票面把这三项列为「额外范围」，说它们「不是上面四条里的任何一条」。复核后它们连「共用件」都不算——各自都过不了结构标准已经写死的判据。</p>
+    <div class="label">当刻事实（生产调用方，测试不算）</div>
+    <ul class="facts">
+      <li><code>contentSuffix.ts</code>：<b>只有一个调用方</b> <code>src/output.ts:312</code>，而 <code>output.ts</code> 在<b>包根</b>、不在 <code>cli/</code> 里 ⇒ 搬进 <code>cli/</code> 等于让包根反向依赖一个能力。</li>
+      <li><code>sceneEnvelope.ts</code>：4 个生产调用方，住 <code>render/</code>（3 件）与 <code>shared/copyArea.ts</code>（1 件）⇒ 搬进 <code>render/</code> 会让<b>共用位反过来 import 一个能力</b>，正是「依赖方向」那条禁止的。</li>
+      <li><code>sourceLine.ts</code>：3 个生产调用方，住 <code>diet</code>（2 件）与 <code>render</code>（1 件）⇒ 搬进 <code>diet/</code> 后 <code>render/dietDocs.ts</code> 要改成「<code>render</code> 从 <code>diet</code> 取件」，与该件自述的「只吃取数结果」口径不符；另有 5 件测试的文件头逐字写着 <code>shared/sourceLine.ts</code> 这个路径。</li>
+    </ul>
+    <div class="label">选项与代价</div>
+    <table>
+      <tr><th>选项</th><th>代价</th><th>结论</th></tr>
+      <tr class="rec"><td>三项全撤销，不动</td><td>承认报告这三条是错的；问题留给将来</td><td class="mark y">推荐</td></tr>
+      <tr class="no"><td>并入本票</td><td>与「删除零调用方代码」这个票名打架；还要先补公开接口</td><td class="mark n">否</td></tr>
+      <tr class="no"><td>另开票</td><td>为三件「不该动的事」开票，等于把错判固化</td><td class="mark n">否</td></tr>
+    </table>
+    <div class="verdict v-hold"><span class="tag">推荐</span><div><b>撤销三项，都不动。</b><br><span class="cost">代价细说：<code>contentSuffix</code> 住 <code>shared/</code> 确有错位感（它唯一的调用方在包根），但那不等于「搬进 <code>cli/</code>」是对的解法。真要摆正，方向是「归到包根输出模块旁边」，那是另一件事、今天不做——<b>把它当遗留记一笔，而不是塞进错误的落点</b>。</span></div></div>
+    <div class="label">顺带一件本票可以收掉的</div>
+    <p><code>src/shared/sourceLine.ts:15</code> 导出的 <code>SourceLineInput</code> 接口 —— <b>全仓零 import</b>，只在自己文件里出现（声明、签名、断言三处）。删掉这一个导出名、把它降成函数签名里的内联类型即可，零调用方受影响。建议<b>纳入本票</b>。</p>
+  </div>
+</section>
+
+<section id="final">
+  <h2>总结：这张表点头，本票就定了</h2>
+  <table class="final">
+    <tr><th>#</th><th>事项</th><th>推荐</th></tr>
+    <tr><td>Q1</td><td><code>shared/pageKit.ts</code>（零 import）</td><td class="mark y">撤件</td></tr>
+    <tr><td>Q2</td><td><code>shared/conclusionLine.ts</code>（零调用方，公共层已有同形）</td><td class="mark y">撤件</td></tr>
+    <tr><td>Q3</td><td><code>render/html.ts</code> 三个老模板（含一处 snake_case 漏网文案）</td><td class="mark y">删</td></tr>
+    <tr><td>Q4</td><td><code>render/html.ts</code> 四个转发（<b>前提不成立，实为热码</b>）</td><td class="mark m">留着，退回母图 #704</td></tr>
+    <tr><td>Q5</td><td><code>cli/legacy/</code> 23 件 ＋ 棘轮与生成器入口</td><td class="mark y">现在退役</td></tr>
+    <tr><td>Q6</td><td>退役的授权与决策记录</td><td class="mark y">你当场拍 ＋ 一张短记录</td></tr>
+    <tr><td>Q7</td><td>两件测试的改法</td><td class="mark y">按 Q7 表逐处摘</td></tr>
+    <tr><td>Q8</td><td>执行时机</td><td class="mark y">本票当场做</td></tr>
+    <tr><td>Q9</td><td>额外三项迁移 ＋ <code>SourceLineInput</code></td><td class="mark m">三项撤销；死导出收掉</td></tr>
+  </table>
+
+  <h3>净动作（若全部按推荐走）</h3>
+  <ul>
+    <li><code>src/shared/</code> 14 件 → <b>11 件</b>（撤 2 件 ＋ 收 1 个导出名）。</li>
+    <li><code>src/cli/legacy/</code> 23 件 → <b>0 件</b>；连带 3 件测试件、1 件对账件与生成器的 legacy 入口。</li>
+    <li><code>src/render/html.ts</code> 删约 46 行 ⇒ 637 → 约 591 LF，<b>仍在 350 线之上</b>，摊销法不变、台账行不动（只须跑 <code>--dry</code> 再 <code>--sync</code> 复核）。</li>
+    <li><b>生产行为零变化</b>——唯一的可见差异是那处 snake_case 文案随函数一起消失。</li>
+  </ul>
+
+  <h3>请你这样回我</h3>
+  <p>逐条答即可：<b>同意</b>就说「同意」，或只报要改的编号（例如「Q1 同意，Q4 改成当场删」）。有异议的编号告诉我你的取舍方向，我按你的方向重算下一层问题。</p>
+
+  <h3>答完之后我会做</h3>
+  <ol class="steps">
+    <li>把决议表写成 <b>#705 的解决评论</b>，并回写母图 <b>#699</b> 的 Decisions so far。</li>
+    <li>更新 <b>#705 正文</b>的 <code>## 进度：N%</code> 与「下一步」，按进度契约收尾。</li>
+    <li>讨论完毕、意图对齐时，提醒你执行一次 <code>/to-spec</code>，把结论固化成规格单，并<b>挂到 #699 这张 map 上成为 subissue</b>。</li>
+  </ol>
+
+  <footer>
+    本页是 <code>#705</code> 的决策助手页，不是决议本身——决议以 <code>#705</code> 的解决评论为准。<br>
+    落点：<code>docs/skills/skill-calorie/t705-decisions.html</code>（照 <code>docs/agents/doc-homes.md</code>：技能件 → <code>docs/skills/&lt;件名&gt;/</code>，跟票走保留票号前缀）。<br>
+    全部事实为当刻只读实测；行号与读数在动手前会再核一遍。
+  </footer>
+</section>
+</main>
+</div>
+</body>
+</html>
