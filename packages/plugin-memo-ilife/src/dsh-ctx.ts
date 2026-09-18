@@ -10,6 +10,11 @@ export interface SlotsRegisterOptions {
   readonly order?: number;
   readonly label?: string | (() => string);
   readonly locale?: string;
+  /** 本包自己那条 RPC 通道（单段，例 `/ilife-memo`）：注册方写进来，读方（总管）据此**通用地**
+   *  调它，不必在源码里写死任何一家的通道名。出处＝总管侧同一格的镜像
+   *  `packages/plugin-manager/src/dsh-ctx.ts:19-21`（#706 配置体检要走它；本包 `client.ts`
+   *  由 #706 的 `f8957dd8` 已在注册处写上 `channel: RPC_CHANNEL`，此处补上缺的那一格）。 */
+  readonly channel?: string;
   readonly inject?: () => Record<string, unknown>;
 }
 
@@ -85,12 +90,22 @@ export interface SkillsFace {
  * （见 `src/index.ts` 的拆雷注释与 `docs/agents/plugin-webserver-inject.md`），不再是早期脚手架的
  * `connection.rpc.handle`。此前镜像一直停在旧那一版（复审 F 的 S3）——现照**实现**对齐；
  * `rpc` 降为可选，因为 `contract.ts` 的信封仍按 RPC 语义命名（`RpcResult`／`RpcHandler`）。
+ *
+ * #696：设置页要在既有通道上加三个配置端点，宿主注册面的镜像类型补成具名的 `HostConnectionFace`
+ * （出处同上一段，照 `packages/plugin-chef/src/dsh-ctx.ts` 那份写）；其余面一个字未动。
  */
 export interface ConnectionFetchRegisterOptions {
   readonly path: string;
   readonly methods?: readonly string[];
   readonly requestBody?: string;
   fetch(request: unknown): Promise<Response> | Response;
+}
+
+/** 宿主 fetch 路由注册面（`ctx.connection.fetch.register`）：出处与上一件同源
+ * （`@xmanrui/dsh-im` 的 `plugin-src/management-rpc.mjs`，宿主注册走 route 对象）。
+ * #696 起 `index.ts` 用它做这个面的镜像类型（原先那里是就地写死的匿名结构）。 */
+export interface HostConnectionFace {
+  readonly fetch: { register(options: ConnectionFetchRegisterOptions): () => void };
 }
 
 export interface HostCtx {
