@@ -10,7 +10,7 @@
  * 老命名规则复刻（只读基线 `D:\2Study\StudyNotes\SKILLS\卡路里\scripts\html_paths.py`）：
  *   - 文件名主体原样使用：可含中文／空格／`：`／`vs`／`_`（老 `html_name` 只 sanitize `suffix`，`command` 不洗）；
  *   - 输出目录：老 `db_path.parent / calorie_html`（`db_path` 为 db **文件**）≡
- *     TS 线 `join(dbDir, 'calorie_html')`（`dbDir` 为 `SKILLS_DB_PATH` **目录**，见 `src/paths.ts`）；
+ *     TS 线 `join(dbDir, 'calorie_html')`（`dbDir` 为**库目录**，见 `src/paths.ts` 的 `resolveDbDir()`）；
  *     目录不存在则递归创建（老 `html_dir(mkdir=True)`），不写死任何盘符。
  */
 

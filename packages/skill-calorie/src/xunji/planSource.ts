@@ -10,7 +10,7 @@
  * - 会读 `workout_plans` 全表再按（周，日）过滤（`workout` 门的 `getPlan` 只读口；
  *   R1 收口 #613：跨能力引用一律走能力门 `workout/index.js#getPlan` 与
  *   `render/index.js#weekOfDate`，不深引对方内部件）；
- * - 存在性预检：`SKILLS_DB_PATH` 未设／库文件不在／打开失败一律回 `found: false` 带人话原因，
+ * - 存在性预检：库目录取不到／库文件不在／打开失败一律回 `found: false` 带人话原因，
  *   不抛错（调用方按退出码 1 报；“失败不许静默吞”）；
  * - “无任何计划”（无配置且无会话）与“计划缺开始日期”同样回 `found: false`；
  *   “这天没排练”（休息日／计划未开始／超周）回 `found: true, sessions: []`——调用方按老
@@ -57,7 +57,7 @@ export function resolveDayPlan(dateStr: string, opts: ResolveDayPlanOpts = {}): 
     }
   }
   if (!existsSync(dbFile)) {
-    return { found: false, reason: '卡路里库文件不在（' + dbFile + '）：先确认 SKILLS_DB_PATH 指对，再看库在不在' };
+    return { found: false, reason: '卡路里库文件不在（' + dbFile + '）：先确认配置项 db.dir 指对（空＝数据目录），再看库在不在' };
   }
   let db: { close: () => void } | null = null;
   try {

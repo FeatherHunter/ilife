@@ -53,7 +53,7 @@ const LOG_SOURCE = 'body_photos（候选窗照片，本页只读不删）';
 export const PICKER_INLINE_MAX_BYTES = 400 * 1024;
 
 /** 短日期（`07-17`）＋相对时间（今天／昨天／N 天前／N 个月前／N 年前）；算不出只留短日期。
- *  「今天」取自共用件 `todayISO()`（同族页同一个出处；`CALORIE_TODAY` 可把它钉死）。
+ *  「今天」取自共用件 `todayISO()`（同族页同一个出处；#718 起「今天」由真实时钟给，钉钟走 `test/helpers/config-test.mjs` 的 `pinProcessClock`）。
  *  （与 `viewerDoc`／`compareDoc` 各自的同名小函数同口径；三处合一归公共小件，另票。） */
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);

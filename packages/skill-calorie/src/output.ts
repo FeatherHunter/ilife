@@ -225,7 +225,7 @@ function windowForHelpDelivery(key: string, stem: string, params: Record<string,
  *  - `target`（HELP 文件／速查台／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
  *    其中 HELP 产物（`卡路里_HELP`／`卡路里_照片HELP`／`卡路里_速查台`）另带**复用窗口**
  *    （#245：缺省一天内只留一份，窗口由 `--params` 的 `reuseHours` 定）；
- *  - 两者都没有 → 默认 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<TS>[_N].html` → **独占创建 ＋ 同秒递补**；
+ *  - 两者都没有 → 默认 `<库目录>/calorie_html/<中文command>_<TS>[_N].html`（库目录＝配置项 `db.dir`，空＝数据目录）→ **独占创建 ＋ 同秒递补**；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
  *  落点**解析**与写入同在一个 try 内：`calorie_html` 被同名文件占位等解析期失败同样归类（#87 返修 F4）。
  *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。
@@ -242,7 +242,7 @@ export function deliverHtml(input: {
 }): HtmlDelivery {
   try {
     if (input.explicit !== undefined) {
-      // #83 返修 R-1（红队 S1）：落点可为**相对路径**（`SKILLS_DB_PATH` 本身可为相对，`--html` 亦文档化为
+      // #83 返修 R-1（红队 S1）：落点可为**相对路径**（库目录配置项本身可为相对路径，`--html` 亦文档化为
       // 「任意路径」），而 `delivery.path` 契约要求绝对路径。此前把原样字符串回传 → `buildDelivery` 抛
       // `bad-input` → **产物已写盘却 exit 2**。共用件回执的 `path` 恒为绝对路径（`resolve(dir)` ＋ 文件名）。
       // #237：走 `file`（确切文件名）而不是把 `basename(abs)` 当 `stem`——两件事各走各的口子。

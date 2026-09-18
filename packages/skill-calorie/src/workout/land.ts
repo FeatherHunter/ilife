@@ -47,7 +47,7 @@ export interface LandBridgeResult {
 }
 
 /** R3 双桥的注入缝（与 `xunji/run-sync.ts#RunSyncDeps.plan`／`wish` 同形：天数组进、结局出；
- * 调用方可注入同形函数；`dbFile` 只给测试换库文件，生产走 `SKILLS_DB_PATH`，不许打生产库）。 */
+ * 调用方可注入同形函数；`dbFile` 只给测试换库文件，生产走库目录（配置项 `db.dir`），不许打生产库）。 */
 export interface LandBridgeDeps {
   readonly plan?: (dates: readonly string[]) => Promise<LandBridgeResult>;
   readonly wish?: (dates: readonly string[]) => Promise<LandBridgeResult>;
@@ -63,7 +63,7 @@ function openPlanDb(dbFile: string | undefined): { db: DatabaseSync | null; reas
     return { db: null, reason: e instanceof Error ? e.message : String(e) };
   }
   if (!existsSync(file)) {
-    return { db: null, reason: '卡路里库文件不在（' + file + '）：先确认 SKILLS_DB_PATH 指对，再看库在不在' };
+    return { db: null, reason: '卡路里库文件不在（' + file + '）：先确认配置项 db.dir 指对（空＝数据目录），再看库在不在' };
   }
   try {
     return { db: openDbReadOnly(file) as unknown as DatabaseSync, reason: null };

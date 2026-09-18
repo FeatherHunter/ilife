@@ -66,7 +66,7 @@ function fileKeyOf(photoPath: string): string {
 }
 
 /** 相对时间（人话）：今天／昨天／N 天前／N 个月前／N 年前；按自然日粗算。
- *  「今天」取自 `todayISO()`（唯一出处；`CALORIE_TODAY` 可把它钉死，测试与基线用得上）。 */
+ *  「今天」取自 `todayISO()`（唯一出处；#718 起「今天」由真实时钟给，钉钟走 `test/helpers/config-test.mjs` 的 `pinProcessClock`）。 */
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (days <= 0) return '今天';

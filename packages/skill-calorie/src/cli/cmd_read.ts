@@ -11,7 +11,7 @@
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
  * HTML 默认落盘（utf8，见下行 #87）＋ 可用 `--html` 显式覆盖：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
  * #87 · 输出命名规范复刻（M10）：不给 `--html` 时默认落
- * <SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（同秒冲突自动加后缀），
+ * <库目录>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html（库目录＝配置项 `db.dir`，空＝数据目录；同秒冲突自动加后缀），
  * 中文 command 取 CALORIE_COMBOS[key].title；显式 `--html` 覆盖任意路径。
  * ⚠️ 老技能的 `--output` 别名**已由 #245 收口删除**（与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
  * 落点随 envelope 的 data.output 回传（additive 字段，六形状守卫不校验 data 额外键）。

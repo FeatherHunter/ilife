@@ -67,9 +67,10 @@ function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, u
 
 /* ── #83 · 三态交付装配（M4 HTML-First ＋ 渲染失败回执） ───────────────────────────────── */
 
-/** 交付落点的可读描述（回执文案用；默认目录名必须出现在文案里，便于用户定位）。 */
+/** 交付落点的可读描述（回执文案用；默认目录名必须出现在文案里，便于用户定位）。
+ *  「库目录」＝配置文件里的 `db.dir`（空串＝配置数据目录），与环境变量无关（#718：环境变量读取已删）。 */
 function describeDeliveryTarget(explicit: string | undefined): string {
-  return explicit !== undefined ? '显式落点 ' + explicit : '默认目录 <SKILLS_DB_PATH>/' + HTML_DIR_NAME;
+  return explicit !== undefined ? '显式落点 ' + explicit : '默认目录 <库目录>/' + HTML_DIR_NAME;
 }
 
 /** ③ 文本态的结构化文本：**同源**取 `buildDataText`（#77 契约，五 shape 投影）。
@@ -144,7 +145,7 @@ function failWithReceipt(reason: string, key: string | undefined): never {
       op: '渲染／落盘未完成',
       reason,
       suggestions: [
-        '检查 SKILLS_DB_PATH 与 ' + HTML_DIR_NAME + ' 目录权限（只读／沙箱会自动转内联交付）',
+        '检查库目录（配置项 db.dir，空＝数据目录）与 ' + HTML_DIR_NAME + ' 目录权限（只读／沙箱会自动转内联交付）',
         '用 --html <可写绝对路径> 显式指定落点后重试',
         '确认 ' + HTML_DIR_NAME + ' 未被同名文件占位（占位会挡住落点解析）',
       ],

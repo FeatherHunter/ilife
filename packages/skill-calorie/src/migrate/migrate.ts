@@ -12,7 +12,7 @@
  *
  * 原则：
  * - 只读 src（DatabaseSync readOnly 打开，从不对其 exec 写；前后 stat 大小/mtime 记入报告）。
- * - 只写 dst（assertWritablePath 守卫：非 tmp 须 CALORIE_FORCE_PROD=1，真实 DB 零触碰）。
+ * - 只写 dst（assertWritablePath 守卫：非 tmp 一律拒，真实 DB 零触碰）。
  * - 幂等可重跑：dst 侧每表先 DELETE 再按“基表→_new→_mig→entries”确定序重插，id 尽量保留，
  *   碰撞则顺序分配新 id（确定性），重跑结果一致。
  * - 三代收敛宁可多记不可丢：body_photos/measurements/composition 的 _new/_mig 行全部收敛进终态表；
@@ -218,7 +218,7 @@ export function migrateCalorieDb(srcPath: string, dstPath: string, opts: Migrate
   } catch {
     throw new MigrateMissingError('src 不存在或不可读：' + srcAbs);
   }
-  // dst 写守卫：非 tmp 须 CALORIE_FORCE_PROD=1（真实 DB 零触碰，见 paths.ts）。
+  // dst 写守卫：非 tmp 一律拒（`CALORIE_FORCE_PROD` 那个 opt-in 已随 #718 删除，真实 DB 零触碰，见 paths.ts）。
   assertWritablePath(dstAbs);
   if (opts.allowOverwrite === false) {
     try {
