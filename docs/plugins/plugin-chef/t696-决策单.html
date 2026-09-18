@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#696 其余四家的设置页 · 待拍四件事</title>
+<style>
+  :root{
+    --ink:#1c2024;--ink2:#5b6570;--line:#e2e6ea;--bg:#f6f7f9;--card:#fff;
+    --accent:#2f6fed;--ok:#12805c;--warn:#b26a00;--bad:#b3261e;
+    --okbg:#e8f6f0;--warnbg:#fff5e5;--badbg:#fdeceb;--accentbg:#eaf1fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--bg);color:var(--ink);
+       font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:24px;line-height:1.35;margin:0 0 6px}
+  .sub{color:var(--ink2);font-size:13.5px;margin:0 0 20px}
+  .strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+        padding:4px 12px;font-size:12.5px;color:var(--ink2)}
+  .chip b{color:var(--ink)}
+  .chip.ok{background:var(--okbg);border-color:#bfe3d5;color:var(--ok)}
+  .chip.warn{background:var(--warnbg);border-color:#f0d9b0;color:var(--warn)}
+  .chip.bad{background:var(--badbg);border-color:#f3c9c6;color:var(--bad)}
+  h2{font-size:17px;margin:34px 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:18px 20px;margin:0 0 16px}
+  .card.q{border-left:5px solid var(--accent)}
+  h3{font-size:15.5px;margin:0 0 6px}
+  .why{color:var(--ink2);font-size:13.5px;margin:0 0 10px}
+  .lbl{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--ink2);
+       text-transform:uppercase;margin:16px 0 8px}
+  ul{margin:0;padding-left:20px}li{margin:0 0 5px}
+  code{font:13px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;background:#eef1f4;
+       border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 0}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--ink2);font-weight:600;font-size:12.5px}
+  tr:last-child td{border-bottom:0}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 10px;background:#fcfdfe}
+  .opt.rec{border-color:#bcd3f8;background:var(--accentbg)}
+  .opt h4{margin:0 0 8px;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;letter-spacing:.04em}
+  .pill.rec{background:var(--accent);color:#fff}
+  .pill.no{background:#eceff2;color:var(--ink2)}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.pc{grid-template-columns:1fr}}
+  .pc div{font-size:13.5px}
+  .pc .h{font-weight:700;font-size:12px;letter-spacing:.06em;margin-bottom:4px}
+  .pro .h{color:var(--ok)}.con .h{color:var(--bad)}
+  .callout{background:var(--warnbg);border:1px solid #f0d9b0;border-radius:10px;
+           padding:14px 18px;font-size:14px;margin:12px 0}
+  .callout.bad{background:var(--badbg);border-color:#f3c9c6}
+  .callout.info{background:var(--accentbg);border-color:#bcd3f8}
+  .callout strong{color:var(--warn)}
+  .callout.bad strong{color:var(--bad)}
+  .callout.info strong{color:var(--accent)}
+  .verdict{margin:12px 0 0;font-size:14px}
+  .verdict b{color:var(--accent)}
+  .reply{background:var(--ink);color:#eef1f5;border-radius:12px;padding:14px 18px;font-size:14px}
+  .reply b{color:#8fd6a8}
+  .reply code{background:rgba(255,255,255,.16);color:#eaf1fe;border-radius:4px}
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink2);font-size:12.5px}
+  a{color:var(--accent)}
+  .kbd{font:12.5px/1.4 ui-monospace,Consolas,monospace;background:#eef1f4;border:1px solid var(--line);
+       border-radius:5px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>#696 其余四家的设置页 · 待拍四件事</h1>
+  <p class="sub">大厨、居家、备忘录、作息四家的技能设置页做成真能配的页（照卡路里样板）。本单只列<b>我拍不了、需要你定夺</b>的四件，每件给前因、关键读数、选项与建议。</p>
+
+  <div class="strip">
+    <span class="chip ok">#696 <b>已认领</b></span>
+    <span class="chip ok">阻塞边 #676 <b>已关</b>·前沿已开</span>
+    <span class="chip warn">进度 <b>0%</b>·未动工</span>
+    <span class="chip bad">在途别席 <b>3 处</b>会撞车</span>
+  </div>
+
+  <h2>一分钟看懂</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:9.5em">这张票要交什么</th><td>四家页签点得到、<b>改得动</b>、保存后重启宿主仍在；每页有「重置为默认」（重置前自动留 <code>.bak</code>）；页里没有任何干活入口；<code>vision_router</code> 逐页打分 ≥90；两条边界门不红。</td></tr>
+      <tr><th>为什么会有问题</th><td>票面只写了「四家插件包的 <code>src/</code>」是交付物，但<b>「改得动」这一条没法只在插件里实现</b>——插件的冻结边界不许它自己读写配置文件。这是本单最大的一件。</td></tr>
+      <tr><th>四件要拍的</th><td>① 四家技能侧的「配置面」归谁做　② 备忘录「附件目录」那一行怎么办　③ 四页的行表与分级　④ 验收怎么出读数</td></tr>
+    </table>
+  </div>
+
+  <h2>开工前的现状读数</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:11em">看什么</th><th>读数</th></tr>
+      <tr><td>四家技能侧配置面</td><td><b>没有</b>。卡路里有 <code>src/config.ts</code> ＋ <code>src/cli/config.ts</code> ＋ <code>cmd_read.ts</code> 拦截；四家的 <code>src/</code> 下一件都没有。<br>好消息：四家 <code>package.json</code> 都已声明 <code>base-link-core@^0.3.0</code>，做配置面是零新依赖。</td></tr>
+      <tr><td>四家插件侧</td><td>大厨／居家／作息<b>没有 RPC 通道</b>（host 与 client 都没有 <code>connection</code>，其 <code>dsh-ctx.ts</code> 自述「最小静态注册，不取数」）；备忘录有 <code>/ilife-memo</code> 通道。⇒ 三家要新开一条电话线，照卡路里／记账的形。</td></tr>
+      <tr><td>取数桥 spawn</td><td>大厨／居家／作息三家 <code>bridge.ts</code> 不传 <code>env</code>、不给 <code>ELECTRON_RUN_AS_NODE</code>（备忘／卡路里／记账三家是齐的）。⇒ 这三家面板今天能不能把配置送进技能子进程，要一并补齐。</td></tr>
+      <tr><td>工作区在途（会撞）</td><td>#677 记账席：<code>plugin-bill-ilife/*</code> ＋ <code>skill-bill/src/{config.ts,cli/config.ts}</code>；<b>#712 备忘附件席</b>：<code>skill-memo-ilife/src/policy/*</code> 与 <code>test/media-dir-712.test.mjs</code>；另有 #676 第二席的技能侧件<b>仍未提交</b>。</td></tr>
+    </table>
+  </div>
+
+  <h2>决策一：四家技能侧的「配置面」归谁做</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">票面「交付物路径」只列了四个插件包的 <code>src/</code>；「不许动」写着不许改这四家的技能侧取数（那是隔壁票 #695 的地盘）。可是验收第 1 条要的是<b>改得动</b>：用户改一项、保存、宿主重启后仍在。</p>
+    <p class="why">而配置文件的读写实现按 #675 冻结口径住在公共层 <code>base-link-core/src/config/</code>（#694 已交付），插件却又<b>不许 import <code>base-*</code></b>——两道门一夹，插件自己写 YAML 就等于把配置实现抄第二处（破结构纪律铁律一）。</p>
+
+    <div class="callout bad">
+      <strong>决定性边界</strong>：<code>test/plugin-p10-boundaries.test.mjs:52</code> 写死「单品源码不许 <code>import base-</code>／<code>skill-</code> 包」，而票面验收第 5 条要求这条门<b>不红</b>。
+      <p class="why" style="margin:8px 0 0">⇒ 只剩一条既不改门、又不抄实现的路：页面 → RPC → <code>spawn</code> 技能 CLI → 技能侧调公共层。<b>技能侧必须有一个「配置面」</b>才能闭环。</p>
+    </div>
+
+    <p class="why">先例：卡路里那张票（#676）就是这么收的——技能侧配置面由那张票自己补落（<code>skill-calorie/src/config.ts</code> ＋ <code>src/cli/config.ts</code> ＋ <code>cmd_read.ts</code> 拦截），并在证据件里点名「票面交付物路径漏写了这一处」。「技能侧路径常量改读配置 ＋ 删环境变量」则留给另一张票（卡路里是 #718，四家是 #695）。</p>
+
+    <div class="lbl">三条路</div>
+
+    <div class="opt rec">
+      <h4>A · 本票也落四家的配置面 <span class="pill rec">推荐</span></h4>
+      <p class="why" style="margin:0 0 8px">每家新增：<code>src/config.ts</code>（默认值表 ＋ 读／写／重置三个薄转调）、<code>src/cli/config.ts</code>（三个 key 的唯一定义地，<b>不是唤醒词命令</b>，不进 <code>registry.ts</code>／<code>keys.ts</code>／HELP）、<code>cmd_read.ts</code> 一处「预检与分派层之前」的拦截（读写配置不该要求库目录已配）。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul>
+          <li>与 #676 先例逐字同形，四家照抄一个小件</li>
+          <li>四家已带 <code>base-link-core</code>，<b>零新依赖、零授权装包</b></li>
+          <li>验收第 1 条今天就能闭环；#695 之后只剩「路径改读配置 ＋ 删环境变量」</li>
+        </ul></div>
+        <div class="con"><div class="h">弊</div><ul>
+          <li>越出票面写集（多碰四个技能包），实施后对账要点名——#676 已开这个先例</li>
+          <li>会碰四家的 <code>cmd_read.ts</code>；#695 若同时在跑就要先划边界（我会在 #695 留评论声明）</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>B · 本票只做插件侧 <span class="pill no">等 #695</span></h4>
+      <p class="why" style="margin:0 0 8px">四家页面今天只能显示「技能侧不认的键」：改得动、存不下。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>严格守住票面写集</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul>
+          <li>验收第 1 条<b>无法成立</b> ⇒ #696 事实上被 #695 阻塞，得回 map 重排前沿</li>
+          <li>#695 的票面同样没写「配置面」，两边都以为对方做 ⇒ 容易空转</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <h4>C · 只做插件侧、页面读写暂挂 <span class="pill no">半成品</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>无</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>交一张改不动的页，验收第 1、2 条都过不去，还要二次动同一批文件</li></ul></div>
+      </div>
+    </div>
+
+    <p class="verdict">➡️ 建议 <b>A</b>：验收能一次闭环，代价只是四个技能包各加两件小文件——与卡路里的先例一致。</p>
+  </div>
+
+  <h2>决策二：备忘录「附件目录」那一行怎么办</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">「六家技能的路径类配置全量调查」（t692）把 <code>MEMO_MEDIA_DIR</code> 记成备忘录的候选项之一。但它今天的语义很别扭：<b>只当字符串前缀用</b>——校验附件路径以它开头、切掉前缀后存相对路径，不解析成真目录、也不校验文件在不在（<code>skill-memo-ilife/src/policy/crud.ts:29-34</code>）。</p>
+    <p class="why">map 的「Not yet specified」早写着：这一项的形状跟「改成真目录」那张票走——那张票就是 <b>#712</b>（前缀校验升级成真目录 ＋ 真包含判定），<b>此刻有另一席在途</b>（<code>policy/media.ts</code> 已落盘、未提交）。</p>
+
+    <div class="callout info">
+      <strong>两件事要同时成立</strong>：① 页面上这一行是按「目录」写，还是先不出；② 我这席<b>不碰</b> <code>skill-memo-ilife/src/policy/**</code>（那是 #712 在途的写集），只经配置 key 读写。
+    </div>
+
+    <div class="lbl">三条路</div>
+    <div class="opt rec">
+      <h4>A · 页面照出这一行，语义按 #712 的真目录写 <span class="pill rec">推荐</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>t692 的候选清单不缺项，与 #712 的方向一致</li><li>本票不碰 <code>policy/</code>，与在途那席零冲突</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>若 #712 收尾晚于本票，这一行的「生效」要等它落地（文案会写清，不假装已生效）</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>B · 这一行先不出 <span class="pill no">等 #712</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>不押注别人的在途工作</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>页面少一项，与「清单以 t692 为准」不符，还要再来一次小改</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>C · 照旧语义写「前缀」 <span class="pill no">与 #712 相反</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>贴合今天的实现</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>#712 一旦落地，这一行的文案就变成错的</li></ul></div>
+      </div>
+    </div>
+    <p class="verdict">➡️ 建议 <b>A</b>：一行按「目录」写、值照存，并在本票正文与 #712 各留一句依赖说明。</p>
+  </div>
+
+  <h2>决策三：四页的行表与分级</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">#675 冻结的呈现口径是<b>分级</b>：常用项直接画在页面上，其余进默认收起的「高级」组。清单以 t692 为准（六家候选 39 条，四家占 21 条）。</p>
+    <p class="why">一处要先说清：<b>「产物文件名主体」在卡路里那页上被略过</b>了（出处 <code>t676-决策单-第二轮.html:165</code>：它不在更早那份 #673 的清单里）。但本票的清单权威 t692 <b>把产物名主体算作候选</b>，所以我按 t692 收进来，四家各占 1–2 行。</p>
+
+    <div class="lbl">建议的行表（常用＝改了就影响库与产物落在哪）</div>
+    <table>
+      <tr><th style="width:5.5em">家</th><th>常用（直接画在页面上）</th><th>高级（默认收起的折叠组）</th><th style="width:4em">行数</th></tr>
+      <tr><td><b>大厨</b></td><td>数据目录／库文件名／HTML 产物目录名</td><td>产物文件名主体 · HELP ／ · 速查表</td><td>3 ＋ 2</td></tr>
+      <tr><td><b>居家</b></td><td>数据目录／库文件名／HTML 产物目录名／<b>备份目录</b></td><td>产物文件名主体 · HELP ／ · 速查表</td><td>4 ＋ 2</td></tr>
+      <tr><td><b>备忘录</b></td><td>数据目录／库文件名／HTML 产物目录名／附件目录</td><td>产物名主体 · HELP ／ · 速查表／飞书 CLI 路径／飞书授权二维码落点</td><td>4 ＋ 4</td></tr>
+      <tr><td><b>作息</b></td><td>数据目录／库文件名／HTML 产物目录名</td><td>产物名主体 · HELP／飞书 CLI 路径</td><td>3 ＋ 2</td></tr>
+      <tr><td colspan="3" style="text-align:right;color:var(--ink2)">合计</td><td><b>24 行</b></td></tr>
+    </table>
+    <p class="why" style="margin:10px 0 0">两条说明：① <b>产物目录名允许带 <code>/</code></b>——大厨是 <code>cook_html/help</code>、作息是 <code>schedule_html/help</code> 两段，备忘／居家是一段，同一套形状用「相对数据目录的目录名」表达即可；② 居家的「备份目录」不属 t692 的 5 条，它是 #707 留下的取值口（<code>resolveBackupDir()</code>），与数据目录同档。</p>
+
+    <div class="lbl">三条路</div>
+    <div class="opt rec">
+      <h4>A · 照上表（24 行） <span class="pill rec">推荐</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>与 t692 的候选清单逐条对得上</li><li>四家形状一致，只有行数与段数不同</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>比卡路里那页多出「产物名主体」一类，两家厂商口径不完全同形（会把出入写进证据件）</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>B · 产物名主体不进页面 <span class="pill no">与卡路里同形</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>四页与卡路里样板逐行同形，少 6 行</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>与 t692 的候选数不符（少了 6 条），要么改清单、要么记一笔出入</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>C · 你另给一份行表 <span class="pill no">我照抄</span></h4>
+      <p class="why" style="margin:0">你给什么行我就铺什么行，不自己增删。</p>
+    </div>
+    <p class="verdict">➡️ 建议 <b>A</b>。</p>
+  </div>
+
+  <h2>决策四：验收怎么出读数（含 ≥90 那条视觉打分）</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">票面第 4 条写的是「<code>vision_router</code> 逐页打分 ≥90，做法：打开设置面板 → 桌面截图 → 逐页打分」。问题在于：<b>本机那个 GUI 上装的不是本仓</b>——127.0.0.1:43120 用的 profile 装的是 npm 发布版（大厨／居家／备忘／作息都还是 <code>0.2.0</code>），所以在真宿主面板上今天看到的是<b>老页面</b>。</p>
+    <p class="why">先例：上一张面板票（#679）遇到同一件事，你当时的裁决是「真机那条验收换成对抗式审查」；那张票用的是<b>渲染台</b>——把真产物渲成真 DOM、量出版式读数、再截图。</p>
+
+    <div class="lbl">三条路</div>
+    <div class="opt rec">
+      <h4>A · 渲染台 ＋ 截图 ＋ vision 逐页打分 <span class="pill rec">推荐</span></h4>
+      <p class="why" style="margin:0 0 8px">照 #679 的渲染台：物化四家 <code>dist/client.js</code>（真产物）→ 用 stub loader ＋ hooks 替身渲成真 DOM → 出四页整页图 → vision 逐页打分；「点得到、改得动」做成量出来的读数（真调输入框的 <code>onChange</code>、保存与重置按钮的 <code>onClick</code>）。「保存后重启宿主仍在」三连（改前／改后／<b>新进程再读</b>）走探针脚本，路径是插件 <code>dist/bridge.js</code> → 技能 CLI 三个配置 key → 盘上 YAML，跑完还原不留痕（照 <code>t676-读数.mjs</code>）。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>全在本仓、可重跑、可入证据件</li><li>不动你正在用的 GUI，不需要装包授权</li><li>三连读数走的就是面板按按钮那条真路</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>不过 DSH 的槽位渲染、不点链接——「真机」那一层进不了读数（会写进证据件的边界一节）</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>B · 链进真宿主，由你亲眼点 <span class="pill no">要动你的 GUI</span></h4>
+      <p class="why" style="margin:0 0 8px">把四个插件链到本仓构建产物（或重新发版），你开面板点一遍，我来截图打分。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>真机上真看得见、真点得动</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>要动你正在用的宿主环境，且属安装动作（按并发协议要你持锁授权）</li><li>与你在途的其他票共用同一个 GUI，风险不成比例</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>C · 只出源码级用例与三连读数 <span class="pill no">视觉那条作废</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>最省事</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>票面第 4 条作废，要你点头，且页面的样子没人看过</li></ul></div>
+      </div>
+    </div>
+    <p class="verdict">➡️ 建议 <b>A</b>；你若有兴趣，收尾时再补一次 B（你亲眼点真面板）。</p>
+  </div>
+
+  <h2>怎么回</h2>
+  <div class="reply">
+    回一句就行：<b>A A A A</b>（全按建议），或逐条改（例：「一 A、二 B、三 A、四 A」）。<br>
+    另有两件我会顺手做、不占你的决策：① 补齐大厨／居家／作息三家取数桥的 spawn 环境（照卡路里样板的 <code>ELECTRON_RUN_AS_NODE</code>）；② 在 #695 上留一条评论，把「四家配置面归本票、路径改读配置归 #695」的边界写死，免得两席撞同一批文件。
+  </div>
+
+  <footer>
+    <p>票：<a href="https://github.com/FeatherHunter/ilife/issues/696">#696 其余四家的设置页：照卡路里样板铺开（分级呈现）</a>　·　图：<a href="https://github.com/FeatherHunter/ilife/issues/671">#671 爱生活设置面</a>　·　上游裁定：<a href="https://github.com/FeatherHunter/ilife/issues/675">#675 配置的存与生效口径</a>　·　清单权威：<code>docs/research/t692-six-skill-paths-survey.md</code>　·　形状样板：<code>docs/plugins/plugin-calorie/t676-证据.md</code>　·　渲染台先例：<code>docs/plugins/plugin-manager/t679-面板渲染台.mjs</code></p>
+    <p>落点说明：本单跟票走、住四家里<b>形状第一件（大厨）</b>的目录；同一票后续三家的证据件各落自家 <code>docs/plugins/&lt;件名&gt;/</code>。</p>
+  </footer>
+
+</div>
+</body>
+</html>
