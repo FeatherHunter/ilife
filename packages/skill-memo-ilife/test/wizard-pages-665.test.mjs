@@ -5,7 +5,8 @@
  * 页面渲染走共享渲染层（读数落在 `tooling/skill-html-snapshot.mjs --check` 产物面）；
  * 「改坏必红／还原必绿」两行机器读数见 `docs/skills/skill-memo-ilife/t658-C-向导与页面-证据.md`。
  *
- * 接缝与注入点同 wish-sync-661（统一出口 ＋ 临时库 `SKILLS_DB_PATH` ＋ 挡板 `LARK_CLI_PATH`）。
+ * 接缝与注入点同 wish-sync-661（统一出口 ＋ 临时库目录＝配置项 `db.dir` ＋ 挡板＝配置项 `lark.cliPath`，
+ * 两者都经 `ILIFE_CONFIG_DIR` 指向的临时配置目录里的 `memo.yaml` 注入）。#695：那两个环境变量已按用户裁决删除。
  * 授权三步另用本文件自带的 mini 挡板（只认授权域三条 argv，老 `feishu_auth_helper.py` 形状）。
  */
 import { test } from 'node:test';
@@ -17,15 +18,28 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
 import { mkMemoDb } from './helpers/memo-sqlite.mjs';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist/cli/cmd_read.js');
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
+/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
+ *  临时库写 `db.dir`、挡板写 `lark.cliPath`；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。 */
+function envOfSeam(s, cliPath) {
+  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: cliPath ?? s.stub.file } }, 't665-cfg-'));
+}
+
+/** 出口调用器：`opts.html` 照旧透传，`opts.cliPath` 可换挡板，其余照 `makeSeam` 的 `runNew`。 */
+function newRun(s, key, params, opts = {}) {
+  const { cliPath, ...rest } = opts;
+  return s.runNew(key, params, { ...rest, extraEnv: envOfSeam(s, cliPath) });
+}
+
 /** 跑一路，断言 delivery 三件套：回执有 delivery{mode,path,bytes}、落盘存在、体积一致。返回 envelope＋delivery。 */
 function runPage(s, key, params, file) {
-  const r = s.runNew(key, params, { html: file });
+  const r = newRun(s, key, params, { html: file });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + String(r.stderr).slice(0, 400));
   const env = envelope(r);
   const d = env.delivery;
@@ -43,8 +57,8 @@ function runPage(s, key, params, file) {
 
 test('#665 W1 排期向导：一路出一张排期页（delivery＋落盘＋内容）', () => {
   const s = seam('t665-w1-');
-  assert.equal(s.runNew('memo.create', { title: '学游泳', body: '学游泳', category: '心愿' }).status, 0);
-  assert.equal(s.runNew('memo.create', { title: '跑马', body: '跑马', category: '心愿', due: '2026-10-05' }).status, 0);
+  assert.equal(newRun(s, 'memo.create', { title: '学游泳', body: '学游泳', category: '心愿' }).status, 0);
+  assert.equal(newRun(s, 'memo.create', { title: '跑马', body: '跑马', category: '心愿', due: '2026-10-05' }).status, 0);
   const file = join(s.dir, 'wish-plan.html');
   const { env, d } = runPage(s, 'memo.wish', { wizard: 'plan', suggestDue: '2026-10-01' }, file);
   assert.equal(env.data.total, 1, '默认只列未排期');
@@ -53,14 +67,14 @@ test('#665 W1 排期向导：一路出一张排期页（delivery＋落盘＋内�
   assert.ok(html.includes('<title>心愿排期向导</title>'), '页面 chrome 须是排期向导（模板错位即红）');
   assert.ok(html.includes('学游泳'));
   assert.ok(!html.includes('<!--INJECT-DATA-->'), '三标记须填完');
-  const all = s.runNew('memo.wish', { wizard: 'plan', all: true });
+  const all = newRun(s, 'memo.wish', { wizard: 'plan', all: true });
   assert.equal(all.status, 0, String(all.stderr));
   assert.equal(envelope(all).data.total, 2, 'all 含已排期');
 });
 
 test('#665 W2 完成向导：一路出一张完成页（默认不勾选）', () => {
   const s = seam('t665-w2-');
-  assert.equal(s.runNew('memo.create', { title: '学琴', body: '学琴', category: '心愿' }).status, 0);
+  assert.equal(newRun(s, 'memo.create', { title: '学琴', body: '学琴', category: '心愿' }).status, 0);
   const file = join(s.dir, 'wish-complete.html');
   const { env, d } = runPage(s, 'memo.wish', { wizard: 'complete' }, file);
   assert.equal(env.data.total, 1);
@@ -70,13 +84,13 @@ test('#665 W2 完成向导：一路出一张完成页（默认不勾选）', () 
 
 test('#665 W3 批量改分类：收集出一张向导页，执行改分类', () => {
   const s = seam('t665-w3-');
-  assert.equal(s.runNew('memo.create', { title: '买奶', body: '买奶', category: '备忘' }).status, 0);
+  assert.equal(newRun(s, 'memo.create', { title: '买奶', body: '买奶', category: '备忘' }).status, 0);
   const file = join(s.dir, 'change-category.html');
   const { env, d } = runPage(s, 'memo.batch', { fromCategory: '备忘', toCategory: '打卡' }, file);
   assert.equal(env.data.total, 1);
   assert.ok(readFileSync(d.path, 'utf8').includes('批量改分类向导'));
   const id = env.data.items[0].id;
-  const x = s.runNew('memo.batch', { ids: [id], toCategory: '打卡' });
+  const x = newRun(s, 'memo.batch', { ids: [id], toCategory: '打卡' });
   assert.equal(x.status, 0, String(x.stderr));
   assert.equal(envelope(x).data.updated, 1);
   assert.equal(s.localNew().find((n) => n.id === id).category, '打卡');
@@ -86,9 +100,9 @@ test('#665 W3 批量改分类：收集出一张向导页，执行改分类', () 
 
 test('#665 W4 同步报告：memo.sync 随行出报告页（默认落盘＋显式路径）', () => {
   const s = seam('t665-w4-');
-  assert.equal(s.runNew('memo.create', { title: '学游泳', body: '学游泳', category: '心愿' }).status, 0);
+  assert.equal(newRun(s, 'memo.create', { title: '学游泳', body: '学游泳', category: '心愿' }).status, 0);
   // 缺省（不带 --html）：落默认 memo_html/同步报告*.html，照样给 delivery。
-  const plain = s.runNew('memo.sync', {});
+  const plain = newRun(s, 'memo.sync', {});
   assert.equal(plain.status, 0, String(plain.stderr));
   const env0 = envelope(plain);
   assert.ok(env0.delivery && env0.delivery.path, '缺省也要出 delivery');
@@ -131,9 +145,10 @@ function makeAuthFake(dir) {
 
 function runAuth(cli, key, params) {
   const dir = mkMemoDb('t665-auth-');
+  const cfg = mkMemoConfig({ db: { dir }, lark: { cliPath: cli } }, 't665-authcfg-');
   return spawnSync(process.execPath, [bin, key, '--params', JSON.stringify(params)], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: dir, LARK_CLI_PATH: cli },
+    env: configEnv(cfg),
   });
 }
 
@@ -169,9 +184,10 @@ test('#665 W5 授权引导：init／qr／poll／status 四步形状（老 helper
 
 test('#665 W6 授权引导：lark 缺席即大声失败（不断言真飞书）', () => {
   const dir = mkMemoDb('t665-authoff-');
+  const cfg = mkMemoConfig({ db: { dir }, lark: { cliPath: join(dir, 'no-lark') } }, 't665-authoffcfg-');
   const r = spawnSync(process.execPath, [bin, 'memo.auth', '--params', JSON.stringify({ step: 'init' })], {
     encoding: 'utf8',
-    env: { ...process.env, SKILLS_DB_PATH: dir, LARK_CLI_PATH: join(dir, 'no-lark') },
+    env: configEnv(cfg),
   });
   assert.equal(r.status, 4);
 });

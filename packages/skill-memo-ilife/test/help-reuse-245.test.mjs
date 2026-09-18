@@ -20,6 +20,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -32,9 +33,11 @@ const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245memo-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, 'memo_html');
 const namesOf = (dir) => { try { return readdirSync(htmlDirOf(dir)).sort(); } catch { return []; } };
 
+/** 真 spawn 出口：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删，`ILIFE_CONFIG_DIR` 是隔离唯一口子）。 */
 function run(dir, args) {
+  const cfg = mkMemoConfig({ db: { dir } }, 't245memo-cfg-');
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: configEnv(cfg),
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }

@@ -25,9 +25,15 @@ import type { HelpShellData } from 'base-paint/help-shell';
 import { HELP_ASSETS, HELP_GROUPS } from './scenes/help-assets.js';
 import type { HelpGroupAsset } from './scenes/help-assets.js';
 import { ScheduleRenderError } from '../render/errors.js';
+import { loadScheduleConfig } from '../config.js';
 
-/** 「作息管家help」交付文件的**文件名主体**（接线层写死；调用方不接受外部传入，照 bill 先例）。 */
-export const HELP_FILE_STEM = '作息管家_HELP' as const;
+/** 「作息管家help」交付文件的**文件名主体**（接线层从配置文件取，调用方不接受外部传入，照 bill 先例）。
+ *  #695 起值的唯一事实源是配置项 `files.help`（默认值 `作息管家_HELP` 住 `src/config.ts` 的默认值表）；
+ *  改造前这里是写死的常量 `HELP_FILE_STEM`，调用点已全部改成函数调用。 */
+export function helpFileStem(): string {
+  return loadScheduleConfig().values.files.help;
+}
+
 /** 5 键头（旧实物口径的逐字取值）。 */
 export const HELP_FILE_SKILL_NAME = '作息管家' as const;
 export const HELP_FILE_TITLE = '作息管家 · 使用手册(HELP)' as const;

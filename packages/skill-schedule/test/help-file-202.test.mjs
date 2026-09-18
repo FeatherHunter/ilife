@@ -40,14 +40,20 @@
  * 运行：先 `pnpm -C packages/skill-schedule exec tsc -b`（用例读 `../dist/**`，dist 陈旧＝测的是旧载荷），
  * 再 `node --test packages/skill-schedule/test/help-file-202.test.mjs`
  */
-import { describe, it } from 'node:test';
+import { after, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 import {
-  HELP_CONTACT, HELP_FILE_STEM, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID,
+  HELP_CONTACT, helpFileStem, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID,
   assertGroupsUsable, buildHelpFileData, renderHelpFileHtml,
 } from '../dist/help/helpFile.js';
 import { HELP_ASSETS, HELP_GROUPS, HELP_GROUP_NOTES, HELP_SCENE_RESULTS } from '../dist/help/scenes/help-assets.js';
+
+/* #695：文件名主体等落点类取值改从配置文件取 —— 本件读默认值那一条要有一个测试隔离口子
+   （`ILIFE_CONFIG_DIR` 指向临时目录，配置件自己那道门缺了会响亮失败）。 */
+const CONFIG_BASE = setupConfigTestBase();
+after(() => CONFIG_BASE.cleanup());
 
 const DATA_OPEN = '<script id="help-data" type="application/json">';
 /** 本地 2026-09-13 14:30:15（同一 `now` 两次渲染可比对）。 */
@@ -638,7 +644,7 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.deepEqual(back.contact, HELP_CONTACT);
       assert.equal(back.version, HELP_FILE_VERSION);
       assert.equal(HELP_FILE_VERSION, '2.0', '技能数据世代（非 npm 包版本）');
-      assert.equal(HELP_FILE_STEM, '作息管家_HELP', '文件名主体（落盘归 #203）');
+      assert.equal(helpFileStem(), '作息管家_HELP', '文件名主体＝配置项 files.help 的默认值（落盘归 #203）');
     });
 
     it('计数派生：三层条数都对得上（载荷里不再有伴生信息块）', () => {

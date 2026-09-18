@@ -1,7 +1,7 @@
 /**
  * #599 · 补计划多天批量（写侧 `dates[]` ＋ SKILL 示例）。
  *
- * 挡板经 `tooling/contract-lark-stub.mjs`（`LARK_CLI_PATH` 注入），禁真飞书。
+ * 挡板经 `tooling/contract-lark-stub.mjs` 注入（#695 起经配置文件 `lark.cliPath`，见 `./helpers/config-seam.mjs`；原 `LARK_CLI_PATH` 已删），禁真飞书。
  * B1 一次 7 天 → 落 7 行；B2 重复调用幂等不增行；B3 远端失败 exit 非 0 且点名天；
  * B4 SKILL 单条（速查表）＋批量（手写段）照抄即跑（同 #660 V5 形态：从文档原样取参喂出口）。
  */
@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeSeam, envelope } from '../../../tooling/contract-seam.mjs';
+import { envelope } from '../../../tooling/contract-seam.mjs';
+import { makeScheduleSeam } from './helpers/config-seam.mjs';
 import { buildHelpLookup } from '../dist/index.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -25,7 +26,7 @@ const batchOf = (days) => ({
 const createsOf = (s) => s.calls().map((c) => c.argv).filter((a) => a[1] === '+create');
 
 test('#599 B1 一次7天→落7行，回执逐天分字段', () => {
-  const s = makeSeam('schedule', { prefix: 't599-' });
+  const s = makeScheduleSeam({ prefix: 't599-' });
   const r = s.runNew('schedule.plan.write', batchOf(DAYS7));
   assert.equal(r.status, 0, String(r.stderr).slice(0, 300));
   const d = envelope(r).data;
@@ -46,7 +47,7 @@ test('#599 B1 一次7天→落7行，回执逐天分字段', () => {
 });
 
 test('#599 B2 重复调用幂等不增行（本地＋远端都不重复）', () => {
-  const s = makeSeam('schedule', { prefix: 't599-' });
+  const s = makeScheduleSeam({ prefix: 't599-' });
   const r1 = s.runNew('schedule.plan.write', batchOf(DAYS7));
   assert.equal(r1.status, 0, String(r1.stderr).slice(0, 300));
   assert.equal(s.localNew().length, 7);
@@ -62,7 +63,7 @@ test('#599 B2 重复调用幂等不增行（本地＋远端都不重复）', () 
 });
 
 test('#599 B3 远端失败 exit 非0且点名天（本地照写）', () => {
-  const s = makeSeam('schedule', { prefix: 't599-', state: { createFails: true } });
+  const s = makeScheduleSeam({ prefix: 't599-', state: { createFails: true } });
   const days = ['2026-09-21', '2026-09-22'];
   const r = s.runNew('schedule.plan.write', batchOf(days));
   assert.equal(r.status, 4, '远端没成 ⇒ 非 0：' + String(r.stderr).slice(0, 200));
@@ -88,7 +89,7 @@ test('#599 B4 SKILL 示例照抄即跑（单条速查＋批量手写段，V5 形
   for (const k of ['date', 'time_start', 'time_end', 'title']) {
     assert.ok(params[k] && params[k] !== '<值>', '单条示例缺必填 ' + k + '：' + hit.cli);
   }
-  const s1 = makeSeam('schedule', { prefix: 't599-' });
+  const s1 = makeScheduleSeam({ prefix: 't599-' });
   const r1 = s1.runNew('schedule.plan.write', params);
   assert.equal(r1.status, 0, '单条示例跑不通：' + String(r1.stderr).slice(0, 300));
   // 批量：SKILL.md 手写段里的原样命令（数组元素逐条带日期）。
@@ -98,7 +99,7 @@ test('#599 B4 SKILL 示例照抄即跑（单条速查＋批量手写段，V5 形
   const bp = JSON.parse(bm[1]);
   assert.ok(Array.isArray(bp.dates) && bp.dates.length >= 2, '批量示例 dates 非数组或不足 2 天');
   assert.ok(bp.dates.every((e) => e.date && e.time_start && e.time_end && e.title), '批量示例逐条须带 date/time 起止/title');
-  const s2 = makeSeam('schedule', { prefix: 't599-' });
+  const s2 = makeScheduleSeam({ prefix: 't599-' });
   const r2 = s2.runNew('schedule.plan.write', bp);
   assert.equal(r2.status, 0, '批量示例跑不通：' + String(r2.stderr).slice(0, 300));
   assert.equal(s2.localNew().length, bp.dates.length, '批量示例落行数对不上天数');

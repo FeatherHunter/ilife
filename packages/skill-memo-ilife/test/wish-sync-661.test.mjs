@@ -4,9 +4,13 @@
  * `content` 单列——正文优先、标题补位；D-24 回摆：对账步 2 走老 `complete-wish` 原子转换）。
  *
  * 判据与接缝见 `docs/agents/合成写判据.md`：**一个接缝**（技能统一出口，spawn 包内 `dist/cli/cmd_read.js`）
- * ＋ **两个注入点**（临时数据目录 `SKILLS_DB_PATH`／可替换的远端挡板 `LARK_CLI_PATH` →
- * `tooling/contract-lark-stub.mjs`）。不立内部模块接缝：所有断言只读三个边界——
+ * ＋ **两个注入点**（临时库目录＝配置项 `db.dir`／可替换的远端挡板＝配置项 `lark.cliPath`，两者都经
+ * `ILIFE_CONFIG_DIR` 指向的临时配置目录里的 `memo.yaml` 注入；挡板本体 → `tooling/contract-lark-stub.mjs`）。
+ * 不立内部模块接缝：所有断言只读三个边界——
  * **出口回执**、**本地库行**、**远端挡板收到的调用**。
+ *
+ * #695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 两个环境变量已按用户裁决删除（配置文件是唯一真相），
+ * 本件照旧只打同一个出口，只是把两个注入点换成了写 `memo.yaml`。
  *
  * 读数与老实现不变量（`docs/skills/skill-memo-ilife/t659-不变量清单.md` 的 M-01～M-13）逐条对上；
  * 有意偏离（D-21～D-27，D-24 回摆待签）另立读数，两行机器读数见
@@ -15,6 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { argOf, envelope, fourReadings, makeSeam } from '../../../tooling/contract-seam.mjs';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 const WISH = '买跑鞋';
 const BODY = '跑马拉松用';
@@ -27,10 +32,16 @@ const STAT_KEYS = [
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
+/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
+ *  临时库写 `db.dir`、远端挡板写 `lark.cliPath`；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。 */
+function envOfSeam(s) {
+  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: s.stub.file } }, 't661-cfg-'));
+}
+
 /** 跑一次出口，把三条痕迹一次取齐：回执、本地行、远端收到的调用。 */
 function run(s, key, params) {
   s.stub.clearCalls();
-  const r = s.runNew(key, params);
+  const r = s.runNew(key, params, { extraEnv: envOfSeam(s) });
   let env = null; let why = null;
   try { env = envelope(r); } catch (e) { why = e.message; }
   return { r, env, why, exit: r.status, argv: s.calls().map((c) => c.argv), rows: s.localNew() };
@@ -69,7 +80,7 @@ test('#661 T2 四条读数模板 · 心愿 memo.create（本地侧／远端侧�
   const verdicts = fourReadings({
     seam: s,
     whatObject: '飞书任务',
-    act: (x) => x.runNew('memo.create', CREATE),
+    act: (x) => x.runNew('memo.create', CREATE, { extraEnv: envOfSeam(x) }),
     remoteOff: (x) => x.stub.setState({ mode: 'unavailable' }),
     receipt: (env) => ({
       本地侧: env && env.data ? env.data.local : undefined,

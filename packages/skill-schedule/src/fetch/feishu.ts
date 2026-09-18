@@ -5,8 +5,10 @@
 // 本模块不直连 DB。缺依赖即 throw（不返空，避免把「读不到」伪装成「远端没有」）。
 import { accessSync, constants } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ScheduleFetchError } from './errors.js';
+import { loadScheduleConfig } from '../config.js';
 
 export const LARK_TIMEOUT_SHORT_MS = 15000;
 export const LARK_TIMEOUT_NORMAL_MS = 30000;
@@ -19,19 +21,25 @@ export const FEISHU_OWNER_MARK = '作息管家自动同步';
 /** 自检留下的远端对象前缀（D-03：用户可据此识别并手工清掉；默认不跑，只走显式 op=check）。 */
 export const FEISHU_SENTINEL_MARK = '[作息管家测试]';
 
-// 跨平台定位：显式覆盖 → Windows npm 全局 → where/which → 固定路径；找不到返 null。
+// 跨平台定位：配置里的显式路径 → Windows npm 全局（家目录派生）→ where/which → 固定路径；找不到返 null。
+// #695 起显式值改从配置项 `lark.cliPath` 取（空串＝没有显式值，走兜底探测）；原 `LARK_CLI_PATH` 与
+// `APPDATA` 两个环境变量读取**已删**（口径见「配置的存与生效口径裁定」#675 的解决评论）。
 export function findLarkCli(): string | null {
-  const over = process.env.LARK_CLI_PATH;
-  if (over) {
+  const config = loadScheduleConfig();
+  const over = config.values.lark.cliPath;
+  if (over !== '') {
     try { accessSync(over, constants.X_OK); return over; }
-    catch { throw new ScheduleFetchError('LARK_UNAVAILABLE', 'LARK_CLI_PATH 不可用：' + over); }
+    catch {
+      throw new ScheduleFetchError('LARK_UNAVAILABLE',
+        '配置项 lark.cliPath 指的那条 lark-cli 用不了：' + over
+        + '（该在哪配＝配置文件 ' + config.path + ' 的 lark.cliPath；留空即走本机自动探测）');
+    }
   }
   if (process.platform === 'win32') {
-    const appdata = process.env.APPDATA;
-    if (appdata) {
-      const cand = join(appdata, 'npm', 'lark-cli.cmd');
-      try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
-    }
+    // 老实现认 `%APPDATA%\npm\lark-cli.cmd`；#695 起由 `os.homedir()` 派生同一处（平台无关地算出来），
+    // 只在 win32 这一支里用——不再读 `APPDATA`。
+    const cand = join(homedir(), 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
+    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
     try {
       const out = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).split(/\r?\n/)[0].trim();
       if (out) return out;

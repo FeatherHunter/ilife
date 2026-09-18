@@ -6,6 +6,7 @@ import { tmpdir as osTmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkMemoDb, seedNote, countNotes } from './helpers/memo-sqlite.mjs';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -23,11 +24,15 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
-// 本文件只测本地侧：远端闸门钉死（`LARK_CLI_PATH` 指不存在的路径），任何真 lark 都连不上，
+// 本文件只测本地侧：远端闸门钉死（配置项 `lark.cliPath` 指不存在的路径），任何真 lark 都连不上，
 // 心愿类写操作走降级（本地照落、退出码非 0）。真远端只在 wish-sync-661 的挡板里测。
+// #695：两个注入点都改走**配置文件**（`db.dir`／`lark.cliPath`），测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。
 function run(args, envExtra) {
-  const dead = { LARK_CLI_PATH: join(DB || tmpDir(), 'no-lark-here') };
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...dead, ...(envExtra || {}) } });
+  const cfg = mkMemoConfig({
+    db: { dir: DB },
+    lark: { cliPath: join(DB || tmpDir(), 'no-lark-here') },
+  }, 'memocli-cfg-');
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: configEnv(cfg, envExtra || {}) });
 }
 function outData(r) {
   return JSON.parse(r.stdout).data;
@@ -79,13 +84,15 @@ describe('memo 唯一出口 cmd_read', () => {
     assert.equal(checkin.total, 1);
     assert.equal(checkin.items[0].category, '打卡');
   });
-  it('未知 key exit 3 且 stdout 空；坏参数 exit 2；缺 DB exit 1', () => {
+  it('未知 key exit 3 且 stdout 空；坏参数 exit 2；配置件读不出来 exit 1', () => {
     const k = run(['memo.nope']);
     assert.equal(k.status, 3);
     assert.equal(k.stdout, '');
     assert.equal(run(['memo.search', '--params', '[]']).status, 2);
     assert.equal(run(['memo.search', '--timeout', 'abc']).status, 2);
-    assert.equal(run(['memo.search'], { SKILLS_DB_PATH: '' }).status, 1);
+    // #695：库目录的唯一真相是配置文件——「库没配」这一档现在的形状是「配置件读不出来 ⇒ exit 1」
+    // （原来那条锁的是环境变量 `SKILLS_DB_PATH: ''`，该读取已按用户裁决删除）。
+    assert.equal(run(['memo.search'], { ILIFE_CONFIG_DIR: mkMemoConfig({ dbx: { dir: 'x' } }) }).status, 1);
   });
   it('查无对条 exit 4；--html 落盘', () => {
     assert.equal(run(['memo.detail', '--params', JSON.stringify({ id: 999999 })]).status, 4);

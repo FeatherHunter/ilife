@@ -5,9 +5,14 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { saveConfig } from 'base-link-core';
+import { SCHEDULE_CONFIG_DEFAULTS } from '../dist/config.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
+/** 配置目录（`ILIFE_CONFIG_DIR` 整体接管的那一处；测试隔离的唯一口子）。 */
+let CFG = '';
+/** 库目录＝`<配置目录>/data`（`db.dir` 空串即配置给出的数据目录）。 */
 let DB = '';
 
 function nodeBin() {
@@ -22,12 +27,17 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
 }
 const P = (o) => JSON.stringify(o);
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'schedcli-'));
+  CFG = mkdtempSync(join(tmpdir(), 'schedcli-'));
+  process.env.ILIFE_CONFIG_DIR = CFG; // 本进程也要这个口子（`saveConfig` 与子进程同一份）
+  DB = join(CFG, 'data');
+  // #695：远端一律不可用——显式值从配置项 `lark.cliPath` 取（不再有 `LARK_CLI_PATH`），
+  // 这里钉到一条不存在的路径，远端门必红、本地那一侧照写。
+  saveConfig('schedule', SCHEDULE_CONFIG_DEFAULTS, { lark: { cliPath: join(DB, 'no-lark-cli') } });
   // 种子：9 月两块 + 8 月一块（对比用）+ 日程一条
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-06', time_start: '09:00', time_end: '10:00', activity: '调优', category: '工作.AI调优' })]).status, 0);
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-07', time_start: '07:00', time_end: '08:00', activity: '跑步', category: '健康.运动' })]).status, 0);
@@ -105,8 +115,7 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     assert.match(JSON.parse(rv.stdout).data.message, /已复盘/);
   });
   it('#660 退出码：远端不在场时本地照写、回执分字段、退出码非 0（降级那一条）', () => {
-    const r = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-11', time_start: '09:00', time_end: '10:00', title: '降级读' })],
-      { LARK_CLI_PATH: join(DB, 'no-lark-cli') });
+    const r = run(['schedule.plan.write', '--params', P({ op: 'ensure', date: '2026-09-11', time_start: '09:00', time_end: '10:00', title: '降级读' })]);
     assert.equal(r.status, 4, '本地成了但远端没成 ⇒ 退出码非 0');
     const d = JSON.parse(r.stdout).data;
     assert.equal(d.local, 'created');
@@ -127,17 +136,21 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     const ed = JSON.parse(empty.stdout).data;
     assert.equal(ed.total, 0);
     assert.ok(typeof ed.hint === 'string' && ed.hint.includes('定时') && ed.hint.includes('早睡') && ed.hint.includes('以外置为准'));
-    const sync = run(['schedule.plan.write', '--params', P({ op: 'sync', date: '2026-09-06' })], { LARK_CLI_PATH: join(DB, 'no-lark-cli') });
+    const sync = run(['schedule.plan.write', '--params', P({ op: 'sync', date: '2026-09-06' })]);
     assert.equal(sync.status, 4);
   });
-  it('契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘', () => {
+  it('契约：未知 key 3 且 stdout 空；坏参 2；缺配置 1；--html 落盘', () => {
     const k = run(['schedule.nope']);
     assert.equal(k.status, 3);
     assert.equal(k.stdout, '');
     assert.equal(run(['schedule.record.today', '--params', '[]']).status, 2);
     assert.equal(run(['schedule.record.today', '--timeout', 'abc']).status, 2);
     assert.equal(run(['nope']).status, 3);
-    assert.equal(run(['schedule.record.today'], { SKILLS_DB_PATH: '' }).status, 1);
+    // #695：库目录不再吃环境变量（`SKILLS_DB_PATH` 已删）。「没配」这件事改由配置件那道门报：
+    // 测试进程里没设 `ILIFE_CONFIG_DIR` ⇒ `CONFIG_TEST_ISOLATION_MISSING` ⇒ 归「预检」那一档 exit 1。
+    const noCfg = run(['schedule.record.today'], { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: 'child-v8' });
+    assert.equal(noCfg.status, 1);
+    assert.match(noCfg.stderr, /测试缺隔离/, 'stderr 须是配置件那句人话：' + noCfg.stderr);
     const p = join(DB, 'out.html');
     const r = run(['schedule.record.today', '--params', P({ date: '2026-09-06' }), '--html', p]);
     assert.equal(r.status, 0);

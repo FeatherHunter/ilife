@@ -6,7 +6,7 @@
  * 用户说「作息管家help」拿不到任何文件。故本文件只跑**真出口**
  * （spawn `dist/cli/cmd_read.js`，argv＋JSON＋exit），锁四件事：
  *  ① 缺省（不给任何参数）＝「作息管家help」的交付物：名 `作息管家_HELP_<TS>[_N].html`、
- *     落 `<SKILLS_DB_PATH>/schedule_html/help/`、顶层 `delivery{mode,path,bytes}` 的 `path` 为**绝对路径**
+ *     落 `<数据目录>/schedule_html/help/`（数据目录＝`<ILIFE_CONFIG_DIR>/data`；配置项 `db.dir` 空串即它）、顶层 `delivery{mode,path,bytes}` 的 `path` 为**绝对路径**
  *     且字节＝落盘大小、stdout 恒一行 JSON（P9）；产物是完整 HTML（`<!DOCTYPE html>` 起、带 charset）；
  *  ② 同名递补：连跑两次落点**各自独立**、两份文件都在；同秒时后到者 `_2`（`wx` 独占，#128 语义）；
  *  ③ 反向锁（防串产物）：缺省产物**不是** envelope 分节页（无 `<section data-skill="schedule"`），
@@ -40,9 +40,14 @@ function mkDir(tag) {
   return mkdtempSync(join(tmpdir(), 't203-' + tag + '-'));
 }
 
+/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<配置目录>/data`。 */
+function dataDirOf(dir) {
+  return join(dir, 'data');
+}
+
 function run(dir, args) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
@@ -53,7 +58,7 @@ function run(dir, args) {
 function runAsync(dir, args = ['schedule.help.lookup']) {
   return new Promise((resolve) => {
     const child = spawn(NODE_BIN, [BIN, ...args], {
-      env: { ...process.env, SKILLS_DB_PATH: dir },
+      env: { ...process.env, ILIFE_CONFIG_DIR: dir },
     });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });
@@ -102,7 +107,7 @@ test('#203 ① 缺省＝HELP 文件：作息管家_HELP_<TS>.html 落 schedule_h
 
   const out = dl.path;
   assert.ok(isAbsolute(out), 'delivery.path 须绝对路径：' + out);
-  assert.equal(basename(dirname(out)), 'help', '落 <SKILLS_DB_PATH>/schedule_html/help/');
+  assert.equal(dirname(out), join(dataDirOf(dir), 'schedule_html', 'help'), '落 <数据目录>/schedule_html/help/');
   assert.equal(basename(dirname(dirname(out))), 'schedule_html');
   assert.match(basename(out), NAME_RE, '老通式命名（t198 第四节）：' + basename(out));
   assert.equal(basename(out).includes('help_center'), false, '不得混进老技能那份独立页面');
@@ -174,7 +179,7 @@ test('#203 ④ 同名递补（`reuseHours:0`）：并发两次落点各自独立
     assert.equal(A[2], undefined);
     assert.equal(B[2], undefined);
   }
-  assert.equal(readdirSync(join(dir, 'schedule_html', 'help')).length, 2, '快照目录里恰两份产物（无覆盖）');
+  assert.equal(readdirSync(join(dataDirOf(dir), 'schedule_html', 'help')).length, 2, '快照目录里恰两份产物（无覆盖）');
 });
 
 test('#203 ⑤ #245 串行二次＝复用同一份（不新建、不改写）；`reuseHours:0` 才是「再落一份」', () => {
@@ -185,7 +190,7 @@ test('#203 ⑤ #245 串行二次＝复用同一份（不新建、不改写）；
   const b = runOk(dir); // 缺省＝一天窗口 ⇒ 复用
   assert.equal(b.env.delivery.path, first, '窗口内第二次必须复用同一份（不再涨目录）');
   assert.equal(statSync(first).size, bytesOfFirst, '那份字节未被改写');
-  assert.equal(readdirSync(join(dir, 'schedule_html', 'help')).length, 1, '目录里仍只有一份');
+  assert.equal(readdirSync(join(dataDirOf(dir), 'schedule_html', 'help')).length, 1, '目录里仍只有一份');
 
   // 独占递补（后到者 `_2`）那条老语义改用 `reuseHours:0`（每次都落新的）来验。
   const c = runOk(dir, ['schedule.help.lookup', '--params', JSON.stringify({ reuseHours: 0 })]);
@@ -213,7 +218,7 @@ test('#203 ⑥ 显式 `--html <路径>`：逐字写该路径（覆盖、不带�
   const r2 = runOk(dir, ['schedule.help.lookup', '--html', mine]);
   assert.equal(r2.env.delivery.path, mine);
   assert.deepEqual(readdirSync(join(dir, 'mine')), ['named.html'], '重复写同一路径＝覆盖，不产生 _2');
-  assert.equal(existsSync(join(dir, 'schedule_html')), false, '给了 `--html` 就不落缺省目录（两支不串）');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '给了 `--html` 就不落缺省目录（两支不串）');
 });
 
 test('#203 ⑦ 不破既有：非 help 键的 `--html` 仍写 envelope 分节页', () => {
@@ -226,11 +231,12 @@ test('#203 ⑦ 不破既有：非 help 键的 `--html` 仍写 envelope 分节页
   assert.equal(r.env.delivery.path, p, '非 help 键的 `--html` 也回执绝对路径');
 });
 
-test('#203 ⑧ 缺省支在开库之前分派：跑完不建库', () => {
+test('#203 ⑧ 缺省支在开库之前分派：跑完不建库（配置目录与数据目录会被建出来，#675 冻结口径）', () => {
   const dir = mkDir('nodb');
   runOk(dir);
-  assert.equal(existsSync(join(dir, 'schedule_data.db')), false, '看帮助不该把 DB 建出来');
-  assert.deepEqual(readdirSync(dir), ['schedule_html'], '只落下产物目录');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_data.db')), false, '看帮助不该把 DB 建出来');
+  assert.deepEqual(readdirSync(dataDirOf(dir)), ['schedule_html'], '数据目录里只落下产物目录');
+  assert.deepEqual(readdirSync(dir).sort(), ['data', 'schedule.yaml'], '配置目录里只有配置件与数据目录');
 });
 
 test('#203 ⑨ 写失败不静默降级：exit 5 ＋ stderr 结构化错误、stdout 空', () => {
@@ -243,5 +249,5 @@ test('#203 ⑨ 写失败不静默降级：exit 5 ＋ stderr 结构化错误、st
   assert.equal(r.stdout, '', '失败时 stdout 不吐任何 JSON（不假装成功）');
   assert.match(r.stderr, /HELP 落盘失败/, 'stderr 须是结构化失败回执');
   assert.match(r.stderr, /EISDIR|EPERM|EACCES/, 'stderr 须保留系统错误码（不吞原始成因）');
-  assert.equal(existsSync(join(dir, 'schedule_html')), false, '失败时不得另找落点、不得静默换形态');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '失败时不得另找落点、不得静默换形态');
 });

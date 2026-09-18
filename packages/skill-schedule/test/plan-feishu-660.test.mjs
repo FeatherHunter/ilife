@@ -2,8 +2,9 @@
  * #660 · 作息侧飞书层完整移植 ＋ 写 op 统一成合成写：本条接缝上的读数。
  *
  * 判据与接缝见 `docs/agents/合成写判据.md`；不变量编号（S-xx）见 `docs/skills/skill-schedule/t659-不变量清单.md`。
- * 接缝只有一个＝技能的统一出口（`dist/cli/cmd_read.js`）；两个注入点＝临时数据目录（`SKILLS_DB_PATH`）
- * 与可替换的远端平台挡板（`LARK_CLI_PATH` → `tooling/contract-lark-stub.mjs`）。**绝不碰真飞书**。
+ * 接缝只有一个＝技能的统一出口（`dist/cli/cmd_read.js`）；两个注入点＝临时数据目录与可替换的远端平台挡板。
+ * #695 起这两个口子都从**配置文件**来（`ILIFE_CONFIG_DIR` 指到独占临时配置目录，见 `./helpers/config-seam.mjs`；
+ * 原 `SKILLS_DB_PATH`／`LARK_CLI_PATH` 两个环境变量已按 #675 的裁决删掉）。**绝不碰真飞书**。
  *
  * 四段读数（每条都点名，不合并成一句「通过了」）：
  *   一 · 四条读数模板（幂等／回执分字段／降级／归属锚）——判据第三节
@@ -13,7 +14,8 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeSeam, envelope, fourReadings, argOf } from '../../../tooling/contract-seam.mjs';
+import { envelope, fourReadings, argOf } from '../../../tooling/contract-seam.mjs';
+import { makeScheduleSeam } from './helpers/config-seam.mjs';
 
 const D = '2026-09-21';
 const ENSURE = { op: 'ensure', date: D, time_start: '09:00', time_end: '10:00', title: '晨会', notes: '周会' };
@@ -41,7 +43,7 @@ const localSeed = (seam, title, from, to, notes) => {
 /* ─────────── 一 · 四条读数模板（判据第三节） ─────────── */
 
 test('#660 R1 四条读数 · 作息 plan.write op=ensure 全绿', () => {
-  const s = makeSeam('schedule', { prefix: 't660-' });
+  const s = makeScheduleSeam({ prefix: 't660-' });
   const verdicts = fourReadings({
     seam: s,
     whatObject: '飞书日历事件',
@@ -63,7 +65,7 @@ test('#660 R1 四条读数 · 作息 plan.write op=ensure 全绿', () => {
 /* ─────────── 二 · 飞书层到深度 ─────────── */
 
 test('#660 R2 三阶段合并拉取 · 议程×1 ＋ 6 小时分片×4 ＋ 逐条补描述（S-10）', () => {
-  const s = makeSeam('schedule', {
+  const s = makeScheduleSeam({
     prefix: 't660-',
     state: {
       // 三条都摆成「+agenda 还索引不到」：只有分片检索读得到。单次上限压到 1 条。
@@ -101,7 +103,7 @@ test('#660 R2 三阶段合并拉取 · 议程×1 ＋ 6 小时分片×4 ＋ 逐�
 });
 
 test('#660 R3 归属锚写对且能从远端反查回本地（S-06／S-05）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-' });
+  const s = makeScheduleSeam({ prefix: 't660-' });
   const r = s.runNew('schedule.plan.write', ENSURE);
   assert.equal(r.status, 0);
   const create = s.calls().map((c) => c.argv).find((a) => a[1] === '+create');
@@ -114,7 +116,7 @@ test('#660 R3 归属锚写对且能从远端反查回本地（S-06／S-05）', (
 });
 
 test('#660 R4 孤儿清理：带锚的该清、不带锚的一律不动（S-12）', () => {
-  const s = makeSeam('schedule', {
+  const s = makeScheduleSeam({
     prefix: 't660-',
     state: {
       events: [
@@ -132,7 +134,7 @@ test('#660 R4 孤儿清理：带锚的该清、不带锚的一律不动（S-12�
 });
 
 test('#660 R5 同槽兜底清理：改时段后同槽只留一条（S-12 同槽一侧）', () => {
-  const s = makeSeam('schedule', {
+  const s = makeScheduleSeam({
     prefix: 't660-',
     state: {
       events: [
@@ -157,7 +159,7 @@ test('#660 R5 同槽兜底清理：改时段后同槽只留一条（S-12 同槽�
 });
 
 test('#660 R6 反向对账：唯一命中才回填，撞键候选不猜（S-11）', () => {
-  const s = makeSeam('schedule', {
+  const s = makeScheduleSeam({
     prefix: 't660-',
     state: {
       events: [
@@ -181,7 +183,7 @@ test('#660 R6 反向对账：唯一命中才回填，撞键候选不猜（S-11�
 /* ─────────── 三 · 合成写各 op ─────────── */
 
 test('#660 R7 覆盖式写入 op=upsert：逐条对齐 ＋ 该日孤儿清掉（S-13 覆盖一侧）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-', state: { events: [remote('fs_stale', '旧日程', '03:00', '04:00')] } });
+  const s = makeScheduleSeam({ prefix: 't660-', state: { events: [remote('fs_stale', '旧日程', '03:00', '04:00')] } });
   const r = s.runNew('schedule.plan.write', {
     op: 'upsert', date: D,
     events: [{ time_start: '00:00', time_end: '12:00', title: '上午' }, { time_start: '12:00', time_end: '23:59', title: '下午' }],
@@ -195,7 +197,7 @@ test('#660 R7 覆盖式写入 op=upsert：逐条对齐 ＋ 该日孤儿清掉（
 });
 
 test('#660 R8 删计划：远端那条真删（闭合 deleteFeishuEvent 零调用）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-' });
+  const s = makeScheduleSeam({ prefix: 't660-' });
   assert.equal(s.runNew('schedule.plan.write', ENSURE).status, 0);
   const id = s.localNew()[0].id;
   s.stub.clearCalls();
@@ -210,7 +212,7 @@ test('#660 R8 删计划：远端那条真删（闭合 deleteFeishuEvent 零调�
 });
 
 test('#660 R9 飞书自检 op=check：默认不跑；显式跑则留痕点名、能删干净（D-03 日历半场）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-' });
+  const s = makeScheduleSeam({ prefix: 't660-' });
   assert.equal(s.runNew('schedule.plan.write', ENSURE).status, 0);
   const sentinels = s.calls().map((c) => c.argv)
     .filter((a) => String(argOf(a, '--summary') || '').includes('[作息管家测试]'));
@@ -235,7 +237,7 @@ test('#660 R9 飞书自检 op=check：默认不跑；显式跑则留痕点名、
 });
 
 test('#660 R10 只读档（preview）一次远端都不碰', () => {
-  const s = makeSeam('schedule', { prefix: 't660-' });
+  const s = makeScheduleSeam({ prefix: 't660-' });
   const r = s.runNew('schedule.plan.write', { op: 'preview', date: D, events: [{ time_start: '00:00', time_end: '23:59', title: '全天' }] });
   assert.equal(r.status, 0);
   assert.equal(s.calls().length, 0, '预览不探远端（连四门都不查）');
@@ -245,7 +247,7 @@ test('#660 R10 只读档（preview）一次远端都不碰', () => {
 /* ─────────── 四 · 降级与退出码 ─────────── */
 
 test('#660 R11 D-13 远端整平台不可用：不挂死，本地照写、回执标 unavailable、退出码非 0', () => {
-  const s = makeSeam('schedule', { prefix: 't660-', state: { mode: 'unavailable' } });
+  const s = makeScheduleSeam({ prefix: 't660-', state: { mode: 'unavailable' } });
   const t0 = Date.now();
   const r = s.runNew('schedule.plan.write', ENSURE, { timeoutMs: 60000 });
   const ms = Date.now() - t0;
@@ -260,7 +262,7 @@ test('#660 R11 D-13 远端整平台不可用：不挂死，本地照写、回执
 });
 
 test('#660 R12 op=sync 远端不可用即阻断（S-09，全仓唯一阻断入口）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-', state: { mode: 'unavailable' } });
+  const s = makeScheduleSeam({ prefix: 't660-', state: { mode: 'unavailable' } });
   const r = s.runNew('schedule.plan.write', { op: 'sync', date: D });
   assert.equal(r.status, 4);
   const d = envelope(r).data;
@@ -270,7 +272,7 @@ test('#660 R12 op=sync 远端不可用即阻断（S-09，全仓唯一阻断入�
 });
 
 test('#660 R13 远端一抖（分片检索失败）也不挂死：照跑完、如实报错（D-13 的反面）', () => {
-  const s = makeSeam('schedule', { prefix: 't660-', state: { searchFails: true } });
+  const s = makeScheduleSeam({ prefix: 't660-', state: { searchFails: true } });
   const t0 = Date.now();
   const r = s.runNew('schedule.plan.write', ENSURE, { timeoutMs: 15000 });
   const ms = Date.now() - t0;

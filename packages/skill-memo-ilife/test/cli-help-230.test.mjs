@@ -5,20 +5,21 @@
  *   ② help 模板前后缀逐字——产物＝共享壳（`base-paint/help-shell`）前缀＋`help-data` 载荷＋后缀，标题槽已填；
  *   ③ 并发 6 次独占递补——六次落点两两不同、内容互不覆盖、`_N` 从 `_2` 起（裁决 3 硬条件 2）；
  *   ④ 三支互不串——缺省 HELP 文件 ／ `mode:"lookup"` 速查表（裁决 2 分名）／ `q` 只回命中不落盘；
- *   ⑤ 退出码矩阵——0 ／ 2 参数错 ／ 3 未知 key ／ 5 落盘失败（＋1 缺 `SKILLS_DB_PATH`）。
+ *   ⑤ 退出码矩阵——0 ／ 2 参数错 ／ 3 未知 key ／ 5 落盘失败（＋1 配置件读不出来）。
  *
  *  课（#139）：模块级测试全绿 ≠ 用户拿到东西 ⇒ 本文件**只经真 spawn**，一次都不直接调模块。
  *  课（#148）：并发要用**异步** spawn——`spawnSync` 会把并发串成串行，测不出独占递补。
  *
  *  **「跑完不建库」的深锁**折进 ① 与 ④（出口的分派先于开库）：
- *  缺省／速查两支只多一个 `memo_html/`，`q` 支连 `SKILLS_DB_PATH` 本身都不建；
- *  任何一支都不建 `<db>/memo` 库目录（票 6 V4 的初始化判据＝库**目录**存在），也不建老家的 `memo.db` 空壳。
+ *  缺省／速查两支只多一个 `memo_html/`，`q` 支连库目录本身都不建；
+ *  任何一支都不建 `<库目录>/memo` 库目录（票 6 V4 的初始化判据＝库**目录**存在），也不建老家的 `memo.db` 空壳。
  *
  *  跑法（**只构建本包**；禁仓根 `tsc -b`／`pnpm -r build`——`plugin-bill-ilife` 的 `dist/client.js` 会被
  *  改写成裸 ESM 而让 web GUI 起不来，见 #241）：
  *    node node_modules/typescript/bin/tsc --build packages/skill-memo-ilife/tsconfig.json --force
  *    node --test packages/skill-memo-ilife/test/cli-help-230.test.mjs
- *  临时库全在 `%TEMP%` 下（`SKILLS_DB_PATH` 逐次指过去），**不动真库** `D:\2Study\StudyNotes\.db`。
+ *  临时库全在 `%TEMP%` 下（库目录经**配置文件** `db.dir` 逐次指过去，隔离口 `ILIFE_CONFIG_DIR`），
+ *  **不动真库** `D:\2Study\StudyNotes\.db`。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,6 +29,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HELP_SHELL_DATA_OPEN, HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT } from 'base-paint/help-shell';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -38,7 +40,8 @@ const HTML_DIR = 'memo_html';
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'memo230-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, HTML_DIR);
-const envOf = (dir) => ({ ...process.env, SKILLS_DB_PATH: dir });
+/** 子进程 env：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删，`ILIFE_CONFIG_DIR` 是隔离唯一口子）。 */
+const envOf = (dir) => configEnv(mkMemoConfig({ db: { dir } }, 'memo230-cfg-'));
 
 /** 真 spawn 出口：`--params` 逐字进 argv，不经任何 shell（Windows 上 PowerShell／cmd 会吃掉内层引号）。 */
 function run(dir, args) {
@@ -92,7 +95,7 @@ test('#230 ① 名字通式与落点：备忘录_HELP_<YYYYMMDD_HHMMSS>[_N].html
   assert.deepEqual(Object.keys(r.env), ['version', 'skill', 'shape', 'key', 'data', 'delivery'], 'delivery 顶层追加、既有五字段序不变');
   assert.equal(r.env.delivery.mode, 'file');
   assert.ok(HELP_NAME_RE.test(basename(out)), '文件名通式：' + basename(out));
-  assert.equal(dirname(out), htmlDirOf(dir), '落 <SKILLS_DB_PATH>/memo_html/（绝对路径、扁平）');
+  assert.equal(dirname(out), htmlDirOf(dir), '落 <库目录>/memo_html/（绝对路径、扁平）');
   assert.equal(basename(dirname(out)), HTML_DIR, '子目录名逐字 memo_html');
   assert.equal(out.includes(join(HTML_DIR, 'help')), false, '裁决 1：不加 help/ 一层');
   assert.ok(existsSync(out), '回执路径真的存在');
@@ -222,7 +225,7 @@ test('#230 ④ 三支互不串：缺省 HELP 文件 ／ mode:"lookup" 速查表 
   assert.equal(q.env.delivery, undefined, 'q＝现找：不默认落盘');
   assert.equal(q.env.data.total, 1);
   assert.equal(q.env.data.items[0].category, 'memo.remind');
-  assert.equal(existsSync(dbQ), false, 'q 支连 SKILLS_DB_PATH 本身都不建（零落盘、零建库）');
+  assert.equal(existsSync(dbQ), false, 'q 支连库目录本身都不建（零落盘、零建库）');
   // 两支落盘的那次也只多一个 memo_html/，全程不建库
   assert.deepEqual(readdirSync(dir), [HTML_DIR], '看帮助只多一个 memo_html/，不建 memo 库目录');
   assert.equal(existsSync(join(dir, 'memo')), false, '不建 memo 库目录');
@@ -258,7 +261,7 @@ test('#230 ⑤ 退出码矩阵：0 ／ 2 参数错 ／ 3 未知 key ／ 5 落盘
   assert.equal(bad3.stdout, '');
   assert.match(bad3.stderr, /ERR 3/);
 
-  // 5 ＝ 落盘失败：默认支（SKILLS_DB_PATH 落在「文件」之下）＋ 显式支（`--html` 父级是文件）
+  // 5 ＝ 落盘失败：默认支（库目录落在「文件」之下）＋ 显式支（`--html` 父级是文件）
   const filler = join(dir, 'filler');
   writeFileSync(filler, 'x');
   const w1 = run(join(filler, 'sub'), [KEY]);
@@ -272,8 +275,13 @@ test('#230 ⑤ 退出码矩阵：0 ／ 2 参数错 ／ 3 未知 key ／ 5 落盘
   assert.equal(w2.stdout, '');
   assert.match(w2.stderr, /ERR 5/);
 
-  // 1 ＝ 预检（本图口径之外的补充锁：缺 SKILLS_DB_PATH 时既不开库也不落盘）
-  const noEnv = spawnSync(process.execPath, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: '' } });
-  assert.equal(noEnv.status, 1, '缺 SKILLS_DB_PATH ⇒ exit 1（stderr：' + String(noEnv.stderr) + '）');
-  assert.equal(String(noEnv.stdout), '');
+  // 1 ＝ 预检：配置件读不出来时既不开库也不落盘。原这条锁的是「缺 `SKILLS_DB_PATH` ⇒ exit 1」，
+  // 那个环境变量已按用户裁决删除（#675/#695：配置文件是唯一真相），故改成锁同一位上的新事实——
+  // 配置件写坏（不认识的键）⇒ exit 1，且报错须是人话（点名坏键与坏在哪份文件）。
+  const badCfg = mkMemoConfig({ dbx: { dir } }, 'memo230-bad-');
+  const noCfg = spawnSync(process.execPath, [BIN, KEY], { encoding: 'utf8', env: configEnv(badCfg) });
+  assert.equal(noCfg.status, 1, '配置件写坏 ⇒ exit 1（stderr：' + String(noCfg.stderr) + '）');
+  assert.equal(String(noCfg.stdout), '');
+  assert.match(String(noCfg.stderr), /不认识的配置项/, '报错须点名坏键：' + String(noCfg.stderr));
+  assert.match(String(noCfg.stderr), /memo\.yaml/, '报错须点名坏在哪份配置件：' + String(noCfg.stderr));
 });

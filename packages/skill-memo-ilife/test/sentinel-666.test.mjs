@@ -1,7 +1,8 @@
 /**
  * #666 · 备忘侧：飞书自检 sentinel ＋ 授权引导（D-03 三处改造，本票落任务半场自检）
  *
- * 接缝与注入点同 wish-sync-661（统一出口 ＋ 临时库 `SKILLS_DB_PATH` ＋ 挡板 `LARK_CLI_PATH`）。
+ * 接缝与注入点同 wish-sync-661（统一出口 ＋ 临时库目录＝配置项 `db.dir` ＋ 挡板＝配置项 `lark.cliPath`，
+ * 两者都经 `ILIFE_CONFIG_DIR` 指向的临时配置目录里的 `memo.yaml` 注入）。#695：那两个环境变量已按用户裁决删除。
  * 授权引导三步（init/qr/poll/status）已由 #665 落地（见 wizard-pages-665 W5/W6），本文件只覆盖自检：
  *
  *  D1 成功链：`memo.auth step:diag` → 建／改／完成／删各一次（argv 逐条可见），回执点名删干净，
@@ -19,12 +20,20 @@ import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { argOf, envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
+import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
-function run(s, key, params, extraEnv) {
+/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
+ *  临时库写 `db.dir`、挡板写 `lark.cliPath`（`cliPath` 可换成本件自己的内联包装板）。 */
+function envOfSeam(s, cliPath) {
+  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: cliPath ?? s.stub.file } }, 't666-cfg-'));
+}
+
+/** `opts.cliPath` 换挡板；`opts.env` 叠本件自己的两个环境变量（包装板用）。 */
+function run(s, key, params, opts = {}) {
   s.stub.clearCalls();
-  const r = s.runNew(key, params, extraEnv ? { extraEnv } : undefined);
+  const r = s.runNew(key, params, { extraEnv: { ...envOfSeam(s, opts.cliPath), ...(opts.env ?? {}) } });
   let env = null; let why = null;
   try { env = envelope(r); } catch (e) { why = e.message; }
   return { r, env, why, exit: r.status, argv: s.calls().map((c) => c.argv), rows: s.localNew() };
@@ -132,7 +141,7 @@ function failingDeleteShim(s) {
   ].join('\n'), 'utf8');
   const cmd = join(s.dir, 'fail-delete.cmd');
   writeFileSync(cmd, '@node "' + mjs + '" %*\r\n', 'utf8');
-  return { LARK_CLI_PATH: cmd, SENTINEL_REAL_STUB: real, SENTINEL_CALLS_LOG: log };
+  return { cliPath: cmd, env: { SENTINEL_REAL_STUB: real, SENTINEL_CALLS_LOG: log } };
 }
 
 test('#666 D6 删不掉→完成态残留＋点名＋exit 4', () => {

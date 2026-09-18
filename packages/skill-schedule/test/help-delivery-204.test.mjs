@@ -67,14 +67,20 @@ function mkDir(tag) {
  *  注：`process.on('warning', …)` 在 22.13 上**压不住**这条（实测监听器被调用了，告警照样落 stderr），
  *  故只能走启动参数。 */
 const RUNTIME_QUIET = '--disable-warning=ExperimentalWarning';
-/** 子进程环境：显式 tmp 库（本用例自己的路径）＋ 运行时降噪（保留调用方已有的 NODE_OPTIONS）。 */
+/** 子进程环境：`ILIFE_CONFIG_DIR` 指向本用例的临时配置目录（数据目录＝它下面的 `data/`，库与 HELP 都落那儿）
+ *  ＋ 运行时降噪（保留调用方已有的 NODE_OPTIONS）。#695 起不再有 `SKILLS_DB_PATH`/`LARK_CLI_PATH` 两个口子。 */
 function childEnvOf(dir) {
   const prior = process.env.NODE_OPTIONS;
   return {
     ...process.env,
-    SKILLS_DB_PATH: dir,
+    ILIFE_CONFIG_DIR: dir,
     NODE_OPTIONS: prior ? prior + ' ' + RUNTIME_QUIET : RUNTIME_QUIET,
   };
+}
+
+/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<配置目录>/data`。 */
+function dataDirOf(dir) {
+  return join(dir, 'data');
 }
 
 /** 真 spawn（同步）：argv ＋ JSON(stdout) ＋ exit。`tz` 非空时覆写子进程时区。 */
@@ -157,7 +163,7 @@ test('#204 ① 名字通式：作息管家_HELP_<YYYYMMDD_HHMMSS>.html，时间�
 
   const out = r.env.delivery.path;
   assert.ok(isAbsolute(out), 'delivery.path 须绝对路径：' + out);
-  assert.equal(basename(dirname(out)), 'help', '落 <SKILLS_DB_PATH>/schedule_html/help/');
+  assert.equal(dirname(out), join(dataDirOf(dir), 'schedule_html', 'help'), '落 <数据目录>/schedule_html/help/');
   assert.equal(basename(dirname(dirname(out))), 'schedule_html');
   const m = nameOf(out).match(NAME_RE);
   assert.ok(m, '通式不符：' + nameOf(out));
@@ -224,7 +230,7 @@ test('#204 ③ 同名递补（`reuseHours:0`）：同秒的首候选被占 ⇒ �
   let seen = null;
   for (let attempt = 1; attempt <= 6 && seen === null; attempt++) {
     const dir = mkDir('collide');
-    const helpDir = join(dir, 'schedule_html', 'help');
+    const helpDir = join(dataDirOf(dir), 'schedule_html', 'help');
     mkdirSync(helpDir, { recursive: true });
     // 给「本秒」与「下一秒」都放哨兵：子进程无论落在哪一秒，首候选都已被别人占住。
     const t0 = new Date();
@@ -280,7 +286,7 @@ test('#204 ③ 真并发两次（`reuseHours:0`）：落点互不相同、两份
       .map((n) => n.match(NAME_RE)[7]);
     assert.deepEqual(nums.slice().sort(), ['2', undefined].sort(), '同秒必有且只有一方 _2：' + nums.join(' / '));
   }
-  assert.equal(readdirSync(join(dir, 'schedule_html', 'help')).length, 2, '目录里恰两份产物（无覆盖、无多余）');
+  assert.equal(readdirSync(join(dataDirOf(dir), 'schedule_html', 'help')).length, 2, '目录里恰两份产物（无覆盖、无多余）');
 });
 
 test('#204 ④ 显式 `--html <路径>`：逐字写该路径（覆盖不递补）、内容是完整 HELP 页、不落缺省目录', () => {
@@ -297,7 +303,7 @@ test('#204 ④ 显式 `--html <路径>`：逐字写该路径（覆盖不递补�
   const r2 = runOk(dir, [KEY, '--html', mine]);
   assert.equal(r2.env.delivery.path, mine, '再写同一路径＝覆盖同一个文件（不带时间戳、不递补）');
   assert.deepEqual(readdirSync(join(dir, 'mine')), ['named.html'], '不产生 _2');
-  assert.equal(existsSync(join(dir, 'schedule_html')), false, '给了 `--html` 就不落缺省目录（两支不串）');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '给了 `--html` 就不落缺省目录（两支不串）');
 });
 
 test('#204 ④ 非 help 命令带 `--html`：仍写既有 envelope 分节页，不落缺省目录、不串成 HELP 页', () => {
@@ -311,7 +317,7 @@ test('#204 ④ 非 help 命令带 `--html`：仍写既有 envelope 分节页，�
   assert.equal(html.includes(DATA_ANCHOR), false, '分节页不是 HELP 全页（不得混进 help-data 载荷）');
   assert.equal(html.indexOf(HEAD_LITERAL), -1, '分节页不得起于 HELP 模板前缀');
   assert.match(nameOf(p), /^out\.html$/, '不按通式改名、不带时间戳');
-  assert.equal(existsSync(join(dir, 'schedule_html')), false, '非 help 命令也给 `--html` 时同样不落缺省目录');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '非 help 命令也给 `--html` 时同样不落缺省目录');
 });
 
 test('#204 ④ `q` 现找：不落盘、无 delivery；带 `--html` 时写分节页（不是 HELP 全页）', () => {
@@ -322,7 +328,7 @@ test('#204 ④ `q` 现找：不落盘、无 delivery；带 `--html` 时写分节
   assert.equal(Object.prototype.hasOwnProperty.call(r.env, 'delivery'), false, '现找不落盘 ⇒ 顶层不得有 delivery');
   assert.equal(r.env.data.query, '帮助');
   assert.ok(r.env.data.total >= 1, '须有命中：' + r.env.data.total);
-  assert.deepEqual(readdirSync(dir), [], '现找不得在数据目录里留下任何文件');
+  assert.deepEqual(readdirSync(dataDirOf(dir)), [], '现找不得在数据目录里留下任何文件');
 
   const dir2 = mkDir('lookup-html');
   const p = join(dir2, 'q.html');
@@ -332,7 +338,7 @@ test('#204 ④ `q` 现找：不落盘、无 delivery；带 `--html` 时写分节
   const html = readFileSync(p, 'utf8');
   assert.equal(html.includes('<section'), true, 'q＋`--html` 写的是分节页');
   assert.equal(html.includes(DATA_ANCHOR), false, 'q 支不得串成 HELP 全页');
-  assert.equal(existsSync(join(dir2, 'schedule_html')), false, 'q 支也不落缺省目录');
+  assert.equal(existsSync(join(dataDirOf(dir2), 'schedule_html')), false, 'q 支也不落缺省目录');
 });
 
 test('#204 ⑤ 退出码矩阵：成功 0；落盘失败 5 且 stdout 一个字节不吐（矩阵全跑，逐行打印）', () => {
@@ -373,7 +379,9 @@ test('#204 ⑤ 退出码矩阵：成功 0；落盘失败 5 且 stdout 一个字�
   // 失败支：三条真实写不进去的条件，全部 exit 5（现状码），且 stdout 一个字节不吐。
   row('缺省 · 落点父级 schedule_html 是文件（mkdir ENOTDIR）', { status: 5, codeRe: /ENOTDIR|EEXIST/ }, () => {
     const d = mkDir('m5');
-    writeFileSync(join(d, 'schedule_html'), 'x', 'utf8');
+    // 落点是 `<配置目录>/data/schedule_html/help`；先把数据目录建出来、把 schedule_html 摆成一个文件。
+    mkdirSync(join(dataDirOf(d)), { recursive: true });
+    writeFileSync(join(dataDirOf(d), 'schedule_html'), 'x', 'utf8');
     return run(d, [KEY]);
   });
   row('`--html <已存在的目录>`（EISDIR）', { status: 5, codeRe: /EISDIR|EPERM|EACCES/ }, () => {

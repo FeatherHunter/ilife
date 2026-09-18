@@ -16,13 +16,19 @@ import {
   larkReady,
   MemoFetchError,
 } from '../dist/index.js';
+import { saveMemoConfig } from '../dist/config.js';
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
+import { mkConfigDir } from './helpers/config-base.mjs';
 
 let db = null;
 let n1 = 0;
 let n2 = 0;
 let n3 = 0;
-const OLD_ENV = process.env.LARK_CLI_PATH;
+const OLD_CFG_DIR = process.env.ILIFE_CONFIG_DIR;
+
+// #695：本件在**进程内**调取数层，配置也读在同一进程里 ⇒ 隔离口必须在任何一次读配置**之前**设好
+// （跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` 时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`）。
+process.env.ILIFE_CONFIG_DIR = mkConfigDir('memo-fetch-cfg-');
 
 // fake lark-cli：posix 用 shebang 脚本，win 用 .cmd 转调同目录 mjs（均走 PATH 之 node）。
 function makeFakeCli(dir) {
@@ -53,12 +59,15 @@ before(() => {
   n2 = seedNote(dir, { content: '今天跑步5公里', category: '打卡', sub: '跑步' });
   n3 = seedNote(dir, { content: '心愿：学会一首歌', category: '心愿' });
   db = openMemoDb(dir);
-  process.env.LARK_CLI_PATH = makeFakeCli(mkdtempSync(join(tmpdir(), 'memo-fake-')));
+  // `lark.cliPath` 走**配置文件**（#695：环境变量 `LARK_CLI_PATH` 读取已删）。写盘用 `saveMemoConfig`
+  // ——它落盘后清掉进程内的配置记忆，故紧随其后的 `findLarkCli()` 现读现取，改一项即生效。
+  saveMemoConfig({ lark: { cliPath: makeFakeCli(mkdtempSync(join(tmpdir(), 'memo-fake-'))) } });
 });
 
 after(() => {
   if (db) closeMemoDb(db);
-  process.env.LARK_CLI_PATH = OLD_ENV;
+  if (OLD_CFG_DIR === undefined) delete process.env.ILIFE_CONFIG_DIR;
+  else process.env.ILIFE_CONFIG_DIR = OLD_CFG_DIR;
 });
 
 describe('memo 取数层', () => {
@@ -83,8 +92,12 @@ describe('memo 取数层', () => {
     const ready = larkReady();
     assert.equal(ready.openId, 'ou_fake');
   });
-  it('LARK_CLI_PATH 坏路径 throw', () => {
-    process.env.LARK_CLI_PATH = join(tmpdir(), 'memo-nope-xyz');
-    assert.throws(() => findLarkCli(), (e) => e.code === 'LARK_UNAVAILABLE');
+  it('lark.cliPath 坏路径 throw（报错点名配置项，不再点名环境变量 LARK_CLI_PATH）', () => {
+    saveMemoConfig({ lark: { cliPath: join(tmpdir(), 'memo-nope-xyz') } });
+    const caught = [];
+    assert.throws(() => findLarkCli(), (e) => { caught.push(e); return e.code === 'LARK_UNAVAILABLE'; });
+    assert.throws(() => larkReady(), (e) => e.code === 'LARK_UNAVAILABLE', '四门入口同样大声失败，不静默降级');
+    assert.match(caught[0].message, /lark\.cliPath/, '报错文案要点名配置项 lark.cliPath');
+    assert.doesNotMatch(caught[0].message, /LARK_CLI_PATH/, '环境变量读取已删（#695）：报错不许再点名它');
   });
 });

@@ -1,14 +1,14 @@
 // 备忘录测试 helper（#665）：临时 SQLite 库。DDL 只有一处定义——`tooling/contract-seam.mjs`
 // 的 `MEMO_TEST_SCHEMA_DDL`（mirror 老 `script/init.sql` 的两张业务表；FTS 虚表与触发器不 mirror——
 // 老家 #180 已停用 FTS 查询路径，测试库不需要全文副表；见证据件）。
-// 铁律：只建临时库（`SKILLS_DB_PATH` 指向的 tmp 目录），绝不碰活库 `D:\2Study\StudyNotes\.db`。
+// 铁律：只建临时库（库目录＝配置项 `db.dir`，测试里指向 tmp），绝不碰活库 `D:\2Study\StudyNotes\.db`。
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { initMemoTestDb } from '../../../../tooling/contract-seam.mjs';
 
-/** 建一个临时库，返回可直接赋给 `SKILLS_DB_PATH` 的目录（含 `memo.db`）。 */
+/** 建一个临时库，返回可直接当 `db.dir` 用的目录（含 `memo.db`）。 */
 export function mkMemoDb(prefix = 'memo-665-') {
   const dir = mkdtempSync(join(tmpdir(), prefix));
   initMemoTestDb(join(dir, 'memo.db'));

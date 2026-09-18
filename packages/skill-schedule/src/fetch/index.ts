@@ -1,5 +1,5 @@
 export { ScheduleFetchError, SchedulePolicyError } from './errors.js';
-export { DB_FILENAME, resolveDbDir, resolveDbPath, assertWritablePath } from './paths.js';
+export { DEFAULT_DB_FILENAME, dbFilename, resolveDbDir, resolveDbPath } from './paths.js';
 export {
   SCHEMA_VERSION, openScheduleDb, closeScheduleDb,
   addRecord, amendRecord, getRecordById, listRecordsByDate, listRecordsRange, getLastRecord, getStatus,

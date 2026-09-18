@@ -7,8 +7,8 @@
  *  ① **缺省＝一天**：连读 3 次目录**文件数不增**，三次回执同一份、字节同值、那份一字未改；
  *  ② `reuseHours` 换窗口：`3` 同效、`0`＝**每次都要一份最新的**（落新的、不覆盖旧的）；
  *  ③ **坏参阻断**：负数／非数一律 exit 2（不静默当 0、不静默当缺省），且不落盘；
- *  ④ 落点与名字**逐字不变**（`<SKILLS_DB_PATH>/schedule_html/help/作息管家_HELP_<TS>[_N].html`）——
- *     本票为接复用把落盘管线改成走共用件 `saveHtmlFile`，这一条防「顺手改坏名字」；
+ *  ④ 落点与名字**逐字不变**（`<数据目录>/schedule_html/help/作息管家_HELP_<TS>[_N].html`；数据目录＝
+ *     `<ILIFE_CONFIG_DIR>/data`）——本票为接复用把落盘管线改成走共用件 `saveHtmlFile`，这一条防「顺手改坏名字」；
  *  ⑤ **不吃窗口的路照旧**：`--html` 逐字覆盖、`q` 现找回命中、看帮助不建库。
  *
  * 运行：先 `pnpm build`（或逐包 `tsc -b`），再
@@ -29,12 +29,14 @@ const KEY = 'schedule.help.lookup';
 const NAME_RE = /^作息管家_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245sch-' + tag + '-'));
-const helpDirOf = (dir) => join(dir, 'schedule_html', 'help');
+/** 数据目录＝`<配置目录>/data`（配置项 `db.dir` 空串即它）。 */
+const dataDirOf = (dir) => join(dir, 'data');
+const helpDirOf = (dir) => join(dataDirOf(dir), 'schedule_html', 'help');
 const namesOf = (dir) => { try { return readdirSync(helpDirOf(dir)).sort(); } catch { return []; } };
 
 function run(dir, args) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }
@@ -53,7 +55,7 @@ test('#245 ① 缺省＝一天：连读 3 次目录文件数不增，三次落�
   const a = runOk(dir, [KEY]);
   const out = a.env.delivery.path;
   assert.ok(isAbsolute(out), '回执须绝对路径：' + out);
-  assert.equal(dirname(out), helpDirOf(dir), '落点＝<SKILLS_DB_PATH>/schedule_html/help');
+  assert.equal(dirname(out), helpDirOf(dir), '落点＝<数据目录>/schedule_html/help');
   assert.match(basename(out), NAME_RE, '名字通式逐字不变：' + basename(out));
 
   const before = readFileSync(out);
@@ -116,10 +118,10 @@ test('#245 ⑤ 不吃窗口的路照旧：`--html` 逐字覆盖、`q` 现找回�
   assert.equal(e1.env.delivery.path, mine, '`--html` 逐字落点');
   assert.equal(e2.env.delivery.path, mine, '再写同一路径＝覆盖，不派生 _2');
   assert.deepEqual(readdirSync(join(dir, 'mine')), [basename(mine)], '覆盖写不产生 _2');
-  assert.equal(existsSync(join(dir, 'schedule_html')), false, '给了 `--html` 就不落缺省目录');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '给了 `--html` 就不落缺省目录');
 
   const q = runOk(dir, [KEY, '--params', JSON.stringify({ q: '查作息' })]);
   assert.equal(q.env.delivery, undefined, '现找（q）不落盘');
   assert.ok(q.env.data.total >= 1, '现找回命中：' + String(q.env.data.total));
-  assert.equal(existsSync(join(dir, 'schedule_data.db')), false, '看帮助不建库');
+  assert.equal(existsSync(join(dataDirOf(dir), 'schedule_data.db')), false, '看帮助不建库');
 });

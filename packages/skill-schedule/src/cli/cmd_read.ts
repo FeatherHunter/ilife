@@ -29,9 +29,12 @@ import {
 } from '../render/index.js';
 import { buildHelpLookup } from '../help/index.js';
 import { resolveHelpDir } from '../help/helpPaths.js';
-import { HELP_FILE_STEM, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
+import { helpFileStem, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
 import { HELP_GROUPS } from '../help/scenes/help-assets.js';
 import { deliverHtml, type HtmlDelivery } from '../help/output.js';
+import { isConfigKey, runConfigKey } from './config.js';
+// #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
+import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import type { ScheduleRecord } from '../fetch/db.js';
 
@@ -41,12 +44,11 @@ function fail(code: number, msg: string): never { console.error('ERR ' + code + 
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
-function preflight(): string {
+/** 预检：只查 node 版本。**不再读任何环境变量**——库目录从配置文件取（#695；口径见 #675 解决评论），
+ *  「没配」这件事由 `resolveDbPath()` 那一趟的配置件报错承担（测试进程缺 `ILIFE_CONFIG_DIR` 即响亮失败）。 */
+function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p;
 }
 
 function needInt(params: Record<string, unknown>, name: string): number {
@@ -68,8 +70,9 @@ function toISODateTime(date: string, time: string): string {
 
 // ── #203 · 「作息管家help」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:493-495）────
 //
-// 缺省（不给任何参数）＝ 全量 HELP 文件：`<SKILLS_DB_PATH>/schedule_html/help/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`
-// （目录与通式照老实物，`t198-old-help-truth.md` 第四节），独占落盘 ＋ **绝对路径**回执
+// 缺省（不给任何参数）＝ 全量 HELP 文件：`<库目录>/schedule_html/help/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`
+// （库目录＝配置项 `db.dir`，空串即数据目录；两级子目录与主体名从配置取，默认逐字等于老常量，
+// `t198-old-help-truth.md` 第四节），独占落盘 ＋ **绝对路径**回执
 // （`delivery{mode,path,bytes}` 顶层追加，序在既有五字段之后）。
 // 显式 `q` ＝ 现找：只回命中（stdout），不落盘（检索式问答不刷目录）；`--html <路径>` 给了才写那个路径。
 // 全程**不开库**：初始化判据＝「DB 文件存在」（照老 `render_help._is_initialized`）；
@@ -130,7 +133,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   assertHtmlSize(html);
   return {
     data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, targetDir: resolveHelpDir(dbDir), stem: HELP_FILE_STEM, reuseMs },
+    deliver: { html, targetDir: resolveHelpDir(dbDir), stem: helpFileStem(), reuseMs },
   };
 }
 
@@ -296,12 +299,24 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：schedule-cmd-read <schedule.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
-  preflight();
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #695：三个配置 key（`schedule.config.read/write/reset`）在预检与形状表之前拦下——
+  // 读写配置不该要求库目录已配，它们也不进 `SCHEDULE_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
+  if (isConfigKey(o.key)) {
+    process.stdout.write(runConfigKey(o.key, params) + '\n');
+    return;
+  }
+  // #706 · 配置体检（`schedule.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+  if (isHealthCheckKey(o.key)) {
+    process.stdout.write(runHealthCheckKey(o.key) + '\n');
+    return;
+  }
+  preflight();
   try { scheduleShapeFor(o.key as ScheduleKey); } catch (e) { fail(3, (e as Error).message); }
   const key = o.key as string;
   const timer = setTimeout(() => {
@@ -343,6 +358,9 @@ async function main() {
     if (e instanceof SchedulePolicyError) fail(2, (e as Error).message);
     if (e instanceof ScheduleFetchError) fail(4, (e as Error).message);
     if (e instanceof ScheduleRenderError) fail(5, (e as Error).message);
+    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+    // #695 起「库目录没配」也走这条——测试进程缺 `ILIFE_CONFIG_DIR` 时报 `测试缺隔离…`。
+    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     fail(4, '取数失败：' + (e as Error).message);
   }
   // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。

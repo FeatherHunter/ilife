@@ -1,27 +1,37 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 import {
-  openScheduleDb, closeScheduleDb, assertWritablePath,
+  openScheduleDb, closeScheduleDb,
+  dbFilename, DEFAULT_DB_FILENAME, resolveDbDir, resolveDbPath,
   addRecord, amendRecord, getRecordById, listRecordsByDate, listRecordsRange, getStatus, getLastRecord,
   addSummary, getDailySummary,
   listPlanEvents, searchPlanEvent, ensurePlanEvent, upsertPlanEvents, updatePlanEvent, deactivatePlanEvent, getPlanEvent,
   validateUpdateInput, ScheduleFetchError,
 } from '../dist/index.js';
 
+let CFG = null;
 let DB = '';
 let H = null;
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'sched-fetch-'));
-  assertWritablePath(join(DB, 'schedule_data.db'));
-  H = openScheduleDb(join(DB, 'schedule_data.db'));
+  // #695：库目录不再从 `SKILLS_DB_PATH` 取；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`（基座缺了直接报错）。
+  CFG = setupConfigTestBase();
+  DB = join(CFG.dir, 'data'); // `db.dir` 空串 ⇒ 数据目录＝<配置目录>/data
+  H = openScheduleDb(resolveDbPath()); // 走配置面取默认落点（里面 mkdirSync 把数据目录建出来）
   assert.equal(H.initialized, true);
 });
 
-describe('作息取数 fetch（tmp 隔离）', () => {
+describe('作息取数 fetch（配置目录隔离）', () => {
+  it('库路径三项都由配置面给出：目录＝数据目录、库名＝默认常量', () => {
+    assert.equal(resolveDbDir(), DB, '`db.dir` 空串 ⇒ 数据目录（<配置目录>/data）');
+    assert.equal(dbFilename(), 'schedule_data.db', '`db.name` 空串 ⇒ 改造前那个代码常量');
+    assert.equal(DEFAULT_DB_FILENAME, 'schedule_data.db', '默认库名逐字不变');
+    assert.equal(resolveDbPath(), join(DB, 'schedule_data.db'), '默认落点＝<数据目录>/schedule_data.db');
+    assert.equal(existsSync(join(CFG.dir, 'schedule.yaml')), true, '首次读即按默认值落一份配置文件');
+  });
   it('记/查/修正闭环（edit_count 审计）', () => {
     const r = addRecord(H, { date: '2026-09-06', time_start: '09:00', time_end: '10:00', duration_minutes: 60, activity: '调优', category: '工作.AI调优' });
     assert.equal(r.id, 1);
@@ -65,8 +75,7 @@ describe('作息取数 fetch（tmp 隔离）', () => {
     assert.equal(listPlanEvents(H, '2026-09-08').length, 1);
     assert.equal(listPlanEvents(H, '2026-09-08', true).length, 3);
   });
-  it('标题搜空 title 阻断 + 非 tmp 写盘守卫', () => {
+  it('标题搜空 title 阻断', () => {
     assert.throws(() => searchPlanEvent(H, '2026-09-08', '  '), ScheduleFetchError);
-    assert.throws(() => assertWritablePath(join('D:', 'prod.db')), /SCHEDULE_FORCE_PROD/);
   });
 });

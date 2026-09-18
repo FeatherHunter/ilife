@@ -21,17 +21,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
 const D1 = '2026-09-22';
 const D2 = '2026-09-23';
-let DB = '';
+/** 配置目录（`ILIFE_CONFIG_DIR` 整体接管的那一处）；库落在 `<它>/data/`。 */
+let CFG = '';
 
 const P = (o) => JSON.stringify(o);
 function run(args, envExtra) {
   return spawnSync(process.execPath, [bin, ...args], {
-    cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) },
+    cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) },
   });
 }
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'schedov-'));
+  CFG = mkdtempSync(join(tmpdir(), 'schedov-'));
   const seed = (date, s, e, title) => {
     const r = run(['schedule.plan.write', '--params', P({ op: 'ensure', date, time_start: s, time_end: e, title, feishu: 'skip' })]);
     assert.equal(r.status, 0, '种子失败：' + String(r.stderr).slice(0, 200));
