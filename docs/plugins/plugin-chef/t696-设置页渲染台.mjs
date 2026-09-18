@@ -40,6 +40,8 @@ const argOf = (name, fallback) => {
 const CHECK = argv.includes('--check');
 const OUT = resolve(argOf('--out', join(REPO, '.scratch', 't696')));
 const WIDTHS = argOf('--widths', '360,720').split(',').map((n) => Number(n.trim()));
+/** 产物路径可换（负向对照用：拿一份改坏的 client 产物跑，必须变红）。空串＝用各包自己的 dist。 */
+const BUNDLE_OVERRIDE = argOf('--bundle', '');
 
 /** 四家：件名 → 技能包 / 页签槽 / 配置主体名 / 页面禁语（干活入口的典型词）。 */
 const PANELS = [
@@ -232,7 +234,9 @@ setTimeout(() => {
         commonAboveDetails: Array.from(panel.querySelectorAll('input')).filter((el) => !el.closest('details')).length === window.__T696_COMMON_COUNT__,
         advancedCollapsedByDefault: window.__T696_EXPAND__ ? true : (details !== null && details.querySelectorAll('input').length > 0 && !details.hasAttribute('open')),
         noOverflowX: container.overflowX <= 0,
-        threeButtons: ['保存', '重置为默认', '重新读取'].every((t) => pageButtons.some((b) => b.indexOf(t) >= 0)),
+        /* 三枚按钮**逐字相等**（子串匹配在这里是假绿：标签被改一个字也照样 substring 命中——
+           2026-09-18 的负向对照实测过这一条）。 */
+        threeButtons: ['保存', '重置为默认', '重新读取'].every((t) => pageButtons.includes(t)),
         showsConfigPath: bodyText.indexOf(window.__T696_SURFACE__.path) >= 0,
         showsDataDir: bodyText.indexOf(window.__T696_SURFACE__.dataDir) >= 0,
         editedAndSaved: savedLeaf === PROBE,
@@ -307,7 +311,7 @@ async function surfaceFor(meta) {
 mkdirSync(OUT, { recursive: true });
 const pages = [];
 for (const meta of SELECTED) {
-  const bundle = readFileSync(join(REPO, 'packages', meta.pkg, 'dist', 'client.js'), 'utf8');
+  const bundle = readFileSync(BUNDLE_OVERRIDE === '' ? join(REPO, 'packages', meta.pkg, 'dist', 'client.js') : resolve(BUNDLE_OVERRIDE), 'utf8');
   const info = await surfaceFor(meta);
   for (const W of WIDTHS) {
     for (const expand of [false, true]) {
