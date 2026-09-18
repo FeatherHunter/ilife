@@ -5,6 +5,7 @@
  * 本文件只把结论翻成三种状态与一句话，不另起一套版本比较。
  */
 import type { CheckReceipt, BlockedReason, UpdateSnapshot } from 'dsh-plugin-update';
+import { dualInstallCmd } from './nav.js';
 import { reasonText } from './update-contract.js';
 
 /** 一个更新目标的面板数据（宿主 `ilife-manager.targets` 的每行）。 */
@@ -76,6 +77,16 @@ export function pendingRestartText(target: TargetInfo, snapshot: UpdateSnapshot)
   if (installed === null) return '⚠️ 新版已装好，重启宿主后生效。';
   if (installed === running) return '⚠️ 新版 ' + installed + ' 已装好，重启宿主后生效。';
   return '⚠️ 新版 ' + installed + ' 已装好，正在跑的还是 ' + running + '，重启宿主后生效。';
+}
+
+/** 面板展示的那条可复制命令（用户会照着敲的那一条）。
+ *
+ * 缺席包给人人都会用的**单命令双包**口径（#674 冻结的装入口径：不带版本号、不带任何开关）；
+ * 已装包给更新包回包里那条（`--save-exact ... --registry=` 是它 README 第 9 节的冻结合同，
+ * 本仓不动它——要改只能提上游）。规范词见 docs/plugins/plugin-manager/t678-缺席即装与检查更新.md。 */
+export function manualForDisplay(target: TargetInfo, manual: string | null): string | null {
+  if (isAbsent(target)) return dualInstallCmd(target.packageName);
+  return manual;
 }
 
 /** 版本行两行文字：插件包（本家） ＋ 技能包（随插件，不单独查更新）。 */

@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { isAbsent, pendingRestartText, verdictOf, versionLines } from './update-view.js';
+import { isAbsent, manualForDisplay, pendingRestartText, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -230,7 +230,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
       const row = rows[target.key];
       const snapshot = row.outcome?.snapshot ?? null;
       const verdict = snapshot ? verdictOf(target, snapshot) : null;
-      const manual = row.failure?.manual ?? row.outcome?.manual ?? null;
+      const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
       const busy = row.phase === 'installing';
       return React.createElement(
         'div',
@@ -276,7 +276,7 @@ export function AbsentCard(props: {
   const target = props.target;
   const row = target ? props.face.rows[target.key] : null;
   const busy = row?.phase === 'installing';
-  const manual = row?.failure?.manual ?? row?.outcome?.manual ?? props.fallbackCommand;
+  const manual = (target ? manualForDisplay(target, row?.failure?.manual ?? row?.outcome?.manual ?? null) : null) ?? props.fallbackCommand;
   let reason: string | null = row?.failure?.message ?? null;
   if (target && reason === null && row?.outcome && row.outcome.snapshot.blockedReason !== null) {
     reason = verdictOf(target, row.outcome.snapshot).text;

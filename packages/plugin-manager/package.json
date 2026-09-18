@@ -1,6 +1,6 @@
 {
   "name": "dsh-life-pack",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "爱生活总管插件：单 DSH设置面板槽（爱生活卡）+ 爱生活页签槽 children，技能设置页动态聚合，不依赖单品、不 import 单品页",
   "type": "module",
   "main": "./dist/index.js",

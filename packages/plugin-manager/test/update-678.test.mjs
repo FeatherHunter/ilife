@@ -6,7 +6,7 @@ import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
 import { BLOCKED_REASONS, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
-import { isAbsent, pendingRestartText, verdictOf, versionLines } from '../dist/update-view.js';
+import { isAbsent, manualForDisplay, pendingRestartText, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
 
 const PROFILE = 'dsh-profile-web';
@@ -118,8 +118,13 @@ describe('#678 一行结论与版本行', () => {
     assert.equal(absent.action, 'install');
     assert.match(absent.text, /未安装/);
   });
-  it('待重启文案说清新版号与重启两件事；版本行标注技能包随插件', () => {
-    const text = pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
+  it('面板展示的命令：缺席给双包口径（不带任何参数），已装包给更新包那条', () => {
+    const packagerCmd = 'dsh plugin --profile web add --save-exact dsh-calorie@0.2.6 --registry=https://registry.npmjs.org/';
+    assert.equal(manualForDisplay(absentTarget, packagerCmd), 'dsh plugin add dsh-life-pack dsh-calorie');
+    assert.equal(manualForDisplay(absentTarget, null).includes('--save-exact'), false);
+    assert.equal(manualForDisplay(target, packagerCmd), packagerCmd);
+  });
+  it('待重启文案说清新版号与重启两件事；版本行标注技能包随插件', () => {    const text = pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
     assert.match(text, /0\.2\.6/);
     assert.match(text, /重启宿主后生效/);
     assert.equal(pendingRestartText(target, snapshot({})), null);
