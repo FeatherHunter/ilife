@@ -9,11 +9,20 @@ import * as React from 'react';
 import { countByStatus, worstStatus } from './health-contract.js';
 import type { HealthItem, HealthReport, HealthStatus } from './health-contract.js';
 
-/** 三档的配色（走 DSH 主题别名，写死值只做回退）。 */
+/** 三档的配色（走 DSH 主题别名，写死值只做回退）。
+ *  红与黄两档在**边框与文字**上用不带回退的实色：评审连着两轮点「红灯计数与底色贴色、黄灯饱和偏低」，
+ *  灯与档位词是这一屏唯一要「一眼可辨」的东西，不再只靠主题别名。 */
 const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
-  red: 'var(--dsw-alias-state-error-primary, #ff6b6b)',
-  yellow: 'var(--dsw-alias-state-warning-primary, #d8a300)',
+  red: '#d92d20',
+  yellow: '#b54708',
   green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
+};
+
+/** 芯片底色用的浅一档（红黄两档各自一枚；绿不给底色）。 */
+const STATUS_TINT: Readonly<Record<HealthStatus, string>> = {
+  red: 'rgba(217, 45, 32, 0.12)',
+  yellow: 'rgba(181, 71, 8, 0.14)',
+  green: 'transparent',
 };
 
 const STATUS_LABEL: Readonly<Record<HealthStatus, string>> = { red: '红', yellow: '黄', green: '绿' };
@@ -56,7 +65,7 @@ export const HEALTH_STYLE = {
     cursor: 'pointer',
   } as React.CSSProperties,
   lightIdle: { cursor: 'default', color: INK_DIM } as React.CSSProperties,
-  meta: { color: INK_DIM, fontSize: 12, lineHeight: 1.7, marginTop: 6 } as React.CSSProperties,
+  meta: { color: INK_DIM, fontSize: 12, lineHeight: 1.7, marginTop: 12 } as React.CSSProperties,
   error: { color: STATUS_COLOR.red, fontSize: 12, lineHeight: 1.7, marginTop: 6 } as React.CSSProperties,
 } as const;
 
@@ -149,7 +158,8 @@ export function HealthOverview(props: {
               : {
                   ...HEALTH_STYLE.light,
                   borderColor: STATUS_COLOR[light.status],
-                  background: 'color-mix(in srgb, ' + STATUS_COLOR[light.status] + ' 12%, transparent)',
+                  borderWidth: 1.5,
+                  background: STATUS_TINT[light.status],
                 },
             disabled: light.status === null,
             onClick: () => props.onJump(light.id),
