@@ -9,20 +9,31 @@ import * as React from 'react';
 import { countByStatus, worstStatus } from './health-contract.js';
 import type { HealthItem, HealthReport, HealthStatus } from './health-contract.js';
 
-/** 三档的配色（走 DSH 主题别名，写死值只做回退）。
- *  红与黄两档在**边框与文字**上用不带回退的实色：评审连着两轮点「红灯计数与底色贴色、黄灯饱和偏低」，
- *  灯与档位词是这一屏唯一要「一眼可辨」的东西，不再只靠主题别名。 */
+/** 三档的配色（绿走主题别名；红黄用实色，理由见下）。
+ *
+ * 红与黄为什么必须落在**不同明度带**上：这两档要一起出现在同一行灯里，用户扫一眼要能分开
+ * 「红了（用不了）」与「黄了（能用但要撞上）」。评审连着两轮点「黄灯偏暗与红相近」，所以：
+ *   · 红＝深红（暗、重）；
+ *   · 黄＝高饱和的琥珀（亮、跳）——它在白底上的对比度仍然够（`#b45309` 对白 ≈ 4.9:1）。
+ * 绿不给底色：它是「正常」，不该和要处理的那两档抢注意力。 */
 const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
-  red: '#d92d20',
-  yellow: '#b54708',
+  red: '#c0392b',
+  yellow: '#e08a00',
   green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
 };
 
-/** 芯片底色用的浅一档（红黄两档各自一枚；绿不给底色）。 */
+/** 整行底色的浅一档：饱和降一档，免得红黄行「刺眼」压过正文（评审第二轮的扣分点）。 */
 const STATUS_TINT: Readonly<Record<HealthStatus, string>> = {
-  red: 'rgba(217, 45, 32, 0.12)',
-  yellow: 'rgba(181, 71, 8, 0.14)',
+  red: 'rgba(192, 57, 43, 0.08)',
+  yellow: 'rgba(224, 138, 0, 0.14)',
   green: 'transparent',
+};
+
+/** 档位词（灯里那几个字）用的色：红黄要**够深**才读得清，故另取一枚比灯更深的值。 */
+const STATUS_TEXT: Readonly<Record<HealthStatus, string>> = {
+  red: '#a5281b',
+  yellow: '#8a5200',
+  green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
 };
 
 const STATUS_LABEL: Readonly<Record<HealthStatus, string>> = { red: '红', yellow: '黄', green: '绿' };
@@ -179,7 +190,7 @@ export function HealthOverview(props: {
           React.createElement('span', { style: { color: INK, fontWeight: 650 } }, light.title),
           React.createElement(
             'span',
-            { style: { color: light.status === null ? INK_DIM : STATUS_COLOR[light.status], fontWeight: 700 } },
+            { style: { color: light.status === null ? INK_DIM : STATUS_TEXT[light.status], fontWeight: 700 } },
             light.status === null ? '—' : countsText(light.counts),
           ),
         ),
@@ -253,7 +264,7 @@ export function HealthTable(props: {
                 }),
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, item.title),
                 React.createElement('span', {
-                  style: { color: isAttention(item.status) ? STATUS_COLOR[item.status] : INK_DIM, fontWeight: 700 },
+                  style: { color: isAttention(item.status) ? STATUS_TEXT[item.status] : INK_DIM, fontWeight: 700 },
                 }, STATUS_LABEL[item.status]),
                 item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
               ),
