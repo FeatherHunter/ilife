@@ -21,18 +21,8 @@ export function contentOf(title: string, body: string): string {
   return body !== '' ? body : title;
 }
 
-/** 附件路径（老 `_resolve_media_path`）：须以 `MEMO_MEDIA_DIR`（缺省 `media`）开头，存相对路径；
- *  空即无附件。 */
-export function normalizeMediaPath(v: unknown): string | null {
-  if (!v) return null;
-  if (typeof v !== 'string') throw new MemoPolicyError('POLICY_BAD_INPUT', '附件须为文本路径');
-  const mediaDir = process.env.MEMO_MEDIA_DIR || 'media';
-  const prefix = mediaDir.endsWith('/') ? mediaDir : mediaDir + '/';
-  if (v !== mediaDir && !v.startsWith(prefix)) {
-    throw new MemoPolicyError('POLICY_BAD_INPUT', '附件路径须以 ' + mediaDir + ' 开头，当前：' + v);
-  }
-  return v.startsWith(prefix) ? v.slice(prefix.length) : '';
-}
+// 附件路径那条口径已按 #712 搬进 `media.ts`：取值口（附件目录）与包含判定同住一件，
+// 不再是这里的一段字符串前缀比对。
 
 export function crudUpdate(input: { id?: unknown }): { id: number } {
   return { id: needId(input.id, '更新') };

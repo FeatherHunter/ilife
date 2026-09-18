@@ -10,6 +10,8 @@ export {
 export type { RemindOp, RemindRoute, RemindRepeatType } from './reminder.js';
 export { routeWish, WISH_SYNC_OPS } from './wish.js';
 export type { WishOp, WishSyncOp } from './wish.js';
-export { crudCreate, crudUpdate, crudRemove, needId, contentOf, normalizeMediaPath } from './crud.js';
+export { crudCreate, crudUpdate, crudRemove, needId, contentOf } from './crud.js';
+// #712：附件路径那条口径搬进 `media.js`（附件目录 ＋ 包含判定同住一件，名字不变）。
+export { normalizeMediaPath, resolveMediaDir } from './media.js';
 export { routeWakeword, WAKE_TABLE } from './wakewords.js';
 export type { MemoKey, WakeRoute, WakeEntry } from './wakewords.js';
