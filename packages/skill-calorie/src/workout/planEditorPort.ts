@@ -37,11 +37,11 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, nums } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 import { readMovementCatalog } from '../xunji/index.js';
-import { WIZARD_WAKE_WORD } from '../workout/precheckPrompt.js';
-import { inferEquipment } from '../workout/planStore.js';
+import { WIZARD_WAKE_WORD } from './precheckPrompt.js';
+import { inferEquipment } from './planStore.js';
 import type { EditorDay, EditorMove, EditorState, EditorWeek } from './planEditor.js';
 import { buildPlanEditorDoc } from './planEditorDocs.js';
-import { buildPlanWizardView } from './planPlate.js';
+import { buildPlanWizardView } from '../render/planPlate.js';
 
 /** 这条键：186「定训练计划」的过程页就是它（换装前后键名不变，见件头）。 */
 const EDITOR_KEY = 'calorie.view.plan-wizard';

@@ -10,7 +10,7 @@
  */
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import { planCopyBlock } from '../render/planCopyBlock.js';
+import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyLog, promptCopyArea } from '../shared/copyArea.js';

@@ -16,7 +16,7 @@
 import type { CopyLogFields, SerializableEnvelope } from 'base-paint';
 import { buildDataText, buildLogText, renderActionBar } from 'base-paint';
 import { renderCopyBlock, renderPreBlock } from 'base-paint/blocks';
-import { CALORIE_COPY_ACTION } from './copy.js';
+import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { sceneEnvelope } from '../shared/sceneEnvelope.js';
 
 /** prompt 段：预览块 ＋ 一颗「复制指令」（预检确认页「复制 prompt 回给 AI」那一环，老侧 `promptCopyArea` 的语序）。

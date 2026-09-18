@@ -23,7 +23,7 @@ import { strict as assert } from 'node:assert';
 
 import { copyArea, copyLog } from '../dist/shared/copyArea.js';
 import { sceneEnvelope } from '../dist/shared/sceneEnvelope.js';
-import { planCopyBlock } from '../dist/render/planCopyBlock.js';
+import { planCopyBlock } from '../dist/workout/planCopyBlock.js';
 import { buildLogText } from '../../base-render/dist/index.js';
 
 /** 卡路里侧的真形状（`src/render/*Docs.ts` 逐页装的那只信封）。 */

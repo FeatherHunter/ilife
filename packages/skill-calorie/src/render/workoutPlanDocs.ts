@@ -18,7 +18,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import { escapeHtml } from 'base-paint';
 import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
-import { planCopyBlock } from './planCopyBlock.js';
+import { planCopyBlock } from '../workout/planCopyBlock.js';
 import { planPageCss, planViewCss } from './workoutPlanCss.js';
 import { pageChromeCss } from './pageChromeCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';

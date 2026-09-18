@@ -21,7 +21,7 @@
  * `scripts/gen-cli.mjs` 合成的 `cli/keys.ts`）；带整页回执的写命令另在声明上挂 `doc:` 那一位。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
-import { viewPlanEditor } from '../render/planEditorPort.js';
+import { viewPlanEditor } from './planEditorPort.js';
 import { viewContraindication } from './contraindication.js';
 import { viewPlan, viewPlanVsActual, viewPlanWritePreview } from './plan.js';
 import { viewProcessProgress } from './progress.js';

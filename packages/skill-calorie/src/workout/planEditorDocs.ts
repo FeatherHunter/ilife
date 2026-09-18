@@ -11,12 +11,12 @@ import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine } from 'base-paint/blocks';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
-import { pageChromeCss } from './pageChromeCss.js';
+import { pageChromeCss } from '../render/pageChromeCss.js';
 import { planCopyBlock } from './planCopyBlock.js';
 import { PLAN_EDITOR_CSS } from './planEditorCss.js';
 import { serializeState, type EditorState } from './planEditor.js';
 import { PLAN_EDITOR_JS } from './planEditorRuntime.js';
-import { nowStamp } from './receipt.js';
+import { nowStamp } from '../render/receipt.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';

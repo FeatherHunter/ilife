@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { XUNJI_CATALOG, readMovementCatalog } from '../dist/xunji/index.js';
-import { editorStateFromPlan } from '../dist/render/planEditorPort.js';
+import { editorStateFromPlan } from '../dist/workout/planEditorPort.js';
 
 const names = () => readMovementCatalog().names;
 

@@ -21,7 +21,7 @@ import { renderCaliberLine, renderDisclosure, renderEmptyBlock, renderListRows }
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
 import { pageChromeCss } from './pageChromeCss.js';
-import { planCopyBlock } from './planCopyBlock.js';
+import { planCopyBlock } from '../workout/planCopyBlock.js';
 import { planWizardCss } from './planWizardCss.js';
 import { nowStamp } from './receipt.js';
 import type {

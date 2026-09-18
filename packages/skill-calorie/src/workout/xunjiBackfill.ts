@@ -17,7 +17,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { todayISO } from '../analysis/utils.js';
-import { planCopyBlock } from '../render/planCopyBlock.js';
+import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';

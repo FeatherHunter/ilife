@@ -5,7 +5,7 @@
  * `statusCard`／`reconcileDisclosure`），只换内容：老实物 `crud_receipt.html` 的
  * 标识卡＋差异卡落点为状态卡＋改动对照表，M5 四要素（记录编号／写入时间／影响行数／
  * 写入字段）全部上页；操作名一律中文，不出现 `op=` 裸词与 `# 成功 ·` 前缀。
- * 底部复制区与场景 05 各页同形（共用件 `../render/planCopyBlock.js` 的冻结双按钮，
+ * 底部复制区与场景 05 各页同形（共用件 `./planCopyBlock.js` 的冻结双按钮，
  * 不出三格式菜单）。必须在 `withM5` 之后调用（见 `src/cli/write.ts`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -15,7 +15,7 @@ import type { CrudReceipt } from '../render/receipt.js';
 import { getPlan } from './planStore.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { pageChromeCss } from '../render/pageChromeCss.js';
-import { planCopyBlock } from '../render/planCopyBlock.js';
+import { planCopyBlock } from './planCopyBlock.js';
 import { copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';

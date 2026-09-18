@@ -16,7 +16,7 @@ import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { todayISO } from '../analysis/utils.js';
 import { weekOfDate } from '../render/planPlate.js';
-import { planCopyBlock } from '../render/planCopyBlock.js';
+import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { verifyMovements } from '../xunji/index.js';
 import type { MovementVerifyReport } from '../xunji/index.js';
