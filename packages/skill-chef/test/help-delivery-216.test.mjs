@@ -38,6 +38,9 @@ const HELP_RE = /^私家大厨_HELP_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 const LOOKUP_RE = /^私家大厨_速查表_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 
 const mkTmp = (tag) => mkdtempSync(join(tmpdir(), 't216-' + tag + '-'));
+/** #695：隔离目录＝**配置目录**，数据目录＝它下面的 `data/`（默认配置 `db.dir` 空串＝按默认落点）。
+ *  本文件的老断言把「隔离目录」当产物根用，故这一层换算只在路径助手上做一次。 */
+const dataOf = (cfgDir) => join(cfgDir, 'data');
 const P = (o) => JSON.stringify(o);
 
 /** 本地时区零填充时间戳（与共用件同口径；测试侧**独立算一份**，不做同义反复）。 */
@@ -53,11 +56,11 @@ function stampWindow() {
   return [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((d) => localStamp(new Date(t + d * 1000)));
 }
 
-/** 真 spawn 出口：CLI 子进程，cwd ＝真消费者包，DB 目录＝调用者给的隔离目录。 */
+/** 真 spawn 出口：CLI 子进程，cwd ＝真消费者包，配置目录＝调用者给的隔离目录。 */
 function run(dbDir, args, envExtra) {
   return spawnSync(process.execPath, [CLI, ...args], {
     cwd: CONSUMER, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, SKILLS_DB_PATH: dbDir, ...(envExtra || {}) },
+    env: { ...process.env, ILIFE_CONFIG_DIR: dbDir, ...(envExtra || {}) },
   });
 }
 function runOk(dbDir, args, envExtra) {
@@ -65,7 +68,7 @@ function runOk(dbDir, args, envExtra) {
   assert.equal(r.status, 0, 'exit 非 0：' + String(r.status) + ' / stderr=' + String(r.stderr));
   return JSON.parse(String(r.stdout));
 }
-const helpDirOf = (dbDir) => join(dbDir, 'cook_html', 'help');
+const helpDirOf = (dbDir) => join(dataOf(dbDir), 'cook_html', 'help');
 const namesOf = (dbDir) => { try { return readdirSync(helpDirOf(dbDir)).sort(); } catch { return []; } };
 
 test('#216 ① 缺省：落 `<库目录>/cook_html/help/私家大厨_HELP_<本地时间戳>.html` ＋ 绝对路径回执；不建库', () => {
@@ -80,7 +83,7 @@ test('#216 ① 缺省：落 `<库目录>/cook_html/help/私家大厨_HELP_<本�
   assert.equal(env.delivery.mode, 'file');
   const abs = env.delivery.path;
   assert.equal(isAbsolute(abs), true, '回执必须是绝对路径：' + abs);
-  assert.equal(dirname(abs), helpDirOf(db), '落点＝<SKILLS_DB_PATH>/cook_html/help');
+  assert.equal(dirname(abs), helpDirOf(db), '落点＝<数据目录>/cook_html/help');
   const m = HELP_RE.exec(basename(abs));
   assert.ok(m, '文件名通式不符：' + basename(abs));
   assert.equal(stampWindow().includes(m[1]), true, '时间戳须是本地时区零填充 YYYYMMDD_HHMMSS：' + m[1]);
@@ -88,8 +91,10 @@ test('#216 ① 缺省：落 `<库目录>/cook_html/help/私家大厨_HELP_<本�
   assert.equal(env.delivery.bytes, readFileSync(abs).length, 'bytes ＝实际落盘字节数');
   assert.equal(readdirSync(helpDirOf(db)).length, 1, '一次调用恰一份产物');
   // 本票病灶：说一句 help 不许把库建出来（DB 由 openChefDb 的 DDL 自愈建，282,624 B 那种）
-  assert.equal(existsSync(join(db, 'chef_data.db')), false, '看帮助不许建库');
-  assert.deepEqual(readdirSync(db).sort(), ['cook_html'], '库目录里只许多出落点目录本身');
+  assert.equal(existsSync(join(dataOf(db), 'chef_data.db')), false, '看帮助不许建库');
+  assert.deepEqual(readdirSync(dataOf(db)).sort(), ['cook_html'], '库目录里只许多出落点目录本身');
+  // #695：配置件是唯一真相——首次读就在配置目录里落一份默认（数据目录是它算出来的）。
+  assert.equal(existsSync(join(db, 'chef.yaml')), true, '首次读落一份默认配置');
 });
 
 test('#216 ② 产物＝通用 help 模板：前后缀逐字、标题槽已填、载荷段可 parse', () => {
@@ -189,7 +194,7 @@ test('#216 ④ 两支互不串：缺省 HELP 支与显式速查支同目录、�
   const lookupHtml = readFileSync(lookup.delivery.path, 'utf8');
   assert.equal(lookupHtml.startsWith('<!DOCTYPE html>'), true);
   assert.equal(lookupHtml.includes('chef-cmd-read ' + KEY), true);
-  assert.equal(existsSync(join(db, 'chef_data.db')), false, '速查支同样不许建库');
+  assert.equal(existsSync(join(dataOf(db), 'chef_data.db')), false, '速查支同样不许建库');
 });
 
 test('#216 ⑤ 退出码矩阵：0 三态／2 参数／1 预检／5 落盘；现找不刷目录', () => {
@@ -206,7 +211,13 @@ test('#216 ⑤ 退出码矩阵：0 三态／2 参数／1 预检／5 落盘；现
   assert.equal(run(db, [KEY, '--params', P({ q: '能做啥', mode: 'lookup' })]).status, 2, 'q 与 mode 互斥');
   assert.equal(run(db, [KEY, '--params', P({ mode: '速查' })]).status, 2, 'mode 只认 lookup');
   assert.equal(run(db, [KEY, '--params', '[]']).status, 2);
-  assert.equal(run(db, [KEY], { SKILLS_DB_PATH: '' }).status, 1, '缺 SKILLS_DB_PATH 走预检 exit 1');
+  // #695：库目录不再由环境变量阻断；配置件写坏（不认识的键）走预检那一档 exit 1，且给人话＋行号。
+  const badCfg = mkTmp('badconfig');
+  writeFileSync(join(badCfg, 'chef.yaml'), 'db:\n  dirx: 1\n', 'utf8');
+  const badRun = run(badCfg, [KEY]);
+  assert.equal(badRun.status, 1, '配置错项走预检 exit 1');
+  assert.match(String(badRun.stderr), /不认识的配置项「db\.dirx」/);
+  assert.equal(String(badRun.stdout), '', '配置错项不许写 stdout');
   assert.equal(run(db, ['chef.nope']).status, 3);
   assert.equal(run(db, ['chef.nope']).stdout, '', '失败路径 stdout 必须干净');
   // 落盘失败：`--html` 指到一个「父路径是文件」的位置 ⇒ mkdirSync ENOTDIR ⇒ exit 5

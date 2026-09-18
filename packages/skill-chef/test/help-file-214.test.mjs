@@ -27,6 +27,11 @@ import * as pkg from '../dist/index.js';
 
 /** 固定时刻（本地时区）⇒ 产物可复现。 */
 const NOW = new Date(2026, 8, 12, 14, 30, 0);
+
+// #695：落点值改成从配置文件取（`~/.ilife/chef.yaml`，默认值逐字等于老常量）。本件在**进程内**读
+// 配置，故先把配置目录指到一个临时目录（测试隔离的唯一口子）；进程内只读一次，与各 test 的临时目录互不打扰。
+process.env.ILIFE_CONFIG_DIR = mkdtempSync(join(tmpdir(), 't214-cfg-'));
+
 const DATA = buildChefHelpFileData(NOW);
 const HTML = renderChefHelpHtml(DATA);
 const HTML_LF = (HTML.match(/\n/g) || []).length;

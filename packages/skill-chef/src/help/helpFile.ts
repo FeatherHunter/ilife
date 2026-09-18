@@ -59,7 +59,7 @@ import { renderHelpShellHtml } from 'base-paint/help-shell';
 import type { HelpShellData } from 'base-paint/help-shell';
 import type { SceneGroup } from 'base-paint';
 import { buildChefSceneData } from './sceneData.js';
-import { HELP_DIR_SEGMENTS, HELP_FILE_STEM, LOOKUP_FILE_STEM } from './manifest.js';
+import { helpDirSegments, helpFileStem, lookupFileStem } from './manifest.js';
 import { ChefRenderError } from '../render/errors.js';
 
 /** 落点值由 #215 收进 `src/help/manifest.ts`（A2）——本件从它 `import`，**不落第二处**（铁律二）。
@@ -210,9 +210,11 @@ export function renderChefHelpHtml(data: ReturnType<typeof buildChefHelpFileData
 
 /** 落点目录（两个主体共用一个目录）：`dbPath` 的**父目录** ＋ manifest 的两段，`resolve` 成绝对路径
  *  （回执路径因此可用）。坏 `dbPath` 即抛，不返空落点。 */
+/** 落点目录（两个主体共用一个目录）：`dbPath` 的**父目录** ＋ 配置里的段串（默认 `cook_html/help`，
+ *  `#695` 起从配置文件取），`resolve` 成绝对路径（回执路径因此可用）。坏 `dbPath` 即抛，不返空落点。 */
 function chefHelpDir(dbPath: string): string {
   if (!isNonEmptyString(dbPath)) fail('HELP 落点缺库路径（`dbPath` 须为非空字符串，缺失阻断不返空）。');
-  return resolve(dirname(dbPath), ...HELP_DIR_SEGMENTS);
+  return resolve(dirname(dbPath), ...helpDirSegments());
 }
 
 /** 域级索引条目：`subgroupCount`／`sceneCount` 全是**数出来的**（与页面 `subtitle` 同一路子），
@@ -260,7 +262,7 @@ export function buildChefHelpDelivery(dbPath: string, now: Date): {
   const data = buildChefHelpFileData(now, { initialized: chefHelpInitialized(dbPath) });
   return Object.freeze({
     html: renderChefHelpHtml(data),
-    target: Object.freeze({ dir, stem: HELP_FILE_STEM }),
+    target: Object.freeze({ dir, stem: helpFileStem() }),
     index: chefHelpIndex(data.groups),
   });
 }
@@ -269,5 +271,5 @@ export function buildChefHelpDelivery(dbPath: string, now: Date): {
  *  **不渲染页面**——速查页由出口拿信封走本技能自己的 `templates/help.html` 渲染（#215）：
  *  落点值与载荷因此不必互相等，本件也不预设那个页面的形状。 */
 export function buildChefLookupLanding(dbPath: string): { readonly dir: string; readonly stem: string } {
-  return Object.freeze({ dir: chefHelpDir(dbPath), stem: LOOKUP_FILE_STEM });
+  return Object.freeze({ dir: chefHelpDir(dbPath), stem: lookupFileStem() });
 }

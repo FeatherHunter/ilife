@@ -15,7 +15,8 @@ import {
   recordHistory, queryHistory, historyStats,
   buildShoppingList, healthCheck,
 } from '../fetch/index.js';
-import { resolveDbPath, resolveDbDir, DB_FILENAME } from '../fetch/paths.js';
+import { resolveDbPath, resolveDbDir, dbFilename } from '../fetch/paths.js';
+import { isConfigKey, runConfigKey } from './config.js';
 import type { RecipeRow, ChefDb } from '../fetch/db.js';
 import { needName, needNames, validateCategory, validateRating } from '../policy/index.js';
 import {
@@ -42,12 +43,9 @@ function fail(code: number, msg: string): never { console.error('ERR ' + code + 
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
-function preflight(): string {
+function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p as string;
 }
 
 function todayStr(): string {
@@ -101,8 +99,9 @@ function pickNum(params: Record<string, unknown>, key: string): number | undefin
 
 /* ── #215 · 「私家大厨help」的交付装配（**在开库之前**走）────────────────────────────────
  *
- * 缺省（不给 `q`／`mode`）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/cook_html/help/
- * 私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
+ * 缺省（不给 `q`／`mode`）＝ 老实物同款 HELP 文件：`<库目录>/cook_html/help/
+ * 私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`（两段目录名与主体名都从配置文件取，默认逐字等于老常量，
+ * 见 `src/help/manifest.ts` 与 `src/config.ts`），独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
  * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `私家大厨_速查表`，与 HELP 分名——照 #139 判法：
  * 一个键两种产物就分成两个名字，别让用户按一个名字打开到另一个东西），页面由信封走 `templates/help.html`。
  * 显式 `q` ＝ 现找：只回命中（stdout），`--html` 给了才落盘（检索式问答不刷目录）。
@@ -112,7 +111,7 @@ function pickNum(params: Record<string, unknown>, key: string): number | undefin
  * 落点只出**意图**（目录 ＋ 文件名主体）：时间戳与同秒递补由共用件 `saveHtmlFile` 钉死（裁决 8）。
  * 全程**不开库、本件自己也不建库目录**：库路径走 `resolveDbDir()`（**不 mkdir**）＋ 文件名拼——`resolveDbPath()`
  * 会 `mkdirSync`（`src/fetch/paths.ts:21`）。落点目录由落盘件按需递归建出（要落文件就必然建它），
- * 但要落的是 `<SKILLS_DB_PATH>/cook_html/help/`，**不是** `chef_data.db`。
+ * 但要落的是 `<库目录>/cook_html/help/`，**不是** `chef_data.db`。
  */
 interface HelpDeliver { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; }
 interface HelpDispatch { readonly data: unknown; readonly deliver?: HelpDeliver; }
@@ -123,7 +122,7 @@ interface HelpDispatch { readonly data: unknown; readonly deliver?: HelpDeliver;
 const helpWindowOrFail = helpReuseWindowOf((m) => fail(2, m));
 
 function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
-  const dbPath = join(resolve(resolveDbDir()), DB_FILENAME);
+  const dbPath = join(resolve(resolveDbDir()), dbFilename());
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
   if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
@@ -402,13 +401,18 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：chef-cmd-read <chef.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
-  const dbPath = preflight();
-  void dbPath;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #695：三个配置 key（`chef.config.read/write/reset`）在库目录预检与形状表之前拦下——
+  // 读写配置不该要求库已配，它们也不进 `CHEF_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
+  if (isConfigKey(o.key)) {
+    process.stdout.write(runConfigKey(o.key, params) + '\n');
+    return;
+  }
+  preflight();
   let shape = null;
   try { shape = chefShapeFor(o.key as string); } catch (e) { fail(3, (e as Error).message); }
   void shape;
@@ -442,7 +446,8 @@ async function main() {
     if (e instanceof ChefRenderError) fail(5, '渲染失败：' + e.message);
     // 落盘失败：共用件 `saveHtmlFile` 的 code（`EEXIST`／`EINVAL`／`EIO`）原样穿过，落到 exit 5。
     if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, '落盘失败：' + ((e as Error).message || String(e)));
-    if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
+    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     // #215：help 支一步取数都没有（只渲染 ＋ 落盘），未知错只可能出在渲染（共享模板抛的普通 Error
     // 没有 code）或落盘 ⇒ 归 exit 5，不落到「未知失败 4」。其余七键保持原样（取数面宽，无法这样归类）。
     if (o.key === 'chef.help.lookup') fail(5, '渲染/落盘失败：' + ((e as Error).message || String(e)));

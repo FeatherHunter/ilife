@@ -24,12 +24,14 @@ const HELP_NAME_RE = /^私家大厨_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 const LOOKUP_NAME_RE = /^私家大厨_速查表_\d{8}_\d{6}(_\d+)?\.html$/;
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245chef-' + tag + '-'));
-const htmlDirOf = (dir) => join(dir, 'cook_html', 'help');
+/** #695：隔离目录＝**配置目录**，数据目录＝它下面的 `data/`（默认配置 `db.dir` 空串＝按默认落点）。 */
+const dataOf = (cfgDir) => join(cfgDir, 'data');
+const htmlDirOf = (dir) => join(dataOf(dir), 'cook_html', 'help');
 const namesOf = (dir) => { try { return readdirSync(htmlDirOf(dir)).sort(); } catch { return []; } };
 
 function run(dir, args) {
   const r = spawnSync(process.execPath, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }
@@ -48,7 +50,7 @@ test('#245 ① 缺省＝一天：连读 3 次目录文件数不增，三次落�
   const a = runOk(dir, [KEY]);
   const out = a.env.delivery.path;
   assert.ok(isAbsolute(out), '回执须绝对路径：' + out);
-  assert.equal(dirname(out), htmlDirOf(dir), '落点＝<SKILLS_DB_PATH>/cook_html/help');
+  assert.equal(dirname(out), htmlDirOf(dir), '落点＝<数据目录>/cook_html/help');
   assert.match(basename(out), HELP_NAME_RE, '名字通式：' + basename(out));
 
   const before = readFileSync(out);
@@ -61,7 +63,7 @@ test('#245 ① 缺省＝一天：连读 3 次目录文件数不增，三次落�
   assert.deepEqual(namesOf(dir), [basename(out)], '目录里仍只有首跑那一份（不涨）');
   assert.deepEqual(readFileSync(out), before, '复用不得改写那份（逐字节相同）');
   assert.equal(statSync(out).mtimeMs, mtime, '复用不得 touch 那份（mtime 不动）');
-  assert.equal(existsSync(join(dir, 'chef_data.db')), false, '看帮助不许建库');
+  assert.equal(existsSync(join(dataOf(dir), 'chef_data.db')), false, '看帮助不许建库');
 });
 
 test('#245 ② 两支都吃窗口：HELP 文件与速查表各自复用，目录稳定在两份', () => {

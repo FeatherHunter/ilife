@@ -1,19 +1,26 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { openChefDb, closeChefDb, addRecipe, updateRecipe, filterRecipes, addIngredient, addStep, listRecipes, searchRecipes, getRecipeDetail, deprecateRecipe, recordHistory, queryHistory, historyStats, buildShoppingList, healthCheck, ChefFetchError } from '../dist/index.js';
-import { resolveDbPath } from '../dist/index.js';
+import { resolveDbDir, resolveDbPath } from '../dist/index.js';
 
+const HERE = dirname(fileURLToPath(import.meta.url));
+
+let CFG = '';
 let DB = '';
 let H = null;
 let gongbaoId = '';
 let mapoId = '';
 
 before(() => {
-  DB = mkdtempSync(join(tmpdir(), 'cheffetch-'));
-  process.env.SKILLS_DB_PATH = DB;
+  // #695：配置走配置文件——隔离目录＝配置目录，数据目录＝它下面的 `data/`。
+  CFG = mkdtempSync(join(tmpdir(), 'cheffetch-'));
+  DB = join(CFG, 'data');
+  process.env.ILIFE_CONFIG_DIR = CFG;
   H = openChefDb(resolveDbPath());
   const g = addRecipe(H, { name: '宫保虾球', difficulty: '中等', status: '未做', servings: 2, total_time_minutes: 25, description: '酸甜微辣' });
   gongbaoId = g.id;
@@ -97,10 +104,22 @@ describe('私家大厨取数 fetch', () => {
     assert.ok(filterRecipes(H, { cuisine: '川菜', difficulty: '中等' }).some((r) => r.name === '宫保虾球'));
     assert.equal(filterRecipes(H, { cuisine: '粤菜' }).length, 0);
   });
-  it('SKILLS_DB_PATH 缺失阻断', () => {
-    const old = process.env.SKILLS_DB_PATH;
-    delete process.env.SKILLS_DB_PATH;
-    assert.throws(() => resolveDbPath(), /SKILLS_DB_PATH/);
-    process.env.SKILLS_DB_PATH = old;
+  it('配置件的默认值逐项等于改造前的代码常量；库目录由配置给', () => {
+    // 改造前的代码常量：库名 `chef_data.db`、落点子目录 `cook_html/help`、两个产物主体名。
+    // 默认配置下数据目录＝<配置目录>/data，库文件就叫 chef_data.db。
+    assert.equal(resolveDbDir(), DB);
+    assert.equal(resolveDbPath(), join(DB, 'chef_data.db'));
+  });
+  it('测试缺隔离即响亮失败（没设 ILIFE_CONFIG_DIR 的测试进程不许读配置）', () => {
+    // 本进程的配置已经读过（before 那次，进程内有缓存），故用**子进程**验护栏：
+    // 清掉 ILIFE_CONFIG_DIR 且带测试上下文时，现读配置必须响亮失败，不许静默落到真实家目录。
+    // 整条链的读数见同包 `test/config-695.test.mjs`。
+    const r = spawnSync(process.execPath, ['-e',
+      "import('./dist/index.js').then((m)=>{try{m.resolveDbPath();process.exit(0);}catch(e){console.error(String(e.message));process.exit(9);}})",
+    ], {
+      cwd: join(HERE, '..'), encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: '1' },
+    });
+    assert.equal(r.status, 9, '缺 ILIFE_CONFIG_DIR 的测试进程读配置必须抛：' + String(r.stdout));
+    assert.match(String(r.stderr), /ILIFE_CONFIG_DIR/);
   });
 });
