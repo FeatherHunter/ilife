@@ -16,6 +16,9 @@ export interface SlotsRegisterOptions {
   readonly order?: number;
   readonly label?: string | (() => string);
   readonly locale?: string;
+  /** 本包自己那条 RPC 通道（单段，例 `/ilife-calorie`）：注册方写进来，读方（总管）据此**通用地**
+   *  调它，不必在源码里写死任何一家的通道名（#706 配置体检要走它）。 */
+  readonly channel?: string;
   readonly inject?: () => Record<string, unknown>;
   readonly children?: Record<string, SlotChildSpec>;
 }
@@ -26,6 +29,8 @@ export interface SlotLedgerEntry {
     readonly id?: string;
     readonly order?: number;
     readonly label?: string | (() => string);
+    /** 见 `SlotsRegisterOptions.channel`（缺席即这一家没声明体检通道）。 */
+    readonly channel?: string;
   };
 }
 
@@ -37,11 +42,15 @@ export interface SlotsFace {
   subscribe(key: string, listener: () => void): () => void;
 }
 
-/** 爱生活页签槽行（总管自有形状：id=单品插件包名，order/label 随注册）。 */
+/** 爱生活页签槽行（总管自有形状：id=单品插件包名，order/label 随注册）。
+ *
+ * `channel` 由各家注册时写进 options（#706）：总管据此调那家的配置体检，**通用地**——
+ * 源码里不出现任何一家的通道名。 */
 export interface ConfigTabRow {
   readonly id: string;
   readonly order: number;
   readonly label: string;
+  readonly channel: string;
 }
 
 /** ledger 观测源（uSES 对：getSnapshot+subscribe； absent 形见 renderer:212-215）。 */

@@ -12,6 +12,14 @@ export const RPC_ENDPOINT_CONFIG_GET = 'config.get' as const;
 export const RPC_ENDPOINT_CONFIG_SAVE = 'config.save' as const;
 export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
 
+/** #706 配置体检端点：只读一次，回一份报告（判据由技能侧出，本包只透传）。
+ *
+ * 端点名与技能侧那条只读命令同名（`calorie.config.check`），两端各写一份、值相同：
+ * 插件侧这份是面板的第二段参数，技能侧那份是 CLI 要认的命令名。**报告形状**的唯一真相在
+ * 技能侧 `packages/skill-calorie/src/health.ts`；面板侧镜像在
+ * `packages/plugin-manager/src/health-contract.ts`。本包不校验、不重写那份报告。 */
+export const RPC_ENDPOINT_CONFIG_CHECK = 'config.check' as const;
+
 /** 保存载荷：一份键值（键路径 → 值）。缺项由宿主按默认值补齐，故只收用户真改的那些。 */
 export interface SavePayload {
   readonly values: Record<string, unknown>;

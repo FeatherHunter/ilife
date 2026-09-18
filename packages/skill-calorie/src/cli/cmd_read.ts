@@ -5,6 +5,8 @@
  * 退出码对齐 skilllink 冻结（P9）：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
  * stdout 纯净：成功只打 envelope JSON 一行（version/skill/shape/key/data 全字段，对齐 link-core 0.1.0）。
  * 组合键为 registry 合法点式（见 cli/keys.ts；内部 VIEW_KEYS 下划线键仅渲染层复用，不直接登记）。
+ * #676 · 设置页的三个配置 key（`calorie.config.read`／`.write`／`.reset`）**不在 registry 里**：
+ * 它们在预检与分派层之前由 cli/config.ts 拦下（不是唤醒词命令，不进 HELP 与唤醒词计数）。
  * 缺失阻断不返空：空库/空窗/无目标一律抛（CalorieRenderError missing-data / FetchError），exit 4，不返空数组冒充正常。
  * 仅 type-only 消费 link-core（零运行时依赖）；envelope 手工装配，形状校验本地镜像 link-core。
  * HTML 默认落盘（utf8，见下行 #87）＋ 可用 `--html` 显式覆盖：视图键走 render/html.ts 专属模板（与 T8/T9/T10 快照同源），其余走通用 section。
@@ -21,7 +23,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../schema.js';
-import { DB_FILENAME } from '../paths.js';
+import { resolveDbFileName } from '../paths.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 
@@ -30,6 +32,10 @@ import { CalorieRenderError } from '../render/errors.js';
 // #330 · CLI 前置与交付装配住同目录两件（纯搬，行为不变）：`readArgs.ts`（参数＋预检）／
 // `delivery.ts`（envelope＋三态交付＋失败回执）。入口名与 `export function dispatch` 不挪。
 import { USAGE, bodySceneFor, parseReadArgs, preflight, toast } from './readArgs.js';
+// #676 · 设置页的三个配置 key 由本文件在分派层之前拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
+import { isConfigKey, runConfigKey } from './config.js';
+// #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
+import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { buildDeliveredEnvelope, describeDeliveryTarget, failWithBodyReceipt, failWithReceipt } from './delivery.js';
 export { buildDeliveredEnvelope };
 
@@ -67,7 +73,6 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
 async function main(): Promise<void> {
   const o = parseReadArgs(process.argv.slice(2));
   if (!o.key) fail(2, USAGE);
-  const dbPath = preflight();
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try {
@@ -77,6 +82,19 @@ async function main(): Promise<void> {
     }
     if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
   }
+  // #676 · 设置页的配置 key 在**预检与分派层之前**拦下：读写配置不该要求库目录已配（配置面正是
+  // 「库目录配在哪」的入口），也不走 HTML 交付那条链；输出仍是唯一出口那条规矩（stdout 一行 envelope）。
+  if (isConfigKey(o.key as string)) {
+    process.stdout.write(runConfigKey(o.key as string, params) + '\n');
+    return;
+  }
+  // #706 · 配置体检（`calorie.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+  if (isHealthCheckKey(o.key as string)) {
+    process.stdout.write(runHealthCheckKey(o.key as string) + '\n');
+    return;
+  }
+  const dbPath = preflight();
   let shape: EnvelopeShape;
   try {
     shape = calorieShapeFor(o.key as string);
@@ -92,7 +110,8 @@ async function main(): Promise<void> {
   (timer as unknown as { unref: () => void }).unref();
   let env: Record<string, unknown> | null = null;
   try {
-    const dbFile = join(dbPath as string, DB_FILENAME);
+    // #676 · 库文件名也来自配置（`values.db.name`），不再写死路径常量。
+    const dbFile = join(dbPath as string, resolveDbFileName());
     // #93 · 读键走只读打开（不建表、不迁移、写入被拒）；写键或库文件尚不存在时仍走 openDb。
     const db = isCalorieWriteKey(o.key as string) || !existsSync(dbFile) ? openDb(dbFile) : openDbReadOnly(dbFile);
     try {

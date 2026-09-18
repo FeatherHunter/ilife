@@ -22,6 +22,9 @@ import { MANAGER_TABS, MANAGER_VERSION, MORE_PLUGINS, PANEL_LINKS, recoFor } fro
 import type { ManagerTab } from './nav.js';
 import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
 import type { CallFace } from './update-client.js';
+import { useHealthPanel } from './health-panel.js';
+import { HealthOverview, HealthTable, lightsOf } from './health-view.js';
+import { HEALTH_ENDPOINT } from './health-contract.js';
 import type {
   ClientCtx,
   ConfigTabRow,
@@ -238,6 +241,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
   const face = useUpdateRows(props.getCall);
+  // 配置体检（#706）：一张表六份报告，总览那行与各家那张表都从它读（同一份数据）。
+  // 通道名由各家注册时写进页签槽 options，总管源码里不出现任何一家的通道名。
+  const healthTabs = React.useMemo(
+    () => rows.filter((row) => row.channel.length > 0).map((row) => ({ id: row.id, channel: row.channel })),
+    [rows],
+  );
+  const health = useHealthPanel(() => props.getCall(), healthTabs);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
@@ -252,6 +262,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   function labelFor(tab: ManagerTab): string {
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;
+  }
+  /** 按包名取页签标题（总览那行按账本行过，账本里没有的退到导航表的标题）。 */
+  function labelForTab(id: string): string {
+    const row = rows.find((r) => r.id === id);
+    if (row && row.label.length > 0) return row.label;
+    const tab = MANAGER_TABS.find((t) => t.plugin === id);
+    return tab ? tab.title : id;
   }
   function targetForTab(tab: ManagerTab) {
     return face.targets.find((t) => t.packageName === tab.plugin) ?? null;
@@ -292,6 +309,16 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       React.createElement('div', null, '总管 dsh-life-pack · ' + MANAGER_VERSION),
     ),
     React.createElement(UpdateResults, { face }),
+    React.createElement(HealthOverview, {
+      lights: lightsOf(
+        rows.map((row) => ({ id: row.id, title: labelForTab(row.id) })),
+        Object.fromEntries(Object.entries(health.rows).map(([id, row]) => [id, row.report ?? undefined])),
+      ),
+      running: health.running,
+      error: health.error,
+      onRun: health.run,
+      onJump: setActiveId,
+    }),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: S.tablist },
@@ -334,7 +361,18 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
           hidden: !selected,
         },
         present.has(tab.plugin)
-          ? (props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode)
+          ? React.createElement(
+              'div',
+              null,
+              props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode,
+              // 那家的体检表：与总览那行读同一份快照（`health.rows`），不是各算一遍。
+              React.createElement(HealthTable, {
+                title: labelFor(tab),
+                phase: health.rows[tab.plugin]?.phase ?? 'idle',
+                report: health.rows[tab.plugin]?.report ?? null,
+                error: health.rows[tab.plugin]?.error ?? null,
+              }),
+            )
           : React.createElement(AbsentCard, {
               target: targetForTab(tab),
               fallbackCommand: recoFor(tab).installCmd,
@@ -365,6 +403,8 @@ export function apply(ctx: ClientCtx): void {
                 id: entry.options.id ?? '',
                 order: entry.options.order ?? 0,
                 label: resolveLabel(entry.options.label),
+                // #706 配置体检的通道：各家注册时写进 options，缺席即这一家没有体检出口（灯显 —）。
+                channel: entry.options.channel ?? '',
               }))
               .sort((a, b) => a.order - b.order);
           }

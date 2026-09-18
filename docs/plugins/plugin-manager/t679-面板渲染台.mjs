@@ -72,6 +72,8 @@ const React = {
     if (changed && !before) { try { fn(); } catch (e) {} }
   },
   useCallback: (fn) => fn,
+  // #706：体检那块的数组快照按依赖记忆（替身只许每次重算，结果一样即可）。
+  useMemo: (fn) => fn(),
 };
 
 /* ② 物化真产物 → 捕获 settings.section 的组件（loader stub 在本页最前面那段 script 里已挂好） */
@@ -86,13 +88,17 @@ factoryExports.apply({
     entries: () => [], getVersion: () => 0, subscribe: () => () => {},
   },
   effect: (cb) => cb(),
+  // #706：体检那块要么不取值（拿不到报告＝灯显 —），要么给一份**双语的**假报告。
+  // 双语＝总览那行的计数与各家那张表的行数都能查到同一份数字，用来量「同一份数据」。
+  connection: window.__T706_CALL__ ? { rpc: { call: window.__T706_CALL__ } } : undefined,
 });
-const props = { useTabs: (selector) => selector([]), renderSlot: () => null, getCall: () => null };
+const props = { useTabs: (selector) => selector(window.__T706_TABS__ || []), renderSlot: () => null, getCall: () => (window.__T706_CALL__ || null) };
 
 /* ③ 渲染一遍（含状态落定），拿到元素树 */
 function pass() { hookCursor = 0; return Section(props); }
 let guard = 0;
 while (pendingUpdates > 0 && guard++ < 20) { pendingUpdates = 0; pass(); }
+const hydrated = pass();
 
 /* ④ 元素树 → HTML（React 的 DOM 语义子集：style 对象、属性改名、空标签自闭合） */
 const VOID_TAGS = new Set(['path','rect','circle','ellipse','line','polyline','polygon','use','br','hr','img','input']);
@@ -144,12 +150,28 @@ function measure(tag) {
   const card = root.lastElementChild;
   const rows = card ? Array.from(card.querySelectorAll('a[href]')) : [];
   const links = Array.from(head.querySelectorAll('a[href]'));
+  // #706 配置体检那一块：总览框（「体检一次」按钮 ＋ 六盏灯）与各家那张表（每条一行）。
+  // 用标记位找（data-ilife-health 属性），不靠文字猜。判据用**双语**量：总览灯上的计数文本
+  // 与表里的行数必须对得上同一份报告。
+  const healthBox = root.querySelector('[data-ilife-health="overview"]');
+  const healthBtn = healthBox ? Array.from(healthBox.querySelectorAll('button'))
+    .find((b) => /体检/.test(b.textContent)) : null;
+  const healthLights = healthBox ? Array.from(healthBox.querySelectorAll('[data-ilife-health="light"]')) : [];
+  const healthHost = root.querySelector('[data-ilife-health="table"]');
   return {
     tag,
     container: { width: pr.width, clientWidth: panel.clientWidth, scrollWidth: panel.scrollWidth, overflowX: panel.scrollWidth - panel.clientWidth },
     title: { text: title ? title.textContent : null, box: title ? box(title) : null, inside: title ? inside(box(title)) : false },
     headItems: Array.from(headGroup.children).map((el) => ({ tag: el.tagName.toLowerCase(), text: (el.textContent || '').trim().slice(0, 24), inside: inside(box(el)), box: box(el) })),
     links: links.map((a) => ({ href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel'), tip: a.getAttribute('title'), ariaLabel: a.getAttribute('aria-label'), inside: inside(box(a)), box: box(a) })),
+    health: {
+      box: !!healthBox,
+      inside: healthBox ? inside(box(healthBox)) : false,
+      button: healthBtn ? healthBtn.textContent.trim() : null,
+      lights: healthLights.length,
+      lightTexts: healthLights.map((b) => b.textContent.trim()),
+      tableRows: healthHost ? healthHost.querySelectorAll('div').length : 0,
+    },
     card: {
       heading: card && card.firstElementChild ? card.firstElementChild.textContent : null,
       isLast: !!card && card === root.lastElementChild,
@@ -177,6 +199,8 @@ const tabButtons = [];
   if (type === 'button' && p && p.role === 'tab') tabButtons.push(node);
   if (p) collect(p.children);
 })(pass());
+// #706：体检那块的灯也是 button（但不是页签），以及后面那个「体检一次」——都别混进页签集合里。
+const tabsOnly = tabButtons.filter((b) => /^(●|○) /.test(String(b.props.children || '')));
 
 const renderNow = () => { panel.innerHTML = render(pass()); };
 const states = [];
@@ -189,6 +213,31 @@ for (let i = 0; i < tabButtons.length; i += 1) {
   states.push(measure('tab' + i));
 }
 
+/* ⑥b #706：真点那个「体检一次」（它的 onClick），把取数的 promise 落定（替身没有真事件环，故排队跑 then），
+       重量一遍——所以「总览的计数与各家表的行数对得上」是**量出来的**，不是看代码推的。 */
+const healthStates = [];
+// 调试图（不算判据）：体检那条链走到哪儿了。
+window.__T706_DIAG__ = [];
+window.__T706_RUN__ = window.__T706_RUN__ || [];
+const healthBtn0 = Array.from(panel.querySelectorAll('button')).find((b) => /体检/.test(b.textContent));
+if (healthBtn0 && window.__T706_CALL__) {
+  window.__T706_DIAG__.push('clicked');
+  healthBtn0.click();
+  for (let round = 0; round < 60 && window.__T706_QUEUE__.length > 0; round += 1) {
+    const job = window.__T706_QUEUE__.shift();
+    window.__T706_DIAG__.push('then#' + String(round));
+    try { job.fn(job.arg); } catch (err) { window.__T706_DIAG__.push('then-threw:' + String(err && err.message)); }
+    let g = 0; while (pendingUpdates > 0 && g++ < 20) { pendingUpdates = 0; pass(); }
+  }
+} else {
+  window.__T706_DIAG__.push(healthBtn0 ? 'no-call-stub' : 'no-button');
+}
+if (healthStates.length === 0 && window.__T706_CALL__ && healthBtn0) {
+  let settle = 0; while (pendingUpdates > 0 && settle++ < 20) { pendingUpdates = 0; pass(); }
+  renderNow();
+  healthStates.push(measure('体检后'));
+}
+
 /* ⑦ 判据（每宽一页自己判；--check 由外层跑 Chrome 收 VERDICT） */
 const checks = {
   titleInside: states.every((s) => s.title && s.title.inside),
@@ -198,20 +247,51 @@ const checks = {
   cardLastAndWhole: states.every((s) => s.card && s.card.isLast && s.card.inside && s.card.heading === '作者其他插件' && s.card.rowCount === 4 && s.card.rowsOK),
   cardSurvivesAllTabs: states.length === 7 && states.every((s) => s.card && s.card.rowCount === 4 && s.card.heading === '作者其他插件'),
   tabBarSix: states.every((s) => s.tabBar === 6),
+  // #706 体检那一块：一个总览框 ＋ 那个按钮 ＋ 灯（没取数时 0 盏、取到六家报告时 6 盏），且在盒内。
+  healthOverview: states.every((s) => s.health && s.health.box && s.health.inside && s.health.button !== null && (s.health.lights === 0 || s.health.lights === 6)),
+  // #706 取数后：六盏灯各自的文字都带档位与计数，各家那张表也有行——总览与各家表读的是同一份快照。
+  // 没有取数的变体（页内没给假答复）不判这一条：回 null ＝ 这一条按「不适用」记，不算它绿。
+  healthSameData: healthStates.length === 0 ? null : (() => {
+    const s = healthStates[0];
+    if (!s.health || s.health.lights !== 6 || s.health.tableRows < 6) return false;
+    return s.health.lightTexts.every((text) => /红|黄|绿|—/.test(text));
+  })(),
 };
-const verdictOf = (s) => ({ tag: s.tag, titleInside: s.title && s.title.inside, cardInside: s.card && s.card.inside, rowCount: s.card ? s.card.rowCount : -1, overflowX: s.container ? s.container.overflowX : null });
-const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+const verdictOf = (s) => ({ tag: s.tag, titleInside: s.title && s.title.inside, cardInside: s.card && s.card.inside, rowCount: s.card ? s.card.rowCount : -1, overflowX: s.container ? s.container.overflowX : null,
+  health: s.health ? { lights: s.health.lights, rows: s.health.tableRows, texts: s.health.lightTexts } : null });
+const failed = Object.entries(checks).filter(([, ok]) => ok === false).map(([k]) => k);
 const out = {
   container: { clientWidth: panel.clientWidth, overflowX: states[0].container.overflowX },
-  checks, states: states.map(verdictOf), tabsClicked: tabButtons.length,
+  checks, states: states.map(verdictOf), healthStates: healthStates.map(verdictOf), tabsClicked: tabButtons.length,
+  diag: window.__T706_DIAG__,
+  runDiag: window.__T706_RUN__,
   detail: { first: states[0], last: states[states.length - 1] },
 };
 document.getElementById('probe').textContent = 'T679-READINGS ' + JSON.stringify(out)
   + ' T679-VERDICT ' + (failed.length === 0 ? 'PASS' : 'FAIL:' + failed.join(','));
 `;
 
-const page = (W) => `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
-<title>票 #679 面板渲染台 · 内容宽 ${W}px</title>
+/** #706：取数变体（页内塞一份假的「各家通道 → config.check」答复），量体检那一块。 */
+const T706_TABS = JSON.stringify([
+  { id: 'dsh-memo-ilife', order: 70, label: '备忘录', channel: '/ilife-memo' },
+  { id: 'dsh-calorie', order: 75, label: '卡路里', channel: '/ilife-calorie' },
+  { id: 'dsh-schedule-ilife', order: 80, label: '作息', channel: '/ilife-schedule' },
+  { id: 'dsh-home-ilife', order: 85, label: '居家', channel: '/ilife-home' },
+  { id: 'dsh-chef', order: 90, label: '大厨', channel: '/ilife-chef' },
+  { id: 'dsh-bill-ilife', order: 95, label: '记账', channel: '/ilife-bill' },
+]);
+const T706_CALL = `function (channel, endpoint, payload) {
+  if (endpoint !== 'config.check') return Promise.resolve({ ok: false, error: { code: 'bad-request', message: '渲染台只答体检' } });
+  var skill = channel.replace('/ilife-', '');
+  var items = [0,1,2,3,4,5,6,7,8,9,10,11].map(function (i) {
+    var status = i === 1 ? 'yellow' : (i === 2 ? 'red' : 'green');
+    return { id: 'x' + i, title: '检查项 ' + i, status: status, message: '读数：检查项 ' + i, action: status === 'green' ? '' : '去哪修：检查项 ' + i, source: '默认值' };
+  });
+  return Promise.resolve({ ok: true, value: { skill: skill, configPath: 'C:/cfg/' + skill + '.yaml', dataDir: 'C:/data', items: items } });
+}`;
+
+const page = (W, withData) => `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>票 #679／#706 面板渲染台 · 内容宽 ${W}px${withData ? '（带体检数据）' : ''}</title>
 <style>
   html,body{margin:0;padding:0;background:#f2f2f4;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
   .wrap{display:flex;gap:20px;align-items:flex-start;padding:16px}
@@ -222,7 +302,18 @@ const page = (W) => `<!doctype html><html lang="zh-CN"><head><meta charset="utf-
   <div id="panel"></div>
   <pre id="probe">T679-READINGS …</pre>
 </div>
-<script>window.__T679_REGS__ = []; window.__ModuleLoader__ = { load: (reg) => window.__T679_REGS__.push(reg) };</script>
+<script>
+window.__T679_REGS__ = [];
+window.__ModuleLoader__ = { load: (reg) => window.__T679_REGS__.push(reg) };
+window.__T706_QUEUE__ = [];
+if (${withData ? 'true' : 'false'}) {
+  window.__T706_TABS__ = ${T706_TABS};
+  window.__T706_CALL__ = ${T706_CALL};
+} else {
+  window.__T706_TABS__ = null;
+  window.__T706_CALL__ = null;
+}
+</script>
 <script>${bundle}</script>
 <script>try {
 ${PAGE_SCRIPT}
@@ -232,10 +323,12 @@ ${PAGE_SCRIPT}
 mkdirSync(OUT, { recursive: true });
 const pages = [];
 for (const W of ACCEPT_WIDTHS) {
-  const file = join(OUT, `panel-${W}.html`);
-  writeFileSync(file, page(W), 'utf8');
-  pages.push(file);
-  console.log('PAGE ' + file + ' （容器内容宽 ' + W + 'px）');
+  for (const withData of [false, true]) {
+    const file = join(OUT, `panel-${W}${withData ? '-health' : ''}.html`);
+    writeFileSync(file, page(W, withData), 'utf8');
+    pages.push(file);
+    console.log('PAGE ' + file + ' （容器内容宽 ' + W + 'px' + (withData ? '，带体检数据' : '') + '）');
+  }
 }
 
 if (!CHECK) {

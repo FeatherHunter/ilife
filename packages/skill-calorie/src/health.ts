@@ -1,0 +1,537 @@
+/** 卡路里自己的配置体检（票 #706）：一份只读的报告，回答「我配的东西现在通不通」。
+ *
+ * 口径（票面「开工前的形状裁定」）：
+ *   · **判据住技能侧**——每条的有效值（库在哪、产物落哪个目录、包内预置件在不在）只有本包算得出来；
+ *     插件包与总管只透传与渲染，不重写这里的任何一个字。
+ *   · **只报不改**——不建目录、不写文件、不落那份默认配置；凡是要建目录才算得出的结论，一律当「不在」报。
+ *     所以本件**不许**调 `loadCalorieConfig()`（文件不在即落一份默认件）与 `resolveDbPath()`（它 `mkdir`），
+ *     配置一律本件只读解析（`base-link-core` 的受限子集解析器**没有对外**，见其包门只有四条）。
+ *   · 报告形状见面板侧镜像 `packages/plugin-manager/src/health-contract.ts`（唯一消费者）。
+ *
+ * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
+ * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
+ * ＋ 卡路里特有 7 条（照片目录／GIF 子目录／训记 KEY／训记 CLI／训记状态目录／跨技能两个出口／动作库预置）。
+ */
+import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
+import { configPaths } from 'base-link-core';
+import { CALORIE_CONFIG_DEFAULTS, CALORIE_CONFIG_STEM } from './config.js';
+
+/** 报告里的三档判据（与面板侧镜像同值）。 */
+export type HealthStatus = 'red' | 'yellow' | 'green';
+
+export interface HealthItem {
+  readonly id: string;
+  readonly title: string;
+  readonly status: HealthStatus;
+  readonly message: string;
+  readonly action: string;
+  readonly source?: string;
+}
+
+export interface CalorieHealthReport {
+  readonly skill: string;
+  readonly configPath: string;
+  readonly dataDir: string;
+  readonly items: readonly HealthItem[];
+}
+
+/** 库表数门槛：`src/schema.ts` 那 11 张表齐了才算正常（少了报黄：还能用，但缺功能的表要重建或迁移）。 */
+export const DB_TABLE_THRESHOLD = 11 as const;
+
+const SKILL = 'calorie' as const;
+
+/** 训记三份状态文件住在同一个目录。 */
+const XUNJI_STATE_DIR = join(homedir(), '.mavis');
+
+/** 包根：`dist/health.js` 上一级。 */
+function packageRoot(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), '..');
+}
+
+/** 人话里的路径一律用正斜杠：报告给页面看，也让跨平台读数可比。 */
+function p(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
+/** 只读解析结果：文件不在／读得出取值与「哪些键真在文件里」／读不出来（报文带行号与文件名）。 */
+export type ConfigRead =
+  | { readonly kind: 'missing' }
+  | { readonly kind: 'ok'; readonly values: Record<string, Record<string, unknown>>; readonly present: ReadonlySet<string> }
+  | { readonly kind: 'bad'; readonly message: string };
+
+/**
+ * 只读解析那份配置文件（与 `base-link-core` 的受限子集同一套校验，口径逐条对齐）：
+ * 剥 BOM、去 `\r`、空行与整行注释跳过、缩进只许 2 个空格且不许制表符、不支持列表、
+ * 一行须是「键: 值」、不许重复定义、顶层键冒号后没值即开一个组。
+ *
+ * 与 `loadConfig()` 的差别只有一处、也正是本件要的那一处：**文件不在时不落默认件**。
+ * 取值语义与它一致：文件里缺的项按默认值补。
+ */
+export function readCalorieConfigReadOnly(): ConfigRead {
+  const file = configPaths(CALORIE_CONFIG_STEM).configFile;
+  if (!existsSync(file)) return { kind: 'missing' };
+  let text: string;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (e) {
+    return { kind: 'bad', message: '读配置文件失败：' + file + '（' + (e instanceof Error ? e.message : String(e)) + '）' };
+  }
+  const parsed = parseSubset(text, file);
+  if (!parsed.ok) return { kind: 'bad', message: parsed.message };
+  return { kind: 'ok', values: projectOnDefaults(parsed.values), present: presentKeysOf(parsed.values) };
+}
+
+/** 文件里真写了哪些键（扁平成 `组.键`）：给「这个值从哪来」那条判据用。
+ *
+ * 为什么不能直接看投到默认值表之后的值：**空串＝按默认落点**——留空的项值看起来与默认值一样，
+ * 但它的来源是「用户写了空串」，不是「文件里没有这一项」。混起来就会把来源报错。 */
+function presentKeysOf(values: Record<string, unknown>): ReadonlySet<string> {
+  const out = new Set<string>();
+  for (const [group, got] of Object.entries(values)) {
+    if (typeof got !== 'object' || got === null) {
+      out.add(group);
+      continue;
+    }
+    for (const key of Object.keys(got as Record<string, unknown>)) out.add(group + '.' + key);
+  }
+  return out;
+}
+
+/** 受限子集的极简解析：只算值与行号，不算别的（校验口径与配置件同一套）。 */
+function parseSubset(text: string, file: string):
+  | { readonly ok: true; readonly values: Record<string, unknown> }
+  | { readonly ok: false; readonly message: string } {
+  const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const lines = source.replace(/\r\n?/g, '\n').split('\n');
+  const values: Record<string, unknown> = {};
+  const lineOf = new Map<string, number>();
+  let openGroup: string | null = null;
+  let openGroupLine = 0;
+  /** 标量解析的失败口：`parseScalar` 把报文写进 `scalarError`，调用处读它即可（不抛，免得类型糊）。 */
+  let scalarError = '';
+  const fail = (line: number, why: string) => ({ ok: false as const, message: '配置件第 ' + String(line) + ' 行：' + why + '（文件：' + file + '）' });
+  const closeGroup = (): string | null => {
+    if (openGroup !== null && Object.keys(values[openGroup] as Record<string, unknown>).length === 0) {
+      return fail(openGroupLine, '键「' + openGroup + '」冒号后没有值，也没有子项').message;
+    }
+    openGroup = null;
+    return null;
+  };
+  for (let i = 0; i < lines.length; i += 1) {
+    const lineNo = i + 1;
+    const raw = lines[i] ?? '';
+    if (raw.trim() === '') continue;
+    if (/^\s*#/.test(raw)) continue;
+    const head = /^[ \t]*/.exec(raw)?.[0] ?? '';
+    const body = raw.slice(head.length);
+    if (head.includes('\t')) return fail(lineNo, '缩进里有制表符：本子集只许空格，且嵌套缩进恰好 2 个空格');
+    if (body.startsWith('-')) return fail(lineNo, '本子集不支持列表（「-」开头的行）');
+    const matched = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(body);
+    if (matched === null) return fail(lineNo, '不是「键: 值」形状：' + body.trim());
+    const key = matched[1] as string;
+    const rest = (matched[2] ?? '').trim();
+    if (head.length > 0) {
+      if (head.length !== 2) return fail(lineNo, '缩进必须恰好 2 个空格（本子集只支持一层嵌套），实为 ' + String(head.length) + ' 个空格');
+      if (openGroup === null) return fail(lineNo, '缩进的子项「' + key + '」上面没有开着子的顶层键');
+      const group = values[openGroup] as Record<string, unknown>;
+      if (Object.prototype.hasOwnProperty.call(group, key)) {
+        return fail(lineNo, '键「' + openGroup + '.' + key + '」重复定义（第 ' + String(lineOf.get(openGroup + '.' + key)) + ' 行已定义）');
+      }
+      if (rest === '') return fail(lineNo, '键「' + openGroup + '.' + key + '」冒号后没有值');
+      const scalar = parseScalar(rest, lineNo, fail, (message) => {
+        scalarError = message;
+      });
+      if (scalarError !== '') return { ok: false, message: scalarError };
+      group[key] = scalar;
+      lineOf.set(openGroup + '.' + key, lineNo);
+      continue;
+    }
+    const closedError = closeGroup();
+    if (closedError !== null) return { ok: false, message: closedError };
+    if (Object.prototype.hasOwnProperty.call(values, key)) {
+      return fail(lineNo, '键「' + key + '」重复定义（第 ' + String(lineOf.get(key)) + ' 行已定义）');
+    }
+    lineOf.set(key, lineNo);
+    if (rest === '') {
+      values[key] = {};
+      openGroup = key;
+      openGroupLine = lineNo;
+      continue;
+    }
+    const scalar = parseScalar(rest, lineNo, fail, (message) => {
+      scalarError = message;
+    });
+    if (scalarError !== '') return { ok: false, message: scalarError };
+    values[key] = scalar;
+  }
+  const tailError = closeGroup();
+  if (tailError !== null) return { ok: false, message: tailError };
+  return { ok: true, values };
+}
+
+/** 标量：带引号／数字／布尔／裸字符串（值后的 `#` 注释照配置件同一口径切掉）。 */
+function parseScalar(
+  text: string,
+  lineNo: number,
+  fail: (line: number, why: string) => { readonly ok: false; readonly message: string },
+  onError: (message: string) => void,
+): string | number | boolean {
+  const first = text[0];
+  if (first === '"' || first === "'") {
+    const quote = first;
+    let out = '';
+    let i = 1;
+    let closed = false;
+    for (; i < text.length; i += 1) {
+      const ch = text[i];
+      if (ch === quote) {
+        if (quote === "'" && text[i + 1] === "'") {
+          out += "'";
+          i += 1;
+          continue;
+        }
+        closed = true;
+        break;
+      }
+      if (quote === '"' && ch === '\\') {
+        const next = text[i + 1];
+        out += next === 'n' ? '\n' : next === 't' ? '\t' : (next ?? '');
+        i += 1;
+        continue;
+      }
+      out += ch;
+    }
+    if (!closed) {
+      onError(fail(lineNo, '引号没有闭合：' + text).message);
+      return '';
+    }
+    return out;
+  }
+  let cut = text.length;
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] === '#' && (i === 0 || /\s/.test(text[i - 1] as string))) {
+      cut = i;
+      break;
+    }
+  }
+  const body = text.slice(0, cut).trim();
+  if (body === '') {
+    onError(fail(lineNo, '冒号后没有值（只有注释）').message);
+    return '';
+  }
+  if (body === 'true') return true;
+  if (body === 'false') return false;
+  if (/^-?(\d+\.?\d*|\.\d+)$/.test(body)) return Number(body);
+  return body;
+}
+
+/** 把文件里读到的取值投到默认值表的形状上（缺项补默认值；组内只取默认值表认得的键）。 */
+function projectOnDefaults(values: Record<string, unknown>): Record<string, Record<string, unknown>> {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [group, def] of Object.entries(CALORIE_CONFIG_DEFAULTS)) {
+    const bucket: Record<string, unknown> = {};
+    const got = values[group];
+    const source = typeof got === 'object' && got !== null ? (got as Record<string, unknown>) : {};
+    for (const [key, defValue] of Object.entries(def as Record<string, unknown>)) {
+      const mine = source[key];
+      bucket[key] = typeof mine === typeof defValue ? mine : defValue;
+    }
+    out[group] = bucket;
+  }
+  return out;
+}
+
+/** 取值：一层嵌套按 `组.键` 读（缺层或类型不符回 undefined）。 */
+function readValue(values: Record<string, Record<string, unknown>>, group: string, key: string): unknown {
+  return values[group]?.[key];
+}
+
+/** 有值的字符串（空串＝未配，按 `undefined` 处理，语义与各取用处一致）。 */
+function textOf(value: unknown): string {
+  return typeof value === 'string' && value.trim() !== '' ? value : '';
+}
+
+/** 「这个值从哪来」：真在文件里写了就是「配置文件」，否则按默认值（文件不存在则全按默认值）。 */
+function sourceOf(present: ReadonlySet<string>, key: string): string {
+  return present.has(key) ? '配置文件' : '默认值';
+}
+
+/** 目录项：在不在 ＋ 能不能写。 */
+interface DirVerdict {
+  readonly exists: boolean;
+  readonly writable: boolean;
+  readonly reason: string;
+}
+
+/** 目录能不能写：建一个探针文件再删掉（老技能三家同一套做法）。**不建目录本身**。 */
+function writeProbe(dir: string): { readonly ok: boolean; readonly reason: string } {
+  const probe = join(dir, '.ilife-health-probe-' + String(process.pid) + '-' + String(Date.now()));
+  try {
+    writeFileSync(probe, 'probe', { encoding: 'utf8', flag: 'wx' });
+    unlinkSync(probe);
+    return { ok: true, reason: '' };
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** 已算过的目录结论按路径记一份：同一份报告里同一个目录不重复起写探针。 */
+const dirMemo = new Map<string, DirVerdict>();
+
+function dirVerdict(dir: string): DirVerdict {
+  const memoized = dirMemo.get(dir);
+  if (memoized !== undefined) return memoized;
+  const verdict = dirVerdictUncached(dir);
+  dirMemo.set(dir, verdict);
+  return verdict;
+}
+
+function dirVerdictUncached(dir: string): DirVerdict {
+  if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
+  try {
+    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: '同名文件占了它的位置' };
+  } catch (e) {
+    return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
+  }
+  const probe = writeProbe(dir);
+  return { exists: true, writable: probe.ok, reason: probe.reason };
+}
+
+/** 开库读表数（只读打开，不建库、不迁移）。打不开即当作「读不出」。 */
+function tableCount(file: string): { readonly ok: boolean; readonly count: number; readonly reason: string } {
+  let db: DatabaseSync | null = null;
+  try {
+    db = new DatabaseSync(file, { readOnly: true });
+    const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{ name?: unknown }>;
+    const names = rows.map((row) => String(row.name ?? '')).filter((name) => name !== '' && !name.startsWith('sqlite_'));
+    return { ok: true, count: names.length, reason: '' };
+  } catch (e) {
+    return { ok: false, count: 0, reason: e instanceof Error ? e.message : String(e) };
+  } finally {
+    try {
+      db?.close();
+    } catch {
+      /* 关不掉不影响结论 */
+    }
+  }
+}
+
+/** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
+export function buildCalorieHealthReport(): CalorieHealthReport {
+  const paths = configPaths(CALORIE_CONFIG_STEM);
+  const items: HealthItem[] = [];
+  const read = readCalorieConfigReadOnly();
+  const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
+  const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
+
+  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
+  const defaultConfigFile = join(homedir(), '.ilife', CALORIE_CONFIG_STEM + '.yaml');
+  const relocated = paths.configFile !== defaultConfigFile;
+  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  if (read.kind === 'bad') {
+    items.push({
+      id: 'config.file', title: '配置文件', status: 'red',
+      message: read.message,
+      action: '照报文指的行号改回「键: 值」的写法；改不动就删掉这个文件，让技能按默认值重落一份。',
+      source: '配置文件',
+    });
+  } else if (read.kind === 'missing') {
+    items.push({
+      id: 'config.file', title: '配置文件', status: 'yellow',
+      message: '配置文件还不存在：' + p(paths.configFile) + '（现在跑的是默认值）。',
+      action: '在面板上保存一次即会落一份；也可点「重置为默认」。',
+      source: '默认值',
+    });
+  } else {
+    items.push({
+      id: 'config.file', title: '配置文件', status: 'green',
+      message: '能解析：' + p(paths.configFile) + '（' + where + '）。',
+      action: '',
+      source: '配置文件',
+    });
+  }
+
+  // ② 数据目录：在不在、能不能写。
+  const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
+  const dataDir = dbDirConfigured !== '' ? dbDirConfigured : paths.dataDir;
+  const dataDirSource = sourceOf(present, 'db.dir');
+  const dataDirVerdict = dirVerdict(dataDir);
+  items.push({
+    id: 'db.dir', title: '数据目录',
+    status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
+    message: !dataDirVerdict.exists
+      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
+      : dataDirVerdict.writable
+        ? '在且能写：' + p(dataDir) + '。'
+        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+    action: !dataDirVerdict.exists
+      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
+      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+    source: dataDirSource,
+  });
+
+  // ③ 库文件：在不在 ＋ 表数够不够。
+  const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
+  const dbName = dbNameConfigured !== '' ? dbNameConfigured : CALORIE_CONFIG_DEFAULTS.db.name;
+  const dbFile = join(dataDir, dbName);
+  const dbSource = sourceOf(present, 'db.name');
+  if (!existsSync(dbFile)) {
+    items.push({
+      id: 'db.file', title: '库文件', status: 'red',
+      message: '不在：' + p(dbFile) + '。',
+      action: '确认「数据目录」与「库文件名」对不对；新装的话，跑一条会写库的命令即会建库。',
+      source: dbSource,
+    });
+  } else {
+    const tables = tableCount(dbFile);
+    if (!tables.ok) {
+      items.push({
+        id: 'db.file', title: '库文件', status: 'red',
+        message: '在，但打不开：' + p(dbFile) + '（' + tables.reason + '）。',
+        action: '这个文件可能不是库文件或已损坏；先备份，再看要不要让技能重建一份。',
+        source: dbSource,
+      });
+    } else if (tables.count < DB_TABLE_THRESHOLD) {
+      items.push({
+        id: 'db.file', title: '库文件', status: 'yellow',
+        message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
+        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
+        source: dbSource,
+      });
+    } else {
+      items.push({
+        id: 'db.file', title: '库文件', status: 'green',
+        message: '在，' + String(tables.count) + ' 张表齐：' + p(dbFile) + '。',
+        action: '',
+        source: dbSource,
+      });
+    }
+  }
+
+  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
+  const htmlDirName = textOf(readValue(values, 'html', 'dir'));
+  const htmlDir = join(dataDir, htmlDirName !== '' ? htmlDirName : String(CALORIE_CONFIG_DEFAULTS.html.dir));
+  const htmlVerdict = dirVerdict(htmlDir);
+  const htmlSource = sourceOf(present, 'html.dir');
+  items.push({
+    id: 'html.dir', title: '产物目录',
+    status: !htmlVerdict.exists ? 'green' : htmlVerdict.writable ? 'green' : 'yellow',
+    message: !htmlVerdict.exists
+      ? '还没建：' + p(htmlDir) + '（交付页面时才落这里，那时自动建）。'
+      : htmlVerdict.writable
+        ? '在且能写：' + p(htmlDir) + '。'
+        : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    source: htmlSource,
+  });
+
+  // ⑤ 这个值从哪来：只陈述数据目录与库文件名的来源，不判好坏（六家通用最后一条）。
+  items.push({
+    id: 'value.source', title: '这个值从哪来', status: 'green',
+    message: '数据目录走「' + dataDirSource + '」，库文件名走「' + dbSource + '」'
+      + (read.kind === 'missing' ? '（配置文件还不存在，落点全按默认值）。' : '。'),
+    action: '', source: dataDirSource,
+  });
+
+  // ⑥ 照片目录（卡路里特有）：没配＝黄（读照片不报错，出 GIF 与写照片会被拦下）。
+  const photosDir = textOf(readValue(values, 'photos', 'dir'));
+  const photosVerdict = photosDir === '' ? { exists: false, writable: false, reason: '' } : dirVerdict(photosDir);
+  items.push({
+    id: 'photos.dir', title: '照片目录',
+    status: photosDir === '' ? 'yellow' : photosVerdict.exists && photosVerdict.writable ? 'green' : 'red',
+    message: photosDir === ''
+      ? '还没配：读照片不报错，出 GIF 与写照片会被拦下。'
+      : photosVerdict.exists
+        ? (photosVerdict.writable ? '在且能写：' + p(photosDir) + '。' : '在，但写不进去：' + p(photosDir) + '。')
+        : '配了但目录不在：' + p(photosDir) + '。',
+    action: photosDir === ''
+      ? '要用身材照就在配置页填这个目录（绝对路径）。'
+      : photosVerdict.exists && photosVerdict.writable ? '' : '建出这个目录（或去掉只读），或换一个位置。',
+    source: photosDir === '' ? '默认值' : '配置文件',
+  });
+
+  // ⑦ 照片 GIF 子目录：不在＝黄（照片目录没配时也跟着黄）。
+  const gifsSub = textOf(readValue(values, 'photos', 'gifs'));
+  const gifsDir = photosDir === '' ? '' : join(photosDir, gifsSub !== '' ? gifsSub : String(CALORIE_CONFIG_DEFAULTS.photos.gifs));
+  const gifsExists = gifsDir !== '' && existsSync(gifsDir);
+  items.push({
+    id: 'photos.gifs', title: '照片 GIF 子目录',
+    status: photosDir === '' || !gifsExists ? 'yellow' : 'green',
+    message: photosDir === ''
+      ? '照片目录还没配，这一项跟着空着。'
+      : gifsExists ? '在：' + p(gifsDir) + '。' : '还没建：' + p(gifsDir) + '（合成 GIF 时才落这里）。',
+    action: photosDir === '' ? '先配「照片目录」。' : gifsExists ? '' : '第一次合成 GIF 时会自动建；想提前建也行。',
+    source: sourceOf(present, 'photos.gifs'),
+  });
+
+  // ⑧ 训记 KEY：只查「配了没有」，**绝不显示值**。
+  const xunjiKey = textOf(readValue(values, 'xunji', 'key'));
+  items.push({
+    id: 'xunji.key', title: '训记 KEY',
+    status: 'green',
+    message: xunjiKey === '' ? '还没配（用训记功能需要它）。' : '已配（值不在这里显示）。',
+    action: xunjiKey === '' ? '要用训记就在配置页填上；不用就一直空着。' : '',
+    source: xunjiKey === '' ? '默认值' : '配置文件',
+  });
+
+  // ⑨ 训记 CLI 入口：那个编译产物在不在（不在＝红）。
+  const xunjiCli = join(packageRoot(), 'dist', 'xunji', 'cli.js');
+  const xunjiCliExists = existsSync(xunjiCli);
+  items.push({
+    id: 'xunji.cli', title: '训记 CLI 入口',
+    status: xunjiCliExists ? 'green' : 'red',
+    message: xunjiCliExists ? '在：' + p(xunjiCli) + '。' : '不在：' + p(xunjiCli) + '。',
+    action: xunjiCliExists ? '' : '技能包没构建完整：重装这个技能包，或跑一次它的构建。',
+  });
+
+  // ⑩ 训记三份状态文件目录：`~/.mavis/` 能不能写（不可写＝黄）。
+  const stateDirConfigured = textOf(readValue(values, 'xunji', 'stateDir'));
+  const stateDir = stateDirConfigured !== '' ? stateDirConfigured : XUNJI_STATE_DIR;
+  const stateVerdict = dirVerdict(stateDir);
+  items.push({
+    id: 'xunji.stateDir', title: '训记状态文件目录',
+    status: !stateVerdict.exists || !stateVerdict.writable ? 'yellow' : 'green',
+    message: !stateVerdict.exists
+      ? '还没建：' + p(stateDir) + '（限频与同步游标要记这里，第一次用时自动建）。'
+      : stateVerdict.writable ? '在且能写：' + p(stateDir) + '。' : '在，但写不进去：' + p(stateDir) + '。',
+    action: !stateVerdict.exists || stateVerdict.writable ? '' : '去掉只读，或把「训记状态文件目录」改到别处。',
+    source: stateDirConfigured !== '' ? '配置文件' : '默认值',
+  });
+
+  // ⑪ 跨技能出口（作息／备忘 CLI）：不在＝黄（只在用「落地训练」时才是红）。
+  const siblingRoot = join(packageRoot(), '..');
+  const scheduleConfigured = textOf(readValue(values, 'land', 'scheduleCli'));
+  const memoConfigured = textOf(readValue(values, 'land', 'memoCli'));
+  const scheduleCli = scheduleConfigured !== '' ? scheduleConfigured : join(siblingRoot, 'skill-schedule', 'dist', 'cli', 'cmd_read.js');
+  const memoCli = memoConfigured !== '' ? memoConfigured : join(siblingRoot, 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
+  const missingLand: string[] = [];
+  if (!existsSync(scheduleCli)) missingLand.push('作息 ' + p(scheduleCli));
+  if (!existsSync(memoCli)) missingLand.push('备忘 ' + p(memoCli));
+  items.push({
+    id: 'land.cli', title: '跨技能出口（作息／备忘）',
+    status: missingLand.length === 0 ? 'green' : 'yellow',
+    message: missingLand.length === 0
+      ? '两个出口都在。'
+      : '不在：' + missingLand.join('；') + '。',
+    action: missingLand.length === 0 ? '' : '只有「落地训练」会用到这两个出口；要用就先装上（或构建）那两家技能包。',
+    source: sourceOf(present, 'land.scheduleCli') === '配置文件' || sourceOf(present, 'land.memoCli') === '配置文件' ? '配置文件' : '默认值',
+  });
+
+  // ⑫ 训记动作库包内预置：包内数据件在不在（不在＝黄）。
+  const catalogConfigured = textOf(readValue(values, 'xunji', 'catalog'));
+  const catalog = catalogConfigured !== '' ? catalogConfigured : join(packageRoot(), 'src', 'xunji', 'data', '训记官方动作.json');
+  const catalogExists = existsSync(catalog);
+  items.push({
+    id: 'xunji.catalog', title: '训记动作库包内预置',
+    status: catalogExists ? 'green' : 'yellow',
+    message: catalogExists ? '在：' + p(catalog) + '。' : '不在：' + p(catalog) + '（动作名判不了）。',
+    action: catalogExists ? '' : '技能包装得不完整，或配置里指到了不存在的路径；重装技能包，或改回包内预置那份。',
+    source: sourceOf(present, 'xunji.catalog'),
+  });
+
+  return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };
+}

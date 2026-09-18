@@ -7,9 +7,9 @@
  * 打包技能提供方见 skill-provider.ts（badge 同形，#56）：单份 SKILL.md 按包名解析，
  * rank 内联 600，名用 skill-calorie；面板/桥行为不受其影响。
  */
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
 import type { RpcResult } from './contract.js';
-import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults } from './bridge.js';
+import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
 import type { HostCtx, RpcHandler } from './dsh-ctx.js';
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 
@@ -40,6 +40,8 @@ const handleCalorieRpc: RpcHandler = async (endpoint, payload): Promise<RpcResul
       return ok(writeConfigValues(parsed.values));
     }
     if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(resetConfigToDefaults());
+    // #706 配置体检：只读一次，把技能侧那份报告原样交回面板（本包不校验、不重写）。
+    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(readConfigHealth());
     return fail('bad-request', `未知端点：${String(endpoint)}`);
   } catch (e) {
     // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的
@@ -107,7 +109,7 @@ export { SKILL, SLOT_ID, SLOT_ORDER, SLOT_TITLE, PLUGIN, MANAGER_PLUGIN, slotDes
 export type { SlotDescriptor, TabsPort } from './slot.js';
 export { SETTINGS_OWNER, SETTINGS_SLOT, CONFIG_STEM, CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
 export type { ConfigItem, ConfigTier, ConfigControl } from './settings.js';
-export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY } from './bridge.js';
+export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, CONFIG_CHECK_KEY } from './bridge.js';
 export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, skillFile, parseSkillText, provider as skillProvider } from './skill-provider.js';
-export { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
+export { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
 export type { ReadPayload, SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './contract.js';
