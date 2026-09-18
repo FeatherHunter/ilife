@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>配置检查表（待划）· map #671</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--card2:#1d2129;--line:#2a2f3a;--ink:#e8eaee;--dim:#9aa3b2;--faint:#6c7484;
+        --accent:#7c9cff;--ok:#4ec9a0;--warn:#f0b45a;--bad:#f2708a;--copy:#4ec9a0;--new:#7c9cff;--mod:#f0b45a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 72px}
+  header.top{position:sticky;top:0;z-index:10;background:rgba(15,17,21,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top-in{max-width:1000px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top-in h1{margin:0;font-size:16px;font-weight:650}
+  .top-in .meta{color:var(--faint);font-size:12px}
+  .chips{margin-left:auto;display:flex;gap:6px}
+  .chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .chip.a{border-color:#2f5e4d;color:var(--ok);background:rgba(78,201,160,.08)}
+  .chip.b{border-color:#6b5520;color:var(--warn);background:rgba(240,180,90,.08)}
+  h2.sec{margin:36px 0 4px;font-size:14px;font-weight:650;color:var(--dim);display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  .lede{color:var(--dim);font-size:13.5px;margin:6px 0 16px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px}
+  th{background:var(--card2);text-align:left;font-weight:600;color:var(--dim);font-size:12.5px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink)}
+  tr:last-child td{border-bottom:none}
+  td.k{font-weight:600;white-space:nowrap}
+  .bdg{font-size:11px;padding:1px 7px;border-radius:5px;border:1px solid;white-space:nowrap;font-weight:600}
+  .bdg.copy{border-color:#2f5e4d;color:var(--copy);background:rgba(78,201,160,.1)}
+  .bdg.new{border-color:#33507e;color:var(--new);background:rgba(124,156,255,.1)}
+  .bdg.mod{border-color:#6b5520;color:var(--mod);background:rgba(240,180,90,.1)}
+  .bdg.tbd{border-color:#7a3346;color:var(--bad);background:rgba(242,112,138,.1)}
+  .fam{display:inline-block;font-size:11.5px;color:var(--faint);font-weight:600;padding:10px 0 4px}
+  code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#12151b;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cfd6e2}
+  mark{background:rgba(240,180,90,.16);color:var(--warn);border-radius:3px;padding:0 4px}
+  .drop{background:var(--card);border:1px solid var(--line);border-left:3px solid #3a3f4a;border-radius:10px;padding:12px 16px;margin:10px 0}
+  .drop h3{margin:0 0 6px;font-size:13.5px;color:var(--dim)}
+  .drop ul{margin:6px 0 0;padding-left:18px;color:var(--faint);font-size:13px}
+  .drop li{margin:3px 0}
+  .ask{border-left-color:var(--bad)}
+  .ask h3{color:var(--bad)}
+  .ask p{margin:6px 0 0;font-size:13.5px;color:var(--dim)}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:12px 16px;margin:12px 0;font-size:13.5px;color:var(--dim)}
+  .note b{color:#c9d0da}
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+  footer a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <h1>配置检查表 · 待你划</h1>
+  <span class="meta">map <a href="https://github.com/FeatherHunter/ilife/issues/671" style="color:var(--accent);text-decoration:none">#671</a> · 2026-09-17</span>
+  <span class="chips"><span class="chip a">27 条候选</span><span class="chip b">2 条待裁</span><span class="chip">6 类已筛掉</span></span>
+</div></header>
+
+<div class="wrap">
+  <p class="lede">这就是「配置体检」要查的全部东西。<mark>划掉哪条就去掉</mark>，划完我才开票。<br>
+  来源列：<span class="bdg copy">照抄</span>＝老技能里有现成判据与文案，我直接抄；<span class="bdg mod">改造</span>＝老技能有，但判据要按新仓口径改；<span class="bdg new">新增</span>＝换了配置文件机制之后才有的项；<span class="bdg tbd">待裁</span>＝要你先定一件事才能写判据。</p>
+
+  <h2 class="sec">一、六家通用（形状一样，5 条）</h2>
+  <table>
+    <tr><th style="width:130px">检查项</th><th>查什么</th><th style="width:78px">来源</th><th style="width:230px">三档结果</th></tr>
+    <tr><td class="k">配置文件本身</td><td>YAML 能不能解析；它落在默认位置还是被 <code>ILIFE_CONFIG_DIR</code> 指到别处（只陈述，不评价）</td><td><span class="bdg new">新增</span></td><td>解析失败＝红，<b>并给出错在哪一行</b>；正常＝绿</td></tr>
+    <tr><td class="k">数据目录</td><td>在不在、<b>能不能写</b>（建目录 ＋ 写一个探针文件 ＋ 删掉）</td><td><span class="bdg copy">照抄</span></td><td>不在＝红／不可写＝红／正常＝绿</td></tr>
+    <tr><td class="k">库文件</td><td>文件在不在 ＋ 表数够不够</td><td><span class="bdg copy">照抄</span></td><td>不在＝红／表数不足＝黄／正常＝绿</td></tr>
+    <tr><td class="k">产物目录</td><td>在不在、能不能写</td><td><span class="bdg copy">照抄</span></td><td>同「数据目录」</td></tr>
+    <tr><td class="k">这个值从哪来</td><td>当前生效值来自配置文件、还是来自默认值（只陈述）</td><td><span class="bdg mod">改造</span></td><td>只陈述，不判好坏</td></tr>
+  </table>
+  <p class="lede" style="margin-top:8px">写出探针 ＋ 表数门槛这两条不是我发明的：老技能三家都用同一套做法——<code>作息 setup_scenarios.py:97-106</code>、<code>居家 开始使用/ops.py:32-77</code>、<code>大厨 开始使用/ops.py:40-49</code>；表数门槛也现成：大厨 17 张、作息 4 张、居家 4 张核心表。</p>
+
+  <h2 class="sec">二、各家特有（22 条）</h2>
+  <table>
+    <tr><th style="width:88px">技能</th><th style="width:150px">检查项</th><th>查什么</th><th style="width:78px">来源</th><th style="width:200px">三档结果</th></tr>
+
+    <tr><td class="k" rowspan="7">卡路里</td><td class="k">照片目录</td><td>在不在、能不能写</td><td><span class="bdg mod">改造</span></td><td>没配＝黄（只在真用照片功能时才是红）</td></tr>
+    <tr><td class="k">照片 GIF 子目录</td><td>在不在</td><td><span class="bdg new">新增</span></td><td>不在＝黄</td></tr>
+    <tr><td class="k">训记 KEY</td><td><b>只查「配了没有」，绝不显示值</b></td><td><span class="bdg new">新增</span></td><td>没配＝绿，但提示「用训记功能需要它」</td></tr>
+    <tr><td class="k">训记 CLI 入口</td><td>那个编译产物在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+    <tr><td class="k">训记三份状态文件目录</td><td><code>~/.mavis/</code> 能不能写</td><td><span class="bdg new">新增</span></td><td>不可写＝黄</td></tr>
+    <tr><td class="k">跨技能出口（作息／备忘 CLI）</td><td>那两个文件在不在</td><td><span class="bdg new">新增</span></td><td>不在＝黄（只在用「落地训练」时才是红）</td></tr>
+    <tr><td class="k">训记动作库包内预置</td><td>包内数据件在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝黄</td></tr>
+
+    <tr><td class="k" rowspan="2">记账</td><td class="k">第二份库 <code>goals.json</code></td><td>在不在、能不能解析</td><td><span class="bdg copy">照抄</span></td><td>不在＝绿（预算功能没在用）／坏了＝红</td></tr>
+    <tr><td class="k">备份目录</td><td>在不在、能不能写</td><td><span class="bdg copy">照抄</span></td><td>不在＝黄（面板<b>不自动建</b>，只报）</td></tr>
+
+    <tr><td class="k" rowspan="2">大厨</td><td class="k">包内模板目录</td><td><code>templates/</code>（8 件）在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+    <tr><td class="k">场景资产</td><td><code>references/scenarios.yaml</code> 在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+
+    <tr><td class="k" rowspan="4">居家</td><td class="k">产物根 vs 库根</td><td><b>两处并排显示</b>，值不一样就报出来</td><td><span class="bdg mod">改造</span></td><td>不一致＝黄（产物与库分离）</td></tr>
+    <tr><td class="k">种子分类</td><td><code>references/seed_categories.yaml</code> 在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红（老技能给了逐字文案）</td></tr>
+    <tr><td class="k">主密钥文件</td><td>在不在（四级定位）</td><td><span class="bdg copy">照抄</span></td><td>不在＝黄（只在用票据凭证时才是红）</td></tr>
+    <tr><td class="k">包内模板目录 ＋ <code>公共组件/</code></td><td>在不在（模板实测 60 个）</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+
+    <tr><td class="k" rowspan="4">备忘</td><td class="k">附件前缀</td><td>见下面「待你裁」第 2 条</td><td><span class="bdg tbd">待裁</span></td><td>—</td></tr>
+    <tr><td class="k">飞书 CLI</td><td><b>三档</b>：装没装／登没登录／日历能不能写</td><td><span class="bdg copy">照抄</span></td><td>逐档给文案（老技能有现成的三档话术）</td></tr>
+    <tr><td class="k">包内模板 ＋ <code>公共组件/</code></td><td>在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+    <tr><td class="k">场景资产</td><td><code>references/scenarios.yaml</code> 在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+
+    <tr><td class="k" rowspan="4">作息</td><td class="k">飞书 CLI</td><td><b>三档</b>：装没装／登没登录／日历能不能写</td><td><span class="bdg copy">照抄</span></td><td>missing＝黄／partial＝黄／full＝绿（老技能 tier 三档现成）</td></tr>
+    <tr><td class="k">分类允许清单</td><td><code>category_whitelist.yaml</code> 在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红（action 文案逐字有）</td></tr>
+    <tr><td class="k">第二份库 <code>daily_recorder.db</code></td><td>见下面「待你裁」第 1 条</td><td><span class="bdg tbd">待裁</span></td><td>—</td></tr>
+    <tr><td class="k">包内模板 ＋ <code>公共组件/</code></td><td>在不在</td><td><span class="bdg copy">照抄</span></td><td>不在＝红</td></tr>
+  </table>
+
+  <h2 class="sec">三、我筛掉、不查的（6 类）</h2>
+  <div class="drop">
+    <h3>老技能确实在查，但它们是「内容／数据」的检查，不是「配置」的检查——面板不该出现</h3>
+    <ul>
+      <li><b>私家大厨的「体检」</b>：给每道菜按 5 个维度打分（食材／步骤／贴士／技法／背景），满分 100 —— 那是内容质量</li>
+      <li><b>居家管家的 <code>lint</code>（8 项）</b>：无标签物品、无位置物品、状态时效、相似位置未合并…… —— 那是数据健康</li>
+      <li><b>作息管家的同步粒度校验</b>（每 5 条消息至少一个 block）—— 那是业务规则</li>
+      <li><b>备忘录的 <code>validate_scenarios.py</code>／<code>template_lint.py</code>／仓库结构体检 7 项</b> —— 那是我们开发时用的仓库门禁</li>
+      <li><b>私家大厨的 14 个输出子目录</b>、各家的 Python／pyyaml／<code>python3</code> 依赖 —— 老技能特有，新仓没有这些概念</li>
+      <li><b>各家的测试隔离变量</b>（<code>SKILLS_BASE_DIR</code> 等）—— 不是给人配的旋钮</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">四、要你先裁的两处</h2>
+  <div class="drop ask">
+    <h3>1 · 作息第二份库的位置冲突</h3>
+    <p>实测 <code>D:\2Study\StudyNotes\SKILLS\daily_recorder.db</code> <b>存在</b>，但老技能默认链算出来的路径是 <code>D:\.db\daily_recorder.db</code> —— <mark>两者不是同一个文件</mark>。面板上这一项到底指哪个？先定这个，判据才写得出来。</p>
+  </div>
+  <div class="drop ask">
+    <h3>2 · 备忘录 <code>MEMO_MEDIA_DIR</code> 填什么</h3>
+    <p>老技能只把它当<b>字符串前缀</b>用（校验附件路径以它开头、再切掉），<b>不解析成目录、不检查存在</b>，缺省值还是相对「当前工作目录」的 <code>media</code>。面板这一项是「填目录」还是「填前缀」？</p>
+  </div>
+
+  <div class="note">
+    <b>一条口径说明（关于「照抄」）：</b>老技能「缺配置会怎样」与新仓<b>完全相反</b>——老四家全都回落到平台默认目录并自动建目录、<b>永不报错</b>；新仓四家是「未设即 <code>fail(1)</code>」。我们已经决定给平台无关的默认值，所以检查表的判据按<b>新仓 ＋ 新机制</b>写（目录在不在／可写吗），不再有「缺失阻断」这一档。<b>照抄老技能的「缺了会怎样」会与新仓实现相反</b>——这也是为什么每条我都标了「照抄／改造／新增」。
+  </div>
+
+  <footer>
+    map <a href="https://github.com/FeatherHunter/ilife/issues/671">#671 爱生活设置面</a>　·　
+    判据来源：<a href="https://github.com/FeatherHunter/ilife/issues/698">#698 四家老技能的取值与自检调查</a>（`docs/research/t698-old-skills-check-survey.md`）＋
+    <a href="https://github.com/FeatherHunter/ilife/issues/692">#692 六家路径类配置调查</a>（`docs/research/t692-six-skill-paths-survey.md`）　·　
+    划完我才开「配置体检」那张票
+  </footer>
+</div>
+</body>
+</html>
