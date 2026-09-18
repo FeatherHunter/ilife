@@ -20,7 +20,10 @@ import {
   buildHelpBlock,
   buildMissingReport,
 } from '../scripts/build-help.mjs';
-import { ALL_ROUTES } from '../dist/triggers/routing.js';
+// #702 · 换缝：`ALL_ROUTES` 的正本件是生成物 `routes.generated.js`；`routing.js` 只是薄转出它
+// （`src/triggers/routing.ts:35,137` 逐字），同一符号两个路径由结构门 `scripts/check-one-path.mjs` 判红。
+// 本件取值语句一字未动，只把 import 路径换成正本件。
+import { ALL_ROUTES } from '../dist/triggers/routes.generated.js';
 import { SCENE_06_GOAL } from '../dist/triggers/scene-06-goal.js';
 
 const FROZEN = SCENE_06_GOAL.map((t) => t.wake_word);
