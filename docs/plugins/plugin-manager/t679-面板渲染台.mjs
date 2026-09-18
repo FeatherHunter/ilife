@@ -210,6 +210,27 @@ window.__T679_SETTLE__ = () => {
   renderNow();
 };
 const states = [];
+// #706：带体检数据的变体（页内塞了假答复 __T706_CALL__）要在**有读数**的形态下量——
+// 所以这里替它跑一次取数、排空队列、落定重渲；那一条 healthSameData 才是在真数据上量的。
+if (window.__T706_CALL__ && window.__T706_FACE_SINK__) {
+  window.__T706_DIAG__ = window.__T706_DIAG__ || [];
+  let face = null;
+  window.__T706_FACE_SINK__((value) => { face = value; });
+  if (face) {
+    try { face.run(); } catch (err) { window.__T706_DIAG__.push('autorun-threw:' + String(err && err.message)); }
+    for (let i = 0; i < 60 && window.__T706_QUEUE__.length > 0; i += 1) {
+      const job = window.__T706_QUEUE__.shift();
+      try { job.fn(job.arg); } catch (err) { window.__T706_DIAG__.push('then-threw:' + String(err && err.message)); }
+      let g = 0; while (pendingUpdates > 0 && g++ < 20) { pendingUpdates = 0; pass(); }
+    }
+    let settle = 0; while (pendingUpdates > 0 && settle++ < 20) { pendingUpdates = 0; pass(); }
+    window.__T679_SETTLE__();
+    window.__T706_DIAG__.push('autorun-ran rows=' + String((face.rows && Object.keys(face.rows).length) || 0));
+  } else {
+    window.__T706_DIAG__ = window.__T706_DIAG__ || [];
+    window.__T706_DIAG__.push('autorun-no-face');
+  }
+}
 renderNow();
 states.push(measure('初始'));
 for (let i = 0; i < tabButtons.length; i += 1) {
