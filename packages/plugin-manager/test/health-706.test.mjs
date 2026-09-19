@@ -4,10 +4,11 @@
 // 而是面板侧五件事：
 //   A 报告形状守卫与三档聚合（最严重那一档、计数）
 //   B 取数：六家各调一次各自的通道与端点；一家报错／超时／形状认不出都不拖死别家
-//   C 总览那行：六盏灯按页签顺序、缺席或没体检时显 —（不冒充绿）
-//   D 同一份数据：产物里只有一处取数口，总览与各家表读的是同一个快照（结构断言）
+//   C 顶部那一行汇总（票 #732 从「一排灯按钮」改成「一行总账」）：红黄计数按档上色、缺席不冒充绿
+//   D 同一份数据：产物里只有一处取数口，顶部汇总与各家表读的是同一个快照（结构断言）
 //   E 全量对齐门：六家报告合起来**逐条**对上检查表（这份名单是独立转写的一份期望值，
 //     不是从各家的源码生成的——少了、多了、改名了都当场红）
+//   F 页签上那枚小数字（票 #732）：体检结果长到页签上，红黄的家名后才带一条计数
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -16,7 +17,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { HEALTH_ENDPOINT, countByStatus, isHealthReport, worstStatus } from '../dist/health-contract.js';
 import { loadHealthReports } from '../dist/health-fetch.js';
-import { HealthOverview, HealthTable, lightsOf } from '../dist/health-view.js';
+import { HealthSummaryLine, HealthTable, TAB_DOT, countSegsOf, lightsOf, tabDotColor, tabNote } from '../dist/health-view.js';
+// 档位的**灯色**从 dist 直接取（票 #732）：本件原先自己抄了一份同样的色值——
+// 那样「改源码里的色值」在这件里是**看不见**的（抄来的那份不会跟着变），断言就守不住这件事。
+import { STATUS_COLOR as STATUS_COLOR_DIST } from '../dist/health-view.js?732-live';
 import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 
 const require = createRequire(import.meta.url);
@@ -189,12 +193,12 @@ describe('#706 配置体检 · 面板侧', () => {
     });
   });
 
-  describe('C 总览那行', () => {
-    it('每家用最严重那一档点灯；没有报告的那盏显 —（不冒充绿）', () => {
+  describe('C 顶部那一行汇总', () => {
+    it('每家用最严重那一档算档；没有报告的那盏显 —（不冒充绿）', () => {
       const tabs = [
-        { id: 'dsh-calorie', title: '卡路里' },
-        { id: 'dsh-chef', title: '大厨' },
-        { id: 'dsh-home', title: '居家' },
+        { id: 'dsh-calorie', title: '卡路里', hasChannel: true },
+        { id: 'dsh-chef', title: '大厨', hasChannel: true },
+        { id: 'dsh-home', title: '居家', hasChannel: true },
       ];
       const lights = lightsOf(tabs, {
         'dsh-calorie': report('calorie', ['green', 'green']),
@@ -208,17 +212,19 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.deepEqual(lights[1].counts, { red: 1, yellow: 0, green: 1 });
       // 这里曾印过「最严重那一项的名字」当区分度，实测六家常坏在同一条通用检查项上（都是「数据目录」），
       // 是噪声不是区分度，已撤回；灯上只留「家名 ＋ 按档上色的计数」。
-      assert.deepEqual(Object.keys(lights[1]).sort(), ['counts', 'id', 'status', 'title']);
+      // `hasChannel`（票 #732）也是必须的一格：报告上「没装」与「装了没体检」都长成 null，
+      // 页签的圆点色与顶部汇总都要靠它分开，少一格这两个读数就分不开。
+      assert.deepEqual(Object.keys(lights[1]).sort(), ['counts', 'hasChannel', 'id', 'status', 'title']);
     });
 
     it('灯上那截计数按档上色：「黄 N」不许印成红字（本页自己定的语义，文字层也得守）', () => {
       // 出图复评逮到的真缺陷：计数原先是**一个字符串**塞进一个 span、染顶档色，
       // 六家都红时「黄 3」就跟着印成红字——页面自己说「黄＝还没配」，文字层却把它涂成红。
       const lights = [
-        { id: 'dsh-bill-ilife', title: '记账', status: 'red', counts: { red: 2, yellow: 3, green: 0 } },
+        { id: 'dsh-bill-ilife', title: '记账', status: 'red', counts: { red: 2, yellow: 3, green: 0 }, hasChannel: true },
       ];
       const html = renderHtml(
-        React.createElement(HealthOverview, { lights, running: false, error: null, onRun: () => {}, onJump: () => {} }),
+        React.createElement(HealthSummaryLine, { lights, running: false, error: null, onRun: () => {} }),
       );
       const red = STATUS_TEXT.red;
       const yellow = STATUS_TEXT.yellow;
@@ -259,7 +265,7 @@ describe('#706 配置体检 · 面板侧', () => {
   });
 
   describe('D 同一份数据（结构断言）', () => {
-    it('产物里只有一处取数口：总览与各家表都不自己调通道', () => {
+    it('产物里只有一处取数口：顶部汇总与各家表都不自己调通道', () => {
       const occurrences = CLIENT.split('config.check').length - 1;
       assert.equal(occurrences, 1, '「config.check」在产物里出现 ' + String(occurrences) + ' 次：取数口必须只有一处');
       // 只数那个字符串不够（两处都调 loadHealthReports 也仍然只出现一次）。真正要咬的性质是
@@ -269,6 +275,8 @@ describe('#706 配置体检 · 面板侧', () => {
       const VIEW = readFileSync(join(HERE, '..', 'src', 'health-view.ts'), 'utf8');
       assert.equal((VIEW.match(/loadHealthReports|config\.check/g) || []).length, 0, '渲染件不许自己取数（它只吃传进来的报告）');
       assert.ok(CLIENT.includes('体检一次'), '产物里没有那个按钮');
+      // 「只看不改」从屏上撤到按钮悬停里了（票 #732：它原先和两排圆点的图例挤在一行）。
+      // 这句话本身不许消失——它是这个功能的口径，悬停是它现在唯一的出口。
       assert.ok(CLIENT.includes('只看不改'), '产物里没有「只看不改」那句口径');
     });
 
@@ -326,6 +334,75 @@ describe('#706 配置体检 · 面板侧', () => {
       // 卡片头会印整条配置文件路径（故意），故这里只核「两条报文里都不再有明文长路径」：
       assert.equal((visibleText(html).match(/配置文件还不存在：C:\/Users\/me\/\.ilife\/bill\.yaml/g) || []).length, 0,
         '报文里的明文长路径没缩');
+    });
+  });
+
+  // 票 #732：体检结果长到页签上——红黄的家名后带一枚小数字，绿与没跑过不带。
+  // 这一组是**视觉改版的机器判据**：改坏「哪几家带数字」这件事，这里必须变红。
+  describe('F 页签上那枚小数字（#732）', () => {
+    const light = (status, counts, hasChannel = true) => ({ id: 'x', title: 'X', status, counts, hasChannel });
+    const allGreen = { red: 0, yellow: 0, green: 3 };
+
+    it('只有红黄那几家带数字：红优先于黄，全绿与没跑过都不带', () => {
+      assert.deepEqual(tabNote(light('red', { red: 2, yellow: 1, green: 0 })), { status: 'red', text: '红 2' },
+        '红黄都有时该报红那一档（圆点已经按最严重的档上色了）');
+      assert.deepEqual(tabNote(light('yellow', { red: 0, yellow: 1, green: 2 })), { status: 'yellow', text: '黄 1' });
+      assert.equal(tabNote(light('green', allGreen)), null, '全绿不该带数字');
+      assert.equal(tabNote(light(null, allGreen)), null, '还没体检不该带数字');
+      assert.equal(tabNote(light('red', { red: 1, yellow: 0, green: 0 }, false)), null, '没有体检出口的那家不该带数字');
+    });
+
+    it('数字那份文案与色标同源：红黄各归各的档，绿与缺席才显 —', () => {
+      assert.deepEqual(countSegsOf(light('red', { red: 2, yellow: 1, green: 0 })), [
+        { status: 'red', text: '红 2' },
+        { status: 'yellow', text: '黄 1' },
+      ]);
+      assert.deepEqual(countSegsOf(light('green', allGreen)), [{ status: 'green', text: '绿' }]);
+      assert.deepEqual(countSegsOf(light(null, allGreen)), [{ status: null, text: '—' }], '没跑过显 —（不冒充绿）');
+    });
+
+    it('页签圆点：装了按档上色、没跑过显灰、没装显缺席态', () => {
+      // 圆点取的是**灯色**（STATUS_COLOR，跳的那一档），不是文字用的深色（STATUS_TEXT）——
+      // 页签上那枚点是「一眼看见」，压在深色主题的页签上要够亮。
+      assert.equal(tabDotColor(light('red', { red: 1, yellow: 0, green: 0 })), STATUS_COLOR_DIST.red);
+      assert.equal(tabDotColor(light('yellow', { red: 0, yellow: 1, green: 0 })), STATUS_COLOR_DIST.yellow);
+      assert.equal(tabDotColor(light('green', allGreen)), STATUS_COLOR_DIST.green);
+      assert.equal(tabDotColor(light(null, allGreen)), TAB_DOT.unchecked, '装了但没体检：灰点');
+      assert.equal(tabDotColor(light(null, allGreen, false)), TAB_DOT.absent, '没装：缺席态');
+    });
+
+    it('「没装」与「装了没跑过」必须一眼看得出是两件事（同色＝这一行的意义没了）', () => {
+      // 注意这里**别写 `assert.notEqual`**：strict 子模块里它绑的是 `notStrictEqual`，两个不可比的值之间
+      // 会退化成 NaN 比较（NaN != NaN 判真），明明同色也不抛——变异自证时实测栽过一次。
+      assert.ok(TAB_DOT.absent !== TAB_DOT.unchecked, '缺席（没装）与没跑过（装了没体检）不许同色');
+      const absent = light(null, { red: 0, yellow: 0, green: 0 }, false);
+      const unchecked = light(null, { red: 0, yellow: 0, green: 0 }, true);
+      assert.ok(tabDotColor(absent) !== tabDotColor(unchecked), '两态画出来的点不许是同一个颜色');
+      // 两态都不带数字（绿也不带）：页签上那枚小数字只属于红黄。
+      assert.equal(tabNote(absent), null);
+      assert.equal(tabNote(unchecked), null);
+    });
+
+    it('顶部那一行按状态换话：全绿说「六家正常」、没跑过说「还没体检」、有红黄报总账', () => {
+      const line = (lights) => visibleText(renderHtml(
+        React.createElement(HealthSummaryLine, { lights, running: false, error: null, onRun: () => {} }),
+      ));
+      const normal = light('green', { red: 0, yellow: 0, green: 5 });
+      assert.match(line([normal, { ...normal, id: 'y' }]), /配置体检.*六家正常.*体检一次/, '全绿那一档没把话写对');
+      assert.match(line([light(null, allGreen)]), /还没体检/, '没跑过那一档没把话写对');
+      const text = line([light('red', { red: 2, yellow: 3, green: 0 })]);
+      assert.match(text, /红 2/, '总账里没有红计数');
+      assert.match(text, /黄 3/, '总账里没有黄计数');
+      assert.match(text, /要处理/, '红黄都在时没有「要处理」那句');
+    });
+
+    it('顶部不再是一家一盏灯按钮（改版后在位的那件事，守着别长回去）', () => {
+      assert.ok(CLIENT.includes('data-ilife-health'), '产物里没有体检的标记位');
+      assert.ok(CLIENT.includes('"summary"'), '产物里没有那一行汇总');
+      assert.ok(CLIENT.includes('tab-note'), '产物里没有页签上那枚小数字');
+      assert.ok(CLIENT.includes('tab-dot'), '产物里没有页签圆点');
+      assert.ok(CLIENT.includes('TAB_DOT'), '产物里没有页签圆点的缺席态');
+      assert.ok(!CLIENT.includes('"lights"'), '产物里又长回了「一排灯按钮」那一层');
     });
   });
 

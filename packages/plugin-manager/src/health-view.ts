@@ -16,7 +16,7 @@ import type { HealthItem, HealthReport, HealthStatus } from './health-contract.j
  *   · 红＝深红（暗、重）；
  *   · 黄＝高饱和的琥珀（亮、跳）——它在白底上的对比度仍然够（`#b45309` 对白 ≈ 4.9:1）。
  * 绿不给底色：它是「正常」，不该和要处理的那两档抢注意力。 */
-const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
+export const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
   red: '#c0392b',
   yellow: '#e08a00',
   green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
@@ -32,7 +32,7 @@ const STATUS_TINT: Readonly<Record<HealthStatus, string>> = {
 };
 
 /** 档位词（灯里那几个字）用的色：红黄要**够深**才读得清，故另取一枚比灯更深的值。 */
-const STATUS_TEXT: Readonly<Record<HealthStatus, string>> = {
+export const STATUS_TEXT: Readonly<Record<HealthStatus, string>> = {
   red: '#a5281b',
   yellow: '#8a5200',
   green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
@@ -57,33 +57,28 @@ export const HEALTH_STYLE = {
   } as React.CSSProperties,
   headRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 4 } as React.CSSProperties,
   head: { fontSize: 13, fontWeight: 700, color: INK } as React.CSSProperties,
-  /** 「体检一次」不挤在标题右端：它单独占一行、与标题同一起始边（视觉复评两轮点「孤立在右上缺层次」）。 */
-  runRow: { margin: '8px 0 10px' } as React.CSSProperties,
+  /** 顶部那一行汇总（票 #732）：一行装下「配置体检 ＋ 一句总账 ＋ 体检按钮」，三样都不独占行。
+   *  它替掉了原先「标题行 ＋ 单独一行的按钮 ＋ 一排灯按钮 ＋ 两行图例」（同屏实测 153px → 一行）。 */
+  summaryRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  } as React.CSSProperties,
+  summaryText: { flex: '1 1 auto', minWidth: 0, fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as React.CSSProperties,
+  /** 各家那张表里的说明行（「还没体检：点上面那个…」那几句）。 */
+  meta: { color: INK_DIM, fontSize: 12, lineHeight: 1.7, marginTop: 12 } as React.CSSProperties,
   btn: {
     border: '1px solid ' + BORDER,
     background: 'transparent',
     color: INK,
     borderRadius: 8,
-    padding: '6px 16px',
-    fontSize: 13,
+    flex: '0 0 auto',
+    padding: '3px 10px',
+    fontSize: 12.5,
     fontWeight: 600,
     cursor: 'pointer',
   } as React.CSSProperties,
-  lightsRow: { display: 'flex', flexWrap: 'wrap', gap: 8 } as React.CSSProperties,
-  light: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    background: 'transparent',
-    border: '1px solid ' + BORDER,
-    borderRadius: 999,
-    padding: '3px 10px',
-    fontSize: 12.5,
-    color: INK,
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  lightIdle: { cursor: 'default', color: INK_DIM } as React.CSSProperties,
-  meta: { color: INK_DIM, fontSize: 12, lineHeight: 1.7, marginTop: 12 } as React.CSSProperties,
   error: { color: STATUS_COLOR.red, fontSize: 12, lineHeight: 1.7, marginTop: 6 } as React.CSSProperties,
 } as const;
 
@@ -173,17 +168,19 @@ export function shortenPathsIn(text: string, prefixes: readonly string[]): strin
   return out;
 }
 
-/** 一盏灯：一家一名一档（数到几个红黄绿）。点一下把面板切到那家的页签。 */
+/** 一盏灯：一家一名一档（数到几个红黄绿）。落点是那家页签（票 #732：面板不再单开一排灯按钮）。 */
 export interface HealthLightRow {
   readonly id: string;
   readonly title: string;
   readonly status: HealthStatus | null;
   readonly counts: Readonly<Record<HealthStatus, number>>;
+  /** 这一家交没交体检通道（页签槽 `options.channel`）。false＝这家没装／没接上：圆点保持缺席态，不许点。 */
+  readonly hasChannel: boolean;
 }
 
 /** 从六份报告数出那一行的灯（每家按最严重那一档上色）。 */
 export function lightsOf(
-  tabs: readonly { readonly id: string; readonly title: string }[],
+  tabs: readonly { readonly id: string; readonly title: string; readonly hasChannel?: boolean }[],
   reports: Readonly<Record<string, HealthReport | undefined>>,
 ): readonly HealthLightRow[] {
   return tabs.map((tab) => {
@@ -194,6 +191,8 @@ export function lightsOf(
       title: tab.title,
       status: report ? worstStatus(items) : null,
       counts: countByStatus(items),
+      // 缺席与「装了但还没体检」在报告上都长成 null，分开只能靠这一格（票 #732）。
+      hasChannel: tab.hasChannel ?? true,
       // 这里曾短期印过「最严重那一项的名字」当区分度，**已撤回**：实测六家常坏在同一条通用检查项上
       // （都是「数据目录」），印出来六家一模一样，是噪声不是区分度（出图复评实测逐字抄了六个「数据目录」）。
       // 「哪一项坏了」本来就由那家自己那张表回答，灯上不再重复。
@@ -201,7 +200,7 @@ export function lightsOf(
   });
 }
 
-/** 一家的一句话读数：「红 1 黄 2」，全绿就是「绿」。 */
+/** 一家的一句话读数：「红 1 黄 2」，全绿就是「绿」。面板侧要**上色**的那几处不用它（见 `countSegments`）。 */
 function countsText(counts: Readonly<Record<HealthStatus, number>>): string {
   const parts: string[] = [];
   if (counts.red > 0) parts.push('红 ' + String(counts.red));
@@ -210,121 +209,127 @@ function countsText(counts: Readonly<Record<HealthStatus, number>>): string {
   return parts.join(' · ');
 }
 
-/** 「红 2 · 黄 3」那一截**按档上色**：每一档用它自己的字色、分隔符走淡色。
- *  为什么必须拆开：原先整截塞进一个 span、染「最严重那一档」的颜色，六家都红时「黄 3」就跟着印成红字——
- *  本页自己说「黄＝还没配」，文字层却把它涂成红（出图复评五份里三份独立指到，取色同为 `#c03828`）。 */
-function countSegments(light: HealthLightRow): React.ReactElement[] {
-  if (light.status === null) {
-    return [React.createElement('span', { key: 'dash', style: { color: INK_DIM, fontWeight: 700 } }, '—')];
+/** 一截读数：`红 2`／`黄 3`／`绿`／`—`（缺席没报告）。`status` 为 null 的那些走淡色。 */
+export interface HealthCountSeg {
+  readonly status: HealthStatus | null;
+  readonly text: string;
+}
+
+/** 把一份计数拆成**按档分色**的几截。红黄各自一截、各自上色，互不串色；
+ *  「黄 3」这一截为什么不能被染成红——见 `countSegments` 的注释（出图复评逮到的真缺陷）。 */
+export function countSegsOf(light: HealthLightRow): readonly HealthCountSeg[] {
+  if (light.status === null) return [{ status: null, text: '—' }];
+  const segs: HealthCountSeg[] = [];
+  for (const status of ['red', 'yellow'] as const) {
+    const count = light.counts[status];
+    if (count > 0) segs.push({ status, text: STATUS_LABEL[status] + ' ' + String(count) });
+  }
+  return segs.length > 0 ? segs : [{ status: 'green', text: '绿' }];
+}
+
+/** 几截读数之间那个分隔符：不许染档位色（它不属于任何一档）。 */
+const SEG_SEP = ' · ';
+
+/** 一家的读数**写成一行**（纯文本版：给页签上那枚小数字用）。 */
+function countText(light: HealthLightRow): string {
+  return countSegsOf(light).map((piece) => piece.text).join(SEG_SEP);
+}
+
+/** 汇总行那一句：绿要显眼（它是「正常」这件事本身），没通道的那几家不冒充绿。 */
+function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
+  const pending = lights.filter((light) => !light.hasChannel).length;
+  const withReport = lights.filter((light) => light.hasChannel);
+  const tail = pending > 0 ? ' · ' + String(pending) + ' 家还没体检' : '';
+  if (withReport.length > 0 && withReport.every((light) => light.status === 'green')) {
+    return React.createElement('span', { style: { color: STATUS_COLOR.green, fontWeight: 700 } }, '六家正常' + tail);
   }
   const parts: React.ReactElement[] = [];
   for (const status of ['red', 'yellow'] as const) {
-    const count = light.counts[status];
+    let count = 0;
+    for (const light of lights) count += light.counts[status];
     if (count === 0) continue;
-    if (parts.length > 0) {
-      parts.push(React.createElement('span', { key: status + '-sep', style: { color: INK_DIM } }, ' · '));
-    }
+    if (parts.length > 0) parts.push(React.createElement('span', { key: status + '-sep', style: { color: INK_DIM } }, SEG_SEP));
     parts.push(
-      React.createElement(
-        'span',
-        { key: status, style: { color: STATUS_TEXT[status], fontWeight: 700 } },
-        STATUS_LABEL[status] + ' ' + String(count),
-      ),
+      React.createElement('span', { key: status, style: { color: STATUS_TEXT[status], fontWeight: 700 } }, STATUS_LABEL[status] + ' ' + String(count)),
     );
   }
-  if (parts.length === 0) return [React.createElement('span', { key: 'green', style: { color: INK_DIM, fontWeight: 700 } }, '绿')];
-  return parts;
+  if (parts.length === 0) {
+    return React.createElement('span', { style: { color: INK_DIM } }, '还没体检' + tail);
+  }
+  parts.push(React.createElement('span', { key: 'todo', style: { color: INK } }, ' 要处理' + tail));
+  return React.createElement('span', null, parts);
 }
 
-/** 顶部那行总览：六家一盏灯 ＋ 一个「体检一次」按钮。 */
-export function HealthOverview(props: {
+/** 那枚小数字用的底色（比灯色浅一档，压在页签上不抢眼）。 */
+const STATUS_DOT: Readonly<Record<HealthStatus, string>> = {
+  red: STATUS_COLOR.red,
+  yellow: STATUS_COLOR.yellow,
+  green: STATUS_COLOR.green,
+};
+
+/** 页签圆点的颜色与语义（票 #732）：从「实心／空心＝装没装」改成「颜色＝体检档位」。 */
+export const TAB_DOT = {
+  /** 没装（页签槽账本里没有这一家）。 */
+  absent: STATUS_DOT.green,
+  /** 装了、但还没跑过体检。 */
+  unchecked: INK_DIM,
+} as const;
+
+/** 页签圆点该用什么色：装了按档位（红黄绿），没装/没跑过走缺席态。 */
+export function tabDotColor(light: HealthLightRow): string {
+  if (!light.hasChannel) return TAB_DOT.absent;
+  return light.status === null ? TAB_DOT.unchecked : STATUS_DOT[light.status];
+}
+
+/** 页签上那枚小数字（票 #732）：红黄那几家，家名后带一条计数；全绿与没跑过不带。 */
+export const TAB_NOTE_STYLE: React.CSSProperties = {
+  marginLeft: 5,
+  border: '1px solid ' + BORDER,
+  borderRadius: 999,
+  padding: '0 5px',
+  fontSize: 11,
+  fontWeight: 700,
+} as const;
+
+/** 那枚小数字写什么：只报「要处理」的那两档；一家里红黄都有时先报红那一档（圆点已经按最严重的档上色了）。 */
+export function tabNote(light: HealthLightRow): HealthCountSeg | null {
+  if (!light.hasChannel || light.status === null || light.status === 'green') return null;
+  return countSegsOf(light)[0] ?? null;
+}
+
+/** 顶部那一行汇总（票 #732：不再一家一盏灯按钮，一行总账 ＋ 一个体检按钮）。
+ *
+ *  与页签的分工：这行只答「一共几条要处理」；「哪几家、各几条」由页签的圆点与小数字答；
+ *  「具体哪一条坏了、去哪修」由那家页签里的 `HealthTable` 答。 */
+export function HealthSummaryLine(props: {
   readonly lights: readonly HealthLightRow[];
   readonly running: boolean;
   readonly error: string | null;
   readonly onRun: () => void;
-  readonly onJump: (id: string) => void;
 }): React.ReactElement {
+  const hasLights = props.lights.length > 0;
   return React.createElement(
     'div',
-    { style: HEALTH_STYLE.box, 'data-ilife-health': 'overview' },
+    { style: HEALTH_STYLE.summaryRow, 'data-ilife-health': 'summary' },
+    React.createElement('div', { style: HEALTH_STYLE.head }, '配置体检'),
     React.createElement(
       'div',
-      { style: HEALTH_STYLE.headRow },
-      React.createElement('div', { style: HEALTH_STYLE.head }, '配置体检'),
+      { style: HEALTH_STYLE.summaryText },
+      props.error !== null ? React.createElement('span', { style: { color: STATUS_TEXT.red } }, props.error)
+        : hasLights ? overallText(props.lights) : React.createElement('span', { style: { color: INK_DIM } }, '还没体检'),
     ),
     React.createElement(
-      'div',
-      { style: HEALTH_STYLE.runRow },
-      React.createElement(
-        'button',
-        {
-          type: 'button',
-          style: props.running ? { ...HEALTH_STYLE.btn, opacity: 0.55, cursor: 'default' } : HEALTH_STYLE.btn,
-          disabled: props.running,
-          onClick: props.onRun,
-          title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置）',
-        },
-        props.running ? '体检中…' : '体检一次',
-      ),
-    ),
-    React.createElement(
-      'div',
-      { style: HEALTH_STYLE.lightsRow, 'data-ilife-health': 'lights' },
-      props.lights.map((light) =>
-        React.createElement(
-          'button',
-          {
-            key: light.id,
-            type: 'button',
-            'data-ilife-health': 'light',
-            'data-skill': light.id,
-            // 档位落到按钮自身的边框与底色上：一眼扫过去先看到颜色，再读家名（票面验收：一屏看红黄）。
-            style: light.status === null
-              ? { ...HEALTH_STYLE.light, ...HEALTH_STYLE.lightIdle }
-              : {
-                  ...HEALTH_STYLE.light,
-                  borderColor: STATUS_COLOR[light.status],
-                  borderWidth: 1.5,
-                  background: STATUS_TINT[light.status],
-                },
-            disabled: light.status === null,
-            onClick: () => props.onJump(light.id),
-            title: light.status === null
-              ? '还没体检（或这一家没装）'
-              : light.title + '：' + countsText(light.counts),
-          },
-          React.createElement('span', {
-            style: {
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: light.status === null ? INK_DIM : STATUS_COLOR[light.status],
-              display: 'inline-block',
-            },
-          }),
-          React.createElement('span', { style: { color: INK, fontWeight: 650 } }, light.title),
-          ...countSegments(light),
-        ),
-      ),
-    ),
-    React.createElement(
-      'div',
-      { style: HEALTH_STYLE.meta },
-      // 三档的含义要**写在屏上**（复评五份里三份独立指出「全屏没有图例，红黄绿只能靠猜」），
-      // 且三个词要**按档上色**——「定义红黄绿的那把钥匙自己不上色」是复评点名过的一处。
-      props.error !== null
-        ? props.error
-        : [
-            React.createElement('span', { key: 'r', style: { color: STATUS_TEXT.red, fontWeight: 700 } }, '红'),
-            React.createElement('span', { key: 'r2' }, '＝坏了 · '),
-            React.createElement('span', { key: 'y', style: { color: STATUS_TEXT.yellow, fontWeight: 700 } }, '黄'),
-            React.createElement('span', { key: 'y2' }, '＝还没配 · '),
-            React.createElement('span', { key: 'g', style: { color: STATUS_TEXT.green, fontWeight: 700 } }, '绿'),
-            React.createElement('span', { key: 'g2' }, '＝正常 ｜ 只看不改：不建目录、不改配置、不自动重置'),
-            // 页签那排也用圆点（`● 装上了／○ 没装`），这里把**顶部那排**的语义写清楚，
-            // 免得两排同构的圆点互相抢解释权（复评两份点名）。
-            React.createElement('span', { key: 'tab' }, ' · 上面那排圆点是体检灯，点一下跳到那家配置页；下面那排圆点是页签（实心＝装上了）'),
-          ],
+      'button',
+      {
+        type: 'button',
+        style: props.running ? { ...HEALTH_STYLE.btn, opacity: 0.55, cursor: 'default' } : HEALTH_STYLE.btn,
+        disabled: props.running,
+        onClick: props.onRun,
+       // 「只看不改」那三条口径从屏上撤下来了（它原先和两排圆点的图例挤在一行），
+        // 但它**仍然要说出口**：按钮悬停是它能待的地方（票 #732；测试按产物里的字符串守着）。
+        title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置、不自动重置）',
+      },
+      props.running ? '体检中…' : '体检一次',
     ),
   );
 }

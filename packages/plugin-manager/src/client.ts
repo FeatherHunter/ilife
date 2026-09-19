@@ -24,7 +24,7 @@ import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './u
 import type { CallFace } from './update-client.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { useHealthPanel } from './health-panel.js';
-import { HealthOverview, HealthTable, lightsOf } from './health-view.js';
+import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
 import type {
   ClientCtx,
@@ -242,13 +242,22 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
   const face = useUpdateRows(props.getCall);
-  // 配置体检（#706）：一张表六份报告，总览那行与各家那张表都从它读（同一份数据）。
+  // 配置体检（#706）：一张表六份报告，顶部那行汇总与各家那张表都从它读（同一份数据）。
   // 通道名由各家注册时写进页签槽 options，总管源码里不出现任何一家的通道名。
   const healthTabs = React.useMemo(
     () => rows.filter((row) => row.channel.length > 0).map((row) => ({ id: row.id, channel: row.channel })),
     [rows],
   );
   const health = useHealthPanel(() => props.getCall(), healthTabs);
+  /** 六家的灯（票 #732）：按**页签槽账本**那一排过（装了但没体检通道的也在内，它显缺席态）。 */
+  const lights = React.useMemo(
+    () => lightsOf(
+      rows.map((row) => ({ id: row.id, title: row.label, hasChannel: row.channel.length > 0 })),
+      Object.fromEntries(Object.entries(health.rows).map(([id, row]) => [id, row.report ?? undefined])),
+    ),
+    [rows, health.rows],
+  );
+  const lightOf = (id: string) => lights.find((light) => light.id === id);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
@@ -263,13 +272,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   function labelFor(tab: ManagerTab): string {
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;
-  }
-  /** 按包名取页签标题（总览那行按账本行过，账本里没有的退到导航表的标题）。 */
-  function labelForTab(id: string): string {
-    const row = rows.find((r) => r.id === id);
-    if (row && row.label.length > 0) return row.label;
-    const tab = MANAGER_TABS.find((t) => t.plugin === id);
-    return tab ? tab.title : id;
   }
   function targetForTab(tab: ManagerTab) {
     return face.targets.find((t) => t.packageName === tab.plugin) ?? null;
@@ -310,21 +312,24 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       React.createElement('div', null, '总管 dsh-life-pack · ' + MANAGER_VERSION),
     ),
     React.createElement(UpdateResults, { face }),
-    React.createElement(HealthOverview, {
-      lights: lightsOf(
-        rows.map((row) => ({ id: row.id, title: labelForTab(row.id) })),
-        Object.fromEntries(Object.entries(health.rows).map(([id, row]) => [id, row.report ?? undefined])),
-      ),
+    React.createElement(HealthSummaryLine, {
+      lights,
       running: health.running,
       error: health.error,
       onRun: health.run,
-      onJump: setActiveId,
     }),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: S.tablist },
       MANAGER_TABS.map((tab, index) => {
         const selected = tab.plugin === active;
+        const light = lightOf(tab.plugin);
+        // 圆点从「实心／空心＝装没装」换成「颜色＝体检档位」（票 #732）：装了就是实心、
+        // 颜色按档位走；没装的保持缺席态、不许点（点它只会跳到一张缺席卡）。
+        const dotColor = light === undefined
+          ? (present.has(tab.plugin) ? TAB_DOT.unchecked : TAB_DOT.absent)
+          : tabDotColor(light);
+        const note = light === undefined ? null : tabNote(light);
         return React.createElement(
           'button',
           {
@@ -345,8 +350,35 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
             onKeyDown: (event: React.KeyboardEvent) => {
               onTabKeyDown(event, index);
             },
+            title: light === undefined
+              ? '这一家没装（或产物没注册页签槽）'
+              : light.title + '：' + (light.hasChannel
+                ? (light.status === null ? '还没体检' : '体检读数见本页签下方的表')
+                : '没有配置体检出口'),
           },
-          (present.has(tab.plugin) ? '● ' : '○ ') + labelFor(tab),
+          React.createElement('span', {
+            'data-ilife-health': 'tab-dot',
+            style: {
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: dotColor,
+              display: 'inline-block',
+              flex: '0 0 auto',
+            },
+          }),
+          labelFor(tab),
+          note === null
+            ? null
+            : React.createElement(
+                'span',
+                {
+                  'data-ilife-health': 'tab-note',
+                  // 红黄各自那一截带**自己**的档位色，不许一个色管两档（#706 复评逮过的缺陷）。
+                  style: { ...TAB_NOTE_STYLE, color: note.status === null ? undefined : STATUS_TEXT[note.status] },
+                },
+                note.text,
+              ),
         );
       }),
     ),
