@@ -366,7 +366,16 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
   );
 }
 
-/** 缺席卡：一句人话 ＋「装上」按钮（复制命令降为辅助展示）；总管缺席时不显示此卡（面板也看不到）。 */
+/** 缺席卡：**按宿主的装机读数分两态**，不让层与层的结论互相顶替。
+ *
+ * - 宿主说磁盘上没有这个包 →「未安装」＋「装上」按钮（这是本票原有的能力）；
+ * - 宿主说装着（`installedVersion` 非空）却没进页签槽 → 说实情、**不给「装上」**：
+ *   重装改不了产物里有没有注册代码这件事（真机实测：作息/居家/大厨/记账 的已发布 0.2.0
+ *   产物里根本没有页签槽注册，见票 #723）。给出可复制命令仅作参考。
+ *
+ * 原实现只看页签槽 ledger 就断言「未安装」——那对上面第二种情形是说假话，且点「装上」
+ * 会走进更新包的流程（它已经装着 ⇒ 没有新版 ⇒ 没有凭证）并报出误导的「查新版失败」。
+ */
 export function AbsentCard(props: {
   readonly target: TargetInfo | null;
   readonly fallbackCommand: string;
@@ -376,15 +385,21 @@ export function AbsentCard(props: {
   const row = target ? props.face.rows[target.key] : null;
   const busy = row?.phase === 'installing';
   const manual = (target ? manualForDisplay(target, row?.failure?.manual ?? row?.outcome?.manual ?? null) : null) ?? props.fallbackCommand;
+  const installed = target ? (target.installedVersion ?? target.runningVersion) : null;
   let reason: string | null = row?.failure?.message ?? null;
   if (target && reason === null && row?.outcome && row.outcome.snapshot.blockedReason !== null) {
     reason = verdictOf(target, row.outcome.snapshot).text;
   }
+  const headline = !target
+    ? '这个页签对应的插件还没装。'
+    : installed === null
+      ? '未安装[' + target.packageName + ']，装上后这个页签就能用了。'
+      : '插件已装（' + installed + '），但它这一版没把设置页接上爱生活面板：要等它发新版才对得上（重启与重装都不会变）。';
   return React.createElement(
     'div',
     { style: PANEL_STYLE.reco },
-    React.createElement('div', null, target ? '未安装[' + target.packageName + ']，装上后这个页签就能用了。' : '这个页签对应的插件还没装。'),
-    target
+    React.createElement('div', null, headline),
+    target && installed === null
       ? React.createElement(
           'button',
           {

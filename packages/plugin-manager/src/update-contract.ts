@@ -54,6 +54,7 @@ const REASON_TEXT: Record<string, string> = {
   'check-expired': '上次查新版的凭证过期了：重新查一次再点安装（不要重试旧编号）。',
   'update-busy': '同一个使用范围同时只装一个：等当前任务结束再点。',
   'install-failed': '安装没跑成：按下面那条手工命令在终端执行一次。',
+  'manager-unreachable': '总管的电话没接上（宿主半没注册或版本对不上）：重启宿主后再试；仍不行看宿主日志。',
   'bad-request': '回执异常（请求形状不对）：把宿主日志里的事件名报给作者。',
   internal: '回执异常（总管内部错误）：把宿主日志里的事件名报给作者。',
 };

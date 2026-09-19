@@ -94,22 +94,53 @@ export function actionText(action: string): string {
   return trimmed.startsWith('去哪修：') ? trimmed.slice(4).trim() : trimmed;
 }
 
-/** 一家里出现次数最多的那个「共同前缀」（按 `/` 切、整段比）：用来把一长串落点缩成
- *  「公共前缀 ＋ 各条短尾巴」，免得四条路径把每一行都撑成两行（视觉复评点「冗余、像日志 dump」）。 */
-export function commonDirPrefix(paths: readonly string[]): string {
-  const split = paths.filter((path) => path.includes('/')).map((path) => path.split('/'));
-  if (split.length < 2) return '';
+/** 报文里能扫出来的每一段路径（盘符绝对路径；非 Windows 形状的退回 `/` 打头那一支）。 */
+function rawPathsIn(text: string): readonly string[] {
+  return text.match(/[A-Za-z]:\/[^\s（）「」，。；]+/g) ?? text.match(/\/[^\s（）「」，。；]+/g) ?? [];
+}
+
+/** 一段落点的**根**（盘符）：`C:/a/b` → `C:/`。用来把「同一个盘、但根下不同枝」的落点分开算，
+ *  免得一个 D 盘上的旁证（比如「配了但目录不在：D:/media」）把 C 盘那几条的缩写全拖没。 */
+function rootOf(path: string): string {
+  const drive = /^[A-Za-z]:\//.exec(path);
+  return drive === null ? '/' : drive[0];
+}
+
+/** 一段落点的公共目录前缀（按 `/` 切、整段比）：`C:/a/b/c` ＋ `C:/a/b/d` → `C:/a/b`。 */
+function commonDirOf(paths: readonly string[]): string {
+  if (paths.length < 2) return '';
+  const split = paths.map((path) => path.replace(/[.,。；]+$/, '').split('/'));
   const first = split[0] as string[];
   let size = 0;
   while (size < first.length && split.every((parts) => parts[size] === first[size])) size += 1;
-  if (size < 1) return '';
-  return first.slice(0, size).join('/');
+  return size < 1 ? '' : first.slice(0, size).join('/');
+}
+
+/** 一份报文里**按根分开**的落点前缀（长的在前）：只给「同一个根下至少两条落点」的根算前缀——
+ *  这个根下只有一条落点时不缩（没有第二条可比，缩出来反而是瞎猜）。
+ *  为什么要分根：一家报里常有别的盘的旁证（备忘录用 D 盘上那份媒体目录），只算一个总前缀，
+ *  一条旁证就能把整张表的缩写全拖没（#706 出图复评：备忘录那张表整片没缩、记账那张缩了）。 */
+export function dirPrefixesOf(report: HealthReport): readonly string[] {
+  return dirPrefixesIn(pathsOf(report).join(' '));
+}
+
+/** `dirPrefixesOf` 的正文版：一段文字里（报文正文 ＋ 表头两条混在一起）按根分组取公共目录前缀。 */
+export function dirPrefixesIn(text: string): readonly string[] {
+  const paths = rawPathsIn(text);
+  const roots = [...new Set(paths.map(rootOf))];
+  const prefixes: string[] = [];
+  for (const root of roots) {
+    const prefix = commonDirOf(paths.filter((path) => rootOf(path) === root));
+    if (prefix !== '') prefixes.push(prefix);
+  }
+  // 长的在前：一个落点命中多条前缀时，最长的那个才是它真正的目录（缩短后不歧义）。
+  return prefixes.sort((a, b) => b.length - a.length);
 }
 
 /** 那一行「配置文件 … · 数据目录 …」+ 各条报文里的长路径，都缩成「公共前缀 ＋ 短尾巴」。 */
-function shorten(path: string, prefix: string): string {
-  if (prefix === '' || !path.startsWith(prefix + '/')) return path;
-  return '…/' + path.slice(prefix.length + 1);
+function shorten(path: string, prefixes: readonly string[]): string {
+  const hit = prefixes.find((prefix) => path.startsWith(prefix + '/'));
+  return hit === undefined ? path : '…/' + path.slice(hit.length + 1);
 }
 
 /** 一家里所有会印出来的路径。 */
@@ -119,10 +150,22 @@ export function pathsOf(report: HealthReport): readonly string[] {
   return out;
 }
 
-/** 把报文里那一长串路径按公共前缀缩短（只动打印，不动事实）。 */
-export function shortenPathsIn(text: string, prefix: string): string {
-  if (prefix === '') return text;
-  return text.split(prefix + '/').join('…/');
+/** 把报文里那一长串路径按公共前缀缩短（只动打印，不动事实）。
+ *  只按**扫得出来的那一段段落点**去缩，不做全串替换：既不误伤长路径，也不会把一段路劈成半截。 */
+export function shortenPathsIn(text: string, prefixes: readonly string[]): string {
+  const candidates = rawPathsIn(text);
+  if (candidates.length === 0) return text;
+  // 长的在前：先缩长的那条，缩完它自己就挡住了它的父目录，不会二次缩。
+  const longestFirst = [...new Set(candidates.map((path) => path.replace(/[.,。；]+$/, '')))].sort(
+    (a, b) => b.length - a.length,
+  );
+  let out = text;
+  for (const path of longestFirst) {
+    const hit = prefixes.find((prefix) => path.startsWith(prefix + '/'));
+    if (hit === undefined) continue;
+    out = out.split(hit + '/').join('…/');
+  }
+  return out;
 }
 
 /** 一盏灯：一家一名一档（数到几个红黄绿）。点一下把面板切到那家的页签。 */
@@ -255,7 +298,7 @@ export function HealthTable(props: {
   readonly error: string | null;
 }): React.ReactElement {
   const { report } = props;
-  const prefix = report ? commonDirPrefix(pathsOf(report)) : '';
+  const prefixes: readonly string[] = report ? dirPrefixesOf(report) : [];
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.box, 'data-ilife-health': 'table' },
@@ -274,10 +317,10 @@ export function HealthTable(props: {
       ? React.createElement(
           'div',
           null,
-          // 落点一律缩到公共前缀之内印（四条长路径并排会把每一行撑成两行，视觉复评点过「像日志 dump」）。
-          React.createElement('div', { style: HEALTH_STYLE.meta },
-            '配置文件 ' + shorten(report.configPath, prefix) + ' · 数据目录 ' + shorten(report.dataDir, prefix)
-            + (prefix === '' ? '' : '（公共前缀 ' + prefix + '）')),
+          // 落点一律缩到公共前缀之内印（四条长路径并排会把每一行撑成两行，视觉复评点过「像日志 dump」）；
+          // 前缀本身印在悬停里，屏上不留一长串盘符。
+          React.createElement('div', { style: HEALTH_STYLE.meta, title: prefixes.join('　') },
+            '配置文件 ' + shorten(report.configPath, prefixes) + ' · 数据目录 ' + shorten(report.dataDir, prefixes)),
           report.items.filter(isAttentionItem).map((item) =>
             React.createElement(
               'div',
@@ -310,7 +353,7 @@ export function HealthTable(props: {
                 }, STATUS_LABEL[item.status]),
                 item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
               ),
-              React.createElement('div', { style: { color: INK } }, shortenPathsIn(item.message, prefix)),
+              React.createElement('div', { style: { color: INK }, title: item.message }, shortenPathsIn(item.message, prefixes)),
               item.action.length > 0
                 ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + actionText(item.action))
                 : null,

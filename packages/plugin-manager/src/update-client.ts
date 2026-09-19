@@ -62,7 +62,9 @@ async function callManager<T>(call: CallFace | null, method: string, payload: Re
     // 第一段是**载体基段**（`/api`）、第二段才是本包端点；传错就是打到一个不存在的路由（真机踩过）。
     result = await call(MANAGER_RPC.base, MANAGER_RPC.endpoint, { method, payload });
   } catch (error) {
-    return failure('check-failed', { detail: String((error as Error)?.message ?? error) });
+    // 传输层失败（路由没注册、宿主半版本对不上、请求挂了）：不许套用「查新版失败」那句——
+    // 它对这种情形是误导（真机上就这么误报过一次）。各层的失败各有各的话。
+    return failure('manager-unreachable', { detail: String((error as Error)?.message ?? error) });
   }
   if (!result || typeof result !== 'object' || typeof (result as { ok?: unknown }).ok !== 'boolean') {
     return failure('internal', { detail: '回执信封异常（非 ok 信封）' });
