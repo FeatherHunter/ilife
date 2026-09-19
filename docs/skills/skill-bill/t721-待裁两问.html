@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#721 待裁两问 · 域声明的形状与事实源</title>
+<style>
+  :root{
+    --ink:#111418; --ink2:#4a5560; --ink3:#7b8794;
+    --line:#e3e8ee; --bg:#f6f8fa; --card:#fff;
+    --blue:#007aff; --blue-bg:#eef5ff;
+    --green:#0a7d43; --green-bg:#eaf7ef;
+    --red:#c0392b; --red-bg:#fdeeec;
+    --amber:#9a6700; --amber-bg:#fff8e5;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:40px 24px 72px}
+
+  header{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:28px}
+  h1{margin:0 0 6px;font-size:27px;letter-spacing:-.02em}
+  .sub{color:var(--ink2);font-size:14px}
+  .sub a{color:var(--blue);text-decoration:none;border-bottom:1px solid #bcd8ff}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px;
+    font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .chip b{color:var(--ink)}
+
+  h2{font-size:19px;margin:38px 0 4px;letter-spacing:-.01em}
+  h2 .tag{font:600 11.5px/1 var(--mono);vertical-align:3px;margin-left:10px;
+    padding:4px 7px;border-radius:6px;background:var(--blue-bg);color:var(--blue);letter-spacing:.04em}
+  h3{font-size:15px;margin:24px 0 8px;color:var(--ink)}
+  h3 .n{font:600 12px/1 var(--mono);color:var(--ink3);margin-right:8px}
+  p{margin:10px 0}
+  .lead{color:var(--ink2)}
+  code,kbd{font:13px/1.5 var(--mono);background:#eef1f4;border-radius:5px;padding:1.5px 5px}
+  a{color:var(--blue)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .card.tight{padding:14px 18px}
+
+  .fact{border-left:3px solid var(--amber);background:var(--amber-bg);border-radius:0 10px 10px 0;
+    padding:12px 16px;margin:12px 0}
+  .fact .h{font-weight:600;font-size:13.5px;color:var(--amber);margin-bottom:4px}
+  .fact p{margin:6px 0 0;color:#5d4a12}
+
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  @media(max-width:760px){.opts{grid-template-columns:1fr}}
+  .opt{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    display:flex;flex-direction:column}
+  .opt.pick{border-color:#9ecbff;box-shadow:0 0 0 3px #eaf3ff}
+  .opt .top{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .opt.pick .top{background:var(--blue-bg)}
+  .opt .letter{font:700 12px/1 var(--mono);color:#fff;background:var(--ink3);
+    width:20px;height:20px;border-radius:6px;display:grid;place-items:center}
+  .opt.pick .letter{background:var(--blue)}
+  .opt .name{font-weight:600}
+  .opt .badge{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;
+    background:var(--green-bg);color:var(--green)}
+  .opt .bod{padding:12px 16px;flex:1}
+  .opt .bod p{margin:0 0 10px;font-size:14px;color:var(--ink2)}
+  .opt ul{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+  .opt li{margin:4px 0}
+  .pro::marker{color:var(--green)}
+  .con::marker{color:var(--red)}
+  .pro{color:#12513a}
+  .con{color:#8a3b32}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f3f7;font-weight:600;font-size:12.5px;color:var(--ink2)}
+  tr:last-child td{border-bottom:none}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .rec{border-left:3px solid var(--green);background:var(--green-bg);border-radius:0 10px 10px 0;
+    padding:12px 16px;margin:14px 0}
+  .rec .h{font-weight:700;color:var(--green);font-size:13.5px;margin-bottom:2px}
+  .rec p{margin:4px 0 0}
+
+  pre{margin:14px 0;background:#0f172a;color:#dbe4f0;border-radius:10px;padding:16px 18px;
+    overflow:auto;font:12.5px/1.65 var(--mono)}
+  pre .c{color:#7f96b3}
+  pre .g{color:#8ee6a8}
+
+  .ask{background:var(--ink);color:#fff;border-radius:12px;padding:14px 18px;margin-top:16px;
+    display:flex;gap:12px;align-items:baseline}
+  .ask .k{font:700 11.5px/1 var(--mono);letter-spacing:.06em;background:#fff;color:var(--ink);
+    padding:4px 7px;border-radius:6px;transform:translateY(-1px)}
+  .ask .v{font-size:14.5px}
+  .ask code{background:rgba(255,255,255,.16);color:#fff}
+
+  ol.steps{margin:14px 0 0;padding-left:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:4px 0 4px 34px;font-size:14px;color:var(--ink2)}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:4px;width:22px;height:22px;
+    border-radius:7px;background:#fff;border:1px solid var(--line);color:var(--ink2);
+    font:600 12px/22px var(--mono);text-align:center}
+  .muted{color:var(--ink3);font-size:12.5px}
+  hr{border:none;border-top:1px solid var(--line);margin:34px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>#721 待裁两问</h1>
+  <div class="sub">
+    <a href="https://github.com/FeatherHunter/ilife/issues/721">[规格] 域声明的形状与事实源</a>
+    · 母图 <a href="https://github.com/FeatherHunter/ilife/issues/681">#681 饼干记账本体图</a>
+    · 决定正本 #684 · 形状上位 #720
+  </div>
+  <div class="chips">
+    <span class="chip">标签 <b>wayfinder:task + ready-for-agent</b></span>
+    <span class="chip">阻塞 <b>0</b>（挡住 #689／#690）</span>
+    <span class="chip">唤醒词 <b>77</b> 条</span>
+    <span class="chip">场景 <b>74</b> 条</span>
+    <span class="chip">待退役生成物 <b>962 行</b></span>
+    <span class="chip">老实物 <b>在盘</b>（可当场取证）</span>
+  </div>
+</header>
+
+<p class="lead">
+  规格本身是完整的：8 份域声明 ＋ 2 个薄合并件 ＋ 撤掉命令声明与落点表里的唤醒词 ＋ 摘要锁重钉 ＋ 退役生成器。
+  我按规格走了一遍实测，撞到两处<b>规格没写死、且两条读法代价差很大</b>的岔口。下面是这两问的前因、读数、选项与我的推荐。
+</p>
+
+<h2>速览</h2>
+<table>
+  <tr>
+    <th style="width:15%">问题</th><th style="width:34%">岔口是什么</th><th style="width:22%">推荐</th><th style="width:29%">一句话理由</th>
+  </tr>
+  <tr>
+    <td><b>Q1</b></td>
+    <td>「字面量只准出现在所属域声明里」这条判据，要不要连<b>页面标签</b>也一起改成派生</td>
+    <td><b>甲 · 严格口径</b>（写集多 5 件）</td>
+    <td>规格的目标句是「靠别处<b>写不出来</b>」——只有甲做得到；乙把「改一处漏一处」的洞留着</td>
+  </tr>
+  <tr>
+    <td><b>Q2</b></td>
+    <td>8 份声明住哪、五域目录现在建不建、文件叫什么名</td>
+    <td><b>record/ ＋ 现在建五域 ＋ declaration.ts</b></td>
+    <td>先把域劈成两个目录会撞 #686 的结构守卫；8 份声明到位是本票的交付物</td>
+  </tr>
+</table>
+
+<h2>Q1 <span class="tag">扫描口径与写集</span></h2>
+
+<h3>前因</h3>
+<p>
+  #684 的 D4 把老判据「一条唤醒词手写出现次数 ≤2（目标 1）」改成了结构性判据：
+  <b>「一条唤醒词的字面量只准出现在它所属那份域声明里；其他 <code>src/**</code> 手写件出现即红」</b>，
+  机器判据＝扫非声明件的源码文本。理由是计数口径要人解释边界。
+</p>
+<p>
+  我按「整串字面量」口径（去注释、去散文串）把 77 条词在 <code>src/**</code> 里实测了一遍，两条事实决定了这一问：
+</p>
+
+<div class="fact">
+  <div class="h">事实 1 · 命令名与唤醒词逐字撞名，必须给 <code>title:</code> 一条豁免</div>
+  <p>
+    六条命令声明的 <code>title</code> 与某条唤醒词逐字相同：<code>记一笔</code>／<code>改记录</code>／
+    <code>查今天</code>／<code>查区间</code>／<code>搜备注</code>／<code>查账单详情</code>。
+    而 D3 明文说「命令的 <code>title</code> 与场景的 <code>title</code> 是两种事实」——
+    同名是巧合，不是第二处书写。这条豁免两种口径下都躲不掉，我会写进判据里并注明出处。
+  </p>
+</div>
+
+<div class="fact">
+  <div class="h">事实 2 · 严格口径还会判红 5 件「页面标签」</div>
+  <p>
+    它们不是词表，是把<b>用户说的那条词</b>当页标题／徽标用的代码位：
+    <code>query/read.ts</code>（11 处：查昨天／查某天／查最近／查周／查月／查区间／查标签／查欠款／查待报销／查分期／查账单详情）、
+    <code>record/receiptBody.ts</code>（5 处）、<code>shared/userWording.ts</code>（13 条 <code>kind → 词</code> 表）、
+    <code>shared/collectFrame.ts</code>（1 处兜底「记一笔」）、<code>query/detail.ts</code>（1 处）。
+    这 5 件<b>不在 #721 D10 列的五件交付物里</b>，其中 <code>query/*</code> 是 #690 的地盘。
+  </p>
+</div>
+
+<h3>两个选项</h3>
+<div class="opts">
+  <div class="opt pick">
+    <div class="top"><span class="letter">甲</span><span class="name">严格口径</span><span class="badge">推荐</span></div>
+    <div class="bod">
+      <p>判据＝扫 <code>src/**</code> 手写件（排除 8 份声明），<b>整串字面量</b>命中即红，唯一豁免是 <code>title:</code> 的值位。上列 5 件一并改成「从域声明派生」。</p>
+      <ul>
+        <li class="pro">「一条词只有一个书写位」真成立：改一条词只改那份声明，页标题自动跟变</li>
+        <li class="pro">判据只剩一条豁免，且豁免有 D3 的明文出处，不会被解释出去</li>
+        <li class="pro">页面字节风险由既有页面锁兜住（<code>t412</code>／<code>t415</code>／<code>t416</code>／<code>t417</code>／<code>frozen-blocks</code>），派生错值当场变红</li>
+        <li class="con">写集比 D10 多 5 件，越进 #690 的 <code>query/*</code>（它此刻<b>未开工</b>，且被本票挡着）</li>
+        <li class="con">要多一个派生函数（按预设／槽位算回那条词），是本票新增的机器面</li>
+      </ul>
+    </div>
+  </div>
+  <div class="opt">
+    <div class="top"><span class="letter">乙</span><span class="name">只扫「声明形态」</span></div>
+    <div class="bod">
+      <p>判据只判<b>声明位</b>：<code>wakeWord:</code>／<code>wake_word:</code>／<code>phrase:</code> 的值位，以及「一个文件里出现 ≥2 个不同唤醒词＝又写了一张词表」。页面标签不判。</p>
+      <ul>
+        <li class="pro">写集守住 D10 的五件，不碰 #690 的地盘，改动面最小</li>
+        <li class="pro">没有新增派生函数，回归面窄</li>
+        <li class="con">「一条词只有 1 个书写位」是假的：页标题里那份副本仍在，改词仍会漏</li>
+        <li class="con">判据从「结构上写不出来」退化成「换个形态就不判」——正是 D4 想躲开的那种要靠人解释边界的判据</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="h">推荐：甲</div>
+  <p>
+    D4 的理由句是「照字面 grep 的命中全是<b>页面文案</b>与别的词 prompt 里的<b>子串</b>」——
+    这两类噪声在「整串字面量 ＋ 去注释」口径下会自然消失，剩下的 5 件恰好是<b>真正的第二处书写位</b>。
+    规格 Solution 节的目标句也写死了：「不许在别处再写一遍」由结构保证，是<b>靠别处写不出来</b>。只做乙，等于把这条目标留成一句口号。
+  </p>
+</div>
+
+<div class="ask">
+  <span class="k">你只需回</span>
+  <span class="v">「<b>甲</b>」＝按严格口径办（我把 5 件一起收进本票写集，并在 #721 评论里留一条判读记录）　/　「<b>乙</b>」＝只扫声明形态，5 件留给各自的票</span>
+</div>
+
+<h2>Q2 <span class="tag">落点 · 目录 · 文件名</span></h2>
+<p class="lead">三小问，都关于「这 8 份声明写到哪里」。仓规要求新建目录层级前先报你。</p>
+
+<div class="card">
+  <h3 style="margin-top:0"><span class="n">①</span>write 域的声明放今天的 <code>src/record/</code>，还是现在就建 <code>src/write/</code>？</h3>
+  <p><b>推荐：<code>src/record/declaration.ts</code></b>。目录改名 <code>record/ → write/</code> 归 #689，<b>而 #689 正被本票挡着</b>；现在建 <code>write/</code> 会把一个域劈成两个目录，撞 #686 守卫④「每域至多一件命令声明件」与守卫②「域间 import 边必须指向对方门件」。声明随 #689 的改名一起走，零返工。</p>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0"><span class="n">②</span>其余五域（analysis／goal／account／link／setup）此刻在树上一个目录都没有——现在就建吗？</h3>
+  <p><b>推荐：现在就建这五个一级目录，每域一件声明。</b>依据三条：D10 ① 要求 8 份声明到位；<code>t683 §3.12</code> 已把「7 份域声明」列为形状的一部分、执行归本票；#720 的白名单本来就含这五个域名（建它们＝朝白名单走，不是加偏差）。</p>
+  <p class="muted">代价：本票首次动到五个尚无一行业务代码的域目录——声明是纯数据（词条／场景／二级组／域元数据），不带处理函数。</p>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0"><span class="n">③</span>文件名取 <code>declaration.ts</code>，还是照卡路里先例取 <code>routes.ts</code>？</h3>
+  <p><b>推荐：<code>declaration.ts</code>。</b>它装的是词条 ＋ 场景 ＋ 二级组 ＋ 域元数据，不止路由记录；卡路里的 <code>routes.ts</code> 是「只装路由记录」的形状，套过来名不副实。</p>
+</div>
+
+<h3>按推荐办，树长这样</h3>
+<pre>src/
+├─ <span class="g">analysis/declaration.ts</span>   <span class="c">← 新建（9 词／7 二级组／25 场景）</span>
+├─ <span class="g">account/declaration.ts</span>    <span class="c">← 新建</span>
+├─ <span class="g">goal/declaration.ts</span>       <span class="c">← 新建</span>
+├─ <span class="g">link/declaration.ts</span>       <span class="c">← 新建</span>
+├─ <span class="g">setup/declaration.ts</span>      <span class="c">← 新建</span>
+├─ record/declaration.ts     <span class="c">← write 域（随 #689 改名 write/ 一起走）</span>
+├─ query/declaration.ts
+├─ help/declaration.ts       <span class="c">← 4 条短语、无场景，order=0 保住今天 WAKE_TABLE 的词序</span>
+├─ triggers/routeSpec.ts     <span class="c">← 声明形状与类型唯一处</span>
+├─ triggers/wakeTable.ts     <span class="c">← 词表合并 ＋ 路由 ＋ 派生（机器面，落在这里是 #720 定的住处）</span>
+├─ triggers/wake-assets.ts   <span class="c">← 962 行生成物 → 薄合并件（同路径同导出面）</span>
+└─ policy/wakewords.ts       <span class="c">← 退成薄转出，保消费方零改；#689 删 policy/ 时收</span></pre>
+
+<h2>点头之后怎么走</h2>
+<ol class="steps">
+  <li>搬运器（一次性取证工具，落 <code>docs/skills/skill-bill/</code>）：老实物 → 8 份声明，当场跑「与老权威逐字段 0 差异」</li>
+  <li>两个薄合并件 ＋ 撤掉命令声明与落点表的 <code>wakeWord</code> ＋ 生成器必填字段门同步改</li>
+  <li>新判据（内容目录／路由／派生 fail-closed／注册表）＋ 内容摘要锁重钉</li>
+  <li>退役老生成器、同步告警线台账、补证据件</li>
+  <li>对抗式自查（变异：改坏必红、改回必绿）＋ 编译／测试／提交经 <code>node tooling/run-locked.mjs --ticket 721</code></li>
+</ol>
+<p class="muted">验收口径：老 70 个唯一唤醒词逐条路由到与今天相同的命令；7 域／20 二级组／74 场景与今天一字不差；老实体退役后构建与全量测试仍绿。</p>
+
+<hr>
+<p class="muted">
+  逐字读数与实测明细（77 条词的整串／子串命中逐件清单）见同目录 <code>t721-证据.md</code>（实施时补）。
+  本页只放两问的决策材料。
+</p>
+
+</div>
+</body>
+</html>
