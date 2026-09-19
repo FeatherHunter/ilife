@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#683 目标 src/ 形状 · 待裁六问（第一轮）</title>
+<style>
+  :root{
+    --blue:#007aff; --ink:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+    --bg:#f5f6f8; --card:#fff; --ok:#0a7d43; --warn:#b45309; --stop:#b42318;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  }
+  header,main,footer{max-width:960px;margin:0 auto;padding:0 20px}
+  header{padding-top:34px;padding-bottom:8px}
+  .eyebrow{font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+  h1{font-size:26px;line-height:1.35;margin:8px 0 10px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:3px 11px;font-size:12.5px;color:var(--muted)
+  }
+  .chip b{color:var(--ink);font-weight:600}
+  .chip.hot{border-color:#f5c2a0;background:#fff8f2;color:var(--warn)}
+  .chip.blue{border-color:#bcd8ff;background:#f2f8ff;color:#0a5cbf}
+
+  h2{font-size:19px;margin:0 0 6px;line-height:1.45}
+  h3{font-size:15px;margin:26px 0 10px}
+  p{margin:8px 0}
+  section.block{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+  .lead{color:#3f3f46}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+  .conflict{background:#fffdf7;border:1px solid #f3e2c7;border-radius:12px;padding:12px 14px}
+  .conflict h4{margin:0 0 6px;font-size:14px;color:var(--warn)}
+  .conflict p{margin:0;font-size:13.5px;color:#4b5563}
+  code{
+    background:#f2f3f5;border:1px solid var(--line);border-radius:5px;
+    padding:1px 5px;font:12.5px/1.5 "Cascadia Mono",Consolas,monospace
+  }
+
+  /* 目标树 */
+  .tree{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .lane{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fcfcfd}
+  .lane h4{margin:0 0 4px;font-size:13.5px}
+  .lane .tag{font-size:12px;color:var(--muted);display:block;margin-bottom:8px}
+  .lane .dirs{display:flex;flex-wrap:wrap;gap:6px}
+  .d{font:12.5px/1.4 "Cascadia Mono",Consolas,monospace;border-radius:6px;padding:3px 7px;border:1px solid}
+  .d.domain{background:#eef6ff;border-color:#c5dcff;color:#0a4f9e}
+  .d.common{background:#eefaf3;border-color:#c3ead6;color:#0a7d43}
+  .d.shell{background:#f4f2fb;border-color:#dcd6f3;color:#4b3fa0}
+  .d.drop{background:#fff1f0;border-color:#f6ccc8;color:var(--stop);text-decoration:line-through}
+  .lane .why{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+
+  /* 速览表 */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{font-size:12.5px;color:var(--muted);font-weight:600;background:#fafbfc}
+  td.rec b{color:var(--ok)}
+  tr:last-child td{border-bottom:0}
+
+  /* 问题卡 */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0;scroll-margin-top:78px}
+  .q h2{display:flex;gap:10px;align-items:baseline}
+  .num{
+    flex:none;background:var(--blue);color:#fff;border-radius:8px;
+    font-size:13px;font-weight:700;padding:2px 8px;letter-spacing:.02em
+  }
+  .why{background:#f7f8fa;border-left:3px solid #c9ccd3;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13.5px;color:#414a56}
+  .why b{color:var(--ink)}
+  .opts{display:grid;gap:10px;margin:14px 0 0}
+  .opt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fcfcfd}
+  .opt h4{margin:0 0 6px;font-size:14px}
+  .opt ul{margin:0;padding-left:18px;font-size:13.5px;color:#4b5563}
+  .opt li{margin:2px 0}
+  .opt.pick{border-color:#b7e0c8;background:#f6fdf9}
+  .opt.pick h4::after{content:"推荐";margin-left:8px;font-size:11.5px;color:#fff;background:var(--ok);border-radius:5px;padding:1px 7px;vertical-align:1px}
+  .rec-box{margin-top:14px;border:1px solid #bcd8ff;background:#f2f8ff;border-radius:12px;padding:12px 14px;font-size:13.5px}
+  .rec-box b{color:#0a4f9e}
+  .risk{font-size:13.5px;color:#4b5563}
+  .risk li{margin:6px 0}
+  footer{padding:22px 20px 44px;color:var(--muted);font-size:13px}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .toc a{
+    text-decoration:none;color:#0a4f9e;background:#f1f7ff;border:1px solid #cfe2ff;
+    border-radius:999px;padding:3px 11px;font-size:13px
+  }
+  .toc a:hover{background:#e6f1ff}
+  @media (max-width:720px){
+    .tree{grid-template-columns:1fr}
+    h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">FeatherHunter/ilife · issue <a href="https://github.com/FeatherHunter/ilife/issues/683">#683</a> · Part of <a href="https://github.com/FeatherHunter/ilife/issues/681">#681</a></div>
+  <h1>目标 <code>src/</code> 形状：7 个域目录与共用位<br><span style="font-size:15px;color:var(--muted);font-weight:400">第一轮 · 待维护者裁定的六件事</span></h1>
+  <div class="meta">
+    <span class="chip">状态 <b>待裁 6 问</b></span>
+    <span class="chip">进度 <b>15%</b></span>
+    <span class="chip">走查日期 <b>2026-09-18</b></span>
+    <span class="chip blue">读数口径 <b>LF（只数 \n）</b></span>
+  </div>
+  <div class="toc">
+    <a href="#q1">Q1 三类准入</a>
+    <a href="#q2">Q2 record→write</a>
+    <a href="#q3">Q3 help 身份</a>
+    <a href="#q4">Q4 shared 分档</a>
+    <a href="#q5">Q5 四个疑难件</a>
+    <a href="#q6">Q6 接缝与落地</a>
+    <a href="#risk">风险</a>
+  </div>
+</header>
+
+<main>
+
+<section class="block">
+  <h3 style="margin-top:0">一句话前因</h3>
+  <p class="lead">当刻 <code>src/</code> 一级 9 个目录 ＋ 3 个根件 ＝ <b>11,738 LF</b>，但只有 <b>2 个目录是 HELP 里的域</b>（<code>record/</code> <code>query/</code>）；<code>policy/</code> 一个盒子装着 7 个域的口径，其余 6 个是工种名（<code>cli fetch render shared triggers help</code>）。仓规 <code>docs/agents/structure.md</code> 要求「一级必须是能力名」，而兄弟件 <code>skill-calorie</code> 的实况是<b>域目录与横切层并存</b>——本票要把「并存」升成可查的规矩，并给出逐件归属。</p>
+
+  <h3>走查发现三处「票面判据／盘上实况」对不上</h3>
+  <div class="grid3">
+    <div class="conflict">
+      <h4>① 判据 vs 真共用件</h4>
+      <p>判据写「共用位里不出现任何域的名字」，但 <code>shared/pageShell.ts:22</code> 的眉标表就是 <code>Record&lt;'write' | 'query'&gt;</code>，而它是 write＋query 两家在用的真共用件。</p>
+    </div>
+    <div class="conflict">
+      <h4>② 归属表漏件</h4>
+      <p>票面点了 6 件，漏了 <code>policy/category.ts</code>(125)、<code>policy/wakewords.ts</code>(142)、<code>render/views.ts</code>(125)，以及 <code>shared/</code> <b>整层 25 件／2,645 LF</b>。</p>
+    </div>
+    <div class="conflict">
+      <h4>③ 名字撞车</h4>
+      <p><code>write</code> 既是域名（HELP 一级分组）又是命令种类（<code>commandSpec.ts:37</code> 的 <code>kind:'write'</code>）；<code>analysis</code> 既是域名又是页形状名（<code>render/envelope.ts:12</code>）。</p>
+    </div>
+  </div>
+
+  <h3>目标树（Q1 提议的形状）</h3>
+  <div class="tree">
+    <div class="lane">
+      <h4>域目录 · 7</h4>
+      <span class="tag">名字取自 HELP 一级分组；持自己的命令声明、自己的页</span>
+      <div class="dirs">
+        <span class="d domain">write</span><span class="d domain">query</span><span class="d domain">analysis</span>
+        <span class="d domain">goal</span><span class="d domain">account</span><span class="d domain">link</span><span class="d domain">setup</span>
+      </div>
+      <p class="why">准入：跨域只经对方 <code>index.ts</code> 门；<code>link/</code> 按 #681 的 non-exec 收口仍立目录，只持词与路由声明。</p>
+    </div>
+    <div class="lane">
+      <h4>共用位 · 3</h4>
+      <span class="tag">说得出两个域在用</span>
+      <div class="dirs">
+        <span class="d common">fetch</span><span class="d common">render</span><span class="d common">shared</span>
+      </div>
+      <p class="why">说得出是外壳或派生件 → 第三类；三条都说不出的件不许存在。</p>
+    </div>
+    <div class="lane">
+      <h4>外壳与机器面 · 3 ／ 删 · 1</h4>
+      <span class="tag">没人「用」它，是出入口或派生件</span>
+      <div class="dirs">
+        <span class="d shell">cli</span><span class="d shell">triggers</span><span class="d shell">help</span><span class="d drop">policy</span>
+      </div>
+      <p class="why">根件 <code>index.ts</code>／<code>config.ts</code>／<code>output.ts</code> 不动。合计一级 13 个目录。</p>
+    </div>
+  </div>
+
+  <h3>六问速览</h3>
+  <table>
+    <thead><tr><th style="width:52px">问题</th><th>裁什么</th><th style="width:100px">推荐</th><th>一句话理由</th></tr></thead>
+    <tbody>
+      <tr><td>Q1</td><td>一级目录的三类准入 ＋ 名单（含 <code>policy/</code> 删除）</td><td class="rec"><b>A 三类准入</b></td><td>把「并存」升成可查判据，走完 7 域不会各长一套</td></tr>
+      <tr><td>Q2</td><td><code>record/</code> 是否改名 <code>write/</code>（命令 key 冻结不动）</td><td class="rec"><b>A 改名</b></td><td>HELP 里指得出的是「写入」；<code>record</code> 指不出任何一组</td></tr>
+      <tr><td>Q3</td><td><code>help/</code> 的身份（非域一级目录／挂进域／挂 CLI）</td><td class="rec"><b>A 立为非域目录</b></td><td><code>bill.help.lookup</code> 是命令，命令事实必须住能力目录</td></tr>
+      <tr><td>Q4</td><td><code>shared/</code> 25 件分档（含 18 件下沉 <code>write/</code>）</td><td class="rec"><b>A 按律搬</b></td><td>今天已是「写入域零件堆 ＋ 5 件真共用」，不搬下一票就找错块</td></tr>
+      <tr><td>Q5</td><td>四个疑难件落点（分类表／日期口径／唤醒词表／<code>views.ts</code>）</td><td class="rec"><b>A 长成共用位</b></td><td>analysis 域一到就有第 3、4 个消费者，现在正是长共用位的时候</td></tr>
+      <tr><td>Q6</td><td>接缝分工 ＋ 机器守卫归属 ＋ 留存载体</td><td class="rec"><b>A ＋ 新 ADR-0003</b></td><td>三类准则是跨技能通用规则，共用一处出处比各写一份省</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= Q1 ================= -->
+<section class="q" id="q1">
+  <h2><span class="num">Q1</span> 一级目录的三类准入（最顶上的一条）</h2>
+  <div class="why"><b>前因：</b>仓规只写「<code>src/</code> 下第一层必须是能力名，不能是工种名」，但没人说过域之外的那些层该怎么立、凭什么留。兄弟件卡路里是<b>域与横切层并存</b>：10 个域 ＋ <code>cli/fetch/render/shared/triggers</code> 5 个横切层 ＋ <code>db/migrate/xunji</code> 3 个例外。不把「并存」写成准入判据，7 个域走完就是七套形状。<br>
+  <b>关键读数：</b>一级 9 目录里，<code>policy/</code> 483 LF 是唯一「7 个域的口径共用一个盒子」的目录；两个超告警线（350）的件都在横切层：<code>triggers/wake-assets.ts</code> <b>986</b>、<code>cli/cmd_read.ts</code> <b>485</b>。</div>
+  <div class="opts">
+    <div class="opt pick">
+      <h4>A · 立三类准入</h4>
+      <ul>
+        <li>利：每类都有可查判据（名字取自 HELP／说得出两个域在用／说得清为什么不是域也不是共用位），新目录加不进来；与卡路里实况同形，看两个包不用两套心智。</li>
+        <li>弊：多一层「解释成本」，13 个一级目录要逐个写明身份；<code>policy/</code> 的 483 LF 要散回各处（动作在别的票）。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · 只留「域 ＋ 共用位」两类</h4>
+      <ul>
+        <li>利：目录数最少；<code>triggers</code> 并 <code>help</code>、<code>cli</code> 并包根。</li>
+        <li>弊：把「没人用的出入口」和「两家在用的共用件」塞进一类，下一位执行者分不清谁依赖谁；<code>cli</code> 是 Node 入口，并进包根会让包门与入口混一层。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · 不分类，只列名单</h4>
+      <ul>
+        <li>利：这一票最小、最快。</li>
+        <li>弊：等于没定规矩——「为什么留 <code>render/</code>」答不出来，下一票就会来问同一件事（#682 台账已为此记过教训）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A</b>：<code>结构标准</code> 只写了「能力目录」一条，A 是把卡路里的既成实况补成规矩；B／C 的省事要用后面每一票重新讨论来还。</div>
+</section>
+
+<!-- ================= Q2 ================= -->
+<section class="q" id="q2">
+  <h2><span class="num">Q2</span> <code>record/</code> 是否改名 <code>write/</code></h2>
+  <div class="why"><b>前因：</b>铁律四的判据是「把目录名念给用户听，他能在 HELP 里指出这是哪一组」。HELP 一级分组的 7 个 id 是 <code>write query analysis goal account link setup</code>（对应中文 写入／查询／分析／目标／账户／联动／开始使用），<b>没有 <code>record</code></b>；反而代码里已经用 <code>write</code> 当域名（<code>shared/pageShell.ts:22</code> 眉标表键值）。<br>
+  <b>改名触面（当刻实测）：</b><code>src/**/*.ts</code> 里 <b>73 行</b>引用 <code>record/</code>、测试 <b>5 行</b>，命中 <b>47 个文件</b>；<code>packages/skill-bill/AGENTS.md</code> 两张表与多份证据件的行号锚点会漂。<br>
+  <b>不能动的：</b><code>bill.record.*</code> 这 <b>6 条命令 key</b> 是跨技能契约（#682 §4.A-2 A2-1「key 字符串后续票落表时冻结」）——只改目录名，key 不动。</div>
+  <div class="opts">
+    <div class="opt pick">
+      <h4>A · 目录改 <code>write/</code>，key 不动，执行交 #689</h4>
+      <ul>
+        <li>利：铁律四成立（<code>write</code> 直接指向 HELP「写入」组）；改名与 write 域自身的重构同窗做，不额外开窗。</li>
+        <li>弊：73＋5 行改动与 47 个文件触面；「目录 <code>write</code>／命令 key <code>record</code>」两套名字并存，必须在文档里写明这不是一件事。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · 目录留 <code>record/</code>，文档里记例外</h4>
+      <ul>
+        <li>利：零改动、零风险。</li>
+        <li>弊：让本票正要立的「名字取自 HELP」对自家第一个域就失效；下一票会来问凭什么。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · 连 key 一起改成 <code>bill.write.*</code></h4>
+      <ul>
+        <li>利：名字彻底统一。</li>
+        <li>弊：破跨技能契约，要同步 <code>plugin-bill-ilife</code> 与 <code>base-combos</code>（且插件侧有別席在途），出本图范围。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A</b>。顺带一件必须在文档里写死的：<code>write</code>（域名）与 <code>kind:'write'</code>（命令种类）、<code>analysis</code>（域名）与 <code>shape:'analysis'</code>（页形状）是<b>同名不同物</b>——不写，下一位执行者会把它们当成一件事。</div>
+</section>
+
+<!-- ================= Q3 ================= -->
+<section class="q" id="q3">
+  <h2><span class="num">Q3</span> <code>help/</code> 的身份怎么立</h2>
+  <div class="why"><b>前因：</b>今天 <code>help/</code> 3 件 172 LF（<code>lookup.ts</code> 55＝SKILL 速查 77 行；<code>writeWire.ts</code> 115＝写域 16 词接线对账；<code>index.ts</code>），而 <b>HELP 页面不由它出</b>——出页面的是 <code>cli/cmd_read.ts</code> 的 help 分支 ＋ <code>render/helpFile.ts</code>(185) ＋ <code>triggers/wake-assets.ts</code>。<br>
+  <b>两头压力：</b>HELP 不是 7 个一级分组之一 → 铁律四下立不住；但命令登记纪律（<code>docs/agents/命令登记纪律.md:8</code>）说「一条命令的事实只有一个定义地，就是它自己的能力目录」，而 <code>bill.help.lookup</code> 是 16 条 key 里的一条。<br>
+  <b>兄弟件参照：</b>卡路里<b>没有 <code>help/</code> 目录</b>，它的 HELP 命令 <code>calorie.help.center</code> 挂在 <code>src/photo/commands.ts</code> 里。</div>
+  <div class="opts">
+    <div class="opt pick">
+      <h4>A · 立 <code>help/</code> 为非域一级目录（第三类）</h4>
+      <ul>
+        <li>利：命令有家，命令登记纪律不破；<code>render/helpFile.ts</code> ＋ <code>helpPaths.ts</code> 搬进来后，HELP 的交付面集中一处。</li>
+        <li>弊：非域目录要常驻一句「为什么它不是域」，否则下次走查又会被当违规；与卡路里形状不一致。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · 照卡路里挂进一个域（本包最贴 <code>setup/</code>）</h4>
+      <ul>
+        <li>利：与卡路里同形，一级少一个目录。</li>
+        <li>弊：setup 域凭空背上 HELP 的所有权（<code>HELP_INIT_SCENE_ID='setup_init_wizard'</code> 只是「引导语取自哪条场景」，不等于 HELP 属 setup）；卡路里那条是历史遗留而非设计。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · 不立目录，命令声明挂 <code>cli/</code></h4>
+      <ul>
+        <li>利：不动目录结构。</li>
+        <li>弊：直接违命令登记纪律（命令事实进了共用位），正是「冲突为何消失」要解掉的那种形状。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A</b>：<code>help/</code> 的定位写成「<b>交付面</b>——用户可点的一级入口，不持账目事实」；<code>render/helpFile.ts</code> 与 <code>helpPaths.ts</code> 随本决定搬入。</div>
+</section>
+
+<!-- ================= Q4 ================= -->
+<section class="q" id="q4">
+  <h2><span class="num">Q4</span> <code>shared/</code> 25 件的分档（归属律 ＋ 读数）</h2>
+  <div class="why"><b>前因：</b>票面写「共用位里不出现任何域的名字」，但没说怎么判一件是不是共用件。仓规的判据是「<b>写得出哪两个能力在用</b>」，且「共用位是从第二个用法里长出来的，不是预先设计的」。按这条一量，当刻 <code>shared/</code> 的分档是：<br>
+  <b>5 件真共用（423 LF）</b>：<code>commandSpec</code>(74 ← cli+query+record)、<code>copyArea</code>(159)、<code>pageIdentity</code>(36)、<code>pageShell</code>(65)、<code>writeParts</code>(89)（后四件 ← write+query）。<br>
+  <b>2 件间接（184 LF）</b>：<code>docPage</code>(130 ← pageShell)、<code>errorReceipt</code>(54 ← blockedSlots)，只被 <code>shared/</code> 内部用。<br>
+  <b>18 件（2,038 LF）只被 <code>record/</code> 用</b>：<code>recordPicker</code>(247)、<code>photoEscape</code>(181)、<code>installmentPreview</code>(170)…</div>
+  <div class="opts">
+    <div class="opt pick">
+      <h4>A · 按律搬：18 件下沉 <code>write/</code>，<code>shared/</code> 只留 5 件</h4>
+      <ul>
+        <li>利：<code>shared/</code> 回归「跨域公共件」的本义；下一票（analysis）写页时在 <code>shared/</code> 找到的都是真公共块。</li>
+        <li>弊：18 件搬家有触面（引用行、测试）；2 件间接件随 <code>pageShell</code> 的处置走，要单独裁一次。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · 全留 <code>shared/</code>，等各域票自己来搬</h4>
+      <ul>
+        <li>利：本票零动作。</li>
+        <li>弊：把「找错块」的坑留给下一票；每个域票都会重议一次同一条判据。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · 只留真共用，其余先记债务清单不搬</h4>
+      <ul>
+        <li>利：不动代码就把账记清。</li>
+        <li>弊：清单本身会过期（#682 §1 已记过这个坑），下次仍然要逐件重判。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A</b>，并把它写成四条归属律：①只属于一个域 → 住那个域；②说得出两个域在用 → 共用位；③说得出是外壳或派生件 → 第三类；④三条都说不出的件不许存在。<b>搬的执行不在本票</b>（票面已划出「命令的搬迁动作」），归 #689。</div>
+</section>
+
+<!-- ================= Q5 ================= -->
+<section class="q" id="q5">
+  <h2><span class="num">Q5</span> 四个没被点名的疑难件落点</h2>
+  <div class="why"><b>前因：</b>票面的归属表只点了 6 件（<code>analysis/goals/accounts/record.ts</code>、<code>helpFile</code>、<code>wake-assets</code>），实际还有四件说不清，其中两件是「两个域经它对话」的口径件：</div>
+  <div class="opts" style="margin-top:10px">
+    <div class="opt">
+      <h4>(a) <code>policy/category.ts</code> 125 LF —— 分类表 ＋ 金额/时间/日期校验</h4>
+      <ul>
+        <li>消费者 4 处：<code>record/*</code>（写入校验）、<code>query/read.ts:24</code>、<code>render/views.ts:6</code>（<code>l1Of</code>）、<code>shared/*</code> → <b>两域在用</b>。</li>
+        <li>它管的是用户念得出的词表（餐饮/居家/…/借贷/分期/转账）＋默认值，属「口径」而非某个域的私产。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>(b) <code>policy/record.ts</code> 91 LF —— 一半写域、一半是日期</h4>
+      <ul>
+        <li>写命令 params 校验（<code>parseRecordOp</code>/<code>validateAddInput</code>/<code>validateUpdateInput</code>）→ 属 <code>write/</code>。</li>
+        <li>日期与时间窗口（<code>resolveQueryDate</code>/<code>resolveRange</code>/<code>monthRange</code>/<code>weekRange</code>/<code>yesterdayStr</code>，#411 搬进来，消费者 <code>query/read.ts</code>）→ 与 (a) 的 <code>normalizeDate</code>/<code>normalizeMonth</code> 合成<b>一处日期口径</b>。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>(c) <code>policy/wakewords.ts</code> 142 LF —— 77 词 → 16 key 的整表</h4>
+      <ul>
+        <li>#684（T3）已定「域声明住域目录、唤醒词唯一」→ 本票只定「不留 <code>policy/</code>，T3 把这 142 行拆进 7 份域声明」，不预定最终文件名。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>(d) <code>render/views.ts</code> 125 LF ＋ <code>render/helpFile.ts</code> 185 LF</h4>
+      <ul>
+        <li><code>views.ts</code> 里拴着 7 个域的东西：<code>calcKpi</code>（write/query 两家用）、<code>buildOverview</code>/<code>buildCompare</code>/<code>buildTrend</code>（analysis）、<code>buildGoalQuery</code>（goal）、<code>buildAccountQuery</code>（account）、<code>buildRecordReceipt</code>（write）、<code>buildHelpItems</code>（help）。</li>
+        <li><code>helpFile.ts</code> 整个是 HELP 交付 → 随 Q3 回 <code>help/</code>。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="opts">
+    <div class="opt pick">
+      <h4>A · (a)(b) 长成共用位；(c) 交 T3；(d) 域属回域、<code>calcKpi</code> 留共用位</h4>
+      <ul>
+        <li>利：分类表与日期口径各只有一个定义地，第 3、第 4 个消费者（analysis 域 25 场景）一到就复用，不重算。</li>
+        <li>弊：新建两个共用件（建议 <code>shared/category.ts</code>、<code>shared/dateRange.ts</code>，名字可再谈），<code>views.ts</code> 要按域切开。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · (a)(b) 整体归 <code>write/</code>（谁校验谁持有），别的域经 write 的门取</h4>
+      <ul>
+        <li>利：不新建共用件，写入路径最简单。</li>
+        <li>弊：query 为了校验一个分类要去引 write 的门，语义错位；analysis 一到就变成三方耦合。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · (a) 归 <code>write/</code>、(b) 的日期半归 <code>query/</code></h4>
+      <ul>
+        <li>利：按当下消费者就近放。</li>
+        <li>弊：日期口径横跨 write/query/analysis，挂在一个域下就是等着被抄第二份（铁律一）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A</b>。<b>风险提示：</b>(d) 的拆件与 T4（#685「页面装配深模块的接口与 7 域页型清单」）天花板撞车——<code>views.ts</code> 的最终去处要在 T4 落地后复核一次，本票只定方向（各域票执行）。</div>
+</section>
+
+<!-- ================= Q6 ================= -->
+<section class="q" id="q6">
+  <h2><span class="num">Q6</span> 决定怎么立住：接缝分工 ＋ 守卫 ＋ 留存载体</h2>
+  <div class="why"><b>前因：</b>本票是<b>决定票</b>（票面产出的是决定、不是改动），所以真正的风险是「决定写完没人执行、或各票各理解」。需要一次把「谁搬、谁拆、谁守、写在哪」说清。</div>
+  <div class="opts">
+    <div class="opt">
+      <h4>接缝（建议）</h4>
+      <ul>
+        <li>改名 ＋ <code>shared/</code> 下沉 → <b>#689</b>（write 域：形状重构与 parity 优化）</li>
+        <li>域声明 ＋ 唤醒词表拆分 → <b>#684</b>（T3）；页面装配形状与 <code>views.ts</code>／<code>helpFile.ts</code> 终局 → <b>#685</b>（T4）</li>
+        <li>机器守卫 → <b>#686</b>（T5「机器面照卡路里装齐」，它的定位就是落门）</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>守卫四条（#686 落，白名单取自本票文档）</h4>
+      <ul>
+        <li>① 一级目录 ∈ 白名单，只许删不许加；② 域之间零直引，只经对方 <code>index.ts</code>；③ <code>shared/**</code> 不出现 7 个域名（含 <code>pageShell</code> 那条眉标改成「域自报 eyebrow 参数」）；④ 每个域目录恰一件 <code>commands.ts</code>。</li>
+      </ul>
+    </div>
+    <div class="opt pick">
+      <h4>A · 载体＝技能文档 ＋ 新 ADR-0003（推荐）</h4>
+      <ul>
+        <li>利：三类准入是<b>跨技能通用</b>规则（卡路里 #699 那条整改线在做同一件事），一份 ADR 供两边引；逐件归属只住技能文档，分工写死。</li>
+        <li>弊：多一份要同步的文档；ADR 与技能文档必须分工明确，否则同一件事两处定义。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>B · 只写技能文档 <code>docs/skills/skill-bill/t683-目标src形状.md</code></h4>
+      <ul>
+        <li>利：一件交付物，最省。</li>
+        <li>弊：跨技能通用的规则被埋在本包文档里，卡路里线要么引一份别的包的文档，要么自己再写一份。</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h4>C · 直接改仓规 <code>docs/agents/structure.md</code></h4>
+      <ul>
+        <li>利：规则离读者最近。</li>
+        <li>弊：仓规的分层表写明「结构标准由维护者改，AI 报理由后可提改」——本票只提请、不代改。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rec-box">➡️ <b>推荐 A（接缝）＋ A（载体：技能文档 ＋ ADR-0003）</b>。本票零源码改动，交付物＝<code>docs/skills/skill-bill/t683-目标src形状.md</code> ＋ issue 正文结论 ＋ ADR-0003。</div>
+</section>
+
+<!-- ================= 风险 ================= -->
+<section class="block" id="risk">
+  <h3 style="margin-top:0">风险（不同意请点破）</h3>
+  <ol class="risk">
+    <li><b>只出文档、不落白名单</b> → 「一票一域」的节奏会让 7 个域各长一套形状。缓解＝守卫挂 #686，白名单以本票文档为来源。</li>
+    <li><b>顺序错了会返工</b> → 卡路里 #704 已裁「<b>先搬后拆</b>」（搬＝保产物可核，拆＝改结构）。本票的 <code>shared/</code> 下沉属搬，<code>views.ts</code> 属拆，两件事分窗口、判据不混。</li>
+    <li><b>改名与在途席撞车</b> → 多席共用一个工作区，改名要挑没有別席动 <code>record/</code> 的窗口，由 #689 抢锁、先声明写集再动（并发纪律）。</li>
+  </ol>
+</section>
+
+<footer>
+  进度契约：<a href="https://github.com/FeatherHunter/ilife/issues/683">#683</a> 正文已写 <code>## 进度：15%</code> ＋ 下一步（第一轮六问待答）。<br>
+  答完这轮 → 下一轮过<b>逐件归属表</b>（政策 7 件 ＋ <code>shared</code> 25 件 ＋ <code>render</code> 8 件 ＋ <code>help</code> 3 件 ＋ <code>triggers</code> 1 件）；讨论收口、意图对齐后 → 跑一次 <code>/to-spec</code> 固化成规格单，挂到 #681 这张 map 下。<br>
+  本页读数：LF 口径（只数 <code>\n</code>），与 #682／<code>packages/skill-bill/AGENTS.md</code> 同口径。
+</footer>
+
+</main>
+</body>
+</html>
