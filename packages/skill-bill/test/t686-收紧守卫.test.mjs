@@ -22,7 +22,9 @@ import { join, resolve } from 'node:path';
 import { FROZEN, PKG_DIR } from '../scripts/ratchet-frozen-686.mjs';
 
 const GUARD = join(PKG_DIR, 'scripts', 'check-ratchet-tight.mjs');
-const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update'];
+/** 夹具用的注册表键集（**当刻已迁移的十四条**：写入 2／查询 4／账户 2／开始使用 1／目标 2／分析 3）。
+ *  #729 同窗更新：本轮三条分析键搬进能力目录，夹具的注册表读数跟着涨到 14（与 `FROZEN.registryKeyCount` 同值）。 */
+const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend', 'bill.goal.query', 'bill.goal.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update', 'bill.setup.run'];
 
 /** 把一段正文补到恰好 `target` 个 LF（补的是注释行，不影响任何判据）。 */
 function padTo(body, target) {

@@ -1,11 +1,13 @@
-/** 分析域对外的门（#689 结构搬迁第三批立）：本域的命令**还没搬进来**——三条 analysis 命令的分派今天
- *  仍住 `src/cli/cmd_read.ts` 的 `switch`（未迁移命令那一族）。故门里先只放外面真在取的两摊：
- *  ① 命令参数口径 `./params.js`（三个 kind 分流 ＋ `month`／`range` 槽位）；
- *  ② 结果载荷装配 `./views.js`（分类聚合／总览／对比／趋势）。
+/** 分析域对外的门（#729 收口）：本域三条读命令已搬进本目录，域外只该取两件——
+ *   ① `ANALYSIS_COMMANDS`——命令声明（权威源 `./commands.ts`，这里只是转出；出口分派按注册表里的
+ *      声明直接调 `spec.run`，故本域不再需要第二个入口函数，形制同 `../account/index.ts`）；
+ *   ② `calcCategories`——分类聚合（`src/query/read.ts` 的「查分类」占比条在用；**域→域只经对方的门**）。
  *
- *  为什么要有这道门：域→域的每条 import 边只许指向对方的门（#683 §六 守卫②），
- *  `src/query/read.ts` 取 `calcCategories` 走的就是这里。命令搬进本域后按 `../write/index.ts` 的
- *  形状收口成「命令声明 ＋ 一个入口」，这些转出随之收窄。 */
-export { parseOverviewKind, parseCompareKind, parseTrendKind, needMonth, needRange } from './params.js';
-export type { OverviewKind, CompareKind, TrendKind } from './params.js';
-export { calcCategories, buildOverview, buildCompare, buildTrend } from './views.js';
+ * 搬迁前那几件转出（`parseOverviewKind`／`parseCompareKind`／`parseTrendKind`／`needMonth`／`needRange`／
+ *  `buildOverview` ／`buildCompare`／`buildTrend`）随 #729 一并收窄：前五件回 `./params.js` 供本域场景自用，
+ *  后三件回 `./views.js` 供本域场景拼载荷——**门外已无消费方**（出口那三个 `case` 已删）。
+ * 域内其他件（场景契约与落点表 `scene.ts`、五份模板件、25 件场景声明、聚合件 `agg.ts`、卡形状件 `cards.ts`、
+ *  页内共件 `pageParts.ts`、处理体 `read.ts`）不出这个目录，故不在这里转出。
+ * 场景落点表 `ANALYSIS_SCENES` 供测试按既有取法直取定义地（`../dist/analysis/scene.js`），不经本门。 */
+export { ANALYSIS_COMMANDS } from './commands.js';
+export { calcCategories } from './views.js';

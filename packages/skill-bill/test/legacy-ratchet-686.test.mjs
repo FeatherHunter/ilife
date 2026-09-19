@@ -104,23 +104,28 @@ function migrate(nth, how) {
   };
 }
 
+/** 拿哪一条未搬迁的键当样本：**取当刻清单的第一条**（#729 起只剩 help／link 两条，
+ *  写死下标 3 会越界取到 `undefined`，三条自证会一起失效——那是「夹具陈化」的假绿，
+ *  故这里按清单长度取头一条，搬迁再往前推也不会再陈化）。 */
+const SAMPLE = 0;
+
 const redsOf = (problems) => problems.filter((p) => !p.ok).map((p) => p.name + '：' + p.detail).join(' ｜ ');
 
 test('#686 同窗自证：只删 case／只删过渡表行／两处都删却没下调冻结值 ⇒ 三种都红', () => {
   for (const how of ['只删 case', '只删过渡表行']) {
-    const { measured, frozen } = migrate(3, how);
+    const { measured, frozen } = migrate(SAMPLE, how);
     const problems = ratchetProblems(measured, frozen);
     assert.ok(problems.some((p) => !p.ok), how + '：两处不同集却判绿——「同窗」这条纪律是空的');
     assert.match(redsOf(problems), /dispatchEqualsLegacy/, how + '：没点名两处不同集');
   }
-  const stale = migrate(3, '两处都删但冻结值没下调');
+  const stale = migrate(SAMPLE, '两处都删但冻结值没下调');
   const problems = ratchetProblems(stale.measured, stale.frozen);
   assert.ok(problems.some((p) => !p.ok), '两处都删、冻结值没下调却判绿——收紧守卫是空的（卡路里 #294 的病）');
   assert.match(redsOf(problems), /冻结值仍有 1 条/, '没点名「冻结值比实况松」这一种');
 });
 
 test('#686 同窗自证：两处都删 ＋ 冻结值与上限同窗下调 ⇒ 绿', () => {
-  const { measured, frozen } = migrate(3, '同窗下调');
+  const { measured, frozen } = migrate(SAMPLE, '同窗下调');
   const problems = ratchetProblems(measured, frozen);
   assert.deepEqual(problems.filter((p) => !p.ok), [], '照规矩搬一条却判红：' + redsOf(problems));
 });
