@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#676 卡路里设置页 · 第二轮决策单</title>
+<style>
+  :root{
+    --ink:#1c2024;--ink2:#5b6570;--line:#e2e6ea;--bg:#f6f7f9;--card:#fff;
+    --accent:#2f6fed;--ok:#12805c;--warn:#b26a00;--bad:#b3261e;
+    --okbg:#e8f6f0;--warnbg:#fff5e5;--badbg:#fdeceb;--accentbg:#eaf1fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--bg);color:var(--ink);
+       font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:24px;line-height:1.35;margin:0 0 6px}
+  .sub{color:var(--ink2);font-size:13.5px;margin:0 0 22px}
+  .strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+        padding:4px 12px;font-size:12.5px;color:var(--ink2)}
+  .chip b{color:var(--ink)}
+  .chip.ok{background:var(--okbg);border-color:#bfe3d5;color:var(--ok)}
+  .chip.warn{background:var(--warnbg);border-color:#f0d9b0;color:var(--warn)}
+  .chip.bad{background:var(--badbg);border-color:#f3c9c6;color:var(--bad)}
+  h2{font-size:17px;margin:34px 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:18px 20px;margin:0 0 16px}
+  .card.q{border-left:5px solid var(--accent)}
+  h3{font-size:15.5px;margin:0 0 4px}
+  .why{color:var(--ink2);font-size:13.5px;margin:0 0 12px}
+  .lbl{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--ink2);
+       text-transform:uppercase;margin:16px 0 8px}
+  ul{margin:0;padding-left:20px}li{margin:0 0 6px}
+  code{font:13px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;background:#eef1f4;
+       border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 0}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--ink2);font-weight:600;font-size:12.5px}
+  .opt{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 10px;background:#fcfdfe}
+  .opt.rec{border-color:#bcd3f8;background:var(--accentbg)}
+  .opt h4{margin:0 0 8px;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;letter-spacing:.04em}
+  .pill.rec{background:var(--accent);color:#fff}
+  .pill.no{background:#eceff2;color:var(--ink2)}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.pc{grid-template-columns:1fr}}
+  .pc div{font-size:13.5px}
+  .pc .h{font-weight:700;font-size:12px;letter-spacing:.06em;margin-bottom:4px}
+  .pro .h{color:var(--ok)}.con .h{color:var(--bad)}
+  .callout{background:var(--warnbg);border:1px solid #f0d9b0;border-radius:10px;
+           padding:14px 18px;font-size:14px;margin:0 0 16px}
+  .callout.bad{background:var(--badbg);border-color:#f3c9c6}
+  .callout strong{color:var(--warn)}
+  .callout.bad strong{color:var(--bad)}
+  .reply{background:var(--ink);color:#eef1f5;border-radius:12px;padding:14px 18px;font-size:14px}
+  .reply b{color:#8fd6a8}
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink2);font-size:12.5px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>#676 卡路里设置页 · 第二轮决策单</h1>
+  <p class="sub">第一轮单（同目录 <code>t676-决策单.html</code>）是另一席写的。本张只讲它之后发生的变化，以及你现在还要拍的三件事。</p>
+
+  <div class="strip">
+    <span class="chip ok">#694 <b>已关闭</b></span>
+    <span class="chip ok">#694 代码<b>已提交</b></span>
+    <span class="chip warn">同一票上有 <b>两个席位</b></span>
+    <span class="chip bad">待拍 <b>3 件</b></span>
+  </div>
+
+  <h2>一分钟看懂</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:8.5em">第一轮单里的三条</th><th>现在</th></tr>
+      <tr><td>请关掉 #694</td><td class=""><b>已办</b> —— #694 已于 21:23 关闭；代码也已提交（<code>29dea3f7</code>）</td></tr>
+      <tr><td>技能侧归谁</td><td><b>已由票面评论拍板</b>（用户 2026-09-17）：<b>技能侧也归本票</b>——路径定位改读配置、删掉全部环境变量读取</td></tr>
+      <tr><td>授权装依赖</td><td><b>前提要重看</b>：那条路会撞一道冻结的边界断言，见下面「决策一」</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">所以真正还悬着的只有三件：<b>配置读写走哪条路</b>、<b>两个席位谁继续</b>、<b>11 行怎么分级</b>。</p>
+  </div>
+
+  <h2>决策一：配置读写走哪条路</h2>
+  <div class="card q">
+    <h3>前因</h3>
+    <p class="why">设置页要能读、改、重置 <code>~/.ilife/calorie.yaml</code>。而按 #675 的冻结口径，<b>读写实现住 <code>base-link-core/src/config/</code></b>（#694 已交付）。剩下的问题只有一个：<b>谁来调这套函数</b>。</p>
+
+    <div class="callout bad">
+      <strong>决定性读数</strong>：边界门 <code>test/plugin-p10-boundaries.test.mjs:52</code> 写死了<b>单品（六个 plugin-*）源码不许 import base- 包</b>；
+      而本票验收要求这道门<b>不红</b>。
+      <p class="why" style="margin:8px 0 0">⇒「插件宿主半直接 import <code>base-link-core</code>」这条路，本身与验收冲突：要么改掉那条冻结断言，要么从它的扫描盲区绕过去（那是自欺，我不做）。</p>
+    </div>
+
+    <div class="lbl">两条路</div>
+
+    <div class="opt">
+      <h4>A · 插件直连公共层 <span class="pill no">第一轮席的方案</span></h4>
+      <p class="why" style="margin:0 0 0">插件宿主半自己读写 YAML，再把值注入 spawn 出去的技能子进程环境。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>技能侧不用加「配置面」小件</li><li>值立刻能注入子进程（那 2 项有接缝的先生效）</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li><b>要你点头改一条冻结断言</b>（或绕过它的盲区）</li><li><b>要你持锁授权一次 <code>pnpm install</code></b>（协议 §2.1 禁自行安装）</li><li>本票会开出「插件 → 公共层」的第一条连线，六家插件都要跟着改口径</li></ul></div>
+      </div>
+    </div>
+
+    <div class="opt rec">
+      <h4>B · 经技能 CLI 配置面 <span class="pill rec">推荐</span></h4>
+      <p class="why" style="margin:0 0 0">技能侧加一个小面（读／写／重置三个 key），页面走<b>既有</b>通道：面板 → RPC → <code>spawn</code> 技能 CLI。</p>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li><b>零授权、零依赖安装</b>，今天就能开工</li><li><b>不碰任何边界门</b>，验收第 4 条天然成立</li><li>技能侧本票已经要做，配置面正好一起落；六家照抄时只抄一个小件</li><li>技能改读配置后，值自然生效——不需要往子进程塞环境变量</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>每次读写多起一次技能子进程（既有惯例，百毫秒级）</li><li>卡片「交付物路径」漏写了技能侧那 3 个件（我会在票面记一笔）</li></ul></div>
+      </div>
+    </div>
+
+    <p class="why" style="margin:12px 0 0">➡️ <b>建议走 B</b>：它在「不改门、不装依赖」的前提下满足全部验收；A 想省的那一个小件，代价是改一条冻结边界 ＋ 一次持锁授权。</p>
+  </div>
+
+  <h2>决策二：两个席位谁收口</h2>
+  <div class="card q">
+    <p class="why">第一轮席被「等授权」挡住停手了，本席（这一席）已经把票认领并读完全部口径。
+    认领位分不出席位（两边同一个 GitHub 账号），所以要用你一句话指定。</p>
+    <div class="opt rec">
+      <h4>甲 · 本席继续（按决策一选的路线走到底） <span class="pill rec">推荐</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>本席已核过依赖、门与技能侧体量，可直接开工</li><li>若走 B，第一轮席的卡点自然消失</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>第一轮席已写下的那份单要作废一半</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>乙 · 拆一半给我：技能侧归本席，设置页归第一轮席 <span class="pill no">备选</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>两半正好并行：技能侧是大头（130 个测试件），页面是设计活</li><li>接口只有一处：那 3 个配置 key</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>两席同改一票，要你先定死接口，否则互相踩</li></ul></div>
+      </div>
+    </div>
+    <div class="opt">
+      <h4>丙 · 第一轮席继续，本席退场 <span class="pill no">备选</span></h4>
+      <div class="pc">
+        <div class="pro"><div class="h">利</div><ul><li>它已有一份完整开工读数</li></ul></div>
+        <div class="con"><div class="h">弊</div><ul><li>它仍卡在「授权安装」上，要先答决策一</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>决策三：11 行怎么分级</h2>
+  <div class="card q">
+    <p class="why">冻结口径要求「常用项在页面上，其余进默认收起的『高级』组」；清单以 #673 的产出为准，共 11 项。</p>
+    <table>
+      <tr><th style="width:5.5em">分组</th><th style="width:11em">行</th><th>它是什么（为什么放这组）</th></tr>
+      <tr><td rowspan="5"><b>常用</b></td><td>库目录</td><td>数据文件放哪，填错整个技能跑不起来</td></tr>
+      <tr><td>库文件名</td><td>默认 <code>calorie_data.db</code></td></tr>
+      <tr><td>页面产物目录</td><td>命令产出的 HTML 落在哪</td></tr>
+      <tr><td>身材照目录</td><td>照片来源目录，写侧必填</td></tr>
+      <tr><td>训记 KEY</td><td>外部凭据，一次配好长期有效</td></tr>
+      <tr><td rowspan="6"><b>高级</b><br><span class="why">默认收起</span></td><td>封面 GIF 子目录</td><td>照片目录下的子目录名</td></tr>
+      <tr><td>训记状态文件目录</td><td>限频与同步状态三件的存放处</td></tr>
+      <tr><td>动作模型库来源</td><td>校验动作名用哪份库</td></tr>
+      <tr><td>跨技能出口</td><td>调作息／备忘 CLI 的路径（两个输入）</td></tr>
+      <tr><td>外部调用限时</td><td>调训记／落地训练的超时秒数（两个输入）</td></tr>
+      <tr><td>回写默认天数</td><td>拉训记实绩不给天数时的默认窗口</td></tr>
+    </table>
+    <p class="why" style="margin:12px 0 0">➡️ <b>建议按上表分</b>：常用那 5 行是「不配就跑不通／要长期用」的；高级那 6 行都是机器相关、改错代价高、几乎不动。要挪哪一行直接说。
+    <br>另：调查补出的「产物文件名主体」（三个值）不在 #673 的 11 项里，本票不列，按遗留出口记进 <code>docs/plugins/plugin-calorie/</code>。</p>
+  </div>
+
+  <h2>你可以直接回我这句话</h2>
+  <div class="reply">
+    <b>决策一</b>：走 B ／ 走 A（并授权安装＋允许改那条断言）<br>
+    <b>决策二</b>：本席继续 ／ 拆一半 ／ 第一轮席继续<br>
+    <b>决策三</b>：照推荐分 ／ 把＿＿挪到常用／高级
+  </div>
+
+  <footer>
+    <p>出处：<a href="https://github.com/FeatherHunter/ilife/issues/676">#676</a>（票面评论：范围扩充＋加两条验收；第二评论：本席开工读数与卡点） ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/694">#694</a>（配置件，已关） ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/675">#675</a>（存与生效口径） ·
+      <a href="https://github.com/FeatherHunter/ilife/issues/671">#671</a>（地图）</p>
+    <p>关键读数：<code>test/plugin-p10-boundaries.test.mjs:52</code>（单品不许 import base- 包，正则 <code>/from\s+['"]base-/</code>）·
+      写集：技能侧 130 个测试件挂 <code>SKILLS_DB_PATH</code>（<code>Select-String -List</code> 读数）·
+      本张落点 <code>docs/plugins/plugin-calorie/t676-决策单-第二轮.html</code></p>
+  </footer>
+
+</div>
+</body>
+</html>
