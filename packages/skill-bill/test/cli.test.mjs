@@ -88,7 +88,11 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
   });
   it('goal/account 写读闭环（写走 receipt）', () => {
     assert.equal(run(['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3000 })]).status, 0);
-    assert.equal(run(['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3000 })]).status, 2);
+    // #730 起同月同类已存在走**阻断页**（exit 0、ok:false、不写库）——照 #688 裁定 9 的同一路径，
+    // 与账户域「撞重名」同一处置；本条此前按搬迁前那份过渡实现断言 exit 2（一句 POLICY_CONFLICT 错误串）。
+    const conflict = run(['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3000 })]);
+    assert.equal(conflict.status, 0, '冲突应出阻断页而不是报错退出');
+    assert.equal(JSON.parse(conflict.stdout).data.ok, false);
     assert.equal(run(['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3500, force: true })]).status, 0);
     assert.match(JSON.parse(run(['bill.goal.query', '--params', P({ op: 'budget', month: '2026-09' })]).stdout).data.items[0].month, /2026-09/);
     assert.equal(run(['bill.account.write', '--params', P({ op: 'add', name: '招行卡' })]).status, 0);
