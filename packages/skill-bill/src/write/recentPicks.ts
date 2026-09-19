@@ -7,7 +7,7 @@
 
  * 本件只吃普通数据、零跨目录引用：入参是「近期记录那几列」与「本次参数」这种普通数据，
  *  **不引** `src/write/` 下的件，也不认 `CollectInput` 这类页面入参形状。可引的只有
- *  `src/fetch/db.ts`（记录行的数据形状）与 `src/policy/category.ts`（缺省那一格）。
+ *  `src/fetch/db.ts`（记录行的数据形状）与 `src/shared/category.ts`（缺省那一格）。
 
  * 口径（一处定义，别处不许再写第二份）：
  *   - 候选上限**十二个**（`PICK_LIMIT`）：三枚选择器共用这一个数；
@@ -16,7 +16,7 @@
  *   - 一个字段的选项＝候选 ＋ 本次已给的值（已给的值不在候选里时并到队首，免得表单把它显示没了）。
  */
 import type { BillRow } from '../fetch/db.js';
-import { DEFAULTS } from '../policy/category.js';
+import { DEFAULTS } from '../shared/category.js';
 
 /** 候选选择器的取数上限（三枚选择器：分类／账户／账本）。**收在件内**：外面不需要知道这个数。 */
 const PICK_LIMIT = 12;

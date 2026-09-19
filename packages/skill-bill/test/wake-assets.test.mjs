@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import {
   WAKE_GROUPS, WAKE_ASSETS, SCENE_BY_ID, WAKE_ASSET_TOTAL, HELP_WAKE_WORDS,
 } from '../dist/triggers/wake-assets.js';
-import { WAKE_TABLE } from '../dist/policy/index.js';
+import { WAKE_TABLE } from '../dist/triggers/wakeTable.js';
 
 /** 本票新增的 3 条（老实物无；= 现表比老 HELP 多出的 3 条）。 */
 const ADDED_IDS = new Set(['write_record', 'query_bills', 'query_bill_detail']);

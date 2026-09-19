@@ -16,7 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REGISTRY } from '../dist/cli/registry.js';
 import { runQueryRead } from '../dist/query/index.js';
-import { WAKE_TABLE, projectWakeWord } from '../dist/policy/index.js';
+import { WAKE_TABLE, projectWakeWord } from '../dist/triggers/wakeTable.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');

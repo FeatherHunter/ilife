@@ -1,6 +1,17 @@
-// 口径层·分类与金额（老家 references/categories.md + scripts/validators.py 对应）。
-// 支出 L1 10 + 收入 L1 6 + 借贷/分期/转账隔离；amount 符号即分类依据（支出负/收入正），不单设 type 列。
+/** 共用位·分类与金额口径（#689 结构搬迁第三批：从 `src/policy/category.ts` 来）。
+ *  支出 L1 10 ＋ 收入 L1 6 ＋ 借贷／分期／转账隔离；`amount` 符号即分类依据（支出负／收入正），不单设 `type` 列。
+ *  同一件拆出的另一半是 `./dateRange.ts`（日期与时间窗口），两件互不反向依赖。
+ *
+ *  谁在用（指名，路径随 #689 搬迁改成新家）：
+ *    · `src/write/`——`collectBody.ts`／`photoEscape.ts`（三级分类候选与 `ALL_L1`）·
+ *      `record.ts`（`validateCategory`／`validateAmount`／`validateRecord`）·
+ *      `prefillNote.ts`／`recentPicks.ts`／`template-batch.ts`（`DEFAULTS`）· `summaryRow.ts`（`l1Of`）；
+ *    · `src/query/read.ts`——「查分类」那条条件的 `validateCategory`；
+ *    · `src/cli/cmd_read.ts`——导入 CSV 那一支的 `validateCategory`（外壳）；
+ *    · `src/shared/kpi.ts`——总览的分档前缀取 `l1Of`。
+ *  两域（write／query）＋外壳在用它 ⇒ 住共用位（归属律 2）。 */
 import { BillPolicyError } from '../fetch/errors.js';
+import { defaultTimeOn, validateTime } from './dateRange.js';
 
 export const EXPENSE_L1 = ['餐饮', '居家', '穿着', '出行', '玩乐', '学习', '健康', '社交', '宠物', '其他'] as const;
 export const INCOME_L1 = ['工资', '奖金', '兼职', '投资', '其他收入', '退款'] as const;
@@ -9,15 +20,6 @@ export const ALL_L1 = [...EXPENSE_L1, ...INCOME_L1, ...SPECIAL_L1] as const;
 export type BillL1 = (typeof ALL_L1)[number];
 
 export const DEFAULTS = { account: '', ledger: '生活', currency: '人民币', note: '' } as const;
-
-/** 只给日期不给时分秒时的缺省时刻（**唯一定义地**）：`validateTime` 补出整串，页面侧的预填标注引这一份。
- *  改这一条就是改全仓的缺省时刻，别处不得再写第二份 `12:00:00` 字面量。 */
-export const DEFAULT_TIME_SUFFIX = '12:00:00';
-
-/** 缺省时刻的整串形态：`YYYY-MM-DD` ＋ 上面那份（页面文案与库内取值同一句）。 */
-export function defaultTimeOn(date: string): string {
-  return date + ' ' + DEFAULT_TIME_SUFFIX;
-}
 
 export function l1Of(category: string): string {
   return category.split('/')[0].trim();
@@ -54,56 +56,12 @@ export function validateAmount(raw: unknown): number {
   return Math.round(n * 100) / 100;
 }
 
-export const DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}):(\d{2}))?$/;
-export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-export const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function realDate(y: number, m: number, d: number): boolean {
-  const dt = new Date(y, m - 1, d);
-  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
-}
-
-// 时间：YYYY-MM-DD HH:mm:ss 或 YYYY-MM-DD（补 12:00:00）；非法阻断。
-export function validateTime(raw: unknown): string {
-  if (typeof raw !== 'string' || raw.trim().length === 0) {
-    throw new BillPolicyError('POLICY_BAD_TIME', 'time 不能为空');
-  }
-  const s = raw.trim().replace(/\//g, '-');
-  const m = DATETIME_RE.exec(s);
-  if (!m) throw new BillPolicyError('POLICY_BAD_TIME', 'time 格式非法');
-  const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3]);
-  if (!realDate(y, mo, d)) throw new BillPolicyError('POLICY_BAD_TIME', 'time 非真实日期');
-  if (m[4] === undefined) return defaultTimeOn(s);
-  const hh = Number(m[4]); const mm = Number(m[5]); const ss = Number(m[6]);
-  if (hh > 23 || mm > 59 || ss > 59) throw new BillPolicyError('POLICY_BAD_TIME', 'time 时分秒非法');
-  return s;
-}
-
-export function normalizeDate(d: unknown, field = 'date'): string {
-  if (typeof d !== 'string' || d.trim().length === 0) {
-    throw new BillPolicyError('POLICY_BAD_TIME', field + ' 须为日期字符串');
-  }
-  let s = d.trim().replace(/\//g, '-').replace(/\./g, '-');
-  if (/^\d{8}$/.test(s)) s = s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6);
-  if (!DATE_RE.test(s)) throw new BillPolicyError('POLICY_BAD_TIME', field + ' 格式非法');
-  const parts2 = s.split('-').map(Number);
-  if (!realDate(parts2[0], parts2[1], parts2[2])) throw new BillPolicyError('POLICY_BAD_TIME', field + ' 非真实日期');
-  return s;
-}
-
-export function normalizeMonth(m: unknown, field = 'month'): string {
-  if (typeof m !== 'string' || !MONTH_RE.test(m.trim())) {
-    throw new BillPolicyError('POLICY_BAD_TIME', field + ' 格式非法');
-  }
-  return (m as string).trim();
-}
-
 export interface BillRecordInput {
   category: string; amount: number; time: string;
   account: string; ledger: string; currency: string; note: string;
 }
 
-// 整单校验：7 字段（account/ledger/currency/note 可缺省）；坏输入阻断。
+// 整单校验：7 字段（account/ledger/currency/note 可缺省）；坏输入阻断。时刻的补法引 `./dateRange.js`（真源一处）。
 export function validateRecord(raw: Record<string, unknown>): BillRecordInput {
   const category = validateCategory(raw.category);
   const amount = validateAmount(raw.amount);

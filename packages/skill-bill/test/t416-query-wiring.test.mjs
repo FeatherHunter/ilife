@@ -7,8 +7,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WAKE_TABLE, routeWakeword, buildHelpLookup, BILL_KEY_SHAPES,
+  buildHelpLookup, BILL_KEY_SHAPES,
 } from '../dist/index.js';
+import { WAKE_TABLE, routeWakeword } from '../dist/triggers/wakeTable.js';
 import { WAKE_GROUPS, WAKE_ASSETS } from '../dist/triggers/wake-assets.js';
 
 const here = dirname(fileURLToPath(import.meta.url));

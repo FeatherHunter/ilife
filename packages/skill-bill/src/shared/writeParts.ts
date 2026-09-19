@@ -1,6 +1,8 @@
 /** 写命令回执的共用件（**唯一定义地**）：回执事实的形状（`BillReceipt`）＋ 影响行数口径（`totalChanges`）
  *  ＋ 页面的 `<section>` 段（`writeSection`）＋ 命令原文（`commandLine`）。**对外五件**；三字符转义（`esc`）只在本件内部
  *  给 `writeSection` 用，不转出去（铁律五：接口小、里面厚）。
+ *  回执事实里 `op` 的取值集 `RecordOp` 住共用位 `./params.js`（#689 起：它与 `id` 槽位守卫同住一件，
+ *  两边都是跨域参数口径）——本件只把它取来当 `BillReceipt.op` 的类型，不另立一份取值面。
  *
  * 谁在用（两个能力，指名）：
  *   ① `src/write/`——写入域：两条写命令的处理体（影响行数取前后差、回执事实在这里装配、命令原文在这里拼），
@@ -20,7 +22,7 @@
  *   两者混用会静默改产物（`docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第二节 `esc` 行）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import type { RecordOp } from '../policy/record.js';
+import type { RecordOp } from './params.js';
 import { DOC_SKILL, sceneKeyOf } from './pageIdentity.js';
 
 /** 一次写库的事实（回执页与复制日志都读它）。

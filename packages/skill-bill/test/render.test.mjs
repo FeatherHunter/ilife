@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { BILL_KEY_SHAPES, billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize, fillTemplate, BILL_TEMPLATES, templateFor, loadTemplate, calcKpi, buildOverview, buildTrend, BillRenderError } from '../dist/index.js';
+import { BILL_KEY_SHAPES, billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize, fillTemplate, BILL_TEMPLATES, templateFor, loadTemplate, BillRenderError } from '../dist/index.js';
+// #689 结构搬迁第三批：`src/render/views.ts` 已拆散删除，KPI 口径与三种结果装配各回新家。
+import { calcKpi } from '../dist/shared/kpi.js';
+import { buildOverview, buildTrend } from '../dist/analysis/views.js';
 import { parseRegistryKey, ENVELOPE_SHAPES } from '../../base-link-core/dist/index.js';
 
 describe('饼干渲染 render', () => {

@@ -1,38 +1,18 @@
-// 页面交付·视图数据装配：DB 行 → 16 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
-// KPI：笔数/支出（绝对值累计）/收入/净额；转账分类 转账/* 不入收支统计，余额另计。
-// 查询域四条命令（today/range/search/detail）的取数与数据装配已随 #411 搬进 `src/query/read.ts`：
-// 本件留 KPI 口径（`calcKpi`——查询域与分析域共用，是本包唯一一份）与行投影（`toBillItem`／`BillItem`）。
+/** 分析域·结果载荷装配件（#689 结构搬迁第三批：从 `src/render/views.ts` 拆来）。
+ *  DB 行 → 分析域的 envelope 载荷（全字段，不返空冒充由调用方缺失阻断）：
+ *    · `calcCategories`——分类聚合（支出侧绝对值降序，转账除外）；
+ *    · `buildOverview`——总览（stat metrics：count/expense/income/net ＋ l1.* ＋ days 全 number）；
+ *    · `buildCompare`——对比（analysis summary：两聚合 ＋ 差异句，数字全来自实算）；
+ *    · `buildTrend`——趋势／排行／洞察（analysis summary：按月聚合 ＋ Top／高频／分布／异常句）。
+ *  收支口径（`calcKpi`／`isTransfer`）取 `../shared/kpi.js`（真源一处，本件不重算）；一级分类取
+ *  `../shared/category.js` 的 `l1Of`。
+ *
+ *  谁在用（指名）：`src/cli/cmd_read.ts` 的 analysis 分支（三条未迁移命令的分派，经 `./index.js` 门取）·
+ *    `src/query/read.ts`（查分类的分类聚合与占比，经同一道门取 `calcCategories`）。
+ *  命令搬进本域后由本域处理体消费，门外的那两处随之收窄。 */
 import type { BillRow } from '../fetch/db.js';
-import { l1Of } from '../policy/category.js';
-
-export interface BillItem {
-  id: number; category: string; time: string; amount: number;
-  account: string; ledger: string; currency: string; note: string;
-}
-
-export function toBillItem(r: BillRow): BillItem {
-  return {
-    id: r.id, category: r.category, time: r.time, amount: r.amount,
-    account: r.account, ledger: r.ledger, currency: r.currency, note: r.note,
-  };
-}
-
-function isTransfer(r: BillRow): boolean {
-  return r.ledger === '转账' || r.category.startsWith('转账/');
-}
-
-// KPI（转账除外）：count/expense/income/net 全 number。
-export function calcKpi(records: BillRow[]): { count: number; expense: number; income: number; net: number } {
-  const real = records.filter((r) => !isTransfer(r));
-  let expense = 0; let income = 0;
-  for (const r of real) {
-    if (r.amount < 0) expense += Math.abs(r.amount);
-    else income += r.amount;
-  }
-  expense = Math.round(expense * 100) / 100;
-  income = Math.round(income * 100) / 100;
-  return { count: real.length, expense, income, net: Math.round((income - expense) * 100) / 100 };
-}
+import { l1Of } from '../shared/category.js';
+import { calcKpi, isTransfer } from '../shared/kpi.js';
 
 // 分类聚合（支出侧绝对值降序，转账除外）。
 export function calcCategories(records: BillRow[]): { category: string; total: number; count: number }[] {
@@ -48,11 +28,6 @@ export function calcCategories(records: BillRow[]): { category: string; total: n
   const out = [...agg.values()].sort((a, b) => b.total - a.total);
   for (const it of out) it.total = Math.round(it.total * 100) / 100;
   return out;
-}
-
-// 单条/回执：items 与 total 由查询域与分析域各自装配，本件只留回执那一条的载荷形状。
-export function buildRecordReceipt(message: string): { ok: boolean; message: string } {
-  return { ok: true, message };
 }
 
 // 总览：stat metrics（count/expense/income/net + l1.* + days 全 number）。
@@ -105,21 +80,4 @@ export function buildTrend(kind: string, records: BillRow[], opts: { limit?: num
     else lines.push('样本不足，无显著异常。');
   }
   return { summary: lines.join('\n') };
-}
-
-// 目标/账户查询：list（items + total；预算执行/余额由调用方实算装配）。
-export function buildGoalQuery(op: string, items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number; op: string } {
-  return { items, total: items.length, op };
-}
-
-export function buildAccountQuery(items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number } {
-  return { items, total: items.length };
-}
-
-// HELP 现找：list（短语→key/cli/一句话，构建期快照进 SKILL.md，运行时按需过滤）。
-export interface HelpItem { phrase: string; key: string; shape: string; cli: string; desc: string; }
-
-export function buildHelpItems(all: HelpItem[], q?: string): { items: HelpItem[]; total: number } {
-  const items = !q || !q.trim() ? all : all.filter((h) => (q as string).includes(h.phrase) || h.phrase.includes((q as string).trim()));
-  return { items, total: items.length };
 }

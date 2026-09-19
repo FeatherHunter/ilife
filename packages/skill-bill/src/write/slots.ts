@@ -9,12 +9,12 @@
  * 「一条命令要哪些槽位、哪个必需」与「表单怎么摆」原本同住一件；本票按场景拆件时把前者单独搬到这里，
  *  理由：场景件只管自己那张页怎么摆，槽位表是两条命令共有的**事实**，搬进场景件就会各抄一份。
  *
- * 必需性照 `src/policy/category.ts` 的 `validateRecord`：分类与金额没有缺省值（必需），
+ * 必需性照 `src/shared/category.ts` 的 `validateRecord`：分类与金额没有缺省值（必需），
  *  时间／账户／账本／币种／备注都有缺省值（可缺）。七槽里的「名目」没有库列：它落在三级分类的最后一段
  *  （如 `餐饮/外卖/午餐`）或备注里，提示里写明。
  *  `missingSlots` 只做「在不在」的探针；方向不符那一半住 `../shared/blockedSlots.ts` 的 `blockedItems`，
  *  **只服务录入路径**（`bill.record.add` 采集页传 `kind`；`bill.record.update` 那一支不判方向）。
- *  真值校验仍走 `src/policy` 的 `validateAddInput`／`validateUpdateInput`（阻断项清空后才走到那一步）。
+ *  真值校验仍走 `./record.js` 的 `validateAddInput`／`validateUpdateInput`（阻断项清空后才走到那一步）。
  */
 import { fieldLabelOf } from './userWording.js';
 

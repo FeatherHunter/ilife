@@ -42,7 +42,7 @@ interface BlockedProbe {
   readonly kind: string;
 }
 
-/** 金额解析：认数字与非空数字串；解析不了就不在这里判方向（那是 `src/policy` 的活，报错不静默）。 */
+/** 金额解析：认数字与非空数字串；解析不了就不在这里判方向（那是 `src/shared/category.ts` 的活，报错不静默）。 */
 function amountOf(raw: unknown): number | null {
   const n = typeof raw === 'string' && raw.trim() !== '' ? Number(raw.trim()) : raw;
   if (typeof n !== 'number' || !Number.isFinite(n)) return null;

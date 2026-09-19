@@ -15,7 +15,7 @@ import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { routeWakeword } from '../dist/policy/index.js';
+import { routeWakeword } from '../dist/triggers/wakeTable.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');

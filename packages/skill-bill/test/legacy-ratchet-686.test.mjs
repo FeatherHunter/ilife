@@ -17,7 +17,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { WAKE_TABLE } from '../dist/index.js';
+import { WAKE_TABLE } from '../dist/triggers/wakeTable.js';
 import { REGISTRY } from '../dist/cli/registry.js';
 import { FROZEN, PKG_DIR, cliDispatchKeysOf, ratchetProblems, transitionKeysOf } from '../scripts/ratchet-frozen-686.mjs';
 

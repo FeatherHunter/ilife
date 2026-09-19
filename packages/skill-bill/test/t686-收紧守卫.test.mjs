@@ -40,7 +40,7 @@ function makeFixture(root, opt = {}) {
   mkdirSync(join(root, 'src', 'cli'), { recursive: true });
   mkdirSync(join(root, 'src', 'render'), { recursive: true });
   mkdirSync(join(root, 'dist', 'cli'), { recursive: true });
-  mkdirSync(join(root, 'dist', 'policy'), { recursive: true });
+  mkdirSync(join(root, 'dist', 'triggers'), { recursive: true });
   if (opt.dispatchKeys !== null) {
     const body = ['function dispatch(key) {', '  switch (key) {',
       ...dispatchKeys.map((k) => "    case '" + k + "': return 1;"), '  }', '}'].join('\n');
@@ -53,7 +53,7 @@ function makeFixture(root, opt = {}) {
   }
   if (opt.dist !== false) {
     writeFileSync(join(root, 'dist', 'cli', 'registry.js'), 'export const REGISTRY_KEYS = ' + JSON.stringify(registryKeys) + ';\n', 'utf8');
-    writeFileSync(join(root, 'dist', 'policy', 'index.js'), 'export const WAKE_TABLE = ' + JSON.stringify(wakeKeys.map((k) => ({ phrase: '词-' + k, key: k }))) + ';\n', 'utf8');
+    writeFileSync(join(root, 'dist', 'triggers', 'wakeTable.js'), 'export const WAKE_TABLE = ' + JSON.stringify(wakeKeys.map((k) => ({ phrase: '词-' + k, key: k }))) + ';\n', 'utf8');
   }
   return root;
 }

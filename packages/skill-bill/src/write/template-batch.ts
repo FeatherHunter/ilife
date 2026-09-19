@@ -30,7 +30,7 @@
  */
 import type { SerializableEnvelope } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
-import { DEFAULTS } from '../policy/category.js';
+import { DEFAULTS } from '../shared/category.js';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
@@ -148,7 +148,7 @@ function promptOf(word: string, lines: number, blocked: readonly BlockedItem[]):
   return head + tail;
 }
 
-/** 账本与币种留空按缺省落库那条：浅色静态提示，缺省值取 `../policy/category.js`，页内不另写一份。 */
+/** 账本与币种留空按缺省落库那条：浅色静态提示，缺省值取 `../shared/category.js`，页内不另写一份。 */
 function defaultNotice(): string {
   return renderFeedbackBlock({
     toast: {

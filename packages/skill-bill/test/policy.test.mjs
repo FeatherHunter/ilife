@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCategory, validateAmount, validateTime, validateRecord, normalizeDate, l1Of, routeWakeword, WAKE_TABLE, BillPolicyError } from '../dist/index.js';
+// #689 结构搬迁第三批：`src/policy/` 已拆散删除，这些名字各回新家（包门只许收窄，不再转出它们）。
+import { validateCategory, validateAmount, validateRecord, l1Of } from '../dist/shared/category.js';
+import { validateTime, normalizeDate } from '../dist/shared/dateRange.js';
+import { routeWakeword, WAKE_TABLE } from '../dist/triggers/wakeTable.js';
+import { BillPolicyError } from '../dist/fetch/index.js';
 
 describe('饼干口径 policy', () => {
   it('L1 10支出+6收入+隔离三类 + 三级上限', () => {

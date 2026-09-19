@@ -19,7 +19,8 @@ import { strict as assert } from 'node:assert';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { BILL_KEY_SHAPES, WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/index.js';
+import { BILL_KEY_SHAPES } from '../dist/index.js';
+import { WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/triggers/wakeTable.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 import { FROZEN, PKG_DIR, cliDispatchKeysOf, dispatchLiteralsOf } from '../scripts/ratchet-frozen-686.mjs';
 

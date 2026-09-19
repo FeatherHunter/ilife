@@ -54,7 +54,7 @@ export type QueryTableRow = {
   readonly note: string;
 };
 
-/** KPI 行四格的事实（口径来自 `../render/views.js` 的 `calcKpi`，本件只排版、不重算）。 */
+/** KPI 行四格的事实（口径来自 `../shared/kpi.js` 的 `calcKpi`，本件只排版、不重算）。 */
 export type QueryKpi = {
   readonly count: number;
   readonly expense: number;
@@ -72,7 +72,7 @@ export type QueryCategoryRow = {
 };
 
 /** 列表页的出口载荷（＝envelope `data`）：`items`／`total` 是表里形状的要求，其余是本域给页面看的窗口事实。
- *  `items` 是**搬迁前那一份行**（`../render/views.js` 的 `toBillItem` 形状：`id`／`amount` 是数，
+ *  `items` 是**搬迁前那一份行**（`./items.js` 的 `toBillItem` 形状：`id`／`amount` 是数，
  *  下游拿它回查详情），与页面表格行（`QueryTableRow`，文本化）是两件事——一份给机器、一份给人。
  *  **显示上限只截页面那一份**：`items` 照老侧语义仍是本窗全量（老侧 `slice(0,200)` 也只截显示）。 */
 export type QueryListData = {

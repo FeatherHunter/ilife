@@ -31,7 +31,7 @@ export interface WakeRoute { readonly key: BillKey; readonly params: Record<stri
 
 /** 路由项（＝域声明里去掉场景的那半）；`needs`＝必需槽位（给不出就在路由层报错）；
  *  `carries`＝**不拦**、上下文里给了就带下去的槽位（改记录／撤销／恢复三条词的 `id` 住这里）。
- *  分两格的理由见 `src/policy/wakewords.ts` 的旧注释（逐字保留在本件的 `WakeEntry` 上）。 */
+ *  分两格的理由见本件的 `WakeEntry`（逐字保留自旧的 `src/policy/wakewords.ts`——那件已随 #689 第三批删掉）。 */
 export interface WakeEntry {
   readonly phrase: string;
   readonly key: BillKey;

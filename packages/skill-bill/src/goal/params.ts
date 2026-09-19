@@ -1,7 +1,12 @@
-// 口径层·目标 params 校验（老家 goal/cli.py 对应：set-budget/budget/set-saving/saving）。
-// 覆盖语义：同月同分类预算已存在默认拒绝（conflict），AI 层提示用户确认后加 --force 重跑。
+/** 目标域·命令参数校验（#689 结构搬迁第三批：从 `src/policy/goals.ts` 来）。
+ *  老家 `goal/cli.py` 对应：set-budget/budget/set-saving/saving。
+ *  覆盖语义：同月同分类预算已存在默认拒绝（conflict），AI 层提示用户确认后加 `--force` 重跑。
+ *  月份与截止日的归一取 `../shared/dateRange.js`（真源一处）。
+ *
+ *  谁在用（指名）：`src/cli/cmd_read.ts` 的 goal 分支（两条未迁移命令的分派）——随命令搬进本域后
+ *    由本域处理体经 `./index.js` 取。 */
 import { BillPolicyError } from '../fetch/errors.js';
-import { normalizeMonth, normalizeDate } from './category.js';
+import { normalizeMonth, normalizeDate } from '../shared/dateRange.js';
 
 export type GoalOp = 'set-budget' | 'budget' | 'set-saving' | 'saving';
 

@@ -4,8 +4,10 @@ export { BILL_HTML_MAX_BYTES, renderEnvelopeHtml, estimateBytes, assertHtmlSize,
 export { escapeHtml } from 'base-paint';
 export { BILL_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { BillTemplate } from './templates.js';
-export { toBillItem, calcKpi, calcCategories, buildRecordReceipt, buildOverview, buildCompare, buildTrend, buildGoalQuery, buildAccountQuery, buildHelpItems } from './views.js';
-export type { BillItem, HelpItem } from './views.js';
+// #689 结构搬迁第三批：原 `export { … } from './views.js'` 两行随 `views.ts` 的拆散**删除**——
+// 那些名字按归属律散回各自的家（`../shared/kpi.js`／`../query/items.js`／`../analysis/views.js`／
+// `../write/receiptOut.js`／`../goal/query.js`／`../account/query.js`／`../help/items.js`），
+// 由消费方直接取新家，不再经本模块与包门转出（包门只许收窄）。
 export {
   HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
   formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,

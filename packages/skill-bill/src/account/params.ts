@@ -1,5 +1,10 @@
-// 口径层·账户 params 校验（老家 account/cli.py 对应：add/update/transfer/summary）。
-// 转账 = 两笔 #转账（转出支出 + 转入收入），分类 转账/转出 | 转账/转入，账本 转账，不入收支统计由 views 过滤。
+/** 账户域·命令参数校验（#689 结构搬迁第三批：从 `src/policy/accounts.ts` 来）。
+ *  老家 `account/cli.py` 对应：add/update/transfer/summary。
+ *  转账 = 两笔 #转账（转出支出 + 转入收入），分类 转账/转出 | 转账/转入，账本 转账，
+ *  不入收支统计由 `src/shared/kpi.ts` 的 `isTransfer` 过滤。
+ *
+ *  谁在用（指名）：`src/cli/cmd_read.ts` 的 account 分支（两条未迁移命令的分派）——随命令搬进本域后
+ *    由本域处理体经 `./index.js` 取。 */
 import { BillPolicyError } from '../fetch/errors.js';
 
 export type AccountOp = 'add' | 'update' | 'transfer' | 'summary';

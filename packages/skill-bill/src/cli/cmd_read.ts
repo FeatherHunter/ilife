@@ -10,32 +10,32 @@ import {
   fetchAll, listRange,
   addBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
-import {
-  resolveRange, parseOverviewKind, parseCompareKind, parseTrendKind,
-  monthRange,
-  parseGoalOp, validateSetBudget, validateSetSaving,
-  parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY, TRANSFER_LEDGER,
-  validateCategory,
-} from '../policy/index.js';
+// #689 结构搬迁第三批：`policy/` 与 `render/views.ts` 已拆散删除，下列名字按归属律各回自己的域／共用位
+// （`../shared/` 三件、`../analysis/`、`../goal/`、`../account/`、`../help/`、`../write/`、`../query/`）——
+// 外壳只认各域的门（一个命令族一处；随命令迁移收窄）。
+import { parseOverviewKind, parseCompareKind, parseTrendKind, buildOverview, buildCompare, buildTrend } from '../analysis/index.js';
+import { parseGoalOp, validateSetBudget, validateSetSaving, buildGoalQuery } from '../goal/index.js';
+import { parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY,
+  TRANSFER_LEDGER, buildAccountQuery } from '../account/index.js';
+import { monthRange, resolveRange } from '../shared/dateRange.js';
+import { validateCategory } from '../shared/category.js';
 import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize,
   templateFor, loadTemplate, fillTemplate,
-  toBillItem, buildRecordReceipt, buildOverview, buildCompare, buildTrend,
-  buildGoalQuery, buildAccountQuery, buildHelpItems,
   buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
   HELP_FILE_STEM, LOOKUP_FILE_STEM, HELP_HTML_DIR_NAME,
   BillRenderError,
 } from '../render/index.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
-import { buildHelpLookup } from '../help/index.js';
+import { buildHelpLookup, buildHelpItems } from '../help/index.js';
 import { REGISTRY } from './registry.js';
 // #677 · 设置页的三个配置 key 由本文件在**预检与分派层之前**拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { runRecordWrite } from '../write/index.js';
-import { runQueryRead } from '../query/index.js';
+import { buildRecordReceipt, runRecordWrite } from '../write/index.js';
+import { runQueryRead, toBillItem } from '../query/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -54,8 +54,8 @@ function preflight(): string {
 }
 
 /* 时间窗口（周／月／昨天）与日期归一不再是本文件的文件级函数：查询域搬迁（#411）时它们被
- * 查询的四条命令与分析的三个命令同时需要，已按口径层的位置搬进 `src/policy/record.ts`，
- * 出口经 `src/policy/index.ts` 转出（`monthRange`／`weekRange`／`yesterdayStr`）——本文件照旧引用它们。 */
+ * 查询的四条命令与分析的三个命令同时需要，按口径层的位置摆正；#689 第三批随 `policy/` 拆散落进
+ * `src/shared/dateRange.ts`（`monthRange`／`weekRange`／`yesterdayStr` 等）——本文件引用的是新家。 */
 
 /* ── #144 · 「饼干记账help」的交付装配（**在开库之前**走） ────────────────────────────────
  *
@@ -152,7 +152,7 @@ function runRegistered(key: string, params: Record<string, unknown>): WriteOut |
   }
 }
 
-// 十六条命令分发：读走 fetch 读，写走 fetch 写+policy 校验；未知命令名上游已拦，此处再拦一道。
+// 十六条命令分发：读走 fetch 读，写走 fetch 写+各域门的校验；未知命令名上游已拦，此处再拦一道。
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const goalsPath = resolveGoalsPath();

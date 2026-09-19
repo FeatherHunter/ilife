@@ -106,7 +106,7 @@ const canonical = (rows) => JSON.stringify(rows.map((s) => [s.id, s.title, s.wak
 
 describe('#721 · 结构性判据：一条唤醒词只准住它所属那份域声明', () => {
   it('非声明件的代码文本里，整串字面量命中即红（title 值位除外）', async () => {
-    const { WAKE_TABLE } = await import('../dist/index.js');
+    const { WAKE_TABLE } = await import('../dist/triggers/wakeTable.js');
     const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
     const allowed = new Set(DECLARATION_FILES.map((f) => f.replace(/\//g, '\\')));
     const hits = [];
@@ -145,7 +145,7 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
   });
 
   it('词 → 命令 表逐条与改前相同（77 条，按词排序后摘要锁）', async () => {
-    const { WAKE_TABLE } = await import('../dist/index.js');
+    const { WAKE_TABLE } = await import('../dist/triggers/wakeTable.js');
     assert.equal(WAKE_TABLE.length, 77);
     const pairs = WAKE_TABLE.map((e) => [e.phrase, e.key]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
     assert.equal(createHash('sha256').update(JSON.stringify(pairs), 'utf8').digest('hex'), ROUTE_DIGEST);

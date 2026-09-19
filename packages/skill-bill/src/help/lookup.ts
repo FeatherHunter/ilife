@@ -1,5 +1,6 @@
-// HELP 速查：WAKE_TABLE 唯一上游；短语→key/cli/一句话。构建期注入 SKILL.md（scripts/build-help.mjs）。
-import { WAKE_TABLE, type BillKey } from '../policy/index.js';
+// HELP 速查：WAKE_TABLE 唯一上游（`src/triggers/wakeTable.ts`）；短语→key/cli/一句话。构建期注入 SKILL.md（scripts/build-help.mjs）。
+import { WAKE_TABLE } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { BILL_KEY_SHAPES } from '../render/index.js';
 
 export interface HelpHit { phrase: string; key: BillKey; shape: string; cli: string; desc: string; }

@@ -3,26 +3,27 @@
  *  `bill.record.range`（查周／查月／查区间／查分类／查账户／查账本）／
  *  `bill.record.search`（搜备注／查标签／查欠款／查待报销／查分期）／
  *  `bill.record.detail`（查账单详情）。一条命令一处，出口 `src/cli/cmd_read.ts` 只查注册表再调本域的门。
- *
  * **红线（本域既有语义，本次搬迁一字不改，逐条有测试钉着）**：
  *   - 空查询不返全量：`search` 既没 `q` 也没 `kind` → exit 2；`range` 既没 start/end 也没条件 → exit 2；
  *   - 坏输入阻断不冒充正常：区间查不到记录 → exit 4（不出一张空表冒充「查过了」）；`detail` 查无此号 → exit 4；
- *   - `#tag` 精确匹配走取数层的 `listByTag`（本件不重写比对）；
- *   - 时间缺时分由 `../policy` 的 `resolveQueryDate`／`resolveRange` 补，本件不自己算日期。
- *
- * 分工：取数走 `../fetch`、口径走 `../policy`、整页装配走 `./list.js`；本件只做**编排与页面入参装配**。
- * KPI 的四项口径（`calcKpi`）与行投影（`toBillItem`）引 `../render/views.js` 的同名件——分析域三条命令与
- * 写域回执也在用同一份（搬迁债务记在这里）。查询没有「阻断改出过程型页」那一支：缺参即错误回执，
- * 页面只在真取到数（哪怕是零行）时出。
+ *   - `#tag` 精确匹配走取数层的 `listByTag`（本件不重写比对）；时间缺时分由 `../shared/dateRange.js` 补，本件不自己算日期。
+ * 分工：取数走 `../fetch`；口径走 `../shared/`（分类／日期窗口／`id` 槽位／KPI）；分类聚合走 `../analysis/index.js` 门
+ * （域→域只经对方的门）；行投影住 `./items.js`、整页装配走 `./list.js`——本件只做**编排与页面入参装配**。
+ * 查询没有「阻断改出过程型页」那一支：缺参即错误回执，页面只在真取到数（哪怕是零行）时出。
+ * （#689 结构搬迁第三批：`../policy/index.js` 与 `../render/views.js` 已拆散删除，上面这些名字各回新家。）
  */
 import {
   DB_FILENAME, BillFetchError, fetchAll, listByTag, listToday, searchKeyword, tagMatch,
 } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
-import { needId, normalizeDate, resolveQueryDate, resolveRange, validateCategory, yesterdayStr } from '../policy/index.js';
+import { validateCategory } from '../shared/category.js';
+import { normalizeDate, resolveQueryDate, resolveRange, yesterdayStr } from '../shared/dateRange.js';
+import { needId } from '../shared/params.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
-import { calcCategories, calcKpi, toBillItem } from '../render/views.js';
+import { calcKpi } from '../shared/kpi.js';
+import { calcCategories } from '../analysis/index.js';
+import { toBillItem } from './items.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
@@ -165,7 +166,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
 
 /** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：显式 `today` 参数 ＞ 环境
  *  `BILL_TODAY` ＞ 机器时钟（UTC 日）。种子日期只活在参数／环境里，不进源码；测试一律传相对日期。
- *  下面两件是查询侧截到锚点的窗口（未来不计），与 `../policy` 的 `weekRange／monthRange` 各管一摊。 */
+ *  下面两件是查询侧截到锚点的窗口（未来不计），与 `../shared/dateRange.js` 的 `weekRange／monthRange` 各管一摊。 */
 function rangeAnchor(params: Record<string, unknown>): string {
   const t = params.today;
   if (t !== undefined && t !== null && t !== '') return normalizeDate(t, 'today');

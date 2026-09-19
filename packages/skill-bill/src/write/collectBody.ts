@@ -27,7 +27,7 @@ import { renderCaliberLine, renderDisclosure, renderParamForm } from 'base-paint
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
-import { ALL_L1, EXPENSE_L1 } from '../policy/category.js';
+import { ALL_L1, EXPENSE_L1 } from '../shared/category.js';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';

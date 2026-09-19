@@ -1,7 +1,7 @@
 /** 409 · 写入 16 词接线派生（说词→路由 key→SKILL 行→HELP 卡→可执行 CLI）。
  *
  * 本件只做一件事：把已在仓里的四处事实读出来拼成 16 行，不写第二份词表、不跑命令、不落盘。
- *  - 说词与 key：口径层 `WAKE_TABLE`（`src/policy/wakewords.ts`，唯一上游）；
+ *  - 说词与 key：`WAKE_TABLE`（`src/triggers/wakeTable.ts`——8 份域声明的汇总位，唯一上游）；
  *  - SKILL 行与可执行 CLI：`buildHelpLookup()`（`src/help/lookup.ts`，构建期注入 SKILL.md 的同一函数）；
  *  - HELP 卡：内容资产 `WAKE_ASSETS`／`WAKE_GROUPS`（`src/triggers/wake-assets.ts`，写域 16 卡）；
  *  - 形状：`BILL_KEY_SHAPES`（`src/render/envelope.ts` 经 `src/render/index.ts` 门出）。
@@ -14,7 +14,8 @@
  *  - 不做真出口断言：可执行只验“示例带齐必需槽位”（add 要 category＋amount，update 要 id），不 spawn。
  */
 import { BILL_KEY_SHAPES } from '../render/index.js';
-import { WAKE_TABLE, routeWakeword, type BillKey } from '../policy/index.js';
+import { WAKE_TABLE, routeWakeword } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { buildHelpLookup } from '../help/lookup.js';
 

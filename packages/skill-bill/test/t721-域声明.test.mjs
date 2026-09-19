@@ -8,7 +8,8 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { BILL_KEY_SHAPES, WAKE_TABLE, buildHelpFileData, projectWakeWord, renderHelpFileHtml, routeWakeword } from '../dist/index.js';
+import { BILL_KEY_SHAPES, buildHelpFileData, renderHelpFileHtml } from '../dist/index.js';
+import { WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/triggers/wakeTable.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 /** 落点表（16 行）的**处理方声明**（kind／op）在这一件里；它不是包对外面的一部分，判据按既有取法直取定义地
  *  （同 `frozen-blocks`／`t409-wire` 两件既有测试的取法）。 */

@@ -11,13 +11,14 @@
  * 口径（三件事一处定义）：
  *   - **只预填四项**：账户／账本／币种（来源＝近期最近一笔的库内值）＋ 时间（来源＝本页执行那天的缺省时刻）；
  *     分类**一律不预填**（施工图第四节第 10 条：分类不许留空交给助手猜），备注是自由文本也不预填；
- *   - **缺省值不在本件另立一份**：账本「生活」／币种「人民币」引 `src/policy/category.ts` 的 `DEFAULTS`；
- *     时间引同一件的 `defaultTimeOn`（`12:00:00` 的真源在口径层，本件不写第二份字面量）；
+ *   - **缺省值不在本件另立一份**：账本「生活」／币种「人民币」引 `src/shared/category.ts` 的 `DEFAULTS`；
+ *     时间引 `src/shared/dateRange.ts` 的 `defaultTimeOn`（`12:00:00` 的真源在共用位，本件不写第二份字面量）；
  *   - **来源逐格可追**：库里顶来的写「来自记录编号 N（最近一笔）」，缺省顶的写「缺省值（库里还没有可用的…）」，
  *     两种来源不许混成一句「自动填的」。
  */
 import { renderDataTable } from 'base-paint/blocks';
-import { DEFAULTS, DEFAULT_TIME_SUFFIX, defaultTimeOn } from '../policy/category.js';
+import { DEFAULTS } from '../shared/category.js';
+import { DEFAULT_TIME_SUFFIX, defaultTimeOn } from '../shared/dateRange.js';
 import type { BillRow } from '../fetch/db.js';
 
 /** 一条预填标注：哪一格／中文名／顶上去的值／来源。 */

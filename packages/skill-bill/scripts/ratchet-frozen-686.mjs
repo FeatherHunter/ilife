@@ -13,7 +13,8 @@
  *   ① **分派层**：`src/cli` **全目录**（含将来按域拆出来的姊妹件）里**按键分派**的 `bill.…` 字面量集
  *      （行为口径：`case`／`===`／就地键集查询三类都数，双引号与 `if` 阶梯一视同仁；具名键集／默认值／注释不数）；
  *   ② **过渡表**：`src/render/envelope.ts` 的 `TRANSITIONAL_KEY_SHAPES` 键集（未搬迁的键仍住在那里）；
- *   ③ **键总数与注册表**：`dist/policy/index.js` 的 `WAKE_TABLE` 键集（口径层，手写，是 16 键的独立事实源）
+ *   ③ **键总数与注册表**：`dist/triggers/wakeTable.js` 的 `WAKE_TABLE` 键集（**域声明合并出来的派生面**，
+ *      是 16 键的独立事实源；#689 搬迁前这一读数取自 `dist/policy/index.js`，那件已随 `policy/` 拆散删除）
  *      与 `dist/cli/registry.js` 的 `REGISTRY_KEYS`（生成物）。
  *
  * 未搬迁的键**恰恰住两处**（过渡表有形状行、分派层有 case）：搬一条＝两处同窗消失 ＋ 冻结值同窗下调。
@@ -175,21 +176,21 @@ export async function measure(root = PKG_DIR) {
   const dispatchKeys = cliDispatchKeysOf(root);
   const legacyKeys = [...transitionKeysOf(readSrc('src/render/envelope.ts'))].sort();
   const registryDist = join(root, 'dist', 'cli', 'registry.js');
-  const policyDist = join(root, 'dist', 'policy', 'index.js');
-  for (const p of [registryDist, policyDist]) {
+  const wakeTableDist = join(root, 'dist', 'triggers', 'wakeTable.js');
+  for (const p of [registryDist, wakeTableDist]) {
     if (!existsSync(p)) throw new Error('缺编译产物：' + p + '（先 `pnpm build`／`tsc -b`）');
   }
   const reg = await import(pathToFileURL(registryDist).href);
-  const policy = await import(pathToFileURL(policyDist).href);
+  const wakeTable = await import(pathToFileURL(wakeTableDist).href);
   if (!Array.isArray(reg.REGISTRY_KEYS)) throw new Error('dist/cli/registry.js 缺 REGISTRY_KEYS 数组');
-  if (!Array.isArray(policy.WAKE_TABLE)) throw new Error('dist/policy/index.js 缺 WAKE_TABLE 数组');
+  if (!Array.isArray(wakeTable.WAKE_TABLE)) throw new Error('dist/triggers/wakeTable.js 缺 WAKE_TABLE 数组');
   const lines = {};
   for (const rel of Object.keys(FROZEN.lineCaps)) lines[rel] = lfOf(join(root, rel));
   return {
     dispatchKeys,
     legacyKeys,
     registryKeys: [...reg.REGISTRY_KEYS].sort(),
-    wakeKeys: [...new Set(policy.WAKE_TABLE.map((e) => e.key))].sort(),
+    wakeKeys: [...new Set(wakeTable.WAKE_TABLE.map((e) => e.key))].sort(),
     lines,
   };
 }

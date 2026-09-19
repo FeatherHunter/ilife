@@ -10,17 +10,18 @@
  *   - **符号即方向**：`moneyDirection` 与 `directionOf`（取值源是件内的 `DIRECTION` 表）——摘要行的方向格、
  *     采集页与回执页的类型徽章那句「…要负数／要正数」、阻断条的方向判定与文案，都走这一份；
  *   - **金额两位小数文本**：`money2`——摘要行、重复检测的比对与列示、阻断条的方向文案共引这一份；
- *   - **缺省时刻**：引 `src/policy/category.ts` 的 `DEFAULT_TIME_SUFFIX`（真源在口径层，本件不留第二份）；
- *   - **缺省值**（账本「生活」／币种「人民币」）：引 `src/policy/category.ts` 的 `DEFAULTS`，本件不另立一份。
+ *   - **缺省时刻**：引 `src/shared/dateRange.ts` 的 `DEFAULT_TIME_SUFFIX`（真源在共用位，本件不留第二份）；
+ *   - **缺省值**（账本「生活」／币种「人民币」）：引 `src/shared/category.ts` 的 `DEFAULTS`，本件不另立一份。
  *  分两件出去（`moneyDirection` 与 `summaryRow`）是因为方向那句话在采集页的徽章与阻断条上都要引同一份措辞。
  *
  * 口径出处：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节第 3 行（`renderKpiCard` ＋ `renderKpiGrid`
- *  ＋ `renderCaliberLine`）。三级分类的一级取自 `src/policy/category.ts` 的 `l1Of`（分类口径的唯一真相源），
+ *  ＋ `renderCaliberLine`）。三级分类的一级取自 `src/shared/category.ts` 的 `l1Of`（分类口径的唯一真相源），
  *  本件不另写一份 L1 名单。
  */
 import { renderCaliberLine, renderChips, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
-import { DEFAULT_TIME_SUFFIX, l1Of } from '../policy/category.js';
+import { l1Of } from '../shared/category.js';
+import { DEFAULT_TIME_SUFFIX } from '../shared/dateRange.js';
 
 /** 一型的方向口径（**唯一定义地**，四处引用都走这里）：
  *  `sign`＝这一型要的金额符号（`Math.sign` 的值），`require`＝「这一型为什么得是这个符号」那一句，

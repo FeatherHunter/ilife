@@ -13,16 +13,16 @@
  *   **方向判定只服务录入路径**：`writeRecordAdd`（`bill.record.add`）那一支传 `kind` 才判方向；
  *   `writeRecordUpdate`（改字段／撤销／恢复三支）不传方向，那三支只按「缺的必需槽位」阻断。
  *   阻断项清空照旧写库，出结果型回执整页（`./receipt.ts`）。
- *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `src/policy`
+ *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `./record.js`
  *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`），取数写库仍走 `src/fetch`
  *   （`addBill`／`updateBill`／`undoBill`／`restoreBill`），本文件只做编排与回执事实装配。
  * 写入字段口径：记一笔写整列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
  */
 import { addBill, updateBill, undoBill, restoreBill, getById, listRecent, DB_FILENAME } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
-import { needId, parseRecordOp, validateAddInput, validateUpdateInput } from '../policy/index.js';
-import type { RecordOp } from '../policy/record.js';
-import { buildRecordReceipt } from '../render/views.js';
+import { needId, parseRecordOp, validateAddInput, validateUpdateInput } from './record.js';
+import type { RecordOp } from './record.js';
+import { buildRecordReceipt } from './receiptOut.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
@@ -81,7 +81,7 @@ function rowDetail(r: BillRow): DetailRow[] {
 }
 
 /** 库内那一列在改前的值。字段名只认 `BillRow` 上真有的列——形状写得出（铁律三），
- *  不拿 `unknown` 中转成宽字典再按变长字符串取字段。`patch` 那一边由 `src/policy` 的
+ *  不拿 `unknown` 中转成宽字典再按变长字符串取字段。`patch` 那一边由 `./record.js` 的
  *  `validateUpdateInput` 校验过字段与值，这里只读回来比对。 */
 function preValue(pre: BillRow, column: string): string | number | null | undefined {
   return Object.prototype.hasOwnProperty.call(pre, column) ? pre[column as keyof BillRow] : undefined;

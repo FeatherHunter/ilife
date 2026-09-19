@@ -111,7 +111,7 @@ export function listRange(h: BillDb, start: string, end: string): BillRow[] {
 
 /** 近期记录（按时间倒序，最近在先）：预填标注、重复检测、三枚选择器的候选三处共用同一份取数。
  *  `aroundTime` 可以是时刻串或日期串；解析不出日期就按今天算——采集页本来就是「信息还不全」那一支，
- *  这里不抛错（真值校验归 `src/policy`）。软删记录不取：它既不进候选，也不参与重复检测。 */
+ *  这里不抛错（真值校验归 `src/write/record.ts` 与 `src/shared/category.ts`）。软删记录不取：它既不进候选，也不参与重复检测。 */
 export function listRecent(h: BillDb, aroundTime: string, windowDays = 90): BillRow[] {
   const head = typeof aroundTime === 'string' ? aroundTime.slice(0, 10) : '';
   const day = /^\d{4}-\d{2}-\d{2}$/.test(head) ? head : new Date().toISOString().slice(0, 10);

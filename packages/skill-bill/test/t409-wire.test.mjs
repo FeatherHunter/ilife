@@ -6,8 +6,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WRITE_WORDS, buildWriteWire, projectWakeWord, routeWakeword, WAKE_TABLE,
+  WRITE_WORDS, buildWriteWire,
 } from '../dist/index.js';
+import { projectWakeWord, routeWakeword, WAKE_TABLE } from '../dist/triggers/wakeTable.js';
 import { WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
 import { SCENES, sceneFor } from '../dist/write/scene.js';
 

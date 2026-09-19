@@ -23,7 +23,7 @@
  * **本件只吃普通数据、零跨目录引用**（与已冻的 `candidatePick.ts`／`rowEditorTable.ts`／`diffTable.ts` 同形状）：
  *  入参是「要展示的字段名与文案」「本次参数」「近期记录那几列」这类普通数据，**不引** `src/write/` 下的件，
  *  也不认 `CollectInput`／`ReceiptInput`——那两张页的入参形状由 `src/write/scene.ts` 定义，由各场景件自己解成普通数据传进来。
- *  本件可引的只有：`base-paint`／`base-paint/blocks`（现成组件）、`src/policy/category.ts`（口径层）、
+ *  本件可引的只有：`base-paint`／`base-paint/blocks`（现成组件）、`src/shared/category.ts`（分类与缺省口径）、
  *  `src/fetch/db.ts`（记录行的数据形状）、`src/shared/` 同目录的共用件。
  *
  * 口径（一处定义，别处不许再写第二份）：
@@ -39,7 +39,7 @@
 import { renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { BillRow } from '../fetch/db.js';
-import { ALL_L1, EXPENSE_L1, INCOME_L1 } from '../policy/category.js';
+import { ALL_L1, EXPENSE_L1, INCOME_L1 } from '../shared/category.js';
 import type { DuplicateProbe } from './duplicateNote.js';
 import { prefillHint } from './prefillNote.js';
 import type { PrefillMark } from './prefillNote.js';

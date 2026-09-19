@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { projectWakeWord, routeWakeword } from '../dist/index.js';
+import { projectWakeWord, routeWakeword } from '../dist/triggers/wakeTable.js';
 import { SCENES, sceneFor } from '../dist/write/scene.js';
 import { candidateEmpty, candidatePick, candidateRows } from '../dist/write/candidatePick.js';
 import { rowEditorMissing, rowEditorTable } from '../dist/write/rowEditorTable.js';
