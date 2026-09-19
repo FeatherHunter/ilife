@@ -57,7 +57,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-calorie:
-        specifier: 0.2.4
+        specifier: 0.2.5
         version: link:../skill-calorie
     devDependencies:
       '@types/react':
@@ -76,7 +76,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-chef:
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../skill-chef
     devDependencies:
       '@types/react':
@@ -95,7 +95,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-home:
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../skill-home
     devDependencies:
       '@types/react':
@@ -130,7 +130,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-memo-ilife:
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../skill-memo-ilife
     devDependencies:
       '@types/react':
@@ -149,7 +149,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-schedule:
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../skill-schedule
     devDependencies:
       '@types/react':

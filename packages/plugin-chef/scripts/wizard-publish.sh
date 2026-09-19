@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
 # 私家大厨插件发版 wizard：dsh-chef（共 1 包，人扫码）
-#   dsh-chef 0.2.0（槽位 ilife:chef／order 90、打包技能提供方、
-#     CLI 单轨桥；精确 pin skill-chef@0.2.0）
+#   dsh-chef 0.2.1（槽位 ilife:chef／order 90、打包技能提供方、
+#     CLI 单轨桥；精确 pin skill-chef@0.2.1）
 #
 # 前提（硬门，第 1 stage 会自动查，不满足即停）：
-# skill-chef@0.2.0 必须已在 registry 上 —— 插件对它是精确 pin，
+# skill-chef@0.2.1 必须已在 registry 上 —— 插件对它是精确 pin，
 # 先发插件＝第三方装到旧技能（#129）。先跑
 # packages/skill-chef/scripts/wizard-publish.sh 把技能落上去。
 #
@@ -206,8 +206,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_PLUGIN="0.2.0"
-V_SKILL="0.2.0"
+V_PLUGIN="0.2.1"
+V_SKILL="0.2.1"
 
 # 目录名（非 npm 名）
 D_PLUGIN="plugin-chef"
@@ -316,7 +316,7 @@ pause "清单没问题？按回车进入发布（下面开始弹浏览器了）"
 
 # ── Stage 4：发 dsh-chef ──────────────────────────────────────────────
 stage "4/5 · 发布 dsh-chef@$V_PLUGIN（你扫码）"
-say "私家大厨插件 0.2.0：槽位 ilife:chef／order 90、打包技能提供方、CLI 单轨桥。"
+say "私家大厨插件 0.2.1：槽位 ilife:chef／order 90、打包技能提供方、CLI 单轨桥。"
 say "精确 pin skill-chef@$V_SKILL —— 这一步发出后，第三方装插件就会连带装到**这一版新技能**。"
 if already dsh-chef "$V_PLUGIN"; then
   warn "registry 已有 dsh-chef@$V_PLUGIN —— 跳过本次发布（不重复占版本号）。"

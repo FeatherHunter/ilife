@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # 备忘录技能线发版 wizard：skill-memo-ilife（共 1 包，人扫码）
-#   skill-memo-ilife 0.2.0（记一条／改／删／分类／提醒／心愿／统计／飞书同步；
+#   skill-memo-ilife 0.2.1（记一条／改／删／分类／提醒／心愿／统计／飞书同步；
 #     唯一出口 memo-cmd-read）
 #
 # 前提：base-paint@0.3.2 已在 registry（2026-09-16 随饼干线落上去），
@@ -206,7 +206,7 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_SKILL="0.2.0"
+V_SKILL="0.2.1"
 V_BASEPAINT="0.3.2"
 
 # 目录名（非 npm 名）
@@ -311,7 +311,7 @@ pause "清单没问题？按回车进入发布（下面开始弹浏览器了）"
 
 # ── Stage 4：发 skill-memo-ilife ───────────────────────────────────────
 stage "4/5 · 发布 skill-memo-ilife@$V_SKILL（你扫码）"
-say "备忘录技能 0.2.0：记一条／改／删／分类／提醒／心愿／统计／飞书同步，契约键 memo.stats。"
+say "备忘录技能 0.2.1：记一条／改／删／分类／提醒／心愿／统计／飞书同步，契约键 memo.stats。"
 if already skill-memo-ilife "$V_SKILL"; then
   warn "registry 已有 skill-memo-ilife@$V_SKILL —— 跳过本次发布（不重复占版本号）。"
 else

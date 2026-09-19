@@ -551,8 +551,8 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## 公共安装器运行时（skills-cli 装完必读，#47）
 
-- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.2.4` 已发布）。
-- 取运行时二选一：`npm install -g skill-calorie@0.2.4`（一劳永逸），或免安装 `npx -p skill-calorie@0.2.4 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
+- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.2.5` 已发布）。
+- 取运行时二选一：`npm install -g skill-calorie@0.2.5`（一劳永逸），或免安装 `npx -p skill-calorie@0.2.5 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
 - HELP 现找→cmd_read→envelope→HTML 验证（隔离靠把**配置目录**指到临时目录：`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录，配置里的 `db.dir` 再决定库与产物落哪；node>=22.13；完整口径见 docs/public-installer-47.md）：
   ```sh
   cfg="$(mktemp -d)" && mkdir -p "$cfg/db" && printf 'db:\n  dir: %s\n' "$cfg/db" > "$cfg/calorie.yaml"

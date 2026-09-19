@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # 居家管家技能线发版 wizard：skill-home（共 1 包，人扫码）
-#   skill-home 0.2.0（查物品／录物品／查位置／查快递／查保修／查证件／
+#   skill-home 0.2.1（查物品／录物品／查位置／查快递／查保修／查证件／
 #     看统计 7 大类；唯一出口 home-cmd-read）
 #
 # 前提：base-paint@0.3.2 已在 registry（2026-09-16 随饼干线落上去），
@@ -206,7 +206,7 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_SKILL="0.2.0"
+V_SKILL="0.2.1"
 V_BASEPAINT="0.3.2"
 
 # 目录名（非 npm 名）
@@ -311,7 +311,7 @@ pause "清单没问题？按回车进入发布（下面开始弹浏览器了）"
 
 # ── Stage 4：发 skill-home ─────────────────────────────────────────────
 stage "4/5 · 发布 skill-home@$V_SKILL（你扫码）"
-say "居家管家技能 0.2.0：查物品／录物品／查位置／查快递／查保修／查证件／看统计，唯一出口 home-cmd-read。"
+say "居家管家技能 0.2.1：查物品／录物品／查位置／查快递／查保修／查证件／看统计，唯一出口 home-cmd-read。"
 if already skill-home "$V_SKILL"; then
   warn "registry 已有 skill-home@$V_SKILL —— 跳过本次发布（不重复占版本号）。"
 else
