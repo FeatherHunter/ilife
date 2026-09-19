@@ -8,6 +8,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -22,7 +23,7 @@ before(() => {
 function collectHtml(params, name) {
   const file = join(HTML, name);
   const r = spawnSync(process.execPath, [bin, 'bill.record.add', '--params', JSON.stringify(params), '--html', file],
-    { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+    { encoding: 'utf8', env: billEnv(DB) });
   assert.equal(r.status, 0, name + ' CLI exit 非 0：' + (r.stderr || '').slice(-300));
   return readFileSync(file, 'utf8');
 }

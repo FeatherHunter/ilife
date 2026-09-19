@@ -5,6 +5,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -22,7 +23,7 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(DB, envExtra) });
 }
 const P = (o) => JSON.stringify(o);
 
@@ -118,7 +119,7 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(k.stdout, '');
     assert.equal(run(['bill.record.today', '--params', '[]']).status, 2);
     assert.equal(run(['bill.record.today', '--timeout', 'abc']).status, 2);
-    assert.equal(run(['bill.record.today'], { SKILLS_DB_PATH: '' }).status, 1);
+    assert.equal(run(['bill.record.today'], { ILIFE_CONFIG_DIR: '' }).status, 1);
     const p = join(DB, 'out.html');
     const r = run(['bill.record.today', '--params', P({ date: '2026-09-06' }), '--html', p]);
     assert.equal(r.status, 0);

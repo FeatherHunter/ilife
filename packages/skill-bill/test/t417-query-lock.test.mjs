@@ -10,6 +10,7 @@ import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -27,7 +28,7 @@ let DB = '';
 let OUT = '';
 const P = (o) => JSON.stringify(o);
 function run(args) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(DB) });
 }
 /** 跑一条真出口：exit 0＋产物落盘＋stdout 信封可解析，一并返回。 */
 function page(key, params, name) {

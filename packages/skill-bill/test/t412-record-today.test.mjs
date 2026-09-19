@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeWakeword } from '../dist/triggers/wakeTable.js';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -29,7 +30,7 @@ let EMPTY_DB = '';
 let OUT = '';
 const P = (o) => JSON.stringify(o);
 function runWith(db, args) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(db) });
 }
 function run(args) {
   return runWith(DB, args);

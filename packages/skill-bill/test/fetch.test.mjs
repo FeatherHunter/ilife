@@ -4,14 +4,15 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openBillDb, closeBillDb, fetchAll, listToday, getById, searchKeyword, listByTag, addBill, updateBill, undoBill, restoreBill, loadGoals, saveGoals, BillFetchError } from '../dist/index.js';
-import { resolveDbPath, assertWritablePath } from '../dist/index.js';
+import { resolveDbPath } from '../dist/index.js';
+import { billConfigDir } from './helpers/config-base.mjs';
 
 let DB = '';
 let H = null;
 
 before(() => {
   DB = mkdtempSync(join(tmpdir(), 'billfetch-'));
-  process.env.SKILLS_DB_PATH = DB;
+  process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
   H = openBillDb(resolveDbPath());
   addBill(H, { category: '餐饮/外卖/午餐', amount: -35, time: '2026-09-06 12:00:00', account: '支付宝', ledger: '生活', currency: '人民币', note: '午饭 #工作餐' });
   addBill(H, { category: '借贷/借出', amount: -500, time: '2026-09-05 10:00:00', account: '', ledger: '借贷', currency: '人民币', note: '借小明 #未还' });
@@ -39,20 +40,18 @@ describe('饼干取数 fetch', () => {
     assert.equal(loadGoals(p).budgets.length, 1);
     assert.deepEqual(loadGoals(join(DB, 'nope.json')), { budgets: [], savings: [], accounts: [] });
   });
-  it('SKILLS_DB_PATH 缺失阻断', () => {
-    const old = process.env.SKILLS_DB_PATH;
-    delete process.env.SKILLS_DB_PATH;
-    assert.throws(() => resolveDbPath(), /SKILLS_DB_PATH/);
-    process.env.SKILLS_DB_PATH = old;
+  it('测试运行器里缺 ILIFE_CONFIG_DIR ＝响亮失败（替代老的「缺 SKILLS_DB_PATH」那道门）', () => {
+    const old = process.env.ILIFE_CONFIG_DIR;
+    delete process.env.ILIFE_CONFIG_DIR;
+    assert.throws(() => resolveDbPath(), (e) => e?.code === 'CONFIG_TEST_ISOLATION_MISSING');
+    process.env.ILIFE_CONFIG_DIR = old;
   });
-  it('BILL_FORCE_PROD 哨兵：非 tmp 写须 opt-in（tmp 直过）', () => {
-    const old = process.env.BILL_FORCE_PROD;
-    delete process.env.BILL_FORCE_PROD;
-    assert.throws(() => assertWritablePath(join('D:', 'prod-bill.db')), /BILL_FORCE_PROD/);
-    assertWritablePath(join(DB, 'probe.db'));
-    process.env.BILL_FORCE_PROD = '1';
-    assertWritablePath(join('D:', 'prod-bill.db'));
-    if (old === undefined) delete process.env.BILL_FORCE_PROD;
-    else process.env.BILL_FORCE_PROD = old;
+  it('落点随配置走：改 db.dir／db.name 即改落点（写库开关随 #675 退役，非 tmp 不再是拒绝条件）', () => {
+    const other = mkdtempSync(join(tmpdir(), 'billfetch-cfg-'));
+    const old = process.env.ILIFE_CONFIG_DIR;
+    process.env.ILIFE_CONFIG_DIR = billConfigDir(other, { db: { name: 'custom.db' } });
+    try {
+      assert.equal(resolveDbPath(), join(other, 'custom.db'));
+    } finally { process.env.ILIFE_CONFIG_DIR = old; }
   });
 });

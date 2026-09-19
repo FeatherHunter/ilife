@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HELP_SHELL_DATA_OPEN, HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT } from 'base-paint/help-shell';
+import { billEnv } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -23,7 +24,7 @@ const KEY = 'bill.help.lookup';
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'bill148-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, 'biscuit_accountant_html');
-const envOf = (dir) => ({ ...process.env, SKILLS_DB_PATH: dir });
+const envOf = (dir) => billEnv(dir);
 
 function run(dir, args = [KEY]) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: envOf(dir) });
@@ -71,8 +72,8 @@ test('#148 ① 缺省＝HELP 文件：名字通式／落点／回执绝对路径
 
   assert.equal(r.env.key, KEY);
   assert.ok(HELP_NAME_RE.test(basename(out)), '文件名通式：' + basename(out));
-  assert.equal(basename(dirname(out)), 'biscuit_accountant_html', '落 <SKILLS_DB_PATH>/biscuit_accountant_html/');
-  assert.ok(out.startsWith(dir), 'delivery.path 为绝对路径且在该次 SKILLS_DB_PATH 下：' + out);
+  assert.equal(basename(dirname(out)), 'biscuit_accountant_html', '落 <库目录>/biscuit_accountant_html/');
+  assert.ok(out.startsWith(dir), 'delivery.path 为绝对路径且在该次库目录下：' + out);
   assert.ok(existsSync(out), '回执路径真的存在');
   assert.equal(statSync(out).size, r.env.delivery.bytes, 'delivery.bytes ＝ 落盘字节数');
   assert.equal(r.env.delivery.bytes, Buffer.byteLength(readFileSync(out, 'utf8'), 'utf8'));
@@ -184,8 +185,8 @@ test('#148 ⑤ 参数与退出码矩阵（真出口）＋ 失败时 stdout 空',
     assert.equal(r.stdout, '', c.why + '：失败时 stdout 必须空');
     assert.match(r.stderr, new RegExp('ERR ' + c.code));
   }
-  const noEnv = spawnSync(NODE_BIN, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: '' } });
-  assert.equal(noEnv.status, 1, '缺 SKILLS_DB_PATH ＝exit 1');
+  const noEnv = spawnSync(NODE_BIN, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: '' } });
+  assert.equal(noEnv.status, 1, '测试运行器里缺 ILIFE_CONFIG_DIR ＝exit 1（响亮失败）');
   const badPath = join(dir, 'blocker', 'x.html');
   spawnSync(NODE_BIN, ['-e', 'require("fs").writeFileSync(process.argv[1],"x")', join(dir, 'blocker')], { encoding: 'utf8' });
   const bad = run(dir, [KEY, '--html', badPath]);

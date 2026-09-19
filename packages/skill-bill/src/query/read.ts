@@ -164,14 +164,13 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   });
 }
 
-/** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：显式 `today` 参数 ＞ 环境
- *  `BILL_TODAY` ＞ 机器时钟（UTC 日）。种子日期只活在参数／环境里，不进源码；测试一律传相对日期。
+/** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：显式 `today` 参数 ＞ 机器时钟（UTC 日）。
+ *  #726：`BILL_TODAY` 那个环境 pin 随「环境变量全部删掉」（#675）一并退役——测试要钉钟就走测试基座的
+ *  钉钟预载件（`test/helpers/config-base.mjs` 的 `freezeClock()`／`freeze-clock.cjs`），不进源码。
  *  下面两件是查询侧截到锚点的窗口（未来不计），与 `../shared/dateRange.js` 的 `weekRange／monthRange` 各管一摊。 */
 function rangeAnchor(params: Record<string, unknown>): string {
   const t = params.today;
   if (t !== undefined && t !== null && t !== '') return normalizeDate(t, 'today');
-  const pin = process.env['BILL_TODAY'];
-  if (pin !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(pin)) return normalizeDate(pin, 'BILL_TODAY');
   return new Date().toISOString().slice(0, 10);
 }
 

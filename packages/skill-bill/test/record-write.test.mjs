@@ -12,6 +12,7 @@ import { WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/triggers/wak
 import { RECORD_COMMANDS, runRecordWrite } from '../dist/write/index.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 import { RECORD_SLOTS, missingSlots } from '../dist/write/collect.js';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -30,7 +31,7 @@ before(() => {
 });
 
 function run(args) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(DB) });
 }
 /** stdout 末行即 envelope（成功只打一行 JSON）。 */
 function envOf(r) {
@@ -249,7 +250,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
   const H2 = mkdtempSync(join(tmpdir(), 'bill407-html-'));
   const SEED = { category: '餐饮/外卖/午餐', amount: -12.5, time: '2026-09-14 12:00:00', account: '支付宝', ledger: '生活', note: '午饭' };
   function run2(args) {
-    return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: D2 } });
+    return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(D2) });
   }
   function rowsAt(date) {
     return envOf(run2(['bill.record.today', '--params', JSON.stringify({ date })])).data.items.length;

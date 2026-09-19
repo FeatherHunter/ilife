@@ -1,6 +1,8 @@
 /** #145 · 「饼干记账help」的交付**内容**：内容资产 ＋ 派生 → 共享 help 模板（`base-paint/help-shell`）全页 HTML。
  *
- * 本模块**零 IO、零落盘**：落点与写盘全在 CLI 交付管线（#144：`render/helpPaths.ts` ＋ `output.ts`）。
+ * 本模块**零 IO、零落盘**：落点与写盘全在 CLI 交付管线（#144：`src/help/helpPaths.ts` ＋ `src/output.ts`）。
+ * 唯一一处会碰盘的是 `helpFileStem()`——它现读配置文件（#726 起文件名主体是可配项 `html.helpStem`）；
+ * 页面装配那条链（`buildHelpFileData`／`renderHelpFileHtml`）仍然全纯。
  * 逐字对照老口径（只读基线 `D:\2Study\StudyNotes\SKILLS\饼干记账\scripts\render_help.py:build_help_contract`）：
  *  - `skill_name`／`title`／`contact`／`version` 照老实样（`:197-214`）；
  *  - `subtitle` 与 `meta_blocks[0]` 同源派生（老 `:194-202` 的 `summary_line` 一处算、两处用）；
@@ -18,10 +20,19 @@
  */
 import { renderHelpShellHtml } from 'base-paint/help-shell';
 import { HELP_WAKE_WORDS, SCENE_BY_ID, WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
+import { BILL_CONFIG_DEFAULTS, loadBillConfig } from '../config.js';
 import { BillRenderError } from '../render/errors.js';
 
-/** 「饼干记账help」交付文件的文件名主体（接线层写死；调用方不接受外部传入，照 #139 S3-3）。 */
-export const HELP_FILE_STEM = '饼干记账_HELP' as const;
+/** 「饼干记账help」交付文件的文件名主体：配置项 `html.helpStem` 的**具名引用**（默认 `饼干记账_HELP`）。
+ *  对外不接受调用方传入（照 #139 S3-3）——用户改的是配置文件，不是这条命令的参数。 */
+export const HELP_FILE_STEM = BILL_CONFIG_DEFAULTS.html.helpStem;
+
+/** HELP 文件名主体：配置 `html.helpStem` 非空即用它，空串＝`HELP_FILE_STEM`（#726 起取值走配置文件）。 */
+export function helpFileStem(): string {
+  const configured = loadBillConfig().values.html.helpStem;
+  return configured !== '' ? configured : HELP_FILE_STEM;
+}
+
 /** 5 键头（老实物逐字）。 */
 export const HELP_FILE_SKILL_NAME = '饼干记账' as const;
 export const HELP_FILE_TITLE = '饼干记账 · 使用手册(HELP)' as const;

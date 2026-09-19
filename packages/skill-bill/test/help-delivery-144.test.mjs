@@ -16,6 +16,7 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM, HELP_FILE_STEM } from '../dist/render/index.js';
 import { deliverHtml } from '../dist/output.js';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -103,7 +104,7 @@ describe('#144 端到端冒烟（真 spawn 出口）', () => {
   it('缺省＝HELP 文件：stdout 给绝对路径，路径上真有全壳 HTML，且不建库', () => {
     const db = join(TMP, 'prod');
     const r = spawnSync(process.execPath, [bin, 'bill.help.lookup'], {
-      env: { ...process.env, SKILLS_DB_PATH: db },
+      env: billEnv(db),
       encoding: 'utf8',
     });
     assert.equal(r.status, 0, r.stderr);
@@ -116,14 +117,14 @@ describe('#144 端到端冒烟（真 spawn 出口）', () => {
     assert.equal(env.delivery.bytes, Buffer.byteLength(html, 'utf8'));
     assert.ok(html.includes('<script id="help-data" type="application/json">'), '落盘物是全壳页');
     assert.ok(html.includes('饼干记账 · 使用手册(HELP)'));
-    assert.equal(spawnSync(process.execPath, [bin, 'bill.help.lookup'], { env: { ...process.env, SKILLS_DB_PATH: db }, encoding: 'utf8' }).status, 0);
+    assert.equal(spawnSync(process.execPath, [bin, 'bill.help.lookup'], { env: billEnv(db), encoding: 'utf8' }).status, 0);
     assert.equal(readdirSync(db).filter((f) => f.endsWith('.db')).length, 0, '看帮助不建记账库');
   });
 
   it('显式参数两支：mode=lookup 落速查表文件；q 只回命中不落盘', () => {
     const db = join(TMP, 'prod2');
     const m = spawnSync(process.execPath, [bin, 'bill.help.lookup', '--params', '{"mode":"lookup"}'], {
-      env: { ...process.env, SKILLS_DB_PATH: db }, encoding: 'utf8',
+      env: billEnv(db), encoding: 'utf8',
     });
     assert.equal(m.status, 0, m.stderr);
     const me = JSON.parse(m.stdout);
@@ -132,7 +133,7 @@ describe('#144 端到端冒烟（真 spawn 出口）', () => {
     assert.ok(me.data.items.length >= 70, '速查表含全量短语');
 
     const q = spawnSync(process.execPath, [bin, 'bill.help.lookup', '--params', '{"q":"查今天"}'], {
-      env: { ...process.env, SKILLS_DB_PATH: db }, encoding: 'utf8',
+      env: billEnv(db), encoding: 'utf8',
     });
     assert.equal(q.status, 0, q.stderr);
     const qe = JSON.parse(q.stdout);
@@ -145,7 +146,7 @@ describe('#144 端到端冒烟（真 spawn 出口）', () => {
     const db = join(TMP, 'prod3');
     const out = join(TMP, 'prod3', 'sub', '我的帮助.html');
     const r = spawnSync(process.execPath, [bin, 'bill.help.lookup', '--html', out], {
-      env: { ...process.env, SKILLS_DB_PATH: db }, encoding: 'utf8',
+      env: billEnv(db), encoding: 'utf8',
     });
     assert.equal(r.status, 0, r.stderr);
     const env = JSON.parse(r.stdout);
@@ -163,7 +164,7 @@ describe('#144 落盘失败＝exit 5', () => {
     mkdirSync(join(TMP, 'prod4'), { recursive: true });
     writeFileSync(blocker, 'x');
     const r = spawnSync(process.execPath, [bin, 'bill.help.lookup', '--html', join(blocker, 'a.html')], {
-      env: { ...process.env, SKILLS_DB_PATH: db }, encoding: 'utf8',
+      env: billEnv(db), encoding: 'utf8',
     });
     assert.equal(r.status, 5, r.stderr);
     assert.match(r.stderr, /ERR 5/);

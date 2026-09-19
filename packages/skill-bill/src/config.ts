@@ -14,7 +14,7 @@
  * 键表出处：`docs/research/t692-six-skill-paths-survey.md` 的记账 8 项去掉 1 项包内固定
  * （包内页面模板目录）＝**上设置页候选 7 项**；其中「产物文件名主体」在源码里是两个值，故键数为 8。
  */
-import { loadConfig, resetConfig, saveConfig } from 'base-link-core';
+import { configPaths, loadConfig, resetConfig, saveConfig } from 'base-link-core';
 import type { ConfigRecord } from 'base-link-core';
 
 /** 配置文件主体名：`<配置目录>/bill.yaml`。 */
@@ -40,23 +40,30 @@ export interface LoadedBillConfig {
   readonly values: BillConfigValues;
 }
 
-/** 每进程只读一次：配置文件的「保存即生效」靠**下一次调用现读**，同一个进程里不反复读盘。 */
-let memo: LoadedBillConfig | null = null;
+/** 每进程按**配置目录**记一份：`ILIFE_CONFIG_DIR` 一变（测试逐用例换临时目录）即现读，
+ *  同一目录里不反复读盘（「保存即生效」由 `saveBillConfig`／`resetBillConfig` 清记忆保证，
+ *  不靠长连接）。记忆位不绑「进程」而绑「配置文件路径」，是为了不让换目录后的读落到上一份的缓存上
+ *  ——照 `packages/skill-calorie/src/config.ts:47-67` 同形（#718 那一侧先落的这条）。 */
+let memo: { file: string; loaded: LoadedBillConfig } | null = null;
 
 /** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。 */
 export function loadBillConfig(): LoadedBillConfig {
-  if (memo === null) {
+  const file = configPaths(BILL_CONFIG_STEM).configFile;
+  if (memo === null || memo.file !== file) {
     const loaded = loadConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
-      path: loaded.path,
-      dataDir: loaded.dataDir,
-      created: loaded.created,
-      values: loaded.values as unknown as BillConfigValues,
+      file,
+      loaded: {
+        path: loaded.path,
+        dataDir: loaded.dataDir,
+        created: loaded.created,
+        values: loaded.values as unknown as BillConfigValues,
+      },
     };
   }
-  return memo;
+  return memo.loaded;
 }
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */

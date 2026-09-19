@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeWakeword } from '../dist/triggers/wakeTable.js';
+import { billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -28,7 +29,7 @@ before(() => {
 });
 
 function run(args) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(DB) });
 }
 function envOf(r) {
   const last = (r.stdout || '').trim().split(/\r?\n/).filter((s) => s !== '').pop() ?? '';

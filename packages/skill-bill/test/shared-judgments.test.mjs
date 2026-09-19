@@ -21,6 +21,7 @@ import { flowSteps } from '../dist/write/flowSteps.js';
 import { installmentPreview, installmentShares } from '../dist/write/installmentPreview.js';
 import { ESCAPE_FIELDS, escapeCard, escapePrompt, imageNote } from '../dist/write/outsideScan.js';
 import { pickerBlock, pickModeOf, readRowById } from '../dist/write/recordPicker.js';
+import { billConfigDir, billEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -36,7 +37,7 @@ let HTML = '';
 const IDS = { keep1: 0, keep2: 0, keep3: 0, gone: 0 };
 
 function run(args) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(DB) });
 }
 const P = (o) => JSON.stringify(o);
 /** 落一笔并回记录编号。 */
@@ -97,7 +98,7 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
   });
 
   it('按编号读一条认得软删行：deleted 与行一起给全（改记录／撤销／恢复三处共用）', () => {
-    process.env.SKILLS_DB_PATH = DB;
+    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
     const gone = readRowById(IDS.gone);
     assert.equal(gone.ok, true);
     assert.notEqual(gone.row, null, '软删的行仍读得到（`getById` 读不到软删行，本件走 `fetchAll` 自己筛）');
@@ -109,7 +110,7 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
   });
 
   it('候选按时间倒序摆：最近的一笔在最前（页面与那一格同一条次序）', () => {
-    process.env.SKILLS_DB_PATH = DB;
+    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
     const html = pickerBlock({ mode: 'undo' });
     const at = (s) => {
       const i = html.indexOf(s);
@@ -122,29 +123,29 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
   });
 
   it('候选读不通照实报（不拿空表冒充「库里没有记录」）', () => {
-    const saved = process.env.SKILLS_DB_PATH;
+    const saved = process.env.ILIFE_CONFIG_DIR;
     // 拿一个「文件」当库目录用：建目录这一步就过不去，读候选只能照实报原因。
     const blocker = join(DB, 'iam-a-file');
     writeFileSync(blocker, 'x');
-    process.env.SKILLS_DB_PATH = join(blocker, 'sub');
+    process.env.ILIFE_CONFIG_DIR = billConfigDir(join(DB, 'cfg-blocked'), { db: { dir: join(blocker, 'sub') } });
     try {
       const html = pickerBlock({ mode: 'undo' });
       assert.ok(html.includes('候选读不出来'), '库打不开须报原因，不出空表');
       assert.ok(!html.includes('库里一条都没有'), '读不通与「库里没有」不许混成一句');
     } finally {
-      process.env.SKILLS_DB_PATH = saved;
+      process.env.ILIFE_CONFIG_DIR = saved;
     }
   });
 
   it('库里一条候选都没有时出空态，不拿最近一笔顶替', () => {
-    const saved = process.env.SKILLS_DB_PATH;
-    process.env.SKILLS_DB_PATH = mkdtempSync(join(tmpdir(), 'billpick-empty-'));
+    const saved = process.env.ILIFE_CONFIG_DIR;
+    process.env.ILIFE_CONFIG_DIR = billConfigDir(mkdtempSync(join(tmpdir(), 'billpick-empty-')));
     try {
       const html = pickerBlock({ mode: 'undo' });
       assert.ok(html.includes('没有可选的要撤销的那条记录'), '空态须说明这一格要的是哪种记录');
       assert.ok(html.includes('不拿最近一笔顶替'), '空态须写明不拿最近一笔顶');
     } finally {
-      process.env.SKILLS_DB_PATH = saved;
+      process.env.ILIFE_CONFIG_DIR = saved;
     }
   });
 });

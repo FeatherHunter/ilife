@@ -111,7 +111,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 
 ## HELP 交付（说「饼干记账help」或「查帮助」走这里）
 
-- **缺省就是交付物**：`bill-cmd-read bill.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<SKILLS_DB_PATH>/biscuit_accountant_html/饼干记账_HELP_<YYYYMMDD_HHMMSS>.html`（7 域／74 场景，与卡路里同一套共享 help 模板）。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
+- **缺省就是交付物**：`bill-cmd-read bill.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<库目录>/<产物目录>/<HELP 主体名>_<YYYYMMDD_HHMMSS>[_N].html`——`<库目录>`＝配置文件 `~/.ilife/bill.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `biscuit_accountant_html`）；`<HELP 主体名>`＝同文件的 `html.helpStem`（默认 `饼干记账_HELP`）；7 域／74 场景，与卡路里同一套共享 help 模板。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
   **完成标准**：`delivery.path` 指向的文件真的存在，且大小＝`delivery.bytes`。
 - **要全量速查表才加参数**：`--params '{"mode":"lookup"}'` 出 77 条唤醒词速查表，落同目录 `饼干记账_速查表_<时间戳>.html`（与 HELP 文件分名，两份产物不撞车）；这一支同样吃下面的复用窗口。
 - **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。
@@ -122,6 +122,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 
 ## 环境与出 scope
 
-- SKILLS_DB_PATH（必设，无默认值）+ BILL_FORCE_PROD 哨兵（非 tmp 写库须 opt-in），见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/bill.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `biscuit_accountant.db`）、第二份库＝`db.goals`（默认 `goals.json`）、产物目录＝`html.dir`（默认 `biscuit_accountant_html`）、HELP 与速查表的主体名＝`html.helpStem`／`html.quickRefStem`、备份目录＝`backup.dir`（空串＝库目录下 `backups`）、备份文件名主体＝`backup.stem`（默认 `biscuit_`）；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。取值面与环境项见 docs/env.md。
+- 预检只留 node 版本一道门（`engines>=22.13`）：**没有一个环境变量是必设的**——库目录与产物落点全在配置文件里定（见上行），缺项一律按默认落点走；测试要隔离就把配置目录指到临时目录（`ILIFE_CONFIG_DIR` 设定且非空即整体接管）。
 - --html 套模板输出完整收据页（section 片段经 CONTENT 注入对应模板，非片段直写；超体积阻断）；`bill.help.lookup` 的 `--html` 改写到该键的产物（HELP 全页／速查页），语义见上「HELP 交付」节。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；link 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照。

@@ -2,9 +2,10 @@
 // skilllink CLI 冻结（P9 #10）：四步 skilllink + 唯一出口 cmd_read(read) + argv+JSON+exit + doctor。
 // 退出码冻结：0 ok；1 doctor fail；2 用法/参数；3 读表/registry/key；4 取数；5 envelope/形状/渲染/HTML落盘；6 dist 未构建（先跑 pnpm build）。
 // stdout 纯净：read 成功只打 envelope JSON 一行；进度与错误一律 stderr。
-import { accessSync, constants, statSync, readFileSync, writeFileSync } from 'node:fs';
+import { accessSync, constants, existsSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,19 +32,30 @@ function checkNode() {
   ok('node ' + process.versions.node + ' >= 22.13');
 }
 
-function checkDb() {
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) {
-    if (strict) dies('SKILLS_DB_PATH 未设置（docs/env.md：无默认值，必设）');
-    else warn('SKILLS_DB_PATH 未设置（无默认值，必设；默认 warn，--strict 升 fail）');
-    return;
-  }
+/** 配置目录的绝对路径（`ILIFE_CONFIG_DIR` 设定且非空即接管，否则默认 `~/.ilife`——与技能侧同一套口径）。 */
+function configDirPath() {
+  const override = String(process.env.ILIFE_CONFIG_DIR ?? '').trim();
+  return override !== '' ? resolve(override) : join(homedir(), '.ilife');
+}
+function configDirWhere() {
+  return String(process.env.ILIFE_CONFIG_DIR ?? '').trim() !== '' ? 'ILIFE_CONFIG_DIR' : '默认 ~/.ilife';
+}
+
+/** 配置目录体检（**#726 改写**）：老线在这里查全局 `SKILLS_DB_PATH`（无默认值、必设）——
+ *  那个变量随「配置的存与生效口径裁定」（#675）的「环境变量全部删掉」退役，六家的取值面改成
+ *  每技能一份 `<配置目录>/<技能>.yaml`（默认 `~/.ilife/<技能>.yaml`）。目录还不存在＝首次运行
+ *  （技能自己会建），只提示、不判失败——「没有一个环境变量是必设的」同一条口径。 */
+function checkConfigDir() {
+  const dir = configDirPath();
+  const where = configDirWhere();
   try {
-    const st = statSync(p);
-    if (!st.isDirectory()) return dies('SKILLS_DB_PATH 非目录：' + p);
-    accessSync(p, constants.W_OK);
-    ok('SKILLS_DB_PATH 可写：' + p);
-  } catch (e) { dies('SKILLS_DB_PATH 不可用：' + p + '（换 DB 需重连）'); }
+    const st = statSync(dir);
+    if (!st.isDirectory()) return dies('配置目录不是目录：' + dir);
+    accessSync(dir, constants.W_OK);
+    ok('配置目录可写：' + dir + '（' + where + '）');
+  } catch (e) {
+    warn('配置目录还不存在：' + dir + '（' + where + '；首次跑任一条技能命令会自动建）');
+  }
 }
 
 function checkLark() {
@@ -59,65 +71,26 @@ function checkLark() {
   }
 }
 
-// 六家技能的环境项逐包检查（docs/env.md 那张表的可执行版；#707）。
-// 与上面三项的分工：SKILLS_DB_PATH／lark-cli 是全局项，这里只查各家**自己**读的变量。
-// 表里每行 = 包名（仓内 packages/skill-<name>）＋该包自己 src 里读的变量，一个不多一个不少；
-// 实现面的依据（2026-09-18 逐包 grep，见 #707 决议）：
-//   calorie  → CALORIE_PHOTOS_DIR（src/photo/dir.ts）、CALORIE_FORCE_PROD（src/paths.ts）
-//   home     → HOME_FORCE_PROD（src/fetch/paths.ts）；照片变量不适用（本包 src 零命中 HOME_PHOTOS_DIR）
-//   chef     → CHEF_FORCE_PROD（src/fetch/paths.ts）
-//   bill     → BILL_FORCE_PROD（src/fetch/paths.ts）
-//   schedule → SCHEDULE_FORCE_PROD（src/fetch/paths.ts）、LARK_CLI_PATH（src/fetch/feishu.ts）
-//   memo     → MEMO_MEDIA_DIR（src/policy/crud.ts）；无写库哨兵（src 零命中 MEMO_FORCE_PROD）
-// 判据与全局项同口径：写库哨兵缺省 warn→--strict fail；目录/文件给了但不可用一律 fail（给了就是配错）。
-// 目录类不自动建：doctor 只读，不许因体检而写出目录（缺省那条已给创建命令）。
-const SKILL_CHECKS = [
-  { name: '卡路里', pkg: 'skill-calorie', sentinel: 'CALORIE_FORCE_PROD', dirs: [['CALORIE_PHOTOS_DIR', '照片目录']] },
-  { name: '居家', pkg: 'skill-home', sentinel: 'HOME_FORCE_PROD', dirs: [] },
-  { name: '大厨', pkg: 'skill-chef', sentinel: 'CHEF_FORCE_PROD', dirs: [] },
-  { name: '饼干', pkg: 'skill-bill', sentinel: 'BILL_FORCE_PROD', dirs: [] },
-  { name: '作息', pkg: 'skill-schedule', sentinel: 'SCHEDULE_FORCE_PROD', dirs: [], cli: [['LARK_CLI_PATH', '飞书 CLI 路径']] },
-  { name: '备忘录', pkg: 'skill-memo-ilife', sentinel: null, dirs: [['MEMO_MEDIA_DIR', '附件目录']] },
+// 六家的配置面逐包检查（docs/env.md 那张表的可执行版；**#726 改写**）。
+// 老线查的是「各家自己读的环境变量」（五个写库哨兵 ＋ 三个目录变量／飞书 CLI 路径），那些变量已随
+// #675 的「环境变量全部删掉」退役（卡路里 #718、其余四家 #695、记账 #726）⇒ 现在每家的取值面
+// 一律读 `<配置目录>/<技能>.yaml`。**doctor 只读**：配置文件不在只提示，不替用户落一份。
+// 表里每行 = 家名 ＋ 配置文件主体名（`~/.ilife/<主体>.yaml`），一个不多一个不少。
+const SKILL_CONFIGS = [
+  { name: '卡路里', stem: 'calorie' },
+  { name: '大厨', stem: 'chef' },
+  { name: '居家', stem: 'home' },
+  { name: '饼干', stem: 'bill' },
+  { name: '作息', stem: 'schedule' },
+  { name: '备忘录', stem: 'memo' },
 ];
 
-function checkDir(skill, spec) {
-  const [name, label] = spec;
-  const v = process.env[name];
-  if (!v) {
-    if (strict) dies(skill + ' ' + name + ' 未设置（' + label + '，--strict）');
-    else warn(skill + ' ' + name + ' 未设置（' + label + '缺失只挡相关命令，取数不阻断）');
-    return;
-  }
-  try {
-    if (!statSync(v).isDirectory()) return dies(skill + ' ' + name + ' 非目录：' + v);
-    accessSync(v, constants.W_OK);
-    ok(skill + ' ' + name + ' 可写：' + v);
-  } catch (e) { dies(skill + ' ' + name + ' 目录不存在或不可写：' + v + '（可执行：mkdir "' + v + '"）'); }
-}
-
-function checkCliPath(skill, spec) {
-  const [name, label] = spec;
-  const v = process.env[name];
-  if (!v) {
-    if (strict) dies(skill + ' ' + name + ' 未设置（' + label + '，--strict）');
-    else warn(skill + ' ' + name + ' 未设置（' + label + '：缺省回落 PATH 找 lark-cli）');
-    return;
-  }
-  try {
-    accessSync(v, constants.X_OK);
-    ok(skill + ' ' + name + ' 可执行：' + v);
-  } catch (e) { dies(skill + ' ' + name + ' 不可执行：' + v); }
-}
-
-function checkSkills() {
-  for (const c of SKILL_CHECKS) {
-    if (c.sentinel) {
-      if (process.env[c.sentinel] === '1') ok(c.name + ' ' + c.sentinel + '=1（放行写非 tmp 路径）');
-      else if (strict) dies(c.name + ' ' + c.sentinel + '≠1（opt-in，--strict）');
-      else warn(c.name + ' ' + c.sentinel + '≠1（opt-in：非 tmp 写库被拒是预期行为）');
-    }
-    for (const d of c.dirs) checkDir(c.name, d);
-    for (const p of c.cli || []) checkCliPath(c.name, p);
+function checkSkillConfigs() {
+  const dir = configDirPath();
+  for (const c of SKILL_CONFIGS) {
+    const file = join(dir, c.stem + '.yaml');
+    if (existsSync(file)) ok(c.name + ' 配置文件在：' + file);
+    else warn(c.name + ' 配置文件还没落：' + file + '（跑一次该技能即按默认值落一份；落点由配置唯一决定）');
   }
 }
 
@@ -256,9 +229,9 @@ function parseReadArgs(a) {
 if (cmd === 'doctor') {
   strict = rest.includes('--strict');
   checkNode();
-  checkDb();
+  checkConfigDir();
   checkLark();
-  checkSkills();
+  checkSkillConfigs();
   ok('CLI 契约：argv+JSON(stdout)+exit；HTML 用 --html 显式落盘（utf8，路径/编码待定中转方案）');
   if (process.exitCode) console.error('doctor: FAIL');
   else console.log('doctor: PASS');

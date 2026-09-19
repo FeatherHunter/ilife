@@ -1,6 +1,6 @@
 // t413 区间页锁：bill.record.range 六词（查周／查月／查区间／查分类／查账户／查账本）
 // 判据五组：
-//   ① 查周／查月：显式 today 锚点＋截到锚点（end==锚点，非周日／月末）＋ BILL_TODAY 环境 pin 同窗；
+//   ① 查周／查月：显式 today 锚点＋截到锚点（end==锚点，非周日／月末）＋ 钉钟（`freezeClock`，替代已退役的 BILL_TODAY）同窗；
 //   ② 查区间：start+end 同给真跑；单缺一起→exit 2；start>end→exit 2；空区间→exit 4；
 //   ③ 查分类：L1 无斜杠命中下级（餐饮→3 笔）／L2 命中子树（2 笔）／L3 精确（1 笔）；失败路径不断言；
 //   ④ 查账户／查账本：只过滤（行集按值过滤，KPI 照窗内收支、转账除外）；余额无关探针（无 balance 字段，
@@ -17,6 +17,7 @@ import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { billEnv, freezeClock } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -44,7 +45,7 @@ let DB = '';
 let OUT = '';
 const P = (o) => JSON.stringify(o);
 function runWith(db, args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: billEnv(db, envExtra) });
 }
 function run(args, envExtra) {
   return runWith(DB, args, envExtra);
@@ -106,10 +107,10 @@ describe('t413 ① 查周：锚点周一..锚点（截到锚点，非周日）',
     assert.ok(text.includes(monday + ' ~ ' + wed + '（本周）'), '窗口 end 应为锚点');
     assert.ok(!text.includes(monday + ' ~ ' + sunday), '窗口 end 不得是周日（旧整周口径已退）');
   });
-  it('环境 pin：BILL_TODAY=周三（不传 today）同窗', () => {
-    const { stdout } = page('bill.record.range', { range: 'week' }, 't413-week-pin', { BILL_TODAY: wed });
+  it('钉钟：当刻钉在周三（不传 today）同窗', () => {
+    const { stdout } = page('bill.record.range', { range: 'week' }, 't413-week-pin', freezeClock(wed));
     const env = JSON.parse(stdout);
-    assert.equal(env.data.start, monday, '环境 pin 应与显式锚点同窗');
+    assert.equal(env.data.start, monday, '钉钟应与显式锚点同窗');
     assert.equal(env.data.end, wed);
   });
 });

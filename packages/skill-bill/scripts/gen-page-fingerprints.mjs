@@ -80,8 +80,10 @@ const reShort = new RegExp('(' + [...clockDates].join('|') + ') \\d{2}:\\d{2}(?!
 const normalize = (t) => t.replace(reFull, '<TS>').replace(reShort, '<TS>');
 
 const DB = mkdtempSync(join(tmpdir(), 't689-fp-db-'));
-const env = { ...process.env, SKILLS_DB_PATH: DB };
-delete env.BILL_FORCE_PROD;
+// #726：落点改由配置文件唯一的真相决定——在 DB 里落一份 `bill.yaml`（`db.dir = DB`），
+// 再把配置目录指到同一个临时目录（老线的 `SKILLS_DB_PATH` ＋ 删 `BILL_FORCE_PROD` 已退役）。
+writeFileSync(join(DB, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(DB) + '\n', 'utf8');
+const env = { ...process.env, ILIFE_CONFIG_DIR: DB };
 const NODE = process.execPath;
 
 function run(key, params, html) {

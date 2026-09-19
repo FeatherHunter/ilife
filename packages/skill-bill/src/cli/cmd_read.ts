@@ -3,13 +3,15 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
 import { writeFileSync, readFileSync, copyFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
-import { join, basename, resolve } from 'node:path';
+import { join, basename } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
-  resolveDbPath, resolveDbDir, resolveGoalsPath, assertWritablePath, openBillDb, closeBillDb,
+  resolveDbPath, resolveDbDir, resolveGoalsPath, openBillDb, closeBillDb,
   fetchAll, listRange,
   addBill, loadGoals, saveGoals,
 } from '../fetch/index.js';
+// #726：备份目录与备份文件名两件从定义地直取（只服务 `bill.setup.run`，不进 `fetch/index.js` 那道门）。
+import { backupFileName, resolveBackupDir } from '../fetch/paths.js';
 // #689 结构搬迁第三批：`policy/` 与 `render/views.ts` 已拆散删除，下列名字按归属律各回自己的域／共用位
 // （`../shared/` 三件、`../analysis/`、`../goal/`、`../account/`、`../help/`、`../write/`、`../query/`）——
 // 外壳只认各域的门（一个命令族一处；随命令迁移收窄）。
@@ -23,9 +25,11 @@ import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize,
   templateFor, loadTemplate, fillTemplate,
   buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
-  HELP_FILE_STEM, LOOKUP_FILE_STEM, HELP_HTML_DIR_NAME,
   BillRenderError,
 } from '../render/index.js';
+// #726：产物目录名与两个文件名主体改成「现读配置」的三个函数（那几个常量仍住同一处定义地，是默认值）。
+import { htmlDirName, lookupFileStem } from '../help/helpPaths.js';
+import { helpFileStem } from '../help/helpFile.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup, buildHelpItems } from '../help/index.js';
@@ -45,12 +49,12 @@ function fail(code: number, msg: string): never { console.error('ERR ' + code + 
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
-function preflight(): string {
+/** 预检只留 node 版本这一道门（#726）：库目录不再要求环境变量——落点由配置文件唯一决定，
+ *  缺项一律按默认落点走，故「没配」不再是阻断项。测试隔离那道响亮失败住 `base-link-core`
+ *  （跑在 `node --test` 里却没设 `ILIFE_CONFIG_DIR` 即抛 `CONFIG_TEST_ISOLATION_MISSING`）。 */
+function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
-  const p = process.env.SKILLS_DB_PATH;
-  if (!p) fail(1, 'SKILLS_DB_PATH 未设置（无默认值，必设）');
-  return p;
 }
 
 /* 时间窗口（周／月／昨天）与日期归一不再是本文件的文件级函数：查询域搬迁（#411）时它们被
@@ -59,9 +63,10 @@ function preflight(): string {
 
 /* ── #144 · 「饼干记账help」的交付装配（**在开库之前**走） ────────────────────────────────
  *
- * 缺省（不给任何参数）＝ 老实物同款 HELP 文件：`<SKILLS_DB_PATH>/biscuit_accountant_html/
- * 饼干记账_HELP_<YYYYMMDD_HHMMSS>[_N].html`，独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。
- * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体 `饼干记账_速查表`，与 HELP 分名——照 #139 判法：
+ * 缺省（不给任何参数）＝ 老实物同款 HELP 文件：`<库目录>/<产物目录名>/<HELP 文件名主体>_<YYYYMMDD_HHMMSS>[_N].html`，
+ * 独占落盘 ＋ 绝对路径回执（`delivery` 顶层追加）。#726 起三处取值（库目录／产物目录名／文件名主体）
+ * 全部读配置文件里的 `db.dir`／`html.dir`／`html.helpStem`，默认逐字等于老常量。
+ * 显式 `mode:"lookup"` ＝ 全量速查表文件（主体取 `html.quickRefStem`，与 HELP 分名——照 #139 判法：
  * 一条命令两种产物就分成两个名字，别让用户按一个名字打开到另一个东西）。
  * 显式 `q` ＝ 现找：只回命中（stdout），`--html <路径>` 给了才落盘（检索式问答不刷目录）。
  * 显式 `reuseHours`（小时）＝ 复用窗口：`0`＝每次都落新的（要一份最新的）；不给＝**一天**——
@@ -77,8 +82,11 @@ interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverInten
 
 /** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
  *  `bill.help.lookup` 这条命令下挂着两种产物（HELP 文件与速查表），两种都算「反复读的 HELP 产物」；
- *  而 `--html` 那支是用户逐字指定的落点（共用件的 `file` 口子），本来不吃复用。 */
-const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, LOOKUP_FILE_STEM];
+ *  而 `--html` 那支是用户逐字指定的落点（共用件的 `file` 口子），本来不吃复用。
+ *  #726 起改成函数：两个主体随配置变（`html.helpStem`／`html.quickRefStem`），常量会在配置改动后陈旧。 */
+function helpReuseStems(): readonly string[] {
+  return [helpFileStem(), lookupFileStem()];
+}
 
 /** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
  *
@@ -88,7 +96,7 @@ const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, LOOKUP_FILE_STEM];
 const windowOf = helpReuseWindowOf((m) => fail(2, m));
 
 function windowForHelpDelivery(stem: string, params: Record<string, unknown>): number | undefined {
-  if (!HELP_REUSE_STEMS.includes(stem)) return undefined;
+  if (!helpReuseStems().includes(stem)) return undefined;
   return windowOf(params);
 }
 
@@ -99,7 +107,6 @@ function helpInitialized(): boolean {
 }
 
 function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
-  const dbDir = resolveDbDir();
   const now = new Date();
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
@@ -111,36 +118,36 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   }
   if (mode === 'lookup') {
     const hits = buildHelpItems(buildHelpLookup(), undefined);
-    const stem = LOOKUP_FILE_STEM;
+    const stem = lookupFileStem();
     return {
       data: { ...hits, mode: 'lookup' },
       deliver: {
-        target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem },
+        target: { dir: join(resolveDbDir(), htmlDirName()), stem },
         reuseMs: windowForHelpDelivery(stem, params),
       },
     };
   }
   const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
-  const stem = HELP_FILE_STEM;
+  const stem = helpFileStem();
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
     deliver: {
       html,
-      target: { dir: join(resolve(dbDir), HELP_HTML_DIR_NAME), stem },
+      target: { dir: join(resolveDbDir(), htmlDirName()), stem },
       reuseMs: windowForHelpDelivery(stem, params),
     },
   };
 }
 
 /** 迁移过的命令入口（写入域两条 ＋ 查询域四条）：查注册表命中即走能力目录，按 `kind` 静态分两支。
- *  开库／关库与写前置守卫与老路同一套；读命令不碰写库守卫（照旧只读）。
+ *  开库／关库与老路同一套；**写库开关已退役（#726）**：`BILL_FORCE_PROD` 那个 opt-in 随 #675 删除，
+ *  落点改由配置文件唯一决定（口径「照写」，替代护栏＝测试基座的 `ILIFE_CONFIG_DIR`）。
  *  这些命令的整页（采集页／回执页／查询列表页）住各自能力目录，
  *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。 */
 function runRegistered(key: string, params: Record<string, unknown>): WriteOut | ViewOut {
   const spec = REGISTRY[key];
   if (spec === undefined) fail(3, '未知 bill 命令：' + key);
   const dbPath = resolveDbPath();
-  if (spec.kind === 'write') assertWritablePath(dbPath);
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
@@ -156,10 +163,6 @@ function runRegistered(key: string, params: Record<string, unknown>): WriteOut |
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const goalsPath = resolveGoalsPath();
-  // 会改数据库的命令前置守卫（B6）：非 tmp 写库须 BILL_FORCE_PROD=1；查询命令不受影响。
-  // 记一笔／改记录已迁进能力目录（走上面的 `runRegistered`），守卫也跟着搬过去了。
-  if (key === 'bill.goal.write') assertWritablePath(goalsPath);
-  if (key === 'bill.account.write') { assertWritablePath(dbPath); assertWritablePath(goalsPath); }
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
@@ -352,26 +355,24 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           return buildRecordReceipt(`就绪：bills 表 10 列（v2.0 特征 deleted_at），库 ${dbPath}`);
         }
         if (op === 'backup-create' || op === 'backup-list') {
-          const dir = join(dbPath, '..', 'backups');
+          const dir = resolveBackupDir();
           mkdirSync(dir, { recursive: true });
           if (op === 'backup-list') {
             const names = readdirSync(dir).filter((f) => f.endsWith('.db')).sort();
             return buildRecordReceipt(`备份${names.length}个${names.length ? '：' + names.slice(-5).join('、') : ''}`);
           }
-          assertWritablePath(dbPath);
           closeBillDb(handle);
           const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '').replace(/(\d{8})(\d{6})/, '$1_$2');
-          const name = `biscuit_${stamp}.db`;
+          const name = backupFileName(stamp);
           copyFileSync(dbPath, join(dir, name));
           try { copyFileSync(goalsPath, join(dir, name.replace('.db', '.goals.json'))); } catch { /* goals 可空 */ }
           return buildRecordReceipt(`已备份：${name}`);
         }
         if (op === 'restore') {
           const name = params.name;
-          const dir = join(dbPath, '..', 'backups');
+          const dir = resolveBackupDir();
           const target = typeof name === 'string' && name ? join(dir, basename(name)) : readdirSync(dir).filter((f) => f.endsWith('.db')).sort().map((f) => join(dir, f)).pop();
           if (!target || !existsSync(target as string)) throw new BillFetchError('BILL_DB_MISSING', '无可用备份（先 backup-create）');
-          assertWritablePath(dbPath);
           closeBillDb(handle);
           copyFileSync(target as string, dbPath);
           return buildRecordReceipt(`已恢复：${basename(target as string)}`);
@@ -386,7 +387,6 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           if (params['dry-run'] === true || params.dryRun === true) {
             return buildRecordReceipt(`导入预览：${lines.length - 1} 行（dry-run，未写入）`);
           }
-          assertWritablePath(dbPath);
           let n = 0;
           for (const line of lines.slice(1)) {
             const cells = line.split(',').map((c) => c.trim());
@@ -449,8 +449,7 @@ async function main() {
     process.stdout.write(runHealthCheckKey(key) + '\n');
     return;
   }
-  const dbPath = preflight();
-  void dbPath;
+  preflight();
   let shape = null;
   try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
   void shape;
@@ -490,8 +489,9 @@ async function main() {
     if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
       fail(5, '落盘失败：' + ((e as Error).message || String(e)));
     }
-    if ((e as Error).message?.includes('SKILLS_DB_PATH')) fail(1, (e as Error).message);
-    if ((e as Error).message?.includes('BILL_FORCE_PROD')) fail(1, (e as Error).message);
+    // #726：配置面报错（测试缺隔离基座、配置文件读不出来）走「预检」那一档，与老线缺库目录同一档；
+    // 按 `base-link-core` 的 `ConfigError.code`（`CONFIG_*`）认，不拿报文文本去猜。
+    if (String((e as { code?: unknown }).code ?? '').startsWith('CONFIG_')) fail(1, (e as Error).message);
     fail(4, '未知失败：' + ((e as Error).message || String(e)));
   } finally { clearTimeout(timer); }
   // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。

@@ -16,6 +16,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { billEnv } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -30,7 +31,7 @@ const namesOf = (dir) => { try { return readdirSync(htmlDirOf(dir)).sort(); } ca
 
 function run(dir, args) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, SKILLS_DB_PATH: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: billEnv(dir),
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }
@@ -49,7 +50,7 @@ test('#245 ① 缺省＝一天：连读 3 次目录文件数不增，三次落�
   const a = runOk(dir, [KEY]);
   const out = a.env.delivery.path;
   assert.ok(isAbsolute(out), '回执须绝对路径：' + out);
-  assert.equal(basename(dirname(out)), 'biscuit_accountant_html', '落 <SKILLS_DB_PATH>/biscuit_accountant_html/');
+  assert.equal(basename(dirname(out)), 'biscuit_accountant_html', '落 <库目录>/biscuit_accountant_html/');
   assert.match(basename(out), HELP_NAME_RE, '名字通式：' + basename(out));
 
   const before = readFileSync(out);
