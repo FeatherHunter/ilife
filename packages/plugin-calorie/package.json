@@ -25,7 +25,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.2.5",
+    "dsh-life-pack": "^0.2.6",
     "skill-calorie": "0.2.4"
   },
   "dsh": {

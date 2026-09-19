@@ -17,6 +17,9 @@ export interface TargetInfo {
   /** 宿主启动那一刻磁盘上的版本；null = 启动时这个包还没装。 */
   readonly runningVersion: string | null;
   readonly installedVersion: string | null;
+  /** 已装产物里有没有爱生活页签槽的注册代码；**宿主没给这一行时为 undefined**（老宿主）。
+   * 见 `slotStateOf`：判据缺席不许猜，退回「装了但我们不知道接没接上」那一态。 */
+  readonly panelRegistered?: boolean;
   /** 技能包随插件的那条精确 pin（插件包 manifest 里的 `skill-*` 依赖）。 */
   readonly skill: { readonly packageName: string; readonly version: string } | null;
 }
@@ -31,6 +34,22 @@ export interface CheckOutcome {
 /** 缺席：宿主启动时没装、现在磁盘上也没有（`runningVersion`/`installedVersion` 都是 null）。 */
 export function isAbsent(target: TargetInfo): boolean {
   return target.runningVersion === null && target.installedVersion === null;
+}
+
+/** 缺席卡要说清的四态（前两态给动作，后两态**不给动作**——重装与重启都不会改变那两个状态）。
+ *
+ * 判据是**两处独立事实**，不许互相顶替：宿主的装机读数（磁盘上有没有、产物里有没有注册代码），
+ * 与浏览器侧的页签槽账本（这一家的设置页此刻在不在浏览器里）。前者答「装没装、重装有没有用」，
+ * 后者答「接没接上」。用账本代理「装没装」会说假话：真机实测四家已装却显示「未安装」（0.2.5 已修）。
+ */
+export type SlotState = 'connected' | 'absent' | 'unregistered-product' | 'not-connected';
+
+/** 一家页签此刻的状态：账本里已注册 → `connected`（面板显示它自己的设置页），否则按宿主装机读数分三态。 */
+export function slotStateOf(target: TargetInfo | null, inLedger: boolean): SlotState {
+  if (inLedger) return 'connected';
+  if (target === null || isAbsent(target)) return 'absent';
+  if (target.panelRegistered === false) return 'unregistered-product';
+  return 'not-connected';
 }
 
 export type VerdictKind = 'unknown' | 'up-to-date' | 'update-available' | 'blocked';

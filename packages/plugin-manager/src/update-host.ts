@@ -13,7 +13,7 @@ import type { EnvironmentKind } from 'dsh-plugin-update';
 import { DEFAULT_REGISTRY, MANAGER_ACTIONS, reasonText } from './update-contract.js';
 import { UPDATE_TARGETS, targetFor } from './update-targets.js';
 import type { UpdateTarget } from './update-targets.js';
-import { MISSING_RUNNING_VERSION, captureRunningVersion, readSkillRide, readTargetEnvironment, resolveProfileDir } from './update-env.js';
+import { MISSING_RUNNING_VERSION, captureRunningVersion, readPanelRegistered, readSkillRide, readTargetEnvironment, resolveProfileDir } from './update-env.js';
 
 /** 面板侧认的回执信封（与 DSH 载体的 `RpcCallResult` 同形，见 cookbook §6）。 */
 export type ManagerReply =
@@ -88,6 +88,9 @@ async function readTargets(
       phones: phones.get(target.key) ?? null,
       runningVersion: facts.runningVersions.get(target.key) ?? null,
       installedVersion: await captureRunningVersion(target.packageName, facts.profileDir),
+      // 面板缺席卡三态要的第三个事实：已装产物里有没有爱生活页签槽的注册代码。
+      // 它答的是「重装／重启有没有用」，版本号答不出来（票 #723，见 `readPanelRegistered` 头注）。
+      panelRegistered: await readPanelRegistered(target.packageName, facts.profileDir),
       skill: await readSkillRide(target.packageName, facts.profileDir),
     });
   }

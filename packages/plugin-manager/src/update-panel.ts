@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { isAbsent, manualForDisplay, pendingRestartText, verdictOf, versionLines } from './update-view.js';
+import { isAbsent, manualForDisplay, pendingRestartText, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -160,22 +160,28 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [checking, setChecking] = React.useState(false);
   const [open, setOpen] = React.useState(false);
-  React.useEffect(() => {
-    let alive = true;
-    void (async () => {
-      const loaded = await loadTargets(getCall());
-      if (!alive) return;
-      if (loaded.ok) {
-        setTargets(loaded.value.targets);
-        setPollMs(loaded.value.pollMs);
-      } else {
-        setLoadError(loaded.message);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+  const alive = React.useRef(true);
+  React.useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
+  /** 重取七个目标的表（装机读数变了就重取：缺席卡的态是拿这张表算的，缓存住它会继续说旧话）。 */
+  const reload = React.useCallback(async () => {
+    const loaded = await loadTargets(getCall());
+    if (!alive.current) return;
+    if (loaded.ok) {
+      setTargets(loaded.value.targets);
+      setPollMs(loaded.value.pollMs);
+      setLoadError(null);
+    } else {
+      setLoadError(loaded.message);
+    }
   }, [getCall]);
+  React.useEffect(() => {
+    void reload();
+  }, [reload]);
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
     setRows((previous) => ({ ...previous, [key]: next }));
   }, []);
@@ -214,6 +220,9 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
           const refreshed = await checkTarget(getCall(), target, target.phones?.status);
           patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
+          // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
+          // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
+          await reload();
           return;
         }
         patch(target.key, {
@@ -223,7 +232,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
         });
       })();
     },
-    [getCall, patch, pollMs, rows],
+    [getCall, patch, pollMs, reload, rows],
   );
   return { targets, rows, pollMs, loadError, checking, open, close: () => setOpen(false), checkAll, act };
 }
@@ -366,19 +375,22 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
   );
 }
 
-/** 缺席卡：**按宿主的装机读数分两态**，不让层与层的结论互相顶替。
+/** 缺席卡：**按两处独立事实分三态**，每态只给能改变状态的动作。
  *
- * - 宿主说磁盘上没有这个包 →「未安装」＋「装上」按钮（这是本票原有的能力）；
- * - 宿主说装着（`installedVersion` 非空）却没进页签槽 → 说实情、**不给「装上」**：
- *   重装改不了产物里有没有注册代码这件事（真机实测：作息/居家/大厨/记账 的已发布 0.2.0
- *   产物里根本没有页签槽注册，见票 #723）。给出可复制命令仅作参考。
+ * - `absent`（磁盘上没有这个包）→「未安装」＋「装上」按钮（本票原有的能力）；
+ * - `unregistered-product`（装着，但产物里没有页签槽注册代码）→ 说实情、**不给按钮**：
+ *   重装改不了产物里有没有注册代码（真机实测：作息／居家／大厨／记账 的已发布 0.2.0
+ *   产物里根本没有注册代码，见票 #723）；给可复制命令只是参考；
+ * - `not-connected`（装着、产物也有注册代码，设置页却没送到浏览器）→ 重启宿主；仍不行看日志；
+ * - `connected` 不归本卡管：那时面板显示的是那家自己的设置页。
  *
- * 原实现只看页签槽 ledger 就断言「未安装」——那对上面第二种情形是说假话，且点「装上」
+ * 原实现只看页签槽 ledger 就断言「未安装」——那对后两种情形是说假话，且点「装上」
  * 会走进更新包的流程（它已经装着 ⇒ 没有新版 ⇒ 没有凭证）并报出误导的「查新版失败」。
  */
 export function AbsentCard(props: {
   readonly target: TargetInfo | null;
   readonly fallbackCommand: string;
+  readonly inLedger: boolean;
   readonly face: UpdateRowsFace;
 }): React.ReactElement {
   const target = props.target;
@@ -386,27 +398,47 @@ export function AbsentCard(props: {
   const busy = row?.phase === 'installing';
   const manual = (target ? manualForDisplay(target, row?.failure?.manual ?? row?.outcome?.manual ?? null) : null) ?? props.fallbackCommand;
   const installed = target ? (target.installedVersion ?? target.runningVersion) : null;
+  const state = slotStateOf(target, props.inLedger);
   let reason: string | null = row?.failure?.message ?? null;
   if (target && reason === null && row?.outcome && row.outcome.snapshot.blockedReason !== null) {
     reason = verdictOf(target, row.outcome.snapshot).text;
   }
-  const headline = !target
-    ? '这个页签对应的插件还没装。'
-    : installed === null
-      ? '未安装[' + target.packageName + ']，装上后这个页签就能用了。'
-      : '插件已装（' + installed + '），但它这一版没把设置页接上爱生活面板：要等它发新版才对得上（重启与重装都不会变）。';
+  let headline: string;
+  switch (state) {
+    case 'absent':
+      headline = target
+        ? '未安装[' + target.packageName + ']，装上后这个页签就能用了。'
+        : '这个页签对应的插件还没装。';
+      break;
+    case 'unregistered-product':
+      headline =
+        target!.packageName +
+        ' ' +
+        String(installed) +
+        ' 装着，但它这一版的产物里没有爱生活页签的注册代码：得等它发一个带注册代码的新版才对得上。重启与重装都不会变（重装只是把同一版再装一次）。';
+      break;
+    default:
+      headline =
+        target!.packageName +
+        ' ' +
+        String(installed) +
+        ' 装着、产物里也有注册代码，但它的设置页没送到浏览器：重启宿主后再看这个页签；仍然这样就去宿主日志里找它的报错。';
+      break;
+  }
   return React.createElement(
     'div',
     { style: PANEL_STYLE.reco },
     React.createElement('div', null, headline),
-    target && installed === null
+    state === 'absent'
       ? React.createElement(
           'button',
           {
             type: 'button',
             style: busy ? { ...PANEL_STYLE.btn, marginTop: 8, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 8 },
             disabled: busy,
-            onClick: () => props.face.act(target),
+            onClick: () => {
+              if (target) props.face.act(target);
+            },
           },
           busy ? '正在装，请稍候…' : '装上',
         )

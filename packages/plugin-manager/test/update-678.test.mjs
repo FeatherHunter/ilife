@@ -2,12 +2,16 @@
 // 判据（票面「改动要能自证」）：本脚本改坏一处必须变红（见实施记录的变异两态读数）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, isAbsolute } from 'node:path';
 import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
-import { BLOCKED_REASONS, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
-import { isAbsent, manualForDisplay, pendingRestartText, verdictOf, versionLines } from '../dist/update-view.js';
+import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
+import { isAbsent, manualForDisplay, pendingRestartText, slotStateOf, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
+import { readPanelRegistered } from '../dist/update-env.js';
 
 const PROFILE = 'dsh-profile-web';
 
@@ -99,6 +103,20 @@ describe('#678 一行结论与版本行', () => {
     assert.equal(isAbsent(absentTarget), true);
     assert.equal(isAbsent(target), false);
   });
+  it('面板缺席卡四态：账本已注册＝connected；否则按宿主装机读数分 absent／unregistered-product／not-connected', () => {
+    // 账本里已注册：面板显示那家自己的设置页，不归缺席卡管。
+    assert.equal(slotStateOf(target, true), 'connected');
+    // 磁盘上没有这个包 ⇒ 只有「装上」能改变状态。
+    assert.equal(slotStateOf(absentTarget, false), 'absent');
+    assert.equal(slotStateOf(null, false), 'absent');
+    // 装着、但已装产物里没有页签槽注册代码（票 #723 那四家）⇒ 重启与重装都不会变。
+    assert.equal(slotStateOf({ ...target, panelRegistered: false }, false), 'unregistered-product');
+    // 装着、产物也有注册代码，却没进账本 ⇒ 差一次重启（这正是「装完不重启」那一刻的样子）。
+    assert.equal(slotStateOf({ ...target, panelRegistered: true }, false), 'not-connected');
+    // 判据缺席（老宿主没给这一行）不许猜：退回「装了但我们不知道接没接上」那一态，别误报成没装。
+    assert.equal(slotStateOf({ ...target, panelRegistered: undefined }, false), 'not-connected');
+    assert.equal(slotStateOf({ ...target }, false), 'not-connected');
+  });
   it('三态：还没查 / 已是最新 / 有新版可装', () => {
     assert.equal(verdictOf(target, snapshot({})).kind, 'unknown');
     assert.equal(verdictOf(target, snapshot({ latestVersion: '0.2.5' })).kind, 'up-to-date');
@@ -174,6 +192,12 @@ describe('#678 面板流程（假传输口）', () => {
     assert.equal(seen[0].channel, MANAGER_RPC.base, '第一段必须是载体基段（传成通道名就 404）');
     assert.equal(seen[0].endpoint, MANAGER_RPC.endpoint);
     assert.equal(seen[0].method, MANAGER_ACTIONS.targets);
+  });
+  it('取目标表：宿主转交的 panelRegistered 原样留到面板（第三态判据不许在这一层被丢掉）', async () => {
+    const call = async () => ({ ok: true, value: { targets: [{ ...target, panelRegistered: false }], pollMs: 1000 } });
+    const loaded = await loadTargets(call);
+    assert.equal(loaded.value.targets[0].panelRegistered, false);
+    assert.equal(slotStateOf(loaded.value.targets[0], false), 'unregistered-product');
   });
   it('查一家：调那一家的查新版电话，回包体原样透传', async () => {
     const seen = [];
@@ -261,5 +285,76 @@ describe('#678 面板流程（假传输口）', () => {
     const checked = await checkTarget(null, target);
     assert.equal(checked.ok, false);
     assert.equal(checked.code, 'internal');
+  });
+});
+
+// 宿主侧读数：`readPanelRegistered` 是缺席卡第三态（unregistered-product）的**唯一**判据来源。
+// 它判的是一条真机上出现过的差别（票 #723）：四家已发布产物里没有注册代码 —— 版本号答不出来。
+describe('#678 宿主读数：已装产物里有没有页签槽注册代码', () => {
+  const HOST = 'dsh-probe-host';
+  /** 造一个使用范围夹具：一家装着、产物里有／没有注册代码，另一家根本没装。
+   * `entryPath` 指向的出口文件**不写**时可造「清单说得出、文件却不在」那一支（`stat` 失败）。 */
+  function fixture(entryContents, entryPath = './dist/client.js') {
+    const dir = mkdtempSync(join(tmpdir(), 't678-env-'));
+    const pkgDir = join(dir, 'node_modules', HOST);
+    mkdirSync(join(pkgDir, 'dist'), { recursive: true });
+    writeFileSync(
+      join(pkgDir, 'package.json'),
+      JSON.stringify({
+        name: HOST,
+        version: '0.2.0',
+        main: './dist/index.js',
+        exports: { './client': entryPath },
+        dsh: { bundle: { patch: './cordis.patch.yml' } },
+      }),
+      'utf8',
+    );
+    if (entryContents !== null && !isAbsolute(entryPath)) {
+      writeFileSync(join(pkgDir, entryPath.replace('./', '')), entryContents, 'utf8');
+    }
+    return dir;
+  }
+
+  it('产物里有槽名字面量 ⇒ true；没有 ⇒ false', async () => {
+    const withSlot = fixture('var CONFIG_TAB_SLOT = "' + CONFIG_TAB_SLOT + '"; ctx.slots.inject(CONFIG_TAB_SLOT, fn);');
+    const withoutSlot = fixture('var SLOT_ID = "ilife:' + HOST.slice(4) + '"; ctx.slots.inject(SLOT_ID, fn);');
+    try {
+      assert.equal(await readPanelRegistered(HOST, withSlot), true);
+      assert.equal(await readPanelRegistered(HOST, withoutSlot), false);
+    } finally {
+      rmSync(withSlot, { recursive: true, force: true });
+      rmSync(withoutSlot, { recursive: true, force: true });
+    }
+  });
+  it('判据缺席（包没装／清单读不出／出口文件不在／出口不是普通文件／出口形状认不出）⇒ 一律 false，不抛', async () => {
+    const empty = mkdtempSync(join(tmpdir(), 't678-env-'));
+    const noEntryFile = fixture(null, './dist/absent.js');
+    const absoluteEntry = fixture('var x = 1;', 'C:/outside/client.js');
+    // 出口指向一个**目录**：`stat` 成功、但不是普通文件 ⇒ 走的是「读不出产物」那一支
+    // （与「文件不在」不同：那一种是 stat 直接抛 ENOENT，压根到不了这一步）。这一支必须保守。
+    const directoryEntry = fixture(null, './dist/dir-entry');
+    mkdirSync(join(directoryEntry, 'node_modules', HOST, 'dist', 'dir-entry'), { recursive: true });
+    try {
+      assert.equal(await readPanelRegistered('dsh-not-installed', empty), false, '包没装（清单读不出）');
+      assert.equal(await readPanelRegistered(HOST, noEntryFile), false, '清单说得出、出口文件却不在');
+      assert.equal(await readPanelRegistered(HOST, absoluteEntry), false, '出口给绝对路径（越界）');
+      assert.equal(await readPanelRegistered(HOST, directoryEntry), false, '出口不是普通文件（读不出产物 ⇒ 保守判否）');
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+      rmSync(noEntryFile, { recursive: true, force: true });
+      rmSync(absoluteEntry, { recursive: true, force: true });
+      rmSync(directoryEntry, { recursive: true, force: true });
+    }
+  });
+  it('产物换了（安装／重装改了大小与时间）⇒ 重新读文件，不吃旧结论', async () => {
+    const dir = fixture('var x = 1;');
+    try {
+      assert.equal(await readPanelRegistered(HOST, dir), false);
+      // 装上带注册代码的新版：同一路径、内容与大小都变了。
+      writeFileSync(join(dir, 'node_modules', HOST, 'dist', 'client.js'), 'var s = "' + CONFIG_TAB_SLOT + '";', 'utf8');
+      assert.equal(await readPanelRegistered(HOST, dir), true, '不重读就等于把装机读数缓存住了：装完不重启也不改态');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

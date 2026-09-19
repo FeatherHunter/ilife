@@ -11,6 +11,14 @@
  */
 import type { BlockedReason } from 'dsh-plugin-update';
 
+/** 爱生活页签槽名（总管声明 `children`、各单品技能设置页注册进来；单段名，避开官方 `settings.*` 前缀）。
+ *
+ * 为什么住这里：这个名字**两侧都要用**——面板侧 `client.ts` 拿它注册／投影槽，
+ * 宿主侧（`update-env.ts` 的 `readPanelRegistered`）拿它判「已装产物里到底有没有注册代码」。
+ * 一处定义、两边引用（结构纪律「概念唯一」）：名字改了只有这一行要动。
+ * 宿主判据为什么要读这个字面量、以及它的边界，见 `readPanelRegistered` 的头注。 */
+export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
+
 /** 载体：宿主注册 `connection.fetch.register` 的路径 / 面板 `connection.rpc.call` 的两段参数。 */
 export const MANAGER_RPC = {
   /** 载体基段（`connection.rpc.call` 的**第一段**参数）。传错第一段就是 404：真机上踩过一次。 */
@@ -27,7 +35,7 @@ export const MANAGER_RPC = {
 export const MANAGER_ACTIONS = {
   /** 装上缺席的目标包：入参 `{packageName, version}`，回包 `{packageName, version}`。 */
   install: 'ilife-manager.install',
-  /** 七个更新目标的表：入参 `{}`，回包 `{targets: [{key, title, packageName, phones, runningVersion, installedVersion, skill}]}`。
+  /** 七个更新目标的表：入参 `{}`，回包 `{targets: [{key, title, packageName, phones, runningVersion, installedVersion, panelRegistered, skill}]}`。
    *
    * 电话名为什么由宿主转交而不是面板侧写死：更新包的三个电话名只有它自己知道
    * （`update.phoneNames`，`host.ts:335`）；面板侧既不能 import 更新包（浏览器产物纯度门）

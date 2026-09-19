@@ -24,6 +24,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { fileURLToPath } from 'node:url';
 import { defaultHomeDir, profileNameValid, registrySpec } from 'dsh-plugin-update';
 import type { EnvironmentKind, EnvironmentView } from 'dsh-plugin-update';
+import { CONFIG_TAB_SLOT } from './update-contract.js';
 
 /** 缺席包给读取器的占位运行版本：这家读数是「没装」，不显示、也不参与能不能装（`eligible` 已为假）。 */
 export const MISSING_RUNNING_VERSION = '0.0.0' as const;
@@ -192,6 +193,70 @@ export async function captureRunningVersion(packageName: string, profileDir: str
   } catch {
     return null;
   }
+}
+
+/** 面板产物读数缓存：key 是客户端出口文件的绝对路径，value 是「上一次读到的产物事实 ＋ 判它失效的两个数字」。
+ *
+ * 为什么敢缓存：宿主半的存活期以天计，而每次轮询都重读 17～70 kB 的产物太浪费；
+ * 失效判据取文件的**大小与修改时间**——安装／重装必然换掉这两个数字（包内容变了），
+ * 所以在「装完不重启」这类真机上会变的场景下，下一次读数就会重新读文件把新事实读出来。
+ * 缓存条目随进程存活（一个使用范围最多七个目标），不是无界增长。 */
+const panelCache = new Map<string, { size: number; mtimeMs: number; registered: boolean }>();
+
+/** 读一家**已装产物**里有没有爱生活页签槽的注册代码（面板缺席卡三态要的第三个事实）。
+ *
+ * 为什么要读产物而不是只问版本号：这个事实**版本号答不出来**。真机实测（2026-09-19）：
+ * 作息／居家／大厨／记账四家的已发布 0.2.0 产物里根本没有注册代码（票 #723），
+ * 它们的页签槽永远空着；只按「装了没有」分态，面板就会把这种情形说成「已装但没接上，
+ * 重启试试」——那是叫用户去做一件不可能有用的事。判据只能是产物里那个槽名字面量。
+ *
+ * 边界（必须说清，否则这个读数会被当成保证）：
+ * - 判据是**源码里那个槽名常量（`CONFIG_TAB_SLOT`）的字符串**。产物是构建期打包的（tsdown），
+ *   故字面量会原样留在产物里（两侧同源：单品的注册代码里写的也是这个名字）。
+ * - 打包器若哪天把表达式改写成「拼接出名字」（如 `'ilife' + '.config-tab'`），本读数会漏报；
+ *   那时表现为面板少一态、退回「装了但没接上」，不会误报成「没装」。
+ * - 读不到出口文件、或产物读不出这个字符串 ⇒ 一律 false：**判据缺席时不给肯定结论**
+ *   （宁可让用户看到「等它发新版」这句偏保守的话，不可把可能已注册的产物说成已注册）。
+ */
+export async function readPanelRegistered(packageName: string, profileDir: string): Promise<boolean> {
+  const directory = join(profileDir, 'node_modules', packageName);
+  let entry: string | undefined;
+  try {
+    const manifest = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8')) as {
+      exports?: Record<string, unknown>;
+    };
+    const exportsField = manifest.exports?.['./client'];
+    if (typeof exportsField === 'string') entry = exportsField;
+    else if (exportsField && typeof exportsField === 'object') {
+      const value = (exportsField as { default?: unknown }).default;
+      if (typeof value === 'string') entry = value;
+    }
+  } catch {
+    return false;
+  }
+  if (!entry || isAbsolute(entry) || entry.includes('\0')) return false;
+  const filename = resolve(directory, entry);
+  if (!inside(directory, filename)) return false;
+  let size: number;
+  let mtimeMs: number;
+  try {
+    const info = await stat(filename);
+    if (!info.isFile()) return false;
+    size = info.size;
+    mtimeMs = info.mtimeMs;
+  } catch {
+    return false;
+  }
+  const cached = panelCache.get(filename);
+  if (cached && cached.size === size && cached.mtimeMs === mtimeMs) return cached.registered;
+  let registered = false;
+  try {
+    registered = (await readFile(filename, 'utf8')).includes(CONFIG_TAB_SLOT);
+  } catch {
+    return false;
+  }
+  panelCache.set(filename, { size, mtimeMs, registered });
+  return registered;
 }
 
 /** 版本行要的「技能包随插件」事实：插件包 manifest 里那条 `skill-*` 依赖（精确 pin）。 */

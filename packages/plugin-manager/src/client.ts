@@ -22,6 +22,7 @@ import { MANAGER_TABS, MANAGER_VERSION, MORE_PLUGINS, PANEL_LINKS, recoFor } fro
 import type { ManagerTab } from './nav.js';
 import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
 import type { CallFace } from './update-client.js';
+import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { useHealthPanel } from './health-panel.js';
 import { HealthOverview, HealthTable, lightsOf } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
@@ -34,8 +35,8 @@ import type {
 
 export const inject = ['slots', 'connection'];
 
-/** 爱生活页签槽（总管声明的 children，技能设置页注册进来；单段名，避开官方 settings.* 前缀）。 */
-export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
+/** 爱生活页签槽名：定义在 `update-contract.ts`（宿主判「已装产物有没有注册代码」也用这个名字，一处定义）。 */
+export { CONFIG_TAB_SLOT } from './update-contract.js';
 
 /** 总管视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退；与技能面板同语言）。 */
 const S = {
@@ -376,6 +377,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
           : React.createElement(AbsentCard, {
               target: targetForTab(tab),
               fallbackCommand: recoFor(tab).installCmd,
+              // 账本事实与装机读数分开给：缺席卡按两处事实分三态，不许互相顶替（见 update-view.ts 的 slotStateOf）。
+              inLedger: present.has(tab.plugin),
               face,
             }),
       );
