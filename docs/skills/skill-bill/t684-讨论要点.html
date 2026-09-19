@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#684 域声明的形状与事实源 · 结论</title>
+<style>
+  :root{
+    --ink:#1d1d1f; --ink-2:#4b5563; --ink-3:#8a8f98;
+    --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --blue:#007aff; --green:#0a7f45; --green-bg:#eefaf3;
+    --amber:#9a5b00; --amber-bg:#fff8ec; --amber-line:#f2dfbc;
+    --grey-bg:#f4f5f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px; margin:0 auto; padding:32px 24px 72px}
+
+  header.top{border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:24px}
+  .kicker{font-size:12px; font-weight:700; letter-spacing:.08em; color:var(--blue); text-transform:uppercase}
+  h1{font-size:25px; line-height:1.35; margin:8px 0 12px; letter-spacing:-.01em}
+  .strip{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .pill{font-size:12px; border:1px solid var(--line); background:#fff; border-radius:999px; padding:3px 11px; color:var(--ink-2)}
+  .pill.ok{background:var(--green-bg); border-color:#c9ead9; color:var(--green); font-weight:700}
+  .pill.warn{background:var(--amber-bg); border-color:var(--amber-line); color:var(--amber); font-weight:700}
+  .oneline{margin-top:14px; font-size:14px; background:#fff; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:8px; padding:12px 14px}
+
+  h2{font-size:15px; margin:30px 0 12px; letter-spacing:.02em}
+  h2 span{color:var(--ink-3); font-weight:400; font-size:13px; margin-left:8px}
+
+  .axioms{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  @media(max-width:760px){.axioms{grid-template-columns:1fr}}
+  .axiom{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:13.5px}
+  .axiom b{display:block; color:var(--blue); font-size:11.5px; letter-spacing:.06em; margin-bottom:4px}
+
+  pre.model{background:#1f2430; color:#e8ecf3; border-radius:10px; padding:16px 18px; font-size:12.5px; line-height:1.75;
+    overflow-x:auto; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; margin:0}
+  pre.model em{color:#8fd6a8; font-style:normal}
+
+  .d{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:13px 16px; margin-bottom:9px}
+  .d.rev{border-left:3px solid var(--amber)}
+  .dhead{display:flex; align-items:baseline; gap:8px; margin-bottom:5px; flex-wrap:wrap}
+  .tag{font-size:11px; font-weight:800; color:#fff; background:var(--blue); border-radius:5px; padding:1px 7px; flex:none}
+  .dhead b{font-size:14.5px}
+  .badge{font-size:10.5px; font-weight:800; letter-spacing:.04em; color:var(--amber); background:var(--amber-bg);
+    border:1px solid var(--amber-line); border-radius:999px; padding:1px 8px}
+  .d p{margin:0 0 6px; font-size:13.5px; color:var(--ink-2)}
+  .d p:last-child{margin-bottom:0}
+  .d b.k{color:var(--ink)}
+
+  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:13px}
+  th{background:#fbfbfc; text-align:left; font-size:11.5px; letter-spacing:.05em; color:var(--ink-3); padding:9px 13px; border-bottom:1px solid var(--line)}
+  td{padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--ink-2)}
+  tr:last-child td{border-bottom:0}
+  td b{color:var(--ink)}
+  .old{color:var(--ink-3); text-decoration:line-through}
+
+  ul.reads{list-style:none; margin:0; padding:0; display:grid; gap:6px}
+  ul.reads li{background:var(--grey-bg); border-radius:8px; padding:9px 13px; font-size:13.5px; color:var(--ink-2)}
+  ul.reads li b{color:var(--ink)}
+  code{background:#eceef2; border-radius:4px; padding:1px 5px; font-size:12.5px; font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+
+  .todo{background:var(--amber-bg); border:1px solid var(--amber-line); border-radius:10px; padding:14px 16px; margin-top:10px}
+  .todo .lbl{font-size:11.5px; font-weight:800; letter-spacing:.06em; color:var(--amber); display:block; margin-bottom:6px}
+  .todo ol{margin:0; padding-left:20px; font-size:13.5px; color:#5c4a1f}
+  .todo li{margin-bottom:5px}
+  footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); color:var(--ink-2); font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">wayfinder:grilling · #684 · 结论</div>
+  <h1>域声明的形状与事实源</h1>
+  <div class="strip">
+    <span class="pill ok">进度 95%</span>
+    <span class="pill">9 条建议中 <b>5 处改判</b></span>
+    <span class="pill">维护者已认可</span>
+    <span class="pill">结论已落 issue 正文</span>
+    <span class="pill warn">本页是讨论当刻的过程留档</span>
+  </div>
+  <div class="oneline"><b>结论正本</b>：<a href="https://github.com/FeatherHunter/ilife/issues/684">#684 正文</a>的「决定」与「判据（改写后）」两节；规格单＝<a href="https://github.com/FeatherHunter/ilife/issues/721">#721</a>。本页三条待确认已于同日定下（判据改写留存／不另开搬运票、规格即工作单／越线口径先实测），细节见正文「进度：100%」节。</div>
+  <div class="oneline"><b>终态一句话</b>：搬运完成后只剩三种书写位——8 份能力声明（词条＋场景＋域元数据）／8 份 <code>commands.ts</code>（命令事实）／1 份薄合并件；<b>一条唤醒词在 <code>src/</code> 下的手写位置恰好 1 个，且写不出第 2 个</b>；内容由摘要锁守，老仓只读对照，生成器链只管命令注册表。</div>
+</header>
+
+<h2>三条公理 <span>全部结论都由它们推出来</span></h2>
+<div class="axioms">
+  <div class="axiom"><b>公理 1</b>一件事只有一个书写位；<b>能算出来的，不许写</b>。</div>
+  <div class="axiom"><b>公理 2</b><b>派生件是缓存</b>——算得贵、或消费者要另一种表示，才配存在；否则它是同一件事的第二份真相。</div>
+  <div class="axiom"><b>公理 3</b>判据必须对「病」发红：<b>计数不是判据，结构上写不出来才是</b>。</div>
+</div>
+
+<h2>实体模型 <span>它决定了下面全部答案</span></h2>
+<pre class="model">域（label / icon / order）
+ ├─ 词条（phrase / key / preset / needs / carries）
+ │    └─ 场景 ×0..n（id / title / status / prompt_template / types）
+ ├─ 二级组（id / label）→ 场景
+ └─ 命令（key / shape / title / example / run）   <em>← 与场景是两种事实，不合</em></pre>
+
+<h2>决定 <span>D1–D10</span></h2>
+
+<div class="d rev">
+  <div class="dhead"><span class="tag">D1</span><b>域声明只装消费者要读的字段</b><span class="badge">⟲ 改判</span></div>
+  <p>装：词条 <code>phrase/key/preset/needs/carries</code>；场景 <code>id/title/status/prompt_template/types</code>；域元数据 <code>id/label/icon/order</code>；二级组 <code>id/label</code>。</p>
+  <p>老侧事实（<code>result</code>、<code>html.template</code>、<code>command_cn</code>、<code>data_source</code>、老位置 id）<b class="k">一律不进 src</b>：差异表的左列是老行为，<b>它已冻结</b>（老技能退休为只读对照），不需要机器可读位也不会陈化；放进 src 只会造出一个没有任何消费者计算的字段。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D2</span><b>路由并进域声明</b></div>
+  <p><code>WAKE_TABLE</code> 与 <code>routeWakeword</code> 由各域声明合并得出；<code>policy/wakewords.ts</code> 作为跨域词表的形态消失。</p>
+  <p>依据：一个词的两条属性（路由到哪／卡片长什么样）同住一处。调用方零改——同名转出。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D3</span><b>声明的实体形状</b></div>
+  <p>场景的 <code>wake_word</code> 是投影、不写；命令的 <code>title</code> 与场景的 <code>title</code> 是两种事实、各自保留（实测：老 71 条里已声明命令的 4 条，卡名与命令名 <b>4/4 不同名</b>）。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D4</span><b>判据 1 改成结构性判据，不计数</b></div>
+  <p>一条唤醒词的字面量<b class="k">只准出现在它所属那份域声明里</b>，其他 <code>src/**</code> 手写件出现即红。</p>
+  <p>理由：计数判据要人解释边界——照字面 grep 是 15～71 处，全是页面文案与别的词 prompt 里的子串；结构性判据<b>无法被解释出去</b>。</p>
+</div>
+
+<div class="d rev">
+  <div class="dhead"><span class="tag">D5</span><b>代表词与场景词都不声明，派生</b><span class="badge">⟲ 改判</span></div>
+  <p><code>commands.ts</code> 的 <code>wakeWord</code> 与 <code>SCENES[i].wakeWord</code> 都撤掉：前者按 <code>key</code> 算，后者按 <code>preset.kind</code>／<code>op</code> 算。<code>SCENES[i].kind/op</code> <b class="k">保留</b>——那是「这件文件认哪些值」的处理方声明，与 <code>preset</code> 的一致性用一条断言钉住。</p>
+  <p>副产品：某条命令若一条词都算不出来，派生 fail-closed 即报「用户到不了它」。代价：要动 <code>commandSpec.ts</code> 的必填字段与 <code>gen-cli.mjs</code> 的字段门——按 #682 台账 A5-5／A5-4，这是本包内的事，不等 #686。</p>
+</div>
+
+<div class="d rev">
+  <div class="dhead"><span class="tag">D6</span><b>HELP 资产改为运行期合并，删掉 962 行生成物</b><span class="badge">⟲ 改判</span></div>
+  <p><code>src/triggers/wake-assets.ts</code> 保留路径与导出，内容变成一只手写的薄合并件；<code>scripts/gen-wake-assets.mjs</code> 随搬运器退役。</p>
+  <p>理由：这个派生物的产出只是「几个数组按序拼起来」——算得不贵、消费者也不要另一种表示；它唯一剩下的功能是「证明自己没被手改」，而<b>文件不存在就没东西可手改</b>。</p>
+  <p>后果：① 「手改派生件必红」在这条线上<b class="k">无对象</b>，鉴别力转由内容摘要锁承担；② 本包超 350 告警线的件从两件减到一件。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D7</span><b>域序与元数据</b></div>
+  <p>域声明自带 <code>order</code>（合并件按它排，缺号／重号 fail-closed）——不用中央名单、不用目录扫描（扫描出的是字母序，与实物域序 71 个位置全不同）。<code>label</code>／<code>icon</code>／二级组随域声明住。</p>
+  <p>4 条 HELP 短语住 <code>help</code> 位自己一份同形声明（无场景）⇒ <b class="k">终态是 8 份声明（7 域 ＋ help），不是 7 份</b>；防自指的规则只写一处。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D8</span><b>搬运与对账</b></div>
+  <p>· 「逐字节一致」按<b class="k">值层逐字段逐字</b>判，不按字节流（老 HTML 那段 JSON 带自己的缩进与转义）。</p>
+  <p>· 老 payload <b class="k">不进仓</b>：摘要锁已把值集钉死，原件永远在老仓只读对照。</p>
+  <p>· 搬运器＝一次性<b>取证工具</b>，落 <code>docs/skills/skill-bill/</code> 归档（可跑、不在管线），<b>不落</b> <code>packages/skill-bill/scripts/</code>——防「重搬覆盖已改好的手写声明」。</p>
+  <p>· 搬运完成后，判据 4 从「待达成」变成「回归护栏」（今天已绿）。</p>
+</div>
+
+<div class="d rev">
+  <div class="dhead"><span class="tag">D9</span><b>越线风险与排序</b><span class="badge">⟲ 改判 ×2</span></div>
+  <p><b class="k">越线</b>：<code>analysis</code> 域 25 场景可能越 350。先实测；若越线，<b>首选</b>承认「数据件不适用逻辑件的行数线」并写进包规，<b>次选</b>才是按二级组拆件——按二级组切一个域的目录，是优化代理指标、牺牲真目标。</p>
+  <p><b class="k">排序</b>：搬运<b>排在 #689／#690 之前</b>——搬运唯一的证据是「与老权威 0 差异」，任何并行内容改动都会污染这条读数；那两票此刻未开工。</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><span class="tag">D10</span><b>本票只出决定</b></div>
+  <p>动作分两张后票：① <b>搬运票</b>（<code>scenes/*.yaml</code> → 8 份声明 ＋ 薄合并件 ＋ 摘要锁重钉 ＋ 退役生成器）；② <b>机器面票</b>（命令面收口，与 #686 合并或并列）。</p>
+</div>
+
+<h2>判据改写 <span>原文四条 → 现在</span></h2>
+<table>
+  <tr><th style="width:30%">原文</th><th style="width:40%">改写后</th><th>来因</th></tr>
+  <tr>
+    <td class="old">一条唤醒词手写出现次数 ≤2（目标 1）</td>
+    <td>字面量只准出现在所属域声明里，<b>恰好 1 处</b>；机器判据＝扫非声明件源码文本</td>
+    <td>计数口径照字面不可度量（15～71 处全是文案与子串）</td>
+  </tr>
+  <tr>
+    <td class="old"><code>pnpm gen</code> → <code>gen:check</code> 绿；手改派生件必红</td>
+    <td>HELP 线<b>无派生件可手改</b>；鉴别力由内容摘要锁（<code>LEGACY_DIGEST</code>）承担，命令注册表那条不变</td>
+    <td>D6：派生件不存在，保护从「门」升级成「结构不可达」</td>
+  </tr>
+  <tr>
+    <td class="old">对账门：与老技能 payload 逐字节一致</td>
+    <td>按<b>值层逐字段逐字</b>一致；搬运当刻跑一次比对＝<b>0 差异</b>，读数写进证据件</td>
+    <td>字节流对齐跨格式无意义（缩进／转义是载体的事）</td>
+  </tr>
+  <tr>
+    <td class="old">仓外依赖可拆：移走老技能目录后 build ＋ 全量测试仍绿</td>
+    <td>保留，但<b>它今天已经绿</b>——所以它是<b>回归护栏</b>，不是待达成的目标</td>
+    <td>全仓只有那个生成器读仓外，而它不在 build/test 管线里</td>
+  </tr>
+</table>
+
+<h2>关键读数 <span>支撑上面判断的实测</span></h2>
+<ul class="reads">
+  <li><b>老 YAML ↔ 老 payload</b>：共同字段 71/71 一致，<code>prompt</code> 逐字符 <b>0</b> 差异 ⇒「清单权威＝YAML」与「对账＝与 payload 一致」可以并存。</li>
+  <li><b>顺序</b>：域序两边 <b>7/7 位置不同</b>；组内顺序 <b>71/71 相同</b>，20 个二级组名 20/20 相同。</li>
+  <li><b>卡名 ≠ 命令名</b>：已声明命令的 4 条，<b>4/4 不同名</b>；71 条里卡名与唤醒词同名只有 2 条。</li>
+  <li><b>字段面</b>：老 YAML 比 payload 多 4 类事实，而新仓 <code>src/</code> 今天<b>零处引用</b>它们。</li>
+  <li><b>生成器归属</b>：根 <code>pnpm gen</code> 只跑卡路里的；bill 的 gen 是包内 script。</li>
+</ul>
+
+<div class="todo">
+  <span class="lbl">待确认（讨论当刻）— 三条均已于同日定下，判决见 #684 正文「进度：100%」节</span>
+  <ol>
+    <li>本版正文要不要原样留存——尤其 <b>D6 对判据 2 的改写</b>与 <b>D4 对判据 1 的口径改写</b>。</li>
+    <li>两张动作票<b>现在就开</b>，还是等 <code>/to-spec</code> 之后再开。</li>
+    <li>D9 的越线口径（数据件是否不适用逻辑件的行数线）现在就写进 <code>packages/skill-bill/AGENTS.md</code>，还是等 analysis 域声明实测出来再定。</li>
+  </ol>
+</div>
+
+<footer>
+  <b>下一步</b>：按 D10 开两张动作票（搬运票先开、排在 #689／#690 之前）；执行一次 <code>/to-spec</code>，把结论固化成规格单并挂到 #681 图上成为 subissue。<br>
+  合并件落哪个横切位等 <b>#683</b> 的结论——本票只定形状，不定住处名。
+</footer>
+
+</div>
+</body>
+</html>
