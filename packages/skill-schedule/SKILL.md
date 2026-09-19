@@ -90,7 +90,7 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 
 ## HELP 交付（说「作息管家 HELP」或「作息管家帮助」走这里）
 
-- **缺省就是交付物**：`schedule-cmd-read schedule.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<SKILLS_DB_PATH>/schedule_html/help/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`（5 类别／34 唤醒词／85 场景，走共享 help 模板）。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
+- **缺省就是交付物**：`schedule-cmd-read schedule.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<库目录>/<产物目录>/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`（`<库目录>`＝配置文件 `~/.ilife/schedule.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`，默认 `schedule_html/help`，段间用 `/` 或 `\` 分隔；5 类别／34 唤醒词／85 场景，走共享 help 模板）。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
   **完成标准**：`delivery.path` 指向的文件真的存在，且大小＝`delivery.bytes`。
 - **要现找才加参数**：`--params '{"q":"查作息"}'` 回命中条目（只出 JSON，不落盘）；`q` 留空＝全表。全量速查表读上「联动速查」块（48 条路由词，构建期注入，与 `q` 同一张表）。
 - **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）；缺省支写的是完整 HELP 页，`q` 支写的是该键的分节页（与其余 7 条命令同形）。
@@ -101,5 +101,5 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 
 ## 环境与出 scope
 
-- SKILLS_DB_PATH（必设，无默认值）+ lark-cli（同步须四门全绿），见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/schedule.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `schedule_data.db`）、产物目录＝`html.dir`（默认 `schedule_html/help`）、HELP 文件主体名＝`files.help`、飞书 CLI 路径＝`lark.cliPath`（**空串＝没有显式值，走本机自动探测**）；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务/早睡提醒（老家 Cron 已删，外部定时以外置为准）、面板（二期单 MAP）、本技能外联动（combos 登记走后续票）；语录取数（daily_recorder.db）以外置为准；真实数据禁迁，测试 tmp 隔离。

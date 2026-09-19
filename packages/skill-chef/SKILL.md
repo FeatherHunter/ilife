@@ -21,7 +21,7 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 
 对用户说「私家大厨help」时，**这条命令的缺省行为就是落一份 HELP HTML 文件**，并把绝对路径回执进 stdout：
 
-- **缺省**（不给 `q`／`mode`）：产物落 `<SKILLS_DB_PATH>/cook_html/help/私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`；
+- **缺省**（不给 `q`／`mode`）：产物落 `<库目录>/<产物目录>/私家大厨_HELP_<YYYYMMDD_HHMMSS>[_N].html`——`<库目录>`＝配置文件 `~/.ilife/chef.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `cook_html/help`，段间用 `/` 或 `\` 分隔）；
   stdout 顶层多一个 `delivery{mode,path,bytes}`，`path` 恒为**绝对路径** ⇒ **把 `delivery.path` 告诉用户**（他要打开的就是这一份）。
   文件名主体与老技能逐字相同；**同一主体一天内只留一份**——24 小时内再读就复用已有那份（不新建、不改写），已有那份绝不动。
 - **速查表**（`--params '{"mode":"lookup"}'`）：落 `私家大厨_速查表_<stamp>.html`（与 HELP 文件**分名**——别让用户按一个名字打开到另一个东西），载荷是 37 条短语；同样吃下面的复用窗口。
@@ -33,7 +33,7 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 
 两件容易踩的：
 
-- 这条命令**不开库**：跑完不会多出 `chef_data.db`（落文件仍然要求 `SKILLS_DB_PATH` 已设置）。
+- 这条命令**不开库**：跑完不会多出 `chef_data.db`（落文件仍然要求库目录定得下来：配置文件 `~/.ilife/chef.yaml` 的 `db.dir`，空串＝数据目录，故从不因「没设什么」而失败）。
 - 页面由**通用 help 模板**（`base-paint/help-shell`）渲染，与卡路里／饼干记账／居家管家同款；要动观感就去改模板源再跑它的生成器。
 
 失败口径：参数错（`q` 与 `mode` 互斥、`mode` 只认 `lookup`）走 `exit 2`；渲染或落盘失败走 `exit 5`（stderr 是 `ERR 5: …`），失败路径上 stdout 保持干净。
@@ -53,7 +53,7 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 - 评分 0-5（含 0/5 端点，允许小数，超界/非数字阻断；history.record 必带 name，rating 可选）。
 - 空查询与空结果阻断不返空：search 空 q 抛 exit 2；查无对条/区间无记录抛 exit 4，不返空数组冒充正常。
 - 筛选维度一期限制（#43 F2）：cuisine/season/method/flavor/tag/meal/cookware/maxTime/filter 只读（recipe.search 透传过滤），recipe.write 一期只写主表（name/difficulty/status/servings/total_time_minutes/description/photo/source 系列 + ingredients/steps 内嵌），维度表落库走二期（测试经直连落维度，见 test/cli.test.mjs）。
-- 真实数据禁迁，测试 tmp 隔离（SKILLS_DB_PATH 指向 mkdtemp，见 test/fetch.test.mjs）。
+- 真实数据禁迁，测试 tmp 隔离（测试把配置目录经 `ILIFE_CONFIG_DIR` 指到 mkdtemp，见 test/fetch.test.mjs）。
 - 跨技能只复制 prompt 不直调：shopping/recipe 跨技能按钮仅复制 `chef-cmd-read ...` 文本，AI 调目标技能，不直写他库。
 
 ## 联动速查（构建期注入，勿手改）
@@ -104,5 +104,5 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 
 ## 环境与出 scope
 
-- SKILLS_DB_PATH（必设，无默认值）+ CHEF_FORCE_PROD 哨兵（非 tmp 写库须 opt-in），见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/chef.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `chef_data.db`）、产物目录＝`html.dir`（默认 `cook_html/help`）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务（老家零定时代码，外部定时以外置为准）、面板（二期单 MAP）、combos.yaml 一律不碰（走后续票；shopping/recipe 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照（D:/2Study/StudyNotes/SKILLS/私家大厨）。

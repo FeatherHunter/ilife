@@ -20,8 +20,8 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 
 对用户说「居家管家 帮助」时，**这条命令的缺省行为就是落一份 HELP HTML 文件**，并把绝对路径回执进 stdout：
 
-- **缺省**（不给 `q`／`mode`）：产物落 `<SKILLS_DB_PATH>/home_manager_html/居家管家_HELP_<YYYYMMDD_HHMMSS>.html`；**缺省（24 小时内）重复触发回同一路径、不新建**——需要每次落新件时传 `--params '{"reuseHours":0}'`（此时同秒冲突才走 `_2` 递补）；stdout 顶层多一个 `delivery{mode,path,bytes}`，`path` 恒为**绝对路径** ⇒ **把 `delivery.path` 告诉用户**（他要打开的就是这一份），落点一律以回执为准。
-- **速查表**（`--params '{"mode":"lookup"}'`）：落 `<SKILLS_DB_PATH>/home_manager_html/居家管家_速查表_<时间戳>.html`（与 HELP 文件**分名**——别让用户按一个名字打开到另一个东西）。
+- **缺省**（不给 `q`／`mode`）：产物落 `<库目录>/<产物目录>/居家管家_HELP_<YYYYMMDD_HHMMSS>.html`——`<库目录>`＝配置文件 `~/.ilife/home.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `home_manager_html`）；**缺省（24 小时内）重复触发回同一路径、不新建**——需要每次落新件时传 `--params '{"reuseHours":0}'`（此时同秒冲突才走 `_2` 递补）；stdout 顶层多一个 `delivery{mode,path,bytes}`，`path` 恒为**绝对路径** ⇒ **把 `delivery.path` 告诉用户**（他要打开的就是这一份），落点一律以回执为准。
+- **速查表**（`--params '{"mode":"lookup"}'`）：落同一产物目录下 `居家管家_速查表_<时间戳>.html`（与 HELP 文件**分名**——别让用户按一个名字打开到另一个东西）。
 - **现找**（`--params '{"q":"查物品"}'`）：只在 stdout 回命中，**不落盘**（检索式问答不刷目录）。
 - 这两支**互斥**：`mode` 与 `q` 同给、或 `mode` 不是 `lookup`，一律 exit 2（stderr 是 `ERR 2: …`），失败路径上 stdout 保持干净。
 - **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。`reuseHours` 给坏值（非数／负数）exit 2。
@@ -30,7 +30,7 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 
 两件容易踩的：
 
-- 这条命令**不开库**：它在开库之前分派，跑完产物目录里 0 个 `.db`（落文件仍然要求 `SKILLS_DB_PATH` 已设）。
+- 这条命令**不开库**：它在开库之前分派，跑完产物目录里 0 个 `.db`（落文件仍然要求库目录定得下来：配置文件 `~/.ilife/home.yaml` 的 `db.dir`，空串＝数据目录，故从不因「没设什么」而失败）。
 - 页面由**通用 help 模板**（`base-paint/help-shell` 的 `renderHelpShellHtml`）渲染，与卡路里／饼干记账／私家大厨同款；要动观感就去改模板源再跑它的生成器。
 
 **本节不管**（各有归属，别在这里找）：其余 20 条 `home.*` 命令（各有自己的节）；`--html <路径>`（所有命令通用的分节页出口，与 HELP 交付不是一回事）；把文件送进面板／侧栏（属另一条线）。
@@ -150,16 +150,18 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 
 ## 环境与出 scope
 
-- SKILLS_DB_PATH（必设，无默认值）+ HOME_FORCE_PROD 哨兵（非 tmp 写库须 opt-in），见 docs/env.md；HOME_PHOTOS_DIR 可选（缺失仅告警）。
+- 路径类取值一律读配置文件 `~/.ilife/home.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `home.db`）、产物目录＝`html.dir`（默认 `home_manager_html`）、备份目录＝`backup.dir`（默认 `backups`，相对库目录解）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。**没有照片目录这项配置**（照片是记录里的一列，不解析照片目录）。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；SM9 3 场景 prompt 复制不迁）；真实数据禁迁，测试 tmp 隔离。
 
 ## 公共安装器运行时（skills-cli 装完必读，#47）
 
 - 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；「不走 npm」的只是 skill 发现这一步，运行时走 npm（npm 包名即目录名 `skill-home`，二进制名 `home-cmd-read`）。
 - 取运行时二选一：`npm install -g skill-home`（一劳永逸），或免安装 `npx -p skill-home home-cmd-read …`（每次现拉）。**但这两条现在必失败：`skill-home@0.1.0` 虽已发布到 npm（2026-09-07，registry 在册），它的依赖 `"base-link-core": "workspace:^0.1.0"` 未改写 ⇒ npm 报 `EUNSUPPORTEDPROTOCOL`**（已发布包待重发，发版流修，见 docs/public-installer-47.md「已发布包阻塞」）——重发前一律走下面那条本仓构建产物验证链路。
-- HELP 端到端验证（本仓构建产物；node>=22.13 是 `engines` 钉死的门槛；sh 先 `export SKILLS_DB_PATH="$(mktemp -d)"`，Windows PowerShell 先 `$env:SKILLS_DB_PATH = "$env:TEMP\sk-test"`；完整口径见 docs/public-installer-47.md）：
+- HELP 端到端验证（本仓构建产物；node>=22.13 是 `engines` 钉死的门槛；隔离靠把**配置目录**指到临时目录——`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录，配置里的 `db.dir` 再决定库与产物落哪，故临时目录里自己写一份 `home.yaml`；完整口径见 docs/public-installer-47.md）：
+
   ```sh
-  node packages/skill-home/dist/cli/cmd_read.js home.help.lookup
+  cfg="$(mktemp -d)" && mkdir -p "$cfg/db" && printf 'db:\n  dir: %s\n' "$cfg/db" > "$cfg/home.yaml"
+  ILIFE_CONFIG_DIR="$cfg" node packages/skill-home/dist/cli/cmd_read.js home.help.lookup
   ```
-- 上面这条跑通的样子：stdout 一行 envelope JSON，`delivery.path` 指的文件存在且大小＝`delivery.bytes`（与「HELP 交付」节的完成判据同源）。
+- 上面那条跑通的样子：stdout 一行 envelope JSON，`delivery.path` 指的文件存在且大小＝`delivery.bytes`（与「HELP 交付」节的完成判据同源）；按上面那份 `home.yaml`，落点是 `$cfg/db/home_manager_html/`。
 - 版本钉死登记：本节**命令不写版本号**（重发前钉了也装不上，没有意义；npm 现值 `0.1.0`）；重发后照 docs/public-installer-47.md「版本钉死登记」把 SKILL.md／该文档／`test/skills-export-47.test.mjs` 三处硬编码一起同步。

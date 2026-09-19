@@ -28,8 +28,8 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 二进制：`packages/skill-calorie/dist/cli/cmd_read.js`（bin `calorie-cmd-read`），纯 CLI 单轨，无面板/定时/外联动。
 - 运维定位（C1 #43）：`skill-calorie-fetch`（`dist/fetch/cli.js`）仅运维（import/validate/dedupe/export/history/audit/catalog-verify），不承载业务读写；业务读写唯一出口仍为 `calorie-cmd-read`。
 - 契约：P9 冻结 argv+JSON+exit；缺 key exit 2、未知 key exit 3、取数/缺失 exit 4、envelope/渲染/落盘 exit 5、预检 exit 1。
-- stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落 `<SKILLS_DB_PATH>/calorie_html/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`），落点回传在 envelope `data.output`（**恒绝对路径**，相对 `SKILLS_DB_PATH`／`--html` 亦按 cwd 归一后回传）；`--html <路径>` 显式覆盖任意路径（**唯一落点参数**：老技能的 `--output` 别名已按 #245 删除，给了即 exit 2，与其余五家同形）。
-- 预检：engines>=22.13 + SKILLS_DB_PATH 必设（无默认值）；照片存在位需 CALORIE_PHOTOS_DIR，否则记 null 不断言。
+- stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落 `<库目录>/<产物目录>/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`）——`<库目录>`＝配置文件 `~/.ilife/calorie.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `calorie_html`）。落点回传在 envelope `data.output`（**恒绝对路径**，相对库目录／`--html` 亦按 cwd 归一后回传）；`--html <路径>` 显式覆盖任意路径（**唯一落点参数**：老技能的 `--output` 别名已按 #245 删除，给了即 exit 2，与其余五家同形）。
+- 预检：engines>=22.13；库目录与照片目录都从配置文件取（`~/.ilife/calorie.yaml` 的 `db.dir` 与 `photos.dir`，空串＝按各自默认回落——库目录落数据目录 `~/.ilife/data/`，照片目录算「还没配」），**没有一个环境变量是必设的**；照片目录没配时，照片存在位记 null、不断言。
 - 写链（#40）：52 写键（diet/water/weight/exercise/photo/product/profile/goal/body/workout）同出口可执行，一律 `receipt` 形（`ok/message` + T10 `receipt` 回执）；缺参 exit 2、缺失阻断 exit 4；训记同步与 mmx vision 两步向导无独立写键（二期，见 triggers 旧链）。
 
 ## envelope 全字段
@@ -317,7 +317,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - **「卡路里HELP」＝老技能同款 HELP 文件**（#139 起）：`calorie-cmd-read calorie.help.center` 缺省即出 `卡路里_HELP_<时间戳>.html`（老命名，V4 三级目录壳，与老技能视觉一致；落 `data.output`，约 300 KB **只落盘**、不进 envelope）。**除下面的复用窗口外别再给它加参数**——缺省就是目的地交付物。
 - **反复读不再涨目录（#245）**：HELP 文件与速查台**同一主体一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；`data.output` 给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内已有一份、而你刚改过内容时，那份旧产物**不会自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。业务页面与失败回执**不吃窗口**（每跑一次仍各留一份）。
 - **速查台（#88，须显式要）**：`--params '{"mode":"file"}'` 出完整 HTML 速查台（436 场景／54 子功能／10 分组，卡级复制按钮，约 1 MB，落 `卡路里_速查台_<时间戳>.html`）；`{"mode":"inline"}` 出内嵌片段／`{"mode":"text"}` 出纯文本索引；非法 `mode` 与 `q`＋`mode` 同给一律 exit 2。
-- **照片 11 键走 `q`**（不是 `mode`）：`--params '{"q":"记身材照"}'` 现找、`{"q":""}` 全表，顺序跟 SCENE_09_PHOTO SoT 序；每条命中自带 `exec`（node 一行式，读 SKILLS_DB_PATH 库）+`legacyCli`（老家 python 原命令备查）；模块 `skill-calorie/photo/photo`＋`skill-calorie/photo/photos`，函数须存在（单测逐条 import 断言）。
+- **照片 11 键走 `q`**（不是 `mode`）：`--params '{"q":"记身材照"}'` 现找、`{"q":""}` 全表，顺序跟 SCENE_09_PHOTO SoT 序；每条命中自带 `exec`（node 一行式，读配置里的库目录）+`legacyCli`（老家 python 原命令备查）；模块 `skill-calorie/photo/photo`＋`skill-calorie/photo/photos`，函数须存在（单测逐条 import 断言）。
 - **通用唤醒词现找**：`calorie.help.lookup --params '{"q":"<唤醒词/分类/描述子串>"}'`（436 唤醒词全量，10 场景，空串抛，不返全表冒充命中）。
 - 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64；GIF 只出任务描述不碰二进制。
 
@@ -542,20 +542,21 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 ```
 
 - HELP 面：旧词 85 条走 `calorie.help.lookup --params '{"q":"<唤醒词>"}'` 现找（抽查 5/5 绿，见证据件）；3 条新词（看组合分析／看热量趋势／看整体趋势）在冻结表无行，现找无精确命中，路由直达可执行（真出口已验），补行留收口（本票不改冻结表）。
-- 固定种子抽查（`docs/research/t81-seed.mjs`，`CALORIE_TODAY=2026-09-07`）：每组至少 1 条真出口 exit 0，结果型 HTML 落盘、回执绝对路径，指标全有限数（判定①②绿，判定③视觉留用户肉眼；读数见证据件）。
+- 固定种子抽查（`docs/research/t81-seed.mjs`）：「今天」由测试把整只钟钉到种子日 2026-09-07（`test/freeze-clock.cjs`，父进程与子进程一起钉），故读数与机器时钟无关。每组至少 1 条真出口 exit 0，结果型 HTML 落盘、回执绝对路径，指标全有限数（判定①②绿，判定③视觉留用户肉眼；读数见证据件）。
 
 ## 环境与出 scope
 
-- SKILLS_DB_PATH（必设，无默认值）+ CALORIE_PHOTOS_DIR（照片存在位校验用，缺则记 null）；真实 DB 禁迁，测试 tmp 隔离；老家只读对照。
+- 路径类取值一律读配置文件 `~/.ilife/calorie.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `calorie_data.db`）、产物目录＝`html.dir`（默认 `calorie_html`）、照片目录＝`photos.dir`（**空串＝这一项还没配**：取数侧跳过「照片文件在不在」的校验、写侧直接阻断，不猜路径）、GIF 子目录＝`photos.gifs`（默认 `gifs`）、训记五项＝`xunji.*`、落地三项＝`land.*`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。真实 DB 禁迁，测试 tmp 隔离；老家只读对照。取值面与环境项见 docs/env.md。
 - 出 scope（一期外）：面板（二期单 MAP）、定时任务、本技能外联动（router+作息/备忘/训记仅只读对照，不落本包）。
 
 ## 公共安装器运行时（skills-cli 装完必读，#47）
 
 - 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.2.4` 已发布）。
 - 取运行时二选一：`npm install -g skill-calorie@0.2.4`（一劳永逸），或免安装 `npx -p skill-calorie@0.2.4 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
-- HELP 现找→cmd_read→envelope→HTML 验证（sh 先 `export SKILLS_DB_PATH="$(mktemp -d)"`；Windows PowerShell 先 `$env:SKILLS_DB_PATH = "$env:TEMP\sk-test"`；node>=22.13；完整口径见 docs/public-installer-47.md）：
+- HELP 现找→cmd_read→envelope→HTML 验证（隔离靠把**配置目录**指到临时目录：`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录，配置里的 `db.dir` 再决定库与产物落哪；node>=22.13；完整口径见 docs/public-installer-47.md）：
   ```sh
-  calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
+  cfg="$(mktemp -d)" && mkdir -p "$cfg/db" && printf 'db:\n  dir: %s\n' "$cfg/db" > "$cfg/calorie.yaml"
+  ILIFE_CONFIG_DIR="$cfg" calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
   ```
 - stdout／落盘契约与「唯一出口（T11）」节同源（成功只一行 envelope JSON；HTML 落点见 `data.output`）。
 - 版本钉死登记：本节版本硬编码现为 `@0.2.4`（已随 #44 发版流同步；历史登记见 docs/public-installer-47.md「版本钉死登记」）。

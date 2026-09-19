@@ -39,7 +39,15 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     assert.match(skill, /envelope 全字段/);
     assert.match(skill, /HELP 现找/);
     assert.match(skill, /身材照片 HELP 模块/);
-    assert.match(skill, /SKILLS_DB_PATH/);
+    // #722：口径已从环境变量换到配置文件，故这里钉**新口径**（原钉的是 `/SKILLS_DB_PATH/`）。
+    // 正向＝说明面真的教读者去哪配：配置文件落点 ＋ 四个路径类配置项名，改回「配环境变量」即红；
+    // 负向＝已退役的变量名一个都不许再出现在说明面（票面验收那条机器读数由本断言常驻看守）。
+    assert.match(skill, /~\/\.ilife\/calorie\.yaml/, 'SKILL.md 须写明配置文件落点 ~/.ilife/calorie.yaml（旧口径钉的是环境变量 SKILLS_DB_PATH）');
+    for (const key of ['db.dir', 'html.dir', 'photos.dir', 'photos.gifs']) {
+      assert.ok(skill.includes(key), '#722：SKILL.md 的路径口径须点名配置项 ' + key);
+    }
+    assert.doesNotMatch(skill, /SKILLS_DB_PATH|CALORIE_PHOTOS_DIR|CALORIE_FORCE_PROD|CALORIE_TODAY/,
+      '#722：已退役的环境变量名不许再出现在 SKILL.md（改回任一即红）');
     assert.match(skill, /出 scope/);
     assert.ok(skill.includes(START) && skill.includes(END));
     assert.ok(skill.split('\n').length >= 70);
