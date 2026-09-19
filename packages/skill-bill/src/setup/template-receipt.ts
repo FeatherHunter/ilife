@@ -64,8 +64,8 @@ function kpiOf(input: ReceiptDocInput): readonly KpiCardInput[] {
 /** 明细表：这一份备份的逐项事实（老侧 `备份路径` 标签那一块）。 */
 function detailTable(e: BackupEntry, total: number): string {
   const columns: readonly DataTableColumn[] = [
-    { key: 'k', label: '哪一项' },
-    { key: 'v', label: '是什么' },
+    { key: 'k', label: '字段' },
+    { key: 'v', label: '字段名' },
   ];
   const rows: readonly DataTableRow[] = [
     { k: '备份文件', v: e.file },

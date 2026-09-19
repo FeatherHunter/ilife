@@ -72,6 +72,16 @@ interface CopyLogInput {
 const PROMPT_COPY_ACTION = 'ilife-copy-prompt';
 const PROMPT_COPY_HINT = '复制给助手：这一句可以直接复制';
 
+/** 页上那一行可见文本（#728 第二轮）。**prompt 原文不再摊在页面上。**
+ *
+ *  维护者 2026-09-19 逐字：「这个模板不应该把 prompt 内容给用户看，太繁杂了」。
+ *  实测那一块把整套模板平铺出来（`唤醒词：记分期` ＋ `总额：<总额>` 这类尖括号占位符 ＋
+ *  缺项逐条「没给：分期由用户定，不许默认」），390 档占三百多像素高；而 `唤醒词`／尖括号
+ *  占位符／「逐项补齐」都是**给助手看的实现词汇**，本不该上用户的屏（本仓「区外内部话」那条）。
+ *  改法：页上只留一句人话；**原文一字不改地走 `copyText` 进复制载荷**——
+ *  复制得到的还是原来那一整段，载荷文本没动。 */
+const PROMPT_PREVIEW = '点右边的按钮复制，发给助手就行。';
+
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋ 它自带的复制按钮。
  *  **`actionId` 必给**：公共层的 `renderPreBlock` 只在给了 `actionId` 时才渲染复制按钮
  *  （`packages/base-render/src/blocks.ts:729-736`），只给 `copyText` 会出一个「写着复制、其实没有按钮」的
@@ -81,7 +91,7 @@ export function promptCopyArea(prompt: string, label?: string | null): string {
   const heading = label === undefined ? PROMPT_COPY_HINT : label;
   return renderPreBlock({
     ...(heading === null ? {} : { label: heading }),
-    command: prompt,
+    command: PROMPT_PREVIEW,
     actionId: PROMPT_COPY_ACTION,
     copyText: prompt,
     copyLabel: PROMPT_COPY_HINT,

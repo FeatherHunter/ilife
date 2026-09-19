@@ -258,7 +258,7 @@ function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
     { html: spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber) },
     { html: duplicateNote(findDuplicates(input.recent, probe), probe, 'static') },
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail,
       caption: spec.receiptCaption,
     }), 'sec-detail', '明细'),

@@ -116,7 +116,7 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
     blockedFoldOf({ blocked, command: blockedCommandOf(input.key, input.params, blocked) }),
     spec.note === '' ? '' : renderCaliberLine(spec.note),
     preview.length === 0 ? '' : renderConclusionBar('将执行以下操作') + renderDataTable({
-      columns: [{ key: 'k', label: '这一步做什么' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '步骤' }, { key: 'v', label: '值' }],
       rows: preview, caption: spec.previewCaption,
     }),
     input.accounts.length === 0 ? emptyOf(spec.emptyAccounts) : accountsTableOf(input.accounts, spec.registerCaption),
@@ -149,14 +149,14 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
     ]), 'sec-kpi', '读数'),
     ...(result === null ? [] : [navBlock(
       renderDataTable({
-        columns: [{ key: 'k', label: '哪一笔' }, { key: 'v', label: '记成什么' }],
+        columns: [{ key: 'k', label: '记录' }, { key: 'v', label: '值' }],
         rows: result.rows, caption: result.caption,
       }) + (result.note === '' ? '' : renderCaliberLine(result.note)),
       'sec-result', result.navText,
     )]),
     { html: spec.receiptNote === '' ? '' : renderCaliberLine(spec.receiptNote) },
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail, caption: spec.detailCaption,
     }), 'sec-detail', '明细'),
     navBlock(reconcileOf({ actionAt: receipt.actionAt, changed: receipt.affectedRows, note: RECONCILE_NOTE }),

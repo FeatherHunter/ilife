@@ -49,6 +49,6 @@ export const SCENE: Scene = {
     receiptCaliber: '',
     dropDefaultHints: true,
     cards: 'scene',
-    receiptCaption: '这一笔记成什么',
+    receiptCaption: '本次写入',
   }),
 };

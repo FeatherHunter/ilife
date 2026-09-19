@@ -251,7 +251,7 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
   const readAt = after !== null && after.ok && after.row !== null ? after.row.deleted_at : undefined;
   if (spec.receiptResult === 'restore') {
     return renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: [
         { k: fieldLabelOf('id'), v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
         { k: fieldLabelOf('deleted_at') + '现在是什么样', v: readAt === undefined
@@ -269,7 +269,7 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
     : diffOf({ fields: ['撤销标记'], before: { 撤销标记: null }, after: { 撤销标记: stamped } });
   if (rows.length > 0) return diffTable({ rows, caption: '改前改后对照　只动「撤销标记」这一项' });
   return renderDataTable({
-    columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+    columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
     rows: [
       { k: fieldLabelOf('deleted_at'), v: '已打上（本页再读时已看不到这一条）' },
       { k: '撤销后能不能找回来', v: '能：点「恢复」把它找回来' },
@@ -312,7 +312,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
     { html: spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber) },
     ...resultBlockOf(spec, receipt),
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail, caption: '写进去的项与值',
     }), 'sec-detail', '明细'),
     navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),

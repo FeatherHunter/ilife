@@ -116,19 +116,21 @@ export function blockedBar(input: BlockedBarInput): string {
     message: '还缺 ' + n + ' 项，补齐再记',
     retryPrompt: '补齐了，说一遍试试',
   }) + renderDataTable({
+    // t728 逐页审计实测：改前这里是三列 `还缺哪一项／是什么／为什么写不进去`，而**前两列印的是同一个词**
+    //   （`fieldLabelOf(i.name)` 与 `i.label` 在实测里逐行同值：`分类` / `分类`、`金额` / `金额`）——
+    //   同一格相邻两列重复，还多占 390 档一整条列头线。改法＝去掉重复那一列，留「字段 ＋ 原因」两列。
     columns: [
-      { key: 'slot', label: '还缺哪一项' },
-      { key: 'label', label: '是什么' },
-      { key: 'why', label: '为什么写不进去' },
+      { key: 'label', label: '字段' },
+      { key: 'why', label: '原因' },
     ],
     rows: input.items.map((i) => ({
-      slot: fieldLabelOf(i.name), label: i.label,
-      why: i.why === '没给' ? '这一项没给' : i.why,
+      label: i.label,
+      why: i.why === '没给' ? '未提供' : i.why,
     })),
     caption: '缺一项就先不写库',
-  }) + renderPreBlock({
+  }) + renderCaliberLine('补齐之后照下面那条口令跟助手说一遍。') + renderPreBlock({
     command: input.command,
-    label: '口令原文（照上面那句跟助手说）',
+    label: '口令原文',
   }) + renderActionBar({
     buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION }],
   }) + renderCaliberLine(

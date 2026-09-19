@@ -310,7 +310,7 @@ function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
       ? renderChips({ items: [{ text: preview.err === '' ? spec.receiptNoSharesChip : '分摊没算出来：' + preview.err }] })
       : preview.html, 'sec-shares', '分期表'),
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail,
       caption: spec.receiptCaption,
     }), 'sec-detail', '明细'),

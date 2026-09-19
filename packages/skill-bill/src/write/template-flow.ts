@@ -325,7 +325,7 @@ function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
       ...summaryCards(input.facts), receiptStatusCard(receipt, input.writtenDetail), ...spec.receiptTail(input),
     ]), 'sec-kpi', '读数'),
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }], rows: input.detail, caption: '写进去的项与值',
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }], rows: input.detail, caption: '写进去的项与值',
     }), 'sec-detail', '明细'),
     navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
     { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },

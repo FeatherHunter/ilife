@@ -97,7 +97,7 @@ export function stepTableOf(steps: readonly WizardStep[]): string {
   }
   const columns: readonly DataTableColumn[] = [
     { key: 'step', label: '第几步' },
-    { key: 'label', label: '这一步做什么' },
+    { key: 'label', label: '步骤' },
     { key: 'state', label: '现在怎么样' },
     { key: 'detail', label: '什么情况' },
   ];
@@ -154,7 +154,7 @@ export function blockedOf(input: {
   if (input.blocked.length === 0) return '';
   return renderChips({ items: input.blocked.map((b) => ({ text: b.label })) })
     + renderDataTable({
-      columns: [{ key: 'label', label: '还缺哪一项' }, { key: 'why', label: '为什么走不了' }],
+      columns: [{ key: 'label', label: '缺失字段' }, { key: 'why', label: '原因' }],
       rows: input.blocked.map((b) => ({ label: b.label, why: b.why })),
       caption: '缺一项就先不动数据',
     })

@@ -36,7 +36,7 @@ export function reconcileDisclosure(receipt: BillReceipt): string {
   return renderDisclosure({
     title: '对账信息',
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: [
         { k: '记录编号', v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
         { k: '写入时间', v: receipt.actionAt },

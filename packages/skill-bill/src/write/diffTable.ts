@@ -73,7 +73,7 @@ export function diffTable(input: { readonly rows: readonly DiffRow[]; readonly c
   }
   return renderDataTable({
     columns: [
-      { key: 'field', label: '改了哪一项' },
+      { key: 'field', label: '字段' },
       { key: 'before', label: '改前' },
       { key: 'after', label: '改后' },
     ],

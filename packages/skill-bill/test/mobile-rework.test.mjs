@@ -30,13 +30,16 @@ describe('t407 移动端返工 · 回执引导句分行', () => {
 });
 
 describe('t407 移动端返工 · diff 表走映射', () => {
-  it('行名过 fieldLabelOf，列头说人话', async () => {
+  it('行名过 fieldLabelOf，列头用规范名词', async () => {
     const { diffOf, diffTable } = await import('../dist/write/diffTable.js');
     const rows = diffOf({ fields: ['deleted_at', 'note'], before: { deleted_at: null, note: 'a' }, after: { deleted_at: '2026-09-14 15:39:17', note: 'b' } });
     const html = diffTable({ rows });
     assert.ok(!html.includes('deleted_at'), '库列名不上屏');
     assert.ok(html.includes('撤销标记'), '映射到用户说法');
-    assert.ok(html.includes('改了哪一项') && html.includes('改前') && html.includes('改后'), '列头说人话');
+    // #728 第三轮换口径：列头从口语改写（`改了哪一项`）改成**规范名词**（`字段`）。
+    // 维护者 2026-09-19 逐字：「图12太口语化」——规范词照 `docs/agents/wording.md` 取。
+    assert.ok(html.includes('字段') && html.includes('改前') && html.includes('改后'), '列头用规范名词');
+    assert.ok(!html.includes('改了哪一项'), '口语化列头不许回来');
   });
 });
 

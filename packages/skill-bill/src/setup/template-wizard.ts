@@ -132,8 +132,8 @@ function restoreBody(input: RestoreWizardInput): string {
   }));
   const detail = renderDataTable({
     columns: [
-      { key: 'k', label: '哪一项' },
-      { key: 'v', label: '是什么' },
+      { key: 'k', label: '字段' },
+      { key: 'v', label: '字段名' },
     ],
     rows: [
       { k: '备份名称', v: s.file },

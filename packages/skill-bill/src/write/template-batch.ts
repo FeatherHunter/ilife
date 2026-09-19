@@ -252,7 +252,7 @@ function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
     ]), 'sec-kpi', '读数'),
     { html: renderCaliberLine(spec.receiptCaliber) },
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail,
       caption: spec.receiptCaption,
     }), 'sec-detail', '明细'),

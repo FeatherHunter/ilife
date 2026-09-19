@@ -110,6 +110,6 @@ export const SCENE: Scene = {
     receiptCaliber: '三要素来自本仓之外，本仓不存图也不读图。',
     dropDefaultHints: true,
     cards: 'scene',
-    receiptCaption: '这一笔记成什么',
+    receiptCaption: '本次写入',
   }),
 };

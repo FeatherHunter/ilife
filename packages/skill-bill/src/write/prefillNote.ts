@@ -84,8 +84,8 @@ export function prefillNote(marks: readonly PrefillMark[]): string {
   if (marks.length === 0) return '';
   return renderDataTable({
     columns: [
-      { key: 'label', label: '预填的格' },
-      { key: 'value', label: '顶上去的值' },
+      { key: 'label', label: '字段' },
+      { key: 'value', label: '预填值' },
       { key: 'from', label: '来源' },
     ],
     rows: marks.map((m) => ({ label: m.label, value: m.value === '' ? '（留空＝落库默认）' : m.value, from: m.from })),

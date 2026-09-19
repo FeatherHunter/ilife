@@ -34,6 +34,6 @@ export const SCENE: Scene = {
     receiptNext: nextStepOf({ page: 'receipt', exit: true }),
     receiptCaliber: '本批一次只落一笔，回执里的编号就是它。',
     receiptRowsLabel: '这次记了几笔',
-    receiptCaption: '这一笔记成什么',
+    receiptCaption: '本次写入',
   }),
 };

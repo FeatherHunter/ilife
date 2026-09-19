@@ -128,7 +128,7 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
     blockedFoldOf({ blocked, command: blockedCommandOf(input.key, input.params, blocked) }),
     spec.note === '' ? '' : renderCaliberLine(spec.note),
     target === null ? '' : renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '现在是什么样' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '当前值' }],
       rows: [
         { k: '账户名', v: target.name },
         { k: '类型', v: textOrDash(target.type) },
@@ -189,7 +189,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
       : renderChangeRows({ rows }), 'sec-change', '改了什么'),
     { html: spec.receiptNote === '' ? '' : renderCaliberLine(spec.receiptNote) },
     navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: input.detail, caption: spec.detailCaption,
     }), 'sec-detail', '明细'),
     navBlock(reconcileOf({ actionAt: receipt.actionAt, changed: receipt.affectedRows, note: RECONCILE_NOTE }),

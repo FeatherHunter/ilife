@@ -108,7 +108,7 @@ export function candidateRows(items: readonly CandidateItem[]): string {
   return renderDataTable({
     columns: [
       { key: 'id', label: '记录编号' },
-      { key: 'label', label: '是哪一笔' },
+      { key: 'label', label: '摘要' },
       { key: 'amount', label: '金额', align: 'right' },
       { key: 'time', label: '时间' },
     ],

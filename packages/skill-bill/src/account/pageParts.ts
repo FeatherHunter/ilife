@@ -132,10 +132,10 @@ export function blockedFoldOf(input: {
       title: '还缺什么（点开看补齐后照抄的那条）',
       contentHtml: renderDataTable({
         columns: [
-          { key: 'label', label: '还缺哪一项' },
+          { key: 'label', label: '缺失字段' },
           { key: 'why', label: '为什么进不去' },
         ],
-        rows: input.blocked.map((b) => ({ label: b.label, why: b.why === '没给' ? '这一项没给' : b.why })),
+        rows: input.blocked.map((b) => ({ label: b.label, why: b.why === '没给' ? '未提供' : b.why })),
         caption: '缺一项就先不写进去',
       }) + renderPreBlock({ command: input.command, label: '口令原文（只给看不给复制）' })
         + renderCaliberLine('这一页先不写库；补齐之后照上面那句跟助手说一遍才会写。'),
@@ -227,7 +227,7 @@ export function reconcileOf(input: { readonly actionAt: string; readonly changed
   return renderDisclosure({
     title: '对账信息',
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
+      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
       rows: [
         { k: '改了账本里几处', v: String(input.changed) + ' 处' },
         { k: '写入时间', v: input.actionAt },
