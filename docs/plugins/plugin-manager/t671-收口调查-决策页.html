@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#671 收口调查 · 4 问待你裁</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--card2:#1d2129;--line:#2a2f3a;--ink:#e8eaee;--dim:#9aa3b2;--faint:#6c7484;
+        --accent:#7c9cff;--ok:#4ec9a0;--warn:#f0b45a;--bad:#f2708a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 64px}
+  header.top{position:sticky;top:0;z-index:10;background:rgba(15,17,21,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top-in{max-width:920px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top-in h1{margin:0;font-size:16px;font-weight:650}
+  .top-in .meta{color:var(--faint);font-size:12px}
+  .chips{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .chip.a{border-color:#33507e;color:var(--accent);background:rgba(124,156,255,.08)}
+  .chip.b{border-color:#6b5520;color:var(--warn);background:rgba(240,180,90,.08)}
+  .chip.c{border-color:#7a3346;color:var(--bad);background:rgba(242,112,138,.08)}
+  .lede{color:var(--dim);font-size:13.5px;margin:18px 0 0}
+  .lede b{color:#c9d0da;font-weight:600}
+  .verdict{margin:16px 0 0;background:rgba(242,112,138,.07);border:1px solid #7a3346;border-left:3px solid var(--bad);border-radius:12px;padding:13px 16px}
+  .verdict .k{font-size:11px;letter-spacing:.4px;color:var(--bad);font-weight:700;display:block;margin-bottom:3px}
+  .verdict p{margin:0;font-size:14.5px}
+  .verdict b{color:#fff;font-weight:650}
+  h2.sec{margin:32px 0 8px;font-size:14px;font-weight:650;color:var(--dim);display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  .gaps{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .gap{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--faint);border-radius:11px;padding:12px 14px}
+  .gap.hard{border-left-color:var(--bad)}
+  .gap.med{border-left-color:var(--warn)}
+  .gap h3{margin:0 0 5px;font-size:14px;font-weight:650}
+  .gap .lv{font-size:11px;font-weight:700;letter-spacing:.3px;color:var(--bad)}
+  .gap.med .lv{color:var(--warn)}
+  .gap p{margin:6px 0 0;font-size:12.5px;color:var(--dim)}
+  .gap .ev{margin-top:8px;font:11.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint);word-break:break-all}
+  .card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px 15px;margin:12px 0}
+  .q{display:flex;align-items:baseline;gap:9px;margin:0 0 9px}
+  .q .n{font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint);min-width:22px;padding-top:4px}
+  .q .t{font-size:15.5px;font-weight:650;margin:0}
+  .tag{font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #33507e;color:var(--accent);background:rgba(124,156,255,.1);margin-left:auto;white-space:nowrap;font-weight:600}
+  .why{margin:0 0 10px;color:var(--dim);font-size:13.5px}
+  .why b{color:#c9d0da;font-weight:600}
+  .facts{margin:0 0 10px;border-top:1px dashed var(--line);padding-top:9px}
+  .facts div{font-size:13px;color:var(--dim);margin:3px 0}
+  .facts .h{font-size:11px;font-weight:700;letter-spacing:.3px;color:var(--faint)}
+  .rec{display:flex;gap:9px;align-items:flex-start;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px}
+  .rec .mk{color:var(--ok);font-weight:700;flex:none}
+  .rec strong{color:#eaf7f2}
+  .pros{margin:9px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  .pros div{font-size:12.5px;color:var(--dim)}
+  .pros .h{display:block;font-size:11px;letter-spacing:.3px;margin-bottom:2px;font-weight:600}
+  .pros .plus .h{color:var(--ok)} .pros .minus .h{color:var(--warn)}
+  .pros b{color:#c9d0da;font-weight:600}
+  code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#12151b;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cfd6e2}
+  table{width:100%;border-collapse:collapse;margin:8px 0 0;font-size:12.5px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--dim)}
+  th{color:var(--faint);font-weight:600;font-size:11.5px}
+  td.y{color:var(--ok)} td.n{color:var(--bad)}
+  details{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  details>summary{cursor:pointer;padding:11px 15px;background:var(--card2);font-size:13.5px;color:var(--dim);font-weight:600}
+  details .in{padding:12px 16px 16px}
+  details ul{margin:0;padding-left:20px;color:var(--dim);font-size:13px}
+  details li{margin:5px 0}
+  details b{color:#c9d0da;font-weight:600}
+  pre{margin:8px 0 0;padding:12px 14px;background:#12151b;border:1px solid var(--line);border-radius:9px;overflow:auto;color:#cfd6e2;font:12px/1.85 ui-monospace,SFMono-Regular,Menlo,monospace}
+  footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+  footer a{color:var(--accent);text-decoration:none}
+  @media (max-width:680px){ .pros,.gaps{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <h1>#671 收口调查 · 4 问待你裁</h1>
+  <span class="meta">map <a href="https://github.com/FeatherHunter/ilife/issues/671" style="color:var(--accent);text-decoration:none">#671</a> · 2026-09-19 · 只读调查</span>
+  <span class="chips"><span class="chip a">100% ＝ 子票计数</span><span class="chip c">4 处对不上目的地</span><span class="chip b">本轮零写操作</span></span>
+</div></header>
+
+<div class="wrap">
+
+<p class="lede">20 张子票全关 ⇒ GitHub 的进度条必然读 <b>100%</b>：它只数子票。但地图仍开着——因为本图<b>从未收口</b>（0 条评论、没有任何关闭动作），而 100% <b>不数</b>「Not yet specified」里的雾，也<b>不数从来没建过票的遗漏</b>。下面是查出来的 4 处，其中 2 处是硬缺口。</p>
+
+<div class="verdict">
+  <span class="k">结论</span>
+  <p>这不是「忘了关」，是<b>还没到能关的时候</b>。建议<b>先别 close</b>：先补 1 张票（记账）、给「发版」这条雾一个去处，再把正文口径改准。</p>
+</div>
+
+<h2 class="sec">一、四处对不上目的地（读数锚点）</h2>
+<div class="gaps">
+  <div class="gap hard">
+    <h3>① 记账那半没生效</h3>
+    <span class="lv">硬缺口 · 无票承接</span>
+    <p>目的地要求「环境变量读取全部删除」。记账技能侧仍读 3 个变量，<code>bill.yaml</code> 只被配置命令与体检报告读，<b>不驱动执行路径</b>；关票时把它推给 #718，而 #718 只含卡路里且已关闭 ⇒ 掉缝里没人接。</p>
+    <div class="ev">packages/skill-bill/src：cli/cmd_read.ts:51 · fetch/paths.ts:11 · fetch/paths.ts:33 · query/read.ts:172</div>
+  </div>
+  <div class="gap hard">
+    <h3>② 用户装得到的世界：0/6 可用</h3>
+    <span class="lv">硬缺口 · #723（open）</span>
+    <p>四家页签打不开；卡路里／备忘录页签打开的是 <b>P10 只读脚手架</b>（无保存／重置／配置命令）。六个技能包的已发布产物也没有 <code>dist/config.js</code>／<code>dist/health.js</code> ⇒ 本图的配置机制今天<b>只活在本仓构建产物里</b>。</p>
+    <div class="ev">装机 dist/client.js：保存·重置·config.save·db.dir·高级 逐串零命中</div>
+  </div>
+  <div class="gap med">
+    <h3>③ 总管总设置区：没票也没做</h3>
+    <span class="lv">待裁 · 记录缺项</span>
+    <p>目的地第 3 条要「总设置区放全局数据目录 ＋ 六家配置文件位置 ＋『重置为默认』」。面板那块今天只有两行静态字；六家落点只出现在各家设置页与体检表里。</p>
+    <div class="ev">packages/plugin-manager/src/client.ts:306-311（只有总开关行 ＋ 版本行）</div>
+  </div>
+  <div class="gap med">
+    <h3>④ 验收口径没按实况记账</h3>
+    <span class="lv">待裁 · 口径</span>
+    <p>目的地写「vision_router 逐页打分 ≥90」。四家真打了分；体检页 77.7 未过、改按对抗式审查收口；标题点名的卡路里／记账两块<b>没有打分读数</b>。地图对这段变化只字未记。</p>
+    <div class="ev">docs/plugins/plugin-manager/t706-证据.md:158（「未过」，稳定在 78）</div>
+  </div>
+</div>
+
+<h2 class="sec">二、四问（推荐 ＋ 利弊）</h2>
+
+<div class="card">
+  <div class="q"><span class="n">Q1</span><p class="t">「记账技能侧」票：开不开？</p><span class="tag">推荐：开</span></div>
+  <p class="why"><b>前因：</b>目的地第 1 条是「不再用环境变量承载配置，读取全部删除」。做记账设置页那张票（#677）时，技能侧被划在票外，解决评论写明「同归 #718 那条线」；而 #718 的票面与写集只有卡路里、并且已经关闭。于是这半块<b>既没做、也没票</b>——<code>docs/env.md</code> 自己也写着「等它的取值面迁移票落地」，那张票不存在。</p>
+  <div class="facts">
+    <div class="h">关键信息</div>
+    <div>· 范围已被上一张研究票写清：<code>docs/research/t692-six-skill-paths-survey.md</code> 记账段 ＋ <code>docs/env.md</code> 五·1。</div>
+    <div>· 同形先例 = #718（卡路里）：202 个测试件迁到 <code>ILIFE_CONFIG_DIR</code> 隔离 ＋ 删变量 ＋ 变异自证。</div>
+    <div>· 影响面：设置页存的 8 项（库目录／库名／备份目录／产物目录…）今天<b>不进执行路径</b>，技能仍要求终端里有 <code>SKILLS_DB_PATH</code> —— 正是本图要解决的根问题。</div>
+  </div>
+  <div class="rec"><span class="mk">➡</span><div>开，照 #718 同形，挂成本图子票。<br><span style="color:var(--dim);font-size:13px">（若你判「记账不属本图」，那就得把它开在别处——但不能不开，否则这条口径永远落不了地。）</span></div></div>
+  <div class="pros">
+    <div class="plus"><span class="h">利</span>目的地第 1 条补齐；记账设置页真的「保存即生效」；六家口径一致。</div>
+    <div class="minus"><span class="h">弊</span>一张大票（测试基座迁移是主要体量），要占一个会话；本图 open 的时间拉长。</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="q"><span class="n">Q2</span><p class="t">「发版」这块：收进本图，还是判出图？</p><span class="tag">推荐：收进本图</span></div>
+  <p class="why"><b>前因：</b>目的地的达成判据是「六家每一家都能在面板上改到配置、保存后重启宿主仍生效」。这条在本仓成立，但在<b>用户装得到的 npm 世界</b>里是 0/6。地图早在「Not yet specified」里写着「正式发版窗口的编排」这条雾，一直没毕业；#723 就是它切出的第一个实体。</p>
+  <div class="facts">
+    <div class="h">关键信息 · 装机与发布读数</div>
+    <div>· 七个插件：本地版本 = npm latest = 装机版本（改动都没伴随版本 bump）。</div>
+    <div>· 四家（记账／大厨／居家／作息）装机产物<b>没有</b>页签槽注册；另两家（卡路里／备忘录）有槽名，但渲染的是只读脚手架。</div>
+    <div>· 六个技能包装机产物<b>全部没有</b>配置命令与体检命令。</div>
+  </div>
+  <div class="rec"><span class="mk">➡</span><div>收进本图：把「正式发版窗口的编排」毕业成一张票（把 #723 收编为子票），范围＝六技能＋六插件的版本与顺序。<br><span style="color:var(--dim);font-size:13px">只有发过版，判据才真的兑现；否则得把判据改写成「本仓构建产物口径」——那是 Q2 的另一个选项。</span></div></div>
+  <div class="pros">
+    <div class="plus"><span class="h">利（收进本图）</span>终点是「用户真能用」；#723 有了归属；收口时不会有假绿。</div>
+    <div class="minus"><span class="h">弊（收进本图）</span>发版要人在场扫码（2FA），属 HITL 窗口，串行且不可远程；本图会多飘一段。</div>
+    <div class="plus"><span class="h">利（判出图）</span>本图可以立刻收口；发版交给发版线统筹。</div>
+    <div class="minus"><span class="h">弊（判出图）</span>必须同时改写目的地／达成判据（否则地图说假话），并接受「记账 + 发版」两条缺口变成别图的债。</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="q"><span class="n">Q3</span><p class="t">总管「总设置区」：做，还是改口径？</p><span class="tag">推荐：改口径</span></div>
+  <p class="why"><b>前因：</b>2026-09-17 的原裁决（Q9）选的是「在总管面板加一块总设置区、六个技能共用一份」。到第 3 条目的地时这句话还在，但承载方式后来整个换掉了（改成每技能一份配置文件），于是「一份全局值」自然降解成「各家配置文件路径」——而这块<b>从头到尾没有票</b>，今天面板上只剩两行静态字。</p>
+  <div class="facts">
+    <div class="h">关键信息</div>
+    <div>· 已有替代：体检表能逐家印出「配置文件 &lt;路径&gt; · 数据目录 &lt;路径&gt;」；各家设置页里也印。</div>
+    <div>· 已有替代：「重置为默认」在<b>六家各自</b>的设置页里都能用（重置前自动留 <code>.bak</code>）。</div>
+    <div>· 缺的只有「一块集中的总览／一个全局重置」——目的地原话那三件里的前两件已由体检表覆盖。</div>
+  </div>
+  <div class="rec"><span class="mk">➡</span><div>改口径：把目的地那句话改成「各家配置文件位置与数据目录在体检表与各家设置页呈现；重置为默认住各家设置页」。<br><span style="color:var(--dim);font-size:13px">若你确实想要一块集中的总设置（含全局重置），那就新开一张小实施票（改一处面板组件，体量小）。</span></div></div>
+  <div class="pros">
+    <div class="plus"><span class="h">利（改口径）</span>零成本，地图与实况一致。</div>
+    <div class="minus"><span class="h">弊（改口径）</span>与你当初想要的「一处总设置」不同——用户要在六个页签之间跳。</div>
+    <div class="plus"><span class="h">利（做）</span>回到 Q9 的原意，一处看全、一处重置。</div>
+    <div class="minus"><span class="h">弊（做）</span>多一张票 ＋ 一次真机验收；且与体检表功能部分重叠。</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="q"><span class="n">Q4</span><p class="t">记录修正与进度数字：现在落吗？最后 close 吗？</p><span class="tag">推荐：落修正 · 先不 close</span></div>
+  <p class="why"><b>前因：</b>地图正文三处自相矛盾：任务清单 3 个复选框没勾（票却关了）、Decisions so far 缺两张票的行且有一行重复、<code>## 进度：100%</code> 同段又写着「还剩两件待裁」。这些不改，下一次来的人会被误导。</p>
+  <div class="facts">
+    <div class="h">关键信息</div>
+    <div>· GitHub 那条进度条只统计子票，正文改了它也不动；但<b>新开两张子票后它自己从 100% 掉成 20/22（90%）</b>——数字终于与实况同向。</div>
+    <div>· 20/20 都有收口评论、15 张判真完成；缺口集中在记账、发布、总设置区、验收口径四件事上（第三节）。</div>
+  </div>
+  <div class="rec"><span class="mk">➡</span><div>记录修正 ＋ 进度改 <code>90% · 待确认</code> 已经落了；<b>本图仍未 close</b>（等下面 Q1／Q2 的结论）。</div></div>
+  <div class="pros">
+    <div class="plus"><span class="h">利</span>地图不再说假话；后来的人一眼看到缺口在哪。</div>
+    <div class="minus"><span class="h">弊</span>若你觉得这些都不属本图，就是一次多余的正文往返（约 3 分钟）。</div>
+  </div>
+</div>
+
+<details>
+  <summary>展开：正文改写的<b>落地结果</b>（已落 2026-09-19）</summary>
+  <div class="in">
+    <ul>
+      <li><b>进度区</b>：<code>## 进度：90% · 待确认</code>（与子票进度条 20/22 同源）＋ 三句未落地（记账取值面／发布滞后／总设置区）＋ 验收口径按实况改写 ＋「下一步：等维护者裁」。</li>
+      <li><b>任务清单</b>：勾上原本漏勾的 3 个复选框（公共层配置件／先发 skill-chef@0.2.0／配置体检＋健康总览）；另加 #726、#727 两行。</li>
+      <li><b>Decisions so far</b>：补 #697、#706 两行；去掉重复的 #678 那行（原 19 行 → 20 行 ＝ 20 张已关票各一行）。</li>
+      <li><b>Not yet specified</b>：删「作息第二份库」那条（已核完：新仓无此库、编者已撤、不入体检表）与「正式发版窗口的编排」那条（已毕业成 #727）；把「用户明确不做的五条」移进 Out of scope。</li>
+    </ul>
+    <pre>## 进度：90% · 待确认
+
+（子票 20/20 已全关、20/20 都有收口评论。2026-09-19 收口调查判：子票全关 ≠ 目的地达成——本图 open 的直接原因是这条）
+
+未落地三处：
+1. 记账技能侧取值面未迁移：packages/skill-bill/src 仍读 SKILLS_DB_PATH／BILL_FORCE_PROD／BILL_TODAY（4 个读取点），
+   bill.yaml 只被 bill.config.* 与体检报告读、不驱动执行路径；#677 指向的 #718 只覆盖卡路里且已关闭 ⇒ 无票承接。
+2. 发布滞后：四家插件已发布产物缺 ilife.config-tab 注册（#723 open）；六个技能包的已发布产物都没有
+   dist/config.js 与 dist/health.js ⇒ 本图的配置机制今天只在本仓构建产物上成立。
+3. 总管总设置区（全局数据目录 ＋ 六家配置文件位置 ＋ 重置为默认）：没票也没做（client.ts:306-311 只有两行静态字）。
+
+另需改准验收口径：目的地写 vision_router 逐页打分 ≥90；#696 四家 91/91/91/90 真打了分，
+#706 去极值平均 77.7 未过并改按对抗式审查收口，#676／#677 无打分读数，
+#678／#679 的真机与视觉验收被用户裁决换过或留维护者窗口。
+
+下一步：等维护者裁（补「记账技能侧」票／毕业发版雾／总设置区做或改口径／记录修正后决定 close）。</pre>
+  </div>
+</details>
+
+<footer>
+  本页成文时对 GitHub 零写操作；随后已落：开票 <b>#726</b>（记账技能侧，挂 <code>blocked_by</code> #689）／<b>#727</b>（正式发版窗口，#723 收编为其子票）／地图正文五处修正与进度改 90%。<b>代码侧按并发协议转票</b>：开票当刻 #689 正持锁改 skill-bill（`owner.json` 读数），本席撤回已落的三处半成品并停手。仓里没碰别席的在途改动。<br>
+  回我一句即可，例如：<b>「1 开 · 2 收进本图 · 3 改口径 · 4 现在落且先不 close」</b>。 · 依据：<a href="https://github.com/FeatherHunter/ilife/issues/671">map #671</a>　<a href="https://github.com/FeatherHunter/ilife/issues/723">#723</a>　<a href="https://github.com/FeatherHunter/ilife/issues/718">#718</a>　<a href="https://github.com/FeatherHunter/ilife/issues/677">#677</a>　<a href="https://github.com/FeatherHunter/ilife/issues/706">#706</a>
+</footer>
+
+</div>
+</body>
+</html>
