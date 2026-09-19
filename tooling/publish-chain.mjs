@@ -33,7 +33,7 @@ let bad = 0;
 for (const n of list) {
   const local = pkgJson(n);
   const rv = regVer(n);
-  const action = NEED_BUMP_48.has(n) ? 'PUBLISH（#48 样板重发，changeset 定版后，本地现 ' + local.version + '）' : 'VERIFY 在位（registry ' + rv + '，本地 ' + local.version + '）';
+  const action = NEED_BUMP_48.has(n) ? 'PUBLISH（#48 样板重发，本地现 ' + local.version + '）' : 'VERIFY 在位（registry ' + rv + '，本地 ' + local.version + '）';
   console.log(' - ' + n + ': ' + action);
   if (live && NEED_BUMP_48.has(n)) {
     const r = spawnSync(NPM, ['publish', '--access', 'public'], { cwd: join(root, 'packages', DIRM[n]), encoding: 'utf8', shell: NPSH });
@@ -41,6 +41,8 @@ for (const n of list) {
     else console.log('OK: ' + n + ' 已发布');
   }
 }
-if (!live) console.log('预演结束：未写 registry。真发布用 --live（先合入 master，changeset 定版后跑）。');
+// 版本落点政策见 docs/agents/changeset-政策.md：**手工定版**，不跑 `changeset version`
+// （本行原写「changeset 定版后跑」，与政策相反，2026-09-19 改；票 #713）
+if (!live) console.log('预演结束：未写 registry。真发布用 --live（先合入 master；版本由手工定版的 package.json 决定，勿跑 changeset version）。');
 if (bad) { console.error('publish-chain：' + bad + ' 处红'); process.exit(1); }
 console.log('publish-chain：PASS');
