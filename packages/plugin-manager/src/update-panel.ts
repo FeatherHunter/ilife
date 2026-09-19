@@ -12,7 +12,7 @@ import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
 import { isAbsent, manualForDisplay, pendingRestartText, slotStateOf, verdictOf, versionLines } from './update-view.js';
-import type { CheckOutcome, TargetInfo } from './update-view.js';
+import type { CheckOutcome, TargetInfo, Verdict } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
 export const PANEL_STYLE = {
@@ -79,13 +79,47 @@ export const PANEL_STYLE = {
     marginBottom: 8,
     borderRadius: 10,
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.3))',
+    borderLeftWidth: 3,
     fontSize: 13,
     lineHeight: 1.7,
   } as React.CSSProperties,
-  rowHead: { fontWeight: 700, marginBottom: 2 } as React.CSSProperties,
+  rowHead: { display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 } as React.CSSProperties,
+  rowTitle: { fontWeight: 700, color: 'var(--dsw-alias-label-primary, inherit)' } as React.CSSProperties,
+  rowPkg: {
+    color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: 12,
+  } as React.CSSProperties,
   rowMeta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12 } as React.CSSProperties,
+  /** 版本号用等宽字：数字要能对齐着读（「当前」「最新」两列一眼比大小）。 */
+  ver: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    fontWeight: 600,
+  } as React.CSSProperties,
+  /** 结论那一行：**只有要动的那几档上色**（绿／灰不抢注意力，照 health-view 的三档口径）。 */
+  verdictLine: { fontSize: 12.5, marginTop: 2 } as React.CSSProperties,
   reason: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
-  skill: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
+  skill: {
+    color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  } as React.CSSProperties,
+  /** 行内主按钮（装上／装上更新）：品牌底色 —— 全屏只有「能点的」这一种是这个颜色。 */
+  btnPrimary: {
+    border: '1px solid transparent',
+    background: 'var(--dsw-alias-brand-primary, #0a84ff)',
+    color: '#fff',
+    borderRadius: 8,
+    padding: '5px 14px',
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: 'pointer',
+    marginTop: 6,
+  } as React.CSSProperties,
+  /** 分档标记：**形状是第二条读数**（灰度截图、色弱视角下也分得开哪一行要动）。 */
+  mark: { fontWeight: 700, fontSize: 13, lineHeight: 1 } as React.CSSProperties,
   overlay: {
     position: 'fixed',
     inset: 0,
@@ -96,12 +130,14 @@ export const PANEL_STYLE = {
     padding: 16,
     background: 'rgba(0,0,0,.45)',
   } as React.CSSProperties,
+  /** 浮层是**竖排两段**：题头固定、结果列表自己滚（题头跟着滚会把关闭键滚出视野 —— 用户实测反馈）。 */
   dialog: {
     width: '100%',
     maxWidth: 560,
     maxHeight: '80vh',
-    overflow: 'auto',
-    padding: '12px 14px',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     borderRadius: 12,
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.4))',
     background: 'var(--dsw-alias-bg-elevated, var(--dsw-alias-bg-base, #222))',
@@ -113,9 +149,18 @@ export const PANEL_STYLE = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 8,
+    flex: '0 0 auto',
+    padding: '12px 14px',
+    borderBottom: '1px solid var(--dsw-alias-border, rgba(128,128,128,.3))',
   } as React.CSSProperties,
   dialogTitle: { fontSize: 14, fontWeight: 700 } as React.CSSProperties,
+  /** 唯一会滚的那一段。 */
+  dialogBody: {
+    flex: '1 1 auto',
+    minHeight: 0,
+    overflowY: 'auto',
+    padding: '12px 14px',
+  } as React.CSSProperties,
   close: {
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
     background: 'transparent',
@@ -129,6 +174,31 @@ export const PANEL_STYLE = {
   } as React.CSSProperties,
   dialogNote: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
 };
+
+/** 一行的分档：**要动的那几档才上色**（`ok`／`idle` 保持素色，不跟红黄抢注意力 —— 照 `health-view.ts` 的三档口径）。
+ *  每档同时给**形状**（`↑ ! ✕ ✓`）：颜色之外的第二条读数，灰度截图与色弱视角下同样分得开。 */
+type RowTone = 'ok' | 'update' | 'blocked' | 'failed' | 'idle';
+
+const ROW_TONE: Readonly<Record<RowTone, { readonly mark: string; readonly color: string; readonly tint: string }>> = {
+  update: { mark: '↑', color: 'var(--dsw-alias-brand-primary, #0a84ff)', tint: 'rgba(10,132,255,.08)' },
+  blocked: { mark: '!', color: 'var(--dsw-alias-state-warning-primary, #d8a300)', tint: 'rgba(216,163,0,.10)' },
+  failed: { mark: '✕', color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', tint: 'rgba(255,107,107,.10)' },
+  ok: { mark: '✓', color: 'var(--dsw-alias-state-success-primary, #4ec9a0)', tint: 'transparent' },
+  idle: { mark: '·', color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', tint: 'transparent' },
+};
+
+/** 这一行算哪一档：取数失败 > 装不上 > 有新版 > 待重启／源码装 > 已是最新 > 未查。 */
+export function rowToneOf(row: UpdateRowState, verdict: Verdict | null): RowTone {
+  if (row.failure !== null || row.phase === 'failed') return 'failed';
+  if (row.phase === 'installing') return 'update';
+  if (verdict === null) return 'idle';
+  switch (verdict.kind) {
+    case 'update-available': return 'update';
+    case 'blocked': return 'blocked';
+    case 'up-to-date': return 'ok';
+    default: return 'idle';
+  }
+}
 
 /** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。 */
 export interface UpdateRowState {
@@ -296,25 +366,46 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
     const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
     const busy = row.phase === 'installing';
     const showManual = manual !== null && (row.phase === 'failed' || verdict?.kind === 'blocked');
+    const tone = rowToneOf(row, verdict);
+    const paint = ROW_TONE[tone];
+    /** 这一行「当前／最新」两个版本号：不等才算有新版，把「最新」那格上色（用户扫一眼先看有没有箭头）。 */
+    const running = snapshot?.runningVersion ?? target.runningVersion ?? null;
+    const latest = snapshot?.latestVersion ?? null;
+    const newer = running !== null && latest !== null && latest !== running;
+    const lit = tone === 'update' || tone === 'blocked' || tone === 'failed';
     return React.createElement(
       'div',
-      { key: target.key, style: PANEL_STYLE.row },
-      React.createElement('div', { style: PANEL_STYLE.rowHead }, target.title + ' · ' + target.packageName),
+      { key: target.key, style: { ...PANEL_STYLE.row, borderLeftColor: paint.color, background: paint.tint } },
+      React.createElement(
+        'div',
+        { style: PANEL_STYLE.rowHead },
+        React.createElement('span', { style: { ...PANEL_STYLE.mark, color: paint.color }, 'aria-hidden': 'true' }, paint.mark),
+        React.createElement('span', { style: PANEL_STYLE.rowTitle }, target.title),
+        React.createElement('span', { style: PANEL_STYLE.rowPkg }, '· ' + target.packageName),
+      ),
       React.createElement(
         'div',
         { style: PANEL_STYLE.rowMeta },
-        '当前 ' +
-          String(snapshot?.runningVersion ?? target.runningVersion ?? '未安装') +
-          ' · 最新 ' +
-          String(snapshot?.latestVersion ?? '未查'),
+        '当前 ',
+        React.createElement('b', { style: PANEL_STYLE.ver }, String(running ?? '未安装')),
+        ' · 最新 ',
+        React.createElement(
+          'b',
+          { style: newer ? { ...PANEL_STYLE.ver, color: paint.color } : PANEL_STYLE.ver },
+          String(latest ?? '未查'),
+        ),
       ),
-      React.createElement('div', null, busy ? '正在装，请稍候…' : (verdict?.text ?? (checking ? '检查中…' : ''))),
+      React.createElement(
+        'div',
+        { style: lit ? { ...PANEL_STYLE.verdictLine, color: paint.color, fontWeight: 600 } : { ...PANEL_STYLE.verdictLine, color: 'var(--dsw-alias-label-secondary, #9a9a9a)' } },
+        busy ? '正在装，请稍候…' : (verdict?.text ?? (checking ? '检查中…' : '')),
+      ),
       verdict?.action
         ? React.createElement(
             'button',
             {
               type: 'button',
-              style: busy ? { ...PANEL_STYLE.btn, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 6 },
+              style: busy ? { ...PANEL_STYLE.btnPrimary, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btnPrimary,
               disabled: busy,
               onClick: () => props.face.act(target),
             },
@@ -356,18 +447,23 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
             React.createElement(
               'div',
               { style: PANEL_STYLE.dialogHead },
-              React.createElement('div', { style: PANEL_STYLE.dialogTitle }, '检查更新（七家）'),
+              // 标题只说「检查更新」：查的是几个包由每行自己交代，不必在标题里数数。
+              React.createElement('div', { style: PANEL_STYLE.dialogTitle }, '检查更新'),
               React.createElement(
                 'button',
                 { type: 'button', style: PANEL_STYLE.close, onClick: () => close(), title: '关闭', 'aria-label': '关闭' },
                 '×',
               ),
             ),
-            body,
             React.createElement(
               'div',
-              { style: PANEL_STYLE.dialogNote },
-              '装与更新都在宿主后台跑：关掉这块不影响正在进行的安装，再点「检查更新」可以看到最新状态。',
+              { style: PANEL_STYLE.dialogBody },
+              body,
+              React.createElement(
+                'div',
+                { style: PANEL_STYLE.dialogNote },
+                '装与更新都在宿主后台跑：关掉这块不影响正在进行的安装，再点「检查更新」可以看到最新状态。',
+              ),
             ),
           ),
         )
