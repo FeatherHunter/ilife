@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>#685 页面装配深模块 · 决策页</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0d0d0f; --card:#16161a; --card2:#1c1c21; --line:#2a2a31; --line2:#3a3a44;
+  --fg:#f2f2f7; --fg2:#a9a9b4; --fg3:#7b7b88;
+  --blue:#007aff; --ok:#30d158; --warn:#ff9f0a; --bad:#ff453a;
+  --soft:rgba(255,255,255,.05);
+  --blue-soft:rgba(0,122,255,.14); --ok-soft:rgba(48,209,88,.14); --warn-soft:rgba(255,159,10,.14); --bad-soft:rgba(255,69,58,.14);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--fg);background:var(--bg);margin:0;padding:0 0 60px;-webkit-font-smoothing:antialiased;min-height:100vh}
+.page{max-width:900px;margin:0 auto;padding:34px 20px 0}
+h1{font-size:30px;line-height:1.25;font-weight:700;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:4px}
+.eyebrow{font-size:12px;color:var(--fg3)}
+.sub{color:var(--fg2);font-size:14.5px;margin:0 0 22px}
+.stamp{text-align:center;color:var(--fg3);font-size:12px;margin:0 0 26px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:14px 0}
+.card.hot{border-color:rgba(255,69,58,.4)}
+.card.warm{border-color:rgba(255,159,10,.35)}
+.card.blue{border-color:rgba(0,122,255,.4)}
+.lead{font-size:15.5px;margin:.4em 0}
+.q{border-left:2px solid var(--blue);padding-left:15px;margin-top:4px}
+.q .body{color:var(--fg2);font-size:14px;margin-bottom:13px}
+.q .body b,td b,li b{color:var(--fg)}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--fg2);margin:0 6px 6px 0;white-space:nowrap}
+.pill.r{background:var(--bad-soft);color:#ff7b72}
+.pill.g{background:var(--ok-soft);color:#4ade80}
+.pill.b{background:var(--blue-soft);color:#5aa9ff}
+.pill.o{background:var(--warn-soft);color:#ffb340}
+.rec{background:var(--blue-soft);border-left:2px solid var(--blue);border-radius:0 12px 12px 0;padding:11px 15px;margin:13px 0}
+.rec .lb{font-size:11.5px;font-weight:700;color:#5aa9ff;letter-spacing:.05em}
+.why{font-size:13px;color:var(--fg2);margin-top:5px}
+.sw{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:10px}
+.sw>div{border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.65;color:var(--fg2)}
+.s1{background:var(--ok-soft);border:1px solid rgba(48,209,88,.22)}
+.s2{background:var(--warn-soft);border:1px solid rgba(255,159,10,.22)}
+.sw .h{font-weight:700;font-size:11.5px;display:block;margin-bottom:4px}
+.s1 .h{color:#4ade80}.s2 .h{color:#ffb340}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{background:var(--soft);font-size:12.5px;font-weight:700;color:var(--fg2)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+details{border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:12px 0;background:var(--card2)}
+summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸";color:var(--blue);margin-right:8px;display:inline-block;transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{margin-bottom:10px}
+ul.tight{margin:.35em 0 .5em;padding-left:1.15em}
+ul.tight li{margin:.3em 0;font-size:13.5px;color:var(--fg2)}
+p.tight{margin:.35em 0 .6em}
+.note{font-size:12.5px;color:var(--fg3)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:#d9d9e3}
+.hl{background:linear-gradient(transparent 58%,rgba(0,122,255,.32) 58%);color:var(--fg)}
+.cat{display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.cat .no{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:#5aa9ff;background:var(--blue-soft);border-radius:999px;padding:3px 11px;white-space:nowrap}
+.cat h3{margin:0;font-size:17.5px}
+.cat .tag{margin-left:auto;font-size:11.5px;color:var(--fg3);white-space:nowrap}
+nav.jump{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 2px}
+nav.jump a{font-size:12.5px;color:#5aa9ff;text-decoration:none;background:var(--blue-soft);border-radius:999px;padding:5px 12px}
+nav.jump a:hover{background:rgba(0,122,255,.24)}
+.chk{list-style:none;padding:0;margin:8px 0 0}
+.chk li{display:flex;align-items:baseline;gap:10px;border-top:1px solid var(--line);padding:11px 0;font-size:14px}
+.chk li:first-child{border-top:0}
+.chk .id{font-weight:700;color:#5aa9ff;white-space:nowrap}
+.chk .st{margin-left:auto;font-size:11.5px;color:var(--fg3);white-space:nowrap}
+@media (max-width:640px){.sw{grid-template-columns:1fr}.card{padding:16px 15px}h1{font-size:25px}.page{padding:26px 14px 0}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="meta"><span class="eyebrow">饼干记账 · 决策页</span><span class="pill b">#685</span><span class="pill">2026-09-18</span></div>
+<h1>页面装配深模块：讨论决策页</h1>
+<p class="sub">五条已确认（2026-09-18）＋ 已量过的硬事实 ＋ 收敛方案</p>
+<p class="stamp">本文由 #685 讨论过程整理，不是规格</p>
+
+<section class="card" id="bg">
+  <span class="pill g">五条已确认</span><span class="pill">7.4 倍成本差</span><span class="pill">67% 重复</span>
+  <p class="tight lead">新仓做了两个完成的域，走成了<strong>相反的两种形状</strong>：查询域一场景 43 行，写入域一场景 <strong>319 行</strong>；写入域 15 个场景件里 67% 的独立代码行在三个以上文件里<strong>逐字重复</strong>。</p>
+  <table>
+    <tr><th>域</th><th class="n">件数</th><th class="n">行数</th><th class="n">场景</th><th class="n">每场景</th></tr>
+    <tr><td>查询 query</td><td class="n">5</td><td class="n">727</td><td class="n">17</td><td class="n" style="color:#4ade80;font-weight:700">43 行</td></tr>
+    <tr><td>写入 write</td><td class="n">27</td><td class="n">≈5,100</td><td class="n">16</td><td class="n" style="color:#ff7b72;font-weight:700">319 行</td></tr>
+  </table>
+  <p class="tight" style="font-size:13.5px;color:var(--fg2)"><b>正题</b>：要不要把「页面装配」做成一个深模块，接口收「页型 ＋ 差异」、块序归页型，让 41 个未做场景不再照写入域的样子铺开。<br><b>反题（不是空担）</b>：老技能自己的答案就是查询域那种——<span class="hl">1 张模板 ＋ 每场景一个渲染器</span>（查询 11 个／分析 25 个，每个 10–53 行、中位数 ≈ 24）。<b>合</b>：模块必须同时满足「老侧的灵活性」与「新仓的单一出口」。</p>
+  <p class="tight note">真正怕的后果不是行数，是<b>改一次版式要动 41 处</b>——老侧「改 1 张 HTML」的便利会永久失去。</p>
+
+  <nav class="jump">
+    <a href="#facts">硬事实</a><a href="#refute">新证据·假说被证伪</a><a href="#q1">待拍 1 产出口径</a><a href="#q2">待拍 2 判据</a><a href="#q3">待拍 3 机制住处</a><a href="#q4">待拍 4 页型清单</a><a href="#q5">待拍 5 写入域方向</a><a href="#plan">收敛方案</a><a href="#dec">拍板清单</a>
+  </nav>
+</section>
+
+<details open id="facts">
+<summary>已经量过的硬事实（判断都建立在这上面）</summary>
+<ul class="tight">
+  <li><b>块序没有显式表达</b>：老侧块序＝<code>innerHTML = &grave;...&grave;</code> 里 <code>&lt;div&gt;</code> 的行序，硬编码在渲染器字面量里。</li>
+  <li><b>重复不止 15 份</b>：写入域 16 件里<b>只有 1 件</b>用通用装配体（记支出），另 15 件各写了自己的采集页与回执页函数；加上通用两件，同形页的块序<b>同时有 17 份</b>。<span class="note">（票面写「15 件」，实测 16 件，是少算了记支出。）</span></li>
+  <li><b>已经有两份同构件</b>：<code>skill-calorie/src/shared/docPage.ts</code>（11 字段、110 处调用点）与 <code>skill-bill/src/shared/docPage.ts</code>（5 字段、1 处调用点）。仓里已判过：<b>两侧已非同物</b>，可合并的只有拼页骨架，差异参数化「参数量与两侧差异项等量」。</li>
+  <li><b>两侧已经在用同一个接口</b>：都写着 <code>fillTemplate({ template, assets, content })</code>。重复的只是它上面一圈骨架常量。</li>
+  <li><b>页级块序从来没有机器判据</b>：账单 31 个测试件全打在真交付出口上，但没有一条断块序次序；也见不到共用页断言 helper（卡路里侧有）。</li>
+  <li><b>块位名是闭集</b>：公共层 12 区块（<code>BLOCK_STYLE_SECTIONS</code>）对缺失<b>当场抛错</b>；页级另有三件（页内导航／口径行／结论条）＋若干形状件。这一层不许自造第 13 种。</li>
+</ul>
+</details>
+
+<section class="card hot" id="refute">
+  <span class="pill r">新证据 · 我自己的假说被证伪</span><span class="pill">改待拍 4</span>
+  <p class="tight" style="font-size:13.5px;color:var(--fg2)">我此前抽读 6 个渲染器就下了「页型 ≈ 8 类」的判断。做了一次逐渲染器归并的硬核验，结论是<b>那个判断不成立</b>。</p>
+  <table>
+    <tr><th>归并口径</th><th class="n">类数</th><th>读数</th></tr>
+    <tr><td>块序列逐字相同</td><td class="n" style="color:#ff7b72;font-weight:700">31</td><td>36 个渲染器里 28 个<b>各自成一类</b></td></tr>
+    <tr><td>块种类＋块数</td><td class="n">16</td><td>最大一类 9 个成员</td></tr>
+    <tr><td>只看块种类集合</td><td class="n">9–11</td><td>把图表卡／解读卡各算独立块即 11</td></tr>
+    <tr><td>只看首块</td><td class="n">4</td><td>KPI 20／芯片行 7／卡 5／对比格 4</td></tr>
+  </table>
+  <p class="tight" style="font-size:13.5px;color:var(--fg2)"><b>没有一档落在 7–8。</b>而且不是「归并不够狠」的问题——同一份证据给出了<b>10 处类别归属打架</b>：<br>
+  · 空态有<b>三种挂法</b>：整页互斥／卡内互斥／每卡各挂一个（后者只有一处）；<br>
+  · KPI 栅格的位置有三种：芯片行之后／卡内嵌／后 3 卡<b>条件出</b>（全库仅一处）；<br>
+  · 「对比格 → 徽标」家族 3 个成员，但其中 2 个各带别的尾巴；<br>
+  · 数据表、图卡、明细表的组合次序在类之间来回横跳。</p>
+  <p class="tight" style="font-size:13.5px;color:var(--fg2)"><b>更硬的一条：写入域与视图域不是同一套骨架。</b>逐字 grep 实测——<br>
+  视图域 36 个渲染器里 <code>&lt;input&gt;</code>／<code>&lt;table&gt;</code>／输入框芯片行／合计行／参数栅格／候选卡／操作预览／确认按钮 <b>命中 0 次</b>；反方向，写入域 5 张模板里 <code>kpi-grid</code>／占比条／记录列表／对比格／解读卡 也<b>命中 0 次</b>。<br>
+  而写入域自己也<b>不是「一场景一渲染器」</b>：5 张模板是<b>静态 HTML ＋ 按 id 填值</b>，且<b>一张模板覆盖多个类型</b>（支出表单覆盖 4 个、流程确认覆盖 6 个）——它的块序本来就是<b>模板级 1 份</b>。</p>
+  <p class="tight" style="font-size:13.5px;color:var(--fg2)"><b>第三颗钉子：「20 行」这个单位量不准。</b>对同一批 36 个函数，严格口径（只数取字段／值／文案／算式行）与宽松口径（含条件行与收尾行）差 4 倍：严格中位数 <b>6 行</b>、宽松中位数 <b>12.5 行</b>。两个口径都远在线内——<b>这条判据既能随意变绿，也本来就在线内</b>，证明它不是一道有用的门。</p>
+  <div class="rec"><span class="lb">结论</span>　「跨域共用的单层页型清单」这个想法<b>是错的</b>。真实结构是<b>两个正交维度</b>：<br>
+    · 交互/输出类型（老侧 <code>type</code> 字段，机器校验过）：<b>查看 45 ／采集 17 ／向导 4 ／选择 4 ／回执 1</b>；<br>
+    · 块位序列（页型）——<b>按域各有一套，不跨域共用</b>。<br>
+    卡路里那「七类页」之所以能闭，是因为它<b>只有一个域</b>。新仓已有的 <code>query/list</code> ＋ <code>query/detail</code>（按域自报两块位表）＝ 这个两层结构的一个实例。
+    <div class="why">所以不是「选哪套名字」，而是<b>「页型表按域声明」</b>——名字问题降级成各域自己取，且必须先答待拍 4。</div>
+  </div>
+</section>
+
+<details open>
+<summary>四条第一原理，与它们各自推出的结论</summary>
+<ul class="tight">
+  <li><b>这是一个变换</b>——接口只该暴露会变的那个轴。变化只有两类：<b>结构性差异</b>（出哪几块、什么次序）与<b>内容性差异</b>（每块写什么字、哪个数）。⇒ 块序归页型，接口吃「页型 ＋ 内容差异」。</li>
+  <li><b>老技能从没做过「一场景一模块」</b>——36 个策略函数共用 2 张模板，块序就是字面量行序；写入域更彻底，5 张模板覆盖 16 个类型。⇒ 计数单位是「一场景一处的声明」，不是「一场景一个模块」。</li>
+  <li><b>共用位从第二个用法里长出来</b>——两侧都依赖公共层、公共层零依赖，而两侧的差异项全部是技能侧的事。⇒ 机制进公共层；页型的词汇留在技能自己的包里，<b>机制里不许出现能力名</b>。</li>
+  <li><b>现在不做，成本按票增长</b>——写入／查询／账户三张域票正在铺页面，41 个场景的五域票随时开工。接口不冻结，那几票的产物就是第一批要按同一份账重做的东西。</li>
+</ul>
+</details>
+
+<details>
+<summary>我已经在你之前做的事（不用你回答）</summary>
+<ul class="tight">
+  <li>已回读并核实：票面、地图 #681、卡路里融合基准 <code>t425</code>、审计清单 <code>t687</code>、仓规 <code>structure.md</code>、公共层 12 区块清单、两侧全部装配件与 31 个测试件。</li>
+  <li>已实测：老侧 24 张模板逐张行数与承载脚本；两张分发模板的「键→渲染器」表；36 个渲染器的逐函数行数。</li>
+  <li>已做一次<b>对抗式核验</b>（就是上面那张证伪表）：4 个归并口径逐渲染器过一遍，并逐字 grep 两侧模板的块名交集。</li>
+  <li>已发现我自己两处失误并当场改判：① 最初建议「机制先留账单侧」——推翻，理由是仓规早判过；② 最初判断「页型 ≈ 8 类」——推翻，见上。</li>
+</ul>
+</details>
+
+<section class="card" id="q1">
+  <div class="cat"><span class="no">待拍 1</span><h3>本票产出到哪一步？</h3><span class="tag">零冲突 / 抢文件</span></div>
+  <div class="q">
+    <div class="body">票面写的产出是「决定 ＋ <b>一件可复用的模块</b>」，字面读像要在讨论票里把模块落成码。但地图已经把写入域划给 #689、查询域给 #690、账户域给 #691，另有 41 个场景的五域票在雾区。<b>前因</b>：讨论票一旦开始写码，就会和那三张在途票抢同一批文件。</div>
+    <div class="rec"><span class="lb">推荐</span>　只出<b>决定 ＋ 接口纸样 ＋ 按域的页型表 ＋ 判据定义</b>；码另立公共层票与各域票。
+      <div class="why">依据：接口的验收样本（写入域 16 场景）本来就是 #689 的地盘，本票拿它<b>试算</b>不拿它<b>改码</b>。</div>
+    </div>
+    <div class="sw">
+      <div class="s1"><span class="h">推荐 · 只出规格</span>与在途三票零冲突，讨论结论可立刻当规格冻结。</div>
+      <div class="s2"><span class="h">另一条 · 本票直接落码</span>好处是接口当刻被真样品检验；代价是与 #689／#690／#691 抢文件，且讨论票变施工票，偏离地图分工。</div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="q2">
+  <div class="cat"><span class="no">待拍 2</span><h3>主体判据用哪一条？</h3><span class="tag">这条已被数据支持</span></div>
+  <div class="q">
+    <div class="body"><b>前因</b>：票面判据是「每场景的差异声明 ≤ 20 行」。上面那颗钉子已经实测：这个单位两个口径差 4 倍，且两个口径都远在 20 以内——<span class="hl">它不是一道有用的门</span>；更根本的是它指错了目标。</div>
+    <div class="rec"><span class="lb">推荐</span>　换成<b>后果陈述</b>，两条都要：<br>
+      ① <b>影响范围</b>：改一次版式（块序／块位形状）<b>只动一处文件</b>，且不许碰任何场景件。<br>
+      ② <b>职责</b>：场景件里 <b>grep 不到块序、也不许 import 块位渲染函数</b>。
+      <div class="why">依据：可机器判（前者用「未改动的场景产物 sha256 相同、目标页产物按预期变化」量；后者用 import 清单量），且不会被「搬行李」钻空子。写入域的老侧先例已经证明这条能成立——它的块序本来就是模板级 1 份。</div>
+    </div>
+    <div class="sw">
+      <div class="s1"><span class="h">推荐 · 后果陈述</span>不可钻空子，直接锁住真正怕的那个后果（改一处动一处）。</div>
+      <div class="s2"><span class="h">保留 · 20 行/场景</span>读数直观；但已被证明可随意变绿、且本来就在线内。可留作<b>试算脚手架</b>，不进验收。</div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="q3">
+  <div class="cat"><span class="no">待拍 3</span><h3>机制住在哪、叫什么？</h3><span class="tag">浅模块陷阱</span></div>
+  <div class="q">
+    <div class="body"><b>前因</b>：两侧各写了一遍「文档骨架」——doctype、head、三个槽位序、样式与助手资产的拼接。但两侧<b>已经在用同一个接口</b> <code>fillTemplate</code>，缺的只是骨架常量的单一住处。这里有个真陷阱：如果抽成「一个函数管两侧页头语义」，就会因为两侧页头不同而长出 6 个可选开关，<span class="hl">参数量与差异项等量 = 浅模块</span>。</div>
+    <div class="rec"><span class="lb">推荐</span>　公共层新增<b>一个薄件</b>（文档骨架 ＋ 资产拼接，纯机制、零领域词）：吃 <code>docTitle / bodyHtml / extraCss / charts</code>。<br>两侧各自的 <code>shared/docPage.ts</code> <b>留下但缩成薄件</b>，管自己的页头语义与补丁样式，再交给它。
+      <div class="why">依据：这样没有「新模块」，只有一处骨架常量；卡路里那份 <b>110 处调用点一行不碰</b>，判据＝产物逐字节相同（仓里跑通过多次的搬迁判据形状）。</div>
+    </div>
+    <div class="sw">
+      <div class="s1"><span class="h">推荐 · 只抽骨架</span>接口无开关、无能力名；删掉它，两侧就得各写一遍骨架（不是白占一层）。</div>
+      <div class="s2"><span class="h">另一条 · 抽「整页装配」</span>想一次统一两侧页头；代价是 6 个可选开关 ＋ 卡路里 110 处要跟着动，正撞仓里已判过的「参数量与差异项等量」。</div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="q4">
+  <div class="cat"><span class="no">待拍 4</span><h3>页型表按域声明吗？两层还是一层？</h3><span class="tag">已被证伪逼出</span></div>
+  <div class="q">
+    <div class="body"><b>前因</b>：票面写「七类页（回执／条目列表／排行榜／复盘／库／总览／预检）」——那是<b>卡路里的页型</b>。新证据证明了<span class="hl">不存在跨域共用的单层页型清单</span>：类数没有收敛，且写入域与视图域是两套骨架。所以这一问从「选哪套名字」变成「表怎么切」。</div>
+    <div class="rec"><span class="lb">推荐</span>　两层，且<b>页型表按域声明</b>：<br>
+      · 第一层＝交互/输出类型，沿用老侧 <code>type</code>（<b>查看 45 ／采集 17 ／向导 4 ／选择 4 ／回执 1</b>，机器校验过的唯一权威）；<br>
+      · 第二层＝该域自己的块位表（页型 → 块位序列 ＋ 每个块位的数据形状）；<br>
+      · <b>卡路里那套七类原样不动</b>，它只是「只有一个域」下的一个特例；<br>
+      · 页型的名字在各域自己取，且只准从老侧 <code>type</code> 与 HELP 的 7 域 20 二级组（写入／查询／分析／目标／账户／联动／开始使用；记账／特殊收支／修正／按时间／按条件／按状态／汇总／结构／对比／趋势／金额／统计洞察／状态聚合／预算／目标／账户管理／初始化／备份恢复／导入）里取。
+      <div class="why">依据：老侧那 36 个渲染器证明「单层页型」会把 28 个渲染器各成一类；而写入域 5 张模板覆盖 16 个类型，证明<b>域内可以很宽、域间不该硬并</b>。</div>
+    </div>
+    <div class="sw">
+      <div class="s1"><span class="h">推荐 · 两层 ＋ 按域声明</span>与老实物一致（视图域 2 张模板、写入域 5 张模板，各自成一套）；机制里不出现能力名，符合仓规。</div>
+      <div class="s2"><span class="h">另一条 · 全技能一张单层页型表</span>好处是「一套词表走天下」；代价是被实测证伪——31 个类里 28 个落单，且要把输入表单与 KPI 栅格硬并成一类。</div>
+    </div>
+  </div>
+</section>
+
+<section class="card warm" id="q5">
+  <div class="cat"><span class="no">待拍 5</span><h3>写入域的方向：抽接口，还是回到「模板级单份」？</h3><span class="tag">新增 · 影响 #689</span></div>
+  <div class="q">
+    <div class="body"><b>前因</b>：新证据显示写入域的 319 行／场景<b>不是因为写入域更复杂</b>——老侧写入域是 5 张<b>静态模板 ＋ 按 id 填值</b>，块序本来就只有模板级 1 份、每个类型只出差异值。新仓这 17 份块序是<b>新仓自己造的</b>。于是写入域有两条路。</div>
+    <div class="rec"><span class="lb">推荐</span>　<b>先答一条问题再定</b>：写入域的块序该按「页型 × 块位三档」表来（新机制），还是按「模板级单份 ＋ 场景只填值」（老侧原形）来？<br>
+      我的倾向：<b>走老侧原形</b>——因为它把「一场景一份块序」直接降到「一域一份」，比任何接口都更接近第一原理里那条「结构性差异归页型」。
+      <div class="why">依据：老侧写入域用这个形状承载 16 个类型、5 张模板；且它已经满足待拍 2 的两条判据（改版式只动模板、场景件里没有块序）。</div>
+    </div>
+    <div class="sw">
+      <div class="s1"><span class="h">推荐 · 老侧原形（模板级单份）</span>重复直接消失；场景件退化成「填值 ＋ 声明缺项」，与老实物可逐块对照。</div>
+      <div class="s2"><span class="h">另一条 · 页型块位表</span>更贴合「块序即数据」的机器判据、便于跨域一致；代价是仍要造一层块位表，且写入域的交互（表单／候选／合计）需要新增块位。</div>
+    </div>
+    <p class="tight note">注意：这一问会改变 #689 的工作性质（从「重构现有 16 件」变成「回到模板级单份」），所以它必须在写域动手之前拍下来。</p>
+  </div>
+</section>
+
+<details>
+<summary>对抗式审查：我推翻或修正了自己哪些说法（含上面两条新证据）</summary>
+<ul class="tight">
+  <li><b>把判据当目标</b>——已换成后果陈述（见待拍 2）；并实测出「20 行」两个口径差 4 倍。</li>
+  <li><b>模块找错了</b>——原来说「把整页装配抽到公共层」，实际两侧重复的只有骨架常量，抽出整页装配等于给 <code>fillTemplate</code> 套一层壳，正撞仓规「白占一层」那条。已收缩到只抽骨架。</li>
+  <li><b>没验过前提</b>——「页型 ≈ 8 类」已<b>证伪</b>（31／16／9–11／4 四档都不落 7–8，28 个渲染器落单）。</li>
+  <li><b>只治块序不治值</b>——那 67% 里也有值加工的重复；但它们不归本模块，归写入域优化票接上已有共用件（否则本模块会变成什么都装的口袋）。</li>
+  <li><b>抽读 6 个渲染器就下结论</b>——这是<b>抽样偏差</b>：我抽到的正好都是「KPI → 图 → 明细」同族，漏掉了整片无 KPI、整页自绘的页。教训：结论必须由逐条归并表给，不能由抽样给。</li>
+  <li><b>引仓规打自己</b>——见待拍 3 的陷阱说明。</li>
+  <li><b>没查载体规格</b>——公共层自己的告警线也是 350 行，新增件必须小；已写进方案的动作清单。</li>
+</ul>
+</details>
+
+<section class="card" id="plan">
+  <span class="pill g">收敛方案（我评 90 分）</span>
+  <table>
+    <tr><th>层</th><th>住哪</th><th>吃什么</th><th>判据</th></tr>
+    <tr><td><b>文档骨架</b><br><span class="note">机制</span></td><td>公共层新件</td><td>标题／正文／补丁样式／要不要图表助手</td><td>两侧委派后<b>逐字节相同</b></td></tr>
+    <tr><td><b>页头策略</b></td><td>各技能 <code>shared/docPage.ts</code>（缩薄）</td><td>各自的字段（11 ／ 5）</td><td>卡路里 110 处<b>零改动</b></td></tr>
+    <tr><td><b>页型块位表</b><br><span class="note">策略词汇 · 按域</span></td><td>各域自己的 <code>src/</code></td><td>第一层＝交互/输出类型；第二层＝该域块位序列（恒出／有内容才出／不出）＋ 每块位数据形状</td><td>只准用公共层已有块位名；机制里 grep 不到能力名</td></tr>
+    <tr><td><b>场景</b></td><td>各域场景件</td><td>只声明差异（数据）</td><td>不出现块序、不出现块位拼装</td></tr>
+  </table>
+  <p class="tight" style="font-size:13.5px"><b>动作顺序</b>：① 逐域页型归并表（写入域先做，它的类型只有 5 个）→ ② 判据成形 → ③ 骨架去重（3 处调用点）→ ④ 写入域按待拍 5 的答案定形状 → ⑤ 分析／目标／账户／开始使用四域照同一门做。</p>
+  <p class="tight note">改哪几件：公共层新增 1 件 ＋ 各域新增 1 件。卡路里 110 处调用点、公共层区块本体一行不动。</p>
+</section>
+
+<section class="card blue" id="dec">
+  <span class="pill g">已拍板 · 2026-09-18</span><span class="pill b">已落 #685 正文</span>
+  <ul class="chk">
+    <li><span class="id">1 产出口径</span><span>只出规格；码归公共层票与各域票</span><span class="st">已确认</span></li>
+    <li><span class="id">2 主体判据</span><span>后果陈述两条；「20 行」降为试算脚手架</span><span class="st">已确认</span></li>
+    <li><span class="id">3 机制住处</span><span>公共层只抽文档骨架，两侧保留薄页头件</span><span class="st">已确认</span></li>
+    <li><span class="id">4 页型清单</span><span>两层 ＋ 按域声明；卡路里那套不动</span><span class="st">已确认</span></li>
+    <li><span class="id">5 写入域方向</span><span>老侧原形：模板级单份 ＋ 场景只填值</span><span class="st">已确认</span></li>
+  </ul>
+  <p class="tight note">下一轮进三件细节：接口字段词表、按域页型逐类块位、判据的机器形态。</p>
+</section>
+</div>
+</body>
+</html>
