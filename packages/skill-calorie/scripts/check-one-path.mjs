@@ -138,6 +138,9 @@ export const DEFINITION_SITES = [
   { name: '孤儿区间（15-30／40-60，已作废）', allow: [], re: /\b15\s*,\s*30\b|\b40\s*,\s*60\b/g, hint: '这套数已作废（#701 内容三裁），任何地方都不该再出现' },
   { name: '千卡↔体重常数（算式里的 7700）', allow: ['src/shared/kcalPerKg.ts'], re: /[/\*]\s*7700\b/g, hint: '常数只写一处：shared/kcalPerKg.ts 的 KCAL_PER_KG，别处引用它' },
   { name: '本地时钟副本（自己读系统 Date 造日／时刻）', allow: ['src/shared/time.ts'], re: /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)|new Date\(\)\.toTimeString\(\)\.slice\(0, 8\)/g, hint: '时钟只写一处：shared/time.ts 的 todayISO／timeOfDayISO，别处引用它' },
+  /* #717 批④ 第 4 件：饮食域不许再自造「算闭区间天数却叫两点差」的 daysBetween——
+     正本＝`shared/params.ts` 的 `daysIn`（含首末日）。台账为空 = 该域一律读正本。 */
+  { name: '饮食域自造 daysBetween（闭区间天数走正本 daysIn）', scope: 'diet', allow: [], re: /function daysBetween\s*\(/g, hint: '闭区间天数只读 shared/params.ts 的 daysIn；两点跨度另有其名，不混用' },
 ];
 
 /** 待收口清单（**只登记、不判红**）：`谓词字面散在 44 处 SQL 串里`。
@@ -159,7 +162,8 @@ function stripComments(src) {
 export function scanDefinitionSites(pkgRoot) {
   const out = [];
   for (const row of DEFINITION_SITES) {
-    for (const abs of walk(join(pkgRoot, 'src'), /\.ts$/)) {
+    const scopeDir = row.scope ? join(pkgRoot, 'src', row.scope) : join(pkgRoot, 'src');
+    for (const abs of walk(scopeDir, /\.ts$/)) {
       const rel = relative(pkgRoot, abs).replace(/\\/g, '/');
       if (row.allow.includes(rel)) continue;
       const src = stripComments(readFileSync(abs, 'utf8'));

@@ -21,6 +21,8 @@ import { sourceStats } from './productStore.js';
 import { shiftISODate } from '../analysis/utils.js';
 /* #717 批②·推荐区间归一：区间正本上移共用位 `shared/nutritionRange.ts`——诊断侧的失衡判决读同一处，
    本件不再自己写一份区间数（从前配比页印 10-20／45-65／20-35，而诊断按另一套 15-30／40-60／20-35 判）。 */
+/* #717 批④·第 4 件：闭区间天数只读共用位正本（本件原先自写一份 `daysBetween`，名字说的是「两点差」、算的是含首末日）。 */
+import { daysIn } from '../shared/params.js';
 import { NUTRITION_RANGE } from '../shared/nutritionRange.js';
 import type { NutritionRange } from '../shared/nutritionRange.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -38,10 +40,9 @@ function assertISODate(v: string, field: string): void {
   }
 }
 
-function daysBetween(start: string, end: string): number {
-  return Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
-}
-
+/* #717 批④·第 4 件（闭区间天数）：本件原有一个本地 `daysBetween(start, end)`，但它算的是
+   **闭区间天数（含首末日）**——挂着「两点差」的名字算着「窗内几天」，正是规格点名的那处混淆。
+   现删掉本副本、改调共用位正本 `shared/params.ts` 的 `daysIn({start,end})`（同一个算式，同一处定义）。 */
 /** 一位小数（老 Python `round(x, 1)` 口径；本域只此一处定义）。 */
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -93,7 +94,7 @@ export function buildNutritionRatioView(db: DatabaseSync, start: string, end: st
      FROM food_log WHERE date BETWEEN ? AND ? AND food_name != ?`,
   ).get(start, end, WATER_NAME) as { n: number; p: number; c: number; f: number; cal: number };
   if (row.n === 0) throw new CalorieRenderError('missing-data', `无饮食记录：${start} ~ ${end}`);
-  const days = daysBetween(start, end);
+  const days = daysIn({ start, end });
   const total = row.cal;
   // 占比口径沿旧（蛋白/碳水×4、脂肪×9 除以总热量；实现差异：旧 Python round 为银行家
   // 舍入，本层 Math.round 半值上入，pct 整数差至多 1，见证据 R5）。
@@ -198,7 +199,7 @@ export function buildNutritionDetailView(db: DatabaseSync, start: string, end: s
     totals.sugar += hit.sugar * scale;
     matched += 1;
   }
-  const days = Math.max(1, daysBetween(start, end));
+  const days = Math.max(1, daysIn({ start, end }));
   // 命中 0 亦渲染（缺数据盒明示，不编数）；连一餐都没有才 missing（上游已拦）。
   const items: NutrientItem[] = DRI.map((spec) => {
     const val = round1(totals[spec.key as keyof typeof totals]);
@@ -294,7 +295,7 @@ function monthFirstOf(date: string): string {
 }
 
 function overviewPeriod(db: DatabaseSync, start: string, end: string): DietOverviewPeriod {
-  const days = start <= end ? daysBetween(start, end) : 0;
+  const days = start <= end ? daysIn({ start, end }) : 0;
   const daily: OverviewDay[] = [];
   if (days > 0) {
     const by = new Map<string, number>();
