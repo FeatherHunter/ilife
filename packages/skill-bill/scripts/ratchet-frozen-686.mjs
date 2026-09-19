@@ -10,15 +10,15 @@
  *   · 冻结值高于实况（搬走了却没同步下调）⇒ 红——这一条就是「收紧守卫」。
  *
  * 量三件东西（都不看时间戳，只看当刻盘上的内容）：
- *   ① **分派层**：`src/cli/cmd_read.ts` 里**按键分派**的 `bill.…` 字面量集（行为口径：`case`／`===`／
- *      就地键集查询三类都数，双引号与 `if` 阶梯一视同仁；具名键集／默认值／注释不数）；
+ *   ① **分派层**：`src/cli` **全目录**（含将来按域拆出来的姊妹件）里**按键分派**的 `bill.…` 字面量集
+ *      （行为口径：`case`／`===`／就地键集查询三类都数，双引号与 `if` 阶梯一视同仁；具名键集／默认值／注释不数）；
  *   ② **过渡表**：`src/render/envelope.ts` 的 `TRANSITIONAL_KEY_SHAPES` 键集（未搬迁的键仍住在那里）；
  *   ③ **键总数与注册表**：`dist/policy/index.js` 的 `WAKE_TABLE` 键集（口径层，手写，是 16 键的独立事实源）
  *      与 `dist/cli/registry.js` 的 `REGISTRY_KEYS`（生成物）。
  *
  * 未搬迁的键**恰恰住两处**（过渡表有形状行、分派层有 case）：搬一条＝两处同窗消失 ＋ 冻结值同窗下调。
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -39,7 +39,7 @@ export const FROZEN = {
     'bill.link.submit',
     'bill.setup.run',
   ],
-  /** 分派层按键分派的字面量集：与 `legacyKeys` 同集（未搬迁的键才在分派层有 case）。 */
+  /** 分派层按键分派的字面量集（`src/cli` **全目录**）：与 `legacyKeys` 同集（未搬迁的键才在分派层有 case）。 */
   dispatchKeys: [
     'bill.account.query',
     'bill.account.write',
@@ -147,6 +147,24 @@ export function transitionKeysOf(text) {
 
 export const lfOf = (abs) => readFileSync(abs, 'utf8').split('\n').length - 1;
 
+/** 分派层＝`src/cli` **全目录**（照卡路里 `cmd-registry-294` 的口径；只盯 `cmd_read.ts` 一件会留一个洞：
+ *  把 `case` 挪进同目录的姊妹件就绕开了判据）。`cmd_read.ts` 将来按域拆件时，这条判据跟着走、不失明。 */
+export function cliDispatchKeysOf(root = PKG_DIR) {
+  const found = new Set();
+  const walk = (dir) => {
+    // 读不到就**抛**，不许静默当空（#686 实测：把 ReferenceError 吞掉会让判据读到 0 条而假红／假绿）。
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const abs = join(dir, e.name);
+      if (e.isDirectory()) walk(abs);
+      else if (e.isFile() && e.name.endsWith('.ts')) {
+        for (const k of dispatchLiteralsOf(readFileSync(abs, 'utf8'))) found.add(k);
+      }
+    }
+  };
+  walk(join(root, 'src', 'cli'));
+  return [...found].sort();
+}
+
 /** 当刻实况。`root` 缺省＝本包根；夹具可指另一棵小树（`src/`＋`dist/` 两件 stub 即可）。 */
 export async function measure(root = PKG_DIR) {
   const readSrc = (rel) => {
@@ -154,7 +172,7 @@ export async function measure(root = PKG_DIR) {
     if (!existsSync(abs)) throw new Error('缺源件：' + abs);
     return readFileSync(abs, 'utf8');
   };
-  const dispatchKeys = [...dispatchLiteralsOf(readSrc('src/cli/cmd_read.ts'))].sort();
+  const dispatchKeys = cliDispatchKeysOf(root);
   const legacyKeys = [...transitionKeysOf(readSrc('src/render/envelope.ts'))].sort();
   const registryDist = join(root, 'dist', 'cli', 'registry.js');
   const policyDist = join(root, 'dist', 'policy', 'index.js');
@@ -194,12 +212,14 @@ function setCheck(name, actual, frozen) {
   return { name, ok: false, detail: '冻结=' + frozen.length + ' 实况=' + actual.length + '；' + parts.join('；') };
 }
 
-function countCheck(name, actual, frozen) {
+function countCheck(name, actual, frozen, upHint) {
   const ok = actual === frozen;
   const why = ok
     ? '冻结=' + frozen + ' 实况=' + actual
     : '冻结=' + frozen + ' 实况=' + actual
-      + (actual > frozen ? '（实况上涨：棘轮只许变短）' : '（实况已降 ' + (frozen - actual) + ' 而冻结值没下调：棘轮的牙齿松了）');
+      + (actual > frozen
+        ? '（' + (upHint || '实况上涨：棘轮只许变短') + '）'
+        : '（实况已降 ' + (frozen - actual) + ' 而冻结值没下调：棘轮的牙齿松了）');
   return { name, ok, detail: why };
 }
 
@@ -216,7 +236,8 @@ export function ratchetProblems(m, frozen = FROZEN) {
       : '两处不同集（分派层 ' + m.dispatchKeys.length + '／过渡表 ' + m.legacyKeys.length + '）——搬一条必须两处同窗消失',
   });
   out.push(countCheck('registryKeyCount（生成物注册表键数）', m.registryKeys.length, frozen.registryKeyCount));
-  out.push(countCheck('totalKeyCount（口径层 WAKE_TABLE 的键总数）', m.wakeKeys.length, frozen.totalKeyCount));
+  out.push(countCheck('totalKeyCount（口径层 WAKE_TABLE 的键总数）', m.wakeKeys.length, frozen.totalKeyCount,
+    '16 联动 key 是票面冻结的契约（键字符串后续票落表时冻结）：要加新命令得同窗改本冻结值并在票面说明，不是在这里悄悄长出来'));
   const both = [...new Set([...m.registryKeys, ...m.legacyKeys])].sort();
   out.push({
     name: 'unionIsTotal（注册表 ∪ 未搬迁 ＝ 全量声明）',

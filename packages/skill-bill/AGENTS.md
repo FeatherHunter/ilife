@@ -9,6 +9,7 @@
 - 范围：本包 `src/**/*.ts` 与包内 `scripts/**/*.mjs`。
 - **生成物不算**——剔除名单只认生成器自己的输出声明（`scripts/gen-*.mjs` 里名字带 `OUT`／`TARGET(S)`／`DST`／`DEST`／`GEN…` 段的 `const <名> = join(SRC_DIR, …)`，与 `targets` 数组里的 `path: join(SRC_DIR, …)`），**不手写一份会过期的名单**；判据一条输出声明都抽不到即红。当前剔出两件：`src/triggers/wake-assets.ts`（`scripts/gen-wake-assets.mjs` 生成）、`src/cli/registry.ts`（`scripts/gen-cli.mjs` 生成）——重跑 `pnpm gen` 改它们不会逼无关的票来同步台账。**手写件 `src/render/helpFile.ts` 仍在扫描面内**：它 import 内容资产，但本身是人写的装配逻辑（「谁生成」才算生成物，「谁 import 生成物」不算），人改了它就照常挂号。
 - 不算：`templates/*.html`（页面模板）、`SKILL.md`（说明面）、`test/*.mjs`（测试文件）、`dist/` 与 `.tsbuildinfo`（构建产物）——`structure.md` 的「管辖」一节已把它们划在外面。
+- **生成器链与它的一条机器前提**（#686）：包内 `pnpm gen`／`gen:check` 覆盖本包两个生成器——`scripts/gen-cli.mjs`（写 `src/cli/registry.ts`；内容印记 `dist/.gen-inputs.json` 由 `pnpm build` 的 `--stamp` 写）与 `scripts/gen-wake-assets.mjs`（写 `src/triggers/wake-assets.ts`）；仓根 `pnpm build`／`pnpm gen:check` 已把本包收进链（CI 的 `pnpm gen:check` 那一步真跑）。**前提记一句**：wake-assets 的**事实源在仓外**（老技能目录，机器本地）——事实源不在盘的机器上 `--check` 会**明打一行 `WAKE-ASSETS SKIP` 后放行（exit 0）**，不静默当绿；但那种机器上手改 `wake-assets.ts` 不会被 `gen:check` 抓住，改词必须回事实源在盘的机器上跑生成器（`registry.ts` 那一支不受影响：它读的是本包编译产物）。
 - 超线即触发必报五步的**第四步**：当场报一句「已超线，需要根据规则进行重构。」，后头接一句为什么超，再给拆法或说明这次为什么先不拆。**超线是报警，不是拦路。**
 
 暂定：本数照兄弟件同数取 350，**待维护者确认**。

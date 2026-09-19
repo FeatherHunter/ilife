@@ -16,11 +16,12 @@
  */
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { BILL_KEY_SHAPES, WAKE_TABLE, routeWakeword } from '../dist/index.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
-import { FROZEN, PKG_DIR, dispatchLiteralsOf } from '../scripts/ratchet-frozen-686.mjs';
+import { FROZEN, PKG_DIR, cliDispatchKeysOf, dispatchLiteralsOf } from '../scripts/ratchet-frozen-686.mjs';
 
 const read = (rel) => readFileSync(join(PKG_DIR, rel), 'utf8');
 const sorted = (list) => [...list].sort();
@@ -47,8 +48,23 @@ test('#686 分派层扫描器有鉴别力：四种按键分派写法都数得出
   }
 });
 
+test('#686 扫描面是 src/cli 全目录：case 挪进同目录的姊妹件也躲不掉（夹具自证）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't686-cli-'));
+  try {
+    mkdirSync(join(dir, 'src', 'cli'), { recursive: true });
+    writeFileSync(join(dir, 'src', 'cli', 'cmd_read.ts'), "function d(key) { switch (key) { case 'bill.aa.one': return 1; } }\n", 'utf8');
+    writeFileSync(join(dir, 'src', 'cli', 'sibling.ts'), "export function f(key) { if (key === 'bill.bb.two') return 2; }\n", 'utf8');
+    assert.deepEqual(cliDispatchKeysOf(dir), ['bill.aa.one', 'bill.bb.two'],
+      '只盯 cmd_read.ts 一件会让同目录姊妹件里的按键分派漏掉');
+  } finally {
+    const guard = resolve(tmpdir()) + '\\';
+    if (!resolve(dir).startsWith(guard)) throw new Error('拒绝删除临时根之外的路径：' + dir);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('#686 棘轮：分派层的按键分派字面量集与冻结集逐条相等（只许随搬迁变短）', () => {
-  const actual = sorted(dispatchLiteralsOf(read('src/cli/cmd_read.ts')));
+  const actual = cliDispatchKeysOf(PKG_DIR);
   const extra = actual.filter((k) => !FROZEN.dispatchKeys.includes(k));
   const left = FROZEN.dispatchKeys.filter((k) => !actual.includes(k));
   assert.deepEqual(extra, [],

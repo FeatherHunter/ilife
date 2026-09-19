@@ -19,13 +19,13 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { WAKE_TABLE } from '../dist/index.js';
 import { REGISTRY } from '../dist/cli/registry.js';
-import { FROZEN, PKG_DIR, dispatchLiteralsOf, ratchetProblems, transitionKeysOf } from '../scripts/ratchet-frozen-686.mjs';
+import { FROZEN, PKG_DIR, cliDispatchKeysOf, ratchetProblems, transitionKeysOf } from '../scripts/ratchet-frozen-686.mjs';
 
 const read = (rel) => readFileSync(join(PKG_DIR, rel), 'utf8');
 const sorted = (list) => [...list].sort();
 
 const actualTransitionKeys = () => sorted(transitionKeysOf(read('src/render/envelope.ts')));
-const actualDispatchKeys = () => sorted(dispatchLiteralsOf(read('src/cli/cmd_read.ts')));
+const actualDispatchKeys = () => cliDispatchKeysOf(PKG_DIR);
 const wakeKeys = () => sorted(new Set(WAKE_TABLE.map((e) => e.key)));
 
 test('#686 棘轮：过渡表键集与冻结的未搬迁清单逐条相等', () => {
