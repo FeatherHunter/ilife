@@ -25,7 +25,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.2.3",
+    "dsh-life-pack": "^0.2.4",
     "skill-chef": "0.2.0"
   },
   "dsh": {

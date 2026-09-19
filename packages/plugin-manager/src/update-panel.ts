@@ -86,6 +86,48 @@ export const PANEL_STYLE = {
   rowMeta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12 } as React.CSSProperties,
   reason: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
   skill: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 40,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    background: 'rgba(0,0,0,.45)',
+  } as React.CSSProperties,
+  dialog: {
+    width: '100%',
+    maxWidth: 560,
+    maxHeight: '80vh',
+    overflow: 'auto',
+    padding: '12px 14px',
+    borderRadius: 12,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.4))',
+    background: 'var(--dsw-alias-bg-elevated, var(--dsw-alias-bg-base, #222))',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    boxShadow: '0 12px 32px rgba(0,0,0,.35)',
+  } as React.CSSProperties,
+  dialogHead: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 8,
+  } as React.CSSProperties,
+  dialogTitle: { fontSize: 14, fontWeight: 700 } as React.CSSProperties,
+  close: {
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    background: 'transparent',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    borderRadius: 8,
+    width: 26,
+    height: 26,
+    lineHeight: 1,
+    fontSize: 14,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  dialogNote: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
 };
 
 /** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。 */
@@ -101,6 +143,9 @@ export interface UpdateRowsFace {
   readonly pollMs: number;
   readonly loadError: string | null;
   readonly checking: boolean;
+  /** 结果浮层是否打开（点「检查更新」开，关法三种：×、点遮罩、Esc）。 */
+  readonly open: boolean;
+  close(): void;
   checkAll(): void;
   act(target: TargetInfo): void;
 }
@@ -114,6 +159,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [pollMs, setPollMs] = React.useState(1000);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [checking, setChecking] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
   React.useEffect(() => {
     let alive = true;
     void (async () => {
@@ -135,6 +181,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   }, []);
   const checkAll = React.useCallback(() => {
     setChecking(true);
+    setOpen(true);
     const list = targets;
     for (const target of list) patch(target.key, { phase: 'checking', outcome: rows[target.key]?.outcome ?? null, failure: null });
     void Promise.all(
@@ -178,7 +225,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     },
     [getCall, patch, pollMs, rows],
   );
-  return { targets, rows, pollMs, loadError, checking, checkAll, act };
+  return { targets, rows, pollMs, loadError, checking, open, close: () => setOpen(false), checkAll, act };
 }
 
 /** 标题右侧的「检查更新」：一个按钮一次查七家（吃 `useUpdateRows` 的表）。 */
@@ -215,55 +262,107 @@ function RestartBanners(props: { readonly face: UpdateRowsFace }): React.ReactEl
   );
 }
 
-/** 七家结果行：一家一行（版本行两行、结论一句、按钮一个、装不了给原因与手工命令）。 */
+/** 七家结果：装不了的与待重启的常驻（横幅），详细结果放**居中浮层**（点「检查更新」开）。
+ *
+ * 为什么是浮层：内联展开会把面板本体撑长、且它自身没有关闭控件（真机第一次做成内联后用户反馈
+ * 「打开就无法收回了」）。参照实现也是浮层：`dsh-mattpocock-skills-deck/src/client/views/SettingsPage.js`
+ * 的 `upd.dialog`。关法三种：右上角 ×、点遮罩、Esc（Esc 靠浮层自己拿焦点后收 keydown，
+ * 不摸 window——客户端纪律禁直写 DOM 全局）。
+ * 手工命令只在「装不了」或「装失败」的行显示：正常用户用不到，摊在每行上既吵又误导。
+ */
 export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.ReactElement | null {
-  const { targets, rows, loadError, checking } = props.face;
+  const { targets, rows, loadError, checking, open, close } = props.face;
+  const dialogRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    if (open) dialogRef.current?.focus();
+  }, [open]);
   const shown = targets.filter((target) => rows[target.key] && rows[target.key].phase !== 'idle');
   if (loadError) return React.createElement('div', { style: PANEL_STYLE.reason }, '更新能力没接上：' + loadError);
   if (targets.length === 0) return null;
-  if (shown.length === 0) return null;
+  if (shown.length === 0 && !open) return null;
+  const body = shown.map((target) => {
+    const row = rows[target.key];
+    const snapshot = row.outcome?.snapshot ?? null;
+    const verdict = snapshot ? verdictOf(target, snapshot) : null;
+    const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
+    const busy = row.phase === 'installing';
+    const showManual = manual !== null && (row.phase === 'failed' || verdict?.kind === 'blocked');
+    return React.createElement(
+      'div',
+      { key: target.key, style: PANEL_STYLE.row },
+      React.createElement('div', { style: PANEL_STYLE.rowHead }, target.title + ' · ' + target.packageName),
+      React.createElement(
+        'div',
+        { style: PANEL_STYLE.rowMeta },
+        '当前 ' +
+          String(snapshot?.runningVersion ?? target.runningVersion ?? '未安装') +
+          ' · 最新 ' +
+          String(snapshot?.latestVersion ?? '未查'),
+      ),
+      React.createElement('div', null, busy ? '正在装，请稍候…' : (verdict?.text ?? (checking ? '检查中…' : ''))),
+      verdict?.action
+        ? React.createElement(
+            'button',
+            {
+              type: 'button',
+              style: busy ? { ...PANEL_STYLE.btn, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 6 },
+              disabled: busy,
+              onClick: () => props.face.act(target),
+            },
+            verdict.action === 'install' ? '装上' : '装上更新',
+          )
+        : null,
+      row.failure ? React.createElement('div', { style: PANEL_STYLE.reason }, '装不上：' + row.failure.message) : null,
+      versionLines(target, snapshot).map((line, index) =>
+        React.createElement('div', { key: String(index), style: PANEL_STYLE.skill }, line),
+      ),
+      showManual ? React.createElement('code', { style: PANEL_STYLE.cmd }, manual) : null,
+    );
+  });
   return React.createElement(
     'div',
     null,
     React.createElement(RestartBanners, { face: props.face }),
-    shown.map((target) => {
-      const row = rows[target.key];
-      const snapshot = row.outcome?.snapshot ?? null;
-      const verdict = snapshot ? verdictOf(target, snapshot) : null;
-      const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
-      const busy = row.phase === 'installing';
-      return React.createElement(
-        'div',
-        { key: target.key, style: PANEL_STYLE.row },
-        React.createElement('div', { style: PANEL_STYLE.rowHead }, target.title + ' · ' + target.packageName),
-        React.createElement(
+    open
+      ? React.createElement(
           'div',
-          { style: PANEL_STYLE.rowMeta },
-          '当前 ' +
-            String(snapshot?.runningVersion ?? target.runningVersion ?? '未安装') +
-            ' · 最新 ' +
-            String(snapshot?.latestVersion ?? '未查'),
-        ),
-        React.createElement('div', null, busy ? '正在装，请稍候…' : (verdict?.text ?? (checking ? '检查中…' : ''))),
-        verdict?.action
-          ? React.createElement(
-              'button',
-              {
-                type: 'button',
-                style: busy ? { ...PANEL_STYLE.btn, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 6 },
-                disabled: busy,
-                onClick: () => props.face.act(target),
+          {
+            style: PANEL_STYLE.overlay,
+            role: 'presentation',
+            onClick: () => close(),
+          },
+          React.createElement(
+            'div',
+            {
+              ref: dialogRef,
+              tabIndex: -1,
+              role: 'dialog',
+              'aria-label': '检查更新结果',
+              style: PANEL_STYLE.dialog,
+              onClick: (event: React.MouseEvent) => event.stopPropagation(),
+              onKeyDown: (event: React.KeyboardEvent) => {
+                if (event.key === 'Escape') close();
               },
-              verdict.action === 'install' ? '装上' : '装上更新',
-            )
-          : null,
-        row.failure ? React.createElement('div', { style: PANEL_STYLE.reason }, '装不上：' + row.failure.message) : null,
-        versionLines(target, snapshot).map((line, index) =>
-          React.createElement('div', { key: String(index), style: PANEL_STYLE.skill }, line),
-        ),
-        manual ? React.createElement('code', { style: PANEL_STYLE.cmd }, manual) : null,
-      );
-    }),
+            },
+            React.createElement(
+              'div',
+              { style: PANEL_STYLE.dialogHead },
+              React.createElement('div', { style: PANEL_STYLE.dialogTitle }, '检查更新（七家）'),
+              React.createElement(
+                'button',
+                { type: 'button', style: PANEL_STYLE.close, onClick: () => close(), title: '关闭', 'aria-label': '关闭' },
+                '×',
+              ),
+            ),
+            body,
+            React.createElement(
+              'div',
+              { style: PANEL_STYLE.dialogNote },
+              '装与更新都在宿主后台跑：关掉这块不影响正在进行的安装，再点「检查更新」可以看到最新状态。',
+            ),
+          ),
+        )
+      : null,
   );
 }
 

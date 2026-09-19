@@ -24,8 +24,8 @@ const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
 
 /** 整行底色的浅一档：饱和降一档，免得红黄行「刺眼」压过正文（评审第二轮的扣分点）。 */
 const STATUS_TINT: Readonly<Record<HealthStatus, string>> = {
-  red: 'rgba(192, 57, 43, 0.08)',
-  yellow: 'rgba(224, 138, 0, 0.14)',
+  red: 'rgba(192, 57, 43, 0.06)',
+  yellow: 'rgba(224, 138, 0, 0.10)',
   green: 'transparent',
 };
 
@@ -50,16 +50,17 @@ export const HEALTH_STYLE = {
     borderRadius: 10,
     border: '1px solid ' + BORDER,
   } as React.CSSProperties,
-  headRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 6 } as React.CSSProperties,
+  headRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 4 } as React.CSSProperties,
   head: { fontSize: 13, fontWeight: 700, color: INK } as React.CSSProperties,
+  /** 「体检一次」不挤在标题右端：它单独占一行、与标题同一起始边（视觉复评两轮点「孤立在右上缺层次」）。 */
+  runRow: { margin: '8px 0 10px' } as React.CSSProperties,
   btn: {
-    marginLeft: 'auto',
     border: '1px solid ' + BORDER,
     background: 'transparent',
     color: INK,
     borderRadius: 8,
-    padding: '3px 10px',
-    fontSize: 12.5,
+    padding: '4px 12px',
+    fontSize: 13,
     cursor: 'pointer',
   } as React.CSSProperties,
   lightsRow: { display: 'flex', flexWrap: 'wrap', gap: 8 } as React.CSSProperties,
@@ -140,6 +141,10 @@ export function HealthOverview(props: {
       'div',
       { style: HEALTH_STYLE.headRow },
       React.createElement('div', { style: HEALTH_STYLE.head }, '配置体检'),
+    ),
+    React.createElement(
+      'div',
+      { style: HEALTH_STYLE.runRow },
       React.createElement(
         'button',
         {
@@ -250,8 +255,8 @@ export function HealthTable(props: {
                   margin: '2px 0',
                   borderTop: '1px solid ' + BORDER,
                   borderRadius: 6,
-                  fontSize: 12.5,
-                  lineHeight: 1.7,
+                  fontSize: 13,
+                  lineHeight: 1.75,
                   background: STATUS_TINT[item.status],
                 },
               },
@@ -287,7 +292,7 @@ export function HealthTable(props: {
                     fontSize: 12, lineHeight: 1.6, color: INK_DIM,
                   },
                 },
-                React.createElement('span', { style: { fontWeight: 650 } }, '正常 ' + String(countByStatus(report.items).green) + ' 条'),
+                React.createElement('span', { style: { fontWeight: 650, color: INK } }, '正常 ' + String(countByStatus(report.items).green) + ' 条'),
                 report.items.filter((item) => !isAttentionItem(item)).map((item) =>
                   React.createElement('span', { key: item.id, 'data-ilife-health': 'ok-item' }, '· ' + item.title),
                 ),
