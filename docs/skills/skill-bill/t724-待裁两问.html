@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#724 待裁两问 · 页面装配骨架与按域页型表</title>
+<style>
+  :root{
+    --ink:#111418; --ink2:#4a5560; --ink3:#7b8794;
+    --line:#e3e8ee; --bg:#f6f8fa; --card:#fff;
+    --blue:#007aff; --blue-bg:#eef5ff;
+    --green:#0a7d43; --green-bg:#eaf7ef;
+    --red:#c0392b; --red-bg:#fdeeec;
+    --amber:#9a6700; --amber-bg:#fff8e5;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:38px 22px 64px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px}
+  h1{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+  .sub{color:var(--ink2);font-size:14px}
+  .sub a{color:var(--blue);text-decoration:none;border-bottom:1px solid #bcd8ff}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:12.5px;color:var(--ink2)}
+  .chip b{color:var(--ink)}
+  .chip.hot{border-color:#f3c9c4;background:var(--red-bg);color:#8a3b32}
+
+  h2{font-size:19px;margin:36px 0 2px;letter-spacing:-.01em}
+  h2 .tag{font:600 11.5px/1 var(--mono);vertical-align:3px;margin-left:10px;padding:4px 7px;border-radius:6px;background:var(--blue-bg);color:var(--blue)}
+  h3{font-size:15px;margin:20px 0 6px}
+  p{margin:9px 0}
+  .lead{color:var(--ink2)}
+  code{font:12.5px/1.5 var(--mono);background:#eef1f4;border-radius:5px;padding:1.5px 5px}
+  a{color:var(--blue)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:14px 0}
+  .verdict{border-left:4px solid var(--blue);font-size:15.5px}
+
+  ol.flow{counter-reset:s;list-style:none;margin:14px 0 0;padding:0}
+  ol.flow li{counter-increment:s;position:relative;padding:0 0 0 40px;margin:0 0 12px}
+  ol.flow li::before{content:counter(s);position:absolute;left:0;top:2px;width:24px;height:24px;border-radius:8px;
+    background:var(--ink);color:#fff;font:600 12.5px/24px var(--mono);text-align:center}
+  ol.flow li b{color:var(--ink)}
+
+  .kv{margin:14px 0 0;padding:0;list-style:none}
+  .kv li{background:#fff;border:1px solid var(--line);border-left:3px solid var(--ink3);border-radius:0 10px 10px 0;
+    padding:9px 14px;margin:0 0 8px;font-size:14px;color:var(--ink2)}
+  .kv li b{color:var(--ink)}
+  .kv li.hot{border-left-color:var(--red);background:#fffafa}
+
+  .bars{display:flex;height:26px;border-radius:8px;overflow:hidden;margin:10px 0 6px;border:1px solid var(--line)}
+  .bars span{display:grid;place-items:center;font:600 11.5px/1 var(--mono);color:#fff;min-width:0;overflow:hidden;white-space:nowrap}
+  .bars .b1{background:#2b6cb0;flex:13}.bars .b2{background:#2f855a;flex:4}
+  .bars .b3{background:#975a16;flex:3}.bars .b4{background:#6b46c1;flex:4}.bars .b5{background:#4a5568;flex:1.6}
+  .bars .b6{background:repeating-linear-gradient(45deg,#c0392b,#c0392b 5px,#e07a6f 5px,#e07a6f 10px);flex:3}
+  .legend{font-size:12.5px;color:var(--ink3);margin:0 0 4px}
+
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:760px){.opts{grid-template-columns:1fr}}
+  .opt{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .opt.pick{border-color:#9ecbff;box-shadow:0 0 0 3px #eaf3ff}
+  .opt .top{display:flex;align-items:center;gap:9px;padding:11px 15px;border-bottom:1px solid var(--line)}
+  .opt.pick .top{background:var(--blue-bg)}
+  .opt .letter{font:700 12px/1 var(--mono);color:#fff;background:var(--ink3);width:20px;height:20px;border-radius:6px;display:grid;place-items:center}
+  .opt.pick .letter{background:var(--blue)}
+  .opt .name{font-weight:600;font-size:14.5px}
+  .opt .badge{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-bg);color:var(--green)}
+  .opt .bod{padding:11px 15px;flex:1}
+  .opt .bod p{margin:0 0 8px;font-size:13.5px;color:var(--ink2)}
+  .opt ul{margin:4px 0 0;padding-left:18px;font-size:13.5px}
+  .opt li{margin:5px 0}
+  .pro{color:#12513a}.pro::marker{color:var(--green)}
+  .con{color:#8a3b32}.con::marker{color:var(--red)}
+
+  .rec{border-left:4px solid var(--green);background:var(--green-bg);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;font-size:14.5px}
+  .rec b{color:#0a5c33}
+  .fact{border-left:4px solid var(--amber);background:var(--amber-bg);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;font-size:14px;color:#5d4a12}
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;color:var(--ink3);font-size:12.5px;line-height:1.9}
+  footer code{font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>#724 待裁两问</h1>
+  <div class="sub">票：<a href="https://github.com/FeatherHunter/ilife/issues/724">[规格] 页面装配骨架与按域页型表</a> · 母图：<a href="https://github.com/FeatherHunter/ilife/issues/681">饼干记账本体图</a> · 执行：2026-09-19 · 裁决请求页</div>
+  <div class="chips">
+    <span class="chip">进度 <b>95%</b>（待你点头）</span>
+    <span class="chip">交付物已入仓 <b>268f28f7</b></span>
+    <span class="chip hot">复核 <b>14/15</b>：唯一红＝卡路里调用点 110 vs 114</span>
+    <span class="chip">裁完只改分片数，<b>不动接口与判据</b></span>
+  </div>
+</header>
+
+<div class="card verdict">
+  一句话：规格三件已归档、读数逐条复核完（14/15）；<b>只剩「分析域那一格」要你裁</b>。两个问题都一句话能定，裁完我改分片数与票面读数 → 100% ＋ close。
+</div>
+
+<h2>前因：为什么会有这两问</h2>
+<ol class="flow">
+  <li>规格正文自己写明「本票产出＝规格，<b>不落码</b>」⇒ 本票的执行就是<b>把规格落进版本控制 ＋ 对抗式复核它的读数</b>（形状照已收口的 #720）。</li>
+  <li>复核把规格里的读数逐条拿去盘上比：块位闭集行号 <b>20/20</b> 对、卡路里 <code>docPage.ts</code> 161 行／11 字段对、账单 130 行／5 字段／1 调用点对、账单出口 <b>34</b> 处调用点对、query 五件 <b>727</b> 行（成文当刻）对、「测试面没有一条断块序判据」对。</li>
+  <li>唯一的结构性问题落在<b>分析域那一格</b>：规格 §2.3 记「25 个渲染器落 <b>6</b> 个形态族」，实测 25 个只落 <b>5</b> 族；第 6 族点名的那支渲染器<b>住在查询模板里</b>。</li>
+  <li>而「七域分片数」这份落点清单，规格原本就写着<b>「尚待维护者点头」</b>——所以这一格不是我该猜的，归你裁。</li>
+</ol>
+
+<h2>决策一 · 分析域按 5 片还是 6 片？<span class="tag">影响切票</span></h2>
+<ul class="kv">
+  <li>分析模板 <code>templates/分析/analysis_view.html</code> 分发表 <code>:199-232</code> 逐字在位，键数实测 <b>25 个渲染器</b>。</li>
+  <li>这 25 个按「内容卡种类」归并落 <b>5 族</b>：读数＋条 <b>13</b>｜读数＋图 <b>4</b>｜读数＋表 <b>3</b>｜对比＋变更 <b>4</b>｜解读＋多卡 <b>1</b>。</li>
+  <li class="hot">第 6 族「读数＋占比图（环形）＋明细」点的是 <code>renderBreakdown(347-375)</code>：分析模板里 <code>breakdown</code> <b>0 命中</b>；它是<b>查询模板</b> <code>query_view.html</code> 的同名渲染器（<code>:346-374</code>）。该行自己也注了「查询域的 breakdown 请求，属查询域」。</li>
+</ul>
+<div class="bars">
+  <span class="b1">条 13</span><span class="b2">图 4</span><span class="b3">表 3</span><span class="b4">对比 4</span><span class="b5">解读 1</span><span class="b6">环形</span>
+</div>
+<div class="legend">左边五段＝分析域自己的 25 个渲染器；斜纹那段＝规格记的第 6 族，唯一实现在查询模板里。</div>
+
+<div class="opts">
+  <div class="opt pick">
+    <div class="top"><span class="letter">A</span><span class="name">分析按 <b>5 片</b></span><span class="badge">推荐</span></div>
+    <div class="bod">
+      <p>分片＝实测的 5 个形态族（13／4／3／4／1）；环形那一族从分析域清单里摘掉（页留在查询域）。</p>
+      <ul>
+        <li class="pro">与规格自己的粒度判据一致：<b>页型＝内容卡的种类</b>，25 个渲染器确实只有 5 种卡序列。</li>
+        <li class="pro">切分析域票时每一片都有实例，不会出现「一片空转」。</li>
+        <li class="pro">当刻分析域还没切票（还在地图雾区）⇒ <b>现在改最便宜</b>，只改一个数字。</li>
+        <li class="con">若将来要把环形页从查询域挪到分析域，得再为第 6 族补一次登记。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="opt">
+    <div class="top"><span class="letter">B</span><span class="name">保留 <b>6 片</b></span></div>
+    <div class="bod">
+      <p>维持规格原样：第 6 族「环形＋明细」留位，当刻由查询域承载其实例。</p>
+      <ul>
+        <li class="pro">环形页有明确归属位；将来把 breakdown 请求搬进分析域时不用改分片数。</li>
+        <li class="pro">票面与地图一行都不用改（今天就能 100% ＋ close）。</li>
+        <li class="con">与实测不符：分析域的 25 个渲染器落 5 族，第 6 片当刻没有分析域实例。</li>
+        <li class="con">切票时要么这一片空转，要么把查询域的一段代码划给分析域——两笔账都要另外说清。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="rec"><b>推荐 A（5 片）。</b>唯一能翻盘的问句：<b>你打算把 breakdown 那张环形页从查询域挪进分析域吗？</b>要挪 ⇒ 选 B，并把 §2.3 那一行的场景列改成「分析域（从查询域搬）」。</div>
+
+<h2>决策二 · §2.3「读数＋条」一行补两个渲染器名？<span class="tag">独立小改</span></h2>
+<ul class="kv">
+  <li>那一行的场景列有 <b>13 个</b>（看月度／看年度／<b>看总览</b>／<b>看周报</b>／看分类／看账户／看账本／看结构／做统计／看活跃／看退款／看大额／看高频），渲染器名却只列了 <b>11 个</b>。</li>
+  <li>漏的两个是 <code>renderOverview</code>（看总览，<code>:330</code>）与 <code>renderWeek</code>（看周报，<code>:347</code>）——两者都在分析模板里、逐行在位。</li>
+</ul>
+<div class="opts">
+  <div class="opt pick">
+    <div class="top"><span class="letter">A</span><span class="name">补上两个名字</span><span class="badge">推荐</span></div>
+    <div class="bod">
+      <ul>
+        <li class="pro">「13 个」与列出的名字当场对上，接分析域的人不用自己再数一遍。</li>
+        <li class="pro">纯清单补全：不动块序、不动族划分、不动行号。</li>
+        <li class="con">改动落在已归档的规格件上，要在证据件留一行改动记录（我会记）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="opt">
+    <div class="top"><span class="letter">B</span><span class="name">照原样留着</span></div>
+    <div class="bod">
+      <ul>
+        <li class="pro">规格三件保持「逐字节同搬」的入仓形态，历史最干净。</li>
+        <li class="con">留下一个「数得 13、写得出 11」的缺口，后来者要么踩一次、要么再来一张票。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h2>顺带两问（低优先，可只回一句）</h2>
+<ul class="kv">
+  <li><b>要不要立一张「骨架件」公共层票？</b>规格把生产者码归公共层票，但地图 #681 上当刻<b>没有这张票</b>（<code>docShell.ts</code>／<code>renderDocShell</code>，吃 4 字段、零领域词）。<span style="color:var(--green)">建议：立</span>——否则「两份同构件」消不掉。</li>
+  <li><b>#689 窗口收口时改两处？</b>包内 <code>AGENTS.md</code> 当刻把规格引在 <code>packages/skill-bill/docs/t685-接口与判据.md</code>（#685 窗口留下的未跟踪工作副本），地址以 <code>docs/skills/skill-bill/</code> 为准。<span style="color:var(--green)">建议：改引用 ＋ 副本退场</span>（我没删，怕打断在飞席）。</li>
+</ul>
+
+<h2>你回一句之后我做什么</h2>
+<ol class="flow">
+  <li>按裁决改 §2.3 的分片数与票面读数（只这两个数，接口与判据一行不动）。</li>
+  <li>票面 → <code>## 进度：100%</code> ＋ close；按 wayfinder 规矩在地图 <code>Decisions so far</code> 补收口 gist。</li>
+  <li>若你说「立骨架件票」，我一并把那张票开出来再挂上地图。</li>
+</ol>
+
+<div class="fact">另外三处已登记的读数差（不影响任何决定，证据件 §3.2 有逐条读数）：卡路里「110 处调用点」复测 <b>114</b>；「账单 31 个测试件」在成文当刻是 <b>28</b>；讨论正文两处行数自相矛盾（分析 1,166 vs 1,098、查询 548 vs 503）。</div>
+
+<footer>
+  证据件：<code>D:\ilife\docs\skills\skill-bill\t724-规格归档-证据.md</code><br>
+  可复跑复核脚本：<code>D:\ilife\docs\skills\skill-bill\t724-读数复核.mjs</code>（无参只读；当刻 <code>RESULT: 14/15</code>，唯一红＝卡路里调用点）<br>
+  本票提交：<code>268f28f7</code>（规格三件入仓）／<code>aa01b62d</code>（证据＋脚本）／<code>5a6387a1</code>／<code>7bccef5e</code>
+</footer>
+
+</div>
+</body>
+</html>
