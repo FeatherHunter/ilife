@@ -2358,12 +2358,24 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  width: 100%;',
     '  min-height: 44px;',
     '  padding: 0 12px;',
-    '  border: 0;',
+    // #728 逐页审计实测（多席独立量到）：改前这里是 `border: 0; background: var(--bg)`，
+    //   而 `--bg`（#f5f5f7）**同时就是页面底色** ⇒ 控件与页底逐像素相同（对比度 1.00:1），
+    //   整片表单静息态下**不是一个框**：390 档逐点采样十三个点全是 #f5f5f7、与版心外同值；
+    //   全页唯一线索只剩两枚 select 的 ▾ 与红星。同页的读数卡、空态卡、折叠条都是
+    //   「白底 ＋ 1px var(--line)」——这套语言有「面」，只有控件丢了面。
+    //   改法：控件取同一条语言（白底 ＋ 1px 描边），零新色值、零新 token。
+    '  border: 1px solid var(--line);',
     '  border-radius: ' + RADIUS_SM + 'px;',
-    '  background: var(--bg);',
+    '  background: var(--card);',
     '  color: var(--fg);',
     '  font-family: inherit;',
     '  font-size: 13px;',
+    '}',
+    // 占位符色：改前没有 `::placeholder` 规则，吃 UA 的 #757575 压在页底上是 4.23:1（不到 AA 4.5）。
+    //   显式取 `--fg2`（压白底 4.94:1）。
+    '.' + p + 'block-param-form-input::placeholder {',
+    '  color: var(--fg2);',
+    '  opacity: 1;',
     '}',
     '.' + p + 'block-param-form-input:focus {',
     '  background: var(--card);',

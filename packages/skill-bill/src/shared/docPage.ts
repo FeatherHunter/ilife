@@ -55,6 +55,17 @@ const DESKTOP_CSS = [
   '@media (min-width:1200px) {',
   '  .ilife-block-page-shell .ilife-block-data-table { max-width: none; }',
   '}',
+  '/* t728 逐页审计实测：公共层配方 ⑧ 的「宽件满铺」那条写的是',
+  '   `.ilife-block-page-shell-body > :where(读数卡网格／表／图／…){ grid-column: 1 / -1 }`，',
+  '   而本包的 DOM 是 `page-shell-body > section.ilife-write > section#sec-kpi > div.读数卡网格`',
+  '   ——宽件隔着 `section.ilife-write` 这一层，成了**孙级**，`>` 一个都匹配不到 ⇒',
+  '   全部落回「中间 880 列」，1280 档两翼逐点扫描非背景像素 0 行（内容墨迹最外沿 x174–1105）。',
+  '   修法：让这层纯分组的包裹节从布局里退场（`display: contents`），宽件重新成为栅格项。',
+  '   它挂在**本包产出的选择器**上（`.ilife-write` 由 `src/shared/writeParts.ts` 出），',
+  '   所以按「样式随它的选择器」住本件，公共层不认这个类名。 */',
+  '@media (min-width: 1001px) {',
+  '  .ilife-block-page-shell-body > .ilife-write { display: contents; }',
+  '}',
 ].join('\n');
 
 /** 手机端黑底说明块补丁（t407 第 3 轮返工 B；与上面 D1 同一处、同一条路）。

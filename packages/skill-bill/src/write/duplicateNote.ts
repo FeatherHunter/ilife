@@ -90,9 +90,16 @@ export function duplicateNote(
   mode: 'toast' | 'static' = 'toast',
 ): string {
   if (hits.length === 0) return '';
-  const lines = hits.map((h) => '记录编号 ' + h.id + '（' + h.time + '）：' + h.category
-    + '，' + money2(h.amount) + '，账户' + (h.account === '' ? '没设置' : h.account)
-    + (h.sameAccount ? '（同一个账户）' : ''));
+  // t728 逐页审计实测：改前每条都重抄一遍「分类，金额，账户…」，而这三项**按定义每条都相同**
+  //   （重复判据就是同一天 ＋ 同金额 ＋ 同分类）⇒ 同一句话印 N 遍；16 条记录在 390 档糊成
+  //   380px 高的一块文字墙，逐行看下来唯一多出来的信息就是那些记录编号。
+  //   改法：共同事实由上面那句 `detail` 说一次（它本来就写着「对的是哪天、金额多少、哪个分类」）；
+  //   每条只出**因记录而异**的两列——编号与时刻；账户只在与「没设置」不同时补一句。
+  //   `，`／`·` 一个不进版式（用户要求 5），字段之间靠括号与行距分列。
+  const lines = hits.map((h) => {
+    const account = h.account === '' ? '' : '　账户 ' + h.account + (h.sameAccount ? '（同账户）' : '');
+    return '记录编号 ' + h.id + '（' + h.time + '）' + account;
+  });
   const detail = '对的是 ' + probe.date.slice(0, 10) + ' 这一天，金额 ' + money2(probe.amount)
     + '，分类 ' + probe.category.trim();
   if (mode === 'static') {
