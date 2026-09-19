@@ -310,11 +310,21 @@ export function HealthOverview(props: {
     React.createElement(
       'div',
       { style: HEALTH_STYLE.meta },
-      // 三档的含义要**写在屏上**：复评五份里有三份独立指出「全屏没有图例，红黄绿只能靠猜」——
-      // 这是票面口径（红＝坏了／黄＝还没配／绿＝正常），不写出来就等于让人猜。
+      // 三档的含义要**写在屏上**（复评五份里三份独立指出「全屏没有图例，红黄绿只能靠猜」），
+      // 且三个词要**按档上色**——「定义红黄绿的那把钥匙自己不上色」是复评点名过的一处。
       props.error !== null
         ? props.error
-        : '红＝坏了 · 黄＝还没配 · 绿＝正常 ｜ 只看不改：不建目录、不改配置、不自动重置 · 点一下跳到那家配置页',
+        : [
+            React.createElement('span', { key: 'r', style: { color: STATUS_TEXT.red, fontWeight: 700 } }, '红'),
+            React.createElement('span', { key: 'r2' }, '＝坏了 · '),
+            React.createElement('span', { key: 'y', style: { color: STATUS_TEXT.yellow, fontWeight: 700 } }, '黄'),
+            React.createElement('span', { key: 'y2' }, '＝还没配 · '),
+            React.createElement('span', { key: 'g', style: { color: STATUS_TEXT.green, fontWeight: 700 } }, '绿'),
+            React.createElement('span', { key: 'g2' }, '＝正常 ｜ 只看不改：不建目录、不改配置、不自动重置'),
+            // 页签那排也用圆点（`● 装上了／○ 没装`），这里把**顶部那排**的语义写清楚，
+            // 免得两排同构的圆点互相抢解释权（复评两份点名）。
+            React.createElement('span', { key: 'tab' }, ' · 上面那排圆点是体检灯，点一下跳到那家配置页；下面那排圆点是页签（实心＝装上了）'),
+          ],
     ),
   );
 }
@@ -382,16 +392,14 @@ export function HealthTable(props: {
               React.createElement(
                 'div',
                 { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 } },
-                // 档位不只靠颜色认：色弱／灰度截图下也得一眼看出哪条要处理（灯保留作二次确认）。
+                // 档位**不只靠颜色**认：形状标记（✕／!）＋档位字，色弱与灰度截图下也分得开。
+                // 原先这里还有一个同色的实心圆点，与标记、档位字三者同义同色（复评两份点名「没有主次」），
+                // 且页签那排（`client.ts:349`）也用同样的圆点表示「这家装没装」——同屏两套圆点语义，
+                // 故本件的条目里**去掉圆点**，把圆点这一格语汇留给页签。
                 React.createElement('span', {
                   style: { color: STATUS_TEXT[item.status], fontWeight: 700, fontSize: 13, lineHeight: 1 },
                   'aria-hidden': 'true',
                 }, STATUS_MARK[item.status]),
-                React.createElement('span', {
-                  style: {
-                    width: 8, height: 8, borderRadius: '50%', display: 'inline-block', background: STATUS_COLOR[item.status],
-                  },
-                }),
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, item.title),
                 React.createElement('span', {
                   style: { color: STATUS_TEXT[item.status], fontWeight: 700 },
