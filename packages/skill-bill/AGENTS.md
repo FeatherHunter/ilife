@@ -59,6 +59,23 @@
 - 复跑：`node packages/skill-bill/scripts/check-warning-line.mjs`；夹具与变异可用 `--root`／`--agents` 指另一份包根与另一份 AGENTS.md（真实门禁**一律无参运行**，脚本会打印 `SCAN-ROOT:`／`LEDGER:` 两行供认口，剔出的生成物逐条打 `GENERATED-SKIP`）。本脚本**不提供**关掉扫描面的开关——缩面＝放宽。
 - 测试：`packages/skill-bill/test/t686-告警线门.test.mjs`（漏报必红／陈化必红／还原必绿／缩面失明／生成物剔除与自证／同步器 `--dry` 不改文件 ＋ `--sync` 回绿／真包无参门禁的绿读数）。
 
+### 页面两道门（#689 起，规格 `packages/skill-bill/docs/t685-接口与判据.md` §二）
+
+`packages/skill-bill/scripts/check-scene-shape.mjs`（**判据乙**：场景件里不许有块序）：
+
+- **绿**＝`exit 0`、`RESULT: n/n`、`PASS: 场景件只声明差异值，块序与块位拼装都在模板件里`，并打 `SCAN-ROOT:` 认口行。
+- **红**＝逐条 `RED <域>/<件>:<行> [乙-1｜乙-2｜乙-3] <命中的名字>`，末段给修法。三条判据：乙-1 场景件 import 了公共层块位渲染函数；乙-2 出现整段 HTML 字面量或块位渲染函数调用；乙-3 出现本域装配件调用（`pageShell(`／`copyArea(`／`fieldCardOf(` 这类）。**扫描面为空也红**（缩面＝放宽）。
+- 夹具／变异入口 `--root <包根>`；真实门禁**一律无参**运行。本脚本**不提供**关掉扫描面的开关。
+- 测试：`packages/skill-bill/test/t689-scene-shape.test.mjs`（真包 16/16 绿 ＋ 改前场景件夹具红 ＋ 现场塞一行块位 import 必红 ＋ 扫描面为空必红）。
+
+`packages/skill-bill/scripts/gen-page-fingerprints.mjs`（**判据甲**：改一次版式只动一处）：
+
+- **绿**＝`--check` 与账本 `test/t689-页面指纹.json` 逐页一致：`exit 0`、`RESULT: 32/32`、`PASS: 32 张页指纹与账本一致`。
+- **红**＝逐页点名 `RED 页指纹变了：<唤醒词>-<采集｜回执>`（另有「账本没这一页／账本多这一页」两类），末段给修法。
+- **重录只有一条路**：`--write --declare-layout-change <票号>`——必须**声明**本次改动要改版式，重录时会把新旧差异集打出来（`重录声明（票 n）·差异集 k 张：…`），该差异集要与「改动只动一个模板件」的读数一起写进证据；没有这条声明即为红。
+- 指纹口径：先把「今天 ±1 天」的日期时间串换成 `<TS>`（时钟来源），再对整页取 sha256；夹具里的固定日期逐字保留。
+- 测试：`packages/skill-bill/test/t689-page-fingerprint.test.mjs`。
+
 ## 发布（npm 官方源，交互式 wizard）
 
 - 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `base-paint@0.3.2`（前置：registry 旧版缺 `save-html` 导出，不先发技能装上就崩）＋ `skill-bill@0.2.0`（402 写入 16 词 ＋ 403 查询 17 词）。
