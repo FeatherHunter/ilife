@@ -11,10 +11,9 @@
  *   - 时间缺时分由 `../policy` 的 `resolveQueryDate`／`resolveRange` 补，本件不自己算日期。
  *
  * 分工：取数走 `../fetch`、口径走 `../policy`、整页装配走 `./list.js`；本件只做**编排与页面入参装配**。
- * KPI 的四项口径（`calcKpi`）与行投影（`toBillItem`）引 `../render/views.js` 的同名件——
- * 分析域三条命令与写域回执也在用同一份，本票不搬它（那是「读命令搬迁」整条线的账，记在这里作**搬迁债务**）。
- * 与写命令的处理体（`../record/write.ts`）不同的一点：查询没有「阻断改出过程型页」那一支——
- * 查询缺参就是缺参，阻断即错误回执，页面只在真取到数（哪怕是零行）时出。
+ * KPI 的四项口径（`calcKpi`）与行投影（`toBillItem`）引 `../render/views.js` 的同名件——分析域三条命令与
+ * 写域回执也在用同一份（搬迁债务记在这里）。查询没有「阻断改出过程型页」那一支：缺参即错误回执，
+ * 页面只在真取到数（哪怕是零行）时出。
  */
 import {
   DB_FILENAME, BillFetchError, fetchAll, listByTag, listToday, searchKeyword, tagMatch,
@@ -23,15 +22,31 @@ import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { needId, normalizeDate, resolveQueryDate, resolveRange, validateCategory, yesterdayStr } from '../policy/index.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
-import { calcKpi, toBillItem } from '../render/views.js';
+import { calcCategories, calcKpi, toBillItem } from '../render/views.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
 import { queryDetailDoc } from './detail.js';
-import type { QueryDetailData, QueryListData, QueryTableRow } from './list.js';
+import type { QueryCategoryRow, QueryDetailData, QueryListData, QueryTableRow } from './list.js';
 
 /** 本次数据来源（复制日志第 3 段）：库文件名逐字取本包常量，共用件不取本包文件名。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+
+/** 来源脚注上屏的那句人话来源（与 `SOURCE_QUERY` 分住两个常量）：复制日志给机器看、可带库文件名；
+ *  上屏的不许带库文件名与脚本路径（`688-融合基准.md` §四 裁定 1；老页脚恒印 `scripts/record_bill.py` 是反面）。 */
+const SOURCE_TEXT_QUERY = '记账库（只读）';
+
+/** 没有时间窗的查法（条件查、查最近）在来源脚注起止位写的那两个字——留空会读成缺值。 */
+const NO_WINDOW = '不限';
+
+/** 查分类的占比芯片（老页 `query_view.html:287` 的 `category_pct`）：该分类支出 ÷ 全库支出合计
+ *  （查分类没有时间窗，「同期」＝全部时间）。**本域唯一一处页面侧第二次取数**，故单独成函数记账。 */
+function shareChip(db: BillDb, records: readonly BillRow[]): string {
+  const mine = calcKpi([...records]).expense;
+  const all = calcKpi(fetchAll(db)).expense;
+  const pct = all === 0 ? 0 : Math.round((mine / all) * 100);
+  return '占全部支出的 ' + String(pct) + '%';
+}
 
 /** 一条库行 → 表格行（值一律文本化；金额照库里的符号写两位小数：支出负数、收入正数）。 */
 function tableRow(r: BillRow): QueryTableRow {
@@ -47,9 +62,12 @@ function tableRow(r: BillRow): QueryTableRow {
 }
 
 /** 四条命令共用的收口：把「查到什么」装配成出口载荷（envelope `data`）＋ 一整页列表。
- *  **载荷与页面同源但不同形**：载荷那一份照搬迁前的字段与类型（`items` 走 `toBillItem`，`id`／`amount` 是数，
- *  下游按 id 再查详情走的就是它）；页面那一份是文本化的表格行（`tableRow`）。两者都由同一个 `records` 派生。
- *  KPI 只算一次（`calcKpi`），既进载荷也进页面的 KPI 行。 */
+ *  **载荷与页面同源但不同形**：载荷那一份照搬迁前的字段与类型（`items` 走 `toBillItem`，`id`／`amount`
+ *  是数，下游按 id 再查详情走的就是它）；页面那一份是文本化的表格行（`tableRow`）。两者同源同序。
+ *  KPI 只算一次（`calcKpi`）；分类聚合走 `calcCategories`（同一份口径，本件不自己归堆），
+ *  占比＝该分类支出 ÷ 本页支出合计。**页面侧多出的两件事实只在页面用、不进载荷**：
+ *  `extraChips`（结果胶囊里除条数之外的读数，如查分类的占比芯片）与 `windowStart`／`windowEnd`
+ *  （来源脚注的窗口起止）——载荷形状是既有契约，本票加法式不扩。 */
 function listOut(input: {
   readonly key: string;
   readonly params: Record<string, unknown>;
@@ -59,10 +77,21 @@ function listOut(input: {
   readonly extra: Omit<QueryListData, 'items' | 'total' | 'kpi'>;
   readonly emptyText: string;
   readonly emptyHint: string;
+  /** 结果胶囊里除「共 N 笔」之外的读数（如查分类的占比芯片，老页 `category_pct`）。 */
+  readonly extraChips?: readonly string[];
+  /** 来源脚注的窗口起止（没有时间窗的查法给 `NO_WINDOW`）。 */
+  readonly windowStart: string;
+  readonly windowEnd: string;
 }): ViewOut {
   const records = [...input.records];
   const rows = records.map(tableRow);
   const kpi = calcKpi(records);
+  const categories: readonly QueryCategoryRow[] = kpi.expense === 0 ? [] : calcCategories(records).map((c) => ({
+    label: c.category,
+    amount: c.total,
+    count: c.count,
+    pct: (c.total / kpi.expense) * 100,
+  }));
   const data: QueryListData = { items: records.map(toBillItem), total: records.length, ...input.extra, kpi };
   return {
     data,
@@ -72,35 +101,36 @@ function listOut(input: {
       shape: 'list',
       wakeWord: input.wakeWord,
       window: input.window,
-      chips: ['共 ' + records.length + ' 笔'],
+      chips: ['共 ' + records.length + ' 笔', ...(input.extraChips ?? [])],
       rows,
       kpi,
+      categories,
       emptyText: input.emptyText,
       emptyHint: input.emptyHint,
       envelope: listEnvelope(input.key, data),
       source: SOURCE_QUERY,
+      sourceText: SOURCE_TEXT_QUERY,
+      windowStart: input.windowStart,
+      windowEnd: input.windowEnd,
       actionAt: actionStamp(),
     }),
   };
 }
 
-/** today 分支的标题：这一页是哪条词由**域声明**算（`查昨天`／`查某天`／`查今天`；`查账单` 是同页别名），
- *  本件不再写第二处字面量（#721 判据：一条唤醒词的字面量只准住它所属那份域声明）。
- *  recent 不进本支（上游已分流）。 */
+/** today 分支的标题：这一页是哪条词由**域声明**算（#721 判据：一条唤醒词的字面量只准住它所属那份
+ *  域声明）。recent 不进本支（上游已分流）。 */
 function todayWakeWord(params: Record<string, unknown>): string {
   return projectWakeWord({ key: 'bill.record.today', preset: params });
 }
 
-/** today 分支的空态四句（**唯一判地**）：今天／昨天／某天／最近各一句；
- *  查某天自指已摘（不说「查某天」，说换个日子再查一次）。 */
+/** today 分支的空态四句（**唯一判地**）+ 查某天自指已摘（说「换个日子再查一次」而不是「查某天」）。 */
 function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
   if (params.date === 'yesterday') return { emptyText: '昨天还没有记录', emptyHint: '要补昨天那笔就说「记支出」。' };
   if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」。换个日子再查一次。' };
   return { emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。' };
 }
 
-/** `bill.record.today`：查今天／查昨天／查某天（带 `date`）／查最近（`recent:true` ＋ `limit` 1~200）／查账单。
- *  当日无记录不是故障：照实出一张零行的页（老侧在 stderr 上留的那句 NOTE，本票改由页面上的空态承担）。 */
+/** `bill.record.today`：查今天／查昨天／查某天／查最近（`recent` ＋ `limit` 1~200）／查账单；当日无记录不是故障，照实出零行的页。 */
 export function viewRecordToday(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.today';
   if (params.recent === true) {
@@ -116,6 +146,8 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
       extra: { date: 'recent' },
       emptyText: '库里还没有记录',
       emptyHint: '要记一笔就说「记支出」。',
+      windowStart: NO_WINDOW,
+      windowEnd: NO_WINDOW,
     });
   }
   const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
@@ -126,14 +158,14 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
     extra: { date },
     emptyText: empty.emptyText,
     emptyHint: empty.emptyHint,
+    windowStart: date,
+    windowEnd: date,
   });
 }
 
-/** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：
- *  显式 `today` 参数 ＞ 环境 `BILL_TODAY` ＞ 机器时钟（UTC 日）。
- *  种子日期只活在参数／环境里，不进源码；测试一律传相对日期。
- *  分析侧的整周／整月仍是 `../policy` 的 `weekRange／monthRange`（`cmd_read.ts` 在用），
- *  下面两件是查询侧截到锚点的窗口（未来不计），两处各管一摊。 */
+/** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：显式 `today` 参数 ＞ 环境
+ *  `BILL_TODAY` ＞ 机器时钟（UTC 日）。种子日期只活在参数／环境里，不进源码；测试一律传相对日期。
+ *  下面两件是查询侧截到锚点的窗口（未来不计），与 `../policy` 的 `weekRange／monthRange` 各管一摊。 */
 function rangeAnchor(params: Record<string, unknown>): string {
   const t = params.today;
   if (t !== undefined && t !== null && t !== '') return normalizeDate(t, 'today');
@@ -155,8 +187,8 @@ function monthWindowFrom(anchor: string): { start: string; end: string } {
   return { start: anchor.slice(0, 8) + '01', end: anchor };
 }
 
-/** #413 · 单条件取值：缺席→undefined（无此条件）；空串／全空格／非串→阻断 exit 2。
- *  空值不许悄悄退化成无条件全量（取数层 `fetchAll` 遇空串会忽略该条件，G2-2 穿透）。 */
+/** #413 · 单条件取值：缺席→undefined；空串／全空格／非串→阻断 exit 2——空值不许悄悄退化成
+ *  无条件全量（取数层 `fetchAll` 遇空串会忽略该条件，G2-2 穿透）。 */
 function condValue(params: Record<string, unknown>, field: string): string | undefined {
   const v = params[field];
   if (v === undefined || v === null) return undefined;
@@ -166,9 +198,8 @@ function condValue(params: Record<string, unknown>, field: string): string | und
   return v.trim();
 }
 
-/** `bill.record.range`：查周／查月（`range`＋锚点：周一..锚点／月初..锚点）／
- *  查区间（`start`＋`end` 同给，缺一即用法错 exit 2）／查分类（三级，无 / 视为 L1）／
- *  查账户／查账本（只过滤：KPI 照窗内收支、转账除外，余额无关）。
+/** `bill.record.range`：查周／查月（`range`＋锚点）／查区间（`start`＋`end` 同给，缺一即 exit 2）／
+ *  查分类（三级，无 / 视为 L1）／查账户／查账本（只过滤：KPI 照窗内收支、转账除外，余额无关）。
  *  区间查不到记录 → 阻断（exit 4），不返一张空表冒充正常。 */
 export function viewRecordRange(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.range';
@@ -188,6 +219,8 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       records, extra: { start, end },
       emptyText: '这一段没有记录',
       emptyHint: '换个起止日期再查一次。',
+      windowStart: start,
+      windowEnd: end,
     });
   }
   if (params.start !== undefined || params.end !== undefined) {
@@ -198,6 +231,8 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       key, params, wakeWord: projectWakeWord({ key, preset: params }), window: start + ' ~ ' + end, records, extra: { start, end },
       emptyText: '这一段没有记录',
       emptyHint: '换个起止日期再查一次。',
+      windowStart: start,
+      windowEnd: end,
     });
   }
   if (category !== undefined || account !== undefined || ledger !== undefined) {
@@ -208,34 +243,35 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     return listOut({
       key, params, wakeWord: projectWakeWord({ key, preset: params }), window: by + '＝' + value + '（全部时间）', records,
       extra: { start: '', end: '' },
+      extraChips: category === undefined ? [] : [shareChip(db, records)],
       emptyText: '这个条件没有记录',
       emptyHint: '换个条件，或说「查区间」并给出起止日期。',
+      windowStart: NO_WINDOW,
+      windowEnd: NO_WINDOW,
     });
   }
   throw new BillPolicyError('POLICY_BAD_INPUT', '缺槽位 start/end（或 range=week/month，或 category/account/ledger 条件）');
 }
 
-/** #414 · 查欠款行判（**唯一判地**）：借贷分类或带 `#未还` 精确，且未带 `#已还` 精确。
- *  已还排除的理由：收回／偿还后原记录分类仍是 `借贷/*`（换的只是 tag），不排除就把还清的也算成还欠着。 */
+/** #414 · 查欠款行判（**唯一判地**）：借贷分类或带 `#未还` 精确，且未带 `#已还` 精确——收回／偿还后
+ *  原记录分类仍是 `借贷/*`（换的只是 tag），不排除就把还清的也算成还欠着。 */
 function isDebtRow(r: BillRow): boolean {
   return (r.category.startsWith('借贷/') || tagMatch(r.note, '未还')) && !tagMatch(r.note, '已还');
 }
 
-/** #414 · 查待报销行判（**唯一判地**）：带 `#待报销` 精确，且未带 `#已报销` 精确。
- *  到账后消 `#待报销` 补 `#已报销`（写侧 `scene-reimburse-done.ts`），残留双标也不算等着报销。 */
+/** #414 · 查待报销行判（**唯一判地**）：带 `#待报销` 精确且未带 `#已报销` 精确（到账后消补）。 */
 function isReimburseRow(r: BillRow): boolean {
   return tagMatch(r.note, '待报销') && !tagMatch(r.note, '已报销');
 }
 
-/** #414 · 查分期行判（**唯一判地**）：分期分类或带 `#分期`／`#分期中` 精确。
- *  票面写“分期中”口径，代码旧口径只有 `#分期` 子串；写侧记分期不落 `#tag`（分类是主口径），两串并存。 */
+/** #414 · 查分期行判（**唯一判地**）：分期分类或带 `#分期`／`#分期中` 精确（写侧记分期不落 `#tag`，
+ *  分类是主口径，两串并存）。 */
 function isInstallmentRow(r: BillRow): boolean {
   return r.category.startsWith('分期/') || tagMatch(r.note, '分期') || tagMatch(r.note, '分期中');
 }
 
 /** `bill.record.search`：搜备注（`q` 必给）／查标签（`kind:"tag"` ＋ `tag` 必给，精确匹配）／
- *  查欠款（`kind:"debt"`）／查待报销（`kind:"reimburse"`）／查分期（`kind:"installment"`）。
- *  空查询不返全量：既没 `q` 也没 `kind` → exit 2。 */
+ *  查欠款／查待报销／查分期。空查询不返全量：既没 `q` 也没 `kind` → exit 2。 */
 export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.search';
   const kind = params.kind === undefined ? '' : String(params.kind);
@@ -279,14 +315,15 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     key, params, wakeWord, window, records, extra: { kind: label },
     emptyText: '没有找到符合条件的记录',
     emptyHint: '换个关键词试试，也可以看看「查最近」。',
+    windowStart: NO_WINDOW,
+    windowEnd: NO_WINDOW,
   });
 }
 
-/** `bill.record.detail`：查账单详情（`id` 必给，#415 专属版式）。
- *  取数含软删行（`fetchAll includeDeleted` 经取数公开接口，不另写比对）：真无此号才抛
- *  `BILL_RECORD_NOT_FOUND`（exit 4），已撤销走整页＋已撤销徽，不冒充正常。
- *  载荷 `item` 照搬迁前形状（`toBillItem` 8 字段）原样保留，另加 `created_at／deleted_at`
- *  两列（加法式，旧 8 字段一字不动）；页面字段表 10 列全交代，见 `./detail.js`。 */
+/** `bill.record.detail`：查账单详情（`id` 必给，#415 专属版式）。取数含软删行（`includeDeleted` 经取数
+ *  公开接口）：真无此号才抛 `BILL_RECORD_NOT_FOUND`（exit 4），已撤销走整页＋已撤销徽，不冒充正常。
+ *  载荷 `item` 照搬迁前形状（`toBillItem` 8 字段）原样保留，另加 `created_at／deleted_at` 两列
+ *  （加法式，旧 8 字段一字不动）；页面字段表 10 列全交代，见 `./detail.js`。 */
 export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.detail';
   const id = needId(params);
@@ -305,6 +342,7 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
       row,
       envelope: detailEnvelope(key, data),
       source: SOURCE_QUERY,
+      sourceText: SOURCE_TEXT_QUERY,
       actionAt: actionStamp(),
     }),
   };
