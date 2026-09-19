@@ -8,8 +8,8 @@
 //     落点表的场景词都由声明算回，别处不再写第二处字面量（判据见 `test/t721-判据与摘要锁.test.mjs`）。
 //
 // 谁在用（指名）：`src/policy/wakewords.ts`（薄转出，保消费方零改）· `src/help/lookup.ts` ·
-//   `src/help/writeWire.ts` · `src/shared/userWording.ts` · `src/shared/collectFrame.ts` ·
-//   `src/record/receiptBody.ts` · `src/query/read.ts`。
+//   `src/write/writeWire.ts` · `src/write/userWording.ts` · `src/write/collectFrame.ts` ·
+//   `src/write/receiptBody.ts` · `src/query/read.ts`。
 //
 // 域序 fail-closed：8 份声明的 `order` 必须是连续的 0..n-1，缺号／重号即抛（不用中央名单、
 // 也不用目录扫描——扫描出的是字母序，与实物的域序七处全不同）。
@@ -21,7 +21,7 @@ import { HELP_DECLARATION } from '../help/declaration.js';
 import { LINK_DECLARATION } from '../link/declaration.js';
 import { QUERY_DECLARATION } from '../query/declaration.js';
 import { SETUP_DECLARATION } from '../setup/declaration.js';
-import { WRITE_DECLARATION } from '../record/declaration.js';
+import { WRITE_DECLARATION } from '../write/declaration.js';
 import type { BillKey, DomainDeclaration, WakeEntry, WakeEntryDecl, WakeRoute, WakeScope } from './routeSpec.js';
 
 /** 8 份域声明（每份一件，恰好一个导出）。**声明的清单只有这一处**——目录投影件也从这里取。 */
@@ -124,7 +124,7 @@ export function projectWakeWord(scope: WakeScope): string {
 }
 
 /** 内部型名 → 唤醒词（类型徽章与回执页标题那一支）：认得的型名按 `preset.kind` 算，
- *  **认不得的型名与空串都给写入域的通用词**（`记一笔`）——与 `src/record/scene.ts` 的兜底同口径。 */
+ *  **认不得的型名与空串都给写入域的通用词**（`记一笔`）——与 `src/write/scene.ts` 的兜底同口径。 */
 export function wakeWordOfKind(kind: string): string {
   const k = typeof kind === 'string' ? kind.trim() : '';
   const hit = k === '' ? undefined : BY_KIND.get(k);

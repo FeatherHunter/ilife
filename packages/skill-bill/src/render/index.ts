@@ -9,7 +9,7 @@ export {
   HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
   formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,
   buildHelpIndex,
-} from './helpFile.js';
-export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from './helpFile.js';
+} from '../help/helpFile.js';
+export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from '../help/helpFile.js';
 /** #237：时间戳／通式／初候选已收进共用件 `base-paint/save-html`（本模块只剩本技能自己的落点值）。 */
-export { HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from './helpPaths.js';
+export { HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from '../help/helpPaths.js';

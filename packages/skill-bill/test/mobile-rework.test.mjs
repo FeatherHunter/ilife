@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 describe('t407 移动端返工 · 方向口径拆成独立形状', () => {
   it('summaryRow 不再用顿号分方向、分号缀分类', async () => {
-    const { summaryRow } = await import('../dist/shared/summaryRow.js');
+    const { summaryRow } = await import('../dist/write/summaryRow.js');
     const html = summaryRow({ amount: null, category: '', account: '', ledger: '', time: '' });
     assert.ok(!html.includes('支出的金额记成负数、收入记成正数；'), '旧串须消失');
     assert.ok(html.includes('支出记负数') && html.includes('收入记正数'), '方向各一枚胶囊');
@@ -15,14 +15,14 @@ describe('t407 移动端返工 · 方向口径拆成独立形状', () => {
 
 describe('t407 移动端返工 · 回执引导句分行', () => {
   it('nextStepOf 带退出口那档不用分号串两件事', async () => {
-    const { nextStepOf } = await import('../dist/shared/userWording.js');
+    const { nextStepOf } = await import('../dist/write/userWording.js');
     const s = nextStepOf({ page: 'receipt', exit: true });
     assert.ok(!s.includes('；'), '分号须消失');
     assert.ok(s.includes('撤销这一笔'), '仍要点出撤销');
   });
   it('typeBadge 按句分行各出一行口径', async () => {
-    const { typeBadge } = await import('../dist/shared/typeBadge.js');
-    const { nextStepOf } = await import('../dist/shared/userWording.js');
+    const { typeBadge } = await import('../dist/write/typeBadge.js');
+    const { nextStepOf } = await import('../dist/write/userWording.js');
     const html = typeBadge({ kind: 'expense', status: 'ok', state: '写库成功', next: nextStepOf({ page: 'receipt', exit: true }) });
     const n = (html.match(/ilife-block-caliber/g) ?? []).length;
     assert.ok(n >= 2, '下一步动作须分行出两行口径，实得 ' + n);
@@ -31,7 +31,7 @@ describe('t407 移动端返工 · 回执引导句分行', () => {
 
 describe('t407 移动端返工 · diff 表走映射', () => {
   it('行名过 fieldLabelOf，列头说人话', async () => {
-    const { diffOf, diffTable } = await import('../dist/shared/diffTable.js');
+    const { diffOf, diffTable } = await import('../dist/write/diffTable.js');
     const rows = diffOf({ fields: ['deleted_at', 'note'], before: { deleted_at: null, note: 'a' }, after: { deleted_at: '2026-09-14 15:39:17', note: 'b' } });
     const html = diffTable({ rows });
     assert.ok(!html.includes('deleted_at'), '库列名不上屏');

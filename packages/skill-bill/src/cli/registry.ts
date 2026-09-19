@@ -11,7 +11,7 @@
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { QUERY_COMMANDS } from '../query/index.js';
-import { RECORD_COMMANDS } from '../record/index.js';
+import { RECORD_COMMANDS } from '../write/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
   QUERY_COMMANDS,

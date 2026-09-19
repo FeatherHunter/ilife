@@ -6,10 +6,10 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectWakeWord, routeWakeword } from '../dist/index.js';
-import { SCENES, sceneFor } from '../dist/record/scene.js';
-import { candidateEmpty, candidatePick, candidateRows } from '../dist/shared/candidatePick.js';
-import { rowEditorMissing, rowEditorTable } from '../dist/shared/rowEditorTable.js';
-import { diffChangeRows, diffOf, diffTable } from '../dist/shared/diffTable.js';
+import { SCENES, sceneFor } from '../dist/write/scene.js';
+import { candidateEmpty, candidatePick, candidateRows } from '../dist/write/candidatePick.js';
+import { rowEditorMissing, rowEditorTable } from '../dist/write/rowEditorTable.js';
+import { diffChangeRows, diffOf, diffTable } from '../dist/write/diffTable.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -37,7 +37,7 @@ describe('t407 · 写入域 16 条唤醒词一场景一件', () => {
     assert.deepEqual(ids, EXPECTED_IDS);
     assert.equal(new Set(ids).size, 16, '一件一条词，不许两条词挤一件');
     for (const id of ids) {
-      const file = join(here, '..', 'src', 'record', 'scene-' + id + '.ts');
+      const file = join(here, '..', 'src', 'write', 'scene-' + id + '.ts');
       assert.ok(existsSync(file), '场景件须在盘上：' + file);
     }
   });

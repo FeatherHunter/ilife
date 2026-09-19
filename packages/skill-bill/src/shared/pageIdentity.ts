@@ -2,7 +2,7 @@
  *  整页装配的调用方与复制日志都读它，别处只引用、不另写这几个字面量（同一件事实两处就会走散）。
  *
  * 谁在用（两个能力，指名）：
- *   ① `src/record/`——写入域：结果型回执整页与过程型采集页的 envelope 三字段（其中 `key` 过 `sceneKeyOf`）、
+ *   ① `src/write/`——写入域：结果型回执整页与过程型采集页的 envelope 三字段（其中 `key` 过 `sceneKeyOf`）、
  *      复制日志版本、页标题前缀；`src/shared/writeParts.ts` 的 `writeSection` 取技能名做 `data-skill`；
  *   ② `src/query/`——查询域：通用查询列表页的同一批取值（envelope 三字段、复制日志版本、页标题前缀）。
  *  两域的页面内置 envelope 都拿本件的 `sceneKeyOf` 把对外命令名收成场景名（`bill.record.today` → `record.today`），

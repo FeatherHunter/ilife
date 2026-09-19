@@ -29,7 +29,7 @@ const SRC = join(PKG, 'src');
 /** 8 份域声明（字面量**准住在这里**）。 */
 const DECLARATION_FILES = [
   'help/declaration.ts',
-  'record/declaration.ts',
+  'write/declaration.ts',
   'query/declaration.ts',
   'analysis/declaration.ts',
   'goal/declaration.ts',

@@ -8,9 +8,9 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BILL_KEY_SHAPES, WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/index.js';
-import { RECORD_COMMANDS, runRecordWrite } from '../dist/record/index.js';
+import { RECORD_COMMANDS, runRecordWrite } from '../dist/write/index.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
-import { RECORD_SLOTS, missingSlots } from '../dist/record/collect.js';
+import { RECORD_SLOTS, missingSlots } from '../dist/write/collect.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');

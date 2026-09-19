@@ -40,7 +40,7 @@ describe('饼干口径 policy', () => {
     assert.throws(() => routeWakeword('同步记账到云端'), /无命中/);
     // 三条修正词（改记录／撤销／恢复）在 t407 批量与修正族改了口径：**不再由路由层报「缺槽位 id」**——
     // 只说唤醒词也落采集页，由候选记录列表让用户挑一条（施工图第二节「撤销」「恢复」两行的缺项阻断那条
-    // 把「在路由层直接报错」记为要修的缺陷；落点见 `src/record/scene-update.ts` 件头与 `src/shared/recordPicker.ts`）。
+    // 把「在路由层直接报错」记为要修的缺陷；落点见 `src/write/scene-update.ts` 件头与 `src/write/recordPicker.ts`）。
     assert.equal(routeWakeword('改记录').key, 'bill.record.update');
     assert.equal(routeWakeword('撤销').key, 'bill.record.update');
     assert.equal(routeWakeword('恢复').key, 'bill.record.update');

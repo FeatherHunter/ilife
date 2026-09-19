@@ -8,8 +8,8 @@
 // 跑法：`node node_modules/typescript/bin/tsc -b packages/skill-bill --force` 之后 `node --test "packages/skill-bill/test/*.test.mjs"`。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { statusNoteOf, wakeWordOf, fieldLabelOf, nextStepOf, badgeTextOf } from '../dist/shared/userWording.js';
-import { typeBadge } from '../dist/shared/typeBadge.js';
+import { statusNoteOf, wakeWordOf, fieldLabelOf, nextStepOf, badgeTextOf } from '../dist/write/userWording.js';
+import { typeBadge } from '../dist/write/typeBadge.js';
 
 describe('t407 整改（一）· 用户语言映射只此一处', () => {
   it('库列名一律给中文名，认不得的照实返回（不静默抹掉）', () => {
@@ -41,7 +41,7 @@ describe('t407 整改（一）· 用户语言映射只此一处', () => {
   });
 
   it('金额 0 视同没给（上级裁定第 3 条）：值栏与说明栏都不摆 0.00', async () => {
-    const { money2, moneyDirection } = await import('../dist/shared/summaryRow.js');
+    const { money2, moneyDirection } = await import('../dist/write/summaryRow.js');
     assert.equal(money2(0), '未给', '金额 0 的值栏写「未给」，不摆 0.00');
     assert.equal(moneyDirection(0), '还没给', '金额 0 的说明写「还没给」');
     assert.equal(money2(null), '未给');

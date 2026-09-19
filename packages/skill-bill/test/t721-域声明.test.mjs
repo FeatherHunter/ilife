@@ -12,7 +12,7 @@ import { BILL_KEY_SHAPES, WAKE_TABLE, buildHelpFileData, projectWakeWord, render
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 /** 落点表（16 行）的**处理方声明**（kind／op）在这一件里；它不是包对外面的一部分，判据按既有取法直取定义地
  *  （同 `frozen-blocks`／`t409-wire` 两件既有测试的取法）。 */
-import { SCENES } from '../dist/record/scene.js';
+import { SCENES } from '../dist/write/scene.js';
 
 /** 老实物的域顺序（照搬，不许重排）。 */
 const GROUP_IDS = ['write', 'query', 'analysis', 'goal', 'account', 'link', 'setup'];

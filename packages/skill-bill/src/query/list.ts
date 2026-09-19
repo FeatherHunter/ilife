@@ -165,7 +165,7 @@ const PAGE_BYTE_BUDGET = 240_000;
 /** 分类聚合卡的类数上限（老侧 `categoryBar` 的 `slice(0,8)` 同数）。 */
 const CATEGORY_LIMIT = 8;
 
-/** 合计金额的文本（两位小数）。**不是** `src/shared/summaryRow.ts` 的 `money2`：那一件是「用户给的
+/** 合计金额的文本（两位小数）。**不是** `src/write/summaryRow.ts` 的 `money2`：那一件是「用户给的
  *  那一笔金额」的口径（0 与缺省都写「未给」），这里是**合计**——合计为 0 是真实读数（这一天没花钱），
  *  写成「未给」就是撒谎。两件事，两个定义。 */
 function sumText(n: number): string {

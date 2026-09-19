@@ -8,10 +8,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { textOf } from '../dist/shared/recentPicks.js';
-import { diffOf } from '../dist/shared/diffTable.js';
-import { prefillOf } from '../dist/shared/prefillNote.js';
-import { pickerBlock, snapshotTable } from '../dist/shared/recordPicker.js';
+import { textOf } from '../dist/write/recentPicks.js';
+import { diffOf } from '../dist/write/diffTable.js';
+import { prefillOf } from '../dist/write/prefillNote.js';
+import { pickerBlock, snapshotTable } from '../dist/write/recordPicker.js';
 import { openBillDb, closeBillDb, addBill } from '../dist/fetch/db.js';
 import { resolveDbPath } from '../dist/fetch/paths.js';
 
@@ -189,7 +189,7 @@ describe('t469 · textOf 三样口径保留（硬并不改行为，故逐处钉�
 // t469-sup 追加：D1 S3 本票范围 diffRowsFor 只比给了的字段（recordPicker.ts:231-246）。
 // 红线延续：只钉现有行为（given：undefined／null／空白串不算给，0 算给；没给不进表），不改可见行为。
 // 复核探针 .scratch/t469/review-probe.mjs P-R1／P-R1b 去 given 过滤后红而新旧 38 存活，故滚进本票补断言，不新开票。
-import { diffRowsFor } from '../dist/shared/recordPicker.js';
+import { diffRowsFor } from '../dist/write/recordPicker.js';
 
 describe('t469-sup · diffRowsFor 只比给了的字段（recordPicker.ts diffRowsFor／given）', () => {
   it('只给 note 就只比 note：没给的 amount 不进表', () => {

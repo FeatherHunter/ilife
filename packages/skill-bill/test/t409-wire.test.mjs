@@ -1,5 +1,5 @@
 // 409 · 写入 16 词接线：说词→路由 key→SKILL 行→HELP 卡→可执行 CLI，五段对得上。
-// 不做真出口断言：不断言 spawn／exit 码，只断言示例带齐必需槽位（见 src/help/writeWire.ts）。
+// 不做真出口断言：不断言 spawn／exit 码，只断言示例带齐必需槽位（见 src/write/writeWire.ts）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,7 +9,7 @@ import {
   WRITE_WORDS, buildWriteWire, projectWakeWord, routeWakeword, WAKE_TABLE,
 } from '../dist/index.js';
 import { WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
-import { SCENES, sceneFor } from '../dist/record/scene.js';
+import { SCENES, sceneFor } from '../dist/write/scene.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skillText = readFileSync(join(here, '..', 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n');

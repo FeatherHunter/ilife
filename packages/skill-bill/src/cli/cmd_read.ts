@@ -34,7 +34,7 @@ import { REGISTRY } from './registry.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { runRecordWrite } from '../record/index.js';
+import { runRecordWrite } from '../write/index.js';
 import { runQueryRead } from '../query/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
@@ -466,7 +466,7 @@ async function main() {
     const built = buildBillEnvelope(key, abilityOut ? abilityOut.data : (help ? help.data : dispatch(key, params)));
     env = built;
     // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
-    // 迁移过的命令另有整页（采集页／回执页住 `src/record/`、查询列表页住 `src/query/`），不再套老模板。
+    // 迁移过的命令另有整页（采集页／回执页住 `src/write/`、查询列表页住 `src/query/`），不再套老模板。
     const sectionHtml = (): string => {
       if (abilityOut) return abilityOut.html;
       return fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));

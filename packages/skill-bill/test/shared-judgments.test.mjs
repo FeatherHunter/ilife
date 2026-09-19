@@ -1,6 +1,6 @@
 // t407 整改 E1：新共用件与取数共用位的护栏。
 //
-// 为什么要补这一件：复核者把 `src/shared/recordPicker.ts` 里 `keeps` 那条判定
+// 为什么要补这一件：复核者把 `src/write/recordPicker.ts` 里 `keeps` 那条判定
 // （「撤销候选只列未删／恢复候选只列已软删」）改坏之后，`tsc` 与当时全部 90 条测试**仍全绿**——
 // 变异存活、零护栏。本件把那处判定钉住，并把自查出来同样没有断言管着的判定逐条补上：
 //   `recordPicker.ts`（候选过筛、按编号读一条认出软删行）、`recentPicks.ts`（取值、去重与次序、
@@ -16,11 +16,11 @@ import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { optionsFor, pickOf, textOf } from '../dist/shared/recentPicks.js';
-import { flowSteps } from '../dist/shared/flowSteps.js';
-import { installmentPreview, installmentShares } from '../dist/shared/installmentPreview.js';
-import { ESCAPE_FIELDS, escapeCard, escapePrompt, imageNote } from '../dist/shared/outsideScan.js';
-import { pickerBlock, pickModeOf, readRowById } from '../dist/shared/recordPicker.js';
+import { optionsFor, pickOf, textOf } from '../dist/write/recentPicks.js';
+import { flowSteps } from '../dist/write/flowSteps.js';
+import { installmentPreview, installmentShares } from '../dist/write/installmentPreview.js';
+import { ESCAPE_FIELDS, escapeCard, escapePrompt, imageNote } from '../dist/write/outsideScan.js';
+import { pickerBlock, pickModeOf, readRowById } from '../dist/write/recordPicker.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
