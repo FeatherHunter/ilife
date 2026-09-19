@@ -132,7 +132,11 @@ export function blockedBar(input: BlockedBarInput): string {
     command: input.command,
     label: '口令原文',
   }) + renderActionBar({
-    buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION }],
+    // #733 复现实测：这颗按钮在**内联脚本里出现 0 次** —— 委派第一道 `node.closest("[data-action-id]")`
+    //   认得出它，第二道 `getAttribute("data-t") === null → return` 就早退 ⇒ 点了零动作、零反馈。
+    //   它是「补齐之前不许写库」的**状态标记**，不是可点控件（该由宿主判定补齐没有，这一页做不到），
+    //   故走判据 1 认可的那一档：`disabled` ＋ `aria-disabled`，吃公共层 `action-btn[disabled]` 的浅底样式。
+    buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION, disabled: true }],
   }) + renderCaliberLine(
     input.note === undefined || input.note === ''
       ? '这一页先不写库。补齐之后照上面那句跟助手说一遍才会写。'

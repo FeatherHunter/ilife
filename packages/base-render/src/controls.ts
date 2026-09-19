@@ -163,6 +163,22 @@ export const TOAST_ICON_GLYPHS: Readonly<Record<ToastIcon, string>> = Object.fre
   info: '💡',
 });
 
+/** 图标位的**文字标签**（#733 新增）：与 `TOAST_ICON_GLYPHS` 一一对应的中文词。
+ *
+ *  为什么要有它：`pageUi` ⑩ 那条为了治「emoji 在手机上小且糊」，把字形用 `font-size: 0` 收起、
+ *  再用 `::after { content: "已完成" }` 把词**画**在屏幕上——词只活在 CSS 里。
+ *  实测（32/32 页）：整份产物里「已完成」只出现 1 次，就是那行 `content:`；`<body>` 里一次都没有。
+ *  后果＝屏幕上那个词**不可选中、不可搜索、不可复制、屏读器读不到、打印与 PDF 取不到字**。
+ *  改法＝词进 DOM：图标位里同时放字形与这枚标签，谁显谁隐交 CSS（见 `blocks.ts` 的 note 区 CSS
+ *  与 `pageUi` ⑩）。不启用 `pageUi` 的页仍只显字形，外观与改前逐值相同。 */
+export const TOAST_ICON_LABELS: Readonly<Record<ToastIcon, string>> = Object.freeze({
+  copy: '已复制',
+  ok: '已完成',
+  warn: '注意',
+  danger: '未通过',
+  info: '提示',
+});
+
 /** 徽章类型允许清单：取冻结类型 `ToastBadge['type']` 的成员（非法值回落 `'ok'`，旧层口径）。 */
 const TOAST_BADGE_TYPES = ['ok', 'warn', 'danger'] as const satisfies readonly ToastBadge['type'][];
 
@@ -1232,6 +1248,8 @@ function normalizeButtons(buttons: ActionBarInput['buttons']): ActionBarButton[]
       label: button.label,
       kind: button.kind as ActionBarKind,
       actionId: assertActionId(button.actionId, field + '.actionId'),
+      // #733：只在**真给 true** 时带这一位；不给／给假 ⇒ 产物与改前逐字节相同（旧调用方零影响）。
+      ...(button.disabled === true ? { disabled: true } : {}),
     };
   });
 }
@@ -1322,8 +1340,12 @@ function normalizeCopyButton(input: CopyButtonInput | undefined, fallbackLabel: 
 }
 
 function sceneButtonHtml(button: ActionBarButton): string {
-  return '<button type="button" class="' + STYLE_PREFIX + 'action-btn ' + STYLE_PREFIX + 'action-btn-' + button.kind + '" '
-    + ACTION_ID_ATTR + '="' + esc(button.actionId) + '">' + esc(button.label) + '</button>';
+  // #733：`disabled: true` ⇒ 落 `disabled` ＋ `aria-disabled`（「标记」而非「可点控件」）。
+  //   动作条按钮没有 `data-t` 载荷位 ⇒ 凡是「该由宿主来做、这一页做不到」的动作，
+  //   不给这一位就会渲染成「看着能点、点了没反应」（记账写入域实测两颗）。
+  const disabledAttr = button.disabled === true ? ' disabled aria-disabled="true"' : '';
+  return '<button type="button" class="' + STYLE_PREFIX + 'action-btn ' + STYLE_PREFIX + 'action-btn-' + button.kind + '"'
+    + disabledAttr + ' ' + ACTION_ID_ATTR + '="' + esc(button.actionId) + '">' + esc(button.label) + '</button>';
 }
 
 function copyButtonHtml(button: NormalizedCopyButton): string {
@@ -1464,9 +1486,17 @@ export const renderErrorReceipt: RenderErrorReceipt = (input) => {
   if (typeof receipt.message !== 'string') badInput('renderErrorReceipt: input.message 必须是字符串');
 
   const retryLabel = typeof receipt.retryPrompt === 'string' && receipt.retryPrompt !== '' ? receipt.retryPrompt : ERROR_RETRY_LABEL;
+  // #733 复现实测：这一颗**从来不带** ACTION_ID_ATTR 与 DEFAULT_DATA_ATTR（件头第 42 行自述「该按钮不带…」），
+  //   而产物内联委派的第一道 `node.closest("[data-action-id]")` 就早退 ⇒ **点了零动作、零反馈**。
+  //   记账写入域 16 张采集页上，它是整块错误回执里视觉权重最重的一颗（primary ＋ wide），
+  //   维护者逐字要求：「要么真能点，要么看起来就不能点，不许留在『看着能点、点了没反应』这一档」。
+  //   改法＝走后者：加 `disabled` ＋ `aria-disabled`，吃既有的 `.copy-btn[disabled]` 样式
+  //   （浅底 ＋ `--fg3` 字 ＋ `cursor: not-allowed`），它当场从「最响的一颗」变成明显不可点的一行。
+  //   不改成「真能点」的原因：它的文案是「补齐了，说一遍试试」，而这一页是静态文档，
+  //   「再试一次」这件事只有宿主（助手）能做——给它编一个动作才是说谎。
   const actions: string[] = [
-    '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-primary ' + STYLE_PREFIX + 'copy-btn-wide">'
-    + esc(retryLabel) + '</button>',
+    '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-primary ' + STYLE_PREFIX + 'copy-btn-wide"'
+    + ' disabled aria-disabled="true">' + esc(retryLabel) + '</button>',
   ];
 
   const ids = new Set<string>();

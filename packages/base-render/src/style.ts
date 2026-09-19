@@ -394,6 +394,18 @@ const SECTION_BUILDERS: Record<ControlStyleSection, (prefix: string) => string> 
     '  background: var(--card);',
     '  color: var(--blue2);',
     '}',
+    // #733：`disabled`（「标记」而非「可点控件」）的样式。**改前本区没有这一条**——
+    //   而 `.copy-btn` 那边早就有（浅底 ＋ `--fg3` 字 ＋ `cursor: not-allowed`，见 `copyButton` 区）。
+    //   动作条这一条按同一套值对齐，两处读起来是同一档「不可点」。取既有 `--soft`／`--line`／`--fg3`，
+    //   零新色值；只在本区加，不动任何既有选择器。
+    '.' + p + 'action-btn[disabled],',
+    '.' + p + 'action-btn:disabled {',
+    '  opacity: 1;',
+    '  border-color: var(--line);',
+    '  background: var(--soft);',
+    '  color: var(--fg3);',
+    '  cursor: not-allowed;',
+    '}',
     // #179 触控目标：窄屏按钮抬到 44px。**#525 起两个宽档同值**（`minHeightPx` 40 → 44，见
     // `spec/controls.ts`）；本条留在这里只为不动既有选择器与既有媒体查询。
     '@media (max-width: ' + TOAST_DEFAULTS.mobileMaxPx + 'px) {',

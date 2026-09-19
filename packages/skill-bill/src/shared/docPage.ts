@@ -110,22 +110,14 @@ const KV_CSS = [
   '}',
 ].join('\n');
 
-/** 退出口单钮独占整行（t410 终审 n20：撤销页「撤销这一笔」在 390 下实测 175px 半宽）。
+/** 退出口单钮独占整行（t410 终审 n20）——**#733 起已撤，本段整体删掉，理由是它成了死 CSS**。
  *
- *  根因在公共层（`base-render` 的 `.ilife-action-row` 恒两列，单钮只占半格），落点只能是本件
- *  交 `extraCss` 的这一处（与上面 DESKTOP／TOAST／KV 同一条路）。只收退出口那一格
- *  （`copyArea.ts` 的 `undoExit`，动作号 `ilife-exit-undo`）：该格恒只有一颗红钮，
- *  把它所在行的列改成单列；页上别的动作行（两颗复制按钮平分的那种）一行不动。桌面端同形
- *  （危险动作独占一行，本就是层级所需）。`:has` 不支持时回退到半宽，不比改前差。 */
-const EXIT_CSS = [
-  '/* t410：退出口单钮独占整行（只收 ilife-exit-undo 这一格） */',
-  '.ilife-block-copy-block:has([data-action-id="ilife-exit-undo"]) .ilife-action-row {',
-  '  grid-template-columns: 1fr;',
-  '}',
-  '.ilife-block-copy-block:has([data-action-id="ilife-exit-undo"]) .ilife-action-btn {',
-  '  width: 100%;',
-  '}',
-].join('\n');
+ *  t410 当时落这条：`copyArea` 的退出口恒只有一颗红钮，而公共层 `.ilife-action-row` 恒两列，
+ *  单钮只占半格（390 下实测 175px），故用 `:has([data-action-id="ilife-exit-undo"])` 把它收成单列。
+ *  #733 把退出口那颗**点了没反应的红钮**换成一枚非交互的 danger 标记（`copyArea.undoExit` 的注释里有完整推导）⇒
+ *  `ilife-exit-undo` 这个动作号在产物里**一次都不再出现**，本段的两个选择器一条也命中不到。
+ *  留着的代价不是零：它会被 grep 进「页上还有没有这个动作号」这类判据，读的人会以为按钮还在。
+ *  一并删掉——**删的是失效的补丁，不是那条版面意图**（那颗钮已经不存在了）。 */
 
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（文档壳交公共层骨架件）。
  *
@@ -142,7 +134,7 @@ export function assembleDocPage(input: DocPageInput): string {
   return renderDocShell({
     docTitle: input.docTitle,
     bodyHtml: body,
-    extraCss: [DESKTOP_CSS, TOAST_CSS, KV_CSS, EXIT_CSS, pageUiCss()].join('\n'),
+    extraCss: [DESKTOP_CSS, TOAST_CSS, KV_CSS, pageUiCss()].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });

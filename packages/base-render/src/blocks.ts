@@ -30,7 +30,7 @@
  */
 
 import { charts } from './charts.js';
-import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast, TOAST_ICON_GLYPHS } from './controls.js';
+import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast, TOAST_ICON_GLYPHS, TOAST_ICON_LABELS } from './controls.js';
 import { BODY_FONT_STACK } from './font.js';
 import {
   ACTION_BAR_DEFAULTS,
@@ -1247,8 +1247,15 @@ function renderStaticNotice(toast: ToastInput): string {
     : TOAST_DEFAULTS.defaultIcon;
   const parts: string[] = [
     '<div class="' + blockPart('feedbackBlock', 'note') + '">',
+    // #733：图标位里**字形与文字词各出一枚**——字形 `aria-hidden`（装饰），词是**真文字节点**
+    //   （可选中／可搜索／可复制／屏读器可读／打印能取到字）。默认只显字形（不启用 `pageUi` 的页
+    //   外观与改前逐值相同）；`pageUi` ⑩ 那条把字形藏起来、把词显出来（治 emoji 在手机上小且糊）。
     '<span class="' + blockPart('feedbackBlock', 'note-icon') + ' '
-      + blockPart('feedbackBlock', 'note-icon-' + icon) + '" aria-hidden="true">' + TOAST_ICON_GLYPHS[icon] + '</span>',
+      + blockPart('feedbackBlock', 'note-icon-' + icon) + '">'
+      + '<span class="' + blockPart('feedbackBlock', 'note-icon-glyph') + '" aria-hidden="true">'
+      + TOAST_ICON_GLYPHS[icon] + '</span>'
+      + '<span class="' + blockPart('feedbackBlock', 'note-icon-text') + '">'
+      + TOAST_ICON_LABELS[icon] + '</span></span>',
     '<div class="' + blockPart('feedbackBlock', 'note-body') + '">',
     '<div class="' + blockPart('feedbackBlock', 'note-title') + '">' + esc(toast.msg) + '</div>',
   ];
@@ -2459,6 +2466,12 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  color: var(--fg2);',
     '  font-size: 13px;',
     '  line-height: 1;',
+    '}',
+    // #733：图标位里的两枚子件——**默认只显字形**（不启用 `pageUi` 的页外观与改前逐值相同）。
+    //   词那一枚 `display: none` 不是「藏起来不给读」，它在 DOM 里、只是这一档不画；
+    //   `pageUi` ⑩ 那条把两者对调（治 emoji 在手机上小且糊）。
+    '.' + p + 'block-feedback-block-note-icon-text {',
+    '  display: none;',
     '}',
     // 三档实色**逐值取同仓既有的状态徽章**（`src/style.ts` 的 `statusBadge` 区：ok `#e6f7ec`／`#1f8c3d`、
     // warn `#fff5e0`／`#a25b00`、danger `#fff0ee`／`#a83228`，原样取自旧层 `.hm-status.*`）——

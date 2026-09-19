@@ -17,6 +17,7 @@
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { renderCaliberLine, renderCopyBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
+import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
@@ -279,13 +280,17 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
 }
 
 /** 回执页的退出口：`undo`＝「撤销这一笔」（走共用件 `../shared/copyArea.js`）；`restore`＝撤销那一张页专用的
- *  「恢复这一笔」——只留那枚按钮与一句去向说明，不带复制按钮、不带 `data-t`（复制按钮走下面复制区那一组）。 */
+ *  「恢复这一笔」。
+ *
+ *  **#733 改**：改前这里是一颗 `kind: 'red'` 的 `<button>`（`data-action-id="ilife-exit-restore"`，
+ *  **故意不带 `data-t`**）——它与共用件那颗 `ilife-exit-undo` 是同一个病：委派第二道
+ *  `getAttribute('data-t') === null → return` 早退 ⇒ **点了零动作、零反馈**（复现：撤销-回执页 1 处）。
+ *  改法照 `copyArea.undoExit` 的同一口径：**标记不走按钮形态**，渲染成一枚 `danger` 胶囊 ＋ 那句指路口径。
+ *  桌面端那颗 878px 满列实心红块一并消失（它是全页唯一一块满列高饱和色，却点不动）。 */
 function exitBlock(kind: UpdateSpec['receiptExit'], recordId: number): string {
   if (kind === 'undo') return undoExit(recordId);
-  return renderCopyBlock({
-    title: '想反悔（把这一笔找回来）',
-    buttons: [{ label: '↩︎ 恢复这一笔', kind: 'red', actionId: 'ilife-exit-restore' }],
-  }) + renderCaliberLine('想反悔就用下面那颗「复制数据」，里面带着一句恢复的话。');
+  return renderStatusBadge({ status: 'danger', text: '想反悔（把这一笔找回来）' })
+    + renderCaliberLine('想反悔就用下面那颗「复制数据」，里面带着一句恢复的话。（记录编号 ' + recordId + '）');
 }
 
 /** 回执页的结果表那一块：**有内容才进导航**（改记录不出这一块，进导航就会留一枚指向空区块的条目）。 */

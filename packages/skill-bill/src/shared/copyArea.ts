@@ -18,6 +18,7 @@
  *   - 日志第 3 段的库文件名**由调用方给**（`CopyLogInput.source`），共用件不取本包文件名
  *     （`docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第二节 `DB_FILENAME` 行）。
  */
+import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderCopyBlock, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput } from 'base-paint';
@@ -158,14 +159,21 @@ const EXIT_MARK_ACTION = 'ilife-exit-undo';
 const EXIT_TITLE = '想反悔（撤销这一笔）';
 const EXIT_NOTE = '要撤销这一笔，点下面那颗「复制数据」，里面带着一句撤销的话。撤销之后记录还在，随时可以恢复。';
 
-/** ④ 回执页退出口：危险色出口标记 ＋ 一句去向说明（t407 根因整改二 D2 去重后）。
- *  改前这里另带一枚「复制数据」（撤销指令直拷，`ilife-exit-undo-copy`）＋ base #336
- *  自动补的一枚置灰「复制日志」，与下面复制区那组「复制数据／复制日志」上下重复。
- *  改后退出口只留标记与说明、不带任何复制按钮与 `data-t`；撤销指令走下面复制区那颗
- *  「复制数据」（复制载荷里仍带可重跑命令，`data-t` 形状不动）。 */
+/** ④ 回执页退出口：**一枚非交互的 danger 标记 ＋ 一句指路**（#733 改）。
+ *
+ * 改前这里是一颗 `kind: 'red'` 的 `<button>`（`data-action-id="ilife-exit-undo"`，**故意不带 `data-t`**），
+ *  而产物内联委派的第二道 `getAttribute('data-t') === null → return` 就早退 ⇒ **点了零动作、零反馈**；
+ *  1280 档它还是整页唯一一块 878×44 的满列实心高饱和红（最响的一块却不响应），
+ *  而正下方那行口径又写着「点下面那颗『复制数据』」——同屏两句互相否定（15 张回执页全中，逐页复现过）。
+ *
+ * 改法＝**照它本来的身份办**：它是一件「标记」，不是一颗按钮。现在渲染成
+ *  `renderStatusBadge(status:'danger')` 的一枚红胶囊（一眼就知道不是可点控件）＋ 那句指路口径。
+ *  顺带收掉两样债：① 满列红块没了（判据里的「整页最响的一块」）；② `docPage.ts` 里那条
+ *  专为「单钮独占整行」写的补丁（`EXIT_CSS`）随之失效，一并删掉。
+ *
+ * 为什么不做成「真能点」：本页下面复制区那颗「复制数据」的载荷里**已经带着**可重跑的撤销指令，
+ *  退出口再给一颗同样功能的按钮，就是同一件事两颗按钮（t410 拆掉过一次，不该拆回去）。 */
 export function undoExit(recordId: number): string {
-  return renderCopyBlock({
-    title: EXIT_TITLE,
-    buttons: [{ label: '↩︎ 撤销这一笔', kind: 'red', actionId: EXIT_MARK_ACTION }],
-  }) + renderCaliberLine(EXIT_NOTE + '（记录编号 ' + recordId + '）');
+  return renderStatusBadge({ status: 'danger', text: EXIT_TITLE })
+    + renderCaliberLine(EXIT_NOTE + '（记录编号 ' + recordId + '）');
 }

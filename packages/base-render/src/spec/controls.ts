@@ -249,6 +249,14 @@ export interface ActionBarButton {
   readonly label: string;
   readonly kind: ActionBarKind;
   readonly actionId: string;
+  /** **#733 追加**：这一颗是「标记」不是「可点控件」时给 `true` —— 渲染出 `disabled` ＋ `aria-disabled`，
+   *  吃既有的 `.action-btn[disabled]` 样式（浅底 ＋ `--fg3` 字 ＋ `cursor: not-allowed`）。
+   *
+   *  为什么需要它：动作条按钮**没有 `data-t` 载荷位**，所以凡是「本该由宿主（助手）来做、
+   *  这一页自己做不到」的动作，渲染出来都会是「看着能点、点了没反应」。
+   *  记账写入域实测到两颗这类（缺项阻断条的「⛔ 先补齐（N 项）」与错误回执的「补齐了，说一遍试试」），
+   *  维护者逐字要求「要么真能点，要么看起来就不能点，不许留在中间那一档」。 */
+  readonly disabled?: boolean;
 }
 
 export interface CopyButtonInput {
