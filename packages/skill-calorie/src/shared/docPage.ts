@@ -5,16 +5,20 @@
  * 同走这一份。此前这套模板与装配函数在 7 个 `*Docs.ts` 里各抄了一份，本次收成一份。
  *
  * 包裹约定（沿 #111–#113，不新增）：内容 = `base-paint/blocks` 的区块；文档 = `fillTemplate`
- * 包裹（资产裸文本＋填充器包裹）；`sharedCss = buildStyleSheet().css + blocksCss()`，不走
- * `extraCss`；图表页另加 CHARTS-HELPERS ＋ `buildChartsHelpersJs`，图表 CSS 由其运行时注入。
+ * 包裹（资产裸文本＋填充器包裹）；`sharedCss = buildStyleSheet().css + blocksCss()`；图表页另加
+ * CHARTS-HELPERS ＋ `buildChartsHelpersJs`，图表 CSS 由其运行时注入。
+ * **#725 起「文档壳」那一圈（doctype／head 三槽位序／资产拼接／图表位）搬去公共层
+ * `base-paint/docShell` 的 `renderDocShell`**——本件只留页头语义（下面那些字段与 A／B 双路）
+ * ＋ 自己的补丁样式（走 `extraCss`），拼好正文后交给骨架件；11 个字段与两条路一行未动。
  * 本文件不做取数、不装任何能力名，只按参数拼页；`fmt`／`DOC_VERSION`／`DOC_SKILL` 不进来
  * （它们是各页自己的口径，留给整包按域重排那张票）。
  *
  * 复制与提示（`promptCopyArea`／`dataCopyArea`／`copyArea`／`copyLog`／`notice`）住在同目录
  * `copyArea.ts`——#239 按「一个文件对外不多于五个」把那一组名字另立一件，本文件只留装配与投影。
  */
-import { blocksCss, renderPageShell } from 'base-paint/blocks';
-import { buildChartsHelpersJs, buildSharedHelpersJs, buildStyleSheet, fillTemplate, PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageShapeCss, pageUiCss } from 'base-paint';
+import { renderPageShell } from 'base-paint/blocks';
+import { renderDocShell } from 'base-paint/docShell';
+import { pageShapeCss, pageUiCss } from 'base-paint';
 
 /** 整页装配的入参（≤11 字段；B线新增 metaLeft／badge／summary 三字段：给 metaLeft 才走新路，
  *  badge 缺省＝不出徽章，老调用方不传即走老路）。 */
@@ -50,8 +54,9 @@ interface DocPageInput {
   readonly pageUi?: boolean;
 }
 
-/** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。 */
-const BLINE_CSS = '\n.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}\n'
+/** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。
+ *  **首字符不是换行**：它是 `extraCss` 的一段，段前那个换行由骨架件（`renderDocShell`）补。 */
+const BLINE_CSS = '.meta-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}\n'
   + '.meta-bar .left{font-size:12px;color:var(--fg2)}\n'
   + '.type-badge{font-size:11px;padding:3px 10px;border-radius:6px;background:var(--soft);color:var(--fg2);font-weight:600;white-space:nowrap}\n'
   + '.ilife-block-page-shell-title{font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-.02em;margin-bottom:4px;text-wrap:balance}\n'
@@ -93,27 +98,11 @@ function blineEsc(value: string): string {
   });
 }
 
-/** 整页模板（裸标记＋CONTENT 槽；`wrap` 带 ilife-page 兼容既有 --html 断言）。
- *  标记不得预包裹：资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包。
- *  `pageUi`（#525）只改两处、都在启用时才发生：viewport 串加 `viewport-fit=cover`
- *  （`env(safe-area-inset-*)` 在 iOS 上不写它恒取 0）＋版面根多一颗 `ilife-page-ui`；
- *  不给即老串老类，产出物逐字节不变。 */
-function docShell(docTitle: string, charts: boolean, pageUi: boolean): string {
-  const chartsSlot = charts ? '<!--CHARTS-HELPERS-->\n' : '';
-  const viewport = pageUi ? PAGE_UI_VIEWPORT : 'width=device-width,initial-scale=1';
-  const wrapClass = 'wrap ilife-page' + (pageUi ? ' ' + PAGE_UI_CLASS : '');
-  return '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
-    + '<meta name="viewport" content="' + viewport + '">\n'
-    + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n'
-    + '<div class="' + wrapClass + '">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n'
-    + chartsSlot
-    + '</body>\n</html>';
-}
-
 /** ① 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（图表页多带图表 helpers）。
  * B线新路（给了 metaLeft）：老A壳两行式＝meta-bar（左参数一行＋右页型徽章，**徽章由调用方给、
  * 不给即整颗不渲染**）＋H1（人话短标题）＋结论摘要行；沿用 B-01 类名（不碰类名根），补丁样式只用冻结 token。
- * 可打印位（`printable`，A线／B线共用）只加类名，不加样式、不碰 `extraCss`。 */
+ * 可打印位（`printable`，A线／B线共用）只加类名，不加样式、不碰 `extraCss`。
+ * 本件只决定「哪一版正文」与「这一页的补丁样式」；文档壳（doctype／槽位序／资产拼接／图表位）交骨架件。 */
 export function assembleDocPage(input: DocPageInput): string {
   const charts = input.charts === true;
   const metaLeft = typeof input.metaLeft === 'string' ? screenEyebrow(input.metaLeft) : null;
@@ -122,12 +111,11 @@ export function assembleDocPage(input: DocPageInput): string {
   const printable = input.printable === true;
   /** 页面级移动端配方（#525）：同上口径——只认真真值，不给／给假即老路（产出物逐字节不变）。 */
   const pageUi = input.pageUi === true;
-  const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + (bline ? BLINE_CSS : '')
-      + (pageUi ? '\n' + pageUiCss() + '\n' + pageShapeCss() : ''),
-    sharedHelpersJs: buildSharedHelpersJs(),
-  };
-  if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
+  /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段，都不启用即空串。 */
+  const extraCss = [
+    bline ? BLINE_CSS : '',
+    pageUi ? pageUiCss() + '\n' + pageShapeCss() : '',
+  ].filter((seg) => seg !== '').join('\n');
   if (bline) {
     const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : null;
     const summary = typeof input.summary === 'string' && input.summary !== '' ? input.summary : undefined;
@@ -138,7 +126,7 @@ export function assembleDocPage(input: DocPageInput): string {
       + (summary === undefined ? '' : '<p class="sub">' + blineEsc(summary) + '</p>')
       + '<div class="ilife-block-page-shell-body">' + input.content + '</div>'
       + '</section>';
-    return fillTemplate({ template: docShell(input.docTitle, charts, pageUi), assets, content: body }).html;
+    return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi });
   }
   const eyebrow = typeof input.eyebrow === 'string' ? screenEyebrow(input.eyebrow) : null;
   const body = renderPageShell({
@@ -148,7 +136,7 @@ export function assembleDocPage(input: DocPageInput): string {
     content: input.content,
     printable,
   });
-  return fillTemplate({ template: docShell(input.docTitle, charts, pageUi), assets, content: body }).html;
+  return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi });
 }
 
 /** ② 度量投影：stat-metrics 只收确定数字（冻结口径：null／undefined 不进投影）。 */
