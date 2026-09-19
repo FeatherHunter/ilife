@@ -4,7 +4,7 @@
 #   skill-calorie 0.2.6（饮食／运动／体重／目标／身体细节／计划／训记联动；
 #     唯一出口 calorie-cmd-read）
 #
-# 前提：base-paint@0.3.5 已在 registry（2026-09-19：#725 的 docShell ＋ #728 的写入域形状件），
+# 前提：base-paint@0.3.6 已在 registry（2026-09-19 夜：#725 的 docShell、#728 的写入域形状件与逐页审计后的一刀），
 # 本脚本只断言它在位，不重发。
 # 插件 dsh-calorie 不在本脚本发 —— 走
 # packages/plugin-calorie/scripts/wizard-publish.sh（技能必须先落 registry，
@@ -207,7 +207,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
 V_SKILL="0.2.6"
-V_BASEPAINT="0.3.5"
+V_BASEPAINT="0.3.6"
 
 # 目录名（非 npm 名）
 D_SKILL="skill-calorie"

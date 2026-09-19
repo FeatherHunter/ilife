@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
 # 饼干记账技能线发版 wizard：共享层前置 ＋ skill-bill（共 2 包，人扫码）
-#   base-paint 0.3.5（前置：skill-bill 的 HELP 交付链 import 它的 `./save-html`
-#     （`helpReuseWindowOf`）与 `./docShell`（#725）＋ 写入域的形状件（#728）；
+#   base-paint 0.3.6（前置：skill-bill 的 HELP 交付链 import 它的 `./save-html`
+#     （`helpReuseWindowOf`）与 `./docShell`（#725）＋ 写入域的形状件（#728）＋ 逐页审计后的一刀（#733）；
 #     技能装到第三方就起不来。base-paint 归属 packages/base-render，本脚本只在它
 #     缺席时代发一步，不替它建自己的 wizard；本批它已在同一窗口发过，这里会跳过。）
-#   skill-bill 0.2.1（含 402 写入 16 词 ＋ 403 查询 17 词：WAKE_TABLE 77 短语、
+#   skill-bill 0.2.2（含 402 写入 16 词 ＋ 403 查询 17 词：WAKE_TABLE 77 短语、
 #     16 运行时 key、7 域 74 场景 HELP、16 件模板）
 #
 # 插件 dsh-bill-ilife 不在本脚本发 —— 走
@@ -209,8 +209,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_BASEPAINT="0.3.5"
-V_SKILL="0.2.1"
+V_BASEPAINT="0.3.6"
+V_SKILL="0.2.2"
 
 # 目录名（非 npm 名）
 D_BASEPAINT="base-render"
@@ -348,7 +348,7 @@ fi
 
 # ── Stage 5：发 skill-bill ────────────────────────────────────────────
 stage "5/6 · 发布 skill-bill@$V_SKILL（你扫码）"
-say "饼干记账技能 0.2.1：402 写入 16 词 ＋ 403 查询 17 词（WAKE_TABLE 77 短语、"
+say "饼干记账技能 0.2.2：402 写入 16 词 ＋ 403 查询 17 词（WAKE_TABLE 77 短语、"
 say "16 运行时 key、7 域 74 场景 HELP、16 件模板），唯一出口 bill-cmd-read。"
 if already skill-bill "$V_SKILL"; then
   warn "registry 已有 skill-bill@$V_SKILL —— 跳过本次发布（不重复占版本号）。"
