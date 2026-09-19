@@ -9,16 +9,12 @@
  * 备注前 3 动作 `、` 连接（`;` 不上屏）。宿主编排（`land.ts`）与本页用同一套，不另起第二份。
  */
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
-import type { SerializableEnvelope } from 'base-paint';
-import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
-import { copyLog, promptCopyArea } from '../shared/copyArea.js';
-import { commandLine } from '../shared/writeParts.js';
+import { promptCopyArea } from '../shared/copyArea.js';
+import { copyBlock } from '../shared/copyBlock.js';
 import type { PlanSessionRow } from './planStore.js';
 
-const DOC_VERSION = '0.1.0';
-const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·健身计划回执';
 
 /** 四步里一步的结局（编排层给，页层只摆不算）。 */
@@ -49,26 +45,6 @@ export function landTitleOf(s: PlanSessionRow, index = 0): string {
 /** 前 3 个动作用 `、` 连接（老 `; ` 改形状：`;` 不上屏）。 */
 export function landNotesOf(s: PlanSessionRow): string {
   return (s.movements ?? []).slice(0, 3).map((m) => (m.name ?? '') + '多组').join('、');
-}
-
-function envelopeOf(key: string, message: string): SerializableEnvelope {
-  return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key,
-    data: { ok: true, message },
-  };
-}
-
-function copyBlock(key: string, params: Record<string, unknown>, receipt: CrudReceipt, source: string): string {
-  return planCopyBlock({
-    envelope: envelopeOf(key, receipt.summary),
-    log: copyLog({
-      command: commandLine(key, params),
-      source,
-      m5Line: receipt.m5Line,
-      actionAt: receipt.meta.actionAt,
-      version: DOC_VERSION,
-    }),
-  });
 }
 
 /** 实跑命令原文（过程页首位可复制 prompt：照抄即跑同一天，单引号包 JSON 照本仓一贯口径）。 */

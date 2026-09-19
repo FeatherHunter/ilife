@@ -13,17 +13,15 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
-import type { SerializableEnvelope } from 'base-paint';
 import { todayISO } from '../analysis/utils.js';
 import { weekOfDate } from '../render/planPlate.js';
-import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { verifyMovements } from '../xunji/index.js';
 import type { MovementVerifyReport } from '../xunji/index.js';
 import { assembleDocPage } from '../shared/docPage.js';
-import { copyLog } from '../shared/copyArea.js';
+import { copyBlock } from '../shared/copyBlock.js';
 import { dayField, fail } from '../shared/params.js';
-import { R, commandLine, provided } from '../shared/writeParts.js';
+import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
 import type { PlanSessionRow } from './planStore.js';
@@ -32,8 +30,6 @@ import type { XunjiCall } from './xunjiRunner.js';
 
 export const XUNJI_PUSH_KEY = 'calorie.workout.xunji-push';
 const XUNJI_PUSH_WAKE = '同步到训记';
-const DOC_VERSION = '0.1.0';
-const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·健身计划回执';
 
 /** 子进程 `push-plan` stdout 的最小形状守卫（成功分支；缺键即回执解析失败 exit 4）。 */
@@ -88,26 +84,6 @@ function auditMovements(sessions: readonly PlanSessionRow[]): MovementVerifyRepo
   )];
   if (names.length === 0) return null;
   return verifyMovements(names);
-}
-
-function envelopeOf(key: string, message: string): SerializableEnvelope {
-  return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key,
-    data: { ok: true, message },
-  };
-}
-
-function copyBlock(key: string, params: Record<string, unknown>, receipt: CrudReceipt): string {
-  return planCopyBlock({
-    envelope: envelopeOf(key, receipt.summary),
-    log: copyLog({
-      command: commandLine(key, params),
-      source: '训练计划（workout_plans）＋ 训记推送读数',
-      m5Line: receipt.m5Line,
-      actionAt: receipt.meta.actionAt,
-      version: DOC_VERSION,
-    }),
-  });
 }
 
 /** 审计表行（动作／结论／建议名——建议只在不通过时给，不过的不拦推）。 */
@@ -219,7 +195,7 @@ function pushProcessPage(
       ],
       caption: '本地成远端没成分得清',
     }),
-    copyBlock(XUNJI_PUSH_KEY, params, receipt),
+    copyBlock(XUNJI_PUSH_KEY, params, receipt, '训练计划（workout_plans）＋ 训记推送读数'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -273,7 +249,7 @@ function pushResultPage(
       ],
       caption: '本地成远端没成分得清',
     }),
-    copyBlock(XUNJI_PUSH_KEY, params, receipt),
+    copyBlock(XUNJI_PUSH_KEY, params, receipt, '训练计划（workout_plans）＋ 训记推送读数'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,

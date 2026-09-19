@@ -15,22 +15,18 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
-import type { SerializableEnvelope } from 'base-paint';
 import { todayISO } from '../analysis/utils.js';
-import { planCopyBlock } from './planCopyBlock.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
-import { copyLog } from '../shared/copyArea.js';
+import { copyBlock } from '../shared/copyBlock.js';
 import { dayField, fail, optInt } from '../shared/params.js';
-import { R, commandLine, provided } from '../shared/writeParts.js';
+import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 
 export const XUNJI_BACKFILL_KEY = 'calorie.workout.xunji-backfill';
 const XUNJI_BACKFILL_WAKE = '拉训记实绩';
-const DOC_VERSION = '0.1.0';
-const DOC_SKILL = 'calorie';
 const DOC_TITLE = '卡路里·健身计划回执';
 
 /** 子进程 `backfill` stdout 的最小形状守卫（成功分支；缺键即回执解析失败 exit 4）。 */
@@ -74,26 +70,6 @@ function readDays(params: Record<string, unknown>): number {
   if (v === undefined) return 1;
   if (v < 1) fail(2, '参数 days 须为 ≥1 整数（实际：' + String(params['days']) + '）');
   return v as number;
-}
-
-function envelopeOf(key: string, message: string): SerializableEnvelope {
-  return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key,
-    data: { ok: true, message },
-  };
-}
-
-function copyBlock(key: string, params: Record<string, unknown>, receipt: CrudReceipt): string {
-  return planCopyBlock({
-    envelope: envelopeOf(key, receipt.summary),
-    log: copyLog({
-      command: commandLine(key, params),
-      source: '训记实绩回写读数（运动记录）',
-      m5Line: receipt.m5Line,
-      actionAt: receipt.meta.actionAt,
-      version: DOC_VERSION,
-    }),
-  });
 }
 
 /** 失败天点名（读数可解析时）：「没拉到」与「拉到了没写进」是两种失败，文案分得清（`#608 §三·5`）。 */
@@ -181,7 +157,7 @@ function backfillProcessPage(params: Record<string, unknown>, end: string, days:
       ],
       caption: '本地成远端没成分得清',
     }),
-    copyBlock(XUNJI_BACKFILL_KEY, params, receipt),
+    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, '训记实绩回写读数（运动记录）'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
@@ -227,7 +203,7 @@ function backfillResultPage(params: Record<string, unknown>, summary: BackfillRa
       ],
       caption: '本地成远端没成分得清',
     }),
-    copyBlock(XUNJI_BACKFILL_KEY, params, receipt),
+    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, '训记实绩回写读数（运动记录）'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,
