@@ -120,6 +120,57 @@ function collectTestImports(pkgRoot) {
   return map;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * #717 批⑤ · 定义地闭集账（第二段判定，「同一符号只允许一个定义地」）
+ *
+ * 判据与上面同构：**例外从源码派生**，不认手写清单。
+ *   ① 每个符号写一行：允许出现那些字面／标识符的文件清单；
+ *   ② 文件里出现 `export { X } … from './件.js'` 这种**薄转出声明**即豁免——那是搬迁期的合法形状
+ *      （正本已搬走、老地址留转出），台账只需列出正本件；
+ *   ③ 其余命中即红，逐行点名「哪个文件、哪一行、命中了什么」。
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/** 闭集账：`符号 → { 只许出现在这些文件, 命中正则 }`。
+ *  加一行 = 把一处口径纳入机器门；命中为零也照样算通过（该符号可能已被更彻底的写法吸收）。 */
+export const DEFINITION_SITES = [
+  { name: '夜宵跨零点（22, 30）', allow: ['src/shared/meal.ts'], re: /\[\s*22\s*,\s*30\s*\]/g, hint: '夜宵窗只写一处：shared/meal.ts 的 MEAL_WINDOW' },
+  { name: '营养素推荐区间（10-20／45-65／20-35）', allow: ['src/shared/nutritionRange.ts'], re: /min:\s*(?:10|45|20)\s*,\s*max:\s*(?:20|65|35)/g, hint: '区间只写一处：shared/nutritionRange.ts 的 NUTRITION_RANGE' },
+  { name: '孤儿区间（15-30／40-60，已作废）', allow: [], re: /\b15\s*,\s*30\b|\b40\s*,\s*60\b/g, hint: '这套数已作废（#701 内容三裁），任何地方都不该再出现' },
+];
+
+/** 去注释与空白（注释里提到旧数不算定义地；本门只看代码）。 */
+function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+}
+
+/** 扫真源码：每个符号 → `{ file, line, hit }[]`（薄转出件豁免）。 */
+export function scanDefinitionSites(pkgRoot) {
+  const out = [];
+  for (const row of DEFINITION_SITES) {
+    for (const abs of walk(join(pkgRoot, 'src'), /\.ts$/)) {
+      const rel = relative(pkgRoot, abs).replace(/\\/g, '/');
+      if (row.allow.includes(rel)) continue;
+      const src = stripComments(readFileSync(abs, 'utf8'));
+      if (new RegExp("export\\s*\\{[^}]*\\}\\s*from\\s*'").test(src)) continue; // 薄转出件：豁免
+      const re = new RegExp(row.re.source, row.re.flags.includes('g') ? row.re.flags : row.re.flags + 'g');
+      let m;
+      while ((m = re.exec(src)) !== null) {
+        const line = src.slice(0, m.index).split('\n').length;
+        out.push({ name: row.name, file: rel, line, hit: m[0], hint: row.hint });
+      }
+    }
+  }
+  out.sort((a, b) => (a.name + a.file + a.line).localeCompare(b.name + b.file + b.line));
+  return out;
+}
+
+/** 判定：返回红条目（定义地跑到了台账没列的文件里）。 */
+export function judgeDefinitionSites(pkgRoot) {
+  return scanDefinitionSites(pkgRoot);
+}
+
 /** 判定：返回红条目。 */
 export function judge(pkgRoot) {
   const reexports = collectReexports(pkgRoot);
@@ -173,6 +224,23 @@ function selftest() {
   fakeTree(dir, { withReexport: false, fromPaths: new Map([[1, '../../dist/index.js'], [2, '../../dist/render/canon.js']]) });
   results.push(['③包门配对 ⇒ 绿（豁免）', judge(dir).length === 0, judge(dir).length]);
   rmSync(dir, { recursive: true, force: true });
+  /* ── #717 批⑤ · 定义地闭集账的两条自证（同一套「例外从源码派生」的规矩） ── */
+  const mkDefTree = (body) => {
+    const d = mkdtempSync(join(tmpdir(), 't717-defsite-'));
+    mkdirSync(join(d, 'src', 'shared'), { recursive: true });
+    writeFileSync(join(d, 'src', 'shared', 'nutritionRange.ts'), "export const NUTRITION_RANGE = { protein: { min: 10, max: 20 } };\n");
+    writeFileSync(join(d, 'src', 'rogue.ts'), body);
+    return d;
+  };
+  // ④ 别处再抄一份区间 ⇒ 必红
+  let d4 = mkDefTree("export const R = { protein: { min: 10, max: 20 } };\n");
+  const red4 = judgeDefinitionSites(d4);
+  results.push(['④定义地跑到台账外 ⇒ 红', red4.length === 1 && red4[0].file === 'src/rogue.ts', red4.length]);
+  rmSync(d4, { recursive: true, force: true });
+  // ⑤ 同一处置成薄转出（正本仍只一处）⇒ 绿（合法例外不被误判）
+  const d5 = mkDefTree("export { NUTRITION_RANGE } from './shared/nutritionRange.js';\n");
+  results.push(['⑤薄转出（搬迁期合法形状）⇒ 绿', judgeDefinitionSites(d5).length === 0, judgeDefinitionSites(d5).length]);
+  rmSync(d5, { recursive: true, force: true });
   const bad = results.filter((r) => !r[1]);
   for (const [name, ok, n] of results) console.log(`${ok ? 'PASS' : 'RED '} ${name}（红条目 ${n}）`);
   console.log(`RESULT: ${results.length - bad.length}/${results.length}`);
@@ -182,9 +250,15 @@ function selftest() {
 
 if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('check-one-path.mjs')) {
   if (process.argv.includes('--selftest')) process.exit(selftest());
-  const red = judge(PKG);
+  /* `--root <包根>`：夹具用（照同目录 `check-warning-line.mjs` 的 `--root`／`--agents` 先例）——
+     夹具只碰临时目录；真实门禁一律无参运行，脚本会打印 ROOT: 供认口。 */
+  const rootIx = process.argv.indexOf('--root');
+  const ROOT = rootIx > 0 && process.argv[rootIx + 1] ? process.argv[rootIx + 1] : PKG;
+  console.log('ROOT: ' + ROOT);
+  const red = judge(ROOT);
+  const redDef = judgeDefinitionSites(ROOT);
   if (process.argv.includes('--json')) {
-    console.log(JSON.stringify({ red: red.length, items: red.map((r) => r.symbol) }));
+    console.log(JSON.stringify({ red: red.length, items: red.map((r) => r.symbol), defRed: redDef.length, defItems: redDef.map((r) => r.name + '@' + r.file + ':' + r.line) }));
   }
   if (red.length) {
     console.error(`RED 同一符号两个路径：${red.length} 个（规矩与口径见本件头）`);
@@ -194,7 +268,13 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('check-one-p
     }
     console.error('修法：把断言换到其中一条路径上（优先生产真正走的那条）；确属搬迁期薄转出时，'
       + '在正本件旁写出 `export { … } from \'./正本件.js\'`，本门按源码派生例外、不认手写清单。');
-    process.exit(1);
   }
+  if (redDef.length) {
+    console.error(`RED 定义地跑到台账外：${redDef.length} 处（#717 批⑤；台账见本件 DEFINITION_SITES）`);
+    for (const r of redDef) console.error(`RED   ${r.name} —— ${r.file}:${r.line} 命中 ${JSON.stringify(r.hit)}｜${r.hint}`);
+    console.error('修法：把数值删掉、改读正本件；确属搬迁期转出时在该件写 `export { … } from \'./正本件.js\'`（本门按源码派生豁免）。');
+  }
+  if (red.length || redDef.length) process.exit(1);
   console.log('PASS: 测试面每个符号只有一条 dist 路径（包门与薄转出声明按源码派生豁免）');
+  console.log('PASS: 定义地闭集账 ' + DEFINITION_SITES.length + ' 项全在台账内（#717 批⑤）');
 }
