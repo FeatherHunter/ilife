@@ -131,11 +131,17 @@ export function missingSubtitle(input: CollectInput, blocked: readonly BlockedLi
   return blocked.length === 0 ? '这一页只采集，不写库。' : '缺的就是下面这几项。';
 }
 
-/** 缺项那一处的共用说法（记报销那一页用它）：逐项给中文名与「为什么缺」，并点名写库指令。 */
+/** 缺项那一处的共用说法（记报销那一页用它）：逐项给中文名与「为什么缺」。
+ *
+ *  **#733 改**：改前句尾还缀着 `照这条说：bill.record.add。`——那是**具体脚本（命令全名）**，
+ *  而维护者 2026-09-19 的口径是：「`唤醒词`／槽位是 prompt 模板的正常组成，**具体脚本才是硬编码**，
+ *  页面与复制出去的 prompt 都不该有」。命令全名对用户没有动作意义（他说的是唤醒词，不是键名），
+ *  故整句删掉，只留「补齐之后跟助手说一遍」。
+ *  `key` 保留在签名里：调用方按同一形状喂，删参数要连带改四处调用点，不属本票写集。 */
 export function sharedPrompt(key: string, blocked: readonly BlockedLine[]): string {
   return '这一笔还差 ' + blocked.length + ' 项：'
     + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-    + '。\n这一页先不写库。补齐之后跟助手说一遍，照这条说：' + key + '。';
+    + '。\n这一页先不写库。补齐之后跟助手说一遍。';
 }
 
 /** 过程型采集页：缺项时出这一页（只采集、不写库）。 */

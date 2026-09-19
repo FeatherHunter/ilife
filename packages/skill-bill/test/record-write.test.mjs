@@ -293,14 +293,22 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal((text.match(/<select/g) ?? []).length, 3, '分类／账户／账本三枚选择器');
   });
 
-  it('缺项阻断条真阻断：含占位符的写库指令只给看不给复制（任何 data-t 都不含它）', () => {
+  it('缺项阻断条真阻断：含占位符的写库指令整块不再上屏（#733）', () => {
     const file = join(H2, 'collect-block.html');
     const r = run2(['bill.record.add', '--params', '{"kind":"expense"}', '--html', file]);
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
     assert.equal(envOf(r).data.message, '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）');
     const text = pageOf(file);
     assert.ok(text.includes('⛔ 先补齐（2 项）'), '置灰按钮须报出缺几项');
-    assert.ok(text.includes('&lt;分类&gt;') && text.includes('&lt;金额&gt;'), '补齐后要跑的写库口令须给看');
+    // #733 换口径：维护者 2026-09-19——「唤醒词／槽位是 prompt 模板的正常组成，**具体脚本**才是硬编码，
+    // 页面与复制出去的 prompt 里都不该有」。那条带 `bill-cmd-read … --params '{…<分类>…}'` 的
+    // 「口令原文」块整个不再渲染 ⇒ 屏幕上与任何 data-t 里都不许再有具体脚本。
+    assert.ok(!text.includes('口令原文'), '口令原文块（具体脚本）不许再上屏');
+    // 屏幕上＝`<pre>` 指令块那几处。日志载荷（`data-t` 的「调用链」那行）**不在这一条口径内**：
+    // 它是过程证据，不是 prompt 模板（见 #733 正文的「三个口子」一节）。
+    for (const m of text.matchAll(/<pre[^>]*class="[^"]*pre-block-code[^"]*"[^>]*>([\s\S]*?)<\/pre>/g)) {
+      assert.ok(!m[1].includes('bill-cmd-read'), '指令块里不许再印具体脚本：' + m[1].slice(0, 60));
+    }
     for (const t of copyTexts(text)) {
       assert.ok(!t.includes('&lt;'), '含占位符的写库口令不得可复制，却出现在 data-t：' + t.slice(0, 60));
     }

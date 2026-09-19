@@ -174,8 +174,10 @@ export function blockedPromptOf(input: {
   for (const b of input.blocked) filled[b.name] = input.replaces?.[b.name] ?? '<' + b.label + '>';
   return {
     command: commandLine(input.key, filled),
+    // #733：句尾原来缀着 `照这条说：<命令全名>。`（如 `bill.record.add`）——那是**具体脚本**，
+    //   按维护者 2026-09-19 的口径不该出现在复制出去的 prompt 里，整句删掉。
     prompt: '这一笔还差 ' + input.blocked.length + ' 项：'
       + input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-      + '。\n这一页先不写库。补齐之后跟助手说一遍，照这条说：' + input.key + '。',
+      + '。\n这一页先不写库。补齐之后跟助手说一遍。',
   };
 }

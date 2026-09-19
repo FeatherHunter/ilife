@@ -84,7 +84,10 @@ export function blockedMessage(
 /** 阻断条的入参：判定结果 ＋ 那条「补齐后可重跑」的写库指令原文。 */
 interface BlockedBarInput {
   readonly items: readonly BlockedItem[];
-  /** 写库指令原文（补齐后照抄重跑那条）；带尖括号占位符。 */
+  /** 写库指令原文。**#733 起不再上屏**（维护者口径：`唤醒词`／槽位是 prompt 模板的正常组成，
+   *  「**具体脚本**」才是硬编码、不该出现在页面与复制出去的 prompt 里）。
+   *  这一格留在入参里是因为调用方按同一形状喂（`commandLine(...)`），本轮只是**不渲染它**；
+   *  删字段要连带改四个域的调用点，不属本票写集，留在「遗留出口」。 */
   readonly command: string;
   /** 补齐之后会发生什么（缺省一句）。 */
   readonly note?: string;
@@ -128,9 +131,6 @@ export function blockedBar(input: BlockedBarInput): string {
       why: i.why === '没给' ? '未提供' : i.why,
     })),
     caption: '缺一项就先不写库',
-  }) + renderCaliberLine('补齐之后照下面那条口令跟助手说一遍。') + renderPreBlock({
-    command: input.command,
-    label: '口令原文',
   }) + renderActionBar({
     // #733 复现实测：这颗按钮在**内联脚本里出现 0 次** —— 委派第一道 `node.closest("[data-action-id]")`
     //   认得出它，第二道 `getAttribute("data-t") === null → return` 就早退 ⇒ 点了零动作、零反馈。
