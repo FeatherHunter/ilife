@@ -37,7 +37,7 @@ export interface ConfigItem {
   readonly hint: string;
 }
 
-/** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
+/** 常用项：用户裁决三点的五项——改了就影响「库与产物落在哪、训记认不认你」，放页面上。 */
 const COMMON: readonly ConfigItem[] = [
   {
     key: 'db.dir',
@@ -67,9 +67,16 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     hint: '身材照的存放目录，绝对路径。留空＝未配：读照片不报错，出 GIF 与写照片会被拦下。',
   },
+  {
+    key: 'xunji.key',
+    title: '训记 KEY',
+    tier: 'common',
+    control: 'text',
+    hint: '训记用的凭据。留空＝没配，推送与回写会被拦下；它同时是敏感值，别贴给别人。',
+  },
 ];
 
-/** 高级项：默认收起。改错了多半只是自己撞上麻烦，不确定就别动。 */
+/** 高级项：默认收起（13 项减常用 5 项＝8 项）。改错了多半只是自己撞上麻烦，不确定就别动。 */
 const ADVANCED: readonly ConfigItem[] = [
   {
     key: 'photos.gifs',
@@ -77,13 +84,6 @@ const ADVANCED: readonly ConfigItem[] = [
     tier: 'advanced',
     control: 'text',
     hint: '照片目录下放 GIF 的子目录名。',
-  },
-  {
-    key: 'xunji.key',
-    title: '训记 KEY',
-    tier: 'advanced',
-    control: 'text',
-    hint: '训记用的凭据。留空＝没配，推送与回写会被拦下；它同时是敏感值，别贴给别人。',
   },
   {
     key: 'xunji.stateDir',
