@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#727 收尾待裁三问</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1c2024; --dim:#5b6570; --line:#e3e6ea;
+    --ok:#1a7f45; --okbg:#e9f7ee; --warn:#a4610a; --warnbg:#fdf3e2; --bad:#b3261e; --badbg:#fdecea;
+    --rec:#1b5fb0; --recbg:#e8f1fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--bg);color:var(--ink);
+       font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  main{max-width:900px;margin:0 auto}
+  a{color:#1b5fb0}
+  h1{font-size:24px;line-height:1.4;margin:0 0 6px}
+  h1 small{display:block;font-size:13px;font-weight:400;color:var(--dim);margin-top:6px}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;margin-right:8px}
+  .pill.p-warn{background:var(--warnbg);color:var(--warn)}
+  .pill.p-info{background:var(--recbg);color:var(--rec)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:18px 0}
+  h2{font-size:18px;margin:0 0 12px}
+  .lead{color:var(--dim);margin:0 0 4px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(198px,1fr));gap:10px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fbfcfd}
+  .stat b{display:block;font-size:20px;line-height:1.3}
+  .stat span{font-size:12.5px;color:var(--dim);display:block}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .stat.ok-s{background:var(--okbg);border-color:#c9e8d6}
+  .stat.warn-s{background:var(--warnbg);border-color:#f0dcb8}
+  .q{border-left:5px solid var(--rec);}
+  .q h2{display:flex;gap:10px;align-items:baseline}
+  .n{background:var(--rec);color:#fff;border-radius:8px;font-size:13px;padding:2px 9px;flex:none}
+  .why{background:#f8f9fb;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:0 0 14px}
+  .why p{margin:0 0 8px}
+  .why p:last-child{margin:0}
+  ul.facts{margin:0;padding-left:20px}
+  ul.facts li{margin-bottom:6px}
+  code{background:#eef1f4;border-radius:5px;padding:1px 5px;font-size:13.5px;
+       font-family:ui-monospace,Consolas,"Cascadia Mono",monospace}
+  table{width:100%;border-collapse:collapse;margin:12px 0 4px;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;vertical-align:top;text-align:left}
+  th{background:#f3f5f7;font-size:13px;color:var(--dim);font-weight:600;white-space:nowrap}
+  tr.rec td{background:var(--recbg)}
+  tr.rec td:first-child{font-weight:600}
+  .rec-tag{display:inline-block;background:var(--rec);color:#fff;border-radius:6px;
+           font-size:12px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+  .verdict{border-left:4px solid var(--ok);background:var(--okbg);border-radius:0 10px 10px 0;
+           padding:10px 14px;margin-top:12px}
+  .verdict b{color:var(--ok)}
+  details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  summary{cursor:pointer;color:var(--dim);font-size:14px}
+  details p{font-size:14.5px;margin:8px 0 0}
+  footer{color:var(--dim);font-size:14px;margin-top:22px}
+  footer ol{margin:8px 0 0;padding-left:20px}
+  .answer{background:#1c2024;color:#fff;border-radius:10px;padding:12px 16px;margin-top:14px;font-size:14.5px}
+  @media print{body{background:#fff;padding:0}section{break-inside:avoid;border-color:#ccc}}
+</style>
+</head>
+<body>
+<main>
+
+  <h1>#727 正式发版窗口：收尾待裁三问
+    <small><span class="pill p-warn">95% · 待确认</span><span class="pill p-info">父图 #671 的最后一张子票</span>
+    <a href="https://github.com/FeatherHunter/ilife/issues/727">github.com/FeatherHunter/ilife/issues/727</a></small>
+  </h1>
+
+  <section>
+    <p class="lead">发版窗口本身已经跑完：12 个包在 npm 上、四道门全绿、装机已经就位。剩下三件都需要你点头（或动手）：<b>记账那一对的收口口径</b>、<b>重启宿主后的点屏验收</b>、<b>本轮在你真配置上留下的痕迹</b>。</p>
+    <div class="stats">
+      <div class="stat ok-s"><b class="ok">全绿</b><span>发布态：从 registry 实拉 13 包 tarball 逐条查（技能含 config／health，插件含页签槽注册，pin 逐家对上）</span></div>
+      <div class="stat warn-s"><b class="warn">6 / 7</b><span>装机态探针：<code>panelRegistered=true</code>；唯一 false 是记账（本票押后那一对）</span></div>
+      <div class="stat ok-s"><b class="ok">5 / 5</b><span>装机态配置往返：改一项 → 新进程读回 → 重置 ＋ <code>.bak</code> 在位</span></div>
+      <div class="stat ok-s"><b class="ok">PASS</b><span>收口门 <code>check-publish --post</code>：16 个目标逐条复核</span></div>
+    </div>
+  </section>
+
+  <section class="q">
+    <h2><span class="n">Q1</span>记账那一对（<code>skill-bill</code> ＋ <code>dsh-bill-ilife</code> 0.2.1）进不进本窗口？</h2>
+
+    <div class="why">
+      <p><b>前因</b>：本票的发布矩阵里，记账这一对写着「等 #726（记账技能侧取值面迁移）落地后再发」。<b>#726 今天已关闭</b>——按原文读，押后条件满足了。</p>
+      <p><b>后果</b>：若把它划出本窗口，面板上第七个目标（记账）就一直是第三态「产物里没有注册代码，等它发新版」，#723 的第四家（记账）也维持 ○；本票的七目标读数停在 6/7。若现在发，要把一个正在被改的技能交出去。</p>
+    </div>
+
+    <b>帮你决策的四条关键信息</b>
+    <ul class="facts">
+      <li><b>技能侧正在被另一个写者改</b>：<code>packages/skill-bill/src/account/*</code> 等 12 件在 <a href="https://github.com/FeatherHunter/ilife/issues/691">#691</a>（父图 #681）名下有<b>未提交写集</b>，此刻发版＝把搬迁到一半的记账技能交给用户。</li>
+      <li><b>你在今天 18:29 已经裁过</b>：「我们开发完成后 再发新版」——本仓已就绪但不再逐项发版的改动<b>进攒发清单</b>，收尾时一个窗口发完。</li>
+      <li><b>「只发插件这一半」不成立</b>：记账设置页的三个 key 是 <code>bill.config.*</code>，而<b>已发布的 <code>skill-bill@0.2.0</code> 没有配置命令</b>（实测 <code>bill.config.read</code> → <code>ERR 3: 未知联动 key</code>）⇒ 只发插件＝用户点开一个打不开的页签。</li>
+      <li><b>发版要 npm 的 OTP 扫码</b>，这一步只在人手上（本轮窗口也是你配合扫的）。</li>
+    </ul>
+
+    <table>
+      <tr><th>选项</th><th>利</th><th>弊</th></tr>
+      <tr class="rec">
+        <td>A. 押后到「开发完成」后的攒发窗口<span class="rec-tag">推荐</span></td>
+        <td>与 18:29 的裁定一致；与 <code>dsh-life-pack 0.2.7</code>、检查更新弹窗整改<b>一趟发完</b>；不会交付半成品</td>
+        <td>七目标维持 6/7、#723 第四家维持 ○；本票（或 #723）要多挂一段时间</td>
+      </tr>
+      <tr>
+        <td>B. 现在就发 0.2.1</td>
+        <td>七目标立刻 7/7，#723 可以整体关闭</td>
+        <td>与 #691 的在途写集冲突（并发协议要求<b>开窗前工作区干净</b>）；与 18:29 的裁定直接冲突；发出去的是搬迁到一半的技能</td>
+      </tr>
+    </table>
+
+    <div class="verdict"><b>建议选 A。</b>发版窗口的意义是「把已就绪的东西交到用户手里」——记账技能此刻<b>没就绪</b>，它属于攒发窗口那一趟。</div>
+
+    <details><summary>已被我排除的第三条路（为什么不能只发插件）</summary>
+      <p>记账设置页的读／写／重置走的是技能侧的 <code>bill.config.read</code>／<code>.write</code>／<code>.reset</code>，插件只是 spawn 技能的出口。已发布的 <code>skill-bill@0.2.0</code> 里没有这三个 key 的实现，所以单发插件取得的不是「半个功能」，而是「一个注定报错的页签」。</p>
+    </details>
+  </section>
+
+  <section class="q">
+    <h2><span class="n">Q2</span>面板点屏验收：现在做还是等攒发窗口？在哪一份上做？</h2>
+
+    <div class="why">
+      <p><b>前因</b>：装机发生在今天 15:48，而<b>宿主进程 13:57:40 就起来了</b> ⇒ 宿主里跑的还是启动那一刻加载的旧版。探头读磁盘会说「六个目标都已注册」，但面板上的页签要<b>重启宿主</b>之后才会跳成 ●。</p>
+      <p><b>后果</b>：这一步不动，本票就没法收口——票面第 3 条验收（逐家改一项 → 保存 → 重启 → 读回 → 重置）与 #678 留的两条，都是「人点屏」。</p>
+    </div>
+
+    <b>帮你决策的四条关键信息</b>
+    <ul class="facts">
+      <li>探针的 <code>run</code>／<code>disk</code> 都是<b>读磁盘</b>，它答「盘上这份发了没有」，<b>不答</b>「活宿主里正在跑哪一版」——后者只能靠重启后的面板读数。</li>
+      <li>本票要证的判据是「<b>用户在 npm 世界里装得到的那份</b>能不能用」。你 18:29 另记了一件事：把本仓产物 <code>link:</code> 进使用范围，重启一次就能看到五家新版 ＋ 弹窗新样式——那份是<b>工作区构建</b>，不是 npm 那份。</li>
+      <li><b>重启会打断本轮对话</b>（本席住在宿主进程里）；会话已落盘，重启回来接着收尾即可。</li>
+      <li>点屏清单（四步）：六家页签应全 ●（记账除外）；本次窗口的五家页签点得开且是真配置页；改一项 → 保存 → 重启 → 读回 → 重置（<code>.bak</code> 在）；#678 的两条（卸掉一家 → 点「装上」→ 页签变配置页；「装了新版未重启」时的待重启横幅 ＋ 无「装上更新」按钮——<b>现在正是这一态，重启前可以先看一眼</b>）。</li>
+    </ul>
+
+    <table>
+      <tr><th>选项</th><th>利</th><th>弊</th></tr>
+      <tr class="rec">
+        <td>A. 先按现在的 npm 装机态重启 ＋ 点屏，之后再看 link<span class="rec-tag">推荐</span></td>
+        <td>本票的读数干净——验的就是用户装得到的那一份；一次只验一件事，出问题好归因</td>
+        <td>要看弹窗新样式得多重启一次</td>
+      </tr>
+      <tr>
+        <td>B. 先 <code>link:</code> 本仓产物再重启（一次办两件事）</td>
+        <td>省一次重启；能同时看到五家新版生效与弹窗新样式</td>
+        <td>「npm 世界」的装机读数被工作区构建混掉，本票最核心那条判据失去直接证据（只能靠今天这份磁盘读数旁证）</td>
+      </tr>
+      <tr>
+        <td>C. 都等攒发窗口一起做</td>
+        <td>总共只重启一次</td>
+        <td>本票要挂更久；届时要重跑一遍点屏，今天这份装修机态白等一场</td>
+      </tr>
+    </table>
+
+    <div class="verdict"><b>建议选 A。</b>本票的对象就是 npm 那份；看弹窗新样式是另一件事，放它后面做，两者互不污染。</div>
+  </section>
+
+  <section class="q" style="border-left-color:var(--warn)">
+    <h2><span class="n" style="background:var(--warn)">Q3</span>本轮在你真配置上留下的痕迹：保留还是还原？</h2>
+
+    <div class="why">
+      <p><b>前因</b>：票面第 3 条验收是「逐家改一项 → 保存 → <b>重启宿主</b> → 新进程读回 → 重置回默认（<code>.bak</code> 在）」。它的<b>机制半支</b>（面板改一项最终走的那条链）可以脱离浏览器在装机态机器上跑，我跑了五家：写 → 另起进程读回 → 重置。</p>
+      <p><b>后果</b>：因此动了你的真配置 <code>~/.ilife/*.yaml</code>——留下五个 <code>*.yaml.bak</code>，并且 <code>calorie.yaml</code> 多了一个键。</p>
+    </div>
+
+    <b>帮你决策的三条关键信息</b>
+    <ul class="facts">
+      <li>五个 <code>~/.ilife/*.yaml.bak</code> 是「重置为默认」自动留的备份——<b>「.bak 在」本身就是这条验收要的读数</b>。</li>
+      <li>六份配置的<b>改前现值与哈希</b>留档在 <code>.scratch/t727/config-before.json</code>，事后可逐份核对。</li>
+      <li>只有 <code>calorie.yaml</code> 字节不复位：重置按<b>现行默认值表</b>补进了 <code>xunji.cli</code>（页外键，空串＝包内编译产物＝生产行为）。票面口径是「<b>不做老配置兼容</b>」，这正是应有表现；值面（<code>html.dir</code> 等）全部复位。</li>
+    </ul>
+
+    <table>
+      <tr><th>选项</th><th>利</th><th>弊</th></tr>
+      <tr class="rec">
+        <td>A. 都保留<span class="rec-tag">推荐</span></td>
+        <td><code>.bak</code> 就是验收读数，与票面判据同口径；<code>calorie.yaml</code> 停在现行默认值表（值面与改前一致）</td>
+        <td><code>~/.ilife</code> 比改前多五行 <code>.bak</code> 与一个 <code>xunji.cli</code> 键</td>
+      </tr>
+      <tr>
+        <td>B. 还原成改前逐字节</td>
+        <td><code>~/.ilife</code> 完全回到我动手之前</td>
+        <td>丢掉 <code>.bak</code> 这条验收读数（要重跑一次往返才有）</td>
+      </tr>
+    </table>
+
+    <div class="verdict"><b>建议选 A。</b>它们不影响任何功能，且是这条验收的物证；要还原我随时可以做。</div>
+  </section>
+
+  <section>
+    <h2>你答完，我接着做的三件事</h2>
+    <ol>
+      <li>按 Q1 的答复收口：#723 与 #727 是关闭、还是挂 95% 等攒发窗口（并在票上写清取代关系）。</li>
+      <li>你重启宿主后，把面板点屏读数收齐、回帖到 #727（六家页签／五家配置页／#678 两条）。</li>
+      <li>按 wayfinder 规则，在父图 #671 的 <b>Decisions so far</b> 追加一行 gist（票名 ＋ 链接 ＋ 一句话结论）。</li>
+    </ol>
+    <div class="answer">回答只要一行：<b>Q1 A，Q2 A，Q3 A</b>（或写你选的字母）。</div>
+  </section>
+
+  <footer>
+    读数全部可复现：<code>node .scratch/t727/verify-published.mjs</code>（发布态）、
+    <code>node .scratch/t678/probe-installed.mjs</code>（装机态探针）、
+    <code>node .scratch/t727/config-roundtrip.mjs</code>（配置往返）、
+    <code>node tooling/check-publish.mjs --post</code>（收口门）。
+    逐条读数与边界说明见证据件 <code>docs/plugins/plugin-manager/t727-装机验收-证据.md</code>（提交 <code>346c3bad</code>）。
+  </footer>
+
+</main>
+</body>
+</html>
