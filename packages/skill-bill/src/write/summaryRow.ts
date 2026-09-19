@@ -22,6 +22,7 @@ import { renderCaliberLine, renderChips, renderKpiGrid } from 'base-paint/blocks
 import type { KpiCardInput } from 'base-paint/blocks';
 import { l1Of } from '../shared/category.js';
 import { DEFAULT_TIME_SUFFIX } from '../shared/dateRange.js';
+import { optionLabelOf } from './recentPicks.js';
 
 /** 一型的方向口径（**唯一定义地**，四处引用都走这里）：
  *  `sign`＝这一型要的金额符号（`Math.sign` 的值），`require`＝「这一型为什么得是这个符号」那一句，
@@ -80,7 +81,9 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
     { label: '金额', value: money2(facts.amount), detail: moneyDirection(facts.amount) },
     {
       label: '分类',
-      value: facts.category.trim() === '' ? '未给' : facts.category,
+      // t728：层级值（`借贷/借出`）在页面上改走**层级字形**显示，机器值一个字不改；
+      //  一条口径只许一处实现 ⇒ 显示写法引 `recentPicks.ts` 的 `optionLabelOf`，本件不另写一份。
+      value: facts.category.trim() === '' ? '未给' : optionLabelOf(facts.category),
       detail: facts.category.trim() === '' ? '分类要选到最细那一级' : '归在「' + l1 + '」下面',
     },
     { label: '账户', value: facts.account.trim() === '' ? '未给' : facts.account, detail: '不填就记到默认账户' },

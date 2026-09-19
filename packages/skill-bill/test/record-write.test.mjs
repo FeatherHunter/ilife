@@ -184,7 +184,7 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '改记录 · 回执', '已改动', '这次记了几笔']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '>改记录</h1>', '>回执</span>', '已改动', '这次记了几笔']) {
       assert.ok(text.includes(needle), '改记录回执缺：' + needle);
     }
   });

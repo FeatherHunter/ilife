@@ -149,7 +149,9 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.ok(body(text).includes('ilife-block-kpi-card-bar-fill'), '要有进度条');
     assert.ok(body(text).includes('ilife-block-dist-row'), '要有占比条');
     assert.match(text, /<nav[^>]*aria-label="页内导航"/);
-    assert.match(text, /数据来源 · .+ · .+ → .+ · 共 3 条/, '来源脚注要写清窗口与条数');
+    // t728：脚注改成「三段并列」——来源／窗口／条数各一枚 <span>，段间那条细线由版式出，字符不进产物。
+    assert.match(text, /<span>数据来源 [^<]+<\/span> <span>[^<]+<\/span> <span>共 3 条<\/span>/, '来源脚注要写清来源、窗口与条数');
+    assert.ok(!text.includes('数据来源 · '), '来源脚注不得再用 `·` 串');
   });
 
   it('看预算 · 判据 2：超支项为 0 出「✓ 无」；进度百分比双端夹取', () => {

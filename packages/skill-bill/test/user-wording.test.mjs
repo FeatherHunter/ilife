@@ -82,7 +82,7 @@ describe('t407 整改（一）· 用户语言映射只此一处', () => {
 
   it('下一步动作四档：缺项／采集页／回执页／回执页带退出口', () => {
     assert.equal(nextStepOf({ page: 'collect', missing: 2, wakeWord: '记支出' }), '还差 2 项：补齐了，再说一遍「记支出」。');
-    assert.equal(nextStepOf({ page: 'collect' }), '这一页先不写库；看准了就照下面那句复制。');
+    assert.equal(nextStepOf({ page: 'collect' }), '这一页先不写库。看准了就照下面那句复制。');
     assert.equal(nextStepOf({ page: 'receipt' }), '这一笔已经记下了，不用再做什么。');
     assert.ok(nextStepOf({ page: 'receipt', exit: true }).includes('撤销这一笔'), '带退出口那一档要点出「撤销」');
   });
@@ -100,23 +100,39 @@ describe('t407 整改（一）· 徽章改成若干枚独立形状', () => {
     next: nextStepOf({ page: 'collect', missing: 1, wakeWord: '记支出' }),
   });
 
-  it('四枚形状各自在：唤醒词胶囊／状态徽章／下一步动作', () => {
-    assert.ok(html.includes('ilife-block-chip'), '第一枚：唤醒词与这一页的口径那枚胶囊');
-    assert.ok(html.includes('记支出'), '胶囊里写唤醒词');
-    assert.ok(html.includes('金额取负数'), '口径那一段（方向写清，不靠分隔符）');
+  // t728：徽章行第一枚从「唤醒词」改成「页型」——H1 恒写着唤醒词，徽章行再抄一遍就是同一件事印两遍
+  // （用户逐字要求 4）。页型那一枚在页壳上，本件只有传了 `pageKind` 才出。
+  const withKind = typeBadge({
+    kind: 'expense', status: 'danger', pageKind: '采集页',
+    state: '待补槽位 · 未写库（已阻断）',
+    next: nextStepOf({ page: 'collect', missing: 1, wakeWord: '记支出' }),
+  });
+
+  it('形状各自在：页型胶囊／口径胶囊／状态徽章／下一步动作', () => {
+    assert.ok(withKind.includes('ilife-block-chip-row'), '徽章行有容器（一行并列标签是一个块级子件）');
+    assert.ok(withKind.includes('>采集页</span>'), '第一枚：这一页是哪一种页');
+    assert.ok(withKind.includes('>金额取负数</span>'), '第二枚：口径那一段（方向写清，不靠分隔符）');
+    assert.ok(!withKind.includes('>记支出</span>'), '唤醒词不再在徽章行抄第二遍（H1 已经写了）');
     // 返工第 3 轮：唤醒词与口径拆成两枚胶囊——不再用全角空格把两件事串在一枚里，口径里也不重复唤醒词的方向词。
-    assert.ok(!html.includes('记支出　'), '唤醒词与口径不得再用全角空格串成一枚');
-    assert.ok(!html.includes('支出 金额取负数'), '口径里不再把「支出」抄第二遍');
-    assert.ok(html.includes('ilife-status-badge'), '第二枚：页面状态徽章');
-    assert.ok(html.includes('还没写库'), '状态徽章写用户说法');
-    assert.ok(html.includes('ilife-block-caliber'), '第三枚：下一步动作那行');
-    assert.ok(html.includes('还差 1 项'), '下一步动作说清要做什么');
+    assert.ok(!withKind.includes('记支出　'), '唤醒词与口径不得再用全角空格串成一枚');
+    assert.ok(!withKind.includes('支出 金额取负数'), '口径里不再把「支出」抄第二遍');
+    assert.ok(withKind.includes('ilife-status-badge'), '第三枚：页面状态徽章');
+    assert.ok(withKind.includes('还没写库'), '状态徽章写用户说法');
+    assert.ok(withKind.includes('ilife-block-caliber'), '第四枚：下一步动作那行');
+    assert.ok(withKind.includes('还差 1 项'), '下一步动作说清要做什么');
+  });
+
+  it('不给 pageKind 就只出口径那一枚（页型不是本件的必填事实）', () => {
+    assert.ok(!html.includes('ilife-block-chip-row') || html.includes('>金额取负数</span>'), '只给口径也要出形状');
+    assert.ok(html.includes('金额取负数'), '口径那一枚仍在');
   });
 
   it('版式容器上不许出现 `·`（连形状都不许退回一行串）', () => {
-    for (const cls of ['ilife-block-chip', 'ilife-status-badge', 'ilife-block-caliber']) {
-      const re = new RegExp('class="[^"]*' + cls + '[^"]*"[^>]*>([^<]*)<');
-      const m = re.exec(html);
+    // 按**承载文本的那个标签**取：`ilife-block-chip` 与 `ilife-status-badge` 在 `<span>` 上，
+    // `ilife-block-caliber` 在 `<p>` 上；不锚标签会先命中徽章行容器（它的首子不是文本）。
+    for (const [tag, cls] of [['span', 'ilife-block-chip'], ['span', 'ilife-status-badge'], ['p', 'ilife-block-caliber']]) {
+      const re = new RegExp('<' + tag + ' class="[^"]*' + cls + '[^"]*"[^>]*>([^<]*)<');
+      const m = re.exec(withKind);
       assert.ok(m !== null, '这一枚形状要在：' + cls);
       assert.ok(m[1].trim() !== '', '这一枚形状要有话说：' + cls);
       assert.ok(!m[1].includes('·'), '这一枚形状里不许有 `·`：' + cls + ' → ' + m[1]);

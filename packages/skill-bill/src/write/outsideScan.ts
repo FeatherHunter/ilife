@@ -43,7 +43,7 @@ export const ESCAPE_FIELDS: readonly {
   readonly hint: string;
 }[] = [
   { name: 'amount', label: '金额', hint: '识别出来的金额照原样写：支出为负、收入为正，如 -12.5' },
-  { name: 'category', label: '分类', hint: '三级分类：L1/L2/L3，如 餐饮/外卖/午餐（L3 即名目）' },
+  { name: 'category', label: '分类', hint: '要选到最细那一级，如「午餐」' },
   { name: 'time', label: '时间', hint: '账单上的日期，如 2026-09-14 或 2026-09-14 12:00:00' },
 ];
 
@@ -54,7 +54,7 @@ export function imageNote(scale: PhotoScale): string {
     msg: '已收到 ' + n + ' 张账单图片',
     detail: n === 0
       ? '本次一张图都没交上来：那就走三要素文字填空这条路，照样能记。'
-      : '图放在 ' + scale.where + '，本仓不存图也不读图；识别在外部办完，把三样要素填回来。',
+      : '图放在 ' + scale.where + '，本仓不存图也不读图。识别在外部办完，把三样要素填回来。',
     icon: 'info',
     badge: { text: '已收图片数', type: 'warn' },
     lines: [
@@ -118,7 +118,7 @@ export function escapePrompt(input: {
 }): string {
   const missing = ESCAPE_FIELDS.filter((f) => textOf(input.params[f.name]) === '');
   const head = '拍账单：本仓不装识别引擎、也不做上传控件，图片识别在外部办（本仓之外）。'
-    + '已收到 ' + (input.scale.count > 0 ? input.scale.count : 0) + ' 张图；'
+    + '已收到 ' + (input.scale.count > 0 ? input.scale.count : 0) + ' 张图。'
     + (missing.length === 0
       ? '三要素齐了，可以落库。'
       : '还缺 ' + missing.map((f) => f.label).join('、') + '，缺一样不许写库、也不替你猜。');

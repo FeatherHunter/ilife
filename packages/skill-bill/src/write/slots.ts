@@ -37,17 +37,17 @@ function slot(name: string, hint: string, required: boolean): RecordSlot {
 /** 两条写命令的槽位表。提示句都是**用户说法**：`缺省＝…` 这类口径词不上屏（本轮整改）。 */
 export const RECORD_SLOTS: Record<string, readonly RecordSlot[]> = {
   'bill.record.add': [
-    slot('category', '三级分类，如 餐饮/外卖/午餐。要选到最细那一级', true),
+    slot('category', '要选到最细那一级，如「午餐」', true),
     slot('amount', '支出记负数、收入记正数，如 -12.5', true),
     slot('time', '不填就记成今天 12:00:00', false),
     slot('account', '不填就记到默认账户', false),
     slot('ledger', '不填就记到默认账本', false),
     slot('currency', '不填就用默认币种', false),
-    slot('note', '自由文本；名目写在这里，可带 #标签', false),
+    slot('note', '自由文本，名目写在这里，可带 #标签', false),
   ],
   'bill.record.update': [
     slot('id', '要改的那条记录的编号（撤销／恢复同样要它）', true),
-    slot('op', '不填＝改字段；undo＝撤销／restore＝恢复', false),
+    slot('op', '不填就改字段。撤销写 undo，恢复写 restore', false),
     slot('category', '不改就别给', false),
     slot('amount', '不改就别给', false),
     slot('time', '不改就别给', false),

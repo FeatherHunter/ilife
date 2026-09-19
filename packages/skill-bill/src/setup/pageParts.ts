@@ -34,7 +34,7 @@ import type { WizardStep } from './steps.js';
 import type { SetupBlocked, SetupSlot } from './params.js';
 
 /** 开始使用域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表；老侧 `init_wizard.html:60` 同句）。 */
-export const EYEBROW = '记账 · 开始使用';
+export const EYEBROW = '记账｜开始使用';
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`。 */
 export function setupPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {

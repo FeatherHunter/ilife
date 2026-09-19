@@ -37,7 +37,6 @@ export const SCENE: Scene = {
     kind: KIND,
     category: CATEGORY,
     ledger: LEDGER,
-    docTitle: '·记借出',
     extraBlocked: (values) => {
       const extra: BlockedItem[] = [];
       if (textOf(values.params[WHO_NAME]) === '') {

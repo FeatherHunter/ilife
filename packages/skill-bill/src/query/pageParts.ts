@@ -12,7 +12,7 @@ import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
 
 /** 查询域各页的眉标。 */
-export const QUERY_EYEBROW = '记账 · 查询域';
+export const QUERY_EYEBROW = '记账｜查询域';
 
 /** 本域两张页型统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function queryPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {

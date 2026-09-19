@@ -20,6 +20,7 @@
 import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderParamForm } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
+import { optionLabelOf } from './recentPicks.js';
 import { badgeTextOf } from './userWording.js';
 
 /** 一个候选：哪条记录 ＋ 一眼认得出的摘要 ＋ 为什么是它。 */
@@ -111,7 +112,7 @@ export function candidateRows(items: readonly CandidateItem[]): string {
       { key: 'amount', label: '金额', align: 'right' },
       { key: 'time', label: '时间' },
     ],
-    rows: items.map((it) => ({ id: it.id, label: it.label, amount: it.amount, time: it.time })),
+    rows: items.map((it) => ({ id: it.id, label: optionLabelOf(it.label), amount: it.amount, time: it.time })),
     caption: '可选的记录（共 ' + items.length + ' 条）',
   }) + whyBadges(items);
 }
@@ -131,7 +132,7 @@ export function candidatePick(input: CandidatePickInput): string {
   const hit = selected === null ? undefined : input.candidates.find((it) => it.id === selected);
   const table = hit === undefined ? candidateRows(input.candidates) : '';
   return renderParamForm({
-    description: input.hint ?? '从下面列出的记录里挑一条；挑中的编号要跟复制指令里的那一个一致。',
+    description: input.hint ?? '从下面列出的记录里挑一条。挑中的编号要跟复制指令里的那一个一致。',
     fields: [{
       name,
       label,

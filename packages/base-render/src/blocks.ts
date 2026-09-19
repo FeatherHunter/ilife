@@ -203,6 +203,16 @@ function pageLevelBlock(name: string): string {
  * B-01 共享页面模板／标题区
  * ══════════════════════════════════════════════════════════════ */
 
+/** 页面级「并列分隔符」（U+FF5C 全角竖线）：**公共层唯一**被当作「并列」的输入分隔符。
+ *
+ *  语义：调用方写一句「甲 ｜ 乙 ｜ 丙」，公共层把它拆成逐段 `<span>`，段间那条细线由 CSS 的
+ *  `border-left` 出——**字符不进产物**，分隔只活在版式里（#514 立规、t154-r3 在口径行落地，
+ *  t728 把同一条机制推广到页头眉标：一条口径只许一处实现）。
+ *
+ *  为什么输入仍要写它：调用方只需要说「这几段是并列的」，怎么说由本件定；把「怎么分」留给
+ *  调用方（各写各的 `·`／`/`／`、`）就是同一件事在 40 处定义。 */
+const PARALLEL_SEP = '｜';
+
 export interface PageShellInput {
   readonly title: string;
   readonly subtitle?: string;
@@ -212,6 +222,26 @@ export interface PageShellInput {
   /** 可打印版式（#420）：为真时版面根加 `ilife-page-printable`，打印规则挂在它名下
    *  （隐藏页内导航与复制区）。不给／给假 → 产物与旧版逐字相同（类不出现，规则不命中）。 */
   readonly printable?: boolean;
+}
+
+/** 眉标里那几段的类名：第一段是**品牌位**，其余是**域位**（`pageLevelPart` 同族命名，不进 12 区闭集）。 */
+function eyebrowSegmentClass(index: number): string {
+  return blockPart('pageShell', index === 0 ? 'eyebrow-app' : 'eyebrow-scope');
+}
+
+/** 把一句「甲 ｜ 乙」按并列分隔符拆段：两头剪白、空段丢弃。不带分隔符 ⇒ 原样一段。 */
+function splitSegments(text: string): string[] {
+  if (!text.includes(PARALLEL_SEP)) return [text];
+  return text.split(PARALLEL_SEP).map((seg) => seg.trim()).filter((seg) => seg !== '');
+}
+
+/** 眉标的 HTML：带并列分隔符（且拆得出 ≥2 段）⇒ 逐段一枚 `<span>`，段间那条细竖线由 CSS 出，
+ *  **字符不进产物文本**；不带 ⇒ 逐字节同旧版（一个纯文本节点的 `<p>`）。
+ *  拆不出两段（如只有一条竖线收尾）⇒ 不拆，照原样文本落盘（不静默吞字符，与口径行同一条口径）。 */
+function eyebrowHtml(eyebrow: string): string {
+  const segs = splitSegments(eyebrow);
+  if (segs.length < 2) return esc(eyebrow);
+  return segs.map((seg, i) => '<span class="' + eyebrowSegmentClass(i) + '">' + esc(seg) + '</span>').join(' ');
 }
 
 /** B-01：单页容器＋标题三件套（eyebrow／title／subtitle）＋正文。 */
@@ -225,7 +255,7 @@ export function renderPageShell(input: PageShellInput): string {
     + (shell.printable === true ? ' ' + STYLE_PREFIX + PRINTABLE_SLUG : '');
   const parts: string[] = ['<section class="' + rootClass + '">'];
   const eyebrow = optText(shell.eyebrow);
-  if (eyebrow !== undefined) parts.push('<p class="' + blockPart('pageShell', 'eyebrow') + '">' + esc(eyebrow) + '</p>');
+  if (eyebrow !== undefined) parts.push('<p class="' + blockPart('pageShell', 'eyebrow') + '">' + eyebrowHtml(eyebrow) + '</p>');
   parts.push('<h1 class="' + blockPart('pageShell', 'title') + '">' + esc(title) + '</h1>');
   const subtitle = optText(shell.subtitle);
   if (subtitle !== undefined) parts.push('<p class="' + blockPart('pageShell', 'subtitle') + '">' + esc(subtitle) + '</p>');
@@ -267,10 +297,8 @@ export function renderTocBlock(input: TocBlockInput): string {
   return '<nav class="' + pageLevelBlock('toc') + '" aria-label="页内导航">' + links.join('') + '</nav>';
 }
 
-/** 口径行的并列分隔符（U+FF5C 全角竖线）：**唯一**被当作「并列」的字符。
- *  #514 立规把它计入可见文本的设计债（R4），本票（负责人第三轮要求 1）就是把这笔债在
- *  **公共层一次还掉**：该字符不再进产物文本，分隔改由版式承担（见 `renderCaliberLine` 与本区 CSS）。 */
-const CALIBER_SEP = '｜';
+/** 口径行的并列分隔符＝公共层那条**唯一**的并列分隔符（`PARALLEL_SEP`，定义见 B-01 区开头）。 */
+const CALIBER_SEP = PARALLEL_SEP;
 
 /** #420-2 口径说明行（纯文本单参；五字符转义表与区块层其余函数同源 `esc`）。
  *  聚合数字旁那句灰色小字（例如「周目标口径＝每日目标 × 7」）的唯一落点。
@@ -510,6 +538,29 @@ export function renderChips(input: ChipsInput): string {
     return '<span class="' + pageLevelBlock(CHIP_NAME) + '">'
       + esc(reqText((entry as ChipItemInput).text, field + '.text')) + '</span>';
   }).join('');
+}
+
+export interface ChipRowInput extends ChipsInput {
+  /** 已经渲染好、拼在这一行末尾的并列小件（**受信透传，不转义**；典型是状态徽章
+   *  `renderStatusBadge` 的产出——它和徽章同属「这一页现在是什么样」那一组，得在同一行里）。
+   *  不给／空串＝只出行里那几枚徽章。 */
+  readonly tailHtml?: string;
+}
+
+/** #728 徽章行（**并列标签要对齐成一行**时用这一件）：把 `renderChips` 那一串裸 `<span>` 收进一个
+ *  容器 `<div>`，行距／换行／对齐交 CSS，调用方仍然只给标签文本。
+ *
+ *  为什么需要它（不是「再包一层」的洁癖）：`pageUi`（#525 页面级移动端配方）在 ≥1001px 把
+ *  `.ilife-block-page-shell-body` 变成栅格，`> *` 一律落到中间那一列 —— **裸 `<span>` 也是栅格项**，
+ *  于是「一行徽章」会被摊成「一行一枚」。有了本件，徽章行是一个块级子件，栅格里占一格。
+ *  `items: []` 且没给 `tailHtml` ＝ 空串（与 `renderChips` 同口径：没内容不留空块）；
+ *  `items` 缺失／非数组 → `bad-input`；`tailHtml` 给了字符串即透传（与 `renderPageShell` 的
+ *  `content` 同一条受信口径）。 */
+export function renderChipRow(input: ChipRowInput): string {
+  const inner = renderChips(input);
+  const tail = typeof input.tailHtml === 'string' ? input.tailHtml : '';
+  if (inner === '' && tail === '') return '';
+  return '<div class="' + pageLevelBlock('chip-row') + '">' + inner + tail + '</div>';
 }
 
 export interface ChangeRowInput {
@@ -1290,8 +1341,21 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  color: var(--fg);',
     '  font-feature-settings: "tnum";',
     '}',
+    // t728 D-T2「页头三级一眼分得开，且不与正文徽章同规格」：
+    //   改前眉标与正文徽章是**同一套字体规格**（12px／600／`var(--blue2)`），只差一层浅底与圆角，
+    //   于是「这是页头」与「这是页里的一枚状态标签」在视觉上分不出来（R3）。
+    //   拆口径：眉标走**面包屑**（无底、有字距、品牌位与域位分色），徽章走**胶囊**（有底、有边框）——
+    //   两者不再共用「同字号同字重同色」这一组值。
+    //   分段落法：`display:flex` ＋ `> span + span` 的 hairline（与口径行 `renderCaliberLine` 同一机制、
+    //   同一色档 `LINE_RGB` 的 .6 透明档），并列符因此不进产物文本（t508 门判据）。
+    //   只写 `display:flex` 不加 `gap`：单段眉标（不带并列符的调用点）里那一段是匿名 flex 项，
+    //   版面与改前的 `<p>` 纯文本逐值相同。
     '.' + p + 'block-page-shell-eyebrow {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  align-items: center;',
     '  margin: 0;',
+    // 缺省色＝改前那一档（单段眉标不带 span，取的就是这条）：别的调用点版面不动。
     // #179 对比度：12px 小字压白底，`--blue` 4.02:1 不到 AA 的 4.5:1 → 同族深一档 `--blue2`（5.6:1）。
     '  color: var(--blue2);',
     '  font-size: 12px;',
@@ -1299,18 +1363,43 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  letter-spacing: .08em;',
     '  text-transform: uppercase;',
     '}',
+    // 品牌位：中性灰（`--fg2` 4.94:1，过 AA），不抢域位。
+    '.' + p + 'block-page-shell-eyebrow-app {',
+    '  color: var(--fg2);',
+    '}',
+    // 域位：`--blue2`（5.6:1），与品牌位分色 ⇒ 两段的关系由颜色与那条 hairline 说明。
+    '.' + p + 'block-page-shell-eyebrow-scope {',
+    '  color: var(--blue2);',
+    '}',
+    // 段间那条细竖线：与口径行同一条 hairline、同一色档，不新增色值、不新增 token。
+    '.' + p + 'block-page-shell-eyebrow > span + span {',
+    '  padding-left: 8px;',
+    '  margin-left: 8px;',
+    '  border-left: 1px solid rgba(' + LINE_RGB + ', .6);',
+    '}',
     '.' + p + 'block-page-shell-title {',
-    '  margin: 6px 0 0;',
+    // t728 间距网格：页头 4 处的 `6px 0 0` 破 4px 网格（R4），统一到 8px（4 的倍数）。
+    '  margin: 8px 0 0;',
     // #567 J4（§5.2 大数 28 吸收 26／28／32／40）：页标题 32→28。
     '  font-size: 28px;',
     '  font-weight: 700;',
     '  letter-spacing: -.4px;',
     '  line-height: 1.2;',
     '}',
+    // t728 页头与正文之间那一条分隔：页头三级（眉标／标题／副题）是一个整体，正文另起一段——
+    //   改前两者只靠 16px 间距分开，长表单页里「页头在哪里结束」看不出边界。
+    //   分隔线落在**页头最后一行**上：有副题的页落在副题，没有副题的页落在标题（`:has` 判「这一页
+    //   有没有副题」，两条规则互斥，页头恒恰一条线）。
     '.' + p + 'block-page-shell-subtitle {',
-    '  margin: 6px 0 0;',
+    '  margin: 8px 0 0;',
     '  color: var(--fg2);',
     '  font-size: 15px;',
+    '  padding-bottom: 16px;',
+    '  border-bottom: 1px solid var(--line);',
+    '}',
+    '.' + p + 'block-page-shell:not(:has(> .' + p + 'block-page-shell-subtitle)) > .' + p + 'block-page-shell-title {',
+    '  padding-bottom: 16px;',
+    '  border-bottom: 1px solid var(--line);',
     '}',
     '.' + p + 'block-page-shell-body {',
     '  display: block;',
@@ -1556,6 +1645,9 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  text-align: right;',
     '}',
     // 12px 小字取 `--blue2`（压 `--soft` 约 5.4:1）；`--blue` 4.02:1 不到 AA 的 4.5:1（#179 口径）。
+    // t728：`margin` 由每枚徽章自带改成**行容器**统一给（`row-gap` / `column-gap`）——改前靠
+    //   `margin: 0 6px 6px 0` 凑间距，右端与下沿各多出 6px 悬空，且末枚右边距在 `text-align:right`
+    //   的父容器里会把整行推歪。裸 `renderChips`（不在行容器里）的调用点仍吃这条 margin，版面不变。
     '.' + p + 'block-chip {',
     '  display: inline-block;',
     '  margin: 0 6px 6px 0;',
@@ -1567,6 +1659,31 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 12px;',
     '  font-weight: 600;',
     '  line-height: 1.5;',
+    '}',
+    // 徽章行：一枚容器吃掉「并列标签」这件事——间距走 `gap`（末枚不再多出右边距），
+    // 行高走 `min-height`（v 对齐不靠 `line-height` 凑），窄屏 `flex-wrap` 自动换行。
+    '.' + p + 'block-chip-row {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  align-items: center;',
+    '  gap: 6px 8px;',
+    '  margin: 0 0 8px;',
+    '}',
+    '.' + p + 'block-chip-row > .' + p + 'block-chip {',
+    '  margin: 0;',
+    '}',
+    // t728 收口（视觉第 1 轮实测）：徽章行里「胶囊」与「状态徽章」的**文字基线不齐**——
+    //   两者内距不同（2px 8px 对 6px 14px）、字号不同（12 对 13），`align-items: center` 只居中盒子。
+    //   统一到同一条**行盒高度**：两颗都改成 30px 高的 inline-flex 且上下内距归零，
+    //   文字因此在同一高度盒里垂直居中；行高不靠 padding 凑，窄屏换行后每行仍然等高。
+    '.' + p + 'block-chip-row > .' + p + 'block-chip,',
+    '.' + p + 'block-chip-row > .ilife-status-badge {',
+    '  display: inline-flex;',
+    '  align-items: center;',
+    '  min-height: 30px;',
+    '  margin: 0;',
+    '  padding-top: 0;',
+    '  padding-bottom: 0;',
     '}',
     '.' + p + 'block-change-row {',
     '  display: flex;',

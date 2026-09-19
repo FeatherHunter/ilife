@@ -176,6 +176,6 @@ export function blockedPromptOf(input: {
     command: commandLine(input.key, filled),
     prompt: '这一笔还差 ' + input.blocked.length + ' 项：'
       + input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-      + '。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：' + input.key + '。',
+      + '。\n这一页先不写库。补齐之后跟助手说一遍，照这条说：' + input.key + '。',
   };
 }

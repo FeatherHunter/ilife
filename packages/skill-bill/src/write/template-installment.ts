@@ -32,13 +32,13 @@
  *  都是 `bindInstallmentPages(spec)` 的产物，本件不自己出页。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { renderChips, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
+import { renderChips, renderChipRow, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { installmentPreview, installmentShares } from './installmentPreview.js';
-import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { summaryCards } from './summaryRow.js';
@@ -188,7 +188,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   }
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
-    + (extra.length === 0 ? '' : '；本型另需：' + extra.map((i) => i.label).join('、'));
+    + (extra.length === 0 ? '' : '。本型另需 ' + extra.length + ' 项，见下面的缺项徽章');
   /** 副标题只报计数（进度形状）；缺项明细在标签组与阻断表明细两处形状里。 */
   const subtitle = spec.word + '还差 ' + blocked.length + ' 项';
   const envelope = envelopeOf(key, false, message);
@@ -221,6 +221,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   const content = [
     typeBadge({
       kind: spec.kind,
+      pageKind: '采集页',
       status: blocked.length > 0 ? 'danger' : 'warn',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
       next: '',
@@ -228,7 +229,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: spec.section1 }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     renderKpiGrid(summaryCards(facts)),
-    renderChips({ items: spec.chips.map((text) => ({ text })) }),
+    renderChipRow({ items: spec.chips.map((text) => ({ text })) }),
     collectSectionTitle({ no: 2, title: spec.section2 }),
     renderParamForm({
       description: spec.description,
@@ -271,7 +272,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     collectSourceNote(facts.time),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·' + spec.word, title: spec.word, subtitle,
+    docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
@@ -333,12 +334,13 @@ function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
   ];
   const content = typeBadge({
     kind: spec.kind,
+    pageKind: '回执',
     status: 'ok',
     state: spec.receiptState,
     next: spec.receiptNext,
   }) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·写库回执', title: spec.word + ' · 回执', subtitle: receipt.summary,
+    docTitle: docTitleOf(spec.word + ' 回执'), title: spec.word, subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,
   });
 }

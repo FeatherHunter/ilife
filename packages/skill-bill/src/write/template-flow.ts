@@ -14,7 +14,7 @@
  * 谁在用（六个调用点，指名）：`src/write/scene-{refund,reimburse-done,lend,borrow,collect,repay}.ts`——
  *  各件 `Scene.collect`／`Scene.receipt` 都是 `bindFlowPages(spec)` 的产物，本件不自己出页。
  */
-import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChipRow, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
@@ -26,7 +26,7 @@ import { collectMissingTags } from './collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
-import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { money2, summaryCards } from './summaryRow.js';
@@ -103,7 +103,6 @@ export interface FlowSpec {
   /** 本型固定的分类：用户没给分类时，摘要行与各格文案都按它出。 */ readonly category: string;
   /** 本型固定的账本（借贷两型是「借贷」）；不给＝账本这一格照用户给的 `params.ledger` 原样。 */
   readonly ledger?: string;
-  /** 采集页 `<title>` 的尾缀（如 `·记退款`）。 */ readonly docTitle: string;
 
   /** 本型多要的那一格「指向哪一条原记录」（`source_id`）：给了它，模板就把编号与那一行算进上下文、并把它并进阻断清单。 */
   readonly sourceSlot?: { readonly name: string; readonly label: string; readonly why: string };
@@ -281,7 +280,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   if (spec.extraBlocked !== undefined) extra.push(...spec.extraBlocked(values));
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
-    + (extra.length === 0 ? '' : '；本型另需：' + extra.map((i) => i.label).join('、'));
+    + (extra.length === 0 ? '' : '。本型另需 ' + extra.length + ' 项，见下面的缺项徽章');
   const ctx: FlowCtx = { ...values, blocked, candidates: spec.candidates(values) };
   const envelope = envelopeOf(key, false, message);
   const filled: Record<string, unknown> = { ...params };
@@ -289,11 +288,11 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   const prompt = spec.prompt(ctx);
   const content = [
     typeBadge({
-      kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '',
+      kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '', pageKind: '采集页',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
     }),
     renderKpiGrid(cards),
-    spec.chips === undefined ? '' : renderChips({ items: spec.chips(ctx).map((text) => ({ text })) }),
+    spec.chips === undefined ? '' : renderChipRow({ items: spec.chips(ctx).map((text) => ({ text })) }),
     spec.caliber === undefined ? '' : renderCaliberLine(spec.caliber(ctx)),
     renderKpiGrid(spec.cards(ctx)),
     spec.note === undefined ? '' : renderFeedbackBlock({ toast: spec.note(ctx), staticNotice: true }),
@@ -311,7 +310,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     collectSourceNote(facts.time),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + spec.docTitle, title: spec.word, subtitle: spec.word + '还差 ' + blocked.length + ' 项',
+    docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle: '还差 ' + blocked.length + ' 项，缺的在下面标出来了',
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }
@@ -341,10 +340,10 @@ function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
     }), 'sec-copy', '复制'),
     { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
   ];
-  const content = typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', next: '这一笔已记下，撤销见下方按钮。' })
+  const content = typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', pageKind: '回执', next: '这一笔已记下，撤销见下方按钮。' })
     + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·写库回执', title: spec.word + ' · 回执', subtitle: receipt.summary,
+    docTitle: docTitleOf(spec.word + ' 回执'), title: spec.word, subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,
   });
 }

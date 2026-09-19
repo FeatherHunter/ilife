@@ -44,7 +44,6 @@ export const SCENE: Scene = {
     section3: '补齐了再请助手记',
     subtitle: missingSubtitle,
     logDetail: () => '没写库（采集页）',
-    docTitle: '·采集页',
     receiptState: '写库成功（方向按金额符号判）',
     receiptNext: () => nextStepOf({ page: 'receipt', exit: true }),
     receiptCaliber: '',

@@ -10,22 +10,23 @@
  * 文案纪律：纯中文加数字，不含 `·`／`|`／英文标识（机审版式位与区外内部话两列保持零命中）；
  * 每句带唤醒词或段号，页内不重句。
  */
-import { renderCaliberLine, renderChips, renderConclusionBar } from 'base-paint/blocks';
-import { wakeWordOfKind } from '../triggers/wakeTable.js';
+import { renderCaliberLine, renderChipRow, renderConclusionBar } from 'base-paint/blocks';
 
-/** 进度：还差几项，补齐就能记（只读数，不判定）。
- *  空唤醒词＝调用方没有这一条事实，退回**写入域的通用词**（从域声明算，不在本件写字面量）。 */
+/** 进度：补上这几项就能记（只读数，不判定）。
+ *  入参保留 `wakeWord`（五个调用点原样传，签名不动），但**这一行不再印它**——
+ *  H1 恒写着同一个唤醒词，再印一遍就是同一件事在页上出现两次（t728 去冗）。 */
 export function collectProgress(input: { readonly wakeWord: string; readonly missing: number }): string {
-  const word = input.wakeWord.trim() === '' ? wakeWordOfKind('') : input.wakeWord.trim();
   const n = Number.isFinite(input.missing) && input.missing > 0 ? Math.floor(input.missing) : 0;
-  return renderCaliberLine(word + '还差 ' + n + ' 项，补齐就能记');
+  // t728 去冗：这一行**只说「补上会怎样」**——唤醒词归 H1、缺几项与缺哪几项归副标题与缺项徽章，
+  // 三处不再互相复述（改前这一行同时复述了 H1 的唤醒词与副标题的项数）。
+  return renderCaliberLine('补齐这 ' + n + ' 项就能记进账本');
 }
 
 /** 缺项标签：缺的格逐枚成标签（空即不出块）。 */
 export function collectMissingTags(input: { readonly labels: readonly string[] }): string {
   const items = input.labels.map((s) => s.trim()).filter((s) => s !== '');
   if (items.length === 0) return '';
-  return renderChips({ items: items.map((text) => ({ text })) });
+  return renderChipRow({ items: items.map((text) => ({ text })) });
 }
 
 /** 分段标题：第几段加一句中文标题（黑块前后分段用）。 */

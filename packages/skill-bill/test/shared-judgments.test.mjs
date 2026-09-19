@@ -119,7 +119,8 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
     };
     assert.ok(at('zzkeep3') < at('zzkeep2'), '最近的一笔（09-03）排在 09-02 之前');
     assert.ok(at('zzkeep2') < at('zzkeep1'), '09-02 排在 09-01 之前');
-    assert.ok(html.includes('餐饮/外卖/午餐　zzkeep3'), '候选行摘要＝分类＋备注（账户在同页只读回显表里，不重抄）');
+    assert.ok(html.includes('餐饮 › 外卖 › 午餐　zzkeep3'), '候选行摘要＝分类（层级字形显示）＋备注（账户在同页只读回显表里，不重抄）');
+    assert.ok(!html.includes('餐饮/外卖/午餐　zzkeep3'), '层级值不许再用斜线排版上屏');
   });
 
   it('候选读不通照实报（不拿空表冒充「库里没有记录」）', () => {
@@ -280,7 +281,7 @@ describe('t407 E1 · 分摊预览（installmentPreview.ts）', () => {
   it('超 24 期只显前 12 期，其余进折叠区；24 期整好不折', () => {
     const p24 = installmentPreview({ total: 240, periods: 24, startDate: '2026-01-31' });
     assert.ok(!p24.includes('折叠'), '24 期整好不折');
-    assert.ok(p24.includes('共 24 期；合计 240.00（＝总价）'), '24 期的说明须报满期数与合计');
+    assert.ok(p24.includes('共 24 期。合计 240.00，等于总价'), '24 期的说明须报满期数与合计（两句，不再用分号串）');
     const p25 = installmentPreview({ total: 250, periods: 25, startDate: '2026-01-31' });
     assert.ok(p25.includes('共 25 期，这里先显前 12 期'), '25 期须写明先显前 12 期');
     assert.ok(p25.includes('还有 13 期（折叠在这里）'), '其余的期数进折叠区');

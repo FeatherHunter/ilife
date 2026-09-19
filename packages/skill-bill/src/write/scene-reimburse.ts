@@ -42,7 +42,7 @@ export const SCENE: Scene = {
     prefill: 'note',
     emptyAccount: {
       text: '库里还没有带账户的记录，账户这一格没有候选可以挑。',
-      next: '账户留空即落默认账户；想选就先给一笔带账户的记录（例如 支付宝）。',
+      next: '账户留空即落默认账户。想选就先给一笔带账户的记录，例如支付宝。',
     },
     section2: '',
     description: '补齐必需项即可继续。金额取负数，备注那格写清垫了什么并带上 ' + TAG + '。',
@@ -52,7 +52,6 @@ export const SCENE: Scene = {
     section3: '',
     subtitle: (_input, blocked) => WORD + '还差 ' + blocked.length + ' 项',
     logDetail: () => '没写库（采集页）',
-    docTitle: '·记报销',
     receiptState: '写库成功',
     receiptNext: () => '这一笔已记下，撤销见下方按钮。',
     receiptNotice: {

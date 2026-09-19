@@ -88,8 +88,10 @@ describe('t410 · 13条录入词真出口锁（唤醒词起点）', () => {
       assert.equal(env.data.receipt.affectedRows, 1, '单笔化：一次只落一笔');
       assert.equal(env.data.receipt.writtenFields.length, 7, '记一笔写整列全集7项');
       const text = assertLanded(file, env.delivery);
-      // 字段正确：页标题=唤醒词·回执；摘要含降级/型名串；明细含分类与两位小数金额；回执三件齐。
-      assert.ok(text.includes(c.word + ' · 回执'), '页标题须为唤醒词·回执：' + c.word);
+      // 字段正确：H1＝唤醒词（t728 去重：页型不再与 H1 同串）、页型落在徽章上、
+      // 摘要含降级/型名串；明细含分类与两位小数金额；回执三件齐。
+      assert.ok(text.includes('>' + c.word + '</h1>'), 'H1 须为唤醒词（页型不上 H1）：' + c.word);
+      assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：' + c.word);
       if (c.summaryFrag !== null) assert.ok(env.data.receipt.summary.includes(c.summaryFrag), '摘要须含' + c.summaryFrag + '：' + env.data.receipt.summary);
       else {
         assert.ok(env.data.receipt.summary.includes('（记录编号'), '记一笔摘要须直接接记录编号：' + env.data.receipt.summary);
@@ -117,7 +119,8 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('改记录 · 回执'), '页标题须为改记录·回执');
+    assert.ok(text.includes('>改记录</h1>'), 'H1 须为唤醒词（页型不上 H1）：改记录');
+    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：改记录');
     assert.ok(env.data.receipt.summary.includes('已修改'), '摘要须说已修改：' + env.data.receipt.summary);
     assert.ok(text.includes(String(id)), '页内须印记录编号');
   });
@@ -133,7 +136,8 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'undo');
     assert.deepEqual(env.data.receipt.writtenFields, ['deleted_at']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('撤销 · 回执'));
+    assert.ok(text.includes('>撤销</h1>'), 'H1 须为唤醒词（页型不上 H1）：撤销');
+    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：撤销');
     assert.ok(env.data.receipt.summary.includes('已撤销'), '摘要须说已撤销');
     assert.ok(text.includes('记录还在'), '撤销页须说清记录还在');
   });
@@ -150,7 +154,8 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'restore');
     assert.deepEqual(env.data.receipt.writtenFields, ['deleted_at']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('恢复 · 回执'));
+    assert.ok(text.includes('>恢复</h1>'), 'H1 须为唤醒词（页型不上 H1）：恢复');
+    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：恢复');
     assert.ok(env.data.receipt.summary.includes('已恢复'), '摘要须说已恢复');
     assert.ok(text.includes('已恢复（记录编号 ' + id), '恢复页须印记录编号');
   });

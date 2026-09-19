@@ -28,7 +28,6 @@ export const SCENE: Scene = {
     word: WORD,
     kind: KIND,
     category: CATEGORY,
-    docTitle: '·记退款',
     sourceSlot: {
       name: SOURCE_NAME,
       label: SOURCE_LABEL,

@@ -36,7 +36,7 @@ import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
-import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { rowEditorTable } from './rowEditorTable.js';
@@ -156,7 +156,7 @@ function defaultNotice(): string {
   return renderFeedbackBlock({
     toast: {
       msg: '账本与币种留空按缺省落库',
-      detail: '账本「' + DEFAULTS.ledger + '」／币种「' + DEFAULTS.currency + '」；要记进别的账本就先给这一格。',
+      detail: '账本「' + DEFAULTS.ledger + '」，币种「' + DEFAULTS.currency + '」。要记进别的账本就先给这一格。',
       icon: 'info',
     },
     staticNotice: true,
@@ -173,6 +173,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
   const content = [
     typeBadge({
       kind: spec.kind,
+      pageKind: '采集页',
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
       next: '',
@@ -213,9 +214,9 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
     collectSourceNote(textOf(params['time'])),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·采集页',
+    docTitle: docTitleOf(spec.word + ' 采集页'),
     title: spec.word,
-    subtitle: '缺 ' + blocked.length + ' 项，详见下表。',
+    subtitle: blocked.length === 0 ? '这一页只采集，不写库。' : '缺的就是下面这几项。',
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -246,7 +247,7 @@ function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
       {
         label: '写进去的项',
         value: receipt.writtenFields.length + ' 项',
-        detail: '共 ' + receipt.writtenFields.length + ' 项，详见下表。',
+        detail: '逐项见下面的明细表',
       },
     ]), 'sec-kpi', '读数'),
     { html: renderCaliberLine(spec.receiptCaliber) },
@@ -275,13 +276,14 @@ function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
   ];
   const content = typeBadge({
     kind: spec.kind,
+    pageKind: '回执',
     status: 'ok',
     state: spec.receiptState,
     next: spec.receiptNext,
   }) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·写库回执',
-    title: spec.word + ' · 回执',
+    docTitle: docTitleOf(spec.word + ' 回执'),
+    title: spec.word,
     subtitle: receipt.summary,
     slot: 'receipt',
     page: 'receipt',

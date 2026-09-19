@@ -27,7 +27,7 @@ import { collectMissingTags, collectProgress, collectSectionTitle } from './coll
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
-import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { docTitleOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from './photoEscape.js';
 import { prefillNote, prefillOf } from './prefillNote.js';
@@ -97,7 +97,6 @@ export interface ExpenseSpec {
   /** 采集页：日志第 4 段「这一页干了什么」。 */
   readonly logDetail: (input: CollectInput) => string;
   /** 采集页：`<title>` 尾缀。 */
-  readonly docTitle: string;
 
   /** 回执页：类型徽章那句状态。 */
   readonly receiptState: string;
@@ -126,16 +125,17 @@ export function plainPrompt(word: string, blocked: readonly BlockedLine[]): stri
     + '。这一页先不写库。补齐后跟助手说一遍「' + word + '」。';
 }
 
-/** 本族多数场景共用的副标题：只报缺几项，明细在下表。 */
+/** 本族多数场景共用的副标题：**只说出「缺的是哪几项在哪」**（明细就在紧下面那行缺项徽章里），
+ *  项数与「补上就能记」归进度行 —— 两句各说一件，不互相复述（t728 去冗）。 */
 export function missingSubtitle(input: CollectInput, blocked: readonly BlockedLine[]): string {
-  return (input.missing.length === 0 ? '这一笔还差 ' : '缺 ') + blocked.length + ' 项，详见下表。';
+  return blocked.length === 0 ? '这一页只采集，不写库。' : '缺的就是下面这几项。';
 }
 
 /** 缺项那一处的共用说法（记报销那一页用它）：逐项给中文名与「为什么缺」，并点名写库指令。 */
 export function sharedPrompt(key: string, blocked: readonly BlockedLine[]): string {
   return '这一笔还差 ' + blocked.length + ' 项：'
     + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-    + '。\n这一页先不写库；补齐之后跟助手说一遍，照这条说：' + key + '。';
+    + '。\n这一页先不写库。补齐之后跟助手说一遍，照这条说：' + key + '。';
 }
 
 /** 过程型采集页：缺项时出这一页（只采集、不写库）。 */
@@ -161,6 +161,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   const content = [
     typeBadge({
       kind: spec.kind,
+      pageKind: '采集页',
       status: 'danger',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
       next: '',
@@ -213,7 +214,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     collectSourceNote(facts.time),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + spec.docTitle,
+    docTitle: docTitleOf(spec.word + ' 采集页'),
     title: spec.word,
     subtitle: spec.subtitle(input, blocked),
     slot: 'collect',
@@ -279,11 +280,11 @@ function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
     }), 'sec-copy', '复制'),
     { html: receiptSourceNote(input.facts.time, input.receipt.affectedRows) },
   ];
-  const content = typeBadge({ kind: spec.kind, status: 'ok', state: spec.receiptState, next: spec.receiptNext(input) })
+  const content = typeBadge({ kind: spec.kind, status: 'ok', state: spec.receiptState, pageKind: '回执', next: spec.receiptNext(input) })
     + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·写库回执',
-    title: spec.word + ' · 回执',
+    docTitle: docTitleOf(spec.word + ' 回执'),
+    title: spec.word,
     subtitle: input.receipt.summary,
     slot: 'receipt',
     page: 'receipt',

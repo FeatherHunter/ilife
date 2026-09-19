@@ -99,7 +99,7 @@ export function duplicateNote(
     return renderFeedbackBlock({
       title: '先核一眼再定',
       toast: {
-        msg: '看着像重复：同一天、同金额、同分类，已经有 ' + hits.length + ' 笔了',
+        msg: '看着像重复：同一天同一金额同一分类，已经有 ' + hits.length + ' 笔了',
         detail,
         icon: 'warn',
         lines,
@@ -108,7 +108,7 @@ export function duplicateNote(
     });
   }
   const toast: ToastInput = {
-    msg: '看着像重复：同一天、同金额、同分类，已经有 ' + hits.length + ' 笔了',
+    msg: '看着像重复：同一天同一金额同一分类，已经有 ' + hits.length + ' 笔了',
     detail,
     icon: 'warn',
     badge: { text: '疑似重复', type: 'warn' },

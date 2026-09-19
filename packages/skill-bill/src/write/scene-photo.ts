@@ -25,7 +25,7 @@ const ESCAPE_SLOTS: readonly FieldSlot[] = ESCAPE_FIELDS.map((f) => ({
   name: f.name,
   label: f.label,
   hint: f.name === 'category'
-    ? '三级分类，如 餐饮/外卖/午餐'
+    ? '要选到最细那一级，如「午餐」'
     : f.name === 'amount' ? '支出为负、收入为正，如 -12.5' : '账单上的日期，如 2026-09-14',
   required: true,
 }));
@@ -66,7 +66,7 @@ export const SCENE: Scene = {
     calibers: (input: CollectInput) => {
       const scale = scaleOf(input.params);
       return [
-        '三要素由外部识别提供；收图在你交图那头，读图在本仓之外，本仓不存图也不读图。',
+        '三要素由外部识别提供。收图在你交图那头，读图在本仓之外，本仓不存图也不读图。',
         scale.count > 0
           ? '已收 ' + Math.floor(scale.count) + ' 张账单图片，图放在 ' + scale.where + '。'
           : '这次一张图都没交上来，走三要素文字填空。',
@@ -87,14 +87,13 @@ export const SCENE: Scene = {
     foldNote: '补齐后照上面那条口令跟助手说一遍。',
     prefill: 'caliber',
     section2: '把三样要素填回来',
-    description: '金额、分类、时间三样填回这里，金额带符号（支出为负、收入为正）。',
+    description: '三样填回这里。金额带符号，支出记负数、收入记正数。',
     slots: ESCAPE_SLOTS,
     marksShape: 'short',
     prompt: (input) => {
       const lack = lackOf(input.params);
-      return '拍账单：三要素由外部识别给出，还差 ' + lack.length + ' 样：'
-        + lack.map((f) => f.label).join('、')
-        + '。这一页先不写库。补齐后跟助手说一遍「' + WORD + '」。';
+      return '拍账单：三要素由外部识别给出，还差 ' + lack.length + ' 样，这一页先不写库。'
+        + '补齐后跟助手说一遍「' + WORD + '」。';
     },
     promptTitle: '这一段就是补齐后要发给助手的话',
     section3: '补齐了再请助手记',
@@ -106,7 +105,6 @@ export const SCENE: Scene = {
       const scale = scaleOf(input.params);
       return '没写库（采集页） · 已收 ' + (scale.count > 0 ? scale.count : 0) + ' 张图';
     },
-    docTitle: '·采集页',
     receiptState: '写库成功（三要素来自外部识别）',
     receiptNext: () => nextStepOf({ page: 'receipt', exit: true }),
     receiptCaliber: '三要素来自本仓之外，本仓不存图也不读图。',

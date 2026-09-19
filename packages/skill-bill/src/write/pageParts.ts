@@ -105,7 +105,7 @@ export function tailCardsOf(style: CardsStyle, input: ReceiptInput): readonly Ta
       {
         label: '写进去的项',
         value: input.receipt.writtenFields.length + ' 项',
-        detail: '共 ' + input.receipt.writtenFields.length + ' 项，详见下表。',
+        detail: '逐项见下面的明细表',
       },
     ];
   }
@@ -115,7 +115,7 @@ export function tailCardsOf(style: CardsStyle, input: ReceiptInput): readonly Ta
     {
       label: '写进去的项',
       value: input.receipt.writtenFields.length + ' 项',
-      detail: input.receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+      detail: input.receipt.writtenFields.length === 0 ? '没改到任何一项' : '逐项见下面的明细表',
     },
   ];
 }
@@ -138,7 +138,7 @@ export function probeOfReceipt(input: ReceiptInput): {
 }
 
 /** 写入域各页的眉标：**只在本域写一次**（共用位 `shared/pageShell.ts` 不持「域名→取值」表，照守卫③b）。 */
-export const EYEBROW = '记账 · 写入域';
+export const EYEBROW = '记账｜写入域';
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function writePageShell(input: Omit<PageShellInput, 'eyebrow'>): string {

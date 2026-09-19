@@ -30,11 +30,33 @@ export interface SourceLineFacts {
   readonly count: number;
 }
 
-/** 来源脚注：`数据来源 · 来源 · 起 → 止 · 共 N 条`。 */
+/** 并列段之间那条分隔：**公共层的并列分隔符**（`base-paint` 的 `renderCaliberLine` 认的就是它）。
+ *  本件给的是「这句脚注有几段并列」，怎么把并列画出来由公共层定——页侧一个分隔符字符都不写。 */
+const SEG = '｜';
+
+/** 窗口那一格：起止同值时只说一次（本域回执记的是**一笔**，不是一段）。
+ *  「不限」那两端（没给窗口）改说人话，不再印 `— → —`（改前空窗口页逐页印这串）。 */
+function windowText(start: string, end: string): string {
+  const s = start.trim();
+  const e = end.trim();
+  const blank = (v: string): boolean => v === '' || v === '—' || v === '-';
+  if (blank(s) && blank(e)) return '时间不限';
+  if (blank(e)) return '从 ' + s + ' 起';
+  if (blank(s)) return '到 ' + e + ' 止';
+  return s === e ? '时间 ' + s : '时间 ' + s + ' 到 ' + e;
+}
+
+/** 来源脚注：`数据来源 <来源> ｜ <窗口> ｜ 共 N 条`（分隔由版式出，字符不进可见文本）。
+ *
+ *  t728 改法：改前是先 `join(' · ')` 拼成一整串再交给口径行，于是公共层的拆段器认不出它
+ *  （它只认并列分隔符）⇒ 那 32 行 `·` 串原样上屏，正是用户点名的那类「用符号简化 UI」。
+ *  现在改成：本件只说「这是三段并列」，`｜` 交给 `renderCaliberLine` 拆成逐段 `<span>`，
+ *  段间那条细竖线由公共层 CSS 出（与全仓口径行同一条机制、同一处定义）。 */
 export function sourceLine(facts: SourceLineFacts): string {
-  const parts: string[] = ['数据来源'];
-  if (facts.source.trim() !== '') parts.push(facts.source);
-  parts.push(facts.start + ' → ' + facts.end);
+  const parts: string[] = [];
+  const source = facts.source.trim();
+  if (source !== '') parts.push('数据来源 ' + source);
+  parts.push(windowText(facts.start, facts.end));
   parts.push('共 ' + String(facts.count) + ' 条');
-  return renderCaliberLine(parts.join(' · '));
+  return renderCaliberLine(parts.join(SEG));
 }

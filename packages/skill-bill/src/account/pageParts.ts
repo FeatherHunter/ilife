@@ -28,7 +28,7 @@ import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 
 /** 账户域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
-export const EYEBROW = '记账 · 账户域';
+export const EYEBROW = '记账｜账户域';
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function accountPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {

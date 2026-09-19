@@ -55,13 +55,38 @@ export function pickOf(
   };
 }
 
-/** 一个字段的选项：选择器候选 ＋ 本次已给的值（已给的值不在候选里时并到队首，免得表单把它显示没了）。 */
+/** 三级分类路径在页面上的**显示写法**：`借贷/偿还` → `借贷 › 偿还`。**t728 新增**。
+ *
+ *  为什么要有这一条：库里存的是 `一级/二级[/三级]` 的**层级值**——那是事实，一个字不改；
+ *  而原样上屏就等于把「这是三层」这件事交给一个斜线去排版，正是用户逐字点名的那类写法
+ *  （「当一个内容需要通过 `；`／`|`／`·` 分割时代表需要进行 UI 上的设计」）。层级值改用
+ *  **层级字形** `›`（U+203A，面包屑的惯用写法），一眼看出「右边比左边细一级」。
+ *  机器值仍是原来那一个：`<option value="借贷/偿还">` 不动，选完递回宿主的还是库里的原值——
+ *  只改给人看的那一面，页面事实与复制载荷文本一个字不变。
+ *  判据：只在值里真带层级斜线时才改标签；普通值原样返回（调用方据此决定落对象项还是字符串项，
+ *  不带层级的值走的还是原来那条路，产物逐字节不变）。 */
+const LEVEL_MARK = '›';
+
+/** 一个值的显示写法（见上）。 */
+export function optionLabelOf(value: string): string {
+  if (!value.includes('/')) return value;
+  const segs = value.split('/').map((s) => s.trim()).filter((s) => s !== '');
+  return segs.length < 2 ? value : segs.join(' ' + LEVEL_MARK + ' ');
+}
+
+/** 一个字段的选项：选择器候选 ＋ 本次已给的值（已给的值不在候选里时并到队首，免得表单把它显示没了）。
+ *  带层级斜线的值落 `{ value, label }` 对象项（#474 的对照项：`value` 是机器值、`label` 给人看）；
+ *  不带层级的仍是普通字符串项，调用方与产物都不变。 */
 export function optionsFor(
   pick: Record<string, readonly string[]>,
   name: string,
   value: string,
-): readonly string[] | undefined {
+): readonly (string | { readonly value: string; readonly label: string })[] | undefined {
   const list = pick[name];
   if (list === undefined || list.length === 0) return undefined;
-  return value !== '' && !list.includes(value) ? [value, ...list] : [...list];
+  const merged = value !== '' && !list.includes(value) ? [value, ...list] : [...list];
+  return merged.map((v) => {
+    const label = optionLabelOf(v);
+    return label === v ? v : { value: v, label };
+  });
 }

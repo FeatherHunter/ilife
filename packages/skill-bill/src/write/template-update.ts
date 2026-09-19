@@ -24,7 +24,7 @@ import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { diffOf, diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
-import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { diffRowsFor, pickerBlock, readRowById, snapshotTable } from './recordPicker.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
@@ -214,9 +214,9 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
   const facts = factsOf(row, input.params);
   const envelope = envelopeOf(spec.key, false, blockedMessage(input.missing, page.blocked));
   /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
-  const subtitle = page.blocked.length === 0 ? '' : '缺必需槽位：' + page.blocked.map((i) => i.label).join('、');
+  const subtitle = page.blocked.length === 0 ? '' : '还差 ' + page.blocked.length + ' 项必需项';
   const content = [
-    typeBadge({ kind: '', status: 'danger', state: spec.collectState(page), next: '' }),
+    typeBadge({ kind: '', status: 'danger', state: spec.collectState(page), pageKind: page.id === null ? '挑一条记录' : '核对这一条', next: '' }),
     page.blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
     collectMissingTags({ labels: page.blocked.map((i) => i.label) }),
     summaryRow(facts),
@@ -238,8 +238,8 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
     collectSourceNote(facts.time),
   ].join('');
   return pageShell({
-    docTitle: DOC_TITLE + '·补齐槽位',
-    title: spec.wake + ' · ' + (page.id === null ? '挑一条记录' : spec.confirmTitle),
+    docTitle: docTitleOf(spec.wake + ' 补齐槽位'),
+    title: spec.wake,
     subtitle, slot: 'collect', page: 'collect', shape: envelope.shape, key: spec.key, content,
   });
 }
@@ -306,7 +306,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
       { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
       {
         label: '写进去的项', value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项',
+        detail: receipt.writtenFields.length === 0 ? '没改到任何一项' : '逐项见下面的明细表',
       },
     ]), 'sec-kpi', '读数'),
     { html: spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber) },
@@ -331,11 +331,11 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
     }), 'sec-copy', '复制'),
     { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
   ];
-  const content = typeBadge({ kind: '', status: spec.receiptStatus, state: '写库成功', next: spec.receiptNext })
+  const content = typeBadge({ kind: '', status: spec.receiptStatus, state: '写库成功', pageKind: '回执', next: spec.receiptNext })
     + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·写库回执',
-    title: spec.wake + ' · 回执',
+    docTitle: docTitleOf(spec.wake + ' 回执'),
+    title: spec.wake,
     subtitle: receipt.summary, slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key, content,
   });
 }

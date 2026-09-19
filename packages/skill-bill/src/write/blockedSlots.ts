@@ -104,13 +104,16 @@ interface BlockedBarInput {
  */
 const BLOCKED_WRITE_ACTION = 'ilife-blocked-write';
 
-/** 缺项阻断条：错误回执 ＋ 缺项明示表 ＋ 不可复制的写库指令 ＋ 置灰的写库按钮。空判定＝不出这一段（返回空串）。 */
+/** 缺项阻断条：错误回执 ＋ 缺项徽章行 ＋ 缺项明示表 ＋ 不可复制的写库指令 ＋ 置灰的写库按钮。空判定＝不出这一段（返回空串）。 */
 export function blockedBar(input: BlockedBarInput): string {
   const n = input.items.length;
   if (n === 0) return '';
   return errorReceipt({
     title: '还缺什么',
-    message: '还缺 ' + n + ' 项，补齐再记：' + input.items.map((i) => i.label).join('、'),
+    // t728：改前这里是把缺项名 `join('、')` 接在句尾（`还缺 3 项，补齐再记：分类、金额、向谁借`）——
+    //   用户逐字点名的那类写法（拿顿号当日志排版，一段文本里塞 ≥3 件并列的事）。
+    //   现在事由只说「还缺几项」，**缺的是哪几项由下面那行徽章出形状**（每项一枚胶囊，与整页标签同一形状）。
+    message: '还缺 ' + n + ' 项，补齐再记',
     retryPrompt: '补齐了，说一遍试试',
   }) + renderDataTable({
     columns: [
@@ -130,7 +133,7 @@ export function blockedBar(input: BlockedBarInput): string {
     buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION }],
   }) + renderCaliberLine(
     input.note === undefined || input.note === ''
-      ? '这一页先不写库；补齐之后照上面那句跟助手说一遍才会写。'
+      ? '这一页先不写库。补齐之后照上面那句跟助手说一遍才会写。'
       : input.note,
   );
 }

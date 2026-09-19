@@ -123,7 +123,7 @@ export function nextStepOf(input: {
     const word = input.wakeWord === undefined || input.wakeWord === '' ? '' : '，再说一遍「' + input.wakeWord + '」';
     return '还差 ' + n + ' 项：补齐了' + word + '。';
   }
-  if (input.page === 'collect') return '这一页先不写库；看准了就照下面那句复制。';
+  if (input.page === 'collect') return '这一页先不写库。看准了就照下面那句复制。';
   if (input.exit === true) return '这一笔已经记下了，不用再做什么。要反悔就点下面的「撤销这一笔」。';
   return '这一笔已经记下了，不用再做什么。';
 }

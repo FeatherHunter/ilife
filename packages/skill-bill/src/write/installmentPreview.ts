@@ -158,8 +158,8 @@ export function installmentPreview(input: InstallmentInput): string {
     + '故合计逐分等于总价：' + yuan(total) + '（' + periods + ' 期）。',
   )];
   parts.push(shareTable(head, folded
-    ? '分摊预览：共 ' + periods + ' 期，这里先显前 ' + HEAD_PERIODS + ' 期；合计 ' + yuan(total) + '（＝总价）'
-    : '分摊预览：共 ' + periods + ' 期；合计 ' + yuan(total) + '（＝总价）'));
+    ? '分摊预览：共 ' + periods + ' 期，这里先显前 ' + HEAD_PERIODS + ' 期。合计 ' + yuan(total) + '，等于总价'
+    : '分摊预览：共 ' + periods + ' 期。合计 ' + yuan(total) + '，等于总价'));
   if (rest.length > 0) {
     parts.push(renderDisclosure({
       title: '还有 ' + rest.length + ' 期（折叠在这里）',
