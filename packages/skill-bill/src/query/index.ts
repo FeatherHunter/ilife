@@ -1,12 +1,15 @@
-/** 记账查询域对外的门：命令声明 ＋ 一个读入口 ＋ 载荷行投影。对外三件（铁律五「不多于五个」）：
+/** 记账查询域对外的门：命令声明 ＋ 一个读入口。对外两件（铁律五「不多于五个」）：
  *   ① `QUERY_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
- *   ② `runQueryRead(key, params, db)`——读命令入口（**非本域命令即抛，不猜、不静默兜底**）；
- *   ③ `toBillItem`／`BillItem`——载荷行投影（件住 `items.ts`）。出现点实测三个（两条查询命令 ＋
- *      `src/cli/cmd_read.ts` 的 account.query 分支），今天只被查询域用，故按 #683 §3.9 **暂住本域**；
- *      分析域真要用明细行时按归属律 2 上浮共用位，到时这一行转出随之删掉。
+ *   ② `runQueryRead(key, params, db)`——读命令入口（**非本域命令即抛，不猜、不静默兜底**）。
  *
- * 域内其他件（处理体 `read.ts`／列表装配件 `list.ts`／详情装配件 `detail.ts`）**不出这个目录**，故不在这里转出。
- * 形状照 `../write/index.ts`（同一包内两域同形）：那边的第二参是饼干库句柄 `BillDb`，这里同。
+ * #691 起**收窄一件**：原先还转出 `toBillItem`／`BillItem`（载荷行投影），理由是当时第 3 个出现点是
+ *  `src/cli/cmd_read.ts` 的 account.query 分支（按 #683 §3.9 暂住本域，等分析域真要用时再上浮共用位）。
+ *  账户域那两条命令搬进 `src/account/` 之后，本域之外**已无消费方**（查询域自己的 `read.ts` 直接引
+ *  `./items.js`）⇒ 门跟着收窄，不再转出那两件；件本身仍住 `./items.js`（查询域自用）。
+ *
+ * 域内其他件（处理体 `read.ts`／列表装配件 `list.ts`／详情装配件 `detail.ts`／行投影 `items.ts`）
+ *  **不出这个目录**，故不在这里转出。
+ * 形状照 `../write/index.ts`（同一包内三域同形）：那边的第二参是饼干库句柄 `BillDb`，这里同。
  */
 import type { BillDb } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
@@ -14,8 +17,6 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { QUERY_COMMANDS } from './commands.js';
 
 export { QUERY_COMMANDS } from './commands.js';
-export { toBillItem } from './items.js';
-export type { BillItem } from './items.js';
 
 const BY_KEY = new Map(QUERY_COMMANDS.map((c) => [c.key, c]));
 

@@ -93,7 +93,9 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.match(JSON.parse(run(['bill.goal.query', '--params', P({ op: 'budget', month: '2026-09' })]).stdout).data.items[0].month, /2026-09/);
     assert.equal(run(['bill.account.write', '--params', P({ op: 'add', name: '招行卡' })]).status, 0);
     assert.equal(run(['bill.account.write', '--params', P({ op: 'transfer', amount: 500, from: '支付宝', to: '招行卡' })]).status, 0);
-    assert.equal(JSON.parse(run(['bill.account.query']).stdout).data.total, 1);
+    // #691 起 `total` 照老侧口径：账户全集＝登记过的账户 ＋ 只在流水里出现过的账户。
+    // 本条此前按「只数登记过的账户」写 1；上面第 31–32 行两笔样本带的账户也进全集 ⇒ 3。
+    assert.equal(JSON.parse(run(['bill.account.query']).stdout).data.total, 3);
   });
   it('link/setup/help：联动采单 + 初始化 + 现找', () => {
     const l = run(['bill.link.submit', '--params', P({ scene: 'meal', ate: '鸡腿饭', amount: -35 })]);

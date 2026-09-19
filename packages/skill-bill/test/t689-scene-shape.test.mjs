@@ -25,10 +25,11 @@ function tempRoot(name) {
 }
 
 describe('t689 · 判据乙门：场景件只声明差异值', () => {
-  it('正例·真包：16 件场景件全合格（RESULT 16/16、exit 0）', () => {
+  it('正例·真包：19 件场景件全合格（RESULT 19/19、exit 0）', () => {
+    // #691 起扫描面纳三件账户域场景件（scene-{add,update,transfer}.ts）：16 件写入域 ＋ 3 件账户域。
     const r = gate(null);
     assert.equal(r.status, 0, '门须绿：' + r.stdout + r.stderr);
-    assert.match(r.stdout, /RESULT: 16\/16/);
+    assert.match(r.stdout, /RESULT: 19\/19/);
     assert.match(r.stdout, /PASS: /);
     assert.ok(r.stdout.startsWith('SCAN-ROOT: '), '须打认口行 SCAN-ROOT');
   });

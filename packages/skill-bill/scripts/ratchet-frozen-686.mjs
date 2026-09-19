@@ -27,10 +27,8 @@ export const PKG_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** 冻结基线（只许随搬迁同步下调；本票 #686 交付当刻实测所得，出处见 `docs/skills/skill-bill/t686-机器面-证据.md`）。 */
 export const FROZEN = {
-  /** 未搬迁的键集：住 `src/render/envelope.ts` 的 `TRANSITIONAL_KEY_SHAPES`（10 条）。 */
+  /** 未搬迁的键集：住 `src/render/envelope.ts` 的 `TRANSITIONAL_KEY_SHAPES`（8 条）。 */
   legacyKeys: [
-    'bill.account.query',
-    'bill.account.write',
     'bill.analysis.compare',
     'bill.analysis.overview',
     'bill.analysis.trend',
@@ -42,8 +40,6 @@ export const FROZEN = {
   ],
   /** 分派层按键分派的字面量集（`src/cli` **全目录**）：与 `legacyKeys` 同集（未搬迁的键才在分派层有 case）。 */
   dispatchKeys: [
-    'bill.account.query',
-    'bill.account.write',
     'bill.analysis.compare',
     'bill.analysis.overview',
     'bill.analysis.trend',
@@ -54,13 +50,13 @@ export const FROZEN = {
     'bill.setup.run',
   ],
   /** 已搬进能力目录、进生成物注册表的键数：搬一条 ⇒ +1，同窗上调这里。 */
-  registryKeyCount: 6,
+  registryKeyCount: 8,
   /** 7 域 16 联动的键总数（搬迁不改这个数）：注册表 ∪ 未搬迁 ＝ 全集。 */
   totalKeyCount: 16,
   /** 分派层两件的行数上限（**等于当刻实况**：改一行就同窗改这里，否则收紧守卫红）。 */
   lineCaps: {
-    'src/cli/cmd_read.ts': 501,
-    'src/render/envelope.ts': 64,
+    'src/cli/cmd_read.ts': 455,
+    'src/render/envelope.ts': 62,
   },
 };
 

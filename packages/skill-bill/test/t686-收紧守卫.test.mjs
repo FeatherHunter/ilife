@@ -22,7 +22,7 @@ import { join, resolve } from 'node:path';
 import { FROZEN, PKG_DIR } from '../scripts/ratchet-frozen-686.mjs';
 
 const GUARD = join(PKG_DIR, 'scripts', 'check-ratchet-tight.mjs');
-const REGISTRY_KEYS = ['bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update'];
+const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update'];
 
 /** 把一段正文补到恰好 `target` 个 LF（补的是注释行，不影响任何判据）。 */
 function padTo(body, target) {

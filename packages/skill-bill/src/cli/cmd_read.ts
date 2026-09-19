@@ -13,12 +13,12 @@ import {
 // #726：备份目录与备份文件名两件从定义地直取（只服务 `bill.setup.run`，不进 `fetch/index.js` 那道门）。
 import { backupFileName, resolveBackupDir } from '../fetch/paths.js';
 // #689 结构搬迁第三批：`policy/` 与 `render/views.ts` 已拆散删除，下列名字按归属律各回自己的域／共用位
-// （`../shared/` 三件、`../analysis/`、`../goal/`、`../account/`、`../help/`、`../write/`、`../query/`）——
+// （`../shared/` 三件、`../analysis/`、`../goal/`、`../help/`、`../write/`）——
 // 外壳只认各域的门（一个命令族一处；随命令迁移收窄）。
+// #691 起 `../account/` 的四个名字也从本文件消失：账户域两条命令搬进能力目录，
+// 出口只查注册表（`runRegistered`）再调命令声明里的 `run`；本域的门只转出命令声明一件。
 import { parseOverviewKind, parseCompareKind, parseTrendKind, buildOverview, buildCompare, buildTrend } from '../analysis/index.js';
 import { parseGoalOp, validateSetBudget, validateSetSaving, buildGoalQuery } from '../goal/index.js';
-import { parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY,
-  TRANSFER_LEDGER, buildAccountQuery } from '../account/index.js';
 import { monthRange, resolveRange } from '../shared/dateRange.js';
 import { validateCategory } from '../shared/category.js';
 import {
@@ -38,8 +38,7 @@ import { REGISTRY } from './registry.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { buildRecordReceipt, runRecordWrite } from '../write/index.js';
-import { runQueryRead, toBillItem } from '../query/index.js';
+import { buildRecordReceipt } from '../write/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
 
@@ -139,11 +138,13 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   };
 }
 
-/** 迁移过的命令入口（写入域两条 ＋ 查询域四条）：查注册表命中即走能力目录，按 `kind` 静态分两支。
+/** 迁移过的命令入口（写入域两条 ＋ 查询域四条 ＋ 账户域两条）：查注册表命中即走**命令声明里的 `run`**。
  *  开库／关库与老路同一套；**写库开关已退役（#726）**：`BILL_FORCE_PROD` 那个 opt-in 随 #675 删除，
  *  落点改由配置文件唯一决定（口径「照写」，替代护栏＝测试基座的 `ILIFE_CONFIG_DIR`）。
- *  这些命令的整页（采集页／回执页／查询列表页）住各自能力目录，
- *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。 */
+ *  这些命令的整页（采集页／回执页／查询列表页／账户表单与汇总页）住各自能力目录，
+ *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。
+ *  #691 起**不再按域写死入口**（改前是 `spec.kind === 'write' ? runRecordWrite : runQueryRead` 两条）：
+ *  声明里本来就带着 `run`，第三个域进来时这一支一行不动——入口跟着声明走，域不需要在外壳上挂号。 */
 function runRegistered(key: string, params: Record<string, unknown>): WriteOut | ViewOut {
   const spec = REGISTRY[key];
   if (spec === undefined) fail(3, '未知 bill 命令：' + key);
@@ -151,9 +152,7 @@ function runRegistered(key: string, params: Record<string, unknown>): WriteOut |
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
-    return spec.kind === 'write'
-      ? runRecordWrite(key, params, handle)
-      : runQueryRead(key, params, handle);
+    return spec.run(params, handle);
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
   }
@@ -285,51 +284,6 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           return { ...ss, saved: Math.round(net * 100) / 100, pct: amount > 0 ? Math.round((net / amount) * 1000) / 10 : 0 };
         });
         return buildGoalQuery('saving', items);
-      }
-      case 'bill.account.write': {
-        const op = parseAccountOp(params);
-        const goals = loadGoals(goalsPath);
-        if (op === 'add') {
-          const name = needName(params);
-          const type = typeof params.type === 'string' ? (params.type as string) : '';
-          if (goals.accounts.some((a) => (a as Record<string, unknown>).name === name)) {
-            throw new BillPolicyError('POLICY_CONFLICT', '账户已存在：' + name);
-          }
-          goals.accounts.push({ name, type, disabled: false, created_at: new Date().toISOString().slice(0, 19).replace('T', ' ') });
-          saveGoals(goalsPath, goals);
-          return buildRecordReceipt(`已新增账户：${name}`);
-        }
-        if (op === 'update') {
-          const name = needName(params);
-          const acc = goals.accounts.find((a) => (a as Record<string, unknown>).name === name) as Record<string, unknown> | undefined;
-          if (!acc) throw new BillFetchError('BILL_ACCOUNT_CORRUPT', '无此账户：' + name);
-          if (typeof params['new-name'] === 'string' && (params['new-name'] as string).trim()) acc.name = (params['new-name'] as string).trim();
-          if (params.disable === true) acc.disabled = true;
-          if (params.enable === true) acc.disabled = false;
-          saveGoals(goalsPath, goals);
-          return buildRecordReceipt(`已修改账户：${String(acc.name)}`);
-        }
-        if (op === 'transfer') {
-          const { amount, from, to, time } = validateTransfer(params);
-          const t = time || new Date().toISOString().slice(0, 19).replace('T', ' ');
-          addBill(handle, { category: TRANSFER_OUT_CATEGORY, amount: -amount, time: t, account: from, ledger: TRANSFER_LEDGER, currency: '人民币', note: '#转账（转出）' });
-          addBill(handle, { category: TRANSFER_IN_CATEGORY, amount, time: t, account: to, ledger: TRANSFER_LEDGER, currency: '人民币', note: '#转账（转入）' });
-          return buildRecordReceipt(`已转账：${from}→${to} ${amount.toFixed(2)}（双笔 #转账，不入收支）`);
-        }
-        fail(2, 'account.write 只接受 op=add/update/transfer');
-        return null;
-      }
-      case 'bill.account.query': {
-        const goals = loadGoals(goalsPath);
-        const rows = fetchAll(handle);
-        const items = goals.accounts.map((a) => {
-          const aa = a as Record<string, unknown>;
-          const name = String(aa.name);
-          const bal = rows.filter((r) => r.account === name).reduce((s, r) => s + r.amount, 0);
-          const recent = rows.filter((r) => r.account === name).sort((x, y) => y.time.localeCompare(x.time) || y.id - x.id).slice(0, 3).map(toBillItem);
-          return { name, type: aa.type || '', disabled: !!aa.disabled, balance: Math.round(bal * 100) / 100, recent };
-        });
-        return buildAccountQuery(items);
       }
       case 'bill.link.submit': {
         const scene = params.scene === undefined ? 'purchase' : params.scene;

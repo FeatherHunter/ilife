@@ -129,8 +129,8 @@ describe('#721 · 路由（从包门读）', () => {
 });
 
 describe('#721 · 命令注册表（撤掉代表唤醒词之后仍自洽）', () => {
-  it('条数不缩水：注册表 6 键（已迁移的那些），16 键契约由词表整体守', () => {
-    assert.equal(REGISTRY_KEYS.length, 6, '注册表＝已迁移的六条（其余 10 条仍住过渡表，合起来仍是 16 键）');
+  it('条数不缩水：注册表 8 键（已迁移的那些），16 键契约由词表整体守', () => {
+    assert.equal(REGISTRY_KEYS.length, 8, '注册表＝已迁移的八条（其余 8 条仍住过渡表，合起来仍是 16 键）');
     for (const key of REGISTRY_KEYS) {
       assert.ok(String(BILL_KEY_SHAPES[key] || '').length > 0, key + ' 在形状表里没有形状');
     }
