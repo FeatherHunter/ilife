@@ -1,5 +1,6 @@
 import { describe, it, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -64,5 +65,33 @@ describe('baseline：基线指纹', () => {
     const red = compareBaseline(flipped, repoRoot);
     assert.ok(red.diffs.some((d) => d.includes('差异面 dist') && d.includes(victim)), red.diffs.join('\n'));
     assert.equal(compareBaseline(base, repoRoot).diffs.length, 0);
+  });
+
+  /* #715 实测记下的缺陷：`git ls-files` 列的是**索引**，「已删、未提交」的件仍在其中而盘上已无 ⇒
+     旧写法对每个路径直读会 ENOENT，**整个工具崩**（不是报差异）。多席共用工作区里这是常态。
+     本用例在**临时 git 仓库**里造出那个状态（不碰本仓、不动任何真件），断言存基线不抛错、
+     且该件不在源面、文件数如实少 1。 */
+  it('「已删、未提交」的件不许把存基线打成 ENOENT（#715 回归）', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ilife-baseline-deleted-'));
+    tmpDirs.push(dir);
+    const run = (args) => {
+      const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8' });
+      assert.equal(r.status, 0, `git ${args.join(' ')} 失败：${r.stderr}`);
+    };
+    run(['init', '-q']);
+    run(['config', 'user.email', 'baseline@test.local']);
+    run(['config', 'user.name', 'baseline test']);
+    fs.writeFileSync(path.join(dir, 'kept.txt'), 'kept\n', 'utf8');
+    fs.writeFileSync(path.join(dir, 'gone.txt'), 'gone\n', 'utf8');
+    run(['add', 'kept.txt', 'gone.txt']);
+    run(['commit', '-qm', 'seed']);
+    fs.rmSync(path.join(dir, 'gone.txt'));            // 已删、**不提交** —— 正是 #715 撞到的状态
+    run(['status', '--short']);                        // 索引仍在，盘上已无
+
+    const base = saveBaseline(dir);                    // 旧写法在这里 ENOENT
+    assert.equal(base.source.files, 1, '源面应只剩盘上真实存在的那一件');
+    const { notes, diffs } = compareBaseline(base, dir);
+    assert.equal(diffs.length, 0, diffs.join('\n'));
+    assert.ok(notes.some((n) => n.includes('source')), notes.join('\n'));
   });
 });

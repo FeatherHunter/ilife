@@ -4,7 +4,8 @@
  * 存＝源码 tree sha＋派生面指纹＋冻结文件结果；比＝逐项对照并报差异面。
  * 只读输入、只报结论，不替人执行。
  * 用法：--save <基线.json> ｜ --compare <基线.json> ｜ --help（可加 --root）。
- * 路径清单每次从当刻树派生：源码＝git ls-files；派生面＝递归枚举 dist（含
+ * 路径清单每次从当刻树派生：源码＝`git ls-files` **取盘上真实存在者**（「已删未提交」的件
+ * 仍在索引里但盘上已无，直读会 ENOENT ⇒ 见 `sourceList` 的说明）；派生面＝递归枚举 dist（含
  * .gen-inputs.json，另单列一行）；冻结面＝枚举 triggers/scene-*.ts＋冻结测试。
  * 基线形状：{version,savedAt,source:{tree,files},dist:{tree,files},
  * genInputs:{sha|null},frozen:{files}}；比对只查基线里有的面。退出码：0 一致；
@@ -24,10 +25,21 @@ const posix = (p) => p.split(path.sep).join('/');
 
 export const shaFile = (abs) => createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
 
+/**
+ * 源面路径清单：取**盘上真实存在**的受跟踪件。
+ *
+ * ⚠️ 为什么不直接用 `git ls-files`：它列的是**索引**，而「已删、未提交」的件仍在索引里、盘上已无。
+ * `saveBaseline` 随后要对每个路径 `shaFile()` 直读 ⇒ 撞上这种件就 `ENOENT` 抛错，
+ * **整个工具当场不可用**（不是报差异，是崩）。多席共用工作区里别席的未提交删除是常态，
+ * 故这里按存在性过滤，让「索引有、盘上无」如实表现为**该件不在源面**（其删除正是 `--compare` 要报的差异）。
+ * 复现与出处：`docs/skills/skill-calorie/t715-搬家-证据.md` §4.4（票 #715 实测）。
+ */
 export function sourceList(root) {
   const r = spawnSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'buffer' });
   if (r.status !== 0) throw new Error('git ls-files 失败（须在 git 仓库内运行）');
-  return r.stdout.toString('utf8').split('\0').filter(Boolean).map((s) => s.replace(/\\/g, '/'));
+  return r.stdout.toString('utf8').split('\0').filter(Boolean)
+    .map((s) => s.replace(/\\/g, '/'))
+    .filter((p) => fs.existsSync(path.join(root, p)));
 }
 
 export const treeHash = (entries) => createHash('sha256').update([...entries].sort().join('\n')).digest('hex');

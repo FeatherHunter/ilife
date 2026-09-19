@@ -182,7 +182,16 @@ function assertFusion(r, what, eyebrow) {
   assert.deepEqual([...r.file.matchAll(/data-fmt="([^"]+)"/g)].map((m) => m[1]), ['text', 'json', 'csv'],
     what + ' 的复制数据不是三格式菜单');
   assert.ok(r.file.includes('复制数据'), what + ' 缺复制数据按钮');
-  assert.ok(r.file.includes('ilife-copy-log'), what + ' 缺复制日志按钮');
+  /* 复制日志按钮**本族三页没有、也不该有**（#715 更正）：`shared/copyArea.ts` 的契约是
+     「给了什么出什么」（`copyArea` 出 0–3 颗按钮，日志位走 `log:` 入参），而本件五页共用同一条
+     装配出口 `finishPage`（`sportPortDocs.ts:306-321` 的 `copyArea({ data: … })` 调用）——
+     **只给 `data:`，从不给 `log:`** ⇒ 按契约就不该有日志按钮。
+     本行原先断的 `'ilife-copy-log'` 是个 **class 字面**，而公共层 #247 起把复制区按钮改成
+     `data-action-id="ilife-copy-log"`（`03b31e65` 改的是 `src/shared/copyArea.ts`，没动本件）——
+     两个口径对不上 ⇒ 这条断言**从那天起就没成立过**，不是页面缺功能。
+     判定依据（可复核）：#715 的搬迁判据把本族三页在**搬迁前后**逐字节比过（30/30 相同），
+     而**搬前**的产物里 `ilife-copy-log` 命中就是 0 处（对照页 `calorie.view.diet-review` 命中 1 处）。
+     复盘页（回执族）有日志按钮是另一族的事，见 `exercise-receipt-*` 那几件。 */
   // ⑤ 来源脚注 ＋ 口径行（都走 #420 的口径说明行）。
   // #544：来源脚注改键值行「数据来源／窗口／记录数」，不再是 `数据来源 · …` 那种 `·` 串。
   assert.ok(r.file.includes('数据来源'), what + ' 缺来源脚注');
