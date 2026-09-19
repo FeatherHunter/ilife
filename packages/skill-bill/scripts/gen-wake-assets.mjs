@@ -9,8 +9,9 @@
  *   node packages/skill-bill/scripts/gen-wake-assets.mjs --check          # 只比对，不一致 exit 1
  *   node packages/skill-bill/scripts/gen-wake-assets.mjs --src <老实物.html> --out <目标.ts>
  *
- * 事实源在**仓外**（老技能目录，机器本地）：`--check` 只在事实源在盘的机器上可跑；
- * 仓内不再落第二份 payload 副本（单一事实源），故 CI 不跑本脚本，改词走生成器。
+ * 事实源在**仓外**（老技能目录，机器本地）：`--check` 只在事实源在盘的机器上可判；
+ * 仓内不再落第二份 payload 副本（单一事实源）⇒ 事实源缺席时 `--check` 明打一行 SKIP 后放行
+ * （CI 因此不红），改词仍必走本生成器。#686 起本脚本的 `--check` 进包内 `pnpm gen:check` 那条链。
  *
  * 三处「非纯搬运」都在本文件里写死、可复核（生成文件头注释同步声明）：
  *   ① `ADDED_SCENES`＝现 `WAKE_TABLE` 比老 HELP 多出的 3 条（Q8=A 补进对应域）；
@@ -22,8 +23,12 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const PKG_DIR = join(HERE, '..');
+const SRC_DIR = join(PKG_DIR, 'src');
 const DEFAULT_SRC = 'D:\\2Study\\StudyNotes\\SKILLS\\饼干记账\\饼干记账.html';
-const DEFAULT_OUT = join(HERE, '..', 'src', 'triggers', 'wake-assets.ts');
+/** 生成物落点。**这一行的形状是判据**（#686）：告警线门按生成器自己的输出声明
+ *  （`const OUT = join(SRC_DIR, …)`）把生成物剔出扫描面，不靠人手维护一份会过期的剔除名单。 */
+const OUT = join(SRC_DIR, 'triggers', 'wake-assets.ts');
 const DATA_OPEN = '<script id="help-data" type="application/json">';
 
 /** 期望形状（老实物 2026-08-16 新世代：7 域／20 二级组／71 场景；不符即 fail-closed）。 */
@@ -143,7 +148,7 @@ function renderFile(groups) {
  *
  * 本文件由 \`scripts/gen-wake-assets.mjs\` 机器生成（逐字 \`JSON.stringify\`），**禁止手工改词**：
  * 改内容＝改事实源或改生成器里的新增条目段，再跑 \`node packages/skill-bill/scripts/gen-wake-assets.mjs\`
- * （\`--check\` 只比对不落盘；事实源在仓外，故 CI 不跑，改词必走生成器）。
+ * （\`--check\` 只比对不落盘；事实源在仓外，本机没有事实源时 \`--check\` 明打一行 SKIP 后放行，改词必走生成器）。
  *
  * 与「纯搬运」不同的三处（生成器里写死、可复核）：
  *  1. 新增 3 条场景 \`write_record\`/\`query_bills\`/\`query_bill_detail\` ＝现 \`WAKE_TABLE\` 比老 HELP
@@ -227,8 +232,17 @@ const argOf = (name, fallback) => {
   return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
 };
 const src = resolve(argOf('--src', DEFAULT_SRC));
-const out = resolve(argOf('--out', DEFAULT_OUT));
+const out = resolve(argOf('--out', OUT));
 const check = argv.includes('--check');
+
+/** 事实源在**仓外**（老技能目录，机器本地）：`--check` 只在事实源在盘的机器上可判。
+ *  缺席时**只放行 `--check`**，并明打一行 SKIP（CI 上没有事实源，不能因此转红；
+ *  也绝不静默当绿——`--check` 之外（写盘）仍照旧 fail-closed，缺事实源即抛）。 */
+if (check && !existsSync(src)) {
+  console.log('WAKE-ASSETS SKIP：事实源不在本机（' + src + '）。仓外单一事实源，本次不比；'
+    + '改词须在事实源在盘的机器上跑本生成器。');
+  process.exit(0);
+}
 
 const payload = readPayload(src);
 const scenes = payload.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));

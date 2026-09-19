@@ -30,9 +30,11 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/gen-cli.mjs --stamp && node scripts/build-help.mjs",
-    "gen": "node scripts/gen-cli.mjs",
-    "gen:check": "node scripts/gen-cli.mjs --check",
+    "gen": "node scripts/gen-cli.mjs && node scripts/gen-wake-assets.mjs",
+    "gen:check": "node scripts/gen-cli.mjs --check && node scripts/gen-wake-assets.mjs --check",
     "gen:wake-assets": "node scripts/gen-wake-assets.mjs",
+    "check:ratchet-tight": "node scripts/check-ratchet-tight.mjs",
+    "check:warning-line": "node scripts/check-warning-line.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

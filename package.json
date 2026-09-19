@@ -8,9 +8,9 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc -b && node packages/skill-calorie/scripts/gen-cli.mjs --stamp && pnpm -r --if-present run build:client",
-    "gen": "node packages/skill-calorie/scripts/gen-cli.mjs",
-    "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check",
+    "build": "tsc -b && node packages/skill-calorie/scripts/gen-cli.mjs --stamp && node packages/skill-bill/scripts/gen-cli.mjs --stamp && pnpm -r --if-present run build:client",
+    "gen": "node packages/skill-calorie/scripts/gen-cli.mjs && node packages/skill-bill/scripts/gen-cli.mjs && node packages/skill-bill/scripts/gen-wake-assets.mjs",
+    "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-wake-assets.mjs --check",
     "test:types": "tsc -b",
     "test": "node --test \"test/*.test.mjs\" \"packages/base-render/test/*.test.mjs\" \"packages/skill-calorie/test/*.test.mjs\" \"packages/skill-memo-ilife/test/*.test.mjs\" \"packages/skill-schedule/test/*.test.mjs\" \"packages/skill-home/test/*.test.mjs\" \"packages/skill-bill/test/*.test.mjs\" \"packages/skill-chef/test/*.test.mjs\" \"packages/plugin-manager/test/*.test.mjs\" \"packages/plugin-calorie/test/*.test.mjs\" \"packages/plugin-memo-ilife/test/*.test.mjs\" \"packages/plugin-schedule-ilife/test/*.test.mjs\" \"packages/plugin-home-ilife/test/*.test.mjs\" \"packages/plugin-chef/test/*.test.mjs\" \"packages/plugin-bill-ilife/test/*.test.mjs\"",
     "doctor": "node tooling/skilllink.mjs doctor",

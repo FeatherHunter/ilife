@@ -7,7 +7,7 @@
  *
  * 本文件由 `scripts/gen-wake-assets.mjs` 机器生成（逐字 `JSON.stringify`），**禁止手工改词**：
  * 改内容＝改事实源或改生成器里的新增条目段，再跑 `node packages/skill-bill/scripts/gen-wake-assets.mjs`
- * （`--check` 只比对不落盘；事实源在仓外，故 CI 不跑，改词必走生成器）。
+ * （`--check` 只比对不落盘；事实源在仓外，本机没有事实源时 `--check` 明打一行 SKIP 后放行，改词必走生成器）。
  *
  * 与「纯搬运」不同的三处（生成器里写死、可复核）：
  *  1. 新增 3 条场景 `write_record`/`query_bills`/`query_bill_detail` ＝现 `WAKE_TABLE` 比老 HELP
