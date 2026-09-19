@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, mkdtempSync, rmSync, 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname, basename, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const mode = process.argv[2] || '--pre';
@@ -196,6 +196,9 @@ function gateFreshTmp() {
     "import { join, basename, dirname } from 'node:path';",
     "import { pathToFileURL } from 'node:url';",
     "import { spawnSync } from 'node:child_process';",
+    // #727：备忘库的布景件取自 `tooling/contract-seam.mjs`（同仓tooling，与各技能单测同源），
+    // 免得「建库 SQL」在门里再抄一份、两边漂移。
+    "import { initMemoTestDb } from " + JSON.stringify(pathToFileURL(join(root, 'tooling', 'contract-seam.mjs')).href) + ";",
     "const CONTRACT = " + JSON.stringify(Object.fromEntries(Object.entries(CONTRACT_KEY).filter(([k]) => scopedPlugs.includes(k)))) + ";",
     "const PLUGIN_OF = " + JSON.stringify(Object.fromEntries(Object.entries(PLUGIN_OF).filter(([k]) => scopedPlugs.includes(k)))) + ";",
     "const TPL_EXPECT = " + JSON.stringify(tplExpect) + ";",
@@ -213,16 +216,22 @@ function gateFreshTmp() {
     "  try { mod.assertCliPresent(); } catch (e) { console.error('FAIL: ' + plug + ' assertCliPresent 抛：' + e.message); bad++; continue; }",
     "  const db = mkdtempSync(join(tmpdir(), 'ilife-g3-'));",
     '  dbs.push(db);',
-    "  // #50 memo 对 harness 侧 arranging（非产品语义变更）：memo 全键先 openMemoDb（缺目录 exit 4 系设计态阻断，不碰），",
-    "  // 其余五对契约键皆静态 help 键不碰 DB；仅 memo 分支预建 memo/ 空目录（对标 skill-memo-ilife 单测同款前置）。",
-    "  if (skill === 'skill-memo-ilife') mkdirSync(join(db, 'memo'), { recursive: true });",
-    "  const r = spawnSync(process.execPath, [p, key, '--params', '{}'], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });",
+    "  // #727：技能侧自 #695／#722 起，「库在哪」改由配置文件定（`ILIFE_CONFIG_DIR` 指向的目录里放 <技能>.yaml），",
+    "  // 旧布景（`SKILLS_DB_PATH` ＋ `<db>/memo` 空目录）已不再被技能读取 —— 沿用会让备忘取数 exit4 假红",
+    "  // （实测：五对静态 help 键全绿、仅 memo.stats exit4，它在找 `<数据目录>/memo.db`）。",
+    "  // 现按冻结口径给一个隔离配置目录：数据目录落在这里，备忘库按老 schema 建空库（布景件与单测同源）。",
+    "  const cfg = mkdtempSync(join(tmpdir(), 'ilife-g3-cfg-'));",
+    "  dbs.push(cfg);",
+    "  mkdirSync(join(cfg, 'data'), { recursive: true });",
+    "  if (skill === 'skill-memo-ilife') initMemoTestDb(join(cfg, 'data', 'memo.db'));",
+    "  const r = spawnSync(process.execPath, [p, key, '--params', '{}'], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: cfg, SKILLS_DB_PATH: db } });",
     "  if (r.status !== 0) { console.error('FAIL: ' + plug + ' 契约键 ' + key + ' exit' + r.status); bad++; continue; }",
     '  let env;',
     "  try { env = JSON.parse(String(r.stdout)); } catch { console.error('FAIL: ' + plug + ' 契约回执非 JSON'); bad++; continue; }",
     "  if (env.key !== key || env.data === null || env.data === undefined || typeof env.shape !== 'string') { console.error('FAIL: ' + plug + ' envelope 契约破'); bad++; continue; }",
     "  console.log('OK: ' + plug + ' SKILL直执行 契约键 ' + key + ' shape=' + env.shape);",
     "  process.env.SKILLS_DB_PATH = db;",
+    "  process.env.ILIFE_CONFIG_DIR = cfg;",
     "  let data;",
     "  try { data = mod.readViaCli(key, {}); } catch (e) { console.error('FAIL: ' + plug + ' 面板路 readViaCli 抛：' + e.message); bad++; continue; }",
     "  if (data === null || data === undefined) { console.error('FAIL: ' + plug + ' 面板路返空'); bad++; continue; }",
