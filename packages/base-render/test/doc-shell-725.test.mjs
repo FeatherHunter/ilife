@@ -120,9 +120,14 @@ describe('#725 文档骨架件：件自己（判据 4 与铁律五）', () => {
     assert.deepEqual(hits, [], '公共层件里出现了技能名：' + hits.join('、'));
   });
 
-  it('铁律五：对外只一个名字；子路径出口已登记、主入口不动', async () => {
+  it('铁律五：对外只一个运行时名字；类型面出口也在此点名（改动即在此变红）', async () => {
     const mod = await import('../dist/docShell.js');
     assert.deepEqual(Object.keys(mod).sort(), ['renderDocShell'], '一个文件对外只许一个名字');
+    // 类型面（`.d.ts`）的出口：规格 §一 那句话是「对外只这一个名字」的**运行时**口径；
+    // 类型面按铁律五数字（≤5）另算，这里把它逐字点名——加类型出口就得先改这一行（免得悄悄长胖）。
+    const dts = readFileSync(fileURLToPath(new URL('../dist/docShell.d.ts', import.meta.url)), 'utf8');
+    const types = [...dts.matchAll(/^export (?:type|interface) (\w+)/gm)].map((m) => m[1]).sort();
+    assert.deepEqual(types, ['DocShellDoctypeCase', 'DocShellInput'], '类型面出口＝这两个');
     const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'));
     assert.equal(pkg.exports['./docShell'], './dist/docShell.js', '子路径导出');
     assert.equal(pkg.exports['.'], './dist/index.js', '主入口不动');
