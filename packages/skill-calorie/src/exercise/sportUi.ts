@@ -29,31 +29,21 @@
 
 import { escapeHtml } from 'base-paint';
 import { renderChips } from 'base-paint/blocks';
+import {
+  FACT_VOCAB, WINDOW_VOCAB,
+  factStrip as stripFactStrip, factStripCss,
+  windowStrip as stripWindowStrip, windowStripCss,
+} from '../shared/pageStrips.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
 /** 形状词汇的 CSS（冻结 token；不新增 `:root` 变量；间距一律落 4／8 网格）。 */
 export function exerciseUiCss(): string {
   return '<style>'
-    // ── 窗口条：两枚日期块 ＋ 箭头 ＋ 天数／条数胶囊（原来这三件事挤在页头一行 `·` 串里）──
-    + '.sui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 16px}'
-    + '.sui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);'
-    + 'border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-variant-numeric:tabular-nums}'
-    + '.sui-arrow{color:var(--fg3);font-size:13px}'
-    + '.sui-days{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);'
-    + 'border-radius:999px;padding:4px 8px}'
-    // ── 键值行：一行若干「标签 ＋ 值」。窄屏塌成一列（标签贴左、值贴右），行行对齐 ──
-    // 键值行（#543 视觉复评 r6 的 P1-1）：**桌面档也必须是「键上／值下」的有轴小格**——
-    // 原来 `display:flex;flex-wrap:wrap` 一路横排，四组值在 1440 档落成 x=296／444／540／661
-    // **四条互不对齐的竖轴**（实测最大差 365px），「键—值」配对只能靠数；同一件的 390 档
-    // 反而塌成了右对齐纵列（那一档是对的）。改法：`auto-fit` 栅格——同排小格等宽、键左缘同轴，
-    // 行数由内容定（4 组＝1 行 4 格，3 组＝1 行 3 格），不写死列数，空档不靠 `wrap` 兜。
-    + '.sui-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px 16px;margin:8px 0 16px}'
-    + '.sui-fact{display:flex;flex-direction:column;gap:2px;min-width:0}'
-    // 键色 `--fg3`(#86868b) 对白底仅 3.62:1，12px 正文要 4.5:1；`--fg2`(#6e6e73) 为 5.07:1
-    // （同包 `base-render/src/style.ts:567` 已为同类 12px 小字做过同一次改动，本处照办）。
-    + '.sui-fact-k{font-size:12px;color:var(--fg2);white-space:nowrap}'
-    + '.sui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums;min-width:0}'
+    // ── 窗口条与事实条的形状规则自 #719 起住共用位 `src/shared/pageStrips.ts`（三族原先各写一份）──
+    + windowStripCss()
+    + factStripCss()
+    // ── 以下都是**本族自己**的形状（窗口条与事实条之外的那些），仍住本件 ──
     // ── 并列小胶囊（单位／筛选这类短词并排；`renderChips` 的件，本类只管行距与折行）──
     + '.sui-caps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 16px}'
     // ── 并列字段清单的行题（「本次写入的字段」这一行；字段名本身走 `renderChips` 的胶囊件）──
@@ -132,14 +122,9 @@ export function exerciseUiCss(): string {
     + '.ilife-block-verdict.ok{background:#e6f7ec;color:#1f8c3d}'
     + '.ilife-block-verdict.no{background:#fff5e0;color:#a25b00}'
     // ── 手机端（断点 820 = HELP）：横向塌纵向、内距收紧、触摸目标 ≥44px ──
+    //    窗口条与事实条两条窄屏规则自 #719 起随形状住共用位 `shared/pageStrips.ts`，
+    //    本段只剩**本族自己**那些件（胶囊／环卡／分布条）的窄屏处置。
     + '@media (max-width:820px){'
-    + '  .sui-window{gap:8px}'
-    + '  .sui-date{padding:8px 12px;min-height:32px;display:inline-flex;align-items:center}'
-    + '  .sui-days{padding:4px 12px}'
-    // 键值行在窄屏塌成**一列「键左／值右」**（同 `.wui-strip-v` 的处置）：桌面那套小格在 390 档
-    // 会把「2026-09-15 → 2026-09-15」这类长值挤成两行，故窄屏改回纵列并两端对齐。
-    + '  .sui-facts{grid-template-columns:minmax(0,1fr);gap:8px}'
-    + '  .sui-fact{flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px}'
     + '  .sui-caps{gap:8px}'
     // 环卡在窄屏塌成一列：环在上、数值在下，居中——横排会把环挤到 100px 出头。
     + '  .ilife-block-ring-card{flex-direction:column;align-items:center;gap:16px}'
@@ -164,28 +149,16 @@ export function exerciseUiCss(): string {
 }
 
 /** 窗口条：`2026-02-27 → 2026-09-15` ＋ 天数（或条数）胶囊。`start === end`（单日窗）只出一枚
- *  日期块、不出箭头——不替读者断言一个不存在的跨度（同 `weightUi.windowStrip()` 的退化分支）。 */
+ *  日期块、不出箭头——不替读者断言一个不存在的跨度。形状住 `src/shared/pageStrips.ts`（#719 起三族共用），
+ *  本件只把本族的类名词汇递给它。 */
 export function windowStrip(start: string, end: string, chipText?: string): string {
-  const chip = chipText === undefined || chipText === '' ? '' : '<span class="sui-days">' + esc(chipText) + '</span>';
-  if (start === end) {
-    return '<div class="sui-window"><span class="sui-date">' + esc(start) + '（单日）</span>' + chip + '</div>';
-  }
-  return '<div class="sui-window">'
-    + '<span class="sui-date">' + esc(start) + '</span>'
-    + '<span class="sui-arrow">→</span>'
-    + '<span class="sui-date">' + esc(end) + '</span>'
-    + chip
-    + '</div>';
+  return stripWindowStrip(start, end, chipText, WINDOW_VOCAB.exercise);
 }
 
-/** 键值行：一组「标签 ＋ 值」。`v` 为空串的那一条整条不出（缺值不留空槽）。 */
+/** 键值行：一组「标签 ＋ 值」。`v` 为空串的那一条整条不出（缺值不留空槽）。
+ *  形状住 `src/shared/pageStrips.ts`（#719 起两族共用）；本族**不给**那三个变体位。 */
 export function factStrip(facts: ReadonlyArray<{ k: string; v: string }>): string {
-  const body = facts
-    .filter((f) => f.v !== '')
-    .map((f) => '<span class="sui-fact"><span class="sui-fact-k">' + esc(f.k) + '</span>'
-      + '<span class="sui-fact-v">' + esc(f.v) + '</span></span>')
-    .join('');
-  return body === '' ? '' : '<div class="sui-facts">' + body + '</div>';
+  return stripFactStrip(facts, FACT_VOCAB.exercise);
 }
 
 /** 并列小胶囊行（单位／筛选这类短词）：件走公共层 `renderChips`，本件只给行容器与间距。

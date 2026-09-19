@@ -57,39 +57,28 @@
 import { escapeHtml } from 'base-paint';
 import { renderKpiCard } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
+import {
+  FACT_VOCAB, WINDOW_VOCAB,
+  factStrip as stripFactStrip, factStripCss,
+  windowStrip as stripWindowStrip, windowStripCss,
+} from '../shared/pageStrips.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
-/** 形状词汇的 CSS（冻结 token；不新增 `:root` 变量）。 */
+/** 本族样式段：**共用位那段（窗口条与事实条的形状规则）＋ 本族自己那一段**。
+ *
+ *  拼成**一个** `<style>` 块（不是两块）——既有测试件按 `<style>` 标签切块、再断言「含本族形状类名的
+ *  那一块恰好 1 个」，并列两块会把那条判据打红。共用位那两段按族逐值保留几何（见 `shared/pageStrips.ts`）。
+ *
+ *  以下本族自己的形状（`.wui-pair`／`.wui-chip`／`.wui-note`／`.wui-bullets`／`.wui-verdict`／
+ *  `.wui-cmp` 一族与 `.wui-window-block`）**一行未动、仍住本件**：它们只有本族一份定义，不是重复。 */
 export function weightUiCss(): string {
   return '<style>'
-    // ── 事实条：一行若干「标签 ＋ 值」，窄屏塌成一列 ──
-    + '.wui-strip{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin:2px 0 10px}'
-    + '.wui-strip-v{flex-direction:column;align-items:stretch;gap:8px}'
-    // 空槽（`margin-top:16px`）：**卡片的 `detail` 槽**里本件没有兄弟件可借距（KPI 值槽之下直接是本条）。
-    // 桌面一行若干枚，间距由 `.wui-strip` 的 `gap` 给；窄屏塌成纵列时由 `.wui-strip-v` 接管。
-    + '.wui-strip-gap{margin-top:16px}'
-    // 纵列里的一组「标签 ＋ 值」：标签在左、值贴右，行行对齐（窄屏的事实一栏读法）。
-    + '.wui-strip-v .wui-fact{width:100%;justify-content:space-between;gap:12px}'
-    // 「标签 ＋ **说明句**」那一型（`factStrip(facts, false, true, true)`）：值不是量值而是一句脚注口气的
-    // 说明（「目标值超出刻度」），整块退一档（同 `.wui-note` 的字号／行高／色），不跟量值抢眼。
-    // #510：两半**分两档**——标签留 `--fg3`、说明那半落到 `--fg2` 且不加粗（原来两半同为 13px 加粗 `--fg`，
-    // 并排读成一句不通的话：`图上没画目标线 目标值超出刻度`）。
-    + '.wui-strip-note .wui-fact{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}'
-    + '.wui-strip-note .wui-fact-k{font-size:12px;color:var(--fg3);font-weight:400;white-space:normal}'
-    + '.wui-strip-note .wui-fact-v{font-size:12px;font-weight:400;color:var(--fg2);line-height:1.6}'
-    + '.wui-fact{display:inline-flex;align-items:baseline;gap:6px;min-width:0}'
-    + '.wui-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
-    + '.wui-fact-v{font-size:13px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}'
-    // ── 窗口条：日期块 → 日期块 ＋ 天数胶囊（原来串在一行字里） ──
-    + '.wui-window{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}'
+    + windowStripCss()
+    + factStripCss()
     // 窗口条 ＋ 方向胶囊合成的一件（体重盘正文首件，原来这两条挤在页头副标题那句 `·` 串里）。
     + '.wui-window-block{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}'
     + '.wui-window-block .wui-window{margin:0}'
-    + '.wui-date{font-size:13px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--line);'
-    + 'border-radius:10px;padding:3px 9px;font-variant-numeric:tabular-nums}'
-    + '.wui-arrow{color:var(--fg3);font-size:13px}'
-    + '.wui-days{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:3px 10px}'
     // ── 两端值对比（首末日、两期、目标与实际）──
     // 留一点点上边距（#504）：本件常跟在 `.wui-note` 后面，而本页没有 `*{margin:0}` 复位 ⇒
     // 若写成 `margin:0`，会把上一条的 `margin:2px 0 0` 折成 0px（相邻外边距折叠，实测贴字）。
@@ -137,13 +126,9 @@ export function weightUiCss(): string {
     // 差值读数（量值面）：与 KPI 卡的值槽同口径（13px／700／tnum），不换行。
     + '.wui-cmp-delta{font-size:13px;font-weight:700;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}'
     // ── 手机端（断点 820 = HELP）：横向塌纵向、内距收紧、触摸目标 ≥44px ──
+    //    窗口条与事实条两条窄屏规则自 #719 起随形状住共用位 `shared/pageStrips.ts`，
+    //    本段只剩**本族自己**那些件（判语块／两段对照块）的窄屏处置。
     + '@media (max-width:820px){'
-    + '  .wui-strip{gap:6px 14px}'
-    + '  .wui-strip-v{gap:8px}'
-    + '  .wui-window{gap:6px}'
-    + '  .wui-fact-v{font-size:13px}'
-    + '  .wui-date{padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}'
-    + '  .wui-days{padding:5px 10px}'
     // #510：手机档原写 14.5px——比桌面那 15px 只差 0.5px，是个空档（页内件面只留 12／13／15 三档）。
     + '  .wui-verdict{font-size:15px}'
     // 判语块的胶囊行在窄屏塌成一栏「标签 ＋ 值」：原来几枚胶囊横排会折行、断在词中间。
@@ -169,36 +154,26 @@ export function weightUiCss(): string {
 }
 
 /** 窗口条：`2026-09-01 → 2026-09-07` ＋ 天数（或条数）胶囊。
- *  #510 退化分支：`start === end`（单日窗）时**只出一枚日期块、不出箭头**——原来会印
+ *  `start === end`（单日窗）时**只出一枚日期块、不出箭头**——原来会印
  *  `2026-09-07 → 2026-09-07`，那是形状替读者断言了一个不存在的跨度（页 15／30 同病）；
- *  这一档的日期块里写明「单日」，跨度的形状不再出现。 */
+ *  这一档的日期块里写明「单日」，跨度的形状不再出现。形状住 `src/shared/pageStrips.ts`（#719 起三族共用），
+ *  本件只把本族的类名词汇递给它。 */
 export function windowStrip(start: string, end: string, chipText?: string): string {
-  const chip = chipText === undefined || chipText === '' ? '' : '<span class="wui-days">' + esc(chipText) + '</span>';
-  if (start === end) {
-    return '<div class="wui-window"><span class="wui-date">' + esc(start) + '（单日）</span>' + chip + '</div>';
-  }
-  return '<div class="wui-window">'
-    + '<span class="wui-date">' + esc(start) + '</span>'
-    + '<span class="wui-arrow">→</span>'
-    + '<span class="wui-date">' + esc(end) + '</span>'
-    + chip
-    + '</div>';
+  return stripWindowStrip(start, end, chipText, WINDOW_VOCAB.weight);
 }
 
 /** 事实条：一组「标签 ＋ 值」。`vertical`＝整块恒纵列；`gap`＝整块与上一件之间空一行
  *  （KPI 卡的 `detail` 槽里本件没有兄弟件可借距，故那一槽要打开它）；`asNote`＝值退成脚注口气的字，
- *  「标签 ＋ 一句说明」那种用法走它（数字量值不用）。三个位都是**落点**，形状不变。 */
+ *  「标签 ＋ 一句说明」那种用法走它（数字量值不用）。三个位都是**落点**，形状不变。
+ *
+ *  **形状住 `src/shared/pageStrips.ts`（#719 起两族共用）**：容器的版式已由共用件统一成
+ *  运动族那套等宽小格（`auto-fit` 栅格、窄屏塌单列）——这是本票唯一一处可见版式变更，票面已授权；
+ *  类名与字号色权重一律未改，故 `wui-strip-v`／`wui-strip-gap`／`wui-strip-note` 三个变体位的
+ *  既有版式一行未动。本件只把本族的类名词汇与这三个位递给共用件。 */
 export function factStrip(
   facts: ReadonlyArray<{ k: string; v: string }>, vertical = false, gap = false, asNote = false,
 ): string {
-  const body = facts
-    .filter((f) => f.v !== '')
-    .map((f) => '<span class="wui-fact"><span class="wui-fact-k">' + esc(f.k) + '</span>'
-      + '<span class="wui-fact-v">' + esc(f.v) + '</span></span>')
-    .join('');
-  if (body === '') return '';
-  return '<div class="wui-strip' + (vertical ? ' wui-strip-v' : '') + (gap ? ' wui-strip-gap' : '')
-    + (asNote ? ' wui-strip-note' : '') + '">' + body + '</div>';
+  return stripFactStrip(facts, FACT_VOCAB.weight, { vertical, gap, asNote });
 }
 
 /** 两端值对比：`首 70.1 kg → 末 70.4 kg` 那类，中缝写一句关系词（缺省不写）。 */
