@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡路里包结构收口 · 建图前待裁四问</title>
+<style>
+  :root{
+    --ink:#15181f; --dim:#5d6675; --line:#e4e8ef; --bg:#f5f6f9; --card:#fff;
+    --ok:#0d6b35; --okbg:#e9f8ef; --warn:#8a5a09; --warnbg:#fdf4e7; --bad:#a01b1b; --badbg:#fdecec;
+    --blue:#1d4ed8; --bluebg:#eef4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+  header{background:#151a24;color:#eef2f8;padding:30px 0 26px}
+  header .meta{color:#8fa0b8;font-size:12.5px;letter-spacing:.06em;margin:0 0 8px}
+  header h1{font-size:28px;line-height:1.3;margin:0 0 10px;color:#fff}
+  header p.lead{margin:0;color:#c6d1e2;max-width:840px}
+  nav{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+  nav a{display:inline-block;background:#232b38;color:#dbe6f5;text-decoration:none;
+        font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid #33405455}
+  nav a:hover{background:#2d3849}
+  h2{font-size:20px;margin:38px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:17px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+        box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+  .ok{border-left:5px solid var(--ok)} .warn{border-left:5px solid #e0b054} .bad{border-left:5px solid var(--bad)}
+  .label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0 0 4px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;border:1px solid}
+  .t-ok{background:var(--okbg);border-color:#9ad7b3;color:var(--ok)}
+  .t-warn{background:var(--warnbg);border-color:#e6c489;color:var(--warn)}
+  .t-bad{background:var(--badbg);border-color:#f0a9a9;color:var(--bad)}
+  .t-blue{background:var(--bluebg);border-color:#a9c3f5;color:var(--blue)}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0 0}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#eef1f6;font-weight:600;white-space:nowrap}
+  td.rec{background:var(--okbg)}
+  .decision{margin:18px 0}
+  .dh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .num{width:28px;height:28px;border-radius:50%;background:#151a24;color:#fff;display:flex;
+       align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:0 0 auto}
+  .dh .sp{flex:1}
+  .recbox{background:var(--okbg);border:1px solid #9ad7b3;border-radius:10px;padding:10px 14px;margin:14px 0 0;font-size:14.5px}
+  .recbox b{color:var(--ok)}
+  .why{color:var(--dim);font-size:14px}
+  code{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:12.5px;
+       background:#eef1f6;padding:1px 5px;border-radius:4px;white-space:nowrap}
+  .kv{display:flex;gap:26px;flex-wrap:wrap;margin:12px 0 0}
+  .kv div{min-width:120px}
+  .kv b{display:block;font-size:22px;line-height:1.2}
+  .kv span{font-size:12px;color:var(--dim)}
+  .num-bad{color:var(--bad)} .num-ok{color:var(--ok)}
+  details{margin:10px 0 0;font-size:14px}
+  summary{cursor:pointer;color:var(--blue);font-weight:600}
+  details ul{margin:8px 0 0;padding-left:20px}
+  footer{margin:40px 0 30px;padding-top:14px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+  ul.tight{margin:8px 0 0;padding-left:20px} ul.tight li{margin:2px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="meta">skill-calorie · 架构审查之后的下一步 · 2026-09-17</p>
+    <h1>四个问题，等你一句话</h1>
+    <p class="lead">
+      审查报告的九条候选已逐条复核完（四个只读席对照当刻源码），六张票面也写好了。
+      下面四件只有你能拍：每件都写了前因后果、选项利弊，并给了我的推荐。
+    </p>
+    <nav>
+      <a href="#answers">先看两个回答</a>
+      <a href="#map">地图一览</a>
+      <a href="#d1">① 范围</a>
+      <a href="#d2">② 交货口径</a>
+      <a href="#d3">③ 台账那 40 件</a>
+      <a href="#d4">④ 谁来建</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+<h2 id="answers">先回答你问的两件事</h2>
+<div class="grid2">
+  <div class="card ok">
+    <h3>这套技能的结构能不能优化好？</h3>
+    <p style="margin:10px 0 0"><b>能。</b>方向都对、盘子都真——但不能照报告的数字施工。</p>
+    <div class="kv">
+      <div><b class="num-bad">27</b><span>复核抓到的计数更正</span></div>
+      <div><b class="num-ok">0</b><span>行号漂移（被引 20+ 处全中）</span></div>
+    </div>
+    <p style="margin:12px 0 0;color:var(--dim);font-size:13.5px">最要紧的三处：</p>
+    <ul class="tight" style="font-size:14px">
+      <li>「真出口覆盖薄」<b>是反的</b>——201 件测试里已有 <b>124 件</b> spawn 真 CLI；真正薄的是算式层门面。</li>
+      <li>「页内形状约 130 个调用点」实为 <b>≈64</b>；门上的 <code>run*</code> 是 <b>19 个</b>不是 20（home 只有读命令）。</li>
+      <li>包门不是 131 个名字，是 <b>402 个</b>——其中 <b>354 个在包外零引用</b>，比报告说的更严重。</li>
+    </ul>
+    <details>
+      <summary>看全部更正（27 行）在哪</summary>
+      <p style="margin:8px 0 0">逐条对照表在草案目录的 <code>README.md</code>；每条更正的落点都写进对应票面的「开工先复核」位置。</p>
+    </details>
+  </div>
+
+  <div class="card">
+    <h3>wayfinder 能不能用来开 issue 做精简地图？</h3>
+    <p style="margin:10px 0 0"><b>能，而且形状正对。</b>九条里最吃重的三条本来就是「决定」而不是施工单——形状共件住哪、五处口径归哪、空棘轮到期谁拍。</p>
+    <p style="margin:10px 0 0"><span class="tag t-warn">一个限制</span>
+      <code>/wayfinder</code> 的技能文件带 <code>disable-model-invocation: true</code>，我这边<b>不能用技能工具加载它</b>（试过，报 not available）。我把它的源文件读全了，仓里 <code>#671</code> 是同一套形状的现成样板，照它起草的。</p>
+    <p style="margin:10px 0 0;color:var(--dim);font-size:13.5px">
+      技术前提已实测：<code>gh</code> 已登录、子票挂载（sub-issues）与原生阻塞边（<code>blocked_by</code>）都通；<code>#671</code> 已挂 9 张子票。</p>
+  </div>
+</div>
+
+<h2 id="map">地图一览：六张票，前沿四张</h2>
+<div class="card">
+  <table>
+    <tr><th>票</th><th>类型</th><th>阻塞</th><th>干什么</th></tr>
+    <tr><td>页内形状收成一个共件</td><td>裁定</td><td>—</td><td>住哪／接口几名／CSS 怎么收／<b>判据是什么</b></td></tr>
+    <tr><td>口径唯一</td><td>裁定</td><td>—</td><td>五处口径各归一处；汇总层改调正本；两处一行级修复当场做</td></tr>
+    <tr><td>测试面改成打在接口上</td><td>实施</td><td>—</td><td>算式走能力门；结构门要先裁「搬迁期例外」</td></tr>
+    <tr><td>包对外的门收成一页</td><td>实施</td><td>← 测试面</td><td>删 19 个 <code>run*</code>；写命令加 <code>doc</code> 位；exports 收窄</td></tr>
+    <tr><td>页面件搬回各自的能力目录</td><td>实施</td><td>← 形状共件、测试面</td><td>先立逐字节判据 ＋ 裁清与台账的关系，再搬第一批</td></tr>
+    <tr><td>白占重量的四处出清</td><td>裁定</td><td>—</td><td>撤件／删转发／空棘轮退役，到期谁拍</td></tr>
+  </table>
+  <p class="why" style="margin:12px 0 0">
+    到岸判据三条：形状只剩一份实现（≈64 个调用点全部改调）／十道门只剩自家命令声明 ＋ 包门收到一页／<code>src/render/</code> 只剩「说得出哪两个能力在用」的真共件。</p>
+</div>
+
+<h2 id="d1">① 范围：九条候选进几条？</h2>
+<div class="card decision">
+  <div class="dh"><span class="num">①</span><h3>九条全进，还是只进「Strong」六条？</h3><span class="sp"></span><span class="tag t-ok">推荐：全进（6 票）</span></div>
+
+  <p class="label" style="margin-top:14px">前因后果</p>
+  <p style="margin:0">九条候选里六条是 Strong（形状共件／口径唯一／汇总层接线／页面件回家／门上的 <code>run*</code>／测试面），三条是「值得探」（写命令端口／公开面／四处出清）。
+    复核后我做了合并：<b>写命令端口 ＋ 公开面 并进同一张票</b>（它们改的是同一批 <code>cli/</code> 与 <code>index.ts</code> 文件），<b>四处出清单独一票</b>。所以九条全进 ＝ <b>6 票</b>；只进 Strong ＝ <b>5 票</b>。</p>
+
+  <table>
+    <tr><th>选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="rec"><td class="rec"><b>A · 九条全进（6 票）</b></td>
+      <td>四处出清是九条里唯一「删掉生产零变化」的一票（23 件的空架子、两件白占的共用位——一件代码侧零引用、一件只有一件测试在读）；顺带把「到期即删」这条没人拍的规矩定下来</td>
+      <td>多一张裁定票，你要多点一次头（代理会把选项备齐，一次点头即可）</td></tr>
+    <tr><td>B · 只进 Strong（5 票）</td>
+      <td>前沿更窄，先做价值最大的六条</td>
+      <td>空棘轮与零引用件继续挂着；<code>cli/legacy/</code> 里 20 个空分片会一直骗过读者的眼睛</td></tr>
+    <tr><td>C · 只做三件裁定，其余另立</td>
+      <td>最小启动</td>
+      <td>「搬迁 vs 按页族切件」这场冲突不裁就一直在——后面谁碰 <code>src/render/</code> 都会撞上</td></tr>
+  </table>
+
+  <p class="recbox"><b>推荐 A。</b>理由：这一票是全图里性价比最高的一票（删掉即完成，生产零变化），而它唯一的阻塞是「谁有权拍到『到期』」——正适合在地图里裁一次。</p>
+</div>
+
+<h2 id="d2">② 交货口径：地图只出决定，还是也要交出能跑的东西？</h2>
+<div class="card decision">
+  <div class="dh"><span class="num">②</span><h3>本图要不要交货？</h3><span class="sp"></span><span class="tag t-ok">推荐：要交货</span></div>
+
+  <p class="label" style="margin-top:14px">前因后果</p>
+  <p style="margin:0">wayfinder 默认是「只出决定」——票只解决决定，不干活。但地图可以在 Notes 里改成<b>要交货</b>（本仓 <code>#671</code> 就是这么写的）。
+    九条里真正需要裁的只有三件（形状共件住哪／五处口径归哪／空棘轮到期谁拍），其余是施工：删 <code>run*</code>、改测试导入、搬页面件、加 <code>doc</code> 位。</p>
+
+  <table>
+    <tr><th>选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="rec"><td class="rec"><b>A · 要交货</b></td>
+      <td>三件裁定可以由代理先备成「选项 ＋ 代价 ＋ 推荐」的解答表，你一次点头（<code>#671</code> 的 16 题决策问答先例）；决定与施工连着做，同一批文件不用开两轮票</td>
+      <td>票面必须带可跑的验收（逐字节对照、台账 <code>--sync</code>、两行自证），写票更重；每张票的窗口内要抢锁排队</td></tr>
+    <tr><td>B · 只出决定</td>
+      <td>你只需要回答决策；票面轻</td>
+      <td>决定与施工之间容易掉东西（判据、落点、遗留出口）；搬迁类尤其明显——「逐字节相同」这条判据要施工时才立得住</td></tr>
+  </table>
+
+  <p class="recbox"><b>推荐 A。</b>理由：这个工作区是多席共用的，同一批文件改两轮就要排两遍窗口；把决定和施工放在同一张票里，判据（比如搬迁的逐字节对照）当场有效。</p>
+</div>
+
+<h2 id="d3">③ 350 行台账那 40 件：本图接不接？</h2>
+<div class="card decision">
+  <div class="dh"><span class="num">③</span><h3>那批「收口票」进本图、另立图，还是先记账？</h3><span class="sp"></span><span class="tag t-ok">推荐：先记账，本图不接</span></div>
+
+  <p class="label" style="margin-top:14px">前因后果</p>
+  <p style="margin:0">台账门今天全绿：扫描面 <b>354 件、超线 40 件</b>、台账 44 行。台账里逐件写好了拆法，却<b>零票承接</b>（全仓 open issue 只有 8 张，全是「爱生活设置面」那张图的）。
+    更要紧的是它与本图<b>正面冲突</b>：要搬回能力目录的那批 <code>src/render/</code> 件，正是台账挂了「按页族切姊妹件」拆法的件（<code>AGENTS.md:35／36／46／48／49／52／58／77</code>）。</p>
+
+  <table>
+    <tr><th>选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="rec"><td class="rec"><b>A · 先记账（Not yet specified），本图不接</b></td>
+      <td>两类判据不同源（搬迁＝产物逐字节；拆件＝形状与行数），分开做才不会把判据变成合成读数——台账自己就写过这条理由</td>
+      <td>40 件继续超线；欠债时间变长（但今天门是绿的，不拦路）</td></tr>
+    <tr><td>B · 并入本图</td>
+      <td>一次收干净；<code>render/</code> 搬完顺势在各自新家拆件</td>
+      <td>地图从 6 票变 40+ 票，前沿被摊薄；两类判据混在一张图里，谁的读数算谁的说不清</td></tr>
+    <tr><td>C · 另立一张收容图</td>
+      <td>职责最清（《编排纪律》专门写了「收容图」这种形状：把无主孤儿票推到终局）</td>
+      <td>要再开一张图、再走一遍建图；两张图都要碰 <code>skill-calorie</code>，并发窗口要排</td></tr>
+  </table>
+
+  <p class="recbox"><b>推荐 A。</b>理由：搬迁票（第 5 张）本来就要先裁「搬回能力目录」与「按页族切件」的先后；这个裁定不落地之前，那 40 件进哪张图都只能等着。</p>
+</div>
+
+<h2 id="d4">④ 谁来建这张地图？</h2>
+<div class="card decision">
+  <div class="dh"><span class="num">④</span><h3>你用 <code>/wayfinder</code> 起头，还是我直接建？</h3><span class="sp"></span><span class="tag t-ok">推荐：我直接建</span></div>
+
+  <p class="label" style="margin-top:14px">前因后果</p>
+  <p style="margin:0">地图正文与六张票面已经写好，放在仓内草案区 <code>.scratch/wayfinder-s2/</code>。
+    <code>/wayfinder</code> 的技能文件带 <code>disable-model-invocation: true</code>，我这边加载不了它，只能照它的规程做——而它的规程与本仓 <code>#671</code> 那张图的形状完全一致。</p>
+
+  <table>
+    <tr><th>选项</th><th>好处</th><th>代价</th></tr>
+    <tr class="rec"><td class="rec"><b>A · 我直接建</b></td>
+      <td>内容已定稿，建票是机械动作（地图 ＋ 6 张子票 ＋ 阻塞边一次做完）；省一轮往返</td>
+      <td>没有「技能入口」的痕迹——但后续会话读的是 issue 本身，不受影响</td></tr>
+    <tr><td>B · 你用 <code>/wayfinder</code> 起头</td>
+      <td>走技能入口，形状最不会有偏差</td>
+      <td>多一轮；而且正文仍要交给那个会话（同一批文件）</td></tr>
+  </table>
+
+  <p class="recbox"><b>推荐 A。</b>理由：两边的产物一模一样（都是 GitHub 上的地图 ＋ 子票），而建票动作本身已经测通。</p>
+</div>
+
+<footer>
+  <p style="margin:0">
+    草案位置：<code>D:\ilife\.scratch\wayfinder-s2\</code>（<code>map-body.md</code> 地图正文 ＋ <code>t1…t6</code> 票面 ＋ <code>README.md</code> 建图步骤与 27 行修正对照表）。
+    审查报告：<code>%TEMP%\architecture-review-20260917-201708.html</code>。</p>
+  <p style="margin:6px 0 0">
+    本次全程只读：未改 <code>packages/</code> 源码、未跑编译与测试、未动 git。四个复核席均为只读，结论都带当刻 <code>file:line</code>。</p>
+</footer>
+
+</div>
+</body>
+</html>
