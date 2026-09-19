@@ -21,7 +21,7 @@ import { HELP_CONTACT } from './helpCenter.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
 import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
-import { renderHelpShellHtml } from '../render/helpShell.js';
+import { renderHelpShellHtml } from './helpShell.js';
 
 /** 「卡路里help」交付文件的文件名主体（接线层写死；调用方不接受外部传入，S3-3）。 */
 export const HELP_FILE_STEM = '卡路里_HELP' as const;

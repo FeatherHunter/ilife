@@ -19,7 +19,7 @@ import { CALORIE_COMBOS } from '../dist/cli/keys.js';
 import { PHOTO_COMMANDS } from '../dist/photo/commands.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { MEASUREMENT_FIELDS, CALIPER_FIELDS } from '../dist/fetch/body.js';
-import { WIZARD_MEASURE_CAMEL } from '../dist/render/wizardPort.js';
+import { WIZARD_MEASURE_CAMEL } from '../dist/body/wizardPlate.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
 process.env.ILIFE_CONFIG_DIR = configTestBase();

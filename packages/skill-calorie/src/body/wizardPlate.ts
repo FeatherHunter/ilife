@@ -1,6 +1,6 @@
 /** #353 · 身体域预检确认页取数（记围度／记体脂两页）：
  * 自 `render/wizardPort.ts` **原样迁入**能力目录 `src/body/`（归属律：只属身体的东西住身体目录）。
- * 身材照／GIF 两页仍住 `render/wizardPort.ts`，本件不碰。
+ * 身材照／GIF 两页住 `src/photo/wizardPort.ts`（#716 起），本件不碰。
  *
  * 数据源全复用既有取数层（fetch/body.ts），不自算：
  * 围度 recent＝listMeasurements(limit 1)；体脂 recent＝listCompositions(limit 1)。

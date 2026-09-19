@@ -15,8 +15,8 @@ export {
   HELP_SHELL_SUFFIX,
 } from 'base-paint/help-shell';
 import { renderHelpShellHtml as renderBaseHelpShellHtml } from 'base-paint/help-shell';
-import { CalorieRenderError } from './errors.js';
-import type { HelpFileData } from '../photo/helpFile.js';
+import { CalorieRenderError } from '../render/errors.js';
+import type { HelpFileData } from './helpFile.js';
 
 /** @deprecated 改道 `base-paint/help-shell`（见模块头注释）；缺分组仍抛 skill 侧 `missing-data`。 */
 export function renderHelpShellHtml(data: HelpFileData): string {

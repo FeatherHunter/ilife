@@ -22,7 +22,7 @@
  * 那一份查询（同一个取数不留两处）。页面层不自算口径：活动量系数取
  * `analysis/utils.TDEE_ACTIVITY_FACTORS` 正本，TDEE 走同文件 `energyOf`（缺身高/年龄/
  * 性别/体重/活动量时**不算**，不填默认值冒充；#177 起这条判据只此一处，看档案结果页同走它）。
- * 未知参数抛 `bad-input`（与 `render/wizardPort.ts` 同字面「不支持字段: 」，出口 exit 2）。
+ * 未知参数抛 `bad-input`（与 `src/photo/wizardPort.ts` 同字面「不支持字段: 」，出口 exit 2）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderDisclosure, renderKpiGrid, renderParamForm, renderPreBlock } from 'base-paint/blocks';

@@ -9,7 +9,7 @@
  * 的新架构同形（B-11 复制区；行为归宿主 B7，本层零 JS）。
  * 表单＝renderParamForm 预填值（B-09 静态 label＋input，零 JS；无 select 控件，
  * 来源/性别等以下拉候选写进 hint，B7 边界）。
- * 本层不做取数（数据由 render/wizardPort.ts 备齐），空库不返空页（recent 为空即空态行）。
+ * 本层不做取数（数据由 photo/wizardPort.ts 备齐），空库不返空页（recent 为空即空态行）。
  *
  * #655（负责人验收打回「两页很丑陋」）把这两页从「名＋空框＋灰示例」的三层空表单改成**确认清单**：
  * 值先以只读一行上屏、点开哪一行才出哪一行的输入（形状与样式住姊妹件 `photo/wizardUi.ts`），
@@ -32,9 +32,9 @@ import type {
 import { PHOTO_LOG_TAGS, transitionText } from './wizardPort.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
-import { nowStamp } from './receipt.js';
-import { chipRow, photoPickRows, photoUiCss } from '../photo/photoUi.js';
-import { editRows, noticeBar, wizardUiCss } from '../photo/wizardUi.js';
+import { nowStamp } from '../render/receipt.js';
+import { chipRow, photoPickRows, photoUiCss } from './photoUi.js';
+import { editRows, noticeBar, wizardUiCss } from './wizardUi.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';

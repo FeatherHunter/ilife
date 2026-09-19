@@ -1,7 +1,7 @@
 /** #179 · 整页装配共用件：区块 HTML 拼成完整文档（最后一公里）。
  *
  * 谁在用（写得出哪两个在用）：**基础信息**（`src/profile/` 的预检确认页与回执页）与
- * **身体细节／身材照片**（`src/render/wizardPortDocs.ts` 那四页）；饮食／运动／分析各域页面
+ * **身体细节／身材照片**（身体那两页住 `src/body/wizardDocs.ts`、身材照那两页住 `src/photo/wizardPortDocs.ts`）；饮食／运动／分析各域页面
  * 同走这一份。此前这套模板与装配函数在 7 个 `*Docs.ts` 里各抄了一份，本次收成一份。
  *
  * 包裹约定（沿 #111–#113，不新增）：内容 = `base-paint/blocks` 的区块；文档 = `fillTemplate`

@@ -7,7 +7,7 @@
  *   ③ 票面第 4 条（负向对照）：扫描面缩回硬清单 → 第 2 条的那个超线件**拿不到红条**（说明这道门
  *      确实靠扫描面撑着）。
  *   ④ `packages/skill-calorie/AGENTS.md`「台账」一节：`件／挂号值／当场实测／结论` 四列，
- *      冻结挂号值 `src/render/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`。
+ *      冻结挂号值 `src/photo/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`。
  *
  * 夹具＝`mkdtempSync` 出来的独占小包根（自带 `src/`＋`scripts/`＋`AGENTS.md`），全部走
  * `--root`／`--agents` 两个夹具入口；**真实门禁读两份**（无参运行读本包真台账：T5 绿、T9 同步器零改动）。
@@ -51,7 +51,7 @@ const GATE = path.join(PKG, 'scripts', 'check-warning-line.mjs');
 const OVER_LINE = '已超线，需要根据规则进行重构。';
 /** 冻结挂号值（来源＝`docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面，与门脚本 REQUIRED 同源）。 */
 const FROZEN = [
-  ['src/render/wizardPort.ts', 457],
+  ['src/photo/wizardPort.ts', 457],
   ['scripts/gen-cli.mjs', 729],
 ];
 
@@ -62,6 +62,7 @@ const lfOf = (abs) => readFileSync(abs, 'utf8').split('\n').length - 1;
 function makeFixture() {
   const dir = mkdtempSync(path.join(os.tmpdir(), 't445-gate-'));
   mkdirSync(path.join(dir, 'src', 'render'), { recursive: true });
+  mkdirSync(path.join(dir, 'src', 'photo'), { recursive: true });
   mkdirSync(path.join(dir, 'scripts'), { recursive: true });
   // 两个冻结挂号件：行数与冻结值一起写死，⑦（挂号台账两行齐全）才不是夹具自己造的假绿。
   // `scripts/gen-cli.mjs` 的名字对得上生成器判据 ⇒ 夹具里也给它一条输出声明：否则
@@ -278,7 +279,7 @@ test('T8 同步器：--dry 不改文件且报计划，--sync 回绿且只动台�
     const after = readFileSync(fx.agents, 'utf8');
     assert.notEqual(after, before, '--sync 应当改到台账');
     assert.deepEqual(outside(after), outside(before), '台账块之外一个字都不许动');
-    assert.match(after, /\| `src\/render\/wizardPort\.ts` \| 457 \| /, '冻结挂号值不许被同步器改写');
+    assert.match(after, /\| `src\/photo\/wizardPort\.ts` \| 457 \| /, '冻结挂号值不许被同步器改写');
     const g = runGate(['--root', fx.dir, '--agents', fx.agents]);
     assert.equal(g.exit, 0, `同步后门应绿，实际 exit=${g.exit}\n${g.text}`);
   } finally {

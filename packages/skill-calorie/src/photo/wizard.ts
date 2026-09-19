@@ -2,12 +2,12 @@
  *  身材照向导 ＋ GIF规划器两条读命令——填表前的取数与预检页。
  *
  * 两条 `case` 逐字搬自旧分派层 `cli/cmd_read.ts`（#314 纯搬迁，行为不变）；
- * 视图数据与整页文档走共用件 `render/wizardPort.ts`／`render/wizardPortDocs.ts`，
+ * 视图数据与整页文档走本能力内部件 `src/photo/wizardPort.ts`／`src/photo/wizardPortDocs.ts`，
  * 照片目录走本能力内部件 `dir.ts` 的读侧口径（缺目录不抛）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { buildGifPlannerView, buildPhotoLogWizardView } from '../render/wizardPort.js';
-import { buildGifPlannerDoc, buildPhotoLogWizardDoc } from '../render/wizardPortDocs.js';
+import { buildGifPlannerView, buildPhotoLogWizardView } from './wizardPort.js';
+import { buildGifPlannerDoc, buildPhotoLogWizardDoc } from './wizardPortDocs.js';
 import { nums } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';

@@ -13,7 +13,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 import { CALORIE_COMBOS } from '../dist/cli/keys.js';
 import { TRIGGERS } from '../dist/triggers/index.js';
-import { CALORIE_TEMPLATES, loadTemplate, CalorieRenderError } from '../dist/render/index.js';
+import { CALORIE_TEMPLATES, loadTemplate } from '../dist/photo/templates.js';
+import { CalorieRenderError } from '../dist/render/index.js';
 import {
   HELP_VIEW_ENTRIES_META_ID, HELP_VIEW_ENTRIES_META_TITLE,
   buildHelpSceneData, buildHelpViewEntries, renderHelpCenterHtml, renderViewEntriesHtml,
@@ -162,10 +163,12 @@ describe('calorie SKILL 与模板（M6 范式）', () => {
     };
     try {
       const rel = join('node_modules', 'skill-calorie');
-      const dst = join(tmp, rel, 'dist', 'render');
-      mkdirSync(dst, { recursive: true });
-      for (const f of ['templates.js', 'errors.js']) copyFileSync(join(pkgDir, 'dist', 'render', f), join(dst, f));
-      const mod = await import(pathToFileURL(join(dst, 'templates.js')).href);
+      const distRoot = join(tmp, rel, 'dist');
+      mkdirSync(join(distRoot, 'photo'), { recursive: true });
+      mkdirSync(join(distRoot, 'render'), { recursive: true });
+      copyFileSync(join(pkgDir, 'dist', 'photo', 'templates.js'), join(distRoot, 'photo', 'templates.js'));
+      copyFileSync(join(pkgDir, 'dist', 'render', 'errors.js'), join(distRoot, 'render', 'errors.js'));
+      const mod = await import(pathToFileURL(join(distRoot, 'photo', 'templates.js')).href);
       // 副本模块与被测 dist 是**两个模块实例**，不能 instanceof 比较类；按 name＋code 判。
       const isMissingData = (e) => !!e && e.name === 'CalorieRenderError' && e.code === 'missing-data';
       // 负例：包根 templates/ 缺席 → 必须抛 missing-data（变异成 return '' 即红）。

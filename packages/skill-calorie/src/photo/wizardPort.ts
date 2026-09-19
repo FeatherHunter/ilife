@@ -19,9 +19,9 @@
  * 未知字段 fail(2)（与 cli/write.ts 同字面「不支持字段: 」，防拼写漂移）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { listPhotos } from '../photo/photos.js';
-import { toCard } from '../photo/photo.js';
-import { CalorieRenderError } from './errors.js';
+import { listPhotos } from './photos.js';
+import { toCard } from './photo.js';
+import { CalorieRenderError } from '../render/errors.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -45,9 +45,7 @@ function strOrUndef(raw: unknown, field: string): string | undefined {
   return s === '' ? undefined : s;
 }
 
-/* ── 身体两页已迁出（#353）：记围度／记体脂的视图与 prompt 原样迁入 src/body/wizardPlate.ts，本件只留身材照／GIF。下行为测试兼容转出（实现不在此）。 */
-export { WIZARD_CALIPER_LABELS, WIZARD_MEASURE_CAMEL, WIZARD_MEASURE_LABELS } from '../body/wizardPlate.js';
-export type { CompositionWizardView, MeasureWizardView } from '../body/wizardPlate.js';
+/* ── 身体两页已迁出（#353）：记围度／记体脂的视图与 prompt 原样迁入 src/body/wizardPlate.ts，本件只留身材照／GIF。 */
 
 /* ── 3. 记身材照 wizard（body_photo_log_wizard.html 复刻，纯配置不读库） ── */
 

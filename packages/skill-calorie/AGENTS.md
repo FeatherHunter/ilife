@@ -20,7 +20,7 @@
 
 ## 台账两种口径（别混用）
 
-- **挂号值**＝**第一次挂号时**写的 LF。它是历史事实（那时确实超线），**永不回改**；需求原文里的冻结值是 `src/render/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`（来源＝`docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面）。检查脚本只核对这两个冻结值**没被改写**，不拿它们跟实况比。从未挂号过的件记 `—`。
+- **挂号值**＝**第一次挂号时**写的 LF。它是历史事实（那时确实超线），**永不回改**；需求原文里的冻结值是 `src/render/wizardPort.ts｜457`、`scripts/gen-cli.mjs｜729`（来源＝`docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面；前一件 **#716 起住 `src/photo/wizardPort.ts`**——需求原文那句是 #354 当期验收的历史记录，按「地址随实况、历史不改」逐字不动）。检查脚本只核对这两个冻结值**没被改写**，不拿它们跟实况比。从未挂号过的件记 `—`。
 - **当场实测**＝**当刻盘上**数出来的 LF，节点口径 `readFileSync(f,'utf8').split('\n').length - 1`。台账表里**只有这一列**是 `check-warning-line.mjs` 拿来对实况的：与实况不等即红（这就是「台账陈化」）。
 - 某个件的 LF 掉回 350 以内：**挂号行不删**（挂号值仍是历史事实），但「当场实测」列要跟着实况改，结论列写明「已落回线内、不再触发第四步」。
 
@@ -75,7 +75,7 @@
 | `src/photo/photo.ts` | — | 355 | 已超线，需要根据规则进行重构。超因：（**#476 引入，越过 350**）这一件同时住着三组活——照片行的写口与卡片映射（`toCard`／`addPhotos`／`deletePhoto`／`updateTag`／`tagAdd`／`tagRemove` 等）＋四条读口的取数（`buildGalleryData`／`buildCompareData`／`buildViewerData`／`buildGifTask`）＋三条写后回执的数据面（`buildAddReceipt`／`buildDeleteReceipt`／`buildTagReceipt`）；#476 为「失败张逐张上页」在 `buildAddReceipt` 里补了缺源复算与逐条 items（＋件头与函数注释），LF 328→355。本次先不拆：拆分不在 #476 写集（本票只许动 `photo/receipt.ts`／`photo/photo.ts`／`store.ts` 三件的文本与装配），拆法＝按场景把这一件切两件姊妹件：①「读口取数」（看身材照／对比两张照片／查身材照／生成身材照GIF 四个 `build*Data` 搬去与同族的 `gallery.ts`／`gif.ts`／`compare.ts` 并排）②「回执数据面」（三条 `build*Receipt` 随 `store.ts`／`manage.ts` 的写口族走）；照片卡类型 `PhotoCard` 与 `toCard` 提为两族共用的卡件；出口经 `photo/index.ts` 薄转出；待收口票认领。 |
 | `src/home/homeDocs.ts` | — | 334 | **停留告警线（LF=350，未越线）**。超因（**#401 引入**）：本件同时住着主页族的整页装配（KPI／折线／按日表／结论条／复制区接线）＋按窗口分视图的页名与口径；本次先不拆：拆分不在 #401 写集，拆法＝把「结论条与复制区接线」与「页头/页名派生」切成同目录姊妹件，出口经本件薄转出；待收口票认领。 |
 | `scripts/gen-photo-baseline.mjs` | — | 289 | 已超线，需要根据规则进行重构。超因与拆法待补（本行由 `--sync` 自动补出，请补写超因与拆法）。 |
-| `src/render/wizardPort.ts` | 457 | 277 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** |
+| `src/photo/wizardPort.ts` | 457 | 275 | 「#354 挂号原文」超因：预检确认页装配与结果型页面装配同处一处；本次先不拆：拆分本身不在 #354（该票只登记），拆法待后续票确定。**#445 当场实测已落回 350 以内，挂号行保留（457 是历史事实、不回改），本行不再触发第四步。** **#716 已在场**（纯搬迁，277→275；「件」列地址由本票手改，挂号值 457 与以上结论原样带过去）：本件按归属律自 `src/render/wizardPort.ts` **原样迁入能力目录 `src/photo/`**（同族 `wizardPortDocs`／`helpShell`／`templates` 一并迁入）；迁入时删掉两行**零生产调用方**的身体域转出（`export … from '../body/wizardPlate.js'`，唯一消费者 `test/wizard-86.test.mjs` 已改指 `dist/body/wizardPlate.js` 这个定义地）——那是搬迁做出来的能力↔能力内部件直引，按铁律一在本窗摆正；其余 275 行逐字节相同。搬迁判据＝向导两键全分支 ＋ HELP 三支共 20 页 ＋ 2 条对照页逐字节相同（`docs/skills/skill-calorie/t716-搬家-证据.md`）；拆法一字未改、待收口票认领。 |
 <!-- warning-line-ledger:end -->
 
 ## 本包现状（2026-09-14 #445 当场扫描）

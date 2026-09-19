@@ -18,7 +18,7 @@ import {
   HELP_SHELL_PREFIX,
   HELP_SHELL_SUFFIX,
   renderHelpShellHtml,
-} from '../dist/render/helpShell.js';
+} from '../dist/photo/helpShell.js';
 import { buildHelpFileData, renderHelpFileHtml } from '../dist/photo/helpFile.js';
 import { CalorieRenderError } from '../dist/render/errors.js';
 import { configTestBase } from './helpers/config-test.mjs';

@@ -52,7 +52,7 @@ import type { SceneTrigger, Trigger } from '../triggers/index.js';
 import { NEW_KEY_ROUTES, routesFor } from '../triggers/routing.js';
 import { COPY_RUNTIME_JS } from '../render/copy.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { CALORIE_TEMPLATES, loadTemplate } from '../render/templates.js';
+import { CALORIE_TEMPLATES, loadTemplate } from './templates.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
 const LF = String.fromCharCode(10);

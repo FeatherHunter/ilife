@@ -43,7 +43,7 @@ const LEDGER_BEGIN = '<!-- warning-line-ledger:begin -->';
 const LEDGER_END = '<!-- warning-line-ledger:end -->';
 /** 挂号台账冻结值（#354）：来源＝需求原文 `docs/skills/skill-calorie/t169-设计定稿.md` 票 2 票面。 */
 const REQUIRED = [
-  { path: 'src/render/wizardPort.ts', lf: 457 },
+  { path: 'src/photo/wizardPort.ts', lf: 457 },
   { path: 'scripts/gen-cli.mjs', lf: 729 },
 ];
 /** 同步器给新补的行写这句，提醒人补超因／拆法（不许静默替人下判断）。 */

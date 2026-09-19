@@ -1,6 +1,6 @@
 /** #353 · 身体域预检确认页文档装配（记围度／记体脂两页）：
  * 自 `render/wizardPortDocs.ts` **原样迁入**能力目录 `src/body/`（归属律：只属身体的东西住身体目录）。
- * 身材照／GIF 两页仍住 `render/wizardPortDocs.ts`，本件不碰。
+ * 身材照／GIF 两页住 `src/photo/wizardPortDocs.ts`（#716 起），本件不碰。
  * 本层不做取数（数据由 `body/wizardPlate.ts` 备齐）。
  *
  * **#366 · 复制—执行闭环 ＋ 裁定 1／3**（基准 `docs/skills/skill-calorie/t395-融合基准.md` §四）：

@@ -31,7 +31,7 @@ import { join } from 'node:path';
 import { SCENE_09_PHOTO } from '../dist/triggers/scene-09-photo.js';
 import { TRIGGERS, searchHelp } from '../dist/triggers/index.js';
 import { PHOTO_COMMANDS } from '../dist/photo/commands.js';
-import { buildPhotoLogWizardPrompt } from '../dist/render/wizardPort.js';
+import { buildPhotoLogWizardPrompt } from '../dist/photo/wizardPort.js';
 import { buildPhotoPickerPrompt } from '../dist/photo/picker.js';
 import { openDb } from '../dist/index.js';
 import { addPhotos } from '../dist/photo/photos.js';
