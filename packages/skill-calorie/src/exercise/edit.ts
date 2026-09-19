@@ -23,6 +23,8 @@ import { assertISO, fail, optNum, optStr, wday } from '../shared/params.js';
 import { R, SOFT_EXCLUDED, cliNames, commandLine, deleteStatus, totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { buildExerciseReceiptDoc } from './receipt.js';
+/* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先内联同一句话）。 */
+import { EX_ALIVE } from '../shared/alive.js';
 
 const EX_CAMEL: Record<string, string> = {
   type: 'exercise_type', exerciseType: 'exercise_type', calories: 'calories_burned', caloriesBurned: 'calories_burned',
@@ -133,7 +135,7 @@ export function writeExerciseRemove(params: Record<string, unknown>, db: Databas
   }
   if (date !== undefined) {
     assertISO(date, 'date');
-    const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date = ? AND COALESCE(is_deleted, 0) = 0').all(date) as ExerciseRow[];
+    const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date = ? AND ' + EX_ALIVE + '').all(date) as ExerciseRow[];
     const n = deleteDay(db, date);
     if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
     const base = R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });
@@ -145,7 +147,7 @@ export function writeExerciseRemove(params: Record<string, unknown>, db: Databas
     assertISO(from as string, 'from');
     assertISO(to as string, 'to');
     if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
-    const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND COALESCE(is_deleted, 0) = 0 ORDER BY date, time').all(from as string, to as string) as ExerciseRow[];
+    const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' ORDER BY date, time').all(from as string, to as string) as ExerciseRow[];
     const n = deleteRange(db, from as string, to as string);
     if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
     const base = R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });

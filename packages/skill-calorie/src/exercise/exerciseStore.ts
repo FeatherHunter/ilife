@@ -7,6 +7,9 @@ import type { DatabaseSync } from 'node:sqlite';
 import { sql } from '../fetch/db.js';
 import type { SQLInputValue } from '../fetch/db.js';
 import { FetchError } from '../fetch/errors.js';
+/* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先 8 处内联同一句话）。
+   模板串里的那一处改走 `${EX_ALIVE}` 插值。 */
+import { EX_ALIVE } from '../shared/alive.js';
 import { timeOfDayISO, todayISO } from '../shared/time.js';
 /* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowTime`）——抓取层被要求
    「不反向依赖 analysis」，于是绕路自造一份。现在本件四个读写口同取共用位 `shared/time.js`。 */
@@ -204,7 +207,7 @@ export function updateRecord(db: DatabaseSync, recordId: number, fields: Record<
   if (!Number.isInteger(id)) throw new FetchError('记录 ID 必须是数字');
   // #125 · 按 id 改必须与按日改／删同口径：软删行视为不存在（`COALESCE` 保 NULL 活行，
   // 与 `listWindow`／`softDeleteWhere`／#120 `EX_ALIVE` 同款；否则 E1 对软删行报成功）。
-  const old = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND COALESCE(is_deleted, 0) = 0').get(id) as ExerciseRow | undefined;
+  const old = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND ' + EX_ALIVE + '').get(id) as ExerciseRow | undefined;
   if (!old) throw new FetchError(`记录 ID ${id} 不存在`);
   const sets: string[] = [];
   const vals: SQLInputValue[] = [];
@@ -223,7 +226,7 @@ export function updateRecord(db: DatabaseSync, recordId: number, fields: Record<
 
 function softDeleteWhere(db: DatabaseSync, where: string, params: SQLInputValue[]): number {
   const info = db.prepare(
-    `UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE ${where} AND COALESCE(is_deleted, 0) = 0`,
+    `UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE ${where} AND ${EX_ALIVE}`,
   ).run(nowStamp(), ...params);
   return Number(info.changes);
 }
@@ -233,9 +236,9 @@ export function deleteRecord(db: DatabaseSync, recordId: number): ExerciseRow {
   if (!Number.isInteger(id)) throw new FetchError('记录 ID 必须是数字');
   // #125 · 按 id 删必须与按日／按范围删同口径：软删行视为不存在（否则 E2 重复删报成功，
   // 而按日路径 `softDeleteWhere` changes=0 → missing-data，两套幂等语义）。
-  const row = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND COALESCE(is_deleted, 0) = 0').get(id) as ExerciseRow | undefined;
+  const row = db.prepare('SELECT * FROM exercise_log WHERE id = ? AND ' + EX_ALIVE + '').get(id) as ExerciseRow | undefined;
   if (!row) throw new FetchError(`记录 ID ${id} 不存在`);
-  db.prepare('UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE id = ? AND COALESCE(is_deleted, 0) = 0').run(nowStamp(), id);
+  db.prepare('UPDATE exercise_log SET is_deleted = 1, updated_at = ? WHERE id = ? AND ' + EX_ALIVE + '').run(nowStamp(), id);
   return row;
 }
 
@@ -248,7 +251,7 @@ export function deleteRange(db: DatabaseSync, fromDate: string, toDate: string):
 }
 
 export function updateDay(db: DatabaseSync, date: string, fields: Record<string, unknown>): { matched: number; pairs: { old: ExerciseRow; new: ExerciseRow }[] } {
-  const ids = (db.prepare('SELECT id FROM exercise_log WHERE date = ? AND COALESCE(is_deleted, 0) = 0').all(date) as { id: number }[])
+  const ids = (db.prepare('SELECT id FROM exercise_log WHERE date = ? AND ' + EX_ALIVE + '').all(date) as { id: number }[])
     .map((r) => r.id);
   const pairs = ids.map((id) => updateRecord(db, id, fields));
   return { matched: ids.length, pairs };
@@ -259,12 +262,12 @@ export function copyYesterday(db: DatabaseSync, targetDate?: string): { copied: 
   const y = new Date(target + 'T00:00:00');
   y.setDate(y.getDate() - 1);
   const src = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-  const rows = db.prepare('SELECT * FROM exercise_log WHERE date = ? AND COALESCE(is_deleted, 0) = 0').all(src) as ExerciseRow[];
+  const rows = db.prepare('SELECT * FROM exercise_log WHERE date = ? AND ' + EX_ALIVE + '').all(src) as ExerciseRow[];
   let copied = 0, skipped = 0;
   const out: ExerciseRow[] = [];
   for (const r of rows) {
     const hit = db.prepare(
-      'SELECT id FROM exercise_log WHERE date = ? AND exercise_type = ? AND calories_burned = ? AND duration_minutes = ? AND COALESCE(is_deleted, 0) = 0 LIMIT 1',
+      'SELECT id FROM exercise_log WHERE date = ? AND exercise_type = ? AND calories_burned = ? AND duration_minutes = ? AND ' + EX_ALIVE + ' LIMIT 1',
     ).get(target, sql(r.exercise_type), sql(r.calories_burned), sql(r.duration_minutes));
     if (hit) { skipped++; continue; }
     const { id } = addRecord(db, {
@@ -289,7 +292,7 @@ export function batchAdd(db: DatabaseSync, items: ExerciseRecordInput[]): { adde
 
 export function listWindow(db: DatabaseSync, start: string, end: string): ExerciseRow[] {
   return db.prepare(
-    'SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND COALESCE(is_deleted, 0) = 0 ORDER BY date, time',
+    'SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' ORDER BY date, time',
   ).all(start, end) as ExerciseRow[];
 }
 

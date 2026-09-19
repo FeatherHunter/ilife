@@ -20,6 +20,8 @@ import { validateRecord } from '../fetch/validate.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { optStr } from '../shared/params.js';
 import { brandOfImportRecord, normalizeImportRecord } from './productImport.js';
+/* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先内联同一句话）。 */
+import { BODY_ALIVE } from '../shared/alive.js';
 
 /** 读命令的入口标记：定义住叶子件 `./precheckParts.ts`（免得 `precheck.ts` 与本件互相 import 成环），
  *  本件只转出给处理体（`log.ts`／`productImport.ts`／`receipt.ts`／`nutrition.ts`）用。 */
@@ -65,7 +67,7 @@ export function buildImportPrecheckView(db: DatabaseSync, items: unknown): Impor
     throw new CalorieRenderError('bad-input', 'items 须为 1~200 条数组');
   }
   const lib = new Map((db.prepare(
-    'SELECT product_name AS n, calories AS cal FROM nutrition_products WHERE COALESCE(is_deprecated, 0) = 0',
+    'SELECT product_name AS n, calories AS cal FROM nutrition_products WHERE ' + BODY_ALIVE + '',
   ).all() as { n: string; cal: number }[]).map((r) => [r.n, r.cal]));
   const rows: ImportPrecheckRow[] = [];
   const writeItems: Record<string, unknown>[] = [];

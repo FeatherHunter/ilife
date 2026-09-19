@@ -22,6 +22,8 @@ import type { DatabaseSync } from 'node:sqlite';
 import { WATER_NAME, readGoal } from '../fetch/diet.js';
 import { buildTrendData, type TrendData } from '../analysis/trend.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+/* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先 4 处内联同一句话）。 */
+import { BODY_ALIVE, EX_ALIVE } from '../shared/alive.js';
 import { CalorieRenderError } from './errors.js';
 
 function assertRange(start: string, end: string): void {
@@ -218,7 +220,7 @@ export function buildSixFactorsView(db: DatabaseSync, date: string): SixFactorsV
     `SELECT COALESCE(SUM(grams), 0) AS ml FROM food_log WHERE date = ? AND food_name = ?`,
   ).get(date, WATER_NAME) as { ml: number };
   const ex = db.prepare(
-    `SELECT COUNT(*) AS n FROM exercise_log WHERE date = ? AND COALESCE(is_deleted, 0) = 0`,
+    `SELECT COUNT(*) AS n FROM exercise_log WHERE date = ? AND ${EX_ALIVE}`,
   ).get(date) as { n: number };
   const w = db.prepare(`SELECT COUNT(*) AS n FROM weight_log WHERE date = ?`).get(date) as { n: number };
   const calGoal = goal?.calorie_goal ?? null;
@@ -279,7 +281,7 @@ export interface LintHealthView {
 export function buildLintHealthView(db: DatabaseSync): LintHealthView {
   const today = todayISO();
   const libNames = new Set((db.prepare(
-    'SELECT product_name AS n FROM nutrition_products WHERE COALESCE(is_deprecated, 0) = 0',
+    'SELECT product_name AS n FROM nutrition_products WHERE ' + BODY_ALIVE + '',
   ).all() as { n: string }[]).map((r) => r.n));
   const usedNames = (db.prepare(
     'SELECT DISTINCT food_name AS n FROM food_log WHERE food_name != ?',
@@ -345,7 +347,7 @@ export function buildProcessProgressView(db: DatabaseSync, endFallback: string):
     : 0;
   const ex = db.prepare(
     `SELECT COUNT(*) AS n, COALESCE(SUM(duration_minutes), 0) AS mins FROM exercise_log
-     WHERE date BETWEEN ? AND ? AND COALESCE(is_deleted, 0) = 0`,
+     WHERE date BETWEEN ? AND ? AND ${EX_ALIVE}`,
   ).get(start, end) as { n: number; mins: number };
   if (!plan && ex.n === 0) throw new CalorieRenderError('missing-data', '无训练计划且近 7 天无运动记录');
   return {
@@ -382,7 +384,7 @@ export function buildReviewTemplateView(db: DatabaseSync, start: string, end: st
   ).get(start, end, WATER_NAME) as { meals: number; cal: number };
   const ex = db.prepare(
     `SELECT COUNT(*) AS n, COALESCE(SUM(duration_minutes), 0) AS mins FROM exercise_log
-     WHERE date BETWEEN ? AND ? AND COALESCE(is_deleted, 0) = 0`,
+     WHERE date BETWEEN ? AND ? AND ${EX_ALIVE}`,
   ).get(start, end) as { n: number; mins: number };
   const weights = (db.prepare(
     'SELECT weight_kg AS w FROM weight_log WHERE date BETWEEN ? AND ? ORDER BY date, id',

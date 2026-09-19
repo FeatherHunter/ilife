@@ -8,6 +8,9 @@ import type { SQLInputValue } from './db.js';
 import { SOURCE_CHOICES } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
 import { FetchError } from './errors.js';
+/* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`——本件原先 12 处内联同一句话。
+   凡在**模板串**里的改走 `${BODY_ALIVE}` 插值（生成的 SQL 逐字不变）。 */
+import { BODY_ALIVE } from '../shared/alive.js';
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -161,7 +164,7 @@ export function addMeasurement(db: DatabaseSync, input: MeasurementInput): { id:
 
 export function listMeasurements(db: DatabaseSync, opts: { dateFrom?: string; dateTo?: string; days?: number; metric?: string; limit?: number } = {}): Record<string, unknown>[] {
   const cols = ['id', 'date', ...MEASUREMENT_FIELDS, 'note'];
-  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_measurements WHERE COALESCE(is_deprecated, 0) = 0';
+  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_measurements WHERE ' + BODY_ALIVE + '';
   const params: SQLInputValue[] = [];
   if (opts.metric) {
     if (!MEASUREMENT_FIELDS.includes(opts.metric)) throw new FetchError(`未知围度项: ${opts.metric}`);
@@ -202,7 +205,7 @@ export function trendMeasurement(db: DatabaseSync, metric: string, days: number)
     throw new FetchError(`--metric 必填且为: ${MEASUREMENT_FIELDS.join(', ')}`);
   }
   const rows = db.prepare(`SELECT date, AVG(${metric}) AS avg_val, COUNT(*) AS n FROM body_measurements
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND ${metric} IS NOT NULL GROUP BY date ORDER BY date ASC`)
+    WHERE ${BODY_ALIVE} AND date >= ? AND ${metric} IS NOT NULL GROUP BY date ORDER BY date ASC`)
     .all(daysAgo(days)) as unknown as { date: string; avg_val: number; n: number }[];
   return rows.map((r) => ({ date: r.date, avgVal: r.avg_val, n: r.n }));
 }
@@ -220,7 +223,7 @@ export function latestMeasurementMetric(
 ): string | null {
   let best: { field: string; date: string; id: number } | null = null;
   for (const f of MEASUREMENT_FIELDS) {
-    let sql = `SELECT date, id FROM body_measurements WHERE COALESCE(is_deprecated, 0) = 0 AND ${f} IS NOT NULL`;
+    let sql = `SELECT date, id FROM body_measurements WHERE ${BODY_ALIVE} AND ${f} IS NOT NULL`;
     const params: SQLInputValue[] = [];
     if (opts.dateFrom && opts.dateTo) { sql += ' AND date >= ? AND date <= ?'; params.push(opts.dateFrom, opts.dateTo); }
     else if (opts.days !== undefined) { sql += ' AND date >= ?'; params.push(daysAgo(opts.days)); }
@@ -240,7 +243,7 @@ export function compareMeasurements(db: DatabaseSync, date1: string, date2: stri
   const snap = (day: string) => {
     const cols = ['id', ...MEASUREMENT_FIELDS];
     return db.prepare(`SELECT ${cols.join(', ')} FROM body_measurements
-      WHERE COALESCE(is_deprecated, 0) = 0 AND date = ? ORDER BY id DESC LIMIT 1`).get(day) as unknown as Record<string, number> | undefined;
+      WHERE ${BODY_ALIVE} AND date = ? ORDER BY id DESC LIMIT 1`).get(day) as unknown as Record<string, number> | undefined;
   };
   const s1 = snap(date1);
   if (!s1) throw new FetchError(`${date1} 无围度记录`);
@@ -263,7 +266,7 @@ export function compareMeasurements(db: DatabaseSync, date1: string, date2: stri
  */
 function sameDay(db: DatabaseSync, table: string, cols: string[], date: string): Record<string, unknown>[] {
   return db.prepare(`SELECT ${['id', 'date', ...cols].join(', ')} FROM ${table}
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date = ? ORDER BY id ASC`).all(date) as unknown as Record<string, unknown>[];
+    WHERE ${BODY_ALIVE} AND date = ? ORDER BY id ASC`).all(date) as unknown as Record<string, unknown>[];
 }
 
 /** 同一天已有的体成分记录（列序同 `listCompositions`）。 */
@@ -315,7 +318,7 @@ export function listCompositions(db: DatabaseSync, opts: { dateFrom?: string; da
   // #362 · 日期窗口改走 `windowClause`（同一条口径的四条取数之一）；三样都不给＝全部历史，`limit` 仍可截行。
   if (opts.source !== undefined) assertSourceFilter(opts.source);
   const cols = ['id', 'date', 'source', 'body_fat_pct', ...CALIPER_FIELDS, 'note'];
-  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0';
+  let sql = 'SELECT ' + cols.join(', ') + ' FROM body_composition WHERE ' + BODY_ALIVE + '';
   const params: SQLInputValue[] = [];
   if (opts.source && opts.source !== SOURCE_FILTER_ALL) { sql += ' AND source = ?'; params.push(opts.source); }
   const win = windowClause(opts);
@@ -346,7 +349,7 @@ export function deleteComposition(db: DatabaseSync, id: number): { id: number; s
 
 export function latestSource(db: DatabaseSync): string | null {
   const row = db.prepare(`SELECT source FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 ORDER BY date DESC, id DESC LIMIT 1`).get() as { source: string } | undefined;
+    WHERE ${BODY_ALIVE} ORDER BY date DESC, id DESC LIMIT 1`).get() as { source: string } | undefined;
   return row?.source ?? null;
 }
 
@@ -361,7 +364,7 @@ export function trendComposition(db: DatabaseSync, win: CompositionWindowInput, 
   const src = all ? null : (source ?? latestSource(db) ?? 'home_caliper');
   const clause = windowClause(win);
   let sql = `SELECT date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql;
+    WHERE ${BODY_ALIVE}` + clause.sql;
   const params: SQLInputValue[] = [...clause.params];
   // #398 · `all` ⇒ 不加 `AND source = ?`（不按来源过滤）；具体来源与缺省（`latestSource`）照旧恒带该过滤。
   if (src !== null) { sql += ' AND source = ?'; params.push(src); }
@@ -388,7 +391,7 @@ export interface SourceSeries {
 export function trendCompositionBySource(db: DatabaseSync, win: CompositionWindowInput): SourceSeries[] {
   const clause = windowClause(win); // #362 · 与列表同一条窗口口径（不传＝全部历史）
   const rows = db.prepare(`SELECT source, date, AVG(body_fat_pct) AS avg_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql + `
+    WHERE ${BODY_ALIVE}` + clause.sql + `
     GROUP BY source, date ORDER BY date ASC`).all(...clause.params) as unknown as
     { source: string; date: string; avg_pct: number; n: number }[];
   const bySource = new Map<string, { date: string; avgPct: number; n: number }[]>();
@@ -415,7 +418,7 @@ export function compositionSourceCount(
   opts: { days?: number; dateFrom?: string; dateTo?: string } = {},
 ): number {
   const clause = windowClause(opts);
-  const sql = `SELECT COUNT(DISTINCT source) AS n FROM body_composition WHERE COALESCE(is_deprecated, 0) = 0` + clause.sql;
+  const sql = `SELECT COUNT(DISTINCT source) AS n FROM body_composition WHERE ${BODY_ALIVE}` + clause.sql;
   const row = db.prepare(sql).get(...clause.params) as { n: number };
   return row.n;
 }
@@ -424,7 +427,7 @@ export function compareCompositions(db: DatabaseSync, fromDate: string, toDate: 
   const src = source ?? latestSource(db) ?? 'home_caliper';
   const agg = (day: string, cmp: string) => db.prepare(`SELECT AVG(body_fat_pct) AS avg_pct,
     MIN(body_fat_pct) AS min_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 AND source = ? AND date ${cmp} ?`).get(src, day) as
+    WHERE ${BODY_ALIVE} AND source = ? AND date ${cmp} ?`).get(src, day) as
     { avg_pct: number | null; min_pct: number | null; n: number };
   const before = agg(fromDate, '<');
   const after = agg(toDate, '>=');
@@ -446,7 +449,7 @@ export function avgCompositionInRange(
 ): { avg_pct: number | null; min_pct: number | null; n: number } {
   const base = `SELECT AVG(body_fat_pct) AS avg_pct,
     MIN(body_fat_pct) AS min_pct, COUNT(*) AS n FROM body_composition
-    WHERE COALESCE(is_deprecated, 0) = 0 AND date >= ? AND date <= ?`;
+    WHERE ${BODY_ALIVE} AND date >= ? AND date <= ?`;
   if (source === undefined) {
     return db.prepare(base).get(start, end) as { avg_pct: number | null; min_pct: number | null; n: number };
   }
