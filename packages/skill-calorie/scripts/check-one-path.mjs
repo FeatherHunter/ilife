@@ -140,6 +140,14 @@ export const DEFINITION_SITES = [
   { name: '本地时钟副本（自己读系统 Date 造日／时刻）', allow: ['src/shared/time.ts'], re: /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)|new Date\(\)\.toTimeString\(\)\.slice\(0, 8\)/g, hint: '时钟只写一处：shared/time.ts 的 todayISO／timeOfDayISO，别处引用它' },
 ];
 
+/** 待收口清单（**只登记、不判红**）：`谓词字面散在 44 处 SQL 串里`。
+ *  为什么先不判红：#717 批③ 已把正本收进 `shared/alive.ts`（`analysis/utils.ts` 按原名转出），
+ *  两处定义地的问题已消失；剩下的是「同一句话被抄了 44 遍」，批量替换会把每一条 SQL 的拼串重排，
+ *  风险大于收益。这里登记成**机器可读的待收口项**，等有人在那些件上开窗时顺手换。 */
+export const PENDING_SINGLE_SOURCE = [
+  { name: '软删存活谓词字面（44 处，散在 10 件的 SQL 串里）', owner: '#717 批③', todo: '改读 shared/alive.ts 的 EX_ALIVE／BODY_ALIVE（正本已就位，字面与正本逐字相同，故不是正确性问题）' },
+];
+
 /** 去注释与空白（注释里提到旧数不算定义地；本门只看代码）。 */
 function stripComments(src) {
   return src
