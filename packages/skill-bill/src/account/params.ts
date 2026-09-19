@@ -25,6 +25,8 @@
  *  域与域之间只经对方的 `index.ts` 门）。
  */
 import { BillPolicyError } from '../fetch/errors.js';
+// #731：三件值读法住共用位，本件既转出（对外面不变）又本地用（域内四处校验）。
+import { isGiven, numberOf, textOf } from '../shared/params.js';
 
 /** 一道写命令的三支操作（老侧 `account/cli.py` 的 add／update／transfer 三个子命令）。
  *  `summary` 不在这里：它是 `bill.account.query`（读命令），不在写命令的判别式里。 */
@@ -101,26 +103,9 @@ export const ACCOUNT_SLOTS: Readonly<Record<AccountOp, readonly AccountSlot[]>> 
   ],
 };
 
-/** 一个值算不算「给了」：`undefined`／`null`／`false`／空白串都不算。 */
-export function isGiven(v: unknown): boolean {
-  if (v === undefined || v === null || v === false) return false;
-  return !(typeof v === 'string' && v.trim() === '');
-}
-
-/** 一个值写成文本（认字符串与有限数；其余形态一律当没给——不猜）。 */
-export function textOf(v: unknown): string {
-  if (typeof v === 'string') return v.trim();
-  return typeof v === 'number' && Number.isFinite(v) ? String(v) : '';
-}
-
-/** 数字解析：认数字与非空数字串；解析不了给 `null`（不在这里报错，报错归 `validateTransfer`）。 */
-export function numberOf(v: unknown): number | null {
-  if (v === undefined || v === null || typeof v === 'boolean') return null;
-  const raw = typeof v === 'string' ? v.trim() : v;
-  if (raw === '') return null;
-  const n = typeof raw === 'number' ? raw : Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
+/** 三件值读法**改从共用位转出**（#731）：账户域是第一处用法、开始使用域是第二处，
+ *  按「共用件是从第二个用法里长出来的」上浮到 `../shared/params.js`；本域调用点写法一字不改。 */
+export { isGiven, numberOf, textOf };
 
 /** 改账户那一支「改成什么」给了没有（三个口子任给其一即算给了）。 */
 export function hasChange(params: Record<string, unknown>): boolean {

@@ -29,3 +29,35 @@ export function needId(params: Record<string, unknown>): number {
   }
   return id as number;
 }
+
+/* ── 值的三种读法（#731 上浮共用位）────────────────────────────────────────────────────────
+ *
+ * 三件从 `src/account/params.ts` **原样上移**（行为一字不改）：账户域第一处写、开始使用域（#731）
+ * 第二处要用，按「共用件是从第二个用法里长出来的」上浮；`src/account/params.ts` 改为转出这三件，
+ * 域内调用点写法不变。
+ *
+ * **本件不是「全仓唯一一份值读法」**：写入域若干件各有一份**私有**同名函数（`collect.ts`／`diffTable.ts`／
+ * `template-*.ts`／`recentPicks.ts`，其中 `recentPicks.ts` 那份的 `NaN` 归「`NaN` 字面」、
+ * 与下面这份「`NaN` 归空」不同义）——那是搬迁前的既有债务，不属本票写集，就地摆正留给写入域自己的票。
+ */
+
+/** 一个值算不算「给了」：`undefined`／`null`／`false`／空白串都不算。 */
+export function isGiven(v: unknown): boolean {
+  if (v === undefined || v === null || v === false) return false;
+  return !(typeof v === 'string' && v.trim() === '');
+}
+
+/** 一个值写成文本（认字符串与有限数；其余形态一律当没给——不猜）。 */
+export function textOf(v: unknown): string {
+  if (typeof v === 'string') return v.trim();
+  return typeof v === 'number' && Number.isFinite(v) ? String(v) : '';
+}
+
+/** 数字解析：认数字与非空数字串；解析不了给 `null`（不在这里报错，报错归各域的校验处）。 */
+export function numberOf(v: unknown): number | null {
+  if (v === undefined || v === null || typeof v === 'boolean') return null;
+  const raw = typeof v === 'string' ? v.trim() : v;
+  if (raw === '') return null;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}

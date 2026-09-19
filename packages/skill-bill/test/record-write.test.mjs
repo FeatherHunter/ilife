@@ -86,11 +86,18 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
   });
 
   it('注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在页面这一层）', () => {
-    // #411 起注册表纳两域六条；#691 起再加账户域两条（账户管理／账户汇总）＝ 八条三域。
-    assert.equal(REGISTRY_KEYS.length, 8);
+    // #411 起注册表纳两域六条；#691 起再加账户域两条 ＝ 八条三域；
+    // #729／#730／#731 三域同窗进表（分析三条／目标两条／开始使用一条）＝ 十四条六能力。
+    assert.equal(REGISTRY_KEYS.length, 14);
     assert.deepEqual(
       [...REGISTRY_KEYS].sort(),
-      ['bill.account.query', 'bill.account.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update'],
+      [
+        'bill.account.query', 'bill.account.write',
+        'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend',
+        'bill.goal.query', 'bill.goal.write',
+        'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update',
+        'bill.setup.run',
+      ],
     );
     assert.equal(Object.keys(BILL_KEY_SHAPES).length, 16, '16 条联动命令的形状表不缩水');
     for (const key of REGISTRY_KEYS) {

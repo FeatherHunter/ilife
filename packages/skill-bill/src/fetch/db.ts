@@ -17,7 +17,16 @@ export interface BillRow {
   deleted_at: string | null;
 }
 
-export interface BillDb { db: DatabaseSync; path: string; initialized: boolean; }
+export interface BillDb {
+  db: DatabaseSync;
+  path: string;
+  initialized: boolean;
+  /** 本次打开时**自动补过什么**（空数组＝结构本来就是齐的）。
+   *  取值是两个固定的中文短语：`建表`／`补列 deleted_at`。
+   *  为什么记下来（#731）：DDL 自愈一直是**静默**做的，于是「初始化状态」那张页报不出
+   *  「这次补了什么」——把补的动作报出来，状态页的迁移块才有真事实可说。 */
+  repaired: readonly string[];
+}
 
 const BILLS_DDL = `CREATE TABLE IF NOT EXISTS bills (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,21 +57,23 @@ export function openBillDb(dbPath: string): BillDb {
   try { db = new DatabaseSync(dbPath); }
   catch (e) { throw new BillFetchError('BILL_DB_UNREADABLE', '记账 DB 打不开：' + dbPath, { cause: e }); }
   let initialized = false;
+  const repaired: string[] = [];
   try {
     db.exec('PRAGMA journal_mode=WAL');
     db.exec('PRAGMA busy_timeout=5000');
     const before = tableColumns(db, 'bills');
     if (!before.length) initialized = true;
     db.exec(BILLS_DDL);
+    if (!before.length) repaired.push('建表');
     db.exec('CREATE INDEX IF NOT EXISTS idx_bills_time ON bills(time)');
     db.exec('CREATE INDEX IF NOT EXISTS idx_bills_category ON bills(category)');
     const cols = tableColumns(db, 'bills');
-    if (!cols.includes('deleted_at')) db.exec('ALTER TABLE bills ADD COLUMN deleted_at TEXT DEFAULT NULL');
+    if (!cols.includes('deleted_at')) { db.exec('ALTER TABLE bills ADD COLUMN deleted_at TEXT DEFAULT NULL'); repaired.push('补列 deleted_at'); }
   } catch (e) {
     try { db.close(); } catch { /* ignore */ }
     throw new BillFetchError('BILL_DB_UNREADABLE', '记账 DB 初始化失败：' + dbPath, { cause: e });
   }
-  return { db, path: dbPath, initialized };
+  return { db, path: dbPath, initialized, repaired };
 }
 
 export function closeBillDb(handle: BillDb): void {

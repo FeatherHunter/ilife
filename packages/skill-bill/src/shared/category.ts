@@ -7,7 +7,8 @@
  *      `record.ts`（`validateCategory`／`validateAmount`／`validateRecord`）·
  *      `prefillNote.ts`／`recentPicks.ts`／`template-batch.ts`（`DEFAULTS`）· `summaryRow.ts`（`l1Of`）；
  *    · `src/query/read.ts`——「查分类」那条条件的 `validateCategory`；
- *    · `src/cli/cmd_read.ts`——导入 CSV 那一支的 `validateCategory`（外壳）；
+ *    · `src/setup/import.ts`——导入 CSV 那一支的 `validateCategory`／`validateAmount`（#731 起住能力目录；
+ *      搬迁前那一支在外壳 `src/cli/cmd_read.ts` 里，随开始使用域那张票搬走）；
  *    · `src/shared/kpi.ts`——总览的分档前缀取 `l1Of`。
  *  两域（write／query）＋外壳在用它 ⇒ 住共用位（归属律 2）。 */
 import { BillPolicyError } from '../fetch/errors.js';

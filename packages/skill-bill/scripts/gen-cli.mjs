@@ -3,9 +3,9 @@
 //
 // 输入（唯一权威源）：`src/<能力>/commands.ts` 导出的唯一一个声明数组（编译后 `dist/<能力>/commands.js`）。
 // 收两种命令：`kind:'write'`（形状恒 `receipt`）与 `kind:'read'`（形状是表里的形状：`list`／`detail`…）。
-// 当前纳已迁移的八条（写入域 `bill.record.add`／`update`，查询域 `bill.record.today`／`range`／`search`／`detail`，
-// 账户域 `bill.account.write`／`query`）；
-// 其余 8 条仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
+// 当前纳已迁移的十四条（写入域 `bill.record.add`／`update`，查询域 `bill.record.today`／`range`／`search`／`detail`，
+// 账户域 `bill.account.write`／`query`，开始使用域 `bill.setup.run`，分析域三条，目标域两条）；
+// 其余 2 条（`bill.help.lookup`／`bill.link.submit`）仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
 // 输出（唯一生成物）：`src/cli/registry.ts`（一能力一行，由扫描得出，人不手改）。
 // 不派生的落点（本次不动，不上报）：`packages/base-combos/combos.yaml` 属跨技能登记禁区（地图 OutofScope），
 // `src/render/envelope.ts` 过渡表、`scripts/build-help.mjs` 的 HELP-AUTO 块一律不碰。
@@ -90,7 +90,7 @@ function renderRegistryTs(capabilities) {
   L.push(' * 对外两件：`REGISTRY`（命令名 → 声明）与 `REGISTRY_KEYS`（全部命令名）。');
   L.push(' * 谁在用（两个调用点，指名）：① `src/cli/cmd_read.ts`——迁移过的命令先查这张表；');
   L.push(' * ② `src/render/envelope.ts`——迁移过的命令的形状从这张表运行期派生。');
-  L.push(' * 本次纳已迁移的八条（写入域两条／查询域四条／账户域两条），其余 8 条仍在过渡表（行为产物不动，本生成器不读写它们）。');
+  L.push(' * 本次纳已迁移的十四条（写入域两条／查询域四条／账户域两条／开始使用域一条／分析域三条／目标域两条），其余 2 条仍在过渡表（help／link，行为产物不动，本生成器不读写它们）。');
   L.push(' * `combos.yaml` 不在本生成器派生面（跨技能登记禁区，本次不动）。');
   L.push(' * 新加一个能力＝建它的 `commands.ts` 并在该能力 `index.ts` 再导出那个数组；');
   L.push(' * 新加一条命令＝改它的声明加它那个子功能文件，本文件不动。');
