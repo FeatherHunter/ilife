@@ -90,6 +90,24 @@ describe('#725 文档骨架件：两个位（charts／pageUi）', () => {
   });
 });
 
+describe('#725 文档骨架件：文档版本声明的大小写（doctype）', () => {
+  it('缺省＝小写；给 upper 只差那几个字符，其余逐字节相同', () => {
+    const lower = renderDocShell({ ...BASE });
+    assert.ok(lower.startsWith('<!doctype html>\n<html lang="zh-CN">'), '缺省必须是小写写法');
+    const upper = renderDocShell({ ...BASE, doctypeCase: 'upper' });
+    assert.ok(upper.startsWith('<!DOCTYPE html>\n<html lang="zh-CN">'), 'upper 必须是大写写法');
+    assert.equal(upper.replace('<!DOCTYPE html>', '<!doctype html>'), lower, '除大小写外必须逐字节相同');
+    assert.equal(renderDocShell({ ...BASE, doctypeCase: 'lower' }), lower);
+    assert.equal(renderDocShell({ ...BASE, doctypeCase: undefined }), lower);
+  });
+
+  it('只认 upper：给别的值一律按缺省小写（不新开第三种写法）', () => {
+    const lower = renderDocShell({ ...BASE });
+    assert.equal(renderDocShell({ ...BASE, doctypeCase: 'UPPER' }), lower);
+    assert.equal(renderDocShell({ ...BASE, doctypeCase: 'bogus' }), lower);
+  });
+});
+
 describe('#725 文档骨架件：件自己（判据 4 与铁律五）', () => {
   it('判据 4：件里不出现任何技能名（清单从 packages/ 派生，不手写）', () => {
     const src = readFileSync(fileURLToPath(new URL('../src/docShell.ts', import.meta.url)), 'utf8');

@@ -58,4 +58,62 @@ START ticket=725 runId=61988bab-1587-4cd6-b180-f0afa045a61c cmd="node packages/s
 RUN ticket=725 runId=61988bab-1587-4cd6-b180-f0afa045a61c cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=42132 at=2026-09-19T08:10:16.123Z
 START ticket=725 runId=598f4690-5fc9-4e9e-adec-a7bdb99b1c7e cmd="node --test packages/base-render/test/*.test.mjs" waitedMs=0 pid=35596 at=2026-09-19T08:10:16.180Z
 RUN ticket=725 runId=598f4690-5fc9-4e9e-adec-a7bdb99b1c7e cmd="node --test packages/base-render/test/*.test.mjs" waitedMs=0 exit=1 pid=35596 at=2026-09-19T08:10:23.485Z
+START ticket=725 runId=dcd5750e-3623-4556-9e4b-96c066305d35 cmd="git add -- packages/base-render/src/docShell.ts packages/base-render/package.json packages/base-render/test/doc-shell-725.test.mjs packages/skill-calorie/src/shared/docPage.ts docs/base/base-render/t725-文档骨架件-证据.md docs/base/base-render/t725-gate-runs.md docs/base/base-render/t725-equivalence.mjs" waitedMs=0 pid=42472 at=2026-09-19T08:11:35.629Z
+RUN ticket=725 runId=dcd5750e-3623-4556-9e4b-96c066305d35 cmd="git add -- packages/base-render/src/docShell.ts packages/base-render/package.json packages/base-render/test/doc-shell-725.test.mjs packages/skill-calorie/src/shared/docPage.ts docs/base/base-render/t725-文档骨架件-证据.md docs/base/base-render/t725-gate-runs.md docs/base/base-render/t725-equivalence.mjs" waitedMs=0 exit=0 pid=42472 at=2026-09-19T08:11:35.682Z
+START ticket=725 runId=831438b2-0ec5-44d6-8e4a-52132f074c45 cmd="git diff --cached --name-only" waitedMs=0 pid=42100 at=2026-09-19T08:11:35.739Z
+RUN ticket=725 runId=831438b2-0ec5-44d6-8e4a-52132f074c45 cmd="git diff --cached --name-only" waitedMs=0 exit=0 pid=42100 at=2026-09-19T08:11:35.780Z
+START ticket=725 runId=f97ef14f-20f8-48d9-bf09-16e9b23afa2f cmd="git commit -F .scratch/t725/commit-msg.txt -- packages/base-render/src/docShell.ts packages/base-render/package.json packages/base-render/test/doc-shell-725.test.mjs packages/skill-calorie/src/shared/docPage.ts docs/base/base-render/t725-文档骨架件-证据.md docs/base/base-render/t725-gate-runs.md docs/base/base-render/t725-equivalence.mjs" waitedMs=0 pid=27844 at=2026-09-19T08:11:35.841Z
+RUN ticket=725 runId=f97ef14f-20f8-48d9-bf09-16e9b23afa2f cmd="git commit -F .scratch/t725/commit-msg.txt -- packages/base-render/src/docShell.ts packages/base-render/package.json packages/base-render/test/doc-shell-725.test.mjs packages/skill-calorie/src/shared/docPage.ts docs/base/base-render/t725-文档骨架件-证据.md docs/base/base-render/t725-gate-runs.md docs/base/base-render/t725-equivalence.mjs" waitedMs=0 exit=0 pid=27844 at=2026-09-19T08:11:35.948Z
+START ticket=725 runId=bdd8730e-3aa5-4d68-a981-c2d537479611 cmd="git log -1 --stat --format=%H%n%s" waitedMs=0 pid=7284 at=2026-09-19T08:11:36.006Z
+RUN ticket=725 runId=bdd8730e-3aa5-4d68-a981-c2d537479611 cmd="git log -1 --stat --format=%H%n%s" waitedMs=0 exit=0 pid=7284 at=2026-09-19T08:11:36.050Z
+START ticket=725 runId=03718438-4c83-4592-9777-f230424487e7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 pid=39412 at=2026-09-19T08:12:10.031Z
+RUN ticket=725 runId=03718438-4c83-4592-9777-f230424487e7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 exit=0 pid=39412 at=2026-09-19T08:12:11.267Z
+START ticket=725 runId=564e158d-65de-49f5-81cb-34e995bee2ac cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=26016 at=2026-09-19T08:12:11.329Z
+RUN ticket=725 runId=564e158d-65de-49f5-81cb-34e995bee2ac cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=26016 at=2026-09-19T08:12:17.456Z
+START ticket=725 runId=565d465c-327f-4525-8a4e-07c7dd892f10 cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie packages/skill-bill --force" waitedMs=0 pid=33976 at=2026-09-19T08:45:44.278Z
+RUN ticket=725 runId=565d465c-327f-4525-8a4e-07c7dd892f10 cmd="node node_modules/typescript/bin/tsc -b packages/base-render packages/skill-calorie packages/skill-bill --force" waitedMs=0 exit=0 pid=33976 at=2026-09-19T08:45:49.426Z
+START ticket=725 runId=dd65a8dc-37ee-4121-8285-3dc06f19655d cmd="node --test packages/base-render/test/doc-shell-725.test.mjs" waitedMs=0 pid=11600 at=2026-09-19T08:45:49.486Z
+RUN ticket=725 runId=dd65a8dc-37ee-4121-8285-3dc06f19655d cmd="node --test packages/base-render/test/doc-shell-725.test.mjs" waitedMs=0 exit=0 pid=11600 at=2026-09-19T08:45:49.651Z
+START ticket=725 runId=ed8c0515-9be7-43d1-8a57-103c3024241b cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=23320 at=2026-09-19T08:45:49.715Z
+RUN ticket=725 runId=ed8c0515-9be7-43d1-8a57-103c3024241b cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=23320 at=2026-09-19T08:45:56.158Z
+START ticket=725 runId=e4c8f3db-2eae-4a6c-8e8f-e7ded7003e6d cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 pid=29080 at=2026-09-19T08:48:34.767Z
+RUN ticket=725 runId=e4c8f3db-2eae-4a6c-8e8f-e7ded7003e6d cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 exit=0 pid=29080 at=2026-09-19T08:48:49.828Z
+START ticket=725 runId=f1b7dbf4-b639-4532-98a7-fad3a4924093 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=39572 at=2026-09-19T08:48:59.491Z
+RUN ticket=725 runId=f1b7dbf4-b639-4532-98a7-fad3a4924093 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=39572 at=2026-09-19T08:48:59.577Z
+START ticket=725 runId=1210dbca-6132-490d-a1dc-f875cf405479 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=13592 at=2026-09-19T08:48:59.644Z
+RUN ticket=725 runId=1210dbca-6132-490d-a1dc-f875cf405479 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=13592 at=2026-09-19T08:48:59.730Z
+START ticket=725 runId=a07c0f0d-2d72-480c-b06a-2dc6847fc6ec cmd="node packages/skill-bill/scripts/check-page-assert.mjs" waitedMs=1 pid=38144 at=2026-09-19T08:48:59.790Z
+RUN ticket=725 runId=a07c0f0d-2d72-480c-b06a-2dc6847fc6ec cmd="node packages/skill-bill/scripts/check-page-assert.mjs" waitedMs=1 exit=1 pid=38144 at=2026-09-19T08:48:59.867Z
+START ticket=725 runId=0b8ec583-3a33-4a9d-8eaf-58b1f9ba1170 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 pid=42872 at=2026-09-19T08:48:59.926Z
+RUN ticket=725 runId=0b8ec583-3a33-4a9d-8eaf-58b1f9ba1170 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=42872 at=2026-09-19T08:49:00.061Z
+START ticket=725 runId=5c1be654-3b04-4e5c-8e85-a6c97de462a3 cmd="node packages/skill-calorie/scripts/check-one-path.mjs" waitedMs=0 pid=38908 at=2026-09-19T08:49:00.126Z
+RUN ticket=725 runId=5c1be654-3b04-4e5c-8e85-a6c97de462a3 cmd="node packages/skill-calorie/scripts/check-one-path.mjs" waitedMs=0 exit=0 pid=38908 at=2026-09-19T08:49:00.393Z
+START ticket=725 runId=f1fbf1a6-2bfc-4957-9f37-28fa34b36c2d cmd="node packages/skill-calorie/scripts/check-page-assert.mjs" waitedMs=0 pid=38708 at=2026-09-19T08:49:00.455Z
+RUN ticket=725 runId=f1fbf1a6-2bfc-4957-9f37-28fa34b36c2d cmd="node packages/skill-calorie/scripts/check-page-assert.mjs" waitedMs=0 exit=0 pid=38708 at=2026-09-19T08:49:00.543Z
+START ticket=725 runId=2db2777b-2692-44ec-8538-ba20ee11f5b9 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 pid=39000 at=2026-09-19T08:49:00.602Z
+RUN ticket=725 runId=2db2777b-2692-44ec-8538-ba20ee11f5b9 cmd="node packages/skill-calorie/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=39000 at=2026-09-19T08:49:00.722Z
+START ticket=725 runId=cc5e0eae-b787-475d-becc-b7f586c5b223 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 pid=35068 at=2026-09-19T08:49:00.793Z
+RUN ticket=725 runId=cc5e0eae-b787-475d-becc-b7f586c5b223 cmd="node packages/skill-calorie/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=35068 at=2026-09-19T08:49:01.064Z
+START ticket=725 runId=32f88eb2-b728-4e2d-bc2a-8ed408395403 cmd="node tooling/check-boundaries.mjs" waitedMs=0 pid=42740 at=2026-09-19T08:49:01.120Z
+RUN ticket=725 runId=32f88eb2-b728-4e2d-bc2a-8ed408395403 cmd="node tooling/check-boundaries.mjs" waitedMs=0 exit=0 pid=42740 at=2026-09-19T08:49:01.237Z
+START ticket=725 runId=68892bc2-356a-4d0d-b0f4-baaad71e24c8 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 pid=39084 at=2026-09-19T08:49:01.297Z
+RUN ticket=725 runId=68892bc2-356a-4d0d-b0f4-baaad71e24c8 cmd="node tooling/skill-html-snapshot.mjs --check" waitedMs=0 exit=0 pid=39084 at=2026-09-19T08:49:01.464Z
+START ticket=725 runId=98fd6a0c-f942-401e-af01-f1ba46d15cf0 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=1 pid=34248 at=2026-09-19T08:49:37.474Z
+RUN ticket=725 runId=98fd6a0c-f942-401e-af01-f1ba46d15cf0 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=1 exit=0 pid=34248 at=2026-09-19T08:49:37.561Z
+START ticket=725 runId=d4e4b9a3-a230-40cf-be51-5f3e558aad59 cmd="node packages/skill-calorie/test/t380-真出口.mjs --all" waitedMs=0 pid=42652 at=2026-09-19T08:49:37.620Z
+RUN ticket=725 runId=d4e4b9a3-a230-40cf-be51-5f3e558aad59 cmd="node packages/skill-calorie/test/t380-真出口.mjs --all" waitedMs=0 exit=1 pid=42652 at=2026-09-19T08:50:32.220Z
+START ticket=725 runId=a20acc1b-d44b-4ccf-a070-9b58a6f8e932 cmd="node packages/skill-bill/scripts/check-ratchet-tight.mjs" waitedMs=0 pid=6008 at=2026-09-19T08:50:43.157Z
+RUN ticket=725 runId=a20acc1b-d44b-4ccf-a070-9b58a6f8e932 cmd="node packages/skill-bill/scripts/check-ratchet-tight.mjs" waitedMs=0 exit=0 pid=6008 at=2026-09-19T08:50:43.293Z
+START ticket=725 runId=34c53a96-c8fa-4a70-9568-33ed64a6571f cmd="node packages/skill-bill/scripts/ratchet-frozen-686.mjs" waitedMs=1 pid=35928 at=2026-09-19T08:50:43.360Z
+RUN ticket=725 runId=34c53a96-c8fa-4a70-9568-33ed64a6571f cmd="node packages/skill-bill/scripts/ratchet-frozen-686.mjs" waitedMs=1 exit=0 pid=35928 at=2026-09-19T08:50:43.433Z
+START ticket=725 runId=b269c12d-99fc-45ac-893c-9fb5909d6098 cmd="node packages/skill-calorie/scripts/check-ratchet-tight.mjs" waitedMs=0 pid=30480 at=2026-09-19T08:50:43.497Z
+RUN ticket=725 runId=b269c12d-99fc-45ac-893c-9fb5909d6098 cmd="node packages/skill-calorie/scripts/check-ratchet-tight.mjs" waitedMs=0 exit=1 pid=30480 at=2026-09-19T08:50:43.566Z
+START ticket=725 runId=fb4ef75c-1766-4834-806d-aa8e5e235c4d cmd="node packages/skill-calorie/scripts/check-examples.mjs check-examples.mjs" waitedMs=0 pid=39800 at=2026-09-19T08:50:53.663Z
+RUN ticket=725 runId=fb4ef75c-1766-4834-806d-aa8e5e235c4d cmd="node packages/skill-calorie/scripts/check-examples.mjs check-examples.mjs" waitedMs=0 exit=1 pid=39800 at=2026-09-19T08:51:30.729Z
+START ticket=725 runId=6396f8b9-8e8d-4fd6-945b-19ab3ad29f39 cmd="node packages/skill-calorie/scripts/audit-separators.mjs audit-separators.mjs" waitedMs=0 pid=36904 at=2026-09-19T08:51:30.824Z
+RUN ticket=725 runId=6396f8b9-8e8d-4fd6-945b-19ab3ad29f39 cmd="node packages/skill-calorie/scripts/audit-separators.mjs audit-separators.mjs" waitedMs=0 exit=1 pid=36904 at=2026-09-19T08:51:30.895Z
+START ticket=725 runId=09d57f08-099b-4aac-99e2-684b6b837d82 cmd="node packages/skill-calorie/scripts/gen-sot-snapshot.mjs --check" waitedMs=0 pid=39312 at=2026-09-19T08:51:30.952Z
+RUN ticket=725 runId=09d57f08-099b-4aac-99e2-684b6b837d82 cmd="node packages/skill-calorie/scripts/gen-sot-snapshot.mjs --check" waitedMs=0 exit=1 pid=39312 at=2026-09-19T08:51:31.035Z
+START ticket=725 runId=f9b91114-1eaf-4a82-996b-e9b27fe7e989 cmd="node packages/skill-calorie/scripts/gen-routes.mjs --check" waitedMs=0 pid=41316 at=2026-09-19T08:51:31.096Z
+RUN ticket=725 runId=f9b91114-1eaf-4a82-996b-e9b27fe7e989 cmd="node packages/skill-calorie/scripts/gen-routes.mjs --check" waitedMs=0 exit=0 pid=41316 at=2026-09-19T08:51:31.178Z
 ```
