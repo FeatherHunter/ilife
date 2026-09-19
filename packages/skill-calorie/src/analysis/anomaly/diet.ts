@@ -3,6 +3,10 @@ import type { DatabaseSync } from 'node:sqlite';
 import { getActivityFactor } from '../utils.js';
 import { base, degrade, mealStructure, round, seriesAvg, topFoods } from './common.js';
 import type { DaySeries, Diagnosis } from './common.js';
+/* #717 批②·推荐区间归一：判决依据的区间只有一处定义（共用位 `shared/nutritionRange.ts`）。
+   本件原先自写一套无出处的数（15-30／40-60／20-35），与配比页印出来的那套（10-20／45-65／20-35）
+   在同一份库上给出两个答案——同一条记录在两个页面上被判成两个结论。 */
+import { NUTRITION_RANGE, nutritionRangeNote } from '../../shared/nutritionRange.js';
 
 export function diagDietOver(db: DatabaseSync, series: DaySeries[]): Diagnosis {
   const out = base(series, 'diet_over', '诊断饮食超标');
@@ -60,11 +64,15 @@ export function diagDietUnbalanced(series: DaySeries[]): Diagnosis {
     '碳水': round((c * 4) / total * 1000) / 10,
     '脂肪': round((f * 9) / total * 1000) / 10,
   };
-  const ref: Record<string, [number, number]> = { '蛋白': [15, 30], '碳水': [40, 60], '脂肪': [20, 35] };
-  const off = Object.keys(shares).filter((k) => { const r = ref[k] as [number, number]; const v = shares[k] as number; return !(r[0] <= v && v <= r[1]); });
+  /* #717 批②·推荐区间归一：判决依据＝共用位正本（与配比页印出来的那套同一个定义地）。
+     这张映射表只做「中文名 → 正本键」的翻译，**不再出现任何字面区间数**。 */
+  const ref: Record<string, { min: number; max: number; label: string }> = {
+    '蛋白': NUTRITION_RANGE.protein, '碳水': NUTRITION_RANGE.carb, '脂肪': NUTRITION_RANGE.fat,
+  };
+  const off = Object.keys(shares).filter((k) => { const r = ref[k] as { min: number; max: number }; const v = shares[k] as number; return !(r.min <= v && v <= r.max); });
   out.findings.push({
     cause: '三大营养占比',
-    evidence: '蛋白 ' + shares['蛋白'] + '% / 碳水 ' + shares['碳水'] + '% / 脂肪 ' + shares['脂肪'] + '%(参考 蛋白15-30 碳水40-60 脂肪20-35)',
+    evidence: '蛋白 ' + shares['蛋白'] + '% / 碳水 ' + shares['碳水'] + '% / 脂肪 ' + shares['脂肪'] + '%(' + nutritionRangeNote() + ')',
     confidence: '中',
     action: off.length > 0 ? '失衡维度:' + off.join('、') + ',针对性调整(蛋白不足→加蛋奶豆肉;碳水过高→减精制碳水;脂肪过高→减油/油炸)' : '三大营养占比在均衡范围',
   });

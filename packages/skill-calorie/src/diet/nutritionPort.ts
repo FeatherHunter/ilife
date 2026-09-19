@@ -19,6 +19,10 @@ import type { DatabaseSync } from 'node:sqlite';
 import { WATER_NAME, readGoal } from '../fetch/diet.js';
 import { sourceStats } from './productStore.js';
 import { shiftISODate } from '../analysis/utils.js';
+/* #717 批②·推荐区间归一：区间正本上移共用位 `shared/nutritionRange.ts`——诊断侧的失衡判决读同一处，
+   本件不再自己写一份区间数（从前配比页印 10-20／45-65／20-35，而诊断按另一套 15-30／40-60／20-35 判）。 */
+import { NUTRITION_RANGE } from '../shared/nutritionRange.js';
+import type { NutritionRange } from '../shared/nutritionRange.js';
 import { CalorieRenderError } from '../render/errors.js';
 
 function assertRange(start: string, end: string): void {
@@ -57,7 +61,7 @@ export function hasAnyDietRow(db: DatabaseSync): boolean {
 
 /* ── 营养配比（nutrition_ratio：蛋白/碳水/脂肪克数＋热量占比＋目标＋推荐范围） ── */
 
-export interface NutritionRatioRange { min: number; max: number; label: string }
+export type NutritionRatioRange = NutritionRange;
 
 export interface NutritionRatioView {
   start: string;
@@ -77,12 +81,9 @@ export interface NutritionRatioView {
   range: { protein: NutritionRatioRange; carb: NutritionRatioRange; fat: NutritionRatioRange };
 }
 
-/** 推荐范围（旧 render_nutrition_ratio.py range 表逐字）。 */
-const RATIO_RANGE = {
-  protein: { min: 10, max: 20, label: '10-20%' },
-  carb: { min: 45, max: 65, label: '45-65%' },
-  fat: { min: 20, max: 35, label: '20-35%' },
-} as const;
+/** 推荐范围（旧 render_nutrition_ratio.py range 表逐字；#717 批② 起正本住 `shared/nutritionRange.ts`，
+ *  本处只把共用位的键名对齐到本视图的字段名——数值一个都不在本文件里出现）。 */
+const RATIO_RANGE = NUTRITION_RANGE;
 
 export function buildNutritionRatioView(db: DatabaseSync, start: string, end: string): NutritionRatioView {
   assertRange(start, end);
