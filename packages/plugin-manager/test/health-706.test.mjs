@@ -51,6 +51,11 @@ function renderHtml(node) {
   return step(node);
 }
 
+/** 屏上看得见的那部分（去掉标签与属性）：文案断言看它，免得属性里的原文（悬停提示）把结论带偏。 */
+function visibleText(html) {
+  return html.replace(/<[^>]*>/g, '');
+}
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 const REPO = join(HERE, '..', '..', '..');
@@ -236,6 +241,33 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.ok(!html.includes('能解析。'), '绿条还印了「一句话」，没收成一行');
       assert.ok(html.includes('还没配。'), '红黄条没印「一句话」');
       assert.ok(html.includes('去哪修：去配置页填。'), '红黄条没印「去哪修」');
+    });
+
+    it('一个盘上的旁证不许把别的盘的落点缩写全拖没（按根分开算前缀）', () => {
+      // 这一条是出图复评里逮到的真缺陷：备忘录那条报里有一条 `D:/ilife/media`（另一个盘），
+      // 原先只算「一个总前缀」——于是 C 盘那七八条（明文里全是长路径）一条都没缩，整张表像日志 dump。
+      const items = [
+        { id: 'a', title: '数据目录', status: 'red', message: '不在：C:/Users/me/.ilife/data', action: 'x', source: '默认值' },
+        { id: 'b', title: '媒体目录', status: 'yellow', message: '配了但目录不在：D:/ilife/media。', action: 'x', source: '配置文件' },
+      ];
+      const report = { skill: 'x', configPath: 'C:/Users/me/.ilife/memo.yaml', dataDir: 'C:/Users/me/.ilife/data', items };
+      const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
+      assert.ok(html.includes('配置文件 …/memo.yaml'), '表头那两条 C 盘落点没缩（一个旁证的盘不该拖没它们）');
+      assert.ok(html.includes('不在：…/data'), '报文的 C 盘落点没缩');
+      assert.ok(html.includes('配了但目录不在：D:/ilife/media。'), 'D 盘那条只有一条落点，本该原样印（不许瞎缩）');
+      // 悬停里留原文（要查证的人悬停能看到整条），所以只断言**可见文字**里不再有长路径。
+      assert.ok(!visibleText(html).includes('C:/Users/me/.ilife/data'), '可见文字里还是明文长路径');
+    });
+
+    it('同一路径出现在多条报文里时，逐条都缩（不是只缩第一处）', () => {
+      const items = [
+        { id: 'a', title: '配置文件', status: 'yellow', message: '配置文件还不存在：C:/Users/me/.ilife/bill.yaml。', action: 'x', source: '默认值' },
+        { id: 'b', title: '备份目录', status: 'yellow', message: '还没建：C:/Users/me/.ilife/bill.yaml。', action: 'x', source: '默认值' },
+      ];
+      const report = { skill: 'x', configPath: 'C:/Users/me/.ilife/bill.yaml', dataDir: 'C:/Users/me/.ilife/data', items };
+      const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
+      assert.equal((visibleText(html).match(/…\/bill\.yaml/g) || []).length, 3, '表头一处 ＋ 两条报文，三处都该缩');
+      assert.ok(!visibleText(html).includes('C:/Users/me/.ilife/bill.yaml'), '可见文字里还有明文没缩的');
     });
   });
 

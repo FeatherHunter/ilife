@@ -38,6 +38,9 @@ const STATUS_TEXT: Readonly<Record<HealthStatus, string>> = {
 
 const STATUS_LABEL: Readonly<Record<HealthStatus, string>> = { red: '红', yellow: '黄', green: '绿' };
 
+/** 档位的**形状**标记：颜色之外的第二条读数（灰度截图、色弱视角下也分得开谁要处理）。 */
+const STATUS_MARK: Readonly<Record<HealthStatus, string>> = { red: '✕', yellow: '!', green: '✓' };
+
 /** 面板上的文字色与分隔线（与 `client.ts` 同一套别名）。 */
 const INK = 'var(--dsw-alias-label-primary, inherit)';
 const INK_DIM = 'var(--dsw-alias-label-secondary, #9a9a9a)';
@@ -342,6 +345,11 @@ export function HealthTable(props: {
               React.createElement(
                 'div',
                 { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 } },
+                // 档位不只靠颜色认：色弱／灰度截图下也得一眼看出哪条要处理（灯保留作二次确认）。
+                React.createElement('span', {
+                  style: { color: STATUS_TEXT[item.status], fontWeight: 700, fontSize: 13, lineHeight: 1 },
+                  'aria-hidden': 'true',
+                }, STATUS_MARK[item.status]),
                 React.createElement('span', {
                   style: {
                     width: 8, height: 8, borderRadius: '50%', display: 'inline-block', background: STATUS_COLOR[item.status],
