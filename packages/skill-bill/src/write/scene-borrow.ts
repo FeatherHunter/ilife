@@ -61,14 +61,12 @@ export const SCENE: Scene = {
     chips: (ctx) => ctx.cards.slice(2).map((c) => c.label + ' ' + c.value),
     caliber: () => '标签流转：这一笔写「' + TAG_BORROW + ' #向（对象）借 ' + TAG_UNPAID
       + '」，还回去时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
-    genericCards: false,
     cards: (ctx) => {
       const who = textOf(ctx.params[WHO_NAME]);
       const due = textOf(ctx.params[DUE_NAME]);
       const unpaid = ctx.candidates.length;
       return [
         { label: '借入金额', value: money2(ctx.amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
-        ctx.cards[1],
         { label: '向谁借', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给，可后补' : '期限 ' + due },
         {
           label: '同人未还',

@@ -8,7 +8,7 @@
 //     落点表的场景词都由声明算回，别处不再写第二处字面量（判据见 `test/t721-判据与摘要锁.test.mjs`）。
 //
 // 谁在用（指名）：`src/help/lookup.ts` · `src/write/writeWire.ts` · `src/write/userWording.ts` ·
-//   `src/write/collectFrame.ts` · `src/write/receiptBody.ts` · `src/query/read.ts`
+//   `src/write/collectFrame.ts` · `src/write/scene-{update,undo,restore}.ts` · `src/query/read.ts`
 //   （#689 第三批：原先经薄转出件 `src/policy/wakewords.ts` 取的三处已直接改指本件，那件与 `policy/` 一并删除）。
 //
 // 域序 fail-closed：8 份声明的 `order` 必须是连续的 0..n-1，缺号／重号即抛（不用中央名单、

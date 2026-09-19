@@ -10,8 +10,10 @@
  *
  * 拆件的用意：拆件前 16 条词共用 `collect.ts`／`receipt.ts` 两个件里的装配体，同一时刻只允许一个执行者在写，
  *  15 张页只能串行；拆成一场景一件之后，三族窗口各改各那一件，零文件重叠。
- * 本票**只搬不改行为**：16 件现在都指同一对通用装配体（`./collectBody.ts`／`./receiptBody.ts`），
- *  逐条真跑的产物与拆件前逐字节同量级（读数见 `t407-拆件与三个缺口块-证据.md` 第六节）。
+ * 本票**只搬不改行为**：16 件现在都只声明差异值，两张页由**五张模板件**按页型装配
+ *  （`./template-{expense,flow,batch,installment,update}.ts`；原先那一对通用装配体
+ *  `./collectBody.ts`／`./receiptBody.ts` 已随票删除），逐条真跑的产物与拆件前逐字节同量级
+ *  （读数见 `t407-拆件与三个缺口块-证据.md` 第六节）。
  *
  * 谁在用（两个调用点，指名）：
  *   ① `src/write/collect.ts`——采集页分派：`sceneFor` 取件，叫它的 `collect`；
@@ -59,7 +61,9 @@ export interface ReceiptInput {
   readonly params: Record<string, unknown>;
   readonly receipt: BillReceipt;
   readonly writtenDetail: string;
-  /** 明细表的行（本次写入的字段与值）；写成字面量类型（不是 interface）的理由见 `receiptBody.ts`。 */
+  /** 明细表的行（本次写入的字段与值）；写成**字面量类型**而不是 `interface`：公共层的表格件收
+   *  `readonly Record<string, unknown>[]`，字面量类型自带隐式索引签名、能直接过（同口径见
+   *  `../query/list.js` 的 `QueryTableRow`）。 */
   readonly detail: readonly { readonly k: string; readonly v: string }[];
   readonly facts: SummaryFacts;
   readonly recent: readonly BillRow[];

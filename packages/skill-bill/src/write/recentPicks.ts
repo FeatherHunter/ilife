@@ -2,8 +2,9 @@
  *  按最近在先去重、剔掉没给的、取前十二个；再把本次已给的值并进那一格。
 
  * 谁在用（两处，指名；两处原先各写一份同形同名的取数，本次提到本件一处）：
- *   ① `src/write/photoEscape.ts`——记收入／记报销／记一笔／拍账单四个场景件的字段卡，它的 `pickOf` 一行转发到本件；
- *   ② `src/write/collectBody.ts`——通用采集页装配体的那一格，它的 `pickOf` 同样一行转发到本件。
+ *   ① `src/write/photoEscape.ts`——三级分类候选那一格，它的 `pickOf` 一行转发到本件；
+ *   ② `src/write/template-expense.ts` 的采集页那一格，它的 `pickOf` 同样一行转发到本件
+ *      （那一格原住已删除的 `src/write/collectBody.ts`）。
 
  * 本件只吃普通数据、零跨目录引用：入参是「近期记录那几列」与「本次参数」这种普通数据，
  *  **不引** `src/write/` 下的件，也不认 `CollectInput` 这类页面入参形状。可引的只有

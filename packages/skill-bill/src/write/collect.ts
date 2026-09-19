@@ -7,8 +7,10 @@
  *
  * 本件只剩三件事：转出槽位表（`./slots.ts` 的定义，测试与 `write.ts` 照旧引这一条）、
  *  按落点取件（`./scene.ts` 的 `sceneFor`）、把入参原样交给那一件场景件。
- *  拆件前这里装着通用采集页的十块；本票把那十块原样搬进 `./collectBody.ts`，16 件场景件现在都指它。
- *  后续三族窗口填各自那张页时改的是**场景件**，本件一行不动。
+ *  拆件前这里装着通用采集页的十块：先搬进 `./collectBody.ts`，再随「按域页型表」落成**五张模板件**
+ *  各持自己那张页的块序（`./template-{expense,flow,batch,installment,update}.ts`）——`collectBody.ts`
+ *  随本票删除（场景件都走模板了，它已无调用方）。
+ *  后续三族窗口填各自那张页时改的是**模板件（块序）与场景件（差异值）**，本件一行不动。
  */
 import type { CollectInput } from './scene.js';
 import { sceneFor } from './scene.js';

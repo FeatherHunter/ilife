@@ -6,9 +6,10 @@
  * 盖住的场景：记退款 `refund` · 报销到账 `reimburse-done` · 记借出 `lend` · 记借入 `borrow` · 记收回 `collect` · 记偿还 `repay`。
  * **块位序列**（照 `t685-按域页型表.md` §2.1「流程确认」那一行；● 恒出、○ 有内容才出）：
  *   采集页：类型徽章 ● → 结论摘要行 ● → 口径徽章行 ○ → 口径行 ○ → 本型三格卡 ● → 打标说明条 ○ →
- *     缺项标签 ● → 流程三段式 ● → 缺项阻断条（折叠）● → 复制区 ●
- *   回执页：类型徽章 ● → 结论摘要行（＋状态卡与本次那两格）● → #tag 流转条 ● → 写入明细表 ● →
- *     对账折叠区 ● → 退出口 ○ → 复制区 ●
+ *     缺项标签 ● → 流程三段式 ● → 缺项阻断条（折叠）● → 复制区 ● → 来源脚注 ●（#688 §五 第 26 行）
+ *   回执页：类型徽章 ● → 页内导航 ●（表序第 4 行；回执页＝结果型 ④，采集页＝过程型 ① 故不出）→
+ *     结论摘要行（＋状态卡与本次那两格）● → #tag 流转条 ● → 写入明细表 ● →
+ *     对账折叠区 ● → 退出口 ○ → 复制区 ● → 来源脚注 ●（第 26 行）
  *
  * 谁在用（六个调用点，指名）：`src/write/scene-{refund,reimburse-done,lend,borrow,collect,repay}.ts`——
  *  各件 `Scene.collect`／`Scene.receipt` 都是 `bindFlowPages(spec)` 的产物，本件不自己出页。
@@ -33,6 +34,8 @@ import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
+import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
+import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
 
@@ -114,14 +117,8 @@ export interface FlowSpec {
   readonly chips?: (ctx: FlowCtx) => readonly string[];
   /** 采集页：本型三格卡之后那条口径行（借贷两型的标签流转）；不给＝不出。 */
   readonly caliber?: (ctx: FlowCtx) => string;
-  /** 采集页：本型那三格卡（或本型自己给的整行读数行——见下一条）。 */
+  /** 采集页：本型那三格卡（读数行＝「摘要五格 ＋ 本型三格」两行，全族同形）。 */
   readonly cards: (ctx: FlowCtx) => readonly KpiCardInput[];
-  /** 采集页：读数行是不是「摘要五格 ＋ 本型三格」两行。
-   *  不给＝是（记退款／报销到账／记借出／记偿还四件：摘要五格在前、本型三格在三段式之前）；
-   *  **记借入**那一页自己给整行（今天只出「借入金额／分类／向谁借／同人未还」四格、没有摘要五格）⇒ 给 `false`：
-   *  模板就把 `cards` 那一行摆到读数行那一位（chips 之前），不再另出摘要五格。
-   *  这条差异是**本票照旧保留**的：把它并成族内同形会让那一页多出账户／账本／时间三格，属改版式，留给维护者定。 */
-  readonly genericCards?: boolean;
   /** 采集页：打标说明条（记退款不出＝不给）。 */
   readonly note?: (ctx: FlowCtx) => FlowNote;
   /** 采集页：流程三段式那三段的差异（骨位、「第 N 段」与定没定的口径由模板摆）。 */
@@ -295,10 +292,10 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
       kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '',
       state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
     }),
-    spec.genericCards === false ? renderKpiGrid(spec.cards(ctx)) : renderKpiGrid(cards),
+    renderKpiGrid(cards),
     spec.chips === undefined ? '' : renderChips({ items: spec.chips(ctx).map((text) => ({ text })) }),
     spec.caliber === undefined ? '' : renderCaliberLine(spec.caliber(ctx)),
-    spec.genericCards === false ? '' : renderKpiGrid(spec.cards(ctx)),
+    renderKpiGrid(spec.cards(ctx)),
     spec.note === undefined ? '' : renderFeedbackBlock({ toast: spec.note(ctx), staticNotice: true }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     flowSteps({ steps: stepsOf(spec, ctx) }),
@@ -311,6 +308,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
         actionAt: input.actionAt, version: DOC_VERSION,
       }) },
     }),
+    collectSourceNote(facts.time),
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + spec.docTitle, title: spec.word, subtitle: spec.word + '还差 ' + blocked.length + ' 项',
@@ -318,20 +316,21 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   });
 }
 
-/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。 */
+/** 结果型回执页：写库成功后出这一页；块清单既拼正文也派生页内导航（块序见件头）。 */
 function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
   const { key, params, receipt } = input;
   const envelope = envelopeOf(key, true, receipt.summary);
-  const content = [
-    typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', next: '这一笔已记下，撤销见下方按钮。' }),
-    renderKpiGrid([...summaryCards(input.facts), receiptStatusCard(receipt, input.writtenDetail), ...spec.receiptTail(input)]),
-    renderFeedbackBlock({ toast: spec.receiptNote(input), staticNotice: true }),
-    renderDataTable({
+  const blocks: readonly PageBlock[] = [
+    { html: renderFeedbackBlock({ toast: spec.receiptNote(input), staticNotice: true }) },
+    navBlock(renderKpiGrid([
+      ...summaryCards(input.facts), receiptStatusCard(receipt, input.writtenDetail), ...spec.receiptTail(input),
+    ]), 'sec-kpi', '读数'),
+    navBlock(renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }], rows: input.detail, caption: '写进去的项与值',
-    }),
-    reconcileDisclosure(receipt),
-    receipt.recordId === null ? '' : undoExit(receipt.recordId),
-    copyArea({
+    }), 'sec-detail', '明细'),
+    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
+    { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },
+    navBlock(copyArea({
       data: { envelope },
       log: { envelope, copyLog: copyLog({
         command: commandLine(key, params), source: receipt.source,
@@ -339,8 +338,11 @@ function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
           + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
         actionAt: receipt.actionAt, version: DOC_VERSION,
       }) },
-    }),
-  ].join('');
+    }), 'sec-copy', '复制'),
+    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
+  ];
+  const content = typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', next: '这一笔已记下，撤销见下方按钮。' })
+    + pageNav(blocks) + pageBody(blocks);
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执', title: spec.word + ' · 回执', subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,

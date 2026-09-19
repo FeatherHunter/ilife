@@ -12,9 +12,10 @@
  *
  *   采集页：类型徽章 ● → 进度 ● → 缺项标签 ● → 第 1 段标题 ● → 口径行 ● → 缺项阻断条（折叠）● →
  *     第 2 段标题 ● → 逐行可编辑表 ●（合计行由该表自带）→ 账本与币种缺省提示（浅色静态）● →
- *     复制 prompt 块 ● → 第 3 段标题 ● → 复制区 ●
- *   回执页：类型徽章 ● → 读数行（摘要五格 ＋ 写入状态 ＋ 这一次记了几笔 ＋ 写进去的项）● → 口径行 ● →
- *     写入明细表 ● → 对账折叠区 ● → 退出口 ○ → 复制区 ●
+ *     复制 prompt 块 ● → 第 3 段标题 ● → 复制区 ● → 来源脚注 ●（#688 §五 第 26 行）
+ *   回执页：类型徽章 ● → 页内导航 ●（表序第 4 行；回执页＝结果型 ④，采集页＝过程型 ① 故不出）→
+ *     读数行（摘要五格 ＋ 写入状态 ＋ 这一次记了几笔 ＋ 写进去的项）● → 口径行 ● →
+ *     写入明细表 ● → 对账折叠区 ● → 退出口 ○ → 复制区 ● → 来源脚注 ●（第 26 行）
  *
  * 本批现阶段的裁定（施工图 `docs/skills/skill-bill/t407-页面块清单-16词.md` 第二节「批量录入」）：
  *  **单笔化**——这一页一次只落一笔，页面上明示；多笔同屏那张表还没接。表里那一屏：`params.rows`
@@ -45,7 +46,9 @@ import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
-import { collectBlockedFold } from './collectBody.js';
+import { collectBlockedFold } from './blockedFold.js';
+import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
+import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
 
@@ -207,6 +210,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
         }),
       },
     }),
+    collectSourceNote(textOf(params['time'])),
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·采集页',
@@ -229,18 +233,13 @@ function receiptCardsOf(facts: SummaryFacts): ReturnType<typeof summaryCards> {
   ));
 }
 
-/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。块序见件头。 */
+/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。
+ *  块清单既拼正文也派生页内导航（共用位 `../shared/pageSections.js`）；块序见件头。 */
 function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
   const { key, params, receipt } = input;
   const envelope = envelopeOf(key, true, receipt.summary);
-  const content = [
-    typeBadge({
-      kind: spec.kind,
-      status: 'ok',
-      state: spec.receiptState,
-      next: spec.receiptNext,
-    }),
-    renderKpiGrid([
+  const blocks: readonly PageBlock[] = [
+    navBlock(renderKpiGrid([
       ...receiptCardsOf(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
       { label: spec.receiptRowsLabel, value: receipt.affectedRows + ' 笔' },
@@ -249,16 +248,16 @@ function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
         value: receipt.writtenFields.length + ' 项',
         detail: '共 ' + receipt.writtenFields.length + ' 项，详见下表。',
       },
-    ]),
-    renderCaliberLine(spec.receiptCaliber),
-    renderDataTable({
+    ]), 'sec-kpi', '读数'),
+    { html: renderCaliberLine(spec.receiptCaliber) },
+    navBlock(renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: spec.receiptCaption,
-    }),
-    reconcileDisclosure(receipt),
-    receipt.recordId === null ? '' : undoExit(receipt.recordId),
-    copyArea({
+    }), 'sec-detail', '明细'),
+    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
+    { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },
+    navBlock(copyArea({
       data: { envelope },
       log: {
         envelope,
@@ -271,8 +270,15 @@ function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
           version: DOC_VERSION,
         }),
       },
-    }),
-  ].join('');
+    }), 'sec-copy', '复制'),
+    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
+  ];
+  const content = typeBadge({
+    kind: spec.kind,
+    status: 'ok',
+    state: spec.receiptState,
+    next: spec.receiptNext,
+  }) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执',
     title: spec.word + ' · 回执',

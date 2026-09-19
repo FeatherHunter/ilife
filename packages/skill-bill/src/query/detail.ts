@@ -5,7 +5,7 @@
  * 谁在用（一个调用点，指名）：`src/query/read.ts` 的 `viewRecordDetail`（查账单详情）——
  *   today／range／search 三支仍走 `./list.js` 的 `queryListDoc`，本件不动它们。
  *
- * **块序在本件只写一份**：块清单 `blocks` 既拼正文也派生页内导航（见 `./pageParts.js`）。
+ * **块序在本件只写一份**：块清单 `blocks` 既拼正文也派生页内导航（见 `../shared/pageSections.js`）。
  *
  * 三源融合（老 `templates/query_view.html` 无 detail 分支，注入 `type=detail` 落未知类型错误回执——
  *   `t411-查询域-老模板逐块清单.md §1`；这是新仓补的读链）：
@@ -29,8 +29,8 @@ import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { queryPageShell as pageShell } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
-import { pageBody, pageNav } from './pageParts.js';
-import type { QueryPageBlock } from './pageParts.js';
+import { pageBody, pageNav } from '../shared/pageSections.js';
+import type { PageBlock } from '../shared/pageSections.js';
 import type { BillRow } from '../fetch/index.js';
 
 /** 详情页的入参：这一页是谁（命令名／唤醒词／窗口）＋ 查到哪一条 ＋ 复制日志与来源脚注的取数。 */
@@ -138,7 +138,7 @@ function detailCaliber(): string {
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
   const rows = detailRows(input.row, deleted);
-  const blocks: readonly QueryPageBlock[] = [
+  const blocks: readonly PageBlock[] = [
     { html: renderChips({ items: input.chips.map((text) => ({ text })) }), nav: { anchor: 'sec-summary', navText: '结果' } },
     { html: renderKpiGrid(detailCards(input.row, deleted)), nav: { anchor: 'sec-kpi', navText: '读数' } },
     {

@@ -12,9 +12,10 @@
  *   采集页：类型徽章 ●（`renderChips`）→ 进度 ○ → 缺项标签 ● → 第 1 段标题 ○ → 口径行 ×n ○ →
  *     主表 ○（拍账单的三要素表）→ 读数行 ○（记报销的垫付事实；**全空不出**，照 #688 裁定 6）→
  *     打标提示 ○（记报销）→ 重复检测条 ○ → 预填标注 ○ → 缺项阻断条（折叠）● →
- *     空态 ×n ○ → 第 2 段标题 ○ → 字段卡 ● → 复制指令块 ● → 第 3 段标题 ○ → 复制区 ●
- *   回执页：类型徽章 ● → 打标回执条 ○（记报销）→ 读数行 ● → 口径行 ○ → 重复检测条 ○ →
- *     明细表 ● → 对账折叠区 ● → 退出口 ○ → 复制区 ●
+ *     空态 ×n ○ → 第 2 段标题 ○ → 字段卡 ● → 复制指令块 ● → 第 3 段标题 ○ → 复制区 ● → 来源脚注 ●（第 26 行）
+ *   回执页：类型徽章 ● → 页内导航 ●（表序第 4 行；回执页＝结果型 ④，采集页＝过程型 ① 故不出）→
+ *     打标回执条 ○（记报销）→ 读数行 ● → 口径行 ○ → 重复检测条 ○ → 明细表 ● → 对账折叠区 ● →
+ *     退出口 ○ → 复制区 ● → 来源脚注 ●（第 26 行）
  *
  * 谁在用（五个调用点，指名）：`src/write/scene-{expense,income,photo,reimburse,plain}.ts`——各件
  *  `Scene.collect`／`Scene.receipt` 都是 `bindExpensePages(spec)` 的产物，本件不自己出页。
@@ -35,7 +36,9 @@ import { summaryCards } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
-import { collectBlockedFold } from './collectBody.js';
+import { collectBlockedFold } from './blockedFold.js';
+import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
+import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
 import type { BlockedLine, CardsStyle, FieldSlot, NoticeIcon } from './pageParts.js';
 import {
   defaultSlots, envelopeOf, formFields, hasAnyFact, probeOfReceipt, shorter, tailCardsOf,
@@ -207,6 +210,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
         }),
       },
     }),
+    collectSourceNote(facts.time),
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + spec.docTitle,
@@ -220,7 +224,8 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   });
 }
 
-/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。 */
+/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。
+ *  块清单既拼正文也派生页内导航（共用位 `../shared/pageSections.js`）；块序见件头。 */
 function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
   const probe = probeOfReceipt(input);
   const envelope = envelopeOf(input.key, true, input.receipt.summary);
@@ -231,33 +236,34 @@ function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
         : { label: c.label, value: c.value }
     ))
     : summaryCards(input.facts);
-  const content = [
-    typeBadge({ kind: spec.kind, status: 'ok', state: spec.receiptState, next: spec.receiptNext(input) }),
-    spec.receiptNotice === undefined
-      ? ''
-      : renderFeedbackBlock({
-        toast: {
-          msg: spec.receiptNotice.msg,
-          detail: spec.receiptNotice.detail,
-          icon: spec.receiptNotice.icon,
-        },
-        staticNotice: true,
-      }),
-    renderKpiGrid([
+  const blocks: readonly PageBlock[] = [
+    {
+      html: spec.receiptNotice === undefined
+        ? ''
+        : renderFeedbackBlock({
+          toast: {
+            msg: spec.receiptNotice.msg,
+            detail: spec.receiptNotice.detail,
+            icon: spec.receiptNotice.icon,
+          },
+          staticNotice: true,
+        }),
+    },
+    navBlock(renderKpiGrid([
       ...facts,
       receiptStatusCard(input.receipt, input.writtenDetail),
       ...tailCardsOf(spec.cards, input),
-    ]),
-    spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber),
-    duplicateNote(findDuplicates(input.recent, probe), probe, 'static'),
-    renderDataTable({
+    ]), 'sec-kpi', '读数'),
+    { html: spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber) },
+    { html: duplicateNote(findDuplicates(input.recent, probe), probe, 'static') },
+    navBlock(renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: spec.receiptCaption,
-    }),
-    reconcileDisclosure(input.receipt),
-    input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId),
-    copyArea({
+    }), 'sec-detail', '明细'),
+    navBlock(reconcileDisclosure(input.receipt), 'sec-reconcile', '对账'),
+    { html: input.receipt.recordId === null ? '' : undoExit(input.receipt.recordId) },
+    navBlock(copyArea({
       data: { envelope },
       log: {
         envelope,
@@ -270,8 +276,11 @@ function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
           version: envelope.version,
         }),
       },
-    }),
-  ].join('');
+    }), 'sec-copy', '复制'),
+    { html: receiptSourceNote(input.facts.time, input.receipt.affectedRows) },
+  ];
+  const content = typeBadge({ kind: spec.kind, status: 'ok', state: spec.receiptState, next: spec.receiptNext(input) })
+    + pageNav(blocks) + pageBody(blocks);
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执',
     title: spec.word + ' · 回执',

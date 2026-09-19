@@ -3,7 +3,7 @@
  *  同一件拆出的另一半是 `./dateRange.ts`（日期与时间窗口），两件互不反向依赖。
  *
  *  谁在用（指名，路径随 #689 搬迁改成新家）：
- *    · `src/write/`——`collectBody.ts`／`photoEscape.ts`（三级分类候选与 `ALL_L1`）·
+ *    · `src/write/`——`photoEscape.ts`（三级分类候选与 `ALL_L1`／`EXPENSE_L1`／`INCOME_L1`）·
  *      `record.ts`（`validateCategory`／`validateAmount`／`validateRecord`）·
  *      `prefillNote.ts`／`recentPicks.ts`／`template-batch.ts`（`DEFAULTS`）· `summaryRow.ts`（`l1Of`）；
  *    · `src/query/read.ts`——「查分类」那条条件的 `validateCategory`；

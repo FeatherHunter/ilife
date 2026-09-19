@@ -7,7 +7,7 @@
  *   （搜备注那一族）三条走本件；`viewRecordDetail`（查账单详情）走 `./detail.js`。
  *
  * **块序在本件只写一份**（本域页型表的第二层）：块清单 `blocks` 既拼正文也派生页内导航，
- *  锚点与条目不由两处各写一次（见 `./pageParts.js`）。列序同理，只住下面的 `COLUMNS`。
+ *  锚点与条目不由两处各写一次（见 `../shared/pageSections.js`）。列序同理，只住下面的 `COLUMNS`。
  *
  * 三源融合（逐块对照见 `docs/skills/skill-bill/t411-查询域-老模板逐块清单.md`）：
  *   - **留**：KPI 行（老页 6 处共用一套数：笔数／支出／收入／净额）＋ 明细列表（老页 `recordsList`）＋
@@ -38,8 +38,8 @@ import { queryPageShell as pageShell } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { estimateBytes } from '../render/html.js';
-import { pageBody, pageNav } from './pageParts.js';
-import type { QueryPageBlock } from './pageParts.js';
+import { pageBody, pageNav } from '../shared/pageSections.js';
+import type { PageBlock } from '../shared/pageSections.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，
@@ -195,7 +195,7 @@ function conclusionOf(input: QueryListInput): string {
 /** 分类聚合卡的每一行：`名称 ｜ 占比条 ｜ 金额 · 笔数 · 均额`（老页 `categoryBar` 的四件事全在）。
  *  占比由条长承载；均额＝该分类支出合计 ÷ 笔数。类数上限在本件截（老页 `slice(0,8)` 同数），
  *  截掉了什么由紧跟其后那行口径说清——不静默截断。 */
-function categoryRows(input: QueryListInput): readonly QueryPageBlock[] {
+function categoryRows(input: QueryListInput): readonly PageBlock[] {
   if (input.categories.length === 0) return [];
   const shown = input.categories.slice(0, CATEGORY_LIMIT);
   const hidden = input.categories.length - shown.length;
@@ -216,7 +216,7 @@ function categoryRows(input: QueryListInput): readonly QueryPageBlock[] {
 
 /** 截断明示（§五 第 21 行，⑤ 类恒出）：表只画了一部分时，跟一个折叠区把「为什么只画这些、
  *  怎么看到其余的」讲清，再跟一行口径（条数报的是**当刻真画了几条**）。老页「不静默截断」的意图继承。 */
-function truncatedBlocks(hidden: number, total: number, shownCount: number): readonly QueryPageBlock[] {
+function truncatedBlocks(hidden: number, total: number, shownCount: number): readonly PageBlock[] {
   if (hidden <= 0) return [];
   return [{
     nav: { anchor: 'sec-truncated', navText: '没显示的记录' },
@@ -304,8 +304,8 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
   });
 }
 
-/** 正文块清单（**块序唯一定义地**）：结论句与页内导航之外的八块。导航由本清单派生（见 `./pageParts.js`）。 */
-function blocksOf(input: QueryListInput, table: string, hidden: number, shownCount: number): readonly QueryPageBlock[] {
+/** 正文块清单（**块序唯一定义地**）：结论句与页内导航之外的八块。导航由本清单派生（见 `../shared/pageSections.js`）。 */
+function blocksOf(input: QueryListInput, table: string, hidden: number, shownCount: number): readonly PageBlock[] {
   const pageEnvelope = pageEnvelopeOf(input, shownCount);
   return [
     {

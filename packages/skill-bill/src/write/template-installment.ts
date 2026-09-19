@@ -13,9 +13,11 @@
  *
  *   采集页：类型徽章 ● → 第 1 段标题 ○（缺项才出）→ 缺项标签 ● → 读数行（摘要五格）● → 期数角标 ● →
  *     第 2 段标题 ● → 参数只读回显（表单区）● → 第 3 段标题 ● → 分摊预览标注 ○ → 分摊预览表 ○ →
- *     算不出分摊那枚角标 ○ → 缺项阻断条（折叠）○ → 复制区（含口径那段话）●
- *   回执页：类型徽章 ● → 读数行（摘要五格 ＋ 写入状态 ＋ 这一次记了几笔 ＋ 分期参数）● → 分摊口径提示 ● →
- *     分摊预览表 ○（算不出时换成那枚角标 ○）→ 写入明细表 ● → 对账折叠区 ● → 退出口 ○ → 复制区 ●
+ *     算不出分摊那枚角标 ○ → 缺项阻断条（折叠）○ → 复制区（含口径那段话）● → 来源脚注 ●（#688 §五 第 26 行）
+ *   回执页：类型徽章 ● → 页内导航 ●（表序第 4 行；回执页＝结果型 ④，采集页＝过程型 ① 故不出）→
+ *     读数行（摘要五格 ＋ 写入状态 ＋ 这一次记了几笔 ＋ 分期参数）● → 分摊口径提示 ● →
+ *     分摊预览表 ○（算不出时换成那枚角标 ○）→ 写入明细表 ● → 对账折叠区 ● → 退出口 ○ → 复制区 ● →
+ *     来源脚注 ●（第 26 行）
  *
  * 本件的两处口径（与老侧不同处逐条记在这里）：
  *   ① **先校验再算**：总额／期数／首期日缺一项就不写库、也不算；给了但解析不出（如总额写「一千」）
@@ -44,6 +46,8 @@ import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
+import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
+import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪一块长什么样」，**不含任何块位拼装**。 */
@@ -264,6 +268,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
         }),
       },
     }),
+    collectSourceNote(facts.time),
   ].join('');
   return pageShell({
     docTitle: DOC_TITLE + '·' + spec.word, title: spec.word, subtitle,
@@ -271,21 +276,16 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   });
 }
 
-/** 回执页正文：分摊预览表（写库那一笔按期数摊开的同一张）＋ 写入明细表 ＋ 对账折叠区 ＋ 退出口 ＋ 复制区。 */
+/** 回执页正文：分摊预览表（写库那一笔按期数摊开的同一张）＋ 写入明细表 ＋ 对账折叠区 ＋ 退出口 ＋ 复制区。
+ *  块清单既拼正文也派生页内导航（共用位 `../shared/pageSections.js`）；块序见件头。 */
 function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
   const { key, params, receipt } = input;
   const preview = previewOrNote(spec, params);
   const total = textOf(params[spec.totalName]);
   const periods = textOf(params[spec.periodsName]);
   const envelope = envelopeOf(key, true, receipt.summary);
-  const content = [
-    typeBadge({
-      kind: spec.kind,
-      status: 'ok',
-      state: spec.receiptState,
-      next: spec.receiptNext,
-    }),
-    renderKpiGrid([
+  const blocks: readonly PageBlock[] = [
+    navBlock(renderKpiGrid([
       ...summaryCards(input.facts),
       receiptStatusCard(receipt, input.writtenDetail),
       { label: spec.receiptRowsLabel, value: receipt.affectedRows + ' 笔', detail: spec.receiptRowsDetail },
@@ -294,26 +294,28 @@ function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
         value: (total || '未给') + ' ÷ ' + (periods || '未给') + ' 期',
         detail: spec.firstDateLabel + ' ' + (textOf(params[spec.firstDateName]) || '未给'),
       },
-    ]),
-    renderFeedbackBlock({
-      toast: {
-        msg: '这一笔按 ' + (periods || '未给') + ' 期摊，尾差归最后一期',
-        detail: spec.receiptFeedbackDetail,
-        icon: 'ok',
-      },
-      staticNotice: true,
-    }),
-    preview.html === ''
+    ]), 'sec-kpi', '读数'),
+    {
+      html: renderFeedbackBlock({
+        toast: {
+          msg: '这一笔按 ' + (periods || '未给') + ' 期摊，尾差归最后一期',
+          detail: spec.receiptFeedbackDetail,
+          icon: 'ok',
+        },
+        staticNotice: true,
+      }),
+    },
+    navBlock(preview.html === ''
       ? renderChips({ items: [{ text: preview.err === '' ? spec.receiptNoSharesChip : '分摊没算出来：' + preview.err }] })
-      : preview.html,
-    renderDataTable({
+      : preview.html, 'sec-shares', '分期表'),
+    navBlock(renderDataTable({
       columns: [{ key: 'k', label: '哪一项' }, { key: 'v', label: '记成什么' }],
       rows: input.detail,
       caption: spec.receiptCaption,
-    }),
-    reconcileDisclosure(receipt),
-    receipt.recordId === null ? '' : undoExit(receipt.recordId),
-    copyArea({
+    }), 'sec-detail', '明细'),
+    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
+    { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },
+    navBlock(copyArea({
       data: { envelope },
       log: {
         envelope,
@@ -326,8 +328,15 @@ function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
           version: DOC_VERSION,
         }),
       },
-    }),
-  ].join('');
+    }), 'sec-copy', '复制'),
+    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
+  ];
+  const content = typeBadge({
+    kind: spec.kind,
+    status: 'ok',
+    state: spec.receiptState,
+    next: spec.receiptNext,
+  }) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
     docTitle: DOC_TITLE + '·写库回执', title: spec.word + ' · 回执', subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,

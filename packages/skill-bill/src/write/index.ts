@@ -5,7 +5,7 @@
  *      `src/cli/cmd_read.ts` 里 goal／account／link／setup 四族未迁移命令的分派也要这一格载荷
  *      （#689 结构搬迁第三批的现状）；那四族各自搬进自己的域后，这一行随之删掉。
  *
- * 域内其他件（处理体 `write.ts`／采集页 collector 一族／回执页 `receipt.ts`／`receiptBody.ts`）**不出这个目录**。
+ * 域内其他件（处理体 `write.ts`／采集页 collector 一族／回执页 `receipt.ts`）**不出这个目录**。
  * 形状照 `packages/skill-calorie/src/diet/index.ts`（照结构，不照文件）：那里的第二参是 `DatabaseSync`，
  * 这里收饼干的库句柄 `BillDb`，理由同 `src/shared/commandSpec.ts` 的 `WriteHandler` 一节。
  */
