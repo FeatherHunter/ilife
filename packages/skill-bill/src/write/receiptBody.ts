@@ -24,7 +24,7 @@ import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import type { DuplicateProbe } from './duplicateNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { summaryCards } from './summaryRow.js';
 import { nextStepOf, typeBadge, wakeWordOf } from './typeBadge.js';

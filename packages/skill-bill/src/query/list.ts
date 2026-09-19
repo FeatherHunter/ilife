@@ -34,7 +34,7 @@ import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { queryPageShell as pageShell } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { estimateBytes } from '../render/html.js';
@@ -300,7 +300,6 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
     page: 'list',
     shape: input.shape,
     key: input.key,
-    domain: 'query',
     content,
   });
 }

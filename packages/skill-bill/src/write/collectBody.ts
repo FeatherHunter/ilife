@@ -36,7 +36,7 @@ import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import type { DuplicateProbe } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { prefillHint, prefillOf } from './prefillNote.js';
 import type { PrefillMark } from './prefillNote.js';
 import { optionsFor, pickOf as pickValues, textOf } from './recentPicks.js';

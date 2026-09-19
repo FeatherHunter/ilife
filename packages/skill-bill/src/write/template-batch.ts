@@ -36,7 +36,7 @@ import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { rowEditorTable } from './rowEditorTable.js';
 import type { RowEditorField } from './rowEditorTable.js';

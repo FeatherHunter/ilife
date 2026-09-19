@@ -16,7 +16,7 @@
  *   - 回执 `<section>` 的槽位取值照卡路里同件的 `ilife:<技能>:<槽位>` 形状。
  *
  * 转义口径（**不得与公共层 `escapeHtml` 互换**）：本件 `esc` 只转 `&`／`<`／`>` 三字符；
- *   公共层 `escapeHtml`（`base-paint`）与 `src/render/html.ts:7` 的那份都转五字符（多 `"`／`'`）。
+ *   公共层那一份（`base-paint` 的 `escapeHtml`，`src/render/html.ts` 也改引它）转五字符（多 `"`／`'`）。
  *   两者混用会静默改产物（`docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第二节 `esc` 行）。
  */
 import type { DatabaseSync } from 'node:sqlite';

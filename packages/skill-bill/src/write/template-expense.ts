@@ -27,7 +27,7 @@ import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from './photoEscape.js';
 import { prefillNote, prefillOf } from './prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';

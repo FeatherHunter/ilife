@@ -1,12 +1,9 @@
-// 页面交付·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
+// 页面交付·HTML：envelope 按形状渲染为 section 页；转义取公共层那一份（五字符）；超体积大声失败。
 import type { Envelope } from 'base-link-core';
+import { escapeHtml } from 'base-paint';
 import { BillRenderError } from './errors.js';
 
 export const BILL_HTML_MAX_BYTES = 256 * 1024;
-
-export function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
 
 function billItemHtml(n: Record<string, unknown>): string {
   const time = escapeHtml(String(n.time ?? ''));

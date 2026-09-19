@@ -9,6 +9,8 @@
  */
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
+import { pageShell } from '../shared/pageShell.js';
+import type { PageShellInput } from '../shared/pageShell.js';
 import { DOC_SKILL, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { prefillHint } from './prefillNote.js';
 import type { PrefillMark } from './prefillNote.js';
@@ -133,4 +135,12 @@ export function probeOfReceipt(input: ReceiptInput): {
     account: input.facts.account,
     ...(input.receipt.recordId === null ? {} : { excludeId: input.receipt.recordId }),
   };
+}
+
+/** 写入域各页的眉标：**只在本域写一次**（共用位 `shared/pageShell.ts` 不持「域名→取值」表，照守卫③b）。 */
+export const EYEBROW = '记账 · 写入域';
+
+/** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
+export function writePageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
+  return pageShell({ ...input, eyebrow: EYEBROW });
 }

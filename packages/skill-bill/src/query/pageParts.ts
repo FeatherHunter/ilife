@@ -19,6 +19,8 @@
  *  （复制区更不许出与按钮同名的标题，裁定 5）。锚点不要求有可见标题，故 `heading` 可缺。
  */
 import { renderTocBlock } from 'base-paint/blocks';
+import { pageShell } from '../shared/pageShell.js';
+import type { PageShellInput } from '../shared/pageShell.js';
 
 /** 一个区块的导航面：锚点 id 与它在页内导航里的条目文本（两字段必须同给）。 */
 export interface QueryBlockNav {
@@ -53,4 +55,12 @@ export function pageNav(blocks: readonly QueryPageBlock[]): string {
   return renderTocBlock({
     items: blocks.filter((b) => b.nav !== undefined).map((b) => ({ id: (b.nav as QueryBlockNav).anchor, text: (b.nav as QueryBlockNav).navText })),
   });
+}
+
+/** 查询域各页的眉标：**只在本域写一次**（共用位 `shared/pageShell.ts` 不持「域名→取值」表，照守卫③b）。 */
+export const QUERY_EYEBROW = '记账 · 查询域';
+
+/** 本域两张页型统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
+export function queryPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
+  return pageShell({ ...input, eyebrow: QUERY_EYEBROW });
 }

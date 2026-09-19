@@ -24,7 +24,7 @@ import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.
 import { diffOf, diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { diffRowsFor, pickerBlock, readRowById, snapshotTable } from './recordPicker.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { summaryCards, summaryRow } from './summaryRow.js';

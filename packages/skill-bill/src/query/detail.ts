@@ -23,10 +23,10 @@
 import { renderCaliberLine, renderChips, renderConclusionBar, renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import { escapeHtml } from '../render/html.js';
+import { escapeHtml } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { queryPageShell as pageShell } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { pageBody, pageNav } from './pageParts.js';
@@ -113,7 +113,7 @@ function detailRows(row: BillRow, deleted: boolean): readonly Record<string, unk
 
 /** 移动端键值列表（与字段表**同一数据源派生、只转形状**：字段名与值只在 `detailRows` 定义一处，
  *  本件不重写第二份）。桌面端藏、窄屏替表格（显隐见 `../shared/docPage.js` 的 KV_CSS，每端恰出一套）；
- *  转义与表格单元格同口径（`../render/html.js` 的 `escapeHtml`，与 `renderDataTable` 的单元格同为五字符）。 */
+ *  转义与表格单元格同口径（公共层 `base-paint` 的 `escapeHtml`，与 `renderDataTable` 的单元格同为五字符）。 */
 function kvList(rows: readonly Record<string, unknown>[]): string {
   return '<dl class="ilife-query-kv-list">' + rows.map((r) =>
     '<div><dt>' + escapeHtml(String(r.field)) + '</dt><dd>' + escapeHtml(String(r.value)) + '</dd></div>',
@@ -175,7 +175,6 @@ export function queryDetailDoc(input: QueryDetailInput): string {
     page: 'list',
     shape: 'detail',
     key: input.key,
-    domain: 'query',
     content,
   });
 }

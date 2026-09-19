@@ -26,7 +26,7 @@ import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { pageShell } from '../shared/pageShell.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { money2, summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
