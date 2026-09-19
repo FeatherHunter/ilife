@@ -2,25 +2,24 @@
 // 饼干记账唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
-import { writeFileSync, readFileSync, copyFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
   resolveDbPath, resolveDbDir, resolveGoalsPath, openBillDb, closeBillDb,
   fetchAll, listRange,
-  addBill, loadGoals, saveGoals,
+  loadGoals, saveGoals,
 } from '../fetch/index.js';
-// #726：备份目录与备份文件名两件从定义地直取（只服务 `bill.setup.run`，不进 `fetch/index.js` 那道门）。
-import { backupFileName, resolveBackupDir } from '../fetch/paths.js';
 // #689 结构搬迁第三批：`policy/` 与 `render/views.ts` 已拆散删除，下列名字按归属律各回自己的域／共用位
 // （`../shared/` 三件、`../analysis/`、`../goal/`、`../help/`、`../write/`）——
 // 外壳只认各域的门（一个命令族一处；随命令迁移收窄）。
 // #691 起 `../account/` 的四个名字也从本文件消失：账户域两条命令搬进能力目录，
 // 出口只查注册表（`runRegistered`）再调命令声明里的 `run`；本域的门只转出命令声明一件。
-import { parseOverviewKind, parseCompareKind, parseTrendKind, buildOverview, buildCompare, buildTrend } from '../analysis/index.js';
-import { parseGoalOp, validateSetBudget, validateSetSaving, buildGoalQuery } from '../goal/index.js';
+// #731 起开始使用域同理：`bill.setup.run` 的六种 op（含备份目录与 CSV 那两摊）搬进 `src/setup/`，
+// 本文件不再 import `../fetch/paths.js` 的备份两件、也不再用 fs 的读／写／拷三件（`existsSync` 仍用于 HELP 判定）。
+// #730 起目标域同理：两条命令（`bill.goal.write`／`query`）搬进 `src/goal/`，本文件不再 import `../goal/`——
+// 一个域里读写两类命令同域时，域门也只转出命令声明一件（结论写在 `src/goal/index.ts` 的门注释里）。
 import { monthRange, resolveRange } from '../shared/dateRange.js';
-import { validateCategory } from '../shared/category.js';
 import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml, assertHtmlSize,
   templateFor, loadTemplate, fillTemplate,
@@ -166,125 +165,8 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
     switch (key) {
-      case 'bill.analysis.overview': {
-        const kind = parseOverviewKind(params);
-        let rows: BillRow[]; let label: string = kind;
-        if (params.month !== undefined) {
-          const m = String(params.month);
-          const { start, end } = monthRange(m);
-          rows = listRange(handle, start, end); label = m;
-        } else if (params.start !== undefined || params.end !== undefined) {
-          const { start, end } = resolveRange(params);
-          rows = listRange(handle, start, end); label = start + '~' + end;
-        } else if (kind === 'monthly') {
-          const { start, end } = monthRange(new Date().toISOString().slice(0, 7));
-          rows = listRange(handle, start, end); label = start.slice(0, 7);
-        } else {
-          rows = fetchAll(handle);
-        }
-        if (!rows.length) throw new BillFetchError('BILL_EMPTY_RANGE', '总览区间无记录：' + label + '（缺失阻断）');
-        return buildOverview(label, rows);
-      }
-      case 'bill.analysis.compare': {
-        const kind = parseCompareKind(params);
-        if (kind === 'period' || kind === 'yoy') {
-          const a = params.monthA;
-          const b = params.monthB;
-          if (typeof a !== 'string' || typeof b !== 'string') fail(2, '对比须给 monthA/monthB（YYYY-MM）');
-          const ra = monthRange(a as string); const rb = monthRange(b as string);
-          const rowsA = listRange(handle, ra.start, ra.end);
-          const rowsB = listRange(handle, rb.start, rb.end);
-          if (!rowsA.length || !rowsB.length) throw new BillFetchError('BILL_EMPTY_RANGE', '对比区间有空（缺失阻断）');
-          return buildCompare({ labelA: a as string, labelB: b as string, a: rowsA, b: rowsB });
-        }
-        if (kind === 'range') {
-          for (const k of ['startA', 'endA', 'startB', 'endB']) if (typeof params[k] !== 'string') fail(2, '双区间对比须给 startA/endA/startB/endB');
-          const rowsA = listRange(handle, params.startA as string, params.endA as string);
-          const rowsB = listRange(handle, params.startB as string, params.endB as string);
-          if (!rowsA.length || !rowsB.length) throw new BillFetchError('BILL_EMPTY_RANGE', '对比区间有空（缺失阻断）');
-          return buildCompare({ labelA: `${params.startA}~${params.endA}`, labelB: `${params.startB}~${params.endB}`, a: rowsA, b: rowsB });
-        }
-        const { start, end } = resolveRange(params);
-        const rows = listRange(handle, start, end);
-        if (!rows.length) throw new BillFetchError('BILL_EMPTY_RANGE', '分类对比区间无记录（缺失阻断）');
-        const mid = start.slice(0, 7);
-        const ra = monthRange(mid);
-        const rowsA = rows.filter((r) => r.time <= ra.end + ' 23:59:59');
-        return buildCompare({ labelA: start + '~' + ra.end, labelB: ra.end + '~' + end, a: rowsA.length ? rowsA : rows, b: rows });
-      }
-      case 'bill.analysis.trend': {
-        const kind = parseTrendKind(params);
-        let rows: BillRow[];
-        if (params.month !== undefined) {
-          const { start, end } = monthRange(String(params.month));
-          rows = listRange(handle, start, end);
-        } else if (params.start !== undefined || params.end !== undefined) {
-          const { start, end } = resolveRange(params);
-          rows = listRange(handle, start, end);
-        } else {
-          rows = fetchAll(handle);
-        }
-        if (!rows.length) throw new BillFetchError('BILL_EMPTY_RANGE', '趋势区间无记录（缺失阻断）');
-        const limit = params.limit === undefined ? 5 : params.limit;
-        if (params.limit !== undefined && (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 50)) fail(2, 'limit 须为 1~50 的整数');
-        return buildTrend(kind, rows, { limit: limit as number });
-      }
-      case 'bill.goal.write': {
-        const op = parseGoalOp(params);
-        const goals = loadGoals(goalsPath);
-        if (op === 'set-budget') {
-          const { month, category, amount, force } = validateSetBudget(params);
-          const hit = goals.budgets.find((b) => (b as Record<string, unknown>).month === month && ((b as Record<string, unknown>).category || '') === category);
-          if (hit && !force) {
-            throw new BillPolicyError('POLICY_CONFLICT', `同月同分类预算已存在（${month} ${category || '全分类'} ${JSON.stringify((hit as Record<string, unknown>).amount)}），确认后加 --force 重跑`);
-          }
-          const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-          if (hit && force) {
-            (hit as Record<string, unknown>).amount = amount;
-            (hit as Record<string, unknown>).created_at = now;
-          } else {
-            const id = Math.max(0, ...goals.budgets.map((b) => Number((b as Record<string, unknown>).id) || 0)) + 1;
-            goals.budgets.push({ id, month, category, amount, created_at: now });
-          }
-          saveGoals(goalsPath, goals);
-          return buildRecordReceipt(`已设定预算：${month} ${category || '全分类'} ${amount.toFixed(2)}`);
-        }
-        if (op === 'set-saving') {
-          const { name, amount, deadline } = validateSetSaving(params);
-          const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-          const id = Math.max(0, ...goals.savings.map((b) => Number((b as Record<string, unknown>).id) || 0)) + 1;
-          goals.savings.push({ id, name, amount, deadline, created_at: now });
-          saveGoals(goalsPath, goals);
-          return buildRecordReceipt(`已设定目标：${name} ${amount.toFixed(2)}${deadline ? '（' + deadline + ' 前）' : ''}`);
-        }
-        fail(2, 'goal.write 只接受 op=set-budget/set-saving');
-        return null;
-      }
-      case 'bill.goal.query': {
-        const op = parseGoalOp(params);
-        const goals = loadGoals(goalsPath);
-        if (op === 'budget' || params.op === undefined) {
-          const month = typeof params.month === 'string' ? params.month : new Date().toISOString().slice(0, 7);
-          const { start, end } = monthRange(month);
-          const rows = listRange(handle, start, end);
-          const items = goals.budgets.filter((b) => (b as Record<string, unknown>).month === month).map((b) => {
-            const bb = b as Record<string, unknown>;
-            const cat = String(bb.category || '');
-            const spent = rows.filter((r) => r.amount < 0 && (cat === '' || r.category === cat || r.category.startsWith(cat + '/'))).reduce((a, r) => a + Math.abs(r.amount), 0);
-            const amount = Number(bb.amount);
-            return { ...bb, spent: Math.round(spent * 100) / 100, remaining: Math.round((amount - spent) * 100) / 100, rate: amount > 0 ? Math.round((spent / amount) * 1000) / 10 : 0 };
-          });
-          return buildGoalQuery('budget:' + month, items);
-        }
-        const items = goals.savings.map((s) => {
-          const ss = s as Record<string, unknown>;
-          const rows = fetchAll(handle);
-          const net = rows.filter((r) => r.ledger !== '转账' && !r.category.startsWith('转账/')).reduce((a, r) => a + r.amount, 0);
-          const amount = Number(ss.amount);
-          return { ...ss, saved: Math.round(net * 100) / 100, pct: amount > 0 ? Math.round((net / amount) * 1000) / 10 : 0 };
-        });
-        return buildGoalQuery('saving', items);
-      }
+      // #729：分析域三条读命令（`bill.analysis.overview`／`compare`／`trend`）已搬进 `src/analysis/`，
+      // 出口只查注册表（`runRegistered`）再调命令声明里的 `run`——本分派层不再认这三条 key。
       case 'bill.link.submit': {
         const scene = params.scene === undefined ? 'purchase' : params.scene;
         if (scene !== 'purchase' && scene !== 'meal') fail(2, 'scene 非法（期望 purchase/meal）');
@@ -299,63 +181,6 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         }
         const ate = typeof params.ate === 'string' ? params.ate : '';
         return buildRecordReceipt(`已采单吃饭${ate ? '：' + ate : ''}（主操作请先走 bill.record.add 记支出；同时记卡路里请复制 prompt：请加载「卡路里」技能，帮我记一餐${ate ? '：' + ate : ''}）`);
-      }
-      case 'bill.setup.run': {
-        const op = typeof params.op === 'string' ? params.op : 'init-status';
-        if (op === 'init') {
-          return buildRecordReceipt(`已初始化：${dbPath}（幂等自愈，bills 10 列 + 索引 + deleted_at 补列）`);
-        }
-        if (op === 'init-status') {
-          return buildRecordReceipt(`就绪：bills 表 10 列（v2.0 特征 deleted_at），库 ${dbPath}`);
-        }
-        if (op === 'backup-create' || op === 'backup-list') {
-          const dir = resolveBackupDir();
-          mkdirSync(dir, { recursive: true });
-          if (op === 'backup-list') {
-            const names = readdirSync(dir).filter((f) => f.endsWith('.db')).sort();
-            return buildRecordReceipt(`备份${names.length}个${names.length ? '：' + names.slice(-5).join('、') : ''}`);
-          }
-          closeBillDb(handle);
-          const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '').replace(/(\d{8})(\d{6})/, '$1_$2');
-          const name = backupFileName(stamp);
-          copyFileSync(dbPath, join(dir, name));
-          try { copyFileSync(goalsPath, join(dir, name.replace('.db', '.goals.json'))); } catch { /* goals 可空 */ }
-          return buildRecordReceipt(`已备份：${name}`);
-        }
-        if (op === 'restore') {
-          const name = params.name;
-          const dir = resolveBackupDir();
-          const target = typeof name === 'string' && name ? join(dir, basename(name)) : readdirSync(dir).filter((f) => f.endsWith('.db')).sort().map((f) => join(dir, f)).pop();
-          if (!target || !existsSync(target as string)) throw new BillFetchError('BILL_DB_MISSING', '无可用备份（先 backup-create）');
-          closeBillDb(handle);
-          copyFileSync(target as string, dbPath);
-          return buildRecordReceipt(`已恢复：${basename(target as string)}`);
-        }
-        if (op === 'import') {
-          const file = params.file;
-          if (typeof file !== 'string' || !file) fail(2, '导入须给 file（CSV 路径）');
-          if (!existsSync(file as string)) throw new BillFetchError('BILL_DB_MISSING', '导入文件不存在：' + file);
-          const text = readFileSync(file as string, 'utf8');
-          const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-          if (lines.length < 2) throw new BillFetchError('BILL_BAD_QUERY', '导入 CSV 无数据行');
-          if (params['dry-run'] === true || params.dryRun === true) {
-            return buildRecordReceipt(`导入预览：${lines.length - 1} 行（dry-run，未写入）`);
-          }
-          let n = 0;
-          for (const line of lines.slice(1)) {
-            const cells = line.split(',').map((c) => c.trim());
-            if (cells.length < 3) continue;
-            try {
-              const rec = { category: validateCategory(cells[2]), amount: Number(cells[1]), time: cells[0], account: cells[3] || '', ledger: cells[4] || '生活', currency: '人民币', note: cells[5] || '' };
-              if (!Number.isFinite(rec.amount)) continue;
-              addBill(handle, { ...rec, amount: rec.amount });
-              n++;
-            } catch { /* 单行坏数据跳过，计数不含 */ }
-          }
-          return buildRecordReceipt(`已导入：${n} 笔（${basename(file as string)}）`);
-        }
-        fail(2, 'setup op 非法（期望 init/init-status/backup-create/backup-list/restore/import）');
-        return null;
       }
       case 'bill.help.lookup':
         // #144：本命令由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
