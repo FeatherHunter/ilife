@@ -1,15 +1,17 @@
 /** T5 #24 · 预测模拟（对照老家 scripts/analysis/simulate.py A6）。
  *
  * 线性外推 + ±2σ 按 sqrt(天数) 扩张；<14 天数据降级（MIN_DAYS=14）。
- * KCAL_PER_KG=7700；HEALTHY_RATE=[0.5, 1.0] kg/周。
+ * KCAL_PER_KG（＝7700）：正本自 #717 批④ 起住共用位 `shared/kcalPerKg.ts`，本件按原名转出；
+ * HEALTHY_RATE=[0.5, 1.0] kg/周（本域自用，未上共用位）。
  * L6 开放式分析留 AI：此处只做规则外推，不做自由文本建议。
  */
 import { seriesAvg } from './series.js';
 import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
 export const SIM_MIN_DAYS = 14;
-export const KCAL_PER_KG = 7700;
+export { KCAL_PER_KG };
 export const HEALTHY_RATE: [number, number] = [0.5, 1.0];
 
 const round = (n: number): number => Math.round(n);

@@ -9,6 +9,7 @@ import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { FetchError } from '../fetch/errors.js';
 import { loadCalorieConfig } from '../config.js';
+import { shiftISODate, timeOfDayISO, todayISO } from '../shared/time.js';
 
 export const TAG_SEP = ',';
 export const TAG_MAX_LEN = 20;
@@ -96,16 +97,8 @@ export interface ListPhotosFilter {
   today?: string;
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shiftISODate(iso: string, deltaDays: number): string {
-  const t = Date.parse(iso + 'T12:00:00Z');
-  if (Number.isNaN(t)) throw new FetchError('日期非法: ' + iso);
-  return new Date(t + deltaDays * 86400000).toISOString().slice(0, 10);
-}
-
+/* #717 批③·时钟归一：本件原先自写 `todayISO` ＋ `shiftISODate`（又一份副本），
+   两个定义成对去掉、改读共用位 `shared/time.js`。 */
 export function listPhotos(db: DatabaseSync, filter: ListPhotosFilter = {}): PhotoRow[] {
   const days = filter.days ?? 7;
   const where: string[] = [];
@@ -158,7 +151,7 @@ export function addPhotos(db: DatabaseSync, photosDir: string, input: AddPhotosI
   const tags = validateTags(parseTags(input.tag));
   const serialized = serializeTags(tags);
   const today = input.today ?? todayISO();
-  const now = input.nowTime ?? new Date().toTimeString().slice(0, 8);
+  const now = input.nowTime ?? timeOfDayISO();
   const cnt = db.prepare('SELECT COUNT(*) AS n FROM body_photos WHERE date = ?').get(today) as { n: number };
   const added: Array<{ id: number; file: string }> = [];
   let i = 0;

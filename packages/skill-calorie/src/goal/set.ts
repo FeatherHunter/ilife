@@ -25,12 +25,11 @@ import { NUTRI_PROFILE_LABELS, NUTRI_PROFILE_WEEKLY_RATE, NUTRI_PROFILES } from 
 import { getProfile } from '../fetch/profile.js';
 import { energyOf, todayISO } from '../analysis/utils.js';
 import type { EnergyResult } from '../analysis/utils.js';
+/* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
 /** 体重速率的安全线（卡/天）：老技能 `weight_goal.py:158-167` 同值，严格大于才算越线。 */
 export const WEIGHT_RATE_SAFE_LINE_KCAL = 1000;
-
-/** 一公斤体重折算的热量（卡）：老技能 `weight_goal.py:116-118` 同值。 */
-const KCAL_PER_KG = 7700;
 
 /** 推荐出来的营养五项目标 ＋ 依据（不是库内现值——现值在 `GoalDraft.current`）。
  *  数字只在四要素齐备时出现；`energy.tdee === null` 时本对象整体为 `null`。 */

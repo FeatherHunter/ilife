@@ -19,6 +19,8 @@ import type { TrendData } from '../analysis/trend.js';
 import { getWeightGoalInfo } from '../weight/index.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
+/* #717 批③·时钟归一：本件原先自己读系统钟造日期（第 N 份副本），改读共用位。 */
+import { todayISO } from '../shared/time.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {
@@ -39,7 +41,7 @@ export function buildGoalExpiringView(db: DatabaseSync, withinDays = 14, today?:
   if (!Number.isInteger(withinDays) || withinDays < 1 || withinDays > 365) {
     throw new CalorieRenderError('bad-input', 'withinDays 须为 1..365 整数');
   }
-  const t = today ?? new Date().toISOString().slice(0, 10);
+  const t = today ?? todayISO();
   assertDate(t);
   const nutrition = getNutritionGoal(db);
   const info = getWeightGoalInfo(db, t);

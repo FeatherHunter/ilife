@@ -8,6 +8,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { dayPhrase } from './dayPhrase.js';
 import { typeZh } from './movementType.js';
+import { todayISO } from '../shared/time.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },
@@ -166,10 +167,7 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
   return { errors, warnings };
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
+/* #717 批③·时钟归一：本件原先自写一份 `todayISO`，改成读共用位 `shared/time.js`。 */
 export interface WritePlanResult extends PlanValidation {
   insertedCount: number;
   totalWeeks?: number;

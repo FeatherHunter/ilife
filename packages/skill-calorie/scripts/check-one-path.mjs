@@ -136,6 +136,8 @@ export const DEFINITION_SITES = [
   { name: '夜宵跨零点（22, 30）', allow: ['src/shared/meal.ts'], re: /\[\s*22\s*,\s*30\s*\]/g, hint: '夜宵窗只写一处：shared/meal.ts 的 MEAL_WINDOW' },
   { name: '营养素推荐区间（10-20／45-65／20-35）', allow: ['src/shared/nutritionRange.ts'], re: /min:\s*(?:10|45|20)\s*,\s*max:\s*(?:20|65|35)/g, hint: '区间只写一处：shared/nutritionRange.ts 的 NUTRITION_RANGE' },
   { name: '孤儿区间（15-30／40-60，已作废）', allow: [], re: /\b15\s*,\s*30\b|\b40\s*,\s*60\b/g, hint: '这套数已作废（#701 内容三裁），任何地方都不该再出现' },
+  { name: '千卡↔体重常数（算式里的 7700）', allow: ['src/shared/kcalPerKg.ts'], re: /[/\*]\s*7700\b/g, hint: '常数只写一处：shared/kcalPerKg.ts 的 KCAL_PER_KG，别处引用它' },
+  { name: '本地时钟副本（自己读系统 Date 造日／时刻）', allow: ['src/shared/time.ts'], re: /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)|new Date\(\)\.toTimeString\(\)\.slice\(0, 8\)/g, hint: '时钟只写一处：shared/time.ts 的 todayISO／timeOfDayISO，别处引用它' },
 ];
 
 /** 去注释与空白（注释里提到旧数不算定义地；本门只看代码）。 */

@@ -52,7 +52,7 @@ import { anchorOf, dayField, optStr, windowRange } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
-import { shiftISODate } from '../analysis/utils.js';
+import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { weightMilestone } from './figures.js';
 import type { WeightMilestone } from './figures.js';
 import { getWeightHistory } from './records.js';
@@ -206,7 +206,7 @@ function titleOf(window: string | undefined): string {
 }
 
 export function buildWeightReviewView(db: DatabaseSync, today?: string): WeightReviewView {
-  const t = today ?? new Date().toISOString().slice(0, 10);
+  const t = today ?? todayISO();
   assertDate(t);
   const res = weightMilestone(db, t);
   if (res.status !== 'ok' || !res.data) {

@@ -277,7 +277,9 @@ test('#271 ④ hasAnyDietRow 全仓只有一处定义（diet/nutritionPort.ts）
       }
     });
   }
-  assert.deepEqual(defs, ['packages/skill-calorie/src/diet/nutritionPort.ts:53'],
+  /* 判据只看**件与条数**（一处、且在 `diet/nutritionPort.ts`）：行号随别处的编辑漂移，
+     钉死行号会让每一次无关的缩进都染红本门——那正是「假红」。（#717 批③ 实测踩到一次。） */
+  assert.deepEqual(defs.map((s) => s.replace(/:\d+$/, '')), ['packages/skill-calorie/src/diet/nutritionPort.ts'],
     'hasAnyDietRow 的定义不在唯一那一处：' + defs.join('、'));
   /* 收敛面：#273 的 review.ts 与 #272 的 rankingPlate.ts 都改吃共用件。 */
   for (const f of ['src/diet/review.ts', 'src/diet/rankingPlate.ts']) {

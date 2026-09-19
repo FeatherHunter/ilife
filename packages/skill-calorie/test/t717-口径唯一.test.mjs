@@ -16,7 +16,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -29,7 +29,7 @@ const ROOT = join(HERE, '..', '..', '..');
 const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js');
 const FREEZE = join(HERE, 'freeze-clock.cjs');
 
-const { openDb } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
+const { openDb, KCAL_PER_KG } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
 /* 时间窗口径走**既有对外读法**（`dist/fetch/diet.js` 的薄转出，包门 `fetch/index.ts` 也在转它），
    不新开第二条对外路径（#703「包门只许收窄」）：本件要看的正是「对外读到的窗口」这件事。 */
 const { MEAL_WINDOWS, inferMealType } =
@@ -193,6 +193,49 @@ test('#717 ④ 推荐区间只有一处：配比页印出来的区间 ＝ 诊断
 });
 
 /* ── 批③：钉钟后的三个日期 ── */
+
+/* ── 批④：常数一处定义 ── */
+
+test('#717 ⑥ 千卡↔体重常数只有一处：包门转出的 KCAL_PER_KG ＝ 7700，且源码里只剩一处定义', () => {
+  console.log('READING #717 ⑥ KCAL_PER_KG=' + KCAL_PER_KG);
+  assert.equal(KCAL_PER_KG, 7700, '包门转出的常数不是 7700：' + KCAL_PER_KG);
+  /* 「只有一处」由结构门那条闭集账盯着（test/t717-防复发门.test.mjs 拉的门），
+     本处只断**对外读数**与**源码里不再有裸字面**这两件事——不读内部件名、不数函数调用。 */
+  const srcRoot = join(ROOT, 'packages', 'skill-calorie', 'src');
+  const offenders = [];
+  const walk = (d) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) { walk(p); continue; }
+      if (!p.endsWith('.ts')) continue;
+      const rel = p.slice(srcRoot.length + 1).replace(/\\/g, '/');
+      if (rel === 'shared/kcalPerKg.ts') continue;
+      /* 只看**代码**：去掉注释与字符串之外的写法不好判，故只认「除以／乘以 7700」这种算式形状。 */
+      const code = readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+      for (const m of code.matchAll(/[/\*]\s*7700\b/g)) offenders.push(rel + ' ' + m[0].trim());
+    }
+  };
+  walk(srcRoot);
+  assert.deepEqual(offenders, [], '还有地方在算式里写死 7700：' + JSON.stringify(offenders));
+});
+
+/* ── 批④：闭区间天数 vs 两点跨度 ── */
+
+test('#717 ⑦ 两个日期口径各有其名：窗内天数按闭区间算，两点跨度不加 1（不合并）', () => {
+  /* 判据取自**对外产物**：同一窗口页面上印的「共 N 天」＝含首末日；
+     而「两点相隔多久」是另一件事（`daysBetween` 那两个日期之差），两者不可互相顶替。 */
+  const { dir } = freshDb(false);
+  const page = run(dir, 'calorie.view.diet', { window: '7d', meal: 'all' });
+  assert.equal(page.status, 0, '餐别分布页 exit=' + page.status);
+  const text = visible(page.html);
+  /* 页头窗口条的形状：`2026-09-01 → 2026-09-07 7 天`（区间 → 天数）；天数那一格是闭区间含首末日。 */
+  const m = /(\d{4}-\d{2}-\d{2})\s*→\s*(\d{4}-\d{2}-\d{2})\s*(\d+)\s*天/.exec(text);
+  assert.ok(m, '页面上读不到窗口条的「区间 → 天数」：' + text.slice(0, 200));
+  const span = Math.round((Date.parse(m[2]) - Date.parse(m[1])) / 86400000);
+  console.log('READING #717 ⑦ 窗口条=' + m[0] + '（日期差 ' + span + ' 天，印出 ' + m[3] + ' 天）');
+  assert.equal(Number(m[3]), span + 1, '窗口天数不是闭区间（含首末日）＝日期差＋1：' + m[0]);
+  assert.equal(Number(m[3]), 7, '「最近 7 天」那一档印出的天数不是 7：' + m[0]);
+});
 
 test('#717 ⑤ 把当刻钉到某一天：落库日 ＝ 回执日 ＝ 累计读的那一天', () => {
   const { dir } = freshDb(false);

@@ -8,6 +8,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { EX_ALIVE, getActivityFactor, shiftISODate, todayISO } from './utils.js';
+/* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -225,7 +227,7 @@ export function deriveReview(db: DatabaseSync, dims: FiveDims, today: string = t
     macroRatio,
     weeklyDeficit: round(weeklyDeficit),
     avgDailyDeficit: days > 0 ? round(weeklyDeficit / days) : 0,
-    theoreticalWeightLoss: round1(weeklyDeficit / 7700),
+    theoreticalWeightLoss: round1(weeklyDeficit / KCAL_PER_KG),
     nutritionMatch,
     weightTrendSvg: null,
     weightTrendMeta: { deferred: 'SVG 属渲染层，归 T8-T10（待裁决）' },

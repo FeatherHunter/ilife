@@ -10,6 +10,8 @@ import { FetchError } from '../fetch/errors.js';
 import { parseDate, shiftISODate, todayISO } from '../analysis/utils.js';
 import { ok, rejection } from '../analysis/result.js';
 import type { AnalysisResult } from '../analysis/result.js';
+/* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -152,7 +154,7 @@ export function getWeightGoalInfo(db: DatabaseSync, today: string = todayISO()):
   void today;
   if (daysLeft !== null && daysLeft > 0) {
     const gap = wrow.weight_kg - row.weight_goal;
-    calorieAdjustment = Math.trunc((gap / daysLeft) * 7700);
+    calorieAdjustment = Math.trunc((gap / daysLeft) * KCAL_PER_KG);
   }
   return { weightGoal: row.weight_goal, deadline: row.goal_deadline, daysLeft, calorieAdjustment };
 }

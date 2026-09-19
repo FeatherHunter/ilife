@@ -5,7 +5,7 @@
  * loadProfileTdee 复刻 series 行为：profile 无体重键 → 体重恒 70.0（老家
  * latest_weight_kg 永不存在，parity 原样保留，不“修复”，T7/T8 周知）。
  */
-
+import { shiftISODate, todayISO } from '../shared/time.js';
 /** #120 · 软删过滤谓词（唯一来源）：`exercise_log` 软删行（`is_deleted=1`）不计入任何用户可见统计。
  *
  * 与 fetch 层 `listWindow`（`exercise/exerciseStore.ts:280`）同口径；analysis 层 11 处查询统一内联，
@@ -127,22 +127,16 @@ export function energyOf(parts: EnergyParts): EnergyResult {
   };
 }
 
-/** 「今天」的**唯一出处**（本地口径：UTC 日，与 T3/T4 同口径）。
+/** 「今天」的**唯一出处**——#717 批③ 起正本住共用位 `shared/time.ts`，本处按原名转出。
  *
  *  #676：`CALORIE_TODAY` 这颗钉子已按「配置文件是唯一真相、环境变量读取全部删除」的裁定（#675）摘掉——
  *  真实时钟是唯一来源，本函数不再读任何环境变量。要钉「今天」改用**钉时钟预载件**
  *  `test/freeze-clock.cjs`（`node --require` 预载 ＋ `FAKE_NOW_ISO`）：它把整个进程的 `Date` 一次盖住，
- *  除了 `todayISO()`，其它直接读 `new Date()` 的路径（如 `fetch/body.ts` 的 `daysAgo()`）也跟着走。
- *  显式锚点（命令参数 `today`）仍优先于它，仍由各命令自行传入 `resolveWindow`。 */
-export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function shiftISODate(iso: string, deltaDays: number): string {
-  const t = Date.parse(iso + 'T12:00:00Z');
-  if (Number.isNaN(t)) throw new Error('[calorie] 日期非法: ' + iso);
-  return new Date(t + deltaDays * 86400000).toISOString().slice(0, 10);
-}
+ *  故共用位那一处（以及原先各自读钟的 `fetch/diet.ts`／`exercise/exerciseStore.ts`／`weight/records.ts`）
+ *  同时跟走。
+ *  显式锚点（命令参数 `today`）仍优先于它，仍由各命令自行传入 `resolveWindow`。
+ *  `shiftISODate`（日期加减）同批收进共用位，本处一并按原名转出。 */
+export { shiftISODate, todayISO };
 
 /** YYYYMMDD → YYYY-MM-DD；其他原样（老家 _parse_date 同义）。 */
 export function parseDate(s: string | null | undefined): string | null {

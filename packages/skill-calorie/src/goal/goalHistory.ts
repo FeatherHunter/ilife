@@ -5,6 +5,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+import { shiftISODate, todayISO } from '../shared/time.js';
 
 export type DayStatus = '完成' | '未完成' | '无记录';
 
@@ -25,15 +26,9 @@ export interface GoalHistory {
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function shiftISODate(iso: string, deltaDays: number): string {
-  const t = Date.parse(iso + 'T12:00:00Z');
-  if (Number.isNaN(t)) throw new FetchError('日期非法: ' + iso);
-  return new Date(t + deltaDays * 86400000).toISOString().slice(0, 10);
-}
+/* #717 批③·时钟归一：本件原先自写 `todayISO` ＋ `shiftISODate`（抓取层的第三份副本）。
+   两个定义与其默认参数**成对**去掉，改读共用位——单删其一必红（参数绑定期先求值）。 */
+export { shiftISODate, todayISO };
 
 export function listCompletedGoals(db: DatabaseSync, days = 30, today: string = todayISO()): GoalHistory {
   if (!Number.isInteger(days) || days < 1) throw new FetchError('days 须为正整数: ' + String(days));

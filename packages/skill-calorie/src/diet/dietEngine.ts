@@ -10,6 +10,8 @@ import { FetchError } from '../fetch/errors.js';
 import { EX_ALIVE, getActivityFactor, parseDate } from '../analysis/utils.js';
 import { ok, rejection } from '../analysis/result.js';
 import type { AnalysisResult } from '../analysis/result.js';
+/* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -182,7 +184,7 @@ export function dietDeficitAnalysis(db: DatabaseSync, startDate: string, endDate
   const bmr = currentWeight * 24 * getActivityFactor(profileActivityLevel(db));
   const avgDeficit = bmr + avgEx - avgIntake;
   const totalDeficit = avgDeficit * days;
-  const kgEquivalent = totalDeficit / 7700;
+  const kgEquivalent = totalDeficit / KCAL_PER_KG;
   const dietContrib = totalDeficit !== 0 ? (Math.abs(totalDeficit - totalEx * days) / Math.abs(totalDeficit)) * 100 : 0;
   const exContrib = totalDeficit !== 0 ? (totalEx / Math.abs(totalDeficit)) * 100 : 0;
   const sizeLabel = avgDeficit > 0 && avgDeficit < 300 ? '偏小' : avgDeficit > 700 ? '过大' : '正常';

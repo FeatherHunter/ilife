@@ -7,9 +7,11 @@ import type { DatabaseSync } from 'node:sqlite';
 import { sql } from '../fetch/db.js';
 import type { SQLInputValue } from '../fetch/db.js';
 import { FetchError } from '../fetch/errors.js';
-
-function todayStr(): string { return new Date().toISOString().slice(0, 10); }
-function nowTime(): string { return new Date().toTimeString().slice(0, 8); }
+import { timeOfDayISO, todayISO } from '../shared/time.js';
+/* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowTime`）——抓取层被要求
+   「不反向依赖 analysis」，于是绕路自造一份。现在本件四个读写口同取共用位 `shared/time.js`。 */
+const todayStr = todayISO;
+const nowTime = timeOfDayISO;
 function nowStamp(): string {
   const d = new Date();
   return `${d.toISOString().slice(0, 10)} ${d.toTimeString().slice(0, 8)}`;

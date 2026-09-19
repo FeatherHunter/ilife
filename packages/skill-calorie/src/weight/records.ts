@@ -6,6 +6,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { SQLInputValue } from '../fetch/db.js';
 import { FetchError } from '../fetch/errors.js';
+import { timeOfDayISO, todayISO } from '../shared/time.js';
 
 export const NOTE_TAGS = ['晨起空腹', '运动后', '睡前', '餐前', '餐后', '晨起', '空腹', '早起', '运动前', '生理期'];
 
@@ -15,8 +16,9 @@ export function noteTag(note: string | null | undefined): string | null {
   return '其他';
 }
 
-function todayStr(): string { return new Date().toISOString().slice(0, 10); }
-function nowStr(): string { return new Date().toTimeString().slice(0, 8); }
+/* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowStr`）——现取共用位 `shared/time.js`。 */
+const todayStr = todayISO;
+const nowStr = timeOfDayISO;
 
 export interface WeightRow {
   id: number; date: string; time: string | null; weight_kg: number;

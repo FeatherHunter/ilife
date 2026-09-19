@@ -2,14 +2,16 @@
  *
  * 薄壳：唯一数据源 = T5 buildSeries，不自算缺口（老家 v2 T5 薄壳化后同样）。
  * 热量缺口 = 消耗 − 摄入，正=缺口；消耗 = TDEE + 当日运动；摄入 = 当日食物（不含水）。
- * KCAL_PER_KG = 7700（脂肪）；weekly_deficit_per_day: 300 沿老家 target 段。
+ * KCAL_PER_KG（＝7700，脂肪）：正本自 #717 批④ 起住共用位 `shared/kcalPerKg.ts`，本件只按原名转出。
+ * weekly_deficit_per_day: 300 沿老家 target 段。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
+import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 import { buildSeries } from './series.js';
 
-export const KCAL_PER_KG = 7700;
+export { KCAL_PER_KG };
 export const WEEKDAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 export function weekdayName(isoDate: string): string {

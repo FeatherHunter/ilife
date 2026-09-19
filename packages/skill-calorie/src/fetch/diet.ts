@@ -13,6 +13,7 @@ import { FetchError } from './errors.js';
    本件按原导出名**薄转出**（包对外的名字一个不少），实现与边界都在共用位。 */
 import { MEAL_NAMES, MEAL_WINDOWS, inferMealType } from '../shared/meal.js';
 import type { MealName } from '../shared/meal.js';
+import { timeOfDayISO, todayISO } from '../shared/time.js';
 
 export const WATER_NAME = '💧水';
 /** 写入口的 `--meal` 值域（＝五类餐名，来自共用位正本；`MEALS`／`MealName` 两个对外名字照旧转出）。 */
@@ -38,8 +39,11 @@ export interface DailyGoalRow {
   water_goal: number | null;
 }
 
-function todayStr(): string { return new Date().toISOString().slice(0, 10); }
-function nowStr(): string { return new Date().toTimeString().slice(0, 8); }
+/* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowStr`，直接读系统 `Date`）——
+   抓取层被要求「不反向依赖 analysis」，于是绕路自造一份。现在读写两侧同取共用位 `shared/time.js`：
+   钉钟时写入日、回执日、累计读日不再分家。 */
+const todayStr = todayISO;
+const nowStr = timeOfDayISO;
 
 function num(v: unknown, field: string): number {
   const n = typeof v === 'number' ? v : parseFloat(String(v));
