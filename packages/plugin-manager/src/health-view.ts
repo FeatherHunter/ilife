@@ -23,8 +23,10 @@ const STATUS_COLOR: Readonly<Record<HealthStatus, string>> = {
 };
 
 /** 整行底色的浅一档：饱和降一档，免得红黄行「刺眼」压过正文（评审第二轮的扣分点）。 */
+/** 红黄两档整行上底的底色。红灯要**明显重于**黄灯：复评实测原先两个底色亮度几乎一样
+ *  （红 `#FBF3F3` 对黄 `#FCF3E5`，只差蓝通道），最严重那一档反而最淡——红色提到 0.14。 */
 const STATUS_TINT: Readonly<Record<HealthStatus, string>> = {
-  red: 'rgba(192, 57, 43, 0.06)',
+  red: 'rgba(192, 57, 43, 0.14)',
   yellow: 'rgba(224, 138, 0, 0.10)',
   green: 'transparent',
 };
@@ -186,11 +188,15 @@ export function lightsOf(
 ): readonly HealthLightRow[] {
   return tabs.map((tab) => {
     const report = reports[tab.id];
+    const items = report?.items ?? [];
     return {
       id: tab.id,
       title: tab.title,
-      status: report ? worstStatus(report.items) : null,
-      counts: countByStatus(report?.items ?? []),
+      status: report ? worstStatus(items) : null,
+      counts: countByStatus(items),
+      // 这里曾短期印过「最严重那一项的名字」当区分度，**已撤回**：实测六家常坏在同一条通用检查项上
+      // （都是「数据目录」），印出来六家一模一样，是噪声不是区分度（出图复评实测逐字抄了六个「数据目录」）。
+      // 「哪一项坏了」本来就由那家自己那张表回答，灯上不再重复。
     };
   });
 }
@@ -202,6 +208,32 @@ function countsText(counts: Readonly<Record<HealthStatus, number>>): string {
   if (counts.yellow > 0) parts.push('黄 ' + String(counts.yellow));
   if (parts.length === 0) return '绿';
   return parts.join(' · ');
+}
+
+/** 「红 2 · 黄 3」那一截**按档上色**：每一档用它自己的字色、分隔符走淡色。
+ *  为什么必须拆开：原先整截塞进一个 span、染「最严重那一档」的颜色，六家都红时「黄 3」就跟着印成红字——
+ *  本页自己说「黄＝还没配」，文字层却把它涂成红（出图复评五份里三份独立指到，取色同为 `#c03828`）。 */
+function countSegments(light: HealthLightRow): React.ReactElement[] {
+  if (light.status === null) {
+    return [React.createElement('span', { key: 'dash', style: { color: INK_DIM, fontWeight: 700 } }, '—')];
+  }
+  const parts: React.ReactElement[] = [];
+  for (const status of ['red', 'yellow'] as const) {
+    const count = light.counts[status];
+    if (count === 0) continue;
+    if (parts.length > 0) {
+      parts.push(React.createElement('span', { key: status + '-sep', style: { color: INK_DIM } }, ' · '));
+    }
+    parts.push(
+      React.createElement(
+        'span',
+        { key: status, style: { color: STATUS_TEXT[status], fontWeight: 700 } },
+        STATUS_LABEL[status] + ' ' + String(count),
+      ),
+    );
+  }
+  if (parts.length === 0) return [React.createElement('span', { key: 'green', style: { color: INK_DIM, fontWeight: 700 } }, '绿')];
+  return parts;
 }
 
 /** 顶部那行总览：六家一盏灯 ＋ 一个「体检一次」按钮。 */
@@ -271,18 +303,18 @@ export function HealthOverview(props: {
             },
           }),
           React.createElement('span', { style: { color: INK, fontWeight: 650 } }, light.title),
-          React.createElement(
-            'span',
-            { style: { color: light.status === null ? INK_DIM : STATUS_TEXT[light.status], fontWeight: 700 } },
-            light.status === null ? '—' : countsText(light.counts),
-          ),
+          ...countSegments(light),
         ),
       ),
     ),
     React.createElement(
       'div',
       { style: HEALTH_STYLE.meta },
-      props.error !== null ? props.error : '只看不改 · 灯＝那一家最严重的一档 · 点一下跳到那家配置页',
+      // 三档的含义要**写在屏上**：复评五份里有三份独立指出「全屏没有图例，红黄绿只能靠猜」——
+      // 这是票面口径（红＝坏了／黄＝还没配／绿＝正常），不写出来就等于让人猜。
+      props.error !== null
+        ? props.error
+        : '红＝坏了 · 黄＝还没配 · 绿＝正常 ｜ 只看不改：不建目录、不改配置、不自动重置 · 点一下跳到那家配置页',
     ),
   );
 }
@@ -320,10 +352,15 @@ export function HealthTable(props: {
       ? React.createElement(
           'div',
           null,
-          // 落点一律缩到公共前缀之内印（四条长路径并排会把每一行撑成两行，视觉复评点过「像日志 dump」）；
-          // 前缀本身印在悬停里，屏上不留一长串盘符。
-          React.createElement('div', { style: HEALTH_STYLE.meta, title: prefixes.join('　') },
-            '配置文件 ' + shorten(report.configPath, prefixes) + ' · 数据目录 ' + shorten(report.dataDir, prefixes)),
+          // 行内落点缩成「…/短尾」是为了不把每行撑成两行；但「去哪修：先建这个目录」要照着建，
+          // 就得把**它到底在哪儿**说清楚（出图复评五份里两份点名「照屏修不了」）。
+          // 措辞有讲究：不能写成「下面行内的「…/」都接在这里」——行里本来就有个「…/data」，
+          // 接上基目录会拼成「…/data/data」，自相矛盾（复评原话）。故只**点明缩写代表哪一层**。
+          report.dataDir !== ''
+            ? React.createElement('div', { style: { color: INK_DIM, fontSize: 11.5, marginTop: 2 } },
+              '落点根目录：' + report.dataDir
+              + (report.configPath !== '' ? '（配置文件 ' + report.configPath + '）' : ''))
+            : null,
           report.items.filter(isAttentionItem).map((item) =>
             React.createElement(
               'div',
@@ -359,7 +396,11 @@ export function HealthTable(props: {
                 React.createElement('span', {
                   style: { color: STATUS_TEXT[item.status], fontWeight: 700 },
                 }, STATUS_LABEL[item.status]),
-                item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
+                // 来源那一格**只在它不只是「默认值」时印**：四行全印「来自默认值」等于零区分度，
+                // 而且「值从哪来」这件事正文里已经写全了（复评原话：「这四个字零区分度」）。
+                item.source && item.source !== '默认值'
+                  ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source)
+                  : null,
               ),
               React.createElement('div', { style: { color: INK }, title: item.message }, shortenPathsIn(item.message, prefixes)),
               item.action.length > 0
@@ -368,6 +409,8 @@ export function HealthTable(props: {
             ),
           ),
           // 正常的那一档：一条都不用点开，名字排成一行（`data-ilife-health="ok"` 供判据核对「一条不少」）。
+          // 给它**一条绿边＋一层极淡底**，让它读起来是「一组正常项」，而不是四行问题之后的一句脚注
+          // （复评原话：「占多数的那一档在视觉上几乎退成脚注」）——条目仍然收成一行（票面第一条）。
           report.items.some((item) => !isAttentionItem(item))
             ? React.createElement(
                 'div',
@@ -375,11 +418,24 @@ export function HealthTable(props: {
                   'data-ilife-health': 'ok',
                   style: {
                     display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 10px',
-                    marginTop: 8, paddingTop: 6, borderTop: '1px solid ' + BORDER,
+                    marginTop: 8, padding: '6px 8px',
+                    borderLeft: '3px solid ' + STATUS_COLOR.green,
+                    borderRadius: 6,
                     fontSize: 12, lineHeight: 1.6, color: INK_DIM,
                   },
                 },
+                // 绿档也要**看得见**：只给一行灰字时，五份出图复评里三份独立指到「全屏没有绿色、
+                // 绿＝正常这一档等于不存在」。故这一档前面加一个绿点（与红黄同一个「点」语汇），
+                // 说明它们就是正常项——条目**仍然收成一行**（票面第一条：正常的收成一行）。
+                React.createElement('span', {
+                  style: {
+                    width: 8, height: 8, borderRadius: '50%', display: 'inline-block',
+                    background: STATUS_COLOR.green, flex: '0 0 auto',
+                  },
+                  'aria-hidden': 'true',
+                }),
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, '正常 ' + String(countByStatus(report.items).green) + ' 条'),
+                React.createElement('span', { style: { color: INK_DIM } }, '（下列各项都正常工作）'),
                 report.items.filter((item) => !isAttentionItem(item)).map((item) =>
                   React.createElement('span', { key: item.id, 'data-ilife-health': 'ok-item' }, '· ' + item.title),
                 ),

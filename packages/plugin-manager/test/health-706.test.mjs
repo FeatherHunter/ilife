@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { HEALTH_ENDPOINT, countByStatus, isHealthReport, worstStatus } from '../dist/health-contract.js';
 import { loadHealthReports } from '../dist/health-fetch.js';
-import { HealthTable, lightsOf } from '../dist/health-view.js';
+import { HealthOverview, HealthTable, lightsOf } from '../dist/health-view.js';
 import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 
 const require = createRequire(import.meta.url);
@@ -55,6 +55,10 @@ function renderHtml(node) {
 function visibleText(html) {
   return html.replace(/<[^>]*>/g, '');
 }
+
+/** 三档的颜色取值：与 `src/health-view.ts` 的 `STATUS_COLOR` / `STATUS_TEXT` 同值（断言要按色判）。 */
+const STATUS_COLOR = { red: '#c0392b', yellow: '#e08a00', green: 'var(--dsw-alias-state-success-primary, #4ec9a0)' };
+const STATUS_TEXT = { red: '#a5281b', yellow: '#8a5200', green: 'var(--dsw-alias-state-success-primary, #4ec9a0)' };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
@@ -202,6 +206,55 @@ describe('#706 配置体检 · 面板侧', () => {
         ['dsh-home', '居家', null],
       ]);
       assert.deepEqual(lights[1].counts, { red: 1, yellow: 0, green: 1 });
+      // 这里曾印过「最严重那一项的名字」当区分度，实测六家常坏在同一条通用检查项上（都是「数据目录」），
+      // 是噪声不是区分度，已撤回；灯上只留「家名 ＋ 按档上色的计数」。
+      assert.deepEqual(Object.keys(lights[1]).sort(), ['counts', 'id', 'status', 'title']);
+    });
+
+    it('灯上那截计数按档上色：「黄 N」不许印成红字（本页自己定的语义，文字层也得守）', () => {
+      // 出图复评逮到的真缺陷：计数原先是**一个字符串**塞进一个 span、染顶档色，
+      // 六家都红时「黄 3」就跟着印成红字——页面自己说「黄＝还没配」，文字层却把它涂成红。
+      const lights = [
+        { id: 'dsh-bill-ilife', title: '记账', status: 'red', counts: { red: 2, yellow: 3, green: 0 } },
+      ];
+      const html = renderHtml(
+        React.createElement(HealthOverview, { lights, running: false, error: null, onRun: () => {}, onJump: () => {} }),
+      );
+      const red = STATUS_TEXT.red;
+      const yellow = STATUS_TEXT.yellow;
+      assert.ok(html.includes('红 2'), '红那一截没印出来');
+      assert.ok(html.includes('黄 3'), '黄那一截没印出来');
+      // 两截必须带**各自**的颜色：黄那一截的 span 里不许出现红的色值。
+      const segs = [...html.matchAll(/<span style="([^"]*)">(红|黄) (\d+)<\/span>/g)].map((m) => ({ style: m[1], text: m[2] + ' ' + m[3] }));
+      assert.equal(segs.length, 2, '计数应当拆成两截各自上色，现在是：' + JSON.stringify(segs));
+      assert.ok(segs[0].style.includes(red) && !segs[0].style.includes(yellow), '红那一截的颜色不对：' + segs[0].style);
+      assert.ok(segs[1].style.includes(yellow) && !segs[1].style.includes(red), '黄那一截印成了别的颜色（缺陷原样）: ' + segs[1].style);
+    });
+
+    it('绿档看得见：正常那一行前面有绿点（不是只剩一行灰字）', () => {
+      const items = [
+        { id: 'a', title: '要处理的', status: 'red', message: '不在：C:/Users/me/.ilife/data', action: 'x', source: '默认值' },
+        { id: 'b', title: '正常的甲', status: 'green', message: '在且能写。', action: '', source: '默认值' },
+      ];
+      const report = { skill: 'x', configPath: 'C:/Users/me/.ilife/x.yaml', dataDir: 'C:/Users/me/.ilife/data', items };
+      const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
+      const okLine = (html.match(/data-ilife-health="ok"[\s\S]{0,600}/) ?? [''])[0];
+      assert.ok(okLine.includes(STATUS_COLOR.green), '正常那一行没有绿点：绿＝正常这一档在屏上不存在');
+      assert.ok(okLine.includes('正常 1 条'), '正常那条的计数没印出来');
+      assert.ok(okLine.includes('正常的甲'), '正常项的名字没印出来（票面：一条不少）');
+      assert.equal((okLine.match(/data-ilife-health="ok-item"/g) || []).length, 1, '正常项还是该收成一行小字');
+    });
+
+    it('落点可执行：卡片里印得出整条基目录（行内的「…/」接在它后面）', () => {
+      const report = {
+        skill: 'x',
+        configPath: 'C:/Users/me/.ilife/bill.yaml',
+        dataDir: 'C:/Users/me/.ilife/data',
+        items: [{ id: 'a', title: '数据目录', status: 'red', message: '不在：C:/Users/me/.ilife/data', action: '先建这个目录。', source: '默认值' }],
+      };
+      const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
+      assert.ok(html.includes('落点根目录：C:/Users/me/.ilife/data'), '屏上没有整条落点根目录，「去哪修：先建这个目录」就落不到实处');
+      assert.ok(html.includes('…/data'), '行内仍然该缩（不许把长路径堆回正文）');
     });
   });
 
@@ -252,11 +305,14 @@ describe('#706 配置体检 · 面板侧', () => {
       ];
       const report = { skill: 'x', configPath: 'C:/Users/me/.ilife/memo.yaml', dataDir: 'C:/Users/me/.ilife/data', items };
       const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
-      assert.ok(html.includes('配置文件 …/memo.yaml'), '表头那两条 C 盘落点没缩（一个旁证的盘不该拖没它们）');
+      assert.ok(html.includes('落点根目录：C:/Users/me/.ilife/data'), '卡片头没有整条落点根目录（「…/」就没有可照抄的去处）');
       assert.ok(html.includes('不在：…/data'), '报文的 C 盘落点没缩');
       assert.ok(html.includes('配了但目录不在：D:/ilife/media。'), 'D 盘那条只有一条落点，本该原样印（不许瞎缩）');
-      // 悬停里留原文（要查证的人悬停能看到整条），所以只断言**可见文字**里不再有长路径。
-      assert.ok(!visibleText(html).includes('C:/Users/me/.ilife/data'), '可见文字里还是明文长路径');
+      // 悬停里留原文（要查证的人悬停能看到整条），所以只断言**可见文字**里不再有行内长路径；
+      // 卡片头那行「落点根目录 <整条>（配置文件 <整条>）」是**故意**印的（行内「…/」要有个能照抄的去处）。
+      const text = visibleText(html);
+      assert.equal((text.match(/C:\/Users\/me\/\.ilife\/data/g) || []).length, 1,
+        '落点根目录只该在卡片头出现一次（行内应当全是「…/」）');
     });
 
     it('同一路径出现在多条报文里时，逐条都缩（不是只缩第一处）', () => {
@@ -266,8 +322,10 @@ describe('#706 配置体检 · 面板侧', () => {
       ];
       const report = { skill: 'x', configPath: 'C:/Users/me/.ilife/bill.yaml', dataDir: 'C:/Users/me/.ilife/data', items };
       const html = renderHtml(React.createElement(HealthTable, { title: '样例', phase: 'ready', report, error: null }));
-      assert.equal((visibleText(html).match(/…\/bill\.yaml/g) || []).length, 3, '表头一处 ＋ 两条报文，三处都该缩');
-      assert.ok(!visibleText(html).includes('C:/Users/me/.ilife/bill.yaml'), '可见文字里还有明文没缩的');
+      assert.equal((visibleText(html).match(/…\/bill\.yaml/g) || []).length, 2, '两条报文里各一处，两处都该缩');
+      // 卡片头会印整条配置文件路径（故意），故这里只核「两条报文里都不再有明文长路径」：
+      assert.equal((visibleText(html).match(/配置文件还不存在：C:\/Users\/me\/\.ilife\/bill\.yaml/g) || []).length, 0,
+        '报文里的明文长路径没缩');
     });
   });
 
