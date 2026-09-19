@@ -31,9 +31,10 @@ import { commandLine } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 
 /** 一条唤醒词一件：本件服务的那条。 */
-const WAKE = '改记录';
+const WAKE: string = projectWakeWord({ key: 'bill.record.update' });
 /** 本件的命令名（两条页与复制指令都引它一份）。 */
 const KEY = 'bill.record.update';
 
@@ -255,7 +256,6 @@ function receiptOf(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'update',
-  wakeWord: WAKE,
   key: KEY,
   kind: '',
   op: '',

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { routeWakeword } from '../dist/index.js';
+import { projectWakeWord, routeWakeword } from '../dist/index.js';
 import { SCENES, sceneFor } from '../dist/record/scene.js';
 import { candidateEmpty, candidatePick, candidateRows } from '../dist/shared/candidatePick.js';
 import { rowEditorMissing, rowEditorTable } from '../dist/shared/rowEditorTable.js';
@@ -45,11 +45,13 @@ describe('t407 · 写入域 16 条唤醒词一场景一件', () => {
   it('登记表 16 行、与唤醒词表双向对得上（每件报的词都真路由到它自己那一件）', () => {
     assert.equal(SCENES.length, 16);
     for (const s of SCENES) {
-      const r = routeWakeword(s.wakeWord, { id: 1 });
-      assert.equal(r.key, s.key, s.wakeWord + ' 命令名对不上');
-      assert.equal(String(r.params.kind ?? ''), s.kind, s.wakeWord + ' 的 kind 对不上');
-      assert.equal(String(r.params.op ?? ''), s.op, s.wakeWord + ' 的 op 对不上');
-      assert.ok(s.family.trim() !== '', s.wakeWord + ' 要写明待哪一族窗口来填');
+      // #721 起落点行不写唤醒词了：按它认的 kind／op 从域声明算回那一条词。
+      const word = projectWakeWord({ key: s.key, kind: s.kind, op: s.op });
+      const r = routeWakeword(word, { id: 1 });
+      assert.equal(r.key, s.key, word + ' 命令名对不上');
+      assert.equal(String(r.params.kind ?? ''), s.kind, word + ' 的 kind 对不上');
+      assert.equal(String(r.params.op ?? ''), s.op, word + ' 的 op 对不上');
+      assert.ok(s.family.trim() !== '', word + ' 要写明待哪一族窗口来填');
       assert.equal(typeof s.collect, 'function');
       assert.equal(typeof s.receipt, 'function');
     }

@@ -7,6 +7,7 @@
  *
  * 为什么另立一件：内部标识符与用户说法是**一对多**的映射（同一个 `amount` 在金额格叫「金额」、在缺口清单里叫「金额」、
  *  在字段表里叫「金额」），散在各页各写一句就会走散；本件把这张对照表只写一遍，别处只引用。
+ *  **唤醒词不在其列**（#721）：那条对照表已回域声明，本件的 `wakeWordOf` 只转调 `wakeWordOfKind`。
  *
  * 对外五件（铁律五「不多于五个」）：
  *   - `wakeWordOf`——内部型名 → 唤醒词（`expense` → 记支出）；
@@ -21,8 +22,9 @@
  * 口径出处：`docs/skills/skill-bill/t407-文字审查.md` 第二节逐条（页／位置／原文逐字／最小改法字面）
  *  ＋ `docs/skills/skill-bill/t407-机审读数.md` 第三节（英文裸词那一列逐行）。
  */
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
-/** 内部标识符 → 用户说法。四张表都**只在这里定义一次**，别处不许再写第二份。 */
+/** 内部标识符 → 用户说法。三张表都**只在这里定义一次**，别处不许再写第二份。 */
 
 /** ① 库列名 → 中文列名（字段表、缺口清单、回执明细都读它）。 */
 const FIELD_LABELS: Readonly<Record<string, string>> = {
@@ -43,22 +45,10 @@ const FIELD_LABELS: Readonly<Record<string, string>> = {
   op: '这一步做什么',
 };
 
-/** ② 内部型名 → 唤醒词（类型徽章第一枚形状、回执页页标题都读它）。 */
-const WAKE_WORDS: Readonly<Record<string, string>> = {
-  expense: '记支出',
-  income: '记收入',
-  photo: '拍账单',
-  batch: '批量录入',
-  refund: '记退款',
-  reimburse: '记报销',
-  'reimburse-done': '报销到账',
-  lend: '记借出',
-  borrow: '记借入',
-  collect: '记收回',
-  repay: '记偿还',
-  installment: '记分期',
-  plain: '记一笔',
-};
+/** ② 内部型名 → 唤醒词（类型徽章第一枚形状、回执页页标题都读它）。
+ *  **不在这里写词表**（#721）：那张表曾经是同一件事的第二处书写位（域声明一处、这里一处，
+ *  改一处忘一处不会有机器报警）。现在一律从域声明算——`wakeWordOfKind` 走词条的 `preset.kind`，
+ *  认不得的型名与空串退回写入域的通用词（`记一笔`），口径与 `src/record/scene.ts` 的兜底同一处。 */
 
 /** ③ 内部状态串 → 用户说法。表里的名字逐字取自页面现状（`docs/skills/skill-bill/t407-机审读数.md` 第三节的原文）。
  *  撤销／恢复两态照上级口径逐字：`deleted_at＝now` →「已撤销，记录还在，随时可恢复」、
@@ -87,10 +77,10 @@ export function statusNoteOf(state: string): string {
   return hit === undefined ? state.trim() : hit;
 }
 
-/** 内部型名 → 唤醒词；认不得的型名与空串都给「记一笔」（通用词那一件，与 `src/record/scene.ts` 的兜底同口径）。 */
+/** 内部型名 → 唤醒词；认不得的型名与空串都给「记一笔」（通用词那一件，与 `src/record/scene.ts` 的兜底同口径）。
+ *  **算法在域声明那边**（`wakeWordOfKind`）：本件只是给页面侧留一个说得出口的名字。 */
 export function wakeWordOf(kind: unknown): string {
-  const k = typeof kind === 'string' ? kind.trim() : '';
-  return k === '' ? '记一笔' : (WAKE_WORDS[k] ?? '记一笔');
+  return wakeWordOfKind(typeof kind === 'string' ? kind : '');
 }
 
 /** 库列名 → 中文列名；认不得的原样返回（照实印出，不假装认得出）。 */

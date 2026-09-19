@@ -19,7 +19,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { BILL_KEY_SHAPES, WAKE_TABLE, routeWakeword } from '../dist/index.js';
+import { BILL_KEY_SHAPES, WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/index.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 import { FROZEN, PKG_DIR, cliDispatchKeysOf, dispatchLiteralsOf } from '../scripts/ratchet-frozen-686.mjs';
 
@@ -118,23 +118,25 @@ test('#686 对账：注册表的键都在运行期形状表里，形状一致', 
   }
 });
 
-test('#686 对账：每条声明的代表唤醒词是真唤醒词，且路由回同一个键', () => {
+test('#686 对账：每条声明的代表唤醒词（按 key 派生）是真唤醒词，且路由回同一个键', () => {
   const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
   for (const key of REGISTRY_KEYS) {
     const spec = REGISTRY[key];
-    assert.ok(phrases.has(spec.wakeWord), '代表唤醒词不在 `WAKE_TABLE` 里：' + spec.wakeWord + '（' + key + '）');
-    const hit = WAKE_TABLE.filter((e) => e.phrase === spec.wakeWord);
-    for (const e of hit) assert.equal(e.key, key, '代表唤醒词路由到别的键：' + spec.wakeWord + ' → ' + e.key);
+    // #721 起代表唤醒词不再写在声明里，按 key 从域声明算（`projectWakeWord`）。
+    const word = projectWakeWord({ key });
+    assert.ok(phrases.has(word), '代表唤醒词不在 `WAKE_TABLE` 里：' + word + '（' + key + '）');
+    const hit = WAKE_TABLE.filter((e) => e.phrase === word);
+    for (const e of hit) assert.equal(e.key, key, '代表唤醒词路由到别的键：' + word + ' → ' + e.key);
     assert.equal(typeof spec.run, 'function', '声明缺处理函数：' + key);
     const routed = (() => {
       // 有的词带必需槽位（如「查区间」要 start／end）：路由层缺槽位即抛，那属**词的槽位口径**、
       // 不是路由错；这里只要它不把这个词派到别的键上（`WAKE_TABLE` 那一条已把键钉死）。
-      try { return routeWakeword(spec.wakeWord); } catch (e) {
-        assert.equal(e.code, 'POLICY_MISSING_SLOT', '代表唤醒词路由时抛出非「缺槽位」的错：' + spec.wakeWord);
+      try { return routeWakeword(word); } catch (e) {
+        assert.equal(e.code, 'POLICY_MISSING_SLOT', '代表唤醒词路由时抛出非「缺槽位」的错：' + word);
         return null;
       }
     })();
-    if (routed !== null) assert.equal(routed.key, key, '路由层把代表唤醒词派到别的键：' + spec.wakeWord + ' → ' + routed.key);
+    if (routed !== null) assert.equal(routed.key, key, '路由层把代表唤醒词派到别的键：' + word + ' → ' + routed.key);
   }
 });
 

@@ -41,9 +41,10 @@ import { commandLine } from '../shared/writeParts.js';
 import { collectBlockedFold } from './collectBody.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
 /** 一条唤醒词一件：本件服务的那条。 */
-const WAKE = '批量录入';
+const WAKE: string = wakeWordOfKind('batch');
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
 function textOf(v: unknown): string {
@@ -243,7 +244,6 @@ function receiptOf(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'batch',
-  wakeWord: WAKE,
   key: 'bill.record.add',
   kind: 'batch',
   op: '',

@@ -4,7 +4,7 @@ import { BILL_KEY_SHAPES } from '../render/index.js';
 
 export interface HelpHit { phrase: string; key: BillKey; shape: string; cli: string; desc: string; }
 
-function exampleParams(key: BillKey, e: { needs?: string[]; carries?: string[]; preset?: Record<string, unknown> }): string {
+function exampleParams(key: BillKey, e: { readonly needs?: readonly string[]; readonly carries?: readonly string[]; readonly preset?: Readonly<Record<string, unknown>> }): string {
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   // B2：record.add 示例须可直跑——补最小槽位 category/amount/note（kind preset 仅路由提示，校验忽略未认的名字）。
   if (key === 'bill.record.add') {

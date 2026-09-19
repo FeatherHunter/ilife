@@ -12,7 +12,6 @@ import type { Scene } from './scene.js';
 
 export const SCENE: Scene = {
   id: 'expense',
-  wakeWord: '记支出',
   key: 'bill.record.add',
   kind: 'expense',
   op: '',

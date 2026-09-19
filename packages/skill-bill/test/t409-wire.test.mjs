@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WRITE_WORDS, buildWriteWire, routeWakeword, WAKE_TABLE,
+  WRITE_WORDS, buildWriteWire, projectWakeWord, routeWakeword, WAKE_TABLE,
 } from '../dist/index.js';
 import { WAKE_GROUPS } from '../dist/triggers/wake-assets.js';
 import { SCENES, sceneFor } from '../dist/record/scene.js';
@@ -64,7 +64,9 @@ describe('409 · 写入 16 词五段接线', () => {
     const ids = new Set();
     for (const r of buildWriteWire()) {
       const s = sceneFor({ key: r.key, kind: r.params.kind, op: r.params.op });
-      assert.ok(s.wakeWord === r.phrase || r.phrase === '记偿还' && s.id === 'repay', r.phrase);
+      // #721 起落点行不写唤醒词：按它认的 kind／op 从域声明算回那一条词，必须就是路由命中的那一条。
+      const word = projectWakeWord({ key: s.key, kind: s.kind, op: s.op });
+      assert.equal(word, r.phrase, r.phrase);
       ids.add(s.id);
     }
     assert.equal(ids.size, 16, '一件一条词，不许两条词挤一件');

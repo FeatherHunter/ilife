@@ -7,7 +7,8 @@
 // 其余 10 条仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
 // 输出（唯一生成物）：`src/cli/registry.ts`（一能力一行，由扫描得出，人不手改）。
 // 不派生的落点（本次不动，不上报）：`packages/base-combos/combos.yaml` 属跨技能登记禁区（地图 OutofScope），
-// `src/render/envelope.ts` 过渡表、`scripts/build-help.mjs` 的 HELP-AUTO 块、路由与 `wake-assets` 一律不碰。
+// `src/render/envelope.ts` 过渡表、`scripts/build-help.mjs` 的 HELP-AUTO 块一律不碰。
+// #721 起 `src/triggers/wake-assets.ts` 不再是生成物（它变成手写的薄合并件），`scripts/gen-wake-assets.mjs` 已退役。
 //
 // 新鲜度（照卡路里同构，内容判据，不看时间戳）：生成器读的是编译后的声明模块，故先查
 // `dist/.gen-inputs.json` 内容印记（每条记 `{src, dist}`＝源文本 sha256＋编译产物 `.js` 文本 sha256，
@@ -42,7 +43,9 @@ function scanCapabilityNames() {
     .sort();
 }
 
-/** 读一个能力目录的声明：引编译后模块，取唯一数组导出；字段按饼干口径必填（`wakeWord` 必填，与卡路里不同）。 */
+/** 读一个能力目录的声明：引编译后模块，取唯一数组导出；字段按饼干口径必填。
+ *  `wakeWord` **不在必填面**（#721 撤）：代表唤醒词是按 `key` 从域声明算出来的派生值，
+ *  命令声明里再写一遍就是同一件事的第二处书写位。 */
 async function loadCapability(name) {
   const distPath = join(DIST_DIR, name, 'commands.js');
   if (!existsSync(distPath)) throw new Error('缺 ' + relative(REPO_ROOT, distPath) + '：请先 `pnpm build`');
@@ -55,7 +58,7 @@ async function loadCapability(name) {
     throw new Error('src/' + name + '/index.ts 须再导出那个数组（生成的 registry 从 `../' + name + '/index.js` 取）：' + exportName);
   }
   for (const spec of list) {
-    for (const f of ['kind', 'key', 'shape', 'title', 'wakeWord', 'example']) {
+    for (const f of ['kind', 'key', 'shape', 'title', 'example']) {
       if (typeof spec?.[f] !== 'string' || spec[f] === '') throw new Error(name + ' 的声明缺 ' + f + '：' + spec?.key);
     }
     if (spec.kind === 'write') {

@@ -301,7 +301,6 @@ function receiptPage(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'reimburse-done',
-  wakeWord: '报销到账',
   key: 'bill.record.add',
   kind: 'reimburse-done',
   op: '',

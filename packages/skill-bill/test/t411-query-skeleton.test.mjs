@@ -16,7 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REGISTRY } from '../dist/cli/registry.js';
 import { runQueryRead } from '../dist/query/index.js';
-import { WAKE_TABLE } from '../dist/policy/index.js';
+import { WAKE_TABLE, projectWakeWord } from '../dist/policy/index.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -70,10 +70,11 @@ describe('t411 ① 注册表：查询四条进表', () => {
       assert.equal(spec.shape, shape, key + ' 的形状');
     }
   });
-  it('代表唤醒词都是 WAKE_TABLE 里真有的词', () => {
+  it('代表唤醒词按 key 从域声明派生，都是 WAKE_TABLE 里真有的词', () => {
     const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
     for (const key of ['bill.record.today', 'bill.record.range', 'bill.record.search', 'bill.record.detail']) {
-      assert.ok(phrases.has(REGISTRY[key].wakeWord), REGISTRY[key].wakeWord + ' 应是真唤醒词');
+      const word = projectWakeWord({ key });
+      assert.ok(phrases.has(word), word + ' 应是真唤醒词');
     }
   });
   it('本域的门不认别域命令（不猜、不兜底）', () => {

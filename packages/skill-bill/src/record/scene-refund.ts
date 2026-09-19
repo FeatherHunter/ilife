@@ -298,7 +298,6 @@ function receiptPage(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'refund',
-  wakeWord: '记退款',
   key: 'bill.record.add',
   kind: 'refund',
   op: '',

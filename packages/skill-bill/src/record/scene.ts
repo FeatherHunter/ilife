@@ -69,8 +69,6 @@ export interface ReceiptInput {
 export interface Scene {
   /** 件的名字（与文件名 `scene-<id>.ts` 对得上）。 */
   readonly id: string;
-  /** 这一件服务的唤醒词（一条词一件）。 */
-  readonly wakeWord: string;
   /** 命令全名（`bill.record.add` 或 `bill.record.update`）。 */
   readonly key: string;
   /** 认的 `kind` 值（空串＝这一件不按 kind 认，靠命令名落）。 */
@@ -85,7 +83,12 @@ export interface Scene {
   readonly receipt: (input: ReceiptInput) => string;
 }
 
-/** 16 行的落点表（**唯一定义地**）。顺序与 `t407-场景落点清单.md` 一致：先 13 条录入词，后 3 条修正词。 */
+/** 16 行的落点表（**唯一定义地**）。顺序与 `t407-场景落点清单.md` 一致：先 13 条录入词，后 3 条修正词。
+ *
+ * 表里**不写唤醒词**（#721 撤）：这一件认哪些 `kind`／`op` 是**处理方声明**（`sceneFor` 靠它选件，
+ * 不走词表），而「这一件服务哪条词」是**词条**的事实、由域声明拥有。要那一行词就现算：
+ * `projectWakeWord({ key: s.key, kind: s.kind, op: s.op })`（`src/triggers/wakeTable.ts`）；
+ * 两者的一致性由 `test/t721-域声明.test.mjs` 的「落点表 ↔ 词条」逐件断言钉住。 */
 export const SCENES: readonly Scene[] = [
   sceneExpense, sceneIncome, scenePhoto, sceneBatch, sceneRefund, sceneReimburse, sceneReimburseDone,
   sceneLend, sceneBorrow, sceneCollect, sceneRepay, sceneInstallment, scenePlain,

@@ -47,9 +47,10 @@ import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
 /** 服务哪条唤醒词（`Scene.wakeWord`）。 */
-const WORD = '记收入';
+const WORD: string = wakeWordOfKind('income');
 
 /** 缺项时那条「补齐后重跑」的写库指令用什么占位：金额那格写清方向，不写空洞的「金额」。 */
 const REPLACES: Readonly<Record<string, string>> = {
@@ -222,7 +223,6 @@ function receiptIncome(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'income',
-  wakeWord: WORD,
   key: 'bill.record.add',
   kind: 'income',
   op: '',

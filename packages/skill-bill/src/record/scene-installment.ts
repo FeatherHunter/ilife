@@ -260,7 +260,6 @@ function receiptPage(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'installment',
-  wakeWord: '记分期',
   key: 'bill.record.add',
   kind: 'installment',
   op: '',

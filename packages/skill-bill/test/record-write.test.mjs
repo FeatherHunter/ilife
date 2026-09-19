@@ -7,7 +7,7 @@ import { mkdtempSync, existsSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BILL_KEY_SHAPES, WAKE_TABLE, routeWakeword } from '../dist/index.js';
+import { BILL_KEY_SHAPES, WAKE_TABLE, projectWakeWord, routeWakeword } from '../dist/index.js';
 import { RECORD_COMMANDS, runRecordWrite } from '../dist/record/index.js';
 import { REGISTRY, REGISTRY_KEYS } from '../dist/cli/registry.js';
 import { RECORD_SLOTS, missingSlots } from '../dist/record/collect.js';
@@ -46,14 +46,14 @@ function pageOf(file) {
 }
 
 describe('t406 · 记账写入域命令声明与注册表', () => {
-  it('恰好两条命令，六件事齐全，形状一律 receipt', () => {
+  it('恰好两条命令，五件事齐全，形状一律 receipt', () => {
     assert.equal(RECORD_COMMANDS.length, 2);
     assert.deepEqual(RECORD_COMMANDS.map((c) => c.key), ['bill.record.add', 'bill.record.update']);
     for (const c of RECORD_COMMANDS) {
       assert.equal(c.kind, 'write', c.key);
       assert.equal(c.shape, 'receipt', c.key);
       assert.equal(typeof c.run, 'function', c.key);
-      for (const f of ['key', 'title', 'wakeWord', 'example']) {
+      for (const f of ['key', 'title', 'example']) {
         assert.equal(typeof c[f], 'string', c.key + ' 的 ' + f + ' 须为字符串');
         assert.ok(c[f].length > 0, c.key + ' 的 ' + f + ' 不得为空');
       }
@@ -63,11 +63,12 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
     assert.equal(RECORD_COMMANDS[1].title, '改记录');
   });
 
-  it('代表唤醒词是 WAKE_TABLE 里真有的词，且路由到本命令', () => {
+  it('代表唤醒词按 key 从域声明派生，且路由到本命令（#721 撤掉了声明里那一处）', () => {
     const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
     for (const c of RECORD_COMMANDS) {
-      assert.ok(phrases.has(c.wakeWord), c.wakeWord + ' 不在 WAKE_TABLE');
-      assert.equal(routeWakeword(c.wakeWord, { id: 1 }).key, c.key, c.wakeWord + ' 路由对不上 ' + c.key);
+      const word = projectWakeWord({ key: c.key });
+      assert.ok(phrases.has(word), word + ' 不在 WAKE_TABLE');
+      assert.equal(routeWakeword(word, { id: 1 }).key, c.key, word + ' 路由对不上 ' + c.key);
     }
   });
 

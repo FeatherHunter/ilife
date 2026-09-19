@@ -307,7 +307,6 @@ function receiptPage(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'collect',
-  wakeWord: '记收回',
   key: 'bill.record.add',
   kind: 'collect',
   op: '',

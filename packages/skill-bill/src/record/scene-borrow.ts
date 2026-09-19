@@ -309,7 +309,6 @@ function receiptPage(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'borrow',
-  wakeWord: '记借入',
   key: 'bill.record.add',
   kind: 'borrow',
   op: '',

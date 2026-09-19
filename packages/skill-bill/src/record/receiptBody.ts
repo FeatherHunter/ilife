@@ -12,13 +12,14 @@
  *  重复检测提示条 `src/shared/duplicateNote.ts`（写完再报一次，排除本次这条编号）／明细表 `renderDataTable`／
  *  页尾对账折叠区与状态卡 `src/shared/receiptParts.ts`／退出口与复制区三件 `src/shared/copyArea.ts`／
  *  整页包裹 `src/shared/pageShell.ts`。
- * 页标题由**这一页是哪条唤醒词**派生，见下面 `PAGE_WAKE_WORDS` 的说明。
+ * 页标题由**这一页是哪条唤醒词**派生，见下面 `wakeWord` 那两行的说明。
  * 未用到的 base 组件（记成遗留，不硬塞）：`renderEmptyBlock`——回执页恒有数据；失败那一面走
  *  `src/shared/errorReceipt.ts`（共用位内部件），它的整页替换落点是后票的事（见该文件头）。
  */
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
-import type { RecordOp } from '../policy/record.js';
+import type { BillKey } from '../triggers/routeSpec.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from '../shared/duplicateNote.js';
 import type { DuplicateProbe } from '../shared/duplicateNote.js';
@@ -31,16 +32,11 @@ import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { ReceiptInput } from './scene.js';
 
-/** 页标题由**这一页是哪条唤醒词**派生（**唯一来源**）：写库那一半只认四种操作（add／update／undo／restore），
- *  而用户看到的标题说的是他刚才说的那条唤醒词（记支出／改记录／撤销／恢复）。唤醒词与型名的对照表只有
- *  `../shared/userWording.js` 一处，本件不另立一张「命令名 → 页标题」的表。
+/** 页标题由**这一页是哪条唤醒词**派生（**唯一算法在域声明那边**）：写库那一半只认四种操作
+ *  （add／update／undo／restore），而用户看到的标题说的是他刚才说的那条唤醒词（记支出／改记录／撤销／恢复）。
+ *  两处取值都由 `../triggers/wakeTable.js` 从域声明算回（型名走 `wakeWordOf`、操作走 `projectWakeWord`），
+ *  本件不另立一张「命令名 → 页标题」的表，也不写第二处唤醒词字面量（#721 判据）。
  *  本轮整改修掉代表页页头的笔误：改前 `add` 恒写「记一笔 · 回执」，记支出那两张代表页的页头与徽章对不上。 */
-const PAGE_WAKE_WORDS: Record<RecordOp, string> = {
-  add: '记一笔',
-  update: '改记录',
-  undo: '撤销',
-  restore: '恢复',
-};
 
 /** 结果型回执整页：类型徽章 ＋ 一张大网格（摘要行五格 ＋ 状态／这次记了几笔／写进去的项）
  *  ＋ 重复检测提示条 ＋ 写进去的项与值 ＋ 对账折叠区 ＋ 退出口 ＋ 复制区三件。 */
@@ -55,8 +51,11 @@ export function receiptBody(input: ReceiptInput): string {
   };
   const kind = typeof params.kind === 'string' ? params.kind : '';
   // 这一页的唤醒词：型认得出就按型（记支出／记收入…），认不出就按操作（记一笔／改记录／撤销／恢复）。
+  // `key` 进这一页之前已由注册表拦过（不是 16 键之一到不了这里），故这里按命令名断言。
   const known = kind.trim() === '' ? '' : wakeWordOf(kind);
-  const wakeWord = known === '' || known === '记一笔' ? PAGE_WAKE_WORDS[receipt.op] : known;
+  const wakeWord = known === '' || known === wakeWordOf('')
+    ? projectWakeWord({ key: key as BillKey, op: receipt.op })
+    : known;
   const probe: DuplicateProbe = {
     amount: input.facts.amount,
     category: input.facts.category,

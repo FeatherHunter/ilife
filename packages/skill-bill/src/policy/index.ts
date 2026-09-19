@@ -8,5 +8,5 @@ export { parseGoalOp, validateBudgetAmount, validateSetBudget, validateSetSaving
 export type { GoalOp } from './goals.js';
 export { parseAccountOp, needName, validateTransfer, TRANSFER_OUT_CATEGORY, TRANSFER_IN_CATEGORY, TRANSFER_LEDGER } from './accounts.js';
 export type { AccountOp } from './accounts.js';
-export { routeWakeword, WAKE_TABLE } from './wakewords.js';
-export type { BillKey, WakeRoute, WakeEntry } from './wakewords.js';
+export { WAKE_TABLE, routeWakeword, projectWakeWord, wakeWordOfKind } from './wakewords.js';
+export type { BillKey, WakeRoute, WakeEntry, WakeScope } from './wakewords.js';

@@ -37,9 +37,10 @@ import { typeBadge, wakeWordOf } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
 /** 服务哪条唤醒词（`Scene.wakeWord`）。 */
-const WORD = '记报销';
+const WORD: string = wakeWordOfKind('reimburse');
 
 /** 流转用的标签（打标提示条与打标说明条共引这一处，不各写一份字面量）。 */
 const TAG = '#待报销';
@@ -230,7 +231,6 @@ function receiptReimburse(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'reimburse',
-  wakeWord: WORD,
   key: 'bill.record.add',
   kind: 'reimburse',
   op: '',

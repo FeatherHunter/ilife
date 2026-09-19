@@ -22,6 +22,7 @@ import {
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { needId, normalizeDate, resolveQueryDate, resolveRange, validateCategory, yesterdayStr } from '../policy/index.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import { calcKpi, toBillItem } from '../render/views.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
@@ -83,12 +84,11 @@ function listOut(input: {
   };
 }
 
-/** today 分支的标题判（**唯一判地**）：recent 不进本支（上游已分流）；
- *  yesterday→查昨天／显式 date→查某天／无参→查今天（查账单别名同页，无入口标记）。 */
+/** today 分支的标题：这一页是哪条词由**域声明**算（`查昨天`／`查某天`／`查今天`；`查账单` 是同页别名），
+ *  本件不再写第二处字面量（#721 判据：一条唤醒词的字面量只准住它所属那份域声明）。
+ *  recent 不进本支（上游已分流）。 */
 function todayWakeWord(params: Record<string, unknown>): string {
-  if (params.date === 'yesterday') return '查昨天';
-  if (params.date !== undefined && params.date !== null && params.date !== '') return '查某天';
-  return '查今天';
+  return projectWakeWord({ key: 'bill.record.today', preset: params });
 }
 
 /** today 分支的空态四句（**唯一判地**）：今天／昨天／某天／最近各一句；
@@ -112,7 +112,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
       .sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id)
       .slice(0, limit as number);
     return listOut({
-      key, params, wakeWord: '查最近', window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records,
+      key, params, wakeWord: todayWakeWord(params), window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records,
       extra: { date: 'recent' },
       emptyText: '库里还没有记录',
       emptyHint: '要记一笔就说「记支出」。',
@@ -183,7 +183,7 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
     return listOut({
-      key, params, wakeWord: params.range === 'week' ? '查周' : '查月',
+      key, params, wakeWord: projectWakeWord({ key, preset: params }),
       window: start + ' ~ ' + end + (params.range === 'week' ? '（本周）' : '（本月）'),
       records, extra: { start, end },
       emptyText: '这一段没有记录',
@@ -195,7 +195,7 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
     return listOut({
-      key, params, wakeWord: '查区间', window: start + ' ~ ' + end, records, extra: { start, end },
+      key, params, wakeWord: projectWakeWord({ key, preset: params }), window: start + ' ~ ' + end, records, extra: { start, end },
       emptyText: '这一段没有记录',
       emptyHint: '换个起止日期再查一次。',
     });
@@ -206,7 +206,7 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     const by = category !== undefined ? '分类' : account !== undefined ? '账户' : '账本';
     const value = String(category ?? account ?? ledger);
     return listOut({
-      key, params, wakeWord: '查' + by, window: by + '＝' + value + '（全部时间）', records,
+      key, params, wakeWord: projectWakeWord({ key, preset: params }), window: by + '＝' + value + '（全部时间）', records,
       extra: { start: '', end: '' },
       emptyText: '这个条件没有记录',
       emptyHint: '换个条件，或说「查区间」并给出起止日期。',
@@ -240,7 +240,6 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   const key = 'bill.record.search';
   const kind = params.kind === undefined ? '' : String(params.kind);
   let records: BillRow[];
-  let wakeWord: string;
   let window: string;
   let label: string;
   if (kind === 'tag') {
@@ -251,22 +250,18 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     const tag = rawTag.trim();
     records = listByTag(db, tag);
     label = 'tag:' + tag;
-    wakeWord = '查标签';
     window = '标签 ' + tag + '（精确匹配）';
   } else if (kind === 'debt') {
     records = fetchAll(db).filter(isDebtRow);
     label = 'debt';
-    wakeWord = '查欠款';
     window = '还欠着的那些账';
   } else if (kind === 'reimburse') {
     records = fetchAll(db).filter(isReimburseRow);
     label = 'reimburse';
-    wakeWord = '查待报销';
     window = '等着报销的那些账';
   } else if (kind === 'installment') {
     records = fetchAll(db).filter(isInstallmentRow);
     label = 'installment';
-    wakeWord = '查分期';
     window = '分期还款的那些账';
   } else {
     const rawQ = params.q;
@@ -276,9 +271,10 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     const q = rawQ.trim();
     records = searchKeyword(db, q);
     label = 'search:' + q;
-    wakeWord = '搜备注';
     window = '备注里有「' + q + '」的记录';
   }
+  // 这一页是哪条词（查标签／查欠款／查待报销／查分期／搜备注）由**域声明**按同一份入参算，本件不写第二处。
+  const wakeWord = projectWakeWord({ key, preset: params });
   return listOut({
     key, params, wakeWord, window, records, extra: { kind: label },
     emptyText: '没有找到符合条件的记录',
@@ -303,7 +299,7 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
     html: queryDetailDoc({
       key,
       params,
-      wakeWord: '查账单详情',
+      wakeWord: projectWakeWord({ key, preset: params }),
       window: row.time,
       chips: deleted ? ['记录编号 ' + row.id, '已撤销'] : ['记录编号 ' + row.id],
       row,

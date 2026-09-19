@@ -30,9 +30,10 @@ import { nextStepOf, typeBadge } from '../shared/typeBadge.js';
 import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 
 /** 一条唤醒词一件：本件服务的那条。 */
-const WAKE = '撤销';
+const WAKE: string = projectWakeWord({ key: 'bill.record.update', op: 'undo' });
 /** 本件的命令名（撤销是 `bill.record.update` 的 `op=undo` 那一支）。 */
 const KEY = 'bill.record.update';
 
@@ -277,7 +278,6 @@ function receiptOf(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'undo',
-  wakeWord: WAKE,
   key: KEY,
   kind: '',
   op: 'undo',

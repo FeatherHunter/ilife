@@ -1,9 +1,13 @@
-/** 命令声明的形状（**唯一定义地**）：一条命令的事实——种类／命令名／形状／标题／代表唤醒词／可执行示例／处理函数。
+/** 命令声明的形状（**唯一定义地**）：一条命令的事实——种类／命令名／形状／标题／可执行示例／处理函数。
  *
  * 谁在用（两个能力，指名）：
  *   ① `src/record/commands.ts`——写入域命令事实的唯一权威源（两条写命令：记一笔、改记录）；
  *   ② `src/query/commands.ts`——查询域命令事实的唯一权威源（四条读命令：查今天／查区间／搜备注／查账单详情）；
  *  两张声明各由本能力的 `index.ts` 转出，`src/cli/registry.ts` 汇总成一张查表供 `src/cli/cmd_read.ts` 先查。
+ *
+ * 代表唤醒词**不在本形状里**（#721 撤）：它是**派生**——按 `key` 从该域的域声明算
+ * （`projectWakeWord({ key })`，见 `src/triggers/wakeTable.ts`）。原来每条声明各写一遍代表词，
+ * 是同一件事的第二处书写位；撤掉之后「一条命令有词可路由」由 `test/t721-域声明.test.mjs` 逐键判。
  *
  * 口径出处：形状照 `packages/skill-calorie/src/shared/commandSpec.ts`（照结构，不照文件）。
  * `docs/skills/skill-bill/t406-共用件依赖与提升改造清单.md` 第三节第 1 条判「`commandSpec.ts` 不上移公共层」，
@@ -38,8 +42,6 @@ export interface WriteCommandSpec {
   readonly key: string;
   readonly shape: 'receipt';
   readonly title: string;
-  /** 代表唤醒词；**必填**，且必须是 `src/policy/wakewords.ts` 的 `WAKE_TABLE` 里真有的词（测试里逐条核）。 */
-  readonly wakeWord: string;
   /** 照抄即能跑的一行（本票两条都在空库上真跑过，退出码 0）。 */
   readonly example: string;
   readonly run: WriteHandler;
@@ -59,15 +61,13 @@ export interface ViewOut {
 /** 读命令的处理函数。第二参同 `WriteHandler` 收饼干的库句柄 `BillDb`（取数层只认这一种句柄）。 */
 export type ViewHandler = (params: Record<string, unknown>, db: BillDb) => ViewOut;
 
-/** 读命令的声明：与写命令同六件事，只两处不同——`kind` 是 `read`、`shape` 是**表里的形状**。 */
+/** 读命令的声明：与写命令同五件事，只两处不同——`kind` 是 `read`、`shape` 是**表里的形状**。 */
 export interface ReadCommandSpec {
   readonly kind: 'read';
   readonly key: string;
   /** 本次 envelope 的形状（`list`＝列表页、`detail`＝单条详情页）。 */
   readonly shape: EnvelopeShape;
   readonly title: string;
-  /** 代表唤醒词；**必填**，且必须是 `src/policy/wakewords.ts` 的 `WAKE_TABLE` 里真有的词（测试里逐条核）。 */
-  readonly wakeWord: string;
   /** 照抄即能跑的一行（四条都在本机临时库上真跑过，退出码 0）。 */
   readonly example: string;
   readonly run: ViewHandler;

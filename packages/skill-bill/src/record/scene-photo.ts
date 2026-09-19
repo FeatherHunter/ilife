@@ -54,9 +54,10 @@ import { fieldLabelOf } from '../shared/userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import { collectBlockedFold, prefillShort } from './collectBody.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
 /** 服务哪条唤醒词（`Scene.wakeWord`）。 */
-const WORD = '拍账单';
+const WORD: string = wakeWordOfKind('photo');
 
 /** 本件认的 `kind`。 */
 const KIND = 'photo';
@@ -270,7 +271,6 @@ function receiptPhoto(input: ReceiptInput): string {
 
 export const SCENE: Scene = {
   id: 'photo',
-  wakeWord: WORD,
   key: 'bill.record.add',
   kind: KIND,
   op: '',

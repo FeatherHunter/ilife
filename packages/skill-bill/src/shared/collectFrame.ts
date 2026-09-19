@@ -12,10 +12,12 @@
  * 每句带唤醒词或段号，页内不重句。
  */
 import { renderCaliberLine, renderChips, renderConclusionBar } from 'base-paint/blocks';
+import { wakeWordOfKind } from '../triggers/wakeTable.js';
 
-/** 进度：还差几项，补齐就能记（只读数，不判定）。 */
+/** 进度：还差几项，补齐就能记（只读数，不判定）。
+ *  空唤醒词＝调用方没有这一条事实，退回**写入域的通用词**（从域声明算，不在本件写字面量）。 */
 export function collectProgress(input: { readonly wakeWord: string; readonly missing: number }): string {
-  const word = input.wakeWord.trim() === '' ? '记一笔' : input.wakeWord.trim();
+  const word = input.wakeWord.trim() === '' ? wakeWordOfKind('') : input.wakeWord.trim();
   const n = Number.isFinite(input.missing) && input.missing > 0 ? Math.floor(input.missing) : 0;
   return renderCaliberLine(word + '还差 ' + n + ' 项，补齐就能记');
 }
