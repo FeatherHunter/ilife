@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
 # 卡路里技能线发版 wizard：skill-calorie（共 1 包，人扫码）
-#   skill-calorie 0.2.5（饮食／运动／体重／目标／身体细节／计划／训记联动；
+#   skill-calorie 0.2.6（饮食／运动／体重／目标／身体细节／计划／训记联动；
 #     唯一出口 calorie-cmd-read）
 #
-# 前提：base-paint@0.3.4 已在 registry（2026-09-19 随 #725 的 docShell 子路径落上去），
+# 前提：base-paint@0.3.5 已在 registry（2026-09-19：#725 的 docShell ＋ #728 的写入域形状件），
 # 本脚本只断言它在位，不重发。
 # 插件 dsh-calorie 不在本脚本发 —— 走
 # packages/plugin-calorie/scripts/wizard-publish.sh（技能必须先落 registry，
@@ -206,8 +206,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_SKILL="0.2.5"
-V_BASEPAINT="0.3.4"
+V_SKILL="0.2.6"
+V_BASEPAINT="0.3.5"
 
 # 目录名（非 npm 名）
 D_SKILL="skill-calorie"
@@ -311,7 +311,7 @@ pause "清单没问题？按回车进入发布（下面开始弹浏览器了）"
 
 # ── Stage 4：发 skill-calorie ──────────────────────────────────────────
 stage "4/5 · 发布 skill-calorie@$V_SKILL（你扫码）"
-say "卡路里技能 0.2.5：饮食／运动／体重／目标／身体细节／计划／训记联动，唯一出口 calorie-cmd-read。"
+say "卡路里技能 0.2.6：饮食／运动／体重／目标／身体细节／计划／训记联动，唯一出口 calorie-cmd-read。"
 if already skill-calorie "$V_SKILL"; then
   warn "registry 已有 skill-calorie@$V_SKILL —— 跳过本次发布（不重复占版本号）。"
 else
