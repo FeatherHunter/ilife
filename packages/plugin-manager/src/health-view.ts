@@ -59,8 +59,9 @@ export const HEALTH_STYLE = {
     background: 'transparent',
     color: INK,
     borderRadius: 8,
-    padding: '4px 12px',
+    padding: '6px 16px',
     fontSize: 13,
+    fontWeight: 600,
     cursor: 'pointer',
   } as React.CSSProperties,
   lightsRow: { display: 'flex', flexWrap: 'wrap', gap: 8 } as React.CSSProperties,
@@ -91,6 +92,37 @@ function isAttention(status: HealthStatus): boolean {
 export function actionText(action: string): string {
   const trimmed = action.trim();
   return trimmed.startsWith('去哪修：') ? trimmed.slice(4).trim() : trimmed;
+}
+
+/** 一家里出现次数最多的那个「共同前缀」（按 `/` 切、整段比）：用来把一长串落点缩成
+ *  「公共前缀 ＋ 各条短尾巴」，免得四条路径把每一行都撑成两行（视觉复评点「冗余、像日志 dump」）。 */
+export function commonDirPrefix(paths: readonly string[]): string {
+  const split = paths.filter((path) => path.includes('/')).map((path) => path.split('/'));
+  if (split.length < 2) return '';
+  const first = split[0] as string[];
+  let size = 0;
+  while (size < first.length && split.every((parts) => parts[size] === first[size])) size += 1;
+  if (size < 1) return '';
+  return first.slice(0, size).join('/');
+}
+
+/** 那一行「配置文件 … · 数据目录 …」+ 各条报文里的长路径，都缩成「公共前缀 ＋ 短尾巴」。 */
+function shorten(path: string, prefix: string): string {
+  if (prefix === '' || !path.startsWith(prefix + '/')) return path;
+  return '…/' + path.slice(prefix.length + 1);
+}
+
+/** 一家里所有会印出来的路径。 */
+export function pathsOf(report: HealthReport): readonly string[] {
+  const out: string[] = [report.configPath, report.dataDir];
+  for (const item of report.items) out.push(item.message);
+  return out;
+}
+
+/** 把报文里那一长串路径按公共前缀缩短（只动打印，不动事实）。 */
+export function shortenPathsIn(text: string, prefix: string): string {
+  if (prefix === '') return text;
+  return text.split(prefix + '/').join('…/');
 }
 
 /** 一盏灯：一家一名一档（数到几个红黄绿）。点一下把面板切到那家的页签。 */
@@ -223,6 +255,7 @@ export function HealthTable(props: {
   readonly error: string | null;
 }): React.ReactElement {
   const { report } = props;
+  const prefix = report ? commonDirPrefix(pathsOf(report)) : '';
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.box, 'data-ilife-health': 'table' },
@@ -241,7 +274,10 @@ export function HealthTable(props: {
       ? React.createElement(
           'div',
           null,
-          React.createElement('div', { style: HEALTH_STYLE.meta }, '配置文件 ' + report.configPath + ' · 数据目录 ' + report.dataDir),
+          // 落点一律缩到公共前缀之内印（四条长路径并排会把每一行撑成两行，视觉复评点过「像日志 dump」）。
+          React.createElement('div', { style: HEALTH_STYLE.meta },
+            '配置文件 ' + shorten(report.configPath, prefix) + ' · 数据目录 ' + shorten(report.dataDir, prefix)
+            + (prefix === '' ? '' : '（公共前缀 ' + prefix + '）')),
           report.items.filter(isAttentionItem).map((item) =>
             React.createElement(
               'div',
@@ -274,7 +310,7 @@ export function HealthTable(props: {
                 }, STATUS_LABEL[item.status]),
                 item.source ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source) : null,
               ),
-              React.createElement('div', { style: { color: INK } }, item.message),
+              React.createElement('div', { style: { color: INK } }, shortenPathsIn(item.message, prefix)),
               item.action.length > 0
                 ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + actionText(item.action))
                 : null,
