@@ -24,6 +24,8 @@
 import { renderChips, renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
 import { fmt, fmtInt, foldedTable, kvTable, lineOf, sec, tableOf } from './reportDocParts.js';
 import type { ReportSection } from './reportDocParts.js';
+/* #717 批④：BMR 算式只读共用位那一份（本件原写 10*w + 6.25*h - 5*a + sign）。 */
+import { mifflinStJeorBmr } from './utils.js';
 import type { ReportPlate } from './reportPlate.js';
 
 /** 缺项清单上屏口径：本用 `、` 连接（判据 R5 的债）⇒ 空格分隔（同一个 `missing` 数组，不另算一份）。 */
@@ -136,11 +138,10 @@ function tdeeCurve(plate: ReportPlate): string {
       text: '档案四要素不全，画不了这条曲线（缺：' + missText(p.missing) + '）',
     });
   }
-  const sign = p.gender === 'male' ? 5 : -161;
   const points = plate.base.series.map((s) => ({
     date: s.date,
     value: s.weightKg === null ? null
-      : Math.round((10 * s.weightKg + 6.25 * (p.heightCm as number) - 5 * (p.age as number) + sign) * (p.activityFactor as number)),
+      : Math.round(mifflinStJeorBmr(s.weightKg, p.heightCm, p.age, p.gender) * (p.activityFactor as number)),
   }));
   return lineOf(points, '总消耗随体重变化（同样四要素下，体重变 → 总消耗变）', { format: (v) => String(Math.round(v)) });
 }

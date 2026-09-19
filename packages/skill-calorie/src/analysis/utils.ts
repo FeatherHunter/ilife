@@ -42,11 +42,29 @@ export function getActivityFactor(level?: string | null): number {
   return TDEE_ACTIVITY_FACTORS[String(level).toLowerCase()] ?? (TDEE_ACTIVITY_FACTORS.moderate as number);
 }
 
-/** Mifflin-St Jeor BMR × 系数（运动消耗另计，不在此）。缺体型回 1800。 */
+/** Mifflin-St Jeor 基础代谢（卡/天，**不取整**）——**算式的唯一定义地**。
+ *
+ *  谁在用：本件自己的 `calcTdee`／`energyOf`，以及三处**逐日 BMR**（`analysis/review.ts` 的理论消耗、
+ *  `analysis/reportDocTracked.ts` 的「总消耗随体重变化」曲线、`goal/nutritionGoal.ts` 的目标推荐算式）。
+ *  这三处原先各抄一份 `10*w + 6.25*h - 5*a + (male ? 5 : -161)`——#717 批④ 收成一处调用。
+ *
+ *  **缺项回落交调用方**：本函数只算，不做任何「缺身高就按 175 算」的假设（那属各自的读物口径）。 */
+export function mifflinStJeorBmr(
+  weightKg: number | null | undefined, heightCm: number | null | undefined,
+  age: number | null | undefined, gender: string | null | undefined,
+): number {
+  const w = Number(weightKg);
+  const h = Number(heightCm);
+  const a = Number(age);
+  const g = String(gender ?? '').trim().toLowerCase();
+  const isMale = g === 'male' || g === '男' || g === '';
+  return 10 * w + 6.25 * h - 5 * a + (isMale ? 5 : -161);
+}
+
+/** \`calcTdee\` 的算式与回落口径（老家 parity）：缺体重／身高即回 1800，缺年龄按 30、缺性别按 male。 */
 export function calcTdee(weightKg: number | null | undefined, heightCm: number | null | undefined, age: number | null | undefined, gender: string = 'male', activityLevel?: string | null): number {
   if (!weightKg || !heightCm) return 1800;
-  const bmr = 10 * weightKg + 6.25 * heightCm - 5 * (age ?? 30) + (gender === 'male' ? 5 : -161);
-  return Math.round(bmr * getActivityFactor(activityLevel ?? 'moderate'));
+  return Math.round(mifflinStJeorBmr(weightKg, heightCm, age ?? 30, gender) * getActivityFactor(activityLevel ?? 'moderate'));
 }
 
 /** #177 · 「档案 ＋ 最近体重」的能耗度量入参：四要素 ＋ 活动量档位。
@@ -103,7 +121,7 @@ export function energyOf(parts: EnergyParts): EnergyResult {
   if (weightKg === null || !(weightKg > 0)) bodyMissing.push('体重');
   // BMR 只要四要素（活动量是 TDEE 才要的那一项）——缺活动量不影响 BMR 出数字。
   const rawBmr = bodyMissing.length === 0
-    ? 10 * (weightKg as number) + 6.25 * heightCm - 5 * age + (gender === 'male' ? 5 : -161)
+    ? mifflinStJeorBmr(weightKg, heightCm, age, gender)
     : null;
   const missing = factor === null ? [...bodyMissing, '活动量'] : bodyMissing;
   return {

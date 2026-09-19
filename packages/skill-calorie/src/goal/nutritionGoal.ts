@@ -7,6 +7,9 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+/* #717 批④：BMR 算式只读共用位那一份（本件原写 10*w + 6.25*h - 5*a + (male ? 5 : -161)；
+   本件自己的缺项回落 身高175／体重70／年龄30／male 原样保留）。 */
+import { mifflinStJeorBmr } from '../analysis/utils.js';
 
 export interface NutritionGoalRow {
   id: number;
@@ -165,7 +168,7 @@ export function recommendNutritionGoal(db: DatabaseSync, opts: RecommendInput = 
   const a = age ?? 30;
   const g = gender ?? 'male';
   const factor = opts.activityFactor ?? 1.55;
-  const bmr = 10 * w + 6.25 * h - 5 * a + (g === 'male' ? 5 : -161);
+  const bmr = mifflinStJeorBmr(w, h, a, g);
   const tdee = bmr * factor;
   const cal = Math.trunc(tdee + p.calorieAdj);
   const protein = Math.trunc(w * p.proteinGPerKg);

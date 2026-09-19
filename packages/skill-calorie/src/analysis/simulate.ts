@@ -2,17 +2,20 @@
  *
  * 线性外推 + ±2σ 按 sqrt(天数) 扩张；<14 天数据降级（MIN_DAYS=14）。
  * KCAL_PER_KG（＝7700）：正本自 #717 批④ 起住共用位 `shared/kcalPerKg.ts`，本件按原名转出；
- * HEALTHY_RATE=[0.5, 1.0] kg/周（本域自用，未上共用位）。
+ * HEALTHY_RATE（0.5–1.0 kg/周）＝**目标速率**，正本住 `shared/healthRate.ts` 的 `TARGET_RATE`，
+ * 本件按原名转出（同处还有「缺口折算的容差带」`DEFICIT_RATE_TOLERANCE`，别混用）。
  * L6 开放式分析留 AI：此处只做规则外推，不做自由文本建议。
  */
 import { seriesAvg } from './series.js';
 import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
+import { TARGET_RATE } from '../shared/healthRate.js';
 
 export const SIM_MIN_DAYS = 14;
 export { KCAL_PER_KG };
-export const HEALTHY_RATE: [number, number] = [0.5, 1.0];
+/** 目标速率（kg/周）：定目标时的合理区间（正本 `shared/healthRate.ts` 的 `TARGET_RATE`）。 */
+export const HEALTHY_RATE: readonly [number, number] = TARGET_RATE;
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;

@@ -4,6 +4,9 @@ import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
 import { HEALTHY_RATE, KCAL_PER_KG, SIM_MIN_DAYS } from './simulate.js';
 import type { SimBase, SimPoint } from './simulate.js';
+/* #717 批④：本件判「缺口水平靠不靠谱」用的是**容差带**（0.3–1.2），不是目标速率（0.5–1.0）——
+   两者从前都是裸数字，现在各自具名、正本都在共用位（本件原写 `weekly >= 0.3 && weekly <= 1.2`）。 */
+import { DEFICIT_RATE_TOLERANCE } from '../shared/healthRate.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -192,7 +195,7 @@ export function calorieDeficitEta(series: DaySeries[], title: string, kind = 'ca
   if (df.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录', df.length + ' 天摄入+运动记录');
   const avgDf = df.reduce((a, b) => a + b, 0) / df.length;
   const weekly = (avgDf * 7) / KCAL_PER_KG;
-  const healthy = weekly >= 0.3 && weekly <= 1.2;
+  const healthy = weekly >= DEFICIT_RATE_TOLERANCE[0] && weekly <= DEFICIT_RATE_TOLERANCE[1];
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: (series[series.length - 1] as DaySeries).date, days: series.length,

@@ -7,7 +7,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
-import { EX_ALIVE, getActivityFactor, shiftISODate, todayISO } from './utils.js';
+import { EX_ALIVE, getActivityFactor, mifflinStJeorBmr, shiftISODate, todayISO } from './utils.js';
 /* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 
@@ -168,7 +168,7 @@ export function deriveReview(db: DatabaseSync, dims: FiveDims, today: string = t
   const latestWeight = dims.weightLogs.length > 0 ? (dims.weightLogs[dims.weightLogs.length - 1] as WeightLogPoint).weightKg : null;
   const prof = dims.userProfile;
   const tdee = latestWeight && prof.heightCm
-    ? round((10 * latestWeight + 6.25 * (prof.heightCm as number) - 5 * prof.age + (prof.gender === 'male' ? 5 : -161)) * getActivityFactor(prof.activityLevel))
+    ? round(mifflinStJeorBmr(latestWeight, prof.heightCm, prof.age, prof.gender) * getActivityFactor(prof.activityLevel))
     : 1800;
   const intakeSummary = completeIntake.length > 0
     ? {
