@@ -38,7 +38,7 @@ importers:
         specifier: ^0.2.6
         version: link:../plugin-manager
       skill-bill:
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../skill-bill
     devDependencies:
       '@types/react':

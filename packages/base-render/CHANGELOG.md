@@ -1,5 +1,14 @@
 # base-paint
 
+## 0.3.4
+
+### Minor Changes
+
+- 新增对外子路径 `./docShell`（文档骨架件，对外 `renderDocShell`，票 #725）：卡路里与账单两侧的文档页
+  改走它，两侧产物逐字节不变。**发布顺序**：这两个技能此后按 `base-paint/docShell` 取件，本版必须先于它们
+  落 registry —— 判据与复现见 `tooling/check-registry-exports.mjs` 件头。
+- 版本号随「三包版本锁步」与 `base-link-core`／`base-combos` 一同抬到 0.3.4（这两包内容无改动，只为版本逐字相等）。
+
 ## 0.3.3
 
 ### Patch Changes

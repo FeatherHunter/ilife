@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
 # 饼干记账技能线发版 wizard：共享层前置 ＋ skill-bill（共 2 包，人扫码）
-#   base-paint 0.3.2（**必须先发**：skill-bill 的 HELP 交付链 import 它的
-#     `./save-html`（`helpReuseWindowOf`），而 registry 上的 0.3.1 没有这个导出。
-#     base-paint 归属 packages/base-render，本脚本只在它缺席时代发一步，
-#     不替它建自己的 wizard。）
-#   skill-bill 0.2.0（含 402 写入 16 词 ＋ 403 查询 17 词：WAKE_TABLE 77 短语、
+#   base-paint 0.3.4（前置：skill-bill 的 HELP 交付链 import 它的 `./save-html`
+#     （`helpReuseWindowOf`）与 `./docShell`（#725）；registry 上缺这两条子路径，
+#     技能装到第三方就起不来。base-paint 归属 packages/base-render，本脚本只在它
+#     缺席时代发一步，不替它建自己的 wizard；本批它已在同一窗口发过，这里会跳过。）
+#   skill-bill 0.2.1（含 402 写入 16 词 ＋ 403 查询 17 词：WAKE_TABLE 77 短语、
 #     16 运行时 key、7 域 74 场景 HELP、16 件模板）
 #
 # 插件 dsh-bill-ilife 不在本脚本发 —— 走
@@ -209,8 +209,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_BASEPAINT="0.3.2"
-V_SKILL="0.2.0"
+V_BASEPAINT="0.3.4"
+V_SKILL="0.2.1"
 
 # 目录名（非 npm 名）
 D_BASEPAINT="base-render"
@@ -330,10 +330,10 @@ pause "清单没问题？按回车进入发布（下面开始弹浏览器了）"
 
 # ── Stage 4：发 base-paint（**必须先发**：skill-bill 运行时 import 它）──
 stage "4/6 · 发布 base-paint@$V_BASEPAINT（你扫码）★ 这一步必须先做"
-say "共享渲染层。**本批发它的唯一原因**：skill-bill 的 HELP 交付链 import"
-say "'base-paint/save-html' 的 helpReuseWindowOf，而 registry 上的 0.3.1 没有这个导出"
-say "（实测：does not provide an export named 'helpReuseWindowOf'）—— 不先发这一版，"
-say "skill-bill 装到第三方就起不来。"
+say "共享渲染层。skill-bill 的 HELP 交付链 import 'base-paint/save-html' 的"
+say "helpReuseWindowOf；registry 上若没有这一版，skill-bill 装到第三方就起不来"
+say "（0.3.1 就缺这个导出，实测 does not provide an export named 'helpReuseWindowOf'）。"
+say "本批 registry 已有 base-paint@$V_BASEPAINT，故这一步会直接跳过。"
 if already base-paint "$V_BASEPAINT"; then
   warn "registry 已有 base-paint@$V_BASEPAINT —— 跳过本次发布。"
 else
@@ -348,7 +348,7 @@ fi
 
 # ── Stage 5：发 skill-bill ────────────────────────────────────────────
 stage "5/6 · 发布 skill-bill@$V_SKILL（你扫码）"
-say "饼干记账技能 0.2.0：402 写入 16 词 ＋ 403 查询 17 词（WAKE_TABLE 77 短语、"
+say "饼干记账技能 0.2.1：402 写入 16 词 ＋ 403 查询 17 词（WAKE_TABLE 77 短语、"
 say "16 运行时 key、7 域 74 场景 HELP、16 件模板），唯一出口 bill-cmd-read。"
 if already skill-bill "$V_SKILL"; then
   warn "registry 已有 skill-bill@$V_SKILL —— 跳过本次发布（不重复占版本号）。"

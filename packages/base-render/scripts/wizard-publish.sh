@@ -223,6 +223,8 @@ fi
 say "$PKG 无 workspace: 外泄 ✓"
 say "产物新鲜度：dist 必须含 #693 的修复行"
 DIR="$DIR" node -e 'const fs=require("fs");const q=String.fromCharCode(39);const t=fs.readFileSync(process.env.DIR+"/dist/helpShell.js","utf8");const needle="stack.className = "+q+"hm-toast-stack"+q;const ok=t.includes(needle);console.log("  dist/helpShell.js 含修复行: "+ok);if(!ok){console.error("  ✗ 先跑 node node_modules/typescript/bin/tsc -b "+process.env.DIR);process.exit(1)}'
+say "对外子路径：package.json 的 exports 必须含 ./docShell（#725 的交付；缺它，两个技能在第三方装起来就崩）"
+DIR="$DIR" node -e 'const j=require("./"+process.env.DIR+"/package.json");const ok=Object.keys(j.exports||{}).includes("./docShell");console.log("  exports 含 ./docShell: "+ok);if(!ok){console.error("  ✗ 先补 exports 再发");process.exit(1)}'
 note "注：dist 是共享产物。若同刻有别的席位在重编 base-render，产物可能处于混合态——本预检只看修复行，发布前请确认没有并发重编。"
 say "打包预览（--dry-run，不落盘）："
 ( cd "$ROOT/$DIR" && npm pack --dry-run --json 2>/dev/null ) | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s)[0];console.log("  "+j.name+"@"+j.version+"   文件数 "+j.files.length+"   含 dist/helpShell.js: "+j.files.some(f=>f.path==="dist/helpShell.js"))})'
@@ -261,7 +263,7 @@ PV=$(npm view $PKG version --registry="$REG" --prefer-online 2>/dev/null || true
 say "  $PKG 线上：$PV（期望 $WANT）"
 say "依赖里不得出现 workspace:（下方无输出＝通过）："
 npm view $PKG@"$WANT" dependencies --registry="$REG" --prefer-online 2>/dev/null | grep -i 'workspace' || say "  $PKG：无 workspace: ✓"
-say "线上 exports 抽查（应含 ./help-shell）："
+say "线上 exports 抽查（应含 ./help-shell 与 ./docShell）："
 npm view $PKG@"$WANT" exports --registry="$REG" --prefer-online 2>/dev/null | sed 's/^/  /'
 if [[ "$PV" == "$WANT" ]]; then
   say "$PKG@$WANT 已上架。"

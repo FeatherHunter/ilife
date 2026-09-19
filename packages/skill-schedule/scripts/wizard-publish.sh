@@ -3,7 +3,7 @@
 # 作息管家技能线发版 wizard：skill-schedule（共 1 包，人扫码）
 #   skill-schedule 0.2.1（作息记录／复盘／计划／飞书同步；契约键 schedule.help.lookup）
 #
-# 前提：base-paint@0.3.2 已在 registry（2026-09-16 随饼干线落上去），
+# 前提：base-paint@0.3.4 已在 registry（2026-09-19 随 #725 的 docShell 子路径落上去），
 # 本脚本只断言它在位，不重发。
 # 插件 dsh-schedule-ilife 不在本脚本发 —— 走
 # packages/plugin-schedule-ilife/scripts/wizard-publish.sh（技能必须先落 registry，
@@ -205,7 +205,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
 V_SKILL="0.2.1"
-V_BASEPAINT="0.3.2"
+V_BASEPAINT="0.3.4"
 
 # 目录名（非 npm 名）
 D_SKILL="skill-schedule"
