@@ -275,9 +275,9 @@ describe('#696 居家设置页 · 配置面', () => {
       const buttons = nodesOfType(withBrowse, 'button');
       assert.equal(buttons.length, 1, '目录行恰一枚按钮');
       assert.equal(buttons[0].props.type, 'button');
-      assert.match(textOf(buttons[0]), /浏览/, '只有应用内浏览这一档写「浏览…」（#744）');
+      assert.match(textOf(buttons[0]), /浏览/);
       assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {} }), 'button').length, 0,
-        'onBrowse 缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
+        '入口缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
       assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').length, 0,
         '非目录行不画按钮');
       assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'input').length, 1,
@@ -287,17 +287,20 @@ describe('#696 居家设置页 · 配置面', () => {
     it('点按钮 → 唤一次 pick → 按**平台信封**回填该行；取消一字不动', async () => {
       const seen = [];
       const picker = { pick: async () => { seen.push('pick'); return { ok: true, value: 'D:\\爱生活数据' }; } };
-      const browseHandler = createBrowseHandler({
-        picker,
-        onChange: (k, v) => seen.push([k, v]),
-        onUnavailable: (m) => seen.push(['!', m]),
-      });
       const node = Row({
         item: CONFIG_ITEMS.find((i) => i.key === 'db.dir'),
         value: '',
         disabled: false,
         onChange: (k, v) => seen.push([k, v]),
-        browser: { mode: 'native', onOpen: (k) => browseHandler(k) },
+        browser: {
+          mode: 'native',
+          onOpen: (key) =>
+            createBrowseHandler({
+              picker,
+              onChange: (k, v) => seen.push([k, v]),
+              onUnavailable: (m) => seen.push(['!', m]),
+            })(key),
+        },
       });
       const clicked = nodesOfType(node, 'button')[0].props.onClick();
       assert.equal(typeof clicked?.then, 'function', '按钮的 onClick 要回那枚 Promise（用例据此可判）');
