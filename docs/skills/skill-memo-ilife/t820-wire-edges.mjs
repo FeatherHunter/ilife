@@ -18,19 +18,23 @@ const CHILDREN = {
   1: 821, 2: 822, 3: 823, 4: 824, 5: 825,
   6: 826, 7: 827, 8: 828, 9: 829, 10: 830, 11: 831, 12: 832, 13: 833,
   14: 834, 15: 835,
+  // 执行期新增（票 1 关票时顺势开出）
+  16: 837, 17: 838,
 };
 
 /** 阻塞图：子票序 -> 阻塞它的那些子票序。 */
 const BLOCKED_BY = {
   1: [],
-  2: [1],
-  3: [1, 2],
+  2: [1, 16],
+  3: [1, 2, 16],
   4: [2],
   5: [2],
-  6: [2, 3, 4], 7: [2, 3, 4], 8: [2, 3, 4], 9: [2, 3, 4],
-  10: [2, 3, 4], 11: [2, 3, 4], 12: [2, 3, 4], 13: [2, 3, 4],
+  6: [2, 3, 4, 17], 7: [2, 3, 4, 17], 8: [2, 3, 4, 17], 9: [2, 3, 4, 17],
+  10: [2, 3, 4, 17], 11: [2, 3, 4, 17], 12: [2, 3, 4, 17], 13: [2, 3, 4, 17],
   14: [5, 6, 7, 8, 9, 10, 11, 12, 13],
   15: [14],
+  16: [],
+  17: [16],
 };
 
 const gh = (args) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim();
@@ -101,21 +105,27 @@ for (const [seqStr, blockers] of Object.entries(BLOCKED_BY)) {
 }
 
 // ── 4 逐票校验阻塞边数 ──────────────────────────────────────────────────────
+// ⚠️ 口径（踩过一次）：GitHub 的 `blocked_by` **只数未关的**阻塞票，是「现场闸门」；
+//    `total_blocked_by` 才数**声明的全部边**（含已关的）。校验「边建了没有」必须用后者，
+//    前者随阻塞票关票会变小 —— 那是正常的，不是漏建。
 let depTotal = 0;
 let depExpectedTotal = 0;
+let openGate = 0;
 for (const [seqStr, blockers] of Object.entries(BLOCKED_BY)) {
   const seq = Number(seqStr);
   const child = CHILDREN[seq];
   const raw = JSON.parse(gh(['api', `repos/${REPO}/issues/${child}`, '--paginate']));
   const summary = raw.issue_dependencies_summary ?? {};
-  const actual = Number(summary.blocked_by ?? 0);
+  const actual = Number(summary.total_blocked_by ?? 0);
   const expected = blockers.length;
   depTotal += actual;
   depExpectedTotal += expected;
+  openGate += Number(summary.blocked_by ?? 0);
   if (actual !== expected) fail.push(`#${child}（序 ${seq}）阻塞边 expected ${expected} ≠ actual ${actual}`);
 }
 if (depTotal === depExpectedTotal) ok.push(`阻塞边合计 expected ${depExpectedTotal} = actual ${depTotal}（新增 ${addedDep}）`);
 else fail.push(`阻塞边合计 expected ${depExpectedTotal} ≠ actual ${depTotal}`);
+ok.push(`其中未关的阻塞票合计 ${openGate} 条（＝当前真实闸门，随关票会下降）`);
 
 // ── 汇总 ────────────────────────────────────────────────────────────────────
 console.log('');
