@@ -16,6 +16,9 @@
  *
  * #696：本文件原先是「最小静态注册，不取数，故无 connection」。设置页要读改配置，
  * 按 #56 卡路里／#677 记账／#696 大厨先例补上 connection 两侧（host 注册 ＋ client 调用），其余面不动。
+ *
+ * #734：本文件末尾补模型工具面三枚镜像（`ToolTextPart`／`ToolDefinitionMirror`／`ToolsFace`），
+ * `SkillHostCtx` 加可选 `tools` 面——出处与形状见末尾那段的文档注释。
  */
 
 /** 爱生活页签槽注册项（cookbook §11 options 全形子集，只取本次用到的面）。 */
@@ -116,6 +119,8 @@ export interface HostConnectionFace {
 /** 本插件用到的宿主面（apply 入参）。 */
 export interface SkillHostCtx {
   readonly skills: SkillsFace;
+  /** 模型工具注册表（#734）：本包把技能唯一出口开成 agent 工具。 */
+  readonly tools?: ToolsFace;
   /** 宿主连接面：设置页的三个配置端点注册在这上面（#696 起用）。 */
   readonly connection?: HostConnectionFace;
   /** 卸载清理登记。 */
@@ -130,4 +135,30 @@ export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
  * 不给 signal（平台那格可选），用户取消回 `null`。 */
 export interface DirectoryPickerFace {
   pick(): Promise<string | null>;
+}
+
+/** 模型工具面镜像（#734；出处见 cookbook §14）。
+ *
+ * 出处：`@deepseek-ai/dsh-tools/lib/index.js` 的 `defineTool` 与 `ToolRuntime.register`——
+ * 工具对象的形状是 `name`／`description`／`parameters`（JSON Schema）／`output{schema,render}`／
+ * `execute`；`register` 只校验 `output.render` 是函数、`output.schema` 受支持、`timeoutMs` 为正、
+ * 名字不是保留名 `run_code`，**不要求 `defineTool` 产物** ⇒ 本包按形状手写、零依赖。 */
+export interface ToolTextPart {
+  readonly type: 'text';
+  readonly text: string;
+}
+
+export interface ToolDefinitionMirror {
+  readonly name: string;
+  readonly description: string;
+  readonly parameters: Record<string, unknown>;
+  readonly output: {
+    readonly schema: Record<string, unknown>;
+    render(args: unknown, value: string): readonly ToolTextPart[];
+  };
+  execute(args: Record<string, unknown>, exec?: unknown): Promise<unknown>;
+}
+
+export interface ToolsFace {
+  register(definition: ToolDefinitionMirror): () => void;
 }

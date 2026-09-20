@@ -18,9 +18,10 @@ import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_C
 import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
 import type { HostCtx, HostConnectionFace, RpcHandler } from './dsh-ctx.js';
+import { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
 
 export const name = 'dsh-memo-ilife';
-export const inject: readonly string[] = ['connection', 'webServer', 'skills'];
+export const inject: readonly string[] = ['connection', 'webServer', 'skills', 'tools'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -71,6 +72,20 @@ export function apply(ctx: HostCtx): void {
     // 提供方是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让；他错重抛。
     if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
     logger.warn?.('[dsh-memo-ilife] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
+  }
+  // #734 路线①：把技能唯一出口开成 agent 工具。宿主进程里 spawn（自带运行时，不读 PATH），
+  // 纯 DSH 机器上会话没有 `node` 也照样能用。契约与两级回退见 docs/agents/技能调用契约.md。
+  try {
+    const disposeTool = ctx.tools?.register(createSkillTool());
+    if (disposeTool) ctx.effect(() => disposeTool, 'dsh-memo-ilife: skill tool cleanup');
+    else logger.warn?.('[dsh-memo-ilife] tools face missing; agent tool ' + SKILL_TOOL_NAME + ' not registered');
+  } catch (error) {
+    // 工具名是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让（提供方／通道退让同形）。
+    if (/already registered|duplicate/.test(String((error as Error)?.message ?? error))) {
+      logger.warn?.('[dsh-memo-ilife] agent tool ' + SKILL_TOOL_NAME + ' already registered by another instance; yielding');
+    } else {
+      throw error;
+    }
   }
   // #80：迁移到 DSH 公开的 /api 载体（ctx.connection.fetch.register）。
   // 旧写法 ctx.connection.rpc.handle() 会以 connection 服务自身的 Context 去调
@@ -124,4 +139,5 @@ export type { ReadPayload, SavePayload, ConfigSurfaceReply, RpcError, RpcResult 
 // 「The requested module './client.js' does not provide an export named 'CLIENT_COMPONENT'」而整棵树起不来；
 // 连 type-only 引用也会把 client.ts 拉进宿主 `tsc -b` 的编译程序，把 loader 工厂包覆写成裸 ESM。
 export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, parseSkillText, provider as skillProvider } from './skill-provider.js';
+export { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
 export type { SkillCandidate, SkillDefinition, SkillProvider, SkillInvocationPolicy, SkillsFace } from './dsh-ctx.js';

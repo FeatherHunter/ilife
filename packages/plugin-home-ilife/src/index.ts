@@ -10,15 +10,19 @@
  * #696：本包原先**没有任何 RPC 通道**。设置页要读改配置，这里照大厨那份补齐：
  * `inject` 加 `connection`／`webServer`，`apply` 注册 `/api/ilife-home-ilife` 路由，端点分发到 bridge 的
  * 三个配置口。client 侧禁 node，只经这条通道取用。
+ *
+ * #734 路线①：`inject` 加 `tools`，`apply` 把技能唯一出口注册成 agent 工具（见 skill-tool.ts）——
+ * 宿主进程里 spawn 技能出口，不经会话 shell、不读 PATH（照 #56 卡路里／#150 记账同形）。
  */
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, ok, fail, parseSavePayload } from './contract.js';
 import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 import type { RpcHandler, SkillHostCtx } from './dsh-ctx.js';
+import { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
 
 export const name = 'dsh-home-ilife';
-export const inject: readonly string[] = ['skills', 'connection', 'webServer'];
+export const inject: readonly string[] = ['skills', 'connection', 'webServer', 'tools'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -63,6 +67,20 @@ export function apply(ctx: SkillHostCtx): void {
     // 提供方是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让；他错重抛。
     if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
     logger.warn?.('[dsh-home-ilife] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
+  }
+  // #734 路线①：把技能唯一出口开成 agent 工具。宿主进程里 spawn（自带运行时，不读 PATH），
+  // 纯 DSH 机器上会话没有 `node` 也照样能用。契约与两级回退见 docs/agents/技能调用契约.md。
+  try {
+    const disposeTool = ctx.tools?.register(createSkillTool());
+    if (disposeTool) ctx.effect?.(() => disposeTool, 'dsh-home-ilife: skill tool cleanup');
+    else logger.warn?.('[dsh-home-ilife] tools face missing; agent tool ' + SKILL_TOOL_NAME + ' not registered');
+  } catch (error) {
+    // 工具名是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让（提供方／通道退让同形）。
+    if (/already registered|duplicate/.test(String((error as Error)?.message ?? error))) {
+      logger.warn?.('[dsh-home-ilife] agent tool ' + SKILL_TOOL_NAME + ' already registered by another instance; yielding');
+    } else {
+      throw error;
+    }
   }
 
   const conn = ctx.connection;
@@ -117,3 +135,4 @@ export type { SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './con
 // 连 type-only 引用也会把 client.ts 拉进宿主 `tsc -b` 的编译程序，把 loader 工厂包覆写成裸 ESM。
 export { PROVIDER_NAME, SKILL_NAME, BUNDLED_SKILL_RANK, SKILL_FILE, skillDir, skillFile, parseSkillText, provider as skillProvider } from './skill-provider.js';
 export type { SkillCandidate, SkillDefinition, SkillProvider, SkillInvocationPolicy, SkillsFace, SkillHostCtx, ClientCtx, RpcCallFace } from './dsh-ctx.js';
+export { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';

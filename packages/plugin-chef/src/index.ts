@@ -16,9 +16,10 @@ import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
 import type { RpcHandler, SkillHostCtx } from './dsh-ctx.js';
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
+import { SKILL_TOOL_NAME, createSkillTool } from './skill-tool.js';
 
 export const name = 'dsh-chef';
-export const inject: readonly string[] = ['skills', 'connection', 'webServer'];
+export const inject: readonly string[] = ['skills', 'connection', 'webServer', 'tools'];
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -63,6 +64,20 @@ export function apply(ctx: SkillHostCtx): void {
     // 提供方是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让；他错重抛。
     if (!String((error as Error)?.message ?? error).includes('already registered')) throw error;
     logger.warn?.('[dsh-chef] skill provider ' + PROVIDER_NAME + ' already registered by another instance; yielding');
+  }
+  // #734 路线①：把技能唯一出口开成 agent 工具。宿主进程里 spawn（自带运行时，不读 PATH），
+  // 纯 DSH 机器上会话没有 `node` 也照样能用。契约与两级回退见 docs/agents/技能调用契约.md。
+  try {
+    const disposeTool = ctx.tools?.register(createSkillTool());
+    if (disposeTool) ctx.effect?.(() => disposeTool, 'dsh-chef: skill tool cleanup');
+    else logger.warn?.('[dsh-chef] tools face missing; agent tool ' + SKILL_TOOL_NAME + ' not registered');
+  } catch (error) {
+    // 工具名是宿主按名去重的单例：重装配时上一实例可能已注册，此时退让（提供方／通道退让同形）。
+    if (/already registered|duplicate/.test(String((error as Error)?.message ?? error))) {
+      logger.warn?.('[dsh-chef] agent tool ' + SKILL_TOOL_NAME + ' already registered by another instance; yielding');
+    } else {
+      throw error;
+    }
   }
 
   const conn = ctx.connection;
@@ -109,6 +124,7 @@ export { SETTINGS_OWNER, SETTINGS_SLOT, CONFIG_STEM, CONFIG_ITEMS, COMMON_ITEM_C
 export type { ConfigItem, ConfigTier, ConfigControl } from './settings.js';
 export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, resolveNodeBin, SPAWN_TIMEOUT_MS, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, CONFIG_CHECK_KEY } from './bridge.js';
 export { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, ok, fail, parseSavePayload, isRpcResult } from './contract.js';
+export { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
 export type { SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './contract.js';
 // 宿主**不**导出 `./client.js` 的值也不引用它的类型（#218 拆雷）：客户端产物是 **loader 工厂包**
 // （`window.__ModuleLoader__.load({id, factory})` 的 CJS，由 tsdown 打），不是 ESM 模块——
