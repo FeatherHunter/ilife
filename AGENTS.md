@@ -40,6 +40,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 写／改技能包或 DSH 插件之前读 `docs/agents/技能调用契约.md`：**技能侧**只声明「唯一出口 ＋ 与宿主无关的调用形态」（不许出现 `dsh-`／`DSH_`／仓内相对路径，也不许假设 PATH 里有自家命令名）；**插件侧**负责「装上插件＝技能装好」并给 agent 一条在 DSH 里真能用的调用通道（入口按包 `bin` 声明解析、运行时用 `resolveNodeBin(process.execPath)`，不读 PATH）。背景：DSH 会话 PATH 上只有 `dsh`／`pnpm` 两条命令，纯 DSH 机器上会话里连 `node` 都没有。
 
+### 发版（npm 发布）
+
+要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才登录并发布**」逐个处理 16 个包（公共层三包 ＋ 六家技能 ＋ 七家插件），顺序依赖先行，2FA 每次由人批准。**必须在侧边栏终端用 `pwsh -NoProfile -File tooling\wizard-publish.ps1` 跑**——Windows 上 `powershell`（5.1）按 GBK 读本文件的中文会解析失败。
+
 ### 编排纪律
 
 切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
