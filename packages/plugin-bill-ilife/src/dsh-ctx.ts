@@ -1,4 +1,5 @@
-/** DSH ctx 最小镜像（只含本仓实际使用的面；type-only，构建期擦除，零运行时）。
+/** DSH ctx 最小镜像（只含本仓实际使用的面；**除末尾那枚服务名常量外全是 type-only**，
+ * 构建期擦除——那枚常量是为 #736 的目录选择软依赖加的，是本文件唯一的运行期值）。
  *
  * skills 面出处见 `docs/agents/dsh-client-contract.md` §12（#56 卡路里样板，#150 记账同形）：
  *   `ctx.skills.registerProvider(create)`（`dsh-skill/lib/index.js:147`）；

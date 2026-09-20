@@ -23,8 +23,9 @@ export const CONFIG_STEM = 'calorie' as const;
 /** 分级：常用项直接画在页面上，其余进默认收起的「高级」组（#675 冻结口径）。 */
 export type ConfigTier = 'common' | 'advanced';
 
-/** 控件种类：只有这三种（与受限 YAML 子集的字符串／数字／布尔一一对应，没有数组）。 */
-export type ConfigControl = 'text' | 'number' | 'switch';
+/** 控件种类：只有这四种（前三种与受限 YAML 子集的字符串／数字／布尔一一对应，没有数组；
+ * `directory` 是**字符串那一档的页面形态**——取值仍是串，只是多一个唤起系统文件夹选择器的入口，见 #736）。 */
+export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
 
 export interface ConfigItem {
   /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `xunji.stateDir`。 */
@@ -43,7 +44,7 @@ const COMMON: readonly ConfigItem[] = [
     key: 'db.dir',
     title: '数据目录',
     tier: 'common',
-    control: 'text',
+    control: 'directory',
     hint: '库文件与各类产物的根目录。留空＝按默认落点（配置目录下的 data/），也就是改造前那个位置。',
   },
   {
@@ -64,7 +65,7 @@ const COMMON: readonly ConfigItem[] = [
     key: 'photos.dir',
     title: '照片目录',
     tier: 'common',
-    control: 'text',
+    control: 'directory',
     hint: '身材照的存放目录，绝对路径。留空＝未配：读照片不报错，出 GIF 与写照片会被拦下。',
   },
   {
@@ -89,7 +90,7 @@ const ADVANCED: readonly ConfigItem[] = [
     key: 'xunji.stateDir',
     title: '训记状态文件目录',
     tier: 'advanced',
-    control: 'text',
+    control: 'directory',
     hint: '限频记账点与同步游标放哪。留空＝家目录下的 .mavis，也就是改造前那个位置。',
   },
   {

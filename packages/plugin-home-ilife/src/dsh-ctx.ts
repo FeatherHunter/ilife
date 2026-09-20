@@ -122,3 +122,12 @@ export interface SkillHostCtx {
   effect?(callback: () => void, label?: string): void;
   readonly logger?: unknown;
 }
+
+/** 宿主目录选择命名空间的服务名（#736；出处与禁令见 cookbook §13）。 */
+export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
+
+/** 宿主目录选择命名空间（DSH 平台提供）。本包**只用 `pick` 这一格**：
+ * 不给 signal（平台那格可选），用户取消回 `null`。 */
+export interface DirectoryPickerFace {
+  pick(): Promise<string | null>;
+}

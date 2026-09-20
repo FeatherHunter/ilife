@@ -1,4 +1,4 @@
-/** DSH ctx 最小镜像：只含本仓实际使用的面（type-only，构建期擦除，零运行时）。
+/** DSH ctx 最小镜像：只含本仓实际使用的面（除末尾那枚服务名常量外全是 type-only，构建期擦除）。
  *
  * 每条成员的用法出处见 docs/agents/dsh-client-contract.md（附源码路径+行）。
  * 禁止加镜外成员：要用新能力，先在 cookbook 落出处，再加镜像。用 `import type` 引用本文件。
@@ -85,4 +85,13 @@ export interface HostCtx {
   readonly skills: SkillsFace;
   effect(callback: () => ((() => void) | void), label?: string): () => void;
   readonly logger?: unknown;
+}
+
+/** 宿主目录选择命名空间的服务名（#736；出处与禁令见 cookbook §13）。 */
+export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
+
+/** 宿主目录选择命名空间（DSH 平台提供）。本包**只用 `pick` 这一格**：
+ * 不给 signal（平台那格可选），用户取消回 `null`。 */
+export interface DirectoryPickerFace {
+  pick(): Promise<string | null>;
 }

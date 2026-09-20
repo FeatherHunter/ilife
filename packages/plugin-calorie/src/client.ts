@@ -11,7 +11,7 @@
  * （betterSidebar 服务可能晚于本模块到达，最多 10 次、间隔 1000ms；卸载清理）。
  * 样式：React 内联 style + DSH 主题别名（var(--dsw-alias-*)，带回退），无外部样式表、
  * 无 <style> 注入、无类名冲突；只用 dsh-ctx 镜像内成员（slots.inject/register、
- * connection.rpc.call 经闭包现取、betterSidebar 经 ctx.get 运行时取）；
+ * connection.rpc.call 经闭包现取、betterSidebar 与 #736 的目录选择命名空间经 ctx.get 运行时取）；
  * 取数只经 connection.rpc.call 进 host 通道；缺席/错误纯条件渲染，不返空冒充。
  * 组件 React.createElement 手写，不引入 JSX。
  *
@@ -27,8 +27,11 @@ import type { ConfigSurfaceReply } from './contract.js';
 import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
 import type { ConfigItem } from './settings.js';
-import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
+import { REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
+import type { ClientCtx, RpcCallFace, RpcCallResult, DirectoryPickerFace } from './dsh-ctx.js';
 
+/** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
+ * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
 export const inject = ['slots', 'connection'];
 
 /** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
@@ -42,31 +45,30 @@ const S = {
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
     background: 'var(--dsw-alias-bg-base, transparent)',
     color: 'var(--dsw-alias-label-primary, inherit)',
-    fontSize: 13,
     lineHeight: 1.6,
   } as React.CSSProperties,
-  title: { fontSize: 14, fontWeight: 700, marginBottom: 8 } as React.CSSProperties,
+  title: { fontSize: '1.08em', fontWeight: 700, marginBottom: 8 } as React.CSSProperties,
   total: { fontSize: 22, fontWeight: 700, margin: '2px 0 4px' } as React.CSSProperties,
-  muted: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12 } as React.CSSProperties,
-  error: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: 13 } as React.CSSProperties,
-  okText: { color: 'var(--dsw-alias-state-success-primary, #12805c)', fontSize: 12.5 } as React.CSSProperties,
+  muted: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: '0.92em'} as React.CSSProperties,
+  error: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: '1em'} as React.CSSProperties,
+  okText: { color: 'var(--dsw-alias-state-success-primary, #12805c)', fontSize: '0.96em'} as React.CSSProperties,
   rows: { marginTop: 8, borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))', paddingTop: 8 } as React.CSSProperties,
   version: {
     marginTop: 8,
     paddingTop: 8,
     borderTop: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.25))',
     color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
-    fontSize: 12,
+    fontSize: '0.92em',
   } as React.CSSProperties,
   info: {
+    fontSize: '0.92em',
     margin: '6px 0 0',
-    font: '12px/1.5 ui-monospace,Consolas,monospace',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
-    wordBreak: 'break-all',
+    overflowWrap: 'anywhere',
   } as React.CSSProperties,
   row: { marginTop: 10 } as React.CSSProperties,
-  label: { fontSize: 12.5, fontWeight: 600 } as React.CSSProperties,
-  hint: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 11.5, margin: '1px 0 4px' } as React.CSSProperties,
+  label: { fontWeight: 600 } as React.CSSProperties,
+  hint: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: '0.92em', margin: '1px 0 4px' } as React.CSSProperties,
   input: {
     width: '100%',
     boxSizing: 'border-box',
@@ -75,7 +77,17 @@ const S = {
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
     background: 'var(--dsw-alias-bg-base, transparent)',
     color: 'var(--dsw-alias-label-primary, inherit)',
-    font: '12.5px/1.5 ui-monospace,Consolas,monospace',
+  } as React.CSSProperties,
+  pickRow: { display: 'flex', gap: 6, alignItems: 'center' } as React.CSSProperties,
+  btnPick: {
+    flex: '0 0 auto',
+    padding: '4px 10px',
+    borderRadius: 6,
+    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
   } as React.CSSProperties,
   bar: { marginTop: 14, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } as React.CSSProperties,
   btn: {
@@ -84,7 +96,6 @@ const S = {
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
     background: 'var(--dsw-alias-bg-base, transparent)',
     color: 'var(--dsw-alias-label-primary, inherit)',
-    fontSize: 12.5,
     cursor: 'pointer',
   } as React.CSSProperties,
   btnPrimary: {
@@ -93,7 +104,6 @@ const S = {
     border: '1px solid var(--dsw-alias-brand-primary, #2f6fed)',
     background: 'var(--dsw-alias-brand-primary, #2f6fed)',
     color: '#fff',
-    fontSize: 12.5,
     cursor: 'pointer',
   } as React.CSSProperties,
   adv: {
@@ -101,7 +111,7 @@ const S = {
     paddingTop: 8,
     borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))',
   } as React.CSSProperties,
-  advSummary: { cursor: 'pointer', fontSize: 12.5, fontWeight: 600 } as React.CSSProperties,
+  advSummary: { cursor: 'pointer', fontWeight: 600 } as React.CSSProperties,
 };
 
 /** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染＋unknown 降级）。
@@ -384,12 +394,71 @@ export function fromDraft(draft: Record<string, string>): Record<string, unknown
   return values;
 }
 
-/** 一行输入（三种控件对齐受限 YAML 子集：文本／数字／布尔）。 */
-function Row(props: {
+/** 目录选择的三种结果（注入 picker 的纯归一：选中／取消／这条路供不了）。 */
+export type PickOutcome =
+  | { readonly kind: 'picked'; readonly path: string }
+  | { readonly kind: 'cancelled' }
+  | { readonly kind: 'unavailable'; readonly message: string };
+
+/** 形状守卫：拿到的那个东西像不像目录选择命名空间（本包只认 `pick` 是函数）。 */
+export function isDirectoryPicker(raw: unknown): raw is DirectoryPickerFace {
+  if (typeof raw !== 'object' || raw === null) return false;
+  return typeof (raw as { pick?: unknown }).pick === 'function';
+}
+
+/** 现取目录选择命名空间：**软依赖**，拿不到回 null（页面据此不出入口）。
+ *
+ * 为什么不用 `inject` 声明：见 cookbook §13——写进声明＝硬依赖，提供方缺席时整包被停靠，
+ * 设置页会跟着装不上。这里按平台给的「可选查找」办：缺席只是没有入口。
+ * 守卫拒绝或提供方中途卸载会抛，一律当「没有」，绝不把设置页带下来。 */
+export function resolveDirectoryPicker(getService: unknown): DirectoryPickerFace | null {
+  if (typeof getService !== 'function') return null;
+  try {
+    const raw = (getService as (name: string) => unknown)(REMOTE_DIRECTORY_PICKER);
+    return isDirectoryPicker(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 唤起一次系统文件夹选择器并归一结果（**永不抛**）。 */
+export async function pickDirectory(picker: DirectoryPickerFace): Promise<PickOutcome> {
+  try {
+    const picked = await picker.pick();
+    if (typeof picked === 'string' && picked.trim() !== '') return { kind: 'picked', path: picked };
+    return { kind: 'cancelled' };
+  } catch (e) {
+    const reason = e instanceof Error ? e.message : String(e);
+    return { kind: 'unavailable', message: '这台部署用不了系统文件夹对话框（' + reason + '）：请直接在框里填绝对路径。' };
+  }
+}
+
+/** 「选择文件夹」按钮的真装配函数（目录行渲染出来的按钮，onClick 就是它）。
+ *
+ * 回 Promise 是为了本地可判（用例直接 await）；接进 React 时调用方 `void` 掉。 */
+export function createBrowseHandler(deps: {
+  readonly picker: DirectoryPickerFace;
+  readonly onChange: (key: string, next: string) => void;
+  readonly onUnavailable: (message: string) => void;
+}): (key: string) => Promise<void> {
+  return async (key: string) => {
+    const outcome = await pickDirectory(deps.picker);
+    if (outcome.kind === 'picked') deps.onChange(key, outcome.path);
+    else if (outcome.kind === 'unavailable') deps.onUnavailable(outcome.message);
+  };
+}
+
+/** 一行输入（四种控件对齐受限 YAML 子集：文本／数字／布尔／目录）。
+ *
+ * 目录档＝文本框 ＋ 一枚唤起系统文件夹选择器的按钮；`onBrowse` 缺席（命名空间拿不到、
+ * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。 */
+export function Row(props: {
   readonly item: ConfigItem;
   readonly value: string;
   readonly disabled: boolean;
   readonly onChange: (key: string, next: string) => void;
+  /** 目录行才有：唤起系统文件夹选择器。 */
+  readonly onBrowse?: ((key: string) => void) | undefined;
 }): React.ReactElement {
   const { item } = props;
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
@@ -409,12 +478,27 @@ function Row(props: {
           spellCheck: false,
           onChange,
         });
+  const browse =
+    item.control === 'directory' && props.onBrowse !== undefined
+      ? React.createElement(
+          'button',
+          {
+            style: S.btnPick,
+            type: 'button',
+            disabled: props.disabled,
+            // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它，
+            // 拿到「唤一次 pick → 回填这一行」的确定性读数（本地可判）。
+            onClick: () => props.onBrowse?.(item.key),
+          },
+          '选择文件夹…',
+        )
+      : null;
   return React.createElement(
     'div',
     { style: S.row },
     React.createElement('div', { style: S.label }, item.title),
     React.createElement('div', { style: S.hint }, item.hint),
-    control,
+    browse === null ? control : React.createElement('div', { style: S.pickRow }, control, browse),
   );
 }
 
@@ -422,8 +506,9 @@ function Row(props: {
  *
  * 三态：loading（一次 RPC 内）／ready（真表单）／failed（人话报错 + 指引，不返空、不转圈）。
  * 没有任何干活入口——查数、记一餐在技能功能页（sidebar槽）。 */
-function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
+function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerFace | null }): React.ReactElement {
   const [state, setState] = React.useState<ConfigState>({ kind: 'loading' });
+  const [pickerGone, setPickerGone] = React.useState(false);
   const [draft, setDraft] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -483,6 +568,23 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
     setNotice(null);
     setError(null);
   }, []);
+
+  /** 目录选择：拿不到命名空间就没有入口；被拒一次即收起入口（不留死按钮）。 */
+  const picker = pickerGone ? null : props.getPicker();
+  const onBrowse = React.useMemo(
+    () =>
+      picker === null
+        ? undefined
+        : createBrowseHandler({
+            picker,
+            onChange,
+            onUnavailable: (message: string) => {
+              setError(message);
+              setPickerGone(true);
+            },
+          }),
+    [picker, onChange],
+  );
 
   const surface = state.kind === 'ready' ? state.surface : null;
   const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values)[i.key] ?? ''));
@@ -555,7 +657,7 @@ function CalorieConfig(props: { getCall: GetCall }): React.ReactElement {
   const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT);
   const advanced = CONFIG_ITEMS.slice(COMMON_ITEM_COUNT);
   const renderRow = (item: ConfigItem) =>
-    React.createElement(Row, { key: item.key, item, value: draft[item.key] ?? '', disabled: busy, onChange });
+    React.createElement(Row, { key: item.key, item, value: draft[item.key] ?? '', disabled: busy, onChange, onBrowse });
 
   return React.createElement(
     'div',
@@ -599,6 +701,10 @@ interface BetterSidebarService {
 export function apply(ctx: ClientCtx): void {
   // 调用口取用器透传给组件（每次取数现取；非函数由组件判缺席）。
   const getCall: GetCall = () => ctx.connection?.rpc?.call ?? null;
+  // #736 目录选择：**软依赖**，每次渲染现取（提供方后到／中途卸载都不留痕）；
+  // 拿不到就只是没有入口，设置页照常（不声明、不停靠，见 cookbook §13）。
+  const getPicker = (): DirectoryPickerFace | null =>
+    typeof ctx.get === 'function' ? resolveDirectoryPicker((name: string) => ctx.get?.(name)) : null;
 
   // (a) 技能设置页 → 爱生活页签槽（总管声明；总管缺席时 inject 等待，不断链）。
   ctx.slots.inject('ilife.config-tab', () =>
@@ -612,7 +718,7 @@ export function apply(ctx: ClientCtx): void {
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
-      () => React.createElement(CalorieConfig, { getCall }),
+      () => React.createElement(CalorieConfig, { getCall, getPicker }),
     ),
   );
 
