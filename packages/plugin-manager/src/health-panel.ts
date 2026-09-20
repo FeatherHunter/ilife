@@ -7,7 +7,7 @@
  */
 import * as React from 'react';
 import { loadHealthReports } from './health-fetch.js';
-import type { HealthCallFace, HealthTabRow } from './health-fetch.js';
+import type { HealthCallFace, HealthFetchRow, HealthTabRow } from './health-fetch.js';
 import { worstStatus } from './health-contract.js';
 import type { HealthReport, HealthStatus } from './health-contract.js';
 
@@ -32,7 +32,10 @@ export function lightOf(row: { readonly report: HealthReport | null } | undefine
   return row?.report ? worstStatus(row.report.items) : null;
 }
 
-/** 体检状态源：挂载时不自动跑（体检要读盘、要起子进程，按需跑），点一次跑六家。 */
+/** 体检状态源：挂载时不自动跑（体检要读盘、要起子进程，按需跑），点一次跑六家。
+ *
+ * **按家增量**（票 #741）：某一家一落定就画那一家——不再等全部齐了才一次性 setRows。
+ * 取数口仍然只有一处（`loadHealthReports`），它把「一家好了」的回调交给这里 patch 状态。 */
 export function useHealthPanel(getCall: () => HealthCallFace | null, tabs: readonly HealthTabRow[]): HealthPanelFace {
   const [rows, setRows] = React.useState<HealthPanelFace['rows']>({});
   const [error, setError] = React.useState<string | null>(null);
@@ -45,19 +48,25 @@ export function useHealthPanel(getCall: () => HealthCallFace | null, tabs: reado
     const targets = tabs;
     setRows(Object.fromEntries(targets.map((tab) => [tab.id, { ...IDLE, phase: 'running' as HealthPhase }])));
     void (async () => {
-      const loaded = await loadHealthReports(getCall(), targets);
-      // 渲染台的调试图（浏览器里没人写它，写入失败无所谓）：只记条数与第一条的错。
+      const patch = (row: HealthFetchRow): void => {
+        // 函数式更新：这家落定时别家可能也刚落定，直接读旧 state 会丢掉那一次。
+        const next = { phase: (row.report ? 'ready' : 'failed') as HealthPhase, report: row.report, error: row.error };
+        setRows((previous) => ({ ...previous, [row.id]: next }));
+        // 只记条数与第一条的错（渲染台的调试图；浏览器里没人写它，写入失败无所谓）。
+        try {
+          const diag = (globalThis as { __T706_RUN__?: string[] }).__T706_RUN__;
+          if (Array.isArray(diag)) diag.push('row=' + row.id + ' ok=' + String(row.report !== null) + ' err=' + String(row.error));
+        } catch {
+          /* 调试图写不进去不影响正经事 */
+        }
+      };
+      const loaded = await loadHealthReports(getCall(), targets, patch);
       try {
         const diag = (globalThis as { __T706_RUN__?: string[] }).__T706_RUN__;
         if (Array.isArray(diag)) diag.push('rows=' + String(loaded.rows.length) + ' err=' + String(loaded.error) + ' first=' + String(loaded.rows[0]?.error ?? 'null'));
       } catch {
         /* 调试图写不进去不影响正经事 */
       }
-      const next: Record<string, { phase: HealthPhase; report: HealthReport | null; error: string | null }> = {};
-      for (const row of loaded.rows) {
-        next[row.id] = { phase: row.report ? 'ready' : 'failed', report: row.report, error: row.error };
-      }
-      setRows(next);
       setError(loaded.error);
       setRunning(false);
     })();

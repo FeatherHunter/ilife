@@ -86,12 +86,27 @@ async function fetchOne(call: HealthCallFace, row: HealthTabRow): Promise<{ read
   }
 }
 
-/** 取六家的体检报告（缺席的包不在此列，由调用方按账本判断）。 */
-export async function loadHealthReports(call: HealthCallFace | null, tabs: readonly HealthTabRow[]): Promise<HealthFetchResult> {
+/** 取六家的体检报告（缺席的包不在此列，由调用方按账本判断）。
+ *
+ * `onRow`（票 #741）：某一家一落定就回调一次——面板据此**按家增量**画，不再等齐全部。
+ * 六家的电话是并发打出去的，但宿主里干活的只有一个线程（各单品宿主半 `spawnSync`），
+ * 所以真实到达顺序就是它们被串行干完的顺序；先回来的那家先画出来，用户才看得见进度。 */
+export async function loadHealthReports(
+  call: HealthCallFace | null,
+  tabs: readonly HealthTabRow[],
+  onRow?: (row: HealthFetchRow) => void,
+): Promise<HealthFetchResult> {
   if (typeof call !== 'function') return { rows: [], error: '宿主连接缺席：connection.rpc.call 不可用' };
   const rows = await Promise.all(tabs.map(async (tab): Promise<HealthFetchRow> => {
     const one = await fetchOne(call, tab);
-    return { id: tab.id, report: one.report, error: one.error };
+    const row: HealthFetchRow = { id: tab.id, report: one.report, error: one.error };
+    // 回调里的异常不许把整批拖下水：这是画图的旁路，不是取数本身。
+    try {
+      onRow?.(row);
+    } catch {
+      /* 旁路失败不影响整批结果 */
+    }
+    return row;
   }));
   return { rows, error: null };
 }

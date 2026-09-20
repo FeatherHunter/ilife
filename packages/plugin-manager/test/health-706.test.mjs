@@ -168,6 +168,35 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.equal(out.rows[0].error, null);
     });
 
+    // 票 #741（维护者真机）：体检原先要等**全部**齐了才一次性画出来，看着像卡住。取数口现在多一个
+    // 「一家好了就回调一次」的通道，面板据此按家增量画。这一条咬住：先回来的那家必须在**另一家还在途**时
+    // 就已经回调出去（不是攒到最后一起给）。
+    it('一家落定就回调一次：先回来的先画，不等别家（#741）', async () => {
+      let releaseSlow = () => {};
+      const slow = new Promise((resolve) => { releaseSlow = () => resolve({ ok: true, value: report('slow', ['green']) }); });
+      const arrived = [];
+      const call = async (base, phone) => (phone === 'ilife-slow'
+        ? slow
+        : { ok: true, value: report('fast', ['yellow']) });
+      const pending = loadHealthReports(call, [
+        { id: 'dsh-slow', channel: '/ilife-slow' },
+        { id: 'dsh-fast', channel: '/ilife-fast' },
+      ], (row) => arrived.push(row.id));
+      // 让快那家的微任务跑完（慢那家还挂在 promise 上）。
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      assert.deepEqual(arrived, ['dsh-fast'], '快的那家落定就该回调出去；慢的还没回来时不许等它');
+      releaseSlow();
+      const out = await pending;
+      assert.deepEqual(arrived, ['dsh-fast', 'dsh-slow'], '慢的那家落定后再回调一次');
+      assert.equal(out.rows.length, 2);
+      // 回调抛错不许把整批拖下水（它是画图的旁路，不是取数本身）。
+      const stillOk = await loadHealthReports(async () => ({ ok: true, value: report('x', ['green']) }), [
+        { id: 'dsh-x', channel: '/ilife-x' },
+      ], () => { throw new Error('画图旁路炸了'); });
+      assert.equal(stillOk.rows.length, 1);
+      assert.equal(stillOk.rows[0].report.skill, 'x');
+    });
+
     it('一家失败不拖别家：出错那家只有 error，另一家照常有报告', async () => {
       const call = async (base, phone) => (phone === 'ilife-bad'
         ? { ok: false, error: { code: 'missing-cli', message: '技能出口缺失', details: {} } }
