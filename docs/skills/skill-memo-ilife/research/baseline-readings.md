@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 分隔符探针 | `packages/base-render/test/separator-probe.mjs` | 208 | **可用，直接跑备忘录产物**。口径：有命中 exit 1／无命中 exit 0／用法错 exit 2 |
 | 六列机审 | `docs/skills/skill-bill/t407-v8-style-audit.mjs` | 332 | **今天不能直接用**：`FILES` 是写死的 32 份账单产物名单（`:36-40` 的 `t407-页-<唤醒词>-采集页.html`），指到备忘录目录会报「共 0 份」并 exit 1。**要先改成按目录扫描或换名单** |
-| 版式读数器 | `docs/skills/skill-calorie/t516-判据-版式.mjs` | 330 | 存在。**只出读数、不判红绿**；默认只认 `.ilife-*` 公共层类名，对备忘录页要先确认类名对得上 |
+| 版式读数器 | `docs/skills/skill-calorie/t516-判据-版式.mjs` | 330 | **可用**：`--dir` 指备忘录产物实测 `8/8 件读数完成`，exit 0。**只出读数、不判红绿**（阈值写在基准里，靠人核）。13 个公共层区块类对备忘录**命中全 0** —— 那不是它读不了，是备忘录页本来就不用那些类（见 §6.3）；`touchSmall`／字号／越界三列与类名无关，照读 |
 | 判分脚本（五维尺） | `docs/skills/skill-calorie/t524-判分.mjs` | 263 | 存在。包路径与读数目录写死在卡路里，**搬到备忘录要改常量**（票 #824 的活） |
 | 响应式门 | `packages/skill-calorie/scripts/measure-responsive.mjs` | — | 存在（**在 `packages/` 下，不是 `docs/` 下** —— 早先一份调查报告把路径写成了 `docs/skills/skill-calorie/scripts/`，此处更正） |
 | 墙生成器 | `docs/skills/skill-calorie/scene02-验收墙/gen-wall.mjs` | 293 | 存在，造册／双端墙／索引／`--check` 四形态一体 |
@@ -141,9 +141,63 @@ node packages/base-render/test/separator-probe.mjs .scratch/memo-scene-map/basel
 
 ---
 
-## 六 这份读数还没覆盖的
+## 六 补齐的三列（2026-09-20 第二轮实测）
 
-- **触摸目标 44px**：没量（要 `t516-判据-版式.mjs` 的 `touchSmall`，它对备忘录的类名适配还没验）。
-- **跨宽溢出**：没量（要 `measure-responsive.mjs`，三档 390／768／1440）。
-- **英文裸词与重复句**：没量（`t407` 今天跑不动备忘录，见 §一）。
+### 6.1 跨宽溢出：**已经全绿**（三档零溢出）
+
+命令：`node packages/skill-calorie/scripts/measure-responsive.mjs --dir <目录> --label before`
+
+```
+OVERFLOW-ZERO pages=8 cells=24 failed=0 scopeOutFailed=0 label=before
+```
+
+8 件产物在 **390／768／1440** 三档全部 `0`（`docScrollWidth − innerWidth`）。唯一一处 `clip=1` 是 `memo_query` 里的 `label.sr-only`（给读屏用的 1px 元素，**不是缺陷**）。
+
+⇒ **D4 跨宽自适应的横向溢出这一条，基线就是绿的**。后面改动不许弄红。
+
+### 6.2 触摸目标与字号：**这是最要紧的一列**
+
+命令：`node docs/skills/skill-calorie/t516-判据-版式.mjs --dir <目录> --widths 390,768,1440`
+
+| 产物 | 390 档 `<44px` 处数 | 390 最小字号 | 逐处构成 |
+|---|---|---|---|
+| `help.html` | **34** | **8**（`div.s-d`） | `button.copy-btn`×6、`button.ib-close`×1、`input`×1 … |
+| `memo_query.html` | **24** | 11（`span.badge`） | `button.copy`×7、`input`×1 … |
+| `wish_plan.html` | **10** | 12 | `button.ghost`×4、`input`×2、`input.wish-check`×2 … |
+| `wish_complete.html` | **6** | 12 | `button.ghost`×4、`input`×1、`input.wish-check`×1 |
+| `change_category.html` | **4** | 12 | `button.ghost`×3、`select`×1 |
+| `sync_report.html` | **2** | 11 | `button.copy`×2 |
+| `sync.html` | **2** | 11 | `button.copy`×2 |
+| `init_report.html` | **0** | 12 | （无） |
+
+**合计 82 处 `<44px`（390 档）。** 两条读数必须一起看：
+
+1. **390／768／1440 三档的处数完全相同**（例如 `memo_query` 三档都是 24）⇒ 这些页**从来没有触摸档适配**，不是「窄屏才出的问题」。按五维尺的 H6（触摸区 <44px，**只在 390／768 两档扣**，每处 −1），`memo_query` 一页就是 **−24**，`help` 一页就是 **−34** —— 逐页 ≥90 的目标下，**这一列不清零，分数不可能过线**。
+2. **最小字号普遍 11–12px**（`memo_query` 是 `span.badge` 的 11px）；`help.html` 更是 **8px**（`div.s-d`，初始化引导卡的说明文字）。t524 的 D5 数值表里有「字号下限 12px」这一条。
+
+### 6.3 公共层块类命中：**全 0**
+
+`t516` 同时统计 13 个公共层区块类（`ilife-block-kpi-card`、`ilife-block-data-table`、`ilife-charts`、`ilife-empty` …）的命中数：
+
+```
+change_category 0 | help 0 | init_report 0 | memo_query 0
+sync 0 | sync_report 0 | wish_complete 0 | wish_plan 0
+```
+
+⇒ **8 件产物一处都不用公共层的区块类**。它们走的是自己那套 `MEMO_PAGE_CSS`（`src/render/pageAssets.ts`），**完全不在公共层的响应式／触摸／形状体系内**。
+
+**这两条合起来决定了 #824 的性质**：不是「把样式微调一下」，而是「**从自己那套 CSS 搬到公共层底座**」。走到位，触摸目标与字号两列才有可能清零；不搬，82 处会一处不落地带进新页。
+
+### 6.4 顺带一条（不在本图 30 场景范围内）
+
+`help.html` 在 390 档有 **317 处「越界」**（元素右边缘超出视口）＋ **8px 字号**。逐条看样例（`div.init-step@376+83`、`div.s-d@368+71`）都落在**初始化引导卡**上 —— 而那块**横向滑动是模板的有意设计**（`help-template.html` 注释：「初始化步骤卡（可选 · 技能传 steps 显示 · **>4 步横向滑动**）」），备忘录传了 6 步。「越界」计数多半来自这个横滑容器，**不是缺陷**。
+
+但 **8px 的说明文字**是不是可接受，值得单独看一次 —— HELP 页不属本图目的地（本图做 30 个场景的产物），若要处置**另开票**，别夹带进域票。
+
+---
+
+## 七 这份读数还没覆盖的
+
+- **英文裸词与重复句**：仍然没量（`t407` 今天跑不动备忘录，见 §一）。
 - **其余 5 份模板族各只量了 1 件样本**，族内是否每件都同形还没验。
+- **触摸目标与字号只量了 8 件样本**（每族 1 件 ＋ HELP），30 个场景最终产物还没出，基线到此为止。
