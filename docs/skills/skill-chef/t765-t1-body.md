@@ -7,7 +7,8 @@
 1. 取**历史域**做最小试点：建 `src/history/{commands,routes,index}.ts` 三件套（能力自治 ＋ 能力门），把历史域的命令声明与路由声明搬进去。
 2. 建**共用位派生链**：`scripts/gen-cli.mjs`（声明表 → `src/cli/keys.ts` 等生成物）＋ `--check` 比对门，并接进根 `package.json` 的 `gen:check`。
 3. 新增配置键 `html.sceneDir`（默认 `cook_html`）；`html.dir` 的语义与默认值一动不动。
-4. 交「必报五步」全额：影响清单、结构设计、超线报警、交付对账。
+4. 派生链必须**扫域目录**（不是逐域登记）：新增一个域**只许碰该域自己的目录**，共用位零改动——这是后面 7 张域票能并行开工的前提。
+5. 交「必报五步」全额：影响清单、结构设计、超线报警、交付对账。
 
 **本票只碰 `src/` 与配置面，不碰页面、不改任何命令的对外行为。**
 
@@ -18,6 +19,8 @@
 - 正例：`node tooling/run-locked.mjs --ticket 766 -- node --test "packages/skill-chef/test/*.test.mjs"` → 全绿（含 HTML 快照 changed=0）
 - 反例（必跑）：删掉 `src/history/commands.ts` 里一条声明 → `gen-cli.mjs --check` 必须 exit 1 并点名该条；改回即绿
 - 反例（必跑）：把 `html.sceneDir` 默认值改坏 → 配置测试必须红
+- 正例（本票核心判据）：临时加一个空域目录（只放三件空声明）→ 跑 `pnpm gen` → 生成物出现该域，且 `git diff --name-only` 只出现该域目录与生成物（**共用位零改动**）
+- 反例（必跑）：把生成器的扫描根去掉一个域目录 → `pnpm gen:check` 必须 exit 1 并点名缺哪个域
 
 ## 不许动的东西
 

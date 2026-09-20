@@ -63,6 +63,35 @@ A3-1 老模板**不像素复刻**｜A5-3 `#433`「回执页共用件提升公共
 - `packages/skill-chef/AGENTS.md:23` 关于「本包没有 `src/help/manifest.ts`」**已过期**（该件实际存在，41 行）。
 - **器械缺口**：`skill-chef` 名下**墙生成器 0 个、链路总表 0 个** ⇒ 本图必须新造，照 `docs/skills/skill-calorie/scene02-验收墙/gen-wall.mjs` 起手并**带上 `dropped` 判据**（反面教材 `t154-mobile-wall.mjs` 缺它＝假绿灯）。
 
+### 并发与写集（本图的死锁与干扰设计）
+
+**两条第一性原理**：死锁的根源是**环**；干扰的根源是**两张票同写一个文件**。据此定了三件事：
+
+1. **整包落位前置**（票 16）：7 张域票若各自去共用位里搬自己那一份，会在 `cli`／`fetch`／`policy`／`render` 同一批文件上互相踩。所以由**一个写者**先把其余 9 个域机械落位（只搬不改），之后域票只碰自己目录。
+2. **结构票只验「行为不变」、功能票只验「功能变对」**：票 16 的判据是全绿测试 ＋ HTML 快照 changed=0；域票的判据是本域卡逐卡跑通。两类判据不打架。
+3. **形状先于铺开**：`票 1 → 票 16 → 票 3 → 票 5–11 → 收口 12 → 13`，另有 `票 2／14／15／17` 在各自位置入图，`票 18` 收在域票之后。所有边单向（结构先于功能、形状先于铺开、聚合后于分片），**建边前先做拓扑排序，有环即拒绝**。
+
+**写集表**（谁能改哪些路径；越界先立票）：
+
+| 票 | 可写路径 | 与其他票的关系 |
+|---|---|---|
+| 1 形状 | `src/history/**`、`src/config.ts`、`scripts/gen-cli.mjs`、生成物 `src/cli/keys.ts` | 与 16 互斥（同碰共用位） |
+| 16 落位 | `src/<其余 9 域>/**`、`src/{cli,fetch,policy,render}/**` | **必须早于域票**；与 1、3 串行 |
+| 3 页面族 | `src/render/**`（票 16 之后再动）、`docs/skills/skill-chef/t768-*` | 与 16 串行（同碰渲染层） |
+| 5–11 域票 | **只许** `src/<自己那一域>/**` ＋ 自己票号的文档 ＋ `.scratch/t<票号>/**` | 域与域**互不相交，可全并行** |
+| 12 收口 A | `.scratch/<批名>/**`、`docs/skills/skill-chef/t777-*` | 只读 7 份册子片段 |
+| 13 收口 B | `.scratch/<批名>/**`、`docs/skills/skill-chef/t778-*` | 只读册子 |
+| 17 沙箱 | `docs/skills/skill-chef/t17-*`、本机 `~/.ilife/chef.yaml` | **不碰 `src/**`** |
+| 18 说明面 | `SKILL.md` 快照区、`src/help/sceneData.ts`（生成物）、`scripts/gen-help-assets.mjs` | 单写者，收在域票之后 |
+
+**共用生成物**（`src/cli/keys.ts` 等）：谁改完自己的域，**提交前重跑 `pnpm gen`**，以重跑结果为准（确定性、幂等，重跑即收敛）；`gen:check` 必须绿。金快照类件同理。
+
+**串行点**：`pnpm gen`／`tsc -b`／`node --test` 一律走 `node tooling/run-locked.mjs --ticket <票号> -- <命令>`；并行窗口数照 `docs/subagent-concurrency-protocol.md`。
+
+**数据隔离**：一票一份副本（`.scratch/t<票号>/chef_data.db`，由票 17 的沙箱器械生成），**不许与其他票共用副本**；真实库全程只读。
+
+**为什么不会死锁**：见上第 3 条——边全部单向，且建边脚本 `t765-v2.mjs` 在动手前跑 Kahn 拓扑排序，有环即非零退出、一张边都不建。
+
 ### 纪律
 
 - **会话纪律**：不弹窗问，一律写在对话正文里问。
@@ -86,7 +115,7 @@ A3-1 老模板**不像素复刻**｜A5-3 `#433`「回执页共用件提升公共
 - **采购域与居家管家的联动细节**：`stock_check` 要联动查询，但 `#682` A6-21 明令技能包零依赖 ⇒ 走调用契约还是降级为提示，等该域纵向票走到再定。
 - **13 条新表多出词的 prompt 示例**：新表只有短语、无场景资产，示例怎么写（沿用同域卡的 prompt 还是新写）待②对账表交出后定。
 - **数据管理域的备份／导入产物落点与命名**：`t769` 已给出「老库只有 17 张用户表、无迁移版本表」的读数，但产物落点与命名仍未定，等该域纵向票走到再裁。
-- **新技能缺省库目录不接老库**：真实库在 `D:\2Study\StudyNotes\.db\`，缺省数据目录 `~/.ilife/data/` 里没有它。是把配置 `db.dir` 指到老库目录，还是把老库搬进缺省数据目录——属配置面，与 `#745` 那条线相邻，等收口 A 走到再裁。
+- **新技能缺省库目录不接老库**：已由票 17（运行面沙箱）认领——器械 ＋ 本机 `db.dir` 指向真实库 ＋ 端到端读数，不再挂在这里。
 - **收口时墙按几个页族拆几张**：取决于最终产物页数与体积（验收墙 §6.3「几十格是舒适区」，带大图要拆）。
 
 ## Out of scope
@@ -103,35 +132,40 @@ A3-1 老模板**不像素复刻**｜A5-3 `#433`「回执页共用件提升公共
 
 <!-- 原生子议题边与原生阻塞边才是准；本清单只作索引 -->
 
-**切法**：4 张横向票（形状／资产单一源／页面族／写侧对账）先立，7 张纵向票按域切（按卡数分组，小域合并），2 张收口票串行收尾；研究票毕业后另立 2 张裁定票（老库 NOT NULL 冲突、数据库层两处全局缺口），它们挡写侧纵向票。**页面族票挡全部纵向票**（否则各域各造一套样式，撞概念唯一）。
+**切法**：横向票先立（形状 1／资产单一源 2／页面族 3／写侧对账 4），紧接着**整包落位 16**（并发前提：一个写者先把其余 9 域搬进各自目录，域票才能只碰自己那份），再开 7 张纵向域票（按卡数分组、小域合并，**相互零写集重叠、可全并行**），最后两张收口票串行收尾（12 聚片段 → 13 出墙）。另有 3 张补位票：2 张裁定票（14／15，挡写侧纵向票）与运行面沙箱 17（挡全部纵向票）、说明面同步 18（收在域票之后）。**页面族票挡全部纵向票**（否则各域各造一套样式，撞概念唯一）。
 
 | 序 | 票 | 类型 | 被谁阻塞 |
 |---|---|---|---|
 <!-- PLAN-ROWS-START -->
 | 1 | [[规格] skill-chef 形状票：历史域试点 ＋ 派生链 ＋ 配置键 html.sceneDir](https://github.com/FeatherHunter/ilife/issues/766) | task | — |
 | 2 | [[规格] 域与唤醒词资产单一源：老 scenes/*.yaml → 仓内 typed 资产 ＋ 50 词／48 卡对账表](https://github.com/FeatherHunter/ilife/issues/767) | task | — |
-| 3 | [[原型] 页面族：过程型／结果型／回执型三族 ＋ 双端自适应（先裁形状再铺开）](https://github.com/FeatherHunter/ilife/issues/768) | prototype | [票 1](https://github.com/FeatherHunter/ilife/issues/766) |
+| 3 | [[原型] 页面族：过程型／结果型／回执型三族 ＋ 双端自适应（先裁形状再铺开）](https://github.com/FeatherHunter/ilife/issues/768) | prototype | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) |
 | 4 | [[研究] 老库 schema 与写侧字段对账：48 卡逐卡列出要写的表与字段](https://github.com/FeatherHunter/ilife/issues/769) | research | — |
-| 5 | [查看域：端到端搬迁（8 卡／5 组，纯读）](https://github.com/FeatherHunter/ilife/issues/770) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) |
-| 6 | [搜索筛选域：端到端搬迁（13 卡；含 5 张待开发 ＋ 3 条路由错位）](https://github.com/FeatherHunter/ilife/issues/771) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) |
-| 7 | [做菜域：端到端搬迁（5 卡，过程型为主）](https://github.com/FeatherHunter/ilife/issues/772) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) |
-| 8 | [录入域：端到端搬迁（6 卡，写侧）](https://github.com/FeatherHunter/ilife/issues/773) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
-| 9 | [修改域：端到端搬迁（4 卡，写侧）](https://github.com/FeatherHunter/ilife/issues/774) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
-| 10 | [历史域：端到端搬迁（4 卡；记录做菜＝写、查看历史／查看统计＝读）](https://github.com/FeatherHunter/ilife/issues/775) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) |
-| 11 | [小域合并：派生 3 ＋ 采购 1 ＋ 开始使用 1 ＋ 数据管理 3（8 卡）](https://github.com/FeatherHunter/ilife/issues/776) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
+| 5 | [查看域：端到端搬迁（8 卡／5 组，纯读）](https://github.com/FeatherHunter/ilife/issues/770) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) |
+| 6 | [搜索筛选域：端到端搬迁（13 卡；含 5 张待开发 ＋ 3 条路由错位）](https://github.com/FeatherHunter/ilife/issues/771) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) |
+| 7 | [做菜域：端到端搬迁（5 卡，过程型为主）](https://github.com/FeatherHunter/ilife/issues/772) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) |
+| 8 | [录入域：端到端搬迁（6 卡，写侧）](https://github.com/FeatherHunter/ilife/issues/773) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
+| 9 | [修改域：端到端搬迁（4 卡，写侧）](https://github.com/FeatherHunter/ilife/issues/774) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
+| 10 | [历史域：端到端搬迁（4 卡；记录做菜＝写、查看历史／查看统计＝读）](https://github.com/FeatherHunter/ilife/issues/775) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) |
+| 11 | [小域合并：派生 3 ＋ 采购 1 ＋ 开始使用 1 ＋ 数据管理 3（8 卡）](https://github.com/FeatherHunter/ilife/issues/776) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/769) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/818) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/819) |
 | 12 | [[收口 A] 链路总表 ＋ 产物册子 ＋ 批量驱动器（验收副本）](https://github.com/FeatherHunter/ilife/issues/777) | task | [票 5](https://github.com/FeatherHunter/ilife/issues/770) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/771) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/772) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/773) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/774) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/775) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/776) |
 | 13 | [[收口 B] 双端视觉验收墙 ＋ vision_router 终审 ≥90 分](https://github.com/FeatherHunter/ilife/issues/778) | task | [票 12](https://github.com/FeatherHunter/ilife/issues/777) |
 | 14 | [【裁定】老库三条 NOT NULL 与卡面「选填」的冲突：9 张卡怎么落](https://github.com/FeatherHunter/ilife/issues/818) | grilling | — |
 | 15 | [【裁定】数据库层两处全局缺口：recipes.name 唯一约束在老库未生效 ＋ 新技能未开 foreign_keys](https://github.com/FeatherHunter/ilife/issues/819) | grilling | — |
+| 16 | [【规格·落位】整包按形状落位：其余 9 域只搬不改 ＋ 四个工种目录定去留（并发前提）](https://github.com/FeatherHunter/ilife/issues/839) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) |
+| 17 | [【实施】运行面沙箱：副本库器械 ＋ 本机配置指向真实库 ＋ 端到端读数](https://github.com/FeatherHunter/ilife/issues/840) | task | — |
+| 18 | [【实施】说明面同步：SKILL.md 快照 37→50 ＋ HELP 页 14 张卡【待开发】翻可用](https://github.com/FeatherHunter/ilife/issues/841) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/770) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/771) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/772) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/773) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/774) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/775) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/776) |
 <!-- PLAN-ROWS-END -->
 
-## 进度：8%
+## 进度：15%
 
-**画图完成（2026-09-21）**：15 张子票已建（横向 4 ＋ 纵向 7 ＋ 收口 2 ＋ 裁定 2），原生子议题边与原生阻塞边逐项校验通过（expected＝actual）。
+**画图完成（2026-09-21）**：18 张子票已建（横向 4 ＋ 纵向 7 ＋ 收口 2 ＋ 裁定 2 ＋ 补位 3），原生子议题边与原生阻塞边逐项校验通过（expected＝actual），且**阻塞关系经拓扑校验无环**。
 
 **研究票已解（2026-09-21）**：[【研究】老库 schema 与写侧字段对账](https://github.com/FeatherHunter/ilife/issues/769) 已关，结论见 Decisions so far；据它毕业出两张裁定票（票 14 老库 NOT NULL 与卡面「选填」冲突、票 15 数据库层两处全局缺口），并把两条地面真相写进 Notes。
 
-**下一步**：开 frontier 四张——① 形状票（历史域试点）、② 域与唤醒词资产单一源、14 老库 NOT NULL 三列怎么落、15 数据库层两处缺口的处置；③ 页面族原型等 ① 的形状过关后开。
+**二轮补票（2026-09-21，并发设计版）**：按「目标 → 缺口 → 票」重推，补三张——**票 16 整包落位**（从「最后收口」改成**前置**，理由见「并发与写集」）、**票 17 运行面沙箱**、**票 18 说明面同步**；并给票 1 加「加域零改共用位」判据、票 3 扩容成「页面族 ＋ 页面质量门」（机审六列 ＋ 代码层 UI 审查清单）、7 张域票各加三条口径（过程性 vision 审查／册子片段／副本库沙箱）、票 12 加「点击实测」。
+
+**下一步**：开 frontier 五张——票 1 形状票、票 2 资产单一源、票 17 运行面沙箱、票 14／15 两张裁定（等你裁）；票 16 等票 1 过关后立刻开（它是域票的并发前提）。
 
 ## 用户原话采访区（verbatim，一字未改；AI 执行先读这里）
 
