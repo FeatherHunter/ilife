@@ -1,13 +1,14 @@
-/** 面板到宿主的三条流程（纯异步函数：无 DOM、无 react；传输口由调用方注入，便于单测）。
+/** 面板到宿主的四条流程（纯异步函数：无 DOM、无 react；传输口由调用方注入，便于单测）。
  *
- * 三条流程与更新包 README 的对应关系：
+ * 四条流程与更新包 README 的对应关系：
  * - 检查更新：`updateCheck`（第 3 节第 3 步的 `host.call(UPD_CHECK, {})`）；
  * - 装上更新：`updateCheck` 拿凭证 → `updateInstall` 提交 → **按间隔轮询 `updateStatus`**
  *   直到任务离开 `installing`/`verifying`（第 3 节第 3 步与第 9 节：安装是后台跑，
  *   调用方不干等；凭证过期 `check-expired` 是正常错误码，重查一次再提交，见第 11 节）；
- * - 装上缺席的包：走总管自有的 `ilife-manager.install`（更新包的三个电话只管已装的包）。
+ * - 装上缺席的包：走总管自有的 `ilife-manager.install`（更新包的三个电话只管已装的包）；
+ * - 总管自述版本：走总管自有的 `ilife-manager.version`（宿主读自己那份包描述文件，见 `manager-version.ts`）。
  */
-import { MANAGER_ACTIONS, MANAGER_RPC, reasonText } from './update-contract.js';
+import { MANAGER_ACTIONS, MANAGER_RPC, VERSION_UNKNOWN, reasonText } from './update-contract.js';
 import type { CheckOutcome, TargetInfo } from './update-view.js';
 
 /** 传输口（DSH 载体 `connection.rpc.call` 的形状，cookbook §6）。 */
@@ -83,6 +84,17 @@ export async function loadTargets(call: CallFace | null): Promise<CallOutcome<{ 
   const targets = Array.isArray(out.value?.targets) ? out.value.targets : [];
   const pollMs = typeof out.value?.pollMs === 'number' && out.value.pollMs > 0 ? out.value.pollMs : FALLBACK_POLL_MS;
   return { ok: true, value: { targets, pollMs } };
+}
+
+/** 取总管自述版本（票 #737）：宿主读**自己这份已安装包**的 `package.json`，面板只渲染读到的值。
+ *
+ * 单次、无轮询；宿主读不到会回 `unknown`，传输层失败也回同一个字面量——面板照原样显示，
+ * 不假装知道版本（与卡路里 #130 的降级口径一致）。 */
+export async function loadManagerVersion(call: CallFace | null): Promise<string> {
+  const out = await callManager<{ version?: unknown }>(call, MANAGER_ACTIONS.version, {});
+  if (!out.ok) return VERSION_UNKNOWN;
+  const raw = out.value?.version;
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : VERSION_UNKNOWN;
 }
 
 /** 查一家：默认查新版（`updateCheck`，顺带回最新版本与凭证）；给 `phoneName` 时查那个电话。 */

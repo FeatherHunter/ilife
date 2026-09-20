@@ -18,11 +18,12 @@
  */
 
 import * as React from 'react';
-import { MANAGER_TABS, MANAGER_VERSION, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
+import { loadManagerVersion } from './update-client.js';
 import type { CallFace } from './update-client.js';
-import { CONFIG_TAB_SLOT } from './update-contract.js';
+import { CONFIG_TAB_SLOT, VERSION_UNKNOWN } from './update-contract.js';
 import { useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
@@ -239,6 +240,24 @@ function MorePluginsCard(): React.ReactElement {
   );
 }
 
+/** 总管自述版本（票 #737）：**不手写**，问宿主——宿主读自己这份已安装包的 `package.json`。
+ *
+ * 单次取数（`loadManagerVersion`），无轮询；初值 `unknown`，读不到也停在 `unknown`。
+ * 与卡路里 #130 同一条路：面板是浏览器产物、禁 node 内建，读盘只许在宿主半。 */
+function useManagerVersion(getCall: () => CallFace | null): string {
+  const [version, setVersion] = React.useState<string>(VERSION_UNKNOWN);
+  React.useEffect(() => {
+    let alive = true;
+    void loadManagerVersion(getCall()).then((next) => {
+      if (alive) setVersion(next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [getCall]);
+  return version;
+}
+
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace | null }): React.ReactElement {
   const tabsId = React.useId();
@@ -246,6 +265,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
   const face = useUpdateRows(props.getCall);
+  const managerVersion = useManagerVersion(props.getCall);
   // 配置体检（#706）：一张表六份报告，顶部那行汇总与各家那张表都从它读（同一份数据）。
   // 通道名的来源见 CHANNEL_BY_PLUGIN（#735：账本那一格读不到，改取导航表那份镜像）。
   const healthTabs = React.useMemo(
@@ -313,7 +333,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       'div',
       { style: S.meta },
       React.createElement('div', null, '总开关 · 开关（缺省启用，只读）'),
-      React.createElement('div', null, '总管 dsh-life-pack · ' + MANAGER_VERSION),
+      // 版本行（#737）：包名取自 nav.ts 那处唯一定义，版本号取自宿主读到的装机包版本。
+      React.createElement('div', null, '总管 ' + MANAGER_PLUGIN + ' · ' + managerVersion),
     ),
     React.createElement(UpdateResults, { face }),
     React.createElement(HealthSummaryLine, {

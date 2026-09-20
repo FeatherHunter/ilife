@@ -42,7 +42,19 @@ export const MANAGER_ACTIONS = {
    * 也不该把名字再写一份（写两份必然走散）。宿主把名字表连同版本行一起交出去，
    * 面板一行字面量都不留。 */
   targets: 'ilife-manager.targets',
+  /** 总管自述版本（票 #737）：入参 `{}`，回包 `{version}`。
+   *
+   * 宿主读**自己这份已安装包**的 `package.json`（`manager-version.ts`），面板只渲染读到的值。
+   * 为什么走电话：面板是浏览器产物，禁 node 内建（`test/client-bundle-48.test.mjs` 看门），
+   * 读盘只许在宿主半；与卡路里 #130 同一条路（host 读 → RPC → client 纯渲染）。 */
+  version: 'ilife-manager.version',
 } as const;
+
+/** 版本读不到时两侧共用的降级字面量（面板照原样显示，不假装知道版本）。
+ *
+ * 一处定义、两侧引用：宿主半 `manager-version.ts` 读失败时回它，面板半 `update-client.ts`
+ * 归一化时也认它——面板侧不许 import 宿主半（会把 node 内建带进浏览器束）。 */
+export const VERSION_UNKNOWN = 'unknown' as const;
 
 /** 更新包默认官方源（`config.ts:20`，总管侧拼手工命令时用同一个值）。 */
 export const DEFAULT_REGISTRY = 'https://registry.npmjs.org/' as const;

@@ -11,6 +11,7 @@
 import { createHostUpdate, createUpdateExecutor, detectEnvironmentKind, resolveUpdateConfig } from 'dsh-plugin-update';
 import type { EnvironmentKind } from 'dsh-plugin-update';
 import { DEFAULT_REGISTRY, MANAGER_ACTIONS, reasonText } from './update-contract.js';
+import { readManagerVersion } from './manager-version.js';
 import { UPDATE_TARGETS, targetFor } from './update-targets.js';
 import type { UpdateTarget } from './update-targets.js';
 import { MISSING_RUNNING_VERSION, captureRunningVersion, readPanelRegistered, readSkillRide, readTargetEnvironment, resolveProfileDir } from './update-env.js';
@@ -152,6 +153,9 @@ async function buildTable(ctx: unknown): Promise<(method: string, args: Record<s
       },
     ],
     [MANAGER_ACTIONS.targets, () => readTargets(facts, phonesByTarget, pollMs)],
+    // 总管自述版本（#737）：读自己这份包的描述文件，永不抛（读不到回 unknown）。恒成功，
+    // 故不走下面的 `internal` 兜底——「读不到」也是一种要给面板看的事实，不是错误码。
+    [MANAGER_ACTIONS.version, () => Promise.resolve<ManagerReply>({ ok: true, value: { version: readManagerVersion() } })],
   ]);
   return async (method, args) => {
     const action = managerActions.get(method);
