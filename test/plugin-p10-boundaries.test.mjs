@@ -92,6 +92,29 @@ describe('P10 槽位定案', () => {
       assert.match(row.channel, /^\/[A-Za-z0-9._~-]+$/, plugin + ' 的通道名不是单段路由名');
     }
   });
+  // 票 #738：面板印的页签名（＝产品名）有**两处产地**——各家自己那个 `SLOT_TITLE` 是主
+  // （页签注册交出去的 label、侧边栏页签名、本家设置页标题都从它出），总管导航表那一格是它的镜像
+  // （页签还没注册时兜底，更新列表那一行的行首也用它）。两处必须同值：只改一边，
+  // 屏上就会一半长名一半短名。写法照上面那条通道对齐断言——真 import 两边的产物来比，不是搜字符串。
+  it('导航表的页签名与各家契约件逐家一致（#738）', async () => {
+    const nav = await import('../packages/plugin-manager/dist/nav.js');
+    const TITLES = [
+      ['plugin-memo-ilife', 'dsh-memo-ilife', '备忘录'],
+      ['plugin-calorie', 'dsh-calorie', '卡路里'],
+      ['plugin-schedule-ilife', 'dsh-schedule-ilife', '作息管家'],
+      ['plugin-home-ilife', 'dsh-home-ilife', '居家管家'],
+      ['plugin-chef', 'dsh-chef', '私家大厨'],
+      ['plugin-bill-ilife', 'dsh-bill-ilife', '饼干记账'],
+    ];
+    for (const [dir, plugin, productName] of TITLES) {
+      const slot = await import('../packages/' + dir + '/dist/slot.js');
+      const row = nav.MANAGER_TABS.find((t) => t.plugin === plugin);
+      assert.ok(row, '导航表里没有这家：' + plugin);
+      assert.equal(row.title, slot.SLOT_TITLE,
+        plugin + ' 的页签名与它自己契约件那份不一致（屏上印的是这一格，漂开就是半长半短）');
+      assert.equal(row.title, productName, plugin + ' 的页签名不是产品名：' + row.title);
+    }
+  });
   it('写死原生组件：无动态按需加载、无外嵌页、无数据轮询（注册有界重试除外）', () => {
     for (const d of SINGLES.concat(['plugin-manager'])) {
       const t = srcText(d);

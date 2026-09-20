@@ -16,6 +16,11 @@ export interface ManagerTab {
   readonly skill: string;
   readonly slotId: string;
   readonly order: number;
+  /** 页签名（屏上逐字印这个）＝**产品名**（票 #738：作息管家／居家管家／私家大厨／饼干记账）。
+   *
+   *  它是各家自己那个 `SLOT_TITLE` 的镜像，两处必须同值：页签注册缺席时由这一格兜底，
+   *  更新列表那一行的行首也用它（`update-targets.ts` 原样取 `title`）。
+   *  对齐由 `test/plugin-p10-boundaries.test.mjs` 逐家咬住——真 import 两边的产物来比，不搜字符串。 */
   readonly title: string;
   /** 提供该 tab 的单品插件包名（仅文档级引用，不 import）。 */
   readonly plugin: string;
@@ -54,10 +59,10 @@ export function dualInstallCmd(singlePlugin: string): string {
 export const MANAGER_TABS: readonly ManagerTab[] = [
   { skill: 'memo', slotId: 'ilife:memo', order: 70, title: '备忘录', plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
   { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: '卡路里', plugin: 'dsh-calorie', channel: '/ilife-calorie' },
-  { skill: 'schedule', slotId: 'ilife:schedule', order: 80, title: '作息', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
-  { skill: 'home', slotId: 'ilife:home', order: 85, title: '居家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
-  { skill: 'chef', slotId: 'ilife:chef', order: 90, title: '大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
-  { skill: 'bill', slotId: 'ilife:cookie', order: 95, title: '记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
+  { skill: 'schedule', slotId: 'ilife:schedule', order: 80, title: '作息管家', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
+  { skill: 'home', slotId: 'ilife:home', order: 85, title: '居家管家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
+  { skill: 'chef', slotId: 'ilife:chef', order: 90, title: '私家大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
+  { skill: 'bill', slotId: 'ilife:cookie', order: 95, title: '饼干记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
 ];
 
 export function recoFor(tab: ManagerTab): RecoTab {

@@ -332,8 +332,9 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
     React.createElement(
       'div',
       { style: S.meta },
-      React.createElement('div', null, '总开关 · 开关（缺省启用，只读）'),
       // 版本行（#737）：包名取自 nav.ts 那处唯一定义，版本号取自宿主读到的装机包版本。
+      // 这段 meta 区此前还挂着一行静态文本，说有个「缺省启用、只读的开关」——那个开关今天并不存在
+      // （全仓没有任何代码读它或写它，设置页的行表里也没有「启用」这一项），票 #738 原地删除。
       React.createElement('div', null, '总管 ' + MANAGER_PLUGIN + ' · ' + managerVersion),
     ),
     React.createElement(UpdateResults, { face }),

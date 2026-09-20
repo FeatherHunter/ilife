@@ -9,7 +9,7 @@
 export const SKILL = 'chef' as const;
 export const SLOT_ID = 'ilife:chef' as const;
 export const SLOT_ORDER = 90 as const;
-export const SLOT_TITLE = '大厨' as const;
+export const SLOT_TITLE = '私家大厨' as const;
 export const PLUGIN = 'dsh-chef' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 

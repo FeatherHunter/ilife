@@ -9,7 +9,7 @@
 export const SKILL = 'schedule' as const;
 export const SLOT_ID = 'ilife:schedule' as const;
 export const SLOT_ORDER = 80 as const;
-export const SLOT_TITLE = '作息' as const;
+export const SLOT_TITLE = '作息管家' as const;
 export const PLUGIN = 'dsh-schedule-ilife' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 

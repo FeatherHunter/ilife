@@ -298,14 +298,15 @@ document.getElementById('probe').textContent = 'T679-READINGS ' + JSON.stringify
   + ' T679-VERDICT ' + (failed.length === 0 ? 'PASS' : 'FAIL:' + failed.join(','));
 `;
 
-/** #706：取数变体（页内塞一份假的「各家通道 → config.check」答复），量体检那一块。 */
+/** #706：取数变体（页内塞一份假的「各家通道 → config.check」答复），量体检那一块。
+ *  假账本里的页签名照各家注册交出去的那份写（票 #738 起是产品名：作息管家／居家管家／私家大厨／饼干记账）。 */
 const T706_TABS = JSON.stringify([
   { id: 'dsh-memo-ilife', order: 70, label: '备忘录', channel: '/ilife-memo' },
   { id: 'dsh-calorie', order: 75, label: '卡路里', channel: '/ilife-calorie' },
-  { id: 'dsh-schedule-ilife', order: 80, label: '作息', channel: '/ilife-schedule' },
-  { id: 'dsh-home-ilife', order: 85, label: '居家', channel: '/ilife-home' },
-  { id: 'dsh-chef', order: 90, label: '大厨', channel: '/ilife-chef' },
-  { id: 'dsh-bill-ilife', order: 95, label: '记账', channel: '/ilife-bill' },
+  { id: 'dsh-schedule-ilife', order: 80, label: '作息管家', channel: '/ilife-schedule' },
+  { id: 'dsh-home-ilife', order: 85, label: '居家管家', channel: '/ilife-home' },
+  { id: 'dsh-chef', order: 90, label: '私家大厨', channel: '/ilife-chef' },
+  { id: 'dsh-bill-ilife', order: 95, label: '饼干记账', channel: '/ilife-bill' },
 ]);
 const T706_CALL = `function (channel, endpoint, payload) {
   if (endpoint !== 'config.check') return Promise.resolve({ ok: false, error: { code: 'bad-request', message: '渲染台只答体检' } });

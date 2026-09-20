@@ -13,6 +13,9 @@
 //   ③ 屏幕那行真跟着宿主跑：拿真产物渲一次组件 —— 宿主回哨兵版本，屏上就是哨兵；
 //      宿主回 unknown，屏上就是 unknown（写死常量、或面板自己编一个值，都过不了这两条）。
 //
+// 渲染替身（③用）原先写在本文件里，票 #738 也要在同一条路上读页签条的字，
+// 故提到仓根共用：`test/helpers/panel-render.mjs`（两份拷贝就是两处腐化）。
+//
 // 前提：①②③ 都读产物，所以要先出产物（CI 的顺序正是先 `pnpm build` 再 `pnpm test`）：
 //   node node_modules/typescript/bin/tsc -b packages/plugin-manager
 //   cmd /c "cd /d <仓根>\packages\plugin-manager && node node_modules\tsdown\dist\run.mjs"
@@ -22,6 +25,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderManagerPanel } from '../../../test/helpers/panel-render.mjs';
 import { managerPackageJsonPath, readManagerVersion } from '../dist/manager-version.js';
 import { MANAGER_ACTIONS, VERSION_UNKNOWN } from '../dist/update-contract.js';
 
@@ -41,114 +45,6 @@ function withTmpDir(fn) {
     if (!dir.split(/[\\/]/).pop().startsWith('t737-reader-')) throw new Error('清理守卫拒绝：' + dir);
     rmSync(dir, { recursive: true, force: true });
   }
-}
-
-/** 把元素树里的文本收集起来（替身 `createElement` 的形状：`{type, props:{children}}`）。 */
-function collectText(node, buf) {
-  if (node === null || node === undefined || node === false || node === true) return;
-  if (typeof node === 'string' || typeof node === 'number') {
-    buf.push(String(node));
-    return;
-  }
-  if (Array.isArray(node)) {
-    for (const child of node) collectText(child, buf);
-    return;
-  }
-  if (typeof node !== 'object') return;
-  collectText(node.props?.children, buf);
-}
-
-/** 把函数组件展开成元素树（替身 `createElement` 只造节点、不调组件，这一步就是「渲染器」）。
- *  hooks 的调用顺序必须与组件的渲染顺序一致，所以展开与取 hooks 在**同一个 cursor 周期**里做。 */
-function expand(node) {
-  if (node === null || node === undefined || typeof node !== 'object') return node;
-  if (Array.isArray(node)) return node.map((child) => expand(child));
-  if (typeof node.type === 'function') return expand(node.type(node.props));
-  return { type: node.type, props: { ...node.props, children: expand(node.props?.children) } };
-}
-
-/**
- * 用真产物渲一次面板，只回那行版本号文本。
- * 替身只够跑这个组件：hooks 用顺序 hook store（与 `docs/plugins/plugin-manager/t679-面板渲染台.mjs`
- * 页内那份同形），`connection.rpc.call` 换成按方法名回桩值的假传输口。
- */
-async function renderVersionLine(reply) {
-  const store = [];
-  const queue = [];
-  let cursor = 0;
-  const React = {
-    createElement: (type, props, ...children) => ({
-      type,
-      props: { ...(props ?? {}), children: children.length === 0 ? undefined : children.length === 1 ? children[0] : children },
-    }),
-    Fragment: Symbol('Fragment'),
-    useId: () => 'r1',
-    useRef: (init) => {
-      const i = cursor++;
-      if (!(i in store)) store[i] = { current: init === undefined ? null : init };
-      return store[i];
-    },
-    useState: (init) => {
-      const i = cursor++;
-      if (!(i in store)) store[i] = typeof init === 'function' ? init() : init;
-      return [store[i], (next) => { const value = typeof next === 'function' ? next(store[i]) : next; if (value !== store[i]) store[i] = value; }];
-    },
-    useMemo: (fn) => fn(),
-    // 注意：useCallback 只**返回**回调，不许当场调它（写成 `(fn) => fn()` 会把回调当工厂调一遍）。
-    useCallback: (fn) => fn,
-    useEffect: (fn, deps) => {
-      const i = cursor++;
-      const before = store[i];
-      const changed = !before || !deps || before.deps.length !== deps.length || deps.some((d, k) => d !== before.deps[k]);
-      store[i] = { deps: deps ?? null };
-      if (changed) queue.push(fn);
-    },
-  };
-  const call = async (_base, _endpoint, payload) => {
-    const method = payload?.method;
-    if (method === MANAGER_ACTIONS.version) {
-      return reply.fail
-        ? { ok: false, error: { code: 'internal', message: '宿主读不到', details: {} } }
-        : { ok: true, value: { version: reply.version } };
-    }
-    if (method === MANAGER_ACTIONS.targets) return { ok: true, value: { targets: [], pollMs: 1000 } };
-    return { ok: false, error: { code: 'bad-request', message: '渲染台只答这两条', details: {} } };
-  };
-
-  // 物化真产物（classic script 语义）→ 捕获注册进 settings.section 的那个组件。
-  const registrations = [];
-  new Function('window', CLIENT)({ __ModuleLoader__: { load: (reg) => { registrations.push(reg); } } });
-  assert.equal(registrations.length, 1, 'client 束须恰好注册一次');
-  let Section = null;
-  registrations[0].factory((spec) => {
-    if (String(spec).startsWith('react')) return React;
-    throw new Error('渲染台只提供 react：' + spec);
-  }).apply({
-    slots: {
-      inject: (_key, callback) => callback(),
-      register: (_options, component) => { Section = component; return () => {}; },
-      entries: () => [],
-      getVersion: () => 0,
-      subscribe: () => () => {},
-    },
-    effect: (callback) => callback(),
-    connection: { rpc: { call } },
-  });
-  assert.equal(typeof Section, 'function', '没捕获到 settings.section 组件');
-
-  const props = { useTabs: (selector) => selector([]), renderSlot: () => null };
-  cursor = 0;
-  let tree = expand(Section(props));
-  for (let pass = 0; pass < 8 && queue.length > 0; pass += 1) {
-    const effects = queue.splice(0, queue.length);
-    for (const effect of effects) effect();
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
-    cursor = 0;
-    tree = expand(Section(props));
-  }
-  const buf = [];
-  collectText(tree, buf);
-  return buf.join(' ');
 }
 
 describe('票 #737 ① 宿主读值：读的是自己这份包描述文件', () => {
@@ -197,12 +93,12 @@ describe('票 #737 ② 不手写回潮：版本号不是面板写死的', () => 
 
 describe('票 #737 ③ 屏幕那行跟着宿主跑（真产物渲一次）', () => {
   it('宿主回哨兵版本 → 屏上就是哨兵（写死常量、面板自己编值，都过不了）', async () => {
-    const text = await renderVersionLine({ version: SENTINEL });
+    const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
     assert.ok(text.includes('总管 dsh-life-pack · ' + SENTINEL), '屏上那行不是哨兵，取到的是：' + text.slice(0, 160));
   });
 
   it('宿主回 unknown（读不到）→ 屏上就是 unknown，不抛也不编值', async () => {
-    const text = await renderVersionLine({ fail: true });
+    const { text } = await renderManagerPanel({ reply: { fail: true } });
     assert.ok(text.includes('总管 dsh-life-pack · ' + VERSION_UNKNOWN), '读不到时屏上该是 unknown，取到的是：' + text.slice(0, 160));
   });
 });
