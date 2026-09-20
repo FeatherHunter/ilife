@@ -678,7 +678,6 @@ function MemoConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
         open: '选定这个目录',
         cancel: '取消',
         willPick: '将选定：',
-        roots: '其他磁盘：',
       },
     }) : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,

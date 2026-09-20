@@ -31,8 +31,6 @@ export interface DirectoryBrowserLabels {
   readonly cancel: string;
   /** 选中预览那一行的前缀，例：「将选定：」。 */
   readonly willPick: string;
-  /** 根那一行的行首说明，例：「其他磁盘：」。 */
-  readonly roots: string;
 }
 
 /** 根的类型说明（悬停可见）：**本件自己的词汇**，与取数方无关。 */
@@ -76,7 +74,6 @@ export const S = {
     borderBottom: '1px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.25))',
   } as React.CSSProperties,
   title: { fontSize: 14, fontWeight: 700 } as React.CSSProperties,
-  headTail: { marginLeft: 'auto', fontSize: 12, opacity: 0.72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as React.CSSProperties,
   crumbs: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2, padding: '8px 12px 0', fontSize: 12 } as React.CSSProperties,
   chromeButton: {
     background: 'transparent',
@@ -89,7 +86,6 @@ export const S = {
   } as React.CSSProperties,
   crumbSep: { opacity: 0.45, fontSize: 12 } as React.CSSProperties,
   roots: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, padding: '0 12px 8px', fontSize: 12 } as React.CSSProperties,
-  rootsLabel: { opacity: 0.72, marginRight: 2 } as React.CSSProperties,
   rootButton: {
     border: '1px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.35))',
     borderRadius: 6,
@@ -180,32 +176,24 @@ export function crumbRow(state: BrowseState, onEnter: (path: string) => void): R
   return React.createElement('div', { style: S.crumbs }, parts);
 }
 
-/** 可跳转的根那一行（Windows 上的盘符等）。**少于两个根就不画**：一个根没有「跳到别处」可言。 */
-export function rootsRow(
-  state: BrowseState,
-  labels: DirectoryBrowserLabels,
-  onEnter: (path: string) => void,
-): React.ReactElement | null {
+/** 可跳转的根那一行（Windows 上的盘符等）：**就是本机全部磁盘**，故不加行首说明。
+ *  **少于两个根就不画**：一个根没有「跳到别处」可言。 */
+export function rootsRow(state: BrowseState, onEnter: (path: string) => void): React.ReactElement | null {
   if (state.roots.length < 2) return null;
-  const parts: React.ReactNode[] = [
-    React.createElement('span', { key: 'roots-label', style: S.rootsLabel }, labels.roots),
-  ];
-  for (const root of state.roots) {
-    parts.push(
-      React.createElement(
-        'button',
-        {
-          key: root.path,
-          type: 'button',
-          style: { ...S.chromeButton, ...S.rootButton },
-          title: ROOT_KIND_TEXT[root.kind] ?? ROOT_KIND_TEXT.other,
-          onClick: () => onEnter(root.path),
-        },
-        root.path,
-      ),
-    );
-  }
-  return React.createElement('div', { style: S.roots, role: 'group', 'aria-label': labels.roots }, parts);
+  const parts: React.ReactNode[] = state.roots.map((root) =>
+    React.createElement(
+      'button',
+      {
+        key: root.path,
+        type: 'button',
+        style: { ...S.chromeButton, ...S.rootButton },
+        title: ROOT_KIND_TEXT[root.kind] ?? ROOT_KIND_TEXT.other,
+        onClick: () => onEnter(root.path),
+      },
+      root.path,
+    ),
+  );
+  return React.createElement('div', { style: S.roots }, parts);
 }
 
 /** 一行子目录：点名字进它，点「选」把它当目标（「选」再点一次取消）。 */

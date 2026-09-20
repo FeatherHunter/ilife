@@ -15,7 +15,6 @@ export {
   hiddenCount,
   isBrowseFace,
   joinPath,
-  locationLabel,
   parentOf,
   pickerModeOf,
   readBrowseAnswer,

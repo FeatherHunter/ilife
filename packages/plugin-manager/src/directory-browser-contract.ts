@@ -242,16 +242,6 @@ export function filterEntries(entries: readonly DirectoryEntry[], filter: string
   return entries.filter((entry) => entry.name.toLowerCase().includes(needle));
 }
 
-/** 给界面用的一句话位置说明：优先显示相对 home 的说法，省得整条绝对路径占满一行。 */
-export function locationLabel(listing: DirectoryListing): string {
-  const home = listing.home.replace(/[\\/]+$/, '');
-  if (home !== '' && listing.path !== home && listing.path.startsWith(home)) {
-    const tail = listing.path.slice(home.length).replace(/^[\\/]+/, '');
-    if (tail !== '') return '~' + (listing.path.includes('\\') ? '\\' : '/') + tail;
-  }
-  return listing.path;
-}
-
 /** 新建文件夹的名字合不合法（单个路径段：不许分隔符、不许空、不许 `.`／`..`）。
  *
  * 与宿主 browse 后端的校验同口径——这里先拦一道，是为了在图上给得出人话，不是替代宿主校验。 */

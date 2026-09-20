@@ -1,6 +1,6 @@
 {
   "name": "dsh-memo-ilife",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "爱生活单品插件 P10 脚手架：备忘录（ilife:memo order 70），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,7 +30,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.3.5",
+    "dsh-life-pack": "^0.3.6",
     "skill-memo-ilife": "0.3.0"
   },
   "dsh": {

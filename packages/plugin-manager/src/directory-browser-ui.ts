@@ -8,7 +8,7 @@
 import * as React from 'react';
 import { rowsOf, targetOf } from './directory-browser-state.js';
 import type { BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
-import { hiddenCount, locationLabel } from './directory-browser-contract.js';
+import { hiddenCount } from './directory-browser-contract.js';
 import type { DirectoryListing } from './directory-browser-contract.js';
 import { S, createRow, crumbRow, entryRow, rootsRow } from './directory-browser-parts.js';
 import type { DirectoryBrowserLabels } from './directory-browser-parts.js';
@@ -44,7 +44,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
   const hidden = hiddenCount(listing);
   const body: React.ReactNode[] = [];
   body.push(crumbRow(state, props.onEnter));
-  body.push(rootsRow(state, labels, props.onEnter));
+  body.push(rootsRow(state, props.onEnter));
   body.push(
     React.createElement(
       'div',
@@ -123,10 +123,11 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
         'div',
         { style: S.head },
         React.createElement('span', { style: S.title }, labels.title),
-        React.createElement('span', { style: S.headTail, title: listing.path }, state.listing === null ? '' : locationLabel(listing)),
+        // 标题右侧**不再重复当前路径**：同一条路径下面已经出现两次（面包屑与路径框），
+        // 而盘符那行也要地方——头一行越干净越好（#744 第三轮现场反馈）。
         React.createElement(
           'button',
-          { type: 'button', style: S.button, 'aria-label': labels.close, title: labels.close, onClick: props.onClose },
+          { type: 'button', style: { ...S.button, marginLeft: 'auto' }, 'aria-label': labels.close, title: labels.close, onClick: props.onClose },
           '✕',
         ),
       ),

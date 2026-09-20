@@ -36,7 +36,6 @@ const {
   visibleEntries,
   filterEntries,
   hiddenCount,
-  locationLabel,
   validateFolderName,
 } = contract;
 const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath, createDirectoryRowBrowser, openRowBrowser } = state;
@@ -121,11 +120,6 @@ describe('#744 路径换算（Windows 与 POSIX 两种写法）', () => {
     assert.equal(visibleEntries(full, false).length, 2, '关着时只剩两个非隐藏目录');
     assert.equal(visibleEntries(full, true).length, 3);
     assert.equal(hiddenCount(full), 1);
-  });
-
-  it('locationLabel：home 里的话缩成 ~，外面照原样', () => {
-    assert.equal(locationLabel({ path: 'C:\\a\\b', home: 'C:\\', crumbs: [], entries: [], truncated: false }), '~\\a\\b');
-    assert.equal(locationLabel({ path: 'D:\\x', home: 'C:\\', crumbs: [], entries: [], truncated: false }), 'D:\\x');
   });
 
   it('validateFolderName：空、带分隔符、. 与 .. 都拦下并给人话', () => {
@@ -439,7 +433,6 @@ const labelsFixture = {
   open: '打开',
   cancel: '取消',
   willPick: '将选定：',
-  roots: '其他磁盘：',
 };
 
 const noopActions = {
@@ -720,8 +713,9 @@ describe('#744 盘符那一行（根清单：宿主问、图上点）', () => {
       roots: [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }],
     };
     const element = ui.DirectoryBrowser({ open: true, state: withRoots, labels: labelsFixture, ...noopActions });
-    assert.equal(countText(element, labelsFixture.roots), 1, '那一行的行首说明要画出来');
+    assert.equal(countText(element, 'C:\\'), 2, '面包屑一格 ＋ 根那一枚');
     assert.equal(countText(element, 'D:\\'), 1, 'D 盘要画成一枚可点的按钮');
+    assert.equal(countText(element, '其他磁盘'), 0, '那一行就是全部磁盘，不加行首说明');
 
     const single = ui.DirectoryBrowser({
       open: true,
@@ -729,7 +723,27 @@ describe('#744 盘符那一行（根清单：宿主问、图上点）', () => {
       labels: labelsFixture,
       ...noopActions,
     });
-    assert.equal(countText(single, labelsFixture.roots), 0, '只有一个根没有「跳到别处」可言，不画');
+    assert.equal(countText(single, 'C:\\'), 1, '只有一个根没有「跳到别处」可言：只留面包屑那一格，不画那一行');
+
+    const none = ui.DirectoryBrowser({
+      open: true,
+      state: { ...stateFixture, roots: [] },
+      labels: labelsFixture,
+      ...noopActions,
+    });
+    assert.equal(countText(none, 'C:\\'), 1, '根清单空（非 Windows／取不到）同样不画');
+  });
+
+  it('标题栏不再重复当前路径（同一条路径下面已经出现两次）', async () => {
+    const ui = await import('../dist/directory-browser-ui.js');
+    const element = ui.DirectoryBrowser({
+      open: true,
+      state: { ...stateFixture, listing: { ...stateFixture.listing, path: 'C:\\a\\b', home: 'C:\\' } },
+      labels: labelsFixture,
+      ...noopActions,
+    });
+    assert.equal(countText(element, '~\\a\\b'), 0, '标题右侧那一段位置文本已经去掉');
+    assert.equal(countText(element, '选择数据目录'), 1, '标题照旧');
   });
 
   it('点 D 盘那一枚按钮 → 交给 onEnter（进它那一层）', async () => {
