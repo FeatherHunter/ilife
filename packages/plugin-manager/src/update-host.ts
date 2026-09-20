@@ -1,4 +1,4 @@
-/** 总管宿主半的电话表：七组更新电话（更新包建）＋ 两个总管自有电话（本包建）。
+/** 总管宿主半的电话表：七组更新电话（更新包建）＋ 三个总管自有电话（本包建）。
  *
  * 形状：`buildUpdatePhoneTable(ctx).call(方法名, 入参)` —— 一条入口，内部按方法名派发。
  * 表的建成是**懒的**（首次调用时建）：要读磁盘拿使用范围与七个目标的运行版本，
@@ -12,6 +12,7 @@ import { createHostUpdate, createUpdateExecutor, detectEnvironmentKind, resolveU
 import type { EnvironmentKind } from 'dsh-plugin-update';
 import { DEFAULT_REGISTRY, MANAGER_ACTIONS, reasonText } from './update-contract.js';
 import { readManagerVersion } from './manager-version.js';
+import { rootsReply } from './roots.js';
 import { UPDATE_TARGETS, targetFor } from './update-targets.js';
 import type { UpdateTarget } from './update-targets.js';
 import { MISSING_RUNNING_VERSION, captureRunningVersion, readPanelRegistered, readSkillRide, readTargetEnvironment, resolveProfileDir } from './update-env.js';
@@ -156,6 +157,9 @@ async function buildTable(ctx: unknown): Promise<(method: string, args: Record<s
     // 总管自述版本（#737）：读自己这份包的描述文件，永不抛（读不到回 unknown）。恒成功，
     // 故不走下面的 `internal` 兜底——「读不到」也是一种要给面板看的事实，不是错误码。
     [MANAGER_ACTIONS.version, () => Promise.resolve<ManagerReply>({ ok: true, value: { version: readManagerVersion() } })],
+    // 本机「根」清单（#744）：一次系统调用换全部盘符，超时即空。同样恒成功——
+    // 列不出来只是「图上不画那一行」，不该给面板弹一条失败。
+    [MANAGER_ACTIONS.roots, () => rootsReply()],
   ]);
   return async (method, args) => {
     const action = managerActions.get(method);

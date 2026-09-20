@@ -56,6 +56,13 @@ export const MANAGER_ACTIONS = {
    * 为什么走电话：面板是浏览器产物，禁 node 内建（`test/client-bundle-48.test.mjs` 看门），
    * 读盘只许在宿主半；与卡路里 #130 同一条路（host 读 → RPC → client 纯渲染）。 */
   version: 'ilife-manager.version',
+  /** 本机「根」清单（票 #744）：入参 `{}`，回包 `{roots: [{path, kind}]}`。
+   *
+   * 为什么这条能力住在总管：浏览器里没有卷清单接口，而宿主那条目录选择接缝只有
+   * `list`／`createDirectory` 两格——「这台机器上有哪些盘」只能由宿主去问操作系统。
+   * 六家的目录浏览器都取这一通电话，故名字与实现都只有这一处（清单本身见 `roots.ts`）。
+   * 回包**恒成功**：列不出来是空清单，不是错误码（界面据此只是不画那一行）。 */
+  roots: 'ilife-manager.roots',
 } as const;
 
 /** 版本读不到时两侧共用的降级字面量（面板照原样显示，不假装知道版本）。

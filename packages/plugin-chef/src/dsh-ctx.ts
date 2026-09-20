@@ -155,6 +155,21 @@ export interface DirectoryPickerFace {
   pick(): Promise<DirectoryPickerAnswer>;
 }
 
+/** 总管那条电话通道的两个字面量（#744）：载体第一段与第二段。
+ *
+ * 出处：主管包 `packages/plugin-manager/src/update-contract.ts` 的 `MANAGER_RPC.base`／`.endpoint`
+ * ——那边是一处定义，这边是镜像（本包不许 import 总管的宿主半：会把 node 内建带进浏览器束）。
+ * 传错第一段就是 404：总管自己在 #678 栽过一次、各家的配置体检在 #735 又栽过一次。 */
+export const MANAGER_RPC_BASE = '/api' as const;
+export const MANAGER_RPC_ENDPOINT = 'ilife-manager' as const;
+
+/** 总管那通「本机根清单」电话名（#744）：入参 `{}`，回包 `{roots: [{path, kind}]}`。
+ *
+ * 出处：主管包 `update-contract.ts` 的 `MANAGER_ACTIONS.roots`。为什么要走总管：
+ * 浏览器里没有卷清单接口，宿主那条目录选择接缝也只有 `list`／`createDirectory` 两格，
+ * 「这台机器上有哪些盘」只能由宿主去问操作系统——那份实现在总管宿主半的 `roots.ts`。 */
+export const MANAGER_ROOTS_METHOD = 'ilife-manager.roots' as const;
+
 /** 模型工具面镜像（#734 路线①；卡路里样板逐格同形，两个镜像不各写一份）。
  *
  * 出处：`@deepseek-ai/dsh-tools/lib/index.js` 的 `defineTool` 与 `ToolRuntime.register`——

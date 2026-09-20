@@ -85,3 +85,6 @@ export { MANAGER_TABS, tabsForPresence } from './nav.js';
 export { MANAGER_PACKAGE, SINGLE_PLUGINS, reconcileBundles, assertDualBundles, assertNegativeSingleOnly } from './install.js';
 export { UPDATE_TARGETS } from './update-targets.js';
 export { MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from './update-contract.js';
+/** 本机「根」清单（#744）：宿主半取数，六家的目录浏览器经 `ilife-manager.roots` 取用。 */
+export { clearRootsCache, listRoots, parseDriveRows, rootsReply } from './roots.js';
+export type { RootsDeps } from './roots.js';

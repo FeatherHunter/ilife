@@ -51,7 +51,8 @@ export type { DirectoryBrowserLabels, DirectoryBrowserProps } from './directory-
 export { createBrowseController, createDirectoryRowBrowser, rowsOf, canGoUp, targetOf, entryPath } from './directory-browser-state.js';
 export type { BrowseController, BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
 export { pickerModeOf, readPickAnswer } from './directory-browser-contract.js';
-export type { DirectoryBrowseFace, DirectoryListing, PickOutcome } from './directory-browser-contract.js';
+export type { DirectoryBrowseFace, DirectoryListing, PickOutcome, RootKind, RootRow } from './directory-browser-contract.js';
+export { createRootsSource, readRootsAnswer } from './directory-browser-roots.js';
 
 /** 包名 → 本家那条客户端通道（票 #735）。取值面是导航表那份镜像，不再从页签槽账本的自定义选项里读：
  *  装机槽位面不透传自定义键，读了恒是空串（详见 `nav.ts` 上 `ManagerTab.channel` 的注释）。 */

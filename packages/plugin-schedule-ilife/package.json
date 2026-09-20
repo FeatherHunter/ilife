@@ -1,6 +1,6 @@
 {
   "name": "dsh-schedule-ilife",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "爱生活单品插件 P10 脚手架：作息（ilife:schedule order 80），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,7 +30,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.3.4",
+    "dsh-life-pack": "^0.3.5",
     "skill-schedule": "0.3.0"
   },
   "dsh": {

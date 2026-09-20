@@ -15,6 +15,8 @@
     "src/dsh-ctx.ts",
     "src/directory-browser-contract.ts",
     "src/directory-browser-state.ts",
+    "src/directory-browser-parts.ts",
+    "src/directory-browser-roots.ts",
     "src/directory-browser-ui.ts"
   ]
 }

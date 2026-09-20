@@ -19,10 +19,10 @@ import type { ConfigSurfaceReply } from './contract.js';
 import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
 import type { ConfigItem } from './settings.js';
-import { DIRECTORY_PICKER_REFUSED, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
-import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, openRowBrowser } from 'dsh-life-pack/directory-browser';
+import { DIRECTORY_PICKER_REFUSED, MANAGER_RPC_BASE, MANAGER_RPC_ENDPOINT, MANAGER_ROOTS_METHOD, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
+import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, openRowBrowser, createRootsSource } from 'dsh-life-pack/directory-browser';
 import { DirectoryBrowserFromRow } from 'dsh-life-pack/directory-browser-ui';
-import type { PickerMode, DirectoryRowBrowser, DirectoryRowEntry } from 'dsh-life-pack/directory-browser';
+import type { PickerMode, DirectoryRowBrowser, DirectoryRowEntry, RootRow } from 'dsh-life-pack/directory-browser';
 import type { ClientCtx, RpcCallFace, RpcCallResult, DirectoryPickerAnswer, DirectoryPickerFace } from './dsh-ctx.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
@@ -342,7 +342,7 @@ export function Row(props: {
 /** 技能设置页：承载饼干记账自己的全部可配置项（只配置，不干活）。
  *
  * 三态：loading（一次 RPC 内）／ready（真表单）／failed（人话报错 ＋ 指引，不返空、不转圈）。 */
-function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPickerFace | null }): React.ReactElement {
+function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPickerFace | null; rootsSource: () => Promise<readonly RootRow[]> }): React.ReactElement {
   const [state, setState] = React.useState<ConfigState>({ kind: 'loading' });
   const [pickerGone, setPickerGone] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
@@ -421,10 +421,11 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
         onChange: (next) => onChange(key, next),
         onRow: setBrowseRow,
         refusalCode: DIRECTORY_PICKER_REFUSED,
+        rootsSource: props.rootsSource,
       });
       if (opened === undefined || (await opened) === 'refused') await openNative(key);
     },
-    [picker, onChange, draft, openNative],
+    [picker, onChange, draft, openNative, props.rootsSource],
   );
 
   /** 给 Row 的三态入口：`none` 时给 null（不画按钮，文本框照旧）。 */
@@ -562,6 +563,7 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
         open: '选定这个目录',
         cancel: '取消',
         willPick: '将选定：',
+        roots: '其他磁盘：',
       },
     }) : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
@@ -589,7 +591,12 @@ export function apply(ctx: ClientCtx): void {
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
-      () => React.createElement(BillConfig, { getCall, pickerSource: getPicker }),
+      () => React.createElement(BillConfig, { getCall, pickerSource: getPicker, rootsSource: createRootsSource({
+        getCall,
+        base: MANAGER_RPC_BASE,
+        endpoint: MANAGER_RPC_ENDPOINT,
+        method: MANAGER_ROOTS_METHOD,
+      }) }),
     ),
   );
 }

@@ -19,6 +19,8 @@ const PKG = join(HERE, '..');
 
 const contract = await import('../dist/directory-browser-contract.js');
 const state = await import('../dist/directory-browser-state.js');
+/** 公开门：六家取用的就是这一条子路径，所以「门转出没转出」也在这里读。 */
+const api = await import('../dist/directory-browser-api.js');
 
 const {
   isBrowseFace,
@@ -38,6 +40,7 @@ const {
   validateFolderName,
 } = contract;
 const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath, createDirectoryRowBrowser, openRowBrowser } = state;
+const { readRootsAnswer, createRootsSource } = api;
 
 /** 假取数面：一张写死的目录树，`C:\a` 下面有 `b`（普通）、`.hidden`（隐藏）、`c`（普通）。 */
 function fakeFace(options = {}) {
@@ -312,15 +315,26 @@ describe('#744 解密判据：共用件不认识宿主', () => {
   const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
   it('源码三件的**代码**里不出现宿主接缝名', () => {
-    for (const file of ['directory-browser-contract.ts', 'directory-browser-state.ts', 'directory-browser-ui.ts']) {
+    for (const file of [
+      'directory-browser-contract.ts',
+      'directory-browser-state.ts',
+      'directory-browser-parts.ts',
+      'directory-browser-roots.ts',
+      'directory-browser-ui.ts',
+    ]) {
       const source = stripComments(readFileSync(join(PKG, 'src', file), 'utf8'));
       const hit = source.match(HOST_TOKENS);
       assert.equal(hit, null, `${file} 的代码里出现了宿主接缝名：${hit?.[0]}`);
     }
   });
 
-  it('产物两件的**代码**里也不出现宿主接缝名', () => {
-    for (const file of ['directory-browser-contract.js', 'directory-browser-state.js']) {
+  it('产物各件的**代码**里也不出现宿主接缝名', () => {
+    for (const file of [
+      'directory-browser-contract.js',
+      'directory-browser-state.js',
+      'directory-browser-parts.js',
+      'directory-browser-roots.js',
+    ]) {
       const source = stripComments(readFileSync(join(PKG, 'dist', file), 'utf8'));
       const hit = source.match(HOST_TOKENS);
       assert.equal(hit, null, `${file} 的代码里出现了宿主接缝名：${hit?.[0]}`);
@@ -405,6 +419,7 @@ const stateFixture = {
   filter: '',
   creating: null,
   notice: null,
+  roots: [],
 };
 
 const labelsFixture = {
@@ -424,6 +439,7 @@ const labelsFixture = {
   open: '打开',
   cancel: '取消',
   willPick: '将选定：',
+  roots: '其他磁盘：',
 };
 
 const noopActions = {
@@ -455,6 +471,26 @@ function countText(node, needle) {
   };
   walk(node);
   return found;
+}
+
+/** 按按钮上的文字找那一枚元素（找不到回 undefined，让用例如实报「找不到」而不是抛）。 */
+function findButton(node, text) {
+  let hit;
+  const walk = (value) => {
+    if (hit !== undefined || value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item);
+      return;
+    }
+    if (typeof value !== 'object' || !('props' in value)) return;
+    if (value.type === 'button' && value.props.children === text) {
+      hit = value;
+      return;
+    }
+    walk(value.props.children);
+  };
+  walk(node);
+  return hit;
 }
 
 /** 宿主命名空间**真机上的样子**（#744 返修的三条读数都咬在这里）：
@@ -609,5 +645,106 @@ describe('#744 返修：宿主信封、组合只服务一种能力', () => {
     await broken.open();
     assert.equal(broken.state().phase, 'ready', '读不出来不把图卡死');
     assert.equal(broken.state().listing.path, 'C:\\Users\\me', '退回宿主家目录');
+  });
+});
+
+describe('#744 盘符那一行（根清单：宿主问、图上点）', () => {
+  it('readRootsAnswer：信封拆得出清单；坏形状一律空（图上少一行，不报错）', () => {
+    const rows = readRootsAnswer({ ok: true, value: { roots: [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }] } });
+    assert.deepEqual(rows, [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }]);
+    assert.deepEqual(readRootsAnswer({ ok: false, error: { code: 'x', message: 'y' } }), []);
+    assert.deepEqual(readRootsAnswer({ ok: true, value: {} }), []);
+    assert.deepEqual(readRootsAnswer({ ok: true, value: { roots: [{ path: '', kind: 'fixed' }, { kind: 'fixed' }, 'nope'] } }), [], '认不出的行丢掉');
+    assert.deepEqual(readRootsAnswer(undefined), []);
+  });
+
+  it('createRootsSource：按调用方给的三段发一次电话；没有调用口或抛了都回空', async () => {
+    const seen = [];
+    const source = createRootsSource({
+      getCall: () => async (base, endpoint, payload) => {
+        seen.push([base, endpoint, payload]);
+        return { ok: true, value: { roots: [{ path: 'D:\\', kind: 'fixed' }] } };
+      },
+      base: '/api',
+      endpoint: 'some-manager',
+      method: 'some.roots',
+    });
+    assert.deepEqual(await source(), [{ path: 'D:\\', kind: 'fixed' }]);
+    assert.deepEqual(seen, [['/api', 'some-manager', { method: 'some.roots', payload: {} }]]);
+
+    const noCall = createRootsSource({ getCall: () => null, base: '/api', endpoint: 'x', method: 'y' });
+    assert.deepEqual(await noCall(), [], '连接缺席只是没有这一行');
+    const boom = createRootsSource({
+      getCall: () => async () => { throw new Error('电话没接上'); },
+      base: '/api', endpoint: 'x', method: 'y',
+    });
+    assert.deepEqual(await boom(), []);
+  });
+
+  it('状态：根清单落进 state 并推一次重画；只问一次；取不到就是空', async () => {
+    let asked = 0;
+    const rootsSource = async () => {
+      asked += 1;
+      return [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }];
+    };
+    const row = createDirectoryRowBrowser({
+      face: browseFaceOf(wireNamespace()),
+      initialPath: 'C:\\a',
+      onPicked: () => {},
+      rootsSource,
+    });
+    const seen = [];
+    row.subscribe((next) => seen.push(next.roots.length));
+    await row.open();
+    assert.deepEqual(row.state().roots.map((r) => r.path), ['C:\\', 'D:\\']);
+    assert.equal(asked, 1);
+    row.actions.onToggleHidden();
+    assert.equal(asked, 1, '问过一次就不再问');
+    assert.ok(seen.includes(2), '根清单落定要推一次，否则那一行永远不出现');
+
+    const broken = createDirectoryRowBrowser({
+      face: browseFaceOf(wireNamespace()),
+      initialPath: 'C:\\a',
+      onPicked: () => {},
+      rootsSource: async () => { throw new Error('问不出来'); },
+    });
+    await broken.open();
+    assert.deepEqual(broken.state().roots, [], '问不出来就是空，浏览照常');
+    assert.equal(broken.state().phase, 'ready');
+  });
+
+  it('图上：两个以上根才画那一行，点它进那一层；一个根不画', async () => {
+    const ui = await import('../dist/directory-browser-ui.js');
+    const withRoots = {
+      ...stateFixture,
+      roots: [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }],
+    };
+    const element = ui.DirectoryBrowser({ open: true, state: withRoots, labels: labelsFixture, ...noopActions });
+    assert.equal(countText(element, labelsFixture.roots), 1, '那一行的行首说明要画出来');
+    assert.equal(countText(element, 'D:\\'), 1, 'D 盘要画成一枚可点的按钮');
+
+    const single = ui.DirectoryBrowser({
+      open: true,
+      state: { ...stateFixture, roots: [{ path: 'C:\\', kind: 'fixed' }] },
+      labels: labelsFixture,
+      ...noopActions,
+    });
+    assert.equal(countText(single, labelsFixture.roots), 0, '只有一个根没有「跳到别处」可言，不画');
+  });
+
+  it('点 D 盘那一枚按钮 → 交给 onEnter（进它那一层）', async () => {
+    const ui = await import('../dist/directory-browser-ui.js');
+    const entered = [];
+    const element = ui.DirectoryBrowser({
+      open: true,
+      state: { ...stateFixture, roots: [{ path: 'C:\\', kind: 'fixed' }, { path: 'D:\\', kind: 'network' }] },
+      labels: labelsFixture,
+      ...noopActions,
+      onEnter: (path) => entered.push(path),
+    });
+    const button = findButton(element, 'D:\\');
+    assert.ok(button !== undefined, '找不到 D 盘那一枚按钮');
+    button.props.onClick();
+    assert.deepEqual(entered, ['D:\\']);
   });
 });

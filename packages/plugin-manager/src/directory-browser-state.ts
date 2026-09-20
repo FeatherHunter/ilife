@@ -12,6 +12,7 @@ import type {
   DirectoryBrowseFace,
   DirectoryEntry,
   DirectoryListing,
+  RootRow,
 } from './directory-browser-contract.js';
 import {
   browseFaceOf,
@@ -44,6 +45,8 @@ export interface BrowseState {
   readonly creating: string | null;
   /** 上一次操作的失败人话（新建失败等）；看一眼就好，下一次操作清掉。 */
   readonly notice: string | null;
+  /** 可跳转的根（Windows 上的盘符等）：取数方给什么就是什么，空数组＝不画那一行。 */
+  readonly roots: readonly RootRow[];
 }
 
 /** 订阅者拿到的状态（不可变，每次变更是新对象）。 */
@@ -89,6 +92,8 @@ export function createBrowseController(deps: {
   readonly onClose: () => void;
   /** 失败人话的前缀，默认「浏览失败」。 */
   readonly failureLabel?: string;
+  /** 可跳转的根从哪来；不给就是没有这一行（都是空清单，一样不画）。 */
+  readonly rootsSource?: () => Promise<readonly RootRow[]>;
 }): BrowseController {
   const label = deps.failureLabel ?? '浏览失败';
   const listeners = new Set<BrowseListener>();
@@ -102,6 +107,7 @@ export function createBrowseController(deps: {
     filter: '',
     creating: null,
     notice: null,
+    roots: [],
   };
 
   /** 每次列举带一个序号：晚回来的旧回执直接丢掉，不许覆盖新一层。 */
@@ -110,6 +116,21 @@ export function createBrowseController(deps: {
   const emit = (next: Partial<BrowseState>): void => {
     state = { ...state, ...next };
     for (const listener of [...listeners]) listener(state);
+  };
+
+  /** 根清单只问一次：取不到就是空（不报错、不重试——它只是图上的一行入口）。
+   *
+   * 「问一次」钉在这里而不是图里：视图那半每次重画都会重新求值，问在这里才谈得上一次。 */
+  let rootsAsked = false;
+  const loadRoots = async (): Promise<void> => {
+    if (rootsAsked || deps.rootsSource === undefined) return;
+    rootsAsked = true;
+    try {
+      const roots = await deps.rootsSource();
+      if (roots.length > 0) emit({ roots });
+    } catch {
+      /* 取不到就当没有这一行：浏览本身照常。 */
+    }
   };
 
   const humanize = (cause: unknown): BrowseFailure => {
@@ -163,6 +184,9 @@ export function createBrowseController(deps: {
       return () => listeners.delete(listener);
     },
     async open(): Promise<BrowseState> {
+      // 根清单一并去问，但**不等它**：它只是图上的一行入口，落定了自会推一次重画；
+      // 等它就等于让「宿主那台机器列盘符快不快」决定对话框什么时候开。
+      void loadRoots();
       const wanted = deps.initialPath.trim();
       if (wanted !== '') {
         await load(wanted);
@@ -300,6 +324,8 @@ export function createDirectoryRowBrowser(deps: {
   readonly onPicked: (path: string) => void;
   readonly onClosed?: () => void;
   readonly failureLabel?: string;
+  /** 可跳转的根从哪来（各家给的是同一份「总管电话」的取数器）；不给就没有那一行。 */
+  readonly rootsSource?: () => Promise<readonly RootRow[]>;
 }): DirectoryRowBrowser {
   const controller = createBrowseController({
     face: deps.face,
@@ -307,6 +333,7 @@ export function createDirectoryRowBrowser(deps: {
     onPicked: deps.onPicked,
     onClose: () => deps.onClosed?.(),
     ...(deps.failureLabel === undefined ? {} : { failureLabel: deps.failureLabel }),
+    ...(deps.rootsSource === undefined ? {} : { rootsSource: deps.rootsSource }),
   });
   return {
     open: () => controller.open(),
@@ -346,6 +373,8 @@ export function openRowBrowser(input: {
   readonly onChange: (next: string) => void;
   readonly onRow: (row: DirectoryRowBrowser | null) => void;
   readonly refusalCode: string;
+  /** 可跳转的根从哪来（可选：不给就是图上没有那一行）。 */
+  readonly rootsSource?: () => Promise<readonly RootRow[]>;
 }): Promise<'open' | 'refused'> | undefined {
   const face = browseFaceOf(input.picker);
   if (face === null) return undefined;
@@ -357,6 +386,7 @@ export function openRowBrowser(input: {
       input.onRow(null);
     },
     onClosed: () => input.onRow(null),
+    ...(input.rootsSource === undefined ? {} : { rootsSource: input.rootsSource }),
   });
   input.onRow(row);
   return row.open().then((settled) => {

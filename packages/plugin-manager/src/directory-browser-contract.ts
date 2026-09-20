@@ -58,6 +58,18 @@ export interface BrowseFailure {
 /** 目录行入口的三态判定结果：**按命名空间上有什么动词**看一眼，不是问组合里服务哪种能力。 */
 export type PickerMode = 'native' | 'browse' | 'none';
 
+/** 一个「根」是什么类型：界面只拿它写悬停说明，不拿它做任何判断。
+ *
+ * 这五个值由**取数方**（宿主半）归一：Windows 上是 `DriveInfo.DriveType` 映过来的；
+ * 别的根（挂载点等）落 `other`。本件不认识任何宿主名词，只认识这五个值。 */
+export type RootKind = 'fixed' | 'network' | 'removable' | 'optical' | 'other';
+
+/** 一个可跳转的根：`path` 是绝对路径（Windows 上形如 `D:\`），`kind` 只用于显示。 */
+export interface RootRow {
+  readonly path: string;
+  readonly kind: RootKind;
+}
+
 /** 平台回执的信封（各家的 `DirectoryPickerAnswer` 与此同形；本件只认这三格，不认别家的类名）。 */
 export interface PickEnvelope {
   readonly ok: boolean;
@@ -67,8 +79,9 @@ export interface PickEnvelope {
 
 /** 一次「唤起选择器」的归一结果：选中／取消／供不了，永不抛。
  *
- * `code` 只在平台给了的时候带上（就是 `error.code`）：调用方据它分辨「这条路宿主没给」
- * （{@link CAPABILITY_REFUSED}）与「别的失败」——前者该换一条路走，后者才该报出来。 */
+ * `code` 只在平台给了的时候带上（就是 `error.code`）：调用方据它分辨「宿主没给这条路」与
+ * 「别的失败」——前者该换一条路走，后者才该报出来。那个码由调用方从自己的宿主镜像里传进来
+ * （见 `openRowBrowser` 的 `refusalCode`），本件不认它的名字。 */
 export type PickOutcome =
   | { readonly kind: 'picked'; readonly path: string }
   | { readonly kind: 'cancelled' }

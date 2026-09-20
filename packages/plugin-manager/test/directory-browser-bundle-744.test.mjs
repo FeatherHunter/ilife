@@ -17,13 +17,15 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 
 describe('#744 目录浏览器打进了 client 束', () => {
-  it('六家要用的四个名字都在束里', () => {
+  it('六家要用的几个名字都在束里', () => {
     for (const name of [
       'DirectoryBrowserFromRow',
       'createDirectoryRowBrowser',
       'createBrowseController',
       'pickerModeOf',
       'readPickAnswer',
+      'createRootsSource',
+      'readRootsAnswer',
     ]) {
       assert.match(CLIENT, new RegExp(`\\b${name}\\b`), `束里找不到 ${name}（视图没被打进产物）`);
     }
@@ -31,9 +33,15 @@ describe('#744 目录浏览器打进了 client 束', () => {
 
   it('图上那几句自带文案也在（组件真的被画出来，不是只留了函数名）', () => {
     // 只咬本件**自带**的那两句：「显示隐藏目录」是开关的固定说法、「新建文件夹」是那枚按钮；
-    // 「将选定：」由调用方按行给，不在本件里，故不咬（它在各家的束里）。
+    // 「将选定：」「其他磁盘：」由调用方按行给，不在本件里，故不咬（它们在各家的束里）。
     for (const text of ['显示隐藏', '新建文件夹']) {
       assert.ok(CLIENT.includes(text), `束里找不到文案「${text}」`);
+    }
+  });
+
+  it('宿主半的东西没漏进浏览器束（取盘符那条路只许住宿主）', () => {
+    for (const forbidden of ['child_process', 'powershell', 'DriveInfo']) {
+      assert.ok(!CLIENT.includes(forbidden), `client 束里出现了宿主半的东西：${forbidden}`);
     }
   });
 
