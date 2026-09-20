@@ -84,10 +84,11 @@ node --input-type=module -e "import {readEntries,validateEntries} from './script
 
 1. **打包的是工作区，不是提交。** `tooling/wizard-publish.ps1` 走 `npm publish`，而包里 `files` 只含 `dist` 与 `cordis.patch.yml`——发出去的就是**盘上当前的 `dist/`**。`packages/plugin-manager` 正被另一席改着（#743／#744）时发版，等于把那一席没做完的产物发上 npm；本仓已有同类先例（#734 记过总管处在同一处境时本轮不发）。要发就等那一席的树落定。（2026-09-20 17:30 读数：`packages/plugin-manager/package.json` 与 `packages/plugin-chef/src/client.ts` 当时都有未提交改动。）
 2. **要人批准 2FA**：在侧边栏终端跑 `pwsh -NoProfile -File tooling\wizard-publish.ps1 -Auto -Package dsh-life-pack`（AI 送回车、把授权链接原文转给人，人只在浏览器批准）；跑之前先过 `tooling/check-publish.mjs` 三道门（`--pre`／`--tarball`／`--fresh-tmp`，都要 `--only dsh-life-pack`）。
+3. **由维护者的统一发版窗口带上**（2026-09-20 维护者口径：还有些问题要靠自家插件发新版解决，稍后统一发版）——本席不单独发 `dsh-life-pack`。同一窗口里还要顺带看 `publish:fresh` 那道红：`master` 上 `dfebf476` 的 CI 读数里，`pnpm install --frozen-lockfile`／`build`／`publish:pre`／`publish:tarball` 都过，红在 `publish:fresh`——`skill-calorie` 安装态装载器导入失败（`dist/render/templates.js` 不在 registry 上那一版的产物里，日志原文批注「版本偏斜，非本票红」）。registry 版本落后于工作区，正是发新版能解掉的那类问题。
 
 顺带记一条：六个单品自己的 npm 包同样没有 `repository` 字段。它们各自投稿时同样要补字段并发一版，才有下载量。
 
-## 八、截图（2026-09-20 已入仓，未推）
+## 八、截图（2026-09-20 已入仓并已推上 master）
 
 `packages/plugin-manager/screenshots.json` 声明三张，**数组顺序就是展示顺序**：
 
@@ -98,5 +99,5 @@ node --input-type=module -e "import {readEntries,validateEntries} from './script
 | 3 | `screenshots/卡路里-HELP.png` | 卡路里 唤醒词速查台（437 场景） |
 
 - 声明方式照上游约定：**放在自家仓**、`package.json` 旁边，路径相对于该文件，且不许出插件目录（不许以 `/` 开头、不许含 `..`）。它仓 `scripts/probe-screenshots.mjs` 把相对路径按 `https://raw.githubusercontent.com/FeatherHunter/ilife/HEAD/packages/plugin-manager/` 逐段 `encodeURIComponent` 解析成绝对 URL 再做存活检查——**所以文件名用中文没问题**。
-- 生效条件：这份声明与三张图要在**默认分支（`master`）**上。改动在提交 `04822cef`，**尚未推送**（`master` 上还有别席三个未推的提交，推一次会一并带上）。
+- 生效条件与现场读数：这份声明与三张图必须在**默认分支（`master`）**上。提交 `04822cef`，随 `dfebf476` 一起推上 `master`（2026-09-20 17:37）。按它仓 `probe-screenshots.mjs` 的同一套判据复核过：`screenshots.json` 读回 HTTP 200，三张图 `Range: bytes=0-0` 全 206（LIVE）——市场下一次构建就会读到。
 - 不声明也能展示（市场会从 README 抽图）；声明只是拿回「顺序与取舍」的控制权。
