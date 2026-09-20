@@ -78,8 +78,8 @@
 
 ## 发布（npm 官方源，交互式 wizard）
 
-- 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `base-paint@0.3.6`（前置：registry 旧版缺 `save-html`、#725 的 `docShell` 子路径与 #728 的写入域形状件，不先发技能装上就崩）＋ `skill-bill@0.2.2`（402 写入 16 词 ＋ 403 查询 17 词）。
-- 插件发版脚本：`packages/plugin-bill-ilife/scripts/wizard-publish.sh` —— 发 `dsh-bill-ilife@0.2.2`。它住插件自己的目录（发谁的包，脚本就住谁的家）；硬前提是技能已落 registry（插件精确 pin 技能版本，先发插件会装到旧技能，wizard 第 1 stage 自动拦）。
+- 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `base-paint@0.3.6`（前置：registry 旧版缺 `save-html`、#725 的 `docShell` 子路径与 #728 的写入域形状件，不先发技能装上就崩）＋ `skill-bill@0.3.0`（402 写入 16 词 ＋ 403 查询 17 词）。
+- 插件发版脚本：`packages/plugin-bill-ilife/scripts/wizard-publish.sh` —— 发 `dsh-bill-ilife@0.3.1`。它住插件自己的目录（发谁的包，脚本就住谁的家）；硬前提是技能已落 registry（插件精确 pin 技能版本，先发插件会装到旧技能，wizard 第 1 stage 自动拦）。
 - 跑法（必须 Git Bash，脚本必须 LF；发布命令绝不重定向输出，否则 stdout 非 TTY 会直接 EOTP —— 见 `SKILLS/npm-publish/SKILL.md` §4；OTP 不进聊天，见该 §4 铁律）：
   - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/skill-bill/scripts/wizard-publish.sh`（先跑，2 包，人扫码）
   - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/plugin-bill-ilife/scripts/wizard-publish.sh`（后跑，1 包，人扫码）

@@ -3,7 +3,7 @@
  * （跳过 node_modules/.git/dist/build），要求文件头 YAML frontmatter 含字符串 name + description，
  * 缺任一即整包跳过（No valid skills）。本测试钉死卡路里导出头，回退即红。
  * 范围诚实注记（双审终审 must）：本测试仅静态断言 SKILL.md 导出头
- * （frontmatter/HELP 标记块/运行时小节字符串），不覆盖 skills-cli 真跑
+ * （frontmatter/HELP 标记块/唯一出口口径块），不覆盖 skills-cli 真跑
  * （add -l/add/list --json）、agent 落点目录、HELP→cmd_read→envelope→HTML
  * 端到端；真跑证据见 docs/public-installer-47.md「验证证据」手工实测，
  * 端到端 artifact 缺失是已知缺口，不在本测试冒充覆盖。
@@ -20,11 +20,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // #47 样板期只收敛卡路里一条线；复制到其余 5 包时扩展此清单。
 // #192 起 skill-home 入列（第二包）；bill／chef／memo-ilife／schedule 四包仍待复制。
 const PKGS = ['skill-calorie', 'skill-home'];
-// 运行时版本钉死：只对**已发布且真装得上**的包断言硬编码版本号；
-// skill-home@0.1.0 虽已发布到 npm（2026-09-07），但依赖里 `base-link-core: workspace:^0.1.0`
-// 未改写 ⇒ 新装必 EUNSUPPORTEDPROTOCOL，故不钉版本，一律走「本仓构建产物」那条路
-//（缘由见 docs/public-installer-47.md「已发布包阻塞」）。
-const NPM_PIN = { 'skill-calorie': '@0.2.4' };
 
 // 最小 frontmatter 解析（无依赖）：文件须以 --- 开头，第二个 --- 前为 key: value 行。
 function parseFrontmatter(text) {
@@ -55,15 +50,19 @@ describe('#47 skills-cli 导出头（卡路里样板 + 居家第二包）', () =
       assert.ok(rest.includes('#'), 'frontmatter 之后正文仍在');
       assert.ok(rest.includes('<!-- HELP-AUTO-START -->') && rest.includes('<!-- HELP-AUTO-END -->'), 'HELP 标记块仍在');
     });
-    it(pkg + '：公共安装器运行时小节存在', () => {
+    it(pkg + '：唯一出口口径块在（#742 起由 tooling/skill-call-form.mjs 生成，勿手改）', () => {
       const text = readFileSync(join(ROOT, 'packages', pkg, 'SKILL.md'), 'utf8');
-      assert.ok(text.includes('## 公共安装器运行时'), '须含运行时小节（dist 不进 git，运行时走 npm）');
-      // 版本钉死 @0.2.4 为硬编码（已随本批发版窗口同步）
-      // （SKILL.md/docs/测试三处联动，登记见 docs/public-installer-47.md「版本钉死登记」）。
-      // 仅「已发布且装得上」的包有版本号可钉；其余（如 skill-home：已发布但 workspace: 未改写）改钉「本仓构建产物」那句。
-      const pin = NPM_PIN[pkg];
-      if (pin) assert.ok(text.includes(pin), '须钉死 npm 运行时版本（已随 ' + pin + ' 同步）');
-      else assert.ok(text.includes('本仓构建产物'), '未钉版本号的包须写明本仓构建产物验证那条路');
+      const start = text.indexOf('<!-- CALL-FORM-START -->');
+      const end = text.indexOf('<!-- CALL-FORM-END -->');
+      assert.ok(start >= 0 && end > start, '须含 CALL-FORM 标记块（口径正文由 tooling/skill-call-form.mjs 渲染）');
+      const block = text.slice(start, end);
+      const cmd = pkg.replace(/^skill-/, '') + '-cmd-read';
+      assert.ok(block.includes(cmd), '块里须写出本包的唯一出口命令名 ' + cmd);
+      assert.ok(block.includes('Base directory for this skill'), '块里须写明「技能基目录」＝宿主给的那一行');
+      assert.ok(block.includes('dist/cli/cmd_read.js'), '块里须给出本包 bin 声明的入口（按声明渲染）');
+      // #742：钉死版号的 npm 写法（旧口径）不许回潮；口径里也不许出现版本号。
+      assert.ok(!text.includes('npm install -g'), '不许再出现推 npm 全局安装的写法（会装出第二份同名副本）');
+      assert.ok(!/CALL-FORM[\s\S]*?@\d+\.\d+\.\d+[\s\S]*?CALL-FORM-END/.test(text), '口径里不许钉版本号');
     });
   }
   it('样板清单当前恰为 2 包（复制期扩展即改此断言）', () => {

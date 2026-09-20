@@ -17,6 +17,21 @@ schedule-cmd-read schedule.plan.today --params '{"date":"2026-09-06"}'
 schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06","time_start":"09:00","time_end":"10:00","activity":"调优","category":"工作.AI调优"}'
 ```
 
+<!-- CALL-FORM-START -->
+
+## 唯一出口：怎么跑
+
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`schedule-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-schedule schedule-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->
+
 ## 口径
 
 - 双域隔离：record（真实发生的过去时间块）唤醒词禁含计划/日程；plan（未来安排）唤醒词禁含作息/记录。废弃词（同步作息/作息计划表/配置定时同步）不路由。

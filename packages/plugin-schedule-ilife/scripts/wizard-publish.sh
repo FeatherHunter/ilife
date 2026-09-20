@@ -2,10 +2,10 @@
 #
 # 作息管家插件发版 wizard：dsh-schedule-ilife（共 1 包，人扫码）
 #   dsh-schedule-ilife 0.2.1（槽位 ilife:schedule／order 80、打包技能提供方、
-#     CLI 单轨桥；精确 pin skill-schedule@0.2.1）
+#     CLI 单轨桥；精确 pin skill-schedule@0.3.0）
 #
 # 前提（硬门，第 1 stage 会自动查，不满足即停）：
-# skill-schedule@0.2.1 必须已在 registry 上 —— 插件对它是精确 pin，
+# skill-schedule@0.3.0 必须已在 registry 上 —— 插件对它是精确 pin，
 # 先发插件＝第三方装到旧技能（#129）。先跑
 # packages/skill-schedule/scripts/wizard-publish.sh 把技能落上去。
 #
@@ -205,8 +205,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_PLUGIN="0.2.1"
-V_SKILL="0.2.1"
+V_PLUGIN="0.3.1"
+V_SKILL="0.3.0"
 
 # 目录名（非 npm 名）
 D_PLUGIN="plugin-schedule-ilife"

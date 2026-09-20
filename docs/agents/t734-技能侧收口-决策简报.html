@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#734 待拍 A · 技能侧说明面（含对抗式审查）</title>
+<style>
+  :root{
+    --ink:#111418; --ink-2:#4a5261; --line:#e3e7ee; --bg:#f6f7f9; --card:#fff;
+    --ok:#0f7b52; --ok-bg:#e8f6f0; --warn:#8a5a00; --warn-bg:#fdf4e3; --bad:#a52121; --bad-bg:#fdecec;
+    --accent:#1f5fd0; --accent-bg:#eaf1fe; --mono:ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 72px}
+
+  header.top{position:sticky;top:0;z-index:9;background:rgba(255,255,255,.94);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin:0 -20px 24px;padding:12px 20px}
+  header.top .t{font-weight:700;font-size:15px}
+  header.top nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:14px}
+  header.top nav a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  header.top nav a:hover{border-bottom-color:var(--accent)}
+
+  h1{font-size:25px;line-height:1.32;margin:8px 0 4px}
+  .sub{color:var(--ink-2);font-size:14px;margin:0 0 20px}
+  h2{font-size:20px;margin:34px 0 12px}
+  h3{font-size:16px;margin:18px 0 8px}
+
+  .verdict{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:10px;padding:14px 18px;margin:0 0 20px}
+  .verdict ul{margin:6px 0 0;padding-left:20px} .verdict li{margin:5px 0}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:14px 0 6px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-size:18px;letter-spacing:.2px}
+  .stat span{font-size:12.5px;color:var(--ink-2)}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;font-size:14.5px;margin:10px 0 6px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:#f0f3f7;font-weight:600;font-size:13.5px;color:var(--ink-2)}
+  tr:last-child td{border-bottom:0}
+  code,.mono{font-family:var(--mono);font-size:13px;background:#f1f3f7;border:1px solid #e6e9f0;border-radius:4px;padding:1px 5px}
+
+  .chip{display:inline-block;font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .ok{color:var(--ok);background:var(--ok-bg)} .warn{color:var(--warn);background:var(--warn-bg)}
+  .bad{color:var(--bad);background:var(--bad-bg)} .info{color:var(--accent);background:var(--accent-bg)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0}
+  .card.done{border-left:5px solid var(--ok)} .card.dec{border-left:5px solid var(--warn)}
+  .card.pick{border-left:5px solid var(--accent)}
+  .card h3{margin-top:0}
+
+  .reco{background:var(--accent-bg);border:1px solid #cfdffc;border-radius:10px;padding:11px 14px;margin:12px 0 0}
+  .reco b{color:#123f8f}
+
+  ol.steps{margin:8px 0 0;padding-left:22px} ol.steps li{margin:7px 0}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
+  details[open] summary{margin-bottom:8px}
+  details ul{margin:6px 0;padding-left:20px} details li{margin:5px 0}
+
+  .note{font-size:13.5px;color:var(--ink-2)}
+  .cta{background:#111418;color:#fff;border-radius:10px;padding:12px 16px;margin:14px 0 0;font-size:15px}
+  .cta code{background:#2a2f38;border-color:#39404a;color:#dfe6f2}
+  footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);color:var(--ink-2);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="t">#734 待拍 A · 技能侧说明面（v2，含对抗式审查）</div>
+  <nav>
+    <a href="#s1">① 已结清</a>
+    <a href="#s2">② 问题是什么</a>
+    <a href="#s3">③ 关键事实</a>
+    <a href="#s4">④ 对抗式审查</a>
+    <a href="#s5">⑤ 修正方案</a>
+    <a href="#s6">⑥ 三选项</a>
+  </nav>
+</header>
+
+<h1>技能侧说明面：这一轮做不做</h1>
+<p class="sub">2026-09-20 · v2 为对抗式审查后的修正版（v1 的定性偏高、漏了「门」与成本面，见 §⑦）。</p>
+
+<div class="verdict">
+  <b>先看三句</b>
+  <ul>
+    <li><b>问题性质</b>：这是<b>兜底缺口</b>，<b>不是主路径缺口</b>——DSH 装完重启后，agent 已能直接调工具跑技能，你那份会话验过。</li>
+    <li><b>缺口在哪</b>：只有两个场景会撞上——① DSH 装完<b>还没重启</b>；② <b>非 DSH 宿主</b>（只有 Node 的 agent 环境）。</li>
+    <li><b>我的建议</b>：<b>选项 1</b>（六家一次做全，并和本来就欠着的那轮单品发布并成一趟）；若你判断不值得，<b>选项 3</b> 也体面——但要把「非 DSH 宿主今天不可用」写进票里当已知限制。</li>
+  </ul>
+</div>
+
+<div class="stats">
+  <div class="stat"><b>3 样</b><span>跑一次技能的必要条件：入口／运行时／依赖</span></div>
+  <div class="stat"><b>1 / 3</b><span>场景已通（已装已重启）；2 个待补</span></div>
+  <div class="stat"><b>0 / 6</b><span>说明面写了「命令名解析不到时怎么定位入口」</span></div>
+  <div class="stat"><b>1 条门缺失</b><span>改完没人看守，六家会走散</span></div>
+</div>
+
+<h2 id="s1">① 已结清的两件（不用你出面）</h2>
+<div class="card done">
+  <table>
+    <tr><th style="width:34%">事项</th><th>读数</th></tr>
+    <tr><td>发布六个单品插件</td>
+      <td><span class="chip ok">完成</span> registry：六个单品 = <code>0.3.0</code>；<code>dsh-life-pack</code> = <code>0.3.2</code></td></tr>
+    <tr><td>重启宿主后真机验收</td>
+      <td><span class="chip ok">完成</span> 工具表 59 个、六个 <code>run_*_command</code> 全在；读技能 → <code>run_calorie_command</code>（一次拿到 envelope）→ 交付文件；回复里无安装建议</td></tr>
+  </table>
+  <p class="note" style="margin:10px 0 0">对照：上一份会话（宿主启动早于装机）工具表 53 个、<code>run_*</code> 0 命中，模型只能自己找运行时，跑的是 <code>npx -y -p skill-calorie@0.2.6</code>。</p>
+</div>
+
+<h2 id="s2">② 问题是什么（前因后果）</h2>
+<div class="card dec">
+  <details open>
+    <summary>30 秒时间线</summary>
+    <ul>
+      <li>用户报告：说一句「执行卡路里 help」，AI 回「二进制没进 PATH…装一下 <code>npm install -g skill-calorie@0.2.6</code>」。</li>
+      <li>追查出三处结构性问题：① DSH 会话 PATH 上只有 <code>dsh</code>／<code>pnpm</code>，技能命令名解析不到；② 说明面只教「直敲命令名」，卡路里那份还把入口写成仓内路径；③ 同一技能在一台机器上有四份副本。</li>
+      <li>定下的修法分两半：<b>插件侧</b>＝注册 agent 工具（已完成、已发、已验）；<b>技能侧</b>＝说明面补一条与宿主无关的定位口径（<b>尚未落地</b>）。</li>
+      <li>你当时的裁定是「SKILL.md 不许写 DSH 的东西」——要补的口径里没有一个 DSH 字样：它只说「命令名解析不到时，用技能基目录＋包 <code>bin</code> 声明的入口，用 Node 跑」。</li>
+    </ul>
+  </details>
+
+  <h3>三个场景分别的现状（这就是「问题多大」）</h3>
+  <table>
+    <tr><th style="width:30%">场景</th><th>现状</th><th>改说明面能救吗</th></tr>
+    <tr><td>DSH，已装且已重启<br><span class="note">（主路径）</span></td>
+      <td><span class="chip ok">通</span> 模型看见工具，直接调</td><td>不需要——这一格今天就通</td></tr>
+    <tr><td>DSH，装完还没重启</td>
+      <td><span class="chip bad">会复发</span> 模型只能照说明面办事，被第 555 行带去 <code>npx -p skill-calorie@0.2.6</code></td>
+      <td><b>能</b>：装机版 provider 每次 <code>list</code>／<code>get</code> 都现读磁盘上的 <code>SKILL.md</code> ⇒ 旧进程里也读得到新说明面</td></tr>
+    <tr><td>非 DSH 宿主（只有 Node）</td>
+      <td><span class="chip bad">不可用</span> 说明面没告诉它入口就在技能自己目录里，于是去装 npm 包或够仓内路径</td>
+      <td>能（说明面是唯一载体）</td></tr>
+  </table>
+  <p class="note">第三格是<b>投机性</b>的：今天没有已知用户在那里跑。所以这件事的定性是<b>兜底面</b>，不是主路径缺口。</p>
+</div>
+
+<h2 id="s3">③ 关键事实（决定成本与做法）</h2>
+<table>
+  <tr><th style="width:46%">事实</th><th>对决策的影响</th></tr>
+  <tr><td>插件 provider 每次调用都<b>现读</b> <code>SKILL.md</code>（装机版 0.2.7 实测同形）</td>
+    <td><span class="chip ok">利</span>「改说明面」是唯一能在「装完未重启」窗口里立刻生效的改法</td></tr>
+  <tr><td>让插件在它喂给模型的正文后面拼一段调用形态（技术上可行）</td>
+    <td><span class="chip bad">无用</span> 只覆盖已能用的 DSH 场景；旧插件进程跑旧代码，救不了那个窗口</td></tr>
+  <tr><td>六个包各有 <code>build-help.mjs</code>，<b>只重写标记块、其余不动</b></td>
+    <td>手改安全；但口径必须做成生成块，否则六家迟早走散</td></tr>
+  <tr><td>每个包 <code>AGENTS.md</code> 与 <code>scripts/wizard-publish.sh</code> 都<b>手钉版本号</b></td>
+    <td>抬一轮版本会连带一批小文件；旧单包向导要么改、要么退役</td></tr>
+  <tr><td><code>check-examples.mjs</code> 会真跑说明面速查表里的示例</td>
+    <td>新增示例行要避开它解析的列</td></tr>
+  <tr><td>六个单品的工作区已是 <code>dsh-life-pack: ^0.3.2</code>，而 registry 上的 <code>0.3.0</code> 还是 <code>^0.3.0</code></td>
+    <td><span class="chip info">省一半</span> 单品本来就欠一轮发布 ⇒ 增量成本≈只多说明面与那条门</td></tr>
+  <tr><td>说明面里那句 <code>npm install -g</code>／<code>npx -p</code> 是「从仓里拷副本（不含 <code>dist/</code>）」那条路唯一的走法，技能包里也没有 README</td>
+    <td>不能一刀删；应<b>降级为最后兜底并去掉钉死版号</b></td></tr>
+</table>
+
+<h2 id="s4">④ 对抗式审查：我原来的判断被戳了七下</h2>
+<table>
+  <tr><th style="width:52%">攻击点</th><th>结论</th></tr>
+  <tr><td>1. 「六家缺口径」的判据是我自己写的契约 ⇒ 自证循环？</td>
+      <td><span class="chip warn">部分成立</span> 判据站得住（你审过、#734 也记了「路线②必做兜底」），但「做不做」是产品判断，契约推不出来</td></tr>
+  <tr><td>2. 这个缺口真的会造成故障吗？</td>
+      <td><span class="chip ok">被压缩</span> 只有两个窗口，主路径不受影响 ⇒ 上次的措辞给了它过高的紧迫感</td></tr>
+  <tr><td>3. 有没有更本质的解法（宿主侧把形态喂给模型）？</td>
+      <td><span class="chip ok">已排除</span> 可行但无用；反倒证明「磁盘现读」是说明面改法的独有优势</td></tr>
+  <tr><td>4. 删掉 npm/npx 会不会堵死一条路？</td>
+      <td><span class="chip warn">会</span> 改为降级＋去钉版号，而不是删除</td></tr>
+  <tr><td>5. 补口径会不会把模型从「工具」引回 shell？</td>
+      <td><span class="chip warn">真实风险</span> 可控：口径只写「命令名不可解析时」用，上线后再抽验一次会话行为</td></tr>
+  <tr><td>6. 成本估对了吗？</td>
+      <td><span class="chip bad">我低估了</span> 还有各包版本钉、旧向导、示例门、逐包测试门</td></tr>
+  <tr><td>7. 方案有没有看守？</td>
+      <td><span class="chip bad">原来没有</span> 必须补一条门，否则改完就会烂（见 §⑤ 第 3 条）</td></tr>
+</table>
+
+<details>
+  <summary>三条关键推理（为什么这么判）</summary>
+  <ul>
+    <li><b>为什么「磁盘现读」值钱</b>：用户装完插件、还没重启时，跑着的是旧插件代码——但技能正文是每次调用现读文件的，所以只有「改说明面」这条路能在这个窗口里生效。</li>
+    <li><b>为什么宿主侧注入被排除</b>：那段说明住在插件代码里；旧进程加载的是旧代码，天然没有它；非 DSH 宿主更是根本看不到插件。</li>
+    <li><b>为什么必须配门</b>：六份说明面是各自独立的文件，靠人自觉保持同一句口径一定会走散（仓里已经有一批「说明面与行为对不上」的旧账）。门要能变异自证：拿掉一块 → 红，写回 → 绿。</li>
+  </ul>
+</details>
+
+<h2 id="s5">⑤ 修正后的方案（若选「做」）</h2>
+<div class="card">
+  <ol class="steps">
+    <li><b>单一来源</b>：口径正文住在 <code>docs/agents/技能调用契约.md</code>（这套规矩的家），由一个仓库级生成器写进六份 <code>SKILL.md</code> 的标记块。</li>
+    <li><b>清脏读数</b>：卡路里（第 28 行仓内路径；第 554-556 行＝钉 <code>@0.2.6</code>＋自称 <code>@0.2.4</code> 的自相矛盾）、居家（第 159 行「这两条现在必失败」；第 164 行 shell 里仓内路径）。npm/npx 两句降级为最后兜底、去钉版号。</li>
+    <li><b>配门</b>：断言六份都有该块且<b>六份逐字相同</b>；全仓 <code>SKILL.md</code> 里 <code>packages/skill-</code>／<code>npm install -g</code>／<code>npx -p</code> 命中 0；挂进 <code>pnpm gen:check</code>，带变异自证。</li>
+    <li><b>一轮发布</b>：六技能统一 <code>0.3.0</code> → 六单品 pin 同步抬 → 发单品 <code>0.3.1</code>（顺带把欠着的 <code>^0.3.2</code> 范围发出去）；<b>总管不动</b>。</li>
+    <li><b>验收</b>：六家各跑 <code>pnpm gen</code> ＋ 包门；用装机副本真跑一次 <code>node &lt;技能基目录&gt;/dist/cli/cmd_read.js &lt;key&gt;</code>（exit 0 ＋ 绝对路径回执）；最后你在会话里说一句抽验。</li>
+  </ol>
+</div>
+
+<h2 id="s6">⑥ 三个选项</h2>
+<table>
+  <tr><th style="width:22%">选项</th><th>做什么</th><th>利</th><th>弊</th></tr>
+  <tr>
+    <td><b>1</b> <span class="chip info">推荐</span><br>一次做全</td>
+    <td>§⑤ 的 1–5</td>
+    <td>契约闭合；两个窗口都补上；六家版本线统一；与欠着的单品发布并轮</td>
+    <td>一轮真发布 ＋ 生成器与门的活 ＋ 一批小文件（各包 <code>AGENTS.md</code>／旧向导）</td>
+  </tr>
+  <tr>
+    <td><b>2</b><br>只清危险两家</td>
+    <td>只清卡路里／居家的钉版号与仓内路径（不补口径、不动另外四家）</td>
+    <td>改动最小；掐掉「把用户引去装第二份副本」那句</td>
+    <td>另外四家仍缺兜底口径；六家版本线更不齐；下一轮还得再来一次</td>
+  </tr>
+  <tr>
+    <td><b>3</b><br>不做</td>
+    <td>只把风险记账（#734 收口 ＋ 契约里标「已知缺口」）</td>
+    <td>不动任何包；主路径已通</td>
+    <td>装完未重启时继续跑 <code>npx …@0.2.6</code>；非 DSH 宿主无解；卡路里那条自相矛盾的版号继续烂</td>
+  </tr>
+</table>
+
+<div class="reco">
+  <b>➡️ 推荐 1。</b>理由不是「几乎零成本」（那是我上次的错），而是：单品那一轮本来就欠着，增量主要是六份说明面加一个生成器与一条门；它补的是兜底面，所以选 3 也体面——只是要把「非 DSH 宿主今天不可用」写进票里当已知限制。
+</div>
+
+<div class="cta">
+  你只要回一个数字：<code>1</code>／<code>2</code>／<code>3</code>。<br>
+  <span style="opacity:.85;font-size:14px">选 1 → 我开技能侧那张票、做生成器与门、与单品发布一起走一轮，然后收口 #734。<br>
+  选 2 → 只清两家并在 #734 里记「其余四家无兜底口径」。<br>
+  选 3 → 我在 #734 与契约里各记一条已知缺口，然后关票。</span>
+</div>
+
+<h2>⑦ 我改判了什么（交底）</h2>
+<div class="card">
+  <ul style="margin:0;padding-left:20px">
+    <li>上次把「技能侧那半没做」排在待拍第一位，<b>暗示了它与主路径同级</b>；实际是兜底面。</li>
+    <li>漏了工程约束：<b>必须配一条门</b>，否则六份口径一定走散。</li>
+    <li>漏了成本面：各包版本钉、旧单包向导、示例门与逐包测试门。</li>
+    <li>也漏了一条<b>有利</b>事实：说明面是磁盘现读，改它在「装完未重启」窗口里立刻生效。</li>
+  </ul>
+</div>
+
+<footer>
+  证据：registry（<code>npm view</code> 逐包）· 装机副本（<code>~\.dsh\profiles\web\node_modules</code>）· 两份会话日志（<code>…5150ae8c…</code>／<code>…b50f8379…</code>）· 仓内源码（<code>skill-provider.ts</code>／<code>build-help.mjs</code>／<code>check-examples.mjs</code>／<code>check-publish.mjs</code>／<code>update-targets.ts</code>／六份 <code>SKILL.md</code>）。
+  本页只读，未改动任何包或机器状态。
+</footer>
+
+</div>
+</body>
+</html>

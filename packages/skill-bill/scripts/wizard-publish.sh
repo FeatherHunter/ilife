@@ -210,7 +210,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
 V_BASEPAINT="0.3.6"
-V_SKILL="0.2.2"
+V_SKILL="0.3.0"
 
 # 目录名（非 npm 名）
 D_BASEPAINT="base-render"

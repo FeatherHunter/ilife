@@ -16,11 +16,11 @@ npx skills@latest add FeatherHunter/ilife
   `node_modules/.git/dist/build`；要求文件头 YAML frontmatter 含字符串
   `name` + `description`，缺任一即整包跳过（`No valid skills`）。
 - 本仓之前 6 包 SKILL.md 全缺 frontmatter → 发现数为 0（`add -l` 复现过）。
-- 样板：只给 `packages/skill-calorie/SKILL.md` 加了头（`name: skill-calorie`）+
-  末尾「公共安装器运行时」小节；现有布局、base 三件套、依赖一律没动。
+- 样板：只给 `packages/skill-calorie/SKILL.md` 加了头（`name: skill-calorie`）；现有布局、base 三件套、依赖一律没动。
 - 本仓库 `dist/` 不进 git：装完目录里只有 SKILL.md + 源码 + 模板，
-  没有可执行文件；运行时走 npm（`skill-calorie@0.2.4` 已发布）。
-  「不走 npm」的只是 skill 发现这一步。
+  没有可执行文件；运行时走 npm（该包已发布，取当前发布版）。「不走 npm」的只是 skill 发现这一步。
+  ⇒ 这条正是 `SKILL.md` 里那条「唯一出口：怎么跑」第 3 级兜底存在的原因（#742 起该节由
+  `tooling/skill-call-form.mjs` 从 `docs/agents/技能调用契约.md` §七 生成，六份逐字同源）。
 
 ## 常用变体
 
@@ -51,11 +51,11 @@ npx skills@latest list -a opencode --json                     # 查已装
    - 同命令加 `--html <tmp>/home.html` → exit 0，落盘 2488 字节，头为 `<section class="ilife-page" data-skill="calorie" …>`。
 5. 回归：`test/skills-export-47.test.mjs` 钉死导出头（frontmatter name=目录名、description 非空、HELP 标记块仍在、运行时小节存在；仅静态导出头，真跑/落点/端到端不在单测覆盖，见测试头注记）。
 
-## 版本钉死登记（随 0.1.1 重发同步；现为 0.2.4）
+## 版本钉死登记（#742 起退役）
 
-- 三处版本硬编码已随 `0.1.1` 同步改完（SKILL.md 运行时小节、本文档发现小节、测试版本断言）；阻塞小节保留 0.1.0 历史记录备查。`#123` 发版窗口已把同一三处硬编码同步升到 `0.2.0`（`packages/skill-calorie/SKILL.md`、本文档发现小节、`test/skills-export-47.test.mjs`）。
-- 本次改写当刻实测：`packages/skill-calorie/package.json` 的 `version` 是 `0.2.3`，npm 官方源同读数（`npm view skill-calorie version` → `0.2.3`）；同一三处硬编码现均为 `0.2.3`（`packages/skill-calorie/SKILL.md` 运行时小节、本文档发现小节、`test/skills-export-47.test.mjs` 的 `NPM_PIN`）。上一段的 `0.1.1` 与 `0.2.0` 是历史登记，保留不回改。
-- 卡路里 `0.2.4`／`0.2.5` 发版窗口：同一三处硬编码同步升到 `0.2.4`（`packages/skill-calorie/SKILL.md` 运行时小节、本文档发现小节、`test/skills-export-47.test.mjs` 的 `NPM_PIN`）；`dsh-calorie` 同步到 `0.2.5`（精确 pin `skill-calorie@0.2.4`）。上一段的 `0.2.3` 是历史登记，保留不回改。
+- **本节不再登记任何硬编码版本号**：#742 把「怎么取运行时」那段口径收成**唯一来源 ＋ 生成块**（`docs/agents/技能调用契约.md` §七 → 六份 `SKILL.md`），口径里**不许出现版本号**（钉了就必然过期：旧写法钉过 `@0.2.6`，同一份文件的自述又写 `@0.2.4`，两行自相矛盾）。
+- 历史登记（不回改，备查）：`0.1.1`／`0.2.0`／`0.2.3`／`0.2.4`／`0.2.5` 五轮，同一批硬编码住在 `packages/skill-calorie/SKILL.md` 运行时小节、本文档发现小节、`test/skills-export-47.test.mjs` 的 `NPM_PIN` 三处；#742 把这小节整节换成生成块、把测试里的 `NPM_PIN` 删掉，三处联动随之结束。
+- 门在哪：`node tooling/skill-call-form.mjs --check`（挂 `pnpm gen:check`）——六份必须与唯一来源逐字同源，且**块外**零命中 `packages/skill-`／`npm install -g`／`npx -p`／`~/.agents/skills`。
 
 ## 已发布包阻塞（发版流修，不在本票硬上）
 
@@ -72,9 +72,9 @@ npx skills@latest list -a opencode --json                     # 查已装
 ## 复制到其余 5 包（样板通过后）
 
 - 给 `skill-bill/skill-chef/skill-home/skill-memo-ilife/skill-schedule` 的 SKILL.md
-  加同构头（`name` = 目录名 + 一句话 description）与「公共安装器运行时」小节
+  加同构头（`name` = 目录名 + 一句话 description）与「唯一出口：怎么跑」块
   （bin 名各包不同：`bill-cmd-read/chef-cmd-read/home-cmd-read/memo-cmd-read/schedule-cmd-read`，npm 包名即目录名；
-  仅 `skill-calorie` 多一个运维二进制 `skill-calorie-fetch`（import/validate/dedupe/export/history/audit/catalog-verify，不承载业务读写），其余 5 包复制时不带 fetch）。
+  #742 起这一块由 `tooling/skill-call-form.mjs` 生成，**不许手写**）。仅 `skill-calorie` 多一个运维二进制 `skill-calorie-fetch`（import/validate/dedupe/export/history/audit/catalog-verify，不承载业务读写），其余 5 包复制时不带 fetch。
 - 配方 description 写一句话、避冒号（中英文冒号一律不用，全角逗号代替），与正文首段同义。
 - 把 `test/skills-export-47.test.mjs` 的 `PKGS` 扩展为 6 包。
 - `skill-memo/`（无 SKILL.md 的构建残留目录）不算在内。

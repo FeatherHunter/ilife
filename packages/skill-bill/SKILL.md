@@ -15,6 +15,21 @@ bill-cmd-read bill.record.today --params '{"date":"2026-09-06"}'
 bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amount":-35,"note":"午饭"}'
 ```
 
+<!-- CALL-FORM-START -->
+
+## 唯一出口：怎么跑
+
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`bill-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-bill bill-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->
+
 ## 口径
 
 - 分类：支出 L1 10 个 + 收入 L1 6 个（餐饮/居家/穿着/出行/玩乐/学习/健康/社交/宠物/其他）+ 借贷/分期/转账隔离；amount 符号即分类依据（支出负/收入正），不单设 type 列；至多 L1/L2/L3 三级，旧数据无 / 视为 L1。

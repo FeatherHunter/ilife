@@ -15,6 +15,21 @@ memo-cmd-read memo.remind
 memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（不分大小写）：缺省就落一份 HELP 文件
 ```
 
+<!-- CALL-FORM-START -->
+
+## 唯一出口：怎么跑
+
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`memo-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-memo-ilife memo-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->
+
 ## 口径（M3）
 
 - 顶层分类 4 种：备忘（默认）/心愿/打卡/情绪日记；子分类自由文本可空；子唤醒词自带顶层。

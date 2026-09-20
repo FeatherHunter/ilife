@@ -136,8 +136,8 @@
 
 ## 发布（npm 官方源，交互式 wizard）
 
-- 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `skill-calorie@0.2.6`（硬前提 `base-paint@0.3.6` 已在 registry，第 1 stage 自动查）。
-- 插件发版脚本：`packages/plugin-calorie/scripts/wizard-publish.sh` —— 发 `dsh-calorie@0.2.7`。它住插件自己的目录（发谁的包，脚本就住谁的家）；硬前提是技能已落 registry（插件精确 pin 技能版本，wizard 第 1 stage 自动拦）。
+- 技能发版脚本：`scripts/wizard-publish.sh` —— 发 `skill-calorie@0.3.0`（硬前提 `base-paint@0.3.6` 已在 registry，第 1 stage 自动查）。
+- 插件发版脚本：`packages/plugin-calorie/scripts/wizard-publish.sh` —— 发 `dsh-calorie@0.3.1`。它住插件自己的目录（发谁的包，脚本就住谁的家）；硬前提是技能已落 registry（插件精确 pin 技能版本，wizard 第 1 stage 自动拦）。
 - 跑法（必须 Git Bash，脚本必须 LF；发布命令绝不重定向输出，否则 stdout 非 TTY 会直接 EOTP —— 见 `SKILLS/npm-publish/SKILL.md` §4；OTP 不进聊天，见该 §4 铁律）：
   - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/skill-calorie/scripts/wizard-publish.sh`（先跑，人扫码）
   - `"C:\Program Files\Git\bin\bash.exe" D:/ilife/packages/plugin-calorie/scripts/wizard-publish.sh`（后跑，人扫码）

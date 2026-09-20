@@ -17,6 +17,21 @@ chef-cmd-read chef.recipe.search --params '{"q":"虾"}'
 chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 ```
 
+<!-- CALL-FORM-START -->
+
+## 唯一出口：怎么跑
+
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`chef-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-chef chef-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->
+
 ## HELP 交付（「私家大厨HELP」这条命令交什么）
 
 对用户说「私家大厨help」时，**这条命令的缺省行为就是落一份 HELP HTML 文件**，并把绝对路径回执进 stdout：
@@ -39,10 +54,6 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 失败口径：参数错（`q` 与 `mode` 互斥、`mode` 只认 `lookup`）走 `exit 2`；渲染或落盘失败走 `exit 5`（stderr 是 `ERR 5: …`），失败路径上 stdout 保持干净。
 
 **本节不管**（各有归属，别在这里找）：页面里的内容（域／组／卡在 `src/help/sceneData.ts` 的内容资产，改内容走 `scripts/gen-help-assets.mjs` 再生成）；名字怎么算（时间戳格式与同秒递补的唯一定义地是共用件 `packages/base-render/src/output/saveHtml.ts`）；把文件送进面板／侧栏（属 #57 那条线）。
-
-## 装出来的那份怎么判新旧
-
-`~/.agents/skills/skill-chef` 在本机实测是 **Junction（目录联接）**，指向仓内这个包 ⇒ 它就是同一份文件，改这里立即生效；`Get-Item <路径> -Force | Select-Object LinkType` 一看便知。若某台机器上它是**拷贝**，那才谈新旧：只能比 `SKILL.md` 的哈希（拷贝里那份与仓里这份哈希不同＝旧的，重新装机）。
 
 ## 口径
 

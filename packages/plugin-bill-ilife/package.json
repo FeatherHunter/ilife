@@ -1,6 +1,6 @@
 {
   "name": "dsh-bill-ilife",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "爱生活单品插件 P10 脚手架：记账（ilife:cookie order 95），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "dsh-life-pack": "^0.3.2",
-    "skill-bill": "0.2.2"
+    "skill-bill": "0.3.0"
   },
   "dsh": {
     "bundle": {

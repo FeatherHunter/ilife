@@ -35,10 +35,6 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 
 **本节不管**（各有归属，别在这里找）：其余 20 条 `home.*` 命令（各有自己的节）；`--html <路径>`（所有命令通用的分节页出口，与 HELP 交付不是一回事）；把文件送进面板／侧栏（属另一条线）。
 
-## 装出来的那份怎么判新旧
-
-装到 agent 读得到位置的那份与仓内这个包是不是同一份，对**安装点**（`<技能目录>` 取实际安装点：本机常见形如 `~/.agents/skills/<技能名>`，该处没有同名目录时说明装到了别处）跑 `Get-Item <技能目录> -Force | Select-Object LinkType` 一看便知：**链接（Junction／目录联接）＝同一份**，改仓内立即生效；**拷贝**才谈新旧——只能比 `SKILL.md` 的哈希（拷贝里那份与仓里这份哈希不同＝旧的，重新把技能装到 agent 读得到的位置）。
-
 ## 口径
 
 - 分类：8 顶级统一不带前缀（食物与饮品/衣物与穿戴/家居与陈设/工具与器材/数码与电子/健康与医药/文体与娱乐/资产与凭证）；录物品须 category_id 正整数（从 categories 表查）；分类名禁数字前缀/emoji。
@@ -153,15 +149,17 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 - 路径类取值一律读配置文件 `~/.ilife/home.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `home.db`）、产物目录＝`html.dir`（默认 `home_manager_html`）、备份目录＝`backup.dir`（默认 `backups`，相对库目录解）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。**没有照片目录这项配置**（照片是记录里的一列，不解析照片目录）。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；SM9 3 场景 prompt 复制不迁）；真实数据禁迁，测试 tmp 隔离。
 
-## 公共安装器运行时（skills-cli 装完必读，#47）
+<!-- CALL-FORM-START -->
 
-- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；「不走 npm」的只是 skill 发现这一步，运行时走 npm（npm 包名即目录名 `skill-home`，二进制名 `home-cmd-read`）。
-- 取运行时二选一：`npm install -g skill-home`（一劳永逸），或免安装 `npx -p skill-home home-cmd-read …`（每次现拉）。**但这两条现在必失败：`skill-home@0.1.0` 虽已发布到 npm（2026-09-07，registry 在册），它的依赖 `"base-link-core": "workspace:^0.1.0"` 未改写 ⇒ npm 报 `EUNSUPPORTEDPROTOCOL`**（已发布包待重发，发版流修，见 docs/public-installer-47.md「已发布包阻塞」）——重发前一律走下面那条本仓构建产物验证链路。
-- HELP 端到端验证（本仓构建产物；node>=22.13 是 `engines` 钉死的门槛；隔离靠把**配置目录**指到临时目录——`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录，配置里的 `db.dir` 再决定库与产物落哪，故临时目录里自己写一份 `home.yaml`；完整口径见 docs/public-installer-47.md）：
+## 唯一出口：怎么跑
 
-  ```sh
-  cfg="$(mktemp -d)" && mkdir -p "$cfg/db" && printf 'db:\n  dir: %s\n' "$cfg/db" > "$cfg/home.yaml"
-  ILIFE_CONFIG_DIR="$cfg" node packages/skill-home/dist/cli/cmd_read.js home.help.lookup
-  ```
-- 上面那条跑通的样子：stdout 一行 envelope JSON，`delivery.path` 指的文件存在且大小＝`delivery.bytes`（与「HELP 交付」节的完成判据同源）；按上面那份 `home.yaml`，落点是 `$cfg/db/home_manager_html/`。
-- 版本钉死登记：本节**命令不写版本号**（重发前钉了也装不上，没有意义；npm 现值 `0.1.0`）；重发后照 docs/public-installer-47.md「版本钉死登记」把 SKILL.md／该文档／`test/skills-export-47.test.mjs` 三处硬编码一起同步。
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`home-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-home home-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->

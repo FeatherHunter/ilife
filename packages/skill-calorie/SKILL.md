@@ -25,7 +25,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## 唯一出口（T11）
 
-- 二进制：`packages/skill-calorie/dist/cli/cmd_read.js`（bin `calorie-cmd-read`），纯 CLI 单轨，无面板/定时/外联动。
+- 入口＝本包 `bin` 声明的那条（`calorie-cmd-read`）；**怎么调见下面「唯一出口：怎么跑」节**。纯 CLI 单轨，无面板/定时/外联动。
 - 运维定位（C1 #43）：`skill-calorie-fetch`（`dist/fetch/cli.js`）仅运维（import/validate/dedupe/export/history/audit/catalog-verify），不承载业务读写；业务读写唯一出口仍为 `calorie-cmd-read`。
 - 契约：P9 冻结 argv+JSON+exit；缺 key exit 2、未知 key exit 3、取数/缺失 exit 4、envelope/渲染/落盘 exit 5、预检 exit 1。
 - stdout 纯净：成功只打 envelope JSON 一行；进度与错误一律 stderr；HTML 默认落 `<库目录>/<产物目录>/<中文command>_<YYYYMMDD>_<HHMMSS>[_N].html`（同秒冲突自动加 `_2`/`_3`）——`<库目录>`＝配置文件 `~/.ilife/calorie.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `calorie_html`）。落点回传在 envelope `data.output`（**恒绝对路径**，相对库目录／`--html` 亦按 cwd 归一后回传）；`--html <路径>` 显式覆盖任意路径（**唯一落点参数**：老技能的 `--output` 别名已按 #245 删除，给了即 exit 2，与其余五家同形）。
@@ -549,14 +549,18 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 路径类取值一律读配置文件 `~/.ilife/calorie.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `calorie_data.db`）、产物目录＝`html.dir`（默认 `calorie_html`）、照片目录＝`photos.dir`（**空串＝这一项还没配**：取数侧跳过「照片文件在不在」的校验、写侧直接阻断，不猜路径）、GIF 子目录＝`photos.gifs`（默认 `gifs`）、训记五项＝`xunji.*`、落地三项＝`land.*`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。真实 DB 禁迁，测试 tmp 隔离；老家只读对照。取值面与环境项见 docs/env.md。
 - 出 scope（一期外）：面板（二期单 MAP）、定时任务、本技能外联动（router+作息/备忘/训记仅只读对照，不落本包）。
 
-## 公共安装器运行时（skills-cli 装完必读，#47）
+<!-- CALL-FORM-START -->
 
-- 本仓库 `dist/` 不进 git：skills-cli 只把本目录（含本文件）装进 agent，不带可执行文件；“不走 npm”的只是 skill 发现这一步，运行时走 npm（`skill-calorie@0.2.6` 已发布）。
-- 取运行时二选一：`npm install -g skill-calorie@0.2.6`（一劳永逸），或免安装 `npx -p skill-calorie@0.2.6 calorie-cmd-read …`（每次现拉）。若 npm 报 EUNSUPPORTEDPROTOCOL（workspace:），说明已发布包待重发（发版流修，见 docs/public-installer-47.md「已发布包阻塞」），先用本仓构建产物验证链路。
-- HELP 现找→cmd_read→envelope→HTML 验证（隔离靠把**配置目录**指到临时目录：`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录，配置里的 `db.dir` 再决定库与产物落哪；node>=22.13；完整口径见 docs/public-installer-47.md）：
-  ```sh
-  cfg="$(mktemp -d)" && mkdir -p "$cfg/db" && printf 'db:\n  dir: %s\n' "$cfg/db" > "$cfg/calorie.yaml"
-  ILIFE_CONFIG_DIR="$cfg" calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
-  ```
-- stdout／落盘契约与「唯一出口（T11）」节同源（成功只一行 envelope JSON；HTML 落点见 `data.output`）。
-- 版本钉死登记：本节版本硬编码现为 `@0.2.4`（已随 #44 发版流同步；历史登记见 docs/public-installer-47.md「版本钉死登记」）。
+## 唯一出口：怎么跑
+
+入口＝本技能包 `package.json` 里 `bin` 声明的那条：`dist/cli/cmd_read.js`。
+`<技能基目录>`＝加载本技能时给出的 `Base directory for this skill: <路径>` 那一行。
+
+1. 命令名解析得到时：`calorie-cmd-read <key> [--params '<json>']`。
+2. 解析不到时（`not recognized`／`command not found`）＝ PATH 上没有这条命令，下面这行照样跑得起来：
+   `node <技能基目录>/dist/cli/cmd_read.js <key> [--params '<json>']`
+3. 本目录里没有编译产物时：`npx -p skill-calorie calorie-cmd-read <key> [--params '<json>']`（上面第 2 行就够，不必再取一份）。
+
+换走法的信号只有一个：命令名解析不到。其余报错照 stderr 的报文原样交给用户。
+<!-- CALL-FORM-END -->
+
