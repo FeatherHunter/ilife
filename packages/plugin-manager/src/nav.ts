@@ -24,7 +24,7 @@ export interface ManagerTab {
   readonly title: string;
   /** 提供该 tab 的单品插件包名（仅文档级引用，不 import）。 */
   readonly plugin: string;
-  /** 本家自己那条客户端通道（单段，例 `/ilife-calorie`）：面板按它取配置体检（`config.check` 挂在上面）。
+  /** 本家自己那条客户端通道（单段，例 `/ilife-calorie`）：面板按它取配置体检（体检那个端点挂在上面）。
    *
    *  这条事实为什么住在这里（票 #735）：各家注册页签槽时**也**会交一份（各包契约件的 `RPC_CHANNEL`），
    *  但装机上的槽位面**不透传自定义注册选项**——条目 options 只留 `{key,id,order,label,priority}`，

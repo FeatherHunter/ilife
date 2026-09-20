@@ -75,3 +75,15 @@ export function useHealthPanel(getCall: () => HealthCallFace | null, tabs: reado
   }
   return face;
 }
+
+/** 汇总行该显示哪一句错（票 #735）：取数过程本身的错优先；**一家报告都没回来**时，把第一条家错误顶上来。
+ *
+ * 为什么要有这一格：各家的错只画在那家页签里的体检表上，一行摘要看不见 ⇒ 用户点完只见「体检中…」闪一下、
+ * 接着仍旧「还没体检」，会以为按钮坏了（真机上就是这么被误判的；那次六家全 404，汇总行一声不吭）。
+ * 有报告回来时不顶：那时各家那张表里已经把错说清楚了，摘要行只管读数。 */
+export function summaryErrorOf(face: Pick<HealthPanelFace, 'rows' | 'error'>): string | null {
+  if (face.error !== null) return face.error;
+  const rows = Object.values(face.rows);
+  if (rows.some((row) => row.report !== null)) return null;
+  return rows.find((row) => row.error !== null)?.error ?? null;
+}

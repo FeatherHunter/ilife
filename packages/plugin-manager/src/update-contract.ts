@@ -19,10 +19,18 @@ import type { BlockedReason } from 'dsh-plugin-update';
  * 宿主判据为什么要读这个字面量、以及它的边界，见 `readPanelRegistered` 的头注。 */
 export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
 
+/** 载体基段：`connection.rpc.call` 的**第一段**参数，宿主注册路径与它同源（`'/api' ＋ 通道名`）。
+ *
+ * 一处定义（#735）：总管自己的电话、以及面板到各家的每一通电话，第一段都必须是它。
+ * 真机实现（`dsh-client-connection/lib/client.js`）：URL ＝ `${第一段}/${第二段}`、信封 `method` ＝ 第二段。
+ * 传错第一段就是 404：总管自己的电话在 #678 栽过一次，各家的配置体检在 #735 又栽过一次
+ * （那次传的是通道名 `/ilife-<技能>`，拼出来的地址上没有注册过那条路由，六家全 404）。 */
+export const CARRIER_BASE = '/api' as const;
+
 /** 载体：宿主注册 `connection.fetch.register` 的路径 / 面板 `connection.rpc.call` 的两段参数。 */
 export const MANAGER_RPC = {
   /** 载体基段（`connection.rpc.call` 的**第一段**参数）。传错第一段就是 404：真机上踩过一次。 */
-  base: '/api',
+  base: CARRIER_BASE,
   /** 单段通道名，须 match `/^\/[A-Za-z0-9._~-]+$/`（cookbook §6）。 */
   channel: '/ilife-manager',
   /** 面板侧第二段参数（等于通道名去掉前导斜杠那一段）。 */

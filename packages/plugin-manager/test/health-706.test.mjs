@@ -17,6 +17,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { HEALTH_ENDPOINT, countByStatus, isHealthReport, worstStatus } from '../dist/health-contract.js';
 import { loadHealthReports } from '../dist/health-fetch.js';
+import { summaryErrorOf } from '../dist/health-panel.js';
 import { HealthSummaryLine, HealthTable, TAB_DOT, countSegsOf, lightsOf, tabDotColor, tabNote } from '../dist/health-view.js';
 // 档位的**灯色**从 dist 直接取（票 #732）：本件原先自己抄了一份同样的色值——
 // 那样「改源码里的色值」在这件里是**看不见**的（抄来的那份不会跟着变），断言就守不住这件事。
@@ -143,12 +144,14 @@ describe('#706 配置体检 · 面板侧', () => {
     });
   });
 
-  describe('B 取数：一家一次、各走各的通道', () => {
-    it('六家各调一次自己的通道，端点都是 config.check，载荷空对象', async () => {
+  describe('B 取数：一家一通电话，走载体基段', () => {
+    // 票 #735 真机 404 的根：载体是 `call(第一段, 第二段, {method, payload})`，URL ＝ `${第一段}/${第二段}`。
+    // 第一段必须是载体基段 `/api`、第二段是那家的电话名；写成「通道名 ＋ 端点名」两家都不认。
+    it('六家各一通电话：第一段载体基段、第二段电话名、端点写进载荷 method', async () => {
       const seen = [];
-      const call = async (channel, endpoint, payload) => {
-        seen.push([channel, endpoint, payload]);
-        return { ok: true, value: report(channel.replace('/ilife-', ''), ['green']) };
+      const call = async (base, phone, payload) => {
+        seen.push([base, phone, payload]);
+        return { ok: true, value: report(phone.replace('ilife-', ''), ['green']) };
       };
       const tabs = [
         { id: 'dsh-calorie', channel: '/ilife-calorie' },
@@ -157,8 +160,8 @@ describe('#706 配置体检 · 面板侧', () => {
       const out = await loadHealthReports(call, tabs);
       assert.equal(out.error, null);
       assert.deepEqual(seen, [
-        ['/ilife-calorie', HEALTH_ENDPOINT, {}],
-        ['/ilife-chef', HEALTH_ENDPOINT, {}],
+        ['/api', 'ilife-calorie', { method: HEALTH_ENDPOINT, payload: {} }],
+        ['/api', 'ilife-chef', { method: HEALTH_ENDPOINT, payload: {} }],
       ]);
       assert.equal(out.rows.length, 2);
       assert.equal(out.rows[0].report.skill, 'calorie');
@@ -166,7 +169,7 @@ describe('#706 配置体检 · 面板侧', () => {
     });
 
     it('一家失败不拖别家：出错那家只有 error，另一家照常有报告', async () => {
-      const call = async (channel) => (channel === '/ilife-bad'
+      const call = async (base, phone) => (phone === 'ilife-bad'
         ? { ok: false, error: { code: 'missing-cli', message: '技能出口缺失', details: {} } }
         : { ok: true, value: report('good', ['yellow']) });
       const out = await loadHealthReports(call, [
@@ -190,6 +193,18 @@ describe('#706 配置体检 · 面板侧', () => {
       const out = await loadHealthReports(null, [{ id: 'dsh-x', channel: '/ilife-x' }]);
       assert.equal(out.rows.length, 0);
       assert.match(out.error, /宿主连接缺席/);
+    });
+
+    // 票 #735 的第三次真机误判：六家全 404 时各家只有自己的 error，摘要行一声不吭，
+    // 用户看到的仍是「还没体检」⇒ 以为按钮坏了。这一条咬住「一家报告都没回来时把错顶上去」。
+    it('报告一份都没回来时，家错误要顶到摘要行', () => {
+      const failed = { report: null, error: '体检没跑起来：transport failure for /ilife-calorie/config.check: HTTP 404' };
+      const okRow = { report: report('calorie', ['green']), error: null };
+      assert.equal(summaryErrorOf({ rows: {}, error: '宿主连接缺席：connection.rpc.call 不可用' }), '宿主连接缺席：connection.rpc.call 不可用',
+        '取数过程本身的错优先');
+      assert.match(summaryErrorOf({ rows: { a: failed, b: failed }, error: null }), /HTTP 404/, '一家报告都没回来时，第一条家错误没顶上来');
+      assert.equal(summaryErrorOf({ rows: { a: okRow, b: failed }, error: null }), null, '有报告回来时不顶（各家那张表已经说清了）');
+      assert.equal(summaryErrorOf({ rows: {}, error: null }), null, '还没跑过时不许无中生有');
     });
   });
 

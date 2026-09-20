@@ -1,25 +1,28 @@
 /** 面板到各家的配置体检：一次取数、六份报告（纯异步函数：无 DOM、无 react；传输口注入，便于单测）。
  *
  * 三条纪律：
- *   · **只走各家自己的通道**（`rpc.call(channel, HEALTH_ENDPOINT, …)`）——总管不认任何一家、也不加
- *     任何单品的依赖；通道名从「爱生活页签槽」的账本条目带出来（各家注册时写进 options）。
+ *   · **只走各家自己的电话**（`rpc.call(CARRIER_BASE, <电话名>, {method, payload}, …)`）——总管不认任何
+ *     一家的端点、也不加任何单品的依赖；电话名与端点名都是各家契约件公开的事实。
+ *     ⚠ **载体形状**（#735 真机踩到）：第一段必须是**载体基段** `/api`，第二段是那家的电话名
+ *     （＝它注册在 `/api<通道>` 上的那一段），端点名写进载荷的 `method`。写错第一段就是 404，
+ *     而 404 只落成「那一家取不到数」，屏上看起来像按钮坏了（先例：总管自己的电话在 #678 栽过同一处，
+ *     见 `update-contract.ts` 的 `CARRIER_BASE`）。
  *   · **一次取数，六份报告**：总览那行与各家那张表读的是同一份结果（见 `health-panel.ts` 的单一状态源），
  *     不许两处各算一遍。
  *   · 有界超时：一家不回不该拖死整屏（技能侧 spawn 上限 20 s，这里给 25 s）。
  */
 import { HEALTH_ENDPOINT, isHealthReport } from './health-contract.js';
 import type { HealthReport } from './health-contract.js';
+import { CARRIER_BASE } from './update-contract.js';
+import type { CallFace } from './update-client.js';
 
-/** 传输口（DSH 载体 `connection.rpc.call` 的形状，cookbook §6）。 */
-export type HealthCallFace = (
-  channel: string,
-  endpoint: string,
-  payload: unknown,
-  signal?: AbortSignal,
-) => Promise<
-  | { readonly ok: true; readonly value: unknown }
-  | { readonly ok: false; readonly error: { readonly code: string; readonly message: string; readonly details: Record<string, unknown> } }
->;
+/** 传输口：与更新面**同一张脸**（`connection.rpc.call` 的四参形状，cookbook §6）——一张脸一处定义。 */
+export type HealthCallFace = CallFace;
+
+/** 一家的电话名：通道名去掉前导斜杠那一段（各家宿主半注册在 `/api` ＋ 通道名，信封 `method` 就是它）。 */
+export function phoneOf(channel: string): string {
+  return channel.startsWith('/') ? channel.slice(1) : channel;
+}
 
 /** 一次取数的时限（毫秒）：技能侧 spawn 上限 20 s，这里留一点余量。 */
 export const HEALTH_TIMEOUT_MS = 25_000 as const;
@@ -51,7 +54,12 @@ function timeoutText(): string {
 
 async function fetchOne(call: HealthCallFace, row: HealthTabRow): Promise<{ readonly report: HealthReport | null; readonly error: string | null }> {
   try {
-    const result = await call(row.channel, HEALTH_ENDPOINT, {}, AbortSignal.timeout(HEALTH_TIMEOUT_MS));
+    const result = await call(
+      CARRIER_BASE,
+      phoneOf(row.channel),
+      { method: HEALTH_ENDPOINT, payload: {} },
+      AbortSignal.timeout(HEALTH_TIMEOUT_MS),
+    );
     if (!result || typeof result !== 'object' || typeof (result as { ok?: unknown }).ok !== 'boolean') {
       return { report: null, error: '回执信封异常（非 ok 信封）。' };
     }

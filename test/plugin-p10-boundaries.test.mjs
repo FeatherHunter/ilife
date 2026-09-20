@@ -92,6 +92,15 @@ describe('P10 槽位定案', () => {
       assert.match(row.channel, /^\/[A-Za-z0-9._~-]+$/, plugin + ' 的通道名不是单段路由名');
     }
   });
+  // 票 #735 的第二条断链（真机 404）：面板到各家的电话第一段必须是**载体基段** `/api`
+  // （载体 URL ＝ `${第一段}/${第二段}`）。两边这一格必须同源：各家宿主半注册在 `'/api' + RPC_CHANNEL`，
+  // 面板那侧取自总管的一处常量 `CARRIER_BASE`。
+  it('载体基段两侧一致（#735）', () => {
+    for (const d of SINGLES) {
+      assert.ok(srcText(d).includes("'/api' + RPC_CHANNEL"), d + ' 宿主半的注册路径不是「/api ＋ 通道名」');
+    }
+    assert.ok(/CARRIER_BASE = '\/api'/.test(srcText('plugin-manager')), '总管侧没有把载体基段写成一处常量');
+  });
   // 票 #738：面板印的页签名（＝产品名）有**两处产地**——各家自己那个 `SLOT_TITLE` 是主
   // （页签注册交出去的 label、侧边栏页签名、本家设置页标题都从它出），总管导航表那一格是它的镜像
   // （页签还没注册时兜底，更新列表那一行的行首也用它）。两处必须同值：只改一边，

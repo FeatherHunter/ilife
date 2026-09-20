@@ -24,7 +24,7 @@ import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './u
 import { loadManagerVersion } from './update-client.js';
 import type { CallFace } from './update-client.js';
 import { CONFIG_TAB_SLOT, VERSION_UNKNOWN } from './update-contract.js';
-import { useHealthPanel } from './health-panel.js';
+import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
 import type {
@@ -341,7 +341,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
     React.createElement(HealthSummaryLine, {
       lights,
       running: health.running,
-      error: health.error,
+      // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
+      error: summaryErrorOf(health),
       onRun: health.run,
     }),
     React.createElement(
