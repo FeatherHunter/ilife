@@ -80,6 +80,21 @@ describe('票 #738 ① 六家交出去的页签名与设置页标题（真产物
         family.dir + ' 的设置页标题没跟着那一个常量走，屏上是：' + JSON.stringify(text.slice(0, 80)));
     }
   });
+
+  it('侧边栏页签名与页签描述子的 title 也是产品名（真产物跑 registerSingle）', async () => {
+    for (const family of FAMILIES) {
+      const slot = await import('../../../packages/' + family.dir + '/dist/slot.js');
+      const entries = [];
+      slot.registerSingle({
+        hasTabs: () => true,
+        registerTab: (entry) => { entries.push(entry); return () => {}; },
+        openTab: () => {},
+      });
+      assert.equal(entries.length, 1, family.dir + ' 没注册页签槽');
+      assert.equal(entries[0].title, family.name, family.dir + ' 侧边栏页签名不是产品名');
+      assert.equal(slot.slotDescriptor().title, family.name, family.dir + ' 页签描述子的 title 不是产品名');
+    }
+  });
 });
 
 describe('票 #738 ② 屏上页签条印产品名（真产物渲两次）', () => {
