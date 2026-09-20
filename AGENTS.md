@@ -36,6 +36,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 加／改／搬一条命令、碰共用位之前，先读 `docs/agents/命令登记纪律.md`：一条命令的事实只住它自己的能力目录（`src/<能力>/commands.ts`），共用位一律由 `pnpm gen` 派生、`pnpm gen:check` 守。
 
+### 技能调用契约（技能侧与插件侧各管一半）
+
+写／改技能包或 DSH 插件之前读 `docs/agents/技能调用契约.md`：**技能侧**只声明「唯一出口 ＋ 与宿主无关的调用形态」（不许出现 `dsh-`／`DSH_`／仓内相对路径，也不许假设 PATH 里有自家命令名）；**插件侧**负责「装上插件＝技能装好」并给 agent 一条在 DSH 里真能用的调用通道（入口按包 `bin` 声明解析、运行时用 `resolveNodeBin(process.execPath)`，不读 PATH）。背景：DSH 会话 PATH 上只有 `dsh`／`pnpm` 两条命令，纯 DSH 机器上会话里连 `node` 都没有。
+
 ### 编排纪律
 
 切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
