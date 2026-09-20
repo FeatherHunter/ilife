@@ -39,25 +39,30 @@
 - 提交 `04822cef`，随 `dfebf476` 推上 `master`（2026-09-20 17:37）。
 - 按上游 `probe-screenshots.mjs` 的同一套判据复核过：`screenshots.json` 读回 HTTP 200，三张图 `Range: bytes=0-0` 全 206（LIVE）——市场下一次构建就会读到。
 
-## 三、下载量：未执行
+## 三、下载量：字段已补齐，等下一版
 
-关联判据在上游 `scripts/probe-npm.mjs`：按条目 `url` 那层读 `package.json` 拿包名 → 取 registry 上 `dist-tags.latest` 那一版 manifest 的 `repository` → 小写包含 `featherhunter/ilife` 才算关联。`dsh-life-pack` 现在 0.3.2 的 manifest 没有 `repository`，所以关联不上；**改 `repository` 就必须发一个新版本**。
+关联判据在上游 `scripts/probe-npm.mjs`：按条目 `url` 那层读 `package.json` 拿包名 → 取 registry 上 `dist-tags.latest` 那一版 manifest 的 `repository` → 小写包含 `featherhunter/ilife` 才算关联。
 
-改动清单（一次做完，少一件就红）：
+**云端读数（2026-09-20 晚）**：`dsh-life-pack@0.3.3` 与六家单品 `@0.3.4` 都已是各自的 `latest`，**两批 manifest 里都没有 `repository`**，所以现在一条都关联不上。npm 不允许重发同一版本号——**要出下载量就得再发一版**。
 
-| 文件 | 改动 |
+**字段已经补齐**（提交 `e32e8a72`）：七个包的 `package.json` 各加一段，指向 `git+https://github.com/FeatherHunter/ilife.git` 与各自的 `directory`。下一次发版无论版本号是多少都会带上它，关联与下载量随之成立。版本号不由本席定。
+
+| 项 | 读数 |
 | --- | --- |
-| `packages/plugin-manager/package.json` | 加 `repository`：`{"type":"git","url":"git+https://github.com/FeatherHunter/ilife.git","directory":"packages/plugin-manager"}`；`version` `0.3.2` → `0.3.3` |
-| 六个 `packages/plugin-{bill-ilife,calorie,chef,home-ilife,memo-ilife,schedule-ilife}/package.json` | `dsh-life-pack` 范围 `^0.3.2` → `^0.3.3`（`test/plugin-p10-boundaries.test.mjs:38` 与 `test/plugin-p10-install.test.mjs:46` 断言「范围 ＝ `^` ＋ 总管工作区版本」） |
-| `pnpm-lock.yaml` | 六个 importer 里 `dsh-life-pack` 的 `specifier: ^0.3.2` → `^0.3.3`（CI 三处 `pnpm install --frozen-lockfile`，`ci.yml:28`／`94`／`133` 逐字比） |
+| 七个包的 `repository` | ✅ 已加（`e32e8a72`）。本地复核：`check-publish --pre` PASS（七个包全 OK）＋ `test/plugin-p10-boundaries.test.mjs`／`plugin-p10-install.test.mjs` 22 pass / 0 fail |
+| 六家的 `dsh-life-pack` 范围 | ✅ 已是 `^0.3.3`（来自 #744 的定版提交 `7534adb4`，不是本席改的；`plugin-p10-boundaries.test.mjs:38` 与 `plugin-p10-install.test.mjs:46` 咬这条） |
+| `pnpm-lock.yaml` 的 specifier | ✅ 六处已跟到 `^0.3.3`（#744） |
+| 出下载量 | ⏳ 等下一次发版；本席没有升版本号，字段发出去之前一直休眠 |
+
 
 发布窗口的两条硬约束：
 
-1. **打包的是工作区，不是提交。** `tooling/wizard-publish.ps1` 走 `npm publish`，包里 `files` 只含 `dist` 与 `cordis.patch.yml`——发出去的是**盘上当前的 `dist/`**。`packages/plugin-manager` 被另一席改着（#743／#744）时发版，等于把那一席没做完的产物发上 npm；#734 记过总管处在同一处境时本轮不发。（2026-09-20 17:30 读数：`packages/plugin-manager/package.json` 与 `packages/plugin-chef/src/client.ts` 当时都有未提交改动。）
+1. **打包的是工作区，不是提交。** `tooling/wizard-publish.ps1` 走 `npm publish`，包里 `files` 只含 `dist` 与 `cordis.patch.yml`——发出去的是**盘上当前的 `dist/`**。发版前确认没有别席正在改 `packages/plugin-*/src`（有未提交改动时发版，等于把那一席没做完的产物发上 npm；#734 记过总管处在同一处境时本轮不发）。
 2. **要人批准 2FA**：侧边栏终端跑 `pwsh -NoProfile -File tooling\wizard-publish.ps1 -Auto -Package dsh-life-pack`；跑之前先过 `tooling/check-publish.mjs` 三道门（`--pre`／`--tarball`／`--fresh-tmp`，都带 `--only dsh-life-pack`）。
-3. **本席不单独发**：维护者口径是「有些问题要靠自家插件发新版解决，稍后统一发版」，这一版由统一窗口带上。同窗口顺带看 `publish:fresh` 那道红——`master` 上 `dfebf476` 的 CI 里 `install`／`build`／`publish:pre`／`publish:tarball` 都过，红在 `publish:fresh`：`skill-calorie` 安装态装载器导入失败（`dist/render/templates.js` 不在 registry 那一版产物里，日志自注「版本偏斜，非本票红」）。
+3. **发版分两次看**：`wizard-publish.ps1` 按「云端已有该版本就跳过」工作，所以本地版本号不动就不会重发——字段补了但版本没升＝它一直休眠，这是预期的。
+4. **同窗口顺带看 `publish:fresh` 那道红**：`master` 上 CI 的 `install`／`build`／`publish:pre`／`publish:tarball` 都过，红在 `publish:fresh`——`skill-calorie` 安装态装载器导入失败（`dist/render/templates.js` 不在 registry 那一版产物里，日志自注「版本偏斜，非本票红」）。
 
-六个单品自己的 npm 包同样没有 `repository` 字段；它们各自投稿时同样要补字段并发一版，才有下载量。
+六个单品的 `repository` 已在 `e32e8a72` 一并补上，但**云端最新版（0.3.4）里没有**——它们各自投稿后要出下载量，同样要等它们下一次发版。
 
 ## 四、缺口与未决
 
