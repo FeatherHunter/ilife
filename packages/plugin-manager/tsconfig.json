@@ -9,7 +9,6 @@
   ],
   "exclude": [
     "src/client.ts",
-    "src/update-panel.ts",
-    "src/directory-browser-ui.ts"
+    "src/update-panel.ts"
   ]
 }

@@ -17,9 +17,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 
 describe('#744 目录浏览器打进了 client 束', () => {
-  it('六家要用的五个名字都在束里', () => {
+  it('六家要用的四个名字都在束里', () => {
     for (const name of [
-      'DirectoryBrowser',
+      'DirectoryBrowserFromRow',
       'createDirectoryRowBrowser',
       'createBrowseController',
       'pickerModeOf',

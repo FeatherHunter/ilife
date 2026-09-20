@@ -9,6 +9,7 @@
     ".": "./dist/index.js",
     "./client": "./dist/client.js",
     "./directory-browser": "./dist/directory-browser-contract.js",
+    "./directory-browser-ui": "./dist/directory-browser-ui.js",
     "./package.json": "./package.json"
   },
   "files": [

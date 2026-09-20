@@ -34,7 +34,7 @@ const {
   locationLabel,
   validateFolderName,
 } = contract;
-const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath } = state;
+const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath, createDirectoryRowBrowser } = state;
 
 /** 假取数面：一张写死的目录树，`C:\a` 下面有 `b`（普通）、`.hidden`（隐藏）、`c`（普通）。 */
 function fakeFace(options = {}) {
@@ -322,9 +322,15 @@ describe('#744 解密判据：共用件不认识宿主', () => {
     }
   });
 
-  it('出口只经唯一门：package.json 只给一条 ./directory-browser 子路径', () => {
+  it('出口只经两条子路径：纯逻辑一条、视图一条（视图那条是给六家 require 的）', () => {
     const manifest = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8'));
-    assert.deepEqual(Object.keys(manifest.exports).sort(), ['.', './client', './directory-browser', './package.json']);
+    assert.deepEqual(Object.keys(manifest.exports).sort(), [
+      '.',
+      './client',
+      './directory-browser',
+      './directory-browser-ui',
+      './package.json',
+    ]);
   });
 });
 
@@ -338,3 +344,76 @@ describe('#744 图上要用的三个读数', () => {
     assert.equal(entryPath('C:\\a', { name: 'c', path: '', hidden: false }), 'C:\\a\\c', '宿主没给 path 时按名字拼');
   });
 });
+
+describe('#744 六家取用的两条子路径真的能 require', () => {
+  it('./directory-browser：开图接线在 Node 里能跑（六家的 client 束就是 require 这一条）', async () => {
+    const picked = [];
+    const row = createDirectoryRowBrowser({
+      face: fakeFace(),
+      initialPath: '',
+      onPicked: (p) => picked.push(p),
+    });
+    assert.equal(row.state().phase, 'idle');
+    await row.open();
+    assert.equal(row.state().phase, 'ready');
+    assert.match(row.summary(), /C:\\a/);
+    assert.equal(typeof row.actions.onPick, 'function');
+    row.actions.onSelect('C:\\a\\c');
+    row.actions.onPick();
+    assert.deepEqual(picked, ['C:\\a\\c']);
+  });
+
+  it('./directory-browser-ui：组件与界面的挂钩都转出来了（require 它不炸）', async () => {
+    const ui = await import('../dist/directory-browser-ui.js');
+    assert.equal(typeof ui.DirectoryBrowser, 'function');
+    assert.equal(typeof ui.DirectoryBrowserFromRow, 'function');
+    assert.equal(typeof ui.createDirectoryRowBrowser, 'function');
+    assert.equal(ui.DirectoryBrowser({ open: false, state: stateFixture, labels: labelsFixture, ...noopActions }), null,
+      '没开图时不画任何东西');
+  });
+});
+
+/** 视图用例用的最小 state：满载但空列表。 */
+const stateFixture = {
+  phase: 'ready',
+  listing: { path: 'C:\\a', home: 'C:\\', crumbs: [{ name: 'C:\\', path: 'C:\\', hidden: false }], entries: [], truncated: false },
+  failure: null,
+  selected: null,
+  showHidden: false,
+  draft: 'C:\\a',
+  filter: '',
+  creating: null,
+  notice: null,
+};
+
+const labelsFixture = {
+  title: '选择数据目录',
+  close: '关闭',
+  up: '上一级',
+  pathPlaceholder: '路径',
+  go: '转到',
+  showHidden: (n) => `显示隐藏目录（${n}）`,
+  empty: '没有子目录',
+  loading: '正在读取…',
+  newFolder: '新建文件夹',
+  createConfirm: '创建',
+  createCancel: '取消',
+  select: '选',
+  selected: '已选',
+  open: '打开',
+  cancel: '取消',
+  willPick: '将选定：',
+};
+
+const noopActions = {
+  onPick: () => {},
+  onClose: () => {},
+  onEnter: () => {},
+  onUp: () => {},
+  onSelect: () => {},
+  onToggleHidden: () => {},
+  onDraft: () => {},
+  onCommitDraft: () => {},
+  onCreate: () => {},
+  onCreatingChange: () => {},
+};

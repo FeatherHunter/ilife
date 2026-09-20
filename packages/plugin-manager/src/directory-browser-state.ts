@@ -253,3 +253,61 @@ export function describe(state: BrowseState): string {
 export function entryPath(directory: string, entry: DirectoryEntry): string {
   return entry.path === '' ? joinPath(directory, entry.name) : entry.path;
 }
+
+/** 目录行接线的返回：**不碰 React**——`actions` 原样喂给 `directory-browser-ui` 的组件 props，
+ *  `isOpen`／`setOpen` 由调用方自己接进它的状态（宿主怎么重画是它的事，本件不管）。 */
+export interface DirectoryRowBrowser {
+  readonly actions: {
+    readonly onPick: () => void;
+    readonly onClose: () => void;
+    readonly onEnter: (path: string) => void;
+    readonly onUp: () => void;
+    readonly onSelect: (path: string) => void;
+    readonly onToggleHidden: () => void;
+    readonly onDraft: (draft: string) => void;
+    readonly onCommitDraft: () => void;
+    readonly onCreate: (name: string) => void;
+    readonly onCreatingChange: (name: string | null) => void;
+  };
+  /** 开图（初次列举家目录），并把「开着」交给调用方自己记。 */
+  open(): Promise<void>;
+  state(): BrowseState;
+  /** 一段可读的当前状态（用例与调试用）。 */
+  summary(): string;
+}
+
+/** 建一份「目录行接线」：给一个取数面与初值，回一组动作。
+ *
+ * 只做接线：把控制器算出来的状态与回调打包好，不取数、不画图、不认宿主。 */
+export function createDirectoryRowBrowser(deps: {
+  readonly face: DirectoryBrowseFace;
+  readonly initialPath: string;
+  readonly onPicked: (path: string) => void;
+  readonly onClosed?: () => void;
+  readonly failureLabel?: string;
+}): DirectoryRowBrowser {
+  const controller = createBrowseController({
+    face: deps.face,
+    initialPath: deps.initialPath,
+    onPicked: deps.onPicked,
+    onClose: () => deps.onClosed?.(),
+    ...(deps.failureLabel === undefined ? {} : { failureLabel: deps.failureLabel }),
+  });
+  return {
+    open: () => controller.open(),
+    state: () => controller.getState(),
+    summary: () => describe(controller.getState()),
+    actions: {
+      onPick: () => controller.pick(),
+      onClose: () => controller.cancel(),
+      onEnter: (path) => void controller.enter(path),
+      onUp: () => void controller.up(),
+      onSelect: (path) => controller.select(path),
+      onToggleHidden: () => controller.toggleHidden(),
+      onDraft: (draft) => controller.setDraft(draft),
+      onCommitDraft: () => void controller.commitDraft(),
+      onCreate: (name) => void controller.createFolder(name),
+      onCreatingChange: (name) => controller.setCreating(name),
+    },
+  };
+}

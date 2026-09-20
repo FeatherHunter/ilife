@@ -39,13 +39,17 @@ export const inject = ['slots', 'connection'];
 /** 爱生活页签槽名：定义在 `update-contract.ts`（宿主判「已装产物有没有注册代码」也用这个名字，一处定义）。 */
 export { CONFIG_TAB_SLOT } from './update-contract.js';
 
-/** 共用件「目录浏览器」从包门转出（票 #744）：六个单品插件的设置页要用的就是这三样——
- *  挂在行上的组件、开图用的接线、以及入口三态的判定。六家只 import 这一个门，
- *  不 deep-import 本包 `dist/` 里的具体文件（那条禁令写在本票票面「解耦要求」第 4 条）。 */
-export { DirectoryBrowser, createDirectoryRowBrowser } from './directory-browser-ui.js';
+/** 共用件「目录浏览器」从包门转出（票 #744）：六个单品插件的设置页要用的就是这两样——
+ *  「开图接线 ＋ 入口三态判定」（纯逻辑，`./directory-browser` 子路径）与
+ *  「对话框组件」（`./directory-browser-ui` 子路径，吃 React）。
+ *
+ *  六家的 client 束**不能**从本条 `./client` 取：这一条是 loader 工厂包
+ *  （`window.__ModuleLoader__.load(...)` 的注册壳），`require` 拿到的是空 exports。
+ *  所以对外要用的是那两个普通子路径；这里只是同源转出，供本包内部与用例使用。 */
+export { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 export type { DirectoryBrowserLabels, DirectoryBrowserProps } from './directory-browser-ui.js';
-export { createBrowseController, rowsOf, canGoUp, targetOf } from './directory-browser-state.js';
-export type { BrowseController, BrowseState } from './directory-browser-state.js';
+export { createBrowseController, createDirectoryRowBrowser, rowsOf, canGoUp, targetOf, entryPath } from './directory-browser-state.js';
+export type { BrowseController, BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
 export { pickerModeOf, readPickAnswer } from './directory-browser-contract.js';
 export type { DirectoryBrowseFace, DirectoryListing, PickOutcome } from './directory-browser-contract.js';
 

@@ -5,10 +5,10 @@
  */
 
 import * as React from 'react';
-import { createBrowseController, describe, rowsOf, targetOf } from './directory-browser-state.js';
-import type { BrowseController, BrowseState } from './directory-browser-state.js';
+import { rowsOf, targetOf } from './directory-browser-state.js';
+import type { BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
 import { hiddenCount, locationLabel } from './directory-browser-contract.js';
-import type { DirectoryBrowseFace, DirectoryEntry, DirectoryListing } from './directory-browser-contract.js';
+import type { DirectoryEntry, DirectoryListing } from './directory-browser-contract.js';
 
 /** 图上出现的每一句文案；调用方给（本件不自造口径）。 */
 export interface DirectoryBrowserLabels {
@@ -336,52 +336,23 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
   );
 }
 
-/** 目录行接线：给一个取数面与初值，回一组动作（开图／出图／取状态）。
+/** 目录行接线的 React 半边：把操作半那组动作直接喂给组件。
  *
- * 只做接线：把控制器与 React 组件接起来，不取数、不画图、不认宿主。 */
-export function createDirectoryRowBrowser(deps: {
-  readonly face: DirectoryBrowseFace;
-  readonly initialPath: string;
-  readonly onPicked: (path: string) => void;
+ * 操作半（`directory-browser-state.ts` 的 `createDirectoryRowBrowser`）不碰 React，
+ * 这里只把它的 `actions` 摊进 props —— 于是「进哪一层」那套在 Node 里可测，这里只做接线。 */
+export function DirectoryBrowserFromRow(props: {
+  readonly open: boolean;
+  readonly row: DirectoryRowBrowser;
   readonly labels: DirectoryBrowserLabels;
-  readonly onClosed?: () => void;
-  readonly failureLabel?: string;
-}): {
-  readonly controller: BrowseController;
-  readonly element: (open: boolean) => React.ReactElement | null;
-  readonly stateOf: () => BrowseState;
-  readonly summary: () => string;
-} {
-  const controller = createBrowseController({
-    face: deps.face,
-    initialPath: deps.initialPath,
-    onPicked: deps.onPicked,
-    onClose: () => deps.onClosed?.(),
-    ...(deps.failureLabel === undefined ? {} : { failureLabel: deps.failureLabel }),
+}): React.ReactElement | null {
+  return DirectoryBrowser({
+    open: props.open,
+    state: props.row.state(),
+    labels: props.labels,
+    ...props.row.actions,
   });
-  return {
-    controller,
-    element: (open: boolean) =>
-      DirectoryBrowser({
-        open,
-        state: controller.getState(),
-        labels: deps.labels,
-        onPick: () => controller.pick(),
-        onClose: () => controller.cancel(),
-        onEnter: (path) => void controller.enter(path),
-        onUp: () => void controller.up(),
-        onSelect: (path) => controller.select(path),
-        onToggleHidden: () => controller.toggleHidden(),
-        onDraft: (draft) => controller.setDraft(draft),
-        onCommitDraft: () => void controller.commitDraft(),
-        onCreate: (name) => void controller.createFolder(name),
-        onCreatingChange: (name) => controller.setCreating(name),
-      }),
-    stateOf: () => controller.getState(),
-    summary: () => describe(controller.getState()),
-  };
 }
 
-export { createBrowseController } from './directory-browser-state.js';
-export type { BrowseController, BrowseState } from './directory-browser-state.js';
+export { createBrowseController, createDirectoryRowBrowser, describe, rowsOf, targetOf } from './directory-browser-state.js';
+export type { BrowseController, BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
 export type { DirectoryEntry, DirectoryListing } from './directory-browser-contract.js';
