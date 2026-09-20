@@ -75,10 +75,16 @@ export function restartPendingOf(snapshot: UpdateSnapshot): boolean {
   return installed !== null && installed !== snapshot.runningVersion;
 }
 
-/** 待重启那一句（三段齐全：事实 → 后果 → 动作）。 */
+/** 待重启那一句（三段齐全：事实 → 后果 → 动作）。
+ *
+ * 措辞不写「新版」：磁盘上那份也可能比正在跑的**低**（手工降级），「新版」就不实了；
+ * 只照事实说「磁盘上装的是 X、正在运行的是 Y」。
+ * 动作只给「重启 DSH」：这一态下面板**做不了别的**——更新包的可装判据要求最新版严格高于
+ * **正在运行**的版本（`service.js:219`），而凭证只发在可装态（`service.js:256`：`receipt` 只在
+ * `canInstall` 时给），所以这一态里「重试安装」点了也是白点。 */
 export function restartLine(snapshot: UpdateSnapshot): string {
   const installed = snapshot.installedVersion ?? snapshot.job?.targetVersion ?? '新版本';
-  return '新版 ' + String(installed) + ' 已装到磁盘；正在运行的是 ' + snapshot.runningVersion + '。重启 DSH（退出后重新打开）后生效。';
+  return '磁盘上装的是 ' + String(installed) + '；正在运行的是 ' + snapshot.runningVersion + '。重启 DSH（退出后重新打开）后生效。';
 }
 
 /** 拦截态各自给得出的下一步：面板能代劳的给按钮，代劳不了的给 null（那种走手工命令块）。 */
@@ -135,6 +141,11 @@ export function verdictOf(target: TargetInfo, snapshot: UpdateSnapshot): Verdict
   if (snapshot.canInstall) {
     // 把「正在运行的是哪个版本」写进同一行：用户不必回头去版本行里找。
     return { kind: 'update-available', text: '有新版本 ' + String(latest) + '（正在运行 ' + snapshot.runningVersion + '）。点「装上更新」。', action: 'update' };
+  }
+  if (hasNewer) {
+    // 有新版、却没有可用凭证（这一通的凭证过期，或压根没签发）⇒ **不许说「已是最新」**：
+    // 那是假话（最新版就在官方源上、磁盘上还是旧的），正确答案是重新检查一次拿新凭证。
+    return { kind: 'update-available', text: '有新版本 ' + String(latest) + '（正在运行 ' + snapshot.runningVersion + '）。点「重新检查」，再点「装上更新」。', action: 'recheck' };
   }
   return { kind: 'up-to-date', text: '已是最新版本 ' + String(latest) + '。', action: null };
 }

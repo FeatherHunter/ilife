@@ -32,9 +32,6 @@ export const MISSING_RUNNING_VERSION = '0.0.0' as const;
 /** 使用范围的落盘清单与锁文件（与更新包读的四处同名，`reader.ts:20`）。 */
 const PROFILE_STATE_FILES = ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'package-lock.json'] as const;
 
-/** 指纹绑定：第一次读到自洽的环境就把指纹记下来，之后再变即 `installation-changed`（同更新包语义）。 */
-const boundKeys = new Map<string, string>();
-
 interface LoadedPackage {
   readonly directory: string;
   readonly manifest: Record<string, unknown>;
@@ -168,13 +165,13 @@ export async function readTargetEnvironment(packageName: string, options: Target
       ]),
     )
     .digest('hex');
-  const bindKey = options.pluginId + '\0' + packageName;
-  const bound = boundKeys.get(bindKey);
-  if (bound === undefined) {
-    if (view.packageValid && !view.sourceInstall) boundKeys.set(bindKey, view.installationKey);
-  } else if (bound !== view.installationKey && view.packageValid && !view.sourceInstall) {
-    view.blockedReason = 'installation-changed';
-  }
+  // 这里**故意不**在进程里留一份「第一次读到的安装态」做比对（票 #740 对抗式审查逮到的）：
+  // 那份绑定一旦落定就不会刷新，于是「装成一家之后」其余各家在本进程里**永久**判 installation-changed
+  // ——面板给的「重新检查」点了也没用，用户只能重启宿主才能接着装下一家（真机就是这么卡住的）。
+  // 真正管 TOCTOU 的那道守卫在更新包自己手里，而且**按凭证**：`service.js:309`／`:325` 在装之前重读一次，
+  // `env.installationKey !== checked.installationKey` 就抛 installation-changed；它的口径是
+  // 「这一次检查到这一次安装之间有没有变」，比「本进程第一次读到的样子」准，也不会卡住后续安装。
+  // 故本处只如实投影安装态，不做二次拦截。
   if (view.blockedReason === null) {
     if (!view.packageValid) view.blockedReason = 'invalid-installation';
     else if (view.sourceInstall) view.blockedReason = 'source-install';

@@ -2,18 +2,21 @@
 // 判据（票面「改动要能自证」）：本脚本改坏一处必须变红（见实施记录的变异两态读数）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, isAbsolute } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
 import { isAbsent, manualForDisplay, markStaleOthers, pendingRestartText, slotStateOf, staleVerdict, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
-import { readPanelRegistered } from '../dist/update-env.js';
+import { readPanelRegistered, readTargetEnvironment } from '../dist/update-env.js';
 
 const PROFILE = 'dsh-profile-web';
+/** 本测试件所在目录（产物与源码都从它往上找）。 */
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 
 // 环境读数（readTargetEnvironment）与宿主电话表的读数不在这里：那两个模块运行时 import 更新包
 // `dsh-plugin-update`，而依赖进仓要编排者持锁授权（并发协议 §2.1.1）。它们的读数在仓库外独占目录
@@ -157,7 +160,7 @@ describe('#678 一行结论与版本行', () => {
     assert.match(byCode.text, /重启 DSH（退出后重新打开）后生效/);
     const byJob = verdictOf(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'recovery-required' }));
     assert.equal(byJob.action, null, '原因码是「上次安装没收尾」，事实是「装好了没重启」：照样先说重启');
-    assert.match(byJob.text, /新版 0\.2\.6 已装到磁盘；正在运行的是 0\.2\.5/);
+    assert.match(byJob.text, /磁盘上装的是 0\.2\.6；正在运行的是 0\.2\.5/);
     assert.ok(!/重试安装/.test(byJob.text), '事实是待重启时，不许去劝人重试安装');
     const nothing = verdictOf(target, snapshot({ latestVersion: '0.2.5', canInstall: false, blockedReason: 'installation-changed' }));
     assert.equal(nothing.kind, 'up-to-date', '没东西可装时，守卫拦不拦与用户无关：不占那一行');
@@ -168,6 +171,61 @@ describe('#678 一行结论与版本行', () => {
     assert.equal(stale.action, 'recheck');
     assert.match(stale.text, /刚装过别的插件/);
     assert.match(stale.text, /重新检查/);
+  });
+  // 对抗式审查逮到的一条：有新版、却没凭证（凭证过期或没签发）时，旧写法会落到「已是最新」那句——
+  // 那是假话（官方源上就有新版）。正确答案是重新检查一次。
+  it('有新版但没凭证：不许说「已是最新」（#740 对抗式审查）', () => {
+    const noReceipt = verdictOf(target, snapshot({ latestVersion: '0.2.6', canInstall: false }));
+    assert.equal(noReceipt.kind, 'update-available');
+    assert.equal(noReceipt.action, 'recheck');
+    assert.match(noReceipt.text, /0\.2\.6/);
+    assert.ok(!/已是最新/.test(noReceipt.text), '有新版时不许说「已是最新」');
+  });
+  // 对抗式审查逮到的第二条：环境读数**不许**按「本进程第一次读到的样子」拦人。
+  // 那条绑定落定后不会刷新 ⇒ 装成一家之后其余各家在本进程里永久判 installation-changed，
+  // 面板给的「重新检查」点了也白点（真机就是这么卡住的）。真正按凭证的守卫在更新包手里。
+  it('环境读数不按「本进程第一次读到的样子」拦人（#740 对抗式审查）', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 't740-env-'));
+    try {
+      // 夹具要做成**「装得完整」**的样子（`packageComplete` 会看 main／client 出口／装配行三件是否真在）：
+      // 否则读数落进 invalid-installation 那一支，这条判据就落不到守卫上（变异 740-I 实测过这一点）。
+      const pkgDir = join(dir, 'node_modules', 'dsh-calorie');
+      mkdirSync(join(pkgDir, 'dist'), { recursive: true });
+      writeFileSync(join(pkgDir, 'dist', 'index.js'), 'export {};\n', 'utf8');
+      writeFileSync(join(pkgDir, 'dist', 'client.js'), 'export {};\n', 'utf8');
+      writeFileSync(join(pkgDir, 'cordis.patch.yml'), '[]\n', 'utf8');
+      writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({
+        name: 'dsh-calorie',
+        version: '0.3.0',
+        main: './dist/index.js',
+        exports: { './client': './dist/client.js' },
+        dsh: { bundle: { patch: './cordis.patch.yml' } },
+      }), 'utf8');
+      const writeProfile = (deps) => writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'dsh-profile-web', dependencies: deps }), 'utf8');
+      writeProfile({ 'dsh-calorie': '0.3.0' });
+      const opts = { profileDir: dir, profileName: 'dsh-profile-web', runningVersion: '0.2.7', environmentKind: 'cli', pluginId: 't740-probe' };
+      const first = await readTargetEnvironment('dsh-calorie', opts);
+      assert.ok(first.packageValid, '夹具本身要「装得完整」，否则这条判据落不到守卫那一支');
+      assert.ok(!first.sourceInstall, '夹具的依赖要是按版本号的（不是源码装）');
+      // 模拟「刚装过别的插件」：使用范围清单被改写
+      writeProfile({ 'dsh-calorie': '0.3.0', 'dsh-chef': '0.3.0' });
+      const second = await readTargetEnvironment('dsh-calorie', opts);
+      assert.ok(second.blockedReason !== 'installation-changed',
+        '第二次读不该因为「清单变了」就拦人：真正按凭证的守卫在更新包手里');
+      assert.ok(first.installationKey !== second.installationKey,
+        '两次读到的安装态指纹本身确实不同（说明判据没被写死）');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  // 交付面判据：四个动作的名字必须真的进了浏览器束（纯函数判据管不到「有没有画出来」）。
+  it('四个动作的名字都进了产物（#740）', () => {
+    const bundle = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
+    for (const label of ['装上', '装上更新', '重试安装', '重新检查']) {
+      assert.ok(bundle.includes(label), '产物里缺按钮名：' + label);
+    }
+    assert.ok(bundle.includes('重启 DSH（退出后重新打开）'), '产物里缺重启动作那句话');
+    assert.ok(bundle.includes('刚装过别的插件'), '产物里缺「刚装过别的插件」那一态');
   });
   it('作废只作废别家：装成的那一家自己保持原样（#740）', () => {
     const ready = { phase: 'ready', outcome: null, failure: null };

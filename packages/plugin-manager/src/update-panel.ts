@@ -317,10 +317,13 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           : await updateInstalled(getCall(), target, pollMs);
         if (result.ok) {
           // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
+          const before = current.outcome?.snapshot.installedVersion ?? null;
           const refreshed = await checkTarget(getCall(), target, target.phones?.status);
+          const after = refreshed.ok ? (refreshed.value.snapshot.installedVersion ?? null) : null;
           patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null, stale: false } : { phase: 'failed', outcome: null, failure: refreshed, stale: false });
-          // 装成一家 ⇒ 其余各家的旧快照作废（票 #740）。
-          staleOthers(target.key);
+          // 只有**磁盘上的版本真的变了**才作废别家（票 #740 对抗式审查）：作业失败／中断时安装态没动，
+          // 别家的快照照样有效，那时作废只会白逼用户重查一遍。
+          if (after !== null && after !== before) staleOthers(target.key);
           // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
           // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
           await reload();
