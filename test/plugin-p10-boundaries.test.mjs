@@ -69,6 +69,29 @@ describe('P10 槽位定案', () => {
     assert.deepEqual(nav.MANAGER_TABS.map((t) => t.slotId), ['ilife:memo', 'ilife:calorie', 'ilife:schedule', 'ilife:home', 'ilife:chef', 'ilife:cookie']);
     assert.deepEqual(nav.MANAGER_TABS.map((t) => t.order), [70, 75, 80, 85, 90, 95]);
   });
+  // 票 #735：面板取配置体检的通道名取自导航表那一列，它必须与各家**自己**契约件里那份逐家相等。
+  // 为什么要有这条：各家注册页签槽时也交了一份通道名，但装机上的槽位面不透传自定义注册选项，
+  // 账本上那一格恒是空串 ⇒ 六家曾恒被判成「没有体检出口」，体检按钮按下去毫无反应。
+  // 写法照上面那条对齐断言：真 import 两边的产物来比，不是搜字符串。
+  it('导航表的客户端通道与各家契约件逐家一致（#735）', async () => {
+    const nav = await import('../packages/plugin-manager/dist/nav.js');
+    const PAIRS = [
+      ['plugin-memo-ilife', 'dsh-memo-ilife'],
+      ['plugin-calorie', 'dsh-calorie'],
+      ['plugin-schedule-ilife', 'dsh-schedule-ilife'],
+      ['plugin-home-ilife', 'dsh-home-ilife'],
+      ['plugin-chef', 'dsh-chef'],
+      ['plugin-bill-ilife', 'dsh-bill-ilife'],
+    ];
+    for (const [dir, plugin] of PAIRS) {
+      const contract = await import('../packages/' + dir + '/dist/contract.js');
+      const row = nav.MANAGER_TABS.find((t) => t.plugin === plugin);
+      assert.ok(row, '导航表里没有这家：' + plugin);
+      assert.equal(row.channel, contract.RPC_CHANNEL,
+        plugin + ' 的通道名与它自己契约件那份不一致（面板按这张表取配置体检，错了这家就取不到数）');
+      assert.match(row.channel, /^\/[A-Za-z0-9._~-]+$/, plugin + ' 的通道名不是单段路由名');
+    }
+  });
   it('写死原生组件：无动态按需加载、无外嵌页、无数据轮询（注册有界重试除外）', () => {
     for (const d of SINGLES.concat(['plugin-manager'])) {
       const t = srcText(d);

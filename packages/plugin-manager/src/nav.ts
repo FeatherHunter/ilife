@@ -19,6 +19,15 @@ export interface ManagerTab {
   readonly title: string;
   /** 提供该 tab 的单品插件包名（仅文档级引用，不 import）。 */
   readonly plugin: string;
+  /** 本家自己那条客户端通道（单段，例 `/ilife-calorie`）：面板按它取配置体检（`config.check` 挂在上面）。
+   *
+   *  这条事实为什么住在这里（票 #735）：各家注册页签槽时**也**会交一份（各包契约件的 `RPC_CHANNEL`），
+   *  但装机上的槽位面**不透传自定义注册选项**——条目 options 只留 `{key,id,order,label,priority}`，
+   *  总管从账本上读到的那一格恒是空串。后果是六家恒被判成「没有体检出口」，
+   *  面板的体检目标表恒为空，「体检一次」按下去毫无反应（第 1 版的实现就是这么哑掉的）。
+   *  这份镜像由 `test/plugin-p10-boundaries.test.mjs` 逐家与各包契约件的常量对齐守着。
+   *  各家注册里那一格**留着不删**：上游哪天开始透传自定义选项，可以一行切回账本。 */
+  readonly channel: string;
 }
 
 export interface RecoTab extends ManagerTab {
@@ -41,12 +50,12 @@ export function dualInstallCmd(singlePlugin: string): string {
 
 /** P3 定案 6 tab（order 升序即 + 号菜单顺序；已打开条不受 order 控制）。 */
 export const MANAGER_TABS: readonly ManagerTab[] = [
-  { skill: 'memo', slotId: 'ilife:memo', order: 70, title: '备忘录', plugin: 'dsh-memo-ilife' },
-  { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: '卡路里', plugin: 'dsh-calorie' },
-  { skill: 'schedule', slotId: 'ilife:schedule', order: 80, title: '作息', plugin: 'dsh-schedule-ilife' },
-  { skill: 'home', slotId: 'ilife:home', order: 85, title: '居家', plugin: 'dsh-home-ilife' },
-  { skill: 'chef', slotId: 'ilife:chef', order: 90, title: '大厨', plugin: 'dsh-chef' },
-  { skill: 'bill', slotId: 'ilife:cookie', order: 95, title: '记账', plugin: 'dsh-bill-ilife' },
+  { skill: 'memo', slotId: 'ilife:memo', order: 70, title: '备忘录', plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
+  { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: '卡路里', plugin: 'dsh-calorie', channel: '/ilife-calorie' },
+  { skill: 'schedule', slotId: 'ilife:schedule', order: 80, title: '作息', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
+  { skill: 'home', slotId: 'ilife:home', order: 85, title: '居家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
+  { skill: 'chef', slotId: 'ilife:chef', order: 90, title: '大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
+  { skill: 'bill', slotId: 'ilife:cookie', order: 95, title: '记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
 ];
 
 export function recoFor(tab: ManagerTab): RecoTab {

@@ -235,13 +235,23 @@ function countText(light: HealthLightRow): string {
   return countSegsOf(light).map((piece) => piece.text).join(SEG_SEP);
 }
 
-/** 汇总行那一句：绿要显眼（它是「正常」这件事本身），没通道的那几家不冒充绿。 */
+/** 汇总行那一句：绿要显眼（它是「正常」这件事本身），没通道的那几家不冒充绿。
+ *
+ *  「没有体检出口」与「还没跑过体检」是**两件事**（票 #735）：前者那颗「体检一次」按下去不会有任何反应，
+ *  必须自己说出来——两态共用一句「还没体检」时，用户与诊断都会被引到「点了没跑」上去。 */
 function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
   const pending = lights.filter((light) => !light.hasChannel).length;
-  const withReport = lights.filter((light) => light.hasChannel);
-  const tail = pending > 0 ? ' · ' + String(pending) + ' 家还没体检' : '';
-  if (withReport.length > 0 && withReport.every((light) => light.status === 'green')) {
-    return React.createElement('span', { style: { color: STATUS_COLOR.green, fontWeight: 700 } }, '六家正常' + tail);
+  const withChannel = lights.filter((light) => light.hasChannel);
+  const tail = pending > 0 ? ' · ' + String(pending) + ' 家没有体检出口' : '';
+  if (withChannel.length === 0) {
+    const what = lights.length === 0
+      ? '还没有任何一家登记体检出口'
+      : String(lights.length) + ' 家都没有体检出口（通道名没登记上）';
+    return React.createElement('span', { style: { color: STATUS_TEXT.red, fontWeight: 700 } }, '没有可体检的家：' + what);
+  }
+  const allGreen = withChannel.every((light) => light.status === 'green');
+  if (allGreen && pending === 0) {
+    return React.createElement('span', { style: { color: STATUS_COLOR.green, fontWeight: 700 } }, '六家正常');
   }
   const parts: React.ReactElement[] = [];
   for (const status of ['red', 'yellow'] as const) {
@@ -254,7 +264,8 @@ function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
     );
   }
   if (parts.length === 0) {
-    return React.createElement('span', { style: { color: INK_DIM } }, '还没体检' + tail);
+    // 一份报告都没跑过；有出口的已经全绿、只是还有没出口的家时，不许把「还没体检」安到它们头上。
+    return React.createElement('span', { style: { color: INK_DIM } }, (allGreen ? '有出口的都正常' : '还没体检') + tail);
   }
   parts.push(React.createElement('span', { key: 'todo', style: { color: INK } }, ' 要处理' + tail));
   return React.createElement('span', null, parts);
@@ -307,7 +318,6 @@ export function HealthSummaryLine(props: {
   readonly error: string | null;
   readonly onRun: () => void;
 }): React.ReactElement {
-  const hasLights = props.lights.length > 0;
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.summaryRow, 'data-ilife-health': 'summary' },
@@ -315,8 +325,8 @@ export function HealthSummaryLine(props: {
     React.createElement(
       'div',
       { style: HEALTH_STYLE.summaryText },
-      props.error !== null ? React.createElement('span', { style: { color: STATUS_TEXT.red } }, props.error)
-        : hasLights ? overallText(props.lights) : React.createElement('span', { style: { color: INK_DIM } }, '还没体检'),
+      // 一家都没有出口这一态由 overallText 自己说（#735）：这里不再用一句「还没体检」把两件事糊成一件。
+      props.error !== null ? React.createElement('span', { style: { color: STATUS_TEXT.red } }, props.error) : overallText(props.lights),
     ),
     React.createElement(
       'button',

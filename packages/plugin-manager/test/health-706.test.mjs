@@ -396,6 +396,23 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.match(text, /要处理/, '红黄都在时没有「要处理」那句');
     });
 
+    // 票 #735：这两态共用一句「还没体检」时，用户与诊断都会被引到「点了没跑」上去——
+    // 而「没有体检出口」那一态的真相是**按钮按下去不会有任何反应**。
+    it('「没有体检出口」与「还没跑过」不许同话（#735）', () => {
+      const line = (lights) => visibleText(renderHtml(
+        React.createElement(HealthSummaryLine, { lights, running: false, error: null, onRun: () => {} }),
+      ));
+      const notRun = line([light(null, allGreen, true), { ...light(null, allGreen, true), id: 'y' }]);
+      const noOutlet = line([light(null, allGreen, false), { ...light(null, allGreen, false), id: 'y' }]);
+      assert.match(notRun, /还没体检/, '没跑过那一档没把话写对');
+      assert.match(noOutlet, /没有体检出口/, '一家出口都没有时，那句「没有体检出口」没说出来');
+      assert.ok(noOutlet !== notRun, '两态画出来的话不许逐字相同');
+      assert.ok(!/还没体检/.test(noOutlet), '「没有出口」那一态不许再用「还没体检」这句');
+      // 只有部分家没有出口时，尾巴也要把「几家没有出口」数出来。
+      const mixed = line([light('green', { red: 0, yellow: 0, green: 2 }), { ...light(null, allGreen, false), id: 'y' }]);
+      assert.match(mixed, /1 家没有体检出口/, '混合态没把「几家没有出口」数出来');
+    });
+
     it('顶部不再是一家一盏灯按钮（改版后在位的那件事，守着别长回去）', () => {
       assert.ok(CLIENT.includes('data-ilife-health'), '产物里没有体检的标记位');
       assert.ok(CLIENT.includes('"summary"'), '产物里没有那一行汇总');

@@ -16,21 +16,25 @@ export interface SlotsRegisterOptions {
   readonly order?: number;
   readonly label?: string | (() => string);
   readonly locale?: string;
-  /** 本包自己那条 RPC 通道（单段，例 `/ilife-calorie`）：注册方写进来，读方（总管）据此**通用地**
-   *  调它，不必在源码里写死任何一家的通道名（#706 配置体检要走它）。 */
+  /** 本包自己那条 RPC 通道（单段，例 `/ilife-calorie`）：注册方交出来。
+   *
+   *  #735 实测：装机上的槽位面**不透传自定义注册选项**（条目 options 只留 `{key,id,order,label,priority}`），
+   *  读方（总管）拿不到这一格——面板的取值面已改成导航表那份镜像（见 `nav.ts` 的 `ManagerTab.channel`）。
+   *  这一格留着：上游哪天开始透传，可以一行切回。 */
   readonly channel?: string;
   readonly inject?: () => Record<string, unknown>;
   readonly children?: Record<string, SlotChildSpec>;
 }
 
-/** 子槽 ledger 条目（只读投影 settings-plugins:1751-1756 同形）。 */
+/** 子槽 ledger 条目（只读投影 settings-plugins:1751-1756 同形）。
+ *
+ *  这里**没有** `channel` 一格（#735）：注册方交出去的自定义键到不了账本（实测只留 id／order／label 那几格），
+ *  面板因此不从这条路上取通道名。 */
 export interface SlotLedgerEntry {
   readonly options: {
     readonly id?: string;
     readonly order?: number;
     readonly label?: string | (() => string);
-    /** 见 `SlotsRegisterOptions.channel`（缺席即这一家没声明体检通道）。 */
-    readonly channel?: string;
   };
 }
 
