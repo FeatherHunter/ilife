@@ -8,7 +8,7 @@
 
 export const SKILL = 'bill' as const;
 export const SLOT_ID = 'ilife:cookie' as const;
-export const SLOT_ORDER = 95 as const;
+export const SLOT_ORDER = 70 as const;
 export const SLOT_TITLE = '饼干记账' as const;
 export const PLUGIN = 'dsh-bill-ilife' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;

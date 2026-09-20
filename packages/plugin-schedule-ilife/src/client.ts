@@ -460,7 +460,6 @@ function ScheduleConfig(props: { getCall: GetCall; getPicker: () => DirectoryPic
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
-    React.createElement('div', { style: S.muted }, `${PLUGIN} 本页只配置；记作息、看时间轴在对话里说。`),
   );
 }
 

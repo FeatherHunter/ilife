@@ -44,13 +44,6 @@ const S = {
   error: { color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', fontSize: '1em', whiteSpace: 'pre-wrap' } as React.CSSProperties,
   okText: { color: 'var(--dsw-alias-state-success-primary, #12805c)', fontSize: '0.96em'} as React.CSSProperties,
   rows: { marginTop: 8, borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))', paddingTop: 8 } as React.CSSProperties,
-  version: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTop: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.25))',
-    color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
-    fontSize: '0.92em',
-  } as React.CSSProperties,
   info: {
     fontSize: '0.92em',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
@@ -479,7 +472,6 @@ function BillConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
         React.createElement('button', { style: S.btn, type: 'button', onClick: () => void load() }, '重试'),
         React.createElement('button', { style: S.btn, type: 'button', onClick: () => void onReset() }, '重置为默认'),
       ),
-      React.createElement('div', { style: S.version }, `${PLUGIN} 本页只配置；记账在对话里说。`),
     );
   }
 
@@ -514,7 +506,6 @@ function BillConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
-    React.createElement('div', { style: S.version }, `${PLUGIN} 本页只配置；记账在对话里说。`),
   );
 }
 

@@ -12,7 +12,7 @@ import { resolveNodeBin, SPAWN_TIMEOUT_MS } from '../dist/bridge.js';
 describe('dsh-bill-ilife 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
     assert.equal(SLOT_ID, 'ilife:cookie');
-    assert.equal(SLOT_ORDER, 95);
+    assert.equal(SLOT_ORDER, 70);
     assert.equal(slotDescriptor().slotId, 'ilife:cookie');
   });
   it('设置页住单品包', () => {

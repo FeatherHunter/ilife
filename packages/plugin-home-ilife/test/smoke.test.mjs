@@ -11,7 +11,7 @@ import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_P
 describe('dsh-home-ilife 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
     assert.equal(SLOT_ID, 'ilife:home');
-    assert.equal(SLOT_ORDER, 85);
+    assert.equal(SLOT_ORDER, 90);
     assert.equal(slotDescriptor().slotId, 'ilife:home');
   });
   it('设置页住单品包', () => {

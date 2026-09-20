@@ -8,7 +8,7 @@
 
 export const SKILL = 'home' as const;
 export const SLOT_ID = 'ilife:home' as const;
-export const SLOT_ORDER = 85 as const;
+export const SLOT_ORDER = 90 as const;
 export const SLOT_TITLE = '居家管家' as const;
 export const PLUGIN = 'dsh-home-ilife' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;

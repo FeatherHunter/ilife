@@ -57,12 +57,12 @@ export function dualInstallCmd(singlePlugin: string): string {
 
 /** P3 定案 6 tab（order 升序即 + 号菜单顺序；已打开条不受 order 控制）。 */
 export const MANAGER_TABS: readonly ManagerTab[] = [
-  { skill: 'memo', slotId: 'ilife:memo', order: 70, title: '备忘录', plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
+  { skill: 'bill', slotId: 'ilife:cookie', order: 70, title: '饼干记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
   { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: '卡路里', plugin: 'dsh-calorie', channel: '/ilife-calorie' },
-  { skill: 'schedule', slotId: 'ilife:schedule', order: 80, title: '作息管家', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
-  { skill: 'home', slotId: 'ilife:home', order: 85, title: '居家管家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
-  { skill: 'chef', slotId: 'ilife:chef', order: 90, title: '私家大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
-  { skill: 'bill', slotId: 'ilife:cookie', order: 95, title: '饼干记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
+  { skill: 'memo', slotId: 'ilife:memo', order: 80, title: '备忘录', plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
+  { skill: 'schedule', slotId: 'ilife:schedule', order: 85, title: '作息管家', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
+  { skill: 'home', slotId: 'ilife:home', order: 90, title: '居家管家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
+  { skill: 'chef', slotId: 'ilife:chef', order: 95, title: '私家大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
 ];
 
 export function recoFor(tab: ManagerTab): RecoTab {

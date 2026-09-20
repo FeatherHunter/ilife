@@ -135,7 +135,7 @@ export function normalizeVersion(v: unknown): string {
 
 /** 版本行文本（纯函数，供 VersionLine 与单测复用；骨架恒为 `dsh-calorie X · skill-calorie Y`）。 */
 export function formatVersionLine(pluginVersion: unknown, skillVersion: unknown): string {
-  return `${PLUGIN} ${normalizeVersion(pluginVersion)} · ${SKILL_PACKAGE} ${normalizeVersion(skillVersion)}`;
+  return `${normalizeVersion(pluginVersion)} · 技能 ${normalizeVersion(skillVersion)}`;
 }
 
 /** 版本行：纯渲染 host 传来的值＋unknown 降级（用户要求：每技能设置页自报家门）。 */
@@ -716,7 +716,6 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
-    React.createElement('div', { style: S.muted }, `${PLUGIN} 本页只配置；记一餐、看数据在对话里说。`),
     React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
   );
 }

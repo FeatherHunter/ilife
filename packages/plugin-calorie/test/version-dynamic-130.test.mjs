@@ -32,7 +32,7 @@ const SKILL_PKG_PATH = join(REPO, 'packages', 'skill-calorie', 'package.json');
 const SKILL_VERSION = requirePkg('skill-calorie/package.json').version;
 const PLUGIN_NAME = 'dsh-calorie';
 const SKILL_NAME = 'skill-calorie';
-const line = (p, s) => `${PLUGIN_NAME} ${p} · ${SKILL_NAME} ${s}`;
+const line = (p, s) => `${p} · 技能 ${s}`;
 
 /** 列出目录下指定后缀的全部文件（递归；用于「无版本字面量回潮」与「源码未被触碰」两处扫描）。 */
 function listFiles(dir, exts) {
@@ -305,7 +305,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
     });
   });
 
-  describe('⑤ 正常路径：版本行格式恰为 dsh-calorie X · skill-calorie Y', () => {
+  describe('⑤ 正常路径：版本行格式恰为 `X · 技能 Y`（两个号，包名不重复）', () => {
     it('装好的仓库布局下，版本行＝两处 package.json 的版本，格式全等', async () => {
       const host = await hostOf(join(DIST, 'bridge.js'));
       assert.deepEqual(host.readInstalledVersions(), { plugin: PLUGIN_PKG.version, skill: SKILL_VERSION },
@@ -313,7 +313,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
       const { text, versions } = await panelVersionLine(host);
       assert.equal(text, line(PLUGIN_PKG.version, SKILL_VERSION));
       assert.deepEqual(versions, { plugin: PLUGIN_PKG.version, skill: SKILL_VERSION });
-      assert.match(text, /^dsh-calorie \d+\.\d+\.\d+ · skill-calorie \d+\.\d+\.\d+$/);
+      assert.match(text, /^\d+\.\d+\.\d+ · 技能 \d+\.\d+\.\d+$/);
     });
   });
 });

@@ -32,12 +32,12 @@ const PACKAGES = join(ROOT, 'packages');
 
 /** 六家：插件包名 ／ 目录名 ／ 屏上该逐字印的产品名 ／ 补全前的短名（改名的那四家才有）。 */
 const FAMILIES = [
-  { plugin: 'dsh-memo-ilife', dir: 'plugin-memo-ilife', name: '备忘录', short: null },
+  { plugin: 'dsh-bill-ilife', dir: 'plugin-bill-ilife', name: '饼干记账', short: '记账' },
   { plugin: 'dsh-calorie', dir: 'plugin-calorie', name: '卡路里', short: null },
+  { plugin: 'dsh-memo-ilife', dir: 'plugin-memo-ilife', name: '备忘录', short: null },
   { plugin: 'dsh-schedule-ilife', dir: 'plugin-schedule-ilife', name: '作息管家', short: '作息' },
   { plugin: 'dsh-home-ilife', dir: 'plugin-home-ilife', name: '居家管家', short: '居家' },
   { plugin: 'dsh-chef', dir: 'plugin-chef', name: '私家大厨', short: '大厨' },
-  { plugin: 'dsh-bill-ilife', dir: 'plugin-bill-ilife', name: '饼干记账', short: '记账' },
 ];
 const PRODUCT_NAMES = FAMILIES.map((f) => f.name);
 /** 那行静态文本的冻结原文（本回路要它**哪儿都没有**，所以在这里逐字写一份）。 */

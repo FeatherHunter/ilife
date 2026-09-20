@@ -15,7 +15,7 @@ const requirePkg = createRequire(import.meta.url);
 describe('dsh-memo-ilife 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
     assert.equal(SLOT_ID, 'ilife:memo');
-    assert.equal(SLOT_ORDER, 70);
+    assert.equal(SLOT_ORDER, 80);
     assert.equal(slotDescriptor().slotId, 'ilife:memo');
   });
   it('设置页住单品包', () => {

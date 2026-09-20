@@ -458,7 +458,6 @@ function HomeConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
-    React.createElement('div', { style: S.muted }, `${PLUGIN} 本页只配置；查物品、盘物品在对话里说。`),
   );
 }
 

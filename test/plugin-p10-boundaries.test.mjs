@@ -14,12 +14,12 @@ const srcText = (dir) => srcFiles(dir).map((f) => readFileSync(join(root, 'packa
 const SINGLES = ['plugin-calorie', 'plugin-memo-ilife', 'plugin-schedule-ilife', 'plugin-home-ilife', 'plugin-chef', 'plugin-bill-ilife'];
 const SINGLE_NPMS = ['dsh-calorie', 'dsh-memo-ilife', 'dsh-schedule-ilife', 'dsh-home-ilife', 'dsh-chef', 'dsh-bill-ilife'];
 const EXPECT = [
-  ['plugin-memo-ilife', 'ilife:memo', 70],
+  ['plugin-bill-ilife', 'ilife:cookie', 70],
   ['plugin-calorie', 'ilife:calorie', 75],
-  ['plugin-schedule-ilife', 'ilife:schedule', 80],
-  ['plugin-home-ilife', 'ilife:home', 85],
-  ['plugin-chef', 'ilife:chef', 90],
-  ['plugin-bill-ilife', 'ilife:cookie', 95],
+  ['plugin-memo-ilife', 'ilife:memo', 80],
+  ['plugin-schedule-ilife', 'ilife:schedule', 85],
+  ['plugin-home-ilife', 'ilife:home', 90],
+  ['plugin-chef', 'ilife:chef', 95],
 ];
 
 describe('P10 依赖方向', () => {
@@ -66,7 +66,7 @@ describe('P10 槽位定案', () => {
       assert.match(mod.SLOT_ID, /^ilife:/, dir + ' 命名空间');
     }
     const nav = await import('../packages/plugin-manager/dist/nav.js');
-    assert.deepEqual(nav.MANAGER_TABS.map((t) => t.slotId), ['ilife:memo', 'ilife:calorie', 'ilife:schedule', 'ilife:home', 'ilife:chef', 'ilife:cookie']);
+    assert.deepEqual(nav.MANAGER_TABS.map((t) => t.slotId), ['ilife:cookie', 'ilife:calorie', 'ilife:memo', 'ilife:schedule', 'ilife:home', 'ilife:chef']);
     assert.deepEqual(nav.MANAGER_TABS.map((t) => t.order), [70, 75, 80, 85, 90, 95]);
   });
   // 票 #735：面板取配置体检的通道名取自导航表那一列，它必须与各家**自己**契约件里那份逐家相等。

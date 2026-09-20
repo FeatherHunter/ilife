@@ -19,7 +19,7 @@
 import * as React from 'react';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
 import type { ConfigSurfaceReply } from './contract.js';
-import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
+import { SLOT_TITLE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
 import type { ConfigItem } from './settings.js';
 import { REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
@@ -108,9 +108,10 @@ const S = {
   } as React.CSSProperties,
 };
 
-/** 版本行：插件与技能双版本号（用户要求：每技能设置页自报家门）。 */
+/** 版本行：插件与技能双版本号（面板自报家门，排障时看这台装的是哪版）。
+ * 只留两个号——包名在页签上已经写着，重复一遍只是噪音（#743）。 */
 function VersionLine(): React.ReactElement {
-  return React.createElement('div', { style: S.version }, `${PLUGIN} ${PLUGIN_VERSION} · ${SKILL_PACKAGE} ${SKILL_VERSION}`);
+  return React.createElement('div', { style: S.version }, `${PLUGIN_VERSION} · 技能 ${SKILL_VERSION}`);
 }
 
 type PanelState =
@@ -620,7 +621,6 @@ function MemoConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
-    React.createElement('div', { style: S.muted }, `${PLUGIN} 本页只配置；记笔记、搜笔记在对话里说。`),
     React.createElement(VersionLine, null),
   );
 }
@@ -649,7 +649,7 @@ export function apply(ctx: ClientCtx): void {
       {
         name: 'ilife.config-tab',
         id: 'dsh-memo-ilife',
-        order: 70,
+        order: 80,
         label: () => SLOT_TITLE,
         // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
