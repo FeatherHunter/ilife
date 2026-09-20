@@ -66,7 +66,19 @@
 
 ## 四、缺口与未决
 
-1. **`FeatherHunter/ilife` 仓里没有任何 README** → 条目详情页正文会空。要补的话：`packages/plugin-manager/README.md` 讲总管面板，仓根 `README.md` 讲整套。
+1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
 2. 六个单品分批投稿（每 PR ≤3 条）。
 3. 本席提交与推送的锁留痕是 `ticket=unknown`（这活没有票号）；要补票号得先开票。
 4. 本机遗留的临时副本与自制脚本（`.gitignore` 忽略、随时可能被清掉）：`D:\ilife\.tmp-awesome\`（上游仓副本 ＋ `node_modules`）里有 `validate-entry.mjs`（校验条目）、`check-screenshots.mjs`（复核截图声明）、`verify-live.mjs`（复核线上存活）、`diagnose-lock.mjs`（对账 lockfile 与 package.json）；会话交接件写在系统临时目录的 `handoff-awesome-plugin-marketplace.md`。
+
+## 五、合并后 / 发版后怎么核（照抄命令）
+
+顺序是**先合并条目、再发版**：上游 `probe-npm.mjs` 是拿条目 `url` 去读 `package.json` 的，条目没进列表就什么都采不到。
+
+| 要核什么 | 命令 | 期望读数 |
+| --- | --- | --- |
+| 条目合并了吗 | `gh api repos/awesome-dsh-plugin/awesome-dsh-plugin/contents/data/plugins/FeatherHunter__ilife--packages-plugin-manager.yml --jq .name` | 打出文件名；404 ＝ 还没合并 |
+| npm 关联成立吗 | `npm view dsh-life-pack repository --json` | 含 `github.com/FeatherHunter/ilife`。不含 ＝ latest 那一版还没带字段，等下一次发版 |
+| 上游采到下载量了吗 | `gh api repos/awesome-dsh-plugin/awesome-dsh-plugin/contents/data/downloads.json -H 'Accept: application/vnd.github.raw'`，在返回的 JSON 里找 `https://github.com/FeatherHunter/ilife/tree/master/packages/plugin-manager` 这个键 | 键下是 `{"downloads":N,"checkedAt":"…"}`；键不在 ＝ 上游探针还没跑到（它每天跑） |
+| 详情页正文在不在 | `gh api repos/FeatherHunter/ilife/contents/packages/plugin-manager/README.md -H 'Accept: application/vnd.github.raw'` | 有正文；没有就是回落仓根 README |
+| 截图活着吗 | `node .tmp-awesome/verify-live.mjs`（本机脚本） | 三张全 206 |
