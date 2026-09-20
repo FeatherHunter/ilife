@@ -1,6 +1,6 @@
 {
   "name": "dsh-chef",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "爱生活单品插件 P10 脚手架：大厨（ilife:chef order 90），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",

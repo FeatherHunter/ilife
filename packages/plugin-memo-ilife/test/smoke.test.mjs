@@ -31,7 +31,7 @@ describe('dsh-memo-ilife 烟囱', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-memo-ilife', 'package.json'), 'utf8')).version;
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
+    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.3\./);
     assert.equal(dep['skill-memo-ilife'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });

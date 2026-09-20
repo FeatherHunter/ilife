@@ -28,7 +28,7 @@ describe('dsh-schedule-ilife 烟囱', () => {
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     // 本批发版窗口（作息线首发 0.2.0）：总管走 ^0.2.0 同版本线；
     // 技能按 #129 用**精确 pin**——caret ＋ 存量 lockfile 会让旧 skill 残留，exact 才强制重解。
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.2\./);
+    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.3\./);
     // #129：断言与版本号解耦——与 SKILL 包当前 version 逐字比对（照 plugin-bill-ilife 烟囱同形）。
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-schedule', 'package.json'), 'utf8')).version;
     assert.equal(dep['skill-schedule'], skillVer);
