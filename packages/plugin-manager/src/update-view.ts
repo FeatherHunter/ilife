@@ -63,6 +63,10 @@ export interface Verdict {
   /** 一句话结论（面板那行正文）：事实 ＋ 后果 ＋ 动作，三段齐全。 */
   readonly text: string;
   readonly action: VerdictAction | null;
+  /** 这句话是否指着「下面这条命令」：指着就必须真把命令块摊出来（票 #740 第三轮）。
+   *  没有这一格时出现过失配：`recovery-required` 那句写着「就用下面这条命令重装」，
+   *  而命令块只在「拦截态且没按钮」时才画，那句下面什么都没有。 */
+  readonly manualHint?: boolean;
 }
 
 /** 这一家是不是「装好了、只差重启」——判据是**事实**（磁盘版本 ≠ 正在跑的版本），不是原因码。
@@ -87,17 +91,38 @@ export function restartLine(snapshot: UpdateSnapshot): string {
   return '磁盘上装的是 ' + String(installed) + '；正在运行的是 ' + snapshot.runningVersion + '。重启 DSH（退出后重新打开）后生效。';
 }
 
+/** 「条件在别处（目录／清单／别处装的），改完回来重读一次」的原因码：面板能给的下一步就是「重新检查」。
+ *
+ *  为什么要逐码列（票 #740 第三轮的朗读表）：`unknown-profile`／`registry-conflict`／`invalid-installation`／
+ *  `source-install` 这四态原先一个动作都不给，屏上那句却写着「再点「检查更新」」——那颗按钮住在面板题头，
+ *  结果浮层一开（点「检查更新」就开）就被浮层盖住，够不着。跟两张「还没查过」的卡是同一类病。 */
+const RECHECK_REASONS: ReadonlySet<string> = new Set(['installation-changed', 'unknown-profile', 'registry-conflict', 'invalid-installation', 'source-install']);
+
+/** 「这一步面板代劳不了、得照下面那条命令做」的原因码：这些话下面必须真有命令块。 */
+const NEEDS_MANUAL: ReadonlySet<string> = new Set(['source-install', 'invalid-installation', 'recovery-required']);
+
 /** 拦截态各自给得出的下一步：面板能代劳的给按钮，代劳不了的给 null（那种走手工命令块）。 */
 function actionForBlocked(reason: BlockedReason): VerdictAction | null {
-  if (reason === 'installation-changed') return 'recheck';
+  if (RECHECK_REASONS.has(reason)) return 'recheck';
   if (reason === 'recovery-required') return 'retry';
+  // `incompatible-node`（要升级 Node 并重启 DSH）与 `pending-restart`（要重启，且已被上面那条事实判据截走）
+  // 这两态面板一步也做不了，按定义给 null；它们那句里点名的「检查更新」发生在重启之后，那时浮层早已关掉。
   return null;
+}
+
+/** 这一行此刻该画哪颗按钮：结论自带的动作优先，**失败的行一律给「重新检查」**（票 #740 第三轮）。
+ *
+ *  失败的行（查不到最新版／检查过期／装失败）没有快照、也就没有结论，原先一颗按钮都不画：
+ *  屏上写着「再点「检查更新」」，那颗按钮却在浮层底下 ⇒ 无路可走。重新查一次对每一种失败都成立。 */
+export function cardActionOf(verdict: Verdict | null, phase: 'idle' | 'checking' | 'ready' | 'installing' | 'failed'): VerdictAction | null {
+  if (verdict?.action) return verdict.action;
+  return phase === 'failed' ? 'recheck' : null;
 }
 
 /** 装成一家之后，其余各家的读数一律作废（票 #740）：七家共用同一份使用范围清单，
  *  刚那次安装已经改写了它，旧快照再拿去装必然被守卫拦下。这句话就是那条守卫的人话。 */
 export function staleVerdict(): Verdict {
-  return { kind: 'blocked', text: '刚装过别的插件，共用的安装清单变了。点「重新检查」重新读一次，再操作这一家。', action: 'recheck' };
+  return { kind: 'blocked', text: '刚在本面板装过别的插件，共用的安装清单变了，这一家要先重读一次。点「重新检查」，再点「装上更新」。', action: 'recheck' };
 }
 
 /** 把除 `keepKey` 之外的行全标成过期（票 #740）：装成一家 ⇒ 七家共用的安装清单被改写，
@@ -117,7 +142,9 @@ export function verdictOf(target: TargetInfo, snapshot: UpdateSnapshot): Verdict
   const absent = isAbsent(target);
   const latest = snapshot.latestVersion;
   if (absent && latest === null) {
-    return { kind: 'unknown', text: '未安装。点「检查更新」查最新版本，再点「装上」。', action: null };
+    // 动作给「重新检查」而不是让人去点面板顶上那颗「检查更新」：浮层开着的时候，顶上那颗被盖住了
+    // （票 #740 对抗式审查第三轮的朗读表逮到）⇒ **每张卡自己的动作必须在这张卡上够得着**。
+    return { kind: 'unknown', text: '未安装。点「重新检查」查最新版本，再点「装上」。', action: 'recheck' };
   }
   if (absent) {
     return { kind: 'update-available', text: '未安装；最新版本 ' + String(latest) + '。点「装上」安装。', action: 'install' };
@@ -133,10 +160,10 @@ export function verdictOf(target: TargetInfo, snapshot: UpdateSnapshot): Verdict
   const hasNewer = latest !== null && latest !== installed;
   if (snapshot.blockedReason !== null && hasNewer) {
     const blocked = snapshot.blockedReason as BlockedReason;
-    return { kind: 'blocked', text: reasonText(blocked), action: actionForBlocked(blocked) };
+    return { kind: 'blocked', text: reasonText(blocked), action: actionForBlocked(blocked), manualHint: NEEDS_MANUAL.has(blocked) };
   }
   if (latest === null) {
-    return { kind: 'unknown', text: '还没查过最新版本。点「检查更新」。', action: null };
+    return { kind: 'unknown', text: '还没查过最新版本。点「重新检查」。', action: 'recheck' };
   }
   if (snapshot.canInstall) {
     // 把「正在运行的是哪个版本」写进同一行：用户不必回头去版本行里找。
@@ -150,11 +177,13 @@ export function verdictOf(target: TargetInfo, snapshot: UpdateSnapshot): Verdict
   return { kind: 'up-to-date', text: '已是最新版本 ' + String(latest) + '。', action: null };
 }
 
-/** 待重启横幅文案（更新包 README 第 10 节：说清新版号与「重启后才生效」两件事）。
- *  判据同 `restartPendingOf`（按事实）；横幅要说清是**哪一家**（七家一起列时不点名等于没说）。 */
-export function pendingRestartText(target: TargetInfo, snapshot: UpdateSnapshot): string | null {
-  if (!restartPendingOf(snapshot)) return null;
-  return '⚠️ ' + target.title + '：' + restartLine(snapshot);
+/** 待重启横幅：**一行总账**，只点名哪几家要做「重启 DSH」这件事。
+ *
+ *  为什么不再逐家重复那句话（票 #740 对抗式审查第三轮的朗读表逮到）：同一句「重启 DSH…后生效」
+ *  会同时出现在横幅和那家卡片上，一屏两遍。分工定死：**横幅答「谁要重启」，卡片答「为什么、怎么做」**。 */
+export function restartBannerText(titles: readonly string[]): string | null {
+  if (titles.length === 0) return null;
+  return '⚠️ 待重启 DSH（退出后重新打开）：' + titles.join('、');
 }
 
 /** 面板展示的那条可复制命令（用户会照着敲的那一条）。

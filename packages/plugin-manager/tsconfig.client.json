@@ -5,6 +5,7 @@
     "noEmit": true
   },
   "include": [
+    "src/dsh-plugin-update.d.ts",
     "src/client.ts",
     "src/update-panel.ts",
     "src/update-client.ts",

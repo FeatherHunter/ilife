@@ -10,7 +10,7 @@ import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
-import { isAbsent, manualForDisplay, markStaleOthers, pendingRestartText, slotStateOf, staleVerdict, verdictOf, versionLines } from '../dist/update-view.js';
+import { isAbsent, cardActionOf, manualForDisplay, markStaleOthers, restartBannerText, restartPendingOf, slotStateOf, staleVerdict, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
 import { readPanelRegistered, readTargetEnvironment } from '../dist/update-env.js';
 
@@ -149,7 +149,11 @@ describe('#678 一行结论与版本行', () => {
   it('装不了：原因 ＋ 一个能执行的下一步（#740）', () => {
     const blocked = verdictOf(target, snapshot({ latestVersion: '0.2.6', blockedReason: 'source-install' }));
     assert.equal(blocked.kind, 'blocked');
-    assert.equal(blocked.action, null, '源码装面板代劳不了：只给原因，命令块兜底');
+    // 第三轮改的口径：这一态原先一颗按钮都不给（只摊命令），屏上那句却写着「再点「检查更新」」——
+    // 那颗按钮住在题头、被结果浮层盖住。照命令重装完之后，用户要的正是「把这一家重读一次」，
+    // 所以给「重新检查」；命令块照旧要摊（`manualHint`，这里有判据）。
+    assert.equal(blocked.action, 'recheck', '源码装：命令块 ＋ 一颗够得着的「重新检查」');
+    assert.equal(blocked.manualHint, true, '这句写着「照下面这条命令重装」⇒ 命令块必须出来');
     const changed = verdictOf(target, snapshot({ latestVersion: '0.2.6', blockedReason: 'installation-changed' }));
     assert.equal(changed.action, 'recheck', '安装清单变了给「重新检查」');
     assert.match(changed.text, /重新检查/);
@@ -174,8 +178,10 @@ describe('#678 一行结论与版本行', () => {
     const stale = staleVerdict();
     assert.equal(stale.kind, 'blocked');
     assert.equal(stale.action, 'recheck');
-    assert.match(stale.text, /刚装过别的插件/);
-    assert.match(stale.text, /重新检查/);
+    assert.match(stale.text, /在本面板装过别的插件/);
+    assert.match(stale.text, /点「重新检查」/);
+    // 第三轮朗读表逮到：「再操作这一家」是空话——照着念也不知道点哪颗按钮。
+    assert.match(stale.text, /再点「装上更新」/, '作废后的下一步要指名按钮，不许写「再操作这一家」');
   });
   // 对抗式审查逮到的一条：有新版、却没凭证（凭证过期或没签发）时，旧写法会落到「已是最新」那句——
   // 那是假话（官方源上就有新版）。正确答案是重新检查一次。
@@ -230,7 +236,8 @@ describe('#678 一行结论与版本行', () => {
       assert.ok(bundle.includes(label), '产物里缺按钮名：' + label);
     }
     assert.ok(bundle.includes('重启 DSH（退出后重新打开）'), '产物里缺重启动作那句话');
-    assert.ok(bundle.includes('刚装过别的插件'), '产物里缺「刚装过别的插件」那一态');
+    assert.ok(bundle.includes('待重启 DSH（退出后重新打开）'), '产物里缺待重启横幅那句总账');
+    assert.ok(bundle.includes('在本面板装过别的插件'), '产物里缺「装过别的插件」那一态');
   });
   it('作废只作废别家：装成的那一家自己保持原样（#740）', () => {
     const ready = { phase: 'ready', outcome: null, failure: null };
@@ -241,15 +248,85 @@ describe('#678 一行结论与版本行', () => {
     assert.equal(next.c.stale, true);
     assert.equal(rows.b.stale, undefined, '原对象不许被改写（纯函数）');
   });
-  it('待重启文案说清新版号、正在跑的版本与动作；版本行标注技能包随插件', () => {
-    const text = pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
-    assert.match(text, /0\.2\.6/);
-    assert.match(text, /正在运行的是 0\.2\.5/);
-    assert.match(text, /重启 DSH（退出后重新打开）后生效/);
-    assert.match(text, /卡路里/, '七家一起列时要点名是哪一家');
-    assert.equal(pendingRestartText(target, snapshot({})), null);
-    assert.ok(pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'recovery-required' })) !== null,
-      '原因码不同、事实相同：横幅照旧出（按事实判）');
+  it('待重启：卡片说事实与做法，横幅只点名（不重复那句话）', () => {
+    const pending = snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' });
+    assert.ok(restartPendingOf(pending), '判据按事实：磁盘版本 ≠ 正在跑的版本');
+    assert.ok(!restartPendingOf(snapshot({})), '磁盘与运行一致时不算待重启');
+    assert.ok(restartPendingOf(snapshot({ installedVersion: '0.2.6', blockedReason: 'recovery-required' })),
+      '原因码不同、事实相同 ⇒ 照样算待重启（按事实判）');
+    const card = verdictOf(target, pending);
+    assert.match(card.text, /磁盘上装的是 0\.2\.6；正在运行的是 0\.2\.5/);
+    assert.match(card.text, /重启 DSH（退出后重新打开）后生效/);
+    assert.equal(card.action, null, '待重启期间不给安装按钮');
+    // 横幅只是一行总账：点名谁要重启，不再重复「重启 DSH…后生效」那句话（一屏两遍会吵）。
+    const banner = restartBannerText(['卡路里', '备忘录']);
+    assert.match(banner, /^⚠️ 待重启 DSH（退出后重新打开）：卡路里、备忘录$/);
+    assert.ok(!/后生效/.test(banner), '横幅不重复那句做法：做法写在卡片上');
+    assert.equal(restartBannerText([]), null);
+  });
+  it('两张「还没查过」的卡自带「重新检查」按钮（浮层开着时顶上那颗够不着，第三轮朗读表逮到）', () => {
+    assert.equal(verdictOf(absentTarget, snapshot({ runningVersion: '0.0.0', installedVersion: null })).action, 'recheck');
+    assert.equal(verdictOf(target, snapshot({})).action, 'recheck');
+  });
+  // 第三轮的主判据：**这句话点名的按钮，那一行上真有一颗、真够得着**。
+  // 结果浮层一开就盖住面板题头的「检查更新」，所以「改完再读一次」这类下一步只能写「重新检查」
+  // （它画在那一行上）；只有发生在**重启之后**的下一步才许写「检查更新」。
+  it('装不了的那八态：点名的按钮在这一行上真有一颗（#740 第三轮）', () => {
+    // 每一态：结论给的动作 ＋ 那句话点名的**第一颗**按钮（「再点后面那颗」是读完这一步之后的事，不算）。
+    // `incompatible-node` 是个例外：它那句里的「检查更新」发生在**重启之后**，那时浮层早已关掉，题头那颗够得着。
+    // `pending-restart` 在「磁盘 ≠ 运行中」时已被重启那条事实判据截走；走到这里的是磁盘与运行一致的尾巴，只教重启。
+    const FIRST_STEP = {
+      'unknown-profile': ['recheck', '重新检查'],
+      'source-install': ['recheck', '重新检查'],
+      'invalid-installation': ['recheck', '重新检查'],
+      'installation-changed': ['recheck', '重新检查'],
+      'registry-conflict': ['recheck', '重新检查'],
+      'recovery-required': ['retry', '重试安装'],
+      'incompatible-node': [null, '检查更新'],
+      'pending-restart': [null, null],
+    };
+    for (const reason of BLOCKED_REASONS) {
+      const [action, firstNamed] = FIRST_STEP[reason];
+      const v = verdictOf(target, snapshot({ latestVersion: '0.3.0', blockedReason: reason }));
+      assert.equal(v.kind, 'blocked', reason);
+      assert.equal(v.action, action, reason);
+      const named = /点「([^」]+)」/.exec(v.text);
+      assert.equal(named ? named[1] : null, firstNamed, reason + '：这句话点名的第一颗按钮，得是这一行上真够得着的那颗');
+      if (v.text.includes('下面这条命令')) assert.equal(v.manualHint, true, reason + '：那句话指着命令块，命令块就得出来');
+    }
+  });
+  it('写着「下面这条命令」的那几行，命令块必须真出来（#740 第三轮）', () => {
+    // 第三轮逮到的第二处失配：`recovery-required` 那句写着「就用下面这条命令重装」，
+    // 而命令块只在「拦截态且没按钮」时才画 —— 那句话下面什么都没有。
+    for (const reason of ['source-install', 'invalid-installation', 'recovery-required']) {
+      const v = verdictOf(target, snapshot({ latestVersion: '0.3.0', blockedReason: reason }));
+      assert.match(v.text, /下面这条命令/, reason);
+      assert.equal(v.manualHint, true, reason + '：这句话指着命令块，判据就得让面板把它画出来');
+    }
+    // 反面：面板一步能推回去的那几态不摊命令（摊了是噪声，第二轮已定）。
+    for (const reason of ['installation-changed', 'unknown-profile', 'registry-conflict', 'incompatible-node']) {
+      assert.ok(!verdictOf(target, snapshot({ latestVersion: '0.3.0', blockedReason: reason })).manualHint, reason);
+    }
+  });
+  it('过程错误码点名的按钮也够得着：失败的行一律补一颗「重新检查」（#740 第三轮）', () => {
+    // 更新包 README 第 12 节的过程错误码：它们不走「拦截态」，是**失败的行**（没有快照、原先一颗按钮都不画）。
+    const ERROR_CODES = ['check-failed', 'check-expired', 'invalid-release', 'update-busy', 'install-failed', 'manager-unreachable', 'bad-request', 'internal'];
+    for (const code of ERROR_CODES) {
+      const text = reasonText(code);
+      assert.ok(text.length > 0, code);
+      if (text.includes('点「重新检查」')) assert.equal(cardActionOf(null, 'failed'), 'recheck', code + '：这一行靠它补按钮');
+      if (text.includes('点「检查更新」')) assert.equal(code, 'manager-unreachable', code + '：这句话点的是被结果浮层盖住的题头按钮');
+      if (text.includes('下面这条命令')) assert.equal(code, 'install-failed', code + '：只有装失败那一行摊命令');
+    }
+    // 补按钮的判据本身：失败 ⇒ 有按钮；没失败 ⇒ 结论说什么就是什么。
+    assert.equal(cardActionOf(null, 'failed'), 'recheck');
+    assert.equal(cardActionOf(null, 'ready'), null);
+    assert.equal(cardActionOf(null, 'idle'), null);
+    assert.equal(cardActionOf({ kind: 'blocked', text: 'x', action: 'retry' }, 'ready'), 'retry');
+    assert.equal(cardActionOf({ kind: 'up-to-date', text: 'x', action: null }, 'ready'), null);
+    assert.equal(cardActionOf({ kind: 'up-to-date', text: 'x', action: null }, 'failed'), 'recheck');
+  });
+  it('版本行标注技能包随插件', () => {
     const lines = versionLines(target, snapshot({}));
     assert.match(lines[0], /dsh-calorie 0\.2\.5/);
     assert.match(lines[1], /skill-calorie 0\.1\.7/);

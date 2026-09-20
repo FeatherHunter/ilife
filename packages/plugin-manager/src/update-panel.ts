@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { isAbsent, manualForDisplay, markStaleOthers, pendingRestartText, slotStateOf, staleVerdict, verdictOf, versionLines } from './update-view.js';
+import { cardActionOf, isAbsent, manualForDisplay, markStaleOthers, restartBannerText, restartPendingOf, slotStateOf, staleVerdict, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -359,21 +359,17 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
   );
 }
 
-/** 待重启横幅：任何一家成 `pending-restart` 就常驻显示，重启宿主后自动消失（更新包 README 第 10 节）。 */
+/** 待重启横幅：一行总账，只点名哪几家要重启（理由与做法写在各家卡片上，见 `restartBannerText`）。 */
 function RestartBanners(props: { readonly face: UpdateRowsFace }): React.ReactElement | null {
-  const lines: string[] = [];
+  const titles: string[] = [];
   for (const target of props.face.targets) {
     const outcome = props.face.rows[target.key]?.outcome;
     if (!outcome) continue;
-    const text = pendingRestartText(target, outcome.snapshot);
-    if (text) lines.push(text);
+    if (restartPendingOf(outcome.snapshot)) titles.push(target.title);
   }
-  if (lines.length === 0) return null;
-  return React.createElement(
-    'div',
-    { style: PANEL_STYLE.banner },
-    lines.map((line, index) => React.createElement('div', { key: String(index) }, line)),
-  );
+  const text = restartBannerText(titles);
+  if (text === null) return null;
+  return React.createElement('div', { style: PANEL_STYLE.banner }, text);
 }
 
 /** 七家结果：装不了的与待重启的常驻（横幅），详细结果放**居中浮层**（点「检查更新」开）。
@@ -403,7 +399,11 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
     const busy = row.phase === 'installing';
     // 手工命令只在**面板代劳不了**时才摊出来（拦截态但没按钮，或上一次装失败）：
     // 拦得住但面板一步能推回去的（重新检查／重试安装），摊命令只是噪声（票 #740）。
-    const showManual = manual !== null && (row.phase === 'failed' || (verdict?.kind === 'blocked' && verdict.action === null));
+    // 第三轮补的一格：那句话**自己**写了「下面这条命令」时，命令必须出来（`Verdict.manualHint`）——
+    // 否则屏上那句「就用下面这条命令重装」下面什么都没有。
+    const showManual = manual !== null && (row.phase === 'failed' || verdict?.manualHint === true || (verdict?.kind === 'blocked' && verdict.action === null));
+    // 失败的行没有快照、也就没有结论，但照样要给一颗够得着的按钮（票 #740 第三轮，见 `cardActionOf`）。
+    const buttonAction = cardActionOf(verdict, row.phase);
     const tone = rowToneOf(row, verdict);
     const paint = ROW_TONE[tone];
     /** 这一行「当前／最新」两个版本号：不等才算有新版，把「最新」那格上色（用户扫一眼先看有没有箭头）。 */
@@ -438,7 +438,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
         { style: lit ? { ...PANEL_STYLE.verdictLine, color: paint.color, fontWeight: 600 } : { ...PANEL_STYLE.verdictLine, color: 'var(--dsw-alias-label-secondary, #9a9a9a)' } },
         busy ? '正在装，请稍候…' : (verdict?.text ?? (checking ? '检查中…' : '')),
       ),
-      verdict?.action
+      buttonAction
         ? React.createElement(
             'button',
             {
@@ -446,10 +446,10 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
               style: busy ? { ...PANEL_STYLE.btnPrimary, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btnPrimary,
               disabled: busy,
               onClick: () => {
-                if (verdict.action) props.face.act(target, verdict.action);
+                props.face.act(target, buttonAction);
               },
             },
-            ACTION_LABEL[verdict.action],
+            ACTION_LABEL[buttonAction],
           )
         : null,
       row.failure ? React.createElement('div', { style: PANEL_STYLE.reason }, '装不上：' + row.failure.message) : null,
@@ -537,10 +537,12 @@ export function AbsentCard(props: {
   const manual = (target ? manualForDisplay(target, row?.failure?.manual ?? row?.outcome?.manual ?? null) : null) ?? props.fallbackCommand;
   const installed = target ? (target.installedVersion ?? target.runningVersion) : null;
   const state = slotStateOf(target, props.inLedger);
+  const blockedVerdict = target && row?.outcome && row.outcome.snapshot.blockedReason !== null ? verdictOf(target, row.outcome.snapshot) : null;
   let reason: string | null = row?.failure?.message ?? null;
-  if (target && reason === null && row?.outcome && row.outcome.snapshot.blockedReason !== null) {
-    reason = verdictOf(target, row.outcome.snapshot).text;
-  }
+  if (reason === null && blockedVerdict) reason = blockedVerdict.text;
+  // 这张卡也要有一颗够得着的按钮（票 #740 第三轮）：上一次失败之后，屏上那句写着「再点「重新检查」」，
+  // 这张卡原先一颗都不给（absent 态只给「装上」）。判据与结果行同一份（`cardActionOf`）。
+  const retryAction = row ? cardActionOf(blockedVerdict, row.phase) : null;
   let headline: string;
   switch (state) {
     case 'absent':
@@ -579,6 +581,19 @@ export function AbsentCard(props: {
             },
           },
           busy ? '正在装，请稍候…' : '装上',
+        )
+      : null,
+    // 「重新检查」只在上面那句真写了它、且这张卡上还没有同一颗按钮时补出来（absent 态的「装上」不动）。
+    retryAction === 'recheck' && target
+      ? React.createElement(
+          'button',
+          {
+            type: 'button',
+            style: busy ? { ...PANEL_STYLE.btn, marginTop: 8, marginLeft: 8, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 8, marginLeft: 8 },
+            disabled: busy,
+            onClick: () => props.face.act(target, 'recheck'),
+          },
+          ACTION_LABEL.recheck,
         )
       : null,
     reason ? React.createElement('div', { style: PANEL_STYLE.reason }, reason) : null,
