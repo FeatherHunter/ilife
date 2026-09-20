@@ -48,7 +48,14 @@ export interface BrowseFailure {
   readonly message: string;
 }
 
-/** 目录行入口的三态判定结果：拿到的能力是哪种，决定界面上画什么。 */
+/** 宿主拒了一条路的说法随宿主变化，**本件不认识**：调用方把它的回执码传进 `openRowBrowser`。
+ *
+ * 它为什么是唯一信号：一次组合里只服务一种能力（native 或 browse），另一条路上的动词一律被拒
+ * （`@deepseek-ai/dsh-api-workspace-controller/lib/types/directory-picker.js` 的 `requireCapability`）；
+ * 而三条动词在客户端命名空间上都在（都由 `TYPERT_REMOTE.descriptors` 生成），
+ * 所以「有没有 `pick`／有没有 `list`」问不出组合里服务哪种能力，只有真调一次、看它拒没拒才知道。 */
+
+/** 目录行入口的三态判定结果：**按命名空间上有什么动词**看一眼，不是问组合里服务哪种能力。 */
 export type PickerMode = 'native' | 'browse' | 'none';
 
 /** 平台回执的信封（各家的 `DirectoryPickerAnswer` 与此同形；本件只认这三格，不认别家的类名）。 */
@@ -58,11 +65,14 @@ export interface PickEnvelope {
   readonly error?: { readonly code?: string; readonly message?: string };
 }
 
-/** 一次「唤起选择器」的归一结果：选中／取消／供不了，永不抛。 */
+/** 一次「唤起选择器」的归一结果：选中／取消／供不了，永不抛。
+ *
+ * `code` 只在平台给了的时候带上（就是 `error.code`）：调用方据它分辨「这条路宿主没给」
+ * （{@link CAPABILITY_REFUSED}）与「别的失败」——前者该换一条路走，后者才该报出来。 */
 export type PickOutcome =
   | { readonly kind: 'picked'; readonly path: string }
   | { readonly kind: 'cancelled' }
-  | { readonly kind: 'unavailable'; readonly message: string };
+  | { readonly kind: 'unavailable'; readonly code?: string; readonly message: string };
 
 /** 认一认某个值是不是可用的目录取数面（软依赖守卫用：认不出就当没有，绝不把页面带下来）。 */
 export function isBrowseFace(raw: unknown): raw is DirectoryBrowseFace {
@@ -77,10 +87,15 @@ export function hasPickFn(raw: unknown): boolean {
   return typeof (raw as { pick?: unknown }).pick === 'function';
 }
 
-/** 三态判定：先 native（有 pick），再 browse（有两格原语），都没有＝`none`。 */
+/** 三态判定：**先看两格浏览原语**（都在＝应用内浏览器这条路在），再看单独的 `pick`，都没有＝`none`。
+ *
+ * 为什么浏览优先：客户端命名空间上三条动词一定都在（由 `TYPERT_REMOTE.descriptors` 生成，
+ * 与组合里服务哪种能力无关），所以两格原语在＝这台宿主**可能**给浏览；真调一次才知道给不给，
+ * 不给（{@link CAPABILITY_REFUSED}）再由调用方换系统对话框。反过来先认 `pick` 就会在
+ * Desktop 这种「只服务 browse」的宿主上每次都去唤一次系统对话框、被拒一次（#744 实测）。 */
 export function pickerModeOf(raw: unknown): PickerMode {
-  if (hasPickFn(raw)) return 'native';
-  return isBrowseFace(raw) ? 'browse' : 'none';
+  if (isBrowseFace(raw)) return 'browse';
+  return hasPickFn(raw) ? 'native' : 'none';
 }
 
 /** 平台回执 → 三态（**永不抛**）：成功回的是信封里的 `value` 不是路径；`ok:false` 是「供不了」不是「取消」。
@@ -96,7 +111,62 @@ export function readPickAnswer(raw: unknown): PickOutcome {
     return typeof value === 'string' && value.trim() !== '' ? { kind: 'picked', path: value } : { kind: 'cancelled' };
   }
   const detail = answer.error?.message?.trim() ?? '';
-  return { kind: 'unavailable', message: '打不开系统文件夹对话框' + (detail === '' ? '' : '（' + detail + '）') + '：请直接在框里填绝对路径。' };
+  const code = answer.error?.code;
+  return {
+    kind: 'unavailable',
+    ...(typeof code === 'string' && code !== '' ? { code } : {}),
+    message: '打不开系统文件夹对话框' + (detail === '' ? '' : '（' + detail + '）') + '：请直接在框里填绝对路径。',
+  };
+}
+
+/** 取数原语失败：带上宿主给的回执码，好让调用方分辨「没这条路」与「这一层读不出来」。
+ *
+ * `code` 就是 `humanize`（状态那半）读的那一格，人话直接上图。 */
+export class BrowseAnswerError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'BrowseAnswerError';
+    this.code = code;
+  }
+}
+
+/** 宿主 browse 原语的**信封** → 值，或按信封里的 `error` 抛。
+ *
+ * 为什么必须走这一道：`list`／`createDirectory` 与 `pick` 一样是 Remote 动词，客户端拿到的是
+ * `{ok:true,value}`／`{ok:false,error}`（`@deepseek-ai/dsh-api-gateway/lib/client.js` 的 `invoke()`）。
+ * 把信封当值用，图上就会是一层「读出来了但一行都没有」的空目录（#744 实测），
+ * 而不是报错——所以宁可在这里抛，也不许把它当列举结果传下去。
+ * 第一方消费方同口径：`@deepseek-ai/dsh-client-ui-workspace/lib/client.js:105-113` 也是这么拆的。 */
+export function readBrowseAnswer<T>(raw: unknown, what: string): T {
+  const answer = (typeof raw === 'object' && raw !== null ? raw : {}) as {
+    ok?: unknown;
+    value?: unknown;
+    error?: { code?: string; message?: string };
+  };
+  if (answer.ok === true && answer.value !== undefined && answer.value !== null) return answer.value as T;
+  const detail = answer.error?.message?.trim() ?? '';
+  const code = answer.error?.code;
+  throw new BrowseAnswerError(
+    typeof code === 'string' && code !== '' ? code : 'browse-failed',
+    detail === '' ? what + '没有回执' : detail,
+  );
+}
+
+/** 宿主命名空间 → 本件的取数面：把两条原语的信封拆开，成功给值、失败按码抛。
+ *
+ * 命名空间上两格原语不在就回 null（调用方据此不画入口）。**透传参数个数照宿主的规矩**：
+ * 描述符声明了可选 `AbortSignal`（`cancellation: {parameter:'signal'}`），而客户端按
+ * `values.length === 业务参数个数 + 1` 判有没有 signal——显式传一个 `undefined` 会被当成 signal
+ * 去 `AbortSignal.any([…, undefined])` 而炸。本件的界面不做取消，故**从不传 signal**。 */
+export function browseFaceOf(raw: unknown): DirectoryBrowseFace | null {
+  if (!isBrowseFace(raw)) return null;
+  const namespace = raw as DirectoryBrowseFace;
+  return {
+    list: async (path) =>
+      readBrowseAnswer<DirectoryListing>(path === undefined ? await namespace.list() : await namespace.list(path), '列举目录'),
+    createDirectory: async (path, name) => readBrowseAnswer<string>(await namespace.createDirectory(path, name), '新建文件夹'),
+  };
 }
 
 /** 一段路径里最后那个分隔符的位置（Windows 上 `\` 与 `/` 都算；POSIX 上 `\` 是合法文件名字符，不算）。 */

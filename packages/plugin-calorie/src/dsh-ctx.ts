@@ -92,7 +92,9 @@ export interface HostCtx {
 /** 宿主目录选择命名空间的服务名（#736；出处与禁令见 cookbook §13）。 */
 export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
 
-/** 宿主目录选择命名空间（DSH 平台提供）。本包**只用 `pick` 这一格**：不给 signal（平台那格可选）。
+/** 宿主目录选择命名空间（DSH 平台提供）：本包用它的 `pick`（系统对话框）与
+ * `list`／`createDirectory`（应用内浏览那两格原语，由共用件的 `browseFaceOf` 拆信封）。不给 signal
+ * （平台那格可选；描述符按「业务参数个数 ＋ 1」判有没有 signal，显式传 `undefined` 会炸）。
  *
  * **回执是信封，不是路径**（#743 真机缺陷的根因）：客户端把每次 Remote 调用包成
  * `{ok:true,value}`／`{ok:false,error}`（`@deepseek-ai/dsh-api-gateway/lib/client.js` 的 `invoke()`：
@@ -104,6 +106,15 @@ export interface DirectoryPickerAnswer {
   readonly value?: string | null;
   readonly error?: { readonly code?: string; readonly message?: string };
 }
+
+/** 宿主「这条路没给」的回执码（#744）：一次组合里只服务一种能力（native 或 browse），
+ * 另一条路上的动词一律回它。
+ *
+ * 出处：`@deepseek-ai/dsh-api-workspace-controller/lib/types/directory-picker.js` 的 `requireCapability()`
+ * ——`RemoteError('directory-picker/unavailable', …)`。三条动词在客户端命名空间上都在，
+ * 所以只有真调一次、看它拒没拒，才知道组合里服务哪种能力。
+ * 共用件不认识这个名字（只照比对），于是这条宿主事实住在本镜像里。 */
+export const DIRECTORY_PICKER_REFUSED = 'directory-picker/unavailable' as const;
 
 export interface DirectoryPickerFace {
   pick(): Promise<DirectoryPickerAnswer>;

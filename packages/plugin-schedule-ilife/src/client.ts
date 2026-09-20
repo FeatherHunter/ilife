@@ -21,10 +21,10 @@ import {
   RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, isRpcResult,
 } from './contract.js';
 import type { ConfigSurfaceReply } from './contract.js';
-import { REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
-import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, createDirectoryRowBrowser } from 'dsh-life-pack/directory-browser';
+import { DIRECTORY_PICKER_REFUSED, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
+import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, openRowBrowser } from 'dsh-life-pack/directory-browser';
 import { DirectoryBrowserFromRow } from 'dsh-life-pack/directory-browser-ui';
-import type { DirectoryBrowseFace, PickerMode, DirectoryRowBrowser, DirectoryRowEntry } from 'dsh-life-pack/directory-browser';
+import type { PickerMode, DirectoryRowBrowser, DirectoryRowEntry } from 'dsh-life-pack/directory-browser';
 import type { ClientCtx, RpcCallFace, DirectoryPickerAnswer, DirectoryPickerFace } from './dsh-ctx.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
@@ -230,29 +230,11 @@ export function directoryEntryMode(picker: DirectoryPickerFace | null): PickerMo
   return picker === null ? 'none' : pickerModeOf(picker);
 }
 
-/** 开一行的应用内浏览器；返回 undefined＝这条路供不了（调用方据此不画入口）。
+/** 开一行的应用内浏览器：**策略在共用件里**（`openRowBrowser`，一处定义），本处只透出。
  *
- * **状态由调用方持有**（`setBrowseRow`）：本函数只造浏览器、开图，不碰 React 状态。 */
-export function openRowBrowser(input: {
-  readonly picker: DirectoryPickerFace | null;
-  readonly key: string;
-  readonly path: string;
-  readonly onChange: (key: string, next: string) => void;
-  readonly setBrowseRow: (row: DirectoryRowBrowser | null) => void;
-}): Promise<void> | undefined {
-  if (input.picker === null || pickerModeOf(input.picker) !== 'browse') return undefined;
-  const row = createDirectoryRowBrowser({
-    face: input.picker as unknown as DirectoryBrowseFace,
-    initialPath: input.path,
-    onPicked: (picked) => {
-      input.onChange(input.key, picked);
-      input.setBrowseRow(null);
-    },
-    onClosed: () => input.setBrowseRow(null),
-  });
-  input.setBrowseRow(row);
-  return row.open();
-}
+ * 为什么不留本地实现：先浏览还是先系统对话框、被拒之后换哪条路，是六家必须一致的一条判断；
+ * 各写一份就会各错各的（#744 实测：先认 `pick` 的写法在 Desktop 上每次都吃一次拒绝）。 */
+export { openRowBrowser };
 
 
 /** 「选择文件夹」按钮的真装配函数（目录行渲染出来的按钮，onClick 就是它）。
@@ -374,28 +356,41 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
   const picker = pickerGone ? null : props.pickerSource();
   const [browseRow, setBrowseRow] = React.useState<DirectoryRowBrowser | null>(null);
 
-  /** 目录行的入口动作：三态各一条路；都供不了就不给入口（`undefined` ⇒ Row 不画按钮）。 */
+  /** 唤起系统文件夹选择器那一条路（应用内浏览被拒时的兜底，也是命名空间只给 `pick` 时的唯一一条）。 */
+  const openNative = React.useCallback(
+    async (key: string): Promise<void> => {
+      const face = pickerGone ? null : props.pickerSource();
+      if (face === null) return;
+      // 系统对话框是模态的：等它回来的这段时间给一行字，免得看着像「点了没反应」（#743）。
+      setPicking(true);
+      setError(null);
+      const outcome = await pickDirectory(face);
+      setPicking(false);
+      if (outcome.kind === 'picked') onChange(key, outcome.path);
+      else if (outcome.kind === 'unavailable') {
+        setError(outcome.message);
+        setPickerGone(true);
+      }
+    },
+    [pickerGone, onChange, props.pickerSource],
+  );
+
+  /** 目录行的入口动作：**先应用内浏览，宿主没给这条路再换系统对话框**（判断在共用件里）。
+   *
+   * 两条都供不了就不给入口（`undefined` 时 `rowEntry` 为 null ⇒ Row 不画按钮）。 */
   const onOpenRow = React.useCallback(
     async (key: string): Promise<void> => {
-      if (pickerModeOf(picker) === 'native') {
-        // 系统对话框是模态的：等它回来的这段时间给一行字，免得看着像「点了没反应」（#743）。
-        setPicking(true);
-        setError(null);
-        const outcome = await pickDirectory(picker as DirectoryPickerFace);
-        setPicking(false);
-        if (outcome.kind === 'picked') onChange(key, outcome.path);
-        else if (outcome.kind === 'unavailable') {
-          setError(outcome.message);
-          setPickerGone(true);
-        }
-        return;
-      }
-      const opened = openRowBrowser({ picker, key, path: draft[key] ?? '', onChange, setBrowseRow });
-      if (opened === undefined) return;
       setError(null);
-      await opened;
+      const opened = openRowBrowser({
+        picker,
+        initialPath: draft[key] ?? '',
+        onChange: (next) => onChange(key, next),
+        onRow: setBrowseRow,
+        refusalCode: DIRECTORY_PICKER_REFUSED,
+      });
+      if (opened === undefined || (await opened) === 'refused') await openNative(key);
     },
-    [picker, onChange, draft],
+    [picker, onChange, draft, openNative],
   );
 
   /** 给 Row 的三态入口：`none` 时给 null（不画按钮，文本框照旧）。 */

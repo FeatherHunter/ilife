@@ -154,7 +154,6 @@ const S = {
 
 function crumbRow(
   state: BrowseState,
-  labels: DirectoryBrowserLabels,
   onEnter: (path: string) => void,
 ): React.ReactElement | null {
   const listing = state.listing;
@@ -173,7 +172,9 @@ function crumbRow(
           title: crumb.path,
           onClick: () => onEnter(crumb.path),
         },
-        index === 0 ? labels.up : crumb.name,
+        // 每一格都写**它自己那一层的名字**：第一格是文件系统根（`C:\`），不是「上一级」——
+        // 「上一级」是路径行那颗按钮的活（#744 返修：这一格原先串了那颗按钮的文案）。
+        crumb.name,
       ),
     );
   });
@@ -245,7 +246,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
   const listing = state.listing ?? EMPTY_LISTING;
   const hidden = hiddenCount(listing);
   const body: React.ReactNode[] = [];
-  body.push(crumbRow(state, labels, props.onEnter));
+  body.push(crumbRow(state, props.onEnter));
   body.push(
     React.createElement(
       'div',
@@ -339,15 +340,19 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
 /** 目录行接线的 React 半边：把操作半那组动作直接喂给组件。
  *
  * 操作半（`directory-browser-state.ts` 的 `createDirectoryRowBrowser`）不碰 React，
- * 这里只把它的 `actions` 摊进 props —— 于是「进哪一层」那套在 Node 里可测，这里只做接线。 */
+ * 这里只把它的 `actions` 摊进 props —— 于是「进哪一层」那套在 Node 里可测，这里只做接线。
+ *
+ * `useSyncExternalStore` 是**必需**的：列举是异步落定的，不订阅的话这一帧画完就再没有重画，
+ * 图上会永远停在「正在读取…」（#744 实测）。 */
 export function DirectoryBrowserFromRow(props: {
   readonly open: boolean;
   readonly row: DirectoryRowBrowser;
   readonly labels: DirectoryBrowserLabels;
 }): React.ReactElement | null {
+  const state = React.useSyncExternalStore(props.row.subscribe, props.row.state);
   return DirectoryBrowser({
     open: props.open,
-    state: props.row.state(),
+    state,
     labels: props.labels,
     ...props.row.actions,
   });

@@ -25,6 +25,9 @@ const {
   hasPickFn,
   pickerModeOf,
   readPickAnswer,
+  browseFaceOf,
+  readBrowseAnswer,
+  BrowseAnswerError,
   parentOf,
   joinPath,
   splitDraft,
@@ -34,7 +37,7 @@ const {
   locationLabel,
   validateFolderName,
 } = contract;
-const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath, createDirectoryRowBrowser } = state;
+const { createBrowseController, rowsOf, canGoUp, targetOf, createBaseOf, entryPath, createDirectoryRowBrowser, openRowBrowser } = state;
 
 /** 假取数面：一张写死的目录树，`C:\a` 下面有 `b`（普通）、`.hidden`（隐藏）、`c`（普通）。 */
 function fakeFace(options = {}) {
@@ -132,8 +135,10 @@ describe('#744 路径换算（Windows 与 POSIX 两种写法）', () => {
 });
 
 describe('#744 入口三态与回执归一（宿主名词只在这一层出现）', () => {
-  it('pickerModeOf：有 pick＝native，只有两格原语＝browse，都没有＝none', () => {
+  it('pickerModeOf：两格浏览原语齐＝browse（**先认它**），只有 pick＝native，都没有＝none', () => {
     assert.equal(pickerModeOf({ pick: async () => null }), 'native');
+    assert.equal(pickerModeOf({ pick: async () => null, list: async () => {}, createDirectory: async () => {} }), 'browse',
+      '真机上三条动词都在（命名空间按描述符生成）——先认 pick 就会每次都去唤一次被拒的系统对话框（#744 实测）');
     assert.equal(pickerModeOf(fakeFace()), 'browse');
     assert.equal(pickerModeOf({}), 'none');
     assert.equal(pickerModeOf(undefined), 'none');
@@ -371,6 +376,22 @@ describe('#744 六家取用的两条子路径真的能 require', () => {
     assert.equal(ui.DirectoryBrowser({ open: false, state: stateFixture, labels: labelsFixture, ...noopActions }), null,
       '没开图时不画任何东西');
   });
+
+  it('面包屑每一格写自己那一层的名字（第一格不是「上一级」——那是路径行那颗按钮的文案）', async () => {
+    const ui = await import('../dist/directory-browser-ui.js');
+    const listing = {
+      ...stateFixture.listing,
+      path: 'C:\\子目录层',
+      crumbs: [
+        { name: 'C:\\', path: 'C:\\', hidden: false },
+        { name: '子目录层', path: 'C:\\子目录层', hidden: false },
+      ],
+    };
+    const element = ui.DirectoryBrowser({ open: true, state: { ...stateFixture, listing }, labels: labelsFixture, ...noopActions });
+    assert.equal(countText(element, labelsFixture.up), 1, '「上一级」在图上只该出现一次（路径行那颗按钮）');
+    assert.equal(countText(element, 'C:\\'), 1, '第一格面包屑写根自己的名字');
+    assert.equal(countText(element, '子目录层'), 1, '第二格写那一层的名字');
+  });
 });
 
 /** 视图用例用的最小 state：满载但空列表。 */
@@ -417,3 +438,176 @@ const noopActions = {
   onCreate: () => {},
   onCreatingChange: () => {},
 };
+
+/** 数一数元素树里某个文本出现了几次（React 元素是普通对象：`type`／`props.children`）。 */
+function countText(node, needle) {
+  let found = 0;
+  const walk = (value) => {
+    if (typeof value === 'string') {
+      if (value === needle) found += 1;
+      return;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item);
+      return;
+    }
+    if (value !== null && typeof value === 'object' && 'props' in value) walk(value.props.children);
+  };
+  walk(node);
+  return found;
+}
+
+/** 宿主命名空间**真机上的样子**（#744 返修的三条读数都咬在这里）：
+ *  ① 三条动词都在（按描述符生成，与组合里服务哪种能力无关）；
+ *  ② 回的不是值而是信封 `{ok:true,value}`／`{ok:false,error}`（`@deepseek-ai/dsh-api-gateway` 的 `invoke()`）；
+ *  ③ 组合里没给的那条路一律回 `directory-picker/unavailable`（宿主 `requireCapability()`）。 */
+function wireNamespace(options = {}) {
+  const calls = [];
+  const listing = (path) => ({
+    path,
+    home: 'C:\\Users\\me',
+    crumbs: [{ name: 'C:\\', path: 'C:\\', hidden: false }],
+    entries: [
+      { name: 'b', path: path + '\\b', hidden: false },
+      { name: '.hidden', path: path + '\\.hidden', hidden: true },
+    ],
+    truncated: false,
+  });
+  const refused = (method) => ({
+    ok: false,
+    error: {
+      code: 'directory-picker/unavailable',
+      message: `directoryPicker.${method} needs the native capability; the composed picker serves "browse"`,
+    },
+  });
+  return {
+    calls,
+    async list(path) {
+      calls.push(['list', path ?? null]);
+      if (options.refuseBrowse === true) return refused('list');
+      return { ok: true, value: listing(path ?? 'C:\\Users\\me') };
+    },
+    async createDirectory(path, name) {
+      calls.push(['createDirectory', path, name]);
+      if (options.refuseBrowse === true) return refused('createDirectory');
+      return { ok: true, value: path + '\\' + name };
+    },
+    async pick() {
+      calls.push(['pick']);
+      return options.refuseBrowse === true ? { ok: true, value: 'D:\\选中的' } : refused('pick');
+    },
+  };
+}
+
+describe('#744 返修：宿主信封、组合只服务一种能力', () => {
+  it('readPickAnswer：平台给了回执码就带上（分辨「没这条路」与「别的失败」）', () => {
+    const refused = readPickAnswer({ ok: false, error: { code: 'directory-picker/unavailable', message: 'x' } });
+    assert.equal(refused.kind, 'unavailable');
+    assert.equal(refused.code, 'directory-picker/unavailable');
+    assert.equal('code' in readPickAnswer({ ok: false, error: { message: 'x' } }), false, '没给码就不带这一格');
+  });
+
+  it('browseFaceOf：把信封拆成值；被拒按码抛（信封当值用＝图上空目录，不是报错）', async () => {
+    const face = browseFaceOf(wireNamespace());
+    assert.ok(face !== null, '两格原语都在 ⇒ 有取数面');
+    const listed = await face.list('C:\\a');
+    assert.equal(listed.path, 'C:\\a', '信封里的 value 才是那一层');
+    assert.equal(listed.entries.length, 2);
+    assert.equal(await face.createDirectory('C:\\a', '新建'), 'C:\\a\\新建');
+
+    const refused = browseFaceOf(wireNamespace({ refuseBrowse: true }));
+    await assert.rejects(
+      () => refused.list('C:\\a'),
+      (error) => {
+        assert.equal(error.code, 'directory-picker/unavailable');
+        assert.match(error.message, /needs the native capability/, '平台原话不许吞');
+        return true;
+      },
+    );
+    assert.equal(browseFaceOf({ pick: async () => ({ ok: true, value: null }) }), null, '只有 pick 的命名空间没有浏览那条路');
+    assert.equal(browseFaceOf(null), null);
+  });
+
+  it('readBrowseAnswer：认得信封与自己的失败类型（用例与本件同一处读数）', () => {
+    assert.deepEqual(readBrowseAnswer({ ok: true, value: { path: 'C:\\a' } }, '列举目录'), { path: 'C:\\a' });
+    assert.throws(() => readBrowseAnswer({ ok: false, error: { code: 'directory-picker/unreadable', message: '这一层读不出来' } }, '列举目录'),
+      (error) => error instanceof BrowseAnswerError && error.code === 'directory-picker/unreadable' && /这一层读不出来/.test(error.message));
+    assert.throws(() => readBrowseAnswer(undefined, '列举目录'), /没有回执/, '认不出的形状要报出来，不许当空目录');
+  });
+
+  it('openRowBrowser：先应用内浏览 → 图上落定第一层，选中回填该行', async () => {
+    const rows = [];
+    const changed = [];
+    const opened = openRowBrowser({
+      picker: wireNamespace(),
+      initialPath: 'C:\\a',
+      onChange: (next) => changed.push(next),
+      onRow: (next) => rows.push(next),
+      refusalCode: 'directory-picker/unavailable',
+    });
+    assert.equal(typeof opened?.then, 'function', '回 Promise（用例据此判，不信「点了没反应」）');
+    assert.equal(await opened, 'open');
+    const row = rows[0];
+    assert.ok(row !== null && row !== undefined, '图开着：调用方拿到了那一条');
+    assert.equal(row.state().phase, 'ready');
+    assert.equal(row.state().listing.path, 'C:\\a', '初值指到哪一层就从哪一层开');
+    assert.equal(rowsOf(row.state()).length, 1, '隐藏目录默认不出现');
+    row.actions.onSelect('C:\\a\\b');
+    row.actions.onPick();
+    assert.deepEqual(changed, ['C:\\a\\b'], '选中之后回填给这一行');
+    assert.equal(rows.at(-1), null, '选中之后图收起');
+  });
+
+  it('openRowBrowser：宿主只服务 native ⇒ refused，并把图收起（调用方据此换系统对话框）', async () => {
+    const rows = [];
+    const opened = openRowBrowser({
+      picker: wireNamespace({ refuseBrowse: true }),
+      initialPath: '',
+      onChange: () => {},
+      onRow: (next) => rows.push(next),
+      refusalCode: 'directory-picker/unavailable',
+    });
+    assert.equal(await opened, 'refused');
+    assert.equal(rows.length, 2);
+    assert.notEqual(rows[0], null, '先开着图（列举是这一步才知道给不给）');
+    assert.equal(rows[1], null, '被拒之后图要收起，不留一张读不动的空图');
+  });
+
+  it('openRowBrowser：命名空间只给 pick（或干脆没有）⇒ undefined，调用方走系统对话框', () => {
+    const base = { initialPath: '', onChange: () => {}, onRow: () => {}, refusalCode: 'directory-picker/unavailable' };
+    assert.equal(openRowBrowser({ ...base, picker: { pick: async () => ({ ok: true, value: null }) } }), undefined);
+    assert.equal(openRowBrowser({ ...base, picker: null }), undefined);
+    assert.equal(openRowBrowser({ ...base, picker: undefined }), undefined);
+  });
+
+  it('订阅：状态变更推到订阅者（视图靠 `useSyncExternalStore` 用它重画，没有它只画第一帧）', async () => {
+    const seen = [];
+    const row = createDirectoryRowBrowser({ face: browseFaceOf(wireNamespace()), initialPath: 'C:\\a', onPicked: () => {} });
+    assert.equal(typeof row.subscribe, 'function');
+    const off = row.subscribe((next) => seen.push(next.phase));
+    await row.open();
+    assert.deepEqual(seen, ['loading', 'ready'], '列举落定要推一次，否则图上永远「正在读取…」');
+    off();
+    row.actions.onToggleHidden();
+    assert.deepEqual(seen, ['loading', 'ready'], '退订后不再推');
+  });
+
+  it('开图先试初值那一层，读不出来（不存在／没权限）退回宿主家目录', async () => {
+    const face = browseFaceOf(wireNamespace());
+    // 让带初值的那次列举失败：真机上就是 `directory-picker/unreadable`。
+    const broken = createDirectoryRowBrowser({
+      face: {
+        list: async (path) => {
+          if (path === 'D:\\没有这一层') throw Object.assign(new Error('读不出来'), { code: 'directory-picker/unreadable' });
+          return face.list(path);
+        },
+        createDirectory: face.createDirectory,
+      },
+      initialPath: 'D:\\没有这一层',
+      onPicked: () => {},
+    });
+    await broken.open();
+    assert.equal(broken.state().phase, 'ready', '读不出来不把图卡死');
+    assert.equal(broken.state().listing.path, 'C:\\Users\\me', '退回宿主家目录');
+  });
+});

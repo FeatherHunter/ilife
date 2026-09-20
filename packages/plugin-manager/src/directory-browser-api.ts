@@ -9,6 +9,7 @@
  */
 
 export {
+  browseFaceOf,
   filterEntries,
   hasPickFn,
   hiddenCount,
@@ -17,11 +18,13 @@ export {
   locationLabel,
   parentOf,
   pickerModeOf,
+  readBrowseAnswer,
   readPickAnswer,
   splitDraft,
   validateFolderName,
   visibleEntries,
 } from './directory-browser-contract.js';
+export { BrowseAnswerError } from './directory-browser-contract.js';
 export type {
   BrowseFailure,
   DirectoryBrowseFace,
@@ -40,6 +43,7 @@ export {
   createDirectoryRowBrowser,
   describe,
   entryPath,
+  openRowBrowser,
   rowsOf,
   targetOf,
 } from './directory-browser-state.js';

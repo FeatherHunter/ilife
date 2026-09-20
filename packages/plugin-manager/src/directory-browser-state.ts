@@ -14,6 +14,7 @@ import type {
   DirectoryListing,
 } from './directory-browser-contract.js';
 import {
+  browseFaceOf,
   filterEntries,
   joinPath,
   parentOf,
@@ -52,8 +53,10 @@ export type BrowseListener = (state: BrowseState) => void;
 export interface BrowseController {
   getState(): BrowseState;
   subscribe(listener: BrowseListener): () => void;
-  /** 开图：初次列举（`list()` 不带路径＝宿主给的家目录）。 */
-  open(): Promise<void>;
+  /** 开图：先试配置里那个目录（空则直接家目录），读不出来（不存在、没权限）退回宿主家目录。
+   *
+   * 回**第一份落定的状态**：调用方据此分辨「这条路宿主没给」与「这一层读不出来」。 */
+  open(): Promise<BrowseState>;
   /** 进某一层（绝对路径，或 `list()` 的默认家目录当入参为 null）。 */
   enter(path: string | null): Promise<void>;
   /** 回上一级（当前层就是根时原地不动）。 */
@@ -159,7 +162,15 @@ export function createBrowseController(deps: {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    open: () => load(null),
+    async open(): Promise<BrowseState> {
+      const wanted = deps.initialPath.trim();
+      if (wanted !== '') {
+        await load(wanted);
+        if (state.phase === 'ready') return state;
+      }
+      await load(null);
+      return state;
+    },
     enter: (path) => load(path),
     async up() {
       const listing = state.listing;
@@ -269,8 +280,12 @@ export interface DirectoryRowBrowser {
     readonly onCreate: (name: string) => void;
     readonly onCreatingChange: (name: string | null) => void;
   };
-  /** 开图（初次列举家目录），并把「开着」交给调用方自己记。 */
-  open(): Promise<void>;
+  /** 开图（先试配置里那个目录，读不出来退回家目录），回第一份落定的状态。 */
+  open(): Promise<BrowseState>;
+  /** 状态变更订阅：视图那半靠 `useSyncExternalStore` 用它重画。
+   *
+   * **没有它图上只有第一帧**——列举是异步落定的，React 不订阅就永远停在开图那一刻的状态。 */
+  subscribe(listener: BrowseListener): () => void;
   state(): BrowseState;
   /** 一段可读的当前状态（用例与调试用）。 */
   summary(): string;
@@ -295,6 +310,7 @@ export function createDirectoryRowBrowser(deps: {
   });
   return {
     open: () => controller.open(),
+    subscribe: (listener) => controller.subscribe(listener),
     state: () => controller.getState(),
     summary: () => describe(controller.getState()),
     actions: {
@@ -310,4 +326,44 @@ export function createDirectoryRowBrowser(deps: {
       onCreatingChange: (name) => controller.setCreating(name),
     },
   };
+}
+
+/** 一条目录行点下去该走哪条路（**六家共用这一处策略**，单独写在各家就会各错各的）。
+ *
+ * 顺序是「先应用内浏览，被拒再换系统对话框」，因为客户端命名空间上三条动词都在、问不出组合里服务哪种
+ * 能力（见 `pickerModeOf`）。回执：
+ *  - `undefined`＝连两格浏览原语都没有（这条路没有，调用方自己想办法）；
+ *  - `'refused'`＝宿主回了 `refusalCode`（组合里是系统对话框），图已收起；
+ *  - `'open'`＝图开着，后面的事都在图里。
+ *
+ * **状态由调用方持有**：`onRow` 收到刚建好的那条（或 null＝收起），React 那边据此决定画不画图。
+ *
+ * `refusalCode` 是**宿主的回执码**（各家自己从宿主镜像里拿，本件只照比不认名）：
+ * 它换名字本件照样跑，六家一起换。 */
+export function openRowBrowser(input: {
+  readonly picker: unknown;
+  readonly initialPath: string;
+  readonly onChange: (next: string) => void;
+  readonly onRow: (row: DirectoryRowBrowser | null) => void;
+  readonly refusalCode: string;
+}): Promise<'open' | 'refused'> | undefined {
+  const face = browseFaceOf(input.picker);
+  if (face === null) return undefined;
+  const row = createDirectoryRowBrowser({
+    face,
+    initialPath: input.initialPath,
+    onPicked: (picked) => {
+      input.onChange(picked);
+      input.onRow(null);
+    },
+    onClosed: () => input.onRow(null),
+  });
+  input.onRow(row);
+  return row.open().then((settled) => {
+    if (settled.phase === 'failed' && settled.failure?.code === input.refusalCode) {
+      input.onRow(null);
+      return 'refused' as const;
+    }
+    return 'open' as const;
+  });
 }
