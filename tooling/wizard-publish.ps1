@@ -1,4 +1,4 @@
-# 发版向导（Windows；覆盖 公共层三包 ＋ 六家技能 ＋ 七家插件）
+﻿# 发版向导（Windows；覆盖 公共层三包 ＋ 六家技能 ＋ 七家插件）
 #
 # 跑法 —— 必须在**侧边栏终端**里、且用 pwsh（不是 powershell；powershell 5.1 会按 GBK 读本文件的中文而解析失败）：
 #     pwsh -NoProfile -File D:\ilife\tooling\wizard-publish.ps1
