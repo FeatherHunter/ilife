@@ -12,7 +12,9 @@
  *     的 `MEMO_CONFIG_DEFAULTS`（本文件是它在页面上的投影，逐键对齐由
  *     `test/config-surface-696.test.mjs` 用编译产物锁死）；
  *   · **空串＝按默认落点**（老落点由技能各取用处算），所以「空」不是「没配」，
- *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写。
+ *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写；
+ *   · `db.dir` 那一行的落点由配置面回执的 `dataDir` 带回（解析好的绝对路径），页面上把它**预填**进
+ *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  *
  * 清单出处：「六家技能的路径类配置全量调查」备忘那 8 项全部上设置页 ＝ 行数 8：
  * 常用 4（库与产物落在哪）＋ 高级 4（两个产物文件名主体 ＋ 飞书 CLI 与二维码两处落点）。
@@ -38,8 +40,11 @@ export interface ConfigItem {
   readonly title: string;
   readonly tier: ConfigTier;
   readonly control: ConfigControl;
-  /** 一行人话：这一项管什么、留空会怎样。 */
+  /** 一行人话：这一项管什么、留空会怎样（一到两句，不写开发期口径）。 */
   readonly hint: string;
+  /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
+   *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
+  readonly prefillFrom?: 'dataDir';
 }
 
 /** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
@@ -49,28 +54,30 @@ const COMMON: readonly ConfigItem[] = [
     title: '数据目录',
     tier: 'common',
     control: 'directory',
-    hint: '库文件与产物的根目录。留空＝按默认落点（配置目录下的 data/），也就是改造前那个位置。',
+    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+    prefillFrom: 'dataDir',
+    hint: '库文件与产物的根目录。留空＝用默认目录。',
   },
   {
     key: 'db.name',
     title: '库文件名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下的数据库文件名。留空＝按默认落点（memo.db）；改它等于换一个备忘录库，老笔记留在旧文件里不会跟过来。',
+    hint: '数据目录下的数据库文件名。改名＝换库，旧笔记不会被读入。',
   },
   {
     key: 'html.dir',
     title: 'HTML 产物目录名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下放 HELP 页面的子目录名，只有一段。留空＝按默认落点（memo_html）；改它之后新产物落新地方，旧的留在原处。',
+    hint: '数据目录下存放 HELP 页面的子目录名。',
   },
   {
     key: 'media.dir',
     title: '附件目录',
     tier: 'common',
     control: 'directory',
-    hint: '附件的根目录：技能会把它解析成绝对路径并要求目录真的在（附件路径按真包含判定）。留空＝按默认落点（相对进程工作目录的 media）。',
+    hint: '附件的存放根目录。留空＝工作目录下的 media。',
   },
 ];
 
@@ -81,28 +88,28 @@ const ADVANCED: readonly ConfigItem[] = [
     title: '产物文件名主体 · HELP',
     tier: 'advanced',
     control: 'text',
-    hint: 'HELP 文件的文件名主体，后面自动跟时间戳。改它之后旧的 HELP 产物不再被复用。',
+    hint: 'HELP 文件名前缀，后面自动加时间戳。',
   },
   {
     key: 'files.lookup',
     title: '产物文件名主体 · 速查表',
     tier: 'advanced',
     control: 'text',
-    hint: '速查表文件的文件名主体。改它之后新产物落新名字，旧的留在原处。',
+    hint: '速查表文件名前缀。',
   },
   {
     key: 'lark.cliPath',
     title: '飞书 CLI 路径',
     tier: 'advanced',
     control: 'text',
-    hint: '飞书 CLI 的可执行文件路径。留空＝按默认落点（自动探测：Windows npm 全局目录 → PATH 里的 where/which → 固定安装位置）。',
+    hint: '飞书 CLI 的可执行文件路径。留空＝自动探测。',
   },
   {
     key: 'lark.qrDir',
     title: '飞书授权二维码落点',
     tier: 'advanced',
     control: 'directory',
-    hint: '飞书授权二维码 PNG 的落点目录，缺就现建。留空＝按默认落点（系统临时目录下的 memo_feishu_qr）。',
+    hint: '飞书授权二维码 PNG 的存放目录，缺就现建。留空＝系统临时目录。',
   },
 ];
 
@@ -114,7 +121,7 @@ export const COMMON_ITEM_COUNT = COMMON.length;
 
 /** 高级组标题与副文案。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
-export const ADVANCED_GROUP_NOTE = '不常改。留空＝按默认落点（改造前那个位置），不确定就别动。' as const;
+export const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。' as const;
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

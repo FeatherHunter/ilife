@@ -12,7 +12,9 @@
  *     的 `BILL_CONFIG_DEFAULTS`（本文件是它在页面上的投影，逐键对齐由
  *     `test/config-surface-677.test.mjs` 用编译产物锁死）；
  *   · **空串＝按默认落点**（老落点由技能各取用处算），所以「空」不是「没配」，
- *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写。
+ *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写；
+ *   · `db.dir` 那一行的落点由配置面回执的 `dataDir` 带回（解析好的绝对路径），页面上把它**预填**进
+ *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  *
  * 清单出处：「六家技能的路径类配置全量调查」记账 8 项去掉 1 项包内固定（包内页面模板目录）
  * ＝**上设置页候选 7 项**；其中「产物文件名主体」在源码里是两个值，故行数为 8。
@@ -37,8 +39,11 @@ export interface ConfigItem {
   readonly title: string;
   readonly tier: ConfigTier;
   readonly control: ConfigControl;
-  /** 一行人话：这一项管什么、留空会怎样。 */
+  /** 一行人话：这一项管什么、留空会怎样（一到两句，不写开发期口径）。 */
   readonly hint: string;
+  /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
+   *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
+  readonly prefillFrom?: 'dataDir';
 }
 
 /** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
@@ -48,28 +53,30 @@ const COMMON: readonly ConfigItem[] = [
     title: '数据目录',
     tier: 'common',
     control: 'directory',
-    hint: '库文件与备份的根目录。留空＝按默认落点（配置目录下的 data/），也就是改造前那个位置。',
+    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+    prefillFrom: 'dataDir',
+    hint: '库文件与备份的根目录。留空＝用默认目录。',
   },
   {
     key: 'db.name',
     title: '库文件名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下的数据库文件名。改它等于换一个账本，老账留在旧文件里不会跟过来。',
+    hint: '数据目录下的数据库文件名。改名＝换库，旧数据不会被读入。',
   },
   {
     key: 'db.goals',
     title: '预算／账户文件名',
     tier: 'common',
     control: 'text',
-    hint: '跟库同目录的那份预算与账户数据。改它之后旧的预算与账户不会被读出来。',
+    hint: '与库同目录的预算与账户数据文件名。改名后旧文件不会再被读取。',
   },
   {
     key: 'html.dir',
     title: 'HELP 产物目录名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下放 HELP 与速查表文件的子目录名。改它之后新产物落新地方，旧的留在原处。',
+    hint: '数据目录下存放 HELP 与速查表的子目录名。改名后新产物落新目录。',
   },
 ];
 
@@ -80,28 +87,28 @@ const ADVANCED: readonly ConfigItem[] = [
     title: '备份目录',
     tier: 'advanced',
     control: 'directory',
-    hint: '备份与恢复读写的位置。留空＝库目录下的 backups。恢复时按文件名取最新一份。',
+    hint: '备份与恢复的读写目录。留空＝库目录下的 backups。',
   },
   {
     key: 'backup.stem',
     title: '备份名主体',
     tier: 'advanced',
     control: 'text',
-    hint: '备份文件名的前缀，后面自动跟时间戳。改它之后旧的备份不再被当成恢复候选。',
+    hint: '备份文件名的前缀，后面自动加时间戳。',
   },
   {
     key: 'html.helpStem',
     title: '产物名主体 · HELP',
     tier: 'advanced',
     control: 'text',
-    hint: 'HELP 文件的文件名前缀。改它之后旧的 HELP 产物不再被复用。',
+    hint: 'HELP 文件名前缀。',
   },
   {
     key: 'html.quickRefStem',
     title: '产物名主体 · 速查表',
     tier: 'advanced',
     control: 'text',
-    hint: '速查表文件的文件名前缀。',
+    hint: '速查表文件名前缀。',
   },
 ];
 
@@ -113,7 +120,7 @@ export const COMMON_ITEM_COUNT = COMMON.length;
 
 /** 高级组标题与副文案。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
-export const ADVANCED_GROUP_NOTE = '不常改。留空＝按默认落点（改造前那个位置），不确定就别动。' as const;
+export const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。' as const;
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

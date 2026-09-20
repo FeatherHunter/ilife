@@ -12,7 +12,9 @@
  *     的 `CALORIE_CONFIG_DEFAULTS`（本文件是它在页面上的投影，逐键对齐由
  *     `test/config-surface-676.test.mjs` 用源码文本锁死）；
  *   · **空串＝按默认落点**（老落点由技能各取用处算）。所以「空」不是「没配」，
- *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写。
+ *     而是「还走改造前那个位置」，老数据不会看起来丢了——行文案按这个语义写；
+ *   · `db.dir` 那一行的落点由配置面回执的 `dataDir` 带回（解析好的绝对路径），页面上把它**预填**进
+ *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  */
 export const SETTINGS_OWNER = 'dsh-calorie' as const;
 export const SETTINGS_SLOT = 'ilife:calorie' as const;
@@ -34,8 +36,11 @@ export interface ConfigItem {
   readonly title: string;
   readonly tier: ConfigTier;
   readonly control: ConfigControl;
-  /** 一行人话：这一项管什么、留空会怎样。 */
+  /** 一行人话：这一项管什么、留空会怎样（一到两句，不写开发期口径）。 */
   readonly hint: string;
+  /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
+   *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
+  readonly prefillFrom?: 'dataDir';
 }
 
 /** 常用项：用户裁决三点的五项——改了就影响「库与产物落在哪、训记认不认你」，放页面上。 */
@@ -45,35 +50,37 @@ const COMMON: readonly ConfigItem[] = [
     title: '数据目录',
     tier: 'common',
     control: 'directory',
-    hint: '库文件与各类产物的根目录。留空＝按默认落点（配置目录下的 data/），也就是改造前那个位置。',
+    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+    prefillFrom: 'dataDir',
+    hint: '库文件与各类产物的根目录。留空＝用默认目录。',
   },
   {
     key: 'db.name',
     title: '库文件名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下的数据库文件名。改它等于换一个库，老数据留在旧文件里不会跟过来。',
+    hint: '数据目录下的数据库文件名。改名＝换库，旧数据不会被读入。',
   },
   {
     key: 'html.dir',
     title: 'HTML 产物目录名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下放交付页面的子目录名。改它之后新页面落新地方，旧页面留在原处。',
+    hint: '数据目录下存放交付页面的子目录名。改名后新页面落新目录。',
   },
   {
     key: 'photos.dir',
     title: '照片目录',
     tier: 'common',
     control: 'directory',
-    hint: '身材照的存放目录，绝对路径。留空＝未配：读照片不报错，出 GIF 与写照片会被拦下。',
+    hint: '身材照的存放目录（绝对路径）。留空＝未配置，生成 GIF 会被拦下。',
   },
   {
     key: 'xunji.key',
     title: '训记 KEY',
     tier: 'common',
     control: 'text',
-    hint: '训记用的凭据。留空＝没配，推送与回写会被拦下；它同时是敏感值，别贴给别人。',
+    hint: '训记的凭据。留空＝未配置，推送与回写会被拦下。',
   },
 ];
 
@@ -84,56 +91,56 @@ const ADVANCED: readonly ConfigItem[] = [
     title: '照片 GIF 子目录',
     tier: 'advanced',
     control: 'text',
-    hint: '照片目录下放 GIF 的子目录名。',
+    hint: '照片目录下存放 GIF 的子目录名。',
   },
   {
     key: 'xunji.stateDir',
     title: '训记状态文件目录',
     tier: 'advanced',
     control: 'directory',
-    hint: '限频记账点与同步游标放哪。留空＝家目录下的 .mavis，也就是改造前那个位置。',
+    hint: '训记的限频与同步游标存放目录。留空＝家目录下的 .mavis。',
   },
   {
     key: 'xunji.catalog',
     title: '训记动作库路径',
     tier: 'advanced',
     control: 'text',
-    hint: '动作名判定用哪份库。留空＝用包内预置的那份，也就是改造前那个位置。',
+    hint: '动作名判定用的动作库。留空＝用包内预置的那份。',
   },
   {
     key: 'xunji.backfillDays',
     title: '回写默认天数',
     tier: 'advanced',
     control: 'number',
-    hint: '从训记拉实绩时不带天数参数时的窗口，整数天。',
+    hint: '从训记拉实绩时默认回溯的天数（整数）。',
   },
   {
     key: 'land.scheduleCli',
     title: '跨技能出口 · 作息',
     tier: 'advanced',
     control: 'text',
-    hint: '「落地训练」调作息那一步的入口文件。留空＝按包布局算（改造前那个位置）。',
+    hint: '「落地训练」调作息技能的入口文件。留空＝按包布局推断。',
   },
   {
     key: 'land.memoCli',
     title: '跨技能出口 · 备忘',
     tier: 'advanced',
     control: 'text',
-    hint: '「落地训练」调备忘那一步的入口文件，同上。',
+    hint: '「落地训练」调备忘录技能的入口文件。留空＝按包布局推断。',
   },
   {
     key: 'land.xunjiSeconds',
     title: '训记调用限时（秒）',
     tier: 'advanced',
     control: 'number',
-    hint: '外部调训记超过这个秒数即 exit 4。机器慢就调大。',
+    hint: '调用训记的超时秒数，超过即失败。',
   },
   {
     key: 'land.landSeconds',
     title: '落地调用限时（秒）',
     tier: 'advanced',
     control: 'number',
-    hint: '落地训练那几步超过这个秒数即 exit 4，同上。',
+    hint: '落地训练各步骤的超时秒数。',
   },
 ];
 
@@ -145,7 +152,7 @@ export const COMMON_ITEM_COUNT = COMMON.length;
 
 /** 高级组标题与副文案。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
-export const ADVANCED_GROUP_NOTE = '不常改。留空＝按默认落点（改造前那个位置），不确定就别动。' as const;
+export const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。' as const;
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

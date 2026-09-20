@@ -31,7 +31,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** client 真产物（#736 组件级读数用；缺产物在这里响亮失败，不静默跳过）。 */
 const CLIENT = loadClientBundle(join(HERE, '..'));
-const { Row, resolveDirectoryPicker, pickDirectory, createBrowseHandler } = CLIENT.exports;
+const { Row, resolveDirectoryPicker, pickDirectory, readPickAnswer, toDraft, createBrowseHandler } = CLIENT.exports;
 
 /** 把一层嵌套的默认值表摊平成 `a.b` 键集。 */
 function flattenKeys(record, prefix = '') {
@@ -266,8 +266,7 @@ describe('#696 作息设置页 · 配置面', () => {
       for (const e of set) assert.match(e, /^config\./);
     });
   });
-
-  describe('H 目录行与系统文件夹选择器入口（#736）', () => {
+  describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正）', () => {
     it('目录档只发给目录类行：数据目录（本包恰一行，其余四行不动档）', () => {
       const dirs = CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort();
       assert.deepEqual(dirs, ['db.dir'], '目录行集合＝{db.dir}（本包恰一行目录）');
@@ -282,7 +281,7 @@ describe('#696 作息设置页 · 配置面', () => {
       }
       assert.equal(resolveDirectoryPicker(() => { throw new Error('service "remote.directoryPicker" is not declared'); }), null,
         '守卫拒绝当没有，不许把设置页带下来');
-      const picker = resolveDirectoryPicker((name) => (name === 'remote.directoryPicker' ? { pick: async () => null } : undefined));
+      const picker = resolveDirectoryPicker((name) => (name === 'remote.directoryPicker' ? { pick: async () => ({ ok: true, value: null }) } : undefined));
       assert.ok(picker !== null && typeof picker.pick === 'function', '拿到命名空间就用它');
     });
 
@@ -302,9 +301,9 @@ describe('#696 作息设置页 · 配置面', () => {
         '目录行仍是文本框 ＋ 按钮');
     });
 
-    it('点按钮 → 唤一次 pick → 回填该行；取消一字不动', async () => {
+    it('点按钮 → 唤一次 pick → 按**平台信封**回填该行；取消一字不动', async () => {
       const seen = [];
-      const picker = { pick: async () => { seen.push('pick'); return 'D:\\爱生活数据'; } };
+      const picker = { pick: async () => { seen.push('pick'); return { ok: true, value: 'D:\\爱生活数据' }; } };
       const node = Row({
         item: CONFIG_ITEMS.find((i) => i.key === 'db.dir'),
         value: '',
@@ -319,19 +318,34 @@ describe('#696 作息设置页 · 配置面', () => {
       const clicked = nodesOfType(node, 'button')[0].props.onClick();
       assert.equal(typeof clicked?.then, 'function', '按钮的 onClick 要回那枚 Promise（用例据此可判）');
       await clicked;
-      assert.deepEqual(seen, ['pick', ['db.dir', 'D:\\爱生活数据']], '点一次：唤一次 pick，再把绝对路径回填给这一行');
+      assert.deepEqual(seen, ['pick', ['db.dir', 'D:\\爱生活数据']], '信封里的 value 才是那条绝对路径，回填给这一行');
 
       const cancelled = [];
       const handler = createBrowseHandler({
-        picker: { pick: async () => null },
+        picker: { pick: async () => ({ ok: true, value: null }) },
         onChange: (k, v) => cancelled.push([k, v]),
         onUnavailable: (m) => cancelled.push(['!', m]),
       });
       await handler('db.dir');
-      assert.deepEqual(cancelled, [], '用户取消 ⇒ 这一行的值一字不动');
+      assert.deepEqual(cancelled, [], 'value:null ＝用户取消 ⇒ 这一行的值一字不动');
     });
 
-    it('这条路供不了 ⇒ 给人话、不写值（页面据此收起入口，不留死按钮）', async () => {
+    it('#743 回归：平台回 ok:false（**不抛**）也要出人话——被吞掉就成「点了没反应」', async () => {
+      const seen = [];
+      const handler = createBrowseHandler({
+        picker: { pick: async () => ({ ok: false, error: { code: 'directory-picker/unavailable', message: 'the composition cannot serve pick' } }) },
+        onChange: (k, v) => seen.push([k, v]),
+        onUnavailable: (m) => seen.push(['!', m]),
+      });
+      await handler('db.dir');
+      assert.equal(seen.length, 1, '被拒只出一条');
+      assert.equal(seen[0][0], '!', '被拒不写值，只给人话');
+      assert.match(seen[0][1], /系统文件夹对话框/);
+      assert.match(seen[0][1], /绝对路径/);
+      assert.match(seen[0][1], /cannot serve/, '平台给的原话要带上，别吞');
+    });
+
+    it('这条路供不了（传输层直接抛）⇒ 同样给人话、不写值', async () => {
       const seen = [];
       const handler = createBrowseHandler({
         picker: { pick: async () => { throw new Error('the composition cannot serve pick'); } },
@@ -345,15 +359,27 @@ describe('#696 作息设置页 · 配置面', () => {
       assert.match(seen[0][1], /绝对路径/);
     });
 
-    it('pickDirectory 归一三态且永不抛', async () => {
-      assert.deepEqual(await pickDirectory({ pick: async () => 'D:\\x' }), { kind: 'picked', path: 'D:\\x' });
-      assert.deepEqual(await pickDirectory({ pick: async () => null }), { kind: 'cancelled' });
-      assert.deepEqual(await pickDirectory({ pick: async () => '   ' }), { kind: 'cancelled' }, '空白串视同取消，不算选中');
-      assert.equal((await pickDirectory({ pick: async () => undefined })).kind, 'cancelled');
+    it('pickDirectory 按平台信封归一三态且永不抛', async () => {
+      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: 'D:\\x' }) }), { kind: 'picked', path: 'D:\\x' });
+      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: null }) }), { kind: 'cancelled' });
+      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: '   ' }) }), { kind: 'cancelled' }, '空白串视同取消，不算选中');
+      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: false, error: { message: 'no native backend' } }) }),
+        { kind: 'unavailable', message: '打不开系统文件夹对话框（no native backend）：请直接在框里填绝对路径。' });
       assert.equal((await pickDirectory({ pick: async () => { throw new Error('x'); } })).kind, 'unavailable');
+      assert.deepEqual(await pickDirectory({ pick: async () => 'D:\\裸串' }), { kind: 'picked', path: 'D:\\裸串' }, '裸串照收（老形状兜底）');
+      assert.equal(readPickAnswer(undefined).kind, 'unavailable', '认不出的形状当「供不了」报出来，不当取消吞掉');
     });
 
-    it('client 短名声明没被 #736 改动（不许写成硬依赖：写进去整包会被停靠）', () => {
+    it('#743：「db.dir」那行把解析好的绝对路径预填出来（用户不必自己拼）', () => {
+      const dir = 'C:\\Users\\x\\.ilife\\data';
+      assert.equal(toDraft({}, { dataDir: dir })['db.dir'], dir, '取值空着 ⇒ 直接显示回执里那条绝对路径');
+      assert.equal(toDraft({ db: { dir: 'D:\\elsewhere' } }, { dataDir: dir })['db.dir'], 'D:\\elsewhere', '配了值 ⇒ 显示配置里的值');
+      assert.equal(toDraft({}, {})['db.dir'], '', '没有落点回执 ⇒ 保持空，不编一个路径出来');
+      assert.equal(toDraft({}, { dataDir: dir })['db.dir'], toDraft({ db: { dir: dir } }, { dataDir: dir })['db.dir'],
+        '预填出来的表单态与显式配置同读数 ⇒ 打开面板不会凭空变「未保存」');
+    });
+
+    it('client 短名声明没被改动（不许写成硬依赖：写进去整包会被停靠）', () => {
       assert.deepEqual(CLIENT.exports.inject, ['slots', 'connection']);
     });
   });

@@ -127,10 +127,21 @@ export interface SkillHostCtx {
 /** 宿主目录选择命名空间的服务名（#736；出处与禁令见 cookbook §13）。 */
 export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
 
-/** 宿主目录选择命名空间（DSH 平台提供）。本包**只用 `pick` 这一格**：
- * 不给 signal（平台那格可选），用户取消回 `null`。 */
+/** 宿主目录选择命名空间（DSH 平台提供）。本包**只用 `pick` 这一格**：不给 signal（平台那格可选）。
+ *
+ * **回执是信封，不是路径**（#743 真机缺陷的根因）：客户端把每次 Remote 调用包成
+ * `{ok:true,value}`／`{ok:false,error}`（`@deepseek-ai/dsh-api-gateway/lib/client.js` 的 `invoke()`：
+ * 失败不抛、成功也不回裸值），第一方消费方 `@deepseek-ai/dsh-client-ui-workspace/lib/client.js`
+ * 的 `pickDirectory()` 就照这个形状拆：`const r = await pick(); if (!r.ok) throw …; return r.value`。
+ * `value` 为 `null`＝用户取消；`ok:false`＝这条路供不了（例如组合里是 browse 后端）。 */
+export interface DirectoryPickerAnswer {
+  readonly ok: boolean;
+  readonly value?: string | null;
+  readonly error?: { readonly code?: string; readonly message?: string };
+}
+
 export interface DirectoryPickerFace {
-  pick(): Promise<string | null>;
+  pick(): Promise<DirectoryPickerAnswer>;
 }
 
 /** 模型工具面镜像（#734 路线①；卡路里样板逐格同形，两个镜像不各写一份）。

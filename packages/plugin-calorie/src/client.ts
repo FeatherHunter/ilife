@@ -28,7 +28,7 @@ import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
 import type { ConfigItem } from './settings.js';
 import { REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
-import type { ClientCtx, RpcCallFace, RpcCallResult, DirectoryPickerFace } from './dsh-ctx.js';
+import type { ClientCtx, RpcCallFace, RpcCallResult, DirectoryPickerAnswer, DirectoryPickerFace } from './dsh-ctx.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
  * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
@@ -62,7 +62,6 @@ const S = {
   } as React.CSSProperties,
   info: {
     fontSize: '0.92em',
-    margin: '6px 0 0',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
     overflowWrap: 'anywhere',
   } as React.CSSProperties,
@@ -329,11 +328,11 @@ type ConfigState =
  */
 export function humanizeConfigFailure(code: string, message: string): string {
   const text = message.trim().length > 0 ? message.trim() : `（${code}，宿主未给报文）`;
-  if (/解析|YAML|parse/i.test(text)) return `${text}\n改回「键: 值」的写法，或点「重置为默认」重来一份（重置会先留一份 .bak）。`;
-  if (/不认识|未知键|UNKNOWN_KEY/i.test(text)) return `${text}\n本页只认表里这些项；多余的行删掉，或点「重置为默认」。`;
-  if (/类型|TYPE_MISMATCH/i.test(text)) return `${text}\n按本页给的形状填（文本填文本、数字填数字），或点「重置为默认」。`;
-  if (/缺席|missing-cli/.test(text)) return `${text}\n技能出口没找着：先确认技能包已构建（packages/skill-calorie/dist/cli/cmd_read.js）。`;
-  return `${text}\n改不动就点「重置为默认」（会先留一份 .bak），或照报文里的路径手工改配置文件。`;
+  if (/解析|YAML|parse/i.test(text)) return `${text}\n改回「键: 值」的写法，或点「重置为默认」。`;
+  if (/不认识|未知键|UNKNOWN_KEY/i.test(text)) return `${text}\n删掉页面上没有的行，或点「重置为默认」。`;
+  if (/类型|TYPE_MISMATCH/i.test(text)) return `${text}\n按本页的控件形状填，或点「重置为默认」。`;
+  if (/缺席|missing-cli/.test(text)) return `${text}\n技能出口没找到：先确认技能包已装好，再点「重新读取」。`;
+  return `${text}\n改不动就点「重置为默认」，或照上面那条路径手工改配置文件。`;
 }
 
 type ConfigOutcome =
@@ -373,12 +372,20 @@ export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
   return configRpc(call, RPC_ENDPOINT_CONFIG_RESET, {});
 }
 
-/** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。 */
-export function toDraft(values: Record<string, unknown>): Record<string, string> {
+/** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。
+ *
+ * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：标了 `prefillFrom` 的行在取值空着时
+ * 直接显示那条绝对路径——用户不必自己拼路径（#743），显示的就是技能真会用的那个目录（逐字相同）。 */
+export function toDraft(
+  values: Record<string, unknown>,
+  prefill: { readonly dataDir?: string } = {},
+): Record<string, string> {
   const draft: Record<string, string> = {};
   for (const item of CONFIG_ITEMS) {
     const v = readPath(values, item.key);
-    draft[item.key] = v === undefined || v === null ? '' : String(v);
+    const raw = v === undefined || v === null ? '' : String(v);
+    const fallback = item.prefillFrom === undefined ? undefined : prefill[item.prefillFrom];
+    draft[item.key] = raw === '' && typeof fallback === 'string' && fallback !== '' ? fallback : raw;
   }
   return draft;
 }
@@ -421,15 +428,28 @@ export function resolveDirectoryPicker(getService: unknown): DirectoryPickerFace
   }
 }
 
+/** 平台回执 → 三种结果（**永不抛**）。回执是信封 `{ok, value|error}`（见 dsh-ctx.ts 的
+ * `DirectoryPickerAnswer`）：成功回的是 `value` 不是路径本身，被拒回的是 `ok:false` 不是抛——
+ * 照裸值解会把两种情况都误判成「用户取消」（#743 真机现象：点「选择文件夹」什么都没发生）。
+ * 裸串照收（老形状兜底），认不出的形状当「供不了」报出来，不当取消吞掉。 */
+export function readPickAnswer(raw: unknown): PickOutcome {
+  if (typeof raw === 'string') return raw.trim() === '' ? { kind: 'cancelled' } : { kind: 'picked', path: raw };
+  const answer = (typeof raw === 'object' && raw !== null ? raw : {}) as DirectoryPickerAnswer;
+  if (answer.ok === true) {
+    const value = answer.value;
+    return typeof value === 'string' && value.trim() !== '' ? { kind: 'picked', path: value } : { kind: 'cancelled' };
+  }
+  const detail = answer.error?.message?.trim() ?? '';
+  return { kind: 'unavailable', message: '打不开系统文件夹对话框' + (detail === '' ? '' : '（' + detail + '）') + '：请直接在框里填绝对路径。' };
+}
+
 /** 唤起一次系统文件夹选择器并归一结果（**永不抛**）。 */
 export async function pickDirectory(picker: DirectoryPickerFace): Promise<PickOutcome> {
   try {
-    const picked = await picker.pick();
-    if (typeof picked === 'string' && picked.trim() !== '') return { kind: 'picked', path: picked };
-    return { kind: 'cancelled' };
+    return readPickAnswer(await picker.pick());
   } catch (e) {
     const reason = e instanceof Error ? e.message : String(e);
-    return { kind: 'unavailable', message: '这台部署用不了系统文件夹对话框（' + reason + '）：请直接在框里填绝对路径。' };
+    return { kind: 'unavailable', message: '打不开系统文件夹对话框（' + reason + '）：请直接在框里填绝对路径。' };
   }
 }
 
@@ -509,6 +529,7 @@ export function Row(props: {
 function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerFace | null }): React.ReactElement {
   const [state, setState] = React.useState<ConfigState>({ kind: 'loading' });
   const [pickerGone, setPickerGone] = React.useState(false);
+  const [picking, setPicking] = React.useState(false);
   const [draft, setDraft] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -524,7 +545,7 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
     const r = await fetchConfigSurface(props.getCall());
     if (r.ok) {
       setState({ kind: 'ready', surface: r.surface });
-      setDraft(toDraft(r.surface.values));
+      setDraft(toDraft(r.surface.values, r.surface));
     } else {
       setState({ kind: 'failed', message: r.message });
     }
@@ -537,7 +558,7 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
       if (!alive) return;
       if (r.ok) {
         setState({ kind: 'ready', surface: r.surface });
-        setDraft(toDraft(r.surface.values));
+        setDraft(toDraft(r.surface.values, r.surface));
       } else {
         setState({ kind: 'failed', message: r.message });
       }
@@ -571,23 +592,26 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
 
   /** 目录选择：拿不到命名空间就没有入口；被拒一次即收起入口（不留死按钮）。 */
   const picker = pickerGone ? null : props.getPicker();
-  const onBrowse = React.useMemo(
-    () =>
-      picker === null
-        ? undefined
-        : createBrowseHandler({
-            picker,
-            onChange,
-            onUnavailable: (message: string) => {
-              setError(message);
-              setPickerGone(true);
-            },
-          }),
-    [picker, onChange],
-  );
+  const onBrowse = React.useMemo(() => {
+    if (picker === null) return undefined;
+    const browse = createBrowseHandler({
+      picker,
+      onChange,
+      onUnavailable: (message: string) => {
+        setError(message);
+        setPickerGone(true);
+      },
+    });
+    // 系统对话框是模态的：等它回来的这段时间给一行字，免得看着像「点了没反应」（#743）。
+    return (key: string) => {
+      setPicking(true);
+      setError(null);
+      void browse(key).finally(() => setPicking(false));
+    };
+  }, [picker, onChange]);
 
   const surface = state.kind === 'ready' ? state.surface : null;
-  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values)[i.key] ?? ''));
+  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
 
   const onSave = React.useCallback(async () => {
     setBusy(true);
@@ -597,7 +621,7 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
     setBusy(false);
     if (r.ok) {
       setState({ kind: 'ready', surface: r.surface });
-      setDraft(toDraft(r.surface.values));
+      setDraft(toDraft(r.surface.values, r.surface));
       setNotice('已保存，立即生效（不用重启宿主）');
     } else {
       setError(r.message);
@@ -612,7 +636,7 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
     setBusy(false);
     if (r.ok) {
       setState({ kind: 'ready', surface: r.surface });
-      setDraft(toDraft(r.surface.values));
+      setDraft(toDraft(r.surface.values, r.surface));
       setNotice('已重置为默认（原配置已另存一份 .bak）');
     } else {
       setError(r.message);
@@ -629,7 +653,7 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
           null,
           React.createElement('div', { style: S.info }, `配置文件 ${surface.path}`),
           React.createElement('div', { style: S.info }, `数据目录 ${surface.dataDir}`),
-          surface.created ? React.createElement('div', { style: S.muted }, '（这份配置是刚按默认值建出来的）') : null,
+          surface.created ? React.createElement('div', { style: S.muted }, '（配置文件刚按默认值生成）') : null,
         )
       : null,
   );
@@ -682,8 +706,10 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
     ),
+    picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
+    React.createElement('div', { style: S.muted }, `${PLUGIN} 本页只配置；记一餐、看数据在对话里说。`),
     React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
   );
 }
