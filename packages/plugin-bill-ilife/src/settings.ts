@@ -26,8 +26,9 @@ export const CONFIG_STEM = 'bill' as const;
 /** 分级：常用项直接画在页面上，其余进默认收起的「高级」组（#675 冻结口径）。 */
 export type ConfigTier = 'common' | 'advanced';
 
-/** 控件种类：只有这三种（与受限 YAML 子集的字符串／数字／布尔一一对应，没有数组）。 */
-export type ConfigControl = 'text' | 'number' | 'switch';
+/** 控件种类：只有这四种（前三种与受限 YAML 子集的字符串／数字／布尔一一对应，没有数组；
+ * `directory` 是**字符串那一档的页面形态**——取值仍是串，只是多一个唤起系统文件夹选择器的入口，见 #736）。 */
+export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
 
 export interface ConfigItem {
   /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `html.helpStem`。 */
@@ -46,7 +47,7 @@ const COMMON: readonly ConfigItem[] = [
     key: 'db.dir',
     title: '数据目录',
     tier: 'common',
-    control: 'text',
+    control: 'directory',
     hint: '库文件与备份的根目录。留空＝按默认落点（配置目录下的 data/），也就是改造前那个位置。',
   },
   {
@@ -78,7 +79,7 @@ const ADVANCED: readonly ConfigItem[] = [
     key: 'backup.dir',
     title: '备份目录',
     tier: 'advanced',
-    control: 'text',
+    control: 'directory',
     hint: '备份与恢复读写的位置。留空＝库目录下的 backups。恢复时按文件名取最新一份。',
   },
   {

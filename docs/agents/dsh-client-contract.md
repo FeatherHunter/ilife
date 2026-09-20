@@ -170,3 +170,39 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
 - 本仓用法（卡路里样板）：host `inject` 加 `"skills"`（短名即服务名，见 §4 新增行）；单份 SKILL.md 按包名解析（`createRequire.resolve('skill-calorie/package.json')` 再拼 `SKILL.md`，不复制，避 R2 修法②双份腐化；不走 `exports` 子路径，免补 `./SKILL.md` 导出）；`resourceBase` 指技能包根目录；`content` 取 frontmatter 后正文（filesystem `parseSkillFile` 同形；badge 无 frontmatter 才整文返回，不照抄）。
 - DSH右侧槽（`details`）本项目明确不用；技能功能页唯一入口是 sidebar槽
  （`betterSidebar.registerTab`，软依赖：`ctx.get('betterSidebar')` 判空，没装就不注册，不断链）。
+
+## 13 目录选择器（#736；软依赖：拿不到就不出入口）
+
+> 纠一处陈化：头部那条 `ASAR` 根在本机不存在（`resources\app.asar.unpacked\node_modules\@deepseek-ai`
+> 实测 `Test-Path = False`）；本次装机的实际根是
+> `D:\0Tools\DSH Desktop\resources\app\node_modules\@deepseek-ai`。本节各条按这个根解。
+
+- **缝的出处**：客户端命名空间 `remote.directoryPicker` 由 workspace controller 生成——
+  服务键 `directoryPickerController`／命名空间 `directoryPicker`，三个动词
+  `pick`／`list`／`createDirectory` 声明在
+  `@deepseek-ai/dsh-api-workspace-controller/lib/typert.host.js:127-202`（`pick` 那一格 `:189-202`）。
+  第一方消费方：`@deepseek-ai/dsh-client-ui-workspace/lib/client.js:2717-2729` 注入
+  `['remote.directoryPicker']` 取命名空间，`pick()` 调用点在同文件 `:101`。
+- **宿主侧同一能力**是抽象服务 `directoryPicker`（`@deepseek-ai/dsh-host-directory-picker/lib/index.js:38-42`
+  的 `super(ctx, "directoryPicker")`，`capability()` 回可辨识联合 `{kind:'native'|'browse', …}`）；
+  后端由 `@deepseek-ai/dsh-host-directory-picker-auto/lib/index.js:65-69` 启动时二选一
+  （loopback 绑定 ＋ win32 ⇒ `native`）。
+- **取用一律走可选查找（软依赖）**：平台两侧的沙箱上下文都把 `ctx.get(name)` 留给插件做可选查找
+  ——客户端 `dsh-cordis-client-runner/lib/client.js:333-343`（`get` 不要求声明）；
+  宿主 `dsh-cordis-host-runner/lib/index.js:629-645`。平台原话：
+  「Prefer ctx.get(name) with an undefined check; use inject for hard dependencies」
+  （`dsh-cordis-host-runner/lib/types/sandbox.js:19-21`）。
+- **不许写进 `inject`**：写进去＝硬依赖，提供方缺席时**整包被停靠**
+  （`dsh-cordis-client-runner/lib/client.js:322` 逐字「The runtime then parks the package if the
+  provider unloads」）——设置页会跟着装不上。本仓 `client.ts` 的 `inject` 保持
+  `['slots','connection']` 不变。
+- **回执与拒绝**：`pick(signal?) → Promise<string|null>`，`null`＝用户取消；
+  组合供不了这个动词时调用被拒（`.../dsh-api-workspace-controller/lib/typert.host.js:375-379`
+  逐字「a verb the composition cannot serve is refused rather than approximated」）
+  ⇒ 调用方必须 catch、给人话、把入口收起来，不许当崩、不许留死按钮。
+- **本仓用法（#736 六家单品设置页）**：行表里目录行写 `control:'directory'`；
+  `resolveDirectoryPicker(ctx.get)` 判空 → 有入口才有按钮；`pickDirectory(picker)` 归一三态
+  （选中／取消／这条路供不了）；`createBrowseHandler` 是按钮 `onClick` 的真装配函数。
+  拿不到命名空间 ⇒ 不渲染入口，纯文本输入框照旧。
+- **禁令**：不许写进 `inject`；不许因为拿不到它就让设置页失败或抛错；不许新增依赖
+  （命名空间是运行期给的，不进 `package.json`）。
