@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>备忘录场景 HTML 全量开发 · 待确认 8 问</title>
+<style>
+:root{
+  --blue:#007aff; --green:#34c759; --amber:#ff9500; --red:#ff3b30;
+  --fg:#1d1d1f; --fg2:#424245; --fg3:#86868b;
+  --bg:#f5f5f7; --card:#fff; --line:#e3e3e8; --soft:#fafafc;
+  --r:14px; --r-s:9px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  background:var(--bg); color:var(--fg); line-height:1.7;
+  padding:0 20px calc(64px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:960px;margin:0 auto}
+
+/* ── 页头 ───────────────────────────── */
+.head{padding:40px 0 8px}
+.eyebrow{
+  display:inline-block;font-size:12.5px;font-weight:600;letter-spacing:.06em;
+  color:var(--blue);background:#eaf3ff;border-radius:100px;padding:4px 12px;
+}
+h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin:16px 0 10px;line-height:1.3}
+.lede{font-size:15px;color:var(--fg2);max-width:64ch}
+.lede b{color:var(--fg)}
+
+/* ── 现状条 ─────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:26px 0 6px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px}
+.stat .n{font-size:27px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .n small{font-size:14px;font-weight:600;color:var(--fg3);margin-left:2px}
+.stat .k{font-size:12.5px;color:var(--fg3);margin-top:6px;line-height:1.5}
+.stat.warn .n{color:var(--amber)}
+.stat.bad  .n{color:var(--red)}
+.stat.good .n{color:var(--green)}
+
+/* ── 分区 ───────────────────────────── */
+section{margin-top:36px}
+h2{font-size:19px;font-weight:650;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+h2 .bar{width:4px;height:19px;border-radius:2px;background:var(--blue)}
+
+/* ── 前因卡 ─────────────────────────── */
+.cause{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;font-size:14.5px;color:var(--fg2)}
+.cause p+p{margin-top:11px}
+.cause b{color:var(--fg)}
+.cause code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;background:var(--soft);border:1px solid var(--line);
+  border-radius:5px;padding:1px 6px;color:var(--fg2);word-break:break-all;
+}
+.rows{border-top:1px solid var(--line);margin-top:14px}
+.row{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.row:last-child{border-bottom:0}
+.row dt{color:var(--fg3);font-size:13px;font-weight:600}
+.row dd{color:var(--fg2)}
+
+/* ── 问题卡 ─────────────────────────── */
+.q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-top:14px}
+.q-head{display:flex;gap:12px;align-items:flex-start}
+.q-id{
+  flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--blue);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:14.5px;letter-spacing:.02em;
+}
+.q-t{font-size:17px;font-weight:650;letter-spacing:-.01em;line-height:1.45;padding-top:4px}
+.q-why{margin-top:14px;font-size:14px;color:var(--fg2)}
+.q-why p+p{margin-top:9px}
+.q-why b{color:var(--fg)}
+.q-why code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;
+  background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px;word-break:break-all;
+}
+
+/* ── 选项 ───────────────────────────── */
+.opts{display:grid;gap:10px;margin-top:16px}
+.opt{border:1px solid var(--line);border-radius:var(--r-s);padding:14px 16px;background:var(--soft)}
+.opt.pick{border-color:#b8e6c4;background:#f3fbf5}
+.opt-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--fg3);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.opt-h strong{font-size:14.5px;font-weight:650}
+.pick-badge{font-size:11.5px;font-weight:700;color:#1c7a35;background:#d8f3e0;border-radius:100px;padding:2px 9px}
+.opt p{font-size:13.5px;color:var(--fg2);margin-top:7px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pc div{font-size:13px;line-height:1.6;padding-left:20px;position:relative;color:var(--fg2)}
+.pc div::before{position:absolute;left:0;top:0;font-weight:700}
+.pc .p::before{content:"＋";color:var(--green)}
+.pc .c::before{content:"−";color:var(--amber)}
+
+/* ── 推荐 ───────────────────────────── */
+.rec{
+  margin-top:16px;border-left:3px solid var(--green);background:#f3fbf5;
+  border-radius:0 var(--r-s) var(--r-s) 0;padding:13px 16px;
+}
+.rec .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;color:#1c7a35}
+.rec p{font-size:14px;color:var(--fg2);margin-top:5px}
+.rec p strong{color:var(--fg)}
+
+/* ── 小件 ───────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.chip{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:100px;padding:3px 11px;color:var(--fg2);font-variant-numeric:tabular-nums}
+.chip.bad{border-color:#f7d4d1;background:#fff5f4;color:#a8241c}
+.chip.ok{border-color:#c9ead3;background:#f4fcf6;color:#1c7a35}
+.chip.k{color:var(--fg3)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:12px}
+th{text-align:left;font-size:12.5px;font-weight:650;color:var(--fg3);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--fg2);vertical-align:top}
+td:first-child{color:var(--fg);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── 收尾 ───────────────────────────── */
+.steps{counter-reset:s}
+.step{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:14px 16px 14px 52px;position:relative;font-size:14px;color:var(--fg2);margin-top:9px;
+}
+.step::before{
+  counter-increment:s;content:counter(s);
+  position:absolute;left:16px;top:13px;width:22px;height:22px;border-radius:7px;
+  background:#eaf3ff;color:var(--blue);font-size:12.5px;font-weight:700;display:grid;place-items:center;
+}
+.step b{color:var(--fg)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--fg3)}
+footer code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}
+
+/* ── 响应式 ─────────────────────────── */
+@media(max-width:820px){
+  body{padding:0 16px calc(48px + env(safe-area-inset-bottom))}
+  h1{font-size:24px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{padding:14px}
+  .stat .n{font-size:23px}
+  .q{padding:18px}
+  .q-t{font-size:16px}
+  .row{grid-template-columns:1fr;gap:2px}
+  .pc{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+  .head{padding:28px 0 4px}
+  h1{font-size:21px}
+  .lede{font-size:14px}
+  .stat .n{font-size:21px}
+  .q-id{width:30px;height:30px;font-size:13.5px;border-radius:8px}
+  .q{padding:16px}
+  .opt{padding:12px 13px}
+  th,td{padding:8px 6px;font-size:12.5px}
+  table{font-size:12.5px}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .q,.cause,.opt{break-inside:avoid;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <span class="eyebrow">待确认 · 8 问</span>
+  <h1>备忘录场景 HTML 全量开发</h1>
+  <p class="lede">你要的是「<b>每个功能域下面的场景在新备忘录里都开发好</b>」加上「<b>所有唤醒词对应的 HTML 都开发完毕</b>」。我先把四份调查报告读完了，摊出下面这组读数 —— 它们决定这张图怎么切票，所以每一问我都给了前因、选项、利弊和推荐。<b>你不点头，我不建图。</b></p>
+</header>
+
+<div class="stats">
+  <div class="stat bad"><div class="n">11<small>/ 29</small></div><div class="k">HELP 场景唤醒词在新技能里<br>路由不到</div></div>
+  <div class="stat bad"><div class="n">26<small>/ 30</small></div><div class="k">场景今天没有 HTML 产物<br>（老技能也只出 14 条）</div></div>
+  <div class="stat warn"><div class="n">3</div><div class="k">源码件超 350 行告警线<br>最高 614 行</div></div>
+  <div class="stat"><div class="n">18</div><div class="k">结构不合规点<br>只有 1 个域达标</div></div>
+</div>
+
+<section>
+  <h2><span class="bar"></span>前因：这张图是怎么来的</h2>
+  <div class="cause">
+    <p><b>它是上一张图留下的欠账。</b>已关的 <code>[wayfinder] 备忘录HELP真标准（#220）</code> 在「Out of scope」里逐字写着：其余场景页（查询／初始化报告／同步报告／心愿排期／批量改分类等过程型与结果型 HTML）本图不做；并且记下了你的原话「<b>完成 HELP HTML 后会有 MAP 进行开发</b>」。本次需求就是那张图。</p>
+    <p><b>现状比预想差。</b>新仓 30 个场景里只有 4 条真有 HTML；6 份模板中有 2 份（<code>memo_query.html</code> 与 <code>init_report.html</code>）<b>零接线</b>；「首次使用」这个场景<b>连命令键都没有</b>。另外 3 处是「HELP 承诺了、代码没做」（按时间搜的参数没人读、查已提醒备忘进错分支、给已有笔记加提醒没有命令）。</p>
+    <p><b>而 HELP 自己已经写好了标准答案。</b>每个场景都带一个 <code>types</code> 字段，声明这个场景该出哪些页 —— 这就是「每个场景要开发到什么程度」的事实源。</p>
+    <div class="rows">
+      <div class="row"><dt>权威来源</dt><dd>老备忘录技能（<code>D:\2Study\StudyNotes\SKILLS\备忘录</code>），只读对照，全程不改</dd></div>
+      <div class="row"><dt>官方源</dt><dd>新备忘录的 HELP HTML，8 域 13 二级组 30 场景</dd></div>
+      <div class="row"><dt>四份调查</dt><dd><code>docs/skills/skill-memo-ilife/research/</code> 下：老技能全景／新仓现状／卡路里架构样板／墙与链路页现成件</dd></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="bar"></span>八问</h2>
+
+  <!-- Q1 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q1</div><div class="q-t">这张图要不要「交货」</div></div>
+    <div class="q-why">
+      <p>wayfinder 默认只出决定、不出东西。但 <code>#220</code> 的 Notes 立过先例：这张图<b>要交货</b>，必须交出能跑的功能。你要的「所有唤醒词的 HTML 都开发完毕」本身就是交付物 —— 只出决定的话，一张 HTML 也出不来，视觉验收墙更无从谈起。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">A</span><strong>带执行</strong><span class="pick-badge">推荐</span></div>
+        <p>每张票交能跑的东西，最后一张票用视觉验收墙收口。</p>
+        <div class="pc">
+          <div class="p">和你的原话直接对齐；仓里 32 页／18 格两批先例都走这条路</div>
+          <div class="c">图会很长，预计 10 到 15 张子票</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">B</span><strong>只出决定</strong></div>
+        <p>只产出一份方案，不动代码。</p>
+        <div class="pc">
+          <div class="p">短、快</div>
+          <div class="c">交不出任何 HTML，与你的需求原话冲突</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 A</div><p>照 <strong>#220 的先例</strong>：本图带执行，最后一张票的验收物就是视觉验收墙加逐格缺陷清单。</p></div>
+  </article>
+
+  <!-- Q2 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q2</div><div class="q-t">「所有唤醒词的 HTML 都开发完毕」按几份产物算</div></div>
+    <div class="q-why">
+      <p>HELP 每个场景都声明了自己要出哪些页型，逐条加总是 <b>64 格</b>：</p>
+      <div class="chips">
+        <span class="chip k">采集 20</span><span class="chip k">回执 30</span>
+        <span class="chip k">向导 4</span><span class="chip k">查看 10</span>
+        <span class="chip">＝ 64</span>
+      </div>
+      <p>但<b>老技能实际只出了 14 条</b>，另外 16 条只回 JSON 文本。老技能 6 份模板的断点还各写各的（4 份 800px，2 份 360px），这本身就是你要治的病。</p>
+      <p>仓内的先例是「一词可以有过程页和结果页两份」：饼干记账写入域 16 词出了 32 页，查询域 17 词出了 18 格。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">B</span><strong>照 HELP 声明的页型逐型出页，约 64 格</strong><span class="pick-badge">推荐</span></div>
+        <p>链路页 30 行，每行 1 到 3 个链接。墙按页族拆成 2 到 3 张。</p>
+        <div class="pc">
+          <div class="p">与 HELP 声明、老技能写法、仓内 32 页先例三方一致</div>
+          <div class="p">你的第 5 条要求（分隔处要变成 UI 设计）在过程页和结果页上各有落点</div>
+          <div class="c">工作量最大，<b>必须做形状归并</b>（约 8 个形状族参数化），否则 64 页各写样式＝必然变成「设计联邦」</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">A</span><strong>一个场景一份产物，30 份</strong></div>
+        <p>链路页 30 行，每行一个链接，最干净。</p>
+        <div class="pc">
+          <div class="p">工作量最小，链路页最好读</div>
+          <div class="c">把过程型和结果型压成一页，与老技能和仓内先例都不符</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">C</span><strong>30 份主产物，只给 4 条向导补过程页</strong></div>
+        <p>折中，共 34 份。</p>
+        <div class="pc">
+          <div class="p">工作量可控</div>
+          <div class="c">同一个「采集页」形态只给向导类做、其余 16 条不做，将来难解释为什么两样待遇</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 B</div><p>按 <strong>HELP 的 types 逐型出页（约 64 格）</strong>，但把形状归并到约 8 个族 —— 产物照样一格一份，样式只有一套。这样「每个场景都开发好」是可数的，验收墙也能逐格签。</p></div>
+  </article>
+
+  <!-- Q3 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q3</div><div class="q-t">「代码架构需要解耦」做到哪一档</div></div>
+    <div class="q-why">
+      <p>你的原话是「代码架构需要解耦，可以参考新卡路里的架构设计」。而 <code>#220</code> 当年已把「<code>src</code> 整包按 HELP 一级分组重排」明确划成<b>另立票的后续</b> —— 就是本图。</p>
+      <p>现状读数：<b>18 条结构不合规</b>；<code>fetch</code>／<code>policy</code>／<code>render</code>／<code>cli</code>／<code>help</code> 五个是「工种名目录」（按说不合铁律四），<b>只有 <code>src/wish/</code> 是达标的按域能力目录</b>，正好可以当第一个样板域照抄。卡路里那边是 10 个能力域，每个域三件（<code>index.ts</code> 门／<code>commands.ts</code> 声明／<code>routes.ts</code> 路由）。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">A</span><strong>整包按 8 个域重排</strong><span class="pick-badge">推荐</span></div>
+        <p>照卡路里那套形状：<code>src/&lt;域&gt;/</code> 加 <code>shared</code>／<code>render</code>／<code>cli</code>／<code>triggers</code> 四个共用位。</p>
+        <div class="pc">
+          <div class="p">一次到位，64 格产物才能共用一份样式底盘</div>
+          <div class="p"><code>src/wish/</code> 已是合格样板，可零猜测照抄</div>
+          <div class="c">动面最大，要拆 569 行的 <code>cmd_read.ts</code> 和 614 行的 <code>health.ts</code></div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">B</span><strong>只把新增件按域切，旧件就地摆正</strong></div>
+        <p>风险小，老代码留在原地。</p>
+        <div class="pc">
+          <div class="p">改动可控</div>
+          <div class="c">解耦只做了一半，五个工种名目录还在，与你的原话不符</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">C</span><strong>只分离页面件与数据件，目录不动</strong></div>
+        <div class="pc">
+          <div class="p">最小改动</div>
+          <div class="c">等于不解耦</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 A</div><p>整包重排。<strong>没有这一步，64 格产物就只能各自写样式</strong> —— 而那正是记账上一轮被判「随便截图看都非常的丑陋」的病根。</p></div>
+  </article>
+
+  <!-- Q4 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q4</div><div class="q-t">链路页（prompt 到 唤醒词 到 命令 到 HTML 绝对路径）怎么出</div></div>
+    <div class="q-why">
+      <p>你的原话：「输出在一个 HTML 中，在 HTML 中我点击绝对产物路径的某个 URL 就能跳转打开这个 HTML」。</p>
+      <p>要小心的只有一条：<code>#220</code> 曾裁定「<b>命令不上页面</b>」—— 但那条禁令管的是 <b>HELP 交付面</b>（给用户看的说明页），此处的链路页是<b>给维护者看的验收导航</b>，是两回事。</p>
+      <p>仓里现成件：<code>t268-链路总览.build.mjs</code>（用 <code>file:///</code> 链接）、<code>scene02-验收墙/链路总表.html</code>（用相对路径）、<code>t369-链路总表.mjs</code>（94 行最省）。</p>
+    </div>
+    <table>
+      <thead><tr><th>子问</th><th>选 A</th><th>选 B</th><th>推荐</th></tr></thead>
+      <tbody>
+        <tr><td>它是什么</td><td>脚本跑一遍 30 场景后合成的静态页</td><td>新增一条技能命令的产物</td><td><b>A</b>：给维护者看的导航，不必随技能发版，且能随时重出</td></tr>
+        <tr><td>命令列上不上</td><td>上</td><td>不上</td><td><b>上</b>：那条禁令只管 HELP 交付面</td></tr>
+        <tr><td>链接形态</td><td><code>file:///D:/…</code> 绝对 URL</td><td>相对路径</td><td><b>A</b>：你的原话就是「点击绝对产物路径」；代价是换机器或搬目录会死链，所以同时印一份可复制的纯路径</td></tr>
+      </tbody>
+    </table>
+    <div class="rec"><div class="lbl">推荐</div><p><strong>脚本生成物 ＋ 命令列要上 ＋ <code>file:///</code> 绝对链接</strong>，并在每行并列印出纯路径文本，方便复制。</p></div>
+  </article>
+
+  <!-- Q5 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q5</div><div class="q-t">「手机端适配参考 help html」按哪个口径抄</div></div>
+    <div class="q-why">
+      <p>通用 help 模板 <code>packages/base-render/assets/help-template.html</code> 的断点是 <b>500 与 820</b> 两档。而记账那批 30 多页的响应式底座落在公共层：<code>blocksCss()</code> 加 <code>pageUiCss()</code>，带 44px 触摸区、安全区、窄屏单列，断点只取仓内既有集合 <b>400／640／820／1001／1200</b>。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">B</span><strong>判据下限取 help 的两档，实现走公共层底座</strong><span class="pick-badge">推荐</span></div>
+        <p>验收时拿 help 的 500／820 当尺，代码只有一份。</p>
+        <div class="pc">
+          <div class="p">64 格共用一份样式，改一处全批变；符合仓规「一个形状一处定义」</div>
+          <div class="c">要先把公共层读熟，不能各页临场发挥</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">A</span><strong>只抄 help 的断点值，样式各自写</strong></div>
+        <div class="pc">
+          <div class="p">每页可以单独微调</div>
+          <div class="c">这正是记账被判「设计联邦」的病，上一轮已因此被推翻</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 B</div><p>以 <strong>help 的两档断点为判据下限</strong>，实现统一走公共层 <code>pageUiCss()</code>。</p></div>
+  </article>
+
+  <!-- Q6 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q6</div><div class="q-t">视觉审查用哪把尺，过线怎么判</div></div>
+    <div class="q-why">
+      <p>你要求「100 分下需要能有 90 分」。仓里有两套现成的尺，都有真实读数先例。</p>
+    </div>
+    <table>
+      <thead><tr><th>尺</th><th>结构</th><th>先例读数</th></tr></thead>
+      <tbody>
+        <tr><td>六级量表</td><td>层级 20／留白对齐 20／无符号串 15／无内部话 15／本端适配 15／对比按钮 15</td><td>18 格最低 93，均值 94</td></tr>
+        <tr><td>五维尺加硬扣分</td><td>D1 结构纪律 15／D2 信息层级 20／D3 分隔符与文字纪律 25／D4 跨宽自适应 15／D5 手机端与 HELP 同档 25，另加 H1 到 H7 硬扣分（分隔符串扣 2、内部标识符扣 3、同事实重复扣 2、符号顶替文字扣 1、窄屏溢出扣 5、触摸区不足 44px 扣 1、露英文扣 1）；<b>判分脚本已入仓</b></td><td>实测换算：模型分减 2 约等于用户分，所以 <b>模型 ≥92 等价于用户 ≥90</b></td></tr>
+      </tbody>
+    </table>
+    <div class="rec"><div class="lbl">推荐五维尺加硬扣分</div>
+      <p>三条理由：一是它是本仓<b>唯一算式入仓、可复算</b>的一套（<code>t524-判分.mjs</code>）；二是它的 D3 权重最高（25 分），<b>正压在你的第 4、5 条上</b>（文字不冗余、分隔处要变成 UI 设计）；三是 D5（25 分）正压在「手机端参考 help」上。</p>
+      <p>过线判据建议：<strong>逐页 ≥90 且每维 ≥ 满权 80%</strong>，同时报族均分与最低页分 —— 不取平均掩盖短板。</p>
+    </div>
+  </article>
+
+  <!-- Q7 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q7</div><div class="q-t">与并行图 #760 怎么避让</div></div>
+    <div class="q-why">
+      <p><code>#760 「备忘录设置页收窄」</code> 现在开着，会动同一个包 <code>packages/skill-memo-ilife</code>。而本图要<b>整包重排 src</b>，两条线会撞。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">B</span><strong>路径划界并行</strong><span class="pick-badge">推荐</span></div>
+        <p>本图不动 <code>src/config.ts</code>，不动 <code>packages/plugin-memo-ilife/**</code>，并逐字写进地图的 Notes。</p>
+        <div class="pc">
+          <div class="p">零等待，两条线同时推进</div>
+          <div class="c">切票时每一张都要写明这条边界，漏一张就会撞</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">A</span><strong>等 #760 关票后再重排</strong></div>
+        <div class="pc"><div class="p">零冲突</div><div class="c">本图开工被卡住，白等</div></div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">C</span><strong>把 #760 并进本图</strong></div>
+        <div class="pc"><div class="p">一次收口</div><div class="c">两件事绑死，任一件拖住另一件</div></div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 B</div><p>路径划界。<strong>先到的先落</strong>，两边都不等。</p></div>
+  </article>
+
+  <!-- Q8 -->
+  <article class="q">
+    <div class="q-head"><div class="q-id">Q8</div><div class="q-t">11 条路由不到的唤醒词，按哪一支收口</div></div>
+    <div class="q-why">
+      <p>把 HELP 的 29 个场景词和技能路由表逐条对账，<b>11 条在新技能里根本路由不到</b>：</p>
+      <div class="chips">
+        <span class="chip bad">记备忘</span><span class="chip bad">改备忘</span><span class="chip bad">删备忘</span>
+        <span class="chip bad">备忘改分类</span><span class="chip bad">备忘改子分类</span><span class="chip bad">查情绪</span>
+        <span class="chip bad">记情绪</span><span class="chip bad">删情绪</span><span class="chip bad">改情绪</span>
+        <span class="chip bad">备忘录同步</span><span class="chip bad">首次使用</span>
+      </div>
+      <p>反过来，路由表里有 11 条 HELP 没有的：<code>批量改分类</code>／<code>改子分类</code>／<code>查提醒</code>／<code>废弃提醒</code>／<code>飞书授权</code>／<code>记一条</code>／<code>添加笔记</code>／<code>记情绪日记</code>／<code>查情绪日记</code>／<code>改情绪日记</code>／<code>删情绪日记</code>。</p>
+      <p>关键背景：<code>#226</code> 当年裁过一条 <b>U4「老词为主名、新词进别名」</b> —— 那条只落到了 HELP 资产上，<b>没落到技能路由表</b>。所以今天等于是新旧两套词各占一半主名。</p>
+    </div>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-h"><span class="tag">B</span><strong>老词为主名，新词降为别名</strong><span class="pick-badge">推荐</span></div>
+        <p>把 U4 真正落到路由表这一侧。</p>
+        <div class="pc">
+          <div class="p">一个意图只有一个主名，链路页不分叉</div>
+          <div class="p">不是在发明新决定，只是把已有裁决落到该落的地方</div>
+          <div class="c">要改 11 行路由加唤醒词表，会碰到已有测试</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">A</span><strong>老词补进路由表，与新词并存</strong></div>
+        <div class="pc">
+          <div class="p">不动现状</div>
+          <div class="c">一个意图两个并列主名，链路页的「prompt 到 唤醒词」会分叉</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="tag">C</span><strong>只补 HELP 用到的那 11 条</strong></div>
+        <div class="pc">
+          <div class="p">最小</div>
+          <div class="c">主从颠倒：HELP 场景词仍是别名，新造词仍是主名</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><div class="lbl">推荐 B，另加两件事</div>
+      <p><strong>其一</strong>：「备忘录同步」今天有实现却没有唤醒词指向它，「首次使用」连命令键都没有 —— 这两条建议<b>真做出来</b>，因为同步域与初始化域各只有 1 个场景，缺了就等于两个整域是空的。</p>
+      <p><strong>其二</strong>：那 11 条「路由表有、HELP 没有」的词<b>保留为别名</b>，但不进链路页、不出产物 —— 链路页只列 HELP 的 30 个场景。</p>
+    </div>
+  </article>
+</section>
+
+<section>
+  <h2><span class="bar"></span>你答完我做这五步</h2>
+  <div class="steps">
+    <div class="step"><b>写地图</b>：建一张 <code>wayfinder:map</code> 的 issue，填 Destination 与 Notes，把还没看清的部分写进「Not yet specified」。</div>
+    <div class="step"><b>建子票</b>：按 8 个域加横切件切票，每张票是一张原生子议题。</div>
+    <div class="step"><b>建原生边</b>：用脚本建子议题边与阻塞依赖边，<b>并逐项校验计数与预期一致</b>（对不上脚本非零退出，不当成功）。</div>
+    <div class="step"><b>写进度</b>：在地图正文按进度契约更新，写清百分比与下一步。</div>
+    <div class="step"><b>再交付</b>：整批产物出来之后，用视觉验收墙给您验，附逐格缺陷清单与打分。</div>
+  </div>
+</section>
+
+<footer>
+  四份调查报告落在 <code>D:\ilife\docs\skills\skill-memo-ilife\research\</code>。本页是一次性的决策页，不是交付物。
+</footer>
+
+</div>
+</body>
+</html>
