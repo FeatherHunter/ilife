@@ -14,9 +14,9 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node packages/skill-chef/scripts/gen-cli.mjs --check` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node node_modules/typescript/bin/tsc -b packages/skill-chef` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node --test "packages/skill-chef/test/*.test.mjs"` → 全绿（含 HTML 快照 changed=0）
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node packages/skill-chef/scripts/gen-cli.mjs --check` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node node_modules/typescript/bin/tsc -b packages/skill-chef` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node --test "packages/skill-chef/test/*.test.mjs"` → 全绿（含 HTML 快照 changed=0）
 - 反例（必跑）：删掉 `src/history/commands.ts` 里一条声明 → `gen-cli.mjs --check` 必须 exit 1 并点名该条；改回即绿
 - 反例（必跑）：把 `html.sceneDir` 默认值改坏 → 配置测试必须红
 
@@ -31,7 +31,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/history/{commands,routes,index}.ts`、`packages/skill-chef/scripts/gen-cli.mjs`、生成物 `packages/skill-chef/src/cli/keys.ts`、`packages/skill-chef/src/config.ts`
-- 文档：`docs/skills/skill-chef/t1-形状.md`（必报五步全额 ＋ 变异红／还原一致两行读数）
+- 文档：`docs/skills/skill-chef/t766-形状.md`（必报五步全额 ＋ 变异红／还原一致两行读数）
 
 ## 遗留出口
 
@@ -56,8 +56,8 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node packages/skill-chef/scripts/gen-chef-scenes.mjs --check` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t2-对账.mjs` → 打印 `词 50／卡 48／差集 0／slug 冲突 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 767 -- node packages/skill-chef/scripts/gen-chef-scenes.mjs --check` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 767 -- node docs/skills/skill-chef/t767-对账.mjs` → 打印 `词 50／卡 48／差集 0／slug 冲突 0` 且 exit 0
 - 反例（必跑）：从 `WAKE_TABLE` 删一条 → 对账脚本 exit 1 并点名；改回即绿
 - 反例（必跑）：给两张卡同一个 slug → 对账脚本 exit 1 并点名
 
@@ -71,7 +71,7 @@
 ## 交付物路径
 
 - 资产与生成器：`packages/skill-chef/src/triggers/chef-scenes.ts`（或等价的域／组／卡资产）、`packages/skill-chef/scripts/gen-chef-scenes.mjs`
-- 对账与命名：`docs/skills/skill-chef/t2-对账表.md`、`docs/skills/skill-chef/t2-对账.mjs`、`docs/skills/skill-chef/t2-命名.md`（域中文名 ＋ 卡 slug 规则）
+- 对账与命名：`docs/skills/skill-chef/t767-对账表.md`、`docs/skills/skill-chef/t767-对账.mjs`、`docs/skills/skill-chef/t767-命名.md`（域中文名 ＋ 卡 slug 规则）
 - 证据：变异红／还原一致两行读数
 
 ## 遗留出口
@@ -98,7 +98,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t3-原型.mjs` → 出三页原型 ＋ 六张截图（390／1280），打印 `横向溢出 0／分隔符懒政 0／英文裸词 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 768 -- node docs/skills/skill-chef/t768-原型.mjs` → 出三页原型 ＋ 六张截图（390／1280），打印 `横向溢出 0／分隔符懒政 0／英文裸词 0` 且 exit 0
 - 反例（必跑）：把原型页塞进一个超过视口的表格 → 脚本必须报横向溢出并 exit 1
 - 人裁（关票条件）：维护者看过三页原型后回「过」或逐条列出要改的地方
 
@@ -111,7 +111,7 @@
 ## 交付物路径
 
 - 原型与截图：`.scratch/<批名>/`（三页 ＋ 六张图）
-- 设计与对照：`docs/skills/skill-chef/t3-页面族设计.md`（三族结构 ＋ 老件对照表 ＋ 分割符设计 ＋ 判据读数）
+- 设计与对照：`docs/skills/skill-chef/t768-页面族设计.md`（三族结构 ＋ 老件对照表 ＋ 分割符设计 ＋ 判据读数）
 
 ## 遗留出口
 
@@ -136,7 +136,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t4-schema-audit.mjs --check` → 打印 `卡 48／行齐 48／未知 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 769 -- node docs/skills/skill-chef/t769-schema-audit.mjs --check` → 打印 `卡 48／行齐 48／未知 0` 且 exit 0
 - 反例（必跑）：从对账表删一行 → 脚本 exit 1 并点名缺哪张卡
 
 ## 不许动的东西
@@ -147,8 +147,8 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 交付物路径
 
-- 报告：`docs/skills/skill-chef/t4-写侧字段对账.md`（48 行表格 ＋ 结论）
-- 校验脚本：`docs/skills/skill-chef/t4-schema-audit.mjs`
+- 报告：`docs/skills/skill-chef/t769-写侧字段对账.md`（48 行表格 ＋ 结论）
+- 校验脚本：`docs/skills/skill-chef/t769-schema-audit.mjs`
 
 ## 遗留出口
 
@@ -170,7 +170,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t5-run-view.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`，`缺卡 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 770 -- node docs/skills/skill-chef/t770-run-view.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`，`缺卡 0` 且 exit 0
 - 反例（必跑）：把某卡的数据源改坏 → 该行必须 exit≠0 并点名该卡（不许返空页冒充）
 
 ## 不许动的东西
@@ -184,7 +184,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 - 代码：`packages/skill-chef/src/view/**`
 - 产物：按册子（收口 A ⑫）落验收副本
-- 证据：`docs/skills/skill-chef/t5-查看域.md`（8 行读数 ＋ 变异自证）
+- 证据：`docs/skills/skill-chef/t770-查看域.md`（8 行读数 ＋ 变异自证）
 
 ## 遗留出口
 
@@ -209,7 +209,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t6-run-search.mjs` → 打印 13 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`、`路由错位 0`，exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 771 -- node docs/skills/skill-chef/t771-run-search.mjs` → 打印 13 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`、`路由错位 0`，exit 0
 - 反例（必跑）：把 `筛选口味` 的映射改回 `cuisine` → 脚本必须报路由错位并 exit 1
 
 ## 不许动的东西
@@ -222,7 +222,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/search/**`
-- 证据：`docs/skills/skill-chef/t6-搜索筛选域.md`（13 行读数 ＋ 路由错位修复前后对照）
+- 证据：`docs/skills/skill-chef/t771-搜索筛选域.md`（13 行读数 ＋ 路由错位修复前后对照）
 
 ## 遗留出口
 
@@ -247,7 +247,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t7-run-cooking.mjs` → 打印 5 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`，exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 772 -- node docs/skills/skill-chef/t772-run-cooking.mjs` → 打印 5 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`，exit 0
 - 反例（必跑）：把某步的食材关联改坏 → 该卡必须 exit≠0 并点名（不许静默少显示一步）
 
 ## 不许动的东西
@@ -259,7 +259,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/cook/**`
-- 证据：`docs/skills/skill-chef/t7-做菜域.md`（5 行读数 ＋ 过程族复用情况）
+- 证据：`docs/skills/skill-chef/t772-做菜域.md`（5 行读数 ＋ 过程族复用情况）
 
 ## 遗留出口
 
@@ -284,7 +284,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t8-run-add.mjs` → 打印 6 行 `卡 → exit=0 → 产物绝对路径` ＋ 每卡的写后回读（行数／关键字段）且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 773 -- node docs/skills/skill-chef/t773-run-add.mjs` → 打印 6 行 `卡 → exit=0 → 产物绝对路径` ＋ 每卡的写后回读（行数／关键字段）且 exit 0
 - 反例（必跑）：故意少给一个必填字段 → 必须走「校验失败」页并 exit≠0（不许写进半条脏数据）
 
 ## 不许动的东西
@@ -297,7 +297,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/add/**`
-- 证据：`docs/skills/skill-chef/t8-录入域.md`（6 行读数 ＋ 写后回读 ＋ 校验失败样本）
+- 证据：`docs/skills/skill-chef/t773-录入域.md`（6 行读数 ＋ 写后回读 ＋ 校验失败样本）
 
 ## 遗留出口
 
@@ -322,7 +322,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t9-run-update.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` ＋ 写后回读且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 774 -- node docs/skills/skill-chef/t774-run-update.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` ＋ 写后回读且 exit 0
 - 反例（必跑）：把「废弃」实现成物理删除 → 脚本必须红并点名（只增不删是硬要求）
 
 ## 不许动的东西
@@ -334,7 +334,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/update/**`
-- 证据：`docs/skills/skill-chef/t9-修改域.md`（4 行读数 ＋ 对比页与回执页样本）
+- 证据：`docs/skills/skill-chef/t774-修改域.md`（4 行读数 ＋ 对比页与回执页样本）
 
 ## 遗留出口
 
@@ -359,7 +359,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t10-run-history.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 775 -- node docs/skills/skill-chef/t775-run-history.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` 且 exit 0
 - 反例（必跑）：提交 `feedback` 为「无」→ 必须被校验拦下并 exit≠0
 
 ## 不许动的东西
@@ -371,7 +371,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/history/**`
-- 证据：`docs/skills/skill-chef/t10-历史域.md`（4 行读数 ＋ 校验反例读数）
+- 证据：`docs/skills/skill-chef/t775-历史域.md`（4 行读数 ＋ 校验反例读数）
 
 ## 遗留出口
 
@@ -397,7 +397,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t11-run-small-domains.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`（备份卡另打印产物文件字节数）且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 776 -- node docs/skills/skill-chef/t776-run-small-domains.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`（备份卡另打印产物文件字节数）且 exit 0
 - 反例（必跑）：造一个成环的关系对 → 家族树必须报环并 exit≠0（不许画出一张自环图）
 
 ## 不许动的东西
@@ -410,7 +410,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/{relation,shopping,setup,data}/**`
-- 证据：`docs/skills/skill-chef/t11-小域.md`（8 行读数 ＋ 体检口径裁定 ＋ 跨技能调用契约说明）
+- 证据：`docs/skills/skill-chef/t776-小域.md`（8 行读数 ＋ 体检口径裁定 ＋ 跨技能调用契约说明）
 
 ## 遗留出口
 
@@ -435,7 +435,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t12-链路总表.mjs` → 打印 `词 50／卡 48／链接 N 条／缺失 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 777 -- node docs/skills/skill-chef/t777-链路总表.mjs` → 打印 `词 50／卡 48／链接 N 条／缺失 0` 且 exit 0
 - 反例（必跑）：故意改坏 `manifest.json` 里一个文件名 → 脚本必须 exit 1 并点名那一份
 - 反例（必跑）：从唤醒词表删一条 → 覆盖对账必须报缺并 exit 1
 
@@ -447,9 +447,9 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 交付物路径
 
-- 器械（入仓）：`docs/skills/skill-chef/t12-链路总表.mjs`、`docs/skills/skill-chef/t12-run-all.mjs`
+- 器械（入仓）：`docs/skills/skill-chef/t777-链路总表.mjs`、`docs/skills/skill-chef/t777-run-all.mjs`
 - 产物：`.scratch/<批名>/`（50 份产物 ＋ `manifest.json` ＋ 链路总表页）
-- 证据：`docs/skills/skill-chef/t12-收口A.md`（正反例退出码 ＋ 覆盖对账读数）
+- 证据：`docs/skills/skill-chef/t777-收口A.md`（正反例退出码 ＋ 覆盖对账读数）
 
 ## 遗留出口
 
@@ -474,7 +474,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t13-验收墙.mjs <产物目录> <输出名>` → 打印「N 格；链接 M 条；缺失 0 -> 可发」且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 778 -- node docs/skills/skill-chef/t778-验收墙.mjs <产物目录> <输出名>` → 打印「N 格；链接 M 条；缺失 0 -> 可发」且 exit 0
 - 反例（必跑）：在清单里故意写一个不存在的文件名 → 必须 exit 1 且点名那一份
 - 打分：vision_router 终审总分记录在案，≥90 才关票
 
@@ -486,9 +486,9 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 交付物路径
 
-- 器械：`docs/skills/skill-chef/t13-验收墙.mjs`
+- 器械：`docs/skills/skill-chef/t778-验收墙.mjs`
 - 交付三样：两张墙（390／1280）＋ 逐格缺陷清单 ＋ 自检正反例退出码，落 `docs/skills/skill-chef/`
-- 分数：`docs/skills/skill-chef/t13-终审打分.md`
+- 分数：`docs/skills/skill-chef/t778-终审打分.md`
 
 ## 遗留出口
 

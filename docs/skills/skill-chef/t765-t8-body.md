@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t8-run-add.mjs` → 打印 6 行 `卡 → exit=0 → 产物绝对路径` ＋ 每卡的写后回读（行数／关键字段）且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 773 -- node docs/skills/skill-chef/t773-run-add.mjs` → 打印 6 行 `卡 → exit=0 → 产物绝对路径` ＋ 每卡的写后回读（行数／关键字段）且 exit 0
 - 反例（必跑）：故意少给一个必填字段 → 必须走「校验失败」页并 exit≠0（不许写进半条脏数据）
 
 ## 不许动的东西
@@ -24,7 +24,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/add/**`
-- 证据：`docs/skills/skill-chef/t8-录入域.md`（6 行读数 ＋ 写后回读 ＋ 校验失败样本）
+- 证据：`docs/skills/skill-chef/t773-录入域.md`（6 行读数 ＋ 写后回读 ＋ 校验失败样本）
 
 ## 遗留出口
 

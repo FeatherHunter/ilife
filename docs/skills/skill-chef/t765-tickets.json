@@ -76,5 +76,17 @@
         "issue": 778,
         "type": "task",
         "title": "[收口 B] 双端视觉验收墙 ＋ vision_router 终审 ≥90 分"
+    },
+    {
+        "n": 14,
+        "issue": 818,
+        "type": "grilling",
+        "title": "【裁定】老库三条 NOT NULL 与卡面「选填」的冲突：9 张卡怎么落"
+    },
+    {
+        "n": 15,
+        "issue": 819,
+        "type": "grilling",
+        "title": "【裁定】数据库层两处全局缺口：recipes.name 唯一约束在老库未生效 ＋ 新技能未开 foreign_keys"
     }
 ]

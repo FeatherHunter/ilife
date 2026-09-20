@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t9-run-update.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` ＋ 写后回读且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 774 -- node docs/skills/skill-chef/t774-run-update.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` ＋ 写后回读且 exit 0
 - 反例（必跑）：把「废弃」实现成物理删除 → 脚本必须红并点名（只增不删是硬要求）
 
 ## 不许动的东西
@@ -23,7 +23,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/update/**`
-- 证据：`docs/skills/skill-chef/t9-修改域.md`（4 行读数 ＋ 对比页与回执页样本）
+- 证据：`docs/skills/skill-chef/t774-修改域.md`（4 行读数 ＋ 对比页与回执页样本）
 
 ## 遗留出口
 

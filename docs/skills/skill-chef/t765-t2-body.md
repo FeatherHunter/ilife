@@ -11,8 +11,8 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node packages/skill-chef/scripts/gen-chef-scenes.mjs --check` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t2-对账.mjs` → 打印 `词 50／卡 48／差集 0／slug 冲突 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 767 -- node packages/skill-chef/scripts/gen-chef-scenes.mjs --check` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 767 -- node docs/skills/skill-chef/t767-对账.mjs` → 打印 `词 50／卡 48／差集 0／slug 冲突 0` 且 exit 0
 - 反例（必跑）：从 `WAKE_TABLE` 删一条 → 对账脚本 exit 1 并点名；改回即绿
 - 反例（必跑）：给两张卡同一个 slug → 对账脚本 exit 1 并点名
 
@@ -26,7 +26,7 @@
 ## 交付物路径
 
 - 资产与生成器：`packages/skill-chef/src/triggers/chef-scenes.ts`（或等价的域／组／卡资产）、`packages/skill-chef/scripts/gen-chef-scenes.mjs`
-- 对账与命名：`docs/skills/skill-chef/t2-对账表.md`、`docs/skills/skill-chef/t2-对账.mjs`、`docs/skills/skill-chef/t2-命名.md`（域中文名 ＋ 卡 slug 规则）
+- 对账与命名：`docs/skills/skill-chef/t767-对账表.md`、`docs/skills/skill-chef/t767-对账.mjs`、`docs/skills/skill-chef/t767-命名.md`（域中文名 ＋ 卡 slug 规则）
 - 证据：变异红／还原一致两行读数
 
 ## 遗留出口

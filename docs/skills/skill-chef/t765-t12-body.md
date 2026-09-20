@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t12-链路总表.mjs` → 打印 `词 50／卡 48／链接 N 条／缺失 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 777 -- node docs/skills/skill-chef/t777-链路总表.mjs` → 打印 `词 50／卡 48／链接 N 条／缺失 0` 且 exit 0
 - 反例（必跑）：故意改坏 `manifest.json` 里一个文件名 → 脚本必须 exit 1 并点名那一份
 - 反例（必跑）：从唤醒词表删一条 → 覆盖对账必须报缺并 exit 1
 
@@ -23,9 +23,9 @@
 
 ## 交付物路径
 
-- 器械（入仓）：`docs/skills/skill-chef/t12-链路总表.mjs`、`docs/skills/skill-chef/t12-run-all.mjs`
+- 器械（入仓）：`docs/skills/skill-chef/t777-链路总表.mjs`、`docs/skills/skill-chef/t777-run-all.mjs`
 - 产物：`.scratch/<批名>/`（50 份产物 ＋ `manifest.json` ＋ 链路总表页）
-- 证据：`docs/skills/skill-chef/t12-收口A.md`（正反例退出码 ＋ 覆盖对账读数）
+- 证据：`docs/skills/skill-chef/t777-收口A.md`（正反例退出码 ＋ 覆盖对账读数）
 
 ## 遗留出口
 

@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t6-run-search.mjs` → 打印 13 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`、`路由错位 0`，exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 771 -- node docs/skills/skill-chef/t771-run-search.mjs` → 打印 13 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`、`路由错位 0`，exit 0
 - 反例（必跑）：把 `筛选口味` 的映射改回 `cuisine` → 脚本必须报路由错位并 exit 1
 
 ## 不许动的东西
@@ -24,7 +24,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/search/**`
-- 证据：`docs/skills/skill-chef/t6-搜索筛选域.md`（13 行读数 ＋ 路由错位修复前后对照）
+- 证据：`docs/skills/skill-chef/t771-搜索筛选域.md`（13 行读数 ＋ 路由错位修复前后对照）
 
 ## 遗留出口
 

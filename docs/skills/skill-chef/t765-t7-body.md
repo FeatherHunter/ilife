@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t7-run-cooking.mjs` → 打印 5 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`，exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 772 -- node docs/skills/skill-chef/t772-run-cooking.mjs` → 打印 5 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`，exit 0
 - 反例（必跑）：把某步的食材关联改坏 → 该卡必须 exit≠0 并点名（不许静默少显示一步）
 
 ## 不许动的东西
@@ -23,7 +23,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/cook/**`
-- 证据：`docs/skills/skill-chef/t7-做菜域.md`（5 行读数 ＋ 过程族复用情况）
+- 证据：`docs/skills/skill-chef/t772-做菜域.md`（5 行读数 ＋ 过程族复用情况）
 
 ## 遗留出口
 

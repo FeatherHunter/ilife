@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t13-验收墙.mjs <产物目录> <输出名>` → 打印「N 格；链接 M 条；缺失 0 -> 可发」且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 778 -- node docs/skills/skill-chef/t778-验收墙.mjs <产物目录> <输出名>` → 打印「N 格；链接 M 条；缺失 0 -> 可发」且 exit 0
 - 反例（必跑）：在清单里故意写一个不存在的文件名 → 必须 exit 1 且点名那一份
 - 打分：vision_router 终审总分记录在案，≥90 才关票
 
@@ -23,9 +23,9 @@
 
 ## 交付物路径
 
-- 器械：`docs/skills/skill-chef/t13-验收墙.mjs`
+- 器械：`docs/skills/skill-chef/t778-验收墙.mjs`
 - 交付三样：两张墙（390／1280）＋ 逐格缺陷清单 ＋ 自检正反例退出码，落 `docs/skills/skill-chef/`
-- 分数：`docs/skills/skill-chef/t13-终审打分.md`
+- 分数：`docs/skills/skill-chef/t778-终审打分.md`
 
 ## 遗留出口
 

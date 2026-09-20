@@ -12,7 +12,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t3-原型.mjs` → 出三页原型 ＋ 六张截图（390／1280），打印 `横向溢出 0／分隔符懒政 0／英文裸词 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 768 -- node docs/skills/skill-chef/t768-原型.mjs` → 出三页原型 ＋ 六张截图（390／1280），打印 `横向溢出 0／分隔符懒政 0／英文裸词 0` 且 exit 0
 - 反例（必跑）：把原型页塞进一个超过视口的表格 → 脚本必须报横向溢出并 exit 1
 - 人裁（关票条件）：维护者看过三页原型后回「过」或逐条列出要改的地方
 
@@ -25,7 +25,7 @@
 ## 交付物路径
 
 - 原型与截图：`.scratch/<批名>/`（三页 ＋ 六张图）
-- 设计与对照：`docs/skills/skill-chef/t3-页面族设计.md`（三族结构 ＋ 老件对照表 ＋ 分割符设计 ＋ 判据读数）
+- 设计与对照：`docs/skills/skill-chef/t768-页面族设计.md`（三族结构 ＋ 老件对照表 ＋ 分割符设计 ＋ 判据读数）
 
 ## 遗留出口
 

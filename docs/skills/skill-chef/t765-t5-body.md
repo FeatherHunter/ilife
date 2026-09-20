@@ -8,7 +8,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t5-run-view.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`，`缺卡 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 770 -- node docs/skills/skill-chef/t770-run-view.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`，`缺卡 0` 且 exit 0
 - 反例（必跑）：把某卡的数据源改坏 → 该行必须 exit≠0 并点名该卡（不许返空页冒充）
 
 ## 不许动的东西
@@ -22,7 +22,7 @@
 
 - 代码：`packages/skill-chef/src/view/**`
 - 产物：按册子（收口 A ⑫）落验收副本
-- 证据：`docs/skills/skill-chef/t5-查看域.md`（8 行读数 ＋ 变异自证）
+- 证据：`docs/skills/skill-chef/t770-查看域.md`（8 行读数 ＋ 变异自证）
 
 ## 遗留出口
 

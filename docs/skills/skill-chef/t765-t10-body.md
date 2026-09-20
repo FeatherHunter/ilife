@@ -11,7 +11,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t10-run-history.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 775 -- node docs/skills/skill-chef/t775-run-history.mjs` → 打印 4 行 `卡 → exit=0 → 产物绝对路径` 且 exit 0
 - 反例（必跑）：提交 `feedback` 为「无」→ 必须被校验拦下并 exit≠0
 
 ## 不许动的东西
@@ -23,7 +23,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/history/**`
-- 证据：`docs/skills/skill-chef/t10-历史域.md`（4 行读数 ＋ 校验反例读数）
+- 证据：`docs/skills/skill-chef/t775-历史域.md`（4 行读数 ＋ 校验反例读数）
 
 ## 遗留出口
 

@@ -11,7 +11,7 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t4-schema-audit.mjs --check` → 打印 `卡 48／行齐 48／未知 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 769 -- node docs/skills/skill-chef/t769-schema-audit.mjs --check` → 打印 `卡 48／行齐 48／未知 0` 且 exit 0
 - 反例（必跑）：从对账表删一行 → 脚本 exit 1 并点名缺哪张卡
 
 ## 不许动的东西
@@ -22,8 +22,8 @@ Q3 裁「写侧真落库」、Q4 裁「老 schema 为权威、本次不改 schem
 
 ## 交付物路径
 
-- 报告：`docs/skills/skill-chef/t4-写侧字段对账.md`（48 行表格 ＋ 结论）
-- 校验脚本：`docs/skills/skill-chef/t4-schema-audit.mjs`
+- 报告：`docs/skills/skill-chef/t769-写侧字段对账.md`（48 行表格 ＋ 结论）
+- 校验脚本：`docs/skills/skill-chef/t769-schema-audit.mjs`
 
 ## 遗留出口
 

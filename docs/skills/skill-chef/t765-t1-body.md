@@ -13,9 +13,9 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node packages/skill-chef/scripts/gen-cli.mjs --check` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node node_modules/typescript/bin/tsc -b packages/skill-chef` → exit 0
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node --test "packages/skill-chef/test/*.test.mjs"` → 全绿（含 HTML 快照 changed=0）
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node packages/skill-chef/scripts/gen-cli.mjs --check` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node node_modules/typescript/bin/tsc -b packages/skill-chef` → exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 766 -- node --test "packages/skill-chef/test/*.test.mjs"` → 全绿（含 HTML 快照 changed=0）
 - 反例（必跑）：删掉 `src/history/commands.ts` 里一条声明 → `gen-cli.mjs --check` 必须 exit 1 并点名该条；改回即绿
 - 反例（必跑）：把 `html.sceneDir` 默认值改坏 → 配置测试必须红
 
@@ -30,7 +30,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/history/{commands,routes,index}.ts`、`packages/skill-chef/scripts/gen-cli.mjs`、生成物 `packages/skill-chef/src/cli/keys.ts`、`packages/skill-chef/src/config.ts`
-- 文档：`docs/skills/skill-chef/t1-形状.md`（必报五步全额 ＋ 变异红／还原一致两行读数）
+- 文档：`docs/skills/skill-chef/t766-形状.md`（必报五步全额 ＋ 变异红／还原一致两行读数）
 
 ## 遗留出口
 

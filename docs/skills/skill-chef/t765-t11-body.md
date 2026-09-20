@@ -12,7 +12,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t11-run-small-domains.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`（备份卡另打印产物文件字节数）且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 776 -- node docs/skills/skill-chef/t776-run-small-domains.mjs` → 打印 8 行 `卡 → exit=0 → 产物绝对路径`（备份卡另打印产物文件字节数）且 exit 0
 - 反例（必跑）：造一个成环的关系对 → 家族树必须报环并 exit≠0（不许画出一张自环图）
 
 ## 不许动的东西
@@ -25,7 +25,7 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/{relation,shopping,setup,data}/**`
-- 证据：`docs/skills/skill-chef/t11-小域.md`（8 行读数 ＋ 体检口径裁定 ＋ 跨技能调用契约说明）
+- 证据：`docs/skills/skill-chef/t776-小域.md`（8 行读数 ＋ 体检口径裁定 ＋ 跨技能调用契约说明）
 
 ## 遗留出口
 
