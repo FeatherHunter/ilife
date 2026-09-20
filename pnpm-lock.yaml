@@ -35,7 +35,7 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-bill:
         specifier: 0.2.2
@@ -54,7 +54,7 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-calorie:
         specifier: 0.2.6
@@ -73,7 +73,7 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-chef:
         specifier: 0.2.1
@@ -92,7 +92,7 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-home:
         specifier: 0.2.1
@@ -127,7 +127,7 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.2.1
@@ -146,7 +146,7 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: link:../plugin-manager
       skill-schedule:
         specifier: 0.2.1
