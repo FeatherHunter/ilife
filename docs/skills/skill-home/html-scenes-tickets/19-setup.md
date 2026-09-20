@@ -1,0 +1,32 @@
+## Question
+
+开始使用域 4 条场景。这一域的四张老页面在**老实现里没有生产渲染调用点**（实测：老 `scripts/` 里没有对这四张模板的调用），也就是「yaml 声明了、老实现没接」；新技能要按用户裁决（Q10）把它们做成真页面。
+
+## 目标
+
+逐条端到端走通（唤醒词 → 命令 → 默认落 HTML → 页面）：信息结构对齐下表的老页面、UI 走新仓共用件、双端自适应、无冗余文字、无分隔符懒政。4 条各出一份产物；本域手机墙与桌面墙各一张（`--check` exit 0）；每格写下「这一页该确认什么」。注意 `SM8-1 首次使用` 是 **6 步向导**页（环境检测→配置→建库→建分类→引导→回执，幂等可重试）、`SM8-2 查异常` 是**八项检查＋勾选复制修复引导**页、`SM8-3 备份导出` 与 `SM8-4 导入恢复` 是**回执／预览**页，四张各有版式。
+
+| 场景 | 唤醒词 | 老页面（信息结构对齐源） |
+|---|---|---|
+| SM8-1 | 首次使用 | `开始使用/first_use_wizard.html` |
+| SM8-2 | 查异常 | `开始使用/health_report.html` |
+| SM8-3 | 备份导出 | `开始使用/backup_receipt.html` |
+| SM8-4 | 导入恢复 | `开始使用/import_restore.html` |
+
+## 验收命令
+
+① `node tooling/run-locked.mjs --ticket <本票号> -- pnpm test` exit 0；
+② `node docs/skills/skill-home/gen-scene-wall.mjs --check .scratch/<本票号> 开始使用-手机墙.html` exit 0（桌面墙同）；
+③ `node packages/skill-home/scripts/audit-separators.mjs .scratch/<本票号>` —— 0 命中、exit 0。
+
+## 不许动的东西
+
+不动其它域的页面与命令；不改共用件契约（要改回写票 2／票 3）；不碰生产库与生产产物目录；不改 `scenarios.yaml`。
+
+## 交付物路径
+
+`packages/skill-home/**`（本域页面与命令）；产物与墙 `.scratch/<票号>/`；域对账 `docs/skills/skill-home/scene-setup.md`。
+
+## 遗留出口
+
+「老实现无调用点」这类 yaml 与实现的偏差，逐条写进本票对账文件，供票 2 裁是否回写 HELP 内容资产。

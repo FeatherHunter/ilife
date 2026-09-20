@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>居家管家 · 场景页地图 · 第 1 轮决策</title>
+<style>
+  :root{
+    --ink:#1d1d1f; --ink2:#424245; --mute:#6e6e73; --line:#e4e4e8;
+    --bg:#f5f5f7; --card:#fff; --accent:#0a6cff; --accent-soft:#eef4ff;
+    --ok:#0b7a45; --ok-soft:#e8f6ee; --no:#a8382c; --no-soft:#fdecea;
+    --warn:#8a5a00; --warn-soft:#fff6e5;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.65; font-size:15px;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:0 18px 132px}
+
+  /* 顶栏 */
+  .top{
+    position:sticky; top:0; z-index:20; backdrop-filter:saturate(180%) blur(14px);
+    background:rgba(245,245,247,.86); border-bottom:1px solid var(--line);
+  }
+  .top-in{max-width:1000px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:16px;font-weight:650;letter-spacing:.2px}
+  .top .sub{color:var(--mute);font-size:12.5px}
+  .grow{flex:1 1 auto}
+  .count{font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums}
+  .count b{color:var(--accent);font-size:15px}
+
+  /* 头部 */
+  header.head{padding:30px 0 6px}
+  header.head h2{font-size:25px;font-weight:700;letter-spacing:-.3px}
+  header.head p{color:var(--ink2);margin-top:8px;font-size:14.5px}
+
+  /* 事实卡 */
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px}
+  .fact .n{font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.6px}
+  .fact h4{font-size:14.5px;margin:6px 0 6px;font-weight:650}
+  .fact p{font-size:13px;color:var(--ink2)}
+  .fact code{background:#f1f1f4;border-radius:4px;padding:1px 5px;font-size:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .fact .src{display:block;margin-top:8px;font-size:11.5px;color:var(--mute)}
+
+  /* 分组 */
+  section{margin-top:34px}
+  section > h3{font-size:14px;font-weight:700;color:var(--mute);letter-spacing:1.2px;margin-bottom:12px}
+
+  /* 问题卡 */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;margin-bottom:12px}
+  .q.answered{border-color:#c7d9ff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .q > header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .qid{font-weight:800;color:var(--accent);font-size:13px;font-variant-numeric:tabular-nums}
+  .q h4{font-size:16.5px;font-weight:650;letter-spacing:-.1px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#f1f1f4;color:var(--mute);font-weight:600}
+  .why{margin-top:10px;font-size:13.5px;color:var(--ink2)}
+  .why b{color:var(--ink);font-weight:650}
+
+  .opts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .opt{
+    display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;
+    background:#fbfbfd;border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+    transition:border-color .15s,background .15s,box-shadow .15s;
+  }
+  .opt:hover{border-color:#c9c9d0}
+  .opt .row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .opt .key{
+    font-weight:800;font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums;
+    min-width:20px;text-align:center;border-radius:6px;background:#ececf0;padding:1px 0
+  }
+  .opt .label{font-weight:650;font-size:14px}
+  .opt .rec{font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .pc div{font-size:12.5px;border-radius:8px;padding:7px 9px;line-height:1.55}
+  .pc .pro{background:var(--ok-soft);color:#0a5f37}
+  .pc .con{background:var(--no-soft);color:#8a2f24}
+  .pc b{display:block;font-size:11px;letter-spacing:.8px;font-weight:800;opacity:.75;margin-bottom:2px}
+
+  .opt[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .opt[aria-pressed="true"] .key{background:var(--accent);color:#fff}
+  .chosen-note{margin-top:8px;font-size:12.5px;color:var(--accent);font-weight:600;display:none}
+  .q.answered .chosen-note{display:block}
+
+  /* 底栏 */
+  .bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(14px);
+    border-top:1px solid var(--line);
+  }
+  .bar-in{max-width:1000px;margin:0 auto;padding:11px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bar .hint{font-size:12.5px;color:var(--mute)}
+  button.btn{
+    font:inherit;font-weight:650;font-size:13.5px;border-radius:10px;padding:9px 14px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
+  }
+  button.btn:hover{border-color:#c9c9d0}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.btn.primary:hover{filter:brightness(1.06)}
+  .copied{
+    position:absolute;right:16px;bottom:calc(100% + 10px);z-index:31;
+    background:#0b7a45;color:#fff;font-size:12.5px;font-weight:650;
+    padding:7px 13px;border-radius:999px;opacity:0;pointer-events:none;
+    transition:opacity .2s;
+  }
+  .copied.on{opacity:1;pointer-events:auto}
+
+  @media (max-width:760px){
+    body{font-size:14.5px}
+    .facts{grid-template-columns:1fr}
+    .pc{grid-template-columns:1fr}
+    header.head h2{font-size:21px}
+    .q{padding:14px 13px 12px}
+    .bar-in{padding:9px 12px;gap:8px}
+    .bar .hint,.bar .grow{display:none}
+    .bar .copied{flex:0 0 auto;font-size:12px}
+    button.btn{flex:1 1 0;text-align:center;padding:9px 10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div>
+      <h1>居家管家 · 场景页地图</h1>
+      <div class="sub">第 1 轮决策 · 11 问</div>
+    </div>
+    <div class="grow"></div>
+    <div class="count">已选 <b id="n">0</b>/11</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="head">
+    <h2>把「每个域下的场景都做成真页面」这条路定下来</h2>
+    <p>下面每条都是只能由你拍板的决定。每条给了前因、选项、利弊和我推荐的答案；点一下选项就能选中，底部可一键复制成答复发我。</p>
+  </header>
+
+  <div class="facts">
+    <div class="fact">
+      <div class="n">事实 1</div>
+      <h4>现在的页面是骨架，不是页面</h4>
+      <p>新技能 21 个模板全部是 16 行、270–288 字节的骨架，正文由 <code>render/html.ts:27-47</code> 按数据形状统一生成 —— 73 条场景走的是同一张页换数据。老技能对同样 73 条场景引用了 49 个真页面模板。</p>
+      <span class="src">来源：html-scenes-gap-inventory.md §三</span>
+    </div>
+    <div class="fact">
+      <div class="n">事实 2</div>
+      <h4>链路断在最后一跳</h4>
+      <p>新技能默认只输出 JSON，只有显式加 <code>--html</code>（<code>cmd_read.ts:850-859</code>）或 HELP 交付（<code>:860-868</code>）才落文件。老技能是写类场景默认落 HTML。</p>
+      <span class="src">来源：html-scenes-gap-inventory.md §4.3 第 6 条</span>
+    </div>
+    <div class="fact">
+      <div class="n">事实 3</div>
+      <h4>代码里没有能力目录</h4>
+      <p><code>src/</code> 第一层是 cli、fetch、policy、render、help 五个工种名；21 条命令键挤在 <code>cmd_read.ts</code> 一个 <code>switch</code> 里（实测 884 行）。卡路里同位置是 <code>src/&lt;能力&gt;/commands.ts</code>。</p>
+      <span class="src">来源：html-scenes-precedents.md §D；包内台账写 876 行已过期</span>
+    </div>
+  </div>
+
+  <section>
+    <h3>一 · 交付什么</h3>
+
+    <article class="q" id="q1">
+      <header><span class="qid">Q1</span><h4>页面册子怎么切</h4><span class="tag">粒度</span></header>
+      <p class="why"><b>前因：</b>你要「所有唤醒词的对应 HTML 都开发完毕」＋「每个功能域下面的场景都开发好」。而现在 21 个骨架页服务 73 条场景，等于同一张页换数据；老技能对同样这批场景有 49 个真页面（照片墙、撤销选择、搬家清单、盘点差异、首次使用向导、健康报告、衣橱分析这些都有）。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q1" data-short="(a) 73 场景各一页" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">73 条场景各出一页</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>满足你的原话；墙的格数、链路行数、判据真假都数得清；每条场景能按它自己的信息结构做设计</div>
+            <div class="con"><b>弊</b>工作量最大，要按 9 个域切票并行推进</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q1" data-short="(b) 对齐老技能 49 个页面" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">对齐老技能的 49 个页面模板</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>与老技能逐件对齐，工作量比 (a) 小一档</div>
+            <div class="con"><b>弊</b>多条场景仍共用一页换数据，等于把现状保留下来</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q1" data-short="(c) 21 个命令键各一页" aria-pressed="false">
+          <span class="row1"><span class="key">c</span><span class="label">21 个命令键各一页</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>最省，改动量最小</div>
+            <div class="con"><b>弊</b>「所有唤醒词都有对应 HTML」不成立；按场景做生动展示也做不到</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q9">
+      <header><span class="qid">Q9</span><h4>命令默认要不要落 HTML</h4><span class="tag">链路</span></header>
+      <p class="why"><b>前因：</b>你需求 2 写的链路是「prompt → 唤醒词 → 命令 → HTML 绝对路径」。新技能默认只吐 JSON，这一跳要人工补参数，链路等于没通。命名与落盘的共用件 #183 已经做好（`base-paint/save-html`），复用不新造。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q9" data-short="(a) 默认落 HTML ＋ 回执给绝对路径" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">默认落 HTML，回执直接给绝对路径</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>链路真正打通；与老技能写类行为一致；落点和命名走现成共用件</div>
+            <div class="con"><b>弊</b>改默认输出语义，动输出层与既有用例</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q9" data-short="(b) 保持现状，靠 --html 显式生成" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">保持现状，产物靠显式参数生成</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>零改动，风险最低</div>
+            <div class="con"><b>弊</b>「命令 → HTML 路径」这一跳靠人工，验收时证的只是脚本能跑</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q10">
+      <header><span class="qid">Q10</span><h4>老技能自己不出页面的 13 条，补不补</h4><span class="tag">范围</span></header>
+      <p class="why"><b>前因：</b>老技能票据凭证域的 11 条写类场景（登记购买记录、登记保修、记录维修、设置保养周期、执行保养、登记证件、证件归档、更新证件、存账号、改账号等）只打 JSON 回执、不渲染页面；家庭协作那 2 条只在带 `--output` 时才落 HTML。而你要的是「所有唤醒词都有 HTML」。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q10" data-short="(a) 补齐这 13 条页面" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">补齐，按「所有唤醒词都有页面」为准</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>册子完整 73 格；登记购买记录、存账号这类最常被唤醒的写类词也有页面</div>
+            <div class="con"><b>弊</b>比老技能多做 13 页</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q10" data-short="(b) 沿老行为，不补" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">沿老技能行为，这 13 条只出 JSON</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>少做 13 页，且与老技能行为逐条一致</div>
+            <div class="con"><b>弊</b>册子缺 13 格，与「所有唤醒词都开发完」冲突</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q7">
+      <header><span class="qid">Q7</span><h4>本期不做的清单</h4><span class="tag">范围</span></header>
+      <p class="why"><b>前因：</b>这四项都在上一张地图（#183）里已经裁过或明确留待别处：联动 3 词（联动总览、记到卡路里、记到记账）已定「留登记位、走 combos 另设计」；3 条带 `(HTML)` 的兼容词不进清单；HELP 页 #183 已交付；发版装机是另一条线。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q7" data-short="(a) 四项都不做" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">四项都不做</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>地图聚焦，判据都在本地跑得出来；不把图拖到发版授权上</div>
+            <div class="con"><b>弊</b>想在 DSH 界面里真说一句唤醒词，要等发版那张票</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q7" data-short="(b) 本图顺带做完发版装机" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">本图顺带把发版装机也做完</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>可直接在 GUI 里真跑一遍</div>
+            <div class="con"><b>弊</b>收口会卡在浏览器里批 2FA；图变长，页面本身没多做的</div>
+          </span>
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h3>二 · 怎么建</h3>
+
+    <article class="q" id="q2">
+      <header><span class="qid">Q2</span><h4>解耦范围：整包按 9 个域重排吗</h4><span class="tag">架构</span></header>
+      <p class="why"><b>前因：</b>你说「代码架构需要解耦，可以参考新卡路里的架构设计」。卡路里第一层是 <code>src/&lt;能力&gt;/</code>，每个能力有 <code>commands.ts</code>（命令声明）＋ <code>routes.ts</code>（路由）＋装配件。仓规 <code>docs/agents/structure.md</code> 铁律四：能力目录名取自 HELP 一级分组 —— 对居家就是那 9 个域（物品管理、空间与位置、穿搭出行、统计总览、快递购物、票据凭证、家庭协作、开始使用、联动）。现在 73 条场景要落地，却没有一个域目录可放。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q2" data-short="(a) 整包按 9 域重排，先出结构设计票报你点头" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">整包按 9 个域重排</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>73 个页面有合理归属；与卡路里同形；顺手拆掉那个 884 行的 switch；照 #183 的做法先出结构设计票、报你点头再动</div>
+            <div class="con"><b>弊</b>会碰到已能跑的 21 条命令，回归面比另两种大</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q2" data-short="(b) 只新增域目录装新页面" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">只新增域目录，旧件原地不动</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>回归面小，现有命令零风险</div>
+            <div class="con"><b>弊</b>新旧两套并存；新页面陆续堆进去，等于把重排留到下次再来一遍</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q2" data-short="(c) 解耦另立一张图" aria-pressed="false">
+          <span class="row1"><span class="key">c</span><span class="label">解耦另立一张图，本图只做页面</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>本图最聚焦</div>
+            <div class="con"><b>弊</b>新页面没有归属，先写再搬，两次成本</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q4">
+      <header><span class="qid">Q4</span><h4>页面数据从哪来</h4><span class="tag">数据</span></header>
+      <p class="why"><b>前因：</b>验收墙上每一格都是可点的真页面，所以先要定：页面上显示的数据，是跑真命令链取出来的，还是直接拼一份样例数据塞进模板。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q4" data-short="(a) 种子库 ＋ 真命令链" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">仓内种子数据灌测试库，页面一律经真命令链产出</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>链路顺带被验证；墙上每格都是真渲染；种子脚本入仓、随时可重跑</div>
+            <div class="con"><b>弊</b>要先写一份种子脚本与测试库</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q4" data-short="(b) 静态样例数据直接渲染" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">写死的样例数据直接渲染</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>最快，不用建库</div>
+            <div class="con"><b>弊</b>「唤醒词 → 命令 → 页面」这条链没有被验证，等于只验了模板好不好看</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q4" data-short="(c) 直接连生产库" aria-pressed="false">
+          <span class="row1"><span class="key">c</span><span class="label">直接连我现在的生产数据</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>看到的是真实数据的样子</div>
+            <div class="con"><b>弊</b>写类场景会在真实数据上动刀，且换台机器复不了</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q5">
+      <header><span class="qid">Q5</span><h4>产物落点与那条链路总览页</h4><span class="tag">落点</span></header>
+      <p class="why"><b>前因：</b>你要「输出在一个 HTML 中，点里面那个绝对产物路径就能跳转打开」。老规范是 <code>&lt;数据根&gt;/home_manager_html/&lt;命令中文名&gt;_&lt;时间戳&gt;.html</code>。另外实测一条硬约束：本机视觉工具只接受工作区内的文件（拿生产目录的文件直接渲染会被拒），而仓规要求验收墙与产物放在同一个目录。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q5" data-short="(a) 沿用老规范落点，链路总览页落在产物目录里" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">沿用老规范，链路总览页与产物同目录</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>与老技能一致；总览页每行印绝对路径文本并把文本做成可点链接，正好满足你的原话；墙也能同目录渲染</div>
+            <div class="con"><b>弊</b>产物目录里会多一份总览页文件</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q5" data-short="(b) 链路总览页单独放到 .scratch" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">总览页单独放到工作区的 .scratch 里</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>产物目录保持干净</div>
+            <div class="con"><b>弊</b>跨目录引用容易断，点开打不着的风险高</div>
+          </span>
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h3>三 · 怎么验收</h3>
+
+    <article class="q" id="q3">
+      <header><span class="qid">Q3</span><h4>页面 UI 走哪一家的语言</h4><span class="tag">UI 口径</span></header>
+      <p class="why"><b>前因：</b>老技能 67 个页模板是它自己那套观感；新仓已有打磨过的共用件（base-paint、help 模板、卡路里与记账的页面语言）。上一张图 #183 已经裁过一次同样的问题：老技能只作功能来源，UI 用新仓现成的。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q3" data-short="(a) 老技能只作功能来源，UI 走新仓共用件" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">老技能提供功能与信息结构，UI 走新仓共用件</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>沿用 #183 裁定；全局观感统一，「符合 UI 设计师审美」才有统一判据；双端自适应可复用现成做法</div>
+            <div class="con"><b>弊</b>与老页面观感不同，不能逐像素对照</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q3" data-short="(b) 逐页复刻老技能页面的 UI" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">逐页复刻老技能页面的 UI</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>与老技能视觉一致，熟悉</div>
+            <div class="con"><b>弊</b>老 UI 没经过审美审查，且与新仓共用件冲突，等于放弃现成基建</div>
+          </span>
+        </button>
+      </div>
+    </article>
+
+    <article class="q" id="q6">
+      <header><span class="qid">Q6</span><h4>验收墙怎么摆、分数怎么算</h4><span class="tag">验收</span></header>
+      <p class="why"><b>前因：</b>仓规 <code>docs/agents/视觉验收墙.md</code> 要求双端各出墙（手机 390 宽、桌面 1280 宽），每格一件真产物，格数要和清单对得上；同时又提醒「几十格是舒适区」，格数多了要按页族拆。你的要求是最后用视觉审查打分，100 分制下要到 90 分。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q6" data-short="(a) 墙按 9 个域成对出（各 9 张），每页留复核记录，综合分 ≥90" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">按 9 个域成对出墙，每页留复核记录，综合分 ≥90</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>每张墙 4–15 格，符合仓规的舒适区；分数有明确定义；出问题能精确到域和人</div>
+            <div class="con"><b>弊</b>手机墙加桌面墙共 18 张，你要滚一遍</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q6" data-short="(b) 只出两张总墙" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">只出两张总墙（手机一张、桌面一张）</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>一次滚完，最省事</div>
+            <div class="con"><b>弊</b>73 格挤一张，按仓规已超舒适区，容易看不清也容易被跳过</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q6" data-short="(c) 每一页各自都要 ≥90 分" aria-pressed="false">
+          <span class="row1"><span class="key">c</span><span class="label">不放综合分，每一页各自都要 ≥90</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>标准最严，没有平均掉的空间</div>
+            <div class="con"><b>弊</b>73 页逐页评分成本高，收益低于综合分加逐页记录</div>
+          </span>
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h3>四 · 怎么跑</h3>
+
+    <article class="q" id="q8">
+      <header><span class="qid">Q8</span><h4>图内一席串行还是多席并行</h4><span class="tag">编排</span></header>
+      <p class="why"><b>前因：</b>9 个域天然可以并行推进，每域一票、票面自带判据与产物。这决定我把票切多细、阻塞边怎么连。</p>
+      <div class="opts">
+        <button class="opt" data-q="Q8" data-short="(a) 域票并行：结构设计票先行，域票互不阻塞，收口墙票收尾" data-rec="1" aria-pressed="false">
+          <span class="row1"><span class="key">a</span><span class="label">域票并行</span><span class="rec">推荐</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>9 个域同时推进，最快；每席上下文只装自己那一域</div>
+            <div class="con"><b>弊</b>要按并发纪律排编译与提交的队列</div>
+          </span>
+        </button>
+        <button class="opt" data-q="Q8" data-short="(b) 单席串行，票切粗一点" aria-pressed="false">
+          <span class="row1"><span class="key">b</span><span class="label">单席串行，票切粗一些</span></span>
+          <span class="pc">
+            <div class="pro"><b>利</b>交接成本低，冲突少</div>
+            <div class="con"><b>弊</b>73 条场景串着做，日历时间最长</div>
+          </span>
+        </button>
+      </div>
+    </article>
+  </section>
+
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <span class="hint" id="hint">点选项选中；也可以只回「全部认可推荐」</span>
+    <div class="grow"></div>
+    <span class="copied" id="copied">已复制，直接粘贴到对话即可</span>
+    <button class="btn" id="pick">全选推荐</button>
+    <button class="btn primary" id="copy">复制我的答复</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.q'));
+  var total = cards.length;
+  var nEl = document.getElementById('n');
+
+  function chosen(card){
+    var b = card.querySelector('.opt[aria-pressed="true"]');
+    return b ? b : null;
+  }
+  function refresh(){
+    var n = 0;
+    cards.forEach(function(c){ if(chosen(c)) n++; });
+    nEl.textContent = n;
+    return n;
+  }
+  cards.forEach(function(card){
+    if (!chosen(card)) {
+      var rec = card.querySelector('.opt[data-rec="1"]');
+      if (rec) rec.setAttribute('aria-pressed','false');
+    }
+    card.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.opt') : null;
+      if (!btn || !card.contains(btn)) return;
+      var was = btn.getAttribute('aria-pressed') === 'true';
+      card.querySelectorAll('.opt').forEach(function(o){ o.setAttribute('aria-pressed','false'); });
+      btn.setAttribute('aria-pressed', was ? 'false' : 'true');
+      if (!was) { card.classList.add('answered'); } else { card.classList.remove('answered'); }
+      refresh();
+    });
+  });
+
+  document.getElementById('pick').addEventListener('click', function(){
+    cards.forEach(function(card){
+      card.querySelectorAll('.opt').forEach(function(o){ o.setAttribute('aria-pressed','false'); });
+      var rec = card.querySelector('.opt[data-rec="1"]');
+      if (rec) { rec.setAttribute('aria-pressed','true'); card.classList.add('answered'); }
+    });
+    refresh();
+  });
+
+  document.getElementById('copy').addEventListener('click', function(){
+    var lines = ['居家管家场景页地图 · 第 1 轮答复（按顺序）',''];
+    cards.forEach(function(card){
+      var b = chosen(card);
+      var qid = card.querySelector('.qid').textContent;
+      var rec = card.querySelector('.opt[data-rec="1"]');
+      var suffix = (b && rec && b === rec) ? ' —— 认可推荐' : ' —— 改为上面这条';
+      lines.push(qid + ' ' + (b ? b.getAttribute('data-short') : '（未选，按你推荐的办）') + (b ? suffix : ''));
+    });
+    var text = lines.join('\n');
+    var done = function(){
+      var c = document.getElementById('copied');
+      c.classList.add('on');
+      setTimeout(function(){ c.classList.remove('on'); }, 2600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function(){ fallback(text, done); });
+    } else { fallback(text, done); }
+  });
+
+  function fallback(text, done){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.top='-1000px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e){ alert(text); }
+    document.body.removeChild(ta);
+  }
+
+  refresh();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+{
+  "map": {
+    "title": "[wayfinder] 居家管家场景页：70 条场景各出真页面（按 9 域解耦＋视觉验收墙验收）",
+    "label": "wayfinder:map",
+    "bodyFile": "html-scenes-map-body.md",
+    "issue": 797
+  },
+  "tickets": [
+    {
+      "n": 1,
+      "key": "01-pages-ledger",
+      "type": "research",
+      "title": "册子：老技能 49 个页面模板 → 70 场景的信息结构清单",
+      "body": "html-scenes-tickets/01-pages-ledger.md",
+      "blockedBy": [],
+      "issue": 798
+    },
+    {
+      "n": 2,
+      "key": "02-structure-design",
+      "type": "grilling",
+      "title": "结构设计：按 9 域重排的形状定稿（必报五步第一、二步，报用户点头）",
+      "body": "html-scenes-tickets/02-structure-design.md",
+      "blockedBy": [
+        1
+      ],
+      "issue": 799
+    },
+    {
+      "n": 3,
+      "key": "03-structure-landing",
+      "type": "task",
+      "title": "结构重排落地：目录搬进 9 域＋派生链＋门禁＋既有命令回归",
+      "body": "html-scenes-tickets/03-structure-landing.md",
+      "blockedBy": [
+        2
+      ],
+      "issue": 800
+    },
+    {
+      "n": 4,
+      "key": "04-html-delivery-chain",
+      "type": "task",
+      "title": "链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径",
+      "body": "html-scenes-tickets/04-html-delivery-chain.md",
+      "blockedBy": [
+        3
+      ],
+      "issue": 801
+    },
+    {
+      "n": 5,
+      "key": "05-seed-data",
+      "type": "task",
+      "title": "种子数据：仓内种子脚本＋测试库（70 场景所需）",
+      "body": "html-scenes-tickets/05-seed-data.md",
+      "blockedBy": [
+        1
+      ],
+      "issue": 802
+    },
+    {
+      "n": 6,
+      "key": "06-style-audit",
+      "type": "task",
+      "title": "判据件：样式与文案机审接到居家＋接进包内门",
+      "body": "html-scenes-tickets/06-style-audit.md",
+      "blockedBy": [],
+      "issue": 803
+    },
+    {
+      "n": 7,
+      "key": "07-wall-and-chain-page",
+      "type": "task",
+      "title": "生成器：双端验收墙＋链路总览页",
+      "body": "html-scenes-tickets/07-wall-and-chain-page.md",
+      "blockedBy": [],
+      "issue": 804
+    },
+    {
+      "n": 8,
+      "key": "08-sample-scene",
+      "type": "task",
+      "title": "样板：录物品端到端走通（形状先验，人裁过再铺开）",
+      "body": "html-scenes-tickets/08-sample-scene.md",
+      "blockedBy": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "issue": 805
+    },
+    {
+      "n": 9,
+      "key": "09-items-1",
+      "type": "task",
+      "title": "物品管理域（一）录入与查找 10 条：各出真页面",
+      "body": "html-scenes-tickets/09-items-1.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 806
+    },
+    {
+      "n": 10,
+      "key": "10-items-2",
+      "type": "task",
+      "title": "物品管理域（二）更新与标签分类 11 条：各出真页面",
+      "body": "html-scenes-tickets/10-items-2.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 807
+    },
+    {
+      "n": 11,
+      "key": "11-items-3",
+      "type": "task",
+      "title": "物品管理域（三）照片、盘点与历史 8 条：各出真页面",
+      "body": "html-scenes-tickets/11-items-3.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 808
+    },
+    {
+      "n": 12,
+      "key": "12-space",
+      "type": "task",
+      "title": "空间与位置域 4 条：各出真页面",
+      "body": "html-scenes-tickets/12-space.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 809
+    },
+    {
+      "n": 13,
+      "key": "13-outfit",
+      "type": "task",
+      "title": "穿搭出行域 5 条：各出真页面",
+      "body": "html-scenes-tickets/13-outfit.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 810
+    },
+    {
+      "n": 14,
+      "key": "14-stats",
+      "type": "task",
+      "title": "统计总览域 4 条：各出真页面",
+      "body": "html-scenes-tickets/14-stats.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 811
+    },
+    {
+      "n": 15,
+      "key": "15-express",
+      "type": "task",
+      "title": "快递购物域 4 条：各出真页面",
+      "body": "html-scenes-tickets/15-express.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 812
+    },
+    {
+      "n": 16,
+      "key": "16-receipt-1",
+      "type": "task",
+      "title": "票据凭证域（一）购买记录与保修保养 10 条：各出真页面",
+      "body": "html-scenes-tickets/16-receipt-1.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 813
+    },
+    {
+      "n": 17,
+      "key": "17-receipt-2",
+      "type": "task",
+      "title": "票据凭证域（二）证件与账号 8 条：各出真页面",
+      "body": "html-scenes-tickets/17-receipt-2.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 814
+    },
+    {
+      "n": 18,
+      "key": "18-family",
+      "type": "task",
+      "title": "家庭协作域 2 条＋借用写侧唤醒词接通",
+      "body": "html-scenes-tickets/18-family.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 815
+    },
+    {
+      "n": 19,
+      "key": "19-setup",
+      "type": "task",
+      "title": "开始使用域 4 条：各出真页面",
+      "body": "html-scenes-tickets/19-setup.md",
+      "blockedBy": [
+        8
+      ],
+      "issue": 816
+    },
+    {
+      "n": 20,
+      "key": "20-closeout",
+      "type": "task",
+      "title": "收口：双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审",
+      "body": "html-scenes-tickets/20-closeout.md",
+      "blockedBy": [
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "issue": 817
+    }
+  ]
+}
