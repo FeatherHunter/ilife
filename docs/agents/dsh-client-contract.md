@@ -68,6 +68,12 @@ externals：`react react/jsx-runtime react-dom react-dom/client cordis
   （`dsh-cordis-client-runner/lib/client.js:3885`）。
 - 只读面：`entries/getVersion/subscribe`（uSES 配对，`renderer:1188`）；`ctx.get` miss 返回 undefined，
   一律先判空（`cordis-client-runner:4083`）。
+- `settings.section` 的注册项**没有图标字段**，导航行的图标由外壳按 `id` 查表
+  （`dsh-client-ui-settings-general/lib/client.js:102-123` 的 `navIcon(id)` 只认 models /
+  agent-presets / plugins / desktop），未知 id 一律回落设置齿轮 `IconSettingsOutline16`；
+  label 是纯文本，往里塞 emoji 只会让齿轮旁边多一个不吃 `currentColor` 的彩色字形。
+  要自家图标只能画在 section 内容区里（先例：同文件 `:76` 的 `IconDesktopSettings`
+  「Desktop-owned display glyph kept local until the upstream slot accepts icons」）。
 - `settings.section` order 分配表（单卡方案后只剩总管一条；单品独立 section 已删）：
   settings-plugins 15 / agent-presets 20 / dsh-life-pack 21（爱生活卡）/ dsh-im-companion 22。
   爱生活页签槽内 tab 顺序复用 SLOT_ORDER（memo 70 / calorie 75 / schedule 80 / home 85 / chef 90 / bill 95）。
