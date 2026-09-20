@@ -9,7 +9,7 @@ import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
-import { isAbsent, manualForDisplay, pendingRestartText, slotStateOf, verdictOf, versionLines } from '../dist/update-view.js';
+import { isAbsent, manualForDisplay, markStaleOthers, pendingRestartText, slotStateOf, staleVerdict, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
 import { readPanelRegistered } from '../dist/update-env.js';
 
@@ -48,11 +48,21 @@ describe('#678 原因人话与手工命令', () => {
       assert.ok(text.length > 8, code + ' 缺人话');
       assert.ok(!text.startsWith(code), code + ' 正文以原因码开头（不算人话）');
     }
-    assert.match(reasonText('install-failed'), /手工命令/);
+    // 票 #740 的第一性原理判据：每条报错都要**给得出下一步**（面板上的按钮名，或一条要执行的命令）。
+    for (const code of BLOCKED_REASONS) {
+      const text = reasonText(code);
+      assert.ok(/点「|重启 DSH|下面这条命令|改成磁盘上的版本号/.test(text), code + ' 没给下一步');
+    }
+    // 自造词与口语不许回到文案里（票 #740 全表换字时逐条清掉过一批）。
+    const all = [...BLOCKED_REASONS, 'check-failed', 'check-expired', 'invalid-release', 'update-busy', 'install-failed', 'manager-unreachable', 'bad-request', 'internal'].map(reasonText).join('\n');
+    assert.ok(!/半截任务|电话没接上|宿主半|回执异常|还出现就重装|查宿主日志/.test(all), '自造词／口语回到了文案里');
+    assert.match(reasonText('install-failed'), /终端/);
   });
   it('未知原因码不猜：原样回码并说明这是未知原因', () => {
-    assert.match(reasonText('something-new'), /未知原因/);
-    assert.match(reasonText('something-new'), /something-new/);
+    const text = reasonText('something-new');
+    assert.match(text, /不认识这个原因码/);
+    assert.match(text, /something-new/);
+    assert.match(text, /DSH 日志/, '未知码也要给得出下一步（去哪看报错）');
   });
   it('手工兜底命令形状照更新包 README 第 9 节（精确版本、官方源、--save-exact）', () => {
     assert.equal(
@@ -120,17 +130,67 @@ describe('#678 一行结论与版本行', () => {
   it('三态：还没查 / 已是最新 / 有新版可装', () => {
     assert.equal(verdictOf(target, snapshot({})).kind, 'unknown');
     assert.equal(verdictOf(target, snapshot({ latestVersion: '0.2.5' })).kind, 'up-to-date');
+    assert.match(verdictOf(target, snapshot({ latestVersion: '0.2.5' })).text, /已是最新版本 0\.2\.5。$/);
     const hasNew = verdictOf(target, snapshot({ latestVersion: '0.2.6', canInstall: true }));
     assert.equal(hasNew.kind, 'update-available');
     assert.equal(hasNew.action, 'update');
     assert.match(hasNew.text, /0\.2\.6/);
+    assert.match(hasNew.text, /正在运行 0\.2\.5/, '有新版那一句要带上「正在运行的是哪个版本」');
   });
-  it('装不了：给原因不给按钮（待重启期间尤其不给安装按钮）', () => {
+  // 票 #740：拦截态不许只给一句话——面板能代劳的**必须**给按钮，代劳不了的给命令块。
+  it('装不了：原因 ＋ 一个能执行的下一步（#740）', () => {
     const blocked = verdictOf(target, snapshot({ latestVersion: '0.2.6', blockedReason: 'source-install' }));
     assert.equal(blocked.kind, 'blocked');
-    assert.equal(blocked.action, null);
-    const restarting = verdictOf(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
-    assert.equal(restarting.action, null);
+    assert.equal(blocked.action, null, '源码装面板代劳不了：只给原因，命令块兜底');
+    const changed = verdictOf(target, snapshot({ latestVersion: '0.2.6', blockedReason: 'installation-changed' }));
+    assert.equal(changed.action, 'recheck', '安装清单变了给「重新检查」');
+    assert.match(changed.text, /重新检查/);
+    const half = verdictOf(target, snapshot({ latestVersion: '0.2.6', installedVersion: '0.2.5', blockedReason: 'recovery-required' }));
+    assert.equal(half.action, 'retry', '上次安装没收尾给「重试安装」');
+    assert.match(half.text, /重试安装/);
+  });
+  // 票 #740 的真机根因：同一种事实（装了没重启）会被更新核心报成两种原因码
+  // （`pending-restart`，或被上一次中断的任务盖成 `recovery-required`）⇒ 判据必须绑事实。
+  it('待重启按事实判，不按原因码判（#740）', () => {
+    const byCode = verdictOf(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
+    assert.equal(byCode.action, null, '待重启期间不给安装按钮');
+    assert.match(byCode.text, /重启 DSH（退出后重新打开）后生效/);
+    const byJob = verdictOf(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'recovery-required' }));
+    assert.equal(byJob.action, null, '原因码是「上次安装没收尾」，事实是「装好了没重启」：照样先说重启');
+    assert.match(byJob.text, /新版 0\.2\.6 已装到磁盘；正在运行的是 0\.2\.5/);
+    assert.ok(!/重试安装/.test(byJob.text), '事实是待重启时，不许去劝人重试安装');
+    const nothing = verdictOf(target, snapshot({ latestVersion: '0.2.5', canInstall: false, blockedReason: 'installation-changed' }));
+    assert.equal(nothing.kind, 'up-to-date', '没东西可装时，守卫拦不拦与用户无关：不占那一行');
+  });
+  it('装成一家之后别家的读数作废：给「重新检查」（#740）', () => {
+    const stale = staleVerdict();
+    assert.equal(stale.kind, 'blocked');
+    assert.equal(stale.action, 'recheck');
+    assert.match(stale.text, /刚装过别的插件/);
+    assert.match(stale.text, /重新检查/);
+  });
+  it('作废只作废别家：装成的那一家自己保持原样（#740）', () => {
+    const ready = { phase: 'ready', outcome: null, failure: null };
+    const rows = { a: ready, b: ready, c: { ...ready, stale: true } };
+    const next = markStaleOthers(rows, 'a');
+    assert.equal(next.a.stale, undefined, '刚装成的那家不许被自己作废');
+    assert.equal(next.b.stale, true, '别家要作废');
+    assert.equal(next.c.stale, true);
+    assert.equal(rows.b.stale, undefined, '原对象不许被改写（纯函数）');
+  });
+  it('待重启文案说清新版号、正在跑的版本与动作；版本行标注技能包随插件', () => {
+    const text = pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
+    assert.match(text, /0\.2\.6/);
+    assert.match(text, /正在运行的是 0\.2\.5/);
+    assert.match(text, /重启 DSH（退出后重新打开）后生效/);
+    assert.match(text, /卡路里/, '七家一起列时要点名是哪一家');
+    assert.equal(pendingRestartText(target, snapshot({})), null);
+    assert.ok(pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'recovery-required' })) !== null,
+      '原因码不同、事实相同：横幅照旧出（按事实判）');
+    const lines = versionLines(target, snapshot({}));
+    assert.match(lines[0], /dsh-calorie 0\.2\.5/);
+    assert.match(lines[1], /skill-calorie 0\.1\.7/);
+    assert.match(lines[1], /随插件/);
   });
   it('缺席 + 已知最新版本：给「装上」按钮', () => {
     const absent = verdictOf(absentTarget, snapshot({ runningVersion: '0.0.0', installedVersion: null, latestVersion: '0.2.6' }));
@@ -142,15 +202,6 @@ describe('#678 一行结论与版本行', () => {
     assert.equal(manualForDisplay(absentTarget, packagerCmd), 'dsh plugin add dsh-life-pack dsh-calorie');
     assert.equal(manualForDisplay(absentTarget, null).includes('--save-exact'), false);
     assert.equal(manualForDisplay(target, packagerCmd), packagerCmd);
-  });
-  it('待重启文案说清新版号与重启两件事；版本行标注技能包随插件', () => {    const text = pendingRestartText(target, snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' }));
-    assert.match(text, /0\.2\.6/);
-    assert.match(text, /重启宿主后生效/);
-    assert.equal(pendingRestartText(target, snapshot({})), null);
-    const lines = versionLines(target, snapshot({}));
-    assert.match(lines[0], /dsh-calorie 0\.2\.5/);
-    assert.match(lines[1], /skill-calorie 0\.1\.7/);
-    assert.match(lines[1], /随插件/);
   });
 });
 
@@ -279,7 +330,7 @@ describe('#678 面板流程（假传输口）', () => {
     const checked = await checkTarget(call, target);
     assert.equal(checked.ok, false);
     assert.equal(checked.code, 'update-busy');
-    assert.match(checked.message, /同时只装一个/);
+    assert.match(checked.message, /同一时间只能安装一个插件/);
   });
   it('传输口缺席（宿主连接没到）：给内部错，不抛', async () => {
     const checked = await checkTarget(null, target);

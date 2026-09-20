@@ -11,8 +11,8 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { isAbsent, manualForDisplay, pendingRestartText, slotStateOf, verdictOf, versionLines } from './update-view.js';
-import type { CheckOutcome, TargetInfo, Verdict } from './update-view.js';
+import { isAbsent, manualForDisplay, markStaleOthers, pendingRestartText, slotStateOf, staleVerdict, verdictOf, versionLines } from './update-view.js';
+import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
 export const PANEL_STYLE = {
@@ -200,11 +200,14 @@ export function rowToneOf(row: UpdateRowState, verdict: Verdict | null): RowTone
   }
 }
 
-/** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。 */
+/** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。
+ *  `stale`＝「这一家的快照已经过期」（别家刚装成，七家共用的安装清单被改写了，票 #740）：
+ *  这时不拿旧快照的话去画卡，直接换成「重新检查」那一态。 */
 export interface UpdateRowState {
   readonly phase: 'idle' | 'checking' | 'ready' | 'installing' | 'failed';
   readonly outcome: CheckOutcome | null;
   readonly failure: CallFailure | null;
+  readonly stale?: boolean;
 }
 
 export interface UpdateRowsFace {
@@ -217,8 +220,17 @@ export interface UpdateRowsFace {
   readonly open: boolean;
   close(): void;
   checkAll(): void;
-  act(target: TargetInfo): void;
+  /** 执行这一行按钮对应的动作（装上／装上更新／重试安装／重新检查）。 */
+  act(target: TargetInfo, action: VerdictAction): void;
 }
+
+/** 四个动作在屏上的名字：按钮文案与判据同源（票 #740）。 */
+const ACTION_LABEL: Readonly<Record<VerdictAction, string>> = {
+  install: '装上',
+  update: '装上更新',
+  retry: '重试安装',
+  recheck: '重新检查',
+};
 
 const IDLE: UpdateRowState = { phase: 'idle', outcome: null, failure: null };
 
@@ -255,32 +267,49 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
     setRows((previous) => ({ ...previous, [key]: next }));
   }, []);
+  /** 装成一家 ⇒ 其余各家的旧快照一律作废（票 #740）：判据见 `markStaleOthers`。 */
+  const staleOthers = React.useCallback((keepKey: string) => {
+    setRows((previous) => markStaleOthers(previous, keepKey));
+  }, []);
   const checkAll = React.useCallback(() => {
     setChecking(true);
     setOpen(true);
     const list = targets;
-    for (const target of list) patch(target.key, { phase: 'checking', outcome: rows[target.key]?.outcome ?? null, failure: null });
+    // 重查即重新绑一次安装态指纹 ⇒ 过期标记随之清掉。
+    for (const target of list) patch(target.key, { phase: 'checking', outcome: rows[target.key]?.outcome ?? null, failure: null, stale: false });
     void Promise.all(
       list.map(async (target) => {
         const result = await checkTarget(getCall(), target);
-        patch(target.key, result.ok ? { phase: 'ready', outcome: result.value, failure: null } : { phase: 'failed', outcome: null, failure: result });
+        patch(target.key, result.ok ? { phase: 'ready', outcome: result.value, failure: null, stale: false } : { phase: 'failed', outcome: null, failure: result, stale: false });
       }),
     ).finally(() => setChecking(false));
   }, [getCall, patch, rows, targets]);
   const act = React.useCallback(
-    (target: TargetInfo) => {
+    (target: TargetInfo, action: VerdictAction) => {
       const current = rows[target.key] ?? IDLE;
-      patch(target.key, { ...current, phase: 'installing', failure: null });
+      // 「重新检查」：只重读这一家（重新绑一次安装态指纹）。装成一家之后其余各家都要走这一步——
+      // 它们的旧快照已经过期，直接装必然被守卫拦下（票 #740）。
+      if (action === 'recheck') {
+        patch(target.key, { phase: 'checking', outcome: current.outcome, failure: null, stale: false });
+        void (async () => {
+          const checked = await checkTarget(getCall(), target);
+          patch(target.key, checked.ok
+            ? { phase: 'ready', outcome: checked.value, failure: null, stale: false }
+            : { phase: 'failed', outcome: null, failure: checked, stale: false });
+        })();
+        return;
+      }
+      patch(target.key, { ...current, phase: 'installing', failure: null, stale: false });
       void (async () => {
         const absent = isAbsent(target);
         let version = current.outcome?.snapshot.latestVersion ?? null;
         if (absent && version === null) {
           const checked = await checkTarget(getCall(), target);
           if (!checked.ok) {
-            patch(target.key, { phase: 'failed', outcome: null, failure: checked });
+            patch(target.key, { phase: 'failed', outcome: null, failure: checked, stale: false });
             return;
           }
-          patch(target.key, { phase: 'installing', outcome: checked.value, failure: null });
+          patch(target.key, { phase: 'installing', outcome: checked.value, failure: null, stale: false });
           version = checked.value.snapshot.latestVersion;
         }
         const result = absent
@@ -289,7 +318,9 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
         if (result.ok) {
           // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
           const refreshed = await checkTarget(getCall(), target, target.phones?.status);
-          patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
+          patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null, stale: false } : { phase: 'failed', outcome: null, failure: refreshed, stale: false });
+          // 装成一家 ⇒ 其余各家的旧快照作废（票 #740）。
+          staleOthers(target.key);
           // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
           // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
           await reload();
@@ -299,10 +330,11 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           phase: 'failed',
           outcome: current.outcome,
           failure: { ...result, manual: result.manual ?? current.outcome?.manual ?? null },
+          stale: false,
         });
       })();
     },
-    [getCall, patch, pollMs, reload, rows],
+    [getCall, patch, pollMs, reload, rows, staleOthers],
   );
   return { targets, rows, pollMs, loadError, checking, open, close: () => setOpen(false), checkAll, act };
 }
@@ -318,7 +350,7 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
       style: disabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
       disabled,
       onClick: checkAll,
-      title: '一次查七家（总管自己 ＋ 六个单品）的插件包版本',
+      title: '检查总管与六家插件的版本',
     },
     checking ? '检查中…' : '检查更新',
   );
@@ -362,10 +394,13 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
   const body = shown.map((target) => {
     const row = rows[target.key];
     const snapshot = row.outcome?.snapshot ?? null;
-    const verdict = snapshot ? verdictOf(target, snapshot) : null;
+    // 快照过期（别家刚装成）⇒ 不拿旧快照的话去画卡，直接换成「重新检查」那一态（票 #740）。
+    const verdict = row.stale === true ? staleVerdict() : (snapshot ? verdictOf(target, snapshot) : null);
     const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
     const busy = row.phase === 'installing';
-    const showManual = manual !== null && (row.phase === 'failed' || verdict?.kind === 'blocked');
+    // 手工命令只在**面板代劳不了**时才摊出来（拦截态但没按钮，或上一次装失败）：
+    // 拦得住但面板一步能推回去的（重新检查／重试安装），摊命令只是噪声（票 #740）。
+    const showManual = manual !== null && (row.phase === 'failed' || (verdict?.kind === 'blocked' && verdict.action === null));
     const tone = rowToneOf(row, verdict);
     const paint = ROW_TONE[tone];
     /** 这一行「当前／最新」两个版本号：不等才算有新版，把「最新」那格上色（用户扫一眼先看有没有箭头）。 */
@@ -407,15 +442,19 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
               type: 'button',
               style: busy ? { ...PANEL_STYLE.btnPrimary, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btnPrimary,
               disabled: busy,
-              onClick: () => props.face.act(target),
+              onClick: () => {
+                if (verdict.action) props.face.act(target, verdict.action);
+              },
             },
-            verdict.action === 'install' ? '装上' : '装上更新',
+            ACTION_LABEL[verdict.action],
           )
         : null,
       row.failure ? React.createElement('div', { style: PANEL_STYLE.reason }, '装不上：' + row.failure.message) : null,
       versionLines(target, snapshot).map((line, index) =>
         React.createElement('div', { key: String(index), style: PANEL_STYLE.skill }, line),
       ),
+      // 命令块先说它是干什么的（票 #740）：给一条命令不给用途，用户不知道该不该敲。
+      showManual ? React.createElement('div', { style: PANEL_STYLE.skill }, '在终端里执行这条命令可以手动完成这一步：') : null,
       showManual ? React.createElement('code', { style: PANEL_STYLE.cmd }, manual) : null,
     );
   });
@@ -462,7 +501,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
               React.createElement(
                 'div',
                 { style: PANEL_STYLE.dialogNote },
-                '装与更新都在宿主后台跑：关掉这块不影响正在进行的安装，再点「检查更新」可以看到最新状态。',
+                '安装在宿主后台继续：关掉这块不会中断它。再点「检查更新」看最新进度。',
               ),
             ),
           ),
@@ -511,14 +550,14 @@ export function AbsentCard(props: {
         target!.packageName +
         ' ' +
         String(installed) +
-        ' 装着，但它这一版的产物里没有爱生活页签的注册代码：得等它发一个带注册代码的新版才对得上。重启与重装都不会变（重装只是把同一版再装一次）。';
+        ' 已安装，但这一版的插件包里没有「爱生活页签」的注册代码：要等它发布带注册代码的新版本。重启和重装都不会改变这一点。';
       break;
     default:
       headline =
         target!.packageName +
         ' ' +
         String(installed) +
-        ' 装着、产物里也有注册代码，但它的设置页没送到浏览器：重启宿主后再看这个页签；仍然这样就去宿主日志里找它的报错。';
+        ' 已安装，插件包里也有注册代码，但它的设置页没有加载到面板：重启 DSH 后再看这个页签；仍然这样，就在 DSH 日志里找它的报错。';
       break;
   }
   return React.createElement(
@@ -533,7 +572,7 @@ export function AbsentCard(props: {
             style: busy ? { ...PANEL_STYLE.btn, marginTop: 8, opacity: 0.55 } : { ...PANEL_STYLE.btn, marginTop: 8 },
             disabled: busy,
             onClick: () => {
-              if (target) props.face.act(target);
+              if (target) props.face.act(target, 'install');
             },
           },
           busy ? '正在装，请稍候…' : '装上',
