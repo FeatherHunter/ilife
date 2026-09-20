@@ -1,4 +1,4 @@
-// #676 卡路里设置页：配置面验收。
+﻿// #676 卡路里设置页：配置面验收。
 //
 // 七组判据：
 //   A 测试隔离在位（#675 替代护栏）
@@ -233,32 +233,33 @@ describe('#676 卡路里设置页 · 配置面', () => {
     it('按钮按档渲染：目录行恰一枚、非目录行没有；onBrowse 缺席时不画按钮', () => {
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
       const textItem = CONFIG_ITEMS.find((i) => i.key === 'db.name');
-      const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} });
+      const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } });
       const buttons = nodesOfType(withBrowse, 'button');
       assert.equal(buttons.length, 1, '目录行恰一枚按钮');
       assert.equal(buttons[0].props.type, 'button');
-      assert.match(textOf(buttons[0]), /选择文件夹/);
+      assert.match(textOf(buttons[0]), /浏览/, '只有应用内浏览这一档写「浏览…」（#744）');
       assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {} }), 'button').length, 0,
         'onBrowse 缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
-      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} }), 'button').length, 0,
+      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').length, 0,
         '非目录行不画按钮');
-      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} }), 'input').length, 1,
+      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'input').length, 1,
         '目录行仍是文本框 ＋ 按钮');
     });
 
     it('点按钮 → 唤一次 pick → 按**平台信封**回填该行；取消一字不动', async () => {
       const seen = [];
       const picker = { pick: async () => { seen.push('pick'); return { ok: true, value: 'D:\\爱生活数据' }; } };
+      const browseHandler = createBrowseHandler({
+        picker,
+        onChange: (k, v) => seen.push([k, v]),
+        onUnavailable: (m) => seen.push(['!', m]),
+      });
       const node = Row({
         item: CONFIG_ITEMS.find((i) => i.key === 'db.dir'),
         value: '',
         disabled: false,
         onChange: (k, v) => seen.push([k, v]),
-        onBrowse: createBrowseHandler({
-          picker,
-          onChange: (k, v) => seen.push([k, v]),
-          onUnavailable: (m) => seen.push(['!', m]),
-        }),
+        browser: { mode: 'native', onOpen: (k) => browseHandler(k) },
       });
       const clicked = nodesOfType(node, 'button')[0].props.onClick();
       assert.equal(typeof clicked?.then, 'function', '按钮的 onClick 要回那枚 Promise（用例据此可判）');
