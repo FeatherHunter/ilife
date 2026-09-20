@@ -27,7 +27,10 @@ import type { ClientCtx, RpcCallFace, DirectoryPickerAnswer, DirectoryPickerFace
  *  写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
 export const inject: readonly string[] = ['slots', 'connection'];
 
-/** 面板视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退）。 */
+/** 面板视觉（内联 style；颜色走 DSH 主题别名，深浅主题自适应，写死值只做回退）。
+ *
+ * **六家逐项同形**（备忘·卡路里·记账·作息·居家·大厨）：同一项在这六份里逐字相同，
+ * 改任一条要六家一起改，锁见 `test/panel-copy-743.test.mjs` 第 ⑤ 条。 */
 const S = {
   card: {
     padding: '12px 14px',
@@ -46,11 +49,12 @@ const S = {
   hint: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: '0.92em', marginBottom: 4 } as React.CSSProperties,
   input: {
     width: '100%',
+    boxSizing: 'border-box',
     padding: '4px 8px',
     borderRadius: 6,
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
-    background: 'var(--dsw-alias-bg-base, #fff)',
-    color: 'inherit',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
   } as React.CSSProperties,
   pickRow: { display: 'flex', gap: 6, alignItems: 'center' } as React.CSSProperties,
   btnPick: {
@@ -58,8 +62,8 @@ const S = {
     padding: '4px 10px',
     borderRadius: 6,
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
-    background: 'var(--dsw-alias-bg-base, #fff)',
-    color: 'inherit',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
   } as React.CSSProperties,
@@ -70,19 +74,19 @@ const S = {
     padding: '4px 12px',
     borderRadius: 6,
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
-    background: 'transparent',
-    color: 'inherit',
+    background: 'var(--dsw-alias-bg-base, transparent)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
     cursor: 'pointer',
   } as React.CSSProperties,
   btnPrimary: {
     padding: '4px 12px',
     borderRadius: 6,
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.45))',
+    border: '1px solid var(--dsw-alias-brand-primary, #2f6fed)',
     background: 'var(--dsw-alias-brand-primary, #2f6fed)',
     color: '#fff',
     cursor: 'pointer',
   } as React.CSSProperties,
-  okText: { marginTop: 8, color: 'var(--dsw-alias-label-success, #12805c)', fontSize: '0.96em'} as React.CSSProperties,
+  okText: { marginTop: 8, color: 'var(--dsw-alias-state-success-primary, #12805c)', fontSize: '0.96em'} as React.CSSProperties,
   error: { marginTop: 8, color: 'var(--dsw-alias-label-error, #b3261e)', fontSize: '1em', whiteSpace: 'pre-wrap' } as React.CSSProperties,
 };
 
