@@ -613,20 +613,32 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
   const surface = state.kind === 'ready' ? state.surface : null;
   const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
 
+  /** 写完（保存／重置）之后重新读一份整面：写回执是 `{path, values}`、重置回执是 `{path, backupPath}`，
+   *  都不是整面——拿写回执当整面用，页头那行「数据目录」会显示成 undefined（#743 实测）。 */
+  const writeThenReload = React.useCallback(async (done: string) => {
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    const r = await fetchConfigSurface(props.getCall());
+    if (r.ok) {
+      setState({ kind: 'ready', surface: r.surface });
+      setDraft(toDraft(r.surface.values, r.surface));
+      setNotice(done);
+    } else {
+      setState({ kind: 'failed', message: r.message });
+    }
+    setBusy(false);
+  }, [props.getCall]);
+
   const onSave = React.useCallback(async () => {
     setBusy(true);
     setNotice(null);
     setError(null);
     const r = await saveConfigSurface(props.getCall(), fromDraft(draft));
     setBusy(false);
-    if (r.ok) {
-      setState({ kind: 'ready', surface: r.surface });
-      setDraft(toDraft(r.surface.values, r.surface));
-      setNotice('已保存，立即生效（不用重启宿主）');
-    } else {
-      setError(r.message);
-    }
-  }, [draft, props.getCall]);
+    if (r.ok) await writeThenReload('已保存，立即生效（不用重启宿主）');
+    else setError(r.message);
+  }, [draft, props.getCall, writeThenReload]);
 
   const onReset = React.useCallback(async () => {
     setBusy(true);
@@ -634,14 +646,9 @@ function CalorieConfig(props: { getCall: GetCall; getPicker: () => DirectoryPick
     setError(null);
     const r = await resetConfigSurface(props.getCall());
     setBusy(false);
-    if (r.ok) {
-      setState({ kind: 'ready', surface: r.surface });
-      setDraft(toDraft(r.surface.values, r.surface));
-      setNotice('已重置为默认（原配置已另存一份 .bak）');
-    } else {
-      setError(r.message);
-    }
-  }, [props.getCall]);
+    if (r.ok) await writeThenReload('已重置为默认（原配置已另存一份 .bak）');
+    else setError(r.message);
+  }, [props.getCall, writeThenReload]);
 
   const head = React.createElement(
     'div',

@@ -182,11 +182,9 @@ export function saveConfigSurface(call: unknown, values: Record<string, unknown>
   return configRpc(call, RPC_ENDPOINT_CONFIG_SAVE, { values });
 }
 
-/** 重置为默认（技能侧先落 .bak；回执不含 values，故重置后重新读一次整面）。 */
-export async function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
-  const r = await configRpc(call, RPC_ENDPOINT_CONFIG_RESET, {});
-  if (!r.ok) return r;
-  return fetchConfigSurface(call);
+/** 重置为默认（技能侧先落 .bak；写回执不是整面，由组件写完重读一份）。 */
+export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
+  return configRpc(call, RPC_ENDPOINT_CONFIG_RESET, {});
 }
 
 /** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。
@@ -412,6 +410,22 @@ function BillConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
   const surface = state.kind === 'ready' ? state.surface : null;
   const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
 
+  /** 写完（保存／重置）之后重新读一份整面：写回执是 `{path, values}`、重置回执是 `{path, backupPath}`，
+   *  都不是整面——拿写回执当整面用，页头那行「数据目录」会显示成 undefined（#743 实测）。 */
+  const writeThenReload = React.useCallback(async (done: string) => {
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    const r = await fetchConfigSurface(props.getCall());
+    if (r.ok) {
+      apply(r.surface);
+      setNotice(done);
+    } else {
+      setState({ kind: 'failed', message: r.message });
+    }
+    setBusy(false);
+  }, [apply, props.getCall]);
+
   const onSave = React.useCallback(async () => {
     setBusy(true);
     setNotice(null);
@@ -421,9 +435,7 @@ function BillConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     if (r.ok) {
       apply(r.surface);
       setNotice('已保存，立即生效（不用重启宿主）');
-    } else {
-      setError(r.message);
-    }
+    } else setError(r.message);
   }, [apply, draft, props.getCall]);
 
   const onReset = React.useCallback(async () => {
@@ -432,13 +444,9 @@ function BillConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     setError(null);
     const r = await resetConfigSurface(props.getCall());
     setBusy(false);
-    if (r.ok) {
-      apply(r.surface);
-      setNotice('已重置为默认（原配置已另存一份 .bak）');
-    } else {
-      setError(r.message);
-    }
-  }, [apply, props.getCall]);
+    if (r.ok) await writeThenReload('已重置为默认（原配置已另存一份 .bak）');
+    else setError(r.message);
+  }, [props.getCall, writeThenReload]);
 
   const head = React.createElement(
     'div',

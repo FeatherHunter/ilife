@@ -43,8 +43,10 @@ const WIDTHS = argOf('--widths', '360,720').split(',').map((n) => Number(n.trim(
 /** 产物路径可换（负向对照用：拿一份改坏的 client 产物跑，必须变红）。空串＝用各包自己的 dist。 */
 const BUNDLE_OVERRIDE = argOf('--bundle', '');
 
-/** 四家：件名 → 技能包 / 页签槽 / 配置主体名 / 页面禁语（干活入口的典型词）。 */
+/** 六家：件名 → 技能包 / 页签槽 / 配置主体名 / 页面禁语（干活入口的典型词）。 */
 const PANELS = [
+  { pkg: 'plugin-bill-ilife', skill: 'skill-bill', slot: 'ilife:cookie', stem: 'bill', workWords: ['记一笔', '查账', '撤销'] },
+  { pkg: 'plugin-calorie', skill: 'skill-calorie', slot: 'ilife:calorie', stem: 'calorie', workWords: ['记一餐', '看体重', '查食品'] },
   { pkg: 'plugin-chef', skill: 'skill-chef', slot: 'ilife:chef', stem: 'chef', workWords: ['搜菜', '记录做菜', '买菜清单'] },
   { pkg: 'plugin-home-ilife', skill: 'skill-home', slot: 'ilife:home', stem: 'home', workWords: ['查物品', '录物品', '查快递'] },
   { pkg: 'plugin-memo-ilife', skill: 'skill-memo-ilife', slot: 'ilife:memo', stem: 'memo', workWords: ['记一条', '心愿排期', '飞书同步'] },
@@ -81,6 +83,7 @@ const React = {
     if (changed && !before) { try { fn(); } catch (e) {} }
   },
   useCallback: (fn) => fn,
+  useMemo: (fn) => fn(),
 };
 
 /* ② 假答复：只答配置面三个端点，抄下每次调用（「改得动、存得进」的读数从这里来） */
@@ -89,6 +92,12 @@ const SURFACE = window.__T696_SURFACE__;
 function fakeCall(channel, endpoint, body) {
   const method = body && body.method;
   CALLS.push({ endpoint, method, payload: body ? body.payload : null, channel });
+  /* 回执按**真技能**的形状给（#743 实测）：读＝整面；保存＝\`{path, values}\`；重置＝\`{path, backupPath}\`。
+     给「每个方法都回整面」会让「把写回执当整面用」这类缺陷假绿——记账与卡路里正栽在这（页头「数据目录 undefined」）。 */
+  if (method === 'config.save') {
+    const values = body && body.payload && body.payload.values ? body.payload.values : {};
+    return Promise.resolve({ ok: true, value: { path: SURFACE.path, values } });
+  }
   if (method === 'config.reset') return Promise.resolve({ ok: true, value: { path: SURFACE.path, backupPath: SURFACE.path + '.bak' } });
   return Promise.resolve({ ok: true, value: SURFACE });
 }
@@ -239,6 +248,11 @@ setTimeout(() => {
         threeButtons: ['保存', '重置为默认', '重新读取'].every((t) => pageButtons.includes(t)),
         showsConfigPath: bodyText.indexOf(window.__T696_SURFACE__.path) >= 0,
         showsDataDir: bodyText.indexOf(window.__T696_SURFACE__.dataDir) >= 0,
+        /* #743：取值空着的那一行要把解析出来的绝对路径**预填**进输入框（不是空框、不是灰字占位）。 */
+        dataDirPrefilled: (() => {
+          const first = panel.querySelector('input');
+          return first !== null && first.value === window.__T696_SURFACE__.dataDir;
+        })(),
         editedAndSaved: savedLeaf === PROBE,
         resetDispatched: resetSeen,
         noWorkEntry: window.__T696_WORK_WORDS__.every((w) => scanned.indexOf(w) < 0) && pageButtons.every((b) => window.__T696_WORK_WORDS__.every((w) => b.indexOf(w) < 0)),
