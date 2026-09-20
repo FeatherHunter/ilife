@@ -15,6 +15,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import vm from 'node:vm';
 import { HEALTH_ENDPOINT, countByStatus, isHealthReport, worstStatus } from '../dist/health-contract.js';
 import { loadHealthReports } from '../dist/health-fetch.js';
 import { summaryErrorOf } from '../dist/health-panel.js';
@@ -378,6 +379,180 @@ describe('#706 配置体检 · 面板侧', () => {
       // 卡片头会印整条配置文件路径（故意），故这里只核「两条报文里都不再有明文长路径」：
       assert.equal((visibleText(html).match(/配置文件还不存在：C:\/Users\/me\/\.ilife\/bill\.yaml/g) || []).length, 0,
         '报文里的明文长路径没缩');
+    });
+  });
+
+  // ── 票 #741（维护者真机）：「我看他是所有插件全部体检好后全量提示出来的」。上一手把「一家落定就回调一次」
+  // 加到了取数口（B 组咬了「回调先到」），但**面板这一格一直没人守**：把 `health-panel.ts` 改回「攒齐了一次
+  // 写」——也就是真机看到的那条写法——B 组照样绿。这一组把判据量到**屏上**：物化真产物
+  // （`dist/client.js`，与 `client-bundle-48.test.mjs` 同一套 classic 执行）＋ hooks 替身把整段面板跑起来
+  // ＋ 假传输口让一家立刻回、另一家挂着 ⇒ 这时元素树里必须**已经有**先回来那家的读数。
+  describe('G 按家增量绘制（#741）：慢那家还挂着时，快那家在屏上', () => {
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    /** 树遍历式渲染 ＋ 按**组件身份**存 hook：替身没有 React 的调和，用身份当键，重复调用也不会错位。 */
+    function makePaint() {
+      const stores = new Map();
+      const stack = [];
+      const cursors = [];
+      const slotOf = (init) => {
+        const component = stack[stack.length - 1];
+        const index = cursors[cursors.length - 1]++;
+        let store = stores.get(component);
+        if (store === undefined) { store = []; stores.set(component, store); }
+        if (!(index in store)) store[index] = typeof init === 'function' ? init() : init;
+        return { store, index };
+      };
+      const React = {
+        createElement(type, props, ...children) {
+          const own = { ...(props ?? {}) };
+          if (children.length === 1) own.children = children[0];
+          else if (children.length > 1) own.children = children;
+          return { type, props: own };
+        },
+        Fragment: Symbol('Fragment'),
+        useId: () => 'g741',
+        useRef(init) {
+          const { store, index } = slotOf({ current: init === undefined ? null : init });
+          return store[index];
+        },
+        useState(init) {
+          const { store, index } = slotOf(init);
+          return [store[index], (next) => {
+            const value = typeof next === 'function' ? next(store[index]) : next;
+            if (value !== store[index]) store[index] = value;
+          }];
+        },
+        // 替身不跑副作用（不引第二层取数、不轮询）：这一组要的是「状态到屏」这一段链。
+        useEffect() { slotOf(null); },
+        useCallback: (fn) => fn,
+        useMemo: (fn) => fn(),
+      };
+      const VOID_TAGS = new Set(['br', 'hr', 'img', 'input']);
+      const UNITLESS = new Set(['fontWeight', 'lineHeight', 'flex', 'opacity', 'zIndex']);
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const kebab = (k) => k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+      const css = (style) => Object.entries(style).filter(([, value]) => value !== null && value !== undefined && value !== '')
+        .map(([k, value]) => kebab(k) + ':' + (typeof value === 'number' && !UNITLESS.has(k) ? value + 'px' : String(value))).join(';');
+      const paint = (node) => {
+        if (node === null || node === undefined || node === false || node === true) return '';
+        if (typeof node === 'string' || typeof node === 'number') return esc(node);
+        if (Array.isArray(node)) return node.map(paint).join('');
+        const { type, props } = node;
+        if (typeof type === 'function') {
+          stack.push(type);
+          cursors.push(0);
+          try {
+            return paint(type({ ...props }));
+          } finally {
+            stack.pop();
+            cursors.pop();
+          }
+        }
+        if (type === React.Fragment) return paint(props.children);
+        if (typeof type !== 'string') return '';
+        const attrs = [];
+        if (props.style) attrs.push('style="' + esc(css(props.style)) + '"');
+        for (const [k, value] of Object.entries(props)) {
+          if (k === 'children' || k === 'style' || k === 'key' || k === 'ref' || typeof value === 'function') continue;
+          if (value === null || value === undefined || value === false) continue;
+          if (value === true) { attrs.push(k); continue; }
+          attrs.push(k + '="' + esc(value) + '"');
+        }
+        const open = '<' + type + (attrs.length ? ' ' + attrs.join(' ') : '');
+        return VOID_TAGS.has(type) ? open + ' />' : open + '>' + paint(props.children) + '</' + type + '>';
+      };
+      return { React, paint };
+    }
+
+    it('慢那家还挂在传输口上时，先回来那家的读数已经在元素树里（面板改回「攒齐了一次写」必红）', async () => {
+      const { React, paint } = makePaint();
+      // ① 物化真产物，捕获注册进 `settings.section` 的那颗组件（与 client-bundle-48 同一套 classic 执行）
+      const registrations = [];
+      // 沙箱里除了 loader 桩，还要给上**浏览器本来就有**的那几个宿主全局：取数口用 `AbortSignal.timeout`
+      // 兜超时，vm 的干净上下文里没有它（少了这一个，两家会当场都报「体检没跑起来」）。
+      const sandbox = {
+        window: { __ModuleLoader__: { load: (reg) => { registrations.push(reg); } } },
+        AbortSignal, setTimeout, clearTimeout, console,
+      };
+      // 调试图与出图台的取数口都挂在产物自己的 `globalThis` 上（沙箱全局）：沙箱外写、产物里读。
+      sandbox.__T706_RUN__ = [];
+      let face = null;
+      sandbox.__T706_FACE_SINK__ = (value) => { face = value; };
+      vm.createContext(sandbox);
+      new vm.Script(CLIENT, { filename: 'client.js' }).runInContext(sandbox);
+      assert.equal(registrations.length, 1, '产物应当恰好注册一次');
+      let Section = null;
+      const bundle = registrations[0].factory((spec) => {
+        if (spec === 'react') return React;
+        throw new Error('这一组只喂 react 一处外部模块：' + spec);
+      });
+      assert.equal(typeof bundle.apply, 'function');
+
+      // ② 假传输口：快那家立刻回（红 1）、慢那家挂在一个手动放行的 promise 上（黄 1）
+      let release = () => {};
+      const slow = new Promise((resolve) => { release = () => resolve({ ok: true, value: report('chef', ['yellow']) }); });
+      const calls = [];
+      const call = async (base, phone, payload) => {
+        calls.push([base, phone, payload === undefined ? null : payload.method]);
+        if (payload !== undefined && payload.method === HEALTH_ENDPOINT) {
+          return phone === 'ilife-chef' ? slow : { ok: true, value: report('calorie', ['red']) };
+        }
+        return { ok: false, error: { code: 'not-in-this-guard', message: '这一组只喂体检那条链', details: {} } };
+      };
+      bundle.apply({
+        slots: {
+          inject: (_key, cb) => cb(),
+          register: (_options, component) => { Section = component; return () => {}; },
+          entries: () => [], getVersion: () => 0, subscribe: () => () => {},
+        },
+        effect: (cb) => cb(),
+        connection: { rpc: { call } },
+      });
+      assert.equal(typeof Section, 'function', '没捕获到注册进 settings.section 的那颗组件');
+      const props = {
+        useTabs: (selector) => selector([
+          { id: 'dsh-calorie', order: 75, label: '卡路里', channel: '/ilife-calorie' },
+          { id: 'dsh-chef', order: 90, label: '私家大厨', channel: '/ilife-chef' },
+        ]),
+        renderSlot: () => null,
+        getCall: () => call,
+      };
+
+      // ③ 画一遍（面板自己把状态源交到 `__T706_FACE_SINK__` 上），再点一次「体检一次」
+      const html0 = paint(Section(props));
+      assert.ok(html0.includes('体检一次'), '那行汇总里的「体检一次」没画出来');
+      assert.equal(typeof (face === null ? null : face.run), 'function', '面板没把状态源交出来（出图台那条通道没了）');
+      face.run(); // ＝那颗按钮的 onClick（`onRun: health.run`）
+      await tick();
+
+      // ④ 慢那家还在途：屏上必须只有先回来那一家
+      const htmlMid = paint(Section(props));
+      const visibleMid = htmlMid.replace(/<[^>]*>/g, '|');
+      assert.ok(htmlMid.includes('体检中…'),
+        '整批还没落定，汇总行应当仍写着「体检中…」；现在是：' + visibleMid.slice(0, 400)
+        + ' ／ diag=' + JSON.stringify(sandbox.__T706_RUN__) + ' ／ face=' + JSON.stringify(Object.keys(face.rows)));
+      assert.equal((htmlMid.match(/data-ilife-health="tab-note"/g) || []).length, 1,
+        '两家里只有先回来那一家该带读数（攒齐了一起画就是 0 家）');
+      const mark = htmlMid.indexOf('aria-controls="g741-panel-dsh-calorie"');
+      assert.ok(mark > 0, '没找到卡路里那颗页签');
+      assert.ok(htmlMid.slice(mark, htmlMid.indexOf('</button>', mark)).includes('红 1'),
+        '先回来那一家的读数没长在它自己那颗页签上：' + htmlMid.slice(mark, mark + 240));
+      assert.ok(!htmlMid.includes('黄 1'), '慢那家还在途，它的读数不该已经在屏上');
+      assert.deepEqual(sandbox.__T706_RUN__.filter((line) => line.startsWith('row=')), ['row=dsh-calorie ok=true err=null'],
+        '调试图也该是陆续写的：' + JSON.stringify(sandbox.__T706_RUN__));
+
+      // ⑤ 放行慢那家：它也长出来，running 收掉，两家各一通电话
+      release();
+      await tick();
+      await tick();
+      const htmlEnd = paint(Section(props));
+      assert.equal((htmlEnd.match(/data-ilife-health="tab-note"/g) || []).length, 2, '慢那家落定后也该长出自己的读数');
+      assert.ok(htmlEnd.includes('黄 1'), '慢那家的读数没画出来');
+      assert.ok(!htmlEnd.includes('体检中…'), '全部落定后不该还写着「体检中…」');
+      assert.ok(sandbox.__T706_RUN__.includes('rows=2 err=null first=null'),
+        '渲染台那条收尾调试图变了：' + JSON.stringify(sandbox.__T706_RUN__));
+      assert.equal(calls.filter((one) => one[2] === HEALTH_ENDPOINT).length, 2, '两家各一通体检电话');
     });
   });
 
