@@ -101,6 +101,17 @@ describe('P10 槽位定案', () => {
     }
     assert.ok(/CARRIER_BASE = '\/api'/.test(srcText('plugin-manager')), '总管侧没有把载体基段写成一处常量');
   });
+  // 票 #740 对抗式审查第二轮：体检那一批的时限要按**六家串行**算，不能按一家算。
+  // 机制：各家的宿主半用 `spawnSync`（阻塞同一个宿主线程），六通电话是一个接一个干完的
+  // ⇒ 真实上界是「六家之和」，不是单家上限加一点余量。
+  it('体检整批时限与各家 spawn 上限对齐（#740 对抗式审查）', async () => {
+    const health = await import('../packages/plugin-manager/dist/health-fetch.js');
+    const bridge = await import('../packages/plugin-calorie/dist/bridge.js');
+    assert.ok(
+      health.HEALTH_TIMEOUT_MS >= 3 * bridge.SPAWN_TIMEOUT_MS,
+      '整批时限（' + String(health.HEALTH_TIMEOUT_MS) + 'ms）不到单家 spawn 上限（' + String(bridge.SPAWN_TIMEOUT_MS) + 'ms）的三倍：六家串行时必然误报超时',
+    );
+  });
   // 票 #738：面板印的页签名（＝产品名）有**两处产地**——各家自己那个 `SLOT_TITLE` 是主
   // （页签注册交出去的 label、侧边栏页签名、本家设置页标题都从它出），总管导航表那一格是它的镜像
   // （页签还没注册时兜底，更新列表那一行的行首也用它）。两处必须同值：只改一边，

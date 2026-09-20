@@ -60,6 +60,11 @@ describe('#678 原因人话与手工命令', () => {
     const all = [...BLOCKED_REASONS, 'check-failed', 'check-expired', 'invalid-release', 'update-busy', 'install-failed', 'manager-unreachable', 'bad-request', 'internal'].map(reasonText).join('\n');
     assert.ok(!/半截任务|电话没接上|宿主半|回执异常|还出现就重装|查宿主日志/.test(all), '自造词／口语回到了文案里');
     assert.match(reasonText('install-failed'), /终端/);
+    // 对抗式审查第二轮：`recovery-required` 只在「磁盘版本 == 正在运行」（或磁盘那份读不到）时才印出来，
+    // 「磁盘 ≠ 运行中」被事实判据先截走（印 `restartLine`）⇒ 这一条**不许**再教人重启（那在眼下没用）。
+    assert.ok(!/重启/.test(reasonText('recovery-required')), '这一态教人重启是错的：重启不改变任何东西');
+    assert.match(reasonText('recovery-required'), /重试安装/);
+    assert.match(reasonText('installation-changed'), /重新检查/);
   });
   it('未知原因码不猜：原样回码并说明这是未知原因', () => {
     const text = reasonText('something-new');

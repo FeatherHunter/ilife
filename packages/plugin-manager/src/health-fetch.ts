@@ -24,8 +24,15 @@ export function phoneOf(channel: string): string {
   return channel.startsWith('/') ? channel.slice(1) : channel;
 }
 
-/** 一次取数的时限（毫秒）：技能侧 spawn 上限 20 s，这里留一点余量。 */
-export const HEALTH_TIMEOUT_MS = 25_000 as const;
+/** 整批取数的时限（毫秒），**不是**一家一份：六家的活是在**同一个宿主线程**上排队干的。
+ *
+ * 为什么不是「技能侧 spawn 上限 20 s ＋ 一点余量」（票 #740 对抗式审查第二轮逮到）：
+ * 各家的宿主半用的是 `spawnSync`（各单品的 `src/bridge.ts` 里 `SPAWN_TIMEOUT_MS = 20_000`），
+ * 它**阻塞**宿主的事件循环——六通电话同时打进来，真正干活的是一个接一个串起来的。
+ * 于是「六家之和」才是这一批的真实上界：按一家 20 s 算最坏 120 s，常见情形（一家 1～3 s）约 10 s。
+ * 60 s 取两者之间：给常见情形留足余量，又不至于让一次卡死把按钮按成两分钟不动。
+ * 单家的错照样逐家报（那家页签里的体检表会写「体检超时（60s）…」）。 */
+export const HEALTH_TIMEOUT_MS = 60_000 as const;
 
 /** 一家的一行：报告取到了就是 `report`，取不到就是 `error`（缺席的包不进这张表）。 */
 export interface HealthFetchRow {
