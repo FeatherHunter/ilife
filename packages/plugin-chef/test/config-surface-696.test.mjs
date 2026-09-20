@@ -31,7 +31,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** client 真产物（#736 组件级读数用；缺产物在这里响亮失败，不静默跳过）。 */
 const CLIENT = loadClientBundle(join(HERE, '..'));
-const { Row, resolveDirectoryPicker, pickDirectory, readPickAnswer, toDraft, createBrowseHandler } = CLIENT.exports;
+const { Row, resolveDirectoryPicker, pickDirectory, readPickAnswer, pickerModeOf, toDraft, createBrowseHandler } = CLIENT.exports;
 
 /** 把一层嵌套的默认值表摊平成 `a.b` 键集。 */
 function flattenKeys(record, prefix = '') {
@@ -262,35 +262,40 @@ describe('#696 大厨设置页 · 配置面', () => {
       assert.ok(picker !== null && typeof picker.pick === 'function', '拿到命名空间就用它');
     });
 
-    it('按钮按档渲染：目录行恰一枚、非目录行没有；onBrowse 缺席时不画按钮', () => {
+    it('按钮按档渲染：目录行恰一枚、非目录行没有；入口缺席时不画按钮', () => {
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
       const textItem = CONFIG_ITEMS.find((i) => i.key === 'db.name');
-      const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} });
+      const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } });
       const buttons = nodesOfType(withBrowse, 'button');
       assert.equal(buttons.length, 1, '目录行恰一枚按钮');
       assert.equal(buttons[0].props.type, 'button');
-      assert.match(textOf(buttons[0]), /选择文件夹/);
+      assert.match(textOf(buttons[0]), /浏览/, '只有应用内浏览这一档时写「浏览…」（#744：不再写「选择文件夹…」）');
       assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {} }), 'button').length, 0,
-        'onBrowse 缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
-      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} }), 'button').length, 0,
+        '入口缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
+      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').length, 0,
         '非目录行不画按钮');
-      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, onBrowse: () => {} }), 'input').length, 1,
+      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'input').length, 1,
         '目录行仍是文本框 ＋ 按钮');
+      const native = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } });
+      assert.match(textOf(nodesOfType(native, 'button')[0]), /选择文件夹/, '有系统对话框这一档仍写「选择文件夹…」');
+      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'none', onOpen: () => {} } }), 'button').length, 0,
+        'mode=none ⇒ 也不画按钮');
     });
 
     it('点按钮 → 唤一次 pick → 按**平台信封**回填该行；取消一字不动', async () => {
       const seen = [];
       const picker = { pick: async () => { seen.push('pick'); return { ok: true, value: 'D:\\爱生活数据' }; } };
+      const handler = createBrowseHandler({
+        picker,
+        onChange: (k, v) => seen.push([k, v]),
+        onUnavailable: (m) => seen.push(['!', m]),
+      });
       const node = Row({
         item: CONFIG_ITEMS.find((i) => i.key === 'db.dir'),
         value: '',
         disabled: false,
         onChange: (k, v) => seen.push([k, v]),
-        onBrowse: createBrowseHandler({
-          picker,
-          onChange: (k, v) => seen.push([k, v]),
-          onUnavailable: (m) => seen.push(['!', m]),
-        }),
+        browser: { mode: 'native', onOpen: (k) => handler(k) },
       });
       const clicked = nodesOfType(node, 'button')[0].props.onClick();
       assert.equal(typeof clicked?.then, 'function', '按钮的 onClick 要回那枚 Promise（用例据此可判）');
@@ -298,12 +303,12 @@ describe('#696 大厨设置页 · 配置面', () => {
       assert.deepEqual(seen, ['pick', ['db.dir', 'D:\\爱生活数据']], '信封里的 value 才是那条绝对路径，回填给这一行');
 
       const cancelled = [];
-      const handler = createBrowseHandler({
+      const handler2 = createBrowseHandler({
         picker: { pick: async () => ({ ok: true, value: null }) },
         onChange: (k, v) => cancelled.push([k, v]),
         onUnavailable: (m) => cancelled.push(['!', m]),
       });
-      await handler('db.dir');
+      await handler2('db.dir');
       assert.deepEqual(cancelled, [], 'value:null ＝用户取消 ⇒ 这一行的值一字不动');
     });
 
@@ -358,6 +363,23 @@ describe('#696 大厨设置页 · 配置面', () => {
 
     it('client 短名声明没被改动（不许写成硬依赖：写进去整包会被停靠）', () => {
       assert.deepEqual(CLIENT.exports.inject, ['slots', 'connection']);
+    });
+
+    it('#744：入口三态改由共用件判定（有系统对话框／只有应用内浏览／都没有）', () => {
+      const native = { pick: async () => ({ ok: true, value: null }) };
+      const browse = { list: async () => ({ path: '', home: '', crumbs: [], entries: [], truncated: false }), createDirectory: async () => '' };
+      assert.equal(pickerModeOf(native), 'native', '有 pick ⇒ 走系统对话框那条路');
+      assert.equal(pickerModeOf(browse), 'browse', '只有两格原语 ⇒ 走应用内浏览器（本机 Windows 桌面版就是这一档）');
+      assert.equal(pickerModeOf({}), 'none', '都没有 ⇒ 不画入口');
+      assert.equal(pickerModeOf(null), 'none');
+    });
+
+    it('#744：client 束里带着应用内浏览器那套界面与文案（真产物读数）', () => {
+      const bundle = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
+      for (const text of ['选择文件夹', '浏览', '上一级', '新建文件夹']) {
+        assert.ok(bundle.includes(text), `束里找不到「${text}」`);
+      }
+      assert.ok(!bundle.includes('__DSH_BOOT__'), '束是 loader 工厂包，不该带引导数据');
     });
   });
 });

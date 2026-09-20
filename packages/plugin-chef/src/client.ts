@@ -25,6 +25,13 @@ import {
 import type { ConfigSurfaceReply } from './contract.js';
 import { REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
 import type { ClientCtx, RpcCallFace, DirectoryPickerAnswer, DirectoryPickerFace } from './dsh-ctx.js';
+import {
+  pickerModeOf as sharedPickerModeOf,
+  readPickAnswer as sharedReadPickAnswer,
+  createDirectoryRowBrowser,
+} from 'dsh-life-pack/directory-browser';
+import { DirectoryBrowserFromRow } from 'dsh-life-pack/directory-browser-ui';
+import type { DirectoryBrowseFace, PickerMode, DirectoryRowBrowser, DirectoryRowEntry } from 'dsh-life-pack/directory-browser';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
  * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
@@ -207,20 +214,8 @@ export function resolveDirectoryPicker(getService: unknown): DirectoryPickerFace
   }
 }
 
-/** 平台回执 → 三种结果（**永不抛**）。回执是信封 `{ok, value|error}`（见 dsh-ctx.ts 的
- * `DirectoryPickerAnswer`）：成功回的是 `value` 不是路径本身，被拒回的是 `ok:false` 不是抛——
- * 照裸值解会把两种情况都误判成「用户取消」（#743 真机现象：点「选择文件夹」什么都没发生）。
- * 裸串照收（老形状兜底），认不出的形状当「供不了」报出来，不当取消吞掉。 */
-export function readPickAnswer(raw: unknown): PickOutcome {
-  if (typeof raw === 'string') return raw.trim() === '' ? { kind: 'cancelled' } : { kind: 'picked', path: raw };
-  const answer = (typeof raw === 'object' && raw !== null ? raw : {}) as DirectoryPickerAnswer;
-  if (answer.ok === true) {
-    const value = answer.value;
-    return typeof value === 'string' && value.trim() !== '' ? { kind: 'picked', path: value } : { kind: 'cancelled' };
-  }
-  const detail = answer.error?.message?.trim() ?? '';
-  return { kind: 'unavailable', message: '打不开系统文件夹对话框' + (detail === '' ? '' : '（' + detail + '）') + '：请直接在框里填绝对路径。' };
-}
+export const readPickAnswer = sharedReadPickAnswer;
+export const pickerModeOf = sharedPickerModeOf;
 
 /** 唤起一次系统文件夹选择器并归一结果（**永不抛**）。 */
 export async function pickDirectory(picker: DirectoryPickerFace): Promise<PickOutcome> {
@@ -231,6 +226,12 @@ export async function pickDirectory(picker: DirectoryPickerFace): Promise<PickOu
     return { kind: 'unavailable', message: '打不开系统文件夹对话框（' + reason + '）：请直接在框里填绝对路径。' };
   }
 }
+
+/** 目录行入口的三态：有系统对话框（`native`）／只有应用内浏览（`browse`）／都没有（`none`）。
+ *
+ * 由调用方（`apply`）按命中的服务现算：先看有没有 `pick`，再看有没有 `list` ＋ `createDirectory`。
+ * 判定本身住在共用件里（一处定义），本包只转出。 */
+export type { DirectoryRowBrowser };
 
 /** 「选择文件夹」按钮的真装配函数（目录行渲染出来的按钮，onClick 就是它）。
  *
@@ -256,8 +257,9 @@ export function Row(props: {
   readonly value: string;
   readonly disabled: boolean;
   readonly onChange: (key: string, next: string) => void;
-  /** 目录行才有：唤起系统文件夹选择器。 */
-  readonly onBrowse?: ((key: string) => void) | undefined;
+  /** 目录行才有：入口三态。`native`＝画「选择文件夹…」（系统对话框）；`browse`＝画「浏览…」
+   *  （打开应用内文件夹浏览器）；`none`／缺席＝不画按钮，文本框照旧（供不了就收起入口，不是失败）。 */
+  readonly browser?: DirectoryRowEntry | null | undefined;
 }): React.ReactElement {
   const { item } = props;
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
@@ -277,8 +279,10 @@ export function Row(props: {
           spellCheck: false,
           onChange,
         });
+  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。 */
+  const entry = props.browser ?? null;
   const browse =
-    item.control === 'directory' && props.onBrowse !== undefined
+    item.control === 'directory' && entry !== null && entry.mode !== 'none'
       ? React.createElement(
           'button',
           {
@@ -287,9 +291,9 @@ export function Row(props: {
             disabled: props.disabled,
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它，
             // 拿到「唤一次 pick → 回填这一行」的确定性读数（本地可判）。
-            onClick: () => props.onBrowse?.(item.key),
+            onClick: () => entry.onOpen(item.key),
           },
-          '选择文件夹…',
+          entry.mode === 'native' ? '选择文件夹…' : '浏览…',
         )
       : null;
   return React.createElement(
@@ -302,7 +306,16 @@ export function Row(props: {
 }
 
 /** 技能设置页：承载私家大厨自己的全部可配置项（只配置，不干活）。 */
-function ChefConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerFace | null }): React.ReactElement {
+function ChefConfig(props: {
+  getCall: GetCall;
+  getPicker: () => DirectoryPickerFace | null;
+  /** 目录行入口三态（由共用的目录浏览器包提供）。 */
+  mode: PickerMode;
+  /** 开一行目录行的应用内浏览器；返回 undefined＝这条路供不了（不画入口）。 */
+  openBrowse: (key: string, path: string, onChange: (k: string, v: string) => void) => Promise<void> | undefined;
+  /** 当前打开的浏览器（`null`＝没开）。 */
+  browseRow: DirectoryRowBrowser | null;
+}): React.ReactElement {
   const [state, setState] = React.useState<ConfigState>({ kind: 'loading' });
   const [pickerGone, setPickerGone] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
@@ -343,25 +356,42 @@ function ChefConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
     setError(null);
   }, []);
 
-  /** 目录选择：拿不到命名空间就没有入口；被拒一次即收起入口（不留死按钮）。 */
+  /** 三态入口的 React 接线：`native`＝系统对话框；`browse`＝应用内浏览器（票 #744）。
+   *
+   * 为什么写得比原来长：这台机器上（Windows 桌面版）宿主组合里只有 browse 那一档，
+   * `pick` 会被拒（见 `docs/agents/desktop-directory-picker-browse.md` 的根因读数），
+   * 于是这一行改成「开应用内浏览器」——同一个用户动作，不依赖系统对话框也能选到目录。 */
+  const { mode: entryMode, openBrowse, browseRow } = props;
   const picker = pickerGone ? null : props.getPicker();
-  const onBrowse = React.useMemo(() => {
-    if (picker === null) return undefined;
-    const browse = createBrowseHandler({
-      picker,
-      onChange,
-      onUnavailable: (message: string) => {
-        setError(message);
-        setPickerGone(true);
-      },
-    });
-    // 系统对话框是模态的：等它回来的这段时间给一行字，免得看着像「点了没反应」（#743）。
-    return (key: string) => {
-      setPicking(true);
+
+  /** 目录行的入口动作：三态各一条路；都供不了就不给入口（`undefined` ⇒ Row 不画按钮）。 */
+  const onOpenRow = React.useCallback(
+    async (key: string): Promise<void> => {
+      const current = pickerModeOf(picker);
+      if (current === 'native') {
+        // 系统对话框是模态的：等它回来的这段时间给一行字，免得看着像「点了没反应」（#743）。
+        setPicking(true);
+        setError(null);
+        const outcome = await pickDirectory(picker as DirectoryPickerFace);
+        setPicking(false);
+        if (outcome.kind === 'picked') onChange(key, outcome.path);
+        else if (outcome.kind === 'unavailable') {
+          setError(outcome.message);
+          setPickerGone(true);
+        }
+        return;
+      }
+      const opened = openBrowse(key, draft[key] ?? '', onChange);
+      if (opened === undefined) return;
       setError(null);
-      void browse(key).finally(() => setPicking(false));
-    };
-  }, [picker, onChange]);
+      await opened;
+    },
+    [picker, onChange, openBrowse, draft],
+  );
+
+  /** 给 Row 的三态入口：`none` 时给 null（不画按钮），否则把 mode 与动作一起递下去。 */
+  const rowEntry: DirectoryRowEntry | null =
+    entryMode === 'none' ? null : { mode: entryMode, onOpen: onOpenRow };
 
   const surface = state.kind === 'ready' ? state.surface : null;
   const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
@@ -438,7 +468,14 @@ function ChefConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
   const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT);
   const advanced = CONFIG_ITEMS.slice(COMMON_ITEM_COUNT);
   const renderRow = (item: ConfigItem) =>
-    React.createElement(Row, { key: item.key, item, value: draft[item.key] ?? '', disabled: busy, onChange, onBrowse });
+    React.createElement(Row, {
+      key: item.key,
+      item,
+      value: draft[item.key] ?? '',
+      disabled: busy,
+      onChange,
+      browser: rowEntry,
+    });
 
   return React.createElement(
     'div',
@@ -464,6 +501,31 @@ function ChefConfig(props: { getCall: GetCall; getPicker: () => DirectoryPickerF
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
     ),
     picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
+    browseRow !== null ? React.createElement('div', { style: S.muted }, '应用内文件夹浏览器已打开：选中后自动填上，取消则不动。') : null,
+    browseRow !== null
+      ? React.createElement(DirectoryBrowserFromRow, {
+          open: true,
+          row: browseRow,
+          labels: {
+            title: '选择文件夹',
+            close: '关闭',
+            up: '上一级',
+            pathPlaceholder: '直接填绝对路径，回车即进入',
+            go: '转到',
+            showHidden: (n: number) => '显示隐藏目录（' + n + '）',
+            empty: '这个目录里没有子目录。',
+            loading: '正在读取…',
+            newFolder: '新建文件夹',
+            createConfirm: '创建',
+            createCancel: '取消',
+            select: '选',
+            selected: '已选',
+            open: '选定这个目录',
+            cancel: '取消',
+            willPick: '将选定：',
+          },
+        })
+      : null,
     notice !== null ? React.createElement('div', { style: S.okText }, notice) : null,
     error !== null ? React.createElement('div', { style: S.error }, error) : null,
   );
@@ -490,7 +552,39 @@ export function apply(ctx: ClientCtx): void {
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
-      () => React.createElement(ChefConfig, { getCall, getPicker }),
+      () => {
+        // 入口三态：先看有没有 `pick`（系统对话框），再看有没有 `list` ＋ `createDirectory`
+        // （应用内浏览）。都供不了就没有入口——这是该缝自己的契约（供不了收起入口，不是失败）。
+        return function ChefConfigSlot(): React.ReactElement {
+          const [browseRow, setBrowseRow] = React.useState<DirectoryRowBrowser | null>(null);
+          const picker = resolveDirectoryPicker((name: string) => ctx.get?.(name));
+          const openBrowse = (
+            key: string,
+            path: string,
+            onChange: (k: string, v: string) => void,
+          ): Promise<void> | undefined => {
+            if (picker === null || pickerModeOf(picker) !== 'browse') return undefined;
+            const row = createDirectoryRowBrowser({
+              face: picker as unknown as DirectoryBrowseFace,
+              initialPath: path,
+              onPicked: (picked) => {
+                onChange(key, picked);
+                setBrowseRow(null);
+              },
+              onClosed: () => setBrowseRow(null),
+            });
+            setBrowseRow(row);
+            return row.open();
+          };
+          return React.createElement(ChefConfig, {
+            getCall,
+            getPicker,
+            mode: pickerModeOf(picker),
+            openBrowse,
+            browseRow,
+          });
+        };
+      },
     ),
   );
 }
