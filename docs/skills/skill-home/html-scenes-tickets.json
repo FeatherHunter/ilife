@@ -44,7 +44,8 @@
       "title": "链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径",
       "body": "html-scenes-tickets/04-html-delivery-chain.md",
       "blockedBy": [
-        3
+        3,
+        21
       ],
       "issue": 801
     },
@@ -74,7 +75,9 @@
       "type": "task",
       "title": "生成器：双端验收墙＋链路总览页",
       "body": "html-scenes-tickets/07-wall-and-chain-page.md",
-      "blockedBy": [],
+      "blockedBy": [
+        21
+      ],
       "issue": 804
     },
     {
@@ -233,6 +236,17 @@
         19
       ],
       "issue": 817
+    },
+    {
+      "n": 21,
+      "key": "21-scene-naming",
+      "type": "grilling",
+      "title": "决定：产物命名与落点怎么区分 70 条场景（老规范按模板 1:1，会互相覆盖）",
+      "body": "html-scenes-tickets/21-scene-naming.md",
+      "blockedBy": [
+        1
+      ],
+      "issue": 836
     }
   ]
 }

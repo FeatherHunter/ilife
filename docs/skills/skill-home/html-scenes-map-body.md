@@ -1,16 +1,18 @@
 ## Destination
 
-在 DSH 里说出一句居家管家唤醒词 → **拿到那份页面的绝对路径**（落盘 ＋ 可打开），且 **70 条场景各有自己的真页面**（73 条减去联动域 3 条：联动总览／记到卡路里／记到记账，已裁不做）：页面按 **9 个域的目录解耦落位**（与卡路里同形），**信息结构对齐老技能的对应页面**，**UI 走新仓共用件与语言**（老技能只作功能来源与信息结构来源）；每份产物都经**真命令链**（prompt → 唤醒词 → 命令 → 落盘）与**仓内种子库**产出，汇总成一张**链路总览页**（行内点绝对路径的 URL 即可跳转打开），再由 `docs/agents/视觉验收墙.md` 的双端墙（手机 390 宽／桌面 1280 宽，按域成对）交维护者终审。
+在 DSH 里说出一句居家管家唤醒词 → **拿到那份页面的绝对路径**（落盘 ＋ 可打开），且 **70 条场景各有自己的真页面**（73 条减去联动域 3 条：联动总览／记到卡路里／记到记账，已裁不做）：页面按 **HELP 一级分组解耦落位**（9 个域里**实建 8 个域目录**：`link` 只留登记位、不建目录），由 **46 个页族**承载 70 条场景（票 1 册子实测：老 yaml 引用 49 个模板，减 `link` 域 3 族），**信息结构对齐老技能的对应页面**，**UI 走新仓共用件与语言**（老技能只作功能来源与信息结构来源）；每份产物都经**真命令链**（prompt → 唤醒词 → 命令 → 落盘）与**仓内种子库**产出，汇总成一张**链路总览页**（行内点绝对路径的 URL 即可跳转打开），再由 `docs/agents/视觉验收墙.md` 的双端墙（手机 390 宽／桌面 1280 宽，**8 个域成对共 16 张**，`link` 无产物不出墙）交维护者终审。
 
 > **判定口径（五条同时达成即本图完成）**：① 70 条场景各有真产物且能点开 ② 链路总览页行内链接可跳转 ③ 墙生成器自检**正例 exit 0 ＋ 反例 exit 1 并点名**都走过 ④ 逐页视觉复核记录齐、整批综合分 **≥90/100**（vision 复核）⑤ 维护者终审「过」。
 
-## 进度：0%
+## 进度：5%
 
-**口径**：分母＝**20 张子票**（画图本身不计入分子）。**0/20 关闭**——本图 2026-09-20 建成（map **#797**，子票 **#798–#817**）：原生子议题边 **20/20**、原生阻塞边逐张与票源一致、任务清单表 **20 行**，接线脚本自校验 **PASS**。
+**口径**：分母＝**21 张子票**（画图本身不计入分子）。**1/21 关闭**——票 1（#798 册子，research）已关，并毕业出 **#836**（产物命名裁决：老规范按模板 1:1，会让 70 条场景互相覆盖）。
 
-**frontier（无阻塞、未认领，先到先得）**：票 1（#798 册子，research）／票 6（#803 判据件，task）／票 7（#804 生成器，task）。
+**画图完成（2026-09-20）**：map **#797**，子票 **#798–#817** ＋ 后补 **#836**；原生子议题边 **21/21**、原生阻塞边逐张与票源一致、任务清单表 **21 行**，接线脚本自校验 **PASS**（含「本地正文文件 ＝ issue 正文」逐张校验、变异探针实测能变红）。
 
-下一步：从 frontier 里认领一张开工（research 票可并跑）；改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再 `gh issue edit <n> --body-file`，改完跑 `node docs/skills/skill-home/html-scenes-wire.mjs --check` 对账（它也会校验本正文文件与 issue 正文逐字一致）。
+**frontier（无阻塞、未认领，先到先得）**：票 6（#803 判据件，task）／票 21（#836 命名裁决，grilling，**HITL：要你拍板**）。票 7（#804 生成器）与票 4（#801 落盘）已被 #836 阻塞。
+
+下一步：等你裁 #836（三条命名规则候选，见票面）；同时可并行认领 #803（判据件）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——脚本会推票面、建缺的边、回写本表与本文、并自校验。
 
 ## Notes
 
@@ -55,10 +57,10 @@
 | 1 | [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) | research | — |
 | 2 | [结构设计：按 9 域重排的形状定稿（必报五步第一、二步，报用户点头）](https://github.com/FeatherHunter/ilife/issues/799) | grilling | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
 | 3 | [结构重排落地：目录搬进 9 域＋派生链＋门禁＋既有命令回归](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) |
-| 4 | [链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) |
+| 4 | [链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 21](https://github.com/FeatherHunter/ilife/issues/836) |
 | 5 | [种子数据：仓内种子脚本＋测试库（70 场景所需）](https://github.com/FeatherHunter/ilife/issues/802) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
 | 6 | [判据件：样式与文案机审接到居家＋接进包内门](https://github.com/FeatherHunter/ilife/issues/803) | task | — |
-| 7 | [生成器：双端验收墙＋链路总览页](https://github.com/FeatherHunter/ilife/issues/804) | task | — |
+| 7 | [生成器：双端验收墙＋链路总览页](https://github.com/FeatherHunter/ilife/issues/804) | task | [票 21](https://github.com/FeatherHunter/ilife/issues/836) |
 | 8 | [样板：录物品端到端走通（形状先验，人裁过再铺开）](https://github.com/FeatherHunter/ilife/issues/805) | task | [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) |
 | 9 | [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
 | 10 | [物品管理域（二）更新与标签分类 11 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/807) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
@@ -72,19 +74,21 @@
 | 18 | [家庭协作域 2 条＋借用写侧唤醒词接通](https://github.com/FeatherHunter/ilife/issues/815) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
 | 19 | [开始使用域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/816) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
 | 20 | [收口：双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审](https://github.com/FeatherHunter/ilife/issues/817) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/806) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/807) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/808) ＋ [票 12](https://github.com/FeatherHunter/ilife/issues/809) ＋ [票 13](https://github.com/FeatherHunter/ilife/issues/810) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/811) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/812) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/813) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/814) ＋ [票 18](https://github.com/FeatherHunter/ilife/issues/815) ＋ [票 19](https://github.com/FeatherHunter/ilife/issues/816) |
+| 21 | [决定：产物命名与落点怎么区分 70 条场景（老规范按模板 1:1，会互相覆盖）](https://github.com/FeatherHunter/ilife/issues/836) | grilling | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
 <!-- PLAN-TABLE:END -->
 
 ## Decisions so far
 
 <!-- 索引：一行一条＝已关的子票 gist ＋ 链接；细节在票里，这里不复述 -->
 
-（尚无已关子票：本图建成时 20 张全开。）
+- [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) — 产出 `docs/skills/skill-home/pages-ledger.md`（**49 行页族表**；老 yaml 引用的 49 个模板**全部存在**，49/49）：页面类型 混合 27／查看 11／采集＋回执 6／选择＋回执 3／向导 2；按域页族 items 19、space 4、outfit 5、stats 4、express 4、receipt 4、family 2、setup 4（＋link 3，不做）。**三条改地图的实测**：①本图实做 **8 个域／70 场景／46 页族**，不是 9 个域（`link` 已裁不做）②老实现产物命名按模板 **1:1**（`scripts/render/__init__.py:130-147`）——`物品/receipt.html` 承担 4 条场景、`物品/add_form.html` 承担 4 条，照它落盘**会互相覆盖** ⇒ 毕业成 **#836** 并阻塞票 4／票 7 ③「开始使用四模板无调用点」订正为「`scripts/` 无调用点；`first_use_wizard.html` 全库唯一调用点在老测试 `tests/test_开始使用.py:622`，另 3 张任何地方都没有」。其余实测（票据凭证写类 11 条只打 JSON、家庭协作唯一把 HTML 做成 opt-in、18 个 legacy 平铺件里 17 个仍挂 `TEMPLATE_TO_COMMAND_CN`、`SM6-4` 无入口）全档在册子 §三。
 
 ## Not yet specified
 
 <!-- 已看出苗头、但还说不成一张票的雾；随 frontier 推进毕业 -->
 
-- **页族归属表**（哪几条场景共用一页、每族一个装配件）——等票 1（册子）与票 2（结构设计）毕业成事实。
+- **页族归属表**（哪几条场景共用一页、每族一个装配件）：票 1 已给出**族数与每族服务的场景清单**（`pages-ledger.md` 表一）；「一族一个装配件、页族与域目录怎么对应」仍待票 2（结构设计）定稿。
+- **产物命名规则裁完之后的连带面**（票 21／#836）：HELP 交付支与速查支的落点值要不要跟着改（`居家管家_HELP_<戳>.html`）——等 #836 裁决落地再看。
 - **HELP 内容资产 `html.template` 是否改指新页面**（改则须重跑 `pnpm gen:help-assets` 并更新摘要锁，见 `packages/skill-home/AGENTS.md`）——等票 2 裁。
 - **20 条兼容唤醒词在链路总览页里的呈现**（连同命令同页的附表，还是各自一行）——等票 7 与票 2 的形状定完。
 - **域票之间的共用件边界**（哪些装配件该升共用位；结构标准要求「共用位从第二个用法里长出来」）——等票 2 定骨架、样板票跑通后看实情。

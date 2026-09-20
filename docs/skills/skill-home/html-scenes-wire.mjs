@@ -113,6 +113,21 @@ function ensureBlockedByEdges() {
   }
 }
 
+/** 票面**以本地文件为准**：文件与 issue 正文不一致就推一次（`--body-file`，真实换行、不带 BOM）。 */
+function syncTicketBodies() {
+  for (const t of state.tickets) {
+    const local = readFileSync(join(here, t.body), 'utf8');
+    const remote = gh('issue', 'view', String(t.issue), '--repo', REPO, '--json', 'body', '--jq', '.body');
+    if (normTail(local) !== normTail(remote)) {
+      gh('issue', 'edit', String(t.issue), '--repo', REPO, '--body-file', join(here, t.body));
+      console.log(`同步子票正文：#${t.issue}（票 ${t.n}）`);
+    }
+  }
+}
+
+/** `gh` 打印字符串时会自带一个行尾换行，故只规范化**尾换行**；正文任何一处真差异仍判红。 */
+const normTail = (s) => s.replace(/\n+$/, '');
+
 function syncMapBody() {
   const url = (n) => `https://github.com/${REPO}/issues/${n}`;
   const rows = state.tickets.map((t) => {
@@ -160,8 +175,6 @@ function validate() {
   if (tableRows !== state.tickets.length) problems.push(`任务清单表行数：expected=${state.tickets.length} actual=${tableRows}`);
 
   const localBody = readFileSync(join(here, state.map.bodyFile), 'utf8');
-  // `gh` 打印字符串时会自带一个行尾换行，故只规范化**尾换行**；正文任何一处真差异仍判红。
-  const normTail = (s) => s.replace(/\n+$/, '');
   if (normTail(localBody) !== normTail(body)) {
     problems.push('地图正文：本地文件与 issue 正文不一致（改文件后跑一次不带 --check 的脚本即可推送）');
   }
@@ -170,6 +183,8 @@ function validate() {
     if (!local.trim()) problems.push(`子票 ${t.n} 正文文件为空`);
     if (/\uFEFF/.test(local)) problems.push(`子票 ${t.n} 正文文件带 BOM`);
     if (/\\n/.test(local)) problems.push(`子票 ${t.n} 正文里有字面 \\n 转义`);
+    const remoteBody = gh('issue', 'view', String(t.issue), '--repo', REPO, '--json', 'body', '--jq', '.body');
+    if (normTail(local) !== normTail(remoteBody)) problems.push(`子票 ${t.n} #${t.issue}：本地正文文件与 issue 正文不一致`);
   }
 
   console.log(`\n地图 #${map}（数据库 id ${dbIdOf(map)}）  ${state.map.title}`);
@@ -197,6 +212,7 @@ function main() {
   createTickets();
   ensureSubIssueEdges();
   ensureBlockedByEdges();
+  syncTicketBodies();
   syncMapBody();
   validate();
 }
