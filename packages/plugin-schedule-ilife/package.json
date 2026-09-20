@@ -20,6 +20,11 @@
     "plugin",
     "ilife"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FeatherHunter/ilife.git",
+    "directory": "packages/plugin-schedule-ilife"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=22.13"
