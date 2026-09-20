@@ -117,7 +117,13 @@ export async function installAbsent(
   return callManager(call, MANAGER_ACTIONS.install, { packageName: target.packageName, version });
 }
 
-/** 装上更新：查新版 → 提交安装 → 有界轮询查状态到任务收尾；凭证过期重查一次再提交。 */
+/** 装上更新：查新版 → 提交安装 → 有界轮询查状态到任务收尾；凭证过期重查一次再提交。
+ *
+ * **第一句那次 `checkTarget` 不是多余的**（票 #740 第四轮）：凭证是「这一刻的安装态」的凭据，
+ * 更新包提交时拿它跟当时读到的安装态比（`service.js:309`／`:325`），不一样就拒。
+ * 而面板**从来只提交这一刻现签的凭证**——这就是「刚在本面板装过别家，这一家照样点得动
+ * 「装上更新」」的全部依据：旧快照只用来显示版本，不参与提交。（第四轮以前面板还把别家整行
+ * 换成「重新检查」——那是白挡一次本来会成功的点击，已删。） */
 export async function updateInstalled(
   call: CallFace | null,
   target: TargetInfo,

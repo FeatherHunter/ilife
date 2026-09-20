@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { cardActionOf, isAbsent, manualForDisplay, markStaleOthers, restartBannerText, restartPendingOf, slotStateOf, staleVerdict, verdictOf, versionLines } from './update-view.js';
+import { cardActionOf, isAbsent, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -200,14 +200,11 @@ export function rowToneOf(row: UpdateRowState, verdict: Verdict | null): RowTone
   }
 }
 
-/** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。
- *  `stale`＝「这一家的快照已经过期」（别家刚装成，七家共用的安装清单被改写了，票 #740）：
- *  这时不拿旧快照的话去画卡，直接换成「重新检查」那一态。 */
+/** 一行的运行时状态：还没查 / 查着 / 有结果 / 装着 / 出错。 */
 export interface UpdateRowState {
   readonly phase: 'idle' | 'checking' | 'ready' | 'installing' | 'failed';
   readonly outcome: CheckOutcome | null;
   readonly failure: CallFailure | null;
-  readonly stale?: boolean;
 }
 
 export interface UpdateRowsFace {
@@ -267,63 +264,54 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
     setRows((previous) => ({ ...previous, [key]: next }));
   }, []);
-  /** 装成一家 ⇒ 其余各家的旧快照一律作废（票 #740）：判据见 `markStaleOthers`。 */
-  const staleOthers = React.useCallback((keepKey: string) => {
-    setRows((previous) => markStaleOthers(previous, keepKey));
-  }, []);
   const checkAll = React.useCallback(() => {
     setChecking(true);
     setOpen(true);
     const list = targets;
-    // 重查即重新绑一次安装态指纹 ⇒ 过期标记随之清掉。
-    for (const target of list) patch(target.key, { phase: 'checking', outcome: rows[target.key]?.outcome ?? null, failure: null, stale: false });
+    for (const target of list) patch(target.key, { phase: 'checking', outcome: rows[target.key]?.outcome ?? null, failure: null });
     void Promise.all(
       list.map(async (target) => {
         const result = await checkTarget(getCall(), target);
-        patch(target.key, result.ok ? { phase: 'ready', outcome: result.value, failure: null, stale: false } : { phase: 'failed', outcome: null, failure: result, stale: false });
+        patch(target.key, result.ok ? { phase: 'ready', outcome: result.value, failure: null } : { phase: 'failed', outcome: null, failure: result });
       }),
     ).finally(() => setChecking(false));
   }, [getCall, patch, rows, targets]);
   const act = React.useCallback(
     (target: TargetInfo, action: VerdictAction) => {
       const current = rows[target.key] ?? IDLE;
-      // 「重新检查」：只重读这一家（重新绑一次安装态指纹）。装成一家之后其余各家都要走这一步——
-      // 它们的旧快照已经过期，直接装必然被守卫拦下（票 #740）。
+      // 「重新检查」：只重读这一家（重新绑一次安装态指纹）。
       if (action === 'recheck') {
-        patch(target.key, { phase: 'checking', outcome: current.outcome, failure: null, stale: false });
+        patch(target.key, { phase: 'checking', outcome: current.outcome, failure: null });
         void (async () => {
           const checked = await checkTarget(getCall(), target);
           patch(target.key, checked.ok
-            ? { phase: 'ready', outcome: checked.value, failure: null, stale: false }
-            : { phase: 'failed', outcome: null, failure: checked, stale: false });
+            ? { phase: 'ready', outcome: checked.value, failure: null }
+            : { phase: 'failed', outcome: null, failure: checked });
         })();
         return;
       }
-      patch(target.key, { ...current, phase: 'installing', failure: null, stale: false });
+      patch(target.key, { ...current, phase: 'installing', failure: null });
       void (async () => {
         const absent = isAbsent(target);
         let version = current.outcome?.snapshot.latestVersion ?? null;
         if (absent && version === null) {
           const checked = await checkTarget(getCall(), target);
           if (!checked.ok) {
-            patch(target.key, { phase: 'failed', outcome: null, failure: checked, stale: false });
+            patch(target.key, { phase: 'failed', outcome: null, failure: checked });
             return;
           }
-          patch(target.key, { phase: 'installing', outcome: checked.value, failure: null, stale: false });
+          patch(target.key, { phase: 'installing', outcome: checked.value, failure: null });
           version = checked.value.snapshot.latestVersion;
         }
+        // 已装的那条路，`updateInstalled` **自己会先查一次**再提交（凭证是那一查现签的）——
+        // 这就是「装了别家之后，这一家的「装上更新」照样点得动」的原因：面板从不拿旧凭证去提交。
         const result = absent
           ? await installAbsent(getCall(), target, version ?? '')
           : await updateInstalled(getCall(), target, pollMs);
         if (result.ok) {
           // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
-          const before = current.outcome?.snapshot.installedVersion ?? null;
           const refreshed = await checkTarget(getCall(), target, target.phones?.status);
-          const after = refreshed.ok ? (refreshed.value.snapshot.installedVersion ?? null) : null;
-          patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null, stale: false } : { phase: 'failed', outcome: null, failure: refreshed, stale: false });
-          // 只有**磁盘上的版本真的变了**才作废别家（票 #740 对抗式审查）：作业失败／中断时安装态没动，
-          // 别家的快照照样有效，那时作废只会白逼用户重查一遍。
-          if (after !== null && after !== before) staleOthers(target.key);
+          patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
           // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
           // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
           await reload();
@@ -333,11 +321,10 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           phase: 'failed',
           outcome: current.outcome,
           failure: { ...result, manual: result.manual ?? current.outcome?.manual ?? null },
-          stale: false,
         });
       })();
     },
-    [getCall, patch, pollMs, reload, rows, staleOthers],
+    [getCall, patch, pollMs, reload, rows],
   );
   return { targets, rows, pollMs, loadError, checking, open, close: () => setOpen(false), checkAll, act };
 }
@@ -393,15 +380,13 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
   const body = shown.map((target) => {
     const row = rows[target.key];
     const snapshot = row.outcome?.snapshot ?? null;
-    // 快照过期（别家刚装成）⇒ 不拿旧快照的话去画卡，直接换成「重新检查」那一态（票 #740）。
-    const verdict = row.stale === true ? staleVerdict() : (snapshot ? verdictOf(target, snapshot) : null);
+    // 快照在就按它画卡。（第四轮改：装成一家之后**不再**把别家换成「重新检查」——
+    // 装的那条路本来就会在提交前重查一次拿新凭证，旧快照从不到达守卫，那句作废提示只是白挡一次点击。）
+    const verdict = snapshot ? verdictOf(target, snapshot) : null;
     const manual = manualForDisplay(target, row.failure?.manual ?? row.outcome?.manual ?? null);
     const busy = row.phase === 'installing';
-    // 手工命令只在**面板代劳不了**时才摊出来（拦截态但没按钮，或上一次装失败）：
-    // 拦得住但面板一步能推回去的（重新检查／重试安装），摊命令只是噪声（票 #740）。
-    // 第三轮补的一格：那句话**自己**写了「下面这条命令」时，命令必须出来（`Verdict.manualHint`）——
-    // 否则屏上那句「就用下面这条命令重装」下面什么都没有。
-    const showManual = manual !== null && (row.phase === 'failed' || verdict?.manualHint === true || (verdict?.kind === 'blocked' && verdict.action === null));
+    // 手工命令只在**面板代劳不了**时才摊出来（判据收在 `showManualOf` 里，与单测同一份）。
+    const showManual = manual !== null && showManualOf(verdict, row.phase);
     // 失败的行没有快照、也就没有结论，但照样要给一颗够得着的按钮（票 #740 第三轮，见 `cardActionOf`）。
     const buttonAction = cardActionOf(verdict, row.phase);
     const tone = rowToneOf(row, verdict);

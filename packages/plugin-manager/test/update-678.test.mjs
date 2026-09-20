@@ -10,7 +10,7 @@ import { MANAGER_TABS } from '../dist/nav.js';
 import { MANAGER_PACKAGE } from '../dist/install.js';
 import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-targets.js';
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
-import { isAbsent, cardActionOf, manualForDisplay, markStaleOthers, restartBannerText, restartPendingOf, slotStateOf, staleVerdict, verdictOf, versionLines } from '../dist/update-view.js';
+import { isAbsent, cardActionOf, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
 import { readPanelRegistered, readTargetEnvironment } from '../dist/update-env.js';
 
@@ -174,14 +174,36 @@ describe('#678 一行结论与版本行', () => {
     const nothing = verdictOf(target, snapshot({ latestVersion: '0.2.5', canInstall: false, blockedReason: 'installation-changed' }));
     assert.equal(nothing.kind, 'up-to-date', '没东西可装时，守卫拦不拦与用户无关：不占那一行');
   });
-  it('装成一家之后别家的读数作废：给「重新检查」（#740）', () => {
-    const stale = staleVerdict();
-    assert.equal(stale.kind, 'blocked');
-    assert.equal(stale.action, 'recheck');
-    assert.match(stale.text, /在本面板装过别的插件/);
-    assert.match(stale.text, /点「重新检查」/);
-    // 第三轮朗读表逮到：「再操作这一家」是空话——照着念也不知道点哪颗按钮。
-    assert.match(stale.text, /再点「装上更新」/, '作废后的下一步要指名按钮，不许写「再操作这一家」');
+  // 第四轮（维护者真机截图）：装了卡路里之后，别家全变成黄的「刚在本面板装过别的插件…」，
+  // 只剩「重新检查」——用户点不动「装上更新」。查下来是**第一轮那条「作废别家读数」的前提错了**：
+  // 装的那条路（`updateInstalled`）本来就在提交前重查一次、用那一查现签的凭证提交
+  // （更新包的守卫是 `service.js:309`／`:325` 的「凭证里的 installationKey ≠ 当时读到的」），
+  // 所以旧快照从不到达守卫。作废提示只是白挡一次点击 ＋ 白让人多点一次「重新检查」。
+  it('装上更新的提交前一定重读一次（这就是「装了别家，这一家照样点得动」的原因）', async () => {
+    const calls = [];
+    const receipt = { checkId: 'c1', checkedAt: 1, expiresAt: 2 };
+    const face = async (channel, endpoint, payload) => {
+      calls.push({ endpoint, method: payload?.method });
+      if (payload?.method === 'check') return { ok: true, value: { snapshot: snapshot({ latestVersion: '0.3.0', canInstall: true }), receipt, manual: null } };
+      if (payload?.method === 'install') return { ok: true, value: { snapshot: snapshot({ latestVersion: '0.3.0', installedVersion: '0.3.0', job: null }), receipt: null, manual: null } };
+      return { ok: true, value: { snapshot: snapshot({ job: null }), receipt: null, manual: null } };
+    };
+    const targetWithPhones = { ...target, phones: { status: 'status', check: 'check', install: 'install' } };
+    const out = await updateInstalled(face, targetWithPhones, 1);
+    assert.equal(out.ok, true);
+    assert.deepEqual(calls.map((c) => c.method), ['check', 'install'], '顺序必须是「先查一次拿新凭证，再提交安装」');
+    // 反面：只查一次不行——提交必须用**这一次查**签出来的凭证。
+    assert.equal(calls.length, 2);
+  });
+  it('结论只说「点得动的那一步」：待重启那张卡不摊手工命令（第四轮真机截图逮到）', () => {
+    const restart = verdictOf(target, snapshot({ installedVersion: '0.3.0', blockedReason: 'pending-restart' }));
+    assert.equal(restart.action, null);
+    assert.equal(showManualOf(restart, 'ready'), false, '待重启要的是重启，不是把刚装好的那版再装一遍');
+    assert.equal(showManualOf(verdictOf(target, snapshot({ latestVersion: '0.3.0', blockedReason: 'incompatible-node' })), 'ready'), false);
+    // 该摊的三种照旧摊：句子自己指着命令（`manualHint`），或上一次装失败。
+    assert.equal(showManualOf(verdictOf(target, snapshot({ latestVersion: '0.3.0', blockedReason: 'source-install' })), 'ready'), true);
+    assert.equal(showManualOf(null, 'failed'), true);
+    assert.equal(showManualOf(verdictOf(target, snapshot({ latestVersion: '0.3.0', canInstall: true })), 'ready'), false);
   });
   // 对抗式审查逮到的一条：有新版、却没凭证（凭证过期或没签发）时，旧写法会落到「已是最新」那句——
   // 那是假话（官方源上就有新版）。正确答案是重新检查一次。
@@ -237,16 +259,26 @@ describe('#678 一行结论与版本行', () => {
     }
     assert.ok(bundle.includes('重启 DSH（退出后重新打开）'), '产物里缺重启动作那句话');
     assert.ok(bundle.includes('待重启 DSH（退出后重新打开）'), '产物里缺待重启横幅那句总账');
-    assert.ok(bundle.includes('在本面板装过别的插件'), '产物里缺「装过别的插件」那一态');
+    // 第四轮：作废态整条路（`staleVerdict`／`markStaleOthers`）已按「前提错了」删除——
+    // 产物里不许再出现那句挡人的话。
+    assert.ok(!bundle.includes('刚在本面板装过别的插件'), '产物里不该再有把别家挡住的作废态');
   });
-  it('作废只作废别家：装成的那一家自己保持原样（#740）', () => {
-    const ready = { phase: 'ready', outcome: null, failure: null };
-    const rows = { a: ready, b: ready, c: { ...ready, stale: true } };
-    const next = markStaleOthers(rows, 'a');
-    assert.equal(next.a.stale, undefined, '刚装成的那家不许被自己作废');
-    assert.equal(next.b.stale, true, '别家要作废');
-    assert.equal(next.c.stale, true);
-    assert.equal(rows.b.stale, undefined, '原对象不许被改写（纯函数）');
+  it('装上更新的提交顺序（纯函数面）：失败时给得出下一步，成功时不编快照', async () => {
+    const targetWithPhones = { ...target, phones: { status: 'status', check: 'check', install: 'install' } };
+    // 查新版失败：整条路停在这一步，回的就是那次失败（不拿旧快照硬装）。
+    const failing = async (channel, endpoint, payload) => (payload?.method === 'check'
+      ? { ok: false, error: { code: 'check-failed', message: 'x', details: {} } }
+      : { ok: true, value: {} });
+    const bad = await updateInstalled(failing, targetWithPhones, 1);
+    assert.equal(bad.ok, false);
+    assert.equal(bad.code, 'check-failed');
+    // 没凭证（有新版本但没签发）：不许硬提交，照实回原因码。
+    const noReceipt = async (channel, endpoint, payload) => (payload?.method === 'check'
+      ? { ok: true, value: { snapshot: snapshot({ latestVersion: '0.3.0' }), receipt: null, manual: null } }
+      : { ok: true, value: {} });
+    const blocked = await updateInstalled(noReceipt, targetWithPhones, 1);
+    assert.equal(blocked.ok, false);
+    assert.equal(blocked.code, 'check-failed');
   });
   it('待重启：卡片说事实与做法，横幅只点名（不重复那句话）', () => {
     const pending = snapshot({ installedVersion: '0.2.6', blockedReason: 'pending-restart' });

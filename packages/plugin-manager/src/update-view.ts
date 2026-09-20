@@ -119,22 +119,14 @@ export function cardActionOf(verdict: Verdict | null, phase: 'idle' | 'checking'
   return phase === 'failed' ? 'recheck' : null;
 }
 
-/** 装成一家之后，其余各家的读数一律作废（票 #740）：七家共用同一份使用范围清单，
- *  刚那次安装已经改写了它，旧快照再拿去装必然被守卫拦下。这句话就是那条守卫的人话。 */
-export function staleVerdict(): Verdict {
-  return { kind: 'blocked', text: '刚在本面板装过别的插件，共用的安装清单变了，这一家要先重读一次。点「重新检查」，再点「装上更新」。', action: 'recheck' };
-}
-
-/** 把除 `keepKey` 之外的行全标成过期（票 #740）：装成一家 ⇒ 七家共用的安装清单被改写，
- *  其余各家的旧快照再拿去装必然被守卫拦下。纯函数：状态源与单测共用同一份判据，
- *  不关心行里还有什么（泛型只要求有 `stale` 这一格）。 */
-export function markStaleOthers<T extends { readonly stale?: boolean }>(
-  rows: Readonly<Record<string, T>>,
-  keepKey: string,
-): Record<string, T> {
-  const next: Record<string, T> = {};
-  for (const [key, row] of Object.entries(rows)) next[key] = key === keepKey ? row : { ...row, stale: true };
-  return next;
+/** 这一行要不要摊出那条手工命令（票 #740 第三轮定的形状，第四轮补的这一格）。
+ *
+ *  三种情形摊：① 上一次装失败（`failed`）；② 这句话自己指着「下面这条命令」（`manualHint`）。
+ *  **待重启**与 `incompatible-node` 不摊：它们那时该做的是**重启**（或升级 Node），不是重装一次。
+ *  （第四轮维护者真机截图逮到：待重启那张卡下面挂着一条「dsh plugin … add」——点它等于把刚装好的
+ *  那一版再装一遍，纯噪声，还会让人以为状态不对。） */
+export function showManualOf(verdict: Verdict | null, phase: 'idle' | 'checking' | 'ready' | 'installing' | 'failed'): boolean {
+  return phase === 'failed' || verdict?.manualHint === true;
 }
 
 /** 把快照翻成一行结论：还没查 / 已是最新 / 有新版 / 待重启 / 装不了（附人话原因与下一步）。 */
