@@ -39,6 +39,16 @@ export const inject = ['slots', 'connection'];
 /** 爱生活页签槽名：定义在 `update-contract.ts`（宿主判「已装产物有没有注册代码」也用这个名字，一处定义）。 */
 export { CONFIG_TAB_SLOT } from './update-contract.js';
 
+/** 共用件「目录浏览器」从包门转出（票 #744）：六个单品插件的设置页要用的就是这三样——
+ *  挂在行上的组件、开图用的接线、以及入口三态的判定。六家只 import 这一个门，
+ *  不 deep-import 本包 `dist/` 里的具体文件（那条禁令写在本票票面「解耦要求」第 4 条）。 */
+export { DirectoryBrowser, createDirectoryRowBrowser } from './directory-browser-ui.js';
+export type { DirectoryBrowserLabels, DirectoryBrowserProps } from './directory-browser-ui.js';
+export { createBrowseController, rowsOf, canGoUp, targetOf } from './directory-browser-state.js';
+export type { BrowseController, BrowseState } from './directory-browser-state.js';
+export { pickerModeOf, readPickAnswer } from './directory-browser-contract.js';
+export type { DirectoryBrowseFace, DirectoryListing, PickOutcome } from './directory-browser-contract.js';
+
 /** 包名 → 本家那条客户端通道（票 #735）。取值面是导航表那份镜像，不再从页签槽账本的自定义选项里读：
  *  装机槽位面不透传自定义键，读了恒是空串（详见 `nav.ts` 上 `ManagerTab.channel` 的注释）。 */
 const CHANNEL_BY_PLUGIN = new Map(MANAGER_TABS.map((tab) => [tab.plugin, tab.channel]));

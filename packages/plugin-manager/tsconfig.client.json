@@ -12,6 +12,9 @@
     "src/update-view.ts",
     "src/update-contract.ts",
     "src/nav.ts",
-    "src/dsh-ctx.ts"
+    "src/dsh-ctx.ts",
+    "src/directory-browser-contract.ts",
+    "src/directory-browser-state.ts",
+    "src/directory-browser-ui.ts"
   ]
 }
