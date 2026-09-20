@@ -1,6 +1,6 @@
 {
   "name": "dsh-calorie",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "爱生活单品插件 P10 脚手架：卡路里（ilife:calorie order 75），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +25,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.3.2",
+    "dsh-life-pack": "^0.3.3",
     "skill-calorie": "0.3.0"
   },
   "dsh": {
