@@ -75,7 +75,7 @@
 | `src/init/commands.ts` | 20 | 20 | 未越线，在册备查 |
 | `src/init/diagnosis.ts` | 133 | 134 | 未越线，在册备查 |
 | `src/init/index.ts` | 42 | 42 | 未越线，在册备查 |
-| `src/init/page.ts` | 243 | 243 | 未越线，在册备查 |
+| `src/init/page.ts` | 243 | 245 | 未越线，在册备查 |
 | `src/init/routes.ts` | 15 | 15 | 未越线，在册备查 |
 | `src/init/run.ts` | 71 | 71 | 未越线，在册备查 |
 | `src/memo/batch.ts` | 62 | 62 | 未越线，在册备查 |

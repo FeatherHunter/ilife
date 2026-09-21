@@ -176,9 +176,11 @@ function pageContent(input: InitPageInput, counts: Counts, forGuide: boolean): s
 
   if (pending.length > 0) {
     parts.push('<h2 id="sec-pending">' + (forGuide ? '先处理这些' : '待处理项') + '</h2>');
+    // 不带行首状态词：KPI 卡上已经按档位报过同一事实（`必装缺失 N 项`），
+    // 行首再挂一枚同名徽章就是「同一事实一页两处」——H3 那一笔债。分档信息由上方
+    // KPI 卡与本节标题承担，行内只留「哪一项、怎么办」。
     parts.push(renderListRows({
       items: pending.map((i) => ({
-        left: statusText(i.status),
         main: i.name + '：' + (i.action === '' ? i.desc : i.action),
       })),
     }));

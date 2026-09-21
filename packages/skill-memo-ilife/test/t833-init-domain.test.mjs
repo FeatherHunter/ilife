@@ -24,7 +24,7 @@ const outEnv = (r) => JSON.parse(r.stdout);
 const DIAG = {
   items: [
     { name: '运行环境', status: 'ok', desc: 'Node 可用', action: '' },
-    { name: '数据存储', status: 'warn', desc: '全文搜索扩展未装', action: '装 fts5 扩展后重跑' },
+    { name: '数据存储', status: 'warn', desc: '全文搜索扩展未装', action: '装全文搜索扩展后重跑' },
     { name: '飞书联动', status: 'err', desc: '未安装飞书 CLI', action: '按指引安装并授权' },
   ],
   todos: [{ title: '装飞书 CLI', steps: ['下安装包', '跑授权'] }],
