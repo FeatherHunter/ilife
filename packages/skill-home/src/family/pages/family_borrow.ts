@@ -250,7 +250,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="bw-btn primary" id="btnReg">确认登记</button>'
     + '<p class="bw-legend">状态分四种：已超期，今日到期，已归还，借用中</p>'
     + '</section>'
-    + '<section class="bw-sec"><h2>数据快照</h2>' + snapshotHtml(env, rows)
+    + '<section hidden class="bw-sec"><h2>数据快照</h2>' + snapshotHtml(env, rows)
     + '<div class="bw-copy2"><button class="bw-copy" data-t="'
     + escapeHtml('【借用管理数据快照】借出' + out.length + '件，借入' + inn.length + '件，超期' + overdue + '件')
     + '" onclick="copyText(this.dataset.t)">复制数据</button><button class="bw-copy" data-t="'

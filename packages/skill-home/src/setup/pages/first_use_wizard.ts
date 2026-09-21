@@ -117,7 +117,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<h2>首次使用向导</h2>'
+    + '<h2>初始化六步</h2>'
     + '<p class="su-lead">跟着六个步骤完成初始化，随时可以重进本页确认状态。</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="6步步骤条">六个步骤</h2>'

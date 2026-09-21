@@ -169,7 +169,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div><button class="bm-btn primary" id="btnAddMember">确认添加</button>'
     + '<p class="bm-legend">关系一栏不限定写法，未标记的物品一律记在使用者名下</p>'
     + '</section>'
-    + '<section class="bm-sec"><h2>数据快照</h2><div>' + renderEnvelopeHtml(env) + '</div>'
+    + '<section hidden class="bm-sec"><h2>数据快照</h2><div>' + renderEnvelopeHtml(env) + '</div>'
     + '<div class="bm-copy2"><button class="bm-copy" data-t="'
     + escapeHtml('【家人档案数据快照】成员' + members.length + '位')
     + '" onclick="copyText(this.dataset.t)">复制数据</button><button class="bm-copy" data-t="'

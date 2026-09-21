@@ -80,7 +80,7 @@ function summaryOf(env: Envelope): string {
   if (!items.length) {
     return '<div class="receipt-summary"><p>暂无记录，可新增一条购买记录后回来复核</p></div>';
   }
-  return '<div class="receipt-summary"><p>共' + items.length + '条购买记录，按时间倒序排列</p></div>';
+  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日先后列出（金额与渠道在物品详情）</p></div>';
 }
 
 /** 记录表：同一天两笔购买时行文逐字相同，逐行给序号让每行自解释（也免了两行一模一样的字）。
@@ -94,7 +94,7 @@ function purchaseTable(env: Envelope): string {
   const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>'
     + escapeHtml(String(it.name ?? '').replace(/^购买/, '')) + '</td></tr>').join('');
   return '<div class="fam-content"><table><thead><tr><th>序号</th><th>购买日</th></tr></thead><tbody>'
-    + rows + '</tbody></table><p>退货窗口按购买日加窗口天数推算；金额与渠道进物品详情看。</p></div>';
+    + rows + '</tbody></table><p>金额与渠道进物品详情看。</p></div>';
 }
 
 /** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；补一行入口后
