@@ -1,13 +1,19 @@
-// receipt能力·accounts页装配（#805 脚手架生成，域票填内容）。
+// receipt能力·accounts页装配（#805 脚手架生成，#814 域票填内容）。
 //
 // 一族一个装配件：模板 `templates/receipt/accounts.html` 的装配入口。
 // 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
 // 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。
+// 可见文案中文-only：机审 `audit-separators` 判载荷区外英文裸词行进红，
+// 而平台名与用户名含拉丁字符，故清单行一律走表格单元格
+// （判据把单元格文本排除在英文裸词之外），可见标题只用中文。
 // 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
+//
+// 密码红线：明文永不进页（含可见文本、复制载荷、预埋摘要）；
+// 本页只显脱敏符号与操作入口，查看与复制均经对话二次确认。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'accounts' as const;
 
@@ -57,14 +63,125 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
+type AccountRow = {
+  platform: string;
+  username: string;
+  typeText: string;
+};
+
+function parseThinName(name: string): AccountRow {
+  const open = name.indexOf('（');
+  const close = name.indexOf('）');
+  if (open >= 0 && close > open) {
+    return { platform: name.slice(0, open), username: name.slice(open + 1, close), typeText: '待补' };
+  }
+  return { platform: name, username: '待补', typeText: '待补' };
+}
+
+function isRich(item: Record<string, unknown>): boolean {
+  return (item as { platform?: unknown }).platform !== undefined
+    || (item as { username?: unknown }).username !== undefined
+    || (item as { type?: unknown }).type !== undefined;
+}
+
+function rowOf(item: Record<string, unknown>): AccountRow {
+  if (!isRich(item)) return parseThinName(String((item as { name?: unknown }).name ?? ''));
+  return {
+    platform: String((item as { platform?: unknown }).platform ?? '待补'),
+    username: String((item as { username?: unknown }).username ?? '待补'),
+    typeText: String((item as { type?: unknown }).type ?? '待补'),
+  };
+}
+
+function groupTitle(t: string): string {
+  if (t === '购物' || t === '银行' || t === '社交' || t === '其他') return t;
+  return '其他';
+}
+
+function listGroups(env: Envelope): string {
+  const data = env.data as Record<string, unknown>;
+  const items = Array.isArray((data as { items?: unknown }).items)
+    ? (data as { items: Record<string, unknown>[] }).items
+    : [];
+  if (!items.length) {
+    return '<div><p>暂无账号，可新增一个账号后回来按类型复核</p></div>';
+  }
+  const rows = items.map(rowOf);
+  const groups = new Map<string, AccountRow[]>();
+  for (const r of rows) {
+    const g = groupTitle(r.typeText);
+    const hit = groups.get(g);
+    if (hit) hit.push(r);
+    else groups.set(g, [r]);
+  }
+  const order = ['购物', '银行', '社交', '其他'];
+  const parts: string[] = ['<div><p>共' + rows.length + '个账号，按类型分组展示</p>'];
+  for (const g of order) {
+    const list = groups.get(g);
+    if (!list || !list.length) continue;
+    parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
+    parts.push('<table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
+      + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
+        + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
+      + '</tbody></table>');
+  }
+  const rest = [...groups.keys()].filter((k) => !order.includes(k));
+  for (const g of rest) {
+    const list = groups.get(g) as AccountRow[];
+    parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
+    parts.push('<table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
+      + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
+        + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
+      + '</tbody></table>');
+  }
+  parts.push('<p>清单全脱敏展示，复制文本默认不含密码</p></div>');
+  return parts.join('');
+}
+
+function receiptNote(env: Envelope): string {
+  const data = env.data as Record<string, unknown>;
+  const msg = String((data as { message?: unknown }).message ?? '已落盘');
+  if (/密码/.test(msg)) {
+    return '<div><p>密码操作已受理，明文仅经对话回显，页上不展示</p>'
+      + '<p>可在查账号中按类型复核，密码加密存储，页上不展示明文</p></div>';
+  }
+  return '<div><p>账号写操作已受理，可在查账号中按类型复核</p>'
+    + '<p>密码加密存储，页上不展示明文</p></div>';
+}
+
+function opsBlock(): string {
+  return '<div>'
+    + '<button type="button" data-t="请新增账号">新增账号</button>'
+    + '<button type="button" data-t="请查看密码，经对话回显">查看密码</button>'
+    + '<button type="button" data-t="请复制密码，复制前二次确认">复制密码</button>'
+    + '<button type="button" data-t="复制账号脱敏数据">复制数据</button>'
+    + '<button type="button" data-t="复制账号日志">复制日志</button>'
+    + '</div>';
+}
+
+function envelopeBrief(env: Envelope): string {
+  const data = env.data as Record<string, unknown>;
+  const total = (data as { total?: unknown }).total;
+  const ok = (data as { ok?: unknown }).ok;
+  return JSON.stringify({ key: String((env as { key?: unknown }).key ?? ''), shape: String((env as { shape?: unknown }).shape ?? ''), total: typeof total === 'number' ? total : undefined, ok: typeof ok === 'boolean' ? ok : undefined });
+}
+
+function sensitiveBanner(): string {
+  return '<div><p>说明页不展示明文，查看与复制均需二次确认</p></div>';
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/receipt/accounts.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
+  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
+    + '<span>账号密码</span></div>';
+  const main = env.shape === 'receipt' ? receiptNote(env) : listGroups(env);
   const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    + sensitiveBanner()
+    + main
+    + opsBlock()
+    + '<div class="fam-content"><pre>' + escapeHtml(envelopeBrief(env)) + '</pre></div>'
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')
