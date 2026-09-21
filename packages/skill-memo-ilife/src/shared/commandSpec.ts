@@ -15,7 +15,7 @@
  * 故这里按老路径 import type；那个件搬家的那一批里，本行的路径跟着改，别处不动。
  */
 import type { EnvelopeShape } from 'base-link-core';
-import type { MemoDb } from '../fetch/db.js';
+import type { MemoDb } from '../db/readonly.js';
 
 /** 整页交付意图：`html`＝本次产物的整页，`stem`＝册子冻结的文件名主体（`src/help/booklet.ts` 的唯一定义地给出）。 */
 export interface PageDeliver {

@@ -9,7 +9,7 @@
  */
 import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
-import type { MemoDb } from '../fetch/db.js';
+import type { MemoDb } from '../db/readonly.js';
 import { authStatus, runSentinel } from '../fetch/index.js';
 import { reconcileWishes } from '../wish/index.js';
 import { fillMemoPage, pageEnvelope, syncSnapshot } from '../render/index.js';

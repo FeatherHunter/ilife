@@ -8,8 +8,8 @@
  */
 import type { CommandOut } from '../shared/commandSpec.js';
 import { toRows } from '../shared/rows.js';
-import type { MemoDb } from '../fetch/db.js';
-import { listNotes } from '../fetch/db.js';
+import type { MemoDb } from '../db/readonly.js';
+import { listNotes } from '../db/readonly.js';
 import { fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot } from '../render/index.js';
 import { dueMatches } from './due.js';
 import { planWizard, completeWizard } from './wizards.js';

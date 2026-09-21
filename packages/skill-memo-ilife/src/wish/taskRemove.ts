@@ -4,8 +4,8 @@
 // 真删走的是原生 resource `task tasks delete --task-guid <guid> --yes`（短路里没有 `+delete`，
 // 本机 lark-cli 1.0.82 的 `task --help` 已核对）；老实现「只标完成」不是接口没有删除能力，
 // 而是当时没走原生 resource 那条路（老代码自认的 `task 无 +delete shortcut` 一直是对的）。
-import { listRelatedTasks } from '../fetch/tasks.js';
-import { deleteTask } from '../fetch/taskWrite.js';
+import { listRelatedTasks } from './tasks.js';
+import { deleteTask } from './taskWrite.js';
 
 /** 真删远端任务。报错时先复核「是不是已经没有了」：远端任务早被手工删掉也算达成（幂等），
  *  否则才把失败上抛——免得任务被删过之后本地这条再也删不掉。 */

@@ -12,10 +12,10 @@
 import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadMemoConfig, resetMemoConfig, saveMemoConfig } from '../config.js';
-import { resolvedMemoPaths } from '../fetch/paths.js';
-import type { MemoResolvedPaths } from '../fetch/paths.js';
-import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../fetch/feishu.js';
-import type { LarkTier } from '../fetch/feishu.js';
+import { resolvedMemoPaths } from '../shared/paths.js';
+import type { MemoResolvedPaths } from '../shared/paths.js';
+import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../sync/feishu.js';
+import type { LarkTier } from '../sync/feishu.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-memo-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {

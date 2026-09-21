@@ -3,7 +3,7 @@
 //   ① 只认心愿（闸门）；② 删该心愿 note（关联 reminders 手动先删，外键 NO ACTION）；
 //   ③ 新建一条 `打卡` note（content 默认拷贝心愿原文；reminder_id 留 NULL）；
 //   ④ 单事务，失败回滚；⑤ 本地提交后，用删前快照的 guid 调远端标完成（本地优先，远端失败不影响本地）。
-import { addNote, getNote, removeNote, removeReminderRowsOfNote, type MemoDb } from '../fetch/db.js';
+import { addNote, getNote, removeNote, removeReminderRowsOfNote, type MemoDb } from '../db/readonly.js';
 import { larkSetupOf, openGate } from './gate.js';
 import { completeRemoteWish } from './taskSync.js';
 import type { WishReceipt, WishWriteResult } from './ensure.js';

@@ -104,7 +104,7 @@ describe('memo 取数层', () => {
   it('无显式覆盖：删键后 findLarkCli 只走探测链（#760）', async () => {
     // `lark.cliPath` 键已删：探测链只认 PATH／固定路径，不认任何配置覆盖。
     // 本件 PATH 首位即挡板 ⇒ 命中的必是挡板那一份（`larkTierInfo` 同链）。
-    const { larkTierInfo } = await import('../dist/fetch/feishu.js');
+    const { larkTierInfo } = await import('../dist/sync/feishu.js');
     const found = findLarkCli();
     assert.ok(String(found).length > 0);
     const tier = larkTierInfo();

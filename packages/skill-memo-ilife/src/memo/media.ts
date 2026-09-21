@@ -21,7 +21,7 @@ import { statSync } from 'node:fs';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { MemoPolicyError } from '../shared/errors.js';
 import { loadMemoConfig } from '../config.js';
-import { mediaDirOf } from '../fetch/paths.js';
+import { mediaDirOf } from '../shared/paths.js';
 
 /** 附件路径不在附件目录内时的错码（口径层的坏输入）。 */
 const CODE = 'POLICY_BAD_INPUT' as const;

@@ -15,7 +15,7 @@ import {
   type MemoDb,
   type MemoNote,
   type NotePatch,
-} from '../fetch/db.js';
+} from '../db/readonly.js';
 import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../remind/policy.js';
 import { dueForCategory, normalizeDue } from './due.js';
 import { larkSetupOf, openGate } from './gate.js';

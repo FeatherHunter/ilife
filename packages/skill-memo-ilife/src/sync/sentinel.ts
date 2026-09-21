@@ -6,8 +6,8 @@
 // 落回完成态残留＋如实说明＋退出码非 0（D-31）；新建自带一句话描述便于反查（D-32，不带归属正则，
 // 对账仍判非自管跳过，见 `src/wish/reconcile.ts` 的 `skippedNoMark`）。
 import { larkReady, larkSetupInfo } from './feishu.js';
-import { listRelatedTasks } from './tasks.js';
-import { completeTask, createTask, deleteTask, updateTask } from './taskWrite.js';
+import { listRelatedTasks } from '../wish/tasks.js';
+import { completeTask, createTask, deleteTask, updateTask } from '../wish/taskWrite.js';
 import type { WishReceipt } from '../wish/ensure.js';
 
 /** 自检对象前缀（老逐字 `SENTINEL_PREFIX`，`feishu_sync.py:62`）。 */

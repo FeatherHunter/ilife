@@ -14,10 +14,10 @@
 import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
 import { toRows } from '../shared/rows.js';
-import type { MemoDb, NotePatch } from '../fetch/db.js';
-import { getNote, listNotes, listReminderRows } from '../fetch/db.js';
-import { abandonReminder } from '../fetch/reminders.js';
-import { applyBatchCategory, collectBatchItems, countNotesByCategory } from '../fetch/batch.js';
+import type { MemoDb, NotePatch } from '../db/readonly.js';
+import { getNote, listNotes, listReminderRows } from '../db/readonly.js';
+import { abandonReminder } from '../remind/store.js';
+import { applyBatchCategory, collectBatchItems, countNotesByCategory } from './batch.js';
 import { crudCreate, crudRemove, crudUpdate, needId, normalizeMediaPath, normalizeSub, normalizeTop } from '../policy/index.js';
 import { completeWish, dueForCategory, ensureWish, removeWish, setWishDue, updateWish } from '../wish/index.js';
 import { buildReceiptPage, changeCategorySnapshot, fillMemoPage, pageEnvelope } from '../render/index.js';

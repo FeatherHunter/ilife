@@ -9,7 +9,7 @@ import {
   setReminderRow,
   type MemoDb,
   type MemoReminder,
-} from './db.js';
+} from '../db/readonly.js';
 import { MemoFetchError } from '../shared/errors.js';
 
 export const REMIND_ADVANCE_MINUTES = 10;

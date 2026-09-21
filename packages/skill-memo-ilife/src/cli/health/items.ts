@@ -18,7 +18,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { configPaths } from 'base-link-core';
 import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_STEM } from '../../config.js';
-import { mediaDirOf } from '../../fetch/paths.js';
+import { mediaDirOf } from '../../shared/paths.js';
 import { projectOnDefaults, readMemoConfigReadOnly, readValue, sourceOf, textOf } from './configRead.js';
 import {
   DB_TABLE_THRESHOLD,

@@ -13,9 +13,9 @@
  */
 import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
-import type { MemoDb } from '../fetch/db.js';
-import { addReminderRow, getNote, listReminderRows } from '../fetch/db.js';
-import { checkDueReminders, listCompletedReminders } from '../fetch/reminders.js';
+import type { MemoDb } from '../db/readonly.js';
+import { addReminderRow, getNote, listReminderRows } from '../db/readonly.js';
+import { checkDueReminders, listCompletedReminders } from './store.js';
 import { needId, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../policy/index.js';
 
 /** `memo.remind`：提醒四视图（到期／已完成／有效／已废弃）。 */

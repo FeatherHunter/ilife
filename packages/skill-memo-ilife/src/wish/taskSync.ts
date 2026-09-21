@@ -2,10 +2,10 @@
 // 每个操作一个一个对得上老实现：`add_wish_sync`(feishu_sync.py:272)、`update_wish_sync`(:349)、
 // `complete_wish_sync`(:363)、`update_due_sync`(:373)、`clear_due_sync`(:398)。
 // 建的那一支带三条口径：① 建前查重（远端侧自然键）；② 成功后标识回写本地；③ 远端对象带归属标记。
-import type { MemoDb, MemoNote } from '../fetch/db.js';
-import { updateNote } from '../fetch/db.js';
-import { searchTasks } from '../fetch/tasks.js';
-import { createTask, updateTask, completeTask, clearTaskDue, taskTitle } from '../fetch/taskWrite.js';
+import type { MemoDb, MemoNote } from '../db/readonly.js';
+import { updateNote } from '../db/readonly.js';
+import { searchTasks } from './tasks.js';
+import { createTask, updateTask, completeTask, clearTaskDue, taskTitle } from './taskWrite.js';
 import { ownershipMark } from './mark.js';
 
 export interface RemoteWishRef {

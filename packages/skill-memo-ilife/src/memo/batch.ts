@@ -2,7 +2,7 @@
 // 收集：按原分类取最近 200 条（默认全部分类），条目默认勾选，目标分类下条数作提示；
 // 执行：逐条改顶层分类（子分类不动，老原文），找不到逐条记账。
 // 远端不碰（老原文两条路都不调飞书）。
-import { getNote, updateNote, type MemoDb } from './db.js';
+import { getNote, updateNote, type MemoDb } from '../db/readonly.js';
 
 export interface BatchItem {
   readonly id: number;

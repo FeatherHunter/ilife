@@ -2,7 +2,7 @@
 // 老 `wish-batch-plan`／`wish-complete`（`memo_cli.py:763-967`）的 TS 换皮，口径逐项照搬：
 // 排期默认只列未排期（`--all` 含已排期，`--ids` 精确指定，两者互斥）；完成默认列全部心愿
 // （`--only-overdue` 仅未排期＋已过期，`--ids` 与之互斥；`--all` 等同默认，留作兼容）。
-import { type MemoDb } from '../fetch/db.js';
+import { type MemoDb } from '../db/readonly.js';
 import { MemoPolicyError } from '../shared/errors.js';
 import { normalizeDue } from './due.js';
 

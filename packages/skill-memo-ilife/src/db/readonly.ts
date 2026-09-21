@@ -8,7 +8,7 @@ import { accessSync, constants, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { MemoFetchError } from '../shared/errors.js';
-import { dbFilename } from './paths.js';
+import { dbFilename } from '../shared/paths.js';
 
 /** 老 `notes` 行（`init.sql` 逐列：id 自增整数／content 正文／summary 短摘要／category／sub_category／
  *  media_path 附件相对路径／reminder_id 打卡追溯来源／feishu_task_guid 远端标识回写／due 排期日期／

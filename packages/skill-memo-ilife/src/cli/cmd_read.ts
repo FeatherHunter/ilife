@@ -13,7 +13,7 @@ import {
   closeMemoDb,
   MemoFetchError,
 } from '../fetch/index.js';
-import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
+import { LARK_WEBSITE_LINE } from '../sync/feishu.js';
 // #855：参数校验口径（`crud*`／`normalize*`／`needId`）随备忘域命令一起搬进 `src/memo/run.ts`；
 // 本件只剩开库前分派与交付装配，不再直接做域校验。
 // #855：跨域的写侧合成（`reconcileWishes`）随 `memo.sync` 一起搬进 `src/sync/run.ts`；
@@ -30,12 +30,12 @@ import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.
 // #855：产物名主体（`bookletFileStem`）与诊断读取／两页装配（`INIT_SCENE_ID`／`readInitDiagnosis`／
 // `InitInputError`／`renderInitPage`／`InitPageMode`）随 `memo.sync`／`memo.init` 搬进各自的域——
 // 本件只剩开库前分派与交付装配。
-import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
+import { resolveDbDir, dbFilename, resolveDbPath } from '../shared/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { MemoPolicyError } from '../shared/errors.js';
-import type { MemoDb } from '../fetch/db.js';
+import type { MemoDb } from '../db/readonly.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 

@@ -10,8 +10,8 @@
  */
 import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
-import type { MemoDb } from '../fetch/db.js';
-import { getNote, listNotes, searchNotes, searchNotesByCreatedRange } from '../fetch/db.js';
+import type { MemoDb } from '../db/readonly.js';
+import { getNote, listNotes, searchNotes, searchNotesByCreatedRange } from '../db/readonly.js';
 import { needId, normalizeTop } from '../policy/index.js';
 import { dueMatches } from '../wish/index.js';
 

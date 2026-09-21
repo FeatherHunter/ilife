@@ -6,8 +6,8 @@
 // 与老实现的一处差异：老 `list` 失败返回 `[]`（`:466`）会把「读不到」装成「远端没有」，此处上抛后收进 errors。
 // D-24 回摆（待签）：#661 曾把步 2 改为只标完成（`done` 列），DB 对齐后那一列不存在——
 // 老权威要求步 2 走本地 `complete-wish`（删心愿 ＋ 生成打卡，`feishu_sync.py:648-655`），此处照老执行。
-import { listNotes, updateNote, type MemoDb } from '../fetch/db.js';
-import { listRelatedTasks, taskDueDate } from '../fetch/tasks.js';
+import { listNotes, updateNote, type MemoDb } from '../db/readonly.js';
+import { listRelatedTasks, taskDueDate } from './tasks.js';
 import { completeWish } from './complete.js';
 import { larkSetupOf, openGate } from './gate.js';
 import { ownerIdOf } from './mark.js';

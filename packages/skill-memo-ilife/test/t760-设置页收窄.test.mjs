@@ -31,7 +31,7 @@ import { fileURLToPath } from 'node:url';
 import { parseConfigYaml } from '../../base-link-core/dist/config/yaml.js';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
 import { initMemoTestDb, makeLarkStub } from '../../../tooling/contract-seam.mjs';
-import { LARK_INSTALL_PROMPT } from '../dist/fetch/feishu.js';
+import { LARK_INSTALL_PROMPT } from '../dist/sync/feishu.js';
 import { noLarkPathEnv, stubPathEnv } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
