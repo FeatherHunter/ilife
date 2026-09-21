@@ -179,7 +179,17 @@ node docs/skills/skill-calorie/t516-判据-版式.mjs --dir .scratch/t827/pages 
 
 ---
 
-## 七 收尾口径
+## 八 提交
+
+- 代码与证据：`f97c3888`（4 件：`src/search/run.ts`／`test/t827-search-domain.test.mjs`／
+  `docs/skills/skill-memo-ilife/t827-probe-search.mjs`／本件）。
+  ⚠️ 该提交的**标题被终端代码页损坏**（`git commit -m` 传中文时被 PowerShell 转码），
+  可读信息副本见紧随其后的那条提交；文件内容无碍。
+- 暂存区复核：提交前 `git diff --cached --name-only` 只列本票 4 件（他席在途件未入本提交）。
+
+---
+
+## 九 收尾口径
 
 - 本票**做掉**：6 格真落盘（册子 seq 7–10／12／13）＋ 7 词路由全通 ＋ 反例三面 ＋ 分隔符门与响应式门两门绿；
 - 本票**没做掉**：第 11 格（撞格，见 §五.1）、机审六列与五维尺（件归 #851，见 §3.3）、
