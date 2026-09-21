@@ -206,8 +206,8 @@ REG="https://registry.npmjs.org"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 # 定死版本（与仓内 package.json 一致；对不上即停，不在本脚本里改版本）
-V_SKILL="0.3.1"
-V_BASEPAINT="0.3.6"
+V_SKILL="0.3.2"
+V_BASEPAINT="0.3.7"
 
 # 目录名（非 npm 名）
 D_SKILL="skill-home"

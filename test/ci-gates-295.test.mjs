@@ -26,7 +26,7 @@ const CI = join(HERE, '..', '.github', 'workflows', 'ci.yml');
 /** 受保护的门：job 里必须**恰有一道**步骤命中 hit，且该步自带 if: always()。
  *  名单口径＝「这道门要么被机器盯着，要么明确不受保护」——加一行是显式动作（#295 的原口径）。 */
 const GATES = [
-  ...['pnpm gen:check', 'pnpm doctor', 'pnpm test', 'pnpm boundaries',
+  ...['pnpm gen:check', 'pnpm doctor', 'pnpm test', 'pnpm boundaries', 'pnpm base:floor',
     'pnpm snapshot:html:check', 'pnpm gate:selftest:html', 'pnpm help:examples:check',
   ].map((gate) => ({ job: 'build-test', hit: 'run: ' + gate, label: gate })),
   // #311：publish-gates 是同一类遮蔽面——三道发布门 ＋ 两道复核门一并入册。

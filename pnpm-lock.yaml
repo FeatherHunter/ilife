@@ -21,7 +21,7 @@ importers:
   packages/base-combos:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
 
   packages/base-link-core: {}
@@ -38,7 +38,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-bill:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-bill
     devDependencies:
       '@types/react':
@@ -57,7 +57,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-calorie:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-calorie
     devDependencies:
       '@types/react':
@@ -76,7 +76,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-chef:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-chef
     devDependencies:
       '@types/react':
@@ -95,7 +95,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-home:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-home
     devDependencies:
       '@types/react':
@@ -130,7 +130,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-memo-ilife:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-memo-ilife
     devDependencies:
       '@types/react':
@@ -149,7 +149,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-schedule:
-        specifier: 0.3.0
+        specifier: 0.3.2
         version: link:../skill-schedule
     devDependencies:
       '@types/react':
@@ -165,55 +165,55 @@ importers:
   packages/skill-bill:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
   packages/skill-calorie:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
   packages/skill-chef:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
   packages/skill-home:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
   packages/skill-memo-ilife:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
   packages/skill-schedule:
     dependencies:
       base-link-core:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-link-core
       base-paint:
-        specifier: ^0.3.0
+        specifier: ^0.3.7
         version: link:../base-render
 
 packages:

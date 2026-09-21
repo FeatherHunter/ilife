@@ -88,11 +88,11 @@ describe('#79 base-* 三包版本 lockstep', () => {
     }
   });
 
-  it('技能面 base-link-core runtime range 与工作区版本同 major.minor（D-1；skill-calorie 例外单列）', () => {
+  it('技能面 base-link-core runtime range 与工作区版本同 major.minor（D-1）', () => {
     const coreVersion = manifests.find((m) => m.name === 'base-link-core')?.json.version;
     const lineOf = (v) => v.split('.').slice(0, 2).join('.');
-    // 5 个 runtime 消费技能：dependencies 必须同版本线（任一退回 ^0.1.0 即红，MUT-4）。
-    const runtimeSkills = ['skill-bill', 'skill-chef', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
+    // 六个 runtime 消费技能：dependencies 必须同版本线（任一退回 ^0.1.0 即红，MUT-4）。
+    const runtimeSkills = ['skill-bill', 'skill-calorie', 'skill-chef', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
     for (const dir of runtimeSkills) {
       const range = pkg(dir).dependencies?.['base-link-core'];
       assert.ok(range, `${dir} 必须在 dependencies 声明 base-link-core`);
@@ -104,10 +104,9 @@ describe('#79 base-* 三包版本 lockstep', () => {
         `${dir} 的 base-link-core 范围「${range}」与工作区版本 ${coreVersion} 不同版本线`,
       );
     }
-    // skill-calorie 例外单列（G-2）：本票禁改该包，devDep 钉死当前值 ^0.1.0；任何漂移即红。
-    // 解冻对齐 ^0.2.0 时把本断言并入同版本线（届时改此一行）。
-    const calRange = pkg('skill-calorie').devDependencies?.['base-link-core'];
-    assert.equal(calRange, '^0.1.0', `skill-calorie 的 base-link-core 例外值漂移（实得「${calRange}」，G-2）`);
+    // skill-calorie 的 G-2 例外已就地摆正（#861）：那条例外钉的是它当年的 `devDependencies["base-link-core"] === "^0.1.0"`，
+    // 而该 devDep 早已随它的配置面改造消失（当刻两张依赖表里只有 `dependencies`），例外断言因此恒红——
+    // 本单把它并入上面那份同版本线名单，判据不放松：少声明、写错版本线一样红。
   });
 
   it('版本常量仍是契约版本 0.1.0，不随包版本漂移（口径分离）', async () => {

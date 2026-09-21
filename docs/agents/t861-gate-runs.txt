@@ -1,0 +1,26 @@
+# #861 的运行条目录出件（协议 §2.3.4）
+# 源：.scratch/locks/gate-runs.log 里 ticket=861 的全部条目，逐字抄录（含调试期的红：exit=1 的条目也在）。
+# 收口日期：2026-09-21
+
+START ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 pid=38452 at=2026-09-21T06:05:18.563Z
+RUN ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 exit=1 pid=38452 at=2026-09-21T06:05:18.776Z
+START ticket=861 runId=1168ac08-4524-4b83-8df3-dbee1077fe3e cmd="node --test test/base-floor-861.test.mjs" waitedMs=0 pid=27072 at=2026-09-21T06:05:46.634Z
+RUN ticket=861 runId=1168ac08-4524-4b83-8df3-dbee1077fe3e cmd="node --test test/base-floor-861.test.mjs" waitedMs=0 exit=1 pid=27072 at=2026-09-21T06:05:46.989Z
+START ticket=861 runId=c314f3bc-e513-4e38-993b-77b3a33cbc34 cmd="node --test test/base-floor-861.test.mjs" waitedMs=1 pid=26692 at=2026-09-21T06:06:59.867Z
+RUN ticket=861 runId=c314f3bc-e513-4e38-993b-77b3a33cbc34 cmd="node --test test/base-floor-861.test.mjs" waitedMs=1 exit=0 pid=26692 at=2026-09-21T06:07:00.200Z
+START ticket=861 runId=0ce28b11-8d80-4ba0-9157-22a951639ce6 cmd="node .scratch/t861/run-gates.mjs" waitedMs=0 pid=50880 at=2026-09-21T06:08:33.136Z
+RUN ticket=861 runId=0ce28b11-8d80-4ba0-9157-22a951639ce6 cmd="node .scratch/t861/run-gates.mjs" waitedMs=0 exit=0 pid=50880 at=2026-09-21T06:11:35.061Z
+START ticket=861 runId=b9bebb8c-66ff-4105-bc44-b4cd5dc2d7fd cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs test/skill-pin-lockstep-129.test.mjs" waitedMs=0 pid=39160 at=2026-09-21T06:13:40.898Z
+RUN ticket=861 runId=b9bebb8c-66ff-4105-bc44-b4cd5dc2d7fd cmd="node --test packages/base-render/test/base-version-lockstep.test.mjs test/skill-pin-lockstep-129.test.mjs" waitedMs=0 exit=0 pid=39160 at=2026-09-21T06:13:41.066Z
+START ticket=861 runId=d5b435f5-d04a-48b7-a53d-525282c8b2aa cmd="node --test packages/plugin-calorie/test/smoke.test.mjs packages/plugin-memo-ilife/test/config-surface-696.test.mjs" waitedMs=0 pid=48100 at=2026-09-21T06:14:41.700Z
+RUN ticket=861 runId=d5b435f5-d04a-48b7-a53d-525282c8b2aa cmd="node --test packages/plugin-calorie/test/smoke.test.mjs packages/plugin-memo-ilife/test/config-surface-696.test.mjs" waitedMs=0 exit=0 pid=48100 at=2026-09-21T06:14:44.421Z
+START ticket=861 runId=36db1c6f-9869-4dac-94f4-95b4a6b6757e cmd="node --test packages/plugin-calorie/test/smoke.test.mjs packages/plugin-memo-ilife/test/config-surface-696.test.mjs" waitedMs=0 pid=37580 at=2026-09-21T06:14:54.883Z
+RUN ticket=861 runId=36db1c6f-9869-4dac-94f4-95b4a6b6757e cmd="node --test packages/plugin-calorie/test/smoke.test.mjs packages/plugin-memo-ilife/test/config-surface-696.test.mjs" waitedMs=0 exit=0 pid=37580 at=2026-09-21T06:14:57.665Z
+START ticket=861 runId=cd5b8ae4-a94b-4937-8975-01ec6900c662 cmd="node .scratch/t861/run-gates.mjs" waitedMs=10002 pid=50992 at=2026-09-21T06:16:56.039Z
+RUN ticket=861 runId=cd5b8ae4-a94b-4937-8975-01ec6900c662 cmd="node .scratch/t861/run-gates.mjs" waitedMs=10002 exit=0 pid=50992 at=2026-09-21T06:19:35.121Z
+START ticket=861 runId=7f1fa050-cc66-484c-ba42-43da83d86bff cmd="node tooling/check-base-floor.mjs" waitedMs=0 pid=29180 at=2026-09-21T06:20:39.112Z
+RUN ticket=861 runId=7f1fa050-cc66-484c-ba42-43da83d86bff cmd="node tooling/check-base-floor.mjs" waitedMs=0 exit=0 pid=29180 at=2026-09-21T06:20:39.188Z
+START ticket=861 runId=b6371090-780c-4bdd-829f-c11ce51a862b cmd="node tooling/check-boundaries.mjs" waitedMs=0 pid=17832 at=2026-09-21T06:20:39.248Z
+RUN ticket=861 runId=b6371090-780c-4bdd-829f-c11ce51a862b cmd="node tooling/check-boundaries.mjs" waitedMs=0 exit=0 pid=17832 at=2026-09-21T06:20:39.379Z
+START ticket=861 runId=f5237fdb-2f8f-47b9-817e-1b69caa607f2 cmd="node --test test/base-floor-861.test.mjs test/ci-gates-295.test.mjs" waitedMs=0 pid=52564 at=2026-09-21T06:20:39.438Z
+RUN ticket=861 runId=f5237fdb-2f8f-47b9-817e-1b69caa607f2 cmd="node --test test/base-floor-861.test.mjs test/ci-gates-295.test.mjs" waitedMs=0 exit=0 pid=52564 at=2026-09-21T06:20:39.735Z

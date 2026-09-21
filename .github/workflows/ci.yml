@@ -48,6 +48,11 @@ jobs:
         if: always()
       - run: pnpm boundaries
         if: always()
+      # #861：依赖下界门——消费方声明的 base-* 下界必须逐字等于仓内那个 base 包的版本。
+      #   原形：六技能的配置表删了键、改走「已退休键清单」，而 package.json 仍写 ^0.3.0，
+      #   装机沿用锁里那份不懂退休清单的 0.3.6 ⇒ 六个配置面板全部读不出配置。
+      - run: pnpm base:floor
+        if: always()
       # #96：其余 5 技能 HTML 不回归门（per-skill HTML 逐件 sha256；base-* 影响面断言）
       #   本地同口径命令就是这一条：pnpm snapshot:html:check（见 tooling/skill-html-snapshot.mjs）
       - run: pnpm snapshot:html:check
