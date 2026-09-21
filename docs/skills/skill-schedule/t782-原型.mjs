@@ -525,6 +525,10 @@ const SWITCHER_CSS = [
   '.t782-split{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}',
   '.t782-split > div{min-width:0}',
   '@media (min-width:821px){.t782-split{grid-template-columns:minmax(0,320px) minmax(0,1fr)}}',
+  // 窄栏里的读数卡：pageUi 在 ≥1001px 把 `.block-kpi-card-grid` 钉成一行四张（宽屏口径），
+  // 放进 320px 的栏里每张只剩 ~70px ⇒ 数字被折成竖排。本件在窄栏范围内改回两列。
+  // （这条要不要收进公共层「栏内栅格」的口子，是 #782 要人裁的事，先记在证据件里。）
+  '@media (min-width:1001px){.t782-split .ilife-block-kpi-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}',
   '@media (min-width:1001px){.t782-heat,.t782-split{grid-column:1/-1}}',
   /* 原型底栏：明显不属于被评估的设计 */
   '.t782-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;background:#1d1d1f;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.28);font-size:13px;max-width:min(92vw,560px)}',
