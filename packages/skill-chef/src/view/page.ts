@@ -20,7 +20,7 @@ import {
   renderDataTable, renderDisclosure, renderKpiCard, renderPageShell,
   renderProseBlock, renderTocBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { viewPageCss } from './pageCss.js';
@@ -289,10 +289,11 @@ function sectionsOf(d: ViewItem): Record<string, string> {
 }
 
 function shellOf(title: string, content: string): string {
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'result',
     // 文档标题与页标题错开一句（页标题只说这是什么页，文档标题带技能名），不互相复读。
-    // 页面级样式＝公共层两配方 ＋ 私家大厨皮肤（单一入口 `chefSceneCss()`）＋ 本域页内那一段。
-    docTitle: title + ' - 私家大厨', extraCss: chefSceneCss() + LF + viewPageCss(), pageUi: true,
+    // 页面级样式＝公共层两配方 ＋ 私家大厨皮肤 ＋ 族级标准（单一入口 `renderSceneShell`）＋ 本域页内那一段。
+    docTitle: title + ' - 私家大厨', extraCss: viewPageCss(),
     bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 查看', title, content }),
   });
 }

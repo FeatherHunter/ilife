@@ -18,7 +18,7 @@
  *
  * 页面形状：照 `docs/skills/skill-chef/t768-页面族配方.md` §2 结果型配方表组装，每一格都是
  * 一次公共层区块调用（`base-render` 的 `blocks`＋`docShell`，`pageUi` 开）；正文段落用 #860 交的
- * `renderProseBlock`。样式层的单一入口仍是 `chefSceneCss()`（公共层两配方 ＋ 私家大厨皮肤），
+ * `renderProseBlock`。整页装配的单一入口改走页壳件 `renderSceneShell()`（装饰带 ＋ 族级标准 ＋ 公共层两配方 ＋ 私家大厨皮肤），
  * 本页**页内专属**的那一段接在它后面追加（`searchSceneCss()`），不把公共层那两层拆回去。
  * 标签口径：六张关联表（`recipe_categories`／`recipe_flavors`／`recipe_seasons`／
  * `recipe_meal_types`／`recipe_diet_tags`／`recipe_cooking_methods`）聚合为一行徽章，
@@ -54,11 +54,10 @@ const WANT_SHOTS = ARGS.has('--shots');
 const LF = String.fromCharCode(10);
 
 const B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
-const { renderDocShell } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'docShell.js')).href);
 /** 事实条（页面级形状件）＋ 色基来源（冻结 token 表与既有调色板，页内样式不自造色值）。 */
 const { renderFactStrip, CHART_PALETTE, CSS_VAR_TOKENS } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href);
 /** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
-const { chefSceneCss } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href);
+const { renderSceneShell } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href);
 const { printGate, runGate, withBrowser } = await import('./t768-质量门.mjs');
 const DIST = join(ROOT, 'packages', 'skill-chef', 'dist');
 const D = (p) => pathToFileURL(join(DIST, p)).href;
@@ -318,7 +317,7 @@ function fullWidthPunct(text) {
   return text.replace(/[,()]/g, (ch) => (ch === ',' ? '，' : ch === '(' ? '（' : '）'));
 }
 
-/** 本席页内样式：接在 `chefSceneCss()` **之后**追加（不把公共层那两层拆回去）。
+/** 本席页内样式：接在页壳件那几段**之后**追加（不把公共层那两层拆回去）。
  *  全部规则挂在根类 `.ilife-page-ui` 之下；色值只取冻结 token 与既有调色板；
  *  圆角只用闭集 `{8,14,20,999}`；断点只用仓内既有集合（本页只用到 1001 一档）。 */
 function searchSceneCss() {
@@ -327,7 +326,7 @@ function searchSceneCss() {
   const CARDBOX = P + '.ilife-block-search-cards';
   const CARDS = CARDBOX + ' ';
   return [
-    '/* #873 搜索筛选席 · 页内版式（接在 chefSceneCss() 之后追加） */',
+    '/* #873 搜索筛选席 · 页内版式（由 renderSceneShell 追加在族级标准之后） */',
     /* ① 页体：窄屏单列；≥1001 切「条件轨 ＋ 结果」两栏（列宽与该断点的其余规则统一收在
        本函数末尾的 `@media (min-width: 1001px)` 里，一处定义）。
        `grid-column: 1 / -1` 是必需的：公共层在 ≥1001 把页体变成三列栅格、`> *` 一律落中间那 880px
@@ -729,11 +728,11 @@ function buildPage(card, data, metas) {
     eyebrow, title: card.title,
     content: '<div class="ilife-block-search-scene">' + art + rail + main + copySlot + '</div>',
   });
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'result',
     docTitle: card.title + ' ｜ 私家大厨',
     bodyHtml: shell,
-    extraCss: chefSceneCss() + LF + searchSceneCss(),
-    pageUi: true,
+    extraCss: searchSceneCss(),
   });
 }
 

@@ -20,8 +20,7 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
-import { chefSceneCss } from '../render/skin.js';
+import { renderSceneShell } from '../render/sceneShell.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
 const LF = String.fromCharCode(10);
@@ -163,10 +162,10 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
       }),
     ].join(''),
   });
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'process',
     docTitle: '首次使用',
     bodyHtml: body,
-    extraCss: chefSceneCss() + LF + setupPageCss(),
-    pageUi: true,
+    extraCss: setupPageCss(),
   });
 }

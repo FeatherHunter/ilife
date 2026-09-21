@@ -25,8 +25,7 @@ import {
   renderProseBlock,
 } from 'base-paint/blocks';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
-import { chefSceneCss } from '../render/skin.js';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 import { HIST_NODE_TIERS, historyPageCss } from './page-css.js';
 import type { HistoryGlobalPortrait } from './run-query.js';
 
@@ -96,11 +95,11 @@ function fmtNum(v: number): string {
  * 与页内 `<h1>` 不逐字重复，见质量门「重复句」列）。
  */
 function docOf(docTitle: string, eyebrow: string, title: string, blocks: readonly string[]): string {
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'result',
     docTitle: docTitle + ' ｜ 私家大厨',
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: chefSceneCss() + LF + historyPageCss(),
-    pageUi: true,
+    extraCss: historyPageCss(),
   });
 }
 

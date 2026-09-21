@@ -29,7 +29,7 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 import { chefSceneCss } from '../render/skin.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
@@ -237,11 +237,11 @@ function dataSeatCss(page: 'quality' | 'batch' | 'backup'): string {
 }
 
 function shell(title: string, eyebrow: string, blocks: string[], page: 'quality' | 'batch' | 'backup'): string {
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'receipt',
     docTitle: title,
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: chefSceneCss() + LF + dataSeatCss(page),
-    pageUi: true,
+    extraCss: dataSeatCss(page),
   });
 }
 

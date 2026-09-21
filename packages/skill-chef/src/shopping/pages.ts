@@ -21,8 +21,7 @@ import {
   renderKpiGrid,
   renderPageShell,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
-import { chefSceneCss } from '../render/skin.js';
+import { renderSceneShell } from '../render/sceneShell.js';
 import type { ShoppingItem } from '../fetch/db.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
@@ -167,10 +166,10 @@ export function shoppingListPage(input: {
       dataText: input.recipes.join('、') + '：' + input.items.map((g) => g.name + round(Number(g.quantity)) + g.unit).join('、'),
     }),
   ];
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'result',
     docTitle: '生成清单',
     bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 采购', title: '生成清单', content: blocks.join('') }),
-    extraCss: chefSceneCss() + LF + shoppingPageCss(),
-    pageUi: true,
+    extraCss: shoppingPageCss(),
   });
 }

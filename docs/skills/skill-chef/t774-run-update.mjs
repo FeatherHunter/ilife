@@ -34,7 +34,7 @@
  *     # 反例：对临时候选走一次物理删除，再跑只增不删断言 → 必须 exit 1 并点名只增不删。
  *
  * 页面口径（#873 修改席）：4 张回执页＝结论条 → 事实条瓦片 → 「改动明细」分组卡（改前→改后）→ 改后表格
- * → 主按钮 → 复制区，一页只说一遍。样式＝`chefSceneCss()`（公共层两配方 ＋ 私家大厨皮肤）**之后再追加
+ * → 主按钮 → 复制区，一页只说一遍。样式＝页壳件 `renderSceneShell()`（公共层两配方 ＋ 皮肤 ＋ 族级标准）**之后再追加
  * 本域页内收口的一段**（`updateReceiptCss()`），不把公共层两层拆回去。
  *
  * 数据隔离：只碰票 774 自己的副本（`t840-沙箱.mjs --ticket 774` 建，`.scratch/t774/`），
@@ -90,15 +90,14 @@ function cli(key, params) {
 }
 
 /* ── 页面装配（只用公共层区块 ＋ 本域页内收口的一段样式）────────────── */
-let B, renderDocShell, renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS;
-/** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
-let chefSceneCss;
+let B, renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS;
+/** 页壳装配的单一入口（装饰带 ＋ 族级标准 ＋ 文档壳）住本技能的渲染包，见 `src/render/sceneShell.ts`。 */
+let renderSceneShell;
 async function loadBlocks() {
   B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
-  ({ renderDocShell } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'docShell.js')).href));
   ({ renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS } =
     await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href));
-  ({ chefSceneCss } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href));
+  ({ renderSceneShell } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href));
 }
 const fact = (items) => renderFactStrip({ items });
 const concl = (t) => B.renderConclusionBar(t);
@@ -156,7 +155,7 @@ function group(title, contentHtml) {
   return B.renderDisclosure({ title, open: true, contentHtml });
 }
 
-/** 本域 4 张回执页的页内收口样式：**只追加在 `chefSceneCss()` 之后**（公共层两层 ＋ 皮肤一段都不拆，
+/** 本域 4 张回执页的页内收口样式：**只追加在页壳件那几段之后**（公共层两层 ＋ 皮肤一段都不拆，
  *  见 `packages/skill-chef/test/skin-873.test.mjs` 的接线断言）。七条口径：
  *   ① **分区要有可见边界**：改动明细收进一张分组卡（标题行 ＋ 暖底头带 ＋ 暖色左缘 ＋ 浅影），
  *      卡内挂一条「改前 → 改后」图形对照带（`band()`，内联 SVG）；
@@ -333,11 +332,11 @@ function updateReceiptCss() {
 function page(docTitle, eyebrow, title, blocks) {
   const shell = B.renderPageShell({ eyebrow, title, content: blocks.join('') });
   // docTitle 与页标题必须不同句（机审⑥重复句按整页可见文本判，含 <title>）。
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'receipt',
     docTitle: docTitle + '｜私家大厨修改域',
     bodyHtml: shell,
-    extraCss: chefSceneCss() + LF + updateReceiptCss(),
-    pageUi: true,
+    extraCss: updateReceiptCss(),
   });
 }
 /** 回执页**不再把 CLI 回执原文印上屏**：原文里带行编号（ASCII 长串，机审⑤英文裸词会点名）与实现语

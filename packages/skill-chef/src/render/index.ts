@@ -8,6 +8,12 @@ export { toRecipeItem, buildRecipeReceipt, buildHistoryQuery, buildHelpItems } f
 // `docs/skills/skill-chef/t77*-run-*.mjs` 两个驱动器都只从这一处取样式入口。
 export { CHEF_SKIN_CSS, chefSkinCss, chefSceneCss } from './skin.js';
 export type { ChefSkinCssInput } from './skin.js';
+// #873 第三轮：页族共用的两条视觉标准（一条装饰带 × 三族 ＋ 族级节奏）与页壳装配的单一入口。
+export { SCENE_FAMILIES, renderSceneBand, sceneBandClass, sceneBandCss } from './sceneBand.js';
+export type { SceneFamily } from './sceneBand.js';
+export { sceneFamilyCss } from './sceneRhythm.js';
+export { renderSceneShell } from './sceneShell.js';
+export type { SceneShellInput } from './sceneShell.js';
 // #839 搬迁债务（到期＝收口票把测试改打域接口后删）：下六件的新家在域目录，
 // 本 barrel 只转出、不断言内容（结构纪律铁律五：过渡期旧共用 barrel 对新家内部件的深路径直引用）。
 export { recipeDetail } from '../view/run.js';

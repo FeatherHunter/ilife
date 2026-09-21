@@ -21,7 +21,7 @@ import {
   renderCaliberLine, renderChipRow, renderConclusionBar, renderCopyBlock,
   renderDataTable, renderDisclosure, renderKpiCard, renderPageShell, renderProseBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { COOK_STEP_CLASS, COOK_STEPS_CLASS, COOK_STEP_SIDE_CLASS, cookPageCss } from './page-css.js';
@@ -329,11 +329,12 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
     eyebrow: '私家大厨 ｜ 做菜', title: '做菜模式：' + data.recipe.name,
     content: head.join('') + stepsHtml + stepper + tail.join('') + prep + ware + done + copy,
   });
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'process',
     // 文档标题与页内标题错开一处（后者缀技能名）：否则同一句在 `<title>` 与页标题各出现一次，
     // 质量门「重复句」列会红（`t768` 原型即用不同标题避开此列）。
     docTitle: '做菜模式：' + data.recipe.name + '（私家大厨）', bodyHtml: body,
-    // 页内收口那一段（本域五页共用的栅格与排印）追加在皮肤之后：两层不拆回去（包内测试守着）。
-    extraCss: chefSceneCss() + LF + cookPageCss(), pageUi: true,
+    // 页内收口那一段（本域五页共用的栅格与排印）追加在族级样式之后：两层不拆回去（包内测试守着）。
+    extraCss: cookPageCss(),
   });
 }

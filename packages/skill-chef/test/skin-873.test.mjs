@@ -16,6 +16,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { CHEF_SKIN_CSS, chefSceneCss, chefSkinCss } from '../dist/render/skin.js';
+import { SCENE_FAMILIES, renderSceneBand, sceneBandCss } from '../dist/render/sceneBand.js';
+import { sceneFamilyCss } from '../dist/render/sceneRhythm.js';
 import { pageShapeCss, pageUiCss } from 'base-paint';
 import { setupInitPage } from '../dist/setup/pages.js';
 import { dataQualityPage } from '../dist/data/pages.js';
@@ -32,16 +34,16 @@ const BREAKPOINTS_CLOSED = new Set([400, 640, 820, 1001, 1200]);
 
 /** CSS 块注释剥除（与公共层 `assertExtraCss` 同口径：注释里的字只是说明，不是声明）。 */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, ' ');
-/** 取选择器表：逐字符记账，`{` 之前那段就是选择器（`@` 开头的 at 规则头不算选择器）。 */
+/** 取选择器表：逐字符记账，`{` 之前那段就是选择器（`@` 开头的 at 规则头不算选择器）。
+ *  逗号**只在括号外才当分界**：`:where(a, b)`／`:has(a, b)` 里的逗号不是选择器分隔符
+ *  （公共层 `pageUi.ts` 那条满铺规则就写成多行 `:where(…)`，按逗号硬切会把它的成员读成裸选择器）。 */
 function selectorsOf(css) {
   const out = [];
   let buf = '';
   for (const ch of stripComments(css)) {
     if (ch === '{') {
       const head = buf.trim();
-      if (head !== '' && !head.startsWith('@')) {
-        for (const sel of head.split(',')) out.push(sel.trim().replace(/\s+/g, ' '));
-      }
+      if (head !== '' && !head.startsWith('@')) out.push(...splitTopLevel(head));
       buf = '';
     } else if (ch === '}' || ch === ';') {
       buf = '';
@@ -50,6 +52,20 @@ function selectorsOf(css) {
     }
   }
   return out;
+}
+/** 按顶层逗号切选择器表（括号内的逗号不分）。 */
+function splitTopLevel(head) {
+  const parts = [];
+  let buf = '';
+  let depth = 0;
+  for (const ch of head) {
+    if (ch === '(') depth += 1;
+    if (ch === ')') depth = Math.max(0, depth - 1);
+    if (ch === ',' && depth === 0) { parts.push(buf); buf = ''; continue; }
+    buf += ch;
+  }
+  parts.push(buf);
+  return parts.map((s) => s.trim().replace(/\s+/g, ' ')).filter((s) => s !== '');
 }
 /** 取某条声明的全部取值（`prop: value;` 的 value，一条规则里同属性可能多条）。 */
 function valuesOf(css, prop) {
@@ -128,13 +144,66 @@ describe('#873 十处壳接线（③）', () => {
   ];
   for (const file of SHELLS) {
     const rel = file.slice(ROOT.length + 1).replace(/\\/g, '/');
-    it(rel + ' 只调 chefSceneCss()', () => {
+    it(rel + ' 只调 renderSceneShell()，且带一个合法族名', () => {
       const src = readFileSync(file, 'utf8');
-      assert.ok(src.includes('chefSceneCss('), '没有调用单一入口');
+      assert.ok(src.includes('renderSceneShell('), '没有调用页壳件的单一入口');
+      assert.ok(!src.includes('renderDocShell('), '还有一处自己拼文档壳');
       assert.ok(!src.includes('pageUiCss'), '旧的两层拼接还剩一处');
       assert.ok(!src.includes('pageShapeCss'), '旧的两层拼接还剩一处');
+      assert.ok(/family:\s*'(result|process|receipt)'/.test(src), '这一处没给族名（或给了闭集外的值）');
     });
   }
+});
+
+/* ── #873 第三轮：页族共用视觉标准 ─────────────────────────────────────────── */
+
+describe('#873 族级装饰带（第三轮 ①）', () => {
+  it('三族各出一条带：内联 SVG、无 loading=lazy、无 <img>、无可见文本', () => {
+    for (const family of SCENE_FAMILIES) {
+      const band = renderSceneBand(family);
+      assert.ok(band.includes('<svg '), family + ' 那条带不是内联 SVG');
+      assert.ok(band.includes('ilife-scene-band-' + family), family + ' 那条带没带族名类');
+      assert.ok(!/<img/i.test(band), family + ' 那条带用了 <img>');
+      assert.ok(!/loading\s*=/i.test(band), family + ' 那条带带 loading 属性（验收墙拒收）');
+      assert.ok(!/>[^<]*[\u4e00-\u9fa5][^<]*</.test(band), family + ' 那条带里有可见文本（机审⑤⑥会红）');
+      assert.ok(band.includes('aria-hidden="true"'), family + ' 那条带没标 aria-hidden');
+    }
+  });
+  it('族名闭集外的值即抛（不静默出一条空带）', () => {
+    assert.throws(() => renderSceneBand('nope'), /family/);
+  });
+  it('带的样式每一条选择器都在根类之下，且窄档不缩成细线（高度有下限）', () => {
+    const css = sceneBandCss();
+    const leaked = selectorsOf(css).filter((s) => !s.startsWith(ROOT_CLASS));
+    assert.deepEqual(leaked, [], '装饰带的样式有选择器没挂在根类之下');
+    const heights = [...css.matchAll(/height:\s*(\d+)px/g)].map((m) => Number(m[1]));
+    assert.ok(heights.length > 0 && Math.min(...heights) >= 40, '窄档那条带被压到 40px 以下（会读成细线）');
+  });
+});
+
+describe('#873 族级节奏与色彩锚点（第三轮 ②③）', () => {
+  it('三段样式（皮肤／带／族）合成后仍只作用于根类', () => {
+    const composed = chefSceneCss() + LF + sceneBandCss() + LF + sceneFamilyCss('receipt');
+    assert.deepEqual(selectorsOf(composed).filter((s) => !s.startsWith(ROOT_CLASS)), []);
+  });
+  it('回执族带首屏填满度那一段，其余两族不带', () => {
+    const receipt = sceneFamilyCss('receipt');
+    assert.ok(receipt.includes('margin-top: 26px'), '回执族没有块距那一档');
+    assert.ok(receipt.includes('min-height: 54px'), '回执族没有把可点件抬到 54px');
+    for (const other of ['result', 'process']) {
+      assert.ok(!sceneFamilyCss(other).includes('min-height: 54px'),
+        other + ' 族不该带首屏填满度那一段（守线页在这一族）');
+    }
+  });
+  it('色彩锚点密度两族都有：胶囊与瓦片各有一条暖色基与三处轮转点缀色', () => {
+    for (const family of SCENE_FAMILIES) {
+      const css = sceneFamilyCss(family);
+      assert.ok(css.includes('block-chip {'), family + ' 族没有胶囊的色彩锚点');
+      assert.ok(css.includes('block-fact-strip-item {'), family + ' 族没有瓦片的色彩锚点');
+      assert.equal((css.match(/nth-child\(3n\+/g) ?? []).length, 12,
+        family + ' 族的轮转点缀色不是 12 条（胶囊 描边 3＋底 3，瓦片 描边 3＋左缘 3）');
+    }
+  });
 });
 
 describe('#873 真产物（④）', () => {

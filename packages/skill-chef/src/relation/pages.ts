@@ -16,9 +16,8 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml } from '../render/index.js';
-import { chefSceneCss } from '../render/skin.js';
 import { relationShapeCss, TONE } from './shapes.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
@@ -33,11 +32,11 @@ interface RelationRow {
 }
 
 function shell(title: string, eyebrow: string, blocks: string[]): string {
-  return renderDocShell({
+  return renderSceneShell({
+    family: 'receipt',
     docTitle: title,
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: chefSceneCss() + LF + relationShapeCss(),
-    pageUi: true,
+    extraCss: relationShapeCss(),
   });
 }
 

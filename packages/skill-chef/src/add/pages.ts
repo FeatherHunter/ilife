@@ -6,7 +6,6 @@
  */
 
 import { CHART_PALETTE, renderActionBar, renderErrorReceipt, renderFactStrip } from 'base-paint';
-import { chefSceneCss } from '../render/skin.js';
 import {
   renderConclusionBar,
   renderCopyBlock,
@@ -15,7 +14,7 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { renderDocShell } from 'base-paint/docShell';
+import { renderSceneShell } from '../render/sceneShell.js';
 
 interface AddIngredientView {
   readonly name: string;
@@ -63,12 +62,8 @@ interface AddFailureInput {
 }
 
 function shellDoc(docTitle: string, bodyHtml: string): string {
-  return renderDocShell({
-    docTitle,
-    bodyHtml,
-    extraCss: chefSceneCss() + '\n' + addPageCss(),
-    pageUi: true,
-  });
+  // #873 第三轮：整页装配走页壳件的单一入口（装饰带 ＋ 族级样式 ＋ 本域页内版式一处拼齐）。
+  return renderSceneShell({ family: 'receipt', docTitle, bodyHtml, extraCss: addPageCss() });
 }
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
