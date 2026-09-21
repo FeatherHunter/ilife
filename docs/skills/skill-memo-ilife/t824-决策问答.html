@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#824 决策问答 · 视觉基准与手机端数值表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f;line-height:1.65;max-width:780px;margin:0 auto;padding:0 16px 60px}
+nav{position:sticky;top:0;z-index:10;background:rgba(245,245,247,.94);backdrop-filter:blur(8px);padding:10px 0;margin:0 -16px;padding-left:16px;padding-right:16px;border-bottom:1px solid #e5e5ea;display:flex;gap:8px;flex-wrap:wrap}
+nav a{font-size:12px;font-weight:700;text-decoration:none;color:#0a63d6;background:#fff;border:1px solid #e5e5ea;padding:3px 11px;border-radius:999px}
+nav a:hover{background:#0a63d6;color:#fff}
+h1{font-size:22px;margin:18px 0 4px}
+.sub{color:#6e6e73;font-size:13px;margin-bottom:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px;background:#eef5ff;color:#0a63d6}
+.chip.warn{background:#fff7e8;color:#b25b00}
+.hero{background:#fff;border-radius:14px;padding:14px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.hero h2{font-size:15px;margin-bottom:6px}
+.hero table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.hero td,.hero th{border-top:1px solid #f0f0f2;padding:6px 4px;text-align:left;vertical-align:top}
+.hero th{color:#6e6e73;font-weight:600;white-space:nowrap;width:86px}
+.num{font-variant-numeric:tabular-nums;font-weight:800;color:#c7254e}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:5px solid #ff9500;scroll-margin-top:64px}
+.card:target{outline:2px solid #0a63d6}
+.card h2{font-size:16px;margin-bottom:4px}
+.tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:2px;background:#fff7e8;color:#b25b00}
+.card p{font-size:14px;margin:6px 0}
+.why{font-size:13px;color:#6e6e73;background:#f7f7f9;border-radius:10px;padding:8px 12px}
+.kv{font-size:13px;margin-top:6px}
+.kv code{background:#f0f0f2;padding:1px 6px;border-radius:6px;font-size:12px}
+.rec{margin-top:10px;background:#f2f9ff;border-radius:10px;padding:10px 12px;font-size:14px}
+.rec b{color:#0a63d6}
+.fire{margin-top:8px;background:#fff5f5;border-radius:10px;padding:8px 12px;font-size:13px}
+.fire b{color:#c7254e}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cols div{font-size:13px;border-radius:10px;padding:8px 10px}
+.pro{background:#ecfff2}.con{background:#fff5f5}
+.cols h3{font-size:12px;margin-bottom:4px}
+.pro h3{color:#178a3a}.con h3{color:#c7254e}
+ul{margin:4px 0 4px 18px}
+details{margin-top:8px;font-size:13px;color:#6e6e73}
+details summary{cursor:pointer;color:#0a63d6;font-weight:700}
+.howto{background:#1d1d1f;color:#f5f5f7;border-radius:14px;padding:14px 18px;margin:16px 0;font-size:14px}
+.howto code{background:#333;padding:1px 8px;border-radius:6px}
+.foot{margin-top:16px;font-size:13px;color:#6e6e73}
+@media(max-width:560px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav><a href="#bg">背景</a><a href="#q1">Q1 底座</a><a href="#q2">Q2 判分脚本</a><a href="#q3">Q3 数值表</a><a href="#q4">Q4 机审三件</a><a href="#q5">Q5 形状对照</a><a href="#how">怎么回</a></nav>
+<h1>#824 决策问答</h1>
+<p class="sub">视觉基准与手机端数值表 · 五维尺落地口径 · 8 张域票与收口票的前置</p>
+<div class="chips"><span class="chip warn">待确认 5 项</span><span class="chip">过线：逐页 ≥90 且每维 ≥80%</span><span class="chip">本票不出代码</span></div>
+
+<div class="hero" id="bg">
+<h2>前因后果（30 秒抓住重点）</h2>
+<table>
+<tr><th>尺已选</th><td>D1 15／D2 20／D3 25／D4 15／D5 25，硬扣分 H1–H7，判分脚本入仓才算数。</td></tr>
+<tr><th>基线实测</th><td>触摸 <span class="num">&lt;44px 合计 82 处</span>（390／768／1440 三档数相同＝从无触摸适配）；公共层 13 类命中 <span class="num">全 0</span>（走自持 <code>MEMO_PAGE_CSS</code>）；跨宽溢出三档全绿（回归门，不许弄红）。</td></tr>
+<tr><th>算术死结</th><td>H6 每处 −1 只数 390／768：<code>help</code> 单页 <span class="num">−34</span>、<code>memo_query</code> 单页 <span class="num">−24</span>——不清零，≥90 不可能。</td></tr>
+<tr><th>本页只裁</th><td>新页走什么底座。老 8 件是改前基线不是交付物；采集页份数、HELP 8px 另票，不管。</td></tr>
+</table>
+</div>
+
+<div class="card" id="q1">
+<h2>Q1 新页走公共层底座，还是继续自持？<span class="tag">核心 · 待定</span></h2>
+<p class="why">前因：8 件页完全不在公共层响应式／触摸／形状体系内；82 处不清零则逐页 ≥90 算术无解。</p>
+<p class="kv">关键信息：底座＝<code>blocksCss()</code>＋<code>pageUiCss()</code>（44px＋安全区）；自持＝<code>src/render/pageAssets.ts</code> 的 <code>MEMO_PAGE_CSS</code>。A 是本图最大工作量。</p>
+<p>选项：<b>A 全搬</b> ／ B 继续自持 ／ C 新老分治。优化后：<b>拆两层——底座能力必搬，形状件先收包内共用</b>（公共层缺件另开串行小票）。</p>
+<div class="rec"><b>推荐：必搬＋先收。</b>「一个形状一处定义」与过线算术共同决定；纯自持（B）留 82 处，等于判自己红。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>82 处有路径清零，过线可达</li><li>回归面比全搬小一半（形状不动公共层）</li></ul></div><div class="con"><h3>弊</h3><ul><li>仍是本图最大工作量</li><li>全搬动装配链，可能先弄红溢出回归门</li></ul></div></div>
+<div class="fire"><b>红队：</b>公共层 13 类是账单／卡路里长出来的，备忘录向导族按钮它今天就没有——「全搬」把底座与形状混成一件事。</div>
+</div>
+
+<div class="card" id="q2">
+<h2>Q2 判分脚本怎么搬？<span class="tag">待定</span></h2>
+<p class="why">前因：<code>t524-判分.mjs</code>（263 行）路径写死卡路里；读数件 grep 不到私有算式就不算数。</p>
+<p class="kv">关键信息：冻结 6 处 <code>WEIGHTS／FLOOR／HARD／TOUCH_WIDTHS／D3W／D5W</code>；历史教训：两套权重曾让同一页差 43 分。</p>
+<p>选项：A 复制改常量 ／ B 直升公共层 ／ <b>C 先复制＋另开小票（串行窗口）＋diff 门</b>。</p>
+<div class="rec"><b>推荐 C。</b>复制可跑、小票收敛，diff 门保证「同一读数目录两脚本分差 0」。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>不阻塞 8 张域票</li><li>算式入仓，可复算</li></ul></div><div class="con"><h3>弊</h3><ul><li>短期两份算式，需盯 diff 门</li></ul></div></div>
+<div class="fire"><b>红队：</b>复制即走散——C 若无机械门，三个月后又是两套算式。</div>
+<details><summary>独占写集（边界）</summary><code>t824-*.md</code> ＋判分复制件；<code>base-render</code> 仅口径，本票不出代码；域票不许改公共层。</details>
+</div>
+
+<div class="card" id="q3">
+<h2>Q3 手机端数值表照谁的档？<span class="tag">待定</span></h2>
+<p class="why">前因：HELP 用 500／820，页面用 640／400／820——两套不是同一组，不能写成「同档」。</p>
+<p class="kv">关键信息：现状字号 11–12px（<code>help</code> 有 8px）、<code>viewport-fit</code> 0 处、安全区只 bottom。禁令：<b>零字面色值、零新断点</b>（只许 400／640／820／1001／1200）。</p>
+<p>方案：<b>判据只写行为，断点只写禁令</b>——验收在 500／820 量行为（触摸档零不足、字号 ≥12、行高 ≥1.4、<code>viewport-fit=cover</code>、表格二选一、长页目录＋scroll-margin、图片宽高比）。</p>
+<div class="rec"><b>推荐：双轨（量尺 500／820，实现禁新值）。</b>两者不冲突，域票不再问「按哪个量」。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>行为可判，不纠缠断点值</li><li>HELP 比线（如 viewport）写成更严，不误判</li></ul></div><div class="con"><h3>弊</h3><ul><li>字号 11→12、安全区补齐是硬活</li></ul></div></div>
+</div>
+
+<div class="card" id="q4">
+<h2>Q4 机审三件跑在哪一步？<span class="tag">转向最大 · 待定</span></h2>
+<p class="why">前因：分隔符门已实测可直接跑（6 族全红）；响应式门三档全绿当回归门；六列机审写死 32 份账单名单，跑不动备忘录。</p>
+<p class="kv">关键信息：分隔符门有命中 exit 1／无命中 0／用法错 2；<code>t407</code> 名单硬写是有意的（目录有老样／墙页，筛目录会混入），且版式位、白名单全是账单特例。</p>
+<p>方案：分隔符门＋响应式门直接跑进域票交付门；<code>t407</code> <b>本图不用</b>，英文裸词／重复句人核＋vision 顶上，另开一票建备忘录探针。</p>
+<div class="rec"><b>推荐：t407 不用（转向）。</b>硬搬是刻舟求剑，改名单两行解决不了版式位与白名单全套账单假设。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>每列都有牙齿（摘要行＋退出码＋变异自证）</li><li>不把账单容差带进备忘录</li></ul></div><div class="con"><h3>弊</h3><ul><li>英文／重复句暂无门，靠人核（已在 t524 开过同例）</li></ul></div></div>
+<div class="fire"><b>红队：</b>上一轮「改目录扫描」低估一个数量级——那不是改名单，是重写一支脚本。</div>
+</div>
+
+<div class="card" id="q5">
+<h2>Q5 分隔符串换成什么形状？<span class="tag">待定</span></h2>
+<p class="why">前因：用户第 5 条——可见文本出现 <code>；｜·</code> 即设计债；实测真缺陷 9 处（复制区说明行 7 处同一句、三段并列＋内部编号、引导链 <code>→</code> 串四段）。</p>
+<p class="kv">关键信息：语义→形状七条照 <code>t524</code> §3.1（徽章列／卡片格／键值行／结论条／事实条或小表／进度条或时间轴／小表或卡片化）；出口只许 <code>blocks.ts</code> 既有＋<code>pageShapes</code>，不自造；<code>~</code> 一律写「至」或换条。</p>
+<p>方案：语义照抄、<b>实例全换备忘录的病</b>；<code>hm-actions</code> 与复制区说明行在本票只定「收成一个件」的口径，实现由包内小票落（本票不出代码）。</p>
+<div class="rec"><b>推荐：七条照抄＋实例全换。</b>域票按「碰上什么语义→换什么形状」照做，不对照片域实例。</div>
+<div class="cols"><div class="pro"><h3>利</h3><ul><li>3 形状族（列表／向导／报告）直接可用</li><li>6 处重复一次收敛</li></ul></div><div class="con"><h3>弊</h3><ul><li>实例要逐条换，不换等于没写</li></ul></div></div>
+</div>
+
+<div class="howto" id="how">怎么回：按 Q1–Q5 回「按推荐走」或逐条改。重点看 <b>Q1 两层拆法</b>与 <b>Q4 t407 不用</b>——这是相对上一轮最大的两个转向。确认后我落盘 issue 正文，再提醒你跑 <code>/to-spec</code> 挂 subissue。</div>
+<p class="foot">落盘前一字不写 issue 正文。无 map 时不挂 subissue。</p>
+</body>
+</html>
