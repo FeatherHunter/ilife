@@ -117,12 +117,16 @@ describe('#843 交付面', () => {
         label + ' 落盘名须是「' + stem + '_<时间戳>.html」：' + basename(out));
 
       // 整页：模板起头 ＋ 真产物（envelope 分节或 HELP 载荷容器）。
+      // #783 起 doctype 两种写法都算整页：薄模板是大写，写键交的**整页**走文档壳（默认小写）。
       const html = readFileSync(out, 'utf8');
-      assert.equal(html.startsWith('<!DOCTYPE html>'), true, label + ' 须是完整页面（<!DOCTYPE html> 起）');
+      assert.equal(/^<!doctype html>/i.test(html), true, label + ' 须是完整页面（doctype 起）');
       assert.equal(html.includes('</html>'), true, label + ' 须收尾 </html>');
+      // 真内容：HELP 看载荷容器；**写键 #783 起交整页**（页壳 ＋ 页面级配方根类），其余键仍走薄模板分节。
       const substantive = entry.key === 'schedule.help.lookup'
         ? html.includes('<script id="help-data" type="application/json">')
-        : html.includes('<section data-skill="schedule"');
+        : (entry.key === 'schedule.record.write'
+          ? html.includes('ilife-block-page-shell-body') && html.includes('ilife-page-ui')
+          : html.includes('<section data-skill="schedule"'));
       assert.equal(substantive, true, label + ' 产物须含本键真内容（不是空壳）');
 
       seen.push(entry.key + ' → ' + basename(out) + '（' + dl.bytes + ' B）');

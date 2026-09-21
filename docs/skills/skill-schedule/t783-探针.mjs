@@ -32,9 +32,15 @@ const CLI = join(REPO, PKG, 'dist', 'cli', 'cmd_read.js');
 const SEED = join(REPO, '.scratch', 't844', 'home', '.ilife', 'data', 'schedule_data.db');
 const OUT = resolve(process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : join(REPO, '.scratch', 't783'));
 const PROD = join(OUT, '成品');
-const SHOTS = join(PROD, '截图');
+const WALL = join(OUT, '墙');
+/** 截图**与产物同目录**（票面原话）：不另立子目录，收口票按清单逐件收得走。 */
+const SHOTS = PROD;
 const HOME = join(OUT, 'home');
 const NO_SHOTS = process.argv.includes('--no-shots');
+/** **变异自证专用**：`--allow-dirty` 跳过「本包 src 必须干净」那一条。
+ *  为什么要这个口子：票面要求「改坏一处必须变红」——变异就在 `src/write/` 里，而安静窗口那一条
+ *  恰恰要求 src 干净，两者不能同时成立。默认**不开**（验收命令跑的是默认），开了会在结论里点名。 */
+const ALLOW_DIRTY = process.argv.includes('--allow-dirty');
 /** 夹具日：种子库里没有这一天（干净的一天，页上的读数不会被种子数据搅混）。 */
 const DAY = '2026-09-22';
 
@@ -128,9 +134,10 @@ function checkQuietWindow() {
   const g = spawnSync('git', ['-C', REPO, 'status', '--short', '--', PKG + '/src'], { encoding: 'utf8' });
   if (g.status !== 0) die2('取不到 git 状态：' + String(g.stderr).trim());
   const dirty = String(g.stdout).trim();
-  if (dirty !== '') {
+  if (dirty !== '' && !ALLOW_DIRTY) {
     die2('窗口不安静：本包 src 有未提交改动（可能是别人正在写，也可能是本票还没提交），读数作废：\n' + dirty);
   }
+  if (dirty !== '' && ALLOW_DIRTY) ok('变异自证模式：本包 src 有未提交改动，安静窗口那一条**按请求跳过**（默认跑法不跳）');
   const owner = join(REPO, '.scratch', 'locks', 'owner.json');
   if (existsSync(owner)) {
     let live = false;
@@ -172,6 +179,7 @@ ok('编译指纹：' + fingerprint);
 
 rmSync(HOME, { recursive: true, force: true });
 rmSync(PROD, { recursive: true, force: true });
+rmSync(WALL, { recursive: true, force: true });
 mkdirSync(join(HOME, '.ilife', 'data'), { recursive: true });
 const DB = join(HOME, '.ilife', 'data', 'schedule_data.db');
 copyFileSync(SEED, DB);
@@ -480,7 +488,7 @@ async function shoot(pages) {
       for (let i = 0; i < 60; i += 1) { if (await evaluate('document.readyState === "complete"') === true) break; await sleep(50); }
       await sleep(300);
       const shot = await s('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
-      writeFileSync(join(SHOTS, basename(f, '.html') + '__全页__' + w + '.png'), Buffer.from(shot.data, 'base64'));
+      writeFileSync(join(SHOTS, basename(f, '.html') + '__截图__' + w + '.png'), Buffer.from(shot.data, 'base64'));
       made += 1;
     }
   }
@@ -489,21 +497,28 @@ async function shoot(pages) {
   return made;
 }
 
-/** 本域小墙（形制照 `docs/agents/视觉验收墙.md` §6.2）：手机 390 三列／桌面 1280 一列，
+/** 本域小墙（形制照 `docs/agents/视觉验收墙.md` §6.2）：手机 390 三列／桌面 1280 一列。
+ *
+ *  **住 `墙/` 子目录、引用写成 `../成品/<件>`**：产物目录要留给「产物」——墙页自身是定宽夹具
+ *  （手机墙 390 宽、桌面墙 1280 宽），混进产物目录会让 `measure-responsive --dir <产物目录>`
+ *  把两张墙也当成产物去量三档，读数当场变红（本探针首轮就这么红过一次）。相对路径照旧落得到，
+ *  双击即看这条不受影响。
  *  自检 `dropped`（清单点名、盘上没有）与 `dead`（页上引用、盘上没有）两条一起判。 */
 function buildWalls(pages) {
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const reds2 = [];
   const dropped = rows.filter((r) => !existsSync(join(PROD, r.file)));
   for (const d of dropped) reds2.push('清单点名 ' + d.file + '，盘上没有');
-  let made = { mobile: 0, desktop: 0, links: 0 };
+  mkdirSync(WALL, { recursive: true });
+  const made = { mobile: 0, desktop: 0, links: 0 };
   for (const [name, W, H, COLS] of [['t783-小墙-手机.html', 390, 820, 3], ['t783-小墙-桌面.html', 1280, 820, 1]]) {
     const cells = pages.map((f, i) => {
       const row = rows.find((r) => r.file === f);
-      return '  <figure><figcaption><a href="' + esc(f) + '" target="_blank" rel="noopener">'
+      const ref = '../成品/' + f;
+      return '  <figure><figcaption><a href="' + esc(ref) + '" target="_blank" rel="noopener">'
         + esc(String(i + 1).padStart(2, '0') + ' ' + (row === undefined ? f : row.wake)) + '</a>'
         + '<span>' + esc(row === undefined ? '' : row.note) + '</span></figcaption>'
-        + '<iframe src="' + esc(f) + '" width="' + W + '" height="' + H + '" title="' + esc(f) + '"></iframe></figure>';
+        + '<iframe src="' + esc(ref) + '" width="' + W + '" height="' + H + '" title="' + esc(f) + '"></iframe></figure>';
     }).join('\n');
     const page = '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">'
       + '<meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(name) + '</title>'
@@ -518,9 +533,9 @@ function buildWalls(pages) {
       + '<h1>' + esc(name.replace(/^t783-小墙-|\.html$/g, '')) + '墙 · ' + pages.length + ' 格 × ' + W + ' 宽</h1>'
       + '<div class="sub">每格是一份产物的<b>真实渲染</b>（可交互）。点标题在新标签打开整页。这一页给人看，不是交付产物。</div>'
       + '<div class="grid">\n' + cells + '\n</div></div></body></html>\n';
-    writeFileSync(join(PROD, name), page, 'utf8');
+    writeFileSync(join(WALL, name), page, 'utf8');
     const refs = [...page.matchAll(/(?:src|href)="([^"#]+\.html)"/g)].map((m) => m[1]);
-    const dead = refs.filter((r) => !existsSync(join(PROD, decodeURIComponent(r))));
+    const dead = refs.filter((r) => !existsSync(resolve(WALL, decodeURIComponent(r))));
     for (const d of dead) reds2.push('墙页引用 ' + d + '，盘上没有');
     made.links += refs.length;
     if (COLS === 3) made.mobile = pages.length; else made.desktop = pages.length;
