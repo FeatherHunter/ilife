@@ -8,8 +8,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\add_relation.html",
     "exit": 0,
-    "bytes": 103479,
-    "sha256": "f2a5dbd8b9c4f1332672c3edd77db3d422fb461f3e825c099d85ccf2b532db60"
+    "bytes": 105699,
+    "sha256": "7b9f165003ead3333b7c269f83a2f231a13c970b01ec7efc6ddda3d0b011b462"
   },
   {
     "card": "derive_from_existing",
@@ -20,8 +20,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\derive_from_existing.html",
     "exit": 0,
-    "bytes": 103556,
-    "sha256": "00a2952698cd3be07e8745b3c7788136a1cd101e8b34926efabb62059b2cf47e"
+    "bytes": 105770,
+    "sha256": "1d870432fa656cd8029b50e9cff72e8ebbe6373e011688b011cdcdbb6d58c2b1"
   },
   {
     "card": "view_relation_tree",
@@ -32,8 +32,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\view_relation_tree.html",
     "exit": 0,
-    "bytes": 104490,
-    "sha256": "392620e12e2ea691b984121c5046fdcfee093dc439dba5fdcda94cdb57bc7000"
+    "bytes": 107847,
+    "sha256": "007931899e10ae4220705518fc10ae714dec2ec6518175edb477834abff697db"
   },
   {
     "card": "shopping_generate",
@@ -47,8 +47,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\shopping_generate.html",
     "exit": 0,
-    "bytes": 102246,
-    "sha256": "b0aca78ac968f4109719e659db1288660e35a94032a5a452bfa9c072059f82ec"
+    "bytes": 102430,
+    "sha256": "94e367520b045f4ebbbeb9722b095c56cdb44812f812c10914c734c29b4e6fdc"
   },
   {
     "card": "first_use",
@@ -57,8 +57,8 @@
     "params": {},
     "path": "D:\\ilife\\.scratch\\t776\\first_use.html",
     "exit": 0,
-    "bytes": 99295,
-    "sha256": "f1395124e75d13da94153ce672f363afb26ffaf84daee3f8d721d5670d13aa05"
+    "bytes": 99833,
+    "sha256": "9412b4166e68179ce8efece72f52f947d0984f5288b6c3b81713184e71e3f920"
   },
   {
     "card": "data_quality_report",
@@ -69,8 +69,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\data_quality_report.html",
     "exit": 0,
-    "bytes": 99004,
-    "sha256": "ea20f32bcb651acc60f6c97b2a28cd6f9c78fab99bebad93be2b74f73f65a3fd"
+    "bytes": 102001,
+    "sha256": "62e02320905a4811aee0cff207f0fb574c71abff478461832c1b7270f9885106"
   },
   {
     "card": "data_batch_edit",
@@ -81,8 +81,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\data_batch_edit.html",
     "exit": 0,
-    "bytes": 98162,
-    "sha256": "87beeaba402a305018d7816cc5798bb20f327072a20831eba9b0bd90aaa58d52"
+    "bytes": 100436,
+    "sha256": "c9476e5de84dffc76bb20eb18c3685cd3724fb250c3aef3a059d5d9ac543a550"
   },
   {
     "card": "data_export_backup",
@@ -93,8 +93,8 @@
     },
     "path": "D:\\ilife\\.scratch\\t776\\data_export_backup.html",
     "exit": 0,
-    "bytes": 97696,
-    "sha256": "48d8aef85794d81a6e33deaeff162dd2df681779d07959bc3a78bcb27467b733",
+    "bytes": 99910,
+    "sha256": "48c217652ee27e16c37ac1c782a9ca8a46c5e0ee780466ed6df7a83bf6d0726c",
     "backupFile": "D:\\ilife\\.scratch\\t776\\backup.json",
     "backupBytes": 24916
   }

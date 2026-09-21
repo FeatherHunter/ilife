@@ -5,7 +5,7 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update",
-      "name": "修改验证菜20260921145630",
+      "name": "修改验证菜20260921175557",
       "patch": {
         "servings": 4,
         "difficulty": "快手菜"
@@ -13,8 +13,8 @@
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
     "exit": 0,
-    "bytes": 98871,
-    "sha256": "05ba6da840215c07828c1261ede64c973367d835a17050cccc5d0a3bd2409fa0"
+    "bytes": 101071,
+    "sha256": "956dea75b34ad3ed3b413aa1cfc7496a09d57e9b1a688a3b0103f7f8b087f30b"
   },
   {
     "卡": "update_step_content",
@@ -23,12 +23,12 @@
     "参数": {
       "op": "update",
       "target": "step/step-order",
-      "name": "修改验证菜20260921145630"
+      "name": "修改验证菜20260921175557"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
     "exit": 0,
-    "bytes": 100707,
-    "sha256": "a266e707cd0597ce8989cdf72c96d7750c25e9c3149d35422e7fed45c8e800b0"
+    "bytes": 102862,
+    "sha256": "a0c250c06a1c0ff9076a6571865bffea061030339681526a65e247a908734560"
   },
   {
     "卡": "update_ingredient",
@@ -36,12 +36,12 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update/add-ingredient",
-      "name": "修改验证菜20260921145630"
+      "name": "修改验证菜20260921175557"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
     "exit": 0,
-    "bytes": 100268,
-    "sha256": "fbea6aa526dec58c77572afe7c40a5b637e5736f2eb79ae2c92e07dd4716ae78"
+    "bytes": 102566,
+    "sha256": "4f1d2acbf960b8c49886f7f05d1332dbd895021364a56e7ee6970b2285e0ddbf"
   },
   {
     "卡": "discard_recipe",
@@ -49,11 +49,11 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "deprecate",
-      "name": "修改验证菜20260921145630"
+      "name": "修改验证菜20260921175557"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
     "exit": 0,
-    "bytes": 98513,
-    "sha256": "43c36933700243e287a759e7f58ac8b8cf5d85306bcfd3004c8be106cb1f4978"
+    "bytes": 100665,
+    "sha256": "17fe8ffd217c01d387e19a4c36872d31679922e39acf1b03b8ccf5864f52a9fb"
   }
 ]
