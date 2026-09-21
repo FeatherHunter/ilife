@@ -3,10 +3,9 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import {
   BillFetchError, BillPolicyError,
-  resolveDbPath, resolveDbDir, resolveGoalsPath, openBillDb, closeBillDb,
+  resolveDbPath, resolveGoalsPath, openBillDb, closeBillDb,
   fetchAll, listRange,
   loadGoals, saveGoals,
 } from '../fetch/index.js';
@@ -26,9 +25,10 @@ import {
   buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
   BillRenderError,
 } from '../render/index.js';
-// #726：产物目录名改成「现读配置」的函数；两个文件名主体在 #762 随配置项退休、回落到代码常量（同一处定义地）。
+// #726 产物目录名改读配置；#762 两个文件名主体回代码常量；#749 起算式整个住 `../fetch/paths.js`。
 import { HELP_FILE_STEM } from '../help/helpFile.js';
-import { LOOKUP_FILE_STEM, htmlDirName } from '../help/helpPaths.js';
+import { LOOKUP_FILE_STEM } from '../help/helpPaths.js';
+import { resolveHtmlDir } from '../fetch/paths.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup, buildHelpItems } from '../help/index.js';
@@ -120,7 +120,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     return {
       data: { ...hits, mode: 'lookup' },
       deliver: {
-        target: { dir: join(resolveDbDir(), htmlDirName()), stem },
+        target: { dir: resolveHtmlDir(), stem },
         reuseMs: windowForHelpDelivery(stem, params),
       },
     };
@@ -131,7 +131,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
     deliver: {
       html,
-      target: { dir: join(resolveDbDir(), htmlDirName()), stem },
+      target: { dir: resolveHtmlDir(), stem },
       reuseMs: windowForHelpDelivery(stem, params),
     },
   };

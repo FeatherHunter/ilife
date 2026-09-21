@@ -10,6 +10,8 @@
  *
  * 一处约定照卡路里那份：**空串＝按默认落点**——落点由各取用处按本域常量算（今天写死在哪，
  * 默认就是哪里），所以空串不是「没配」，而是「用老落点」，老数据不会看起来丢了。
+ * #749 起这条约定的**两半分头**：**读**认空串；**写**（首次落文件／保存／重置）把面板上可改的
+ * 那一格（`db.dir`）落成算出来的绝对路径——见下面 `writableDefaults()` 的注释。
  *
  * 键表出处：`docs/research/t692-six-skill-paths-survey.md` 的记账 8 项去掉 1 项包内固定
  * （包内页面模板目录）＝上设置页候选 7 项，其中「产物文件名主体」在源码里是两个值（#677 起键数 8）。
@@ -41,6 +43,39 @@ export const BILL_CONFIG_RETIRED: readonly string[] = ['html.helpStem', 'html.qu
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type BillConfigValues = typeof BILL_CONFIG_DEFAULTS;
 
+/** 写盘那一份用的默认值表：**可改落点**（`db.dir`）写成算出来的绝对路径（#746 总口径回灌，本票 #749 落地）。
+ *
+ * 为什么写绝对路径：面板上「数据目录」那一格显示的是从配置文件算出的生效值，而空串的语义是「按默认落点」
+ * ——默认落点由 `os.homedir()` 派生，换机器／改用户名就会漂到别处；写死了才是「这一格写的是什么就是什么」。
+ * **代价**（维护者已确认接受）：换机器后 yaml 指向不存在的目录。**只读落点保持相对**（`backup.dir` 的值是
+ * 「库目录下的哪个子目录／前缀」，绝对化＝改语义）。
+ *
+ * 口径的两半：**读**仍认空串（＝按默认落点，老文件一份不用动，也不与 #762 的退休键过渡打架）；
+ * **写**（首次落文件／保存／重置）一律落绝对路径。那一格不自己拼路径——直接用 `configPaths(stem).dataDir`，
+ * 今天算数据目录只有这一处算法（`base-link-core/src/config/dirs.ts`）。 */
+function writableDefaults(): ConfigRecord {
+  return {
+    ...BILL_CONFIG_DEFAULTS,
+    db: { ...BILL_CONFIG_DEFAULTS.db, dir: configPaths(BILL_CONFIG_STEM).dataDir },
+  };
+}
+
+/** 写盘前把可改落点那一格的**空白值**去掉：空串＝按默认落点，而写的时候那个落点要落成绝对路径
+ *  （见 `writableDefaults`）——去掉这一格，`base-link-core` 的 `fillDefaults` 自会补上写盘用的默认值。
+ *  组里一个子项都不剩时连组一起去掉（空组写出去解析不回来）。 */
+function withoutBlankEditableDir(values: ConfigRecord): ConfigRecord {
+  const group = values['db'];
+  if (typeof group !== 'object' || group === null || Array.isArray(group)) return values;
+  const dir = (group as Record<string, unknown>)['dir'];
+  if (typeof dir !== 'string' || dir !== '') return values;
+  const next: Record<string, unknown> = { ...(group as Record<string, unknown>) };
+  delete next['dir'];
+  const out: ConfigRecord = { ...values };
+  if (Object.keys(next).length === 0) delete out['db'];
+  else out['db'] = next as ConfigRecord['db'];
+  return out;
+}
+
 /** 读回来的一份配置：文件路径（人话报错要指它）＋数据目录＋取值。 */
 export interface LoadedBillConfig {
   readonly path: string;
@@ -55,11 +90,14 @@ export interface LoadedBillConfig {
  *  ——照 `packages/skill-calorie/src/config.ts:47-67` 同形（#718 那一侧先落的这条）。 */
 let memo: { file: string; loaded: LoadedBillConfig } | null = null;
 
-/** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。 */
+/** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。
+ *
+ *  读回来的 `values` 是**文件里那份 ⊕ 默认值**（文件里写空串则仍是空串＝按默认落点）；
+ *  首次落文件时写下去的是 `writableDefaults()`（可改落点＝绝对路径）。 */
 export function loadBillConfig(): LoadedBillConfig {
   const file = configPaths(BILL_CONFIG_STEM).configFile;
   if (memo === null || memo.file !== file) {
-    const loaded = loadConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED);
+    const loaded = loadConfig(BILL_CONFIG_STEM, writableDefaults(), BILL_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
@@ -77,14 +115,14 @@ export function loadBillConfig(): LoadedBillConfig {
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */
 export function saveBillConfig(values: ConfigRecord): { path: string } {
-  const r = saveConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, values, BILL_CONFIG_RETIRED);
+  const r = saveConfig(BILL_CONFIG_STEM, writableDefaults(), withoutBlankEditableDir(values), BILL_CONFIG_RETIRED);
   memo = null;
   return r;
 }
 
 /** 重置为默认（先另存 `<配置目录>/bill.yaml.bak`）。 */
 export function resetBillConfig(): { path: string; backupPath: string | null } {
-  const r = resetConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED);
+  const r = resetConfig(BILL_CONFIG_STEM, writableDefaults(), BILL_CONFIG_RETIRED);
   memo = null;
   return r;
 }
