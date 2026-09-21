@@ -11,7 +11,7 @@
  *  锚点：单日＝2026-09-21；周视图＝种子库里最后一个「七天都有记录」的整周（2026-09-14 ~ 09-20）。
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -55,18 +55,24 @@ const PAGE_RULES = [
 const PAGES = [
   {
     file: '今天总结.html',
+    wake: '今天总结',
+    note16: '单日盘',
     need: ['ilife-block-conclusion', 'ilife-block-chart-block', 'ilife-block-fact-strip', 'ilife-block-timeline',
       'ilife-block-disclosure', 'ilife-block-dist-row', 'ilife-block-copy-block'],
     text: ['今天总结', '24 小时时间轴', '分类进度（一级分类分布）', '夜间睡眠'],
   },
   {
     file: '查日程.html',
+    wake: '查日程',
+    note16: '日程盘',
     need: ['ilife-block-kpi-card-grid', 'ilife-block-conclusion', 'ilife-block-chart-block', 'ilife-block-list-rows',
       'ilife-block-disclosure', 'ilife-block-param-form', 'ilife-block-copy-block'],
     text: ['查日程', '24 小时覆盖', '空档'],
   },
   {
     file: '周视图.html',
+    wake: '周视图',
+    note16: '热力盘',
     need: ['ilife-block-kpi-card-grid', 'heat-cells', 'heat-cell', 'heat-legend', 'ilife-block-dist-row',
       'ilife-block-list-rows', 'ilife-block-copy-block'],
     text: ['周视图', '7×24 全分类热力图'],
@@ -134,5 +140,21 @@ for (const page of pages) {
     + (red.length === 0 ? '' : ' 红条=' + red.join('｜')));
   console.log('         → ' + delivery.path + '（' + delivery.bytes + ' B，交付面回执）');
 }
+/** 清单（墙与索引共用一份，不许各自算文件名）：形状照 `docs/skills/skill-calorie/t532-清单.mjs`
+ *  的 `readManifest` 收的两种形状（数组或 `{rows}`）写成 `{rows}`；带 `bytes` 供它做
+ *  「盘上字节 ≠ 清单字节」判据。落盘后由 `t782-样板.mjs` 一处产出——手写第二份必走散。 */
+const manifest = {
+  rows: pages.map((page, i) => ({
+    seq: String(i + 1).padStart(2, '0'),
+    file: page.file,
+    wake: page.wake,
+    family: '作息管家·页型样本',
+    bytes: Buffer.byteLength(page.html, 'utf8'),
+    sha256_12: createHash('sha256').update(page.html).digest('hex').slice(0, 12),
+    note: page.note16,
+  })),
+};
+writeFileSync(join(OUT, 't782-清单.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+console.log('清单 → ' + join(OUT, 't782-清单.json') + '（rows=' + manifest.rows.length + '）');
 console.log('RESULT: ' + (failed === 0 ? 'OK' : 'FAIL') + ' pages=' + pages.length + ' red=' + failed + ' 产物目录=' + OUT);
 process.exit(failed === 0 ? 0 : 1);

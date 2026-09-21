@@ -9,13 +9,13 @@
 
 **「最好看」怎么变成可判定的**（Destination 不允许只有愿望）：由**两次人裁**说话——① `【形状】` 票的**页型配方**由人裁过才铺开；② `【收口】` 票的第二段由人**滚墙给逐格结论并签字**。机器侧只作自检门槛：机审六列 0 命中、双端三档溢出 0、vision 逐页 ≥90（**vision 是提示器，不是证据**）。
 
-## 进度：27%
+## 进度：33%
 
-已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 4/15：`【结构】`（#780，八键一处声明＋三件派生＋分派翻转，行为零改动）、`【清单·取证】`（#781）、`【种子】`（#844，隔离种子库 1037 记录／73 计划／112 摘要）、`【交付面】`（#843，8 键缺省落盘＋落点分家＋命名一处定义，验收探针 8/8 绿）。
+已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 5/15：`【结构】`（#780，八键一处声明＋三件派生＋分派翻转，行为零改动）、`【清单·取证】`（#781）、`【种子】`（#844，隔离种子库 1037 记录／73 计划／112 摘要）、`【交付面】`（#843，8 键缺省落盘＋落点分家＋命名一处定义，验收探针 8/8 绿）。
 
-下一步：【形状】（#782）已可开工（三张样本交人裁页型）——它一裁完，八张域票按写者互斥序铺开，最后【链路页】与【收口】。
+下一步：【形状】（#782）**已关**——人裁 `B A A`（今天总结 B 时间轴主轴／查日程 A 覆盖条＋事件卡／周视图 A 矩阵为主），三张成品页已由人签字「满意并且认可」，页型配方落 `src/shared/`（形状）与 `src/query/`·`src/plan/`（口径）。八张域票（#783 起）按写者互斥序铺开，最后【链路页】与【收口】。
 
-**未到 95%**：主干（【形状】与八张域票）一张都还没开工。到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
+**未到 95%**：主干第一张（【形状】）已关，八张域票与链路页尚未开工。到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
 
 ## Notes
 
@@ -37,7 +37,7 @@
 |---|---|---|---|---|
 | [#780](https://github.com/FeatherHunter/ilife/issues/780) | 【结构】五域能力目录 ＋ 命令登记进 src/<能力>/commands.ts ＋ 接 pnpm gen | task | 已关 | — |
 | [#781](https://github.com/FeatherHunter/ilife/issues/781) | 【清单·取证】85 场景的老侧事实 ＋ 18 条家族必现块 ＋ 别名表（零设计列） | research | 已关 | — |
-| [#782](https://github.com/FeatherHunter/ilife/issues/782) | 【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开） | prototype | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#843](https://github.com/FeatherHunter/ilife/issues/843) ＋ [#844](https://github.com/FeatherHunter/ilife/issues/844) ＋ [#781](https://github.com/FeatherHunter/ilife/issues/781) |
+| [#782](https://github.com/FeatherHunter/ilife/issues/782) | 【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开） | prototype | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#843](https://github.com/FeatherHunter/ilife/issues/843) ＋ [#844](https://github.com/FeatherHunter/ilife/issues/844) ＋ [#781](https://github.com/FeatherHunter/ilife/issues/781) |
 | [#783](https://github.com/FeatherHunter/ilife/issues/783) | 【写入与同步】记作息一族出页：三件套结果页 ＋ 修正的蓝调 diff ＋ 批量导入回执 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) |
 | [#784](https://github.com/FeatherHunter/ilife/issues/784) | 【查询与浏览·单日族】今天总结／查作息／时间轴／详情／状态 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#783](https://github.com/FeatherHunter/ilife/issues/783) |
 | [#785](https://github.com/FeatherHunter/ilife/issues/785) | 【查询与浏览·范围与跨天】区间汇总／范围／周视图／24h 概览／多日 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) |
@@ -57,6 +57,7 @@
 - [【结构】五域能力目录 ＋ 命令登记进 src/<能力>/commands.ts ＋ 接 pnpm gen](https://github.com/FeatherHunter/ilife/issues/780) — 八键一处声明＋三件派生＋分派翻转，行为零改动（首关子票）
 - [【种子】隔离种子库：锚点日期 ＋ 覆盖五域的可复现数据](https://github.com/FeatherHunter/ilife/issues/844) — 种子随锚点平移的隔离库（1037 记录／73 计划／112 摘要／一级分类 8/8），不碰真库、同锚点可复现，下游把家目录指到 `.scratch/t844/home` 即用。
 - [【交付面】唤醒词命令缺省落盘 ＋ 产物落点分家 ＋ 命名一处定义](https://github.com/FeatherHunter/ilife/issues/843) — 8 个联动 key 原样调用各落一份整页并回 `delivery{path,bytes}` 绝对路径（`--html` 仍逐字优先、`q` 现找不落盘）；页面落产物根 `schedule_html`、HELP 落其 `help` 支（老落点逐字不变）；文件名主体＝`技能名_命令标题`（`src/delivery/naming.ts` 一处定义，标题读生成声明）——下游票读 `delivery.path` 即可，不自己算名字。
+- [【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开）](https://github.com/FeatherHunter/ilife/issues/782) — 三张代表页各 3 个候选由人裁（`B A A`），成品整页签字「满意并且认可」；页型配方＝形状住 `src/shared/`（`dayPage`／`planPage`／`weekPage` ＋ 24h 色带与 7×24 矩阵两处页内件）、口径住 `src/query/queryDocs.ts`·`src/plan/planDocs.ts`；桌面端人裁口径＝**正文单一内容列**（窄屏不动）；清单 `t782-清单.json` 供墙与索引读。
 
 ## Not yet specified
 
@@ -100,6 +101,7 @@ Q6 A
 将你的问题和回答以清晰的形式输出到html文件中：…
 再进行一轮的检查和调整。然后任务结束
 ```
+
 
 
 
