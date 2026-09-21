@@ -26,7 +26,7 @@ import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_C
 import type { ConfigSurfaceReply } from './contract.js';
 import { SLOT_TITLE, PLUGIN, SKILL_PACKAGE } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
-import type { ConfigItem } from './settings.js';
+import type { ConfigItem, ResolvedField } from './settings.js';
 import { DIRECTORY_PICKER_REFUSED, MANAGER_RPC_BASE, MANAGER_RPC_ENDPOINT, MANAGER_ROOTS_METHOD, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
 import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, openRowBrowser, createRootsSource } from 'dsh-life-pack/directory-browser';
 import { DirectoryBrowserFromRow } from 'dsh-life-pack/directory-browser-ui';
@@ -292,7 +292,7 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
     };
   }, [props.getCall]);
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '卡路里加载中…'));
+    return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '卡路里加载中'));
   }
   if (state.kind === 'data') {
     return React.createElement(
@@ -372,29 +372,69 @@ export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
 
 /** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。
  *
- * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：标了 `prefillFrom` 的行在取值空着时
- * 直接显示那条绝对路径——用户不必自己拼路径（#743），显示的就是技能真会用的那个目录（逐字相同）。 */
+ * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：
+ *   · 标了 `prefillFrom` 的行在取值空着时直接显示那条绝对路径——用户不必自己拼路径（#743），
+ *     显示的就是技能真会用的那个目录（逐字相同）；
+ *   · 标了 `prefillResolved` 的可改行在取值空着时显示 `resolved` 组那一格（照片目录的生效值）；
+ *   · **只读行**（#757）一律显示 `resolveFrom` 指的那一格（技能算好的绝对路径／生效数字）——
+ *     面板一个字都不算：回执缺那一格（旧技能）就显示空串，绝不编一条路径出来。 */
+export interface SurfacePrefill {
+  readonly dataDir?: string;
+  readonly resolved?: Partial<Record<ResolvedField, string | undefined>>;
+}
+
+/** 只读行显示什么：标了 `resolveFrom` ⇒ 回执 `resolved` 组那一格；没标 ⇒ 配置文件里那个值本身
+ *  （数字类只读项走这一档：显示的是生效数字，见 #749 补注二的甲档）。 */
+function readonlyTextOf(item: ConfigItem, raw: string, prefill: SurfacePrefill): string {
+  if (item.resolveFrom === undefined) return raw;
+  const shown = prefill.resolved?.[item.resolveFrom];
+  return typeof shown === 'string' ? shown : '';
+}
+
 export function toDraft(
   values: Record<string, unknown>,
-  prefill: { readonly dataDir?: string } = {},
+  prefill: SurfacePrefill = {},
 ): Record<string, string> {
   const draft: Record<string, string> = {};
   for (const item of CONFIG_ITEMS) {
     const v = readPath(values, item.key);
     const raw = v === undefined || v === null ? '' : String(v);
-    const fallback = item.prefillFrom === undefined ? undefined : prefill[item.prefillFrom];
-    draft[item.key] = raw === '' && typeof fallback === 'string' && fallback !== '' ? fallback : raw;
+    if (item.readonly === true) {
+      draft[item.key] = readonlyTextOf(item, raw, prefill);
+      continue;
+    }
+    if (raw !== '') {
+      draft[item.key] = raw;
+      continue;
+    }
+    const top = item.prefillFrom === undefined ? undefined : prefill[item.prefillFrom];
+    if (typeof top === 'string' && top !== '') {
+      draft[item.key] = top;
+      continue;
+    }
+    const resolved = item.prefillResolved === undefined ? undefined : prefill.resolved?.[item.prefillResolved];
+    draft[item.key] = typeof resolved === 'string' ? resolved : raw;
   }
   return draft;
 }
 
-/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「未配」承担）。 */
+/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「未配」承担）。
+ *
+ *  **只读行不收**（#757）：它们显示的是技能算好的绝对路径，写回配置就是把「显示的路径」当成「配置值」——
+ *  保存只提交真能改的那些行（本家＝数据目录／照片目录／训记 KEY 三行），其余键由技能侧做组内合并保留现值。 */
 export function fromDraft(draft: Record<string, string>): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const item of CONFIG_ITEMS) {
+    if (item.readonly === true) continue;
     const raw = draft[item.key] ?? '';
-    const value: unknown = item.control === 'number' ? Number(raw) : item.control === 'switch' ? raw === 'true' : raw;
-    writePath(values, item.key, item.control === 'number' && !Number.isFinite(value as number) ? 0 : value);
+    if (item.control === 'number') {
+      const n = Number(raw);
+      writePath(values, item.key, Number.isFinite(n) ? n : 0);
+    } else if (item.control === 'switch') {
+      writePath(values, item.key, raw === 'true');
+    } else {
+      writePath(values, item.key, raw);
+    }
   }
   return values;
 }
@@ -473,7 +513,11 @@ export function createBrowseHandler(deps: {
 /** 一行输入（四种控件对齐受限 YAML 子集：文本／数字／布尔／目录）。
  *
  * 目录档＝文本框 ＋ 一枚唤起系统文件夹选择器的按钮；`onBrowse` 缺席（命名空间拿不到、
- * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。 */
+ * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。
+ *
+ * **只读行（#757）**：`item.readonly` 为真时控件一律 `disabled`（值只经技能侧解析后显示、不给改），
+ * 目录行的浏览按钮**保留但不可点击**（#748 定稿：入口不作废，只是不能改）。控件文案**不出现省略号**
+ * （#746 处置 9）——按钮就写「选择文件夹」／「浏览」两个字面。 */
 export function Row(props: {
   readonly item: ConfigItem;
   readonly value: string;
@@ -483,24 +527,28 @@ export function Row(props: {
   readonly browser?: DirectoryRowEntry | null | undefined;
 }): React.ReactElement {
   const { item } = props;
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
+  const readonly = item.readonly === true;
+  const disabled = props.disabled || readonly;
+  // 只读行不接 onChange：不给「改得动」留假象（用例也据此认「哪几行可改」）。
+  const onChange = readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
   const control =
     item.control === 'switch'
       ? React.createElement('input', {
           type: 'checkbox',
           checked: props.value === 'true',
-          disabled: props.disabled,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
+          disabled,
+          onChange: readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
         })
       : React.createElement('input', {
           style: S.input,
           type: item.control === 'number' ? 'number' : 'text',
           value: props.value,
-          disabled: props.disabled,
+          disabled,
           spellCheck: false,
           onChange,
         });
-  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。 */
+  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。
+   *  只读行照画（按钮保留），但 `disabled` ⇒ 点不动。 */
   const entry = props.browser ?? null;
   const browse =
     item.control === 'directory' && entry !== null && entry.mode !== 'none'
@@ -509,11 +557,11 @@ export function Row(props: {
           {
             style: S.btnPick,
             type: 'button',
-            disabled: props.disabled,
+            disabled,
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
-          entry.mode === 'native' ? '选择文件夹…' : '浏览…',
+          entry.mode === 'native' ? '选择文件夹' : '浏览',
         )
       : null;
   return React.createElement(
@@ -643,7 +691,9 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
     pickerModeOf(picker) === 'none' ? null : { mode: pickerModeOf(picker), onOpen: onOpenRow };
 
   const surface = state.kind === 'ready' ? state.surface : null;
-  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
+  /** 脏值只看**可改行**（#757）：只读行显示的是技能算好的绝对路径，拿它当「改动」会让打开面板就变「未保存」。 */
+  const editableItems = CONFIG_ITEMS.filter((i) => i.readonly !== true);
+  const dirty = surface !== null && editableItems.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
 
   /** 写完（保存／重置）之后重新读一份整面：写回执是 `{path, values}`、重置回执是 `{path, backupPath}`，
    *  都不是整面——拿写回执当整面用，页头那行「数据目录」会显示成 undefined（#743 实测）。 */
@@ -682,6 +732,9 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
     else setError(r.message);
   }, [props.getCall, writeThenReload]);
 
+  /** 头部两行：配置文件路径与**生效**数据目录（#757：回执 `resolved.dbDir` 是技能按配置文件算出来的那一个，
+   *  装了旧技能没有那一组时回落到 `dataDir`——两个值在「数据目录留空」时逐字相同）。 */
+  const headDataDir = surface?.resolved?.dbDir ?? surface?.dataDir ?? '';
   const head = React.createElement(
     'div',
     null,
@@ -691,14 +744,14 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
           'div',
           null,
           React.createElement('div', { style: S.info }, `配置文件 ${surface.path}`),
-          React.createElement('div', { style: S.info }, `数据目录 ${surface.dataDir}`),
+          React.createElement('div', { style: S.info }, `数据目录 ${headDataDir}`),
           surface.created ? React.createElement('div', { style: S.muted }, '（配置文件刚按默认值生成）') : null,
         )
       : null,
   );
 
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中…'));
+    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中'));
   }
 
   if (state.kind === 'failed') {
@@ -747,7 +800,7 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
-        busy ? '处理中…' : '保存',
+        busy ? '处理中' : '保存',
       ),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
@@ -764,7 +817,7 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
         go: '转到',
         showHidden: (n: number) => '显示隐藏目录（' + n + '）',
         empty: '这个目录里没有子目录。',
-        loading: '正在读取…',
+        loading: '正在读取',
         newFolder: '新建文件夹',
         createConfirm: '创建',
         createCancel: '取消',

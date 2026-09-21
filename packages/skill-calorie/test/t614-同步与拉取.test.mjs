@@ -104,13 +104,12 @@ function seedDir() {
   return { dir, db };
 }
 
-/** 跨技能出口＋训记入口都指向 fixture（见 `helpers/land-fixture.mjs` 件头）。 */
+/** 训记入口指向 fixture（见 `helpers/land-fixture.mjs` 件头；#757 起跨技能两出口删键，本件不测落地链，无需文件缝）。 */
 const LAND_FIXTURE = join(HERE, 'helpers', 'land-fixture.mjs');
 
-/** 一份「库目录 ＋ 三处外调都指向 fixture」的配置目录。 */
+/** 一份「库目录 ＋ 训记入口指向 fixture」的配置目录。 */
 function cfg(dir) {
   return calorieConfigDir(dir, {
-    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
     xunji: { cli: LAND_FIXTURE },
   });
 }

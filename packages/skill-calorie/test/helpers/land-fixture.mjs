@@ -6,6 +6,8 @@
  * 以及训记模块自己的命令行入口（推送＋回写）。测试里这三处绝不能真调（会写用户的真作息／真备忘库、
  * 会打真训记接口），原先是六个环境变量短路；配置文件成为唯一真相后，短路口换成**配置里的三个出口**：
  * `land.scheduleCli`／`land.memoCli`／`xunji.cli` 都指向本件。
+ * #757 起跨技能两出口删键（出口按包布局推断）：那两处改走**文件缝**
+ * （`land-inferred-stub.mjs` 把本件暂放到推断位置），`xunji.cli` 页外键照旧走配置指到本件。
  *
  * 两种身份（按 `argv[0]` 判）：
  *   ① **跨技能出口**（argv[0] 是对方的能力键，如 `schedule.plan.write`）——stdout 打一行
@@ -14,7 +16,8 @@
  *      （真入口 `xunji/cli.ts` 打的就是 `run.data` 的 JSON），按 code 退出。
  *
  * 用法（测试侧）：
- *   ① `calorieConfigDir(dir, { land: { scheduleCli: F, memoCli: F }, xunji: { cli: F } })`；
+ *   ① 训记入口走配置：`calorieConfigDir(dir, { xunji: { cli: F } })`；跨技能两处走文件缝
+ *      （`land-inferred-stub.mjs` 的 `before/after`，本件被暂放到推断位置，无需写配置）；
  *   ② 子进程环境里给 `T676_LAND_FIXTURE`：JSON `{ "<argv[0]>": { code, data } }`，
  *      缺省＝全部成功（`code: 0`，`data` 取下面 `DEFAULT_DATA`）。
  *   `T676_LAND_FIXTURE_LOG` 给了路径就往那里**追加**一行 `{"key":…,"params":…}`（断言「调了什么」用）。

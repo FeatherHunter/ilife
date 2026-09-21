@@ -1,7 +1,7 @@
 /** T6 #25 · 训练计划动作名审计（老家 audit_plan_names.py 同契约）。
  * 输出统一 { status, data, message } 三段式；exit 映射由 CLI 负责。
- * #606：库面与动作名校验搬进训记模块，本件改走它的能力门——**默认读包内预置快照**（不再隐式读
- * 各机 `~/.minimax` 那份：那句「这台机器放没放库」的口径与编辑器库面分叉，见 #593 R3）。
+ * #606：库面与动作名校验搬进训记模块，本件改走它的能力门——**默认读包内预置快照**
+ * （#757 起老机器路径已退场：`XUNJI_CATALOG` 只剩 `preset` 一项，不再有第二套口径）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { verifyMovements } from '../xunji/index.js';

@@ -13,6 +13,8 @@ import type { EnvelopeShape } from 'base-link-core';
 import type { ConfigRecord } from 'base-link-core';
 import { CALORIE_SKILL, ENVELOPE_VERSION } from './keys.js';
 import { loadCalorieConfig, resetCalorieConfig, saveCalorieConfig } from '../config.js';
+import { dbFileOf, gifsDirOf, htmlDirOf, photosDirOf, resolveDbDir, resolveDbFileName, stateDirOf } from '../paths.js';
+import { XUNJI_CATALOG } from '../xunji/index.js';
 import { fail } from '../shared/params.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-calorie/src/bridge.ts`）。 */
@@ -61,13 +63,53 @@ function withHumanError<T>(run: () => T): T {
 /**
  * 跑一个配置 key，返回整行 envelope JSON。
  *
- * 三个 key 的载荷：读 → `{path, dataDir, created, values}`；写 → 入参 `{values}`，回执 `{path, values}`；
+ * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved}`；写 → 入参 `{values}`，回执 `{path, values}`；
  * 重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
+ *
+ * `resolved`（#757，照记账 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用：
+ * 生效数据目录／库文件／产物目录／照片目录／GIF 子目录／训记状态目录／动作库
+ * （算式唯一定义地＝`src/paths.ts` 纯函数一族 ＋ `src/xunji/catalog.ts` 的预置件，面板不自己拼路径）。
+ * 只算路径、不建目录、不写盘（设置页与体检都能随时调）。
  */
+export interface CalorieResolvedPaths {
+  /** 生效数据目录（`db.dir` 非空用它，空＝默认落点）——面板上可改项之一的生效值。 */
+  readonly dbDir: string;
+  /** 库文件绝对路径。 */
+  readonly dbFile: string;
+  /** HTML 产物目录绝对路径。 */
+  readonly htmlDir: string;
+  /** 照片目录绝对路径（空串按默认落点，不再是「未配置」）。 */
+  readonly photosDir: string;
+  /** 照片 GIF 子目录绝对路径。 */
+  readonly gifsDir: string;
+  /** 训记状态目录绝对路径（空串按默认落点，不再 `~/.mavis`）。 */
+  readonly stateDir: string;
+  /** 训记动作库绝对路径（空串＝包内预置那份）。 */
+  readonly catalog: string;
+}
+
+/** 算那一组解析后的绝对路径。**只算路径、不建目录、不写盘**。 */
+export function resolvedCaloriePaths(): CalorieResolvedPaths {
+  const c = loadCalorieConfig();
+  const dbDir = resolveDbDir();
+  const photosDir = photosDirOf(dbDir, c.values.photos.dir);
+  const catalogConfigured = c.values.xunji.catalog;
+  return {
+    dbDir,
+    dbFile: dbFileOf(dbDir, resolveDbFileName()),
+    htmlDir: htmlDirOf(dbDir, c.values.html.dir),
+    photosDir,
+    gifsDir: gifsDirOf(photosDir, c.values.photos.gifs),
+    stateDir: stateDirOf(dbDir, c.values.xunji.stateDir),
+    catalog: catalogConfigured !== '' ? catalogConfigured : XUNJI_CATALOG.preset,
+  };
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadCalorieConfig());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values });
+    const resolved = withHumanError(() => resolvedCaloriePaths());
+    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];

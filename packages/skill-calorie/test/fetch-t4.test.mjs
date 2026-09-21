@@ -207,10 +207,13 @@ test('photos：标签+目录守卫+增删改查', () => {
   assert.throws(() => validateTags(Array.from({ length: 11 }, (_, i) => 't' + i)), /太多/);
   assert.equal(tagsContain('正面,侧面', '侧面'), true);
   assert.equal(tagsContain('正面', '背面'), false);
-  // #676：照片目录的唯一真相是配置（`photos.dir`）；没配即抛，报错里点名去哪配。
+  // #757：照片目录空串按默认落点 `<数据目录>/photos`（「未配置」状态消失），不再抛。
   const cfgDir = mkdtempSync(join(tmpdir(), 't23-cfg-'));
   calorieConfigDir(cfgDir);
-  assert.throws(() => resolvePhotosDir(), /照片目录未配置/);
+  const resolved = resolvePhotosDir();
+  assert.equal(typeof resolved, 'string');
+  assert.ok(resolved.endsWith('photos'), '空串应解到默认落点（…/photos）：' + resolved);
+  assert.ok(existsSync(resolved), '解析应建目录（写侧 mkdir 语义）：' + resolved);
 
   const db = tmpDb();
   const dir = mkdtempSync(join(tmpdir(), 't23-photos-'));

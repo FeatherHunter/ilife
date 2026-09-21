@@ -1,7 +1,7 @@
 /** #612 · 落地训练宿主命令（读计划 → 补计划 → 记心愿 → 推送 → 回写，同一命令）。
  *
- * 隔离口径（#676）：跨技能那两步（补计划＝作息、记心愿＝备忘）**绝不真调**——配置里的两个出口
- * `land.scheduleCli`／`land.memoCli` 指向 `test/helpers/land-fixture.mjs`，让它吐出要的回执；
+ * 隔离口径（#676 ＋ #757）：跨技能那两步（补计划＝作息、记心愿＝备忘）**绝不真调**——#757 起两出口删键，
+ * 改走**文件缝**（`helpers/land-inferred-stub.mjs` 把 `land-fixture.mjs` 暂放到推断位置），让它吐出要的回执；
  * 训记那两步（推送／回写）走包内 `dist/xunji/cli.js`，本票没给它配出口，故这盘跑到那里会以
  * **「没配 KEY」确定性失败**（`attempts: 0`，不调网）——测的正是「本地缺 KEY 不许当真调远端」这条。
  * `fail()` 即 `process.exit`，失败路径一律走真子进程断言（in-process 调会自杀）。
@@ -12,7 +12,7 @@
  * ③ 任一步失败非 0 点名（用法 2／无计划 4／记心愿 4／补计划 4／推送缺 KEY 3）；
  * ④ 计划读得到（种子库 1 段＋动作名上页）。
  */
-import { describe, it, before } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -21,6 +21,7 @@ import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { installInferredLandStub, uninstallInferredLandStub } from './helpers/land-inferred-stub.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
 configTestBase();
@@ -77,11 +78,15 @@ before(async () => {
   ({ openDb } = await import('../dist/index.js'));
 });
 
-/** 一份「库目录 ＋ 三处外调（跨技能两出口／训记入口）都指向 fixture」的配置目录；`responses` 决定 fixture 吐什么。 */
+// #757 · 跨技能两出口删键后的文件缝（见 helpers/land-inferred-stub.mjs 件头）：
+// 生产按包布局推断，测试把同一份 fixture 暂放到那两个位置（`xunji.cli` 页外键照旧走配置）。
+before(installInferredLandStub);
+after(uninstallInferredLandStub);
+
+/** 一份「库目录 ＋ 训记入口指向 fixture（跨技能两步走文件缝）」的配置目录；`responses` 决定 fixture 吐什么。 */
 function cfg(dir, responses = {}) {
   if (Object.keys(responses).length > 0) process.env.T676_LAND_FIXTURE = JSON.stringify(responses);
   return calorieConfigDir(dir, {
-    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
     xunji: { cli: LAND_FIXTURE },
   }) && dir;
 }
@@ -131,7 +136,7 @@ describe('#612 落地训练', () => {
     }
   });
 
-  it('①c 四步走通（三处外调全走 fixture）：四步结局＋本地远端分清＋调用面留痕', () => {
+  it('①c 四步走通（跨技能走文件缝、训记走配置 fixture）：四步结局＋本地远端分清＋调用面留痕', () => {
     const { dir, db } = seedDir();
     db.close();
     const log = join(dir, 'fixture-calls.jsonl');
@@ -202,14 +207,12 @@ describe('#612 落地训练', () => {
     assert.match(r.stderr, /失败在补计划/);
   });
 
-  it('③e 推送缺 KEY exit 3 点名没调远端（不配 `xunji.cli`：真入口无 KEY 即判本地）', () => {
+  it('③e 推送缺 KEY exit 3 点名没调远端（不配 `xunji.cli`：真入口无 KEY 即判本地；跨技能两步走文件缝）', () => {
     const { dir, db } = seedDir();
     db.close();
-    // 这一条要的就是真入口那一支：出口只配跨技能两处，训记入口留空（＝包内真入口）。
+    // 这一条要的就是真入口那一支：训记入口留空（＝包内真入口），跨技能两步走文件缝。
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ...homeEnvOf(calorieConfigDir(dir, {
-        land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
-      })),
+      ...homeEnvOf(calorieConfigDir(dir)),
     });
     assert.equal(r.code, 3, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在推送/);

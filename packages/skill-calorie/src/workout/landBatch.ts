@@ -15,8 +15,8 @@
  * - 缺省 → 结果页（逐天结局 ＋ 推送回写天数 ＋ 本地远端分清）。
  *
  * 挡板缝（#676 已退役）：原先的 `CALORIE_LAND_BATCH_FAIL_DATE` 短路（某天强制失败）与单日四路
- * `CALORIE_LAND_*_STUB` 环境变量读取全部删除（配置文件是唯一真相）。测试要挡板就把跨技能出口
- * （配置里的 `land.scheduleCli`／`memoCli`）指到一个 fixture 脚本，让它按天吐出要的回执。
+ * `CALORIE_LAND_*_STUB` 环境变量读取全部删除（配置文件是唯一真相）。#757 起跨技能两出口删键，
+ * 测试不再经配置指 fixture：训记两步走 `xunji.cli` 页外键，跨技能两步走真实兄弟包（家目录注入隔离）。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';

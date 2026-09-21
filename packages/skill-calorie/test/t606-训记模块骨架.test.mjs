@@ -154,7 +154,7 @@ describe('#606 训记模块骨架', () => {
     assert.match(String(noCatJson.catalog_error), /读不到/);
   });
 
-  it('verify 的显式覆盖：机器路径那份拿进来就按它算（默认仍是包内预置）', () => {
+  it('verify 的显式覆盖：传一份库进来就按它算（默认仍是包内预置；#757 起老机器路径已退场）', () => {
     const machineish = tmp('训记官方动作.json');
     writeFileSync(machineish, JSON.stringify({ actions: ['爬楼机'] }));
     const covered = xunji('verify', '爬楼机', '--catalog', machineish);
@@ -163,7 +163,7 @@ describe('#606 训记模块骨架', () => {
     // 不传就是包内预置：爬楼机不在官方库里
     const byDefault = xunji('verify', '爬楼机');
     assert.equal(byDefault.code, 4);
-    assert.ok(mod.XUNJI_CATALOG.machine.endsWith(join('.minimax', '训记官方动作.json')), mod.XUNJI_CATALOG.machine);
+    assert.equal(mod.XUNJI_CATALOG.machine, undefined, '老机器路径已退场：XUNJI_CATALOG 只剩 preset 一项');
     assert.ok(mod.XUNJI_CATALOG.preset.endsWith(join('src', 'xunji', 'data', '训记官方动作.json')), mod.XUNJI_CATALOG.preset);
   });
 

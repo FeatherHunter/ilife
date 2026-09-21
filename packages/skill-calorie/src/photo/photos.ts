@@ -9,6 +9,7 @@ import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { FetchError } from '../fetch/errors.js';
 import { loadCalorieConfig } from '../config.js';
+import { photosDirOf, resolveDbDir } from '../paths.js';
 import { shiftISODate, timeOfDayISO, todayISO } from '../shared/time.js';
 
 export const TAG_SEP = ',';
@@ -46,22 +47,18 @@ export function tagsContain(tagStr: string | null | undefined, tag: string): boo
   return parseTags(tagStr).includes(tag);
 }
 
-/** 配置里的照片目录（**唯一真相**：`calorie.yaml` 的 `photos.dir`；空串＝这一项还没配）。 */
+/** 配置里的照片目录（**唯一真相**：`calorie.yaml` 的 `photos.dir`；空串＝按默认落点 `<数据目录>/photos`，#757 起不再是「未配置」）。 */
 export function configuredPhotosDir(): string {
   return loadCalorieConfig().values.photos.dir;
 }
 
-/** 照片目录解析：显式传参 > 配置文件 `photos.dir`；缺失抛（不静默落盘），报错写明去哪配。 */
+/** 照片目录解析：显式传参 > 配置文件 `photos.dir` > 默认落点 `<库目录>/photos`（#757：空串不再抛）。
+ *  算式唯一定义地＝`src/paths.ts` 的 `photosDirOf`，本函数只做「读配置＋建目录」的薄壳。 */
 export function resolvePhotosDir(dir?: string | null): string {
   const raw = (dir ?? configuredPhotosDir()).trim();
-  if (!raw) {
-    throw new FetchError(
-      '照片目录未配置：请先在卡路里设置页里填「照片目录」（配置文件 calorie.yaml 的 photos.dir），'
-        + '或本次调用直接传 photosDir 参数；填了才落盘，不猜路径。',
-    );
-  }
-  mkdirSync(raw, { recursive: true });
-  return resolve(raw);
+  const resolved = raw !== '' ? raw : photosDirOf(resolveDbDir(), '');
+  mkdirSync(resolved, { recursive: true });
+  return resolve(resolved);
 }
 
 export interface PhotoRow {

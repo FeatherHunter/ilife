@@ -1,9 +1,9 @@
 /** #613 · 批量落地宿主命令（今天→本周日／今天→本月末自算天数，逐天复用单日链）。
  *
- * 隔离口径（#676）：跨技能那两步（补计划＝作息、记心愿＝备忘）经配置里的两个出口
- * `land.scheduleCli`／`land.memoCli` 指向 `test/helpers/land-fixture.mjs`（**不许真调**，
- * 会写用户的真库）；训记那两步走包内 `dist/xunji/cli.js`，本票没给它配出口，故实跑会在
- * 「没配 KEY」处**确定性失败**（`attempts: 0`，不调网）——逐天读取与 fail-fast 因此仍是可判的。
+ * 隔离口径（#676 ＋ #757）：跨技能那两步经**文件缝**（`helpers/land-inferred-stub.mjs` 把
+ * `land-fixture.mjs` 暂放到推断位置，**不许真调**，会写用户的真库）；训记那两步走包内
+ * `dist/xunji/cli.js`，本票没给它配出口，故实跑会在「没配 KEY」处**确定性失败**（`attempts: 0`，
+ * 不调网）——逐天读取与 fail-fast 因此仍是可判的。
  * `fail()` 即 `process.exit`，失败路径一律走真子进程断言（in-process 调会自杀）。
  *
  * 票面验收（各有独立用例）：
@@ -13,7 +13,7 @@
  * ④ 真出口读数：真 CLI 落盘，`data.output` 绝对路径存在（过程页 dryRun＋结果页实跑）；
  * ⑤ R3 双桥真实现（作息／备忘缺省走真合成写，可注入 `RunSyncDeps` 同形函数）。
  */
-import { describe, it, before, afterEach } from 'node:test';
+import { describe, it, before, after, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { installInferredLandStub, uninstallInferredLandStub } from './helpers/land-inferred-stub.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
 configTestBase();
@@ -97,10 +98,9 @@ function seedFile() {
   return file;
 }
 
-/** 一份「库目录 ＋ 三处外调（跨技能两出口／训记入口）都指向 fixture」的配置目录。 */
+/** 一份「库目录 ＋ 训记入口指向 fixture（跨技能两步走文件缝）」的配置目录。 */
 function cfg(dir) {
   return calorieConfigDir(dir, {
-    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
     xunji: { cli: LAND_FIXTURE },
   }) && dir;
 }
@@ -117,6 +117,10 @@ before(async () => {
   ({ openDb } = await import('../dist/index.js'));
   ({ batchDates, runLandBatchDays } = await import('../dist/workout/landBatch.js'));
 });
+
+// #757 · 文件缝（跨技能两出口删键后，见 helpers/land-inferred-stub.mjs 件头）。
+before(installInferredLandStub);
+after(uninstallInferredLandStub);
 
 describe('#613 批量落地', () => {
   it('①a 本周末天数：周四→4 天（今天到周日，含两端）', () => {
@@ -226,7 +230,7 @@ describe('#613 批量落地', () => {
     assert.match(readFileSync(env.data.output, 'utf8'), /ilife-page/);
   });
 
-  it('④d 真出口实跑 7 天（三处外调全走 fixture）：推送 7 天 回写 7 天', () => {
+  it('④d 真出口实跑 7 天（跨技能走文件缝、训记走配置 fixture）：推送 7 天 回写 7 天', () => {
     const { dir, db } = seedDir();
     db.close();
     const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ...homeEnvOf(cfg(dir))});
@@ -275,7 +279,7 @@ describe('#613 批量落地', () => {
     assert.match(n.stderr, /缺开始日期/);
   });
 
-  it('⑤a R3 作息桥真实现（fixture 成功）：不再恒 skip，真写段', async () => {
+  it('⑤a R3 作息桥真实现（文件缝成功）：不再恒 skip，真写段', async () => {
     const { landPlanStep } = await import('../dist/workout/land.js');
     const file = seedFile();
     cfg(tmp('cfg-a'));
@@ -286,7 +290,7 @@ describe('#613 批量落地', () => {
     assert.match(r.note ?? '', /已写 1 段/);
   });
 
-  it('⑤b R3 备忘桥真实现（fixture 成功）：不再恒 skip，真记条', async () => {
+  it('⑤b R3 备忘桥真实现（文件缝成功）：不再恒 skip，真记条', async () => {
     const { landWishStep } = await import('../dist/workout/land.js');
     const file = seedFile();
     cfg(tmp('cfg-b'));
@@ -297,7 +301,7 @@ describe('#613 批量落地', () => {
     assert.match(r.note ?? '', /已记 1 条/);
   });
 
-  it('⑤c R3 双桥失败回结局（fixture 回 4→code 3；无库→code 1）', async () => {
+  it('⑤c R3 双桥失败回结局（文件缝回 4→code 3；无库→code 1）', async () => {
     const { landPlanStep, landWishStep } = await import('../dist/workout/land.js');
     const file = seedFile();
     cfg(tmp('cfg-c'));

@@ -9,27 +9,27 @@
  * - **按段逐个守**：每次 upsert 调用前都看“距上次 upsert 过去了多久”，窗口内先睡够再调
  *   （老行为“睡够再调”保留，见 `push.py:157-158`；`--dry-run` 仍不守不记，老 `:156` 同述）；
  * - **跨天／跨进程也守**（把“跨天不守”当缺陷修掉）：上次调用时刻落在盘上状态文件里，
- *   不同进程的两次 `push-plan` 照样排开（老读侧已有同法先例：`auth.py:40` 的
- *   `~/.mavis/xunji_bridge_rate.json` 跨进程状态）；
+ *   不同进程的两次 `push-plan` 照样排开；
  * - 时钟／睡眠／状态文件**全可注入**：生产走真实时间与 `<状态目录>/xunji_push_rate.json`
- *   （状态目录＝配置 `xunji.stateDir`，空＝`~/.mavis`；见 `xunjiStateDir()`），
+ *   （状态目录＝配置 `xunji.stateDir`，空串＝默认落点 `<数据目录>/xunji`，见 `xunjiStateDir()`；#757 起不再 `~/.mavis`），
  *   测试一律注入（不许睡真 45 秒，更不许碰真机状态文件）。
  */
 
-import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { loadCalorieConfig } from '../config.js';
+import { resolveDbDir, stateDirOf } from '../paths.js';
 
 /** 训记写接口限频窗口（秒）。老 `push.py:29` 同值；全模块只此一处，别处引用。 */
 export const RATE_LIMIT_SECONDS = 45;
 
 /** 状态文件目录的**唯一定义地**（读侧限频／写侧限频／同步状态三份状态文件都落这儿）：
- *  配置里 `xunji.stateDir` 非空即用它，空串＝老落点 `~/.mavis`（老 `auth.py:40`／`run_sync.py:32` 同路径）。
+ *  配置里 `xunji.stateDir` 非空即用它，空串＝默认落点 `<数据目录>/xunji`（#757 起不再 `~/.mavis`；
+ *  算式唯一定义地＝`src/paths.ts` 的 `stateDirOf`，本函数只做「读配置」的薄壳）。
  *  #676：这里原先各自硬写 `join(homedir(), '.mavis')`，三处同式；收成一处，配置也只读一处。 */
 export function xunjiStateDir(): string {
   const configured = loadCalorieConfig().values.xunji.stateDir;
-  return configured !== '' ? configured : join(homedir(), '.mavis');
+  return stateDirOf(resolveDbDir(), configured);
 }
 
 /** 缺省状态文件：状态目录下与读侧分开的一份（读侧是 `xunji_bridge_rate.json`，`auth.py:40`）。 */

@@ -17,7 +17,7 @@ import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
@@ -25,9 +25,13 @@ import { WATER_NAME } from '../dist/fetch/diet.js';
 import { buildSeries } from '../dist/analysis/series.js';
 import { DECLARED_WRITE_KEYS } from './declared.mjs';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { installInferredLandStub, uninstallInferredLandStub } from './helpers/land-inferred-stub.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
 configTestBase();
+// #757 · 文件缝（跨技能两出口删键后，见 helpers/land-inferred-stub.mjs 件头；落地训练族 5 条用）。
+before(installInferredLandStub);
+after(uninstallInferredLandStub);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -947,16 +951,15 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
 
 // ---------------------------------------------------------------- 落地训练族（5 条会改数据库的命令，#650 补）
 //
-// 零本地写：五条命令的跨技能／远端那几步一律**不在父进程写本地库**——补计划／记心愿走配置里的
-// 两个跨技能出口（`land.scheduleCli`／`land.memoCli`），训记两步走配置里的训记入口（`xunji.cli`），
-// 三处都指向 `helpers/land-fixture.mjs`（见 #676）。故回查断言钉「这些路径零本地写」：
+// 零本地写：五条命令的跨技能／远端那几步一律**不在父进程写本地库**——补计划／记心愿走文件缝
+// （#757 起两出口删键，`helpers/land-inferred-stub.mjs` 把 fixture 暂放到推断位置），训记两步走配置里的
+// 训记入口（`xunji.cli`），三处都指向 `helpers/land-fixture.mjs`（见 #676）。故回查断言钉「这些路径零本地写」：
 // 跑前快照三张表行数，跑后逐行比对；日后若给任一条加本地写，本断言即红（改断言须写明新增了哪一列，不得删块）。
 const LAND_FIXTURE = join(HERE, 'helpers', 'land-fixture.mjs');
 
-/** 一份「库目录 ＋ 三处外调都指向 fixture」的配置目录。 */
+/** 一份「库目录 ＋ 训记入口指向 fixture（跨技能两步走文件缝）」的配置目录。 */
 function cfgLand(dir) {
   return calorieConfigDir(dir, {
-    land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
     xunji: { cli: LAND_FIXTURE },
   });
 }
@@ -992,7 +995,7 @@ function snapLocal(dir) {
   }
 }
 
-test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零本地写', () => {
+test('落库 · 落地训练族 5 条命令：跨技能走文件缝、训记走 fixture 且零本地写', () => {
   // land：单日四步（非预演，三处外调全绿）
   {
     const dir = mkEmpty();

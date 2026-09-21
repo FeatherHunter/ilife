@@ -19,6 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
 import { CALORIE_CONFIG_DEFAULTS, CALORIE_CONFIG_STEM } from './config.js';
+import { dbDirOf, gifsDirOf, htmlDirOf, photosDirOf, stateDirOf } from './paths.js';
+import { XUNJI_CATALOG } from './xunji/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -43,9 +45,6 @@ export interface CalorieHealthReport {
 export const DB_TABLE_THRESHOLD = 11 as const;
 
 const SKILL = 'calorie' as const;
-
-/** 训记三份状态文件住在同一个目录。 */
-const XUNJI_STATE_DIR = join(homedir(), '.mavis');
 
 /** 包根：`dist/health.js` 上一级。 */
 function packageRoot(): string {
@@ -328,10 +327,10 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
-  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
+  // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', CALORIE_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
   if (read.kind === 'bad') {
     items.push({
       id: 'config.file', title: '配置文件', status: 'red',
@@ -355,9 +354,9 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     });
   }
 
-  // ② 数据目录：在不在、能不能写。
+  // ② 数据目录：在不在、能不能写（算式唯一定义地＝`src/paths.ts` 的 `dbDirOf`，本件只给只读值）。
   const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
-  const dataDir = dbDirConfigured !== '' ? dbDirConfigured : paths.dataDir;
+  const dataDir = dbDirOf(paths.dataDir, dbDirConfigured);
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
@@ -412,9 +411,9 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     }
   }
 
-  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
+  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建；算式＝`htmlDirOf`）。
   const htmlDirName = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = join(dataDir, htmlDirName !== '' ? htmlDirName : String(CALORIE_CONFIG_DEFAULTS.html.dir));
+  const htmlDir = htmlDirOf(dataDir, htmlDirName);
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
@@ -425,7 +424,7 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
       : htmlVerdict.writable
         ? '在且能写：' + p(htmlDir) + '。'
         : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或编辑配置文件改「HTML 产物目录名」。',
     source: htmlSource,
   });
 
@@ -437,34 +436,39 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     action: '', source: dataDirSource,
   });
 
-  // ⑥ 照片目录（卡路里特有）：没配＝黄（读照片不报错，出 GIF 与写照片会被拦下）。
-  const photosDir = textOf(readValue(values, 'photos', 'dir'));
-  const photosVerdict = photosDir === '' ? { exists: false, writable: false, reason: '' } : dirVerdict(photosDir);
+  // ⑥ 照片目录（卡路里特有，#757 新口径）：空串＝按默认落点 `<数据目录>/photos`，「未配置」状态消失。
+  // 还没建＝绿（首次记身材照时自动建）；在但写不进去／同名文件占位＝红。算式＝`photosDirOf`。
+  const photosConfigured = textOf(readValue(values, 'photos', 'dir'));
+  const photosDir = photosDirOf(dataDir, photosConfigured);
+  const photosVerdict = dirVerdict(photosDir);
+  const photosBlocked = !photosVerdict.exists
+    ? photosVerdict.reason !== ''
+    : !photosVerdict.writable;
   items.push({
     id: 'photos.dir', title: '照片目录',
-    status: photosDir === '' ? 'yellow' : photosVerdict.exists && photosVerdict.writable ? 'green' : 'red',
-    message: photosDir === ''
-      ? '还没配：读照片不报错，出 GIF 与写照片会被拦下。'
-      : photosVerdict.exists
-        ? (photosVerdict.writable ? '在且能写：' + p(photosDir) + '。' : '在，但写不进去：' + p(photosDir) + '。')
-        : '配了但目录不在：' + p(photosDir) + '。',
-    action: photosDir === ''
-      ? '要用身材照就在配置页填这个目录（绝对路径）。'
-      : photosVerdict.exists && photosVerdict.writable ? '' : '建出这个目录（或去掉只读），或换一个位置。',
-    source: photosDir === '' ? '默认值' : '配置文件',
+    status: photosBlocked ? 'red' : 'green',
+    message: !photosVerdict.exists
+      ? (photosVerdict.reason !== ''
+        ? '同名文件占了它的位置：' + p(photosDir) + '（' + photosVerdict.reason + '）。'
+        : '还没建：' + p(photosDir) + '（首次记身材照时自动建）。')
+      : photosVerdict.writable
+        ? '在且能写：' + p(photosDir) + '。'
+        : '在，但写不进去：' + p(photosDir) + '（' + photosVerdict.reason + '）。',
+    action: photosBlocked
+      ? '建出这个目录（或去掉只读），或在配置页把「照片目录」换一个位置。'
+      : '',
+    source: sourceOf(present, 'photos.dir'),
   });
 
-  // ⑦ 照片 GIF 子目录：不在＝黄（照片目录没配时也跟着黄）。
+  // ⑦ 照片 GIF 子目录：不在＝黄（合成 GIF 时自动建；算式＝`gifsDirOf`）。
   const gifsSub = textOf(readValue(values, 'photos', 'gifs'));
-  const gifsDir = photosDir === '' ? '' : join(photosDir, gifsSub !== '' ? gifsSub : String(CALORIE_CONFIG_DEFAULTS.photos.gifs));
-  const gifsExists = gifsDir !== '' && existsSync(gifsDir);
+  const gifsDir = gifsDirOf(photosDir, gifsSub);
+  const gifsExists = existsSync(gifsDir);
   items.push({
     id: 'photos.gifs', title: '照片 GIF 子目录',
-    status: photosDir === '' || !gifsExists ? 'yellow' : 'green',
-    message: photosDir === ''
-      ? '照片目录还没配，这一项跟着空着。'
-      : gifsExists ? '在：' + p(gifsDir) + '。' : '还没建：' + p(gifsDir) + '（合成 GIF 时才落这里）。',
-    action: photosDir === '' ? '先配「照片目录」。' : gifsExists ? '' : '第一次合成 GIF 时会自动建；想提前建也行。',
+    status: gifsExists ? 'green' : 'yellow',
+    message: gifsExists ? '在：' + p(gifsDir) + '。' : '还没建：' + p(gifsDir) + '（合成 GIF 时才落这里）。',
+    action: gifsExists ? '' : '第一次合成 GIF 时会自动建；想提前建也行。',
     source: sourceOf(present, 'photos.gifs'),
   });
 
@@ -488,9 +492,9 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     action: xunjiCliExists ? '' : '技能包没构建完整：重装这个技能包，或跑一次它的构建。',
   });
 
-  // ⑩ 训记三份状态文件目录：`~/.mavis/` 能不能写（不可写＝黄）。
+  // ⑩ 训记三份状态文件目录：`<数据目录>/xunji` 能不能写（不可写＝黄；算式＝`stateDirOf`，#757 起不再 `~/.mavis`）。
   const stateDirConfigured = textOf(readValue(values, 'xunji', 'stateDir'));
-  const stateDir = stateDirConfigured !== '' ? stateDirConfigured : XUNJI_STATE_DIR;
+  const stateDir = stateDirOf(dataDir, stateDirConfigured);
   const stateVerdict = dirVerdict(stateDir);
   items.push({
     id: 'xunji.stateDir', title: '训记状态文件目录',
@@ -498,16 +502,14 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     message: !stateVerdict.exists
       ? '还没建：' + p(stateDir) + '（限频与同步游标要记这里，第一次用时自动建）。'
       : stateVerdict.writable ? '在且能写：' + p(stateDir) + '。' : '在，但写不进去：' + p(stateDir) + '。',
-    action: !stateVerdict.exists || stateVerdict.writable ? '' : '去掉只读，或把「训记状态文件目录」改到别处。',
-    source: stateDirConfigured !== '' ? '配置文件' : '默认值',
+    action: !stateVerdict.exists || stateVerdict.writable ? '' : '去掉只读，或编辑配置文件改「训记状态文件目录」。',
+    source: sourceOf(present, 'xunji.stateDir'),
   });
 
-  // ⑪ 跨技能出口（作息／备忘 CLI）：不在＝黄（只在用「落地训练」时才是红）。
+  // ⑪ 跨技能出口（作息／备忘 CLI）：不在＝黄（只在用「落地训练」时才是红；#757 起删键，出口按包布局推断）。
   const siblingRoot = join(packageRoot(), '..');
-  const scheduleConfigured = textOf(readValue(values, 'land', 'scheduleCli'));
-  const memoConfigured = textOf(readValue(values, 'land', 'memoCli'));
-  const scheduleCli = scheduleConfigured !== '' ? scheduleConfigured : join(siblingRoot, 'skill-schedule', 'dist', 'cli', 'cmd_read.js');
-  const memoCli = memoConfigured !== '' ? memoConfigured : join(siblingRoot, 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
+  const scheduleCli = join(siblingRoot, 'skill-schedule', 'dist', 'cli', 'cmd_read.js');
+  const memoCli = join(siblingRoot, 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
   const missingLand: string[] = [];
   if (!existsSync(scheduleCli)) missingLand.push('作息 ' + p(scheduleCli));
   if (!existsSync(memoCli)) missingLand.push('备忘 ' + p(memoCli));
@@ -518,18 +520,18 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
       ? '两个出口都在。'
       : '不在：' + missingLand.join('；') + '。',
     action: missingLand.length === 0 ? '' : '只有「落地训练」会用到这两个出口；要用就先装上（或构建）那两家技能包。',
-    source: sourceOf(present, 'land.scheduleCli') === '配置文件' || sourceOf(present, 'land.memoCli') === '配置文件' ? '配置文件' : '默认值',
+    source: '默认值',
   });
 
-  // ⑫ 训记动作库包内预置：包内数据件在不在（不在＝黄）。
+  // ⑫ 训记动作库包内预置：包内数据件在不在（不在＝黄；路径唯一定义地＝`XUNJI_CATALOG.preset`）。
   const catalogConfigured = textOf(readValue(values, 'xunji', 'catalog'));
-  const catalog = catalogConfigured !== '' ? catalogConfigured : join(packageRoot(), 'src', 'xunji', 'data', '训记官方动作.json');
+  const catalog = catalogConfigured !== '' ? catalogConfigured : XUNJI_CATALOG.preset;
   const catalogExists = existsSync(catalog);
   items.push({
     id: 'xunji.catalog', title: '训记动作库包内预置',
     status: catalogExists ? 'green' : 'yellow',
     message: catalogExists ? '在：' + p(catalog) + '。' : '不在：' + p(catalog) + '（动作名判不了）。',
-    action: catalogExists ? '' : '技能包装得不完整，或配置里指到了不存在的路径；重装技能包，或改回包内预置那份。',
+    action: catalogExists ? '' : '技能包装得不完整，或配置里指到了不存在的路径；重装技能包，或编辑配置文件改回包内预置那份。',
     source: sourceOf(present, 'xunji.catalog'),
   });
 

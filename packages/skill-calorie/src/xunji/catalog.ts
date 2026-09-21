@@ -6,14 +6,12 @@
  * 读不出来（文件不在／解析失败／`actions` 不是数组）＝「库缺失」，**不是「库是空的」**：
  * 调用方按「无法验证」报（`valid: null`），不许当成「动作不合法」（老 `catalog.py:44-89` 同口径）。
  *
- * 库路径两档（#606 票内定的口径，见证据件 §三；#676 起默认档改成读配置）：
- *   ① **默认**＝配置里的 `xunji.catalog`；空串时回落到包内预置快照 `src/xunji/data/训记官方动作.json`
- *      （`XUNJI_CATALOG.preset`）——同一句动作名在任何一台机器上算出同一个结果；
- *   ② **显式覆盖**＝调用方把老机器路径（`%USERPROFILE%\.minimax\训记官方动作.json`）传进来
- *      （`XUNJI_CATALOG.machine`；子命令读法 `verify --catalog <路径>`）。
- *      **模块不隐式读机器路径**：那会让「这台机器放没放库」变成第二套口径，与编辑器库面（吃预置库）分叉。
+ * 库路径（#606 票内定的口径，见证据件 §三；#676 起默认档改成读配置；#757 起老机器路径退场）：
+ *  **默认**＝配置里的 `xunji.catalog`；空串时回落到包内预置快照 `src/xunji/data/训记官方动作.json`
+ *     （`XUNJI_CATALOG.preset`）——同一句动作名在任何一台机器上算出同一个结果；
+ *  **显式覆盖**＝调用方把一条路径传进来（子命令读法 `verify --catalog <路径>`）。
+ *  **模块不隐式读机器路径**。
  */
-import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -22,13 +20,11 @@ import { loadCalorieConfig } from '../config.js';
 /** 包根：本模块往上两级（源码态 `src/xunji` 与构建态 `dist/xunji` 都成立，与渲染层模板装载器同法）。 */
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** 库路径两档的**唯一定义地**（默认口径与显式覆盖；读法见件头）。 */
+/** 库路径的**唯一定义地**（#757 起只剩包内预置快照这一档；老机器路径已退场）。 */
 export const XUNJI_CATALOG = {
-  /** ① 默认：包内预置快照（模块自己的数据件）。`tsc` **不复制资源**（`tooling/check-publish.mjs:10`
+  /** 默认：包内预置快照（模块自己的数据件）。`tsc` **不复制资源**（`tooling/check-publish.mjs:10`
    *  「只靠 files 随包发」），故按**源布局**定位；安装态读不读得到由发件清单决定（#601 那一票）。 */
   preset: join(PACKAGE_ROOT, 'src', 'xunji', 'data', '训记官方动作.json'),
-  /** ② 显式覆盖：老的机器路径（只作**可传的一个值**，模块不隐式读它）。 */
-  machine: join(homedir(), '.minimax', '训记官方动作.json'),
 } as const;
 
 /** 库来源的缺省落点：配置里 `xunji.catalog` 非空即用它，空串＝包内预置快照（#676 起配置是唯一真相）。 */

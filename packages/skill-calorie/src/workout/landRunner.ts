@@ -15,6 +15,12 @@
  *   - 限时：`land.landSeconds`（毫秒换算在本件做），空／坏值回落默认档；
  *   - 挡板缝（原先四个 `CALORIE_LAND_*_STUB` 环境变量）**已退役**：读取删除，`stubbed` 恒 false。
  *     测试要挡板就把上面两个出口指到一个 fixture 脚本，让它吐出原来挡板吐的那份回执。
+ *
+ * #757 · 两个出口删键（#748 定稿）：`land.scheduleCli`／`land.memoCli` 从默认值表出表，
+ * 老文件里的残留由 `CALORIE_CONFIG_RETIRED` 容忍（读跳过、不进取值、写即清）。
+ * 出口退回「按包布局推断」——本件不再读配置，只按包布局算（测试缝替代通道见下）。
+ * 测试要挡板走 `xunji.cli` 那个页外键（训记两步仍可指到 fixture）；跨技能两步（作息／备忘）在测试里
+ * 走真实兄弟包（家目录注入下它们读写临时家目录，不碰真实数据），不再经配置指到 fixture。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -46,23 +52,22 @@ export interface LandCall {
   readonly stubbed: boolean;
 }
 
-/** 跨技能出口的取值：配置里给了就用它（存在性先拦），没给按包布局算。
+/** 跨技能出口的取值：按包布局算（#757 起不再读配置；老键已退休）。
  *
- *  「谁在取」这一处是**唯一**的取值点：两个出口（作息／备忘）与测试的 fixture 都走它，
- *  于是「出口在哪」只有一个定义地，配置项也只有一处读法。 */
-function crossSkillCliPath(configured: string, relative: readonly string[], label: string): string {
-  const cli = configured !== '' ? configured : join(dirname(fileURLToPath(import.meta.url)), ...relative);
+ *  「谁在取」这一处是**唯一**的取值点：两个出口（作息／备忘）都走它，
+ *  于是「出口在哪」只有一个定义地。 */
+function crossSkillCliPath(relative: readonly string[], label: string): string {
+  const cli = join(dirname(fileURLToPath(import.meta.url)), ...relative);
   if (!existsSync(cli)) {
     fail(4, label + '出口不在（' + cli + '）：先跑对应包的构建再调本命令；'
-      + '若装机布局不同，请在卡路里设置页里把这条出口指到真实路径');
+      + '出口按包布局推断（设置页已不再提供这一项，见 #748 定稿）。');
   }
   return cli;
 }
 
-/** 作息统一出口（编译产物；缺配置即按包布局算，两条路都要存在）。 */
+/** 作息统一出口（编译产物；按包布局算）。 */
 export function scheduleCliPath(): string {
   return crossSkillCliPath(
-    loadCalorieConfig().values.land.scheduleCli,
     ['..', '..', '..', 'skill-schedule', 'dist', 'cli', 'cmd_read.js'],
     '作息',
   );
@@ -71,7 +76,6 @@ export function scheduleCliPath(): string {
 /** 备忘统一出口（同上）。 */
 export function memoCliPath(): string {
   return crossSkillCliPath(
-    loadCalorieConfig().values.land.memoCli,
     ['..', '..', '..', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js'],
     '备忘',
   );

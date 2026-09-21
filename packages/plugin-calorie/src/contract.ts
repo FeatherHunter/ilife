@@ -33,6 +33,28 @@ export function parseSavePayload(raw: unknown): SavePayload | null {
   return { values: values as Record<string, unknown> };
 }
 
+/** 技能侧回执 `resolved` 组：设置页只读行显示的那一组解析后绝对路径（#757，照记账样板）。
+ *
+ * 唯一定义地是技能侧 `packages/skill-calorie/src/cli/config.ts` 的 `CalorieResolvedPaths`
+ * （本处只是镜像，值改一处要两处一起改，对齐由 `test/config-surface-676.test.mjs` 锁死）。
+ * 面板只显示、不计算：回执缺那一格（旧技能）就显示空串，绝不编一条路径出来。 */
+export interface ResolvedPaths {
+  /** 生效数据目录。 */
+  readonly dbDir: string;
+  /** 库文件绝对路径。 */
+  readonly dbFile: string;
+  /** HTML 产物目录绝对路径。 */
+  readonly htmlDir: string;
+  /** 照片目录绝对路径。 */
+  readonly photosDir: string;
+  /** 照片 GIF 子目录绝对路径。 */
+  readonly gifsDir: string;
+  /** 训记状态目录绝对路径。 */
+  readonly stateDir: string;
+  /** 训记动作库绝对路径。 */
+  readonly catalog: string;
+}
+
 /** 配置面回执：设置页一次拿齐「文件在哪、数据在哪、当前值、是不是这次新建的」。
  *
  * 形状与技能侧 `calorie.config.read` 的 data 逐字段同形（唯一定义地在那边的 cli/config.ts）。
@@ -48,6 +70,8 @@ export interface ConfigSurfaceReply {
   readonly created: boolean;
   /** 当前取值（文件里的 ⊕ 缺项按默认值补）。 */
   readonly values: Record<string, unknown>;
+  /** 解析后的绝对路径组（#757；旧技能缺席时只读行显示空串，不炸）。 */
+  readonly resolved?: ResolvedPaths;
 }
 
 /** 读请求载荷：与技能 CLI 的 key/params 同形（见 skill-calorie SKILL.md）。 */

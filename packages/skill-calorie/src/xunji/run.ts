@@ -55,7 +55,7 @@ export interface XunjiCommandDeps {
   readonly sleep?: (ms: number) => Promise<void>;
   /** 现在（毫秒；限频门用；缺省 `Date.now`）。 */
   readonly now?: () => number;
-  /** 限频状态文件（缺省 `~/.mavis/xunji_push_rate.json`；传 null 只记内存）。 */
+  /** 限频状态文件（缺省 `<状态目录>/xunji_push_rate.json`；传 null 只记内存）。 */
   readonly rateLimitPath?: string | null;
   /** upsert 超时毫秒（缺省 30000）。 */
   readonly timeoutMs?: number;

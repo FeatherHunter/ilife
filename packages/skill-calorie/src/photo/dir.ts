@@ -17,7 +17,7 @@ export function photoDir(params: Record<string, unknown>): string | undefined {
   return e !== '' ? e : undefined;
 }
 
-/** 写侧口径：同上取值，缺即抛（照片不落到猜出来的目录里）。 */
+/** 写侧口径：同上取值，缺省落默认目录 `<库目录>/photos`（#757：空串不再抛，「未配置」状态消失）。 */
 export function photoDirOrThrow(params: Record<string, unknown>): string {
   return resolvePhotosDir(photoDir(params) ?? null);
 }
