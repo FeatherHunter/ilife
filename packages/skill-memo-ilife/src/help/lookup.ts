@@ -8,14 +8,13 @@ function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   for (const n of e.needs || []) {
     if (p[n] === undefined) {
-      // #850：示例照 HELP 字段名（`start`／`end`／`remind_at`／`note_id`），月份形 `timeRange` 已退役。
+      // #850：示例照 HELP 字段名（`start`／`end`／`remind_at`／`note_id`），月份形 `timeRange` 已退役（此处不留示例）。
       if (n === 'id') p[n] = '<id>';
       else if (n === 'start') p[n] = '2026-07-01';
       else if (n === 'end') p[n] = '2026-07-07';
       else if (n === 'remind_at') p[n] = '2026-10-01 09:00';
       else if (n === 'note_id') p[n] = '<id>';
       else if (n === 'remindAt') p[n] = '2026-10-01 09:00';
-      else if (n === 'timeRange') p[n] = '2026-09';
       else p[n] = '<值>';
     }
   }
