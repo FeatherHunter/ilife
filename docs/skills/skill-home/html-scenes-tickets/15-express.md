@@ -15,9 +15,10 @@
 
 ## 验收命令
 
-① `node tooling/run-locked.mjs --ticket <本票号> -- pnpm test` exit 0；
+① `node tooling/run-locked.mjs --ticket <本票号> --max-wait-ms 600000 -- node --test packages/skill-home/test/<域>-*.test.mjs` exit 0（**只跑自己那份用例**——持锁只做一件事、缩短排队；全量 `pnpm test` 留给收口票）；
 ② `node docs/skills/skill-home/gen-scene-wall.mjs --check .scratch/<本票号> 快递购物-手机墙.html` exit 0（桌面墙同）；
 ③ `node packages/skill-home/scripts/audit-separators.mjs .scratch/<本票号>` —— 0 命中、exit 0。
+④ `node packages/skill-home/scripts/audit-page-blocks.mjs .scratch/<本票号>` exit 0 —— 本域每份产物的**必需块齐全**（按契约的族清单逐页断言，缺一块即红并点名）；
 
 ## 不许动的东西
 

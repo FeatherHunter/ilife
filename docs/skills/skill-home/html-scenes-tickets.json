@@ -96,6 +96,7 @@
       "scope": [
         "packages/skill-home/scripts/audit-separators.mjs",
         "packages/skill-home/scripts/audit-responsive.mjs",
+        "packages/skill-home/scripts/audit-page-blocks.mjs",
         "packages/skill-home/test/style-audit.test.mjs",
         "docs/skills/skill-home/style-audit.md"
       ],
@@ -126,6 +127,7 @@
       "scope": [
         "packages/skill-home/scripts/new-scene-page.mjs",
         "packages/skill-home/scripts/lib/scene-page-scaffold.mjs",
+        "packages/skill-home/scripts/lib/page-blocks.mjs",
         "packages/skill-home/test/scaffold.test.mjs",
         "docs/skills/skill-home/scene-page-scaffold.md",
         ".scratch/scaffold/"

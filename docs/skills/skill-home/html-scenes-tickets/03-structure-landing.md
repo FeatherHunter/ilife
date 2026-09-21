@@ -13,7 +13,8 @@ v2 稿把「11 张域票按域根隔离」当前提，被两席对抗式审查�
 ⑤ 顺带登记 `借用` 写侧唤醒词（`借出／借入／归还／催还` 今天无词可达：`wakewords.ts:58` 只通读侧、`cmd_read.ts:757-771` 是孤立写侧）；
 ⑥ 门禁全绿并**尽早推**（触 CI 面，按编排纪律「触 CI 尽早推」）；
 ⑦ **页族解析落地**：把 `src/render/templates.ts:33-58` 的「key → 模板」1:1 映射改成「**`(key, preset/场景) → 页族**」两层解析（46 个页族名照票 2 契约），并按**票 22「唤醒词层规格」**的裁定落地唤醒词侧：20 条无场景词逐条归宿、42 条变体的识别口径、必要时改 `scenarios.yaml` 的 `variants`／`DEPRECATED_PHRASES`；改完必须给出**逐行对照读数**：每条唤醒词 → 场景 → 命令 key → 页族，**一条不落**；
-⑧ **唤醒词层的机器门**（防回潮）：四分类检查（主词／变体／技能级入口／废弃，出现「三不管」即红）＋ `scenarios.yaml`／`WAKE_TABLE`／`DEPRECATED_PHRASES` **三向对账** ＋ 上面那张逐行对照表，全部接进包内 test 门；改内容资产后同批重跑 `pnpm gen:help-assets`、更新摘要锁（`packages/skill-home/AGENTS.md` 的规矩），并给「改坏一句即红」的负向证据。
+⑧ **唤醒词层的机器门**（防回潮）：四分类检查（主词／变体／技能级入口／废弃，出现「三不管」即红）＋ `scenarios.yaml`／`WAKE_TABLE`／`DEPRECATED_PHRASES` **三向对账** ＋ 上面那张逐行对照表，全部接进包内 test 门；改内容资产后同批重跑 `pnpm gen:help-assets`、更新摘要锁（`packages/skill-home/AGENTS.md` 的规矩），并给「改坏一句即红」的负向证据；
+⑨ **技能说明面（`SKILL.md`）**：本图的链路是「唤醒词 → 命令 → **落盘 HTML 绝对路径**」，但读技能的是 AI——**SKILL.md 不写，AI 就不会把路径交给用户**。本票要在 `SKILL.md` 写明：缺省即落 HTML（不再是「只回 JSON」）、回执里带 `delivery.path` 绝对路径、产物落在哪、用户怎么点开；并把「完成判据＝文件存在且大小＝`delivery.bytes`」照 #183 票 9 的写法补上。验收：`SKILL.md` 有对应的「输出位置」一节，且**逐字写清链路**。
 
 ## 验收命令
 
