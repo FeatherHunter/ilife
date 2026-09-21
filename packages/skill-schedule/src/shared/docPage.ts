@@ -18,6 +18,24 @@ import { pagePartsCss } from './pageParts.js';
 
 const LF = String.fromCharCode(10);
 
+/** 本页的**宽度口径**（人裁，2026-09-21 复看时圈定）：**桌面端正文一律收在中间那一列**。
+ *
+ *  公共层 `pageUi` ⑧ 条在 ≥1001px 把「真二维数据」那几块（读数卡／数据表／图表块／详情区／列表行）
+ *  放满壳宽（`grid-column: 1 / -1`），文字类留在中列 880px —— 那是卡路里那一族的节奏。
+ *  作息这三张页人裁的是**单一内容列**：页头、矩阵、分类总览、每日汇总、复制区同宽，
+ *  读数卡与每日汇总**不许左右各凸出一截**（用户复看时把「中列那一带」圈成好显示区域，
+ *  卡片左右各凸出约 180／270px 被否掉）。
+ *
+ *  权重与 `pageUi` ⑧ 条**同权**（同为 `.ilife-page-ui` ＋ 两颗类名），靠本段排在 `pageUiCss` 之后取胜；
+ *  断点用仓内既有值 **1001**，不新造。**窄屏不受影响**（人复看留言：手机端现样就很好）。 */
+const BODY_SINGLE_COLUMN_CSS = [
+  '@media (min-width: 1001px) {',
+  '  .ilife-page-ui .ilife-block-page-shell-body > * {',
+  '    grid-column: 2;',
+  '  }',
+  '}',
+].join(LF);
+
 /** 页头四件（`docTitle` 进 `<title>`，其余三件进页壳）。 */
 export interface PageHead {
   readonly docTitle: string;
@@ -43,7 +61,7 @@ export function assembleDocPage(input: DocPageInput): string {
       subtitle: input.head.subtitle,
       content: input.content,
     }),
-    extraCss: pageUiCss() + LF + pageShapeCss() + LF + pagePartsCss(),
+    extraCss: pageUiCss() + LF + pageShapeCss() + LF + pagePartsCss() + LF + BODY_SINGLE_COLUMN_CSS,
     charts: true,
     pageUi: true,
   });
