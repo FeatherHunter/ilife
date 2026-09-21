@@ -64,7 +64,9 @@ describe('#782 页型配方（人裁：今天总结 B／查日程 A／周视图 
     assert.ok(body.includes('ilife-block-conclusion'), '结论条');
     assert.ok(body.includes('ilife-block-chart-block'), '24 小时色带（图表块）');
     assert.ok(body.includes('ilife-block-fact-strip'), '一行事实条（4 卡摘要）／睡眠统计');
-    assert.ok(body.includes('ilife-block-timeline'), '竖向时间轴');
+    // #784 起逐条时间轴走**行列表三槽**（时间／做了什么／时长）：`renderTimelineRows` 只有三槽里
+    // 「时间／正文／附注」，分类与时长塞进附注就堆成一串并列分隔符（分隔符门点名的那种堆法）。
+    assert.ok(body.includes('ilife-block-list-rows'), '逐条时间轴（时间／做了什么／时长三槽）');
     assert.ok(body.includes('ilife-block-disclosure'), '分类进度（折叠）');
     assert.ok(body.includes('ilife-block-dist-row'), '分类分布行');
     assert.ok(body.includes('夜间睡眠'), '睡眠统计那一行在页上');
@@ -72,7 +74,7 @@ describe('#782 页型配方（人裁：今天总结 B／查日程 A／周视图 
 
   it('今天总结：时间轴逐条＝记录条数，空数据不塌', () => {
     const body = markupOf(renderTodaySummaryPage(DAY_RECORDS, DAY));
-    assert.equal(count(body, /ilife-block-timeline-row"/g), DAY_RECORDS.length);
+    assert.equal(count(body, /ilife-block-list-rows-row"/g), DAY_RECORDS.length);
     const empty = renderTodaySummaryPage([], DAY);
     assertWholePage(empty);
     assert.ok(empty.includes('0 块记录'), '空数据也出页，不静默空转');

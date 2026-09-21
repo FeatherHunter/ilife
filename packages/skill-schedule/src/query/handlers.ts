@@ -2,10 +2,14 @@
  *
  * 逐字搬自 `src/cli/cmd_read.ts` 的 switch 四臂（行为零改动）：`fail()` 改抛同文案的类型错误
  * （出口按类映射到同一退出码），`note()` 改走返回的 `notes`（出口逐条打出，stderr 字节一致）。
+ *
+ * **#784 起这一域多出「出页」那一半**（照 #783 写域的先例）：单日查／详情各出一张真页
+ * （`./queryDocs.ts` 装配，形状见 `src/shared/`），`data` 载荷与退出码口径一行不改。
+ * 页的落点由出口按 `#843` 的通式名算（`delivery.path` 给绝对路径），本件只把 HTML 交回去。
  */
 import {
   ScheduleFetchError, SchedulePolicyError,
-  getRecordById, getStatus, listPlanEvents, getPlanEventsRange,
+  getRecordById, getLastRecord, getStatus, listPlanEvents, getPlanEventsRange,
   listRecordsByDate, listRecordsRange, searchPlanEvent,
 } from '../fetch/index.js';
 import { normalizeDate, parsePlanView, resolveDateParam, resolveRangeParam } from '../policy/index.js';
@@ -13,6 +17,7 @@ import { buildPlanOverview } from '../plan/index.js';
 import {
   buildPlanToday, buildRecordDetail, buildRecordRange, buildRecordToday,
 } from '../render/index.js';
+import { renderTodaySummaryPage, type StatusView } from './queryDocs.js';
 import type { ScheduleDb } from '../fetch/db.js';
 import type { ViewHandler } from '../shared/commandSpec.js';
 
@@ -24,13 +29,31 @@ function needInt(params: Record<string, unknown>, name: string): number {
   return v as number;
 }
 
+/** 「作息库现状」那一块要的读数（本域几处共用这一种取法，别处不各查一遍）。 */
+function statusOf(handle: ScheduleDb): StatusView {
+  return { ...getStatus(handle), last: getLastRecord(handle) };
+}
+
+/** 「此刻」的当天分钟数——只在**查的就是今天**时给：页上那句「这一天还没过完」不该拿现在
+ *  去衡量过去某一天（把 7 月 1 日说成「还没过完」是假的）。 */
+function nowMinutesOf(date: string): number | undefined {
+  const now = new Date();
+  const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-'
+    + String(now.getDate()).padStart(2, '0');
+  return date === today ? now.getHours() * 60 + now.getMinutes() : undefined;
+}
+
+/** 单日查这一支（7 个唤醒词共用一枚 key：今天总结／今日作息／今日总结／今天作息／查作息时间轴／
+ *  查作息状态／查作息）。路由表没给它们各自的预设 ⇒ 出口分不出是哪个词，故出一张页把这些诉求答全：
+ *  f01 四个必现块 ＋ 24h 时间轴 ＋ 作息库现状。 */
 export const viewRecordToday: ViewHandler = (params, handle: ScheduleDb) => {
   const notes: string[] = [];
   const date = resolveDateParam(params);
   const records = listRecordsByDate(handle, date);
   const st = getStatus(handle);
   if (st.records === 0) notes.push('库空：真实无记录（非故障）');
-  return { data: buildRecordToday(date, records), html: '', notes };
+  const html = renderTodaySummaryPage(records, date, { status: statusOf(handle), nowMinutes: nowMinutesOf(date) });
+  return { data: buildRecordToday(date, records), html, notes };
 };
 
 export const viewRecordRange: ViewHandler = (params, handle: ScheduleDb) => {
