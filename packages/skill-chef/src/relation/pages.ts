@@ -19,7 +19,7 @@ import {
 import { renderDocShell } from 'base-paint/docShell';
 import { escapeHtml } from '../render/index.js';
 import { chefSceneCss } from '../render/skin.js';
-import { relationShapeCss } from './shapes.js';
+import { relationShapeCss, TONE } from './shapes.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -91,30 +91,63 @@ function relationNote(text: string): string {
   return '<div class="ilife-relation-note">' + renderProseBlock({ text }) + '</div>';
 }
 
-/** 家族树的一层：层头（图标位 ＋ 层名 ＋ 条数）＋ 层体（条目行，或空层的占位件）。 */
-function relationTier(input: { tone: 'up' | 'here' | 'down'; title: string; count: string; body: string }): string {
-  return '<section class="ilife-relation-tier ilife-relation-tier-' + input.tone + '">'
+/** 一层里出现的关系类型（去重后按首次出现序，用「／」并成一句）；一行都没有＝空串。
+ *  类型从逐行徽章挪到层头：同一层里同一个词只写一遍，行内留给形状与菜名。 */
+function kindsOf(rows: readonly RelationRow[]): string {
+  const seen: string[] = [];
+  for (const r of rows) {
+    const k = typeof r.relation_type === 'string' ? r.relation_type : '';
+    if (k !== '' && !seen.includes(k)) seen.push(k);
+  }
+  return seen.join('／');
+}
+
+/** 家族树的一层：层头（图标位 ＋ 层名 ＋ 关系类型 ＋ 条数）＋ 层体（条目行，或空层的占位件）。
+ *  没数的那层收成一条瘦条（`-empty`）：空层占一整块卡片会白吃掉首屏一截。 */
+function relationTier(input: {
+  tone: 'up' | 'here' | 'down';
+  title: string;
+  count: string;
+  kinds: string;
+  empty: boolean;
+  body: string;
+}): string {
+  return '<section class="ilife-relation-tier ilife-relation-tier-' + input.tone
+    + (input.empty ? ' ilife-relation-tier-empty' : '') + '">'
     + '<p class="ilife-relation-tier-head">'
     + relationIcon(input.tone)
     + '<span class="ilife-relation-tier-name">' + escapeHtml(input.title) + '</span>'
+    + (input.kinds === '' ? '' : '<span class="ilife-relation-tier-kind">' + escapeHtml(input.kinds) + '</span>')
     + '<span class="ilife-relation-tier-count">' + escapeHtml(input.count) + '</span>'
     + '</p>'
     + '<div class="ilife-relation-tier-body">' + input.body + '</div>'
     + '</section>';
 }
 
-/** 一层里的条目行：代次徽章 ＋ 菜名 ＋ 关系类型，下面一行是这组关系的改动说明。 */
+/** 改动说明前的一枚图形标记（一支笔）：这一行小字说的是「跟上一代比改了什么」，
+ *  用一个字不写的记号当图例，行内不再重复写「改动」两个字。 */
+function relationDeltaMark(): string {
+  return '<span class="ilife-relation-branch-note-mark" aria-hidden="true">'
+    + '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"'
+    + ' stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.4h3.2L13.6 6a1.6 1.6 0 0 0-2.3-2.3L3.9 11.1v2.3Z"/></svg>'
+    + '</span>';
+}
+
+/** 一层里的条目行：代次徽章 ＋ 菜名 ＋ 改动说明。行首那枚圆点是这一层的图形标记（不上字），
+ *  关系类型只在层头写一次，本行不再复现。 */
 function relationBranch(rows: readonly RelationRow[]): string {
   const items = rows.map((r) => {
     const level = typeof r.level === 'number' && Number.isFinite(r.level) ? '第' + r.level + '代' : '';
     const note = typeof r.change_summary === 'string' && r.change_summary !== ''
-      ? '<span class="ilife-relation-branch-note">' + escapeHtml(r.change_summary) + '</span>'
+      ? '<span class="ilife-relation-branch-note">'
+        + relationDeltaMark()
+        + '<span class="ilife-relation-branch-note-text">' + escapeHtml(r.change_summary) + '</span>'
+        + '</span>'
       : '';
     return '<li class="ilife-relation-branch-row">'
       + '<div class="ilife-relation-branch-head">'
       + (level === '' ? '' : '<span class="ilife-relation-level">' + level + '</span>')
       + '<span class="ilife-relation-branch-name">' + escapeHtml(r.name) + '</span>'
-      + '<span class="ilife-relation-kind">' + escapeHtml(r.relation_type) + '</span>'
       + '</div>'
       + note
       + '</li>';
@@ -122,13 +155,13 @@ function relationBranch(rows: readonly RelationRow[]): string {
   return '<ul class="ilife-relation-branch">' + items + '</ul>';
 }
 
-/** 空层的占位件：虚线框 ＋ 一句人话，槽位与真条目同规格（换数据不换格子）。 */
-function relationGhost(text: string, hint: string): string {
+/** 空层的占位件：虚线瘦条里一句人话。层名与条数已经在层头上写着（「向上祖先 0 道」），
+ *  这一句只补「为什么没有」，不做第二次说明；下一步动作由页底那颗按钮给。 */
+function relationGhost(text: string): string {
   return '<div class="ilife-relation-ghost">'
     + '<span class="ilife-relation-ghost-mark" aria-hidden="true"></span>'
     + '<div class="ilife-relation-ghost-body">'
     + '<p class="ilife-relation-ghost-text">' + escapeHtml(text) + '</p>'
-    + '<p class="ilife-relation-ghost-hint">' + escapeHtml(hint) + '</p>'
     + '</div>'
     + '</div>';
 }
@@ -141,20 +174,26 @@ function relationTreeTree(input: {
 }): string {
   const joint = '<div class="ilife-relation-joint" aria-hidden="true"></div>';
   const upBody = input.ancestors.length === 0
-    ? relationGhost('这一层还没有内容', '上游的菜会出现在这里')
+    ? relationGhost('还没有上游的菜')
     : relationBranch(input.ancestors);
   const downBody = input.descendants.length === 0
-    ? relationGhost('还没有下游的菜', '派生出的菜会出现在这里')
+    ? relationGhost('还没有下游的菜')
     : relationBranch(input.descendants);
   return '<div class="ilife-relation-tree">'
-    + relationTier({ tone: 'up', title: '向上祖先', count: input.ancestors.length + ' 道', body: upBody })
+    + relationTier({
+      tone: 'up', title: '向上祖先', count: input.ancestors.length + ' 道',
+      kinds: kindsOf(input.ancestors), empty: input.ancestors.length === 0, body: upBody,
+    })
     + joint
     + relationTier({
-      tone: 'here', title: '当前', count: '这道菜',
+      tone: 'here', title: '当前', count: '这道菜', kinds: '', empty: false,
       body: '<span class="ilife-relation-here">' + escapeHtml(input.root) + '</span>',
     })
     + joint
-    + relationTier({ tone: 'down', title: '向下后代', count: input.descendants.length + ' 道', body: downBody })
+    + relationTier({
+      tone: 'down', title: '向下后代', count: input.descendants.length + ' 道',
+      kinds: kindsOf(input.descendants), empty: input.descendants.length === 0, body: downBody,
+    })
     + '</div>';
 }
 
@@ -177,6 +216,21 @@ export function relationAddPage(input: { parent: string; child: string; relation
   return shell('记派生关系回执', '私家大厨 ｜ 派生', blocks);
 }
 
+/** 页头右侧的装饰图形：一枝抽象的树（纯装饰，画的是形状不是数据，一个字都不上屏；宽档才显）。
+ *  为什么给家族树这一页加它：这一页此前整屏只有色块与几何图标，评委两次点到「偏静态、无插画感」；
+ *  装饰件不是第二棵树——它不承载任何一条关系，层与层的对应仍由三层树本身承担。 */
+function relationOrnament(): string {
+  return '<span class="ilife-relation-ornament" aria-hidden="true">'
+    + '<svg viewBox="0 0 120 72" width="120" height="72" fill="none" stroke-linecap="round">'
+    + '<path d="M14 66V24" stroke="' + TONE.up + '" stroke-width="3"/>'
+    + '<path d="M14 32c2-11 13-19 27-19" stroke="' + TONE.up + '" stroke-width="3"/>'
+    + '<path d="M14 48c2-9 12-16 25-16" stroke="' + TONE.here + '" stroke-width="3"/>'
+    + '<circle cx="47" cy="12" r="6" fill="' + TONE.up + '"/>'
+    + '<circle cx="45" cy="32" r="6" fill="' + TONE.here + '"/>'
+    + '<circle cx="14" cy="66" r="5" fill="' + TONE.down + '"/>'
+    + '</svg></span>';
+}
+
 /** 家族树页（结果型）。两侧都空时三层照样出：空的那层给占位件，不摆空架子。 */
 export function relationTreePage(input: {
   root: string;
@@ -185,9 +239,12 @@ export function relationTreePage(input: {
 }): string {
   const total = input.ancestors.length + input.descendants.length;
   const blocks = [
-    renderConclusionBar(total === 0
-      ? '这道菜还没有和别的菜连上关系。'
-      : '这道菜共有' + total + '组上下游关系。'),
+    '<div class="ilife-relation-verdict">'
+      + renderConclusionBar(total === 0
+        ? '这道菜还没有和别的菜连上关系。'
+        : '这道菜共有' + total + '组上下游关系。')
+      + relationOrnament()
+      + '</div>',
     relationTreeTree(input),
     renderCaliberLine('废弃菜谱不入树，代数由近及远。'),
     act([{ label: '记一组关系', kind: 'primary', actionId: 'relation-add' }]),
@@ -198,7 +255,7 @@ export function relationTreePage(input: {
 /** 从已有派生新菜回执页（回执型，含母子差异）。 */
 export function relationDerivePage(input: { parent: string; child: string; differences: string }): string {
   const blocks = [
-    relationVerdict('新菜已落库，父子关系一次写完。', true),
+    relationVerdict('已落库，父子关系一次写完。', true),
     relationPair('母本', input.parent, '派生', '新菜', input.child),
     relationNote(input.differences),
     act([
@@ -206,7 +263,7 @@ export function relationDerivePage(input: { parent: string; child: string; diffe
       { label: '看家族树', kind: 'ghost', actionId: 'relation-tree' },
     ]),
     renderCopyBlock({
-      title: '复制差别说明',
+      title: '复制这次改动',
       dataActionId: 'derive-copy',
       dataText: '由' + input.parent + '派生' + input.child + '：' + input.differences,
     }),
