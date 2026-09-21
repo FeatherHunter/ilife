@@ -1,6 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { routeWakeword, normalizeTop, normalizeSub, MEMO_DEFAULT_TOP, routeRemind, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule, routeWish, WISH_SYNC_OPS, crudCreate, crudUpdate, crudRemove, MemoPolicyError } from '../dist/index.js';
+import { routeWakeword } from '../dist/triggers/wakewords.js';
+import { normalizeTop, normalizeSub, MEMO_DEFAULT_TOP } from '../dist/memo/category.js';
+import { routeRemind, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../dist/remind/policy.js';
+import { routeWish, WISH_SYNC_OPS } from '../dist/wish/policy.js';
+import { crudCreate, crudUpdate, crudRemove } from '../dist/memo/crud.js';
+import { MemoPolicyError } from '../dist/shared/errors.js';;
 
 describe('memo 口径层', () => {
   it('9 查询唤醒词路由', () => {

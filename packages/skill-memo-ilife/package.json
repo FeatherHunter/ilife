@@ -7,10 +7,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
-    "./fetch": "./dist/fetch/index.js",
-    "./policy": "./dist/policy/index.js",
-    "./render": "./dist/render/index.js",
-    "./cli": "./dist/cli/cmd_read.js",
     "./package.json": "./package.json"
   },
   "files": [

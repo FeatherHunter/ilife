@@ -12,7 +12,8 @@ import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
 import type { MemoDb } from '../db/readonly.js';
 import { getNote, listNotes, searchNotes, searchNotesByCreatedRange } from '../db/readonly.js';
-import { needId, normalizeTop } from '../policy/index.js';
+import { needId } from '../shared/validators.js';
+import { normalizeTop } from '../memo/category.js';
 import { dueMatches } from '../wish/index.js';
 
 // #850 · 创建时间区间参数（HELP `start`＋`end`，双 `YYYY-MM-DD`）。双必填：缺一边即缺槽位（exit 2，

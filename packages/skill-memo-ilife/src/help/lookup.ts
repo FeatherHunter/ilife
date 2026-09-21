@@ -1,5 +1,5 @@
 // HELP 速查（M6）：WAKE_TABLE 唯一上游；短语→key/cli/一句话。构建期注入 SKILL.md（scripts/build-help.mjs）。
-import { WAKE_TABLE, type MemoKey } from '../policy/index.js';
+import { WAKE_TABLE, type MemoKey } from '../triggers/wakewords.js';
 import { MEMO_KEY_SHAPES } from '../render/index.js';
 
 export interface HelpHit { phrase: string; key: MemoKey; shape: string; cli: string; desc: string; }

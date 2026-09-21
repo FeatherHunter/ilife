@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildHelpLookup, lookupWake, routeWakeword, MEMO_KEY_SHAPES, WAKE_TABLE } from '../dist/index.js';
+import { buildHelpLookup, lookupWake } from '../dist/help/index.js';
+import { routeWakeword, WAKE_TABLE } from '../dist/triggers/wakewords.js';
+import { MEMO_KEY_SHAPES } from '../dist/render/index.js';;
 import { buildHelpBlock, START, END } from '../scripts/build-help.mjs';
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');

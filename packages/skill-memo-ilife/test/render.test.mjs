@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { MEMO_KEY_SHAPES, memoShapeFor, buildMemoEnvelope, parseMemoEnvelope, escapeHtml, renderEnvelopeHtml, assertHtmlSize, MEMO_HTML_MAX_BYTES, MEMO_TEMPLATES, loadTemplate, fillTemplate, fillMemoPage, pageEnvelope, wishPlanSnapshot, MemoRenderError } from '../dist/index.js';
+import { MEMO_KEY_SHAPES, memoShapeFor, buildMemoEnvelope, parseMemoEnvelope, escapeHtml, renderEnvelopeHtml, assertHtmlSize, MEMO_HTML_MAX_BYTES, MEMO_TEMPLATES, loadTemplate, fillTemplate, fillMemoPage, pageEnvelope, wishPlanSnapshot, MemoRenderError } from '../dist/render/index.js';;
 
 const GOOD = {
   'memo.search': { items: [{ id: 1, content: '去医院复查', category: '备忘' }] },

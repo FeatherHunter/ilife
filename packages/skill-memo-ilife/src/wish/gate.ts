@@ -1,8 +1,8 @@
 // 心愿类·远端闸门（#661）：飞书四门（存在→版本→登录→scope）合成一个「开／不开」的判据。
 // 不开**不抛**——抛出去就变成「连本地那一侧也写不了」，而契约要的是「远端不可用不拦住本地写、
 // 回执如实标明远端侧没成」。要抛的是调用方在远端真调失败时（`failed`），与「连不上」（`unavailable`）分开记。
-import { larkReady, larkSetupInfo } from '../fetch/index.js';
-import type { LarkSetupInfo } from '../fetch/index.js';
+import { larkReady, larkSetupInfo } from '../sync/feishu.js';
+import type { LarkSetupInfo } from '../sync/feishu.js';
 
 export type WishGate =
   | { readonly open: true; readonly cli: string; readonly openId: string }

@@ -8,11 +8,7 @@ import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
 // #855：复制区载荷的装配与信封取形（`buildDataText`／`buildLogText`／`MemoCopyEnvelope` 位）随 `memo.init`
 // 一起搬进 `src/init/run.ts`——只有那条命令在用，不留第二份。
-import {
-  openMemoDb,
-  closeMemoDb,
-  MemoFetchError,
-} from '../fetch/index.js';
+import { openMemoDb, closeMemoDb } from '../db/readonly.js';
 import { LARK_WEBSITE_LINE } from '../sync/feishu.js';
 // #855：参数校验口径（`crud*`／`normalize*`／`needId`）随备忘域命令一起搬进 `src/memo/run.ts`；
 // 本件只剩开库前分派与交付装配，不再直接做域校验。
@@ -34,7 +30,7 @@ import { resolveDbDir, dbFilename, resolveDbPath } from '../shared/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { MemoPolicyError } from '../shared/errors.js';
+import { MemoFetchError, MemoPolicyError } from '../shared/errors.js';
 import type { MemoDb } from '../db/readonly.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;

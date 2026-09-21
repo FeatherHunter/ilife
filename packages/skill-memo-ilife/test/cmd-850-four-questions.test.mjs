@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { mkMemoDb, seedNote, seedReminder, countNotes } from './helpers/memo-sqlite.mjs';
 import { mkMemoConfig, noLarkPathEnv } from './helpers/config-base.mjs';
-import { MEMO_KEY_SHAPES, routeWakeword } from '../dist/index.js';
+import { MEMO_KEY_SHAPES } from '../dist/render/index.js';
+import { routeWakeword } from '../dist/triggers/wakewords.js';;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');

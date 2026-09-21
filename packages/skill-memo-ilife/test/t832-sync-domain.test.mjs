@@ -30,7 +30,7 @@ import { envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
 import { mkMemoConfig, noLarkPathEnv, stubPathEnv } from './helpers/config-base.mjs';
 import { seedNote } from './helpers/memo-sqlite.mjs';
 import { bookletFileStem } from '../dist/help/booklet.js';
-import { routeWakeword } from '../dist/policy/index.js';
+import { routeWakeword } from '../dist/triggers/wakewords.js';;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skillPath = join(here, '..', 'SKILL.md');

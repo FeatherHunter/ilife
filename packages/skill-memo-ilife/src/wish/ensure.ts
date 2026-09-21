@@ -19,7 +19,7 @@ import {
 import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../remind/policy.js';
 import { dueForCategory, normalizeDue } from './due.js';
 import { larkSetupOf, openGate } from './gate.js';
-import type { LarkSetupInfo } from '../fetch/index.js';
+import type { LarkSetupInfo } from '../sync/feishu.js';
 import { clearRemoteWishDue, completeRemoteWish, ensureRemoteWish, rescheduleRemoteWish, retitleRemoteWish } from './taskSync.js';
 import { deleteRemoteWish } from './taskRemove.js';
 

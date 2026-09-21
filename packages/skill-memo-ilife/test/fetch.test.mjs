@@ -3,19 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  openMemoDb,
-  closeMemoDb,
-  listNotes,
-  getNote,
-  searchNotes,
-  findLarkCli,
-  larkVersion,
-  authOpenId,
-  checkScope,
-  larkReady,
-  MemoFetchError,
-} from '../dist/index.js';
+import { openMemoDb, closeMemoDb, listNotes, getNote, searchNotes } from '../dist/db/readonly.js';
+import { findLarkCli, larkVersion, authOpenId, checkScope, larkReady } from '../dist/sync/feishu.js';
+import { MemoFetchError } from '../dist/shared/errors.js';;
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
 import { mkConfigDir, useHome } from './helpers/config-base.mjs';
 

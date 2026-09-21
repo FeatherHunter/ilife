@@ -16,7 +16,8 @@ import { fail } from '../shared/exit.js';
 import type { MemoDb } from '../db/readonly.js';
 import { addReminderRow, getNote, listReminderRows } from '../db/readonly.js';
 import { checkDueReminders, listCompletedReminders } from './store.js';
-import { needId, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../policy/index.js';
+import { needId } from '../shared/validators.js';
+import { normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from './policy.js';
 
 /** `memo.remind`：提醒四视图（到期／已完成／有效／已废弃）。 */
 export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandOut {
