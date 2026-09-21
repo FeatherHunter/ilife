@@ -1,6 +1,7 @@
 // t781-清单 自检（入仓）：node docs/skills/skill-schedule/t781-清单.mjs --check
 // 绿：exit 0；清单 scenarios 恰 85（id 集与 fixture 逐条相同）；families 恰 18；别名覆盖新仓路由表全部词；
 // 行只有老侧事实列（白名单＋黑名单双断言）；JSON/MD 无 BOM；MD 为 JSON 派生（--render 重算比对）。
+// 新仓路由词读生成物 routes.generated.ts（780 Layer2 后唯一定义地是各能力 routes.ts；wakewords.ts 只做回退）。
 // 红：任一不符即非零退出并打印首个差异。用法：--check 只比对；--render 由 JSON 重写 MD。
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -12,7 +13,8 @@ const RP = s => join(REPO, ...s.split('/'));
 const JPATH = RP('docs/skills/skill-schedule/场景清单.json');
 const MPATH = RP('docs/skills/skill-schedule/场景清单.md');
 const FPATH = RP('packages/skill-schedule/test/fixtures/t198-old-scenarios.json');
-const WPATH = RP('packages/skill-schedule/src/policy/wakewords.ts');
+const WPATH = RP('packages/skill-schedule/src/triggers/routes.generated.ts');
+const WPATH_FALLBACK = RP('packages/skill-schedule/src/policy/wakewords.ts');
 
 const fail = m => { console.error('RED: ' + m); process.exit(1); };
 const ok = m => console.log('GREEN: ' + m);
@@ -39,7 +41,8 @@ function expectedMD(doc) {
 }
 
 const mode = process.argv[2];
-const jt = raw(JPATH), ft = raw(FPATH), wt = raw(WPATH);
+const jt = raw(JPATH), ft = raw(FPATH);
+let wt; try { wt = raw(WPATH); } catch { wt = raw(WPATH_FALLBACK); }
 const doc = JSON.parse(jt);
 const fix = JSON.parse(ft);
 const fixIds = new Set(); fix.categories.forEach(c => c.wake_words.forEach(w => w.scenarios.forEach(s => fixIds.add(s.scenario_id))));
@@ -89,7 +92,8 @@ for (const r of doc.scenarios) {
  if (!f) fail('家族引用悬空：' + r.scenario_id + ' → ' + fid);
  if (fn !== f.name_old) fail('家族名与 families 不一致：' + r.scenario_id);
 }
-const newPs = [...wt.matchAll(/phrase:\s*'([^']+)'\s*,\s*key:\s*'([^']+)'/g)].map(m => m[1]);
+const newPs = [...wt.matchAll(/phrase:\s*'([^']+)'/g)].map(m => m[1]);
+if (newPs.length === 0) fail('新仓路由词读到 0 条（权威源形状已变，先修读数再谈覆盖）');
 const coveredNew = new Set(doc.aliases.map(a => a.new_phrase).filter(Boolean));
 for (const p of newPs) if (!coveredNew.has(p)) fail('别名缺新词：' + p);
 const oldWs = []; fix.categories.forEach(c => c.wake_words.forEach(w => oldWs.push(w.wake_word)));
