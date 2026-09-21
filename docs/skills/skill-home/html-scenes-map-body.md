@@ -4,19 +4,17 @@
 
 > **判定口径（五条同时达成即本图完成）**：① 70 条场景各有真产物且能点开 ② 链路总览页行内链接可跳转 ③ 墙生成器自检**正例 exit 0 ＋ 反例 exit 1 并点名**都走过 ④ 逐页视觉复核记录齐、整批综合分 **≥90/100**（vision 复核）⑤ 维护者终审「过」。
 
-## 进度：5%
+## 进度：95%
 
-**口径**：分母＝**20 张在役子票 ＋ 1 张退役**（画图本身不计入分子）。**1/21 关闭**——票 1（#798 册子，research）已关。
+**口径**：分子分母都数**在役子票**（21 张：票 1–20 ＋ 票 22；退役的票 21／#836 不计）。**20/21 关闭**——决策与落地票已全关（票 1–10、12–19、22），本轮再关**票 11（#808 物品管理域三）**，**仅剩票 20（#817 收口）**。读数口径见 `html-scenes-tickets.json` 与 tracker 子票状态。
 
 **图已按第一性原理重推（v3）并经两席对抗式审查**：前两稿都被**打回**（P0 共 9 条），处置全档见 `scene-pages-graph-design.md` §五。要点四条：① **票 21（命名裁决）并入票 2**，#836 退役；② **票 8 由「样板票」改为「页面脚手架」**——把「照抄样板」这张卡住 11 张票的软拷贝门换成机器可复制的硬拷贝；③ **票 3 扩成「机器落地」**——照卡路里造通用分派口＋目录扫描生成器＋派生件入仓，**这台机器是「按域不相交」的前提**（审查实测：今天每张域票都得改五处共用件）；④ **域票写集缩小到页族文件**（`templates/<域>/<族>.html` ＋ `src/<域>/pages/<族>.ts`），派生件与共用位单写者归票 3。
 
 **接线脚本四道机器门全绿**：① 无环（传递闭包）② 写集干涉（无序票之间写集不相交）③ frontier 非空 ④ 计数与表行数一致；另含边**双向收敛**（缺的补、多的删——旧版只加不删，改 `blockedBy` 会留下旧边、进而成环：审查已实算复现过 `4 → 21 → 9 → 8 → 4`）与票面／地图正文的逐字同步。
 
-**frontier（4 张，其中不依赖人 3 张）**：票 2（#799 契约冻结，grilling，**HITL：要你点头**）／票 5（#802 种子数据）／票 6（#803 判据件）／票 7（#804 生成器）。
+**frontier（1 张）**：票 20（#817 收口：端到端＋双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审）——它被 11 张域票阻塞，域票已全关，故它是唯一可取的一张（无阻塞）。
 
-下一步：可立刻并行开工的是 **#802／#803／#804** 三张 AFK 票；**#799 契约**等你点头（它阻塞票 3 与全部 11 张域票，是全图唯一的人工门）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——推票面、收敛边、回写本文、跑四道门。
-
-下一步：等你裁 #836（三条命名规则候选，见票面）；同时可并行认领 #803（判据件）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——脚本会推票面、建缺的边、回写本表与本文、并自校验。
+下一步：只剩收口票 **#817**（端到端真跑＋双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——推票面、收敛边、回写本文、跑四道门。**本席未跑该脚本**：票 11 的 ③④ `--manifest` 口径只落在 tracker 侧、本地票面文件已落后，跑脚本会把票面推回旧口径；本次直接 `gh issue edit --body-file`，并把票 11 的票面文件收敛到与 tracker 一致。
 
 ## Notes
 
@@ -65,6 +63,7 @@
 | 序 | 票 | 类型 | 被谁阻塞 |
 |---|---|---|---|
 | 1 | [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) | research | — |
+- [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) — 10 条各出一份真产物，验收全绿（测试 14/14、双墙缺失 0、分隔符与结构块与双端 10/10），对账见 scene-items-1.md。
 | 2 | [契约冻结：形状＋产物命名＋页族归属＋域内写集＋共用位所有权（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/799) | grilling | — |
 | 3 | [机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) ＋ [票 22](https://github.com/FeatherHunter/ilife/issues/845) |
 | 4 | [链路落盘与交付回执：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) |
@@ -93,8 +92,31 @@
 <!-- 索引：一行一条＝已关的子票 gist ＋ 链接；细节在票里，这里不复述 -->
 
 - [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) — 产出 `docs/skills/skill-home/pages-ledger.md`（**49 行页族表**；老 yaml 引用的 49 个模板**全部存在**，49/49）：页面类型 混合 27／查看 11／采集＋回执 6／选择＋回执 3／向导 2；按域页族 items 19、space 4、outfit 5、stats 4、express 4、receipt 4、family 2、setup 4（＋link 3，不做）。**三条改地图的实测**：①本图实做 **8 个域／70 场景／46 页族**，不是 9 个域（`link` 已裁不做）②老实现产物命名按模板 **1:1**（`scripts/render/__init__.py:130-147`）——`物品/receipt.html` 承担 4 条场景、`物品/add_form.html` 承担 4 条，照它落盘**会互相覆盖** ⇒ 毕业成 **#836** 并阻塞票 4／票 7 ③「开始使用四模板无调用点」订正为「`scripts/` 无调用点；`first_use_wizard.html` 全库唯一调用点在老测试 `tests/test_开始使用.py:622`，另 3 张任何地方都没有」。其余实测（票据凭证写类 11 条只打 JSON、家庭协作唯一把 HTML 做成 opt-in、18 个 legacy 平铺件里 17 个仍挂 `TEMPLATE_TO_COMMAND_CN`、`SM6-4` 无入口）全档在册子 §三。
-- [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) — 10 条各出一份真产物，验收全绿（测试 14/14、双墙缺失 0、分隔符与结构块与双端 10/10），对账见 scene-items-1.md。
+
+
+- [机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob](https://github.com/FeatherHunter/ilife/issues/800) — 8 能力＋REGISTRY 分派＋生成器三件入仓＋借用 4 词＋42 变体分层＋页族解析＋125 行对照＋机器门，推→SM2-3／找→SM2-4 已确认，100% 关闭
+
+- [页面脚手架：跑生成器产出同形页骨架（替代照抄样板）](https://github.com/FeatherHunter/ilife/issues/805) — 生成器三件套＋46 族骨架（模板壳＋页装配）＋必需块登记表＋48 用例装配契约测试全绿；11 张域票只填内容，放行
+
+- [判据件：样式与文案机审接到居家＋接进包内门](https://github.com/FeatherHunter/ilife/issues/803) — 三件判据（分隔符 R1–R7 居家口径／390·1280 双端触摸／结构块）＋结构合同 `pages[]` 46 族 755 块由契约附录派生，门禁 11/11、包内回归 126/126，真装配正反证据齐全，100% 关闭；域票逐张把三条命令接进各自验收
+
+- [链路落盘与交付回执：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) — 20 键缺省落 `<库目录>/home_manager_html/<命令中文名>_<场景 id>_<戳>.html`＋`delivery{mode,path,bytes}`（命名 69 行对照票 2 附录＋35 行宿主回退；显式 `--html` 优先单回执；HELP 三支冻结未动）；证据 `docs/skills/skill-home/html-delivery-chain.md`（变异 A 红 2／B 红 5，验收 172/172）
+
+
+- [开始使用域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/816) — 4 真页＋双墙全绿（向导／健康／备份／导入），老实现偏差 4 条已记对账供票 2 裁
+
+- [票据凭证域（一）购买记录与保修保养 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/813) — 10 条真链全绿，两族中文装配，10 份产物加双墙，4 门全绿，100% 关闭
+
+- [票据凭证域（二）证件与账号 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/814) — 8 族页真链全绿＋脱敏守住（号码只显后四位／密码永不进页），产物与双墙在 .scratch/814
+
+- [家庭协作域 2 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/815) — 借用双分区超期催还与家人档案归属标记两真页交付，双墙验收通过；取数行偏瘦缺口回写票 3
+
+- [物品管理域（二）更新与标签分类 11 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/807) — 6 族真页面＋借用 #806 的 add_form 出 3-1，11 条真链全绿（测试 27/27、双墙缺失 0、分隔符 0 命中、结构块全绿），对账见 scene-items-2.md；回执数据缺口另补 #864
 - [穿搭出行域 5 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/810) — 拼贴卡／构成闲置／换季／出行清单／逐日计划 5 真页交付，票面 4 门全绿（测试 8/8、双墙缺失 0、分隔符 5/5、结构块 5/5）＋双端量测 5/5，对账见 scene-outfit.md；骨架 --check 漂移 10 处（本票写集内，收口统一收敛）
+
+- [空间与位置域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/809) — 位置树加相似合并／固定位在位对照／推荐理由备选／面包屑下钻 4 真页，真链全绿（用例 6/6、双墙缺失 0、分隔符 0 命中、结构块 20/20、23/23、24/24、25/25），对账见 scene-space.md；判据口径（墙只走生成器自检、薄种子暂无分支恒 render）已记对账第四节
+
+- [物品管理域（三）照片、盘点与历史 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/808) — 7 族真页面（照片双态分流／照片墙网格墙／盘点三态任务单／差异四组处理台／记录列表／搬家二态标记清单／历史时间线＋位置轨迹）＋8 条场景各一份产物，票面 4 门全绿（域测试 10/10、双墙缺失 0、分隔符与结构块 `--manifest` 产物范围双 8/8）；对账见 `scene-items-3.md`；收据型四族的命令侧载荷增补（差异明细／发生时刻／清单条目／照片二进制）登记为该件遗留出口、另立票。
 
 ## Not yet specified
 
@@ -185,3 +207,7 @@ Q8 (a) 域票并行：结构设计票先行，域票互不阻塞，收口墙票�
 ```
 
 **第 1 轮 11 问的选项全文与利弊**（决策页，给人看的）：`html-scenes-decisions.html`。
+
+
+
+
