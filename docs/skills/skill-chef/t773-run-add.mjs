@@ -23,7 +23,7 @@ const CARDS = [
   {
     id: 'add_from_image', wake: '录入食谱', source: '图片录入', file: 't773-add-from-image.html',
     title: '番茄炒蛋',
-    channel: '图片通道：用户先发菜谱图片，AI 把图片里的菜名与用料转成结构化内容后再调用录入；这里只承接结构化之后落库这一步，读图本身由 AI 在对话里完成。',
+    caliberNote: '图片转结构化录入',
     params: { op: 'add', name: '番茄炒蛋', servings: 2, total_time_minutes: 20, difficulty: '快手菜', description: '图片转结构化后录入', source: '图片录入',
       ingredients: [
         { name: '番茄', category: '蔬菜', quantity: 300, unit: 'g', quantity_text: '约 2 个' },
@@ -38,7 +38,7 @@ const CARDS = [
   {
     id: 'add_from_markdown', wake: '录入食谱', source: '文档录入', file: 't773-add-from-markdown.html',
     title: '青椒肉丝',
-    channel: '文档通道：用户发一份菜谱文档，AI 按文档里的食材与步骤转成结构化内容后再调用录入；这里只承接结构化之后落库这一步。',
+    caliberNote: '文档转结构化录入',
     params: { op: 'add', name: '青椒肉丝', servings: 2, total_time_minutes: 22, difficulty: '简单', description: '文档转结构化后录入', source: '文档录入',
       ingredients: [
         { name: '青椒', category: '蔬菜', quantity: 200, unit: 'g', quantity_text: '约 3 根' },
@@ -53,7 +53,7 @@ const CARDS = [
   {
     id: 'add_from_conversation', wake: '录入食谱', source: '对话录入', file: 't773-add-from-conversation.html',
     title: '麻婆豆腐',
-    channel: '对话通道：AI 逐轮问清菜名与用料，集齐后再调用录入；缺项当场问用户要。',
+    caliberNote: '对话逐轮问清录入',
     params: { op: 'add', name: '麻婆豆腐', servings: 2, total_time_minutes: 25, difficulty: '简单', description: '对话逐步收集后录入', source: '对话录入',
       ingredients: [
         { name: '嫩豆腐', category: '豆制品', quantity: 400, unit: 'g', quantity_text: '1 盒' },
@@ -68,7 +68,7 @@ const CARDS = [
   {
     id: 'add_from_template', wake: '录入食谱', source: '表单录入', file: 't773-add-from-template.html',
     title: '蒜蓉西蓝花',
-    channel: '表单通道：用户按结构化模板逐项填好，AI 校验通过后再调用录入。必填项缺失时确认按钮置灰。',
+    caliberNote: '表单校验通过录入',
     params: { op: 'add', name: '蒜蓉西蓝花', servings: 2, total_time_minutes: 15, difficulty: '快手菜', description: '表单填好后录入', source: '表单录入',
       ingredients: [
         { name: '西蓝花', category: '蔬菜', quantity: 300, unit: 'g', quantity_text: '约 1 颗' },
@@ -83,7 +83,7 @@ const CARDS = [
   {
     id: 'import_from_json', wake: '导入食谱', source: '数据导入', file: 't773-import-from-json.html',
     title: '鱼香肉丝',
-    channel: '文件通道：用户给一份导入文件，AI 先校验必填字段，齐了才调用录入。维度表暂不写，只落三张主表。',
+    caliberNote: '文件校验通过录入',
     params: { op: 'add', name: '鱼香肉丝', servings: 2, total_time_minutes: 25, difficulty: '中等', description: '导入文件校验后录入', source: '数据导入',
       ingredients: [
         { name: '猪里脊', category: '肉类', quantity: 200, unit: 'g', quantity_text: '切丝' },
@@ -98,7 +98,7 @@ const CARDS = [
   {
     id: 'import_validation_failed', wake: '导入食谱', source: '补齐重试', file: 't773-import-validation-failed.html',
     title: '宫保鸡丁',
-    channel: '校验通道：导入先验必填数字，缺用量与时长当场拦下并出失败页。补齐后重试才落库，本页是补齐后的成功回执。',
+    caliberNote: '校验拦住后补齐重试',
     params: { op: 'add', name: '宫保鸡丁', servings: 2, total_time_minutes: 25, difficulty: '中等', description: '校验失败补齐后重试', source: '补齐重试',
       ingredients: [
         { name: '鸡腿肉', category: '肉类', quantity: 250, unit: 'g', quantity_text: '切丁' },
@@ -167,9 +167,9 @@ async function runAll() {
     const data = JSON.parse(v.stdout).data.item;
     const reread = '行数 食材' + data.ingredients.length + ' 步骤' + data.steps.length + ' 首味' + (data.ingredients[0]?.name ?? '') + ' 用量' + (data.ingredients[0]?.quantity ?? '');
     const html = buildAddSuccessHtml({
-      cardId: c.id, wakeWord: c.wake, sourceLabel: c.source, channelNote: c.channel,
+      cardId: c.id, wakeWord: c.wake, sourceLabel: c.source, caliberNote: c.caliberNote,
       recipeName: data.name, recipeId: data.id, servings: data.servings, totalTime: data.total_time_minutes,
-      ingredients: data.ingredients.map((g) => ({ name: g.name, quantity: g.quantity, unit: g.unit, quantity_text: g.quantity_text, category: g.category })),
+      ingredients: data.ingredients.map((g) => ({ name: g.name, quantity: g.quantity, unit: g.unit, quantity_text: g.quantity_text })),
       steps: data.steps.map((s) => ({ sequence: s.sequence, action: s.action, duration_minutes: s.duration_minutes, heat_level: s.heat_level })),
     });
     const out = join(SCRATCH, c.file);
