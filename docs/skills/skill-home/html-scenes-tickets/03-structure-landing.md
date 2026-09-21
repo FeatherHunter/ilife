@@ -11,11 +11,12 @@ v2 稿把「11 张域票按域根隔离」当前提，被两席对抗式审查�
 ③ **生成器**：扫 `src/<能力>/{commands,routes}.ts` 产出派生件（keys／registry／routes.generated），派生件**入仓**（`docs/agents/命令登记纪律.md:19` 的哈希锁要求就是「产物入仓」，`.github/workflows/ci.yml:43` 每轮真跑 `gen:check`），并把 `pnpm gen`／`gen:check` 接进居家（仓根 `package.json:12` 的 `gen` 今天逐字只跑 calorie／bill）；
 ④ **测试 glob 加宽**：`packages/skill-home/test/*.test.mjs` 只到一级，域票的 `test/<域>-*.test.mjs` 今天永不执行；
 ⑤ 顺带登记 `借用` 写侧唤醒词（`借出／借入／归还／催还` 今天无词可达：`wakewords.ts:58` 只通读侧、`cmd_read.ts:757-771` 是孤立写侧）；
-⑥ 门禁全绿并**尽早推**（触 CI 面，按编排纪律「触 CI 尽早推」）。
+⑥ 门禁全绿并**尽早推**（触 CI 面，按编排纪律「触 CI 尽早推」）；
+⑦ **页族解析落地（覆盖审计补进来的头号洞）**：把 `src/render/templates.ts:33-58` 的「key → 模板」1:1 映射改成「**`(key, preset/场景) → 页族**」两层解析（46 个页族名照票 2 契约），并按契约的**兼容词并入表**把 20 条无场景唤醒词接到对应页族上；改完必须给出**逐条对照读数**：91 条唤醒词 → 命令 key → 页族，**一条不落**（这张对照表要能在本票验收命令里跑出来）。
 
 ## 验收命令
 
-`node tooling/run-locked.mjs --ticket <本票号> --max-wait-ms 600000 -- node node_modules/typescript/bin/tsc -b packages/skill-home`、`… -- pnpm test`、`… -- pnpm gen:check` —— **三条 exit 0**；且搬前／搬后 21 条命令的键名与出参用例读数逐条一致。
+`node tooling/run-locked.mjs --ticket <本票号> --max-wait-ms 600000 -- node node_modules/typescript/bin/tsc -b packages/skill-home`、`… -- pnpm test`、`… -- pnpm gen:check` —— **三条 exit 0**；且搬前／搬后 21 条命令的键名与出参用例读数逐条一致；再跑本票新增的**唤醒词→页族对照**（91 条逐行、缺一条即红）。
 
 ## 不许动的东西
 

@@ -94,6 +94,7 @@
       "body": "html-scenes-tickets/06-style-audit.md",
       "scope": [
         "packages/skill-home/scripts/audit-separators.mjs",
+        "packages/skill-home/scripts/audit-responsive.mjs",
         "packages/skill-home/test/style-audit.test.mjs",
         "docs/skills/skill-home/style-audit.md"
       ],
