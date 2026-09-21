@@ -1,6 +1,6 @@
 # #861 的运行条目录出件（协议 §2.3.4）
 # 源：.scratch/locks/gate-runs.log 里 ticket=861 的全部条目，逐字抄录（含调试期的红：exit=1 的条目也在）。
-# 更新时间：2026-09-21（发版与装机复核跑完）
+# 更新时间：2026-09-21（安装态门 G3 跑完）
 
 START ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 pid=38452 at=2026-09-21T06:05:18.563Z
 RUN ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 exit=1 pid=38452 at=2026-09-21T06:05:18.776Z
@@ -41,3 +41,9 @@ RUN ticket=861 runId=0ea90faa-852d-44e8-9704-765ca3c3bf6e cmd="node tooling/chec
 START ticket=861 runId=d235dff4-aa80-4ebc-8b61-f989097230cb cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 pid=11812 at=2026-09-21T06:33:56.098Z
 RUN ticket=861 runId=d235dff4-aa80-4ebc-8b61-f989097230cb cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 exit=0 pid=11812 at=2026-09-21T06:34:03.869Z
 START ticket=861 runId=129adfa1-e4e9-4933-a9c2-2ce1a8ddc1f8 cmd="node .scratch/t861/commit4.mjs" waitedMs=0 pid=49840 at=2026-09-21T06:35:56.644Z
+RUN ticket=861 runId=129adfa1-e4e9-4933-a9c2-2ce1a8ddc1f8 cmd="node .scratch/t861/commit4.mjs" waitedMs=0 exit=0 pid=49840 at=2026-09-21T06:35:56.881Z
+START ticket=861 runId=3dfb5b6e-bee4-4bb2-8b93-d628dbbd5313 cmd="node .scratch/t861/commit5.mjs" waitedMs=1 pid=45980 at=2026-09-21T06:37:27.282Z
+RUN ticket=861 runId=3dfb5b6e-bee4-4bb2-8b93-d628dbbd5313 cmd="node .scratch/t861/commit5.mjs" waitedMs=1 exit=0 pid=45980 at=2026-09-21T06:37:27.486Z
+START ticket=861 runId=9a8a602b-b3e7-41a3-ad1e-1ae1bbe85260 cmd="node tooling/check-publish.mjs --fresh-tmp --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 pid=10140 at=2026-09-21T06:38:15.647Z
+RUN ticket=861 runId=9a8a602b-b3e7-41a3-ad1e-1ae1bbe85260 cmd="node tooling/check-publish.mjs --fresh-tmp --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 exit=0 pid=10140 at=2026-09-21T06:38:41.411Z
+START ticket=861 runId=cf276afc-a504-4676-bde6-9af7538eccc2 cmd="node .scratch/t861/commit6.mjs" waitedMs=1 pid=52556 at=2026-09-21T06:40:09.494Z
