@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>780 结构方案 · 待确认两问</title>
+<style>
+:root{--ink:#1a1a1a;--mut:#666;--line:#e5e5e5;--green:#137333;--greenbg:#e6f4ea;--red:#a50e0e;--redbg:#fce8e6;--blue:#1a73e8;--bluebg:#e8f0fe;--amber:#b06000;--amberbg:#fef7e0;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f6f6}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+.top{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.top h1{font-size:20px;margin:0 0 6px}
+.meta{color:var(--mut);font-size:13px}
+.meta a{color:var(--blue)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:17px;margin:0 0 8px}
+.badge{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;vertical-align:middle}
+.b-rec{background:var(--greenbg);color:var(--green)}
+.b-alt{background:#f1f3f4;color:#5f6368}
+.why{background:var(--amberbg);border-left:4px solid var(--amber);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f8f9fa}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+@media(max-width:640px){.cols{grid-template-columns:1fr}}
+.pro,.con{border-radius:8px;padding:10px 12px;font-size:14px}
+.pro{background:var(--greenbg)}.con{background:var(--redbg)}
+.pro h3,.con h3{margin:0 0 4px;font-size:14px}
+.pro h3{color:var(--green)}.con h3{color:var(--red)}
+.pro ul,.con ul{margin:4px 0;padding-left:18px}
+code{background:#f1f3f4;border-radius:4px;padding:1px 5px;font-size:13px}
+.done{color:var(--green)}
+.foot{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+<h1>【结构】780 · 方案待确认两问</h1>
+<div class="meta">票 <a href="https://github.com/FeatherHunter/ilife/issues/780">#780</a>（已认领，前沿票，进度 40%）· 所属地图 <a href="https://github.com/FeatherHunter/ilife/issues/779">#779 作息管家页面面</a><br>
+目标：一条命令的事实从六处收到 <code>src/&lt;能力&gt;/commands.ts</code>，共用位派生、<code>gen:check</code> 守；行为与 187 件 HTML 产物逐字节不变。</div>
+</div>
+
+<div class="card">
+<h2>已定的事（不再问）</h2>
+<table>
+<tr><th>事项</th><th>结论</th></tr>
+<tr><td>八键归五域</td><td><span class="done">✔</span> write=record.write；query=record.today＋range＋detail＋plan.today；plan=plan.write；analyze=record.compare；admin=help.lookup；<code>config.*</code> 留 <code>cli/</code>。key 集合冻结（HELP 载荷嵌着 key，拆键即红快照门）。</td></tr>
+<tr><td>combos.yaml／CI 文件</td><td><span class="done">✔</span> 都不动（无消费者就是仪仗队；CI 已常驻 <code>gen:check</code>）。票面写面两行随 R1 一并修订。</td></tr>
+<tr><td>#764 同包在途</td><td><span class="done">✔</span> 9 件未提交文件全是既有文件；只等必须等的那一半（R2）。</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>R1 · 范围要不要调 <span class="badge b-rec">推荐：调</span></h2>
+<div class="why"><b>前因</b>：上一轮我推荐“WAKE_TABLE 不动、只加派生镜像”，对抗式审查推翻了它——镜像无人读，且 WAKE_TABLE 继续手写意味着<b>加命令仍撞同一支笔</b>，本票立的目标（治并行撞笔）达不成。<b>后果</b>：要么扩范围做全路由迁移，要么守票面原范围但留病根。</div>
+<table>
+<tr><th>选项</th><th>内容</th></tr>
+<tr><td><span class="badge b-rec">A · 调（推荐）</span></td><td>加 5×<code>routes.ts</code>（短语→key＋preset＋needs＋<code>order</code>=今日 WAKE_TABLE 下标，归并保序，HELP／SKILL 字节不动）＋消费者翻转（路由、速查、HELP 构建读生成物）；减 combos 段与 CI 改动。三件生成物各有消费者：<code>keys.ts</code>→envelope＋HELP 构建；<code>registry.ts</code>→分派（switch 整段删）；<code>routes.generated.ts</code>→路由＋速查。</td></tr>
+<tr><td><span class="badge b-alt">B · 不调</span></td><td>守票面：只做 5×commands.ts＋生成器。WAKE_TABLE 与 switch 照旧手写。</td></tr>
+</table>
+<div class="cols">
+<div class="pro"><h3>A 利</h3><ul><li>共用写点真消失，并行加命令零相交——这才是本纪律存在的理由</li><li>三件生成物件件有消费者，无仪仗队</li><li>与票面“三件行”“routes.generated”验收口径对上</li></ul></div>
+<div class="con"><h3>A 弊</h3><ul><li>超票面交付物字面（＋5 个路由文件＋翻转 5 个既有文件），需你点头</li><li><code>order</code> 保序写错即红 HELP——由对账测试兜底</li></ul></div>
+</div>
+<div class="cols">
+<div class="pro"><h3>B 利</h3><ul><li>字面守票，文件最少</li></ul></div>
+<div class="con"><h3>B 弊</h3><ul><li>门绿了病还在：下次并行加命令照样撞 WAKE_TABLE／switch</li><li>派生镜像无人消费，违反“共用位从第二个用法长出来”</li></ul></div>
+</div>
+</div>
+
+<div class="card">
+<h2>R2 · 分不分层开工 <span class="badge b-rec">推荐：分</span></h2>
+<div class="why"><b>前因</b>：#764 在本包 <code>src</code> 有 9 件未提交在途，但全是<b>既有文件</b>；我的 Layer1 全是<b>新文件</b>，文件相交集为空。<b>后果</b>：全等是把并行窗口白让出去；全不等是撞上 #764 的半成品。</div>
+<table>
+<tr><th>层</th><th>文件</th><th>何时</th></tr>
+<tr><td><span class="badge b-rec">Layer1 先行</span></td><td>5×commands.ts、5×routes.ts、shared/commandSpec.ts、scripts/gen-cli.mjs、test/t780-*.test.mjs、根 package.json 三行；附三表对账测试（声明键集＝WAKE 表键集＝模板键集，只读行为）</td><td>现在，抢锁即干；变异红／还原一致可独立验证</td></tr>
+<tr><td>Layer2 后行</td><td>翻转 envelope.ts、cmd_read.ts、wakewords.ts、lookup.ts、build-help.mjs（删 switch／手表，读生成物）</td><td>等 #764 落点（树上 skill-schedule/src 干净）后开窗</td></tr>
+</table>
+<div class="cols">
+<div class="pro"><h3>分层利</h3><ul><li>Layer1 与 #764 零相交，不白等</li><li>过渡期双源由机器对账守着，Layer2 同窗翻转＋删旧表</li></ul></div>
+<div class="con"><h3>分层弊</h3><ul><li>过渡期声明与旧表并存（显式、有门守、有删除期限：本票 Layer2）</li><li>Layer1 编译需整包可编——若 #764 半成品破坏编译，先报我，我停手</li></ul></div>
+</div>
+</div>
+
+<div class="card foot">答复方式：在会话里回 <b>R1 选 A/B、R2 接受/不接受</b> 即可。两问都判后，我出结构设计（键表、标题、代表唤醒词、示例全表）做下一轮确认，然后 Layer1 开工。</div>
+
+</div>
+</body>
+</html>

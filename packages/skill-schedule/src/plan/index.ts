@@ -4,8 +4,10 @@
 // 删计划／复盘／日程管家同步 ＋ 飞书自检）与日程查询的 24h 聚合视图（#15／#16）。
 // 出门只给三件：一个 op 分发器、一个聚合视图装配、两个类型。
 //
-// 一条命令的六件事（键／形状／标题／唤醒词／示例／处理函数）里，键与唤醒词今天仍住 `policy/`
-// （整包重排尚未做，见 #199 §①「留给后面裁的那条」）；本目录管**处理函数那一半**。
+// 一条命令的六件事（键／形状／标题／唤醒词／示例／处理函数）里，键与唤醒词的声明已住本目录
+// （`./commands.ts`＋`./routes.js`，#780 Layer1）；分派翻转在 Layer2（退役 `policy/` 手表与 `cli/` switch）。
+export * from './commands.js';
+export * from './routes.js';
 import { getPlanEventsRange, SchedulePolicyError } from '../fetch/index.js';
 import { resolveDateParam, resolveRangeParam, VALID_COMPLETIONS, type PlanWriteOp } from '../policy/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
