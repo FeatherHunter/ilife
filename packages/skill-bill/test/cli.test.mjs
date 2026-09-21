@@ -127,7 +127,7 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(run(['bill.record.today', '--params', '[]']).status, 2);
     assert.equal(run(['bill.record.today', '--timeout', 'abc']).status, 2);
     // 「配置面硬失败 ＝exit 1 且 stdout 空」这一档的真出口读数。
-    // 老写法是 `ILIFE_CONFIG_DIR=''`（那个变量已随 #763 退役）；这里换两个新来源，都仍然走真出口：
+    // 老写法是 `ILIFE_CONFIG_DIR=''`（那个变量已随 #754 删除）；这里换两个新来源，都仍然走真出口：
     //   ① **缺隔离**：家目录两格显式指回账号那一份 ⇒ 公共层抛 CONFIG_TEST_ISOLATION_MISSING（在 `mkdir`
     //      之前抛，所以这条实验一个字节都写不出去）；同一判据另有两条零写探针（`help-exit-148`／`fetch`）。
     //   ② **配置面校验没过**：配置文件里放一个名单外的键 ⇒ CONFIG_UNKNOWN_KEY。

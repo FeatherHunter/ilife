@@ -5,12 +5,12 @@
  * 理由（票 #763 的裁决，出处 #756）：家目录是**操作系统的事实**，生产代码里不留「配置根可被外部覆盖」
  * 的开关；测试改的是 `os.homedir()` 的输入，与生产算配置目录的**同一条路**。
  *
- * 落点关系（本件是唯一说明处）：调用方传进来的 `dir`＝**家目录**，配置落在 `<dir>/.life/bill.yaml`；
+ * 落点关系（本件是唯一说明处）：调用方传进来的 `dir`＝**家目录**，配置落在 `<dir>/.ilife/bill.yaml`；
  * `db.dir` 仍指 `dir` 本身——与改造前逐字相同，**产品落点断言一个都不用改**。
  *
  * 三件小事收在这里，逐件测试只写一行：
  *
- *   ① `billConfigDir(dir, extra?)` —— 把 `dir` 布成隔离现场：落 `<dir>/.life/bill.yaml`（`db.dir = dir`）
+ *   ① `billConfigDir(dir, extra?)` —— 把 `dir` 布成隔离现场：落 `<dir>/.ilife/bill.yaml`（`db.dir = dir`）
  *      并把**当刻进程**的家目录接管过去。`extra` 里的组**按键合并**（如 `{ html: { dir } }` 改产物目录名、
  *      `{ db: { dir: 别的目录 } }` 让配置目录与库目录分开）。
  *      **缺了 `dir`（空／非字符串）即响亮报错**，建完**当场自证**当刻家目录不是真实家目录。
@@ -52,7 +52,7 @@ function scalar(value) {
 }
 
 /**
- * 把 `dir` 布成隔离现场（家目录＝`dir`，配置落 `<dir>/.life/bill.yaml`），返回 `dir`。
+ * 把 `dir` 布成隔离现场（家目录＝`dir`，配置落 `<dir>/.ilife/bill.yaml`），返回 `dir`。
  *
  * @param {string} dir 家目录（测试一律传 tmp 目录）
  * @param {Record<string, Record<string, string | number | boolean>>} [extra] 额外配置组（**按键合并**，同组同名项以 extra 为准）

@@ -59,7 +59,6 @@ function probeGuard(extraEnv = {}) {
     + ' catch (e) { console.log("THREW:" + e.code + ":HUMAN=" + (String(e.message).includes("测试缺隔离") ? "1" : "0")); }';
   const env = { ...process.env };
   delete env.USERPROFILE; delete env.HOME;   // 家目录回落真实那份
-  delete env.ILIFE_CONFIG_DIR;              // 位置覆盖变量（#754 才删）也清掉：留着它，守卫就看不到家目录
   Object.assign(env, extraEnv);
   env.NODE_TEST_CONTEXT = 'child-v8';       // 跑在测试运行器里
   return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();

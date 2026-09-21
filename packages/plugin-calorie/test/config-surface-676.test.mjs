@@ -1,4 +1,4 @@
-﻿// #676 卡路里设置页：配置面验收。
+// #676 卡路里设置页：配置面验收。
 //
 // 七组判据：
 //   A 测试隔离在位（#675 替代护栏）
@@ -52,7 +52,6 @@ function probeGuard(extraEnv = {}) {
     const env = { ...process.env };
     delete env.USERPROFILE;
     delete env.HOME;
-    delete env.ILIFE_CONFIG_DIR; // 残留的覆盖变量会把这道门短路掉：探针要判的正是「家目录没隔离」
     Object.assign(env, extraEnv);
     env.NODE_TEST_CONTEXT = 'child-v8'; // 跑在测试运行器里
     return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();

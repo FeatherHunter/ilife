@@ -4,11 +4,11 @@
  * 背景：卡路里技能侧的落点从环境变量改成读配置文件（`~/.ilife/calorie.yaml`）。#763 又把**隔离通道**
  * 从「设 `ILIFE_CONFIG_DIR`」换成**改家目录**（Windows `USERPROFILE`／POSIX `HOME`）——家目录是操作系统的
  * 事实，生产代码里不留「配置根可被外部覆盖」的开关。落点关系：传进来的 `dir`＝**家目录**，配置落在
- * `<dir>/.life/calorie.yaml`；`db.dir` 仍指 `dir` 本身（产品落点断言一字不动）。
+ * `<dir>/.ilife/calorie.yaml`；`db.dir` 仍指 `dir` 本身（产品落点断言一字不动）。
  *
  * 本件收五件小事，逐件测试只写一行：
  *
- *   ① `calorieConfigDir(dir, extra?)` —— 把 `dir` 布成隔离现场：落 `<dir>/.life/calorie.yaml`
+ *   ① `calorieConfigDir(dir, extra?)` —— 把 `dir` 布成隔离现场：落 `<dir>/.ilife/calorie.yaml`
  *      （`db.dir = dir`，另把 `xunji.stateDir` 指到 `<dir>/xunji-state`：**训记三份状态文件必须一起隔离**
  *      ——不隔离就会读到真实 `~/.mavis` 的限频时刻，测试会真的睡 45 秒）并把当刻进程的家目录接管过去。
  *      `extra` 里的组**按键合并**（如 `{ photos: { dir } }` 指照片目录、`{ db: { dir: 别的目录 } }`
@@ -51,7 +51,7 @@ function scalar(value) {
 }
 
 /**
- * 把 `dir` 布成隔离现场（家目录＝`dir`，配置落 `<dir>/.life/calorie.yaml`），返回 `dir`。
+ * 把 `dir` 布成隔离现场（家目录＝`dir`，配置落 `<dir>/.ilife/calorie.yaml`），返回 `dir`。
  *
  * @param {string} dir 家目录（测试一律传 tmp 目录）
  * @param {Record<string, Record<string, string | number | boolean>>} [extra] 额外配置组（**按键合并**，同组同名项以 extra 为准）
@@ -117,7 +117,7 @@ export function restoreHome(saved) {
  * 临时目录。故缺隔离一律**显式**表达：两格指到**真实账号家目录**（`realHomeDir()`，家目录注入改不动它）
  * ⇒ 配置目录正好是真实 `~/.ilife`，护栏必须拦下。反向对照＝两格指一个临时家目录 ⇒ 不许抛。
  *
- * 探针环境＝当刻进程环境先摘掉两格家目录与已退役的 `ILIFE_CONFIG_DIR`，再摊 `extraEnv`；
+ * 探针环境＝当刻进程环境先摘掉两格家目录，再摊 `extraEnv`；
  * `NODE_TEST_CONTEXT` 明写：护栏的判据是「跑在 node 测试运行器里却要落到真实家目录」。
  *
  * @param {Record<string, string>} [extraEnv] 探针子进程的额外环境（通常给 `homeEnvOf(<某个家目录>)`）
@@ -127,7 +127,7 @@ export function probeGuard(extraEnv = {}) {
   const code = 'const m = await import(' + JSON.stringify(pathToFileURL(DIRS_JS).href) + ');'
     + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
   const env = { ...process.env };
-  delete env.USERPROFILE; delete env.HOME; delete env.ILIFE_CONFIG_DIR;
+  delete env.USERPROFILE; delete env.HOME;
   Object.assign(env, extraEnv);
   env.NODE_TEST_CONTEXT = 'child-v8';
   return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
