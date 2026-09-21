@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>作息管家 · 待你裁的 6 个岔口</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --fg:#1d1d1f; --fg2:#6e6e73; --fg3:#86868b;
+    --bg:#f2f2f7; --card:#fff; --line:#e3e3e8;
+    --blue:#007aff; --blue-soft:#eef5ff; --blue-line:#cfe3ff;
+    --ok:#1f9d55; --warn:#b26a00; --warn-soft:#fff7e8; --warn-line:#ffe0b2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    background:var(--bg);color:var(--fg);line-height:1.62;font-size:15px;
+    padding:28px 16px 64px;
+  }
+  .wrap{max-width:900px;margin:0 auto;min-width:0}
+
+  /* ── 页头 ── */
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:14px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--blue);text-transform:uppercase}
+  h1{font-size:23px;line-height:1.3;letter-spacing:-.02em;margin:6px 0 8px}
+  .lead{color:var(--fg2);font-size:13.5px}
+  .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .fact{flex:1 1 190px;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .fact b{display:block;font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .fact span{display:block;font-size:11.5px;color:var(--fg2);margin-top:1px}
+
+  /* ── 速览表 ── */
+  .glance{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+  .glance h2{font-size:14px;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--fg2);font-size:11.5px;letter-spacing:.02em}
+  tbody tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums;color:var(--fg3);width:2.4em}
+  .pick{color:var(--ok);font-weight:700;white-space:nowrap}
+
+  /* ── 决策卡 ── */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px}
+  .q-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .seq{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--fg);border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}
+  .q h2{font-size:16.5px;letter-spacing:-.01em;flex:1 1 260px;min-width:0}
+  .why{color:var(--fg2);font-size:13.5px;margin-top:9px}
+  .why b{color:var(--fg);font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+  .rec{margin-top:12px;background:var(--blue-soft);border:1px solid var(--blue-line);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:11px 13px}
+  .rec .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;color:#fff;background:var(--blue);border-radius:5px;padding:1px 7px;margin-right:7px}
+  .rec p{display:inline;font-size:13.5px}
+
+  .opts{margin-top:12px}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--line)}
+  .opt:first-child{border-top:0;padding-top:6px}
+  .opt .id{flex:0 0 auto;font-family:var(--mono);font-size:12px;font-weight:700;width:1.6em;color:var(--fg3);padding-top:1px}
+  .opt.on .id{color:var(--blue)}
+  .opt .body{flex:1 1 auto;min-width:0}
+  .opt .name{font-weight:600;font-size:13.5px}
+  .opt.on .name::after{content:"推荐";font-size:10.5px;font-weight:800;color:var(--ok);border:1px solid #bfe6cd;background:#effaf3;border-radius:5px;padding:0 5px;margin-left:7px;vertical-align:1px}
+  .opt .meta{color:var(--fg2);font-size:12.5px;margin-top:3px}
+  .opt .meta b{color:var(--fg);font-weight:600}
+  .pro::before{content:"利 ";color:var(--ok);font-weight:700}
+  .con::before{content:"弊 ";color:var(--warn);font-weight:700}
+  .pro,.con{display:block}
+
+  /* ── 回信条 ── */
+  .reply{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .reply h2{font-size:14.5px;margin-bottom:8px}
+  .reply p{color:var(--fg2);font-size:13px}
+  .ticket{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+  .ticket span{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+  .ticket span b{color:var(--ok)}
+  .next{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;font-size:13px;color:var(--fg2)}
+  .next b{color:var(--fg)}
+
+  @media (max-width:640px){
+    body{font-size:14.5px;padding:18px 12px 48px}
+    .hero,.glance,.q,.reply{padding:15px 15px;border-radius:14px}
+    h1{font-size:20px}
+    .fact{flex:1 1 140px}
+    th:nth-child(3),td:nth-child(3){display:none}
+    .q h2{font-size:15.5px;flex-basis:100%}
+  }
+  @media print{.q,.hero,.glance,.reply{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">wayfinder · 建图前澄清</div>
+    <h1>作息管家：全部唤醒词的页面开发，待你裁的 6 个岔口</h1>
+    <p class="lead">这 6 条决定这张图的票数与每一格的验收口径。每条都给了推荐答案与利弊，你可以逐条裁，也可以直接「全按推荐」。</p>
+    <div class="facts">
+      <div class="fact"><b>34 词 / 85 场景</b><span>老侧口径（权威 fixture，2026-08-11）</span></div>
+      <div class="fact"><b>18 条页面家族</b><span>老侧可落盘家族，其中 1 条是死码</span></div>
+      <div class="fact"><b>7 / 8 个命令不落盘</b><span>新仓除 HELP 外，唤醒词跑完没有产物文件</span></div>
+      <div class="fact"><b>0 个模板带 viewport</b><span>新仓 8 个模板都没有手机端适配</span></div>
+    </div>
+  </header>
+
+  <section class="glance">
+    <h2>一眼看全：推荐答案与它买来的东西</h2>
+    <table>
+      <thead><tr><th class="num">#</th><th>岔口</th><th>推荐</th><th>一句话影响</th></tr></thead>
+      <tbody>
+        <tr><td class="num">Q1</td><td>「所有唤醒词」的边界</td><td class="pick">补 2 条</td><td>周视图、首次使用补上；语取三条维持出 scope</td></tr>
+        <tr><td class="num">Q2</td><td>交付单元＝墙的格</td><td class="pick">按唤醒词</td><td>34 格，边界态走机检判据</td></tr>
+        <tr><td class="num">Q3</td><td>视觉基准</td><td class="pick">走公共层</td><td>内容照老，视觉用 base-paint 与卡路里同族</td></tr>
+        <tr><td class="num">Q4</td><td>解耦落到哪一层</td><td class="pick">两件都做</td><td>多一张架构票，要动生成链（进 CI）</td></tr>
+        <tr><td class="num">Q5</td><td>外部依赖与多轮链</td><td class="pick">出页为准</td><td>飞书与商量计划都出页，跑不动则写明外部确认出口</td></tr>
+        <tr><td class="num">Q6</td><td>数据与打分口径</td><td class="pick">种子库＋逐页 90</td><td>数据可复现，达标线落在最差那一页</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q1</span><h2>老 HELP 里新仓没有的那 5 个词，算不算「所有唤醒词」之内</h2></div>
+    <p class="why">老侧 34 个唤醒词里有 5 个新仓既没有命令也没有页面。其中<b>准备消息／同步作息／增量同步</b>背后是语取消息库（<code>daily_recorder.db</code>），仓里早就裁过「以外置为准，不迁」，而且老侧这三条本身也只出 JSON、不产 HTML。另外两条不一样：<b>周视图</b>（7×24 全分类热力图）与<b>首次使用</b>（6 步向导）在老侧是真有页的（<code>record/week/查作息周视图_*.html</code>、<code>setup/首次使用_*.html</code>），也是这一代 HELP 才加进来的新词。</p>
+    <div class="rec"><span class="tag">推荐</span><p>补「周视图」与「首次使用」两条；语取三条维持出 scope，在链路页的「有意不出」一节写明原因。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">补 2 条（周视图、首次使用）</span>
+        <span class="meta pro">两条都是纯本库能力，补完 34 词里除语取三条外全部有页；HELP 里那 3 条词的「待开发」标记继续挂着，但链路页会说清为什么。</span>
+        <span class="meta con">「全部唤醒词」字面上仍缺 3 个，需要你在 HELP 文案上认可这个例外。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">5 条全补</span>
+        <span class="meta pro">字面 100% 齐。</span>
+        <span class="meta con">要做外置消息库的取数与游标链，超出本技能边界，且老侧那三条本来就不产页，等于新造三种页。</span>
+      </div></div>
+      <div class="opt"><span class="id">C</span><div class="body">
+        <span class="name">5 条都不做</span>
+        <span class="meta pro">最省事。</span>
+        <span class="meta con">周视图是你真用过的页（一周作息一眼看全），砍掉会让「查作息」这一族少掉唯一的跨天视图。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q2</span><h2>交付单元：一格是一个唤醒词，还是一个场景</h2></div>
+    <p class="why">老侧 85 个场景里，<b>60 个产 HTML</b>，另外 <b>25 个只出文本或 JSON</b>（非法分类、缺字段、按标题搜索、飞书对账、无记录空态这类）。墙的一格＝一次人的肉眼验收，格子的切法决定了这面墙要铺多长。</p>
+    <div class="rec"><span class="tag">推荐</span><p>按唤醒词切格：34 个唤醒词各出一份代表产物，别名同页；边界与错误态由机检判据钉住，不进墙。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">按唤醒词（约 34 格）</span>
+        <span class="meta pro">与仓里两处先例同口径（记账 #403 的 18 格、卡路里场景02 的 83 格）；一格对应一句人话，你滚一遍就知道哪句话的页不好看。</span>
+        <span class="meta con">边界态（空库、无记录、坏分类）不出现在墙里，得信机检判据的读数。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">按场景（85 格）</span>
+        <span class="meta pro">覆盖最全，错误态也看得见。</span>
+        <span class="meta con">其中约 25 格注定要么无产物、要么内容雷同（三条「无记录」长一个样），墙会膨胀到两倍而信息不增。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q3</span><h2>「老作息管家是权威来源」包不包括它的视觉</h2></div>
+    <p class="why">老页面是 Python 渲染的单文件 HTML，样式内联、控件是老 Base 库；它确实有一套不错的移动端手法（640 单断点、安全区、折叠三层、44px 触摸目标）。新仓有公共层 <code>base-paint</code>：21 个区块件（指标卡、数据表、图表、列表行、空态…）、移动端配方 <code>pageUi</code>、以及卡路里／记账正在用的同一套样式表。</p>
+    <div class="rec"><span class="tag">推荐</span><p>内容的权威性照老（页面清单、场景语义、字段口径），视觉走新仓公共层，跟卡路里、记账同族。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">内容照老，视觉走公共层</span>
+        <span class="meta pro">双端自适应、复制／折叠／触摸目标、打印样式全部现成；六家的页面长得像一家人，后续改样式一处生效。</span>
+        <span class="meta con">老页面某些专属版式（比如 7×24 热力图的老画法）要重画成公共层的图表件，不是逐像素照搬。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">视觉也照老页面复刻</span>
+        <span class="meta pro">与你过去看惯的样子完全一致。</span>
+        <span class="meta con">要把老模板那 17 条移动端手法与全部内联样式搬进来，与「解耦、照卡路里架构」这件事方向相反；公共层的共享控件也用不上。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q4</span><h2>解耦做到哪一层：只摆页面，还是连命令登记一起搬</h2></div>
+    <p class="why">仓规要求「一条命令的事实只住它自己的能力目录 <code>src/&lt;能力&gt;/commands.ts</code>」，共用位由 <code>pnpm gen</code> 派生、<code>gen:check</code> 守。今天做到这件事的只有卡路里（10 个能力）与记账（6 个）；作息这边一条命令的事实散在<b>六个地方</b>（形状表、模板表、唤醒词表、分派 switch、载荷装配、设置页 key）。两年前的结构裁定已经写明：五个能力目录（写入与同步／查询与浏览／日程与计划／分析与洞察／辅助与管理）<b>与该目录的第一件东西同时建</b>——至今没建。</p>
+    <div class="rec"><span class="tag">推荐</span><p>两件都做：新页面按 HELP 五域住进 <code>src/&lt;能力&gt;/</code>；命令登记搬进 <code>commands.ts</code> 并接进 <code>pnpm gen</code>／<code>gen:check</code>。这一步单独一张票，开头先推一次建立 CI 基线。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">目录 ＋ 命令登记，都搬</span>
+        <span class="meta pro">「同一个口径两处各算一遍」这类病只有一处定义才能根治；后面再加唤醒词是改一行声明、跑一次生成，不再动六个文件。</span>
+        <span class="meta con">要动生成链（会进 CI 面），多一张票、多一次独立验证；短期看是「为了以后」付的代价。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">只摆页面，命令登记维持现状</span>
+        <span class="meta pro">票数少一张，风险低，页面照样能出。</span>
+        <span class="meta con">每条命令的事实继续散在六处，下一个域加词时继续踩同一个坑；你说过「代码架构需要解耦」，这一半就还是没做。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q5</span><h2>飞书链与「商量计划」这种多轮链，做到哪一步</h2></div>
+    <p class="why">「日程管家同步」「飞书探测」要本机 <code>lark-cli</code> 四门全绿才能真跑；「商量计划」是人机来回：先出<b>预览页</b>，你确认后写库，再出<b>回执页</b>。老侧这两类里，只有一部分产 HTML，另一部分自己就只打文本。</p>
+    <div class="rec"><span class="tag">推荐</span><p>交互链做到三段都能独立跑、页都出得来（预览页与写库回执页分开）；飞书链做到探测页与同步回执页出得来，本机能跑就真跑，跑不了的在票面写清外部确认出口（谁触发、看哪个读数、失败怎么办）。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">都出页，跑不动的写明外部出口</span>
+        <span class="meta pro">35 个唤醒词的页面面闭合，不留洞；不把「待确认」当完工。</span>
+        <span class="meta con">飞书那两格的验收分两段：本地那段可判，远端那段要靠你那边的一次真实同步确认。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">飞书链本轮不做</span>
+        <span class="meta pro">本轮全部判据本地可判，收口干净。</span>
+        <span class="meta con">「日程与计划」域留两个洞，链路页上要写「有意不出」，等于你这轮验收看不到飞书那一块的样子。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="q">
+    <div class="q-head"><span class="seq">Q6</span><h2>页面用什么数据、最终打分怎么算、产物落在哪</h2></div>
+    <p class="why">你机器上 <code>~/.ilife/data/</code> 里只有卡路里与记账的产物，<b>没有任何作息产物</b>——真库是空的，直接跑只能看到空态页，「生动形象」无从谈起。另外现在的配置把所有 HTML 都塞进 <code>schedule_html/help</code> 这一个子目录，页面产物会和 HELP 混在一起。最后，最终视觉审查的打分口径要先定死，收口时才有真假。</p>
+    <div class="rec"><span class="tag">推荐</span><p>造一份隔离的种子库（固定锚点日期、覆盖五域场景，不碰真库）；打分按<b>逐页 ≥90</b>，取最低那一页；页面产物落 <code>schedule_html/</code> 根，HELP 仍留 <code>schedule_html/help/</code>。</p></div>
+    <div class="opts">
+      <div class="opt on"><span class="id">A</span><div class="body">
+        <span class="name">种子库 ＋ 逐页 90 ＋ 产物分家</span>
+        <span class="meta pro">数据可控可复现（同样的库能重出同一批页，读数可对账）；逐页 90 让最差的那一页必须修，不拿均值糊过去；产物分家后你平时找页不用翻进 help 子目录。</span>
+        <span class="meta con">要多写一份种子数据脚本；页面产物落点变了，需要你认可这个新习惯。</span>
+      </div></div>
+      <div class="opt"><span class="id">B</span><div class="body">
+        <span class="name">真库 ＋ 均值 90 ＋ 落点不动</span>
+        <span class="meta pro">不造数据、不改配置，最省事。</span>
+        <span class="meta con">空库下大半页面只有空态，验收看不到真实版式；均值 90 允许个别页 70 分蒙过去，正是你现在要防的那种「看起来过了」。</span>
+      </div></div>
+    </div>
+  </article>
+
+  <section class="reply">
+    <h2>你怎么回我</h2>
+    <p>逐条裁，或者一句「全按推荐」。按推荐时这一行就是全部答案：</p>
+    <div class="ticket">
+      <span>Q1 <b>A</b></span><span>Q2 <b>A</b></span><span>Q3 <b>A</b></span><span>Q4 <b>A</b></span><span>Q5 <b>A</b></span><span>Q6 <b>A</b></span>
+    </div>
+    <div class="next">
+      <b>裁完我就做这四件事</b>：写下地图（Destination ＋ Notes ＋ 任务清单）→ 建 12 张子票（研究／形状／五域／架构／链路页／机审／收口）→ 用脚本建原生 sub-issue 与 blocked_by 边 → 立刻自校验并把 expected／actual 逐条打给你看。<br>
+      建图工具已写好并做过正反自检（正例 exit 0、改坏一处 exit 1 且点名那张票）。
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
