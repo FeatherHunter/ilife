@@ -10,3 +10,5 @@ export { planWizard, completeWizard } from './wizards.js';
 export type { PlanWizardItem, PlanWizardInput, CompleteWizardItem, CompleteWizardInput } from './wizards.js';
 export { reconcileWishes } from './reconcile.js';
 export type { ReconcileCounters, ReconcileReceipt } from './reconcile.js';
+// #855：本域的命令声明经门转出——生成的 `src/cli/registry.ts` 从**门**取数组（不深引域内实现件）。
+export { WISH_COMMANDS } from './commands.js';

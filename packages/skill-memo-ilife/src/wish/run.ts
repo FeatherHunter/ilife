@@ -1,0 +1,67 @@
+/** 心愿域 · **命令的运行件**（票 #855：域逻辑搬回本域，出口只查表调用）。
+ *
+ * 本件是 `memo.wish` 一条命令的处理函数，逐字从 `src/cli/cmd_read.ts` 的 `case 'memo.wish'` 搬来
+ * （#665 起的三支：`wizard:plan` 出排期向导页／`wizard:complete` 出完成向导页／不带即老形状只回列表）。
+ * 搬迁判据：`node docs/skills/skill-memo-ilife/t855-产物基线.mjs --check` 逐条一致（行为字节不变）。
+ *
+ * 层内依赖：直接 import 本域的实现件（`./wizards.js`／`./due.js`）——**域内不走门**，门只给外域用。
+ */
+import type { CommandOut } from '../shared/commandSpec.js';
+import { toRows } from '../shared/rows.js';
+import type { MemoDb } from '../fetch/db.js';
+import { listNotes } from '../fetch/db.js';
+import { fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot } from '../render/index.js';
+import { dueMatches } from './due.js';
+import { planWizard, completeWizard } from './wizards.js';
+
+/** `memo.wish`：心愿清单（缺省）／排期向导（`wizard:plan`）／完成向导（`wizard:complete`）。 */
+export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut {
+  // #665 向导：`wizard: plan` 出排期向导页（默认全勾选），`wizard: complete` 出完成向导页（默认不勾选）；
+  // 不带即老形状（只回列表，#661 行为）。
+  if (params.wizard === 'plan' || params.wizard === 'complete') {
+    if (params.wizard === 'plan') {
+      const w = planWizard(db, { ids: params.ids, all: params.all, suggestDue: params.suggestDue });
+      const snap = wishPlanSnapshot(toRows(w.items), w.suggestDue, w.includeAll);
+      const message = '找到 ' + w.items.length + ' 个心愿' + (w.includeAll ? '（含已排期）' : '（仅未排期）');
+      const payload = pageEnvelope({
+        commandCn: '心愿排期', wakeWord: '心愿排期', sceneId: 'wish-batch-plan',
+        title: snap.title, summary: snap.summary, sections: snap.sections,
+        copyLog: {
+          thinking: '过程型向导 · 只读收集心愿列表，勾选＋填排期后复制指令回 AI（HTML 不写库）',
+          data_structure: "notes 表（category='心愿'）· id/content/category/sub_category/due/feishu_task_guid",
+          call_chain: 'memo.wish wizard:plan → render_wish_plan → 共享 filler',
+          exception: '无',
+        },
+        extra: { items: w.items, suggest_due: w.suggestDue, all: w.includeAll },
+        message,
+      });
+      return {
+        data: { items: w.items, total: w.items.length, suggestDue: w.suggestDue, all: w.includeAll },
+        exit: 0,
+        deliver: { html: fillMemoPage('wish_plan', payload), stem: '心愿排期向导' },
+      };
+    }
+    const w = completeWizard(db, { ids: params.ids, onlyOverdue: params.onlyOverdue, all: params.all, content: params.content });
+    const snap = wishCompleteSnapshot(toRows(w.items));
+    const message = '找到 ' + w.items.length + ' 个心愿' + (w.onlyOverdue ? '（仅未排期＋已过期）' : '');
+    const payload = pageEnvelope({
+      commandCn: '心愿完成', wakeWord: '完成心愿', sceneId: 'wish-complete',
+      title: snap.title, summary: snap.summary, sections: snap.sections,
+      copyLog: {
+        thinking: '过程型向导 · 勾选＋填打卡内容后复制指令回 AI（completeWish 原子转换）',
+        data_structure: "notes 表（category='心愿'）· id/content/due/feishu_task_guid",
+        call_chain: 'memo.wish wizard:complete → render_wish_complete → 共享 filler',
+        exception: '无',
+      },
+      extra: { items: w.items, default_content: w.defaultContent, only_overdue: w.onlyOverdue },
+      message,
+    });
+    return {
+      data: { items: w.items, total: w.items.length, defaultContent: w.defaultContent, onlyOverdue: w.onlyOverdue },
+      exit: 0,
+      deliver: { html: fillMemoPage('wish_complete', payload), stem: '心愿完成向导' },
+    };
+  }
+  const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
+  return { data: { items, total: items.length }, exit: 0 };
+}

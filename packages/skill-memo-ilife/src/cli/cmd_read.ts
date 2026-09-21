@@ -37,8 +37,11 @@ import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
 import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
 // #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
-import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish, planWizard, completeWizard } from '../wish/index.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError, buildReceiptPage } from '../render/index.js';
+import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish } from '../wish/index.js';
+// #855：**命令登记查表**——各域自己的声明（`src/<域>/commands.ts`）由生成器汇成本表；命中即走该域的运行件。
+import { REGISTRY } from './registry.js';
+import { toRows, type PageRow } from '../shared/rows.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError, buildReceiptPage } from '../render/index.js';
 import type { ReceiptScene } from '../render/index.js';
 import type { WishReceipt } from '../wish/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
@@ -320,9 +323,7 @@ function buildReceipt(
   });
 }
 
-// 快照函数吃纯记录（跨 JSON 边界）：各域条目在此处一次转成记录形。
-type PageRow = Record<string, unknown>;
-const toRows = (xs: readonly object[]): PageRow[] => xs.map((x) => ({ ...(x as PageRow) }));
+// #855：行适配（`toRows`／`PageRow`）已提到共用位 `src/shared/rows.ts`——出口与各域运行件共用一份。
 
 // #850 · 创建时间区间参数（HELP `start`＋`end`，双 `YYYY-MM-DD`）。双必填：缺一边即缺槽位（exit 2，
 // 人话）；起止倒置即报错；`timeRange` 月份形已退役（无权威出处），给了即指路到 `start`／`end`。
@@ -399,6 +400,10 @@ function deleteWithRemindersOf(params: Record<string, unknown>): boolean {
 // 放在本件的旧实现（`initDiagOf`）连同 `init_report` 那套自持页一起退役：一条命令的事实只住它自己的能力目录。
 
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
+  // #855：**先查登记表**——已搬迁的域把自己的命令声明在 `src/<域>/commands.ts`，生成物 `registry.ts`
+  // 汇成一张表，命中即调该域的运行件；没搬的键落下面的 switch（搬迁每落一域，switch 就少一段）。
+  const spec = REGISTRY[key];
+  if (spec !== undefined) return spec.kind === 'pre-open' ? spec.run(params) : spec.run(params, db);
   switch (key) {
     case 'memo.search': {
       // #850：创建时间区间通道（HELP `start`＋`end` 双必填，按 `created_at` 倒序；与排期 `due` 正交可叠加）。
@@ -606,56 +611,8 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         content: row.content,
       });
     }
-    case 'memo.wish': {
-      // #665 向导：`wizard: plan` 出排期向导页（默认全勾选），`wizard: complete` 出完成向导页（默认不勾选）；
-      // 不带即老形状（只回列表，#661 行为）。
-      if (params.wizard === 'plan' || params.wizard === 'complete') {
-        if (params.wizard === 'plan') {
-          const w = planWizard(db, { ids: params.ids, all: params.all, suggestDue: params.suggestDue });
-          const snap = wishPlanSnapshot(toRows(w.items), w.suggestDue, w.includeAll);
-          const message = '找到 ' + w.items.length + ' 个心愿' + (w.includeAll ? '（含已排期）' : '（仅未排期）');
-          const payload = pageEnvelope({
-            commandCn: '心愿排期', wakeWord: '心愿排期', sceneId: 'wish-batch-plan',
-            title: snap.title, summary: snap.summary, sections: snap.sections,
-            copyLog: {
-              thinking: '过程型向导 · 只读收集心愿列表，勾选＋填排期后复制指令回 AI（HTML 不写库）',
-              data_structure: "notes 表（category='心愿'）· id/content/category/sub_category/due/feishu_task_guid",
-              call_chain: 'memo.wish wizard:plan → render_wish_plan → 共享 filler',
-              exception: '无',
-            },
-            extra: { items: w.items, suggest_due: w.suggestDue, all: w.includeAll },
-            message,
-          });
-          return {
-            data: { items: w.items, total: w.items.length, suggestDue: w.suggestDue, all: w.includeAll },
-            exit: 0,
-            deliver: { html: fillMemoPage('wish_plan', payload), stem: '心愿排期向导' },
-          };
-        }
-        const w = completeWizard(db, { ids: params.ids, onlyOverdue: params.onlyOverdue, all: params.all, content: params.content });
-        const snap = wishCompleteSnapshot(toRows(w.items));
-        const message = '找到 ' + w.items.length + ' 个心愿' + (w.onlyOverdue ? '（仅未排期＋已过期）' : '');
-        const payload = pageEnvelope({
-          commandCn: '心愿完成', wakeWord: '完成心愿', sceneId: 'wish-complete',
-          title: snap.title, summary: snap.summary, sections: snap.sections,
-          copyLog: {
-            thinking: '过程型向导 · 勾选＋填打卡内容后复制指令回 AI（completeWish 原子转换）',
-            data_structure: "notes 表（category='心愿'）· id/content/due/feishu_task_guid",
-            call_chain: 'memo.wish wizard:complete → render_wish_complete → 共享 filler',
-            exception: '无',
-          },
-          extra: { items: w.items, default_content: w.defaultContent, only_overdue: w.onlyOverdue },
-          message,
-        });
-        return {
-          data: { items: w.items, total: w.items.length, defaultContent: w.defaultContent, onlyOverdue: w.onlyOverdue },
-          exit: 0,
-          deliver: { html: fillMemoPage('wish_complete', payload), stem: '心愿完成向导' },
-        };
-      }
-      const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
-      return ok({ items, total: items.length });
-    }
+    // #855：`memo.wish` 已搬回 `src/wish/`（声明住 `wish/commands.ts`，运行件住 `wish/run.ts`）——
+    // 上面那张登记查表先命中它，本 case 已删。**别再长回来**：加命令改的是自己域里的声明。
     case 'memo.sync': {
       // #661：反向对账三步（本地缺标识补建／远端完成→本地／远端改期→本地），回执带 11 项统计。
       // #665：同步报告页随行（#661 遗留 HELP 承诺，出页归这一支）。

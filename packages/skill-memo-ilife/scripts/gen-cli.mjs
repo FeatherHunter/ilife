@@ -101,9 +101,13 @@ function parseValue(text, i, where) {
   }
   const m = /^-?\d+(?:\.\d+)?/.exec(text.slice(i));
   if (m) return { value: Number(m[0]), next: i + m[0].length };
+  // 裸标识符（如 `run: runWish` 的处理函数引用）：生成器**不解释**它，只当不透明值带过——
+  // 登记表要的是键与元数据，处理函数由生成物在运行期从各域门取数组得到（`registry.ts` 的 `build(SOURCES)`）。
+  const id = /^[A-Za-z_$][A-Za-z0-9_$.]*/.exec(text.slice(i));
+  if (id) return { value: { __ref: id[0] }, next: i + id[0].length };
   if (text.startsWith('true', i)) return { value: true, next: i + 4 };
   if (text.startsWith('false', i)) return { value: false, next: i + 5 };
-  die(where, '只认字面量（串／数／真伪／数组／对象），实得：' + JSON.stringify(text.slice(i, i + 24)));
+  die(where, '只认字面量（串／数／真伪／数组／对象／裸标识符），实得：' + JSON.stringify(text.slice(i, i + 24)));
 }
 /** 取 `export const <NAME>_<SUFFIX> … = [ … ]` 的数组体与数组名前缀（恰好一处，多一处即抛）。 */
 function arrayBodyOf(text, file, suffix) {

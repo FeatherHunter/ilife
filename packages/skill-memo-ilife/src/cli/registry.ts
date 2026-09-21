@@ -5,8 +5,10 @@
  * 分派层只认这张表：命中即走该域的处理函数；**新加一个能力＝建它的 `commands.ts`**（扫到即自动进来）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
+import { WISH_COMMANDS } from '../wish/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
+  WISH_COMMANDS,
 ];
 
 /** 汇总各家声明；同键两个人声明即抛（生成期已先拦一道，这里再拦运行期那一刀）。 */
