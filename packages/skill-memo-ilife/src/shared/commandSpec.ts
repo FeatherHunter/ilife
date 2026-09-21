@@ -51,7 +51,7 @@ export interface ReadCommandSpec {
   readonly run: CommandHandler;
 }
 
-/** 写命令声明（**不写 `shape`**：写命令一律回执形，唯一定义地在生成器合成的 `MEMO_KEY_SHAPES` 那一行）。 */
+/** 写命令声明（**不写 `shape`**：写命令一律回执形，唯一定义地是生成器合成的 `MEMO_DECLARED_SHAPES` 那一行）。 */
 export interface WriteCommandSpec {
   readonly kind: 'write';
   readonly key: string;

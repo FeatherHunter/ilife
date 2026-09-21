@@ -3,7 +3,8 @@
  * 一写一读：
  *   - `memo.sync`（写，**不写 `shape`**）：反向对账（读＋有变更才写）＋ 同步报告页；
  *   - `memo.auth`（读，`receipt` 形，无唤醒词）：飞书授权只读诊断。读命令写 `shape` 是纪律，
- *     `receipt` 形是它今天的回执形状（与 `MEMO_KEY_SHAPES` 既有分配一致）。
+ *     `receipt` 形是它今天的回执形状（与 envelope 全表 `MEMO_KEY_SHAPES` 的既有分配一致；声明派那一份是生成物
+ *     `MEMO_DECLARED_SHAPES`，两张表逐键一致由 `test/cmd-registry-855.test.mjs` 守）。
  * 出口侧的 `src/cli/registry.ts` 是生成物；加／改命令只碰本件（＋要能被唤醒词命中就在 `routes.ts` 加一条）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';

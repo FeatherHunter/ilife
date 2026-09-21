@@ -2,7 +2,7 @@
  *
  * 五条命令（一形四写一读）：
  *   - `memo.create`／`memo.update`／`memo.remove`／`memo.batch`（写，**不写 `shape`**）：
- *     写命令一律回执形，那件事实的唯一定义地是生成器合成的 `MEMO_KEY_SHAPES` 那一行；
+ *     写命令一律回执形，那件事实的唯一定义地是生成器合成的 `MEMO_DECLARED_SHAPES` 那一行；
  *   - `memo.stats`（读，`stat` 形，无唤醒词——命令面处置在 #842，其读口保留在这里登记）。
  * 出口侧的 `src/cli/registry.ts` 是生成物；加／改命令只碰本件（＋要能被唤醒词命中就在 `routes.ts` 加一条）。
  */

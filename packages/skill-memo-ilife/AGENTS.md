@@ -108,7 +108,7 @@
 | `src/shared/rows.ts` | 13 | 13 | 未越线，在册备查 |
 | `src/shared/validators.ts` | 14 | 14 | 未越线，在册备查 |
 | `src/sync/auth.ts` | 19 | 19 | 未越线，在册备查 |
-| `src/sync/commands.ts` | 29 | 29 | 未越线，在册备查 |
+| `src/sync/commands.ts` | 29 | 30 | 未越线，在册备查 |
 | `src/sync/feishu.ts` | 221 | 221 | 未越线，在册备查 |
 | `src/sync/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/sync/routes.ts` | 16 | 16 | 未越线，在册备查 |
