@@ -25,7 +25,7 @@
 export const SETTINGS_OWNER = 'dsh-home-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:home' as const;
 
-/** 配置文件主体名：落点 `~/.ilife/home.yaml`（`ILIFE_CONFIG_DIR` 可整体接管）。 */
+/** 配置文件主体名：落点 `~/.ilife/home.yaml`（只此一处）。 */
 export const CONFIG_STEM = 'home' as const;
 
 /** 分级：常用项直接画在页面上，其余进默认收起的「高级」组（#675 冻结口径）。 */

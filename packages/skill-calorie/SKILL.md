@@ -546,7 +546,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/calorie.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `calorie_data.db`）、产物目录＝`html.dir`（默认 `calorie_html`）、照片目录＝`photos.dir`（**空串＝这一项还没配**：取数侧跳过「照片文件在不在」的校验、写侧直接阻断，不猜路径）、GIF 子目录＝`photos.gifs`（默认 `gifs`）、训记五项＝`xunji.*`、落地三项＝`land.*`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。真实 DB 禁迁，测试 tmp 隔离；老家只读对照。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/calorie.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `calorie_data.db`）、产物目录＝`html.dir`（默认 `calorie_html`）、照片目录＝`photos.dir`（**空串＝这一项还没配**：取数侧跳过「照片文件在不在」的校验、写侧直接阻断，不猜路径）、GIF 子目录＝`photos.gifs`（默认 `gifs`）、训记五项＝`xunji.*`、落地三项＝`land.*`。真实 DB 禁迁，测试 tmp 隔离；老家只读对照。取值面与环境项见 docs/env.md。
 - 出 scope（一期外）：面板（二期单 MAP）、定时任务、本技能外联动（router+作息/备忘/训记仅只读对照，不落本包）。
 
 <!-- CALL-FORM-START -->

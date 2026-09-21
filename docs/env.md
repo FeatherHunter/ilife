@@ -5,12 +5,12 @@
 > 全局 `SKILLS_DB_PATH`、五个写库哨兵（`*_FORCE_PROD`）、两个日期覆盖（`*_TODAY`）、各包的照片／
 > 附件／飞书 CLI 路径变量，**读取点一个不剩**（记账那 4 处以本票为最后一批）。
 >
-> **环境变量现在只剩两个角色**（都不是配置）：① `ILIFE_CONFIG_DIR`——设定且非空即整体接管**配置目录**
-> （默认 `~/.ilife/`，同时是测试隔离的口子）；② 运行期继承类（`NODE_OPTIONS`／`PATH` 一类），不由本技能定义。
+> **环境变量现在只剩一个角色**（不是配置）：运行期继承类（`NODE_OPTIONS`／`PATH` 一类），不由本技能定义。
+> 配置目录只有一处落点（默认 `~/.ilife/`），测试隔离改走家目录注入（Windows `USERPROFILE`／POSIX `HOME` 指到临时目录，那是操作系统的事实，不是我们定义的变量）。
 
 ## 一、六家的配置面（配置文件是唯一真相）
 
-配置落点：`<配置目录>/<技能>.yaml`，配置目录默认 `~/.ilife/`（由 `os.homedir()` 派生，平台无关），`ILIFE_CONFIG_DIR` 可整体覆盖。数据目录默认 `<配置目录>/data/`，首次读时自动建。「重置为默认」先另存 `<配置目录>/<技能>.yaml.bak`。读写实现住 `base-link-core/src/config/`（#694）。
+配置落点：`<配置目录>/<技能>.yaml`，配置目录默认 `~/.ilife/`（由 `os.homedir()` 派生，平台无关，只此一处）。数据目录默认 `<配置目录>/data/`，首次读时自动建。「重置为默认」先另存 `<配置目录>/<技能>.yaml.bak`。读写实现住 `base-link-core/src/config/`（#694）。
 
 **取值通则**：配置项**空串＝按默认落点**，不是「没配就失败」——库目录空串即数据目录，产物目录空串即该家的默认目录名。故**没有任何一项是必设的**，缺配置不会 exit 1。
 
@@ -29,14 +29,13 @@
 
 | 范围 | 项 | 说明 | doctor 默认 | --strict |
 |---|---|---|---|---|
-| 全局 | `ILIFE_CONFIG_DIR` | 配置目录覆盖（**不是配置承载**，是位置口子；同时是测试隔离的口子） | 未设即用 `~/.ilife/`，不报 | 不判 |
 | 作息／备忘录 | `lark-cli` | 飞书 CLI：存在＋登录＋写权限＋端到端。**路径这一项走配置文件的 `lark.cliPath`**，不再是环境变量 | 缺失 warn（仅存在性＋版本探测） | fail |
 | 全仓 | `NODE_OPTIONS` | 运行期继承（测试的钉钟预载走它）；技能不定义、只透传 | 不判 | 不判 |
 
 ## 三、doctor 与测试隔离
 
-- `tooling/skilllink.mjs` 的 doctor 已由 **#726** 改读配置口径（`checkConfigDir()` ＋ `checkSkillConfigs()`，老的 `checkDb()`／`SKILL_CHECKS` 那套逐包环境变量检查随变量一起删）：报配置目录（`ILIFE_CONFIG_DIR` 或默认 `~/.ilife`）在不在、能不能写，再逐家报六份 `<技能>.yaml` 落没落——**配置文件不在只提示、不替用户落一份**（doctor 只读）。
-- 测试隔离（删掉五个写库哨兵之后的替代护栏）：测试一律用 `ILIFE_CONFIG_DIR` 指向临时目录，且**测试基座强制设置它、缺了直接报错**（`base-link-core` 的 `CONFIG_TEST_ISOLATION_MISSING`）——把「忘了配」从静默写真实数据变成响亮失败。细则见 `packages/base-link-core/README.md` §隔离；记账侧的基座＝`packages/skill-bill/test/helpers/config-base.mjs`（`billConfigDir()`／`billEnv()`／`freezeClock()`）。
+- `tooling/skilllink.mjs` 的 doctor 已由 **#726** 改读配置口径（`checkConfigDir()` ＋ `checkSkillConfigs()`，老的 `checkDb()`／`SKILL_CHECKS` 那套逐包环境变量检查随变量一起删）：报配置目录（默认 `~/.ilife`，只此一处）在不在、能不能写，再逐家报六份 `<技能>.yaml` 落没落——**配置文件不在只提示、不替用户落一份**（doctor 只读）。
+- 测试隔离（删掉五个写库哨兵之后的替代护栏）：测试一律把家目录指到临时目录（Windows 设 `USERPROFILE`／POSIX 设 `HOME`），且三层同守——门 A：生产守卫（跑在测试运行器里却要落到真实家目录即抛 `CONFIG_TEST_ISOLATION_MISSING`，判据取自账号，不读我们定义的变量）；门 B：测试基座自证（建完当场验不是真实家目录）；门 C：真实 `~/.ilife` 逐字节快照门禁（接进 `pnpm test`，前后逐字相同）——把「忘了隔离」从静默写真实数据变成响亮失败。细则见 `packages/base-link-core/README.md` §隔离；记账侧的基座＝`packages/skill-bill/test/helpers/config-base.mjs`（`billConfigDir()`／`billEnv()`／`freezeClock()`）。
 
 ## 四、遗留（登记待认领）
 

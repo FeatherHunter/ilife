@@ -88,5 +88,5 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/memo.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `memo.db`）、产物目录＝`html.dir`（默认 `memo_html`）、附件目录＝`media.dir`（默认 `media`）、飞书 CLI 路径＝`lark.cliPath`（**空串＝没有显式值，走本机自动探测**）、飞书扫码目录＝`lark.qrDir`（空串＝系统临时目录下的 `memo_feishu_qr`）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/memo.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `memo.db`）、产物目录＝`html.dir`（默认 `memo_html`）、附件目录＝`media.dir`（默认 `media`）、飞书 CLI 路径＝`lark.cliPath`（**空串＝没有显式值，走本机自动探测**）、飞书扫码目录＝`lark.qrDir`（空串＝系统临时目录下的 `memo_feishu_qr`）、HELP 与速查表的主体名＝`files.help`／`files.lookup`。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务、面板、本技能外联动；Python 老家只读对照。

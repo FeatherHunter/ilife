@@ -116,5 +116,5 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/schedule.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `schedule_data.db`）、产物目录＝`html.dir`（默认 `schedule_html/help`）、HELP 文件主体名＝`files.help`、飞书 CLI 路径＝`lark.cliPath`（**空串＝没有显式值，走本机自动探测**）；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/schedule.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `schedule_data.db`）、产物目录＝`html.dir`（默认 `schedule_html/help`）。HELP 文件主体名回到代码常量（`作息管家_HELP`，#764 起不再是配置项）；飞书 CLI 不再是配置项（#764 起由设置页「飞书 CLI」状态行替代，只探测、不配置）。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务/早睡提醒（老家 Cron 已删，外部定时以外置为准）、面板（二期单 MAP）、本技能外联动（combos 登记走后续票）；语录取数（daily_recorder.db）以外置为准；真实数据禁迁，测试 tmp 隔离。

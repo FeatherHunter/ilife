@@ -64,7 +64,7 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 - 评分 0-5（含 0/5 端点，允许小数，超界/非数字阻断；history.record 必带 name，rating 可选）。
 - 空查询与空结果阻断不返空：search 空 q 抛 exit 2；查无对条/区间无记录抛 exit 4，不返空数组冒充正常。
 - 筛选维度一期限制（#43 F2）：cuisine/season/method/flavor/tag/meal/cookware/maxTime/filter 只读（recipe.search 透传过滤），recipe.write 一期只写主表（name/difficulty/status/servings/total_time_minutes/description/photo/source 系列 + ingredients/steps 内嵌），维度表落库走二期（测试经直连落维度，见 test/cli.test.mjs）。
-- 真实数据禁迁，测试 tmp 隔离（测试把配置目录经 `ILIFE_CONFIG_DIR` 指到 mkdtemp，见 test/fetch.test.mjs）。
+- 真实数据禁迁，测试 tmp 隔离（测试把家目录指到 mkdtemp（Windows 设 `USERPROFILE`／POSIX 设 `HOME`），见 test/fetch.test.mjs）。
 - 跨技能只复制 prompt 不直调：shopping/recipe 跨技能按钮仅复制 `chef-cmd-read ...` 文本，AI 调目标技能，不直写他库。
 
 ## 联动速查（构建期注入，勿手改）
@@ -115,5 +115,5 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/chef.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `chef_data.db`）、产物目录＝`html.dir`（默认 `cook_html/help`）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/chef.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `chef_data.db`）、产物目录＝`html.dir`（默认 `cook_html/help`）、HELP 与速查表的主体名＝`files.help`／`files.lookup`。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务（老家零定时代码，外部定时以外置为准）、面板（二期单 MAP）、combos.yaml 一律不碰（走后续票；shopping/recipe 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照（D:/2Study/StudyNotes/SKILLS/私家大厨）。

@@ -146,7 +146,7 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/home.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `home.db`）、产物目录＝`html.dir`（默认 `home_manager_html`）、备份目录＝`backup.dir`（默认 `backups`，相对库目录解）、HELP 与速查表的主体名＝`files.help`／`files.lookup`；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。**没有照片目录这项配置**（照片是记录里的一列，不解析照片目录）。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/home.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `home.db`）、产物目录＝`html.dir`（默认 `home_manager_html`）、备份目录＝`backup.dir`（默认 `backups`，相对库目录解）、HELP 与速查表的主体名＝`files.help`／`files.lookup`。**没有照片目录这项配置**（照片是记录里的一列，不解析照片目录）。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；SM9 3 场景 prompt 复制不迁）；真实数据禁迁，测试 tmp 隔离。
 
 <!-- CALL-FORM-START -->

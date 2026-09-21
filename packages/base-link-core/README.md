@@ -28,8 +28,7 @@
 ## 配置文件（`src/config/`）
 
 一个技能自己的可配置项住在一份 YAML 文件里，**这份文件是唯一真相**（环境变量不参与配置）。
-落点默认 `~/.ilife/<技能>.yaml`，数据目录默认 `~/.ilife/data/`（首次读时自动建）。
-`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录——它同时是测试隔离的唯一口子。
+落点只有一处：`~/.ilife/<技能>.yaml`（由 `os.homedir()` 派生），数据目录默认 `~/.ilife/data/`（首次读时自动建）。测试隔离改走家目录注入，不开覆盖口子。
 
 ```js
 import { loadConfig } from 'base-link-core';
@@ -76,10 +75,11 @@ const { values, path, dataDir, created } = loadConfig('calorie', DEFAULTS);
 
 ### 测试隔离（护栏，不许绕过）
 
-删掉五个写库开关（`*_FORCE_PROD`）之后，「跑测试误写真实数据」靠两件事挡住：
+删掉五个写库开关（`*_FORCE_PROD`）之后，「跑测试误写真实数据」靠三道门挡住（三层都不读我们定义的变量）：
 
-1. 测试一律把 `ILIFE_CONFIG_DIR` 指到临时目录；基座是 `test/helpers/config-test-base.mjs`（`setupConfigTestBase()` 设完当场自证，`requireConfigTestBase()` 缺了直接报错）。
-2. 配置件自己那道门：跑在 node 测试运行器里（`NODE_TEST_CONTEXT` 非空）却没设 `ILIFE_CONFIG_DIR` 时，`resolveConfigDir()` 抛 `CONFIG_TEST_ISOLATION_MISSING`——绝不静默落到真实家目录。
+1. 门 A（生产守卫）：跑在 node 测试运行器里（`NODE_TEST_CONTEXT` 非空）却要落到真实家目录的 `.ilife` 时，`resolveConfigDir()` 抛 `CONFIG_TEST_ISOLATION_MISSING`——判据取自账号（`os.userInfo().homedir`），绝不静默落到真实家目录。
+2. 门 B（基座自证）：测试一律把家目录指到临时目录（Windows 设 `USERPROFILE`／POSIX 设 `HOME`）；基座是 `test/helpers/home-test-base.mjs`（建完当场验不是真实家目录，坏了即抛）。
+3. 门 C（快照门禁）：跑全量前后，真实 `~/.ilife` 的树快照逐字不变（`tooling/check-real-home-untouched.mjs`，接进 `pnpm test`）。
 
 ## 消费者
 

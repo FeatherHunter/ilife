@@ -23,7 +23,7 @@
 export const SETTINGS_OWNER = 'dsh-memo-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:memo' as const;
 
-/** 配置文件主体名：落点 `~/.ilife/memo.yaml`（`ILIFE_CONFIG_DIR` 可整体接管）。 */
+/** 配置文件主体名：落点 `~/.ilife/memo.yaml`（只此一处）。 */
 export const CONFIG_STEM = 'memo' as const;
 
 /** 分级：常用项直接画在页面上，其余进默认收起的「高级」组（#675 冻结口径）。 */

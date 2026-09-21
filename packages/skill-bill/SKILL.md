@@ -137,7 +137,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/bill.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `biscuit_accountant.db`）、第二份库＝`db.goals`（默认 `goals.json`）、产物目录＝`html.dir`（默认 `biscuit_accountant_html`）、HELP 与速查表的主体名＝`html.helpStem`／`html.quickRefStem`、备份目录＝`backup.dir`（空串＝库目录下 `backups`）、备份文件名主体＝`backup.stem`（默认 `biscuit_`）；`ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录。取值面与环境项见 docs/env.md。
-- 预检只留 node 版本一道门（`engines>=22.13`）：**没有一个环境变量是必设的**——库目录与产物落点全在配置文件里定（见上行），缺项一律按默认落点走；测试要隔离就把配置目录指到临时目录（`ILIFE_CONFIG_DIR` 设定且非空即整体接管）。
+- 路径类取值一律读配置文件 `~/.ilife/bill.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `biscuit_accountant.db`）、第二份库＝`db.goals`（默认 `goals.json`）、产物目录＝`html.dir`（默认 `biscuit_accountant_html`）、HELP 与速查表的主体名＝`html.helpStem`／`html.quickRefStem`、备份目录＝`backup.dir`（空串＝库目录下 `backups`）、备份文件名主体＝`backup.stem`（默认 `biscuit_`）。取值面与环境项见 docs/env.md。
+- 预检只留 node 版本一道门（`engines>=22.13`）：**没有一个环境变量是必设的**——库目录与产物落点全在配置文件里定（见上行），缺项一律按默认落点走；测试要隔离就把家目录指到临时目录（Windows 设 `USERPROFILE`／POSIX 设 `HOME`）。
 - --html 套模板输出完整收据页（section 片段经 CONTENT 注入对应模板，非片段直写；超体积阻断）；`bill.help.lookup` 的 `--html` 改写到该键的产物（HELP 全页／速查页），语义见上「HELP 交付」节。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；link 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照。
