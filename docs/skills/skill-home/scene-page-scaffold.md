@@ -9,6 +9,10 @@ node packages/skill-home/scripts/new-scene-page.mjs --check      # 只比对（�
 node packages/skill-home/scripts/new-scene-page.mjs --list       # 列出 46 族
 ```
 
+`--check` 全量比对是**单次门**（票 #866 裁决 Q3）：仅脚手架重出时刻有效；
+域票填内容后骨架与落盘必然分叉，此时红是预期，不拦门。常驻门是登记表字节同一
+（`scaffold.test.mjs` 第一组）＋三方对账＋真链渲染。
+
 ## 为什么是脚手架而不是样板
 
 两席对抗式审查的结论（A-P1-8）：「照抄样板」是软拷贝——第三个 HITL 门把并发饿死，

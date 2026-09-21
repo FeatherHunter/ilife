@@ -40,7 +40,11 @@ export const REQUIRED_BLOCKS = {
     "复制日志"
   ],
   "status": [
-    "照片类型"
+    "照片类型",
+    "普通",
+    "说明书-使用",
+    "说明书-安装",
+    "说明书-保养"
   ]
 } as {
   readonly fields: readonly string[];
@@ -53,7 +57,7 @@ const NEED = {
   fields: '分组（分类/位置）|照片网格|无照片件数',
   operations: '全部|类型筛选|去补拍|按位置浏览|点图复制详情prompt|复制数据|复制日志',
   empty: '空态：没有带照片的物品|补充态：还有N件无照片→去补拍|异常：数据解析失败',
-  status: '照片类型四值',
+  status: '照片类型|普通|说明书-使用|说明书-安装|说明书-保养',
 } as const;
 
 const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;margin:14px 0}'

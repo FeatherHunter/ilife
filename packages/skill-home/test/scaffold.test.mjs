@@ -89,10 +89,18 @@ function paramsFor(domain, family, rep) {
 }
 
 describe('#805 脚手架：生成器与登记表齐套', () => {
-  it('--check 全绿（46 族骨架与登记表同附录一致）', () => {
-    const r = spawnSync(process.execPath, [join(pkgDir, 'scripts', 'new-scene-page.mjs'), '--check'], { encoding: 'utf8' });
-    assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /families=46/);
+  // 家族文件字节比对（`new-scene-page.mjs --check` 全量）是单次门：仅脚手架重出时刻有效。
+  // 域票填内容后骨架与落盘必然分叉（票 #866 裁决 Q3），故此处不再断言全量 --check；
+  // 常驻门是本块的登记表字节同一＋下块的 46 族三方对账＋真链渲染。手动单次核验跑：
+  // `node packages/skill-home/scripts/new-scene-page.mjs --check`（填内容后红是预期）。
+  it('登记表与附录字节同一（生成物，常驻门）', async () => {
+    const { loadAppendix, generateRegistry } = await import(
+      pathToFileURL(join(pkgDir, 'scripts', 'lib', 'scene-page-scaffold.mjs')).href);
+    const appendix = loadAppendix();
+    assert.equal(appendix.families.length, 46);
+    const g = generateRegistry(appendix, false);
+    const disk = readFileSync(g.file, 'utf8');
+    assert.equal(disk, g.text, '登记表与附录分叉：只许重跑登记表派生，不许手改生成物');
   });
 
   it('46 族模板与页模块文件齐（8 域目录）', async () => {

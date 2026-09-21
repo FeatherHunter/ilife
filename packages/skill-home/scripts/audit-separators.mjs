@@ -27,6 +27,11 @@
  * 用法（仓根，经排队）：
  *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …]
  *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> [--json <路径>] [--quiet]
+ *   node tooling/run-locked.mjs --ticket 866 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> --manifest <产物目录>/manifest.json
+ *     清单作用域（票 #866：只审清单 `rows[].file` 点名的产物文件；墙与索引是生成器
+ *     产物，走墙自检，不进本门）。清单读不动／`rows` 空／有行缺 `file` → exit 2；
+ *     清单点名却没有文件 → 按 PARSE-FAIL 计，exit 1。`--manifest` 须与 `--dir` 同给，
+ *     与具名文件二选一；不给清单即整目录旧行为，一字不动。
  * 退出码：0＝全绿；1＝有命中或缺件（含解析失败件）；2＝用法错或没有输入件。摘要行固定
  * `RESULT: <全绿页数>/<总页数>` ＋ 末行 `PASS`／`FAIL`。
  */
@@ -288,15 +293,26 @@ function argOf(name, dflt) {
   const i = process.argv.indexOf(name);
   return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
 }
-const FLAGS = ['--dir', '--json'];
+const FLAGS = ['--dir', '--json', '--manifest'];
 const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && !FLAGS.includes(all[i - 1]));
 const DIR = argOf('--dir', '');
 const JSON_OUT = argOf('--json', '');
+const MANIFEST = argOf('--manifest', '');
 const QUIET = process.argv.includes('--quiet');
 
 if (DIR === '' && positional.length === 0) {
-  console.log('用法: node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …] | --dir <目录> [--json <路径>] [--quiet]');
+  console.log('用法: node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …] | --dir <目录> [--manifest <清单>] [--json <路径>] [--quiet]');
   console.log('RESULT: ABORT exit=2 :: 没有输入件');
+  process.exit(2);
+}
+if (MANIFEST !== '' && DIR === '') {
+  console.log('用法: node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …] | --dir <目录> [--manifest <清单>] [--json <路径>] [--quiet]');
+  console.log('RESULT: ABORT exit=2 :: --manifest 须与 --dir 同给（清单文件名相对产物目录解）');
+  process.exit(2);
+}
+if (MANIFEST !== '' && positional.length > 0) {
+  console.log('用法: node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …] | --dir <目录> [--manifest <清单>] [--json <路径>] [--quiet]');
+  console.log('RESULT: ABORT exit=2 :: --manifest 与具名文件只能二选一');
   process.exit(2);
 }
 
@@ -308,6 +324,30 @@ if (DIR !== '') {
     process.exit(2);
   }
   files = readdirSync(d).filter((f) => f.toLowerCase().endsWith('.html')).sort().map((f) => join(d, f));
+}
+if (MANIFEST !== '') {
+  let mf;
+  try {
+    mf = JSON.parse(readFileSync(resolve(MANIFEST), 'utf8'));
+  } catch (e) {
+    console.log('RESULT: ABORT exit=2 :: 清单读不动 ' + MANIFEST + ' :: ' + e.message);
+    process.exit(2);
+  }
+  const rows = mf.rows;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    console.log('RESULT: ABORT exit=2 :: 清单 rows 为空 ' + MANIFEST);
+    process.exit(2);
+  }
+  const names = [];
+  for (const r of rows) {
+    if (!r || typeof r.file !== 'string' || r.file === '') {
+      console.log('RESULT: ABORT exit=2 :: 清单有行缺 file ' + MANIFEST);
+      process.exit(2);
+    }
+    names.push(r.file);
+  }
+  const d = resolve(DIR);
+  files = names.map((f) => join(d, f));
 }
 if (files.length === 0) {
   console.log('RESULT: ABORT exit=2 :: 目录下没有 .html ' + DIR);
@@ -389,7 +429,8 @@ console.log('RESULT: ' + green + '/' + total);
 console.log(green === total && broke === 0 ? 'PASS' : 'FAIL');
 if (JSON_OUT !== '') {
   writeFileSync(resolve(JSON_OUT), JSON.stringify({
-    at: new Date().toISOString(), dir: DIR, files: total, green, broken: broke,
+    at: new Date().toISOString(), dir: DIR, manifest: MANIFEST === '' ? undefined : MANIFEST,
+    files: total, green, broken: broke,
     totals: ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7'].reduce((a, t) => {
       a[t] = rows.reduce((s, r) => s + (r.node ? r.node[t] : 0), 0); return a;
     }, {}),

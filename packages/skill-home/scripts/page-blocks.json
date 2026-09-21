@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "票 #803 领域半段（2026-09-21 派生）：pages[] 46 族 755 块由契约附录派生（docs/skills/skill-home/scene-pages-contract.appendix.json，families 46／scenarios 70），pattern 匹配产物命名“_<场景id>_”段；defaults 7 条骨架块不动；checker 不用改。附录变更后重跑 node .scratch/803-expand-pages.mjs 再跑结构门。",
+  "note": "票 #803 领域半段（2026-09-21 派生）：pages[] 46 族 759 块由契约附录派生（docs/skills/skill-home/scene-pages-contract.appendix.json，families 46／scenarios 70），pattern 匹配产物命名“_<场景id>_”段；defaults 7 条骨架块不动；checker 不用改。附录变更后重跑 node .scratch/803-expand-pages.mjs 再跑结构门。",
   "defaults": [
     {
       "id": "doc-doctype",
@@ -1275,7 +1275,27 @@
         {
           "id": "photo_wall:status:0",
           "kind": "substr",
-          "value": "照片类型四值"
+          "value": "照片类型"
+        },
+        {
+          "id": "photo_wall:status:1",
+          "kind": "substr",
+          "value": "普通"
+        },
+        {
+          "id": "photo_wall:status:2",
+          "kind": "substr",
+          "value": "说明书-使用"
+        },
+        {
+          "id": "photo_wall:status:3",
+          "kind": "substr",
+          "value": "说明书-安装"
+        },
+        {
+          "id": "photo_wall:status:4",
+          "kind": "substr",
+          "value": "说明书-保养"
         }
       ]
     },

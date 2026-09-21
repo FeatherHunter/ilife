@@ -118,6 +118,61 @@ describe('判据件 audit-responsive（双端与触摸）', { skip: !hasBrowser(
   });
 });
 
+describe('审计范围 --manifest（产物清单，866 补票：只审清单点名的产物文件）', () => {
+  function seedManifest(d, rows) {
+    const p = join(d, 'manifest.json');
+    writeFileSync(p, JSON.stringify({ rows }), 'utf8');
+    return p;
+  }
+  it('separators：清单内全绿即 exit 0（目录里另有红页也不看）', () => {
+    const d = seed({ 'clean.html': CLEAN, 'debt.html': DEBT_SEP });
+    const m = seedManifest(d, [{ file: 'clean.html' }]);
+    const r = run(SEP, ['--dir', d, '--manifest', m, '--quiet']);
+    assert.equal(r.status, 0, r.out);
+    assert.match(r.out, /RESULT: 1\/1/);
+  });
+  it('separators：清单点名却没有文件即 exit 1 并点名', () => {
+    const d = seed({ 'clean.html': CLEAN });
+    const m = seedManifest(d, [{ file: 'clean.html' }, { file: 'ghost.html' }]);
+    const r = run(SEP, ['--dir', d, '--manifest', m, '--quiet']);
+    assert.equal(r.status, 1, r.out);
+    assert.match(r.out, /ghost\.html/);
+  });
+  it('separators：清单读不动 exit 2；有清单无 --dir exit 2', () => {
+    const d = seed({ 'clean.html': CLEAN });
+    const bad = run(SEP, ['--dir', d, '--manifest', join(d, '没有.json'), '--quiet']);
+    assert.equal(bad.status, 2, bad.out);
+    const m = seedManifest(d, [{ file: 'clean.html' }]);
+    const nodir = run(SEP, ['--manifest', m, '--quiet']);
+    assert.equal(nodir.status, 2, nodir.out);
+  });
+  it('separators：--manifest 与具名文件二选一（同给 exit 2）', () => {
+    const d = seed({ 'clean.html': CLEAN });
+    const m = seedManifest(d, [{ file: 'clean.html' }]);
+    const r = run(SEP, [join(d, 'clean.html'), '--manifest', m, '--quiet']);
+    assert.equal(r.status, 2, r.out);
+  });
+  it('blocks：清单内块齐即 exit 0（目录里另有缺块页也不看）', () => {
+    const d = seed({ 'a.html': CLEAN, 'bad.html': BAD_BLOCKS });
+    const m = seedManifest(d, [{ file: 'a.html' }]);
+    const r = run(BLOCKS, ['--dir', d, '--blocks', CONTRACT, '--manifest', m]);
+    assert.equal(r.status, 0, r.out);
+    assert.match(r.out, /RESULT: 1\/1/);
+  });
+  it('blocks：清单点名却没有文件即 exit 1 并点名', () => {
+    const d = seed({ 'a.html': CLEAN });
+    const m = seedManifest(d, [{ file: 'a.html' }, { file: 'ghost.html' }]);
+    const r = run(BLOCKS, ['--dir', d, '--blocks', CONTRACT, '--manifest', m]);
+    assert.equal(r.status, 1, r.out);
+    assert.match(r.out, /ghost\.html/);
+  });
+  it('blocks：清单读不动 exit 2', () => {
+    const d = seed({ 'a.html': CLEAN });
+    const r = run(BLOCKS, ['--dir', d, '--blocks', CONTRACT, '--manifest', join(d, '没有.json')]);
+    assert.equal(r.status, 2, r.out);
+  });
+});
+
 describe('结构合同 pages[]（领域半段：附录 46 族派生）', () => {
   const GROUP_ORDER = ['fields', 'operations', 'empty', 'status'];
   function loadBoth() {
