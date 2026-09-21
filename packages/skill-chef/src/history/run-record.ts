@@ -10,13 +10,13 @@ import { ChefFetchError } from '../fetch/errors.js';
 import type { ChefDb, HistoryRow } from '../fetch/db.js';
 import { getRecipeDetail, mustRecipe, now, qGet, qRun, toHistory } from '../fetch/db.js';
 import { needName, validateRating } from '../policy/index.js';
+import { validateCookDate, validateFeedback } from './validate.js';
 
-/** 当日日期（本域独占：落历史默认 cook_date 与补录默认 date；原 db.ts `today()`，随 recordHistory 搬入）。 */
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** 记一次做菜（评分必填：老库 rating NOT NULL，缺评分直接拦）。原 `src/fetch/db.ts`，本域独占。 */
+/** 记一次做菜（评分必填＋反馈必填禁占位：老库 rating NOT NULL，缺值直接拦）。原 `src/fetch/db.ts`，本域独占。
+ *
+ * 反馈口径见 `./validate.ts`（老仓 `scenes/历史.yaml:56`：必填真实内容、禁「无」占位）。
+ * 日期缺省今天（同 `./validate.ts` 的 `validateCookDate`，本文件不再自备 today）。
+ */
 export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: number | null; feedback?: string; cook_date?: string }): HistoryRow {
   const rid = typeof input?.recipe_id === 'string' ? input.recipe_id.trim() : '';
   if (!rid) throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给 recipe_id');
@@ -31,12 +31,13 @@ export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: nu
     if (n < 0 || n > 5) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须在 0-5 内');
     rating = n as number;
   }
-  const cookDate = typeof input.cook_date === 'string' && input.cook_date.trim() ? input.cook_date.trim() : today();
+  const cookDate = validateCookDate(input.cook_date);
+  const feedback = validateFeedback(input.feedback);
   const maxRow = qGet<{ m: number | null }>(h, 'SELECT MAX(cook_sequence) AS m FROM recipe_history WHERE recipe_id = ?', [recipe.id]);
   const seq = (maxRow?.m ?? 0) + 1;
   const id = randomUUID();
   try {
-    qRun(h, 'INSERT INTO recipe_history (id, recipe_id, cook_date, cook_sequence, rating, feedback) VALUES (?, ?, ?, ?, ?, ?)', [id, recipe.id, cookDate, seq, rating, input.feedback ?? '']);
+    qRun(h, 'INSERT INTO recipe_history (id, recipe_id, cook_date, cook_sequence, rating, feedback) VALUES (?, ?, ?, ?, ?, ?)', [id, recipe.id, cookDate, seq, rating, feedback]);
     if (recipe.status === '未做') qRun(h, 'UPDATE recipes SET status = ?, updated_at = ? WHERE id = ?', ['已做', now(), recipe.id]);
   } catch (e) {
     if (e instanceof ChefFetchError) throw e;
@@ -52,7 +53,13 @@ export function buildHistoryRecord(message: string): { ok: boolean; message: str
   return { ok: true, message };
 }
 
-/** 跑 `chef.history.record`：定位母菜＋评分校验＋落历史（receipt 形）。 */
+/** 跑 `chef.history.record`：定位母菜＋评分校验＋反馈校验＋落历史（receipt 形）。
+ *
+ * 参数：`name` 必填；`rating` 0-5 数字（818 定案甲：缺评分不写历史，取数层抛
+ * `CHEF_BAD_QUERY` 即 CLI exit 4）；`feedback` 必填真实内容禁占位（口径错 exit 2）；
+ * 补录日期 `date`（`cook_date` 作兼容别名，老件 `--cook_date` 同名），缺省今天。
+ * 「改评分」唤醒词走同一条记录路径（路由见 `./routes.ts:33-38`）：记一次新的做菜记录。
+ */
 export function runHistoryRecord(handle: ChefDb, params: Record<string, unknown>): unknown {
   const name = needName(params);
   const detail = getRecipeDetail(handle, name);
@@ -61,8 +68,9 @@ export function runHistoryRecord(handle: ChefDb, params: Record<string, unknown>
     const raw = typeof params.rating === 'string' && (params.rating as string).trim() !== '' ? Number((params.rating as string).trim()) : params.rating;
     rating = validateRating(raw);
   }
-  const feedback = params.feedback === undefined ? '' : String(params.feedback);
-  const cookDate = params.date === undefined || params.date === '' ? today() : String(params.date);
+  const feedback = validateFeedback(params.feedback);
+  const dateRaw = params.date === undefined ? params.cook_date : params.date;
+  const cookDate = validateCookDate(dateRaw);
   const h = recordHistory(handle, { recipe_id: detail.recipe.id, rating, feedback, cook_date: cookDate });
   return buildHistoryRecord('已记录做菜：' + detail.recipe.name + '（' + h.cook_date + (rating !== null ? '，评分 ' + rating : '') + '）');
 }

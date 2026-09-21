@@ -1,0 +1,54 @@
+[
+  {
+    "卡id": "hist-1",
+    "唤醒词": "记录做菜",
+    "命令": "chef.history.record",
+    "参数": {
+      "name": "辣椒炒肉",
+      "rating": 4.5,
+      "feedback": "虾很Q弹，下次少放盐",
+      "date": "2026-09-21"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-1-记录做菜回执.html",
+    "exit": 0,
+    "bytes": 90204,
+    "sha256": "ec1be99aac6b910e0337ac544f55882c2f27d980bb0eb0df6ac03571f6b5297e"
+  },
+  {
+    "卡id": "hist-2",
+    "唤醒词": "查看历史",
+    "命令": "chef.history.query",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-2-历史时间线.html",
+    "exit": 0,
+    "bytes": 89663,
+    "sha256": "653b520d96ddb6595b6954b8d19f7123d8c6970cebbf141eb7c1509afe8ea1a3"
+  },
+  {
+    "卡id": "hist-3",
+    "唤醒词": "查看统计",
+    "命令": "chef.history.query",
+    "参数": {
+      "kind": "stats",
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-3-单菜统计.html",
+    "exit": 0,
+    "bytes": 89341,
+    "sha256": "b1409f92c42054075a3f624a6a57f244ec1722020e9c3e14e1829d4a91bb3cc9"
+  },
+  {
+    "卡id": "hist-4",
+    "唤醒词": "查看统计",
+    "命令": "chef.history.query",
+    "参数": {
+      "kind": "stats"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-4-全局统计.html",
+    "exit": 0,
+    "bytes": 90154,
+    "sha256": "d5e17edeab29fed9e0afe215dab5e70aa391ce6d9e32851efc791270e32c9801"
+  }
+]
