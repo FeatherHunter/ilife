@@ -24,6 +24,11 @@ import {
 import { renderDocShell } from 'base-paint/docShell';
 import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
+import { COOK_STEP_CLASS, COOK_STEPS_CLASS, cookPageCss } from './page-css.js';
+import { qtyText, servingsNote, stepProseHtml, stepTitle, usageChip } from './page-text.js';
+
+/** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
+const LF = String.fromCharCode(10);
 
 // 开做 list：items 为步骤（内联本步用料）+ total；recipe/份数放大说明/历史提示作扩展字段（list 形只校验 items/total）。
 // 原 `src/render/views.ts`，本域独占。
@@ -36,16 +41,14 @@ export function buildCookingRun(args: {
   const base = args.recipe.servings > 0 ? args.recipe.servings : 2;
   const servings = args.servings ?? base;
   const factor = Math.round((servings / base) * 100) / 100;
-  // 结论条不复读事实条的份量格：默认只说无需换算，放大只说相对原谱的倍率（#768 设计 §8.1）。
-  const servingsNote = servings === base
-    ? '按原谱份量备料即可，无需换算'
-    : '用量是原谱（' + base + ' 人份）的 ' + factor + ' 倍，照这份清单备料就行。';
+  // 结论句与页面结论条同一句（`page-text.ts` 是这句话的唯一定义地，命令面与页面上屏的是同一串字）。
+  const note = servingsNote(servings, base);
   const h = args.history;
   // 人话收尾：命令键不上屏（#768 设计 §10），做完即记的衔接只说动作。
   const historyHint = h && h.count > 0
     ? '做过 ' + h.count + ' 次' + (h.avgRating !== null && h.avgRating !== undefined ? '，平均评分 ' + h.avgRating : '') + '，做完后记一次'
     : '还没做过，做完后记一次';
-  return { items: args.steps, total: args.steps.length, recipe: args.recipe, servingsNote, historyHint, steps: args.steps };
+  return { items: args.steps, total: args.steps.length, recipe: args.recipe, servingsNote: note, historyHint, steps: args.steps };
 }
 
 /** 本步用料一行（`step_ingredients` 联 `ingredients`，用量按份数倍率放大）。 */
@@ -191,18 +194,19 @@ export function runCookingRun(handle: ChefDb, params: Record<string, unknown>): 
 /** 五张卡的取向（同一命令，不同参数＋不同强调块）。 */
 export type CookCardKind = 'fresh' | 'with-history' | 'double' | 'resume' | 'waiting';
 
-function qtyText(q: number | null, unit: string): string {
-  if (q === null) return '适量';
-  return (String(q) + ' ' + unit).trim();
-}
-
-function usageChip(u: StepUsage): string {
-  return u.name + ' ' + qtyText(u.quantity, u.unit) + (u.optional ? '（可选）' : '');
-}
-
-function stepTitle(seq: number, done: boolean): string {
-  return '第 ' + seq + ' 步' + (done ? '（已做）' : '');
-}
+/** 页头那件**纯装饰**的图形：一口锅加三缕热气（内联 SVG，一笔数据、一个字都不带）。
+ *  为什么要它：本批的「视觉生动」是全场最低维，48 页逐页复评里「整页近乎纯文字、缺图」被反复点到；
+ *  本域没有菜品照片可用（数据源里没有图，也不许编），能补的只有**装饰与图标位**。
+ *  它挂 `aria-hidden`、`pointer-events: none`，屏读器与命中区都不受它影响；线宽与颜色全在样式段里。 */
+export const COOK_HERO_ART = '<div class="ilife-cook-art" aria-hidden="true">'
+  + '<svg viewBox="0 0 120 44" fill="none" stroke-width="3" stroke-linecap="round" focusable="false">'
+  + '<path class="ilife-cook-art-steam" d="M36 24C36 18 42 18 42 12"/>'
+  + '<path class="ilife-cook-art-steam" d="M54 24C54 14 60 14 60 5"/>'
+  + '<path class="ilife-cook-art-steam" d="M72 24C72 18 78 18 78 12"/>'
+  + '<path class="ilife-cook-art-wok" d="M20 26H100"/>'
+  + '<path class="ilife-cook-art-wok" d="M26 26C26 36 44 40 60 40C76 40 94 36 94 26"/>'
+  + '<path class="ilife-cook-art-wok" d="M100 26L112 21"/>'
+  + '</svg></div>';
 
 /** 渲染过程型整页（配方 §1 十二格；全部步骤由六张折叠卡承载，不另起速览清单以避重复句）。 */
 export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardKind; currentStep?: number }): string {
@@ -220,16 +224,16 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
       { label: '状态', value: data.recipe.status },
     ],
   });
-  const conclusion = renderConclusionBar(data.servings === data.baseServings
-    ? '按原谱份量备料即可，无需换算'
-    : '用量是原谱（' + data.baseServings + ' 人份）的 ' + data.factor + ' 倍，照这份清单备料就行。');
+  const conclusion = renderConclusionBar(servingsNote(data.servings, data.baseServings));
   const current = data.steps[cur - 1];
   const progress = renderKpiCard({
     label: '当前进度', value: String(cur), unit: '/ ' + total + ' 步',
-    detail: current.heat_level + ' ' + (current.duration_minutes ?? '—') + ' 分钟',
+    // 说明行明写「本步」：它说的是**当前这一步**的火候与时长，不是全谱的（下头步骤卡里那三格
+    // 是同一件事的展开，加这两个字才不会被读成两处各说一遍）。
+    detail: '本步 ' + current.heat_level + ' ' + (current.duration_minutes ?? '—') + ' 分钟',
     bar: { pct: Math.round((cur / total) * 100) },
   });
-  const head: string[] = [facts, conclusion];
+  const head: string[] = [COOK_HERO_ART, facts, conclusion];
   // 含上次经验卡：把上一次的日期／评分／反馈摆出来（缺历史就显式缺）。
   if (opts.kind === 'with-history') {
     head.push(data.lastHistory === null
@@ -239,7 +243,8 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
         contentHtml: renderTimelineRows({
           rows: [{
             time: data.lastHistory.cook_date,
-            main: '上次做这道菜' + (data.lastHistory.rating === null ? '，未评分' : '，评分 ' + data.lastHistory.rating + ' 分'),
+            // 卡片标题已经是「上次经验」、时间槽已经是那次日期：这行只说评分，不再复述「上次做这道菜」。
+            main: data.lastHistory.rating === null ? '未评分' : '评分 ' + data.lastHistory.rating + ' 分',
             note: data.lastHistory.feedback || '这次没写反馈',
           }],
         }),
@@ -248,24 +253,32 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
   head.push(progress);
   // 断点续做口径：会话记忆由 AI 侧承担，页面只承当前进度与下一步（缺字段不编）。
   if (opts.kind === 'resume') {
-    head.push(renderCaliberLine('断点续接：会话记住做到第 ' + (cur - 1) + ' 步，页面只承当前进度与下一步，跨会话进度暂不保留。'));
+    head.push(renderCaliberLine('断点续接：上次做到第 ' + (cur - 1) + ' 步，这次从第 ' + cur + ' 步接着做。换新会话后进度不保留。'));
   }
-  const cards = data.steps.map((s) => renderDisclosure({
-    title: stepTitle(s.sequence, s.sequence < cur), open: s.sequence === cur,
-    contentHtml: renderProseBlock({ text: s.action })
-      + renderFactStrip({
-        items: [
-          { label: '火候', value: s.heat_level || '未写' },
-          { label: '时长', value: (s.duration_minutes ?? '—') + ' 分钟' },
-          { label: '锅温', value: s.temperature || '未写' },
-        ],
-      })
-      // 零关联菜谱的步：无料可内联就显式缺，不留空白让人猜。
-      + (s.ingredients.length === 0
-        ? renderCaliberLine('本步用料未登记。')
-        : renderChipRow({ items: s.ingredients.map((u) => ({ text: usageChip(u) })) }))
-      + renderCaliberLine('这一步做成：' + (s.expected_result || '未写')),
-  }));
+  // 每张步骤卡外面包一层状态类：当前步／已做步／还没做各有自己的形状（`page-css.ts` 里那三条）。
+  const cards = data.steps.map((s) => {
+    const state = s.sequence < cur ? 'done' : (s.sequence === cur ? 'current' : 'todo');
+    return '<div class="' + COOK_STEP_CLASS + '-' + state + '">' + renderDisclosure({
+      title: stepTitle(s.sequence, state), open: s.sequence === cur,
+      // 正文走 `stepProseHtml`：库里的动作原文一字不动，只在**已有的标点之后**换行。
+      contentHtml: renderProseBlock({ html: stepProseHtml(s.action) })
+        + renderFactStrip({
+          items: [
+            { label: '火候', value: s.heat_level || '未写' },
+            { label: '时长', value: (s.duration_minutes ?? '—') + ' 分钟' },
+            { label: '锅温', value: s.temperature || '未写' },
+          ],
+        })
+        // 零关联菜谱的步：无料可内联就显式缺，不留空白让人猜。
+        + (s.ingredients.length === 0
+          ? renderCaliberLine('本步用料未登记。')
+          : renderChipRow({
+            items: s.ingredients.map((u) => ({ text: usageChip(u.name, u.quantity, u.unit, u.optional) })),
+          }))
+        + renderCaliberLine('这一步做成：' + (s.expected_result || '未写')),
+    }) + '</div>';
+  });
+  const stepsHtml = '<div class="' + COOK_STEPS_CLASS + '">' + cards.join('') + '</div>';
   const stepper = renderActionBar({
     buttons: [
       { label: '上一步', kind: 'ghost', actionId: prefix + '-prev' },
@@ -278,7 +291,7 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
     const longest = [...data.steps].sort((a, b) => (b.duration_minutes ?? 0) - (a.duration_minutes ?? 0)).slice(0, 2);
     tail.push(renderDisclosure({
       title: '等待时可并行', open: true,
-      contentHtml: renderCaliberLine('本谱无炖烤腌类典型等待步骤，以下按耗时最长的两步给并行建议。')
+      contentHtml: renderCaliberLine('本谱没有炖烤腌这类等待步骤，按最耗时的两步给并行建议。')
         + renderTimelineRows({
           // 建议写“备下一步”，注里就摆下一步的料名（当前步的料已在步骤卡里，不复读）。
           rows: longest.map((s) => {
@@ -322,12 +335,13 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
   const copy = renderCopyBlock({ title: '复制备料清单与进度', dataActionId: prefix + '-copy', dataText: copyText });
   const body = renderPageShell({
     eyebrow: '私家大厨 ｜ 做菜', title: '做菜模式：' + data.recipe.name,
-    content: head.join('') + cards.join('') + stepper + tail.join('') + prep + ware + done + copy,
+    content: head.join('') + stepsHtml + stepper + tail.join('') + prep + ware + done + copy,
   });
   return renderDocShell({
     // 文档标题与页内标题错开一处（后者缀技能名）：否则同一句在 `<title>` 与页标题各出现一次，
     // 质量门「重复句」列会红（`t768` 原型即用不同标题避开此列）。
     docTitle: '做菜模式：' + data.recipe.name + '（私家大厨）', bodyHtml: body,
-    extraCss: chefSceneCss(), pageUi: true,
+    // 页内收口那一段（本域五页共用的栅格与排印）追加在皮肤之后：两层不拆回去（包内测试守着）。
+    extraCss: chefSceneCss() + LF + cookPageCss(), pageUi: true,
   });
 }
