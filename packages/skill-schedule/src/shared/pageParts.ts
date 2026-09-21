@@ -164,6 +164,17 @@ export function pagePartsCss(): string {
     '.heat-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 0; color: var(--fg2); font-size: 12px; }',
     '.heat-legend span { display: inline-flex; align-items: center; gap: 6px; }',
     '.heat-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }',
+    /* 宽屏对齐：矩阵是本页的数据脊，跟公共层「真二维数据满铺」那一档（读数卡／表／列表行同档）。
+       不写这条，矩阵与图例会落在 880px 的文字列里，比它上面的读数卡窄一圈——页面上看起来就是
+       「读数卡与每日汇总两块左右各凸出一截」（#782 人复看时点出的正是这处）。
+       权重与 pageUi 那条同权（`.ilife-page-ui` ＋ 一颗类名），靠**本件排在 pageUi 之后**取胜。 */
+    '@media (min-width: 1001px) {',
+    '  .ilife-page-ui .heat-title,',
+    '  .ilife-page-ui .heat,',
+    '  .ilife-page-ui .heat-legend {',
+    '    grid-column: 1 / -1;',
+    '  }',
+    '}',
     '@media (max-width: 820px) {',
     '  .heat-row { grid-template-columns: 52px minmax(0, 1fr); gap: 8px; }',
     '  .heat-row-total { grid-template-columns: 52px minmax(0, 1fr) 50px; }',
