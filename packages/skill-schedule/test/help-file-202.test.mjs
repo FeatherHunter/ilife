@@ -645,7 +645,7 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.deepEqual(back.contact, HELP_CONTACT);
       assert.equal(back.version, HELP_FILE_VERSION);
       assert.equal(HELP_FILE_VERSION, '2.0', '技能数据世代（非 npm 包版本）');
-      assert.equal(helpFileStem(), '作息管家_HELP', '文件名主体＝配置项 files.help 的默认值（落盘归 #203）');
+      assert.equal(helpFileStem(), '作息管家_HELP', '文件名主体＝代码常量（#764 起 files.help 出配置表，落盘归 #203）');
     });
 
     it('计数派生：三层条数都对得上（载荷里不再有伴生信息块）', () => {

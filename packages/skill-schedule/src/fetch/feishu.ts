@@ -8,7 +8,6 @@ import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ScheduleFetchError } from './errors.js';
-import { loadScheduleConfig } from '../config.js';
 
 export const LARK_TIMEOUT_SHORT_MS = 15000;
 export const LARK_TIMEOUT_NORMAL_MS = 30000;
@@ -21,28 +20,54 @@ export const FEISHU_OWNER_MARK = '作息管家自动同步';
 /** 自检留下的远端对象前缀（D-03：用户可据此识别并手工清掉；默认不跑，只走显式 op=check）。 */
 export const FEISHU_SENTINEL_MARK = '[作息管家测试]';
 
-// 跨平台定位：配置里的显式路径 → Windows npm 全局（家目录派生）→ where/which → 固定路径；找不到返 null。
-// #695 起显式值改从配置项 `lark.cliPath` 取（空串＝没有显式值，走兜底探测）；原 `LARK_CLI_PATH` 与
-// `APPDATA` 两个环境变量读取**已删**（口径见「配置的存与生效口径裁定」#675 的解决评论）。
-export function findLarkCli(): string | null {
-  const config = loadScheduleConfig();
-  const over = config.values.lark.cliPath;
-  if (over !== '') {
-    try { accessSync(over, constants.X_OK); return over; }
-    catch {
-      throw new ScheduleFetchError('LARK_UNAVAILABLE',
-        '配置项 lark.cliPath 指的那条 lark-cli 用不了：' + over
-        + '（该在哪配＝配置文件 ' + config.path + ' 的 lark.cliPath；留空即走本机自动探测）');
-    }
+// 跨平台定位：家目录派生的绝对路径 → `where`／`which` → 固定路径；找不到返 null。
+// #695 起显式值改从配置项 `lark.cliPath` 取；#764（定稿 #761）删掉这个配置项——
+// 「飞书 CLI 路径」不再是配置，由新增的「飞书 CLI」状态行替代（它不是配置项），
+// 故这里只剩兜底探测。原 `LARK_CLI_PATH` 与 `APPDATA` 两个环境变量读取**已删**
+// （口径见「配置的存与生效口径裁定」#675 的解决评论）：`%APPDATA%` 那一档改由
+// `os.homedir()` 派生（平台无关地算出来），**不读** `%APPDATA%`／`$HOME` 环境变量。
+//
+// 候选表（#761 定稿 ＋ 维护者 2026-09-20 裁决补 4 条）：保留现有 5 档
+// （Windows npm 全局 → `where` → `which` → `/usr/local/bin` → `/usr/bin`），
+// 补 scoop（`<家>\AppData\Local\Programs\lark-cli\lark-cli.exe` 与 `.cmd`）、
+// `/opt/homebrew/bin/lark-cli`、`<家>/.npm-global/bin/lark-cli`、`<家>/.local/bin/lark-cli`。
+// 与备忘录那张表**逐条相同**（跨包锁进 #758）。
+// 理由（第一性原理）：技能是**在宿主进程里跑的**，那种进程的 PATH 常常是空的，
+// 所以「靠 PATH 找」这一档靠不住，真正能靠的只有绝对路径那条线。
+/** 家目录派生的那一组绝对候选（**纯函数**：只拼路径，不读配置、不碰盘、不起子进程）。
+ *
+ *  这是候选顺序的唯一定义地——`findLarkCli()` 与体检（`src/health.ts`）都调它，两处不许走散。
+ *  `where`／`which` 的动态查找与 `/usr` 固定尾巴不在这一组里（见 `probeLarkCli`）。 */
+export function larkCliCandidates(): string[] {
+  const home = homedir();
+  if (process.platform === 'win32') {
+    return [
+      join(home, 'AppData', 'Roaming', 'npm', 'lark-cli.cmd'),
+      join(home, 'AppData', 'Local', 'Programs', 'lark-cli', 'lark-cli.exe'),
+      join(home, 'AppData', 'Local', 'Programs', 'lark-cli', 'lark-cli.cmd'),
+    ];
+  }
+  return [
+    '/opt/homebrew/bin/lark-cli',
+    join(home, '.npm-global', 'bin', 'lark-cli'),
+    join(home, '.local', 'bin', 'lark-cli'),
+  ];
+}
+
+/** 按固定顺序探一遍：绝对候选 → `where`／`which` → `/usr` 固定尾巴。命中即返，不抛。 */
+function probeLarkCli(candidates: readonly string[]): string | null {
+  for (const cand of candidates) {
+    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
   }
   if (process.platform === 'win32') {
-    // 老实现认 `%APPDATA%\npm\lark-cli.cmd`；#695 起由 `os.homedir()` 派生同一处（平台无关地算出来），
-    // 只在 win32 这一支里用——不再读 `APPDATA`。
-    const cand = join(homedir(), 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
-    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
     try {
-      const out = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).split(/\r?\n/)[0].trim();
-      if (out) return out;
+      // `where` 常一次吐多行（npm 会同时放 `lark-cli`／`lark-cli.cmd`／`lark-cli.ps1`）：
+      // 无扩展名那一行 Windows 起不来（直 spawn 报 EINVAL/ENOENT），故优先取 `.cmd` 那一行
+      // （真 lark-cli 本体就是 `.cmd`，见 #759 本机实测 `%APPDATA%\npm\lark-cli.cmd`）。
+      const lines = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' })
+        .split(/\r?\n/).map((s) => s.trim()).filter((s) => s !== '');
+      const hit = lines.find((s) => /\.cmd$/i.test(s)) ?? lines[0];
+      if (hit !== undefined && hit !== '') return hit;
     } catch { /* 继续 */ }
   } else {
     try {
@@ -54,6 +79,10 @@ export function findLarkCli(): string | null {
     try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
   }
   return null;
+}
+
+export function findLarkCli(): string | null {
+  return probeLarkCli(larkCliCandidates());
 }
 
 export interface LarkRunOk { ok: true; stdout: string; }

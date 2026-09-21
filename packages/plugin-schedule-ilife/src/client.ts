@@ -16,9 +16,10 @@ import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
 import {
   CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath,
 } from './settings.js';
-import type { ConfigItem } from './settings.js';
+import type { ConfigItem, ResolvedField } from './settings.js';
 import {
-  RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, isRpcResult,
+  RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET,
+  RPC_ENDPOINT_CONFIG_CHECK, isRpcResult,
 } from './contract.js';
 import type { ConfigSurfaceReply } from './contract.js';
 import { DIRECTORY_PICKER_REFUSED, MANAGER_RPC_BASE, MANAGER_RPC_ENDPOINT, MANAGER_ROOTS_METHOD, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
@@ -152,28 +153,159 @@ export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
   return configRpc(call, RPC_ENDPOINT_CONFIG_RESET, {});
 }
 
+/** 读一次配置体检（只读；判据由技能侧出，本包只透传，不重写一个字）。 */
+export function fetchHealthSurface(call: unknown): Promise<ConfigOutcome> {
+  return configRpc(call, RPC_ENDPOINT_CONFIG_CHECK, {});
+}
+
+/** 体检报告里「飞书 CLI」那一项的最小形状（面板只读这三格，不认全报告）。 */
+export interface HealthItemLite {
+  readonly id: string;
+  readonly status: string;
+  readonly message: string;
+  readonly action: string;
+}
+
+/** 从体检报告里挑出 `lark.cli` 那一项；形状不对回 null（不抛）。 */
+export function larkItemOf(report: unknown): HealthItemLite | null {
+  if (typeof report !== 'object' || report === null) return null;
+  const items = (report as { items?: unknown }).items;
+  if (!Array.isArray(items)) return null;
+  for (const it of items) {
+    if (typeof it !== 'object' || it === null) continue;
+    const rec = it as Record<string, unknown>;
+    if (rec['id'] !== 'lark.cli') continue;
+    if (typeof rec['id'] !== 'string' || typeof rec['status'] !== 'string' || typeof rec['message'] !== 'string') return null;
+    return { id: rec['id'], status: rec['status'], message: rec['message'], action: typeof rec['action'] === 'string' ? rec['action'] : '' };
+  }
+  return null;
+}
+
+/** 飞书 CLI 官网（面板状态行与安装 prompt 里的同一地址，唯一定义地是这里）。 */
+export const LARK_OFFICIAL_URL = 'https://www.feishu.cn/feishu-cli' as const;
+
+/** 状态行上逐字显示的那一行（三档都在、显示成文字、可点击跳转，不改写、不加话）。 */
+export const LARK_OFFICIAL_LINE = '飞书CLI官网为：https://www.feishu.cn/feishu-cli' as const;
+
+/** 「复制 prompt」按钮复制的内容（定稿住 #759 最新一条评论 v5 的逐字全文，两家的实施票都引它，
+ *  不在本票里另写一份；官网指南 shape 变化时改 #759 那一条，这里跟着换）。 */
+export const LARK_PROMPT_V5 = `在这台机器上安装并配置飞书 CLI（lark-cli）。你来推进，做完为止。
+
+必须满足的终态（每条都要真跑，把命令原文和输出贴回来）：
+1) lark-cli --version >= 1.0.82（更低的版本没有我们要用的 --no-wait）
+2) where lark-cli（Windows）或 which lark-cli（macOS/Linux）能命中；Windows 上还要确认 %APPDATA%\\npm\\lark-cli.cmd 这个文件存在
+3) lark-cli auth status 的输出里有 identities.user.openId
+4) lark-cli auth check --scope task 退出码 0（连退出码一起贴）—— 备忘录要用任务域
+5) lark-cli calendar +agenda 退出码 0（连退出码一起贴）—— 作息管家要读你的主日历
+6) 技能侧也能用：跑一次作息管家的「飞书探测」（＝一条不落地的同步探测），不报「缺 CLI／未登录／日历不可达」
+
+怎么做：
+7) Node.js/npm 不可用就先装。
+8) 安装：npm install -g @larksuite/cli。只装这个官方包（bin 名 lark-cli）；不要装 npm 上的 lark-cli。
+9) 官方指南里的第二件事也照做：npx -y skills add https://open.feishu.cn --skill -y
+10) 配置与登录照这两条走（都是 CLI 自己在 --help 里写给 AI agent 的写法，别改写成别的）：
+    先初始化：lark-cli config init --new
+      它会阻塞等你完成浏览器授权，所以起在后台、从它的输出里把验证链接捞出来
+      （CLI 原文：Run it in the background and retrieve the verification URL from its output）；
+      链接给我，我批准后你继续。
+      如果它报 Inside an Agent context 之类被拒，照它的提示改用 lark-cli config bind。
+    再授权：lark-cli auth login --no-wait --json --domain calendar,task
+      它会立刻返回一个验证链接（或二维码）；把链接给我，我批准后你再用
+      lark-cli auth login --device-code <拿到的 device code> 收尾。
+    官方指南：https://open.feishu.cn/document/no_class/mcp-archive/feishu-cli-installation-guide.md
+    子命令以 lark-cli auth --help / config --help 和官方文档为准，不要凭猜；做完要能过第 3、4、5 条。
+11) npm 全局目录如果不在系统 PATH 上，把它加进系统 PATH（不是只在当前终端 export）。
+
+怎么推进：
+12) 除第 13 条那三类，其余你自己一口气做完，不要逐步问我确认：安装、改 PATH、重试、修报错都自己做完。
+13) 只有这三类必须我介入；遇到就用 /wizard 生成脚本带我走，走完你接着自动往下做：
+    ① 浏览器里的初始化授权 / 登录（把验证链接或二维码给我）；
+    ② 系统权限提示（管理员/sudo）；
+    ③ Node.js 需要我先定怎么装。
+14) 任何一步失败：自己按报错修；修不动再一次性告诉我「卡在哪、报错原文、需要我做什么」。
+
+参考官网：https://www.feishu.cn/feishu-cli`;
+
+/** 复制的依赖注入（浏览器剪贴板缺席时只走兜底；两格都没有即回 false，不抛）。 */
+export interface CopyDeps {
+  readonly clipboard?: { writeText(text: string): Promise<void> } | undefined;
+  readonly execCopy?: ((text: string) => boolean) | undefined;
+}
+
+/** 复制一段文本：先剪贴板，不成再走兜底（永不抛，回是否成功）。 */
+export async function copyText(text: string, deps: CopyDeps = {}): Promise<boolean> {
+  if (deps.clipboard !== undefined) {
+    try {
+      await deps.clipboard.writeText(text);
+      return true;
+    } catch { /* 走兜底 */ }
+  }
+  if (deps.execCopy !== undefined) {
+    try {
+      return deps.execCopy(text);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/** 当刻环境的剪贴板（经 `globalThis` 懒取：顶层不碰 DOM，loader 沙箱与 node 单测都不炸；拿不到回 null）。 */
+export function clipboardOf(): { writeText(text: string): Promise<void> } | null {
+  try {
+    const nav = (globalThis as { navigator?: { clipboard?: { writeText(text: string): Promise<void> } } }).navigator;
+    return nav?.clipboard ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。
  *
- * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：标了 `prefillFrom` 的行在取值空着时
- * 直接显示那条绝对路径——用户不必自己拼路径（#743），显示的就是技能真会用的那个目录（逐字相同）。 */
+ * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：
+ *   · 标了 `prefillFrom` 的行在取值空着时直接显示那条绝对路径——用户不必自己拼路径（#743），
+ *     显示的就是技能真会用的那个目录（逐字相同）；
+ *   · **只读行**（#764，照 #749 样板）一律显示 `resolveFrom` 指的那一格（技能算好的绝对路径）——
+ *     面板一个字都不算：回执缺那一格（旧技能）就显示空串，绝不编一条路径出来。 */
+export interface SurfacePrefill {
+  readonly dataDir?: string;
+  readonly resolved?: Partial<Record<ResolvedField, string | undefined>>;
+}
+
+/** 只读行显示什么：标了 `resolveFrom` ⇒ 回执 `resolved` 组那一格；没标 ⇒ 配置文件里那个值本身
+ *  （数字类只读项走这一档：显示的是生效数字，见 #749 补注二的甲档）。 */
+function readonlyTextOf(item: ConfigItem, raw: string, prefill: SurfacePrefill): string {
+  if (item.resolveFrom === undefined) return raw;
+  const shown = prefill.resolved?.[item.resolveFrom];
+  return typeof shown === 'string' ? shown : '';
+}
+
 export function toDraft(
   values: Record<string, unknown>,
-  prefill: { readonly dataDir?: string } = {},
+  prefill: SurfacePrefill = {},
 ): Record<string, string> {
   const draft: Record<string, string> = {};
   for (const item of CONFIG_ITEMS) {
     const v = readPath(values, item.key);
     const raw = v === undefined || v === null ? '' : String(v);
+    if (item.readonly === true) {
+      draft[item.key] = readonlyTextOf(item, raw, prefill);
+      continue;
+    }
     const fallback = item.prefillFrom === undefined ? undefined : prefill[item.prefillFrom];
     draft[item.key] = raw === '' && typeof fallback === 'string' && fallback !== '' ? fallback : raw;
   }
   return draft;
 }
 
-/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「未配」承担）。 */
+/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「按默认落点」承担）。
+ *
+ *  **只读行不收**（#764，照 #749 样板）：它们显示的是技能算好的绝对路径，写回配置就是把「显示的路径」
+ *  当成「配置值」——保存只提交真能改的那些行（本家＝`db.dir` 一行），其余键由技能侧做组内合并保留现值。 */
 export function fromDraft(draft: Record<string, string>): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const item of CONFIG_ITEMS) {
+    if (item.readonly === true) continue;
     const raw = draft[item.key] ?? '';
     const value: unknown = item.control === 'number' ? Number(raw) : item.control === 'switch' ? raw === 'true' : raw;
     writePath(values, item.key, item.control === 'number' && !Number.isFinite(value as number) ? 0 : value);
@@ -255,7 +387,11 @@ export function createBrowseHandler(deps: {
 /** 一行输入（四种控件对齐受限 YAML 子集：文本／数字／布尔／目录）。
  *
  * 目录档＝文本框 ＋ 一枚唤起系统文件夹选择器的按钮；`onBrowse` 缺席（命名空间拿不到、
- * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。 */
+ * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。
+ *
+ * **只读行（#764，照 #749 样板）**：`item.readonly` 为真时控件一律 `disabled`（值只经技能侧解析后显示、
+ * 不给改），目录行的浏览按钮**保留但不可点击**（#747 定稿：入口不作废，只是不能改）。控件文案**不出现省略号**
+ * （#746 处置 9）——按钮就写「选择文件夹」／「浏览」两个字面。 */
 export function Row(props: {
   readonly item: ConfigItem;
   readonly value: string;
@@ -265,24 +401,28 @@ export function Row(props: {
   readonly browser?: DirectoryRowEntry | null | undefined;
 }): React.ReactElement {
   const { item } = props;
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
+  const readonly = item.readonly === true;
+  const disabled = props.disabled || readonly;
+  // 只读行不接 onChange：不给「改得动」留假象（用例也据此认「哪几行可改」）。
+  const onChange = readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
   const control =
     item.control === 'switch'
       ? React.createElement('input', {
           type: 'checkbox',
           checked: props.value === 'true',
-          disabled: props.disabled,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
+          disabled,
+          onChange: readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
         })
       : React.createElement('input', {
           style: S.input,
           type: item.control === 'number' ? 'number' : 'text',
           value: props.value,
-          disabled: props.disabled,
+          disabled,
           spellCheck: false,
           onChange,
         });
-  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。 */
+  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。
+   *  只读行照画（按钮保留），但 `disabled` ⇒ 点不动。 */
   const entry = props.browser ?? null;
   const browse =
     item.control === 'directory' && entry !== null && entry.mode !== 'none'
@@ -291,11 +431,11 @@ export function Row(props: {
           {
             style: S.btnPick,
             type: 'button',
-            disabled: props.disabled,
+            disabled,
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
-          entry.mode === 'native' ? '选择文件夹…' : '浏览…',
+          entry.mode === 'native' ? '选择文件夹' : '浏览',
         )
       : null;
   return React.createElement(
@@ -316,11 +456,30 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  /** 飞书 CLI 状态行（三档读数由技能侧体检出，面板只显示；`null` 以外的三态见下）。 */
+  const [lark, setLark] = React.useState<
+    | { readonly kind: 'loading' }
+    | { readonly kind: 'ready'; readonly item: HealthItemLite }
+    | { readonly kind: 'failed'; readonly message: string }
+  >({ kind: 'loading' });
+  /** 复制 prompt 那枚按钮的回执（idle＝没点过）。 */
+  const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
 
   const apply = React.useCallback((surface: ConfigSurfaceReply) => {
     setState({ kind: 'ready', surface });
     setDraft(toDraft(surface.values, surface));
   }, []);
+
+  const loadHealth = React.useCallback(async () => {
+    setLark({ kind: 'loading' });
+    const r = await fetchHealthSurface(props.getCall());
+    if (!r.ok) {
+      setLark({ kind: 'failed', message: r.message });
+      return;
+    }
+    const item = larkItemOf(r.surface);
+    setLark(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item });
+  }, [props.getCall]);
 
   const load = React.useCallback(async () => {
     setNotice(null);
@@ -328,7 +487,8 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
     const r = await fetchConfigSurface(props.getCall());
     if (r.ok) apply(r.surface);
     else setState({ kind: 'failed', message: r.message });
-  }, [apply, props.getCall]);
+    await loadHealth();
+  }, [apply, loadHealth, props.getCall]);
 
   React.useEffect(() => {
     let alive = true;
@@ -337,6 +497,13 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
       if (!alive) return;
       if (r.ok) apply(r.surface);
       else setState({ kind: 'failed', message: r.message });
+      const h = await fetchHealthSurface(props.getCall());
+      if (!alive) return;
+      if (!h.ok) setLark({ kind: 'failed', message: h.message });
+      else {
+        const item = larkItemOf(h.surface);
+        setLark(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item });
+      }
     })();
     return () => {
       alive = false;
@@ -399,7 +566,10 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
     pickerModeOf(picker) === 'none' ? null : { mode: pickerModeOf(picker), onOpen: onOpenRow };
 
   const surface = state.kind === 'ready' ? state.surface : null;
-  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
+  /** 脏值只看**可改行**（#764，照 #749 样板）：只读行显示的是技能算好的绝对路径，
+   *  拿它当「改动」会让打开面板就变「未保存」。 */
+  const editableItems = CONFIG_ITEMS.filter((i) => i.readonly !== true);
+  const dirty = surface !== null && editableItems.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
 
   /** 写完之后重新读一份：写回执只有 {path, values}，头部那两行要的是读整面。 */
   const writeThenReload = React.useCallback(async (done: string) => {
@@ -445,14 +615,14 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
           'div',
           null,
           React.createElement('div', { style: S.info }, `配置文件 ${surface.path}`),
-          React.createElement('div', { style: S.info }, `数据目录 ${surface.dataDir}`),
+          React.createElement('div', { style: S.info }, `数据目录 ${surface.resolved?.dbDir ?? surface.dataDir}`),
           surface.created ? React.createElement('div', { style: S.muted }, '（配置文件刚按默认值生成）') : null,
         )
       : null,
   );
 
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中…'));
+    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中'));
   }
 
   if (state.kind === 'failed') {
@@ -482,25 +652,85 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
       browser: rowEntry,
     });
 
+  /** 「复制 prompt」：剪贴板不在就报失败，不抛（按钮三档都在，见 #761 定稿）。 */
+  const onCopyPrompt = React.useCallback(async () => {
+    const ok = await copyText(LARK_PROMPT_V5, { clipboard: clipboardOf() ?? undefined });
+    setCopied(ok ? 'done' : 'failed');
+  }, []);
+
+  /** 「飞书 CLI」状态行（#764，定稿 #761）：不是配置项——三档读数由技能侧体检出，面板只显示；
+   *  三档都有「复制 prompt」按钮与官网那一行（逐字、可点击）。 */
+  const renderLark = (): React.ReactElement => {
+    if (lark.kind === 'loading') {
+      return React.createElement(
+        'div',
+        { style: S.rows },
+        React.createElement('div', { style: S.label }, '飞书 CLI'),
+        React.createElement('div', { style: S.muted }, '飞书 CLI 检测中'),
+      );
+    }
+    if (lark.kind === 'failed') {
+      return React.createElement(
+        'div',
+        { style: S.rows },
+        React.createElement('div', { style: S.label }, '飞书 CLI'),
+        React.createElement('div', { style: S.error }, lark.message),
+        React.createElement(
+          'div',
+          { style: S.bar },
+          React.createElement('button', { style: S.btn, type: 'button', onClick: () => void loadHealth() }, '重新检测'),
+        ),
+      );
+    }
+    const item = lark.item;
+    const tone = item.status === 'green' ? S.okText : item.status === 'red' ? S.error : S.muted;
+    return React.createElement(
+      'div',
+      { style: S.rows },
+      React.createElement('div', { style: S.label }, '飞书 CLI'),
+      React.createElement('div', { style: tone }, item.message),
+      item.action === '' ? null : React.createElement('div', { style: S.hint }, item.action),
+      React.createElement(
+        'div',
+        { style: S.bar },
+        React.createElement('button', { style: S.btn, type: 'button', onClick: () => void onCopyPrompt() }, '复制 prompt'),
+        React.createElement('button', { style: S.btn, type: 'button', onClick: () => void loadHealth() }, '重新检测'),
+      ),
+      copied === 'done'
+        ? React.createElement('div', { style: S.okText }, '已复制安装指引')
+        : copied === 'failed'
+          ? React.createElement('div', { style: S.error }, '复制失败：剪贴板不可用，请手动复制对话框里的安装指引')
+          : null,
+      React.createElement(
+        'div',
+        { style: S.info },
+        React.createElement('a', { href: LARK_OFFICIAL_URL, target: '_blank', rel: 'noreferrer' }, LARK_OFFICIAL_LINE),
+      ),
+    );
+  };
+
   return React.createElement(
     'div',
     { style: S.card },
     head,
     React.createElement('div', { style: S.rows }, common.map(renderRow)),
-    React.createElement(
-      'details',
-      { style: S.advanced },
-      React.createElement('summary', { style: S.summary }, ADVANCED_GROUP_TITLE),
-      React.createElement('div', { style: S.muted }, ADVANCED_GROUP_NOTE),
-      advanced.map(renderRow),
-    ),
+    advanced.length === 0
+      ? null
+      : React.createElement(
+          'details',
+          { style: S.advanced },
+          React.createElement('summary', { style: S.summary }, ADVANCED_GROUP_TITLE),
+          React.createElement('div', { style: S.muted }, ADVANCED_GROUP_NOTE),
+          advanced.map(renderRow),
+        ),
+    renderLark(),
     React.createElement(
       'div',
       { style: S.bar },
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
-        busy ? '处理中…' : '保存',
+        busy ? '处理中' : '保存',
       ),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
@@ -517,7 +747,7 @@ function ScheduleConfig(props: { getCall: GetCall; pickerSource: () => Directory
         go: '转到',
         showHidden: (n: number) => '显示隐藏目录（' + n + '）',
         empty: '这个目录里没有子目录。',
-        loading: '正在读取…',
+        loading: '正在读取',
         newFolder: '新建文件夹',
         createConfirm: '创建',
         createCancel: '取消',

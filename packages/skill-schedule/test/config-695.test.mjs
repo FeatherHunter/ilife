@@ -6,8 +6,8 @@
  * 数据目录默认 `<家>/.ilife/data/`。
  *
  * 四条读数（逐条点名，不合并成一句「通过了」）：
- *  ① 默认值表逐项等于**改造前的代码常量**（`schedule_data.db`／`schedule_html/help`／`作息管家_HELP`），
- *     且落点常量与之一致；
+ *  ① 默认值表逐项等于**改造前的代码常量**（`schedule_data.db`／`schedule_html/help`），
+ *     且落点常量与之一致；#764 起 `files.help`／`lark.cliPath` 出表（进退休清单）；
  *  ② 三个配置 key（`schedule.config.read/write/reset`）走**真出口**：读＝`detail`、写／重置＝`receipt`，
  *     重置要留 `.bak`，回来再读回默认；
  *  ③ 配置**真的进执行路径**：`db.dir`／`html.dir` 指到临时目录下的别处，`schedule.record.write` 与
@@ -25,7 +25,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { SCHEDULE_CONFIG_DEFAULTS } from '../dist/config.js';
+import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_RETIRED } from '../dist/config.js';
 import { DEFAULT_DB_FILENAME } from '../dist/index.js';
 import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
@@ -74,7 +74,6 @@ function probeGuard(extraEnv = {}) {
     + ' catch (e) { console.log("THREW:" + e.code + ":HUMAN=" + (String(e.message).includes("测试缺隔离") ? "1" : "0")); }';
   const env = { ...process.env };
   delete env.USERPROFILE; delete env.HOME;   // 家目录回落真实那份
-  delete env.ILIFE_CONFIG_DIR;              // 位置覆盖变量（#754 才删）也清掉：留着它，守卫就看不到家目录
   Object.assign(env, extraEnv);
   env.NODE_TEST_CONTEXT = 'child-v8';       // 跑在测试运行器里
   return String(spawnSync(NODE_BIN, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
@@ -82,14 +81,14 @@ function probeGuard(extraEnv = {}) {
 
 /* ─────────── ① 默认值＝改造前的代码常量 ─────────── */
 
-test('#695 ① 默认值表逐项等于改造前的代码常量', () => {
+test('#695 ① 默认值表逐项等于改造前的代码常量（#764 起 files.help／lark.cliPath 出表）', () => {
   const d = SCHEDULE_CONFIG_DEFAULTS;
   assert.equal(d.db.dir, '', 'db.dir 空串＝按默认落点（数据目录），不是「没配」');
   assert.equal(d.db.name, 'schedule_data.db', '原 src/fetch/paths.ts 的 DB_FILENAME');
   assert.equal(d.html.dir, 'schedule_html/help', '原 helpPaths.ts 的 HELP_HTML_DIR_PARTS 两段');
-  assert.equal(d.files.help, '作息管家_HELP', '原 helpFile.ts 的 HELP_FILE_STEM');
-  assert.equal(d.lark.cliPath, '', '空串＝没有显式值，走 findLarkCli 的兜底探测（原 LARK_CLI_PATH）');
-  assert.deepEqual(Object.keys(d).sort(), ['db', 'files', 'html', 'lark'], '四组键，键表即设置页的行');
+  assert.deepEqual(Object.keys(d).sort(), ['db', 'html'], '两组键，键表即设置页的行');
+  assert.ok(!('files' in d) && !('lark' in d), 'files／lark 两组已出表');
+  assert.deepEqual([...SCHEDULE_CONFIG_RETIRED].sort(), ['files.help', 'lark.cliPath'], '删掉的两键进退休清单');
   assert.equal(DEFAULT_DB_FILENAME, 'schedule_data.db', '落点常量与配置默认值同源');
   console.log('#695 ① 读数：' + P(d));
 });
@@ -107,7 +106,10 @@ test('#695 ② config.read/write/reset 走 CLI 真出口：shape／载荷／`.ba
     '配置文件落 <家目录>/.ilife/schedule.yaml');
   assert.equal(read1.env.data.dataDir, dataDirOf(cfg), '数据目录＝<家目录>/.ilife/data');
   assert.equal(read1.env.data.created, true, '首次读即按默认值落一份');
-  assert.deepEqual(read1.env.data.values, SCHEDULE_CONFIG_DEFAULTS, '读回来的就是默认值表');
+  assert.equal(read1.env.data.values.db.dir, dataDirOf(cfg),
+    '首次落文件时可改落点写绝对路径（#746 总口径回灌：读认空串、写落绝对路径）');
+  assert.equal(read1.env.data.values.db.name, SCHEDULE_CONFIG_DEFAULTS.db.name);
+  assert.equal(read1.env.data.values.html.dir, SCHEDULE_CONFIG_DEFAULTS.html.dir);
 
   const outDir = join(cfg, 'elsewhere');
   const write = runOk(cfg, ['schedule.config.write', '--params', P({ values: { db: { dir: outDir } } })]);
@@ -128,7 +130,9 @@ test('#695 ② config.read/write/reset 走 CLI 真出口：shape／载荷／`.ba
   assert.equal(readFileSync(reset.env.data.backupPath, 'utf8'), beforeReset, '.bak 里是改前那一份（逐字）');
 
   const read3 = runOk(cfg, ['schedule.config.read']);
-  assert.deepEqual(read3.env.data.values, SCHEDULE_CONFIG_DEFAULTS, '重置后回默认值');
+  assert.equal(read3.env.data.values.db.dir, dataDirOf(cfg), '重置后可改落点仍是绝对路径（写盘口径）');
+  assert.equal(read3.env.data.values.db.name, SCHEDULE_CONFIG_DEFAULTS.db.name, '重置后回默认');
+  assert.equal(read3.env.data.values.html.dir, SCHEDULE_CONFIG_DEFAULTS.html.dir, '重置后回默认');
   assert.deepEqual(readdirSync(configDirOf(cfg)).sort(), ['data', 'schedule.yaml', 'schedule.yaml.bak'],
     '配置目录（<家目录>/.ilife）里恰：数据目录 ＋ 配置件 ＋ .bak');
   assert.deepEqual(readdirSync(cfg).sort(), ['.ilife'],

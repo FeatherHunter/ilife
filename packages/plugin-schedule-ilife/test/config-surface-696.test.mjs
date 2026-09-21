@@ -1,4 +1,4 @@
-﻿// #696 作息设置页：配置面验收（照 #676 卡路里／#677 记账／#696 大厨那套同形）。
+// #696 作息设置页：配置面验收（照 #676 卡路里／#677 记账／#696 大厨那套同形）。
 //
 // 七组判据：
 //   A 测试隔离在位（#675 替代护栏）
@@ -25,7 +25,7 @@ import { CONFIG_ITEMS, COMMON_ITEM_COUNT, CONFIG_STEM, SETTINGS_OWNER, readPath,
 import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface, writeConfigValues, resetConfigToDefaults, resolveNodeBin } from '../dist/bridge.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, parseSavePayload, isRpcResult } from '../dist/contract.js';
 // 权威侧：技能自己的配置表与三个 key（唯一定义地）。
-import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from '../../skill-schedule/dist/config.js';
+import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_RETIRED, SCHEDULE_CONFIG_STEM } from '../../skill-schedule/dist/config.js';
 import { CONFIG_KEYS } from '../../skill-schedule/dist/cli/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -54,7 +54,6 @@ function probeGuard(extraEnv = {}) {
     const env = { ...process.env };
     delete env.USERPROFILE;
     delete env.HOME;
-    delete env.ILIFE_CONFIG_DIR; // 残留的覆盖变量会把这道门短路掉：探针要判的正是「家目录没隔离」
     Object.assign(env, extraEnv);
     env.NODE_TEST_CONTEXT = 'child-v8'; // 跑在测试运行器里
     return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
@@ -125,12 +124,14 @@ describe('#696 作息设置页 · 配置面', () => {
       }
     });
 
-    it('默认值逐项等于现有代码常量', () => {
+    it('默认值逐项等于现有代码常量（#764 起 files.help／lark.cliPath 出表，进退休清单）', () => {
       assert.equal(SCHEDULE_CONFIG_DEFAULTS.db.name, 'schedule_data.db');
       assert.equal(SCHEDULE_CONFIG_DEFAULTS.html.dir, 'schedule_html/help');
-      assert.equal(SCHEDULE_CONFIG_DEFAULTS.files.help, '作息管家_HELP');
       assert.equal(SCHEDULE_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
-      assert.equal(SCHEDULE_CONFIG_DEFAULTS.lark.cliPath, '', '空串＝走兜底探测');
+      assert.equal(Object.keys(SCHEDULE_CONFIG_DEFAULTS).sort().join(','), 'db,html', '两组键');
+      assert.ok(!('files' in SCHEDULE_CONFIG_DEFAULTS), 'files 组已出表');
+      assert.ok(!('lark' in SCHEDULE_CONFIG_DEFAULTS), 'lark 组已出表');
+      assert.deepEqual([...SCHEDULE_CONFIG_RETIRED].sort(), ['files.help', 'lark.cliPath'], '删掉的两键进退休清单');
     });
 
     it('HTML 产物目录是两段（改造前 HELP_HTML_DIR_PARTS 就是两级）', () => {
@@ -169,8 +170,8 @@ describe('#696 作息设置页 · 配置面', () => {
   });
 
   describe('D 分级呈现', () => {
-    it('常用项恰是行表的前若干行，其余全在高级组', () => {
-      assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT < CONFIG_ITEMS.length);
+    it('常用项恰是行表的前若干行；高级组已空（#764 起无高级键）', () => {
+      assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT <= CONFIG_ITEMS.length);
       for (const i of CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT)) assert.equal(i.tier, 'common', `${i.key} 应在常用组`);
       for (const i of CONFIG_ITEMS.slice(COMMON_ITEM_COUNT)) assert.equal(i.tier, 'advanced', `${i.key} 应在高级组`);
     });
@@ -180,11 +181,11 @@ describe('#696 作息设置页 · 配置面', () => {
       for (const k of ['db.dir', 'db.name', 'html.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
     });
 
-    it('清单一共 5 行（调查的 5 项上设置页候选：db 组占两个键）', () => {
-      assert.equal(CONFIG_ITEMS.length, 5);
+    it('清单一共 3 行（#764 收窄：可改 1＋只读 2；高级组已空）', () => {
+      assert.equal(CONFIG_ITEMS.length, 3);
       assert.equal(COMMON_ITEM_COUNT, 3);
       const advanced = CONFIG_ITEMS.slice(COMMON_ITEM_COUNT).map((i) => i.key);
-      assert.deepEqual(advanced, ['files.help', 'lark.cliPath']);
+      assert.deepEqual(advanced, []);
     });
 
     it('每行都有一句人话 hint（空文案＝页面上那行没法看）', () => {
@@ -210,7 +211,6 @@ describe('#696 作息设置页 · 配置面', () => {
       assert.equal(s.created, false);
       assert.equal(readPath(s.values, 'db.name'), 'probe_696.db');
       assert.equal(readPath(s.values, 'html.dir'), SCHEDULE_CONFIG_DEFAULTS.html.dir, '没改的项应保持默认');
-      assert.equal(readPath(s.values, 'files.help'), SCHEDULE_CONFIG_DEFAULTS.files.help);
     });
 
     it('写：只给一项时，同组其它子项保留现值（技能侧做组内合并）', () => {
@@ -230,7 +230,7 @@ describe('#696 作息设置页 · 配置面', () => {
       assert.ok(r.backupPath !== null && existsSync(r.backupPath), '重置前应留下一份 .bak');
       const s = readConfigSurface();
       assert.equal(readPath(s.values, 'db.name'), SCHEDULE_CONFIG_DEFAULTS.db.name);
-      assert.equal(readPath(s.values, 'lark.cliPath'), '');
+      assert.equal(readPath(s.values, 'lark'), undefined, 'lark 组已出表，回执里不再有它');
     });
 
     it('坏配置给人话、不返空：不认识的键被拦下且报文里点了名', () => {
@@ -312,10 +312,10 @@ describe('#696 作息设置页 · 配置面', () => {
     });
   });
   describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正）', () => {
-    it('目录档只发给目录类行：数据目录（本包恰一行，其余四行不动档）', () => {
+    it('目录档只发给目录类行：数据目录（本包恰一行，其余两行不动档）', () => {
       const dirs = CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort();
       assert.deepEqual(dirs, ['db.dir'], '目录行集合＝{db.dir}（本包恰一行目录）');
-      for (const k of ['db.name', 'html.dir', 'files.help', 'lark.cliPath']) {
+      for (const k of ['db.name', 'html.dir']) {
         assert.equal(CONFIG_ITEMS.find((i) => i.key === k).control, 'text', `${k} 不该改档`);
       }
     });

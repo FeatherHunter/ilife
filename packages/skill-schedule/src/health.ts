@@ -21,7 +21,7 @@
  * 本件与卡路里那份 `packages/skill-calorie/src/health.ts` 同形（同一套受限子集解析、同一套写探针、
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
  */
-import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -29,6 +29,12 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
 import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
+// #764：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
+// 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadScheduleConfig()`（文件不在即落一份默认件）。
+import { dbDirOf, dbFileOf, htmlDirOf } from './fetch/paths.js';
+// #764：飞书 CLI 的查找只剩兜底探测（配置项 `lark.cliPath` 已删），候选顺序的唯一定义地是
+// `src/fetch/feishu.ts` 的 `larkCliCandidates()`——本件直接调它，不留第二份表。
+import { findLarkCli, larkVersion } from './fetch/feishu.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -54,8 +60,9 @@ export const DB_TABLE_THRESHOLD = 3 as const;
 
 const SKILL = 'schedule' as const;
 
-/** 探测两档超时（与 `src/fetch/feishu.ts` 的 15／30 秒同档）。 */
-const LARK_STATUS_TIMEOUT_MS = 15000 as const;
+/** 探测两档超时：快段（找 CLI ＋ `auth status`，上限 8 秒）／慢段（`calendar +agenda`，上限 30 秒）——
+// #761 定稿「状态行异步两段填」落在技能侧的同一组数字上；面板只显示，不自己计时。 */
+const LARK_STATUS_TIMEOUT_MS = 8000 as const;
 const LARK_CALENDAR_TIMEOUT_MS = 30000 as const;
 
 /** 包根：`dist/health.js` 上一级。 */
@@ -271,12 +278,6 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
   return present.has(key) ? '配置文件' : '默认值';
 }
 
-/** 目录那一项的形状是**段串**（本家默认 `schedule_html/help` 两段），段数与 `src/config.ts` 自己的
- *  `splitDirSegments` 同一口径。本件不 import 它：health 面与配置面互锁没有好处，而这条规则只有三行。 */
-function splitDirSegments(value: string): string[] {
-  return value.split(/[\\/]+/).filter((s) => s.length > 0);
-}
-
 /** 目录项：在不在 ＋ 能不能写。 */
 interface DirVerdict {
   readonly exists: boolean;
@@ -355,38 +356,6 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
   }
 }
 
-/** lark-cli 在哪：**照 `src/fetch/feishu.ts` 的取法重写一份只读探测**，不 import 那个模块——
- *  它的 `findLarkCli()` 要经 `loadScheduleConfig()` 取显式值，那会在文件不在时落一份默认配置，
- *  与本件的「只报不改」相反。候选顺序与它逐条对齐：配置项 `lark.cliPath` → Windows npm 全局
- *  → `where`／`which` → 固定路径；找不到返 null（不抛）。 */
-function findLarkCli(configured: string): string | null {
-  if (configured !== '') {
-    try {
-      accessSync(configured, constants.X_OK);
-      return configured;
-    } catch {
-      return null;
-    }
-  }
-  if (process.platform === 'win32') {
-    const cand = join(homedir(), 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
-    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
-    try {
-      const out = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).split(/\r?\n/)[0].trim();
-      if (out) return out;
-    } catch { /* 继续 */ }
-  } else {
-    try {
-      const out = execFileSync('which', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).trim();
-      if (out) return out.split('\n')[0];
-    } catch { /* 继续 */ }
-  }
-  for (const cand of ['/usr/local/bin/lark-cli', '/usr/bin/lark-cli']) {
-    try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
-  }
-  return null;
-}
-
 /** 调一次 lark-cli（只读子命令）：同一套 Windows `cmd.exe /d /s /c` 中转（`.cmd` 直 spawn 报 EINVAL）。
  *  失败一律回 `{ok:false}`，**不抛**——体检不许因为探测失败而崩。 */
 function runLark(cli: string, args: string[], timeoutMs: number): { readonly ok: boolean; readonly stdout: string } {
@@ -430,10 +399,10 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
-  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
+  // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', SCHEDULE_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
   if (read.kind === 'bad') {
     items.push({
       id: 'config.file', title: '配置文件', status: 'red',
@@ -459,7 +428,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ② 数据目录：在不在、能不能写。
   const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
-  const dataDir = dbDirConfigured !== '' ? dbDirConfigured : paths.dataDir;
+  const dataDir = dbDirOf(paths.dataDir, dbDirConfigured);
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
@@ -478,8 +447,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ③ 库文件：在不在 ＋ 表数够不够。
   const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
-  const dbName = dbNameConfigured !== '' ? dbNameConfigured : String(SCHEDULE_CONFIG_DEFAULTS.db.name);
-  const dbFile = join(dataDir, dbName);
+  const dbFile = dbFileOf(dataDir, dbNameConfigured);
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
@@ -516,7 +484,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
   const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = join(dataDir, ...splitDirSegments(htmlDirValue !== '' ? htmlDirValue : String(SCHEDULE_CONFIG_DEFAULTS.html.dir)));
+  const htmlDir = htmlDirOf(dataDir, htmlDirValue);
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
@@ -527,7 +495,7 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
       : htmlVerdict.writable
         ? '在且能写：' + p(htmlDir) + '。'
         : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 html.dir。',
     source: htmlSource,
   });
 
@@ -539,27 +507,31 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     action: '', source: dataDirSource,
   });
 
-  // ⑥ 飞书 CLI（作息特有）：三档——missing＝黄／partial＝黄／full＝绿。三档话术逐字照抄老技能
-  // `scripts/setup_scenarios.py:181-192` 的 `_feishu_item`；装法那句也是老技能自己的
-  // `install_cmds`／`auth_note`（`:206-212`，含「npm 上 lark-cli 是僵尸包」那条警告）。
-  const larkConfigured = textOf(readValue(values, 'lark', 'cliPath'));
-  const larkCli = findLarkCli(larkConfigured);
+  // ⑥ 飞书 CLI（作息特有，#764 照 #761 定稿重写）：三档与面板「飞书 CLI」状态行**同判据、同话术**
+  // （判据就跑 `src/fetch/feishu.ts` 里那两条：`auth status` 有 `openId`，且 `calendar +agenda` 退 0）——
+  // 面板只显示这一项，不重写一个字。
+  //   · 没找到 CLI → 红：「没找到飞书 CLI」＋ 复制 prompt ＋ 官网行；
+  //   · 找到了但没就绪 → 黄：「找到了 <路径>，但还没登录／日历读不到」；
+  //   · 就绪 → 绿：CLI 路径与版本。
+  // **红只留给「没找到 CLI」这个确定性事实**（#761 定稿第 6 条）。
+  const larkCli = findLarkCli();
   const tier = larkTier(larkCli);
   const larkWhere = larkCli === null ? '' : p(larkCli);
+  const larkVersionText = tier === 'full' && larkCli !== null ? larkVersion(larkCli) : '';
   items.push({
     id: 'lark.cli', title: '飞书 CLI',
-    status: tier === 'full' ? 'green' : 'yellow',
+    status: tier === 'full' ? 'green' : tier === 'partial' ? 'yellow' : 'red',
     message: tier === 'full'
-      ? '飞书同步已配置(lark-cli 已授权,日历可写),配合飞书效果最好（' + larkWhere + '）。'
+      ? '已就绪：' + larkWhere + '（版本 ' + larkVersionText + '）。'
       : tier === 'partial'
-        ? '飞书同步配置不完整(lark-cli 已装但未授权或日历不可写)。'
-        : '飞书同步未配置(强烈建议配置 · 配合飞书效果最好;不配则飞书同步不可用)。',
+        ? '找到了 ' + larkWhere + '，但还没登录／日历读不到。'
+        : '没找到飞书 CLI：面板「飞书 CLI」那一行有安装指引（复制 prompt 照做）。',
     action: tier === 'full'
       ? ''
       : tier === 'partial'
-        ? '说「配置飞书」补全授权'
-        : '说「配置飞书」补装（npm install -g @larksuite/cli；官方包是 @larksuite/cli(bin 名 lark-cli),npm 上 lark-cli 是僵尸包,严禁安装）',
-    source: larkConfigured !== '' ? '配置文件' : '默认值',
+        ? '按面板那一行的安装 prompt 走完登录与授权，再点重新检测。'
+        : '装好并登录后，在面板上点重新检测。',
+    source: '默认值',
   });
 
   // ⑦ 分类允许清单（作息特有）：查的是**新仓这份实现**＝`src/policy/category.ts`

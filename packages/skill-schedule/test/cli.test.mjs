@@ -3,12 +3,9 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, delimiter } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { saveConfig } from 'base-link-core';
-import { SCHEDULE_CONFIG_DEFAULTS } from '../dist/config.js';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
-
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
 /** 临时**家目录**（#763 起隔离＝家目录注入）：配置落 `<它>/.ilife/schedule.yaml`，库落 `<它>/.ilife/data/`。 */
@@ -27,19 +24,31 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
-function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) } });
-}
 const P = (o) => JSON.stringify(o);
+
+/** 子进程的 PATH：只留 node 与系统目录——真机上可能装着真 lark-cli（`where` 会命中），
+ *  本文件的判据要的是「远端一律不在场」的确定性红，故把那条路掐掉。
+ *  （#764 起配置项 `lark.cliPath` 已删，钉红只能靠查无此 CLI。） */
+function noLarkPath() {
+  const nodeDir = NODE === 'node' ? dirname(process.execPath) : dirname(NODE);
+  const parts = process.platform === 'win32'
+    ? [nodeDir, join(process.env.SystemRoot || 'C:\\Windows', 'System32'), process.env.SystemRoot || 'C:\\Windows']
+    : [nodeDir, '/usr/bin', '/bin'];
+  return parts.join(delimiter);
+}
+
+function run(args, envExtra) {
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), PATH: noLarkPath(), ...(envExtra || {}) } });
+}
 
 before(() => {
   CFG = mkdtempSync(join(tmpdir(), 'schedcli-home-'));
   useHome(CFG);          // 本进程也要接管家目录（`saveConfig` 与子进程读的是同一份）
   requireIsolatedHome(); // 接完当场自证
   DB = join(configDirOf(CFG), 'data');
-  // #695：远端一律不可用——显式值从配置项 `lark.cliPath` 取（不再有 `LARK_CLI_PATH`），
-  // 这里钉到一条不存在的路径，远端门必红、本地那一侧照写。
-  saveConfig('schedule', SCHEDULE_CONFIG_DEFAULTS, { lark: { cliPath: join(DB, 'no-lark-cli') } });
+  // #764：远端一律不可用——配置项 `lark.cliPath` 已删（不再有显式覆盖点），
+  // 这里靠 `run()` 的 PATH 掐掉真 CLI 的落点（npm 全局候选用临时家目录、本机 PATH 不继承），
+  // 故远端门必红（`findLarkCli()` 返 null）、本地那一侧照写。
   // 种子：9 月两块 + 8 月一块（对比用）+ 日程一条
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-06', time_start: '09:00', time_end: '10:00', activity: '调优', category: '工作.AI调优' })]).status, 0);
   assert.equal(run(['schedule.record.write', '--params', P({ op: 'add', date: '2026-09-07', time_start: '07:00', time_end: '08:00', activity: '跑步', category: '健康.运动' })]).status, 0);

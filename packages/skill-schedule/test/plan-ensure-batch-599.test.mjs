@@ -1,7 +1,7 @@
 /**
  * #599 · 补计划多天批量（写侧 `dates[]` ＋ SKILL 示例）。
  *
- * 挡板经 `tooling/contract-lark-stub.mjs` 注入（#695 起经配置文件 `lark.cliPath`，见 `./helpers/config-seam.mjs`；原 `LARK_CLI_PATH` 已删），禁真飞书。
+ * 挡板经 `tooling/contract-lark-stub.mjs` 注入（#764 起经 PATH 首位走查找链，见 `./helpers/config-seam.mjs`；配置项 `lark.cliPath` 已删，原 `LARK_CLI_PATH` 已删），禁真飞书。
  * B1 一次 7 天 → 落 7 行；B2 重复调用幂等不增行；B3 远端失败 exit 非 0 且点名天；
  * B4 SKILL 单条（速查表）＋批量（手写段）照抄即跑（同 #660 V5 形态：从文档原样取参喂出口）。
  */

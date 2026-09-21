@@ -19,10 +19,13 @@
  */
 import { join, resolve } from 'node:path';
 import { loadScheduleConfig, splitDirSegments } from '../config.js';
+// #764：落点子目录默认值的唯一定义地是 `src/fetch/paths.ts` 的 `DEFAULT_HELP_DIR`
+// （＝配置项 `html.dir` 的默认值，具名引用）；本件只转用，不留第二份字面量。
 
-/** 落点子目录的默认值：＝改造前的代码常量 `HELP_HTML_DIR_PARTS` 两段（老实物两级逐字）。
- *  配置项 `html.dir` 空串即用它。 */
-export const DEFAULT_HELP_DIR = 'schedule_html/help' as const;
+/** 落点子目录的默认值：唯一定义地是 `src/fetch/paths.ts` 的同一项（落点算式的唯一定义地）；
+ *  本件只转用，不留第二份字面量。 */
+import { DEFAULT_HELP_DIR } from '../fetch/paths.js';
+export { DEFAULT_HELP_DIR };
 
 /** 落点子目录的段数组：配置 `html.dir`（空串＝默认）拆成段。 */
 export function helpDirSegments(): string[] {
