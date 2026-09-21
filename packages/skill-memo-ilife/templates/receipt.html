@@ -67,7 +67,10 @@ button.copy{background:var(--card);color:var(--blue);border:1.5px solid var(--bl
 
 <section class="panel">
 <strong>数据与日志</strong>
-<div class="hint">点复制数据保存这次的结果 · 点复制日志用于反馈问题（日志不含隐私内容）</div>
+<dl class="hint" style="line-height:1.8">
+<dt>复制数据</dt><dd>保存这次的结果，可粘贴到笔记存档</dd>
+<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
+</dl>
 <div class="hm-actions">
 <button class="copy" id="btnData" onclick="copyText(this.dataset.t)" data-t="">复制数据</button>
 <button class="copy" id="btnLog" onclick="copyText(this.dataset.t)" data-t="">复制日志</button>

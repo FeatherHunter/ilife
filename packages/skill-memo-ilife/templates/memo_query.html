@@ -48,13 +48,16 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 <section id="list"></section>
 <section class="panel">
 <strong>筛选快照</strong>
-<p class="small" style="margin-top:6px">跟随筛选/展开实时变化 · 粘贴给 AI 继续下一步(复制数据 = 初始全量存档)</p>
+<p class="small" style="margin-top:6px">跟随筛选与展开实时变化，可以粘贴给 AI 继续下一步。复制数据 = 初始全量存档。</p>
 <div class="toolbar"><button class="copy ghost" data-copy-receipt onclick="copyFiltered()">复制筛选结果</button></div>
 <pre id="receipt" style="display:none"></pre>
 </section>
 <section class="panel">
 <strong>数据与日志</strong>
-<p class="small" style="margin-top:6px">点复制数据保存当前结果 · 点复制日志用于反馈问题(日志不含隐私内容)</p>
+<dl class="small" style="margin-top:6px;line-height:1.8">
+<dt>复制数据</dt><dd>保存当前结果，可粘贴到笔记存档</dd>
+<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
+</dl>
 <div class="hm-actions">
 <button class="copy ghost" onclick="copyData()">复制数据</button>
 <button class="copy ghost" onclick="copyLog()">复制日志</button>

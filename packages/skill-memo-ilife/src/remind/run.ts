@@ -17,24 +17,79 @@ import type { MemoDb } from '../db/readonly.js';
 import { addReminderRow, getNote, listReminderRows } from '../db/readonly.js';
 import { checkDueReminders, listCompletedReminders } from './store.js';
 import { needId } from '../shared/validators.js';
+import { toRows } from '../shared/rows.js';
 import { normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from './policy.js';
+import { buildListPage, buildReceiptPage, querySnapshot, type ListPageScene } from '../render/index.js';
+
+/** 本条命令的**两格产物**（册子 seq 16／17）：一个视图，两种页。
+ *  词随它服务的 HELP 场景住（#855 口径），故场景 id 由调用它的路由声明给；不带即「看提醒」那一格。 */
+const SCENE_REMINDERS_ACTIVE: ListPageScene = 'memo_reminders_active';
+const SCENE_COMPLETED: ListPageScene = 'memo_completed_reminders';
+function sceneOf(params: Record<string, unknown>): ListPageScene {
+  const s = params.scene;
+  if (s === SCENE_COMPLETED) return SCENE_COMPLETED;
+  if (s === undefined || s === '' || s === SCENE_REMINDERS_ACTIVE) return SCENE_REMINDERS_ACTIVE;
+  fail(2, 'scene 只认 ' + SCENE_REMINDERS_ACTIVE + '／' + SCENE_COMPLETED);
+}
 
 /** `memo.remind`：提醒四视图（到期／已完成／有效／已废弃）。 */
 export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandOut {
-  // 到期判定（老 `due`）：读＋写 notified，定时壳不搬。
+  // 到期判定（老 `due`）：读＋写 notified，定时壳不搬。**到期这一支不出页**——册子本域只有两格
+  // （seq 16「看提醒」／seq 17「查已提醒备忘」），到期是壳里的触发视图，等 #834 收口时另判。
   if (params.mode === 'due' || params.due === true) {
     const items = checkDueReminders(db);
     return { data: { items, total: items.length }, exit: 0 };
   }
-  // 已完成视图（老 `completed`）；`done:true` 是它的兼容写法。
+  // 已完成视图（老 `completed`）：提醒行 ＋ 它带出来的打卡笔记 ＋ 触发时间（`listCompletedReminders`）。
   if (params.mode === 'done' || params.done === true) {
     const items = listCompletedReminders(db);
-    return { data: { items, total: items.length }, exit: 0 };
+    const snap = querySnapshot(toRows(items));
+    return {
+      data: { items, total: items.length },
+      exit: 0,
+      deliver: buildListPage({
+        scene: SCENE_COMPLETED,
+        title: '查已提醒备忘',
+        subtitle: items.length === 0
+          ? '还没有「已触发并打了卡」的提醒'
+          : '已被打卡带回的提醒 ' + items.length + ' 条',
+        summary: snap.summary,
+        sections: snap.sections,
+        copyLog: {
+          thinking: '已触发提醒视图 · 提醒行经打卡笔记的 reminder_id 反查（老 completed_reminders 口径）',
+          data_structure: 'reminders 表 × notes 表（category=打卡）· reminder_content／checkin_content／checkin_at／period',
+          call_chain: 'memo.remind done:true → listCompletedReminders → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
+          exception: '无',
+        },
+        items,
+      }),
+    };
   }
   const status = params.status === undefined ? 'active' : String(params.status);
   if (status !== 'active' && status !== 'dismissed') fail(2, 'status 只认 active/dismissed');
   const items = listReminderRows(db, status);
-  return { data: { items, total: items.length }, exit: 0 };
+  const snap = querySnapshot(toRows(items));
+  const scene = sceneOf(params);
+  return {
+    data: { items, total: items.length },
+    exit: 0,
+    deliver: buildListPage({
+      scene,
+      title: '看提醒',
+      subtitle: items.length === 0
+        ? (status === 'active' ? '没有有效提醒' : '没有已废弃提醒')
+        : (status === 'active' ? '有效期内的提醒 ' : '已废弃的提醒 ') + items.length + ' 条',
+      summary: snap.summary,
+      sections: snap.sections,
+      copyLog: {
+        thinking: '提醒列表视图 · ' + (status === 'active' ? '只看有效（status=active）' : '只看已废弃（status=dismissed）'),
+        data_structure: 'reminders 表 · id／note_id／remind_at／repeat_type／repeat_rule／content／status／note_content',
+        call_chain: 'memo.remind → listReminderRows → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
+        exception: '无',
+      },
+      items,
+    }),
+  };
 }
 
 // #850 · 提醒写参数（HELP 蛇形为主，驼峰兼容既有 `memo.create` 两步合一）：`note_id`／`noteId`／`id`
@@ -84,6 +139,38 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
     repeat_rule: rule,
     content,
   });
+  // #828 · 缺省落「设提醒」那一格（册子 seq 15，通用回执族）。关联笔记时对象行写那条笔记，
+  // 独立提醒时写提醒自己——两种都从库里的行取（权威），不照抄入参。
+  const note = noteId === null ? null : getNote(db, noteId);
+  const deliver = buildReceiptPage({
+    scene: 'memo_remind_existing',
+    title: '设提醒',
+    message: '提醒已设置' + (noteId !== null ? '（笔记 ' + noteId + '）' : '（独立提醒）'),
+    badges: { category: note === null ? '独立提醒' : note.category, sub: note === null ? null : note.sub_category },
+    summary: [
+      note === null ? '对象：独立提醒（未关联笔记）' : '对象：' + note.content.slice(0, 40),
+      '提醒时间：' + (at ?? '(未定)'),
+      '重复：' + type + (rule === null ? '' : '（' + rule + '）'),
+      '提醒内容：' + content,
+    ],
+    sections: [
+      { heading: '提醒行', rows: ['提醒 ID：' + row.id, '状态：' + row.status, '写入时间：' + row.created_at] },
+    ],
+    receipt: {
+      entityLabel: note === null ? '提醒' : note.category,
+      entityId: note === null ? row.id : note.id,
+      local: 'created',
+      remote: 'not-applicable',
+      remoteId: null,
+    },
+    copyLog: {
+      thinking: '设提醒 · 只 INSERT 提醒行，不建笔记（老 `remind [note_id] --at --content` 口径）',
+      data_structure: 'reminders 表 · note_id／remind_at／repeat_type／repeat_rule／content／status',
+      call_chain: 'memo.reminder → addReminderRow → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
+      exception: '无',
+    },
+    retryPrompt: '若这条提醒不对，请把要改的提醒 ID 与要改成的样子发我，我废弃旧条重开一条：设提醒',
+  });
   return {
     data: {
       ok: true,
@@ -96,5 +183,6 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
       content: row.content,
     },
     exit: 0,
+    deliver,
   };
 }

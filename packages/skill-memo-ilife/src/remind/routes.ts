@@ -12,6 +12,8 @@ export const REMIND_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_reminders_active',
     key: 'memo.remind',
     cli: 'memo-cmd-read memo.remind',
+    // 页落哪一格（册子 seq 16）；`memo.remind` 一条命令服务两格，靠这个参数分辨。
+    preset: { scene: 'memo_reminders_active' },
   },
   {
     order: 9,
@@ -19,15 +21,22 @@ export const REMIND_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_completed_reminders',
     key: 'memo.remind',
     cli: 'memo-cmd-read memo.remind --params \'{"mode":"done"}\'',
-    preset: { done: false },
+    // #828 纠错：preset 原写 `{ done: false }` —— 与「已完成视图」的判据（`mode==="done" || done===true`）
+    // 正好相反，于是落到 status=active 分支，与 order 8「看提醒」出**同一条命令同一种视图**。
+    // 本场景是「已触发的提醒 + 关联打卡笔记 + 触发时间」，权威实现＝`listCompletedReminders`
+    // （老 `completed_reminders`），故 preset 改 `{ done: true }`；`scene` 点明页落哪一格（册子 seq 17）。
+    preset: { done: true, scene: 'memo_completed_reminders' },
   },
   {
     order: 10,
     wakeWord: '设提醒',
     scene: 'memo_remind_existing',
     key: 'memo.reminder',
-    cli: 'memo-cmd-read memo.reminder --params \'{"content":"取牛奶","remind_at":"2026-10-01 09:00"}\'',
-    needs: ['remind_at'],
+    cli: 'memo-cmd-read memo.reminder --params \'{"note_id":15,"content":"该做保养了","remind_at":"2026-10-01 09:00"}\'',
+    // #828 纠错：原只声明 `remind_at` 一个槽位，而命令的 `content` 是必填（老 `add_reminder`
+    // `memo_cli.py:1116-1117` 逐字「请填入提醒内容」）⇒ 照总表跑必 exit 2。缺什么当场报什么，
+    // 不靠人猜；`note_id` 不列入 needs（HELP 场景 45 行写「可选，可不关联具体笔记」）。
+    needs: ['content', 'remind_at'],
   },
   {
     order: 31,
