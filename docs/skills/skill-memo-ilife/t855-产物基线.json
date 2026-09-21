@@ -1,0 +1,156 @@
+{
+  "ticket": "#855",
+  "madeAt": "2026-09-21T05:14:22.546Z",
+  "cases": [
+    {
+      "name": "记一条（备忘）",
+      "exit": 0,
+      "key": "memo.create",
+      "shape": "receipt",
+      "landing": "〈临时根〉\\memo_html\\记情绪_〈时间戳〉.html",
+      "bytes": 17013,
+      "sha256": "c44565c3eded1fa6636cb24555b87a0f365bd910700ade6f5ca193d6f4bcbb29",
+      "products": [
+        "记情绪_〈时间戳〉.html"
+      ]
+    },
+    {
+      "name": "搜备忘",
+      "exit": 0,
+      "key": "memo.search",
+      "shape": "list",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "看备忘（单条）",
+      "exit": 0,
+      "key": "memo.detail",
+      "shape": "detail",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "改备忘",
+      "exit": 0,
+      "key": "memo.update",
+      "shape": "receipt",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "批量改分类（收集向导）",
+      "exit": 0,
+      "key": "memo.batch",
+      "shape": "receipt",
+      "landing": "〈临时根〉\\memo_html\\批量改分类_〈时间戳〉.html",
+      "bytes": 22069,
+      "sha256": "24d0a14581b30c3fe9c7c8de0b7f8b86a3ba5c66bf7c72951cb9d1018a93f3ab",
+      "products": [
+        "批量改分类_〈时间戳〉.html"
+      ]
+    },
+    {
+      "name": "统计",
+      "exit": 0,
+      "key": "memo.stats",
+      "shape": "stat",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "看提醒",
+      "exit": 0,
+      "key": "memo.remind",
+      "shape": "list",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "设提醒（挂旧笔记）",
+      "exit": 0,
+      "key": "memo.reminder",
+      "shape": "receipt",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "查心愿",
+      "exit": 0,
+      "key": "memo.wish",
+      "shape": "list",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "删备忘（真删）",
+      "exit": 0,
+      "key": "memo.remove",
+      "shape": "receipt",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "按时间搜备忘",
+      "exit": 0,
+      "key": "memo.search",
+      "shape": "list",
+      "landing": null,
+      "bytes": 0,
+      "sha256": null,
+      "products": []
+    },
+    {
+      "name": "首次使用（初始化渲染）",
+      "exit": 0,
+      "key": "memo.init",
+      "shape": "receipt",
+      "landing": "〈临时根〉\\memo_html\\初始化报告_〈时间戳〉.html",
+      "bytes": 80017,
+      "sha256": "2c975cccd7d03176694eb0a1d6a4b308fa401f20a181d8b78273047abb197ee7",
+      "products": [
+        "初始化报告_〈时间戳〉.html"
+      ]
+    },
+    {
+      "name": "备忘录 HELP（全量文件）",
+      "exit": 0,
+      "key": "memo.help.lookup",
+      "shape": "list",
+      "landing": "〈临时根〉\\memo_html\\备忘录_HELP_〈时间戳〉.html",
+      "bytes": 116643,
+      "sha256": "8cb9e43b8b826742aec5bd8c3652844a67ae0deae8156e1814381eee7ffc389f",
+      "products": [
+        "备忘录_HELP_〈时间戳〉.html"
+      ]
+    },
+    {
+      "name": "HELP 速查表",
+      "exit": 0,
+      "key": "memo.help.lookup",
+      "shape": "list",
+      "landing": "〈临时根〉\\memo_html\\备忘录_速查表_〈时间戳〉.html",
+      "bytes": 4567,
+      "sha256": "4d47c04587ce7f67b1fea36b25d9a7c4357c1e09e2fd808871323f073fcdebed",
+      "products": [
+        "备忘录_速查表_〈时间戳〉.html"
+      ]
+    }
+  ]
+}
