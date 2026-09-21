@@ -59,6 +59,7 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 心愿排期 | memo.wish | list | `memo-cmd-read memo.wish` |
 | 记一条 | memo.create | receipt | `memo-cmd-read memo.create` |
 | 添加笔记 | memo.create | receipt | `memo-cmd-read memo.create` |
+| 备忘录同步 | memo.sync | receipt | `memo-cmd-read memo.sync` |
 | 记心愿 | memo.create | receipt | `memo-cmd-read memo.create --params '{"category":"心愿"}'` |
 | 记打卡 | memo.create | receipt | `memo-cmd-read memo.create --params '{"category":"打卡"}'` |
 | 记情绪日记 | memo.create | receipt | `memo-cmd-read memo.create --params '{"category":"情绪日记"}'` |

@@ -14,6 +14,7 @@ export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; pre
 // #850（命令面四问实施）：`按时间搜备忘` 改认 HELP 的 `start`＋`end`（`timeRange` 退役，无权威出处）；
 // `设提醒` 改指新写命令 `memo.reminder`（`memo.create` 的两步合一不动）；新增 `首次使用`→`memo.init`、
 // `删备忘`→`memo.remove`（`删心愿／删打卡／删情绪日记` 三族同步改指真删，修危险缺陷）。
+// #832（sync 域）：新增 `备忘录同步`→`memo.sync`（`memo.sync` 的键与实现自 #665 就在，缺的只是词）。
 export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '首次使用', key: 'memo.init' },
   { phrase: '删备忘', key: 'memo.remove', needs: ['id'] },
@@ -33,6 +34,9 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '心愿排期', key: 'memo.wish' },
   { phrase: '记一条', key: 'memo.create' },
   { phrase: '添加笔记', key: 'memo.create' },
+  // #832（sync 域）：HELP 官方源 `memo_sync_feishu` 的唯一唤醒词 `备忘录同步` → `memo.sync`。
+  // 本行此前缺失，本域在路由表里等于空（命令在、词不在）——这是本域 1 场景走通的第一块。
+  { phrase: '备忘录同步', key: 'memo.sync' },
 ];
 // 注（#760）：「飞书授权」唤醒词随授权三支退役（定稿 #759：授权交由复制安装指引那段 prompt）。
 // `memo.auth` 键保留给只读诊断（`status`／`diag`），故 `MemoKey` 与分派里的分支不动，只是不再有唤醒短语。

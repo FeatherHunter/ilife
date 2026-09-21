@@ -31,11 +31,15 @@ import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, cru
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
 // #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
 import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish, planWizard, completeWizard } from '../wish/index.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError } from '../render/index.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError, buildReceiptPage } from '../render/index.js';
+import type { ReceiptScene } from '../render/index.js';
+import type { WishReceipt } from '../wish/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
 import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
+// #832（sync 域）：产物名主体取自册子唯一定义地（`bookletFileStem`），不在本件手写第二份名字。
+import { bookletFileStem } from '../help/index.js';
 import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
@@ -220,6 +224,60 @@ function asIds(value: unknown): number[] {
   return value.map((v) => needId(v, 'ids'));
 }
 
+/** #831 · 从写侧回执里取笔记 id：写侧两种说法都以「：id」结尾（`已记一条：7`／`已存在这条心愿（未新建）：7`）。
+ *  取不到即 null（调用方按「未新建」出页，不猜一个号）。 */
+function noteIdOfMessage(message: string): number | null {
+  const m = /(\d+)\D*$/.exec(message);
+  const n = m === null ? NaN : Number(m[1]);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/** #831 · 回执页的槽位：对象行 ／ 分类徽章 ／ 事实条 —— **从 notes 表那一行取**（不照抄入参）。 */
+function receiptOptsOf(note: { id: number; category: string; sub_category: string | null; content: string }): {
+  entityLabel: string;
+  entityId: number;
+  category: string;
+  sub: string | null;
+  summary: string[];
+} {
+  return {
+    entityLabel: note.category,
+    entityId: note.id,
+    category: note.category,
+    sub: note.sub_category,
+    summary: ['笔记 ID ' + note.id, '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category)],
+  };
+}
+
+/** #831 · 「通用回执」族三格的整页交付（`memo.create`／`memo.update`／`memo.remove`）。
+ *
+ *  回执数据只有一处来源 —— policy 的顶层分类与写侧回执（`WishReceipt`）本身；本函数只做
+ *  「回执 → 本的槽位」的翻译，页面形状一律交给族定义地 `buildReceiptPage`（不在此另立布局）。
+ *  命令中文名与唤醒词取自 HELP 的场景主名（`sceneTitle`），与册子主体同名。 */
+function buildReceipt(
+  scene: ReceiptScene,
+  title: string,
+  r: WishReceipt,
+  opts: { entityLabel: string; entityId: string | number; category?: unknown; sub?: unknown; summary: string[] },
+): PageDeliver {
+  return buildReceiptPage({
+    scene,
+    title,
+    message: r.message,
+    badges: { category: normalizeTop(opts.category), sub: opts.sub === undefined || opts.sub === null ? null : String(opts.sub) },
+    summary: opts.summary,
+    sections: [],
+    receipt: { entityLabel: opts.entityLabel, entityId: opts.entityId, local: r.local, remote: r.remote, remoteId: r.remoteId },
+    copyLog: {
+      thinking: title + ' · 写命令回执渲染为通用回执页（页族定义处 src/render/receipt.ts）',
+      data_structure: 'notes／reminders 两表；回执字段 local／remote／remoteId 取自写侧',
+      call_chain: 'cmd_read dispatch → ' + scene + ' → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
+      exception: '无',
+    },
+    retryPrompt: '若这一页的内容不对，请把要改的那一条（笔记 ID 与要改成的样子）发我，我重跑一次：' + title,
+  });
+}
+
 // 快照函数吃纯记录（跨 JSON 边界）：各域条目在此处一次转成记录形。
 type PageRow = Record<string, unknown>;
 const toRows = (xs: readonly object[]): PageRow[] => xs.map((x) => ({ ...(x as PageRow) }));
@@ -359,7 +417,15 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         repeatRule: params.repeatRule,
         due: params.due,
       });
-      return { data: r.receipt, exit: r.exit };
+      // #831：回执页缺省落盘（只有本族这三格出页；`memo.update` 的批量／完成心愿两支不出本族页）。
+      // 页内的分类与子分类取自 notes 表那一行（权威），不照抄入参；`memo.create` 的回执不带 id 字段，
+      // 故从回执末数取（写侧两种说法都以「：id」结尾）。
+      const createdId = noteIdOfMessage(r.receipt.message);
+      return {
+        data: r.receipt,
+        exit: r.exit,
+        deliver: buildReceipt('memo_add_mood', '记情绪', r.receipt, createdId === null ? { entityLabel: '情绪日记', entityId: '未新建', summary: ['本次未新建笔记'] } : receiptOptsOf(getNote(db, createdId))),
+      };
     }
     case 'memo.update': {
       // 批量排期（老 `set-due`）：一批 id ＋ 一个排期日期（空值＝清期），走心愿那条合成写。
@@ -390,6 +456,11 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       if (params.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, params.due);
       if (Object.keys(patch).length === 0) fail(2, '至少需要提供一个更新字段：content/category/sub/media/reminderId/due');
       const r = updateWish(db, { id, patch });
+      // #831：情绪日记那条走本族页（改后那一行是权威，回执页照它出）。
+      const after = getNote(db, id);
+      if (after.category === '情绪日记') {
+        return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_update_mood', '改情绪', r.receipt, receiptOptsOf(after)) };
+      }
       return { data: r.receipt, exit: r.exit };
     }
     case 'memo.remove': {
@@ -575,7 +646,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         extra: { ...r.receipt },
         message: r.receipt.message,
       });
-      return { data: r.receipt, exit: r.exit, deliver: { html: fillMemoPage('sync_report', payload), stem: '同步报告' } };
+      return { data: r.receipt, exit: r.exit, deliver: { html: fillMemoPage('sync_report', payload), stem: bookletFileStem('memo_sync_feishu') } };
     }
     case 'memo.batch': {
       // #665 批量改分类：不带目标分类即收集（出向导页）；带目标分类＋ids 即执行。

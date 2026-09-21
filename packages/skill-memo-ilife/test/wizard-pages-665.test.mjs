@@ -100,7 +100,7 @@ test('#665 W3 批量改分类：收集出一张向导页，执行改分类', () 
 test('#665 W4 同步报告：memo.sync 随行出报告页（默认落盘＋显式路径）', () => {
   const s = seam('t665-w4-');
   assert.equal(newRun(s, 'memo.create', { title: '学游泳', body: '学游泳', category: '心愿' }).status, 0);
-  // 缺省（不带 --html）：落默认 memo_html/同步报告*.html，照样给 delivery。
+  // 缺省（不带 --html）：落默认 memo_html/备忘录同步*.html（#832 起主体＝册子第 29 格），照样给 delivery。
   const plain = newRun(s, 'memo.sync', {});
   assert.equal(plain.status, 0, String(plain.stderr));
   const env0 = envelope(plain);
