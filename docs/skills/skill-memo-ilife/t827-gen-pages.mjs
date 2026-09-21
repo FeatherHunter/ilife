@@ -15,6 +15,11 @@ const CLI = join(ROOT, 'packages', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.
 const OUT = join(ROOT, '.scratch', 't827', 'pages');
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
+// 页群重建 ⇒ 上一跑的读数一律作废：读数链（`t867-facts.mjs`）缺件才现产，留着旧的会被「复用」，
+// 而旧读数记的是旧页名，装配器当场对不上（2026-09-21 实测踩过一次，42 条 FAIL）。
+for (const stale of ['sep.json', 'resp.json', 'fmt.json', 'facts.json', 'engine-score.json', 'sep-探针汇总.json']) {
+  rmSync(join(ROOT, '.scratch', 't827', stale), { force: true });
+}
 
 const dbDir = mkMemoDb('memo-827-pages-');
 const DAY = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);

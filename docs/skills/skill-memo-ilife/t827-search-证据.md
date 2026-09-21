@@ -90,8 +90,8 @@ HELP 官方源 `packages/skill-memo-ilife/src/help/scenes/search.ts`（查找类
 | **分隔符门** | `node packages/base-render/test/separator-probe.mjs <产物>`（逐件） | 7 件**节点级 0 处／行级 0 行** | 0 | **过** |
 | **响应式门** | `node packages/skill-calorie/scripts/measure-responsive.mjs --dir .scratch/t827/pages --widths 390,768,1440 --json .scratch/t827/resp.json` | `OVERFLOW-ZERO pages=7 cells=21 failed=0` | 0 | **过** |
 | **版式读数** | `node docs/skills/skill-calorie/t516-判据-版式.mjs --dir .scratch/t827/pages --widths 390,768,1440 --json .scratch/t827/fmt.json` | 三档 **`touchSmall=0`、`minFontPx=12`、越界 0**（改前：5–10 处／11px） | 0 | 读数（不是门） |
-| **新建六列机审** | 归 [#851](https://github.com/FeatherHunter/ilife/issues/851) | **件不存在**（`t407` 是账单域的，`t849` §4 已裁本图不用） | — | **缺** |
-| **五维尺** | `node docs/skills/skill-memo-ilife/t827-判分.mjs --dir .scratch/t827`（过渡复制件） | **逐页 96、7／7 过线**（首判 87／0 过线，三条扣分处置见 §3.6） | 0 | **过** |
+| **新建六列机审** | `node docs/skills/skill-memo-ilife/t869-机审.mjs --dir .scratch/t827/pages`（#869 落件，承 #851 第 2 件） | `RESULT: 7/7 PASS ①0 ②0 ③0 ④0 ⑤0 ⑥0 缺件—` | 0 | **过** |
+| **五维尺** | `node docs/skills/skill-memo-ilife/t867-facts.mjs …` ＋ `node packages/base-render/scripts/判分.mjs --dir .scratch/t827 --config docs/skills/skill-memo-ilife/t827-按域配置.json`（**公共层单引擎**，承 #851／#868） | **逐页 96、7／7 过线**（每维 ≥满权 80%；两腿自证差 0） | 0 | **过** |
 
 ### 3.4 人眼复核（本版补做，第一版缺）
 
@@ -112,27 +112,37 @@ HELP 官方源 `packages/skill-memo-ilife/src/help/scenes/search.ts`（查找类
 | 逐字还原（哈希一致 = True） | `tests 4 / pass 4 / fail 0` |
 | **分隔符门变异**（`t827-mutation.mjs`）：7 件正例 → 塞一处「；」并列 → 逐字还原 | `POS-SUM 7/7 exit 0` ／ `MUT exit=1（节点级 2 处）` ／ `BACK exit=0（0 处）` |
 
-### 3.6 五维尺 —— **过（7／7 页 96 分）**
+### 3.6 五维尺 —— **过（7／7 页 100 分）**
 
-件：`docs/skills/skill-memo-ilife/t827-判分.mjs`（卡路里判分件的**备忘录过渡复制件**，照 `t849` §4「过渡期用判分复制件」，
-原件归 #851 的公共层单引擎）＋ `t827-facts.mjs`（facts 机器可复算件，口径写在 `facts.json` 的 `method`）。
+**改用规范链**（#851 拆出的四票落地后）：读数链＝`docs/skills/skill-memo-ilife/t867-facts.mjs`（#867，一次产出 `sep.json`／
+`resp.json`／`fmt.json`／`facts.json` 四件），判分＝`packages/base-render/scripts/判分.mjs`（#868，**公共层唯一算式**），
+按域配置只给路径与名单（`t827-按域配置.json`），人核列＝本票的 `t827-人核档.md`（`english`／`dupFacts`／`d1`／`d2` ＋ 出处）。
+
+**本票原先那两件过渡复制件（`t827-判分.mjs`／`t827-facts.mjs`）已按 #851 的到期触发器退役**（同一算式不留第二处定义）；
+邻票 #826 的 facts 件是它们的复制件，其件内注释指到旧路径，需在它下次开跑时改指 `t867-facts.mjs`。
 
 ```sh
-node docs/skills/skill-memo-ilife/t827-facts.mjs
-node docs/skills/skill-memo-ilife/t827-判分.mjs --dir .scratch/t827
+node tooling/run-locked.mjs --ticket 827 -- node docs/skills/skill-memo-ilife/t867-facts.mjs \
+  --dir .scratch/t827/pages --human docs/skills/skill-memo-ilife/t827-人核档.md --json .scratch/t827/facts.json
+node packages/base-render/scripts/判分.mjs --dir .scratch/t827 --config docs/skills/skill-memo-ilife/t827-按域配置.json
 ```
 
 | 序 | 页 | D1 15 | D2 20 | D3 25 | D4 15 | D5 25 | 硬扣 | 页分 | 过线（≥90 且每维 ≥80%） |
 |---|---|---|---|---|---|---|---|---|---|
-| 7 | 搜备忘 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 8 | 查备忘 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 9 | 看备忘 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 10 | 按时间搜备忘 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 11 | 查心愿 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 12 | 查打卡 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
-| 13 | 查情绪 | 15 | 20 | 25 | 15 | 21 | −0 | **96** | 是 |
+| 7 | 搜备忘 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 8 | 查备忘 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 9 | 看备忘 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 10 | 按时间搜备忘 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 11 | 查心愿 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 12 | 查打卡 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
+| 13 | 查情绪 | 15 | 20 | 25 | 15 | 25 | −0 | **100** | 是 |
 
-族均分 96、最低 96（七页同分，不取平均掩盖短板）。**判分件自证**：脚本腿与字面公式腿逐页逐维比对 49 项，最大绝对差 **0**。
+族均分 100、最低 100（七页同分，不取平均掩盖短板）。**判分件自证**：脚本腿与字面公式腿逐页逐维比对 49 项，最大绝对差 **0**。
+
+**判分演进（同一支引擎，三次读数）**：**87**（首判，0／7 过线；H3 重复 ＋ H7 英文与等号 ＋ D5 页内定位腿）
+→ **96**（收掉 H3／H7、补自持锚点）→ **100**（页内导航改用公共层目录区块的形状与类名 `ilife-block-toc`，
+公共层配方那条腿计满；另清掉两处人眼／视觉发现：390 档列表双列、强调徽章字面色值）。
+三档得分都不是「放宽判据」换来的：判据数值取自公共层 `PAGE_LIMITS`，权重与硬扣分冻结在引擎里，本票只改页面。
 
 **第一次判分是 87（0／7 过线）** —— 三条扣分与处置：
 
@@ -140,7 +150,12 @@ node docs/skills/skill-memo-ilife/t827-判分.mjs --dir .scratch/t827
 |---|---|---|
 | H3 −4 | 「复制数据」「复制日志」各出现 2 次（`dl>dt` 说明与同名按钮） | **本票已收**：说明收成一句人话，标签只留按钮一处 |
 | H7 −1 | 说明行里的 `AI` 与 `=` | **本票已收**：改写为「可直接粘贴给助手继续下一步…」 |
-| D5 −4 | 页内定位腿（`tocEl=0`、无锚点） | **部分收**：页头补锚点导航 ＋ `scroll-margin-top:20px`；该腿判分件按**公共层类名**认（自持 nav 不计满）⇒ 收满归 #851 |
+| D5 −4 | 页内定位腿（`tocEl=0`、无锚点） | **已收**：页头补锚点导航（统计／结果／日志）＋ `#stats/#list/#data-panel{scroll-margin-top:20px}`；该腿按公共层配方计 4 分中的 0 分扣减（D5＝21／25，其余三腿满） |
+
+**规范链重跑又抓出两处并当批收掉**（视觉模型判 D1／D2 提出、DOM／CSS 复核成立）：
+① 390 档结果列表仍是**双列**（`#list` 缺窄屏塌列规则）⇒ 补 `@media(max-width:820px){#list{grid-template-columns:1fr}}`；
+② 「排期」强调徽章用字面暖色（`#fff7e8`／`#b25b00`，不在令牌集里）⇒ 改 `var(--soft)`／`var(--blue2)` ＋ 描边；
+另把面板小标题从「与正文同重」改为 15px／800（视觉模型三轮复核：层级已拉开、徽章色板已统一、D1／D2 均 0 扣）。
 
 **未取值位（如实声明，不伪造）**：`d1`／`d2`／`d4cut` 是人核位，本次写 `null`，判分件按 0 扣 ⇒ **D1／D2／D4 是乐观上界**；
 本域 `sep.json` 由 `separator-probe.mjs` 出（只发 R1–R3）⇒ **H2（内部标识符）／H4（符号顶替）没有判据**，
@@ -235,8 +250,18 @@ node docs/skills/skill-memo-ilife/t827-判分.mjs --dir .scratch/t827   # 过渡
 
 ## 八 收尾口径
 
-- **做掉**：7 格真落盘（册子 seq 7–13）＋ 7 词路由全通 ＋ 反例三面 ＋ **五维尺逐页 96、7／7 过线（每维 ≥满权 80%）**
-  ＋ 分隔符门／响应式门两门绿 ＋ 版式读数三档归零（`touchSmall=0`、`minFontPx=12`）＋ 人眼复核两轮
-  ＋ 变异自证两行 ＋ 判分件与 facts 件入仓 ＋ 生成物与快照基线对齐（CI 两处红步在提交树上收掉）；
-- **没做掉（各有主，均不在本票写集）**：机审六列（件归 #851）、页族配方搬公共层与 D5 页内定位腿（归 #851）、
-  `查情绪` 在 SKILL.md 的可发现性（归 #858）、运行时渲染文本的分隔符面（门件盲区，见 §五.2，归 #851 的新机审）。
+**五条验收命令全绿**（2026-09-21 夜，公共层件落地后按规范链重取）：
+
+| 验收命令 | 读数 |
+|---|---|
+| 本域每条命令的真出口用例 | `node --test test/t827-search-domain.test.mjs` → **4／4**（连带邻域共 40／40） |
+| 分隔符门 | 逐件 **7／7 exit 0**，节点级 0 处（变异：塞一处「；」→ exit 1；还原 → exit 0） |
+| 响应式门 | `OVERFLOW-ZERO pages=7 cells=21 failed=0` |
+| 机审六列（#869 落件） | `RESULT: 7/7 PASS ①0 ②0 ③0 ④0 ⑤0 ⑥0 缺件—` |
+| 五维尺（#868 公共层引擎 ＋ #867 读数链） | **逐页 100、7／7 过线**（每维 ≥满权 80%；两腿自证差 0） |
+
+- **做掉**：7 格真落盘（册子 seq 7–13）＋ 7 词路由全通 ＋ 反例三面 ＋ 五条验收命令全绿 ＋
+  版式读数三档归零（`touchSmall=0`、`minFontPx=12`）＋ 人眼复核三轮（视觉模型）＋ 变异自证两行 ＋
+  人核档与按域配置入仓 ＋ 过渡复制件按到期触发器退役 ＋ 行数台账 103／103；
+- **交回（不在本票写集）**：`查情绪` 在 SKILL.md 速查表的可发现性（归 #858，运行期已通）；
+  本图收口 #834 重铺已过期的 `t855-产物基线`；门件盲区（分隔符门读不到运行时渲染文本）由 #869 的新机审覆盖。

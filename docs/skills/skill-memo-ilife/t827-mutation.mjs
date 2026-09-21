@@ -34,8 +34,9 @@ for (const f of files) {
   if (r.json) pages.push(r.json);
   console.log('POS  ' + f.padEnd(34) + ' exit=' + r.exit + '  节点级命中=' + (r.json ? r.json.node.R1 + r.json.node.R2 + r.json.node.R3 : '?'));
 }
-writeFileSync(join(ROOT, '.scratch', 't827', 'sep.json'), JSON.stringify({ pages }, null, 2), 'utf8');
-console.log('POS-SUM ' + greenCount + '/' + files.length + ' 件 exit 0；sep.json 已汇总 ' + pages.length + ' 页');
+writeFileSync(join(ROOT, '.scratch', 't827', 'sep-探针汇总.json'), JSON.stringify({ pages }, null, 2), 'utf8');
+console.log('POS-SUM ' + greenCount + '/' + files.length + ' 件 exit 0；sep-探针汇总.json 已汇总 ' + pages.length + ' 页');
+console.log('（⚠️ 本件不写契约名的 sep.json —— 那是读数链 t867-facts.mjs 的产出名，撞名会让装配器误判「复用」）');
 
 // ── 反例：往可见文本塞一处「；」并列（模板里那句标题行）→ 必须红 ─────────────────────
 const target = files.find((f) => f.startsWith('搜备忘'));
