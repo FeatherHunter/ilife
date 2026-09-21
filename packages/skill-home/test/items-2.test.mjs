@@ -1,10 +1,9 @@
-// 票 #807 · 物品管理域（二）更新与标签分类 10 产物测试。
+// 票 #807 · 物品管理域（二）更新与标签分类 11 产物测试。
 //
 // 本票 6 个页族（receipt／confirm／undo_select／relations／tag_manage／
-// category_manage）各跑真命令链（spawn 真 `home-cmd-read`，隔离家目录，
-// 不碰生产库），逐场景装配真页面后落 `.scratch/807/`，再跑墙自检与三件判据。
-// 3-1 改物品的页族 add_form 归票 #806，本票只读装配（不断真链），产物待 #806
-// 落定后补进墙（见 manifest `notShipped` 与 `scene-items-2.md`）。
+// category_manage）＋ 3-1 借用 #806 的 add_form 页族，各跑真命令链
+// （spawn 真 `home-cmd-read`，隔离家目录，不碰生产库），逐场景装配真页面后
+// 落 `.scratch/807/`，再跑墙自检与三件判据。add_form 只读调用，不改 #806 的文件。
 //
 // 跑法（仓根，经排队，一件事一持锁）：
 //   node tooling/run-locked.mjs --ticket 807 --max-wait-ms 600000 -- node --test packages/skill-home/test/items-2.test.mjs
@@ -44,8 +43,9 @@ function spawnOk(cmd, args, label) {
   return (r.stdout || '') + (r.stderr || '');
 }
 
-// 场景表（3-1 除外：页族归 #806，见文件头说明）。
+// 场景表（11 条全覆盖；3-1 的页族 add_form 归 #806，本测试只读调用）。
 const SCENES = [
+  { id: '3-1', wake: '改物品', title: '修改物品信息', key: 'home.item.update', preset: {}, family: 'add_form', commandCn: '改物品', prompt: '请加载「居家管家」技能，帮我修改物品信息（唤醒词：改物品）', check: '表单字段与改物品分流是否在位' },
   { id: '3-2', wake: '移物品', title: '移动物品位置', key: 'home.item.update', preset: { op: 'move' }, family: 'receipt', commandCn: '移物品', prompt: '请加载「居家管家」技能，帮我移动物品位置（唤醒词：移物品）', check: '原位置与新位置是否都写明，分段位置是否清晰' },
   { id: '3-3', wake: '数量变更', title: '变更物品数量', key: 'home.item.update', preset: { op: 'qty' }, family: 'receipt', commandCn: '数量变更', prompt: '请加载「居家管家」技能，帮我变更物品数量（唤醒词：数量变更）', check: '数量变更前后与补货提示是否在位' },
   { id: '3-4', wake: '状态变更', title: '变更物品状态', key: 'home.item.update', preset: { op: 'status' }, family: 'receipt', commandCn: '状态变更', prompt: '请加载「居家管家」技能，帮我变更物品状态（唤醒词：状态变更）', check: '状态流转前后与软删除说明是否在位' },
@@ -80,7 +80,8 @@ before(() => {
   IDC = items.find((x) => x.name === '域二丙').id;
   // 相近标签对（整理建议用）：首字相同且长度差一。
   runOk('home.item.update', { id: IDA, op: 'tags', tags: '常用,常用品' }, 'seed tags');
-  // 10 条真链（顺序保证依赖：关联先于撤销，整理先于改标签，合并最后删条目）。
+  // 11 条真链（顺序保证依赖：改物品先行；关联先于撤销，整理先于改标签，合并最后删条目）。
+  ENVS['3-1'] = runOk('home.item.update', { id: IDA, remark: '域二复核备注' }, '真链 3-1');
   ENVS['3-2'] = runOk('home.item.update', { id: IDA, op: 'move', new_location: '阳台/收纳柜' }, '真链 3-2');
   ENVS['3-3'] = runOk('home.item.update', { id: IDA, op: 'qty', plus: 2 }, '真链 3-3');
   ENVS['3-4'] = runOk('home.item.update', { id: IDA, op: 'status', status: '备用' }, '真链 3-4');
@@ -103,7 +104,7 @@ describe('#807 两层解析现场复核（契约 L1：同一预设只到一族�
   }
 });
 
-describe('#807 真链装配＋产物落盘（10 份）', () => {
+describe('#807 真链装配＋产物落盘（11 份）', () => {
   for (const s of SCENES) {
     it(s.commandCn + '_' + s.id + '（' + s.family + '）', async () => {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'items', 'pages', s.family + '.js')).href);
@@ -119,7 +120,7 @@ describe('#807 真链装配＋产物落盘（10 份）', () => {
     });
   }
 
-  it('写清单 manifest.json（10 行＋未发货 3-1）', () => {
+  it('写清单 manifest.json（11 行）', () => {
     const rows = SCENES.map((s, i) => ({
       seq: i + 1, wake: s.wake, file: s.commandCn + '_' + s.id + '_' + STAMP + '.html',
       domain: 'items', family: s.family, title: s.title, prompt: s.prompt,
@@ -128,13 +129,13 @@ describe('#807 真链装配＋产物落盘（10 份）', () => {
     const manifest = {
       batch: '物品管理（二）', madeAt: '2026-09-21',
       naming: '文件名只从本清单 file 字段读；生成器不算名、不裁规则',
-      notShipped: [{ what: '3-1 改物品', why: '页族 add_form 归票 806，待其落定后补产物进墙' }],
-      readings: { 产物: '10 份真链装配页（3-2 到 4-3，3-1 除外）' },
+      notShipped: [],
+      readings: { 产物: '11 份真链装配页（3-1 到 4-3 全覆盖）' },
       rows,
     };
     writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1), 'utf8');
     const back = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8'));
-    assert.equal(back.rows.length, 10);
+    assert.equal(back.rows.length, 11);
   });
 });
 
@@ -157,7 +158,7 @@ describe('#807 墙与判据（生成器＋三件机审）', () => {
     spawnOk(process.execPath, [join(pkgDir, 'scripts', 'audit-separators.mjs'), ...files], '分隔符');
   });
 
-  it('结构块机审 exit 0（scope＝10 份产物，墙是生成器产物走墙自检）', () => {
+  it('结构块机审 exit 0（scope＝11 份产物，墙是生成器产物走墙自检）', () => {
     const staging = mkdtempSync(join(tmpdir(), 'items2-blocks-'));
     for (const s of SCENES) {
       const f = s.commandCn + '_' + s.id + '_' + STAMP + '.html';
