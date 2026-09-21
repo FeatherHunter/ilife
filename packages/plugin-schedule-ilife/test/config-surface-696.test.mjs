@@ -110,9 +110,13 @@ describe('#696 作息设置页 · 配置面', () => {
       assert.equal(CONFIG_STEM, 'schedule');
     });
 
-    it('页面每一行都有对应的技能键，且技能每一个键都有对应行（一处不少、一处不多）', () => {
+    it('页面每一行都有对应的技能键，且**面板会给改**的键一个不少（技能侧另有的只读键不立行）', () => {
+      // #843：技能侧默认值表多了 `html.helpDir`（产物根下 HELP 那一支的子目录名）——面板不立行
+      // （落点类项只读展示，且「HELP 产物目录」那一行显示的正是含它的绝对路径）；其余键一行一钮对齐。
       const pageKeys = CONFIG_ITEMS.map((i) => i.key).sort();
-      assert.deepEqual(pageKeys, flattenKeys(SCHEDULE_CONFIG_DEFAULTS));
+      const skillKeys = flattenKeys(SCHEDULE_CONFIG_DEFAULTS);
+      assert.deepEqual(pageKeys, skillKeys.filter((k) => k !== 'html.helpDir'));
+      assert.ok(skillKeys.includes('html.helpDir'), '技能侧确有 html.helpDir 这个键');
     });
 
     it('每行的控件种类与技能默认值类型一致', () => {
@@ -124,9 +128,10 @@ describe('#696 作息设置页 · 配置面', () => {
       }
     });
 
-    it('默认值逐项等于现有代码常量（#764 起 files.help／lark.cliPath 出表，进退休清单）', () => {
+    it('默认值逐项等于现有代码常量（#764 起 files.help／lark.cliPath 出表；#843 起产物落点分家）', () => {
       assert.equal(SCHEDULE_CONFIG_DEFAULTS.db.name, 'schedule_data.db');
-      assert.equal(SCHEDULE_CONFIG_DEFAULTS.html.dir, 'schedule_html/help');
+      assert.equal(SCHEDULE_CONFIG_DEFAULTS.html.dir, 'schedule_html', '#843：产品**根**目录（页面落它下面）');
+      assert.equal(SCHEDULE_CONFIG_DEFAULTS.html.helpDir, 'help', '#843：根下 HELP 那一支的子目录名');
       assert.equal(SCHEDULE_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
       assert.equal(Object.keys(SCHEDULE_CONFIG_DEFAULTS).sort().join(','), 'db,html', '两组键');
       assert.ok(!('files' in SCHEDULE_CONFIG_DEFAULTS), 'files 组已出表');
@@ -134,8 +139,10 @@ describe('#696 作息设置页 · 配置面', () => {
       assert.deepEqual([...SCHEDULE_CONFIG_RETIRED].sort(), ['files.help', 'lark.cliPath'], '删掉的两键进退休清单');
     });
 
-    it('HTML 产物目录是两段（改造前 HELP_HTML_DIR_PARTS 就是两级）', () => {
-      assert.deepEqual(SCHEDULE_CONFIG_DEFAULTS.html.dir.split('/'), ['schedule_html', 'help']);
+    it('#843：老落点逐字不变 —— 产物根 ＋ help 支合起来仍是 `<库目录>/schedule_html/help`', () => {
+      const { html } = SCHEDULE_CONFIG_DEFAULTS;
+      assert.deepEqual([...html.dir.split('/'), html.helpDir], ['schedule_html', 'help'],
+        '两键合起来＝改造前 HELP_HTML_DIR_PARTS 那两级');
     });
 
     it('行表键不重复', () => {

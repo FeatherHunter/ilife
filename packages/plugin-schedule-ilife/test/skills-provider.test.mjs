@@ -76,7 +76,8 @@ describe('#206 打包技能提供方（作息线）', () => {
     assert.equal(def.provider, PROVIDER_NAME);
     assert.ok(typeof def.content === 'string' && def.content.length > 100, '正文非空');
     assert.ok(def.content.includes('schedule-cmd-read'), '正文须含唯一出口调用形');
-    assert.ok(def.content.includes('作息管家_HELP_'), '正文须写明缺省交付物＝HELP 文件');
+    assert.ok(def.content.includes('delivery{mode,path,bytes}'), '正文须写明缺省交付物与回执形状（回执即真相）');
+    assert.ok(def.content.includes('作息管家_HELP'), '正文须写明 HELP 落盘名主体（#843 起 8 键都缺省落盘）');
     assert.ok(!def.content.startsWith('---'), '正文须为 frontmatter 后（filesystem 同形），不带头');
     const stale = await calls.providers[0].get({ ...c, name: 'skill-not-here' }, {});
     assert.equal(stale, undefined, '过期候选须失效（宿主 get 契约）');
