@@ -23,3 +23,15 @@
 ## 遗留出口
 
 居家语境下需要新增的判据（英文裸词例外、重复句口径、帮助页共用件的豁免）逐条列出并当场补进本件或补票。
+
+## 进度：70%（本节与远端 #803 正文同步，wire 推票面时不得丢）
+
+已完成（三件脚本＋门禁 8 例＋说明，提交 d1229434，包内全量 42/42 绿）：分隔符正例
+`RESULT: 5/5 PASS`（节点命中 8）、反例点名 `debt-sep.html(1)` exit 1；双端假例 `PASS`、
+真例 390 档 `overflow+830｜touch<20` exit 1；结构块假例 `7/7 PASS`、真例 `缺块 [page-title]`
+exit 1。读数与遗留逐条落在 `docs/skills/skill-home/style-audit.md` §五／§六。
+
+本票已被票 8（#805）阻塞（`blockedBy: [8]`，见 `html-scenes-tickets.json`）：结构判据的
+领域半段（`page-blocks.json` 的 `pages[]` 扩写）待票 8 骨架登记（`scripts/lib/page-blocks.mjs`）
+落地后收尾。下一步：① 票 8 关闭后扩合同并重跑结构门；② 票 2（#799，已关）契约补 viewport
+后域票产物重跑双端门；③ 域票逐张接入三条命令。未关，认领保留在执行席名下。

@@ -101,7 +101,9 @@
         "packages/skill-home/test/style-audit.test.mjs",
         "docs/skills/skill-home/style-audit.md"
       ],
-      "blockedBy": [],
+      "blockedBy": [
+        8
+      ],
       "issue": 803
     },
     {
