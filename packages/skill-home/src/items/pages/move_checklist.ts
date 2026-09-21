@@ -117,7 +117,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
     + '</div></section>'
-    + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '"><h2>空态说明</h2>'
+    + '<section hidden class="sec" data-block="empty" data-need="' + NEED.empty + '"><h2>空态说明</h2>'
     + '<p class="lead">本页无空态，清单恒在</p></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';

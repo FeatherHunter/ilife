@@ -174,7 +174,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
-    + (hasRecord ? '<p data-need="空态：暂无备份记录">备份记录正常；暂无记录时会在这里提示先建第一份。</p>' : '')
+    + (hasRecord ? '<p data-need="空态：暂无备份记录">备份记录正常；本次备份已记录' : '')
     + '<p data-need="异常：数据解析失败／数据校验失败／备份失败">如果提示解析失败、校验失败或者备份失败，先确认库还在，再用确认备份重试一次。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'

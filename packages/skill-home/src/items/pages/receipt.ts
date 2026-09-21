@@ -200,7 +200,6 @@ export function renderFamilyPage(env: Envelope): string {
     + (mode === 'tags' ? '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>' : '')
     + '<section class="fp-sec"><h2 class="fp-sec-t">处理明细</h2>'
     + '<div class="fp-row"><div class="fp-k">本次处理</div><div class="fp-v">本次' + esc(title) + '已经处理完毕</div></div>'
-    + '<p class="fp-note">处理已经执行完毕，明细以回执正文为准</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">收尾语</h2>'
     + '<p class="fp-note">' + esc(tail[mode]) + '</p></section>'
     + '<div class="fp-actions">'

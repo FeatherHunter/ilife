@@ -3,7 +3,7 @@
 // 信息结构对齐老 `物品/inventory_records.html`：历史盘点列表＋单次展开＋复查入口。
 // 命令信封只带记录标识、范围与规模（发生时间与差异计数由命令侧增补后展开，
 // 见域对账说明），本页按信封如实呈现记录卡：编号、范围、规模可点开，
-// 时间与计数随展开详情，复查与差异处理组装话术直达。
+// 时间与计数—，复查与差异处理组装话术直达。
 // 必需块原文＝契约附录：历史盘点（N）含拉丁字符，只进 data-need 属性。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
@@ -125,8 +125,8 @@ export function renderFamilyPage(env: Envelope): string {
     '<div class="rec"><div class="top"><span class="nm">记录' + escapeHtml(r.id) + '</span>'
     + '<span class="pill">' + escapeHtml(r.scope) + '</span>'
     + '<span class="pill">规模' + r.total + '条</span></div>'
-    + '<dl class="kv"><dt>发生时间</dt><dd>随展开详情</dd>'
-    + '<dt>记录状态</dt><dd>随展开详情</dd></dl>'
+    + '<dl class="kv"><dt>发生时间</dt><dd>—</dd>'
+    + '<dt>记录状态</dt><dd>—</dd></dl>'
     + '<div class="detail">记录' + escapeHtml(r.id) + '缺— 多— 异— 待确认—：计数随命令侧增补后展开</div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">展开详情</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">处理差异</button>'
