@@ -338,6 +338,46 @@ export function renderConclusionBar(text: string): string {
 }
 
 /* ══════════════════════════════════════════════════════════════
+ * #860 正文段落件（页面级：一段正文的落点）
+ * ══════════════════════════════════════════════════════════════ */
+
+/** 正文段落入参（#860）：`text` 纯文本（五字符转义与区块层同源 `esc`）与受信 `html`
+ *  （调用方已自行转义，与 `renderDisclosure.contentHtml` 同口径）**两位互斥**。
+ *  `html` 须是短语内容（行内标记如加粗／链接；多段调多次），不得含块级标记。 */
+export interface ProseBlockInput {
+  readonly text?: string;
+  readonly html?: string;
+}
+
+/** #860 正文段落（一页里「一段正文」的落点：步骤动作、菜谱描述与背景、回执失败说明）。
+ *
+ *  与 `renderCaliberLine`／`renderConclusionBar` 同族（页面级、类名 `ilife-block-<名>`、
+ *  样式随 `pageShell` 区落盘，不进 `BLOCK_STYLE_SECTIONS` 那 12 项闭集）。
+ *  区别只在角色：口径行是旁注、结论条是主读法，本件是**正文**（与正文同档 15px／1.7）。
+ *
+ *  此前这段形状是**页内补丁**（`t768` 原型的 `.v768-prose`：15px／1.7／`var(--fg)`），
+ *  7 张域票若各写各的就会是 7 份互不一致的排印。搬到这里之后，页面侧只传文本。 */
+export function renderProseBlock(input: ProseBlockInput): string {
+  assertPlainObject(input, 'renderProseBlock: input');
+  assertNoInlineHandler(input, 'renderProseBlock: input');
+  const block = input as ProseBlockInput;
+  const text = block.text;
+  const html = block.html;
+  if (text !== undefined && html !== undefined) badInput('renderProseBlock: input.text 与 input.html 只能给一个');
+  if (text !== undefined) {
+    if (typeof text !== 'string') badInput('renderProseBlock: input.text 必须是字符串');
+    if (text === '') return '';
+    return '<p class="' + pageLevelBlock('prose') + '">' + esc(text) + '</p>';
+  }
+  if (html !== undefined) {
+    if (typeof html !== 'string') badInput('renderProseBlock: input.html 必须是字符串');
+    if (html === '') return '';
+    return '<div class="' + pageLevelBlock('prose') + '">' + html + '</div>';
+  }
+  badInput('renderProseBlock: input.text 与 input.html 至少其一');
+}
+
+/* ══════════════════════════════════════════════════════════════
  * #421 页面融合四件（与领域无关：文案／数值／颜色全由调用方给）
  *   占比迷你条／分布条行＝「数字＋图形同格」；徽章＝并列小标签；字段变更行＝改前改后对照。
  *   四件都是页面级（不属 12 区块），样式随 `pageShell` 区落盘（同 #420 处置：不新增样式区）。
@@ -1514,6 +1554,18 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // #567 J4（§5.2 区块标题 15 吸收 14／15）。
     '  font-size: 15px;',
     '  font-weight: 600;',
+    '}',
+    // #860 正文段落件（一段正文的落点）：排印与正文同档（15px／1.7），色只取冻结 `--fg`；
+    // 取值出处＝`t768` 原型页内补丁 `.v768-prose`（15px／1.7／`var(--fg)`）逐值上移，
+    // 间距取 8px 档（区块层既有节奏：口径行下距／标题下距同值，不新造）；
+    // `overflow-wrap` 沿用既有换行兜底（事实条值／媒体注同口径），防长串溢出。
+    // 与 #420／#507 同处置：页面级、不进 12 项闭集，样式随本区落盘。
+    '.' + p + 'block-prose {',
+    '  margin: 8px 0 0;',
+    '  color: var(--fg);',
+    '  font-size: 15px;',
+    '  line-height: 1.7;',
+    '  overflow-wrap: anywhere;',
     '}',
     // #434 操作卡头部（#422 共用件 `operationHead()` 的根类＋四色档＋四子件；样式落本区，不新增区）。
     // 形态对齐老实物 `crud_receipt` 的 `id-card` 左色条（样张 `t156-样张-写后回执.html:153-160`：

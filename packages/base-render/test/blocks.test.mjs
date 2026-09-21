@@ -49,6 +49,7 @@ import {
   renderPageShell,
   renderParamForm,
   renderPreBlock,
+  renderProseBlock,
 } from '../dist/blocks.js';
 
 const BLOCKS_DIST_URL = new URL('../dist/blocks.js', import.meta.url);
@@ -637,5 +638,67 @@ describe('#513 三槽 CSS 落点（既有区内加规则，不新增区、不新
     assert.equal(sizeOf('ilife-block-kpi-card-title'), '15px/700', 'kpi 标题档');
     assert.equal(sizeOf('ilife-block-kpi-card-title'), sizeOf('ilife-block-chart-block-title'), '与图表标题同档');
     assert.equal(sizeOf('ilife-block-kpi-card-title'), sizeOf('ilife-block-copy-block-title'), '与复制区标题同档');
+  });
+});
+
+describe('#860 正文段落件 renderProseBlock（页面级，不进 12 项闭集）', () => {
+  it('闭集仍 12 项且不新增区（prose 只追加页面级件）', () => {
+    assert.equal(BLOCK_STYLE_SECTIONS.length, 12);
+    for (const name of ['prose', 'proseBlock', 'block-prose']) {
+      assert.ok(!BLOCK_STYLE_SECTIONS.includes(name), '不得新增样式区：' + name);
+    }
+  });
+
+  it('text 纯文本：p 根类＋五字符转义（与区块层同源 esc）', () => {
+    const html = renderProseBlock({ text: '先把辣椒切丝 <b>&' });
+    assert.ok(html.startsWith('<p class="ilife-block-prose">'), '根类逐字：' + html);
+    assert.ok(html.includes('先把辣椒切丝 &lt;b&gt;&amp;'), '未按冻结表转义：' + html);
+    assert.ok(!html.includes('<b>'), '原始尖括号不得进产物');
+    assert.ok(html.endsWith('</p>'), '须闭合 p：' + html);
+  });
+
+  it('html 受信透传：div 根类＋内容逐字（调用方已自行转义）', () => {
+    const html = renderProseBlock({ html: 'Roux <strong>roux</strong>' });
+    assert.equal(html, '<div class="ilife-block-prose">Roux <strong>roux</strong></div>', '受信位须逐字透传');
+  });
+
+  it('空串出空串且不抛（没内容不留空块）', () => {
+    assert.equal(renderProseBlock({ text: '' }), '', 'text 空串须出空串');
+    assert.equal(renderProseBlock({ html: '' }), '', 'html 空串须出空串');
+  });
+
+  it('缺参／非字符串／两位同给 → bad-input 并点名到字段', () => {
+    assertBadInput(() => renderProseBlock({}), '两位全缺');
+    assertBadInput(() => renderProseBlock(), '缺参');
+    assertBadInput(() => renderProseBlock(null), 'null 非对象');
+    assertBadInput(() => renderProseBlock({ text: null }), 'text null');
+    assertBadInput(() => renderProseBlock({ text: 7 }), 'text 数字');
+    assertBadInput(() => renderProseBlock({ html: 7 }), 'html 数字');
+    assertBadInput(() => renderProseBlock({ text: 'a', html: 'b' }), '两位同给');
+    for (const [input, field] of [
+      [{ text: null }, 'input.text'],
+      [{ text: 7 }, 'input.text'],
+      [{ html: 7 }, 'input.html'],
+      [{ text: 'a', html: 'b' }, 'input.text'],
+      [{}, 'input.text'],
+    ]) {
+      assert.throws(() => renderProseBlock(input), (err) => err.code === 'bad-input'
+        && typeof err.message === 'string' && err.message.includes(field), '消息须点名 ' + field);
+    }
+  });
+
+  it('样式随 pageShell 区落盘：15px／1.7／只取冻结 --fg（字面量 #333 即红并点名）', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('.ilife-block-prose {'), '缺正文段落规则');
+    const rule = css.slice(css.indexOf('.ilife-block-prose {'));
+    const body = rule.slice(0, rule.indexOf('}') + 1);
+    assert.ok(body.includes('font-size: 15px'), '字号须 15px（与正文同档）：' + body);
+    assert.ok(body.includes('line-height: 1.7'), '行高须 1.7：' + body);
+    assert.ok(body.includes('color: var(--fg)'), '色值只许冻结 token --fg：' + body);
+    assert.ok(!body.includes('#'), '色值字面量（如 #333）不得进本条规则：' + body);
+    const used = new Set([...body.matchAll(/var\((--[A-Za-z0-9-]+)\)/g)].map((m) => m[1]));
+    for (const name of used) {
+      assert.ok(Object.hasOwn(CSS_VAR_TOKENS, name), '未冻结的 token：' + name);
+    }
   });
 });
