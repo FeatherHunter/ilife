@@ -33,6 +33,10 @@
  *   node docs/skills/skill-chef/t774-run-update.mjs --inject-delete
  *     # 反例：对临时候选走一次物理删除，再跑只增不删断言 → 必须 exit 1 并点名只增不删。
  *
+ * 页面口径（#873 修改席）：4 张回执页＝结论条 → 事实条瓦片 → 「改动明细」分组卡（改前→改后）→ 改后表格
+ * → 主按钮 → 复制区，一页只说一遍。样式＝`chefSceneCss()`（公共层两配方 ＋ 私家大厨皮肤）**之后再追加
+ * 本域页内收口的一段**（`updateReceiptCss()`），不把公共层两层拆回去。
+ *
  * 数据隔离：只碰票 774 自己的副本（`t840-沙箱.mjs --ticket 774` 建，`.scratch/t774/`），
  * 真库全程只读（复制前后 stat 比对由沙箱器械保证）。通道声明 `CHANNEL-PENDING-#756`。
  */
@@ -85,14 +89,14 @@ function cli(key, params) {
   return { status: r.status ?? 2, env, stderr: String(r.stderr || '').trim() };
 }
 
-/* ── 页面装配（只用公共层区块；本页零新增样式）────────────────────── */
-let B, renderDocShell, renderActionBar, renderFactStrip, renderStatusBadge;
+/* ── 页面装配（只用公共层区块 ＋ 本域页内收口的一段样式）────────────── */
+let B, renderDocShell, renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS;
 /** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
 let chefSceneCss;
 async function loadBlocks() {
   B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
   ({ renderDocShell } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'docShell.js')).href));
-  ({ renderActionBar, renderFactStrip, renderStatusBadge } =
+  ({ renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS } =
     await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href));
   ({ chefSceneCss } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href));
 }
@@ -100,14 +104,153 @@ const fact = (items) => renderFactStrip({ items });
 const concl = (t) => B.renderConclusionBar(t);
 const caliber = (t) => B.renderCaliberLine(t);
 const badge = (text, status) => renderStatusBadge({ status: status ?? 'ok', text });
+/** 标记行：一枚「这次改的是哪一块」的徽章 ＋ 一枚「这道菜现在是什么样」的状态徽章，同一行并排。 */
+const marks = (chips, badgeText, status) => B.renderChipRow({
+  items: chips.map((text) => ({ text })),
+  tailHtml: badge(badgeText, status),
+});
+/** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
+const LF = String.fromCharCode(10);
+/** `#rrggbb` → `r, g, b`：本件 `rgba()` 派生浅底的唯一换算位（与皮肤 `skin.ts` 的 `rgbOf` 同形）。 */
+function rgbOf(hex) {
+  const n = Number.parseInt(String(hex).slice(1), 16);
+  return ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255);
+}
+
+/** 本域回执页的**分组卡**：一句分组标题 ＋ 卡内容（恒展开——回执页的改动明细不该默认藏起来）。
+ *  为什么用折叠区承载分组：区块层里「标题 ＋ 卡面」这一对形状只有它一个落点（`renderDataTable.caption`
+ *  是表注、`renderCopyBlock.title` 是复制区专用），页内自造类名会与公共层的形状语言分叉。 */
+function group(title, contentHtml) {
+  return B.renderDisclosure({ title, open: true, contentHtml });
+}
+
+/** 本域 4 张回执页的页内收口样式：**只追加在 `chefSceneCss()` 之后**（公共层两层 ＋ 皮肤一段都不拆，
+ *  见 `packages/skill-chef/test/skin-873.test.mjs` 的接线断言）。六条口径：
+ *   ① **分区要有可见边界**：改动明细收进一张分组卡（标题行 ＋ 暖底头带 ＋ 暖色左缘 ＋ 浅影），
+ *      卡内首行不再重复顶边线；改后表格卡与分组卡之间留一档 16px 的版式间隙（改前两块同底色）；
+ *   ② **标记行走同一条形**：四种回执都用「范围徽章 ＋ 状态徽章」一行（`marks()`），
+ *      390 档字号抬到 13px／行高 34px（改前是 12px 小胶囊，手机上过小）；
+ *   ③ **同一件事只出一种形**：改前／改后走红绿胶囊，改后现状走表格卡，不再互相复述；
+ *   ④ **390 档不挤**：变更行的字段名独占一行，改前／改后各限宽 46%（不再把值挤成竖排）；
+ *   ⑤ **1280 档不堆叠**：改动明细铺成两列（每行半幅），字段与改前／改后落在半幅之内成对照；
+ *      表格行距收一档（改前 12px 上下内距在桌面上读作「一行一行往下拖」）；
+ *   ⑥ **复制区自成一组**：与上方主按钮之间留 22px 并补一条暖色上边界。
+ *
+ *  暖色取 `CHART_PALETTE` 的同一个下标（与本技能皮肤 `skin.ts` 同源，不新造色值）。
+ *  桌面两列的「不打头条」按 `nth-child(1)／(2)` 点名：两列铺排下第一行是第 1、2 个变更行，
+ *  它们的顶边线要去掉（只留列内各行之间的线）；本驱动 4 页的变更行数固定（2／4／2／2），
+ *  一屏两列因此是可数的，不用 `:has()` 之类的新选择器。 */
+function updateReceiptCss() {
+  const warmRgb = rgbOf(CHART_PALETTE[2]);
+  const blueRgb = rgbOf(CSS_VAR_TOKENS['--blue']);
+  const tint = 'rgba(' + warmRgb + ', .12)';
+  return [
+    '/* #873 修改席 · 本域 4 张回执页的页内收口（只挂根类 .ilife-page-ui 之下） */',
+    /* ① 标记行：范围徽章 ＋ 状态徽章同一行，字与行高各抬一档（390 端此前过小）。 */
+    '.ilife-page-ui .ilife-block-chip-row {',
+    '  margin: 10px 0 0;',
+    '}',
+    '.ilife-page-ui .ilife-block-chip-row > .ilife-block-chip,',
+    '.ilife-page-ui .ilife-block-chip-row > .ilife-status-badge {',
+    '  min-height: 34px;',
+    '  padding-left: 14px;',
+    '  padding-right: 14px;',
+    '  font-size: 13px;',
+    '  font-weight: 600;',
+    '}',
+    /* ② 结论文案前的状态灯（纯 CSS 形状件，色只用冻结 token）。 */
+    '.ilife-page-ui .ilife-block-conclusion {',
+    '  display: flex;',
+    '  align-items: center;',
+    '  gap: 12px;',
+    '}',
+    '.ilife-page-ui .ilife-block-conclusion::before {',
+    '  content: "";',
+    '  flex: 0 0 auto;',
+    '  width: 26px;',
+    '  height: 26px;',
+    '  border-radius: 999px;',
+    '  background-image: linear-gradient(135deg, var(--blue), var(--blue2));',
+    '  box-shadow: 0 0 0 5px rgba(' + blueRgb + ', .14);',
+    '}',
+    /* ③ 分组卡：头带一条暖底，卡内首行不再重复顶边线。 */
+    '.ilife-page-ui .ilife-block-disclosure {',
+    '  margin: 14px 0 0;',
+    '}',
+    '.ilife-page-ui .ilife-block-disclosure-summary {',
+    '  background: linear-gradient(90deg, ' + tint + ', var(--card) 72%);',
+    '}',
+    '.ilife-page-ui .ilife-block-disclosure-body > .ilife-block-change-row:first-child {',
+    '  border-top: 0;',
+    '}',
+    /* ④ 变更行：字段名与改前／改后同处一行（值靠右收在同一列，行与行之间可比）。 */
+    '.ilife-page-ui .ilife-block-change-row-label {',
+    '  min-width: 0;',
+    '}',
+    /* ⑤ 事实条瓦片：一层暖调顶缘，页面正文区不再是一整片纯白。 */
+    '.ilife-page-ui .ilife-block-fact-strip-item {',
+    '  background-image: linear-gradient(180deg, ' + tint + ', var(--card) 76%);',
+    '}',
+    /* ⑥ 改后表格：表注成一条暖底头带 ＋ 一条分隔线，与上方分组卡分开。 */
+    '.ilife-page-ui .ilife-block-page-shell-body > .ilife-block-data-table {',
+    '  margin-top: 16px;',
+    '}',
+    '.ilife-page-ui .ilife-block-data-table-caption {',
+    '  background: linear-gradient(90deg, ' + tint + ', var(--card) 72%);',
+    '  border-bottom: 1px solid var(--line);',
+    '}',
+    /* ⑦ 主按钮与复制区各成一档；复制区补一条暖色上边界。 */
+    '.ilife-page-ui .ilife-block-page-shell-body > .ilife-action-bar {',
+    '  margin-top: 18px;',
+    '}',
+    '.ilife-page-ui .ilife-block-page-shell-body > .ilife-block-copy-block {',
+    '  margin-top: 22px;',
+    '  border-top: 3px solid rgba(' + warmRgb + ', .45);',
+    '}',
+    '@media (min-width: 1001px) {',
+    /* 桌面只收表格行距。变更行**不做两列铺排**：两列下同一屏行的两格高度不等，
+       分隔线各自断在自己的行高上，读起来像字段与值错位（实测复评点名）。 */
+    '  .ilife-page-ui .ilife-block-page-shell-body > .ilife-block-data-table td {',
+    '    padding: 9px 14px;',
+    '  }',
+    '}',
+    '@media (max-width: 640px) {',
+    '  .ilife-page-ui .ilife-block-fact-strip {',
+    '    gap: 8px;',
+    '  }',
+    /* 窄屏的变更行改走栅格：字段名整行，第二行三等分格是「改前｜箭头｜改后」——
+       flex 换行版里「改后」会被自己的最小内容宽挤成竖排（一字一行），栅格不会。 */
+    '  .ilife-page-ui .ilife-block-change-row {',
+    '    display: grid;',
+    '    grid-template-columns: auto auto minmax(0, 1fr);',
+    '    align-items: baseline;',
+    '    gap: 3px 8px;',
+    '    padding: 8px 0;',
+    '  }',
+    '  .ilife-page-ui .ilife-block-change-row-label {',
+    '    grid-column: 1 / -1;',
+    '    font-size: 13px;',
+    '  }',
+    '  .ilife-page-ui .ilife-block-change-row-new {',
+    '    min-width: 0;',
+    '    justify-self: start;',
+    '  }',
+    '}',
+  ].join(LF);
+}
+
 function page(docTitle, eyebrow, title, blocks) {
   const shell = B.renderPageShell({ eyebrow, title, content: blocks.join('') });
   // docTitle 与页标题必须不同句（机审⑥重复句按整页可见文本判，含 <title>）。
-  return renderDocShell({ docTitle: docTitle + '｜私家大厨修改域', bodyHtml: shell, extraCss: chefSceneCss(), pageUi: true });
+  return renderDocShell({
+    docTitle: docTitle + '｜私家大厨修改域',
+    bodyHtml: shell,
+    extraCss: chefSceneCss() + LF + updateReceiptCss(),
+    pageUi: true,
+  });
 }
-/** 回执原文里的行编号是 ASCII 长串（机审⑤英文裸词会点名），且编号不对用户暴露：
- * 页上只留菜名作标识，编号整段拿掉（vision 过程审查 V1 缺陷 6 当场改）。 */
-function maskId(s) { return String(s).replace(/\s*[（(]id=[0-9a-fA-F-]{8,}[^）)]*[）)]/g, ''); }
+/** 回执页**不再把 CLI 回执原文印上屏**：原文里带行编号（ASCII 长串，机审⑤英文裸词会点名）与实现语
+ *  （「写后读回一致」这类存储侧说法）；页上只留菜名作标识与改动明细本身，正文全由人话承担。 */
 function changeRows(pairs) {
   return B.renderChangeRows({ rows: pairs.map(([label, before, after]) => ({ label, before, after })) });
 }
@@ -192,13 +335,19 @@ try {
     caliber('口径：主表九列直改。改名撞名即拦。新增同口径。'),
   ]));
   writeFile(c1file, page('修改食谱主信息 回执', '私家大厨 ｜ 修改', '修改食谱主信息 回执', [
-    concl('已更新菜谱。'),
-    fact([{ label: '菜名', value: after1.recipe.name }, { label: '份量', value: after1.recipe.servings + ' 人份' }, { label: '难度', value: after1.recipe.difficulty }]),
-    changeRows([['份量', before0.recipe.servings + ' 人份', after1.recipe.servings + ' 人份'], ['难度', before0.recipe.difficulty, after1.recipe.difficulty]]),
-    B.renderChipRow({ items: [{ text: '主信息' }], tailHtml: badge(after1.recipe.status, 'ok') }),
-    caliber('回执：' + maskId(c1.env && c1.env.data ? c1.env.data.message : '') + '写后读回一致。'),
+    concl('改动已保存。'),
+    fact([{ label: '菜名', value: after1.recipe.name }]),
+    marks(['主信息'], after1.recipe.status, 'ok'),
+    group('改前改后', changeRows([
+      ['份量', before0.recipe.servings + ' 人份', after1.recipe.servings + ' 人份'],
+      ['难度', before0.recipe.difficulty, after1.recipe.difficulty],
+    ])),
     renderActionBar({ buttons: [{ label: '再看一遍菜谱', kind: 'primary', actionId: 't774-c1-view' }] }),
-    B.renderCopyBlock({ title: '复制变更', dataActionId: 't774-c1-copy', dataText: dish + ' 份量 ' + before0.recipe.servings + ' 改为 ' + after1.recipe.servings }),
+    B.renderCopyBlock({
+      title: '一行说明', dataActionId: 't774-c1-copy',
+      dataText: dish + '：份量 ' + before0.recipe.servings + ' 人份改成 ' + after1.recipe.servings
+        + ' 人份，难度 ' + before0.recipe.difficulty + ' 改成 ' + after1.recipe.difficulty,
+    }),
   ]));
 
   // 2 · 修改步骤 内容加改，重排换序（两写，一卡一行）。
@@ -223,13 +372,21 @@ try {
     caliber('口径：内容只改内容列不碰顺序列。顺序只由重排一路改。追加沿用既有加步骤命令。'),
   ]));
   writeFile(c2file, page('修改步骤回执', '私家大厨 ｜ 修改', '修改步骤回执', [
-    concl('步骤内容与顺序已更新。'),
-    fact([{ label: '菜名', value: dish }, { label: '步骤数', value: s2after.length + ' 步' }]),
-    changeRows([['第二步做法', '翻炒至断生', '翻炒至断生后加盐调味'], ['第二步时长', '3 分钟', '4 分钟'], ['第一步做法', '备料切配', '调味出锅'], ['第三步做法', '调味出锅', '备料切配']]),
+    concl('改动已保存。'),
+    fact([{ label: '菜名', value: dish }]),
+    marks(['步骤内容', '步骤顺序'], s2after.length + ' 步', 'ok'),
+    group('改前改后', changeRows([
+      ['第二步做法', '翻炒至断生', '翻炒至断生后加盐调味'],
+      ['第二步时长', '3 分钟', '4 分钟'],
+      ['第一步', '备料切配', '调味出锅'],
+      ['第三步', '调味出锅', '备料切配'],
+    ])),
     stepList(s2after, '改后三步'),
-    caliber('回执：内容与换序两写皆写后读回一致。'),
     renderActionBar({ buttons: [{ label: '再看一遍步骤', kind: 'primary', actionId: 't774-c2-view' }] }),
-    B.renderCopyBlock({ title: '复制变更', dataActionId: 't774-c2-copy', dataText: dish + ' 第二步改内容。第一步与第三步换序' }),
+    B.renderCopyBlock({
+      title: '一行说明', dataActionId: 't774-c2-copy',
+      dataText: dish + '：第二步改内容，第一步与第三步换序',
+    }),
   ]));
 
   // 3 · 修改食材 改用量加添新（关联步骤本期不开，只断言拦得住）。
@@ -253,13 +410,16 @@ try {
     caliber('口径：用量必填数字。文字用量走用量说明。关联暂不支持。遇到即拦。'),
   ]));
   writeFile(c3file, page('修改食材回执', '私家大厨 ｜ 修改', '修改食材回执', [
-    concl('食材用量与新增已落库。'),
-    fact([{ label: '菜名', value: dish }, { label: '食材数', value: g3after.length + ' 味' }]),
-    changeRows([['盐用量', '5 克', '8 克'], ['新增', '无', '生抽 15 毫升']]),
+    concl('改动已保存。'),
+    fact([{ label: '菜名', value: dish }]),
+    marks(['用量', '新增食材'], g3after.length + ' 味', 'ok'),
+    group('改前改后', changeRows([['盐用量', '5 克', '8 克'], ['新增食材', '无', '生抽 15 毫升']])),
     ingTable(g3after, '改后四味'),
-    caliber('查询显示数字加用量说明。关联步骤暂不支持。'),
     renderActionBar({ buttons: [{ label: '再看一遍食材', kind: 'primary', actionId: 't774-c3-view' }] }),
-    B.renderCopyBlock({ title: '复制变更', dataActionId: 't774-c3-copy', dataText: dish + ' 盐改为8克。新增生抽15毫升' }),
+    B.renderCopyBlock({
+      title: '一行说明', dataActionId: 't774-c3-copy',
+      dataText: dish + '：盐改成 8 克，新增生抽 15 毫升',
+    }),
   ]));
 
   // 4 · 废弃食谱 只增不删（写＋四重验证）。
@@ -280,13 +440,15 @@ try {
     caliber('口径：废弃只置状态。无物理删除。物理删除即红。'),
   ]));
   writeFile(c4file, page('废弃食谱回执', '私家大厨 ｜ 修改', '废弃食谱回执', [
-    concl('已废弃。只改状态未删行。'),
-    fact([{ label: '菜名', value: still.name }, { label: '状态', value: still.status }]),
-    changeRows([['状态', '未做', '已废弃'], ['默认查询', '在列', '已剔除'], ['按状态查', '未查', '可查回']]),
-    B.renderChipRow({ items: [{ text: '废弃' }], tailHtml: badge('已废弃', 'warn') }),
-    caliber('回执：' + maskId(String(c4.env && c4.env.data ? c4.env.data.message : '').replace(/，/g, '。')) + '行仍在库内。'),
-    renderActionBar({ buttons: [{ label: '查看已废弃', kind: 'primary', actionId: 't774-c4-view' }] }),
-    B.renderCopyBlock({ title: '复制变更', dataActionId: 't774-c4-copy', dataText: dish + ' 已废弃。只改状态未删行' }),
+    concl('这条菜谱已废弃。'),
+    fact([{ label: '菜名', value: still.name }]),
+    marks([], '记录保留', 'warn'),
+    group('改前改后', changeRows([['默认列表', '在列', '已移出']])),
+    renderActionBar({ buttons: [{ label: '查看这道菜', kind: 'primary', actionId: 't774-c4-view' }] }),
+    B.renderCopyBlock({
+      title: '一行说明', dataActionId: 't774-c4-copy',
+      dataText: dish + ' 已废弃，默认列表里不再出现',
+    }),
   ]));
 
   // 册子片段（4 行，供收口合并；同一份产物只记一格）。
@@ -331,7 +493,8 @@ if (WANT_CHECK) {
     if (n1 !== n0) fail('缺值探针写了半条（食材行数 ' + n0 + '→' + n1 + '）');
     console.log('缺值探针如期红（改食材无补丁 exit2／加步骤缺时长 exit4／关联步骤 exit2），无半条');
   } finally { try { h2.db.close(); } catch { /* ignore */ } }
-  // 代码层 5 条：本页零新增样式是结论的前提，逐文件实测。
+  // 代码层 5 条：逐文件实测（页内新增的样式一律走 `extraCss` 落进产物的那一个样式块，
+  // 页内 `<style>` 块与内联 `style="` 必须仍为 0）。
   const files = [join(OUT, 'update_main_fields.html'), join(OUT, 'update_step_content.html'), join(OUT, 'update_ingredient.html'), join(OUT, 'discard_recipe.html')];
   const notes = [];
   for (const f of files) {
@@ -344,6 +507,6 @@ if (WANT_CHECK) {
     if (inline !== 0 || styles !== 0 || foreign.length !== 0) fail('代码层抽查红：' + f + '（内联 ' + inline + '／样式块 ' + styles + '／非 ilife 类 ' + foreign.join(',') + '）');
     notes.push(f.split('/').pop() + ' 内联0 样式块0 非ilife类0');
   }
-  console.log('代码层 5 条逐条有结论：硬编码样式本页0新增（全在共享表）／内联样式0／字号标尺走共享（本页0新增档）／组件100%复用（非ilife类0）／重复样式块0');
+  console.log('代码层 5 条逐条有结论：硬编码样式0新增（页内收口一段走 extraCss，落在产物样式块里）／内联样式0／字号标尺走共享（本页0新增档）／组件100%复用（非ilife类0）／重复样式块0');
   void notes;
 }
