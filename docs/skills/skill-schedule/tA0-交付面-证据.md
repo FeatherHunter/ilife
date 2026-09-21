@@ -61,14 +61,24 @@ schedule.help.lookup    → 作息管家_HELP_20260921_131319.html（139084 B，
 ### ④ 本包全量用例
 
 ```
-GATE-RUN runId=2ac607fc-cd42-4885-8b94-f7ba627bf8f2 cmd="node --test --test-concurrency=1 packages/skill-schedule/test/*.test.mjs"
+GATE-RUN runId=80643910-aef9-4bbb-9985-13d4ba15b39e cmd="node --test --test-concurrency=1 packages/skill-schedule/test/*.test.mjs"
 ℹ pass 124
 ℹ fail 0
 ```
 
-（运行标识抄自 `.scratch/locks/gate-runs.log`；同命令的另两趟 `runId=f0b02ada-7535-479b-9c90-70b54fe45bca`／`d972ddf3-75bb-44fa-874f-42201ec57ae2` 也是 exit 0。）
+（运行标识抄自 `.scratch/locks/gate-runs.log`；同命令的另三趟 `runId=f0b02ada-7535-479b-9c90-70b54fe45bca`／`d972ddf3-75bb-44fa-874f-42201ec57ae2`／`2ac607fc-cd42-4885-8b94-f7ba627bf8f2` 也是 exit 0。）
 
 其中新增 `test/tA0-交付面.test.mjs`（4 条：8 键缺省落盘 ＋ 落点分家 ＋ 命名出处 ＋ 同名不覆盖）。
+
+### ⑤ 快照门（票面「不许动外观与内容」的机械判据）
+
+```
+GATE-RUN runId=84c800bd-45a6-494f-ab7d-a900288cd9ef cmd="node tooling/skill-html-snapshot.mjs --check"
+RESULT: artifacts=190 changed=2 added=3 removed=0 base-* fingerprint=42b5a4cba31a690de6ddc8279c989cf5
+```
+
+这条**红**，但红条逐件都落在**备忘录**（`memo/keys`／`memo/templates`／`memo/frag/memo.init`／`memo/frag/memo.reminder`／`memo/tpl/receipt`，出处 `packages/skill-memo-ilife/…`）——那是另一席在飞的活（备忘录 30 场景页）。
+本包这一侧：`changed/added/removed` 里**没有一件 schedule**（`schedule/*` 一件未动），即「本票改完，别的域的产物逐字节不变」成立。
 
 ### ⑤ 安静窗口被撞一次（读数作废与恢复，过程留痕）
 

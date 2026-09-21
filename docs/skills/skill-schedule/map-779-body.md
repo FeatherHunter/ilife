@@ -9,13 +9,13 @@
 
 **「最好看」怎么变成可判定的**（Destination 不允许只有愿望）：由**两次人裁**说话——① `【形状】` 票的**页型配方**由人裁过才铺开；② `【收口】` 票的第二段由人**滚墙给逐格结论并签字**。机器侧只作自检门槛：机审六列 0 命中、双端三档溢出 0、vision 逐页 ≥90（**vision 是提示器，不是证据**）。
 
-## 进度：14%
+## 进度：27%
 
-已完成（都不是子票开工，是图的准备工作）：① 建图（地图 ＋ 15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）；② 建图前六条裁决（用户答复原文见末节）；③ 三轮对抗式审查 ＋ 一轮调整落地——按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段。图体检与自校验双绿（读数见末节）。
+已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 4/15：`【结构】`（#780，八键一处声明＋三件派生＋分派翻转，行为零改动）、`【清单·取证】`（#781）、`【种子】`（#844，隔离种子库 1037 记录／73 计划／112 摘要）、`【交付面】`（#843，8 键缺省落盘＋落点分家＋命名一处定义，验收探针 8/8 绿）。
 
-下一步：按「任务清单」的执行序开工——【清单·取证】与【结构】两票可并行（写面不相交）；随后【交付面】与【种子】并行；【形状】三张样本交人裁页型；八张域票按序铺开（写者互斥序）；最后【链路页】与【收口】。
+下一步：【形状】（#782）已可开工（三张样本交人裁页型）——它一裁完，八张域票按写者互斥序铺开，最后【链路页】与【收口】。
 
-**未到 95%**：本图一张票都还没开工。到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
+**未到 95%**：主干（【形状】与八张域票）一张都还没开工。到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
 
 ## Notes
 
@@ -35,8 +35,8 @@
 
 | 票 | 标题 | 类型 | 状态 | 被谁阻塞 |
 |---|---|---|---|---|
-| [#780](https://github.com/FeatherHunter/ilife/issues/780) | 【结构】五域能力目录 ＋ 命令登记进 src/<能力>/commands.ts ＋ 接 pnpm gen | task | 可做 | — |
-| [#781](https://github.com/FeatherHunter/ilife/issues/781) | 【清单·取证】85 场景的老侧事实 ＋ 18 条家族必现块 ＋ 别名表（零设计列） | research | 可做 | — |
+| [#780](https://github.com/FeatherHunter/ilife/issues/780) | 【结构】五域能力目录 ＋ 命令登记进 src/<能力>/commands.ts ＋ 接 pnpm gen | task | 已关 | — |
+| [#781](https://github.com/FeatherHunter/ilife/issues/781) | 【清单·取证】85 场景的老侧事实 ＋ 18 条家族必现块 ＋ 别名表（零设计列） | research | 已关 | — |
 | [#782](https://github.com/FeatherHunter/ilife/issues/782) | 【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开） | prototype | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#843](https://github.com/FeatherHunter/ilife/issues/843) ＋ [#844](https://github.com/FeatherHunter/ilife/issues/844) ＋ [#781](https://github.com/FeatherHunter/ilife/issues/781) |
 | [#783](https://github.com/FeatherHunter/ilife/issues/783) | 【写入与同步】记作息一族出页：三件套结果页 ＋ 修正的蓝调 diff ＋ 批量导入回执 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) |
 | [#784](https://github.com/FeatherHunter/ilife/issues/784) | 【查询与浏览·单日族】今天总结／查作息／时间轴／详情／状态 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#783](https://github.com/FeatherHunter/ilife/issues/783) |
@@ -48,13 +48,15 @@
 | [#790](https://github.com/FeatherHunter/ilife/issues/790) | 【辅助与管理】初始化数据库回执 ＋ 首次使用向导 ＋ 飞书探测页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) |
 | [#791](https://github.com/FeatherHunter/ilife/issues/791) | 【链路页】prompt → 唤醒词 → 命令 → 产物绝对路径：一份 HTML，点路径即开 | task | 可做 | [#783](https://github.com/FeatherHunter/ilife/issues/783) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) ＋ [#785](https://github.com/FeatherHunter/ilife/issues/785) ＋ [#786](https://github.com/FeatherHunter/ilife/issues/786) ＋ [#787](https://github.com/FeatherHunter/ilife/issues/787) ＋ [#788](https://github.com/FeatherHunter/ilife/issues/788) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) ＋ [#790](https://github.com/FeatherHunter/ilife/issues/790) |
 | [#792](https://github.com/FeatherHunter/ilife/issues/792) | 【收口】双端墙 ＋ 总索引 ＋ 逐格缺陷清单 → 修完复评 ≥90 → 人签字 | task | 可做 | [#791](https://github.com/FeatherHunter/ilife/issues/791) |
-| [#843](https://github.com/FeatherHunter/ilife/issues/843) | 【交付面】唤醒词命令缺省落盘 ＋ 产物落点分家 ＋ 命名一处定义 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
-| [#844](https://github.com/FeatherHunter/ilife/issues/844) | 【种子】隔离种子库：锚点日期 ＋ 覆盖五域的可复现数据 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
+| [#843](https://github.com/FeatherHunter/ilife/issues/843) | 【交付面】唤醒词命令缺省落盘 ＋ 产物落点分家 ＋ 命名一处定义 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
+| [#844](https://github.com/FeatherHunter/ilife/issues/844) | 【种子】隔离种子库：锚点日期 ＋ 覆盖五域的可复现数据 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
 ## Decisions so far
 
 <!-- 索引：一行一条＝已关的子票 gist ＋ 链接；细节在票里，这里不复述 -->
 
-（尚无已关子票。建图前的六条裁决记在 Notes 的「裁决速记」，用户答复原文在末节采访区。）
+- [【结构】五域能力目录 ＋ 命令登记进 src/<能力>/commands.ts ＋ 接 pnpm gen](https://github.com/FeatherHunter/ilife/issues/780) — 八键一处声明＋三件派生＋分派翻转，行为零改动（首关子票）
+- [【种子】隔离种子库：锚点日期 ＋ 覆盖五域的可复现数据](https://github.com/FeatherHunter/ilife/issues/844) — 种子随锚点平移的隔离库（1037 记录／73 计划／112 摘要／一级分类 8/8），不碰真库、同锚点可复现，下游把家目录指到 `.scratch/t844/home` 即用。
+- [【交付面】唤醒词命令缺省落盘 ＋ 产物落点分家 ＋ 命名一处定义](https://github.com/FeatherHunter/ilife/issues/843) — 8 个联动 key 原样调用各落一份整页并回 `delivery{path,bytes}` 绝对路径（`--html` 仍逐字优先、`q` 现找不落盘）；页面落产物根 `schedule_html`、HELP 落其 `help` 支（老落点逐字不变）；文件名主体＝`技能名_命令标题`（`src/delivery/naming.ts` 一处定义，标题读生成声明）——下游票读 `delivery.path` 即可，不自己算名字。
 
 ## Not yet specified
 
@@ -98,3 +100,6 @@ Q6 A
 将你的问题和回答以清晰的形式输出到html文件中：…
 再进行一轮的检查和调整。然后任务结束
 ```
+
+
+
