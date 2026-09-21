@@ -23,9 +23,11 @@ export interface PageDeliver {
   readonly stem: string;
 }
 
-/** 一条命令跑完的产物：`data` 进 envelope（形状由 `shape` 守），`exit` 是出口退出码，`deliver` 有值即落盘。 */
+/** 一条命令跑完的产物：`data` 进 envelope（形状由 `shape` 守，对象性由 `buildMemoEnvelope` 在运行期判），
+ *  `exit` 是出口退出码，`deliver` 有值即落盘。`data` 取 `unknown` 是与出口旧形 `DispatchOut` 同形——
+ *  写侧回执（`WishReceipt` 等具名接口，无索引签名）直接进 `data`，不在声明层加断言式收窄。 */
 export interface CommandOut {
-  readonly data: Record<string, unknown>;
+  readonly data: unknown;
   readonly exit: number;
   readonly deliver?: PageDeliver;
 }

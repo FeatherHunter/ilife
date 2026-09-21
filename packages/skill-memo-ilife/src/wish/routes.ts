@@ -4,9 +4,8 @@
  * 哪怕它们指向的键属别的域（如 `完成心愿` → `memo.update`，键的事实住 `src/memo/commands.ts`）。
  * 这样 8 张域票的写集才逐个域互斥（照 `t820-图重设计-第一性.md` 的独占写集判据）。
  *
- * 搬迁节奏（#855）：本件随本域一起落；本轮先声明**键已在登记表里**的词（`memo.wish`），
- * 其余 4 个词（完成心愿／记心愿／删心愿／改心愿）等 `memo` 域的声明落地后同批补入——
- * 生成期守卫「路由指向未知键」会拦住抢跑，故不许先写空指向。
+ * 搬迁节奏（#855）：本件 5 词齐（`memo` 域声明落地后补入后 4 行）；生成期守卫「路由指向未知键」
+ * 会拦住抢跑，故只写键已在登记表里的词。
  */
 import type { RouteDecl } from '../triggers/routeSpec.js';
 
@@ -17,5 +16,43 @@ export const WISH_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_wish_schedule',
     key: 'memo.wish',
     cli: 'memo-cmd-read memo.wish',
+  },
+  // ↓↓ 本件后 4 行：心愿类其余 4 个场景的词（键属备忘域，词随场景住本件；`memo` 域声明落地后同批补入）。
+  // 完成心愿走 `memo.update` 的 `done:true` 分支（与旧路由表 `preset: { done: true }` 同义）；
+  // 记／删／改心愿三条的分类预设与 `preset: { category: '心愿' }` 同义。
+  {
+    order: 17,
+    wakeWord: '完成心愿',
+    scene: 'memo_complete_wish',
+    key: 'memo.update',
+    cli: 'memo-cmd-read memo.update --params \'{"id":1,"done":true}\'',
+    needs: ['id'],
+    preset: { done: true },
+  },
+  {
+    order: 18,
+    wakeWord: '记心愿',
+    scene: 'memo_add_wish',
+    key: 'memo.create',
+    cli: 'memo-cmd-read memo.create --params \'{"title":"学游泳","category":"心愿"}\'',
+    preset: { category: '心愿' },
+  },
+  {
+    order: 19,
+    wakeWord: '删心愿',
+    scene: 'memo_delete_wish',
+    key: 'memo.remove',
+    cli: 'memo-cmd-read memo.remove --params \'{"id":1,"confirm":true}\'',
+    needs: ['id'],
+    preset: { category: '心愿' },
+  },
+  {
+    order: 20,
+    wakeWord: '改心愿',
+    scene: 'memo_update_wish',
+    key: 'memo.update',
+    cli: 'memo-cmd-read memo.update --params \'{"id":1,"body":"学游泳"}\'',
+    needs: ['id'],
+    preset: { category: '心愿' },
   },
 ];

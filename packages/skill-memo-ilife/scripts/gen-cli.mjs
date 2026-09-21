@@ -223,8 +223,13 @@ function checkRoutes(all, byKey) {
     if (!byKey.has(r.key)) die(where, '路由指向未知键：' + r.key);
     if (seenOrder.has(r.order)) die(where, 'order 全表唯一：' + r.order + ' 已被 ' + seenOrder.get(r.order) + ' 占');
     seenOrder.set(r.order, where);
-    if (seenWord.has(r.wakeWord)) die(where, '同词两处声明：' + seenWord.get(r.wakeWord));
-    seenWord.set(r.wakeWord, where);
+    // 同一词的多条记录必须**整组同迁**（留同一件）：冻结 SoT 的既成事实（如「备忘改分类」单条与批量两格同词）；
+    // 拦的是「同一词被拆到两个件」（搬散判据变，按整组搬）。
+    const file = 'src/' + r.from + '/routes.ts';
+    if (seenWord.has(r.wakeWord) && seenWord.get(r.wakeWord) !== file) {
+      die(where, '同词两处声明（跨件）：' + seenWord.get(r.wakeWord));
+    }
+    seenWord.set(r.wakeWord, file);
     merged.push(r);
   }
   merged.sort((a, b) => a.order - b.order);
