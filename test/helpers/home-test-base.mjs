@@ -43,6 +43,24 @@ export function isRealHome(home) {
 }
 
 /**
+ * 家目录入参守卫（#763 自查补上的一道缝）。
+ *
+ * 为什么必须有它：`join(String(undefined), '.ilife')` 会拼出**相对路径** `undefined/.ilife`，
+ * 于是「调用方把变量名写错／还没赋值」不会报错，而是**在当前工作目录里静默建出一个 `undefined/` 目录**
+ * （实测踩到：`packages/skill-bill/test/undefined/` 里落了 `bill.yaml` 与一份 20 KB 的库）。
+ * 判据：家目录必须是**具体的、非空字符串**；不是就当场抛，并把用法写在报文里。
+ */
+function assertHomeArg(home, who) {
+  if (typeof home !== 'string' || home.trim() === '') {
+    throw new Error(
+      who + ' 需要一个「家目录」参数（非空字符串，测试一律传 tmp 目录），实际收到：' + JSON.stringify(home)
+      + '。别把未赋值的变量或路径片段传进来——那会拼出相对路径、在当前目录里静默建目录。',
+    );
+  }
+  return home;
+}
+
+/**
  * 子进程那格环境：家目录指向 `home`，其余继承当刻进程，`extra` 覆盖在最后。
  *
  * @param {string} home 家目录（测试一律传 tmp 目录）
@@ -50,18 +68,21 @@ export function isRealHome(home) {
  * @returns {NodeJS.ProcessEnv}
  */
 export function homeEnvOf(home, extra = undefined) {
+  assertHomeArg(home, 'homeEnvOf');
   return { ...process.env, USERPROFILE: home, HOME: home, ...(extra ?? {}) };
 }
 
 /** 当刻进程的家目录就地接管（原「设一个环境变量」的同意图写法）。 */
 export function useHome(home) {
+  assertHomeArg(home, 'useHome');
   for (const key of HOME_ENV_KEYS) process.env[key] = home;
   return home;
 }
 
 /** 配置目录：`<home>/.ilife`（与 `configPaths()` 算出来的一处不差）。 */
 export function configDirOf(home) {
-  return join(String(home), CONFIG_DIR_NAME);
+  assertHomeArg(home, 'configDirOf');
+  return join(home, CONFIG_DIR_NAME);
 }
 
 /**
