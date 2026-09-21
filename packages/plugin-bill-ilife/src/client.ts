@@ -507,6 +507,9 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
     else setError(r.message);
   }, [props.getCall, writeThenReload]);
 
+  /** 头部两行：配置文件路径与**生效**数据目录（#749：回执 `resolved.dbDir` 是技能按配置文件算出来的那一个，
+   *  装了旧技能没有那一组时回落到 `dataDir`——两个值在「数据目录留空」时逐字相同）。 */
+  const headDataDir = surface?.resolved?.dbDir ?? surface?.dataDir ?? '';
   const head = React.createElement(
     'div',
     null,
@@ -516,14 +519,14 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
           'div',
           null,
           React.createElement('div', { style: S.info }, `配置文件 ${surface.path}`),
-          React.createElement('div', { style: S.info }, `数据目录 ${surface.dataDir}`),
+          React.createElement('div', { style: S.info }, `数据目录 ${headDataDir}`),
           surface.created ? React.createElement('div', { style: S.muted }, '（配置文件刚按默认值生成）') : null,
         )
       : null,
   );
 
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中…'));
+    return React.createElement('div', { style: S.card }, head, React.createElement('div', { style: S.muted }, '配置读取中'));
   }
 
   if (state.kind === 'failed') {
@@ -571,7 +574,7 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
-        busy ? '处理中…' : '保存',
+        busy ? '处理中' : '保存',
       ),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
@@ -588,7 +591,7 @@ function BillConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
         go: '转到',
         showHidden: (n: number) => '显示隐藏目录（' + n + '）',
         empty: '这个目录里没有子目录。',
-        loading: '正在读取…',
+        loading: '正在读取',
         newFolder: '新建文件夹',
         createConfirm: '创建',
         createCancel: '取消',
