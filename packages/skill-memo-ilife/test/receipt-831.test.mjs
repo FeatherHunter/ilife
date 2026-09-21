@@ -1,13 +1,13 @@
 // #831 · mood 域 3 场景端到端（真出口用例）＋「通用回执」页族定义级用例。
 //
-// 为什么从 dist 的**副本**跑：`src/init/page.ts`（#833 在途）导入了 `base-paint/blocks` 里不存在的
-// `renderStatusBadge`，仓内 dist 加载即 SyntaxError，整个 CLI 一条命令都跑不动。本件把 dist 与 templates
-// 拷进临时目录、只把那份坏掉的文件换成空壳，其余逐字照跑 —— 本票的用例因此**不与在途票互相锁死**，
-// 待 #833 落定后把 `sandboxBin()` 换回仓内 `dist/cli/cmd_read.js` 即可（一行）。
+// 跑的是**仓内 dist 的真出口**（`dist/cli/cmd_read.js`）。
+// 本件曾带一层「dist 副本 ＋ init 页空壳」的沙箱：当初 #833 在途时 `dist/init/page.js` 加载即死，
+// 不隔离就一条命令都跑不动。#833 落定后实测该件已干净加载（导出 `renderInitGuidePage`／`renderInitReportPage`），
+// 沙箱按原计划退役 —— 用例套从此不再与在途票互相锁死，也不再可能被替身喂出假绿。
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,23 +21,6 @@ let DB = '';
 let HOME = '';
 let BIN = '';
 let TEMPLATE = '';
-
-/** dist ＋ templates 的临时副本（只换掉 #833 在途那份加载即死的 init 页）。
- *  副本必须住在包**里面**：`base-paint`／`base-link-core` 靠向上查找 `node_modules` 解析，
- *  放系统临时目录就 ERR_MODULE_NOT_FOUND（实测）。目录以 `.` 开头，不进仓。 */
-function sandbox() {
-  const dir = join(pkg, '.t831-sandbox');
-  rmSync(dir, { recursive: true, force: true });
-  mkdirSync(dir, { recursive: true });
-  cpSync(join(pkg, 'dist'), join(dir, 'dist'), { recursive: true });
-  cpSync(join(pkg, 'templates'), join(dir, 'templates'), { recursive: true });
-  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'memo-831-sbx', private: true, type: 'module' }), 'utf8');
-  const bad = join(dir, 'dist', 'init', 'page.js');
-  if (existsSync(bad)) {
-    writeFileSync(bad, 'export function renderInitReportPage(){throw new Error("sandbox stub")}\nexport function renderInitGuidePage(){throw new Error("sandbox stub")}\n', 'utf8');
-  }
-  return join(dir, 'dist', 'cli', 'cmd_read.js');
-}
 
 function run(args) {
   return spawnSync(NODE, [BIN, ...args], {
@@ -55,12 +38,13 @@ before(() => {
   mkdirSync(join(HOME, '.ilife'), { recursive: true });
   writeFileSync(join(HOME, '.ilife', 'memo.yaml'),
     ['db:', '  dir: ' + JSON.stringify(DB.replace(/\\/g, '/')), '  name: memo.db'].join('\n') + '\n', 'utf8');
-  BIN = sandbox();
+  BIN = join(pkg, 'dist', 'cli', 'cmd_read.js');
+  assert.ok(existsSync(BIN), '先编译：node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife');
   TEMPLATE = readFileSync(join(pkg, 'templates', 'receipt.html'), 'utf8');
 });
 
 after(() => {
-  rmSync(join(pkg, '.t831-sandbox'), { recursive: true, force: true });
+  rmSync(HOME, { recursive: true, force: true });
 });
 
 describe('#831 · 通用回执族（定义级）', () => {

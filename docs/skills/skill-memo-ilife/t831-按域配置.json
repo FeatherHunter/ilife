@@ -1,0 +1,18 @@
+{
+  "packagePath": "packages/skill-memo-ilife",
+  "readingsDir": ".",
+  "instances": [
+    {
+      "file": "记情绪_20260921_214117.html",
+      "key": "记情绪"
+    },
+    {
+      "file": "改情绪_20260921_214117.html",
+      "key": "改情绪"
+    },
+    {
+      "file": "删情绪_20260921_214117.html",
+      "key": "删情绪"
+    }
+  ]
+}
