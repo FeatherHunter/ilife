@@ -1,0 +1,98 @@
+[
+  {
+    "卡id": "view_full_recipe",
+    "唤醒词": "查看食谱",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_full_recipe.html",
+    "exit": 0,
+    "bytes": 103347,
+    "sha256": "c4d32c68d2cd8efc63bd4143498adc51a0ff676ca57e2c446e5c53fb5f667ff7"
+  },
+  {
+    "卡id": "view_for_beginner",
+    "唤醒词": "查看食谱",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_for_beginner.html",
+    "exit": 0,
+    "bytes": 101502,
+    "sha256": "ca967ac64e6ac4173ebdd204715f39938a5c3621e1a5feab7b975c0cb7b853f9"
+  },
+  {
+    "卡id": "view_recipe_with_substitution",
+    "唤醒词": "查看食谱",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_recipe_with_substitution.html",
+    "exit": 0,
+    "bytes": 96533,
+    "sha256": "3373ea7ffef48d1d5cb929e07e248f6f9e9470a5928985193f6757eb302cc152"
+  },
+  {
+    "卡id": "view_ingredients_only",
+    "唤醒词": "查看食材",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_ingredients_only.html",
+    "exit": 0,
+    "bytes": 93205,
+    "sha256": "8d9df5ccc35fe3341a4e0600a176450b066360abce02fc5732c65f00109e64e0"
+  },
+  {
+    "卡id": "view_ingredients_grouped",
+    "唤醒词": "查看食材",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_ingredients_grouped.html",
+    "exit": 0,
+    "bytes": 94874,
+    "sha256": "f4331700f7eb6a028a005a862b55326623f5b742189b59df9d523682ec512810"
+  },
+  {
+    "卡id": "view_steps_only",
+    "唤醒词": "查看步骤",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_steps_only.html",
+    "exit": 0,
+    "bytes": 95468,
+    "sha256": "f04a6bc8e40a93e372f21356770ae8bc288592ddb04f206ea5ef85b71ec12b0a"
+  },
+  {
+    "卡id": "view_nutrition_only",
+    "唤醒词": "查看营养",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_nutrition_only.html",
+    "exit": 0,
+    "bytes": 91461,
+    "sha256": "4f79df71fff2ddd8855b788d0c90abbafa55bd4dd2108a4b9c4b427b8f2a63aa"
+  },
+  {
+    "卡id": "view_background_only",
+    "唤醒词": "查看背景",
+    "命令": "chef.recipe.view",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_background_only.html",
+    "exit": 0,
+    "bytes": 91033,
+    "sha256": "ff6b558658541489045be37b98955c4caf3cfaa0b730cabe7f7ba3a79b214e30"
+  }
+]
