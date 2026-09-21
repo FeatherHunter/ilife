@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * 唤醒词记录面：27 条（各域 `routes.ts` 的声明按 `order` 升序拼出）。
+ * 唤醒词记录面：28 条（各域 `routes.ts` 的声明按 `order` 升序拼出）。
  * 权威是声明层（`src/<域>/routes.ts`）；本件不含任何顺序知识——顺序事实只住声明的 `order` 字段，
  * 故把记录换文件搬动也不会打乱顺序。运行期路由（`src/triggers/routing.ts`）只读本件。
  */
@@ -34,4 +34,5 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '记情绪', scene: 'memo_add_mood', key: 'memo.create', cli: 'memo-cmd-read memo.create --params \'{"title":"今天很开心","category":"情绪日记"}\'', preset: { category: '情绪日记' } },
   { wakeWord: '删情绪', scene: 'memo_delete_mood', key: 'memo.remove', cli: 'memo-cmd-read memo.remove --params \'{"id":1,"confirm":true}\'', needs: ['id'], preset: { category: '情绪日记' } },
   { wakeWord: '改情绪', scene: 'memo_update_mood', key: 'memo.update', cli: 'memo-cmd-read memo.update --params \'{"id":1,"body":"今天很开心"}\'', needs: ['id'], preset: { category: '情绪日记' } },
+  { wakeWord: '备忘录同步', scene: 'memo_sync_feishu', key: 'memo.sync', cli: 'memo-cmd-read memo.sync' },
 ];

@@ -8,12 +8,14 @@ import type { CommandSpec } from '../shared/commandSpec.js';
 import { MEMO_COMMANDS } from '../memo/index.js';
 import { REMIND_COMMANDS } from '../remind/index.js';
 import { SEARCH_COMMANDS } from '../search/index.js';
+import { SYNC_COMMANDS } from '../sync/index.js';
 import { WISH_COMMANDS } from '../wish/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
   MEMO_COMMANDS,
   REMIND_COMMANDS,
   SEARCH_COMMANDS,
+  SYNC_COMMANDS,
   WISH_COMMANDS,
 ];
 

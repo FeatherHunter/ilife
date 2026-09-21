@@ -16,21 +16,18 @@ type MemoCopyLogFields = NonNullable<Parameters<typeof buildLogText>[0]['copyLog
 import {
   openMemoDb,
   closeMemoDb,
-  authStatus,
-  runSentinel,
   MemoFetchError,
 } from '../fetch/index.js';
 import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
 // #855：参数校验口径（`crud*`／`normalize*`／`needId`）随备忘域命令一起搬进 `src/memo/run.ts`；
 // 本件只剩开库前分派与交付装配，不再直接做域校验。
-// #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
-// #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
-import { reconcileWishes } from '../wish/index.js';
+// #855：跨域的写侧合成（`reconcileWishes`）随 `memo.sync` 一起搬进 `src/sync/run.ts`；
+// 本件只剩开库前分派与交付装配，不再直调域实现。
 // #855：**命令登记查表**——各域自己的声明（`src/<域>/commands.ts`）由生成器汇成本表；命中即走该域的运行件。
 import { REGISTRY } from './registry.js';
 // #855：行适配已无人用本件这份（`toRows` 随 `memo.batch` 搬进 `src/memo/run.ts`，出口侧交付件不拼行）。
 import { fail } from '../shared/exit.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, syncSnapshot, initSnapshot, MemoRenderError } from '../render/index.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, initSnapshot, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
@@ -285,43 +282,12 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
     // 运行件住 `remind/run.ts`），上面那张登记查表先命中它们——这两条 case 已删。
     // #855：`memo.wish` 已搬回 `src/wish/`（声明住 `wish/commands.ts`，运行件住 `wish/run.ts`）——
     // 上面那张登记查表先命中它，本 case 已删。**别再长回来**：加命令改的是自己域里的声明。
-    case 'memo.sync': {
-      // #661：反向对账三步（本地缺标识补建／远端完成→本地／远端改期→本地），回执带 11 项统计。
-      // #665：同步报告页随行（#661 遗留 HELP 承诺，出页归这一支）。
-      const r = reconcileWishes(db);
-      const snap = syncSnapshot(r.receipt);
-      const payload = pageEnvelope({
-        commandCn: '备忘录同步', wakeWord: '备忘录同步', sceneId: 'sync-from-feishu',
-        title: snap.title, summary: snap.summary, sections: snap.sections,
-        copyLog: {
-          thinking: '双向对账 · 飞书 done/due 反向同步到本机（只读扫描 ＋ 有变更才写）',
-          data_structure: 'reconcile 11 项统计（backfilled/synced/due_*/skipped_*/errors）',
-          call_chain: 'memo.sync → reconcileWishes → render_sync_report → 共享 filler',
-          exception: r.receipt.errors.length ? r.receipt.errors.join('; ') : '无',
-        },
-        extra: { ...r.receipt },
-        message: r.receipt.message,
-      });
-      return { data: r.receipt, exit: r.exit, deliver: { html: fillMemoPage('sync_report', payload), stem: bookletFileStem('memo_sync_feishu') } };
-    }
+    // #855：`memo.sync` 已搬回 `src/sync/`（声明住 `sync/commands.ts`，运行件住 `sync/run.ts`），
+    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
     // #855：`memo.batch` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
     // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    case 'memo.auth': {
-      // #760 起只剩只读诊断：`status`（授权状态）／`diag`（任务域自检 sentinel，显式才跑，零写）。
-      // 授权三支（`init`／`qr`／`poll`）随 `lark.cliPath` 删键退役（定稿 #759：授权交由复制安装指引那段
-      // prompt，内容见 `memo.config.read` 回执的 `lark.prompt`）；「飞书授权」唤醒词同步退役。
-      const step = params.step === undefined ? 'status' : String(params.step);
-      if (step === 'status') {
-        return ok({ ok: true, message: '授权状态', step: 'status', ...authStatus() });
-      }
-      if (step === 'diag') {
-        // #666 自检 sentinel（D-03 任务半场）：显式才跑；默认四步不碰它，零写。
-        const r = runSentinel(params.dryRun === true ? { dryRun: true } : undefined);
-        return { data: r.receipt, exit: r.exit };
-      }
-      fail(2, 'step 只认 status/diag（授权引导 init/qr/poll 已退役：完整安装指引见 memo.config.read 回执的 lark.prompt）');
-      return ok(null);
-    }
+    // #855：`memo.auth` 已搬回 `src/sync/`（声明住 `sync/commands.ts`，运行件住 `sync/run.ts`），
+    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
     // #855：`memo.stats` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
     // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
     // #229：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
