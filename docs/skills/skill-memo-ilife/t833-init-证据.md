@@ -178,4 +178,4 @@ node tooling/run-locked.mjs --ticket 833 -- node --test packages/skill-memo-ilif
 
 | 提交 | 内容 |
 |---|---|
-| `8b01e9d6` | 本票交付：`src/init/page.ts` 去列表行首同名徽章（收 H3）＋ 测试示例文案去 `fts5` ＋ 人核档 ＋ 按域配置 ＋ 本证据件 ＋ 行数台账本席那一行 |
+| `2befe37e` | 本票交付：`src/init/page.ts` 去列表行首同名徽章（收 H3）＋ 测试示例文案去 `fts5` ＋ 人核档 ＋ 按域配置 ＋ 本证据件 ＋ 行数台账本席那一行 |
