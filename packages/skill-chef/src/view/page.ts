@@ -24,7 +24,7 @@ import { renderDocShell } from 'base-paint/docShell';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { viewPageCss } from './pageCss.js';
-import { sectionOf } from './pageSection.js';
+import { heroBandOf, paramBandOf, sectionOf } from './pageSection.js';
 import type { SecHead } from './pageSection.js';
 
 /** 换行（本件只在拼 `extraCss` 时用一次）。 */
@@ -85,7 +85,8 @@ function secHeadsOf(d: ViewItem): Record<'ingredients' | 'steps' | 'nutrition' |
   return {
     // 食材那一位的读数不写「分 N 类」：分类由正文里那行「哪几类各几味」点名，两处同说一件事＝复读。
     ingredients: { title: '食材（' + d.ingredients.length + ' 味）', note: '' },
-    steps: { title: '步骤（' + d.steps.length + ' 步）', note: '火候与时长' },
+    // 步骤那一位的读数不写「火候与时长」：正文每张卡里就是火候／时长／锅温三格，标题先报一遍＝复读。
+    steps: { title: '步骤（' + d.steps.length + ' 步）', note: '' },
     nutrition: n.estimated === true
       ? { title: '营养成分', note: '每 ' + String(n.serving_size) + str(n.serving_unit) }
       : { title: '营养成分', note: '' },
@@ -104,12 +105,14 @@ function factsOf(d: ViewItem): string {
     if (d.status === '已做') items.push({ label: '状态', value: d.status, tone: 'ok' });
     else items.push({ label: '状态', value: d.status });
   }
-  return renderFactStrip({ items });
+  // 宽档四格等宽铺满版心（`chef-view-facts` 那一组在 `viewPageCss()` 的桌面档里）。
+  return renderFactStrip({ extraClass: 'chef-view-facts', items });
 }
 
 function conclusionOf(d: ViewItem): string {
   const avg = d.history.avgRating === null ? '暂无评分' : '平均 ' + d.history.avgRating + ' 分';
-  return renderConclusionBar('这道菜做过 ' + d.history.count + ' 次，' + avg + '。');
+  // 不写「这道菜」：标题就是菜名，句子里再点一次同名是复述（判官点过这一句「冗余」）。
+  return renderConclusionBar('做过 ' + d.history.count + ' 次，' + avg + '。');
 }
 
 /** 分组标签块（#873 ②）：一枚维度一枚维度地排，不再是 13 枚无名色块挤成一片标签云。 */
@@ -123,7 +126,8 @@ function tagsOf(d: ViewItem): string {
       + '</div>';
   }).join('');
   if (rows === '') return '';
-  return sectionOf('', 'tags', { title: '标签', note: '这一份的分类' },
+  // 右端读数留空：标签块自己的六个维度名已经把「这一份怎么分类」说全，标题旁再补一句是复述。
+  return sectionOf('', 'tags', { title: '标签', note: '' },
     '<div class="chef-view-tags">' + rows + '</div>');
 }
 
@@ -139,13 +143,15 @@ function ingredientsTableOf(d: ViewItem): string {
 }
 
 function stepCardsOf(d: ViewItem, open: boolean): string {
+  // #873 第二轮：火候／时长／锅温由「三格白瓦片」换成**带图标位的参数带**——每张步骤卡上因此
+  // 有一处色彩锚点，判官点的「卡片纯白底、步骤色块薄」由这条销账。
   return d.steps.map((s) => renderDisclosure({
     title: '第 ' + String(s.sequence) + ' 步', open,
-    contentHtml: renderProseBlock({ text: str(s.action) || '未写' }) + renderFactStrip({ items: [
-      { label: '火候', value: str(s.heat_level) || '未写' },
-      { label: '时长', value: (s.duration_minutes ?? '—') + ' 分钟' },
-      { label: '锅温', value: str(s.temperature) || '未写' },
-    ] }) + renderCaliberLine('这一步做成：' + (str(s.expected_result) || '未写')),
+    contentHtml: renderProseBlock({ text: str(s.action) || '未写' }) + paramBandOf([
+      { tone: 'heat', label: '火候', value: str(s.heat_level) || '未写' },
+      { tone: 'clock', label: '时长', value: (s.duration_minutes ?? '—') + ' 分钟' },
+      { tone: 'temp', label: '锅温', value: str(s.temperature) || '未写' },
+    ]) + renderCaliberLine('这一步做成：' + (str(s.expected_result) || '未写')),
   })).join('');
 }
 
@@ -225,7 +231,9 @@ function swapOf(d: ViewItem): string {
     ? renderChangeRows({ rows })
     : renderCaliberLine(rows.length + ' 味食材的替代品一致：' + uniform + '。')
       + chipRowOf(d.ingredients.map((g) => str(g.name)));
-  return sectionOf('section-substitution', 'swap', { title: '替换食材预览', note: '临时预览' },
+  // 判官点过「'临时预览' 仍可再精炼」：标题已说「替换食材预览」、下面那句已说「只是临时假设」，
+  // 右端读数不再复述第三遍 ⇒ 留空。
+  return sectionOf('section-substitution', 'swap', { title: '替换食材预览', note: '' },
     body + renderCaliberLine('替换只是临时假设，不落库，真换走修改域。'));
 }
 
@@ -294,7 +302,8 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
   const d = asItem(item);
   if (!d.name) throw new Error('无此菜谱：页面缺菜名（' + cardId + '）');
   const sec = sectionsOf(d);
-  const head = factsOf(d) + conclusionOf(d);
+  // 页族装饰带紧跟在页头之后：八页共用的那条器物剪影带（`heroBandOf()`，纯装饰、不承载数据）。
+  const head = factsOf(d) + conclusionOf(d) + heroBandOf();
   // #873 ②：标签块排在正文之后——它此前排在页头，13 枚色块把真正的内容挤到次屏。
   const tail = tagsOf(d) + historyOf(d) + footerOf(d) + actionsOf() + copyOf(d);
   switch (cardId) {
