@@ -1,7 +1,7 @@
 # gate-runs 导出（受 git 跟踪的对账源，协议 §2.4）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：877｜since：（无）｜until：（无）｜条目数：11｜导出时间：2026-09-21T18:31:05.031Z
+> 票号过滤：877｜since：（无）｜until：（无）｜条目数：40｜导出时间：2026-09-21T19:07:04.365Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence <证据文件> --log <本文件> --ticket <票号> --since <同上> --until <同上>`
 
 ```text
@@ -16,4 +16,33 @@ RUN ticket=877 runId=b627ce49-00a1-4fd2-9d9a-1b4c231aa004 cmd="node docs/skills/
 RUN ticket=877 runId=ff36f5fe-0527-4886-85b8-4462f61720bb cmd="pwsh -NoProfile -Command \"'=== 判据面源码指纹（当刻）==='; foreach ($f in @('packages/skill-memo-ilife/templates/memo_query.html','packages/skill-memo-ilife/templates/change_category.html','packages/base-render/src/pageUi.ts','packages/skill-memo-ilife/src/render/memoPageAssets.ts')) { $h=(Get-FileHash $f -Algorithm SHA256).Hash; Write-Host ('SRC-SHA ' + $f + ' ' + $h) }; node packages/skill-memo-ilife/scripts/check-listpage-empty-span.mjs --dir packages/skill-memo-ilife/.scratch/t834/验收 --width 1280 --label 指纹复跑 --json packages/skill-memo-ilife/.scratch/t877-指纹-1280.json\"" waitedMs=20020 exit=0 pid=29712 at=2026-09-21T18:29:54.329Z
 RUN ticket=877 runId=206eb314-131f-4bb5-b3cd-769bde998c92 cmd="node packages/skill-calorie/scripts/measure-responsive.mjs --dir packages/skill-memo-ilife/.scratch/t877-页群 --widths 390,768,1440 --label t877-fingerprint" waitedMs=10005 exit=0 pid=28720 at=2026-09-21T18:30:34.167Z
 RUN ticket=877 runId=c10e62ef-8254-4192-9b6e-617847d6513a cmd="node docs/skills/skill-memo-ilife/t869-机审.mjs --dir packages/skill-memo-ilife/.scratch/t877-页群 --json packages/skill-memo-ilife/.scratch/t877-机审-指纹.json --quiet" waitedMs=0 exit=0 pid=52360 at=2026-09-21T18:30:34.337Z
+RUN ticket=877 runId=20656c39-4795-4cfb-9eae-aff1a092aa98 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-暂存.ps1" waitedMs=20013 exit=0 pid=35820 at=2026-09-21T18:31:33.990Z
+RUN ticket=877 runId=4b0eed05-8aea-4126-b78c-aee795d504c4 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-提交.ps1" waitedMs=0 exit=0 pid=41024 at=2026-09-21T18:31:57.154Z
+RUN ticket=877 runId=b1315004-cbef-4c1c-b9e9-1e49f5e47b99 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-测试变异.ps1" waitedMs=110092 exit=0 pid=52744 at=2026-09-21T18:41:21.327Z
+RUN ticket=877 runId=c27c4223-780c-49ec-ac5e-0b4b1f484414 cmd="node --test packages/skill-memo-ilife/test/*.test.mjs" waitedMs=0 exit=1 pid=37680 at=2026-09-21T18:41:46.709Z
+RUN ticket=877 runId=870187fd-33c2-422a-b2b2-778e5d576656 cmd="node --test packages/skill-memo-ilife/test/t877-template-class-parity.test.mjs" waitedMs=0 exit=0 pid=42636 at=2026-09-21T18:42:58.214Z
+RUN ticket=877 runId=660738c8-01b7-4c59-a4e9-48b62fbe8648 cmd="node packages/skill-memo-ilife/scripts/check-listpage-empty-span.mjs --dir packages/skill-memo-ilife/.scratch/t834/验收 --width 1280" waitedMs=10010 exit=0 pid=41176 at=2026-09-21T18:43:25.257Z
+RUN ticket=877 runId=d7cdd6ef-323a-4649-a9dc-ae8f0819cede cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-提交2.ps1" waitedMs=0 exit=0 pid=57648 at=2026-09-21T18:43:30.543Z
+RUN ticket=877 runId=160d5976-d6b5-4901-a092-4d14526eaa97 cmd="node C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\probe-own.mjs packages/skill-memo-ilife/.scratch/t834/验收/查已提醒备忘.html packages/skill-memo-ilife/.scratch/t834/验收/备忘改分类-批量-向导.html --widths 390,768,820,1280" waitedMs=0 exit=0 pid=55800 at=2026-09-21T18:44:38.600Z
+RUN ticket=877 runId=857d1ae8-fc55-41f7-8feb-055527fcbc15 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-仅测试2.ps1" waitedMs=110068 exit=0 pid=6176 at=2026-09-21T18:46:39.428Z
+RUN ticket=877 runId=ec84315d-9b61-47d0-8c38-2d8f203bbec0 cmd="node C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\make-empty.mjs" waitedMs=80052 exit=0 pid=56972 at=2026-09-21T18:46:40.962Z
+RUN ticket=877 runId=28a23718-0992-48f9-8a9e-150c39e8adf2 cmd="node C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\probe-own.mjs C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\空-查已提醒备忘.html C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\空-备忘改分类.html --widths 390,768,820,1280" waitedMs=0 exit=0 pid=36248 at=2026-09-21T18:47:01.478Z
+RUN ticket=877 runId=79c2103b-aadc-4ec5-8d44-3adf8cf99592 cmd="node packages/skill-memo-ilife/scripts/check-listpage-empty-span.mjs C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\空-备忘改分类.html --width 1280" waitedMs=70054 exit=0 pid=58972 at=2026-09-21T18:50:15.019Z
+RUN ticket=877 runId=26e742cc-1e90-4dc4-a1da-988c9055bf18 cmd="node C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\mutation.mjs" waitedMs=30016 exit=0 pid=37276 at=2026-09-21T18:51:03.885Z
+RUN ticket=877 runId=4e1a3ee3-bfdb-4180-abc7-d7cd49689f3a cmd="node C:\\Users\\辰辰洋洋\\AppData\\Local\\Temp\\t877-review\\probe-actions.mjs packages/skill-memo-ilife/.scratch/t834/验收/查已提醒备忘.html docs/skills/skill-memo-ilife/t867-夹具-页群/搜备忘_20260921_192606.html --width 1280" waitedMs=70044 exit=0 pid=38856 at=2026-09-21T18:53:11.308Z
+RUN ticket=877 runId=0a880c4c-a5a0-489c-996c-8ea436b22334 cmd="gh issue view 877 --json title,body,state" waitedMs=0 exit=0 pid=45508 at=2026-09-21T18:53:17.958Z
+RUN ticket=877 runId=f5ada431-80f8-455f-988b-af03cbe0828a cmd="node --test packages/skill-memo-ilife/test/cli-help-229.test.mjs" waitedMs=0 exit=1 pid=4124 at=2026-09-21T18:53:40.457Z
+RUN ticket=877 runId=01ae5e22-8dc8-4a33-9f6a-77f38903d654 cmd="node packages/skill-memo-ilife/.scratch/t877-向导空分支驱动.mjs --out packages/skill-memo-ilife/.scratch/t877-向导空分支" waitedMs=70082 exit=1 pid=48616 at=2026-09-21T18:56:36.611Z
+RUN ticket=877 runId=d226f0f5-bbf7-4f3f-ab19-66d789b47518 cmd="node packages/skill-memo-ilife/.scratch/t877-向导空分支驱动.mjs --out packages/skill-memo-ilife/.scratch/t877-向导空分支" waitedMs=90071 exit=1 pid=41096 at=2026-09-21T18:58:19.993Z
+RUN ticket=877 runId=cbd708c8-781b-46c5-a508-255603bed993 cmd="node packages/skill-memo-ilife/.scratch/t877-向导空分支驱动.mjs --out packages/skill-memo-ilife/.scratch/t877-向导空分支" waitedMs=0 exit=1 pid=55376 at=2026-09-21T18:58:49.650Z
+RUN ticket=877 runId=9d9b31eb-795d-4f96-aa8d-420fa7a2d8fa cmd="node packages/skill-memo-ilife/.scratch/t877-向导空分支驱动.mjs --out packages/skill-memo-ilife/.scratch/t877-向导空分支" waitedMs=0 exit=1 pid=42992 at=2026-09-21T19:00:23.827Z
+RUN ticket=877 runId=fca99998-0010-41a2-8657-cef0f3ef538e cmd="node packages/skill-memo-ilife/.scratch/t877-只跑向导格.mjs" waitedMs=0 exit=0 pid=51152 at=2026-09-21T19:01:01.174Z
+RUN ticket=877 runId=9dc760ab-e41b-4412-a464-28126bd36bb3 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-改分类页对照.ps1" waitedMs=0 exit=0 pid=46828 at=2026-09-21T19:01:24.530Z
+RUN ticket=877 runId=8b260ad0-44e3-454a-b26b-6e818370ec3d cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-测试2变异.ps1" waitedMs=0 exit=0 pid=54516 at=2026-09-21T19:01:46.800Z
+RUN ticket=877 runId=c5b71f0a-ced6-4bc0-bf59-677c591111f7 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-坏态对照.ps1" waitedMs=0 exit=0 pid=30564 at=2026-09-21T19:03:37.534Z
+RUN ticket=877 runId=0f2c9966-8669-4803-bee3-ba342bbe2680 cmd="pwsh -NoProfile -Command \"node docs/skills/skill-memo-ilife/t834-gen-batch.mjs --out packages/skill-memo-ilife/.scratch/t834/源; exit $LASTEXITCODE\"" waitedMs=0 exit=0 pid=51120 at=2026-09-21T19:04:19.328Z
+RUN ticket=877 runId=b336faec-aa0e-46ab-b0dd-646f313ceec5 cmd="node packages/skill-calorie/scripts/measure-responsive.mjs --dir packages/skill-memo-ilife/.scratch/t877-页群 --widths 390,768,1440 --label t877-review-final" waitedMs=0 exit=0 pid=49160 at=2026-09-21T19:04:33.456Z
+RUN ticket=877 runId=3bbbe2a2-70cb-4224-9539-2c950faafeec cmd="node docs/skills/skill-memo-ilife/t869-机审.mjs --dir packages/skill-memo-ilife/.scratch/t877-页群 --json packages/skill-memo-ilife/.scratch/t877-机审-审查后.json --quiet" waitedMs=0 exit=0 pid=38672 at=2026-09-21T19:04:33.615Z
+RUN ticket=877 runId=28176e40-6b63-40ea-8c8c-a1149a83a33b cmd="node --test packages/skill-memo-ilife/test/*.test.mjs" waitedMs=0 exit=1 pid=55064 at=2026-09-21T19:06:06.602Z
+RUN ticket=877 runId=89bb73d0-9cdc-4ae2-ac66-d9d7280e5f63 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t877-提交3.ps1" waitedMs=0 exit=0 pid=45940 at=2026-09-21T19:06:32.681Z
 ```
