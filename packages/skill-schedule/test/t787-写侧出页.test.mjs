@@ -136,7 +136,7 @@ test('#787 V2 补计划（幂等命中）：认回原来那条，页上给出注
   assert.equal(first.env.data.local, 'created');
   assert.equal(again.env.data.local, 'found', '同一天同一段起止再补一次＝命中已有');
   assert.equal(again.env.data.id, first.env.data.id, '认回原来那条（编号不换）');
-  assert.ok(textOf(again.html).includes('这一步没有新建'), '必现块②：幂等命中注记位在页上');
+  assert.ok(markupOf(again.html).includes('ilife-block-feedback-block-title">这一步没有新建'), '必现块②：幂等命中注记位在页上（按它自己那一块的标题认，结论条里那句不算）');
   console.log('#787 V2 读数：两次都落在 #' + String(again.env.data.id) + '，第二次 local=' + again.env.data.local);
 });
 

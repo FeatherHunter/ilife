@@ -136,7 +136,7 @@ const CONTRACT = {
   ],
   [P_ENSURE_HIT]: [
     { block: '新事件回执（f15）', needs: ['补计划回执', '这一趟的结果'] },
-    { block: '幂等命中注记位（f15）', needs: ['这一步没有新建', '命中已有'] },
+    { block: '幂等命中注记位（f15）', needs: ['ilife-block-feedback-block-title">这一步没有新建', '命中已有'] },
   ],
   [P_ENSURE_NOTE]: [
     { block: '新事件回执（f15）', needs: ['补计划回执', '备注'] },
