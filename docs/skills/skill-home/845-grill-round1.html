@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#845 唤醒词层规格 · 讨论拍板页</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1a1d21;--mut:#5b6470;--line:#e5e8ec;--blue:#0b63e5;--amber:#b45309;--red:#b42318;--green:#067647}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{position:sticky;top:0;z-index:5;background:#111827;color:#fff;padding:14px 22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0}header .sub{color:#cbd5e1;font-size:13px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.b-todo{background:#fef3c7;color:#92400e}.b-info{background:#dbeafe;color:#1e40af}.b-map{background:#e0e7ff;color:#3730a3}
+main{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+.sec h2{margin:0 0 8px;font-size:16px}.sec p{margin:8px 0}ul{margin:8px 0 8px 20px;padding:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;border-top:4px solid var(--blue)}
+.card.risk{border-top-color:var(--red)}.card.opt{border-top-color:var(--amber)}
+.card h3{margin:0 0 6px;font-size:15px}.why{color:var(--mut);font-size:13px}
+.fact{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:8px 12px;font-size:13px;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:#f1f5f9}
+.rec{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:8px}
+.rec b{color:var(--blue)}code{background:#f1f5f9;padding:1px 6px;border-radius:6px;font-size:12px}
+details{font-size:13px;color:var(--mut)}footer{color:var(--mut);font-size:12px;text-align:center;margin-top:20px}
+a{color:var(--blue)}
+</style>
+</head>
+<body>
+<header>
+<h1>#845 唤醒词层规格 · 拍板页</h1>
+<span class="badge b-todo">待你拍板 · 未落盘</span>
+<span class="badge b-map">同图 #797 居家场景页</span>
+<span class="sub">只出规格 <code>wakeword-spec.md</code> · 先点头再动 · 不改 yaml / WAKE_TABLE / 源码</span>
+</header>
+<main>
+
+<div class="sec">
+<h2>0 · 前因（一句话）</h2>
+<p>唤醒词层今天没有规格：<b>3</b> 条已裁不做（一致）／<b>20</b> 条有路由、无场景规格（无 prompt、无类型、无页面归属、HELP 查不到）／<b>42</b> 条 yaml 变体路由 HELP 两头不认（生成器跳过 <code>variants:</code>）。</p>
+<p class="why">根因：唤醒词是场景的入口，不是命令的别名。词的价值 = 它指向的场景规格；脱钩即不可验收，也不该存在。</p>
+<div class="fact">已核对：<code>packages/skill-home/src/policy/wakewords.ts:20-111</code> 为路由表，<code>:115</code> 废弃 3 词，<code>:117-121</code> 最长匹配（<code>includes</code> + 长度降序）。20/42 逐条对账我来跑，不问你要数。</div>
+</div>
+
+<div class="card">
+<h3>Q1 · 目标：五节要不要全写？</h3>
+<p class="why">为什么问：节多了替实施票做决定（越界），节少了归宿无处检验（又散）。票2管页族、票3管路由落地、票7管链路页。</p>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td>A 五节锁死（原案）</td><td>一次闭环</td><td>UI/机器门易写进实现，抢活</td></tr>
+<tr><td>B 五节改“接口声明”（优化）</td><td>闭环不越界</td><td>要多写一句“本节只到判据为止”</td></tr></table>
+<div class="rec"><b>推荐 B：</b>四分类定义＋20条附表＋42条分层口径＋UI别名规则（只定上限与折叠）＋机器门两层划分（本票定死的 / 待票2回填页族列的）。</div>
+</div>
+
+<div class="card">
+<h3>Q2 · 边界：给下游的约束写多厚？</h3>
+<p class="why">为什么问：只给链接，下游可任意解读，规格变废纸；写到参数级，又抢实施票的活。</p>
+<table><tr><th>选项</th><th>利</th><th>弊</th></tr>
+<tr><td>A 只给链接行（原案）</td><td>薄、不越界</td><td>无约束力</td></tr>
+<tr><td>B 判据一句话＋正反例各一行（优化）</td><td>可检验、薄厚适中</td><td>要多写 3 行例</td></tr>
+<tr><td>C 参数级全表</td><td>最严</td><td>抢活、复核翻倍</td></tr></table>
+<div class="rec"><b>推荐 B。</b>例：<code>补物品 → 3-3 数量变更，正例命中 qty，反例不得新建物品</code>。源码一律不动。</div>
+</div>
+
+<div class="card risk">
+<h3>Q3 · 风险：先防哪条？ <span class="badge b-info">自我推翻：原案排 b 第一，现改 a 第一</span></h3>
+<p class="why">为什么问：上一轮我站验收者视角把“口径不诚实”放第一；从用户伤害看应重排。</p>
+<table><tr><th>风险</th><th>后果</th><th>止血线</th></tr>
+<tr><td><b>(a) 最长匹配误伤</b></td><td>一次误触发就是一次数据动作（例：盘点/盘物品/盘全部/囤货盘点互吃）</td><td>最长匹配回归用例必须进机器门</td></tr>
+<tr><td>(b) 口径不诚实</td><td>文档撒谎，运行时无害但不可验收</td><td>变体要么进表、要么标非路由，不许第三态</td></tr>
+<tr><td>(c) HELP 链断裂</td><td>CI 变红，早发现</td><td>维持生成器＋摘要锁</td></tr></table>
+<div class="rec"><b>推荐排序 a &gt; b &gt; c</b>（用户视角）。若你坚持验收视角，则 b &gt; a &gt; c，请拍板。</div>
+</div>
+
+<div class="grid">
+<div class="card opt">
+<h3>Q4 · 20条：默认全并入吗？</h3>
+<p class="why">前因：原文“推荐多数走变体并入、默认不新增”是我猜的，需你确认；<code>改购物清单→SM5-1</code>这类跨命名空间等价存疑。</p>
+<div class="fact">三桶：①无争议并入（补/减/废/借/修/盘系）②待裁决（3 条 <code>(HTML)</code>，若“默认全量落 HTML”成立则废弃）③单审（查高频/查低频/看标签/改购物清单等）。</div>
+<div class="rec"><b>推荐三桶，</b>不默认全并入。默认不新增场景保留。</div>
+</div>
+<div class="card opt">
+<h3>Q5 · 42条：二选一还是分层？</h3>
+<p class="why">前因：原文 (a)全进表 / (b)全留 AI 是假二分。全进易误伤，全不进则识别面骤降。</p>
+<div class="fact">分层标准只一条：无槽位也能唯一命中的才配进表。<br>进表如 <code>帮我记一下</code>；留 AI 如 <code>钥匙固定放哪来着</code>（含指代），且后者移出资产或标“非路由”。</div>
+<div class="rec"><b>推荐分层，</b>替代二选一。代价：要定“无歧义”判定句（本票只定标准，不逐条贴标签）。</div>
+</div>
+</div>
+
+<div class="card">
+<h3>Q6 · UI＋机器门：现在定死到什么粒度？</h3>
+<p class="why">前因：地图里悬着“别名在链路页怎么摆”这团雾；本票不定，雾不散；定太细，抢票7的活。</p>
+<div class="fact">UI：变体与无场景词不占新格、只作宿主别名附注；单场景别名超 N 条折叠（N 由票7定）。机器门：四分类检查＋三向对账（yaml 主词＋变体 ↔ WAKE_TABLE ↔ DEPRECATED）＋“词→场景→命令→页族”对照表，其中页族列待票2回填。</div>
+<div class="rec"><b>推荐按此粒度定死，</b>样式与实现留给票7/票3。</div>
+</div>
+
+<div class="sec">
+<h2>下一步</h2>
+<p>你回 Q1–Q6（可只回“全按推荐”或单条改），我再整理成下一轮正式结论；<b>你点头前不写 issue 正文</b>，对齐后提醒你跑 <code>/to-spec</code>（规格单挂同图 #797 作 subissue）。</p>
+<details><summary>原文依据（收起，不堆砌）</summary>
+<p>Issue #845：四分类＋20条归宿＋42条口径＋UI口径＋机器门；验收 <code>^## Count ≥5</code> 且评论有用户点头原话；本票只出规格。</p>
+</details>
+</div>
+<footer>845-grill-round1 · 精简拍板页 · 结论待确认不得 close</footer>
+</main>
+</body>
+</html>
