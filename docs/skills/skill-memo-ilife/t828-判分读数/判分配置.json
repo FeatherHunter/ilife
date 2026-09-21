@@ -1,0 +1,10 @@
+{
+  "packagePath": "packages/skill-memo-ilife",
+  "readingsDir": ".",
+  "instances": [
+    { "file": "记提醒_20260921_213051.html", "key": "记提醒" },
+    { "file": "设提醒_20260921_213051.html", "key": "设提醒" },
+    { "file": "看提醒_20260921_213052.html", "key": "看提醒" },
+    { "file": "查已提醒备忘_20260921_213052.html", "key": "查已提醒备忘" }
+  ]
+}

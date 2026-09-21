@@ -1,0 +1,443 @@
+{
+ "at": "2026-09-21T13:32:16.273Z",
+ "engine": "packages/base-render/scripts/判分.mjs",
+ "dir": "D:\\ilife\\.scratch\\tickets828\\readings",
+ "config": {
+  "path": "D:\\ilife\\.scratch\\tickets828\\readings\\判分配置.json",
+  "value": {
+   "packagePath": "packages/skill-memo-ilife",
+   "readingsDir": ".",
+   "instances": [
+    {
+     "file": "记提醒_20260921_213051.html",
+     "key": "记提醒"
+    },
+    {
+     "file": "设提醒_20260921_213051.html",
+     "key": "设提醒"
+    },
+    {
+     "file": "看提醒_20260921_213052.html",
+     "key": "看提醒"
+    },
+    {
+     "file": "查已提醒备忘_20260921_213052.html",
+     "key": "查已提醒备忘"
+    }
+   ]
+  }
+ },
+ "frozen": {
+  "weights": {
+   "d1": 15,
+   "d2": 20,
+   "d3": 25,
+   "d4": 15,
+   "d5": 25
+  },
+  "floor": {
+   "d1": 12,
+   "d2": 16,
+   "d3": 20,
+   "d4": 12,
+   "d5": 20
+  },
+  "hard": {
+   "H1": 2,
+   "H2": 3,
+   "H3": 2,
+   "H4": 1,
+   "H5": 5,
+   "H6": 1,
+   "H7": 1
+  },
+  "touchWidths": [
+   390,
+   768
+  ],
+  "criterionWidths": [
+   390,
+   768,
+   1440
+  ],
+  "passScore": 90,
+  "touchMinPx": 44,
+  "textMinPx": 12,
+  "breakpointsPx": [
+   400,
+   640,
+   820,
+   1001,
+   1200
+  ],
+  "coeff": {
+   "d3": {
+    "sep": 1.2,
+    "ident": 1.5,
+    "dup": 2,
+    "symbol": 1
+   },
+   "d5": {
+    "font": 5,
+    "table": 6,
+    "toc": 4,
+    "image": 3
+   }
+  }
+ },
+ "criterion": {
+  "widths": [
+   390,
+   768,
+   1440
+  ],
+  "narrowest": 390,
+  "widest": 1440
+ },
+ "rows": [
+  {
+   "seq": 1,
+   "key": "记提醒",
+   "file": "记提醒_20260921_213051.html",
+   "raw": 96,
+   "dims": {
+    "d1": 15,
+    "d2": 20,
+    "d3": 25,
+    "d4": 15,
+    "d5": 21
+   },
+   "hits": {
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "h4": 0,
+    "h5": 0,
+    "h5Widths": [],
+    "h6": 0,
+    "h6Per": {
+     "390": 0,
+     "768": 0,
+     "1440": 0
+    },
+    "h6Checked": 0,
+    "h7": 0
+   },
+   "hard": {
+    "total": 0,
+    "parts": []
+   },
+   "total": 96,
+   "floorOK": true,
+   "detail": {
+    "d3": {
+     "cut": 0,
+     "coeff": {
+      "sep": 1.2,
+      "ident": 1.5,
+      "dup": 2,
+      "symbol": 1
+     }
+    },
+    "d4": {
+     "cut": 0,
+     "broken": []
+    },
+    "d5": {
+     "cut": 4,
+     "parts": {
+      "font": 0,
+      "table": 0,
+      "toc": 4,
+      "image": 0
+     },
+     "minFont": 12
+    }
+   },
+   "factKeys": [
+    "aspectRatio",
+    "bytes",
+    "candidates",
+    "d1",
+    "d2",
+    "d4cut",
+    "dupFacts",
+    "english",
+    "file",
+    "imgTags",
+    "judge",
+    "note",
+    "scrollMargin",
+    "tables",
+    "tdDataLabel",
+    "tocEl",
+    "totalLines",
+    "visibleTextNodes"
+   ]
+  },
+  {
+   "seq": 2,
+   "key": "设提醒",
+   "file": "设提醒_20260921_213051.html",
+   "raw": 96,
+   "dims": {
+    "d1": 15,
+    "d2": 20,
+    "d3": 25,
+    "d4": 15,
+    "d5": 21
+   },
+   "hits": {
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "h4": 0,
+    "h5": 0,
+    "h5Widths": [],
+    "h6": 0,
+    "h6Per": {
+     "390": 0,
+     "768": 0,
+     "1440": 0
+    },
+    "h6Checked": 0,
+    "h7": 0
+   },
+   "hard": {
+    "total": 0,
+    "parts": []
+   },
+   "total": 96,
+   "floorOK": true,
+   "detail": {
+    "d3": {
+     "cut": 0,
+     "coeff": {
+      "sep": 1.2,
+      "ident": 1.5,
+      "dup": 2,
+      "symbol": 1
+     }
+    },
+    "d4": {
+     "cut": 0,
+     "broken": []
+    },
+    "d5": {
+     "cut": 4,
+     "parts": {
+      "font": 0,
+      "table": 0,
+      "toc": 4,
+      "image": 0
+     },
+     "minFont": 12
+    }
+   },
+   "factKeys": [
+    "aspectRatio",
+    "bytes",
+    "candidates",
+    "d1",
+    "d2",
+    "d4cut",
+    "dupFacts",
+    "english",
+    "file",
+    "imgTags",
+    "judge",
+    "note",
+    "scrollMargin",
+    "tables",
+    "tdDataLabel",
+    "tocEl",
+    "totalLines",
+    "visibleTextNodes"
+   ]
+  },
+  {
+   "seq": 3,
+   "key": "看提醒",
+   "file": "看提醒_20260921_213052.html",
+   "raw": 100,
+   "dims": {
+    "d1": 15,
+    "d2": 20,
+    "d3": 25,
+    "d4": 15,
+    "d5": 25
+   },
+   "hits": {
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "h4": 0,
+    "h5": 0,
+    "h5Widths": [],
+    "h6": 0,
+    "h6Per": {
+     "390": 0,
+     "768": 0,
+     "1440": 0
+    },
+    "h6Checked": 0,
+    "h7": 0
+   },
+   "hard": {
+    "total": 0,
+    "parts": []
+   },
+   "total": 100,
+   "floorOK": true,
+   "detail": {
+    "d3": {
+     "cut": 0,
+     "coeff": {
+      "sep": 1.2,
+      "ident": 1.5,
+      "dup": 2,
+      "symbol": 1
+     }
+    },
+    "d4": {
+     "cut": 0,
+     "broken": []
+    },
+    "d5": {
+     "cut": 0,
+     "parts": {
+      "font": 0,
+      "table": 0,
+      "toc": 0,
+      "image": 0
+     },
+     "minFont": 12
+    }
+   },
+   "factKeys": [
+    "aspectRatio",
+    "bytes",
+    "candidates",
+    "d1",
+    "d2",
+    "d4cut",
+    "dupFacts",
+    "english",
+    "file",
+    "imgTags",
+    "judge",
+    "note",
+    "scrollMargin",
+    "tables",
+    "tdDataLabel",
+    "tocEl",
+    "totalLines",
+    "visibleTextNodes"
+   ]
+  },
+  {
+   "seq": 4,
+   "key": "查已提醒备忘",
+   "file": "查已提醒备忘_20260921_213052.html",
+   "raw": 100,
+   "dims": {
+    "d1": 15,
+    "d2": 20,
+    "d3": 25,
+    "d4": 15,
+    "d5": 25
+   },
+   "hits": {
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "h4": 0,
+    "h5": 0,
+    "h5Widths": [],
+    "h6": 0,
+    "h6Per": {
+     "390": 0,
+     "768": 0,
+     "1440": 0
+    },
+    "h6Checked": 0,
+    "h7": 0
+   },
+   "hard": {
+    "total": 0,
+    "parts": []
+   },
+   "total": 100,
+   "floorOK": true,
+   "detail": {
+    "d3": {
+     "cut": 0,
+     "coeff": {
+      "sep": 1.2,
+      "ident": 1.5,
+      "dup": 2,
+      "symbol": 1
+     }
+    },
+    "d4": {
+     "cut": 0,
+     "broken": []
+    },
+    "d5": {
+     "cut": 0,
+     "parts": {
+      "font": 0,
+      "table": 0,
+      "toc": 0,
+      "image": 0
+     },
+     "minFont": 12
+    }
+   },
+   "factKeys": [
+    "aspectRatio",
+    "bytes",
+    "candidates",
+    "d1",
+    "d2",
+    "d4cut",
+    "dupFacts",
+    "english",
+    "file",
+    "imgTags",
+    "judge",
+    "note",
+    "scrollMargin",
+    "tables",
+    "tdDataLabel",
+    "tocEl",
+    "totalLines",
+    "visibleTextNodes"
+   ]
+  }
+ ],
+ "totals": {
+  "d1": 15,
+  "d2": 20,
+  "d3": 25,
+  "d4": 15,
+  "d5": 23,
+  "total": 98,
+  "hard": 0,
+  "min": 96,
+  "max": 100,
+  "floorOKPages": 4,
+  "passPages": 4
+ },
+ "reconcile": {
+  "zero": true,
+  "worst": {
+   "diff": 0,
+   "dim": "—",
+   "key": "—",
+   "script": "—",
+   "literal": "—"
+  },
+  "items": 28
+ }
+}

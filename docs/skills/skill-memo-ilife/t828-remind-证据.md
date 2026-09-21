@@ -35,22 +35,35 @@
 原 `preset: { done: false }`，而「已完成视图」的判据是 `mode === 'done' || done === true` ⇒ `false` 落回 `status=active` 分支，两条命令**逐字节同结果**。
 改法：`preset: { done: true, scene: 'memo_completed_reminders' }`。权威实现本来就在（`listCompletedReminders`，老 `completed_reminders` 口径：打卡笔记经 `notes.reminder_id` 反查提醒行）。
 
-## 三 五条验收命令逐条读数
+## 三 五条验收命令逐条读数（2026-09-21 收尾轮 · 全绿）
+
+前置件已齐：[#851](https://github.com/FeatherHunter/ilife/issues/851) 关票分解出 [#867 读数链](https://github.com/FeatherHunter/ilife/issues/867)／[#868 判分引擎](https://github.com/FeatherHunter/ilife/issues/868)／[#869 六列机审](https://github.com/FeatherHunter/ilife/issues/869)／[#870 形状件](https://github.com/FeatherHunter/ilife/issues/870)，四件都已落地 —— 本票七条阻塞边全部关闭。
 
 | 门 | 命令 | 读数 | 绿？ |
 |---|---|---|---|
-| 真出口用例 | `node --test packages/skill-memo-ilife/test/t828-remind-domain.test.mjs` | 4 个套件全绿（4 场景落盘 ＋ 两处纠错定义级 ＋ 4 条反例） | ✅ |
+| 真出口用例 | `node --test packages/skill-memo-ilife/test/t828-remind-domain.test.mjs` | **19/19 通过**（4 场景落盘 ＋ 两处纠错定义级 ＋ 4 条反例 ＋ 2 条收尾钉） | ✅ |
 | 分隔符门 | `node packages/base-render/test/separator-probe.mjs <产物>` | 4 件**节点级 0／行级 0** | ✅ |
-| 响应式门 | `node packages/skill-calorie/scripts/measure-responsive.mjs --dir <本域产物目录>` | `OVERFLOW-ZERO pages=4 cells=12 failed=0`（390／768／1440 三档） | ✅ |
-| 机审六列 | `node docs/skills/skill-bill/t407-v8-style-audit.mjs --dir <产物目录>` | **无件可跑**：`t407` 的 `FILES` 名单写死 32 份账单产物；为备忘录新建的那份归 [#851](https://github.com/FeatherHunter/ilife/issues/851) 第 2 件（open，未认领）。见 §四。 | ⛔ 缺件 |
-| 五维尺 | `node docs/skills/skill-memo-ilife/t<票号>-判分.mjs --dir <读数目录>` | **无件可跑**：判分引擎直升公共层归 [#851](https://github.com/FeatherHunter/ilife/issues/851) 第 1 件（open，未认领）。见 §四。 | ⛔ 缺件 |
+| 响应式门 | `node packages/skill-calorie/scripts/measure-responsive.mjs --dir <产物目录>` | `OVERFLOW-ZERO pages=4 cells=12 failed=0`（390／768／1440） | ✅ |
+| 机审六列 | `node docs/skills/skill-memo-ilife/t869-机审.mjs --dir <页群目录>` | **`RESULT: 4/4 PASS ①0 ②0 ③0 ④0 ⑤0 ⑥0`**；逐列汇总「双端断点缺失 0 件／触摸目标缺失 0 件／页内自造样式 0 件／重复句 0 句／分隔符懒政 0 处／英文裸词 0 处」 | ✅ |
+| 五维尺 | `node packages/base-render/scripts/判分.mjs --dir <读数目录> --config <按域配置>` | **逐页 96／96／100／100，均分 98，最低 96**；每维 ≥ 满权 80%（D1 15／D2 20／D3 25／D4 15／D5 21–25）；**硬扣分 0**；`RECONCILE … 最大绝对差 = 0 ⇒ 一致（差 0）`（比对 28 项） | ✅ |
+
+读数与配置落 `t828-判分读数/`（`sep.json`／`resp.json`／`fmt.json`／`facts.json`／`人核档.md`／`判分配置.json`／`判分结果.json`），可重跑。
 
 **复现**：`node .scratch/tickets828/probe-remind-e2e.mjs`（唤醒词与场景 id 从官方源 `src/help/scenes/remind.ts` 取，真喂 `routeWakeword()`，真跑唯一出口，临时库 ＋ 隔离配置，**绝不碰活库**）。
 
-## 四 两条门为什么现在跑不了（不是本票偷懒）
+## 三之二 收尾轮现场修掉的三处（都是「机器门读不到、渲染后才看得见」那类）
 
-`t824-视觉基准.md` §4 已定：**账单域六列机审本图不用**，要「为备忘录新建六列机审」；判分引擎要「直升公共层单引擎」。两件都住 #851，而 #851 是**串行窗口小票**，今天仍是 `open` ＋ 未认领。
-本票能做的部分已做完（四格产物落盘、两个族定义地就位、两张被点名的文案债清掉）；这两道门要在 #851 落地后由收口票重跑 —— 与 `t856-实施-证据.md` 把「34 格真产物重跑」归 #834 是同一口径。
+| # | 症状 | 判据出处 | 改法 |
+|---|---|---|---|
+| 1 | 回执页**页题两遍**：写死的眉头「备忘录回执」与运行时页题同串 | `t849-视觉基准.md` §1 H3（同事实一页一处，−2） | 删眉头元素与其 CSS；页题由载荷 `title` 唯一提供 |
+| 2 | 元信息行 `时间：… · 唤醒词「…」` —— **运行时**才拼出来的 `·` 串，分隔符探针读不到 | §3 形状化对照表（`·` 串单实体的多字段 ⇒ 键值行） | 改用全角间隔，不再用并列串 |
+| 3 | 生成物把内部参数带到用户面：`看提醒` 的 `preset` 让 SKILL 速查示例多出 `"scene":…`；`设提醒` 的 `content` 落成占位符 `<值>` | 命令不上 HELP 交付面；示例要「照抄即能跑」 | 撤 `看提醒` 的 `preset`（缺省支已够）；`exampleParams` 给 `content` 一条人话示例 |
+
+第 1／2 条已由用例钉住（`t828-remind-domain.test.mjs` 的「页题不重复」「页上可见文本不用分隔符串顶替版式」「运行时渲染的元信息行」三条，各自改坏即红）。
+
+## 四 （已作废，留档）此前两条门为什么跑不了
+
+**这一段是上一轮写的，现况见 §三。** 当时 `t824-视觉基准.md` §4 定的两件（备忘录六列机审、判分引擎直升公共层）都住 #851，而 #851 是串行窗口小票、当时 open 未认领；故本票只报到 90%。#851 随后关票并分解出 #867–#870 四件，四件落地后本票补跑了两道门，读数见 §三。
 
 ## 五 跨域一处：`记提醒` 的页为何住在 `src/memo/run.ts`
 

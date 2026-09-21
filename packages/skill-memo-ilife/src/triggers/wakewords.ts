@@ -13,11 +13,14 @@ export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; pre
 // `设提醒` 改指新写命令 `memo.reminder`（`memo.create` 的两步合一不动）；新增 `首次使用`→`memo.init`、
 // `删备忘`→`memo.remove`（`删心愿／删打卡／删情绪日记` 三族同步改指真删，修危险缺陷）。
 // #832（sync 域）：新增 `备忘录同步`→`memo.sync`（`memo.sync` 的键与实现自 #665 就在，缺的只是词）。
+// #828（remind 域）：两行纠错 —— `查已提醒备忘` 原 preset `{done:false}` 与「已完成视图」判据（`done===true`）
+// 相反，落回 active 分支与「看提醒」出同一份；`设提醒` 原只声明 `remind_at`，而 `content` 是必填
+// （老 `memo_cli.py:1116-1117`）⇒ 照本表跑必 exit 2。两处都照生成物改齐，本表与运行期路由仍逐字一致。
 export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '首次使用', key: 'memo.init' },
   { phrase: '删备忘', key: 'memo.remove', needs: ['id'] },
   { phrase: '按时间搜备忘', key: 'memo.search', needs: ['start', 'end'] },
-  { phrase: '查已提醒备忘', key: 'memo.remind', preset: { done: false } },
+  { phrase: '查已提醒备忘', key: 'memo.remind', preset: { done: true, scene: 'memo_completed_reminders' } },
   { phrase: '批量改分类', key: 'memo.batch' },
   { phrase: '改子分类', key: 'memo.update', needs: ['id'] },
   { phrase: '搜备忘', key: 'memo.search' },
@@ -25,7 +28,7 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '看备忘', key: 'memo.detail', needs: ['id'] },
   { phrase: '看提醒', key: 'memo.remind' },
   { phrase: '查提醒', key: 'memo.remind' },
-  { phrase: '设提醒', key: 'memo.reminder', needs: ['remind_at'] },
+  { phrase: '设提醒', key: 'memo.reminder', needs: ['content', 'remind_at'] },
   { phrase: '记提醒', key: 'memo.create', needs: ['remindAt'] },
   { phrase: '废弃提醒', key: 'memo.remove', preset: { mode: 'abandon' } },
   { phrase: '完成心愿', key: 'memo.update', preset: { done: true } },

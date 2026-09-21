@@ -22,7 +22,8 @@ describe('memo 口径层', () => {
   });
   it('#850 四问路由：首次使用／设提醒／删备忘／删三族', () => {
     assert.equal(routeWakeword('首次使用').key, 'memo.init');
-    assert.deepEqual(routeWakeword('设提醒', { remind_at: '2026-10-01 09:00' }), { key: 'memo.reminder', params: { remind_at: '2026-10-01 09:00' } });
+    // #828：`设提醒` 的必填槽位补上 `content`（老 `memo_cli.py:1116-1117` 逐字要求「请填入提醒内容」），故满槽位这趟要带它。
+    assert.deepEqual(routeWakeword('设提醒', { content: '取牛奶', remind_at: '2026-10-01 09:00' }), { key: 'memo.reminder', params: { content: '取牛奶', remind_at: '2026-10-01 09:00' } });
     assert.equal(routeWakeword('记提醒', { remindAt: '2026-10-01 09:00' }).key, 'memo.create');
     assert.deepEqual(routeWakeword('删备忘', { id: 15 }), { key: 'memo.remove', params: { id: 15 } });
     // 删三族改指真删（此前误指 memo.update 只改分类不删）。

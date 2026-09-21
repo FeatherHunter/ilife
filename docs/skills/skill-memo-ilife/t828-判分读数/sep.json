@@ -1,0 +1,123 @@
+{
+ "at": "2026-09-21T13:31:32.526Z",
+ "dir": "D:\\ilife\\.scratch\\tickets828\\readings\\pages",
+ "files": 4,
+ "green": 4,
+ "broken": 0,
+ "totals": {
+  "R1": 0,
+  "R2": 0,
+  "R3": 0,
+  "R4": 0,
+  "R5": 0,
+  "R6": 0,
+  "R7": 0
+ },
+ "nodeHitsTotal": 0,
+ "rows": [
+  {
+   "path": "D:\\ilife\\.scratch\\tickets828\\readings\\pages\\查已提醒备忘_20260921_213052.html",
+   "name": "查已提醒备忘_20260921_213052.html",
+   "bytes": 112178,
+   "totalLines": 3288,
+   "line": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   },
+   "node": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   }
+  },
+  {
+   "path": "D:\\ilife\\.scratch\\tickets828\\readings\\pages\\看提醒_20260921_213052.html",
+   "name": "看提醒_20260921_213052.html",
+   "bytes": 112907,
+   "totalLines": 3288,
+   "line": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   },
+   "node": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   }
+  },
+  {
+   "path": "D:\\ilife\\.scratch\\tickets828\\readings\\pages\\记提醒_20260921_213051.html",
+   "name": "记提醒_20260921_213051.html",
+   "bytes": 105376,
+   "totalLines": 3334,
+   "line": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   },
+   "node": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   }
+  },
+  {
+   "path": "D:\\ilife\\.scratch\\tickets828\\readings\\pages\\设提醒_20260921_213051.html",
+   "name": "设提醒_20260921_213051.html",
+   "bytes": 105500,
+   "totalLines": 3334,
+   "line": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   },
+   "node": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "hits": []
+   }
+  }
+ ]
+}

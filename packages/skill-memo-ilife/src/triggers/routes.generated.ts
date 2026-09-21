@@ -15,7 +15,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '查打卡', scene: 'memo_search_checkin', key: 'memo.search', cli: 'memo-cmd-read memo.search --params \'{"category":"打卡"}\'', preset: { category: '打卡' } },
   { wakeWord: '查情绪', scene: 'memo_search_mood', key: 'memo.search', cli: 'memo-cmd-read memo.search --params \'{"category":"情绪日记"}\'', preset: { category: '情绪日记' } },
   { wakeWord: '查心愿', scene: 'memo_search_wish', key: 'memo.wish', cli: 'memo-cmd-read memo.wish', preset: { category: '心愿' } },
-  { wakeWord: '看提醒', scene: 'memo_reminders_active', key: 'memo.remind', cli: 'memo-cmd-read memo.remind', preset: { scene: 'memo_reminders_active' } },
+  { wakeWord: '看提醒', scene: 'memo_reminders_active', key: 'memo.remind', cli: 'memo-cmd-read memo.remind' },
   { wakeWord: '查已提醒备忘', scene: 'memo_completed_reminders', key: 'memo.remind', cli: 'memo-cmd-read memo.remind --params \'{"mode":"done"}\'', preset: { done: true, scene: 'memo_completed_reminders' } },
   { wakeWord: '设提醒', scene: 'memo_remind_existing', key: 'memo.reminder', cli: 'memo-cmd-read memo.reminder --params \'{"note_id":15,"content":"该做保养了","remind_at":"2026-10-01 09:00"}\'', needs: ['content', 'remind_at'] },
   { wakeWord: '记备忘', scene: 'memo_add_basic', key: 'memo.create', cli: 'memo-cmd-read memo.create --params \'{"title":"买牛奶","category":"备忘"}\'' },

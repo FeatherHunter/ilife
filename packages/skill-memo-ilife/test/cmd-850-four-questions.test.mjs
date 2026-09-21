@@ -224,7 +224,7 @@ describe('#850 命令面四问（唯一出口端到端）', () => {
   it('唤醒词各有唯一命令＋时间参数只认 start／end＋命令面只多两条', () => {
     assert.equal(routeWakeword('首次使用').key, 'memo.init');
     assert.equal(routeWakeword('按时间搜备忘', { start: '2026-07-01', end: '2026-07-07' }).key, 'memo.search');
-    assert.equal(routeWakeword('设提醒', { remind_at: '2026-10-01 09:00' }).key, 'memo.reminder');
+    assert.equal(routeWakeword('设提醒', { content: '取牛奶', remind_at: '2026-10-01 09:00' }).key, 'memo.reminder');
     assert.equal(routeWakeword('删备忘', { id: 1 }).key, 'memo.remove');
     assert.ok(Object.keys(MEMO_KEY_SHAPES).includes('memo.init'));
     assert.ok(Object.keys(MEMO_KEY_SHAPES).includes('memo.reminder'));

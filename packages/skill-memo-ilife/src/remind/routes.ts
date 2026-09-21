@@ -12,8 +12,9 @@ export const REMIND_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_reminders_active',
     key: 'memo.remind',
     cli: 'memo-cmd-read memo.remind',
-    // 页落哪一格（册子 seq 16）；`memo.remind` 一条命令服务两格，靠这个参数分辨。
-    preset: { scene: 'memo_reminders_active' },
+    // 页落哪一格由 `memo.remind` 的缺省支决定（`run.ts` 的 `sceneOf` 缺省＝看提醒那一格），
+    // 故此处**不放 preset**：放一份会让 SKILL.md 速查的示例里多出一个内部参数（`scene`），
+    // 也把这条词与运行期路由钉成两处定义。
   },
   {
     order: 9,

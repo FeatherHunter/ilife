@@ -44,7 +44,7 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 首次使用 | memo.init | receipt | `memo-cmd-read memo.init` |
 | 删备忘 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"id":"<id>"}'` |
 | 按时间搜备忘 | memo.search | list | `memo-cmd-read memo.search --params '{"start":"2026-07-01","end":"2026-07-07"}'` |
-| 查已提醒备忘 | memo.remind | list | `memo-cmd-read memo.remind --params '{"done":false}'` |
+| 查已提醒备忘 | memo.remind | list | `memo-cmd-read memo.remind --params '{"done":true,"scene":"memo_completed_reminders"}'` |
 | 批量改分类 | memo.batch | receipt | `memo-cmd-read memo.batch` |
 | 改子分类 | memo.update | receipt | `memo-cmd-read memo.update --params '{"id":"<id>"}'` |
 | 搜备忘 | memo.search | list | `memo-cmd-read memo.search` |
@@ -52,7 +52,7 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 看备忘 | memo.detail | detail | `memo-cmd-read memo.detail --params '{"id":"<id>"}'` |
 | 看提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
 | 查提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
-| 设提醒 | memo.reminder | receipt | `memo-cmd-read memo.reminder --params '{"remind_at":"2026-10-01 09:00"}'` |
+| 设提醒 | memo.reminder | receipt | `memo-cmd-read memo.reminder --params '{"content":"取牛奶","remind_at":"2026-10-01 09:00"}'` |
 | 记提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01 09:00"}'` |
 | 废弃提醒 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"mode":"abandon"}'` |
 | 完成心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"done":true}'` |

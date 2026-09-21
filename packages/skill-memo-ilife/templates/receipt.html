@@ -10,7 +10,6 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;-webkit-font-smoothing:antialiased}
 .wrap{max-width:980px;margin:0 auto;padding:48px 22px 90px}
 .hero{background:var(--card);border-radius:28px;padding:34px;margin-bottom:20px;box-shadow:var(--shadow,0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06))}
-.eyebrow{font-size:13px;color:var(--blue);font-weight:800;letter-spacing:.08em;margin-bottom:10px}
 h1{font-size:36px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}
 .lead{color:var(--fg);font-size:17px;font-weight:600}
 .badges{margin-top:14px}
@@ -46,7 +45,6 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <body>
 <div class="wrap ilife-page-ui">
 <header class="hero">
-<p class="eyebrow">备忘录回执</p>
 <h1 id="title">回执</h1>
 <p class="lead" id="lead">数据加载中</p>
 <div class="badges" id="badges"></div>
@@ -103,7 +101,7 @@ function init(){
   if(r.category)b.push('<span class="badge">'+esc(r.category)+'</span>');
   if(r.sub)b.push('<span class="badge">'+esc(r.sub)+'</span>');
   document.getElementById("badges").innerHTML=b.join("");
-  document.getElementById("meta").textContent="时间："+(d.generated_at||"")+(meta.wake_word?(" · 唤醒词「"+meta.wake_word+"」"):"");
+  document.getElementById("meta").textContent="时间："+(d.generated_at||"")+(meta.wake_word?("　唤醒词「"+meta.wake_word+"」"):"");
   renderFacts();
   renderResult();
   renderRows();

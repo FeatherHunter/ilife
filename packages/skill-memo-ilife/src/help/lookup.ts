@@ -15,6 +15,8 @@ function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }
       else if (n === 'remind_at') p[n] = '2026-10-01 09:00';
       else if (n === 'note_id') p[n] = '<id>';
       else if (n === 'remindAt') p[n] = '2026-10-01 09:00';
+      // #828：`设提醒` 的必填槽位 `content`（老 `memo_cli.py:1116-1117`）——速查示例给一句人话，不出占位符。
+      else if (n === 'content') p[n] = '取牛奶';
       else p[n] = '<值>';
     }
   }

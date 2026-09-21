@@ -173,7 +173,8 @@ describe('#828 · 两处路由纠错（定义级 ＋ 反例）', () => {
     assert.equal(done.params.done, true, '已完成视图的判据是 done===true');
     assert.equal(done.params.scene, 'memo_completed_reminders');
     assert.equal(active.params.done, undefined);
-    assert.equal(active.params.scene, 'memo_reminders_active');
+    // 「看提醒」不带 `scene`：页落哪一格由缺省支决定（免得速查示例里多出内部参数，也免得两处定义）。
+    assert.equal(active.params.scene, undefined, '看提醒 走缺省支，不放 scene');
   });
 
   it('反例：scene 给个册子外的名字即 exit 2，且不落产物', () => {
@@ -213,10 +214,46 @@ describe('#828 · 产物形状（册子格的页型）', () => {
   });
 
   it('两条写命令出的是**通用回执族**整页，且带常见问题重试指引', () => {
-    for (const f of listing().filter((x) => x.startsWith('设提醒_'))) {
+    for (const f of listing().filter((x) => x.startsWith('设提醒_') || x.startsWith('记提醒_'))) {
       const html = readFileSync(join(landingDir(), f), 'utf8');
       assert.match(html, /^<!doctype html>/i, f + ' 应是整页');
-      assert.match(html, /备忘录回执/);
+      assert.match(html, /数据与日志/, f + ' 回执页要有复制区');
+    }
+  });
+
+  // #828 收尾两条：都是**渲染后才看得见**的债，静态分隔符门与六列机审都读不到（`t867-人核档.md` §三 已登记这个缺口），
+  // 所以在这里用产物正文把它们钉住——改坏一处即红。
+  it('页题不重复：眉头与页题同串的 H3 债已清（回执族模板）', () => {
+    for (const f of listing().filter((x) => x.startsWith('记提醒_') || x.startsWith('设提醒_'))) {
+      const html = readFileSync(join(landingDir(), f), 'utf8');
+      // 眉头与页题同串＝同事实一页两遍（H3）。三处读数：眉头元素没了、页头只剩标题一个、元信息行不进页头标题位。
+      assert.ok(!html.includes('class="eyebrow"'), f + ' 回执页不该再有眉头元素（与页题同串＝同事实一页两遍）');
+      const hero = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+      assert.equal((hero.match(/<h1/g) || []).length, 1, f + ' 页头只许一个标题');
+      assert.ok(!/<p class="eyebrow"/.test(hero), f + ' 页头不该有第二个标题位');
+      assert.ok(!/\b回执\b[\s\S]{0,80}<h1/.test(hero), f + ' 页题之前不该再有同义串');
+    }
+  });
+
+  it('页上可见文本不用分隔符串顶替版式（全页含运行时渲染面）', () => {
+    for (const f of listing()) {
+      const html = readFileSync(join(landingDir(), f), 'utf8');
+      const visible = html
+        .replace(/<script[\s\S]*?<\/script>/g, '')
+        .replace(/<style[\s\S]*?<\/style>/g, '')
+        .replace(/<[^>]+>/g, ' ');
+      assert.ok(!visible.includes('·'), f + ' 可见文本里不该有「·」并列串');
+      assert.ok(!visible.includes('；'), f + ' 可见文本里不该有「；」并列串');
+    }
+  });
+
+  it('运行时渲染的元信息行：时间与唤醒词都在，且不再用「·」串', () => {
+    for (const f of listing().filter((x) => x.startsWith('记提醒_') || x.startsWith('设提醒_'))) {
+      const html = readFileSync(join(landingDir(), f), 'utf8');
+      const line = (/getElementById\("meta"\)\.textContent=([^;]+);/.exec(html) || [])[1] ?? '';
+      assert.ok(line !== '', f + ' 回执页要有元信息行');
+      assert.ok(line.includes('generated_at') && line.includes('wake_word'), f + ' 元信息行要有时间与唤醒词两件事实');
+      assert.ok(!line.includes('·'), f + ' 元信息行不许用「·」串（分隔符探针读不到运行时文本）');
     }
   });
 });

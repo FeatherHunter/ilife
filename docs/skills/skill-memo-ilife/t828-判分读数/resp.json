@@ -1,0 +1,303 @@
+{
+  "label": "t867",
+  "widths": [
+    390,
+    768,
+    1440
+  ],
+  "at": "2026-09-21T13:31:34.801Z",
+  "rows": [
+    {
+      "file": ".scratch/tickets828/readings/pages/查已提醒备忘_20260921_213052.html",
+      "name": "查已提醒备忘_20260921_213052.html",
+      "inScope": true,
+      "bytes": 112178,
+      "sha256": "505af5856df92d719dfb1a541969ed07b8e93765e4238c2226c3ccdd7f2f71aa",
+      "images": 0,
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "docScrollWidth": 390,
+          "bodyScrollWidth": 390,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "768": {
+          "innerWidth": 768,
+          "docScrollWidth": 768,
+          "bodyScrollWidth": 768,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "1440": {
+          "innerWidth": 1440,
+          "docScrollWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        }
+      }
+    },
+    {
+      "file": ".scratch/tickets828/readings/pages/看提醒_20260921_213052.html",
+      "name": "看提醒_20260921_213052.html",
+      "inScope": true,
+      "bytes": 112907,
+      "sha256": "2d69afb28dd60222688cb72510931adfade8f643fc2ee92f07441b515e5bc171",
+      "images": 0,
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "docScrollWidth": 390,
+          "bodyScrollWidth": 390,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "768": {
+          "innerWidth": 768,
+          "docScrollWidth": 768,
+          "bodyScrollWidth": 768,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "1440": {
+          "innerWidth": 1440,
+          "docScrollWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [
+            {
+              "tag": "label",
+              "cls": "sr-only",
+              "cw": 1,
+              "sw": 120,
+              "ox": "hidden"
+            }
+          ],
+          "clippedCount": 1,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        }
+      }
+    },
+    {
+      "file": ".scratch/tickets828/readings/pages/记提醒_20260921_213051.html",
+      "name": "记提醒_20260921_213051.html",
+      "inScope": true,
+      "bytes": 105376,
+      "sha256": "3a6cb5b1328de9142d40d9dac4a3409b2e0470a1c9d3ea273b9c68812de62a12",
+      "images": 0,
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "docScrollWidth": 390,
+          "bodyScrollWidth": 390,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "768": {
+          "innerWidth": 768,
+          "docScrollWidth": 768,
+          "bodyScrollWidth": 768,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "1440": {
+          "innerWidth": 1440,
+          "docScrollWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        }
+      }
+    },
+    {
+      "file": ".scratch/tickets828/readings/pages/设提醒_20260921_213051.html",
+      "name": "设提醒_20260921_213051.html",
+      "inScope": true,
+      "bytes": 105500,
+      "sha256": "7466802081adfe50295f1aa0406bd7417433c31a3f453a6ee9c4c2e9b920589e",
+      "images": 0,
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "docScrollWidth": 390,
+          "bodyScrollWidth": 390,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "768": {
+          "innerWidth": 768,
+          "docScrollWidth": 768,
+          "bodyScrollWidth": 768,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        },
+        "1440": {
+          "innerWidth": 1440,
+          "docScrollWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "images": 0,
+          "blame": [],
+          "imgs": [],
+          "clipped": [],
+          "clippedCount": 0,
+          "scrollers": [],
+          "scrollerCount": 0,
+          "overflow": 0,
+          "unfitted": 0,
+          "why": "",
+          "ok": true,
+          "bodyOverflow": 0
+        }
+      }
+    }
+  ]
+}

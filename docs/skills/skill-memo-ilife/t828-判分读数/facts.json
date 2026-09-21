@@ -1,0 +1,240 @@
+{
+ "at": "2026-09-21T13:31:39.679Z",
+ "ticket": "#867 · 读数链（装配器 docs/skills/skill-memo-ilife/t867-facts.mjs；形状契约 docs/base/base-render/t867-读数链契约.md）",
+ "dir": "D:\\ilife\\.scratch\\tickets828\\readings",
+ "pagesDir": "D:\\ilife\\.scratch\\tickets828\\readings\\pages",
+ "human": "D:\\ilife\\.scratch\\tickets828\\readings\\人核档.md",
+ "widths": [
+  390,
+  768,
+  1440
+ ],
+ "readers": {
+  "sep.json": "produced",
+  "resp.json": "produced",
+  "fmt.json": "produced"
+ },
+ "method": {
+  "domColumns": "六列取 t867-dom-probe.mjs 的冻结正则表（tables=<table\\b／imgTags=<img\\b／tdDataLabel=td[^>]*\\bdata-label=／tocEl=class=\"[^\"]*\\bilife-block-toc\\b／aspectRatio=aspect-ratio／scrollMargin=scroll-margin-top），口径见契约 §四。",
+  "candidateColumns": "english／dupFacts 由探针给**机器候选**（静态上界），人核判分写「采纳候选」或「改判＋理由」；改判要写清为什么（例如折叠态按基准 §4.7 记 0 处）。",
+  "humanColumns": "d1／d2 是人核扣分位（基准 §4.2：逐条带理由），本链只收人核档写下的值；d4cut 是可选人核位（缺省 0）。"
+ },
+ "pages": {
+  "查已提醒备忘": {
+   "note": "真产物：查已提醒备忘_20260921_213052.html",
+   "file": "查已提醒备忘_20260921_213052.html",
+   "bytes": 112178,
+   "totalLines": 3288,
+   "visibleTextNodes": 16,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 1,
+   "aspectRatio": 7,
+   "scrollMargin": 2,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "静态 `.wrap{max-width:1120px}`、四格统计卡",
+     "理由": "同「记提醒」",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "静态 —",
+     "理由": "同 d1",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  },
+  "看提醒": {
+   "note": "真产物：看提醒_20260921_213052.html",
+   "file": "看提醒_20260921_213052.html",
+   "bytes": 112907,
+   "totalLines": 3288,
+   "visibleTextNodes": 16,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 1,
+   "aspectRatio": 7,
+   "scrollMargin": 2,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "静态 `.wrap{max-width:1120px}`、四格统计卡",
+     "理由": "同「记提醒」",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "静态 —",
+     "理由": "同 d1",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  },
+  "记提醒": {
+   "note": "真产物：记提醒_20260921_213051.html",
+   "file": "记提醒_20260921_213051.html",
+   "bytes": 105376,
+   "totalLines": 3334,
+   "visibleTextNodes": 10,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 0,
+   "aspectRatio": 7,
+   "scrollMargin": 1,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "静态 `.wrap{max-width:980px}`、`button.copy{min-height:44px}`",
+     "理由": "本票未跑通可复现的视觉模型判分，**不伪造人核值**；如实声明为乐观上界",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "静态 —",
+     "理由": "同 d1",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  },
+  "设提醒": {
+   "note": "真产物：设提醒_20260921_213051.html",
+   "file": "设提醒_20260921_213051.html",
+   "bytes": 105500,
+   "totalLines": 3334,
+   "visibleTextNodes": 10,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 0,
+   "aspectRatio": 7,
+   "scrollMargin": 1,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "静态 `.wrap{max-width:980px}`、键值表 `dl.kv`",
+     "理由": "同「记提醒」",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "静态 —",
+     "理由": "同 d1",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  }
+ }
+}
