@@ -7,9 +7,11 @@
  *  - `files.lookup`＝裁决 2（速查支产物名 `备忘录_速查表`，**与 HELP 分名**——照 #139 判法：
  *    别让用户按一个名字打开到另一个东西）。
  *
- * **#695 起值的唯一事实源是配置文件**（`~/.ilife/memo.yaml`，默认值表住 `src/config.ts`）：本件从配置取，
- * 空串回落到默认；三个函数的下标名字与老常量逐字对应（`HELP_HTML_DIR_NAME`／`HELP_FILE_STEM`／
- * `LOOKUP_FILE_STEM`），只是从「常量」变成「取值函数」。
+ * **#695 起落点目录值的唯一事实源是配置文件**（`~/.ilife/memo.yaml`，默认值表住 `src/config.ts`）：
+ * 本件从配置取，空串回落到默认；`helpHtmlDirName` 的下标名字与老常量逐字对应
+ * （`HELP_HTML_DIR_NAME`），只是从「常量」变成「取值函数」。
+ * **#760 起两个产物名主体回代码常量**（`files.help`／`files.lookup` 删键，定稿 #759；照记账样板 #762 的
+ * `HELP_FILE_STEM`／`LOOKUP_FILE_STEM`）：`helpFileStem()`／`lookupFileStem()` 不再读配置。
  *
  * ⚠️ 本模块**只放值**。命名与落盘的**逻辑**一概不在这里，也不在本包任何地方：时间戳格式
  * `YYYYMMDD_HHMMSS`（本地时区）、同秒 `_N` 递补（**从 `_2` 起**）、绝不静默覆盖、写后回读字节数、
@@ -25,6 +27,12 @@ import { loadMemoConfig } from '../config.js';
  *  配置项 `html.dir` 空串即用它。 */
 export const DEFAULT_HELP_HTML_DIR_NAME = 'memo_html';
 
+/** 缺省交付物主体（#760 起回代码常量；老配置键 `files.help` 已退休，见 `MEMO_CONFIG_RETIRED`）。 */
+export const HELP_FILE_STEM = '备忘录_HELP' as const;
+
+/** 速查支产物主体（#760 起回代码常量；老配置键 `files.lookup` 已退休，见 `MEMO_CONFIG_RETIRED`）。 */
+export const LOOKUP_FILE_STEM = '备忘录_速查表' as const;
+
 /** 产物子目录名：配置 `html.dir`，空串＝默认（扁平一段，`memo_html`）。 */
 export function helpHtmlDirName(): string {
   const dir = loadMemoConfig().values.html.dir;
@@ -33,10 +41,10 @@ export function helpHtmlDirName(): string {
 
 /** 缺省（不给任何参数）那支的产物名主体：`备忘录_HELP_<YYYYMMDD_HHMMSS>[_N].html`。 */
 export function helpFileStem(): string {
-  return loadMemoConfig().values.files.help;
+  return HELP_FILE_STEM;
 }
 
 /** 显式 `mode:"lookup"` 那支的产物名主体：`备忘录_速查表_<YYYYMMDD_HHMMSS>[_N].html`。 */
 export function lookupFileStem(): string {
-  return loadMemoConfig().values.files.lookup;
+  return LOOKUP_FILE_STEM;
 }

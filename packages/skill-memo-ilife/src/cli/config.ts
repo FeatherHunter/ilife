@@ -12,6 +12,10 @@
 import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadMemoConfig, resetMemoConfig, saveMemoConfig } from '../config.js';
+import { resolvedMemoPaths } from '../fetch/paths.js';
+import type { MemoResolvedPaths } from '../fetch/paths.js';
+import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../fetch/feishu.js';
+import type { LarkTier } from '../fetch/feishu.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-memo-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -67,13 +71,34 @@ function withHumanError<T>(run: () => T): T {
 /**
  * 跑一个配置 key，返回整行 envelope JSON。
  *
- * 三个 key 的载荷：读 → `{path, dataDir, created, values}`；写 → 入参 `{values}`，回执 `{path, values}`；
- * 重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
+ * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved, lark}`；写 → 入参 `{values}`，
+ * 回执 `{path, values}`；重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
+ *
+ * `resolved`（#760，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用
+ * （算式唯一定义地＝`src/fetch/paths.ts`，面板不自己拼路径）。
+ * `lark`（#760，定稿 #759）＝飞书 CLI 三档读数 ＋ 复制安装指引全文 ＋ 官网行
+ * （判据唯一定义地＝`src/fetch/feishu.ts` 的 `larkTierInfo`，面板只显示）。
  */
+export interface MemoConfigReadLark {
+  readonly tier: LarkTier;
+  readonly cliPath: string | null;
+  readonly version: string | null;
+  readonly prompt: string;
+  readonly websiteLine: string;
+  readonly websiteUrl: string;
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadMemoConfig());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values });
+    const resolved: MemoResolvedPaths = withHumanError(() => resolvedMemoPaths());
+    const tier = withHumanError(() => larkTierInfo());
+    const setup = larkSetupInfo();
+    const lark: MemoConfigReadLark = {
+      tier: tier.tier, cliPath: tier.cliPath, version: tier.version,
+      prompt: setup.prompt, websiteLine: setup.websiteLine, websiteUrl: LARK_WEBSITE_URL,
+    };
+    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved, lark });
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];

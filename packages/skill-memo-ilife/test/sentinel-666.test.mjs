@@ -17,23 +17,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { argOf, envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
-import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
+import { mkMemoConfig, stubPathEnv } from './helpers/config-base.mjs';
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
-/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
- *  临时库写 `db.dir`、挡板写 `lark.cliPath`（`cliPath` 可换成本件自己的内联包装板）。 */
-function envOfSeam(s, cliPath) {
-  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: cliPath ?? s.stub.file } }, 't666-cfg-'));
+/** 两个注入点（#760 起挡板走 **PATH 首位**：`lark.cliPath` 删键，无显式覆盖）：
+ *  临时库写 `db.dir`、挡板目录（`stubDir` 可换成本件自己的内联包装板）放 PATH 首位。 */
+function envOfSeam(s, stubDir) {
+  const home = mkMemoConfig({ db: { dir: s.dbPath } }, 't666-cfg-');
+  return stubPathEnv(home, stubDir ?? s.stub.dir);
 }
 
-/** `opts.cliPath` 换挡板；`opts.env` 叠本件自己的两个环境变量（包装板用）。 */
+/** `opts.stubDir` 换挡板目录；`opts.env` 叠本件自己的两个环境变量（包装板用）。 */
 function run(s, key, params, opts = {}) {
   s.stub.clearCalls();
-  const r = s.runNew(key, params, { extraEnv: { ...envOfSeam(s, opts.cliPath), ...(opts.env ?? {}) } });
+  const r = s.runNew(key, params, { extraEnv: { ...envOfSeam(s, opts.stubDir), ...(opts.env ?? {}) } });
   let env = null; let why = null;
   try { env = envelope(r); } catch (e) { why = e.message; }
   return { r, env, why, exit: r.status, argv: s.calls().map((c) => c.argv), rows: s.localNew() };
@@ -119,11 +120,14 @@ test('#666 D5 建失败短路：createFails → exit 4，无残留', () => {
   assert.equal(s.remote().tasks.length, 0);
 });
 
-/** 内联包装板：只让 `task tasks delete` 恒败，其余透传真挡板。文件落本接缝临时目录，不碰共享挡板。 */
+/** 内联包装板：只让 `task tasks delete` 恒败，其余透传真挡板。文件落本接缝临时目录，不碰共享挡板。
+ *  #760 起它以 `lark-cli` 之名放在独立目录里（`stubDir`），经 PATH 首位注入（`lark.cliPath` 删键）。 */
 function failingDeleteShim(s) {
   const real = s.stub.stub;
   const log = s.stub.logFile;
-  const mjs = join(s.dir, 'fail-delete.mjs');
+  const wrapDir = join(s.dir, 'wrapshim');
+  mkdirSync(wrapDir, { recursive: true });
+  const mjs = join(wrapDir, 'fail-delete.mjs');
   writeFileSync(mjs, [
     "import { spawnSync } from 'node:child_process';",
     "import { appendFileSync } from 'node:fs';",
@@ -139,9 +143,13 @@ function failingDeleteShim(s) {
     'process.exit(r.status ?? 1);',
     '',
   ].join('\n'), 'utf8');
-  const cmd = join(s.dir, 'fail-delete.cmd');
-  writeFileSync(cmd, '@node "' + mjs + '" %*\r\n', 'utf8');
-  return { cliPath: cmd, env: { SENTINEL_REAL_STUB: real, SENTINEL_CALLS_LOG: log } };
+  if (process.platform === 'win32') {
+    writeFileSync(join(wrapDir, 'lark-cli.cmd'), '@node "' + mjs + '" %*\r\n', 'utf8');
+  } else {
+    writeFileSync(join(wrapDir, 'lark-cli'), '#!/usr/bin/env node\nimport "./fail-delete.mjs";\n', 'utf8');
+    try { chmodSync(join(wrapDir, 'lark-cli'), 0o755); } catch { /* win 无 exec 位 */ }
+  }
+  return { stubDir: wrapDir, env: { SENTINEL_REAL_STUB: real, SENTINEL_CALLS_LOG: log } };
 }
 
 test('#666 D6 删不掉→完成态残留＋点名＋exit 4', () => {

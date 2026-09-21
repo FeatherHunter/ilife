@@ -5,7 +5,7 @@
 // 在哪／怎么清」（`left`／`leftId`／`cleanup`）；③ 任务域用 #661 补上的真删先尝试删除，删不掉
 // 落回完成态残留＋如实说明＋退出码非 0（D-31）；新建自带一句话描述便于反查（D-32，不带归属正则，
 // 对账仍判非自管跳过，见 `src/wish/reconcile.ts` 的 `skippedNoMark`）。
-import { larkReady } from './feishu.js';
+import { larkReady, larkSetupInfo } from './feishu.js';
 import { listRelatedTasks } from './tasks.js';
 import { completeTask, createTask, deleteTask, updateTask } from './taskWrite.js';
 import type { WishReceipt } from '../wish/ensure.js';
@@ -48,6 +48,7 @@ function closedReceipt(why: string): { receipt: SentinelReceipt; exit: number } 
   return {
     receipt: {
       ok: false, message: '自检未跑：' + why, local: 'checked', remote: 'unavailable', remoteId: null,
+      larkSetup: larkSetupInfo(),
       left: null, leftId: null, cleanup: null, dryRun: false, steps: [], errors: [why],
     },
     exit: 4,

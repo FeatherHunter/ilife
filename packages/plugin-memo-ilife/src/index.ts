@@ -129,10 +129,10 @@ export function apply(ctx: HostCtx): void {
 export { SKILL, SLOT_ID, SLOT_ORDER, SLOT_TITLE, PLUGIN, MANAGER_PLUGIN, slotDescriptor, TAB_COMPONENT, registerSingle, openSingle } from './slot.js';
 export type { SlotDescriptor, TabsPort } from './slot.js';
 export { SETTINGS_OWNER, SETTINGS_SLOT, CONFIG_STEM, CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
-export type { ConfigItem, ConfigTier, ConfigControl } from './settings.js';
+export type { ConfigItem, ConfigTier, ConfigControl, MemoResolvedField } from './settings.js';
 export { SKILL_PACKAGE, SKILL_CLI, SKILL_CLI_REL, HOST_CALL_METHOD, MANAGER_MISSING_HINT, SkillBridgeError, cliPath, assertCliPresent, handleHostCall, requestViaHost, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth, CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, CONFIG_CHECK_KEY } from './bridge.js';
 export { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, ok, fail, parseReadPayload, parseSavePayload, isRpcResult } from './contract.js';
-export type { ReadPayload, SavePayload, ConfigSurfaceReply, RpcError, RpcResult } from './contract.js';
+export type { ReadPayload, SavePayload, ConfigSurfaceReply, ResolvedPaths, LarkState, LarkTier, RpcError, RpcResult } from './contract.js';
 // 宿主**不**导出 `./client.js` 的值也不引用它的类型（#218 拆雷）：客户端产物是 **loader 工厂包**
 // （`window.__ModuleLoader__.load({id, factory})` 的 CJS，由 tsdown 打），不是 ESM 模块——
 // 宿主 `export … from './client.js'` 会让插件树在启动期报

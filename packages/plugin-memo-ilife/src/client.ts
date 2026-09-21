@@ -18,10 +18,10 @@
  */
 import * as React from 'react';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
-import type { ConfigSurfaceReply } from './contract.js';
+import type { ConfigSurfaceReply, LarkState } from './contract.js';
 import { SLOT_TITLE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, ADVANCED_GROUP_TITLE, ADVANCED_GROUP_NOTE, readPath, writePath } from './settings.js';
-import type { ConfigItem } from './settings.js';
+import type { ConfigItem, MemoResolvedField } from './settings.js';
 import { DIRECTORY_PICKER_REFUSED, MANAGER_RPC_BASE, MANAGER_RPC_ENDPOINT, MANAGER_ROOTS_METHOD, REMOTE_DIRECTORY_PICKER } from './dsh-ctx.js';
 import { pickerModeOf as sharedPickerModeOf, readPickAnswer as sharedReadPickAnswer, openRowBrowser, createRootsSource } from 'dsh-life-pack/directory-browser';
 import { DirectoryBrowserFromRow } from 'dsh-life-pack/directory-browser-ui';
@@ -207,7 +207,7 @@ function MemoWork(props: { getCall: GetCall }): React.ReactElement {
     };
   }, [props.getCall]);
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '备忘录加载中…'));
+    return React.createElement('div', { style: S.card }, React.createElement('div', { style: S.muted }, '备忘录加载中'));
   }
   if (state.kind === 'data') {
     return React.createElement(
@@ -291,26 +291,58 @@ export function resetConfigSurface(call: unknown): Promise<ConfigOutcome> {
 
 /** 把配置取值铺成「行键 → 输入框文本」（页面表单态；值缺项即空串，不返空留白）。
  *
- * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：标了 `prefillFrom` 的行在取值空着时
- * 直接显示那条绝对路径——用户不必自己拼路径（#743），显示的就是技能真会用的那个目录（逐字相同）。 */
+ * `prefill` 是**落点回执**（配置面那几格解析出来的绝对路径）：
+ *   · 标了 `prefillFrom` 的行在取值空着时直接显示那条绝对路径——用户不必自己拼路径（#743），
+ *     显示的就是技能真会用的那个目录（逐字相同）；
+ *   · **只读行**（#760，照 #749 样板）一律显示 `resolveFrom` 指的那一格（技能算好的绝对路径）——
+ *     面板一个字都不算：回执缺那一格（旧技能）就显示空串，绝不编一条路径出来；
+ *   · 可改目录行标了 `prefillResolved` 时，取值空着显示 `resolved` 组那一格（`media.dir` 空串即默认落点）。 */
+export interface SurfacePrefill {
+  readonly dataDir?: string;
+  readonly resolved?: Partial<Record<MemoResolvedField, string | undefined>>;
+}
+
+/** 只读行显示什么：标了 `resolveFrom` ⇒ 回执 `resolved` 组那一格；没标 ⇒ 配置文件里那个值本身。 */
+function readonlyTextOf(item: ConfigItem, raw: string, prefill: SurfacePrefill): string {
+  if (item.resolveFrom === undefined) return raw;
+  const shown = prefill.resolved?.[item.resolveFrom];
+  return typeof shown === 'string' ? shown : '';
+}
+
 export function toDraft(
   values: Record<string, unknown>,
-  prefill: { readonly dataDir?: string } = {},
+  prefill: SurfacePrefill = {},
 ): Record<string, string> {
   const draft: Record<string, string> = {};
   for (const item of CONFIG_ITEMS) {
     const v = readPath(values, item.key);
     const raw = v === undefined || v === null ? '' : String(v);
+    if (item.readonly === true) {
+      draft[item.key] = readonlyTextOf(item, raw, prefill);
+      continue;
+    }
+    if (raw === '' && item.prefillResolved !== undefined) {
+      const shown = prefill.resolved?.[item.prefillResolved];
+      if (typeof shown === 'string' && shown !== '') {
+        draft[item.key] = shown;
+        continue;
+      }
+    }
     const fallback = item.prefillFrom === undefined ? undefined : prefill[item.prefillFrom];
     draft[item.key] = raw === '' && typeof fallback === 'string' && fallback !== '' ? fallback : raw;
   }
   return draft;
 }
 
-/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「按默认落点」承担）。 */
+/** 表单态 → 配置取值（按控件种类还原类型；空串对文本项照收，语义由「按默认落点」承担）。
+ *
+ *  **只读行不收**（#760，照 #749 样板）：它们显示的是技能算好的绝对路径，写回配置就是把「显示的路径」
+ *  当成「配置值」——保存只提交真能改的那些行（本家＝`db.dir`／`media.dir` 两行），其余键由技能侧做组内
+ *  合并保留现值。 */
 export function fromDraft(draft: Record<string, string>): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const item of CONFIG_ITEMS) {
+    if (item.readonly === true) continue;
     const raw = draft[item.key] ?? '';
     if (item.control === 'number') {
       const n = Number(raw);
@@ -395,10 +427,79 @@ export function createBrowseHandler(deps: {
   };
 }
 
+/** 复制安装指引的可注入通道（单测注假 clipboard；页面走全局 `navigator.clipboard`）。
+ *
+ * client 禁 DOM 直写（`document`／`window`／`process`）：这里只读 `globalThis.navigator`，
+ * 不碰 DOM；失败（缺席／被拒）回 `false`，调用方落字「长按选择下方文本手动复制」，不抛。 */
+export interface ClipboardPort {
+  writeText(text: string): Promise<void>;
+}
+
+export function copyPrompt(text: string, port?: ClipboardPort | null): Promise<boolean> {
+  const globalNavigator = (globalThis as { navigator?: { clipboard?: ClipboardPort } }).navigator;
+  const channel: ClipboardPort | null = port !== undefined ? port : (globalNavigator?.clipboard ?? null);
+  if (channel === null || typeof channel.writeText !== 'function') return Promise.resolve(false);
+  try {
+    return Promise.resolve(channel.writeText(text)).then(
+      () => true,
+      () => false,
+    );
+  } catch {
+    return Promise.resolve(false);
+  }
+}
+
+/** 「飞书 CLI」状态行（#760，定稿 #759；不是配置项）：三档读数 ＋ 复制安装指引按钮 ＋ 官网链接。
+ *
+ * 判据由技能侧出（回执 `lark` 格），面板只显示：
+ *   · 没找到 CLI → 红「没找到飞书 CLI」＋ 复制安装指引按钮 ＋ 官网链接；
+ *   · 找到了但没登录／缺 task 权限 → 黄「找到了〈路径〉，但还没登录或没拿到 task 域授权」＋ 同一个按钮 ＋ 官网链接；
+ *   · 就绪 → 绿「已登录且 task 域可写：〈路径〉（〈版本〉）」＋ 同一个按钮 ＋ 官网链接。
+ * 官网行三档逐字显示「飞书CLI官网为：https://www.feishu.cn/feishu-cli」，显示成文字＋点一下新窗口跳转。
+ * 旧技能（回执无 `lark` 格）⇒ 只显示一行弱提示，不报错、不探测。 */
+export function LarkStatus(props: {
+  readonly lark: LarkState | undefined;
+  readonly onCopy: (prompt: string) => void;
+}): React.ReactElement {
+  const lark = props.lark;
+  if (lark === undefined) {
+    return React.createElement(
+      'div',
+      { style: S.rows },
+      React.createElement('div', { style: S.label }, '飞书 CLI'),
+      React.createElement('div', { style: S.muted }, '状态未知（技能回执无此格，请升级技能包）。'),
+    );
+  }
+  const status =
+    lark.tier === 'missing'
+      ? '没找到飞书 CLI'
+      : lark.tier === 'partial'
+        ? '找到了 ' + (lark.cliPath ?? '飞书 CLI') + '，但还没登录或没拿到 task 域授权'
+        : '已登录且 task 域可写：' + (lark.cliPath ?? '') + (lark.version !== null ? '（' + lark.version + '）' : '');
+  const statusStyle = lark.tier === 'full' ? S.okText : lark.tier === 'partial' ? S.muted : S.error;
+  return React.createElement(
+    'div',
+    { style: S.rows },
+    React.createElement('div', { style: S.label }, '飞书 CLI'),
+    React.createElement('div', { style: statusStyle }, status),
+    React.createElement(
+      'div',
+      { style: S.bar },
+      React.createElement('button', { style: S.btn, type: 'button', onClick: () => props.onCopy(lark.prompt) }, '复制安装指引'),
+      React.createElement('a', { href: lark.websiteUrl, target: '_blank', rel: 'noreferrer' }, lark.websiteLine),
+    ),
+  );
+}
+
 /** 一行输入（四种控件对齐受限 YAML 子集：文本／数字／布尔／目录）。
  *
  * 目录档＝文本框 ＋ 一枚唤起系统文件夹选择器的按钮；`onBrowse` 缺席（命名空间拿不到、
- * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。 */
+ * 或这条路已被拒）时不画按钮，文本框照旧——那是该缝自己的契约（供不了就收起入口，不是失败）。
+ *
+ * **只读行（#760，照 #749 样板）**：`item.readonly` 为真时控件一律 `disabled`（值只经技能侧解析后显示、
+ * 不给改），`onChange` 不接（不给「改得动」留假象）；目录行的浏览按钮**保留但不可点击**
+ * （定稿：入口不作废，只是不能改）。控件文案**不出现省略号**（#746 处置 9）——按钮就写
+ * 「选择文件夹」／「浏览」两个字面。 */
 export function Row(props: {
   readonly item: ConfigItem;
   readonly value: string;
@@ -408,23 +509,28 @@ export function Row(props: {
   readonly browser?: DirectoryRowEntry | null | undefined;
 }): React.ReactElement {
   const { item } = props;
+  const readonly = item.readonly === true;
+  const disabled = props.disabled || readonly;
+  // 只读行不接 onChange：不给「改得动」留假象（用例也据此认「哪几行可改」）。
+  const onChange = readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value);
   const control =
     item.control === 'switch'
       ? React.createElement('input', {
           type: 'checkbox',
           checked: props.value === 'true',
-          disabled: props.disabled,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
+          disabled,
+          onChange: readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
         })
       : React.createElement('input', {
           style: S.input,
           type: item.control === 'number' ? 'number' : 'text',
           value: props.value,
-          disabled: props.disabled,
+          disabled,
           spellCheck: false,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.value),
+          onChange,
         });
-  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。 */
+  /** 三态入口：供不了（`none`／缺席）就不画，不摆一个点了没反应的死按钮。
+   *  只读行照画（按钮保留），但 `disabled` ⇒ 点不动。 */
   const entry = props.browser ?? null;
   const browse =
     item.control === 'directory' && entry !== null && entry.mode !== 'none'
@@ -433,11 +539,11 @@ export function Row(props: {
           {
             style: S.btnPick,
             type: 'button',
-            disabled: props.disabled,
+            disabled,
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
-          entry.mode === 'native' ? '选择文件夹…' : '浏览…',
+          entry.mode === 'native' ? '选择文件夹' : '浏览',
         )
       : null;
   return React.createElement(
@@ -544,7 +650,19 @@ function MemoConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
     pickerModeOf(picker) === 'none' ? null : { mode: pickerModeOf(picker), onOpen: onOpenRow };
 
   const surface = state.kind === 'ready' ? state.surface : null;
-  const dirty = surface !== null && CONFIG_ITEMS.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
+  /** 脏值只看**可改行**（#760，照 #749 样板）：只读行显示的是技能算好的绝对路径，拿它当「改动」
+   *  会让打开面板就变「未保存」。 */
+  const editableItems = CONFIG_ITEMS.filter((i) => i.readonly !== true);
+  const dirty = surface !== null && editableItems.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
+
+  /** 复制安装指引（面板「飞书 CLI」状态行那枚按钮）：成功落字，失败指到下方的全文手动复制。 */
+  const onCopyPrompt = React.useCallback(async (prompt: string) => {
+    setNotice(null);
+    setError(null);
+    const ok = await copyPrompt(prompt);
+    if (ok) setNotice('已复制，去粘贴给 AI');
+    else setError('复制失败，长按选择下方文本手动复制');
+  }, []);
 
   /** 写完（保存／重置）之后重新读一份整面，读到了才敢提示「已完成」。 */
   const writeThenReload = React.useCallback(async (done: string) => {
@@ -601,7 +719,7 @@ function MemoConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
       'div',
       { style: S.card },
       head,
-      React.createElement('div', { style: S.muted }, '配置读取中…'),
+      React.createElement('div', { style: S.muted }, '配置读取中'),
       React.createElement(VersionLine, null),
     );
   }
@@ -639,20 +757,25 @@ function MemoConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
     { style: S.card },
     head,
     React.createElement('div', { style: S.rows }, common.map(renderRow)),
-    React.createElement(
-      'details',
-      { style: S.advanced },
-      React.createElement('summary', { style: S.summary }, ADVANCED_GROUP_TITLE),
-      React.createElement('div', { style: S.muted }, ADVANCED_GROUP_NOTE),
-      advanced.map(renderRow),
-    ),
+    // #760 起高级组为空（删键 4 项出表）：有项才画分组，没有就不占一行。
+    advanced.length > 0
+      ? React.createElement(
+          'details',
+          { style: S.advanced },
+          React.createElement('summary', { style: S.summary }, ADVANCED_GROUP_TITLE),
+          React.createElement('div', { style: S.muted }, ADVANCED_GROUP_NOTE),
+          advanced.map(renderRow),
+        )
+      : null,
+    // 「飞书 CLI」状态行（#760，定稿 #759；不是配置项）：三档读数＋复制安装指引＋官网链接。
+    React.createElement(LarkStatus, { lark: surface?.lark, onCopy: (prompt) => void onCopyPrompt(prompt) }),
     React.createElement(
       'div',
       { style: S.bar },
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
-        busy ? '处理中…' : '保存',
+        busy ? '处理中' : '保存',
       ),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
@@ -669,7 +792,7 @@ function MemoConfig(props: { getCall: GetCall; pickerSource: () => DirectoryPick
         go: '转到',
         showHidden: (n: number) => '显示隐藏目录（' + n + '）',
         empty: '这个目录里没有子目录。',
-        loading: '正在读取…',
+        loading: '正在读取',
         newFolder: '新建文件夹',
         createConfirm: '创建',
         createCancel: '取消',

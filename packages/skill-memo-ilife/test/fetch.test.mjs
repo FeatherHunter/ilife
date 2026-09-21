@@ -16,7 +16,6 @@ import {
   larkReady,
   MemoFetchError,
 } from '../dist/index.js';
-import { saveMemoConfig } from '../dist/config.js';
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
 import { mkConfigDir, useHome } from './helpers/config-base.mjs';
 
@@ -26,13 +25,17 @@ let n2 = 0;
 let n3 = 0;
 /** 家目录两格的原值（本件在进程内接管家目录，收尾时原样还原；原本 `undefined` 的还原成删除）。 */
 const OLD_HOME = { USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME };
+/** PATH 原值（#760 起本件在进程内把挡板目录放首位，收尾还原）。 */
+let OLD_PATH;
 
 // #695／#763：本件在**进程内**调取数层，配置也读在同一进程里 ⇒ 家目录必须在任何一次读配置**之前**接管
 // （跑在 node 测试运行器里却要落到真实家目录的 `.ilife` 时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`）。
 useHome(mkConfigDir('memo-fetch-home-'));
 
 // fake lark-cli：posix 用 shebang 脚本，win 用 .cmd 转调同目录 mjs（均走 PATH 之 node）。
-function makeFakeCli(dir) {
+// #760 起它走 **PATH 首位**注入（`lark.cliPath` 删键）：目录里放一份 `lark-cli` 名的挡板，
+// 子进程的 `where`／`which` 首中它（win32 优先 `.cmd` 行）。
+function makeFakeCliBin(dir) {
   const logic = [
     'const a = process.argv.slice(2);',
     "if (a[0] === '--version') { console.log('lark-cli 9.9.9-fake'); }",
@@ -41,17 +44,16 @@ function makeFakeCli(dir) {
     'else { console.error(\'unknown\'); process.exit(2); }',
     '',
   ].join('\n');
+  const mjs = join(dir, 'fakelark.mjs');
+  writeFileSync(mjs, logic);
   if (process.platform === 'win32') {
-    const mjs = join(dir, 'fakelark.mjs');
-    writeFileSync(mjs, logic);
-    const cmd = join(dir, 'fakelark.cmd');
-    writeFileSync(cmd, '@node "' + mjs + '" %*\r\n');
-    return cmd;
+    writeFileSync(join(dir, 'lark-cli.cmd'), '@node "' + mjs + '" %*\r\n');
+    return dir;
   }
-  const sh = join(dir, 'fakelark');
+  const sh = join(dir, 'lark-cli');
   writeFileSync(sh, '#!/usr/bin/env node\n' + logic);
   chmodSync(sh, 0o755);
-  return sh;
+  return dir;
 }
 
 before(() => {
@@ -60,9 +62,11 @@ before(() => {
   n2 = seedNote(dir, { content: '今天跑步5公里', category: '打卡', sub: '跑步' });
   n3 = seedNote(dir, { content: '心愿：学会一首歌', category: '心愿' });
   db = openMemoDb(dir);
-  // `lark.cliPath` 走**配置文件**（#695：环境变量 `LARK_CLI_PATH` 读取已删）。写盘用 `saveMemoConfig`
-  // ——它落盘后清掉进程内的配置记忆，故紧随其后的 `findLarkCli()` 现读现取，改一项即生效。
-  saveMemoConfig({ lark: { cliPath: makeFakeCli(mkdtempSync(join(tmpdir(), 'memo-fake-'))) } });
+  // #760 起挡板走 **PATH 首位**（`lark.cliPath` 删键，无显式覆盖）：当刻进程的 PATH 首位即挡板目录，
+  // 故本件（进程内调取数层）的 `findLarkCli()` 现找现中。收尾原样还原 PATH。
+  OLD_PATH = process.env.PATH;
+  const sep = process.platform === 'win32' ? ';' : ':';
+  process.env.PATH = makeFakeCliBin(mkdtempSync(join(tmpdir(), 'memo-fake-'))) + sep + (OLD_PATH ?? '');
 });
 
 after(() => {
@@ -71,6 +75,8 @@ after(() => {
     if (v === undefined) delete process.env[k];
     else process.env[k] = v;
   }
+  if (OLD_PATH === undefined) delete process.env.PATH;
+  else process.env.PATH = OLD_PATH;
 });
 
 describe('memo 取数层', () => {
@@ -95,12 +101,15 @@ describe('memo 取数层', () => {
     const ready = larkReady();
     assert.equal(ready.openId, 'ou_fake');
   });
-  it('lark.cliPath 坏路径 throw（报错点名配置项，不再点名环境变量 LARK_CLI_PATH）', () => {
-    saveMemoConfig({ lark: { cliPath: join(tmpdir(), 'memo-nope-xyz') } });
-    const caught = [];
-    assert.throws(() => findLarkCli(), (e) => { caught.push(e); return e.code === 'LARK_UNAVAILABLE'; });
-    assert.throws(() => larkReady(), (e) => e.code === 'LARK_UNAVAILABLE', '四门入口同样大声失败，不静默降级');
-    assert.match(caught[0].message, /lark\.cliPath/, '报错文案要点名配置项 lark.cliPath');
-    assert.doesNotMatch(caught[0].message, /LARK_CLI_PATH/, '环境变量读取已删（#695）：报错不许再点名它');
+  it('无显式覆盖：删键后 findLarkCli 只走探测链（#760）', async () => {
+    // `lark.cliPath` 键已删：探测链只认 PATH／固定路径，不认任何配置覆盖。
+    // 本件 PATH 首位即挡板 ⇒ 命中的必是挡板那一份（`larkTierInfo` 同链）。
+    const { larkTierInfo } = await import('../dist/fetch/feishu.js');
+    const found = findLarkCli();
+    assert.ok(String(found).length > 0);
+    const tier = larkTierInfo();
+    assert.equal(tier.tier, 'full');
+    assert.equal(tier.cliPath, found);
+    assert.match(String(tier.version), /fake/);
   });
 });

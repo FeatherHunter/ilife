@@ -15,15 +15,13 @@
 //      （相对路径）不用迁——本票只改路径的**判定**，不改那个列的**取值形状**。
 //
 // 「附件目录」这个配置项的**取值口**就是这一件里的 `resolveMediaDir()`：**#695 起读配置文件**
-// （`~/.ilife/memo.yaml` 的 `media.dir`，空串＝`MEDIA_DIR_DEFAULT`＝`media`；本机实测值
-// `D:\2Study\StudyNotes\.db\MemoHub\media`，与老库那两条附件一致）。环境变量读取已按用户裁决删除。
+// （`~/.ilife/memo.yaml` 的 `media.dir`；#760 起空串＝`<数据目录>/media`，定稿 #759）。
+// 环境变量读取已按用户裁决删除。
 import { statSync } from 'node:fs';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { MemoPolicyError } from '../fetch/errors.js';
 import { loadMemoConfig } from '../config.js';
-
-/** 附件目录的**默认值**（配置项 `media.dir` 空串即用它；相对值按进程工作目录归一成绝对路径）。 */
-export const MEDIA_DIR_DEFAULT = 'media' as const;
+import { mediaDirOf } from '../fetch/paths.js';
 
 /** 附件路径不在附件目录内时的错码（口径层的坏输入）。 */
 const CODE = 'POLICY_BAD_INPUT' as const;
@@ -32,10 +30,11 @@ function bad(message: string): never {
   throw new MemoPolicyError(CODE, message);
 }
 
-/** 当前配到的附件目录名（人话报错要指它）：配置项 `media.dir`，空串＝默认。 */
+/** 当前配到的附件目录（人话报错要指它）：配置项 `media.dir`，空串＝`<数据目录>/media`（#760）。
+ *  返回的是**解析后的绝对路径**（与 `resolveMediaDir()` 同一算式，只是不判存在）。 */
 export function mediaDirText(): string {
-  const v = loadMemoConfig().values.media.dir;
-  return v === '' ? MEDIA_DIR_DEFAULT : v;
+  const cfg = loadMemoConfig();
+  return mediaDirOf(cfg.dataDir, cfg.values.media.dir);
 }
 
 /**
@@ -43,14 +42,13 @@ export function mediaDirText(): string {
  * 目录不存在／那个位置不是目录（含 UNC 与坏盘符）／路径本身为空。
  */
 export function resolveMediaDir(): string {
-  const text = mediaDirText();
-  const abs = resolve(text);
+  const abs = mediaDirText();
   let st;
   try {
     st = statSync(abs);
   } catch {
     bad(
-      '附件目录不存在：' + abs + '（取自配置项 media.dir=' + text + '）——' +
+      '附件目录不存在：' + abs + '（取自配置项 media.dir，空串＝<数据目录>/media）——' +
         '请把 ~/.ilife/memo.yaml 里的 media.dir 指向一个已存在的附件目录，或先把目录建出来；' +
         '本技能不替你建目录，也不退回按路径开头比对',
     );

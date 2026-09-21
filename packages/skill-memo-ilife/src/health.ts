@@ -23,11 +23,12 @@
 import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
 import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_STEM } from './config.js';
+import { dbDirOf, mediaDirOf } from './fetch/paths.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -356,10 +357,10 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
   }
 }
 
-/** lark-cli 在哪：**照 `src/fetch/feishu.ts` 的取法重写一份只读探测**，不 import 那个模块——
- *  它的 `findLarkCli()` 要经 `loadMemoConfig()` 取显式值，那会在文件不在时落一份默认配置，
- *  与本件的「只报不改」相反。候选顺序与它逐条对齐：配置项 `lark.cliPath` → Windows npm 全局
- *  → `where`／`which` → 固定路径；找不到返 null（不抛）。 */
+/** lark-cli 在哪：只读探测（不 import `src/fetch/feishu.ts` 的 `findLarkCli`——那份是 9 档，
+ *  本件这份**只用前 5 档**，#760 补注：health 里这份只读副本只用前 5 档，不进锁）。
+ *  5 档＝Windows npm 全局 → `where`／`which` → 两条固定路径；找不到返 null（不抛）。
+ *  本件「只报不改」：文件不在时不落默认配置（`loadMemoConfig` 会落盘，故这里不调它）。 */
 function findLarkCli(configured: string): string | null {
   if (configured !== '') {
     try {
@@ -373,8 +374,12 @@ function findLarkCli(configured: string): string | null {
     const cand = join(homedir(), 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
     try { accessSync(cand, constants.X_OK); return cand; } catch { /* 继续 */ }
     try {
-      const out = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' }).split(/\r?\n/)[0].trim();
-      if (out) return out;
+      // 与 `src/fetch/feishu.ts` 同一条 `where` 行选择（无扩展名 shim 调不动，优先 `.cmd`／`.exe`）。
+      const lines = execFileSync('where', ['lark-cli'], { stdio: 'pipe', encoding: 'utf8' })
+        .split(/\r?\n/).map((s) => s.trim()).filter((s) => s !== '');
+      const runnable = lines.find((l) => /\.(cmd|exe)$/i.test(l));
+      if (runnable !== undefined) return runnable;
+      if (lines[0] !== undefined) return lines[0];
     } catch { /* 继续 */ }
   } else {
     try {
@@ -485,7 +490,7 @@ export function buildMemoHealthReport(): MemoHealthReport {
     items.push({
       id: 'db.file', title: '库文件', status: 'red',
       message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
+      action: '确认「数据目录」与「库文件名」对不对（库文件名只读，要改请编辑配置文件）；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
       source: dbSource,
     });
   } else {
@@ -527,7 +532,7 @@ export function buildMemoHealthReport(): MemoHealthReport {
       : htmlVerdict.writable
         ? '在且能写：' + p(htmlDir) + '。'
         : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或改配置文件里的 html.dir（该项只读，面板上不给改）。',
     source: htmlSource,
   });
 
@@ -539,30 +544,29 @@ export function buildMemoHealthReport(): MemoHealthReport {
     action: '', source: dataDirSource,
   });
 
-  // ⑥ 附件目录（备忘特有，#712 起的形状）：没配＝黄（附件不参与，配了才会把附件一起归档）；
-  // 配了但目录不在＝黄；在且能写＝绿。相对值按进程工作目录解（与 `resolveMediaDir()` 同一口径）。
+  // ⑥ 附件目录（备忘特有，#712 起的形状；#760 起默认＝`<数据目录>/media`）：没配≠未配——
+  // 空串即默认落点，判那个目录在不在；配了但目录不在＝黄；在且能写＝绿。显式相对值按进程工作目录解
+  // （与 `resolveMediaDir()` 同一算式 `mediaDirOf`，本件只调纯函数，不触发配置落盘）。
   const mediaConfigured = textOf(readValue(values, 'media', 'dir'));
-  const mediaDir = mediaConfigured !== '' ? resolve(mediaConfigured) : '';
-  const mediaVerdict = mediaDir === '' ? { exists: false, writable: false, reason: '' } : dirVerdict(mediaDir);
+  const mediaDir = mediaDirOf(dataDir, mediaConfigured);
+  const mediaVerdict = dirVerdict(mediaDir);
+  const mediaMissing = mediaConfigured === '' ? '默认落点目录不在：' : '配了但目录不在：';
   items.push({
     id: 'media.dir', title: '附件目录',
-    status: mediaDir !== '' && mediaVerdict.exists && mediaVerdict.writable ? 'green' : 'yellow',
-    message: mediaDir === ''
-      ? '还没配：附件不参与（收件时不给附件，笔记照记）。'
-      : !mediaVerdict.exists
-        ? '配了但目录不在：' + p(mediaDir) + '。'
-        : mediaVerdict.writable
-          ? '在且能写：' + p(mediaDir) + '。'
-          : '在，但写不进去：' + p(mediaDir) + '（' + mediaVerdict.reason + '）。',
-    action: mediaDir === ''
-      ? '要把附件一起归档就在配置页填这个目录（绝对路径；相对值按当前工作目录解）。'
-      : mediaVerdict.exists && mediaVerdict.writable ? '' : '建出这个目录（或去掉只读），或把「附件目录」改到别处。',
+    status: mediaVerdict.exists && mediaVerdict.writable ? 'green' : 'yellow',
+    message: !mediaVerdict.exists
+      ? mediaMissing + p(mediaDir) + '。'
+      : mediaVerdict.writable
+        ? '在且能写：' + p(mediaDir) + '。'
+        : '在，但写不进去：' + p(mediaDir) + '（' + mediaVerdict.reason + '）。',
+    action: mediaVerdict.exists && mediaVerdict.writable ? '' : '建出这个目录（或去掉只读），或把「附件目录」改到别处。',
     source: sourceOf(present, 'media.dir'),
   });
 
   // ⑦ 飞书 CLI（备忘特有）：三档——找不到＝黄；找得到但没登录／没授权＝黄；登录且 task 域可写＝绿。
-  const larkConfigured = textOf(readValue(values, 'lark', 'cliPath'));
-  const larkCli = findLarkCli(larkConfigured);
+  // #760 起 `lark:` 整组出配置表：来源固定按默认值，指引改指复制安装指引（`memo.auth` 的 init／qr／poll
+  // 已退役，授权走那段 prompt；面板「飞书 CLI」状态行显示同一份三档）。
+  const larkCli = findLarkCli('');
   const tier = larkTier(larkCli);
   const larkWhere = larkCli === null ? '' : p(larkCli);
   items.push({
@@ -574,9 +578,9 @@ export function buildMemoHealthReport(): MemoHealthReport {
         ? '找得到 lark-cli，但还没登录或没拿到 task 域授权：飞书同步用不了。'
         : '已登录且 task 域可写：' + larkWhere + '。',
     action: tier === 'missing'
-      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是 2017 年僵尸包，别装）。'
-      : tier === 'partial' ? '补授权：lark-cli auth login（授权助手那条命令也能走：memo.auth 的 init／qr／poll）。' : '',
-    source: larkConfigured !== '' ? '配置文件' : '默认值',
+      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是僵尸包，别装）。飞书CLI官网为：https://www.feishu.cn/feishu-cli。完整安装指引（含复制给 AI 的 prompt）见 memo.config.read 回执的 lark.prompt，面板「飞书 CLI」状态行有同一个复制按钮。'
+      : tier === 'partial' ? '补授权：照 memo.config.read 回执 lark.prompt 里那段做（登录后要能过 lark-cli auth check --scope task）。' : '',
+    source: '默认值',
   });
 
   // ⑧ 包内模板目录（备忘特有）：整页交付模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。

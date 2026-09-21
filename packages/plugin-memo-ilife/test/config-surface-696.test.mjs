@@ -25,7 +25,7 @@ import { CONFIG_ITEMS, COMMON_ITEM_COUNT, CONFIG_STEM, SETTINGS_OWNER, readPath,
 import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface, writeConfigValues, resetConfigToDefaults, resolveNodeBin } from '../dist/bridge.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, DEFAULT_READ_KEY, parseReadPayload, parseSavePayload, isRpcResult } from '../dist/contract.js';
 // 权威侧：技能自己的配置表与三个 key（唯一定义地）。
-import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_STEM } from '../../skill-memo-ilife/dist/config.js';
+import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_RETIRED, MEMO_CONFIG_STEM } from '../../skill-memo-ilife/dist/config.js';
 import { CONFIG_KEYS } from '../../skill-memo-ilife/dist/cli/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -124,15 +124,13 @@ describe('#696 备忘设置页 · 配置面', () => {
       }
     });
 
-    it('默认值逐项等于现有代码常量', () => {
+    it('默认值逐项等于现有代码常量（#760 起 8 键 → 4 键）', () => {
       assert.equal(MEMO_CONFIG_DEFAULTS.db.name, 'memo.db');
       assert.equal(MEMO_CONFIG_DEFAULTS.html.dir, 'memo_html', 'HTML 产物目录名是扁平一段');
-      assert.equal(MEMO_CONFIG_DEFAULTS.media.dir, 'media');
-      assert.equal(MEMO_CONFIG_DEFAULTS.files.help, '备忘录_HELP');
-      assert.equal(MEMO_CONFIG_DEFAULTS.files.lookup, '备忘录_速查表');
+      assert.equal(MEMO_CONFIG_DEFAULTS.media.dir, '', '空串＝按默认落点（<数据目录>/media，#760）');
       assert.equal(MEMO_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
-      assert.equal(MEMO_CONFIG_DEFAULTS.lark.cliPath, '', '空串＝走兜底探测');
-      assert.equal(MEMO_CONFIG_DEFAULTS.lark.qrDir, '', '空串＝系统临时目录下的 memo_feishu_qr');
+      assert.deepEqual(MEMO_CONFIG_RETIRED,
+        ['files.help', 'files.lookup', 'lark.cliPath', 'lark.qrDir'], '删掉的 4 键进已退休清单（#762 过渡）');
     });
 
     it('行表键不重复', () => {
@@ -140,10 +138,10 @@ describe('#696 备忘设置页 · 配置面', () => {
       assert.equal(new Set(keys).size, keys.length);
     });
 
-    it('行表顺序即页面顺序（常用四行在前，高级四行在后）', () => {
+    it('行表顺序即页面顺序（#760 起 4 行：可改 2 ＋ 只读 2）', () => {
       assert.deepEqual(
         CONFIG_ITEMS.map((i) => i.key),
-        ['db.dir', 'db.name', 'html.dir', 'media.dir', 'files.help', 'files.lookup', 'lark.cliPath', 'lark.qrDir'],
+        ['db.dir', 'db.name', 'html.dir', 'media.dir'],
       );
     });
   });
@@ -176,36 +174,48 @@ describe('#696 备忘设置页 · 配置面', () => {
     });
   });
 
-  describe('D 分级呈现', () => {
-    it('常用项恰是行表的前若干行，其余全在高级组', () => {
-      assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT < CONFIG_ITEMS.length);
-      for (const i of CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT)) assert.equal(i.tier, 'common', `${i.key} 应在常用组`);
-      for (const i of CONFIG_ITEMS.slice(COMMON_ITEM_COUNT)) assert.equal(i.tier, 'advanced', `${i.key} 应在高级组`);
+  describe('D 分级呈现（#760 起高级组为空：删键 4 项出表）', () => {
+    it('常用项即全部行表，高级组为空', () => {
+      assert.equal(COMMON_ITEM_COUNT, CONFIG_ITEMS.length, '高级组为空：行表全在常用组');
+      for (const i of CONFIG_ITEMS) assert.equal(i.tier, 'common', `${i.key} 应在常用组`);
     });
 
-    it('最常动的四项（数据目录／库名／产物目录／附件目录）在页面上直接画出来', () => {
+    it('四项全在页面上直接画出来（数据目录／库名／产物目录／附件目录）', () => {
       const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT).map((i) => i.key);
       for (const k of ['db.dir', 'db.name', 'html.dir', 'media.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
       assert.equal(COMMON_ITEM_COUNT, 4);
     });
 
-    it('清单一共 8 行（路径类配置全量：常用 4 ＋ 高级 4）', () => {
-      assert.equal(CONFIG_ITEMS.length, 8);
+    it('清单一共 4 行（可改 2：数据目录／附件目录；只读 2：库文件名／产物目录名）', () => {
+      assert.equal(CONFIG_ITEMS.length, 4);
+      const editable = CONFIG_ITEMS.filter((i) => i.readonly !== true).map((i) => i.key).sort();
+      assert.deepEqual(editable, ['db.dir', 'media.dir']);
+      const readonly = CONFIG_ITEMS.filter((i) => i.readonly === true).map((i) => i.key).sort();
+      assert.deepEqual(readonly, ['db.name', 'html.dir']);
     });
 
     it('每行都有一句人话 hint（一到两句），控件都是字符串档（text／目录档）；留空有兜底的那几行写明「留空＝」', () => {
-      // 技能侧真语义（逐件核过）：db.dir／media.dir／lark.cliPath／lark.qrDir 的空串有兜底
-      // （paths.ts／media.ts／feishu.ts／auth.ts 各取用处算），故这四行写明「留空＝」；
-      // db.name／html.dir 的老默认值由输入框自己显示（面板里看得见），hint 不重复报；files.* 空串就是空名字主体。
-      // 控件：本包 8 行取值全是串，页面形态只有两种——`text`，与目录行的 `directory`
+      // 技能侧真语义（逐件核过）：db.dir／media.dir 的空串有兜底（paths.ts 的 dbDirOf／mediaDirOf 算），
+      // 故这两行写明「留空＝」；db.name／html.dir 只读（回执 resolved 组给绝对路径），hint 指到配置文件。
+      // 控件：本包 4 行取值全是串，页面形态只有两种——`text`，与目录行的 `directory`
       // （#736：仍是那个文本框，只多一枚唤起系统文件夹选择器的按钮，见 H 组）。
-      const fallbackKeys = ['db.dir', 'media.dir', 'lark.cliPath', 'lark.qrDir'];
+      const fallbackKeys = ['db.dir', 'media.dir'];
       for (const i of CONFIG_ITEMS) {
         assert.equal(typeof i.hint, 'string');
         assert.ok(i.hint.trim().length > 0, `${i.key} 缺 hint`);
         if (fallbackKeys.includes(i.key)) assert.ok(i.hint.includes('留空＝'), `${i.key} 的 hint 该写明留空时的兜底`);
         assert.ok(i.control === 'text' || i.control === 'directory', `${i.key} 的控件应是字符串档（text 或 directory）`);
       }
+    });
+
+    it('只读行标 resolveFrom（面板只显示技能算好的绝对路径，不自己拼）', () => {
+      for (const i of CONFIG_ITEMS.filter((x) => x.readonly === true)) {
+        assert.ok(typeof i.resolveFrom === 'string' && i.resolveFrom.length > 0, `${i.key} 只读行须标 resolveFrom`);
+      }
+      const byKey = Object.fromEntries(CONFIG_ITEMS.map((i) => [i.key, i]));
+      assert.equal(byKey['db.name'].resolveFrom, 'dbFile');
+      assert.equal(byKey['html.dir'].resolveFrom, 'htmlDir');
+      assert.equal(byKey['media.dir'].prefillResolved, 'mediaDir', '可改的附件目录空串时显示 resolved.mediaDir');
     });
   });
 
@@ -228,7 +238,6 @@ describe('#696 备忘设置页 · 配置面', () => {
       assert.equal(s.created, false);
       assert.equal(readPath(s.values, 'db.name'), 'probe_696.db');
       assert.equal(readPath(s.values, 'html.dir'), MEMO_CONFIG_DEFAULTS.html.dir, '没改的项应保持默认');
-      assert.equal(readPath(s.values, 'files.lookup'), MEMO_CONFIG_DEFAULTS.files.lookup);
     });
 
     it('写：只给一项时，同组其它子项保留现值（技能侧做组内合并）', () => {
@@ -243,11 +252,12 @@ describe('#696 备忘设置页 · 配置面', () => {
       assert.equal(dirValue === '' ? s.dataDir : dirValue, join(configDirOf(base.dir), 'data'), '这次写改掉了生效数据目录');
     });
 
-    it('写：高级项也能落盘（飞书 CLI 路径）', () => {
-      const next = {};
-      writePath(next, 'lark.cliPath', 'C:\\probe\\lark.exe');
+    it('写：已删键保存即清（#762 过渡经面板这条路）', () => {
+      const next = { lark: { cliPath: 'C:\\probe\\lark.exe', qrDir: 'C:\\probe\\qr' }, files: { help: 'X', lookup: 'Y' } };
       writeConfigValues(next);
-      assert.equal(readPath(readConfigSurface().values, 'lark.cliPath'), 'C:\\probe\\lark.exe');
+      const s = readConfigSurface();
+      assert.equal(readPath(s.values, 'lark.cliPath'), undefined, '已删键不进取值');
+      assert.equal(readPath(s.values, 'files.help'), undefined, '已删键不进取值');
     });
 
     it('重置：先落 .bak 再回默认', () => {
@@ -255,7 +265,7 @@ describe('#696 备忘设置页 · 配置面', () => {
       assert.ok(r.backupPath !== null && existsSync(r.backupPath), '重置前应留下一份 .bak');
       const s = readConfigSurface();
       assert.equal(readPath(s.values, 'db.name'), MEMO_CONFIG_DEFAULTS.db.name);
-      assert.equal(readPath(s.values, 'lark.cliPath'), MEMO_CONFIG_DEFAULTS.lark.cliPath);
+      assert.equal(readPath(s.values, 'lark.cliPath'), undefined, '重置后已删键不在取值里');
     });
 
     it('坏配置给人话、不返空：不认识的键被拦下且报文里点了名', () => {
@@ -349,9 +359,9 @@ describe('#696 备忘设置页 · 配置面', () => {
     });
   });
   describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正）', () => {
-    it('目录档只发给目录类行：数据目录／附件目录／飞书授权二维码落点', () => {
+    it('目录档只发给目录类行：数据目录／附件目录（#760 起只剩这两行）', () => {
       const dirs = CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort();
-      assert.deepEqual(dirs, ['db.dir', 'lark.qrDir', 'media.dir'], '目录行集合＝{db.dir, media.dir, lark.qrDir}');
+      assert.deepEqual(dirs, ['db.dir', 'media.dir'], '目录行集合＝{db.dir, media.dir}');
     });
 
     it('命名空间拿不到 ⇒ 没有入口（软依赖；守卫拒绝也当没有）', () => {
@@ -371,7 +381,7 @@ describe('#696 备忘设置页 · 配置面', () => {
       const buttons = nodesOfType(withBrowse, 'button');
       assert.equal(buttons.length, 1, '目录行恰一枚按钮');
       assert.equal(buttons[0].props.type, 'button');
-      assert.match(textOf(buttons[0]), /浏览/);
+      assert.equal(textOf(buttons[0]), '浏览', '控件文案无省略号（#746 处置 9）');
       assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {} }), 'button').length, 0,
         '入口缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
       assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').length, 0,

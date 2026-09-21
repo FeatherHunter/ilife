@@ -55,7 +55,6 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 废弃提醒 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"mode":"abandon"}'` |
 | 完成心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"done":true}'` |
 | 心愿排期 | memo.wish | list | `memo-cmd-read memo.wish` |
-| 飞书授权 | memo.auth | receipt | `memo-cmd-read memo.auth` |
 | 记一条 | memo.create | receipt | `memo-cmd-read memo.create` |
 | 添加笔记 | memo.create | receipt | `memo-cmd-read memo.create` |
 | 记心愿 | memo.create | receipt | `memo-cmd-read memo.create --params '{"category":"心愿"}'` |

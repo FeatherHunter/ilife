@@ -41,6 +41,40 @@ export function parseSavePayload(raw: unknown): SavePayload | null {
   return { values: values as Record<string, unknown> };
 }
 
+/** 解析后的绝对路径组（#760，照 #749 样板）：技能侧算好的落点，设置页的只读行**只显示、不计算**
+ *  （口径「面板不算默认值、不拼路径」）。
+ *
+ *  格名与技能侧 `packages/skill-memo-ilife/src/fetch/paths.ts` 的 `MemoResolvedPaths` 逐字同形
+ *  （那是算式与取值的唯一定义地）。 */
+export interface ResolvedPaths {
+  /** 生效数据目录（面板上可改的两项之一的生效值）。 */
+  readonly dbDir: string;
+  /** 库文件绝对路径（备忘不建库——显示的是"会落在哪"）。 */
+  readonly dbFile: string;
+  /** HTML 产物目录绝对路径。 */
+  readonly htmlDir: string;
+  /** 附件目录绝对路径（空串＝`<数据目录>/media`）。 */
+  readonly mediaDir: string;
+}
+
+/** 「飞书 CLI」状态行的三档读数（#760，定稿 #759）：判据由技能侧出，面板只显示。
+ *  形状与技能侧 `memo.config.read` 回执的 `lark` 格逐字段同形（唯一定义地在那边的 cli/config.ts）。 */
+export type LarkTier = 'missing' | 'partial' | 'full';
+
+export interface LarkState {
+  readonly tier: LarkTier;
+  /** 找到的 CLI 绝对路径（missing 时为 null）。 */
+  readonly cliPath: string | null;
+  /** `lark-cli --version` 原文（missing 时为 null）。 */
+  readonly version: string | null;
+  /** 复制安装指引按钮复制的正文（定稿 #759 v5 逐字）。 */
+  readonly prompt: string;
+  /** 三档都要逐字显示的官网行（显示成文字＋点一下新窗口跳转）。 */
+  readonly websiteLine: string;
+  /** 官网行的跳转目标（与 `websiteLine` 里的地址逐字相同，面板不自己拼地址）。 */
+  readonly websiteUrl: string;
+}
+
 /** 配置面回执：形状与技能侧 `memo.config.read` 的 data 逐字段同形（唯一定义地在那边的 cli/config.ts）。
  *
  * 这里不带默认值表——页面不猜默认值，「留空＝按默认落点」由行文案说清，
@@ -55,6 +89,12 @@ export interface ConfigSurfaceReply {
   readonly created: boolean;
   /** 当前取值（文件里的缺项按默认值补）。 */
   readonly values: Record<string, unknown>;
+  /** 一组解析后的绝对路径（#760 起技能侧回执带上）。
+   *  **可选**：装的是旧技能时这一格缺席，只读行显示空串（面板不自己拼路径，绝不编一条出来）。 */
+  readonly resolved?: ResolvedPaths;
+  /** 飞书 CLI 三档读数（#760 起技能侧回执带上）。
+   *  **可选**：装的是旧技能时这一格缺席，状态行显示空串（面板不自己探测）。 */
+  readonly lark?: LarkState;
 }
 
 export interface RpcError {

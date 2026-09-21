@@ -65,39 +65,43 @@ function probeGuard(extraEnv = {}) {
 }
 
 describe('#695 备忘录配置面', () => {
-  it('① 默认值逐项等于改造前的代码常量', () => {
+  it('① 默认值逐项等于改造前的代码常量（#760 起 8 键 → 4 键）', () => {
     // 改造前：库文件 `join(dbDir,'memo.db')`、`HELP_HTML_DIR_NAME='memo_html'`、
-    // `HELP_FILE_STEM='备忘录_HELP'`、`LOOKUP_FILE_STEM='备忘录_速查表'`、
-    // `MEDIA_DIR_DEFAULT='media'`、二维码缺省 `join(tmpdir(),'memo_feishu_qr')`、lark 显式值来自环境变量。
+    // `MEDIA_DIR_DEFAULT='media'`；#760 起 `files.help`／`files.lookup` 回代码常量
+    // （`src/help/manifest.ts` 的 `HELP_FILE_STEM`／`LOOKUP_FILE_STEM`），`lark.*` 整组出表，
+    // `media.dir` 空串＝`<数据目录>/media`（读认空串，写落绝对路径，见 #760）。
     assert.equal(MEMO_CONFIG_STEM, 'memo');
     assert.deepEqual(MEMO_CONFIG_DEFAULTS, {
       db: { dir: '', name: 'memo.db' },
       html: { dir: 'memo_html' },
-      files: { help: '备忘录_HELP', lookup: '备忘录_速查表' },
-      media: { dir: 'media' },
-      lark: { cliPath: '', qrDir: '' },
+      media: { dir: '' },
     });
   });
 
   it('② 三个配置 key 走 CLI 真出口：读／写／重置，重置先留 .bak', () => {
     const cfg = mkCfg('keys');
+    const dataDir = join(configDirOf(cfg), 'data');
+    const mediaDir = join(dataDir, 'media');
     const first = runOk(cfg, ['memo.config.read']);
     assert.equal(first.shape, 'detail');
     assert.equal(first.skill, 'memo');
     assert.equal(first.key, 'memo.config.read');
     assert.equal(first.data.created, true, '首次读落一份默认');
     assert.equal(first.data.path, join(configDirOf(cfg), 'memo.yaml'), '配置落 <家目录>/.ilife/memo.yaml');
-    assert.deepEqual(first.data.values, MEMO_CONFIG_DEFAULTS);
+    assert.deepEqual(first.data.values, {
+      db: { dir: dataDir, name: 'memo.db' },
+      html: { dir: 'memo_html' },
+      media: { dir: mediaDir },
+    }, '首次落盘即可改两格写绝对路径（#760 写盘口径），读回来就是那两条');
     assert.equal(readFileSync(join(configDirOf(cfg), 'memo.yaml'), 'utf8'),
-      'db:\n  dir: ""\n  name: memo.db\nhtml:\n  dir: memo_html\n'
-      + 'files:\n  help: 备忘录_HELP\n  lookup: 备忘录_速查表\nmedia:\n  dir: media\n'
-      + 'lark:\n  cliPath: ""\n  qrDir: ""\n');
+      'db:\n  dir: ' + JSON.stringify(dataDir) + '\n  name: memo.db\nhtml:\n  dir: memo_html\n'
+      + 'media:\n  dir: ' + JSON.stringify(mediaDir) + '\n');
 
     const w = runOk(cfg, ['memo.config.write', '--params', P({ values: { db: { name: 'my.db' } } })]);
     assert.equal(w.shape, 'receipt');
     assert.equal(w.data.values.db.name, 'my.db');
-    assert.equal(w.data.values.db.dir, '', '没给的项保留现值（局部写）');
-    assert.equal(w.data.values.media.dir, 'media', '没给的组保留默认');
+    assert.equal(w.data.values.db.dir, dataDir, '没给的项保留现值（局部写）');
+    assert.equal(w.data.values.media.dir, mediaDir, '没给的组保留现值');
 
     const reread = runOk(cfg, ['memo.config.read']);
     assert.equal(reread.data.created, false);
@@ -107,10 +111,14 @@ describe('#695 备忘录配置面', () => {
     assert.equal(r.data.backupPath, join(configDirOf(cfg), 'memo.yaml.bak'));
     assert.equal(existsSync(r.data.backupPath), true, '重置前先留 .bak');
     assert.equal(readFileSync(r.data.backupPath, 'utf8').includes('my.db'), true, '备份的是重置前那份');
-    assert.deepEqual(runOk(cfg, ['memo.config.read']).data.values, MEMO_CONFIG_DEFAULTS, '重置回默认');
+    assert.deepEqual(runOk(cfg, ['memo.config.read']).data.values, {
+      db: { dir: dataDir, name: 'memo.db' },
+      html: { dir: 'memo_html' },
+      media: { dir: mediaDir },
+    }, '重置回默认（可改两格仍是绝对路径）');
   });
 
-  it('③ 配置真的进执行路径：改 db.dir／html.dir／files.help 后，库与产物落在新落点', () => {
+  it('③ 配置真的进执行路径：改 db.dir／html.dir 后，库与产物落在新落点；已删键只容忍不生效', () => {
     const cfg = mkCfg('takes-effect');
     const dbDir = join(cfg, 'my-db');
     mkdirSync(dbDir, { recursive: true });
@@ -122,6 +130,7 @@ describe('#695 备忘录配置面', () => {
       '  name: my_memo.db',
       'html:',
       '  dir: my-html',
+      // 已删键（#762 过渡）：读容忍、不进取值——产物名仍是代码常量。
       'files:',
       '  help: 我的备忘_HELP',
       '  lookup: 我的备忘_速查表',
@@ -135,11 +144,11 @@ describe('#695 备忘录配置面', () => {
     const h = runOk(cfg, ['memo.help.lookup', '--params', P({ reuseHours: 0 })]);
     const htmlDir = join(dbDir, 'my-html');
     assert.equal(dirname(h.delivery.path), htmlDir, '产物目录按配置拼：' + h.delivery.path);
-    assert.match(h.delivery.path, /我的备忘_HELP_\d{8}_\d{6}\.html$/);
+    assert.match(h.delivery.path, /备忘录_HELP_\d{8}_\d{6}\.html$/, '已删键不生效：产物名仍是代码常量');
     assert.equal(existsSync(h.delivery.path), true);
 
     const l = runOk(cfg, ['memo.help.lookup', '--params', P({ mode: 'lookup', reuseHours: 0 })]);
-    assert.match(l.delivery.path, /我的备忘_速查表_\d{8}_\d{6}\.html$/);
+    assert.match(l.delivery.path, /备忘录_速查表_\d{8}_\d{6}\.html$/);
   });
 
   it('④ 缺隔离（家目录回落真实那份）即响亮失败：探针只调 resolveConfigDir()，零写', () => {

@@ -16,7 +16,7 @@
 // **缺项自动补默认值**，所以只写要改的那几项即可；写错的键名会被读侧抛「不认识的配置项」。
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 // 共用基座（跨件）：家目录通道的口径、配置目录算法与自证都住那儿，六家只借不抄。
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../../test/helpers/home-test-base.mjs';
 
@@ -66,4 +66,24 @@ export function mkMemoConfig(values = {}, prefix = 'memo-cfg-') {
 /** 子进程 env 的那一格：家目录指到 `home`（win32 认 `USERPROFILE`、POSIX 认 `HOME`，两格都设），其余继承当刻进程，可再叠 `extra`。 */
 export function configEnv(home, extra = {}) {
   return homeEnvOf(home, extra);
+}
+
+/** #760：`lark.cliPath` 删键后，远端挡板的注入点是 **PATH 首位**（与 prompt 终态第 2 条同链：
+ *  子进程的 `where`／`which` 首中挡板目录里的 `lark-cli.cmd`／`lark-cli`；win32 优先 `.cmd` 行）。
+ *  家目录仍指到 `home`（配置落 `<家>/.ilife/memo.yaml`），其余继承当刻进程。 */
+export function stubPathEnv(home, stubDir, extra = {}) {
+  const sep = process.platform === 'win32' ? ';' : ':';
+  const prev = process.env.PATH ?? '';
+  return configEnv(home, { PATH: stubDir + sep + prev, ...extra });
+}
+
+/** #760：闸门钉死（飞书缺席）——PATH 里不放任何 lark 落点，只留临时目录、node 与系统目录。
+ *  子进程的 `where`／`which` 找不到 ⇒ `findLarkCli()` 回 null，闸门必关（本机真 CLI 在也不干扰）。 */
+export function noLarkPathEnv(home, extra = {}) {
+  const sep = process.platform === 'win32' ? ';' : ':';
+  const winDir = process.env.SystemRoot || 'C:\\Windows';
+  const dirs = process.platform === 'win32'
+    ? [tmpdir(), dirname(process.execPath), join(winDir, 'System32'), winDir]
+    : [tmpdir(), dirname(process.execPath), '/usr/bin', '/bin'];
+  return configEnv(home, { PATH: dirs.join(sep), ...extra });
 }

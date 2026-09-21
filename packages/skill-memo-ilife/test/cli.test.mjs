@@ -2,16 +2,14 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { tmpdir as osTmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkMemoDb, seedNote, countNotes } from './helpers/memo-sqlite.mjs';
-import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
+import { mkMemoConfig, noLarkPathEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
 let DB = '';
-const tmpDir = () => osTmpdir();
 
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
@@ -24,16 +22,14 @@ function nodeBin() {
   return process.execPath;
 }
 const NODE = nodeBin();
-// 本文件只测本地侧：远端闸门钉死（配置项 `lark.cliPath` 指不存在的路径），任何真 lark 都连不上，
-// 心愿类写操作走降级（本地照落、退出码非 0）。真远端只在 wish-sync-661 的挡板里测。
-// #695：两个注入点都改走**配置文件**（`db.dir`／`lark.cliPath`），#763 起测试隔离的唯一口子是
+// 本文件只测本地侧：远端闸门钉死（PATH 里不放任何 lark 落点，#760 起 `lark.cliPath` 删键），
+// 任何真 lark 都连不上，心愿类写操作走降级（本地照落、退出码非 0）。真远端只在 wish-sync-661 的挡板里测。
+// #695：注入点改走**配置文件**（`db.dir`），#763 起测试隔离的唯一口子是
 // **家目录注入**（把家目录指到临时目录，配置落 `<家>/.ilife/memo.yaml`）。
 function run(args, envExtra) {
-  const cfg = mkMemoConfig({
-    db: { dir: DB },
-    lark: { cliPath: join(DB || tmpDir(), 'no-lark-here') },
-  }, 'memocli-cfg-');
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: configEnv(cfg, envExtra || {}) });
+  const cfg = mkMemoConfig({ db: { dir: DB } }, 'memocli-cfg-');
+  const base = noLarkPathEnv(cfg);
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: envExtra ? { ...base, ...envExtra } : base });
 }
 function outData(r) {
   return JSON.parse(r.stdout).data;

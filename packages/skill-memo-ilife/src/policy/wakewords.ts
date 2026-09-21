@@ -26,10 +26,11 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '废弃提醒', key: 'memo.remove', preset: { mode: 'abandon' } },
   { phrase: '完成心愿', key: 'memo.update', preset: { done: true } },
   { phrase: '心愿排期', key: 'memo.wish' },
-  { phrase: '飞书授权', key: 'memo.auth' },
   { phrase: '记一条', key: 'memo.create' },
   { phrase: '添加笔记', key: 'memo.create' },
 ];
+// 注（#760）：「飞书授权」唤醒词随授权三支退役（定稿 #759：授权交由复制安装指引那段 prompt）。
+// `memo.auth` 键保留给只读诊断（`status`／`diag`），故 `MemoKey` 与分派里的分支不动，只是不再有唤醒短语。
 
 for (const [p, top] of Object.entries(WAKE_TOPS)) {
   const verb = p[0];

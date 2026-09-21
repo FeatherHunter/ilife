@@ -12,29 +12,28 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
 import { mkMemoDb } from './helpers/memo-sqlite.mjs';
-import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
+import { mkMemoConfig, noLarkPathEnv, stubPathEnv } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist/cli/cmd_read.js');
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
-/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
- *  临时库写 `db.dir`、挡板写 `lark.cliPath`；测试隔离的唯一口子是**家目录注入**。 */
-function envOfSeam(s, cliPath) {
-  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: cliPath ?? s.stub.file } }, 't665-cfg-'));
+/** 两个注入点（#760 起挡板走 **PATH 首位**：`lark.cliPath` 删键，无显式覆盖）：
+ *  临时库写 `db.dir`、挡板目录放 PATH 首位；测试隔离的口子是**家目录注入**。 */
+function envOfSeam(s) {
+  const home = mkMemoConfig({ db: { dir: s.dbPath } }, 't665-cfg-');
+  return stubPathEnv(home, s.stub.dir);
 }
 
-/** 出口调用器：`opts.html` 照旧透传，`opts.cliPath` 可换挡板，其余照 `makeSeam` 的 `runNew`。 */
+/** 出口调用器：其余照 `makeSeam` 的 `runNew`。 */
 function newRun(s, key, params, opts = {}) {
-  const { cliPath, ...rest } = opts;
-  return s.runNew(key, params, { ...rest, extraEnv: envOfSeam(s, cliPath) });
+  return s.runNew(key, params, { ...opts, extraEnv: envOfSeam(s) });
 }
 
 /** 跑一路，断言 delivery 三件套：回执有 delivery{mode,path,bytes}、落盘存在、体积一致。返回 envelope＋delivery。 */
@@ -114,80 +113,32 @@ test('#665 W4 同步报告：memo.sync 随行出报告页（默认落盘＋显�
   assert.ok(readFileSync(d.path, 'utf8').includes('备忘录同步报告'));
 });
 
-/* ─────────────── 授权引导三步 ─────────────── */
+/* ─────────────── 授权引导已退役（#760） ─────────────── */
 
-function makeAuthFake(dir) {
-  const log = join(dir, 'auth-calls.jsonl');
-  writeFileSync(log, '', 'utf8');
-  const logic = [
-    "const fs = require('node:fs');",
-    'const a = process.argv.slice(2);',
-    'fs.appendFileSync(' + JSON.stringify(log) + ", JSON.stringify(a) + '\\n');",
-    "if (a[0] === 'config' && a[1] === 'init') { console.log(JSON.stringify({ device_code: 'dc_1', verification_url: 'https://x/1', user_code: 'u1', expires_in: 600 })); }",
-    "else if (a[0] === 'auth' && a[1] === 'qrcode') { console.log('qr-ok'); }",
-    "else if (a[0] === 'auth' && a[1] === 'login') { console.log(JSON.stringify({ ok: true, user: { openId: 'ou_1' } })); }",
-    "else if (a[0] === 'auth' && a[1] === 'status') { console.log(JSON.stringify({ ok: true })); }",
-    "else { console.error('unknown'); process.exit(2); }",
-    '',
-  ].join('\n');
-  if (process.platform === 'win32') {
-    const cjs = join(dir, 'fakeauth.cjs');
-    writeFileSync(cjs, logic);
-    const cmd = join(dir, 'fakeauth.cmd');
-    writeFileSync(cmd, '@node "' + cjs + '" %*\r\n');
-    return { cli: cmd, log };
+test('#665 W5 授权引导已退役：init／qr／poll 只认 status/diag，status 仍可用', () => {
+  const s = seam('t665-w5-');
+  for (const params of [{ step: 'init' }, { step: 'qr', url: 'https://x/1' }, { step: 'poll', deviceCode: 'dc_1' }]) {
+    const r = newRun(s, 'memo.auth', params);
+    assert.equal(r.status, 2, JSON.stringify(params) + ' 应 exit 2：' + String(r.stderr));
+    assert.match(String(r.stderr), /已退役/, '退役分支须点名去处：' + String(r.stderr));
+    assert.match(String(r.stderr), /lark\.prompt/, '退役分支须指到复制安装指引：' + String(r.stderr));
   }
-  const sh = join(dir, 'fakeauth');
-  writeFileSync(sh, '#!/usr/bin/env node\n' + logic);
-  chmodSync(sh, 0o755);
-  return { cli: sh, log };
-}
 
-function runAuth(cli, key, params) {
-  const dir = mkMemoDb('t665-auth-');
-  const cfg = mkMemoConfig({ db: { dir }, lark: { cliPath: cli } }, 't665-authcfg-');
-  return spawnSync(process.execPath, [bin, key, '--params', JSON.stringify(params)], {
-    encoding: 'utf8',
-    env: configEnv(cfg),
-  });
-}
-
-test('#665 W5 授权引导：init／qr／poll／status 四步形状（老 helper 三步＋诊断）', () => {
-  const dir = mkdtempSync(join(tmpdir(), 't665-authfake-'));
-  const fake = makeAuthFake(dir);
-  const calls = () =>
-    readFileSync(fake.log, 'utf8')
-      .trim()
-      .split('\n')
-      .filter(Boolean)
-      .map((l) => JSON.parse(l));
-
-  const init = runAuth(fake.cli, 'memo.auth', { step: 'init' });
-  assert.equal(init.status, 0, init.stderr);
-  assert.equal(envelope(init).data.device_code, 'dc_1');
-  assert.deepEqual(calls()[0].slice(0, 6), ['config', 'init', '--new', '--brand', 'feishu', '--no-wait']);
-
-  const qr = runAuth(fake.cli, 'memo.auth', { step: 'qr', url: 'https://x/1', outDir: dir });
-  assert.equal(qr.status, 0, qr.stderr);
-  assert.ok(envelope(qr).data.qrPath.endsWith('.png'));
-  assert.deepEqual(calls()[1].slice(0, 3), ['auth', 'qrcode', 'https://x/1']);
-
-  const poll = runAuth(fake.cli, 'memo.auth', { step: 'poll', deviceCode: 'dc_1' });
-  assert.equal(poll.status, 0, poll.stderr);
-  assert.equal(envelope(poll).data.ok, true);
-  assert.deepEqual(calls()[2].slice(0, 5), ['auth', 'login', '--domain', 'task', '--device-code']);
-
-  const st = runAuth(fake.cli, 'memo.auth', { step: 'status' });
+  const st = newRun(s, 'memo.auth', { step: 'status' });
   assert.equal(st.status, 0, st.stderr);
   assert.equal(envelope(st).data.step, 'status');
+  assert.ok(envelope(st).data.identities, 'status 回执带授权状态真值');
 });
 
-test('#665 W6 授权引导：lark 缺席即大声失败（不断言真飞书）', () => {
+test('#665 W6 飞书缺席即大声失败＋带安装指引（#760）', () => {
   const dir = mkMemoDb('t665-authoff-');
-  const cfg = mkMemoConfig({ db: { dir }, lark: { cliPath: join(dir, 'no-lark') } }, 't665-authoffcfg-');
-  const r = spawnSync(process.execPath, [bin, 'memo.auth', '--params', JSON.stringify({ step: 'init' })], {
+  const home = mkMemoConfig({ db: { dir } }, 't665-authoffcfg-');
+  const r = spawnSync(process.execPath, [bin, 'memo.auth', '--params', JSON.stringify({ step: 'status' })], {
     encoding: 'utf8',
-    env: configEnv(cfg),
+    env: noLarkPathEnv(home),
   });
-  assert.equal(r.status, 4);
+  assert.equal(r.status, 4, '缺席走 exit 4：' + String(r.stderr));
+  assert.match(String(r.stderr), /lark-cli 未找到/, '点名缺席：' + String(r.stderr));
+  assert.match(String(r.stderr), /飞书CLI官网为：https:\/\/www\.feishu\.cn\/feishu-cli/, '官网行逐字：' + String(r.stderr));
+  assert.match(String(r.stderr), /lark\.prompt/, '指到复制安装指引：' + String(r.stderr));
 });

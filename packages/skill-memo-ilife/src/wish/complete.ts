@@ -4,7 +4,7 @@
 //   ③ 新建一条 `打卡` note（content 默认拷贝心愿原文；reminder_id 留 NULL）；
 //   ④ 单事务，失败回滚；⑤ 本地提交后，用删前快照的 guid 调远端标完成（本地优先，远端失败不影响本地）。
 import { addNote, getNote, removeNote, removeReminderRowsOfNote, type MemoDb } from '../fetch/db.js';
-import { openGate } from './gate.js';
+import { larkSetupOf, openGate } from './gate.js';
 import { completeRemoteWish } from './taskSync.js';
 import type { WishReceipt, WishWriteResult } from './ensure.js';
 
@@ -62,7 +62,7 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
   const gate = openGate();
   if (!gate.open) {
     return {
-      receipt: { ...done, ok: false, message: done.message + '；远端没成（' + gate.why + '）', remote: 'unavailable' },
+      receipt: { ...done, ok: false, message: done.message + '；远端没成（' + gate.why + '）', remote: 'unavailable', larkSetup: larkSetupOf(gate) },
       exit: 4,
     };
   }

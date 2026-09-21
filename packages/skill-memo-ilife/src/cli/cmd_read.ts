@@ -20,13 +20,11 @@ import {
   collectBatchItems,
   countNotesByCategory,
   applyBatchCategory,
-  authInit,
-  authQr,
-  authPoll,
   authStatus,
   runSentinel,
   MemoFetchError,
 } from '../fetch/index.js';
+import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
 import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
 // #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
@@ -89,8 +87,8 @@ interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeli
  *  （exit 2），与其余四家同档：坏参绝不静默当 0。 */
 const helpReuseWindow = helpReuseWindowOf((m) => fail(2, m));
 
-/** 缺省交付的落点意图：`<库目录>/<memo_html>/〈主体〉`（目录名与主体是备忘录自己的三个值，
- *  #695 起从配置文件取：`html.dir`／`files.help`／`files.lookup`，默认逐字等于老常量）。 */
+/** 缺省交付的落点意图：`<库目录>/<memo_html>/〈主体〉`（目录名取自 `../help/manifest.js` 的
+ *  `helpHtmlDirName()`，主体是那两个回常量的 `helpFileStem()`／`lookupFileStem()`）。 */
 function landingOf(dbPath: string, stem: string): HtmlLanding {
   return { dir: join(resolve(dbPath), helpHtmlDirName()), stem };
 }
@@ -404,30 +402,10 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       };
     }
     case 'memo.auth': {
-      // #665 飞书授权引导（三步非阻塞，Q4 批新增 key）：init／qr／poll＋status 诊断。
-      // #666 自检 sentinel：step:'diag'（显式诊断，D-03 任务半场）。
+      // #760 起只剩只读诊断：`status`（授权状态）／`diag`（任务域自检 sentinel，显式才跑，零写）。
+      // 授权三支（`init`／`qr`／`poll`）随 `lark.cliPath` 删键退役（定稿 #759：授权交由复制安装指引那段
+      // prompt，内容见 `memo.config.read` 回执的 `lark.prompt`）；「飞书授权」唤醒词同步退役。
       const step = params.step === undefined ? 'status' : String(params.step);
-      if (step === 'init') {
-        const brand = params.brand === undefined ? 'feishu' : String(params.brand);
-        return ok({
-          ok: true,
-          message: '授权已发起：在浏览器打开链接或扫码，完成后调 step poll 续轮询',
-          step: 'init',
-          ...authInit(brand),
-        });
-      }
-      if (step === 'qr') {
-        if (typeof params.url !== 'string' || params.url.length === 0) fail(2, 'qr 须给 url（init 回的 verification_url）');
-        const qrPath = authQr(params.url as string, params.outDir === undefined ? undefined : String(params.outDir));
-        return ok({ ok: true, message: '二维码已生成', step: 'qr', qrPath });
-      }
-      if (step === 'poll') {
-        if (typeof params.deviceCode !== 'string' || (params.deviceCode as string).length === 0) {
-          fail(2, 'poll 须给 deviceCode（init 回的 device_code，过期请重走 init）');
-        }
-        const domain = params.domain === undefined ? 'task' : String(params.domain);
-        return ok({ ok: true, message: '授权续轮询完成', step: 'poll', ...authPoll(params.deviceCode as string, domain) });
-      }
       if (step === 'status') {
         return ok({ ok: true, message: '授权状态', step: 'status', ...authStatus() });
       }
@@ -436,7 +414,7 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         const r = runSentinel(params.dryRun === true ? { dryRun: true } : undefined);
         return { data: r.receipt, exit: r.exit };
       }
-      fail(2, 'step 只认 init/qr/poll/status/diag');
+      fail(2, 'step 只认 status/diag（授权引导 init/qr/poll 已退役：完整安装指引见 memo.config.read 回执的 lark.prompt）');
       return ok(null);
     }
     case 'memo.stats': {
@@ -546,6 +524,10 @@ async function main() {
       delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
     }
   } catch (e) {
+    // #760：飞书相关命令缺 CLI／未登录的失败回执带上安装指引（与面板「复制安装指引」按钮同一内容）。
+    if (e instanceof MemoFetchError && e.code.startsWith('LARK_')) {
+      fail(4, '取数失败：' + e.message + '。' + LARK_WEBSITE_LINE + '完整安装指引（含复制给 AI 的 prompt）见 memo.config.read 回执的 lark.prompt。');
+    }
     if (e instanceof MemoFetchError) fail(4, '取数失败：' + e.message);
     if (e instanceof MemoPolicyError) fail(2, '口径失败：' + e.message);
     if (e instanceof MemoRenderError) fail(5, '渲染失败：' + e.message);

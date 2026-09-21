@@ -19,7 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { argOf, envelope, fourReadings, makeSeam } from '../../../tooling/contract-seam.mjs';
-import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
+import { mkMemoConfig, stubPathEnv } from './helpers/config-base.mjs';
 
 const WISH = '买跑鞋';
 const BODY = '跑马拉松用';
@@ -32,10 +32,11 @@ const STAT_KEYS = [
 
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
-/** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
- *  临时库写 `db.dir`、远端挡板写 `lark.cliPath`；测试隔离的唯一口子是**家目录注入**。 */
+/** 两个注入点（#760 起挡板走 **PATH 首位**：`lark.cliPath` 删键，无显式覆盖）：
+ *  临时库写 `db.dir`、远端挡板目录放 PATH 首位；测试隔离的口子是**家目录注入**。 */
 function envOfSeam(s) {
-  return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: s.stub.file } }, 't661-cfg-'));
+  const home = mkMemoConfig({ db: { dir: s.dbPath } }, 't661-cfg-');
+  return stubPathEnv(home, s.stub.dir);
 }
 
 /** 跑一次出口，把三条痕迹一次取齐：回执、本地行、远端收到的调用。 */

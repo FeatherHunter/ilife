@@ -9,7 +9,7 @@
 import { listNotes, updateNote, type MemoDb } from '../fetch/db.js';
 import { listRelatedTasks, taskDueDate } from '../fetch/tasks.js';
 import { completeWish } from './complete.js';
-import { openGate } from './gate.js';
+import { larkSetupOf, openGate } from './gate.js';
 import { ownerIdOf } from './mark.js';
 import { ensureRemoteWish } from './taskSync.js';
 import type { WishReceipt } from './ensure.js';
@@ -51,7 +51,7 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
     return {
       receipt: {
         ok: false, message: '对账没跑成：远端不可用（' + gate.why + '）',
-        local: 'unchanged', remote: 'unavailable', remoteId: null, ...zero, errors,
+        local: 'unchanged', remote: 'unavailable', remoteId: null, larkSetup: larkSetupOf(gate), ...zero, errors,
       },
       exit: 4,
     };

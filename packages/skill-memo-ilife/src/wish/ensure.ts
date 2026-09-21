@@ -18,7 +18,8 @@ import {
 } from '../fetch/db.js';
 import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../policy/reminder.js';
 import { dueForCategory, normalizeDue } from './due.js';
-import { openGate } from './gate.js';
+import { larkSetupOf, openGate } from './gate.js';
+import type { LarkSetupInfo } from '../fetch/index.js';
 import { clearRemoteWishDue, completeRemoteWish, ensureRemoteWish, rescheduleRemoteWish, retitleRemoteWish } from './taskSync.js';
 import { deleteRemoteWish } from './taskRemove.js';
 
@@ -33,6 +34,9 @@ export interface WishReceipt {
   readonly remote: 'created' | 'existing' | 'synced' | 'partial' | 'unavailable' | 'failed' | 'not-applicable';
   /** 远端标识（回写本地的那一格）。 */
   readonly remoteId: string | null;
+  /** 远端不可用时的安装指引（#760：与面板「复制安装指引」按钮同一内容；可用时缺席）。
+   *  可选——老回执与 `not-applicable` 那一支没有它。 */
+  readonly larkSetup?: LarkSetupInfo;
 }
 
 export interface WishBatchReceipt extends WishReceipt {
@@ -83,8 +87,8 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
     const type = normalizeRepeatType(input.repeatType);
     remindSpec = { at, type, rule: normalizeRepeatRule(type, input.repeatRule, at) };
   }
-  const fail = (message: string, local: WishReceipt['local'], remoteId: string | null): WishWriteResult => ({
-    receipt: { ok: false, message, local, remote: 'unavailable', remoteId },
+  const fail = (message: string, local: WishReceipt['local'], remoteId: string | null, larkSetup?: LarkSetupInfo): WishWriteResult => ({
+    receipt: { ok: false, message, local, remote: 'unavailable', remoteId, larkSetup },
     exit: 4,
   });
   const placeReminder = (note: MemoNote): string | null => {
@@ -128,9 +132,9 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
   const gate = openGate();
   if (!gate.open) {
     const message = named + (reminderErr ?? '') + '；远端没成（' + gate.why + '）';
-    if (reminderErr) return fail(message, local, note.feishu_task_guid ?? null);
+    if (reminderErr) return fail(message, local, note.feishu_task_guid ?? null, larkSetupOf(gate));
     return {
-      receipt: { ok: false, message, local, remote: 'unavailable', remoteId: note.feishu_task_guid ?? null },
+      receipt: { ok: false, message, local, remote: 'unavailable', remoteId: note.feishu_task_guid ?? null, larkSetup: larkSetupOf(gate) },
       exit: 4,
     };
   }
@@ -164,7 +168,7 @@ export function updateWish(db: MemoDb, input: WishUpdateInput): WishWriteResult 
   }
   const gate = openGate();
   if (!gate.open) {
-    return { receipt: { ok: false, message: done + '；远端没成（' + gate.why + '）', local: 'updated', remote: 'unavailable', remoteId: note.feishu_task_guid ?? null }, exit: 4 };
+    return { receipt: { ok: false, message: done + '；远端没成（' + gate.why + '）', local: 'updated', remote: 'unavailable', remoteId: note.feishu_task_guid ?? null, larkSetup: larkSetupOf(gate) }, exit: 4 };
   }
   let guid = note.feishu_task_guid ?? null;
   try {
@@ -196,7 +200,7 @@ export function removeWish(db: MemoDb, id: number, purge = false): WishWriteResu
   }
   const gate = openGate();
   if (!gate.open) {
-    return { receipt: { ok: false, message: '本地未删（远端没成：' + gate.why + '）：' + id, local: 'unchanged', remote: 'unavailable', remoteId: guid }, exit: 4 };
+    return { receipt: { ok: false, message: '本地未删（远端没成：' + gate.why + '）：' + id, local: 'unchanged', remote: 'unavailable', remoteId: guid, larkSetup: larkSetupOf(gate) }, exit: 4 };
   }
   try {
     if (purge) deleteRemoteWish(gate.cli, guid);
@@ -257,6 +261,7 @@ export function setWishDue(db: MemoDb, input: WishSetDueInput): { receipt: WishB
       local: updated > 0 ? 'updated' : 'unchanged',
       remote,
       remoteId: null,
+      larkSetup: larkSetupOf(gate),
       updated, feishuSynced, skipped, errors,
     },
     exit: errors.length === 0 ? 0 : 4,

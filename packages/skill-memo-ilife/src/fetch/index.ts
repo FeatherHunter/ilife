@@ -1,5 +1,6 @@
 export { MemoFetchError, MemoPolicyError } from './errors.js';
-export { DEFAULT_DB_FILENAME, dbFilename, resolveDbDir, resolveDbPath } from './paths.js';
+export { DEFAULT_DB_FILENAME, DEFAULT_HTML_DIR_NAME, dbFilename, dbDirOf, resolveDbDir, dbFileOf, htmlDirOf, mediaDirOf, resolveMediaDirPath, resolveDbPath, resolvedMemoPaths } from './paths.js';
+export type { MemoResolvedPaths } from './paths.js';
 export {
   openMemoDb,
   closeMemoDb,
@@ -29,9 +30,9 @@ export {
 export type { DueReminder, CompletedReminder } from './reminders.js';
 export { collectBatchItems, countNotesByCategory, applyBatchCategory } from './batch.js';
 export type { BatchItem, BatchApplyResult } from './batch.js';
-export { authInit, authQr, authPoll, authStatus } from './auth.js';
-export { findLarkCli, runLark, larkVersion, authOpenId, checkScope, larkReady, LARK_DEFAULT_TIMEOUT_MS, LARK_WISH_SCOPE } from './feishu.js';
-export type { LarkRunOk, LarkRunDenied, LarkReady } from './feishu.js';
+export { authStatus } from './auth.js';
+export { findLarkCli, runLark, larkVersion, authOpenId, checkScope, larkReady, larkTierInfo, larkSetupInfo, LARK_DEFAULT_TIMEOUT_MS, LARK_WISH_SCOPE, LARK_WEBSITE_URL, LARK_WEBSITE_LINE, LARK_INSTALL_PROMPT } from './feishu.js';
+export type { LarkRunOk, LarkRunDenied, LarkReady, LarkTier, LarkTierInfo, LarkSetupInfo } from './feishu.js';
 // #661：飞书任务域（心愿的远端那一侧）——读三件＋写五件，argv 形状照老 `feishu_sync.py`。
 export { listRelatedTasks, searchTasks, taskDueDate } from './tasks.js';
 export type { RemoteTask } from './tasks.js';
