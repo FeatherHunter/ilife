@@ -52,6 +52,7 @@
   - 决策页（给人看的）：`html-scenes-decisions.html`（第 1 轮 11 问 ＋ 用户答复回流）
   - 票图设计（第一性原理 ＋ 并发与死锁 ＋ 两席 P0 的逐条处置）：`scene-pages-graph-design.md`（v3）
   - 两席对抗式审查原件：`review-graph-A.md`（死锁／并发／锁）／`review-graph-B.md`（第一性原理／干涉／过度工程）
+  - **唤醒词两向对账的复跑证据件**：`audit-wakewords.mjs`（跑法 `node docs/skills/skill-home/audit-wakewords.mjs`；今天**故意是 FAIL**——那 20 条无场景词与 42 条变体还没按 #845 落地。落地后它应当转绿，这就是「唤醒词层补完」的机器读数）
   - 票面正文源：`html-scenes-tickets/<序>-<短名>.md`（改票面一律改文件再 `gh issue edit <n> --body-file`，别内联字符串）
   - 票源映射：`html-scenes-tickets.json`（票号 ↔ issue 号 ↔ 阻塞关系）
   - 接线脚本：`html-scenes-wire.mjs`（建 map＋子票、建原生子议题边与原生阻塞边、回写本表、自校验；重跑即对账）
