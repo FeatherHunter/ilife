@@ -14,7 +14,10 @@ import { toRecipeItem } from '../render/views.js';
 import { fail } from '../shared/slots.js';
 
 // #43 F2 一期限制：FILTER 维度只读（recipe.search 透传过滤），本域独占（旧址 `cmd_read.ts`）。
-export const FILTER_KEYS = ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'filter'] as const;
+// #771：补 `ingredient`（按食材含）与 `ingredient_exclude`（排除食材 NOT 条件，老件 search-6），
+// 3 条路由错位至此收敛：筛选菜系走 `cuisine`（`filter` 别名保留兼容），筛选食材走 `ingredient`，
+// 筛选口味走 `flavor`，筛选季节走 `season`（后三者经显式键，不再经 `filter` 绕 `cuisine`）。
+export const FILTER_KEYS = ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'filter', 'ingredient', 'ingredient_exclude'] as const;
 
 /** 按关键词搜菜名／简介／食材名（空查询不返全量，直接拦）。原 `src/fetch/db.ts`，本域独占。 */
 export function searchRecipes(h: ChefDb, kw: string): RecipeRow[] {
@@ -45,6 +48,12 @@ export function filterRecipes(h: ChefDb, filters: Record<string, unknown> = {}):
   if (filters.tag !== undefined && filters.tag !== '') exists('recipe_diet_tags', 'tag', filters.tag);
   if (filters.meal !== undefined && filters.meal !== '') exists('recipe_meal_types', 'meal_type', filters.meal);
   if (filters.cookware !== undefined && filters.cookware !== '') exists('cookware', 'name', filters.cookware);
+  // #771：按食材含（老件 search-5：列出含该食材的菜）与排除食材（老件 search-6：NOT 条件查询）。
+  if (filters.ingredient !== undefined && filters.ingredient !== '') exists('ingredients', 'name', filters.ingredient);
+  if (filters.ingredient_exclude !== undefined && filters.ingredient_exclude !== '') {
+    conds.push('NOT EXISTS (SELECT 1 FROM ingredients t WHERE t.recipe_id = r.id AND t.name = ?)');
+    params.push(String(filters.ingredient_exclude));
+  }
   const rows = qAll<Record<string, unknown>>(h, 'SELECT DISTINCT r.* FROM recipes r WHERE ' + conds.join(' AND ') + ' ORDER BY r.name ASC', params);
   return rows.map(toRecipe);
 }
@@ -54,30 +63,59 @@ export function buildRecipeSearch(kind: string, items: RecipeItem[]): { items: R
   return { items, total: items.length, kind };
 }
 
-/** 跑 `chef.recipe.search`：关键词搜／查全部／维度过滤三路（list 形）。空结果缺失阻断，不返空冒充。 */
+/** 跑 `chef.recipe.search`：关键词搜／查全部／维度过滤三路（list 形）。空结果缺失阻断，不返空冒充。
+ *
+ * #771 口径（三条，老件 `scenes/搜索筛选.yaml` 为准）：
+ * - 错字模糊匹配（search-2）：精确命中直接返；精确无结果时去尾一字再查，命中则 `kind` 记
+ *   `search-fuzzy:<原词>`（页面据此印纠错提示并直接展示结果），仍无结果则如实抛 `CHEF_EMPTY_RESULT`
+ *   走无结果口径。不建字典／拼音表（需建另立票，见本票遗留出口）。
+ * - 多维组合筛选（search-4）：至多 3 维，超限直接拦（exit 2 并点名维数），不再静默取交集。
+ * - 排除食材（search-6）：`ingredient_exclude`（别名 `exclude_ingredient`／`exclude`）走 NOT 条件。
+ */
 export function runRecipeSearch(handle: ChefDb, params: Record<string, unknown>): unknown {
   const q = params.q;
   let rows: RecipeRow[];
   let kind: string;
   if (typeof q === 'string' && q.trim()) {
-    rows = searchRecipes(handle, q.trim());
-    kind = 'search:' + q.trim();
+    const kw = q.trim();
+    const exact = searchRecipes(handle, kw);
+    if (exact.length) {
+      rows = exact;
+      kind = 'search:' + kw;
+    } else {
+      const short = kw.slice(0, -1);
+      if (short.length >= 2) {
+        const fb = searchRecipes(handle, short);
+        if (fb.length) {
+          rows = fb;
+          kind = 'search-fuzzy:' + kw;
+        } else {
+          throw new ChefFetchError('CHEF_EMPTY_RESULT', '搜菜无结果（缺失阻断，不返空冒充）');
+        }
+      } else {
+        throw new ChefFetchError('CHEF_EMPTY_RESULT', '搜菜无结果（缺失阻断，不返空冒充）');
+      }
+    }
   } else if (params.kind === 'all') {
     rows = listRecipes(handle);
     kind = 'all';
   } else {
     const present = FILTER_KEYS.filter((k) => params[k] !== undefined && params[k] !== '');
-    if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter）');
+    if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude）');
     const f: Record<string, unknown> = {};
-    for (const k of ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime'] as const) {
+    for (const k of ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'ingredient', 'ingredient_exclude'] as const) {
       const v = params[k];
       if (v !== undefined && v !== '') f[k] = typeof v === 'string' ? v.trim() : v;
     }
-    // 别名：filter=通用筛选（川菜类示例按菜系走，与 HELP 示例对齐）；time_max/time=最大用时别名。
+    // 别名：filter=通用筛选（川菜类示例按菜系走，与 HELP 示例对齐，筛选菜系仍走 cuisine）；
+    // time_max/time=最大用时别名；exclude_ingredient/exclude=排除食材别名（老件 search-6「不吃/不要/忌」）。
     if (f.cuisine === undefined && typeof params.filter === 'string' && params.filter.trim()) f.cuisine = params.filter.trim();
     if (f.maxTime === undefined && params.time_max !== undefined && params.time_max !== '') f.maxTime = params.time_max;
     if (f.maxTime === undefined && params.time !== undefined && params.time !== '') f.maxTime = params.time;
-    if (!Object.keys(f).length) fail(2, 'search 过滤条件为空（须给 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter 之一）');
+    if (f.ingredient_exclude === undefined && params.exclude_ingredient !== undefined && params.exclude_ingredient !== '') f.ingredient_exclude = params.exclude_ingredient;
+    if (f.ingredient_exclude === undefined && params.exclude !== undefined && params.exclude !== '') f.ingredient_exclude = params.exclude;
+    if (!Object.keys(f).length) fail(2, 'search 过滤条件为空（须给 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude 之一）');
+    if (Object.keys(f).length > 3) fail(2, '组合筛选至多 3 维（老件 search-4）：本次 ' + Object.keys(f).length + ' 维（' + Object.keys(f).sort().join('、') + '）');
     rows = filterRecipes(handle, f);
     kind = 'filter:' + Object.keys(f).sort().join(',');
   }
