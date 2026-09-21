@@ -44,10 +44,14 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 .notice.warn{background:#fff7e8;color:#b25b00}
 .notice.err{background:#fff5f5;color:#ff3b30}
 @media(max-width:800px){.wrap{padding:28px 14px 70px}.hero{padding:26px 20px}h1{font-size:30px}.kpi .stat{padding:12px}}
+
+/* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
+input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
+input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap ilife-page-ui">
 <header class="hero">
 <h1 id="title">心愿排期向导</h1>
 <p class="lead" id="subtitle">数据加载中</p>
@@ -74,7 +78,7 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 
 <section class="panel">
 <div style="font-weight:700;margin-bottom:8px">📋 发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI,它会按你填的日期更新排期,改完给你回执。</p>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会按你填的日期更新排期，改完给你回执。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">📋 复制排期指令</button>
 </div>
@@ -82,12 +86,12 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 <pre id="promptOut" style="display:none"></pre>
 </section>
 
-<section class="panel">
+<section class="panel ilife-block ilife-block-copy-block">
 <strong>数据与日志</strong>
-<div class="hint">点复制数据保存当前心愿列表 · 点复制日志用于反馈问题(日志不含隐私内容)</div>
+<p class="ilife-block-copy-block-hint">左边那枚存下当前心愿列表，可粘贴存档。右边那枚给出排查用的日志，不含隐私内容。</p>
 <div class="hm-actions">
-<button class="copy ghost" onclick="copyData()">复制数据</button>
-<button class="copy ghost" onclick="copyLog()">复制日志</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-data">复制数据</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-log">复制日志</button>
 </div>
 </section>
 </div>
@@ -257,14 +261,15 @@ function adopt(){
   window.toast('指令已复制','粘贴发给 AI 即可执行',{icon:'ok'});
 }
 
-function copyData(){window.copyText(window.buildDataText(payload),{silent:true});window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
-function copyLog(){window.copyText(window.buildLogText(payload),{silent:true});window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
+function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
+function copyLog(){window.memoAttachCopyArea();window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
 window.applyGlobalToSelected=applyGlobalToSelected;
 window.selectAll=selectAll;
 window.onlyUnset=onlyUnset;
 window.adopt=adopt;
 window.copyData=copyData;
 window.copyLog=copyLog;
+window.memoAttachCopyArea();
 init();
 })();
 </script>

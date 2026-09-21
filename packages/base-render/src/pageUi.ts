@@ -27,6 +27,7 @@
 
 /** 起点色值口径：与 `blocks.ts` 同一条冻结 token 表；本件不新增 token、不新增色值。 */
 import { ACTION_BAR_DEFAULTS } from './spec/index.js';
+import { toastUiCss } from './pageUiToast.js';
 
 const LF = String.fromCharCode(10);
 
@@ -333,5 +334,11 @@ export function pageUiCss(input?: PageUiCssInput): string {
     '    grid-column: 1 / -1;',
     '  }',
     '}',
+    '/* ⑫ toast 关闭键的命中区：那一段（规则 ＋ 逐条记账）另立一件 `pageUiToast.ts`',
+    '   —— 本件加它会 366 LF、越过本包 `AGENTS.md` 钉的 350 LF 告警线；拆的口子也正好是',
+    '   层与层的接缝：本件管「版面与页内控件怎么摆」，那一件管「helpers 运行时注入的浮动件',
+    '   怎么摆」（后者挂在 document.body 下、不在版面根之内，连启用方式都多一道）。',
+    '   取值仍从本件的 `PAGE_LIMITS` 来，规则文本仍只有一处定义。 */',
+    ...toastUiCss(root, PAGE_LIMITS.touchMinPx),
   ].join(LF);
 }

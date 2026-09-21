@@ -1209,19 +1209,38 @@ export interface CopyBlockInput {
    *  （三个格式项各自带该格式已序列化文本）。与 `dataText` 互斥、需要 `dataActionId`
    *  （菜单项的 `data-action-id` 留空，唯一性不与它冲突）。 */
   readonly dataFormats?: CopyFormatTexts;
+  /** **复制区说明行**（#870）：这一排按钮各自复制什么、拿去做什么——一行正文，落在标题与按钮排之间。
+   *
+   *  三态（其余可选字段的两种口径按用途各取其一，本处取**验值**这一种）：
+   *   · 不给 → 一行不出（缺省，既有调用方产物逐字节不变）；
+   *   · 给非空字符串 → 出一行 `<p class="ilife-block-copy-block-hint">`（类名经 `blockPart`，与
+   *     `-title` 同命名空间）；
+   *   · 给空串／非字符串 → `bad-input` 并点名（**不做空串静默吞**）。
+   *
+   *  为什么要它：这一句在多个域里各写一遍，且有域把它写成页内补丁（`style="color:…;font-size:…"`）
+   *  ——同一句说明在 N 处各写一份排印，与「版面单源住公共层」正面冲突。搬到这里之后，
+   *  页面侧只传文本。
+   *
+   *  类名不进 12 项区块闭集：它是**复制区的页面级子件**（与 `renderProseBlock`／`renderCaliberLine`
+   *  同处置），样式随 `pageShell` 区落盘。读屏语义按普通段落，不加 `role`。 */
+  readonly hint?: string;
 }
 
 /** B-11：复制区块（冻结 `renderActionBar`；id 缺省取 `COPY_ACTION_IDS.actionBar.*`，调用方须保页内唯一）。
  *  `dataFormats` 给三格式形态（`dataText` 单格式），两者同给 → `bad-input`。
  *  标题去重（#336 base 侧兜底，与 `copyArea` 的 `COPY_TITLE_DUP_OF_BUTTON` 同口径）：
  *  `title` 与复制数据按钮同名（`ACTION_BAR_DEFAULTS.copyDataLabel`＝「复制数据」）时不出 `<h2>`
- *  （只留动作不留说明文本）；其他标题照旧。 */
+ *  （只留动作不留说明文本）；其他标题照旧。
+ *  可选说明行（#870 `hint`）落在标题与按钮排之间的那一行，见该字段注释。 */
 export function renderCopyBlock(input: CopyBlockInput): string {
   assertPlainObject(input, 'renderCopyBlock: input');
   assertNoInlineHandler(input, 'renderCopyBlock: input');
   const block = input as CopyBlockInput;
   if (block.dataFormats !== undefined && block.dataText !== undefined) {
     badInput('renderCopyBlock: input.dataFormats 与 input.dataText 只能给一个');
+  }
+  if (block.hint !== undefined && (typeof block.hint !== 'string' || block.hint === '')) {
+    badInput('renderCopyBlock: input.hint 给了就必须是非空字符串（不要它就别给这个字段）');
   }
   const bar: ActionBarInput = {};
   if (block.buttons !== undefined) (bar as { buttons?: ActionBarInput['buttons'] }).buttons = block.buttons;
@@ -1243,8 +1262,10 @@ export function renderCopyBlock(input: CopyBlockInput): string {
   const rawTitle = optText(block.title);
   // #336：与按钮同名的标题只留按钮（`copyArea` 去重口径的 base 侧兜底，直调本函数同样生效）。
   const title = rawTitle === ACTION_BAR_DEFAULTS.copyDataLabel ? undefined : rawTitle;
+  const hint = block.hint as string | undefined;
   return '<section class="' + blockRoot('copyBlock') + '">'
     + (title === undefined ? '' : '<h2 class="' + blockPart('copyBlock', 'title') + '">' + esc(title) + '</h2>')
+    + (hint === undefined ? '' : '<p class="' + blockPart('copyBlock', 'hint') + '">' + esc(hint) + '</p>')
     + renderActionBar(bar)
     + '</section>';
 }
@@ -1565,6 +1586,22 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  color: var(--fg);',
     '  font-size: 15px;',
     '  line-height: 1.7;',
+    '  overflow-wrap: anywhere;',
+    '}',
+    // #870 复制区说明行（复制区那一排按钮各自复制什么、拿去做什么）：`renderCopyBlock({ hint })` 的落点。
+    // 排印口径逐条取本文件既有档，不新造：
+    //   字号 12px ＝ 同文件 `renderCaliberLine` 那一档（口径行的旁注档，`#567` 「两个次要 12 吸收」同值），
+    //     也落在 `PAGE_LIMITS.textMinPx`（12，正文类字号下限）这一条硬线上 —— 不取 13px 是因为
+    //     `block-chip` 那条 13px 是「状态字」档，本行是旁注不是状态；
+    //   色 `--fg2`（4.94:1）＝ 口径行同一条（12px 小字压白底要过 AA，`--fg3` 只有 3.62:1）；
+    //   行高 1.5／下距 8px ＝ 口径行逐值同（与紧随其后的按钮排拉开一档 8px）。
+    // 长句折行兜底 `overflow-wrap` 取既有同口径（事实条值／媒体注同一条）。
+    // 与 #420／#434／#860 同处置：页面级、不进 12 项闭集，样式随本区落盘（**不新增样式区**）。
+    '.' + p + 'block-copy-block-hint {',
+    '  margin: 0 0 8px;',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '  line-height: 1.5;',
     '  overflow-wrap: anywhere;',
     '}',
     // #434 操作卡头部（#422 共用件 `operationHead()` 的根类＋四色档＋四子件；样式落本区，不新增区）。

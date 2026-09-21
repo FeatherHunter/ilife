@@ -37,10 +37,14 @@ button.copy{background:var(--card);color:var(--blue);border:1.5px solid var(--bl
   .kv{grid-template-columns:1fr;gap:2px 0}
   .kv dd{margin-bottom:10px}
 }
+
+/* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
+input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
+input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap ilife-page-ui">
 <header class="hero">
 <p class="eyebrow">备忘录回执</p>
 <h1 id="title">回执</h1>
@@ -65,15 +69,12 @@ button.copy{background:var(--card);color:var(--blue);border:1.5px solid var(--bl
 <ul class="rows" id="rows"></ul>
 </section>
 
-<section class="panel">
+<section class="panel ilife-block ilife-block-copy-block">
 <strong>数据与日志</strong>
-<dl class="hint" style="line-height:1.8">
-<dt>复制数据</dt><dd>保存这次的结果，可粘贴到笔记存档</dd>
-<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
-</dl>
+<p class="ilife-block-copy-block-hint">左边那枚存下当前结果，可粘贴到笔记存档。右边那枚给出排查用的日志，不含隐私内容。</p>
 <div class="hm-actions">
-<button class="copy" id="btnData" onclick="copyText(this.dataset.t)" data-t="">复制数据</button>
-<button class="copy" id="btnLog" onclick="copyText(this.dataset.t)" data-t="">复制日志</button>
+<button class="copy ilife-copy-btn" id="btnData" data-action-id="memo-copy-data" data-t="">复制数据</button>
+<button class="copy ilife-copy-btn" id="btnLog" data-action-id="memo-copy-log" data-t="">复制日志</button>
 </div>
 </section>
 </div>

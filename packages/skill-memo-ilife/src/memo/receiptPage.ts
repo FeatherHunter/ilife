@@ -35,7 +35,7 @@ export function receiptOptsOf(note: { id: number; category: string; sub_category
     category: note.category,
     sub: note.sub_category,
     summary: [
-      '笔记 ID ' + note.id,
+      '笔记编号 ' + note.id,
       '正文：' + note.content,
       '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category),
     ],
@@ -67,6 +67,6 @@ export function buildReceipt(
       call_chain: 'cmd_read dispatch → ' + scene + ' → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
       exception: '无',
     },
-    retryPrompt: '若这一页的内容不对，请把要改的那一条（笔记 ID 与要改成的样子）发我，我重跑一次：' + title,
+    retryPrompt: '若这一页的内容不对，请把要改的那一条（笔记编号与要改成的样子）发我，我重跑一次：' + title,
   });
 }

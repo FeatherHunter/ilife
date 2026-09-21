@@ -103,7 +103,7 @@ describe('#831 · mood 域 3 场景端到端（真出口）', () => {
     assert.equal(fresh.length, 1, '产物：' + listing().join(','));
     const html = readFileSync(join(landingDir(), fresh[0]), 'utf8');
     assert.match(html, /今天有点累（改后）/);
-    assert.match(html, new RegExp('笔记 ID ' + id));
+    assert.match(html, new RegExp('笔记编号 ' + id));
   });
 
   it('删情绪：memo.remove exit 0 ＋ 产物「删情绪」且笔记真删', () => {

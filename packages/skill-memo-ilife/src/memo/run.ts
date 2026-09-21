@@ -280,7 +280,8 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
   }
   const items = collectBatchItems(db, from);
   const snap = changeCategorySnapshot(toRows(items), from, to);
-  const message = "原分类 '" + (from ?? '<全部>') + "' 下 " + items.length + ' 条笔记';
+  // 文案口径（#870）：分类名用「」括起，不用半角单引号——中文页上的半角标点归 H7（t849 §1）。
+  const message = '原分类「' + (from ?? '全部') + '」下 ' + items.length + ' 条笔记';
   const payload = pageEnvelope({
     commandCn: '批量改分类', wakeWord: '备忘改分类', sceneId: 'batch-update-category',
     title: snap.title, summary: snap.summary, sections: snap.sections,

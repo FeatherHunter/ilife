@@ -18,7 +18,7 @@ function itemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[]): string {
-  if (!items.length) return '<div class="hm-empty">暂无记录</div>';
+  if (!items.length) return '<div class="ilife-empty">暂无记录</div>';
   return items.map((x) => itemHtml(x as Record<string, unknown>)).join('');
 }
 

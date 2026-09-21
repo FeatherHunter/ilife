@@ -3,9 +3,10 @@ export { MEMO_KEY_SHAPES, memoShapeFor, buildMemoEnvelope, parseMemoEnvelope } f
 export { MEMO_HTML_MAX_BYTES, escapeHtml, renderEnvelopeHtml, estimateBytes, assertHtmlSize } from './html.js';
 export { MEMO_TEMPLATES, loadTemplate } from './templates.js';
 export type { MemoTemplate } from './templates.js';
-// #665 D-28：整页填充走共享 filler（`base-paint/fillTemplate`），资产走窄兼容对（`pageAssets.ts`）。
-// 自持的两标记填充器（`fillSharedMarkers`）已退役——机制归共享层，不在技能侧另立第二份。
-export { MEMO_PAGE_CSS, MEMO_PAGE_RUNTIME } from './pageAssets.js';
+// #665 D-28：整页填充走共享 filler（`base-paint/fillTemplate`）；#870 起资产走公共层产出
+// （`memoPageAssets.ts`），自持窄镜像 `pageAssets.ts` 已退役。
+export { memoPageAssets, memoRuntimeJs } from './memoPageAssets.js';
+export type { MemoPageAssets } from './memoPageAssets.js';
 export {
   pageEnvelope,
   querySnapshot,

@@ -34,7 +34,7 @@ select{border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-siz
 #noteList .note-id{font-size:13px;min-width:0;white-space:nowrap}
 #noteList .note-content{font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all;flex:1 1 auto}
 #noteList .note-meta{margin:auto 0 0;gap:8px;padding-top:8px}
-#noteList .note-meta .badge{font-size:11px;padding:2px 8px;margin:2px 4px 2px 0}
+#noteList .note-meta .badge{font-size:12px;padding:2px 8px;margin:2px 4px 2px 0}
 .note.off{opacity:.5}
 .note.off .content{text-decoration:line-through;color:var(--fg3)}
 .note-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
@@ -54,10 +54,14 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 .notice.warn{background:#fff7e8;color:#b25b00}
 .notice.err{background:#fff5f5;color:#ff3b30}
 @media(max-width:800px){.wrap{padding:28px 14px 70px}.hero{padding:26px 20px}h1{font-size:30px}.flow{flex-direction:column}}
+
+/* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
+input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
+input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap ilife-page-ui">
 <header class="hero">
 <h1 id="title">批量改分类向导</h1>
 <p class="lead" id="subtitle">数据加载中</p>
@@ -70,7 +74,7 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 <section class="panel">
 <div style="font-weight:700;margin-bottom:10px">🎯 改到哪个分类</div>
 <div class="toolbar">
-<label style="color:var(--fg2);font-size:14px">目标分类:</label>
+<label style="color:var(--fg2);font-size:14px">目标分类：</label>
 <select id="toCatSelect">
 <option value="备忘">备忘</option>
 <option value="心愿">心愿</option>
@@ -82,14 +86,14 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 <button class="ghost" onclick="selectAll(false)">清空选择</button>
 </div>
 </div>
-<p class="hint">已选择 <b id="selCount">0</b> 条,共 <span id="selTotal">0</span> 条</p>
+<p class="hint">已选择 <b id="selCount">0</b> 条，共 <span id="selTotal">0</span> 条</p>
 </section>
 
 <section id="noteList"></section>
 
 <section class="panel">
 <div style="font-weight:700;margin-bottom:8px">📋 发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令,粘贴给 AI,AI 会把勾选笔记的分类改成目标分类(子分类保持不变),改完给你回执。</p>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给 AI，AI 会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">📋 复制修改指令</button>
 </div>
@@ -97,15 +101,12 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 <pre id="promptOut" style="display:none"></pre>
 </section>
 
-<section class="panel">
+<section class="panel ilife-block ilife-block-copy-block">
 <strong>数据与日志</strong>
-<dl class="hint" style="line-height:1.8">
-<dt>复制数据</dt><dd>保存当前笔记列表，可粘贴存档</dd>
-<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
-</dl>
+<p class="ilife-block-copy-block-hint">左边那枚存下当前笔记列表，可粘贴存档。右边那枚给出排查用的日志，不含隐私内容。</p>
 <div class="hm-actions">
-<button class="copy ghost" onclick="copyData()">复制数据</button>
-<button class="copy ghost" onclick="copyLog()">复制日志</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-data">复制数据</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-log">复制日志</button>
 </div>
 </section>
 </div>
@@ -247,12 +248,13 @@ function adopt(){
   window.toast('指令已复制','粘贴发给 AI 即可执行',{icon:'ok'});
 }
 
-function copyData(){window.copyText(window.buildDataText(payload),{silent:true});window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
-function copyLog(){window.copyText(window.buildLogText(payload),{silent:true});window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
+function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
+function copyLog(){window.memoAttachCopyArea();window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
 window.selectAll=selectAll;
 window.adopt=adopt;
 window.copyData=copyData;
 window.copyLog=copyLog;
+window.memoAttachCopyArea();
 init();
 })();
 </script>

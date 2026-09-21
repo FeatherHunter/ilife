@@ -1,9 +1,9 @@
 // 渲染层·数据页组装（#665）：老 `memo_render.py` 的 TS 换皮——信封（meta＋scene.snapshot＋copy_log）
-// ＋各页 snapshot。模板行为一字不改（老权威），填充走共享 `fillTemplate`，资产走窄兼容对
-// （`pageAssets.ts`，D-28）。
+// ＋各页 snapshot。模板行为一字不改（老权威），填充走共享 `fillTemplate`，资产走公共层产出
+// （`memoPageAssets.ts`，#870 起替掉 #665 那份自持窄镜像）。
 import { fillTemplate as fillSharedTemplate } from 'base-paint';
 import { MemoRenderError } from './errors.js';
-import { MEMO_PAGE_CSS, MEMO_PAGE_RUNTIME } from './pageAssets.js';
+import { memoPageAssets } from './memoPageAssets.js';
 import { assertHtmlSize, MEMO_HTML_MAX_BYTES } from './html.js';
 import { loadTemplate } from './templates.js';
 
@@ -143,7 +143,7 @@ export function wishPlanSnapshot(items: Row[], suggestDue: string | null, includ
       '心愿 ' + items.length + ' 个',
       '未排期 ' + unset + ' 个',
       '已排期 ' + (items.length - unset) + ' 个',
-      '建议排期 ' + (suggestDue ?? '(未填)'),
+      '建议排期 ' + (suggestDue ?? '（未填）'),
     ],
     sections: [{ heading: '心愿清单', rows: items.map((w) => wishRow(w, true)) }],
   };
@@ -167,7 +167,7 @@ export function changeCategorySnapshot(items: Row[], from: string | null, to: st
     summary: [
       '候选笔记 ' + items.length + ' 条',
       '带子分类 ' + withSub + ' 条',
-      '原分类 ' + (from ?? '(全部)') + ' → 目标 ' + (to ?? '(待选)'),
+      '原分类 ' + (from ?? '（全部）') + ' 改成 ' + (to ?? '（待选）'),
     ],
     sections: [
       {
@@ -230,15 +230,11 @@ export function initSnapshot(input: {
   };
 }
 
-/** 整页填充：模板 ＋ 共享 filler ＋ 窄兼容资产 ＋ 数据。失败一律转渲染错（出口 exit 5）。 */
+/** 整页填充：模板 ＋ 共享 filler ＋ 公共层资产 ＋ 数据。失败一律转渲染错（出口 exit 5）。 */
 export function fillMemoPage(template: string, payload: Record<string, unknown>): string {
   const raw = loadTemplate(template);
   try {
-    const out = fillSharedTemplate({
-      template: raw,
-      assets: { sharedCssText: MEMO_PAGE_CSS, sharedHelpersJs: MEMO_PAGE_RUNTIME },
-      data: payload,
-    });
+    const out = fillSharedTemplate({ template: raw, assets: memoPageAssets(), data: payload });
     assertHtmlSize(out.html, MEMO_HTML_MAX_BYTES);
     return out.html;
   } catch (e) {
@@ -249,11 +245,7 @@ export function fillMemoPage(template: string, payload: Record<string, unknown>)
 /** 快照探针形状 `(templateText, data)`：与别家技能侧 `fillTemplate` 同形（`tooling/skill-html-snapshot.mjs` 直调）。 */
 export function fillTemplate(templateText: string, data: unknown): string {
   try {
-    const out = fillSharedTemplate({
-      template: templateText,
-      assets: { sharedCssText: MEMO_PAGE_CSS, sharedHelpersJs: MEMO_PAGE_RUNTIME },
-      data,
-    });
+    const out = fillSharedTemplate({ template: templateText, assets: memoPageAssets(), data });
     return out.html;
   } catch (e) {
     throw new MemoRenderError('MEMO_PAGE_FILL', '整页填充失败：' + (e as Error).message);

@@ -29,10 +29,14 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 .jump{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;color:var(--blue);text-decoration:none;font-size:13px;font-weight:600}.jump a:hover{background:var(--soft)}
 #stats,#list,#data-panel{scroll-margin-top:20px}
 @media(max-width:820px){.wrap{padding:28px max(14px,env(safe-area-inset-right)) 70px max(14px,env(safe-area-inset-left))}.hero{padding:26px 20px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:30px}.item-head{flex-wrap:wrap}}
+
+/* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
+input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
+input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap ilife-page-ui">
 <header class="hero">
 <h1 id="title">备忘录查询结果</h1>
 <p class="lead" id="subtitle">数据加载中</p>
@@ -55,12 +59,12 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 <div class="toolbar"><button class="copy ghost" data-copy-receipt onclick="copyFiltered()">复制筛选结果</button></div>
 <pre id="receipt" style="display:none"></pre>
 </section>
-<section class="panel" id="data-panel">
+<section class="panel ilife-block ilife-block-copy-block" id="data-panel">
 <strong>数据与日志</strong>
-<p class="small" style="margin-top:6px">左边那枚存下当前结果，可粘贴到笔记存档。右边那枚给出排查用的日志，不含隐私内容。</p>
+<p class="ilife-block-copy-block-hint">左边那枚存下当前结果，可粘贴到笔记存档。右边那枚给出排查用的日志，不含隐私内容。</p>
 <div class="hm-actions">
-<button class="copy ghost" onclick="copyData()">复制数据</button>
-<button class="copy ghost" onclick="copyLog()">复制日志</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-data">复制数据</button>
+<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-log">复制日志</button>
 </div>
 </section>
 </div>
@@ -94,12 +98,13 @@ function snapshotText(){var d=payload.data;var filtered=rowsFiltered();var meta=
 function renderReceipt(){document.getElementById('receipt').textContent=snapshotText()}
 function copyInfo(btn){try{var raw=btn.getAttribute('data-item').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&');var x=JSON.parse(raw);var id=x.id||x.checkin_note_id||x.reminder_id||'';var content=x.content||x.checkin_content||'';var cat=x.category||'未分类';var sub=x.sub_category?'/'+x.sub_category:'';var created=x.created_at||x.checkin_at||'';var text=`备忘录 #${id}\n分类: ${cat}${sub}\n创建: ${created}\n内容: ${content}\n`;if(x.due)text+=`排期: ${x.due}\n`;if(x.remind_at)text+=`提醒: ${x.remind_at}\n`;window.copyText(text,{silent:true});window.toast('已复制这条备忘','#'+id+' · '+content.slice(0,20),{icon:'copy'});}catch(e){window.toast('复制失败','长按选择文本手动复制',{badge:{text:'失败',type:'danger'}})}}
 function copyFiltered(){var text=snapshotText();if(!text)return;var out=document.getElementById('receipt');out.textContent=text;out.style.display='block';window.copyText(text,{silent:true});window.toast('筛选结果已复制','粘贴给 AI 继续下一步',{icon:'copy'});}
-function copyData(){window.copyText(window.buildDataText(payload),{silent:true});window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
-function copyLog(){window.copyText(window.buildLogText(payload),{silent:true});window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
+function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
+function copyLog(){window.memoAttachCopyArea();window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
 window.copyInfo=copyInfo;
 window.copyFiltered=copyFiltered;
 window.copyData=copyData;
 window.copyLog=copyLog;
+window.memoAttachCopyArea();
 init();
 })();
 </script>

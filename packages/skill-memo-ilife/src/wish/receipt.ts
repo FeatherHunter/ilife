@@ -51,11 +51,11 @@ export interface WishReceiptInput {
   };
 }
 
-/** 一条心愿的摘要（页首事实条）：心愿 ID ／ 心愿内容 ／ 排期；`loc` 缺则只剩结论那一条。 */
+/** 一条心愿的摘要（页首事实条）：心愿编号 ／ 心愿内容 ／ 排期；`loc` 缺则只剩结论那一条。 */
 function summaryOf(title: string, loc: MemoNote | null, extra: readonly string[]): string[] {
   const out: string[] = [title + '：' + (loc === null ? '见下方结果' : loc.content)];
   if (loc !== null) {
-    out.push('心愿 ID ' + loc.id);
+    out.push('心愿编号 ' + loc.id);
     out.push('排期 ' + dueText(loc.due));
   }
   for (const line of extra) out.push(line);
@@ -89,7 +89,7 @@ export function buildWishReceipt(input: WishReceiptInput): { readonly html: stri
       call_chain: 'cmd_read 分派 → ' + input.scene + ' → buildWishReceipt → buildReceiptPage → fillMemoPage(receipt) → deliver 落盘',
       exception: '无',
     },
-    retryPrompt: '若这一页的内容不对，请把要改的那一条（心愿 ID 与要改成的样子）发我，我重跑一次：' + input.title,
+    retryPrompt: '若这一页的内容不对，请把要改的那一条（心愿编号与要改成的样子）发我，我重跑一次：' + input.title,
   });
 }
 

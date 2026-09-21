@@ -702,3 +702,55 @@ describe('#860 正文段落件 renderProseBlock（页面级，不进 12 项闭�
     }
   });
 });
+
+describe('#870 复制区说明行（`renderCopyBlock({ hint })`，页面级子件）', () => {
+  it('闭集仍 12 项且不新增区（copyBlock-hint 只追加页面级子件）', () => {
+    assert.equal(BLOCK_STYLE_SECTIONS.length, 12);
+    for (const name of ['copyBlockHint', 'copy-block-hint', 'copyHint']) {
+      assert.ok(!BLOCK_STYLE_SECTIONS.includes(name), '不得新增样式区：' + name);
+    }
+  });
+
+  it('不给 hint → 不出那一行（既有调用方产物逐字节不变）', () => {
+    const before = renderCopyBlock({ dataText: 'd', logText: 'l' });
+    const implied = renderCopyBlock({ dataText: 'd', logText: 'l', hint: undefined });
+    assert.equal(before, implied, 'undefined 与不给须同产物');
+    assert.ok(!before.includes('ilife-block-copy-block-hint'), '不给 hint 不得出说明行：' + before);
+  });
+
+  it('给 hint → h2 之后、动作排之前恰一行 p.ilife-block-copy-block-hint（五字符转义同源 esc）', () => {
+    const html = renderCopyBlock({ title: '拿去做什么', hint: '复制数据存笔记 <b>&', dataText: 'd' });
+    assert.ok(html.includes('<p class="ilife-block-copy-block-hint">'), '缺说明行：' + html);
+    assert.ok(html.includes('复制数据存笔记 &lt;b&gt;&amp;'), '未按冻结表转义：' + html);
+    assert.ok(!html.includes('<b>'), '原始尖括号不得进产物');
+    const iTitle = html.indexOf('<h2 ');
+    const iHint = html.indexOf('<p class="ilife-block-copy-block-hint">');
+    const iBar = html.indexOf('<div class="ilife-action-bar">');
+    assert.ok(iTitle >= 0 && iTitle < iHint, '说明行须在标题之后');
+    assert.ok(iBar >= 0 && iHint < iBar, '说明行须在动作排之前');
+    assert.equal(html.split('ilife-block-copy-block-hint').length - 1, 1, '恰一行说明行');
+  });
+
+  it('hint 给空串／非字符串 → bad-input 并点名 input.hint（不静默吞）', () => {
+    for (const bad of ['', null, 7, {}]) {
+      assertBadInput(() => renderCopyBlock({ dataText: 'd', hint: bad }), 'hint = ' + String(bad));
+      assert.throws(() => renderCopyBlock({ dataText: 'd', hint: bad }), (err) => err.code === 'bad-input'
+        && typeof err.message === 'string' && err.message.includes('input.hint'), '消息须点名 input.hint');
+    }
+  });
+
+  it('样式随 pageShell 区落盘：12px／1.5／只取冻结 --fg2（字面量色值即红并点名）', () => {
+    const css = blocksCss();
+    assert.ok(css.includes('.ilife-block-copy-block-hint {'), '缺复制区说明行规则');
+    const rule = css.slice(css.indexOf('.ilife-block-copy-block-hint {'));
+    const body = rule.slice(0, rule.indexOf('}') + 1);
+    assert.ok(body.includes('font-size: 12px'), '字号须 12px（正文类下限，与口径行同档）：' + body);
+    assert.ok(body.includes('line-height: 1.5'), '行高须 1.5：' + body);
+    assert.ok(body.includes('color: var(--fg2)'), '色值只许冻结 token --fg2：' + body);
+    assert.ok(!body.includes('#'), '色值字面量不得进本条规则：' + body);
+    const used = new Set([...body.matchAll(/var\((--[A-Za-z0-9-]+)\)/g)].map((m) => m[1]));
+    for (const name of used) {
+      assert.ok(Object.hasOwn(CSS_VAR_TOKENS, name), '未冻结的 token：' + name);
+    }
+  });
+});
