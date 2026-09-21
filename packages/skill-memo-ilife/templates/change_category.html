@@ -92,8 +92,8 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <section id="noteList"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:8px">📋 发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给 AI，AI 会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。</p>
+<div style="font-weight:700;margin-bottom:8px">📋 发给助手的指令</div>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给助手，助手会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">📋 复制修改指令</button>
 </div>
@@ -128,7 +128,7 @@ function items(){return data().items||[]}
 function init(){
   var d=data();
   document.getElementById('title').textContent=d.title||'批量改分类向导';
-  document.getElementById('subtitle').textContent='勾选下方笔记 → 复制指令 → 粘贴给 AI 帮你完成改分类';
+  document.getElementById('subtitle').textContent='先勾选下方笔记，再复制指令，粘贴给助手帮你完成改分类';
   var meta=d.meta||{};
   document.getElementById('meta').textContent=`从「${d.from_category||'当前分类'}」改到「${d.to_category||'目标分类'}」(生成时间 ${d.generated_at||''})`;
   if(d.to_category){
