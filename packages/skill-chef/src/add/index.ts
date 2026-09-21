@@ -8,3 +8,4 @@
 export { ADD_COMMANDS } from './commands.js';
 export { ADD_ROUTES } from './routes.js';
 export { addIngredient, addRecipe, addStep, runRecipeWriteAdd } from './run-write.js';
+export { buildAddFailureHtml, buildAddSuccessHtml } from './pages.js';

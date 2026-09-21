@@ -14,6 +14,38 @@ import { needName, validateCategory } from '../policy/index.js';
 import { buildRecipeReceipt } from '../render/index.js';
 import { pickNum, pickStr, resolveRecipeId } from '../shared/slots.js';
 
+/** 写入前预检（原子性：校验不过就不落盘，不写半条脏数据）。
+ *
+ * `add` 先插主表再逐行插食材与步骤：若第 N 行缺值才抛，之前已落的行就成了半条脏数据
+ *（#773 反例实测：缺 `quantity` 仍留下菜名与首味食材）。本函数在碰库之前把全部内嵌行
+ * 按与 `addIngredient`／`addStep` 同口径逐行验一遍（错文逐字同源），红即抛、不碰库。
+ * 单行的 `add-ingredient`／`add-step` 本就单行原子，不经这里。
+ */
+function assertAddPayload(params: Record<string, unknown>): void {
+  if (Array.isArray(params.ingredients)) {
+    for (const g of params.ingredients as Record<string, unknown>[]) {
+      if (!g || typeof g !== 'object') throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给名 name');
+      const name = typeof (g as Record<string, unknown>).name === 'string' ? String((g as Record<string, unknown>).name).trim() : '';
+      if (!name) throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给名 name');
+      const cat = (g as Record<string, unknown>).category;
+      if (typeof cat === 'string' && cat.trim()) validateCategory(cat);
+      const qtyRaw = (g as Record<string, unknown>).quantity;
+      const qtyNum = qtyRaw === undefined || qtyRaw === null || qtyRaw === '' ? null : Number(qtyRaw);
+      if (qtyNum === null || Number.isNaN(qtyNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给数字用量 quantity（老库 NOT NULL；适量请同时给估计数＋quantity_text）');
+    }
+  }
+  if (Array.isArray(params.steps)) {
+    for (const s of params.steps as Record<string, unknown>[]) {
+      if (!s || typeof s !== 'object') throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给操作 action');
+      const action = typeof (s as Record<string, unknown>).action === 'string' ? String((s as Record<string, unknown>).action).trim() : '';
+      if (!action) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给操作 action');
+      const durRaw = (s as Record<string, unknown>).duration_minutes;
+      const durNum = durRaw === undefined || durRaw === null || durRaw === '' ? null : Number(durRaw);
+      if (durNum === null || Number.isNaN(durNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给数字时长 duration_minutes（老库 NOT NULL；缺时长请问用户补齐）');
+    }
+  }
+}
+
 /** 跑 `chef.recipe.write` 的 add 系：`add`（含 ingredients/steps 内嵌同存）／`add-ingredient`／`add-step`。
  *
  * `op` 由入口注册表经 `parseWriteOpCompat` 算好下传（非法 op 入口已拦，落不到这里），
@@ -31,6 +63,7 @@ export function runRecipeWriteAdd(handle: ChefDb, params: Record<string, unknown
       const n = pickNum(params, k);
       if (n !== undefined) (input as Record<string, unknown>)[k] = n;
     }
+    assertAddPayload(params);
     const r = addRecipe(handle, input);
     // 兼容测试内嵌写法：params.ingredients/params.steps 数组随菜同存（与 add-ingredient/add-step 同语义，category 走 validateCategory 归一）。
     if (Array.isArray(params.ingredients)) {

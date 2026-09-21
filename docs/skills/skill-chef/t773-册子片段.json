@@ -1,0 +1,320 @@
+[
+  {
+    "card": "add_from_image",
+    "wake": "录入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "番茄炒蛋",
+      "servings": 2,
+      "total_time_minutes": 20,
+      "difficulty": "快手菜",
+      "description": "图片转结构化后录入",
+      "source": "图片录入",
+      "ingredients": [
+        {
+          "name": "番茄",
+          "category": "蔬菜",
+          "quantity": 300,
+          "unit": "g",
+          "quantity_text": "约 2 个"
+        },
+        {
+          "name": "鸡蛋",
+          "category": "蛋类",
+          "quantity": 3,
+          "unit": "个",
+          "quantity_text": "3 个"
+        },
+        {
+          "name": "盐",
+          "category": "调料",
+          "quantity": 3,
+          "unit": "g",
+          "quantity_text": "半勺"
+        }
+      ],
+      "steps": [
+        {
+          "action": "鸡蛋打散下锅炒熟盛出",
+          "duration_minutes": 2,
+          "heat_level": "中火"
+        },
+        {
+          "action": "下番茄炒软后回锅同炒",
+          "duration_minutes": 5,
+          "heat_level": "大火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-image.html",
+    "exit": 0,
+    "bytes": 92523,
+    "sha256": "a879185665dbeaf2cc514d0decbb1408747aeee593d8e68ecc7ff4c43f020747"
+  },
+  {
+    "card": "add_from_markdown",
+    "wake": "录入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "青椒肉丝",
+      "servings": 2,
+      "total_time_minutes": 22,
+      "difficulty": "简单",
+      "description": "文档转结构化后录入",
+      "source": "文档录入",
+      "ingredients": [
+        {
+          "name": "青椒",
+          "category": "蔬菜",
+          "quantity": 200,
+          "unit": "g",
+          "quantity_text": "约 3 根"
+        },
+        {
+          "name": "猪里脊",
+          "category": "肉类",
+          "quantity": 200,
+          "unit": "g",
+          "quantity_text": "切丝"
+        },
+        {
+          "name": "生抽",
+          "category": "调料",
+          "quantity": 10,
+          "unit": "ml",
+          "quantity_text": "2 勺"
+        }
+      ],
+      "steps": [
+        {
+          "action": "猪里脊切丝腌制",
+          "duration_minutes": 4,
+          "heat_level": "中火"
+        },
+        {
+          "action": "下青椒与肉丝大火快炒",
+          "duration_minutes": 5,
+          "heat_level": "大火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-markdown.html",
+    "exit": 0,
+    "bytes": 92506,
+    "sha256": "2d63420c9263a84a09b468f543787a27f9fe7999ef277705b235ef370ab06faa"
+  },
+  {
+    "card": "add_from_conversation",
+    "wake": "录入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "麻婆豆腐",
+      "servings": 2,
+      "total_time_minutes": 25,
+      "difficulty": "简单",
+      "description": "对话逐步收集后录入",
+      "source": "对话录入",
+      "ingredients": [
+        {
+          "name": "嫩豆腐",
+          "category": "豆制品",
+          "quantity": 400,
+          "unit": "g",
+          "quantity_text": "1 盒"
+        },
+        {
+          "name": "牛肉末",
+          "category": "肉类",
+          "quantity": 100,
+          "unit": "g",
+          "quantity_text": "约半碗"
+        },
+        {
+          "name": "豆瓣酱",
+          "category": "调料",
+          "quantity": 20,
+          "unit": "g",
+          "quantity_text": "1 勺"
+        }
+      ],
+      "steps": [
+        {
+          "action": "豆腐切块焯水捞出",
+          "duration_minutes": 3,
+          "heat_level": "中火"
+        },
+        {
+          "action": "炒香牛肉末与豆瓣后烧豆腐",
+          "duration_minutes": 6,
+          "heat_level": "小火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-conversation.html",
+    "exit": 0,
+    "bytes": 92516,
+    "sha256": "60d8020414b0714ed22a97fd254d666469dd3cf7f5e56380007731c7ce8873c9"
+  },
+  {
+    "card": "add_from_template",
+    "wake": "录入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "蒜蓉西蓝花",
+      "servings": 2,
+      "total_time_minutes": 15,
+      "difficulty": "快手菜",
+      "description": "表单填好后录入",
+      "source": "表单录入",
+      "ingredients": [
+        {
+          "name": "西蓝花",
+          "category": "蔬菜",
+          "quantity": 300,
+          "unit": "g",
+          "quantity_text": "约 1 颗"
+        },
+        {
+          "name": "大蒜",
+          "category": "葱姜蒜",
+          "quantity": 20,
+          "unit": "g",
+          "quantity_text": "4 瓣"
+        },
+        {
+          "name": "盐",
+          "category": "调料",
+          "quantity": 3,
+          "unit": "g",
+          "quantity_text": "半勺"
+        }
+      ],
+      "steps": [
+        {
+          "action": "西蓝花掰朵焯水",
+          "duration_minutes": 2,
+          "heat_level": "大火"
+        },
+        {
+          "action": "爆香蒜末后下西蓝花炒熟",
+          "duration_minutes": 3,
+          "heat_level": "大火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-template.html",
+    "exit": 0,
+    "bytes": 92473,
+    "sha256": "56dab9d696a4f7435b995340bfbd2be69fa5b0fa521ea95e38c7a1e28f7551f4"
+  },
+  {
+    "card": "import_from_json",
+    "wake": "导入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "鱼香肉丝",
+      "servings": 2,
+      "total_time_minutes": 25,
+      "difficulty": "中等",
+      "description": "导入文件校验后录入",
+      "source": "数据导入",
+      "ingredients": [
+        {
+          "name": "猪里脊",
+          "category": "肉类",
+          "quantity": 200,
+          "unit": "g",
+          "quantity_text": "切丝"
+        },
+        {
+          "name": "木耳",
+          "category": "干货",
+          "quantity": 50,
+          "unit": "g",
+          "quantity_text": "泡发后"
+        },
+        {
+          "name": "泡椒",
+          "category": "调料",
+          "quantity": 15,
+          "unit": "g",
+          "quantity_text": "约 3 个"
+        }
+      ],
+      "steps": [
+        {
+          "action": "肉丝与配料分别切好",
+          "duration_minutes": 4,
+          "heat_level": "中火"
+        },
+        {
+          "action": "调鱼香汁后大火快炒",
+          "duration_minutes": 5,
+          "heat_level": "大火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-import-from-json.html",
+    "exit": 0,
+    "bytes": 92478,
+    "sha256": "b73386a12237b4cd0a9a3476cd94e214f204299028dedf53e47fcfe937d2f517"
+  },
+  {
+    "card": "import_validation_failed",
+    "wake": "导入食谱",
+    "command": "chef.recipe.write",
+    "params": {
+      "op": "add",
+      "name": "宫保鸡丁",
+      "servings": 2,
+      "total_time_minutes": 25,
+      "difficulty": "中等",
+      "description": "校验失败补齐后重试",
+      "source": "补齐重试",
+      "ingredients": [
+        {
+          "name": "鸡腿肉",
+          "category": "肉类",
+          "quantity": 250,
+          "unit": "g",
+          "quantity_text": "切丁"
+        },
+        {
+          "name": "花生",
+          "category": "干货",
+          "quantity": 50,
+          "unit": "g",
+          "quantity_text": "约半碗"
+        },
+        {
+          "name": "干辣椒",
+          "category": "调料",
+          "quantity": 10,
+          "unit": "g",
+          "quantity_text": "约 5 个"
+        }
+      ],
+      "steps": [
+        {
+          "action": "鸡丁腌制备用",
+          "duration_minutes": 3,
+          "heat_level": "中火"
+        },
+        {
+          "action": "爆香辣椒后下鸡丁炒熟",
+          "duration_minutes": 5,
+          "heat_level": "大火"
+        }
+      ]
+    },
+    "file": "D:\\ilife\\.scratch\\t773\\t773-import-validation-failed.html",
+    "exit": 0,
+    "bytes": 92516,
+    "sha256": "fd0fca8dffaba2c4803de1313cdd12f3dce122cdf17b4072a48a0320efb0c65d"
+  }
+]
