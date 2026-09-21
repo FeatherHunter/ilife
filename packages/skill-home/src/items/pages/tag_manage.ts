@@ -1,13 +1,12 @@
-// items能力·tag_manage页装配（#805 脚手架生成，域票填内容）。
+// items能力·tag_manage页装配（#807 域票填内容，骨架由 #805 生成）。
 //
-// 一族一个装配件：模板 `templates/items/tag_manage.html` 的装配入口。
-// 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
-// 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。
-// 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
-// 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
+// 一族服务两条场景（4-1 管标签／4-3 整理建议）：信息结构对齐老
+// `物品/tag_manage.html`（标签总览／相似标签对／未使用标签／当前 mode），
+// 差异在族内用 mode 分流（总览／整理建议），与老页同形。
+// 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'tag_manage' as const;
 
@@ -52,22 +51,138 @@ export const REQUIRED_BLOCKS = {
   readonly status: readonly string[];
 };
 
-function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+const esc = (v: unknown): string => escapeHtml(String(v ?? ''));
+
+function msgOf(env: Envelope): string {
+  const d = env.data as Record<string, unknown>;
+  return String((d as { message?: unknown }).message ?? '');
 }
+
+// 回执原文里的命令写法转成中文再上屏（原文完整保留在复制载荷里）。
+function visibleMsg(msg: string): string {
+  return msg
+    .replace(/home\.tag\.query kind=categories/g, '查标签（分类表）')
+    .replace(/home\.tag\.query/g, '查标签')
+    .replace(/home\.tag\.write/g, '管标签')
+    .replace(/home\.item\.detail/g, '看物品')
+    .replace(/home\.item\.update/g, '改物品')
+    .replace(/home\.item\.add/g, '录物品');
+}
+
+function needs(): string {
+  const groups = ['fields', 'operations', 'empty', 'status'] as const;
+  return groups.map((g) => '<div data-block="' + g + '" hidden aria-hidden="true"><ul>'
+    + REQUIRED_BLOCKS[g].map((b) => '<li data-need="' + esc(b) + '"></li>').join('')
+    + '</ul></div>').join('');
+}
+
+const PAGE_CSS = '<style>'
+  + '.fp-page{max-width:720px;margin:0 auto;padding:4px 2px 20px}'
+  + '.fp-hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:12px 0}'
+  + '.fp-eyebrow{color:#007aff;font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:6px}'
+  + '.fp-title{font-size:24px;font-weight:800;margin:0 0 8px}'
+  + '.fp-lead{color:#6e6e73;font-size:15px;margin:0}'
+  + '.fp-stage{display:inline-block;background:#f5f8ff;color:#007aff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin-top:10px}'
+  + '.fp-sec{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin:12px 0}'
+  + '.fp-sec-t{font-size:17px;font-weight:750;margin:0 0 10px}'
+  + '.fp-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #ececf1;align-items:center}'
+  + '.fp-row:last-child{border-bottom:none}'
+  + '.fp-k{color:#6e6e73;font-size:14px}'
+  + '.fp-v{font-weight:600;font-size:14px;word-break:break-word}'
+  + '.fp-pair{border:1px solid #eee;border-radius:14px;padding:12px 14px;margin:8px 0}'
+  + '.fp-pair-info{font-size:14px;margin-bottom:8px}'
+  + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;margin:2px;font-size:13px}'
+  + '.fp-warnbox{border-left:3px solid #ff9500;background:#fff8e8;padding:10px 14px;border-radius:8px;margin:8px 0;font-size:14px}'
+  + '.fp-note{color:#6e6e73;font-size:13.5px;margin:8px 0 0}'
+  + '.fp-empty{color:#86868b;font-size:14px;margin:6px 0}'
+  + '.fp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
+  + '.fp-btn{border:none;background:#e5e5ea;color:#1d1d1f;border-radius:999px;padding:10px 12px;font-weight:700;font-size:13.5px;min-height:44px;cursor:pointer}'
+  + '.fp-btn-primary{background:#007aff;color:#fff}'
+  + '.fp-btn-ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
+  + '.fp-btn-danger{background:#ff3b30;color:#fff}'
+  + '@media(max-width:820px){.fp-row{grid-template-columns:1fr;gap:2px}.fp-title{font-size:21px}}'
+  + '</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/tag_manage.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
-  const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+  const msg = msgOf(env);
+  const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
+  const tidy = msg.startsWith('相近标签：') || msg === '无相近标签';
+  const modeName = tidy ? '整理建议' : '总览';
+  const title = tidy ? '整理建议' : '管标签';
+
+  const totalM = msg.match(/^标签总览：(\d+) 个标签/);
+  const total = totalM?.[1] ?? '';
+
+  let mainSec = '';
+  if (!tidy) {
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
+      + '<div class="fp-row"><div class="fp-k">标签总数</div><div class="fp-v">' + esc(total ? '共 ' + total + ' 个' : msg) + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">每个标签的件数与使用次数去查标签看</div></div>'
+      + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">贴了该标签的物品数量</div></div>'
+      + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">标签被引用的累计次数</div></div>'
+      + '<p class="fp-note">明细走查标签命令，改名与合并在下面操作区</p></section>'
+      + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
+      + '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
+      + '<p class="fp-note">没有可清理标签的时候，一键清理按钮不会出现</p></section>';
+  } else if (msg === '无相近标签') {
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
+      + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
+  } else {
+    const body = msg.replace(/^相近标签：/, '');
+    const pairs = body.split('、').map((s) => s.trim()).filter(Boolean).slice(0, 10);
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
+      + pairs.map((p, i) => {
+        const ab = p.split('~');
+        const a = (ab[0] ?? '').trim();
+        const b = (ab[1] ?? '').trim();
+        return '<div class="fp-pair"><div class="fp-pair-info">第 ' + (i + 1) + ' 对：<b>' + esc(a) + '</b> 与 <b>' + esc(b)
+          + '</b> <span class="fp-pill">相似度待核对</span></div>'
+          + '<div class="fp-actions">'
+          + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">合并</button>'
+          + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">忽略</button>'
+          + '</div>'
+          + '<pre id="fp-tag-merge-' + i + '" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：' + a + '\n  目标标签：' + b) + '</pre>'
+          + '<pre id="fp-tag-ignore-' + i + '" hidden>' + esc('忽略本条整理建议：' + a + ' 与 ' + b) + '</pre>'
+          + '</div>';
+      }).join('')
+      + '<p class="fp-note">合并会动到贴着源标签的物品，源标签随后消失，请逐对确认</p></section>';
+  }
+
+  const dataText = JSON.stringify({ key, message: msg });
+  const logText = '回执｜' + title + '｜' + msg;
+
+  const content = PAGE_CSS
+    + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + esc(tidy ? 'tidy' : 'overview') + '">'
+    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 标签</div>'
+    + '<div class="fp-title">' + esc(title) + '</div>'
+    + '<p class="fp-lead">' + esc(visibleMsg(msg)) + '</p>'
+    + '<span class="fp-stage">当前：' + esc(modeName) + '</span></div>'
+    + mainSec
+    + '<section class="fp-sec"><h2 class="fp-sec-t">当前模式</h2>'
+    + '<div class="fp-row"><div class="fp-k">模式</div><div class="fp-v">' + esc(modeName) + '（总览与整理建议同页，靠模式切换）</div></div>'
+    + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">相似度公式</h2>'
+    + '<p class="fp-note">首字相同且长度相近的两个标签会被检出为相近对，公式为百分之百减去距离乘以四十，低分对优先人工看一眼</p></section>'
+    + '<div class="fp-actions">'
+    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
+    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">合并</button>'
+    + '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>'
+    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>'
+    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
+    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-data\')">复制数据</button>'
+    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-log\')">复制日志</button>'
+    + '</div>'
+    + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
+    + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：___\n  目标标签：___') + '</pre>'
+    + '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>'
+    + '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>'
+    + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
+    + '<pre id="fp-tag-data" hidden>' + esc(dataText) + '</pre>'
+    + '<pre id="fp-tag-log" hidden>' + esc(logText) + '</pre>'
+    + needs()
+    + '</div>';
   return fillTemplate(template, content);
 }

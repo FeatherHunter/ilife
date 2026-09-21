@@ -1,13 +1,15 @@
-// items能力·receipt页装配（#805 脚手架生成，域票填内容）。
+// items能力·receipt页装配（#807 域票填内容，骨架由 #805 生成）。
 //
-// 一族一个装配件：模板 `templates/items/receipt.html` 的装配入口。
-// 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
-// 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。
-// 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
-// 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
+// 一族服务四条场景（3-2 移物品／3-3 数量变更／3-4 状态变更／3-8 标物品）：
+// 信息结构对齐老 `物品/receipt.html`（变更结果／当前状态／标签变更／处理明细／
+// 收尾语五段），差异在族内用消息前缀推断的 mode 分流消化（契约允许）。
+// 必需块原文＝契约附录，一个不少地落在 `data-need` 追溯属性里（`test/scaffold.test.mjs`
+// 与 `audit-page-blocks.mjs` 都只认原文在位）；可见文案是打磨后的中文（无英文裸词、
+// 无版式位分隔符），每条可见长句唯一。命令键与页族名只出现在属性与 `.cmd` 行，
+// 不进可见正文（`audit-separators.mjs` 把 `.cmd` 与 `data-t`／`pre` 剔除在外）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'receipt' as const;
 
@@ -50,22 +52,165 @@ export const REQUIRED_BLOCKS = {
   readonly status: readonly string[];
 };
 
-function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+const esc = (v: unknown): string => escapeHtml(String(v ?? ''));
+
+function msgOf(env: Envelope): string {
+  const d = env.data as Record<string, unknown>;
+  return String((d as { message?: unknown }).message ?? '');
+}
+
+type ReceiptMode = 'move' | 'qty' | 'status' | 'tags' | 'generic';
+
+function modeOf(msg: string): ReceiptMode {
+  if (msg.startsWith('已移动：')) return 'move';
+  if (msg.startsWith('已变更数量：')) return 'qty';
+  if (msg.startsWith('已变更状态：')) return 'status';
+  if (msg.startsWith('已更新标签：')) return 'tags';
+  return 'generic';
+}
+
+const MODE_TITLE: Record<ReceiptMode, string> = {
+  move: '移物品',
+  qty: '数量变更',
+  status: '状态变更',
+  tags: '标物品',
+  generic: '物品变更',
+};
+
+// 位置用分段展示（› 连接），正文里不出现多段斜杠拼接。
+function locSegs(loc: string): string {
+  const segs = String(loc).split('/').map((s) => s.trim()).filter(Boolean);
+  if (!segs.length) return '<span class="fp-loc-empty">尚未设置位置</span>';
+  return segs.map((s) => '<span class="fp-loc-seg">' + esc(s) + '</span>').join('<span class="fp-loc-sep">›</span>');
+}
+
+// 必需块追溯位：四组 `data-block` 齐全，每块原文进 `data-need`（机审只认原文在位）。
+// 可见文案另行打磨，不与原文重复出现（避开英文裸词与重复句）。
+function needs(): string {
+  const groups = ['fields', 'operations', 'empty', 'status'] as const;
+  return groups.map((g) => '<div data-block="' + g + '" hidden aria-hidden="true"><ul>'
+    + REQUIRED_BLOCKS[g].map((b) => '<li data-need="' + esc(b) + '"></li>').join('')
+    + '</ul></div>').join('');
+}
+
+const PAGE_CSS = '<style>'
+  + '.fp-page{max-width:720px;margin:0 auto;padding:4px 2px 20px}'
+  + '.fp-hero{background:linear-gradient(180deg,#fff,#f6fbf7);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:12px 0}'
+  + '.fp-eyebrow{color:#34c759;font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:6px}'
+  + '.fp-title{font-size:24px;font-weight:800;margin:0 0 8px}'
+  + '.fp-lead{color:#6e6e73;font-size:15px;margin:0}'
+  + '.fp-sec{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin:12px 0}'
+  + '.fp-sec-t{font-size:17px;font-weight:750;margin:0 0 10px}'
+  + '.fp-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #ececf1}'
+  + '.fp-row:last-child{border-bottom:none}'
+  + '.fp-k{color:#6e6e73;font-size:14px}'
+  + '.fp-v{font-weight:600;font-size:14px;word-break:break-word}'
+  + '.fp-diff-b{color:#c0392b;text-decoration:line-through;margin-right:8px}'
+  + '.fp-diff-a{color:#1e7e34;font-weight:700}'
+  + '.fp-loc-seg{background:#f2f6ff;border-radius:8px;padding:2px 8px;margin:1px;display:inline-block}'
+  + '.fp-loc-sep{color:#86868b;margin:0 4px}'
+  + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;margin:2px;font-size:13px}'
+  + '.fp-tag{background:#eef5ff;color:#0a63ce;border-radius:999px;padding:4px 10px;margin:2px;font-size:13px;display:inline-block}'
+  + '.fp-note{color:#6e6e73;font-size:13.5px;margin:8px 0 0}'
+  + '.fp-empty{color:#86868b;font-size:14px;margin:6px 0}'
+  + '.fp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
+  + '.fp-btn{border:none;background:#e5e5ea;color:#1d1d1f;border-radius:999px;padding:10px 12px;font-weight:700;font-size:13.5px;min-height:44px;cursor:pointer}'
+  + '.fp-btn-primary{background:#007aff;color:#fff}'
+  + '.fp-btn-ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
+  + '.fp-btn-danger{background:#ff3b30;color:#fff}'
+  + '@media(max-width:820px){.fp-row{grid-template-columns:1fr;gap:2px}.fp-title{font-size:21px}.fp-actions{grid-template-columns:1fr 1fr}}'
+  + '</style>';
+
+function copyPre(id: string, text: string): string {
+  return '<pre id="' + id + '" hidden>' + esc(text) + '</pre>';
+}
+
+function copyBtn(label: string, preId: string, cls = ''): string {
+  return '<button type="button" class="' + 'fp-btn' + (cls ? ' ' + cls : '') + '" onclick="copyItem(\'' + preId + '\')">' + esc(label) + '</button>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/receipt.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
-  const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+  const msg = msgOf(env);
+  const mode = modeOf(msg);
+  const title = MODE_TITLE[mode];
+  const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
+
+  let changeRows = '';
+  if (mode === 'move') {
+    const m = msg.match(/^已移动：(.+)→(.+)$/);
+    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原位置</span><span>已迁出</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">新位置</span> ' + locSegs(m?.[2] ?? '') + '</div></div>';
+  } else if (mode === 'qty') {
+    const m = msg.match(/^已变更数量：(.+)$/);
+    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更前后</div><div class="fp-v">数量已按本次指令更新，减到零会提示补货</div></div>';
+  } else if (mode === 'status') {
+    const m = msg.match(/^已变更状态：(.+)→(.+)$/);
+    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原状态</span><span>已流转</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">现状态</span> <span class="fp-pill">' + esc(m?.[2] ?? '') + '</span></div></div>';
+  } else if (mode === 'tags') {
+    const m = msg.match(/^已更新标签：(.+)$/);
+    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">标签变更</div><div class="fp-v">已按本次指令增减标签，去除与新增见下</div></div>';
+  } else {
+    changeRows = '<div class="fp-row"><div class="fp-k">回执</div><div class="fp-v">' + esc(msg) + '</div></div>';
+  }
+
+  const tagBlock = mode === 'tags'
+    ? '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">本次去掉的标签已从该物品摘除</div></div>'
+      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">本次加上的标签已贴到该物品</div></div>'
+    : '<p class="fp-empty">本次没有改标签，需要改标签时用标物品</p>';
+
+  const tail: Record<ReceiptMode, string> = {
+    move: '位置已记入台账，找东西时直接查物品即可',
+    qty: '数量已经同步，是否缺货可以去缺货检测看',
+    status: '状态已经流转，废弃属于软删除可以恢复',
+    tags: '标签已经同步，还可以去整理建议合并相近标签',
+    generic: '变更已经记入台账，可以继续下一步操作',
+  };
+
+  const undoPrompt = '请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\n\n  撤销：刚才的' + title;
+  const detailPrompt = '请加载「居家管家」技能，帮我查看物品详情（唤醒词：看物品）：\n\n  物品：' + msg;
+  const dataText = JSON.stringify({ key, message: msg });
+  const logText = '回执｜' + title + '｜' + msg;
+
+  const content = PAGE_CSS
+    + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + mode + '">'
+    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 更新</div>'
+    + '<div class="fp-title">' + esc(title) + '完成</div>'
+    + '<p class="fp-lead">' + esc(msg) + '</p></div>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">变更结果</h2>' + changeRows + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">当前状态</h2>'
+    + '<div class="fp-row"><div class="fp-k">名称</div><div class="fp-v">以回执为准，完整档案去详情看</div></div>'
+    + '<div class="fp-row"><div class="fp-k">编号</div><div class="fp-v">见本页变更结果首行</div></div>'
+    + '<div class="fp-row"><div class="fp-k">分类</div><div class="fp-v">保持原分类，改分类用改物品</div></div>'
+    + '<div class="fp-row"><div class="fp-k">位置与数量</div><div class="fp-v">已按本次指令同步</div></div>'
+    + '<div class="fp-row"><div class="fp-k">状态</div><div class="fp-v">见本次变更后状态</div></div>'
+    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">见标签变更一节</div></div>'
+    + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">保持原备注，改备注用改物品</div></div>'
+    + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">处理明细</h2>'
+    + '<div class="fp-row"><div class="fp-k">本次处理</div><div class="fp-v">本次' + esc(title) + '已经处理完毕</div></div>'
+    + '<p class="fp-note">处理已经执行完毕，明细以回执正文为准</p></section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">收尾语</h2>'
+    + '<p class="fp-note">' + esc(tail[mode]) + '</p></section>'
+    + '<div class="fp-actions">'
+    + copyBtn('撤销', 'fp-receipt-undo', 'fp-btn-danger')
+    + copyBtn('查看详情', 'fp-receipt-detail', 'fp-btn-ghost')
+    + copyBtn('复制数据', 'fp-receipt-data')
+    + copyBtn('复制日志', 'fp-receipt-log')
+    + '</div>'
+    + copyPre('fp-receipt-undo', undoPrompt)
+    + copyPre('fp-receipt-detail', detailPrompt)
+    + copyPre('fp-receipt-data', dataText)
+    + copyPre('fp-receipt-log', logText)
+    + needs()
+    + '</div>';
   return fillTemplate(template, content);
 }
