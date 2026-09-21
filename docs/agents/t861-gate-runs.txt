@@ -1,6 +1,6 @@
 # #861 的运行条目录出件（协议 §2.3.4）
 # 源：.scratch/locks/gate-runs.log 里 ticket=861 的全部条目，逐字抄录（含调试期的红：exit=1 的条目也在）。
-# 更新时间：2026-09-21（构建后一批门跑完）
+# 更新时间：2026-09-21（发版与装机复核跑完）
 
 START ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 pid=38452 at=2026-09-21T06:05:18.563Z
 RUN ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 exit=1 pid=38452 at=2026-09-21T06:05:18.776Z
@@ -32,3 +32,12 @@ START ticket=861 runId=81424580-b96a-4915-8a3b-509814b86862 cmd="node .scratch/t
 RUN ticket=861 runId=81424580-b96a-4915-8a3b-509814b86862 cmd="node .scratch/t861/run-postbuild.mjs" waitedMs=0 exit=0 pid=32396 at=2026-09-21T06:23:12.730Z
 START ticket=861 runId=2a1aec06-38a3-431e-a7e3-dc52eb60e188 cmd="pnpm gen:check" waitedMs=0 pid=28892 at=2026-09-21T06:23:49.113Z
 RUN ticket=861 runId=2a1aec06-38a3-431e-a7e3-dc52eb60e188 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=28892 at=2026-09-21T06:23:51.194Z
+START ticket=861 runId=63d654c8-23f4-43a7-9eb3-3b2c41e23649 cmd="node .scratch/t861/commit3.mjs" waitedMs=0 pid=50792 at=2026-09-21T06:25:38.761Z
+RUN ticket=861 runId=63d654c8-23f4-43a7-9eb3-3b2c41e23649 cmd="node .scratch/t861/commit3.mjs" waitedMs=0 exit=1 pid=50792 at=2026-09-21T06:25:38.829Z
+START ticket=861 runId=b38777a7-63fc-4a06-a3c6-269f8d35a6d1 cmd="node .scratch/t861/commit3.mjs" waitedMs=0 pid=51664 at=2026-09-21T06:25:51.632Z
+RUN ticket=861 runId=b38777a7-63fc-4a06-a3c6-269f8d35a6d1 cmd="node .scratch/t861/commit3.mjs" waitedMs=0 exit=0 pid=51664 at=2026-09-21T06:25:51.845Z
+START ticket=861 runId=0ea90faa-852d-44e8-9704-765ca3c3bf6e cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 pid=38212 at=2026-09-21T06:32:28.238Z
+RUN ticket=861 runId=0ea90faa-852d-44e8-9704-765ca3c3bf6e cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 exit=1 pid=38212 at=2026-09-21T06:32:42.421Z
+START ticket=861 runId=d235dff4-aa80-4ebc-8b61-f989097230cb cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 pid=11812 at=2026-09-21T06:33:56.098Z
+RUN ticket=861 runId=d235dff4-aa80-4ebc-8b61-f989097230cb cmd="node tooling/check-publish.mjs --post --only base-paint,base-combos,skill-bill,skill-calorie,skill-chef,skill-memo-ilife,skill-schedule,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-memo-ilife,dsh-schedule-ilife" waitedMs=0 exit=0 pid=11812 at=2026-09-21T06:34:03.869Z
+START ticket=861 runId=129adfa1-e4e9-4933-a9c2-2ce1a8ddc1f8 cmd="node .scratch/t861/commit4.mjs" waitedMs=0 pid=49840 at=2026-09-21T06:35:56.644Z
