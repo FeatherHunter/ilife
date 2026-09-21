@@ -93,6 +93,22 @@ node --test packages/skill-memo-ilife/test/*.test.mjs  →  212 例：211 绿 / 
 
 **唯一那条红不是本票的，是 HEAD 既有的**：`test/cli-help-229.test.mjs` 的 #240 烟雾锁正则（禁 `nextExclusiveCandidate|writeFileExclusiveWithRetry|flag:'wx'`）命中了 `src/cli/health/probe.ts:51` 的 `writeFileSync(probe, 'probe', { flag: 'wx' })` —— 那是**可写性探针**，不是落盘实现（该件由 #855 的拆分引入，已提交）。⇒ 记入遗留出口，不在本票夹带修（改它要么动 #855 交付的域件、要么动 #240 的锁，两者都不属本票写集）。
 
+（口径提示：这条命令跑的是**整个包**的用例，并行会话正在往同一个 `test/` 目录加件 ⇒ 总例数会随现场变，读数只对「当刻树」成立；要紧的是**那一条红**的归属，以及本票自己的 `receipt-831.test.mjs` 10/10。）
+
+### 2.7 当刻树锁步自查（#830 在途改动之后的复跑）
+
+跑门期间实测并行会话（[#830](https://github.com/FeatherHunter/ilife/issues/830) checkin 域）正在改**同一族**的共用件（`src/render/receipt.ts` 加三条 checkin 场景、`src/memo/run.ts` 加打卡分支与 HELP 字段名映射）。本票的 3 件产物是这些改动**落盘之前**的 `dist` 跑出来的，故另做一次锁步自查：
+
+```
+node .scratch/memo-831/lockstep-check.mjs   # 用当刻 dist 重跑同样三格，归一化时间戳后逐字节比对留档产物
+✓ 记情绪  exit=0  与已留档产物逐字相同
+✓ 改情绪  exit=0  与已留档产物逐字相同
+✓ 删情绪  exit=0  与已留档产物逐字相同
+LOCKSTEP 3/3 件与已留档产物逐字相同
+```
+
+⇒ 本票 §二 的五条读数在**当刻树**上成立（#830 的改动只落在打卡那几支与字段名映射上，不触 mood 三支的入参语义与出页形状）。
+
 ---
 
 ## 三 改了什么（独占写集，逐行对账）
