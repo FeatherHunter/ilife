@@ -18,3 +18,6 @@ export {
   fillTemplate,
 } from './pages.js';
 export type { PageSnapshot, PageCopyLog } from './pages.js';
+// #831：「通用回执」页族（34 格里 19 格那一族）的唯一定义地；各域只填槽位。
+export { buildReceiptPage, RECEIPT_SCENES } from './receipt.js';
+export type { ReceiptPageInput, ReceiptRows, ReceiptBadges, ReceiptScene } from './receipt.js';

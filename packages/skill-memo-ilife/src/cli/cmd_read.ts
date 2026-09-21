@@ -6,6 +6,13 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
+// #833（init 域）：本域两页的复制区载荷（数据／日志）走公共层的 text 两件，不在包内自写序列化。
+import { buildDataText, buildLogText } from 'base-paint';
+
+/** #833：复制区载荷吃的那份信封类型（公共层 `text` 两件的入参取出来，不在两处各写一份形状）。 */
+type MemoCopyEnvelope = Parameters<typeof buildDataText>[0]['envelope'];
+/** #833：复制日志载荷的 `copy_log` 位（同上，从公共层 `text` 两件的入参取形）。 */
+type MemoCopyLogFields = NonNullable<Parameters<typeof buildLogText>[0]['copyLog']>;
 import {
   openMemoDb,
   closeMemoDb,
@@ -40,6 +47,8 @@ import { buildHelpLookup } from '../help/index.js';
 import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
 // #832（sync 域）：产物名主体取自册子唯一定义地（`bookletFileStem`），不在本件手写第二份名字。
 import { bookletFileStem } from '../help/index.js';
+// #833（init 域）：诊断读取与两页装配住 `src/init/`（能力门）；本件只做分派与交付。
+import { INIT_SCENE_ID, readInitDiagnosis, InitInputError, renderInitPage, type InitPageMode } from '../init/index.js';
 import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
@@ -187,26 +196,55 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
 
 // #850 · 初始化渲染（`memo.init`，照旧侧 `init-report --data <JSON>`）：只渲染，不建库不写配置；
 // 库不存在时也能跑（与 `memo.help.lookup` 同位置的开库前分派）。输入为 AI 诊断后的 JSON
-// （检查清单＋待办＋验证清单三段），输出为初始化报告整页（`templates/init_report.html`）。
+// （检查清单＋待办＋验证清单三段）。
+// #833 · 本域出两格（册子 #848）：缺省＝结果页 `首次使用`（初始化报告）；`mode:"wizard"`＝过程页
+// `首次使用-向导`（逐步引导）。两页同吃一份诊断载荷；主体一律由 `bookletFileStem` 算，本件不手写名字。
 function dispatchInit(params: Record<string, unknown>): DispatchOut {
-  const diag = initDiagOf(params);
+  const modeRaw = params.mode === undefined ? 'report' : String(params.mode);
+  if (modeRaw !== 'report' && modeRaw !== 'wizard') fail(2, 'mode 只认 wizard（缺省出报告页 `首次使用`）');
+  const mode: InitPageMode = modeRaw === 'wizard' ? 'guide' : 'report';
+  let diag;
+  try {
+    diag = readInitDiagnosis(params);
+  } catch (e) {
+    if (e instanceof InitInputError) fail(2, e.message);
+    throw e;
+  }
   const snap = initSnapshot(diag);
+  const message = mode === 'guide'
+    ? '首次使用引导页已生成（只渲染，不建库不写配置）'
+    : '初始化报告已生成（只渲染，不建库不写配置）';
   const payload = pageEnvelope({
-    commandCn: '首次使用', wakeWord: '首次使用', sceneId: 'memo_init_setup',
+    commandCn: '首次使用', wakeWord: '首次使用', sceneId: INIT_SCENE_ID,
     title: snap.title, summary: snap.summary, sections: snap.sections,
     copyLog: {
-      thinking: '首次使用 · AI 诊断结果渲染为报告页（检查清单＋待办＋验证清单）',
+      thinking: mode === 'guide'
+        ? '首次使用 · 引导过程页（先处理必装缺失，再做待办项）'
+        : '首次使用 · AI 诊断结果渲染为报告页（检查清单＋待办＋验证清单）',
       data_structure: '--data JSON：{items:[{name,status,desc,action}], todos:[{title,steps}], verify:[]}',
-      call_chain: 'memo.init --params → dispatchInit → render_init_report → 共享 filler',
+      call_chain: 'memo.init --params → dispatchInit → src/init 两页装配 → base-paint 文档壳',
       exception: '无',
     },
     extra: { items: diag.items, todos: diag.todos, verify: diag.verify },
-    message: '初始化报告已生成（只渲染，不建库不写配置）',
+    message,
+  });
+  const envelopeData = payload.data as { readonly generated_at?: unknown; readonly copy_log?: unknown };
+  const occurredAt = typeof envelopeData.generated_at === 'string' ? envelopeData.generated_at : '';
+  const data = { ok: true, message, items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length };
+  // 复制区载荷：吃**回执信封**（公共层 `text` 两件只认可序列化信封形状），日志那件再补页面的 copy_log。
+  const copyEnvelope = buildMemoEnvelope('memo.init', data) as unknown as MemoCopyEnvelope;
+  const page = renderInitPage(mode, diag, {
+    occurredAt,
+    dataText: buildDataText({ envelope: copyEnvelope }),
+    logText: buildLogText({
+      envelope: copyEnvelope,
+      copyLog: envelopeData.copy_log as MemoCopyLogFields,
+    }),
   });
   return {
-    data: { ok: true, message: '初始化报告已生成（只渲染，不建库不写配置）', items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length },
+    data: { ok: true, message, items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length },
     exit: 0,
-    deliver: { html: fillMemoPage('init_report', payload), stem: '初始化报告' },
+    deliver: { html: page.html, stem: '初始化报告' },
   };
 }
 
@@ -245,7 +283,11 @@ function receiptOptsOf(note: { id: number; category: string; sub_category: strin
     entityId: note.id,
     category: note.category,
     sub: note.sub_category,
-    summary: ['笔记 ID ' + note.id, '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category)],
+    summary: [
+      '笔记 ID ' + note.id,
+      '正文：' + note.content,
+      '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category),
+    ],
   };
 }
 
@@ -352,29 +394,9 @@ function deleteWithRemindersOf(params: Record<string, unknown>): boolean {
   return v === true;
 }
 
-// #850 · 初始化渲染输入（老 `init-report --data` 契约）：`data` 必填（对象或 JSON 串），
-// 内含 `items`（检查清单）＋ `todos`（待办）＋ `verify`（验证清单）三段；兼容 `{data:{…}}` 与裸 `{…}` 两层。
-function initDiagOf(params: Record<string, unknown>): { items: { name?: unknown; status?: unknown; desc?: unknown; action?: unknown }[]; todos: { title?: unknown; steps?: unknown }[]; verify: unknown[] } {
-  let raw = params.data !== undefined ? params.data : (params as Record<string, unknown>).diag;
-  if (raw === undefined) fail(2, '缺参数 data：首次使用须给诊断 JSON（含检查清单＋待办＋验证清单三段）');
-  if (typeof raw === 'string') {
-    try { raw = JSON.parse(raw); } catch { fail(2, 'data 不是合法 JSON'); }
-  }
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, 'data 须为对象（含检查清单＋待办＋验证清单三段）');
-  const obj = raw as Record<string, unknown>;
-  const inner = (typeof obj.data === 'object' && obj.data !== null && !Array.isArray(obj.data) ? obj.data : obj) as Record<string, unknown>;
-  const items = (inner.items ?? obj.items) as unknown;
-  if (!Array.isArray(items)) fail(2, 'data.items 须为数组（检查清单）');
-  const todos = ((inner.todos ?? obj.todos ?? []) as unknown) as { title?: unknown; steps?: unknown }[];
-  const verify = ((inner.verify ?? obj.verify ?? []) as unknown) as unknown[];
-  if (!Array.isArray(todos) || !Array.isArray(verify)) fail(2, 'data.todos／data.verify 须为数组');
-  for (const it of items as unknown[]) {
-    if (typeof it !== 'object' || it === null) fail(2, 'data.items 须为对象数组（含 name／status／desc／action）');
-    const st = (it as Record<string, unknown>).status;
-    if (st !== 'ok' && st !== 'warn' && st !== 'err') fail(2, 'items[].status 只认 ok／warn／err');
-  }
-  return { items: items as { name?: unknown; status?: unknown; desc?: unknown; action?: unknown }[], todos: todos as { title?: unknown; steps?: unknown }[], verify };
-}
+// #833：初始化渲染的入参读取（老 `init-report --data` 契约）已搬到本域能力目录
+// —— `readInitDiagnosis`（`src/init/diagnosis.ts`，坏输入抛 `InitInputError`，`dispatchInit` 认它归 exit 2）。
+// 放在本件的旧实现（`initDiagOf`）连同 `init_report` 那套自持页一起退役：一条命令的事实只住它自己的能力目录。
 
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
   switch (key) {
@@ -511,7 +533,12 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       if (!confirm) fail(2, '删除须带 confirm:true（用户说删即确认，AI 显式带上；废弃提醒走 abandon）');
       // #661 · C 口径：默认照老「远端标完成」，显式 `purge:true` 才连飞书任务一起删（两种语义用参数讲清）。
       if (!isBatch) {
+        // #831：情绪日记那条走本族页。**删前先取那一行**——删完 `getNote` 就取不到了。
+        const before = getNote(db, ids[0]);
         const w = removeWish(db, ids[0], params.purge === true);
+        if (before.category === '情绪日记') {
+          return { data: w.receipt, exit: w.exit, deliver: buildReceipt('memo_delete_mood', '删情绪', w.receipt, receiptOptsOf(before)) };
+        }
         return { data: w.receipt, exit: w.exit };
       }
       const errors: string[] = [];

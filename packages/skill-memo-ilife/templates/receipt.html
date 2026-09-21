@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>备忘录回执</title>
+<!--SHARED-CSS-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:48px 22px 90px}
+.hero{background:var(--card);border-radius:28px;padding:34px;margin-bottom:20px;box-shadow:var(--shadow,0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06))}
+.eyebrow{font-size:13px;color:var(--blue);font-weight:800;letter-spacing:.08em;margin-bottom:10px}
+h1{font-size:36px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}
+.lead{color:var(--fg);font-size:17px;font-weight:600}
+.badges{margin-top:14px}
+.badge{display:inline-block;background:var(--soft,#f5f8ff);color:var(--blue);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;margin:2px 8px 2px 0;min-height:28px;line-height:1.4}
+.meta{margin-top:12px;color:var(--fg3);font-size:13px}
+.panel{background:var(--card);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin:14px 0}
+.panel h2{font-size:16px;margin-bottom:12px}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{background:var(--soft,#f5f8ff);border-radius:12px;padding:10px 14px;font-size:14px}
+.kv{display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:10px 16px;font-size:15px}
+.kv dt{color:var(--fg2)}
+.kv dd{font-weight:600;word-break:break-word}
+.rows{list-style:none}
+.rows li{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.rows li:last-child{border-bottom:0}
+.hint{font-size:12px;color:var(--fg3);margin-top:6px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;align-items:center}
+button{border:0;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit}
+button.copy{background:var(--card);color:var(--blue);border:1.5px solid var(--blue);min-height:44px;padding:10px 16px}
+@media(max-width:820px){
+  .wrap{padding:28px 14px 70px}
+  .hero{padding:26px 20px;border-radius:22px}
+  h1{font-size:30px}
+  .kv{grid-template-columns:1fr;gap:2px 0}
+  .kv dd{margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<p class="eyebrow">备忘录回执</p>
+<h1 id="title">回执</h1>
+<p class="lead" id="lead">数据加载中</p>
+<div class="badges" id="badges"></div>
+<p class="meta" id="meta"></p>
+</header>
+<section id="injectError" style="display:none"></section>
+
+<section class="panel" id="factsPanel" style="display:none">
+<h2 id="factsHead">这次的结果</h2>
+<div class="facts" id="facts"></div>
+</section>
+
+<section class="panel" id="resultPanel" style="display:none">
+<h2>处理结果</h2>
+<dl class="kv" id="result"></dl>
+</section>
+
+<section class="panel" id="rowsPanel" style="display:none">
+<h2 id="rowsHead">明细</h2>
+<ul class="rows" id="rows"></ul>
+</section>
+
+<section class="panel">
+<strong>数据与日志</strong>
+<div class="hint">点复制数据保存这次的结果 · 点复制日志用于反馈问题（日志不含隐私内容）</div>
+<div class="hm-actions">
+<button class="copy" id="btnData" onclick="copyText(this.dataset.t)" data-t="">复制数据</button>
+<button class="copy" id="btnLog" onclick="copyText(this.dataset.t)" data-t="">复制日志</button>
+</div>
+</section>
+</div>
+
+<script id="payload" type="application/json"><!--INJECT-DATA--></script>
+<!--SHARED-HELPERS-->
+<script>
+(function(){
+"use strict";
+var raw=document.getElementById("payload");
+var payload=null,perr=null;
+try{payload=JSON.parse(raw.textContent||"{}");}catch(e){perr=e.message;}
+if(perr){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:"数据解析失败",log:perr,payload:null});return;}
+if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",payload:null});return;}
+window.__hmPayload=payload;
+function data(){return payload.data}
+function snap(){return (data().scene||{}).snapshot||{}}
+function receipt(){return data().receipt||{}}
+
+function init(){
+  var d=data(),s=snap(),r=receipt(),meta=d.meta||{};
+  document.title=d.title||"备忘录回执";
+  document.getElementById("title").textContent=d.title||"备忘录回执";
+  document.getElementById("lead").textContent=payload.message||r.message||"";
+  var b=[];
+  if(r.category)b.push('<span class="badge">'+esc(r.category)+'</span>');
+  if(r.sub)b.push('<span class="badge">'+esc(r.sub)+'</span>');
+  document.getElementById("badges").innerHTML=b.join("");
+  document.getElementById("meta").textContent="时间："+(d.generated_at||"")+(meta.wake_word?(" · 唤醒词「"+meta.wake_word+"」"):"");
+  renderFacts();
+  renderResult();
+  renderRows();
+  document.getElementById("btnData").setAttribute("data-t",dataText());
+  document.getElementById("btnLog").setAttribute("data-t",window.buildLogText(payload));
+}
+
+function renderFacts(){
+  var s=snap();var sum=Array.isArray(s.summary)?s.summary:[];
+  if(!sum.length)return;
+  document.getElementById("factsPanel").style.display="block";
+  document.getElementById("facts").innerHTML=sum.map(function(x){return '<span class="fact">'+esc(x)+'</span>'}).join("");
+}
+
+function renderResult(){
+  var rows=receipt().rows;
+  if(!Array.isArray(rows)||!rows.length)return;
+  document.getElementById("resultPanel").style.display="block";
+  document.getElementById("result").innerHTML=rows.map(function(line){
+    var i=String(line).indexOf("：");
+    if(i<0)return "<dt></dt><dd>"+esc(line)+"</dd>";
+    return "<dt>"+esc(String(line).slice(0,i))+"</dt><dd>"+esc(String(line).slice(i+1))+"</dd>";
+  }).join("");
+}
+
+function renderRows(){
+  var s=snap();var secs=Array.isArray(s.sections)?s.sections:[];
+  var rest=secs.filter(function(sec){return sec.heading!=="处理结果"&&sec.rows&&sec.rows.length});
+  if(!rest.length)return;
+  document.getElementById("rowsPanel").style.display="block";
+  document.getElementById("rowsHead").textContent=rest.length===1?rest[0].heading:"明细";
+  var li=[];
+  rest.forEach(function(sec){
+    sec.rows.forEach(function(row){
+      li.push('<li>'+esc(typeof row==="object"&&row!==null?row.text:row)+'</li>');
+    });
+  });
+  document.getElementById("rows").innerHTML=li.join("");
+}
+
+function dataText(){
+  var s=snap();var sum=Array.isArray(s.summary)?s.summary:[];
+  var r=receipt();var L=["【备忘录回执 · "+(data().title||"")+"】"];
+  L.push("结论："+(payload.message||r.message||""));
+  L.push("时间："+(data().generated_at||""));
+  sum.forEach(function(x){L.push(String(x))});
+  (r.rows||[]).forEach(function(x){L.push(String(x))});
+  return L.join("\n");
+}
+init();
+})();
+</script>
+</body>
+</html>

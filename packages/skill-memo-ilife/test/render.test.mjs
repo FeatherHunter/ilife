@@ -48,8 +48,8 @@ describe('memo 渲染层', () => {
     assert.match(renderEnvelopeHtml(env), /已记一条/);
     assert.throws(() => assertHtmlSize('x'.repeat(MEMO_HTML_MAX_BYTES + 1), MEMO_HTML_MAX_BYTES), (e) => e.code === 'MEMO_HTML_TOO_LARGE');
   });
-  it('模板：6 随包（含 init_report，M6 落定），共享 filler 一次填完三标记', () => {
-    assert.equal(MEMO_TEMPLATES.length, 6);
+  it('模板：7 随包（含 init_report，M6 落定；receipt＝通用回执族，#831），共享 filler 一次填完三标记', () => {
+    assert.equal(MEMO_TEMPLATES.length, 7);
     for (const n of MEMO_TEMPLATES) {
       const t = loadTemplate(n);
       assert.ok(t.includes('<!--SHARED-CSS-->') && t.includes('<!--SHARED-HELPERS-->') && t.includes('<!--INJECT-DATA-->'));

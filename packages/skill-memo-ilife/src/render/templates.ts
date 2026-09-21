@@ -1,4 +1,5 @@
-// 渲染层·模板装载（M4/M6）：6 模板随包发布（SKILL 包只含 SKILL.md+dist+模板）；init_report 由 M6 落定。
+// 渲染层·模板装载（M4/M6）：7 模板随包发布（SKILL 包只含 SKILL.md+dist+模板）；init_report 由 M6 落定，
+// receipt（通用回执族）由 #831 落定。
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ export const MEMO_TEMPLATES = [
   'wish_complete',
   'change_category',
   'init_report',
+  'receipt',
 ] as const;
 export type MemoTemplate = (typeof MEMO_TEMPLATES)[number];
 
