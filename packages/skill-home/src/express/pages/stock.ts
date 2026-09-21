@@ -153,8 +153,11 @@ export function renderFamilyPage(env: Envelope): string {
   }
 
   if (hints.length) {
+    // 同名物品按名字去重（库里允许重名，但这一节是「还有哪些常用品没设阈值」，同名重复行只是噪声）。
+    const seenHint = new Set<string>();
+    const uniqHints = hints.filter((h) => (seenHint.has(h.name) ? false : seenHint.add(h.name)));
     body += '<section><h2>常用品还没设阈值</h2><p class="x-meta">给常用消耗品设个阈值，缺货检测就能自动提醒补充</p><div>'
-      + hints.map((h) => '<div class="x-row"><div class="x-name">' + escapeHtml(h.name) + '</div><div class="x-meta">' + escapeHtml(h.category_name) + '</div>'
+      + uniqHints.map((h) => '<div class="x-row"><div class="x-name">' + escapeHtml(h.name) + '</div><div class="x-meta">' + escapeHtml(h.category_name) + '</div>'
         + '<button class="x-btn ghost" data-id="' + h.id + '" data-name="' + escapeHtml(h.name) + '" onclick="xOneThr(this)">设阈值</button></div>').join('')
       + '</div></section>';
   }

@@ -189,10 +189,10 @@ function listTable(env: Envelope): string {
     + '<td>' + escapeHtml(r.note) + '</td>'
     + '</tr>').join('');
   return '<div><p>共' + rows.length + '本证件，按到期先后排列</p>'
-    + '<table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
+    + '<div class="rc-scroll"><table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
     + '<th>剩余天数</th><th>证件状态</th><th>到期文案</th><th>脱敏号码</th><th>备注</th></tr></thead>'
-    + '<tbody>' + body + '</tbody></table>'
-    + '<p>号码只显后四位，复制文本不含完整号码</p></div>';
+    + '<tbody>' + body + '</tbody></table></div>'
+    + '<p>表内九列，手机上可左右滑动看全；号码只显后四位，复制文本不含完整号码</p></div>';
 }
 
 function receiptNote(): string {
@@ -219,7 +219,8 @@ function opsBlock(): string {
 
 /** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
-  + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>';
+  + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
+  + '.rc-scroll{overflow-x:auto}table{border-collapse:collapse}th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left}</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。

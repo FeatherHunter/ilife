@@ -92,6 +92,7 @@ const CSS = '<style>'
   + '.of-line.on .of-check{background:#8a744f;border-color:#8a744f}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
+  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
   + '.of-why{font-size:13px;color:#6d5c3d;margin-top:2px;overflow-wrap:anywhere}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
@@ -130,7 +131,7 @@ export function renderFamilyPage(env: Envelope): string {
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
-      + '<div class="of-meta">' + escapeHtml(x.name) + '数量' + x.quantity + (x.location ? '放在' + escapeHtml(x.location) : '') + '</div>'
+      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location) : '') + '</td></tr></table>'
       + (x.reason ? '<div class="of-why">' + escapeHtml(x.reason) + '</div>' : '')
       + '</div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'

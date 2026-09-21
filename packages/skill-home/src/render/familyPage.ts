@@ -68,7 +68,12 @@ export function withSceneIdentity(html: string, commandCn: string): string {
   const safe = commandCn.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
   return html
     .replace(/<title>[\s\S]*?<\/title>/, '<title>' + safe + '</title>')
-    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/, '<h1>' + safe + '</h1>');
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/, '<h1>' + safe + '</h1>')
+    // 页头那行原本写「域 ＋ 页族名」；页族名与大标题重复（一族服务多条场景），只留域标签。
+    .replace(/(<div class="fam-head"[^>]*>)[\s\S]*?(<\/div>)/, (m, open: string, close: string) => {
+      const first = /<span[^>]*>[\s\S]*?<\/span>/.exec(m);
+      return first ? open + first[0] + close : m;
+    });
 }
 
 /**

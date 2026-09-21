@@ -134,7 +134,7 @@ function listGroups(env: Envelope): string {
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
       + '</tbody></table>');
   }
-  parts.push('<p>清单全脱敏展示，复制文本默认不含密码</p></div>');
+  parts.push('<p>清单只显掩码，复制文本默认不含密码</p></div>');
   return parts.join('');
 }
 
@@ -143,9 +143,8 @@ function receiptNote(env: Envelope): string {
   const msg = String((data as { message?: unknown }).message ?? '已落盘');
   // 脱敏口径与 envelope 分节页一致：含「密码」的回执**不落明文**（明文只走对话 JSON 回显）。
   const safe = /密码/.test(msg) ? '密码已回显（只经对话回显，页上不落明文）' : msg;
-  // 真实回执放绿卡；「页上不展示明文」这条只写一次。
-  return '<div><p class="receipt">' + escapeHtml(safe) + '</p>'
-    + '<p>密码加密存储，页上不展示明文；需要看密码时经对话回显。</p></div>';
+  // 真实回执放绿卡；「页上不展示明文」这条由页首敏感横幅统一说一次，这里不重复。
+  return '<div><p class="receipt">' + escapeHtml(safe) + '</p></div>';
 }
 
 function opsBlock(): string {

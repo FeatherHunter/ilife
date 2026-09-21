@@ -102,7 +102,8 @@ const CSS = '<style>'
   + '.of-mini.on{border-color:#8a744f;box-shadow:0 0 0 2px #e4d9c2}'
   + '.of-gap{color:#b4552d;background:#fdeee3;border:1px solid #f5d9c4;border-radius:12px;padding:10px 14px;font-size:13px;margin-top:12px;overflow-wrap:anywhere}'
   + '.of-empty{background:#fdfaf4;border:1px solid #eadfc8;border-radius:16px;padding:28px 16px;text-align:center;color:#8a744f;font-size:14px;overflow-wrap:anywhere}'
-  + '@media(max-width:560px){.of-card{padding:12px}.of-part{flex-basis:46px}}'
+  + '@media(max-width:560px){.of-card{padding:12px}.of-part{flex-basis:46px}'
+  + '.of-strip{flex-wrap:wrap;overflow-x:visible}.of-mini{flex:1 1 96px;min-width:96px;max-width:none}}'
   + '</style>';
 
 function setsOf(data: Record<string, unknown>): OutfitSet[] {
@@ -141,9 +142,10 @@ export function renderFamilyPage(env: Envelope): string {
     const slotRows = SLOT_ORDER.filter((k) => first.slots[k]).map((k) => {
       const c = first.slots[k] as Card;
       const tags = c.tags ? c.tags.split(',').filter(Boolean).join(' ') : '';
+      const sub = tags || c.location || '';
       return '<div class="of-slot"><span class="of-part">' + SLOT_LABEL[k] + '</span>'
         + '<div><div class="of-name">' + escapeHtml(c.name) + '</div>'
-        + '<div class="of-sub">' + escapeHtml(c.name + ' ' + (tags || c.location || '')) + '</div></div></div>';
+        + (sub ? '<div class="of-sub">' + escapeHtml(sub) + '</div>' : '') + '</div></div>';
     }).join('');
     const hasLayers = !!(first.slots.outer && first.slots.inner);
     designed = '<div class="of-card" id="ofNow"><h2>今日这一套</h2>' + slotRows

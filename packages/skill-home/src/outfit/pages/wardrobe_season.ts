@@ -79,6 +79,7 @@ const CSS = '<style>'
   + '.of-line.on .of-check{background:#8a744f;border-color:#8a744f}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
+  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
   + '.of-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}'
@@ -118,8 +119,8 @@ export function renderFamilyPage(env: Envelope): string {
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
-      + '<div class="of-meta">' + escapeHtml(x.name + (x.categoryName || x.tags.join(' ') || '衣物'))
-      + (x.location ? ' 放在' + escapeHtml(x.location) : '') + '</div></div></div>').join('')
+      + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.categoryName || x.tags.join(' ') || '衣物')
+        + (x.location ? '，放在' + x.location : '')) + '</td></tr></table></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn" id="ofAll">全选切换</button>'
       + '<button class="of-btn primary" id="ofGo">确认' + action + '</button>'
       + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div>';

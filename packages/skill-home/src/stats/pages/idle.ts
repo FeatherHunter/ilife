@@ -138,13 +138,12 @@ export function renderFamilyPage(env: Envelope): string {
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span><small>超过所选天数未使用</small></div>'
     + '<div class="st-card"><b>闲置标准</b><span>所选天数</span><small>下单时指定，默认90天</small></div></div>';
-  const sug = '<div class="st st-sug">智能建议：共' + items.length + '件，'
-    + (items.length ? '先处理占地方的大件与重复款，拿不准的选先不处理' : '衣橱状态良好，继续保持') + '</div>';
+  const sug = '<div class="st st-sug">先处理占地方的大件与重复款，'
+    + (items.length ? '拿不准的选先不处理' : '当前没有需要处理的闲置物品') + '</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
   const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
     + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
-    + '</select><span class="st-count" id="stCount">共' + items.length + '件</span></div>'
-    + (cats.length ? '' : '<p class="st-sub">分类信息待补齐，先看全量清单</p>');
+    + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
   const rows = items.map((it) => '<div class="st-item" data-id="' + it.id + '" data-name="' + escapeHtml(it.name)
     + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name))
     + '（编号' + it.id + '）</div>' + locChips(it.location)
@@ -158,7 +157,7 @@ export function renderFamilyPage(env: Envelope): string {
       + items.map((it) => it.name + '（编号' + it.id + '）').join('；')) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml('场景：闲置物品检测，唤醒词查闲置；异常：无') + '">复制日志</button></div>'
     + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
-  const raw = '<details class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')

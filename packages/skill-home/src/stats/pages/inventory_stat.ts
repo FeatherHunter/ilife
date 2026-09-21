@@ -127,7 +127,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-empty"><b>趋势数据不足</b>多盘点几次，完成率曲线与遗留差异总数会在这里成形</div></div>';
   const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(records, items)) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml('场景：盘点统计与建议，唤醒词盘点统计；异常：无') + '">复制日志</button></div>';
-  const raw = '<details class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')

@@ -73,12 +73,7 @@ const showOf = (b: string): string => SHOWN[b] ?? b;
 function latinFree(s: string): string {
   return s.replace(/[A-Za-z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xFEE0));
 }
-// 位置路径拆成短 chips（路径斜杠是数据，不进版式拼写）。
-function locChips(loc: string): string {
-  const parts = loc.split('/').map((s) => s.trim()).filter(Boolean);
-  if (!parts.length) return '';
-  return '<div class="st-chips">' + parts.map((p) => '<span class="st-chip">' + escapeHtml(latinFree(p)) + '</span>').join('') + '</div>';
-}
+// 位置路径拆成短 chips 的规则已并入名称行（本页只显示一处位置，避免同一行重复两遍）。
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(showOf(b)) + '</li>').join('');
@@ -173,17 +168,15 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-card"><b>已过期</b><span>' + expired.length + '</span><small>到期日在今天之前</small></div>'
     + '<div class="st-card"><b>未来预告</b><span>' + upcoming.length + '</span><small>今天到期与未来到期</small></div>'
     + '<div class="st-card"><b>预告范围</b><span>所选天数</span><small>下单时指定，默认30天</small></div></div>';
-  const sug = '<div class="st st-sug">建议：先处理已过期的'
-    + expired.length + '件，再看未来预告；拿不准的选忽略</div>';
+  const sug = '<div class="st st-sug">先处理已过期的那批，再看未来预告；拿不准的选忽略</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
   const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
     + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
-    + '</select><span class="st-count" id="stCount">共' + items.length + '件</span></div>'
-    + (cats.length ? '' : '<p class="st-sub">分类信息待补齐，先看全量清单</p>');
+    + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
   const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id
     + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">'
     + '<div class="st-name">' + escapeHtml(latinFree(r.place || r.it.name)) + '（编号' + r.it.id + '）</div>'
-    + locChips(r.place) + '<div class="st-sub">到期' + escapeHtml(r.it.location || '日期待补') + '</div>'
+    + '<div class="st-sub">到期' + escapeHtml(r.it.location || '日期待补') + '</div>'
     + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>'
     + '<div class="st-ops tight"><button class="st-btn" data-act="已用完" data-item="' + r.it.id + '">已用完</button>'
     + '<button class="st-btn" data-act="废弃" data-item="' + r.it.id + '">废弃</button>'
@@ -197,7 +190,7 @@ export function renderFamilyPage(env: Envelope): string {
       + upcoming.length + '件：' + rows.map((r) => r.place + '（' + r.badge.text + '）').join('；')) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml('场景：过期检查与预告，唤醒词查过期；异常：无') + '">复制日志</button></div>'
     + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
-  const raw = '<details class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')

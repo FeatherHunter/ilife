@@ -90,6 +90,7 @@ const CSS = '<style>'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-est{background:#b4552d;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px}'
   + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
+  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
   + '.of-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}'
@@ -132,9 +133,10 @@ export function renderFamilyPage(env: Envelope): string {
     dormantHtml += dormant.map((x, i) => '<div class="of-idle" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name)
       + (x.estimated ? '<span class="of-est">估算</span>' : '') + '</div>'
-      + '<div class="of-meta">' + escapeHtml(x.name + x.slot + '闲置'
-      + (x.daysIdle === null ? '许久' : x.daysIdle + '天') + '最后使用' + x.lastUsed
-      + (x.location ? '放在' + x.location : '')) + '</div></div></div>').join('')
+      + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.name.includes(x.slot) ? '' : x.slot + '，')
+      + (x.daysIdle === null ? '闲置许久' : '闲置' + x.daysIdle + '天')
+      + (x.lastUsed === '从未使用' ? '，从未使用过' : '，最后使用' + x.lastUsed)
+      + (x.location ? '，放在' + x.location : '')) + '</td></tr></table></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofDrop">标记废弃</button>'
       + '<button class="of-btn" id="ofGive">送人</button><button class="of-btn" id="ofHold">先不处理</button>'
       + '<button class="of-btn" id="ofShop">加入购物清单</button>'

@@ -90,6 +90,7 @@ const CSS = '<style>'
   + '.of-part{flex:0 0 52px;background:#8a744f;color:#fff;border-radius:8px;font-size:12px;text-align:center;padding:6px 0}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-conf{background:#fdeee3;border:1px solid #f5d9c4;border-radius:12px;padding:10px 14px;font-size:13px;color:#b4552d;margin:6px 0;overflow-wrap:anywhere}'
+  + '.of-note{font-size:13px;color:#8a744f;margin:10px 0 0;overflow-wrap:anywhere}'
   + '.of-lug{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}'
   + '.of-lug span{background:#fff;border:1px solid #e4d9c2;border-radius:10px;padding:8px 12px;font-size:13px;color:#4a3d28;min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;overflow-wrap:anywhere}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
@@ -143,7 +144,8 @@ export function renderFamilyPage(env: Envelope): string {
 
   let confHtml = '<div class="of-card"><h2>冲突提示</h2>';
   confHtml += conflicts.length
-    ? '<table class="of-confs">' + conflicts.map((h) => '<tr><td class="of-conf">' + escapeHtml(h) + '，可补录或加入购物清单</td></tr>').join('') + '</table>'
+    ? '<table class="of-confs">' + conflicts.map((h) => '<tr><td class="of-conf">' + escapeHtml(h) + '</td></tr>').join('') + '</table>'
+      + '<p class="of-note">以上缺口可补录名下物品，或加入购物清单</p>'
     : '<div class="of-empty">衣物数量充足，无重复冲突</div>';
   confHtml += '</div>';
 

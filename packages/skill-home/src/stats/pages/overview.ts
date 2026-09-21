@@ -163,7 +163,7 @@ export function renderFamilyPage(env: Envelope): string {
   const sug = '<div class="st st-sug">家底已有' + n('items') + '件物品，'
     + (tops.length ? '最常看的是' + escapeHtml(latinFree(tops[0].name)) + '，' : '')
     + '分布明细补齐后，这里的建议会更准</div>';
-  const raw = '<details class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml(logText()) + '">复制日志</button></div>';
