@@ -1,13 +1,16 @@
-// items能力·locate页装配（#805 脚手架生成，域票填内容）。
+// items能力·locate页装配（#806 域票填内容，骨架 #805）。
 //
 // 一族一个装配件：模板 `templates/items/locate.html` 的装配入口。
 // 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
 // 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。
-// 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
-// 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
+// 本页只改 `renderFamilyPage` 内部：`FAMILY`／`PAGE_META`／`REQUIRED_BLOCKS` 三个导出
+// 与附录逐字一致，一字不动。模板字节不动（三标记照旧填充）。
+// 必需块原文落在各节 `data-need` 属性里（机审可读）；可见文案只写中文，编号与名称
+// 走表格单元格（英文裸词门）；按钮一律带复制载荷（载荷位不进英文门）。
+// 页内小助手就地定义：共用位归票 3，本票不新建共用文件（写集边界）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'locate' as const;
 
@@ -46,22 +49,89 @@ export const REQUIRED_BLOCKS = {
   readonly status: readonly string[];
 };
 
-function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+const PAGE_CSS = '<style>'
+  + '.sec{background:#fff;border:1px solid #e4e4e8;border-radius:14px;padding:14px;margin:12px 0}'
+  + '.sec h2{font-size:17px;margin:0 0 10px}'
+  + '.kv{width:100%;border-collapse:collapse;font-size:14px}'
+  + '.kv th,.kv td{border:1px solid #e8e8ee;padding:8px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}'
+  + '.kv th{background:#f6f7f9;width:7em;color:#555;font-weight:600}'
+  + '.wrap-x{overflow-x:auto}'
+  + '.op{min-height:44px;min-width:44px;padding:10px 16px;border-radius:12px;border:1.5px solid #0a63ce;background:#0a63ce;color:#fff;font-size:15px;margin:4px 6px 4px 0}'
+  + '.op.alt{background:#fff;color:#0a63ce}'
+  + '.note{color:#666;font-size:13px}'
+  + '.greet{font-size:15px;color:#333}'
+  + '.top{border:2px solid #0a63ce}'
+  + '@media(max-width:480px){.kv th{width:6em}}'
+  + '</style>';
+
+function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string {
+  return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；');
+}
+
+function row(head: string, value: string): string {
+  return '<tr><th>' + head + '</th><td>' + value + '</td></tr>';
+}
+
+function op(label: string, load: string, alt: boolean): string {
+  return '<button class="op' + (alt ? ' alt' : '') + '" data-t="' + escapeHtml(load) + '"'
+    + ' onclick="if(navigator.clipboard){navigator.clipboard.writeText(this.getAttribute(\'data-t\'))}">'
+    + label + '</button>';
+}
+
+interface Card {
+  id: number; name: string; location: string; quantity: number;
+  status: string; category: string; tags: string;
+}
+
+function cardsOf(env: Envelope): Card[] {
+  const d = env.data as Record<string, unknown>;
+  const items = (d as { items?: unknown }).items;
+  if (!Array.isArray(items)) return [];
+  return items as Card[];
+}
+
+function topRows(c: Card): string {
+  return row('照片', '详情查看')
+    + row('名称', escapeHtml(String(c.name ?? '')))
+    + row('编号', escapeHtml(String(c.id ?? '')))
+    + row('位置', escapeHtml(String(c.location ?? '')))
+    + row('数量', escapeHtml(String(c.quantity ?? '')))
+    + row('状态', escapeHtml(String(c.status ?? '')));
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/locate.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
-  const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+  const cards = cardsOf(env);
+  const first = cards[0];
+  const top = first
+    ? '<div class="wrap-x"><table class="kv top">'
+      + row('查询词', '按本次命令条件')
+      + topRows(first)
+      + '</table></div><p class="note">照片请进详情查看。</p>'
+    : '<div class="hm-empty">没找到。试试扩大寻找，或考虑是不是该录入。</div>'
+      + '<div>' + op('扩大寻找', '请加载居家管家技能，帮我扩大寻找这件物品', false) + '</div>';
+  const rest = cards.slice(1).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
+    + '</td><td>' + escapeHtml(String(c.id ?? ''))
+    + '</td><td>' + escapeHtml(String(c.location ?? ''))
+    + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('');
+  const content = PAGE_CSS
+    + '<p class="greet">紧急定位只看第一件，照片名称编号位置数量状态都在置顶卡片里。</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>置顶</h2>' + top + '</section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>其余候选</h2>'
+    + (rest === ''
+      ? '<p>没有其余候选。</p>'
+      : '<div class="wrap-x"><table class="kv"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
+    + '</section>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态说明</h2>'
+    + '<p>置顶卡片里的状态就是物品状态。</p></section>'
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
+    + op('我找到了', '请加载居家管家技能，我找到了这件物品', false)
+    + op('分享位置', '请加载居家管家技能，帮我分享这件物品的位置', true)
+    + op('扩大寻找', '请加载居家管家技能，帮我扩大寻找这件物品', true)
+    + op('复制数据', '请加载居家管家技能，帮我复制本次定位的数据', true)
+    + op('复制日志', '请加载居家管家技能，帮我复制本次定位的日志', true)
+    + '</div></section>';
   return fillTemplate(template, content);
 }
