@@ -19,12 +19,14 @@
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
  */
 import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
 import { CHEF_CONFIG_DEFAULTS, CHEF_CONFIG_STEM } from './config.js';
+import { dbDirOf, dbFileOf, htmlDirOf } from './fetch/paths.js';
+// #796：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
+// 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadChefConfig()`（文件不在即落一份默认件）。
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -263,11 +265,8 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
   return present.has(key) ? '配置文件' : '默认值';
 }
 
-/** 目录那一项的形状是**段串**（本家默认 `cook_html/help` 两段），段数与 `src/config.ts` 自己的
- *  `splitDirSegments` 同一口径。本件不 import 它：health 面与配置面互锁没有好处，而这条规则只有三行。 */
-function splitDirSegments(value: string): string[] {
-  return value.split(/[\\/]+/).filter((s) => s.length > 0);
-}
+/** 目录那一项的形状是**段串**（本家默认 `cook_html/help` 两段）：算式唯一定义地是
+ *  `src/fetch/paths.ts` 的 `htmlDirOf`，本件只调它，不自写第二份。 */
 
 /** 目录项：在不在 ＋ 能不能写。 */
 interface DirVerdict {
@@ -355,10 +354,7 @@ export function buildChefHealthReport(): ChefHealthReport {
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
-  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
-  const defaultConfigFile = join(homedir(), '.ilife', CHEF_CONFIG_STEM + '.yaml');
-  const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  // ① 配置文件本身：能不能解析（只陈述，不评价）。
   if (read.kind === 'bad') {
     items.push({
       id: 'config.file', title: '配置文件', status: 'red',
@@ -376,7 +372,7 @@ export function buildChefHealthReport(): ChefHealthReport {
   } else {
     items.push({
       id: 'config.file', title: '配置文件', status: 'green',
-      message: '能解析：' + p(paths.configFile) + '（' + where + '）。',
+      message: '能解析：' + p(paths.configFile) + '。',
       action: '',
       source: '配置文件',
     });
@@ -384,7 +380,7 @@ export function buildChefHealthReport(): ChefHealthReport {
 
   // ② 数据目录：在不在、能不能写。
   const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
-  const dataDir = dbDirConfigured !== '' ? dbDirConfigured : paths.dataDir;
+  const dataDir = dbDirOf(paths.dataDir, dbDirConfigured);
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
@@ -403,8 +399,7 @@ export function buildChefHealthReport(): ChefHealthReport {
 
   // ③ 库文件：在不在 ＋ 表数够不够。
   const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
-  const dbName = dbNameConfigured !== '' ? dbNameConfigured : String(CHEF_CONFIG_DEFAULTS.db.name);
-  const dbFile = join(dataDir, dbName);
+  const dbFile = dbFileOf(dataDir, dbNameConfigured);
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
@@ -441,7 +436,7 @@ export function buildChefHealthReport(): ChefHealthReport {
 
   // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
   const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = join(dataDir, ...splitDirSegments(htmlDirValue !== '' ? htmlDirValue : String(CHEF_CONFIG_DEFAULTS.html.dir)));
+  const htmlDir = htmlDirOf(dataDir, htmlDirValue);
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
@@ -452,7 +447,7 @@ export function buildChefHealthReport(): ChefHealthReport {
       : htmlVerdict.writable
         ? '在且能写：' + p(htmlDir) + '。'
         : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 html.dir。',
     source: htmlSource,
   });
 

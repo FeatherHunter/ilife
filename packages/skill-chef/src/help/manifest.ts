@@ -18,10 +18,12 @@
  * `biscuit_accountant_html/`／`home_manager_html/` 同形），`help/` 子目录保留；文件名主体不变。
  */
 import { loadChefConfig, splitDirSegments } from '../config.js';
+import { DEFAULT_HTML_DIR } from '../fetch/paths.js';
 
-/** 落点子目录的默认值（＝改造前的代码常量 `HELP_DIR_SEGMENTS` 两段；实测落点
- *  `D:\2Study\StudyNotes\.db\cook_html\help\`）。配置项 `html.dir` 空串即用它。 */
-export const DEFAULT_HELP_DIR = 'cook_html/help' as const;
+/** 落点子目录的默认值：就是 `src/fetch/paths.ts` 的 `DEFAULT_HTML_DIR`（＝改造前的代码常量
+ *  `HELP_DIR_SEGMENTS` 两段；实测落点 `D:\2Study\StudyNotes\.db\cook_html\help\`）。
+ *  本常量是它的**具名引用**，不是第二份。配置项 `html.dir` 空串即用它。 */
+export const DEFAULT_HELP_DIR = DEFAULT_HTML_DIR;
 
 /** 落点子目录的段数组：配置 `html.dir`（空串＝默认）拆成段。 */
 export function helpDirSegments(): string[] {
@@ -29,13 +31,21 @@ export function helpDirSegments(): string[] {
   return splitDirSegments(dir === '' ? DEFAULT_HELP_DIR : dir);
 }
 
-/** HELP 文件名主体（配置 `files.help`；产物＝`<主体>_<YYYYMMDD_HHMMSS>[_N].html`，`_N` 从 1 起步）。 */
+/** HELP 文件名主体（产物＝`<主体>_<YYYYMMDD_HHMMSS>[_N].html`，`_N` 从 1 起步）。
+ *  **#796 起回代码常量**：配置项 `files.help` 已删（#795 定稿），老配置文件里残留的值走退休键过渡。 */
 export function helpFileStem(): string {
-  return loadChefConfig().values.files.help;
+  return HELP_FILE_STEM;
 }
 
+/** HELP 文件名主体的代码常量（＝改造前的老常量，产物名逐字不变）。 */
+export const HELP_FILE_STEM = '私家大厨_HELP' as const;
+
 /** 速查支的文件名主体：与 HELP 文件**分名**（照 #139 判法——别让用户按一个名字打开到另一个东西）。
- *  老家只有 HELP 一支、无老名可循；取名照样板图 #143（记账的 `饼干记账_速查表`）的同一后缀。 */
+ *  老家只有 HELP 一支、无老名可循；取名照样板图 #143（记账的 `饼干记账_速查表`）的同一后缀。
+ *  **#796 起回代码常量**：配置项 `files.lookup` 已删（#795 定稿）。 */
 export function lookupFileStem(): string {
-  return loadChefConfig().values.files.lookup;
+  return LOOKUP_FILE_STEM;
 }
+
+/** 速查支文件名主体的代码常量（＝改造前的老常量，产物名逐字不变）。 */
+export const LOOKUP_FILE_STEM = '私家大厨_速查表' as const;

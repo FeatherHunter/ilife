@@ -12,6 +12,7 @@
 import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadChefConfig, resetChefConfig, saveChefConfig } from '../config.js';
+import { resolvedChefPaths } from '../fetch/paths.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-chef/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -67,13 +68,18 @@ function withHumanError<T>(run: () => T): T {
 /**
  * 跑一个配置 key，返回整行 envelope JSON。
  *
- * 三个 key 的载荷：读 → `{path, dataDir, created, values}`；写 → 入参 `{values}`，回执 `{path, values}`；
- * 重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
+ * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved}`；写 → 入参 `{values}`，
+ * 回执 `{path, values}`；重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
+ *
+ * `resolved`（#796，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用：库文件／
+ * HELP 产物目录／场景产物根（算式唯一定义地＝`src/fetch/paths.ts`，面板不自己拼路径）。
+ * 六家的 `*.config.read` 都扩这样一组，各自的格子按自家落点项来。
  */
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadChefConfig());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values });
+    const resolved = withHumanError(() => resolvedChefPaths());
+    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
