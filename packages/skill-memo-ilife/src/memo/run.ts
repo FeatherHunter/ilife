@@ -293,17 +293,20 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
     if (to === null) fail(2, '执行改分类须给 toCategory（只收集不执行时别给 ids）');
     const r = applyBatchCategory(db, asIds(params.ids), to);
     const doneAll = r.errors.length === 0;
+    // #882：这一句只在**写侧这一处**拼，信封的 message 与页 lead 同源（页装配件不重算）；
+    // 措辞走中文条数，不再露半角等号（同一句原先在 `memo/receipt.ts` 又拼了一遍）。
+    const receipt: WishReceipt = {
+      ok: doneAll,
+      message: '改分类完成：更新 ' + r.updated + ' 条，跳过 ' + r.skipped + ' 条',
+      local: 'updated',
+      remote: 'not-applicable',
+      remoteId: null,
+    };
     return {
-      data: {
-        ok: doneAll,
-        message: '改分类完成：更新=' + r.updated + '，跳过=' + r.skipped,
-        updated: r.updated,
-        skipped: r.skipped,
-        errors: r.errors,
-      },
+      data: { ok: receipt.ok, message: receipt.message, updated: r.updated, skipped: r.skipped, errors: r.errors },
       exit: doneAll ? 0 : 4,
       // #826：执行支的结果页（册子 seq 6，主体 `备忘改分类-批量`）；数据那一格仍是老形状（只多 `deliver`）。
-      deliver: memoBatchResultPage({ updated: r.updated, skipped: r.skipped, errors: r.errors, from, to }),
+      deliver: memoBatchResultPage({ receipt, updated: r.updated, skipped: r.skipped, errors: r.errors, from, to }),
     };
   }
   const items = collectBatchItems(db, from);

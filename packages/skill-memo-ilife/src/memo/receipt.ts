@@ -58,20 +58,24 @@ export function memoRemovePage(r: WishReceipt, before: MemoNote): MemoPage | und
 }
 
 /** 批量改分类执行支的结果页（册子 seq 6，通用回执族）：更新／跳过记账进摘要，
- *  逐条错误也进摘要（一条一行，不静默）；远端一格如实写不适用（批量两条路都不调飞书）。 */
+ *  逐条错误也进摘要（一条一行，不静默）；远端一格如实写不适用（批量两条路都不调飞书）。
+ *
+ *  #882：**回执整份由调用方给**（`runBatch` 从写侧那一次结果拼一次），本件不重算 `message`／`ok`
+ *  —— 原先这里自己又拼了一遍「改分类完成：更新=N，跳过=M」，与信封的 `data.message` 成了同一句的
+ *  两份定义（改一处就屏上与信封各说各话），违背本件件头的铁律二。
+ *
+ *  「对象」那一格：批量**没有单条对象**，故按族里 #882 定的形制填字符串形态（`N 条`），不吃 `#`。 */
 export function memoBatchResultPage(input: {
+  readonly receipt: WishReceipt;
   readonly updated: number;
   readonly skipped: number;
   readonly errors: readonly string[];
   readonly from: string | null;
   readonly to: string;
 }): MemoPage {
-  const doneAll = input.errors.length === 0;
-  const message = '改分类完成：更新=' + input.updated + '，跳过=' + input.skipped;
-  const r: WishReceipt = { ok: doneAll, message, local: 'updated', remote: 'not-applicable', remoteId: null };
-  return buildReceipt('memo_batch_change_category', '备忘改分类', r, {
+  return buildReceipt('memo_batch_change_category', '备忘改分类', input.receipt, {
     entityLabel: '批量改分类',
-    entityId: '更新 ' + input.updated + ' 条',
+    entityId: input.updated + ' 条',
     category: input.to,
     summary: [
       '原分类 ' + (input.from ?? '全部') + '，目标分类 ' + input.to,
