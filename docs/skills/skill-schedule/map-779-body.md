@@ -9,13 +9,13 @@
 
 **「最好看」怎么变成可判定的**（Destination 不允许只有愿望）：由**两次人裁**说话——① `【形状】` 票的**页型配方**由人裁过才铺开；② `【收口】` 票的第二段由人**滚墙给逐格结论并签字**。机器侧只作自检门槛：机审六列 0 命中、双端三档溢出 0、vision 逐页 ≥90（**vision 是提示器，不是证据**）。
 
-## 进度：50%
+## 进度：60%
 
-已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 8/15：`【结构】`（#780）、`【清单·取证】`（#781）、`【形状】`（#782，人裁 `B A A`）、`【种子】`（#844）、`【交付面】`（#843）、`【写入与同步】`（#783）、`【查询与浏览·单日族】`（#784）、`【查询与浏览·范围与跨天】`（#785）。八张域票已完成三张，主干（写包）一路单写者、未出现撞笔。
+已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 9/15：`【结构】`（#780）、`【清单·取证】`（#781）、`【形状】`（#782，人裁 `B A A`）、`【种子】`（#844）、`【交付面】`（#843）、`【写入与同步】`（#783）、`【查询与浏览·单日族】`（#784）、`【查询与浏览·范围与跨天】`（#785）、`【查询与浏览·日程族】`（#786）。八张域票已完成四张（正好一半），主干（写包）一路单写者、未出现撞笔。
 
-下一步：【查询与浏览·日程族】（#786）——`查日程／标题搜索／三元组查重／已软删／按 ID` 五族出页（写面仍是 `src/query/`；`schedule.plan.today` 的缺省档今天还回落薄模板分节页，这张页是它的正身）。其后 #787–#790 依次，最后【链路页】（#791）与【收口】（#792）。
+下一步：【日程与计划·写侧】（#787）——补／改／删计划 ＋ 商量计划预览（过程型） ＋ 制定次日计划出页（写面转到 `src/plan/`；#786 已把查日程那一族的空档推算留在 `plan/planDocs.ts`，f12 的「空档提示」直接用同一条）。其后 #788–#790 依次，最后【链路页】（#791）与【收口】（#792）。
 
-**未到 95%**：八张域票还差五张（#786–#790）与链路页；到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
+**未到 95%**：八张域票还差四张（#787–#790）与链路页；到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
 
 ## Notes
 
@@ -39,10 +39,10 @@
 | [#781](https://github.com/FeatherHunter/ilife/issues/781) | 【清单·取证】85 场景的老侧事实 ＋ 18 条家族必现块 ＋ 别名表（零设计列） | research | 已关 | — |
 | [#782](https://github.com/FeatherHunter/ilife/issues/782) | 【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开） | prototype | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#843](https://github.com/FeatherHunter/ilife/issues/843) ＋ [#844](https://github.com/FeatherHunter/ilife/issues/844) ＋ [#781](https://github.com/FeatherHunter/ilife/issues/781) |
 | [#783](https://github.com/FeatherHunter/ilife/issues/783) | 【写入与同步】记作息一族出页：三件套结果页 ＋ 修正的蓝调 diff ＋ 批量导入回执 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) |
-| [#784](https://github.com/FeatherHunter/ilife/issues/784) | 【查询与浏览·单日族】今天总结／查作息／时间轴／详情／状态 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#783](https://github.com/FeatherHunter/ilife/issues/783) |
-| [#785](https://github.com/FeatherHunter/ilife/issues/785) | 【查询与浏览·范围与跨天】区间汇总／范围／周视图／24h 概览／多日 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) |
-| [#786](https://github.com/FeatherHunter/ilife/issues/786) | 【查询与浏览·日程族】查日程／标题搜索／三元组查重／已软删／按 ID 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#785](https://github.com/FeatherHunter/ilife/issues/785) |
-| [#787](https://github.com/FeatherHunter/ilife/issues/787) | 【日程与计划·写侧】补／改／删计划 ＋ 商量计划预览（过程型） ＋ 制定次日计划 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#786](https://github.com/FeatherHunter/ilife/issues/786) |
+| [#784](https://github.com/FeatherHunter/ilife/issues/784) | 【查询与浏览·单日族】今天总结／查作息／时间轴／详情／状态 出页 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#783](https://github.com/FeatherHunter/ilife/issues/783) |
+| [#785](https://github.com/FeatherHunter/ilife/issues/785) | 【查询与浏览·范围与跨天】区间汇总／范围／周视图／24h 概览／多日 出页 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) |
+| [#786](https://github.com/FeatherHunter/ilife/issues/786) | 【查询与浏览·日程族】查日程／标题搜索／三元组查重／已软删／按 ID 出页 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#785](https://github.com/FeatherHunter/ilife/issues/785) |
+| [#787](https://github.com/FeatherHunter/ilife/issues/787) | 【日程与计划·写侧】补／改／删计划 ＋ 商量计划预览（过程型） ＋ 制定次日计划 | task | 在做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#786](https://github.com/FeatherHunter/ilife/issues/786) |
 | [#788](https://github.com/FeatherHunter/ilife/issues/788) | 【日程与计划·复盘与飞书】复盘四档 ＋ 区间复盘一体页 ＋ 飞书探测／同步回执 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#787](https://github.com/FeatherHunter/ilife/issues/787) |
 | [#789](https://github.com/FeatherHunter/ilife/issues/789) | 【分析与洞察】对比两个月／类别深挖／异常检测／写作息摘要／修正作息 出页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#788](https://github.com/FeatherHunter/ilife/issues/788) |
 | [#790](https://github.com/FeatherHunter/ilife/issues/790) | 【辅助与管理】初始化数据库回执 ＋ 首次使用向导 ＋ 飞书探测页 | task | 可做 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) |
@@ -61,6 +61,7 @@
 - [【形状】页型配方 ＋ 三张样本双端定形（人裁过再铺开）](https://github.com/FeatherHunter/ilife/issues/782) — 三张代表页各 3 个候选由人裁（`B A A`），成品整页签字「满意并且认可」；页型配方＝形状住 `src/shared/`（`dayPage`／`planPage`／`weekPage` ＋ 24h 色带与 7×24 矩阵两处页内件）、口径住 `src/query/queryDocs.ts`·`src/plan/planDocs.ts`；桌面端人裁口径＝**正文单一内容列**（窄屏不动）；清单 `t782-清单.json` 供墙与索引读。
 - [【查询与浏览·单日族】今天总结／查作息／时间轴／详情／状态 出页](https://github.com/FeatherHunter/ilife/issues/784) — 单日族七个唤醒词共用的一枚 key 出一张整页（f01 四个必现块 ＋ 24h 时间轴 ＋ **作息库现状**首次上屏），本族 11 行逐行有下文（出页 10 ＋ 有意不出 1），探针 `PASS pages=6 scenes=11 red=0`；三处自裁：单日只出一张页（按词分页要改生成物，票面禁）、页尾现状块走公共层现成件、逐条时间轴换行列表三槽去掉「分类 · 时长」的分隔符债（命中 37 → 0）；详情（f06）与查日程（f10）归 #786、范围与跨天归 #785，边界写在票里并由探针每次跑断言。
 - [【查询与浏览·范围与跨天】区间汇总／范围／周视图／24h 概览／多日 出页](https://github.com/FeatherHunter/ilife/issues/785) — 三张真页：区间汇总（分类聚合改印**人话的一级分类名**，不再印 `l1.工作` 这类原始键）／24h 概览与查多日计划（`view=aggregate` 那一支此前回落薄模板页 ⇒ 一排空卡，本票把聚合载荷真画出来：同小时合并 ＋ 一天一行 ＋ 逐日 24 格 ＋ 口径行明说丢了备注与飞书同步状态）／周视图（接上 #782 已人裁签字的 7×24 矩阵页，唤醒词进 SKILL.md frontmatter 与速查表）；**键不新造**——周视图落 `schedule.record.range` ＋ preset `{view:'week'}`；本族 8 行逐行有下文（出页 6 ＋ 有意不出 2），探针 `PASS pages=5 scenes=8 red=0`，变异两处各自红、还原两枚指纹回清跑那一对。
+- [【查询与浏览·日程族】查日程／标题搜索／三元组查重／已软删／按 ID 出页](https://github.com/FeatherHunter/ilife/issues/786) — 两张真页：**查日程**（老侧 f10 三块必现块齐；四支共用一张页——缺省／按标题搜／按时段查重（重叠即命中）／含已软删，页头与结论条写明这一趟怎么查的）与**作息详情**（老侧 f06 两块必现块齐：11 个字段逐条上台面＋`analysis_reasoning` 全文）；老侧只出 JSON 的三行上了同一张页、老词「按 ID 查记录」（带空格）接回路由；本族 9 行**全有产物、零「有意不出」**，探针 `PASS pages=9 scenes=9 red=0`；两处边界自裁：查日程那一份口径仍住 `plan/planDocs.ts`（#787 的空档提示是同一件事）、已软删不另立页而标在那一行上。
 
 ## Not yet specified
 
@@ -104,3 +105,4 @@ Q6 A
 将你的问题和回答以清晰的形式输出到html文件中：…
 再进行一轮的检查和调整。然后任务结束
 ```
+
