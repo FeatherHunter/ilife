@@ -111,7 +111,13 @@ async function main() {
     const built = env;
     // 页面正文＝本包 envelope 片段（模板填充后）：`--html <路径>` 与「缺省落盘」**同一份正文**，
     // 差别只在落点（逐字 vs 通式）——同一件产物，不因落点不同换形状（#843）。
-    const sectionHtml = (): string => {
+    // **#783 起的接缝**：能力目录出的**真页**（处理函数返回的 `r.html`，如写域的「记作息结果」）优先，
+    // 没给才回落到本键的薄模板页——回落那一支的字节与接缝之前逐字相同（七个读键今天都走它）。
+    const pageHtml = (): string => {
+      if (r.html !== '') {
+        assertHtmlSize(r.html);
+        return r.html;
+      }
       const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
       assertHtmlSize(html);
       return html;
@@ -127,7 +133,7 @@ async function main() {
     const receipt = delivers
       ? deliverHtml({
         explicit: o.html,
-        html: landing !== undefined ? r.html : sectionHtml(),
+        html: landing !== undefined ? r.html : pageHtml(),
         targetDir: landing !== undefined ? landing.targetDir : resolveHtmlDir(),
         stem: landing !== undefined ? landing.stem : pageStemFor(spec),
         ...(landing === undefined ? {} : { reuseMs: landing.reuseMs }),

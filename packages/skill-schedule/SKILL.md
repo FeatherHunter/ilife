@@ -46,6 +46,12 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 - 单天 `op=ensure` 按 `date+time_start+time_end` 三元组幂等（`title` 只展示）；多天批量把每天的对象装进 `dates[]`，逐天走同一条单天合成写（本地幂等＋远端查一趟再判），回执 `items[]` 逐天分字段、失败逐条前缀日期点名且退出码非 0。`op=sync` 整天口径不动。
 - 照抄即跑（2 天示例；7 天同形，只是数组更长）：`schedule-cmd-read schedule.plan.write --params '{"op":"ensure","dates":[{"date":"2026-09-21","time_start":"09:00","time_end":"10:00","title":"晨会"},{"date":"2026-09-22","time_start":"09:00","time_end":"10:00","title":"晨会"}]}'`
 
+## 批量导入作息（记作息 · `records[]`，#783）
+
+- 一条一条记＝`op=add` 走多遍；一次导入多条＝**同一条命令**带 `records[]`（每条自带 `date`／`time_start`／`time_end`／`activity`／`category`）：逐条走同一套校验与写库函数，**单条不过不打断其余**；回执给 `total`／`success`／`failed` 三个读数 ＋ `items[]` 逐条分字段，有一条没通过即退出码非 0（合成写没达成，页照出）。
+- 产物＝一份「批量导入回执」整页（逐条结果 ＋ 汇总），地址读回执的 `delivery.path`。
+- 照抄即跑（2 条示例）：`schedule-cmd-read schedule.record.write --params '{"op":"add","records":[{"date":"2026-09-22","time_start":"09:00","time_end":"10:00","activity":"写代码","category":"工作.开发"},{"date":"2026-09-22","time_start":"10:00","time_end":"10:30","activity":"散步","category":"调整.散步"}]}'`
+
 ## 联动速查（构建期注入，勿手改）
 
 <!-- HELP-AUTO-START -->

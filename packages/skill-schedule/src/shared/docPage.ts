@@ -49,10 +49,17 @@ export interface DocPageInput {
   readonly head: PageHead;
   /** 已组合好的区块 HTML（受信透传，与公共层 `renderPageShell` 的 `content` 同口径）。 */
   readonly content: string;
+  /** **域级样式补丁**（#783 的接缝，可选）：只给「本域自己的页内自造件」用（类名自带域前缀，
+   *  不碰 `.ilife-block-*` 与页壳）。不给／给空串＝与加这一位之前**逐字节相同**（下面那半个 `LF` 只在
+   *  真给了补丁时才拼）。为什么要有这一位：共用位（本件）不是各域的样式收容所，可各域又确实有
+   *  「公共层给不出、只有本域在用」的件（见 `src/write/writeParts.ts` 的件头），补丁得有入口。
+   *  排在 `pagePartsCss()` 之后、桌面单列配方之前——域补丁压不了页级配方。 */
+  readonly extraCss?: string;
 }
 
 /** 区块 HTML ＋ 页头 → 完整文档。一页只调一次。 */
 export function assembleDocPage(input: DocPageInput): string {
+  const patch = input.extraCss !== undefined && input.extraCss !== '' ? LF + input.extraCss : '';
   return renderDocShell({
     docTitle: input.head.docTitle,
     bodyHtml: renderPageShell({
@@ -61,7 +68,7 @@ export function assembleDocPage(input: DocPageInput): string {
       subtitle: input.head.subtitle,
       content: input.content,
     }),
-    extraCss: pageUiCss() + LF + pageShapeCss() + LF + pagePartsCss() + LF + BODY_SINGLE_COLUMN_CSS,
+    extraCss: pageUiCss() + LF + pageShapeCss() + LF + pagePartsCss() + patch + LF + BODY_SINGLE_COLUMN_CSS,
     charts: true,
     pageUi: true,
   });
