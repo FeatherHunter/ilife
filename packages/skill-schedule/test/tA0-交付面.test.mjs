@@ -127,6 +127,8 @@ describe('#843 交付面', () => {
       const FULL_PAGE_KEYS = new Set([
         'schedule.record.write', 'schedule.record.today', 'schedule.record.range',
         'schedule.plan.today', 'schedule.record.detail', 'schedule.plan.write',
+        // #789：分析与洞察这一枚 key 的四个分支（months／ranges／category／anomaly）都交整页。
+        'schedule.record.compare',
       ]);
       const substantive = entry.key === 'schedule.help.lookup'
         ? html.includes('<script id="help-data" type="application/json">')

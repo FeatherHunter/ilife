@@ -148,15 +148,19 @@ export interface RadarInput {
   readonly caption: string;
 }
 
-/** 七维雷达：一张多边形图，两个面＝当前段与基线段。少于三维不出（画不成面）。 */
+/** 七维雷达：一张多边形图，两个面＝当前段与基线段。少于三维不出（画不成面）。
+ *
+ *  **每一个轴按这一维里两段的较大者铺满**（与「7 维差异柱」同一条：柱长按本行两段的较大者比）。
+ *  为什么不按七维共用一个最大值：作息那七维的量级差着一个数量级（睡眠十小时对「日常」二十分钟），
+ *  共用一个最大值会把六个维度压成一个点——老侧那一版就是共用最大值，图上只剩睡眠那一根。 */
 export function renderRadar(input: RadarInput): string {
   const n = input.dims.length;
   if (n < 3) return '';
-  const max = Math.max(1, ...input.dims.map((d) => Math.max(d.current, d.baseline)));
   const angle = (i: number): number => -Math.PI / 2 + (i * 2 * Math.PI) / n;
   const at = (i: number, ratio: number, radius: number): string =>
     (RADAR_CX + radius * ratio * Math.cos(angle(i))).toFixed(1) + ','
     + (RADAR_CY + radius * ratio * Math.sin(angle(i))).toFixed(1);
+  const axisMax = (dim: RadarDimInput): number => Math.max(1, dim.current, dim.baseline);
   const rings = RADAR_RINGS.map((ratio) => '<polygon class="sch-an-radar-ring" points="'
     + input.dims.map((_, i) => at(i, ratio, RADAR_R)).join(' ') + '"/>').join('');
   const axes = input.dims.map((dim, i) => {
@@ -171,7 +175,7 @@ export function renderRadar(input: RadarInput): string {
   }).join('');
   const face = (pick: (dim: RadarDimInput) => number, cls: string): string =>
     '<polygon class="' + cls + '" points="'
-    + input.dims.map((dim, i) => at(i, pick(dim) / max, RADAR_R)).join(' ') + '"/>';
+    + input.dims.map((dim, i) => at(i, pick(dim) / axisMax(dim), RADAR_R)).join(' ') + '"/>';
   return '<figure class="sch-an-radar">'
     + '<svg class="sch-an-radar-svg" viewBox="0 0 ' + String(RADAR_W) + ' ' + String(RADAR_H)
     + '" role="img" aria-label="' + esc(input.caption) + '">'
@@ -244,8 +248,11 @@ export function analyzePartsCss(): string {
     '.sch-an-diff-val { color: var(--fg2); font-size: ' + px(FS_TINY) + '; text-align: right;',
     '  font-variant-numeric: tabular-nums; white-space: nowrap; }',
     '/* ② 7 维雷达 */',
-    '.sch-an-radar { margin: 0; }',
-    '.sch-an-radar-svg { display: block; width: 100%; max-width: ' + px(RADAR_MAX_W) + '; height: auto; margin: 0 auto; }',
+    // 宽度上限挂在**figure**上、不挂在 svg 上：公共层 `pageUi` 有一条 `.ilife-page-ui svg{max-width:100%}`
+    // （类选择器＋类型选择器，比单个类名更具体），挂在 svg 上的上限会被它压掉——实测那一版雷达被拉成
+    // 壳宽那么大（#789 目视抓出）。挂在容器上就不与它争：svg 只负责填满容器。
+    '.sch-an-radar { margin: 0 auto; max-width: ' + px(RADAR_MAX_W) + '; }',
+    '.sch-an-radar-svg { display: block; width: 100%; height: auto; }',
     '.sch-an-radar-ring, .sch-an-radar-axis { fill: none; stroke: var(--line); }',
     '.sch-an-radar-ring { stroke-width: ' + String(STROKE_HAIRLINE) + '; }',
     '.sch-an-radar-axis { stroke-width: ' + String(STROKE_HAIRLINE) + '; }',

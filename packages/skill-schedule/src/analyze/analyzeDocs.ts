@@ -31,7 +31,7 @@ import {
   type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
 import {
-  HEALTH_TARGETS, computeHealthScore, detectAnomalies,
+  HEALTH_TARGETS, detectAnomalies,
   fmtDur, fmtDurShort, fmtPct, getEmojiPrefix, l1Of, parseCategory, toMinutes,
 } from '../policy/index.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
@@ -54,8 +54,9 @@ const BASELINE_DAYS = 30;
 /** 热力图最多印多少行（再多只印最近这些天，与老侧区间页的上限同量级）。 */
 const HEAT_ROWS_MAX = 31;
 
-/** 一处小时数为四小时的「大变化」线（老侧 `ai_questions_for_compare` 的 4h）。 */
-const BIG_CHANGE_MINUTES = 4 * 60;
+/** 一处「大变化」线：日均差超过这么久（老侧 `ai_questions_for_compare` 的 4h 是**总量**口径的线，
+ *  本页把维度读数换成日均之后按同一量级重定：两小时／半小时／一小时）。 */
+const BIG_CHANGE_MINUTES = 2 * 60;
 
 const WEEKDAY = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -156,57 +157,62 @@ export interface ComparePageInput {
   readonly b: readonly ScheduleRecord[];
 }
 
-/** AI 思考钩子那几句（照老侧 `ai_questions_for_compare` 的口径重写：大变化、睡眠那一维、工作那一维、兜底）。 */
+/** AI 思考钩子那几句（照老侧 `ai_questions_for_compare` 的骨架重写：大变化、睡眠那一维、工作那一维、兜底）。 */
 function compareQuestions(rows: readonly CompareRow[], labelA: string, labelB: string): string[] {
   const qs: string[] = [];
   const big = rows.filter((row) => Math.abs(row.deltaMinutes) > BIG_CHANGE_MINUTES);
   if (big.length > 0) {
-    qs.push(labelA + ' 与 ' + labelB + ' 在「' + big.slice(0, 2).map((row) => row.label).join('」和「')
-      + '」上的差别都过了四小时，这一段变化的主因你想从哪里说起？');
+    const top = big[0];
+    qs.push(labelA + ' 与 ' + labelB + ' 在「' + top.label + '」这一维的日均差了 ' + signedDur(top.deltaMinutes)
+      + '，这一段变化的主因你想从哪里说起？');
   }
   const keep = rows.find((row) => row.label === '维持');
-  if (keep !== undefined && Math.abs(keep.deltaMinutes) > 60) {
-    qs.push('「维持」那一维差 ' + signedDur(keep.deltaMinutes) + '，这一段是你主动调整还是被事情推着走的？');
+  if (keep !== undefined && Math.abs(keep.deltaMinutes) > 30) {
+    qs.push('「维持」那一维的日均差 ' + signedDur(keep.deltaMinutes) + '，这一段是你主动调整还是被事情推着走的？');
   }
   const work = rows.find((row) => row.label === '工作');
-  if (work !== undefined && work.deltaMinutes > 2 * 60) {
-    qs.push('「工作」那一维多出 ' + signedDur(work.deltaMinutes) + '，多出来的时间是从哪一处挪过来的？');
+  if (work !== undefined && work.deltaMinutes > 60) {
+    qs.push('「工作」那一维的日均多出 ' + signedDur(work.deltaMinutes) + '，多出来的时间是从哪一处挪过来的？');
   }
   if (qs.length === 0) {
-    qs.push('两段的读数整体接近，有没有哪一处细小的差别其实更要紧？');
+    qs.push('两段的日均整体接近，有没有哪一处细小的差别其实更要紧？');
   }
   return qs;
 }
 
-/** 作息对比整页（老侧 f03：四卡对照 ＋ 7 维差异 ＋ AI 钩子位）。 */
+/** 作息对比整页（老侧 f03：四卡对照 ＋ 7 维差异 ＋ AI 钩子位）。
+ *
+ *  **口径**：七维那一段比的是**按有记录的天数摊平的日均**（老侧 `build_diff_table` 比的是总量——那
+ *  口径遇到「一个区间记录到一半」就会把整个区间读成下降，本票按日均比，与「异常检测」那一页同一条）。
+ *  四卡里同时给总量差，两个读法都在页上，读者自己看得见差在哪。 */
 export function renderComparePage(input: ComparePageInput): string {
   const dimA = byDim(input.a);
   const dimB = byDim(input.b);
   const datesA = datesOf(input.startA, input.endA);
   const datesB = datesOf(input.startB, input.endB);
-  const daysA = Math.max(1, datesA.length);
-  const daysB = Math.max(1, datesB.length);
+  const activeA = Math.max(1, new Set(input.a.map((r) => r.date)).size);
+  const activeB = Math.max(1, new Set(input.b.map((r) => r.date)).size);
   const totalA = totalOf(dimA);
   const totalB = totalOf(dimB);
-  const scoreA = computeHealthScore(dimA).score;
-  const scoreB = computeHealthScore(dimB).score;
+  const avgA = totalA / activeA;
+  const avgB = totalB / activeB;
 
   const rows: CompareRow[] = DIMS.map((dim) => {
-    const aMinutes = dimA[dim] ?? 0;
-    const bMinutes = dimB[dim] ?? 0;
-    const delta = bMinutes - aMinutes;
-    const pct = aMinutes > 0 ? fmtPct(Math.abs(delta), aMinutes) : (bMinutes > 0 ? 100 : 0);
+    const aDaily = Math.round((dimA[dim] ?? 0) / activeA);
+    const bDaily = Math.round((dimB[dim] ?? 0) / activeB);
+    const delta = bDaily - aDaily;
+    const pct = aDaily > 0 ? fmtPct(Math.abs(delta), aDaily) : (bDaily > 0 ? 100 : 0);
     return {
       label: dim,
       glyph: getEmojiPrefix(dim),
-      aValue: aMinutes,
-      bValue: bMinutes,
-      aText: fmtDurShort(aMinutes),
-      bText: fmtDurShort(bMinutes),
+      aValue: aDaily,
+      bValue: bDaily,
+      aText: fmtDurShort(aDaily),
+      bText: fmtDurShort(bDaily),
       deltaText: signedShort(delta) + '，' + signedPct(delta > 0 ? pct : -pct),
       deltaMinutes: delta,
-      aLong: fmtDur(aMinutes),
-      bLong: fmtDur(bMinutes),
+      aLong: fmtDur(aDaily),
+      bLong: fmtDur(bDaily),
       tone: delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat'),
     };
   });
@@ -215,10 +221,16 @@ export function renderComparePage(input: ComparePageInput): string {
     return base > 0 && Math.abs(row.deltaMinutes) / base >= 0.1;
   });
   const cards: readonly KpiCardInput[] = [
-    { label: '区间 A', value: input.labelA, detail: input.startA + ' 至 ' + input.endA + '，共 ' + String(datesA.length) + ' 天' },
-    { label: '区间 B', value: input.labelB, detail: input.startB + ' 至 ' + input.endB + '，共 ' + String(datesB.length) + ' 天' },
+    {
+      label: '区间 A', value: input.labelA,
+      detail: input.startA + ' 至 ' + input.endA + '，共 ' + String(datesA.length) + ' 天，其中 ' + String(activeA) + ' 天有记录',
+    },
+    {
+      label: '区间 B', value: input.labelB,
+      detail: input.startB + ' 至 ' + input.endB + '，共 ' + String(datesB.length) + ' 天，其中 ' + String(activeB) + ' 天有记录',
+    },
     { label: '总时长差', value: signedShort(totalB - totalA), detail: 'B 减 A 的净变化' },
-    { label: '健康分', value: String(scoreB), detail: 'A 段 ' + String(scoreA) + '，七维各自按目标时长给分再取均' },
+    { label: '日均差', value: signedShort(avgB - avgA), detail: '按有记录的天数摊平到每一天' },
   ];
   const head: PageHead = {
     docTitle: '作息管家 作息对比',
@@ -228,8 +240,8 @@ export function renderComparePage(input: ComparePageInput): string {
       + '（' + input.startB + ' 至 ' + input.endB + '）逐维对照。',
   };
   const conclusion = input.labelA + ' 与 ' + input.labelB + '：总时长从 ' + fmtDur(totalA) + ' 到 ' + fmtDur(totalB)
-    + '，健康分从 ' + String(scoreA) + ' 到 ' + String(scoreB) + '，七个维度里有 ' + String(changed.length)
-    + ' 个的读数变化过了一成。';
+    + '。按有记录的天数摊平，日均从 ' + fmtDur(Math.round(avgA)) + ' 到 ' + fmtDur(Math.round(avgB))
+    + '。七个维度里有 ' + String(changed.length) + ' 个的日均变化过了一成。';
   const content = [
     renderKpiGrid(cards, { title: '四卡对照' }),
     renderConclusionBar(conclusion),
@@ -264,12 +276,14 @@ export interface CategoryPageInput {
   readonly level1: string;
   readonly start: string;
   readonly end: string;
+  /** 待筛的记录（**页面自己按 `start` 至 `end` 与这一维再筛一道**：越界的、别的分类的一条都不上台面）。 */
   readonly records: readonly ScheduleRecord[];
 }
 
 /** 类别深挖整页（老侧 f04：24h × N 天热力图 ＋ 分类总览 ＋ 记录明细）。 */
 export function renderCategoryPage(input: CategoryPageInput): string {
-  const hits = input.records.filter((r) => l1Of(r.category) === input.level1);
+  const hits = input.records.filter((r) => r.date >= input.start && r.date <= input.end
+    && l1Of(r.category) === input.level1);
   const dates = datesOf(input.start, input.end);
   const rows: HeatRow[] = dates.map((date) => {
     const day = hits.filter((r) => r.date === date);
@@ -446,7 +460,7 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
       dims: DIMS.map((dim) => ({ label: dim, current: curDaily[dim], baseline: baseDaily[dim] })),
       currentLabel: '最近 ' + String(w) + ' 天',
       baselineLabel: '近 30 天',
-      caption: '蓝面＝最近 ' + String(w) + ' 天的日均，灰面＝近 30 天的日均。',
+      caption: '蓝面＝最近 ' + String(w) + ' 天的日均，灰面＝近 30 天的日均。每一个轴按这一维里两段的较大者铺满，谁缩进去谁就少。',
     }),
     renderDataTable({
       columns: [
