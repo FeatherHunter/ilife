@@ -8,8 +8,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-全新开始.html",
     "exit": 0,
-    "bytes": 99172,
-    "sha256": "898d615db8e4e2426b455f1436e299eef39700309b54f8891119eddd1e862245"
+    "bytes": 112003,
+    "sha256": "743d147f43c88229365a75ffbfb2548adab245975978a2d97abb10056e72c6e3"
   },
   {
     "卡id": "cooking_start_with_history",
@@ -20,8 +20,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-含上次经验.html",
     "exit": 0,
-    "bytes": 99821,
-    "sha256": "314f83b7a488d3131aaafff5026a7805e61e3450b68cbaa4059f427d0783e756"
+    "bytes": 112631,
+    "sha256": "401db1b2cd7b70e088f947e8846a96303830dd94d750998d50716678c1a2142c"
   },
   {
     "卡id": "cooking_start_double_servings",
@@ -33,8 +33,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-双份份量.html",
     "exit": 0,
-    "bytes": 99209,
-    "sha256": "8b6018b6f16c5bf998d6ce67d57e6ccd121a8c5f61549c4068c02110b64988d5"
+    "bytes": 112044,
+    "sha256": "490feed27f453688a11ac03df6e1f246e2bbd4fc07ad9c885503d5027d8ff1b8"
   },
   {
     "卡id": "cooking_resume_after_pause",
@@ -46,8 +46,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-断点续做.html",
     "exit": 0,
-    "bytes": 99362,
-    "sha256": "9fc57349b0f76170d918b7a20939d168e768a88547f6b15ad470989ed476a506"
+    "bytes": 112181,
+    "sha256": "ab25a7812a033c7d80b0ef9719abae1718b9b63b15caa5bbf758617000179ae0"
   },
   {
     "卡id": "cooking_during_waiting_step",
@@ -58,7 +58,7 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-等待并行.html",
     "exit": 0,
-    "bytes": 100172,
-    "sha256": "556c1416f3d06bfdd1c47a82fd4510ddccbbd7dfda64209d83a0217e2bd93f14"
+    "bytes": 112994,
+    "sha256": "44745a53cfd88eef2132d3fef1760d1335d843def4b9dfb1b5ace03aadd56731"
   }
 ]

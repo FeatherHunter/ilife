@@ -5,7 +5,7 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update",
-      "name": "修改验证菜20260921121210",
+      "name": "修改验证菜20260921145630",
       "patch": {
         "servings": 4,
         "difficulty": "快手菜"
@@ -13,8 +13,8 @@
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
     "exit": 0,
-    "bytes": 88993,
-    "sha256": "d36b3bd27f99a174d1949f2ca51138c88cbd4fb108af0cb53068c3b258163ef8"
+    "bytes": 98871,
+    "sha256": "05ba6da840215c07828c1261ede64c973367d835a17050cccc5d0a3bd2409fa0"
   },
   {
     "卡": "update_step_content",
@@ -23,12 +23,12 @@
     "参数": {
       "op": "update",
       "target": "step/step-order",
-      "name": "修改验证菜20260921121210"
+      "name": "修改验证菜20260921145630"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
     "exit": 0,
-    "bytes": 90510,
-    "sha256": "554ad62d1edebb09c1b8756c565bd8908d0870a7c2d959866d37742e47e3322f"
+    "bytes": 100707,
+    "sha256": "a266e707cd0597ce8989cdf72c96d7750c25e9c3149d35422e7fed45c8e800b0"
   },
   {
     "卡": "update_ingredient",
@@ -36,12 +36,12 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update/add-ingredient",
-      "name": "修改验证菜20260921121210"
+      "name": "修改验证菜20260921145630"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
     "exit": 0,
-    "bytes": 90064,
-    "sha256": "92cb0dd73474a93801075bdae93991b01a8b20a3d55c2db88a316de5dfdfa8c7"
+    "bytes": 100268,
+    "sha256": "fbea6aa526dec58c77572afe7c40a5b637e5736f2eb79ae2c92e07dd4716ae78"
   },
   {
     "卡": "discard_recipe",
@@ -49,11 +49,11 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "deprecate",
-      "name": "修改验证菜20260921121210"
+      "name": "修改验证菜20260921145630"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
     "exit": 0,
-    "bytes": 89134,
-    "sha256": "abb481a89b32803c83f8822bf122e6f8962e118de8859ba67a4f0333d290e0bd"
+    "bytes": 98513,
+    "sha256": "43c36933700243e287a759e7f58ac8b8cf5d85306bcfd3004c8be106cb1f4978"
   }
 ]
