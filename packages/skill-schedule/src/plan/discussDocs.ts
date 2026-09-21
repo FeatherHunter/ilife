@@ -26,7 +26,7 @@ import {
 } from '../policy/index.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
-import { clockOf, gapsOf } from './planDocs.js';
+import { clockOf, gapsOf, minutesOfDayEnd } from './planDocs.js';
 import { shiftDay } from './iso.js';
 import { REMOTE_LABEL, type RemoteState } from './receipt.js';
 import { planPartsCss } from './planParts.js';
@@ -40,7 +40,8 @@ const HOURS_PER_DAY = 24;
 
 const span = (start: string, end: string): string => start + ' 至 ' + end;
 const categoryOf = (c: string | null | undefined): string => (c === null || c === undefined || c === '' ? '未分类' : c);
-const minutesOf = (hhmm: string): number => (hhmm === '24:00' ? HOURS_PER_DAY * 60 : toMinutes(hhmm));
+/** 钟点 → 分钟（**这一天末尾那一格按 24:00 算**，与空档同一条口径）：定义在 `planDocs`，本件只引用。 */
+const minutesOf = minutesOfDayEnd;
 
 function cellsOf(events: readonly { readonly time_start: string; readonly time_end: string; category?: string | null }[]) {
   return hourCellsOf(events.map((e) => ({
@@ -159,8 +160,7 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
     title: e.title,
     category: categoryOf(e.category),
     notes: e.notes === undefined || e.notes === null || e.notes === '' ? '—' : e.notes,
-  }));
-  const lockedRows: ListRowInput[] = locked.map((e) => ({
+  }));  const lockedRows: ListRowInput[] = locked.map((e) => ({
     left: span(e.time_start, e.time_end),
     main: e.title,
     right: categoryOf(e.category),
@@ -251,10 +251,11 @@ export function resultPage(
   const rate = referred === 0 ? null : Math.round((match / referred) * 1000) / 10;
   const overlaps = overlapsOf(candidates, locked);
   const covered = candidates.reduce((sum, e) => sum + (minutesOf(e.time_end) - minutesOf(e.time_start)), 0);
+  /** 逐段贴合（四列：时段／标题／贴合／说明）：**不再单列分类那一栏**——说明句里已经点名
+   *  两边各是什么，五列挤在 880 里会把「贴合」两个字折成两行（复看时抓到的版式债）。 */
   const fitRows: DataTableRow[] = fits.map((f) => ({
     time: span(f.event.time_start, f.event.time_end),
     title: f.event.title,
-    category: categoryOf(f.event.category),
     fit: f.fit === 'match' ? '贴合' : (f.fit === 'drift' ? '偏离' : '无参考'),
     hint: f.hint,
   }));
@@ -306,7 +307,6 @@ export function resultPage(
       columns: [
         { key: 'time', label: '时段' },
         { key: 'title', label: '标题' },
-        { key: 'category', label: '分类' },
         { key: 'fit', label: '贴合' },
         { key: 'hint', label: '说明' },
       ],

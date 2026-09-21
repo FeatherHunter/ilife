@@ -27,19 +27,26 @@ const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
 
 const DAY_END = 1440;
 
+/** 钟点 → 分钟，且**这一天末尾那一格**按 24:00 算：末段写 `23:59` 与写 `24:00` 是同一件事
+ *  （校验口径 `assertCoverage24h` 的原话：「末事件 time_end 必须为 24:00，当前 23:59 视同」），
+ *  而落盘的候选是**归一过**的（`normalizeTime` 把 `24:00` 改写成 `23:59`）。整日覆盖、空隙、
+ *  时长三处都按这一条算，否则「整天接满」会被读成「还差一分钟」。定义只此一处。 */
+export const minutesOfDayEnd = (hhmm: string): number =>
+  (hhmm === '24:00' || hhmm === '23:59' ? DAY_END : toMinutes(hhmm));
+
 /** 空档：未排事件的连续时段（按时间先后扫一遍，游标只前进；相邻或重叠都不断档）。
  *  #787 起本件对外给这一条：f12「商量计划预览」的**空隙提示**与 f10「查日程」的空档是同一件事，
  *  两个用法都在本能力目录里，故仍只此一处（收的只是「有起止的东西」，不要求是库行）。 */
 export function gapsOf(
   events: readonly { readonly time_start: string; readonly time_end: string }[],
 ): { readonly start: number; readonly end: number }[] {
-  const sorted = [...events].sort((a, b) => toMinutes(a.time_start) - toMinutes(b.time_start));
+  const sorted = [...events].sort((a, b) => minutesOfDayEnd(a.time_start) - minutesOfDayEnd(b.time_start));
   const out: { start: number; end: number }[] = [];
   let cursor = 0;
   for (const e of sorted) {
-    const start = toMinutes(e.time_start);
+    const start = minutesOfDayEnd(e.time_start);
     if (start > cursor) out.push({ start: cursor, end: start });
-    cursor = Math.max(cursor, toMinutes(e.time_end));
+    cursor = Math.max(cursor, minutesOfDayEnd(e.time_end));
   }
   if (cursor < DAY_END) out.push({ start: cursor, end: DAY_END });
   return out;
