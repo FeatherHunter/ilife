@@ -1,0 +1,15 @@
+{
+  "ticket": 774,
+  "at": "2026-09-21",
+  "shots": [
+    ".dsh-vision-router/artifacts/D--ilife-packages-skill-chef-.tm-bfdceb09-shot-390x900-fullpage.png（390 修改食谱主信息回执）",
+    ".dsh-vision-router/artifacts/D--ilife-packages-skill-chef-.tm-495f651c-shot-1280x900-fullpage.png（1280 废弃食谱回执）"
+  ],
+  "defects": [
+    { "id": "V1", "from": "vision_describe", "item": "回执引用文（caliber 行）把行编号 id=UUID 暴露给用户", "scope": "本票页文案", "disposition": "fixed" },
+    { "id": "V2", "from": "vision_describe", "item": "标题与结论条间距、事实区竖排、按钮主次宽度、1280 内容列宽、贴边内距、无返回按钮等 12 条", "scope": "共享渲染层（renderDocShell／pageUi／区块，t768 原型同形，维护者已裁形状）", "disposition": "kept-目检无错位且与已裁原型同形，页面不许自写样式，转公共层按需立票，本票不动" }
+  ],
+  "fixed": ["V1"],
+  "fix": "maskId 改为整段拿掉编号引用（含括号），页上只留菜名作标识；已重跑端到端并复绿质量门六列 0",
+  "open": 0
+}

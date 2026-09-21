@@ -1,0 +1,59 @@
+[
+  {
+    "卡": "update_main_fields",
+    "唤醒词": "修改食谱",
+    "命令": "chef.recipe.write",
+    "参数": {
+      "op": "update",
+      "name": "修改验证菜20260921085207",
+      "patch": {
+        "servings": 4,
+        "difficulty": "快手菜"
+      }
+    },
+    "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
+    "exit": 0,
+    "bytes": 88993,
+    "sha256": "d0453ad5cdeee64abef630a526bd8140bbcd59cc2d6b99799b139c69afebbb5b"
+  },
+  {
+    "卡": "update_step_content",
+    "唤醒词": "修改步骤",
+    "命令": "chef.recipe.write",
+    "参数": {
+      "op": "update",
+      "target": "step/step-order",
+      "name": "修改验证菜20260921085207"
+    },
+    "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
+    "exit": 0,
+    "bytes": 90510,
+    "sha256": "cb999b230ad9e36c61952ce476181b47a0ff41517cfcde1a8fae1bc0ec5d1ac5"
+  },
+  {
+    "卡": "update_ingredient",
+    "唤醒词": "修改食材",
+    "命令": "chef.recipe.write",
+    "参数": {
+      "op": "update/add-ingredient",
+      "name": "修改验证菜20260921085207"
+    },
+    "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
+    "exit": 0,
+    "bytes": 90064,
+    "sha256": "a1b876af8ce1b3d3e719f255f712f9da30e52ae2b6aa2d729cd181ec475979f9"
+  },
+  {
+    "卡": "discard_recipe",
+    "唤醒词": "废弃食谱",
+    "命令": "chef.recipe.write",
+    "参数": {
+      "op": "deprecate",
+      "name": "修改验证菜20260921085207"
+    },
+    "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
+    "exit": 0,
+    "bytes": 89134,
+    "sha256": "0a923123908f593a8ba06a372f807eca6cd49b36ddc706b135708c74922161f7"
+  }
+]
