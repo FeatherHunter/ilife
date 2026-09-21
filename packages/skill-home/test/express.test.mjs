@@ -6,7 +6,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -67,6 +67,13 @@ before(() => {
   const dataDir = join(configDirOf(HOME), 'data');
   mkdirSync(dataDir, { recursive: true });
   copyFileSync(seedDb, join(dataDir, 'home.db'));
+  // 本用例每跑一次都按当刻戳落新产物；先清掉上一轮的场景产物，否则盘上会累积，
+  // 末条断言（产物目录只留 4 份）会在第二次跑时假红（#817 收口现场实测：盘上留了 5 轮）。
+  if (existsSync(outDir)) {
+    for (const f of readdirSync(outDir)) {
+      if (f.endsWith('.html') && !f.includes('墙') && f !== '总索引.html') rmSync(join(outDir, f));
+    }
+  }
   const probe = runOk('home.shopping.query', { kind: 'list' }, 'seed probe list');
   assert.ok(probe.data.total >= 3, '种子购物清单至少 3 行，实际 ' + probe.data.total);
 });

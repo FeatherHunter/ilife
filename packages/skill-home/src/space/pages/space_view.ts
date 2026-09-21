@@ -115,7 +115,7 @@ function itemsCard(view: SpaceView): string {
     const sub = '请加载「居家管家」技能，帮我减物品：\n物品：' + it.name + '（编号' + it.id + '）\n数量：待填写';
     return '<div class="item" data-need="当前层物品（名称/数量/状态）">'
       + '<div class="inf"><div class="n">' + escapeHtml(it.name) + '</div>'
-      + '<div class="s" data-need="位置状态（缺省在家）">共' + it.qty + '件，' + escapeHtml(it.status) + '</div></div>'
+      + '<div class="s" data-need="位置状态（缺省在家）">共' + it.qty + '件，' + escapeHtml(it.status) + '（编号' + it.id + '）</div></div>'
       + '<div class="qa" data-block="operations">'
       + '<button class="qb" data-copy="' + attr(mv) + '" data-need="移">移</button>'
       + '<button class="qb" data-copy="' + attr(add) + '" data-need="补">补</button>'

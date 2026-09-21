@@ -16,7 +16,8 @@
   "files": [
     "dist",
     "SKILL.md",
-    "templates/*.html"
+    "templates/*.html",
+    "templates/**"
   ],
   "bin": {
     "home-cmd-read": "./dist/cli/cmd_read.js"

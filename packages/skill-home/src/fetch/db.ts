@@ -265,6 +265,13 @@ export function searchItems(handle: HomeDb, f: SearchFilter): { item: HomeItem; 
   return out;
 }
 
+/** 事件详情用的人读字段名（#817 修：此前写的是 SQL 的 SET 片段，`photo=?,updated_at=CURRENT_TIMESTAMP`
+ *  会被「历史」页原样印上屏；事件详情是给人看的，与 move／qty／status 三处的写法一致）。 */
+const ITEM_FIELD_CN: Record<string, string> = {
+  name: '名称', category: '分类', category_id: '分类', owner: '归属',
+  purchase_price: '价格', remark: '备注', photo: '照片', fixed_location: '固定位',
+};
+
 export function updateItem(handle: HomeDb, id: number, patch: {
   name?: string; category?: string | null; category_id?: number | null; owner?: string;
   purchase_price?: number | null; remark?: string | null; photo?: string | null; fixed_location?: string | null;
@@ -272,16 +279,20 @@ export function updateItem(handle: HomeDb, id: number, patch: {
   getItemById(handle, id);
   const sets: string[] = [];
   const vals: (string | number | null)[] = [];
+  const changed = new Set<string>();
   const allow: (keyof HomeItem)[] = ['name', 'category', 'category_id', 'owner', 'purchase_price', 'remark', 'photo', 'fixed_location'];
   for (const k of allow) {
     const v = (patch as Record<string, unknown>)[k];
-    if (v !== undefined) { sets.push(k + '=?'); vals.push(v as string | number | null); }
+    if (v !== undefined) {
+      sets.push(k + '=?'); vals.push(v as string | number | null);
+      changed.add(ITEM_FIELD_CN[k] ?? String(k));
+    }
   }
   if (sets.length) {
     sets.push('updated_at=CURRENT_TIMESTAMP');
     try { handle.db.prepare('UPDATE items SET ' + sets.join(',') + ' WHERE id=?').run(...vals, id); }
     catch (e) { throw new HomeFetchError('HOME_DB_UNREADABLE', '物品更新失败：' + id, { cause: e }); }
-    try { handle.db.prepare('INSERT INTO item_events (item_id, event, detail) VALUES (?,?,?)').run(id, 'update', sets.join(',')); } catch { /* 审计失败不阻断 */ }
+    try { handle.db.prepare('INSERT INTO item_events (item_id, event, detail) VALUES (?,?,?)').run(id, 'update', [...changed].join('、')); } catch { /* 审计失败不阻断 */ }
   }
   return getItemById(handle, id);
 }

@@ -108,7 +108,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '.x-btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;min-height:44px;font-size:15px}'
     + '.x-btn.alt{background:#f2f2f7;color:#111;border:1px solid #ddd}'
     + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
-    + '.x-check{width:22px;height:22px;flex:none}'
+    + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
     + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';

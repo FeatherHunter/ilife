@@ -81,7 +81,9 @@ describe('#801 默认落盘', () => {
     assert.equal(m[2], 'SM4-1', '场景 id 逐字（缺省 kind=summary 的宿主行）');
     assert.equal(r.env.delivery.bytes, statSync(out).size, 'delivery.bytes ＝实际 statSync().size');
     assert.equal(r.env.delivery.bytes, Buffer.byteLength(readFileSync(out, 'utf8'), 'utf8'));
-    assert.match(readFileSync(out, 'utf8'), /<section data-skill="home"/, '产物＝envelope 分节页套模板');
+    const html = readFileSync(out, 'utf8');
+    assert.ok(html.includes('data-block='), '产物＝页族装配的整页（#872 起缺省落族页，不再落 21 模板分节页）');
+    assert.ok(!html.includes('<section data-skill="home"'), '不该再落 21 模板分节页');
   });
 
   test('② 同模板多场景不互盖：移物品与数量变更各落各的 stem', () => {
@@ -116,7 +118,7 @@ describe('#801 默认落盘', () => {
     assert.equal(r.env.delivery.mode, 'file');
     assert.equal(r.env.delivery.path, resolve(out), '回执指逐字路径（绝对）');
     assert.ok(existsSync(out), '逐字路径真有文件');
-    assert.match(readFileSync(out, 'utf8'), /<section data-skill="home"/, '显式产物＝分节页');
+    assert.ok(readFileSync(out, 'utf8').includes('data-block='), '显式产物＝同一份页族整页（#872 起）');
     assert.equal(r.env.delivery.bytes, statSync(out).size);
     assert.equal(listOf(htmlDirOf(dir)).length, before, '显式优先：缺省目录不另落一份');
   });

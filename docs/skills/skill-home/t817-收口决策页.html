@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#817 收口决策页：交付链断口与 28 处机审红</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font:400 14px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f2f2f7;color:#1d1d1f}
+.wrap{max-width:960px;margin:0 auto;padding:26px 18px 70px}
+.hero{background:#fff;border-radius:18px;padding:22px 24px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06)}
+.eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.07em;color:#007aff}
+h1{font-size:23px;font-weight:800;line-height:1.3;margin:8px 0 10px}
+.lead{font-size:14.5px;color:#3a3a3c}
+.lead b{color:#1d1d1f}
+h2{font-size:16px;font-weight:800;margin:30px 0 12px;display:flex;align-items:center;gap:8px}
+h2 .n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:#1d1d1f;color:#fff;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-top:16px}
+.kpi{background:#fff;border-radius:14px;padding:13px 15px;border-left:4px solid #34c759}
+.kpi.bad{border-left-color:#ff3b30}
+.kpi.lead-ok{border-left-color:#007aff}
+.kpi .v{font-size:20px;font-weight:800;line-height:1.2}
+.kpi .k{font-size:12px;color:#6e6e73;margin-top:3px}
+.kpi .s{font-size:11.5px;color:#86868b;margin-top:6px;line-height:1.5}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin-top:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.block{border-left:4px solid #ff3b30}
+.card.high{border-left:4px solid #ff9500}
+.card.mid{border-left:4px solid #ffcc00}
+.card.low{border-left:4px solid #8e8e93}
+.ch{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.ch h3{font-size:15px;font-weight:800}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#ffe5e3;color:#c3271d;white-space:nowrap}
+.tag.high{background:#fff0dd;color:#a35a00}
+.tag.mid{background:#fff8d8;color:#8a6d00}
+.tag.low{background:#eeeef2;color:#5a5a60}
+.flow{margin-top:9px;font-size:13.5px;color:#3a3a3c}
+.flow p{margin:5px 0}
+.flow .lab{display:inline-block;min-width:3.2em;color:#86868b;font-size:12px;font-weight:700}
+.one{display:block;margin-top:10px;background:#f7f7fa;border-radius:10px;padding:9px 12px;font-size:13px;color:#1d1d1f}
+.one::before{content:"一句话 · ";color:#86868b;font-weight:700;font-size:11.5px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;background:#fff}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid #ececf1;vertical-align:top}
+th{font-size:11.5px;font-weight:800;color:#6e6e73;background:#fafafb;white-space:nowrap}
+td b{font-weight:800}
+.pick{background:#f4faf5}
+.pill{display:inline-block;font-size:11px;font-weight:800;color:#128a3a;background:#dcf5e3;border-radius:999px;padding:2px 8px;margin-left:6px}
+.no{display:inline-block;font-size:11px;font-weight:800;color:#8a8a90;background:#eeeef2;border-radius:999px;padding:2px 8px;margin-left:6px}
+.pro::before{content:"利 · ";color:#128a3a;font-weight:800;font-size:11.5px}
+.con::before{content:"弊 · ";color:#c3271d;font-weight:800;font-size:11.5px}
+.pro,.con{display:block;margin:3px 0;font-size:12.5px;color:#3a3a3c}
+.steps{counter-reset:s;margin-top:10px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:12px;background:#fff;border-radius:12px;padding:12px 14px;margin-top:9px}
+.step::before{counter-increment:s;content:counter(s);display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:#007aff;color:#fff;font-weight:800;font-size:13px}
+.step .t{font-weight:800;font-size:13.5px}
+.step .g{font-size:12.5px;color:#6e6e73;margin-top:3px}
+.step .g b{color:#1d1d1f}
+.ask{background:#1d1d1f;color:#f5f5f7;border-radius:16px;padding:18px 20px;margin-top:22px}
+.ask h2{color:#fff;margin:0 0 8px}
+.ask h2 .n{background:#fff;color:#1d1d1f}
+.ask ul{margin:6px 0 0 20px;font-size:13.5px}
+.ask li{margin:4px 0}
+.ask code{background:#3a3a3c;border-radius:6px;padding:1px 6px;font-size:12.5px}
+details{margin-top:18px;background:#fff;border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-size:13px;font-weight:700;color:#007aff}
+pre{background:#f7f7fa;border-radius:8px;padding:10px 12px;margin-top:9px;font-size:12px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.foot{color:#86868b;font-size:12px;margin-top:22px;line-height:1.7}
+@media (max-width:640px){
+.wrap{padding:16px 12px 50px}
+h1{font-size:20px}
+table,thead,tbody,tr,td{display:block}
+thead{display:none}
+tbody tr{border:1px solid #e8e8ee;border-radius:12px;padding:10px 12px;margin-top:10px;background:#fff}
+td{border:0;padding:3px 0;font-size:13px}
+td::before{content:attr(data-l);display:block;font-size:10.5px;font-weight:800;color:#86868b;letter-spacing:.04em}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">地图 #797 · 收口票 #817 · 待你裁两件事</div>
+  <h1>交付链断口 ＋ 28 处机审红：先接上页族装配，再修红，最后出墙</h1>
+  <p class="lead">
+    ① 70 条场景端到端、双墙、链路总览页都已跑出来，机器读数七成绿；
+    ② 但最大的一条洞不是红点，是 <b>交付链没接上</b>——今天说唤醒词，落盘的是旧分节页，不是那 70 张新页面的任何一张；
+    ③ 要你裁：<b>谁来修、墙出几张</b>（另有一条正交的补票事项）。
+  </p>
+</header>
+
+<div class="kpis">
+  <div class="kpi lead-ok"><div class="v">70/70</div><div class="k">端到端真命令链</div><div class="s">隔离家目录 ＋ 仓内种子库，逐条 exit 0；回执绝对路径 70/70 在盘、字节与回执一致</div></div>
+  <div class="kpi"><div class="v">70 格 · exit 0</div><div class="k">墙自检（正反例都走）</div><div class="s">链接 354 条、缺失 0；反例三条命令都 exit 1 且点名</div></div>
+  <div class="kpi"><div class="v">70/70</div><div class="k">结构块判据件</div><div class="s">每页必需块在位</div></div>
+  <div class="kpi bad"><div class="v">63/70</div><div class="k">文案门（判据件）</div><div class="s">7 页红：1 页内部 SQL 上屏、2 页含字母名出表、4 页数据行重复</div></div>
+  <div class="kpi bad"><div class="v">49/70</div><div class="k">双端门（判据件）</div><div class="s">21 页红：触摸目标 &lt; 44px（9＋4＋8 页）、其中 6 页 390 档横向溢出 +15px</div></div>
+</div>
+
+<h2><span class="n">1</span>最重的一条：交付链没接上（阻断）</h2>
+<div class="card block">
+  <div class="ch"><h3>唤醒词 → 命令 → <span style="text-decoration:line-through">新页面</span> 旧分节页</h3><span class="tag">阻断目的地</span></div>
+  <div class="flow">
+    <p><span class="lab">现象</span>说「查物品」→ 回执落的是 <b>922 字节的旧分节页</b>（无 <code>data-block=</code>）；46 张族页模板与 <code>renderFamilyPage</code> 在运行期<b>没有任何调用点</b>。</p>
+    <p><span class="lab">前因</span>落盘那一层（票 4）比族页（票 8／11 张域票）<b>先落地</b>；事后没有一张票拥有「命令 → 族页」这一步，两截各自完好、中间断了。</p>
+    <p><span class="lab">后果</span>Destination「在 DSH 里说唤醒词 → 拿到<b>那份页面</b>的绝对路径」只完成一半；我这批 70 份产物是<b>测试装配</b>出来的，不是命令落出来的——回执路径虽然存在，开出来不是那一页。</p>
+  </div>
+  <span class="one">先把页族装配接进交付链（族页优先、旧模板降级），否则后面每一个读数都在证一件不是目的地的事。</span>
+</div>
+
+<h2><span class="n">2</span>28 处机审红，其实分三类</h2>
+<table>
+  <thead><tr><th>类</th><th>是什么</th><th>读数</th><th>性质</th><th>怎么修</th></tr></thead>
+  <tbody>
+    <tr>
+      <td data-l="类"><b>A 真缺陷</b></td>
+      <td data-l="是什么">取数层把 SQL 的 SET 片段当「事件详情」写库（<code>db.ts:284</code>），历史页照着印上屏：<code>photo=?,updated_at=CURRENT_TIMESTAMP</code></td>
+      <td data-l="读数">1 页</td>
+      <td data-l="性质">内部字符串上屏</td>
+      <td data-l="怎么修">改成「改了哪些字段」，与 move／qty／status 同写法</td>
+    </tr>
+    <tr>
+      <td data-l="类"><b>B 合规缺陷</b></td>
+      <td data-l="是什么">触摸目标 &lt; 44px（撤销操作复选框 20px、查看照片族 <code>&lt;summary&gt;</code> 16px、购物域复选框 22px、票据凭证裸按钮 25px）；6 页 390 档横向溢出 +15px</td>
+      <td data-l="读数">21 页</td>
+      <td data-l="性质"><b>从来没达过标</b>：四张域票自己交付的产物同样红（807 10/11、808 0/8、812 0/4、814 0/8），不是本批数据触发</td>
+      <td data-l="怎么修">命中区撑到 44px（可视尺寸可不变）；溢出先定位真因再最小改</td>
+    </tr>
+    <tr>
+      <td data-l="类"><b>C 判据口径</b></td>
+      <td data-l="是什么">「重复句」读数是<b>数据行重复</b>：两条物品同状态、两笔同日期购买</td>
+      <td data-l="读数">4 页</td>
+      <td data-l="性质">不是文案抄两遍；判据件本来就豁免 <code>&lt;td&gt;</code></td>
+      <td data-l="怎么修">把数据行做进表格单元格（本票可达）；要不要放宽规则回写票 6，不私改</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">3</span>另外两条（一条缺件、一条口径）</h2>
+<div class="card mid">
+  <div class="ch"><h3>批里漏了「其余 62 条唤醒词」</h3><span class="tag mid">交付物缺一块</span></div>
+  <div class="flow">
+    <p><span class="lab">规格</span>票 22 写死：变体与无场景词<b>不占新格新行，只作宿主场景那一行的别名附注</b>，链路总览页要印出来。</p>
+    <p><span class="lab">后果</span>今天说「盘全部」「帮我记一下」「借出」，在链路总览页上<b>找不到自己那句话</b>。</p>
+  </div>
+  <span class="one">清单补 <code>aliases</code>（42 变体 ＋ 18 无场景词 ＋ 4 借用写侧），宿主行附注即可，不新增行列。</span>
+</div>
+<div class="card low">
+  <div class="ch"><h3>墙的形制：一张 70 格，还是 8 个域各一对</h3><span class="tag low">待裁</span></div>
+  <div class="flow">
+    <p><span class="lab">票面</span>「按 8 个域成对出（手机 390／桌面 1280）；格数＝70」——两种读法都通。</p>
+    <p><span class="lab">实测</span>我已出一对 70 格聚合墙（走验收命令）。按域再出 8 对，成本几乎为零。</p>
+  </div>
+</div>
+
+<h2><span class="n">4</span>决策一：这 28 处红＋断口，谁来修</h2>
+<table>
+  <thead><tr><th style="width:31%">选项</th><th>利弊</th></tr></thead>
+  <tbody>
+    <tr class="pick">
+      <td data-l="选项"><b>A · 本图收口当场修</b><span class="pill">推荐</span><br><span style="font-size:12px;color:#6e6e73">接交付链 ＋ 修 A/B/C 三类 ＋ 补票留痕</span></td>
+      <td data-l="利弊">
+        <span class="pro">唯一能达成 797 目的地与票面 ④（机审 0 命中）的路径；缺陷都已定位到行，改动是加法／最小改；一轮终审就能过。</span>
+        <span class="con">越过四张已关票的写集（靠「逐处证据登记 ＋ 原票回写评论」留痕）；21 页触控改动是可见的样式变化——都进墙，你终审一眼能看出。</span>
+      </td>
+    </tr>
+    <tr>
+      <td data-l="选项"><b>B · 只补票＋回写域票</b><span class="no">保守</span><br><span style="font-size:12px;color:#6e6e73">本票停在 95%，不 close</span></td>
+      <td data-l="利弊">
+        <span class="pro">写集纪律零破坏，责任归位到原票。</span>
+        <span class="con">本票不能 close；「命令 → 族页」这一步仍然没有票、没有人做；你要多轮终审；这 21 页的历史读数（域票自称绿）说明重开也未必一次修对。</span>
+      </td>
+    </tr>
+    <tr>
+      <td data-l="选项"><b>C · 不修，只交墙＋缺陷清单</b></td>
+      <td data-l="利弊">
+        <span class="con">票面 ④ 永远不绿；等于默认「机审红也能过」，墙就只能证明「页好看」。</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">5</span>决策二：墙出几张</h2>
+<table>
+  <thead><tr><th style="width:31%">选项</th><th>利弊</th></tr></thead>
+  <tbody>
+    <tr class="pick">
+      <td data-l="选项"><b>聚合一对（70 格）＋ 8 个域各一对</b><span class="pill">推荐</span></td>
+      <td data-l="利弊">
+        <span class="pro">验收命令仍走聚合那对（票面口径不变）；你按域看，一次 2–11 格，点开就能和同一域的其他页比对。</span>
+        <span class="con">共 18 页（不必全看，挑域看即可）。</span>
+      </td>
+    </tr>
+    <tr>
+      <td data-l="选项"><b>只出聚合一对</b></td>
+      <td data-l="利弊">
+        <span class="pro">页面最少。</span>
+        <span class="con">70 格滚下来找一件东西；域内横向比对断掉。</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">6</span>执行方案：一条交付链，所有读数从交付链里出</h2>
+<p class="flow" style="margin-top:6px;color:#6e6e73;font-size:13px">先把「命令 → 页族装配 → 落盘」接成一条交付链；产物、回执、墙、链路页、三个判据件、视觉复核全部从这条交付链取数，「测试装配出来的产物」一律作废。</p>
+<div class="steps">
+  <div class="step"><div><div class="t">补票＋定口径 <span style="color:#86868b;font-weight:400">0.5h</span></div><div class="g">补一张票登记「交付链接合＋<code>package.json files</code> 补子目录」，挂到本图；回写票 6「数据行重复要不要豁免」。判据：<b>票在、障碍边在、回写评论在</b>。</div></div></div>
+  <div class="step"><div><div class="t">接交付链 <span style="color:#86868b;font-weight:400">2h</span></div><div class="g">落盘前加一层：<code>resolvePageFamily</code> 命中族 → 装配族页；未命中／失败 → 降级旧分节页（旧路变降级分支，不回退既有行为）。判据：<b>70 条回执路径指的文件都含 <code>data-block=</code> 且字节一致；居家包测试全绿；<code>gen:check</code> 全绿</b>。</div></div></div>
+  <div class="step"><div><div class="t">修 A/B/C 三类 <span style="color:#86868b;font-weight:400">2–3h</span></div><div class="g">A：事件详情写人话；B：21 页触控命中区 ＋ 6 页溢出的真因；C：4 页把行做进表格单元格。判据：<b>三个判据件 70/70 全绿</b>；每处一行「哪一页／什么症状／改了什么」；回写 #807 #808 #812 #814 各一条。</div></div></div>
+  <div class="step"><div><div class="t">重跑批 <span style="color:#86868b;font-weight:400">0.5h</span></div><div class="g">产物<b>从回执路径收</b>；清单补 <code>aliases</code>；顺手清 <code>.scratch/812</code> 的 5 轮陈旧件（居家包内唯一一条测试红的真因）。判据：<b>文案门 70/70、双端门 70/70、结构块 70/70 全 exit 0</b>。</div></div></div>
+  <div class="step"><div><div class="t">出墙与链路总览页 <span style="color:#86868b;font-weight:400">0.5h</span></div><div class="g">聚合一对 ＋ 8 域各一对 ＋ 总索引 ＋ 链路页（70 行、唤醒词含别名）。判据：<b>生成器自检正例 exit 0；反例三条命令都 exit 1 并点名</b>。</div></div></div>
+  <div class="step"><div><div class="t">视觉复核＋打分（另一席） <span style="color:#86868b;font-weight:400">1.5h</span></div><div class="g">140 张双端截图；8 个域各一席按六维逐页记（结构齐／层级清／双端不塌／触控够大／文案不冗余／分隔符不懒政）。<b>改与评分开</b>：评分席只看重跑出来的产物；综合分 &lt; 90 回第 3 步。</div></div></div>
+  <div class="step"><div><div class="t">证据＋终审 <span style="color:#86868b;font-weight:400">1h</span></div><div class="g">收口证据件写清五条判定口径的读数，加一张「回执路径 == 产物路径」的逐条表；交你：<b>墙 ＋ 逐格缺陷清单 ＋ 自检退出码</b>。你一句「过」→ 100% close。</div></div></div>
+</div>
+
+<div class="ask">
+  <h2><span class="n">?</span>你只需回一句</h2>
+  <ul>
+    <li><code>按方案走</code> —— 授权跨票最小改（共用位 2 处、21 页、取数层 1 行），每处登记证据并回写原票 → 我从第 1 步开始。</li>
+    <li><code>只做第 0 步</code> —— 不碰实现，本票停在 95% 待确认，我把逐格缺陷清单交给你。</li>
+    <li><code>先看墙</code> —— 我先出 8 域墙＋聚合墙给你滚一眼，再决定上面两条。</li>
+  </ul>
+</div>
+
+<details>
+  <summary>附：复现这些读数的命令（点开）</summary>
+  <pre># 70 条场景端到端跑批（产物落 .scratch/817/raw，清单与逐条证据落 .scratch/817/）
+node docs/skills/skill-home/t817-run-70-scenes.mjs
+
+# 造册出墙＋索引（正例 exit 0）／反例：清单点名一个不存在的文件即 exit 1 并点名
+node docs/skills/skill-home/gen-scene-wall.mjs --stage .scratch/817/raw .scratch/817
+node docs/skills/skill-home/gen-scene-wall.mjs --check .scratch/817 手机墙-390.html
+node docs/skills/skill-home/gen-chain-page.mjs .scratch/817 链路总览.html
+
+# 三个判据件（清单范围；墙与索引走生成器自检，不进这三门）
+node packages/skill-home/scripts/audit-separators.mjs --dir .scratch/817 --manifest .scratch/817/manifest.json
+node packages/skill-home/scripts/audit-page-blocks.mjs --dir .scratch/817 --blocks packages/skill-home/scripts/page-blocks.json --manifest .scratch/817/manifest.json
+node packages/skill-home/scripts/audit-responsive.mjs &lt;70 份产物路径&gt;
+
+# 交付链现状实测：回执路径指的那份是不是新页面
+node packages/skill-home/dist/cli/cmd_read.js home.item.search --params '{}'   # → delivery.path 922 B、无 data-block
+
+# 域票既有产物复跑双端门（同样红）
+node packages/skill-home/scripts/audit-responsive.mjs &lt;该域清单点名的那几份&gt;   # 807 10/11、808 0/8、812 0/4、814 0/8</pre>
+</details>
+
+<p class="foot">
+  证据目录：<code>D:\ilife\.scratch\817\</code>（清单 <code>manifest.json</code>、逐条证据 <code>evidence-70.json</code>、双端读数 <code>audit-responsive.json</code>、反例回执 <code>negative-check.txt</code>）。<br>
+  本页只讲需要你裁的事与前因后果；完整读数在收口证据件 <code>docs/skills/skill-home/scene-pages-closeout.md</code>（待写）。
+</p>
+
+</div>
+</body>
+</html>

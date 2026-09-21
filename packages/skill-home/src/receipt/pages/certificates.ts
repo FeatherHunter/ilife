@@ -217,6 +217,10 @@ function opsBlock(): string {
     + '</div>';
 }
 
+/** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。 */
+const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
+  + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>';
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
@@ -224,7 +228,7 @@ export function renderFamilyPage(env: Envelope): string {
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>证件管理</span></div>';
   const main = env.shape === 'receipt' ? receiptNote() : listTable(env);
-  const content = head
+  const content = PAGE_CSS + head
     + main
     + opsBlock()
     + '<div class="fam-content"><pre>' + escapeHtml(envelopeBrief(env)) + '</pre></div>'

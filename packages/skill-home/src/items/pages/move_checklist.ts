@@ -63,6 +63,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#fff8f2);border-radius
 + '.lead{color:#6e6e73;font-size:14px}'
 + '.sec{background:#fff;border-radius:16px;padding:18px;margin:14px 0}'
 + '.sec h2{font-size:17px;margin-bottom:10px}'
++ 'summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
 + '.kv{display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:14px}'
 + '.kv dt{color:#86868b}.kv dd{color:#1d1d1f}'
 + '.binrow{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}'

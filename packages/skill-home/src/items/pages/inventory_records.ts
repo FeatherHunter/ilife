@@ -64,6 +64,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.lead{color:#6e6e73;font-size:14px}'
 + '.sec{background:#fff;border-radius:16px;padding:18px;margin:14px 0}'
 + '.sec h2{font-size:17px;margin-bottom:10px}'
++ 'summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
 + '.rec{border:1px solid #eef0f4;border-radius:14px;padding:14px;margin:10px 0}'
 + '.rec .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}'
 + '.rec .nm{font-weight:700;font-size:15px}'

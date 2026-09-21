@@ -17,7 +17,7 @@ import {
   homeShapeFor, buildHomeEnvelope, renderEnvelopeHtml, assertHtmlSize,
   loadTemplate, templateFor, fillTemplate, resolveSceneStem,
   buildCareList, buildReceipt, buildHelpItems,
-  HomeRenderError,
+  HomeRenderError, renderFamilyHtml,
 } from '../render/index.js';
 import { buildHelpLookup, buildHomeHelpFileData, renderHomeHelpHtml, deliverHomeHelp } from '../help/index.js';
 import type { HomeHtmlDelivery } from '../help/index.js';
@@ -214,12 +214,20 @@ async function main() {
     const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
     const offline = help ? null : dispatchBackup(key, params);
     const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
-    // 分节页（模板填充后）：`--html` 支与速查支共用这一处，不抄第二份。
+    // 分节页（模板填充后）：**降级路径**用（#872 起族页优先），`--html` 支与速查支共用这一处，不抄第二份。
     const sectionHtml = (): string => {
       const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
       assertHtmlSize(html);
       return html;
     };
+    // #872 · 页族装配（交付链缺的那一段）：数据与过程命令先按 `(命令，场景预设)` 解析页族，
+    // 装得上就用族页（`dist/<域>/pages/<族>.js` 的 `renderFamilyPage`）；族名未知／模块不在／
+    // 装配抛错 → 降级上面那份分节页，并在 stderr 记一条 note（不静默、退出码不变）。
+    // 体积门对两条路一视同仁：都走 `assertHtmlSize` —— 超限是内容缺陷，须响亮失败，不靠降级掩盖。
+    const familyHtml = help === null ? await renderFamilyHtml(key, params, env) : null;
+    assertHtmlSize(familyHtml ?? '');
+    if (help === null && familyHtml === null) note('未命中页族，落 21 模板分节页：' + key);
+    const pageHtml = (): string => familyHtml ?? sectionHtml();
     // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
     // 落点意图＝ `{dir: <库目录>/home_manager_html/, stem: <命令中文名>_<场景 id>}`（stem 照票 2 契约），
     // 时间戳与同秒递补由共用件钉死。给了 `--html` 则显式优先（只落一份、单回执，照账单／卡路里先例）。
@@ -228,7 +236,7 @@ async function main() {
       delivery = deliverHtml({
         ...(o.html === undefined ? {} : { explicit: o.html }),
         target: landing,
-        html: sectionHtml(),
+        html: pageHtml(),
       });
       note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
     } else {

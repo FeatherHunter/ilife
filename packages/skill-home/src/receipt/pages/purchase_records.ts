@@ -83,6 +83,20 @@ function summaryOf(env: Envelope): string {
   return '<div class="receipt-summary"><p>共' + items.length + '条购买记录，按时间倒序排列</p></div>';
 }
 
+/** 记录表：同一天两笔购买时行文逐字相同，逐行给序号让每行自解释（也免了两行一模一样的字）。
+ *  口径：行值只从信封取（`items[].name` 形如「购买2026-08-15」），不自己造数。 */
+function purchaseTable(env: Envelope): string {
+  const data = env.data as Record<string, unknown>;
+  const items = Array.isArray((data as { items?: unknown }).items)
+    ? (data as { items: Record<string, unknown>[] }).items
+    : [];
+  if (env.shape === 'receipt' || !items.length) return '';
+  const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>'
+    + escapeHtml(String(it.name ?? '').replace(/^购买/, '')) + '</td></tr>').join('');
+  return '<div class="fam-content"><table><thead><tr><th>序号</th><th>购买日</th></tr></thead><tbody>'
+    + rows + '</tbody></table><p>退货窗口按购买日加窗口天数推算；价格与渠道进物品详情看。</p></div>';
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
@@ -91,7 +105,9 @@ export function renderFamilyPage(env: Envelope): string {
     + '<span>购买记录</span></div>';
   const content = head
     + summaryOf(env)
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    + (env.shape === 'receipt'
+      ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+      : purchaseTable(env))
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

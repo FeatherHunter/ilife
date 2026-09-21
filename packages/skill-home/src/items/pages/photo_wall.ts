@@ -65,6 +65,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.lead{color:#6e6e73;font-size:14px}'
 + '.sec{background:#fff;border-radius:16px;padding:18px;margin:14px 0}'
 + '.sec h2{font-size:17px;margin-bottom:10px}'
++ 'summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
 + '.sec h3{font-size:15px;margin:12px 0 8px}'
 + '.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}'
 + '.chip{border:1.5px solid #d2d2d7;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer;min-height:44px}'

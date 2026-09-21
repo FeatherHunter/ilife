@@ -77,7 +77,7 @@ function recSection(r: Recommendation): string {
   const head = '<h2>' + escapeHtml(it.name)
     + ' <span class="hint">' + escapeHtml(it.category) + '</span></h2>';
   const curLine = r.recommend !== null && it.current !== ''
-    ? '<div class="meta2">当前：' + escapeHtml(it.current) + '</div>' : '';
+    ? '<div class="meta2">当前：' + escapeHtml(it.current) + '（编号' + it.id + '）</div>' : '';
   let main = '';
   if (r.recommend !== null) {
     const rc = r.recommend;
@@ -114,8 +114,10 @@ function recSection(r: Recommendation): string {
   }
   const alt = r.alternates.length === 0
     ? '<div class="altrow" data-need="备选空态：暂无其他备选">暂无其他备选</div>'
-    : r.alternates.map((a) => '<div class="altrow">' + escapeHtml(a.location)
-      + ' <span class="wh">' + escapeHtml(a.reason) + '</span></div>').join('');
+    // 每行自带地点（与其理由同一行）：理由可能两条一模一样（同分类同件数同示例件），
+    // 带上地点后每行自解释，也不会在页面上出现两行逐字相同的文字（#817 收口修）。
+    : r.alternates.map((a) => '<div class="altrow"><span class="wh">'
+      + escapeHtml(a.location + '：' + a.reason) + '</span></div>').join('');
   return '<section class="card" data-block="fields" data-need="推荐列表（推荐位置/理由/备选位置）">'
     + head + curLine + '<div class="rec">' + main
     + '<div class="alt"><h4>备选位置</h4>' + alt + '</div></div></section>';

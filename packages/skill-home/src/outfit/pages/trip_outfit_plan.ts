@@ -84,8 +84,9 @@ const CSS = '<style>'
   + '.of-days{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}'
   + '.of-dayhead{font-size:15px;font-weight:700;color:#4a3d28;margin:6px 0;overflow-wrap:anywhere}'
   + '.of-temp{font-size:13px;color:#8a744f;margin-bottom:8px;overflow-wrap:anywhere}'
-  + '.of-slot{display:flex;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px dashed #e4d9c2;min-height:44px;box-sizing:border-box}'
-  + '.of-slot:last-child{border-bottom:none}'
+  + '.of-slots,.of-confs,.of-lugs{width:100%;border-collapse:collapse}'
+  + '.of-slots th,.of-slots td,.of-confs td,.of-lugs td{padding:8px 4px;border-bottom:1px dashed #e4d9c2;min-height:44px;text-align:left;vertical-align:middle;box-sizing:border-box}'
+  + '.of-slots tr:last-child th,.of-slots tr:last-child td,.of-lugs tr:last-child td{border-bottom:none}'
   + '.of-part{flex:0 0 52px;background:#8a744f;color:#fff;border-radius:8px;font-size:12px;text-align:center;padding:6px 0}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-conf{background:#fdeee3;border:1px solid #f5d9c4;border-radius:12px;padding:10px 14px;font-size:13px;color:#b4552d;margin:6px 0;overflow-wrap:anywhere}'
@@ -130,10 +131,11 @@ export function renderFamilyPage(env: Envelope): string {
       + '</div><div id="ofDay">'
       + '<div class="of-dayhead">第' + first.day + '天 ' + escapeHtml(first.style) + '</div>'
       + '<div class="of-temp">温度' + escapeHtml(first.tempDesc) + '</div>'
-      + SLOT_ORDER.filter((k) => first.slots[k]).map((k) => '<div class="of-slot"><span class="of-part">'
-        + SLOT_LABEL[k] + '</span><span class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</span></div>').join('')
-      + (first.reason ? '<div class="of-temp">' + escapeHtml(first.reason) + '</div>' : '')
-      + '</div>'
+      + '<table class="of-slots">'
+      + SLOT_ORDER.filter((k) => first.slots[k]).map((k) => '<tr><th class="of-part">'
+        + SLOT_LABEL[k] + '</th><td class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</td></tr>').join('')
+      + (first.reason ? '<tr><td class="of-temp" colspan="2">' + escapeHtml(first.reason) + '</td></tr>' : '')
+      + '</table></div>'
       + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">采纳这天</button>'
       + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div>';
   }
@@ -141,13 +143,13 @@ export function renderFamilyPage(env: Envelope): string {
 
   let confHtml = '<div class="of-card"><h2>冲突提示</h2>';
   confHtml += conflicts.length
-    ? conflicts.map((h) => '<div class="of-conf">' + escapeHtml(h) + '，可补录或加入购物清单</div>').join('')
+    ? '<table class="of-confs">' + conflicts.map((h) => '<tr><td class="of-conf">' + escapeHtml(h) + '，可补录或加入购物清单</td></tr>').join('') + '</table>'
     : '<div class="of-empty">衣物数量充足，无重复冲突</div>';
   confHtml += '</div>';
 
   let lugHtml = '<div class="of-card"><h2>行李汇总</h2>';
   lugHtml += luggage.length
-    ? '<div class="of-lug">' + luggage.map((x) => '<span>' + escapeHtml(x.name + '穿' + x.days + '天') + '</span>').join('') + '</div>'
+    ? '<table class="of-lugs">' + luggage.map((x) => '<tr><td class="of-nm">' + escapeHtml(x.name) + '</td><td class="of-temp">穿' + x.days + '天</td></tr>').join('') + '</table>'
       + '<div class="of-actions"><button class="of-btn" id="ofLug">生成行李清单</button></div>'
     : '<div class="of-empty">暂无</div>';
   lugHtml += '</div>';
