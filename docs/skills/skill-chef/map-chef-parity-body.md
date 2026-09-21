@@ -139,7 +139,7 @@ A3-1 老模板**不像素复刻**｜A5-3 `#433`「回执页共用件提升公共
 <!-- PLAN-ROWS-START -->
 | 1 | [[规格] skill-chef 形状票：历史域试点 ＋ 派生链 ＋ 配置键 html.sceneDir](https://github.com/FeatherHunter/ilife/issues/766) | task | — |
 | 2 | [[规格] 域与唤醒词资产单一源：老 scenes/*.yaml → 仓内 typed 资产 ＋ 50 词／48 卡对账表](https://github.com/FeatherHunter/ilife/issues/767) | task | — |
-| 3 | [[原型] 页面族：过程型／结果型／回执型三族 ＋ 双端自适应（先裁形状再铺开）](https://github.com/FeatherHunter/ilife/issues/768) | prototype | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) |
+| 3 | [[原型] 页面族与技术质量门：三族页面 ＋ 双端自适应 ＋ 机审六列 ＋ 代码层 UI 审查清单（先裁形状再铺开）](https://github.com/FeatherHunter/ilife/issues/768) | prototype | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) |
 | 4 | [[研究] 老库 schema 与写侧字段对账：48 卡逐卡列出要写的表与字段](https://github.com/FeatherHunter/ilife/issues/769) | research | — |
 | 5 | [查看域：端到端搬迁（8 卡／5 组，纯读）](https://github.com/FeatherHunter/ilife/issues/770) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) |
 | 6 | [搜索筛选域：端到端搬迁（13 卡；含 5 张待开发 ＋ 3 条路由错位）](https://github.com/FeatherHunter/ilife/issues/771) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/766) ＋ [票 2](https://github.com/FeatherHunter/ilife/issues/767) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/768) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/839) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/840) |
@@ -165,7 +165,9 @@ A3-1 老模板**不像素复刻**｜A5-3 `#433`「回执页共用件提升公共
 
 **二轮补票（2026-09-21，并发设计版）**：按「目标 → 缺口 → 票」重推，补三张——**票 16 整包落位**（从「最后收口」改成**前置**，理由见「并发与写集」）、**票 17 运行面沙箱**、**票 18 说明面同步**；并给票 1 加「加域零改共用位」判据、票 3 扩容成「页面族 ＋ 页面质量门」（机审六列 ＋ 代码层 UI 审查清单）、7 张域票各加三条口径（过程性 vision 审查／册子片段／副本库沙箱）、票 12 加「点击实测」。
 
-**下一步**：开 frontier 五张——票 1 形状票、票 2 资产单一源、票 17 运行面沙箱、票 14／15 两张裁定（等你裁）；票 16 等票 1 过关后立刻开（它是域票的并发前提）。
+**收口校验（2026-09-21，第三／四轮机）**：新增**全图校验器械** `docs/skills/skill-chef/t765-verify.mjs`（一条命令跑八项：拓扑无环／子议题数／阻塞边逐票对账／每张票的票面形状／无残留占位／无字面 `\n`／地图正文与计划表行数／当前 frontier）。最后一跑 **PASS**：18 张票、65 条阻塞边、无环、计划表 18 行、`closed/total = 1/18`。同轮修掉补票时自己引入的三类不一致——① 新票（票 16／17／18）的产物文件名误用票序，已改票号（`t839-`／`t840-`／`t841-`）；② 7 张域票的 `<票号>` 占位落地为真票号；③ 票 12 的册子片段清单、票 14／15 的占位与票序文件名清干净；票 3 改名以承载「技术质量门」。
+
+**下一步**：开 frontier 五张——**形状票**（`#766`）、**域与唤醒词资产单一源**（`#767`）、**运行面沙箱**（`#840`）、两张裁定（[老库 NOT NULL 与卡面「选填」](https://github.com/FeatherHunter/ilife/issues/818)／[数据库层两处全局缺口](https://github.com/FeatherHunter/ilife/issues/819)，**等你裁**）。形状票过关 → 立刻开**整包落位**（`#839`，域票的并发前提）→ 再开 7 张域票（互不相交，可全并行）。重跑校验一律：`node docs/skills/skill-chef/t765-verify.mjs --map 765`。
 
 ## 用户原话采访区（verbatim，一字未改；AI 执行先读这里）
 

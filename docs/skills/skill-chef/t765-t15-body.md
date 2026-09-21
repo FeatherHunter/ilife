@@ -15,7 +15,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t765-t15-db-check.mjs` → 决议文件两节齐（各带「落点票号」与「正反例读数」）且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 819 -- node docs/skills/skill-chef/t819-db-check.mjs` → 决议文件两节齐（各带「落点票号」与「正反例读数」）且 exit 0
 - 反例（必跑）：删掉决议文件里任一节 → 同一条命令 exit 1 并点名缺哪一节
 
 ## 不许动的东西
@@ -27,8 +27,8 @@
 
 ## 交付物路径
 
-- 决议：`docs/skills/skill-chef/t765-t15-db-全局缺口决议.md`（G1／G2 两节，各带落点与正反例读数）
-- 校验：`docs/skills/skill-chef/t765-t15-db-check.mjs`
+- 决议：`docs/skills/skill-chef/t819-db-全局缺口决议.md`（G1／G2 两节，各带落点与正反例读数）
+- 校验：`docs/skills/skill-chef/t819-db-check.mjs`
 - 代码（若 G2 裁「统一开」）：`packages/skill-chef/src/fetch/db.ts` 一处
 
 ## 遗留出口

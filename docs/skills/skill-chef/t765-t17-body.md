@@ -4,14 +4,14 @@
 
 ## 目标
 
-1. 交一个**沙箱器械**：给定票号，把真实库复制到 `.scratch/t<票号>/chef_data.db`（源只读、写只在副本），并把配置指向该副本（`db.dir`）；跑完不动真库。
+1. 交一个**沙箱器械**：给定票号，把真实库复制到 `.scratch/t840/chef_data.db`（源只读、写只在副本），并把配置指向该副本（`db.dir`）；跑完不动真库。
 2. 把**用户日常使用**这条路径接上：本机配置 `~/.ilife/chef.yaml` 的 `db.dir` 指到真实库所在目录，并给出**端到端读数**——读到你库里那道真实菜谱（菜名 ＋ 食材数 ＋ 步骤数），证明接得上老数据。
 3. 写明规矩：**一份副本只归一张票**（并行票不得共用副本），真库全程只读。
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t17-沙箱.mjs --ticket <本票号>` → 打印 `副本=<路径> 字节=… 真库 mtime 未变` 且 exit 0
-- 正例（端到端读数）：`node tooling/run-locked.mjs --ticket <本票号> -- node packages/skill-chef/dist/cli/cmd_read.js chef.recipe.view --params '{"name":"<库里那道菜>"}'` 返回真实字段（非空、非占位）
+- 正例：`node tooling/run-locked.mjs --ticket 840 -- node docs/skills/skill-chef/t840-沙箱.mjs --ticket 840` → 打印 `副本=<路径> 字节=… 真库 mtime 未变` 且 exit 0
+- 正例（端到端读数）：`node tooling/run-locked.mjs --ticket 840 -- node packages/skill-chef/dist/cli/cmd_read.js chef.recipe.view --params '{"name":"<库里那道菜>"}'` 返回真实字段（非空、非占位）
 - 反例（必跑）：把沙箱指向真库路径（不复制）→ 器械必须拒绝并 exit 1
 
 ## 不许动的东西
@@ -22,7 +22,7 @@
 
 ## 交付物路径
 
-- 器械与证据：`docs/skills/skill-chef/t17-沙箱.mjs`、`docs/skills/skill-chef/t17-运行面.md`（端到端读数 ＋ 真库只读证据 ＋ 本机配置值）
+- 器械与证据：`docs/skills/skill-chef/t840-沙箱.mjs`、`docs/skills/skill-chef/t840-运行面.md`（端到端读数 ＋ 真库只读证据 ＋ 本机配置值）
 - 本机配置：`~/.ilife/chef.yaml` 的 `db.dir`（取值写进上面那份文档）
 
 ## 遗留出口

@@ -11,9 +11,9 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node --test "packages/skill-chef/test/*.test.mjs"` 全绿，且 HTML 快照 changed=0（**行为不变的硬证据**）
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- pnpm gen:check` exit 0，且生成物里 10 个域齐
-- 正例：`node docs/skills/skill-chef/t16-落位对账.mjs` → 打印 `域 10／共用位残留 0／对账偏差 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 839 -- node --test "packages/skill-chef/test/*.test.mjs"` 全绿，且 HTML 快照 changed=0（**行为不变的硬证据**）
+- 正例：`node tooling/run-locked.mjs --ticket 839 -- pnpm gen:check` exit 0，且生成物里 10 个域齐
+- 正例：`node docs/skills/skill-chef/t839-落位对账.mjs` → 打印 `域 10／共用位残留 0／对账偏差 0` 且 exit 0
 - 反例（必跑）：从某个域目录里删掉一条命令声明 → `pnpm gen:check` 必须 exit 1 并点名该域
 
 ## 不许动的东西
@@ -27,8 +27,8 @@
 ## 交付物路径
 
 - 代码：`packages/skill-chef/src/<9 个域>/**`、`packages/skill-chef/src/{cli,fetch,policy,render}/**`（逐个定去留后的形状）
-- 文档：`docs/skills/skill-chef/t16-落位对账.md`（影响清单／结构设计／交付对账 ＋ 四个工种目录的去留裁定）
-- 器械：`docs/skills/skill-chef/t16-落位对账.mjs`
+- 文档：`docs/skills/skill-chef/t839-落位对账.md`（影响清单／结构设计／交付对账 ＋ 四个工种目录的去留裁定）
+- 器械：`docs/skills/skill-chef/t839-落位对账.mjs`
 
 ## 遗留出口
 

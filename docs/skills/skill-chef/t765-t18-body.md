@@ -10,7 +10,7 @@
 
 ## 验收命令
 
-- 正例：`node tooling/run-locked.mjs --ticket <本票号> -- node docs/skills/skill-chef/t18-登记面对账.mjs` → 打印 `SKILL.md 词 50／HELP 待开发 0／不一致 0` 且 exit 0
+- 正例：`node tooling/run-locked.mjs --ticket 841 -- node docs/skills/skill-chef/t841-登记面对账.mjs` → 打印 `SKILL.md 词 50／HELP 待开发 0／不一致 0` 且 exit 0
 - 反例（必跑）：手工从 `SKILL.md` 快照里删一条词 → 同一条命令必须 exit 1 并点名
 
 ## 不许动的东西
@@ -23,7 +23,7 @@
 ## 交付物路径
 
 - 代码与资产：`packages/skill-chef/SKILL.md`（快照区）、`packages/skill-chef/src/help/sceneData.ts`（生成物，经生成器重出）、`packages/skill-chef/scripts/gen-help-assets.mjs`（若需改声明表）
-- 器械与证据：`docs/skills/skill-chef/t18-登记面对账.mjs`、`docs/skills/skill-chef/t18-登记面.md`
+- 器械与证据：`docs/skills/skill-chef/t841-登记面对账.mjs`、`docs/skills/skill-chef/t841-登记面.md`
 
 ## 遗留出口
 
