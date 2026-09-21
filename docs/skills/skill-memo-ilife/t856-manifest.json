@@ -1,0 +1,358 @@
+{
+  "batch": "t856-备忘录验收形制",
+  "madeAt": "2026-09-21",
+  "source": "packages/skill-memo-ilife/src/help/booklet.ts（BOOKLET_ROWS 34 行；本清单为机械派生，file＝主体＋.html）",
+  "naming": "发布名＝清单 rows[].file（最终名，全仓只此一处算；墙／索引／链路表／机审名单都只读它）",
+  "ledger": "docs/skills/skill-memo-ilife/t856-读数日志.json（每批读数版本化）",
+  "rowCount": 34,
+  "familyCounts": "通用回执19／列表查询9／报告2／向导4",
+  "readings": {
+    "格数": "34（30 结果页＋4 过程页）",
+    "族分布": "通用回执19／列表查询9／报告2／向导4",
+    "口径提醒": "清单行内字样不做权威；权威为本段 readings＋盘上实测（#825 §六第 1 坑）",
+    "预演说明": "本票为形制冻结＋生成器交付，产物内容归 8 张域票；收口 #834 在 34 格真产物上重跑，本批读数不代收口读数"
+  },
+  "notShipped": [],
+  "rows": [
+    {
+      "seq": 1,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "记备忘",
+      "title": "记备忘",
+      "file": "记备忘.html",
+      "key": "memo.create",
+      "check": "新建回执可点开"
+    },
+    {
+      "seq": 2,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "改备忘",
+      "title": "改备忘",
+      "file": "改备忘.html",
+      "key": "memo.update",
+      "check": "修改回执可点开"
+    },
+    {
+      "seq": 3,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "删备忘",
+      "title": "删备忘",
+      "file": "删备忘.html",
+      "key": "memo.remove",
+      "check": "删除回执可点开"
+    },
+    {
+      "seq": 4,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "备忘改分类",
+      "title": "备忘改分类",
+      "file": "备忘改分类.html",
+      "key": "memo.update",
+      "check": "单条改分类回执可点开"
+    },
+    {
+      "seq": 5,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "备忘改子分类",
+      "title": "备忘改子分类",
+      "file": "备忘改子分类.html",
+      "key": "memo.update",
+      "check": "改子分类回执可点开"
+    },
+    {
+      "seq": 6,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "备忘改分类",
+      "title": "备忘改分类-批量",
+      "file": "备忘改分类-批量.html",
+      "key": "memo.batch",
+      "check": "批量改分类结果可点开"
+    },
+    {
+      "seq": 7,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "搜备忘",
+      "title": "搜备忘",
+      "file": "搜备忘.html",
+      "key": "memo.search",
+      "check": "关键词结果可点开"
+    },
+    {
+      "seq": 8,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "查备忘",
+      "title": "查备忘",
+      "file": "查备忘.html",
+      "key": "memo.search",
+      "check": "别名搜索结果可点开"
+    },
+    {
+      "seq": 9,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "看备忘",
+      "title": "看备忘",
+      "file": "看备忘.html",
+      "key": "memo.detail",
+      "check": "单条详情可点开"
+    },
+    {
+      "seq": 10,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "按时间搜备忘",
+      "title": "按时间搜备忘",
+      "file": "按时间搜备忘.html",
+      "key": "memo.search",
+      "check": "时间范围结果可点开"
+    },
+    {
+      "seq": 11,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "查心愿",
+      "title": "查心愿",
+      "file": "查心愿.html",
+      "key": "memo.wish",
+      "check": "心愿列表可点开"
+    },
+    {
+      "seq": 12,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "查打卡",
+      "title": "查打卡",
+      "file": "查打卡.html",
+      "key": "memo.search",
+      "check": "打卡列表可点开"
+    },
+    {
+      "seq": 13,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "查情绪",
+      "title": "查情绪",
+      "file": "查情绪.html",
+      "key": "memo.search",
+      "check": "情绪列表可点开"
+    },
+    {
+      "seq": 14,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "记提醒",
+      "title": "记提醒",
+      "file": "记提醒.html",
+      "key": "memo.create",
+      "check": "记提醒回执可点开"
+    },
+    {
+      "seq": 15,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "设提醒",
+      "title": "设提醒",
+      "file": "设提醒.html",
+      "key": "memo.reminder",
+      "check": "设提醒回执可点开"
+    },
+    {
+      "seq": 16,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "看提醒",
+      "title": "看提醒",
+      "file": "看提醒.html",
+      "key": "memo.remind",
+      "check": "有效提醒列表可点开"
+    },
+    {
+      "seq": 17,
+      "family": "列表查询",
+      "kind": "结果型·列表页",
+      "wake": "查已提醒备忘",
+      "title": "查已提醒备忘",
+      "file": "查已提醒备忘.html",
+      "key": "memo.remind",
+      "check": "已提醒列表可点开"
+    },
+    {
+      "seq": 18,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "完成心愿",
+      "title": "完成心愿",
+      "file": "完成心愿.html",
+      "key": "memo.update",
+      "check": "完成心愿结果可点开"
+    },
+    {
+      "seq": 19,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "心愿排期",
+      "title": "心愿排期",
+      "file": "心愿排期.html",
+      "key": "memo.wish",
+      "check": "心愿排期结果可点开"
+    },
+    {
+      "seq": 20,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "记心愿",
+      "title": "记心愿",
+      "file": "记心愿.html",
+      "key": "memo.create",
+      "check": "记心愿回执可点开"
+    },
+    {
+      "seq": 21,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "删心愿",
+      "title": "删心愿",
+      "file": "删心愿.html",
+      "key": "memo.remove",
+      "check": "删心愿回执可点开"
+    },
+    {
+      "seq": 22,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "改心愿",
+      "title": "改心愿",
+      "file": "改心愿.html",
+      "key": "memo.update",
+      "check": "改心愿回执可点开"
+    },
+    {
+      "seq": 23,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "记打卡",
+      "title": "记打卡",
+      "file": "记打卡.html",
+      "key": "memo.create",
+      "check": "记打卡回执可点开"
+    },
+    {
+      "seq": 24,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "删打卡",
+      "title": "删打卡",
+      "file": "删打卡.html",
+      "key": "memo.remove",
+      "check": "删打卡回执可点开"
+    },
+    {
+      "seq": 25,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "改打卡",
+      "title": "改打卡",
+      "file": "改打卡.html",
+      "key": "memo.update",
+      "check": "改打卡回执可点开"
+    },
+    {
+      "seq": 26,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "记情绪",
+      "title": "记情绪",
+      "file": "记情绪.html",
+      "key": "memo.create",
+      "check": "记情绪回执可点开"
+    },
+    {
+      "seq": 27,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "删情绪",
+      "title": "删情绪",
+      "file": "删情绪.html",
+      "key": "memo.remove",
+      "check": "删情绪回执可点开"
+    },
+    {
+      "seq": 28,
+      "family": "通用回执",
+      "kind": "结果型·回执页",
+      "wake": "改情绪",
+      "title": "改情绪",
+      "file": "改情绪.html",
+      "key": "memo.update",
+      "check": "改情绪回执可点开"
+    },
+    {
+      "seq": 29,
+      "family": "报告",
+      "kind": "结果型·报告页",
+      "wake": "备忘录同步",
+      "title": "备忘录同步",
+      "file": "备忘录同步.html",
+      "key": "memo.sync",
+      "check": "对账报告可点开"
+    },
+    {
+      "seq": 30,
+      "family": "报告",
+      "kind": "结果型·报告页",
+      "wake": "首次使用",
+      "title": "首次使用",
+      "file": "首次使用.html",
+      "key": "memo.init",
+      "check": "初始化报告可点开"
+    },
+    {
+      "seq": 31,
+      "family": "向导",
+      "kind": "过程型·向导页",
+      "wake": "备忘改分类",
+      "title": "备忘改分类-批量-向导",
+      "file": "备忘改分类-批量-向导.html",
+      "key": "memo.batch",
+      "check": "批量勾选过程可点开"
+    },
+    {
+      "seq": 32,
+      "family": "向导",
+      "kind": "过程型·向导页",
+      "wake": "完成心愿",
+      "title": "完成心愿-向导",
+      "file": "完成心愿-向导.html",
+      "key": "memo.wish",
+      "check": "完成勾选过程可点开"
+    },
+    {
+      "seq": 33,
+      "family": "向导",
+      "kind": "过程型·向导页",
+      "wake": "心愿排期",
+      "title": "心愿排期-向导",
+      "file": "心愿排期-向导.html",
+      "key": "memo.wish",
+      "check": "排期勾选过程可点开"
+    },
+    {
+      "seq": 34,
+      "family": "向导",
+      "kind": "过程型·向导页",
+      "wake": "首次使用",
+      "title": "首次使用-向导",
+      "file": "首次使用-向导.html",
+      "key": "memo.init",
+      "check": "首次使用引导过程可点开"
+    }
+  ]
+}
