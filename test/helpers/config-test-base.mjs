@@ -1,35 +1,37 @@
 /**
- * 配置件测试基座（#694 / #675 解决评论的「替代护栏」）。
+ * 配置件测试基座（#694／#675 的「替代护栏」；**#763 换通道**）。
  *
- * 删掉五个写库开关（`*_FORCE_PROD`）之后，「跑测试误写真实数据」的隔离靠两件事：
- *   ① 测试一律把 `ILIFE_CONFIG_DIR` 指到临时目录 —— 技能因此读不到真实配置；
- *   ② **测试基座强制设置它、缺了直接报错** —— 把「忘了配」从静默危险变成响亮失败。
+ * 「跑测试误写真实数据」的隔离靠两件事：
+ *   ① 测试一律把**家目录**（Windows `USERPROFILE`／POSIX `HOME`）指到临时目录 —— 技能因此读不到真实配置
+ *      （配置落在 `<家>/.ilife/<技能>.yaml`；生产侧算落点的那一行一个字不改）；
+ *   ② **测试基座强制接管家目录、建完当场自证** —— 把「忘了配」从静默危险变成响亮失败。
  *
- * 本文件是第 ② 条的落点：`setupConfigTestBase()` 设完当场自证（自证不通过即抛）。
- * 配置件自己另有一道同向的门：跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` 即抛
- * `CONFIG_TEST_ISOLATION_MISSING`（见 `src/config/dirs.ts`），两条一起把口子堵死。
+ * 本文件是第 ② 条的落点：`setupConfigTestBase()` 建临时家目录 ＋ 接管 ＋ 自证；`requireConfigTestBase()`
+ * 回当刻生效的家目录（缺隔离即抛）。生产侧另有一道同向的门：跑在 node 测试运行器里却要落到**真实**
+ * 家目录时抛 `CONFIG_TEST_ISOLATION_MISSING`（见 `packages/base-link-core/src/config/dirs.ts`）；
+ * 第三道是真实树的逐字节快照门禁（`tooling/check-real-home-untouched.mjs`）——三道一起把口子堵死。
  */
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { configDirOf, requireIsolatedHome, useHome } from './home-test-base.mjs';
 
-/** 位置覆盖变量的名字（与 `src/config/dirs.ts` 的 `CONFIG_DIR_ENV` 同值）。 */
-export const CONFIG_DIR_ENV = 'ILIFE_CONFIG_DIR';
+export { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from './home-test-base.mjs';
 
-/** 缺了就报错：调用方必须已经拿到一个临时配置目录。 */
+/** 缺隔离就报错：调用方必须已经拿到一条临时的家目录。 */
 export function requireConfigTestBase() {
-  const dir = process.env[CONFIG_DIR_ENV];
-  if (typeof dir !== 'string' || dir.trim() === '') {
-    throw new Error('测试基座缺 ' + CONFIG_DIR_ENV
-      + '：测试一律指向临时目录，缺了直接报错（#675 替代护栏），不许落到真实家目录');
-  }
-  return dir;
+  return requireIsolatedHome(homedir());
 }
 
-/** 开一个独占临时配置目录并接管 `ILIFE_CONFIG_DIR`；返回目录与清理函数。 */
+/** 开一条独占临时**家目录**并接管当刻进程；返回家目录与清理函数。
+ *
+ *  配置目录（`<家>/.ilife/`）**一并建出来**：这是**生产**的首次落点（`loadConfig()` 的
+ *  `ensureConfigDirs()` 就建它），用例可以直接往 `<家>/.ilife/<技能>.yaml` 里摆半份坏文件
+ *  （B4～B7 那族），不必每个用例自己先建目录。 */
 export function setupConfigTestBase() {
-  const dir = mkdtempSync(join(tmpdir(), 'ilife-config-test-'));
-  process.env[CONFIG_DIR_ENV] = dir;
+  const dir = mkdtempSync(join(tmpdir(), 'ilife-home-test-'));
+  mkdirSync(configDirOf(dir), { recursive: true });
+  useHome(dir);
   requireConfigTestBase(); // 设完当场自证：读不回来就是基座自己坏了
   return {
     dir,

@@ -33,8 +33,9 @@ import {
 } from '../dist/fetch/body.js';
 import { buildBodyCompositionView } from '../dist/body/bodyPlate.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -102,7 +103,7 @@ function sqlReadout(dir) {
 
 function runRead(dir, params) {
   const args = params === undefined ? [BIN, KEY] : [BIN, KEY, '--params', JSON.stringify(params)];
-  return spawnSync(NODE_BIN, args, { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  return spawnSync(NODE_BIN, args, { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
 }
 
 test('#398 口径：读侧来源词 = 三值 ＋ all；三个入库来源在列、all 不在列', () => {

@@ -4,13 +4,33 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
-// #695：落点改由配置文件决定 —— `ILIFE_CONFIG_DIR` 指向独占临时目录，数据目录＝`<它>/data/`。
+// #763：隔离＝把**家目录**指到独占临时目录 —— 配置落 `<它>/.ilife/home.yaml`，数据目录＝`<它>/.ilife/data/`。
 let CFG = '';
-const dataDir = () => join(CFG, 'data');
+const dataDir = () => join(configDirOf(CFG), 'data');
+
+/**
+ * #763 护栏探针：只调 `resolveConfigDir()` 的子进程（**不碰盘**）。「忘了注入」这一档＝把家目录两格
+ * **显式设成账号那一份**（不是删格：实测 win32 上删掉 `USERPROFILE`，子进程仍会拿到父进程当刻那一格）。
+ * 反向对照经 `extraEnv` 把两格指到临时目录。不拿技能命令做「缺隔离」实验（那条路一旦护栏失效就会真写）。
+ */
+const DIRS_URL = pathToFileURL(join(here, '..', '..', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+const REAL_HOME = realHomeDir().dir;
+const HOME_ENV_CAPS = ['USERPROFILE', 'HOME'];
+function probeGuard(extraEnv = {}) {
+  const code = 'const m = await import(' + JSON.stringify(DIRS_URL) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const env = { ...process.env };
+  for (const cap of HOME_ENV_CAPS) env[cap] = REAL_HOME;
+  env.NODE_TEST_CONTEXT = 'child-v8';
+  Object.assign(env, extraEnv);
+  return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
+}
 
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
@@ -24,7 +44,7 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) } });
 }
 const P = (o) => JSON.stringify(o);
 
@@ -106,10 +126,12 @@ describe('居家唯一出口 cmd_read（21 键全票）', () => {
     assert.equal(run(['home.item.search', '--params', '[]']).status, 2);
     assert.equal(run(['home.item.search', '--timeout', 'abc']).status, 2);
     assert.equal(run(['nope']).status, 3);
-    // #695：写库开关没了，「忘了配」改成响亮失败——配置件在测试运行器里缺 `ILIFE_CONFIG_DIR` 即抛。
-    const nope = run(['home.item.search'], { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: 'child-v8' });
-    assert.equal(nope.status, 1, '测试进程缺隔离 ⇒ exit 1（stderr：' + nope.stderr + '）');
-    assert.match(nope.stderr, /测试缺隔离/);
+    // #763：护栏改「探针式」——只调 `resolveConfigDir()` 的子进程，家目录两格设成真实那一份、必须抛。
+    const probe = probeGuard();
+    assert.equal(probe, 'THREW:CONFIG_TEST_ISOLATION_MISSING', '测试进程缺隔离 ⇒ 配置件抛（读数：' + probe + '）');
+    // 反向对照：家目录指到临时目录就照常算得出来（这道门只关「没注入家目录」）。
+    const fakeHome = mkdtempSync(join(tmpdir(), 'homecli-probe-'));
+    assert.equal(probeGuard({ USERPROFILE: fakeHome, HOME: fakeHome }), 'OK:' + configDirOf(fakeHome));
     const p = join(dataDir(), 'out.html');
     const r = run(['home.item.search', '--params', P({ name: '牛奶' }), '--html', p]);
     assert.equal(r.status, 0);

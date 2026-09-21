@@ -39,8 +39,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { MEASUREMENT_FIELDS } from '../dist/fetch/body.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -121,7 +122,7 @@ function mkEmptyDb() {
 /** 路由示例（全量表）：`calorie.view.body-measure --params '{"days":90}'`（不带部位）。 */
 function readFullTable(dir) {
   const r = spawnSync(NODE_BIN, [BIN, KEY, '--params', '{"days":90}'], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(r.status, 0, '全量表路由 exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
   return JSON.parse(r.stdout);
@@ -318,18 +319,18 @@ function readFullTableTrueExit(dir) {
   const shim = trueExitShim();
   if (shim !== null && process.platform === 'win32') {
     const r = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', shim, KEY, '--params', '{"days":90}'], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+      encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
     });
     return { r, via: 'shim' };
   }
   if (shim !== null) {
     const r = spawnSync(shim, [KEY, '--params', '{"days":90}'], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+      encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
     });
     return { r, via: 'shim' };
   }
   const r = spawnSync(NODE_BIN, [BIN, KEY, '--params', '{"days":90}'], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   return { r, via: 'bin' };
 }
@@ -390,7 +391,7 @@ test('#361 整页六项：doctype／charset／内联样式≥2KB／无外链／�
 test('#361 空库语义不变：无记录时仍 missing-data（exit 4），不编兜底页', () => {
   const dir = mkEmptyDb();
   const r = spawnSync(NODE_BIN, [BIN, KEY, '--params', '{"days":90}'], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(r.status, 4, '空库应阻断 exit 4');
   assert.equal(r.stdout, '', '空库 stdout 纯净');

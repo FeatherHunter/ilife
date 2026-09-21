@@ -25,8 +25,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { Worker } from 'node:worker_threads';
-// #676 · 隔离基座：配置目录指到临时目录（`ILIFE_CONFIG_DIR`），落点跟随它。
-import { calorieConfigDir } from './helpers/config-test.mjs';
+// #676 · 隔离基座：家目录指到临时目录（配置落 `<家目录>/.life/calorie.yaml`），落点跟随它。
+import { calorieConfigDir, restoreHome, saveHome } from './helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIST_OUTPUT = resolve(HERE, '..', 'dist', 'output.js').replace(/\\/g, '/');
@@ -45,8 +45,9 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 const { dbDir, marker, sab } = workerData;
 const flag = new Int32Array(sab);
-process.env.ILIFE_CONFIG_DIR = dbDir;
-writeFileSync(join(dbDir, 'calorie.yaml'), 'db:\\n  dir: ' + JSON.stringify(dbDir) + '\\n', 'utf8');
+// #763 · 隔离走**家目录**（不是环境变量）：而家目录是**进程**级事实——线程改自己那份 env 副本
+// 改不动 os.homedir()，故由**主线程** calorieConfigDir(dbDir) 接管（配置落 <dbDir>/.life/calorie.yaml），
+// 5 条线程只读现成的那份配置（db.dir 仍指 dbDir 本身，产物照旧落 <dbDir>/calorie_html/）。
 Atomics.add(flag, 1, 1);
 while (Atomics.load(flag, 0) === 0) { Atomics.wait(flag, 0, 0, 20); }
 const pad = 'x'.repeat(1024 * 64);
@@ -62,6 +63,16 @@ try {
 
 test('#128 并发 5 路同键：落点互异且内容各即本次产物（零交叉）', async () => {
   const dbDir = tmpDbDir('conc');
+  const saved = saveHome();
+  calorieConfigDir(dbDir); // 主线程接管家目录＋落配置（线程共享进程的家目录事实）
+  try {
+    await runConcWorkers(dbDir);
+  } finally {
+    restoreHome(saved);
+  }
+});
+
+async function runConcWorkers(dbDir) {
   const sab = new SharedArrayBuffer(8);
   const flag = new Int32Array(sab);
   flag[0] = 0; flag[1] = 0;
@@ -98,12 +109,12 @@ test('#128 并发 5 路同键：落点互异且内容各即本次产物（零交
   }
   const files = readdirSync(join(dbDir, 'calorie_html')).filter((f) => /\.html?$/i.test(f));
   assert.equal(files.length, N, '目录产物数必须 == N（无覆盖丢失）：' + files.join(','));
-});
+}
 
 test('#128 独占语义不变：同一落点意图连写两次 → 两份产物，先写那份不被覆盖', async () => {
   const { deliverHtml } = await import('../dist/output.js');
   const dbDir = tmpDbDir('retry');
-  const old = process.env.ILIFE_CONFIG_DIR;
+  const saved = saveHome();
   calorieConfigDir(dbDir);
   try {
     const landing = { dir: join(dbDir, 'calorie_html'), stem: '唤醒词HELP' };
@@ -117,14 +128,14 @@ test('#128 独占语义不变：同一落点意图连写两次 → 两份产物�
     assert.equal(basename(a.path).startsWith('唤醒词HELP_'), true, '名字用调用者给的主体：' + basename(a.path));
     assert.equal(a.bytes, Buffer.byteLength('<html>ORIGINAL</html>', 'utf8'), 'bytes 为真实落盘字节数');
   } finally {
-    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
+    restoreHome(saved);
   }
 });
 
 test('#128 显式 --html 语义不变：逐字覆盖，不参与 _N 重试', async () => {
   const { deliverHtml } = await import('../dist/output.js');
   const dbDir = tmpDbDir('explicit');
-  const old = process.env.ILIFE_CONFIG_DIR;
+  const saved = saveHome();
   calorieConfigDir(dbDir);
   try {
     const explicit = join(dbDir, '自定义', '报告.html');
@@ -135,6 +146,6 @@ test('#128 显式 --html 语义不变：逐字覆盖，不参与 _N 重试', asy
     assert.equal(b.path, a.path, '显式覆盖须写同一路径（不派生 _2）');
     assert.equal(readFileSync(explicit, 'utf8'), '<html>B</html>', '后写覆盖前写');
   } finally {
-    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
+    restoreHome(saved);
   }
 });

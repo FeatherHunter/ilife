@@ -23,9 +23,10 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { buildHelpSceneData, COPY_RUNTIME_JS } from '../dist/render/index.js';
-import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { calorieConfigDir, configTestBase, restoreHome, saveHome } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -47,7 +48,7 @@ function run(dir, params, extraArgs = []) {
   const args = ['calorie.help.center'];
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   args.push(...extraArgs);
-  return spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  return spawnSync(NODE_BIN, [BIN, ...args], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
 }
 
 function runOk(dir, params, extraArgs = []) {
@@ -58,14 +59,12 @@ function runOk(dir, params, extraArgs = []) {
 
 /** #344 ① · 进程内调 `dispatch` 时，落盘目录来自配置（`dist/photo/help.js` 的
  *  `join(resolveDbDir(), …)`；#676 起唯一真相是配置文件，不再是环境变量）。这条用例必须**自己显式指**
- *  本用例的 tmp 配置目录：不指就等于把「往哪儿落盘」交给宿主机的 ambient 值——本机恰好设了才绿，
- *  CI（无隔离口）必红「测试缺隔离」。用后原样恢复，不留痕。 */
+ *  本用例的临时家目录：不指就等于把「往哪儿落盘」交给宿主机的 ambient 值——本机恰好指了才绿，
+ *  CI（缺隔离）必红「测试缺隔离」。用后两格家目录一起还原，不留痕。 */
 function withDbDir(dir, fn) {
-  const saved = process.env.ILIFE_CONFIG_DIR;
+  const saved = saveHome();
   calorieConfigDir(dir);
-  try { return fn(); } finally {
-    if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = saved;
-  }
+  try { return fn(); } finally { restoreHome(saved); }
 }
 
 function countOf(text, needle) {

@@ -29,8 +29,9 @@ import {
 } from '../dist/photo/helpCenter.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
@@ -200,7 +201,7 @@ check('② 照索引表一条照抄执行 → exit 0 ＋落盘整页（六项读
   const argv = row.pageCli.split(' ').slice(1);          // 去掉 `calorie-cmd-read` 前缀换成 CLI 路径
   const out = join(dir, 't368-precheck.html');
   const run = spawnSync(NODE_BIN, [BIN, ...argv, '--html', out], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(run.status, 0, '照抄执行未过：exit=' + run.status + ' stderr=' + run.stderr.slice(-300));
   const env = JSON.parse(run.stdout.trim());

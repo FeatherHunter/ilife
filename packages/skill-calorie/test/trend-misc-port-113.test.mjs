@@ -18,8 +18,9 @@ import { dispatch } from '../dist/cli/cmd_read.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL } from '../dist/cli/keys.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase, pinProcessClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 // #250 · 路由层窗口自本票起是**相对窗口**（今日／本周／最近 Nd…）：把「今天」钉到种子数据日，
 // 这些用例在种子库上才跑得通（与 `docs/research/t81-exec-smoke.mjs` 的快照同锚点）。
@@ -258,14 +259,14 @@ test('#113 无假数据：6 键空库一律 exit 4 且 stdout 纯净；lint/batc
     ['calorie.view.review-template', WIN],
   ];
   for (const [k, p] of missing) {
-    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = run(BIN, k, p, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.status, 4, k + ' 空库未阻断（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
     assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
     assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
   }
-  const r1 = run(BIN, 'calorie.view.lint-health', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r1 = run(BIN, 'calorie.view.lint-health', {}, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r1.status, 0, 'lint 空库应 exit 0：' + (r1.stderr || '').slice(0, 200));
-  const r2 = run(BIN, 'calorie.view.batch-import-preview', { items: [{ foodName: '米饭', calories: 130 }] }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r2 = run(BIN, 'calorie.view.batch-import-preview', { items: [{ foodName: '米饭', calories: 130 }] }, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r2.status, 0, 'preview 空库应 exit 0：' + (r2.stderr || '').slice(0, 200));
 });
 
@@ -280,14 +281,14 @@ test('#113 非法输入：window/group/items/date 非法即 exit 2', () => {
     ['calorie.view.nutrition-analysis', { start: '2026-09-06', end: '2026-09-05' }],
   ];
   for (const [k, p] of bad) {
-    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = run(BIN, k, p, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.status, 2, k + ' 非法输入未拒收（status=' + r.status + '）');
   }
 });
 
 test('#113 命名底座可用：热量趋势落盘＋回传一致＋产物为全文档', () => {
   const { dir } = mkPortDb();
-  const r = run(BIN, 'calorie.view.calorie-trend', WIN, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(BIN, 'calorie.view.calorie-trend', WIN, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 0, 'stderr=' + (r.stderr || '').slice(0, 300));
   const env = JSON.parse(r.stdout);
   const n = basename(env.data.output);

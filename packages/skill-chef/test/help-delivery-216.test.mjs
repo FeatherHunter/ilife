@@ -21,11 +21,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT } from 'base-paint/help-shell';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** 真消费者＝本包自己（与插件侧 `cliPath()` 解析到的那条路同形：`<包>/dist/cli/cmd_read.js`）。 */
@@ -38,9 +39,10 @@ const HELP_RE = /^私家大厨_HELP_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 const LOOKUP_RE = /^私家大厨_速查表_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 
 const mkTmp = (tag) => mkdtempSync(join(tmpdir(), 't216-' + tag + '-'));
-/** #695：隔离目录＝**配置目录**，数据目录＝它下面的 `data/`（默认配置 `db.dir` 空串＝按默认落点）。
- *  本文件的老断言把「隔离目录」当产物根用，故这一层换算只在路径助手上做一次。 */
-const dataOf = (cfgDir) => join(cfgDir, 'data');
+/** #763：`home` 是**家目录**，配置落 `<home>/.ilife/`、数据目录＝`<home>/.ilife/data/`
+ *  （默认配置 `db.dir` 空串＝按默认落点）。本文件的老断言把「隔离目录」当产物根用，
+ *  故这一层换算只在路径助手上做一次。 */
+const dataOf = (home) => join(configDirOf(home), 'data');
 const P = (o) => JSON.stringify(o);
 
 /** 本地时区零填充时间戳（与共用件同口径；测试侧**独立算一份**，不做同义反复）。 */
@@ -56,20 +58,20 @@ function stampWindow() {
   return [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((d) => localStamp(new Date(t + d * 1000)));
 }
 
-/** 真 spawn 出口：CLI 子进程，cwd ＝真消费者包，配置目录＝调用者给的隔离目录。 */
-function run(dbDir, args, envExtra) {
+/** 真 spawn 出口：CLI 子进程，cwd ＝真消费者包，`home` ＝调用者给的隔离**家目录**（配置与数据都在 `<home>/.ilife/`）。 */
+function run(home, args, envExtra) {
   return spawnSync(process.execPath, [CLI, ...args], {
     cwd: CONSUMER, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: dbDir, ...(envExtra || {}) },
+    env: { ...process.env, ...homeEnvOf(home), ...(envExtra || {}) },
   });
 }
-function runOk(dbDir, args, envExtra) {
-  const r = run(dbDir, args, envExtra);
+function runOk(home, args, envExtra) {
+  const r = run(home, args, envExtra);
   assert.equal(r.status, 0, 'exit 非 0：' + String(r.status) + ' / stderr=' + String(r.stderr));
   return JSON.parse(String(r.stdout));
 }
-const helpDirOf = (dbDir) => join(dataOf(dbDir), 'cook_html', 'help');
-const namesOf = (dbDir) => { try { return readdirSync(helpDirOf(dbDir)).sort(); } catch { return []; } };
+const helpDirOf = (home) => join(dataOf(home), 'cook_html', 'help');
+const namesOf = (home) => { try { return readdirSync(helpDirOf(home)).sort(); } catch { return []; } };
 
 test('#216 ① 缺省：落 `<库目录>/cook_html/help/私家大厨_HELP_<本地时间戳>.html` ＋ 绝对路径回执；不建库', () => {
   const db = mkTmp('default');
@@ -93,8 +95,9 @@ test('#216 ① 缺省：落 `<库目录>/cook_html/help/私家大厨_HELP_<本�
   // 本票病灶：说一句 help 不许把库建出来（DB 由 openChefDb 的 DDL 自愈建，282,624 B 那种）
   assert.equal(existsSync(join(dataOf(db), 'chef_data.db')), false, '看帮助不许建库');
   assert.deepEqual(readdirSync(dataOf(db)).sort(), ['cook_html'], '库目录里只许多出落点目录本身');
-  // #695：配置件是唯一真相——首次读就在配置目录里落一份默认（数据目录是它算出来的）。
-  assert.equal(existsSync(join(db, 'chef.yaml')), true, '首次读落一份默认配置');
+  // #763：配置件是唯一真相——首次读就在**家目录**下的配置目录里落一份默认（数据目录是它算出来的）。
+  assert.equal(existsSync(join(configDirOf(db), 'chef.yaml')), true, '首次读落一份默认配置');
+  assert.deepEqual(readdirSync(configDirOf(db)).sort(), ['chef.yaml', 'data'], '配置目录里只有配置件与数据目录');
 });
 
 test('#216 ② 产物＝通用 help 模板：前后缀逐字、标题槽已填、载荷段可 parse', () => {
@@ -212,8 +215,10 @@ test('#216 ⑤ 退出码矩阵：0 三态／2 参数／1 预检／5 落盘；现
   assert.equal(run(db, [KEY, '--params', P({ mode: '速查' })]).status, 2, 'mode 只认 lookup');
   assert.equal(run(db, [KEY, '--params', '[]']).status, 2);
   // #695：库目录不再由环境变量阻断；配置件写坏（不认识的键）走预检那一档 exit 1，且给人话＋行号。
+  // #763：那份坏配置写在隔离家目录下的配置目录里（`<它>/.ilife/chef.yaml`）。
   const badCfg = mkTmp('badconfig');
-  writeFileSync(join(badCfg, 'chef.yaml'), 'db:\n  dirx: 1\n', 'utf8');
+  mkdirSync(configDirOf(badCfg), { recursive: true });
+  writeFileSync(join(configDirOf(badCfg), 'chef.yaml'), 'db:\n  dirx: 1\n', 'utf8');
   const badRun = run(badCfg, [KEY]);
   assert.equal(badRun.status, 1, '配置错项走预检 exit 1');
   assert.match(String(badRun.stderr), /不认识的配置项「db\.dirx」/);

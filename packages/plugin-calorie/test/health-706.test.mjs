@@ -9,7 +9,7 @@
 //   F 正常态：库与目录都在 → 全绿（黄只留给「没配照片目录」那一条）
 //
 // 走的是**真出口**：spawn 技能 CLI 的 `calorie.config.check`，与插件层同一把钥匙。
-// 测试隔离照 #675 的替代护栏：`ILIFE_CONFIG_DIR` 指向临时目录（测试基座强制设置）。
+// 测试隔离照 #675 的替代护栏：`家目录注入（测试跑在临时家目录里）` 指向临时目录（测试基座强制设置）。
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -17,7 +17,8 @@ import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from 'n
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
+import { setupConfigTestBase, configDirOf } from '../../../test/helpers/config-test-base.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -38,11 +39,15 @@ const EXPECT_TITLES = {
   'land.cli': '跨技能出口（作息／备忘）', 'xunji.catalog': '训记动作库包内预置',
 };
 
-/** 跑一次真出口，返回 `{code, result}`（result＝envelope.data，即那份报告）。 */
-function runCheck(configDir) {
+/** 跑一次真出口，返回 `{code, result}`（result＝envelope.data，即那份报告）。
+ *
+ * #763 换通道：隔离口径是**家目录**（`...homeEnvOf(home)`），所以这里传的那个目录是家目录 ——
+ * 技能读的配置文件在 `<家>/.ilife/calorie.yaml`，数据目录在 `<家>/.ilife/data/`（默认 `db.dir` 空串那条）。
+ */
+function runCheck(home) {
   const run = spawnSync(process.execPath, [CLI, 'calorie.config.check'], {
     encoding: 'utf8',
-    env: { ...process.env, ILIFE_CONFIG_DIR: configDir },
+    env: homeEnvOf(home),
   });
   const lines = String(run.stdout ?? '').trim().split('\n').filter((line) => line !== '');
   const envelope = lines.length > 0 ? JSON.parse(lines[lines.length - 1]) : null;
@@ -82,7 +87,8 @@ describe('#706 配置体检 · 卡路里', () => {
     });
 
     it('训记 KEY 那一条只报「配没配」，任何一段文本里都不许出现值本身', () => {
-      writeFileSync(join(base.dir, 'calorie.yaml'), [
+      mkdirSync(configDirOf(base.dir), { recursive: true });
+      writeFileSync(join(configDirOf(base.dir), 'calorie.yaml'), [
         'db:',
         '  dir: ""',
         '  name: calorie_data.db',
@@ -105,7 +111,9 @@ describe('#706 配置体检 · 卡路里', () => {
       const { code, result } = runCheck(fresh);
       assert.equal(code, 0);
       assert.equal(itemOf(result, 'config.file').status, 'yellow', '配置文件不在该报黄');
-      assert.deepEqual(readdirSync(fresh), [], '体检往配置目录里写了东西（只报不改被破）');
+      assert.deepEqual(readdirSync(fresh), [], '体检往家目录里写了东西（只报不改被破）');
+      assert.equal(existsSync(join(configDirOf(fresh), 'calorie.yaml')), false, '体检不该落默认配置');
+      assert.equal(existsSync(join(configDirOf(fresh), 'data')), false, '体检不该建数据目录');
     });
   });
 
@@ -113,13 +121,13 @@ describe('#706 配置体检 · 卡路里', () => {
     let work;
     before(() => {
       work = join(base.dir, 'fault-db');
-      mkdirSync(join(work, 'data'), { recursive: true });
-      writeFileSync(join(work, 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n', 'utf8');
+      mkdirSync(join(configDirOf(work), 'data'), { recursive: true });
+      writeFileSync(join(configDirOf(work), 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n', 'utf8');
       // 造一个真库：用技能自己的建库入口（只读体检之外的事，测试里允许）。
-      const db = new (require('node:sqlite').DatabaseSync)(join(work, 'data', 'calorie_data.db'));
+      const db = new (require('node:sqlite').DatabaseSync)(join(configDirOf(work), 'data', 'calorie_data.db'));
       db.exec('CREATE TABLE food_log (id INTEGER PRIMARY KEY)');
       db.close();
-      renameSync(join(work, 'data', 'calorie_data.db'), join(work, 'data', 'calorie_data.db.bak'));
+      renameSync(join(configDirOf(work), 'data', 'calorie_data.db'), join(configDirOf(work), 'data', 'calorie_data.db.bak'));
     });
     it('库文件被改名 → 该条红，且报文里给出那个路径', () => {
       const { result } = runCheck(work);
@@ -134,10 +142,10 @@ describe('#706 配置体检 · 卡路里', () => {
     let work;
     before(() => {
       work = join(base.dir, 'fault-dir');
-      mkdirSync(work, { recursive: true });
+      mkdirSync(configDirOf(work), { recursive: true });
       // 数据目录的位置被一个**同名文件**占住：写探针起不来，与只读同一档结论（跨平台可造）。
-      writeFileSync(join(work, 'data'), 'not a directory', 'utf8');
-      writeFileSync(join(work, 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n', 'utf8');
+      writeFileSync(join(configDirOf(work), 'data'), 'not a directory', 'utf8');
+      writeFileSync(join(configDirOf(work), 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n', 'utf8');
     });
     it('数据目录写不进去 → 该条红', () => {
       const { result } = runCheck(work);
@@ -151,8 +159,8 @@ describe('#706 配置体检 · 卡路里', () => {
     let work;
     before(() => {
       work = join(base.dir, 'fault-yaml');
-      mkdirSync(work, { recursive: true });
-      writeFileSync(join(work, 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n这不是一行合法配置\n', 'utf8');
+      mkdirSync(configDirOf(work), { recursive: true });
+      writeFileSync(join(configDirOf(work), 'calorie.yaml'), 'db:\n  dir: ""\n  name: calorie_data.db\n这不是一行合法配置\n', 'utf8');
     });
     it('坏行 → 红，且报文指出错在第 4 行', () => {
       const { result } = runCheck(work);
@@ -167,10 +175,10 @@ describe('#706 配置体检 · 卡路里', () => {
     let work;
     before(() => {
       work = join(base.dir, 'healthy');
-      mkdirSync(join(work, 'data'), { recursive: true });
+      mkdirSync(join(configDirOf(work), 'data'), { recursive: true });
       const photos = join(work, 'photos');
       mkdirSync(photos, { recursive: true });
-      writeFileSync(join(work, 'calorie.yaml'), [
+      writeFileSync(join(configDirOf(work), 'calorie.yaml'), [
         'db:',
         '  dir: ""',
         '  name: calorie_data.db',
@@ -180,7 +188,7 @@ describe('#706 配置体检 · 卡路里', () => {
         '',
       ].join('\n'), 'utf8');
       const { DatabaseSync } = require('node:sqlite');
-      const db = new DatabaseSync(join(work, 'data', 'calorie_data.db'));
+      const db = new DatabaseSync(join(configDirOf(work), 'data', 'calorie_data.db'));
       for (let i = 0; i < 11; i += 1) db.exec(`CREATE TABLE t${i} (id INTEGER PRIMARY KEY)`);
       db.close();
     });

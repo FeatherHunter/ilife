@@ -25,8 +25,9 @@ import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from '../dist/index.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -48,7 +49,7 @@ function run(dir, params, extra = []) {
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   args.push(...extra);
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }
@@ -138,13 +139,13 @@ test('#245 ⑥ 不吃窗口的路照旧：业务页面连跑两次各留一份�
     foodName: '早餐', grams: 100, calories: 200, protein: 10, carbs: 20, fat: 5, date: '2026-09-06',
   })];
   const w = spawnSync(NODE_BIN, [BIN, ...writeArgs], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(w.status, 0, '写键 exit 0（stderr：' + String(w.stderr) + '）');
 
   const pageArgs = ['calorie.view.diet', '--params', JSON.stringify({ start: '2026-09-05', end: '2026-09-07' })];
   const runPage = () => spawnSync(NODE_BIN, [BIN, ...pageArgs], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   const p1 = runPage();
   const p2 = runPage();

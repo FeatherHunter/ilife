@@ -1,8 +1,12 @@
 // config/dirs：配置文件与数据目录住在哪。默认 `~/.ilife/`（由 os.homedir() 派生，平台无关）；
-// `ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录（它同时是测试隔离的唯一口子）。
+// `ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录（**待删**，#754 收口）。
 // 只认这两个来源：不读 $DSH_HOME，也不读别家的变量——技能要能在没有 DSH 的平台上单独跑。
+//
+// #763：测试隔离改走**家目录**（Windows `USERPROFILE`／POSIX `HOME`，见 test/helpers/home-test-base.mjs），
+// 那条测试护栏因此换了判据：**跑在测试运行器里却要落到真实家目录的 `.ilife`** 即抛——
+// 「真实家目录」取自**账号**（`os.userInfo().homedir`，注入改不动它），不读我们定义的任何变量。
 import { mkdirSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, userInfo } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ConfigError } from '../errors.js';
 
@@ -25,27 +29,62 @@ export interface ConfigPaths {
 /** 文件名主体：技能名（ASCII），不许带路径分隔符与后缀，免得越出配置目录。 */
 const STEM_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
-/** 跑在 node 测试运行器里（`node --test` 的每个测试进程都带这个变量）。 */
+/** 跑在 node 测试运行器里（`node --test` 的每个测试进程都带这个变量；Node 自己的变量，不是我们定义的）。 */
 function isTestRun(): boolean {
   const context = process.env.NODE_TEST_CONTEXT;
   return typeof context === 'string' && context.length > 0;
 }
 
 /**
+ * **真实**家目录（账号那一份）：win32 走账号资料目录、POSIX 走 getpwuid —— 实测不跟
+ * `USERPROFILE`／`HOME` 的注入走（#753 的实测表 ＋ #763 复测：注入 `USERPROFILE=C:\__fake_up2`
+ * 之后 `os.homedir()` 跟着走、本函数仍返回 `C:\Users\辰辰洋洋`）。
+ *
+ * win32 兜底 `HOMEDRIVE`＋`HOMEPATH`（Windows 自己写的两格，我们从不碰）。两样都拿不到时回 null
+ * ⇒ 守卫放行——那一档由测试侧的「真实 `~/.ilife` 树快照」门禁兜底（`tooling/check-real-home-untouched.mjs`）。
+ */
+function realAccountHome(): string | null {
+  try {
+    const home = userInfo().homedir;
+    if (typeof home === 'string' && home.length > 0) return home;
+  } catch { /* 没有 passwd 条目一类的环境：往下兜 */ }
+  if (process.platform === 'win32') {
+    const drive = process.env.HOMEDRIVE ?? '';
+    const path = process.env.HOMEPATH ?? '';
+    if (drive !== '' && path !== '') return drive + path;
+  }
+  return null;
+}
+
+/** 路径相等（win32 大小写不敏感）。 */
+function samePath(a: string, b: string): boolean {
+  const na = resolve(a);
+  const nb = resolve(b);
+  return process.platform === 'win32' ? na.toLowerCase() === nb.toLowerCase() : na === nb;
+}
+
+/**
  * 配置目录的绝对路径。
  *
- * 测试护栏（#675 解决评论：删掉五个写库开关之后的替代护栏）：跑在测试运行器里却没设
- * `ILIFE_CONFIG_DIR` 即抛错——把「忘了配」从静默写到真实家目录变成响亮失败。
+ * 测试护栏（#763 换判据；原判据挂 `ILIFE_CONFIG_DIR`，那个变量一删它就永远无法被满足）：
+ * **跑在测试运行器里，却要落到真实家目录的 `.ilife`** ⇒ 当场抛错（在 `mkdir` 之前，零写）。
+ * 判据取自账号（见 `realAccountHome()`），**不读我们定义的任何变量**——注入生效时不触发，
+ * 忘了注入即响亮失败。测试侧另有一条同向的树快照判据（跑全量前后真实 `~/.ilife` 逐字节不变）。
  */
 export function resolveConfigDir(): string {
   const override = process.env[CONFIG_DIR_ENV];
   if (override !== undefined && override.trim() !== '') return resolve(override);
+  const configDir = join(homedir(), '.ilife');
   if (isTestRun()) {
-    throw new ConfigError('CONFIG_TEST_ISOLATION_MISSING',
-      '测试缺隔离：跑在 node 测试运行器里却没有设置 ' + CONFIG_DIR_ENV
-      + '。测试一律用 ILIFE_CONFIG_DIR 指向临时目录（缺了直接报错，不许落到真实家目录）');
+    const accountHome = realAccountHome();
+    if (accountHome !== null && samePath(configDir, join(accountHome, '.ilife'))) {
+      throw new ConfigError('CONFIG_TEST_ISOLATION_MISSING',
+        '测试缺隔离：跑在 node 测试运行器里却要落到真实家目录 ' + configDir
+        + '。测试一律把家目录指到临时目录（Windows 设 USERPROFILE／POSIX 设 HOME；'
+        + '技能基座见 test/helpers/home-test-base.mjs）——缺了直接报错，不许落到真实家目录');
+    }
   }
-  return join(homedir(), '.ilife');
+  return configDir;
 }
 
 /** 只算路径、不碰盘。 */

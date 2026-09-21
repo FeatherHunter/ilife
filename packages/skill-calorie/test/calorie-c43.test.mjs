@@ -14,8 +14,9 @@ import { TRIGGERS, HELP_LOOKUP, lookupWake, searchHelp, WAKE_TABLE, routeWakewor
 import { buildDietOverview, buildMealDistribution, zeroMealDistribution } from '../dist/render/index.js';
 import { logWeight } from '../dist/index.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -30,7 +31,7 @@ function run(key, params, envExtra, extraArgs) {
 }
 
 function runOk(dir, key, params, extraArgs) {
-  const r = run(key, params, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }, extraArgs);
+  const r = run(key, params, { ...homeEnvOf(calorieConfigDir(dir))}, extraArgs);
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   return JSON.parse(r.stdout);
 }
@@ -126,7 +127,7 @@ test('C4 view.diet空尾日回零而非整窗missing', () => {
   assert.equal(env.shape, 'stat');
   assert.equal(env.data.metrics.distTotal, 0);
   const htmlFile = join(dir, 'diet.html');
-  const r = run('calorie.view.diet', { start: '2026-09-05', end: '2026-09-06' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }, ['--html', htmlFile]);
+  const r = run('calorie.view.diet', { start: '2026-09-05', end: '2026-09-06' }, { ...homeEnvOf(calorieConfigDir(dir))}, ['--html', htmlFile]);
   assert.equal(r.status, 0);
   assert.match(readFileSync(htmlFile, 'utf8'), /餐别分布/);
 });

@@ -33,8 +33,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase, pinProcessClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 pinProcessClock('2026-09-07'); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
 
@@ -115,7 +116,7 @@ function mkSeededDir() {
 /** 真跑：键 ＋ params ＋ --html 落点（照 383 同款）。 */
 function runKey(key, params, htmlPath, dir) {
   return spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params), '--html', htmlPath], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
 }
 

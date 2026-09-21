@@ -21,8 +21,9 @@ import { dispatch } from '../dist/cli/cmd_read.js';
 import { CALORIE_COMBOS, ENVELOPE_VERSION, CALORIE_SKILL } from '../dist/cli/keys.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase, pinProcessClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 // #250 · 路由层窗口自本票起是**相对窗口**（今日／本周／最近 Nd…）：把「今天」钉到种子数据日，
 // 这些用例在种子库上才跑得通（与 `docs/research/t81-exec-smoke.mjs` 的快照同锚点）。
@@ -375,7 +376,7 @@ test('#111 无假数据：6 键空库一律 exit 4 且 stdout 纯净', () => {
     ['calorie.view.exercise-trend', WIN],
   ];
   for (const [k, p] of cases) {
-    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = run(BIN, k, p, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.status, 4, k + ' 空库未阻断（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
     assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
     assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
@@ -384,13 +385,13 @@ test('#111 无假数据：6 键空库一律 exit 4 且 stdout 纯净', () => {
 
 test('#111 非法窗：start 晚于 end 即 exit 2', () => {
   const { dir } = mkPortDb();
-  const r = run(BIN, 'calorie.view.exercise-trend', { start: '2026-09-07', end: '2026-09-05' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(BIN, 'calorie.view.exercise-trend', { start: '2026-09-07', end: '2026-09-05' }, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 2, '非法窗未拒收（status=' + r.status + '）');
 });
 
 test('#111 命名底座可用：力量训练总览落点＋回传一致＋产物为全文档', () => {
   const { dir } = mkPortDb();
-  const r = run(BIN, 'calorie.view.exercise-strength', WIN, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(BIN, 'calorie.view.exercise-strength', WIN, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 0, 'stderr=' + (r.stderr || '').slice(0, 300));
   const env = JSON.parse(r.stdout);
   const n = basename(env.data.output);

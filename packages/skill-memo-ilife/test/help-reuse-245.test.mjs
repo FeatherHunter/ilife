@@ -33,7 +33,7 @@ const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245memo-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, 'memo_html');
 const namesOf = (dir) => { try { return readdirSync(htmlDirOf(dir)).sort(); } catch { return []; } };
 
-/** 真 spawn 出口：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删，`ILIFE_CONFIG_DIR` 是隔离唯一口子）。 */
+/** 真 spawn 出口：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删；#763 起隔离唯一口子是**家目录注入**）。 */
 function run(dir, args) {
   const cfg = mkMemoConfig({ db: { dir } }, 't245memo-cfg-');
   const r = spawnSync(NODE_BIN, [BIN, ...args], {

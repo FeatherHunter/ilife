@@ -23,7 +23,7 @@ import '../dist/exercise/fieldLabels.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 /** 运动域全部字段键 → 中文（写死在本件；与 `src/exercise/fieldLabels.ts` 当刻逐字对照）。
  * ① CLI 参数名 16 键（写命令回执 `writtenFields` 的口径）＋ ② 库列名 10 键（字段变更卡行键），共 26 键。 */

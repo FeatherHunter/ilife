@@ -19,7 +19,7 @@ import { buildDeficitPlate } from '../dist/render/analysisPlate.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 /** 与地图 #161 的种子库同形：30 岁／男／175 cm／moderate；`withWeight` 决定有没有称重记录。 */
 function mkDb(withWeight, lastWeight = 75.1) {

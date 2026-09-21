@@ -11,9 +11,10 @@ import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { HELP_SHELL_DATA_OPEN, HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT } from 'base-paint/help-shell';
-import { billEnv } from './helpers/config-base.mjs';
+import { billEnv, configDirOf } from './helpers/config-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -21,6 +22,23 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 const HELP_NAME_RE = /^饼干记账_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 const LOOKUP_NAME_RE = /^饼干记账_速查表_\d{8}_\d{6}(_\d+)?\.html$/;
 const KEY = 'bill.help.lookup';
+
+/**
+ * #763 护栏探针：一个只调 `resolveConfigDir()` 的子进程（**不碰盘**——`mkdir` 在它之后，故哪怕护栏
+ * fail-open 这条用例也写不出真实数据）；直接拿技能命令做「缺隔离」实验，一旦护栏失效就会真写。
+ *
+ * 「忘了注入」＝把家目录两格**显式设成账号那一份**（不是删格：win32 上删掉 `USERPROFILE`，子进程仍会
+ * 拿到父进程当刻那一格，到不了真实那一份）。反向对照经 `extraEnv` 给临时两格。
+ */
+const DIRS_URL = pathToFileURL(join(HERE, '..', '..', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+function probeGuard(extraEnv = {}) {
+  const code = 'const m = await import(' + JSON.stringify(DIRS_URL) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const real = realHomeDir().dir;
+  const env = { ...process.env, USERPROFILE: real, HOME: real, NODE_TEST_CONTEXT: 'child-v8' };
+  Object.assign(env, extraEnv);
+  return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
+}
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'bill148-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, 'biscuit_accountant_html');
@@ -185,8 +203,12 @@ test('#148 ⑤ 参数与退出码矩阵（真出口）＋ 失败时 stdout 空',
     assert.equal(r.stdout, '', c.why + '：失败时 stdout 必须空');
     assert.match(r.stderr, new RegExp('ERR ' + c.code));
   }
-  const noEnv = spawnSync(NODE_BIN, [BIN, KEY], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: '' } });
-  assert.equal(noEnv.status, 1, '测试运行器里缺 ILIFE_CONFIG_DIR ＝exit 1（响亮失败）');
+  const bare = probeGuard();
+  assert.equal(bare, 'THREW:CONFIG_TEST_ISOLATION_MISSING',
+    '跑在测试运行器里却没注入家目录 ⇒ 配置落点当场响亮失败（读数：' + bare + '）');
+  const fakeHome = mkdtempSync(join(tmpdir(), 'bill148-probe-'));
+  assert.equal(probeGuard({ USERPROFILE: fakeHome, HOME: fakeHome }), 'OK:' + configDirOf(fakeHome),
+    '给了临时家目录就照常算得出来（这道门只关「没注入家目录」这一档）');
   const badPath = join(dir, 'blocker', 'x.html');
   spawnSync(NODE_BIN, ['-e', 'require("fs").writeFileSync(process.argv[1],"x")', join(dir, 'blocker')], { encoding: 'utf8' });
   const bad = run(dir, [KEY, '--html', badPath]);

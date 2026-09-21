@@ -3,7 +3,7 @@
  *
  * 判据与接缝见 `docs/agents/合成写判据.md`；不变量编号（S-xx）见 `docs/skills/skill-schedule/t659-不变量清单.md`。
  * 接缝只有一个＝技能的统一出口（`dist/cli/cmd_read.js`）；两个注入点＝临时数据目录与可替换的远端平台挡板。
- * #695 起这两个口子都从**配置文件**来（`ILIFE_CONFIG_DIR` 指到独占临时配置目录，见 `./helpers/config-seam.mjs`；
+ * #695 起这两个口子都从**配置文件**来（#763 起靠**家目录注入**指到独占临时家目录：配置落 `<它>/.ilife/schedule.yaml`，见 `./helpers/config-seam.mjs`；
  * 原 `SKILLS_DB_PATH`／`LARK_CLI_PATH` 两个环境变量已按 #675 的裁决删掉）。**绝不碰真飞书**。
  *
  * 四段读数（每条都点名，不合并成一句「通过了」）：

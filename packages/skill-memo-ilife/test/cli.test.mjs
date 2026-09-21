@@ -26,7 +26,8 @@ function nodeBin() {
 const NODE = nodeBin();
 // 本文件只测本地侧：远端闸门钉死（配置项 `lark.cliPath` 指不存在的路径），任何真 lark 都连不上，
 // 心愿类写操作走降级（本地照落、退出码非 0）。真远端只在 wish-sync-661 的挡板里测。
-// #695：两个注入点都改走**配置文件**（`db.dir`／`lark.cliPath`），测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。
+// #695：两个注入点都改走**配置文件**（`db.dir`／`lark.cliPath`），#763 起测试隔离的唯一口子是
+// **家目录注入**（把家目录指到临时目录，配置落 `<家>/.ilife/memo.yaml`）。
 function run(args, envExtra) {
   const cfg = mkMemoConfig({
     db: { dir: DB },
@@ -90,9 +91,11 @@ describe('memo 唯一出口 cmd_read', () => {
     assert.equal(k.stdout, '');
     assert.equal(run(['memo.search', '--params', '[]']).status, 2);
     assert.equal(run(['memo.search', '--timeout', 'abc']).status, 2);
-    // #695：库目录的唯一真相是配置文件——「库没配」这一档现在的形状是「配置件读不出来 ⇒ exit 1」
-    // （原来那条锁的是环境变量 `SKILLS_DB_PATH: ''`，该读取已按用户裁决删除）。
-    assert.equal(run(['memo.search'], { ILIFE_CONFIG_DIR: mkMemoConfig({ dbx: { dir: 'x' } }) }).status, 1);
+    // #695／#763：库目录的唯一真相是配置文件——「库没配」这一档现在的形状是「配置件读不出来 ⇒ exit 1」
+    // （原来那条锁的是环境变量 `SKILLS_DB_PATH: ''`，该读取已按用户裁决删除）；
+    // 坏配置摆在另一份临时**家目录**的 `.ilife/memo.yaml` 里，用家目录两格把子进程指过去。
+    const badHome = mkMemoConfig({ dbx: { dir: 'x' } }, 'memocli-bad-');
+    assert.equal(run(['memo.search'], { USERPROFILE: badHome, HOME: badHome }).status, 1);
   });
   it('查无对条 exit 4；--html 落盘', () => {
     assert.equal(run(['memo.detail', '--params', JSON.stringify({ id: 999999 })]).status, 4);

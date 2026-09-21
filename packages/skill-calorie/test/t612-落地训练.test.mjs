@@ -21,8 +21,9 @@ import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -135,7 +136,7 @@ describe('#612 落地训练', () => {
     db.close();
     const log = join(dir, 'fixture-calls.jsonl');
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE_LOG: log,
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_LOG: log,
     });
     assert.equal(r.code, 0, r.stderr.slice(-400));
     const out = JSON.parse(r.stdout).data;
@@ -158,7 +159,7 @@ describe('#612 落地训练', () => {
   it('② 真出口读数：真 CLI 落盘，回执绝对路径存在（dryRun）', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const a = cli('calorie.workout.land', { date: '2026-09-07', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-400));
     const env = JSON.parse(a.stdout);
     assert.equal(env.key, 'calorie.workout.land');
@@ -170,13 +171,13 @@ describe('#612 落地训练', () => {
   it('③a 用法错 exit 2 点名（非布尔 dryRun）', () => {
     const { dir, db } = seedDir();
     db.close();
-    assert.equal(cli('calorie.workout.land', { dryRun: 'yes' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).code, 2);
+    assert.equal(cli('calorie.workout.land', { dryRun: 'yes' }, { ...homeEnvOf(calorieConfigDir(dir))}).code, 2);
   });
 
   it('③b 无计划 exit 4 点名（空库，不调外部）', () => {
     const dir = tmp('empty');
     openDb(join(dir, 'calorie_data.db')).close();
-    const r = cli('calorie.workout.land', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = cli('calorie.workout.land', { date: '2026-09-07', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.code, 4);
     assert.match(r.stderr, /无训练计划/);
   });
@@ -185,7 +186,7 @@ describe('#612 落地训练', () => {
     const { dir, db } = seedDir();
     db.close();
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({ 'memo.create': MEMO_FAIL }),
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE: JSON.stringify({ 'memo.create': MEMO_FAIL }),
     });
     assert.equal(r.code, 4, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在记心愿/);
@@ -195,7 +196,7 @@ describe('#612 落地训练', () => {
     const { dir, db } = seedDir();
     db.close();
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({ 'schedule.plan.write': SCHED_FAIL }),
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE: JSON.stringify({ 'schedule.plan.write': SCHED_FAIL }),
     });
     assert.equal(r.code, 4, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在补计划/);
@@ -206,9 +207,9 @@ describe('#612 落地训练', () => {
     db.close();
     // 这一条要的就是真入口那一支：出口只配跨技能两处，训记入口留空（＝包内真入口）。
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: calorieConfigDir(dir, {
+      ...homeEnvOf(calorieConfigDir(dir, {
         land: { scheduleCli: LAND_FIXTURE, memoCli: LAND_FIXTURE },
-      }),
+      })),
     });
     assert.equal(r.code, 3, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在推送/);
@@ -227,7 +228,7 @@ describe('#612 落地训练', () => {
       },
     };
     const r = cli('calorie.workout.land', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE: JSON.stringify({ 'push-plan': pushFail }), T676_LAND_FIXTURE_LOG: log,
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE: JSON.stringify({ 'push-plan': pushFail }), T676_LAND_FIXTURE_LOG: log,
     });
     assert.equal(r.code, 4, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在推送/);

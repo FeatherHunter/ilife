@@ -29,6 +29,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** 交付出口（可被变异自证指向副本；缺省＝本包 dist）。 */
@@ -67,20 +68,20 @@ function mkDir(tag) {
  *  注：`process.on('warning', …)` 在 22.13 上**压不住**这条（实测监听器被调用了，告警照样落 stderr），
  *  故只能走启动参数。 */
 const RUNTIME_QUIET = '--disable-warning=ExperimentalWarning';
-/** 子进程环境：`ILIFE_CONFIG_DIR` 指向本用例的临时配置目录（数据目录＝它下面的 `data/`，库与 HELP 都落那儿）
- *  ＋ 运行时降噪（保留调用方已有的 NODE_OPTIONS）。#695 起不再有 `SKILLS_DB_PATH`/`LARK_CLI_PATH` 两个口子。 */
+/** 子进程环境：家目录（`USERPROFILE`／`HOME` 两格）指向本用例的临时家目录（配置落 `<它>/.ilife/schedule.yaml`、
+ *  数据目录＝`<它>/.ilife/data/`，库与 HELP 都落那儿）＋ 运行时降噪（保留调用方已有的 NODE_OPTIONS）。#695 起不再有 `SKILLS_DB_PATH`/`LARK_CLI_PATH` 两个口子。 */
 function childEnvOf(dir) {
   const prior = process.env.NODE_OPTIONS;
   return {
     ...process.env,
-    ILIFE_CONFIG_DIR: dir,
+    ...homeEnvOf(dir),
     NODE_OPTIONS: prior ? prior + ' ' + RUNTIME_QUIET : RUNTIME_QUIET,
   };
 }
 
-/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<配置目录>/data`。 */
+/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<家目录>/.ilife/data`。 */
 function dataDirOf(dir) {
-  return join(dir, 'data');
+  return join(configDirOf(dir), 'data');
 }
 
 /** 真 spawn（同步）：argv ＋ JSON(stdout) ＋ exit。`tz` 非空时覆写子进程时区。 */

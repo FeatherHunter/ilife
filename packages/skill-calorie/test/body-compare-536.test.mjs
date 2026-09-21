@@ -20,7 +20,7 @@ import { dispatch } from '../dist/cli/cmd_read.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const tmpDb = () => openDb(join(mkdtempSync(join(tmpdir(), 't536-')), 't.db'));
 

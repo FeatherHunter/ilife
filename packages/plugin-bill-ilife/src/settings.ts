@@ -1,7 +1,7 @@
 /** dsh-bill-ilife 设置页元数据（#677：从只读脚手架换成真配置页）。
  *
  * 本文件是**设置页的行表**：一个可配置项一行，写清它在配置文件里的键、中文标题、
- * 分级（常用 / 高级）、控件种类与人话指引。它是页面渲染的唯一依据。
+ * 分级（常用 / 高级）、控件种类、只读与否与人话指引。它是页面渲染的唯一依据。
  *
  * **本文件必须零 node 依赖**：`tsconfig.client.json` 把它收进 client 侧编译，
  * 浏览器产物不许带 node 内建。取值一律由宿主经技能 CLI 的 `bill.config.read` 端点现取
@@ -16,14 +16,21 @@
  *   · `db.dir` 那一行的落点由配置面回执的 `dataDir` 带回（解析好的绝对路径），页面上把它**预填**进
  *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  *
+ * **#749 起本家是六家的样板**：页面从「可改表单」收窄成**一处可改 ＋ 其余只读展示**——
+ *   · 可改 1 项：数据目录（`db.dir`，显示生效绝对路径，值非法／空 ⇒ 回落默认数据目录）；
+ *   · 只读 5 项：库文件名／预算账户文件名／HELP 产物目录名／备份目录／备份文件名前缀——它们
+ *     **只显示技能算好的绝对路径**（`resolveFrom` 指向回执 `resolved` 组的那一格），面板既不重算也不提交；
+ *   · 只读目录行（备份目录）的「浏览」按钮**保留但不可点击**（#747 定稿：入口不作废，只是不能改）。
+ *
  * 清单出处：「六家技能的路径类配置全量调查」记账 8 项去掉 1 项包内固定（包内页面模板目录）
  * ＝上设置页候选 7 项，其中「产物文件名主体」在源码里是两个值（#677 起行数 8）。
- * **#762 起那两个产物名主体出配置表**（键已退休、文件名回到技能侧代码常量），故本表 6 行。
+ * **#762 起那两个产物名主体出配置表**（键已退休、文件名回到技能侧代码常量）；
+ * **#749 起那 5 行转只读**，故本表仍是 6 行（可改 1 ＋ 只读 5）。
  */
 export const SETTINGS_OWNER = 'dsh-bill-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:cookie' as const;
 
-/** 配置文件主体名：落点 `~/.ilife/bill.yaml`（`ILIFE_CONFIG_DIR` 可整体接管）。 */
+/** 配置文件主体名：落点 `~/.ilife/bill.yaml`。 */
 export const CONFIG_STEM = 'bill' as const;
 
 /** 分级：常用项直接画在页面上，其余进默认收起的「高级」组（#675 冻结口径）。 */
@@ -32,6 +39,9 @@ export type ConfigTier = 'common' | 'advanced';
 /** 控件种类：只有这四种（前三种与受限 YAML 子集的字符串／数字／布尔一一对应，没有数组；
  * `directory` 是**字符串那一档的页面形态**——取值仍是串，只是多一个唤起系统文件夹选择器的入口，见 #736）。 */
 export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
+
+/** 只读行显示的那一格：技能侧回执 `resolved` 组里的格名（面板只显示、不计算）。 */
+export type ResolvedField = 'dbDir' | 'dbFile' | 'goalsFile' | 'htmlDir' | 'backupDir' | 'backupSample';
 
 export interface ConfigItem {
   /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `backup.dir`。 */
@@ -42,6 +52,12 @@ export interface ConfigItem {
   readonly control: ConfigControl;
   /** 一行人话：这一项管什么、留空会怎样（一到两句，不写开发期口径）。 */
   readonly hint: string;
+  /** **只读行**（#749）：页面上不给改，值只经技能侧解析后显示；改它要编辑配置文件。
+   *  只读行**不参与**保存（`fromDraft` 不收它，免得把显示用的绝对路径写回配置）。 */
+  readonly readonly?: boolean;
+  /** 只读行的**显示值来源**：回执 `resolved` 组里的哪一格。标了它 ⇒ 显示技能算好的绝对路径；
+   *  不标 ⇒ 显示配置文件里那个值本身（数字类只读项走这一档，见 #749 补注二的甲档）。 */
+  readonly resolveFrom?: ResolvedField;
   /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
    *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
   readonly prefillFrom?: 'dataDir';
@@ -63,21 +79,27 @@ const COMMON: readonly ConfigItem[] = [
     title: '库文件名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下的数据库文件名。改名＝换库，旧数据不会被读入。',
+    readonly: true,
+    resolveFrom: 'dbFile',
+    hint: '数据目录下的库文件。只读，要改请编辑配置文件。',
   },
   {
     key: 'db.goals',
     title: '预算／账户文件名',
     tier: 'common',
     control: 'text',
-    hint: '与库同目录的预算与账户数据文件名。改名后旧文件不会再被读取。',
+    readonly: true,
+    resolveFrom: 'goalsFile',
+    hint: '与库同目录的预算与账户文件。只读，要改请编辑配置文件。',
   },
   {
     key: 'html.dir',
     title: 'HELP 产物目录名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下存放 HELP 与速查表的子目录名。改名后新产物落新目录。',
+    readonly: true,
+    resolveFrom: 'htmlDir',
+    hint: 'HELP 与速查表的存放目录。只读，要改请编辑配置文件。',
   },
 ];
 
@@ -88,14 +110,18 @@ const ADVANCED: readonly ConfigItem[] = [
     title: '备份目录',
     tier: 'advanced',
     control: 'directory',
-    hint: '备份与恢复的读写目录。留空＝库目录下的 backups。',
+    readonly: true,
+    resolveFrom: 'backupDir',
+    hint: '备份与恢复的读写目录。只读，要改请编辑配置文件。',
   },
   {
     key: 'backup.stem',
-    title: '备份名主体',
+    title: '备份文件名前缀',
     tier: 'advanced',
     control: 'text',
-    hint: '备份文件名的前缀，后面自动加时间戳。',
+    readonly: true,
+    resolveFrom: 'backupSample',
+    hint: '备份文件名的前缀，后面自动加时间戳。只读，要改请编辑配置文件。',
   },
 ];
 

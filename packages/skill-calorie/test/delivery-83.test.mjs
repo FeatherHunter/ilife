@@ -33,8 +33,9 @@ import {
 } from '../dist/render/envelope.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase, pinProcessClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 // #250 · 路由层窗口自本票起是**相对窗口**（今日／本周／最近 Nd…）：把「今天」钉到种子数据日，
 // 这些用例在种子库上才跑得通（与 `docs/research/t81-exec-smoke.mjs` 的快照同锚点）。
@@ -94,7 +95,7 @@ function run(dir, key, params, extra = []) {
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   args.push(...extra);
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
@@ -442,9 +443,9 @@ test('#253F2 训练计划族代表键（calorie.workout.plan-set）：产物已�
 test('#83 ⑥ 相对库目录（db.dir 为 `.`）：仍为文件态 exit 0 ＋ 绝对 delivery.path ＋ 产物存在', () => {
   const dir = mkDb('reldb');
   // 子进程 cwd 设进 tmp，配置里 `db.dir: '.'` 即「相对落点」（落点字符串原本不含盘符，返修前必红）。
-  // #676：配置目录本身给**绝对**路径（`ILIFE_CONFIG_DIR` 相对会按子进程 cwd 解析），相对的是库目录。
+  // #676：家目录给**绝对**路径（家目录相对会按子进程 cwd 解析），相对的是库目录。
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' })], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(join(dir, 'cfg'), { db: { dir: '.' } }) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ...homeEnvOf(calorieConfigDir(join(dir, 'cfg'), { db: { dir: '.' } })) },
   });
   assert.equal(r.status, 0, '相对库目录不得把成功渲染报成参数失败：' + String(r.stderr));
   const env = JSON.parse(String(r.stdout));
@@ -465,7 +466,7 @@ test('#83 ⑥ 相对 --html：exit 0 ＋ 绝对 delivery.path（写的就是回�
   // 归一后两边比的是同一条真实路径；Linux／Windows 上 `realpathSync` 是恒等变换，断言强度不变。
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.help.lookup', '--params', JSON.stringify({ q: '看今日主页' }),
     '--html', join('nested', 'rel.html')], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(r.status, 0, '相对 --html 不得把写盘成功报成参数失败：' + String(r.stderr));
   const env = JSON.parse(String(r.stdout));
@@ -479,7 +480,7 @@ test('#83 ⑥ 相对 --html：exit 0 ＋ 绝对 delivery.path（写的就是回�
 test('#83 ⑥ 相对库目录（db.dir 为 `.`）＋ 写键：exit 0（库已写入不得报失败）＋ receipt 落盘', () => {
   const dir = mkDb('relwrite');
   const r = spawnSync(NODE_BIN, [BIN, 'calorie.water.log', '--params', JSON.stringify({ ml: 250 })], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(join(dir, 'cfg'), { db: { dir: '.' } }) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: dir, env: { ...process.env, ...homeEnvOf(calorieConfigDir(join(dir, 'cfg'), { db: { dir: '.' } })) },
   });
   assert.equal(r.status, 0, '写键相对落点不得报参数失败（否则会被误判为写失败并重试）：' + String(r.stderr));
   const env = JSON.parse(String(r.stdout));

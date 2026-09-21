@@ -24,8 +24,9 @@ import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -44,7 +45,7 @@ function run(dir, params) {
   const args = ['calorie.help.center'];
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
@@ -55,7 +56,7 @@ function run(dir, params) {
 function runAsync(dir, args = ['calorie.help.center']) {
   return new Promise((resolve) => {
     const child = spawn(NODE_BIN, [BIN, ...args], {
-      env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+      env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
     });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });

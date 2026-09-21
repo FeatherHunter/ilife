@@ -14,9 +14,11 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { CALORIE_COMBOS, CALORIE_WRITE_COMBOS, calorieShapeFor, isCalorieWriteKey } from '../dist/cli/keys.js';
 import { normalizeActivityLevel } from '../dist/fetch/profile.js';
-import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
-// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+import { calorieConfigDir, configTestBase, probeGuard } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
+// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.life/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -56,7 +58,7 @@ function run(key, params, envExtra) {
 function runWrite(dir, key, params, extra) {
   const { photosDir, ...rest } = extra || {};
   const cfg = photosDir ? calorieConfigDir(dir, { photos: { dir: photosDir } }) : calorieConfigDir(dir);
-  const r = run(key, params, { ILIFE_CONFIG_DIR: cfg, ...rest });
+  const r = run(key, params, { ...homeEnvOf(cfg), ...rest });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   const env = JSON.parse(r.stdout);
   assert.equal(env.version, '0.1.0');
@@ -101,10 +103,10 @@ test('饮食记/改/删 + 幂等 + 缺失阻断', () => {
   assert.ok(u.data.message.includes('#' + id));
   const d = runWrite(dir, 'calorie.diet.remove', { id });
   assert.equal(d.data.receipt.op, 'delete');
-  assert.equal(run('calorie.diet.remove', { id }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.diet.update', { id: 999999, grams: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.diet.add', { foodName: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.diet.remove-by-type', { date: '2026-09-06', mealType: '宵夜' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.diet.remove', { id }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.diet.update', { id: 999999, grams: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.diet.add', { foodName: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.diet.remove-by-type', { date: '2026-09-06', mealType: '宵夜' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('饮食批量/复制/按日改/按日删/按范围删/按餐别删', () => {
@@ -113,19 +115,19 @@ test('饮食批量/复制/按日改/按日删/按范围删/按餐别删', () => 
   assert.match(b.data.message, /新增 1/);
   const c = runWrite(dir, 'calorie.diet.copy', { from: '2026-09-05', to: '2026-09-06' });
   assert.match(c.data.message, /复制 1，跳过 1/);
-  assert.equal(run('calorie.diet.copy', { from: '2026-01-01', to: '2026-01-02' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.diet.copy', { from: '2026-01-01', to: '2026-01-02' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const u = runWrite(dir, 'calorie.diet.update-by-date', { date: '2026-09-06', note: '食堂' });
   assert.match(u.data.message, /2 条/);
-  assert.equal(run('calorie.diet.update-by-date', { date: '2026-01-01', note: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.diet.update-by-date', { date: '2026-01-01', note: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const t = runWrite(dir, 'calorie.diet.remove-by-type', { date: '2026-09-05', mealType: '早餐' });
   assert.match(t.data.message, /1 条/);
-  assert.equal(run('calorie.diet.remove-by-type', { date: '2026-09-05', mealType: '早餐' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.diet.remove-by-type', { date: '2026-09-05', mealType: '早餐' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const dd = runWrite(dir, 'calorie.diet.remove-by-date', { date: '2026-09-06' });
   assert.match(dd.data.message, /2 条/);
-  assert.equal(run('calorie.diet.remove-by-date', { date: '2026-01-01' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.diet.remove-by-date', { date: '2026-01-01' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const r = runWrite(dir, 'calorie.diet.remove-by-range', { start: '2026-09-05', end: '2026-09-05' });
   assert.match(r.data.message, /1 条/);
-  assert.equal(run('calorie.diet.remove-by-range', { start: '2026-09-05', end: '2026-09-04' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.diet.remove-by-range', { start: '2026-09-05', end: '2026-09-04' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('记喝水累计', () => {
@@ -133,7 +135,7 @@ test('记喝水累计', () => {
   const w = runWrite(dir, 'calorie.water.log', { ml: 300, date: '2026-09-06', time: '09:00:00' });
   assert.match(w.data.message, /300 ml/);
   assert.match(w.data.message, /累计 300 ml/);
-  assert.equal(run('calorie.water.log', { ml: -5 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.water.log', { ml: -5 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('体重记/改/删/批量 + 缺身高仍记（C5 #43）', () => {
@@ -153,11 +155,11 @@ test('体重记/改/删/批量 + 缺身高仍记（C5 #43）', () => {
   runWrite(dir, 'calorie.weight.remove', { date: '2026-09-05' });
   const rg = runWrite(dir, 'calorie.weight.remove', { start: '2026-09-04', end: '2026-09-04' });
   assert.match(rg.data.message, /1 条/);
-  assert.equal(run('calorie.weight.update', { note: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.weight.remove', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.weight.update', { note: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.weight.remove', {}, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
   const bare = mkEmpty();
   // C5 #43 · 缺身高仍记：exit 0 + BMI 待补身高 + 补档案链（不再 exit 4 阻断）。
-  const noH = run('calorie.weight.log', { kg: 70 }, { ILIFE_CONFIG_DIR: calorieConfigDir(bare) });
+  const noH = run('calorie.weight.log', { kg: 70 }, { ...homeEnvOf(calorieConfigDir(bare))});
   assert.equal(noH.status, 0);
   const noHEnv = JSON.parse(noH.stdout);
   assert.match(noHEnv.data.message, /BMI 待补身高/);
@@ -175,20 +177,20 @@ test('运动记/改/删/批量/复制 + 字段白名单', () => {
   assert.match(bt.data.message, /新增 1 条/);
   const cp = runWrite(dir, 'calorie.exercise.add', { copyFrom: 'yesterday', date: '2026-09-06' });
   assert.match(cp.data.message, /复制/);
-  assert.equal(run('calorie.exercise.add', { calories: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.exercise.update', { id, noSuch: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.exercise.add', { calories: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.exercise.update', { id, noSuch: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
   const u = runWrite(dir, 'calorie.exercise.update', { id, minutes: 40 });
   assert.equal(u.data.receipt.op, 'update');
   runWrite(dir, 'calorie.exercise.update', { date: '2026-09-06', note: '补' });
-  assert.equal(run('calorie.exercise.update', { date: '2026-01-01', note: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.exercise.update', { date: '2026-01-01', note: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   runWrite(dir, 'calorie.exercise.remove', { id });
   // #125 口径收敛：软删＝不存在，重复 remove(id) 与按日／按范围路径一致报缺失（exit 4；此前 exit 0 是 E2 缺陷）。
-  assert.equal(run('calorie.exercise.remove', { id }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.exercise.remove', { id: 999999 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.exercise.remove', { id }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.exercise.remove', { id: 999999 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const dd = runWrite(dir, 'calorie.exercise.remove', { date: '2026-09-06' });
   assert.match(dd.data.message, /3 条/);
-  assert.equal(run('calorie.exercise.remove', { from: '2026-01-01', to: '2026-01-02' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.exercise.remove', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.exercise.remove', { from: '2026-01-01', to: '2026-01-02' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.exercise.remove', {}, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('身材照存/删/标签 + 源缺失阻断', () => {
@@ -203,18 +205,18 @@ test('身材照存/删/标签 + 源缺失阻断', () => {
   const a = runWrite(dir, 'calorie.photo.add', { srcPaths: [f1, f2], tag: '正面', date: '2026-09-06', time: '08:00:00' }, extra);
   assert.equal(a.data.receipt.op, 'create');
   const pid = a.data.receipt.recordId;
-  assert.equal(run('calorie.photo.add', { srcPaths: [join(srcDir, 'nope.jpg')], tag: '正面' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...extra }).status, 4);
+  assert.equal(run('calorie.photo.add', { srcPaths: [join(srcDir, 'nope.jpg')], tag: '正面' }, { ...homeEnvOf(calorieConfigDir(dir)), ...extra }).status, 4);
   const tag = runWrite(dir, 'calorie.photo.tag', { id: pid, op: 'add', tag: '晨起' }, extra);
   assert.match(tag.data.message, /晨起/);
   const same = runWrite(dir, 'calorie.photo.tag', { id: pid, op: 'add', tag: '晨起' }, extra);
   assert.equal(same.data.receipt.noChange, true);
   runWrite(dir, 'calorie.photo.tag', { id: pid, op: 'set', tags: ['侧面'] }, extra);
-  assert.equal(run('calorie.photo.tag', { id: pid, op: 'remove', tag: '侧面' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...extra }).status, 4);
+  assert.equal(run('calorie.photo.tag', { id: pid, op: 'remove', tag: '侧面' }, { ...homeEnvOf(calorieConfigDir(dir)), ...extra }).status, 4);
   runWrite(dir, 'calorie.photo.tag', { id: pid, op: 'remove', tag: '晨起' }, extra);
   const d = runWrite(dir, 'calorie.photo.remove', { id: pid }, extra);
   assert.equal(d.data.receipt.op, 'delete');
-  assert.equal(run('calorie.photo.remove', { id: pid }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...extra }).status, 4);
-  assert.equal(run('calorie.photo.tag', { id: pid, op: 'add', tag: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...extra }).status, 4);
+  assert.equal(run('calorie.photo.remove', { id: pid }, { ...homeEnvOf(calorieConfigDir(dir)), ...extra }).status, 4);
+  assert.equal(run('calorie.photo.tag', { id: pid, op: 'add', tag: 'x' }, { ...homeEnvOf(calorieConfigDir(dir)), ...extra }).status, 4);
 });
 
 test('食品库存取改废 + 缺失阻断', () => {
@@ -223,11 +225,11 @@ test('食品库存取改废 + 缺失阻断', () => {
   const id = a.data.receipt.recordId;
   const u = runWrite(dir, 'calorie.product.update', { id, note: '新版' });
   assert.equal(u.data.receipt.op, 'update');
-  assert.equal(run('calorie.product.update', { id: 999999, note: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.product.update', { id: 999999, note: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const dep = runWrite(dir, 'calorie.product.deprecate', { id });
   assert.match(dep.data.message, /已下架/);
-  assert.equal(run('calorie.product.deprecate', { id: 999999 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.product.add', { productName: 'x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.product.deprecate', { id: 999999 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.product.add', { productName: 'x' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('档案设/活动量/改 + 白名单', () => {
@@ -239,14 +241,14 @@ test('档案设/活动量/改 + 白名单', () => {
   const u = runWrite(dir, 'calorie.profile.update', { field: 'note', value: '测试' });
   assert.equal(u.data.receipt.op, 'update');
   runWrite(dir, 'calorie.profile.update', { fields: { age: 31 } });
-  assert.equal(run('calorie.profile.set', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.profile.activity', { activityLevel: '乱填' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
-  assert.equal(run('calorie.profile.update', { field: 'nope', value: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.profile.set', {}, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.profile.activity', { activityLevel: '乱填' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
+  assert.equal(run('calorie.profile.update', { field: 'nope', value: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });
 
 test('目标定/改/暂停/重启 + 无行阻断', () => {
   const bare = mkEmpty();
-  assert.equal(run('calorie.goal.water', { water: 2000 }, { ILIFE_CONFIG_DIR: calorieConfigDir(bare) }).status, 4);
+  assert.equal(run('calorie.goal.water', { water: 2000 }, { ...homeEnvOf(calorieConfigDir(bare))}).status, 4);
   const s = runWrite(bare, 'calorie.goal.set', { calorie: 1800, protein: 150, carbs: 200, fat: 50, water: 2000 });
   assert.equal(s.data.receipt.op, 'create');
   const s2 = runWrite(bare, 'calorie.goal.set', { calorie: 1900, protein: 150, carbs: 200, fat: 50 });
@@ -255,33 +257,33 @@ test('目标定/改/暂停/重启 + 无行阻断', () => {
   assert.match(w.data.message, /2200 ml/);
   const wg = runWrite(bare, 'calorie.goal.weight', { kg: 68, deadline: '2026-12-31' });
   assert.match(wg.data.message, /68 kg/);
-  assert.equal(run('calorie.goal.weight', { kg: -1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(bare) }).status, 2);
+  assert.equal(run('calorie.goal.weight', { kg: -1 }, { ...homeEnvOf(calorieConfigDir(bare))}).status, 2);
   const p = runWrite(bare, 'calorie.goal.pause', {});
   assert.match(p.data.message, /暂停/);
   const rs = runWrite(bare, 'calorie.goal.resume', {});
   assert.match(rs.data.message, /重启/);
-  assert.equal(run('calorie.goal.set', { calorie: 1800 }, { ILIFE_CONFIG_DIR: calorieConfigDir(bare) }).status, 2);
+  assert.equal(run('calorie.goal.set', { calorie: 1800 }, { ...homeEnvOf(calorieConfigDir(bare))}).status, 2);
 });
 
 test('体脂围度记/删 + 来源白名单', () => {
   const dir = mkEnv();
   const c = runWrite(dir, 'calorie.body.composition-add', { source: 'gym', bodyFatPct: 18.5, date: '2026-09-06' });
   assert.equal(c.data.receipt.op, 'create');
-  assert.equal(run('calorie.body.composition-add', { source: '乱填', bodyFatPct: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.body.composition-add', { source: 'gym' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.body.composition-add', { source: '乱填', bodyFatPct: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.body.composition-add', { source: 'gym' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
   runWrite(dir, 'calorie.body.composition-remove', { id: c.data.receipt.recordId });
-  assert.equal(run('calorie.body.composition-remove', { id: 999999 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 4);
+  assert.equal(run('calorie.body.composition-remove', { id: 999999 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 4);
   const m = runWrite(dir, 'calorie.body.measure-add', { waistCm: 85, hipCm: 95, date: '2026-09-06' });
   assert.match(m.data.message, /waistCm 85/);
-  assert.equal(run('calorie.body.measure-add', { date: '2026-09-06' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.body.measure-add', { noSuch: 1 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.body.measure-add', { date: '2026-09-06' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.body.measure-add', { noSuch: 1 }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
   runWrite(dir, 'calorie.body.measure-remove', { id: m.data.receipt.recordId });
 });
 
 test('skilllink 登记：write 键经 skilllink read 可执行', () => {
   const dir = mkEnv();
   const root = join(HERE, '..', '..', '..');
-  const r = spawnSync(NODE_BIN, [join(root, 'tooling', 'skilllink.mjs'), 'read', 'calorie.weight.log', '--params', JSON.stringify({ kg: 71, date: '2026-09-06' })], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  const r = spawnSync(NODE_BIN, [join(root, 'tooling', 'skilllink.mjs'), 'read', 'calorie.weight.log', '--params', JSON.stringify({ kg: 71, date: '2026-09-06' })], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
   assert.equal(r.status, 0, 'skilllink read exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-400));
   const env = JSON.parse(r.stdout);
   assert.equal(env.key, 'calorie.weight.log');
@@ -291,12 +293,16 @@ test('skilllink 登记：write 键经 skilllink read 可执行', () => {
 
 test('写键 exit 契约 + --html 落盘', () => {
   const dir = mkEnv();
-  assert.equal(run(undefined, undefined, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.nope', undefined, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 3);
-  assert.equal(run('calorie.diet.add', '--params', { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
-  assert.equal(run('calorie.weight.log', undefined, { ILIFE_CONFIG_DIR: '' }).status, 1);
+  assert.equal(run(undefined, undefined, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  assert.equal(run('calorie.nope', undefined, { ...homeEnvOf(calorieConfigDir(dir))}).status, 3);
+  assert.equal(run('calorie.diet.add', '--params', { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
+  // #763 ② · 缺隔离即响亮失败：改由**探针**判（探针只调 `resolveConfigDir()`，不碰盘；
+  // 拿技能命令做「缺隔离」实验一旦护栏失守就会真写）。缺隔离＝两格家目录指到**真实账号家目录**；
+  // 反向对照＝两格指一个临时家目录（Windows 上「两格都不给」会被操作系统补回调用方那一份，造不出缺隔离）。
+  assert.equal(probeGuard(homeEnvOf(realHomeDir().dir)), 'THREW:CONFIG_TEST_ISOLATION_MISSING', '缺隔离没被护栏拦下');
+  assert.ok(probeGuard(homeEnvOf(mkdtempSync(join(tmpdir(), 't40-probe-home-')))).startsWith('OK:'), '给了两格临时家目录仍被拦下');
   const p = join(dir, 'receipt.html');
-  const r = spawnSync(NODE_BIN, [BIN, 'calorie.weight.log', '--params', JSON.stringify({ kg: 70, date: '2026-09-06' }), '--html', p], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.weight.log', '--params', JSON.stringify({ kg: 70, date: '2026-09-06' }), '--html', p], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
   assert.equal(r.status, 0);
   const html = readFileSync(p, 'utf8');
   assert.match(html, /记体重/);

@@ -28,12 +28,14 @@ import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, isAbsolute, join } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock } from './helpers/config-test.mjs';
-// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock, requireIsolatedHome } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { realConfigDir } from '../../../test/helpers/real-home-snapshot.mjs';
+// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.life/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
+configTestBase();
 
 const TODAY = '2026-09-07';
 pinProcessClock(TODAY); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
@@ -218,7 +220,7 @@ function runWord(seedDir, cli, tag, recordId) {
   const toks = tokenize(fillPlaceholders(cli, recordId));
   const r = spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock(TODAY) },
   });
   const outDir = join(dir, 'calorie_html');
   return {
@@ -609,22 +611,23 @@ group(6, '写类 13 词产物是完整文档（不是片段），与 #264 判据
 
 /* ── 真库只读：本文件全部跑动都指向临时夹具目录 ─────────────────────────── */
 
-test('#267 真库只读：本文件从不把 SKILLS_DB_PATH 指向真库', () => {
+test('#267 真库只读：本文件全部跑动都落在临时家目录下，不碰真实家目录', () => {
   RESULT.total += 1;
   try {
-    const real = process.env.ILIFE_CONFIG_DIR ?? null;
+    // #763 · 「真库」＝**真实账号家目录**下那份 `.ilife`（`realConfigDir()` 取自账号，家目录注入改不动它）；
+    // 当刻家目录是不是临时那份由基座自证（`requireIsolatedHome()`）。判据看**配置目录**而不是家目录本身：
+    // 系统临时根（`%TEMP%`）就住在用户资料目录底下，拿家目录当包含面会把它自己判红。
+    const real = realConfigDir();
+    requireIsolatedHome();
     for (const [tag, dir] of [['满库', full().seedDir], ['空库', empty().seedDir]]) {
       assert.ok(dir.startsWith(tmpdir()), tag + '夹具目录不在系统临时根下：' + dir);
-      if (real !== null && existsSync(join(real, DB_FILENAME))) {
-        assert.notEqual(dir, real, tag + '夹具目录指到了真库');
-        assert.ok(!dir.startsWith(real), tag + '夹具目录落在真库目录内：' + dir);
-      }
+      assert.ok(!resolve(dir).startsWith(resolve(real.dir) + sep), tag + '夹具目录落在真实配置目录内（判据源=' + real.source + '）：' + dir);
       assert.equal(basename(join(dir, DB_FILENAME)), DB_FILENAME, tag + '夹具库名不符');
     }
     assert.ok(existsSync(ROOT), '仓根不可达');
     assert.ok(existsSync(BIN), 'dist/cli/cmd_read.js 不在（先 pnpm build）');
     RESULT.passed += 1;
-    say('G7', '夹具根=' + tmpdir() + ' 真库ILIFE_CONFIG_DIR=' + (real ?? '（未设）') + ' 真库零接触=是');
+    say('G7', '夹具根=' + tmpdir() + ' 真实配置目录=' + real.dir + '（判据源=' + real.source + '） 真库零接触=是');
   } catch (err) {
     RESULT.failed.push('G7');
     throw err;

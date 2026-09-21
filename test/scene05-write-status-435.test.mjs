@@ -22,6 +22,10 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../packages/skill-calorie/dist/index.js';
 import { DB_FILENAME } from '../packages/skill-calorie/dist/paths.js';
+// #763 换隔离通道：库目录从「设 `SKILLS_DB_PATH`」改成配置文件项 `db.dir`，配置落点由**家目录**决定
+// ——`calorieEnv(dir)` 把 `dir` 布成临时家目录（`<dir>/.ilife/calorie.yaml` 里 `db.dir` 指回 `dir`），
+// 子进程因此读的是这条临时库，绝不落到真实家目录。
+import { calorieEnv } from '../packages/skill-calorie/test/helpers/config-test.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const CLI = join(here, '..', 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js');
@@ -67,7 +71,7 @@ function seed() {
 
 function cli(dir, key, params) {
   return spawnSync(process.execPath, [CLI, key, '--params', JSON.stringify(params)], {
-    env: { ...process.env, SKILLS_DB_PATH: dir }, encoding: 'utf8',
+    env: calorieEnv(dir), encoding: 'utf8',
   });
 }
 

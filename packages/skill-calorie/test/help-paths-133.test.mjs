@@ -18,8 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/photo/helpPaths.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -36,12 +37,13 @@ function run(dbPath, args = [KEY], cwd) {
   return runCfg(dbPath, dbPath, args, cwd);
 }
 
-/** 配置目录与库目录分开给：`cfgDir` 进 `ILIFE_CONFIG_DIR`（须绝对），`dbDir` 进配置里的 `db.dir`（可相对）。 */
+/** 家目录与库目录分开给：`cfgDir` 当**家目录**（须绝对，配置落 `<cfgDir>/.life/calorie.yaml`），
+ *  `dbDir` 进配置里的 `db.dir`（可相对）。 */
 function runCfg(cfgDir, dbDir, args = [KEY], cwd) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(cfgDir, { db: { dir: dbDir } }) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(cfgDir, { db: { dir: dbDir } })) },
     ...(cwd === undefined ? {} : { cwd }),
   });
   let env = null;
@@ -87,7 +89,7 @@ test('#133 ⑭ 相对库目录（`db.dir` 是相对路径）亦回传绝对路�
   // 是**真实路径**，它把相对库目录 `rel_db` 解析成 `/private/var/…/rel_db`；父进程若用
   // `/var/…` 拼期望值，两边比的是同一份目录的两个名字。归一后比的仍是「回执 ＝ 产物真实所在」。
   //
-  // #676 · 配置目录给**绝对**路径（`ILIFE_CONFIG_DIR` 若是相对的，会按子进程自己的 cwd 解析），
+  // #676 · 家目录给**绝对**路径（家目录若是相对的，会按子进程自己的 cwd 解析），
   // 相对的是**库目录**（`db.dir: rel_db`）——被考察的「相对」语义只留在库落点上。
   const root = realpathSync(tmpDbDir('rel'));
   try {

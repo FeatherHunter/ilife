@@ -8,7 +8,7 @@
  *  ② `reuseHours` 换窗口：`3` 同效、`0`＝**每次都要一份最新的**（落新的、不覆盖旧的）；
  *  ③ **坏参阻断**：负数／非数一律 exit 2（不静默当 0、不静默当缺省），且不落盘；
  *  ④ 落点与名字**逐字不变**（`<数据目录>/schedule_html/help/作息管家_HELP_<TS>[_N].html`；数据目录＝
- *     `<ILIFE_CONFIG_DIR>/data`）——本票为接复用把落盘管线改成走共用件 `saveHtmlFile`，这一条防「顺手改坏名字」；
+ *     `<家目录>/.ilife/data`）——本票为接复用把落盘管线改成走共用件 `saveHtmlFile`，这一条防「顺手改坏名字」；
  *  ⑤ **不吃窗口的路照旧**：`--html` 逐字覆盖、`q` 现找回命中、看帮助不建库。
  *
  * 运行：先 `pnpm build`（或逐包 `tsc -b`），再
@@ -21,6 +21,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -29,14 +30,14 @@ const KEY = 'schedule.help.lookup';
 const NAME_RE = /^作息管家_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245sch-' + tag + '-'));
-/** 数据目录＝`<配置目录>/data`（配置项 `db.dir` 空串即它）。 */
-const dataDirOf = (dir) => join(dir, 'data');
+/** 数据目录＝`<家目录>/.ilife/data`（配置项 `db.dir` 空串即它）。 */
+const dataDirOf = (dir) => join(configDirOf(dir), 'data');
 const helpDirOf = (dir) => join(dataDirOf(dir), 'schedule_html', 'help');
 const namesOf = (dir) => { try { return readdirSync(helpDirOf(dir)).sort(); } catch { return []; } };
 
 function run(dir, args) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(dir)},
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
 import { resolveNodeBin, SPAWN_TIMEOUT_MS, readInstalledVersions } from '../dist/bridge.js';
 import { PLUGIN } from '../dist/slot.js';
+import { homeEnvOf, useHome } from '../../../test/helpers/home-test-base.mjs';
 import { createRequire } from 'node:module';
 const requirePkg = createRequire(import.meta.url);
 
@@ -43,13 +44,15 @@ describe('dsh-calorie 烟囱', () => {
   });
   // Windows 并行 spawn 配额抖动（沿 #41 调查结论，见 test/combos-42.test.mjs）：满载时子进程偶发 exit 0 配空白
   // stdout——产品侧不可能态（出口必出一行 envelope JSON）。仅此签名即时重跑一次；仍坏/他错即真红，不断言放水。
-  function spawnCliOnce(args, db) {
-    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: db } });
+  function spawnCliOnce(args, home) {
+    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: homeEnvOf(home) });
   }
   function spawnCli(args) {
-    const db = mkdtempSync(join(tmpdir(), 'calorie-smoke-'));
-    let r = spawnCliOnce(args, db);
-    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, db);
+    // #695／#763：技能侧不再读环境变量 `SKILLS_DB_PATH`（配置走 `~/.ilife/calorie.yaml`），隔离改走**家目录**——
+    // 把子进程的家目录指到一个空的临时目录，配置与数据都落在它下面（真库零触碰）。
+    const home = mkdtempSync(join(tmpdir(), 'calorie-smoke-'));
+    let r = spawnCliOnce(args, home);
+    if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, home);
     return r;
   }
   it('#48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段', () => {
@@ -62,8 +65,8 @@ describe('dsh-calorie 烟囱', () => {
     assert.ok(env.data && env.data.total >= 1);
   });
   it('#48 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
-    const db = mkdtempSync(join(tmpdir(), 'calorie-smoke-'));
-    process.env.SKILLS_DB_PATH = db;
+    // 面板路走当刻进程的环境：技能读配置只看**家目录**，故这里就地接管（空库落在它下面的 `.ilife/data`）。
+    useHome(mkdtempSync(join(tmpdir(), 'calorie-smoke-')));
     let data;
     try {
       data = readViaCli('calorie.help.center');

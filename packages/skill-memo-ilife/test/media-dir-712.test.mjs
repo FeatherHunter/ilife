@@ -6,7 +6,7 @@
 //   ⑤ 附件目录不存在 → 给人话原因，不静默降级（新加的一条，票面「要做四件」第 4 项）。
 //
 // 接缝与注入点照 `cli.test.mjs`：**真出口**＝spawn `dist/cli/cmd_read.js`，临时库走配置项 `db.dir`，
-// 附件目录走配置项 `media.dir`，测试隔离的唯一口子 `ILIFE_CONFIG_DIR`；**不碰活库** `D:\2Study\StudyNotes\.db`。
+// 附件目录走配置项 `media.dir`，#763 起测试隔离的唯一口子是**家目录注入**；**不碰活库** `D:\2Study\StudyNotes\.db`。
 // #695：原来那两个环境变量（`SKILLS_DB_PATH`／`MEMO_MEDIA_DIR`）已按用户裁决删除，取值口改配置文件。
 //
 // 老规则对照（鉴别力读数）：`oldRuleAllowed()` 是仓外老实现 `备忘录/script/memo_cli.py:106-116`
@@ -31,8 +31,7 @@ const BIN = join(here, '..', 'dist', 'cli', 'cmd_read.js');
 let TMP = '';       // 本文件的独占根：<TMP>/media 是真附件目录，<TMP>/mediafoo 是同开头的另一个目录
 let MEDIA = '';     // 真附件目录
 let DB = '';        // 临时 memo 库（已 seed 一条老数据）
-let CFG = '';       // 本文件的配置目录（`ILIFE_CONFIG_DIR`）：写 `db.dir`／`media.dir` 两份值
-let CFG_BAK = null;
+let HOME_BAK = null;   // 家目录两格的原值（收尾原样还原；原本 undefined 的还原成删除）
 const IMG = '情绪日记_0527_烤肉.jpg';   // 目录内一个真存在的小文件（与老库那两条附件同名，便于对照）
 
 /** 老实现的判定规则（仓外 `memo_cli.py:106-116` 逐条转写，只用来出对照读数，不参与新判定）。 */
@@ -43,7 +42,7 @@ function oldRuleAllowed(v, mediaDir) {
   return { ok: true, stored: v.startsWith(prefix) ? v.slice(prefix.length) : '' };
 }
 
-/** 真出口：库目录与附件目录都经**配置文件**注入（#695：环境变量读取已删，隔离口是 `ILIFE_CONFIG_DIR`）。
+/** 真出口：库目录与附件目录都经**配置文件**注入（#695：环境变量读取已删；#763 起隔离口＝家目录注入）。
  *  `mediaDir` 缺省＝本文件的真附件目录，用例可传别的值（如「不存在的目录」那条）。 */
 function run(args, mediaDir = MEDIA, cwd) {
   const cfg = mkMemoConfig({ db: { dir: DB }, media: { dir: mediaDir } }, 'memo712-cfg-');
@@ -83,19 +82,21 @@ before(() => {
   mkdirSync(MEDIA, { recursive: true });
   writeFileSync(join(MEDIA, IMG), 'fixture');
   DB = mkMemoDb('memo712db-');
-  // #695：库目录与附件目录的唯一真相都是配置文件——本件另有**进程内**调用（`resolveMediaDir()`／
-  // `normalizeMediaPath()`），故隔离口 `ILIFE_CONFIG_DIR` 必须在 before 里就设好（跑在 node 测试运行器里
-  // 却没设它时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`，不许落到真实家目录）。
-  CFG_BAK = process.env.ILIFE_CONFIG_DIR;
-  CFG = mkMemoConfig({ db: { dir: DB }, media: { dir: MEDIA } }, 'memo712-cfg-self-');
-  process.env.ILIFE_CONFIG_DIR = CFG;
+  // #695／#763：库目录与附件目录的唯一真相都是配置文件——本件另有**进程内**调用（`resolveMediaDir()`／
+  // `normalizeMediaPath()`），故家目录必须在 before 里就接管（跑在 node 测试运行器里却要落到真实家目录的
+  // `.ilife` 时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`，不许落到真实家目录）。
+  HOME_BAK = { USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME };
+  // 造临时家目录 ＋ 落 `<家>/.ilife/memo.yaml`，并就地接管当刻进程的家目录（返回的还是那个家目录）。
+  mkMemoConfig({ db: { dir: DB }, media: { dir: MEDIA } }, 'memo712-home-self-');
   // 老数据一条：库里已有的相对路径（形状与活库 `notes` 里那两条逐字同形）。
   seedNote(DB, { content: '老附件那条', category: '情绪日记', media: IMG });
 });
 
 after(() => {
-  if (CFG_BAK === undefined) delete process.env.ILIFE_CONFIG_DIR;
-  else process.env.ILIFE_CONFIG_DIR = CFG_BAK;
+  for (const [k, v] of Object.entries(HOME_BAK ?? {})) {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  }
   if (TMP && existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
 });
 

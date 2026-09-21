@@ -1,6 +1,7 @@
 /** #42 · combos 补登记 #41 的 18 新读键：CALORIE_COMBOS 全量 ⊆ combos.yaml 注册 + skilllink read 逐键 exit 0。
  * 纯配置票回归门：实现侧新增读键而登记漏了就地挂；只读 combos.yaml 与生成物，不碰技能实现。
- * tmp 隔离（SKILLS_DB_PATH 指临时目录种子库），真实 DB 零触碰；严格串行 spawn（沿 #41 调查结论，
+ * tmp 隔离（#763：家目录注入——`dir` 当家目录，库目录经 `<dir>/.ilife/calorie.yaml` 的 `db.dir` 给；
+ * 老线的 `SKILLS_DB_PATH` 已退役），真实 DB 零触碰；严格串行 spawn（沿 #41 调查结论，
  * Windows 并行 spawn 配额抖动）。种子与 packages/skill-calorie/test/cli-smoke-t41.test.mjs seedFull 同构
  * （测试文件间不互 import，避免重复注册用例）。
  */
@@ -8,7 +9,7 @@ import { DECLARED_KEYS, DECLARED_READ_KEYS, DECLARED_WRITE_KEYS } from '../packa
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -160,12 +161,17 @@ describe('#42 combos 补登记 18 新读键（skilllink 可读）', () => {
     const db = openDb(join(dir, DB_FILENAME));
     seedFull(db);
     db.close();
+    // #763：隔离通道＝**家目录注入**（`SKILLS_DB_PATH` 已退役）——`dir` 当家目录，库目录经配置文件给：
+    // `<dir>/.ilife/calorie.yaml` 里 `db.dir = dir`（库仍在原地 `<dir>/calorie_data.db`，种子与断言都不动）。
+    const cfgDir = join(dir, '.ilife');
+    mkdirSync(cfgDir, { recursive: true });
+    writeFileSync(join(cfgDir, 'calorie.yaml'), 'db:\n  dir: ' + JSON.stringify(dir) + '\n', 'utf8');
     let pass = 0;
     for (const key of READ18) {
       const r = spawnSync(NODE, [skilllink, 'read', key, '--params', JSON.stringify(CASES.get(key))], {
         cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, SKILLS_DB_PATH: dir },
+        env: { ...process.env, USERPROFILE: dir, HOME: dir },
       });
       assert.equal(r.status, 0, key + ' exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(0, 300));
       const env = JSON.parse(String(r.stdout));

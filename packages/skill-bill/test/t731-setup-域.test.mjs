@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { configTestBase } from './helpers/config-base.mjs';
 
-process.env.ILIFE_CONFIG_DIR = configTestBase('t731-cfg-');
+configTestBase('t731-cfg-');
 
 const scene = await import('../dist/setup/scene.js');
 const params = await import('../dist/setup/params.js');

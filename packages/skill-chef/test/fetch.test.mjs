@@ -4,11 +4,31 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openChefDb, closeChefDb, addRecipe, updateRecipe, filterRecipes, addIngredient, addStep, listRecipes, searchRecipes, getRecipeDetail, deprecateRecipe, recordHistory, queryHistory, historyStats, buildShoppingList, healthCheck, ChefFetchError } from '../dist/index.js';
 import { resolveDbDir, resolveDbPath } from '../dist/index.js';
+import { configDirOf, useHome } from '../../../test/helpers/home-test-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * #763 护栏探针：一个只调 `resolveConfigDir()` 的子进程（不碰盘，故护栏 fail-open 也写不出真实数据）。
+ * 「忘了注入」＝把家目录两格**显式设成账号那一份**（不是删格：实测 win32 上删掉 `USERPROFILE`，子进程仍会
+ * 拿到父进程当刻那一格——本件自己就注过临时家目录，删格到不了真实那一份）。反向对照经 `extraEnv` 给临时两格。
+ */
+const DIRS_URL = pathToFileURL(join(HERE, '..', '..', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+const REAL_HOME = realHomeDir().dir;
+const HOME_ENV_CAPS = ['USERPROFILE', 'HOME'];
+function probeGuard(extraEnv = {}) {
+  const code = 'const m = await import(' + JSON.stringify(DIRS_URL) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const env = { ...process.env };
+  for (const cap of HOME_ENV_CAPS) env[cap] = REAL_HOME;
+  env.NODE_TEST_CONTEXT = 'child-v8';
+  Object.assign(env, extraEnv);
+  return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
+}
 
 let CFG = '';
 let DB = '';
@@ -17,10 +37,10 @@ let gongbaoId = '';
 let mapoId = '';
 
 before(() => {
-  // #695：配置走配置文件——隔离目录＝配置目录，数据目录＝它下面的 `data/`。
+  // #763：隔离＝把**家目录**指到临时目录 —— 配置落 `<它>/.ilife/chef.yaml`，数据目录＝`<它>/.ilife/data/`。
   CFG = mkdtempSync(join(tmpdir(), 'cheffetch-'));
-  DB = join(CFG, 'data');
-  process.env.ILIFE_CONFIG_DIR = CFG;
+  DB = join(configDirOf(CFG), 'data');
+  useHome(CFG);
   H = openChefDb(resolveDbPath());
   const g = addRecipe(H, { name: '宫保虾球', difficulty: '中等', status: '未做', servings: 2, total_time_minutes: 25, description: '酸甜微辣' });
   gongbaoId = g.id;
@@ -110,16 +130,13 @@ describe('私家大厨取数 fetch', () => {
     assert.equal(resolveDbDir(), DB);
     assert.equal(resolveDbPath(), join(DB, 'chef_data.db'));
   });
-  it('测试缺隔离即响亮失败（没设 ILIFE_CONFIG_DIR 的测试进程不许读配置）', () => {
-    // 本进程的配置已经读过（before 那次，进程内有缓存），故用**子进程**验护栏：
-    // 清掉 ILIFE_CONFIG_DIR 且带测试上下文时，现读配置必须响亮失败，不许静默落到真实家目录。
+  it('测试缺隔离即响亮失败（家目录＝真实家目录的测试进程不许读配置）', () => {
+    // 本进程的配置已经读过（before 那次，进程内有缓存），故用**子进程探针**验护栏：
+    // 只调 `resolveConfigDir()`（不碰盘）——家目录两格设成账号那一份，必须抛 CONFIG_TEST_ISOLATION_MISSING。
     // 整条链的读数见同包 `test/config-695.test.mjs`。
-    const r = spawnSync(process.execPath, ['-e',
-      "import('./dist/index.js').then((m)=>{try{m.resolveDbPath();process.exit(0);}catch(e){console.error(String(e.message));process.exit(9);}})",
-    ], {
-      cwd: join(HERE, '..'), encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: '1' },
-    });
-    assert.equal(r.status, 9, '缺 ILIFE_CONFIG_DIR 的测试进程读配置必须抛：' + String(r.stdout));
-    assert.match(String(r.stderr), /ILIFE_CONFIG_DIR/);
+    assert.equal(probeGuard(), 'THREW:CONFIG_TEST_ISOLATION_MISSING');
+    const fakeHome = mkdtempSync(join(tmpdir(), 'cheffetch-probe-'));
+    assert.equal(probeGuard({ USERPROFILE: fakeHome, HOME: fakeHome }), 'OK:' + configDirOf(fakeHome),
+      '给了临时家目录就照常算得出来（这道门只关「没注入家目录」）');
   });
 });

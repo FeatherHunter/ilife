@@ -2,7 +2,7 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
+import { configDirOf, setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 import {
   openScheduleDb, closeScheduleDb,
   dbFilename, DEFAULT_DB_FILENAME, resolveDbDir, resolveDbPath,
@@ -17,20 +17,21 @@ let DB = '';
 let H = null;
 
 before(() => {
-  // #695：库目录不再从 `SKILLS_DB_PATH` 取；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`（基座缺了直接报错）。
+  // #695／#763：库目录不再从 `SKILLS_DB_PATH` 取；测试隔离的唯一口子是**家目录注入**（基座缺了直接报错，
+  // 配置与数据都落在 `<它>/.ilife/` 下）。
   CFG = setupConfigTestBase();
-  DB = join(CFG.dir, 'data'); // `db.dir` 空串 ⇒ 数据目录＝<配置目录>/data
+  DB = join(configDirOf(CFG.dir), 'data'); // `db.dir` 空串 ⇒ 数据目录＝<家目录>/.ilife/data
   H = openScheduleDb(resolveDbPath()); // 走配置面取默认落点（里面 mkdirSync 把数据目录建出来）
   assert.equal(H.initialized, true);
 });
 
-describe('作息取数 fetch（配置目录隔离）', () => {
+describe('作息取数 fetch（家目录注入隔离）', () => {
   it('库路径三项都由配置面给出：目录＝数据目录、库名＝默认常量', () => {
-    assert.equal(resolveDbDir(), DB, '`db.dir` 空串 ⇒ 数据目录（<配置目录>/data）');
+    assert.equal(resolveDbDir(), DB, '`db.dir` 空串 ⇒ 数据目录（<家目录>/.ilife/data）');
     assert.equal(dbFilename(), 'schedule_data.db', '`db.name` 空串 ⇒ 改造前那个代码常量');
     assert.equal(DEFAULT_DB_FILENAME, 'schedule_data.db', '默认库名逐字不变');
     assert.equal(resolveDbPath(), join(DB, 'schedule_data.db'), '默认落点＝<数据目录>/schedule_data.db');
-    assert.equal(existsSync(join(CFG.dir, 'schedule.yaml')), true, '首次读即按默认值落一份配置文件');
+    assert.equal(existsSync(join(configDirOf(CFG.dir), 'schedule.yaml')), true, '首次读即按默认值落一份配置文件');
   });
   it('记/查/修正闭环（edit_count 审计）', () => {
     const r = addRecord(H, { date: '2026-09-06', time_start: '09:00', time_end: '10:00', duration_minutes: 60, activity: '调优', category: '工作.AI调优' });

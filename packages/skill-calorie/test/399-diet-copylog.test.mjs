@@ -22,8 +22,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -46,7 +47,7 @@ function runDietToday() {
   const out = join(dir, 't399-diet-today.html');
   const r = spawnSync(process.execPath, [CLI, 'calorie.view.diet', '--params', '{"window":"今日"}', '--html', out], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(SEED_TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock(SEED_TODAY) },
   });
   assert.equal(r.status, 0, 'calorie.view.diet（今日）真出口 exit=' + r.status + ' stderr=' + String(r.stderr).slice(-300));
   return readFileSync(out, 'utf8');

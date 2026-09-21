@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
+import { homeEnvOf, useHome } from '../../../test/helpers/home-test-base.mjs';
 
 describe('dsh-chef 烟囱', () => {
   it('槽位 id 与 order 与 P3 定案一致', () => {
@@ -43,9 +44,9 @@ describe('dsh-chef 烟囱', () => {
   // Windows 并行 spawn 配额抖动（沿 #41 调查结论，见 test/combos-42.test.mjs）：满载时子进程偶发 exit 0 配空白
   // stdout——产品侧不可能态（出口必出一行 envelope JSON）。仅此签名即时重跑一次；仍坏/他错即真红，不断言放水。
   // #695：技能侧不再读环境变量 `SKILLS_DB_PATH`（配置走 `~/.ilife/chef.yaml`），测试隔离改用它唯一的口子
-  // `ILIFE_CONFIG_DIR`（缺了技能直接报错，不许落到真实家目录）。
+  // `家目录注入（测试跑在临时家目录里）`（缺了技能直接报错，不许落到真实家目录）。
   function spawnCliOnce(args, cfg) {
-    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: cfg } });
+    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: homeEnvOf(cfg) });
   }
   function spawnCli(args) {
     const cfg = mkdtempSync(join(tmpdir(), 'chef-smoke-'));
@@ -64,7 +65,8 @@ describe('dsh-chef 烟囱', () => {
   });
   it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
     const cfg = mkdtempSync(join(tmpdir(), 'chef-smoke-'));
-    process.env.ILIFE_CONFIG_DIR = cfg;
+    // 面板路走当刻进程的环境：技能读配置只看**家目录**（`<家>/.ilife/chef.yaml`），故这里就地接管。
+    useHome(cfg);
     let data;
     try {
       data = readViaCli('chef.help.lookup');

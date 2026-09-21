@@ -1,11 +1,12 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { billEnv } from './helpers/config-base.mjs';
+import { billEnv, configDirOf, saveHomeEnv } from './helpers/config-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -119,13 +120,36 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     const q = run(['bill.help.lookup', '--params', P({ q: '帮我查今天花了多少' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'bill.record.today'));
   });
-  it('契约：未知 key 3 且 stdout 空；坏参 2；缺 DB 1；--html 落盘', () => {
+  it('契约：未知 key 3 且 stdout 空；坏参 2；配置面硬失败 1；--html 落盘', () => {
     const k = run(['bill.nope']);
     assert.equal(k.status, 3);
     assert.equal(k.stdout, '');
     assert.equal(run(['bill.record.today', '--params', '[]']).status, 2);
     assert.equal(run(['bill.record.today', '--timeout', 'abc']).status, 2);
-    assert.equal(run(['bill.record.today'], { ILIFE_CONFIG_DIR: '' }).status, 1);
+    // 「配置面硬失败 ＝exit 1 且 stdout 空」这一档的真出口读数。
+    // 老写法是 `ILIFE_CONFIG_DIR=''`（那个变量已随 #763 退役）；这里换两个新来源，都仍然走真出口：
+    //   ① **缺隔离**：家目录两格显式指回账号那一份 ⇒ 公共层抛 CONFIG_TEST_ISOLATION_MISSING（在 `mkdir`
+    //      之前抛，所以这条实验一个字节都写不出去）；同一判据另有两条零写探针（`help-exit-148`／`fetch`）。
+    //   ② **配置面校验没过**：配置文件里放一个名单外的键 ⇒ CONFIG_UNKNOWN_KEY。
+    const real = realHomeDir().dir;
+    const blocked = spawnSync(NODE, [bin, 'bill.record.today'],
+      { cwd: here, encoding: 'utf8', env: { ...process.env, USERPROFILE: real, HOME: real } });
+    assert.equal(blocked.status, 1, '缺隔离＝exit 1（stderr：' + blocked.stderr + '）');
+    assert.equal(blocked.stdout, '', '失败时 stdout 必须空');
+    assert.match(blocked.stderr, /CONFIG_TEST_ISOLATION_MISSING|测试缺隔离/,
+      '报的是「缺隔离」这一档，不是别的失败：' + blocked.stderr);
+    const broken = mkdtempSync(join(tmpdir(), 'billcli-badcfg-'));
+    const restoreHome = saveHomeEnv();
+    try {
+      // 这一档要的是「已经有一份配置、但它读不过去」：先把现场布出来，再把那一行替换成名单外的键。
+      // 注意不能走 `run()`——那支把家目录钉在 `DB` 上；这条实验的家目录是 `broken`。
+      const env = billEnv(broken);
+      writeFileSync(join(configDirOf(broken), 'bill.yaml'), 'db:\n  dirr: typo\n', 'utf8');
+      const bad = spawnSync(NODE, [bin, 'bill.record.today'], { cwd: here, encoding: 'utf8', env });
+      assert.equal(bad.status, 1, '配置面校验没过＝exit 1（stderr：' + bad.stderr + '）');
+      assert.equal(bad.stdout, '', '失败时 stdout 必须空');
+      assert.match(bad.stderr, /不认识的配置项「db\.dirr」/, '报的是那一行本身：' + bad.stderr);
+    } finally { restoreHome(); }
     const p = join(DB, 'out.html');
     const r = run(['bill.record.today', '--params', P({ date: '2026-09-06' }), '--html', p]);
     assert.equal(r.status, 0);

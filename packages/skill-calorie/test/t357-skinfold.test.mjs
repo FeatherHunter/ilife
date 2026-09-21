@@ -19,8 +19,9 @@ import { openDb } from '../dist/index.js';
 import { CALIPER_FIELDS } from '../dist/fetch/body.js';
 import { JP7_METHOD, jp7BodyFatPct } from '../dist/body/log.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -54,7 +55,7 @@ function run(key, params, envExtra) {
 
 /** 写命令（要求 exit 0 且 envelope 合法），回 envelope。 */
 function runWrite(dir, params) {
-  const r = run('calorie.body.composition-add', params, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run('calorie.body.composition-add', params, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 0, 'exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-400));
   return JSON.parse(r.stdout);
 }
@@ -141,13 +142,13 @@ test('缺性别／缺年龄／缺 1 点皮褶 → exit 2 且该表行数不变�
   const noOne = { ...full }; delete noOne.caliper_midaxillary_mm;
 
   for (const [name, p] of [['缺性别', noSex], ['缺年龄', noAge], ['缺 1 点皮褶', noOne]]) {
-    const r = run('calorie.body.composition-add', p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = run('calorie.body.composition-add', p, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.status, 2, name + ' 应 exit 2（stderr=' + (r.stderr || '').slice(-200) + '）');
     assert.equal(rows(dir).length, 0, name + ' 不许写库');
   }
   // 缺项不猜：性别/年龄都没给时也不许按某一性别算出一个值来。
   const bare = { source: 'home_caliper', date: '2026-09-06', ...caliperParams(c.calipers) };
-  assert.equal(run('calorie.body.composition-add', bare, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.body.composition-add', bare, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
   assert.equal(rows(dir).length, 0);
   // 齐了才写（对照：同一 tmp 库里把缺项补齐即成功）。
   const ok = runWrite(dir, full);
@@ -179,5 +180,5 @@ test('回归：外部来源直传体脂率照旧（source=gym ＋ bodyFatPct 18.
   assert.equal(got[0].body_fat_pct, 18.5, '直传值原样落库');
   assert.equal(got[0].caliper_chest_mm, null, '外部来源不写皮褶');
   // 非皮褶钳来源缺体脂率仍拦（旧契约不变）。
-  assert.equal(run('calorie.body.composition-add', { source: 'gym', date: '2026-09-06' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }).status, 2);
+  assert.equal(run('calorie.body.composition-add', { source: 'gym', date: '2026-09-06' }, { ...homeEnvOf(calorieConfigDir(dir))}).status, 2);
 });

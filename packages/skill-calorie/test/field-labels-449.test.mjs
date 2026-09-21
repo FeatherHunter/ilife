@@ -29,8 +29,9 @@ import { openDb } from '../dist/index.js';
 import { buildExerciseReceiptDoc } from '../dist/exercise/receipt.js';
 import { fieldLabel } from '../dist/shared/fieldLabel.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -83,7 +84,7 @@ function mkDir() {
 function runCli(dir, key, params) {
   const out = join(dir, key.replace(/\./g, '_') + '-' + Math.random().toString(36).slice(2, 7) + '.html');
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params ?? {}), '--html', out], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   const stdout = String(r.stdout || '').trim();
   return {

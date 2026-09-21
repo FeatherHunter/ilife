@@ -1,18 +1,19 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { saveConfig } from 'base-link-core';
 import { SCHEDULE_CONFIG_DEFAULTS } from '../dist/config.js';
+import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
-/** 配置目录（`ILIFE_CONFIG_DIR` 整体接管的那一处；测试隔离的唯一口子）。 */
+/** 临时**家目录**（#763 起隔离＝家目录注入）：配置落 `<它>/.ilife/schedule.yaml`，库落 `<它>/.ilife/data/`。 */
 let CFG = '';
-/** 库目录＝`<配置目录>/data`（`db.dir` 空串即配置给出的数据目录）。 */
+/** 库目录＝`<家目录>/.ilife/data`（`db.dir` 空串即配置给出的数据目录）。 */
 let DB = '';
 
 function nodeBin() {
@@ -27,14 +28,15 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) } });
 }
 const P = (o) => JSON.stringify(o);
 
 before(() => {
-  CFG = mkdtempSync(join(tmpdir(), 'schedcli-'));
-  process.env.ILIFE_CONFIG_DIR = CFG; // 本进程也要这个口子（`saveConfig` 与子进程同一份）
-  DB = join(CFG, 'data');
+  CFG = mkdtempSync(join(tmpdir(), 'schedcli-home-'));
+  useHome(CFG);          // 本进程也要接管家目录（`saveConfig` 与子进程读的是同一份）
+  requireIsolatedHome(); // 接完当场自证
+  DB = join(configDirOf(CFG), 'data');
   // #695：远端一律不可用——显式值从配置项 `lark.cliPath` 取（不再有 `LARK_CLI_PATH`），
   // 这里钉到一条不存在的路径，远端门必红、本地那一侧照写。
   saveConfig('schedule', SCHEDULE_CONFIG_DEFAULTS, { lark: { cliPath: join(DB, 'no-lark-cli') } });
@@ -139,18 +141,25 @@ describe('作息唯一出口 cmd_read（8 键全票）', () => {
     const sync = run(['schedule.plan.write', '--params', P({ op: 'sync', date: '2026-09-06' })]);
     assert.equal(sync.status, 4);
   });
-  it('契约：未知 key 3 且 stdout 空；坏参 2；缺配置 1；--html 落盘', () => {
+  it('契约：未知 key 3 且 stdout 空；坏参 2；配置件读不出来 1；--html 落盘', () => {
     const k = run(['schedule.nope']);
     assert.equal(k.status, 3);
     assert.equal(k.stdout, '');
     assert.equal(run(['schedule.record.today', '--params', '[]']).status, 2);
     assert.equal(run(['schedule.record.today', '--timeout', 'abc']).status, 2);
     assert.equal(run(['nope']).status, 3);
-    // #695：库目录不再吃环境变量（`SKILLS_DB_PATH` 已删）。「没配」这件事改由配置件那道门报：
-    // 测试进程里没设 `ILIFE_CONFIG_DIR` ⇒ `CONFIG_TEST_ISOLATION_MISSING` ⇒ 归「预检」那一档 exit 1。
-    const noCfg = run(['schedule.record.today'], { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: 'child-v8' });
-    assert.equal(noCfg.status, 1);
-    assert.match(noCfg.stderr, /测试缺隔离/, 'stderr 须是配置件那句人话：' + noCfg.stderr);
+    // #695／#763：库目录不再吃环境变量（`SKILLS_DB_PATH` 已删），配置改由**家目录**定位，
+    // 于是「没配」这一档（原 `SKILLS_DB_PATH: ''`）不存在了；同一位上现在锁「配置件读不出来 ⇒ 预检 exit 1」。
+    // 办法：另造一份**家目录**，把它的 `.ilife/schedule.yaml` 写坏（不认识的键），再用家目录两格把子进程指过去——
+    // 故意**不**拿「缺隔离」做真出口实验：守卫万一 fail-open，真出口就会落到真实家目录（那种实验见 config-695 ④ 的探针）。
+    const badHome = mkdtempSync(join(tmpdir(), 'schedcli-bad-'));
+    mkdirSync(configDirOf(badHome), { recursive: true });
+    writeFileSync(join(configDirOf(badHome), 'schedule.yaml'), 'db:\n  dirx: "x"\n', 'utf8');
+    const noCfg = run(['schedule.record.today'], { USERPROFILE: badHome, HOME: badHome });
+    assert.equal(noCfg.status, 1, '配置件读不出来归「预检」那一档：' + noCfg.stderr);
+    assert.equal(noCfg.stdout, '', '失败时 stdout 不吐任何 JSON（不假装成功）');
+    assert.match(noCfg.stderr, /不认识的配置项/, 'stderr 须是配置件那句人话：' + noCfg.stderr);
+    assert.match(noCfg.stderr, /schedule\.yaml/, '报错须点名坏在哪份配置件：' + noCfg.stderr);
     const p = join(DB, 'out.html');
     const r = run(['schedule.record.today', '--params', P({ date: '2026-09-06' }), '--html', p]);
     assert.equal(r.status, 0);

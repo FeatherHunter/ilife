@@ -15,8 +15,9 @@ import { buildCardioDoc, buildDistributionDoc, buildRecapDoc, buildStrengthDoc, 
 import { buildRecordsDoc } from '../dist/exercise/records.js';
 import { openDb } from '../dist/index.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -274,11 +275,11 @@ test('t576-N7 逐条明细卡同层可折叠（与变更卡同为disclosure）',
   const db = openDb(join(dir, DB_FILENAME));
   db.close();
   const out = join(SAMPLES, 'n7-detail.html');
-  const s1 = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.add', '--params', JSON.stringify({ type: '慢跑', calories: 320, minutes: 30, date: '2026-09-05' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  const s1 = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.add', '--params', JSON.stringify({ type: '慢跑', calories: 320, minutes: 30, date: '2026-09-05' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
   assert.equal(s1.status, 0, 'seed1 stderr=' + String(s1.stderr || '').slice(-200));
-  const s2 = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.add', '--params', JSON.stringify({ type: '慢跑', calories: 320, minutes: 30, date: '2026-09-06' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  const s2 = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.add', '--params', JSON.stringify({ type: '慢跑', calories: 320, minutes: 30, date: '2026-09-06' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
   assert.equal(s2.status, 0, 'seed2 stderr=' + String(s2.stderr || '').slice(-200));
-  const r = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.remove', '--params', JSON.stringify({ from: '2026-09-05', to: '2026-09-06' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+  const r = spawnSync(NODE_BIN, [BIN, 'calorie.exercise.remove', '--params', JSON.stringify({ from: '2026-09-05', to: '2026-09-06' }), '--html', out], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
   assert.equal(r.status, 0, 'remove stderr=' + String(r.stderr || '').slice(-200));
   const file = existsSync(out) ? readFileSync(out, 'utf8') : '';
   const detail = cardOf(file, 'sec-detail');

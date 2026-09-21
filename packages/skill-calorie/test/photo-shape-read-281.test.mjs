@@ -36,8 +36,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { addPhotos } from '../dist/photo/photos.js';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -75,7 +76,7 @@ function runRaw(iso, key, params) {
   return spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params)], {
     encoding: 'utf8',
     // #473：「今天」钉死（`todayISO()` 认 `CALORIE_TODAY`），图注里的相对时间因此可断言、不看机器时钟。
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(iso.dbDir, { photos: { dir: iso.photosDir } }), ...freezeClock(TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(iso.dbDir, { photos: { dir: iso.photosDir } })), ...freezeClock(TODAY) },
   });
 }
 

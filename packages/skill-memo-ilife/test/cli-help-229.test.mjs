@@ -33,7 +33,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_HELP_HTML_DIR_NAME, helpFileStem, helpHtmlDirName, lookupFileStem } from '../dist/help/manifest.js';
-import { configEnv, mkConfigDir, mkMemoConfig } from './helpers/config-base.mjs';
+import { configEnv, mkConfigDir, mkMemoConfig, requireIsolatedHome, useHome } from './helpers/config-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = join(here, '..');
@@ -43,14 +43,15 @@ const KEY = 'memo.help.lookup';
 let TMP = '';
 before(() => {
   TMP = mkdtempSync(join(tmpdir(), 'memo-229-'));
-  // #695：本进程也要读配置（下面三条值走取值函数），故先把隔离口指到临时目录——
-  // 跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` 时公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`。
+  // #695／#763：本进程也要读配置（下面三条值走取值函数），故先把**家目录**接到临时目录——
+  // 跑在 node 测试运行器里却要落到真实家目录的 `.ilife` 时公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`。
   // 这个目录**故意不写 memo.yaml**：读侧按默认值落一份并回默认值，正好锁「默认值逐字」。
-  process.env.ILIFE_CONFIG_DIR = mkConfigDir('memo-229-cfg-');
+  useHome(mkConfigDir('memo-229-home-'));
+  requireIsolatedHome(); // 接完当场自证：当刻家目录还不是临时那份就是基座自己坏了
 });
 
 /** 真 spawn 出口：`--params` 逐字传，不经任何 shell（Windows 上 PowerShell／cmd 会吃掉内层引号）。
- *  库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删，`ILIFE_CONFIG_DIR` 是隔离唯一口子）。 */
+ *  库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删；#763 起隔离唯一口子是**家目录注入**）。 */
 function run(dbDir, args) {
   return spawnSync(process.execPath, [bin, ...args], {
     encoding: 'utf8', env: configEnv(mkMemoConfig({ db: { dir: dbDir } }, 'memo-229-cfg-')), maxBuffer: 64 * 1024 * 1024,
@@ -70,7 +71,7 @@ function walkTs(dir) {
 
 describe('#229 · manifest 三条值（本技能自己的值，逐字）', () => {
   it('落点目录名与两支产物名逐字，且两支必须分名', () => {
-    // #695 起三个值的唯一事实源是**配置文件**（`<ILIFE_CONFIG_DIR>/memo.yaml`，默认值表住 `src/config.ts`）：
+    // #695 起三个值的唯一事实源是**配置文件**（`<家目录>/.ilife/memo.yaml`，默认值表住 `src/config.ts`）：
     // 三个常量换成取值函数，故两条都读——默认值表本身，以及「默认配置下取到的值」。
     assert.equal(DEFAULT_HELP_HTML_DIR_NAME, 'memo_html');
     assert.equal(helpHtmlDirName(), 'memo_html');

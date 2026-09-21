@@ -23,8 +23,9 @@ import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { TRIGGERS, HELP_LOOKUP, lookupWake, searchHelp, WAKE_TABLE, routeWakeword, isExecCli } from '../dist/triggers/index.js';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -47,7 +48,7 @@ function runCli(dir, key, params, htmlName) {
     args.push('--html', out);
   }
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock('2026-09-07') },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock('2026-09-07') },
   });
   return {
     status: r.status, out,

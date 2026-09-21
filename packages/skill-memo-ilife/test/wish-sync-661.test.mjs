@@ -5,7 +5,7 @@
  *
  * 判据与接缝见 `docs/agents/合成写判据.md`：**一个接缝**（技能统一出口，spawn 包内 `dist/cli/cmd_read.js`）
  * ＋ **两个注入点**（临时库目录＝配置项 `db.dir`／可替换的远端挡板＝配置项 `lark.cliPath`，两者都经
- * `ILIFE_CONFIG_DIR` 指向的临时配置目录里的 `memo.yaml` 注入；挡板本体 → `tooling/contract-lark-stub.mjs`）。
+ * `test/helpers/home-test-base.mjs` 的**家目录注入**指向的临时家目录里的 `.ilife/memo.yaml` 注入；挡板本体 → `tooling/contract-lark-stub.mjs`）。
  * 不立内部模块接缝：所有断言只读三个边界——
  * **出口回执**、**本地库行**、**远端挡板收到的调用**。
  *
@@ -33,7 +33,7 @@ const STAT_KEYS = [
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
 /** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
- *  临时库写 `db.dir`、远端挡板写 `lark.cliPath`；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。 */
+ *  临时库写 `db.dir`、远端挡板写 `lark.cliPath`；测试隔离的唯一口子是**家目录注入**。 */
 function envOfSeam(s) {
   return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: s.stub.file } }, 't661-cfg-'));
 }

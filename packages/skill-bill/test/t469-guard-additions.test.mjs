@@ -37,7 +37,7 @@ function rowOf(over) {
 
 before(() => {
   DB = mkdtempSync(join(tmpdir(), 'bill469-'));
-  process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+  billConfigDir(DB);
   let h = openBillDb(resolveDbPath());
   // 同刻两笔：编号大的后落（b > a），byTimeDesc 同刻须按编号倒序。
   IDS.a = addBill(h, {
@@ -53,7 +53,7 @@ before(() => {
     account: '支付宝', ledger: '生活', currency: '人民币', note: 't469early',
   }).id;
   closeBillDb(h);
-  process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+  billConfigDir(DB);
 });
 
 describe('t469 · 只读回显九行与缺省标题（recordPicker.ts snapshotRows/snapshotTable）', () => {
@@ -89,7 +89,7 @@ describe('t469 · 只读回显九行与缺省标题（recordPicker.ts snapshotRo
 
 describe('t469 · 候选预选与自定义提示（recordPicker.ts pickerBlock）', () => {
   it('不给 selectedId＝不预选：出全表＋未预选口径＋缺省提示', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     const html = pickerBlock({ mode: 'update' });
     assert.ok(html.includes('可选的记录（共 3 条）'), '没认准＝全量候选铺开供挑');
     assert.ok(html.includes('候选未预选（不给默认选中）'), '没给就不预选，不拿第一条兜底');
@@ -97,7 +97,7 @@ describe('t469 · 候选预选与自定义提示（recordPicker.ts pickerBlock�
   });
 
   it('给了认准的 selectedId＝预选：表收起＋已认准口径＋编号在表单值里', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     const html = pickerBlock({ mode: 'update', selectedId: IDS.b });
     assert.ok(html.includes('候选已认准 #' + IDS.b), '认准＝报编号请用户核依据');
     assert.ok(!html.includes('可选的记录（共'), '认准后那张表收起（同页只读回显已列全，不重抄）');
@@ -106,7 +106,7 @@ describe('t469 · 候选预选与自定义提示（recordPicker.ts pickerBlock�
   });
 
   it('自定义提示压过缺省：未认准与已认准两态都用传入那句', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     const mine = 't469自定义提示：请挑同刻那两笔里的晚落那一笔。';
     const free = pickerBlock({ mode: 'update', hint: mine });
     assert.ok(free.includes(mine), '未认准用自定义');
@@ -117,7 +117,7 @@ describe('t469 · 候选预选与自定义提示（recordPicker.ts pickerBlock�
   });
 
   it('认不出的 selectedId 按未预选算：不静默顶成第一条', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     const html = pickerBlock({ mode: 'update', selectedId: 999999 });
     assert.ok(html.includes('候选未预选（不给默认选中）'), '对不上的编号不预选');
     assert.ok(html.includes('可选的记录（共 3 条）'), '对不上＝全表仍在');
@@ -126,7 +126,7 @@ describe('t469 · 候选预选与自定义提示（recordPicker.ts pickerBlock�
 
 describe('t469 · 同刻按编号倒序（recordPicker.ts byTimeDesc）', () => {
   it('同一时刻编号大的排前面（后来落的那一笔在先）', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     assert.ok(IDS.b > IDS.a, '前置：同刻后落的编号大');
     const html = pickerBlock({ mode: 'update' });
     const ia = html.indexOf('t469same1');
@@ -136,7 +136,7 @@ describe('t469 · 同刻按编号倒序（recordPicker.ts byTimeDesc）', () => 
   });
 
   it('异刻仍按时间倒序：同刻规则不压时间规则', () => {
-    process.env.ILIFE_CONFIG_DIR = billConfigDir(DB);
+    billConfigDir(DB);
     const html = pickerBlock({ mode: 'update' });
     const early = html.indexOf('t469early');
     const same = html.indexOf('t469same2');

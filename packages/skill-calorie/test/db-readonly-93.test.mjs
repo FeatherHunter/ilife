@@ -27,8 +27,9 @@ import { openDbReadOnly } from '../dist/db/readonly.js';
 import { CALORIE_COMBOS, isCalorieWriteKey } from '../dist/cli/keys.js';
 import { dispatch } from '../dist/cli/cmd_read.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..', '..');
@@ -278,7 +279,7 @@ test('#93 回归 · openDb 原语义不变：空库仍建出 11 张终态表', (
 test('#93 回归 · CLI 读键在库文件缺失时仍按原语义建库（接线保留 openDb 分支）', () => {
   const dir = tmpDir('cli-missing');
   const r = spawnSync(process.execPath, [CLI, 'calorie.view.home', '--params', JSON.stringify({ date: D0 })], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(r.status, 4, '缺数据仍是 exit 4（缺失阻断不返空）');
   assert.equal(existsSync(join(dir, DB_FILENAME)), true, '当前 CLI 对缺失库仍建库（接线时该分支保留）');

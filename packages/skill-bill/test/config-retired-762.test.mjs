@@ -21,6 +21,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSy
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseConfigYaml } from '../../base-link-core/dist/config/yaml.js';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -82,14 +83,34 @@ describe('#762 记账：真老配置文件 ＋ 已退休键', () => {
 
   it('② 一次保存（与面板「保存」同一条代码路径）⇒ 两个死键消失，其余取值逐字不变', () => {
     const before = sandboxText();
+    assert.match(before, /helpStem:/);
+    assert.match(before, /quickRefStem:/);
     const r = runBill('bill.config.write', { values: { html: { dir: 'biscuit_accountant_html' } } });
     assert.equal(r.code, 0, 'stderr=' + r.stderr);
     const after = sandboxText();
     assert.equal(/helpStem|quickRefStem/.test(after), false, '死键已被写即清：\n' + after);
-    // 其余取值逐字不变：把两份文件按行比对，只许少掉那两行。
-    const dropped = before.split('\n').filter((line) => line.trim() !== '' && !/helpStem:|quickRefStem:/.test(line));
-    const kept = after.split('\n').filter((line) => line.trim() !== '');
-    assert.deepEqual(kept, dropped, '除了两行死键，其余逐行不变');
+    // 「其余取值逐字不变」按**取值**对账（比按行比对结实：组的归属、行序都不再是判据的一部分），
+    // 两处允许变：
+    //   ① 两个死键（本票要的「写即清」）；
+    //   ② 可改落点那一格 `db.dir`——它归 #749 的写盘口径管：**写**的时候一律落算出来的绝对路径
+    //      （＝`configPaths(stem).dataDir`，即 `<配置目录>/data`；**读**仍认空串＝按默认落点）。
+    //      正面验收住 `t749-设置页收窄.test.mjs` ①②③。
+    const dataDir = join(configDirOf(home), 'data');
+    const parse = (text) => parseConfigYaml(text, 'bill.yaml').values;
+    const b = parse(before);
+    const a = parse(after);
+    // 老那份里那两个死键还在（`parseConfigYaml` 不认得「已退休」，它只解析）——对账前按本票口径去掉。
+    const bLive = { ...b, html: { ...b.html } };
+    delete bLive.html.helpStem;
+    delete bLive.html.quickRefStem;
+    assert.equal(b.html.helpStem, '饼干记账_HELP', '老文件里死键的取值确实在（本票的素材）');
+    assert.equal(b.db.dir, '', '老文件里那一格原本是空串（这条读数才有意义）');
+    assert.equal(a.db.dir, dataDir, '可改落点那一格落的是算出来的绝对路径（＝数据目录）');
+    assert.deepEqual(
+      { ...a, db: { ...a.db, dir: '' } },
+      { ...bLive, db: { ...bLive.db, dir: '' } },
+      '除了两行死键与可改落点那一格，其余取值逐字不变',
+    );
     // 保存之后照常读得到（写即清不是把文件写坏）。
     const again = runBill('bill.config.read', {});
     assert.equal(again.code, 0, 'stderr=' + again.stderr);

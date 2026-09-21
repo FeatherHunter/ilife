@@ -8,6 +8,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -15,9 +16,9 @@ const archive = await import(pathToFileURL(join(here, '..', 'dist', 'fetch', 'ar
 
 let CFG = '';
 let CID = 0;
-// #695：落点由配置文件决定 —— `ILIFE_CONFIG_DIR` 指向独占临时目录，数据目录＝`<它>/data/`，
-// 备份目录＝数据目录下 `backups/`（配置项 `backup.dir` 的默认值）。
-const DB = () => join(CFG, 'data');
+// #763：落点由配置文件决定 —— 隔离＝把**家目录**指到独占临时目录，配置落 `<它>/.ilife/home.yaml`，
+// 数据目录＝`<它>/.ilife/data/`，备份目录＝数据目录下 `backups/`（配置项 `backup.dir` 的默认值）。
+const DB = () => join(configDirOf(CFG), 'data');
 const backDir = () => join(DB(), 'backups');
 const zips = () => (existsSync(backDir()) ? readdirSync(backDir()).filter((f) => /^home_backup_.*\.zip$/.test(f)).sort() : []);
 
@@ -32,7 +33,7 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) } });
 }
 const P = JSON.stringify;
 const msg = (r) => JSON.parse(r.stdout).data.message;
@@ -167,9 +168,9 @@ describe('#707 居家备份导出／导入恢复', () => {
 
   it('库目录缺失时备份大声失败，不假报成功', () => {
     const other = mkdtempSync(join(tmpdir(), 'home-nodb-'));
-    const r = run(['home.care.write', '--params', P({ kind: 'backup' })], { ILIFE_CONFIG_DIR: other });
-    // 新配置目录的默认数据目录里无 home.db：备份必须非 0（HOME_DB_MISSING → exit 4），不许产出空壳备份
+    const r = run(['home.care.write', '--params', P({ kind: 'backup' })], homeEnvOf(other));
+    // 新家目录下的默认数据目录里无 home.db：备份必须非 0（HOME_DB_MISSING → exit 4），不许产出空壳备份
     assert.notEqual(r.status, 0, '无库不得假报备份成功');
-    assert.equal(existsSync(join(other, 'data', 'backups')), false, '失败的备份不得留下 backups 目录');
+    assert.equal(existsSync(join(configDirOf(other), 'data', 'backups')), false, '失败的备份不得留下 backups 目录');
   });
 });

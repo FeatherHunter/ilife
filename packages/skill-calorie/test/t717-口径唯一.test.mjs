@@ -21,8 +21,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
+import { configDirOf, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
-process.env.ILIFE_CONFIG_DIR = mkdtempSync(join(tmpdir(), 't717-cfg-base-'));
+// #763 · 隔离基座：当刻进程的家目录也接管（本件进程内要 import／调 dist 的门），真库与真实家目录零接触。
+configTestBase('t717-cfg-base-');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -46,11 +49,12 @@ const PROBES = [
   ['2026-09-04', '22:30:00', '探针-22:30'],
 ];
 
-/** 一份隔离的库目录（配置在里、库在里），返回目录；`probe=true` 顺带落三条分歧点记录。 */
+/** 一份隔离的家目录（配置在 `<它>/.life/` 里、库在它里面），返回目录；`probe=true` 顺带落三条分歧点记录。 */
 function freshDb(probe = true) {
   const dir = mkdtempSync(join(tmpdir(), 't717-'));
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'calorie.yaml'),
+  const cfgDir = configDirOf(dir);
+  mkdirSync(cfgDir, { recursive: true });
+  writeFileSync(join(cfgDir, 'calorie.yaml'),
     'db:\n  dir: ' + JSON.stringify(dir) + '\n  name: calorie_data.db\nxunji:\n  stateDir: ' + JSON.stringify(join(dir, 'xunji-state')) + '\n',
     'utf8');
   const db = openDb(join(dir, 'calorie_data.db'));
@@ -68,7 +72,7 @@ function run(dir, key, params, iso = PINNED_NOW) {
   const out = join(dir, 't717-out-' + Math.random().toString(36).slice(2, 8) + '.html');
   const r = spawnSync(process.execPath, [CLI, key, '--params', JSON.stringify(params), '--html', out], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: dir, NODE_OPTIONS: '--require ' + FREEZE, FAKE_NOW_ISO: iso },
+    env: { ...process.env, ...homeEnvOf(dir), NODE_OPTIONS: '--require ' + FREEZE, FAKE_NOW_ISO: iso },
   });
   return { status: r.status, stderr: String(r.stderr), stdout: String(r.stdout), html: r.status === 0 ? readFileSync(out, 'utf8') : '' };
 }

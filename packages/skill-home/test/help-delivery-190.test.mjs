@@ -9,7 +9,7 @@
 // ⑥ 产物目录 `.db` 数＝0（看帮助不建库）；⑦ `delivery` 只追加、`q` 支无 `delivery`、复用窗口回同一路径；
 // ⑧ `--html <路径>` 仍出分节页。
 //
-// 纪律：**只经真 spawn**（`dist/cli/cmd_read.js` ＋ 临时 `ILIFE_CONFIG_DIR`），不直接调模块——
+// 纪律：**只经真 spawn**（`dist/cli/cmd_read.js` ＋ 临时**家目录**），不直接调模块——
 // 课（#139）：模块级测试全绿 ≠ 用户拿到东西。落点值／名字通式在本文件里**写死逐字**（不从
 // `dist/help/manifest.js` 取），否则改实现点会同时改期望值，锁就变成同义反复、变异自证也测不出来。
 import { test } from 'node:test';
@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HELP_SHELL_DATA_OPEN, HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, HELP_SHELL_TITLE_SLOT } from 'base-paint/help-shell';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -36,10 +37,10 @@ const NAME_RE = /^(.+)_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 const TITLE = '居家管家 · 使用手册(HELP)';
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'home191-' + tag + '-'));
-// #695：落点由配置文件决定 —— `dir` 是**配置目录**，数据目录＝`<dir>/data/`，产物落数据目录下那一层。
-const dataDirOf = (dir) => join(dir, 'data');
+// #763：`dir` 是**家目录**；配置落 `<dir>/.ilife/home.yaml`，数据目录＝`<dir>/.ilife/data/`，产物落数据目录下那一层。
+const dataDirOf = (dir) => join(configDirOf(dir), 'data');
 const htmlDirOf = (dir) => join(dataDirOf(dir), HELP_HTML_DIR);
-const envOf = (dir) => ({ ...process.env, ILIFE_CONFIG_DIR: dir });
+const envOf = (dir) => homeEnvOf(dir);
 
 function run(dir, args = [KEY], envExtra) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
@@ -285,7 +286,8 @@ test('⑥ 看帮助不建库：产物目录与数据目录下 `.db` 数＝0', ()
   const dir = mkDir('nodb');
   const r = runOk(dir, undefined);
   assert.ok(existsSync(r.env.delivery.path));
-  assert.equal(dbCountOf(dir), 0, '配置目录不得出现 .db：' + JSON.stringify(listOf(dir)));
+  assert.deepEqual(listOf(configDirOf(dir)), ['data', 'home.yaml'], '配置目录里只有配置件与数据目录：' + JSON.stringify(listOf(configDirOf(dir))));
+  assert.equal(dbCountOf(configDirOf(dir)), 0, '配置目录不得出现 .db：' + JSON.stringify(listOf(configDirOf(dir))));
   assert.equal(dbCountOf(dataDirOf(dir)), 0, '数据目录不得出现 .db：' + JSON.stringify(listOf(dataDirOf(dir))));
   assert.ok(existsSync(htmlDirOf(dir)), '产物目录须存在（目录不在＝「0 个 .db」是缺席式空绿）：' + htmlDirOf(dir));
   assert.equal(dbCountOf(htmlDirOf(dir)), 0, '产物目录不得出现 .db：' + JSON.stringify(listOf(htmlDirOf(dir))));

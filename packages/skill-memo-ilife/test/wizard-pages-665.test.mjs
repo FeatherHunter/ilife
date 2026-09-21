@@ -6,7 +6,7 @@
  * 「改坏必红／还原必绿」两行机器读数见 `docs/skills/skill-memo-ilife/t658-C-向导与页面-证据.md`。
  *
  * 接缝与注入点同 wish-sync-661（统一出口 ＋ 临时库目录＝配置项 `db.dir` ＋ 挡板＝配置项 `lark.cliPath`，
- * 两者都经 `ILIFE_CONFIG_DIR` 指向的临时配置目录里的 `memo.yaml` 注入）。#695：那两个环境变量已按用户裁决删除。
+ * 两者都经**家目录注入**指向的临时家目录里的 `.ilife/memo.yaml` 注入）。#695：那两个环境变量已按用户裁决删除。
  * 授权三步另用本文件自带的 mini 挡板（只认授权域三条 argv，老 `feishu_auth_helper.py` 形状）。
  */
 import { test } from 'node:test';
@@ -26,7 +26,7 @@ const bin = join(here, '..', 'dist/cli/cmd_read.js');
 function seam(prefix, state) { return makeSeam('memo', { prefix, state }); }
 
 /** 两个注入点都改走**配置文件**（#695：`SKILLS_DB_PATH`／`LARK_CLI_PATH` 的读取已按用户裁决删除）：
- *  临时库写 `db.dir`、挡板写 `lark.cliPath`；测试隔离的唯一口子是 `ILIFE_CONFIG_DIR`。 */
+ *  临时库写 `db.dir`、挡板写 `lark.cliPath`；测试隔离的唯一口子是**家目录注入**。 */
 function envOfSeam(s, cliPath) {
   return configEnv(mkMemoConfig({ db: { dir: s.dbPath }, lark: { cliPath: cliPath ?? s.stub.file } }, 't665-cfg-'));
 }

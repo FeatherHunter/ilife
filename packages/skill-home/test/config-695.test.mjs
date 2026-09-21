@@ -5,22 +5,44 @@
 //   ② 三个配置 key（`home.config.read/write/reset`）走 CLI 真出口，重置留 `.bak`；
 //   ③ 配置**真的进执行路径**：`db.dir`／`html.dir` 指到临时目录下的别处，`home.help.lookup` 与
 //      `home.item.add` 的产物落在新落点；
-//   ④ 测试进程里没设 `ILIFE_CONFIG_DIR` ⇒ 配置读取**响亮失败**（删掉写库开关之后的替代护栏）。
+//   ④ 测试进程里家目录＝真实家目录 ⇒ 配置读取**响亮失败**（删掉写库开关之后的替代护栏）。
 //
 // 纪律：落点值／key 名在本文件里**写死逐字**（不从 `dist/config.js` 取），否则改实现点会同时改期望值，
 // 锁就变成同义反复、变异自证也测不出来。
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const P = JSON.stringify;
+
+/**
+ * #763 护栏探针：一个只调 `resolveConfigDir()` 的子进程（**不碰盘**——`mkdir` 在它之后），
+ * 故护栏哪天 fail-open 也写不出真实数据。「忘了注入」这一档＝把家目录两格**显式设成账号那一份**
+ * （`realHomeDir()`，与生产守卫同一条判据源）——**不是删格**：实测 win32 上 env 里删掉 `USERPROFILE`，
+ * 子进程仍会拿到父进程当刻那一格（系统补回），测试进程自己注过家目录时删格到不了真实那一份。
+ * 反向对照经 `extraEnv` 把两格指到临时目录。
+ */
+const DIRS_URL = pathToFileURL(join(HERE, '..', '..', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+const REAL_HOME = realHomeDir().dir;
+const HOME_ENV_CAPS = ['USERPROFILE', 'HOME'];
+function probeGuard(extraEnv = {}) {
+  const code = 'const m = await import(' + JSON.stringify(DIRS_URL) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const env = { ...process.env };
+  for (const cap of HOME_ENV_CAPS) env[cap] = REAL_HOME;
+  env.NODE_TEST_CONTEXT = 'child-v8';
+  Object.assign(env, extraEnv);
+  return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
+}
 
 /** 配置件的默认值（＝改造前的代码常量，逐字写死）。 */
 const DEFAULTS = {
@@ -33,10 +55,11 @@ const DEFAULTS = {
 let CFG = '';
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'home695-' + tag + '-'));
 
+/** 隔离＝把**家目录**指到 `dir`（#763）：配置落 `<dir>/.ilife/home.yaml`、数据落 `<dir>/.ilife/data/`。 */
 function run(dir, args, envExtra) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: dir, ...(envExtra ?? {}) },
+    env: { ...process.env, ...homeEnvOf(dir), ...(envExtra ?? {}) },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
@@ -60,10 +83,11 @@ test('① 默认值逐项＝改造前的代码常量，且配置 key 在形状�
   assert.equal(r.env.key, 'home.config.read');
   assert.equal(r.env.skill, 'home');
   assert.deepEqual(r.env.data.values, DEFAULTS, '五个默认值逐项逐字（home.db／home_manager_html／两份主体名／backups）');
-  assert.equal(r.env.data.path, join(dir, 'home.yaml'), '配置文件＝<配置目录>/home.yaml');
-  assert.equal(r.env.data.dataDir, join(dir, 'data'), '数据目录＝<配置目录>/data');
+  assert.equal(r.env.data.path, join(configDirOf(dir), 'home.yaml'), '配置文件＝<家目录>/.ilife/home.yaml');
+  assert.equal(r.env.data.dataDir, join(configDirOf(dir), 'data'), '数据目录＝<家目录>/.ilife/data');
   assert.equal(r.env.data.created, true, '首次读按默认值落一份');
-  assert.ok(existsSync(join(dir, 'home.yaml')), '配置文件真落盘');
+  assert.ok(existsSync(join(configDirOf(dir), 'home.yaml')), '配置文件真落盘');
+  assert.deepEqual(readdirSync(configDirOf(dir)).sort(), ['data', 'home.yaml'], '配置目录里只有配置件与数据目录');
 
   // 这三个 key 不是唤醒词命令：既不在形状表里（不在的话本键根本走不到这里，会 exit 3），
   // 也不该出现在 HELP 面上（唤醒词表是 HELP 的唯一输入源）。
@@ -77,8 +101,8 @@ test('① 默认值逐项＝改造前的代码常量，且配置 key 在形状�
 
 test('② 三个配置 key 走 CLI 真出口：读／写／重置（重置留 `.bak`，写是局部合并）', () => {
   const dir = mkDir('keys');
-  const cfgFile = join(dir, 'home.yaml');
-  const bakFile = join(dir, 'home.yaml.bak');
+  const cfgFile = join(configDirOf(dir), 'home.yaml');
+  const bakFile = join(configDirOf(dir), 'home.yaml.bak');
 
   // 写：只提交改动过的项 —— `db.name` 换名、`files.help` 换主体；组里没给的子项、没给的组保留现值。
   const w = runOk(dir, ['home.config.write', '--params', P({ values: { db: { name: 'home_test.db' }, files: { help: '居家管家_HELP_X' } } })]);
@@ -106,7 +130,7 @@ test('② 三个配置 key 走 CLI 真出口：读／写／重置（重置留 `.
   assert.equal(rs.env.shape, 'receipt');
   assert.equal(rs.env.key, 'home.config.reset');
   assert.equal(rs.env.data.path, cfgFile);
-  assert.equal(rs.env.data.backupPath, bakFile, '重置先另存 <配置目录>/home.yaml.bak');
+  assert.equal(rs.env.data.backupPath, bakFile, '重置先另存 <家目录>/.ilife/home.yaml.bak');
   assert.ok(existsSync(bakFile), '`.bak` 真落盘');
   assert.match(readFileSync(bakFile, 'utf8'), /home_test\.db/, '`.bak` 里是重置前那一份');
 
@@ -127,7 +151,7 @@ test('③ 配置真的进执行路径：db.dir／html.dir 指到别处，写命�
   const add = runOk(dir, ['home.item.add', '--params', P({ name: '牛奶', category_id: cid, location: '客厅/冰箱' })]);
   assert.match(add.env.data.message, /已录物品/);
   assert.ok(existsSync(join(altDb, 'home.db')), '库真落配置给的 db.dir：' + join(altDb, 'home.db'));
-  assert.equal(existsSync(join(dir, 'data', 'home.db')), false, '默认数据目录不得有库');
+  assert.equal(existsSync(join(configDirOf(dir), 'data', 'home.db')), false, '默认数据目录不得有库');
 
   // 读命令：HELP 产物落配置给的 `html.dir`（相对 db.dir 的一段）。
   const h = runOk(dir, ['home.help.lookup']);
@@ -135,22 +159,20 @@ test('③ 配置真的进执行路径：db.dir／html.dir 指到别处，写命�
   assert.equal(dirname(out), join(altDb, 'alt-html'), 'HELP 落 <db.dir>/<html.dir>：' + out);
   assert.ok(/^居家管家_HELP_\d{8}_\d{6}\.html$/.test(basename(out)), '名字通式不变：' + basename(out));
   assert.ok(existsSync(out), '回执路径真存在');
-  assert.equal(existsSync(join(dir, 'data', 'home_manager_html')), false, '默认落点不得再有产物');
+  assert.equal(existsSync(join(configDirOf(dir), 'data', 'home_manager_html')), false, '默认落点不得再有产物');
 
   // 读命令（库那侧）：同一个新落点的库能被读回来。
   const search = runOk(dir, ['home.item.search', '--params', P({ name: '牛奶' })]);
   assert.ok(search.env.data.total >= 1, '新落点的库读得回来');
 });
 
-test('④ 测试进程缺 ILIFE_CONFIG_DIR ⇒ 配置读取响亮失败（替代护栏），绝不落到真实家目录', () => {
-  // 两个入口各来一次：配置 key 那条（`home.config.read`）与取数那条（`home.stats.overview`，
-  // 它经 `resolveDbPath()` → 配置件）。两者都该在 exit 1 档交出「测试缺隔离」这句人话。
-  for (const args of [['home.config.read'], ['home.stats.overview']]) {
-    const r = run(CFG, args, { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: 'child-v8' });
-    assert.equal(r.status, 1, args.join(' ') + ' ⇒ exit 1（stderr：' + r.stderr + '）');
-    assert.match(r.stderr, /测试缺隔离/, '报错须是那句人话：' + r.stderr);
-    assert.equal(r.stdout, '', '失败时 stdout 空：不把失败伪装成成功');
-  }
-  // 反向对照：同一个进程，给了 `ILIFE_CONFIG_DIR` 就照常跑通（证明这道门只关「没给」这件事）。
-  assert.equal(runOk(CFG, ['home.config.read'], { NODE_TEST_CONTEXT: 'child-v8' }).status, 0);
+test('④ 测试进程家目录＝真实家目录 ⇒ 配置读取响亮失败（替代护栏），绝不落到真实家目录', () => {
+  // 探针：子进程只调 `resolveConfigDir()`（不碰盘）。家目录两格设成账号那一份 ⇒ 护栏必须拦下。
+  // 不拿技能命令做「缺隔离」实验：那条路一旦护栏失效就会真写（这里连 mkdir 都到不了）。
+  assert.equal(probeGuard(), 'THREW:CONFIG_TEST_ISOLATION_MISSING');
+  // 反向对照：同一支探针，家目录指到临时目录就照常算得出来（证明这道门只关「没注入家目录」这件事）。
+  const fakeHome = mkDir('probe');
+  assert.equal(probeGuard({ USERPROFILE: fakeHome, HOME: fakeHome }), 'OK:' + configDirOf(fakeHome));
+  // 真出口那一侧只留正向读数：给了临时家目录，入口照常跑通（那道门的「失败档」由上面的探针覆盖）。
+  assert.equal(runOk(CFG, ['home.config.read']).status, 0);
 });

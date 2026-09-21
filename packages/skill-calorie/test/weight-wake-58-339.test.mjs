@@ -23,8 +23,9 @@ import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -100,7 +101,7 @@ function runOne(item, seq) {
   if (parsed[2] !== undefined) argv.push('--params', parsed[2]);
   const r = spawnSync(process.execPath, argv, {
     encoding: 'utf8',
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(runDir, { photos: { dir: join(harness.workDir, 'photos') } }), ...freezeClock(SEED_TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(runDir, { photos: { dir: join(harness.workDir, 'photos') } })), ...freezeClock(SEED_TODAY) },
   });
   const stderr = String(r.stderr || '').trim().split(harness.workDir).join('<tmp>');
   const tail = stderr.slice(-200);

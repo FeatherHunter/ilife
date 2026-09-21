@@ -26,12 +26,14 @@ import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, isAbsolute, join } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock } from './helpers/config-test.mjs';
-// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock, requireIsolatedHome } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { realConfigDir } from '../../../test/helpers/real-home-snapshot.mjs';
+// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.life/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
+configTestBase();
 
 pinProcessClock('2026-09-07'); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）
 
@@ -135,7 +137,7 @@ function runWord(dir, cli) {
   const toks = tokenize(cli);
   return spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock(TODAY) },
   });
 }
 
@@ -501,16 +503,17 @@ test('#386 第六组：本图范围全部产物都是完整文档（首尾完整
 
 /* ── 真库只读：本文件全部跑动都指向临时夹具目录 ───────────────────────── */
 
-test('#386 真库只读：本文件从不把 SKILLS_DB_PATH 指向真库', () => {
-  const real = process.env.ILIFE_CONFIG_DIR ?? null;
+test('#386 真库只读：本文件全部跑动都落在临时家目录下，不碰真实家目录', () => {
+  // #763 · 「真库」＝**真实账号家目录**下那份 `.ilife`（`realConfigDir()` 取自账号，家目录注入改不动它）；
+  // 当刻家目录是不是临时那份由基座自证（`requireIsolatedHome()`）。判据看**配置目录**而不是家目录本身：
+  // 系统临时根（`%TEMP%`）就住在用户资料目录底下，拿家目录当包含面会把它自己判红。
+  const real = realConfigDir();
+  requireIsolatedHome();
   const dirs = [products().dir, mkDir('t386-guard', 0)];
   for (const d of dirs) {
     assert.ok(d.startsWith(tmpdir()), '夹具目录不在系统临时根下：' + d);
-    if (real !== null && existsSync(join(real, DB_FILENAME))) {
-      assert.notEqual(d, real, '夹具目录指到了真库');
-      assert.ok(!d.startsWith(real), '夹具目录落在真库目录内：' + d);
-    }
+    assert.ok(!resolve(d).startsWith(resolve(real.dir) + sep), '夹具目录落在真实配置目录内（判据源=' + real.source + '）：' + d);
   }
   assert.equal(basename(join(dirs[0], DB_FILENAME)), DB_FILENAME, '夹具库名不符');
-  assert.ok(existsSync(ROOT), '仓根不可达');
+  assert.ok(existsSync(ROOT), '仓根可达');
 });

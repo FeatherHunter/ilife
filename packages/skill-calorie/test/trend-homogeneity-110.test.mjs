@@ -21,8 +21,9 @@ import { routesFor } from '../dist/triggers/routing.js';
 import { resolveWindow } from '../dist/analysis/series.js';
 import { pinClockTo } from './pin-clock.mjs';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 /** 全量 436 路由查词（#81 SoT）：取首个 exec 项。 */
 function execRoute(word) {
@@ -263,7 +264,7 @@ test('#110 无假数据：6 键空库一律 exit 4 且 stdout 纯净', () => {
     ['calorie.view.goal-predict', { start: '2026-08-25', end: '2026-09-07' }],
   ];
   for (const [k, p] of cases) {
-    const r = run(BIN, k, p, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const r = run(BIN, k, p, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(r.status, 4, k + ' 空库未阻断（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
     assert.equal(r.stdout, '', k + ' 空库 stdout 非空');
     assert.match(r.stderr, /缺失|取数/, k + ' 空库 stderr 无阻断文案');
@@ -272,7 +273,7 @@ test('#110 无假数据：6 键空库一律 exit 4 且 stdout 纯净', () => {
 
 test('#110 combined 窗口：未知窗拒收 exit 2（#103 G4 / #250 契约：收任意 Nd，仍拒未知值）', () => {
   const { dir } = mkTrendDb();
-  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '99x' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '99x' }, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 2, '未知窗未拒收（status=' + r.status + ' stderr=' + (r.stderr || '').slice(0, 200) + '）');
   assert.equal(r.stdout, '', '未知窗 stdout 非空');
 });
@@ -300,7 +301,7 @@ test('#110 多配对同键直出：weight_deficit 分桶节＋custom 窗（子�
 
 test('#110 命名底座可用：组合分析动态段落点＋回传一致＋产物为全文档', () => {
   const { dir } = mkTrendDb();
-  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '7d', start: '2026-09-01', end: '2026-09-07' }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(BIN, 'calorie.view.combined', { pair: 'weight_calorie', window: '7d', start: '2026-09-01', end: '2026-09-07' }, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 0, 'stderr=' + (r.stderr || '').slice(0, 300));
   const env = JSON.parse(r.stdout);
   const n = basename(env.data.output);

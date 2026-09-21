@@ -18,9 +18,10 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-// #676 · 卡路里技能侧的落点改成读配置文件（环境变量读取已删），本跑法跟着换隔离口：
-// 配置目录与钉钟都走 `packages/skill-calorie/test/helpers/config-test.mjs`（测试侧同一个基座）。
-import { calorieConfigDir, freezeClock } from '../../../packages/skill-calorie/test/helpers/config-test.mjs';
+// #676 · 卡路里技能侧的落点改成读配置文件（环境变量读取已删），本跑法跟着换隔离口；
+// #763 · 隔离口再换成**家目录**（配置落 `<家目录>/.life/calorie.yaml`，`db.dir` 仍指传入的那个目录）：
+// 测试侧同一个基座（`homeEnvOf(calorieConfigDir(dir))`），本件与判据件 `t279-真出口用例.test.mjs` 共用这一份。
+import { calorieConfigDir, freezeClock, homeEnvOf } from '../../../packages/skill-calorie/test/helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..', '..', '..');
@@ -230,7 +231,7 @@ export function runCli(dir, key, params, env = {}) {
   if (params !== null && params !== undefined) args.push('--params', JSON.stringify(params));
   const r = spawnSync(process.execPath, args, {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY), ...env },
+    env: { ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock(TODAY), ...env },
   });
   let parsed = null;
   try { parsed = JSON.parse(String(r.stdout || '').trim()); } catch { parsed = null; }

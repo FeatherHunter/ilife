@@ -23,8 +23,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -77,7 +78,7 @@ function runWord(seed, word, cli, tag) {
   const toks = tokenize(cli);
   const r = spawnSync(NODE_BIN, [BIN, ...toks.slice(1)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir), ...freezeClock(TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir)), ...freezeClock(TODAY) },
   });
   const outDir = join(dir, 'calorie_html');
   const landed = existsSync(outDir) ? readdirSync(outDir).filter((f) => f.endsWith('.html')) : [];

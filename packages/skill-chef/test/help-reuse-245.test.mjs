@@ -16,6 +16,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -24,14 +25,15 @@ const HELP_NAME_RE = /^私家大厨_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
 const LOOKUP_NAME_RE = /^私家大厨_速查表_\d{8}_\d{6}(_\d+)?\.html$/;
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 't245chef-' + tag + '-'));
-/** #695：隔离目录＝**配置目录**，数据目录＝它下面的 `data/`（默认配置 `db.dir` 空串＝按默认落点）。 */
-const dataOf = (cfgDir) => join(cfgDir, 'data');
-const htmlDirOf = (dir) => join(dataOf(dir), 'cook_html', 'help');
-const namesOf = (dir) => { try { return readdirSync(htmlDirOf(dir)).sort(); } catch { return []; } };
+/** #763：传进来的 `home` 是**家目录**；配置落 `<home>/.ilife/`，数据目录＝`<home>/.ilife/data/`
+ *  （默认配置 `db.dir` 空串＝按默认落点）。 */
+const dataOf = (home) => join(configDirOf(home), 'data');
+const htmlDirOf = (home) => join(dataOf(home), 'cook_html', 'help');
+const namesOf = (home) => { try { return readdirSync(htmlDirOf(home)).sort(); } catch { return []; } };
 
-function run(dir, args) {
+function run(home, args) {
   const r = spawnSync(process.execPath, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(home) },
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout).replace(/^\uFEFF/, '')); } catch { env = null; }

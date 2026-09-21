@@ -3,8 +3,8 @@
  * 一律挡板：**不许打真实训记接口**（真机联调另开票），**不许用真 KEY**
  * （全串永不进仓：测试只用 `FAKE-610-*` 假串，且断言全串不出读数）。
  * 传输／计划来源／四步／状态文件全从注入缝进；KEY 的唯一真相是**配置文件**里的 `xunji.key`
- * （#676：读两个环境变量与写用户级系统环境变量都已删），故 KEY 相关的用例走 `ILIFE_CONFIG_DIR`
- * 指到临时配置目录。`dist/xunji/cli.js` 只测无网路的拒收路径。
+ * （#676：读两个环境变量与写用户级系统环境变量都已删），故 KEY 相关的用例把**家目录**指到临时目录
+ * （#763 起隔离通道＝家目录，配置落 `<家目录>/.life/calorie.yaml`）。`dist/xunji/cli.js` 只测无网路的拒收路径。
  *
  * 四点票面验收（各有独立用例）：
  * ① 无 KEY 退 2（key status／overlay-plan／run-sync 推送步三处）；
@@ -19,7 +19,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { calorieConfigDir } from './helpers/config-test.mjs';
+import { calorieConfigDir, configDirOf, restoreHome, saveHome } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -32,10 +33,10 @@ const tmp = (name) => {
   return dir;
 };
 
-// 进程内调用也要有隔离基座：训记状态文件的缺省落点会读配置（#676），没设 ILIFE_CONFIG_DIR 即响亮报错。
-process.env.ILIFE_CONFIG_DIR = calorieConfigDir(mkdtempSync(join(tmpdir(), 't610-base-')));
+// 进程内调用也要有隔离基座：训记状态文件的缺省落点会读配置（#676），家目录还是真实那份即响亮报错。
+calorieConfigDir(mkdtempSync(join(tmpdir(), 't610-base-')));
 
-/** 一份临时配置目录（KEY 存在这里的 `calorie.yaml` 里；不给 key 即「没配」）。 */
+/** 一份临时家目录（KEY 存在这里的 `.life/calorie.yaml` 里；不给 key 即「没配」）。 */
 function cfgDir(name, key) {
   const dir = tmp(name);
   return calorieConfigDir(dir, key === undefined ? {} : { xunji: { key } });
@@ -98,19 +99,18 @@ describe('#610 密钥与编排', () => {
   });
 
   it('① 无 KEY 退 2：key status（配了退 0）', async () => {
-    const saved = process.env.ILIFE_CONFIG_DIR;
+    const saved = saveHome();
     try {
-      process.env.ILIFE_CONFIG_DIR = cfgDir('nokey');
+      cfgDir('nokey');
       const missing = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(missing.code, 2, JSON.stringify(missing.data));
       assert.match(missing.message, /未配置训记 KEY/);
-      process.env.ILIFE_CONFIG_DIR = cfgDir('withkey', FAKE_KEY);
+      cfgDir('withkey', FAKE_KEY);
       const present = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(present.code, 0, JSON.stringify(present.data));
       assert.match(present.message, /KEY 已配置/);
     } finally {
-      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
-      else process.env.ILIFE_CONFIG_DIR = saved;
+      restoreHome(saved);
     }
   });
 
@@ -145,9 +145,9 @@ describe('#610 密钥与编排', () => {
   });
 
   it('② status 不回显全串：只回前 4＋末 2；短串只回星号', async () => {
-    const saved = process.env.ILIFE_CONFIG_DIR;
+    const saved = saveHome();
     try {
-      process.env.ILIFE_CONFIG_DIR = cfgDir('preview', FAKE_KEY);
+      cfgDir('preview', FAKE_KEY);
       const run = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(run.code, 0);
       assert.equal(run.data.active_key_preview, FAKE_PREVIEW);
@@ -157,19 +157,17 @@ describe('#610 密钥与编排', () => {
       assert.equal(keyMod.previewKey('ABC'), '***', '短串公式会漏全串，只许回星号');
       assert.equal(keyMod.previewKey(''), null);
     } finally {
-      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
-      else process.env.ILIFE_CONFIG_DIR = saved;
+      restoreHome(saved);
     }
   });
 
   it('key set／clear 写配置文件（不再写用户级系统环境变量）：下一次读即生效', async () => {
-    const saved = process.env.ILIFE_CONFIG_DIR;
+    const saved = saveHome();
     try {
       const dir = cfgDir('setclear');
-      process.env.ILIFE_CONFIG_DIR = dir;
       const setRun = await runMod.runXunjiCommand(['key', 'set', 'K-610-SET-SECRET-XYZ']);
       assert.equal(setRun.code, 0, JSON.stringify(setRun.data));
-      const onDisk = readFileSync(join(dir, 'calorie.yaml'), 'utf8');
+      const onDisk = readFileSync(join(configDirOf(dir), 'calorie.yaml'), 'utf8');
       assert.ok(onDisk.includes('K-610-SET-SECRET-XYZ'), 'KEY 没写进配置文件：' + onDisk);
       const status = await runMod.runXunjiCommand(['key', 'status']);
       assert.equal(status.code, 0, '写完当次调用即读得到（存了不生效是裁定点名的反例）');
@@ -177,33 +175,30 @@ describe('#610 密钥与编排', () => {
       const clearRun = await runMod.runXunjiCommand(['key', 'clear']);
       assert.equal(clearRun.code, 0);
       assert.equal(clearRun.data.had, true);
-      assert.ok(!readFileSync(join(dir, 'calorie.yaml'), 'utf8').includes('K-610-SET-SECRET-XYZ'), 'clear 没把配置里的 KEY 抹掉');
+      assert.ok(!readFileSync(join(configDirOf(dir), 'calorie.yaml'), 'utf8').includes('K-610-SET-SECRET-XYZ'), 'clear 没把配置里的 KEY 抹掉');
       const clearAgain = await runMod.runXunjiCommand(['key', 'clear']);
       assert.equal(clearAgain.code, 0, '本来没设即幂等成功');
       assert.equal(clearAgain.data.had, false);
     } finally {
-      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
-      else process.env.ILIFE_CONFIG_DIR = saved;
+      restoreHome(saved);
     }
   });
 
   it('key 用法错退 1：set 缺值／空值／子动作非法；写配置失败退 1', async () => {
-    const saved = process.env.ILIFE_CONFIG_DIR;
+    const saved = saveHome();
     try {
-      process.env.ILIFE_CONFIG_DIR = cfgDir('badusage');
+      cfgDir('badusage');
       assert.equal((await runMod.runXunjiCommand(['key', 'set'])).code, 1);
       assert.equal((await runMod.runXunjiCommand(['key', 'set', '   '])).code, 1);
       assert.equal((await runMod.runXunjiCommand(['key', 'explode'])).code, 1);
       // 写失败：配置文件里有个不认识的键 ⇒ 读配置即抛 ⇒ 写回去失败（人话交回，不静默）。
       const broken = cfgDir('brokencfg');
-      writeFileSync(join(broken, 'calorie.yaml'), 'db:\n  dir: ""\nxunji:\n  key: "K-610-X"\n  noSuchKey: 1\n', 'utf8');
-      process.env.ILIFE_CONFIG_DIR = broken;
+      writeFileSync(join(configDirOf(broken), 'calorie.yaml'), 'db:\n  dir: ""\nxunji:\n  key: "K-610-X"\n  noSuchKey: 1\n', 'utf8');
       const setFail = await runMod.runXunjiCommand(['key', 'set', 'K-610-X']);
       assert.equal(setFail.code, 1);
       assert.match(setFail.message, /写配置文件失败/);
     } finally {
-      if (saved === undefined) delete process.env.ILIFE_CONFIG_DIR;
-      else process.env.ILIFE_CONFIG_DIR = saved;
+      restoreHome(saved);
     }
   });
 
@@ -342,16 +337,16 @@ describe('#610 密钥与编排', () => {
 
   it('CLI 拒收路径无网路：key 非法子动作／overlay 缺参／run-sync 坏天数一律退 1', () => {
     const cfg = cfgDir('cli-nokey');
-    const badAction = cli(['key', 'explode'], { ILIFE_CONFIG_DIR: cfg });
+    const badAction = cli(['key', 'explode'], { ...homeEnvOf(cfg)});
     assert.equal(badAction.code, 1);
     assert.match(badAction.stderr, /status\|set\|clear/);
-    const noDate = cli(['overlay-plan'], { ILIFE_CONFIG_DIR: cfg });
+    const noDate = cli(['overlay-plan'], { ...homeEnvOf(cfg)});
     assert.equal(noDate.code, 1);
     assert.match(noDate.stderr, /缺参数：--date/);
-    const badDays = cli(['run-sync', '--days', '0'], { ILIFE_CONFIG_DIR: cfg });
+    const badDays = cli(['run-sync', '--days', '0'], { ...homeEnvOf(cfg)});
     assert.equal(badDays.code, 1);
     assert.match(badDays.stderr, /天数须为/);
-    const noKey = cli(['key', 'status'], { ILIFE_CONFIG_DIR: cfg });
+    const noKey = cli(['key', 'status'], { ...homeEnvOf(cfg)});
     assert.equal(noKey.code, 2, 'CLI 无 KEY 同样退 2');
   });
 });

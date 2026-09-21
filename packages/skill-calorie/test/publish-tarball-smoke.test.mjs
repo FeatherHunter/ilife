@@ -33,8 +33,9 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skillDir = join(here, '..');
@@ -59,6 +60,19 @@ const NODE = nodeBin();
 
 function sh(cmd, args, opts = {}) {
   return spawnSync(cmd, args, { encoding: 'utf8', shell: SHELL, ...opts });
+}
+
+/** 安装态那一趟的子进程环境：隔离走**家目录**（#763），并把测试运行器印记摘掉。
+ *
+ * 为什么摘 `NODE_TEST_CONTEXT`：这一趟跑的是**装好的产物**（skill tarball ＋ 仓外目录），它依赖的
+ * `base-link-core` 取自 **registry**（本门只打 skill／base-paint 两个 tarball）——已发布那份仍是**旧护栏**
+ * （「跑在测试运行器里却没设 `ILIFE_CONFIG_DIR` 即抛」），与工作区的新通道对不上；而「用户态」本来就不该
+ * 带测试运行器印记。隔离并未放松：两格家目录指向临时目录，配置与产物全落在它下面，真实家目录零接触。
+ * 待 `base-link-core` 随 #754／发版收口后，这一行删掉也不改变结果（新护栏只看家目录）。 */
+function installChildEnv(home) {
+  const env = { ...process.env, ...homeEnvOf(home) };
+  delete env.NODE_TEST_CONTEXT;
+  return env;
 }
 
 /** 递归列出 dir 下全部 .js（不含 .map）。 */
@@ -159,7 +173,7 @@ test('S1-② 发布包体干净安装：calorie.help.center exit 0', { timeout: 
     const r = spawnSync(
       NODE,
       [cli, CONTRACT_KEY, '--params', '{}'],
-      { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(db) } },
+      { encoding: 'utf8', env: installChildEnv(db) },
     );
     assert.equal(r.status, 0, `安装态 ${CONTRACT_KEY} exit=${r.status}：${(r.stderr || '').slice(-800)}`);
     let env;

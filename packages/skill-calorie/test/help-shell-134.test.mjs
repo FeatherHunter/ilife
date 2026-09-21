@@ -24,7 +24,7 @@ import { CalorieRenderError } from '../dist/render/errors.js';
 import { configTestBase } from './helpers/config-test.mjs';
 
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 /** 本地 2026-09-06 22:07:26（与老实物 subtitle 分钟同源，便于肉眼并排）。 */
 const D0 = new Date(2026, 8, 6, 22, 7, 26);

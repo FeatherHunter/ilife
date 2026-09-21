@@ -51,7 +51,8 @@ import {
 import { HELP_ASSETS, HELP_GROUPS, HELP_GROUP_NOTES, HELP_SCENE_RESULTS } from '../dist/help/scenes/help-assets.js';
 
 /* #695：文件名主体等落点类取值改从配置文件取 —— 本件读默认值那一条要有一个测试隔离口子
-   （`ILIFE_CONFIG_DIR` 指向临时目录，配置件自己那道门缺了会响亮失败）。 */
+   （#763 起＝**家目录注入**：基座把当刻家目录指到临时目录，配置落 `<它>/.ilife/schedule.yaml`；
+   配置件自己那道门缺了会响亮失败）。 */
 const CONFIG_BASE = setupConfigTestBase();
 after(() => CONFIG_BASE.cleanup());
 

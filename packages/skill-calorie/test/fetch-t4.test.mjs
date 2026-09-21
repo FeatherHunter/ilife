@@ -25,10 +25,10 @@ import {
   getPhotoRow, listPhotos, daysSinceTagPhoto, addPhotos, deletePhoto,
   updateTag, tagAdd, tagRemove, planGif,
 } from '../dist/photo/photos.js';
-// #676 · 隔离基座：配置目录指到临时目录（`ILIFE_CONFIG_DIR`），缺了就响亮报错。
+// #676 · 隔离基座：配置目录指到临时目录（`家目录注入（测试跑在临时家目录里）`），缺了就响亮报错。
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const tmpDb = () => {
   const db = openDb(join(mkdtempSync(join(tmpdir(), 't23-')), 't.db'));

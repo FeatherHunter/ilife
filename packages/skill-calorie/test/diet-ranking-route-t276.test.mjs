@@ -31,8 +31,9 @@ import { DIET_ROUTES } from '../dist/diet/routes.js';
 import { RANK_CATEGORIES } from '../dist/diet/rankingPlate.js';
 import { ALL_ROUTES } from '../dist/triggers/routes.generated.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -67,7 +68,7 @@ function seedDir() {
   }
   db.close();
   // 钉钟：窗口词固定在 2026-09-07（`--require` 预载，与 seed 同轴），断言与真实当刻日期无关。
-  return { dir, env: { ILIFE_CONFIG_DIR: calorieConfigDir(dir), FAKE_NOW_ISO: '2026-09-07T00:00:00' } };
+  return { dir, env: { ...homeEnvOf(calorieConfigDir(dir)), FAKE_NOW_ISO: '2026-09-07T00:00:00' } };
 }
 
 /** 照路由行自己的 `cli` 实跑：`cli` 是 `--params '<json>'` 形状，参数原样传给它。 */
@@ -203,7 +204,7 @@ test('#276 ⑥ 看食品来源统计 落在来源统计页上（不是分类食�
   const empty = mkdtempSync(join(tmpdir(), 't276-src-empty-'));
   try {
     const er = spawnSync(NODE_BIN, ['--require', join(HERE, 'freeze-clock.cjs'), BIN, 'calorie.view.source-stats', '--params', '{}'], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(empty) },
+      encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(empty))},
     });
     assert.notEqual(er.status, 0, '空库跑来源统计应当是缺失阻断');
     assert.match(String(er.stderr), /来源统计/, '空库的阻断语不是来源统计那条（接错命令即说不出这句）');

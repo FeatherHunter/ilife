@@ -21,8 +21,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -216,7 +217,7 @@ describe('#613 批量落地', () => {
   it('④c 真出口读数：真 CLI dryRun 落盘，回执绝对路径存在', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ...homeEnvOf(cfg(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-400));
     const env = JSON.parse(a.stdout);
     assert.equal(env.key, 'calorie.workout.land-weekend');
@@ -228,7 +229,7 @@ describe('#613 批量落地', () => {
   it('④d 真出口实跑 7 天（三处外调全走 fixture）：推送 7 天 回写 7 天', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ...homeEnvOf(cfg(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-500));
     const env = JSON.parse(a.stdout);
     assert.match(env.data.message, /共 7 天 推送 7 天 回写 7 天/);
@@ -239,7 +240,7 @@ describe('#613 批量落地', () => {
   it('④e 真出口实跑月末 1 天（09-30）：推送 1 天 回写 1 天', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30' }, { ILIFE_CONFIG_DIR: cfg(dir) });
+    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30' }, { ...homeEnvOf(cfg(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-500));
     const env = JSON.parse(a.stdout);
     assert.match(env.data.message, /共 1 天 推送 1 天 回写 1 天/);
@@ -249,7 +250,7 @@ describe('#613 批量落地', () => {
     const { dir, db } = seedDir();
     db.close();
     const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, {
-      ILIFE_CONFIG_DIR: cfg(dir), T676_LAND_FIXTURE_FAIL_DATE: '2026-09-09',
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_FAIL_DATE: '2026-09-09',
     });
     assert.notEqual(r.code, 0, r.stderr.slice(-300));
     assert.match(r.stderr, /失败在第 3 天 2026-09-09/);
@@ -258,10 +259,10 @@ describe('#613 批量落地', () => {
   it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4 ＋ 缺开始日期 exit 4', () => {
     const { dir, db } = seedDir();
     db.close();
-    assert.equal(cli('calorie.workout.land-weekend', { dryRun: 'yes' }, { ILIFE_CONFIG_DIR: cfg(dir) }).code, 2);
+    assert.equal(cli('calorie.workout.land-weekend', { dryRun: 'yes' }, { ...homeEnvOf(cfg(dir))}).code, 2);
     const empty = tmp('empty');
     openDb(join(empty, 'calorie_data.db')).close();
-    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(empty) });
+    const r = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ...homeEnvOf(cfg(empty))});
     assert.equal(r.code, 4);
     assert.match(r.stderr, /无训练计划/);
     const nostart = tmp('nostart');
@@ -269,7 +270,7 @@ describe('#613 批量落地', () => {
     seedPlan(ndb);
     ndb.prepare("UPDATE workout_plan_config SET start_date = '' WHERE id = 1").run();
     ndb.close();
-    const n = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ILIFE_CONFIG_DIR: cfg(nostart) });
+    const n = cli('calorie.workout.land-weekend', { date: '2026-09-07', dryRun: true }, { ...homeEnvOf(cfg(nostart))});
     assert.equal(n.code, 4);
     assert.match(n.stderr, /缺开始日期/);
   });

@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,7 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 let DB = '';
+let HOME_DIR = '';
 before(() => {
   DB = mkdtempSync(join(tmpdir(), 'sk-cal-'));
   const db = openDb(join(DB, 'calorie_data.db'));
@@ -30,8 +31,13 @@ before(() => {
   db.prepare("INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES ('2026-09-07', '08:10:00', '燕麦', 100, 389, 13, 66, 7)").run();
   db.prepare("INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat) VALUES ('2026-09-07', '12:10:00', '鸡胸', 150, 200, 35, 2, 4)").run();
   db.close();
+  // #763：隔离通道＝**家目录注入**（`SKILLS_DB_PATH` 已退役）——库目录经配置文件给：`<家>/.ilife/calorie.yaml` 里 `db.dir = DB`。
+  HOME_DIR = mkdtempSync(join(tmpdir(), 'sk-cal-home-'));
+  const cfgDir = join(HOME_DIR, '.ilife');
+  mkdirSync(cfgDir, { recursive: true });
+  writeFileSync(join(cfgDir, 'calorie.yaml'), 'db:\n  dir: ' + JSON.stringify(DB) + '\n', 'utf8');
 });
-function run(...a) { return spawnSync(NODE, [cli, ...a], { cwd: root, encoding: 'utf8', env: { ...process.env, SKILLS_DB_PATH: DB } }); }
+function run(...a) { return spawnSync(NODE, [cli, ...a], { cwd: root, encoding: 'utf8', env: { ...process.env, USERPROFILE: HOME_DIR, HOME: HOME_DIR } }); }
 
 describe('skilllink 契约冻结', () => {
   it('read calorie.today：exit 0 + stdout 纯 JSON envelope 全字段', () => {

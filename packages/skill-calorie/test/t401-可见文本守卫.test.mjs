@@ -24,8 +24,9 @@ import { test } from 'node:test';
 
 import { visibleLines } from './visible-text-probe.mjs';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -77,7 +78,7 @@ function render(params) {
   db.close();
   const r = spawnSync(process.execPath, [CLI, 'calorie.view.home', '--params', JSON.stringify(params)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(workDir), ...freezeClock(SEED_TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(workDir)), ...freezeClock(SEED_TODAY) },
   });
   assert.equal(r.status, 0, '真出口 exit 0（stderr：' + String(r.stderr).slice(0, 300) + '）');
   return readFileSync(JSON.parse(String(r.stdout).trim()).data.output, 'utf8');

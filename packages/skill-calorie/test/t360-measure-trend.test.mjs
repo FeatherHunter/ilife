@@ -29,8 +29,9 @@ import { openDb } from '../dist/index.js';
 import { buildBodyMeasureView } from '../dist/body/bodyPlate.js';
 import { latestMeasurementMetric } from '../dist/fetch/body.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -88,7 +89,7 @@ function mkEmptyDb() {
 /** 路由示例（不带部位）：`calorie.view.body-measure --params '{"days":90}'`（路由 order 245「看围度趋势」）。 */
 function readAutoPage(dir) {
   const r = spawnSync(NODE_BIN, [BIN, KEY, '--params', '{"days":90}'], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   assert.equal(r.status, 0, '路由示例 exit=' + r.status + ' stderr=' + String(r.stderr || '').slice(-400));
   return JSON.parse(r.stdout);
@@ -96,7 +97,7 @@ function readAutoPage(dir) {
 
 function readWithParams(dir, params) {
   return spawnSync(NODE_BIN, [BIN, KEY, '--params', JSON.stringify(params)], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
 }
 
@@ -239,7 +240,7 @@ test('#360 空库语义不变：无记录时仍 missing-data（exit 4），不�
   const dir = mkEmptyDb();
   for (const p of [undefined, { metric: 'waist_cm' }]) {
     const a = p === undefined ? [KEY] : [KEY, '--params', JSON.stringify(p)];
-    const r = spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) } });
+    const r = spawnSync(NODE_BIN, [BIN, ...a], { encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))} });
     assert.equal(r.status, 4, '空库应阻断 exit 4，params=' + JSON.stringify(p));
     assert.equal(r.stdout, '', '空库 stdout 纯净');
   }

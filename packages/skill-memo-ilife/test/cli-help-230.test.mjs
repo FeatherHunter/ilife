@@ -18,7 +18,7 @@
  *  改写成裸 ESM 而让 web GUI 起不来，见 #241）：
  *    node node_modules/typescript/bin/tsc --build packages/skill-memo-ilife/tsconfig.json --force
  *    node --test packages/skill-memo-ilife/test/cli-help-230.test.mjs
- *  临时库全在 `%TEMP%` 下（库目录经**配置文件** `db.dir` 逐次指过去，隔离口 `ILIFE_CONFIG_DIR`），
+ *  临时库全在 `%TEMP%` 下（库目录经**配置文件** `db.dir` 逐次指过去，#763 起隔离口＝家目录注入），
  *  **不动真库** `D:\2Study\StudyNotes\.db`。
  */
 import { test } from 'node:test';
@@ -40,7 +40,7 @@ const HTML_DIR = 'memo_html';
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'memo230-' + tag + '-'));
 const htmlDirOf = (dir) => join(dir, HTML_DIR);
-/** 子进程 env：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删，`ILIFE_CONFIG_DIR` 是隔离唯一口子）。 */
+/** 子进程 env：库目录经**配置文件** `db.dir` 注入（#695：环境变量读取已删；#763 起隔离唯一口子是**家目录注入**）。 */
 const envOf = (dir) => configEnv(mkMemoConfig({ db: { dir } }, 'memo230-cfg-'));
 
 /** 真 spawn 出口：`--params` 逐字进 argv，不经任何 shell（Windows 上 PowerShell／cmd 会吃掉内层引号）。 */

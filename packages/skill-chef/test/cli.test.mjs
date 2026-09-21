@@ -1,14 +1,15 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
-// #695：配置走配置文件——`ILIFE_CONFIG_DIR` 指向隔离的配置目录，数据目录＝它下面的 `data/`
+// #763：隔离＝把**家目录**指到临时目录 —— 配置落 `<它>/.ilife/chef.yaml`，数据目录＝`<它>/.ilife/data/`
 // （默认配置 `db.dir` 是空串＝按默认落点，见 `src/config.ts`）。
 let CFG = '';
 let DB = '';
@@ -25,13 +26,13 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 function run(args, envExtra) {
-  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) } });
+  return spawnSync(NODE, [bin, ...args], { cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) } });
 }
 const P = (o) => JSON.stringify(o);
 
 before(() => {
   CFG = mkdtempSync(join(tmpdir(), 'chefcli-'));
-  DB = join(CFG, 'data');
+  DB = join(configDirOf(CFG), 'data');
   assert.equal(run(['chef.recipe.write', '--params', P({ name: '宫保虾球', difficulty: '中等', servings: 2, ingredients: [{ name: '虾仁', category: '海鲜', quantity_text: '300克' }], steps: [{ action: '滑油', heat_level: '大火' }] })]).status, 0);
   assert.equal(run(['chef.recipe.write', '--params', P({ name: '麻婆豆腐', difficulty: '简单', servings: 2, ingredients: [{ name: '嫩豆腐', category: '豆制品', quantity_text: '400克' }], steps: [{ action: '焯水', heat_level: '中火' }] })]).status, 0);
 });
@@ -129,9 +130,11 @@ describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(run(['chef.recipe.view', '--params', '[]']).status, 2);
     assert.equal(run(['chef.recipe.view', '--timeout', 'abc']).status, 2);
     // #695：库目录不再由环境变量阻断；配置件写坏（不认识的键）走预检那一档，且给人话。
+    // #763：那份坏配置写在**另一个临时家目录**的配置目录里（`<它>/.ilife/chef.yaml`），不是本件的 `CFG`。
     const bad = mkdtempSync(join(tmpdir(), 'chefcli-bad-'));
-    writeFileSync(join(bad, 'chef.yaml'), 'db:\n  dirx: 1\n', 'utf8');
-    const badRun = run(['chef.recipe.view'], { ILIFE_CONFIG_DIR: bad });
+    mkdirSync(configDirOf(bad), { recursive: true });
+    writeFileSync(join(configDirOf(bad), 'chef.yaml'), 'db:\n  dirx: 1\n', 'utf8');
+    const badRun = run(['chef.recipe.view'], homeEnvOf(bad));
     assert.equal(badRun.status, 1);
     assert.match(badRun.stderr, /不认识的配置项「db\.dirx」/);
     assert.equal(run(['chef.recipe.search', '--params', P({ q: '不存在的菜xxx' })]).status, 4);

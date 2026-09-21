@@ -21,8 +21,9 @@ import { routesFor } from '../dist/triggers/routing.js';
 import { MEASUREMENT_FIELDS, CALIPER_FIELDS } from '../dist/fetch/body.js';
 import { WIZARD_MEASURE_CAMEL } from '../dist/body/wizardPlate.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 /** 全量 436 路由查词（#81 SoT）：取首个 exec 项。 */
 function execRoute(word) {
@@ -367,7 +368,7 @@ test('#86 CLI 端到端：4 键 exit 0＋落盘＋复制属性', () => {
   ];
   for (const [key, params] of cases) {
     const outPath = join(dir, key.replace(/\./g, '_') + '.html');
-    const r = run(BIN, key, params, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) }, outPath);
+    const r = run(BIN, key, params, { ...homeEnvOf(calorieConfigDir(dir))}, outPath);
     assert.equal(r.status, 0, key + ' CLI 非零：' + r.stderr);
     const env = JSON.parse(r.stdout);
     assert.equal(env.key, key);

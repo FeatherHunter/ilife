@@ -46,8 +46,9 @@ import { bodyReceiptDoc } from '../dist/body/index.js';
 import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../dist/shared/operationHead.js';
 import { buildCrudReceipt, withM5 } from '../dist/render/receipt.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -134,7 +135,7 @@ function pokeDb(dir, sql, ...args) {
 /** 真出口：跑一条写命令（`SKILLS_DB_PATH` 指 tmp 库），回执、落盘页路径、页文本一并取回。 */
 function runWrite(dir, key, params) {
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params)], {
-    encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    encoding: 'utf8', env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
   let env = null;
   try { env = JSON.parse(r.stdout); } catch { /* 非 0 退出时 stdout 可能不是 JSON */ }

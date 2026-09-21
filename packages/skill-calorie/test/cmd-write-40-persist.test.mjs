@@ -25,8 +25,9 @@ import { WATER_NAME } from '../dist/fetch/diet.js';
 import { buildSeries } from '../dist/analysis/series.js';
 import { DECLARED_WRITE_KEYS } from './declared.mjs';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -90,7 +91,7 @@ function run(key, params, envExtra) {
 function runWrite(dir, key, params, extra) {
   const { photosDir, ...rest } = extra || {};
   const cfg = photosDir ? calorieConfigDir(dir, { photos: { dir: photosDir } }) : calorieConfigDir(dir);
-  const r = run(key, params, { ILIFE_CONFIG_DIR: cfg, ...rest });
+  const r = run(key, params, { ...homeEnvOf(cfg), ...rest });
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   const env = JSON.parse(r.stdout);
   assert.equal(env.data.ok, true, key + ' data.ok');
@@ -99,7 +100,7 @@ function runWrite(dir, key, params, extra) {
 
 /** 读键（`data.metrics` 形）——口径断言要拿 view 的实测值。 */
 function runView(dir, key, params) {
-  const r = run(key, params, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const r = run(key, params, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(r.status, 0, key + ' exit ' + r.status + ' stderr=' + (r.stderr || '').slice(-600));
   return JSON.parse(r.stdout).data;
 }
@@ -714,7 +715,7 @@ test('口径 · 软删运动后逐面排除（#120 口径收敛，supersedes #10
   assert.equal(after.exerciseKcal, null, '软删后 buildSeries.exerciseKcal 应排除该行');
   assert.equal(after.avgExerciseBurn, 0, '软删后 view.deficit.avgExerciseBurn 应排除该行');
   assert.equal(after.deficitToday, before.deficitToday - 300, '软删后 view.home.deficitToday 应减少该日运动消耗');
-  const ve = run('calorie.view.exercise', { start: date, end: date }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+  const ve = run('calorie.view.exercise', { start: date, end: date }, { ...homeEnvOf(calorieConfigDir(dir))});
   assert.equal(ve.status, 4, '列表侧（fetch listWindow 过滤 is_deleted）应看不到软删行：exit=' + ve.status);
   assert.match(ve.stderr || '', /无运动记录/, '列表侧应报「无运动记录」');
 });
@@ -894,7 +895,7 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
     withRead(dir, 'calorie.workout.plan-update', (db) => {
       assert.equal(q1(db, 'SELECT title FROM workout_plan_config WHERE id = 1').title, '新标题', 'plan-update 未落库');
     });
-    const bad = run('calorie.workout.plan-update', { totalWeeks: 9 }, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const bad = run('calorie.workout.plan-update', { totalWeeks: 9 }, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(bad.status, 2, 'plan-update 改总周数应 exit 2，实测 ' + bad.status);
   }
   // update-day：时段改名落库
@@ -931,7 +932,7 @@ test('落库 · 训练计划 update/update-day/delete-day/update-movement/delete
   {
     const dir = mkEmpty();
     seedPlan(dir);
-    const bare = run('calorie.workout.plan-delete', {}, { ILIFE_CONFIG_DIR: calorieConfigDir(dir) });
+    const bare = run('calorie.workout.plan-delete', {}, { ...homeEnvOf(calorieConfigDir(dir))});
     assert.equal(bare.status, 2, 'plan-delete 无确认应 exit 2，实测 ' + bare.status);
     withRead(dir, 'calorie.workout.plan-delete', (db) => {
       assert.equal(q1(db, 'SELECT COUNT(*) AS n FROM workout_plan_config').n, 1, 'plan-delete 裸调不应写库');
@@ -997,7 +998,7 @@ test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.land', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    const r = run('calorie.workout.land', { date: '2026-09-07' }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'land 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已落地 2026-09-07/);
     withRead(dir, 'calorie.workout.land', (db) => {
@@ -1009,7 +1010,7 @@ test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.land-weekend', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    const r = run('calorie.workout.land-weekend', { date: '2026-09-07' }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'land-weekend 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已批量/);
     withRead(dir, 'calorie.workout.land-weekend', (db) => {
@@ -1021,7 +1022,7 @@ test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.land-monthend', { date: '2026-09-30' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    const r = run('calorie.workout.land-monthend', { date: '2026-09-30' }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'land-monthend 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已批量/);
     withRead(dir, 'calorie.workout.land-monthend', (db) => {
@@ -1033,7 +1034,7 @@ test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.xunji-push', { date: '2026-09-07' }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    const r = run('calorie.workout.xunji-push', { date: '2026-09-07' }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'xunji-push 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已同步 2026-09-07/);
     withRead(dir, 'calorie.workout.xunji-push', (db) => {
@@ -1045,7 +1046,7 @@ test('落库 · 落地训练族 5 条命令：三处外调全走 fixture 且零�
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { ILIFE_CONFIG_DIR: cfgLand(dir) });
+    const r = run('calorie.workout.xunji-backfill', { date: '2026-09-07', days: 1 }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'xunji-backfill 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已拉训记实绩并回写/);
     withRead(dir, 'calorie.workout.xunji-backfill', (db) => {

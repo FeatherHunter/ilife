@@ -10,6 +10,7 @@ import { createRequire } from 'node:module';
 import { initMemoTestDb } from '../../../tooling/contract-seam.mjs';
 import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
+import { configDirOf, homeEnvOf, useHome } from '../../../test/helpers/home-test-base.mjs';
 const requirePkg = createRequire(import.meta.url);
 
 describe('dsh-memo-ilife 烟囱', () => {
@@ -44,17 +45,18 @@ describe('dsh-memo-ilife 烟囱', () => {
   // Windows 并行 spawn 配额抖动（沿 #41 调查结论，见 test/combos-42.test.mjs）：满载时子进程偶发 exit 0 配空白
   // stdout——产品侧不可能态（出口必出一行 envelope JSON）。仅此签名即时重跑一次；仍坏/他错即真红，不断言放水。
   // memo 无 help 键（10 联动键见 SKILL.md）：取 memo.search 无参直读作空库安全契约键；memo 取数层 openMemoDb
-  // 要求库文件在位（缺即 exit 4 阻断），故空库须先建出 `<配置目录>/data/memo.db`。
+  // 要求库文件在位（缺即 exit 4 阻断），故空库须先建出 `<家>/.ilife/data/memo.db`。
   // #695：技能侧不再读环境变量 `SKILLS_DB_PATH`（配置走 `~/.ilife/memo.yaml`），测试隔离改用它唯一的口子
-  // `ILIFE_CONFIG_DIR`（缺了技能直接报错，不许落到真实家目录）；默认 `db.dir` 空串 ⇒ 库目录＝`<配置目录>/data`。
+  // `家目录注入（测试跑在临时家目录里）`（缺了技能直接报错，不许落到真实家目录）；默认 `db.dir` 空串 ⇒ 库目录＝`<家>/.ilife/data`。
   function emptyMemoDb() {
-    const cfg = mkdtempSync(join(tmpdir(), 'memo-smoke-'));
-    mkdirSync(join(cfg, 'data'), { recursive: true });
-    initMemoTestDb(join(cfg, 'data', 'memo.db'));
-    return cfg;
+    const home = mkdtempSync(join(tmpdir(), 'memo-smoke-'));
+    const dataDir = join(configDirOf(home), 'data');
+    mkdirSync(dataDir, { recursive: true });
+    initMemoTestDb(join(dataDir, 'memo.db'));
+    return home;
   }
   function spawnCliOnce(args, cfg) {
-    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: cfg } });
+    return spawnSync(process.execPath, [cliPath(), ...args], { encoding: 'utf8', env: homeEnvOf(cfg) });
   }
   function spawnCli(args) {
     const cfg = emptyMemoDb();
@@ -73,7 +75,8 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.equal(env.data.total, 0);
   });
   it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
-    process.env.ILIFE_CONFIG_DIR = emptyMemoDb();
+    // 面板路走当刻进程的环境：技能读配置只看**家目录**，故这里就地接管（空库就建在它下面的 `.ilife/data`）。
+    useHome(emptyMemoDb());
     let data;
     try {
       data = readViaCli('memo.search');

@@ -16,18 +16,19 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeWakeword, buildHelpLookup } from '../dist/index.js';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
 const D1 = '2026-09-22';
 const D2 = '2026-09-23';
-/** 配置目录（`ILIFE_CONFIG_DIR` 整体接管的那一处）；库落在 `<它>/data/`。 */
+/** 临时**家目录**（#763 起隔离＝家目录注入）：配置落 `<它>/.ilife/schedule.yaml`，库落 `<它>/.ilife/data/`。 */
 let CFG = '';
 
 const P = (o) => JSON.stringify(o);
 function run(args, envExtra) {
   return spawnSync(process.execPath, [bin, ...args], {
-    cwd: here, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: CFG, ...(envExtra || {}) },
+    cwd: here, encoding: 'utf8', env: { ...process.env, ...homeEnvOf(CFG), ...(envExtra || {}) },
   });
 }
 

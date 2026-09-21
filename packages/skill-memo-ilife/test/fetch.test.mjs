@@ -18,17 +18,18 @@ import {
 } from '../dist/index.js';
 import { saveMemoConfig } from '../dist/config.js';
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
-import { mkConfigDir } from './helpers/config-base.mjs';
+import { mkConfigDir, useHome } from './helpers/config-base.mjs';
 
 let db = null;
 let n1 = 0;
 let n2 = 0;
 let n3 = 0;
-const OLD_CFG_DIR = process.env.ILIFE_CONFIG_DIR;
+/** 家目录两格的原值（本件在进程内接管家目录，收尾时原样还原；原本 `undefined` 的还原成删除）。 */
+const OLD_HOME = { USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME };
 
-// #695：本件在**进程内**调取数层，配置也读在同一进程里 ⇒ 隔离口必须在任何一次读配置**之前**设好
-// （跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` 时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`）。
-process.env.ILIFE_CONFIG_DIR = mkConfigDir('memo-fetch-cfg-');
+// #695／#763：本件在**进程内**调取数层，配置也读在同一进程里 ⇒ 家目录必须在任何一次读配置**之前**接管
+// （跑在 node 测试运行器里却要落到真实家目录的 `.ilife` 时，公共层直接抛 `CONFIG_TEST_ISOLATION_MISSING`）。
+useHome(mkConfigDir('memo-fetch-home-'));
 
 // fake lark-cli：posix 用 shebang 脚本，win 用 .cmd 转调同目录 mjs（均走 PATH 之 node）。
 function makeFakeCli(dir) {
@@ -66,8 +67,10 @@ before(() => {
 
 after(() => {
   if (db) closeMemoDb(db);
-  if (OLD_CFG_DIR === undefined) delete process.env.ILIFE_CONFIG_DIR;
-  else process.env.ILIFE_CONFIG_DIR = OLD_CFG_DIR;
+  for (const [k, v] of Object.entries(OLD_HOME)) {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  }
 });
 
 describe('memo 取数层', () => {

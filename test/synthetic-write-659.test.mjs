@@ -4,8 +4,8 @@
  * 本件是**常驻用例**，判据与接缝见 `docs/agents/合成写判据.md`：
  *   - 一个接缝：技能的统一出口（命令行边界，spawn 包内 `dist/cli/cmd_read.js`）。
  *   - 两个注入点（#695 起都走**配置文件**）：临时数据目录写配置项 `db.dir` ＋ 可替换的远端平台挡板
- *     写配置项 `lark.cliPath`（挡板本体仍是 `tooling/contract-lark-stub.mjs`）；两者都住
- *     `ILIFE_CONFIG_DIR` 指的那条独占临时配置目录——**测试隔离的唯一口子**，缺了即响亮失败。
+ *     写配置项 `lark.cliPath`（挡板本体仍是 `tooling/contract-lark-stub.mjs`）；两者都住临时**家目录**
+ *     下的 `.ilife/schedule.yaml`——测试隔离的唯一口子就是那条家目录，回落到真实家目录即响亮失败。
  *   - 一次对拍（老实现 ↔ 新实现）**不进本件**：那是 `packages/skill-schedule` 与 `packages/skill-memo-ilife` 的
  *     `scripts/t659-parity-probe.mjs` 一次性取证，读数落在各自技能文档目录的 `t659-对拍读数.json`。本件只跑新实现，绝不碰真飞书。
  *
@@ -18,19 +18,46 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ROOT, argOf, assertStubIsTheOne, envelope, fourReadings } from '../tooling/contract-seam.mjs';
 // #695：接缝件（`tooling/contract-seam.mjs`）的两个注入点仍是**改造前**的环境变量口径
 // （`SKILLS_DB_PATH`／`LARK_CLI_PATH`），而技能侧已改读配置文件且删掉环境变量读取；
 // 把接缝件那两个点挪到配置文件上的接头件住 `packages/skill-schedule/test/helpers/config-seam.mjs`——
-// 它把 `db.dir` 指到接缝自己的临时目录、`lark.cliPath` 指到接缝造的远端挡板，并叫 `ILIFE_CONFIG_DIR`
-// 指向一条独占临时配置目录（测试隔离的唯一口子）。接缝件本身本票不动，故这里换用那个接头件。
+// 它把 `db.dir` 指到接缝自己的临时目录、`lark.cliPath` 指到接缝造的远端挡板，并把**家目录**指到一条
+// 独占临时家目录（测试隔离的唯一口子）。接缝件本身本票不动，故这里换用那个接头件。
 import { makeScheduleSeam } from '../packages/skill-schedule/test/helpers/config-seam.mjs';
+import { realHomeDir } from './helpers/real-home-snapshot.mjs';
 
 const D = '2026-09-20';
 const ENSURE = { op: 'ensure', date: D, time_start: '09:00', time_end: '10:00', title: '晨会', notes: '周会' };
 const PKG = join(ROOT, 'packages', 'skill-schedule');
+const DIRS = pathToFileURL(join(ROOT, 'packages', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+
+/**
+ * 隔离门探针（#763）：起一个**只算落点、不碰盘**的子进程，报它抛没抛。
+ *
+ * 为什么只调 `resolveConfigDir()` 而不是拿技能命令做「缺隔离」实验：`resolveConfigDir()` 与
+ * `mkdirSync` 之间隔着 `ensureConfigDirs`，算落点这一步零写——守卫哪天 fail-open，这条用例也
+ * 不可能写出真实数据（T2 的另一半用真接缝，读的仍是它自己那条临时库）。
+ *
+ * 「缺隔离」怎么造：**把家目录指到真实家目录**——那正是「家目录没被注入」时子进程看到的那一份
+ * （账号的事实，见 `test/helpers/real-home-snapshot.mjs` 的 `realHomeDir()`），也正是守卫的判据。
+ * 别想着「把两格删掉」：`node --test` 会把 `process.env.USERPROFILE` 当刻的取值**原样注回**它起的
+ * 每个子进程（实测：删掉也照样塞回来），只有「指到真实家目录」这一条路。
+ *
+ * @param {object} [extra] 额外环境（反向对照用：给一个临时家目录就应当放行）
+ * @returns {string} `'OK:<落点>'` 或 `'THREW:<错误码>'`
+ */
+function probeGuard(extra = {}) {
+  const code = 'const m = await import(' + JSON.stringify(DIRS) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const env = { ...process.env, ...extra, NODE_TEST_CONTEXT: 'child-v8' };
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env });
+  return String(r.stdout).trim();
+}
 
 /* ─────────────── 一、接缝自证（这两条绿了，后面的读数才算数） ─────────────── */
 
@@ -50,18 +77,25 @@ test('#659 T1 接缝自证 · 远端挡板：老实现的查找链被喂成挡�
   assert.throws(() => assertStubIsTheOne(blind), /前置门未过/);
 });
 
-test('#659 T2 接缝自证 · 隔离：测试进程缺 ILIFE_CONFIG_DIR 即响亮失败，且两代互不串库', () => {
+test('#659 T2 接缝自证 · 隔离：两代互不串库，缺隔离即响亮失败（探针只算落点，零写盘）', () => {
   // 两条接缝各有自己的库落点（接头件逐条把配置项 `db.dir` 指到该接缝的临时目录），互不串库。
   const a = makeScheduleSeam({ prefix: 't659t-a-' });
   const b = makeScheduleSeam({ prefix: 't659t-b-' });
   assert.notEqual(a.dbPath, b.dbPath);
-  // #695 的替代护栏：跑在 node 测试运行器里却没设 `ILIFE_CONFIG_DIR` ⇒ 配置件直接抛
-  // `CONFIG_TEST_ISOLATION_MISSING`（预检档 exit 1），报文点名它——绝不静默落到真实家目录。
+  // 反向对照：家目录注入到临时目录 ⇒ 照常算出落点（证明门只关「回落到真实家目录」这一件事）。
+  const tempHome = join(a.dir, 'probe-home');
+  assert.equal(probeGuard({ USERPROFILE: tempHome, HOME: tempHome }), 'OK:' + join(tempHome, '.ilife'),
+    '注入了家目录就必须放行，且落点＝注入的那一份');
+  assert.equal(existsSync(join(tempHome, '.ilife')), false, '探针只算落点，一次盘都不碰');
+  // 缺隔离（家目录回落到真实那一份）⇒ 配置件直接抛 `CONFIG_TEST_ISOLATION_MISSING`，绝不静默落到真实家目录。
+  const accountHome = realHomeDir().dir;
+  assert.equal(probeGuard({ USERPROFILE: accountHome, HOME: accountHome }), 'THREW:CONFIG_TEST_ISOLATION_MISSING',
+    '回落到真实家目录必须抛 CONFIG_TEST_ISOLATION_MISSING');
+  // 同一件事在**真出口**上的读数：那条接缝的预检必须失败（无默认值可用），且失败时不落库。
   const noCfg = makeScheduleSeam({ prefix: 't659t-nocfg-', withDb: false });
-  const r = noCfg.runNew('schedule.plan.write', ENSURE, { extraEnv: { ILIFE_CONFIG_DIR: '', NODE_TEST_CONTEXT: '1' } });
+  const r = noCfg.runNew('schedule.plan.write', ENSURE, { extraEnv: { USERPROFILE: accountHome, HOME: accountHome } });
   assert.equal(r.status, 1, '测试进程缺隔离必须预检失败（无默认值可用）：' + String(r.stderr).slice(0, 200));
   assert.match(String(r.stderr), /测试缺隔离/, '报文要点明「测试缺隔离」：' + String(r.stderr).slice(0, 200));
-  assert.match(String(r.stderr), /ILIFE_CONFIG_DIR/, '报文要点名该设哪个变量：' + String(r.stderr).slice(0, 200));
   assert.equal(existsSync(join(noCfg.dbPath, 'schedule_data.db')), false, '预检失败时不该落库');
 });
 

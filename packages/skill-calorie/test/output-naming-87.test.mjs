@@ -26,9 +26,10 @@ import {
   resolveExplicitHtmlPath,
   sanitizeFilenamePart,
 } from '../dist/output.js';
-import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
-// #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+import { calorieConfigDir, configTestBase, restoreHome, saveHome } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+// #676 · 测试隔离基座：家目录（库目录／训记状态目录一并随配置）指到本次运行的临时目录，真库与真实家目录零接触。
+configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -53,7 +54,7 @@ function localIso(msAgo) {
 function runCli(dir, args) {
   return spawnSync(NODE_BIN, [BIN, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(dir) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(dir))},
   });
 }
 
@@ -229,12 +230,12 @@ test('#87 ⑤ 默认落点：<库目录>/calorie_html/<中文command>_<stamp>[_N
   assert.equal(dirname(resolveExplicitHtmlPath(join(a, 'x', 'y', 'z.html'))), join(a, 'x', 'y'), '显式路径建父目录');
   assert.ok(existsSync(join(a, 'x', 'y')));
   const envDir = tmpDbDir('dir-env');
-  const old = process.env.ILIFE_CONFIG_DIR;
+  const saved = saveHome();
   try {
     calorieConfigDir(envDir);
     assert.ok(resolveDefaultHtmlPath('calorie.view.home').startsWith(join(envDir, 'calorie_html')), '缺省参数须跟随配置里的库目录（db.dir）');
   } finally {
-    if (old === undefined) delete process.env.ILIFE_CONFIG_DIR; else process.env.ILIFE_CONFIG_DIR = old;
+    restoreHome(saved);
   }
 });
 

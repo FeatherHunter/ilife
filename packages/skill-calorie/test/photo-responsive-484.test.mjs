@@ -21,8 +21,9 @@ import { openDb } from '../dist/index.js';
 import { addPhotos } from '../dist/photo/photos.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from '../dist/photo/galleryDoc.js';
 import { calorieConfigDir, configTestBase, freezeClock } from './helpers/config-test.mjs';
+import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
-process.env.ILIFE_CONFIG_DIR = configTestBase();
+configTestBase();
 
 const BIN = join(import.meta.dirname, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
@@ -70,7 +71,7 @@ function seedIso() {
 function runPage(iso, key, params) {
   const r = spawnSync(NODE_BIN, [BIN, key, '--params', JSON.stringify(params)], {
     encoding: 'utf8',
-    env: { ...process.env, ILIFE_CONFIG_DIR: calorieConfigDir(iso.dbDir, { photos: { dir: iso.photosDir } }), ...freezeClock(TODAY) },
+    env: { ...process.env, ...homeEnvOf(calorieConfigDir(iso.dbDir, { photos: { dir: iso.photosDir } })), ...freezeClock(TODAY) },
   });
   assert.equal(r.status, 0, key + ' exit 非 0：' + String(r.stderr ?? '').slice(0, 500));
   const env = JSON.parse(String(r.stdout).trim());

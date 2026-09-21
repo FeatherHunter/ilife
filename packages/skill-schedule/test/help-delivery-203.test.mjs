@@ -6,7 +6,7 @@
  * 用户说「作息管家help」拿不到任何文件。故本文件只跑**真出口**
  * （spawn `dist/cli/cmd_read.js`，argv＋JSON＋exit），锁四件事：
  *  ① 缺省（不给任何参数）＝「作息管家help」的交付物：名 `作息管家_HELP_<TS>[_N].html`、
- *     落 `<数据目录>/schedule_html/help/`（数据目录＝`<ILIFE_CONFIG_DIR>/data`；配置项 `db.dir` 空串即它）、顶层 `delivery{mode,path,bytes}` 的 `path` 为**绝对路径**
+ *     落 `<数据目录>/schedule_html/help/`（数据目录＝`<家目录>/.ilife/data`；配置项 `db.dir` 空串即它）、顶层 `delivery{mode,path,bytes}` 的 `path` 为**绝对路径**
  *     且字节＝落盘大小、stdout 恒一行 JSON（P9）；产物是完整 HTML（`<!DOCTYPE html>` 起、带 charset）；
  *  ② 同名递补：连跑两次落点**各自独立**、两份文件都在；同秒时后到者 `_2`（`wx` 独占，#128 语义）；
  *  ③ 反向锁（防串产物）：缺省产物**不是** envelope 分节页（无 `<section data-skill="schedule"`），
@@ -27,6 +27,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { configDirOf, homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -40,14 +41,14 @@ function mkDir(tag) {
   return mkdtempSync(join(tmpdir(), 't203-' + tag + '-'));
 }
 
-/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<配置目录>/data`。 */
+/** 本用例的数据目录：`db.dir` 空串 ⇒ 配置给出的 `<家目录>/.ilife/data`。 */
 function dataDirOf(dir) {
-  return join(dir, 'data');
+  return join(configDirOf(dir), 'data');
 }
 
 function run(dir, args) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
-    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ILIFE_CONFIG_DIR: dir },
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...homeEnvOf(dir)},
   });
   let env = null;
   try { env = JSON.parse(String(r.stdout)); } catch { env = null; }
@@ -58,7 +59,7 @@ function run(dir, args) {
 function runAsync(dir, args = ['schedule.help.lookup']) {
   return new Promise((resolve) => {
     const child = spawn(NODE_BIN, [BIN, ...args], {
-      env: { ...process.env, ILIFE_CONFIG_DIR: dir },
+      env: { ...process.env, ...homeEnvOf(dir)},
     });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });
@@ -236,7 +237,7 @@ test('#203 ⑧ 缺省支在开库之前分派：跑完不建库（配置目录�
   runOk(dir);
   assert.equal(existsSync(join(dataDirOf(dir), 'schedule_data.db')), false, '看帮助不该把 DB 建出来');
   assert.deepEqual(readdirSync(dataDirOf(dir)), ['schedule_html'], '数据目录里只落下产物目录');
-  assert.deepEqual(readdirSync(dir).sort(), ['data', 'schedule.yaml'], '配置目录里只有配置件与数据目录');
+  assert.deepEqual(readdirSync(configDirOf(dir)).sort(), ['data', 'schedule.yaml'], '配置目录（<家目录>/.ilife）里只有配置件与数据目录');
 });
 
 test('#203 ⑨ 写失败不静默降级：exit 5 ＋ stderr 结构化错误、stdout 空', () => {

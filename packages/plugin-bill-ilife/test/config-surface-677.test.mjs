@@ -13,10 +13,11 @@
 // 那是**测试件**的范围（边界门扫的是 `packages/plugin-*/src/*.ts`），src 里一行没 import 技能实现。
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { setupConfigTestBase, requireConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configDirOf, requireConfigTestBase, setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 import { loadClientBundle, nodesOfType, textOf } from '../../../test/helpers/client-bundle.mjs';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, CONFIG_STEM, SETTINGS_OWNER, readPath, writePath } from '../dist/index.js';
 import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface, writeConfigValues, resetConfigToDefaults } from '../dist/bridge.js';
@@ -26,6 +27,40 @@ import { BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED, BILL_CONFIG_STEM } from '../
 import { CONFIG_KEYS } from '../../skill-bill/dist/cli/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+/** 公共层那道隔离门的 dist 入口：探针只 import 它，**不调任何技能命令**（零写盘）。 */
+const CONFIG_DIRS = pathToFileURL(join(HERE, '..', '..', 'base-link-core', 'dist', 'config', 'dirs.js')).href;
+
+/**
+ * 缺隔离探针：起一个子进程只调 `resolveConfigDir()`，回 `OK:<配置目录>` 或 `THREW:<错误码>`。
+ *
+ * 构造的是「测试进程忘了隔离」那一态：家目录两格都不给（回落到**真实**家目录）＋ `NODE_TEST_CONTEXT`
+ * （跑在测试运行器里），公共层据此当场抛。`extraEnv` 覆盖在最后，反向对照拿它把临时家目录给回来。
+ *
+ * ⚠️ 为什么连**母进程**那两格也要先摘掉：win32 实测（Node 24.19），当刻进程里设过的 `USERPROFILE`
+ * 会跟进子进程，哪怕 `spawnSync` 的 `env` 里根本没有它 —— 只在子进程那格删，读到的仍是临时家目录，
+ * 这条路就成了假绿。摘掉的两格在 `finally` 里原样还回去（原本是 `undefined` 就 delete）。
+ * 探针**零写盘**：`resolveConfigDir()` 只算路径，`mkdir` 在它之后（见 dirs.ts）。
+ */
+function probeGuard(extraEnv = {}) {
+  const code = 'const m = await import(' + JSON.stringify(CONFIG_DIRS) + ');'
+    + ' try { console.log("OK:" + m.resolveConfigDir()); } catch (e) { console.log("THREW:" + e.code); }';
+  const saved = { USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME };
+  delete process.env.USERPROFILE;
+  delete process.env.HOME;
+  try {
+    const env = { ...process.env };
+    delete env.USERPROFILE;
+    delete env.HOME;
+    delete env.ILIFE_CONFIG_DIR; // 残留的覆盖变量会把这道门短路掉：探针要判的正是「家目录没隔离」
+    Object.assign(env, extraEnv);
+    env.NODE_TEST_CONTEXT = 'child-v8'; // 跑在测试运行器里
+    return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
+  } finally {
+    if (saved.USERPROFILE === undefined) delete process.env.USERPROFILE; else process.env.USERPROFILE = saved.USERPROFILE;
+    if (saved.HOME === undefined) delete process.env.HOME; else process.env.HOME = saved.HOME;
+  }
+}
 
 /** client 真产物（#736 组件级读数用；缺产物在这里响亮失败，不静默跳过）。 */
 const CLIENT = loadClientBundle(join(HERE, '..'));
@@ -57,8 +92,14 @@ describe('#677 记账设置页 · 配置面', () => {
   });
 
   describe('A 测试隔离', () => {
-    it('基座强制 ILIFE_CONFIG_DIR（缺了就该响亮失败）', () => {
-      assert.equal(requireConfigTestBase(), base.dir);
+    it('基座把当刻进程的家目录接管到临时目录；缺隔离时公共层响亮失败', () => {
+      assert.equal(requireConfigTestBase(), base.dir, '基座须已把当刻进程的家目录接管到临时目录');
+      // 探针：跑在测试运行器里却回落到**真实**家目录 ⇒ 公共层当场抛（零写盘，故守卫哪天坏了也不会真写）。
+      assert.equal(probeGuard(), 'THREW:CONFIG_TEST_ISOLATION_MISSING', '缺隔离须响亮失败，不许静默落真实 ~/.ilife');
+      // 反向对照：同一个探针给了隔离（家目录指到临时目录）就照常跑通——证明门只关「没隔离」这件事。
+      const fakeHome = join(base.dir, 'probe-home');
+      assert.equal(probeGuard({ USERPROFILE: fakeHome, HOME: fakeHome }), 'OK:' + configDirOf(fakeHome));
+      assert.equal(existsSync(configDirOf(fakeHome)), false, '探针零写：不许落下配置目录');
     });
   });
 
@@ -147,8 +188,9 @@ describe('#677 记账设置页 · 配置面', () => {
   describe('E 端到端经真 CLI', () => {
     it('读：拿得到配置文件路径、数据目录与当前值', () => {
       const s = readConfigSurface();
+      assert.equal(s.path, join(configDirOf(base.dir), CONFIG_STEM + '.yaml'), '配置文件落在 <家>/.ilife/<技能>.yaml');
       assert.ok(existsSync(s.path), '首次读应把配置文件落下来');
-      assert.equal(s.dataDir, join(base.dir, 'data'));
+      assert.equal(s.dataDir, join(configDirOf(base.dir), 'data'));
       assert.equal(s.created, true);
       for (const item of CONFIG_ITEMS) assert.notEqual(readPath(s.values, item.key), undefined, `回执里缺 ${item.key}`);
     });
@@ -170,7 +212,10 @@ describe('#677 记账设置页 · 配置面', () => {
       writeConfigValues(next);
       const s = readConfigSurface();
       assert.equal(readPath(s.values, 'db.name'), 'probe_again_677.db');
-      assert.equal(readPath(s.values, 'db.dir'), BILL_CONFIG_DEFAULTS.db.dir);
+      // 没给的那一格保留现值：这里钉的是**产品事实**（生效数据目录不许被这次写改掉），不钉字符串口径——
+      // 「空串＝按默认落点」还是「写盘落成绝对路径」归技能侧那条口径（见各技能 `writableDefaults()`）。
+      const dirValue = readPath(s.values, 'db.dir');
+      assert.equal(dirValue === '' ? s.dataDir : dirValue, join(configDirOf(base.dir), 'data'), '这次写改掉了生效数据目录');
       assert.equal(readPath(s.values, 'db.goals'), BILL_CONFIG_DEFAULTS.db.goals);
     });
 
