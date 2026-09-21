@@ -1,0 +1,1280 @@
+{
+  "generated_from": {
+    "fixture": "packages/skill-schedule/test/fixtures/t198-old-scenarios.json",
+    "fixture_sha256": "f0ec8157e63f664626cb32636628189f18e65a02eb8d43ca1c76524c0ed0fb2a",
+    "fixture_generated_at": "2026-08-11 19:57:02",
+    "wakewords": "packages/skill-schedule/src/policy/wakewords.ts（只读）",
+    "note_60_25": "派生注释非门禁：调查件 25 与枚举 32 对不上（R1），划分只看 result 文本；review_today_all_done 未定（R4）"
+  },
+  "scenarios": [
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "record_add_single",
+      "title": "添加单条作息记录",
+      "prompt": "请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码",
+      "old_family": "f07｜记录三件套结果"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "record_add_json",
+      "title": "通过 JSON 文件批量添加",
+      "prompt": "请帮我批量导入这些作息数据(从 JSON 文件)",
+      "old_family": "f07｜记录三件套结果"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "record_add_illegal_category",
+      "title": "category 不在白名单",
+      "prompt": "记一笔:14:00 写了代码",
+      "old_family": null,
+      "family_null_reason": "校验报错无产物（提议新增流程）"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "record_add_l1_only",
+      "title": "只传一级 category",
+      "prompt": "请帮我记一条创作类作息",
+      "old_family": "f07｜记录三件套结果"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "record_add_missing_field",
+      "title": "必填字段缺失",
+      "prompt": "请帮我记一条作息(用户漏说活动名)",
+      "old_family": null,
+      "family_null_reason": "校验报错无产物（缺字段提示）"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#0 记作息",
+      "scenario_id": "batch_add",
+      "title": "批量导入作息（JSON 批量写入）",
+      "prompt": "请帮我批量导入这些作息数据（从 JSON 文件）",
+      "old_family": null,
+      "family_null_reason": "JSON 回执无产物（ok/partial）"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#1 准备消息",
+      "scenario_id": "prep_default",
+      "title": "默认游标到当前时间拉取",
+      "prompt": "请帮我准备今天的消息",
+      "old_family": null,
+      "family_null_reason": "分页 JSON 无产物"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#1 准备消息",
+      "scenario_id": "prep_with_range",
+      "title": "指定时间区间拉取",
+      "prompt": "请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息",
+      "old_family": null,
+      "family_null_reason": "分页 JSON 无产物"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#1 准备消息",
+      "scenario_id": "prep_pagination",
+      "title": "翻页获取下一页",
+      "prompt": "请帮我翻第 3 页",
+      "old_family": null,
+      "family_null_reason": "分页 JSON 无产物"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#1 准备消息",
+      "scenario_id": "prep_no_messages",
+      "title": "区间内无消息",
+      "prompt": "请帮我准备 2026-07-23 的消息",
+      "old_family": null,
+      "family_null_reason": "空列表 JSON 无产物"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#2 同步作息",
+      "scenario_id": "sync_full",
+      "title": "完整同步流程(准备+分析+写入)",
+      "prompt": "请帮我同步今天的消息成作息记录",
+      "old_family": null,
+      "family_null_reason": "间接产物：每条生成回执 HTML（本场景回执为 JSON 链路）"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#2 同步作息",
+      "scenario_id": "sync_partial_day",
+      "title": "同步指定日期",
+      "prompt": "请帮我同步 2026-07-22 的消息",
+      "old_family": null,
+      "family_null_reason": "间接产物：同 sync_full 链路"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#3 增量同步",
+      "scenario_id": "sync_incremental",
+      "title": "从游标继续",
+      "prompt": "请帮我增量同步(接着上次)",
+      "old_family": null,
+      "family_null_reason": "间接产物：游标续跑链路"
+    },
+    {
+      "domain": "write",
+      "wake_word": "#3 增量同步",
+      "scenario_id": "sync_no_cursor",
+      "title": "首次同步无游标",
+      "prompt": "请帮我同步(从未同步过)",
+      "old_family": null,
+      "family_null_reason": "间接产物：首次全量链路"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#4 今天总结",
+      "scenario_id": "summary_full_24h",
+      "title": "当日满 24h 出综合报告",
+      "prompt": "请给我今天总结",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#4 今天总结",
+      "scenario_id": "summary_partial",
+      "title": "当日未满 24h 出摘要",
+      "prompt": "请给我今天总结(还没记完)",
+      "old_family": null,
+      "family_null_reason": "简短摘要文本无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#4 今天总结",
+      "scenario_id": "summary_specific_date",
+      "title": "指定日期总结",
+      "prompt": "请给我 2026-07-22 的总结",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#4 今天总结",
+      "scenario_id": "summary_no_records",
+      "title": "指定日期无记录",
+      "prompt": "请给我 2026-01-01 的总结",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#5 汇总作息",
+      "scenario_id": "summary_range_default",
+      "title": "日期范围汇总",
+      "prompt": "请给我 7/13~7/19 这一周的汇总",
+      "old_family": "f02｜作息记录·区间"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#5 汇总作息",
+      "scenario_id": "summary_range_full",
+      "title": "日期范围文本汇总",
+      "prompt": "请给我 7/13~7/19 的文本汇总",
+      "old_family": null,
+      "family_null_reason": "纯文本分类聚合无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#6 查作息",
+      "scenario_id": "record_list_today",
+      "title": "今日作息列表",
+      "prompt": "请帮我看看今天我做了什么",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#6 查作息",
+      "scenario_id": "record_list_yesterday",
+      "title": "昨日作息",
+      "prompt": "昨天我做了什么",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#6 查作息",
+      "scenario_id": "record_list_specific",
+      "title": "指定日期作息",
+      "prompt": "请帮我看看 2026-07-15 我做了什么",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#6 查作息",
+      "scenario_id": "record_list_empty",
+      "title": "指定日期无记录",
+      "prompt": "请帮我看看 2026-07-01 我做了什么",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#7 查作息详情",
+      "scenario_id": "detail_day",
+      "title": "查看某日所有详情",
+      "prompt": "请帮我看 7/15 作息详情(含 AI 推理链)",
+      "old_family": "f06｜单条详情"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#7 查作息详情",
+      "scenario_id": "detail_record",
+      "title": "查看单条详情",
+      "prompt": "请帮我看 id=123 这条记录详情",
+      "old_family": "f06｜单条详情"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#7 查作息详情",
+      "scenario_id": "detail_with_reasoning",
+      "title": "查看 AI 推理链",
+      "prompt": "请帮我看 7/15 的 AI 是怎么分类的",
+      "old_family": "f06｜单条详情"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#8 查作息时间轴",
+      "scenario_id": "timeline_today",
+      "title": "今日时间轴",
+      "prompt": "今天时间轴看一下",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#8 查作息时间轴",
+      "scenario_id": "timeline_specific",
+      "title": "指定日期时间轴",
+      "prompt": "请帮我看 7/15 的 24h 时间轴",
+      "old_family": "f01｜作息记录·单日"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#9 查作息范围",
+      "scenario_id": "range_default",
+      "title": "日期范围统计",
+      "prompt": "请帮我看 7/13~7/19 这一周",
+      "old_family": "f02｜作息记录·区间"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#9 查作息范围",
+      "scenario_id": "range_this_week",
+      "title": "本周范围",
+      "prompt": "请帮我看本周",
+      "old_family": "f02｜作息记录·区间"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#9 查作息范围",
+      "scenario_id": "range_text",
+      "title": "范围文本降级",
+      "prompt": "请帮我看本周(直接给文本)",
+      "old_family": null,
+      "family_null_reason": "纯文本分类聚合无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#11 查作息状态",
+      "scenario_id": "status_default",
+      "title": "查整体状态",
+      "prompt": "作息状态怎么样",
+      "old_family": null,
+      "family_null_reason": "5 行文本无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#12 查日程",
+      "scenario_id": "list_events_today",
+      "title": "今日日程",
+      "prompt": "请帮我看今天的日程",
+      "old_family": "f10｜查日程（单日）"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#12 查日程",
+      "scenario_id": "list_events_specific",
+      "title": "指定日期日程",
+      "prompt": "请帮我看 7/15 的日程",
+      "old_family": "f10｜查日程（单日）"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#12 查日程",
+      "scenario_id": "search_event_title",
+      "title": "按标题搜索日程",
+      "prompt": "今天有健身吗",
+      "old_family": null,
+      "family_null_reason": "搜索 JSON 无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#12 查日程",
+      "scenario_id": "search_event_triplet",
+      "title": "按时间三元组查重",
+      "prompt": "今天 17:00-18:00 有什么安排",
+      "old_family": null,
+      "family_null_reason": "搜索 JSON 无产物（CLI 仅 --title 可达）"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#12 查日程",
+      "scenario_id": "list_events_inactive",
+      "title": "查已软删事件",
+      "prompt": "今天被删的日程有哪些",
+      "old_family": null,
+      "family_null_reason": "列表 JSON 无产物"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#15 24h 概览",
+      "scenario_id": "query_plans_today",
+      "title": "今日 24h 概览",
+      "prompt": "今天 24h 安排概览",
+      "old_family": "f11｜查日程（多日 24h 概览）"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#16 查多日计划",
+      "scenario_id": "query_plans_multi",
+      "title": "多日简版",
+      "prompt": "请帮我看 7/13、7/14、7/15 三天计划",
+      "old_family": "f11｜查日程（多日 24h 概览）"
+    },
+    {
+      "domain": "query",
+      "wake_word": "#23 按 ID 查记录",
+      "scenario_id": "get_record_basic",
+      "title": "按 ID 查单条",
+      "prompt": "帮我查 id=123 这条记录",
+      "old_family": "f06｜单条详情"
+    },
+    {
+      "domain": "query",
+      "wake_word": "周视图",
+      "scenario_id": "week_view",
+      "title": "周视图(7×24 全分类总览)",
+      "prompt": "请帮我看看这一周的作息总览(唤醒词:周视图)",
+      "old_family": "f08｜周视图"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#13 补计划",
+      "scenario_id": "ensure_event_basic",
+      "title": "补一条计划(基础)",
+      "prompt": "帮我补一条计划到后天 17:00-18:00 健身",
+      "old_family": "f15｜补日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#13 补计划",
+      "scenario_id": "ensure_event_idempotent",
+      "title": "同时间重复(幂等)",
+      "prompt": "再补一条 17:00-18:00 的健身(已有)",
+      "old_family": null,
+      "family_null_reason": "幂等命中无新产物（返回原 event_id）"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#13 补计划",
+      "scenario_id": "ensure_event_with_notes",
+      "title": "补计划含备注",
+      "prompt": "帮我补明天 17:00-18:00 健身(练背+有氧)",
+      "old_family": "f15｜补日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#14 复盘",
+      "scenario_id": "review_today_normal",
+      "title": "今日复盘(标准流程)",
+      "prompt": "请帮我复盘今天",
+      "old_family": "f13｜复盘（单日）"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#14 复盘",
+      "scenario_id": "review_today_all_done",
+      "title": "今日已全部复盘",
+      "prompt": "再帮我复盘一下今天",
+      "old_family": null,
+      "family_null_reason": "讨论模式无产物（R4：是否渲页未定）"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#14 复盘",
+      "scenario_id": "review_no_events",
+      "title": "该日无活跃事件",
+      "prompt": "请帮我复盘 2026-07-01",
+      "old_family": null,
+      "family_null_reason": "提示退出无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#14 复盘",
+      "scenario_id": "review_with_memo_sync",
+      "title": "复盘前先同步备忘录",
+      "prompt": "复盘前先对一下今天的打卡数据",
+      "old_family": null,
+      "family_null_reason": "询问无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_discuss_tomorrow",
+      "title": "商量明天计划",
+      "prompt": "商量一下明天的计划",
+      "old_family": "f12｜商量计划预览"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_with_locked",
+      "title": "商量时已有部分事件",
+      "prompt": "帮我重新商量明天的计划(已有 4 条)",
+      "old_family": "f12｜商量计划预览"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_with_wish",
+      "title": "商量时拉心愿清单",
+      "prompt": "商量明天(把心愿 X 安排进去)",
+      "old_family": null,
+      "family_null_reason": "拉心愿询问无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_24h_coverage_fail",
+      "title": "覆盖校验失败",
+      "prompt": "商量明天计划(生成的事件有空隙)",
+      "old_family": null,
+      "family_null_reason": "校验失败重生成无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_feishu_sync",
+      "title": "商量后飞书同步",
+      "prompt": "商量后顺便同步到飞书",
+      "old_family": null,
+      "family_null_reason": "探测询问无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_result_tomorrow",
+      "title": "制定次日计划(结果强化)",
+      "prompt": "帮我制定明天的计划,生成计划结果 HTML",
+      "old_family": "f17｜制定次日计划"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_result_adjust",
+      "title": "制定计划后调整再生成",
+      "prompt": "把第 2 段改成 19:00 开始,再生成一次",
+      "old_family": "f17｜制定次日计划"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_result_history_none",
+      "title": "无历史作息参考",
+      "prompt": "帮我制定明天的计划(新环境,没有历史记录)",
+      "old_family": "f17｜制定次日计划"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_result_conflict",
+      "title": "候选与已锁定事件冲突",
+      "prompt": "商量明天的计划(已有 2 条已锁定)",
+      "old_family": "f17｜制定次日计划"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#17 商量计划",
+      "scenario_id": "plan_result_drift",
+      "title": "与历史习惯偏离",
+      "prompt": "明天把下午改成运动(历史下午都是工作)",
+      "old_family": "f17｜制定次日计划"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#18 改计划",
+      "scenario_id": "update_event_basic",
+      "title": "改单个事件字段",
+      "prompt": "改 id=544 这条的 title 为健身(上午)",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#18 改计划",
+      "scenario_id": "update_event_time",
+      "title": "改时段(飞书删旧建新)",
+      "prompt": "把 id=544 改成 17:30-18:30",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#18 改计划",
+      "scenario_id": "update_event_completion",
+      "title": "改 completion",
+      "prompt": "把 id=544 标已完成",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#18 改计划",
+      "scenario_id": "update_event_feishu_ask",
+      "title": "改后飞书询问",
+      "prompt": "改 id=544 的 title(已同步飞书)",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#19 删计划",
+      "scenario_id": "deactivate_event",
+      "title": "软删事件",
+      "prompt": "删 id=544 这条计划",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#19 删计划",
+      "scenario_id": "deactivate_with_feishu",
+      "title": "软删 + 飞书删",
+      "prompt": "删 id=544(已同步飞书)",
+      "old_family": "f14｜改/删日程回执"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "#20 日程管家同步",
+      "scenario_id": "feishu_resync_basic",
+      "title": "反向对账+diff 询问",
+      "prompt": "请帮我同步今天的日程到飞书",
+      "old_family": null,
+      "family_null_reason": "对账询问无产物"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "复盘今日",
+      "scenario_id": "replay_day",
+      "title": "复盘今日(计划 vs 实际对照 + 叙事 + 单日健康分)",
+      "prompt": "请帮我复盘今天(唤醒词:复盘今日)",
+      "old_family": "f18｜区间复盘"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "复盘本周",
+      "scenario_id": "replay_week",
+      "title": "复盘本周(7 维趋势 + 热力图 + 健康分均值)",
+      "prompt": "请帮我复盘本周(唤醒词:复盘本周)",
+      "old_family": "f18｜区间复盘"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "复盘本月",
+      "scenario_id": "replay_month",
+      "title": "复盘本月(月度聚合 + 环比对比 + 目标达成)",
+      "prompt": "请帮我复盘本月(唤醒词:复盘本月)",
+      "old_family": "f18｜区间复盘"
+    },
+    {
+      "domain": "plan",
+      "wake_word": "复盘区间",
+      "scenario_id": "replay_range",
+      "title": "复盘区间(任意区间跨域复盘 · 原 start-end)",
+      "prompt": "请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)",
+      "old_family": "f18｜区间复盘"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#24 写作息摘要",
+      "scenario_id": "add_summary_basic",
+      "title": "写摘要",
+      "prompt": "帮我写摘要:2026-07-22 工作.AI调优 60 分钟",
+      "old_family": null,
+      "family_null_reason": "写库无产物（daily_summary）"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#24 写作息摘要",
+      "scenario_id": "add_summary_idempotent",
+      "title": "同 date+category upsert",
+      "prompt": "再写一次(已有)",
+      "old_family": null,
+      "family_null_reason": "upsert 覆盖无产物"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#25 对比两个月",
+      "scenario_id": "compare_months",
+      "title": "整月对比",
+      "prompt": "6 月和 7 月对比",
+      "old_family": "f03｜作息记录·对比"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#25 对比两个月",
+      "scenario_id": "compare_range",
+      "title": "任意范围对比",
+      "prompt": "上周和这周对比",
+      "old_family": "f03｜作息记录·对比"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#25 对比两个月",
+      "scenario_id": "compare_week_vs_week",
+      "title": "周对比",
+      "prompt": "上周和这周差多少",
+      "old_family": "f03｜作息记录·对比"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#26 修正作息",
+      "scenario_id": "amend_basic",
+      "title": "改 1 条记录多字段",
+      "prompt": "这条记错了,改成工作.AI调优,活动是写代码",
+      "old_family": "f09｜修正作息回执"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#26 修正作息",
+      "scenario_id": "amend_json_inline",
+      "title": "JSON 内联修改",
+      "prompt": "用 JSON 改 id=123 的多字段",
+      "old_family": "f09｜修正作息回执"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "#26 修正作息",
+      "scenario_id": "amend_24h_warn",
+      "title": "超过 24h 修改警告",
+      "prompt": "改 3 天前那条记录(超 24h)",
+      "old_family": "f09｜修正作息回执"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "T4 类别深挖",
+      "scenario_id": "category_range",
+      "title": "区间内某分类深挖",
+      "prompt": "这周健身什么时候做的",
+      "old_family": "f04｜类别深挖"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "T4 类别深挖",
+      "scenario_id": "category_day",
+      "title": "单日某分类",
+      "prompt": "7/15 健身什么时候做的",
+      "old_family": "f04｜类别深挖"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "T5 异常检测",
+      "scenario_id": "anomaly_default",
+      "title": "默认 7 天窗口检测",
+      "prompt": "最近状态怎么样/有没有异常",
+      "old_family": "f05｜异常检测"
+    },
+    {
+      "domain": "analyze",
+      "wake_word": "T5 异常检测",
+      "scenario_id": "anomaly_window_30",
+      "title": "30 天窗口",
+      "prompt": "最近 30 天有没有异常",
+      "old_family": "f05｜异常检测"
+    },
+    {
+      "domain": "admin",
+      "wake_word": "#21 飞书探测",
+      "scenario_id": "feishu_probe",
+      "title": "三档探测",
+      "prompt": "飞书能力怎么样",
+      "old_family": null,
+      "family_null_reason": "状态 JSON 无产物"
+    },
+    {
+      "domain": "admin",
+      "wake_word": "#22 初始化数据库",
+      "scenario_id": "init_default",
+      "title": "建三表",
+      "prompt": "帮我初始化数据库",
+      "old_family": null,
+      "family_null_reason": "建表无产物"
+    },
+    {
+      "domain": "admin",
+      "wake_word": "首次使用",
+      "scenario_id": "first_use",
+      "title": "首次使用(初始化工作流)",
+      "prompt": "请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用)",
+      "old_family": "—外·setup/首次使用（不计 18）"
+    }
+  ],
+  "families": [
+    {
+      "id": "f01",
+      "name_old": "作息记录·单日",
+      "template_old": "schedule_record_day.html",
+      "producer_old": "render_record_day（schedule_html_render.py:2082）",
+      "landing_old": "record/day/查作息记录<TS>.html",
+      "trigger_old": "render-record-day <date>",
+      "blocks_old": [
+        "4 卡摘要",
+        "分类进度",
+        "24h 时间轴",
+        "睡眠统计"
+      ]
+    },
+    {
+      "id": "f02",
+      "name_old": "作息记录·区间",
+      "template_old": "schedule_record_range.html",
+      "producer_old": "render_record_range（schedule_html_render.py:2185）",
+      "landing_old": "record/range/查作息区间<TS>.html",
+      "trigger_old": "render-record-range <start> <end>",
+      "blocks_old": [
+        "分类聚合",
+        "7 维趋势",
+        "睡眠统计"
+      ]
+    },
+    {
+      "id": "f03",
+      "name_old": "作息记录·对比",
+      "template_old": "schedule_record_compare.html",
+      "producer_old": "render_record_compare（schedule_html_render.py:2288）",
+      "landing_old": "record/compare/查作息对比<TS>.html",
+      "trigger_old": "render-record-compare …/-months",
+      "blocks_old": [
+        "4 卡对照",
+        "7 维差异",
+        "AI 钩子位"
+      ]
+    },
+    {
+      "id": "f04",
+      "name_old": "类别深挖",
+      "template_old": "schedule_record_category.html",
+      "producer_old": "render_record_category（schedule_html_render.py:2352）",
+      "landing_old": "record/category/查作息类别<TS>.html",
+      "trigger_old": "render-record-category/-range",
+      "blocks_old": [
+        "24h×N 天热力图",
+        "分类总览"
+      ]
+    },
+    {
+      "id": "f05",
+      "name_old": "异常检测",
+      "template_old": "schedule_record_anomaly.html",
+      "producer_old": "render_record_anomaly（schedule_html_render.py:2444）",
+      "landing_old": "record/anomaly/查作息异常<TS>.html",
+      "trigger_old": "render-record-anomaly [--window 7]",
+      "blocks_old": [
+        "7 维雷达",
+        "红/黄框异常"
+      ]
+    },
+    {
+      "id": "f06",
+      "name_old": "单条详情",
+      "template_old": "schedule_record_detail.html",
+      "producer_old": "render_records_detail（schedule_html_render.py:940）",
+      "landing_old": "record/detail/作息详情<TS>.html",
+      "trigger_old": "render-records-detail <date> [--record-id N]",
+      "blocks_old": [
+        "每条 11 字段全展开",
+        "analysis_reasoning 完整展示"
+      ]
+    },
+    {
+      "id": "f07",
+      "name_old": "记录三件套结果",
+      "template_old": "record_result.html",
+      "producer_old": "render_record_result（schedule_html_render.py:1477）",
+      "landing_old": "record/result/记作息结果<TS>.html",
+      "trigger_old": "写库后自动渲；render-record-result <id>",
+      "blocks_old": [
+        "全天时间轴",
+        "过去几小时推断高亮",
+        "状态总览",
+        "警示条位（l1_only）"
+      ]
+    },
+    {
+      "id": "f08",
+      "name_old": "周视图",
+      "template_old": "week_view.html",
+      "producer_old": "render_record_week（week_view.py:112-119，旁路）",
+      "landing_old": "record/week/查作息周视图<TS>.html",
+      "trigger_old": "render-record-week [YYYY-MM-DD]",
+      "blocks_old": [
+        "7×24 全分类热力图",
+        "分类总览",
+        "每日汇总",
+        "健康分",
+        "复制 prompt 位"
+      ]
+    },
+    {
+      "id": "f09",
+      "name_old": "修正作息回执",
+      "template_old": "schedule_record_receipt_edit.html",
+      "producer_old": "render_record_receipt_edit（schedule_html_render.py:1671）",
+      "landing_old": "record/receipt/修正作息回执<TS>.html",
+      "trigger_old": "render-record-receipt-edit <id> [--diff …]",
+      "blocks_old": [
+        "蓝调 diff",
+        "多字段前后对照"
+      ]
+    },
+    {
+      "id": "f10",
+      "name_old": "查日程（单日）",
+      "template_old": "schedule_list_events.html",
+      "producer_old": "render_list_events（schedule_html_render.py:129）",
+      "landing_old": "plan/list/查日程<TS>.html",
+      "trigger_old": "render-list-events <date>",
+      "blocks_old": [
+        "24h 时间轴",
+        "事件卡",
+        "筛选位"
+      ]
+    },
+    {
+      "id": "f11",
+      "name_old": "查日程（多日 24h 概览）",
+      "template_old": "schedule_list_events.html（同模板）",
+      "producer_old": "render_query_plans（schedule_html_render.py:184）",
+      "landing_old": "plan/query/查日程<TS>.html",
+      "trigger_old": "render-query-plans <日期1,日期2,…>",
+      "blocks_old": [
+        "同小时合并",
+        "多日聚合（不含 notes/completion/飞书状态）"
+      ]
+    },
+    {
+      "id": "f12",
+      "name_old": "商量计划预览",
+      "template_old": "schedule_plan_preview.html",
+      "producer_old": "render_plans_preview（schedule_html_render.py:1036）",
+      "landing_old": "plan/list/商量计划预览<TS>.html",
+      "trigger_old": "render-plans-preview <date> --json @plan.json",
+      "blocks_old": [
+        "候选事件表",
+        "锁定事件区",
+        "空隙提示"
+      ]
+    },
+    {
+      "id": "f13",
+      "name_old": "复盘（单日）",
+      "template_old": "schedule_plan_review.html",
+      "producer_old": "render_plans_review（schedule_html_render.py:1181）",
+      "landing_old": "plan/list/复盘<TS>.html",
+      "trigger_old": "render-plans-review <date>",
+      "blocks_old": [
+        "逐条 completion",
+        "讨论区"
+      ]
+    },
+    {
+      "id": "f14",
+      "name_old": "改/删日程回执",
+      "template_old": "schedule_plan_receipt.html",
+      "producer_old": "render_plan_receipt（schedule_html_render.py:1896；update/deactivate 共用，schedule_cli.py:2076-2077）",
+      "landing_old": "plan/receipt/改日程回执<TS>.html",
+      "trigger_old": "render-plan-receipt <id> [--action update|deactivate]",
+      "blocks_old": [
+        "字段前后对照",
+        "飞书询问位"
+      ]
+    },
+    {
+      "id": "f15",
+      "name_old": "补日程回执",
+      "template_old": "schedule_plan_receipt_add.html",
+      "producer_old": "render_plan_receipt_add（schedule_html_render.py:1961）",
+      "landing_old": "plan/receipt/补日程回执<TS>.html",
+      "trigger_old": "render-plan-receipt-add <id>",
+      "blocks_old": [
+        "新事件回执",
+        "幂等命中注记位"
+      ]
+    },
+    {
+      "id": "f16",
+      "name_old": "写日程回执",
+      "template_old": "schedule_plan_receipt_write.html",
+      "producer_old": "render_plan_receipt_write（schedule_html_render.py:2020）",
+      "landing_old": "plan/receipt/写日程回执<TS>.html",
+      "trigger_old": "render-plan-receipt-write <id>",
+      "blocks_old": [
+        "写库事件回执",
+        "24h 连续性注记位"
+      ]
+    },
+    {
+      "id": "f17",
+      "name_old": "制定次日计划",
+      "template_old": "plan_result.html",
+      "producer_old": "cmd_plan_result（plan_scenarios.py:213-219，旁路直调）",
+      "landing_old": "plan/result/制定次日计划<TS>.html",
+      "trigger_old": "plan-result <date> --json @plan.json",
+      "blocks_old": [
+        "时间轴+分类色带",
+        "历史贴合提示",
+        "冲突红徽章位",
+        "偏离警示位",
+        "复制 prompt 位"
+      ]
+    },
+    {
+      "id": "f18",
+      "name_old": "区间复盘",
+      "template_old": "schedule_replay.html",
+      "producer_old": "render_replay（schedule_html_render.py:2543）",
+      "landing_old": "replay/区间复盘<TS>.html",
+      "trigger_old": "render-replay <s> <e> [--granularity day|week|month|range]",
+      "blocks_old": [
+        "计划 vs 实际对照",
+        "7 维趋势/热力图（周）",
+        "环比对比（月）",
+        "健康分",
+        "复盘→明日衔接"
+      ]
+    }
+  ],
+  "aliases": [
+    {
+      "new_phrase": "作息管家 HELP",
+      "new_key": "schedule.help.lookup",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "作息管家帮助",
+      "new_key": "schedule.help.lookup",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "作息管家能做什么",
+      "new_key": "schedule.help.lookup",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "作息管家使用说明",
+      "new_key": "schedule.help.lookup",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "今天总结",
+      "new_key": "schedule.record.today",
+      "old_phrase": "#4 今天总结",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "今日作息",
+      "new_key": "schedule.record.today",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "今日总结",
+      "new_key": "schedule.record.today",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "今天作息",
+      "new_key": "schedule.record.today",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "查作息时间轴",
+      "new_key": "schedule.record.today",
+      "old_phrase": "#8 查作息时间轴",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查作息状态",
+      "new_key": "schedule.record.today",
+      "old_phrase": "#11 查作息状态",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "初始化数据库",
+      "new_key": "schedule.record.today",
+      "old_phrase": "#22 初始化数据库",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查作息",
+      "new_key": "schedule.record.today",
+      "old_phrase": "#6 查作息",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "汇总作息",
+      "new_key": "schedule.record.range",
+      "old_phrase": "#5 汇总作息",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查作息范围",
+      "new_key": "schedule.record.range",
+      "old_phrase": "#9 查作息范围",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查作息游标",
+      "new_key": "schedule.record.range",
+      "old_phrase": null,
+      "note": "老 SKILL 查询表达（SKILL.md:24），非 HELP 独立词"
+    },
+    {
+      "new_phrase": "查作息详情",
+      "new_key": "schedule.record.detail",
+      "old_phrase": "#7 查作息详情",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "按ID查记录",
+      "new_key": "schedule.record.detail",
+      "old_phrase": "#23 按 ID 查记录",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "补一条作息",
+      "new_key": "schedule.record.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "录作息",
+      "new_key": "schedule.record.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "修正作息",
+      "new_key": "schedule.record.write",
+      "old_phrase": "#26 修正作息",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "改作息",
+      "new_key": "schedule.record.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "这条记错了",
+      "new_key": "schedule.record.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "写作息摘要",
+      "new_key": "schedule.record.write",
+      "old_phrase": "#24 写作息摘要",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "记作息",
+      "new_key": "schedule.record.write",
+      "old_phrase": "#0 记作息",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "对比两个月",
+      "new_key": "schedule.record.compare",
+      "old_phrase": "#25 对比两个月",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "月份对比",
+      "new_key": "schedule.record.compare",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "跨月对比",
+      "new_key": "schedule.record.compare",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "类别深挖",
+      "new_key": "schedule.record.compare",
+      "old_phrase": "T4 类别深挖",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "异常检测",
+      "new_key": "schedule.record.compare",
+      "old_phrase": "T5 异常检测",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查多日计划",
+      "new_key": "schedule.plan.today",
+      "old_phrase": "#16 查多日计划",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "24h 概览",
+      "new_key": "schedule.plan.today",
+      "old_phrase": "#15 24h 概览",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "查日程",
+      "new_key": "schedule.plan.today",
+      "old_phrase": "#12 查日程",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "看日程",
+      "new_key": "schedule.plan.today",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "商量计划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#17 商量计划",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "一起规划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "规划明天",
+      "new_key": "schedule.plan.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "规划一天",
+      "new_key": "schedule.plan.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "讨论计划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": null,
+      "note": "新仓独有别名"
+    },
+    {
+      "new_phrase": "补计划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#13 补计划",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "改计划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#18 改计划",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "删计划",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#19 删计划",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "复盘今日",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "复盘今日",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "复盘本周",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "复盘本周",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "复盘本月",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "复盘本月",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "复盘区间",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "复盘区间",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "日程管家同步",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#20 日程管家同步",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "飞书探测",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#21 飞书探测",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": "复盘",
+      "new_key": "schedule.plan.write",
+      "old_phrase": "#14 复盘",
+      "note": "老 HELP 词（去编号/空格归一）"
+    },
+    {
+      "new_phrase": null,
+      "new_key": null,
+      "old_phrase": "#1 准备消息",
+      "note": "老独有：无新仓命令（NO_COMMAND_WAKE_WORDS）"
+    },
+    {
+      "new_phrase": null,
+      "new_key": null,
+      "old_phrase": "#2 同步作息",
+      "note": "老独有：无新仓命令（NO_COMMAND_WAKE_WORDS）"
+    },
+    {
+      "new_phrase": null,
+      "new_key": null,
+      "old_phrase": "#3 增量同步",
+      "note": "老独有：无新仓命令（NO_COMMAND_WAKE_WORDS）"
+    },
+    {
+      "new_phrase": null,
+      "new_key": null,
+      "old_phrase": "周视图",
+      "note": "老独有：无新仓命令（NO_COMMAND_WAKE_WORDS）"
+    },
+    {
+      "new_phrase": null,
+      "new_key": null,
+      "old_phrase": "首次使用",
+      "note": "老独有：无新仓命令（NO_COMMAND_WAKE_WORDS）"
+    }
+  ],
+  "excluded": {
+    "dead_receipt": "schedule_record_receipt.html/render_receipt:1257 不登记（映射表单处引用，CLI 实调 render_record_result:1957）",
+    "phantom_summary": "render-record-summary 仅老 SKILL.md:410，代码零命中"
+  }
+}
