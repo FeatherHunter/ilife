@@ -193,15 +193,30 @@ export function closeChefDb(handle: ChefDb): void {
   try { handle.db.close(); } catch { /* ignore */ }
 }
 
+// #854（承接 #819 G1）：菜名相等唯一口径——写前去首尾空格后精确相等、大小写敏感，
+// 与未来唯一索引的二进制语义一致；新增与改名两处写路径引用它，不各写一份。
+function canonicalRecipeName(name: unknown): string {
+  return typeof name === 'string' ? name.trim() : '';
+}
+
 function mustRecipe(h: ChefDb, idOrName: string): RecipeRow {
-  const row = qGet<Record<string, unknown>>(h, 'SELECT * FROM recipes WHERE id = ? OR name = ?', [idOrName, idOrName]);
-  if (!row) throw new ChefFetchError('CHEF_RECIPE_NOT_FOUND', '无此菜谱：' + idOrName);
-  return toRecipe(row);
+  // id 优先：按 id 精确命中一行即返回（id 唯一，不会撞）。
+  const byId = qGet<Record<string, unknown>>(h, 'SELECT * FROM recipes WHERE id = ?', [idOrName]);
+  if (byId) return toRecipe(byId);
+  // 按名：去首尾空格后精确相等、大小写敏感；多行即遗留重名，报错不任取第一行。
+  const name = canonicalRecipeName(idOrName);
+  if (!name) throw new ChefFetchError('CHEF_RECIPE_NOT_FOUND', '无此菜谱：' + idOrName);
+  const rows = qAll<Record<string, unknown>>(h, 'SELECT * FROM recipes WHERE name = ?', [name]);
+  if (rows.length === 0) throw new ChefFetchError('CHEF_RECIPE_NOT_FOUND', '无此菜谱：' + idOrName);
+  if (rows.length > 1) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '菜名撞名（库内多行同名，须先清重）：“' + name + '”共' + rows.length + '行');
+  return toRecipe(rows[0]);
 }
 
 export function addRecipe(h: ChefDb, input: Record<string, unknown>): RecipeRow {
-  const name = typeof (input as Record<string, unknown>)?.name === 'string' ? String((input as Record<string, unknown>).name).trim() : '';
+  const name = canonicalRecipeName((input as Record<string, unknown>)?.name);
   if (!name) throw new ChefFetchError('CHEF_BAD_QUERY', '加菜须给菜名 name');
+  const dup = qGet<{ c: number }>(h, 'SELECT COUNT(*) AS c FROM recipes WHERE name = ?', [name]);
+  if (dup && Number(dup.c) > 0) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '菜名已存在：“' + name + '”');
   const id = randomUUID();
   const ts = now();
   const p = input as Record<string, unknown>;
@@ -317,6 +332,16 @@ export function deprecateRecipe(h: ChefDb, id: string): RecipeRow {
 
 export function updateRecipe(h: ChefDb, id: string, patch: Record<string, unknown>): RecipeRow {
   const r = mustRecipe(h, id);
+  // #854（承接 #819 G1）：改名撞名即拦，引用同一口径；存去空格后的名字，与新增路径一致。
+  if ((patch as Record<string, unknown>).name !== undefined) {
+    const newName = canonicalRecipeName((patch as Record<string, unknown>).name);
+    if (!newName) throw new ChefFetchError('CHEF_BAD_QUERY', '改名须给非空菜名 name');
+    if (newName !== canonicalRecipeName(r.name)) {
+      const hit = qGet<Record<string, unknown>>(h, 'SELECT id FROM recipes WHERE name = ?', [newName]);
+      if (hit && String(hit.id) !== r.id) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '菜名已存在：“' + newName + '”');
+    }
+    (patch as Record<string, unknown>).name = newName;
+  }
   const allowed = ['name', 'description', 'difficulty', 'servings', 'total_time_minutes', 'status', 'photo_url', 'source', 'source_url'] as const;
   const sets: string[] = [];
   const params: unknown[] = [];
