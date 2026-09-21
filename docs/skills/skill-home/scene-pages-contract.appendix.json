@@ -1,0 +1,2714 @@
+{
+  "capabilities": [
+    "items",
+    "space",
+    "outfit",
+    "stats",
+    "express",
+    "receipt",
+    "family",
+    "setup"
+  ],
+  "contract": "docs/skills/skill-home/scene-pages-contract.md",
+  "families": [
+    {
+      "domain": "items",
+      "family": "add_form",
+      "oldTemplate": "物品/add_form.html",
+      "pageType": "采集＋回执",
+      "reason": "老模板一页吃5条场景，信息结构同为录入表单，按mode分流，首版合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无（表单页）",
+          "异常：数据解析失败",
+          "必填项标*做空值拦截"
+        ],
+        "fields": [
+          "名称*",
+          "分类*",
+          "数量",
+          "位置（选填）",
+          "状态",
+          "价格（选填）",
+          "购买日期",
+          "过期日期",
+          "录入日期（补录）",
+          "标签（逗号分隔）",
+          "备注",
+          "分区「分类分布」"
+        ],
+        "operations": [
+          "确认写入／确认变更（按mode）",
+          "全部确认（N条）",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "在家",
+          "备用",
+          "穿着中",
+          "旅游中",
+          "洗护中",
+          "借用中",
+          "维修中",
+          "已用完",
+          "快递中",
+          "待处理",
+          "已废弃",
+          "找不到"
+        ]
+      },
+      "scenarios": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "3-1"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "search_list",
+      "oldTemplate": "物品/search_list.html",
+      "pageType": "查看",
+      "reason": "搜索结果列表独立信息结构，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：未命中→录入新物品引导",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "结果卡片（名称/ID/照片/位置/数量/状态/匹配%）",
+          "摘要指标",
+          "查询词",
+          "本地筛选框"
+        ],
+        "operations": [
+          "搜索",
+          "本地筛选",
+          "细化筛选",
+          "拍照找物品",
+          "录入新物品",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态",
+          "匹配度%"
+        ]
+      },
+      "scenarios": [
+        "2-1",
+        "2-5"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "detail",
+      "oldTemplate": "物品/detail.html",
+      "pageType": "查看",
+      "reason": "物品详情信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：未找到该物品",
+          "关联空态",
+          "操作历史空态「暂无记录」",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "ID",
+          "分类",
+          "位置",
+          "标签",
+          "价格",
+          "备注",
+          "最后使用",
+          "录入时间",
+          "关联物品",
+          "同位置邻居",
+          "相似物品",
+          "快捷操作",
+          "操作历史"
+        ],
+        "operations": [
+          "改",
+          "移",
+          "补",
+          "减",
+          "标",
+          "废",
+          "标记使用",
+          "查看完整历史",
+          "查看照片",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态"
+        ]
+      },
+      "scenarios": [
+        "2-2"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "locate",
+      "oldTemplate": "物品/locate.html",
+      "pageType": "查看",
+      "reason": "紧急定位置顶卡片信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没找到＋扩大寻找引导",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "置顶卡片（照片/名称/ID/位置/数量/状态）",
+          "查询词"
+        ],
+        "operations": [
+          "我找到了",
+          "分享位置",
+          "扩大寻找",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态"
+        ]
+      },
+      "scenarios": [
+        "2-3"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "browse",
+      "oldTemplate": "物品/browse.html",
+      "pageType": "查看",
+      "reason": "分组浏览信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无匹配物品",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "计数",
+          "分组卡片（名称/ID/位置/数量/状态）",
+          "当前分组名"
+        ],
+        "operations": [
+          "全部",
+          "分组名（N）",
+          "分组切换",
+          "排序：相关",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态"
+        ]
+      },
+      "scenarios": [
+        "2-4"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "duplicates",
+      "oldTemplate": "物品/duplicates.html",
+      "pageType": "查看",
+      "reason": "重复检查分组信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有发现重复物品",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "位置/数量",
+          "分类",
+          "价格",
+          "组内件数",
+          "首件状态"
+        ],
+        "operations": [
+          "独立录入",
+          "复制合并建议",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态"
+        ]
+      },
+      "scenarios": [
+        "2-6"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "receipt",
+      "oldTemplate": "物品/receipt.html",
+      "pageType": "混合",
+      "reason": "写类4条共用回执信息结构（字段级before→after加当前状态），首版合一族，差异在族内用mode消化",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无字段级变化",
+          "标签空值（无）",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "变更结果（字段级before→after）",
+          "当前状态（名称/ID/分类/位置×数量/状态/标签/备注）",
+          "标签变更（去除/新增）",
+          "处理明细",
+          "收尾语"
+        ],
+        "operations": [
+          "撤销",
+          "查看详情",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态",
+          "标签加/去"
+        ]
+      },
+      "scenarios": [
+        "3-2",
+        "3-3",
+        "3-4",
+        "3-8"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "confirm",
+      "oldTemplate": "物品/confirm.html",
+      "pageType": "选择＋回执",
+      "reason": "合并预览确认信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无（确认页）",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "标题",
+          "引导语",
+          "变更前",
+          "变更后",
+          "逐条entries（含子标签）",
+          "影响说明"
+        ],
+        "operations": [
+          "确认",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": []
+      },
+      "scenarios": [
+        "3-5"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "undo_select",
+      "oldTemplate": "物品/undo_select.html",
+      "pageType": "选择＋回执",
+      "reason": "撤销选择信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无可撤销操作",
+          "拦截态：请先勾选",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "可撤销操作（最近N条）",
+          "事件类型",
+          "通用操作分组"
+        ],
+        "operations": [
+          "勾选事件",
+          "确认撤销勾选项",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "事件类型"
+        ]
+      },
+      "scenarios": [
+        "3-6"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "relations",
+      "oldTemplate": "物品/relations.html",
+      "pageType": "采集＋回执",
+      "reason": "关联关系信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无关联",
+          "建立区占位文案",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "主物品",
+          "关联列表（是否反向/关系类型/对方名称/对方ID）"
+        ],
+        "operations": [
+          "解除",
+          "设置关联",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "配件",
+          "配套",
+          "替代",
+          "同捆",
+          "常用搭配"
+        ]
+      },
+      "scenarios": [
+        "3-7"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "tag_manage",
+      "oldTemplate": "物品/tag_manage.html",
+      "pageType": "混合",
+      "reason": "标签总览加相似对加整理建议同页信息结构，2条场景合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无标签",
+          "无可清理标签时不出「一键清理」",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "标签总览（标签名/件数/使用次数）",
+          "相似标签对（相似度%）",
+          "未使用标签",
+          "当前mode"
+        ],
+        "operations": [
+          "改名",
+          "合并",
+          "一键清理",
+          "忽略",
+          "整理建议",
+          "新建标签",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "相似度公式"
+        ]
+      },
+      "scenarios": [
+        "4-1",
+        "4-3"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "category_manage",
+      "oldTemplate": "物品/category_manage.html",
+      "pageType": "混合",
+      "reason": "分类树管理信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：树为空即只有「新建顶级分类」",
+          "异常：数据解析失败",
+          "拦截态：有物品的分类不可删"
+        ],
+        "fields": [
+          "分类树（层级＋每类计数）",
+          "操作提示",
+          "删除拦截说明"
+        ],
+        "operations": [
+          "改名",
+          "合并",
+          "新建顶级分类",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "种子8类（只可改不可删）"
+        ]
+      },
+      "scenarios": [
+        "4-2"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "photos",
+      "oldTemplate": "物品/photos.html",
+      "pageType": "混合",
+      "reason": "查看照片与管照片共用照片列表信息结构，按mode分流合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无照片＋补拍引导",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "物品（名称/ID）",
+          "照片列表（顺序/类型/主图标记）",
+          "当前mode"
+        ],
+        "operations": [
+          "全部",
+          "类型筛选",
+          "确认顺序变更",
+          "加图·补拍",
+          "删除选中",
+          "下载照片",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "普通",
+          "说明书-使用",
+          "说明书-安装",
+          "说明书-保养"
+        ]
+      },
+      "scenarios": [
+        "5-1",
+        "5-2"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "photo_wall",
+      "oldTemplate": "物品/photo_wall.html",
+      "pageType": "查看",
+      "reason": "照片墙网格信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有带照片的物品",
+          "补充态：还有N件无照片→去补拍",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "分组（分类/位置）",
+          "照片网格",
+          "无照片件数"
+        ],
+        "operations": [
+          "全部",
+          "类型筛选",
+          "去补拍",
+          "按位置浏览",
+          "点图复制详情prompt",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "照片类型四值"
+        ]
+      },
+      "scenarios": [
+        "5-3"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "inventory_round",
+      "oldTemplate": "物品/inventory_round.html",
+      "pageType": "采集＋回执",
+      "reason": "盘点核对清单信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：范围内没有物品",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "范围",
+          "上次待复查（置顶）",
+          "核对清单（ID/位置/数量/状态）",
+          "三态判定",
+          "数量修正",
+          "状态修正（下拉）",
+          "新位置"
+        ],
+        "operations": [
+          "在/不在/不确定",
+          "发现清单外物品",
+          "状态不变＋状态下拉",
+          "保存进度",
+          "确认提交（含差异）",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "在",
+          "不在",
+          "不确定",
+          "状态不变",
+          "在家",
+          "备用",
+          "借用中",
+          "维修中",
+          "找不到",
+          "已废弃"
+        ]
+      },
+      "scenarios": [
+        "6-1"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "inventory_diff",
+      "oldTemplate": "物品/inventory_diff.html",
+      "pageType": "混合",
+      "reason": "差异分组处理信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：该记录没有未处理差异",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "差异分组missing/extra/diff/pending",
+          "所属盘点记录",
+          "动作集",
+          "新位置输入",
+          "批量行"
+        ],
+        "operations": [
+          "按实际更新",
+          "忽略",
+          "录入为新物品",
+          "标记复查",
+          "先不处理",
+          "批量确认",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "缺",
+          "多",
+          "异",
+          "待确认"
+        ]
+      },
+      "scenarios": [
+        "6-2"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "inventory_records",
+      "oldTemplate": "物品/inventory_records.html",
+      "pageType": "查看",
+      "reason": "盘点记录列表信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有盘点记录",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "历史盘点（N）",
+          "发生时间",
+          "缺/多/异/待确认计数",
+          "记录状态"
+        ],
+        "operations": [
+          "展开详情",
+          "处理差异",
+          "复查",
+          "开始盘点",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "进行中",
+          "已完成",
+          "已处理",
+          "已复查"
+        ]
+      },
+      "scenarios": [
+        "6-3"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "move_checklist",
+      "oldTemplate": "物品/move_checklist.html",
+      "pageType": "选择＋回执",
+      "reason": "搬家二态标记信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无空态文案",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "分组（每组建数）",
+          "物品（ID/名称/位置/数量）",
+          "二态标记"
+        ],
+        "operations": [
+          "全带走",
+          "全不带走",
+          "带走",
+          "不带走",
+          "统一确认",
+          "复制清单",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "带走",
+          "不带走"
+        ]
+      },
+      "scenarios": [
+        "6-4"
+      ]
+    },
+    {
+      "domain": "items",
+      "family": "history",
+      "oldTemplate": "物品/history.html",
+      "pageType": "查看",
+      "reason": "操作历史时间线信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无事件",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "位置轨迹",
+          "时间线（N条）",
+          "事件条目（类型/摘要/diff展开）",
+          "已撤销标记"
+        ],
+        "operations": [
+          "全部",
+          "类型筛选",
+          "展开详情",
+          "撤销",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "状态变更",
+          "盘点",
+          "差异处理",
+          "已撤销"
+        ]
+      },
+      "scenarios": [
+        "7-1"
+      ]
+    },
+    {
+      "domain": "space",
+      "family": "location_manage",
+      "oldTemplate": "位置/location_manage.html",
+      "pageType": "混合",
+      "reason": "位置树管理信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有位置＋建第一个位置引导",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "位置树",
+          "已有路径",
+          "目标",
+          "受影响物品",
+          "相似位置组",
+          "源位置表单",
+          "新位置路径表单"
+        ],
+        "operations": [
+          "新建位置",
+          "改名",
+          "删除",
+          "确认合并",
+          "复制prompt",
+          "关闭",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "位置路径多级"
+        ]
+      },
+      "scenarios": [
+        "SM2-1"
+      ]
+    },
+    {
+      "domain": "space",
+      "family": "fixed_spot",
+      "oldTemplate": "位置/fixed_spot.html",
+      "pageType": "采集＋回执",
+      "reason": "固定位清单加表单信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有固定位＋常用件引导",
+          "异常：数据解析失败／数据校验失败",
+          "表单空值拦截"
+        ],
+        "fields": [
+          "现有固定位清单（名称/ID/当前活跃位置/固定位）",
+          "物品表单",
+          "固定位表单"
+        ],
+        "operations": [
+          "设置固定位",
+          "解除",
+          "复制prompt",
+          "关闭",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "位置状态（非「在家」括号标出）"
+        ]
+      },
+      "scenarios": [
+        "SM2-2"
+      ]
+    },
+    {
+      "domain": "space",
+      "family": "suggest_storage",
+      "oldTemplate": "位置/suggest_storage.html",
+      "pageType": "混合",
+      "reason": "收纳推荐列表信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：都有固定位了／没有可建议的物品",
+          "无依据态：暂无依据",
+          "备选空态：暂无其他备选",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "推荐列表（推荐位置/理由/备选位置）",
+          "批量标记",
+          "总量",
+          "当前mode",
+          "无依据态"
+        ],
+        "operations": [
+          "采纳（去移物品）",
+          "设为固定位",
+          "换一个建议",
+          "找没固定位的常用件",
+          "复制收纳建议",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": []
+      },
+      "scenarios": [
+        "SM2-3"
+      ]
+    },
+    {
+      "domain": "space",
+      "family": "space_view",
+      "oldTemplate": "位置/space_view.html",
+      "pageType": "查看",
+      "reason": "空间视图面包屑加下钻信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：这里还没有东西（全屋与单层两套文案）",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "面包屑",
+          "子层",
+          "当前层物品（名称/数量/状态）",
+          "当前层名/路径",
+          "路径总数",
+          "分层空态提示"
+        ],
+        "operations": [
+          "下钻",
+          "移",
+          "补",
+          "减",
+          "复制建位置",
+          "复制收纳建议",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "位置状态（缺省在家）"
+        ]
+      },
+      "scenarios": [
+        "SM2-4"
+      ]
+    },
+    {
+      "domain": "outfit",
+      "family": "outfit_picker",
+      "oldTemplate": "穿搭/outfit_picker.html",
+      "pageType": "混合",
+      "reason": "多部位槽位推荐信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：无空态文案",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "多部位槽位（外层/内搭）",
+          "风格标签",
+          "推荐理由",
+          "备选组合",
+          "场合与天气"
+        ],
+        "operations": [
+          "槽位切换",
+          "上一套",
+          "换一套",
+          "今天穿这套",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "上班",
+          "约会",
+          "运动",
+          "家居",
+          "正式",
+          "自定义"
+        ]
+      },
+      "scenarios": [
+        "SM3-1"
+      ]
+    },
+    {
+      "domain": "outfit",
+      "family": "wardrobe_analyze",
+      "oldTemplate": "穿搭/wardrobe_analyze.html",
+      "pageType": "混合",
+      "reason": "衣橱构成加闲置清单信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：衣橱还没有在家衣物",
+          "无闲置态：衣橱状态良好",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "衣橱构成",
+          "闲置清单",
+          "AI建议一句",
+          "汇总"
+        ],
+        "operations": [
+          "标记废弃",
+          "送人",
+          "先不处理",
+          "缺口加入购物清单",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态",
+          "在家口径"
+        ]
+      },
+      "scenarios": [
+        "SM3-2"
+      ]
+    },
+    {
+      "domain": "outfit",
+      "family": "wardrobe_season",
+      "oldTemplate": "穿搭/wardrobe_season.html",
+      "pageType": "采集＋回执",
+      "reason": "换季收纳拿出信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有带季节标签的在家衣物＋打标签引导",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "季节",
+          "操作（收纳/拿出）",
+          "季节衣物清单",
+          "收纳位置下拉",
+          "候选位置",
+          "汇总"
+        ],
+        "operations": [
+          "收纳位置下拉",
+          "自定义",
+          "全选/全不选",
+          "确认收纳／确认拿出",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "物品状态",
+          "已收纳"
+        ]
+      },
+      "scenarios": [
+        "SM3-3"
+      ]
+    },
+    {
+      "domain": "outfit",
+      "family": "travel_trip",
+      "oldTemplate": "穿搭/travel_trip.html",
+      "pageType": "混合",
+      "reason": "出行清单双词同族（带物品／归物品按mode分流），合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有旅游中的物品／清单为空",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "行程类型/天数/操作mode",
+          "清单物品卡片（名称/数量/位置/理由）",
+          "汇总"
+        ],
+        "operations": [
+          "确认带出（标旅游中）",
+          "确认归位",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "健身",
+          "出差",
+          "旅行",
+          "超市",
+          "游泳",
+          "爬山",
+          "滑雪",
+          "自定义",
+          "旅游中",
+          "在家"
+        ]
+      },
+      "scenarios": [
+        "SM3-4"
+      ]
+    },
+    {
+      "domain": "outfit",
+      "family": "trip_outfit_plan",
+      "oldTemplate": "穿搭/trip_outfit_plan.html",
+      "pageType": "混合",
+      "reason": "旅行每日穿搭计划信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有可计划的衣物",
+          "无冲突态：衣物充足无重复冲突",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "目的地/天数",
+          "每日计划（第N天＋温度＋组合）",
+          "冲突提示",
+          "行李汇总",
+          "汇总"
+        ],
+        "operations": [
+          "日期按钮",
+          "采纳这天",
+          "生成行李清单",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "每日温度"
+        ]
+      },
+      "scenarios": [
+        "SM3-5"
+      ]
+    },
+    {
+      "domain": "stats",
+      "family": "overview",
+      "oldTemplate": "stats/overview.html",
+      "pageType": "查看",
+      "reason": "家底总览五分布信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有物品＋录入第一批引导",
+          "分区空态：暂无分类/位置/状态数据",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "摘要（件数/总价/价格覆盖率/近30天变动）",
+          "分类分布",
+          "位置分布",
+          "状态分布",
+          "归属分布",
+          "价值TOP",
+          "高频TOP",
+          "趋势"
+        ],
+        "operations": [
+          "点柱子复制筛选浏览prompt",
+          "复制初始化",
+          "复制补价提示",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "全部合法物品状态"
+        ]
+      },
+      "scenarios": [
+        "SM4-1"
+      ]
+    },
+    {
+      "domain": "stats",
+      "family": "idle",
+      "oldTemplate": "stats/idle.html",
+      "pageType": "混合",
+      "reason": "闲置清单处理信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：衣橱状态良好＋没有超N天未使用",
+          "拦截态：还没有勾选任何处理",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "闲置清单（按闲置时长排序）",
+          "闲置标准天数",
+          "AI建议",
+          "分类筛选",
+          "空态标记"
+        ],
+        "operations": [
+          "分类下拉",
+          "勾选",
+          "标记废弃",
+          "送人",
+          "先不处理",
+          "确认处理",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "标记废弃",
+          "送人",
+          "先不处理"
+        ]
+      },
+      "scenarios": [
+        "SM4-2"
+      ]
+    },
+    {
+      "domain": "stats",
+      "family": "expiring",
+      "oldTemplate": "stats/expiring.html",
+      "pageType": "混合",
+      "reason": "过期预告处理信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：没有即将过期的物品＋已检查未来N天",
+          "拦截态：还没有勾选任何处理",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "已过期与未来N天预告（剩余天数）",
+          "预告天数",
+          "可调档位",
+          "分类筛选",
+          "摘要"
+        ],
+        "operations": [
+          "分类下拉",
+          "勾选",
+          "已用完",
+          "废弃",
+          "忽略",
+          "确认处理",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "已过期N天",
+          "今天到期",
+          "N天后到期",
+          "已用完",
+          "废弃",
+          "忽略"
+        ]
+      },
+      "scenarios": [
+        "SM4-3"
+      ]
+    },
+    {
+      "domain": "stats",
+      "family": "inventory_stat",
+      "oldTemplate": "stats/inventory_stat.html",
+      "pageType": "查看",
+      "reason": "盘点完成率趋势信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有盘点记录＋完成首次盘点引导",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "完成率与趋势",
+          "盘点明细（时间/范围/缺/多/异/状态）",
+          "遗留差异总数",
+          "复查入口",
+          "AI建议",
+          "有无数据标记"
+        ],
+        "operations": [
+          "复查盘点",
+          "复制首次盘点",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "进行中",
+          "已完成",
+          "已处理",
+          "已复查"
+        ]
+      },
+      "scenarios": [
+        "SM4-4"
+      ]
+    },
+    {
+      "domain": "express",
+      "family": "list",
+      "oldTemplate": "快递购物/list.html",
+      "pageType": "混合",
+      "reason": "购物清单待买条目信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：清单是空的＋试试引导",
+          "拦截态：请先勾选买到的条目",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "待买条目（名称/数量/来源标注）",
+          "清单内查重结果",
+          "摘要"
+        ],
+        "operations": [
+          "我买到了",
+          "清单外新买的",
+          "给已有物品补货",
+          "记一笔要买的",
+          "检测家里缺什么",
+          "清掉已买记录",
+          "勾选",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "待买",
+          "已买"
+        ]
+      },
+      "scenarios": [
+        "SM5-1"
+      ]
+    },
+    {
+      "domain": "express",
+      "family": "missing",
+      "oldTemplate": "快递购物/missing.html",
+      "pageType": "混合",
+      "reason": "缺货检测信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：库存充足没有缺货物品",
+          "拦截态：请先勾选缺货物品",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "缺货物品（物品/当前数量/阈值/建议量）",
+          "检测范围",
+          "摘要"
+        ],
+        "operations": [
+          "勾选",
+          "加入购物清单",
+          "按范围检测",
+          "设置阈值",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "在家",
+          "备用"
+        ]
+      },
+      "scenarios": [
+        "SM5-2"
+      ]
+    },
+    {
+      "domain": "express",
+      "family": "express",
+      "oldTemplate": "快递购物/express.html",
+      "pageType": "混合",
+      "reason": "快递中超时信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：当前没有快递中物品",
+          "拦截态：请先勾选收到的物品",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "快递中物品（名称/已等N天/是否超时）",
+          "超时天数",
+          "摘要"
+        ],
+        "operations": [
+          "勾选",
+          "我收到了",
+          "收到的放备用",
+          "新到的物品录入",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "快递中",
+          "超时",
+          "在家",
+          "备用"
+        ]
+      },
+      "scenarios": [
+        "SM5-3"
+      ]
+    },
+    {
+      "domain": "express",
+      "family": "stock",
+      "oldTemplate": "快递购物/stock.html",
+      "pageType": "混合",
+      "reason": "囤货阈值信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有设置囤货阈值的物品",
+          "分区空态：常用品还没设阈值",
+          "拦截态：请先勾选",
+          "异常：数据解析失败"
+        ],
+        "fields": [
+          "囤货物品（名称/数量/阈值/库存状态）",
+          "未设阈值提示",
+          "摘要"
+        ],
+        "operations": [
+          "勾选",
+          "修正实际数量",
+          "设置阈值",
+          "设阈值",
+          "检测缺货",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "充足",
+          "低",
+          "空"
+        ]
+      },
+      "scenarios": [
+        "SM5-4"
+      ]
+    },
+    {
+      "domain": "receipt",
+      "family": "purchase_records",
+      "oldTemplate": "票据凭证/purchase_records.html",
+      "pageType": "混合",
+      "reason": "购买记录5条同页信息结构（记录加分类统计），合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无分类统计／暂无记录",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "购买记录（物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止）",
+          "分类统计（分类/笔数/金额）",
+          "顺路提醒",
+          "空态提示"
+        ],
+        "operations": [
+          "分类卡片筛选",
+          "新增购买记录",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "已过退货期N天",
+          "今天最后可退",
+          "可退·剩N天",
+          "未设退货"
+        ]
+      },
+      "scenarios": [
+        "SM6-1",
+        "SM6-2",
+        "SM6-3",
+        "SM6-4",
+        "SM6-5"
+      ]
+    },
+    {
+      "domain": "receipt",
+      "family": "warranty",
+      "oldTemplate": "票据凭证/warranty.html",
+      "pageType": "混合",
+      "reason": "保修保养5条同页信息结构（清单加状态筛选），合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无登记",
+          "无事件时折叠区空态",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "保修/保养清单（物品名/ID/类型/状态/到期日/剩余天数/维修次数/服务事件）",
+          "状态筛选",
+          "空态提示"
+        ],
+        "operations": [
+          "状态筛选",
+          "记录维修",
+          "执行保养",
+          "新增保修/保养",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "在保",
+          "即将到期",
+          "已过",
+          "到期未做",
+          "全部",
+          "已做"
+        ]
+      },
+      "scenarios": [
+        "SM6-6",
+        "SM6-7",
+        "SM6-8",
+        "SM6-9",
+        "SM6-10"
+      ]
+    },
+    {
+      "domain": "receipt",
+      "family": "certificates",
+      "oldTemplate": "票据凭证/certificates.html",
+      "pageType": "混合",
+      "reason": "证件4条同页信息结构（清单加脱敏），合一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无登记",
+          "异常：数据解析失败／数据校验失败",
+          "敏感口径：号码脱敏·复制数据不含证件号"
+        ],
+        "fields": [
+          "证件清单（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）",
+          "空态提示"
+        ],
+        "operations": [
+          "更新",
+          "补照片",
+          "新增证件",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "有效",
+          "即将到期",
+          "已过期",
+          "已过期N天",
+          "今天到期",
+          "N天后到期"
+        ]
+      },
+      "scenarios": [
+        "SM6-11",
+        "SM6-12",
+        "SM6-13",
+        "SM6-14"
+      ]
+    },
+    {
+      "domain": "receipt",
+      "family": "accounts",
+      "oldTemplate": "票据凭证/accounts.html",
+      "pageType": "混合",
+      "reason": "账号4条同页信息结构（分组加敏感横幅），合一族；看密码明文只回显、永不进HTML",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无账号",
+          "异常：数据解析失败／数据校验失败",
+          "敏感横幅：本页不含任何明文密码",
+          "复制密码前二次确认"
+        ],
+        "fields": [
+          "账号分组（平台/用户名/类型）",
+          "总数",
+          "空态提示"
+        ],
+        "operations": [
+          "新增账号",
+          "查看密码",
+          "复制密码",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "购物",
+          "银行",
+          "社交",
+          "其他"
+        ]
+      },
+      "scenarios": [
+        "SM6-15",
+        "SM6-16",
+        "SM6-17",
+        "SM6-18"
+      ]
+    },
+    {
+      "domain": "family",
+      "family": "family_borrow",
+      "oldTemplate": "family_borrow.html",
+      "pageType": "混合",
+      "reason": "借用双向分区信息结构独立，单列一族；老模板在根，新位置按域归位",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无借用记录",
+          "超期提醒",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "借出/借入双向分区",
+          "超期件数",
+          "记录（物品名/对象/借出日/约定归还日/状态/已借天数/备注）",
+          "登记表单"
+        ],
+        "operations": [
+          "确认归还",
+          "复制催还文案",
+          "确认登记",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "已超期",
+          "今日到期",
+          "已归还",
+          "借用中"
+        ]
+      },
+      "scenarios": [
+        "SM7-1"
+      ]
+    },
+    {
+      "domain": "family",
+      "family": "family_members",
+      "oldTemplate": "family_members.html",
+      "pageType": "混合",
+      "reason": "家人档案成员列表信息结构独立，单列一族；老模板在根，新位置按域归位",
+      "requiredBlocks": {
+        "empty": [
+          "空态：还没有家人档案",
+          "无物品态：库里还没有物品",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "成员列表",
+          "物品归属勾选清单",
+          "物品总数",
+          "添加成员表单"
+        ],
+        "operations": [
+          "移除成员",
+          "确认标记归属",
+          "确认添加",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "成员关系自由文本",
+          "物品默认归属使用者"
+        ]
+      },
+      "scenarios": [
+        "SM7-2"
+      ]
+    },
+    {
+      "domain": "setup",
+      "family": "first_use_wizard",
+      "oldTemplate": "开始使用/first_use_wizard.html",
+      "pageType": "向导",
+      "reason": "首次使用6步向导信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "异常：数据解析失败／数据校验失败／初始化失败",
+          "幂等提示：已初始化"
+        ],
+        "fields": [
+          "6步步骤条",
+          "环境信息",
+          "建库结果",
+          "下一步"
+        ],
+        "operations": [
+          "开始初始化",
+          "一键重试",
+          "先配置环境变量",
+          "开始录入第一批",
+          "知道了",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "done",
+          "current",
+          "fail",
+          "pending"
+        ]
+      },
+      "scenarios": [
+        "SM8-1"
+      ]
+    },
+    {
+      "domain": "setup",
+      "family": "health_report",
+      "oldTemplate": "开始使用/health_report.html",
+      "pageType": "混合",
+      "reason": "健康检查项列表信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：数据健康良好＋未发现数据问题",
+          "拦截态：请先勾选至少1个问题",
+          "异常：数据解析失败／数据校验失败"
+        ],
+        "fields": [
+          "环境信息",
+          "检查项列表",
+          "问题总数",
+          "健康标记",
+          "动作列"
+        ],
+        "operations": [
+          "勾选",
+          "复制选中修复引导",
+          "知道了",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "良好",
+          "待处理"
+        ]
+      },
+      "scenarios": [
+        "SM8-2"
+      ]
+    },
+    {
+      "domain": "setup",
+      "family": "backup_receipt",
+      "oldTemplate": "开始使用/backup_receipt.html",
+      "pageType": "采集＋回执",
+      "reason": "备份历史加保留份数信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "空态：暂无备份记录",
+          "异常：数据解析失败／数据校验失败／备份失败",
+          "空值拦截：该参数不能为空"
+        ],
+        "fields": [
+          "本次备份（路径/大小/时间）",
+          "备份历史（保留N份）",
+          "距上次备份天数",
+          "保留份数输入"
+        ],
+        "operations": [
+          "保留份数下拉",
+          "确认备份",
+          "导出JSON",
+          "导出CSV",
+          "删除最旧备份",
+          "知道了",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "保留份数默认值"
+        ]
+      },
+      "scenarios": [
+        "SM8-3"
+      ]
+    },
+    {
+      "domain": "setup",
+      "family": "import_restore",
+      "oldTemplate": "开始使用/import_restore.html",
+      "pageType": "向导",
+      "reason": "导入四步冲突预览信息结构独立，单列一族",
+      "requiredBlocks": {
+        "empty": [
+          "冲突超10条折叠",
+          "异常：数据解析失败／数据校验失败／导入失败",
+          "承诺语：导入前自动备份＋失败回滚"
+        ],
+        "fields": [
+          "四步（选择文件/校验结果/冲突预览/确认导入）",
+          "校验项",
+          "冲突名单",
+          "导入结果"
+        ],
+        "operations": [
+          "选择文件",
+          "冲突处理下拉",
+          "确认导入",
+          "撤销导入",
+          "知道了",
+          "复制数据",
+          "复制日志"
+        ],
+        "status": [
+          "跳过同名",
+          "覆盖同名",
+          "done",
+          "current"
+        ]
+      },
+      "scenarios": [
+        "SM8-4"
+      ]
+    }
+  ],
+  "layers": [
+    "L0形状加写集加共用位所有权加锁上限先冻",
+    "L1两层解析签名加46名表次冻",
+    "L2命名函数加必需块表后冻"
+  ],
+  "link": {
+    "note": "只留登记行，不建目录，不出产物，不进墙",
+    "registryOnly": true,
+    "scenarios": [
+      "SM9-1",
+      "SM9-2",
+      "SM9-3"
+    ]
+  },
+  "lock": {
+    "holderVisible": true,
+    "maxWaitMs": 600000,
+    "tool": "node tooling/run-locked.mjs --ticket <票号> -- <命令>"
+  },
+  "naming": {
+    "examples": [
+      "录物品_1-1_<戳>.html",
+      "移物品_3-2_<戳>.html",
+      "查购买记录_SM6-1_<戳>.html"
+    ],
+    "function": "<命令中文名>_<场景id>_<戳>.html",
+    "sanitize": "非法字符 \\/:*?\"<>| 与首尾空格替换为 _；场景id与戳只含 [0-9A-Za-z-_]",
+    "stability": "场景id是稳定主键，改唤醒词不改名；戳保证并发唯一；唤醒词不进文件名",
+    "timestamp": "落盘时刻时间戳"
+  },
+  "patchFlow": "脚手架或域票提案回写本契约，契约按次记录变更理由，只触发受影响域票重跑判据；shaping不了的族回写为人工backlog",
+  "receipt": {
+    "absolutePath": true,
+    "byteCountEqualsOnDisk": true
+  },
+  "resolutionSignature": "(命令，场景预设）到页族",
+  "scenarios": [
+    {
+      "commandCn": "录物品",
+      "domain": "items",
+      "family": "add_form",
+      "id": "1-1",
+      "key": "home.item.add",
+      "preset": {},
+      "wakeWord": "录物品"
+    },
+    {
+      "commandCn": "拍物品",
+      "domain": "items",
+      "family": "add_form",
+      "id": "1-2",
+      "key": "home.item.add",
+      "preset": {
+        "photo": "1"
+      },
+      "wakeWord": "拍物品"
+    },
+    {
+      "commandCn": "批量录入",
+      "domain": "items",
+      "family": "add_form",
+      "id": "1-3",
+      "key": "home.item.add",
+      "preset": {
+        "op": "batch"
+      },
+      "wakeWord": "批量录入"
+    },
+    {
+      "commandCn": "补录",
+      "domain": "items",
+      "family": "add_form",
+      "id": "1-4",
+      "key": "home.item.add",
+      "preset": {
+        "op": "backfill"
+      },
+      "wakeWord": "补录"
+    },
+    {
+      "commandCn": "查物品",
+      "domain": "items",
+      "family": "search_list",
+      "id": "2-1",
+      "key": "home.item.search",
+      "preset": {},
+      "wakeWord": "查物品"
+    },
+    {
+      "commandCn": "看物品",
+      "domain": "items",
+      "family": "detail",
+      "id": "2-2",
+      "key": "home.item.detail",
+      "preset": {},
+      "wakeWord": "看物品"
+    },
+    {
+      "commandCn": "紧急定位",
+      "domain": "items",
+      "family": "locate",
+      "id": "2-3",
+      "key": "home.item.search",
+      "preset": {
+        "locate": true
+      },
+      "wakeWord": "紧急定位"
+    },
+    {
+      "commandCn": "筛选浏览",
+      "domain": "items",
+      "family": "browse",
+      "id": "2-4",
+      "key": "home.item.search",
+      "preset": {
+        "browse": true
+      },
+      "wakeWord": "筛选浏览"
+    },
+    {
+      "commandCn": "拍照找物品",
+      "domain": "items",
+      "family": "search_list",
+      "id": "2-5",
+      "key": "home.item.search",
+      "preset": {
+        "photo": true
+      },
+      "wakeWord": "拍照找物品"
+    },
+    {
+      "commandCn": "查重复",
+      "domain": "items",
+      "family": "duplicates",
+      "id": "2-6",
+      "key": "home.item.search",
+      "preset": {
+        "dupes": true
+      },
+      "wakeWord": "查重复"
+    },
+    {
+      "commandCn": "改物品",
+      "domain": "items",
+      "family": "add_form",
+      "id": "3-1",
+      "key": "home.item.update",
+      "preset": {},
+      "wakeWord": "改物品"
+    },
+    {
+      "commandCn": "移物品",
+      "domain": "items",
+      "family": "receipt",
+      "id": "3-2",
+      "key": "home.item.update",
+      "preset": {
+        "op": "move"
+      },
+      "wakeWord": "移物品"
+    },
+    {
+      "commandCn": "数量变更",
+      "domain": "items",
+      "family": "receipt",
+      "id": "3-3",
+      "key": "home.item.update",
+      "preset": {
+        "op": "qty"
+      },
+      "wakeWord": "数量变更"
+    },
+    {
+      "commandCn": "状态变更",
+      "domain": "items",
+      "family": "receipt",
+      "id": "3-4",
+      "key": "home.item.update",
+      "preset": {
+        "op": "status"
+      },
+      "wakeWord": "状态变更"
+    },
+    {
+      "commandCn": "合并物品",
+      "domain": "items",
+      "family": "confirm",
+      "id": "3-5",
+      "key": "home.item.update",
+      "preset": {
+        "op": "merge"
+      },
+      "wakeWord": "合并物品"
+    },
+    {
+      "commandCn": "撤销操作",
+      "domain": "items",
+      "family": "undo_select",
+      "id": "3-6",
+      "key": "home.item.update",
+      "preset": {
+        "op": "undo"
+      },
+      "wakeWord": "撤销操作"
+    },
+    {
+      "commandCn": "物品关联",
+      "domain": "items",
+      "family": "relations",
+      "id": "3-7",
+      "key": "home.item.update",
+      "preset": {
+        "op": "relate"
+      },
+      "wakeWord": "物品关联"
+    },
+    {
+      "commandCn": "标物品",
+      "domain": "items",
+      "family": "receipt",
+      "id": "3-8",
+      "key": "home.item.update",
+      "preset": {
+        "op": "tags"
+      },
+      "wakeWord": "标物品"
+    },
+    {
+      "commandCn": "管标签",
+      "domain": "items",
+      "family": "tag_manage",
+      "id": "4-1",
+      "key": "home.tag.write",
+      "preset": {
+        "op": "overview"
+      },
+      "wakeWord": "管标签"
+    },
+    {
+      "commandCn": "管分类",
+      "domain": "items",
+      "family": "category_manage",
+      "id": "4-2",
+      "key": "home.tag.write",
+      "preset": {
+        "op": "category"
+      },
+      "wakeWord": "管分类"
+    },
+    {
+      "commandCn": "整理建议",
+      "domain": "items",
+      "family": "tag_manage",
+      "id": "4-3",
+      "key": "home.tag.write",
+      "preset": {
+        "op": "tidy"
+      },
+      "wakeWord": "整理建议"
+    },
+    {
+      "commandCn": "查看照片",
+      "domain": "items",
+      "family": "photos",
+      "id": "5-1",
+      "key": "home.item.detail",
+      "preset": {
+        "view": "photos"
+      },
+      "wakeWord": "查看照片"
+    },
+    {
+      "commandCn": "管照片",
+      "domain": "items",
+      "family": "photos",
+      "id": "5-2",
+      "key": "home.item.update",
+      "preset": {
+        "op": "photo"
+      },
+      "wakeWord": "管照片"
+    },
+    {
+      "commandCn": "照片墙",
+      "domain": "items",
+      "family": "photo_wall",
+      "id": "5-3",
+      "key": "home.item.search",
+      "preset": {
+        "wall": true
+      },
+      "wakeWord": "照片墙"
+    },
+    {
+      "commandCn": "盘点",
+      "domain": "items",
+      "family": "inventory_round",
+      "id": "6-1",
+      "key": "home.inventory.round",
+      "preset": {
+        "op": "round"
+      },
+      "wakeWord": "盘点"
+    },
+    {
+      "commandCn": "差异处理",
+      "domain": "items",
+      "family": "inventory_diff",
+      "id": "6-2",
+      "key": "home.inventory.round",
+      "preset": {
+        "op": "resolve"
+      },
+      "wakeWord": "差异处理"
+    },
+    {
+      "commandCn": "盘点记录",
+      "domain": "items",
+      "family": "inventory_records",
+      "id": "6-3",
+      "key": "home.inventory.records",
+      "preset": {},
+      "wakeWord": "盘点记录"
+    },
+    {
+      "commandCn": "搬家盘点",
+      "domain": "items",
+      "family": "move_checklist",
+      "id": "6-4",
+      "key": "home.inventory.round",
+      "preset": {
+        "op": "move"
+      },
+      "wakeWord": "搬家盘点"
+    },
+    {
+      "commandCn": "历史",
+      "domain": "items",
+      "family": "history",
+      "id": "7-1",
+      "key": "home.item.detail",
+      "preset": {
+        "view": "history"
+      },
+      "wakeWord": "历史"
+    },
+    {
+      "commandCn": "管位置",
+      "domain": "space",
+      "family": "location_manage",
+      "id": "SM2-1",
+      "key": "home.location.write",
+      "preset": {
+        "op": "manage"
+      },
+      "wakeWord": "管位置"
+    },
+    {
+      "commandCn": "固定位",
+      "domain": "space",
+      "family": "fixed_spot",
+      "id": "SM2-2",
+      "key": "home.location.write",
+      "preset": {
+        "op": "fixed"
+      },
+      "wakeWord": "固定位"
+    },
+    {
+      "commandCn": "收纳建议",
+      "domain": "space",
+      "family": "suggest_storage",
+      "id": "SM2-3",
+      "key": "home.location.query",
+      "preset": {
+        "mode": "storage"
+      },
+      "wakeWord": "收纳建议"
+    },
+    {
+      "commandCn": "空间视图",
+      "domain": "space",
+      "family": "space_view",
+      "id": "SM2-4",
+      "key": "home.location.query",
+      "preset": {
+        "mode": "space"
+      },
+      "wakeWord": "空间视图"
+    },
+    {
+      "commandCn": "穿什么",
+      "domain": "outfit",
+      "family": "outfit_picker",
+      "id": "SM3-1",
+      "key": "home.outfit.pick",
+      "preset": {},
+      "wakeWord": "穿什么"
+    },
+    {
+      "commandCn": "衣橱分析",
+      "domain": "outfit",
+      "family": "wardrobe_analyze",
+      "id": "SM3-2",
+      "key": "home.outfit.pick",
+      "preset": {
+        "kind": "wardrobe"
+      },
+      "wakeWord": "衣橱分析"
+    },
+    {
+      "commandCn": "换季",
+      "domain": "outfit",
+      "family": "wardrobe_season",
+      "id": "SM3-3",
+      "key": "home.outfit.pick",
+      "preset": {
+        "kind": "season"
+      },
+      "wakeWord": "换季"
+    },
+    {
+      "commandCn": "出行清单",
+      "domain": "outfit",
+      "family": "travel_trip",
+      "id": "SM3-4",
+      "key": "home.trip.manage",
+      "preset": {
+        "mode": "pack"
+      },
+      "wakeWord": "带物品／归物品"
+    },
+    {
+      "commandCn": "旅行穿搭",
+      "domain": "outfit",
+      "family": "trip_outfit_plan",
+      "id": "SM3-5",
+      "key": "home.outfit.pick",
+      "preset": {
+        "kind": "trip-plan"
+      },
+      "wakeWord": "旅行穿搭"
+    },
+    {
+      "commandCn": "统物品",
+      "domain": "stats",
+      "family": "overview",
+      "id": "SM4-1",
+      "key": "home.stats.overview",
+      "preset": {
+        "kind": "summary"
+      },
+      "wakeWord": "统物品"
+    },
+    {
+      "commandCn": "查闲置",
+      "domain": "stats",
+      "family": "idle",
+      "id": "SM4-2",
+      "key": "home.stats.alert",
+      "preset": {
+        "kind": "idle"
+      },
+      "wakeWord": "查闲置"
+    },
+    {
+      "commandCn": "查过期",
+      "domain": "stats",
+      "family": "expiring",
+      "id": "SM4-3",
+      "key": "home.stats.alert",
+      "preset": {
+        "kind": "expiring"
+      },
+      "wakeWord": "查过期"
+    },
+    {
+      "commandCn": "盘点统计",
+      "domain": "stats",
+      "family": "inventory_stat",
+      "id": "SM4-4",
+      "key": "home.stats.overview",
+      "preset": {
+        "kind": "inventory"
+      },
+      "wakeWord": "盘点统计"
+    },
+    {
+      "commandCn": "购物清单",
+      "domain": "express",
+      "family": "list",
+      "id": "SM5-1",
+      "key": "home.shopping.query",
+      "preset": {
+        "kind": "list"
+      },
+      "wakeWord": "购物清单"
+    },
+    {
+      "commandCn": "缺货检测",
+      "domain": "express",
+      "family": "missing",
+      "id": "SM5-2",
+      "key": "home.shopping.query",
+      "preset": {
+        "kind": "missing"
+      },
+      "wakeWord": "缺货检测"
+    },
+    {
+      "commandCn": "查快递",
+      "domain": "express",
+      "family": "express",
+      "id": "SM5-3",
+      "key": "home.shopping.query",
+      "preset": {
+        "kind": "express"
+      },
+      "wakeWord": "查快递"
+    },
+    {
+      "commandCn": "囤货盘点",
+      "domain": "express",
+      "family": "stock",
+      "id": "SM5-4",
+      "key": "home.shopping.query",
+      "preset": {
+        "kind": "stock"
+      },
+      "wakeWord": "囤货盘点"
+    },
+    {
+      "commandCn": "查购买记录",
+      "domain": "receipt",
+      "family": "purchase_records",
+      "id": "SM6-1",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "purchase"
+      },
+      "wakeWord": "查购买记录"
+    },
+    {
+      "commandCn": "查上月购买",
+      "domain": "receipt",
+      "family": "purchase_records",
+      "id": "SM6-2",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "purchase",
+        "range": "last-month"
+      },
+      "wakeWord": "查上月购买"
+    },
+    {
+      "commandCn": "查今年花费",
+      "domain": "receipt",
+      "family": "purchase_records",
+      "id": "SM6-3",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "purchase",
+        "range": "year"
+      },
+      "wakeWord": "查今年花费"
+    },
+    {
+      "commandCn": "查退货窗口",
+      "domain": "receipt",
+      "family": "purchase_records",
+      "id": "SM6-4",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "purchase",
+        "range": "return"
+      },
+      "wakeWord": "查退货窗口"
+    },
+    {
+      "commandCn": "登记购买记录",
+      "domain": "receipt",
+      "family": "purchase_records",
+      "id": "SM6-5",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "purchase",
+        "op": "add"
+      },
+      "wakeWord": "登记购买记录"
+    },
+    {
+      "commandCn": "查保修状态",
+      "domain": "receipt",
+      "family": "warranty",
+      "id": "SM6-6",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "warranty"
+      },
+      "wakeWord": "查保修状态"
+    },
+    {
+      "commandCn": "登记保修",
+      "domain": "receipt",
+      "family": "warranty",
+      "id": "SM6-7",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "warranty",
+        "op": "register"
+      },
+      "wakeWord": "登记保修"
+    },
+    {
+      "commandCn": "记录维修",
+      "domain": "receipt",
+      "family": "warranty",
+      "id": "SM6-8",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "warranty",
+        "op": "repair"
+      },
+      "wakeWord": "记录维修"
+    },
+    {
+      "commandCn": "设置保养周期",
+      "domain": "receipt",
+      "family": "warranty",
+      "id": "SM6-9",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "warranty",
+        "op": "cycle"
+      },
+      "wakeWord": "设置保养周期"
+    },
+    {
+      "commandCn": "执行保养",
+      "domain": "receipt",
+      "family": "warranty",
+      "id": "SM6-10",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "warranty",
+        "op": "maintain"
+      },
+      "wakeWord": "执行保养"
+    },
+    {
+      "commandCn": "查证件到期",
+      "domain": "receipt",
+      "family": "certificates",
+      "id": "SM6-11",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "cert"
+      },
+      "wakeWord": "查证件到期"
+    },
+    {
+      "commandCn": "登记证件",
+      "domain": "receipt",
+      "family": "certificates",
+      "id": "SM6-12",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "cert",
+        "op": "add"
+      },
+      "wakeWord": "登记证件"
+    },
+    {
+      "commandCn": "证件归档",
+      "domain": "receipt",
+      "family": "certificates",
+      "id": "SM6-13",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "cert",
+        "op": "archive"
+      },
+      "wakeWord": "证件归档"
+    },
+    {
+      "commandCn": "更新证件",
+      "domain": "receipt",
+      "family": "certificates",
+      "id": "SM6-14",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "cert",
+        "op": "update"
+      },
+      "wakeWord": "更新证件"
+    },
+    {
+      "commandCn": "查账号",
+      "domain": "receipt",
+      "family": "accounts",
+      "id": "SM6-15",
+      "key": "home.ticket.query",
+      "preset": {
+        "kind": "account"
+      },
+      "wakeWord": "查账号"
+    },
+    {
+      "commandCn": "存账号",
+      "domain": "receipt",
+      "family": "accounts",
+      "id": "SM6-16",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "account",
+        "op": "add"
+      },
+      "wakeWord": "存账号"
+    },
+    {
+      "commandCn": "改账号",
+      "domain": "receipt",
+      "family": "accounts",
+      "id": "SM6-17",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "account",
+        "op": "update"
+      },
+      "wakeWord": "改账号"
+    },
+    {
+      "commandCn": "看密码",
+      "domain": "receipt",
+      "family": "accounts",
+      "id": "SM6-18",
+      "key": "home.ticket.write",
+      "preset": {
+        "kind": "account",
+        "op": "show"
+      },
+      "wakeWord": "看密码"
+    },
+    {
+      "commandCn": "借用",
+      "domain": "family",
+      "family": "family_borrow",
+      "id": "SM7-1",
+      "key": "home.care.query",
+      "preset": {
+        "kind": "borrow"
+      },
+      "wakeWord": "借用"
+    },
+    {
+      "commandCn": "家人档案",
+      "domain": "family",
+      "family": "family_members",
+      "id": "SM7-2",
+      "key": "home.care.query",
+      "preset": {
+        "kind": "member"
+      },
+      "wakeWord": "家人档案"
+    },
+    {
+      "commandCn": "首次使用",
+      "domain": "setup",
+      "family": "first_use_wizard",
+      "id": "SM8-1",
+      "key": "home.care.write",
+      "preset": {
+        "kind": "init"
+      },
+      "wakeWord": "首次使用"
+    },
+    {
+      "commandCn": "查异常",
+      "domain": "setup",
+      "family": "health_report",
+      "id": "SM8-2",
+      "key": "home.care.query",
+      "preset": {
+        "kind": "lint"
+      },
+      "wakeWord": "查异常"
+    },
+    {
+      "commandCn": "备份导出",
+      "domain": "setup",
+      "family": "backup_receipt",
+      "id": "SM8-3",
+      "key": "home.care.write",
+      "preset": {
+        "kind": "backup"
+      },
+      "wakeWord": "备份导出"
+    },
+    {
+      "commandCn": "导入恢复",
+      "domain": "setup",
+      "family": "import_restore",
+      "id": "SM8-4",
+      "key": "home.care.write",
+      "preset": {
+        "kind": "import"
+      },
+      "wakeWord": "导入恢复"
+    }
+  ],
+  "shared": {
+    "owner": 800,
+    "paths": [
+      "packages/skill-home/src/render/**",
+      "packages/skill-home/src/cli/**",
+      "packages/skill-home/package.json",
+      "package.json（测试glob）",
+      "packages/skill-home/SKILL.md",
+      "packages/skill-home/scripts/gen-*（生成器与生成物）"
+    ]
+  },
+  "sources": {
+    "ledger": "docs/skills/skill-home/pages-ledger.md 表一（49行减联动3行）",
+    "scenariosYaml": "packages/skill-home/src/help/scenarios.yaml（73条，含联动3条）",
+    "wakewordSpec": "docs/skills/skill-home/wakeword-spec.md（词到族只引用，不重复裁决）"
+  },
+  "standardFiles": [
+    "src/<域>/index.ts",
+    "src/<域>/commands.ts",
+    "src/<域>/routes.ts",
+    "src/<域>/pages/<页族>.ts"
+  ],
+  "writeSets": [
+    {
+      "families": [
+        "add_form",
+        "search_list",
+        "detail",
+        "locate",
+        "browse",
+        "duplicates"
+      ],
+      "files": [
+        "templates/items/<页族>.html",
+        "src/items/pages/<页族>.ts"
+      ],
+      "ticket": 806
+    },
+    {
+      "families": [
+        "receipt",
+        "confirm",
+        "undo_select",
+        "relations",
+        "tag_manage",
+        "category_manage"
+      ],
+      "files": [
+        "templates/items/<页族>.html",
+        "src/items/pages/<页族>.ts"
+      ],
+      "ticket": 807
+    },
+    {
+      "families": [
+        "photos",
+        "photo_wall",
+        "inventory_round",
+        "inventory_diff",
+        "inventory_records",
+        "move_checklist",
+        "history"
+      ],
+      "files": [
+        "templates/items/<页族>.html",
+        "src/items/pages/<页族>.ts"
+      ],
+      "ticket": 808
+    },
+    {
+      "families": [
+        "location_manage",
+        "fixed_spot",
+        "suggest_storage",
+        "space_view"
+      ],
+      "files": [
+        "templates/space/<页族>.html",
+        "src/space/pages/<页族>.ts"
+      ],
+      "ticket": 809
+    },
+    {
+      "families": [
+        "outfit_picker",
+        "wardrobe_analyze",
+        "wardrobe_season",
+        "travel_trip",
+        "trip_outfit_plan"
+      ],
+      "files": [
+        "templates/outfit/<页族>.html",
+        "src/outfit/pages/<页族>.ts"
+      ],
+      "ticket": 810
+    },
+    {
+      "families": [
+        "overview",
+        "idle",
+        "expiring",
+        "inventory_stat"
+      ],
+      "files": [
+        "templates/stats/<页族>.html",
+        "src/stats/pages/<页族>.ts"
+      ],
+      "ticket": 811
+    },
+    {
+      "families": [
+        "list",
+        "missing",
+        "express",
+        "stock"
+      ],
+      "files": [
+        "templates/express/<页族>.html",
+        "src/express/pages/<页族>.ts"
+      ],
+      "ticket": 812
+    },
+    {
+      "families": [
+        "purchase_records",
+        "warranty"
+      ],
+      "files": [
+        "templates/receipt/<页族>.html",
+        "src/receipt/pages/<页族>.ts"
+      ],
+      "ticket": 813
+    },
+    {
+      "families": [
+        "certificates",
+        "accounts"
+      ],
+      "files": [
+        "templates/receipt/<页族>.html",
+        "src/receipt/pages/<页族>.ts"
+      ],
+      "ticket": 814
+    },
+    {
+      "families": [
+        "family_borrow",
+        "family_members"
+      ],
+      "files": [
+        "templates/family/<页族>.html",
+        "src/family/pages/<页族>.ts"
+      ],
+      "ticket": 815
+    },
+    {
+      "families": [
+        "first_use_wizard",
+        "health_report",
+        "backup_receipt",
+        "import_restore"
+      ],
+      "files": [
+        "templates/setup/<页族>.html",
+        "src/setup/pages/<页族>.ts"
+      ],
+      "ticket": 816
+    }
+  ],
+  "dualWord": {
+    "scenario": "SM3-4",
+    "family": "travel_trip",
+    "wakeWords": [
+      "带物品",
+      "归物品"
+    ],
+    "note": "SM3-4 双词同族：带物品与归物品各走各的预设到同一族，链路总览页印组合名",
+    "resolutions": [
+      {
+        "key": "home.trip.manage",
+        "preset": {
+          "mode": "pack"
+        }
+      },
+      {
+        "key": "home.trip.manage",
+        "preset": {
+          "mode": "return"
+        }
+      }
+    ]
+  }
+}
