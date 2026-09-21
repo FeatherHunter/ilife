@@ -134,7 +134,7 @@ export function renderFamilyPage(env: Envelope): string {
   const head = '<div class="fam-head"><span class="fam-name" data-family="idle">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查闲置</span></div>';
   const hero = '<div class="st st-hero"><span class="st-wake">查闲置</span>'
-    + '<p class="st-lead">共' + items.length + '件超过所选天数未使用，按闲置时长排序，勾选后确认处理</p></div>';
+    + '<p class="st-lead">共' + items.length + '件超过所选天数未使用，勾选后确认处理</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span><small>超过所选天数未使用</small></div>'
     + '<div class="st-card"><b>闲置标准</b><span>所选天数</span><small>下单时指定，默认90天</small></div></div>';

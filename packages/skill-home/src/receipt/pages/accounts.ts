@@ -115,11 +115,11 @@ function listGroups(env: Envelope): string {
     else groups.set(g, [r]);
   }
   const order = ['购物', '银行', '社交', '其他'];
-  const parts: string[] = ['<div><p>共' + rows.length + '个账号，按类型分组展示</p>'];
+  const parts: string[] = ['<div>'];
   for (const g of order) {
     const list = groups.get(g);
     if (!list || !list.length) continue;
-    parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
+    parts.push('<h3>' + escapeHtml(g) + '（共' + list.length + '个）</h3>');
     parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
@@ -128,7 +128,7 @@ function listGroups(env: Envelope): string {
   const rest = [...groups.keys()].filter((k) => !order.includes(k));
   for (const g of rest) {
     const list = groups.get(g) as AccountRow[];
-    parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
+    parts.push('<h3>' + escapeHtml(g) + '（共' + list.length + '个）</h3>');
     parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')

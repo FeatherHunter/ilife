@@ -124,7 +124,7 @@ export function renderFamilyPage(env: Envelope): string {
     const pre = x.name + '放在';
     if (!r.startsWith(pre)) return r;
     const rest = r.slice(pre.length);
-    const loc = x.location || '';
+    const loc = (x.location || '').replace(/×\d+(\[[^\]]*\])?$/, '');
     const tail = loc !== '' && rest.startsWith(loc) ? rest.slice(loc.length) : rest;
     return tail.trim();
   };
@@ -144,7 +144,7 @@ export function renderFamilyPage(env: Envelope): string {
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
-      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location) : '')
+      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location.replace(/×\d+(\[[^\]]*\])?$/, '')) : '')
       + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + '</td></tr></table>'
       + '</div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'

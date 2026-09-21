@@ -133,10 +133,10 @@ export function renderFamilyPage(env: Envelope): string {
   const head = '<div class="fam-head"><span class="fam-name" data-family="overview">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">统物品</span></div>';
   const hero = '<div class="st st-hero"><span class="st-wake">统物品</span>'
-    + '<p class="st-lead">家底总览：共' + n('items') + '件物品，' + n('categories') + '个分类，'
+    + '<p class="st-lead">家底一览：逐维明细见下方分布卡。共' + n('items') + '件物品，' + n('categories') + '个分类，'
     + n('locations') + '个位置点，' + n('tags') + '个标签</p></div>';
   const cards = '<div class="st st-cards">'
-    + '<div class="st-card"><b>物品件数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
+    + '<div class="st-card"><b>物品条数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
     + '<div class="st-card"><b>物品总件数</b><span>' + n('quantity') + '</span><small>按数量合计</small></div>'
     + '<div class="st-card"><b>位置点</b><span>' + n('locations') + '</span><small>有东西放着的位置</small></div>'
     + '<div class="st-card"><b>标签数</b><span>' + n('tags') + '</span><small>不同标签个数</small></div>'

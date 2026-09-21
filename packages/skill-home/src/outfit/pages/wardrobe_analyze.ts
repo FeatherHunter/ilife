@@ -122,7 +122,7 @@ export function renderFamilyPage(env: Envelope): string {
   else {
     const max = Math.max(1, ...dist.map((d) => d.count));
     distHtml += dist.map((d) => '<div class="of-bar"><div class="of-row"><span>' + escapeHtml(d.label)
-      + '</span><span>' + escapeHtml(d.label + d.count + '件' + d.pct + '%') + '</span></div>'
+      + '</span><span>' + escapeHtml(d.count + '件' + d.pct + '%') + '</span></div>'
       + '<div class="of-track"><div class="of-fill" style="width:' + Math.round((d.count * 100) / max) + '%"></div></div></div>').join('');
   }
   distHtml += '</div>';

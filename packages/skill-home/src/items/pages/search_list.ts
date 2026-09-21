@@ -64,7 +64,7 @@ const PAGE_CSS = '<style>'
   + '.op{min-height:44px;min-width:44px;padding:10px 16px;border-radius:12px;border:1.5px solid #0a63ce;background:#0a63ce;color:#fff;font-size:15px;margin:4px 6px 4px 0}'
   + '.op.alt{background:#fff;color:#0a63ce}'
   + '.note{color:#666;font-size:13px}'
-  + '.greet{font-size:15px;color:#333}'
+  + '.greet{font-size:15px;color:#333}@media(max-width:480px){.kv th{white-space:normal}}'
   + '.find{min-height:44px;width:100%;padding:10px 12px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:15px;box-sizing:border-box}'
   + '</style>';
 
@@ -111,7 +111,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<script>function filterLocal(kw){var t=document.getElementById("rows");if(!t)return;kw=String(kw||"").toLowerCase();var rs=t.getElementsByTagName("tr");for(var i=1;i<rs.length;i++){rs[i].style.display=rs[i].textContent.toLowerCase().indexOf(kw)>=0?"":"none";}}</script>'
     + '<p class="greet">查物品结果都在下面这张表里，框里再敲字可以接着筛，没有命中会指去录入。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>摘要</h2><div class="wrap-x"><table class="kv">'
-    + '<tr><th>查询词</th><td>按本次命令条件</td></tr>'
+    + '<tr><th>查询词</th><td>—</td></tr>'
     + '<tr><th>摘要指标</th><td>共 ' + cards.length + ' 件</td></tr>'
     + '</table></div>'
     + '<p><input class="find" placeholder="本地筛选，敲字过滤本页" oninput="filterLocal(this.value)"></p></section>'
