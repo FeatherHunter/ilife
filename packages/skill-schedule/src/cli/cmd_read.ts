@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 作息管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
-// stdout 纯净：成功只打 envelope JSON 一行。
+// stdout 纯净：成功只打 envelope JSON 一行（**缺省即落盘**：给 `delivery{mode,path,bytes}`，#843）。
 import type { Envelope } from 'base-link-core';
 import { REGISTRY } from './registry.js';
 import type { CommandSpec, ViewOut, WriteOut } from '../shared/commandSpec.js';
@@ -18,7 +18,10 @@ import {
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { deliverHtml, type HtmlDelivery } from '../help/output.js';
+// #843 · 交付面：落盘唯一那条链（`delivery/output.ts`）＋ 文件名主体一处定义（`delivery/naming.ts`）。
+import { deliverHtml, pageStemFor, type HtmlDelivery } from '../delivery/index.js';
+import { resolveHelpDir } from '../help/helpPaths.js';
+import { resolveHtmlDir } from '../fetch/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -49,6 +52,7 @@ function runWithDb(spec: CommandSpec, params: Record<string, unknown>): ViewOut 
 function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
   const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
   for (let i = 1; i < a.length; i++) {
+    // `--html <路径>`＝显式落点（逐字覆盖写）；不给它＝落通式名的缺省产物（#843）。
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
     else if (a[i] === '--timeout' && i + 1 < a.length) {
@@ -62,7 +66,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：schedule-cmd-read <schedule.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
+  if (!o.key) fail(2, '用法：schedule-cmd-read <schedule.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]（不给 --html 即落缺省产物：产物根目录下按通式命名）');
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
@@ -105,24 +109,33 @@ async function main() {
     env = buildScheduleEnvelope(key, r.data);
     exitCode = 'exitCode' in r ? r.exitCode ?? 0 : 0;
     const built = env;
-    // 既有语义（不破）：`--html <路径>` 直写该路径，内容＝本包 envelope 片段（模板填充后）。
+    // 页面正文＝本包 envelope 片段（模板填充后）：`--html <路径>` 与「缺省落盘」**同一份正文**，
+    // 差别只在落点（逐字 vs 通式）——同一件产物，不因落点不同换形状（#843）。
     const sectionHtml = (): string => {
       const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
       assertHtmlSize(html);
       return html;
     };
     const landing = 'landing' in r ? r.landing : undefined;
-    if (landing !== undefined) {
-      // 本键自带整页产物（缺省 HELP 全壳页）：落盘走统一管线（独占 ＋ 同名递补）。
-      const html = r.html;
-      assertHtmlSize(html);
-      delivery = deliverHtml({
-        explicit: o.html, targetDir: landing.targetDir, stem: landing.stem, html, reuseMs: landing.reuseMs,
-      });
-      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
-    } else if (o.html !== undefined) {
-      delivery = deliverHtml({ explicit: o.html, html: sectionHtml() });
-      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+    // **缺省即落盘**（#843）：每个键都落一份 HTML 并回 `delivery.path` 绝对路径。
+    //  - 内容＝该键自身的产物：HELP 全壳页（`r.html`，处理函数已过体积门）／其余键的模板页（`sectionHtml()`）。
+    //  - 落点分家：页面落**产物根** `<库目录>/<html.dir>`；HELP 自带 `landing`（落根下的 `html.helpDir` 一支）。
+    //  - 名字一处定义：页面主体＝`pageStemFor(spec)`（技能名 ＋ 命令标题），HELP 主体＝`helpFileStem()`。
+    //  - `--html <路径>`＝用户逐字指定的落点，优先级最高（逐字覆盖写、不带时间戳、不递补）——
+    //    它也是**唯一**能让「按定义不落盘」的键（HELP 现找 `q`）落盘的路子（#204 ⑤ 锁着）。
+    const delivers = ('delivery' in r ? r.delivery : undefined) !== false || o.html !== undefined;
+    const receipt = delivers
+      ? deliverHtml({
+        explicit: o.html,
+        html: landing !== undefined ? r.html : sectionHtml(),
+        targetDir: landing !== undefined ? landing.targetDir : resolveHtmlDir(),
+        stem: landing !== undefined ? landing.stem : pageStemFor(spec),
+        ...(landing === undefined ? {} : { reuseMs: landing.reuseMs }),
+      })
+      : undefined;
+    if (receipt !== undefined) {
+      delivery = receipt;
+      note('HTML 已写：' + receipt.path + '（' + receipt.bytes + ' 字节 utf8）');
     }
     clearTimeout(timer);
   } catch (e) {

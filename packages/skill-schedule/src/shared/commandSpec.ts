@@ -30,6 +30,10 @@ export interface ViewOut {
   notes?: string[];
   /** 缺省落点意图（仅 `schedule.help.lookup` 有）：出口凭它走统一落盘管线。 */
   landing?: { targetDir: string; stem: string; reuseMs?: number };
+  /** **不落盘**的显式表态（#843）：缺省行为是「**缺省即落盘**」（出口落一份 HTML 并回 `delivery.path`）；
+   *  这一支是「这一趟按定义就没有产物」（今天只有 HELP 的 `q` 现找：只回命中条目，不落盘）。
+   *  缺省值不写＝落盘，故只有不落盘的那一支表态。 */
+  delivery?: false;
 }
 
 /** 写命令的产物：写库回执 ＋ 整页 HTML。

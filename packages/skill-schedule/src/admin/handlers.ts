@@ -11,6 +11,7 @@ import { resolveHelpDir } from '../help/helpPaths.js';
 import { helpFileStem, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
 import { HELP_GROUPS } from '../help/scenes/help-assets.js';
 import { assertHtmlSize, buildHelpItems } from '../render/index.js';
+import type { ViewOut } from '../shared/commandSpec.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 
 const HELP_MODE_FILE = 'file' as const;
@@ -44,14 +45,14 @@ function buildHelpIndex() {
   };
 }
 
-export function lookupHelp(params: Record<string, unknown>) {
-  const dbDir = resolveDbDir();
+export function lookupHelp(params: Record<string, unknown>): ViewOut {
   const now = new Date();
   const q = params.q === undefined ? undefined : String(params.q);
   if (q !== undefined) {
-    // 现找：只回命中；落盘只有用户显式给 `--html <路径>` 才发生（出口那支）。
+    // 现找：只回命中，**按定义不落盘**（#843：`delivery:false` 显式表态，别与「忘了给 landing」混同）；
+    // 要落盘只有用户显式给 `--html <路径>`（出口那支吃 `explicit`）。
     const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
-    return { data: { ...buildHelpItems(all, q), mode: 'lookup', query: q }, html: '' };
+    return { data: { ...buildHelpItems(all, q), mode: 'lookup', query: q }, html: '', delivery: false };
   }
   // #245：HELP 产物吃复用窗口（缺省一天内只留一份，`reuseHours` 可改）。
   const reuseMs = helpWindowOrFail(params);
@@ -60,6 +61,6 @@ export function lookupHelp(params: Record<string, unknown>) {
   return {
     data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
     html,
-    landing: { targetDir: resolveHelpDir(dbDir), stem: helpFileStem(), reuseMs },
+    landing: { targetDir: resolveHelpDir(), stem: helpFileStem(), reuseMs },
   };
 }

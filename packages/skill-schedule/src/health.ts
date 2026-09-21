@@ -482,7 +482,8 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     }
   }
 
-  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
+  // ④ 产物**根**目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
+  // #843 起产品分两支：页面落这个根下，HELP 落根下的 `html.helpDir` 子目录（面板那一行显示的是子目录）。
   const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
   const htmlDir = htmlDirOf(dataDir, htmlDirValue);
   const htmlVerdict = dirVerdict(htmlDir);

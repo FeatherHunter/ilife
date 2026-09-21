@@ -10,7 +10,8 @@
  *
  * 默认值逐项等于改造前的代码常量（对照读数见 `docs/skills/skill-schedule/t695-证据.md`）：
  *   · `db.name`＝`schedule_data.db`（原 `src/fetch/paths.ts` 的 `DB_FILENAME`）；
- *   · `html.dir`＝`schedule_html/help`（原 `src/help/helpPaths.ts` 的 `HELP_HTML_DIR_PARTS` 两段——
+ *   · `html.dir`＝`schedule_html`／`html.helpDir`＝`help`（两段合起来＝原 `src/help/helpPaths.ts` 的
+ *     `HELP_HTML_DIR_PARTS` 那两级 `<库目录>/schedule_html/help`——产物根与 HELP 子目录分家见下；
  *     配置形状是字符串、段间用 `/` 或 `\` 分隔，因为受限子集不收数组；见 `base-link-core/README.md` §支持范围）。
  * #764 起 `files.help`／`lark.cliPath` 出表（#761 定稿：文件名回代码常量 `作息管家_HELP`；
  * 飞书 CLI 路径由新增的「飞书 CLI」状态行替代，它不是配置项），故本表现是 3 键。
@@ -25,10 +26,15 @@ import type { ConfigRecord } from 'base-link-core';
 /** 配置文件主体名：`<配置目录>/schedule.yaml`。 */
 export const SCHEDULE_CONFIG_STEM = 'schedule' as const;
 
-/** 作息管家那份配置表：键即设置页的行，一层嵌套（子集支持范围见 base-link-core README）。 */
+/** 作息管家那份配置表：键即设置页的行，一层嵌套（子集支持范围见 base-link-core README）。
+ *
+ *  **产物落点分家（#843）**：`html.dir`＝产物**根目录**（页面落它下面），`html.helpDir`＝该根下
+ *  HELP 那一支的子目录名。两件产物各有各的落点，一个键不当两个用；名字由来——
+ *  `html.dir` 段串是「库目录下的哪几个子目录」的算料（不绝对化，见 `writableDefaults()`），
+ *  `html.helpDir` 是**单段**子目录名（算料是段串，单段也是段串）。 */
 export const SCHEDULE_CONFIG_DEFAULTS = {
   db: { dir: '', name: 'schedule_data.db' },
-  html: { dir: 'schedule_html/help' },
+  html: { dir: 'schedule_html', helpDir: 'help' },
 };
 
 /** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键的叶子全路径。命中的键跳过校验、

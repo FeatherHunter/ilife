@@ -15,9 +15,15 @@ import { SCHEDULE_CONFIG_DEFAULTS, loadScheduleConfig } from '../config.js';
 /** 库文件名的默认值：＝配置项 `db.name` 的默认值（同一件事只有一个定义地，本常量是它的**具名引用**，不是第二份）。 */
 export const DEFAULT_DB_FILENAME = SCHEDULE_CONFIG_DEFAULTS.db.name;
 
-/** 产物目录名的默认值：＝配置项 `html.dir` 的默认值（同上，具名引用；值形状是段串，**不绝对化**——
-// 绝对化＝改语义（段串 join 会把盘符当普通段拼进去），且会让「改数据目录」不再带动产物目录，见 #761 定稿第 5 条）。 */
-export const DEFAULT_HELP_DIR = SCHEDULE_CONFIG_DEFAULTS.html.dir;
+/** 产物**根目录**名的默认值：＝配置项 `html.dir` 的默认值（同上，具名引用；值形状是段串，**不绝对化**——
+// 绝对化＝改语义（段串 join 会把盘符当普通段拼进去），且会让「改数据目录」不再带动产物目录，见 #761 定稿第 5 条）。
+// **#843 起它是产物根**（页面落它下面），不再是 HELP 专属目录。 */
+export const DEFAULT_HTML_DIR = SCHEDULE_CONFIG_DEFAULTS.html.dir;
+
+/** HELP 子目录名的默认值：＝配置项 `html.helpDir` 的默认值（同上，具名引用）。
+// **#843 起 HELP 是产物根下的一支**：`<产物根>/<html.helpDir>`；老默认落点
+// `<库目录>/schedule_html/help` 逐字不变（根 `schedule_html` ＋ 子 `help`）。 */
+export const DEFAULT_HELP_DIR = SCHEDULE_CONFIG_DEFAULTS.html.helpDir;
 
 /** 库目录算式：`db.dir` 非空即用它，空串＝默认数据目录（默认 `~/.ilife/data/`）。
  *  这是「面板上唯一可改的落点」，写盘时那一格写成算出来的绝对路径（见 `src/config.ts`）。 */
@@ -47,14 +53,27 @@ function dirSegments(value: string): string[] {
   return value.split(/[\\/]+/).filter((seg) => seg !== '');
 }
 
-/** 产物目录算式：`<库目录>/<html.dir 值>`（空串＝默认子目录名）——设置页那一行与体检都调它。 */
+/** 产物**根目录**算式：`<库目录>/<html.dir 值>`（空串＝默认子目录名）——设置页那一行与体检都调它。
+ *  **#843 起页面就落它下面**（不再往 `help/` 里塞）。 */
 export function htmlDirOf(dbDir: string, configured: string): string {
-  return join(dbDir, ...dirSegments(configured !== '' ? configured : DEFAULT_HELP_DIR));
+  return join(dbDir, ...dirSegments(configured !== '' ? configured : DEFAULT_HTML_DIR));
 }
 
-/** 产物目录：配置 `html.dir` 的解析结果（算式见 `htmlDirOf`）。只算路径，落盘归交付那条链。 */
+/** 产物根目录：配置 `html.dir` 的解析结果（算式见 `htmlDirOf`）。只算路径，落盘归交付那条链。 */
 export function resolveHtmlDir(dbDir = resolveDbDir()): string {
   return htmlDirOf(dbDir, loadScheduleConfig().values.html.dir);
+}
+
+/** HELP 落点算式：**产物根 ＋ `html.helpDir` 一段**（#843 的落点分家的唯一算式）。
+ *  两段各有各的配置来源，一处 join——调用方不各拼一份。 */
+export function helpDirOf(pagesRoot: string, configured: string): string {
+  return join(pagesRoot, configured !== '' ? configured : DEFAULT_HELP_DIR);
+}
+
+/** HELP 产物目录：配置 `html.helpDir` 的解析结果（算式见 `helpDirOf`）——设置页那个只读格调的正是它。
+ *  零 IO、不建目录。 */
+export function resolveHelpDirOf(): string {
+  return helpDirOf(resolveHtmlDir(), loadScheduleConfig().values.html.helpDir);
 }
 
 export function resolveDbPath(filename = dbFilename(), dir = resolveDbDir()): string {
@@ -73,13 +92,15 @@ export interface ScheduleResolvedPaths {
   readonly htmlDir: string;
 }
 
-/** 算那一组解析后的绝对路径。**只算路径、不建目录、不写盘**（设置页与体检都能随时调）。 */
+/** 算那一组解析后的绝对路径。**只算路径、不建目录、不写盘**（设置页与体检都能随时调）。
+ *  `htmlDir` 这一格是 **HELP 产物目录**这一行的显示值（#843 起＝产物根下的 `html.helpDir` 一支）：
+ *  行表（`packages/plugin-schedule-ilife/src/settings.ts`）与格名都不动，值随落点算法一起走。 */
 export function resolvedSchedulePaths(): ScheduleResolvedPaths {
   const cfg = loadScheduleConfig();
   const dbDir = resolveDbDir();
   return {
     dbDir,
     dbFile: dbFileOf(dbDir, dbFilename()),
-    htmlDir: htmlDirOf(dbDir, cfg.values.html.dir),
+    htmlDir: helpDirOf(htmlDirOf(dbDir, cfg.values.html.dir), cfg.values.html.helpDir),
   };
 }
