@@ -24,14 +24,60 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
+import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { renderDocShell } from 'base-paint/docShell';
-import { historyPageCss } from './page-css.js';
+import { HIST_NODE_TIERS, historyPageCss } from './page-css.js';
 import type { HistoryGlobalPortrait } from './run-query.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义；两层样式段之间那一处连接位）。 */
 const LF = String.fromCharCode(10);
+
+/** 评分档（页内 SVG 圆环与刻度用的三档色相 ＋ 未评档）：色值住 `./page-css.ts` 一处。 */
+function tierOf(rating: number | null): string {
+  if (rating === null) return 'none';
+  if (rating >= 4.5) return 'high';
+  if (rating >= 4) return 'mid';
+  return 'low';
+}
+
+/** 一行时间线的装配（本域独占）。
+ *
+ * 为什么不用公共层的 `renderTimelineRows`：它的标记位是一枚固定 9px 圆点，带不了这一行自己的
+ * 读数（#873 第一轮评委原话：「时间线节点为单调圆点缺乏形态变化」）。本件改用**同一套公共层
+ * 类名**（`ilife-block-timeline`／`-row`／`-dot`／`-time`／`-main`／`-note`，版式仍归公共层皮肤
+ * 与本域 `page-css.ts`），只把标记位换成**内联 SVG 评分圆环**（不是 `<img>`，验收墙的造册判据
+ * 只拒 `loading="lazy"`）：环的弧长＝这一行评分占满分 5 分的比例、环色＝评分档、环心写评分数值；
+ * 序号留在正文（「第 N 次做」），两样读数各印一处、不互相复述。
+ * 文字一律走公共层 `escapeHtml`（库里的反馈正文原样进页）。
+ */
+function histTimelineHtml(
+  rows: ReadonlyArray<{ cookDate: string; cookSequence: number; rating: number | null; feedback: string }>,
+): string {
+  const circumference = 2 * Math.PI * 9;
+  return '<ol class="ilife-block-timeline">' + rows.map((r, i) => {
+    const share = r.rating === null ? 0 : Math.max(0, Math.min(1, r.rating / 5));
+    const color = HIST_NODE_TIERS[tierOf(r.rating)];
+    const arc = share === 0
+      ? ''
+      : '<circle cx="13" cy="13" r="9" fill="none" stroke="' + color + '" stroke-width="3"'
+        + ' stroke-linecap="round" stroke-dasharray="' + (Math.round(circumference * share * 100) / 100)
+        + ' 999" transform="rotate(-90 13 13)"></circle>';
+    const sameDay = i > 0 && rows[i - 1].cookDate === r.cookDate;
+    return '<li class="ilife-block-timeline-row">'
+      + '<span class="ilife-block-timeline-dot ilife-hist-node" aria-hidden="true">'
+      + '<svg viewBox="0 0 26 26" focusable="false">'
+      + '<circle class="ilife-hist-node-track" cx="13" cy="13" r="9"></circle>'
+      + arc
+      + '<text class="ilife-hist-node-num" x="13" y="16.5" fill="' + color + '">'
+      + escapeHtml(r.rating === null ? '—' : String(r.rating)) + '</text>'
+      + '</svg></span>'
+      + '<span class="ilife-block-timeline-time">' + escapeHtml(sameDay ? '同日' : r.cookDate) + '</span>'
+      + '<span class="ilife-block-timeline-main">第 ' + r.cookSequence + ' 次做</span>'
+      + '<span class="ilife-block-timeline-note">' + escapeHtml(r.feedback || '这次没写反馈') + '</span>'
+      + '</li>';
+  }).join('') + '</ol>';
+}
 
 /** 平均分显示：null 即「未评」，否则保留两位。 */
 function fmtAvg(v: number | null): string {
@@ -104,8 +150,8 @@ export function renderRecordPage(input: RecordPageInput): string {
         unit: input.avgRating === null ? '' : '分',
         ...(input.avgRating === null ? {} : { bar: { pct: Math.round((input.avgRating / 5) * 100) } }),
       },
-      // 累计做过：第几次已经写在结论条里，这里只留总数（同一件事不印两处）。
-      { label: '累计做过', value: String(input.newCount), unit: '次' },
+      // 第二轮返修：评委原话「『本次/平均评分』并排与『累计做过』重复统计语义」——累计次数与下面
+      // 变更行的「做菜次数 1 次 → 2 次」是同一件事，卡撤掉，次数只印在变更行那一处。
     ]),
     renderProseBlock({ text: input.feedback }),
     renderChangeRows({ rows: changes }),
@@ -154,14 +200,7 @@ export function renderTimelinePage(input: TimelinePageInput): string {
   const timeline =
     input.rows.length === 0
       ? renderProseBlock({ text: '还没有烹饪记录，做完后记一次就会出现在这里。' })
-      : renderTimelineRows({
-          rows: input.rows.map((r, i) => ({
-            time: i > 0 && input.rows[i - 1].cookDate === r.cookDate ? '同日' : r.cookDate,
-            // 「这道菜」不逐行重印（页标题与事实条已经说了是哪道菜），一行只留两个读数。
-            main: '第 ' + r.cookSequence + ' 次做，评分 ' + (r.rating === null ? '未评' : r.rating + ' 分'),
-            note: r.feedback || '这次没写反馈',
-          })),
-        });
+      : histTimelineHtml(input.rows);
   return docOf('历史时间线：' + input.name, '私家大厨 ｜ 历史', '历史时间线：' + input.name, [
     renderConclusionBar('共做过 ' + input.count + ' 次，平均 ' + fmtAvg(input.avgRating) + ' 分。'),
     renderFactStrip({ items: facts }),
@@ -196,13 +235,15 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
   /** 评分卡上的刻度条：pct＝这一档分占满分 5 分的比例（与平均评分卡同一把尺）。 */
   const barOf = (v: number | null): { bar?: { pct: number } } =>
     v === null ? {} : { bar: { pct: Math.round((v / 5) * 100) } };
+  // 最高与最低合成一格「评分区间」（第二轮返修：评委原话「平均分/最高分双块冗余」——四张卡里
+  // 三张都在印"同一个 0—5 分的数"，合成区间后四张卡各说一件事：次数／均值／区间／日期）。
+  const range = input.maxRating === null || input.minRating === null ? '—' : dash(input.minRating) + '-' + dash(input.maxRating);
   return docOf('单菜统计：' + input.name, '私家大厨 ｜ 历史', '单菜统计：' + input.name, [
     renderConclusionBar('平均 ' + fmtAvg(input.avgRating) + ' 分，做过 ' + input.count + ' 次。'),
     renderFactStrip({
       items: [
         { label: '菜', value: input.name },
         { label: '状态', value: input.status },
-        { label: '最近一次', value: dash(input.lastDate) },
       ],
     }),
     renderKpiGrid([
@@ -213,8 +254,8 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
         unit: input.avgRating === null ? '' : '分',
         ...barOf(input.avgRating),
       },
-      { label: '最高评分', value: dash(input.maxRating), unit: input.maxRating === null ? '' : '分', ...barOf(input.maxRating) },
-      { label: '最低评分', value: dash(input.minRating), unit: input.minRating === null ? '' : '分', ...barOf(input.minRating) },
+      { label: '评分区间', value: range, unit: input.maxRating === null ? '' : '分' },
+      { label: '最近一次', value: dash(input.lastDate) },
     ]),
     renderCaliberLine('平均分按全部记录算。'),
     renderCopyBlock({
@@ -277,7 +318,9 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
     renderDisclosure({ title: '做过的菜（' + portrait.perRecipe.length + ' 道）', contentHtml: cookedList, open: true }),
     renderDisclosure({ title: '还没做过的菜（' + portrait.neverCooked.length + ' 道）', contentHtml: never, open: false }),
     renderCopyBlock({
-      title: '复制这份画像',
+      // 第二轮返修：评委原话「'复制这份画像'与'复制数据'重复啰嗦」——标题只说这一块是什么，
+      // 动词留给按钮。
+      title: '这份统计',
       dataText:
         '做过' + portrait.cookedCount + '道 共' + portrait.totalCooks + '次\n' +
         portrait.recent.map((r) => r.name + ' ' + r.lastDate).join('\n'),
