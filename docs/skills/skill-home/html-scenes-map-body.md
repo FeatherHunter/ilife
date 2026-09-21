@@ -94,6 +94,7 @@
 
 - [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) — 产出 `docs/skills/skill-home/pages-ledger.md`（**49 行页族表**；老 yaml 引用的 49 个模板**全部存在**，49/49）：页面类型 混合 27／查看 11／采集＋回执 6／选择＋回执 3／向导 2；按域页族 items 19、space 4、outfit 5、stats 4、express 4、receipt 4、family 2、setup 4（＋link 3，不做）。**三条改地图的实测**：①本图实做 **8 个域／70 场景／46 页族**，不是 9 个域（`link` 已裁不做）②老实现产物命名按模板 **1:1**（`scripts/render/__init__.py:130-147`）——`物品/receipt.html` 承担 4 条场景、`物品/add_form.html` 承担 4 条，照它落盘**会互相覆盖** ⇒ 毕业成 **#836** 并阻塞票 4／票 7 ③「开始使用四模板无调用点」订正为「`scripts/` 无调用点；`first_use_wizard.html` 全库唯一调用点在老测试 `tests/test_开始使用.py:622`，另 3 张任何地方都没有」。其余实测（票据凭证写类 11 条只打 JSON、家庭协作唯一把 HTML 做成 opt-in、18 个 legacy 平铺件里 17 个仍挂 `TEMPLATE_TO_COMMAND_CN`、`SM6-4` 无入口）全档在册子 §三。
 - [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) — 10 条各出一份真产物，验收全绿（测试 14/14、双墙缺失 0、分隔符与结构块与双端 10/10），对账见 scene-items-1.md。
+- [穿搭出行域 5 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/810) — 拼贴卡／构成闲置／换季／出行清单／逐日计划 5 真页交付，票面 4 门全绿（测试 8/8、双墙缺失 0、分隔符 5/5、结构块 5/5）＋双端量测 5/5，对账见 scene-outfit.md；骨架 --check 漂移 10 处（本票写集内，收口统一收敛）
 
 ## Not yet specified
 
