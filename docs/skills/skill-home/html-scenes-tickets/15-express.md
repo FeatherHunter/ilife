@@ -30,3 +30,11 @@
 ## 遗留出口
 
 本域发现的老实现缺口与判据例外当场补票或回写票 2。
+
+## 写集（并发用，机器验的那一份）
+
+本票只写自己那几族：`packages/skill-home/templates/express/<族>.html` 与 `packages/skill-home/src/express/pages/<族>.ts`（族 = `list`、`missing`、`express`、`stock`），外加 `packages/skill-home/test/express.test.mjs`、`docs/skills/skill-home/scene-express.md`、`.scratch/812/`。
+
+**不碰**：`src/render/**` 共用件、`src/cli/**`、`package.json`、`SKILL.md`、派生件、别人的域目录与页族（要改就回写票 3 或票 2）。
+
+跑锁一律带 `--max-wait-ms 600000`（协议上限 10 分钟，不无限等）。

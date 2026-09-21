@@ -36,3 +36,11 @@
 ## 遗留出口
 
 脱敏判据若要提升为跨域共用件，回写票 6 并当场补票。
+
+## 写集（并发用，机器验的那一份）
+
+本票只写自己那几族：`packages/skill-home/templates/receipt/<族>.html` 与 `packages/skill-home/src/receipt/pages/<族>.ts`（族 = `certificates`、`accounts`），外加 `packages/skill-home/test/receipt-2.test.mjs`、`docs/skills/skill-home/scene-receipt-2.md`、`.scratch/814/`。
+
+**不碰**：`src/render/**` 共用件、`src/cli/**`、`package.json`、`SKILL.md`、派生件、别人的域目录与页族（要改就回写票 3 或票 2）。
+
+跑锁一律带 `--max-wait-ms 600000`（协议上限 10 分钟，不无限等）。

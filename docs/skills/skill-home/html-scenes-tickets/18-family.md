@@ -5,7 +5,7 @@
 ## 目标
 
 ① 两张真页面（对齐下表老页面），各出一份产物；本域手机墙与桌面墙各一张（`--check` exit 0）；每格写下「这一页该确认什么」。
-② 把写侧接通：为借出／借入／归还／催还补上唤醒词路由（照老技能 `family_borrow.html` 的四个操作与 SKILL.md 的路由表），并补用例；**唤醒词表是 HELP 速查的唯一上游**，改它要同批重跑 HELP 构建链并让对账锁绿。
+② 借用页必须覆盖四个写操作（借出／借入／归还／催还）的**页面形态**；**唤醒词路由的补登记已移入票 3**（命令登记面归票 3，域票一律不碰路由表与派生件）。
 ③ 借用页要有**超期标记与催还文案**（老页面有），借出／借入分区不得压成一张通用列表。
 
 | 场景 | 唤醒词 | 老页面（信息结构对齐源） |
@@ -31,3 +31,11 @@
 ## 遗留出口
 
 若写侧唤醒词与老技能路由表的口径对不齐（老表 95 条 vs 新表 91 条），把差异写进本票并回写票 2。
+
+## 写集（并发用，机器验的那一份）
+
+本票只写自己那几族：`packages/skill-home/templates/family/<族>.html` 与 `packages/skill-home/src/family/pages/<族>.ts`（族 = `family_borrow`、`family_members`），外加 `packages/skill-home/test/family.test.mjs`、`docs/skills/skill-home/scene-family.md`、`.scratch/815/`。
+
+**不碰**：`src/render/**` 共用件、`src/cli/**`、`package.json`、`SKILL.md`、派生件、别人的域目录与页族（要改就回写票 3 或票 2）。
+
+跑锁一律带 `--max-wait-ms 600000`（协议上限 10 分钟，不无限等）。

@@ -6,11 +6,15 @@
 
 ## 进度：5%
 
-**口径**：分母＝**21 张子票**（画图本身不计入分子）。**1/21 关闭**——票 1（#798 册子，research）已关，并毕业出 **#836**（产物命名裁决：老规范按模板 1:1，会让 70 条场景互相覆盖）。
+**口径**：分母＝**20 张在役子票 ＋ 1 张退役**（画图本身不计入分子）。**1/21 关闭**——票 1（#798 册子，research）已关。
 
-**画图完成（2026-09-20）**：map **#797**，子票 **#798–#817** ＋ 后补 **#836**；原生子议题边 **21/21**、原生阻塞边逐张与票源一致、任务清单表 **21 行**，接线脚本自校验 **PASS**（含「本地正文文件 ＝ issue 正文」逐张校验、变异探针实测能变红）。
+**图已按第一性原理重推（v3）并经两席对抗式审查**：前两稿都被**打回**（P0 共 9 条），处置全档见 `scene-pages-graph-design.md` §五。要点四条：① **票 21（命名裁决）并入票 2**，#836 退役；② **票 8 由「样板票」改为「页面脚手架」**——把「照抄样板」这张卡住 11 张票的软拷贝门换成机器可复制的硬拷贝；③ **票 3 扩成「机器落地」**——照卡路里造通用分派口＋目录扫描生成器＋派生件入仓，**这台机器是「按域不相交」的前提**（审查实测：今天每张域票都得改五处共用件）；④ **域票写集缩小到页族文件**（`templates/<域>/<族>.html` ＋ `src/<域>/pages/<族>.ts`），派生件与共用位单写者归票 3。
 
-**frontier（无阻塞、未认领，先到先得）**：票 6（#803 判据件，task）／票 21（#836 命名裁决，grilling，**HITL：要你拍板**）。票 7（#804 生成器）与票 4（#801 落盘）已被 #836 阻塞。
+**接线脚本四道机器门全绿**：① 无环（传递闭包）② 写集干涉（无序票之间写集不相交）③ frontier 非空 ④ 计数与表行数一致；另含边**双向收敛**（缺的补、多的删——旧版只加不删，改 `blockedBy` 会留下旧边、进而成环：审查已实算复现过 `4 → 21 → 9 → 8 → 4`）与票面／地图正文的逐字同步。
+
+**frontier（4 张，其中不依赖人 3 张）**：票 2（#799 契约冻结，grilling，**HITL：要你点头**）／票 5（#802 种子数据）／票 6（#803 判据件）／票 7（#804 生成器）。
+
+下一步：可立刻并行开工的是 **#802／#803／#804** 三张 AFK 票；**#799 契约**等你点头（它阻塞票 3 与全部 11 张域票，是全图唯一的人工门）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——推票面、收敛边、回写本文、跑四道门。
 
 下一步：等你裁 #836（三条命名规则候选，见票面）；同时可并行认领 #803（判据件）。改票面一律改 `html-scenes-tickets/<序>-<短名>.md` 再跑 `node docs/skills/skill-home/html-scenes-wire.mjs`——脚本会推票面、建缺的边、回写本表与本文、并自校验。
 
@@ -43,6 +47,8 @@
 - **本图产物索引**（新会话接手先看这里，全部在 `docs/skills/skill-home/`）：
   - 事实底（本次建图产出，入仓）：`html-scenes-gap-inventory.md`（73 场景覆盖矩阵／380 行）／`html-scenes-precedents.md`（链路页／墙／判据／卡路里骨架四类现成件清单／397 行）
   - 决策页（给人看的）：`html-scenes-decisions.html`（第 1 轮 11 问 ＋ 用户答复回流）
+  - 票图设计（第一性原理 ＋ 并发与死锁 ＋ 两席 P0 的逐条处置）：`scene-pages-graph-design.md`（v3）
+  - 两席对抗式审查原件：`review-graph-A.md`（死锁／并发／锁）／`review-graph-B.md`（第一性原理／干涉／过度工程）
   - 票面正文源：`html-scenes-tickets/<序>-<短名>.md`（改票面一律改文件再 `gh issue edit <n> --body-file`，别内联字符串）
   - 票源映射：`html-scenes-tickets.json`（票号 ↔ issue 号 ↔ 阻塞关系）
   - 接线脚本：`html-scenes-wire.mjs`（建 map＋子票、建原生子议题边与原生阻塞边、回写本表、自校验；重跑即对账）
@@ -55,26 +61,26 @@
 | 序 | 票 | 类型 | 被谁阻塞 |
 |---|---|---|---|
 | 1 | [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) | research | — |
-| 2 | [结构设计：按 9 域重排的形状定稿（必报五步第一、二步，报用户点头）](https://github.com/FeatherHunter/ilife/issues/799) | grilling | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
-| 3 | [结构重排落地：目录搬进 9 域＋派生链＋门禁＋既有命令回归](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) |
-| 4 | [链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 21](https://github.com/FeatherHunter/ilife/issues/836) |
+| 2 | [契约冻结：形状＋产物命名＋页族归属＋域内写集＋共用位所有权（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/799) | grilling | — |
+| 3 | [机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) |
+| 4 | [链路落盘与交付回执：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) |
 | 5 | [种子数据：仓内种子脚本＋测试库（70 场景所需）](https://github.com/FeatherHunter/ilife/issues/802) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
 | 6 | [判据件：样式与文案机审接到居家＋接进包内门](https://github.com/FeatherHunter/ilife/issues/803) | task | — |
-| 7 | [生成器：双端验收墙＋链路总览页](https://github.com/FeatherHunter/ilife/issues/804) | task | [票 21](https://github.com/FeatherHunter/ilife/issues/836) |
-| 8 | [样板：录物品端到端走通（形状先验，人裁过再铺开）](https://github.com/FeatherHunter/ilife/issues/805) | task | [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) |
-| 9 | [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 10 | [物品管理域（二）更新与标签分类 11 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/807) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 11 | [物品管理域（三）照片、盘点与历史 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/808) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 12 | [空间与位置域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/809) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 13 | [穿搭出行域 5 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/810) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 14 | [统计总览域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/811) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 15 | [快递购物域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/812) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 16 | [票据凭证域（一）购买记录与保修保养 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/813) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 17 | [票据凭证域（二）证件与账号 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/814) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 18 | [家庭协作域 2 条＋借用写侧唤醒词接通](https://github.com/FeatherHunter/ilife/issues/815) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 19 | [开始使用域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/816) | task | [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
-| 20 | [收口：双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审](https://github.com/FeatherHunter/ilife/issues/817) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/806) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/807) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/808) ＋ [票 12](https://github.com/FeatherHunter/ilife/issues/809) ＋ [票 13](https://github.com/FeatherHunter/ilife/issues/810) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/811) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/812) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/813) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/814) ＋ [票 18](https://github.com/FeatherHunter/ilife/issues/815) ＋ [票 19](https://github.com/FeatherHunter/ilife/issues/816) |
-| 21 | [决定：产物命名与落点怎么区分 70 条场景（老规范按模板 1:1，会互相覆盖）](https://github.com/FeatherHunter/ilife/issues/836) | grilling | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
+| 7 | [生成器：双端验收墙＋链路总览页（清单驱动，文件名从清单读）](https://github.com/FeatherHunter/ilife/issues/804) | task | — |
+| 8 | [页面脚手架：跑生成器产出同形页骨架（替代照抄样板）](https://github.com/FeatherHunter/ilife/issues/805) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) ＋ [票 3](https://github.com/FeatherHunter/ilife/issues/800) |
+| 9 | [物品管理域（一）录入与查找 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/806) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 10 | [物品管理域（二）更新与标签分类 11 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/807) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 11 | [物品管理域（三）照片、盘点与历史 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/808) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 12 | [空间与位置域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/809) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 13 | [穿搭出行域 5 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/810) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 14 | [统计总览域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/811) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 15 | [快递购物域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/812) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 16 | [票据凭证域（一）购买记录与保修保养 10 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/813) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 17 | [票据凭证域（二）证件与账号 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/814) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 18 | [家庭协作域 2 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/815) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 19 | [开始使用域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/816) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
+| 20 | [收口：端到端＋双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审](https://github.com/FeatherHunter/ilife/issues/817) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/806) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/807) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/808) ＋ [票 12](https://github.com/FeatherHunter/ilife/issues/809) ＋ [票 13](https://github.com/FeatherHunter/ilife/issues/810) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/811) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/812) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/813) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/814) ＋ [票 18](https://github.com/FeatherHunter/ilife/issues/815) ＋ [票 19](https://github.com/FeatherHunter/ilife/issues/816) |
+| 21 | ~~（已退役）决定：产物命名与落点怎么区分 70 条场景~~（已退役） | grilling | — |
 <!-- PLAN-TABLE:END -->
 
 ## Decisions so far
@@ -93,6 +99,7 @@
 - **20 条兼容唤醒词在链路总览页里的呈现**（连同命令同页的附表，还是各自一行）——等票 7 与票 2 的形状定完。
 - **域票之间的共用件边界**（哪些装配件该升共用位；结构标准要求「共用位从第二个用法里长出来」）——等票 2 定骨架、样板票跑通后看实情。
 - **单张域票会不会一次窗口收不完**（items 域 29 条已切三张；receipt 18 条已切两张）——执行中按「一次做完」再切。
+- **脚手架能覆盖到哪一层**：册子表一里「混合」类有 27 族，票 8 跑通后回看——覆盖不到的族，要么补进生成器，要么在票 2 契约里写明「由人裁形状」。
 
 ## Out of scope
 
@@ -102,6 +109,7 @@
 - **发版装机**（抬版本 → npm 发布 → 装进本机 profile → 在 DSH GUI 里真说唤醒词）：另立票；本图判据以「仓内真跑 ＋ 落盘产物 ＋ 墙验收」为准（用户 Q7 裁决）。
 - **老技能本体**（`D:\2Study\StudyNotes\SKILLS\居家管家`）：只读参考，一行不改；它的 18 个 v2.0 前 legacy 平铺模板与 legacy 分支不移植。
 - **其余 6 个技能**（卡路里／记账／备忘／作息／大厨／总管）：本图只做居家管家。
+- **`tooling/run-locked.mjs` 的默认无限等**（`--max-wait-ms 0`，`:126`）：对抗式审查实测现场最长等待 **23.2 分钟**、单次持锁 **142 秒**，与 `docs/subagent-concurrency-protocol.md`「最多 10 分钟，不无限等」相冲。本图只在自己的票面写死「一律带 `--max-wait-ms 600000`」；工具默认值属**公共工具线**，不在本图目的地内。
 - **`skill-home` 之外的新 UI 面**（爱生活设置页里那排页签下的技能设置页）：不归本图。
 
 ## 用户原话采访区（verbatim，一字未改；AI 执行先读这里）

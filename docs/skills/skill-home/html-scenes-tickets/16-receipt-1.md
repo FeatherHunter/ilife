@@ -36,3 +36,11 @@
 ## 遗留出口
 
 若写类页与查看类页被判为必须共用装配件，回写票 2 的页族归属表，不自行私改。
+
+## 写集（并发用，机器验的那一份）
+
+本票只写自己那几族：`packages/skill-home/templates/receipt/<族>.html` 与 `packages/skill-home/src/receipt/pages/<族>.ts`（族 = `purchase_records`、`warranty`），外加 `packages/skill-home/test/receipt-1.test.mjs`、`docs/skills/skill-home/scene-receipt-1.md`、`.scratch/813/`。
+
+**不碰**：`src/render/**` 共用件、`src/cli/**`、`package.json`、`SKILL.md`、派生件、别人的域目录与页族（要改就回写票 3 或票 2）。
+
+跑锁一律带 `--max-wait-ms 600000`（协议上限 10 分钟，不无限等）。

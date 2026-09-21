@@ -12,26 +12,42 @@
       "type": "research",
       "title": "册子：老技能 49 个页面模板 → 70 场景的信息结构清单",
       "body": "html-scenes-tickets/01-pages-ledger.md",
+      "scope": [
+        "docs/skills/skill-home/pages-ledger.md"
+      ],
       "blockedBy": [],
       "issue": 798
     },
     {
       "n": 2,
-      "key": "02-structure-design",
+      "key": "02-contract",
       "type": "grilling",
-      "title": "结构设计：按 9 域重排的形状定稿（必报五步第一、二步，报用户点头）",
+      "title": "契约冻结：形状＋产物命名＋页族归属＋域内写集＋共用位所有权（先报用户点头）",
       "body": "html-scenes-tickets/02-structure-design.md",
-      "blockedBy": [
-        1
+      "scope": [
+        "docs/skills/skill-home/scene-pages-contract.md"
       ],
+      "blockedBy": [],
       "issue": 799
     },
     {
       "n": 3,
-      "key": "03-structure-landing",
+      "key": "03-machine",
       "type": "task",
-      "title": "结构重排落地：目录搬进 9 域＋派生链＋门禁＋既有命令回归",
+      "title": "机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob",
       "body": "html-scenes-tickets/03-structure-landing.md",
+      "scope": [
+        "packages/skill-home/src/",
+        "packages/skill-home/templates/",
+        "packages/skill-home/scripts/gen-",
+        "packages/skill-home/package.json",
+        "packages/skill-home/SKILL.md",
+        "packages/skill-home/AGENTS.md",
+        "packages/skill-home/test/policy.test.mjs",
+        "packages/skill-home/test/render.test.mjs",
+        "packages/skill-home/test/skill.test.mjs",
+        "packages/skill-home/test/help-assets.test.mjs"
+      ],
       "blockedBy": [
         2
       ],
@@ -41,11 +57,15 @@
       "n": 4,
       "key": "04-html-delivery-chain",
       "type": "task",
-      "title": "链路落盘：数据与过程命令默认落 HTML＋回执给绝对路径",
+      "title": "链路落盘与交付回执：数据与过程命令默认落 HTML＋回执给绝对路径",
       "body": "html-scenes-tickets/04-html-delivery-chain.md",
+      "scope": [
+        "packages/skill-home/src/cli/output.ts",
+        "packages/skill-home/test/cli-html-delivery.test.mjs",
+        "docs/skills/skill-home/html-delivery-chain.md"
+      ],
       "blockedBy": [
-        3,
-        21
+        3
       ],
       "issue": 801
     },
@@ -55,6 +75,12 @@
       "type": "task",
       "title": "种子数据：仓内种子脚本＋测试库（70 场景所需）",
       "body": "html-scenes-tickets/05-seed-data.md",
+      "scope": [
+        "packages/skill-home/scripts/seed-scenes.mjs",
+        "packages/skill-home/scripts/lib/seed-",
+        ".scratch/seed/",
+        "docs/skills/skill-home/seed-scenes.md"
+      ],
       "blockedBy": [
         1
       ],
@@ -66,6 +92,11 @@
       "type": "task",
       "title": "判据件：样式与文案机审接到居家＋接进包内门",
       "body": "html-scenes-tickets/06-style-audit.md",
+      "scope": [
+        "packages/skill-home/scripts/audit-separators.mjs",
+        "packages/skill-home/test/style-audit.test.mjs",
+        "docs/skills/skill-home/style-audit.md"
+      ],
       "blockedBy": [],
       "issue": 803
     },
@@ -73,24 +104,33 @@
       "n": 7,
       "key": "07-wall-and-chain-page",
       "type": "task",
-      "title": "生成器：双端验收墙＋链路总览页",
+      "title": "生成器：双端验收墙＋链路总览页（清单驱动，文件名从清单读）",
       "body": "html-scenes-tickets/07-wall-and-chain-page.md",
-      "blockedBy": [
-        21
+      "scope": [
+        "docs/skills/skill-home/gen-scene-wall.mjs",
+        "docs/skills/skill-home/gen-chain-page.mjs",
+        "docs/skills/skill-home/wall-and-chain-page.md",
+        ".scratch/wall-selftest/"
       ],
+      "blockedBy": [],
       "issue": 804
     },
     {
       "n": 8,
-      "key": "08-sample-scene",
+      "key": "08-scaffold",
       "type": "task",
-      "title": "样板：录物品端到端走通（形状先验，人裁过再铺开）",
+      "title": "页面脚手架：跑生成器产出同形页骨架（替代照抄样板）",
       "body": "html-scenes-tickets/08-sample-scene.md",
+      "scope": [
+        "packages/skill-home/scripts/new-scene-page.mjs",
+        "packages/skill-home/scripts/lib/scene-page-scaffold.mjs",
+        "packages/skill-home/test/scaffold.test.mjs",
+        "docs/skills/skill-home/scene-page-scaffold.md",
+        ".scratch/scaffold/"
+      ],
       "blockedBy": [
-        4,
-        5,
-        6,
-        7
+        2,
+        3
       ],
       "issue": 805
     },
@@ -100,7 +140,26 @@
       "type": "task",
       "title": "物品管理域（一）录入与查找 10 条：各出真页面",
       "body": "html-scenes-tickets/09-items-1.md",
+      "domain": "items",
+      "families": [
+        "add_form",
+        "search_list",
+        "detail",
+        "locate",
+        "browse",
+        "duplicates"
+      ],
+      "scope": [
+        "packages/skill-home/test/items-1.test.mjs",
+        "docs/skills/skill-home/scene-items-1.md",
+        ".scratch/806/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 806
@@ -111,7 +170,26 @@
       "type": "task",
       "title": "物品管理域（二）更新与标签分类 11 条：各出真页面",
       "body": "html-scenes-tickets/10-items-2.md",
+      "domain": "items",
+      "families": [
+        "receipt",
+        "confirm",
+        "undo_select",
+        "relations",
+        "tag_manage",
+        "category_manage"
+      ],
+      "scope": [
+        "packages/skill-home/test/items-2.test.mjs",
+        "docs/skills/skill-home/scene-items-2.md",
+        ".scratch/807/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 807
@@ -122,7 +200,27 @@
       "type": "task",
       "title": "物品管理域（三）照片、盘点与历史 8 条：各出真页面",
       "body": "html-scenes-tickets/11-items-3.md",
+      "domain": "items",
+      "families": [
+        "photos",
+        "photo_wall",
+        "inventory_round",
+        "inventory_diff",
+        "inventory_records",
+        "move_checklist",
+        "history"
+      ],
+      "scope": [
+        "packages/skill-home/test/items-3.test.mjs",
+        "docs/skills/skill-home/scene-items-3.md",
+        ".scratch/808/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 808
@@ -133,7 +231,24 @@
       "type": "task",
       "title": "空间与位置域 4 条：各出真页面",
       "body": "html-scenes-tickets/12-space.md",
+      "domain": "space",
+      "families": [
+        "location_manage",
+        "fixed_spot",
+        "suggest_storage",
+        "space_view"
+      ],
+      "scope": [
+        "packages/skill-home/test/space.test.mjs",
+        "docs/skills/skill-home/scene-space.md",
+        ".scratch/809/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 809
@@ -144,7 +259,25 @@
       "type": "task",
       "title": "穿搭出行域 5 条：各出真页面",
       "body": "html-scenes-tickets/13-outfit.md",
+      "domain": "outfit",
+      "families": [
+        "outfit_picker",
+        "wardrobe_analyze",
+        "wardrobe_season",
+        "travel_trip",
+        "trip_outfit_plan"
+      ],
+      "scope": [
+        "packages/skill-home/test/outfit.test.mjs",
+        "docs/skills/skill-home/scene-outfit.md",
+        ".scratch/810/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 810
@@ -155,7 +288,24 @@
       "type": "task",
       "title": "统计总览域 4 条：各出真页面",
       "body": "html-scenes-tickets/14-stats.md",
+      "domain": "stats",
+      "families": [
+        "overview",
+        "idle",
+        "expiring",
+        "inventory_stat"
+      ],
+      "scope": [
+        "packages/skill-home/test/stats.test.mjs",
+        "docs/skills/skill-home/scene-stats.md",
+        ".scratch/811/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 811
@@ -166,7 +316,24 @@
       "type": "task",
       "title": "快递购物域 4 条：各出真页面",
       "body": "html-scenes-tickets/15-express.md",
+      "domain": "express",
+      "families": [
+        "list",
+        "missing",
+        "express",
+        "stock"
+      ],
+      "scope": [
+        "packages/skill-home/test/express.test.mjs",
+        "docs/skills/skill-home/scene-express.md",
+        ".scratch/812/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 812
@@ -177,7 +344,22 @@
       "type": "task",
       "title": "票据凭证域（一）购买记录与保修保养 10 条：各出真页面",
       "body": "html-scenes-tickets/16-receipt-1.md",
+      "domain": "receipt",
+      "families": [
+        "purchase_records",
+        "warranty"
+      ],
+      "scope": [
+        "packages/skill-home/test/receipt-1.test.mjs",
+        "docs/skills/skill-home/scene-receipt-1.md",
+        ".scratch/813/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 813
@@ -188,7 +370,22 @@
       "type": "task",
       "title": "票据凭证域（二）证件与账号 8 条：各出真页面",
       "body": "html-scenes-tickets/17-receipt-2.md",
+      "domain": "receipt",
+      "families": [
+        "certificates",
+        "accounts"
+      ],
+      "scope": [
+        "packages/skill-home/test/receipt-2.test.mjs",
+        "docs/skills/skill-home/scene-receipt-2.md",
+        ".scratch/814/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 814
@@ -197,9 +394,24 @@
       "n": 18,
       "key": "18-family",
       "type": "task",
-      "title": "家庭协作域 2 条＋借用写侧唤醒词接通",
+      "title": "家庭协作域 2 条：各出真页面",
       "body": "html-scenes-tickets/18-family.md",
+      "domain": "family",
+      "families": [
+        "family_borrow",
+        "family_members"
+      ],
+      "scope": [
+        "packages/skill-home/test/family.test.mjs",
+        "docs/skills/skill-home/scene-family.md",
+        ".scratch/815/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 815
@@ -210,7 +422,24 @@
       "type": "task",
       "title": "开始使用域 4 条：各出真页面",
       "body": "html-scenes-tickets/19-setup.md",
+      "domain": "setup",
+      "families": [
+        "first_use_wizard",
+        "health_report",
+        "backup_receipt",
+        "import_restore"
+      ],
+      "scope": [
+        "packages/skill-home/test/setup.test.mjs",
+        "docs/skills/skill-home/scene-setup.md",
+        ".scratch/816/"
+      ],
       "blockedBy": [
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       "issue": 816
@@ -219,8 +448,12 @@
       "n": 20,
       "key": "20-closeout",
       "type": "task",
-      "title": "收口：双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审",
+      "title": "收口：端到端＋双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审",
       "body": "html-scenes-tickets/20-closeout.md",
+      "scope": [
+        ".scratch/817/",
+        "docs/skills/skill-home/scene-pages-closeout.md"
+      ],
       "blockedBy": [
         7,
         9,
@@ -239,13 +472,14 @@
     },
     {
       "n": 21,
-      "key": "21-scene-naming",
+      "key": "21-retired-naming",
       "type": "grilling",
-      "title": "决定：产物命名与落点怎么区分 70 条场景（老规范按模板 1:1，会互相覆盖）",
+      "title": "（已退役）决定：产物命名与落点怎么区分 70 条场景",
       "body": "html-scenes-tickets/21-scene-naming.md",
-      "blockedBy": [
-        1
-      ],
+      "retired": true,
+      "retiredReason": "并入票 2（#799）：命名与形状是同一次要裁完的事，两个人工等待点没有意义；集成职责改由票 3 承担。",
+      "scope": [],
+      "blockedBy": [],
       "issue": 836
     }
   ]

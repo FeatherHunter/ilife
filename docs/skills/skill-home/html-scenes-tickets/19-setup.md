@@ -30,3 +30,11 @@
 ## 遗留出口
 
 「老实现无调用点」这类 yaml 与实现的偏差，逐条写进本票对账文件，供票 2 裁是否回写 HELP 内容资产。
+
+## 写集（并发用，机器验的那一份）
+
+本票只写自己那几族：`packages/skill-home/templates/setup/<族>.html` 与 `packages/skill-home/src/setup/pages/<族>.ts`（族 = `first_use_wizard`、`health_report`、`backup_receipt`、`import_restore`），外加 `packages/skill-home/test/setup.test.mjs`、`docs/skills/skill-home/scene-setup.md`、`.scratch/816/`。
+
+**不碰**：`src/render/**` 共用件、`src/cli/**`、`package.json`、`SKILL.md`、派生件、别人的域目录与页族（要改就回写票 3 或票 2）。
+
+跑锁一律带 `--max-wait-ms 600000`（协议上限 10 分钟，不无限等）。
