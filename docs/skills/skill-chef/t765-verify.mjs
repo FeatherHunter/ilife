@@ -28,13 +28,16 @@ const ghJson = (...a) => JSON.parse(gh(...a) || '[]');
 /** 本图唯一阻塞真相源（与 t765-v2.mjs 一致；票 4 已关，留作来历）。 */
 const BLOCKED_BY = {
   1: [], 2: [], 3: [1, 16], 4: [],
-  5: [1, 2, 3, 16, 17], 6: [1, 2, 3, 16, 17], 7: [1, 2, 3, 16, 17],
-  8: [1, 2, 3, 4, 16, 17, 14, 15], 9: [1, 2, 3, 4, 16, 17, 14, 15],
-  10: [1, 2, 3, 4, 16, 17, 14], 11: [1, 2, 3, 4, 16, 17, 14, 15],
+  5: [1, 2, 3, 16, 17, 20], 6: [1, 2, 3, 16, 17, 20], 7: [1, 2, 3, 16, 17, 20],
+  8: [1, 2, 3, 4, 16, 17, 14, 15, 20], 9: [1, 2, 3, 4, 16, 17, 14, 15, 20],
+  10: [1, 2, 3, 4, 16, 17, 14, 20], 11: [1, 2, 3, 4, 16, 17, 14, 15, 20],
   12: [5, 6, 7, 8, 9, 10, 11], 13: [12],
   14: [], 15: [], 16: [1], 17: [], 18: [2, 5, 6, 7, 8, 9, 10, 11],
+  19: [], 20: [],
 };
 
+/* 票面体例豁免：票 19＝#854（G1/G2 规格线并入本图，票面照那条线自己的体例写；本图只校它的边与状态）。 */
+const SHAPE_EXEMPT = new Set([19]);
 const SECTIONS = ['## Question', '## 目标', '## 验收命令', '## 不许动的东西', '## 交付物路径', '## 遗留出口'];
 const problems = [];
 const saved = JSON.parse(readFileSync(join(here, 't765-tickets.json'), 'utf8').replace(/^\uFEFF/, ''));
@@ -63,9 +66,9 @@ for (const { n, issue } of saved) {
   if (bb.length !== expected) problems.push(`t${n} #${issue} 阻塞边：expected=${expected} actual=${bb.length}`);
 
   const body = gh('issue', 'view', String(issue), '--repo', REPO, '--json', 'body', '--jq', '.body');
-  for (const sec of SECTIONS) if (!body.includes(sec)) problems.push(`t${n} #${issue} 缺段落 ${sec}`);
-  if (!/^## 进度：0%$/m.test(body)) problems.push(`t${n} #${issue} 缺 "## 进度：0%"`);
-  if (!/^下一步：/m.test(body)) problems.push(`t${n} #${issue} 缺 "下一步："`);
+  if (!SHAPE_EXEMPT.has(n)) for (const sec of SECTIONS) if (!body.includes(sec)) problems.push(`t${n} #${issue} 缺段落 ${sec}`);
+  if (!/^## 进度：\d+%$/m.test(body)) problems.push(`t${n} #${issue} 缺 "## 进度：N%"（N 为当前进度）`);
+  if (!SHAPE_EXEMPT.has(n) && !/^下一步：/m.test(body)) problems.push(`t${n} #${issue} 缺 "下一步："`);
   if (body.includes('<票号>') || body.includes('<本票号>')) problems.push(`t${n} #${issue} 残留占位`);
   if (body.includes('\\n')) problems.push(`t${n} #${issue} 疑似字面 \\n`);
   if (n >= 16 && body.includes(`skill-chef/t${n}-`)) problems.push(`t${n} #${issue} 引用票序文件名`);
@@ -97,4 +100,4 @@ if (problems.length) {
   for (const p of problems) console.error('  - ' + p);
   process.exit(1);
 }
-console.log('\nPASS：全图 18 张票的形状、边、拓扑、地图正文逐项一致。');
+console.log('\nPASS：全图 ' + saved.length + ' 张票的形状、边、拓扑、地图正文逐项一致。');
