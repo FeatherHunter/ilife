@@ -1,0 +1,37 @@
+{
+  "label": "run",
+  "widths": [390, 768, 1440],
+  "at": "2026-09-21T00:00:00.000Z",
+  "rows": [
+    {
+      "name": "甲-01-记录一览.html",
+      "inScope": true,
+      "images": 0,
+      "widths": {
+        "390": { "innerWidth": 390, "docScrollWidth": 390, "overflow": 0, "why": "", "ok": true },
+        "768": { "innerWidth": 768, "docScrollWidth": 768, "overflow": 0, "why": "", "ok": true },
+        "1440": { "innerWidth": 1440, "docScrollWidth": 1440, "overflow": 0, "why": "", "ok": true }
+      }
+    },
+    {
+      "name": "甲-02-待办清单.html",
+      "inScope": true,
+      "images": 2,
+      "widths": {
+        "390": { "innerWidth": 390, "docScrollWidth": 402, "overflow": 12, "why": "横向溢出 12px：td.甲-02-行", "ok": false },
+        "768": { "innerWidth": 768, "docScrollWidth": 768, "overflow": 0, "why": "", "ok": true },
+        "1440": { "innerWidth": 1440, "docScrollWidth": 1440, "overflow": 0, "why": "", "ok": true }
+      }
+    },
+    {
+      "name": "甲-03-月度小结.html",
+      "inScope": true,
+      "images": 0,
+      "widths": {
+        "390": { "innerWidth": 390, "docScrollWidth": 390, "overflow": 0, "why": "", "ok": true },
+        "768": { "innerWidth": 768, "docScrollWidth": 768, "overflow": 0, "why": "", "ok": true },
+        "1440": { "innerWidth": 1440, "docScrollWidth": 1440, "overflow": 0, "why": "", "ok": true }
+      }
+    }
+  ]
+}

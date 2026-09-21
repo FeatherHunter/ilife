@@ -1,0 +1,9 @@
+{
+  "packagePath": "packages/base-render",
+  "readingsDir": "test/fixtures/判分/夹具",
+  "instances": [
+    "甲-03-月度小结.html",
+    "甲-01-记录一览.html",
+    "甲-02-待办清单.html"
+  ]
+}

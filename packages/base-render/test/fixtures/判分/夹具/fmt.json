@@ -1,0 +1,57 @@
+{
+  "at": "2026-09-21T00:00:00.000Z",
+  "dir": "packages/base-render/test/fixtures/判分/夹具",
+  "widths": [390, 768, 1440],
+  "files": 3,
+  "unreadable": 0,
+  "rows": [
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-01-记录一览.html",
+      "name": "甲-01-记录一览.html",
+      "widths": {
+        "390": { "vw": 390, "outOfBounds": 0, "fontSizes": [12, 15, 22], "minFontPxNoSvg": 14, "touchSmall": 0, "touchSmallList": [] },
+        "768": { "vw": 768, "outOfBounds": 0, "fontSizes": [12, 15, 32], "minFontPxNoSvg": 14, "touchSmall": 0, "touchSmallList": [] },
+        "1440": { "vw": 1440, "outOfBounds": 0, "fontSizes": [12, 15, 32], "minFontPxNoSvg": 14, "touchSmall": 0, "touchSmallList": [] }
+      }
+    },
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-02-待办清单.html",
+      "name": "甲-02-待办清单.html",
+      "widths": {
+        "390": {
+          "vw": 390,
+          "outOfBounds": 1,
+          "fontSizes": [11, 12, 15, 22],
+          "minFontPxNoSvg": 11,
+          "touchSmall": 2,
+          "touchSmallList": ["button.甲-02-复制@72x38", "td.甲-02-行@120x40"]
+        },
+        "768": {
+          "vw": 768,
+          "outOfBounds": 0,
+          "fontSizes": [12, 13, 15, 32],
+          "minFontPxNoSvg": 13,
+          "touchSmall": 1,
+          "touchSmallList": ["button.甲-02-复制@72x38"]
+        },
+        "1440": { "vw": 1440, "outOfBounds": 0, "fontSizes": [12, 13, 15, 32], "minFontPxNoSvg": 13, "touchSmall": 0, "touchSmallList": [] }
+      }
+    },
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-03-月度小结.html",
+      "name": "甲-03-月度小结.html",
+      "widths": {
+        "390": {
+          "vw": 390,
+          "outOfBounds": 0,
+          "fontSizes": [12, 13, 15, 22],
+          "minFontPxNoSvg": 13,
+          "touchSmall": 3,
+          "touchSmallList": ["button.甲-03-复制@88x32", "button.甲-03-展开@64x36", "td.甲-03-行@150x40"]
+        },
+        "768": { "vw": 768, "outOfBounds": 0, "fontSizes": [12, 13, 15, 32], "minFontPxNoSvg": 13, "touchSmall": 0, "touchSmallList": [] },
+        "1440": { "vw": 1440, "outOfBounds": 0, "fontSizes": [12, 13, 15, 32], "minFontPxNoSvg": 13, "touchSmall": 0, "touchSmallList": [] }
+      }
+    }
+  ]
+}

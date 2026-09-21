@@ -1,0 +1,46 @@
+{
+  "at": "2026-09-21T00:00:00.000Z",
+  "dir": "packages/base-render/test/fixtures/判分/夹具",
+  "note": "手工造的夹具事实列（怎么造见上一层 README.md）。页键＝产物名去掉 .html 后缀。",
+  "pages": {
+    "甲-01-记录一览": {
+      "note": "干净页：逐维满分、零硬扣分",
+      "tables": 0,
+      "imgTags": 0,
+      "tdDataLabel": 0,
+      "tocEl": 1,
+      "aspectRatio": 0,
+      "scrollMargin": 20,
+      "dupFacts": 0,
+      "english": 0,
+      "d1": 0,
+      "d2": 0
+    },
+    "甲-02-待办清单": {
+      "note": "红色页：七条硬扣分各有一处以上",
+      "tables": 1,
+      "imgTags": 2,
+      "tdDataLabel": 0,
+      "tocEl": 1,
+      "aspectRatio": 0,
+      "scrollMargin": 0,
+      "dupFacts": 1,
+      "english": 2,
+      "d1": 4,
+      "d2": 6
+    },
+    "甲-03-月度小结": {
+      "note": "压线页：页分恰 90 且每维 ≥ 满权 80%",
+      "tables": 0,
+      "imgTags": 0,
+      "tdDataLabel": 0,
+      "tocEl": 1,
+      "aspectRatio": 0,
+      "scrollMargin": 20,
+      "dupFacts": 0,
+      "english": 0,
+      "d1": 3,
+      "d2": 4
+    }
+  }
+}

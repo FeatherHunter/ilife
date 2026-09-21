@@ -15,6 +15,7 @@
  *   · 断点只用仓内既有值 **820／640／400**（`blocks.ts` 的 640、`TOAST_DEFAULTS.mobileMaxPx`
  *     的 820、`style.ts` 的 400），**不新造断点值**；
  *   · 触摸区 ≥44×44px（HELP `.ilife-copy-btn` 820 档 `min-height:44px` 同值）；
+ *   · 判据数值（触摸下限／正文字号下限／断点集合）的唯一一处定义地＝本件 `PAGE_LIMITS`（#868）；
  *   · `env(safe-area-inset-*)`（HELP toast 与回顶按钮同法；须配 `viewport-fit=cover`）；
  *   · 页脚留白 60px（HELP `.ilife-help-shell` 640 档 `padding: 20px 16px 60px` 逐值同）；
  *   · 读数卡窄屏两格 → 400 档单列（HELP `.ilife-help-shell-grid` 640 档单列的同一条意图）；
@@ -25,6 +26,8 @@
  */
 
 /** 起点色值口径：与 `blocks.ts` 同一条冻结 token 表；本件不新增 token、不新增色值。 */
+import { ACTION_BAR_DEFAULTS } from './spec/index.js';
+
 const LF = String.fromCharCode(10);
 
 /** 页面级配方的根类名：整页装配把这一颗类加到版面根上（`docPage.ts` 的 `pageUi` 位）。 */
@@ -33,6 +36,20 @@ export const PAGE_UI_CLASS = 'ilife-page-ui';
 /** 配 `viewport-fit=cover` 的 viewport 串（`env(safe-area-inset-*)` 在 iOS 上不写它恒取 0）。
  *  只在启用本配方时用它替换旧串；不给即老串（旧调用方逐字节不变）。 */
 export const PAGE_UI_VIEWPORT = 'width=device-width,initial-scale=1,viewport-fit=cover';
+
+/** #868 页面级判据数值（唯一一处定义地）：判分引擎与各域从这里取，不许在别处另写一份字面量。
+ *
+ *  · `touchMinPx`（44）＝ 可点控件的最小命中高度，与 `spec/controls.ts` 的
+ *    `ACTION_BAR_DEFAULTS.minHeightPx` 是**同一个数、同一件事**（此处只引用，不重写）；
+ *  · `textMinPx`（12）＝ 正文类字号下限，与下面 ⑥ 那条媒体查询**逐值同源**（同一个常量写进 CSS）；
+ *  · `breakpointsPx` ＝ 仓内既有断点集合，断点只许从这一份里取，不新造。
+ *
+ *  判分引擎住包内 `scripts/判分.mjs`，按包内相对路径取 `dist/pageUi.js` 的本件。 */
+export const PAGE_LIMITS = Object.freeze({
+  touchMinPx: ACTION_BAR_DEFAULTS.minHeightPx,
+  textMinPx: 12,
+  breakpointsPx: Object.freeze([400, 640, 820, 1001, 1200]),
+} as const);
 
 export interface PageUiCssInput {
   /** 类名前缀；缺省 `ilife-`（与 `blocksCss({ prefix })` 同口径）。 */
@@ -76,7 +93,7 @@ export function pageUiCss(input?: PageUiCssInput): string {
     root + ' .' + p + 'block-disclosure-summary,',
     root + ' .' + p + 'block-param-form-input,',
     root + ' .' + p + 'block-toc a {',
-    '  min-height: 44px;',
+    '  min-height: ' + PAGE_LIMITS.touchMinPx + 'px;',
     '}',
     '/* 页内导航按胶囊排（inline 元素上 min-height 不生效，须转 inline-flex）。 */',
     root + ' .' + p + 'block-toc a {',
@@ -96,7 +113,7 @@ export function pageUiCss(input?: PageUiCssInput): string {
     '  ' + root + ' .' + p + 'block-caliber,',
     '  ' + root + ' .' + p + 'block-list-rows-row,',
     '  ' + root + ' .' + p + 'block-kpi-card-detail {',
-    '    font-size: 12px;',
+    '    font-size: ' + PAGE_LIMITS.textMinPx + 'px;',
     '  }',
     '  /* 读数卡：两格并排（150px 下限在 358px 可用宽里正好两格，不再被 auto-fit 挤成三格）。 */',
     '  ' + root + ' .' + p + 'block-kpi-card-grid {',

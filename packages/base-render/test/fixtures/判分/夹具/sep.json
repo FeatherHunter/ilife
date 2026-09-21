@@ -1,0 +1,68 @@
+{
+  "at": "2026-09-21T00:00:00.000Z",
+  "dir": "packages/base-render/test/fixtures/判分/夹具",
+  "files": 3,
+  "green": 2,
+  "broken": 1,
+  "totals": {
+    "R1": 2,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 1,
+    "R7": 1
+  },
+  "nodeHitsTotal": 3,
+  "rows": [
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-01-记录一览.html",
+      "name": "甲-01-记录一览.html",
+      "bytes": 35210,
+      "totalLines": 812,
+      "line": { "R1": 0, "R2": 0, "R3": 0, "R4": 0, "R5": 0, "R6": 0, "R7": 0, "hits": [] },
+      "node": { "R1": 0, "R2": 0, "R3": 0, "R4": 0, "R5": 0, "R6": 0, "R7": 0, "hits": [] }
+    },
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-02-待办清单.html",
+      "name": "甲-02-待办清单.html",
+      "bytes": 41890,
+      "totalLines": 934,
+      "line": {
+        "R1": 1,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 0,
+        "R7": 1,
+        "hits": [
+          { "line": 24, "tags": ["R1"], "text": "待办清单 · 今天" },
+          { "line": 610, "tags": ["R7"], "text": "todo-list" }
+        ]
+      },
+      "node": {
+        "R1": 2,
+        "R2": 0,
+        "R3": 0,
+        "R4": 0,
+        "R5": 0,
+        "R6": 1,
+        "R7": 1,
+        "hits": [
+          { "n": 1, "line": 24, "tags": ["R1"], "text": "待办清单 · 今天", "ident": [], "owner": "ilife-block-page-shell-title", "zone": "body", "run": null },
+          { "n": 2, "line": 410, "tags": ["R1", "R6"], "text": "已完成 → 归档", "ident": [], "owner": "ilife-block-kpi-card-value", "zone": "body", "run": null },
+          { "n": 3, "line": 610, "tags": ["R7"], "text": "todo-list", "ident": ["蛇形名"], "owner": "ilife-block-pre-block-code", "zone": "body", "run": null }
+        ]
+      }
+    },
+    {
+      "path": "packages/base-render/test/fixtures/判分/夹具/甲-03-月度小结.html",
+      "name": "甲-03-月度小结.html",
+      "bytes": 38640,
+      "totalLines": 866,
+      "line": { "R1": 0, "R2": 0, "R3": 0, "R4": 0, "R5": 0, "R6": 0, "R7": 0, "hits": [] },
+      "node": { "R1": 0, "R2": 0, "R3": 0, "R4": 0, "R5": 0, "R6": 0, "R7": 0, "hits": [] }
+    }
+  ]
+}

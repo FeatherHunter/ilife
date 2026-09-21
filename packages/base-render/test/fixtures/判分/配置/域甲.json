@@ -1,0 +1,9 @@
+{
+  "packagePath": ".",
+  "readingsDir": "packages/base-render/test/fixtures/判分/夹具",
+  "instances": [
+    { "file": "甲-01-记录一览.html", "key": "甲-01-记录一览" },
+    { "file": "甲-02-待办清单.html", "key": "甲-02-待办清单" },
+    { "file": "甲-03-月度小结.html", "key": "甲-03-月度小结" }
+  ]
+}
