@@ -15,9 +15,11 @@
  * 接缝：同 `wish-sync-661`／`wizard-pages-665` —— 只打唯一出口，两个注入点分别是
  * 临时库（配置项 `db.dir`）与远端挡板（PATH 首位的 `lark-cli`）。
  *
- * 跑法：
- *   node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife
- *   node --test packages/skill-memo-ilife/test/t832-sync-domain.test.mjs
+ * 跑法（**cwd 必须是包目录**：出口依赖包内 `node_modules` 的 junction 依赖 `base-paint` 等，
+ * 从仓根跑会 `ERR_MODULE_NOT_FOUND`，那是跑法问题不是被测行为）：
+ *   cd packages/skill-memo-ilife
+ *   node ../../node_modules/typescript/bin/tsc -b .            # 编译（或照仓规走 run-locked）
+ *   node --test test/t832-sync-domain.test.mjs
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,7 +55,10 @@ function envNoLark(s) {
   return noLarkPathEnv(home);
 }
 
-/** 跑一次出口：回执、退出码、远端收到的调用三样一次取齐（断言只读这三处）。 */
+/** 跑一次出口：回执、退出码、远端收到的调用三样一次取齐（断言只读这三处）。
+ *  ⚠️ 本用例必须在**包目录**为 cwd 时跑（见文件头跑法）：出口依赖包内 `node_modules`
+ *  （`base-paint` 等 junction 依赖只挂在包目录下），从仓根 spawn 会 `ERR_MODULE_NOT_FOUND`
+ *  —— 那是跑法问题，不是被测行为。 */
 function run(s, key, params, opts = {}) {
   s.stub.clearCalls();
   const r = s.runNew(key, params, { ...opts, extraEnv: opts.extraEnv ?? envWithStub(s) });
@@ -123,6 +128,8 @@ describe('#832 sync 域 1 场景端到端（备忘录同步 → memo.sync → �
     const stem = bookletFileStem(SCENE_ID);
     assert.equal(stem, WAKE, '册子第 29 格主体');
     assert.match(base, new RegExp('^' + stem + '_\\d{8}_\\d{6}(_\\d+)?\\.html$'), '落盘名须＝册子主体＋时间戳，实得：' + base);
+    // 目录：扁平 `memo_html/`（册子 §三；`html.dir` 默认值，既有产物原地并排，不另开层）。
+    assert.equal(d.path.replace(/\\/g, '/').slice(0, -base.length), s.dbPath.replace(/\\/g, '/') + '/memo_html/', '目录须是 <库目录>/memo_html/ 扁平一层');
 
     // 显式 --html：逐字落点，内容仍是同一张报告页。
     const explicit = run(s, SYNC_KEY, {}, { html: join(s.dir, 'sync-report.html') });
