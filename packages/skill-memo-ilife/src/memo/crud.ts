@@ -19,6 +19,27 @@ export function contentOf(title: string, body: string): string {
 // 附件路径那条口径已按 #712 搬进 `media.ts`：取值口（附件目录）与包含判定同住一件，
 // 不再是这里的一段字符串前缀比对。
 
+/** #830 · **HELP 的字段名 → 本命令面认的名**（一处定义；口径出处 `t837-命令面口径.md` §实施约束：
+ *  「字段名以 HELP 为准，不自造第二个说法」）。三条写命令是五域共用的，故这张表住字段政策这一层。
+ *
+ *  等价关系都有权威出处：`content` 是老 `add`／`update` 的正式参数名（`memo_cli.py` 的
+ *  `p_add.add_argument("content")`／`p_update.add_argument("--content")`），本命令面把题／文两个入口
+ *  收敛到 `content` 单列（正文优先），故 `content` ≡ `body`；`sub_category`／`reminder_id` 同理。
+ *  映射只**补缺**：实现名给了就以它为准（老面照旧能跑），HELP 名给了即当同一个槽位。 */
+const HELP_FIELD_ALIASES: readonly (readonly [string, string])[] = [
+  ['content', 'body'],
+  ['sub_category', 'sub'],
+  ['reminder_id', 'reminderId'],
+];
+
+export function withHelpFieldNames(params: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...params };
+  for (const [helpName, commandName] of HELP_FIELD_ALIASES) {
+    if (out[commandName] === undefined && out[helpName] !== undefined) out[commandName] = out[helpName];
+  }
+  return out;
+}
+
 export function crudUpdate(input: { id?: unknown }): { id: number } {
   return { id: needId(input.id, '更新') };
 }

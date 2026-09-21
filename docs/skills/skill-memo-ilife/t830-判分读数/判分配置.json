@@ -1,0 +1,9 @@
+{
+  "packagePath": "packages/skill-memo-ilife",
+  "readingsDir": "docs/skills/skill-memo-ilife/t830-判分读数",
+  "instances": [
+    { "file": "记打卡_20260921_214040.html", "key": "记打卡" },
+    { "file": "改打卡_20260921_214040.html", "key": "改打卡" },
+    { "file": "删打卡_20260921_214040.html", "key": "删打卡" }
+  ]
+}

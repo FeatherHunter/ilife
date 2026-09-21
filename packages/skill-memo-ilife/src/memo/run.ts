@@ -21,7 +21,7 @@ import { abandonReminder } from '../remind/index.js';
 import { applyBatchCategory, collectBatchItems, countNotesByCategory } from './batch.js';
 import { needId } from '../shared/validators.js';
 import { normalizeSub, normalizeTop } from './category.js';
-import { crudCreate, crudRemove, crudUpdate } from './crud.js';
+import { crudCreate, crudRemove, crudUpdate, withHelpFieldNames } from './crud.js';
 import { normalizeMediaPath } from './media.js';
 import { completeWish, dueForCategory, ensureWish, removeWish, setWishDue, updateWish, wishReceiptFor } from '../wish/index.js';
 import { buildReceiptPage, changeCategorySnapshot, fillMemoPage, pageEnvelope } from '../render/index.js';
@@ -29,6 +29,7 @@ import type { ReceiptScene } from '../render/index.js';
 import { buildReceipt, noteIdOfMessage, receiptOptsOf } from './receiptPage.js';
 import { memoBatchResultPage, memoCreatePage, memoRemovePage, memoUpdatePage } from './receipt.js';
 import { bookletFileStem } from '../help/booklet.js';
+import { checkinCreatePage, checkinRemovePage, checkinUpdatePage } from '../checkin/index.js';
 import type { WishReceipt } from '../wish/index.js';
 
 function asIds(value: unknown): number[] {
@@ -59,20 +60,28 @@ function deleteWithRemindersOf(params: Record<string, unknown>): boolean {
 
 /** `memo.create`：参数校验 → 心愿合成写 → 通用回执页缺省落盘。 */
 export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandOut {
-  const c = crudCreate(params);
-  const top = normalizeTop(params.category);
-  const sub = normalizeSub(params.sub);
-  const media = params.media !== undefined ? normalizeMediaPath(params.media) : null;
+  // #830：HELP 的字段名（`content`／`sub_category`／`reminder_id`）与命令面认的名同义，映射只补缺
+  // （等价关系与出处见 `./crud.js` 那张表）——「字段名以 HELP 为准」（`t837-命令面口径.md`）。
+  const p = withHelpFieldNames(params);
+  // 关联提醒不在建时写（老 `add` 无 `--reminder-id`；打卡的 `reminder_id` 由打卡追溯链回填）。
+  // HELP 的 `memo_add_checkin` 留着这一格是为了溯源：给了就大声说清，不静默丢掉。
+  if (p.reminderId !== undefined && p.reminderId !== null && p.reminderId !== '') {
+    fail(2, '建时不可写关联提醒（老 add 无此参数；打卡的关联提醒由打卡追溯链回填）');
+  }
+  const c = crudCreate(p);
+  const top = normalizeTop(p.category);
+  const sub = normalizeSub(p.sub);
+  const media = p.media !== undefined ? normalizeMediaPath(p.media) : null;
   const r = ensureWish(db, {
     title: c.title,
     body: c.body,
     category: top,
     sub,
     media,
-    remindAt: params.remindAt,
-    repeatType: params.repeatType,
-    repeatRule: params.repeatRule,
-    due: params.due,
+    remindAt: p.remindAt,
+    repeatType: p.repeatType,
+    repeatRule: p.repeatRule,
+    due: p.due,
   });
   // #831：回执页缺省落盘（只有本族这三格出页；`memo.update` 的批量／完成心愿两支不出本族页）。
   // 页内的分类与子分类取自 notes 表那一行（权威），不照抄入参；`memo.create` 的回执不带 id 字段，
@@ -81,18 +90,23 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
   const created = createdId === null ? null : getNote(db, createdId);
   // #828：要求建提醒的那一趟（`记提醒`，路由断言 `needs: ['remindAt']`）落提醒域那一格；其余仍是「记备忘／记心愿」。
   // 两步合一（添笔记 ＋ 设提醒）不出第三条路，`#837` Q⑥ 已定：不开新键、也不给 create 补参数。
-  if (created !== null && params.remindAt !== undefined && params.remindAt !== null && params.remindAt !== '') {
+  if (created !== null && p.remindAt !== undefined && p.remindAt !== null && p.remindAt !== '') {
     const o = receiptOptsOf(created);
-    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_remind_with_note', '记提醒', r.receipt, { ...o, summary: [...o.summary, '提醒时间：' + String(params.remindAt), '重复：' + (params.repeatType === undefined ? '一次性' : String(params.repeatType))] }) };
+    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_remind_with_note', '记提醒', r.receipt, { ...o, summary: [...o.summary, '提醒时间：' + String(p.remindAt), '重复：' + (p.repeatType === undefined ? '一次性' : String(p.repeatType))] }) };
   }
   // #829：分类＝心愿 ⇒ 本域那一格（`记心愿`）；不是即别家那格（情绪日记）。
   if (created !== null && created.category === '心愿') {
     return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_add_wish', '记心愿', r.receipt, created) };
   }
-  // #826：分类＝备忘 ⇒ 本域那一格（`记备忘`，册子 seq 1）；打卡那支归 #830，本件不动它。
+  // #826：分类＝备忘 ⇒ 本域那一格（`记备忘`，册子 seq 1）。
   const memo = memoCreatePage(r.receipt, created);
   if (memo !== undefined) {
     return { data: r.receipt, exit: r.exit, deliver: memo };
+  }
+  // #830：分类＝打卡 ⇒ 本域那一格（`记打卡`，册子 seq 23）；不是即落回缺省那支（情绪日记）。
+  const checkin = checkinCreatePage(r.receipt, created);
+  if (checkin !== undefined) {
+    return { data: r.receipt, exit: r.exit, deliver: checkin };
   }
   return {
     data: r.receipt,
@@ -103,9 +117,11 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
 
 /** `memo.update`：批量排期／完成心愿原子转换／字段改三支（情绪日记走通用回执页）。 */
 export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandOut {
+  // #830：HELP 字段名等价（`content`／`sub_category`／`reminder_id`），口径同 `runCreate`。
+  const p = withHelpFieldNames(params);
   // 批量排期（老 `set-due`）：一批 id ＋ 一个排期日期（空值＝清期），走心愿那条合成写。
-  if (params.ids !== undefined) {
-    const r = setWishDue(db, { ids: asIds(params.ids), due: params.due });
+  if (p.ids !== undefined) {
+    const r = setWishDue(db, { ids: asIds(p.ids), due: p.due });
     // #829：批量排期是**心愿类场景**（`心愿排期`），回执页归本域（册子 seq 19）；不指向单条，
     // 故主对象那一格写批次数，记账进明细（错误逐条列出，不静默）。
     const errors = r.receipt.errors ?? [];
@@ -120,33 +136,33 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
       }),
     };
   }
-  const id = crudUpdate(params).id;
+  const id = crudUpdate(p).id;
   // #829：这一次动的那一行（权威）——`done` 那支完成后心愿就没了，故必须**动手之前**取。
   const before = getNote(db, id);
   const isWish = before.category === '心愿';
   // 完成心愿走原子转换（老 `complete-wish`：删心愿 ＋ 生成打卡；`content` 即打卡内容，缺省拷贝心愿原文）。
-  if (params.done === true) {
-    const r = completeWish(db, { id, content: params.content });
+  if (p.done === true) {
+    const r = completeWish(db, { id, content: p.content });
     if (isWish) {
       return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_complete_wish', '完成心愿', r.receipt, before) };
     }
     return { data: r.receipt, exit: r.exit };
   }
-  if (params.done !== undefined) fail(2, 'done 只认 true（完成心愿）；改字段另给参数');
+  if (p.done !== undefined) fail(2, 'done 只认 true（完成心愿）；改字段另给参数');
   const patch: NotePatch = {};
-  if (params.title !== undefined || params.body !== undefined) {
-    const t = typeof params.title === 'string' ? params.title.trim() : '';
-    const b = typeof params.body === 'string' ? params.body.trim() : '';
+  if (p.title !== undefined || p.body !== undefined) {
+    const t = typeof p.title === 'string' ? p.title.trim() : '';
+    const b = typeof p.body === 'string' ? p.body.trim() : '';
     if (!t && !b) fail(2, '正文不可改成空');
     patch.content = b !== '' ? b : t !== '' ? t : getNote(db, id).content;
   }
-  if (params.category !== undefined) patch.category = normalizeTop(params.category);
-  if (params.sub !== undefined) patch.sub_category = normalizeSub(params.sub);
-  if (params.media !== undefined) patch.media_path = normalizeMediaPath(params.media);
-  if (params.reminderId !== undefined) patch.reminder_id = needId(params.reminderId, '关联提醒');
+  if (p.category !== undefined) patch.category = normalizeTop(p.category);
+  if (p.sub !== undefined) patch.sub_category = normalizeSub(p.sub);
+  if (p.media !== undefined) patch.media_path = normalizeMediaPath(p.media);
+  if (p.reminderId !== undefined) patch.reminder_id = needId(p.reminderId, '关联提醒');
   // 老实现没有「改提醒时间」这一路：提醒时间定盘即不可改，错了废弃重建，大声失败不静默。
-  if (params.remindAt !== undefined) fail(2, '提醒时间不可改（废弃旧提醒、重建一条）');
-  if (params.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, params.due);
+  if (p.remindAt !== undefined) fail(2, '提醒时间不可改（废弃旧提醒、重建一条）');
+  if (p.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, p.due);
   if (Object.keys(patch).length === 0) fail(2, '至少需要提供一个更新字段：content/category/sub/media/reminderId/due');
   const r = updateWish(db, { id, patch });
   // #831：情绪日记那条走本族页（改后那一行是权威，回执页照它出）。
@@ -162,6 +178,13 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
   const memo = memoUpdatePage(r.receipt, after, Object.keys(patch));
   if (memo !== undefined) {
     return { data: r.receipt, exit: r.exit, deliver: memo };
+  }
+  // #830：改完那一行分类＝打卡 ⇒ 本域那一格（`改打卡`，册子 seq 25）。位置在这里是有意的：
+  // 纯分类／纯子分类两种补丁的唤醒词是**备忘域**的（改分类／改子分类），由上面那两格接；
+  // 其余字段改落到打卡那一行时归本域，不再往下漏成「无产物」。
+  const checkin = checkinUpdatePage(r.receipt, after);
+  if (checkin !== undefined) {
+    return { data: r.receipt, exit: r.exit, deliver: checkin };
   }
   return { data: r.receipt, exit: r.exit };
 }
@@ -225,10 +248,15 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
     if (before.category === '情绪日记') {
       return { data: w.receipt, exit: w.exit, deliver: buildReceipt('memo_delete_mood', '删情绪', w.receipt, receiptOptsOf(before)) };
     }
-    // #826：删前那一行分类＝备忘 ⇒ 本域那一格（`删备忘`，册子 seq 3）；打卡那支归 #830。
+    // #826：删前那一行分类＝备忘 ⇒ 本域那一格（`删备忘`，册子 seq 3）。
     const memo = memoRemovePage(w.receipt, before);
     if (memo !== undefined) {
       return { data: w.receipt, exit: w.exit, deliver: memo };
+    }
+    // #830：删前那一行分类＝打卡 ⇒ 本域那一格（`删打卡`，册子 seq 24）。
+    const checkin = checkinRemovePage(w.receipt, before);
+    if (checkin !== undefined) {
+      return { data: w.receipt, exit: w.exit, deliver: checkin };
     }
     return { data: w.receipt, exit: w.exit };
   }

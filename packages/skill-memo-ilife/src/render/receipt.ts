@@ -15,8 +15,8 @@ import { bookletFileStem } from '../help/booklet.js';
 import { pageEnvelope, fillMemoPage, type PageSnapshot, type PageCopyLog } from './pages.js';
 
 /** 场景 id → 本族页。逐域**追加**，不改别人的行（写集互斥）：
- *  mood 域三条 ← #831；remind 域两条 ← #828；wish 域五条 ← #829；memo 域六条 ← #826。
- *  本族剩 3 格（checkin 域记／删／改打卡）由 #830 照此调用。 */
+ *  mood 域三条 ← #831；remind 域两条 ← #828；wish 域五条 ← #829；memo 域六条 ← #826；
+ *  checkin 域三条 ← #830（本族 19 格至此齐）。 */
 export const RECEIPT_SCENES = [
   'memo_add_mood',
   'memo_delete_mood',
@@ -34,6 +34,9 @@ export const RECEIPT_SCENES = [
   'memo_change_category_single',
   'memo_change_subcategory',
   'memo_batch_change_category',
+  'memo_add_checkin',
+  'memo_delete_checkin',
+  'memo_update_checkin',
 ] as const;
 export type ReceiptScene = (typeof RECEIPT_SCENES)[number];
 

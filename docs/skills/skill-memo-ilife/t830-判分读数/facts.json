@@ -1,0 +1,186 @@
+{
+ "at": "2026-09-21T13:44:28.458Z",
+ "ticket": "#867 · 读数链（装配器 docs/skills/skill-memo-ilife/t867-facts.mjs；形状契约 docs/base/base-render/t867-读数链契约.md）",
+ "dir": "D:\\ilife\\docs\\skills\\skill-memo-ilife\\t830-判分读数",
+ "pagesDir": "D:\\ilife\\.scratch\\t830\\pages",
+ "human": "D:\\ilife\\docs\\skills\\skill-memo-ilife\\t830-判分读数\\人核档.md",
+ "widths": [
+  390,
+  768,
+  1440
+ ],
+ "readers": {
+  "sep.json": "produced",
+  "resp.json": "produced",
+  "fmt.json": "produced"
+ },
+ "method": {
+  "domColumns": "六列取 t867-dom-probe.mjs 的冻结正则表（tables=<table\\b／imgTags=<img\\b／tdDataLabel=td[^>]*\\bdata-label=／tocEl=class=\"[^\"]*\\bilife-block-toc\\b／aspectRatio=aspect-ratio／scrollMargin=scroll-margin-top），口径见契约 §四。",
+  "candidateColumns": "english／dupFacts 由探针给**机器候选**（静态上界），人核判分写「采纳候选」或「改判＋理由」；改判要写清为什么（例如折叠态按基准 §4.7 记 0 处）。",
+  "humanColumns": "d1／d2 是人核扣分位（基准 §4.2：逐条带理由），本链只收人核档写下的值；d4cut 是可选人核位（缺省 0）。"
+ },
+ "pages": {
+  "删打卡": {
+   "note": "真产物：删打卡_20260921_214040.html",
+   "file": "删打卡_20260921_214040.html",
+   "bytes": 105353,
+   "totalLines": 3334,
+   "visibleTextNodes": 10,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 0,
+   "aspectRatio": 7,
+   "scrollMargin": 1,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "渲染后 390×844 与 1440×900 两档真截图（`remove.html-*`）",
+     "理由": "同「记打卡」；无子分类时徽章只留「打卡」一枚，不留空槽（缺值不占位）。",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "渲染后 同两张截图",
+     "理由": "同「记打卡」；结论行「已删除：2」，被删对象的事实条仍在（删前那一行是权威），页上不出现悬空引用。",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  },
+  "改打卡": {
+   "note": "真产物：改打卡_20260921_214040.html",
+   "file": "改打卡_20260921_214040.html",
+   "bytes": 105377,
+   "totalLines": 3334,
+   "visibleTextNodes": 10,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 0,
+   "aspectRatio": 7,
+   "scrollMargin": 1,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "渲染后 390×844 与 1440×900 两档真截图（`update.html-*`）",
+     "理由": "同「记打卡」（同一份族模板，本页样式块 0、本页字面色值 0）。",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "渲染后 同两张截图",
+     "理由": "同「记打卡」；结论行换成「已更新：1」，事实条与处理结果同构，改前改后不换版式。",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  },
+  "记打卡": {
+   "note": "真产物：记打卡_20260921_214040.html",
+   "file": "记打卡_20260921_214040.html",
+   "bytes": 105377,
+   "totalLines": 3334,
+   "visibleTextNodes": 10,
+   "tables": 0,
+   "imgTags": 0,
+   "tdDataLabel": 1,
+   "tocEl": 0,
+   "aspectRatio": 7,
+   "scrollMargin": 1,
+   "dupFacts": 0,
+   "english": 0,
+   "d1": 0,
+   "d2": 0,
+   "d4cut": 0,
+   "judge": {
+    "english": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "dupFacts": {
+     "value": 0,
+     "判": "采纳候选",
+     "出处": "静态 —（候选 0 处）",
+     "candidate": 0
+    },
+    "d1": {
+     "value": 0,
+     "出处": "渲染后 390×844 与 1440×900 两档真截图（`add.html-*`）",
+     "理由": "结构纪律逐条过：页壳与区块走公共层（本页样式块 0、内联样式仅 4 处公共层写法、本页字面色值 0——六列机审 ③ 列同判），栅格与间距由族模板统一给；本页无表格列、无缺值占位、无数字列，故无 `tabular-nums`／缺值两条的适用位。",
+     "candidate": null
+    },
+    "d2": {
+     "value": 0,
+     "出处": "渲染后 同两张截图",
+     "理由": "信息层级清楚：页题「备忘录回执」→ 一句话结论「已记一条：4」→ 分类与子分类徽章 → 元信息行（时间 ＋ 唤醒词）→「这次的结果」三条事实 →「处理结果」键值四行 →「数据与日志」动作区；同类事实相邻、无同事实两处。",
+     "candidate": null
+    }
+   },
+   "candidates": {
+    "english": {
+     "hits": 0,
+     "nodes": []
+    },
+    "dupFacts": {
+     "hits": 0,
+     "kinds": []
+    }
+   }
+  }
+ }
+}
