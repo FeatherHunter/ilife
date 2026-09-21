@@ -329,7 +329,9 @@ test('#204 ④ `q` 现找：不落盘、无 delivery；带 `--html` 时写分节
   assert.equal(Object.prototype.hasOwnProperty.call(r.env, 'delivery'), false, '现找不落盘 ⇒ 顶层不得有 delivery');
   assert.equal(r.env.data.query, '帮助');
   assert.ok(r.env.data.total >= 1, '须有命中：' + r.env.data.total);
-  assert.deepEqual(readdirSync(dataDirOf(dir)), [], '现找不得在数据目录里留下任何文件');
+  // #843：现找走的是「不开库、不落盘」那条口 ⇒ 数据目录连建都不建；建了就必须是空的。
+  const dataDir = dataDirOf(dir);
+  assert.deepEqual(existsSync(dataDir) ? readdirSync(dataDir) : [], [], '现找不得在数据目录里留下任何文件');
 
   const dir2 = mkDir('lookup-html');
   const p = join(dir2, 'q.html');
@@ -359,7 +361,7 @@ test('#204 ⑤ 退出码矩阵：成功 0；落盘失败 5 且 stdout 一个字�
     } else {
       assert.equal(r.stdout, '', name + '：失败时 stdout 不得吐成功回执');
       assert.match(r.stderr, /^ERR 5: /, name + '：stderr 须以结构化错误码起');
-      assert.match(r.stderr, /HELP 落盘失败/, name + '：stderr 须说明是落盘失败');
+      assert.match(r.stderr, /HTML 落盘失败/, name + '：stderr 须说明是落盘失败');
       assert.match(r.stderr, expect.codeRe, name + '：stderr 须保留系统错误码（不吞原始成因）');
     }
     return r;

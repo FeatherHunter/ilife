@@ -103,18 +103,20 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 相关场景：schedule.help.lookup、schedule.plan.today、schedule.plan.write、schedule.record.compare、schedule.record.detail、schedule.record.range、schedule.record.today、schedule.record.write（8 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->
 
-## HELP 交付（说「作息管家 HELP」或「作息管家帮助」走这里）
+## 交付面（说唤醒词就跑，产物落盘并回绝对路径）
 
-- **缺省就是交付物**：`schedule-cmd-read schedule.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<库目录>/<产物目录>/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`（`<库目录>`＝配置文件 `~/.ilife/schedule.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`，默认 `schedule_html/help`，段间用 `/` 或 `\` 分隔；5 类别／34 唤醒词／85 场景，走共享 help 模板）。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
+- **缺省就是交付物**：上面 8 个联动 key **原样调用**即各落一份能打开的 HTML，stdout 顶层给 `delivery{mode,path,bytes}`——`path` 是**绝对路径**、`bytes` 是**落盘字节数**（回执即真相：回话就把 `path` 给用户）。
   **完成标准**：`delivery.path` 指向的文件真的存在，且大小＝`delivery.bytes`。
-- **要现找才加参数**：`--params '{"q":"查作息"}'` 回命中条目（只出 JSON，不落盘）；`q` 留空＝全表。全量速查表读上「联动速查」块（48 条路由词，构建期注入，与 `q` 同一张表）。
-- **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）；缺省支写的是完整 HELP 页，`q` 支写的是该键的分节页（与其余 7 条命令同形）。
-- **同名不覆盖**：缺省落点按秒命名；真要同一秒落两份（`reuseHours:0`）时后到者递补 `_2`、`_3`……**任何时候都不覆盖已有产物**。
+- **落点**：页面落**产物根** `<库目录>/<产物目录>`；`作息管家HELP` 落它的 `help` 子目录。`<库目录>`＝配置文件 `~/.ilife/schedule.yaml` 的 `db.dir`（空串＝数据目录 `~/.ilife/data/`）；`<产物目录>`＝同文件的 `html.dir`（默认 `schedule_html`，段间用 `/` 或 `\` 分隔），HELP 那一支＝`html.helpDir`（默认 `help`）。
+- **命名**：`〈主体〉_<YYYYMMDD_HHMMSS>[_N].html`。主体＝`作息管家_〈页名〉`，页名就是该命令的标题（今日作息／汇总作息／作息详情／作息对比／查日程／写计划／记作息）；HELP 的主体恒为 `作息管家_HELP`（老名字逐字不变；5 类别／34 唤醒词／85 场景，走共享 help 模板）。**同名不覆盖**：同一秒落第二份时递补 `_2`、`_3`……任何时候都不覆盖已有产物。
+- **产物是整页**：`<!DOCTYPE html>` 起、`</html>` 收；7 个命令页里放真内容（`<section data-skill="schedule"…`），`作息管家HELP` 是完整 HELP 壳页（载荷在 `<script id="help-data">`）。
+- **要现找才加参数**：`--params '{"q":"查作息"}'` 回命中条目（**按定义不落盘**：这一支顶层没有 `delivery`；`q` 留空＝走上面的文件交付那一支）。全量速查表读上「联动速查」块（48 条路由词，构建期注入，与 `q` 同一张表）。
+- **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）。8 个 key 都认它；`q` 支带上它写的是该键的分节页。
 - **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。
-- **看帮助不开库**：本键在开库之前分派，跑完不建 `schedule_data.db`（库还没建出来时也看得到帮助）；DB 文件已存在时，页首的首次使用横幅隐藏（判定只看文件在不在，不开库）。
+- **看帮助不开库**：`作息管家HELP` 在开库之前分派，跑完不建 `schedule_data.db`（库还没建出来时也看得到帮助）；DB 文件已存在时，页首的首次使用横幅隐藏（判定只看文件在不在，不开库）。
 - **边界**：面板／侧栏的 HELP 入口不在本技能范围（属插件侧那条线，见下「环境与出 scope」）。
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/schedule.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `schedule_data.db`）、产物目录＝`html.dir`（默认 `schedule_html/help`）。HELP 文件主体名回到代码常量（`作息管家_HELP`，#764 起不再是配置项）；飞书 CLI 不再是配置项（#764 起由设置页「飞书 CLI」状态行替代，只探测、不配置）。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/schedule.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `schedule_data.db`）、产物根目录＝`html.dir`（默认 `schedule_html`；页面落它下面）、HELP 子目录＝`html.helpDir`（默认 `help`）。HELP 文件主体名回到代码常量（`作息管家_HELP`，#764 起不再是配置项）；飞书 CLI 不再是配置项（#764 起由设置页「飞书 CLI」状态行替代，只探测、不配置）。飞书同步另须 lark-cli 四门全绿。取值面与环境项见 docs/env.md。
 - 出 scope：定时任务/早睡提醒（老家 Cron 已删，外部定时以外置为准）、面板（二期单 MAP）、本技能外联动（combos 登记走后续票）；语录取数（daily_recorder.db）以外置为准；真实数据禁迁，测试 tmp 隔离。

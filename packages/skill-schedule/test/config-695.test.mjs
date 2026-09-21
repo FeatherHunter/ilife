@@ -85,7 +85,8 @@ test('#695 ① 默认值表逐项等于改造前的代码常量（#764 起 files
   const d = SCHEDULE_CONFIG_DEFAULTS;
   assert.equal(d.db.dir, '', 'db.dir 空串＝按默认落点（数据目录），不是「没配」');
   assert.equal(d.db.name, 'schedule_data.db', '原 src/fetch/paths.ts 的 DB_FILENAME');
-  assert.equal(d.html.dir, 'schedule_html/help', '原 helpPaths.ts 的 HELP_HTML_DIR_PARTS 两段');
+  assert.equal(d.html.dir, 'schedule_html', '#843 起是产物**根**目录（页面落它下面）');
+  assert.equal(d.html.helpDir, 'help', '#843 起 HELP 是根下的一支：两键合起来＝原 HELP_HTML_DIR_PARTS 两级');
   assert.deepEqual(Object.keys(d).sort(), ['db', 'html'], '两组键，键表即设置页的行');
   assert.ok(!('files' in d) && !('lark' in d), 'files／lark 两组已出表');
   assert.deepEqual([...SCHEDULE_CONFIG_RETIRED].sort(), ['files.help', 'lark.cliPath'], '删掉的两键进退休清单');
@@ -143,7 +144,7 @@ test('#695 ② config.read/write/reset 走 CLI 真出口：shape／载荷／`.ba
 
 /* ─────────── ③ 配置真的进执行路径 ─────────── */
 
-test('#695 ③ db.dir／html.dir 指到别处：写命令与 HELP 产物落在新落点', () => {
+test('#695 ③ db.dir／html.dir 指到别处：写命令与 HELP 产物落在新落点（页面落根、HELP 落根下的一支）', () => {
   const cfg = mkCfg('path');
   const dbDir = join(cfg, 'other', 'db');
   const htmlDir = 'custom_html/manual';
@@ -158,10 +159,15 @@ test('#695 ③ db.dir／html.dir 指到别处：写命令与 HELP 产物落在�
   assert.equal(rec.env.shape, 'receipt');
   assert.equal(existsSync(join(dbDir, 'schedule_data.db')), true, '库落在配置给的 db.dir');
   assert.equal(existsSync(join(dataDirOf(cfg), 'schedule_data.db')), false, '默认数据目录里不落库');
+  // #843：写命令也缺省落盘，且页面落**产物根**（不进 help 支）。
+  assert.ok(rec.env.delivery, '写命令缺省即落盘（#843）');
+  assert.equal(dirname(rec.env.delivery.path), join(dbDir, 'custom_html', 'manual'),
+    '页面落配置给的产物根（html.dir 段串，两段）——与 HELP 那一支分家');
 
   const help = runOk(cfg, ['schedule.help.lookup']);
   const out = help.env.delivery.path;
-  assert.equal(dirname(out), join(dbDir, 'custom_html', 'manual'), 'HELP 落在配置给的 html.dir 段串下（两段）');
+  assert.equal(dirname(out), join(dbDir, 'custom_html', 'manual', 'help'),
+    'HELP 落在配置给的产物根（html.dir 段串，两段）下的 html.helpDir 一支');
   assert.match(basename(out), KEY_RE, '名字通式不变：' + basename(out));
   assert.equal(existsSync(out), true);
   console.log('#695 ③ 读数：db=' + join(dbDir, 'schedule_data.db') + ' help=' + out);

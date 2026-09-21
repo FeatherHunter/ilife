@@ -107,9 +107,10 @@ test('#203 ① 缺省＝HELP 文件：作息管家_HELP_<TS>.html 落 schedule_h
   assert.equal(dl.mode, 'file');
 
   const out = dl.path;
+  const pagesRoot = join(dataDirOf(dir), 'schedule_html');
   assert.ok(isAbsolute(out), 'delivery.path 须绝对路径：' + out);
-  assert.equal(dirname(out), join(dataDirOf(dir), 'schedule_html', 'help'), '落 <数据目录>/schedule_html/help/');
-  assert.equal(basename(dirname(dirname(out))), 'schedule_html');
+  assert.equal(dirname(out), join(pagesRoot, 'help'), '落 <数据目录>/schedule_html/help/');
+  assert.equal(dirname(dirname(out)), pagesRoot, '产物根＝<数据目录>/schedule_html（#843 起页面落它下面）');
   assert.match(basename(out), NAME_RE, '老通式命名（t198 第四节）：' + basename(out));
   assert.equal(basename(out).includes('help_center'), false, '不得混进老技能那份独立页面');
   assert.ok(existsSync(out), '产物须真实落盘');
@@ -248,7 +249,7 @@ test('#203 ⑨ 写失败不静默降级：exit 5 ＋ stderr 结构化错误、st
   const r = run(dir, ['schedule.help.lookup', '--html', asDir]);
   assert.equal(r.status, 5, '落盘失败＝exit 5（stderr：' + r.stderr + '）');
   assert.equal(r.stdout, '', '失败时 stdout 不吐任何 JSON（不假装成功）');
-  assert.match(r.stderr, /HELP 落盘失败/, 'stderr 须是结构化失败回执');
+  assert.match(r.stderr, /HTML 落盘失败/, 'stderr 须是结构化失败回执');
   assert.match(r.stderr, /EISDIR|EPERM|EACCES/, 'stderr 须保留系统错误码（不吞原始成因）');
   assert.equal(existsSync(join(dataDirOf(dir), 'schedule_html')), false, '失败时不得另找落点、不得静默换形态');
 });
