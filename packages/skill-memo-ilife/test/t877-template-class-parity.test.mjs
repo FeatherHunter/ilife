@@ -106,4 +106,22 @@ describe('#877 模板 CSS 与公共层产出件类名一致', () => {
     // 注入资产的样式表里必须有 ilife-empty 的样式（否则规则再对也是空壳）。
     assert.ok(assets.sharedCssText.includes('.ilife-empty'), '公共层样式表应含 .ilife-empty 的样式');
   });
+
+  it('同族第二模板（change_category）：空分支落进栅格的那一层，必须自己带跨列规则', () => {
+    // `change_category.html` 的空分支写的是 `list.innerHTML = '<div class="panel">' + emptyState({…}) + '</div>'`
+    // —— 落进 `#noteList` 栅格的**分栏项是那层 `.panel`，不是空卡本身**。故跨列必须挂在 `.panel` 上：
+    // 只给 `.ilife-empty` 挂 `grid-column` 是空转（空卡是 `.panel` 的子元素，不参与外层栅格定位）。
+    // 实测（#877 复核）：撤掉那条 `.panel` 规则，空卡在 1280 档只占 419px（版心 936），桌面档就是半个卡。
+    const catText = loadTemplate('change_category');
+    const catCss = withoutComments(templateOwnCss(catText));
+    // ① 空分支里 first child 那一层是什么类名 —— 从模板源码里读，不手抄。
+    const branch = /if\(!items\(\)\.length\)\{list\.innerHTML='([^']*)'/.exec(catText);
+    assert.ok(branch, 'change_category 模板里应有空分支（`if(!items().length){list.innerHTML=…}`）');
+    const outerCls = /^<div class="([^"]+)"/.exec(branch[1]);
+    assert.ok(outerCls, '空分支的第一层应是带 class 的容器：' + branch[1].slice(0, 80));
+    // ② 模板 CSS 里必须有一条以「#noteList > 那一层」为主体的规则，且含 grid-column 跨列。
+    const sel = new RegExp('#noteList\\s*>\\s*\\.' + outerCls[1] + '\\b[^{}]*\\{[^}]*grid-column\\s*:\\s*1\\s*\\/\\s*-1');
+    assert.match(catCss, sel,
+      '空分支的分栏项是 `.' + outerCls[1] + '`，模板 CSS 须给它挂 `grid-column:1/-1`（否则桌面档空卡只占半列）');
+  });
 });

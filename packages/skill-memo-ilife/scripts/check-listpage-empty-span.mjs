@@ -119,15 +119,23 @@ const PROBE = `(function () {
   var r = ref ? ref.getBoundingClientRect() : null;
   var cs = getComputedStyle(empty);
   var g = list.getBoundingClientRect();
+  var kids = Array.prototype.slice.call(list.children);
+  var firstGcs = kids.length ? getComputedStyle(kids[0]).gridColumnStart : null;
+  var colStr = cs2(list);
+  // 数格子用正则数（'px' 出现次数）：**不用 split / filter** —— 页面脚本里有同名标识符会把这些数组方法遮住，
+  // 实测被遮住后 filter 不生效、列数恒为 1，两列档被误判成单列档（判据静默失效）。
+  var colCount = (String(colStr).match(/px/g) || []).length;
+  var twoCol = colCount > 1;
   function cs2(el) { return getComputedStyle(el).gridTemplateColumns; }
   return {
     state: 'ok',
     gridColumnStart: cs.gridColumnStart, gridColumnEnd: cs.gridColumnEnd,
+    twoCol: twoCol, colCount: colCount, firstChildGridColumnStart: firstGcs,
     cardW: Math.round(e.width), cardLeft: Math.round(e.left), cardRight: Math.round(e.right),
     panelW: r ? Math.round(r.width) : null, panelLeft: r ? Math.round(r.left) : null, panelRight: r ? Math.round(r.right) : null,
     listW: Math.round(g.width), innerWidth: window.innerWidth,
     docScrollWidth: document.documentElement.scrollWidth,
-    twoCol: cs2(list) };
+    cols: colStr };
 }())`;
 
 const devUrl = await devtoolsUrl();
@@ -169,6 +177,7 @@ for (const file of files) {
   }
   await sleep(180);
   const probe = await evaluate(PROBE);
+  if (process.env.T877_DUMP === '1') console.log('  DEBUG probe=' + JSON.stringify(probe));
   row.probe = probe;
   if (probe.state === 'no-list') { row.state = '无 #list'; row.verdict = 'NA 不适用'; rows.push(row); console.log('  ' + name + '  NA 不适用（无 #list）'); continue; }
   if (probe.state === 'no-empty') {
@@ -179,19 +188,38 @@ for (const file of files) {
     continue;
   }
   applicable += 1;
+  const twoCol = probe.twoCol === true;
+  const colCount = probe.colCount;
   const rightGap = probe.panelRight === null ? null : probe.panelRight - probe.cardRight;
-  const spanOk = String(probe.gridColumnStart) === '1' && String(probe.gridColumnEnd) === '-1';
-  const gapOk = rightGap !== null && Math.abs(rightGap) <= 1;
+  // 行判据分两档（**只看这一档算得出的那条**，别把虚条件当判据）：
+  //   两列档（>820px，本票的病就长在这儿）：须跨满两列（`gridColumn:1/-1`）且右缘对齐基准面板；
+  //   单列档（≤820px，`#list` 已塌成一列）：`1/-1` 在单列里恒成立＝**虚条件**，只判右缘对齐。
+  // 右缘判据另加守卫：基准面板须与 `#list` 同宽（同一版心）才可用——不同宽时判据不成立，报 NA，不产假红/假绿。
+  const colsSingle = colCount === 1;
+  const colsTwo = colCount === 2;
+  const sameWidth = probe.panelW !== null && Math.abs(probe.panelW - probe.listW) <= 1;
+  const spanOk = twoCol ? (String(probe.gridColumnStart) === '1' && String(probe.gridColumnEnd) === '-1') : true;
+  const gapOk = sameWidth && rightGap !== null && Math.abs(rightGap) <= 1;
   const ok = spanOk && gapOk;
   row.state = '空态件在位';
   row.verdict = ok ? 'PASS' : 'FAIL';
-  row.metrics = { gridColumnStart: probe.gridColumnStart, gridColumnEnd: probe.gridColumnEnd, cardW: probe.cardW, panelW: probe.panelW, rightGap, listW: probe.listW, twoCol: probe.twoCol };
+  row.metrics = {
+    gridColumnStart: probe.gridColumnStart, gridColumnEnd: probe.gridColumnEnd,
+    twoCol, colCount, firstChildGridColumnStart: probe.firstChildGridColumnStart,
+    cardW: probe.cardW, panelW: probe.panelW, rightGap, listW: probe.listW, cols: probe.cols,
+  };
   if (!ok) bad += 1;
+  const why = [
+    twoCol && !spanOk && colsTwo ? '两列档未跨满两列' : '',
+    !sameWidth ? '基准面板与 #list 不同宽（' + probe.panelW + '≠' + probe.listW + '）⇒ 右缘判据不成立' : '',
+    sameWidth && !gapOk ? '右缘未对齐' : '',
+    !colsSingle && !colsTwo ? '栅格列数与两档都不符（' + colCount + ' 列：' + probe.cols + '）' : '',
+  ].filter((x) => x !== '').join('；');
   console.log('  ' + name + '  ' + (ok ? 'PASS' : 'FAIL')
-    + '  gridColumn=' + probe.gridColumnStart + '/' + probe.gridColumnEnd
+    + '  ' + (twoCol ? '两列档' : '单列档') + '  gridColumn=' + probe.gridColumnStart + '/' + probe.gridColumnEnd
     + '  卡宽=' + probe.cardW + ' 版心宽=' + probe.panelW + ' 右缝=' + rightGap
-    + '  #list宽=' + probe.listW + ' 列=' + probe.twoCol
-    + (spanOk ? '' : '  ✗ 未跨满两列') + (gapOk ? '' : '  ✗ 右边缘未对齐'));
+    + '  #list宽=' + probe.listW + ' 列=' + probe.cols
+    + (why === '' ? '' : '  ✗ ' + why));
   rows.push(row);
 }
 writeFileSync(JSON_OUT === '' ? join(ROOT, '.scratch', 't877-' + LABEL + '.json') : resolve(JSON_OUT), JSON.stringify({ label: LABEL, width: WIDTH, browser: BROWSER, rows }, null, 2), 'utf8');

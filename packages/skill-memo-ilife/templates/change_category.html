@@ -29,8 +29,14 @@ select{border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-siz
 .note{background:var(--card);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .15s,opacity .15s}
 #noteList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
 #noteList .note{margin:0;padding:14px;display:flex;flex-direction:column;height:100%}
-/* 空态件由公共层给（`ilife-empty-*`）；本页空分支把空卡包在 `.panel` 里，分栏项是那层 panel，
-   故本规则当前不参与版面，只作类名一致性的留档（#877 同源收口）。 */
+/* 空态件由公共层给（`ilife-empty-*`）。本页空分支的形状是
+   `list.innerHTML = '<div class="panel">' + window.emptyState({…}) + '</div>'`
+   ⇒ **落进 `#noteList` 栅格的分栏项是那层 `.panel`，不是空卡本身**，故跨列要挂在 `.panel` 上；
+   只给 `.ilife-empty` 挂 `grid-column` 是空转（空卡是 `.panel` 的子元素，不参与外层栅格定位）。
+   **实测**（#877 复核）：撤掉这条 `.panel` 规则，1280 档 `#noteList` 宽 936、空卡只占 419px（半个卡）；
+   挂上后分栏项 936＝整行、空卡 892px。两条都留着：`.panel` 那条管本页当前形状，
+   `.ilife-empty` 那条管将来空卡直接落进栅格的情形。 */
+#noteList > .panel,
 #noteList .ilife-empty{grid-column:1/-1}
 #noteList .note-head{flex-wrap:nowrap;gap:6px;margin-bottom:8px;align-items:flex-start}
 #noteList .note-id{font-size:13px;min-width:0;white-space:nowrap}
