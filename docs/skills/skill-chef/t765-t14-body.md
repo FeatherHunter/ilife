@@ -37,6 +37,19 @@
 
 - 若裁「改 schema」→ 当场立 schema 票并标出图范围（本图只做技能侧）。
 
-## 进度：0%
+## 定案
 
-下一步：等维护者裁这三列的处置，再回写三张票。
+逐列独立审查、结论同为甲（必填拦下补齐；审查过程是丁，结果收敛为甲；丙只出图不做）。
+
+- quantity（ingredients.quantity REAL NOT NULL）：写侧必填数字；缺值取数层抛 CHEF_BAD_QUERY（CLI exit 4），不写半条脏数据；AI 问用户补齐后重试（适量请同时给估计数＋quantity_text，如 quantity=5＋quantity_text=少许约5g）。查询侧直接显示数字＋quantity_text，无特殊值。页面：录入/修改表单该项标红必补，缺失时确认按钮置灰（照录入域 G2 校验前置一次列全）。
+- duration_minutes（cooking_steps.duration_minutes INTEGER NOT NULL）：写侧必填数字；缺值同上拦下补齐。查询侧直接显示分钟数。页面同上标红必补。
+- rating（recipe_history.rating REAL NOT NULL）：写侧必填 0-5 数字；缺评分不写历史，直接拦下问用户要分（卡面“选填”暂按“必填”执行；HELP 资产禁手改，本次不改 sceneData.ts，文字差以后随 schema 票改回）。查询侧 AVG 直接算，无剔除。页面：记录做菜缺评分走失败回执＋重试。
+
+逐卡：update_ingredient（改用量须给数字；添加食材须给数字＋文字；关联步骤本期不开）；record_cook（缺评分不写）；add_from_image/markdown/conversation/template＋import_from_json/validation_failed（写入前强制每食材有数字 quantity、每步骤有数字 duration，缺就向用户要；维度表本期不写）；derive_from_existing（继承须带数字，母本字段天然完整，用户改空走红必补）。
+
+对抗摘要：乙（库内特殊值）污染 AVG/显示、与老对照不一致，出局；丙（改 schema）与本次不改冲突，只记远期建议（放开三列可空，让未评分与 0 分可区分），本次不立票。实现：src/fetch/db.ts 三处收紧（addIngredient/addStep/recordHistory）＋ test 反例；新库 15/15 通过，副本老库实测缺值 CHEF_BAD_QUERY、带值可写。
+
+
+## 进度：95%
+
+下一步：待用户终审本定案＋三票正文回写效果，确认后关票（未确认不得 close）。

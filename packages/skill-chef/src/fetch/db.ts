@@ -174,6 +174,7 @@ export function openChefDb(dbPath: string): ChefDb {
   try {
     db.exec('PRAGMA journal_mode=WAL');
     db.exec('PRAGMA busy_timeout=5000');
+    db.exec('PRAGMA foreign_keys=ON');
     let existed = false;
     try {
       const row = (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='recipes'") as unknown as { get: () => unknown }).get();
@@ -234,7 +235,9 @@ export function addIngredient(h: ChefDb, recipeIdOrParams: string | Record<strin
   const id = randomUUID();
   const qtyRaw = (params as Record<string, unknown>).quantity;
   const qtyNum = qtyRaw === undefined || qtyRaw === null || qtyRaw === '' ? null : Number(qtyRaw);
-  const qty = qtyNum === null || Number.isNaN(qtyNum) ? null : qtyNum;
+  // 818 定案（甲）：老库 quantity REAL NOT NULL，本次不改 schema，缺值不插 NULL，直接拦下让 AI 问用户补齐。
+  if (qtyNum === null || Number.isNaN(qtyNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给数字用量 quantity（老库 NOT NULL；适量请同时给估计数＋quantity_text）');
+  const qty = qtyNum;
   const isOptRaw = (params as Record<string, unknown>).is_optional;
   const isOpt = isOptRaw === true || isOptRaw === 1 || isOptRaw === '1' ? 1 : 0;
   try {
@@ -263,7 +266,9 @@ export function addStep(h: ChefDb, recipeIdOrParams: string | Record<string, unk
   const id = randomUUID();
   const durRaw = (params as Record<string, unknown>).duration_minutes;
   const durNum = durRaw === undefined || durRaw === null || durRaw === '' ? null : Number(durRaw);
-  const dur = durNum === null || Number.isNaN(durNum) ? null : durNum;
+  // 818 定案（甲）：老库 duration_minutes INTEGER NOT NULL，本次不改 schema，缺值不插 NULL，直接拦下让 AI 问用户补齐。
+  if (durNum === null || Number.isNaN(durNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给数字时长 duration_minutes（老库 NOT NULL；缺时长请问用户补齐）');
+  const dur = durNum;
   try {
     qRun(h, 'INSERT INTO cooking_steps (id, recipe_id, sequence, action, duration_minutes, heat_level, temperature, expected_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
       id, recipeId, seq, action, dur, String(params.heat_level ?? ''), String(params.temperature ?? ''), String(params.expected_result ?? ''),
@@ -359,9 +364,12 @@ export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: nu
   const recipe = mustRecipe(h, rid);
   let rating: number | null = null;
   const rawRt = (input as Record<string, unknown>).rating;
-  if (rawRt !== undefined && rawRt !== null && rawRt !== '') {
+  // 818 定案（甲）：老库 rating REAL NOT NULL，本次不改 schema；卡面“选填”暂改“必填”，缺评分不写历史，直接拦下。
+  if (rawRt === undefined || rawRt === null || rawRt === '') throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给评分 rating（0-5 数字；老库 NOT NULL，未评分请先问用户要分）');
+  {
     const n = typeof rawRt === 'string' ? Number(String(rawRt).trim()) : rawRt;
     if (typeof n !== 'number' || !Number.isFinite(n)) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须为数字');
+    if (n < 0 || n > 5) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须在 0-5 内');
     rating = n as number;
   }
   const cookDate = typeof input.cook_date === 'string' && input.cook_date.trim() ? input.cook_date.trim() : today();

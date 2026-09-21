@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>818 第一轮 grilling · 三个树根决策</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2329;--mut:#666;--line:#e5e7eb;--blue:#1d76db;--amber:#b45309;--green:#067647;--red:#b42318;--amberbg:#fffbeb;--bluebg:#eff6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+.hero{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+.hero h1{margin:0 0 6px;font-size:21px}.hero .sub{color:var(--mut);font-size:13.5px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:#f9fafb}
+.badge.hot{background:#fef2f2;border-color:#fecaca;color:var(--red);font-weight:700}
+.badge.lock{background:var(--bluebg);border-color:#bfdbfe;color:#1e40af}
+.facts{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.facts h2,.card h2{font-size:16px;margin:0 0 10px}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--mut);white-space:nowrap}.kv dd{margin:0}
+code{background:#f3f4f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px;font-family:Consolas,monospace}
+.warn{background:var(--amberbg);border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:12px}
+.warn b{color:var(--amber)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card.q{border-top:5px solid var(--blue)}
+.qhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.qno{background:var(--blue);color:#fff;font-weight:800;border-radius:8px;padding:2px 10px;font-size:14px}
+.qhead h2{font-size:16.5px;margin:0}
+.why{color:var(--mut);font-size:13.5px;margin:0 0 10px}
+.opts{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:10px 0}
+.opt{padding:10px 12px;font-size:14px}.opt+.opt{border-top:1px solid var(--line)}
+.opt b{display:block;margin-bottom:2px}
+.rec{background:var(--bluebg);border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-top:10px}
+.rec .tag{display:inline-block;background:var(--blue);color:#fff;font-size:12.5px;font-weight:700;border-radius:6px;padding:2px 8px;margin-bottom:6px}
+.proscons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.pros,.cons{border-radius:10px;padding:10px 12px;font-size:13.5px}
+.pros{background:#ecfdf5;border:1px solid #a7f3d0}.cons{background:#fef2f2;border:1px solid #fecaca}
+.pros b{color:var(--green)}.cons b{color:var(--red)}
+.pros ul,.cons ul{margin:6px 0 0;padding-left:18px}
+.foot{background:var(--card);border:1px dashed #c7cdd5;border-radius:12px;padding:14px 18px;font-size:13.5px;color:var(--mut)}
+@media(max-width:640px){.proscons{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.kv dt{margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+<h1>818 第一轮 grilling · 先钉三个树根</h1>
+<div class="sub">【裁定】老库三条 NOT NULL 与卡面「选填」的冲突：9 张卡怎么落 · <code>FeatherHunter/ilife#818</code></div>
+<div class="badges"><span class="badge hot">进度 0% · 未定案，不写回 issue</span><span class="badge lock">边界：不改老库 · 不改 schema · 只用副本</span></div>
+</div>
+
+<div class="facts">
+<h2>前因后果（30 秒抓住）</h2>
+<dl class="kv">
+<dt>冲突</dt><dd>老库三列全 <code>NOT NULL</code>：<code>ingredients.quantity</code> ／ <code>cooking_steps.duration_minutes</code> ／ <code>recipe_history.rating</code>；卡面却写“用量/时长/评分可不填”。副本库实测：缺值写入直接抛 <code>IntegrityError</code>。</dd>
+<dt>堵住谁</dt><dd>9 张卡写不进去（修改 1 张 · 历史 1 张 · 录入 6 张 · 派生 1 张），连带挡住纵向票 #773 录入 / #774 修改 / #775 历史 / #776 小域合并。</dd>
+<dt>目标</dt><dd>逐列（3 列）+ 逐卡（9 张）定案：缺值时落库存什么、查询侧怎么显示、页面怎么写。</dd>
+<dt>证据</dt><dd><code>docs/skills/skill-chef/t769-写侧字段对账.md §3.1</code>（三条报错原文 + 9 张卡点名）。</dd>
+</dl>
+<div class="warn"><b>用词先统一：</b>本页不用“哨兵”（仓内它另有含义），一律写<b>未填替代值</b> = 库里存一个正常范围外的值代表“用户没填”，查询侧负责认出它。本轮只确认“这个方向值不值得谈”，<b>不定具体存什么数</b>。</div>
+</div>
+
+<div class="card q">
+<div class="qhead"><span class="qno">Q1</span><h2>边界：Q4“本次不改 schema”还是不是铁律？</h2></div>
+<p class="why">为什么先问它：若铁律还在，丙选项（把三列改成可空并迁移老库）本轮只能“立票出图”，不能当场做；若松动，整个裁定走向全变。</p>
+<div class="opts">
+<div class="opt"><b>A · 还是铁律（推荐）</b>丙只能当场立 schema 票，本票只在甲 / 乙 / 分列里选。</div>
+<div class="opt"><b>B · 可以松动</b>本票直接裁“改三列为可空并迁移老库”。</div>
+</div>
+<div class="rec"><span class="tag">➡️ 推荐 A</span><br>818 与 #773/#774/#775 正文都写了“不改 schema”，推翻会掀翻四张纵向票的前提；真要改也该走“立票出图”的口子。
+<div class="proscons"><div class="pros"><b>选 A · 利</b><ul><li>纵向票前提不塌，可继续并行</li><li>风险最小，不碰老库文件</li></ul></div><div class="cons"><b>选 A · 弊</b><ul><li>“未填”只能用替代值或改必填，将就</li></ul></div></div>
+<div class="proscons"><div class="pros"><b>选 B · 利</b><ul><li>最干净，“未填”如实存可空</li></ul></div><div class="cons"><b>选 B · 弊</b><ul><li>要重建表搬数据，老库 17 表全受影响</li><li>与 Q4 裁定正面冲突，需先翻案</li></ul></div></div>
+</div>
+</div>
+
+<div class="card q">
+<div class="qhead"><span class="qno">Q2</span><h2>粗细程度：一刀切还是按列分别裁？</h2></div>
+<p class="why">为什么问它：评分的“未填”和用量/时长的“未填”语义完全不同 —— <code>0 分是合法评分</code>，<code>0 数量 / 0 分钟</code>也有歧义。一刀切很可能带偏某一列。</p>
+<div class="opts">
+<div class="opt"><b>A · 按列分别裁（推荐，丁）</b><code>quantity</code> / <code>duration_minutes</code> / <code>rating</code> 各自独立选甲或乙。</div>
+<div class="opt"><b>B · 必须统一</b>三列同选甲或同选乙。</div>
+</div>
+<div class="rec"><span class="tag">➡️ 推荐 A</span><br>三列的查询侧用法不同：rating 要进 <code>AVG</code> 聚合，quantity/duration 只进显示。分开裁才能给 rating 更严的口子。
+<div class="proscons"><div class="pros"><b>选 A · 利</b><ul><li>每列按真实语义给最合适的落法</li><li>统计污染可逐列隔离</li></ul></div><div class="cons"><b>选 A · 弊</b><ul><li>要定三遍，讨论多一轮</li></ul></div></div>
+<div class="proscons"><div class="pros"><b>选 B · 利</b><ul><li>一次定完，最省事</li></ul></div><div class="cons"><b>选 B · 弊</b><ul><li>rating 极易被带偏：0 分 vs 未填撞车</li></ul></div></div>
+</div>
+</div>
+
+<div class="card q">
+<div class="qhead"><span class="qno">Q3</span><h2>方向：接不接受“未填替代值”这个谈法？</h2></div>
+<p class="why">为什么问它：乙的本质是“库里存特殊值代表没填，查询侧/统计侧认出它并剔除或换显示”，而不是存 NULL。本轮只确认方向，<b>具体存几、AVG 剔不剔、页面显示什么留到下一轮逐列烤</b>。</p>
+<div class="opts">
+<div class="opt"><b>A · 接受方向（推荐）</b>进入下一轮逐列定具体值（存什么 / 谁来剔 / 显示什么）。</div>
+<div class="opt"><b>B · 不接受</b>乙直接出局，只在“页面改必填 vs 改 schema”里选。</div>
+</div>
+<div class="rec"><span class="tag">➡️ 推荐 A</span><br>不接受乙就只剩“全改必填”（体验倒退）或“改 schema”（掀 Q4）。先留着乙谈具体值，谈不拢再毙掉也不迟。
+<div class="proscons"><div class="pros"><b>选 A · 利</b><ul><li>卡面“选填”不用全改必填</li><li>不碰 schema，边界内可解</li></ul></div><div class="cons"><b>选 A · 弊</b><ul><li>替代值会污染直接聚合，必须写进口径</li><li>逐列定值多一轮讨论</li></ul></div></div>
+<div class="proscons"><div class="pros"><b>选 B · 利</b><ul><li>口径最简单，无污染风险</li></ul></div><div class="cons"><b>选 B · 弊</b><ul><li>9 张卡的“选填”全改“必填”，用户多填 3 个数</li></ul></div></div>
+</div>
+</div>
+
+<div class="foot">下一步：你回 Q1–Q3（可只回 A/B），我按你的结论算第二轮 frontier —— 逐列定“落库存什么、查询侧怎么认、页面怎么写”。在你确认最终结论前，不写 818 正文、不回写 #773/#774/#775。</div>
+
+</div>
+</body>
+</html>

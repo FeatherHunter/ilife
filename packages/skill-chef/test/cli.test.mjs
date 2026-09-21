@@ -33,8 +33,8 @@ const P = (o) => JSON.stringify(o);
 before(() => {
   CFG = mkdtempSync(join(tmpdir(), 'chefcli-'));
   DB = join(configDirOf(CFG), 'data');
-  assert.equal(run(['chef.recipe.write', '--params', P({ name: '宫保虾球', difficulty: '中等', servings: 2, ingredients: [{ name: '虾仁', category: '海鲜', quantity_text: '300克' }], steps: [{ action: '滑油', heat_level: '大火' }] })]).status, 0);
-  assert.equal(run(['chef.recipe.write', '--params', P({ name: '麻婆豆腐', difficulty: '简单', servings: 2, ingredients: [{ name: '嫩豆腐', category: '豆制品', quantity_text: '400克' }], steps: [{ action: '焯水', heat_level: '中火' }] })]).status, 0);
+  assert.equal(run(['chef.recipe.write', '--params', P({ name: '宫保虾球', difficulty: '中等', servings: 2, ingredients: [{ name: '虾仁', category: '海鲜', quantity: 300, unit: '克', quantity_text: '300克' }], steps: [{ action: '滑油', heat_level: '大火', duration_minutes: 3 }] })]).status, 0);
+  assert.equal(run(['chef.recipe.write', '--params', P({ name: '麻婆豆腐', difficulty: '简单', servings: 2, ingredients: [{ name: '嫩豆腐', category: '豆制品', quantity: 400, unit: '克', quantity_text: '400克' }], steps: [{ action: '焯水', heat_level: '中火', duration_minutes: 2 }] })]).status, 0);
 });
 
 describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
@@ -119,9 +119,19 @@ describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(run(['chef.recipe.search', '--params', P({ cuisine: '川菜', difficulty: '中等' })]).status, 0);
     assert.equal(run(['chef.recipe.search', '--params', P({ maxTime: 60 })]).status, 0);
     // add-ingredient 归一：水产→海鲜落地。
-    assert.equal(run(['chef.recipe.write', '--params', P({ op: 'add-ingredient', recipe_name: '宫保虾球', name: '带鱼', category: '水产', quantity_text: '200克' })]).status, 0);
+    assert.equal(run(['chef.recipe.write', '--params', P({ op: 'add-ingredient', recipe_name: '宫保虾球', name: '带鱼', category: '水产', quantity: 200, unit: '克', quantity_text: '200克' })]).status, 0);
     const v2 = JSON.parse(run(['chef.recipe.view', '--params', P({ name: '宫保虾球' })]).stdout);
     assert.ok(v2.data.item.ingredients.some((x) => x.name === '带鱼' && x.category === '海鲜'));
+  });
+  it('818：三列缺值响亮失败，不写脏数据', () => {
+    // 缺 quantity → exit4；缺 duration → exit4；缺 rating → exit4；且 view 读回无新增脏行。
+    const before = JSON.parse(run(['chef.recipe.view', '--params', P({ name: '宫保虾球' })]).stdout).data.item;
+    const nIng = before.ingredients.length;
+    assert.equal(run(['chef.recipe.write', '--params', P({ op: 'add-ingredient', recipe_name: '宫保虾球', name: '缺量食材', category: '蔬菜', quantity_text: '适量' })]).status, 4);
+    assert.equal(run(['chef.recipe.write', '--params', P({ op: 'add-step', recipe_name: '宫保虾球', action: '缺时长装盘' })]).status, 4);
+    assert.equal(run(['chef.history.record', '--params', P({ name: '宫保虾球', feedback: '缺评分测试' })]).status, 4);
+    const after = JSON.parse(run(['chef.recipe.view', '--params', P({ name: '宫保虾球' })]).stdout).data.item;
+    assert.equal(after.ingredients.length, nIng, '缺值写入不得落半条脏数据');
   });
   it('契约：未知 key 3 且 stdout 空；坏参 2；坏配置 1；空结果 4；--html 落盘', () => {
     const k = run(['chef.nope']);

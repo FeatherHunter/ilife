@@ -83,6 +83,11 @@ describe('私家大厨取数 fetch', () => {
     assert.equal(st.count, 2);
     assert.equal(st.avgRating, 4.5);
   });
+  it('818：三列缺值在取数层直接拦下（老库 NOT NULL，本次不改 schema）', () => {
+    assert.throws(() => addIngredient(H, gongbaoId, { name: '缺量', category: '蔬菜' }), /数字用量 quantity/);
+    assert.throws(() => addStep(H, gongbaoId, { action: '缺时长' }), /数字时长 duration_minutes/);
+    assert.throws(() => recordHistory(H, { recipe_id: gongbaoId, feedback: '缺评分' }), /须给评分 rating/);
+  });
   it('采购合并：同食材跨菜累加', () => {
     const list = buildShoppingList(H, ['宫保虾球', '麻婆豆腐']);
     const shrimp = list.find((x) => x.name === '虾仁');
