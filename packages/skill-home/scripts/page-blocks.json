@@ -1,14 +1,4302 @@
 {
   "version": 1,
-  "note": "票 #803 首版：只登记现状骨架可机检块（渲染管线的结构事实）。域必需块（每族字段／操作，事实源 docs/skills/skill-home/pages-ledger.md）待票 8（#805）骨架登记 scripts/lib/page-blocks.mjs 出来后扩进本件：只加 pages[] 条目，不改 checker。kind 只三种：substr（必须出现）／regexp（必须命中）／absent（必须不出现）。",
+  "note": "票 #803 领域半段（2026-09-21 派生）：pages[] 46 族 755 块由契约附录派生（docs/skills/skill-home/scene-pages-contract.appendix.json，families 46／scenarios 70），pattern 匹配产物命名“_<场景id>_”段；defaults 7 条骨架块不动；checker 不用改。附录变更后重跑 node .scratch/803-expand-pages.mjs 再跑结构门。",
   "defaults": [
-    { "id": "doc-doctype", "kind": "substr", "value": "<!DOCTYPE html>" },
-    { "id": "doc-lang", "kind": "regexp", "value": "<html lang=\"zh-CN\">" },
-    { "id": "shell-page", "kind": "substr", "value": "class=\"page\"" },
-    { "id": "page-title", "kind": "regexp", "value": "<h1[^>]*>.+?</h1>" },
-    { "id": "cmd-line", "kind": "substr", "value": "class=\"cmd\"" },
-    { "id": "content-filled", "kind": "absent", "value": "<!--CONTENT-->" },
-    { "id": "css-inlined", "kind": "regexp", "value": "<style>[^<]*\\.page\\{" }
+    {
+      "id": "doc-doctype",
+      "kind": "substr",
+      "value": "<!DOCTYPE html>"
+    },
+    {
+      "id": "doc-lang",
+      "kind": "regexp",
+      "value": "<html lang=\"zh-CN\">"
+    },
+    {
+      "id": "shell-page",
+      "kind": "substr",
+      "value": "class=\"page\""
+    },
+    {
+      "id": "page-title",
+      "kind": "regexp",
+      "value": "<h1[^>]*>.+?</h1>"
+    },
+    {
+      "id": "cmd-line",
+      "kind": "substr",
+      "value": "class=\"cmd\""
+    },
+    {
+      "id": "content-filled",
+      "kind": "absent",
+      "value": "<!--CONTENT-->"
+    },
+    {
+      "id": "css-inlined",
+      "kind": "regexp",
+      "value": "<style>[^<]*\\.page\\{"
+    }
   ],
-  "pages": []
+  "pages": [
+    {
+      "family": "add_form",
+      "domain": "items",
+      "scenarios": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "3-1"
+      ],
+      "pattern": "_(1-1|1-2|1-3|1-4|3-1)_",
+      "blocks": [
+        {
+          "id": "add_form:fields:0",
+          "kind": "substr",
+          "value": "名称*"
+        },
+        {
+          "id": "add_form:fields:1",
+          "kind": "substr",
+          "value": "分类*"
+        },
+        {
+          "id": "add_form:fields:2",
+          "kind": "substr",
+          "value": "数量"
+        },
+        {
+          "id": "add_form:fields:3",
+          "kind": "substr",
+          "value": "位置（选填）"
+        },
+        {
+          "id": "add_form:fields:4",
+          "kind": "substr",
+          "value": "状态"
+        },
+        {
+          "id": "add_form:fields:5",
+          "kind": "substr",
+          "value": "价格（选填）"
+        },
+        {
+          "id": "add_form:fields:6",
+          "kind": "substr",
+          "value": "购买日期"
+        },
+        {
+          "id": "add_form:fields:7",
+          "kind": "substr",
+          "value": "过期日期"
+        },
+        {
+          "id": "add_form:fields:8",
+          "kind": "substr",
+          "value": "录入日期（补录）"
+        },
+        {
+          "id": "add_form:fields:9",
+          "kind": "substr",
+          "value": "标签（逗号分隔）"
+        },
+        {
+          "id": "add_form:fields:10",
+          "kind": "substr",
+          "value": "备注"
+        },
+        {
+          "id": "add_form:fields:11",
+          "kind": "substr",
+          "value": "分区「分类分布」"
+        },
+        {
+          "id": "add_form:operations:0",
+          "kind": "substr",
+          "value": "确认写入／确认变更（按mode）"
+        },
+        {
+          "id": "add_form:operations:1",
+          "kind": "substr",
+          "value": "全部确认（N条）"
+        },
+        {
+          "id": "add_form:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "add_form:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "add_form:empty:0",
+          "kind": "substr",
+          "value": "空态：无（表单页）"
+        },
+        {
+          "id": "add_form:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "add_form:empty:2",
+          "kind": "substr",
+          "value": "必填项标*做空值拦截"
+        },
+        {
+          "id": "add_form:status:0",
+          "kind": "substr",
+          "value": "在家"
+        },
+        {
+          "id": "add_form:status:1",
+          "kind": "substr",
+          "value": "备用"
+        },
+        {
+          "id": "add_form:status:2",
+          "kind": "substr",
+          "value": "穿着中"
+        },
+        {
+          "id": "add_form:status:3",
+          "kind": "substr",
+          "value": "旅游中"
+        },
+        {
+          "id": "add_form:status:4",
+          "kind": "substr",
+          "value": "洗护中"
+        },
+        {
+          "id": "add_form:status:5",
+          "kind": "substr",
+          "value": "借用中"
+        },
+        {
+          "id": "add_form:status:6",
+          "kind": "substr",
+          "value": "维修中"
+        },
+        {
+          "id": "add_form:status:7",
+          "kind": "substr",
+          "value": "已用完"
+        },
+        {
+          "id": "add_form:status:8",
+          "kind": "substr",
+          "value": "快递中"
+        },
+        {
+          "id": "add_form:status:9",
+          "kind": "substr",
+          "value": "待处理"
+        },
+        {
+          "id": "add_form:status:10",
+          "kind": "substr",
+          "value": "已废弃"
+        },
+        {
+          "id": "add_form:status:11",
+          "kind": "substr",
+          "value": "找不到"
+        }
+      ]
+    },
+    {
+      "family": "search_list",
+      "domain": "items",
+      "scenarios": [
+        "2-1",
+        "2-5"
+      ],
+      "pattern": "_(2-1|2-5)_",
+      "blocks": [
+        {
+          "id": "search_list:fields:0",
+          "kind": "substr",
+          "value": "结果卡片（名称/ID/照片/位置/数量/状态/匹配%）"
+        },
+        {
+          "id": "search_list:fields:1",
+          "kind": "substr",
+          "value": "摘要指标"
+        },
+        {
+          "id": "search_list:fields:2",
+          "kind": "substr",
+          "value": "查询词"
+        },
+        {
+          "id": "search_list:fields:3",
+          "kind": "substr",
+          "value": "本地筛选框"
+        },
+        {
+          "id": "search_list:operations:0",
+          "kind": "substr",
+          "value": "搜索"
+        },
+        {
+          "id": "search_list:operations:1",
+          "kind": "substr",
+          "value": "本地筛选"
+        },
+        {
+          "id": "search_list:operations:2",
+          "kind": "substr",
+          "value": "细化筛选"
+        },
+        {
+          "id": "search_list:operations:3",
+          "kind": "substr",
+          "value": "拍照找物品"
+        },
+        {
+          "id": "search_list:operations:4",
+          "kind": "substr",
+          "value": "录入新物品"
+        },
+        {
+          "id": "search_list:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "search_list:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "search_list:empty:0",
+          "kind": "substr",
+          "value": "空态：未命中→录入新物品引导"
+        },
+        {
+          "id": "search_list:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "search_list:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        },
+        {
+          "id": "search_list:status:1",
+          "kind": "substr",
+          "value": "匹配度%"
+        }
+      ]
+    },
+    {
+      "family": "detail",
+      "domain": "items",
+      "scenarios": [
+        "2-2"
+      ],
+      "pattern": "_(2-2)_",
+      "blocks": [
+        {
+          "id": "detail:fields:0",
+          "kind": "substr",
+          "value": "ID"
+        },
+        {
+          "id": "detail:fields:1",
+          "kind": "substr",
+          "value": "分类"
+        },
+        {
+          "id": "detail:fields:2",
+          "kind": "substr",
+          "value": "位置"
+        },
+        {
+          "id": "detail:fields:3",
+          "kind": "substr",
+          "value": "标签"
+        },
+        {
+          "id": "detail:fields:4",
+          "kind": "substr",
+          "value": "价格"
+        },
+        {
+          "id": "detail:fields:5",
+          "kind": "substr",
+          "value": "备注"
+        },
+        {
+          "id": "detail:fields:6",
+          "kind": "substr",
+          "value": "最后使用"
+        },
+        {
+          "id": "detail:fields:7",
+          "kind": "substr",
+          "value": "录入时间"
+        },
+        {
+          "id": "detail:fields:8",
+          "kind": "substr",
+          "value": "关联物品"
+        },
+        {
+          "id": "detail:fields:9",
+          "kind": "substr",
+          "value": "同位置邻居"
+        },
+        {
+          "id": "detail:fields:10",
+          "kind": "substr",
+          "value": "相似物品"
+        },
+        {
+          "id": "detail:fields:11",
+          "kind": "substr",
+          "value": "快捷操作"
+        },
+        {
+          "id": "detail:fields:12",
+          "kind": "substr",
+          "value": "操作历史"
+        },
+        {
+          "id": "detail:operations:0",
+          "kind": "substr",
+          "value": "改"
+        },
+        {
+          "id": "detail:operations:1",
+          "kind": "substr",
+          "value": "移"
+        },
+        {
+          "id": "detail:operations:2",
+          "kind": "substr",
+          "value": "补"
+        },
+        {
+          "id": "detail:operations:3",
+          "kind": "substr",
+          "value": "减"
+        },
+        {
+          "id": "detail:operations:4",
+          "kind": "substr",
+          "value": "标"
+        },
+        {
+          "id": "detail:operations:5",
+          "kind": "substr",
+          "value": "废"
+        },
+        {
+          "id": "detail:operations:6",
+          "kind": "substr",
+          "value": "标记使用"
+        },
+        {
+          "id": "detail:operations:7",
+          "kind": "substr",
+          "value": "查看完整历史"
+        },
+        {
+          "id": "detail:operations:8",
+          "kind": "substr",
+          "value": "查看照片"
+        },
+        {
+          "id": "detail:operations:9",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "detail:operations:10",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "detail:empty:0",
+          "kind": "substr",
+          "value": "空态：未找到该物品"
+        },
+        {
+          "id": "detail:empty:1",
+          "kind": "substr",
+          "value": "关联空态"
+        },
+        {
+          "id": "detail:empty:2",
+          "kind": "substr",
+          "value": "操作历史空态「暂无记录」"
+        },
+        {
+          "id": "detail:empty:3",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "detail:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        }
+      ]
+    },
+    {
+      "family": "locate",
+      "domain": "items",
+      "scenarios": [
+        "2-3"
+      ],
+      "pattern": "_(2-3)_",
+      "blocks": [
+        {
+          "id": "locate:fields:0",
+          "kind": "substr",
+          "value": "置顶卡片（照片/名称/ID/位置/数量/状态）"
+        },
+        {
+          "id": "locate:fields:1",
+          "kind": "substr",
+          "value": "查询词"
+        },
+        {
+          "id": "locate:operations:0",
+          "kind": "substr",
+          "value": "我找到了"
+        },
+        {
+          "id": "locate:operations:1",
+          "kind": "substr",
+          "value": "分享位置"
+        },
+        {
+          "id": "locate:operations:2",
+          "kind": "substr",
+          "value": "扩大寻找"
+        },
+        {
+          "id": "locate:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "locate:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "locate:empty:0",
+          "kind": "substr",
+          "value": "空态：没找到＋扩大寻找引导"
+        },
+        {
+          "id": "locate:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "locate:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        }
+      ]
+    },
+    {
+      "family": "browse",
+      "domain": "items",
+      "scenarios": [
+        "2-4"
+      ],
+      "pattern": "_(2-4)_",
+      "blocks": [
+        {
+          "id": "browse:fields:0",
+          "kind": "substr",
+          "value": "计数"
+        },
+        {
+          "id": "browse:fields:1",
+          "kind": "substr",
+          "value": "分组卡片（名称/ID/位置/数量/状态）"
+        },
+        {
+          "id": "browse:fields:2",
+          "kind": "substr",
+          "value": "当前分组名"
+        },
+        {
+          "id": "browse:operations:0",
+          "kind": "substr",
+          "value": "全部"
+        },
+        {
+          "id": "browse:operations:1",
+          "kind": "substr",
+          "value": "分组名（N）"
+        },
+        {
+          "id": "browse:operations:2",
+          "kind": "substr",
+          "value": "分组切换"
+        },
+        {
+          "id": "browse:operations:3",
+          "kind": "substr",
+          "value": "排序：相关"
+        },
+        {
+          "id": "browse:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "browse:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "browse:empty:0",
+          "kind": "substr",
+          "value": "空态：无匹配物品"
+        },
+        {
+          "id": "browse:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "browse:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        }
+      ]
+    },
+    {
+      "family": "duplicates",
+      "domain": "items",
+      "scenarios": [
+        "2-6"
+      ],
+      "pattern": "_(2-6)_",
+      "blocks": [
+        {
+          "id": "duplicates:fields:0",
+          "kind": "substr",
+          "value": "位置/数量"
+        },
+        {
+          "id": "duplicates:fields:1",
+          "kind": "substr",
+          "value": "分类"
+        },
+        {
+          "id": "duplicates:fields:2",
+          "kind": "substr",
+          "value": "价格"
+        },
+        {
+          "id": "duplicates:fields:3",
+          "kind": "substr",
+          "value": "组内件数"
+        },
+        {
+          "id": "duplicates:fields:4",
+          "kind": "substr",
+          "value": "首件状态"
+        },
+        {
+          "id": "duplicates:operations:0",
+          "kind": "substr",
+          "value": "独立录入"
+        },
+        {
+          "id": "duplicates:operations:1",
+          "kind": "substr",
+          "value": "复制合并建议"
+        },
+        {
+          "id": "duplicates:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "duplicates:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "duplicates:empty:0",
+          "kind": "substr",
+          "value": "空态：没有发现重复物品"
+        },
+        {
+          "id": "duplicates:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "duplicates:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        }
+      ]
+    },
+    {
+      "family": "receipt",
+      "domain": "items",
+      "scenarios": [
+        "3-2",
+        "3-3",
+        "3-4",
+        "3-8"
+      ],
+      "pattern": "_(3-2|3-3|3-4|3-8)_",
+      "blocks": [
+        {
+          "id": "receipt:fields:0",
+          "kind": "substr",
+          "value": "变更结果（字段级before→after）"
+        },
+        {
+          "id": "receipt:fields:1",
+          "kind": "substr",
+          "value": "当前状态（名称/ID/分类/位置×数量/状态/标签/备注）"
+        },
+        {
+          "id": "receipt:fields:2",
+          "kind": "substr",
+          "value": "标签变更（去除/新增）"
+        },
+        {
+          "id": "receipt:fields:3",
+          "kind": "substr",
+          "value": "处理明细"
+        },
+        {
+          "id": "receipt:fields:4",
+          "kind": "substr",
+          "value": "收尾语"
+        },
+        {
+          "id": "receipt:operations:0",
+          "kind": "substr",
+          "value": "撤销"
+        },
+        {
+          "id": "receipt:operations:1",
+          "kind": "substr",
+          "value": "查看详情"
+        },
+        {
+          "id": "receipt:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "receipt:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "receipt:empty:0",
+          "kind": "substr",
+          "value": "空态：无字段级变化"
+        },
+        {
+          "id": "receipt:empty:1",
+          "kind": "substr",
+          "value": "标签空值（无）"
+        },
+        {
+          "id": "receipt:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "receipt:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        },
+        {
+          "id": "receipt:status:1",
+          "kind": "substr",
+          "value": "标签加/去"
+        }
+      ]
+    },
+    {
+      "family": "confirm",
+      "domain": "items",
+      "scenarios": [
+        "3-5"
+      ],
+      "pattern": "_(3-5)_",
+      "blocks": [
+        {
+          "id": "confirm:fields:0",
+          "kind": "substr",
+          "value": "标题"
+        },
+        {
+          "id": "confirm:fields:1",
+          "kind": "substr",
+          "value": "引导语"
+        },
+        {
+          "id": "confirm:fields:2",
+          "kind": "substr",
+          "value": "变更前"
+        },
+        {
+          "id": "confirm:fields:3",
+          "kind": "substr",
+          "value": "变更后"
+        },
+        {
+          "id": "confirm:fields:4",
+          "kind": "substr",
+          "value": "逐条entries（含子标签）"
+        },
+        {
+          "id": "confirm:fields:5",
+          "kind": "substr",
+          "value": "影响说明"
+        },
+        {
+          "id": "confirm:operations:0",
+          "kind": "substr",
+          "value": "确认"
+        },
+        {
+          "id": "confirm:operations:1",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "confirm:operations:2",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "confirm:empty:0",
+          "kind": "substr",
+          "value": "空态：无（确认页）"
+        },
+        {
+          "id": "confirm:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        }
+      ]
+    },
+    {
+      "family": "undo_select",
+      "domain": "items",
+      "scenarios": [
+        "3-6"
+      ],
+      "pattern": "_(3-6)_",
+      "blocks": [
+        {
+          "id": "undo_select:fields:0",
+          "kind": "substr",
+          "value": "可撤销操作（最近N条）"
+        },
+        {
+          "id": "undo_select:fields:1",
+          "kind": "substr",
+          "value": "事件类型"
+        },
+        {
+          "id": "undo_select:fields:2",
+          "kind": "substr",
+          "value": "通用操作分组"
+        },
+        {
+          "id": "undo_select:operations:0",
+          "kind": "substr",
+          "value": "勾选事件"
+        },
+        {
+          "id": "undo_select:operations:1",
+          "kind": "substr",
+          "value": "确认撤销勾选项"
+        },
+        {
+          "id": "undo_select:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "undo_select:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "undo_select:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无可撤销操作"
+        },
+        {
+          "id": "undo_select:empty:1",
+          "kind": "substr",
+          "value": "拦截态：请先勾选"
+        },
+        {
+          "id": "undo_select:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "undo_select:status:0",
+          "kind": "substr",
+          "value": "事件类型"
+        }
+      ]
+    },
+    {
+      "family": "relations",
+      "domain": "items",
+      "scenarios": [
+        "3-7"
+      ],
+      "pattern": "_(3-7)_",
+      "blocks": [
+        {
+          "id": "relations:fields:0",
+          "kind": "substr",
+          "value": "主物品"
+        },
+        {
+          "id": "relations:fields:1",
+          "kind": "substr",
+          "value": "关联列表（是否反向/关系类型/对方名称/对方ID）"
+        },
+        {
+          "id": "relations:operations:0",
+          "kind": "substr",
+          "value": "解除"
+        },
+        {
+          "id": "relations:operations:1",
+          "kind": "substr",
+          "value": "设置关联"
+        },
+        {
+          "id": "relations:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "relations:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "relations:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无关联"
+        },
+        {
+          "id": "relations:empty:1",
+          "kind": "substr",
+          "value": "建立区占位文案"
+        },
+        {
+          "id": "relations:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "relations:status:0",
+          "kind": "substr",
+          "value": "配件"
+        },
+        {
+          "id": "relations:status:1",
+          "kind": "substr",
+          "value": "配套"
+        },
+        {
+          "id": "relations:status:2",
+          "kind": "substr",
+          "value": "替代"
+        },
+        {
+          "id": "relations:status:3",
+          "kind": "substr",
+          "value": "同捆"
+        },
+        {
+          "id": "relations:status:4",
+          "kind": "substr",
+          "value": "常用搭配"
+        }
+      ]
+    },
+    {
+      "family": "tag_manage",
+      "domain": "items",
+      "scenarios": [
+        "4-1",
+        "4-3"
+      ],
+      "pattern": "_(4-1|4-3)_",
+      "blocks": [
+        {
+          "id": "tag_manage:fields:0",
+          "kind": "substr",
+          "value": "标签总览（标签名/件数/使用次数）"
+        },
+        {
+          "id": "tag_manage:fields:1",
+          "kind": "substr",
+          "value": "相似标签对（相似度%）"
+        },
+        {
+          "id": "tag_manage:fields:2",
+          "kind": "substr",
+          "value": "未使用标签"
+        },
+        {
+          "id": "tag_manage:fields:3",
+          "kind": "substr",
+          "value": "当前mode"
+        },
+        {
+          "id": "tag_manage:operations:0",
+          "kind": "substr",
+          "value": "改名"
+        },
+        {
+          "id": "tag_manage:operations:1",
+          "kind": "substr",
+          "value": "合并"
+        },
+        {
+          "id": "tag_manage:operations:2",
+          "kind": "substr",
+          "value": "一键清理"
+        },
+        {
+          "id": "tag_manage:operations:3",
+          "kind": "substr",
+          "value": "忽略"
+        },
+        {
+          "id": "tag_manage:operations:4",
+          "kind": "substr",
+          "value": "整理建议"
+        },
+        {
+          "id": "tag_manage:operations:5",
+          "kind": "substr",
+          "value": "新建标签"
+        },
+        {
+          "id": "tag_manage:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "tag_manage:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "tag_manage:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无标签"
+        },
+        {
+          "id": "tag_manage:empty:1",
+          "kind": "substr",
+          "value": "无可清理标签时不出「一键清理」"
+        },
+        {
+          "id": "tag_manage:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "tag_manage:status:0",
+          "kind": "substr",
+          "value": "相似度公式"
+        }
+      ]
+    },
+    {
+      "family": "category_manage",
+      "domain": "items",
+      "scenarios": [
+        "4-2"
+      ],
+      "pattern": "_(4-2)_",
+      "blocks": [
+        {
+          "id": "category_manage:fields:0",
+          "kind": "substr",
+          "value": "分类树（层级＋每类计数）"
+        },
+        {
+          "id": "category_manage:fields:1",
+          "kind": "substr",
+          "value": "操作提示"
+        },
+        {
+          "id": "category_manage:fields:2",
+          "kind": "substr",
+          "value": "删除拦截说明"
+        },
+        {
+          "id": "category_manage:operations:0",
+          "kind": "substr",
+          "value": "改名"
+        },
+        {
+          "id": "category_manage:operations:1",
+          "kind": "substr",
+          "value": "合并"
+        },
+        {
+          "id": "category_manage:operations:2",
+          "kind": "substr",
+          "value": "新建顶级分类"
+        },
+        {
+          "id": "category_manage:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "category_manage:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "category_manage:empty:0",
+          "kind": "substr",
+          "value": "空态：树为空即只有「新建顶级分类」"
+        },
+        {
+          "id": "category_manage:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "category_manage:empty:2",
+          "kind": "substr",
+          "value": "拦截态：有物品的分类不可删"
+        },
+        {
+          "id": "category_manage:status:0",
+          "kind": "substr",
+          "value": "种子8类（只可改不可删）"
+        }
+      ]
+    },
+    {
+      "family": "photos",
+      "domain": "items",
+      "scenarios": [
+        "5-1",
+        "5-2"
+      ],
+      "pattern": "_(5-1|5-2)_",
+      "blocks": [
+        {
+          "id": "photos:fields:0",
+          "kind": "substr",
+          "value": "物品（名称/ID）"
+        },
+        {
+          "id": "photos:fields:1",
+          "kind": "substr",
+          "value": "照片列表（顺序/类型/主图标记）"
+        },
+        {
+          "id": "photos:fields:2",
+          "kind": "substr",
+          "value": "当前mode"
+        },
+        {
+          "id": "photos:operations:0",
+          "kind": "substr",
+          "value": "全部"
+        },
+        {
+          "id": "photos:operations:1",
+          "kind": "substr",
+          "value": "类型筛选"
+        },
+        {
+          "id": "photos:operations:2",
+          "kind": "substr",
+          "value": "确认顺序变更"
+        },
+        {
+          "id": "photos:operations:3",
+          "kind": "substr",
+          "value": "加图·补拍"
+        },
+        {
+          "id": "photos:operations:4",
+          "kind": "substr",
+          "value": "删除选中"
+        },
+        {
+          "id": "photos:operations:5",
+          "kind": "substr",
+          "value": "下载照片"
+        },
+        {
+          "id": "photos:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "photos:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "photos:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无照片＋补拍引导"
+        },
+        {
+          "id": "photos:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "photos:status:0",
+          "kind": "substr",
+          "value": "普通"
+        },
+        {
+          "id": "photos:status:1",
+          "kind": "substr",
+          "value": "说明书-使用"
+        },
+        {
+          "id": "photos:status:2",
+          "kind": "substr",
+          "value": "说明书-安装"
+        },
+        {
+          "id": "photos:status:3",
+          "kind": "substr",
+          "value": "说明书-保养"
+        }
+      ]
+    },
+    {
+      "family": "photo_wall",
+      "domain": "items",
+      "scenarios": [
+        "5-3"
+      ],
+      "pattern": "_(5-3)_",
+      "blocks": [
+        {
+          "id": "photo_wall:fields:0",
+          "kind": "substr",
+          "value": "分组（分类/位置）"
+        },
+        {
+          "id": "photo_wall:fields:1",
+          "kind": "substr",
+          "value": "照片网格"
+        },
+        {
+          "id": "photo_wall:fields:2",
+          "kind": "substr",
+          "value": "无照片件数"
+        },
+        {
+          "id": "photo_wall:operations:0",
+          "kind": "substr",
+          "value": "全部"
+        },
+        {
+          "id": "photo_wall:operations:1",
+          "kind": "substr",
+          "value": "类型筛选"
+        },
+        {
+          "id": "photo_wall:operations:2",
+          "kind": "substr",
+          "value": "去补拍"
+        },
+        {
+          "id": "photo_wall:operations:3",
+          "kind": "substr",
+          "value": "按位置浏览"
+        },
+        {
+          "id": "photo_wall:operations:4",
+          "kind": "substr",
+          "value": "点图复制详情prompt"
+        },
+        {
+          "id": "photo_wall:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "photo_wall:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "photo_wall:empty:0",
+          "kind": "substr",
+          "value": "空态：没有带照片的物品"
+        },
+        {
+          "id": "photo_wall:empty:1",
+          "kind": "substr",
+          "value": "补充态：还有N件无照片→去补拍"
+        },
+        {
+          "id": "photo_wall:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "photo_wall:status:0",
+          "kind": "substr",
+          "value": "照片类型四值"
+        }
+      ]
+    },
+    {
+      "family": "inventory_round",
+      "domain": "items",
+      "scenarios": [
+        "6-1"
+      ],
+      "pattern": "_(6-1)_",
+      "blocks": [
+        {
+          "id": "inventory_round:fields:0",
+          "kind": "substr",
+          "value": "范围"
+        },
+        {
+          "id": "inventory_round:fields:1",
+          "kind": "substr",
+          "value": "上次待复查（置顶）"
+        },
+        {
+          "id": "inventory_round:fields:2",
+          "kind": "substr",
+          "value": "核对清单（ID/位置/数量/状态）"
+        },
+        {
+          "id": "inventory_round:fields:3",
+          "kind": "substr",
+          "value": "三态判定"
+        },
+        {
+          "id": "inventory_round:fields:4",
+          "kind": "substr",
+          "value": "数量修正"
+        },
+        {
+          "id": "inventory_round:fields:5",
+          "kind": "substr",
+          "value": "状态修正（下拉）"
+        },
+        {
+          "id": "inventory_round:fields:6",
+          "kind": "substr",
+          "value": "新位置"
+        },
+        {
+          "id": "inventory_round:operations:0",
+          "kind": "substr",
+          "value": "在/不在/不确定"
+        },
+        {
+          "id": "inventory_round:operations:1",
+          "kind": "substr",
+          "value": "发现清单外物品"
+        },
+        {
+          "id": "inventory_round:operations:2",
+          "kind": "substr",
+          "value": "状态不变＋状态下拉"
+        },
+        {
+          "id": "inventory_round:operations:3",
+          "kind": "substr",
+          "value": "保存进度"
+        },
+        {
+          "id": "inventory_round:operations:4",
+          "kind": "substr",
+          "value": "确认提交（含差异）"
+        },
+        {
+          "id": "inventory_round:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "inventory_round:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "inventory_round:empty:0",
+          "kind": "substr",
+          "value": "空态：范围内没有物品"
+        },
+        {
+          "id": "inventory_round:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "inventory_round:status:0",
+          "kind": "substr",
+          "value": "在"
+        },
+        {
+          "id": "inventory_round:status:1",
+          "kind": "substr",
+          "value": "不在"
+        },
+        {
+          "id": "inventory_round:status:2",
+          "kind": "substr",
+          "value": "不确定"
+        },
+        {
+          "id": "inventory_round:status:3",
+          "kind": "substr",
+          "value": "状态不变"
+        },
+        {
+          "id": "inventory_round:status:4",
+          "kind": "substr",
+          "value": "在家"
+        },
+        {
+          "id": "inventory_round:status:5",
+          "kind": "substr",
+          "value": "备用"
+        },
+        {
+          "id": "inventory_round:status:6",
+          "kind": "substr",
+          "value": "借用中"
+        },
+        {
+          "id": "inventory_round:status:7",
+          "kind": "substr",
+          "value": "维修中"
+        },
+        {
+          "id": "inventory_round:status:8",
+          "kind": "substr",
+          "value": "找不到"
+        },
+        {
+          "id": "inventory_round:status:9",
+          "kind": "substr",
+          "value": "已废弃"
+        }
+      ]
+    },
+    {
+      "family": "inventory_diff",
+      "domain": "items",
+      "scenarios": [
+        "6-2"
+      ],
+      "pattern": "_(6-2)_",
+      "blocks": [
+        {
+          "id": "inventory_diff:fields:0",
+          "kind": "substr",
+          "value": "差异分组missing/extra/diff/pending"
+        },
+        {
+          "id": "inventory_diff:fields:1",
+          "kind": "substr",
+          "value": "所属盘点记录"
+        },
+        {
+          "id": "inventory_diff:fields:2",
+          "kind": "substr",
+          "value": "动作集"
+        },
+        {
+          "id": "inventory_diff:fields:3",
+          "kind": "substr",
+          "value": "新位置输入"
+        },
+        {
+          "id": "inventory_diff:fields:4",
+          "kind": "substr",
+          "value": "批量行"
+        },
+        {
+          "id": "inventory_diff:operations:0",
+          "kind": "substr",
+          "value": "按实际更新"
+        },
+        {
+          "id": "inventory_diff:operations:1",
+          "kind": "substr",
+          "value": "忽略"
+        },
+        {
+          "id": "inventory_diff:operations:2",
+          "kind": "substr",
+          "value": "录入为新物品"
+        },
+        {
+          "id": "inventory_diff:operations:3",
+          "kind": "substr",
+          "value": "标记复查"
+        },
+        {
+          "id": "inventory_diff:operations:4",
+          "kind": "substr",
+          "value": "先不处理"
+        },
+        {
+          "id": "inventory_diff:operations:5",
+          "kind": "substr",
+          "value": "批量确认"
+        },
+        {
+          "id": "inventory_diff:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "inventory_diff:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "inventory_diff:empty:0",
+          "kind": "substr",
+          "value": "空态：该记录没有未处理差异"
+        },
+        {
+          "id": "inventory_diff:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "inventory_diff:status:0",
+          "kind": "substr",
+          "value": "缺"
+        },
+        {
+          "id": "inventory_diff:status:1",
+          "kind": "substr",
+          "value": "多"
+        },
+        {
+          "id": "inventory_diff:status:2",
+          "kind": "substr",
+          "value": "异"
+        },
+        {
+          "id": "inventory_diff:status:3",
+          "kind": "substr",
+          "value": "待确认"
+        }
+      ]
+    },
+    {
+      "family": "inventory_records",
+      "domain": "items",
+      "scenarios": [
+        "6-3"
+      ],
+      "pattern": "_(6-3)_",
+      "blocks": [
+        {
+          "id": "inventory_records:fields:0",
+          "kind": "substr",
+          "value": "历史盘点（N）"
+        },
+        {
+          "id": "inventory_records:fields:1",
+          "kind": "substr",
+          "value": "发生时间"
+        },
+        {
+          "id": "inventory_records:fields:2",
+          "kind": "substr",
+          "value": "缺/多/异/待确认计数"
+        },
+        {
+          "id": "inventory_records:fields:3",
+          "kind": "substr",
+          "value": "记录状态"
+        },
+        {
+          "id": "inventory_records:operations:0",
+          "kind": "substr",
+          "value": "展开详情"
+        },
+        {
+          "id": "inventory_records:operations:1",
+          "kind": "substr",
+          "value": "处理差异"
+        },
+        {
+          "id": "inventory_records:operations:2",
+          "kind": "substr",
+          "value": "复查"
+        },
+        {
+          "id": "inventory_records:operations:3",
+          "kind": "substr",
+          "value": "开始盘点"
+        },
+        {
+          "id": "inventory_records:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "inventory_records:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "inventory_records:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有盘点记录"
+        },
+        {
+          "id": "inventory_records:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "inventory_records:status:0",
+          "kind": "substr",
+          "value": "进行中"
+        },
+        {
+          "id": "inventory_records:status:1",
+          "kind": "substr",
+          "value": "已完成"
+        },
+        {
+          "id": "inventory_records:status:2",
+          "kind": "substr",
+          "value": "已处理"
+        },
+        {
+          "id": "inventory_records:status:3",
+          "kind": "substr",
+          "value": "已复查"
+        }
+      ]
+    },
+    {
+      "family": "move_checklist",
+      "domain": "items",
+      "scenarios": [
+        "6-4"
+      ],
+      "pattern": "_(6-4)_",
+      "blocks": [
+        {
+          "id": "move_checklist:fields:0",
+          "kind": "substr",
+          "value": "分组（每组建数）"
+        },
+        {
+          "id": "move_checklist:fields:1",
+          "kind": "substr",
+          "value": "物品（ID/名称/位置/数量）"
+        },
+        {
+          "id": "move_checklist:fields:2",
+          "kind": "substr",
+          "value": "二态标记"
+        },
+        {
+          "id": "move_checklist:operations:0",
+          "kind": "substr",
+          "value": "全带走"
+        },
+        {
+          "id": "move_checklist:operations:1",
+          "kind": "substr",
+          "value": "全不带走"
+        },
+        {
+          "id": "move_checklist:operations:2",
+          "kind": "substr",
+          "value": "带走"
+        },
+        {
+          "id": "move_checklist:operations:3",
+          "kind": "substr",
+          "value": "不带走"
+        },
+        {
+          "id": "move_checklist:operations:4",
+          "kind": "substr",
+          "value": "统一确认"
+        },
+        {
+          "id": "move_checklist:operations:5",
+          "kind": "substr",
+          "value": "复制清单"
+        },
+        {
+          "id": "move_checklist:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "move_checklist:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "move_checklist:empty:0",
+          "kind": "substr",
+          "value": "空态：无空态文案"
+        },
+        {
+          "id": "move_checklist:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "move_checklist:status:0",
+          "kind": "substr",
+          "value": "带走"
+        },
+        {
+          "id": "move_checklist:status:1",
+          "kind": "substr",
+          "value": "不带走"
+        }
+      ]
+    },
+    {
+      "family": "history",
+      "domain": "items",
+      "scenarios": [
+        "7-1"
+      ],
+      "pattern": "_(7-1)_",
+      "blocks": [
+        {
+          "id": "history:fields:0",
+          "kind": "substr",
+          "value": "位置轨迹"
+        },
+        {
+          "id": "history:fields:1",
+          "kind": "substr",
+          "value": "时间线（N条）"
+        },
+        {
+          "id": "history:fields:2",
+          "kind": "substr",
+          "value": "事件条目（类型/摘要/diff展开）"
+        },
+        {
+          "id": "history:fields:3",
+          "kind": "substr",
+          "value": "已撤销标记"
+        },
+        {
+          "id": "history:operations:0",
+          "kind": "substr",
+          "value": "全部"
+        },
+        {
+          "id": "history:operations:1",
+          "kind": "substr",
+          "value": "类型筛选"
+        },
+        {
+          "id": "history:operations:2",
+          "kind": "substr",
+          "value": "展开详情"
+        },
+        {
+          "id": "history:operations:3",
+          "kind": "substr",
+          "value": "撤销"
+        },
+        {
+          "id": "history:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "history:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "history:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无事件"
+        },
+        {
+          "id": "history:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "history:status:0",
+          "kind": "substr",
+          "value": "状态变更"
+        },
+        {
+          "id": "history:status:1",
+          "kind": "substr",
+          "value": "盘点"
+        },
+        {
+          "id": "history:status:2",
+          "kind": "substr",
+          "value": "差异处理"
+        },
+        {
+          "id": "history:status:3",
+          "kind": "substr",
+          "value": "已撤销"
+        }
+      ]
+    },
+    {
+      "family": "location_manage",
+      "domain": "space",
+      "scenarios": [
+        "SM2-1"
+      ],
+      "pattern": "_(SM2-1)_",
+      "blocks": [
+        {
+          "id": "location_manage:fields:0",
+          "kind": "substr",
+          "value": "位置树"
+        },
+        {
+          "id": "location_manage:fields:1",
+          "kind": "substr",
+          "value": "已有路径"
+        },
+        {
+          "id": "location_manage:fields:2",
+          "kind": "substr",
+          "value": "目标"
+        },
+        {
+          "id": "location_manage:fields:3",
+          "kind": "substr",
+          "value": "受影响物品"
+        },
+        {
+          "id": "location_manage:fields:4",
+          "kind": "substr",
+          "value": "相似位置组"
+        },
+        {
+          "id": "location_manage:fields:5",
+          "kind": "substr",
+          "value": "源位置表单"
+        },
+        {
+          "id": "location_manage:fields:6",
+          "kind": "substr",
+          "value": "新位置路径表单"
+        },
+        {
+          "id": "location_manage:operations:0",
+          "kind": "substr",
+          "value": "新建位置"
+        },
+        {
+          "id": "location_manage:operations:1",
+          "kind": "substr",
+          "value": "改名"
+        },
+        {
+          "id": "location_manage:operations:2",
+          "kind": "substr",
+          "value": "删除"
+        },
+        {
+          "id": "location_manage:operations:3",
+          "kind": "substr",
+          "value": "确认合并"
+        },
+        {
+          "id": "location_manage:operations:4",
+          "kind": "substr",
+          "value": "复制prompt"
+        },
+        {
+          "id": "location_manage:operations:5",
+          "kind": "substr",
+          "value": "关闭"
+        },
+        {
+          "id": "location_manage:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "location_manage:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "location_manage:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有位置＋建第一个位置引导"
+        },
+        {
+          "id": "location_manage:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "location_manage:status:0",
+          "kind": "substr",
+          "value": "位置路径多级"
+        }
+      ]
+    },
+    {
+      "family": "fixed_spot",
+      "domain": "space",
+      "scenarios": [
+        "SM2-2"
+      ],
+      "pattern": "_(SM2-2)_",
+      "blocks": [
+        {
+          "id": "fixed_spot:fields:0",
+          "kind": "substr",
+          "value": "现有固定位清单（名称/ID/当前活跃位置/固定位）"
+        },
+        {
+          "id": "fixed_spot:fields:1",
+          "kind": "substr",
+          "value": "物品表单"
+        },
+        {
+          "id": "fixed_spot:fields:2",
+          "kind": "substr",
+          "value": "固定位表单"
+        },
+        {
+          "id": "fixed_spot:operations:0",
+          "kind": "substr",
+          "value": "设置固定位"
+        },
+        {
+          "id": "fixed_spot:operations:1",
+          "kind": "substr",
+          "value": "解除"
+        },
+        {
+          "id": "fixed_spot:operations:2",
+          "kind": "substr",
+          "value": "复制prompt"
+        },
+        {
+          "id": "fixed_spot:operations:3",
+          "kind": "substr",
+          "value": "关闭"
+        },
+        {
+          "id": "fixed_spot:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "fixed_spot:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "fixed_spot:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有固定位＋常用件引导"
+        },
+        {
+          "id": "fixed_spot:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "fixed_spot:empty:2",
+          "kind": "substr",
+          "value": "表单空值拦截"
+        },
+        {
+          "id": "fixed_spot:status:0",
+          "kind": "substr",
+          "value": "位置状态（非「在家」括号标出）"
+        }
+      ]
+    },
+    {
+      "family": "suggest_storage",
+      "domain": "space",
+      "scenarios": [
+        "SM2-3"
+      ],
+      "pattern": "_(SM2-3)_",
+      "blocks": [
+        {
+          "id": "suggest_storage:fields:0",
+          "kind": "substr",
+          "value": "推荐列表（推荐位置/理由/备选位置）"
+        },
+        {
+          "id": "suggest_storage:fields:1",
+          "kind": "substr",
+          "value": "批量标记"
+        },
+        {
+          "id": "suggest_storage:fields:2",
+          "kind": "substr",
+          "value": "总量"
+        },
+        {
+          "id": "suggest_storage:fields:3",
+          "kind": "substr",
+          "value": "当前mode"
+        },
+        {
+          "id": "suggest_storage:fields:4",
+          "kind": "substr",
+          "value": "无依据态"
+        },
+        {
+          "id": "suggest_storage:operations:0",
+          "kind": "substr",
+          "value": "采纳（去移物品）"
+        },
+        {
+          "id": "suggest_storage:operations:1",
+          "kind": "substr",
+          "value": "设为固定位"
+        },
+        {
+          "id": "suggest_storage:operations:2",
+          "kind": "substr",
+          "value": "换一个建议"
+        },
+        {
+          "id": "suggest_storage:operations:3",
+          "kind": "substr",
+          "value": "找没固定位的常用件"
+        },
+        {
+          "id": "suggest_storage:operations:4",
+          "kind": "substr",
+          "value": "复制收纳建议"
+        },
+        {
+          "id": "suggest_storage:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "suggest_storage:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "suggest_storage:empty:0",
+          "kind": "substr",
+          "value": "空态：都有固定位了／没有可建议的物品"
+        },
+        {
+          "id": "suggest_storage:empty:1",
+          "kind": "substr",
+          "value": "无依据态：暂无依据"
+        },
+        {
+          "id": "suggest_storage:empty:2",
+          "kind": "substr",
+          "value": "备选空态：暂无其他备选"
+        },
+        {
+          "id": "suggest_storage:empty:3",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        }
+      ]
+    },
+    {
+      "family": "space_view",
+      "domain": "space",
+      "scenarios": [
+        "SM2-4"
+      ],
+      "pattern": "_(SM2-4)_",
+      "blocks": [
+        {
+          "id": "space_view:fields:0",
+          "kind": "substr",
+          "value": "面包屑"
+        },
+        {
+          "id": "space_view:fields:1",
+          "kind": "substr",
+          "value": "子层"
+        },
+        {
+          "id": "space_view:fields:2",
+          "kind": "substr",
+          "value": "当前层物品（名称/数量/状态）"
+        },
+        {
+          "id": "space_view:fields:3",
+          "kind": "substr",
+          "value": "当前层名/路径"
+        },
+        {
+          "id": "space_view:fields:4",
+          "kind": "substr",
+          "value": "路径总数"
+        },
+        {
+          "id": "space_view:fields:5",
+          "kind": "substr",
+          "value": "分层空态提示"
+        },
+        {
+          "id": "space_view:operations:0",
+          "kind": "substr",
+          "value": "下钻"
+        },
+        {
+          "id": "space_view:operations:1",
+          "kind": "substr",
+          "value": "移"
+        },
+        {
+          "id": "space_view:operations:2",
+          "kind": "substr",
+          "value": "补"
+        },
+        {
+          "id": "space_view:operations:3",
+          "kind": "substr",
+          "value": "减"
+        },
+        {
+          "id": "space_view:operations:4",
+          "kind": "substr",
+          "value": "复制建位置"
+        },
+        {
+          "id": "space_view:operations:5",
+          "kind": "substr",
+          "value": "复制收纳建议"
+        },
+        {
+          "id": "space_view:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "space_view:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "space_view:empty:0",
+          "kind": "substr",
+          "value": "空态：这里还没有东西（全屋与单层两套文案）"
+        },
+        {
+          "id": "space_view:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "space_view:status:0",
+          "kind": "substr",
+          "value": "位置状态（缺省在家）"
+        }
+      ]
+    },
+    {
+      "family": "outfit_picker",
+      "domain": "outfit",
+      "scenarios": [
+        "SM3-1"
+      ],
+      "pattern": "_(SM3-1)_",
+      "blocks": [
+        {
+          "id": "outfit_picker:fields:0",
+          "kind": "substr",
+          "value": "多部位槽位（外层/内搭）"
+        },
+        {
+          "id": "outfit_picker:fields:1",
+          "kind": "substr",
+          "value": "风格标签"
+        },
+        {
+          "id": "outfit_picker:fields:2",
+          "kind": "substr",
+          "value": "推荐理由"
+        },
+        {
+          "id": "outfit_picker:fields:3",
+          "kind": "substr",
+          "value": "备选组合"
+        },
+        {
+          "id": "outfit_picker:fields:4",
+          "kind": "substr",
+          "value": "场合与天气"
+        },
+        {
+          "id": "outfit_picker:operations:0",
+          "kind": "substr",
+          "value": "槽位切换"
+        },
+        {
+          "id": "outfit_picker:operations:1",
+          "kind": "substr",
+          "value": "上一套"
+        },
+        {
+          "id": "outfit_picker:operations:2",
+          "kind": "substr",
+          "value": "换一套"
+        },
+        {
+          "id": "outfit_picker:operations:3",
+          "kind": "substr",
+          "value": "今天穿这套"
+        },
+        {
+          "id": "outfit_picker:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "outfit_picker:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "outfit_picker:empty:0",
+          "kind": "substr",
+          "value": "空态：无空态文案"
+        },
+        {
+          "id": "outfit_picker:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "outfit_picker:status:0",
+          "kind": "substr",
+          "value": "上班"
+        },
+        {
+          "id": "outfit_picker:status:1",
+          "kind": "substr",
+          "value": "约会"
+        },
+        {
+          "id": "outfit_picker:status:2",
+          "kind": "substr",
+          "value": "运动"
+        },
+        {
+          "id": "outfit_picker:status:3",
+          "kind": "substr",
+          "value": "家居"
+        },
+        {
+          "id": "outfit_picker:status:4",
+          "kind": "substr",
+          "value": "正式"
+        },
+        {
+          "id": "outfit_picker:status:5",
+          "kind": "substr",
+          "value": "自定义"
+        }
+      ]
+    },
+    {
+      "family": "wardrobe_analyze",
+      "domain": "outfit",
+      "scenarios": [
+        "SM3-2"
+      ],
+      "pattern": "_(SM3-2)_",
+      "blocks": [
+        {
+          "id": "wardrobe_analyze:fields:0",
+          "kind": "substr",
+          "value": "衣橱构成"
+        },
+        {
+          "id": "wardrobe_analyze:fields:1",
+          "kind": "substr",
+          "value": "闲置清单"
+        },
+        {
+          "id": "wardrobe_analyze:fields:2",
+          "kind": "substr",
+          "value": "AI建议一句"
+        },
+        {
+          "id": "wardrobe_analyze:fields:3",
+          "kind": "substr",
+          "value": "汇总"
+        },
+        {
+          "id": "wardrobe_analyze:operations:0",
+          "kind": "substr",
+          "value": "标记废弃"
+        },
+        {
+          "id": "wardrobe_analyze:operations:1",
+          "kind": "substr",
+          "value": "送人"
+        },
+        {
+          "id": "wardrobe_analyze:operations:2",
+          "kind": "substr",
+          "value": "先不处理"
+        },
+        {
+          "id": "wardrobe_analyze:operations:3",
+          "kind": "substr",
+          "value": "缺口加入购物清单"
+        },
+        {
+          "id": "wardrobe_analyze:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "wardrobe_analyze:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "wardrobe_analyze:empty:0",
+          "kind": "substr",
+          "value": "空态：衣橱还没有在家衣物"
+        },
+        {
+          "id": "wardrobe_analyze:empty:1",
+          "kind": "substr",
+          "value": "无闲置态：衣橱状态良好"
+        },
+        {
+          "id": "wardrobe_analyze:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "wardrobe_analyze:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        },
+        {
+          "id": "wardrobe_analyze:status:1",
+          "kind": "substr",
+          "value": "在家口径"
+        }
+      ]
+    },
+    {
+      "family": "wardrobe_season",
+      "domain": "outfit",
+      "scenarios": [
+        "SM3-3"
+      ],
+      "pattern": "_(SM3-3)_",
+      "blocks": [
+        {
+          "id": "wardrobe_season:fields:0",
+          "kind": "substr",
+          "value": "季节"
+        },
+        {
+          "id": "wardrobe_season:fields:1",
+          "kind": "substr",
+          "value": "操作（收纳/拿出）"
+        },
+        {
+          "id": "wardrobe_season:fields:2",
+          "kind": "substr",
+          "value": "季节衣物清单"
+        },
+        {
+          "id": "wardrobe_season:fields:3",
+          "kind": "substr",
+          "value": "收纳位置下拉"
+        },
+        {
+          "id": "wardrobe_season:fields:4",
+          "kind": "substr",
+          "value": "候选位置"
+        },
+        {
+          "id": "wardrobe_season:fields:5",
+          "kind": "substr",
+          "value": "汇总"
+        },
+        {
+          "id": "wardrobe_season:operations:0",
+          "kind": "substr",
+          "value": "收纳位置下拉"
+        },
+        {
+          "id": "wardrobe_season:operations:1",
+          "kind": "substr",
+          "value": "自定义"
+        },
+        {
+          "id": "wardrobe_season:operations:2",
+          "kind": "substr",
+          "value": "全选/全不选"
+        },
+        {
+          "id": "wardrobe_season:operations:3",
+          "kind": "substr",
+          "value": "确认收纳／确认拿出"
+        },
+        {
+          "id": "wardrobe_season:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "wardrobe_season:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "wardrobe_season:empty:0",
+          "kind": "substr",
+          "value": "空态：没有带季节标签的在家衣物＋打标签引导"
+        },
+        {
+          "id": "wardrobe_season:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "wardrobe_season:status:0",
+          "kind": "substr",
+          "value": "物品状态"
+        },
+        {
+          "id": "wardrobe_season:status:1",
+          "kind": "substr",
+          "value": "已收纳"
+        }
+      ]
+    },
+    {
+      "family": "travel_trip",
+      "domain": "outfit",
+      "scenarios": [
+        "SM3-4"
+      ],
+      "pattern": "_(SM3-4)_",
+      "blocks": [
+        {
+          "id": "travel_trip:fields:0",
+          "kind": "substr",
+          "value": "行程类型/天数/操作mode"
+        },
+        {
+          "id": "travel_trip:fields:1",
+          "kind": "substr",
+          "value": "清单物品卡片（名称/数量/位置/理由）"
+        },
+        {
+          "id": "travel_trip:fields:2",
+          "kind": "substr",
+          "value": "汇总"
+        },
+        {
+          "id": "travel_trip:operations:0",
+          "kind": "substr",
+          "value": "确认带出（标旅游中）"
+        },
+        {
+          "id": "travel_trip:operations:1",
+          "kind": "substr",
+          "value": "确认归位"
+        },
+        {
+          "id": "travel_trip:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "travel_trip:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "travel_trip:empty:0",
+          "kind": "substr",
+          "value": "空态：没有旅游中的物品／清单为空"
+        },
+        {
+          "id": "travel_trip:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "travel_trip:status:0",
+          "kind": "substr",
+          "value": "健身"
+        },
+        {
+          "id": "travel_trip:status:1",
+          "kind": "substr",
+          "value": "出差"
+        },
+        {
+          "id": "travel_trip:status:2",
+          "kind": "substr",
+          "value": "旅行"
+        },
+        {
+          "id": "travel_trip:status:3",
+          "kind": "substr",
+          "value": "超市"
+        },
+        {
+          "id": "travel_trip:status:4",
+          "kind": "substr",
+          "value": "游泳"
+        },
+        {
+          "id": "travel_trip:status:5",
+          "kind": "substr",
+          "value": "爬山"
+        },
+        {
+          "id": "travel_trip:status:6",
+          "kind": "substr",
+          "value": "滑雪"
+        },
+        {
+          "id": "travel_trip:status:7",
+          "kind": "substr",
+          "value": "自定义"
+        },
+        {
+          "id": "travel_trip:status:8",
+          "kind": "substr",
+          "value": "旅游中"
+        },
+        {
+          "id": "travel_trip:status:9",
+          "kind": "substr",
+          "value": "在家"
+        }
+      ]
+    },
+    {
+      "family": "trip_outfit_plan",
+      "domain": "outfit",
+      "scenarios": [
+        "SM3-5"
+      ],
+      "pattern": "_(SM3-5)_",
+      "blocks": [
+        {
+          "id": "trip_outfit_plan:fields:0",
+          "kind": "substr",
+          "value": "目的地/天数"
+        },
+        {
+          "id": "trip_outfit_plan:fields:1",
+          "kind": "substr",
+          "value": "每日计划（第N天＋温度＋组合）"
+        },
+        {
+          "id": "trip_outfit_plan:fields:2",
+          "kind": "substr",
+          "value": "冲突提示"
+        },
+        {
+          "id": "trip_outfit_plan:fields:3",
+          "kind": "substr",
+          "value": "行李汇总"
+        },
+        {
+          "id": "trip_outfit_plan:fields:4",
+          "kind": "substr",
+          "value": "汇总"
+        },
+        {
+          "id": "trip_outfit_plan:operations:0",
+          "kind": "substr",
+          "value": "日期按钮"
+        },
+        {
+          "id": "trip_outfit_plan:operations:1",
+          "kind": "substr",
+          "value": "采纳这天"
+        },
+        {
+          "id": "trip_outfit_plan:operations:2",
+          "kind": "substr",
+          "value": "生成行李清单"
+        },
+        {
+          "id": "trip_outfit_plan:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "trip_outfit_plan:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "trip_outfit_plan:empty:0",
+          "kind": "substr",
+          "value": "空态：没有可计划的衣物"
+        },
+        {
+          "id": "trip_outfit_plan:empty:1",
+          "kind": "substr",
+          "value": "无冲突态：衣物充足无重复冲突"
+        },
+        {
+          "id": "trip_outfit_plan:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "trip_outfit_plan:status:0",
+          "kind": "substr",
+          "value": "每日温度"
+        }
+      ]
+    },
+    {
+      "family": "overview",
+      "domain": "stats",
+      "scenarios": [
+        "SM4-1"
+      ],
+      "pattern": "_(SM4-1)_",
+      "blocks": [
+        {
+          "id": "overview:fields:0",
+          "kind": "substr",
+          "value": "摘要（件数/总价/价格覆盖率/近30天变动）"
+        },
+        {
+          "id": "overview:fields:1",
+          "kind": "substr",
+          "value": "分类分布"
+        },
+        {
+          "id": "overview:fields:2",
+          "kind": "substr",
+          "value": "位置分布"
+        },
+        {
+          "id": "overview:fields:3",
+          "kind": "substr",
+          "value": "状态分布"
+        },
+        {
+          "id": "overview:fields:4",
+          "kind": "substr",
+          "value": "归属分布"
+        },
+        {
+          "id": "overview:fields:5",
+          "kind": "substr",
+          "value": "价值TOP"
+        },
+        {
+          "id": "overview:fields:6",
+          "kind": "substr",
+          "value": "高频TOP"
+        },
+        {
+          "id": "overview:fields:7",
+          "kind": "substr",
+          "value": "趋势"
+        },
+        {
+          "id": "overview:operations:0",
+          "kind": "substr",
+          "value": "点柱子复制筛选浏览prompt"
+        },
+        {
+          "id": "overview:operations:1",
+          "kind": "substr",
+          "value": "复制初始化"
+        },
+        {
+          "id": "overview:operations:2",
+          "kind": "substr",
+          "value": "复制补价提示"
+        },
+        {
+          "id": "overview:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "overview:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "overview:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有物品＋录入第一批引导"
+        },
+        {
+          "id": "overview:empty:1",
+          "kind": "substr",
+          "value": "分区空态：暂无分类/位置/状态数据"
+        },
+        {
+          "id": "overview:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "overview:status:0",
+          "kind": "substr",
+          "value": "全部合法物品状态"
+        }
+      ]
+    },
+    {
+      "family": "idle",
+      "domain": "stats",
+      "scenarios": [
+        "SM4-2"
+      ],
+      "pattern": "_(SM4-2)_",
+      "blocks": [
+        {
+          "id": "idle:fields:0",
+          "kind": "substr",
+          "value": "闲置清单（按闲置时长排序）"
+        },
+        {
+          "id": "idle:fields:1",
+          "kind": "substr",
+          "value": "闲置标准天数"
+        },
+        {
+          "id": "idle:fields:2",
+          "kind": "substr",
+          "value": "AI建议"
+        },
+        {
+          "id": "idle:fields:3",
+          "kind": "substr",
+          "value": "分类筛选"
+        },
+        {
+          "id": "idle:fields:4",
+          "kind": "substr",
+          "value": "空态标记"
+        },
+        {
+          "id": "idle:operations:0",
+          "kind": "substr",
+          "value": "分类下拉"
+        },
+        {
+          "id": "idle:operations:1",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "idle:operations:2",
+          "kind": "substr",
+          "value": "标记废弃"
+        },
+        {
+          "id": "idle:operations:3",
+          "kind": "substr",
+          "value": "送人"
+        },
+        {
+          "id": "idle:operations:4",
+          "kind": "substr",
+          "value": "先不处理"
+        },
+        {
+          "id": "idle:operations:5",
+          "kind": "substr",
+          "value": "确认处理"
+        },
+        {
+          "id": "idle:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "idle:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "idle:empty:0",
+          "kind": "substr",
+          "value": "空态：衣橱状态良好＋没有超N天未使用"
+        },
+        {
+          "id": "idle:empty:1",
+          "kind": "substr",
+          "value": "拦截态：还没有勾选任何处理"
+        },
+        {
+          "id": "idle:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "idle:status:0",
+          "kind": "substr",
+          "value": "标记废弃"
+        },
+        {
+          "id": "idle:status:1",
+          "kind": "substr",
+          "value": "送人"
+        },
+        {
+          "id": "idle:status:2",
+          "kind": "substr",
+          "value": "先不处理"
+        }
+      ]
+    },
+    {
+      "family": "expiring",
+      "domain": "stats",
+      "scenarios": [
+        "SM4-3"
+      ],
+      "pattern": "_(SM4-3)_",
+      "blocks": [
+        {
+          "id": "expiring:fields:0",
+          "kind": "substr",
+          "value": "已过期与未来N天预告（剩余天数）"
+        },
+        {
+          "id": "expiring:fields:1",
+          "kind": "substr",
+          "value": "预告天数"
+        },
+        {
+          "id": "expiring:fields:2",
+          "kind": "substr",
+          "value": "可调档位"
+        },
+        {
+          "id": "expiring:fields:3",
+          "kind": "substr",
+          "value": "分类筛选"
+        },
+        {
+          "id": "expiring:fields:4",
+          "kind": "substr",
+          "value": "摘要"
+        },
+        {
+          "id": "expiring:operations:0",
+          "kind": "substr",
+          "value": "分类下拉"
+        },
+        {
+          "id": "expiring:operations:1",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "expiring:operations:2",
+          "kind": "substr",
+          "value": "已用完"
+        },
+        {
+          "id": "expiring:operations:3",
+          "kind": "substr",
+          "value": "废弃"
+        },
+        {
+          "id": "expiring:operations:4",
+          "kind": "substr",
+          "value": "忽略"
+        },
+        {
+          "id": "expiring:operations:5",
+          "kind": "substr",
+          "value": "确认处理"
+        },
+        {
+          "id": "expiring:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "expiring:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "expiring:empty:0",
+          "kind": "substr",
+          "value": "空态：没有即将过期的物品＋已检查未来N天"
+        },
+        {
+          "id": "expiring:empty:1",
+          "kind": "substr",
+          "value": "拦截态：还没有勾选任何处理"
+        },
+        {
+          "id": "expiring:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "expiring:status:0",
+          "kind": "substr",
+          "value": "已过期N天"
+        },
+        {
+          "id": "expiring:status:1",
+          "kind": "substr",
+          "value": "今天到期"
+        },
+        {
+          "id": "expiring:status:2",
+          "kind": "substr",
+          "value": "N天后到期"
+        },
+        {
+          "id": "expiring:status:3",
+          "kind": "substr",
+          "value": "已用完"
+        },
+        {
+          "id": "expiring:status:4",
+          "kind": "substr",
+          "value": "废弃"
+        },
+        {
+          "id": "expiring:status:5",
+          "kind": "substr",
+          "value": "忽略"
+        }
+      ]
+    },
+    {
+      "family": "inventory_stat",
+      "domain": "stats",
+      "scenarios": [
+        "SM4-4"
+      ],
+      "pattern": "_(SM4-4)_",
+      "blocks": [
+        {
+          "id": "inventory_stat:fields:0",
+          "kind": "substr",
+          "value": "完成率与趋势"
+        },
+        {
+          "id": "inventory_stat:fields:1",
+          "kind": "substr",
+          "value": "盘点明细（时间/范围/缺/多/异/状态）"
+        },
+        {
+          "id": "inventory_stat:fields:2",
+          "kind": "substr",
+          "value": "遗留差异总数"
+        },
+        {
+          "id": "inventory_stat:fields:3",
+          "kind": "substr",
+          "value": "复查入口"
+        },
+        {
+          "id": "inventory_stat:fields:4",
+          "kind": "substr",
+          "value": "AI建议"
+        },
+        {
+          "id": "inventory_stat:fields:5",
+          "kind": "substr",
+          "value": "有无数据标记"
+        },
+        {
+          "id": "inventory_stat:operations:0",
+          "kind": "substr",
+          "value": "复查盘点"
+        },
+        {
+          "id": "inventory_stat:operations:1",
+          "kind": "substr",
+          "value": "复制首次盘点"
+        },
+        {
+          "id": "inventory_stat:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "inventory_stat:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "inventory_stat:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有盘点记录＋完成首次盘点引导"
+        },
+        {
+          "id": "inventory_stat:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "inventory_stat:status:0",
+          "kind": "substr",
+          "value": "进行中"
+        },
+        {
+          "id": "inventory_stat:status:1",
+          "kind": "substr",
+          "value": "已完成"
+        },
+        {
+          "id": "inventory_stat:status:2",
+          "kind": "substr",
+          "value": "已处理"
+        },
+        {
+          "id": "inventory_stat:status:3",
+          "kind": "substr",
+          "value": "已复查"
+        }
+      ]
+    },
+    {
+      "family": "list",
+      "domain": "express",
+      "scenarios": [
+        "SM5-1"
+      ],
+      "pattern": "_(SM5-1)_",
+      "blocks": [
+        {
+          "id": "list:fields:0",
+          "kind": "substr",
+          "value": "待买条目（名称/数量/来源标注）"
+        },
+        {
+          "id": "list:fields:1",
+          "kind": "substr",
+          "value": "清单内查重结果"
+        },
+        {
+          "id": "list:fields:2",
+          "kind": "substr",
+          "value": "摘要"
+        },
+        {
+          "id": "list:operations:0",
+          "kind": "substr",
+          "value": "我买到了"
+        },
+        {
+          "id": "list:operations:1",
+          "kind": "substr",
+          "value": "清单外新买的"
+        },
+        {
+          "id": "list:operations:2",
+          "kind": "substr",
+          "value": "给已有物品补货"
+        },
+        {
+          "id": "list:operations:3",
+          "kind": "substr",
+          "value": "记一笔要买的"
+        },
+        {
+          "id": "list:operations:4",
+          "kind": "substr",
+          "value": "检测家里缺什么"
+        },
+        {
+          "id": "list:operations:5",
+          "kind": "substr",
+          "value": "清掉已买记录"
+        },
+        {
+          "id": "list:operations:6",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "list:operations:7",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "list:operations:8",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "list:empty:0",
+          "kind": "substr",
+          "value": "空态：清单是空的＋试试引导"
+        },
+        {
+          "id": "list:empty:1",
+          "kind": "substr",
+          "value": "拦截态：请先勾选买到的条目"
+        },
+        {
+          "id": "list:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "list:status:0",
+          "kind": "substr",
+          "value": "待买"
+        },
+        {
+          "id": "list:status:1",
+          "kind": "substr",
+          "value": "已买"
+        }
+      ]
+    },
+    {
+      "family": "missing",
+      "domain": "express",
+      "scenarios": [
+        "SM5-2"
+      ],
+      "pattern": "_(SM5-2)_",
+      "blocks": [
+        {
+          "id": "missing:fields:0",
+          "kind": "substr",
+          "value": "缺货物品（物品/当前数量/阈值/建议量）"
+        },
+        {
+          "id": "missing:fields:1",
+          "kind": "substr",
+          "value": "检测范围"
+        },
+        {
+          "id": "missing:fields:2",
+          "kind": "substr",
+          "value": "摘要"
+        },
+        {
+          "id": "missing:operations:0",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "missing:operations:1",
+          "kind": "substr",
+          "value": "加入购物清单"
+        },
+        {
+          "id": "missing:operations:2",
+          "kind": "substr",
+          "value": "按范围检测"
+        },
+        {
+          "id": "missing:operations:3",
+          "kind": "substr",
+          "value": "设置阈值"
+        },
+        {
+          "id": "missing:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "missing:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "missing:empty:0",
+          "kind": "substr",
+          "value": "空态：库存充足没有缺货物品"
+        },
+        {
+          "id": "missing:empty:1",
+          "kind": "substr",
+          "value": "拦截态：请先勾选缺货物品"
+        },
+        {
+          "id": "missing:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "missing:status:0",
+          "kind": "substr",
+          "value": "在家"
+        },
+        {
+          "id": "missing:status:1",
+          "kind": "substr",
+          "value": "备用"
+        }
+      ]
+    },
+    {
+      "family": "express",
+      "domain": "express",
+      "scenarios": [
+        "SM5-3"
+      ],
+      "pattern": "_(SM5-3)_",
+      "blocks": [
+        {
+          "id": "express:fields:0",
+          "kind": "substr",
+          "value": "快递中物品（名称/已等N天/是否超时）"
+        },
+        {
+          "id": "express:fields:1",
+          "kind": "substr",
+          "value": "超时天数"
+        },
+        {
+          "id": "express:fields:2",
+          "kind": "substr",
+          "value": "摘要"
+        },
+        {
+          "id": "express:operations:0",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "express:operations:1",
+          "kind": "substr",
+          "value": "我收到了"
+        },
+        {
+          "id": "express:operations:2",
+          "kind": "substr",
+          "value": "收到的放备用"
+        },
+        {
+          "id": "express:operations:3",
+          "kind": "substr",
+          "value": "新到的物品录入"
+        },
+        {
+          "id": "express:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "express:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "express:empty:0",
+          "kind": "substr",
+          "value": "空态：当前没有快递中物品"
+        },
+        {
+          "id": "express:empty:1",
+          "kind": "substr",
+          "value": "拦截态：请先勾选收到的物品"
+        },
+        {
+          "id": "express:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "express:status:0",
+          "kind": "substr",
+          "value": "快递中"
+        },
+        {
+          "id": "express:status:1",
+          "kind": "substr",
+          "value": "超时"
+        },
+        {
+          "id": "express:status:2",
+          "kind": "substr",
+          "value": "在家"
+        },
+        {
+          "id": "express:status:3",
+          "kind": "substr",
+          "value": "备用"
+        }
+      ]
+    },
+    {
+      "family": "stock",
+      "domain": "express",
+      "scenarios": [
+        "SM5-4"
+      ],
+      "pattern": "_(SM5-4)_",
+      "blocks": [
+        {
+          "id": "stock:fields:0",
+          "kind": "substr",
+          "value": "囤货物品（名称/数量/阈值/库存状态）"
+        },
+        {
+          "id": "stock:fields:1",
+          "kind": "substr",
+          "value": "未设阈值提示"
+        },
+        {
+          "id": "stock:fields:2",
+          "kind": "substr",
+          "value": "摘要"
+        },
+        {
+          "id": "stock:operations:0",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "stock:operations:1",
+          "kind": "substr",
+          "value": "修正实际数量"
+        },
+        {
+          "id": "stock:operations:2",
+          "kind": "substr",
+          "value": "设置阈值"
+        },
+        {
+          "id": "stock:operations:3",
+          "kind": "substr",
+          "value": "设阈值"
+        },
+        {
+          "id": "stock:operations:4",
+          "kind": "substr",
+          "value": "检测缺货"
+        },
+        {
+          "id": "stock:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "stock:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "stock:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有设置囤货阈值的物品"
+        },
+        {
+          "id": "stock:empty:1",
+          "kind": "substr",
+          "value": "分区空态：常用品还没设阈值"
+        },
+        {
+          "id": "stock:empty:2",
+          "kind": "substr",
+          "value": "拦截态：请先勾选"
+        },
+        {
+          "id": "stock:empty:3",
+          "kind": "substr",
+          "value": "异常：数据解析失败"
+        },
+        {
+          "id": "stock:status:0",
+          "kind": "substr",
+          "value": "充足"
+        },
+        {
+          "id": "stock:status:1",
+          "kind": "substr",
+          "value": "低"
+        },
+        {
+          "id": "stock:status:2",
+          "kind": "substr",
+          "value": "空"
+        }
+      ]
+    },
+    {
+      "family": "purchase_records",
+      "domain": "receipt",
+      "scenarios": [
+        "SM6-1",
+        "SM6-2",
+        "SM6-3",
+        "SM6-4",
+        "SM6-5"
+      ],
+      "pattern": "_(SM6-1|SM6-2|SM6-3|SM6-4|SM6-5)_",
+      "blocks": [
+        {
+          "id": "purchase_records:fields:0",
+          "kind": "substr",
+          "value": "购买记录（物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止）"
+        },
+        {
+          "id": "purchase_records:fields:1",
+          "kind": "substr",
+          "value": "分类统计（分类/笔数/金额）"
+        },
+        {
+          "id": "purchase_records:fields:2",
+          "kind": "substr",
+          "value": "顺路提醒"
+        },
+        {
+          "id": "purchase_records:fields:3",
+          "kind": "substr",
+          "value": "空态提示"
+        },
+        {
+          "id": "purchase_records:operations:0",
+          "kind": "substr",
+          "value": "分类卡片筛选"
+        },
+        {
+          "id": "purchase_records:operations:1",
+          "kind": "substr",
+          "value": "新增购买记录"
+        },
+        {
+          "id": "purchase_records:operations:2",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "purchase_records:operations:3",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "purchase_records:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无分类统计／暂无记录"
+        },
+        {
+          "id": "purchase_records:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "purchase_records:status:0",
+          "kind": "substr",
+          "value": "已过退货期N天"
+        },
+        {
+          "id": "purchase_records:status:1",
+          "kind": "substr",
+          "value": "今天最后可退"
+        },
+        {
+          "id": "purchase_records:status:2",
+          "kind": "substr",
+          "value": "可退·剩N天"
+        },
+        {
+          "id": "purchase_records:status:3",
+          "kind": "substr",
+          "value": "未设退货"
+        }
+      ]
+    },
+    {
+      "family": "warranty",
+      "domain": "receipt",
+      "scenarios": [
+        "SM6-6",
+        "SM6-7",
+        "SM6-8",
+        "SM6-9",
+        "SM6-10"
+      ],
+      "pattern": "_(SM6-6|SM6-7|SM6-8|SM6-9|SM6-10)_",
+      "blocks": [
+        {
+          "id": "warranty:fields:0",
+          "kind": "substr",
+          "value": "保修/保养清单（物品名/ID/类型/状态/到期日/剩余天数/维修次数/服务事件）"
+        },
+        {
+          "id": "warranty:fields:1",
+          "kind": "substr",
+          "value": "状态筛选"
+        },
+        {
+          "id": "warranty:fields:2",
+          "kind": "substr",
+          "value": "空态提示"
+        },
+        {
+          "id": "warranty:operations:0",
+          "kind": "substr",
+          "value": "状态筛选"
+        },
+        {
+          "id": "warranty:operations:1",
+          "kind": "substr",
+          "value": "记录维修"
+        },
+        {
+          "id": "warranty:operations:2",
+          "kind": "substr",
+          "value": "执行保养"
+        },
+        {
+          "id": "warranty:operations:3",
+          "kind": "substr",
+          "value": "新增保修/保养"
+        },
+        {
+          "id": "warranty:operations:4",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "warranty:operations:5",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "warranty:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无登记"
+        },
+        {
+          "id": "warranty:empty:1",
+          "kind": "substr",
+          "value": "无事件时折叠区空态"
+        },
+        {
+          "id": "warranty:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "warranty:status:0",
+          "kind": "substr",
+          "value": "在保"
+        },
+        {
+          "id": "warranty:status:1",
+          "kind": "substr",
+          "value": "即将到期"
+        },
+        {
+          "id": "warranty:status:2",
+          "kind": "substr",
+          "value": "已过"
+        },
+        {
+          "id": "warranty:status:3",
+          "kind": "substr",
+          "value": "到期未做"
+        },
+        {
+          "id": "warranty:status:4",
+          "kind": "substr",
+          "value": "全部"
+        },
+        {
+          "id": "warranty:status:5",
+          "kind": "substr",
+          "value": "已做"
+        }
+      ]
+    },
+    {
+      "family": "certificates",
+      "domain": "receipt",
+      "scenarios": [
+        "SM6-11",
+        "SM6-12",
+        "SM6-13",
+        "SM6-14"
+      ],
+      "pattern": "_(SM6-11|SM6-12|SM6-13|SM6-14)_",
+      "blocks": [
+        {
+          "id": "certificates:fields:0",
+          "kind": "substr",
+          "value": "证件清单（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）"
+        },
+        {
+          "id": "certificates:fields:1",
+          "kind": "substr",
+          "value": "空态提示"
+        },
+        {
+          "id": "certificates:operations:0",
+          "kind": "substr",
+          "value": "更新"
+        },
+        {
+          "id": "certificates:operations:1",
+          "kind": "substr",
+          "value": "补照片"
+        },
+        {
+          "id": "certificates:operations:2",
+          "kind": "substr",
+          "value": "新增证件"
+        },
+        {
+          "id": "certificates:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "certificates:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "certificates:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无登记"
+        },
+        {
+          "id": "certificates:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "certificates:empty:2",
+          "kind": "substr",
+          "value": "敏感口径：号码脱敏·复制数据不含证件号"
+        },
+        {
+          "id": "certificates:status:0",
+          "kind": "substr",
+          "value": "有效"
+        },
+        {
+          "id": "certificates:status:1",
+          "kind": "substr",
+          "value": "即将到期"
+        },
+        {
+          "id": "certificates:status:2",
+          "kind": "substr",
+          "value": "已过期"
+        },
+        {
+          "id": "certificates:status:3",
+          "kind": "substr",
+          "value": "已过期N天"
+        },
+        {
+          "id": "certificates:status:4",
+          "kind": "substr",
+          "value": "今天到期"
+        },
+        {
+          "id": "certificates:status:5",
+          "kind": "substr",
+          "value": "N天后到期"
+        }
+      ]
+    },
+    {
+      "family": "accounts",
+      "domain": "receipt",
+      "scenarios": [
+        "SM6-15",
+        "SM6-16",
+        "SM6-17",
+        "SM6-18"
+      ],
+      "pattern": "_(SM6-15|SM6-16|SM6-17|SM6-18)_",
+      "blocks": [
+        {
+          "id": "accounts:fields:0",
+          "kind": "substr",
+          "value": "账号分组（平台/用户名/类型）"
+        },
+        {
+          "id": "accounts:fields:1",
+          "kind": "substr",
+          "value": "总数"
+        },
+        {
+          "id": "accounts:fields:2",
+          "kind": "substr",
+          "value": "空态提示"
+        },
+        {
+          "id": "accounts:operations:0",
+          "kind": "substr",
+          "value": "新增账号"
+        },
+        {
+          "id": "accounts:operations:1",
+          "kind": "substr",
+          "value": "查看密码"
+        },
+        {
+          "id": "accounts:operations:2",
+          "kind": "substr",
+          "value": "复制密码"
+        },
+        {
+          "id": "accounts:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "accounts:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "accounts:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无账号"
+        },
+        {
+          "id": "accounts:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "accounts:empty:2",
+          "kind": "substr",
+          "value": "敏感横幅：本页不含任何明文密码"
+        },
+        {
+          "id": "accounts:empty:3",
+          "kind": "substr",
+          "value": "复制密码前二次确认"
+        },
+        {
+          "id": "accounts:status:0",
+          "kind": "substr",
+          "value": "购物"
+        },
+        {
+          "id": "accounts:status:1",
+          "kind": "substr",
+          "value": "银行"
+        },
+        {
+          "id": "accounts:status:2",
+          "kind": "substr",
+          "value": "社交"
+        },
+        {
+          "id": "accounts:status:3",
+          "kind": "substr",
+          "value": "其他"
+        }
+      ]
+    },
+    {
+      "family": "family_borrow",
+      "domain": "family",
+      "scenarios": [
+        "SM7-1"
+      ],
+      "pattern": "_(SM7-1)_",
+      "blocks": [
+        {
+          "id": "family_borrow:fields:0",
+          "kind": "substr",
+          "value": "借出/借入双向分区"
+        },
+        {
+          "id": "family_borrow:fields:1",
+          "kind": "substr",
+          "value": "超期件数"
+        },
+        {
+          "id": "family_borrow:fields:2",
+          "kind": "substr",
+          "value": "记录（物品名/对象/借出日/约定归还日/状态/已借天数/备注）"
+        },
+        {
+          "id": "family_borrow:fields:3",
+          "kind": "substr",
+          "value": "登记表单"
+        },
+        {
+          "id": "family_borrow:operations:0",
+          "kind": "substr",
+          "value": "确认归还"
+        },
+        {
+          "id": "family_borrow:operations:1",
+          "kind": "substr",
+          "value": "复制催还文案"
+        },
+        {
+          "id": "family_borrow:operations:2",
+          "kind": "substr",
+          "value": "确认登记"
+        },
+        {
+          "id": "family_borrow:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "family_borrow:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "family_borrow:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无借用记录"
+        },
+        {
+          "id": "family_borrow:empty:1",
+          "kind": "substr",
+          "value": "超期提醒"
+        },
+        {
+          "id": "family_borrow:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "family_borrow:status:0",
+          "kind": "substr",
+          "value": "已超期"
+        },
+        {
+          "id": "family_borrow:status:1",
+          "kind": "substr",
+          "value": "今日到期"
+        },
+        {
+          "id": "family_borrow:status:2",
+          "kind": "substr",
+          "value": "已归还"
+        },
+        {
+          "id": "family_borrow:status:3",
+          "kind": "substr",
+          "value": "借用中"
+        }
+      ]
+    },
+    {
+      "family": "family_members",
+      "domain": "family",
+      "scenarios": [
+        "SM7-2"
+      ],
+      "pattern": "_(SM7-2)_",
+      "blocks": [
+        {
+          "id": "family_members:fields:0",
+          "kind": "substr",
+          "value": "成员列表"
+        },
+        {
+          "id": "family_members:fields:1",
+          "kind": "substr",
+          "value": "物品归属勾选清单"
+        },
+        {
+          "id": "family_members:fields:2",
+          "kind": "substr",
+          "value": "物品总数"
+        },
+        {
+          "id": "family_members:fields:3",
+          "kind": "substr",
+          "value": "添加成员表单"
+        },
+        {
+          "id": "family_members:operations:0",
+          "kind": "substr",
+          "value": "移除成员"
+        },
+        {
+          "id": "family_members:operations:1",
+          "kind": "substr",
+          "value": "确认标记归属"
+        },
+        {
+          "id": "family_members:operations:2",
+          "kind": "substr",
+          "value": "确认添加"
+        },
+        {
+          "id": "family_members:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "family_members:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "family_members:empty:0",
+          "kind": "substr",
+          "value": "空态：还没有家人档案"
+        },
+        {
+          "id": "family_members:empty:1",
+          "kind": "substr",
+          "value": "无物品态：库里还没有物品"
+        },
+        {
+          "id": "family_members:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "family_members:status:0",
+          "kind": "substr",
+          "value": "成员关系自由文本"
+        },
+        {
+          "id": "family_members:status:1",
+          "kind": "substr",
+          "value": "物品默认归属使用者"
+        }
+      ]
+    },
+    {
+      "family": "first_use_wizard",
+      "domain": "setup",
+      "scenarios": [
+        "SM8-1"
+      ],
+      "pattern": "_(SM8-1)_",
+      "blocks": [
+        {
+          "id": "first_use_wizard:fields:0",
+          "kind": "substr",
+          "value": "6步步骤条"
+        },
+        {
+          "id": "first_use_wizard:fields:1",
+          "kind": "substr",
+          "value": "环境信息"
+        },
+        {
+          "id": "first_use_wizard:fields:2",
+          "kind": "substr",
+          "value": "建库结果"
+        },
+        {
+          "id": "first_use_wizard:fields:3",
+          "kind": "substr",
+          "value": "下一步"
+        },
+        {
+          "id": "first_use_wizard:operations:0",
+          "kind": "substr",
+          "value": "开始初始化"
+        },
+        {
+          "id": "first_use_wizard:operations:1",
+          "kind": "substr",
+          "value": "一键重试"
+        },
+        {
+          "id": "first_use_wizard:operations:2",
+          "kind": "substr",
+          "value": "先配置环境变量"
+        },
+        {
+          "id": "first_use_wizard:operations:3",
+          "kind": "substr",
+          "value": "开始录入第一批"
+        },
+        {
+          "id": "first_use_wizard:operations:4",
+          "kind": "substr",
+          "value": "知道了"
+        },
+        {
+          "id": "first_use_wizard:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "first_use_wizard:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "first_use_wizard:empty:0",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败／初始化失败"
+        },
+        {
+          "id": "first_use_wizard:empty:1",
+          "kind": "substr",
+          "value": "幂等提示：已初始化"
+        },
+        {
+          "id": "first_use_wizard:status:0",
+          "kind": "substr",
+          "value": "done"
+        },
+        {
+          "id": "first_use_wizard:status:1",
+          "kind": "substr",
+          "value": "current"
+        },
+        {
+          "id": "first_use_wizard:status:2",
+          "kind": "substr",
+          "value": "fail"
+        },
+        {
+          "id": "first_use_wizard:status:3",
+          "kind": "substr",
+          "value": "pending"
+        }
+      ]
+    },
+    {
+      "family": "health_report",
+      "domain": "setup",
+      "scenarios": [
+        "SM8-2"
+      ],
+      "pattern": "_(SM8-2)_",
+      "blocks": [
+        {
+          "id": "health_report:fields:0",
+          "kind": "substr",
+          "value": "环境信息"
+        },
+        {
+          "id": "health_report:fields:1",
+          "kind": "substr",
+          "value": "检查项列表"
+        },
+        {
+          "id": "health_report:fields:2",
+          "kind": "substr",
+          "value": "问题总数"
+        },
+        {
+          "id": "health_report:fields:3",
+          "kind": "substr",
+          "value": "健康标记"
+        },
+        {
+          "id": "health_report:fields:4",
+          "kind": "substr",
+          "value": "动作列"
+        },
+        {
+          "id": "health_report:operations:0",
+          "kind": "substr",
+          "value": "勾选"
+        },
+        {
+          "id": "health_report:operations:1",
+          "kind": "substr",
+          "value": "复制选中修复引导"
+        },
+        {
+          "id": "health_report:operations:2",
+          "kind": "substr",
+          "value": "知道了"
+        },
+        {
+          "id": "health_report:operations:3",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "health_report:operations:4",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "health_report:empty:0",
+          "kind": "substr",
+          "value": "空态：数据健康良好＋未发现数据问题"
+        },
+        {
+          "id": "health_report:empty:1",
+          "kind": "substr",
+          "value": "拦截态：请先勾选至少1个问题"
+        },
+        {
+          "id": "health_report:empty:2",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败"
+        },
+        {
+          "id": "health_report:status:0",
+          "kind": "substr",
+          "value": "良好"
+        },
+        {
+          "id": "health_report:status:1",
+          "kind": "substr",
+          "value": "待处理"
+        }
+      ]
+    },
+    {
+      "family": "backup_receipt",
+      "domain": "setup",
+      "scenarios": [
+        "SM8-3"
+      ],
+      "pattern": "_(SM8-3)_",
+      "blocks": [
+        {
+          "id": "backup_receipt:fields:0",
+          "kind": "substr",
+          "value": "本次备份（路径/大小/时间）"
+        },
+        {
+          "id": "backup_receipt:fields:1",
+          "kind": "substr",
+          "value": "备份历史（保留N份）"
+        },
+        {
+          "id": "backup_receipt:fields:2",
+          "kind": "substr",
+          "value": "距上次备份天数"
+        },
+        {
+          "id": "backup_receipt:fields:3",
+          "kind": "substr",
+          "value": "保留份数输入"
+        },
+        {
+          "id": "backup_receipt:operations:0",
+          "kind": "substr",
+          "value": "保留份数下拉"
+        },
+        {
+          "id": "backup_receipt:operations:1",
+          "kind": "substr",
+          "value": "确认备份"
+        },
+        {
+          "id": "backup_receipt:operations:2",
+          "kind": "substr",
+          "value": "导出JSON"
+        },
+        {
+          "id": "backup_receipt:operations:3",
+          "kind": "substr",
+          "value": "导出CSV"
+        },
+        {
+          "id": "backup_receipt:operations:4",
+          "kind": "substr",
+          "value": "删除最旧备份"
+        },
+        {
+          "id": "backup_receipt:operations:5",
+          "kind": "substr",
+          "value": "知道了"
+        },
+        {
+          "id": "backup_receipt:operations:6",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "backup_receipt:operations:7",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "backup_receipt:empty:0",
+          "kind": "substr",
+          "value": "空态：暂无备份记录"
+        },
+        {
+          "id": "backup_receipt:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败／备份失败"
+        },
+        {
+          "id": "backup_receipt:empty:2",
+          "kind": "substr",
+          "value": "空值拦截：该参数不能为空"
+        },
+        {
+          "id": "backup_receipt:status:0",
+          "kind": "substr",
+          "value": "保留份数默认值"
+        }
+      ]
+    },
+    {
+      "family": "import_restore",
+      "domain": "setup",
+      "scenarios": [
+        "SM8-4"
+      ],
+      "pattern": "_(SM8-4)_",
+      "blocks": [
+        {
+          "id": "import_restore:fields:0",
+          "kind": "substr",
+          "value": "四步（选择文件/校验结果/冲突预览/确认导入）"
+        },
+        {
+          "id": "import_restore:fields:1",
+          "kind": "substr",
+          "value": "校验项"
+        },
+        {
+          "id": "import_restore:fields:2",
+          "kind": "substr",
+          "value": "冲突名单"
+        },
+        {
+          "id": "import_restore:fields:3",
+          "kind": "substr",
+          "value": "导入结果"
+        },
+        {
+          "id": "import_restore:operations:0",
+          "kind": "substr",
+          "value": "选择文件"
+        },
+        {
+          "id": "import_restore:operations:1",
+          "kind": "substr",
+          "value": "冲突处理下拉"
+        },
+        {
+          "id": "import_restore:operations:2",
+          "kind": "substr",
+          "value": "确认导入"
+        },
+        {
+          "id": "import_restore:operations:3",
+          "kind": "substr",
+          "value": "撤销导入"
+        },
+        {
+          "id": "import_restore:operations:4",
+          "kind": "substr",
+          "value": "知道了"
+        },
+        {
+          "id": "import_restore:operations:5",
+          "kind": "substr",
+          "value": "复制数据"
+        },
+        {
+          "id": "import_restore:operations:6",
+          "kind": "substr",
+          "value": "复制日志"
+        },
+        {
+          "id": "import_restore:empty:0",
+          "kind": "substr",
+          "value": "冲突超10条折叠"
+        },
+        {
+          "id": "import_restore:empty:1",
+          "kind": "substr",
+          "value": "异常：数据解析失败／数据校验失败／导入失败"
+        },
+        {
+          "id": "import_restore:empty:2",
+          "kind": "substr",
+          "value": "承诺语：导入前自动备份＋失败回滚"
+        },
+        {
+          "id": "import_restore:status:0",
+          "kind": "substr",
+          "value": "跳过同名"
+        },
+        {
+          "id": "import_restore:status:1",
+          "kind": "substr",
+          "value": "覆盖同名"
+        },
+        {
+          "id": "import_restore:status:2",
+          "kind": "substr",
+          "value": "done"
+        },
+        {
+          "id": "import_restore:status:3",
+          "kind": "substr",
+          "value": "current"
+        }
+      ]
+    }
+  ]
 }

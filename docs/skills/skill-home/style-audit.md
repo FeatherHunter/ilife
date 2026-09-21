@@ -27,7 +27,7 @@ node tooling/run-locked.mjs --ticket <票号> --max-wait-ms 600000 -- node packa
 
 退出码三件统一：0＝全绿；1＝有命中或缺件（含读不动）；2＝用法错（分隔符／结构）或缺浏览器
 （双端：本件量的是真浏览器里的版面事实，静态 HTML 查不到，缺浏览器不静默变绿）。
-门禁测试 `packages/skill-home/test/style-audit.test.mjs` 已接进包内 `test` 串（8 例）。
+门禁测试 `packages/skill-home/test/style-audit.test.mjs` 已接进包内 `test` 串（11 例）。
 
 ## 二 · 位置四分（居家口径）
 
@@ -69,11 +69,25 @@ harness 与卡路里同形（零第三方依赖），一处故意不同：`mobil
 
 `scripts/page-blocks.json`（`version:1`）是清单事实源，`kind` 只三种：
 `substr`（必须出现）／`regexp`（必须命中）／`absent`（必须不出现）。
-首版只登记现状骨架可机检块（`doc-doctype`／`doc-lang`／`shell-page`／`page-title`／
+`defaults[]` 7 条是现状骨架可机检块（`doc-doctype`／`doc-lang`／`shell-page`／`page-title`／
 `cmd-line`／`content-filled`／`css-inlined`）：渲染管线的结构事实。
-域必需块（每族字段／操作，事实源 `docs/skills/skill-home/pages-ledger.md`）待票 8
-（#805）骨架登记（`scripts/lib/page-blocks.mjs`）出来后扩进合同 `pages[]`
-（精确文件名或正则匹配），checker 不用改。未补之前本件只守骨架不断，不谎报领域齐。
+`pages[]` 46 条是领域必需块（2026-09-21 由契约附录派生：46 族 755 块，见 §五），
+每条按产物命名“`_<场景id>_`”段匹配（`pattern`，如 `detail` 族是 `_(2-2)_`），
+块 id 形如 `<族>:<组>:<序号>`（如 `detail:fields:0`），缺块点名到文件＋块。
+checker 不用改：只读 `file` 精确名／`pattern` 正则＋`blocks[]`，其余字段（`family`／
+`domain`／`scenarios`）是给人看的。
+
+输入口径：本件查的是**装配后的产物**（`CONTENT` 已填充、样式已内联），不是原始模板——
+原始模板带未填充标记是设计使然，本来就该红，不进本门。无场景 id 的装配页
+（如通用页）只走 7 条默认块，`pattern` 不误伤。
+
+附录变更后重跑派生（只换 `pages[]` 与 `note`，`defaults` 与 checker 不动）：
+
+```sh
+node .scratch/803-expand-pages.mjs
+```
+
+再跑结构门（门禁 11 例里有附录对账，走散即红）。
 
 ## 五 · 本票现场读数（2026-09-21，种子由当刻 dist 真渲染，见 `.scratch/803-seed.mjs`）
 
@@ -96,15 +110,35 @@ HELP 页（有 viewport，390 真宽）：溢出 0，但 77 件可点件短边�
 真例（`blocks-bad.html` 摘掉 `h1`）：`缺块 [page-title] kind=regexp` → `FAIL` exit 1。
 变异（改坏必红）：`page-blocks.json` 任删一条即对应页红，改回即绿（门禁测试钉死）。
 
+领域半段（2026-09-21，`pages[]` 46 族 755 块已由契约附录派生，派生脚本
+`.scratch/803-expand-pages.mjs`，`defaults` 与 checker 一字未动）：
+
+- 三方对账：`dist` 装配登记／契约附录／合同 `pages[]` 的 `detail` 族 29 块原文一致
+  （`.scratch/803-expand-proof.mjs` 先对账，对不上直接抛错、不出“绿”）。
+- 假例（真装配齐全页 `看物品_2-2_20260921T000000.html`，经 `renderFamilyPage` 实组装，
+  非合成夹具）：`blocks=36/36`（默认 7＋`detail` 族 29）；同目录通用页（无场景 id）
+  `blocks=7/7` → `RESULT: 2/2 PASS`。
+- 真例（同页摘掉 `detail:fields:0` 全部出现处）：`blocks=35/36`、
+  `缺块 [detail:fields:0] kind=substr value=ID` → `RESULT: 0/1 FAIL` exit 1。
+- 门禁 11/11 绿（含新增 3 例：46 族对账／场景页 36/36＋通用页 7/7／摘块点名）；
+  包内回归 126/126 绿（`help-assets`／`help-delivery-190`／`backup`／`style-audit`／
+  `wake-family-gates`／`scaffold`／`cli`／`skill` 八件）。
+
 ## 六 · 遗留出口（本票当场处置）
 
-1. 21 张普通模板无 viewport meta（HELP 分支有）：`vp无` 照打，不进红；补进模板归
-   票 2（#799）契约，模板冻结在本票不许动。
+1. 21 张普通模板无 viewport meta（HELP 分支有）：`vp无` 照打，不进红；曾计划补进
+   票 2（#799）契约、模板冻结在本票不许动——票 2 已关且终稿无该条款，现状与跟进见本节 7。
 2. 英文裸词允许清单：种子 FIXTURE 为空壳（本域无豁免夹具名）。票 5（#802）种子
    落地若带英文固定串，按 t407  precedent 逐条允许并写明理由，不扩大。
 3. 重复句口径：照 t417（长度＞6、剔表格原文、跨行不并）。域页出现合法复述
    （如空态与标题同句）时回写本件，不私自放宽。
 4. HELP 壳触摸债（77 件＜44）：公共层写集，本图只记录读数，不修；收口票跑墙时
    HELP 不进双端门，或单列公共层事项。
-5. 域必需块：待票 8 登记后扩合同；届时域票把本件三条命令接进各自验收（写集不相交，
-   各跑各的产物目录）。
+5. 域必需块：2026-09-21 已由契约附录派生进合同 `pages[]`（46 族 755 块，读数见 §五）；
+   域票把本件三条命令接进各自验收（写集不相交，各跑各的产物目录）。
+6. 单字块判别力弱（`改`／`移`／`补`／`减`／`标`／`废`等单字 `substr` 几乎恒命中）：
+   结构门能证“缺整块即红”，证不了单字块的误用；域页语义正确性由视觉复核兜底，
+   不在本件口径内，不属欠账。
+7. 普通产物模板仍无 viewport meta（契约终稿无 viewport 条款，票 2 已关）：
+   双端门 `vp无` 照打、不进红（见 §三）；若将来契约补丁流补 viewport，
+   本件跟进把 `vp无` 转进红——属合同变更，不属本票欠账。
