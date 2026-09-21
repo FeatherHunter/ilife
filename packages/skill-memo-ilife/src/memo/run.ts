@@ -16,7 +16,7 @@ import { fail } from '../shared/exit.js';
 import { toRows } from '../shared/rows.js';
 import type { MemoDb, NotePatch } from '../db/readonly.js';
 import { getNote, listNotes, listReminderRows } from '../db/readonly.js';
-import { abandonReminder } from '../remind/store.js';
+import { abandonReminder } from '../remind/index.js';
 import { applyBatchCategory, collectBatchItems, countNotesByCategory } from './batch.js';
 import { needId } from '../shared/validators.js';
 import { normalizeSub, normalizeTop } from './category.js';

@@ -1,6 +1,6 @@
 /** 设置页专用的三个配置 key：读／写／重置。**它们不是唤醒词命令**。
  *
- * 为什么事实住这儿、不进 `src/policy/wakewords.ts` 那张唤醒词表：那张表管的是**唤醒词命令**
+ * 为什么事实住这儿、不进 `src/triggers/wakewords.ts` 那张唤醒词表：那张表管的是**唤醒词命令**
  * （短语→key→形状→示例），要进 HELP 与唤醒词计数；这三个 key 只由设置页（插件）经既有
  * 「RPC → spawn 技能 CLI」通道调用，没有唤醒词、不进 HELP、也不该出现在用户的命令面上。
  * 按「一条命令的事实只住一处」的同一取向，它们的唯一定义地是这里，并由 `cmd_read.ts` 在
@@ -14,8 +14,8 @@ import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadMemoConfig, resetMemoConfig, saveMemoConfig } from '../config.js';
 import { resolvedMemoPaths } from '../shared/paths.js';
 import type { MemoResolvedPaths } from '../shared/paths.js';
-import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../sync/feishu.js';
-import type { LarkTier } from '../sync/feishu.js';
+import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../sync/index.js';
+import type { LarkTier } from '../sync/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-memo-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -75,9 +75,9 @@ function withHumanError<T>(run: () => T): T {
  * 回执 `{path, values}`；重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
  *
  * `resolved`（#760，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用
- * （算式唯一定义地＝`src/fetch/paths.ts`，面板不自己拼路径）。
+ * （算式唯一定义地＝`src/shared/paths.ts`，面板不自己拼路径）。
  * `lark`（#760，定稿 #759）＝飞书 CLI 三档读数 ＋ 复制安装指引全文 ＋ 官网行
- * （判据唯一定义地＝`src/fetch/feishu.ts` 的 `larkTierInfo`，面板只显示）。
+ * （判据唯一定义地＝`src/sync/feishu.ts` 的 `larkTierInfo`，面板只显示）。
  */
 export interface MemoConfigReadLark {
   readonly tier: LarkTier;

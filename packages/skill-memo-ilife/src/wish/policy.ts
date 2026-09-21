@@ -1,4 +1,4 @@
-// 口径层·心愿排期（M3）：排期/完成/同步三向；同步动作名对齐 feishu 传输（实现见 fetch/feishu）。
+// 口径层·心愿排期（M3）：排期/完成/同步三向；同步动作名对齐 feishu 传输（实现见 `src/sync/feishu.ts`）。
 import { MemoPolicyError } from '../shared/errors.js';
 
 export type WishOp = 'plan' | 'complete';

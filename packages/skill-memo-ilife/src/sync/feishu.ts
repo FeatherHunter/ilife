@@ -71,7 +71,7 @@ export function larkSetupInfo(): LarkSetupInfo {
 // 候选＝既有 5 档（Windows npm 全局 → where／which → 两条固定路径）＋ #760 补注的 4 条
 // （scoop 家目录派生 exe／cmd、`/opt/homebrew/bin`、家目录 `.npm-global/bin`、家目录 `.local/bin`，
 // 一律 `os.homedir()` 派生，不读 `%APPDATA%`／`$HOME`）；**与作息管家那张表逐条相同**（跨包锁进 #758）。
-// `src/health.ts` 里那份只读副本只用前 5 档，不进锁（体检不落盘，调 `loadMemoConfig` 会落默认配置）。
+// `src/cli/health/probe.ts` 里那份只读副本只用前 5 档，不进锁（体检不落盘，调 `loadMemoConfig` 会落默认配置）。
 // 找不到返 null（不抛，larkReady 抛）。#695 起环境变量读取已删（`LARK_CLI_PATH` 与 `APPDATA` 全删）。
 export function findLarkCli(): string | null {
   if (process.platform === 'win32') {

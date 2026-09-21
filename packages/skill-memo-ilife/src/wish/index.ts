@@ -12,3 +12,7 @@ export { reconcileWishes } from './reconcile.js';
 export type { ReconcileCounters, ReconcileReceipt } from './reconcile.js';
 // #855：本域的命令声明经门转出——生成的 `src/cli/registry.ts` 从**门**取数组（不深引域内实现件）。
 export { WISH_COMMANDS } from './commands.js';
+// #855：任务链也该出门——同步域的写权限自检（`sync/sentinel.ts`）真在用它；
+// 跨域只许经门，深引 `tasks.js`／`taskWrite.js` 即被测试判红。
+export { listRelatedTasks } from './tasks.js';
+export { completeTask, createTask, deleteTask, updateTask } from './taskWrite.js';

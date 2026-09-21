@@ -46,7 +46,7 @@ export interface MemoDb {
   readonly conn: DatabaseSync;
 }
 
-// 老定位规则（`memo_cli.py:47-59`）：库目录下的 `memo.db`。库目录从哪来见 `./paths.js`
+// 老定位规则（`memo_cli.py:47-59`）：库目录下的 `memo.db`。库目录从哪来见 `../shared/paths.js`
 // （#695 起＝配置文件的唯一真相，环境变量 `SKILLS_DB_PATH` 已删）；此处不再做 `D:/.db` fallback，不静默换库。
 export function memoDbFile(dbDir: string): string {
   return join(dbDir, dbFilename());
@@ -258,7 +258,7 @@ export function removeNote(db: MemoDb, id: number, confirm: boolean): void {
   }
 }
 
-// ---- reminders 表行级读写（判定逻辑住 `reminders.ts`，此处只做行存取）----
+// ---- reminders 表行级读写（判定逻辑住 `src/remind/store.ts`，此处只做行存取）----
 
 export function listReminderRows(db: MemoDb, status?: string): (MemoReminder & { readonly note_content: string | null })[] {
   const base =

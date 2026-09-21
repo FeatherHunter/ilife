@@ -9,7 +9,7 @@ import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } f
 // #855：复制区载荷的装配与信封取形（`buildDataText`／`buildLogText`／`MemoCopyEnvelope` 位）随 `memo.init`
 // 一起搬进 `src/init/run.ts`——只有那条命令在用，不留第二份。
 import { openMemoDb, closeMemoDb } from '../db/readonly.js';
-import { LARK_WEBSITE_LINE } from '../sync/feishu.js';
+import { LARK_WEBSITE_LINE } from '../sync/index.js';
 // #855：参数校验口径（`crud*`／`normalize*`／`needId`）随备忘域命令一起搬进 `src/memo/run.ts`；
 // 本件只剩开库前分派与交付装配，不再直接做域校验。
 // #855：跨域的写侧合成（`reconcileWishes`）随 `memo.sync` 一起搬进 `src/sync/run.ts`；
@@ -174,7 +174,7 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
 // 本件只做**出口**：参数解析 → 预检 → 开库（或开库前分派）→ envelope → 交付 → 退出码。
 // 命令的声明（键／形状／标题／示例）与域逻辑一律不住这里——#855 已把 13 条命令连声明带运行件搬回各自能力目录，
 // 逐条搬迁记录见 `docs/skills/skill-memo-ilife/t855-实施规格-与开工前读数.md`；本件不再认键，
-// 由 `test/cmd-registry-855.test.mjs` 守着（往本件加 `case`、加键字面量即红）。
+// 由 `test/cmd-registry-855.test.mjs` 守着（往本件加 `case` 即红；键字面量由那条门的白名单表守）。
 // 交付契约：#661 写命令回执照打（分字段是回执的本分，退出码在 main 里落实）；#665 向导与同步报告随 `deliver` 出整页。
 interface PageDeliver { readonly html: string; readonly stem: string }
 interface DispatchOut { readonly data: unknown; readonly exit: number; readonly deliver?: PageDeliver }

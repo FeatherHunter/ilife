@@ -3,7 +3,8 @@
  * 用途：`memo.init` 的入参面（老 `init-report --data <JSON>` 契约的同一形状）——AI 先做环境诊断，
  * 把「检查清单 ＋ 待办 ＋ 验证清单」三段 JSON 交给本域，由 `page.ts` 出两页（报告／引导）。
  *
- * 谁在用：`src/cli/cmd_read.ts` 的 `dispatchInit`（唯一出口）与同域的 `page.ts`。
+ * 谁在用：同域的 `run.ts` 的 `runInit`（声明在 `commands.ts`，经生成的 `cli/registry.ts` 在**开库之前**分派）与同域的 `page.ts`。
+ * （#855 前是出口里的 `dispatchInit`；那个函数已随初始化域一起搬走，本件不再提它。）
  * 对外只给两件：`readInitDiagnosis`（读＋校验）与 `InitInputError`（坏输入 → 出口归 exit 2 的人话）。
  *
  * 校验口径沿 #850 落地的实现，两条不放宽：① `items[].status` 只认 `ok／warn／err`（写错即拦，

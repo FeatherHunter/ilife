@@ -1,12 +1,11 @@
 // 口径层·唤醒词路由（M3）：查询类 + 写入类 ＋ #850 两新键（`memo.init`／`memo.reminder`）；最长匹配；批量改分类向导与改子分类按“批量”消歧；无命中/缺槽位 throw。
-import { WAKE_TOPS } from '../memo/category.js';
+// #855：本件原来手写的 `MemoKey` 键联合与 `WakeRoute` 路由形状**两份副本已删**（铁律二：同一件事两处定义）——
+// 键的唯一一份是生成物 `src/cli/keys.js` 的 `MemoKey`（`routing.ts` 也取那一份），路由形状的唯一一份是 `./routeSpec.js`。
+import type { MemoKey } from '../cli/keys.js';
+import { WAKE_TOPS } from '../memo/index.js';
 
-export type MemoKey =
-  | 'memo.search' | 'memo.detail' | 'memo.create' | 'memo.update' | 'memo.remove'
-  | 'memo.remind' | 'memo.wish' | 'memo.sync' | 'memo.batch' | 'memo.stats'
-  | 'memo.auth' | 'memo.init' | 'memo.reminder';
+export type { MemoKey };
 
-export interface WakeRoute { key: MemoKey; params: Record<string, unknown>; }
 export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; preset?: Record<string, unknown>; }
 
 // 全量唤醒词表（HELP 速查唯一上游；改这里，HELP 构建期跟进）。

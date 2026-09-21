@@ -5,8 +5,8 @@
 // 连接口径不变：新仓直连老库文件 `<库目录>/memo.db`（SQLite、WAL、外键开），连接层禁 DDL。
 //
 // **#760 起本件是全部落点算式的唯一定义地**（设置页只读行显示的那一组绝对路径由这里算，
-// `src/health.ts` 的体检报告调这里的纯函数，`src/policy/media.ts` 的附件目录调 `mediaDirOf`，
-// 三处不许走散；照记账样板 #749 的 `src/fetch/paths.ts`）。
+// `src/cli/health/probe.ts` 的体检探针调这里的纯函数，`src/memo/media.ts` 的附件目录调 `mediaDirOf`，
+// 三处不许走散；照记账样板 #749 的路径件）。
 // 算式一律是**纯函数**（只拼路径、不读配置、不碰盘），读配置只在下面几个 `resolve*` 薄壳里发生。
 import { isAbsolute, join, resolve } from 'node:path';
 import { MEDIA_DIR_NAME, loadMemoConfig } from '../config.js';
@@ -63,7 +63,7 @@ export function mediaDirOf(dataDir: string, configured: string): string {
 }
 
 /** 附件目录：配置 `media.dir` 的解析结果（算式见 `mediaDirOf`）。只算路径，
- *  「必须已存在」的判定归 `src/policy/media.ts` 的 `resolveMediaDir()`。 */
+ *  「必须已存在」的判定归 `src/memo/media.ts` 的 `resolveMediaDir()`。 */
 export function resolveMediaDirPath(): string {
   const cfg = loadMemoConfig();
   return mediaDirOf(cfg.dataDir, cfg.values.media.dir);

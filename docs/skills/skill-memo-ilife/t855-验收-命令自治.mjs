@@ -6,13 +6,20 @@
  * 以及 HELP 场景面（`src/help/scenes/*.ts` 的 30 个场景卡，词面的权威出处）。本探针把四个面逐一取读数、
  * 交叉对账，凡是「在某一面出现过、却没被三桶任何一个收下」的键或词，一律计**未账**并点名。
  *
- * 三桶（互补不重叠，合起来必须覆盖全部键与全部词）：
+ * **键宇宙＝下面五个面 ＋ `FRAMEWORK` 在册表**（对抗式复核提的口径：原话写大了，这里收准）：
+ * 唯一键集从「各域声明 ∪ 登记表 ∪ 词面 ∪ 场景面反查 ∪ 速查面 ∪ 框架位」并出来。
+ * 设置页那条线（`memo.config.read/write/reset` 与 `memo.config.check`，住 `src/cli/config.ts`／`src/cli/health.ts`）
+ * 是**故意不进命令面**的框架位命令（它们没有唤醒词、不进 HELP、不进形状表），**故不在本尺子的键宇宙里**——
+ * 这是按设计排除，不是漏账；要看它们请读那两件自己的头注与 `src/cli/cmd_read.ts` 的预检拦截。
+ *
+ * 三桶（互补不重叠，合起来必须覆盖键宇宙里的每一个键）：
  *   A 全通道自治 —— 声明＋实现＋词面＋场景＋速查四面齐；
  *   B 口径豁免   —— 声明＋实现齐，**按口径无词面**（下面 `EXEMPT` 逐条带原因与出处，改口径就得改本表）；
  *   C 框架位     —— 不属任何域的能力（`memo.help.lookup`：HELP 交付入口，按 `SKILL.md` 只认「备忘录 HELP」）。
  *
- * 另有两张**在册待办**表（不算未账，但每条都得有票）：`PENDING_WORDS`（词面无场景出处的词）、
+ * 另有两张**在册待办**表（不算未账，但每条都得有票）：`PENDING_WORDS`（词面无场景出处的词，或场景别名未接词面的词）、
  * `PENDING_SCENES`（场景卡暂时没有可用词的场景）。今天两张都只在实际读数为空时才有行。
+ * 「在册」是**承重**的：清空任一行，本探针当场点名并 `FAIL`（复核席实测过）。
  *
  * 跑：`node docs/skills/skill-memo-ilife/t855-验收-命令自治.mjs`（读 `dist/`，先 `pnpm build`）。
  * 退出码：0 全部在账；1 有未账或任一面读数与在册表不符；2 环境错（dist 不在）。
@@ -38,8 +45,8 @@ const EXEMPT = {
     from: 'src/help/lookup.ts:40-41、src/sync/commands.ts:5',
   },
   'memo.stats': {
-    why: '无唤醒词：老骨架 30 场景里 0 条统计内容（票 6 裁「不展」），键与读口保留（命令面处置归 #842）',
-    from: 'src/memo/commands.ts:6、src/triggers/wakewords.ts:55',
+    why: '无唤醒词：老骨架 30 场景里 0 条统计内容（票 6 U5=A 裁「照老的来 ⇒ 不展」，只在口径区留一行），键与读口保留（命令面处置归 #842／#858）',
+    from: 'src/memo/commands.ts:6、src/triggers/wakewords.ts:55；票 6 定案 docs/skills/skill-memo-ilife/t226-body.md:43（U5=A）',
   },
 };
 

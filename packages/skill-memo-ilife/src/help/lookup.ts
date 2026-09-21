@@ -22,7 +22,9 @@ function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
 }
 
-const DESCS: Record<string, string> = {
+// 键 → 一句话（HELP 速查表「说明」列）。**键的类型取自生成的 `MemoKey`**：写错一个字编译期就红，
+// 不靠人记（#855 复核提的门洞：此处原是手写字符串表，写第二份 `'memo.search': 'list'` 也无人拦）。
+const DESCS: Partial<Record<MemoKey, string>> = {
   'memo.search': '搜笔记（关键词/CJK 子串，可按分类过滤）',
   'memo.detail': '看单条详情（须 id）',
   'memo.create': '记一条（含记提醒须 remindAt）',
@@ -40,7 +42,8 @@ const DESCS: Record<string, string> = {
 // 注（#760）：`memo.auth` 无唤醒词（「飞书授权」退役），故速查表不再有它这一行；诊断走
 // `memo.auth --params '{"step":"status"}'`（只读）或面板「飞书 CLI」状态行。
 
-// 全量速查表（28 短语：16 显式 + 12 子唤醒词；#760 起「飞书授权」退役）。
+// 全量速查表（31 短语：19 显式 ＋ 12 子唤醒词；#760 起「飞书授权」退役，故 31 里没有它）。
+// 数法：本表＝`WAKE_TABLE` 逐行派生，行数就是词数（#855 复核实测 31；此前注释写的「28 短语：16 显式」是陈旧值）。
 export function buildHelpLookup(): HelpHit[] {
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,

@@ -16,10 +16,10 @@ import {
   type MemoNote,
   type NotePatch,
 } from '../db/readonly.js';
-import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../remind/policy.js';
+import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../remind/index.js';
 import { dueForCategory, normalizeDue } from './due.js';
 import { larkSetupOf, openGate } from './gate.js';
-import type { LarkSetupInfo } from '../sync/feishu.js';
+import type { LarkSetupInfo } from '../sync/index.js';
 import { clearRemoteWishDue, completeRemoteWish, ensureRemoteWish, rescheduleRemoteWish, retitleRemoteWish } from './taskSync.js';
 import { deleteRemoteWish } from './taskRemove.js';
 
