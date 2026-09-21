@@ -23,7 +23,7 @@ const CARDS = [
   {
     id: 'add_from_image', wake: '录入食谱', source: '图片录入', file: 't773-add-from-image.html',
     title: '番茄炒蛋',
-    caliberNote: '图片转结构化录入',
+    caliberNote: '图片转结构化',
     params: { op: 'add', name: '番茄炒蛋', servings: 2, total_time_minutes: 20, difficulty: '快手菜', description: '图片转结构化后录入', source: '图片录入',
       ingredients: [
         { name: '番茄', category: '蔬菜', quantity: 300, unit: 'g', quantity_text: '约 2 个' },
@@ -38,7 +38,7 @@ const CARDS = [
   {
     id: 'add_from_markdown', wake: '录入食谱', source: '文档录入', file: 't773-add-from-markdown.html',
     title: '青椒肉丝',
-    caliberNote: '文档转结构化录入',
+    caliberNote: '文档转结构化',
     params: { op: 'add', name: '青椒肉丝', servings: 2, total_time_minutes: 22, difficulty: '简单', description: '文档转结构化后录入', source: '文档录入',
       ingredients: [
         { name: '青椒', category: '蔬菜', quantity: 200, unit: 'g', quantity_text: '约 3 根' },
@@ -53,7 +53,7 @@ const CARDS = [
   {
     id: 'add_from_conversation', wake: '录入食谱', source: '对话录入', file: 't773-add-from-conversation.html',
     title: '麻婆豆腐',
-    caliberNote: '对话逐轮问清录入',
+    caliberNote: '对话逐轮问清',
     params: { op: 'add', name: '麻婆豆腐', servings: 2, total_time_minutes: 25, difficulty: '简单', description: '对话逐步收集后录入', source: '对话录入',
       ingredients: [
         { name: '嫩豆腐', category: '豆制品', quantity: 400, unit: 'g', quantity_text: '1 盒' },
@@ -68,7 +68,7 @@ const CARDS = [
   {
     id: 'add_from_template', wake: '录入食谱', source: '表单录入', file: 't773-add-from-template.html',
     title: '蒜蓉西蓝花',
-    caliberNote: '表单校验通过录入',
+    caliberNote: '表单校验通过',
     params: { op: 'add', name: '蒜蓉西蓝花', servings: 2, total_time_minutes: 15, difficulty: '快手菜', description: '表单填好后录入', source: '表单录入',
       ingredients: [
         { name: '西蓝花', category: '蔬菜', quantity: 300, unit: 'g', quantity_text: '约 1 颗' },
@@ -83,7 +83,7 @@ const CARDS = [
   {
     id: 'import_from_json', wake: '导入食谱', source: '数据导入', file: 't773-import-from-json.html',
     title: '鱼香肉丝',
-    caliberNote: '文件校验通过录入',
+    caliberNote: '文件校验通过',
     params: { op: 'add', name: '鱼香肉丝', servings: 2, total_time_minutes: 25, difficulty: '中等', description: '导入文件校验后录入', source: '数据导入',
       ingredients: [
         { name: '猪里脊', category: '肉类', quantity: 200, unit: 'g', quantity_text: '切丝' },
