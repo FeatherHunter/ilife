@@ -1,4 +1,4 @@
-// express能力·list页装配（#805 脚手架生成，域票填内容）。
+// express能力·list页装配（#805 脚手架生成，#812 域票填真内容）。
 //
 // 一族一个装配件：模板 `templates/express/list.html` 的装配入口。
 // 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'list' as const;
 
@@ -58,14 +58,120 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
+type ListItem = {
+  id: number;
+  name: string;
+  quantity: number;
+  routine: string;
+  checked: number;
+  sourceLabel: string;
+  statusLabel: string;
+};
+
+function asListItems(env: Envelope): ListItem[] {
+  const d = env.data as Record<string, unknown>;
+  const raw = (d.items as unknown[] | undefined) ?? [];
+  return raw.map((r) => {
+    const o = r as Record<string, unknown>;
+    return {
+      id: Number(o.id ?? 0),
+      name: String(o.name ?? ''),
+      quantity: Number(o.quantity ?? 1),
+      routine: String(o.routine ?? ''),
+      checked: Number(o.checked ?? 0),
+      sourceLabel: String(o.sourceLabel ?? (o.routine ? '例行' : '手动记的')),
+      statusLabel: String(o.statusLabel ?? (Number(o.checked ?? 0) ? '已买' : '待买')),
+    };
+  }).filter((x) => x.name);
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/express/list.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
+  const head = '<div class="fam-head"><span>快递购物</span>'
+    + '<span>购物清单</span></div>';
+  const items = asListItems(env);
+  const pending = items.filter((x) => !x.checked);
+  const done = items.filter((x) => x.checked);
+  const seen = new Map<string, number>();
+  for (const it of pending) seen.set(it.name, (seen.get(it.name) ?? 0) + 1);
+  const dupes = [...seen.entries()].filter(([, n]) => n > 1).map(([n]) => n);
+
+  const style = '<style>'
+    + '.x-lead{color:#3a3a3c;font-size:15px;line-height:1.7;margin:12px 0}'
+    + '.x-metrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}'
+    + '.x-pill{border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfbfd}'
+    + '.x-row{display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid #eee;flex-wrap:wrap}'
+    + '.x-name{font-weight:700;flex:1;min-width:140px;word-break:break-word}'
+    + '.x-note{color:#666;font-size:13px;margin-top:4px}'
+    + '.x-tag{background:#eef5ff;color:#0a63ce;border-radius:999px;padding:3px 10px;font-size:12px;margin-left:8px}'
+    + '.x-tag.manual{background:#f2f2f7;color:#666}'
+    + '.x-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}'
+    + '.x-btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;min-height:44px;font-size:15px}'
+    + '.x-btn.alt{background:#f2f2f7;color:#111;border:1px solid #ddd}'
+    + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
+    + '.x-btn.danger{background:#fff;color:#c00;border:1px solid #ffb4ae}'
+    + '.x-check{width:22px;height:22px;flex:none}'
+    + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
+    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-name{flex:none}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
+    + '</style>';
+
+  const P_NEW = '请加载居家管家技能，帮我录入新买的物品';
+  const P_RESTOCK = '请加载居家管家技能，帮我给物品补数量';
+  const P_ADD = '请加载居家管家技能，帮我添加购物清单条目';
+  const P_MISSING = '请加载居家管家技能，帮我检测缺货';
+  const P_CLEAN = '请加载居家管家技能，帮我清理已买的购物清单条目';
+
+  let body = style;
+  body += '<p class="x-lead">勾选买到的条目，点下方的按钮划掉，例行物品会按周期自动提醒</p>';
+  body += '<div class="x-metrics">'
+    + '<span class="x-pill">待买 ' + pending.length + ' 件</span>'
+    + '<span class="x-pill">已买 ' + done.length + ' 件</span>'
+    + '<span class="x-pill">查重 ' + dupes.length + ' 组</span>'
+    + '</div>';
+
+  if (dupes.length) {
+    body += '<section><h2>清单内查重</h2><div>'
+      + dupes.map((n) => '<span class="x-pill">别买重 ' + escapeHtml(n) + ' 在清单中出现多次，建议合并为一条</span>').join('')
+      + '</div></section>';
+  }
+
+  if (pending.length) {
+    body += '<section><h2>待买条目</h2><div id="x-list">'
+      + pending.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-qty="' + it.quantity + '">'
+        + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
+        + '<span class="x-tag' + (it.routine ? '' : ' manual') + '">' + escapeHtml(it.sourceLabel) + '</span>'
+        + '<span class="x-tag manual">' + escapeHtml(it.statusLabel) + '</span></div>'
+        + '<div class="x-note">数量 ' + it.quantity + (it.routine ? ' 周期 ' + escapeHtml(it.routine) : '') + '</div></div></div>').join('')
+      + '</div></section>';
+    body += '<section><div class="x-actions">'
+      + '<button class="x-btn" onclick="xCheck()">我买到了</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_NEW) + '">清单外新买的</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_RESTOCK) + '">给已有物品补数量</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
+      + '<button class="x-btn danger" data-prompt="' + escapeHtml(P_CLEAN) + '">清掉已买记录</button>'
+      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
+      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
+      + '</div></section>';
+  } else {
+    body += '<section><div class="x-empty">清单是空的<br>可以先看看家里缺什么，或者记一笔要买的<div class="x-actions" style="justify-content:center">'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
+      + '</div></div></section>';
+  }
+
+  body += '<script>'
+    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
+    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
+    + 'function xCheck(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选买到的条目");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我标记购物清单条目已买到："+names+" 编号["+ids+"]");}'
+    + 'function xCopyData(){xCopy(document.title+" 数据共"+document.querySelectorAll("#x-list .x-row").length+"行");}'
+    + 'function xCopyLog(){xCopy(document.title+" 日志 "+new Date().toLocaleString());}'
+    + '</script>';
+
   const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    + body
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

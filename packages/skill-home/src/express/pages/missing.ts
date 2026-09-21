@@ -1,4 +1,4 @@
-// express能力·missing页装配（#805 脚手架生成，域票填内容）。
+// express能力·missing页装配（#805 脚手架生成，#812 域票填真内容）。
 //
 // 一族一个装配件：模板 `templates/express/missing.html` 的装配入口。
 // 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml } from '../../render/index.js';
 
 export const FAMILY = 'missing' as const;
 
@@ -55,14 +55,107 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
+type MissingItem = {
+  id: number;
+  name: string;
+  current: number;
+  threshold: number;
+  threshold_source: string;
+  status: string;
+  suggest: number;
+  category_name: string;
+};
+
+function asMissing(env: Envelope): { items: MissingItem[]; scope: string } {
+  const d = env.data as Record<string, unknown>;
+  const raw = (d.items as unknown[] | undefined) ?? [];
+  const items = raw.map((r) => {
+    const o = r as Record<string, unknown>;
+    return {
+      id: Number(o.id ?? 0),
+      name: String(o.name ?? ''),
+      current: Number(o.current ?? 0),
+      threshold: Number(o.threshold ?? 1),
+      threshold_source: String(o.threshold_source ?? '囤货设置'),
+      status: String(o.status ?? ''),
+      suggest: Number(o.suggest ?? 1),
+      category_name: String(o.category_name ?? ''),
+    };
+  }).filter((x) => x.name);
+  return { items, scope: String((d.scope as string | undefined) ?? '全屋') };
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/express/missing.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
+  const head = '<div class="fam-head"><span>快递购物</span>'
+    + '<span>缺货检测</span></div>';
+  const { items, scope } = asMissing(env);
+
+  const style = '<style>'
+    + '.x-lead{color:#3a3a3c;font-size:15px;line-height:1.7;margin:12px 0}'
+    + '.x-metrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}'
+    + '.x-pill{border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfbfd}'
+    + '.x-row{display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid #eee;flex-wrap:wrap}'
+    + '.x-name{font-weight:700;flex:1;min-width:140px;word-break:break-word}'
+    + '.x-meta{color:#666;font-size:13px;margin-top:4px}'
+    + '.x-suggest{background:#f5f8ff;border-radius:12px;padding:6px 12px;font-size:14px;white-space:nowrap}'
+    + '.x-suggest b{color:#0a63ce}'
+    + '.x-state{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:8px}'
+    + '.x-state.low{background:#fff2df;color:#b36b00}.x-state.empty{background:#ffe8e6;color:#c00}'
+    + '.x-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}'
+    + '.x-btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;min-height:44px;font-size:15px}'
+    + '.x-btn.alt{background:#f2f2f7;color:#111;border:1px solid #ddd}'
+    + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
+    + '.x-check{width:22px;height:22px;flex:none}'
+    + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
+    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
+    + '</style>';
+
+  const P_SCOPE = '请加载居家管家技能，帮我按范围检测缺货';
+  const P_TH = '请加载居家管家技能，帮我查看囤货并设置阈值';
+
+  let body = style;
+  body += '<p class="x-lead">勾选缺货物品加入购物清单，阈值来自囤货设置，建议买按两倍阈值缓冲算出</p>';
+  body += '<div class="x-metrics">'
+    + '<span class="x-pill">缺货 ' + items.length + ' 件</span>'
+    + '<span class="x-pill">检测范围 ' + escapeHtml(scope) + '</span>'
+    + '<span class="x-pill">阈值来源 囤货设置</span>'
+    + '</div>';
+
+  if (items.length) {
+    body += '<section><h2>缺货物品</h2><p class="x-meta">阈值数字蓝色是已设置，灰色是默认估算，建议买是买完保有两倍阈值缓冲</p><div id="x-list">'
+      + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-suggest="' + it.suggest + '">'
+        + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
+        + '<span class="x-state ' + (it.status === '空' ? 'empty' : 'low') + '">' + escapeHtml(it.status) + '</span></div>'
+        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 当前 ' + it.current + ' 阈值 ' + it.threshold + '</div></div>'
+        + '<span class="x-suggest">建议买 <b>' + it.suggest + '</b></span></div>').join('')
+      + '</div><div class="x-actions">'
+      + '<button class="x-btn" onclick="xToList()">加入购物清单</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_SCOPE) + '">按范围检测</button>'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_TH) + '">设置阈值</button>'
+      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
+      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
+      + '</div></section>';
+  } else {
+    body += '<section><div class="x-empty">库存充足没有缺货<br>范围 ' + escapeHtml(scope) + '<div class="x-actions" style="justify-content:center">'
+      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_TH) + '">设置阈值</button>'
+      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
+      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
+      + '</div></div></section>';
+  }
+
+  body += '<script>'
+    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
+    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
+    + 'function xToList(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选缺货物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name")+"建议买"+c.getAttribute("data-suggest");}).join("、");xCopy("请加载居家管家技能，帮我将缺货物品加入购物清单："+names+" 编号["+ids+"]");}'
+    + 'function xCopyData(){xCopy(document.title+" 数据共"+document.querySelectorAll("#x-list .x-row").length+"行");}'
+    + 'function xCopyLog(){xCopy(document.title+" 日志 "+new Date().toLocaleString());}'
+    + '</script>';
+
   const content = head
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    + body
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')
