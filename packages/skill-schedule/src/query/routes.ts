@@ -1,4 +1,4 @@
-/** 查询与浏览的路由声明（**权威源**，18 条：单日查 8／区间 3／详情 2／查日程 4／周视图 1）。
+/** 查询与浏览的路由声明（**权威源**，19 条：单日查 8／区间 3／详情 3／查日程 4／周视图 1）。
  *
  * `schedule.plan.today` 的 4 条住这里（唤醒词 #12／#15／#16 在 HELP 查询组）：路由跟键走，
  * 一键的路由只住一处。`order`＝今日 `WAKE_TABLE` 下标，归并保序。
@@ -31,4 +31,8 @@ export const QUERY_ROUTES: readonly RouteEntry[] = [
   { phrase: '查日程', key: 'schedule.plan.today', order: 31 },
   { phrase: '看日程', key: 'schedule.plan.today', order: 32 },
   { phrase: '周视图', key: 'schedule.record.range', preset: { view: 'week' }, order: 48 },
+  // #786 · 老词「按 ID 查记录」**带空格**：老 HELP 的 #23 就是带空格写的，而表里原有那条不带空格，
+  //  `routeWakeword` 走 `text.includes(phrase)` ⇒ 用户按老 HELP 打字时一条也命不中。两条都留
+  //  （最长匹配优先，带空格那条先命中），键与槽位一模一样。
+  { phrase: '按 ID 查记录', key: 'schedule.record.detail', needs: ['id'], order: 49 },
 ];

@@ -28,6 +28,10 @@
  *     原本回落薄模板页会渲染成一排空卡（渲染器按 `{time,title,activity}` 取值，载荷却是
  *     `{date,hours[],plannedHours}`），本件把这份载荷真画出来；
  *   · **周视图**（f08，`renderWeekViewPage`，形状与样本页 #782 冻结的那一份逐字同）。
+ *
+ *  #786 这一段补一张（第四张页型住 `shared/detailPage.ts`）：
+ *   · **作息详情**（f06，`renderRecordDetailPage`）——老侧那两个必现块（每条 11 字段全展开、
+ *     `analysis_reasoning` 完整展示）都在；按日查与按 ID 查走同一张页（同一枚 key 的两支）。
  */
 import {
   HEALTH_TARGETS, LEVEL1_WHITELIST, computeHealthScore, fmtDur, fmtDurShort, fmtPct, l1Of,
@@ -41,6 +45,7 @@ import { renderDayPage, type DayPageData } from '../shared/dayPage.js';
 import { renderWeekPage, type WeekPageData } from '../shared/weekPage.js';
 import { renderRangePage } from '../shared/rangePage.js';
 import { renderOverviewPage } from '../shared/overviewPage.js';
+import { renderDetailPage, type RecordDetailItem } from '../shared/detailPage.js';
 import { type ListRowInput } from 'base-paint/blocks';
 
 /** 一级分类的权威顺序（配色与图例都照它），取自 `policy` 的白名单，本件不另写一份。 */
@@ -80,8 +85,7 @@ function byL1Of(records: readonly ScheduleRecord[]): Record<string, number> {
 }
 
 /** 记录的 24 小时格（当天分钟数 → 格）。 */
-function cellsOf(records: readonly ScheduleRecord[]): HourCell[] {
-  return hourCellsOf(records.map((r) => ({
+function cellsOf(records: readonly ScheduleRecord[]): HourCell[] {  return hourCellsOf(records.map((r) => ({
     start: toMinutes(r.time_start),
     end: toMinutes(r.time_end),
     key: l1Of(r.category),
@@ -477,6 +481,100 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
         + days.map((day) => day.date + '：' + day.hours.filter((h) => h.text !== '未规划').length + ' 格有安排').join('\n'),
       logText: '场景：' + (single ? '24h 概览' : '查多日计划') + ' ｜ 区间：' + span
         + ' ｜ 数据来源：日程表（' + days.length + ' 天聚合，丢备注与飞书同步状态）',
+    },
+  });
+}
+
+/* ══════════════════════ #786 · 作息详情（f06）／按 ID 查记录 ══════════════════════ */
+
+/** 一条记录在页上的字段：**老侧 `render_records_detail` 写的那 11 个**（它的「100% 字段暴露原则」
+ *  ／票面必现块「每条 11 字段全展开」）——其中 `analysis_reasoning` 走它自己那一段的正文（全文，
+ *  不截断），另外十个落这条事实条。字段名照老侧页面那几格（消息原文／消息时间戳是它取的名字）。
+ *
+ *  缺失一律写「无」，不留空格子、也不编一个值出来（`source_contents`／`source_timestamps`
+ *  在库里多为空——老侧渲染时 `or '（无）'`，本件写「无」）。 */
+function detailFieldsOf(record: ScheduleRecord): { readonly label: string; readonly value: string }[] {
+  const stamp = (value: string): string => (value === '' ? '无' : value.slice(0, 16).replace('T', ' '));
+  const text = (value: string | null): string => (value === null || value === '' ? '无' : value);
+  return [
+    { label: '记录号', value: String(record.id) },
+    { label: '日期', value: record.date },
+    { label: '开始', value: record.time_start },
+    { label: '结束', value: record.time_end },
+    { label: '时长', value: fmtDur(record.duration_minutes ?? 0) },
+    { label: '活动', value: record.activity },
+    { label: '分类', value: record.category },
+    { label: '消息原文', value: text(record.source_contents) },
+    { label: '消息时间戳', value: text(record.source_timestamps) },
+    { label: '创建时间', value: stamp(record.created_at) },
+  ];
+}
+
+/** 一条记录的段名（页上那一段的标题）：记录号 ＋ 日期 ＋ 起止 ＋ 做什么。 */
+function detailTitleOf(record: ScheduleRecord): string {
+  return '记录号 ' + record.id + '：' + record.date + ' ' + timeRangeOf(record.time_start, record.time_end)
+    + ' ' + record.activity;
+}
+
+/** 「作息详情」整页（形状＝`shared/detailPage.ts`；老侧 f06 的两个必现块都在）。
+ *
+ *  `opts.date`＝这一趟查的那一天（页头与结论文案用）；`opts.pickedId`＝按 ID 查时点名的记录号
+ *  （给了它，结论条就写成「这一条」的说法）。按日查与按 ID 查**同一套件序列**。
+ *
+ *  载荷不动：本函数只出 HTML，`data.item` 仍是 `render/views.ts` 的 `buildRecordDetail` 那份
+ *  （按日查的载荷是 `buildRecordDetail(records[0])`，与 #784 之前逐字同）。 */
+export function renderRecordDetailPage(
+  records: readonly ScheduleRecord[],
+  opts: { readonly date: string; readonly pickedId?: number },
+): string {
+  const total = records.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
+  const withReasoning = records.filter((r) => (r.analysis_reasoning ?? '') !== '').length;
+  const dims = [...new Set(records.map((r) => l1Of(r.category)))].sort();
+  const ranked = dims
+    .map((dim) => ({ dim, minutes: records.filter((r) => l1Of(r.category) === dim).reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0) }))
+    .sort((a, b) => b.minutes - a.minutes);
+  const picked = opts.pickedId === undefined ? undefined : records.find((r) => r.id === opts.pickedId);
+  const reasoningClause = withReasoning === 0
+    ? '这一批记录都没有留 AI 推理链。'
+    : (withReasoning === records.length ? '每一条都留着 AI 推理链。' : '其中 ' + withReasoning + ' 条留着 AI 推理链。');
+  const items: RecordDetailItem[] = records.map((r) => ({
+    title: detailTitleOf(r),
+    fields: detailFieldsOf(r),
+    // 空的写「（无）」（老侧页同一个写法）：这一块**恒在**，11 个字段一个不少。
+    reasoning: (r.analysis_reasoning ?? '') === '' ? '（无）' : (r.analysis_reasoning ?? ''),
+  }));
+  const spanLine = records.length === 0
+    ? opts.date + ' 这一天没有记录。'
+    : records[0].time_start + ' 至 ' + records[records.length - 1].time_end;
+  const conclusion = picked === undefined
+    ? opts.date + ' 这一天有 ' + records.length + ' 条记录，覆盖 ' + fmtDurShort(total) + '。' + reasoningClause
+      + '11 个字段逐条展开在这一页上，一条也不折叠。'
+    : '记录号 ' + picked.id + ' 这一条：' + picked.date + ' ' + timeRangeOf(picked.time_start, picked.time_end)
+      + ' ' + picked.activity + '，时长 ' + fmtDurShort(picked.duration_minutes ?? 0) + '。'
+      + '11 个字段全展开在这一页上，'
+      + ((picked.analysis_reasoning ?? '') === '' ? '这一条没有留 AI 推理链。' : 'AI 推理链也照全文摆出来。');
+  return renderDetailPage({
+    head: {
+      docTitle: '作息管家 作息详情',
+      eyebrow: '作息管家 查询与浏览',
+      title: '作息详情',
+      subtitle: picked === undefined
+        ? opts.date + ' 这一天 ' + records.length + ' 条记录，字段逐条展开。'
+        : '记录号 ' + picked.id + ' 这一条，字段逐条展开。',
+    },
+    kpis: [
+      { label: '记录条数', value: String(records.length), unit: '条', detail: spanLine },
+      { label: '覆盖时长', value: fmtDurShort(total), detail: ranked.length === 0 ? '无分类' : '投入最多 ' + ranked[0].dim },
+      { label: '带 AI 推理链', value: String(withReasoning), unit: '条', detail: reasoningClause },
+      { label: '覆盖一级分类', value: String(dims.length), unit: '类', detail: ranked.length === 0 ? '无' : ranked.map((r) => r.dim).join(' ') },
+    ],
+    conclusion,
+    records: items,
+    copy: {
+      dataText: '【作息管家 作息详情】' + opts.date + '（' + records.length + ' 条 · 覆盖 ' + fmtDur(total) + '）\n'
+        + records.map((r) => '记录号 ' + r.id + ' ' + timeRangeOf(r.time_start, r.time_end) + ' ' + r.activity
+          + '（' + r.category + '）').join('\n'),
+      logText: '场景：作息详情 ｜ 日期：' + opts.date + ' ｜ 数据来源：作息记录表（' + records.length + ' 行，11 字段全展开）',
     },
   });
 }

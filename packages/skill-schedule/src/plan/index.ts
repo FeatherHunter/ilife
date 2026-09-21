@@ -21,6 +21,10 @@ import { runCheck } from './check.js';
 export type { PlanOpCtx, PlanOpResult } from './context.js';
 export { buildPlanOverview } from './overview.js';
 export type { PlanOverviewPayload, PlanDayRow, PlanHourRow } from './overview.js';
+// #786 · 「查日程」那一张页的口径（空档推算住本域：`plan` 侧与 `query` 侧都要用——f10 查日程页与
+// f12 商量计划预览的空档提示是同一件事）经能力门出门，`query` 侧只走这个门、不深引用内部件。
+export { eventsInWindow, renderPlanDayPage } from './planDocs.js';
+export type { PlanDayPageOptions, PlanDaySearch } from './planDocs.js';
 
 /** #14 复盘：本地读，不碰远端（四粒度：day／week／month／range）。 */
 function runReview(ctx: PlanOpCtx): PlanOpResult {

@@ -121,9 +121,13 @@ describe('#843 交付面', () => {
       const html = readFileSync(out, 'utf8');
       assert.equal(/^<!doctype html>/i.test(html), true, label + ' 须是完整页面（doctype 起）');
       assert.equal(html.includes('</html>'), true, label + ' 须收尾 </html>');
-      // 真内容：HELP 看载荷容器；**交整页的键**（#783 写域 ＋ #784 单日查 ＋ #785 区间汇总）看页壳与页面级配方根类；
-      // 其余键仍走薄模板分节。这张名单是「哪些键的处理函数自己给整页」的**唯一清单**，加一条＝那一票自己加。
-      const FULL_PAGE_KEYS = new Set(['schedule.record.write', 'schedule.record.today', 'schedule.record.range']);
+      // 真内容：HELP 看载荷容器；**交整页的键**（#783 写域 ＋ #784 单日查 ＋ #785 区间汇总 ＋
+      // #786 查日程／作息详情）看页壳与页面级配方根类；其余键仍走薄模板分节。
+      // 这张名单是「哪些键的处理函数自己给整页」的**唯一清单**，加一条＝那一票自己加。
+      const FULL_PAGE_KEYS = new Set([
+        'schedule.record.write', 'schedule.record.today', 'schedule.record.range',
+        'schedule.plan.today', 'schedule.record.detail',
+      ]);
       const substantive = entry.key === 'schedule.help.lookup'
         ? html.includes('<script id="help-data" type="application/json">')
         : (FULL_PAGE_KEYS.has(entry.key)

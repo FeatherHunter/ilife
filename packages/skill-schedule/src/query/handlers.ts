@@ -9,19 +9,24 @@
  * （`schedule.plan.today` 的 `view=aggregate` 档）、周视图（同 `schedule.record.range` 的
  * `view=week` 档）——同样是「载荷不动，只把 HTML 交回去」。
  * 页的落点由出口按 `#843` 的通式名算（`delivery.path` 给绝对路径），本件只把 HTML 交回去。
+ *
+ *  **#786 再补两族**：`schedule.plan.today` 的缺省档（查日程，含按标题搜／按时段查重／带已软删三条路）
+ *  与 `schedule.record.detail` 的两支（按日／按 ID，f06 单条详情）——同样是「载荷不动，只把 HTML 交回去」。
+ *  时段查重这一条支路此前**参数被静默丢掉**（老侧 CLI 只认 `--title`），本票把它接上。
  */
 import {
   ScheduleFetchError, SchedulePolicyError,
   getRecordById, getLastRecord, getStatus, listPlanEvents, getPlanEventsRange,
   listRecordsByDate, listRecordsRange, searchPlanEvent,
 } from '../fetch/index.js';
-import { normalizeDate, parsePlanView, resolveDateParam, resolveRangeParam } from '../policy/index.js';
-import { buildPlanOverview } from '../plan/index.js';
+import { normalizeDate, normalizeTime, parsePlanView, resolveDateParam, resolveRangeParam } from '../policy/index.js';
+import { buildPlanOverview, eventsInWindow, renderPlanDayPage } from '../plan/index.js';
 import {
   buildPlanToday, buildRecordDetail, buildRecordRange, buildRecordToday,
 } from '../render/index.js';
 import {
-  renderTodaySummaryPage, renderPlanOverviewPage, renderRangeSummaryPage, renderWeekViewPage, weekDatesOf,
+  renderPlanOverviewPage, renderRangeSummaryPage, renderRecordDetailPage, renderTodaySummaryPage,
+  renderWeekViewPage, weekDatesOf,
   type StatusView,
 } from './queryDocs.js';
 import type { ScheduleDb } from '../fetch/db.js';
@@ -81,14 +86,31 @@ export const viewRecordRange: ViewHandler = (params, handle: ScheduleDb) => {
 };
 
 export const viewRecordDetail: ViewHandler = (params, handle: ScheduleDb) => {
+  // #786：这一域的两支从「交空 HTML（回落薄模板分节页）」改成**交整页**（f06 单条详情：
+  // 每条 11 字段全展开 ＋ AI 推理链全文）。载荷一字不动（`data.item` 仍是 `buildRecordDetail` 那份）。
   if (params.id !== undefined) {
-    return { data: buildRecordDetail(getRecordById(handle, needInt(params, 'id'))), html: '' };
+    const record = getRecordById(handle, needInt(params, 'id'));
+    return { data: buildRecordDetail(record), html: renderRecordDetailPage([record], { date: record.date, pickedId: record.id }) };
   }
   const date = resolveDateParam(params);
   const records = listRecordsByDate(handle, date);
   if (!records.length) throw new ScheduleFetchError('SCHEDULE_RECORD_NOT_FOUND', '当日无记录：' + date);
-  return { data: buildRecordDetail(records[0]), html: '' };
+  return { data: buildRecordDetail(records[0]), html: renderRecordDetailPage(records, { date }) };
 };
+
+/** 时段查重的两个钟点（#786「今天 17:00-18:00 有什么安排」那一行）：校验走 `policy` 的
+ *  `normalizeTime`（非法即抛，报文与别处一致），**但不用它的返回值**——它把 `24:00` 改写成 `23:59`
+ *  （那是飞书 ISO 的口径），用在这一段的窗口边界上会把 23:00 至 23:59 那一条漏在窗口外。 */
+function windowOf(params: Record<string, unknown>): { start: string; end: string } | undefined {
+  const rawStart = typeof params.time_start === 'string' ? params.time_start.trim() : undefined;
+  const rawEnd = typeof params.time_end === 'string' ? params.time_end.trim() : undefined;
+  if (rawStart === undefined && rawEnd === undefined) return undefined;
+  const start = rawStart === undefined || rawStart === '' ? '00:00' : rawStart;
+  const end = rawEnd === undefined || rawEnd === '' ? '24:00' : rawEnd;
+  normalizeTime(start, 'time_start');
+  normalizeTime(end, 'time_end');
+  return { start, end };
+}
 
 export const viewPlanToday: ViewHandler = (params, handle: ScheduleDb) => {
   // #15／#16：24h 聚合视图（分桶 ＋ 多日）走 `view=aggregate`；#12 查日程走全字段 list。
@@ -101,13 +123,31 @@ export const viewPlanToday: ViewHandler = (params, handle: ScheduleDb) => {
     const payload = buildPlanOverview(handle, dates);
     return { data: { ...payload }, html: renderPlanOverviewPage(payload) };
   }
+  // #786：这一支的四条路（缺省／按标题搜／按时段查重／带已软删）共用**同一张查日程页**
+  // （老侧那三样只出 JSON）。全天的读数与色带都按**活跃事件**算，只有列表随查法换。
+  const date = resolveDateParam(params);
+  const active = listPlanEvents(handle, date);
+  const inactive = params.include_inactive === true
+    ? listPlanEvents(handle, date, true).filter((e) => e.is_active === 0)
+    : [];
+  const pageOpts = inactive.length === 0 ? {} : { inactive };
   if (typeof params.title === 'string' && params.title.trim()) {
-    const date = resolveDateParam(params);
     const hits = searchPlanEvent(
       handle, date, params.title.trim(),
       params.time_start as string | undefined, params.time_end as string | undefined,
     );
-    return { data: buildPlanToday(date, hits), html: '' };
+    return {
+      data: buildPlanToday(date, hits),
+      html: renderPlanDayPage(active, date, { ...pageOpts, search: { title: params.title.trim(), list: hits } }),
+    };
+  }
+  const window = windowOf(params);
+  if (window !== undefined) {
+    const hits = eventsInWindow(active, window.start, window.end);
+    return {
+      data: buildPlanToday(date, hits),
+      html: renderPlanDayPage(active, date, { ...pageOpts, search: { window, list: hits } }),
+    };
   }
   if (Array.isArray(params.dates) && params.dates.length) {
     const dates = (params.dates as unknown[]).map((x) => normalizeDate(x, 'dates[]'));
@@ -116,6 +156,5 @@ export const viewPlanToday: ViewHandler = (params, handle: ScheduleDb) => {
     const all = getPlanEventsRange(handle, lo, hi).filter((e) => dates.includes(e.date));
     return { data: { items: all.map((e) => buildPlanToday(e.date, [e]).items[0]), total: all.length, date: lo + '~' + hi }, html: '' };
   }
-  const date = resolveDateParam(params);
-  return { data: buildPlanToday(date, listPlanEvents(handle, date)), html: '' };
+  return { data: buildPlanToday(date, active), html: renderPlanDayPage(active, date, pageOpts) };
 };

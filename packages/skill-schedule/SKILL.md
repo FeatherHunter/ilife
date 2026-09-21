@@ -1,6 +1,6 @@
 ---
 name: skill-schedule
-description: "「作息管家HELP」／「作息管家 HELP」→schedule.help.lookup 缺省即落一份能打开的 HELP 文件（5 类别／34 唤醒词／85 场景，走共享 help 模板）；唯一出口 schedule-cmd-read。触发词：作息管家HELP、作息管家help、作息管家 HELP、作息管家帮助、作息管家能做什么、作息管家使用说明、今天总结、今日作息、今日总结、今天作息、查作息时间轴、查作息状态、初始化数据库、查作息、汇总作息、查作息范围、查作息游标、周视图、查作息详情、按ID查记录、补一条作息、录作息、修正作息、改作息、这条记错了、写作息摘要、记作息、对比两个月、月份对比、跨月对比、类别深挖、异常检测、查多日计划、24h 概览、查日程、看日程、商量计划、一起规划、规划明天、规划一天、讨论计划、补计划、改计划、删计划、复盘今日、复盘本周、复盘本月、复盘区间、日程管家同步、飞书探测、复盘"
+description: "「作息管家HELP」／「作息管家 HELP」→schedule.help.lookup 缺省即落一份能打开的 HELP 文件（5 类别／34 唤醒词／85 场景，走共享 help 模板）；唯一出口 schedule-cmd-read。触发词：作息管家HELP、作息管家help、作息管家 HELP、作息管家帮助、作息管家能做什么、作息管家使用说明、今天总结、今日作息、今日总结、今天作息、查作息时间轴、查作息状态、初始化数据库、查作息、汇总作息、查作息范围、查作息游标、周视图、查作息详情、按ID查记录、按 ID 查记录、补一条作息、录作息、修正作息、改作息、这条记错了、写作息摘要、记作息、对比两个月、月份对比、跨月对比、类别深挖、异常检测、查多日计划、24h 概览、查日程、看日程、商量计划、一起规划、规划明天、规划一天、讨论计划、补计划、改计划、删计划、复盘今日、复盘本周、复盘本月、复盘区间、日程管家同步、飞书探测、复盘"
 ---
 
 # 作息管家（schedule）SKILL
@@ -106,6 +106,7 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 | 飞书探测 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"sync","dryRun":true}'` |
 | 复盘 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"review"}'` |
 | 周视图 | schedule.record.range | stat | `schedule-cmd-read schedule.record.range --params '{"view":"week"}'` |
+| 按 ID 查记录 | schedule.record.detail | detail | `schedule-cmd-read schedule.record.detail --params '{"id":1}'` |
 
 相关场景：schedule.help.lookup、schedule.plan.today、schedule.plan.write、schedule.record.compare、schedule.record.detail、schedule.record.range、schedule.record.today、schedule.record.write（8 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->

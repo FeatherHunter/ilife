@@ -208,10 +208,13 @@ test('#785 V8 查多日计划：一天一行 ＋ 逐日 24 格，且不顶掉缺
   assert.ok(text.includes('查多日计划'), '页头＝查多日计划（多日那一支）');
   assert.equal(count(marks, /<tr>/g), 4, '多日概览表＝1 行表头 ＋ 3 行日期');
   assert.equal(count(marks, LIST_ROW), 3 * 24, '逐日 24 格 × 3 天');
-  // 缺省档（查日程）不许被顶掉：仍是薄模板分节页（本票只动 view=aggregate 那一支）。
+  // 缺省档（查日程）**不被聚合那一支顶掉**：它走自己那一张页（#786 起是真页，见 t786 的 V1；
+  // #785 收口时这里量的是「仍是薄模板分节页」——那时缺省档还没接线，本行随 #786 等价改写）。
   const list = page(['schedule.plan.today', '--params', P({ date: D1 })]);
-  assert.ok(list.html.includes('<section data-skill="schedule"'), '缺省档仍是分节页');
-  assert.ok(!list.html.includes('ilife-block-page-shell-body'), '缺省档没被换成整页');
+  assert.ok(!list.html.includes('<section data-skill="schedule"'), '缺省档不再是薄模板分节页');
+  assert.ok(list.html.includes('ilife-block-page-shell-body'), '缺省档出查日程整页');
+  assert.ok(textOf(list.html).includes('查日程'), '缺省档的页头是「查日程」');
+  assert.ok(!textOf(list.html).includes('这一页是 24h 聚合视图'), '缺省档不是聚合视图那一档');
   console.log('#785 V8 读数：多日表行=' + count(marks, /<tr>/g) + ' 24 格段=3');
 });
 
