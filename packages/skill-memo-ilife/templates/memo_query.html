@@ -12,7 +12,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .wrap{max-width:1120px;margin:0 auto;padding:48px max(22px,env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left))}
 .hero{background:linear-gradient(180deg,var(--card) 0%,var(--soft) 100%);border-radius:28px;padding:34px;margin-bottom:20px;box-shadow:var(--shadow,0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06))}
 .eyebrow{font-size:13px;color:var(--blue);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
-h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.lead{color:var(--fg2);font-size:17px}.meta{margin-top:16px;color:var(--fg3);font-size:13px}
+h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.lead{color:var(--fg2);font-size:17px}.meta{margin-top:22px;color:var(--fg3);font-size:12px;line-height:1.6}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.panel,.item{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)}.panel{margin:14px 0}
 .stat b{display:block;font-size:22px;letter-spacing:-.02em;font-weight:800}.stat span{color:var(--fg2);font-size:13px;font-weight:600}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:10px 14px;min-height:44px;font-size:13px;color:var(--fg2);cursor:pointer}.pill.active{background:var(--soft);color:var(--blue);border-color:var(--blue)}
 .item{margin:12px 0}.item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.id{color:var(--blue);font-weight:800}.content{font-size:17px;margin:10px 0;white-space:pre-wrap}.muted{color:var(--fg2)}.small{font-size:13px;color:var(--fg3)}.badge{display:inline-block;background:var(--soft);color:var(--blue);padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;margin:3px 5px 3px 0}.badge.warn{background:#fff7e8;color:#b25b00}.badge.ok{background:#ecfff2;color:var(--ok)}
@@ -26,6 +26,8 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 #list .item .badge{font-size:12px;padding:5px 10px;margin:3px 5px 3px 0}
 #list .small{font-size:12px;margin-top:auto;padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{padding:42px;text-align:center;color:var(--fg2)}button{border:0;background:var(--blue);color:var(--card);border-radius:999px;padding:8px 12px;min-height:44px;cursor:pointer}.item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:44px;font-size:15px;margin-top:12px}pre{white-space:pre-wrap;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;font-size:13px;line-height:1.65;font-family:inherit}
+.jump{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;color:var(--blue);text-decoration:none;font-size:13px;font-weight:600}.jump a:hover{background:var(--soft)}
+#stats,#list,#data-panel{scroll-margin-top:20px}
 @media(max-width:820px){.wrap{padding:28px max(14px,env(safe-area-inset-right)) 70px max(14px,env(safe-area-inset-left))}.hero{padding:26px 20px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:30px}.item-head{flex-wrap:wrap}}
 </style>
 </head>
@@ -35,6 +37,7 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 <h1 id="title">备忘录查询结果</h1>
 <p class="lead" id="subtitle">数据加载中</p>
 <p class="meta" id="meta"></p>
+<nav class="jump" aria-label="页内导航"><a href="#stats">统计</a><a href="#list">结果</a><a href="#data-panel">日志</a></nav>
 </header>
 <section id="injectError" style="display:none"></section>
 <section class="grid" id="stats"></section>
@@ -48,16 +51,13 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 <section id="list"></section>
 <section class="panel">
 <strong>筛选快照</strong>
-<p class="small" style="margin-top:6px">跟随筛选与展开实时变化，可以粘贴给 AI 继续下一步。复制数据 = 初始全量存档。</p>
+<p class="small" style="margin-top:6px">跟随筛选与展开实时变化，可直接粘贴给助手继续下一步。这里存档的是初始的全量数据。</p>
 <div class="toolbar"><button class="copy ghost" data-copy-receipt onclick="copyFiltered()">复制筛选结果</button></div>
 <pre id="receipt" style="display:none"></pre>
 </section>
-<section class="panel">
+<section class="panel" id="data-panel">
 <strong>数据与日志</strong>
-<dl class="small" style="margin-top:6px;line-height:1.8">
-<dt>复制数据</dt><dd>保存当前结果，可粘贴到笔记存档</dd>
-<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
-</dl>
+<p class="small" style="margin-top:6px">左边那枚存下当前结果，可粘贴到笔记存档。右边那枚给出排查用的日志，不含隐私内容。</p>
 <div class="hm-actions">
 <button class="copy ghost" onclick="copyData()">复制数据</button>
 <button class="copy ghost" onclick="copyLog()">复制日志</button>
