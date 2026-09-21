@@ -31,7 +31,7 @@
       "package": "packages/skill-memo-ilife"
     }
   ],
-  "artifactCount": 187,
+  "artifactCount": 194,
   "artifacts": {
     "bill/escape": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -315,6 +315,12 @@
       "sha256": "c9e2194a9208acd185811c0000aae95c",
       "text": "<section data-skill=\"chef\" data-shape=\"list\" data-key=\"chef.cooking.run\"><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=1 status=ok unit=个</span></div></div><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=2 status=ok unit=个</span></div></div></section>"
     },
+    "chef/frag/chef.data.batch": {
+      "src": "packages/skill-chef/src/render/envelope.ts",
+      "bytes": 135,
+      "sha256": "15f2143de45977bc93d47fc0a5f7e26a",
+      "text": "<section data-skill=\"chef\" data-shape=\"receipt\" data-key=\"chef.data.batch\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
     "chef/frag/chef.help.lookup": {
       "src": "packages/skill-chef/src/render/envelope.ts",
       "bytes": 379,
@@ -351,6 +357,24 @@
       "sha256": "7bd5df04fd7b54c2c3881a6ee05fc2d0",
       "text": "<section data-skill=\"chef\" data-shape=\"receipt\" data-key=\"chef.recipe.write\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
     },
+    "chef/frag/chef.relation.query": {
+      "src": "packages/skill-chef/src/render/envelope.ts",
+      "bytes": 382,
+      "sha256": "746aec99d319316f6e7103a450cffd76",
+      "text": "<section data-skill=\"chef\" data-shape=\"list\" data-key=\"chef.relation.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=1 status=ok unit=个</span></div></div><div class=\"item\"><div class=\"item-head\"><span class=\"badge\">名称&lt;&amp;&gt;</span><span class=\"time\">id=2 status=ok unit=个</span></div></div></section>"
+    },
+    "chef/frag/chef.relation.write": {
+      "src": "packages/skill-chef/src/render/envelope.ts",
+      "bytes": 139,
+      "sha256": "c5b4836749d30c1abc12d3d35bb86068",
+      "text": "<section data-skill=\"chef\" data-shape=\"receipt\" data-key=\"chef.relation.write\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
+    "chef/frag/chef.setup.init": {
+      "src": "packages/skill-chef/src/render/envelope.ts",
+      "bytes": 135,
+      "sha256": "df1fe171a6590606409945aa22cbaed2",
+      "text": "<section data-skill=\"chef\" data-shape=\"receipt\" data-key=\"chef.setup.init\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
     "chef/frag/chef.shopping.query": {
       "src": "packages/skill-chef/src/render/envelope.ts",
       "bytes": 382,
@@ -359,9 +383,9 @@
     },
     "chef/keys": {
       "src": "packages/skill-chef/src/render/envelope.ts",
-      "bytes": 244,
-      "sha256": "ed9fee9eff4a71d29d82220877540adf",
-      "text": "[[\"chef.cooking.run\",\"list\"],[\"chef.help.lookup\",\"list\"],[\"chef.history.query\",\"list\"],[\"chef.history.record\",\"receipt\"],[\"chef.recipe.search\",\"list\"],[\"chef.recipe.view\",\"detail\"],[\"chef.recipe.write\",\"receipt\"],[\"chef.shopping.query\",\"list\"]]"
+      "bytes": 369,
+      "sha256": "4e15c7194a9ea1717dcef1c268e283d3",
+      "text": "[[\"chef.cooking.run\",\"list\"],[\"chef.data.batch\",\"receipt\"],[\"chef.help.lookup\",\"list\"],[\"chef.history.query\",\"list\"],[\"chef.history.record\",\"receipt\"],[\"chef.recipe.search\",\"list\"],[\"chef.recipe.view\",\"detail\"],[\"chef.recipe.write\",\"receipt\"],[\"chef.relation.query\",\"list\"],[\"chef.relation.write\",\"receipt\"],[\"chef.setup.init\",\"receipt\"],[\"chef.shopping.query\",\"list\"]]"
     },
     "chef/shape-throw": {
       "src": "packages/skill-chef/src/render/html.ts",
@@ -843,11 +867,23 @@
       "sha256": "7e51ee0e89a060057459219d8ece2c38",
       "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
+    "memo/frag/memo.init": {
+      "src": "packages/skill-memo-ilife/src/render/envelope.ts",
+      "bytes": 108,
+      "sha256": "1b9efce059d42285f35a0371867800e8",
+      "text": "<section data-skill=\"memo\" data-shape=\"receipt\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
     "memo/frag/memo.remind": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 389,
       "sha256": "7e51ee0e89a060057459219d8ece2c38",
       "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
+    },
+    "memo/frag/memo.reminder": {
+      "src": "packages/skill-memo-ilife/src/render/envelope.ts",
+      "bytes": 108,
+      "sha256": "1b9efce059d42285f35a0371867800e8",
+      "text": "<section data-skill=\"memo\" data-shape=\"receipt\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
     },
     "memo/frag/memo.remove": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
@@ -887,9 +923,9 @@
     },
     "memo/keys": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
-      "bytes": 294,
-      "sha256": "b240d47e8c0c84909d660e66619dd16e",
-      "text": "[[\"memo.auth\",\"receipt\"],[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.remind\",\"list\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
+      "bytes": 346,
+      "sha256": "51465a4279396b3ebdc244a26a4e3716",
+      "text": "[[\"memo.auth\",\"receipt\"],[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.init\",\"receipt\"],[\"memo.remind\",\"list\"],[\"memo.reminder\",\"receipt\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
     },
     "memo/shape-throw": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -941,44 +977,50 @@
     },
     "memo/templates": {
       "src": "packages/skill-memo-ilife/src/render/templates.ts",
-      "bytes": 88,
-      "sha256": "9afced28012df001d4f900d83c886f0d",
-      "text": "[\"memo_query\",\"sync_report\",\"wish_plan\",\"wish_complete\",\"change_category\",\"init_report\"]"
+      "bytes": 98,
+      "sha256": "6197aac2ebcd8596a27e612422ec7fa5",
+      "text": "[\"memo_query\",\"sync_report\",\"wish_plan\",\"wish_complete\",\"change_category\",\"init_report\",\"receipt\"]"
     },
     "memo/tpl/change_category": {
       "src": "packages/skill-memo-ilife/templates/change_category.html",
-      "bytes": 22239,
-      "sha256": "8c9ca2ed25a9368c521cb94ceb16776b",
+      "bytes": 22331,
+      "sha256": "1106a4837bb34843562d7ca50a36f992",
       "textOmitted": true
     },
     "memo/tpl/init_report": {
       "src": "packages/skill-memo-ilife/templates/init_report.html",
-      "bytes": 20981,
-      "sha256": "86fa9833929d9912824345a93e58a317",
+      "bytes": 21010,
+      "sha256": "4d4c866888e88ba8bfaba744bc054709",
       "textOmitted": true
     },
     "memo/tpl/memo_query": {
       "src": "packages/skill-memo-ilife/templates/memo_query.html",
-      "bytes": 22570,
-      "sha256": "95ef02f3b603fbd106dc750c9c9ad89a",
+      "bytes": 22951,
+      "sha256": "7b053a231d5a0bfc9b330cfe700c9706",
+      "textOmitted": true
+    },
+    "memo/tpl/receipt": {
+      "src": "packages/skill-memo-ilife/templates/receipt.html",
+      "bytes": 16604,
+      "sha256": "e05a3a618ad5cd58e91513faea38c775",
       "textOmitted": true
     },
     "memo/tpl/sync_report": {
       "src": "packages/skill-memo-ilife/templates/sync_report.html",
-      "bytes": 27796,
-      "sha256": "14886a2d5aaac000edf97361571f9784",
+      "bytes": 27825,
+      "sha256": "0a4495c501f411520a51560960e6b9e2",
       "textOmitted": true
     },
     "memo/tpl/wish_complete": {
       "src": "packages/skill-memo-ilife/templates/wish_complete.html",
-      "bytes": 21349,
-      "sha256": "7ea495c29785c8be4aae95a2ecf63e6b",
+      "bytes": 21378,
+      "sha256": "ef5a778cf07205b610f349f0553e7f1b",
       "textOmitted": true
     },
     "memo/tpl/wish_plan": {
       "src": "packages/skill-memo-ilife/templates/wish_plan.html",
-      "bytes": 21996,
-      "sha256": "7837da407b32a9c7c9252e9db470b09b",
+      "bytes": 22025,
+      "sha256": "8f5bf57077f4cb20d21f21ecffbf813a",
       "textOmitted": true
     },
     "schedule/escape": {
