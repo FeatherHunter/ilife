@@ -180,6 +180,56 @@ export function changeCategorySnapshot(items: Row[], from: string | null, to: st
   };
 }
 
+/** 初始化报告 snapshot（老 `memo_render.py:413-443` 的 `_init_snapshot`）：检查数／就绪／可选缺失／
+ *  必装缺失四段 ＋ 环境检查／待办指引／验证清单三节。模板 `init_report.html` 另在客户端按
+ *  `data.items／todos／verify` 逐项渲染，此处 snapshot 只供 envelope 侧的文本摘要与页内节。 */
+export function initSnapshot(input: {
+  readonly items: readonly { readonly name?: unknown; readonly status?: unknown; readonly desc?: unknown; readonly action?: unknown }[];
+  readonly todos: readonly { readonly title?: unknown; readonly steps?: unknown }[];
+  readonly verify: readonly unknown[];
+}): PageSnapshot {
+  const items = input.items;
+  const ready = items.filter((i) => i.status === 'ok').length;
+  const warn = items.filter((i) => i.status === 'warn').length;
+  const err = items.filter((i) => i.status === 'err').length;
+  const sections: PageSnapshot['sections'] = [];
+  if (items.length) {
+    sections.push({
+      heading: '环境检查',
+      rows: items.map((i) => {
+        const mark = i.status === 'ok' ? '✓' : i.status === 'warn' ? '⚠' : '✗';
+        const base = '[' + mark + '] ' + str(i.name) + ' · ' + str(i.desc);
+        return i.action ? base + ' · 处理: ' + str(i.action) : base;
+      }),
+    });
+  }
+  if (input.todos.length) {
+    sections.push({
+      heading: '待办指引',
+      rows: input.todos.map((t) => {
+        const steps = Array.isArray(t.steps) ? (t.steps as unknown[]).map(str).join(' → ') : '';
+        return str(t.title) + (steps ? ': ' + steps : '');
+      }),
+    });
+  }
+  if (input.verify.length) {
+    sections.push({
+      heading: '验证清单',
+      rows: input.verify.map((v) => (v !== null && typeof v === 'object' ? str((v as { text?: unknown }).text ?? '') : str(v))),
+    });
+  }
+  return {
+    title: '备忘录 · 初始化报告',
+    summary: [
+      '检查 ' + items.length + ' 项',
+      '就绪 ' + ready + ' 项',
+      '可选缺失 ' + warn + ' 项',
+      '必装缺失 ' + err + ' 项',
+    ],
+    sections,
+  };
+}
+
 /** 整页填充：模板 ＋ 共享 filler ＋ 窄兼容资产 ＋ 数据。失败一律转渲染错（出口 exit 5）。 */
 export function fillMemoPage(template: string, payload: Record<string, unknown>): string {
   const raw = loadTemplate(template);

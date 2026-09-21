@@ -1,4 +1,4 @@
-// 渲染层·envelope（M4）：12 联动 key×shape 映射（M1 拆分表 10 条 ＋ #229 的 memo.help.lookup ＋ #665 的 memo.auth）；key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
+// 渲染层·envelope（M4）：14 联动 key×shape 映射（M1 拆分表 10 条 ＋ #229 的 memo.help.lookup ＋ #665 的 memo.auth ＋ #850 的 memo.init／memo.reminder）；key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
 
@@ -18,6 +18,10 @@ export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
   'memo.help.lookup': 'list',
   // #665：飞书授权引导（三步非阻塞：init／qr／poll＋status 诊断）。回执形。
   'memo.auth': 'receipt',
+  // #850：命令面四问新增两条（口径 `t837-命令面口径.md`）。`memo.init` 只渲染不建库（开库前分派）；
+  // `memo.reminder` 只做 INSERT 提醒行（读提醒仍走 `memo.remind`）。两条都是回执形（一个命令一种形状）。
+  'memo.init': 'receipt',
+  'memo.reminder': 'receipt',
 };
 
 export function memoShapeFor(key: string): EnvelopeShape {

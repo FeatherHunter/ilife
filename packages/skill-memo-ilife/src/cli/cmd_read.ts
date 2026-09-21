@@ -12,6 +12,8 @@ import {
   listNotes,
   getNote,
   searchNotes,
+  searchNotesByCreatedRange,
+  addReminderRow,
   abandonReminder,
   checkDueReminders,
   listCompletedReminders,
@@ -25,11 +27,11 @@ import {
   MemoFetchError,
 } from '../fetch/index.js';
 import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
-import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove } from '../policy/index.js';
+import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
 // #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
 import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish, planWizard, completeWizard } from '../wish/index.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, MemoRenderError } from '../render/index.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
@@ -179,7 +181,32 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   };
 }
 
-// 十一键分发（#665 起十二键，加 memo.auth）：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
+// #850 · 初始化渲染（`memo.init`，照旧侧 `init-report --data <JSON>`）：只渲染，不建库不写配置；
+// 库不存在时也能跑（与 `memo.help.lookup` 同位置的开库前分派）。输入为 AI 诊断后的 JSON
+// （检查清单＋待办＋验证清单三段），输出为初始化报告整页（`templates/init_report.html`）。
+function dispatchInit(params: Record<string, unknown>): DispatchOut {
+  const diag = initDiagOf(params);
+  const snap = initSnapshot(diag);
+  const payload = pageEnvelope({
+    commandCn: '首次使用', wakeWord: '首次使用', sceneId: 'memo_init_setup',
+    title: snap.title, summary: snap.summary, sections: snap.sections,
+    copyLog: {
+      thinking: '首次使用 · AI 诊断结果渲染为报告页（检查清单＋待办＋验证清单）',
+      data_structure: '--data JSON：{items:[{name,status,desc,action}], todos:[{title,steps}], verify:[]}',
+      call_chain: 'memo.init --params → dispatchInit → render_init_report → 共享 filler',
+      exception: '无',
+    },
+    extra: { items: diag.items, todos: diag.todos, verify: diag.verify },
+    message: '初始化报告已生成（只渲染，不建库不写配置）',
+  });
+  return {
+    data: { ok: true, message: '初始化报告已生成（只渲染，不建库不写配置）', items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length },
+    exit: 0,
+    deliver: { html: fillMemoPage('init_report', payload), stem: '初始化报告' },
+  };
+}
+
+// 十四键分发（#665 起十二键，加 memo.auth；#850 加 memo.init／memo.reminder）：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
 // #661：写命令分两支——心愿分类走「合成写」（本地 ＋ 飞书任务一次成；回执分字段；最终没达成时退出码非 0），
 // 其它分类照旧只落本地（回执里 `remote` 那一格如实写「不适用」，不假装同步过）。
 // #665：向导三条（排期／完成／批量改分类）与同步报告各出一张整页，随 `deliver` 出交付。
@@ -197,9 +224,118 @@ function asIds(value: unknown): number[] {
 type PageRow = Record<string, unknown>;
 const toRows = (xs: readonly object[]): PageRow[] => xs.map((x) => ({ ...(x as PageRow) }));
 
+// #850 · 创建时间区间参数（HELP `start`＋`end`，双 `YYYY-MM-DD`）。双必填：缺一边即缺槽位（exit 2，
+// 人话）；起止倒置即报错；`timeRange` 月份形已退役（无权威出处），给了即指路到 `start`／`end`。
+const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+function needRangeDate(value: unknown, name: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) fail(2, '缺槽位 ' + name + '：按时间搜备忘须给开始／结束日期（YYYY-MM-DD）');
+  const s = value.trim();
+  const m = DATE_RE.exec(s);
+  if (!m) fail(2, name + ' 只认 YYYY-MM-DD：' + s);
+  const dt = new Date(s + 'T00:00:00Z');
+  if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== s) fail(2, name + ' 不是真日期：' + s);
+  return s;
+}
+function rangeLimitOf(value: unknown): number {
+  if (value === undefined) return 20;
+  const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+  if (!Number.isInteger(n) || n <= 0) fail(2, 'limit 须为正整数');
+  return n;
+}
+function categoryFilterOf(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  return normalizeTop(value);
+}
+
+// #850 · 提醒写参数（HELP 蛇形为主，驼峰兼容既有 `memo.create` 两步合一）：`note_id`／`noteId`／`id`
+// 三名同义（给了校验存在，不给即独立提醒）；`content` 必填；`remind_at`／`remindAt`／`at` 三名同义；
+// `repeat_type`／`repeatType` 默认一次性，一次性必须有时间（老 `add_reminder` 口径）。
+function reminderNoteIdOf(params: Record<string, unknown>): number | null {
+  const v = params.note_id !== undefined ? params.note_id : params.noteId !== undefined ? params.noteId : undefined;
+  if (v === undefined || v === null || v === '') return null;
+  return needId(v, '提醒关联笔记');
+}
+function reminderContentOf(params: Record<string, unknown>): string {
+  const v = params.content !== undefined ? params.content : params.body !== undefined ? params.body : params.title;
+  if (typeof v !== 'string' || v.trim().length === 0) fail(2, '请填入提醒内容');
+  return (v as string).trim();
+}
+function reminderAtOf(params: Record<string, unknown>): string | null {
+  const v = params.remind_at !== undefined ? params.remind_at : params.remindAt !== undefined ? params.remindAt : params.at;
+  if (v === undefined || v === null || v === '') return null;
+  if (typeof v !== 'string') fail(2, '提醒时间须为 YYYY-MM-DD HH:MM');
+  return normalizeRemindAt(v);
+}
+function reminderTypeRuleOf(params: Record<string, unknown>, at: string | null): { type: string; rule: string | null } {
+  const rawType = params.repeat_type !== undefined ? params.repeat_type : params.repeatType;
+  const type = normalizeRepeatType(rawType);
+  const rawRule = params.repeat_rule !== undefined ? params.repeat_rule : params.repeatRule !== undefined ? params.repeatRule : params.rule;
+  const rule = normalizeRepeatRule(type, rawRule, at);
+  if (type === '一次性' && !at) fail(2, '一次性提醒必须给提醒时间');
+  return { type, rule };
+}
+
+// #850 · 删分层 ids 解析：`ids` 数组／`id` 单值／`id` 空格分隔串（三者同义，HELP 的“空格分隔多个”即第三种）。
+// 返回去重后的正整数列（保序）。空即缺参数（exit 2）。
+function deleteIdsOf(params: Record<string, unknown>): number[] {
+  const rawIds = params.ids !== undefined ? params.ids : params.id;
+  if (rawIds === undefined || rawIds === null || rawIds === '') fail(2, '删除须给笔记 id（可多个，空格分隔）');
+  const list: unknown[] = Array.isArray(rawIds) ? rawIds : String(rawIds).trim().split(/\s+/);
+  if (list.length === 0) fail(2, '删除须给笔记 id（可多个，空格分隔）');
+  const ids = list.map((v) => needId(v, '删除'));
+  return [...new Set(ids)];
+}
+function deleteConfirmOf(params: Record<string, unknown>): boolean {
+  const v = params.confirm !== undefined ? params.confirm : (params as Record<string, unknown>).true;
+  return v === true;
+}
+function deleteWithRemindersOf(params: Record<string, unknown>): boolean {
+  const v = params.withReminders !== undefined ? params.withReminders : params.with_reminders;
+  return v === true;
+}
+
+// #850 · 初始化渲染输入（老 `init-report --data` 契约）：`data` 必填（对象或 JSON 串），
+// 内含 `items`（检查清单）＋ `todos`（待办）＋ `verify`（验证清单）三段；兼容 `{data:{…}}` 与裸 `{…}` 两层。
+function initDiagOf(params: Record<string, unknown>): { items: { name?: unknown; status?: unknown; desc?: unknown; action?: unknown }[]; todos: { title?: unknown; steps?: unknown }[]; verify: unknown[] } {
+  let raw = params.data !== undefined ? params.data : (params as Record<string, unknown>).diag;
+  if (raw === undefined) fail(2, '缺参数 data：首次使用须给诊断 JSON（含检查清单＋待办＋验证清单三段）');
+  if (typeof raw === 'string') {
+    try { raw = JSON.parse(raw); } catch { fail(2, 'data 不是合法 JSON'); }
+  }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, 'data 须为对象（含检查清单＋待办＋验证清单三段）');
+  const obj = raw as Record<string, unknown>;
+  const inner = (typeof obj.data === 'object' && obj.data !== null && !Array.isArray(obj.data) ? obj.data : obj) as Record<string, unknown>;
+  const items = (inner.items ?? obj.items) as unknown;
+  if (!Array.isArray(items)) fail(2, 'data.items 须为数组（检查清单）');
+  const todos = ((inner.todos ?? obj.todos ?? []) as unknown) as { title?: unknown; steps?: unknown }[];
+  const verify = ((inner.verify ?? obj.verify ?? []) as unknown) as unknown[];
+  if (!Array.isArray(todos) || !Array.isArray(verify)) fail(2, 'data.todos／data.verify 须为数组');
+  for (const it of items as unknown[]) {
+    if (typeof it !== 'object' || it === null) fail(2, 'data.items 须为对象数组（含 name／status／desc／action）');
+    const st = (it as Record<string, unknown>).status;
+    if (st !== 'ok' && st !== 'warn' && st !== 'err') fail(2, 'items[].status 只认 ok／warn／err');
+  }
+  return { items: items as { name?: unknown; status?: unknown; desc?: unknown; action?: unknown }[], todos: todos as { title?: unknown; steps?: unknown }[], verify };
+}
+
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
   switch (key) {
     case 'memo.search': {
+      // #850：创建时间区间通道（HELP `start`＋`end` 双必填，按 `created_at` 倒序；与排期 `due` 正交可叠加）。
+      // `timeRange` 月份形已退役：给了即指路，不再有两个说法。
+      if (params.timeRange !== undefined) fail(2, 'timeRange 已退役：请给 start（YYYY-MM-DD）＋ end（YYYY-MM-DD），按创建时间过滤');
+      const hasStart = params.start !== undefined;
+      const hasEnd = params.end !== undefined;
+      if (hasStart || hasEnd) {
+        const start = needRangeDate(params.start, 'start');
+        const end = needRangeDate(params.end, 'end');
+        if (start > end) fail(2, '开始日期不能晚于结束日期：' + start + ' > ' + end);
+        const category = categoryFilterOf(params.category);
+        const limit = rangeLimitOf(params.limit);
+        const items = searchNotesByCreatedRange(db, { start, end, category, limit });
+        const hit = items.filter((n) => dueMatches(n, params));
+        return ok({ items: hit, total: hit.length });
+      }
       const items = params.q !== undefined
         ? searchNotes(db, String(params.q), { category: params.category as string | undefined, sub: params.sub as string | undefined })
         : listNotes(db).filter((n) => (params.category === undefined || n.category === params.category));
@@ -263,16 +399,70 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
         abandonReminder(db, rid);
         return ok({ ok: true, message: '提醒已废弃（笔记保留）：' + rid });
       }
-      const r = crudRemove(params);
-      // 老 `delete`：有关联提醒必须显式级联（`--with-reminders`），否则大声失败；
-      // 有未触发提醒时的二次确认是交互动作，出口非交互，改显式参数一次讲清。
-      const related = countReminderRowsOfNote(db, r.id);
-      if (related > 0 && params.withReminders !== true) {
-        fail(2, '笔记 ' + r.id + ' 关联 ' + related + ' 个提醒，请加 withReminders:true 级联删除（提醒不会被自动删除）');
+      // #850 · 删除分层闸（用户说删即确认，AI 带 `confirm:true`；关联与批量另设清单闸）：
+      // 单条无关联直删；有关联先出清单（含提醒数）再要 `withReminders:true`；批量（≥2）一律先出清单
+      // （只回数据清单，不另出整页）；`confirm` 缺即缺参数（exit 2）。回执保持 receipt 形（`ok`／`message` 必有，
+      // 清单放扩展位），退出码 2＝还没删（等第二趟带齐标记），0＝已删。
+      const ids = deleteIdsOf(params);
+      const confirm = deleteConfirmOf(params);
+      const withReminders = deleteWithRemindersOf(params);
+      // 先校验存在（老 `delete_note` 第一步）：缺哪个报哪个（exit 4，不静默）。
+      for (const nid of ids) {
+        try { getNote(db, nid); } catch { fail(4, '无此笔记：' + nid); }
       }
+      const allReminders = listReminderRows(db, undefined).filter((r) => r.note_id !== null && ids.includes(r.note_id));
+      const related = allReminders.length;
+      const notes = ids.map((nid) => {
+        const n = getNote(db, nid);
+        return { id: n.id, content: n.content, category: n.category, created_at: n.created_at };
+      });
+      const isBatch = ids.length >= 2;
+      if (isBatch && !confirm) {
+        return {
+          data: {
+            ok: false,
+            message: '批量删除须先看清单：' + ids.length + ' 条笔记' + (related ? '，关联 ' + related + ' 个提醒' : '（无关联提醒）') + '；确认后带 confirm:true 重调' + (related ? '（有关联时另带 withReminders:true 级联）' : ''),
+            ids, total: ids.length, items: notes, related, reminders: allReminders,
+          },
+          exit: 2,
+        };
+      }
+      if (related > 0 && !withReminders) {
+        return {
+          data: {
+            ok: false,
+            message: '笔记 ' + ids.join(' ') + ' 关联 ' + related + ' 个提醒，请加 withReminders:true 级联删除（提醒不会被自动删除）',
+            ids, total: ids.length, items: notes, related, reminders: allReminders,
+          },
+          exit: 2,
+        };
+      }
+      if (!confirm) fail(2, '删除须带 confirm:true（用户说删即确认，AI 显式带上；废弃提醒走 abandon）');
       // #661 · C 口径：默认照老「远端标完成」，显式 `purge:true` 才连飞书任务一起删（两种语义用参数讲清）。
-      const w = removeWish(db, r.id, params.purge === true);
-      return { data: w.receipt, exit: w.exit };
+      if (!isBatch) {
+        const w = removeWish(db, ids[0], params.purge === true);
+        return { data: w.receipt, exit: w.exit };
+      }
+      const errors: string[] = [];
+      let removed = 0;
+      for (const nid of ids) {
+        try {
+          const w = removeWish(db, nid, params.purge === true);
+          if (w.exit === 0) removed += 1;
+          else errors.push('id=' + nid + '：' + w.receipt.message);
+        } catch (e) {
+          errors.push('id=' + nid + '：' + (e instanceof Error ? e.message : String(e)));
+        }
+      }
+      const doneAll = errors.length === 0;
+      return {
+        data: {
+          ok: doneAll,
+          message: doneAll ? '已删除 ' + removed + ' 条' : '批量删除部分完成：已删=' + removed + '，错误=' + errors.length,
+          removed, errors, ids,
+        },
+        exit: doneAll ? 0 : 4,
+      };
     }
     case 'memo.remind': {
       // 到期判定（老 `due`）：读＋写 notified，定时壳不搬。
@@ -289,6 +479,34 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
       if (status !== 'active' && status !== 'dismissed') fail(2, 'status 只认 active/dismissed');
       const items = listReminderRows(db, status);
       return ok({ items, total: items.length });
+    }
+    case 'memo.reminder': {
+      // #850 · 给已有笔记加提醒（老 `remind [note_id]`）：只做 INSERT 提醒行，不建笔记；
+      // `memo.create` 的两步合一（记提醒）不动；读提醒四视图仍走 `memo.remind`，不混入写分支。
+      const noteId = reminderNoteIdOf(params);
+      if (noteId !== null) {
+        try { getNote(db, noteId); } catch { fail(4, '无此笔记：' + noteId); }
+      }
+      const content = reminderContentOf(params);
+      const at = reminderAtOf(params);
+      const { type, rule } = reminderTypeRuleOf(params, at);
+      const row = addReminderRow(db, {
+        note_id: noteId,
+        remind_at: at,
+        repeat_type: type,
+        repeat_rule: rule,
+        content,
+      });
+      return ok({
+        ok: true,
+        message: '提醒已设置' + (noteId !== null ? '（笔记 ' + noteId + '）' : '（独立提醒）') + '：' + row.id,
+        id: row.id,
+        note_id: row.note_id,
+        remind_at: row.remind_at,
+        repeat_type: row.repeat_type,
+        repeat_rule: row.repeat_rule,
+        content: row.content,
+      });
     }
     case 'memo.wish': {
       // #665 向导：`wizard: plan` 出排期向导页（默认全勾选），`wizard: complete` 出完成向导页（默认不勾选）；
@@ -428,6 +646,10 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
     case 'memo.help.lookup':
       fail(1, '内部错误：memo.help.lookup 须走 dispatchHelp（开库之前）');
       return ok(null);
+    // #850：本键由 `dispatchInit` 在**开库之前**处理（只渲染不建库；库不存在时也能跑）；走到这里同上。
+    case 'memo.init':
+      fail(1, '内部错误：memo.init 须走 dispatchInit（开库之前）');
+      return ok(null);
     default: fail(3, '未知 memo key：' + key); return ok(null);
   }
 }
@@ -484,15 +706,19 @@ async function main() {
   try {
     // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余键照旧走 dispatch。
     // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
+    // #850：`memo.init` 同在开库之前（只渲染，不建库不写配置；库不存在时也能跑）。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
+    const init = o.key === 'memo.init' ? dispatchInit(params) : null;
     let db: MemoDb | null = null;
     let out: DispatchOut;
     try {
-      if (help === null) {
+      if (help !== null) {
+        out = { data: help.data, exit: 0 };
+      } else if (init !== null) {
+        out = init;
+      } else {
         db = openMemoDb(dbPath);
         out = dispatch(o.key, params, db);
-      } else {
-        out = { data: help.data, exit: 0 };
       }
     } finally {
       if (db) {

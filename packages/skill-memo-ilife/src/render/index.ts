@@ -13,6 +13,7 @@ export {
   wishPlanSnapshot,
   wishCompleteSnapshot,
   changeCategorySnapshot,
+  initSnapshot,
   fillMemoPage,
   fillTemplate,
 } from './pages.js';

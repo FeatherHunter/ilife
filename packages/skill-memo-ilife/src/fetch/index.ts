@@ -8,6 +8,7 @@ export {
   listNotes,
   getNote,
   searchNotes,
+  searchNotesByCreatedRange,
   addNote,
   updateNote,
   removeNote,

@@ -17,11 +17,14 @@ const GOOD = {
   'memo.help.lookup': { items: [{ id: '1', icon: '📝', label: '备忘', subgroupCount: 1, sceneCount: 6 }], total: 1, version: '1.3.0' },
   // #665：命令表 11 → 12（飞书授权引导 memo.auth，回执形）。
   'memo.auth': { ok: true, message: '授权状态', step: 'status' },
+  // #850：命令表 12 → 14（命令面四问：初始化渲染 memo.init＋提醒写 memo.reminder，回执形）。
+  'memo.init': { ok: true, message: '初始化报告已生成' },
+  'memo.reminder': { ok: true, message: '提醒已设置' },
 };
 
 describe('memo 渲染层', () => {
-  it('12 key 建 envelope 全字段可用', () => {
-    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 12);
+  it('14 key 建 envelope 全字段可用', () => {
+    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 14);
     for (const [key, shape] of Object.entries(MEMO_KEY_SHAPES)) {
       assert.equal(memoShapeFor(key), shape);
       const env = buildMemoEnvelope(key, GOOD[key]);

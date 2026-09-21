@@ -7,12 +7,25 @@ describe('memo 口径层', () => {
     assert.equal(routeWakeword('帮我搜备忘跑步').key, 'memo.search');
     assert.equal(routeWakeword('查备忘').key, 'memo.search');
     assert.deepEqual(routeWakeword('看备忘', { id: 'n1' }), { key: 'memo.detail', params: { id: 'n1' } });
-    assert.deepEqual(routeWakeword('按时间搜备忘', { timeRange: '2026-09' }).params, { timeRange: '2026-09' });
+    // #850：`timeRange` 退役，改认 HELP 的 `start`＋`end`（双必填，按创建时间过滤倒序）。
+    assert.deepEqual(routeWakeword('按时间搜备忘', { start: '2026-07-01', end: '2026-07-07' }).params, { start: '2026-07-01', end: '2026-07-07' });
     assert.equal(routeWakeword('看提醒').key, 'memo.remind');
     assert.equal(routeWakeword('查已提醒备忘').key, 'memo.remind');
     assert.deepEqual(routeWakeword('查心愿'), { key: 'memo.wish', params: { category: '心愿' } });
     assert.deepEqual(routeWakeword('查打卡'), { key: 'memo.search', params: { category: '打卡' } });
     assert.deepEqual(routeWakeword('查情绪日记'), { key: 'memo.search', params: { category: '情绪日记' } });
+  });
+  it('#850 四问路由：首次使用／设提醒／删备忘／删三族', () => {
+    assert.equal(routeWakeword('首次使用').key, 'memo.init');
+    assert.deepEqual(routeWakeword('设提醒', { remind_at: '2026-10-01 09:00' }), { key: 'memo.reminder', params: { remind_at: '2026-10-01 09:00' } });
+    assert.equal(routeWakeword('记提醒', { remindAt: '2026-10-01 09:00' }).key, 'memo.create');
+    assert.deepEqual(routeWakeword('删备忘', { id: 15 }), { key: 'memo.remove', params: { id: 15 } });
+    // 删三族改指真删（此前误指 memo.update 只改分类不删）。
+    assert.deepEqual(routeWakeword('删心愿', { id: 15 }), { key: 'memo.remove', params: { category: '心愿', id: 15 } });
+    assert.deepEqual(routeWakeword('删打卡', { id: 15 }), { key: 'memo.remove', params: { category: '打卡', id: 15 } });
+    assert.deepEqual(routeWakeword('删情绪日记', { id: 15 }), { key: 'memo.remove', params: { category: '情绪日记', id: 15 } });
+    // 改三族仍走更新。
+    assert.deepEqual(routeWakeword('改心愿', { id: 15 }), { key: 'memo.update', params: { category: '心愿', id: 15 } });
   });
   it('写入与消歧：批量改分类走 batch，改子分类走 update', () => {
     assert.equal(routeWakeword('记一条开会').key, 'memo.create');

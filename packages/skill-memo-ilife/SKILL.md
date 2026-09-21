@@ -41,7 +41,9 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 <!-- HELP-AUTO-START -->
 | 唤醒词 | key | shape | 例 |
 |---|---|---|---|
-| 按时间搜备忘 | memo.search | list | `memo-cmd-read memo.search --params '{"timeRange":"2026-09"}'` |
+| 首次使用 | memo.init | receipt | `memo-cmd-read memo.init` |
+| 删备忘 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"id":"<id>"}'` |
+| 按时间搜备忘 | memo.search | list | `memo-cmd-read memo.search --params '{"start":"2026-07-01","end":"2026-07-07"}'` |
 | 查已提醒备忘 | memo.remind | list | `memo-cmd-read memo.remind --params '{"done":false}'` |
 | 批量改分类 | memo.batch | receipt | `memo-cmd-read memo.batch` |
 | 改子分类 | memo.update | receipt | `memo-cmd-read memo.update --params '{"id":"<id>"}'` |
@@ -50,7 +52,7 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 看备忘 | memo.detail | detail | `memo-cmd-read memo.detail --params '{"id":"<id>"}'` |
 | 看提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
 | 查提醒 | memo.remind | list | `memo-cmd-read memo.remind` |
-| 设提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01 09:00"}'` |
+| 设提醒 | memo.reminder | receipt | `memo-cmd-read memo.reminder --params '{"remind_at":"2026-10-01 09:00"}'` |
 | 记提醒 | memo.create | receipt | `memo-cmd-read memo.create --params '{"remindAt":"2026-10-01 09:00"}'` |
 | 废弃提醒 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"mode":"abandon"}'` |
 | 完成心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"done":true}'` |
@@ -66,11 +68,11 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 改心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}'` |
 | 改打卡 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}'` |
 | 改情绪日记 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}'` |
-| 删心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"心愿","id":"<id>"}'` |
-| 删打卡 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"打卡","id":"<id>"}'` |
-| 删情绪日记 | memo.update | receipt | `memo-cmd-read memo.update --params '{"category":"情绪日记","id":"<id>"}'` |
+| 删心愿 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"category":"心愿","id":"<id>"}'` |
+| 删打卡 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"category":"打卡","id":"<id>"}'` |
+| 删情绪日记 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"category":"情绪日记","id":"<id>"}'` |
 
-相关场景：memo.auth、memo.batch、memo.create、memo.detail、memo.help.lookup、memo.remind、memo.remove、memo.search、memo.stats、memo.sync、memo.update、memo.wish（12 联动，key 字符串 P8 落表时冻结）。
+相关场景：memo.auth、memo.batch、memo.create、memo.detail、memo.help.lookup、memo.init、memo.remind、memo.reminder、memo.remove、memo.search、memo.stats、memo.sync、memo.update、memo.wish（14 联动，key 字符串 P8 落表时冻结）。
 <!-- HELP-AUTO-END -->
 
 ## HELP 交付（说「备忘录 HELP」走这里，不分大小写）

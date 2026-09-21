@@ -164,6 +164,29 @@ export function searchNotes(
   return rows.map(rowNote);
 }
 
+// #850 · 按创建时间区间查（老 `search-date` 口径：`created_at BETWEEN … ORDER BY created_at DESC`）。
+// HELP 字段 `start`＋`end`（双 `YYYY-MM-DD`），按 `created_at` 过滤倒序；`category` 可选叠加，
+// `limit` 默认 20。起止含当天（含 `end` 当天 23:59:59）：老原文 `BETWEEN ? AND ?` 传裸日期会漏掉
+// `end` 当天的时分秒行（字符串比较），此处按 `date(created_at)` 比较保证区间语义；排序与默认条数照老。
+// 只做 SELECT（禁 DDL）；日期形状错误由调用方按 HELP 人话报错，此处只做空值守卫。
+export function searchNotesByCreatedRange(
+  db: MemoDb,
+  input: { start: string; end: string; category?: string; limit?: number },
+): MemoNote[] {
+  const limit = input.limit ?? 20;
+  const where: string[] = ['date(created_at) BETWEEN date(?) AND date(?)'];
+  const params: (string | number)[] = [input.start, input.end];
+  if (input.category !== undefined) {
+    where.push('category = ?');
+    params.push(input.category);
+  }
+  params.push(limit);
+  const rows = db.conn
+    .prepare('SELECT * FROM notes WHERE ' + where.join(' AND ') + ' ORDER BY created_at DESC LIMIT ?')
+    .all(...params) as Record<string, unknown>[];
+  return rows.map(rowNote);
+}
+
 export interface AddNoteInput {
   readonly content: string;
   readonly summary?: string | null;

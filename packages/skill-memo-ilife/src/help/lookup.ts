@@ -7,7 +7,17 @@ export interface HelpHit { phrase: string; key: MemoKey; shape: string; cli: str
 function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }): string {
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   for (const n of e.needs || []) {
-    if (p[n] === undefined) p[n] = n === 'id' ? '<id>' : n === 'timeRange' ? '2026-09' : n === 'remindAt' ? '2026-10-01 09:00' : '<值>';
+    if (p[n] === undefined) {
+      // #850：示例照 HELP 字段名（`start`／`end`／`remind_at`／`note_id`），月份形 `timeRange` 已退役。
+      if (n === 'id') p[n] = '<id>';
+      else if (n === 'start') p[n] = '2026-07-01';
+      else if (n === 'end') p[n] = '2026-07-07';
+      else if (n === 'remind_at') p[n] = '2026-10-01 09:00';
+      else if (n === 'note_id') p[n] = '<id>';
+      else if (n === 'remindAt') p[n] = '2026-10-01 09:00';
+      else if (n === 'timeRange') p[n] = '2026-09';
+      else p[n] = '<值>';
+    }
   }
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
@@ -24,6 +34,9 @@ const DESCS: Record<string, string> = {
   'memo.sync': '飞书同步（须 lark 四门全绿）',
   'memo.batch': '批量改分类向导',
   'memo.stats': '聚合统计',
+  // #850：两新键一句话（HELP 场景主名唯一上游，命令只做 HELP 承诺的事）。
+  'memo.init': '初始化报告（首次使用，只渲染不建库）',
+  'memo.reminder': '给已有笔记加提醒（note_id 可选，不给即独立提醒）',
 };
 // 注（#760）：`memo.auth` 无唤醒词（「飞书授权」退役），故速查表不再有它这一行；诊断走
 // `memo.auth --params '{"step":"status"}'`（只读）或面板「飞书 CLI」状态行。

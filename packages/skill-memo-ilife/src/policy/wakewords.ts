@@ -1,18 +1,23 @@
-// 口径层·唤醒词路由（M3）：9 查询类 + 写入类；最长匹配；批量改分类向导与改子分类按“批量”消歧；无命中/缺槽位 throw。
+// 口径层·唤醒词路由（M3）：查询类 + 写入类 ＋ #850 两新键（`memo.init`／`memo.reminder`）；最长匹配；批量改分类向导与改子分类按“批量”消歧；无命中/缺槽位 throw。
 import { MemoPolicyError } from '../fetch/errors.js';
 import { WAKE_TOPS } from './category.js';
 
 export type MemoKey =
   | 'memo.search' | 'memo.detail' | 'memo.create' | 'memo.update' | 'memo.remove'
   | 'memo.remind' | 'memo.wish' | 'memo.sync' | 'memo.batch' | 'memo.stats'
-  | 'memo.auth';
+  | 'memo.auth' | 'memo.init' | 'memo.reminder';
 
 export interface WakeRoute { key: MemoKey; params: Record<string, unknown>; }
 export interface WakeEntry { phrase: string; key: MemoKey; needs?: string[]; preset?: Record<string, unknown>; }
 
 // 全量唤醒词表（HELP 速查唯一上游；改这里，HELP 构建期跟进）。
+// #850（命令面四问实施）：`按时间搜备忘` 改认 HELP 的 `start`＋`end`（`timeRange` 退役，无权威出处）；
+// `设提醒` 改指新写命令 `memo.reminder`（`memo.create` 的两步合一不动）；新增 `首次使用`→`memo.init`、
+// `删备忘`→`memo.remove`（`删心愿／删打卡／删情绪日记` 三族同步改指真删，修危险缺陷）。
 export const WAKE_TABLE: WakeEntry[] = [
-  { phrase: '按时间搜备忘', key: 'memo.search', needs: ['timeRange'] },
+  { phrase: '首次使用', key: 'memo.init' },
+  { phrase: '删备忘', key: 'memo.remove', needs: ['id'] },
+  { phrase: '按时间搜备忘', key: 'memo.search', needs: ['start', 'end'] },
   { phrase: '查已提醒备忘', key: 'memo.remind', preset: { done: false } },
   { phrase: '批量改分类', key: 'memo.batch' },
   { phrase: '改子分类', key: 'memo.update', needs: ['id'] },
@@ -21,7 +26,7 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '看备忘', key: 'memo.detail', needs: ['id'] },
   { phrase: '看提醒', key: 'memo.remind' },
   { phrase: '查提醒', key: 'memo.remind' },
-  { phrase: '设提醒', key: 'memo.create', needs: ['remindAt'] },
+  { phrase: '设提醒', key: 'memo.reminder', needs: ['remind_at'] },
   { phrase: '记提醒', key: 'memo.create', needs: ['remindAt'] },
   { phrase: '废弃提醒', key: 'memo.remove', preset: { mode: 'abandon' } },
   { phrase: '完成心愿', key: 'memo.update', preset: { done: true } },
@@ -36,6 +41,9 @@ for (const [p, top] of Object.entries(WAKE_TOPS)) {
   const verb = p[0];
   if (verb === '记') WAKE_TABLE.push({ phrase: p, key: 'memo.create', preset: { category: top } });
   else if (verb === '查') WAKE_TABLE.push({ phrase: p, key: p === '查心愿' ? 'memo.wish' : 'memo.search', preset: { category: top } });
+  // #850：`删心愿／删打卡／删情绪日记` 改指真删 `memo.remove`（此前误指 `memo.update` 只改分类不删，
+  // 票面危险缺陷；`改心愿／改打卡／改情绪日记` 仍走 `memo.update`）。
+  else if (verb === '删') WAKE_TABLE.push({ phrase: p, key: 'memo.remove', needs: ['id'], preset: { category: top } });
   else WAKE_TABLE.push({ phrase: p, key: 'memo.update', needs: ['id'], preset: { category: top } });
 }
 
