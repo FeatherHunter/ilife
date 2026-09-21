@@ -117,6 +117,7 @@
 - [空间与位置域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/809) — 位置树加相似合并／固定位在位对照／推荐理由备选／面包屑下钻 4 真页，真链全绿（用例 6/6、双墙缺失 0、分隔符 0 命中、结构块 20/20、23/23、24/24、25/25），对账见 scene-space.md；判据口径（墙只走生成器自检、薄种子暂无分支恒 render）已记对账第四节
 
 - [物品管理域（三）照片、盘点与历史 8 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/808) — 7 族真页面（照片双态分流／照片墙网格墙／盘点三态任务单／差异四组处理台／记录列表／搬家二态标记清单／历史时间线＋位置轨迹）＋8 条场景各一份产物，票面 4 门全绿（域测试 10/10、双墙缺失 0、分隔符与结构块 `--manifest` 产物范围双 8/8）；对账见 `scene-items-3.md`；收据型四族的命令侧载荷增补（差异明细／发生时刻／清单条目／照片二进制）登记为该件遗留出口、另立票。
+- [交付链接合：数据与过程命令缺省落族页（页族装配接进 cmd_read）＋ package.json files 补族页模板子目录](https://github.com/FeatherHunter/ilife/issues/872) — 新增 `src/render/familyPage.ts`（`resolvePageFamily` 两层解析 → 按候选域装入 `dist/<域>/pages/<族>.js` → 失败返回 `null`，不猜名）；`cmd_read.ts` 的缺省落盘与 `--html` 显式出口都先走族页，解析不到族即降级 21 模板分节页并在 stderr 记 note（退出码不变）；`files` 补 `templates/**`（装上包能读到 46 份族页模板）。独立复核（2026-09-22，HEAD 5f14debc）：四条判据复跑成立——包内 312/312、隔离家目录 39/39 exit-0 场景落盘即族页、`gen:check` exit 0、族模板改名负向探针成立（降级＋note＋退出码不变，改回即恢复）。
 
 ## Not yet specified
 
