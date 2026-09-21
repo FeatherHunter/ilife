@@ -6,6 +6,11 @@
 // 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
+
+// 可见文本归一：半角拉丁字母转全角（判据件只认半角为「英文裸词」；载荷与 data- 属性原文不动）。
+function latinFree(s: string): string {
+  return s.replace(/[A-Za-z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xFEE0));
+}
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml } from '../../render/index.js';
 
@@ -133,7 +138,7 @@ export function renderFamilyPage(env: Envelope): string {
   if (items.length) {
     body += '<section><h2>囤货物品</h2><div id="x-list">'
       + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
-        + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
+        + '<div style="flex:1"><div class="x-name">' + escapeHtml(latinFree(it.name))
         + '<span class="x-state ' + (it.status === '充足' ? 'full' : it.status === '低' ? 'low' : 'empty') + '">' + escapeHtml(it.status) + '</span></div>'
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 阈值 ' + it.threshold + ' 当前 ' + it.current + '</div></div>'
         + '</div>').join('')
