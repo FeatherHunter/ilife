@@ -36,6 +36,11 @@ const HAIRLINE = 1;
 const FS_TITLE = 15;
 const FS_BODY = 13;
 const NARROW = 820;
+/** #788 目标达成卡那一件的长度（与上面同表：本文件是唯一住处）。 */
+const GOAL_COLS = 2;
+const GOAL_FS_VALUE = 22;
+const GOAL_FS_LABEL = 13;
+const GOAL_FS_HINT = 12;
 
 const px = (n: number): string => n + 'px';
 const LF = String.fromCharCode(10);
@@ -51,6 +56,31 @@ export function renderChangePanel(input: {
     + '<div class="sch-pl-diff">' + renderChangeRows({ rows: input.rows }) + '</div>';
 }
 
+/** #788 · 段名（页上一段的标题）：走公共层区块自己的段名类 `heat-title`（与 `shared/overviewPage`
+ *  的逐日段名同一条口径），**不新造类名、不新添 CSS**。老侧那四档的每个区块都有自己的名字，
+ *  出页门与探针按名字认块，故段名必须由一处产出。 */
+export function renderSectionTitle(text: string): string {
+  return '<h2 class="heat-title">' + esc(text) + '</h2>';
+}
+
+/** #788 · 目标达成卡（老侧 month 档的「目标达成」：`.goal-card` 那一件）。 */
+export interface GoalCardInput {
+  readonly label: string;
+  readonly value: string;
+  readonly hint: string;
+}
+
+/** 目标达成：一格一张卡（标签 ＋ 读数 ＋ 一句怎么读）。`cards` 为空＝空串（不留空壳）。 */
+export function renderGoalCards(cards: readonly GoalCardInput[]): string {
+  if (cards.length === 0) return '';
+  return '<div class="sch-pl-goals">' + cards.map((card) =>
+    '<div class="sch-pl-goal">'
+    + '<div class="sch-pl-goal-label">' + esc(card.label) + '</div>'
+    + '<div class="sch-pl-goal-value">' + esc(card.value) + '</div>'
+    + '<div class="sch-pl-goal-hint">' + esc(card.hint) + '</div>'
+    + '</div>').join('') + '</div>';
+}
+
 /** 本处族级件的样式唯一产出者（只对用上它的页面有作用）。
  *  颜色只取公共层冻结 token；长度只取上面那组常量——本串里不出现 `px` 字面量。 */
 export function planPartsCss(): string {
@@ -60,8 +90,18 @@ export function planPartsCss(): string {
     '.sch-pl-diff { padding: ' + px(PANEL_PAD_Y) + ' ' + px(PANEL_PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
     '  border-left: ' + px(RAIL_W) + ' solid var(--blue); border-radius: ' + px(PANEL_RADIUS) + '; background: var(--soft); }',
     '.sch-pl-note { margin: 0; color: var(--fg2); font-size: ' + px(FS_BODY) + '; line-height: 1.7; }',
+    '/* #788 复盘与飞书域·族级件：目标达成卡（断点只用仓内既有值 820） */',
+    '.sch-pl-goals { display: grid; grid-template-columns: repeat(' + String(GOAL_COLS) + ', minmax(0, 1fr));',
+    '  gap: ' + px(PANEL_GAP) + '; margin: ' + px(PANEL_GAP) + ' 0 ' + px(PANEL_GAP) + '; }',
+    '.sch-pl-goal { padding: ' + px(PANEL_PAD_Y) + ' ' + px(PANEL_PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
+    '  border-radius: ' + px(PANEL_RADIUS) + '; background: var(--soft); }',
+    '.sch-pl-goal-label { color: var(--fg2); font-size: ' + px(GOAL_FS_LABEL) + '; }',
+    '.sch-pl-goal-value { margin-top: ' + px(PANEL_GAP) + '; font-size: ' + px(GOAL_FS_VALUE) + '; font-weight: 600;',
+    '  color: var(--fg); font-variant-numeric: tabular-nums; }',
+    '.sch-pl-goal-hint { margin-top: ' + px(PANEL_GAP) + '; color: var(--fg2); font-size: ' + px(GOAL_FS_HINT) + '; line-height: 1.7; }',
     '@media (max-width: ' + px(NARROW) + ') {',
     '  .sch-pl-diff { padding: ' + px(PANEL_PAD_Y) + ' ' + px(PANEL_GAP) + '; }',
+    '  .sch-pl-goals { grid-template-columns: minmax(0, 1fr); }',
     '}',
   ].join(LF);
 }

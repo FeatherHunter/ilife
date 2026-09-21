@@ -17,6 +17,7 @@ import { runPreview, runUpsert } from './upsert.js';
 import { runUpdate, runDeactivate } from './single.js';
 import { runSync } from './sync.js';
 import { runCheck } from './check.js';
+import { dayWindow, replayWindowOf } from './replayDocs.js';
 
 export type { PlanOpCtx, PlanOpResult } from './context.js';
 export { buildPlanOverview } from './overview.js';
@@ -26,21 +27,24 @@ export type { PlanOverviewPayload, PlanDayRow, PlanHourRow } from './overview.js
 export { eventsInWindow, renderPlanDayPage } from './planDocs.js';
 export type { PlanDayPageOptions, PlanDaySearch } from './planDocs.js';
 
-/** #14 复盘：本地读，不碰远端（四粒度：day／week／month／range）。 */
+/** #14 复盘：本地读，不碰远端（四粒度：day／week／month／range）。
+ *
+ *  #788 起窗口口径**与页同源**：这一支的窗口与页装配件都走 `replayWindowOf`（页上画哪一段，
+ *  回执里就报哪一段）。此前这一支只按 `date` 参数算单日，于是「复盘本周」的页画了这一周、
+ *  回执却报当天——两处对不上。 */
 function runReview(ctx: PlanOpCtx): PlanOpResult {
-  const { start, end } = ctx.params.granularity === 'range' || ctx.params.start !== undefined
-    ? resolveRangeParam(ctx.params)
-    : { start: resolveDateParam(ctx.params), end: resolveDateParam(ctx.params) };
-  const events = getPlanEventsRange(ctx.handle, start, end);
+  const g = ctx.params.granularity;
+  const win = typeof g === 'string' ? replayWindowOf(g, ctx.params) : dayWindow(ctx.params);
+  const events = getPlanEventsRange(ctx.handle, win.start, win.end);
   const counts: Record<string, number> = {};
   for (const e of events) counts[e.completion || '未复盘'] = (counts[e.completion || '未复盘'] || 0) + 1;
   const parts = VALID_COMPLETIONS.filter((k) => counts[k]).map((k) => k + counts[k]);
   const message = events.length
-    ? '已复盘 ' + start + '~' + end + '：' + events.length + ' 个事件（' + parts.join('、') + '）'
-    : '复盘空：' + start + '~' + end + ' 没有日程事件（不是故障，是这天没排）';
+    ? '已复盘 ' + win.start + ' 至 ' + win.end + '：' + events.length + ' 个事件（' + parts.join('，') + '）'
+    : '复盘空：' + win.start + ' 至 ' + win.end + ' 没有日程事件（不是故障，是这一段没排）';
   return receiptResult(buildReceipt({
     op: 'review', message, local: 'reviewed', remote: 'none', remoteId: null,
-    errors: [], date: start, dates: [start, end], counts: { events: events.length },
+    errors: [], date: win.start, dates: [win.start, win.end], counts: { events: events.length },
   }));
 }
 

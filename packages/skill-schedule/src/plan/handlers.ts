@@ -12,7 +12,7 @@
  */
 import { getPlanEvent, larkReady, listPlanEvents } from '../fetch/index.js';
 import {
-  parseFeishuMode, parsePlanOp, validateUpdateInput, validateUpsertInput,
+  parseFeishuMode, parsePlanOp, resolveDateParam, validateUpdateInput, validateUpsertInput,
   type PlanEventInput, type PlanWriteOp,
 } from '../policy/index.js';
 import { runPlanOp } from './index.js';
@@ -23,6 +23,11 @@ import {
   deactivateReceiptPage, ensureBatchReceiptPage, ensureReceiptPage, updateReceiptPage, type EnsureBatchDay,
 } from './receiptDocs.js';
 import { previewPage, resultPage } from './discussDocs.js';
+import { replayPage } from './replaySections.js';
+import { replayWindowOf } from './replayDocs.js';
+import { reviewPage } from './reviewDocs.js';
+import { probePage, syncPage } from './feishuDocs.js';
+import type { TierReport } from './probe.js';
 
 /** 哪些 op 要碰远端（其余 op 连 lark-cli 都不探——探测本身是三次子进程）。 */
 const REMOTE_OPS: PlanWriteOp[] = ['ensure', 'upsert', 'update', 'deactivate', 'sync', 'check'];
@@ -69,8 +74,11 @@ function preStateOf(op: PlanWriteOp, params: Record<string, unknown>, handle: Sc
 
 const remoteOf = (data: Record<string, unknown>): RemoteState => (data.remote ?? 'none') as RemoteState;
 
-/** 各 op 写完之后那张页（不落页的两支——复盘与飞书那两条——回空串，照旧走模板页）。 */
-function pageOf(op: PlanWriteOp, handle: ScheduleDb, data: Record<string, unknown>, pre: PreState): string {
+/** 各 op 写完之后那张页（不落页的两支——复盘与飞书那两条——回空串，照旧走模板页）。
+ *
+ *  #788 起「复盘」与「飞书」两条各接上自己的整页：复盘按粒度分两族（裸词那一档是单日逐条标记，
+ *  四档是跨域对照与趋势那一张一体页），飞书按 `probe` 那一格分探测（只读）与同步回执两张。 */
+function pageOf(op: PlanWriteOp, handle: ScheduleDb, data: Record<string, unknown>, pre: PreState, params: Record<string, unknown>): string {
   if (op === 'preview' && pre.candidates !== null) {
     return previewPage(handle, pre.candidates.date, pre.candidates.events);
   }
@@ -101,6 +109,32 @@ function pageOf(op: PlanWriteOp, handle: ScheduleDb, data: Record<string, unknow
   if (op === 'deactivate' && pre.beforeEvent !== null) {
     return deactivateReceiptPage(handle, pre.beforeEvent, remoteOf(data));
   }
+  if (op === 'review') {
+    // 裸词「复盘」＝单日逐条标记那一张；四档（今日／本周／本月／区间）＝一体页。
+    const granularity = params.granularity;
+    if (typeof granularity === 'string') return replayPage(handle, replayWindowOf(granularity, params));
+    return reviewPage(handle, resolveDateParam(params));
+  }
+  if (op === 'sync') {
+    const date = resolveDateParam(params);
+    if (data.probe === true) {
+      return probePage(handle, date, {
+        tier: (data.tier ?? 'missing') as TierReport['tier'],
+        cliPath: typeof data.cliPath === 'string' ? data.cliPath : null,
+        version: typeof data.cliVersion === 'string' ? data.cliVersion : null,
+        openId: null,
+        calendar: data.calendarReady === true,
+        why: String(data.tierWhy ?? ''),
+      });
+    }
+    return syncPage(handle, date, {
+      message: String(data.message ?? ''),
+      remote: remoteOf(data),
+      counts: (data.counts ?? {}) as Record<string, number>,
+      notes: Array.isArray(data.notes) ? (data.notes as string[]) : [],
+      errors: Array.isArray(data.errors) ? (data.errors as string[]) : [],
+    });
+  }
   return '';
 }
 
@@ -109,5 +143,5 @@ export const writePlan: WriteHandler = (params, handle: ScheduleDb) => {
   const gate = remoteGate(op, params);
   const pre = preStateOf(op, params, handle);
   const out = runPlanOp(op, { handle, params, cli: gate.cli, remoteWhy: gate.why });
-  return { data: out.data, html: pageOf(op, handle, out.data, pre), exitCode: out.exitCode };
+  return { data: out.data, html: pageOf(op, handle, out.data, pre, params), exitCode: out.exitCode };
 };

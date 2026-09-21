@@ -13,6 +13,7 @@ import { resolveDateParam, todayStr } from '../policy/index.js';
 import type { PlanEvent } from '../fetch/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
 import { buildReceipt } from './receipt.js';
+import { probeTiers, runProbe } from './probe.js';
 import { takeSnapshot, alignOne, matchIn, orphansOf, removeRemote, cleanSlot, type RemoteSnapshot } from './remoteDay.js';
 
 export interface ReconcileOutcome {
@@ -44,6 +45,9 @@ export function reconcileIds(snap: RemoteSnapshot, locals: PlanEvent[]): Reconci
 
 export function runSync(ctx: PlanOpCtx): PlanOpResult {
   const date = resolveDateParam(ctx.params);
+  // #788 · 「飞书探测」那一支（路由预设 `{op:'sync', dryRun:true}`）：**只读**探三档，一门写都不发。
+  // 这一条以前没有：`dryRun` 到了这一层被丢掉，「飞书探测」会真跑一趟同步（真往用户日历里写）。
+  if (ctx.params.dryRun === true) return runProbe(ctx, probeTiers());
   if (!ctx.cli) {
     const why = ctx.remoteWhy ?? '远端不可用';
     return receiptResult(buildReceipt({
