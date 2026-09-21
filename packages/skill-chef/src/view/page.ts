@@ -1,19 +1,36 @@
-/** 查看域 8 卡结果型页面装配（#770）。
+/** 查看域 8 卡结果型页面装配（#770；#873 查看席做页内收口）。
  *
  * 卡清单唯一出处＝HELP 场景资产（`src/help/sceneData.ts:52-67`，5 组 8 卡），本件只组装不另立清单。
  * 形状唯一依据＝配方件（`docs/skills/skill-chef/t768-页面族配方.md` §2 结果型 14 格）：每一格都是一次
- * 公共层区块调用，页面不自写样式（`extraCss` 空串）；正文段落走 #860 的 `renderProseBlock`。
- * 只看 X 卡＝同一页只留对应节、锚点 id 与全量页逐字相同（老场景资产口径：其他隐藏、锚点保留）。
+ * 公共层区块调用；页面级样式走单一入口 `chefSceneCss()`，本域页内版式在它后面**追加一段**
+ * `viewPageCss()`（不把公共层那两层拆回去）。只看 X 卡＝同一页只留对应节、锚点 id 与全量页逐字相同。
+ *
+ * #873 页内收口（七处，逐条都在证据件 `t873-席查看.md` 里有改后读数）：① 分区标题行（图标位＋标题＋
+ * 右端读数）替掉「一段接一段的无题正文」——营养／背景／步骤原先只有表注或干脆没有标题；② 页头那行
+ * 13 枚无名色块改成「维度名＋值」的分组标签块并**移到正文之后**（此前它占掉首屏三分之一，把真正要看
+ * 的内容挤到次屏）；③ 「已做」从徽章行搬进事实条的状态位，不再与口味／季节徽章同形同行同重；
+ * ④ 营养成分表改读数瓦片（配方件第 9 格写明「`renderDataTable` 或读数卡网格」两条都收）；⑤ 背景三段
+ * 各配一枚小标题（来历／历史脉络／文化意味）；⑥ 新手要点由「一行行等重的字」改成序号牌列表；
+ * ⑦ 替换食材「全是同一句时不逐行重复」（配方件第 12 格原话「全是同一句时不印」）——11 行
+ * 「螺丝椒 → 无替代品」收成一句读数。
  */
 
 import {
-  renderCaliberLine, renderChangeRows, renderChipRow, renderConclusionBar, renderCopyBlock,
-  renderDataTable, renderDisclosure, renderKpiCard, renderListRows, renderPageShell,
+  renderCaliberLine, renderChangeRows, renderChips, renderConclusionBar, renderCopyBlock,
+  renderDataTable, renderDisclosure, renderKpiCard, renderPageShell,
   renderProseBlock, renderTocBlock,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { renderActionBar, renderFactStrip, renderStatusBadge, renderTimelineRows } from 'base-paint';
+import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
+import { viewPageCss } from './pageCss.js';
+import { sectionOf } from './pageSection.js';
+import type { SecHead } from './pageSection.js';
+
+/** 换行（本件只在拼 `extraCss` 时用一次）。 */
+const LF = String.fromCharCode(10);
+/** 五字符归一（与区块层同源 `escapeHtml`，不自写第二份字符表）。 */
+const esc = escapeHtml;
 
 /** 8 卡清单（id／标题／唤醒词；出处见文件头注释，细节在 HELP 场景资产里）。 */
 export const VIEW_CARDS: readonly { id: string; title: string; wake: string }[] = [
@@ -25,6 +42,13 @@ export const VIEW_CARDS: readonly { id: string; title: string; wake: string }[] 
   { id: 'view_steps_only', title: '只看步骤', wake: '查看步骤' },
   { id: 'view_nutrition_only', title: '只看营养', wake: '查看营养' },
   { id: 'view_background_only', title: '只看背景文化', wake: '查看背景' },
+];
+
+/** 徽章行的维度分组（键＝给人看的维度名，字段＝`badges` 里的那一张关联表）。 */
+const TAG_GROUPS: readonly { readonly key: string; readonly field: string }[] = [
+  { key: '菜系', field: 'cuisine' }, { key: '口味', field: 'flavors' },
+  { key: '季节', field: 'seasons' }, { key: '餐别', field: 'meal_types' },
+  { key: '营养', field: 'diet_tags' }, { key: '做法', field: 'cooking_methods' },
 ];
 
 interface ViewItem extends Record<string, unknown> {
@@ -40,12 +64,47 @@ interface ViewItem extends Record<string, unknown> {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 const asItem = (item: Record<string, unknown>): ViewItem => item as unknown as ViewItem;
 
+/** 若干枚短词排成一行徽章（分类速览、替换点名用这条形状；与分组标签块同一行制）。 */
+function chipRowOf(texts: readonly string[]): string {
+  if (texts.length === 0) return '';
+  return '<div class="chef-view-tags-row">'
+    + renderChips({ items: texts.map((t) => ({ text: t })) }) + '</div>';
+}
+
+/** 「这一份由哪几类凑成」：分类名 ＋ 该类的味数。
+ *  只看食材那一页先前是光秃秃一张表（全页只有一个块），次一级结构全无；这一行把它补上。 */
+function catsOf(d: ViewItem): string {
+  const cats = [...new Set(d.ingredients.map((g) => str(g.category)))].filter((c) => c !== '');
+  if (cats.length < 2) return '';
+  return chipRowOf(cats.map((c) => c + ' ' + d.ingredients.filter((g) => str(g.category) === c).length + ' 味'));
+}
+
+/** 四枚分区的题头（页内导航与分区标题同源，不许两处各写一份）。 */
+function secHeadsOf(d: ViewItem): Record<'ingredients' | 'steps' | 'nutrition' | 'background', SecHead> {
+  const n = d.nutrition;
+  return {
+    // 食材那一位的读数不写「分 N 类」：分类由正文里那行「哪几类各几味」点名，两处同说一件事＝复读。
+    ingredients: { title: '食材（' + d.ingredients.length + ' 味）', note: '' },
+    steps: { title: '步骤（' + d.steps.length + ' 步）', note: '火候与时长' },
+    nutrition: n.estimated === true
+      ? { title: '营养成分', note: '每 ' + String(n.serving_size) + str(n.serving_unit) }
+      : { title: '营养成分', note: '' },
+    background: { title: '背景文化', note: '' },
+  };
+}
+
 function factsOf(d: ViewItem): string {
-  return renderFactStrip({ items: [
+  const items: { label: string; value: string; tone?: 'ok' | 'warn' | 'danger' }[] = [
     { label: '难度', value: d.difficulty || '未写' },
     { label: '份量', value: d.servings + ' 人份' },
     { label: '总时长', value: d.total_time_minutes + ' 分钟' },
-  ] });
+  ];
+  // #873 ③：「已做」是这一条菜的状态，不是口味／季节那一类标签——它住事实条，不进标签块。
+  if (d.status !== '') {
+    if (d.status === '已做') items.push({ label: '状态', value: d.status, tone: 'ok' });
+    else items.push({ label: '状态', value: d.status });
+  }
+  return renderFactStrip({ items });
 }
 
 function conclusionOf(d: ViewItem): string {
@@ -53,25 +112,28 @@ function conclusionOf(d: ViewItem): string {
   return renderConclusionBar('这道菜做过 ' + d.history.count + ' 次，' + avg + '。');
 }
 
-function badgeRowOf(d: ViewItem): string {
-  const texts = [...d.badges.cuisine, ...d.badges.flavors, ...d.badges.seasons,
-    ...d.badges.meal_types, ...d.badges.diet_tags, ...d.badges.cooking_methods];
-  if (!texts.length && !d.status) return '';
-  return renderChipRow({
-    items: texts.map((t) => ({ text: t })),
-    tailHtml: d.status ? renderStatusBadge({ status: 'ok', text: d.status }) : '',
-  });
+/** 分组标签块（#873 ②）：一枚维度一枚维度地排，不再是 13 枚无名色块挤成一片标签云。 */
+function tagsOf(d: ViewItem): string {
+  const rows = TAG_GROUPS.map((g) => {
+    const vals = d.badges[g.field] ?? [];
+    if (vals.length === 0) return '';
+    return '<div class="chef-view-tags-row">'
+      + '<span class="chef-view-tags-key">' + esc(g.key) + '</span>'
+      + renderChips({ items: vals.map((t) => ({ text: t })) })
+      + '</div>';
+  }).join('');
+  if (rows === '') return '';
+  return sectionOf('', 'tags', { title: '标签', note: '这一份的分类' },
+    '<div class="chef-view-tags">' + rows + '</div>');
 }
 
-function ingredientsTableOf(d: ViewItem, caption: string | null, withCat: boolean): string {
-  const columns = [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }];
-  if (withCat) columns.push({ key: 'cat', label: '分类' });
+function ingredientsTableOf(d: ViewItem): string {
   return renderDataTable({
-    caption: caption ?? undefined, columns,
+    columns: [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }],
     rows: d.ingredients.map((g) => ({
       name: str(g.name),
       qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? '适量' : String(g.quantity) + str(g.unit),
-      note: str(g.quantity_text) || '未写', cat: str(g.category),
+      note: str(g.quantity_text) || '未写',
     })),
   });
 }
@@ -87,19 +149,30 @@ function stepCardsOf(d: ViewItem, open: boolean): string {
   })).join('');
 }
 
-function nutritionOf(d: ViewItem): string {
+/** 新手要点（#873 ⑥）：一条一枚序号牌——「第几步」由形状承担，不再是一行行等重的字。 */
+function keysOf(d: ViewItem): string {
+  const rows = d.steps.map((s) => '<li class="chef-view-key">'
+    + '<span class="chef-view-key-no">第 ' + esc(String(s.sequence)) + ' 步</span>'
+    + '<span class="chef-view-key-text">' + esc(str(s.expected_result) || '按动作做') + '</span></li>').join('');
+  return sectionOf('', 'keys', { title: '新手关键成功点', note: String(d.steps.length) + ' 条' },
+    '<ol class="chef-view-keys">' + rows + '</ol>');
+}
+
+function nutritionOf(d: ViewItem, head: SecHead): string {
   const n = d.nutrition;
-  if (n.estimated !== true) return renderCaliberLine('营养未估算：这个谱按实际称量走，页面不编数字。');
+  const anchor = 'section-nutrition';
+  if (n.estimated !== true) {
+    return sectionOf(anchor, 'nutrition', head, renderCaliberLine('营养未估算：这个谱按实际称量走，页面不编数字。'));
+  }
   const cell = (v: unknown, unit: string): string => (v === null || v === undefined ? '未写' : String(v) + ' ' + unit);
-  return renderDataTable({
-    caption: '营养成分（每 ' + String(n.serving_size) + str(n.serving_unit) + '）',
-    columns: [{ key: 'k', label: '项目' }, { key: 'v', label: '含量', align: 'right' as const }],
-    rows: [
-      { k: '热量', v: cell(n.calories, '千卡') }, { k: '蛋白质', v: cell(n.protein, '克') },
-      { k: '脂肪', v: cell(n.fat, '克') }, { k: '碳水', v: cell(n.carbs, '克') },
-      { k: '纤维', v: cell(n.fiber, '克') }, { k: '钠', v: cell(n.sodium, '毫克') },
+  return sectionOf(anchor, 'nutrition', head, renderFactStrip({
+    extraClass: 'chef-view-nutri',
+    items: [
+      { label: '热量', value: cell(n.calories, '千卡') }, { label: '蛋白质', value: cell(n.protein, '克') },
+      { label: '脂肪', value: cell(n.fat, '克') }, { label: '碳水', value: cell(n.carbs, '克') },
+      { label: '纤维', value: cell(n.fiber, '克') }, { label: '钠', value: cell(n.sodium, '毫克') },
     ],
-  });
+  }));
 }
 
 /** 数据侧的机器标注（真库里那一条的原文形状：`(AI 补:用户手写本没写,根据常识补)`）。
@@ -110,31 +183,50 @@ function nutritionOf(d: ViewItem): string {
  * 清洗落在本域（全库实测只此一处，见 #871 证据件）；第二个用法出现再提共用件。
  */
 const MACHINE_ANNOTATION = /[（(]\s*AI\s*补?\s*[:：][^）)]*[）)]/g;
-const cleanOf = (s: string): string => s.replace(MACHINE_ANNOTATION, '');
+const cleanOf = (s: string): string => s.replace(MACHINE_ANNOTATION, '').trim();
 
-function backgroundOf(d: ViewItem): string {
+/** 背景三小节（#873 ⑤）：来历／历史脉络／文化意味各一枚小标题——三级层级从此看得见。 */
+function backgroundOf(d: ViewItem, head: SecHead): string {
   if (!d.background) return '';
-  return renderProseBlock({ text: cleanOf(str(d.background.origin_story)) })
-    + renderProseBlock({ text: cleanOf(str(d.background.historical_background)) })
-    + renderProseBlock({ text: cleanOf(str(d.background.cultural_significance)) });
+  const segs: readonly (readonly [string, string])[] = [
+    ['来历', cleanOf(str(d.background.origin_story))],
+    ['历史脉络', cleanOf(str(d.background.historical_background))],
+    ['文化意味', cleanOf(str(d.background.cultural_significance))],
+  ];
+  const body = segs.filter((seg) => seg[1] !== '').map((seg) =>
+    '<div class="chef-view-prose-block">'
+    + '<h3 class="chef-view-prose-title">' + esc(seg[0]) + '</h3>'
+    + renderProseBlock({ text: seg[1] }) + '</div>').join('');
+  return sectionOf('section-background', 'background', head, body);
 }
 
 function historyOf(d: ViewItem): string {
   const avg = d.history.avgRating;
+  // #873：结论条已说「做过 N 次」，读数卡的说明位不再把同一句复读一遍。
   const kpi = avg === null
     ? renderKpiCard({ label: '做过', value: String(d.history.count), unit: '次', detail: '暂无评分' })
-    : renderKpiCard({ label: '平均评分', value: String(avg), unit: '分', detail: '满分 5 分，共做过 ' + d.history.count + ' 次', bar: { pct: (avg / 5) * 100 } });
-  if (!d.history_timeline.length) return kpi;
-  return kpi + renderTimelineRows({ rows: d.history_timeline.map((r) => ({
+    : renderKpiCard({ label: '平均评分', value: String(avg), unit: '分', detail: '满分 5 分', bar: { pct: (avg / 5) * 100 } });
+  const body = d.history_timeline.length === 0 ? kpi : kpi + renderTimelineRows({ rows: d.history_timeline.map((r) => ({
     time: r.cook_date, main: '第 ' + r.cook_sequence + ' 次做这道菜，评分 ' + r.rating + ' 分', note: r.feedback || '这次没写反馈',
   })) });
+  return sectionOf('', 'history', { title: '下厨记录', note: '按日期' }, body);
 }
 
+/** 替换预览（#873 ⑦）：替代品全是同一句时不逐行重复（配方件第 12 格原话「全是同一句时不印」）。 */
 function swapOf(d: ViewItem): string {
-  return renderChangeRows({ rows: d.ingredients.map((g) => ({
+  const rows = d.ingredients.map((g) => ({
     label: str(g.name), before: str(g.name), after: str(g.substitute) || '未写',
-  })) }) + renderCaliberLine('替换只是临时假设，不落库，真换走修改域。')
-    + renderCaliberLine('当前库内 11 味均标注无替代品。');
+  }));
+  const first = rows[0];
+  const uniform = first !== undefined && rows.every((r) => r.after === first.after) ? first.after : null;
+  // 替代品全是同一句时不逐行重复（配方件第 12 格原话「全是同一句时不印」）：改印一句读数 ＋
+  // 这一份的实物名（11 行同义行换成一行点名，读者仍看得到论的是哪几味）。
+  const body = uniform === null
+    ? renderChangeRows({ rows })
+    : renderCaliberLine(rows.length + ' 味食材的替代品一致：' + uniform + '。')
+      + chipRowOf(d.ingredients.map((g) => str(g.name)));
+  return sectionOf('section-substitution', 'swap', { title: '替换食材预览', note: '临时预览' },
+    body + renderCaliberLine('替换只是临时假设，不落库，真换走修改域。'));
 }
 
 function footerOf(d: ViewItem): string {
@@ -162,33 +254,37 @@ function actionsOf(): string {
 // 内容画两遍、两段还共用一个 `id="section-ingredients"`。**保留三列数据表**（多「用量」一列、列头承担
 // 语义），删掉清单——配方格 7「切配建议」的内容由表的「说明」列承载，锚点随之唯一。
 function sectionsOf(d: ViewItem): Record<string, string> {
-  const prep = ingredientsTableOf(d, '食材（' + d.ingredients.length + ' 味）', false);
-  const grouped = [...new Set(d.ingredients.map((g) => str(g.category)))].map((c) => renderDisclosure({
-    title: c, contentHtml: renderDataTable({
-      columns: [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }],
-      rows: d.ingredients.filter((g) => str(g.category) === c).map((g) => ({
-        name: str(g.name),
-        qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? '适量' : String(g.quantity) + str(g.unit),
-        note: str(g.quantity_text) || '未写',
-      })),
-    }),
-  })).join('');
+  const h = secHeadsOf(d);
+  const grouped = [...new Set(d.ingredients.map((g) => str(g.category)))].map((c) => {
+    const rows = d.ingredients.filter((g) => str(g.category) === c);
+    return renderDisclosure({
+      title: c + '（' + rows.length + ' 味）', open: true,
+      contentHtml: renderDataTable({
+        columns: [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }],
+        rows: rows.map((g) => ({
+          name: str(g.name),
+          qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? '适量' : String(g.quantity) + str(g.unit),
+          note: str(g.quantity_text) || '未写',
+        })),
+      }),
+    });
+  }).join('');
   return {
-    ingredients: '<div id="section-ingredients">' + prep + '</div>',
-    grouped: '<div id="section-ingredients">' + grouped + '</div>',
-    steps: '<div id="section-steps">' + stepCardsOf(d, true) + '</div>',
-    nutrition: '<div id="section-nutrition">' + nutritionOf(d) + '</div>',
-    background: '<div id="section-background">' + backgroundOf(d) + '</div>',
-    swap: '<div id="section-substitution">' + swapOf(d) + '</div>',
+    ingredients: sectionOf('section-ingredients', 'ingredients', h.ingredients,
+      catsOf(d) + ingredientsTableOf(d)),
+    grouped: sectionOf('section-ingredients', 'ingredients', h.ingredients, grouped),
+    steps: sectionOf('section-steps', 'steps', h.steps, stepCardsOf(d, true)),
+    nutrition: nutritionOf(d, h.nutrition),
+    background: backgroundOf(d, h.background),
+    swap: swapOf(d),
   };
 }
 
 function shellOf(title: string, content: string): string {
   return renderDocShell({
     // 文档标题与页标题错开一句（页标题只说这是什么页，文档标题带技能名），不互相复读。
-    // 页面级样式走单一入口 `chefSceneCss()`（公共层两配方 ＋ 私家大厨皮肤）：事实条多列、
-    // 表格双端行为与皮肤都在它里面；本页零自写样式。
-    docTitle: title + ' - 私家大厨', extraCss: chefSceneCss(), pageUi: true,
+    // 页面级样式＝公共层两配方 ＋ 私家大厨皮肤（单一入口 `chefSceneCss()`）＋ 本域页内那一段。
+    docTitle: title + ' - 私家大厨', extraCss: chefSceneCss() + LF + viewPageCss(), pageUi: true,
     bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 查看', title, content }),
   });
 }
@@ -198,23 +294,20 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
   const d = asItem(item);
   if (!d.name) throw new Error('无此菜谱：页面缺菜名（' + cardId + '）');
   const sec = sectionsOf(d);
-  const head = factsOf(d) + conclusionOf(d) + badgeRowOf(d);
-  const tail = historyOf(d) + footerOf(d) + actionsOf() + copyOf(d);
+  const head = factsOf(d) + conclusionOf(d);
+  // #873 ②：标签块排在正文之后——它此前排在页头，13 枚色块把真正的内容挤到次屏。
+  const tail = tagsOf(d) + historyOf(d) + footerOf(d) + actionsOf() + copyOf(d);
   switch (cardId) {
     case 'view_full_recipe': {
+      // 页内导航的标签取短名（390 档四枚胶囊要排得下，长名会被裁到右缘）；分区标题仍带读数。
       const toc = renderTocBlock({ items: [
-        { id: 'section-ingredients', text: '食材与备料' }, { id: 'section-steps', text: '步骤' },
+        { id: 'section-ingredients', text: '食材' }, { id: 'section-steps', text: '步骤' },
         { id: 'section-nutrition', text: '营养' }, { id: 'section-background', text: '背景' },
       ] });
       return shellOf(d.name, head + toc + sec.ingredients + sec.steps + sec.nutrition + sec.background + tail);
     }
-    case 'view_for_beginner': {
-      const keys = renderDisclosure({
-        title: '新手关键成功点', open: true,
-        contentHtml: renderListRows({ items: d.steps.map((s) => ({ main: '第 ' + String(s.sequence) + ' 步', right: str(s.expected_result) || '按动作做' })) }),
-      });
-      return shellOf(d.name, head + keys + sec.ingredients + sec.steps + sec.nutrition + tail);
-    }
+    case 'view_for_beginner':
+      return shellOf(d.name, head + keysOf(d) + sec.ingredients + sec.steps + sec.nutrition + tail);
     case 'view_recipe_with_substitution':
       return shellOf(d.name, head + sec.swap + sec.ingredients + tail);
     case 'view_ingredients_only':
