@@ -106,13 +106,13 @@ function toMember(item: Record<string, unknown>): Member {
   const note = str(item.note);
   const count = typeof item.count === 'number'
     ? String(item.count)
-    : (str(item.item_count) !== '' ? str(item.item_count) : '未回');
+    : (str(item.item_count) !== '' ? str(item.item_count) : '—');
   return { name, relation, note, itemCount: count };
 }
 
 function memberCard(m: Member): string {
   const removePrompt = '【移除成员】请帮我在居家管家移除一位家人。\n成员称呼：' + m.name + '\n其归属物品将回到使用者';
-  const meta = (m.relation !== '' ? m.relation : '关系未回') + (m.note !== '' ? '，' + m.note : '');
+  const meta = [m.relation, m.note].filter((s) => s !== '').join('，');
   return '<div class="bm-member"><span class="bm-avatar">' + escapeHtml(m.name.slice(0, 1)) + '</span>'
     + '<div class="bm-who"><div class="bm-name">' + escapeHtml(m.name) + '</div>'
     + '<div class="bm-meta">' + escapeHtml(meta) + '</div></div>'
@@ -123,7 +123,7 @@ function memberCard(m: Member): string {
 
 function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<details class="bm-need" data-block="' + group + '"><summary>' + title + '</summary><ul>' + items + '</ul></details>';
+  return '<details hidden class="bm-need" data-block="' + group + '"><summary>' + title + '</summary><ul>' + items + '</ul></details>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。

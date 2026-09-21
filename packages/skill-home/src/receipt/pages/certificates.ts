@@ -70,7 +70,7 @@ function visibleOf(block: string): string {
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(visibleOf(b)) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+  return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 function maskDisplay(raw: unknown): string {
@@ -231,7 +231,6 @@ export function renderFamilyPage(env: Envelope): string {
   const content = PAGE_CSS + head
     + main
     + opsBlock()
-    + '<div class="fam-content"><pre>' + escapeHtml(envelopeBrief(env)) + '</pre></div>'
     + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')

@@ -178,7 +178,7 @@ function recommendFor(handle: HomeDb, itemId: number, mode: string): Recommendat
     .map((h) => ({
       location: h.loc,
       // 理由逐件唯一（同证据＋件名后缀）：机审重复句按整行判等，证据相同也须逐件区分。
-      reason: '分类「' + catName + '」常用位置，' + h.n + '件同类在此（如' + h.ex.join('、') + '），与「' + item.name + '」同类',
+      reason: h.n + '件同类（' + h.ex.join('、') + '）',
       score: h.n,
     }));
   const strong = ranked.filter((r) => r.score >= 2).sort((a, b) => b.score - a.score);
@@ -296,7 +296,7 @@ export function runLocationWrite(params: Record<string, unknown>, handle: HomeDb
     const loc = params.fixed_location ?? params.fixedLocation ?? params.location;
     if (typeof loc !== 'string' || !loc) fail(2, '固定位须给 fixed_location');
     updateItem(handle, id, { fixed_location: normalizeLocation(loc) });
-    const msg = '已设固定位：' + id + '→' + normalizeLocation(loc);
+    const msg = '已把「' + getItemById(handle, id).name + '」的固定位设为 ' + normalizeLocation(loc);
     const entries = fixedEntries(handle);
     return { ...buildReceipt(msg), detail: { fixed_items: entries, total: entries.length } };
   }

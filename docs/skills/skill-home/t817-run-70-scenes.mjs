@@ -54,14 +54,14 @@ const yamlById = new Map(yamlScenes.map((s) => [s.id, s]));
 const SCENES = appendix.scenarios;
 if (SCENES.length !== 70) die(2, '附录场景数不是 70：' + SCENES.length);
 
-/** 「这一格该确认什么」：按场景 id 从各域票清单取（文件名里的 `_<id>_` 就是 id）。 */
+/** 「这一格该确认什么」：按场景 id 从各域票清单取（文件名形如 `<命令中文名>_<场景 id>_<戳>.html`）。 */
 function checksById() {
   const out = new Map();
   for (const n of ['806', '807', '808', '809', '810', '811', '812', '813', '814', '815', '816']) {
     const p = join(repoRoot, '.scratch', n, 'manifest.json');
     if (!existsSync(p)) continue;
     for (const r of JSON.parse(readFileSync(p, 'utf8')).rows) {
-      const m = /_(\d+-\d+|SM\d+-\d+)(?:T?\d*)?\.html$/.exec(String(r.file ?? ''));
+      const m = /_(\d+-\d+|SM\d+-\d+)_/.exec(String(r.file ?? ''));
       if (m && r.check) out.set(m[1], String(r.check));
     }
   }

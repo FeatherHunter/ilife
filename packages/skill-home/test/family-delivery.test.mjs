@@ -101,7 +101,12 @@ describe('#872 真链：缺省落盘与显式出口都落族页', () => {
       // 落盘那一份是「附 delivery 之前」的信封渲染出来的（delivery 是落盘之后才追加的顶层字段），
       // 故比对时把 delivery 去掉再重渲染，其余逐字节必须相同。
       const { delivery: _drop, ...bare } = env;
-      assert.equal(mod.renderFamilyPage(bare), html, key + ' 落盘内容应逐字节等于族页装配结果');
+      // 交付链在装配结果上还回填了「场景身份」（`<title>`／`<h1>` 用场景的命令中文名，见 #817 收口）：
+      // 页族模板写的是族名（add_form 一族服务 录物品／拍物品／批量录入／补录），故比对前先施加同一层。
+      const sceneName = render.sceneNameOf(key, preset);
+      assert.ok(sceneName !== null, key + ' 取不到场景名');
+      assert.equal(render.withSceneIdentity(mod.renderFamilyPage(bare), sceneName), html,
+        key + ' 落盘内容应逐字节等于「族页装配 ＋ 场景身份回填」');
     });
   }
 

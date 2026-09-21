@@ -118,7 +118,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
     + '<h2>首次使用向导</h2>'
-    + '<p class="su-lead">跟着六个步骤完成初始化，随时可以重进本页确认状态，重复进入不会重复建库。</p></div>'
+    + '<p class="su-lead">跟着六个步骤完成初始化，随时可以重进本页确认状态。</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="6步步骤条">六个步骤</h2>'
     + '<div class="su-steps" data-need="done" data-extra="current fail pending">' + steps + '</div>'
@@ -137,7 +137,7 @@ export function renderFamilyPage(env: Envelope): string {
       ? '<p class="su-note" data-need="幂等提示：已初始化">已经初始化过了，直接使用即可，重复进入不会重复建库。</p>'
       : '<p class="su-note" data-need="幂等提示：已初始化">还没有初始化，完成后重复进入会看到幂等提示：已初始化，不会重复建库。</p>')
     + '<h2 data-need="下一步">下一步</h2>'
-    + '<p>初始化完成后，建议先去查一次异常，确认空库健康，再开始录入第一批物品。</p>'
+    + '<p>初始化完成后，建议先去查一次异常，确认数据健康，再开始录入第一批物品。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
     + '<h2>可以做的操作</h2>'

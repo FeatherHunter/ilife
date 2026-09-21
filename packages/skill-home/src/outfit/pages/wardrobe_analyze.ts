@@ -62,7 +62,7 @@ const DISPLAY: Record<string, string> = {
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(DISPLAY[b] ?? b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+  return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type Dist = { label: string; count: number; pct: number };

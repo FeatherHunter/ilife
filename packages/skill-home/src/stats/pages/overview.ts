@@ -73,7 +73,7 @@ function latinFree(s: string): string {
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(showOf(b)) + '</li>').join('');
-  return '<section class="st-sec" data-block="' + group + '"><h2 class="st-sec-t">' + title + '</h2><ul class="st-need">' + items + '</ul></section>';
+  return '<section class="st-sec" hidden data-block="' + group + '"><h2 class="st-sec-t">' + title + '</h2><ul class="st-need">' + items + '</ul></section>';
 }
 
 const CSS = '<style>'
@@ -167,7 +167,7 @@ export function renderFamilyPage(env: Envelope): string {
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml(logText()) + '">复制日志</button></div>';
-  const blocks = '<details class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
+  const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
   const content = CSS + head + '<div class="fam-content st">' + hero + cards + empty + freq + dists + more + sug + '</div>'

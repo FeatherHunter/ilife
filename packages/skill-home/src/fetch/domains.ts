@@ -136,7 +136,8 @@ export function addMember(handle: HomeDb, name: string, relation: string | null)
   return hit.id;
 }
 export function listBorrows(handle: HomeDb): Record<string, unknown>[] {
-  return q(handle, 'SELECT * FROM borrow_records ORDER BY id DESC LIMIT 50');
+  // 带上物品名（#817 收口：借用页要显示「借的什么」，不给就得印占位符）
+  return q(handle, 'SELECT b.*, i.name AS item_name, i.category AS item_category FROM borrow_records b LEFT JOIN items i ON i.id = b.item_id ORDER BY b.id DESC LIMIT 50');
 }
 export function addBorrow(handle: HomeDb, itemId: number | null, member: string, action: string, date: string): number {
   run(handle, 'INSERT INTO borrow_records (item_id, member, action, date) VALUES (?,?,?,?)', itemId, member, action, date);

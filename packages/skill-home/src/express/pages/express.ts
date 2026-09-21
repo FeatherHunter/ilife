@@ -61,7 +61,7 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
       : b;
     return '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(vis) + '</li>';
   }).join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+  return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type ExpressItem = {
@@ -109,7 +109,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '.x-pill{border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfbfd}'
     + '.x-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:12px}'
     + '.x-card{border:1px solid #eee;border-radius:14px;padding:14px;background:#fff}'
-    + '.x-photo{width:100%;height:120px;border-radius:10px;background:#f0f3f8;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;margin-bottom:10px;overflow:hidden}'
+    + '.x-photo{width:100%;height:56px;border-radius:10px;background:#f0f3f8;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;margin-bottom:10px;overflow:hidden}'
     + '.x-name{font-weight:700;font-size:16px;word-break:break-word}'
     + '.x-state{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:8px}'
     + '.x-state.days{background:#eef5ff;color:#0a63ce}.x-state.over{background:#ffe8e6;color:#c00}'

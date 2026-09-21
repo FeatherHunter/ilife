@@ -140,11 +140,11 @@ function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
     else if (due === t) status = '今日到期';
   }
   const id = str(item.id) || String(idx + 1);
-  const shownItem = itemName || '物品明细待补齐';
+  const shownItem = itemName || '物品未登记';
   const detailBits = [
     '对象' + objectName,
-    '借出' + (borrowed || '日期未回'),
-    '约定归还' + (due || '未约定'),
+    ...(borrowed ? ['借出' + borrowed] : []),
+    ...(due ? ['约定归还' + due] : []),
   ];
   if (days !== '') detailBits.push('已借' + days + '天');
   if (remark !== '') detailBits.push('备注' + remark);
@@ -192,7 +192,7 @@ function snapshotHtml(env: Envelope, rows: Record<string, unknown>[]): string {
 
 function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<details class="bw-need" data-block="' + group + '"><summary>' + title + '</summary><ul>' + items + '</ul></details>';
+  return '<details hidden class="bw-need" data-block="' + group + '"><summary>' + title + '</summary><ul>' + items + '</ul></details>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。

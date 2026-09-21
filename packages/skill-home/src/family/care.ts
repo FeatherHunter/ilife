@@ -19,8 +19,33 @@ import { buildCareList, buildReceipt } from '../render/index.js';
 
 export function runCareQuery(params: Record<string, unknown>, handle: HomeDb): unknown {
   const kind = parseCareKind(params, 'borrow');
-  if (kind === 'borrow') return buildCareList(listBorrows(handle).map((r) => ({ name: '借用' + String(r.member), count: 1 })));
-  if (kind === 'member') return buildCareList(listMembers(handle).map((r) => ({ name: String(r.name), count: 1 })));
+  if (kind === 'borrow') {
+    // 行里带上页族要显示的字段（物品名／对象／日期／是否已归还），页面据此渲染，不再印占位符。
+    return buildCareList(listBorrows(handle).map((r) => ({
+      name: String(r.item_name ?? '未登记物品') + '借用给' + String(r.member),
+      count: 1,
+      item_name: String(r.item_name ?? ''),
+      member: String(r.member),
+      op: String(r.op ?? ''),
+      date: String(r.date ?? ''),
+      returned_at: String(r.returned_at ?? ''),
+      due_date: String(r.due_date ?? ''),
+      remark: String(r.remark ?? ''),
+    })));
+  }
+  if (kind === 'member') {
+    const counts = new Map<string, number>();
+    for (const row of handle.db.prepare('SELECT owner, count(*) AS c FROM items WHERE owner IS NOT NULL AND owner<>\'\' GROUP BY owner').all()) {
+      counts.set(String(row.owner), Number(row.c));
+    }
+    return buildCareList(listMembers(handle).map((r) => ({
+      name: String(r.name),
+      count: 1,
+      relation: String(r.relation ?? ''),
+      note: String(r.note ?? ''),
+      item_count: counts.has(String(r.name)) ? counts.get(String(r.name)) : 0,
+    })));
+  }
   if (kind === 'lint') {
     const issues: Record<string, unknown>[] = [];
     const noTag = (handle.db.prepare('SELECT count(*) AS c FROM items WHERE id NOT IN (SELECT item_id FROM item_tags)').get() as { c: number }).c;

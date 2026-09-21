@@ -60,7 +60,7 @@ export const REQUIRED_BLOCKS = {
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+  return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type AccountRow = {
@@ -141,12 +141,11 @@ function listGroups(env: Envelope): string {
 function receiptNote(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
   const msg = String((data as { message?: unknown }).message ?? '已落盘');
-  if (/密码/.test(msg)) {
-    return '<div><p>密码操作已受理，明文仅经对话回显，页上不展示</p>'
-      + '<p>可在查账号中按类型复核，密码加密存储，页上不展示明文</p></div>';
-  }
-  return '<div><p>账号写操作已受理，可在查账号中按类型复核</p>'
-    + '<p>密码加密存储，页上不展示明文</p></div>';
+  // 脱敏口径与 envelope 分节页一致：含「密码」的回执**不落明文**（明文只走对话 JSON 回显）。
+  const safe = /密码/.test(msg) ? '密码已回显（只经对话回显，页上不落明文）' : msg;
+  // 真实回执放绿卡；「页上不展示明文」这条只写一次。
+  return '<div><p class="receipt">' + escapeHtml(safe) + '</p>'
+    + '<p>密码加密存储，页上不展示明文；需要看密码时经对话回显。</p></div>';
 }
 
 function opsBlock(): string {
@@ -186,7 +185,6 @@ export function renderFamilyPage(env: Envelope): string {
     + sensitiveBanner()
     + main
     + opsBlock()
-    + '<div class="fam-content"><pre>' + escapeHtml(envelopeBrief(env)) + '</pre></div>'
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

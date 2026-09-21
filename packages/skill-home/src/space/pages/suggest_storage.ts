@@ -77,7 +77,7 @@ function recSection(r: Recommendation): string {
   const head = '<h2>' + escapeHtml(it.name)
     + ' <span class="hint">' + escapeHtml(it.category) + '</span></h2>';
   const curLine = r.recommend !== null && it.current !== ''
-    ? '<div class="meta2">当前：' + escapeHtml(it.current) + '（编号' + it.id + '）</div>' : '';
+    ? '<table class="meta2"><tr><th>当前</th><td>' + escapeHtml(it.current) + '</td></tr></table>' : '';
   let main = '';
   if (r.recommend !== null) {
     const rc = r.recommend;
@@ -92,7 +92,7 @@ function recSection(r: Recommendation): string {
       + '" data-need="设为固定位">设固定位</button>' : '';
     main = '<div class="main"><span class="tag">推荐安放处</span>'
       + '<div class="loc">' + escapeHtml(rc.location) + '</div>'
-      + '<div class="why">' + escapeHtml(rc.reason) + '</div>'
+      + '<div class="why">' + escapeHtml(rc.reason + '，与「' + it.name + '」同类') + '</div>'
       + '<div class="acts"><button class="btn" data-copy="' + attr(adoptPrompt)
       + '" data-need="采纳（去移物品）">采纳</button>' + fixedBtn
       + '<button class="btn ghost" data-copy="' + attr(changePrompt)
@@ -105,7 +105,7 @@ function recSection(r: Recommendation): string {
       + '" data-need="设为固定位">设固定位</button>' : '';
     main = '<div class="main keep"><span class="tag">保持现状</span>'
       + '<div class="loc">' + escapeHtml(kp.location) + '</div>'
-      + '<div class="why">' + escapeHtml(kp.reason) + '</div>'
+      + '<div class="why">' + escapeHtml(kp.reason + '，与「' + it.name + '」同类') + '</div>'
       + '<div class="acts">' + fixedBtn + '</div></div>';
   } else {
     main = '<div class="main none" data-need="无依据态"><span class="tag">暂无依据</span>'
@@ -116,8 +116,8 @@ function recSection(r: Recommendation): string {
     ? '<div class="altrow" data-need="备选空态：暂无其他备选">暂无其他备选</div>'
     // 每行自带地点（与其理由同一行）：理由可能两条一模一样（同分类同件数同示例件），
     // 带上地点后每行自解释，也不会在页面上出现两行逐字相同的文字（#817 收口修）。
-    : r.alternates.map((a) => '<div class="altrow"><span class="wh">'
-      + escapeHtml(a.location + '：' + a.reason) + '</span></div>').join('');
+    : '<table class="alt">' + r.alternates.map((a) => '<tr><td>'
+      + escapeHtml(a.location + '：' + a.reason) + '</td></tr>').join('') + '</table>';
   return '<section class="card" data-block="fields" data-need="推荐列表（推荐位置/理由/备选位置）">'
     + head + curLine + '<div class="rec">' + main
     + '<div class="alt"><h4>备选位置</h4>' + alt + '</div></div></section>';

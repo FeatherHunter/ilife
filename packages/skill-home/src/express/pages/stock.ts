@@ -55,7 +55,7 @@ export const REQUIRED_BLOCKS = {
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
-  return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+  return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type StockItem = {
@@ -136,7 +136,7 @@ export function renderFamilyPage(env: Envelope): string {
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-state ' + (it.status === '充足' ? 'full' : it.status === '低' ? 'low' : 'empty') + '">' + escapeHtml(it.status) + '</span></div>'
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 阈值 ' + it.threshold + ' 当前 ' + it.current + '</div></div>'
-        + '<span class="x-qty">当前 <b>' + it.current + '</b></span></div>').join('')
+        + '</div>').join('')
       + '</div><div class="x-actions">'
       + '<button class="x-btn" onclick="xFix()">修正实际数量</button>'
       + '<button class="x-btn ghost" onclick="xThr()">设置阈值</button>'

@@ -18,6 +18,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Envelope } from 'base-link-core';
 import { UNKNOWN_FAMILY, resolvePageFamily } from './pageFamilies.js';
+import { resolveSceneStem } from './sceneNaming.js';
 
 /** 命令键前缀 → 候选域目录（按序试装）。表外命令一律无候选（走降级）。 */
 const KEY_DOMAINS: ReadonlyArray<readonly [prefix: string, domains: readonly string[]]> = [
@@ -48,6 +49,28 @@ export function familyModulePath(domain: string, family: string): string | null 
   return existsSync(file) ? file : null;
 }
 
+/** 场景的命令中文名（＝文件名主体 `<命令中文名>_<场景 id>` 的前半；`resolveSceneStem` 是那段唯一算法）。 */
+export function sceneNameOf(key: string, params: Record<string, unknown>): string | null {
+  try {
+    const stem = resolveSceneStem(key, params);
+    const cut = stem.lastIndexOf('_');
+    return cut > 0 ? stem.slice(0, cut) : stem;
+  } catch {
+    return null;
+  }
+}
+
+/** 标题与页内大标题的回填：页族模板的 `<title>`／`<h1>` 写的是**族**的默认名，而一族服务多条场景
+ *  （`add_form` 服务 录物品／拍物品／批量录入／补录，`receipt` 服务 移物品／数量变更／状态变更／标物品，
+ *  `certificates` 服务 查证件到期／登记证件／证件归档／更新证件……）。真名只有交付链知道（要 params 才
+ *  解析得出场景），故在这一层回填 —— 免得「拍物品」那一页的大标题写着「录物品」。 */
+export function withSceneIdentity(html: string, commandCn: string): string {
+  const safe = commandCn.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>' + safe + '</title>')
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/, '<h1>' + safe + '</h1>');
+}
+
 /**
  * 装配页族整页 HTML：
  *  - 命中并装得上 → 返回整页 HTML（含模板壳，标记已填充）；
@@ -68,7 +91,10 @@ export async function renderFamilyHtml(
       };
       if (typeof mod.renderFamilyPage !== 'function') continue;
       const html = mod.renderFamilyPage(env);
-      if (typeof html === 'string' && html.length > 0) return html;
+      if (typeof html === 'string' && html.length > 0) {
+        const sceneName = sceneNameOf(key, params);
+        return sceneName === null ? html : withSceneIdentity(html, sceneName);
+      }
     } catch {
       // 装入失败或装配抛错：试下一个候选域；都不行由调用方降级（本件不吞错，只记录「这条路不通」）。
     }
