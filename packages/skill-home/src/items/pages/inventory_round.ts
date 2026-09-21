@@ -138,7 +138,6 @@ export function renderFamilyPage(env: Envelope): string {
     + '<h2>三态判定</h2><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">在</button>'
     + '<button class="tri" data-v="不在" onclick="setTri(this)">不在</button>'
     + '<button class="tri" data-v="不确定" onclick="setTri(this)">不确定</button></div>'
-    + '<div class="frow">数量修正:<input type="number" min="0" value="1">与系统不同即为异</div>'
     + '<div class="frow">状态修正:<select><option>状态不变</option><option>在家</option><option>备用</option><option>借用中</option><option>维修中</option><option>找不到</option><option>已废弃</option></select></div>'
     + '<div class="frow">新位置:<input placeholder="新位置选填"></div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'extra\')">发现清单外物品</button>'

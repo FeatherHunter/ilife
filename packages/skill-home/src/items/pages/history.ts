@@ -182,7 +182,6 @@ export function renderFamilyPage(env: Envelope): string {
     + '<h2>事件条目</h2><div class="tl">' + timeline + '</div></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>类型筛选</h2>'
     + '<div class="chips"><span class="chip">状态变更</span><span class="chip">盘点</span><span class="chip">差异处理</span><span class="chip">已撤销</span></div>'
-    + '<p class="lead">无此四类事件时只作图例，有则随时间线出现</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow"><button class="btn ghost" data-t="all" onclick="chipFilter(this)">全部</button>'
     + '<button class="btn ghost" onclick="document.querySelector(\'.tl\').scrollIntoView()">类型筛选</button>'

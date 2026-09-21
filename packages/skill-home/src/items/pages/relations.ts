@@ -108,7 +108,7 @@ export function renderFamilyPage(env: Envelope): string {
     + (mainId || '___') + '\n  关联物品：编号' + (peerId || '___');
 
   const listBlock = mainId && peerId
-    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + ' <span class="fp-pill">关系类型待补</span></b>'
+    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + ' <span class="fp-pill">关系类型：常用搭配（回执未带）</span></b>'
       + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
       + '<p class="fp-note">新链回执没有带关系类型，本次按常用搭配建档，准确类型可以在下一次设置时注明</p>'
     : '<p class="fp-empty">暂无关联，配件与配套关系可以在这里建立</p>';

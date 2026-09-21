@@ -125,7 +125,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div>';
 
   if (items.length) {
-    body += '<section><h2>缺货物品</h2><p class="x-meta">阈值数字蓝色是已设置，灰色是默认估算，建议买是买完保有两倍阈值缓冲</p><div id="x-list">'
+    body += '<section><h2>缺货物品</h2><p class="x-meta">阈值数字蓝色是已设置，建议买是买完保有两倍阈值缓冲</p><div id="x-list">'
       + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-suggest="' + it.suggest + '">'
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-state ' + (it.status === '空' ? 'empty' : 'low') + '">' + escapeHtml(it.status) + '</span></div>'
