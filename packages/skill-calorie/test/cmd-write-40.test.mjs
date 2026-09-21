@@ -17,7 +17,7 @@ import { normalizeActivityLevel } from '../dist/fetch/profile.js';
 import { calorieConfigDir, configTestBase, probeGuard } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 import { realHomeDir } from '../../../test/helpers/real-home-snapshot.mjs';
-// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.life/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
+// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.ilife/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
 configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));

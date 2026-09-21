@@ -32,7 +32,7 @@ import { test } from 'node:test';
 import { calorieConfigDir, configTestBase, freezeClock, pinProcessClock, requireIsolatedHome } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 import { realConfigDir } from '../../../test/helpers/real-home-snapshot.mjs';
-// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.life/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
+// #676 · 测试隔离基座：家目录（配置落 `<家目录>/.ilife/calorie.yaml`）指到本次运行的临时目录，真库与真实家目录零接触。
 configTestBase();
 
 pinProcessClock('2026-09-07'); // #676：CALORIE_TODAY 退役，改钉整只钟（当刻进程＋后续子进程）

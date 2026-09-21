@@ -211,7 +211,7 @@ test('T10 照片 parity：画廊/单图/对比/动图/HELP + 只内嵌图片', a
   const added = addPhotos(db, photosDir, { srcPaths: [src('a.jpg'), src('b.jpg')], tag: '正面', today: d(6), nowTime: '08:00:00' });
   db.close();
   assert.equal(added.length, 2);
-  // `photos.dir` 是**配置**（写进 `<dir>/.life/calorie.yaml`），不是环境变量：它属于 `calorieConfigDir` 的第二参。
+  // `photos.dir` 是**配置**（写进 `<dir>/.ilife/calorie.yaml`），不是环境变量：它属于 `calorieConfigDir` 的第二参。
   const envExtra = { ...homeEnvOf(calorieConfigDir(dir, { photos: { dir: photosDir } })), ...CLOCK };
   const g = runOk(dir, 'calorie.photo.list', { tag: '正面' }, envExtra);
   assert.equal(g.data.total, 2);

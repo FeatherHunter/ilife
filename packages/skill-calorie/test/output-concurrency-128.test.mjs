@@ -25,7 +25,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { Worker } from 'node:worker_threads';
-// #676 · 隔离基座：家目录指到临时目录（配置落 `<家目录>/.life/calorie.yaml`），落点跟随它。
+// #676 · 隔离基座：家目录指到临时目录（配置落 `<家目录>/.ilife/calorie.yaml`），落点跟随它。
 import { calorieConfigDir, restoreHome, saveHome } from './helpers/config-test.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -46,7 +46,7 @@ import { join } from 'node:path';
 const { dbDir, marker, sab } = workerData;
 const flag = new Int32Array(sab);
 // #763 · 隔离走**家目录**（不是环境变量）：而家目录是**进程**级事实——线程改自己那份 env 副本
-// 改不动 os.homedir()，故由**主线程** calorieConfigDir(dbDir) 接管（配置落 <dbDir>/.life/calorie.yaml），
+// 改不动 os.homedir()，故由**主线程** calorieConfigDir(dbDir) 接管（配置落 <dbDir>/.ilife/calorie.yaml），
 // 5 条线程只读现成的那份配置（db.dir 仍指 dbDir 本身，产物照旧落 <dbDir>/calorie_html/）。
 Atomics.add(flag, 1, 1);
 while (Atomics.load(flag, 0) === 0) { Atomics.wait(flag, 0, 0, 20); }

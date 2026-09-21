@@ -4,7 +4,7 @@
  * （全串永不进仓：测试只用 `FAKE-610-*` 假串，且断言全串不出读数）。
  * 传输／计划来源／四步／状态文件全从注入缝进；KEY 的唯一真相是**配置文件**里的 `xunji.key`
  * （#676：读两个环境变量与写用户级系统环境变量都已删），故 KEY 相关的用例把**家目录**指到临时目录
- * （#763 起隔离通道＝家目录，配置落 `<家目录>/.life/calorie.yaml`）。`dist/xunji/cli.js` 只测无网路的拒收路径。
+ * （#763 起隔离通道＝家目录，配置落 `<家目录>/.ilife/calorie.yaml`）。`dist/xunji/cli.js` 只测无网路的拒收路径。
  *
  * 四点票面验收（各有独立用例）：
  * ① 无 KEY 退 2（key status／overlay-plan／run-sync 推送步三处）；
@@ -36,7 +36,7 @@ const tmp = (name) => {
 // 进程内调用也要有隔离基座：训记状态文件的缺省落点会读配置（#676），家目录还是真实那份即响亮报错。
 calorieConfigDir(mkdtempSync(join(tmpdir(), 't610-base-')));
 
-/** 一份临时家目录（KEY 存在这里的 `.life/calorie.yaml` 里；不给 key 即「没配」）。 */
+/** 一份临时家目录（KEY 存在这里的 .ilife/calorie.yaml` 里；不给 key 即「没配」）。 */
 function cfgDir(name, key) {
   const dir = tmp(name);
   return calorieConfigDir(dir, key === undefined ? {} : { xunji: { key } });

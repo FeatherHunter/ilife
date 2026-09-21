@@ -49,7 +49,7 @@ const PROBES = [
   ['2026-09-04', '22:30:00', '探针-22:30'],
 ];
 
-/** 一份隔离的家目录（配置在 `<它>/.life/` 里、库在它里面），返回目录；`probe=true` 顺带落三条分歧点记录。 */
+/** 一份隔离的家目录（配置在 `<它>/.ilife/` 里、库在它里面），返回目录；`probe=true` 顺带落三条分歧点记录。 */
 function freshDb(probe = true) {
   const dir = mkdtempSync(join(tmpdir(), 't717-'));
   const cfgDir = configDirOf(dir);

@@ -37,7 +37,7 @@ function run(dbPath, args = [KEY], cwd) {
   return runCfg(dbPath, dbPath, args, cwd);
 }
 
-/** 家目录与库目录分开给：`cfgDir` 当**家目录**（须绝对，配置落 `<cfgDir>/.life/calorie.yaml`），
+/** 家目录与库目录分开给：`cfgDir` 当**家目录**（须绝对，配置落 `<cfgDir>/.ilife/calorie.yaml`），
  *  `dbDir` 进配置里的 `db.dir`（可相对）。 */
 function runCfg(cfgDir, dbDir, args = [KEY], cwd) {
   const r = spawnSync(NODE_BIN, [BIN, ...args], {
