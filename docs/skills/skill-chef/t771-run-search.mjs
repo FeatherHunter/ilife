@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /** t771 搜索筛选域运行器：13 卡逐卡真跑副本库 → 结果型 HTML → 册子片段。
  *
  * 票 #771（父图 #765 票 6）。数据只走票 17（#840）交的沙箱器械：副本
@@ -283,8 +283,14 @@ function facetPanel(card) {
  *  徽章本身仍走区块层的 `renderChips`（同一套徽章形状）；本件只提供**分组的容器**
  *  ——此前是全丢进一枚 `renderChipRow`，13 枚长短不一的胶囊自由换行，
  *  单字值（春／夏／中／晚）看上去就是一枚孤立的碎胶囊。 */
-function attrStrip(groups) {
-  const cells = groups.map((g) => '<span class="ilife-block-search-attr">'
+function attrStrip(groups, record) {
+  // 「这条菜现在是什么状态」跟六维属性同属「这条菜长什么样」那组，**并入同一条属性带**：
+  // 此前它是一条独立的口径行（`做过 1 次 ｜ 平均 4 分 ｜ 状态 已做`），与上面的瓦片、徽章一起
+  // 在首屏一次吐出三段（复评原话：「卡片首屏一次性吐出做法标签、两段长描述和统计行，文案明显超载」）。
+  const all = record.items.length > 0
+    ? [...groups, { text: '状态', items: record.items }]
+    : groups;
+  const cells = all.map((g) => '<span class="ilife-block-search-attr">'
     + '<span class="ilife-block-search-attr-label">' + esc(g.text) + '</span>'
     + B.renderChips({ items: g.items.map((t) => ({ text: t })) })
     + '</span>').join('');
@@ -341,7 +347,9 @@ function searchSceneCss() {
     '  align-content: start;',
     '  min-width: 0;',
     '}',
-    /* ② 页头插画带：一层暖色浅底 ＋ 一枚圆角描边，把插画与正文分成两个「面」。 */
+    /* ② 页头插画带：一层暖色浅底 ＋ 圆角描边，把插画与正文分成两个「面」。
+       宽档这条带**跨两栏**（见下 `grid-template-areas` 的 `art` 区），底纹铺满整条，
+       画面等比居中——宽屏首屏最上面那一片因此不是灰底。 */
     P + '.ilife-block-search-art {',
     '  margin: 0;',
     '  padding: 8px 10px;',
@@ -570,7 +578,16 @@ function searchSceneCss() {
     /* ⑥ 宽屏：字阶抬一档 ＋ 正文行距放宽 —— 1280 档正文列有 880px 以上，15px 会读成「一栏小字」；
        字号抬档同时把短页撑高，首屏下半截不至于只剩一片灰底。 */
     '@media (min-width: 1001px) {',
-    '  ' + SCENE + ' { grid-template-columns: 340px minmax(0, 1fr); }',
+    /* 页头三级与页体对齐：公共层在 ≥1001 把眉标／标题收成 880px 并 `margin: auto` 居中（那是给
+       「单列 880 版心」的形态写的），而本页页体是**全宽两栏**——不修这一条，1280 档标题会从
+       x≈200 起、插画带与条件卡从 x≈20 起，整页左缘错开一条。这里把页头放回 100%（左缘与页体同一条）。 */
+    '  ' + P + '.ilife-block-page-shell-eyebrow,',
+    '  ' + P + '.ilife-block-page-shell-title,',
+    '  ' + P + '.ilife-block-page-shell-subtitle {',
+    '    max-width: 100%;',
+    '    margin-left: 0;',
+    '    margin-right: 0;',
+    '  }',
     '  ' + CARDS + '.ilife-block-disclosure-body { padding: 16px 18px 18px; }',
     /* 字阶抬档要连带把瓦片的内距一起抬：只抬字号会让「18 分钟」顶到瓦片框线上
        （复评原话：「桌面版『2 人份／18 分钟／难度』标签文字超框略显拥挤」）。 */
@@ -581,17 +598,54 @@ function searchSceneCss() {
     '  }',
     '  ' + CARDS + '.ilife-block-fact-strip-value { font-size: 16px; }',
     '  ' + CARDS + '.ilife-block-chip { font-size: 14px; }',
+    /* 属性带在宽档排成**四列一行的属性矩阵**：此前是一条 `flex-wrap` 流水线，872px 一行塞得下
+       五组、第二行只剩两组，读起来「每条参数堆成七八个胶囊、左挤右铺」（复评原话）。
+       矩阵里每组各占一槽，组名独占一行、徽章在组名下面成一片 —— 组与组之间靠槽分，
+       不再靠 22px 的横向间距硬挤。 */
+    '  ' + CARDS + '.ilife-block-search-attrs {',
+    '    display: grid;',
+    '    grid-template-columns: repeat(4, minmax(0, 1fr));',
+    '    gap: 12px 20px;',
+    '    align-items: start;',
+    '  }',
+    '  ' + CARDS + '.ilife-block-search-attr {',
+    '    display: flex;',
+    '    flex-wrap: wrap;',
+    '    align-items: center;',
+    '    gap: 4px 6px;',
+    '  }',
+    '  ' + CARDS + '.ilife-block-search-attr-label { flex: 0 0 100%; }',
+    /* 末一组（「状态」，三枚徽章）跨两槽：四列槽宽约 215px 装不下「做过 N 次／平均 N 分／状态」三枚，
+       不给这一条它会把末一枚挤到下一行，读起来像「单字独占一行」（复评原话）。 */
+    '  ' + CARDS + '.ilife-block-search-attr:last-child { grid-column: span 2; }',
     /* 复制区落到左栏下端：结果区只有一格菜卡，复制区另起一行挂在其下时，
        主列到「复制数据」就断了、页面下半截全是空的（复评原话：「首屏底部出现冗余的
        『复制这次筛选结果』导致空白下坠」「复制数据按钮整行空荡」）。挪到左栏后两栏收在
        同一高度上，按钮也回到常规宽度；390 档媒体查询不命中，窄屏次序仍是
        条件 → 结果 → 复制区。 */
     '  ' + SCENE + ' {',
-    '    grid-template-columns: 340px minmax(0, 1fr);',
+    '    grid-template-columns: 400px minmax(0, 1fr);',
     '    grid-template-areas:',
+    '      "art art"',
     '      "rail main"',
     '      "copy main";',
     '    gap: 16px 24px;',
+    '  }',
+    '  ' + P + '.ilife-block-search-art {',
+    '    grid-area: art;',
+    '    display: flex;',
+    '    align-items: center;',
+    '    justify-content: center;',
+    '    padding: 12px 20px;',
+    '    background-image:',
+    '      repeating-linear-gradient(115deg, rgba(' + YELLOW_RGB + ', .10) 0 12px,'
+      + ' rgba(' + YELLOW_RGB + ', 0) 12px 28px),',
+    '      linear-gradient(115deg, rgba(' + YELLOW_RGB + ', .26),'
+      + ' rgba(' + WARM_RGB + ', .12) 58%, rgba(' + BLUE_RGB + ', .06));',
+    '  }',
+    '  ' + P + '.ilife-block-search-art-svg {',
+    '    width: auto;',
+    '    height: 88px;',
     '  }',
     '  ' + P + '.ilife-block-search-rail { grid-area: rail; }',
     '  ' + P + '.ilife-block-search-main { grid-area: main; }',
@@ -607,6 +661,8 @@ function searchSceneCss() {
        改成「一串胶囊」：390 档首屏只有 820px，两三条条件的卡片要吃掉约 140px，条件带只要 70px 上下
        —— 省下的高度留给下面的菜卡。这一切必须排在基础规则**之后**才盖得住（同权重、后出现者胜）。 */
     '@media (max-width: 640px) {',
+    '  ' + SCENE + ' { gap: 18px; }',
+    '  ' + CARDS + '.ilife-block-disclosure-body { padding: 14px 16px 16px; }',
     '  ' + P + '.ilife-block-search-art { padding: 3px 8px; }',
     '  ' + P + '.ilife-block-search-art-svg { max-height: 36px; }',
     '  ' + P + '.ilife-block-search-facet { padding: 10px 12px; }',
@@ -641,22 +697,27 @@ function buildPage(card, data, metas) {
         { label: '总时长', value: String(it.total_time_minutes) + ' 分钟' },
       ],
     });
-    const chips = attrStrip(m.groups ?? []);
-    // 评分与状态并成一行：并列分段交给 `renderCaliberLine`（分隔符不进产物文本，分隔由版式承担）。
-    const caliber = m.avg === null
-      ? '状态 ' + (it.status || '未写') + ' ｜ 还没记过评分'
-      : '做过 ' + m.count + ' 次 ｜ 平均 ' + m.avg + ' 分 ｜ 状态 ' + (it.status || '未写');
-    const body = head + chips + proseHtml(it) + B.renderCaliberLine(caliber);
+    // 「做过几次／平均几分／什么状态」并进下面那条属性带（`attrStrip` 的第二参），页内不再另起
+    // 一条口径行：卡片体因此由「瓦片＋徽章＋两段正文＋统计行」四段收成三段。
+    const record = m.avg === null
+      ? { items: ['还没记过评分', it.status || '未写'] }
+      : { items: ['做过 ' + m.count + ' 次', '平均 ' + m.avg + ' 分', it.status || '未写'] };
+    const chips = attrStrip(m.groups ?? [], record);
+    const body = head + chips + proseHtml(it);
     return B.renderDisclosure({ title: it.name, open: true, contentHtml: body });
   }).join('');
   const copy = B.renderCopyBlock({
-    title: '复制这次筛选结果', dataActionId: 't771-copy-' + card.id,
+    // 不再给标题：按钮自己写着「复制数据」，上面再压一行「复制这次筛选结果」是同义复述
+    // （复评原话：「『这次的』／『这次的筛选结果』等冗余文案」「复制区在首屏被压在页外属冗余装饰」）。
+    dataActionId: 't771-copy-' + card.id,
     dataText: JSON.stringify({ 条件: card.desc, 总数: data.total, 菜: data.items.map((it) => it.name) }, null, 2),
   });
-  const rail = '<div class="ilife-block-search-rail">'
-    + (ART_SVG === '' ? '' : '<figure class="ilife-block-search-art" aria-hidden="true">' + ART_SVG + '</figure>')
-    + facetPanel(card)
-    + '</div>';
+  // 插画带是**页头那条带**，不是左栏里的一小块：≥1001 时它跨两栏，正好把宽屏首屏最先看到的那一片
+  // 用起来（复评反复点「桌面端大片留白／两栏天平失衡」）；≤640 时它退回一行 ~44px 的窄带。
+  const art = ART_SVG === ''
+    ? ''
+    : '<figure class="ilife-block-search-art" aria-hidden="true">' + ART_SVG + '</figure>';
+  const rail = '<div class="ilife-block-search-rail">' + facetPanel(card) + '</div>';
   const main = '<div class="ilife-block-search-main">'
     + (isFuzzy ? B.renderConclusionBar('你是不是想找：辣椒炒肉') : '')
     + '<h2 class="ilife-block-search-result-title">共 <span class="ilife-block-search-result-num">'
@@ -666,7 +727,7 @@ function buildPage(card, data, metas) {
   const copySlot = '<div class="ilife-block-search-copy">' + copy + '</div>';
   const shell = B.renderPageShell({
     eyebrow, title: card.title,
-    content: '<div class="ilife-block-search-scene">' + rail + main + copySlot + '</div>',
+    content: '<div class="ilife-block-search-scene">' + art + rail + main + copySlot + '</div>',
   });
   return renderDocShell({
     docTitle: card.title + ' ｜ 私家大厨',
