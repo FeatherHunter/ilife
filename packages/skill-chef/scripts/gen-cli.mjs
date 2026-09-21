@@ -4,9 +4,9 @@
 // 输入（唯一的事实）：`src/<能力>/commands.ts` 恰好导出的那一个声明数组。新增一个能力＝
 // 建它的 `commands.ts`（扫到即自动进来）；新增一条命令＝改它自己的声明，生成物不动手。
 // 扫描只认「目录里有 `commands.ts`」这一件事，不登记能力名单——新增域只碰该域自己的目录。
-// 输出：`src/cli/keys.ts`（键表＋标题＋形状＋来源域名单，头一句生成横幅，勿手改）。
+// 输出：`src/cli/keys.ts`（键表＋标题＋形状＋来源域名单＋按域键表，头一句生成横幅，勿手改）。
 // 本票试点范围：只校验六字段在场（`kind`／`key`／`shape`／`title`／`wakeWord`／`example`），
-// 只派生键、标题、形状、来源域；代表唤醒词与示例的派生（速查表那几块）由后续票接走。
+// 只派生键、标题、形状、来源域、按域键表；代表唤醒词与示例的派生（速查表那几块）由后续票接走。
 // 会改数据库的命令不写 `shape`（一律回执形，唯一定义地就是这里合成的那一行）。
 // 用法：`pnpm gen` 写盘；`pnpm gen:check` 只比对，不等即 exit 1（根 `package.json` 接后者）。
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -102,7 +102,8 @@ function q(s) {
   return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 }
 
-/** 渲染生成物全文（含来源域名单：空声明的域也在单里，核心判据靠它显形）。 */
+/** 渲染生成物全文（含来源域名单：空声明的域也在单里，核心判据靠它显形；
+ * 含按域键表：`--check` 按域点名缺／多出的命令，删了某域一条声明即指到该域）。 */
 function render(names, entries) {
   const writes = entries.filter((e) => e.kind === 'write');
   const reads = entries.filter((e) => e.kind === 'read');
@@ -129,18 +130,34 @@ function render(names, entries) {
   for (const e of entries) L.push('  ' + q(e.key) + ': ' + q(e.shape) + ',');
   L.push('};');
   L.push('');
+  L.push('export const CHEF_DOMAIN_KEYS: Record<string, readonly string[]> = {');
+  for (const n of names) {
+    const ks = entries.filter((e) => e.from === n).map((e) => e.key);
+    L.push('  ' + q(n) + ': [' + ks.map((k) => q(k)).join(', ') + '],');
+  }
+  L.push('};');
+  L.push('');
   return L.join('\n') + '\n';
 }
 
-/** 从盘上生成物里取出键表与来源域（只为报错点名，判据仍是全文逐字节比对）。 */
+/** 从盘上生成物里取出键表与来源域与按域键表（只为报错点名，判据仍是全文逐字节比对）。 */
 function parseOnDisk(text) {
   const keys = [];
   const sources = [];
+  const byDomain = new Map();
   const km = text.match(/CHEF_CLI_KEYS[^=]*=\s*\[([\s\S]*?)\]/);
   if (km) for (const m of km[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)) keys.push(m[1]);
   const sm = text.match(/CHEF_CLI_SOURCES[^=]*=\s*\[([\s\S]*?)\]/);
   if (sm) for (const m of sm[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)) sources.push(m[1]);
-  return { keys, sources };
+  const dm = text.match(/CHEF_DOMAIN_KEYS[^=]*=\s*\{([\s\S]*?)\n\};/);
+  if (dm) {
+    for (const m of dm[1].matchAll(/'((?:[^'\\]|\\.)*)'\s*:\s*\[([\s\S]*?)\]/g)) {
+      const ks = [];
+      for (const k of m[2].matchAll(/'((?:[^'\\]|\\.)*)'/g)) ks.push(k[1]);
+      byDomain.set(m[1], ks);
+    }
+  }
+  return { keys, sources, byDomain };
 }
 
 const names = scanCapabilityNames();
@@ -175,6 +192,15 @@ const expSrc = new Set(names);
 const gotSrc = new Set(disk.sources);
 for (const n of expSrc) if (!gotSrc.has(n)) console.error('缺域：' + n);
 for (const n of gotSrc) if (!expSrc.has(n)) console.error('多出域：' + n);
+// 按域点名（#839 反例口径）：删了某域一条声明，直接指到该域。
+const expByDomain = new Map();
+for (const n of names) expByDomain.set(n, entries.filter((e) => e.from === n).map((e) => e.key));
+for (const n of [...new Set([...expByDomain.keys(), ...disk.byDomain.keys()])].sort()) {
+  const exp = new Set(expByDomain.get(n) || []);
+  const got = new Set(disk.byDomain.get(n) || []);
+  for (const k of exp) if (!got.has(k)) console.error('域 ' + n + ' 缺命令：' + k);
+  for (const k of got) if (!exp.has(k)) console.error('域 ' + n + ' 多出命令：' + k);
+}
 const aLines = actual.split('\n');
 const eLines = expected.split('\n');
 for (let i = 0; i < Math.max(aLines.length, eLines.length); i++) {

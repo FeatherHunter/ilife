@@ -8,8 +8,13 @@
 import { randomUUID } from 'node:crypto';
 import { ChefFetchError } from '../fetch/errors.js';
 import type { ChefDb, HistoryRow } from '../fetch/db.js';
-import { getRecipeDetail, mustRecipe, now, qGet, qRun, today, toHistory } from '../fetch/db.js';
+import { getRecipeDetail, mustRecipe, now, qGet, qRun, toHistory } from '../fetch/db.js';
 import { needName, validateRating } from '../policy/index.js';
+
+/** 当日日期（本域独占：落历史默认 cook_date 与补录默认 date；原 db.ts `today()`，随 recordHistory 搬入）。 */
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 /** 记一次做菜（评分必填：老库 rating NOT NULL，缺评分直接拦）。原 `src/fetch/db.ts`，本域独占。 */
 export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: number | null; feedback?: string; cook_date?: string }): HistoryRow {

@@ -47,3 +47,16 @@ export const CHEF_KEY_SHAPES: Record<string, string> = {
   'chef.shopping.query': 'list',
 };
 
+export const CHEF_DOMAIN_KEYS: Record<string, readonly string[]> = {
+  'add': ['chef.recipe.write'],
+  'cook': ['chef.cooking.run'],
+  'data': [],
+  'history': ['chef.history.record', 'chef.history.query'],
+  'relation': [],
+  'search': ['chef.recipe.search'],
+  'setup': [],
+  'shopping': ['chef.shopping.query'],
+  'update': [],
+  'view': ['chef.recipe.view'],
+};
+

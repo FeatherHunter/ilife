@@ -3,9 +3,10 @@ export { CHEF_KEY_SHAPES, chefShapeFor, buildChefEnvelope, parseChefEnvelope } f
 export { CHEF_HTML_MAX_BYTES, escapeHtml, renderEnvelopeHtml, estimateBytes, assertHtmlSize, SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER, SHARED_CSS, SHARED_HELPERS, fillTemplate } from './html.js';
 export { CHEF_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { ChefTemplate } from './templates.js';
-export { toRecipeItem, recipeDetail, buildRecipeReceipt, buildHistoryQuery, buildHelpItems } from './views.js';
-// #839 搬迁债务（到期＝收口票把测试改打域接口后删）：下五件的新家在域目录，
+export { toRecipeItem, buildRecipeReceipt, buildHistoryQuery, buildHelpItems } from './views.js';
+// #839 搬迁债务（到期＝收口票把测试改打域接口后删）：下六件的新家在域目录，
 // 本 barrel 只转出、不断言内容（结构纪律铁律五：过渡期旧共用 barrel 对新家内部件的深路径直引用）。
+export { recipeDetail } from '../view/run.js';
 export { buildRecipeSearch } from '../search/run.js';
 export { buildCookingRun } from '../cook/run.js';
 export { buildShopping } from '../shopping/run.js';

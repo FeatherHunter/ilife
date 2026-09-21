@@ -6,4 +6,4 @@
 
 export { UPDATE_COMMANDS } from './commands.js';
 export { UPDATE_ROUTES } from './routes.js';
-export { runRecipeWriteUpdate } from './run-write.js';
+export { deprecateRecipe, runRecipeWriteUpdate, updateRecipe } from './run-write.js';

@@ -24,26 +24,7 @@ export interface RecipeDetail {
   history?: RecipeHistoryStats | null;
 }
 
-// 单菜全貌 detail：基本 + 食材 + 步骤 + 历史统计 + 营养占位（一期只占位，不编数字）。
-export function recipeDetail(detail: RecipeDetail): { item: Record<string, unknown> } {
-  const ingredients = [...detail.ingredients].sort((a, b) => a.sequence - b.sequence).map((g) => ({ ...g }));
-  const steps = [...detail.steps].sort((a, b) => a.sequence - b.sequence).map((s) => ({ ...s }));
-  return {
-    item: {
-      ...toRecipeItem(detail.recipe),
-      photo_url: detail.recipe.photo_url,
-      source: detail.recipe.source,
-      source_url: detail.recipe.source_url,
-      created_at: detail.recipe.created_at,
-      updated_at: detail.recipe.updated_at,
-      ingredients,
-      steps,
-      history: detail.history ?? { count: 0, avgRating: null },
-      // 营养占位：一期不估算，显式标记未估算，不编数字冒充。
-      nutrition: { estimated: false, note: '营养估算一期占位（以实际食材称量为准）' },
-    },
-  };
-}
+// 单菜全貌装配 `recipeDetail` 已搬入 `src/view/run.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
 
 // 搜菜/筛菜/全部装配 `buildRecipeSearch` 已搬入 `src/search/run.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
 // 写菜回执 receipt（update/add 两域共用，留守）。

@@ -6,9 +6,10 @@
  * 同集合切分（非法 op 入口已拦，落不到这里）。
  */
 
-import { ChefPolicyError } from '../fetch/errors.js';
-import type { ChefDb } from '../fetch/db.js';
-import { addIngredient, addStep, addRecipe, getRecipeDetail } from '../fetch/db.js';
+import { randomUUID } from 'node:crypto';
+import { ChefFetchError, ChefPolicyError } from '../fetch/errors.js';
+import type { ChefDb, IngredientRow, RecipeRow, StepRow } from '../fetch/db.js';
+import { canonicalRecipeName, mustRecipe, now, qGet, qRun, toIngredient, toStep } from '../fetch/db.js';
 import { needName, validateCategory } from '../policy/index.js';
 import { buildRecipeReceipt } from '../render/index.js';
 import { pickNum, pickStr, resolveRecipeId } from '../shared/slots.js';
@@ -84,4 +85,91 @@ export function runRecipeWriteAdd(handle: ChefDb, params: Record<string, unknown
   }
   // 不可达：入口注册表已用 `parseWriteOpCompat` 同集合拦过非法 op（原分支尾的 fail 同语义，归口径错 exit 2）。
   throw new ChefPolicyError('POLICY_BAD_INPUT', 'recipe.write 只接受 op=add/update/discard/add-ingredient/add-step');
+}
+
+/** 新增菜谱（主表；菜名去空格后精确判重）。原 `src/fetch/db.ts`，本域独占。 */
+export function addRecipe(h: ChefDb, input: Record<string, unknown>): RecipeRow {
+  const name = canonicalRecipeName((input as Record<string, unknown>)?.name);
+  if (!name) throw new ChefFetchError('CHEF_BAD_QUERY', '加菜须给菜名 name');
+  const dup = qGet<{ c: number }>(h, 'SELECT COUNT(*) AS c FROM recipes WHERE name = ?', [name]);
+  if (dup && Number(dup.c) > 0) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '菜名已存在：“' + name + '”');
+  const id = randomUUID();
+  const ts = now();
+  const p = input as Record<string, unknown>;
+  const servings = p.servings === undefined || p.servings === '' ? 2 : Number(p.servings);
+  const totalTime = (p.total_time_minutes === undefined || p.total_time_minutes === '') ? (p.total_time === undefined || p.total_time === '' ? 30 : Number(p.total_time)) : Number(p.total_time_minutes);
+  try {
+    qRun(h, 'INSERT INTO recipes (id, name, description, difficulty, servings, total_time_minutes, status, photo_url, source, source_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+      id, name,
+      String(p.description ?? ''), String(p.difficulty ?? ''), servings,
+      totalTime, String(p.status ?? '未做'),
+      String(p.photo_url ?? ''), String(p.source ?? ''), String(p.source_url ?? ''), ts, ts,
+    ]);
+  } catch (e) {
+    if (e instanceof ChefFetchError) throw e;
+    throw new ChefFetchError('CHEF_DB_UNREADABLE', '加菜写盘失败：' + name, { cause: e });
+  }
+  return mustRecipe(h, id);
+}
+
+/** 加食材（用量必填：老库 quantity NOT NULL，缺值直接拦）。原 `src/fetch/db.ts`，本域独占。 */
+export function addIngredient(h: ChefDb, recipeId: string, input: { name: string; category?: string; quantity?: number | null; unit?: string; quantity_text?: string; is_optional?: number | boolean; substitute?: string }): IngredientRow;
+export function addIngredient(h: ChefDb, params: Record<string, unknown>): IngredientRow;
+export function addIngredient(h: ChefDb, recipeIdOrParams: string | Record<string, unknown>, input?: Record<string, unknown>): IngredientRow {
+  const params = typeof recipeIdOrParams === 'string' ? { ...(input ?? {}), recipe_id: recipeIdOrParams } : (recipeIdOrParams as Record<string, unknown>);
+  const recipeId = String(params.recipe_id ?? params.recipeId ?? '');
+  if (!recipeId) throw new ChefFetchError('CHEF_BAD_QUERY', '加食材须给 recipe_id');
+  mustRecipe(h, recipeId);
+  const name = typeof params?.name === 'string' ? String(params.name).trim() : '';
+  if (!name) throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给名 name');
+  const maxRow = qGet<{ m: number | null }>(h, 'SELECT MAX(sequence) AS m FROM ingredients WHERE recipe_id = ?', [recipeId]);
+  const seq = (maxRow?.m ?? 0) + 1;
+  const id = randomUUID();
+  const qtyRaw = (params as Record<string, unknown>).quantity;
+  const qtyNum = qtyRaw === undefined || qtyRaw === null || qtyRaw === '' ? null : Number(qtyRaw);
+  // 818 定案（甲）：老库 quantity REAL NOT NULL，本次不改 schema，缺值不插 NULL，直接拦下让 AI 问用户补齐。
+  if (qtyNum === null || Number.isNaN(qtyNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '食材须给数字用量 quantity（老库 NOT NULL；适量请同时给估计数＋quantity_text）');
+  const qty = qtyNum;
+  const isOptRaw = (params as Record<string, unknown>).is_optional;
+  const isOpt = isOptRaw === true || isOptRaw === 1 || isOptRaw === '1' ? 1 : 0;
+  try {
+    qRun(h, 'INSERT INTO ingredients (id, recipe_id, sequence, name, category, quantity, unit, quantity_text, is_optional, substitute) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+      id, recipeId, seq, name, String(params.category ?? ''), qty, String(params.unit ?? ''), String(params.quantity_text ?? ''), isOpt, String(params.substitute ?? ''),
+    ]);
+  } catch (e) {
+    throw new ChefFetchError('CHEF_DB_UNREADABLE', '食材写盘失败：' + name, { cause: e });
+  }
+  const row = qGet<Record<string, unknown>>(h, 'SELECT * FROM ingredients WHERE id = ?', [id]);
+  if (!row) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '食材写后读回失败：' + name);
+  return toIngredient(row);
+}
+
+/** 加步骤（时长必填：老库 duration_minutes NOT NULL，缺值直接拦）。原 `src/fetch/db.ts`，本域独占。 */
+export function addStep(h: ChefDb, recipeId: string, input: { action: string; heat_level?: string; duration_minutes?: number | null; temperature?: string; expected_result?: string }): StepRow;
+export function addStep(h: ChefDb, params: Record<string, unknown>): StepRow;
+export function addStep(h: ChefDb, recipeIdOrParams: string | Record<string, unknown>, input?: Record<string, unknown>): StepRow {
+  const params = typeof recipeIdOrParams === 'string' ? { ...(input ?? {}), recipe_id: recipeIdOrParams } : (recipeIdOrParams as Record<string, unknown>);
+  const recipeId = String(params.recipe_id ?? params.recipeId ?? '');
+  if (!recipeId) throw new ChefFetchError('CHEF_BAD_QUERY', '加步骤须给 recipe_id');
+  mustRecipe(h, recipeId);
+  const action = typeof params?.action === 'string' ? String(params.action).trim() : '';
+  if (!action) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给操作 action');
+  const maxRow = qGet<{ m: number | null }>(h, 'SELECT MAX(sequence) AS m FROM cooking_steps WHERE recipe_id = ?', [recipeId]);
+  const seq = (maxRow?.m ?? 0) + 1;
+  const id = randomUUID();
+  const durRaw = (params as Record<string, unknown>).duration_minutes;
+  const durNum = durRaw === undefined || durRaw === null || durRaw === '' ? null : Number(durRaw);
+  // 818 定案（甲）：老库 duration_minutes INTEGER NOT NULL，本次不改 schema，缺值不插 NULL，直接拦下让 AI 问用户补齐。
+  if (durNum === null || Number.isNaN(durNum)) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给数字时长 duration_minutes（老库 NOT NULL；缺时长请问用户补齐）');
+  const dur = durNum;
+  try {
+    qRun(h, 'INSERT INTO cooking_steps (id, recipe_id, sequence, action, duration_minutes, heat_level, temperature, expected_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+      id, recipeId, seq, action, dur, String(params.heat_level ?? ''), String(params.temperature ?? ''), String(params.expected_result ?? ''),
+    ]);
+  } catch (e) {
+    throw new ChefFetchError('CHEF_DB_UNREADABLE', '步骤写盘失败', { cause: e });
+  }
+  const row = qGet<Record<string, unknown>>(h, 'SELECT * FROM cooking_steps WHERE id = ?', [id]);
+  if (!row) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '步骤写后读回失败');
+  return toStep(row);
 }

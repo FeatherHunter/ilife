@@ -7,4 +7,4 @@
 
 export { ADD_COMMANDS } from './commands.js';
 export { ADD_ROUTES } from './routes.js';
-export { runRecipeWriteAdd } from './run-write.js';
+export { addIngredient, addRecipe, addStep, runRecipeWriteAdd } from './run-write.js';
