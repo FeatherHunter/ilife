@@ -14,3 +14,6 @@ export { HOME_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { HomeTemplate } from './templates.js';
 // #800 · 页族两层解析（票 2 契约 L1）：`(key, preset) → 页族`，旧 1:1 `templateFor` 原样保留。
 export { UNKNOWN_FAMILY, resolvePageFamily } from './pageFamilies.js';
+// #801 · 场景命名（票 2 契约命名节的产出侧实施）：`(key, params) → 文件名主体`。
+export { resolveSceneStem } from './sceneNaming.js';
+export type { SceneNameRow } from './sceneNaming.js';

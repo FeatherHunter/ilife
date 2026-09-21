@@ -8,19 +8,20 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   HomeFetchError, HomePolicyError,
-  resolveDbDir, resolveDbPath, dbFilename, openHomeDb, closeHomeDb,
+  resolveDbDir, resolveDbPath, resolveHtmlDir, dbFilename, openHomeDb, closeHomeDb,
   createBackup, listBackups, restoreBackup, exportData,
 } from '../fetch/index.js';
 import type { RestoreOutcome } from '../fetch/backup.js';
 import type { HomeKey } from '../policy/index.js';
 import {
   homeShapeFor, buildHomeEnvelope, renderEnvelopeHtml, assertHtmlSize,
-  loadTemplate, templateFor, fillTemplate,
+  loadTemplate, templateFor, fillTemplate, resolveSceneStem,
   buildCareList, buildReceipt, buildHelpItems,
   HomeRenderError,
 } from '../render/index.js';
 import { buildHelpLookup, buildHomeHelpFileData, renderHomeHelpHtml, deliverHomeHelp } from '../help/index.js';
 import type { HomeHtmlDelivery } from '../help/index.js';
+import { deliverHtml } from '../output.js';
 import { helpDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
 import { REGISTRY } from './registry.js';
 import { fail, toast, note } from '../shared/fail.js';
@@ -219,24 +220,37 @@ async function main() {
       assertHtmlSize(html);
       return html;
     };
-    // `--html <路径>` 既有语义**原样保留**（所有 key 通用的产物出口）：写本包 envelope 分节页。
-    if (o.html !== undefined) {
-      try {
-        writeFileSync(o.html, sectionHtml(), 'utf8');
-        note('HTML 已写：' + o.html + '（utf8）');
-      } catch (e) {
-        if (e instanceof HomeRenderError) fail(5, (e as Error).message);
-        fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
-      }
-    }
-    // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
-    if (help?.deliver !== undefined) {
-      const html = help.deliver.html ?? sectionHtml();
-      if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverHomeHelp({
-        targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+    // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
+    // 落点意图＝ `{dir: <库目录>/home_manager_html/, stem: <命令中文名>_<场景 id>}`（stem 照票 2 契约），
+    // 时间戳与同秒递补由共用件钉死。给了 `--html` 则显式优先（只落一份、单回执，照账单／卡路里先例）。
+    if (help === null) {
+      const landing = { dir: resolveHtmlDir(), stem: resolveSceneStem(key, params) };
+      delivery = deliverHtml({
+        ...(o.html === undefined ? {} : { explicit: o.html }),
+        target: landing,
+        html: sectionHtml(),
       });
       note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+    } else {
+      // `--html <路径>` 既有语义**原样保留**（HELP 键的通用产物出口）：写本包 envelope 分节页。
+      if (o.html !== undefined) {
+        try {
+          writeFileSync(o.html, sectionHtml(), 'utf8');
+          note('HTML 已写：' + o.html + '（utf8）');
+        } catch (e) {
+          if (e instanceof HomeRenderError) fail(5, (e as Error).message);
+          fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
+        }
+      }
+      // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
+      if (help?.deliver !== undefined) {
+        const html = help.deliver.html ?? sectionHtml();
+        if (help.deliver.html !== undefined) assertHtmlSize(html);
+        delivery = deliverHomeHelp({
+          targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+        });
+        note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+      }
     }
     // #83 口径的顶层追加：`delivery{mode,path,bytes}` **只追加**，既有字段一字不改、序不变。
     process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');

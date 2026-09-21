@@ -2,7 +2,8 @@
 export class HomeRenderError extends Error {
   readonly code:
     | 'HOME_UNKNOWN_KEY' | 'HOME_SHAPE_MISMATCH' | 'HOME_BAD_PAYLOAD'
-    | 'HOME_HTML_TOO_LARGE' | 'HOME_TEMPLATE_MISSING' | 'HOME_MARKER_INVALID';
+    | 'HOME_HTML_TOO_LARGE' | 'HOME_TEMPLATE_MISSING' | 'HOME_MARKER_INVALID'
+    | 'HOME_UNKNOWN_SCENE';
   constructor(code: HomeRenderError['code'], message: string) {
     super(message);
     this.name = 'HomeRenderError';

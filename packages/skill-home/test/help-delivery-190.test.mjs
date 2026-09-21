@@ -318,5 +318,8 @@ test('⑧ `--html <路径>` 支仍出分节页（所有 key 通用的出口，�
   const o = runOk(dir, ['home.stats.overview', '--html', other]);
   assert.equal(existsSync(other), true, '其它 key 的 --html 仍落盘');
   assert.match(readFileSync(other, 'utf8'), /<section/, '其它 key 的 --html 仍是分节页');
-  assert.equal(o.env.delivery, undefined, '其它 key 不追 delivery（只追加在 help 交付支上）');
+  // #801 起其它 key 默认追 delivery（缺省落 HTML）；`--html` 给了则显式优先、单回执指逐字路径。
+  assert.equal(o.env.delivery.mode, 'file', '其它 key 默认追 delivery（#801）');
+  assert.equal(o.env.delivery.path, other, '--html 显式优先：回执指逐字路径（绝对）');
+  assert.equal(o.env.delivery.bytes, statSync(other).size, 'delivery.bytes ＝实际落盘字节数');
 });

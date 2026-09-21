@@ -7,6 +7,7 @@ export {
 } from './db.js';
 export type { HomeItem, HomeLocation, HomeDb, SearchFilter } from './db.js';
 export { resolveDbDir, resolveDbPath, dbFilename, DEFAULT_DB_FILENAME } from './paths.js';
+export { resolveHtmlDir } from './paths.js';
 export { resolveKeyFile, keyFileOf, resolvedHomePaths } from './paths.js';
 export type { HomeResolvedPaths } from './paths.js';
 export { loadMasterKey, retiredParamMessage, hasParamMasterKey } from './masterKey.js';
