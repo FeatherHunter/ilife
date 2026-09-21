@@ -26,12 +26,21 @@ import type { ScheduleDb } from '../fetch/db.js';
 export interface ViewOut {
   data: Record<string, unknown>;
   html: string;
+  /** stderr 提示行（不进 envelope）：逐条由出口 `note()` 打出，字节与旧分派一致。 */
+  notes?: string[];
+  /** 缺省落点意图（仅 `schedule.help.lookup` 有）：出口凭它走统一落盘管线。 */
+  landing?: { targetDir: string; stem: string; reuseMs?: number };
 }
 
-/** 写命令的产物：回执（`ok`／`message`／`receipt`）＋ 整页 HTML。 */
+/** 写命令的产物：写库回执 ＋ 整页 HTML。
+ *  `data` 是 receipt 形（`ok`／`message` 必备 ＋ 各能力的分字段，见 `plan/receipt.ts` 的 `PlanReceipt`）：
+ *  写成 `Record` 是因为同一 `receipt` 形下各键字段不同（`achieved`／`local`／`remote`…），静态窄化会写假；
+ *  真正的形状守卫是运行时的 envelope 全字段校验（错形状载荷即抛，行为与旧分派一致）。 */
 export interface WriteOut {
-  data: { ok: boolean; message: string; receipt?: unknown };
+  data: Record<string, unknown>;
   html: string;
+  /** 合成写达成通道：非 0 即「本地成了但远端没成」，出口载荷照出、退出码非 0（裁定 A6②）。 */
+  exitCode?: number;
 }
 
 export type ViewHandler = (params: Record<string, unknown>, db: ScheduleDb) => ViewOut;

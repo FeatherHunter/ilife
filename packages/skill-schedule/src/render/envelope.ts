@@ -1,20 +1,14 @@
-// 渲染层·envelope：8 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
+// 渲染层·envelope：8 联动 key×shape 映射是生成物 `src/cli/keys.ts` 的派生（纪律形状二），
+// 本件只做建 envelope 的形状守卫；key 字符串后续票落表时冻结。唯一定义地＝各能力 `commands.ts`。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
+import { SCHEDULE_KEY_SHAPES } from '../cli/keys.js';
 import { ScheduleRenderError } from './errors.js';
 
-export const SCHEDULE_KEY_SHAPES: Record<string, EnvelopeShape> = {
-  'schedule.record.today': 'list',
-  'schedule.record.range': 'stat',
-  'schedule.record.detail': 'detail',
-  'schedule.record.write': 'receipt',
-  'schedule.record.compare': 'analysis',
-  'schedule.plan.today': 'list',
-  'schedule.plan.write': 'receipt',
-  'schedule.help.lookup': 'list',
-};
+export { SCHEDULE_KEY_SHAPES };
 
 export function scheduleShapeFor(key: string): EnvelopeShape {
-  const s = SCHEDULE_KEY_SHAPES[key];
+  // 字符串边界：未知输入进、已知键出；`as` 只放行到运行时判空这一处。
+  const s = (SCHEDULE_KEY_SHAPES as Record<string, EnvelopeShape>)[key];
   if (!s) throw new ScheduleRenderError('SCHEDULE_UNKNOWN_KEY', '未知联动 key：' + key);
   return s;
 }

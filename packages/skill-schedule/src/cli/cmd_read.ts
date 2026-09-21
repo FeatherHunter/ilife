@@ -2,41 +2,23 @@
 // 作息管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。
-import { existsSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
+import { REGISTRY } from './registry.js';
+import type { CommandSpec, ViewOut, WriteOut } from '../shared/commandSpec.js';
 import {
   ScheduleFetchError, SchedulePolicyError,
-  resolveDbPath, resolveDbDir, openScheduleDb, closeScheduleDb,
-  listRecordsByDate, listRecordsRange, getRecordById, getStatus, getLastRecord,
-  addRecord, amendRecord, addSummary,
-  listPlanEvents, getPlanEventsRange, searchPlanEvent,
-  larkReady,
+  resolveDbPath, openScheduleDb, closeScheduleDb,
 } from '../fetch/index.js';
-import {
-  resolveDateParam, resolveRangeParam, validateAddInput, validateAmendInput,
-  validateSummaryInput, validateCompareInput, normalizeDate,
-  parsePlanOp, parseRecordOp, parseFeishuMode, parsePlanView, VALID_COMPLETIONS, l1Of,
-  type ScheduleKey, type PlanWriteOp,
-} from '../policy/index.js';
-import { runPlanOp, buildPlanOverview } from '../plan/index.js';
+import type { ScheduleKey } from '../policy/index.js';
 import {
   scheduleShapeFor, buildScheduleEnvelope, renderEnvelopeHtml, assertHtmlSize,
   loadTemplate, templateFor, fillTemplate,
-  buildRecordToday, buildRecordRange, buildRecordDetail, buildRecordReceipt,
-  buildRecordCompare, buildCategoryDeep, buildAnomaly,
-  buildPlanToday, buildPlanReceipt, buildHelpItems,
   ScheduleRenderError,
 } from '../render/index.js';
-import { buildHelpLookup } from '../help/index.js';
-import { resolveHelpDir } from '../help/helpPaths.js';
-import { helpFileStem, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
-import { HELP_GROUPS } from '../help/scenes/help-assets.js';
-import { deliverHtml, type HtmlDelivery } from '../help/output.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { helpReuseWindowOf } from 'base-paint/save-html';
-import type { ScheduleRecord } from '../fetch/db.js';
+import { deliverHtml, type HtmlDelivery } from '../help/output.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -51,236 +33,18 @@ function preflight(): void {
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
 }
 
-function needInt(params: Record<string, unknown>, name: string): number {
-  const v = params[name];
-  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, '缺参数 ' + name + '（须为正整数）');
-  return v as number;
-}
-
-function monthRange(month: string): { start: string; end: string } {
-  const [y, m] = month.split('-').map(Number);
-  const last = new Date(y, m, 0).getDate();
-  const dd = String(last).padStart(2, '0');
-  return { start: month + '-01', end: month + '-' + dd };
-}
-
-function toISODateTime(date: string, time: string): string {
-  return date + 'T' + time + ':00';
-}
-
-// ── #203 · 「作息管家help」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:493-495）────
-//
-// 缺省（不给任何参数）＝ 全量 HELP 文件：`<库目录>/schedule_html/help/作息管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`
-// （库目录＝配置项 `db.dir`，空串即数据目录；两级子目录与主体名从配置取，默认逐字等于老常量，
-// `t198-old-help-truth.md` 第四节），独占落盘 ＋ **绝对路径**回执
-// （`delivery{mode,path,bytes}` 顶层追加，序在既有五字段之后）。
-// 显式 `q` ＝ 现找：只回命中（stdout），不落盘（检索式问答不刷目录）；`--html <路径>` 给了才写那个路径。
-// 全程**不开库**：初始化判据＝「DB 文件存在」（照老 `render_help._is_initialized`）；
-// 否则「看帮助」会 `new DatabaseSync` 出来并跑 DDL 自愈，把库建在用户还没开始用的目录里。
-const HELP_MODE_FILE = 'file' as const;
-
-/** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。
- *  `reuseMs`（#245）＝复用窗口毫秒数：给了就「窗口内已有同一主体的一份 ⇒ 返回它、不新建」。 */
-interface DeliverIntent {
-  readonly html?: string;
-  readonly targetDir: string;
-  readonly stem: string;
-  readonly reuseMs?: number;
-}
-interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
-
-/** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
- *  换算与坏参判定都在共用件（`helpReuseWindowOf` 把坏参 `RangeError` 交给这里给的处理器）⇒ 归到出口的
- *  「参数错」那一档（exit 2），与其余四家同档：坏参绝不静默当 0。 */
-const helpWindowOrFail = helpReuseWindowOf((m) => fail(2, m));
-
-/** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized` 与 bill `helpInitialized`）。
- *  判定本身异常 ⇒ `false`＝横幅照显（fail-open：误显只多一条提示，误藏会让新用户找不到入口）。 */
-function helpInitialized(): boolean {
-  try { return existsSync(resolveDbPath()); } catch { return false; }
-}
-
-/** 交付索引（`list` 形，`schedule.help.lookup` 的缺省载荷）：一级分组一行，计数全**派生**自内容资产
- *  （改资产即跟变，不写第二份 5／34／85）。行形状照 bill `HelpIndexItem`，不下重口。 */
-function buildHelpIndex() {
-  const items = HELP_GROUPS.map((g) => ({
-    id: g.id,
-    icon: g.icon,
-    label: g.label,
-    subgroupCount: g.subgroups.length,
-    sceneCount: g.subgroups.reduce((n, s) => n + s.scenes.length, 0),
-  }));
-  return {
-    items,
-    total: items.length,
-    sceneTotal: items.reduce((n, it) => n + it.sceneCount, 0),
-    subgroupTotal: items.reduce((n, it) => n + it.subgroupCount, 0),
-  };
-}
-
-function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
-  const dbDir = resolveDbDir();
-  const now = new Date();
-  const q = params.q === undefined ? undefined : String(params.q);
-  if (q !== undefined) {
-    // 现找：只回命中；落盘只有用户显式给 `--html <路径>` 才发生（main 里那支）。
-    const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
-    return { data: { ...buildHelpItems(all, q), mode: 'lookup', query: q } };
-  }
-  // #245：HELP 产物吃复用窗口（缺省一天内只留一份，`reuseHours` 可改）；坏参在这里就抛（出口归 exit 2）。
-  const reuseMs = helpWindowOrFail(params);
-  const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
-  assertHtmlSize(html);
-  return {
-    data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, targetDir: resolveHelpDir(dbDir), stem: helpFileStem(), reuseMs },
-  };
-}
-
-/** 出口分派结果：载荷 ＋ 退出码。合成写「没达成」时载荷照出、退出码非 0（裁定 A6②／用户故事 6）。 */
-interface DispatchOut { data: unknown; exitCode: number }
-
-/** 哪些 op 要碰远端（其余 op 连 lark-cli 都不探——探测本身是三次子进程）。 */
-const REMOTE_OPS: PlanWriteOp[] = ['ensure', 'upsert', 'update', 'deactivate', 'sync', 'check'];
-
-/** 远端门：过了给 cliPath；没过给「为什么不在场」——**不拦本地写**，只如实进回执与退出码。 */
-function remoteGate(op: PlanWriteOp, params: Record<string, unknown>): { cli: string | null; why: string | null } {
-  if (!REMOTE_OPS.includes(op)) return { cli: null, why: null };
-  // sync／check 本身就是远端命令：`feishu:'skip'` 对它们不成立，照探（探不到即阻断／降级）。
-  if (op !== 'sync' && op !== 'check' && parseFeishuMode(params) === 'skip') return { cli: null, why: null };
-  try { return { cli: larkReady().cliPath, why: null }; }
-  catch (e) { return { cli: null, why: (e as Error).message }; }
-}
-
-function dispatch(key: string, params: Record<string, unknown>): DispatchOut {
+/** 开库跑一条非 HELP 命令：DB 已初始化提示与库句柄生命周期住这里（stderr 字节与旧 dispatch 一致）。 */
+function runWithDb(spec: CommandSpec, params: Record<string, unknown>): ViewOut | WriteOut {
   const dbPath = resolveDbPath();
   const handle = openScheduleDb(dbPath);
   try {
     if (handle.initialized) note('作息 DB 已初始化：' + dbPath);
-    switch (key) {
-      case 'schedule.record.today': {
-        const date = resolveDateParam(params);
-        const records = listRecordsByDate(handle, date);
-        const st = getStatus(handle);
-        if (st.records === 0) note('库空：真实无记录（非故障）');
-        return { data: buildRecordToday(date, records), exitCode: 0 };
-      }
-      case 'schedule.record.range': {
-        const { start, end } = resolveRangeParam(params);
-        const records = listRecordsRange(handle, start, end);
-        if (!records.length) {
-          throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '区间无记录：' + start + '~' + end + '（缺失阻断，不返空统计）');
-        }
-        return { data: buildRecordRange(start, end, records), exitCode: 0 };
-      }
-      case 'schedule.record.detail': {
-        if (params.id !== undefined) return { data: buildRecordDetail(getRecordById(handle, needInt(params, 'id'))), exitCode: 0 };
-        const date = resolveDateParam(params);
-        const records = listRecordsByDate(handle, date);
-        if (!records.length) throw new ScheduleFetchError('SCHEDULE_RECORD_NOT_FOUND', '当日无记录：' + date);
-        return { data: buildRecordDetail(records[0]), exitCode: 0 };
-      }
-      case 'schedule.record.write': {
-        const op = parseRecordOp(params);
-        if (op === 'add') {
-          const input = validateAddInput(params);
-          const r = addRecord(handle, input);
-          return { data: buildRecordReceipt('已记一条：' + r.id + '（' + r.date + ' ' + r.time_start + '~' + r.time_end + ' ' + r.category + '）'), exitCode: 0 };
-        }
-        if (op === 'amend') {
-          const { id, patch } = validateAmendInput(params);
-          const r = amendRecord(handle, id, patch as Partial<ScheduleRecord>);
-          return { data: buildRecordReceipt('已修正：' + r.id + '（edit_count=' + r.edit_count + '）'), exitCode: 0 };
-        }
-        const s = validateSummaryInput(params);
-        addSummary(handle, s.date, s.category, s.totalMinutes);
-        return { data: buildRecordReceipt('已写摘要：' + s.date + ' ' + s.category + '=' + s.totalMinutes + '分钟'), exitCode: 0 };
-      }
-      case 'schedule.record.compare': {
-        const c = validateCompareInput(params) as Record<string, unknown>;
-        if (c.kind === 'months') {
-          const ra = monthRange(c.monthA as string);
-          const rb = monthRange(c.monthB as string);
-          const a = listRecordsRange(handle, ra.start, ra.end);
-          const b = listRecordsRange(handle, rb.start, rb.end);
-          if (!a.length || !b.length) {
-            throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '对比缺数据：' + c.monthA + '(' + a.length + '块)/' + c.monthB + '(' + b.length + '块)');
-          }
-          return { data: buildRecordCompare({ labelA: c.monthA as string, labelB: c.monthB as string, a, b }), exitCode: 0 };
-        }
-        if (c.kind === 'ranges') {
-          const a = listRecordsRange(handle, c.startA as string, c.endA as string);
-          const b = listRecordsRange(handle, c.startB as string, c.endB as string);
-          if (!a.length || !b.length) throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '对比缺数据（两侧均须有记录）');
-          return { data: buildRecordCompare({ labelA: c.labelA as string, labelB: c.labelB as string, a, b }), exitCode: 0 };
-        }
-        if (c.kind === 'category') {
-          const records = listRecordsRange(handle, c.start as string, c.end as string);
-          if (!records.length) throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '区间无记录：' + c.start + '~' + c.end);
-          return { data: buildCategoryDeep(c.start as string, c.end as string, c.category as string, records), exitCode: 0 };
-        }
-        const w = c.windowDays as number;
-        const end = c.end as string;
-        const d = new Date(end + 'T00:00:00');
-        d.setDate(d.getDate() - (w - 1));
-        const start = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        const records = listRecordsRange(handle, start, end);
-        if (!records.length) throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '窗口无记录：' + start + '~' + end);
-        const byDay = new Map<string, Record<string, number>>();
-        for (const r of records) {
-          const m = byDay.get(r.date) || {};
-          const k = l1Of(r.category);
-          m[k] = (m[k] || 0) + (r.duration_minutes || 0);
-          byDay.set(r.date, m);
-        }
-        const daily = [...byDay.entries()].sort().map(([date, byL1]) => ({ date, byL1 }));
-        return { data: buildAnomaly(end, w, daily), exitCode: 0 };
-      }
-      case 'schedule.plan.today': {
-        // #15／#16：24h 聚合视图（分桶 ＋ 多日）走 `view=aggregate`；#12 查日程走全字段 list。
-        if (parsePlanView(params) === 'aggregate') {
-          const dates = Array.isArray(params.dates) && params.dates.length
-            ? (params.dates as unknown[]).map((x) => normalizeDate(x, 'dates[]'))
-            : [resolveDateParam(params)];
-          return { data: buildPlanOverview(handle, dates), exitCode: 0 };
-        }
-        if (typeof params.title === 'string' && params.title.trim()) {
-          const date = resolveDateParam(params);
-          const hits = searchPlanEvent(
-            handle, date, params.title.trim(),
-            params.time_start as string | undefined, params.time_end as string | undefined,
-          );
-          return { data: buildPlanToday(date, hits), exitCode: 0 };
-        }
-        if (Array.isArray(params.dates) && params.dates.length) {
-          const dates = (params.dates as unknown[]).map((x) => normalizeDate(x, 'dates[]'));
-          const lo = [...dates].sort()[0];
-          const hi = [...dates].sort()[dates.length - 1];
-          const all = getPlanEventsRange(handle, lo, hi).filter((e) => dates.includes(e.date));
-          return { data: { items: all.map((e) => buildPlanToday(e.date, [e]).items[0]), total: all.length, date: lo + '~' + hi }, exitCode: 0 };
-        }
-        const date = resolveDateParam(params);
-        return { data: buildPlanToday(date, listPlanEvents(handle, date)), exitCode: 0 };
-      }
-      case 'schedule.plan.write': {
-        // 写 op 全部统一成合成写（裁定 A6③）：本地 ＋（可选）远端一条命令走完，回执分字段、退出码报达成与否。
-        // 各 op 的实现住能力目录 `src/plan/`（#199 的结构裁定：`plan` 是 HELP 一级分组「日程与计划」）。
-        const op = parsePlanOp(params);
-        const gate = remoteGate(op, params);
-        const out = runPlanOp(op, { handle, params, cli: gate.cli, remoteWhy: gate.why });
-        return { data: out.data, exitCode: out.exitCode };
-      }
-      // #203：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
-      // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道内部断言——防的是「改回无条件开库」这个静默回退。
-      case 'schedule.help.lookup':
-        fail(1, '内部错误：schedule.help.lookup 须走 dispatchHelp（开库之前）');
-        return { data: null, exitCode: 0 };
-      default: fail(3, '未知 schedule key：' + key); return { data: null, exitCode: 0 };
-    }
+    return spec.run(params, handle);
   } finally {
     closeScheduleDb(handle);
   }
 }
+
 
 function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
   const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
@@ -329,10 +93,17 @@ async function main() {
   let exitCode = 0;
   try {
     // #203：`schedule.help.lookup` 在**开库之前**分派（只读页不建库）；其余 7 键照旧走 dispatch（内部开库）。
-    const help = key === 'schedule.help.lookup' ? dispatchHelp(params) : null;
-    const out = help ? { data: help.data, exitCode: 0 } : dispatch(key, params);
-    env = buildScheduleEnvelope(key, out.data);
-    exitCode = out.exitCode;
+    // 分派只认生成的 `registry.ts`（key → 声明）：命中即走能力目录的处理函数。
+    const spec: CommandSpec | undefined = REGISTRY[key];
+    if (!spec) fail(3, '未知 schedule key：' + key);
+    // #203：`schedule.help.lookup` 在**开库之前**走（只读页不建库）；其余键走开库分支。
+    // 开库与否是基础设施事实（同配置／体检拦截口），不是命令事实，故这一个分支住出口。
+    const r: ViewOut | WriteOut = key === 'schedule.help.lookup'
+      ? (spec.run as (p: Record<string, unknown>) => ViewOut)(params)
+      : runWithDb(spec, params);
+    for (const n of ('notes' in r ? r.notes ?? [] : [])) note(n);
+    env = buildScheduleEnvelope(key, r.data);
+    exitCode = 'exitCode' in r ? r.exitCode ?? 0 : 0;
     const built = env;
     // 既有语义（不破）：`--html <路径>` 直写该路径，内容＝本包 envelope 片段（模板填充后）。
     const sectionHtml = (): string => {
@@ -340,12 +111,13 @@ async function main() {
       assertHtmlSize(html);
       return html;
     };
-    if (help?.deliver !== undefined) {
-      // 本键的产物：缺省＝HELP 全壳页（自带 html），落盘走本包统一管线（独占 ＋ 同名递补）。
-      const html = help.deliver.html ?? sectionHtml();
-      if (help.deliver.html !== undefined) assertHtmlSize(html);
+    const landing = 'landing' in r ? r.landing : undefined;
+    if (landing !== undefined) {
+      // 本键自带整页产物（缺省 HELP 全壳页）：落盘走统一管线（独占 ＋ 同名递补）。
+      const html = r.html;
+      assertHtmlSize(html);
       delivery = deliverHtml({
-        explicit: o.html, targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+        explicit: o.html, targetDir: landing.targetDir, stem: landing.stem, html, reuseMs: landing.reuseMs,
       });
       note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
     } else if (o.html !== undefined) {

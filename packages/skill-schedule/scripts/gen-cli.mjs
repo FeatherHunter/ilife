@@ -18,8 +18,8 @@
 //   配现场配对门（`checkPair()`：源文本里正则抽出的键／短语事实与 dist 模块事实逐件比对）：
 //   · 源内容没变 ⇒ 放行；· 源变了没重建 ⇒ `GEN-STALE FAIL`（医嘱：跑根 `pnpm build` 再跑一次）；
 //   · 改源＋保 mtime 跳过重编＋印记已重签 ⇒ `GEN-PAIR FAIL`（现场比对不信任印记）。
-// Layer1 奇偶校验（过渡期双源机守）：归并路由（去 `order`、归一化缺省）必须与今日
-//   `WAKE_TABLE` 逐条相等（含顺序），否则 `GEN-WAKE FAIL`——Layer2 退役 `WAKE_TABLE` 时此门退役。
+// 路由自洽门（checkRouteSelf）：order 须 0..N-1 连续＋短语唯一＋路由键集＝声明键集；
+// 原 WAKE 奇偶门随手表退役而退役。
 //
 // 确定性：同一份声明跑两次 `pnpm gen`，产物逐字节相同。
 // 用法：`pnpm gen`（写盘）／`pnpm gen:check`（只比对，不等即 exit 1）。二者都需先有 `dist/`。
@@ -198,29 +198,25 @@ export function wakeWordGate(capabilities, routes) {
   }
 }
 
-/** Layer1 奇偶校验：归并路由（去 order、归一化缺省）须与今日 WAKE_TABLE 逐条相等（含顺序）。 */
-export async function checkWakeParity(routes) {
-  const distPath = join(DIST_DIR, 'policy', 'wakewords.js');
-  if (!existsSync(distPath)) throw new Error('缺 ' + rel(distPath) + '：奇偶校验需编译产物');
-  const { WAKE_TABLE } = await import(pathToFileURL(distPath).href);
+/** 路由自洽门（#780 Layer2 起：`WAKE_TABLE` 手表已退役为派生，本门接替原奇偶校验）：
+ *  `order` 须为 0..N-1 连续（归并保序、HELP 字节不动的机守）＋ 短语唯一 ＋ 路由键集 ＝ 声明键集。 */
+export function checkRouteSelf(capabilities, routes) {
   const merged = routes.flatMap((r) => r.list).sort((x, y) => x.order - y.order);
-  const norm = (e) => JSON.stringify({
-    phrase: e.phrase, key: e.key,
-    needs: e.needs === undefined ? undefined : [...e.needs],
-    preset: e.preset === undefined ? undefined : stable(e.preset),
-  });
-  if (merged.length !== WAKE_TABLE.length) {
-    throw new Error('GEN-WAKE FAIL：归并路由 ' + merged.length + ' 条 ≠ WAKE_TABLE ' + WAKE_TABLE.length + ' 条');
+  const orders = merged.map((e) => e.order);
+  const want = merged.map((_, i) => i);
+  if (JSON.stringify(orders) !== JSON.stringify(want)) {
+    throw new Error('GEN-ROUTE FAIL：order 须为 0..' + (merged.length - 1) + ' 连续，实得：' + orders.join('、'));
   }
-  for (let i = 0; i < merged.length; i++) {
-    if (norm(merged[i]) !== norm(WAKE_TABLE[i])) {
-      throw new Error('GEN-WAKE FAIL：第 ' + i + ' 条不一致——归并：' + norm(merged[i]) + '；WAKE_TABLE：' + norm(WAKE_TABLE[i]));
-    }
+  const seen = new Set();
+  for (const e of merged) {
+    if (seen.has(e.phrase)) throw new Error('GEN-ROUTE FAIL：短语重复登记：' + e.phrase);
+    seen.add(e.phrase);
   }
+  const declKeys = new Set(capabilities.flatMap((c) => c.list.map((s) => s.key)));
+  const routeKeys = new Set(merged.map((e) => e.key));
+  const diff = [...declKeys].filter((k) => !routeKeys.has(k)).concat([...routeKeys].filter((k) => !declKeys.has(k)));
+  if (diff.length > 0) throw new Error('GEN-ROUTE FAIL：路由键集 ≠ 声明键集：' + diff.join('、'));
 }
-
-const stable = (o) => JSON.stringify(Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k] && typeof o[k] === 'object' ? stable(o[k]) : o[k]])));
-
 /** 命令合流：同键两处声明即抛；示例必填含键；确定性排序（写前读后、键名码点升序）。 */
 export function merge(capabilities) {
   const out = new Map();
@@ -256,10 +252,13 @@ export function renderKeysTs(entries) {
 }
 
 export function renderRegistryTs(capabilities) {
-  const L = ['// ' + BANNER];
-  for (const c of [...capabilities].sort((x, y) => (x.name < y.name ? -1 : 1))) {
-    L.push('export { ' + c.exportName + " } from '../" + c.name + "/index.js';");
-  }
+  const sorted = [...capabilities].sort((x, y) => (x.name < y.name ? -1 : 1));
+  const L = ['// ' + BANNER, '// 命令索引（一能力一行）：各能力声明汇总成一张 `REGISTRY`（key → 声明）查表。', '// 分派层只认这张表：命中即走能力目录；加命令改声明，本文件不动。', "import type { CommandSpec } from '../shared/commandSpec.js';"];
+  for (const c of sorted) L.push('import { ' + c.exportName + " } from '../" + c.name + "/index.js';");
+  L.push('const SOURCES: readonly (readonly CommandSpec[])[] = [' + sorted.map((c) => c.exportName).join(', ') + '];');
+  L.push('export const REGISTRY: Record<string, CommandSpec> = {};');
+  L.push('for (const list of SOURCES) for (const s of list) REGISTRY[s.key] = s;');
+  L.push('export const REGISTRY_KEYS = Object.keys(REGISTRY).sort();');
   return L.join('\n') + '\n';
 }
 
@@ -297,7 +296,7 @@ export async function runCheck() {
   checkStale(names);
   checkPair(capabilities, routes);
   wakeWordGate(capabilities, routes);
-  await checkWakeParity(routes);
+  checkRouteSelf(capabilities, routes);
   const entries = merge(capabilities);
   // 同键跨能力路由即抛（键归属唯一）。
   const keyCap = new Map();
@@ -330,7 +329,7 @@ export async function runGen() {
   checkStale(names);
   checkPair(capabilities, routes);
   wakeWordGate(capabilities, routes);
-  await checkWakeParity(routes);
+  checkRouteSelf(capabilities, routes);
   const entries = merge(capabilities);
   for (const t of TARGETS(entries, capabilities, routes)) {
     mkdirSync(dirname(t.path), { recursive: true });

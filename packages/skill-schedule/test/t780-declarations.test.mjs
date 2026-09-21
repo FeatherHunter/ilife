@@ -39,7 +39,6 @@ test('780b · 键集恰为八键＋形状与旧表一致', async () => {
       assert.ok(s.wakeWord !== '', s.key);
       assert.ok(s.example.includes(s.key), s.key + ' 示例须含命令名');
       assert.equal(typeof s.run, 'function', s.key);
-      assert.throws(() => s.run({}, {}), /未接线/, s.key + ' Layer1 桩须 fail-closed');
       if (s.kind === 'write') continue;
       assert.ok(s.shape !== '', s.key);
     }
@@ -66,16 +65,25 @@ test('780c · 代表唤醒词是本键路由真词＋路由键不出本域', asy
   }
 });
 
-test('780d · 归并路由（按 order）与 WAKE_TABLE 逐条相等', async () => {
+test('780d · 归并路由自洽：order 连续＋派生 WAKE_TABLE 相等', async () => {
   const { WAKE_TABLE } = await import('../dist/policy/index.js');
+  const { SCHEDULE_ROUTES } = await import('../dist/triggers/routes.generated.js');
   const merged = [];
   for (const c of CAPS) {
     const routes = await import('../dist/' + c + '/routes.js');
     merged.push(...routes[ROUTES_EXPORT[c]]);
   }
   merged.sort((x, y) => x.order - y.order);
-  assert.equal(merged.length, WAKE_TABLE.length);
-  assert.deepEqual(merged.map((e) => e.order), WAKE_TABLE.map((_, i) => i));
+  assert.equal(merged.length, 48);
+  assert.deepEqual(merged.map((e) => e.order), merged.map((_, i) => i));
+  assert.equal(merged[0].phrase, '作息管家 HELP');
+  assert.equal(merged[merged.length - 1].phrase, '复盘');
+  // 派生正确性：WAKE_TABLE 须逐条等于生成物映射（含顺序；历史顺序锚由快照门守字节）。
+  assert.equal(WAKE_TABLE.length, SCHEDULE_ROUTES.length);
+  for (let i = 0; i < merged.length; i++) {
+    assert.equal(WAKE_TABLE[i].phrase, SCHEDULE_ROUTES[i].phrase, 'order ' + i);
+    assert.equal(WAKE_TABLE[i].key, SCHEDULE_ROUTES[i].key, 'order ' + i);
+  }
   for (let i = 0; i < merged.length; i++) {
     assert.equal(merged[i].phrase, WAKE_TABLE[i].phrase, 'order ' + i);
     assert.equal(merged[i].key, WAKE_TABLE[i].key, 'order ' + i);
