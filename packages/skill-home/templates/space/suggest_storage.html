@@ -2,15 +2,57 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>收纳建议</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>居家管家 · 收纳建议</title>
 <!--SHARED-CSS-->
+<style>
+.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px 24px;margin-bottom:14px;border:1px solid #e8ecf1}
+.eyebrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{background:#eef4ff;color:#007aff;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700}
+.lead{color:#6e6e73;font-size:14px;margin-top:6px}
+.card{background:#fff;border-radius:18px;padding:18px 20px;margin-bottom:14px;border:1px solid #eef0f3}
+.card h2{font-size:15px;margin-bottom:12px}
+.card h2 .hint{font-size:11px;color:#86868b;font-weight:400}
+.rec{display:flex;gap:12px;flex-wrap:wrap}
+.rec .main{flex:1 1 280px;background:linear-gradient(180deg,#f0f7ff,#fff);border:1px solid #cfe0ff;border-radius:16px;padding:16px}
+.rec .main.keep{background:linear-gradient(180deg,#f2fbf5,#fff);border-color:#c8ecd5}
+.rec .main.none{background:#f8fafc;border-color:#e8ecf1}
+.rec .tag{display:inline-block;background:#007aff;color:#fff;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800;margin-bottom:8px}
+.rec .main.keep .tag{background:#007aff}
+.rec .loc{font-size:20px;font-weight:800}
+.rec .why{color:#6e6e73;font-size:12px;margin-top:6px}
+.rec .alt{flex:1 1 200px;border:1px dashed #d2d2d7;border-radius:16px;padding:14px}
+.rec .alt h4{font-size:12px;color:#86868b;margin-bottom:8px}
+.rec .alt .altrow{font-size:13px;padding:5px 0;border-bottom:1px solid #f0f0f3}
+.rec .alt .altrow:last-child{border-bottom:none}
+.rec .alt .altrow .wh{color:#86868b;font-size:12px}
+.meta2{font-size:12px;color:#86868b;margin-bottom:12px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.empty{background:#fff;border-radius:18px;padding:36px 20px;text-align:center;color:#86868b}
+.empty h2{font-size:18px;color:#1d1d1f;margin-bottom:6px}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{border:none;border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:12px;background:#007aff;color:#fff;min-height:44px}
+.btn.ghost{background:#fff;color:#1d1d1f;border:1px solid #d2d2d7}
+.btn.big{padding:12px 22px;font-size:13px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:1}
+.page h1{font-size:24px;letter-spacing:-.02em;margin:4px 0 8px}
+.cmd{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;color:#86868b;background:#f2f4f8;border-radius:8px;padding:8px 12px;word-break:break-all;margin:0 0 14px}
+@media(max-width:720px){.actions{display:grid;grid-template-columns:repeat(2,1fr)}.actions .btn:not(.ghost){grid-column:1/-1}.actions .btn{width:100%}.rec .alt{flex-basis:100%}}
+</style>
 </head>
 <body>
 <div class="page">
 <h1>收纳建议</h1>
-<p class="cmd">home-cmd-read home.location.query</p>
+<p class="cmd">home-cmd-read home.location.query --params '{"mode":"suggest","category_id":1}'</p>
 <!--CONTENT-->
 </div>
 <!--SHARED-HELPERS-->
+<script>
+function showToast(msg){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
+function copyText(text,msg){function done(){showToast(msg)}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(function(){fallback()})}else{fallback()}function fallback(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(e){}ta.remove();done()}}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(b){copyText(b.getAttribute('data-copy'),'提示词已复制，发给智能助手执行')}});
+</script>
+<div class="toast" id="toast"></div>
 </body>
 </html>

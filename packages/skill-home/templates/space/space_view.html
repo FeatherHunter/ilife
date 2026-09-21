@@ -2,15 +2,64 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>空间视图</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>居家管家 · 空间视图</title>
 <!--SHARED-CSS-->
+<style>
+.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px 24px;margin-bottom:14px;border:1px solid #e8ecf1}
+.eyebrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{background:#eef4ff;color:#007aff;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700}
+.lead{color:#6e6e73;font-size:14px;margin-top:6px}
+.bread{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0}
+.crumb{background:#fff;border:1px solid #d2d2d7;border-radius:99px;padding:8px 14px;cursor:pointer;color:#6e6e73;font-size:12px;font-weight:600;min-height:44px}
+.crumb:hover{border-color:#007aff;color:#007aff}
+.crumb.home{background:#eef4ff;border-color:#cfe0ff;color:#007aff}
+.arrow{color:#86868b;font-size:11px}
+.card{background:#fff;border-radius:18px;padding:18px 20px;margin-bottom:14px;border:1px solid #eef0f3}
+.card h2{font-size:15px;margin-bottom:12px}
+.card h2 .hint{font-size:11px;color:#86868b;font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.loc{background:#f8fafc;border:1px solid #e8ecf1;border-radius:14px;padding:14px;cursor:pointer;position:relative;text-align:left;font-size:13px;color:#1d1d1f}
+.loc:hover{border-color:#007aff}
+.loc .nm{font-weight:700;font-size:14px;margin-bottom:4px;padding-right:20px}
+.loc .ct{color:#86868b;font-size:11px}
+.loc .go{position:absolute;right:12px;top:12px;color:#86868b;font-size:13px}
+.loc.isempty{border-style:dashed;background:#fbfbfd}
+.loc.isempty .nm{color:#86868b;font-weight:600}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.item{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #eef0f3;border-radius:14px;padding:10px 12px}
+.item .inf{flex:1;min-width:0}
+.item .inf .n{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .inf .s{color:#86868b;font-size:11px}
+.item .qa{display:flex;gap:6px;flex:none}
+.qb{border:none;border-radius:99px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;background:#eef4ff;color:#007aff;min-height:44px;min-width:44px}
+.tip{background:#fff8e6;border:1px solid #f5d98f;color:#8a6d1a;border-radius:14px;padding:12px 16px;font-size:13px;margin-bottom:14px}
+.tip .hintpaths{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tip .hintpath{background:#fff;border:1px solid #f5d98f;border-radius:99px;padding:4px 12px;font-size:12px}
+.empty{background:#fff;border-radius:18px;padding:36px 20px;text-align:center;color:#86868b}
+.empty h2{font-size:18px;color:#1d1d1f;margin-bottom:6px}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{border:none;border-radius:999px;padding:12px 22px;font-weight:700;cursor:pointer;font-size:13px;background:#007aff;color:#fff;min-height:44px}
+.btn.ghost{background:#fff;color:#1d1d1f;border:1px solid #d2d2d7}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:1}
+.page h1{font-size:24px;letter-spacing:-.02em;margin:4px 0 8px}
+.cmd{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;color:#86868b;background:#f2f4f8;border-radius:8px;padding:8px 12px;word-break:break-all;margin:0 0 14px}
+@media(max-width:720px){.actions{display:grid;grid-template-columns:repeat(2,1fr)}.actions .btn:not(.ghost){grid-column:1/-1}.actions .btn{width:100%}.items{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 <body>
 <div class="page">
 <h1>空间视图</h1>
-<p class="cmd">home-cmd-read home.location.query</p>
+<p class="cmd">home-cmd-read home.location.query --params '{"mode":"space"}'</p>
 <!--CONTENT-->
 </div>
 <!--SHARED-HELPERS-->
+<script>
+function showToast(msg){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
+function copyText(text,msg){function done(){showToast(msg)}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(function(){fallback()})}else{fallback()}function fallback(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(e){}ta.remove();done()}}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(b){copyText(b.getAttribute('data-copy'),'提示词已复制，发给智能助手执行')}});
+</script>
+<div class="toast" id="toast"></div>
 </body>
 </html>
