@@ -1,4 +1,4 @@
-﻿// #696 大厨设置页：配置面验收（照 #676 卡路里／#677 记账那套同形）。
+// #696 大厨设置页：配置面验收（照 #676 卡路里／#677 记账那套同形）。
 //
 // 七组判据：
 //   A 测试隔离在位（#675 替代护栏）
@@ -26,6 +26,7 @@ import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface,
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, parseSavePayload, isRpcResult } from '../dist/contract.js';
 // 权威侧：技能自己的配置表与三个 key（唯一定义地）。
 import { CHEF_CONFIG_DEFAULTS, CHEF_CONFIG_STEM } from '../../skill-chef/dist/config.js';
+import { HELP_FILE_STEM, LOOKUP_FILE_STEM } from '../../skill-chef/dist/help/manifest.js';
 import { CONFIG_KEYS } from '../../skill-chef/dist/cli/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -54,7 +55,6 @@ function probeGuard(extraEnv = {}) {
     const env = { ...process.env };
     delete env.USERPROFILE;
     delete env.HOME;
-    delete env.ILIFE_CONFIG_DIR; // 残留的覆盖变量会把这道门短路掉：探针要判的正是「家目录没隔离」
     Object.assign(env, extraEnv);
     env.NODE_TEST_CONTEXT = 'child-v8'; // 跑在测试运行器里
     return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
@@ -128,9 +128,11 @@ describe('#696 大厨设置页 · 配置面', () => {
     it('默认值逐项等于现有代码常量', () => {
       assert.equal(CHEF_CONFIG_DEFAULTS.db.name, 'chef_data.db');
       assert.equal(CHEF_CONFIG_DEFAULTS.html.dir, 'cook_html/help');
-      assert.equal(CHEF_CONFIG_DEFAULTS.files.help, '私家大厨_HELP');
-      assert.equal(CHEF_CONFIG_DEFAULTS.files.lookup, '私家大厨_速查表');
       assert.equal(CHEF_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
+      // #796 起产物文件名主体出配置表、回代码常量（#795 定稿）。
+      assert.equal(HELP_FILE_STEM, '私家大厨_HELP');
+      assert.equal(LOOKUP_FILE_STEM, '私家大厨_速查表');
+      assert.equal('files' in CHEF_CONFIG_DEFAULTS, false, '配置表已是 3 键');
     });
 
     it('行表键不重复', () => {
@@ -165,8 +167,8 @@ describe('#696 大厨设置页 · 配置面', () => {
   });
 
   describe('D 分级呈现', () => {
-    it('常用项恰是行表的前若干行，其余全在高级组', () => {
-      assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT < CONFIG_ITEMS.length);
+    it('常用项恰是行表的前若干行，其余全在高级组（本家高级组是空的）', () => {
+      assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT <= CONFIG_ITEMS.length);
       for (const i of CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT)) assert.equal(i.tier, 'common', `${i.key} 应在常用组`);
       for (const i of CONFIG_ITEMS.slice(COMMON_ITEM_COUNT)) assert.equal(i.tier, 'advanced', `${i.key} 应在高级组`);
     });
@@ -176,8 +178,8 @@ describe('#696 大厨设置页 · 配置面', () => {
       for (const k of ['db.dir', 'db.name', 'html.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
     });
 
-    it('清单一共 5 行（调查的 4 项，其中「产物文件名主体」一项两值）', () => {
-      assert.equal(CONFIG_ITEMS.length, 5);
+    it('清单一共 4 行（可改 1：数据目录；只读 3：库文件名／HELP 产物目录／场景产物目录）', () => {
+      assert.equal(CONFIG_ITEMS.length, 4);
     });
   });
 
@@ -199,7 +201,7 @@ describe('#696 大厨设置页 · 配置面', () => {
       assert.equal(s.created, false);
       assert.equal(readPath(s.values, 'db.name'), 'probe_696.db');
       assert.equal(readPath(s.values, 'html.dir'), CHEF_CONFIG_DEFAULTS.html.dir, '没改的项应保持默认');
-      assert.equal(readPath(s.values, 'files.lookup'), CHEF_CONFIG_DEFAULTS.files.lookup);
+      assert.equal('files' in s.values, false, '已删键不进取值（#796）');
     });
 
     it('写：只给一项时，同组其它子项保留现值（技能侧做组内合并）', () => {
