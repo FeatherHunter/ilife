@@ -4,6 +4,9 @@
  * 一条命令的事实住它自己的能力目录（`src/<域>/commands.ts`）；本文件只是那几处的派生，不手改。
  * 键序：write → read → pre-open，各段内按键名升序（确定性排序，同一个声明层永远得同一份字节）。
  * `MemoKey` 是键的**编译期约束**：删一条声明而不改指向它的路由声明，`tsc` 当场红（TS2820）。
+ * `MEMO_DECLARED_SHAPES` 是**声明面投影**（13 条命令自己声明的形状；写命令的 `receipt` 由生成器合成）；
+ * envelope 认的全表是 `render/envelope.ts` 的 `MEMO_KEY_SHAPES`＝本表 ＋ 框架位那几行（`memo.help.lookup`），
+ * 两张表逐键一致由测试守着（`test/cmd-registry-855.test.mjs`），不靠人记。
  */
 import type { EnvelopeShape } from 'base-link-core';
 
@@ -64,7 +67,8 @@ export const MEMO_KEY_TITLES: Record<string, string> = {
   'memo.init': '首次使用',
 };
 
-export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
+
+export const MEMO_DECLARED_SHAPES: Record<string, EnvelopeShape> = {
   'memo.batch': 'receipt',
   'memo.create': 'receipt',
   'memo.reminder': 'receipt',

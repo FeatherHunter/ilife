@@ -171,76 +171,27 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   };
 }
 
-// #850 · 初始化渲染（`memo.init`，照旧侧 `init-report --data <JSON>`）：只渲染，不建库不写配置；
-// #855：`dispatchInit` 逐字搬进 `src/init/run.ts`（`runInit`，`pre-open` 类经登记表在开库之前调）——
-// 出口只剩开库前分派的查表与交付装配，不再手写域逻辑。
-
-// 十四键分发（#665 起十二键，加 memo.auth；#850 加 memo.init／memo.reminder）：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
-// #661：写命令分两支——心愿分类走「合成写」（本地 ＋ 飞书任务一次成；回执分字段；最终没达成时退出码非 0），
-// 其它分类照旧只落本地（回执里 `remote` 那一格如实写「不适用」，不假装同步过）。
-// #665：向导三条（排期／完成／批量改分类）与同步报告各出一张整页，随 `deliver` 出交付。
-// 返回 `{data, exit, deliver?}`：`exit` 非 0 时回执照打（分字段是回执的本分），退出码在 main 里落实。
+// 本件只做**出口**：参数解析 → 预检 → 开库（或开库前分派）→ envelope → 交付 → 退出码。
+// 命令的声明（键／形状／标题／示例）与域逻辑一律不住这里——#855 已把 13 条命令连声明带运行件搬回各自能力目录，
+// 逐条搬迁记录见 `docs/skills/skill-memo-ilife/t855-实施规格-与开工前读数.md`；本件不再认键，
+// 由 `test/cmd-registry-855.test.mjs` 守着（往本件加 `case`、加键字面量即红）。
+// 交付契约：#661 写命令回执照打（分字段是回执的本分，退出码在 main 里落实）；#665 向导与同步报告随 `deliver` 出整页。
 interface PageDeliver { readonly html: string; readonly stem: string }
 interface DispatchOut { readonly data: unknown; readonly exit: number; readonly deliver?: PageDeliver }
 function ok(data: unknown): DispatchOut { return { data, exit: 0 }; }
 
-// #855：`asIds` 随 `memo.update`／`memo.batch` 一起搬进 `src/memo/run.ts`——只有备忘域在用，不留第二份。
-
-// #855：`noteIdOfMessage`／`receiptOptsOf`／`buildReceipt` 随 `memo.create`／`memo.update`／`memo.remove`
-// 一起搬进 `src/memo/run.ts`——只有备忘域在用，不留第二份。
-
-// #855：行适配（`toRows`／`PageRow`）已提到共用位 `src/shared/rows.ts`——出口与各域运行件共用一份。
-
-// #855：区间参数的三件校验（`needRangeDate`／`rangeLimitOf`／`categoryFilterOf`）随 `memo.search`
-// 一起搬进 `src/search/run.ts`——只有那一条命令在用，不留第二份。
-
-// #855：提醒写参数的四件解析（`reminderNoteIdOf`／`reminderContentOf`／`reminderAtOf`／
-// `reminderTypeRuleOf`）随 `memo.reminder` 一起搬进 `src/remind/run.ts`——只有那一条命令在用，不留第二份。
-
-// #855：删分层三件解析（`deleteIdsOf`／`deleteConfirmOf`／`deleteWithRemindersOf`）随 `memo.remove`
-// 一起搬进 `src/memo/run.ts`——只有那一条命令在用，不留第二份。
-
-// #833：初始化渲染的入参读取（老 `init-report --data` 契约）已搬到本域能力目录
-// —— `readInitDiagnosis`（`src/init/diagnosis.ts`，坏输入抛 `InitInputError`，`dispatchInit` 认它归 exit 2）。
-// 放在本件的旧实现（`initDiagOf`）连同 `init_report` 那套自持页一起退役：一条命令的事实只住它自己的能力目录。
-
 function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): DispatchOut {
-  // #855：**先查登记表**——已搬迁的域把自己的命令声明在 `src/<域>/commands.ts`，生成物 `registry.ts`
-  // 汇成一张表，命中即调该域的运行件；没搬的键落下面的 switch（搬迁每落一域，switch 就少一段）。
+  // #855：**分派只认登记表**——一条命令的声明住它自己的能力目录（`src/<域>/commands.ts`），
+  // 生成物 `registry.ts` 把各域声明汇成这张查表，命中即调该域的运行件。
+  // 加／改命令改的是自己域里的声明；**本件不再认键**（不留 `case`——`test/cmd-registry-855.test.mjs` 守着这点）。
   const spec = REGISTRY[key];
   if (spec !== undefined) return spec.kind === 'pre-open' ? spec.run(params) : spec.run(params, db);
-  switch (key) {
-    // #855：`memo.search`／`memo.detail` 已搬回 `src/search/`（声明住 `search/commands.ts`，运行件住 `search/run.ts`），
-    // 上面那张登记查表先命中它们——这两条 case 已删。**别再长回来**：加命令改的是自己域里的声明。
-    // #855：`memo.create` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.update` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.remove` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.remind`／`memo.reminder` 已搬回 `src/remind/`（声明住 `remind/commands.ts`，
-    // 运行件住 `remind/run.ts`），上面那张登记查表先命中它们——这两条 case 已删。
-    // #855：`memo.wish` 已搬回 `src/wish/`（声明住 `wish/commands.ts`，运行件住 `wish/run.ts`）——
-    // 上面那张登记查表先命中它，本 case 已删。**别再长回来**：加命令改的是自己域里的声明。
-    // #855：`memo.sync` 已搬回 `src/sync/`（声明住 `sync/commands.ts`，运行件住 `sync/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.batch` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.auth` 已搬回 `src/sync/`（声明住 `sync/commands.ts`，运行件住 `sync/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #855：`memo.stats` 已搬回 `src/memo/`（声明住 `memo/commands.ts`，运行件住 `memo/run.ts`），
-    // 上面那张登记查表先命中它——本条 case 已删。**别再长回来**。
-    // #229：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
-    // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道内部断言——防的是「改回无条件开库」这个静默回退。
-    case 'memo.help.lookup':
-      fail(1, '内部错误：memo.help.lookup 须走 dispatchHelp（开库之前）');
-      return ok(null);
-    // #850：本键由 `dispatchInit` 在**开库之前**处理（只渲染不建库；库不存在时也能跑）；走到这里同上。
-    case 'memo.init':
-      fail(1, '内部错误：memo.init 须走 dispatchInit（开库之前）');
-      return ok(null);
-    default: fail(3, '未知 memo key：' + key); return ok(null);
-  }
+  // 下面两条是**内部断言**（不是功能）：走到这里说明 `main` 的开库前分派被改坏了。
+  // 照 skill-bill/src/cli/cmd_read.ts:449-451 的同一道断言——防的是「改回无条件开库」这个静默回退。
+  if (key === 'memo.help.lookup') { fail(1, '内部错误：memo.help.lookup 须走 dispatchHelp（开库之前）'); return ok(null); }
+  if (key === 'memo.init') { fail(1, '内部错误：memo.init 须走开库前分派（库不存在时也要能跑）'); return ok(null); }
+  fail(3, '未知 memo key：' + key);
+  return ok(null);
 }
 
 function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {

@@ -1,7 +1,7 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
  * 命令索引（一域一行）：把各域门里的声明数组汇成一张查表。
- * 对外两件：`REGISTRY`（键 → 声明）与 `REGISTRY_KEYS`（全部键，顺序与 `keys.ts` 的 `MEMO_CLI_KEYS` 同）。
+ * 对外两件：`REGISTRY`（键 → 声明）与 `REGISTRY_KEYS`（全部键，顺序与 `cli/keys.ts` 的 `MEMO_CLI_KEYS` 同）。
  * 分派层只认这张表：命中即走该域的处理函数；**新加一个能力＝建它的 `commands.ts`**（扫到即自动进来）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';

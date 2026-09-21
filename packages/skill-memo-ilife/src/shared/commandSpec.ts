@@ -11,8 +11,7 @@
  *   - `pre-open` 开库前分派：不拿库句柄（HELP 交付与初始化渲染要在「库还没建好」时也能跑），
  *                故它的处理函数只吃参数、自己决定开不开库。
  *
- * 搬迁债务（#855 收尾前有效）：库句柄类型今天住 `src/fetch/db.ts`（目标 `src/db/readonly.ts`），
- * 故这里按老路径 import type；那个件搬家的那一批里，本行的路径跟着改，别处不动。
+ * 库句柄类型住 `src/db/readonly.ts`（#855 起；连接层只读、禁 DDL），本件按新家取。
  */
 import type { EnvelopeShape } from 'base-link-core';
 import type { MemoDb } from '../db/readonly.js';

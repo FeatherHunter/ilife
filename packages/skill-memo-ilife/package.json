@@ -26,6 +26,7 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
+    "gate:lines": "node scripts/check-warning-line.mjs",
     "test": "node --test ../../test/scaffold.test.mjs test/*.test.mjs"
   }
 }
