@@ -48,4 +48,5 @@ export const SCHEDULE_ROUTES = [
   { phrase: '日程管家同步', key: 'schedule.plan.write', preset: {"op":"sync"}, order: 45 },
   { phrase: '飞书探测', key: 'schedule.plan.write', preset: {"op":"sync","dryRun":true}, order: 46 },
   { phrase: '复盘', key: 'schedule.plan.write', preset: {"op":"review"}, order: 47 },
+  { phrase: '周视图', key: 'schedule.record.range', preset: {"view":"week"}, order: 48 },
 ] as const;

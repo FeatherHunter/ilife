@@ -20,13 +20,27 @@
  *  **时间口径只有一条**：日期一律由调用方 `resolveDateParam` 定好（今天／昨天／指定日期同路），
  *  本件不另算「今天」；「这一天还没过完」由调用方给的 `nowMinutes`（当天已过分钟数）与覆盖比较得出，
  *  不给 `nowMinutes` 这一段就不出（用例与固定夹具页面不被墙上时钟搅动）。
+ *
+ *  #785 这一段补三张页（同一枚「形状只此一处」的口径：骨架住 `src/shared/`，本件只算数据）：
+ *   · **区间汇总**（f02，`renderRangeSummaryPage`）——老侧那三块必现块齐全，且分类名是**人话的
+ *     一级分类**（`l1.工作` 这类原始键只许活在本键的载荷里，不许印上屏）；
+ *   · **24h 概览（多日）**（f11，`renderPlanOverviewPage`）——`view=aggregate` 那一支的载荷
+ *     原本回落薄模板页会渲染成一排空卡（渲染器按 `{time,title,activity}` 取值，载荷却是
+ *     `{date,hours[],plannedHours}`），本件把这份载荷真画出来；
+ *   · **周视图**（f08，`renderWeekViewPage`，形状与样本页 #782 冻结的那一份逐字同）。
  */
-import { LEVEL1_WHITELIST, computeHealthScore, fmtDur, fmtDurShort, fmtPct, l1Of, toMinutes } from '../policy/index.js';
+import {
+  HEALTH_TARGETS, LEVEL1_WHITELIST, computeHealthScore, fmtDur, fmtDurShort, fmtPct, l1Of,
+  recentNDays, relativeToRange, toMinutes,
+} from '../policy/index.js';
 import { buildRecordToday } from '../render/views.js';
 import type { ScheduleRecord } from '../fetch/db.js';
-import { hourCellsOf, type HeatRow, type HourCell } from '../shared/pageParts.js';
+import type { PlanOverviewPayload } from '../plan/index.js';
+import { categoryColor, hourCellsOf, type HeatRow, type HourCell } from '../shared/pageParts.js';
 import { renderDayPage, type DayPageData } from '../shared/dayPage.js';
 import { renderWeekPage, type WeekPageData } from '../shared/weekPage.js';
+import { renderRangePage } from '../shared/rangePage.js';
+import { renderOverviewPage } from '../shared/overviewPage.js';
 import { type ListRowInput } from 'base-paint/blocks';
 
 /** 一级分类的权威顺序（配色与图例都照它），取自 `policy` 的白名单，本件不另写一份。 */
@@ -209,7 +223,10 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
   const end = days[days.length - 1];
   const data: WeekPageData = {
     head: {
-      docTitle: '作息管家 · 周视图',
+      // 文档标题走「技能名 空格 页名」（与 #784／本票另两张页同口径）：`·` 是分隔符门（#516）
+      // 名点的并列分隔符，而 `<title>` 是**可见文本节点**（head 区）——周视图这张页此前没走过那道门，
+      // #785 把它接入真出口之后当场命中，故这里改成空格（件序列与页身一字未动）。
+      docTitle: '作息管家 周视图',
       eyebrow: '作息管家 查询与浏览',
       title: '周视图',
       subtitle: start + ' 至 ' + end + ' 这一周，一共 ' + records.length + ' 块记录。',
@@ -240,4 +257,226 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
     },
   };
   return renderWeekPage(data);
+}
+
+/* ══════════════════════ #785 · 区间汇总（f02）／24h 概览多日（f11） ══════════════════════ */
+
+/** 7 个健康维度的权威顺序（＝ `HEALTH_TARGETS` 的键序：维持／健康／工作／学习／调整／日常／投入。
+ *  「创作不参评」是老侧健康分口径的一部分，所以这 7 个里没有创作）。 */
+const DIM_ORDER: readonly string[] = Object.keys(HEALTH_TARGETS);
+
+/** 日期串 → 当天的本地 `Date`（只在周窗口换算这种纯日期算术上用，不参与取数）。 */
+function dateOf(date: string): Date {
+  return new Date(date + 'T00:00:00');
+}
+
+/** 那一天是周几（周一起始，与 `policy` 的周口径同源）。 */
+function weekdayLabelOf(date: string): string {
+  return WEEKDAY_LABELS[(dateOf(date).getDay() + 6) % 7];
+}
+
+/** 「这一周」的七个日期：锚点那天所在周的周一至周日，顺序即矩阵行序。
+ *
+ *  周口径**不另写一份**：走 `policy` 的 `relativeToRange('本周')`（周一起始）＋ `recentNDays(7)`，
+ *  末尾一处自洽断言——口径若哪天改了而这里没跟，当场抛，不静默漂移。 */
+export function weekDatesOf(anchor: string): string[] {
+  const { start, end } = relativeToRange('本周', dateOf(anchor));
+  const last7 = recentNDays(7, dateOf(end));
+  if (last7.start !== start || last7.end !== end) {
+    throw new Error('周窗口口径不一致：本周＝' + start + ' 至 ' + end + '，最近七天＝' + last7.start + ' 至 ' + last7.end);
+  }
+  const y = Number(start.slice(0, 4));
+  const m = Number(start.slice(5, 7));
+  const d = Number(start.slice(8, 10));
+  const days: string[] = [];
+  for (let i = 0; i < 7; i += 1) {
+    const at = new Date(y, m - 1, d + i);
+    days.push(at.getFullYear() + '-' + String(at.getMonth() + 1).padStart(2, '0')
+      + '-' + String(at.getDate()).padStart(2, '0'));
+  }
+  return days;
+}
+
+/** 逐日 × 逐维的分钟数：7 维趋势的原料（一天一个点，一维一条线）。 */
+function dailyDimMinutes(
+  records: readonly ScheduleRecord[],
+  days: readonly string[],
+): { readonly byDay: Record<string, Record<string, number>>; readonly byDim: Record<string, number> } {
+  const byDay: Record<string, Record<string, number>> = {};
+  for (const day of days) byDay[day] = {};
+  const byDim: Record<string, number> = {};
+  for (const r of records) {
+    const dim = l1Of(r.category);
+    const mins = r.duration_minutes ?? 0;
+    (byDay[r.date] ??= {})[dim] = ((byDay[r.date] ?? {})[dim] ?? 0) + mins;
+    byDim[dim] = (byDim[dim] ?? 0) + mins;
+  }
+  return { byDay, byDim };
+}
+
+/** 「区间汇总」整页（老侧 f02「作息记录·区间」）。
+ *
+ *  三块必现块：**分类聚合**（一级分类的时长与占比，标签是**人话的一级分类名**——老侧那页与旧模板
+ *  印的是原始键，本票起印分类名）、**7 维趋势**（多日＝7 条折线，单日＝7 根柱：只有一天没有趋势可言）、
+ *  **睡眠统计**（夜间睡眠／午睡／合计）。
+ *
+ *  载荷不动：本函数只出 HTML，`data.metrics` 仍是 `render/views.ts` 的 `buildRecordRange` 那份
+ *  （`l1.工作` 这类键是载荷口径，不是页面文案）。 */
+export function renderRangeSummaryPage(
+  records: readonly ScheduleRecord[],
+  start: string,
+  end: string,
+): string {
+  const days = [...new Set(records.map((r) => r.date))].sort();
+  const dayCount = Math.max(days.length, 1);
+  const { byDay, byDim } = dailyDimMinutes(records, days);
+  const total = records.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
+  const { score } = computeHealthScore(byDim);
+  const ranked = Object.keys(byDim).sort((a, b) => byDim[b] - byDim[a]);
+  const sleep = sleepOf(records);
+  const perDay = (date: string): { readonly blocks: number; readonly minutes: number } => {
+    const rows = records.filter((r) => r.date === date);
+    return { blocks: rows.length, minutes: rows.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0) };
+  };
+  const trendInput = days.length >= 2
+    ? {
+      kind: 'line' as const,
+      input: {
+        // 折线的横轴点位（`items` 只供轴标签与缺省单序列用，本页 7 条序列由 `series` 给）。
+        items: days.map((day) => ({ label: day.slice(5), value: 0 })),
+        options: {
+          series: DIM_ORDER.map((dim) => ({
+            name: dim,
+            color: categoryColor(dim, L1_ORDER),
+            items: days.map((day) => ({ label: day.slice(5), value: (byDay[day] ?? {})[dim] ?? 0 })),
+          })),
+          legend: true,
+          height: 180,
+          labels: 'select' as const,
+          showValues: false as const,
+        },
+      },
+    }
+    : {
+      kind: 'bar' as const,
+      input: {
+        items: DIM_ORDER.map((dim) => ({
+          label: dim,
+          value: (byDay[days[0]] ?? {})[dim] ?? 0,
+          color: categoryColor(dim, L1_ORDER),
+        })),
+        options: { height: 180, singleColor: false, showValues: true as const },
+      },
+    };
+  const top = ranked[0];
+  return renderRangePage({
+    head: {
+      docTitle: '作息管家 汇总作息',
+      eyebrow: '作息管家 查询与浏览',
+      title: '汇总作息',
+      subtitle: start + ' 至 ' + end + ' 这一段的作息在这儿，一共 ' + records.length + ' 块记录。',
+    },
+    kpis: [
+      { label: '覆盖天数', value: String(days.length), unit: '天', detail: start + ' 至 ' + end },
+      { label: '记录块数', value: String(records.length), unit: '块', detail: '日均 ' + Math.round(records.length / dayCount) + ' 块' },
+      { label: '覆盖时长', value: fmtDurShort(total), detail: '日均 ' + fmtDurShort(Math.round(total / dayCount)) },
+      { label: '健康分', value: String(score), bar: { pct: score }, detail: '七个维度取均（创作不参评）' },
+    ],
+    conclusion: '这一段记了 ' + records.length + ' 块，覆盖 ' + fmtDurShort(total) + '，健康分 ' + score
+      + '。投入最多的是「' + (top ?? '—') + '」' + fmtDurShort(byDim[top] ?? 0) + '，睡眠合计 ' + fmtDurShort(sleep.all) + '。',
+    distribution: ranked.map((key) => ({
+      label: key,
+      value: fmtDurShort(byDim[key]),
+      pct: fmtPct(byDim[key], total),
+    })),
+    order: L1_ORDER,
+    trend: trendInput,
+    sleep: [
+      { label: '夜间睡眠', value: fmtDurShort(sleep.night) },
+      { label: '午睡', value: fmtDurShort(sleep.all - sleep.night) },
+      { label: '合计', value: fmtDurShort(sleep.all), tone: sleep.all >= 420 ? 'ok' : 'warn' },
+    ],
+    daily: days.map((day) => {
+      const got = perDay(day);
+      return { left: day.slice(5) + ' ' + weekdayLabelOf(day), main: got.blocks + ' 块', right: fmtDurShort(got.minutes) };
+    }),
+    copy: {
+      dataText: '【作息管家 · 汇总作息】' + start + ' ~ ' + end
+        + '（共 ' + records.length + ' 块 · 总时长 ' + fmtDur(total) + ' · 健康分 ' + score + '）\n'
+        + ranked.map((key) => key + '：' + fmtDur(byDim[key])).join('\n'),
+      logText: '场景：汇总作息 ｜ 区间：' + start + ' ~ ' + end + ' ｜ 数据来源：作息记录表（' + records.length + ' 行）',
+    },
+  });
+}
+
+/** 「24h 概览（多日）」整页（老侧 f11「查日程（多日 24h 概览）」）。
+ *
+ *  这一支的画法照载荷本身的形状走：`hours[]` 每格 24 个桶（空桶的文案是口径自己给的「未规划」）、
+ *  同小时多条已由口径并成一串 ⇒ 页上**同小时合并**与**多日聚合**两块必现块都看得见；
+ *  口径行明说这一档丢了备注／完成状态与飞书同步状态（要看全字段走「查日程」）。
+ *
+ *  单日与多日同一套件序列（一天＝表一行 ＋ 24 格一段），形状不随数据多寡变形。 */
+export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
+  const days = payload.items;
+  const dayCount = Math.max(days.length, 1);
+  const plannedTotal = days.reduce((sum, day) => sum + day.plannedHours, 0);
+  const emptyTotal = 24 * dayCount - plannedTotal;
+  const fullest = [...days].sort((a, b) => b.plannedHours - a.plannedHours)[0];
+  const stamp = (value: string | null): string => (value === null ? '无' : value.slice(5, 16).replace('T', ' '));
+  const single = days.length === 1;
+  const span = single ? days[0].date : days[0].date + ' 至 ' + days[days.length - 1].date;
+  return renderOverviewPage({
+    head: {
+      docTitle: '作息管家 ' + (single ? '24h 概览' : '查多日计划'),
+      eyebrow: '作息管家 查询与浏览',
+      title: single ? '24h 概览' : '查多日计划',
+      subtitle: single
+        ? days[0].date + ' 这一天 24 格长什么样，已经排了 ' + plannedTotal + ' 格。'
+        : span + ' 这几天每天 24 格长什么样，一共排了 ' + plannedTotal + ' 格。',
+    },
+    kpis: [
+      { label: '天数', value: String(days.length), unit: '天', detail: span },
+      { label: '已排格数', value: String(plannedTotal), unit: '格', detail: '一共 ' + 24 * dayCount + ' 格里' },
+      { label: '空白格数', value: String(emptyTotal), unit: '格', detail: '没有安排的小时' },
+      { label: '排得最满', value: fullest === undefined ? '—' : fullest.date.slice(5), detail: fullest === undefined ? '无' : fullest.plannedHours + ' 格' },
+    ],
+    conclusion: '这 ' + days.length + ' 天里 24 格排了 ' + plannedTotal + ' 格，空着 ' + emptyTotal + ' 格。'
+      + (fullest === undefined
+        ? '没有任何安排。'
+        : '排得最满的是 ' + fullest.date + '，有 ' + fullest.plannedHours + ' 格。'),
+    caliber: '这一页是 24h 聚合视图：同一小时里的多条事件并成一格（并起来用加号连接），不含备注与完成状态，'
+      + '也不含飞书同步状态。要看全字段请用「查日程」。',
+    table: {
+      columns: [
+        { key: 'date', label: '日期' },
+        { key: 'planned', label: '已排格数', align: 'right' },
+        { key: 'empty', label: '空白格数', align: 'right' },
+        { key: 'created', label: '首建' },
+        { key: 'updated', label: '末改' },
+      ],
+      rows: days.map((day) => ({
+        date: day.date + ' ' + weekdayLabelOf(day.date),
+        planned: day.plannedHours + ' 格',
+        empty: (24 - day.plannedHours) + ' 格',
+        created: stamp(day.createdAt),
+        updated: stamp(day.updatedAt),
+      })),
+      caption: '多日概览：一天一行',
+    },
+    days: days.map((day) => ({
+      title: weekdayLabelOf(day.date) + ' ' + day.date + ' 已排 ' + day.plannedHours + ' 格',
+      rows: day.hours.map((hour) => ({
+        left: String(hour.hour).padStart(2, '0') + ':00',
+        main: hour.text,
+      })),
+      footnote: '首建 ' + stamp(day.createdAt) + '，末改 ' + stamp(day.updatedAt),
+    })),
+    copy: {
+      dataText: '【作息管家 · ' + (single ? '24h 概览' : '查多日计划') + '】' + span
+        + '（' + days.length + ' 天 · 已排 ' + plannedTotal + ' 格 · 空白 ' + emptyTotal + ' 格）\n'
+        + days.map((day) => day.date + '：' + day.hours.filter((h) => h.text !== '未规划').length + ' 格有安排').join('\n'),
+      logText: '场景：' + (single ? '24h 概览' : '查多日计划') + ' ｜ 区间：' + span
+        + ' ｜ 数据来源：日程表（' + days.length + ' 天聚合，丢备注与飞书同步状态）',
+    },
+  });
 }

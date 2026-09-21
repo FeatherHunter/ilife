@@ -1,6 +1,6 @@
 ---
 name: skill-schedule
-description: "「作息管家HELP」／「作息管家 HELP」→schedule.help.lookup 缺省即落一份能打开的 HELP 文件（5 类别／34 唤醒词／85 场景，走共享 help 模板）；唯一出口 schedule-cmd-read。触发词：作息管家HELP、作息管家help、作息管家 HELP、作息管家帮助、作息管家能做什么、作息管家使用说明、今天总结、今日作息、今日总结、今天作息、查作息时间轴、查作息状态、初始化数据库、查作息、汇总作息、查作息范围、查作息游标、查作息详情、按ID查记录、补一条作息、录作息、修正作息、改作息、这条记错了、写作息摘要、记作息、对比两个月、月份对比、跨月对比、类别深挖、异常检测、查多日计划、24h 概览、查日程、看日程、商量计划、一起规划、规划明天、规划一天、讨论计划、补计划、改计划、删计划、复盘今日、复盘本周、复盘本月、复盘区间、日程管家同步、飞书探测、复盘"
+description: "「作息管家HELP」／「作息管家 HELP」→schedule.help.lookup 缺省即落一份能打开的 HELP 文件（5 类别／34 唤醒词／85 场景，走共享 help 模板）；唯一出口 schedule-cmd-read。触发词：作息管家HELP、作息管家help、作息管家 HELP、作息管家帮助、作息管家能做什么、作息管家使用说明、今天总结、今日作息、今日总结、今天作息、查作息时间轴、查作息状态、初始化数据库、查作息、汇总作息、查作息范围、查作息游标、周视图、查作息详情、按ID查记录、补一条作息、录作息、修正作息、改作息、这条记错了、写作息摘要、记作息、对比两个月、月份对比、跨月对比、类别深挖、异常检测、查多日计划、24h 概览、查日程、看日程、商量计划、一起规划、规划明天、规划一天、讨论计划、补计划、改计划、删计划、复盘今日、复盘本周、复盘本月、复盘区间、日程管家同步、飞书探测、复盘"
 ---
 
 # 作息管家（schedule）SKILL
@@ -105,6 +105,7 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 | 日程管家同步 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"sync"}'` |
 | 飞书探测 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"sync","dryRun":true}'` |
 | 复盘 | schedule.plan.write | receipt | `schedule-cmd-read schedule.plan.write --params '{"op":"review"}'` |
+| 周视图 | schedule.record.range | stat | `schedule-cmd-read schedule.record.range --params '{"view":"week"}'` |
 
 相关场景：schedule.help.lookup、schedule.plan.today、schedule.plan.write、schedule.record.compare、schedule.record.detail、schedule.record.range、schedule.record.today、schedule.record.write（8 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->
@@ -116,7 +117,7 @@ schedule-cmd-read schedule.record.write --params '{"op":"add","date":"2026-09-06
 - **落点**：页面落**产物根** `<库目录>/<产物目录>`；`作息管家HELP` 落它的 `help` 子目录。`<库目录>`＝配置文件 `~/.ilife/schedule.yaml` 的 `db.dir`（空串＝数据目录 `~/.ilife/data/`）；`<产物目录>`＝同文件的 `html.dir`（默认 `schedule_html`，段间用 `/` 或 `\` 分隔），HELP 那一支＝`html.helpDir`（默认 `help`）。
 - **命名**：`〈主体〉_<YYYYMMDD_HHMMSS>[_N].html`。主体＝`作息管家_〈页名〉`，页名就是该命令的标题（今日作息／汇总作息／作息详情／作息对比／查日程／写计划／记作息）；HELP 的主体恒为 `作息管家_HELP`（老名字逐字不变；5 类别／34 唤醒词／85 场景，走共享 help 模板）。**同名不覆盖**：同一秒落第二份时递补 `_2`、`_3`……任何时候都不覆盖已有产物。
 - **产物是整页**：`<!DOCTYPE html>` 起、`</html>` 收；7 个命令页里放真内容（`<section data-skill="schedule"…`），`作息管家HELP` 是完整 HELP 壳页（载荷在 `<script id="help-data">`）。
-- **要现找才加参数**：`--params '{"q":"查作息"}'` 回命中条目（**按定义不落盘**：这一支顶层没有 `delivery`；`q` 留空＝走上面的文件交付那一支）。全量速查表读上「联动速查」块（48 条路由词，构建期注入，与 `q` 同一张表）。
+- **要现找才加参数**：`--params '{"q":"查作息"}'` 回命中条目（**按定义不落盘**：这一支顶层没有 `delivery`；`q` 留空＝走上面的文件交付那一支）。全量速查表读上「联动速查」块（49 条路由词，构建期注入，与 `q` 同一张表）。
 - **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）。8 个 key 都认它；`q` 支带上它写的是该键的分节页。
 - **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。
 - **看帮助不开库**：`作息管家HELP` 在开库之前分派，跑完不建 `schedule_data.db`（库还没建出来时也看得到帮助）；DB 文件已存在时，页首的首次使用横幅隐藏（判定只看文件在不在，不开库）。

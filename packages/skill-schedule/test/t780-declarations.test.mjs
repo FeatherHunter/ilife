@@ -74,10 +74,12 @@ test('780d · 归并路由自洽：order 连续＋派生 WAKE_TABLE 相等', asy
     merged.push(...routes[ROUTES_EXPORT[c]]);
   }
   merged.sort((x, y) => x.order - y.order);
-  assert.equal(merged.length, 48);
+  // 条数与「最后一条是谁」是本表的**冻结锚**：加一条路由就改这两行（#785 起「周视图」落 order 48，
+  // 它是 #780 之后第一条新路由）。order 连续性由下一行守，锚的用处是「顺序被人动过」当场可读。
+  assert.equal(merged.length, 49);
   assert.deepEqual(merged.map((e) => e.order), merged.map((_, i) => i));
   assert.equal(merged[0].phrase, '作息管家 HELP');
-  assert.equal(merged[merged.length - 1].phrase, '复盘');
+  assert.equal(merged[merged.length - 1].phrase, '周视图');
   // 派生正确性：WAKE_TABLE 须逐条等于生成物映射（含顺序；历史顺序锚由快照门守字节）。
   assert.equal(WAKE_TABLE.length, SCHEDULE_ROUTES.length);
   for (let i = 0; i < merged.length; i++) {

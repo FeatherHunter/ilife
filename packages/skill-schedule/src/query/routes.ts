@@ -1,8 +1,14 @@
-/** 查询与浏览的路由声明（**权威源**，17 条：单日查 8／区间 3／详情 2／查日程 4）。
+/** 查询与浏览的路由声明（**权威源**，18 条：单日查 8／区间 3／详情 2／查日程 4／周视图 1）。
  *
  * `schedule.plan.today` 的 4 条住这里（唤醒词 #12／#15／#16 在 HELP 查询组）：路由跟键走，
  * 一键的路由只住一处。`order`＝今日 `WAKE_TABLE` 下标，归并保序。
  * 条目逐字照搬 `src/policy/wakewords.ts`（Layer2 退役它之前，两处由对账测试钉死相等）。
+ *
+ * #785 · 「周视图」这一条：老侧 34 词里唯一没有新仓命令的跨天视图（本图 Q1 裁决补上它）。
+ * **键不新造**——落在同族的 `schedule.record.range` 上，用 preset 分档（照 `24h 概览` 那一对
+ * 唤醒词的先例）：`view=week` 让处理函数出周视图那张页，缺省档仍是区间汇总。不新造 key 的理由：
+ * 新 key 会牵动 `src/policy/wakewords.ts` 的 `ScheduleKey` 联合与快照门 `schedule/keys` 件，
+ * 两处都不在本票写面（见票面「写面」段）。
  */
 import type { RouteEntry } from '../shared/commandSpec.js';
 
@@ -24,4 +30,5 @@ export const QUERY_ROUTES: readonly RouteEntry[] = [
   { phrase: '24h 概览', key: 'schedule.plan.today', preset: { view: 'aggregate' }, order: 30 },
   { phrase: '查日程', key: 'schedule.plan.today', order: 31 },
   { phrase: '看日程', key: 'schedule.plan.today', order: 32 },
+  { phrase: '周视图', key: 'schedule.record.range', preset: { view: 'week' }, order: 48 },
 ];

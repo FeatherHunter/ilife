@@ -5,6 +5,9 @@
  *
  * **#784 起这一域多出「出页」那一半**（照 #783 写域的先例）：单日查／详情各出一张真页
  * （`./queryDocs.ts` 装配，形状见 `src/shared/`），`data` 载荷与退出码口径一行不改。
+ * **#785 再补三张**：区间汇总（`schedule.record.range` 的缺省档）、24h 概览与查多日计划
+ * （`schedule.plan.today` 的 `view=aggregate` 档）、周视图（同 `schedule.record.range` 的
+ * `view=week` 档）——同样是「载荷不动，只把 HTML 交回去」。
  * 页的落点由出口按 `#843` 的通式名算（`delivery.path` 给绝对路径），本件只把 HTML 交回去。
  */
 import {
@@ -17,7 +20,10 @@ import { buildPlanOverview } from '../plan/index.js';
 import {
   buildPlanToday, buildRecordDetail, buildRecordRange, buildRecordToday,
 } from '../render/index.js';
-import { renderTodaySummaryPage, type StatusView } from './queryDocs.js';
+import {
+  renderTodaySummaryPage, renderPlanOverviewPage, renderRangeSummaryPage, renderWeekViewPage, weekDatesOf,
+  type StatusView,
+} from './queryDocs.js';
 import type { ScheduleDb } from '../fetch/db.js';
 import type { ViewHandler } from '../shared/commandSpec.js';
 
@@ -57,12 +63,21 @@ export const viewRecordToday: ViewHandler = (params, handle: ScheduleDb) => {
 };
 
 export const viewRecordRange: ViewHandler = (params, handle: ScheduleDb) => {
+  // 「周视图」那一支（#785）：本键多出这一枚唤醒词，路由给 preset `{view:'week'}`——出口只按 key
+  // 分派、分不出是哪个词来的，故走预设这一条既有通道（照 `24h 概览` 的先例）。窗口＝锚点那周的
+  // 周一至周日（`weekDatesOf`，周口径与 policy 同源）；**空周照出页**：七行都在、行尾写「无记录」
+  // 是这一张页冻在 #782 的形状（形状不随数据变），不是阻断态。
+  if (params.view === 'week') {
+    const days = weekDatesOf(resolveDateParam(params));
+    const records = listRecordsRange(handle, days[0], days[6]);
+    return { data: buildRecordRange(days[0], days[6], records), html: renderWeekViewPage(records, days) };
+  }
   const { start, end } = resolveRangeParam(params);
   const records = listRecordsRange(handle, start, end);
   if (!records.length) {
     throw new ScheduleFetchError('SCHEDULE_EMPTY_RANGE', '区间无记录：' + start + '~' + end + '（缺失阻断，不返空统计）');
   }
-  return { data: buildRecordRange(start, end, records), html: '' };
+  return { data: buildRecordRange(start, end, records), html: renderRangeSummaryPage(records, start, end) };
 };
 
 export const viewRecordDetail: ViewHandler = (params, handle: ScheduleDb) => {
@@ -77,11 +92,14 @@ export const viewRecordDetail: ViewHandler = (params, handle: ScheduleDb) => {
 
 export const viewPlanToday: ViewHandler = (params, handle: ScheduleDb) => {
   // #15／#16：24h 聚合视图（分桶 ＋ 多日）走 `view=aggregate`；#12 查日程走全字段 list。
+  // #785 起这一支出**真页**（此前回落薄模板页，渲染器按 `{time,title,activity}` 取值、
+  // 载荷却是 `{date,hours[],plannedHours}` ⇒ 一排空卡）：载荷一行不改，只把 HTML 交回去。
   if (parsePlanView(params) === 'aggregate') {
     const dates = Array.isArray(params.dates) && params.dates.length
       ? (params.dates as unknown[]).map((x) => normalizeDate(x, 'dates[]'))
       : [resolveDateParam(params)];
-    return { data: { ...buildPlanOverview(handle, dates) }, html: '' };
+    const payload = buildPlanOverview(handle, dates);
+    return { data: { ...payload }, html: renderPlanOverviewPage(payload) };
   }
   if (typeof params.title === 'string' && params.title.trim()) {
     const date = resolveDateParam(params);
