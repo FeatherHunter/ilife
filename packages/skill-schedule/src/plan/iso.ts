@@ -8,11 +8,16 @@ export const SHARD_HOURS = 6;
 
 function pad(n: number): string { return String(n).padStart(2, '0'); }
 
-export function nextDay(date: string): string {
+/** 日期挪一天（正负都走这一个公式；`nextDay` 与历史窗口都用它，别处不许再抄一遍）。 */
+export function shiftDay(date: string, delta: number): string {
   const [y, m, d] = date.split('-').map(Number);
   const t = new Date(y, m - 1, d);
-  t.setDate(t.getDate() + 1);
+  t.setDate(t.getDate() + delta);
   return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate());
+}
+
+export function nextDay(date: string): string {
+  return shiftDay(date, 1);
 }
 
 /** 本地 (日期, HH:MM) → 飞书 ISO。`24:00` 换到次日 `00:00`（飞书日历不接受 24:00）。 */

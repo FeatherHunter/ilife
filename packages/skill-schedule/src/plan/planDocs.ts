@@ -27,8 +27,12 @@ const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
 
 const DAY_END = 1440;
 
-/** 空档：未排事件的连续时段（按时间先后扫一遍，游标只前进；相邻或重叠都不断档）。 */
-function gapsOf(events: readonly PlanEvent[]): { readonly start: number; readonly end: number }[] {
+/** 空档：未排事件的连续时段（按时间先后扫一遍，游标只前进；相邻或重叠都不断档）。
+ *  #787 起本件对外给这一条：f12「商量计划预览」的**空隙提示**与 f10「查日程」的空档是同一件事，
+ *  两个用法都在本能力目录里，故仍只此一处（收的只是「有起止的东西」，不要求是库行）。 */
+export function gapsOf(
+  events: readonly { readonly time_start: string; readonly time_end: string }[],
+): { readonly start: number; readonly end: number }[] {
   const sorted = [...events].sort((a, b) => toMinutes(a.time_start) - toMinutes(b.time_start));
   const out: { start: number; end: number }[] = [];
   let cursor = 0;
@@ -41,7 +45,8 @@ function gapsOf(events: readonly PlanEvent[]): { readonly start: number; readonl
   return out;
 }
 
-const clock = (minutes: number): string =>
+/** 分钟数 → `HH:MM` 钟点（`24:00` 收尾）：页上空档与空隙两处共用的写法，只此一处。 */
+export const clockOf = (minutes: number): string =>
   minutes >= DAY_END ? '24:00' : String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0');
 
 /** 起止一律写「起 至 止」：`~` 是分隔符门（#516）点名的符号顶替，页上不许出现。 */
@@ -163,7 +168,7 @@ export function renderPlanDayPage(
         : { emptyText: search.title !== undefined ? '这一天没有标题命中的事件' : '这一时段没有安排' }),
     },
     gaps: gaps.map((gap) => ({
-      left: spanOf(clock(gap.start), clock(gap.end)),
+      left: spanOf(clockOf(gap.start), clockOf(gap.end)),
       main: '空档',
       right: fmtDurShort(gap.end - gap.start),
     })),
