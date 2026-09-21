@@ -97,7 +97,11 @@ describe('#743 六家设置页：间距一致 · 文案有界 · 数据目录预
   it('④ 目录选择回执只经 readPickAnswer 解（不许再直接吃 pick() 的裸值）', () => {
     for (const pkg of PACKAGES) {
       const src = readSrc(pkg, 'client.ts');
-      assert.match(src, /export function readPickAnswer\(/, pkg + ' 少了 readPickAnswer');
+      // 形态两种都算数：#744 把归一函数搬进共用件 `dsh-life-pack/directory-browser`，六家改成
+      // 「同名转出共用件」（`export const readPickAnswer = sharedReadPickAnswer;`）；
+      // 这条锁要的是**回执只经它解**，不是要求每家各写一份函数体。
+      assert.match(src, /export (function readPickAnswer\(|const readPickAnswer = )/,
+        pkg + ' 少了 readPickAnswer（本地函数或共用件同名转出，二者其一）');
       assert.match(src, /return readPickAnswer\(await picker\.pick\(\)\);/, pkg + ' 没把 pick() 的返回值交给 readPickAnswer');
       assert.doesNotMatch(src, /const picked = await picker\.pick\(\);/, pkg + ' 仍直接吃 pick() 的裸值（#743 的缺陷样子）');
       assert.match(readSrc(pkg, 'dsh-ctx.ts'), /pick\(\): Promise<DirectoryPickerAnswer>/,
