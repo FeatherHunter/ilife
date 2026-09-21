@@ -60,7 +60,7 @@
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 220 | 未越线，在册备查 |
 | `src/help/index.ts` | 4 | 4 | 未越线，在册备查 |
-| `src/help/lookup.ts` | 56 | 59 | 未越线，在册备查 |
+| `src/help/lookup.ts` | 56 | 61 | 未越线，在册备查 |
 | `src/help/manifest.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/help/sceneData.ts` | 64 | 64 | 未越线，在册备查 |
 | `src/help/scenes/checkin.ts` | 71 | 71 | 未越线，在册备查 |
@@ -92,7 +92,7 @@
 | `src/remind/commands.ts` | 30 | 30 | 未越线，在册备查 |
 | `src/remind/index.ts` | 7 | 10 | 未越线，在册备查 |
 | `src/remind/policy.ts` | 90 | 90 | 未越线，在册备查 |
-| `src/remind/routes.ts` | 57 | 66 | 未越线，在册备查 |
+| `src/remind/routes.ts` | 57 | 67 | 未越线，在册备查 |
 | `src/remind/run.ts` | 100 | 188 | 未越线，在册备查 |
 | `src/remind/store.ts` | 302 | 302 | 未越线，在册备查 |
 | `src/render/envelope.ts` | 52 | 52 | 未越线，在册备查 |
