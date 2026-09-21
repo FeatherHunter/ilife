@@ -1,6 +1,6 @@
 // #743 六家设置页四处整改的跨包锁（跨包面照 test/panel-type-739.test.mjs 的写法：读源码 ＋ 读各家 dist）。
 //
-// 锁五件事，一件一条：
+// #758 起锁八件事，前五件是 #743 立的，后三件是六家收窄的同形面：
 //   ① 头部两行（配置文件／数据目录）间距六家一致——`info` 条目一律不写 `margin`
 //      （改前 {记账／卡路里／备忘录} 写了 `margin: '6px 0 0'`，{大厨／居家／作息} 没写，六家同形面破了）；
 //   ② 行文案有界：每条 hint 最多两句、不超过 40 字、不出现开发期口径词（「改造前」「落点」）；
@@ -10,11 +10,20 @@
 //   ⑤ 六家样式表逐项同形：同一个样式项在六份 `client.ts` 里逐字相同
 //      （改前 {备忘／卡路里／记账} 与 {作息／居家／大厨} 分成两支：`row` 一边 `marginTop: 10`
 //      一边 `marginBottom: 10`，首行字段标题离上方那条分隔线便一边 18px、一边 8px）。
+//   ⑥（#758）每家可改的行只有定稿允许的那几行：记账 1（数据目录）／卡路里 3
+//      （数据目录／照片目录／训记 KEY）／备忘 2（数据目录／附件目录）／作息 1／居家 1／大厨 1；
+//      行数同步钉死：6／11／4／3／5／4。
+//   ⑦（#758）只读目录行的浏览按钮存在且不可点击：有只读目录行的家（记账 `backup.dir`／
+//      卡路里 `xunji.stateDir`／居家 `backup.dir`）各画一枚 disabled 按钮；无只读目录行的家
+//     （备忘／作息／大厨）断言名单为空——加一行只读目录不补按钮即红。
+//   ⑧（#758）控件文案不含省略号：六份 `client.ts` 无 `…`；六家行标题与 hint 无 `…` 与 `...`；
+//      目录行两档按钮文案逐字是「选择文件夹」／「浏览」且无省略号。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadClientBundle, nodesOfType, textOf } from './helpers/client-bundle.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..');
@@ -139,6 +148,101 @@ describe('#743 六家设置页：间距一致 · 文案有界 · 数据目录预
         if (body !== undefined) bodies.add(body.replace(/\s+/g, ' ').trim());
       }
       assert.equal(bodies.size, 1, `样式项 ${key} 六家不一致：${[...bodies].join('  ／  ')}`);
+    }
+  });
+
+  it('⑥（#758）每家可改的行只有定稿允许的那几行（行数同步钉死）', () => {
+    /** 定稿出处：记账 #747／卡路里 #748／备忘 #759／作息 #761／居家 #793／大厨 #795。 */
+    const EXPECTED_EDITABLE = new Map([
+      ['plugin-bill-ilife', ['db.dir']],
+      ['plugin-calorie', ['db.dir', 'photos.dir', 'xunji.key']],
+      ['plugin-memo-ilife', ['db.dir', 'media.dir']],
+      ['plugin-schedule-ilife', ['db.dir']],
+      ['plugin-home-ilife', ['db.dir']],
+      ['plugin-chef', ['db.dir']],
+    ]);
+    const EXPECTED_TOTAL = new Map([
+      ['plugin-bill-ilife', 6],
+      ['plugin-calorie', 11],
+      ['plugin-memo-ilife', 4],
+      ['plugin-schedule-ilife', 3],
+      ['plugin-home-ilife', 5],
+      ['plugin-chef', 4],
+    ]);
+    for (const pkg of PACKAGES) {
+      const items = ITEMS.get(pkg);
+      const editable = items.filter((i) => i.readonly !== true).map((i) => i.key);
+      assert.deepEqual(editable, EXPECTED_EDITABLE.get(pkg), pkg + ' 可改行与定稿不符');
+      assert.equal(items.length, EXPECTED_TOTAL.get(pkg), pkg + ' 行数与定稿不符');
+      // 可改行之外的每一行都必须是只读（没有第三态）。
+      for (const item of items) {
+        if ((EXPECTED_EDITABLE.get(pkg) ?? []).includes(item.key)) {
+          assert.notEqual(item.readonly, true, pkg + ' ' + item.key + ' 应可改');
+        } else {
+          assert.equal(item.readonly, true, pkg + ' ' + item.key + ' 应只读');
+        }
+      }
+    }
+  });
+
+  it('⑦（#758）只读目录行的浏览按钮存在且不可点击', () => {
+    /** 有只读目录行的家才列键；无的家列空数组——加一行只读目录不补按钮即红。 */
+    const EXPECTED_READONLY_DIR = new Map([
+      ['plugin-bill-ilife', ['backup.dir']],
+      ['plugin-calorie', ['xunji.stateDir']],
+      ['plugin-memo-ilife', []],
+      ['plugin-schedule-ilife', []],
+      ['plugin-home-ilife', ['backup.dir']],
+      ['plugin-chef', []],
+    ]);
+    for (const pkg of PACKAGES) {
+      const items = ITEMS.get(pkg);
+      const readonlyDir = items.filter((i) => i.readonly === true && i.control === 'directory');
+      assert.deepEqual(readonlyDir.map((i) => i.key), EXPECTED_READONLY_DIR.get(pkg),
+        pkg + ' 只读目录行名单与定稿不符');
+      if (readonlyDir.length === 0) continue;
+      const { Row } = loadClientBundle(join(REPO, 'packages', pkg)).exports;
+      assert.equal(typeof Row, 'function', pkg + ' 的 client 束缺 Row（组件级断言无从下手）');
+      for (const item of readonlyDir) {
+        const node = Row({
+          item, value: 'C:\\探针\\只读目录', disabled: false, onChange: () => {},
+          browser: { mode: 'browse', onOpen: () => {} },
+        });
+        const buttons = nodesOfType(node, 'button');
+        assert.equal(buttons.length, 1, pkg + ' ' + item.key + ' 应画一枚浏览按钮（保留但不可点）');
+        assert.equal(buttons[0].props.disabled, true, pkg + ' ' + item.key + ' 的浏览按钮须不可点击');
+        const inputs = nodesOfType(node, 'input');
+        assert.equal(inputs.length, 1, pkg + ' ' + item.key + ' 应有一格输入框');
+        assert.equal(inputs[0].props.disabled, true, pkg + ' ' + item.key + ' 的输入框须 disabled');
+        assert.equal(inputs[0].props.onChange, undefined, pkg + ' ' + item.key + ' 不接 onChange');
+      }
+    }
+  });
+
+  it('⑧（#758）控件文案不含省略号（`…` 与 `...`）', () => {
+    for (const pkg of PACKAGES) {
+      // ① 源码面：client.ts 一个 `…` 都没有（`...` 是展开语法，不在此查，只查按钮字面）。
+      assert.doesNotMatch(readSrc(pkg, 'client.ts'), /…/, pkg + ' 的控件文案不得出现省略号');
+      // ② 行表面：标题与 hint 两个字面都不带省略号。
+      for (const item of ITEMS.get(pkg)) {
+        assert.doesNotMatch(item.title, /…|\.\.\./, pkg + ' ' + item.key + ' 的标题带省略号');
+        assert.doesNotMatch(item.hint, /…|\.\.\./, pkg + ' ' + item.key + ' 的 hint 带省略号');
+      }
+      // ③ 按钮面：两档文案逐字是「选择文件夹」／「浏览」且无省略号。
+      const { Row } = loadClientBundle(join(REPO, 'packages', pkg)).exports;
+      const dirItem = ITEMS.get(pkg).find((i) => i.key === 'db.dir');
+      assert.ok(dirItem !== undefined, pkg + ' 少了 db.dir 行');
+      for (const [mode, want] of [['native', '选择文件夹'], ['browse', '浏览']]) {
+        const node = Row({
+          item: dirItem, value: 'D:\\探针', disabled: false, onChange: () => {},
+          browser: { mode, onOpen: () => {} },
+        });
+        const buttons = nodesOfType(node, 'button');
+        assert.equal(buttons.length, 1, pkg + ' ' + mode + ' 档应有一枚目录按钮');
+        const label = textOf(buttons[0]);
+        assert.equal(label, want, pkg + ' ' + mode + ' 档按钮文案应是「' + want + '」');
+        assert.doesNotMatch(label, /…|\.\.\./, pkg + ' ' + mode + ' 档按钮文案带省略号');
+      }
     }
   });
 });
