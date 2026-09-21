@@ -1,11 +1,19 @@
-/** 开始使用能力的命令声明（空）：本域暂无 key。
+/** 开始使用能力的命令声明（权威源：一条命令的事实只住这里）。
  *
- * 本能力即 HELP 一级分组「开始使用」。`首次使用`短语在 #767 资产里去向为 `tbd`
- * （不可路由）——运行时无 key、无实现。空数组仍是「恰好一个声明数组」（生成器认它为一域，
- * 来源域名单里有 `setup`），开始使用端到端票接入 key 时再填。
+ * 本能力即 HELP 一级分组「开始使用」。一条写命令管一摊：
+ *   · `chef.setup.init`（会改数据库的命令，幂等）：首次使用进这一条（环境检测＋按需建库建目录）。
+ * 唤醒词路由仍待说明面票接入（`WAKE_TABLE` 37 条不动），本票先给直键可跑。
  */
 
 import type { CommandSpec } from '../shared/command-spec.js';
 
-/** 开始使用能力的声明表：恰好导出一个声明数组（生成器只认这一个；本域暂空）。 */
-export const SETUP_COMMANDS: readonly CommandSpec[] = [];
+/** 开始使用能力的声明表：恰好导出一个声明数组（生成器只认这一个）。 */
+export const SETUP_COMMANDS: readonly CommandSpec[] = [
+  {
+    kind: 'write',
+    key: 'chef.setup.init',
+    title: '首次使用',
+    wakeWord: '首次使用',
+    example: 'chef-cmd-read chef.setup.init --params \'{}\'',
+  },
+];

@@ -1,0 +1,101 @@
+[
+  {
+    "card": "add_relation",
+    "wake": "添加派生关系",
+    "key": "chef.relation.write",
+    "params": {
+      "op": "add"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\add_relation.html",
+    "exit": 0,
+    "bytes": 88387,
+    "sha256": "9625d1239b273d1de6d2fa842f6fcda0b5810b9452e45b3ba2f29631eb389bc0"
+  },
+  {
+    "card": "derive_from_existing",
+    "wake": "从已有派生新菜",
+    "key": "chef.relation.write",
+    "params": {
+      "op": "derive"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\derive_from_existing.html",
+    "exit": 0,
+    "bytes": 88832,
+    "sha256": "2d91b4a9123611742b9b54b4afb4a3f85761766c4517d59eadfef7c9e21c8c7e"
+  },
+  {
+    "card": "view_relation_tree",
+    "wake": "查看派生关系",
+    "key": "chef.relation.query",
+    "params": {
+      "name": "辣椒炒肉"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\view_relation_tree.html",
+    "exit": 0,
+    "bytes": 88429,
+    "sha256": "44f8328dd6457afd3de3a12f2d3a250ef120e36f8d7284fc821d2fb9fd81764d"
+  },
+  {
+    "card": "shopping_generate",
+    "wake": "生成清单",
+    "key": "chef.shopping.query",
+    "params": {
+      "names": [
+        "辣椒炒肉"
+      ],
+      "servings": 2
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\shopping_generate.html",
+    "exit": 0,
+    "bytes": 94520,
+    "sha256": "a89366fcc2f1ecd725397958169a3fecab7a436e934b17bf6383601e634a0c80"
+  },
+  {
+    "card": "first_use",
+    "wake": "首次使用",
+    "key": "chef.setup.init",
+    "params": {},
+    "path": "D:\\ilife\\.scratch\\t776\\first_use.html",
+    "exit": 0,
+    "bytes": 89246,
+    "sha256": "aa62292451fb2a5a00bc49c64efceae645ae21cf4f7e12370d065d2c28106113"
+  },
+  {
+    "card": "data_quality_report",
+    "wake": "体检",
+    "key": "chef.history.query",
+    "params": {
+      "kind": "quality"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\data_quality_report.html",
+    "exit": 0,
+    "bytes": 93448,
+    "sha256": "78800daa19c99c0c7321c6a641bccc122a540aa3aaea219f70e54d30c98d0f21"
+  },
+  {
+    "card": "data_batch_edit",
+    "wake": "批量改",
+    "key": "chef.data.batch",
+    "params": {
+      "name": "辣椒炒肉"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\data_batch_edit.html",
+    "exit": 0,
+    "bytes": 88617,
+    "sha256": "b8f12e2a8fd698a57181ac46e4f4df1d6fc970d3ed21c99155924b85b0cc4c1e"
+  },
+  {
+    "card": "data_export_backup",
+    "wake": "备份",
+    "key": "chef.history.query",
+    "params": {
+      "kind": "backup"
+    },
+    "path": "D:\\ilife\\.scratch\\t776\\data_export_backup.html",
+    "exit": 0,
+    "bytes": 89211,
+    "sha256": "00fd9de3939ba47a81483d45b2ecd7fc1e9907922dcfb4389043a8256f1d0d0f",
+    "backupFile": "D:\\ilife\\.scratch\\t776\\backup.json",
+    "backupBytes": 24916
+  }
+]

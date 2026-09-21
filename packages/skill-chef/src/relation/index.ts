@@ -6,3 +6,6 @@
 
 export { RELATION_COMMANDS } from './commands.js';
 export { RELATION_ROUTES } from './routes.js';
+export { parseRelationOp, runRelationWrite } from './run-write.js';
+export { runRelationQuery } from './run-query.js';
+export { relationAddPage, relationDerivePage, relationTreePage } from './pages.js';

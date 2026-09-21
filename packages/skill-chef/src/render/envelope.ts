@@ -11,6 +11,10 @@ export const CHEF_KEY_SHAPES: Record<string, EnvelopeShape> = {
   'chef.history.record': 'receipt',
   'chef.history.query': 'list',
   'chef.help.lookup': 'list',
+  'chef.relation.write': 'receipt',
+  'chef.relation.query': 'list',
+  'chef.setup.init': 'receipt',
+  'chef.data.batch': 'receipt',
 };
 
 export function chefShapeFor(key: string): EnvelopeShape {

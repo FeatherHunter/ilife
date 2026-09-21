@@ -36,7 +36,9 @@ import { runRecipeWriteUpdate } from '../update/index.js';
 import { runCookingRun } from '../cook/index.js';
 import { runShoppingQuery } from '../shopping/index.js';
 import { runHistoryRecord, runHistoryQuery } from '../history/index.js';
-import { runDataQuery } from '../data/index.js';
+import { runDataBatch, runDataQuery } from '../data/index.js';
+import { parseRelationOp, runRelationQuery, runRelationWrite } from '../relation/index.js';
+import { runSetupInit } from '../setup/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -138,6 +140,20 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         if (kind === 'quality' || kind === 'backup') return runDataQuery(handle, params, kind);
         fail(2, 'history.query 只接受 kind=timeline/stats/quality/backup');
         return null;
+      }
+      case 'chef.relation.write': {
+        // op 路由：add（加关系）／derive（从已有派生新菜），非法 op 下层已拦。
+        const op = parseRelationOp(params);
+        return runRelationWrite(handle, params, op);
+      }
+      case 'chef.relation.query': {
+        return runRelationQuery(handle, params);
+      }
+      case 'chef.setup.init': {
+        return runSetupInit(handle);
+      }
+      case 'chef.data.batch': {
+        return runDataBatch(handle, params);
       }
       case 'chef.help.lookup':
         // #215：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。

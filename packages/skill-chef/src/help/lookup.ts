@@ -22,6 +22,10 @@ const DESCS: Record<string, string> = {
   'chef.history.record': '记一次做菜（name+rating/feedback/date，写走回执）',
   'chef.history.query': '查做菜时间线/统计/质检/备份（kind 分流，统一 list）',
   'chef.help.lookup': '能力速查 HELP 现找',
+  'chef.relation.write': '记派生关系/从已有派生新菜（op 分流，写走回执）',
+  'chef.relation.query': '看家族树（须 name，成环拒绝出图）',
+  'chef.setup.init': '首次使用初始化（幂等，写走回执）',
+  'chef.data.batch': '批量改既有行（改前对比，写走回执）',
 };
 
 // 全量速查表（WAKE_TABLE 37 短语：help.lookup4 + recipe.view7 + recipe.search8 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。

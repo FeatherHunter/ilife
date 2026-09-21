@@ -7,3 +7,5 @@
 export { DATA_COMMANDS } from './commands.js';
 export { DATA_ROUTES } from './routes.js';
 export { healthCheck, runDataQuery } from './run-query.js';
+export { previewDataBatch, runDataBatch } from './run-batch.js';
+export { dataBackupPage, dataBatchPage, dataQualityPage } from './pages.js';

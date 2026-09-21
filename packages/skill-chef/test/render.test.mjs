@@ -9,8 +9,8 @@ import { parseRegistryKey, ENVELOPE_SHAPES } from '../../base-link-core/dist/ind
 const here = dirname(fileURLToPath(import.meta.url));
 
 describe('私家大厨渲染 render', () => {
-  it('8 key x shape 全合法（命名空间+形状）', () => {
-    assert.equal(Object.keys(CHEF_KEY_SHAPES).length, 8);
+  it('12 key x shape 全合法（命名空间+形状）', () => {
+    assert.equal(Object.keys(CHEF_KEY_SHAPES).length, 12);
     for (const [k, s] of Object.entries(CHEF_KEY_SHAPES)) {
       assert.equal(parseRegistryKey(k).key, k);
       assert.ok(ENVELOPE_SHAPES.includes(s));
@@ -20,7 +20,7 @@ describe('私家大厨渲染 render', () => {
     assert.equal(chefShapeFor('chef.recipe.search'), 'list');
     assert.throws(() => chefShapeFor('chef.nope'), (e) => e instanceof ChefRenderError);
   });
-  it('envelope 8 key 全字段 + 未知 key 抛', () => {
+  it('envelope 12 key 全字段 + 未知 key 抛', () => {
     const receipt = buildChefEnvelope('chef.recipe.write', { ok: true, message: '已加菜' });
     assert.equal(receipt.skill, 'chef');
     assert.equal(receipt.shape, 'receipt');
