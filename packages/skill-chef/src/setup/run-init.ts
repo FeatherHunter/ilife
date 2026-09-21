@@ -15,7 +15,7 @@ export function runSetupInit(handle: ChefDb): unknown {
   const row = qGet<{ c: number }>(handle, "SELECT COUNT(*) AS c FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
   const tables = Number(row?.c ?? 0);
   if (handle.initialized) {
-    return buildRecipeReceipt('首次使用已就绪：本次建齐' + tables + '张表（空库直接录第一道菜即上手）');
+    return buildRecipeReceipt('首次使用已就绪：本次建齐 ' + tables + ' 张表，录第一道菜就能开工');
   }
-  return buildRecipeReceipt('菜谱库已就绪：' + tables + '张表齐全，跳过建库（老库仅提示迁移，不自动迁移）');
+  return buildRecipeReceipt('菜谱库已就绪：' + tables + ' 张表齐全，不用再建（旧数据只提醒，不自动搬动）');
 }
