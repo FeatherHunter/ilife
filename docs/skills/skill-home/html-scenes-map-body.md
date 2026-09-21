@@ -24,7 +24,7 @@
 - **会话纪律**：不弹窗问，一律写在对话正文里（`AGENTS.md`）。
 - **用户原话**：本图一切决策的源头在文末「用户原话采访区」；执行中与采访区冲突的，以采访区为准。
 - **重复检查**：#183（居家管家HELP真标准）明写「居家管家其余场景页（过程型／结果型 HTML）与图形页」**出本图目的地**、『`packages/skill-home/src` 整包按 HELP 一级分组重排』**另立票**——本图正是承接这两条；#745（六家技能设置页收窄）是设置面，与本图无关。2026-09-20 查 `wayfinder:map` 全量与关键词搜索，无既有 map 覆盖本需求，故本图为**新增**。
-- **覆盖审计（2026-09-20，91 条唤醒词逐条对账）**：老 `SKILL.md` 的唤醒词索引表（`:122-216`）显示那 20 条「无场景」的唤醒词全是**并入既有流程**的——`补物品/减物品` → 数量变更、`废物品/借物品/修物品` → 状态变更、`盘物品/盘全部` → 盘点、`查高频` → 并入总览、`查低频` → 由闲置承接、`看标签/合标签` → 标签管理、`推位置/找位置` → 位置管理、`改购物清单` → 购物清单、三条 `(HTML)` 同族、HELP 三条 #183 已交付 ⇒ **没有孤儿唤醒词**，它们落到的页族都有票拥有。审计同时补了两个**会让本图交不齐**的洞：① **页族解析**——今天 `src/render/templates.ts:33-58` 是「一个命令 key → 一个模板」的 1:1 映射，46 个页族表达不了（`home.item.update` 一个 key 底下挂着 9 条场景），必须改成 **`(key, preset/场景) → 页族`** 两层解析并附兼容词并入表（已写进票 2 第 ⑦ 条与票 3 第 ⑦ 条，含 91 条逐行对照验收）；② **机审六列里「双端自适应」「触摸目标」两列无人负责**（票 6 只接了文案与分隔符那几列）——已扩进票 6（新件 `scripts/audit-responsive.mjs`）。**仍留在图外的一条**：发版装机（在 DSH 里真说唤醒词）没有任何票，要另立。
+- **唤醒词层审计（2026-09-20，逐条对账；**修正了本图前一版的口径**）**：三处实测——① **20 条词是「三不管」**：有路由、却没有任何场景规格（没有 prompt、没有 `type`、没有页面归属，HELP 里查不到，验收墙没有格），**没有任何口径能判它对不对**；② **42 条变体是孤儿内容**：`scenarios.yaml` 逐条写了同义／口语／模糊说法（`帮我记一下`、`数数这里`…），而 HELP 生成器**显式跳过 `variants:` 子树**（`packages/skill-home/AGENTS.md` 立规、`scripts/lib/yaml-subset.mjs` 不收）、路由表 **0 条**认它们；③ 3 条场景无路由＝联动三条（已裁不做）✓。**前一版写的「没有孤儿唤醒词」是错的**——那只证了「页族可达」，没证「有规格」；唤醒词是**场景的入口**，词与场景脱钩就既不可验收、也不该存在。处置：开 **票 22「唤醒词层规格」**（四分类＋20 条逐条归宿＋42 条变体识别口径，HITL），落地与机器门（三向对账＋逐行对照）接进票 3，票 2 ⑦ 只留页面侧的「`(key, preset) → 页族`」两层解析。另两个已补的洞：**页族解析**（`src/render/templates.ts:33-58` 的 1:1 映射表达不了 46 个页族）与**机审六列里「双端自适应」「触摸目标」无人负责**（已扩进票 6，新件 `scripts/audit-responsive.mjs`）。**仍留在图外的一条**：发版装机（在 DSH 里真说唤醒词）没有任何票，要另立。
 - **地面真相（2026-09-20 实测，只读）**，全档在两份报告里（见下「本图产物索引」）：
   - 新技能 21 个页面模板**全部是 16 行／270–288 字节的骨架**（只有 `<!--SHARED-CSS-->`／`<!--SHARED-HELPERS-->`／`<!--CONTENT-->` 三个标记），正文由 `renderEnvelopeHtml()`（`src/render/html.ts:27-47`）按数据形状统一生成——**73 条场景走的是同一张页换数据**。
   - 老技能对同样 73 条场景引用 **49 个真页面模板**（老 `templates/` 全树 67 个 `.html`，全部存在；其中 18 个是 v2.0 前的 legacy 平铺件）。
@@ -63,7 +63,7 @@
 |---|---|---|---|
 | 1 | [册子：老技能 49 个页面模板 → 70 场景的信息结构清单](https://github.com/FeatherHunter/ilife/issues/798) | research | — |
 | 2 | [契约冻结：形状＋产物命名＋页族归属＋域内写集＋共用位所有权（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/799) | grilling | — |
-| 3 | [机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) |
+| 3 | [机器落地：通用分派口＋目录扫描生成器＋派生件入仓＋21 条命令按域搬＋测试 glob](https://github.com/FeatherHunter/ilife/issues/800) | task | [票 2](https://github.com/FeatherHunter/ilife/issues/799) ＋ [票 22](https://github.com/FeatherHunter/ilife/issues/845) |
 | 4 | [链路落盘与交付回执：数据与过程命令默认落 HTML＋回执给绝对路径](https://github.com/FeatherHunter/ilife/issues/801) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) |
 | 5 | [种子数据：仓内种子脚本＋测试库（70 场景所需）](https://github.com/FeatherHunter/ilife/issues/802) | task | [票 1](https://github.com/FeatherHunter/ilife/issues/798) |
 | 6 | [判据件：样式与文案机审接到居家＋接进包内门](https://github.com/FeatherHunter/ilife/issues/803) | task | — |
@@ -82,6 +82,7 @@
 | 19 | [开始使用域 4 条：各出真页面](https://github.com/FeatherHunter/ilife/issues/816) | task | [票 3](https://github.com/FeatherHunter/ilife/issues/800) ＋ [票 4](https://github.com/FeatherHunter/ilife/issues/801) ＋ [票 5](https://github.com/FeatherHunter/ilife/issues/802) ＋ [票 6](https://github.com/FeatherHunter/ilife/issues/803) ＋ [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 8](https://github.com/FeatherHunter/ilife/issues/805) |
 | 20 | [收口：端到端＋双端墙＋链路总览＋逐页视觉复核＋综合分 ≥90＋维护者终审](https://github.com/FeatherHunter/ilife/issues/817) | task | [票 7](https://github.com/FeatherHunter/ilife/issues/804) ＋ [票 9](https://github.com/FeatherHunter/ilife/issues/806) ＋ [票 10](https://github.com/FeatherHunter/ilife/issues/807) ＋ [票 11](https://github.com/FeatherHunter/ilife/issues/808) ＋ [票 12](https://github.com/FeatherHunter/ilife/issues/809) ＋ [票 13](https://github.com/FeatherHunter/ilife/issues/810) ＋ [票 14](https://github.com/FeatherHunter/ilife/issues/811) ＋ [票 15](https://github.com/FeatherHunter/ilife/issues/812) ＋ [票 16](https://github.com/FeatherHunter/ilife/issues/813) ＋ [票 17](https://github.com/FeatherHunter/ilife/issues/814) ＋ [票 18](https://github.com/FeatherHunter/ilife/issues/815) ＋ [票 19](https://github.com/FeatherHunter/ilife/issues/816) |
 | 21 | ~~（已退役）决定：产物命名与落点怎么区分 70 条场景~~（已退役） | grilling | — |
+| 22 | [唤醒词层规格：四分类＋20 条无场景词归宿＋42 条变体识别口径（先报用户点头）](https://github.com/FeatherHunter/ilife/issues/845) | grilling | — |
 <!-- PLAN-TABLE:END -->
 
 ## Decisions so far

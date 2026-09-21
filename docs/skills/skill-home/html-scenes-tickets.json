@@ -49,7 +49,8 @@
         "packages/skill-home/test/help-assets.test.mjs"
       ],
       "blockedBy": [
-        2
+        2,
+        22
       ],
       "issue": 800
     },
@@ -482,6 +483,18 @@
       "scope": [],
       "blockedBy": [],
       "issue": 836
+    },
+    {
+      "n": 22,
+      "key": "22-wakeword-spec",
+      "type": "grilling",
+      "title": "唤醒词层规格：四分类＋20 条无场景词归宿＋42 条变体识别口径（先报用户点头）",
+      "body": "html-scenes-tickets/22-wakeword-spec.md",
+      "scope": [
+        "docs/skills/skill-home/wakeword-spec.md"
+      ],
+      "blockedBy": [],
+      "issue": 845
     }
   ]
 }
