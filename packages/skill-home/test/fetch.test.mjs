@@ -65,7 +65,7 @@ describe('居家取数 fetch（配置隔离：家目录独占临时目录）', (
     assert.deepEqual(HOME_CONFIG_DEFAULTS, {
       db: { dir: '', name: 'home.db' },
       html: { dir: 'home_manager_html' },
-      files: { help: '居家管家_HELP', lookup: '居家管家_速查表' },
+      key: { file: '.master.key' },
       backup: { dir: 'backups' },
     });
     assert.equal(dbFilename(), 'home.db');

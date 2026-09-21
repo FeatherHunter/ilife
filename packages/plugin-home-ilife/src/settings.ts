@@ -1,7 +1,7 @@
 /** dsh-home-ilife 设置页元数据（#696：从只读脚手架换成真配置页）。
  *
  * 本文件是**设置页的行表**：一个可配置项一行，写清它在配置文件里的键、中文标题、
- * 分级（常用 / 高级）、控件种类与人话指引。它是页面渲染的唯一依据。
+ * 分级（常用 / 高级）、控件种类、只读与否与人话指引。它是页面渲染的唯一依据。
  *
  * **本文件必须零 node 依赖**：`tsconfig.client.json` 把它收进 client 侧编译，
  * 浏览器产物不许带 node 内建。默认值不住这里，也不从技能包 import——
@@ -17,9 +17,17 @@
  *   · `db.dir` 那一行的落点由配置面回执的 `dataDir` 带回（解析好的绝对路径），页面上把它**预填**进
  *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  *
- * 清单出处：`HOME_CONFIG_DEFAULTS` 的 6 个叶子键（`db.dir`／`db.name`／`html.dir`／
- * `files.help`／`files.lookup`／`backup.dir`）逐项上页，一处不少、一处不多；
- * 其中常用 4 项＝影响「库与产物落在哪」的那些，高级 2 项＝产物文件名主体。
+ * **#794 起本家照记账 #749 样板收窄**：页面从「可改表单」收窄成**一处可改 ＋ 其余只读展示**——
+ *   · 可改 1 项：数据目录（`db.dir`，显示生效绝对路径，值非法／空 ⇒ 回落默认数据目录）；
+ *   · 只读 4 项：库文件名／HTML 产物目录／备份目录／主密钥文件——它们
+ *     **只显示技能算好的绝对路径**（`resolveFrom` 指向回执 `resolved` 组的那一格），面板既不重算也不提交；
+ *   · 只读目录行（备份目录）的「浏览」按钮**保留但不可点击**（#793 定稿：入口不作废，只是不能改）。
+ *
+ * 清单出处：`HOME_CONFIG_DEFAULTS` 的 5 个叶子键（`db.dir`／`db.name`／`html.dir`／
+ * `key.file`／`backup.dir`）逐项上页，一处不少、一处不多；
+ * 其中常用 3 项＝影响「库与产物落在哪」的那些（含只读的库与产物落点展示），
+ * 高级 2 项＝备份目录与主密钥文件。
+ * （`files.help`／`files.lookup` 已于 #794 出配置表，文件名回到技能侧代码常量，不上页。）
  */
 
 export const SETTINGS_OWNER = 'dsh-home-ilife' as const;
@@ -35,8 +43,11 @@ export type ConfigTier = 'common' | 'advanced';
  * `directory` 是**字符串那一档的页面形态**——取值仍是串，只是多一个唤起系统文件夹选择器的入口，见 #736）。 */
 export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
 
+/** 只读行显示的那一格：技能侧回执 `resolved` 组里的格名（面板只显示、不计算）。 */
+export type ResolvedField = 'dbDir' | 'dbFile' | 'htmlDir' | 'backupDir' | 'keyFile';
+
 export interface ConfigItem {
-  /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `files.help`。 */
+  /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `key.file`。 */
   readonly key: string;
   /** 页面上那一行的中文标题。 */
   readonly title: string;
@@ -44,12 +55,18 @@ export interface ConfigItem {
   readonly control: ConfigControl;
   /** 一行人话：这一项管什么、留空会怎样（一到两句，不写开发期口径）。 */
   readonly hint: string;
+  /** **只读行**（#794）：页面上不给改，值只经技能侧解析后显示；改它要编辑配置文件。
+   *  只读行**不参与**保存（`fromDraft` 不收它，免得把显示用的绝对路径写回配置）。 */
+  readonly readonly?: boolean;
+  /** 只读行的**显示值来源**：回执 `resolved` 组里的哪一格。标了它 ⇒ 显示技能算好的绝对路径；
+   *  不标 ⇒ 显示配置文件里那个值本身（本家无此类行，每行只读都标）。 */
+  readonly resolveFrom?: ResolvedField;
   /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
    *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
   readonly prefillFrom?: 'dataDir';
 }
 
-/** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
+/** 常用项：库与产物落在哪，放页面上。 */
 const COMMON: readonly ConfigItem[] = [
   {
     key: 'db.dir',
@@ -65,39 +82,40 @@ const COMMON: readonly ConfigItem[] = [
     title: '库文件名',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下的数据库文件名。改名＝换库，旧数据不会被读入。',
+    readonly: true,
+    resolveFrom: 'dbFile',
+    hint: '数据目录下的库文件。只读，要改请编辑配置文件。',
   },
   {
     key: 'html.dir',
-    title: 'HTML 产物目录名',
+    title: 'HTML 产物目录',
     tier: 'common',
     control: 'text',
-    hint: '数据目录下存放交付页面的子目录名。',
-  },
-  {
-    key: 'backup.dir',
-    title: '备份目录',
-    tier: 'common',
-    control: 'directory',
-    hint: '备份写出的目录。留空＝数据目录下的 backups。',
+    readonly: true,
+    resolveFrom: 'htmlDir',
+    hint: '交付页面的存放目录。只读，`.`或留空＝产物放库根；改请编辑配置文件。',
   },
 ];
 
 /** 高级项：默认收起。改错了多半只是自己撞上麻烦，不确定就别动。 */
 const ADVANCED: readonly ConfigItem[] = [
   {
-    key: 'files.help',
-    title: '产物文件名主体 · HELP',
+    key: 'backup.dir',
+    title: '备份目录',
     tier: 'advanced',
-    control: 'text',
-    hint: 'HELP 文件名前缀，后面自动加时间戳。',
+    control: 'directory',
+    readonly: true,
+    resolveFrom: 'backupDir',
+    hint: '备份与恢复的读写目录。只读，要改请编辑配置文件。',
   },
   {
-    key: 'files.lookup',
-    title: '产物文件名主体 · 速查表',
+    key: 'key.file',
+    title: '主密钥文件',
     tier: 'advanced',
     control: 'text',
-    hint: '速查表文件名前缀。',
+    readonly: true,
+    resolveFrom: 'keyFile',
+    hint: '主密钥文件的位置。只读，要改请编辑配置文件。',
   },
 ];
 

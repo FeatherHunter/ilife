@@ -44,11 +44,11 @@ function probeGuard(extraEnv = {}) {
   return String(spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8', env }).stdout).trim();
 }
 
-/** 配置件的默认值（＝改造前的代码常量，逐字写死）。 */
+/** 配置件的默认值（＝改造前的代码常量，逐字写死；#794 起 files 两键出表，加 key.file）。 */
 const DEFAULTS = {
   db: { dir: '', name: 'home.db' },
   html: { dir: 'home_manager_html' },
-  files: { help: '居家管家_HELP', lookup: '居家管家_速查表' },
+  key: { file: '.master.key' },
   backup: { dir: 'backups' },
 };
 
@@ -82,11 +82,15 @@ test('① 默认值逐项＝改造前的代码常量，且配置 key 在形状�
   assert.equal(r.env.shape, 'detail');
   assert.equal(r.env.key, 'home.config.read');
   assert.equal(r.env.skill, 'home');
-  assert.deepEqual(r.env.data.values, DEFAULTS, '五个默认值逐项逐字（home.db／home_manager_html／两份主体名／backups）');
+  // #794 起首次落盘把可改落点写成算出来的绝对路径（读仍认空串，见 t794 那条）——其余四项逐字等于常量。
+  assert.equal(r.env.data.values.db.dir, join(configDirOf(dir), 'data'), '首次落盘：db.dir＝算出来的绝对路径');
+  assert.deepEqual({ ...r.env.data.values, db: { ...r.env.data.values.db, dir: '' } }, DEFAULTS,
+    '其余默认值逐项逐字（home.db／home_manager_html／.master.key／backups）');
   assert.equal(r.env.data.path, join(configDirOf(dir), 'home.yaml'), '配置文件＝<家目录>/.ilife/home.yaml');
   assert.equal(r.env.data.dataDir, join(configDirOf(dir), 'data'), '数据目录＝<家目录>/.ilife/data');
   assert.equal(r.env.data.created, true, '首次读按默认值落一份');
   assert.ok(existsSync(join(configDirOf(dir), 'home.yaml')), '配置文件真落盘');
+  assert.equal(existsSync(join(configDirOf(dir), 'data', '.master.key')), false, '密钥文件不自动生成（#793）');
   assert.deepEqual(readdirSync(configDirOf(dir)).sort(), ['data', 'home.yaml'], '配置目录里只有配置件与数据目录');
 
   // 这三个 key 不是唤醒词命令：既不在形状表里（不在的话本键根本走不到这里，会 exit 3），
@@ -104,20 +108,20 @@ test('② 三个配置 key 走 CLI 真出口：读／写／重置（重置留 `.
   const cfgFile = join(configDirOf(dir), 'home.yaml');
   const bakFile = join(configDirOf(dir), 'home.yaml.bak');
 
-  // 写：只提交改动过的项 —— `db.name` 换名、`files.help` 换主体；组里没给的子项、没给的组保留现值。
-  const w = runOk(dir, ['home.config.write', '--params', P({ values: { db: { name: 'home_test.db' }, files: { help: '居家管家_HELP_X' } } })]);
+  // 写：只提交改动过的项 —— `db.name` 换名、`key.file` 换落点；组里没给的子项、没给的组保留现值。
+  const w = runOk(dir, ['home.config.write', '--params', P({ values: { db: { name: 'home_test.db' }, key: { file: 'custom.key' } } })]);
   assert.equal(w.env.shape, 'receipt');
   assert.equal(w.env.key, 'home.config.write');
   assert.equal(w.env.data.path, cfgFile);
   assert.deepEqual(w.env.data.values, {
-    db: { dir: '', name: 'home_test.db' },
+    db: { dir: join(configDirOf(dir), 'data'), name: 'home_test.db' },
     html: { dir: 'home_manager_html' },
-    files: { help: '居家管家_HELP_X', lookup: '居家管家_速查表' },
+    key: { file: 'custom.key' },
     backup: { dir: 'backups' },
-  }, '局部合并：改动项落进组里，其余原样');
+  }, '局部合并：改动项落进组里，其余原样（db.dir 按写盘口径是绝对路径）');
   const disk = readFileSync(cfgFile, 'utf8');
   assert.match(disk, /home_test\.db/, '写出去的是盘上这份：' + disk);
-  assert.match(disk, /居家管家_HELP_X/);
+  assert.match(disk, /custom\.key/);
 
   // 坏值不落盘：类型不符（给字符串项一个数）即响亮失败（exit 1）。
   const bad = run(dir, ['home.config.write', '--params', P({ values: { db: { name: 7 } } })]);
@@ -135,7 +139,9 @@ test('② 三个配置 key 走 CLI 真出口：读／写／重置（重置留 `.
   assert.match(readFileSync(bakFile, 'utf8'), /home_test\.db/, '`.bak` 里是重置前那一份');
 
   const after = runOk(dir, ['home.config.read']);
-  assert.deepEqual(after.env.data.values, DEFAULTS, '重置后逐项回到默认值');
+  assert.equal(after.env.data.values.db.dir, join(configDirOf(dir), 'data'), '重置落的也是绝对路径（#794）');
+  assert.deepEqual({ ...after.env.data.values, db: { ...after.env.data.values.db, dir: '' } }, DEFAULTS,
+    '重置后其余项回到默认值');
   assert.equal(after.env.data.created, false, '重置是重写，不是删了重建');
 });
 

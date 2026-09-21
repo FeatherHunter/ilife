@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -107,8 +107,14 @@ describe('居家唯一出口 cmd_read（21 键全票）', () => {
     assert.equal(run(['home.ticket.query', '--params', P({ kind: 'purchase' })]).status, 0);
     const id = JSON.parse(run(['home.item.search', '--params', P({ name: '牛奶' })]).stdout).data.items[0].id;
     assert.equal(run(['home.ticket.write', '--params', P({ kind: 'purchase', op: 'add', item_id: id, date: '2026-09-01', price: 5 })]).status, 0);
-    assert.equal(run(['home.ticket.write', '--params', P({ kind: 'account', op: 'add', platform: '淘宝', user: 'u', pass: 'p123', master_key: '12345678' })]).status, 0);
-    assert.match(run(['home.ticket.write', '--params', P({ kind: 'account', op: 'show', platform: '淘宝', master_key: '12345678' })]).stdout, /密码/);
+    // #794：主密钥改从文件读 —— 口令写进 <数据目录>/.master.key，调用时不再给 master_key。
+    mkdirSync(dataDir(), { recursive: true });
+    writeFileSync(join(dataDir(), '.master.key'), 'testpass-12345678', 'utf8');
+    assert.equal(run(['home.ticket.write', '--params', P({ kind: 'account', op: 'add', platform: '淘宝', user: 'u', pass: 'p123' })]).status, 0);
+    assert.match(run(['home.ticket.write', '--params', P({ kind: 'account', op: 'show', platform: '淘宝' })]).stdout, /密码/);
+    const retired = run(['home.ticket.write', '--params', P({ kind: 'account', op: 'show', platform: '淘宝', master_key: '12345678' })]);
+    assert.equal(retired.status, 2, '调用参数给口令 ⇒ 响亮失败（stderr：' + retired.stderr + '）');
+    assert.match(retired.stderr, /\.master\.key/, '报文须指向密钥文件');
     assert.equal(run(['home.care.query', '--params', P({ kind: 'lint' })]).status, 0);
     assert.equal(run(['home.care.write', '--params', P({ kind: 'init' })]).status, 0);
   });

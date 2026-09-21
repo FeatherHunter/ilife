@@ -2,7 +2,8 @@
 export class HomeFetchError extends Error {
   readonly code:
     | 'HOME_DB_MISSING' | 'HOME_DB_UNREADABLE' | 'HOME_ITEM_NOT_FOUND' | 'HOME_BAD_QUERY'
-    | 'HOME_EMPTY_RANGE' | 'HOME_ACCOUNT_MISSING' | 'HOME_ACCOUNT_BAD_KEY';
+    | 'HOME_EMPTY_RANGE' | 'HOME_ACCOUNT_MISSING' | 'HOME_ACCOUNT_BAD_KEY'
+    | 'HOME_MASTER_KEY_MISSING' | 'HOME_MASTER_KEY_UNREADABLE';
   constructor(code: HomeFetchError['code'], message: string, options?: { cause?: unknown }) {
     super(message, options);
     this.name = 'HomeFetchError';

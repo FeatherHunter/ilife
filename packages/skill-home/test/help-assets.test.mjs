@@ -16,10 +16,10 @@ const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
 /** 仓内事实源摘要（重算：`node -e "…createHash('sha256').update(readFileSync('packages/skill-home/src/help/scenarios.yaml')).digest('hex')"`）。 */
-const YAML_SHA256 = 'f80184ce9a0a7b345404941dfdd21e2e0b56cc1577dc059c536df5d9bf7e665a';
-const YAML_BYTES = 46267;
+const YAML_SHA256 = '3fa35b0bfd9d325c9173cb8abdec52519bd4031fc9e6bf85c1acb8b67b44f558';
+const YAML_BYTES = 46123;
 /** 生成物摘要（重算命令见 `src/help/helpAssets.ts` 头注释）——手改生成物即变红。 */
-const ASSET_SHA256 = 'f61f49e7b36b6fa7ff79b1449e5b2cad82951c37e15b262cd6f230e444e2e732';
+const ASSET_SHA256 = 'dbb186be754b2e66fa0bff0b456c051df84746518fc181edc1c6801b6a135e06';
 
 /** 期望形状（老骨架 9 域／30 二级组／73 场景，含联动 3 条登记位）：夹具自持，生成器改数不替它作证。 */
 const EXPECT_SHAPE = { domains: 9, subgroups: 30, scenes: 73, linkScenes: 3 };

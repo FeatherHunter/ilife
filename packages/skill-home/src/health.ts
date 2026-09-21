@@ -24,7 +24,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
-import { HOME_CONFIG_STEM } from './config.js';
+import { HOME_CONFIG_DEFAULTS, HOME_CONFIG_STEM } from './config.js';
 import { dbDirOf, dbFileOf, htmlDirOf, keyFileOf, DEFAULT_MASTER_KEY_FILENAME } from './fetch/paths.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
@@ -452,9 +452,10 @@ export function buildHomeHealthReport(): HomeHealthReport {
     }
   }
 
-  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
+  // ④ 产物目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建；
+  // 算式与回执同源：`src/fetch/paths.ts` 的 `htmlDirOf`）。
   const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = join(dataDir, ...splitDirSegments(htmlDirValue !== '' ? htmlDirValue : String(HOME_CONFIG_DEFAULTS.html.dir)));
+  const htmlDir = htmlDirOf(dataDir, htmlDirValue);
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
@@ -465,7 +466,7 @@ export function buildHomeHealthReport(): HomeHealthReport {
       : htmlVerdict.writable
         ? '在且能写：' + p(htmlDir) + '。'
         : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或把「HTML 产物目录名」改到别处。',
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 html.dir。',
     source: htmlSource,
   });
 
@@ -485,7 +486,7 @@ export function buildHomeHealthReport(): HomeHealthReport {
     message: sameRoot
       ? '两处同一处：产物根 ' + p(htmlDir) + '，库根 ' + p(dataDir) + '。'
       : '产物根 ' + p(htmlDir) + '，库根 ' + p(dataDir) + '（产物与库分离，不是故障）。',
-    action: sameRoot ? '' : '这是默认布局：页面产物落在库旁边的产物目录里，库文件仍在库根。想把产物也放库根，就把「HTML 产物目录名」留空或用 `.`。',
+    action: sameRoot ? '' : '这是默认布局：页面产物落在库旁边的产物目录里，库文件仍在库根。想把产物也放库根，编辑配置文件，把 html.dir 留空或写 `.`。',
     source: htmlSource,
   });
 
@@ -506,18 +507,34 @@ export function buildHomeHealthReport(): HomeHealthReport {
     action: seedExists ? '' : '重装这个技能包即会补齐；缺了它建分类时没有顶级分类口径。',
   });
 
-  // ⑧ 主密钥文件（居家特有）：在＝绿；不在＝黄（只在用票据凭证／账号密码时才是红）。
-  const keyCandidates = masterKeyCandidates(dataDir);
-  const keyFile = keyCandidates.find((candidate) => existsSync(candidate)) ?? (keyCandidates[0] as string);
+  // ⑧ 主密钥文件（居家特有）：判据＝配置 `key.file` 那一处（在／不在）；老四级定位只读提示——
+  // 配置那处不在、而老四处某处真在，就报"把它复制到 <配置那处>，或把 `key.file` 指过去"。
+  const keyConfigured = textOf(readValue(values, 'key', 'file'));
+  const keyFile = keyFileOf(paths.dataDir, keyConfigured);
+  const keySource = sourceOf(present, 'key.file');
   const keyExists = existsSync(keyFile);
-  items.push({
-    id: 'key.file', title: '主密钥文件',
-    status: keyExists ? 'green' : 'yellow',
-    message: keyExists
-      ? '在：' + p(keyFile) + '。'
-      : '不在：' + p(keyFile) + '（四级定位都没找到；只在用票据凭证／存账号密码时才是故障）。',
-    action: keyExists ? '' : '要用「存账号／看密码」就先把这个文件建出来（老技能用的是四级定位，任一处皆可）。',
-  });
+  if (keyExists) {
+    items.push({
+      id: 'key.file', title: '主密钥文件',
+      status: 'green',
+      message: '在：' + p(keyFile) + '。',
+      action: '',
+      source: keySource,
+    });
+  } else {
+    const legacyHit = legacyKeyCandidates(paths.dataDir).find((c) => c !== keyFile && existsSync(c));
+    items.push({
+      id: 'key.file', title: '主密钥文件',
+      status: 'yellow',
+      message: legacyHit !== undefined
+        ? '配置那处不在：在 ' + p(legacyHit) + ' 发现 ' + MASTER_KEY_NAME + '（老位置），配置要的是 ' + p(keyFile) + '。'
+        : '不在：' + p(keyFile) + '（只在用「存账号／看密码」时才是故障）。',
+      action: legacyHit !== undefined
+        ? '把它复制到 ' + p(keyFile) + '，或编辑配置文件把 key.file 指到它现在的位置。'
+        : '要用「存账号／看密码」就先把这个文件建出来（纯文本一行写口令）；换机恢复后要用账号密码，把它一起带过去。',
+      source: keySource,
+    });
+  }
 
   // ⑨ 包内模板目录（居家特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
   const templatesDir = join(packageRoot(), 'templates');

@@ -29,13 +29,21 @@ export function helpDirName(): string {
   return splitDirSegments(dir === '' ? DEFAULT_HELP_DIR_NAME : dir).join('/');
 }
 
-/** HELP 文件名主体：产物＝`居家管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`（老通式逐字；递补起步值走共用件缺省）。 */
+/** HELP 文件名主体：产物＝`居家管家_HELP_<YYYYMMDD_HHMMSS>[_N].html`（老通式逐字；递补起步值走共用件缺省）。
+ *  #794 起配置表不再收这一项（键已退休），名字回到这里的代码常量（与 `home_manager_html` 同一出处层级）。 */
+export const HELP_FILE_STEM = '居家管家_HELP' as const;
+
+/** HELP 文件名主体（配置删键后的取值口；调用处不变）。 */
 export function helpFileStem(): string {
-  return loadHomeConfig().values.files.help;
+  return HELP_FILE_STEM;
 }
 
 /** 速查支的文件名主体：与 HELP 文件**分名**（照 #139 判法——别让用户按一个名字打开到另一个东西）。
- *  老家只有 HELP 一支、无老名可循；取名照样板图 #143（账单的 `饼干记账_速查表`／卡路里的 `卡路里_速查台`）同一后缀。 */
+ *  老家只有 HELP 一支、无老名可循；取名照样板图 #143（账单的 `饼干记账_速查表`／卡路里的 `卡路里_速查台`）同一后缀。
+ *  #794 起配置表不再收这一项，名字回到这里的代码常量。 */
+export const LOOKUP_FILE_STEM = '居家管家_速查表' as const;
+
+/** 速查支的文件名主体（配置删键后的取值口；调用处不变）。 */
 export function lookupFileStem(): string {
-  return loadHomeConfig().values.files.lookup;
+  return LOOKUP_FILE_STEM;
 }

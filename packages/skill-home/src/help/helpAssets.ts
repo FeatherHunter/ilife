@@ -1,7 +1,7 @@
 // 本文件由 packages/skill-home/scripts/gen-help-assets.mjs 生成 —— 禁止手工修改。
 // 改动一律走生成器（手改会被 --check 判漂移、被 test/help-assets.test.mjs 的摘要锁打红）。
 //
-// 事实源（仓内唯一）：src/help/scenarios.yaml · 46267 字节 · sha256 f80184ce9a0a7b345404941dfdd21e2e0b56cc1577dc059c536df5d9bf7e665a
+// 事实源（仓内唯一）：src/help/scenarios.yaml · 46123 字节 · sha256 3fa35b0bfd9d325c9173cb8abdec52519bd4031fc9e6bf85c1acb8b67b44f558
 // 重算摘要：node -e "const f=require('fs'),c=require('crypto');console.log(c.createHash('sha256').update(f.readFileSync('packages/skill-home/src/help/helpAssets.ts')).digest('hex'))"
 // icon／label／id：逐字取事实源 domains[].icon/name/key（老骨架自带 9 个域图标，不另立图标表）。
 // types 词表：共享 help 模板的配色表 packages/base-render/assets/help-template.html:1698-1709（TYPE_DEFAULT 10 词）。
@@ -902,7 +902,7 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
               "title": "存账号(加密存储)",
               "wake_word": "存账号",
               "status": "",
-              "prompt_template": "请加载「居家管家」技能,帮我存一个账号(唤醒词:存账号):\n\n  平  台(如:淘宝/微信): _____________\n  用户名: _____________\n  密  码: _____________\n  类  型(购物/银行/社交/其他,选填): _____________\n  主密钥: _____________ (验证用)",
+              "prompt_template": "请加载「居家管家」技能,帮我存一个账号(唤醒词:存账号):\n\n  平  台(如:淘宝/微信): _____________\n  用户名: _____________\n  密  码: _____________\n  类  型(购物/银行/社交/其他,选填): _____________",
               "types": [
                 "采集",
                 "回执"
@@ -913,7 +913,7 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
               "title": "改账号(更新录入)",
               "wake_word": "改账号",
               "status": "",
-              "prompt_template": "请加载「居家管家」技能,帮我改账号(唤醒词:改账号):\n\n  平  台: _____________\n  用户名(选填,改时填): _____________\n  密  码(选填,改时填): _____________\n  类  型(选填): _____________\n  主密钥: _____________ (验证用)\n  (只填要改的,其余留空)",
+              "prompt_template": "请加载「居家管家」技能,帮我改账号(唤醒词:改账号):\n\n  平  台: _____________\n  用户名(选填,改时填): _____________\n  密  码(选填,改时填): _____________\n  类  型(选填): _____________\n  (只填要改的,其余留空)",
               "types": [
                 "采集",
                 "回执"
@@ -924,7 +924,7 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
               "title": "看密码(敏感回显)",
               "wake_word": "看密码",
               "status": "",
-              "prompt_template": "请加载「居家管家」技能,帮我查看密码(唤醒词:看密码):\n\n  平  台: _____________\n  主密钥: _____________ (验证用)",
+              "prompt_template": "请加载「居家管家」技能,帮我查看密码(唤醒词:看密码):\n\n  平  台: _____________",
               "types": [
                 "查看",
                 "回执"

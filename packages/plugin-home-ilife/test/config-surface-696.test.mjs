@@ -124,11 +124,10 @@ describe('#696 居家设置页 · 配置面', () => {
       }
     });
 
-    it('默认值逐项等于现有代码常量', () => {
+    it('默认值逐项等于现有代码常量（#794 起 files 两键出表，文件名回技能侧常量）', () => {
       assert.equal(HOME_CONFIG_DEFAULTS.db.name, 'home.db');
       assert.equal(HOME_CONFIG_DEFAULTS.html.dir, 'home_manager_html');
-      assert.equal(HOME_CONFIG_DEFAULTS.files.help, '居家管家_HELP');
-      assert.equal(HOME_CONFIG_DEFAULTS.files.lookup, '居家管家_速查表');
+      assert.equal(HOME_CONFIG_DEFAULTS.key.file, '.master.key');
       assert.equal(HOME_CONFIG_DEFAULTS.backup.dir, 'backups');
       assert.equal(HOME_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
     });
@@ -171,14 +170,14 @@ describe('#696 居家设置页 · 配置面', () => {
       for (const i of CONFIG_ITEMS.slice(COMMON_ITEM_COUNT)) assert.equal(i.tier, 'advanced', `${i.key} 应在高级组`);
     });
 
-    it('最常动的四项（数据目录／库名／产物目录／备份目录）在页面上直接画出来', () => {
+    it('最常看的三项（数据目录／库名／产物目录）在页面上直接画出来', () => {
       const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT).map((i) => i.key);
-      for (const k of ['db.dir', 'db.name', 'html.dir', 'backup.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
+      for (const k of ['db.dir', 'db.name', 'html.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
     });
 
-    it('清单一共 6 行，其中常用 4 行', () => {
-      assert.equal(CONFIG_ITEMS.length, 6);
-      assert.equal(COMMON_ITEM_COUNT, 4);
+    it('清单一共 5 行，其中常用 3 行（#794 起可改 1 ＋ 只读 4）', () => {
+      assert.equal(CONFIG_ITEMS.length, 5);
+      assert.equal(COMMON_ITEM_COUNT, 3);
       assert.equal(CONFIG_ITEMS.length - COMMON_ITEM_COUNT, 2, '高级组 2 行');
     });
   });
@@ -201,7 +200,7 @@ describe('#696 居家设置页 · 配置面', () => {
       assert.equal(s.created, false);
       assert.equal(readPath(s.values, 'db.name'), 'probe_696.db');
       assert.equal(readPath(s.values, 'html.dir'), HOME_CONFIG_DEFAULTS.html.dir, '没改的项应保持默认');
-      assert.equal(readPath(s.values, 'files.lookup'), HOME_CONFIG_DEFAULTS.files.lookup);
+      assert.equal(readPath(s.values, 'key.file'), HOME_CONFIG_DEFAULTS.key.file);
       assert.equal(readPath(s.values, 'backup.dir'), HOME_CONFIG_DEFAULTS.backup.dir);
     });
 

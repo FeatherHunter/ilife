@@ -31,6 +31,24 @@ export function parseSavePayload(raw: unknown): SavePayload | null {
   return { values: values as Record<string, unknown> };
 }
 
+/** 解析后的绝对路径组（#794，照记账 #749 样板）：技能侧算好的落点，设置页的只读行**只显示、不计算**
+ *  （口径「面板不算默认值、不拼路径」，见 #677 冻结的边界）。
+ *
+ *  格名与技能侧 `packages/skill-home/src/fetch/paths.ts` 的 `HomeResolvedPaths` 逐字同形
+ *  （那是算式与取值的唯一定义地）；六家的 `*.config.read` 都扩这样一组，各自的格子按自家落点项来。 */
+export interface ResolvedPaths {
+  /** 生效数据目录（面板上唯一可改的那一项的生效值）。 */
+  readonly dbDir: string;
+  /** 库文件绝对路径。 */
+  readonly dbFile: string;
+  /** HTML 产物目录绝对路径。 */
+  readonly htmlDir: string;
+  /** 备份目录绝对路径。 */
+  readonly backupDir: string;
+  /** 主密钥文件绝对路径。 */
+  readonly keyFile: string;
+}
+
 /** 配置面回执：形状与技能侧 `home.config.read` 的 data 逐字段同形（唯一定义地在那边的 cli/config.ts）。
  *
  * 这里不带默认值表——页面不猜默认值，「留空＝按默认落点」由行文案说清，
@@ -45,6 +63,22 @@ export interface ConfigSurfaceReply {
   readonly created: boolean;
   /** 当前取值（文件里的缺项按默认值补）。 */
   readonly values: Record<string, unknown>;
+  /** 一组解析后的绝对路径（#794 起技能侧回执带上）。
+   *  **可选**：装的是旧技能时这一格缺席，只读行显示空串（面板不自己拼路径，绝不编一条出来）。 */
+  readonly resolved?: ResolvedPaths;
+}
+export interface ConfigSurfaceReply {
+  /** 配置文件绝对路径。 */
+  readonly path: string;
+  /** 数据目录绝对路径。 */
+  readonly dataDir: string;
+  /** 本次是不是「文件不存在、按默认值落了一份」。 */
+  readonly created: boolean;
+  /** 当前取值（文件里的缺项按默认值补）。 */
+  readonly values: Record<string, unknown>;
+  /** 一组解析后的绝对路径（#794 起技能侧回执带上）。
+   *  **可选**：装的是旧技能时这一格缺席，只读行显示空串（面板不自己拼路径，绝不编一条出来）。 */
+  readonly resolved?: ResolvedPaths;
 }
 
 export interface RpcError {
