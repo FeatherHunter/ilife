@@ -1,24 +1,24 @@
 /** 采购能力的页面装配（生成清单一页，全走公共层区块＋页内一段收口样式）。
  *
  * 老件骨架来源：`templates/shopping_view.html`（小结四格＋分组表＋工具条）。
- * 新页按同一信息组织：结论条＋读数带＋分区折叠＋库存口径行＋复制区。
+ * 新页按同一信息组织：结论条＋品牌装饰带＋读数卡＋分区折叠＋动作行＋复制区。
  *
  * #873 页内收口（公共层只给到形状那一层，层级的最后一档落在页内）：
- *  ① **四条读数只画一遍**（菜数／食材／分组／份量），读数卡网格下线——≤640 档公共层把读数卡栅格
- *    写成两列，奇数张必落一张孤卡（#871 证据件 §四 E 记过同一类账：恢复奇数格读数卡要先给公共层
- *    补一条规则，本包不许改公共层，故走页面侧收口）；
- *  ② 格与格之间用**发丝线**分区、标签 12px／数值 17px、桌面档格内居中——「这是几件事、各是什么」
- *    由形状与字号说，不靠读者数间距；
- *  ③ 页头图标位（采购袋）与开合标记的暖色圆点（纯装饰，进 CSS 的只有空串）。
+ *  ① 四条读数（菜数／食材／分组／份量）**只画一遍**，走读数卡栅格：四张＝**偶数**，
+ *     ≤640 档公共层那条两列栅格正好排满两行，**没有孤卡**（#871 证据件 §四 E 记的账是「奇数张
+ *     必落一张孤卡」；本包不许改公共层的栅格，故用「按偶数张开卡」这一手在页面侧收口）；
+ *  ② 读数卡的正下方就是分组折叠——读数说总量、分组说去处，同一件事不画两遍；
+ *  ③ 页头图标位 ＋ 品牌装饰带（都是内联 SVG，纯装饰，不载任何数据）。
  */
 
-import { CHART_PALETTE, CSS_VAR_TOKENS, renderActionBar, renderFactStrip } from 'base-paint';
+import { CHART_PALETTE, CSS_VAR_TOKENS, renderActionBar } from 'base-paint';
 import {
   renderCaliberLine,
   renderConclusionBar,
   renderCopyBlock,
   renderDataTable,
   renderDisclosure,
+  renderKpiGrid,
   renderPageShell,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
@@ -41,7 +41,7 @@ function heroMark(art: string): string {
 }
 
 /** 采购袋（页头图标位）。 */
-const BAG_MARK = heroMark(
+const TITLE_MARK = heroMark(
   '%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E'
   + '%3Cpath%20d=%27M15%2024h34l-4%2030h-26Z%27%20fill=%27%23ffcc00%27%20fill-opacity=%27.25%27'
   + '%20stroke=%27%23ff9500%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E'
@@ -53,13 +53,13 @@ const BAG_MARK = heroMark(
 function shoppingPageCss(): string {
   const yellow = rgbOf(CHART_PALETTE[6]);
   const warm = rgbOf(CHART_PALETTE[2]);
-  const line = rgbOf(CSS_VAR_TOKENS['--line']);
   const root = '.ilife-page-ui ';
   return [
     '/* #873 采购·生成清单 页内收口 · 每一条都挂在根类之下 */',
-    '/* 页头图标位：页名右侧一枚采购袋（纯装饰）。 */',
+    '/* 页头图标位：页名右侧一枚采购袋（48px，纯装饰）。 */',
     root + '.ilife-block-page-shell-title {',
     '  position: relative;',
+    '  padding-right: 56px;',
     '}',
     root + '.ilife-block-page-shell-title::after {',
     '  content: "";',
@@ -68,54 +68,29 @@ function shoppingPageCss(): string {
     '  top: 0;',
     '  width: 48px;',
     '  height: 48px;',
-    '  background-image: ' + BAG_MARK + ';',
+    '  background-image: ' + TITLE_MARK + ';',
     '  background-repeat: no-repeat;',
     '  background-size: 48px 48px;',
     '}',
-    '/* 读数带：四条读数收进一张暖色面板，格间发丝线分区（不用任何分隔符字符）。 */',
-    root + '.ilife-chef-deck {',
+    '/* 读数卡：暖调描边＋暖色浅底（皮肤已给顶缘暖色条），四张等高由公共层 grid-auto-rows 保证。 */',
+    root + '.ilife-block-kpi-card {',
     '  box-sizing: border-box;',
-    '  margin: 16px 0 0;',
-    '  padding: 0;',
-    '  border: 1px solid rgba(' + warm + ', .30);',
-    '  border-radius: 14px;',
-    '  background-image: linear-gradient(100deg, rgba(' + yellow + ', .20), var(--card) 58%);',
-    '  box-shadow: 0 1px 3px rgba(' + line + ', .50);',
+    '  border-color: rgba(' + warm + ', .34);',
+    '  background-image: linear-gradient(170deg, rgba(' + yellow + ', .16), var(--card) 62%);',
     '}',
-    root + '.ilife-chef-deck .ilife-block-fact-strip-item {',
-    '  flex: 1 1 auto;',
-    '  padding: 11px 12px;',
-    '  border: 0;',
-    '  border-radius: 0;',
-    '  background-color: transparent;',
+    '/* 分区题头：折叠条标题那一行带一条暖色渐隐（品牌温度落在「分区」这一层）。 */',
+    root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary {',
+    '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
+    '  border-radius: 13px;',
     '}',
-    root + '.ilife-chef-deck .ilife-block-fact-strip-item + .ilife-block-fact-strip-item {',
-    '  border-left: 1px solid rgba(' + line + ', .90);',
-    '}',
-    // 标签与数值差 5px：一屏里「哪一列是什么」不再靠猜。
-    root + '.ilife-chef-deck .ilife-block-fact-strip-label {',
-    '  letter-spacing: .06em;',
-    '}',
-    root + '.ilife-chef-deck .ilife-block-fact-strip-value {',
-    '  font-size: 17px;',
-    '  font-weight: 700;',
-    '}',
-    // 桌面档把格内容居中：四格等宽时短值不再孤零零贴左，整条读数带读起来是一排读数而不是四个洞。
-    '@media (min-width: 820px) {',
-    '  ' + root + '.ilife-chef-deck .ilife-block-fact-strip-item {',
-    '    align-items: center;',
-    '    text-align: center;',
-    '  }',
-    '}',
-    // 开合标记：改成 10px 暖色小圆点（公共层给的蓝三角落在 24px 圆底上读起来像一个播放键，
-    // 且「左边条 ＋ 圆底」两件记号在同一行里是重复的层级记号）。
+    '/* 开合标记：换成暖色圆点（公共层那枚蓝 ▸ 落在圆底上读起来像一个播放键）。 */',
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary::before {',
-    '  width: 10px;',
-    '  height: 10px;',
-    '  line-height: 0;',
-    '  border-radius: 999px;',
-    '  background-color: rgba(' + warm + ', .85);',
+    '  background-color: rgba(' + warm + ', .22);',
     '  color: transparent;',
+    '}',
+    '/* 折叠体内的数据表：表卡顶缘一条暖色细线，与读数卡同一族。 */',
+    root + '.ilife-block-page-shell-body .ilife-block-disclosure-body .ilife-block-data-table {',
+    '  border-top: 2px solid rgba(' + warm + ', .35);',
     '}',
   ].join(LF);
 }
@@ -136,15 +111,24 @@ export function shoppingListPage(input: {
   }
   const groups = [...byCategory.entries()].sort((a, b) => a[0].localeCompare(b[0], 'zh'));
   const round = (n: number): number => Math.round(n * 100) / 100;
+  // 库存口径只在真有「这次不一样」的时候出一行：默认那一句（去哪儿核库存）已由主按钮与复制区承担，
+  // 再在正文里复述一遍就是同一件事说两遍（冻结尺原话点了这一处）。
+  const caveat = (input.excludeOptional ? '已排除可选食材。' : '')
+    + (input.stockSkipped ? '这次不核对家里的库存。' : '');
   const blocks = [
-    renderConclusionBar('已按' + input.servingsText + '算好，照着买就行。'),
-    renderFactStrip({
-      extraClass: 'ilife-chef-deck',
-      items: [
-        { label: '菜数', value: String(input.recipes.length) + ' 道' },
-        { label: '食材', value: String(input.items.length) + ' 味' },
-        { label: '分组', value: String(groups.length) + ' 组' },
-        { label: '份量', value: input.servingsText },
+    renderConclusionBar('已按' + input.servingsText + '算好。'),
+    renderKpiGrid([
+      { label: '菜数', value: String(input.recipes.length), unit: '道', detail: input.recipes.join('、') },
+      { label: '食材', value: String(input.items.length), unit: '味' },
+      { label: '分组', value: String(groups.length), unit: '组' },
+      { label: '份量', value: input.servingsText },
+    ]),
+    ...(caveat === '' ? [] : [renderCaliberLine(caveat)]),
+    // 主操作提到分组之前：列表长起来会把它压到首屏之外，而「复制清单核对库存」是这一页的主入口。
+    renderActionBar({
+      buttons: [
+        { label: '复制清单核对库存', kind: 'primary', actionId: 'shopping-stock' },
+        { label: '再算一份清单', kind: 'ghost', actionId: 'shopping-again' },
       ],
     }),
     ...groups.map(([cat, rows], index) =>
@@ -154,8 +138,8 @@ export function shoppingListPage(input: {
         title: cat + '（' + rows.length + '味）',
         contentHtml: renderDataTable({
           // 不画表注：分组名已由折叠条标题承载，同一组名画两遍是复读。
-          // 「来自哪道菜」只在真的多道菜合并时才成一列；一道菜时它每一行都是同一个值（已在读数带
-          // ——菜数 1 道——说过一次了），留着只是把同一句话重复 N 行。
+          // 「来自哪道菜」只在真的多道菜合并时才成一列；一道菜时它每一行都是同一个值（读数卡
+          // 「菜数 1 道」下面那行 detail 已经写了是哪道菜），留着只是把同一句话重复 N 行。
           columns: input.recipes.length > 1
             ? [
                 { key: 'name', label: '食材' },
@@ -176,16 +160,7 @@ export function shoppingListPage(input: {
         }),
       }),
     ),
-    renderCaliberLine(
-      (input.excludeOptional ? '已排除可选食材。' : '')
-      + (input.stockSkipped ? '这次不核对家里的库存。' : '家里的库存交给居家管家核对。'),
-    ),
-    renderActionBar({
-      buttons: [
-        { label: '复制清单核对库存', kind: 'primary', actionId: 'shopping-stock' },
-        { label: '再算一份清单', kind: 'ghost', actionId: 'shopping-again' },
-      ],
-    }),
+    ...(caveat === '' ? [] : [renderCaliberLine(caveat)]),
     renderCopyBlock({
       title: '复制采购清单',
       dataActionId: 'shopping-copy',

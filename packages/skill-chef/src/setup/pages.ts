@@ -4,16 +4,16 @@
  * 新页按同一四步组织，行为归宿主（页面只摆形状与状态，静态呈现）。
  *
  * #873 页内收口（公共层只给到形状那一层，层级的最后一档落在页内）：
- *  ① 读数带：三条读数收进一张暖色面板，格间发丝线分区、桌面档格内居中；标签与数值差 5px ——
- *    「业务表／状态／建库时机」是**列头**，值才是正文，两者不再同号；
- *  ② 页头图标位：页名右侧一枚锅（纯装饰的图形锚）；
- *  ③ 开合标记改为暖色圆点——公共层给的蓝三角落在圆底上读起来像一个播放键；
- *  ④ 上屏文字去实现语（装配层原话里的「装前命令」「老库仅提示迁移」「只读不写」都不给用户看）。
+ *  ① 读数三张**瓦片**（不是一条通栏面板）：标签与数值差 5px —— 「业务表／状态／建库时机」是列头，
+ *    值才是正文；三张各自成卡，宽档不会读成一条呆板的通栏；
+ *  ② 页头图标位（锅）＋ 品牌装饰带（都是内联 SVG，纯装饰，不载任何数据）；
+ *  ③ 分区题头带一条暖色渐隐、开合标记换成暖色圆点（公共层那枚蓝 ▸ 落在圆底上读起来像播放键）；
+ *  ④ 上屏文字去实现语与复述（「装前命令」「老库仅提示迁移」「只读不写」全部换人话；
+ *    口径行与读数瓦片、结论条互为复述的那一句删掉，内容并进「建库」那一步的正文）。
  */
 
 import { CHART_PALETTE, CSS_VAR_TOKENS, renderActionBar, renderFactStrip } from 'base-paint';
 import {
-  renderCaliberLine,
   renderConclusionBar,
   renderCopyBlock,
   renderDisclosure,
@@ -39,7 +39,7 @@ function heroMark(art: string): string {
 }
 
 /** 汤锅（页头图标位）。 */
-const POT_MARK = heroMark(
+const TITLE_MARK = heroMark(
   '%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E'
   + '%3Crect%20x=%2714%27%20y=%2728%27%20width=%2736%27%20height=%2724%27%20rx=%278%27'
   + '%20fill=%27%23ffcc00%27%20fill-opacity=%27.25%27%20stroke=%27%23ff9500%27%20stroke-width=%273%27/%3E'
@@ -57,9 +57,10 @@ function setupPageCss(): string {
   const root = '.ilife-page-ui ';
   return [
     '/* #873 开始使用·首次使用 页内收口 · 每一条都挂在根类之下 */',
-    '/* 页头图标位：页名右侧一枚锅（纯装饰）。 */',
+    '/* 页头图标位：页名右侧一枚锅（48px，纯装饰）。 */',
     root + '.ilife-block-page-shell-title {',
     '  position: relative;',
+    '  padding-right: 56px;',
     '}',
     root + '.ilife-block-page-shell-title::after {',
     '  content: "";',
@@ -68,7 +69,7 @@ function setupPageCss(): string {
     '  top: 0;',
     '  width: 48px;',
     '  height: 48px;',
-    '  background-image: ' + POT_MARK + ';',
+    '  background-image: ' + TITLE_MARK + ';',
     '  background-repeat: no-repeat;',
     '  background-size: 48px 48px;',
     '}',
@@ -92,7 +93,7 @@ function setupPageCss(): string {
     root + '.ilife-chef-deck .ilife-block-fact-strip-item + .ilife-block-fact-strip-item {',
     '  border-left: 1px solid rgba(' + line + ', .90);',
     '}',
-    // 列头（标签）与正文（数值）差 5px：这一条销的就是「表头与正文同号、难辨列」。
+    '/* 列头（标签）与正文（数值）差 5px：这一条销的就是「表头与正文同号、难辨列」。 */',
     root + '.ilife-chef-deck .ilife-block-fact-strip-label {',
     '  letter-spacing: .06em;',
     '}',
@@ -100,17 +101,21 @@ function setupPageCss(): string {
     '  font-size: 17px;',
     '  font-weight: 700;',
     '}',
-    // 桌面档把格内容居中：三格等宽时短值不再孤零零贴左，整条读数带读起来是一排读数而不是三个洞。
+    /* 桌面档把瓦片内容居中：三张等宽时短值不再孤零零贴左，一排三张读起来是一组读数。 */
     '@media (min-width: 820px) {',
     '  ' + root + '.ilife-chef-deck .ilife-block-fact-strip-item {',
     '    align-items: center;',
     '    text-align: center;',
     '  }',
     '}',
-    // 开合标记：保留公共层那枚 24px 圆底（去掉字形），底色换成暖色浅底 —— 蓝三角落在圆底上读起来
-    // 像一个播放键；换色后它读起来是「这一行是一个分区」的标记位。
+    '/* 分区题头：折叠条标题那一行带一条暖色渐隐（品牌温度落在「分区」这一层）。 */',
+    root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary {',
+    '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
+    '  border-radius: 13px;',
+    '}',
+    '/* 开合标记：换成暖色圆点（公共层那枚蓝 ▸ 落在圆底上读起来像一个播放键）。 */',
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary::before {',
-    '  background-color: rgba(' + warm + ', .18);',
+    '  background-color: rgba(' + warm + ', .22);',
     '  color: transparent;',
     '}',
   ].join(LF);
@@ -138,13 +143,13 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
       }),
       renderDisclosure({
         title: '建库',
-        contentHtml: renderProseBlock({ text: '缺的会补上，齐的直接跳过，旧数据只提醒，不自动搬动。' }),
+        // 原口径行那一句（用到时才建／建好不再改动）并进这一步：三个折叠条里它本来就属于「建库」。
+        contentHtml: renderProseBlock({ text: '缺的会补上，齐的直接跳过，旧数据只提醒，不自动搬动；建好以后不再改动文件。' }),
       }),
       renderDisclosure({
         title: '完成回执',
         contentHtml: renderProseBlock({ text: '初始化只做一次，以后每次进来都不会重复建。' }),
       }),
-      renderCaliberLine('用到时才建库建目录，建好以后不再改动文件。'),
       renderActionBar({
         buttons: [
           { label: '录第一道菜', kind: 'primary', actionId: 'setup-first' },
