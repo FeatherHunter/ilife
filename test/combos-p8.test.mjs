@@ -21,6 +21,25 @@ let DB = '';
 let LARK = '';
 let CFG = '';
 
+/** 某包 `dist/` 下的运行时段（递归取 `.js`；`skip` 里的顶层目录＝非运行时段，如渲染面与 HELP 面）。
+ *  #855：备忘录 src 按 8 域 ＋ 共用位重排后，旧的「扫 `dist/fetch/*.js`」写法会指向不存在的路径；
+ *  改按非渲染面递归取，目录再搬动也不必同步改这张表。 */
+function distRuntimeJs(pkgDir, skip = []) {
+  const out = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.js')) out.push(p);
+    }
+  };
+  for (const e of readdirSync(pkgDir, { withFileTypes: true })) {
+    if (e.isFile() && e.name.endsWith('.js')) out.push(join(pkgDir, e.name));
+    else if (e.isDirectory() && !skip.includes(e.name)) walk(join(pkgDir, e.name));
+  }
+  return out;
+}
+
 function nodeBin() {
   const cands = [process.env.npm_node_execpath, 'node', process.execPath].filter(Boolean);
   for (const c of cands) {
@@ -151,7 +170,8 @@ describe('P8 combos 真相源与 HELP 注入', () => {
       join(root, 'tooling/skilllink.mjs'),
       ...readdirSync(join(root, 'packages/base-combos/dist')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/base-combos/dist', f)),
       join(root, 'packages/skill-memo-ilife/dist/cli/cmd_read.js'),
-      ...readdirSync(join(root, 'packages/skill-memo-ilife/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-memo-ilife/dist/fetch', f)),
+      // #855：备忘录运行时段改按非渲染面递归取（旧的 `dist/fetch/*.js` 在 8 域重排后已不存在）。
+      ...distRuntimeJs(join(root, 'packages/skill-memo-ilife/dist'), ['render', 'help']),
       // #190：居家管家运行时段（同形照 memo 两行）；不进数组＝新锁静默跑不到。
       join(root, 'packages/skill-home/dist/cli/cmd_read.js'),
       ...readdirSync(join(root, 'packages/skill-home/dist/fetch')).filter((f) => f.endsWith('.js')).map((f) => join(root, 'packages/skill-home/dist/fetch', f)),

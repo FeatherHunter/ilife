@@ -141,4 +141,14 @@ describe('#855 · 命令登记棘轮（声明面／域门形状／只许变短�
     assert.ok(/REGISTRY\[/.test(exit), '分派件不再查登记表了？');
     assert.ok(statSync(join(PKG, 'src/cli/registry.ts')).size > 0, '登记表生成物不见了');
   });
+
+  it('④ 构建产物里没有「搬空之后留下的旧家」（dist 顶层目录名必须与 src 一致）', () => {
+    // #855 实测踩到的坑：`tsc -b` **不会**删掉「源件已搬走」的那些旧输出，于是 `dist/fetch/`、`dist/policy/`
+    // 成了幽灵旧家——仓根的 `test/combos-p8.test.mjs` 照旧扫它们（扫的是过期产物），npm 包也会把它发出去。
+    // 这条门把「dist 顶层目录名 == src 顶层目录名」钉死：搬完家没清 dist 就红。
+    const names = (dir) => readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+    const dist = join(PKG, 'dist');
+    if (!existsSync(dist)) return; // 还没构建过：本门只管「建过之后不许留旧家」
+    assert.deepEqual(names(dist), names(SRCDIR), 'dist 顶层目录与 src 对不上：多的是搬空后没清的旧家，少的是没编译出来的新家（清 dist 重编）');
+  });
 });
