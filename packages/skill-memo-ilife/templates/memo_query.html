@@ -2,31 +2,31 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>备忘录查询结果</title>
 <!--SHARED-CSS-->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1120px;margin:0 auto;padding:48px 22px 90px}
-.hero{background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);border-radius:28px;padding:34px;margin-bottom:20px;box-shadow:var(--shadow-md,0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06))}
+.wrap{max-width:1120px;margin:0 auto;padding:48px max(22px,env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left))}
+.hero{background:linear-gradient(180deg,var(--card) 0%,var(--soft) 100%);border-radius:28px;padding:34px;margin-bottom:20px;box-shadow:var(--shadow,0 1px 2px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06))}
 .eyebrow{font-size:13px;color:var(--blue);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
 h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.lead{color:var(--fg2);font-size:17px}.meta{margin-top:16px;color:var(--fg3);font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.panel,.item{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)}.panel{margin:14px 0}
-.stat b{display:block;font-size:22px;letter-spacing:-.02em;font-weight:800}.stat span{color:var(--fg2);font-size:13px;font-weight:600}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;color:var(--fg2);cursor:pointer}.pill.active{background:#eef5ff;color:var(--blue);border-color:#b8d8ff}
-.item{margin:12px 0}.item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.id{color:var(--blue);font-weight:800}.content{font-size:17px;margin:10px 0;white-space:pre-wrap}.muted{color:var(--fg2)}.small{font-size:13px;color:var(--fg3)}.badge{display:inline-block;background:var(--soft,#f5f8ff);color:var(--blue);padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;margin:3px 5px 3px 0}.badge.warn{background:#fff7e8;color:#b25b00}.badge.ok{background:#ecfff2;color:#178a3a}
+.stat b{display:block;font-size:22px;letter-spacing:-.02em;font-weight:800}.stat span{color:var(--fg2);font-size:13px;font-weight:600}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:10px 14px;min-height:44px;font-size:13px;color:var(--fg2);cursor:pointer}.pill.active{background:var(--soft);color:var(--blue);border-color:var(--blue)}
+.item{margin:12px 0}.item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.id{color:var(--blue);font-weight:800}.content{font-size:17px;margin:10px 0;white-space:pre-wrap}.muted{color:var(--fg2)}.small{font-size:13px;color:var(--fg3)}.badge{display:inline-block;background:var(--soft);color:var(--blue);padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;margin:3px 5px 3px 0}.badge.warn{background:#fff7e8;color:#b25b00}.badge.ok{background:#ecfff2;color:var(--ok)}
 #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch;margin:14px 0}
 #list .item{margin:0;padding:14px;display:flex;flex-direction:column;height:100%}
 #list .hm-empty{grid-column:1/-1}
 #list .item-head{flex-wrap:nowrap;gap:6px;min-height:32px;align-items:center}
 #list .id{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#list .item-head button.copy{flex:0 0 auto;min-height:30px;padding:5px 12px;font-size:12px}
+#list .item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}
 #list .content{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;margin:8px 0;word-break:break-all;flex:1 1 auto}
-#list .item .badge{font-size:11px;padding:2px 8px;margin:2px 4px 2px 0}
+#list .item .badge{font-size:12px;padding:5px 10px;margin:3px 5px 3px 0}
 #list .small{font-size:12px;margin-top:auto;padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{padding:42px;text-align:center;color:var(--fg2)}button{border:0;background:var(--blue);color:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}.item-head button.copy{flex:0 0 auto;min-height:40px;padding:8px 16px;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px;margin-top:12px}pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;font-size:13px;line-height:1.65;font-family:inherit}
-@media(max-width:800px){.wrap{padding:28px 14px 70px}.hero{padding:26px 20px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:30px}.item-head{flex-wrap:wrap}}
+.empty{padding:42px;text-align:center;color:var(--fg2)}button{border:0;background:var(--blue);color:var(--card);border-radius:999px;padding:8px 12px;min-height:44px;cursor:pointer}.item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:44px;font-size:15px;margin-top:12px}pre{white-space:pre-wrap;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;font-size:13px;line-height:1.65;font-family:inherit}
+@media(max-width:820px){.wrap{padding:28px max(14px,env(safe-area-inset-right)) 70px max(14px,env(safe-area-inset-left))}.hero{padding:26px 20px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:30px}.item-head{flex-wrap:wrap}}
 </style>
 </head>
 <body>

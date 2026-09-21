@@ -32,12 +32,12 @@ export const MEMO_PAGE_CSS = [
   '.hm-toast-body{flex:1;min-width:0}',
   '.hm-toast-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
   '.hm-toast-title{font-weight:600;font-size:12.5px;line-height:1.4;color:#fff;margin-bottom:2px}',
-  '.hm-toast-detail{font-size:11px;line-height:1.5;color:#c8c8cc}',
-  '.hm-toast-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0}',
+  '.hm-toast-detail{font-size:12px;line-height:1.5;color:#c8c8cc}',
+  '.hm-toast-chip{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0}',
   '.hm-toast-chip.ok{background:rgba(52,199,89,.18);color:#4dd96b}',
   '.hm-toast-chip.warn{background:rgba(255,149,0,.18);color:#ffb340}',
   '.hm-toast-chip.danger{background:rgba(255,59,48,.18);color:#ff6961}',
-  '.hm-toast-close{background:rgba(255,255,255,.10);color:#34c759;border:0;border-radius:8px;padding:5px 9px;font-size:10.5px;font-weight:500;font-family:inherit;cursor:pointer;white-space:nowrap;margin-left:6px;flex-shrink:0}',
+  '.hm-toast-close{background:rgba(255,255,255,.10);color:#34c759;border:0;border-radius:8px;padding:5px 9px;min-height:44px;min-width:44px;font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;white-space:nowrap;margin-left:6px;flex-shrink:0}',
   '@media(max-width:820px){.hm-toast-stack{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0));transform:none;align-items:stretch}.hm-toast{min-width:0}.hm-toast.show{transform:scale(1)}}',
 ].join('\n');
 
