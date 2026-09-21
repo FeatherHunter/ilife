@@ -29,6 +29,13 @@ export const CHEF_CONFIG_DEFAULTS = {
   files: { help: '私家大厨_HELP', lookup: '私家大厨_速查表' },
 };
 
+/** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键的叶子全路径。命中的键跳过校验、
+ *  不进取值、也不会被写回（任何一次保存／重置天然抹掉它）。名单**只许写已经删掉的键**——键还在默认值表里
+ *  就写进清单＝在护栏上开洞，`base-link-core` 收到清单时当场拒。
+ *  `files.help`／`files.lookup` 预定在【实施】私家大厨设置页收窄（#796）里删；填进来之前，本清单保持为空。
+ *  退出条件：下一个大版本删掉这张清单。 */
+export const CHEF_CONFIG_RETIRED: readonly string[] = [];
+
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type ChefConfigValues = typeof CHEF_CONFIG_DEFAULTS;
 
@@ -46,7 +53,7 @@ let memo: LoadedChefConfig | null = null;
 /** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。 */
 export function loadChefConfig(): LoadedChefConfig {
   if (memo === null) {
-    const loaded = loadConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS);
+    const loaded = loadConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS, CHEF_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
@@ -61,14 +68,14 @@ export function loadChefConfig(): LoadedChefConfig {
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */
 export function saveChefConfig(values: ConfigRecord): { path: string } {
-  const r = saveConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS, values);
+  const r = saveConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS, values, CHEF_CONFIG_RETIRED);
   memo = null;
   return r;
 }
 
 /** 重置为默认（先另存 `<配置目录>/chef.yaml.bak`）。 */
 export function resetChefConfig(): { path: string; backupPath: string | null } {
-  const r = resetConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS);
+  const r = resetConfig(CHEF_CONFIG_STEM, CHEF_CONFIG_DEFAULTS, CHEF_CONFIG_RETIRED);
   memo = null;
   return r;
 }

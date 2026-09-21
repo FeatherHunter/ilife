@@ -26,9 +26,9 @@ import {
   buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
   BillRenderError,
 } from '../render/index.js';
-// #726：产物目录名与两个文件名主体改成「现读配置」的三个函数（那几个常量仍住同一处定义地，是默认值）。
-import { htmlDirName, lookupFileStem } from '../help/helpPaths.js';
-import { helpFileStem } from '../help/helpFile.js';
+// #726：产物目录名改成「现读配置」的函数；两个文件名主体在 #762 随配置项退休、回落到代码常量（同一处定义地）。
+import { HELP_FILE_STEM } from '../help/helpFile.js';
+import { LOOKUP_FILE_STEM, htmlDirName } from '../help/helpPaths.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup, buildHelpItems } from '../help/index.js';
@@ -81,9 +81,9 @@ interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverInten
 /** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
  *  `bill.help.lookup` 这条命令下挂着两种产物（HELP 文件与速查表），两种都算「反复读的 HELP 产物」；
  *  而 `--html` 那支是用户逐字指定的落点（共用件的 `file` 口子），本来不吃复用。
- *  #726 起改成函数：两个主体随配置变（`html.helpStem`／`html.quickRefStem`），常量会在配置改动后陈旧。 */
+ *  #762 起两个主体是代码常量（配置项 `html.helpStem`／`html.quickRefStem` 已退休），故本件直接引常量。 */
 function helpReuseStems(): readonly string[] {
-  return [helpFileStem(), lookupFileStem()];
+  return [HELP_FILE_STEM, LOOKUP_FILE_STEM];
 }
 
 /** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
@@ -116,7 +116,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   }
   if (mode === 'lookup') {
     const hits = buildHelpItems(buildHelpLookup(), undefined);
-    const stem = lookupFileStem();
+    const stem = LOOKUP_FILE_STEM;
     return {
       data: { ...hits, mode: 'lookup' },
       deliver: {
@@ -126,7 +126,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     };
   }
   const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
-  const stem = helpFileStem();
+  const stem = HELP_FILE_STEM;
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
     deliver: {

@@ -7,9 +7,11 @@
  * 通式 `〈文件名主体〉_<stamp>[_N].html` **不再住这里**：唯一定义地是共用件 `base-paint/save-html` 的
  * `saveHtmlFile`（`packages/base-render/src/output/saveHtml.ts`），本模块只剩「本技能自己的值」。
  *
- * #726 起这三处取值也改读配置文件（`html.dir`／`html.quickRefStem`），与 `src/fetch/paths.ts` 同形：
+ * #726 起**产物目录名**这一处取值改读配置文件（`html.dir`），与 `src/fetch/paths.ts` 同形：
  *   - **常量＝默认值表那一项的具名引用**（不是第二份定义地，改默认值表即跟变）；
  *   - **函数＝「配置非空即用它、空串＝默认」**那条通则（空串不是「没配」，是「按老落点」，老产物不会看起来丢了）。
+ * #762 起两个文件名主体（`HELP_FILE_STEM`／`LOOKUP_FILE_STEM`）**回到代码常量**：配置项
+ * `html.helpStem`／`html.quickRefStem` 已退休（#747 定稿），本件这里不再有第二个来源。
  * 落点算式与 `src/health.ts:418` 的体检报告同源：**产物目录 = `join(库目录, htmlDirName())`**。
  *
  * 老命名规则复刻（只读基线 `SKILLS\饼干记账\scripts\html_paths.py` ＋ 实物目录
@@ -23,17 +25,11 @@ export const HELP_HTML_DIR_NAME = BILL_CONFIG_DEFAULTS.html.dir;
 
 /** 「速查／现找」那一支的产物名主体：与 HELP 文件**分名**（照 #139 判法：别让用户按一个名字
  *  打开到另一个东西）。老技能没有这一支，故无老名可循；取「饼干记账_速查表」与 HELP 并列。
- *  ＝配置项 `html.quickRefStem` 的具名引用。 */
-export const LOOKUP_FILE_STEM = BILL_CONFIG_DEFAULTS.html.quickRefStem;
+ *  **#762 起是代码常量**（配置项 `html.quickRefStem` 已退休，本件不再读盘）。 */
+export const LOOKUP_FILE_STEM = '饼干记账_速查表' as const;
 
 /** 产物目录名：配置 `html.dir` 非空即用它，空串＝`HELP_HTML_DIR_NAME`。 */
 export function htmlDirName(): string {
   const configured = loadBillConfig().values.html.dir;
   return configured !== '' ? configured : HELP_HTML_DIR_NAME;
-}
-
-/** 速查表文件名主体：配置 `html.quickRefStem` 非空即用它，空串＝`LOOKUP_FILE_STEM`。 */
-export function lookupFileStem(): string {
-  const configured = loadBillConfig().values.html.quickRefStem;
-  return configured !== '' ? configured : LOOKUP_FILE_STEM;
 }

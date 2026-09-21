@@ -17,7 +17,8 @@
  *     该行（`prefillFrom: 'dataDir'`），用户不必自己拼路径（#743）。
  *
  * 清单出处：「六家技能的路径类配置全量调查」记账 8 项去掉 1 项包内固定（包内页面模板目录）
- * ＝**上设置页候选 7 项**；其中「产物文件名主体」在源码里是两个值，故行数为 8。
+ * ＝上设置页候选 7 项，其中「产物文件名主体」在源码里是两个值（#677 起行数 8）。
+ * **#762 起那两个产物名主体出配置表**（键已退休、文件名回到技能侧代码常量），故本表 6 行。
  */
 export const SETTINGS_OWNER = 'dsh-bill-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:cookie' as const;
@@ -33,7 +34,7 @@ export type ConfigTier = 'common' | 'advanced';
 export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
 
 export interface ConfigItem {
-  /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `html.helpStem`。 */
+  /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `backup.dir`。 */
   readonly key: string;
   /** 页面上那一行的中文标题。 */
   readonly title: string;
@@ -95,20 +96,6 @@ const ADVANCED: readonly ConfigItem[] = [
     tier: 'advanced',
     control: 'text',
     hint: '备份文件名的前缀，后面自动加时间戳。',
-  },
-  {
-    key: 'html.helpStem',
-    title: '产物名主体 · HELP',
-    tier: 'advanced',
-    control: 'text',
-    hint: 'HELP 文件名前缀。',
-  },
-  {
-    key: 'html.quickRefStem',
-    title: '产物名主体 · 速查表',
-    tier: 'advanced',
-    control: 'text',
-    hint: '速查表文件名前缀。',
   },
 ];
 

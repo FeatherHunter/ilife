@@ -1,4 +1,4 @@
-﻿// #677 记账设置页：配置面验收（照 #676 卡路里那套同形）。
+// #677 记账设置页：配置面验收（照 #676 卡路里那套同形）。
 //
 // 六组判据：
 //   A 测试隔离在位（#675 替代护栏）
@@ -22,7 +22,7 @@ import { CONFIG_ITEMS, COMMON_ITEM_COUNT, CONFIG_STEM, SETTINGS_OWNER, readPath,
 import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface, writeConfigValues, resetConfigToDefaults } from '../dist/bridge.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, parseSavePayload, isRpcResult } from '../dist/contract.js';
 // 权威侧：技能自己的配置表与三个 key（唯一定义地）。
-import { BILL_CONFIG_DEFAULTS, BILL_CONFIG_STEM } from '../../skill-bill/dist/config.js';
+import { BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED, BILL_CONFIG_STEM } from '../../skill-bill/dist/config.js';
 import { CONFIG_KEYS } from '../../skill-bill/dist/cli/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -86,10 +86,14 @@ describe('#677 记账设置页 · 配置面', () => {
       assert.equal(BILL_CONFIG_DEFAULTS.db.name, 'biscuit_accountant.db');
       assert.equal(BILL_CONFIG_DEFAULTS.db.goals, 'goals.json');
       assert.equal(BILL_CONFIG_DEFAULTS.html.dir, 'biscuit_accountant_html');
-      assert.equal(BILL_CONFIG_DEFAULTS.html.helpStem, '饼干记账_HELP');
-      assert.equal(BILL_CONFIG_DEFAULTS.html.quickRefStem, '饼干记账_速查表');
       assert.equal(BILL_CONFIG_DEFAULTS.db.dir, '', '空串＝按默认落点');
       assert.equal(BILL_CONFIG_DEFAULTS.backup.dir, '');
+    });
+
+    it('#762 已退休的两个产物名主体不在默认值表里，且落在清单上（文件名回代码常量）', () => {
+      assert.equal(Object.prototype.hasOwnProperty.call(BILL_CONFIG_DEFAULTS.html, 'helpStem'), false);
+      assert.equal(Object.prototype.hasOwnProperty.call(BILL_CONFIG_DEFAULTS.html, 'quickRefStem'), false);
+      assert.deepEqual([...BILL_CONFIG_RETIRED].sort(), ['html.helpStem', 'html.quickRefStem']);
     });
 
     it('行表键不重复', () => {
@@ -135,8 +139,8 @@ describe('#677 记账设置页 · 配置面', () => {
       for (const k of ['db.dir', 'db.name', 'db.goals', 'html.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
     });
 
-    it('清单一共 8 行（调查的 7 项，其中「产物文件名主体」一项两值）', () => {
-      assert.equal(CONFIG_ITEMS.length, 8);
+    it('清单一共 6 行（调查的 7 项减去 #762 退休的两个产物名主体）', () => {
+      assert.equal(CONFIG_ITEMS.length, 6);
     });
   });
 

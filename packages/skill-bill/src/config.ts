@@ -12,7 +12,8 @@
  * 默认就是哪里），所以空串不是「没配」，而是「用老落点」，老数据不会看起来丢了。
  *
  * 键表出处：`docs/research/t692-six-skill-paths-survey.md` 的记账 8 项去掉 1 项包内固定
- * （包内页面模板目录）＝**上设置页候选 7 项**；其中「产物文件名主体」在源码里是两个值，故键数为 8。
+ * （包内页面模板目录）＝上设置页候选 7 项，其中「产物文件名主体」在源码里是两个值（#677 起键数 8）。
+ * **#762 起那两个产物名主体出表**（见下面 `BILL_CONFIG_RETIRED`），故本表现为 6 键。
  */
 import { configPaths, loadConfig, resetConfig, saveConfig } from 'base-link-core';
 import type { ConfigRecord } from 'base-link-core';
@@ -26,8 +27,16 @@ export const BILL_CONFIG_DEFAULTS = {
   db: { dir: '', name: 'biscuit_accountant.db', goals: 'goals.json' },
   // 备份目录留空＝库目录下的 backups；主体是那份时间戳文件名的主干。
   backup: { dir: '', stem: 'biscuit_' },
-  html: { dir: 'biscuit_accountant_html', helpStem: '饼干记账_HELP', quickRefStem: '饼干记账_速查表' },
+  html: { dir: 'biscuit_accountant_html' },
 };
+
+/** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键。命中的键跳过校验、不进取值，
+ *  也不会被写回——任何一次保存／重置天然把它抹掉（`saveConfig` 写的是按默认值表补齐的那一份）。
+ *  名单**只许写已经删掉的键**（键还在默认值表里就写进清单＝在有护栏上开洞，`base-link-core` 当场拒）。
+ *  `html.helpStem`／`html.quickRefStem`（#747 定稿）删于 #762：两个产物文件名主体回到代码常量，
+ *  落点值住 `src/help/helpFile.ts` 的 `HELP_FILE_STEM` 与 `src/help/helpPaths.ts` 的 `LOOKUP_FILE_STEM`。
+ *  退出条件：下一个大版本删掉这张清单。 */
+export const BILL_CONFIG_RETIRED: readonly string[] = ['html.helpStem', 'html.quickRefStem'];
 
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type BillConfigValues = typeof BILL_CONFIG_DEFAULTS;
@@ -50,7 +59,7 @@ let memo: { file: string; loaded: LoadedBillConfig } | null = null;
 export function loadBillConfig(): LoadedBillConfig {
   const file = configPaths(BILL_CONFIG_STEM).configFile;
   if (memo === null || memo.file !== file) {
-    const loaded = loadConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS);
+    const loaded = loadConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
@@ -68,14 +77,14 @@ export function loadBillConfig(): LoadedBillConfig {
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */
 export function saveBillConfig(values: ConfigRecord): { path: string } {
-  const r = saveConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, values);
+  const r = saveConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, values, BILL_CONFIG_RETIRED);
   memo = null;
   return r;
 }
 
 /** 重置为默认（先另存 `<配置目录>/bill.yaml.bak`）。 */
 export function resetBillConfig(): { path: string; backupPath: string | null } {
-  const r = resetConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS);
+  const r = resetConfig(BILL_CONFIG_STEM, BILL_CONFIG_DEFAULTS, BILL_CONFIG_RETIRED);
   memo = null;
   return r;
 }

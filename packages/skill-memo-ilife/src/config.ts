@@ -33,6 +33,14 @@ export const MEMO_CONFIG_DEFAULTS = {
   lark: { cliPath: '', qrDir: '' },
 };
 
+/** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键的叶子全路径。命中的键跳过校验、
+ *  不进取值、也不会被写回（任何一次保存／重置天然抹掉它）；**整组的子项全退休时那一层组名也不写出**
+ *  （`lark` 这一组在本家将来正是这个形状）。名单**只许写已经删掉的键**——键还在默认值表里就写进清单
+ *  ＝在护栏上开洞，`base-link-core` 收到清单时当场拒。
+ *  `files.help`／`files.lookup`／`lark.cliPath`／`lark.qrDir` 预定在【实施】备忘录设置页收窄（#760）里删；
+ *  填进来之前，本清单保持为空。退出条件：下一个大版本删掉这张清单。 */
+export const MEMO_CONFIG_RETIRED: readonly string[] = [];
+
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type MemoConfigValues = typeof MEMO_CONFIG_DEFAULTS;
 
@@ -50,7 +58,7 @@ let memo: LoadedMemoConfig | null = null;
 /** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。 */
 export function loadMemoConfig(): LoadedMemoConfig {
   if (memo === null) {
-    const loaded = loadConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS);
+    const loaded = loadConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
@@ -65,14 +73,14 @@ export function loadMemoConfig(): LoadedMemoConfig {
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */
 export function saveMemoConfig(values: ConfigRecord): { path: string } {
-  const r = saveConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS, values);
+  const r = saveConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS, values, MEMO_CONFIG_RETIRED);
   memo = null;
   return r;
 }
 
 /** 重置为默认（先另存 `<配置目录>/memo.yaml.bak`）。 */
 export function resetMemoConfig(): { path: string; backupPath: string | null } {
-  const r = resetConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS);
+  const r = resetConfig(MEMO_CONFIG_STEM, MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_RETIRED);
   memo = null;
   return r;
 }
