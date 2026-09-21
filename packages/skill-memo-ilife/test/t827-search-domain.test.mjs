@@ -56,7 +56,7 @@ const SCENES = [
   { seq: 8, wake: '查备忘', key: 'memo.search', scene: 'memo_search_alias', ctx: {}, params: { q: '咖啡', scene: 'memo_search_alias' } },
   { seq: 9, wake: '看备忘', key: 'memo.detail', scene: 'memo_get_detail', ctx: { id: 1 }, params: { id: 1 } },
   { seq: 10, wake: '按时间搜备忘', key: 'memo.search', scene: 'memo_search_by_date', ctx: { start: DAY(-7), end: DAY(1) }, params: { start: DAY(-7), end: DAY(1) } },
-  { seq: 11, wake: '查心愿', key: 'memo.wish', scene: 'memo_search_wish', ctx: {}, params: { category: '心愿' } },
+  { seq: 11, wake: '查心愿', key: 'memo.wish', scene: 'memo_search_wish', ctx: {}, params: { category: '心愿', scene: 'memo_search_wish' } },
   { seq: 12, wake: '查打卡', key: 'memo.search', scene: 'memo_search_checkin', ctx: {}, params: { category: '打卡' } },
   { seq: 13, wake: '查情绪', key: 'memo.search', scene: 'memo_search_mood', ctx: {}, params: { category: '情绪日记' } },
 ];
@@ -93,12 +93,11 @@ describe('#827 查找域 7 场景端到端（唤醒词 → 命令 → 册子格�
     assert.throws(() => routeWakeword('看备忘', {}), (e) => e.code === 'POLICY_MISSING_SLOT');
   });
 
-  it('② 6 格真落盘：主体＝册子主体，落点＝<库目录>/memo_html/ 扁平一层', () => {
+  it('② 7 格真落盘：主体＝册子主体，落点＝<库目录>/memo_html/ 扁平一层', () => {
     const s = seam('t827-pages-');
     const ids = seed(s);
     const detailParams = { id: ids[0] };
     for (const sc of SCENES) {
-      if (sc.scene === 'memo_search_wish') continue; // 第 7 格：命令属心愿域，见文件头
       const params = sc.key === 'memo.detail' ? detailParams : sc.params;
       const x = run(s, sc.key, params);
       assert.equal(x.exit, 0, sc.wake + ' 须能跑（stderr=' + String(x.r.stderr).slice(0, 300) + '）');
@@ -124,12 +123,19 @@ describe('#827 查找域 7 场景端到端（唤醒词 → 命令 → 册子格�
     }
   });
 
-  it('③ 第 7 格「查心愿」：命令能跑、库里有行（出页接线在心愿域写集里）', () => {
+  it('③ 第 7 格「查心愿」：关键词过滤走同一条搜索原语，且缺省（不给 scene）仍落心愿域那一格', () => {
     const s = seam('t827-wish-');
     seed(s);
-    const x = run(s, 'memo.wish', { category: '心愿' });
-    assert.equal(x.exit, 0, 'stderr=' + String(x.r.stderr).slice(0, 300));
-    assert.equal(x.env.data.total, 1, '心愿清单须命中 1 条');
+    // 给了 `scene`：落查找类那一格，带关键词时只回命中（关键词匹配复用取数层 `searchNotes`）。
+    const hit = run(s, 'memo.wish', { category: '心愿', scene: 'memo_search_wish', q: '提拉米苏' });
+    assert.equal(hit.exit, 0, 'stderr=' + String(hit.r.stderr).slice(0, 300));
+    assert.equal(hit.env.data.total, 1, '关键词「提拉米苏」须只命中那一条心愿');
+    assert.equal(stemOf(hit.env.delivery.path), bookletFileStem('memo_search_wish'));
+    // 不给 `scene`（#829 的老形状）：仍是心愿域那一格，逐字不变。
+    const plain = run(s, 'memo.wish', { category: '心愿' });
+    assert.equal(plain.exit, 0);
+    assert.equal(plain.env.data.total, 1, '缺省不带关键词：仍回全部心愿');
+    assert.equal(stemOf(plain.env.delivery.path), bookletFileStem('memo_wish_schedule'), '缺省须落心愿域那一格（撞格修正不许改老路径）');
   });
 
   it('④ 反例：scene 给别的域的格 ⇒ 退出码 2（不静默改判）', () => {

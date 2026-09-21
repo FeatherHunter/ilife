@@ -6,6 +6,8 @@
  *
  * #829 起三支各自的**产物**补齐（册子 `BOOKLET_ROWS` seq 19／32／33 三格）：
  *   - 不带 `wizard` 那支是 HELP 场景 `memo_wish_schedule` 的**结果页**（主体 `心愿排期`，键＝`memo.wish`）；
+ *     ⚠️ 同一支还被查找类场景 `memo_search_wish`（`查心愿`，册子 seq 11）用着——#827 起按 `params.scene` 分格，
+ *     给了 `memo_search_wish` 即出列表页，缺省仍是本域那一格（见下方该分支的注释）；
  *   - 两条向导是同一批场景的**过程页**（主体 `心愿排期-向导`／`完成心愿-向导`）——册子里同场景两格，
  *     故取名一律经 `buildWishReceipt` 带 `kind`，本件不自己拼名字。
  * 代价：`memo.wish` 的 envelope 仍是 `list` 形，`data` 那半边一字不改（只多 `deliver`）。
@@ -15,8 +17,8 @@
 import type { CommandOut } from '../shared/commandSpec.js';
 import { toRows } from '../shared/rows.js';
 import type { MemoDb } from '../db/readonly.js';
-import { listNotes } from '../db/readonly.js';
-import { pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot } from '../render/index.js';
+import { listNotes, searchNotes } from '../db/readonly.js';
+import { pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, buildListPage, querySnapshot } from '../render/index.js';
 import { dueMatches, normalizeDue } from './due.js';
 import { planWizard, completeWizard } from './wizards.js';
 import { buildWishReceipt } from './receipt.js';
@@ -83,6 +85,34 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
   const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
   const due = normalizeDue(params.due);
   const scheduled = items.filter((n) => n.due !== null).length;
+  // #827 · 撞格修正：`查心愿`（查找类场景 `memo_search_wish`，册子 seq 11，族「列表查询」）与
+  // `心愿排期`（心愿类场景 `memo_wish_schedule`，册子 seq 19，族「通用回执」）**共用本支**——
+  // HELP 里这两条场景都走 `memo.wish` 无 `wizard` 的那一路，区别只在唤醒词，故按 `params.scene` 分格。
+  // 缺省（不给 scene）与 #829 交付时**逐字一致**：仍是心愿类那一格。查找类那一格走列表族唯一定义地
+  // `src/render/listPage.ts`，关键词过滤复用取数层同一条搜索原语（`searchNotes`），不另立第二份匹配规则。
+  if (params.scene === 'memo_search_wish') {
+    const q = params.q === undefined ? '' : String(params.q).trim();
+    const hit = q === '' ? items : searchNotes(db, q, { category: '心愿' }).filter((n) => dueMatches(n, params));
+    const snap = querySnapshot(toRows(hit));
+    return {
+      data: { items: hit, total: hit.length },
+      exit: 0,
+      deliver: buildListPage({
+        scene: 'memo_search_wish',
+        title: '查心愿',
+        subtitle: '共 ' + hit.length + ' 个心愿' + (q === '' ? '' : '，条件：关键词「' + q + '」'),
+        summary: snap.summary,
+        sections: snap.sections,
+        copyLog: {
+          thinking: '查心愿 · 自动按「心愿」分类过滤，页内可再筛选与复制（列表查询族）',
+          data_structure: 'notes 表（category=心愿）· id／content／category／sub_category／due／created_at',
+          call_chain: 'memo.wish（scene=memo_search_wish）→ listNotes／searchNotes → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
+          exception: '无',
+        },
+        items: hit,
+      }),
+    };
+  }
   const message = '找到 ' + items.length + ' 个心愿，其中 ' + scheduled + ' 个已排期';
   return {
     data: { items, total: items.length },

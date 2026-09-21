@@ -8,6 +8,11 @@
 //   ④ 记退出码 ＋ 回执里 `delivery`（页外无 delivery ＝ 这次没落盘）。
 //
 // 跑法：node docs/skills/skill-memo-ilife/t827-probe-search.mjs
+//
+// ⚠️ 两个时点的调用形不同，别把两次读数当同一支量：**开工前**（2026-09-21 上午）那次是在 #855 重排前跑
+// 的：路由件还住 `dist/policy/wakewords.js`、`查情绪` 主名还没进表（`POLICY_NO_MATCH`）、7 条命令都没有
+// `deliver`（`delivered=0`）；那次读数记在证据件 §3.1 的表里。**现在**这一版按各格的真调用形跑
+// （别名格给 `scene: 'memo_search_alias'`、查心愿给 `scene: 'memo_search_wish'`）。
 import { mkdirSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
@@ -66,10 +71,10 @@ const route = (phrase, ctx) => {
 // 7 场景：主名 ＋ 它这次要补的槽位（照 HELP prompt 里的字段）＋ 真跑参数。
 const SCENES = [
   { id: 'memo_search_keyword', wake: '搜备忘', ctx: { q: '咖啡' }, run: { key: 'memo.search', params: { q: '咖啡' } } },
-  { id: 'memo_search_alias', wake: '查备忘', ctx: { q: '咖啡' }, run: { key: 'memo.search', params: { q: '咖啡' } } },
+  { id: 'memo_search_alias', wake: '查备忘', ctx: { q: '咖啡' }, run: { key: 'memo.search', params: { q: '咖啡', scene: 'memo_search_alias' } } },
   { id: 'memo_get_detail', wake: '看备忘', ctx: { id: seeded[0] }, run: { key: 'memo.detail', params: { id: seeded[0] } } },
   { id: 'memo_search_by_date', wake: '按时间搜备忘', ctx: { start: plus(-7), end: plus(1) }, run: { key: 'memo.search', params: { start: plus(-7), end: plus(1) } } },
-  { id: 'memo_search_wish', wake: '查心愿', ctx: {}, run: { key: 'memo.wish', params: {} } },
+  { id: 'memo_search_wish', wake: '查心愿', ctx: {}, run: { key: 'memo.wish', params: { category: '心愿', scene: 'memo_search_wish' } } },
   { id: 'memo_search_checkin', wake: '查打卡', ctx: {}, run: { key: 'memo.search', params: { category: '打卡' } } },
   { id: 'memo_search_mood', wake: '查情绪', ctx: {}, run: { key: 'memo.search', params: { category: '情绪日记' } } },
 ];

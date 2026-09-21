@@ -58,7 +58,7 @@ const SCENES = [
   { seq: 8, wake: '查备忘', scene: 'memo_search_alias', key: 'memo.search', params: { q: '咖啡', scene: 'memo_search_alias' } },
   { seq: 9, wake: '看备忘', scene: 'memo_get_detail', key: 'memo.detail', params: { id: ids[1] } },
   { seq: 10, wake: '按时间搜备忘', scene: 'memo_search_by_date', key: 'memo.search', params: { start: DAY(-7), end: DAY(1) } },
-  { seq: 11, wake: '查心愿', scene: 'memo_search_wish', key: 'memo.wish', params: { category: '心愿' } },
+  { seq: 11, wake: '查心愿', scene: 'memo_search_wish', key: 'memo.wish', params: { category: '心愿', scene: 'memo_search_wish' } },
   { seq: 12, wake: '查打卡', scene: 'memo_search_checkin', key: 'memo.search', params: { category: '打卡' } },
   { seq: 13, wake: '查情绪', scene: 'memo_search_mood', key: 'memo.search', params: { category: '情绪日记' } },
 ];
