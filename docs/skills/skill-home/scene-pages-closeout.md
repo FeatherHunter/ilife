@@ -325,8 +325,8 @@ items／locations／tags／categories 四类聚合，逐维分布与时间趋势
 | 12–18 变更回执（`items/pages/receipt.ts`） | 当前状态 名称／分类／位置与数量／状态／备注 五行「—」 | `home.item.update` 回执带变更后 item 摘要 | #807 |
 | 15 合并物品（`items/pages/confirm.ts`） | 「来源条目 —」 | `op=merge` 带 `sources` 与合并前后数量 | #807 |
 | 17 物品关联（`items/pages/relations.ts`） | 「关系类型：—」（回执只带主条 id 与对方 id，五类关系类型不带） | `op=relate` 带关系类型与对方名称 | #807 |
-| 19、21 管标签（`items/pages/tag_manage.ts`） | 标签名／件数／使用次数 三行「—」；每对「相似度 —」 | `home.tag.write` 回执带标签明细与相似度分数 | #804 |
-| 20 管分类（`items/pages/category_manage.ts`） | 「每类计数 —」 | 同上回执带每类节点计数 | #804 |
+| 19、21 管标签（`items/pages/tag_manage.ts`） | 标签名／件数／使用次数 三行「—」；每对「相似度 —」 | `home.tag.write` 回执带标签明细与相似度分数 | #807 |
+| 20 管分类（`items/pages/category_manage.ts`） | 「每类计数 —」 | 同上回执带每类节点计数 | #807 |
 | 22、23 照片管理态（`items/pages/photos.ts`） | 管理态六字段「—」（查看态已接真值） | `home.item.update op=photo` 回执带 item 摘要 | #808 |
 | 24 照片墙（`items/pages/photo_wall.ts`） | 「— 件无照片」 | 墙体回执带无照片件数 | #808 |
 | 25–28 盘点与搬家（`items/pages/inventory_{round,diff,records}.ts`、`move_checklist.ts`） | 待复查置顶／核对清单／差异条目／差异计数／搬家物品行 写「—」 | `home.inventory.*` 回执带清单行、差异分组明细与计数 | #808 |
@@ -344,6 +344,13 @@ items／locations／tags／categories 四类聚合，逐维分布与时间趋势
 `items.purchase_price` 价格聚合（39）、`idleItems` 补 `category`（40）、`expiringItems` JOIN `items` 取 `item_name`／`category`（41）、
 `count(*)` 替换 `limit(1)`（42）、`home.trip.manage` 汇总改真条数（37）、`outfit.pick` 缺省候选池 5→20（34）、`places` 去掉 `slice(0,12)`（36）。
 **对外行为变更**（`home.outfit.pick`／`home.trip.manage`／`home.stats.*` 的回执或出参形状）见各席报告，均为**加法或口径修正**，形状与既有键语义不变，包内 312 例全绿。
+
+**归属更正（第十六轮核对现场发现）**：早先那版 §六 把 19／20／21 管标签与管分类的缺口记到 **#804**，
+但 #804 是「**生成器：双端验收墙＋链路总览页**」——**归属写错了**。管标签（4-1）／管分类（4-2）／整理建议（4-3）
+属**物品管理域（二）更新与标签分类＝#807**。上表已按 #807 记，回写也按 #807 发。
+
+**经核无数据层缺口的域票**：#809 空间与位置 4 条、#812 快递购物 4 条——这两域的页面在现有字段下已无「拿不到的值」，
+故不产生回写条目（第 44 页缺货检测那处是**页面层功能缺陷**，本票已当场修）。
 
 ## 七 · 交出去的三样
 
