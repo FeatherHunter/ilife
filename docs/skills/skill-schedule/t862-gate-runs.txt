@@ -1,9 +1,21 @@
 # #862 的运行条目录出件（协议 §2.3.4）
-# 源：.scratch/locks/gate-runs.log 里 ticket=862 的全部条目，逐字抄录。
-# 更新时间：2026-09-21
+# 源：.scratch/locks/gate-runs.log 里 ticket=862 的全部条目，逐字抄录（含调试期的红）。
+# 更新时间：2026-09-21（定版与发版跑完）
 
 START ticket=862 runId=e0450947-a6ca-4122-a794-c86e1105f7eb cmd="node .scratch/t862/run.mjs" waitedMs=0 pid=47572 at=2026-09-21T07:38:38.073Z
 RUN ticket=862 runId=e0450947-a6ca-4122-a794-c86e1105f7eb cmd="node .scratch/t862/run.mjs" waitedMs=0 exit=0 pid=47572 at=2026-09-21T07:38:54.159Z
 START ticket=862 runId=58c9e279-7062-4621-acdc-3706f5dc9265 cmd="node .scratch/t862/commit.mjs" waitedMs=1 pid=4292 at=2026-09-21T07:39:27.607Z
 RUN ticket=862 runId=58c9e279-7062-4621-acdc-3706f5dc9265 cmd="node .scratch/t862/commit.mjs" waitedMs=1 exit=1 pid=4292 at=2026-09-21T07:39:27.763Z
 START ticket=862 runId=da42edb9-8d3a-4c1b-a72b-ab7c951e904f cmd="node .scratch/t862/commit.mjs" waitedMs=0 pid=48200 at=2026-09-21T07:39:43.020Z
+RUN ticket=862 runId=da42edb9-8d3a-4c1b-a72b-ab7c951e904f cmd="node .scratch/t862/commit.mjs" waitedMs=0 exit=0 pid=48200 at=2026-09-21T07:39:43.366Z
+START ticket=862 runId=50f161ba-2103-4a6d-95c7-6995123f31d0 cmd="node .scratch/t862/run-release.mjs" waitedMs=1 pid=42428 at=2026-09-21T07:56:42.878Z
+RUN ticket=862 runId=50f161ba-2103-4a6d-95c7-6995123f31d0 cmd="node .scratch/t862/run-release.mjs" waitedMs=1 exit=1 pid=42428 at=2026-09-21T07:57:06.244Z
+START ticket=862 runId=59495d59-396a-4140-af42-b6275f7670bd cmd="node .scratch/t862/run-release2.mjs" waitedMs=0 pid=28076 at=2026-09-21T07:57:37.209Z
+RUN ticket=862 runId=59495d59-396a-4140-af42-b6275f7670bd cmd="node .scratch/t862/run-release2.mjs" waitedMs=0 exit=0 pid=28076 at=2026-09-21T07:57:54.889Z
+START ticket=862 runId=92c8aa8e-21bb-4142-bb0f-e691db97cae1 cmd="node .scratch/t862/commit-bump.mjs" waitedMs=0 pid=28004 at=2026-09-21T07:58:18.727Z
+RUN ticket=862 runId=92c8aa8e-21bb-4142-bb0f-e691db97cae1 cmd="node .scratch/t862/commit-bump.mjs" waitedMs=0 exit=0 pid=28004 at=2026-09-21T07:58:19.012Z
+START ticket=862 runId=730e5a2f-0d39-4447-b745-ee29c88f6493 cmd="node tooling/check-publish.mjs --post --only skill-schedule,dsh-schedule-ilife" waitedMs=0 pid=10928 at=2026-09-21T08:01:02.099Z
+RUN ticket=862 runId=730e5a2f-0d39-4447-b745-ee29c88f6493 cmd="node tooling/check-publish.mjs --post --only skill-schedule,dsh-schedule-ilife" waitedMs=0 exit=1 pid=10928 at=2026-09-21T08:01:06.261Z
+START ticket=862 runId=c2ec8e8b-4393-4ae7-b157-1221a6dc4d55 cmd="node tooling/check-publish.mjs --post --only skill-schedule,dsh-schedule-ilife" waitedMs=0 pid=12772 at=2026-09-21T08:05:01.447Z
+RUN ticket=862 runId=c2ec8e8b-4393-4ae7-b157-1221a6dc4d55 cmd="node tooling/check-publish.mjs --post --only skill-schedule,dsh-schedule-ilife" waitedMs=0 exit=0 pid=12772 at=2026-09-21T08:05:02.811Z
+START ticket=862 runId=95bcd69d-82b3-4475-814a-0ac2938ae796 cmd="node .scratch/t862/commit-final.mjs" waitedMs=0 pid=37224 at=2026-09-21T08:05:43.292Z
