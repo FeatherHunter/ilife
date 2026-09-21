@@ -31,6 +31,10 @@
 
 ## 行数台账（#855 · 350 ＋ LF 口径）
 
+台账由包内这一件守：`node packages/skill-memo-ilife/scripts/check-warning-line.mjs`（比对，红即点名）／
+`--sync`（只补新行、只刷「当场实测」列——**已存在行的挂号值永不回改**）。越线件只许变短：实测 > 挂号值即红。
+包内脚本别名：`pnpm --filter skill-memo-ilife gate:lines`。（口径与拆法见 `docs/skills/skill-memo-ilife/t855-实施规格-与开工前读数.md` §十七。）
+
 <!-- warning-line-ledger:begin -->
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
