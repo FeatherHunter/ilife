@@ -27,7 +27,7 @@
  */
 import {
   renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderDistributionRows,
-  renderKpiGrid, renderListRows,
+  renderKpiGrid, renderProseBlock,
   type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
 import {
@@ -252,7 +252,9 @@ export function renderComparePage(input: ComparePageInput): string {
     renderDiffBars(rows),
     renderSectionTitle('AI 思考钩子'),
     renderCaliberLine('这一节是留给 AI 的入口：把下面任意一句复制给 AI，它就着这两个区间往下聊'),
-    renderListRows({ items: compareQuestions(rows, input.labelA, input.labelB).map((text) => ({ main: text })) }),
+    // 逐句一段正文（**不用列表行**：那一件是「一行一格、超出裁掉」的形状，窄屏上问题会被省略号吃掉——
+    //  #789 的响应式读数在 390 档实测裁掉过四成，见证据件第四节）。
+    ...compareQuestions(rows, input.labelA, input.labelB).map((text) => renderProseBlock({ text })),
     renderCopyBlock({
       title: '复制与留档',
       dataText: '【作息管家 · 作息对比】' + input.labelA + '（' + input.startA + ' 至 ' + input.endA + '）对 '
