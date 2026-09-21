@@ -94,7 +94,21 @@ function purchaseTable(env: Envelope): string {
   const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>'
     + escapeHtml(String(it.name ?? '').replace(/^购买/, '')) + '</td></tr>').join('');
   return '<div class="fam-content"><table><thead><tr><th>序号</th><th>购买日</th></tr></thead><tbody>'
-    + rows + '</tbody></table><p>退货窗口按购买日加窗口天数推算；价格与渠道进物品详情看。</p></div>';
+    + rows + '</tbody></table><p>退货窗口按购买日加窗口天数推算；金额与渠道进物品详情看。</p></div>';
+}
+
+/** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；补一行入口后
+ *  「触控够大」这一维才有对象可量。 */
+const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
+  + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}</style>';
+
+function opsBlock(): string {
+  return '<div class="rc-ops">'
+    + '<button type="button" data-t="请查购买记录，按物品复核">按物品复核</button>'
+    + '<button type="button" data-t="请登记购买记录">新增记录</button>'
+    + '<button type="button" data-t="请查退货窗口">查退货窗口</button>'
+    + '<button type="button" data-t="复制购买记录数据">复制数据</button>'
+    + '<button type="button" data-t="复制购买记录日志">复制日志</button></div>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -108,6 +122,8 @@ export function renderFamilyPage(env: Envelope): string {
     + (env.shape === 'receipt'
       ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
       : purchaseTable(env))
+    + PAGE_CSS
+    + opsBlock()
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

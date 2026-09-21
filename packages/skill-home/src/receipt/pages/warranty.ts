@@ -74,7 +74,13 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
 function summaryOf(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
   if (env.shape === 'receipt') {
-    return '<div class="receipt-summary"><p>已落盘，可在查保修状态中按状态筛选复核，到期日按起始日加时长推算，下次保养按上次执行加周期推算</p></div>';
+    // 每条写操作说本操作那一件事（消息文本带动作词，据此分流），不再把五种语义都塞进一句。
+    const msg = String((data as { message?: unknown }).message ?? '');
+    const byOp = /保养周期/.test(msg) ? '下次保养按本次周期与上次执行日推算'
+      : /执行保养/.test(msg) ? '本次执行日已记入，下次保养按周期往后推'
+        : /维修/.test(msg) ? '维修日期与花费已记入该物品的服务事件'
+          : /保修/.test(msg) ? '到期日按起始日加保修时长自动算出' : '已落盘，可在查保修状态中按状态筛选复核';
+    return '<div class="receipt-summary"><p>' + byOp + '</p></div>';
   }
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: unknown[] }).items
@@ -83,6 +89,20 @@ function summaryOf(env: Envelope): string {
     return '<div class="receipt-summary"><p>暂无登记，可新增一条保修保养后回来复核</p></div>';
   }
   return '<div class="receipt-summary"><p>共' + items.length + '项保修保养权益，按到期先后排列</p></div>';
+}
+
+/** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起。 */
+const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
+  + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}</style>';
+
+function opsBlock(): string {
+  return '<div class="rc-ops">'
+    + '<button type="button" data-t="请查保修状态">按状态复核</button>'
+    + '<button type="button" data-t="请登记保修">新增保修</button>'
+    + '<button type="button" data-t="请记录一次维修">记录维修</button>'
+    + '<button type="button" data-t="请执行一次保养">执行保养</button>'
+    + '<button type="button" data-t="复制保修保养数据">复制数据</button>'
+    + '<button type="button" data-t="复制保修保养日志">复制日志</button></div>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -94,6 +114,8 @@ export function renderFamilyPage(env: Envelope): string {
   const content = head
     + summaryOf(env)
     + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    + PAGE_CSS
+    + opsBlock()
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

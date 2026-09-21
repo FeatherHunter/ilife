@@ -126,7 +126,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div>'
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
-    + '<h2>空态与异常</h2>'
+    + '<h2>这种时候会怎样</h2>'
     + (healthy
       ? '<p data-need="空态：数据健康良好＋未发现数据问题">数据健康良好，没有发现数据问题。</p>'
       : '<p data-need="空态：数据健康良好＋未发现数据问题">数据还没有可体检的内容，录入物品后再回来查看。</p>')
@@ -134,10 +134,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p data-need="异常：数据解析失败／数据校验失败">如果页面提示解析失败或者校验失败，说明这次检查没有跑起来，换个时间再查一次。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>状态说明</h2>'
+    + '<h2>口径说明</h2>'
     + '<p>健康标记只有两种：良好表示没有待处理项，待处理表示还有事项需要看。</p>'
     + '</section>'
-    + '<details class="su-raw"><summary>原始回执</summary><pre>'
+    + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'
     + '</div>'
     + '<div class="su-toast" id="suToast" role="status"></div>'
