@@ -29,6 +29,7 @@ HELP 官方源 `packages/skill-memo-ilife/src/help/scenes/search.ts`（查找类
 | 1 | `src/search/run.ts` | 两条读命令补 `deliver`：`memo.search` 两支（区间／关键词-分类）＋ `memo.detail`；并加「这一次是哪一格」的判定 | 命令今天只回 JSON、**一件不落盘**；页面必须由命令出口的 `deliver` 钩子触发 |
 | 2 | `test/t827-search-domain.test.mjs`（新增） | 4 例：① 7 词路由＋SKILL.md 行；② **6 格真落盘**（主体／目录／体积／整页）；③ 第 7 格命令能跑；④ 反例三面 | 票面「唤醒词能路由／命令能跑／产物真落盘」逐条要真出口用例 |
 | 3 | `docs/skills/skill-memo-ilife/t827-probe-search.mjs`（入仓） | 开工前现状探针（7 场景真喂路由＋真跑＋看产物） | 本域的改前读数；客观记录「改前 0／7 落盘」 |
+| 4 | `docs/skills/skill-memo-ilife/t827-gen-pages.mjs`／`t827-mutation.mjs`（入仓） | 真产物驱动器（临时库＋隔离配置，含**撞格防线**：产物主体≠本格册子主体时挪 `out-of-scope/` 并点名）／分隔符门变异电池 | 读数要别人能重跑（协议 §5：可复跑脚本随证据入仓） |
 
 **页形状不新写**：列表族（34 格里 9 格）的唯一定义地是 `src/render/listPage.ts`（**#828 首建**，本票复用，不另立第二份）；
 模板是族共用的 `templates/memo_query.html`；文件名主体只经 `bookletFileStem(sceneId)` 查册子。
@@ -167,8 +168,8 @@ src/wish/run.ts:90   deliver: buildWishReceipt({ scene: 'memo_wish_schedule', ti
 node docs/skills/skill-memo-ilife/t827-probe-search.mjs                # 现状探针（路由三档 ＋ 落盘）
 node tooling/run-locked.mjs --ticket 827 -- node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife
 node tooling/run-locked.mjs --ticket 827 -- node --test packages/skill-memo-ilife/test/t827-search-domain.test.mjs
-node tooling/run-locked.mjs --ticket 827 -- node .scratch/t827/gen-search-pages.mjs
-node .scratch/t827/mutation.mjs                                        # 分隔符门正例／反例／还原
+node tooling/run-locked.mjs --ticket 827 -- node .scratch/t827/gen-search-pages.mjs   # 等价件入仓：docs/skills/skill-memo-ilife/t827-gen-pages.mjs
+node .scratch/t827/mutation.mjs                                        # 分隔符门正例／反例／还原（等价件入仓：t827-mutation.mjs）
 node packages/base-render/test/separator-probe.mjs .scratch/t827/pages/<产物>.html
 node packages/skill-calorie/scripts/measure-responsive.mjs --dir .scratch/t827/pages --widths 390,768,1440 --json .scratch/t827/resp.json
 node docs/skills/skill-calorie/t516-判据-版式.mjs --dir .scratch/t827/pages --widths 390,768,1440 --json .scratch/t827/fmt.json
@@ -186,6 +187,7 @@ node docs/skills/skill-calorie/t516-判据-版式.mjs --dir .scratch/t827/pages 
   ⚠️ 该提交的**标题被终端代码页损坏**（`git commit -m` 传中文时被 PowerShell 转码），
   可读信息副本见紧随其后的那条提交；文件内容无碍。
 - 暂存区复核：提交前 `git diff --cached --name-only` 只列本票 4 件（他席在途件未入本提交）。
+- 随后一条：驱动与变异件随证据入仓（`t827-gen-pages.mjs`／`t827-mutation.mjs`）＋本件补 §八／§六 的路径与撞格防线说明。
 
 ---
 
