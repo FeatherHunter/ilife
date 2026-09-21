@@ -121,10 +121,12 @@ describe('#843 交付面', () => {
       const html = readFileSync(out, 'utf8');
       assert.equal(/^<!doctype html>/i.test(html), true, label + ' 须是完整页面（doctype 起）');
       assert.equal(html.includes('</html>'), true, label + ' 须收尾 </html>');
-      // 真内容：HELP 看载荷容器；**写键 #783 起交整页**（页壳 ＋ 页面级配方根类），其余键仍走薄模板分节。
+      // 真内容：HELP 看载荷容器；**交整页的键**（#783 写域 ＋ #784 单日查）看页壳与页面级配方根类；
+      // 其余键仍走薄模板分节。这张名单是「哪些键的处理函数自己给整页」的**唯一清单**，加一条＝那一票自己加。
+      const FULL_PAGE_KEYS = new Set(['schedule.record.write', 'schedule.record.today']);
       const substantive = entry.key === 'schedule.help.lookup'
         ? html.includes('<script id="help-data" type="application/json">')
-        : (entry.key === 'schedule.record.write'
+        : (FULL_PAGE_KEYS.has(entry.key)
           ? html.includes('ilife-block-page-shell-body') && html.includes('ilife-page-ui')
           : html.includes('<section data-skill="schedule"'));
       assert.equal(substantive, true, label + ' 产物须含本键真内容（不是空壳）');

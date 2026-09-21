@@ -132,6 +132,16 @@ const GENERATED_BASELINE = {
   'src/triggers/routes.generated.ts': '79c79b79fe6cedb1',
 };
 
+/** **本票收口那一刻**的编译态指纹（`FINGERPRINT:` 行里那两枚 sha，逐字抄自干净窗口那次跑）。
+ *  默认照它比：两枚都对得上＝「这份读数就是收口那一刻那棵 src 树／那批 dist 编出来的」。
+ *  ⚠️ 别的席若在本包之外重编过（`pnpm build` 会重写本包 dist），dist 那枚会变——那是**同源产物**、
+ *  不是漂移：那种时候显式加 `--no-baseline` 再跑，并在读数里写清为什么。 */
+const FROZEN_FINGERPRINT = {
+  src: 'b1aaee59a8ca0fa7',
+  dist: '2abcb7db0d13143f',
+};
+const NO_BASELINE = process.argv.includes('--no-baseline');
+
 const reds = [];
 const lines = [];
 const ok = (m) => lines.push('OK   ' + m);
@@ -195,6 +205,21 @@ const fingerprint = compileFingerprint();
 const runId = gateRunId();
 ok('安静窗口：本包 src 无未提交改动、锁目录无别人持锁');
 ok('编译指纹：' + fingerprint);
+
+/** 与收口那一刻的指纹对账（默认比；`--no-baseline` 跳过并在读数里点名）。 */
+{
+  const gotSrc = (fingerprint.match(/src-sha-后=([0-9a-f]+)/) ?? [])[1];
+  const gotDist = (fingerprint.match(/dist-sha-后=([0-9a-f]+)/) ?? [])[1];
+  if (NO_BASELINE) {
+    ok('编译态基线：**按请求跳过**（--no-baseline）；本趟 src=' + String(gotSrc) + ' dist=' + String(gotDist));
+  } else if (gotSrc === FROZEN_FINGERPRINT.src && gotDist === FROZEN_FINGERPRINT.dist) {
+    ok('编译态基线：与收口那一刻同枚（src=' + FROZEN_FINGERPRINT.src + ' dist=' + FROZEN_FINGERPRINT.dist + '）');
+  } else {
+    red('编译态基线不符：收口那一刻 src=' + FROZEN_FINGERPRINT.src + '／dist=' + FROZEN_FINGERPRINT.dist
+      + '，本趟 src=' + String(gotSrc) + '／dist=' + String(gotDist)
+      + '——本包 src 若真变过，读数作废；若是别席重编过 dist（同源），加 --no-baseline 重跑并写清理由');
+  }
+}
 
 rmSync(HOME, { recursive: true, force: true });
 rmSync(PROD, { recursive: true, force: true });
