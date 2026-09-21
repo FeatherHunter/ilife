@@ -115,6 +115,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">每个分类名后面跟着该类的物品件数</div></div>'
     + '<p class="fp-note">完整树明细走查标签命令看分类表，本页只收总数与操作入口</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">操作提示</h2>'
+    + '<p class="fp-note">改名、合并或移动分类在对话里说一句就行，本页只给总数与入口</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">删除拦截说明</h2>'
     + '<div class="fp-warnbox">名下还有物品的分类不能删除，先把物品挪走或者并入其他分类</div>'
     + '<p class="fp-note">树是空的时候，本页只会留一个新建顶级分类入口</p></section>'
