@@ -18,8 +18,6 @@ import {
   closeMemoDb,
   listNotes,
   getNote,
-  searchNotes,
-  searchNotesByCreatedRange,
   addReminderRow,
   abandonReminder,
   checkDueReminders,
@@ -37,10 +35,11 @@ import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
 import { normalizeTop, normalizeSub, needId, normalizeMediaPath, crudCreate, crudUpdate, crudRemove, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../policy/index.js';
 // #661：心愿类的对外面——记／改／删／批量排期四条写命令与反向对账都经这一个门（`src/wish/index.ts`）。
 // #665：完成心愿走原子转换（`completeWish`，老 `complete-wish`）；排期／完成向导收集走 `wizards`。
-import { dueForCategory, dueMatches, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish } from '../wish/index.js';
+import { dueForCategory, ensureWish, updateWish, removeWish, setWishDue, reconcileWishes, completeWish } from '../wish/index.js';
 // #855：**命令登记查表**——各域自己的声明（`src/<域>/commands.ts`）由生成器汇成本表；命中即走该域的运行件。
 import { REGISTRY } from './registry.js';
 import { toRows, type PageRow } from '../shared/rows.js';
+import { fail } from '../shared/exit.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, changeCategorySnapshot, syncSnapshot, initSnapshot, MemoRenderError, buildReceiptPage } from '../render/index.js';
 import type { ReceiptScene } from '../render/index.js';
 import type { WishReceipt } from '../wish/index.js';
@@ -61,7 +60,7 @@ import type { MemoDb, NotePatch } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
-function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
+// #855：失败约定（`fail`）提到共用位 `src/shared/exit.ts`——出口与各域运行件同一档退出码。
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 
 function preflight(): void {
@@ -325,28 +324,8 @@ function buildReceipt(
 
 // #855：行适配（`toRows`／`PageRow`）已提到共用位 `src/shared/rows.ts`——出口与各域运行件共用一份。
 
-// #850 · 创建时间区间参数（HELP `start`＋`end`，双 `YYYY-MM-DD`）。双必填：缺一边即缺槽位（exit 2，
-// 人话）；起止倒置即报错；`timeRange` 月份形已退役（无权威出处），给了即指路到 `start`／`end`。
-const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
-function needRangeDate(value: unknown, name: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) fail(2, '缺槽位 ' + name + '：按时间搜备忘须给开始／结束日期（YYYY-MM-DD）');
-  const s = value.trim();
-  const m = DATE_RE.exec(s);
-  if (!m) fail(2, name + ' 只认 YYYY-MM-DD：' + s);
-  const dt = new Date(s + 'T00:00:00Z');
-  if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== s) fail(2, name + ' 不是真日期：' + s);
-  return s;
-}
-function rangeLimitOf(value: unknown): number {
-  if (value === undefined) return 20;
-  const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
-  if (!Number.isInteger(n) || n <= 0) fail(2, 'limit 须为正整数');
-  return n;
-}
-function categoryFilterOf(value: unknown): string | undefined {
-  if (value === undefined || value === null || value === '') return undefined;
-  return normalizeTop(value);
-}
+// #855：区间参数的三件校验（`needRangeDate`／`rangeLimitOf`／`categoryFilterOf`）随 `memo.search`
+// 一起搬进 `src/search/run.ts`——只有那一条命令在用，不留第二份。
 
 // #850 · 提醒写参数（HELP 蛇形为主，驼峰兼容既有 `memo.create` 两步合一）：`note_id`／`noteId`／`id`
 // 三名同义（给了校验存在，不给即独立提醒）；`content` 必填；`remind_at`／`remindAt`／`at` 三名同义；
@@ -405,29 +384,8 @@ function dispatch(key: string, params: Record<string, unknown>, db: MemoDb): Dis
   const spec = REGISTRY[key];
   if (spec !== undefined) return spec.kind === 'pre-open' ? spec.run(params) : spec.run(params, db);
   switch (key) {
-    case 'memo.search': {
-      // #850：创建时间区间通道（HELP `start`＋`end` 双必填，按 `created_at` 倒序；与排期 `due` 正交可叠加）。
-      // `timeRange` 月份形已退役：给了即指路，不再有两个说法。
-      if (params.timeRange !== undefined) fail(2, 'timeRange 已退役：请给 start（YYYY-MM-DD）＋ end（YYYY-MM-DD），按创建时间过滤');
-      const hasStart = params.start !== undefined;
-      const hasEnd = params.end !== undefined;
-      if (hasStart || hasEnd) {
-        const start = needRangeDate(params.start, 'start');
-        const end = needRangeDate(params.end, 'end');
-        if (start > end) fail(2, '开始日期不能晚于结束日期：' + start + ' > ' + end);
-        const category = categoryFilterOf(params.category);
-        const limit = rangeLimitOf(params.limit);
-        const items = searchNotesByCreatedRange(db, { start, end, category, limit });
-        const hit = items.filter((n) => dueMatches(n, params));
-        return ok({ items: hit, total: hit.length });
-      }
-      const items = params.q !== undefined
-        ? searchNotes(db, String(params.q), { category: params.category as string | undefined, sub: params.sub as string | undefined })
-        : listNotes(db).filter((n) => (params.category === undefined || n.category === params.category));
-      const hit = items.filter((n) => dueMatches(n, params));
-      return ok({ items: hit, total: hit.length });
-    }
-    case 'memo.detail': return ok({ item: getNote(db, needId(params.id, '详情')) });
+    // #855：`memo.search`／`memo.detail` 已搬回 `src/search/`（声明住 `search/commands.ts`，运行件住 `search/run.ts`），
+    // 上面那张登记查表先命中它们——这两条 case 已删。**别再长回来**：加命令改的是自己域里的声明。
     case 'memo.create': {
       const c = crudCreate(params);
       const top = normalizeTop(params.category);
