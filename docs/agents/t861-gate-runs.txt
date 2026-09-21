@@ -1,6 +1,6 @@
 # #861 的运行条目录出件（协议 §2.3.4）
 # 源：.scratch/locks/gate-runs.log 里 ticket=861 的全部条目，逐字抄录（含调试期的红：exit=1 的条目也在）。
-# 收口日期：2026-09-21
+# 更新时间：2026-09-21（构建后一批门跑完）
 
 START ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 pid=38452 at=2026-09-21T06:05:18.563Z
 RUN ticket=861 runId=7a7f7cd1-9643-4714-bff9-1ab1038775f7 cmd="node --test test/base-floor-861.test.mjs" waitedMs=10001 exit=1 pid=38452 at=2026-09-21T06:05:18.776Z
@@ -24,3 +24,11 @@ START ticket=861 runId=b6371090-780c-4bdd-829f-c11ce51a862b cmd="node tooling/ch
 RUN ticket=861 runId=b6371090-780c-4bdd-829f-c11ce51a862b cmd="node tooling/check-boundaries.mjs" waitedMs=0 exit=0 pid=17832 at=2026-09-21T06:20:39.379Z
 START ticket=861 runId=f5237fdb-2f8f-47b9-817e-1b69caa607f2 cmd="node --test test/base-floor-861.test.mjs test/ci-gates-295.test.mjs" waitedMs=0 pid=52564 at=2026-09-21T06:20:39.438Z
 RUN ticket=861 runId=f5237fdb-2f8f-47b9-817e-1b69caa607f2 cmd="node --test test/base-floor-861.test.mjs test/ci-gates-295.test.mjs" waitedMs=0 exit=0 pid=52564 at=2026-09-21T06:20:39.735Z
+START ticket=861 runId=17aee375-0a59-48b2-921c-3a7619eaebea cmd="node .scratch/t861/commit.mjs" waitedMs=0 pid=24724 at=2026-09-21T06:21:35.027Z
+RUN ticket=861 runId=17aee375-0a59-48b2-921c-3a7619eaebea cmd="node .scratch/t861/commit.mjs" waitedMs=0 exit=0 pid=24724 at=2026-09-21T06:21:35.426Z
+START ticket=861 runId=88d105b2-d946-4d4e-bb3d-1013889229d3 cmd="pnpm build" waitedMs=0 pid=2548 at=2026-09-21T06:22:39.518Z
+RUN ticket=861 runId=88d105b2-d946-4d4e-bb3d-1013889229d3 cmd="pnpm build" waitedMs=0 exit=0 pid=2548 at=2026-09-21T06:22:43.948Z
+START ticket=861 runId=81424580-b96a-4915-8a3b-509814b86862 cmd="node .scratch/t861/run-postbuild.mjs" waitedMs=0 pid=32396 at=2026-09-21T06:23:04.206Z
+RUN ticket=861 runId=81424580-b96a-4915-8a3b-509814b86862 cmd="node .scratch/t861/run-postbuild.mjs" waitedMs=0 exit=0 pid=32396 at=2026-09-21T06:23:12.730Z
+START ticket=861 runId=2a1aec06-38a3-431e-a7e3-dc52eb60e188 cmd="pnpm gen:check" waitedMs=0 pid=28892 at=2026-09-21T06:23:49.113Z
+RUN ticket=861 runId=2a1aec06-38a3-431e-a7e3-dc52eb60e188 cmd="pnpm gen:check" waitedMs=0 exit=0 pid=28892 at=2026-09-21T06:23:51.194Z
