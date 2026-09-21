@@ -370,16 +370,22 @@ for (const [file, blocks] of Object.entries(CONTRACT)) {
 /* ─────────────────────────── ③ 代码层窄判据 ─────────────────────────── */
 
 const SRC = join(REPO, PKG, 'src', 'write');
+/** 判据只量**代码里的字符串**：注释里写「实测 880px 掉到 874px」这类读数不算样式字面量；
+ *  TS 里 `gap: { from: string }` 这种类型注解也不是样式（首轮把这两处都误判过）。 */
+const stripComments = (text) => text
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+const stringLiterals = (code) => [...code.matchAll(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"/g)]
+  .map((m) => m[1] ?? m[2] ?? '').join('\n');
 const cssish = /(font-size|line-height|padding|margin|gap|border-radius|color|background)\s*:|@media/;
 const hex = /#[0-9a-fA-F]{4,8}\b/;
-let pieceViolations = [];
+const pieceViolations = [];
 for (const f of readdirSync(SRC).filter((x) => x.endsWith('.ts'))) {
-  const text = readFileSync(join(SRC, f), 'utf8');
-  if (hex.test(text)) pieceViolations.push(f + '：出现十六进制色值（色值只许取公共层 token）');
+  const literals = stringLiterals(stripComments(readFileSync(join(SRC, f), 'utf8')));
+  if (hex.test(literals)) pieceViolations.push(f + '：出现十六进制色值（色值只许取公共层 token）');
   if (f === 'writeParts.ts') {
-    const stripped = text.replace(/\$\{[^}]*\}/g, '');
-    if (/\d+px/.test(stripped)) pieceViolations.push(f + '：样式里出现 px 字面量（长度只许取族级常量）');
-  } else if (cssish.test(text)) {
+    if (/\d+px/.test(literals)) pieceViolations.push(f + '：样式里出现 px 字面量（长度只许取族级常量）');
+  } else if (cssish.test(literals)) {
     pieceViolations.push(f + '：页装配件里出现样式字面量（样式只许住族级样式件）');
   }
 }
