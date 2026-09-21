@@ -6,13 +6,8 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
-// #833（init 域）：本域两页的复制区载荷（数据／日志）走公共层的 text 两件，不在包内自写序列化。
-import { buildDataText, buildLogText } from 'base-paint';
-
-/** #833：复制区载荷吃的那份信封类型（公共层 `text` 两件的入参取出来，不在两处各写一份形状）。 */
-type MemoCopyEnvelope = Parameters<typeof buildDataText>[0]['envelope'];
-/** #833：复制日志载荷的 `copy_log` 位（同上，从公共层 `text` 两件的入参取形）。 */
-type MemoCopyLogFields = NonNullable<Parameters<typeof buildLogText>[0]['copyLog']>;
+// #855：复制区载荷的装配与信封取形（`buildDataText`／`buildLogText`／`MemoCopyEnvelope` 位）随 `memo.init`
+// 一起搬进 `src/init/run.ts`——只有那条命令在用，不留第二份。
 import {
   openMemoDb,
   closeMemoDb,
@@ -27,15 +22,14 @@ import { LARK_WEBSITE_LINE } from '../fetch/feishu.js';
 import { REGISTRY } from './registry.js';
 // #855：行适配已无人用本件这份（`toRows` 随 `memo.batch` 搬进 `src/memo/run.ts`，出口侧交付件不拼行）。
 import { fail } from '../shared/exit.js';
-import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, pageEnvelope, initSnapshot, MemoRenderError } from '../render/index.js';
+import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
 import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
-// #832（sync 域）：产物名主体取自册子唯一定义地（`bookletFileStem`），不在本件手写第二份名字。
-import { bookletFileStem } from '../help/index.js';
-// #833（init 域）：诊断读取与两页装配住 `src/init/`（能力门）；本件只做分派与交付。
-import { INIT_SCENE_ID, readInitDiagnosis, InitInputError, renderInitPage, type InitPageMode } from '../init/index.js';
+// #855：产物名主体（`bookletFileStem`）与诊断读取／两页装配（`INIT_SCENE_ID`／`readInitDiagnosis`／
+// `InitInputError`／`renderInitPage`／`InitPageMode`）随 `memo.sync`／`memo.init` 搬进各自的域——
+// 本件只剩开库前分派与交付装配。
 import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
@@ -182,58 +176,8 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
 }
 
 // #850 · 初始化渲染（`memo.init`，照旧侧 `init-report --data <JSON>`）：只渲染，不建库不写配置；
-// 库不存在时也能跑（与 `memo.help.lookup` 同位置的开库前分派）。输入为 AI 诊断后的 JSON
-// （检查清单＋待办＋验证清单三段）。
-// #833 · 本域出两格（册子 #848）：缺省＝结果页 `首次使用`（初始化报告）；`mode:"wizard"`＝过程页
-// `首次使用-向导`（逐步引导）。两页同吃一份诊断载荷；主体一律由 `bookletFileStem` 算，本件不手写名字。
-function dispatchInit(params: Record<string, unknown>): DispatchOut {
-  const modeRaw = params.mode === undefined ? 'report' : String(params.mode);
-  if (modeRaw !== 'report' && modeRaw !== 'wizard') fail(2, 'mode 只认 wizard（缺省出报告页 `首次使用`）');
-  const mode: InitPageMode = modeRaw === 'wizard' ? 'guide' : 'report';
-  let diag;
-  try {
-    diag = readInitDiagnosis(params);
-  } catch (e) {
-    if (e instanceof InitInputError) fail(2, e.message);
-    throw e;
-  }
-  const snap = initSnapshot(diag);
-  const message = mode === 'guide'
-    ? '首次使用引导页已生成（只渲染，不建库不写配置）'
-    : '初始化报告已生成（只渲染，不建库不写配置）';
-  const payload = pageEnvelope({
-    commandCn: '首次使用', wakeWord: '首次使用', sceneId: INIT_SCENE_ID,
-    title: snap.title, summary: snap.summary, sections: snap.sections,
-    copyLog: {
-      thinking: mode === 'guide'
-        ? '首次使用 · 引导过程页（先处理必装缺失，再做待办项）'
-        : '首次使用 · AI 诊断结果渲染为报告页（检查清单＋待办＋验证清单）',
-      data_structure: '--data JSON：{items:[{name,status,desc,action}], todos:[{title,steps}], verify:[]}',
-      call_chain: 'memo.init --params → dispatchInit → src/init 两页装配 → base-paint 文档壳',
-      exception: '无',
-    },
-    extra: { items: diag.items, todos: diag.todos, verify: diag.verify },
-    message,
-  });
-  const envelopeData = payload.data as { readonly generated_at?: unknown; readonly copy_log?: unknown };
-  const occurredAt = typeof envelopeData.generated_at === 'string' ? envelopeData.generated_at : '';
-  const data = { ok: true, message, items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length };
-  // 复制区载荷：吃**回执信封**（公共层 `text` 两件只认可序列化信封形状），日志那件再补页面的 copy_log。
-  const copyEnvelope = buildMemoEnvelope('memo.init', data) as unknown as MemoCopyEnvelope;
-  const page = renderInitPage(mode, diag, {
-    occurredAt,
-    dataText: buildDataText({ envelope: copyEnvelope }),
-    logText: buildLogText({
-      envelope: copyEnvelope,
-      copyLog: envelopeData.copy_log as MemoCopyLogFields,
-    }),
-  });
-  return {
-    data: { ok: true, message, items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length },
-    exit: 0,
-    deliver: { html: page.html, stem: bookletFileStem(INIT_SCENE_ID, page.kind) },
-  };
-}
+// #855：`dispatchInit` 逐字搬进 `src/init/run.ts`（`runInit`，`pre-open` 类经登记表在开库之前调）——
+// 出口只剩开库前分派的查表与交付装配，不再手写域逻辑。
 
 // 十四键分发（#665 起十二键，加 memo.auth；#850 加 memo.init／memo.reminder）：读走 fetch 读，写走 fetch 写+policy 校验，sync 走 lark 四门；未知键 upstream 已拦，此处再拦一道。
 // #661：写命令分两支——心愿分类走「合成写」（本地 ＋ 飞书任务一次成；回执分字段；最终没达成时退出码非 0），
@@ -355,16 +299,17 @@ async function main() {
   try {
     // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余键照旧走 dispatch。
     // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
-    // #850：`memo.init` 同在开库之前（只渲染，不建库不写配置；库不存在时也能跑）。
+    // #855：开库前分派统一走登记表——`pre-open` 类的命令（今天只有 `memo.init`，声明住 `src/init/commands.ts`）
+    // 在开库之前调，库不存在时也能跑；`memo.help.lookup` 的交付装配仍走框架位 `dispatchHelp`（HELP 面，不进域门）。
     const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
-    const init = o.key === 'memo.init' ? dispatchInit(params) : null;
+    const pre = o.key === 'memo.help.lookup' ? undefined : REGISTRY[o.key];
     let db: MemoDb | null = null;
     let out: DispatchOut;
     try {
       if (help !== null) {
         out = { data: help.data, exit: 0 };
-      } else if (init !== null) {
-        out = init;
+      } else if (pre !== undefined && pre.kind === 'pre-open') {
+        out = pre.run(params);
       } else {
         db = openMemoDb(dbPath);
         out = dispatch(o.key, params, db);

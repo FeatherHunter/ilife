@@ -5,6 +5,7 @@
  * 分派层只认这张表：命中即走该域的处理函数；**新加一个能力＝建它的 `commands.ts`**（扫到即自动进来）。
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
+import { INIT_COMMANDS } from '../init/index.js';
 import { MEMO_COMMANDS } from '../memo/index.js';
 import { REMIND_COMMANDS } from '../remind/index.js';
 import { SEARCH_COMMANDS } from '../search/index.js';
@@ -12,6 +13,7 @@ import { SYNC_COMMANDS } from '../sync/index.js';
 import { WISH_COMMANDS } from '../wish/index.js';
 
 const SOURCES: readonly (readonly CommandSpec[])[] = [
+  INIT_COMMANDS,
   MEMO_COMMANDS,
   REMIND_COMMANDS,
   SEARCH_COMMANDS,

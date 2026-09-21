@@ -18,6 +18,8 @@ import type { InitPageInput } from './page.js';
 
 export { readInitDiagnosis, InitInputError } from './diagnosis.js';
 export type { InitDiagnosis, InitCheckItem, InitCheckStatus, InitTodo, InitVerifyEntry, InitVerifyStatus } from './diagnosis.js';
+// #855：本域的命令声明经门转出——生成的 `src/cli/registry.ts` 从**门**取数组（不深引域内实现件）。
+export { INIT_COMMANDS } from './commands.js';
 
 /** 本域场景 id（HELP `init.ts` 的 `memo_init_setup`）。 */
 export const INIT_SCENE_ID = 'memo_init_setup';

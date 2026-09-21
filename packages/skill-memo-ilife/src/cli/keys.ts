@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * 备忘录命令键表：write 6 条、read 6 条、pre-open 0 条，合计 12 条。
+ * 备忘录命令键表：write 6 条、read 6 条、pre-open 1 条，合计 13 条。
  * 一条命令的事实住它自己的能力目录（`src/<域>/commands.ts`）；本文件只是那几处的派生，不手改。
  * 键序：write → read → pre-open，各段内按键名升序（确定性排序，同一个声明层永远得同一份字节）。
  * `MemoKey` 是键的**编译期约束**：删一条声明而不改指向它的路由声明，`tsc` 当场红（TS2820）。
@@ -9,6 +9,7 @@ import type { EnvelopeShape } from 'base-link-core';
 
 export const MEMO_CLI_SOURCES: readonly string[] = [
   'checkin',
+  'init',
   'memo',
   'mood',
   'remind',
@@ -30,6 +31,7 @@ export const MEMO_CLI_KEYS: readonly string[] = [
   'memo.search',
   'memo.stats',
   'memo.wish',
+  'memo.init',
 ];
 
 export type MemoKey = 'memo.batch'
@@ -43,7 +45,8 @@ export type MemoKey = 'memo.batch'
   | 'memo.remind'
   | 'memo.search'
   | 'memo.stats'
-  | 'memo.wish';
+  | 'memo.wish'
+  | 'memo.init';
 
 export const MEMO_KEY_TITLES: Record<string, string> = {
   'memo.batch': '批量改分类',
@@ -58,6 +61,7 @@ export const MEMO_KEY_TITLES: Record<string, string> = {
   'memo.search': '搜备忘',
   'memo.stats': '统计',
   'memo.wish': '心愿排期',
+  'memo.init': '首次使用',
 };
 
 export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
@@ -73,9 +77,11 @@ export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
   'memo.search': 'list',
   'memo.stats': 'stat',
   'memo.wish': 'list',
+  'memo.init': 'receipt',
 };
 
 export const MEMO_DOMAIN_KEYS: Record<string, readonly string[]> = {
+  'init': ['memo.init'],
   'memo': ['memo.batch', 'memo.create', 'memo.remove', 'memo.update', 'memo.stats'],
   'remind': ['memo.reminder', 'memo.remind'],
   'search': ['memo.detail', 'memo.search'],
