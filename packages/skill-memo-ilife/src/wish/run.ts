@@ -4,17 +4,24 @@
  * （#665 起的三支：`wizard:plan` 出排期向导页／`wizard:complete` 出完成向导页／不带即老形状只回列表）。
  * 搬迁判据：`node docs/skills/skill-memo-ilife/t855-产物基线.mjs --check` 逐条一致（行为字节不变）。
  *
- * 层内依赖：直接 import 本域的实现件（`./wizards.js`／`./due.js`）——**域内不走门**，门只给外域用。
+ * #829 起三支各自的**产物**补齐（册子 `BOOKLET_ROWS` seq 19／32／33 三格）：
+ *   - 不带 `wizard` 那支是 HELP 场景 `memo_wish_schedule` 的**结果页**（主体 `心愿排期`，键＝`memo.wish`）；
+ *   - 两条向导是同一批场景的**过程页**（主体 `心愿排期-向导`／`完成心愿-向导`）——册子里同场景两格，
+ *     故取名一律经 `buildWishReceipt` 带 `kind`，本件不自己拼名字。
+ * 代价：`memo.wish` 的 envelope 仍是 `list` 形，`data` 那半边一字不改（只多 `deliver`）。
+ *
+ * 层内依赖：直接 import 本域的实现件（`./wizards.js`／`./due.js`／`./receipt.js`）——**域内不走门**。
  */
 import type { CommandOut } from '../shared/commandSpec.js';
 import { toRows } from '../shared/rows.js';
 import type { MemoDb } from '../db/readonly.js';
 import { listNotes } from '../db/readonly.js';
-import { fillMemoPage, pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot } from '../render/index.js';
-import { dueMatches } from './due.js';
+import { pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot } from '../render/index.js';
+import { dueMatches, normalizeDue } from './due.js';
 import { planWizard, completeWizard } from './wizards.js';
+import { buildWishReceipt } from './receipt.js';
 
-/** `memo.wish`：心愿清单（缺省）／排期向导（`wizard:plan`）／完成向导（`wizard:complete`）。 */
+/** `memo.wish`：排期结果页（缺省）／排期向导（`wizard:plan`）／完成向导（`wizard:complete`）。 */
 export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut {
   // #665 向导：`wizard: plan` 出排期向导页（默认全勾选），`wizard: complete` 出完成向导页（默认不勾选）；
   // 不带即老形状（只回列表，#661 行为）。
@@ -38,7 +45,11 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
       return {
         data: { items: w.items, total: w.items.length, suggestDue: w.suggestDue, all: w.includeAll },
         exit: 0,
-        deliver: { html: fillMemoPage('wish_plan', payload), stem: '心愿排期向导' },
+        deliver: buildWishReceipt({
+          scene: 'memo_wish_schedule', title: '心愿排期',
+          receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
+          page: { kind: '过程页', template: 'wish_plan', values: payload },
+        }),
       };
     }
     const w = completeWizard(db, { ids: params.ids, onlyOverdue: params.onlyOverdue, all: params.all, content: params.content });
@@ -59,9 +70,39 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
     return {
       data: { items: w.items, total: w.items.length, defaultContent: w.defaultContent, onlyOverdue: w.onlyOverdue },
       exit: 0,
-      deliver: { html: fillMemoPage('wish_complete', payload), stem: '心愿完成向导' },
+      deliver: buildWishReceipt({
+        scene: 'memo_complete_wish', title: '完成心愿',
+        receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
+        page: { kind: '过程页', template: 'wish_complete', values: payload },
+      }),
     };
   }
+  // #829 结果页：HELP 场景 `memo_wish_schedule` 的交付物（主体 `心愿排期`，册子 seq 19）。
+  // 数据那一格仍是老形状（心愿清单列表，`memo.wish` 的 envelope 是 `list`）；页里把「这批心愿的排期现状」
+  // 铺成事实条＋逐条明细，让「心愿排期」这一格点得开。
   const items = listNotes(db).filter((n) => n.category === '心愿').filter((n) => dueMatches(n, params));
-  return { data: { items, total: items.length }, exit: 0 };
+  const due = normalizeDue(params.due);
+  const scheduled = items.filter((n) => n.due !== null).length;
+  const message = '找到 ' + items.length + ' 个心愿，其中 ' + scheduled + ' 个已排期';
+  return {
+    data: { items, total: items.length },
+    exit: 0,
+    deliver: buildWishReceipt({
+      scene: 'memo_wish_schedule',
+      title: '心愿排期',
+      receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
+      entityLabel: '心愿清单',
+      entityId: items.length,
+      extraSummary: [
+        '心愿 ' + items.length + ' 个',
+        '已排期 ' + scheduled + ' 个',
+        '未排期 ' + (items.length - scheduled) + ' 个',
+        ...(due === null ? [] : ['这一趟排期至 ' + due]),
+      ],
+      extraSections: [{
+        heading: '心愿清单',
+        rows: items.map((n) => '#' + n.id + ' ' + n.content + '：' + (n.due === null ? '未排期' : n.due)),
+      }],
+    }),
+  };
 }
