@@ -140,7 +140,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</table></div>'
     + '<h2 data-need="冲突名单">冲突预览</h2>'
     + '<p data-need="冲突处理下拉" data-mode-a="跳过同名" data-mode-b="覆盖同名">本期是整库覆盖：恢复会整体替换当前库，不做逐条比对，所以没有逐条冲突名单。以前的两种口径（跳过同名、覆盖同名）只在整库覆盖里统一处理，恢复前那份自动备份就是兜底。</p>'
-    + '<p class="su-note" data-need="冲突超10条折叠">条数很多时名单会折叠，只看前十条，其余只报总数，本次整库覆盖没有逐条名单。</p>'
+    + '<p class="su-note" data-need="冲突超10条折叠"只看前十条，其余只报总数，本次整库覆盖没有逐条名单。</p>'
     + '<h2 data-need="导入结果">导入结果</h2>'
     + (isDone
       ? '<p>导入完成，当前库已经是备份里的样子。想反悔就用恢复前那份自动备份恢复回去。</p>'
@@ -164,7 +164,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p data-need="异常：数据解析失败／数据校验失败／导入失败">如果提示解析失败、校验失败或者导入失败，先确认发过去的是备份文件，再走一次预告。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>口径说明</h2>'
+    + '<h2>状态说明</h2>'
     + '<p>步骤状态分三种：已完成，进行中，待办。当前走到哪一步，卡片上看得出来。</p>'
     + '</section>'
     + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'

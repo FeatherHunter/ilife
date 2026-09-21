@@ -127,7 +127,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<span class="pill">规模' + r.total + '条</span></div>'
     + '<dl class="kv"><dt>发生时间</dt><dd>—</dd>'
     + '<dt>记录状态</dt><dd>—</dd></dl>'
-    + '<div class="detail">记录' + escapeHtml(r.id) + '缺— 多— 异— 待确认—：计数随命令侧增补后展开</div>'
+    + '<div class="detail">记录' + escapeHtml(r.id) + '缺— 多— 异— 待确认—：回执未带</div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">展开详情</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">处理差异</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'re\')">复查</button>'
