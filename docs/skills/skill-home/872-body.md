@@ -54,3 +54,14 @@ HELP 键三支（缺省／速查／q）及它自己的 `--html` 语义；命令�
 
 页族装入是动态路径：若某域的族名与目录不一致（契约附录 `families[].domain` 与落盘目录走散），
 由新增用例扫盘对账，发现即回写票 2。
+
+## 进度：100%
+
+已交付并关闭（提交 `5a20e18e`）。判据由独立席位于 2026-09-22 在 HEAD `5f14debc` 逐条复跑成立：
+
+- ① 包内测试：全量级 `node --test packages/skill-home/test/*.test.mjs` → **312/312**（含本票新增 11 例）；票面原命令 `pnpm --filter skill-home test` → 75/75 exit 0（该脚本只覆盖 5 个文件；本票用例在仓根 `pnpm test` 那道门的 glob 内真跑）。
+- ② 真链抽查：隔离家目录按契约附录 70 条场景逐条跑，exit 0 的 **39 条全部落盘即族页 39/39**（含 `data-block=`、盘上字节 ＝ 回执 `delivery.bytes`）；其余 31 条要多前置实体 id／主密钥／必填参数，属抽查范围外。
+- ③ `pnpm gen:check` → exit 0。
+- ④ 负向证据：`templates/items/search_list.html` 临时改名 → 降级 21 模板分节页（无 `data-block=`）、stderr 有降级 note、退出码仍 0；改回后重跑恢复族页。
+
+下一步：无（收口票 #817 会把本票读数带进终审包）。复核器入仓：`docs/skills/skill-home/t872-复核.mjs`（跑法 `node docs/skills/skill-home/t872-复核.mjs`）。
