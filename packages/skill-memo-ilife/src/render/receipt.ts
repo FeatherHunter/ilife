@@ -96,17 +96,17 @@ const REMOTE_LABEL: Record<string, string> = {
 };
 
 /** 「对象」那一行的后半（#882）：数字＝记录号，加 `#`；字符串＝域侧自述，原样上屏、不吃 `#`
- *  （不这么分，批量那一格会被拼成 `#更新 1 条` —— `#` 后面跟中文动词短语，不是记录号）。 */
-function entityRefOf(r: ReceiptRows): string {
-  if (typeof r.entityId === 'number') return ' #' + String(r.entityId);
-  return r.entityId === '' ? '' : ' ' + r.entityId;
+ *  （不这么分，批量那一格会被拼成 `#1 条` —— `#` 后面跟的不是记录号）。 */
+function objectRowTailOf(entityId: string | number): string {
+  if (typeof entityId === 'number') return ' #' + String(entityId);
+  return ' ' + entityId;
 }
 
 /** 三格里的**前三行**：对象（本地记录号／域侧自述）／本地侧／远端侧——屏上与数据面共用过一段，一处定义。
  *  取值不认得的原样透出，不静默吞掉。 */
 function receiptUserRows(r: ReceiptRows): string[] {
   return [
-    '对象：' + r.entityLabel + entityRefOf(r),
+    '对象：' + r.entityLabel + objectRowTailOf(r.entityId),
     '本地侧：' + (LOCAL_LABEL[r.local] ?? r.local),
     '远端侧：' + (REMOTE_LABEL[r.remote] ?? r.remote),
   ];

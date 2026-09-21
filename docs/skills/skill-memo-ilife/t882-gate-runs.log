@@ -1,0 +1,18 @@
+# #882 · gate-runs 导出（受 git 跟踪的对账源，协议 §2.3 第 4 条／§5.1）
+
+> 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
+> 票号过滤：882 ｜ 条目数：10 ｜ 导出时间：2026-09-21T18:51:10.050Z
+> 复核用法：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-memo-ilife/t882-实施证据.md --log docs/skills/skill-memo-ilife/t882-gate-runs.log --ticket 882`
+
+```text
+START ticket=882 runId=03ecf2e7-626a-441f-adc1-989267592618 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/gate.ps1" waitedMs=20021 pid=12944 at=2026-09-21T18:30:43.119Z
+RUN ticket=882 runId=03ecf2e7-626a-441f-adc1-989267592618 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/gate.ps1" waitedMs=20021 exit=0 pid=12944 at=2026-09-21T18:31:22.954Z
+START ticket=882 runId=bd3f8cef-4d01-462c-9eae-64e6808d9883 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/commit.ps1" waitedMs=10009 pid=47068 at=2026-09-21T18:32:42.488Z
+RUN ticket=882 runId=bd3f8cef-4d01-462c-9eae-64e6808d9883 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/commit.ps1" waitedMs=10009 exit=0 pid=47068 at=2026-09-21T18:32:45.015Z
+START ticket=882 runId=43f06aa0-09f5-46d5-99c1-d77aae2a5efb cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/gate2.ps1" waitedMs=90085 pid=52156 at=2026-09-21T18:40:47.690Z
+RUN ticket=882 runId=43f06aa0-09f5-46d5-99c1-d77aae2a5efb cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/gate2.ps1" waitedMs=90085 exit=0 pid=52156 at=2026-09-21T18:41:14.535Z
+START ticket=882 runId=11fc5b0b-93a0-4a62-b7ff-4e596c90b4d1 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/commit2.ps1" waitedMs=20025 pid=29368 at=2026-09-21T18:41:49.065Z
+RUN ticket=882 runId=11fc5b0b-93a0-4a62-b7ff-4e596c90b4d1 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/commit2.ps1" waitedMs=20025 exit=0 pid=29368 at=2026-09-21T18:41:50.859Z
+START ticket=882 runId=617606f0-8207-4be8-8e4d-256bc21400fe cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-改后" waitedMs=0 pid=14144 at=2026-09-21T18:50:16.226Z
+RUN ticket=882 runId=617606f0-8207-4be8-8e4d-256bc21400fe cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-改后" waitedMs=0 exit=0 pid=14144 at=2026-09-21T18:50:55.989Z
+```

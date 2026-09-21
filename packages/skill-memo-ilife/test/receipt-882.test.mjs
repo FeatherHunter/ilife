@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
 
@@ -19,6 +19,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const pkg = join(here, '..');
 const NODE = process.execPath;
 const dist = (rel) => pathToFileURL(join(pkg, 'dist', rel)).href;
+/** 包内 `src` 的 `.ts` 件（静态审计用：只读源码文本，不 import）。 */
+const srcFiles = (dir) => readdirSync(dir, { withFileTypes: true })
+  .flatMap((e) => (e.isDirectory() ? srcFiles(join(dir, e.name)) : (e.name.endsWith('.ts') ? [join(dir, e.name)] : [])));
 
 let DB = '';
 let HOME = '';
@@ -61,10 +64,10 @@ after(() => {
 });
 
 describe('#882 · 回执页族「对象」行（定义级：数字＝记录号，字符串＝域侧自述）', () => {
-  const buildPage = async (entityId, entityLabel) => {
+  const buildPage = async (entityId, entityLabel, scene = 'memo_batch_change_category') => {
     const { buildReceiptPage } = await import(dist('render/receipt.js'));
     return buildReceiptPage({
-      scene: 'memo_batch_change_category',
+      scene,
       title: '备忘改分类',
       message: '改分类完成：更新 1 条，跳过 0 条',
       badges: { category: '心愿', sub: null },
@@ -96,6 +99,44 @@ describe('#882 · 回执页族「对象」行（定义级：数字＝记录号�
     });
     assert.equal(page.stem, '备忘改分类-批量', '主体取自册子（seq 6）');
     assert.equal(objectRowOf(jsonOf(page.html)), '对象：批量改分类 1 条');
+  });
+
+  it('19 格逐格：数字形态（记录号）在**每一格**上都带 `#`（族里那条规则的覆盖面）', async () => {
+    const { RECEIPT_SCENES } = await import(dist('render/receipt.js'));
+    assert.equal(RECEIPT_SCENES.length, 19, '册子本族 19 格（#831／#826／#828／#829／#830 逐域追加）');
+    const bad = [];
+    for (const scene of RECEIPT_SCENES) {
+      const row = objectRowOf(jsonOf((await buildPage(18, '备忘', scene)).html));
+      if (row !== '对象：备忘 #18') bad.push(scene + ' → ' + row);
+    }
+    assert.deepEqual(bad, [], '这几格没按「数字＝记录号」渲染');
+  });
+
+  // 调用面审计（静态）：`entityId` 的取值位全包只有三处写字符串字面量，其余都是数字表达式。
+  // 这就是「18 格单条场景仍带 `#`」在仓内的门 —— 新冒一处字符串（把记录号改成文案）即红。
+  // 现场清单（#882 当刻，10 处取值位）：checkin/receipt.ts `note.id`；memo/receiptPage.ts `note.id`／
+  // `opts.entityId`；memo/receipt.ts `input.updated + ' 条'`（本票目标的字符串形态）；
+  // memo/run.ts `'未新建'`（兜底）／`r.receipt.updated`（**计数**，按类型仍带 `#`，见票面 §四）；
+  // remind/run.ts `note === null ? row.id : note.id`；wish/receipt.ts `input.entityId ?? loc?.id ?? '—'`（兜底）；
+  // wish/run.ts `items.length`（**计数**，同上）。
+  it('调用面：`entityId` 取值位的字符串字面量只许是这三处（新冒一处即红）', () => {
+    const known = [' 条', '未新建', '—']; // 批量支的「N 条」拼接 ／ 记情绪兜底 ／ 记心愿兜底
+    const hits = [];
+    for (const f of srcFiles(join(pkg, 'src'))) {
+      const rel = relative(pkg, f).replace(/\\/g, '/');
+      for (const line of readFileSync(f, 'utf8').split('\n')) {
+        if (/\breadonly\b/.test(line)) continue; // 类型声明位，不是取值位
+        // 只取 `entityId: <expr>` ／ `entityId = <expr>` 里的那截表达式（`===` 比较不算），再从中取字面量 ——
+        // 整行取会把同一行的 `'对象：'`、`'打卡'` 这类不相关的字面量也算进来。
+        const m = /entityId\s*[:=](?!=)\s*([^,;}\n]+)/.exec(line);
+        if (m === null) continue;
+        for (const lit of m[1].matchAll(/'([^']*)'/g)) hits.push([rel, lit[1]]);
+      }
+    }
+    assert.deepEqual(
+      [...new Set(hits.map((h) => h[1]))].sort(), [...known].sort(),
+      '新出现的字符串字面量：' + JSON.stringify(hits),
+    );
   });
 });
 
@@ -144,10 +185,10 @@ describe('#882 · 18 格单条场景不吃这一改（回归锁）', () => {
 });
 
 // 字符串形态在域里一共三处：批量支（本票目标）＋ 两处兜底。墙上 34 格跑不到兜底那两处，
-// 但本票改了它们**上屏的样子**（`#未新建` → `未新建`、`#—` → `—`），故在这里按定义级锁住形状：
-// **本票只去 `#`，不改措辞**（措辞的去留见票面 §四，另开票）。
-describe('#882 · 字符串形态的另外两处兜底（定义级：只去 `#`，不改措辞）', () => {
-  it('记心愿没拿到记录号时：`对象：心愿 —`（旧写法是 `#—`）', async () => {
+// 但本票改了它们**上屏的样子**（去掉那个 `#`），故在这里锁住本票真做过的那件事：**形状**（标签 ＋ 无 `#`）。
+// 兜底那两个词（`未新建`／`—`）本身**不锁** —— 措辞的去留归票面 §四那张待开的票。
+describe('#882 · 字符串形态的另外两处兜底（定义级：只锁「去了 `#`」，不锁措辞）', () => {
+  it('记心愿没拿到记录号时：去掉 `#`（旧样子是 `心愿 #—`）', async () => {
     const { buildWishReceipt } = await import(dist('wish/receipt.js'));
     const page = buildWishReceipt({
       scene: 'memo_add_wish',
@@ -155,16 +196,20 @@ describe('#882 · 字符串形态的另外两处兜底（定义级：只去 `#`�
       loc: null,
       receipt: { ok: true, message: '已记一条：7', local: 'created', remote: 'not-applicable', remoteId: null },
     });
-    assert.equal(objectRowOf(jsonOf(page.html)), '对象：心愿 —');
+    const row = objectRowOf(jsonOf(page.html));
+    assert.ok(row.startsWith('对象：心愿 '), '对象那一半仍是「心愿」：' + row);
+    assert.ok(!row.includes('#'), '`#` 后面没有记录号，不许再出现：' + row);
   });
 
-  it('记情绪没拿到记录号时：`对象：情绪日记 未新建`（旧写法是 `#未新建`）', async () => {
+  it('记情绪没拿到记录号时：去掉 `#`（旧样子是 `情绪日记 #未新建`）', async () => {
     const { buildReceipt } = await import(dist('memo/receiptPage.js'));
     const page = buildReceipt(
       'memo_add_mood', '记情绪',
       { ok: false, message: '已记一条：7；远端没成（未登录）', local: 'created', remote: 'failed', remoteId: null },
       { entityLabel: '情绪日记', entityId: '未新建', summary: ['本次未新建笔记'] },
     );
-    assert.equal(objectRowOf(jsonOf(page.html)), '对象：情绪日记 未新建');
+    const row = objectRowOf(jsonOf(page.html));
+    assert.ok(row.startsWith('对象：情绪日记 '), '对象那一半仍是「情绪日记」：' + row);
+    assert.ok(!row.includes('#'), '`#` 后面不是记录号，不许再出现：' + row);
   });
 });
