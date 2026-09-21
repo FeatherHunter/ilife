@@ -41,13 +41,38 @@ node --test packages/skill-memo-ilife/test/wish-pages-829.test.mjs
 
 | 门 | 命令 | 本域读数 | 判 |
 |---|---|---|---|
-| 分隔符门 | `packages/base-render/test/separator-probe.mjs <产物>` | **4 张结果页节点级 0**；2 张过程页各 1 处，且是**同一句共用件原文**「点复制数据…· 点复制日志…」 | 结果页绿；过程页那 1 处**不属本域**（`t824-视觉基准.md` §3 判给 #851 收共用件） |
-| 响应式门 | `packages/skill-calorie/scripts/measure-responsive.mjs --dir .scratch/t829/artifacts` | `OVERFLOW-ZERO pages=7 cells=21 failed=0`，三档 390／768／1440 全 0；`exit=0` | **绿**（回归门，不得当成绩） |
-| 行数门 | `packages/skill-memo-ilife/scripts/check-warning-line.mjs` | `件 102／超线（>350）0`；`RESULT: 102/102 PASS` | **绿** |
-| 机审六列 | `docs/skills/skill-bill/t407-v8-style-audit.mjs` | 该件内嵌**账单域 32 份产物名单**，对本域产物报「清单点名缺件 32 份」`exit=1` | **不适用**（`t824-视觉基准.md` §4：本图不用账单域那件，要按备忘录重写，归 #851） |
-| 五维尺 | `docs/skills/skill-memo-ilife/t<t4票号>-判分.mjs` | 盘上**不存在**（引擎归 #851） | **待回填** |
+| 分隔符门 | `packages/base-render/test/separator-probe.mjs <产物>` | **七件全部节点级 0、行级 0** | **绿** |
+| 响应式门 | `packages/skill-calorie/scripts/measure-responsive.mjs --dir .scratch/t829/pages` | `OVERFLOW-ZERO pages=7 cells=21 failed=0`，三档 390／768／1440 全 0；`exit=0` | **绿**（回归门，不得当成绩） |
+| 行数门 | `packages/skill-memo-ilife/scripts/check-warning-line.mjs` | `件 103／超线（>350）0`；`RESULT: 103/103 PASS` | **绿** |
+| 机审六列 | `docs/skills/skill-memo-ilife/t869-机审.mjs --dir .scratch/t829/pages` | `RESULT: 7/7 PASS ①0 ②0 ③0 ④0 ⑤0 ⑥0`；`exit=0` | **绿** |
+| 五维尺 | `packages/base-render/scripts/判分.mjs --dir .scratch/t829/readings --config .scratch/t829/按域配置.json` | 逐页 **96**（7/7 过线，每维 ≥ 满权 80%）；一致性自证**最大绝对差 0**；`SCORE 页数=7 均分=96 最低=96` | **绿** |
 
-**过程页那 1 处为什么留在那里**：两条向导页的复制区是模板自带的（`templates/wish_plan.html:87`／`templates/wish_complete.html:84`），原文即 `t822` 基线里点名的那 7 处同句之一。收成共用件要动公共层与模板，**域票不许改共用位**（`t824` §5）⇒ 本域只引用、不另写第二句；本票用例把这条钉成断言：**命中只许是共用件那一句**，别处长出新句即红。
+> 上表是**验收档**（2026-09-21 第二次执行，`#868` 公共层判分引擎与 `#869` 机审、`#870` 共用件均已落地之后重跑）。
+> 四个前缀 `docs/skills/skill-bill/t407-v8-style-audit.mjs` 那条**已作废**：`t824-视觉基准.md` §4 明写本图不用账单域那件，
+> 备忘录自己的六列机审是 `t869-机审.mjs`（#869 交付）。
+
+**分隔符门从「2 张过程页各 1 处」变成「七件全 0」的原因**：那 1 处是共用件「复制区说明行」的同一句（`t822` 基线点名 7 处之一）。`#870` 把它收进公共层并接线后，两张向导页也随之归零 —— 本票没有自己动手解除它（域票不许改共用位，`t824` §5），是**等共用件收口后自然归零**。本票用例的断言已随之收紧为「必须 0」。
+
+### 3.1 五维尺怎么算出来的（读数链四件齐）
+
+`t867-facts.mjs` 一次装配四件读数（三件 reader 现产 ＋ 人核档解析）：
+
+```
+node docs/skills/skill-memo-ilife/t867-facts.mjs \
+  --dir .scratch/t829/pages \
+  --human docs/skills/skill-memo-ilife/t829-人核档.md \
+  --json .scratch/t829/readings/facts.json --readings .scratch/t829/readings
+```
+
+- `sep.json`（`audit-separators.mjs`）7/7 PASS、`resp.json` 三档零溢出、`fmt.json` 7/7 件、`facts.json` 页键 7。
+- 人核档 `docs/skills/skill-memo-ilife/t829-人核档.md`：`d1`／`d2` 两维以**两档真截图**（390／1440，落 `.scratch/t829-shot/`）逐页判，逐页 0 扣分并写理由；`english`／`dupFacts` 两列机器候选 0、0。
+- **两处 `改判`**：两张向导页的候选 `english=2`，两处全是「AI」这个词 —— 按 `t849-视觉基准.md` §3 尾句与 `t869-机审.mjs` 的允许清单，`AI` 是**通用术语、按允许清单放过**（机审 ⑥ 列同判 0），故改判为 0 而非裸英文词。装配器接受了这两处改判（无 bug 项）。
+
+### 3.2 验收产物驱动器（与 §一 那张探针的分工）
+
+- `.scratch/t829/gen-wish-pages.mjs` —— **验收用**：临时库 ＋ **能应答的 lark-cli 挡板** ＋ 家目录隔离，七格逐条真跑后收进 `.scratch/t829/pages/`。
+- `.scratch/t829/verify-wish.mjs` —— **探针用**：故意不配远端，量的是「产物出不出、出在哪个主体」（合成写那两条如实走远端没成分支、`exit=4`）。
+- 为什么必须有挡板：不给远端时回执 `message` 会带 `lark-cli auth status 失败（未登录？）`，机审 ⑥ 列会把这个**内部命令名**点成红（`t869-机审读数.md` 把该串记为家族已知债）。给上挡板后七条全 `exit=0`、消息干净，门判的是**交付面**而不是「本机没装飞书」。
 
 ---
 
@@ -91,7 +116,30 @@ node --test packages/skill-memo-ilife/test/wish-pages-829.test.mjs
 
 ## 六 未做项与下一手缺什么
 
-1. **五维尺读数**（`t<t4票号>-判分.mjs --dir .scratch/t829/artifacts`）—— 引擎落盘后回填。按 `t824-视觉基准.md` §1，**逐页 ≥90 且每维 ≥ 满权 80%** 才算过线；本票不以任何替代读数冒充。
-2. **两张过程页的复制区那 1 处** —— 归 #851 收共用件；收完本域两页自动归零（本票用例那两条断言会随之从「只许是那一句」变成「必须 0」）。
-3. **机审六列** —— 备忘录自建件归 #851；本票只报「账单域那件不适用」。
-4. **收口票 #834 消费**：本域七格实例可由 `.scratch/t829/verify-wish.mjs` 一键重出到任意目录，墙按清单 `file` 精确名取（七格均一）。
+1. ~~**五维尺读数**~~ —— **已回填**（§三·第 3.1 条：逐页 96、7/7 过线、一致性自证差 0）。原「待 #851 引擎落盘」的条件已满足：引擎落在公共层 `packages/base-render/scripts/判分.mjs`（#868）。
+2. ~~**两张过程页的复制区那 1 处**~~ —— **已归零**（#870 共用件收口后自动解除，本票用例断言已收紧为「必须 0」）。
+3. ~~**机审六列**~~ —— **已跑**：`docs/skills/skill-memo-ilife/t869-机审.mjs`（#869 交付），`7/7 PASS ①0 ②0 ③0 ④0 ⑤0 ⑥0`。
+4. **留给收口票 #834**：本域七格实例由 `.scratch/t829/gen-wish-pages.mjs` 一键重出到任意目录（**带挡板**，七条全 `exit=0` 且消息干净），墙按清单 `file` 精确名取（七格均一）。**#834 重跑时请用带挡板的那个驱动器**，不要用不带挡板的 `verify-wish.mjs`（后者回执 message 会带内部命令名，机审 ⑥ 列会红）。
+5. **两条范围外发现（不夹带、只登记）**：
+   - 回执页「远端标识」那一行按设计原样显示远端 guid（本票夹具里是 `guid_stub_829`）。它是页族契约里的既定行位，**本票不改**；若后续判它属「内部标识符进用户视野」（机审 ⑥／H2 同族），那是**页族契约的账**，回 `src/render/receipt.ts` 与它的票。
+   - 只有**一个本票用例套**覆盖本域（13 例）；域内私有件的分支（如 `dueMatches` 的边界）不在本票断言面内 —— 它们由既有 `wish-sync-661`／`wizard-pages-665` 等件覆盖。
+
+---
+
+## 七 验收结论
+
+**逐条验收命令 → 读数**：
+
+| 票面验收命令 | 读数 | 判 |
+|---|---|---|
+| 本域每条命令的真出口用例（照票 3 定的测试面） | `node --test packages/skill-memo-ilife/test/wish-pages-829.test.mjs` → `tests 13 / pass 13 / fail 0` | **过** |
+| 分隔符门：节点级与行级都 0 | 七件全部 `节点级=0 行级=0` | **过** |
+| 响应式门：三档零横向溢出 | `OVERFLOW-ZERO pages=7 cells=21 failed=0` | **过** |
+| 机审六列：退出码 0 | `t869-机审.mjs --dir .scratch/t829/pages` → `7/7 PASS`，`exit=0` | **过** |
+| 五维尺：逐页 ≥90 且每维 ≥ 满权 80% | 逐页 96、7/7 过线、一致性自证差 0 | **过** |
+
+**五条验收命令全部跑绿** ⇒ 本票按「完成且通过验收」收口：**进度 100% ＋ close**。
+
+**收尾时对票面做的两处据实修正**（写在票面，不静默改）：
+- 验收命令里 `t407-v8-style-audit.mjs` 与 `t<t4票号>-判分.mjs` 两条**路径已过时**：前者按 `t824` §4 本图不用（换成 `t869-机审.mjs`），后者引擎已直升公共层（换成 `packages/base-render/scripts/判分.mjs` ＋ 按域配置）。
+- 「本域涉及的命令键」漏了 `memo.remove`（#850 起 `删心愿` 改指真删），已在票面补记。

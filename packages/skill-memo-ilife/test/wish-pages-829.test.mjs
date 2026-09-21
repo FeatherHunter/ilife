@@ -210,17 +210,14 @@ describe('#829 · 分隔符门（本域读数与共用件归属）', () => {
     }
   });
 
-  it('2 张向导过程页：命中只许是**共用件那一句**（收口归 #851；本域不许长出新句）', () => {
+  it('2 张向导过程页：节点级 **0 命中**（#870 共用件收口后归零，本域不留第二句）', () => {
     const s = fixture();
     s.run('memo.wish', { wizard: 'complete' });
     s.run('memo.wish', { wizard: 'plan' });
     const files = s.listing().filter((f) => ['完成心愿-向导', '心愿排期-向导'].some((stem) => f.startsWith(stem + '_')));
     assert.equal(files.length, 2, '两张过程页应收齐，实测：' + s.listing().join(','));
     for (const [f, texts] of sepHits(s.landing, files)) {
-      for (const t of texts) {
-        // 这一句即 #851 要收的共用件原句（`t824-视觉基准.md` §3）；本域只许引用、不许另写第二句。
-        assert.match(t, /点复制数据.*点复制日志/, f + ' 的新债不是共用件那一句：' + t);
-      }
+      assert.deepEqual(texts, [], f + ' 仍有分隔符债：' + texts.join(' ／ '));
     }
   });
 });

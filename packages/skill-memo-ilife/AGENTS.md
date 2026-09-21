@@ -123,7 +123,7 @@
 | `src/sync/sentinel.ts` | 175 | 174 | 未越线，在册备查 |
 | `src/triggers/routeSpec.ts` | 36 | 36 | 未越线，在册备查 |
 | `src/triggers/routing.ts` | 41 | 41 | 未越线，在册备查 |
-| `src/triggers/wakewords.ts` | 59 | 58 | 未越线，在册备查 |
+| `src/triggers/wakewords.ts` | 59 | 61 | 未越线，在册备查 |
 | `src/wish/commands.ts` | 22 | 22 | 未越线，在册备查 |
 | `src/wish/complete.ts` | 78 | 78 | 未越线，在册备查 |
 | `src/wish/due.ts` | 61 | 61 | 未越线，在册备查 |
