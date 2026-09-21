@@ -53,11 +53,12 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       assert.equal(byKey['html.dir'].title, 'HELP 产物目录');
     });
 
-    it('只读 hint 指配置文件（不让人去页面上改）', () => {
+    it('#863 起只读 hint 不再写那句提示（只读由行表标记＋disabled 外观承担）', () => {
       for (const k of ['db.name', 'html.dir']) {
-        const hint = CONFIG_ITEMS.find((i) => i.key === k).hint;
-        assert.match(hint, /只读/);
-        assert.match(hint, /配置文件/);
+        const item = CONFIG_ITEMS.find((i) => i.key === k);
+        assert.doesNotMatch(item.hint, /只读，要改请编辑配置文件/);
+        assert.doesNotMatch(item.hint, /改请编辑配置文件/);
+        assert.equal(item.readonly, true, '只读标记须保留（外观与保存行为靠它）');
       }
     });
   });

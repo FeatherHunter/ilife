@@ -84,7 +84,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。只读，要改请编辑配置文件。',
+    hint: '数据目录下的库文件。',
   },
   {
     key: 'html.dir',
@@ -93,7 +93,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'htmlDir',
-    hint: '交付页面的存放目录。只读，`.`或留空＝产物放库根；改请编辑配置文件。',
+    hint: '交付页面的存放目录。`.`或留空＝产物放库根。',
   },
 ];
 
@@ -106,7 +106,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'directory',
     readonly: true,
     resolveFrom: 'backupDir',
-    hint: '备份与恢复的读写目录。只读，要改请编辑配置文件。',
+    hint: '备份与恢复的读写目录。',
   },
   {
     key: 'key.file',
@@ -115,7 +115,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'keyFile',
-    hint: '主密钥文件的位置。只读，要改请编辑配置文件。',
+    hint: '主密钥文件的位置。',
   },
 ];
 

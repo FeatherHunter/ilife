@@ -82,7 +82,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'dbFile',
-    hint: '数据目录下的数据库文件。只读，要改请编辑配置文件。',
+    hint: '数据目录下的数据库文件。',
   },
   {
     key: 'html.dir',
@@ -91,7 +91,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'htmlDir',
-    hint: '数据目录下存放交付页面的子目录。只读，要改请编辑配置文件。',
+    hint: '数据目录下存放交付页面的子目录。',
   },
   {
     key: 'photos.dir',
@@ -119,7 +119,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'gifsDir',
-    hint: '照片目录下存放 GIF 的子目录。只读，要改请编辑配置文件。',
+    hint: '照片目录下存放 GIF 的子目录。',
   },
   {
     key: 'xunji.stateDir',
@@ -128,7 +128,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'directory',
     readonly: true,
     resolveFrom: 'stateDir',
-    hint: '训记的限频与同步游标存放目录。只读，要改请编辑配置文件。',
+    hint: '训记的限频与同步游标存放目录。',
   },
   {
     key: 'xunji.catalog',
@@ -137,7 +137,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'catalog',
-    hint: '动作名判定用的动作库。只读，要改请编辑配置文件。',
+    hint: '动作名判定用的动作库。',
   },
   {
     key: 'xunji.backfillDays',
@@ -145,7 +145,7 @@ const ADVANCED: readonly ConfigItem[] = [
     tier: 'advanced',
     control: 'number',
     readonly: true,
-    hint: '从训记拉实绩时默认回溯的天数。只读，要改请编辑配置文件。',
+    hint: '从训记拉实绩时默认回溯的天数。',
   },
   {
     key: 'land.xunjiSeconds',
@@ -153,7 +153,7 @@ const ADVANCED: readonly ConfigItem[] = [
     tier: 'advanced',
     control: 'number',
     readonly: true,
-    hint: '调用训记的超时秒数。只读，要改请编辑配置文件。',
+    hint: '调用训记的超时秒数。',
   },
   {
     key: 'land.landSeconds',
@@ -161,7 +161,7 @@ const ADVANCED: readonly ConfigItem[] = [
     tier: 'advanced',
     control: 'number',
     readonly: true,
-    hint: '落地训练各步骤的超时秒数。只读，要改请编辑配置文件。',
+    hint: '落地训练各步骤的超时秒数。',
   },
 ];
 

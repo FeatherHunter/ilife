@@ -87,7 +87,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件（备忘不建库，显示的是会落在哪）。只读，要改请编辑配置文件。',
+    hint: '数据目录下的库文件（备忘不建库，显示的是会落在哪）。',
   },
   {
     key: 'html.dir',
@@ -96,7 +96,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'htmlDir',
-    hint: '数据目录下存放 HELP 页面的子目录名。只读，要改请编辑配置文件。',
+    hint: '数据目录下存放 HELP 页面的子目录名。',
   },
   {
     key: 'media.dir',

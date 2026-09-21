@@ -116,7 +116,7 @@ export function buildMemoHealthReport(): MemoHealthReport {
     items.push({
       id: 'db.file', title: '库文件', status: 'red',
       message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对（库文件名只读，要改请编辑配置文件）；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
+      action: '确认「数据目录」与「库文件名」对不对；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
       source: dbSource,
     });
   } else {

@@ -82,7 +82,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。只读，要改请编辑配置文件。',
+    hint: '数据目录下的库文件。',
   },
   {
     key: 'html.dir',
@@ -91,7 +91,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'htmlDir',
-    hint: 'HELP 页面的存放目录。只读，要改请编辑配置文件。',
+    hint: 'HELP 页面的存放目录。',
   },
 ];
 

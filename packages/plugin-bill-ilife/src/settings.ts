@@ -81,7 +81,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。只读，要改请编辑配置文件。',
+    hint: '数据目录下的库文件。',
   },
   {
     key: 'db.goals',
@@ -90,7 +90,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'goalsFile',
-    hint: '与库同目录的预算与账户文件。只读，要改请编辑配置文件。',
+    hint: '与库同目录的预算与账户文件。',
   },
   {
     key: 'html.dir',
@@ -99,7 +99,7 @@ const COMMON: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'htmlDir',
-    hint: 'HELP 与速查表的存放目录。只读，要改请编辑配置文件。',
+    hint: 'HELP 与速查表的存放目录。',
   },
 ];
 
@@ -112,7 +112,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'directory',
     readonly: true,
     resolveFrom: 'backupDir',
-    hint: '备份与恢复的读写目录。只读，要改请编辑配置文件。',
+    hint: '备份与恢复的读写目录。',
   },
   {
     key: 'backup.stem',
@@ -121,7 +121,7 @@ const ADVANCED: readonly ConfigItem[] = [
     control: 'text',
     readonly: true,
     resolveFrom: 'backupSample',
-    hint: '备份文件名的前缀，后面自动加时间戳。只读，要改请编辑配置文件。',
+    hint: '备份文件名的前缀，后面自动加时间戳。',
   },
 ];
 
