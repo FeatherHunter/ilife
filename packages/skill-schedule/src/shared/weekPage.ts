@@ -15,7 +15,7 @@ import {
   type DistributionRowInput, type KpiCardInput, type ListRowInput,
 } from 'base-paint/blocks';
 import { assembleDocPage, type PageHead } from './docPage.js';
-import { renderHeatMatrix, type HeatRow } from './pageParts.js';
+import { categoryColor, renderHeatMatrix, type HeatRow } from './pageParts.js';
 
 /** 「周视图」一页要的全部东西（7 个字段）。 */
 export interface WeekPageData {
@@ -36,7 +36,10 @@ export function renderWeekPage(data: WeekPageData): string {
   const content = [
     renderKpiGrid(data.kpis),
     renderHeatMatrix(data.rows, { order: data.order, id: 'week-heat', title: '7×24 全分类热力图', legend: true }),
-    renderDistributionRows({ rows: data.distribution }),
+    // 分类总览按名上色（与矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
+    renderDistributionRows({
+      rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
+    }),
     renderListRows({ items: data.daily, emptyText: '这一周没有记录' }),
     renderCopyBlock({
       title: '复制给 AI',

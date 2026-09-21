@@ -90,6 +90,15 @@ describe('#782 页型配方（人裁：今天总结 B／查日程 A／周视图 
     assert.ok(body.includes('空档'), '空档那一段在页上');
   });
 
+  it('分类分布行按分类上色（#782 首版七条全蓝，这条判据就是为它补的）', () => {
+    const body = markupOf(renderTodaySummaryPage(DAY_RECORDS, DAY));
+    const fills = [...body.matchAll(/<span class="ilife-block-dist-row-fill" style="([^"]*)"/g)].map((m) => m[1]);
+    assert.ok(fills.length >= 2, '这一天有 ≥2 个分类，分布行就该 ≥2 条（实得 ' + fills.length + '）');
+    for (const style of fills) assert.ok(/background:/.test(style), '每条分布行都得带填充色：' + style);
+    const colors = new Set(fills.map((s) => (s.match(/background:\s*([^;"]+)/) ?? [])[1]));
+    assert.ok(colors.size >= 2, '不同分类不许同色（实得 ' + colors.size + ' 种）');
+  });
+
   it('周视图：是整页，7×24 矩阵＝7 行 × 24 格', () => {
     const records = [
       rec(1, WEEK[0], '00:00', '06:00', 360, '睡眠', '维持.睡眠'),

@@ -43,8 +43,10 @@ function esc(value: string): string {
   });
 }
 
-/** 键 → 色的唯一算式（位次定色）。表外的键走 `--fg3`（灰），不落回某个真分类的颜色上。 */
-function colorAt(order: readonly string[], key: string | null): string {
+/** 键 → 色的**唯一算式**（位次定色）。表外的键走 `--fg3`（灰），不落回某个真分类的颜色上。
+ *  色带、热力矩阵、分类分布行三处都调它——一处改，三处一起改（#782 首版曾在分布行上漏传色，
+ *  七条全蓝，见证据件第七节）。 */
+export function categoryColor(key: string | null, order: readonly string[]): string {
   if (key === null) return 'var(--soft)';
   const at = order.indexOf(key);
   return at >= 0 ? CHART_PALETTE[at % CHART_PALETTE.length] : 'var(--fg3)';
@@ -88,7 +90,7 @@ export function renderHourBand(
       items: cells.map((cell, h) => ({
         label: String(h).padStart(2, '0'),
         value: cell.minutes,
-        color: colorAt(opts.order, cell.key),
+        color: categoryColor(cell.key, opts.order),
       })),
       options: {
         height: opts.height ?? 120,
@@ -123,7 +125,7 @@ export function renderHeatMatrix(
   const head = rows.map((row) => {
     const label = opts.dayLabel === undefined ? row.label + ' ' + row.date.slice(5) : opts.dayLabel(row);
     const cells = row.cells.map((cell, h) => '<span class="heat-cell" style="background:'
-      + colorAt(opts.order, cell.key) + '" title="' + esc(row.date + ' ' + String(h).padStart(2, '0')
+      + categoryColor(cell.key, opts.order) + '" title="' + esc(row.date + ' ' + String(h).padStart(2, '0')
       + ':00 · ' + (cell.key ?? '无记录') + ' · ' + cell.minutes + ' 分钟') + '"></span>').join('');
     return '<div class="' + rowClass + '">'
       + '<div class="heat-day">' + esc(label) + '</div>'
@@ -136,7 +138,7 @@ export function renderHeatMatrix(
     .map(([col, text, align]) => '<span style="grid-column:' + col + '/span 4;text-align:' + align + '">' + text + '</span>')
     .join('');
   const legend = opts.legend === false ? '' : '<div class="heat-legend">' + opts.order.map((key) => '<span><i style="background:'
-    + colorAt(opts.order, key) + '"></i>' + esc(key) + '</span>').join('') + '</div>';
+    + categoryColor(key, opts.order) + '"></i>' + esc(key) + '</span>').join('') + '</div>';
   const title = opts.title === undefined ? '' : '<h2 class="heat-title">' + esc(opts.title) + '</h2>';
   return title + '<div class="heat"' + (opts.id === undefined ? '' : ' id="' + esc(opts.id) + '"') + '>'
     + head

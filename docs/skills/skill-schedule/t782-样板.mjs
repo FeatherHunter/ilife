@@ -73,6 +73,18 @@ const PAGES = [
   },
 ];
 
+/** 分类分布行**按名上色**的判据（#782 首版七条全蓝就是这条缺位）：每条都得带填充色，
+ *  且不同分类不许同色。页上没有分布行时（如查日程）这条判据自动不适用。 */
+function distributionColorRed(body) {
+  const fills = [...body.matchAll(/<span class="ilife-block-dist-row-fill" style="([^"]*)"/g)].map((m) => m[1]);
+  if (fills.length === 0) return [];
+  const red = [];
+  for (const style of fills) if (!/background:/.test(style)) red.push('分布行无色:' + style);
+  const colors = new Set(fills.map((s) => (s.match(/background:\s*([^;"]+)/) ?? [])[1]));
+  if (fills.length >= 2 && colors.size < 2) red.push('分布行同色:' + colors.size + ' 种');
+  return red;
+}
+
 const mondayOf = (iso) => {
   const t = new Date(iso + 'T00:00:00Z');
   t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7));
@@ -111,6 +123,7 @@ for (const page of pages) {
   for (const [name, rule] of PAGE_RULES) if (!rule(page.html)) red.push(name);
   for (const cls of page.need) if (!body.includes(cls)) red.push('缺件:' + cls);
   for (const text of page.text) if (!body.includes(text)) red.push('缺文案:' + text);
+  red.push(...distributionColorRed(body));
   const bytes = Buffer.byteLength(page.html, 'utf8');
   const sha = createHash('sha256').update(page.html).digest('hex').slice(0, 16);
   const delivery = deliverHtml({ explicit: join(OUT, page.file), html: page.html });

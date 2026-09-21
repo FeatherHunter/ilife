@@ -18,7 +18,7 @@ import {
 } from 'base-paint/blocks';
 import { renderFactStrip, renderTimelineRows, type FactItemInput, type TimelineRowInput } from 'base-paint';
 import { assembleDocPage, type PageHead } from './docPage.js';
-import { renderHourBand, type HourCell } from './pageParts.js';
+import { categoryColor, renderHourBand, type HourCell } from './pageParts.js';
 
 /** 「今天总结」一页要的全部东西（8 个字段，口径都在调用方）。 */
 export interface DayPageData {
@@ -51,7 +51,10 @@ export function renderDayPage(data: DayPageData): string {
     renderFactStrip({ items: data.sleep }),
     renderDisclosure({
       title: '分类进度（一级分类分布）',
-      contentHtml: renderDistributionRows({ rows: data.distribution }),
+      // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，七条一样看不出分别。
+      contentHtml: renderDistributionRows({
+        rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
+      }),
     }),
     renderCopyBlock({
       title: '复制与留档',
