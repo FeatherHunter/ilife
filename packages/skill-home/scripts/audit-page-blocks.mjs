@@ -20,9 +20,10 @@
  * 用法（仓根，经排队）：
  *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json [--json <路径>]
  *   node tooling/run-locked.mjs --ticket 866 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json --manifest <产物目录>/manifest.json
- *     清单作用域（票 #866：只审清单 `rows[].file` 点名的产物文件；墙与索引是生成器
- *     产物，走墙自检，不进本门）。清单读不动／`rows` 空／有行缺 `file` → exit 2；
- *     清单点名却没有文件 → 按 READ-FAIL 计，exit 1。不给清单即整目录旧行为，一字不动。
+ *     清单作用域（票 #866：只审清单 `rows[].file` 点名的产物文件，清单文件名相对
+ *     产物目录解；墙与索引是生成器产物，走墙自检，不进本门）。清单读不动／`rows` 空／
+ *     有行缺 `file` → exit 2；清单点名却没有文件 → 按 READ-FAIL 计，exit 1。
+ *     不给清单即整目录旧行为，一字不动。
  * 退出码：0＝块块在位；1＝有缺块或有页面读不动；2＝用法错／合同读不动。
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
