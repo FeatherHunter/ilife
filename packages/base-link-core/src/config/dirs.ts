@@ -1,17 +1,14 @@
-// config/dirs：配置文件与数据目录住在哪。默认 `~/.ilife/`（由 os.homedir() 派生，平台无关）；
-// `ILIFE_CONFIG_DIR` 设定且非空即整体接管配置目录（**待删**，#754 收口）。
-// 只认这两个来源：不读 $DSH_HOME，也不读别家的变量——技能要能在没有 DSH 的平台上单独跑。
+// config/dirs：配置文件与数据目录住在哪。**只有一处落点**：`~/.ilife/`（由 `os.homedir()` 派生，平台无关）——
+// 配置的真相只在配置文件里，环境变量一律不参与（「位置覆盖」那个口子已随 #754 删除）。
 //
-// #763：测试隔离改走**家目录**（Windows `USERPROFILE`／POSIX `HOME`，见 test/helpers/home-test-base.mjs），
-// 那条测试护栏因此换了判据：**跑在测试运行器里却要落到真实家目录的 `.ilife`** 即抛——
-// 「真实家目录」取自**账号**（`os.userInfo().homedir`，注入改不动它），不读我们定义的任何变量。
+// #763：测试隔离走**家目录**（Windows `USERPROFILE`／POSIX `HOME`，见 test/helpers/home-test-base.mjs），
+// 落点因此不需要任何测试专用开关：测试改的是 `os.homedir()` 的**输入**，与生产走同一条路。
+// 测试护栏＝**跑在测试运行器里却要落到真实家目录的 `.ilife`** 即抛——「真实家目录」取自**账号**
+// （`os.userInfo().homedir`，注入改不动它），不读我们定义的任何变量。
 import { mkdirSync } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ConfigError } from '../errors.js';
-
-/** 位置覆盖变量的名字：设定且非空即接管配置目录。 */
-export const CONFIG_DIR_ENV = 'ILIFE_CONFIG_DIR';
 
 /** 配置文件后缀：每个技能一份 `<技能>.yaml`。 */
 export const CONFIG_FILE_EXT = '.yaml';
@@ -64,16 +61,14 @@ function samePath(a: string, b: string): boolean {
 }
 
 /**
- * 配置目录的绝对路径。
+ * 配置目录的绝对路径：**只有一个来源** —— `os.homedir()/.ilife`。
  *
- * 测试护栏（#763 换判据；原判据挂 `ILIFE_CONFIG_DIR`，那个变量一删它就永远无法被满足）：
+ * 测试护栏（#763 换判据；原判据挂的位置覆盖变量已随 #754 删除）：
  * **跑在测试运行器里，却要落到真实家目录的 `.ilife`** ⇒ 当场抛错（在 `mkdir` 之前，零写）。
- * 判据取自账号（见 `realAccountHome()`），**不读我们定义的任何变量**——注入生效时不触发，
+ * 判据取自账号（见 `realAccountHome()`），**不读我们定义的任何变量**——家目录注入生效时不触发，
  * 忘了注入即响亮失败。测试侧另有一条同向的树快照判据（跑全量前后真实 `~/.ilife` 逐字节不变）。
  */
 export function resolveConfigDir(): string {
-  const override = process.env[CONFIG_DIR_ENV];
-  if (override !== undefined && override.trim() !== '') return resolve(override);
   const configDir = join(homedir(), '.ilife');
   if (isTestRun()) {
     const accountHome = realAccountHome();

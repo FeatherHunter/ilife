@@ -32,29 +32,25 @@ function checkNode() {
   ok('node ' + process.versions.node + ' >= 22.13');
 }
 
-/** 配置目录的绝对路径（`ILIFE_CONFIG_DIR` 设定且非空即接管，否则默认 `~/.ilife`——与技能侧同一套口径）。 */
+/** 配置目录的绝对路径：**只有一处落点** —— `os.homedir()/.ilife`。
+ *  （「位置覆盖变量」那个口子已随 #754 删除：配置的真相只在配置文件里，环境变量不参与。） */
 function configDirPath() {
-  const override = String(process.env.ILIFE_CONFIG_DIR ?? '').trim();
-  return override !== '' ? resolve(override) : join(homedir(), '.ilife');
-}
-function configDirWhere() {
-  return String(process.env.ILIFE_CONFIG_DIR ?? '').trim() !== '' ? 'ILIFE_CONFIG_DIR' : '默认 ~/.ilife';
+  return join(homedir(), '.ilife');
 }
 
-/** 配置目录体检（**#726 改写**）：老线在这里查全局 `SKILLS_DB_PATH`（无默认值、必设）——
+/** 配置目录体检（**#726 改写**；#754 去掉「位置覆盖」那条岔路）：老线在这里查全局 `SKILLS_DB_PATH`（无默认值、必设）——
  *  那个变量随「配置的存与生效口径裁定」（#675）的「环境变量全部删掉」退役，六家的取值面改成
- *  每技能一份 `<配置目录>/<技能>.yaml`（默认 `~/.ilife/<技能>.yaml`）。目录还不存在＝首次运行
- *  （技能自己会建），只提示、不判失败——「没有一个环境变量是必设的」同一条口径。 */
+ *  每技能一份 `<配置目录>/<技能>.yaml`（落点只有 `~/.ilife/<技能>.yaml` 一处；测试隔离改走家目录注入，不开任何覆盖口子）。
+ *  目录还不存在＝首次运行（技能自己会建），只提示、不判失败——「没有一个环境变量是必设的」同一条口径。 */
 function checkConfigDir() {
   const dir = configDirPath();
-  const where = configDirWhere();
   try {
     const st = statSync(dir);
     if (!st.isDirectory()) return dies('配置目录不是目录：' + dir);
     accessSync(dir, constants.W_OK);
-    ok('配置目录可写：' + dir + '（' + where + '）');
+    ok('配置目录可写：' + dir);
   } catch (e) {
-    warn('配置目录还不存在：' + dir + '（' + where + '；首次跑任一条技能命令会自动建）');
+    warn('配置目录还不存在：' + dir + '（首次跑任一条技能命令会自动建）');
   }
 }
 
