@@ -21,7 +21,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { normalizeMediaPath, resolveMediaDir } from '../dist/policy/media.js';
+import { normalizeMediaPath, resolveMediaDir } from '../dist/memo/media.js';
 import { mkMemoDb, seedNote } from './helpers/memo-sqlite.mjs';
 import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 

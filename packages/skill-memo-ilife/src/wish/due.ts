@@ -3,7 +3,7 @@
 // （HELP 已在用这个词：`src/help/scenes/wish.ts` 的 `label: "排期日期"`，实现侧不再自造第二个说法）。
 // 老实现的两条口径照搬：① 只对心愿生效；② 非心愿**静默置空**、不报错（`memo_cli.py:137`）。
 import type { MemoNote } from '../fetch/db.js';
-import { MemoPolicyError } from '../fetch/errors.js';
+import { MemoPolicyError } from '../shared/errors.js';
 
 /** 面向使用者的中文说法：排期字段一律叫这个，不夹英文术语。 */
 export const WISH_DUE_LABEL = '排期日期';

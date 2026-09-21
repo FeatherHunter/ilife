@@ -34,7 +34,7 @@ import { resolveDbDir, dbFilename, resolveDbPath } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
-import { MemoPolicyError } from '../fetch/errors.js';
+import { MemoPolicyError } from '../shared/errors.js';
 import type { MemoDb } from '../fetch/db.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;

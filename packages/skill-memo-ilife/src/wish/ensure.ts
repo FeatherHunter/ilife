@@ -16,7 +16,7 @@ import {
   type MemoNote,
   type NotePatch,
 } from '../fetch/db.js';
-import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../policy/reminder.js';
+import { normalizeRemindAt, normalizeRepeatRule, normalizeRepeatType } from '../remind/policy.js';
 import { dueForCategory, normalizeDue } from './due.js';
 import { larkSetupOf, openGate } from './gate.js';
 import type { LarkSetupInfo } from '../fetch/index.js';

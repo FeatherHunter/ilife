@@ -8,7 +8,7 @@
  * 加／删唤醒词改的是各域 `routes.ts`，别改本件——本件不在生成器 targets 里，
  * 改它 `pnpm gen:check` 不报红（兜住它的只有路由测试与差分回归）。
  */
-import { MemoPolicyError } from '../fetch/errors.js';
+import { MemoPolicyError } from '../shared/errors.js';
 import type { MemoKey } from '../cli/keys.js';
 import { WAKE_ROUTES } from './routes.generated.js';
 import type { WakeRoute } from './routeSpec.js';

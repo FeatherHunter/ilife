@@ -4,7 +4,7 @@
 // `deleteTask` 是 D-06 补的能力：老实现自认「task 域无 +delete shortcut」（feishu_sync.py:834），
 // 删心愿只标完成，飞书任务永远留着；老**自检**里 calendar 域有真删除（:900）、task 域没有。
 import { runLark } from './feishu.js';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 
 /** 飞书标题上限口径（老 `content[:200]`，feishu_sync.py:327）——查重键与写入键必须是同一个，故只此一处。 */
 export const TASK_TITLE_MAX = 200;

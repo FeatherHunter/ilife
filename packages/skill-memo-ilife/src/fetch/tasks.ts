@@ -4,7 +4,7 @@
 // 与老实现的一处有意偏离：老 list 失败静默返回 `[]`（feishu_sync.py:466-467），会让「远端读不到」装成
 // 「远端没有」；新实现一律上抛，由调用方收进错误列表（见 `docs/skills/skill-memo-ilife/t658-A-心愿排期移植-证据.md`）。
 import { runLark } from './feishu.js';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 import { taskTitle } from './taskWrite.js';
 
 export interface RemoteTask {

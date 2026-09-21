@@ -10,7 +10,7 @@ import {
   type MemoDb,
   type MemoReminder,
 } from './db.js';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 
 export const REMIND_ADVANCE_MINUTES = 10;
 export const REMIND_CRON_INTERVAL_MINUTES = 5;

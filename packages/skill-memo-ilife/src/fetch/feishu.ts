@@ -4,7 +4,7 @@ import { accessSync, constants } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 
 export const LARK_DEFAULT_TIMEOUT_MS = 30000;
 export const LARK_WISH_SCOPE = 'task';

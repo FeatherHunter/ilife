@@ -3,7 +3,7 @@
 // 保留的检测面：`authStatus`（面板三档读数与 `larkTierInfo` 的身份真值源）由 `src/fetch/feishu.ts`
 // 的 `findLarkCli`／`runLark` 驱动；四道门（存在→版本→登录→scope）住 `larkReady`。
 import { findLarkCli, runLark } from './feishu.js';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 
 /** 当前 lark-cli 授权状态（诊断用）。 */
 export function authStatus(): Record<string, unknown> {

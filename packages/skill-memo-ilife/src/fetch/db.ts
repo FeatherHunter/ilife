@@ -7,7 +7,7 @@
 import { accessSync, constants, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { MemoFetchError } from './errors.js';
+import { MemoFetchError } from '../shared/errors.js';
 import { dbFilename } from './paths.js';
 
 /** 老 `notes` 行（`init.sql` 逐列：id 自增整数／content 正文／summary 短摘要／category／sub_category／

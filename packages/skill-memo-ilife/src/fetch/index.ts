@@ -1,4 +1,4 @@
-export { MemoFetchError, MemoPolicyError } from './errors.js';
+export { MemoFetchError, MemoPolicyError } from '../shared/errors.js';
 export { DEFAULT_DB_FILENAME, DEFAULT_HTML_DIR_NAME, dbFilename, dbDirOf, resolveDbDir, dbFileOf, htmlDirOf, mediaDirOf, resolveMediaDirPath, resolveDbPath, resolvedMemoPaths } from './paths.js';
 export type { MemoResolvedPaths } from './paths.js';
 export {
