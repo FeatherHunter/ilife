@@ -1,0 +1,64 @@
+[
+  {
+    "卡id": "cooking_start_fresh",
+    "唤醒词": "做菜模式",
+    "命令": "chef.cooking.run",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-全新开始.html",
+    "exit": 0,
+    "bytes": 99172,
+    "sha256": "898d615db8e4e2426b455f1436e299eef39700309b54f8891119eddd1e862245"
+  },
+  {
+    "卡id": "cooking_start_with_history",
+    "唤醒词": "做菜模式",
+    "命令": "chef.cooking.run",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-含上次经验.html",
+    "exit": 0,
+    "bytes": 99821,
+    "sha256": "314f83b7a488d3131aaafff5026a7805e61e3450b68cbaa4059f427d0783e756"
+  },
+  {
+    "卡id": "cooking_start_double_servings",
+    "唤醒词": "做菜模式",
+    "命令": "chef.cooking.run",
+    "参数": {
+      "name": "辣椒炒肉",
+      "servings": 4
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-双份份量.html",
+    "exit": 0,
+    "bytes": 99209,
+    "sha256": "8b6018b6f16c5bf998d6ce67d57e6ccd121a8c5f61549c4068c02110b64988d5"
+  },
+  {
+    "卡id": "cooking_resume_after_pause",
+    "唤醒词": "做菜模式",
+    "命令": "chef.cooking.run",
+    "参数": {
+      "name": "辣椒炒肉",
+      "progress": 3
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-断点续做.html",
+    "exit": 0,
+    "bytes": 99365,
+    "sha256": "1486fa5ad0771027e87579d8bd52a8c27ddef926f7148ca84181d968ade9ab77"
+  },
+  {
+    "卡id": "cooking_during_waiting_step",
+    "唤醒词": "做菜模式",
+    "命令": "chef.cooking.run",
+    "参数": {
+      "name": "辣椒炒肉"
+    },
+    "产物绝对路径": "D:\\ilife\\.scratch\\t772\\做菜-等待并行.html",
+    "exit": 0,
+    "bytes": 100172,
+    "sha256": "556c1416f3d06bfdd1c47a82fd4510ddccbbd7dfda64209d83a0217e2bd93f14"
+  }
+]

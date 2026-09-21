@@ -6,4 +6,5 @@
 
 export { COOK_COMMANDS } from './commands.js';
 export { COOK_ROUTES } from './routes.js';
-export { buildCookingRun, runCookingRun } from './run.js';
+export { buildCookingRun, getCookingPageData, renderCookingPage, runCookingRun } from './run.js';
+export type { CookCardKind, CookStep, CookwareItem, CookingPageData, StepUsage } from './run.js';
