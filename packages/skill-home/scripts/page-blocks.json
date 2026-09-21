@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "note": "票 #803 首版：只登记现状骨架可机检块（渲染管线的结构事实）。域必需块（每族字段／操作，事实源 docs/skills/skill-home/pages-ledger.md）待票 8（#805）骨架登记 scripts/lib/page-blocks.mjs 出来后扩进本件：只加 pages[] 条目，不改 checker。kind 只三种：substr（必须出现）／regexp（必须命中）／absent（必须不出现）。",
+  "defaults": [
+    { "id": "doc-doctype", "kind": "substr", "value": "<!DOCTYPE html>" },
+    { "id": "doc-lang", "kind": "regexp", "value": "<html lang=\"zh-CN\">" },
+    { "id": "shell-page", "kind": "substr", "value": "class=\"page\"" },
+    { "id": "page-title", "kind": "regexp", "value": "<h1[^>]*>.+?</h1>" },
+    { "id": "cmd-line", "kind": "substr", "value": "class=\"cmd\"" },
+    { "id": "content-filled", "kind": "absent", "value": "<!--CONTENT-->" },
+    { "id": "css-inlined", "kind": "regexp", "value": "<style>[^<]*\\.page\\{" }
+  ],
+  "pages": []
+}

@@ -30,7 +30,7 @@
   },
   "scripts": {
     "build": "tsc -b && node scripts/build-help.mjs",
-    "test": "node --test test/help-assets.test.mjs test/help-delivery-190.test.mjs test/backup.test.mjs ../../test/scaffold.test.mjs",
+    "test": "node --test test/help-assets.test.mjs test/help-delivery-190.test.mjs test/backup.test.mjs test/style-audit.test.mjs ../../test/scaffold.test.mjs",
     "gen:help-assets": "node scripts/gen-help-assets.mjs",
     "gen:help-assets:check": "node scripts/gen-help-assets.mjs --check"
   }
