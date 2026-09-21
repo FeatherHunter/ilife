@@ -27,6 +27,8 @@ import { completeWish, dueForCategory, ensureWish, removeWish, setWishDue, updat
 import { buildReceiptPage, changeCategorySnapshot, fillMemoPage, pageEnvelope } from '../render/index.js';
 import type { ReceiptScene } from '../render/index.js';
 import { buildReceipt, noteIdOfMessage, receiptOptsOf } from './receiptPage.js';
+import { memoBatchResultPage, memoCreatePage, memoRemovePage, memoUpdatePage } from './receipt.js';
+import { bookletFileStem } from '../help/booklet.js';
 import type { WishReceipt } from '../wish/index.js';
 
 function asIds(value: unknown): number[] {
@@ -86,6 +88,11 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
   // #829：分类＝心愿 ⇒ 本域那一格（`记心愿`）；不是即别家那格（情绪日记）。
   if (created !== null && created.category === '心愿') {
     return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_add_wish', '记心愿', r.receipt, created) };
+  }
+  // #826：分类＝备忘 ⇒ 本域那一格（`记备忘`，册子 seq 1）；打卡那支归 #830，本件不动它。
+  const memo = memoCreatePage(r.receipt, created);
+  if (memo !== undefined) {
+    return { data: r.receipt, exit: r.exit, deliver: memo };
   }
   return {
     data: r.receipt,
@@ -151,6 +158,11 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
   if (after.category === '情绪日记') {
     return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_update_mood', '改情绪', r.receipt, receiptOptsOf(after)) };
   }
+  // #826：纯分类补丁→单条改分类（seq 4）／纯子分类补丁→改子分类（seq 5）／备忘行字段改→改备忘（seq 2）。
+  const memo = memoUpdatePage(r.receipt, after, Object.keys(patch));
+  if (memo !== undefined) {
+    return { data: r.receipt, exit: r.exit, deliver: memo };
+  }
   return { data: r.receipt, exit: r.exit };
 }
 
@@ -213,6 +225,11 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
     if (before.category === '情绪日记') {
       return { data: w.receipt, exit: w.exit, deliver: buildReceipt('memo_delete_mood', '删情绪', w.receipt, receiptOptsOf(before)) };
     }
+    // #826：删前那一行分类＝备忘 ⇒ 本域那一格（`删备忘`，册子 seq 3）；打卡那支归 #830。
+    const memo = memoRemovePage(w.receipt, before);
+    if (memo !== undefined) {
+      return { data: w.receipt, exit: w.exit, deliver: memo };
+    }
     return { data: w.receipt, exit: w.exit };
   }
   const errors: string[] = [];
@@ -257,6 +274,8 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
         errors: r.errors,
       },
       exit: doneAll ? 0 : 4,
+      // #826：执行支的结果页（册子 seq 6，主体 `备忘改分类-批量`）；数据那一格仍是老形状（只多 `deliver`）。
+      deliver: memoBatchResultPage({ updated: r.updated, skipped: r.skipped, errors: r.errors, from, to }),
     };
   }
   const items = collectBatchItems(db, from);
@@ -277,7 +296,8 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
   return {
     data: { ok: true, message, items, total: items.length, fromCategory: from, toCategory: to },
     exit: 0,
-    deliver: { html: fillMemoPage('change_category', payload), stem: '批量改分类' },
+    // #826：过程页主体按册子取（seq 31 `备忘改分类-批量-向导`）；模板仍是本域这张向导页（主体名由域票填，#848 证据 §没碰什么）。
+    deliver: { html: fillMemoPage('change_category', payload), stem: bookletFileStem('memo_batch_change_category', '过程页') },
   };
 }
 

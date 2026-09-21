@@ -125,13 +125,16 @@ describe('#831 · mood 域 3 场景端到端（真出口）', () => {
 
   it('反例：非情绪类笔记的改／删**不出本族页**（不冒充本域交付物）', () => {
     const id = seedNote(DB, { content: '一条普通备忘', category: '备忘' });
-    const before = listing().length;
+    // #826 起备忘类笔记的改／删落自己域的页（改备忘／删备忘），故本断言只数 mood 本族三主体，
+    // 意图不变：非情绪类笔记不冒充 mood 域交付物。
+    const isMood = (f) => /^(记情绪|改情绪|删情绪)_/.test(f);
+    const before = listing().filter(isMood).length;
     const u = run(['memo.update', '--params', JSON.stringify({ id, body: '改过的普通备忘' })]);
     assert.equal(u.status, 0, '普通备忘照样能改');
     const d = run(['memo.remove', '--params', JSON.stringify({ id, confirm: true })]);
     assert.equal(d.status, 0, '普通备忘照样能删');
     assert.equal(countNotes(DB) > 0, true);
-    assert.equal(listing().length, before, '本族页数不变：' + listing().join(','));
+    assert.equal(listing().filter(isMood).length, before, 'mood 本族页数不变：' + listing().join(','));
   });
 
   it('反例：无此笔记即 exit 4，且不落任何产物', () => {

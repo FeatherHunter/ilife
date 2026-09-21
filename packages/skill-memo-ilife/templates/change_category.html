@@ -99,7 +99,10 @@ pre{white-space:pre-wrap;background:#f5f5f7;color:var(--fg);border:1px solid var
 
 <section class="panel">
 <strong>数据与日志</strong>
-<div class="hint">点复制数据保存当前笔记列表 · 点复制日志用于反馈问题(日志不含隐私内容)</div>
+<dl class="hint" style="line-height:1.8">
+<dt>复制数据</dt><dd>保存当前笔记列表，可粘贴存档</dd>
+<dt>复制日志</dt><dd>反馈问题用，日志不含隐私内容</dd>
+</dl>
 <div class="hm-actions">
 <button class="copy ghost" onclick="copyData()">复制数据</button>
 <button class="copy ghost" onclick="copyLog()">复制日志</button>
@@ -126,7 +129,7 @@ function init(){
   document.getElementById('title').textContent=d.title||'批量改分类向导';
   document.getElementById('subtitle').textContent='勾选下方笔记 → 复制指令 → 粘贴给 AI 帮你完成改分类';
   var meta=d.meta||{};
-  document.getElementById('meta').textContent=`从「${d.from_category||'当前分类'}」改到「${d.to_category||'目标分类'}」 · 生成时间：${d.generated_at||''}`;
+  document.getElementById('meta').textContent=`从「${d.from_category||'当前分类'}」改到「${d.to_category||'目标分类'}」(生成时间 ${d.generated_at||''})`;
   if(d.to_category){
     var sel=document.getElementById('toCatSelect');
     sel.value=d.to_category;
