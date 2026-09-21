@@ -18,6 +18,6 @@ export const SHOPPING_COMMANDS: readonly CommandSpec[] = [
     shape: 'list',
     title: '生成清单',
     wakeWord: '生成清单',
-    example: 'chef-cmd-read chef.shopping.query --params \'{"names":["宫保虾球","鱼香肉丝"]}\'',
+    example: 'chef-cmd-read chef.shopping.query --params \'{"names":["辣椒炒肉"]}\'',
   },
 ];

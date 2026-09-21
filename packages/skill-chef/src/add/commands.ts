@@ -19,6 +19,6 @@ export const ADD_COMMANDS: readonly CommandSpec[] = [
     key: 'chef.recipe.write',
     title: '录入食谱',
     wakeWord: '录入食谱',
-    example: 'chef-cmd-read chef.recipe.write --params \'{"op":"add","name":"宫保虾球"}\'',
+    example: 'chef-cmd-read chef.recipe.write --params \'{"op":"add","name":"辣椒炒肉"}\'',
   },
 ];

@@ -39,7 +39,7 @@ export const HISTORY_COMMANDS: readonly HistoryCommandSpec[] = [
     key: 'chef.history.record',
     title: '记录做菜',
     wakeWord: '记录做菜',
-    example: 'chef-cmd-read chef.history.record --params \'{"name":"宫保虾球"}\'',
+    example: 'chef-cmd-read chef.history.record --params \'{"name":"辣椒炒肉"}\'',
   },
   {
     kind: 'read',

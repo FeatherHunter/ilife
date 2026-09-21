@@ -19,6 +19,14 @@ import { fail } from '../shared/slots.js';
 // 筛选口味走 `flavor`，筛选季节走 `season`（后三者经显式键，不再经 `filter` 绕 `cuisine`）。
 export const FILTER_KEYS = ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'filter', 'ingredient', 'ingredient_exclude'] as const;
 
+/** 过滤维度的**别名**键（老件 `scenes/搜索筛选.yaml` 的词面）：`time_max`／`time` → `maxTime`。
+ *
+ * #841 修：这两个别名原先在「一个维度都没给」那道预检**之后**才被认（下面 113–114 行的归一），
+ * 而那道预检只点名 `FILTER_KEYS` ⇒ 只给 `time_max` 会被判成「没给过滤条件」exit 2，
+ * 归一那两行成了走不到的死代码（`filter_time_quick` 那张卡一直因此打不通）。别名属**同一维度**，
+ * 故与 `FILTER_KEYS` 一起参与预检，归一换算仍在下面一处。 */
+const FILTER_ALIAS_KEYS = ['time_max', 'time'] as const;
+
 /** 按关键词搜菜名／简介／食材名（空查询不返全量，直接拦）。原 `src/fetch/db.ts`，本域独占。 */
 export function searchRecipes(h: ChefDb, kw: string): RecipeRow[] {
   if (typeof kw !== 'string' || kw.trim().length === 0) {
@@ -100,8 +108,8 @@ export function runRecipeSearch(handle: ChefDb, params: Record<string, unknown>)
     rows = listRecipes(handle);
     kind = 'all';
   } else {
-    const present = FILTER_KEYS.filter((k) => params[k] !== undefined && params[k] !== '');
-    if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude）');
+    const present = [...FILTER_KEYS, ...FILTER_ALIAS_KEYS].filter((k) => params[k] !== undefined && params[k] !== '');
+    if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude，别名 time_max／time）');
     const f: Record<string, unknown> = {};
     for (const k of ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'ingredient', 'ingredient_exclude'] as const) {
       const v = params[k];

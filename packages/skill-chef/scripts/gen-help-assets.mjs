@@ -12,11 +12,12 @@
  * 三处事实源（全程只读）：
  *   ① 老技能 HELP 载荷 `.scratch/chef-help/legacy-chef-help-payload.json`（74,581 B）。**以 `$.scenarios[]` 为准**：
  *      载荷把同一批 48 条输出了两遍（`$.wake_words[].scenarios[]` 是第二遍视图，48/48 逐字相同，本文件有断言），两遍不相加；
- *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`：唤醒词单一事实源。chip 路由与 14 张卡的状态**从它派生**
+ *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`：唤醒词单一事实源。chip 路由与 48 张卡的状态**从它派生**
  *      （照兄弟件 `skill-bill/src/triggers/wake-assets.ts:984-986` 的派生法），本文件不落第二份字面量；
- *      ⚠️ 双向对账的实测口径：表 37 条 ↔ 资产 33 个组名。**表中有资产无＝17 条**（4 条 HELP 自身触发词 ＋
- *      13 条新表多出词）；**资产有表中无＝13 个老组名**（→ 14 张卡标 `'【待开发】'`）。那 13 条多出词按
- *      t2 §3.1／§5.1 是「待判」的 13 条（判「老卡近义触发／改名」9 ＋ 「真新条目」3 ＋ 「不造卡」1），
+ *      ⚠️ 双向对账的实测口径（#841 之后）：表 50 条 ↔ 资产 33 个组名逐条对得上。**表中有资产无＝17 条**
+ *      （4 条 HELP 自身触发词 ＋ 13 条新表多出词）；**资产有表中无＝0**——13 个老组名在 #770–#776 落好
+ *      命令分支与页面后已由 #841 补进表，故 48 张卡**全部可用**，不再有「待开发」徽章。那 13 条多出词按
+ *      t2 §3.1／§5.1 是「待判」的 13 条（判「老卡近义触发／改名」9 ＋「真新条目」3 ＋「不造卡」1），
  *      §5.1 给它们判了内容来源与落位「接在对应二级组末尾」，但**本票资产按定案保持老骨架 48 卡**
  *      （t236 §2.2／§七 草案／本图裁决 3-4 的数都按 48 卡记账）⇒ 这 13 条**不在本票资产内**，见 `NEW_TABLE_ONLY`；
  *   ③ `docs/skills/skill-chef/t2-content-reconcile.md` §七 的 JSON 草案（定案的形状起点）：逐组／逐卡交叉复核
@@ -27,8 +28,9 @@
  *   2. `dimensions`（42 键／80 条，含 1 条畸形键）→ `editable_fields`：键→`name`／`label`（逐字，不自造中文名），
  *      老值原文→`value`。**丢弃 1 条**＝`data_export_backup` 的畸形键 `默认不含)`（值为 `null`，过不了
  *      `SceneEditableField.value` 的 string）；同卡 `include_archived` 照 t2 丁类定案补 `hint`；
- *   3. `status`：老件 48/48 空串（老家缺陷，不照抄）⇒ 13 个不在 `WAKE_TABLE` 的老组名下 **14 张卡**标 `'【待开发】'`，
- *      其余 34 张空串。**13 个组名由 `WAKE_TABLE` 派生后逐字比对，不靠手抄**；
+ *   3. `status`：老件 48/48 空串（老家缺陷，不照抄）。#213 首版把 13 个不在 `WAKE_TABLE` 的老组名下
+ *      **14 张卡**标 `'【待开发】'`；那些组名在 #770–#776 落好命令分支与页面、#841 补进表之后，
+ *      **条件不再成立 ⇒ 48/48 全空串**。`status` 一律由 `WAKE_TABLE` 派生后逐字比对，不靠手抄；
  *   4. **不迁四项**：`result`（48/48；裁决＝「用户拿到的结果型 HTML 文件就是最好的执行结果」）／
  *      `html.command_cn`（与组名 48/48 逐字相同，搬了＝同卡重复）／`html.template`（18 个老技能路径，新技能里一个不存在）／
  *      `html.data_source` ＋ `variants`（96 处全空）。
@@ -47,10 +49,12 @@ const WAKE_SRC = join(PKG_DIR, 'src', 'policy', 'wakewords.ts');
 const DRAFT_DOC = join(PKG_DIR, '..', '..', 'docs', 'skills', 'skill-chef', 't2-content-reconcile.md');
 const DEFAULT_SRC = 'D:\\ilife\\.scratch\\chef-help\\legacy-chef-help-payload.json';
 
-/** 摘要锁：① 载荷文件字节；② 老 48 条 canonical；③ 映射后 48 条 canonical。 */
+/** 摘要锁：① 载荷文件字节；② 老 48 条 canonical；③ 映射后 48 条 canonical。
+ *  ③ 的值随 `status` 变：#841 把 14 张 `'【待开发】'` 翻成空串后重算（老件两条锁一字未动，
+ *  证明这次改的只是新仓自己的 status，没碰任何老家事实源）。 */
 const SOURCE_SHA256 = 'c09f11d9ffa49e6b14c2ade094b5ab428f22fd440b2608442166e470db47d2ab';
 const LEGACY_DIGEST = '620653ed98c85acbeaf0ab646adf0ef48345f4d65d218a8d756f59f86757ae55';
-const ASSET_DIGEST = 'b87e504e2ecabccfcb9d7887e2a1153026bab6b882c9c068f29db93f82292d9f';
+const ASSET_DIGEST = 'ea4d05fb2e3cfe63823de89d46b482d8f513f2478f42c6e2db703cf02abc225d';
 
 /** 页面级三项（裁决 6「逐项照记账」），三个值各自钉在自己的事实上：
  *  - `skill_name` 取老 `meta.skill`（下方 `:185` 逐字断言）；
@@ -95,8 +99,9 @@ const GROUP_DOMAIN = {
   '体检': 'data', '批量改': 'data', '备份': 'data',
 };
 
-/** 13 个不在 `WAKE_TABLE` 的老组名 ＋ 各组名下应标 `'【待开发】'` 的卡（t2 §3.2 逐条）。
- *  ⚠️ 这只作**比对期望**：状态本身由 `WAKE_TABLE` 派生（`assetWords − tablePhrases`），不是拿这张表赋值。 */
+/** 13 个老组名 ＋ 各组名下卡数：**资产有、表中无**的那批。#841 起这批已全部入表，
+ *  故这里只剩「组名下有几张卡」的对照面（`assetOnly` 应恒为 0），保留是为了下次真出现
+ *  「有资产没路由」时能立刻点名，而不是静默放过。 */
 const PENDING_EXPECT = {
   '筛选难度': ['filter_difficulty_easy'],
   '筛选时间': ['filter_time_quick'],
@@ -124,12 +129,13 @@ const FIELD_HINT_FIX = { 'data_export_backup/include_archived': '是否含已废
 const NEW_TABLE_ONLY = ['看菜谱', '看菜', '搜菜', '查食材', '加菜', '开始做菜', '继续做菜', '完成做菜',
   '排除可选', '查清单', '清空清单', '补录做菜', '改评分'];
 
-/** 形状断言全表（每个数都在这里钉死，改资产即红）。 */
+/** 形状断言全表（每个数都在这里钉死，改资产即红）。
+ *  #841 之后：`WAKE_TABLE` 50 条 ⇒ 资产有表中无 0 个组名、待开发卡 0 张、可用卡 48 张。 */
 const EXPECT = {
   bytes: 74581, domains: 10, subgroups: 33, scenes: 48, cardsWithFields: 46, dimPairs: 79, dimKeys: 41,
   legacyDimPairs: 80, legacyDimKeys: 42, droppedPairs: 1, typeStrings: 11, placeholders: 16,
-  wakePhrases: 37, helpWakeWords: 4, newTableOnlyWords: 13, tableOnlyWords: 17,
-  pendingGroups: 13, pendingCards: 14, availableCards: 34,
+  wakePhrases: 50, helpWakeWords: 4, newTableOnlyWords: 13, tableOnlyWords: 17,
+  pendingGroups: 0, pendingCards: 0, availableCards: 48,
 };
 
 const bad = (msg) => { throw new Error('生成器断言不过：' + msg); };
@@ -205,8 +211,11 @@ function build(payload, wakeTable) {
   const assetOnly = names.filter((w) => !tablePhrases.includes(w)); // 方向①：资产有、表中无
   const tableOnly = tablePhrases.filter((p) => !names.includes(p)); // 方向②：表中有、资产无
   eq('资产有表中无的组名数', assetOnly.length, EXPECT.pendingGroups);
-  for (const w of Object.keys(PENDING_EXPECT)) if (!assetOnly.includes(w)) bad('非路由老组名少了 ' + w);
   for (const w of assetOnly) if (!PENDING_EXPECT[w]) bad('多出一个非路由老组名：' + w);
+  // #841：13 个老组名已在表里 ⇒ 上面那个差集必须为 0，且这 13 个组名要真在表内（防「悄悄挪走」）。
+  for (const w of Object.keys(PENDING_EXPECT)) {
+    if (!tablePhrases.includes(w)) bad('老组名又掉出 WAKE_TABLE：' + w);
+  }
   eq('表中有资产无的词数', tableOnly.length, EXPECT.tableOnlyWords);
   eq('其中 HELP 自身触发词', tableOnly.filter((p) => helpPhrases.includes(p)).length, EXPECT.helpWakeWords);
   eq('其中新表多出词（本票不造卡）', tableOnly.filter((p) => NEW_TABLE_ONLY.includes(p)).length, EXPECT.newTableOnlyWords);
@@ -263,15 +272,18 @@ function build(payload, wakeTable) {
   const dev = scenes.filter((s) => s.status === '【待开发】');
   eq('待开发卡数', dev.length, EXPECT.pendingCards);
   eq('可用卡数', scenes.length - dev.length, EXPECT.availableCards);
+  // #841：13 个老组名入表后条件不再成立 ⇒ 待开发 0 张。若将来又冒出待开发卡，
+  // 它会落在这 13 个组名的哪一个上，这里逐组点名（不靠肉眼翻 48 行）。
   for (const [name, ids] of Object.entries(PENDING_EXPECT)) {
     const got = dev.filter((s) => s.wake_word === name).map((s) => s.id);
-    if (JSON.stringify(got) !== JSON.stringify(ids)) bad('组 ' + name + ' 的待开发卡：实测 ' + JSON.stringify(got));
+    if (got.length) bad('组 ' + name + ' 又有待开发卡：' + JSON.stringify(got) + '（该组卡：' + ids.join('／') + '）');
   }
   return { asset, subs, scenes, fields, dropped, tablePhrases, helpPhrases, assetOnly, tableOnly };
 }
 
 /** 与 t2 §七 草案交叉复核：三层结构 ＋ 每卡逐字（草案不搬 `dimensions`，字段账另算）。
- *  **唯一豁免 `status`**：草案照抄老件（48/48 空串），本件按裁决 3-4 改了 14 张 ⇒ 差异条数必须恰好 14。 */
+ *  **唯一豁免 `status`**：草案照抄老件（48/48 空串），本件 #213 首版按裁决 3-4 改了 14 张、
+ *  #841 又把那 14 张翻回空串 ⇒ 今天的差异条数必须是 0（即与草案完全一致）。 */
 function crossCheckDraft(asset, draft) {
   let statusDiffs = 0;
   eq('草案域数', draft.groups.length, EXPECT.domains);
@@ -301,7 +313,7 @@ function crossCheckDraft(asset, draft) {
       }
     }
   }
-  eq('与草案的 status 差异条数（裁决 3-4 的 14 张）', statusDiffs, EXPECT.pendingCards);
+  eq('与草案的 status 差异条数（#841 之后应为 0，即 48/48 与老件同为空串）', statusDiffs, EXPECT.pendingCards);
 }
 
 /** 头部声明（事实源／摘要锁／四类偏离／两个导出）。 */
@@ -315,10 +327,11 @@ function header(digests) {
     ' * 事实源（全程只读）：',
     ' *   ① 老技能 HELP 载荷 `.scratch/chef-help/legacy-chef-help-payload.json`（74,581 B）；**以 `$.scenarios[]` 为准**——',
     ' *      载荷把同一批 48 条输出了两遍（`$.wake_words[].scenarios[]` 是第二遍视图，48/48 逐字相同），两遍不相加；',
-    ' *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条 phrase）：唤醒词单一事实源，本件的 chip 路由与',
-    ' *      14 张卡的状态从它**派生**（`资产组名 − 表内 phrase`），不落第二份字面量。双向对账：表 37 ↔ 资产 33 组名；',
-    ' *      资产有表中无 ＝ 13 个老组名（→ 14 张 `\'【待开发】\'`）；表中有资产无 ＝ 17 条（4 条 HELP 自身触发词 ＋',
-    ' *      13 条新表多出词——后者见 t2 §3.1／§5.1，本票资产按老骨架保持 48 卡、不含它们）；',
+    ' *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（50 条 phrase，下标 1..50）：唤醒词单一事实源，',
+    ' *      本件的 chip 路由与 48 张卡的 status 从它**派生**（`资产组名 − 表内 phrase`），不落第二份字面量。',
+    ' *      双向对账：表 50 ↔ 资产 33 组名；资产有表中无 ＝ 0 个组名（13 个老组名 #841 起已入表 ⇒ 48 张卡全可用）；',
+    ' *      表中有资产无 ＝ 17 条（4 条 HELP 自身触发词 ＋ 13 条新表多出词——后者见 t2 §3.1／§5.1，',
+    ' *      本票资产按老骨架保持 48 卡、不含它们）；',
     ' *   ③ `docs/skills/skill-chef/t2-content-reconcile.md` §七 的 JSON 草案：形状起点，生成器已逐组／逐卡交叉复核。',
     ' * 摘要锁：载荷文件 sha256＝' + digests.source,
     ' *           老 48 条 sha256＝' + digests.legacy,
@@ -329,8 +342,8 @@ function header(digests) {
     ' *   2. `dimensions`（42 键／80 条）→ `editable_fields`：键→`name`／`label`（逐字，不自造中文名），老值原文→`value`；',
     ' *      **丢弃 1 条**＝`data_export_backup` 的畸形键 `默认不含)`（值为 `null`，过不了 `value: string`）；',
     ' *      同卡 `include_archived` 照 t2 丁类定案补 `hint`（「是否含已废弃(选填，默认不含)」）；',
-    ' *   3. `status`：老件 48/48 空串是老家缺陷，不照抄 ⇒ 13 个不在 `WAKE_TABLE` 的老组名下 **14 张卡**标',
-    ' *      `\'【待开发】\'`（卡面出「待开发」徽章），其余 34 张空串；',
+    ' *   3. `status`：老件 48/48 空串是老家缺陷，不照抄；#213 首版把 13 个不在 `WAKE_TABLE` 的老组名下',
+    ' *      **14 张卡**标 `\'【待开发】\'`，#841 起那些组名已入表 ⇒ **48/48 全空串**（卡面不出「待开发」徽章）；',
     ' *   4. **不迁四项**：`result`（48/48；裁决「用户拿到的结果型 HTML 文件就是最好的执行结果」）／',
     ' *      `html.command_cn`（与组名 48/48 逐字相同）／`html.template`（18 个老技能路径，新技能里一个不存在）／',
     ' *      `html.data_source` ＋ `variants`（96 处全空）。',

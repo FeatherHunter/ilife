@@ -2,7 +2,7 @@
 // 锁四件：① inject 声明 skills；② apply 注册且只注册一个提供方、重名退让不炸；
 // ③ list 给唯一的 skill-chef 摘要（bundled/600/单份 SKILL.md 按包名解析、不复制）；
 // ④ get 给全文（frontmatter 后正文，含唯一出口调用形）；
-// 另加本技能特有的三把锁：description 必须覆盖 WAKE_TABLE 全部 37 条唤醒词（说明面与路由表不许漂移）、
+// 另加本技能特有的三把锁：description 必须覆盖 WAKE_TABLE 全部唤醒词（说明面与路由表不许漂移）、
 // 打包清单必须带 SKILL.md（少了它，安装态提供方读不到说明面——实测的断链点之一）、
 // SKILL_NAME 常量必须与 SKILL.md frontmatter 实测值逐字一致（不然插件内会硬编码出第二份名）。
 import { describe, it } from 'node:test';

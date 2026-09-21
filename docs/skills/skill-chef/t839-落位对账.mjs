@@ -22,7 +22,8 @@ const ROOT = join(HERE, '..', '..', '..');
 const SRC = join(ROOT, 'packages', 'skill-chef', 'src');
 
 const EXPECT_DOMAINS = ['add', 'cook', 'data', 'history', 'relation', 'search', 'setup', 'shopping', 'update', 'view'];
-const EXPECT_KEYS = ['chef.cooking.run', 'chef.history.query', 'chef.history.record', 'chef.recipe.search', 'chef.recipe.view', 'chef.recipe.write', 'chef.shopping.query'];
+// 域域命令键（生成物 `src/cli/keys.ts` 的 11 条；#839 落位时是 7 条，此后域票把 restructure 的四条也填实了）。
+const EXPECT_KEYS = ['chef.cooking.run', 'chef.data.batch', 'chef.history.query', 'chef.history.record', 'chef.recipe.search', 'chef.recipe.view', 'chef.recipe.write', 'chef.relation.query', 'chef.relation.write', 'chef.setup.init', 'chef.shopping.query'];
 
 let residual = 0;
 let deviation = 0;
@@ -101,7 +102,7 @@ function wakeOfPolicy(text) {
   const perDomain = new Map();
   for (const n of EXPECT_DOMAINS) perDomain.set(n, keysOfCommands(readRel(n + '/commands.ts')));
   const flat = [...perDomain.values()].flat().sort();
-  if (JSON.stringify(flat) === JSON.stringify(EXPECT_KEYS)) ok('声明键 7（与生成物一致，由 B 门逐字节担保）');
+  if (JSON.stringify(flat) === JSON.stringify(EXPECT_KEYS)) ok('声明键 ' + EXPECT_KEYS.length + '（与生成物一致，由 B 门逐字节担保）');
   else bad('deviation', '声明键对不上：' + flat.join('、'));
   const dm = keys.match(/CHEF_DOMAIN_KEYS[^=]*=\s*\{([\s\S]*?)\n\};/);
   const diskMap = new Map();
@@ -118,42 +119,41 @@ function wakeOfPolicy(text) {
   else bad('deviation', 'DOMAIN_KEYS 按域对不上声明');
 }
 
-// —— D. 路由覆盖：WAKE 短语 ⊆ 域 ROUTES（同 key） ————————————
+// —— D. 路由覆盖：唤醒词表 50 短语 ⊆ 域 ROUTES（同 key，且 order ＝ 表内行号） ————
 {
   const wake = wakeOfPolicy(readRel('policy/wakewords.ts'));
-  if (wake.length !== 37) { bad('deviation', 'WAKE_TABLE 非 37 条（实 ' + wake.length + '，摘要锁口径漂移）'); }
+  if (wake.length !== 50) { bad('deviation', 'WAKE_TABLE 非 50 条（实 ' + wake.length + '，摘要锁口径漂移）'); }
   else {
     const byPhrase = new Map();
     for (const d of EXPECT_DOMAINS) {
       for (const r of rowsOfRoutes(readRel(d + '/routes.ts'))) {
-        if (r.key === 'tbd') continue;
-        if (!byPhrase.has(r.wakeWord)) byPhrase.set(r.wakeWord, []);
-        byPhrase.get(r.wakeWord).push({ domain: d, key: r.key });
+        if (byPhrase.has(r.wakeWord)) bad('deviation', '同一短语在两个域各声明一行：' + r.wakeWord);
+        byPhrase.set(r.wakeWord, { domain: d, key: r.key, order: r.order, cli: r.cli });
       }
     }
     // help 链例外：4 条 HELP 短语的事实住冻结的 help/（票 18），域 ROUTES 不声明它们。
+    const help = wake.filter((w) => w.key === 'chef.help.lookup');
+    if (help.length !== 4) bad('deviation', 'HELP 短语非 4 条，help 链口径漂移');
     const routable = wake.filter((w) => w.key !== 'chef.help.lookup');
-    if (wake.length - routable.length !== 4) bad('deviation', 'HELP 短语非 4 条，help 链口径漂移');
+    // #841 起 46 条业务词条条有且仅有一处同 key 路由，且 `order` ＝ 该词在表里的 1-based 行号。
     let n = 0;
-    for (const w of routable) {
-      const hits = byPhrase.get(w.phrase) || [];
-      if (hits.length !== 1 || hits[0].key !== w.key) {
-        bad('deviation', '路由未覆盖/错配：' + w.phrase + '（表内 ' + w.key + '，路由 ' + JSON.stringify(hits) + '）');
-      } else n += 1;
+    for (let i = 0; i < wake.length; i += 1) {
+      const w = wake[i];
+      if (w.key === 'chef.help.lookup') continue;
+      const hit = byPhrase.get(w.phrase);
+      if (!hit) { bad('deviation', '路由未覆盖：' + w.phrase + '（表内 ' + w.key + '）'); continue; }
+      if (hit.key !== w.key) { bad('deviation', '路由错配：' + w.phrase + '（表内 ' + w.key + '，路由 ' + hit.key + '）'); continue; }
+      if (hit.order !== i + 1) { bad('deviation', 'order 与表行号不符：' + w.phrase + '（route ' + hit.order + '，表 ' + (i + 1) + '）'); continue; }
+      if (!hit.cli.includes('chef-cmd-read ' + w.key)) { bad('deviation', 'cli 与 key 不符：' + w.phrase + '（' + hit.cli + '）'); continue; }
+      n += 1;
     }
-    if (n === 33) ok('WAKE 33 短语逐条有且仅有一处同 key 路由（HELP 4 条由 help 链覆盖，不在域）');
+    if (n === routable.length) ok('WAKE ' + n + ' 短语逐条有且仅有一处同 key 路由、order ＝ 表行号（HELP 4 条由 help 链覆盖，不在域）');
   }
-  // 非 tbd 的 order:0 行只允许 data 的备份（#767 定去向未入表，待接入）。
+  // 不再有 `order: 0` 的待接入行：50 条全部入表（#841）。
   for (const d of EXPECT_DOMAINS) {
     for (const r of rowsOfRoutes(readRel(d + '/routes.ts'))) {
-      if (r.key === 'tbd') {
-        if (d !== 'relation' && d !== 'setup') bad('deviation', 'tbd 行越界：' + d + '／' + r.wakeWord);
-        if (r.order !== 0 || r.cli !== '') bad('deviation', 'tbd 行形状不对：' + d + '／' + r.wakeWord);
-      } else if (r.order === 0) {
-        if (!(d === 'data' && r.wakeWord === '备份' && r.key === 'chef.history.query')) {
-          bad('deviation', 'order:0 非 tbd 行越界：' + d + '／' + r.wakeWord);
-        }
-      }
+      if (r.order === 0) bad('deviation', 'order:0 待接入行残留：' + d + '／' + r.wakeWord);
+      if (r.key === 'tbd') bad('deviation', 'key:tbd 行残留：' + d + '／' + r.wakeWord);
     }
   }
 }
@@ -171,9 +171,10 @@ function wakeOfPolicy(text) {
   for (const s of moved) {
     if (cli.includes(s)) { bad('residual', 'cmd_read.ts 残留搬出逻辑：' + s); clean = false; }
   }
+  // 入口的 case 数＝域域命令数（生成物 `src/cli/keys.ts` 的 11 键）＋ help 那条哨兵 case。
   const cases = (cli.match(/case 'chef\./g) || []).length;
-  if (cases !== 8) { bad('residual', 'cmd_read.ts case 数非 8（实 ' + cases + '）'); clean = false; }
-  if (clean) ok('cmd_read.ts 薄注册表（8 case，无搬出逻辑残留）');
+  if (cases !== 12) { bad('residual', 'cmd_read.ts case 数非 12（实 ' + cases + '）'); clean = false; }
+  if (clean) ok('cmd_read.ts 薄注册表（12 case，无搬出逻辑残留）');
 }
 
 // —— F. 搬出符号双向断言（新家有、旧址无） ————————————————————
@@ -254,11 +255,16 @@ function wakeOfPolicy(text) {
   if (n === files.length) ok('行数门全过（' + files.length + ' 件 ≤350，最大 ' + Math.max(...files.map(lf)) + '）');
 }
 
-// —— I. tbd 行只许 relation/setup —————————————————————————————（已在 D 中断言，此处只报数）
+// —— I. 待接入占位归零 ———————————————————————————（已在 D 中断言，此处只报数）
 {
   let tbd = 0;
-  for (const d of ['relation', 'setup']) tbd += rowsOfRoutes(readRel(d + '/routes.ts')).filter((r) => r.key === 'tbd').length;
-  ok('tbd 占位 ' + tbd + ' 行（relation 3＋setup 1，域票接入时填实）');
+  for (const d of EXPECT_DOMAINS) {
+    for (const r of rowsOfRoutes(readRel(d + '/routes.ts'))) {
+      if (r.key === 'tbd' || r.order === 0) tbd += 1;
+    }
+  }
+  if (tbd === 0) ok('待接入占位 0 行（#841 起 50 条全部入表，不再有 order:0／key:tbd）');
+  else bad('deviation', '待接入占位仍剩 ' + tbd + ' 行');
 }
 
 console.log('域 ' + EXPECT_DOMAINS.length + '／共用位残留 ' + residual + '／对账偏差 ' + deviation);

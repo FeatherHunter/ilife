@@ -4,11 +4,23 @@ import { CHEF_KEY_SHAPES } from '../render/index.js';
 
 export interface HelpHit { phrase: string; key: ChefKey; shape: string; cli: string; desc: string; }
 
+/** 槽位 → 可照抄的示例值：表里每条的 `needs` 都从这里取一个真值拼进 `cli`。
+ *  取值面钉在**真实库实际有的那一道菜**上（`D:\2Study\StudyNotes\.db\chef_data.db` 实测：
+ *  只有 `辣椒炒肉` 一道，状态 `已做`，18 分钟，口味 `辣`，食材含 `螺丝椒`／`五花肉`，炊具 `炒锅`）。
+ *  为什么较真：这些「例」就是 AI 在 DSH 里照抄的那一串，指向库里不存在的菜＝跑一次报一次「无此菜谱」。 */
+const EXAMPLE_VALUES: Record<string, unknown> = {
+  id: 1, recipe_id: 1, name: '辣椒炒肉', nameOrId: '辣椒炒肉', names: ['辣椒炒肉'],
+  q: '辣椒', filter: '川菜', action: '大火翻炒', rating: 5, feedback: '好吃', date: '2026-09-06',
+  servings: 2, quantity: 250, unit: '克', patch: { servings: 3 },
+  difficulty: '快手菜', time_max: 30, cookware: '炒锅', status: '已做',
+  step: 2, ingredient: '螺丝椒', input: '菜谱.json',
+  child: '小炒肉', parent: '辣椒炒肉', relation_type: '派生', change_summary: '换个辣椒',
+  source: '辣椒炒肉', target: '小炒肉', differences: '换个辣椒',
+};
+
 function exampleParams(e: { needs?: string[]; preset?: Record<string, unknown> }): string {
   const p: Record<string, unknown> = { ...(e.preset || {}) };
-  for (const n of e.needs || []) {
-    if (p[n] === undefined) p[n] = n === 'id' ? 1 : n === 'recipe_id' ? 1 : n === 'name' ? '宫保虾球' : n === 'nameOrId' ? '宫保虾球' : n === 'names' ? ['宫保虾球', '鱼香肉丝'] : n === 'q' ? '排骨' : n === 'filter' ? '川菜' : n === 'action' ? '大火翻炒' : n === 'rating' ? 5 : n === 'feedback' ? '好吃' : n === 'date' ? '2026-09-06' : n === 'servings' ? 2 : n === 'quantity' ? 2 : n === 'unit' ? '克' : n === 'patch' ? { servings: 3 } : '<值>';
-  }
+  for (const n of e.needs || []) if (p[n] === undefined) p[n] = n in EXAMPLE_VALUES ? EXAMPLE_VALUES[n] : '<值>';
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
 }
@@ -28,7 +40,7 @@ const DESCS: Record<string, string> = {
   'chef.data.batch': '批量改既有行（改前对比，写走回执）',
 };
 
-// 全量速查表（WAKE_TABLE 37 短语：help.lookup4 + recipe.view7 + recipe.search8 + recipe.write4 + cooking.run4 + shopping.query4 + history.record3 + history.query3）。
+// 全量速查表：`WAKE_TABLE` 有几条就有几行（#841 起 50 条，逐行派生，不落第二份短语）。
 export function buildHelpLookup(): HelpHit[] {
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,

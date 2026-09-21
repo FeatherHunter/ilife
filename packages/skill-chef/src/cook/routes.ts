@@ -14,24 +14,24 @@ export const COOK_ROUTES: readonly RouteDecl[] = [
     order: 24,
     wakeWord: '做菜模式',
     key: 'chef.cooking.run',
-    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"宫保虾球"}\'',
+    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"辣椒炒肉"}\'',
   },
   {
     order: 25,
     wakeWord: '开始做菜',
     key: 'chef.cooking.run',
-    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"宫保虾球"}\'',
+    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"辣椒炒肉"}\'',
   },
   {
     order: 26,
     wakeWord: '继续做菜',
     key: 'chef.cooking.run',
-    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"宫保虾球"}\'',
+    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"辣椒炒肉"}\'',
   },
   {
     order: 27,
     wakeWord: '完成做菜',
     key: 'chef.cooking.run',
-    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"宫保虾球"}\'',
+    cli: 'chef-cmd-read chef.cooking.run --params \'{"name":"辣椒炒肉"}\'',
   },
 ];

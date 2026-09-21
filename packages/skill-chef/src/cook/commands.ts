@@ -18,6 +18,6 @@ export const COOK_COMMANDS: readonly CommandSpec[] = [
     shape: 'list',
     title: '做菜模式',
     wakeWord: '做菜模式',
-    example: 'chef-cmd-read chef.cooking.run --params \'{"name":"宫保虾球"}\'',
+    example: 'chef-cmd-read chef.cooking.run --params \'{"name":"辣椒炒肉"}\'',
   },
 ];

@@ -1,6 +1,6 @@
 ---
 name: skill-chef
-description: "「私家大厨HELP」→chef.help.lookup 落一份 HELP 文件并回执绝对路径；唯一出口 chef-cmd-read（本地菜谱：搜菜／查看／加菜、跟着做、买菜清单合并、做菜记录与历史、体检排序）。触发词：私家大厨HELP、菜谱HELP、查帮助、能做什么、查看食谱、查看食材、查看步骤、查看营养、查看背景、看菜谱、看菜、查看全部、搜索食谱、搜菜、查食材、筛选菜系、筛选食材、筛选口味、筛选季节、录入食谱、修改食谱、废弃食谱、加菜、做菜模式、开始做菜、继续做菜、完成做菜、生成清单、排除可选、查清单、清空清单、记录做菜、补录做菜、改评分、查看历史、查看统计、体检"
+description: "「私家大厨HELP」→chef.help.lookup 落一份 HELP 文件并回执绝对路径；唯一出口 chef-cmd-read（本地菜谱：搜菜／查看／加菜、跟着做、买菜清单合并、做菜记录与历史、体检排序）。触发词：私家大厨HELP、菜谱HELP、查帮助、能做什么、查看食谱、查看食材、查看步骤、查看营养、查看背景、看菜谱、看菜、查看全部、搜索食谱、搜菜、查食材、筛选菜系、筛选食材、筛选口味、筛选季节、录入食谱、修改食谱、废弃食谱、加菜、做菜模式、开始做菜、继续做菜、完成做菜、生成清单、排除可选、查清单、清空清单、记录做菜、补录做菜、改评分、查看历史、查看统计、体检、筛选难度、筛选时间、筛选炊具、筛选状态、修改步骤、修改食材、导入食谱、添加派生关系、从已有派生新菜、首次使用、查看派生关系、批量改、备份"
 ---
 # 私家大厨（chef）SKILL
 
@@ -76,41 +76,54 @@ chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'
 | 菜谱HELP | chef.help.lookup | list | `chef-cmd-read chef.help.lookup` |
 | 查帮助 | chef.help.lookup | list | `chef-cmd-read chef.help.lookup` |
 | 能做什么 | chef.help.lookup | list | `chef-cmd-read chef.help.lookup` |
-| 查看食谱 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 查看食材 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 查看步骤 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 查看营养 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 查看背景 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 看菜谱 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
-| 看菜 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"宫保虾球"}'` |
+| 查看食谱 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 查看食材 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 查看步骤 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 查看营养 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 查看背景 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 看菜谱 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
+| 看菜 | chef.recipe.view | detail | `chef-cmd-read chef.recipe.view --params '{"name":"辣椒炒肉"}'` |
 | 查看全部 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"kind":"all"}'` |
-| 搜索食谱 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
-| 搜菜 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
-| 查食材 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"排骨"}'` |
+| 搜索食谱 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"辣椒"}'` |
+| 搜菜 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"辣椒"}'` |
+| 查食材 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"q":"辣椒"}'` |
 | 筛选菜系 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"filter":"川菜"}'` |
 | 筛选食材 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"filter":"川菜"}'` |
 | 筛选口味 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"filter":"川菜"}'` |
 | 筛选季节 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"filter":"川菜"}'` |
-| 录入食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"add","name":"宫保虾球"}'` |
-| 修改食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"update","name":"宫保虾球"}'` |
-| 废弃食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"deprecate","name":"宫保虾球"}'` |
-| 加菜 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"add","name":"宫保虾球"}'` |
-| 做菜模式 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"宫保虾球"}'` |
-| 开始做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"宫保虾球"}'` |
-| 继续做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"宫保虾球"}'` |
-| 完成做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"宫保虾球"}'` |
-| 生成清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
-| 排除可选 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
-| 查清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
-| 清空清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["宫保虾球","鱼香肉丝"]}'` |
-| 记录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
-| 补录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
-| 改评分 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"宫保虾球"}'` |
-| 查看历史 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"name":"宫保虾球"}'` |
+| 录入食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"add","name":"辣椒炒肉"}'` |
+| 修改食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"update","name":"辣椒炒肉"}'` |
+| 废弃食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"deprecate","name":"辣椒炒肉"}'` |
+| 加菜 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"add","name":"辣椒炒肉"}'` |
+| 做菜模式 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"辣椒炒肉"}'` |
+| 开始做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"辣椒炒肉"}'` |
+| 继续做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"辣椒炒肉"}'` |
+| 完成做菜 | chef.cooking.run | list | `chef-cmd-read chef.cooking.run --params '{"name":"辣椒炒肉"}'` |
+| 生成清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["辣椒炒肉"]}'` |
+| 排除可选 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["辣椒炒肉"]}'` |
+| 查清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["辣椒炒肉"]}'` |
+| 清空清单 | chef.shopping.query | list | `chef-cmd-read chef.shopping.query --params '{"names":["辣椒炒肉"]}'` |
+| 记录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"辣椒炒肉"}'` |
+| 补录做菜 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"辣椒炒肉"}'` |
+| 改评分 | chef.history.record | receipt | `chef-cmd-read chef.history.record --params '{"name":"辣椒炒肉"}'` |
+| 查看历史 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"name":"辣椒炒肉"}'` |
 | 查看统计 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"kind":"stats"}'` |
 | 体检 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"kind":"quality"}'` |
+| 筛选难度 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"difficulty":"快手菜"}'` |
+| 筛选时间 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"time_max":30}'` |
+| 筛选炊具 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"cookware":"炒锅"}'` |
+| 筛选状态 | chef.recipe.search | list | `chef-cmd-read chef.recipe.search --params '{"status":"已做"}'` |
+| 修改步骤 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"update","target":"step","name":"辣椒炒肉","step":2}'` |
+| 修改食材 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"update","target":"ingredient","name":"辣椒炒肉","ingredient":"螺丝椒"}'` |
+| 导入食谱 | chef.recipe.write | receipt | `chef-cmd-read chef.recipe.write --params '{"op":"add","name":"辣椒炒肉","input":"菜谱.json"}'` |
+| 添加派生关系 | chef.relation.write | receipt | `chef-cmd-read chef.relation.write --params '{"child":"小炒肉","parent":"辣椒炒肉","relation_type":"派生","change_summary":"换个辣椒"}'` |
+| 从已有派生新菜 | chef.relation.write | receipt | `chef-cmd-read chef.relation.write --params '{"op":"derive","source":"辣椒炒肉","target":"小炒肉","differences":"换个辣椒"}'` |
+| 首次使用 | chef.setup.init | receipt | `chef-cmd-read chef.setup.init` |
+| 查看派生关系 | chef.relation.query | list | `chef-cmd-read chef.relation.query --params '{"name":"辣椒炒肉"}'` |
+| 批量改 | chef.data.batch | receipt | `chef-cmd-read chef.data.batch --params '{"name":"辣椒炒肉"}'` |
+| 备份 | chef.history.query | list | `chef-cmd-read chef.history.query --params '{"kind":"backup"}'` |
 
-相关场景：chef.cooking.run、chef.help.lookup、chef.history.query、chef.history.record、chef.recipe.search、chef.recipe.view、chef.recipe.write、chef.shopping.query（8 联动，key 字符串后续票落表时冻结）。
+相关场景：chef.cooking.run、chef.data.batch、chef.help.lookup、chef.history.query、chef.history.record、chef.recipe.search、chef.recipe.view、chef.recipe.write、chef.relation.query、chef.relation.write、chef.setup.init、chef.shopping.query（12 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->
 
 ## 环境与出 scope

@@ -74,11 +74,11 @@ describe('私家大厨唯一出口 cmd_read（8 键全票）', () => {
     assert.equal(envAll.delivery.path.startsWith(DB), true, '回执是绝对路径');
     assert.equal(existsSync(envAll.delivery.path), true, '产物必须真落盘');
     assert.equal(envAll.delivery.bytes, readFileSync(envAll.delivery.path).length, 'bytes ＝实际落盘字节数');
-    // 速查支：显式 `mode:"lookup"`，与 HELP 文件**分名**，载荷＝今日的 37 条短语。
+    // 速查支：显式 `mode:"lookup"`，与 HELP 文件**分名**，载荷＝唤醒词表全部 50 条短语。
     const lk = run(['chef.help.lookup', '--params', P({ mode: 'lookup' })]);
     assert.equal(lk.status, 0);
     const envLk = JSON.parse(lk.stdout);
-    assert.equal(envLk.data.total, 37);
+    assert.equal(envLk.data.total, 50);
     assert.match(envLk.delivery.path, /[\\/]私家大厨_速查表_\d{8}_\d{6}\.html$/);
     assert.notEqual(envLk.delivery.path, envAll.delivery.path);
     // 互斥与非法：q 与 mode 不能同时给；mode 只认 lookup。

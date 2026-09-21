@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 //    （生成物里逐字 `typeof renderHelpShellHtml`），**不做 schema 校验**。
 import { renderHelpShell } from 'base-paint';
 import { CHEF_SCENES, buildChefSceneData } from '../dist/help/sceneData.js';
+import { WAKE_TABLE } from '../dist/policy/index.js';
 import * as pkg from '../dist/index.js';
 
 /** B 路校验器的探针用最小资产（`TemplateAssets` 两件即可，本探针只走校验那一步）。 */
@@ -40,8 +41,9 @@ const DOMAINS = [
   ['setup', '开始使用', '🚀'], ['data', '数据管理', '🗄️'],
 ];
 
-/** 13 个不在 `WAKE_TABLE`（`src/policy/wakewords.ts`）的老组名 → 该组下**应**标 `'【待开发】'` 的卡（t2 §3.2）。 */
-const PENDING = {
+/** 13 个曾是「不在 `WAKE_TABLE` 的老组名」→ 该组名下曾标 `'【待开发】'` 的卡（t2 §3.2）。
+ *  #841 起这些组名已入 `WAKE_TABLE`，条件不再成立 ⇒ 这里只留「这批组名现在都得在表里」的对照面。 */
+const WIRED_OLD_GROUPS = {
   筛选难度: ['filter_difficulty_easy'],
   筛选时间: ['filter_time_quick'],
   筛选炊具: ['filter_by_cookware'],
@@ -100,18 +102,19 @@ test('#213 十域 id／label／icon 逐字 ∈ 定案表（顺序也钉）', () 
   assert.deepEqual(GROUPS.map((g) => [g.id, g.label, g.icon]), DOMAINS);
 });
 
-test("#213 status：恰好 14 张标 '【待开发】'，且 id ↔ 13 个老组名逐条对得上", () => {
+test('#841 status：48 张全可用（无「待开发」徽章），且 13 个老组名都已进 `WAKE_TABLE`', () => {
   const dev = SCENES.filter((s) => s.status === '【待开发】');
-  assert.equal(dev.length, 14, '待开发卡数');
-  assert.equal(SCENES.filter((s) => s.status === '').length, 34, '可用卡数');
-  assert.deepEqual([...new Set(dev.map((s) => s.wake_word))].sort(), Object.keys(PENDING).sort(), '14 张卡落在恰好这 13 个组名上');
-  for (const [group, ids] of Object.entries(PENDING)) {
-    assert.deepEqual(dev.filter((s) => s.wake_word === group).map((s) => s.id), ids, group);
+  assert.equal(dev.length, 0, '待开发卡数（#841 起应为 0）');
+  assert.equal(SCENES.filter((s) => s.status === '').length, 48, '可用卡数');
+  for (const s of SCENES) assert.equal(s.status, '', s.id + ' 的 status 应为空串（可用）');
+  // 这批卡之所以能翻成可用，是因为它们那 13 个老组名真进了唤醒词表；表里没有就等于偷偷放宽。
+  const tablePhrases = new Set(WAKE_TABLE.map((e) => e.phrase));
+  for (const group of Object.keys(WIRED_OLD_GROUPS)) {
+    assert.ok(tablePhrases.has(group), group + ' 不在 WAKE_TABLE（卡面却已标可用）');
   }
-  const shouldBePending = new Set(Object.values(PENDING).flat());
-  for (const s of SCENES) {
-    assert.ok(s.status === '' || s.status === '【待开发】', s.id + ' 的 status 出枚举');
-    assert.equal(s.status === '【待开发】', shouldBePending.has(s.id), s.id + ' 的状态与组名归位不一致');
+  // 每组名下的卡 id 与资产逐条对得上（防翻状态时顺手挪错卡）
+  for (const [group, ids] of Object.entries(WIRED_OLD_GROUPS)) {
+    assert.deepEqual(SCENES.filter((s) => s.wake_word === group).map((s) => s.id), ids, group);
   }
 });
 

@@ -2,7 +2,7 @@
  *
  * 本能力即 HELP 一级分组「开始使用」。一条写命令管一摊：
  *   · `chef.setup.init`（会改数据库的命令，幂等）：首次使用进这一条（环境检测＋按需建库建目录）。
- * 唤醒词路由仍待说明面票接入（`WAKE_TABLE` 37 条不动），本票先给直键可跑。
+ * 唤醒词路由：#841 起 `首次使用` 已在 `WAKE_TABLE`（下标 48），`src/setup/routes.ts` 同步填实 `order`。
  */
 
 import type { CommandSpec } from '../shared/command-spec.js';

@@ -6,9 +6,10 @@
  *
  * 事实源（全程只读，老件一行不动）：
  *   ① `src/help/sceneData.ts` 的 48 卡（id／组／chip）：标题与 prompt 以它为准，本件不复制；
- *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条）：路由唯一事实源，既有语义不动；
+ *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（50 条）：路由唯一事实源；
+ *      本件投影它的短语集合做双向对账（可路由 50 条逐条＝表内短语），不复制路由逻辑；
  *   ③ t2 §5.1：13 条新表多出词的落位与 prompt 口径（9 复用／3 新写／1 参数）。
- * 摘要锁：`WAKE_TABLE` 37 短语 sha256＝edaef07339b594ecbaeffdc26a8f6f14f958ab44402bab8a5c00746855423a50
+ * 摘要锁：`WAKE_TABLE` 50 短语 sha256＝8db03a2806da4a4bb08d9a324ab937cabde1d47897039af7040b7be6212c3ab5
  *           `sceneData.ts` 48 卡 id sha256＝14033d014cc5cb86e2a79b28696ed8c17cd30708c5df79c63ae171bfc79a8374
  * 域目录中文名＝HELP 域 label；卡 slug＝卡 id（全局唯一，文件名为 `<slug>.html`，见 t767-命名.md）。
  */
@@ -139,19 +140,19 @@ export const CHEF_WAKES: readonly ChefWake[] = [
   { phrase: '生成清单', source: 'old-group', routable: true, key: 'chef.shopping.query', group: '生成清单', cards: ['shopping_generate'], promptKind: 'group', promptRef: '' },
   { phrase: '录入食谱', source: 'old-group', routable: true, key: 'chef.recipe.write', group: '录入食谱', cards: ['add_from_image', 'add_from_markdown', 'add_from_conversation', 'add_from_template'], promptKind: 'group', promptRef: '' },
   { phrase: '体检', source: 'old-group', routable: true, key: 'chef.history.query', group: '体检', cards: ['data_quality_report'], promptKind: 'group', promptRef: '' },
-  { phrase: '筛选难度', source: 'old-group', routable: false, key: 'chef.recipe.search', group: '筛选难度', cards: ['filter_difficulty_easy'], promptKind: 'group', promptRef: '' },
-  { phrase: '筛选时间', source: 'old-group', routable: false, key: 'chef.recipe.search', group: '筛选时间', cards: ['filter_time_quick'], promptKind: 'group', promptRef: '' },
-  { phrase: '筛选炊具', source: 'old-group', routable: false, key: 'chef.recipe.search', group: '筛选炊具', cards: ['filter_by_cookware'], promptKind: 'group', promptRef: '' },
-  { phrase: '筛选状态', source: 'old-group', routable: false, key: 'chef.recipe.search', group: '筛选状态', cards: ['filter_by_status'], promptKind: 'group', promptRef: '' },
-  { phrase: '修改步骤', source: 'old-group', routable: false, key: 'chef.recipe.write', group: '修改步骤', cards: ['update_step_content'], promptKind: 'group', promptRef: '' },
-  { phrase: '修改食材', source: 'old-group', routable: false, key: 'chef.recipe.write', group: '修改食材', cards: ['update_ingredient'], promptKind: 'group', promptRef: '' },
-  { phrase: '导入食谱', source: 'old-group', routable: false, key: 'chef.recipe.write', group: '导入食谱', cards: ['import_from_json', 'import_validation_failed'], promptKind: 'group', promptRef: '' },
-  { phrase: '添加派生关系', source: 'old-group', routable: false, key: 'tbd', group: '添加派生关系', cards: ['add_relation'], promptKind: 'group', promptRef: '' },
-  { phrase: '查看派生关系', source: 'old-group', routable: false, key: 'tbd', group: '查看派生关系', cards: ['view_relation_tree'], promptKind: 'group', promptRef: '' },
-  { phrase: '从已有派生新菜', source: 'old-group', routable: false, key: 'tbd', group: '从已有派生新菜', cards: ['derive_from_existing'], promptKind: 'group', promptRef: '' },
-  { phrase: '首次使用', source: 'old-group', routable: false, key: 'tbd', group: '首次使用', cards: ['first_use'], promptKind: 'group', promptRef: '' },
-  { phrase: '批量改', source: 'old-group', routable: false, key: 'tbd', group: '批量改', cards: ['data_batch_edit'], promptKind: 'group', promptRef: '' },
-  { phrase: '备份', source: 'old-group', routable: false, key: 'chef.history.query', group: '备份', cards: ['data_export_backup'], promptKind: 'group', promptRef: '' },
+  { phrase: '筛选难度', source: 'old-group', routable: true, key: 'chef.recipe.search', group: '筛选难度', cards: ['filter_difficulty_easy'], promptKind: 'group', promptRef: '' },
+  { phrase: '筛选时间', source: 'old-group', routable: true, key: 'chef.recipe.search', group: '筛选时间', cards: ['filter_time_quick'], promptKind: 'group', promptRef: '' },
+  { phrase: '筛选炊具', source: 'old-group', routable: true, key: 'chef.recipe.search', group: '筛选炊具', cards: ['filter_by_cookware'], promptKind: 'group', promptRef: '' },
+  { phrase: '筛选状态', source: 'old-group', routable: true, key: 'chef.recipe.search', group: '筛选状态', cards: ['filter_by_status'], promptKind: 'group', promptRef: '' },
+  { phrase: '修改步骤', source: 'old-group', routable: true, key: 'chef.recipe.write', group: '修改步骤', cards: ['update_step_content'], promptKind: 'group', promptRef: '' },
+  { phrase: '修改食材', source: 'old-group', routable: true, key: 'chef.recipe.write', group: '修改食材', cards: ['update_ingredient'], promptKind: 'group', promptRef: '' },
+  { phrase: '导入食谱', source: 'old-group', routable: true, key: 'chef.recipe.write', group: '导入食谱', cards: ['import_from_json', 'import_validation_failed'], promptKind: 'group', promptRef: '' },
+  { phrase: '添加派生关系', source: 'old-group', routable: true, key: 'chef.relation.write', group: '添加派生关系', cards: ['add_relation'], promptKind: 'group', promptRef: '' },
+  { phrase: '查看派生关系', source: 'old-group', routable: true, key: 'chef.relation.query', group: '查看派生关系', cards: ['view_relation_tree'], promptKind: 'group', promptRef: '' },
+  { phrase: '从已有派生新菜', source: 'old-group', routable: true, key: 'chef.relation.write', group: '从已有派生新菜', cards: ['derive_from_existing'], promptKind: 'group', promptRef: '' },
+  { phrase: '首次使用', source: 'old-group', routable: true, key: 'chef.setup.init', group: '首次使用', cards: ['first_use'], promptKind: 'group', promptRef: '' },
+  { phrase: '批量改', source: 'old-group', routable: true, key: 'chef.data.batch', group: '批量改', cards: ['data_batch_edit'], promptKind: 'group', promptRef: '' },
+  { phrase: '备份', source: 'old-group', routable: true, key: 'chef.history.query', group: '备份', cards: ['data_export_backup'], promptKind: 'group', promptRef: '' },
   { phrase: '看菜谱', source: 'new-extra', routable: true, key: 'chef.recipe.view', group: '查看食谱', cards: ['view_full_recipe'], promptKind: 'reuse', promptRef: 'view_full_recipe' },
   { phrase: '看菜', source: 'new-extra', routable: true, key: 'chef.recipe.view', group: '查看食谱', cards: ['view_full_recipe'], promptKind: 'reuse', promptRef: 'view_full_recipe' },
   { phrase: '搜菜', source: 'new-extra', routable: true, key: 'chef.recipe.search', group: '搜索食谱', cards: ['search_by_name_keyword'], promptKind: 'reuse', promptRef: 'search_by_name_keyword' },

@@ -186,8 +186,8 @@ test('#216 ④ 两支互不串：缺省 HELP 支与显式速查支同目录、�
   const help = runOk(db, [KEY]);
   const lookup = runOk(db, [KEY, '--params', P({ mode: 'lookup' })]);
   assert.equal(lookup.data.mode, 'lookup');
-  assert.equal(lookup.data.total, 37, '速查支＝今天那 37 条短语');
-  assert.equal(lookup.data.items.length, 37);
+  assert.equal(lookup.data.total, 50, '速查支＝唤醒词表全部 50 条短语（#841 起 37→50）');
+  assert.equal(lookup.data.items.length, 50);
   assert.ok(LOOKUP_RE.test(basename(lookup.delivery.path)), '速查产物名不符：' + basename(lookup.delivery.path));
   assert.equal(stampWindow().includes(LOOKUP_RE.exec(basename(lookup.delivery.path))[1]), true);
   assert.equal(HELP_RE.test(basename(lookup.delivery.path)), false, '速查支不许落成 HELP 名');

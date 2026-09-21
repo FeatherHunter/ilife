@@ -19,6 +19,6 @@ export const VIEW_COMMANDS: readonly CommandSpec[] = [
     shape: 'detail',
     title: '查看食谱',
     wakeWord: '查看食谱',
-    example: 'chef-cmd-read chef.recipe.view --params \'{"name":"宫保虾球"}\'',
+    example: 'chef-cmd-read chef.recipe.view --params \'{"name":"辣椒炒肉"}\'',
   },
 ];

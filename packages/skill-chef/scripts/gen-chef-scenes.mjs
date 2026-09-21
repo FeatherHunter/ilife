@@ -11,14 +11,14 @@
  * 三处事实源（全程只读，老件一行不动）：
  *   ① `src/help/sceneData.ts`（机器生成、禁手改）：48 卡的 id／组名／chip 由它派生，不落第二份标题与 prompt；
  *      本件只存 id→组→域→slug 与词→卡映射，标题与 prompt 仍以 sceneData.ts 为唯一事实源；
- *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条）：唤醒词路由的唯一事实源，既有 37 条不改语义；
+ *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（50 条）：唤醒词路由的唯一事实源；
  *      本件只投影它的短语集合做双向对账，不复制路由逻辑；
  *   ③ `docs/skills/skill-chef/t2-content-reconcile.md` §5.1：13 条新表多出词的内容来源与落位（9 复用／3 新写／1 参数）。
  *
- * 双向对账口径：并集 50＝老 33 组名＋新表多出 13＋HELP 触发 4；`WAKE_TABLE` 37＝其中可路由 37；
- *   老组名中有 13 个不在表中（→14 张待开发卡，状态仍由 sceneData.ts 派生，本件不重判）；
+ * 双向对账口径：并集 50＝老 33 组名＋新表多出 13＋HELP 触发 4；`WAKE_TABLE` 50＝其中可路由 50
+ *   （#841 起 13 个老组名全部入表 ⇒ 不再有不可路由词，也无 `key: 'tbd'` 行）；
  *   差集＝可路由词缺表＋表词缺并集＋业务词无卡＋卡无词，任一即红。
- * 摘要锁：`WAKE_TABLE` 37 短语集合＋`sceneData.ts` 48 卡 id 集合；任一漂移即 exit 1 并点名。
+ * 摘要锁：`WAKE_TABLE` 50 短语集合＋`sceneData.ts` 48 卡 id 集合；任一漂移即 exit 1 并点名。
  *   改内容＝改本生成器声明表再重跑（`sceneData.ts` 的标题与 prompt 不在这里改）。
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -83,7 +83,9 @@ const CARDS = [
   ['data_quality_report', '体检'], ['data_batch_edit', '批量改'], ['data_export_backup', '备份'],
 ];
 
-/** 50 词并集：[短语, 来源, 可路由, 命令, 组, 卡, prompt口径, prompt依据]；tbd＝尚无命令分支，纵向票实现（见对账表）。 */
+/** 50 词并集：[短语, 来源, 可路由, 命令, 组, 卡, prompt口径, prompt依据]。
+ *  #841 起 50 条**全部可路由**：13 个老组名在各域 #770–#776 落好命令分支与页面后入表，
+ *  原先的 `routable: 0` 与 `key: 'tbd'` 一并转正（判据＝表里真有这条、命令对得上，见文件尾的对账）。 */
 const WAKES = [
   ['做菜模式', 'old-group', 1, 'chef.cooking.run', '做菜模式', ['cooking_start_fresh', 'cooking_start_with_history', 'cooking_start_double_servings', 'cooking_resume_after_pause', 'cooking_during_waiting_step'], 'group', ''],
   ['查看食谱', 'old-group', 1, 'chef.recipe.view', '查看食谱', ['view_full_recipe', 'view_for_beginner', 'view_recipe_with_substitution'], 'group', ''],
@@ -105,19 +107,19 @@ const WAKES = [
   ['生成清单', 'old-group', 1, 'chef.shopping.query', '生成清单', ['shopping_generate'], 'group', ''],
   ['录入食谱', 'old-group', 1, 'chef.recipe.write', '录入食谱', ['add_from_image', 'add_from_markdown', 'add_from_conversation', 'add_from_template'], 'group', ''],
   ['体检', 'old-group', 1, 'chef.history.query', '体检', ['data_quality_report'], 'group', ''],
-  ['筛选难度', 'old-group', 0, 'chef.recipe.search', '筛选难度', ['filter_difficulty_easy'], 'group', ''],
-  ['筛选时间', 'old-group', 0, 'chef.recipe.search', '筛选时间', ['filter_time_quick'], 'group', ''],
-  ['筛选炊具', 'old-group', 0, 'chef.recipe.search', '筛选炊具', ['filter_by_cookware'], 'group', ''],
-  ['筛选状态', 'old-group', 0, 'chef.recipe.search', '筛选状态', ['filter_by_status'], 'group', ''],
-  ['修改步骤', 'old-group', 0, 'chef.recipe.write', '修改步骤', ['update_step_content'], 'group', ''],
-  ['修改食材', 'old-group', 0, 'chef.recipe.write', '修改食材', ['update_ingredient'], 'group', ''],
-  ['导入食谱', 'old-group', 0, 'chef.recipe.write', '导入食谱', ['import_from_json', 'import_validation_failed'], 'group', ''],
-  ['添加派生关系', 'old-group', 0, 'tbd', '添加派生关系', ['add_relation'], 'group', ''],
-  ['查看派生关系', 'old-group', 0, 'tbd', '查看派生关系', ['view_relation_tree'], 'group', ''],
-  ['从已有派生新菜', 'old-group', 0, 'tbd', '从已有派生新菜', ['derive_from_existing'], 'group', ''],
-  ['首次使用', 'old-group', 0, 'tbd', '首次使用', ['first_use'], 'group', ''],
-  ['批量改', 'old-group', 0, 'tbd', '批量改', ['data_batch_edit'], 'group', ''],
-  ['备份', 'old-group', 0, 'chef.history.query', '备份', ['data_export_backup'], 'group', ''],
+  ['筛选难度', 'old-group', 1, 'chef.recipe.search', '筛选难度', ['filter_difficulty_easy'], 'group', ''],
+  ['筛选时间', 'old-group', 1, 'chef.recipe.search', '筛选时间', ['filter_time_quick'], 'group', ''],
+  ['筛选炊具', 'old-group', 1, 'chef.recipe.search', '筛选炊具', ['filter_by_cookware'], 'group', ''],
+  ['筛选状态', 'old-group', 1, 'chef.recipe.search', '筛选状态', ['filter_by_status'], 'group', ''],
+  ['修改步骤', 'old-group', 1, 'chef.recipe.write', '修改步骤', ['update_step_content'], 'group', ''],
+  ['修改食材', 'old-group', 1, 'chef.recipe.write', '修改食材', ['update_ingredient'], 'group', ''],
+  ['导入食谱', 'old-group', 1, 'chef.recipe.write', '导入食谱', ['import_from_json', 'import_validation_failed'], 'group', ''],
+  ['添加派生关系', 'old-group', 1, 'chef.relation.write', '添加派生关系', ['add_relation'], 'group', ''],
+  ['查看派生关系', 'old-group', 1, 'chef.relation.query', '查看派生关系', ['view_relation_tree'], 'group', ''],
+  ['从已有派生新菜', 'old-group', 1, 'chef.relation.write', '从已有派生新菜', ['derive_from_existing'], 'group', ''],
+  ['首次使用', 'old-group', 1, 'chef.setup.init', '首次使用', ['first_use'], 'group', ''],
+  ['批量改', 'old-group', 1, 'chef.data.batch', '批量改', ['data_batch_edit'], 'group', ''],
+  ['备份', 'old-group', 1, 'chef.history.query', '备份', ['data_export_backup'], 'group', ''],
   ['看菜谱', 'new-extra', 1, 'chef.recipe.view', '查看食谱', ['view_full_recipe'], 'reuse', 'view_full_recipe'],
   ['看菜', 'new-extra', 1, 'chef.recipe.view', '查看食谱', ['view_full_recipe'], 'reuse', 'view_full_recipe'],
   ['搜菜', 'new-extra', 1, 'chef.recipe.search', '搜索食谱', ['search_by_name_keyword'], 'reuse', 'search_by_name_keyword'],
@@ -140,11 +142,11 @@ const WAKES = [
 /** 形状断言（改声明表即跟变；外部事实源的漂移另由摘要锁报）。 */
 const EXPECT = {
   domains: 10, groups: 33, cards: 48, wakes: 50,
-  oldGroups: 33, newExtra: 13, helpWords: 4, wakeRoutable: 37, wakeNonRoutable: 13,
+  oldGroups: 33, newExtra: 13, helpWords: 4, wakeRoutable: 50, wakeNonRoutable: 0,
 };
 
 /** 摘要锁（外部事实源；任一不符即 exit 1 并点名；改声明表不改这里，改事实源才红）。 */
-const WAKE_DIGEST = 'edaef07339b594ecbaeffdc26a8f6f14f958ab44402bab8a5c00746855423a50';
+const WAKE_DIGEST = '8db03a2806da4a4bb08d9a324ab937cabde1d47897039af7040b7be6212c3ab5';
 const CARD_DIGEST = '14033d014cc5cb86e2a79b28696ed8c17cd30708c5df79c63ae171bfc79a8374';
 
 const bad = (msg) => { throw new Error('生成器断言不过：' + msg); };
@@ -206,9 +208,10 @@ function header(digests) {
     ' *',
     ' * 事实源（全程只读，老件一行不动）：',
     ' *   ① `src/help/sceneData.ts` 的 48 卡（id／组／chip）：标题与 prompt 以它为准，本件不复制；',
-    ' *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（37 条）：路由唯一事实源，既有语义不动；',
+    ' *   ② `src/policy/wakewords.ts` 的 `WAKE_TABLE`（50 条）：路由唯一事实源；',
+    ' *      本件投影它的短语集合做双向对账（可路由 50 条逐条＝表内短语），不复制路由逻辑；',
     ' *   ③ t2 §5.1：13 条新表多出词的落位与 prompt 口径（9 复用／3 新写／1 参数）。',
-    ' * 摘要锁：`WAKE_TABLE` 37 短语 sha256＝' + digests.wake,
+    ' * 摘要锁：`WAKE_TABLE` 50 短语 sha256＝' + digests.wake,
     ' *           `sceneData.ts` 48 卡 id sha256＝' + digests.card,
     ' * 域目录中文名＝HELP 域 label；卡 slug＝卡 id（全局唯一，文件名为 `<slug>.html`，见 t767-命名.md）。',
     ' */'].join('\n');
@@ -268,7 +271,7 @@ const digests = {
   wake: sha256(JSON.stringify(tablePhrases)),
   card: sha256(JSON.stringify([...scene.ids].sort())),
 };
-const locks = [['WAKE_TABLE 37 短语', digests.wake, WAKE_DIGEST], ['sceneData.ts 48 卡 id', digests.card, CARD_DIGEST]];
+const locks = [['WAKE_TABLE 50 短语', digests.wake, WAKE_DIGEST], ['sceneData.ts 48 卡 id', digests.card, CARD_DIGEST]];
 if (locks.some((l) => String(l[2]).startsWith('FILL_'))) {
   throw new Error('摘要锁未回填（fail-closed）：\n  ' + locks.map(([n, got]) => n + ' = ' + got).join('\n  '));
 }

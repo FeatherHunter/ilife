@@ -14,24 +14,24 @@ export const SHOPPING_ROUTES: readonly RouteDecl[] = [
     order: 28,
     wakeWord: '生成清单',
     key: 'chef.shopping.query',
-    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["宫保虾球","鱼香肉丝"]}\'',
+    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["辣椒炒肉"]}\'',
   },
   {
     order: 29,
     wakeWord: '排除可选',
     key: 'chef.shopping.query',
-    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["宫保虾球","鱼香肉丝"]}\'',
+    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["辣椒炒肉"]}\'',
   },
   {
     order: 30,
     wakeWord: '查清单',
     key: 'chef.shopping.query',
-    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["宫保虾球","鱼香肉丝"]}\'',
+    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["辣椒炒肉"]}\'',
   },
   {
     order: 31,
     wakeWord: '清空清单',
     key: 'chef.shopping.query',
-    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["宫保虾球","鱼香肉丝"]}\'',
+    cli: 'chef-cmd-read chef.shopping.query --params \'{"names":["辣椒炒肉"]}\'',
   },
 ];

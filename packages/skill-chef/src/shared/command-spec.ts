@@ -34,9 +34,11 @@ export type CommandSpec =
 
 /** 一条路由的声明行形状（各域 `routes.ts` 数组元素的形状）。
  *
- * `order` 取 `WAKE_TABLE` 的 1-based 下标（跨域可比，全表级顺序由场景表定）；
- * 暂未入表的短语（`备份`／派生三组／`首次使用`）取 `order: 0` 并在行注释写明待接入，
- * 对账脚本认 `order: 0` 为 tbd 行（`key: 'tbd'` 或注释点名去向）。
+ * `order` 取 `WAKE_TABLE`（`src/policy/wakewords.ts`）的 1-based 行号，即「这条路由在唤醒词表里第几行」；
+ * 表序是全表唯一的顺序事实源，本字段与表序互为判据（判据住 `docs/skills/skill-chef/t841-登记面对账.mjs`）。
+ * #841 起 50 条全部入表 ⇒ 不再有 `order: 0` 的待接入行（此前 `备份`／派生三组／`首次使用`／`批量改`
+ * 是入表前的占位）。一句事实只有一个落点：同一短语不在两个域各声明一行（越域共用命令时，
+ * 按事实归属选一处，如 `备份` 住历史域、`体检` 也住历史域）。
  */
 export interface RouteDecl {
   readonly order: number;
