@@ -138,6 +138,9 @@ export function renderFamilyPage(env: Envelope): string {
   const title = MODE_TITLE[mode];
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
 
+  // 当前状态只写拿得到的真值；拿不到的写「—」，不写「见某节」「以回执为准」这类绕路话。
+  const idOf = (s: string): string => s.match(/[：:]\s*(\d+)/)?.[1] ?? '—';
+
   let changeRows = '';
   if (mode === 'move') {
     const m = msg.match(/^已移动：(.+)→(.+)$/);
@@ -186,15 +189,15 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="fp-lead">' + esc(msg) + '</p></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">变更结果</h2>' + changeRows + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">当前状态</h2>'
-    + '<div class="fp-row"><div class="fp-k">名称</div><div class="fp-v">以回执为准，完整档案去详情看</div></div>'
-    + '<div class="fp-row"><div class="fp-k">编号</div><div class="fp-v">见本页变更结果首行</div></div>'
-    + '<div class="fp-row"><div class="fp-k">分类</div><div class="fp-v">保持原分类，改分类用改物品</div></div>'
-    + '<div class="fp-row"><div class="fp-k">位置与数量</div><div class="fp-v">已按本次指令同步</div></div>'
-    + '<div class="fp-row"><div class="fp-k">状态</div><div class="fp-v">见本次变更后状态</div></div>'
-    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">见标签变更一节</div></div>'
-    + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">保持原备注，改备注用改物品</div></div>'
+    + '<div class="fp-row"><div class="fp-k">名称</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">编号</div><div class="fp-v">' + esc(idOf(msg)) + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">分类</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">位置与数量</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">状态</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">' + (mode === 'tags' ? '已按本次指令更新' : '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">—</div></div>'
     + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>'
+    + (mode === 'tags' ? '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>' : '')
     + '<section class="fp-sec"><h2 class="fp-sec-t">处理明细</h2>'
     + '<div class="fp-row"><div class="fp-k">本次处理</div><div class="fp-v">本次' + esc(title) + '已经处理完毕</div></div>'
     + '<p class="fp-note">处理已经执行完毕，明细以回执正文为准</p></section>'

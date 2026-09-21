@@ -137,6 +137,7 @@ export function renderFamilyPage(env: Envelope): string {
     + n('locations') + '个位置点，' + n('tags') + '个标签</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>物品件数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
+    + '<div class="st-card"><b>物品总件数</b><span>' + n('quantity') + '</span><small>按数量合计</small></div>'
     + '<div class="st-card"><b>位置点</b><span>' + n('locations') + '</span><small>有东西放着的位置</small></div>'
     + '<div class="st-card"><b>标签数</b><span>' + n('tags') + '</span><small>不同标签个数</small></div>'
     + '<div class="st-card"><b>分类数</b><span>' + n('categories') + '</span><small>启用中的分类</small></div></div>';
@@ -150,13 +151,14 @@ export function renderFamilyPage(env: Envelope): string {
     + freqRows + '</div>';
   const dist = (t: string, ctx: string, cmd: string) => '<div class="st-row"><div class="st-name">' + t
     + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">复制指令</button></div></div>';
-  const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">明细分布待数据补齐，先看总量与入口</span></h2>'
-    + dist('分类分布', '库内共有' + n('categories') + '个分类，逐类件数待补', '帮我按分类统计物品数量')
-    + dist('位置分布', '库内共有' + n('locations') + '个位置点，逐位置件数待补', '帮我按位置统计物品数量')
-    + dist('状态分布', '库内共有' + n('items') + '件物品，逐状态件数待补', '帮我按状态统计物品数量')
-    + dist('归属分布', '库内物品默认归属使用者，逐人件数待补', '帮我按归属人统计物品数量') + '</div>';
-  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行与趋势 <span class="st-hint">待价格与变动数据</span></h2>'
-    + '<div class="st-empty"><b>价格与变动数据不足</b>给物品补上价格后，这里会出现价值排行与近30天趋势'
+  const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">无逐维明细</span></h2>'
+    + '<p class="st-sub">逐类、逐位置、逐状态、逐归属的件数还没有对应聚合，这四行先给总量与入口</p>'
+    + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量')
+    + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量')
+    + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量')
+    + dist('归属分布', '库内物品默认归属使用者', '帮我按归属人统计物品数量') + '</div>';
+  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行与趋势 <span class="st-hint">无价格数据</span></h2>'
+    + '<div class="st-empty"><b>还没有价格数据</b>给物品补上价格后，这里会出现价值排行与近30天趋势'
     + '<div class="st-actions center"><button class="st-btn" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div></div></div>';
   const empty = n('items') === 0 ? '<div class="st st-empty"><b>还没有物品</b>录入第一批物品后，这里就是你的家底总览'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我录入第一批物品">复制初始化</button></div></div>' : '';

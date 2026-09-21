@@ -116,6 +116,18 @@ export function renderFamilyPage(env: Envelope): string {
     reason: str(x.reason), registered: x.registered !== false,
   } as TripItem));
   const message = str((data as Record<string, unknown>).message);
+  // 理由行去重：命令给的 reason 形如「<物品名>放在<位置>出发前核对」，名称与位置本行已经给过，
+  // 页上只留它独有的那半句（「出发前核对」／「恢复在家」）并折进同一行的数据格，不在下面另起一行复述。
+  const whyTail = (x: TripItem): string => {
+    const r = x.reason;
+    if (!r) return '';
+    const pre = x.name + '放在';
+    if (!r.startsWith(pre)) return r;
+    const rest = r.slice(pre.length);
+    const loc = x.location || '';
+    const tail = loc !== '' && rest.startsWith(loc) ? rest.slice(loc.length) : rest;
+    return tail.trim();
+  };
 
   const metrics = '<div class="of-metrics">'
     + '<span>' + escapeHtml(tripType) + '</span>'
@@ -123,7 +135,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '<span>清单' + items.length + '件</span>'
     + '</div>';
 
-  let listHtml = '<div class="of-card"><h2>' + (mode === 'return' ? '归位确认' : '出发核对') + '</h2><div id="ofProg"></div>';
+  let listHtml = '<div class="of-card"><h2>' + (mode === 'return' ? '归位确认' : '出发核对') + '</h2>'
+    + '<div id="ofProg">已装 0/' + items.length + ' 件</div>';
   if (!items.length) {
     listHtml += '<div class="of-empty">' + (mode === 'return'
       ? '没有旅游中的物品，暂无待归位'
@@ -131,8 +144,8 @@ export function renderFamilyPage(env: Envelope): string {
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
-      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location) : '') + '</td></tr></table>'
-      + (x.reason ? '<div class="of-why">' + escapeHtml(x.reason) + '</div>' : '')
+      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location) : '')
+      + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + '</td></tr></table>'
       + '</div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'
       + (mode === 'return' ? '确认归位' : '确认带出') + '</button>'

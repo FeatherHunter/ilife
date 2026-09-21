@@ -87,7 +87,7 @@ function fixedCard(entries: FixedEntry[]): string {
       + '<button class="btn ghost" data-copy="' + attr(clearPrompt) + '" data-need="解除">解除</button></div>';
   }).join('');
   return '<section class="card" data-block="fields" data-need="现有固定位清单（名称/ID/当前活跃位置/固定位）">'
-    + '<h2>现有固定位 <span class="hint">' + entries.length + '件，叹号表示当前位置不在固定位</span></h2>'
+    + '<h2>现有固定位 <span class="hint">' + entries.length + '件，红色「不在固定位」表示当前不在固定位</span></h2>'
     + rows + '</section>';
 }
 

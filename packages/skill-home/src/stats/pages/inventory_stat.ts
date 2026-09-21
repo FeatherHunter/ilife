@@ -116,14 +116,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-card"><b>库内物品</b><span>' + items + '</span><small>盘点覆盖范围基数</small></div>'
     + '<div class="st-card"><b>有无数据</b><span>' + (records > 0 ? '有' : '无') + '</span><small>有没有盘点过</small></div></div>';
   const sug = '<div class="st st-sug">智能建议：'
-    + (records > 0 ? '已有' + records + '条记录，建议优先复查遗留差异，再补下一次盘点' : '先完成首次盘点，这里才会出现完成率与趋势') + '</div>';
+    + (records > 0 ? '建议优先复查遗留差异，再补下一次盘点' : '先完成首次盘点，这里才会出现完成率与趋势') + '</div>';
   const detail = records > 0
-    ? '<div class="st st-sec"><h2 class="st-sec-t">盘点明细 <span class="st-hint">逐条时间，范围与状态待明细补齐</span></h2>'
-    + '<p><span class="st-badge st-ok">已有' + records + '条记录</span></p>'
+    ? '<div class="st st-sec"><h2 class="st-sec-t">盘点明细 <span class="st-hint">无明细数据</span></h2>'
+    + '<p><span class="st-badge st-ok">最近一次盘点已在库</span></p>'
     + '<div class="st-actions"><button class="st-btn pri" data-t="帮我复查最近一次盘点的遗留差异">复查盘点</button></div></div>'
     : '<div class="st st-empty"><b>还没有盘点记录</b>完成首次盘点后，这里会显示完成率，差异趋势与优先盘点建议'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我开始第一次盘点">复制首次盘点</button></div></div>';
-  const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势 <span class="st-hint">待盘点明细</span></h2>'
+  const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势 <span class="st-hint">待盘点</span></h2>'
     + '<div class="st-empty"><b>趋势数据不足</b>多盘点几次，完成率曲线与遗留差异总数会在这里成形</div></div>';
   const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(records, items)) + '">复制数据</button>'
     + '<button class="st-btn soft" data-t="' + escapeHtml('场景：盘点统计与建议，唤醒词盘点统计；异常：无') + '">复制日志</button></div>';

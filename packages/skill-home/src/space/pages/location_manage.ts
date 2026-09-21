@@ -103,7 +103,7 @@ function treeCard(nodes: LocNode[]): string {
       + '</span></div>';
   }).join('');
   return '<section class="card" data-block="fields" data-need="位置树">'
-    + '<h2>位置树 <span class="hint">点每行的按钮改名、合并或删除</span></h2>'
+    + '<h2>位置树 <span class="hint">点每行的按钮改名或删除（合并见下方相似位置检测）</span></h2>'
     + '<div class="tree" data-need="位置路径多级">' + rows + '</div></section>';
 }
 

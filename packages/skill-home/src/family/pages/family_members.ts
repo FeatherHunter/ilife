@@ -149,7 +149,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="bm-lead">成员增减与物品归属标记都在这一页</p>'
     + '<div class="bm-metrics">'
     + '<div class="bm-num"><b>成员数</b><span>' + members.length + '</span></div>'
-    + '<div class="bm-num"><b>物品总数</b><span>' + (hasItemDetail ? rows.length : '未回') + '</span></div>'
+    + '<div class="bm-num"><b>物品总数（暂未统计）</b><span>' + (hasItemDetail ? rows.length : '—') + '</span></div>'
     + '</div>'
     + receiptBanner + emptyBanner
     + '<section class="bm-sec"><h2>成员列表</h2>'

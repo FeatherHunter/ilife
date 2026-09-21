@@ -122,8 +122,13 @@ export function renderFamilyPage(env: Envelope): string {
   const msg = receiptOf(env);
   const name = pickName(msg);
   const count = pickCount(msg);
+  // 一族四场景共用本页：导语按本次操作说本页那一件事，不再把三件事写进每一页。
+  const greet = /批量/.test(msg) ? '批量录入一次过手多件，逐件确认后一起写入。'
+    : /补录/.test(msg) ? '补录历史物品时，把旧日期填进「录入日期（补录）」那一格。'
+      : /(改|更新|变更)/.test(msg) ? '改物品只列本次要改的项，其余字段留空即保持原值。'
+        : '单条录入一次填完，必填标星，空值会被拦下；要拍照录入可以走拍照找物那一页。';
   const content = PAGE_CSS
-    + '<p class="greet">单条录入一次填完，必填标星，空值会被拦下，拍照与批量补录的分流在下面各就各位。</p>'
+    + '<p class="greet">' + greet + '</p>'
     + '<div class="receipt">' + escapeHtml(msg) + '</div>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>本次录入明细</h2><div class="wrap-x"><table class="kv">'
     + row('名称*', escapeHtml(name))
@@ -134,7 +139,7 @@ export function renderFamilyPage(env: Envelope): string {
     + row('价格（选填）', '—')
     + row('购买日期', '—')
     + row('过期日期', '—')
-    + row('录入日期（补录）', '补录场景在此填写')
+    + row('录入日期（补录）', 'YYYY-MM-DD，例如 2026-08-21')
     + row('标签（逗号分隔）', '—')
     + row('备注', '—')
     + row('分区「分类分布」', '本次分类见上表分类行')
@@ -142,7 +147,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="note">横线表示本次回执没有带出该字段。</p></section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>三处分流</h2>'
     + '<p>拍照录入与单条同页，照片随本次一起存。批量录入本次共 ' + escapeHtml(count) + ' 件，一次全部确认。补录历史物品时，把旧日期填进下面这格。</p>'
-    + '<p><input class="find" placeholder="补录日期，例如上月今天"></p></section>'
+    + '<p><input class="find" placeholder="补录日期，例如 2026-08-21"></p></section>'
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态候选</h2><div>'
     + REQUIRED_BLOCKS.status.map((s) => '<span class="pill">' + escapeHtml(s) + '</span>').join('')
     + '</div></section>'

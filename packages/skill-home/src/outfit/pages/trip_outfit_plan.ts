@@ -145,7 +145,6 @@ export function renderFamilyPage(env: Envelope): string {
   let confHtml = '<div class="of-card"><h2>冲突提示</h2>';
   confHtml += conflicts.length
     ? '<table class="of-confs">' + conflicts.map((h) => '<tr><td class="of-conf">' + escapeHtml(h) + '</td></tr>').join('') + '</table>'
-      + '<p class="of-note">以上缺口可补录名下物品，或加入购物清单</p>'
     : '<div class="of-empty">衣物数量充足，无重复冲突</div>';
   confHtml += '</div>';
 

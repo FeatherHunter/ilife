@@ -176,7 +176,8 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   it('1-4 补录：补录日期有处可填', () => {
     const html = read('补录_1-4_' + STAMP + '.html');
     assert.ok(html.includes('已录物品'), '回执缺席');
-    assert.ok(html.includes('补录场景在此填写'), '补录位缺席');
+    // 旧断言查的是占位残句「补录场景在此填写」；#817 收口按复核意见把它换成完整日期示例，断言同步。
+    assert.ok(html.includes('录入日期（补录）') && html.includes('YYYY-MM-DD'), '补录位缺席');
   });
 
   it('2-1 查物品：结果与摘要在位', () => {

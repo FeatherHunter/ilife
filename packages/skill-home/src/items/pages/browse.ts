@@ -120,7 +120,6 @@ export function renderFamilyPage(env: Envelope): string {
   const body = cards.length
     ? '<p>计数：共 ' + cards.length + ' 件，分 ' + names.length + ' 组，当前分组名：' + escapeHtml(names[0] ?? '') + '。</p>'
       + '<div>' + op('全部', '请加载居家管家技能，帮我筛选浏览全部物品', false) + switchButtons + '</div>'
-      + '<p class="note">排序固定按相关来。</p>'
       + tables
     : '<div class="hm-empty">没有匹配的物品，换个条件再筛一次吧。</div>';
   const content = PAGE_CSS

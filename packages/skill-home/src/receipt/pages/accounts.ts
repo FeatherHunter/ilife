@@ -120,19 +120,19 @@ function listGroups(env: Envelope): string {
     const list = groups.get(g);
     if (!list || !list.length) continue;
     parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
-    parts.push('<table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
+    parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
-      + '</tbody></table>');
+      + '</tbody></table></div>');
   }
   const rest = [...groups.keys()].filter((k) => !order.includes(k));
   for (const g of rest) {
     const list = groups.get(g) as AccountRow[];
     parts.push('<h3>' + escapeHtml(g) + '共' + list.length + '个</h3>');
-    parts.push('<table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
+    parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
-      + '</tbody></table>');
+      + '</tbody></table></div>');
   }
   parts.push('<p>清单只显掩码，复制文本默认不含密码</p></div>');
   return parts.join('');
@@ -143,8 +143,12 @@ function receiptNote(env: Envelope): string {
   const msg = String((data as { message?: unknown }).message ?? '已落盘');
   // 脱敏口径与 envelope 分节页一致：含「密码」的回执**不落明文**（明文只走对话 JSON 回显）。
   const safe = /密码/.test(msg) ? '密码已回显（只经对话回显，页上不落明文）' : msg;
+  // 存账号（新增）多说一句密码怎么存；改账号（更新）说清只填要改的——消息文本带动作词，据此分流。
+  const byOp = /(新增|新建|已存)/.test(msg)
+    ? '<p>密码加密落库，只在对话里回显，页上不落明文</p>'
+    : /(更新|已改|修改)/.test(msg) ? '<p>只填要改的字段，其余留空即保持原值</p>' : '';
   // 真实回执放绿卡；「页上不展示明文」这条由页首敏感横幅统一说一次，这里不重复。
-  return '<div><p class="receipt">' + escapeHtml(safe) + '</p></div>';
+  return '<div>' + byOp + '<p class="receipt">' + escapeHtml(safe) + '</p></div>';
 }
 
 function opsBlock(): string {
@@ -168,9 +172,13 @@ function sensitiveBanner(): string {
   return '<div><p>说明页不展示明文，查看与复制均需二次确认</p></div>';
 }
 
-/** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。 */
+/** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动；
+ *  清单表套横滑容器（长邮箱等会把表撑宽，容器内滑、不撑破文档）。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
-  + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>';
+  + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
+  + '.rc-scroll{overflow-x:auto}'
+  + '.rc-scroll table{min-width:520px;border-collapse:collapse}'
+  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。

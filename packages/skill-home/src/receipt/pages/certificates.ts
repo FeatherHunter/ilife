@@ -195,16 +195,14 @@ function listTable(env: Envelope): string {
     + '<p>表内九列，手机上可左右滑动看全；号码只显后四位，复制文本不含完整号码</p></div>';
 }
 
-function receiptNote(): string {
-  return '<div><p>写操作已受理，可在查证件到期中按到期复核</p>'
+function receiptNote(env: Envelope): string {
+  // 每条写操作说清它自己那件事：消息文本带动作词，页面据此补一句本操作独有的语义。
+  const msg = String((env.data as { message?: unknown }).message ?? '');
+  const byOp = /归档/.test(msg) ? '<p>照片已关联到这张证件</p>'
+    : /更新/.test(msg) ? '<p>只填要改的字段，其余留空即保持原值</p>' : '';
+  return '<div>' + byOp
+    + '<p>写操作已受理，可在查证件到期中按到期复核</p>'
     + '<p>号码脱敏存储，复制文本不含完整号码</p></div>';
-}
-
-function envelopeBrief(env: Envelope): string {
-  const data = env.data as Record<string, unknown>;
-  const total = (data as { total?: unknown }).total;
-  const ok = (data as { ok?: unknown }).ok;
-  return JSON.stringify({ key: String((env as { key?: unknown }).key ?? ''), shape: String((env as { shape?: unknown }).shape ?? ''), total: typeof total === 'number' ? total : undefined, ok: typeof ok === 'boolean' ? ok : undefined });
 }
 
 function opsBlock(): string {
@@ -220,7 +218,9 @@ function opsBlock(): string {
 /** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
   + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
-  + '.rc-scroll{overflow-x:auto}table{border-collapse:collapse}th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left}</style>';
+  + '.rc-scroll{overflow-x:auto}'
+  + '.rc-scroll table{min-width:560px;border-collapse:collapse}'
+  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
@@ -228,11 +228,13 @@ export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/receipt/certificates.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>证件管理</span></div>';
-  const main = env.shape === 'receipt' ? receiptNote() : listTable(env);
+  // 清单页已由本族的九列表承载；这里只嵌回执卡，别再嵌一份平铺清单（那是重复数据）。
+  const main = env.shape === 'receipt'
+    ? receiptNote(env) + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    : listTable(env);
   const content = PAGE_CSS + head
     + main
     + opsBlock()
-    + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')
