@@ -53,14 +53,12 @@ const HOSTED = new Map(Object.entries({
   '补物品': '3-3', '减物品': '3-3', '废物品': '3-4', '借物品': '3-4', '修物品': '3-4',
   '盘物品': '6-1', '盘全部': '6-1',
   '查高频': 'SM4-1', '查低频': 'SM4-2', '看标签': '4-1', '合标签': '4-1',
-  '推位置': 'SM2-1', '找位置': 'SM2-1', '改购物清单': 'SM5-1',
+  '推位置': 'SM2-3', '找位置': 'SM2-4', '改购物清单': 'SM5-1',
   '借出': 'SM7-1', '借入': 'SM7-1', '归还': 'SM7-1', '催还': 'SM7-1',
 }));
 const HELP_ENTRY = new Set(['居家管家 帮助', '居家管家帮助', '居家管家能做什么']);
 // 待复裁 3 词（兼容词，票 4 落默认 HTML 后复裁；路由保持现状，不擅自废弃）。
 const PENDING_DEPRECATED = new Set(['查物品(HTML)', '看物品(HTML)', '统物品(HTML)']);
-// 单审退回 2 词（宿主 SM2-1 复核未通过：管位置 prompt 无推荐／查找语义；路由保持现状待用户重裁）。
-const REJUDGE = new Set(['推位置', '找位置']);
 const sceneKey = new Map(appendix.scenarios.map((s) => [s.id, s.key]));
 // 多键场景的可达键集（附录只列主键；读写两面同属一场，见 ledger）：4-1 管标签（查／合）、
 // SM5-1 购物清单（查／改）、SM7-1 借用管理（查／借／还）。
@@ -120,15 +118,15 @@ describe('#800 逐行对照（词→场景→key→页族，一行不落）', ()
       else if (variantHost.has(e.phrase)) scene = variantHost.get(e.phrase);
       else if (HOSTED.has(e.phrase)) scene = HOSTED.get(e.phrase);
       assert.ok(scene, '场景不定：' + e.phrase);
-      if (scene !== 'HELP' && !REJUDGE.has(e.phrase)) {
+      if (scene !== 'HELP') {
         const allowed = SCENE_KEYS.get(scene) ?? new Set([sceneKey.get(scene)]);
         assert.ok(allowed.has(e.key), 'key 与场景不一致：' + e.phrase + ' 路由 ' + e.key + '／场景 ' + scene + ' 可达 ' + [...allowed].join('、'));
-      } else if (scene === 'HELP') {
+      } else {
         assert.equal(e.key, 'home.help.lookup');
       }
       const family = scene === 'HELP' ? 'help' : resolvePageFamily(e.key, e.preset ?? {});
       assert.notEqual(family, UNKNOWN_FAMILY, '页族未解析：' + e.phrase + ' ' + e.key + ' ' + JSON.stringify(e.preset ?? {}));
-      rows.push(e.phrase + ' → ' + scene + ' → ' + e.key + ' → ' + family + (REJUDGE.has(e.phrase) ? '（待重裁）' : ''));
+      rows.push(e.phrase + ' → ' + scene + ' → ' + e.key + ' → ' + family);
     }
     assert.equal(rows.length, WAKE_TABLE.length, '对照缺行');
     console.log('对照 ' + rows.length + ' 行（词 → 场景 → key → 页族）：\n' + rows.join('\n'));
@@ -141,13 +139,15 @@ describe('#800 逐行对照（词→场景→key→页族，一行不落）', ()
     assert.equal(appendix.families.length, 46);
   });
 
-  it('单审退回项锁定（推位置／找位置）：路由保持现状，待用户重裁才许动', () => {
+  it('单审确认（推位置→SM2-3／找位置→SM2-4）：路由与页族双锁，擅动即红', () => {
     const r1 = routeWakeword('推位置看看', { category_id: 1 });
     assert.equal(r1.key, 'home.location.query');
     assert.deepEqual(r1.params, { mode: 'suggest', category_id: 1 });
+    assert.equal(resolvePageFamily(r1.key, r1.params), 'suggest_storage');
     const r2 = routeWakeword('找位置看看', { reference: '牛奶' });
     assert.equal(r2.key, 'home.location.query');
     assert.deepEqual(r2.params, { mode: 'find', reference: '牛奶' });
+    assert.equal(resolvePageFamily(r2.key, r2.params), 'space_view');
   });
 
   it('setup 空声明：目录与标准件在，命令与路由为空（care 键家在 family）', () => {

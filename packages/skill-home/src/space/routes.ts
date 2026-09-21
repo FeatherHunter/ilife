@@ -2,8 +2,7 @@
 //
 // 推位置／找位置补 `needs`（路由层即报缺槽位，exit 2 与处理函数内报错同档，话更明白）：
 // 推位置须 category_id（建议实现按同类聚合），找位置须 reference（实现按名搜）。
-// 推位置／找位置的宿主场景（SM2-1）复核未通过（见迁移对账 structure-landing.md），
-// 路由保持现状，待用户重裁，不擅自改 key。
+// 宿主确认（用户拍板）：推位置→SM2-3 收纳建议、找位置→SM2-4 空间视图，key 不变。
 
 import type { HomeRouteSpec } from '../shared/commandSpec.js';
 
