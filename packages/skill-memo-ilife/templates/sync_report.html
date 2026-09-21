@@ -27,6 +27,10 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 1px 3px rgba(0,0,0,.04),0 12px 36px rgba(0,0,0,.06);
   --shadow-lg:0 1px 3px rgba(0,0,0,.04),0 24px 48px rgba(0,0,0,.08);
+  /* #832 令牌收债：下面 7 个值原先散在规则里当字面色值用（t849 §2 禁令「色值只许用令牌」）。
+     值逐字不变，只是搬进令牌定义地——规则里只剩 var()。 */
+  --ok-tint:#ebfaef;--warn-tint:#fff7e0;--err-tint:#ffe8e6;--idle-tint:#fafafa;
+  --idle-icon:#f0f0f2;--badge-neutral:#ececef;--desktop-bg:#ededf0;
   --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
@@ -57,10 +61,10 @@ body{
   position:relative;
   overflow:hidden;
 }
-.status-card.ok{background:linear-gradient(180deg,#fff 0%,#ebfaef 100%)}
-.status-card.warn{background:linear-gradient(180deg,#fff 0%,#fff7e0 100%)}
-.status-card.err{background:linear-gradient(180deg,#fff 0%,#ffe8e6 100%)}
-.status-card.idle{background:linear-gradient(180deg,#fff 0%,#fafafa 100%)}
+.status-card.ok{background:linear-gradient(180deg,var(--card) 0%,var(--ok-tint) 100%)}
+.status-card.warn{background:linear-gradient(180deg,var(--card) 0%,var(--warn-tint) 100%)}
+.status-card.err{background:linear-gradient(180deg,var(--card) 0%,var(--err-tint) 100%)}
+.status-card.idle{background:linear-gradient(180deg,var(--card) 0%,var(--idle-tint) 100%)}
 
 .status-icon{
   width:56px;height:56px;
@@ -73,7 +77,7 @@ body{
 .status-card.ok .status-icon{background:var(--ok-soft);color:var(--ok)}
 .status-card.warn .status-icon{background:var(--warn-soft);color:var(--warn)}
 .status-card.err .status-icon{background:var(--err-soft);color:var(--err)}
-.status-card.idle .status-icon{background:#f0f0f2;color:var(--fg3)}
+.status-card.idle .status-icon{background:var(--idle-icon);color:var(--fg3)}
 
 .status-title{
   font-size:22px;font-weight:700;
@@ -130,7 +134,7 @@ body{
 }
 .kpi-num.zero{color:var(--fg4);font-weight:600}
 .kpi-label{font-size:13px;color:var(--fg2);font-weight:500}
-.kpi-hint{font-size:11px;color:var(--fg3);margin-top:3px;line-height:1.4}
+.kpi-hint{font-size:12px;color:var(--fg3);margin-top:3px;line-height:1.4}
 
 /* ===== 明细卡(<details> 原生折叠) ===== */
 .detail{
@@ -171,7 +175,7 @@ body{
   min-width:22px;height:22px;padding:0 7px;
   border-radius:999px;
   font-size:12px;font-weight:700;
-  background:#ececef;color:var(--fg2);
+  background:var(--badge-neutral);color:var(--fg2);
   font-variant-numeric:tabular-nums;
 }
 .detail-badge.ok{background:var(--ok-soft);color:var(--ok-fg)}
@@ -255,6 +259,9 @@ body{
 }
 .err-list li:last-child{margin-bottom:0}
 
+/* ===== 页内导航（公共层目录形状 `ilife-block-toc`；#832 补：本页三屏，长页需定位） ===== */
+#statusCard,#kpis,#details,#dataPanel{scroll-margin-top:20px}
+
 /* ===== 数据与日志 ===== */
 .data-panel{
   background:var(--card);
@@ -266,21 +273,17 @@ body{
 .data-panel strong{font-size:14.5px}
 .data-panel .hint{font-size:12px;color:var(--fg3);margin-top:6px}
 
-/* ===== 移动端微调(已经在 480 内,只处理超小屏) ===== */
-@media(max-width:360px){
-  .wrap{padding:14px 12px 32px}
-  .status-card{padding:20px 16px}
-  .status-title{font-size:20px}
-  .kpi{padding:14px 12px}
-  .kpi-num{font-size:22px}
-  .detail summary{padding:13px 14px;font-size:14px}
-  .detail-body{padding:0 14px 14px}
-}
+/* ===== 超小屏微调已并入基样式 =====
+   #832：原先有一段 `@media(max-width:360px)` 的「超小屏微调」，而 360 不在仓内既有断点集合
+   （400／640／820／1001／1200，`t849-视觉基准.md` §2 禁令「零新断点」）里。本页是 mobile-first、
+   基样式本来就是移动优先，那段括号只是把 320 档的内距再收 4px、把页题从 22px 降到 20px——
+   删掉即回落到基样式（正文 ≥12px、安全区照旧由 body 的 `env(safe-area-inset-*)` 避让），
+   三档验收宽（390／768／1440）读数一字不变。 */
 
 /* ===== PC 端:480 居中,背景留白(类 Apple Mail) ===== */
-@media(min-width:600px){
+@media(min-width:640px){
   .wrap{padding-top:40px}
-  body{background:#ededf0}
+  body{background:var(--desktop-bg)}
 }
 
 /* ===== reduce motion ===== */
@@ -296,6 +299,9 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <body>
 <div class="wrap ilife-page-ui">
 <section id="injectError" style="display:none"></section>
+
+<!-- ===== 页内导航（公共层目录形状；#832：本页三屏，长页给定位） ===== -->
+<nav class="ilife-block-toc jump" aria-label="页内导航"><a href="#statusCard">结论</a><a href="#kpis">统计</a><a href="#details">明细</a><a href="#dataPanel">数据</a></nav>
 
 <!-- ===== 状态卡(首屏 · 结论) ===== -->
 <section class="status-card" id="statusCard">
@@ -334,7 +340,7 @@ var raw=document.getElementById("payload");
 var payload=null,perr=null;
 try{payload=JSON.parse(raw.textContent||"{}");}catch(e){perr=e.message;}
 if(perr){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:"数据解析失败",log:perr,payload:null});return;}
-if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行备忘录同步(唤醒词:备忘录同步)",payload:null});return;}
+if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行备忘录同步（唤醒词：备忘录同步）",payload:null});return;}
 window.__hmPayload=payload;
 
 function num(v){return (typeof v==='number'&&isFinite(v))?v:0}
@@ -355,13 +361,15 @@ function init(){
   // success: 同步报告已渲染(4 状态 fallback · success 路径)
   var synced = num(d.synced);
   var backfilled = num(d.backfilled);
-  var dueAdded = num(d.due_added);
-  var dueOverridden = num(d.due_overridden);
-  var dueRemoved = num(d.due_removed);
+  // #832：载荷是回执对象原样（`runSync` 的 `extra`），键名一律驼峰——旧世代那份下划线写法
+  // 与本页的载荷对不上，六项统计全部读成 0（页面把「排期变更 3 条」印成 0）。此处照载荷改齐。
+  var dueAdded = num(d.dueAdded);
+  var dueOverridden = num(d.dueOverridden);
+  var dueRemoved = num(d.dueRemoved);
   var dueChanged = dueAdded + dueOverridden + dueRemoved;
-  var skippedNoLocal = num(d.skipped_no_local_note);
-  var skippedNoMemo = num(d.skipped_no_memo_id);
-  var skippedAlready = num(d.skipped_already_done);
+  var skippedNoLocal = num(d.skippedNoLocalNote);
+  var skippedNoMemo = num(d.skippedNoMark);
+  var skippedAlready = num(d.skippedAlreadyDone);
   var totalSkipped = skippedNoLocal + skippedNoMemo + skippedAlready;
   var errs = (d.errors || []).length;
   var totalChanged = synced + backfilled + dueChanged;
@@ -370,48 +378,48 @@ function init(){
   if(errs > 0){
     card.className = 'status-card err';
     icon.textContent = '!';
-    title.textContent = '同步完成 · ' + errs + ' 个错误';
-    desc.innerHTML = '同步已执行,但有 <b>' + errs + '</b> 个错误需要关注。展开下方错误明细查看详情。';
+    title.textContent = '同步完成，' + errs + ' 个错误';
+    desc.innerHTML = '同步已执行，但有 <b>' + errs + '</b> 个错误需要关注。展开下方错误明细查看详情。';
     // #299:err 态 → Base errorReceipt(修正重试 = 重新同步)
     var er = document.getElementById('errorReceipt');
     er.style.display = 'block';
     er.innerHTML = window.errorReceipt({
-      message: '同步完成 · ' + errs + ' 个错误',
-      retryPrompt: '请重新运行备忘录同步(唤醒词:备忘录同步)',
+      message: '同步完成，' + errs + ' 个错误',
+      retryPrompt: '请重新运行备忘录同步（唤醒词：备忘录同步）',
       payload: null
     });
   }else if(totalChanged === 0 && totalSkipped === 0){
     card.className = 'status-card idle';
     icon.textContent = '—';
-    title.textContent = '完全一致 · 无变化';
-    desc.textContent = '本机与飞书已同步,本次没有需要处理的变更。';
+    title.textContent = '完全一致，无变化';
+    desc.textContent = '本机与飞书已同步，本次没有需要处理的变更。';
   }else if(synced > 0 || backfilled > 0){
     card.className = 'status-card ok';
     icon.textContent = '✓';
     title.textContent = '同步完成';
     var parts = [];
-    if(synced > 0) parts.push('<b>' + synced + '</b> 条心愿在飞书勾选,本机已转打卡');
+    if(synced > 0) parts.push('<b>' + synced + '</b> 条心愿在飞书勾选，本机已转打卡');
     if(backfilled > 0) parts.push('<b>' + backfilled + '</b> 条本机心愿补建到飞书');
     if(dueChanged > 0) parts.push('<b>' + dueChanged + '</b> 条排期已按飞书更新');
     desc.innerHTML = parts.join('<br>') + '。';
   }else{
     card.className = 'status-card warn';
     icon.textContent = '·';
-    title.textContent = '同步完成 · 无变更';
-    desc.innerHTML = '扫到飞书数据但本次没有实际变更。' + (totalSkipped > 0 ? '有 ' + totalSkipped + ' 条跳过,可展开查看。' : '');
+    title.textContent = '同步完成，无变更';
+    desc.innerHTML = '扫到飞书数据但本次没有实际变更。' + (totalSkipped > 0 ? '有 ' + totalSkipped + ' 条跳过，可展开查看。' : '');
   }
 
   /* ----- meta 行 ----- */
   function commandToChinese(c){return c==='sync-from-feishu'?'同步飞书':c}
   var metaParts = [];
   if(d.generated_at) metaParts.push('<span>' + fmtTime(d.generated_at) + '</span>');
-  if(d.command) metaParts.push('<span>' + esc(commandToChinese(d.command)) + '</span>');
+  if(d.scene&&d.scene.scene_id) metaParts.push('<span>' + esc(commandToChinese(d.scene.scene_id)) + '</span>');
   meta.innerHTML = metaParts.join('');
 
   /* ----- KPI 网格 ----- */
   var kpis = [
-    {n:synced, label:'完成同步', hint:'飞书上勾选的,本机已记为打卡', bar: synced>0?'ok':'', z:synced===0},
-    {n:backfilled, label:'补建到飞书', hint:'本机心愿 → 飞书任务', bar: backfilled>0?'ok':'', z:backfilled===0},
+    {n:synced, label:'完成同步', hint:'飞书上勾选的，本机已记为打卡', bar: synced>0?'ok':'', z:synced===0},
+    {n:backfilled, label:'补建到飞书', hint:'本机心愿已建到飞书任务', bar: backfilled>0?'ok':'', z:backfilled===0},
     {n:dueChanged, label:'排期变更', hint:'已按飞书最新日期调整', bar: dueChanged>0?'warn':'', z:dueChanged===0},
     {n:totalSkipped, label:'跳过', hint:'未匹配到本机心愿', bar: totalSkipped>0?'warn':'', z:totalSkipped===0},
   ];
@@ -427,52 +435,40 @@ function init(){
   /* ----- 明细区(原生 details,按需展示) ----- */
   var details = [];
 
-  // 1. 完成同步明细
+  // 1. 完成同步明细（D-29：回执只带计数、不带逐条明细，故只出这一种正文）
   if(synced > 0){
-    var items = d.synced_items || [];
-    var body = '';
-    if(items.length > 0){
-      body = '<ul class="item-list">' + items.map(function(it){
-        return '<li>' +
-          '<span class="item-id">#' + esc(it.id) + '</span>' +
-          '<span class="item-content">' + esc(it.content) + '</span>' +
-          '<span class="item-mark">✓</span>' +
-        '</li>';
-      }).join('') + '</ul>';
-    }else{
-      body = '<p>本次有 <b>' + synced + '</b> 条心愿在飞书勾选完成,本机已转为打卡记录。</p>' +
-             '<p class="note">如需查看具体心愿,可用「查心愿」唤醒词查看本机心愿清单。</p>';
-    }
+    var body = '<p>本次有 <b>' + synced + '</b> 条心愿在飞书勾选完成，本机已转为打卡记录。</p>' +
+               '<p class="note">如需查看具体心愿，可用「查心愿」唤醒词查看本机心愿清单。</p>';
     details.push(makeDetail('✓ 完成同步', 'ok', synced, body, true));
   }
 
   // 2. 补建明细
   if(backfilled > 0){
-    var body2 = '<p>本次有 <b>' + backfilled + '</b> 条本机心愿补建到飞书 task,已建立双向关联。</p>';
+    var body2 = '<p>本次有 <b>' + backfilled + '</b> 条本机心愿补建到飞书任务，已建立双向关联。</p>';
     details.push(makeDetail('+ 补建到飞书', 'ok', backfilled, body2));
   }
 
   // 3. 排期变更明细
   if(dueChanged > 0){
     var parts3 = [];
-    if(dueAdded > 0) parts3.push('新增 due ' + dueAdded + ' 条');
-    if(dueOverridden > 0) parts3.push('覆盖 due ' + dueOverridden + ' 条');
-    if(dueRemoved > 0) parts3.push('清除 due ' + dueRemoved + ' 条');
-    var body3 = '<p>本次排期变更:<b>' + parts3.join(' · ') + '</b>。</p>' +
-                '<p class="note">飞书 task 的 due 时间已同步到本机心愿。飞书优先,本机跟随。</p>';
+    if(dueAdded > 0) parts3.push('新增排期 ' + dueAdded + ' 条');
+    if(dueOverridden > 0) parts3.push('覆盖排期 ' + dueOverridden + ' 条');
+    if(dueRemoved > 0) parts3.push('清除排期 ' + dueRemoved + ' 条');
+    var body3 = '<p>本次排期变更：<b>' + parts3.join('，') + '</b>。</p>' +
+                '<p class="note">飞书任务的排期已同步到本机心愿。飞书优先，本机跟随。</p>';
     details.push(makeDetail('📅 排期变更', 'warn', dueChanged, body3));
   }
 
   // 4. 跳过明细(平静展示)
   if(totalSkipped > 0){
     var skipParts = [];
-    if(skippedNoLocal > 0) skipParts.push('<b>' + skippedNoLocal + '</b> 条在飞书已完成,但本机找不到对应心愿');
-    if(skippedNoMemo > 0) skipParts.push('<b>' + skippedNoMemo + '</b> 条飞书 task 缺少 memo_id 字段');
+    if(skippedNoLocal > 0) skipParts.push('<b>' + skippedNoLocal + '</b> 条在飞书已完成，但本机找不到对应心愿');
+    if(skippedNoMemo > 0) skipParts.push('<b>' + skippedNoMemo + '</b> 条飞书任务缺少本机笔记编号');
     if(skippedAlready > 0) skipParts.push('<b>' + skippedAlready + '</b> 条之前已处理过');
-    var body4 = '<p>本次跳过 ' + totalSkipped + ' 条:</p>' +
-                '<p>' + skipParts.join(';<br>') + '。</p>';
+    var body4 = '<p>本次跳过 ' + totalSkipped + ' 条：</p>' +
+                '<p>' + skipParts.join('<br>') + '。</p>';
     if(skippedNoLocal > 0){
-      body4 += '<p class="note">可能你最近清理过本机库,或这些 task 是飞书原生建的。通常无需操作。如需排查可用「查心愿」唤醒词查看本机心愿清单。</p>';
+      body4 += '<p class="note">可能你最近清理过本机库，或这些任务是飞书原生建的。通常无需操作。如需排查可用「查心愿」唤醒词查看本机心愿清单。</p>';
     }
     details.push(makeDetail('○ 跳过', 'warn', totalSkipped, body4));
   }
@@ -505,8 +501,8 @@ function makeDetail(label, badgeClass, count, body, open){
   '</details>';
 }
 
-function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}
-function copyLog(){window.memoAttachCopyArea();window.toast('日志已复制','诊断信息 · 有异常时粘贴给开发者排查',{icon:'copy'});}
+function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照，可粘贴到笔记存档',{icon:'copy'});}
+function copyLog(){window.memoAttachCopyArea();window.toast('日志已复制','诊断信息，有异常时粘贴给开发者排查',{icon:'copy'});}
 window.copyData=copyData;
 window.copyLog=copyLog;
 window.memoAttachCopyArea();
