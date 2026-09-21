@@ -6,3 +6,4 @@
 
 export { VIEW_COMMANDS } from './commands.js';
 export { VIEW_ROUTES } from './routes.js';
+export { runRecipeView } from './run.js';

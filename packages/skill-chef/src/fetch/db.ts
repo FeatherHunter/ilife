@@ -3,7 +3,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { ChefFetchError } from './errors.js';
+import { CHEF_TABLE_DDL } from './schema.js';
 
+// 建表语句住 `src/fetch/schema.ts`（DDL 稳定、查询常变，变化频率分层；17 张表齐是体检的门槛，见 `src/health.ts`）。
 export interface RecipeRow {
   id: string; name: string; description: string; difficulty: string;
   servings: number; total_time_minutes: number; status: string;
@@ -39,62 +41,17 @@ export interface HealthIssue {
 
 export interface ChefDb { db: DatabaseSync; path: string; initialized: boolean; }
 
-function now(): string {
+/** #839 搬迁后包内共享的取数原语：域目录的 run 可直接引用（`src/<域>/run*.ts`），包门不管。 */
+export function now(): string {
   return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
 
-function today(): string {
+export function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-const DDL: string[] = [
-  `CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, description TEXT DEFAULT '', difficulty TEXT DEFAULT '', servings INTEGER DEFAULT 2, total_time_minutes INTEGER DEFAULT 30, status TEXT DEFAULT '未做', photo_url TEXT DEFAULT '', source TEXT DEFAULT '', source_url TEXT DEFAULT '', created_at TEXT DEFAULT '', updated_at TEXT DEFAULT '')`,
-  `CREATE INDEX IF NOT EXISTS idx_recipes_name ON recipes(name)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipes_difficulty ON recipes(difficulty)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(status)`,
-  `CREATE TABLE IF NOT EXISTS recipe_categories (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, cuisine_type TEXT DEFAULT '', region TEXT DEFAULT '', country TEXT DEFAULT '', FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_categories_recipe ON recipe_categories(recipe_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_categories_cuisine ON recipe_categories(cuisine_type)`,
-  `CREATE TABLE IF NOT EXISTS recipe_seasons (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, season TEXT NOT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_seasons_recipe ON recipe_seasons(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_cooking_methods (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, method TEXT NOT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_cooking_methods_recipe ON recipe_cooking_methods(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_flavors (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, flavor TEXT NOT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_flavors_recipe ON recipe_flavors(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_diet_tags (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, tag TEXT NOT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_diet_tags_recipe ON recipe_diet_tags(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_meal_types (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, meal_type TEXT NOT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_meal_types_recipe ON recipe_meal_types(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS ingredients (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, sequence INTEGER DEFAULT 0, name TEXT NOT NULL, category TEXT DEFAULT '', quantity REAL DEFAULT NULL, unit TEXT DEFAULT '', quantity_text TEXT DEFAULT '', is_optional INTEGER DEFAULT 0, substitute TEXT DEFAULT '', FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_ingredients_recipe ON ingredients(recipe_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_ingredients_name ON ingredients(name)`,
-  `CREATE TABLE IF NOT EXISTS cooking_steps (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, sequence INTEGER NOT NULL, action TEXT NOT NULL, duration_minutes INTEGER DEFAULT NULL, heat_level TEXT DEFAULT '', temperature TEXT DEFAULT '', expected_result TEXT DEFAULT '', FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_cooking_steps_recipe ON cooking_steps(recipe_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_cooking_steps_sequence ON cooking_steps(recipe_id, sequence)`,
-  `CREATE TABLE IF NOT EXISTS step_ingredients (id TEXT PRIMARY KEY, step_id TEXT NOT NULL, ingredient_id TEXT NOT NULL, quantity_used REAL DEFAULT NULL, introduced_at TEXT DEFAULT '', unit TEXT DEFAULT '', FOREIGN KEY (step_id) REFERENCES cooking_steps(id) ON DELETE CASCADE, FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_step_ingredients_step ON step_ingredients(step_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_step_ingredients_ingredient ON step_ingredients(ingredient_id)`,
-  `CREATE TABLE IF NOT EXISTS step_techniques (id TEXT PRIMARY KEY, step_id TEXT NOT NULL, recipe_id TEXT NOT NULL, technique_name TEXT NOT NULL, description TEXT DEFAULT '', key_points TEXT DEFAULT '', FOREIGN KEY (step_id) REFERENCES cooking_steps(id) ON DELETE CASCADE, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_step_techniques_step ON step_techniques(step_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_step_techniques_recipe ON step_techniques(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS tips (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, step_id TEXT DEFAULT NULL, ingredient_id TEXT DEFAULT NULL, category TEXT DEFAULT '', content TEXT NOT NULL, priority INTEGER DEFAULT 0, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (step_id) REFERENCES cooking_steps(id) ON DELETE SET NULL, FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE SET NULL)`,
-  `CREATE INDEX IF NOT EXISTS idx_tips_recipe ON tips(recipe_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_tips_step ON tips(step_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_tips_ingredient ON tips(ingredient_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_history (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, cook_date TEXT NOT NULL, cook_sequence INTEGER DEFAULT 1, rating REAL DEFAULT NULL, feedback TEXT DEFAULT '', photo TEXT DEFAULT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_history_recipe ON recipe_history(recipe_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_history_date ON recipe_history(cook_date)`,
-  `CREATE TABLE IF NOT EXISTS background_knowledge (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL UNIQUE, origin_story TEXT DEFAULT '', historical_background TEXT DEFAULT '', cultural_significance TEXT DEFAULT '', FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_background_recipe ON background_knowledge(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS recipe_relations (id TEXT PRIMARY KEY, parent_id TEXT NOT NULL, child_id TEXT NOT NULL, relation_type TEXT DEFAULT '', change_summary TEXT DEFAULT '', FOREIGN KEY (parent_id) REFERENCES recipes(id) ON DELETE CASCADE, FOREIGN KEY (child_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_relations_parent ON recipe_relations(parent_id)`,
-  `CREATE INDEX IF NOT EXISTS idx_recipe_relations_child ON recipe_relations(child_id)`,
-  `CREATE TABLE IF NOT EXISTS cookware (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, name TEXT NOT NULL, category TEXT DEFAULT '', FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_cookware_recipe ON cookware(recipe_id)`,
-  `CREATE TABLE IF NOT EXISTS nutrition_info (id TEXT PRIMARY KEY, recipe_id TEXT NOT NULL UNIQUE, serving_size REAL DEFAULT NULL, serving_unit TEXT DEFAULT '', calories INTEGER DEFAULT NULL, protein REAL DEFAULT NULL, fat REAL DEFAULT NULL, carbs REAL DEFAULT NULL, fiber REAL DEFAULT NULL, sodium REAL DEFAULT NULL, FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE)`,
-  `CREATE INDEX IF NOT EXISTS idx_nutrition_recipe ON nutrition_info(recipe_id)`,
-];
-function qAll<T>(h: ChefDb, sql: string, params: unknown[] = []): T[] {
+// 建表语句已搬入 ./schema.ts（CHEF_TABLE_DDL）：DDL 稳定、查询常变，变化频率分层（#839）。
+export function qAll<T>(h: ChefDb, sql: string, params: unknown[] = []): T[] {
   try {
     const stmt = h.db.prepare(sql) as unknown as { all: (...a: never[]) => T[] };
     return stmt.all(...(params as never[]));
@@ -103,7 +60,7 @@ function qAll<T>(h: ChefDb, sql: string, params: unknown[] = []): T[] {
   }
 }
 
-function qGet<T>(h: ChefDb, sql: string, params: unknown[] = []): T | undefined {
+export function qGet<T>(h: ChefDb, sql: string, params: unknown[] = []): T | undefined {
   try {
     const stmt = h.db.prepare(sql) as unknown as { get: (...a: never[]) => T | undefined };
     return stmt.get(...(params as never[]));
@@ -112,7 +69,7 @@ function qGet<T>(h: ChefDb, sql: string, params: unknown[] = []): T | undefined 
   }
 }
 
-function qRun(h: ChefDb, sql: string, params: unknown[] = []): void {
+export function qRun(h: ChefDb, sql: string, params: unknown[] = []): void {
   try {
     const stmt = h.db.prepare(sql) as unknown as { run: (...a: never[]) => unknown };
     stmt.run(...(params as never[]));
@@ -122,7 +79,7 @@ function qRun(h: ChefDb, sql: string, params: unknown[] = []): void {
   }
 }
 
-function toRecipe(r: Record<string, unknown>): RecipeRow {
+export function toRecipe(r: Record<string, unknown>): RecipeRow {
   return {
     id: String(r.id ?? ''), name: String(r.name ?? ''), description: String(r.description ?? ''),
     difficulty: String(r.difficulty ?? ''), servings: Number(r.servings ?? 2),
@@ -133,7 +90,7 @@ function toRecipe(r: Record<string, unknown>): RecipeRow {
   };
 }
 
-function toIngredient(r: Record<string, unknown>): IngredientRow {
+export function toIngredient(r: Record<string, unknown>): IngredientRow {
   const q = r.quantity === null || r.quantity === undefined || r.quantity === '' ? null : Number(r.quantity);
   return {
     id: String(r.id ?? ''), recipe_id: String(r.recipe_id ?? ''), sequence: Number(r.sequence ?? 0),
@@ -154,7 +111,7 @@ function toStep(r: Record<string, unknown>): StepRow {
   };
 }
 
-function toHistory(r: Record<string, unknown>): HistoryRow {
+export function toHistory(r: Record<string, unknown>): HistoryRow {
   const rt = r.rating === null || r.rating === undefined || r.rating === '' ? null : Number(r.rating);
   return {
     id: String(r.id ?? ''), recipe_id: String(r.recipe_id ?? ''),
@@ -180,7 +137,7 @@ export function openChefDb(dbPath: string): ChefDb {
       const row = (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='recipes'") as unknown as { get: () => unknown }).get();
       existed = !!row;
     } catch { existed = false; }
-    for (const ddl of DDL) db.exec(ddl);
+    for (const ddl of CHEF_TABLE_DDL) db.exec(ddl);
     h.initialized = !existed;
   } catch (e) {
     try { db.close(); } catch { /* ignore */ }
@@ -199,7 +156,7 @@ function canonicalRecipeName(name: unknown): string {
   return typeof name === 'string' ? name.trim() : '';
 }
 
-function mustRecipe(h: ChefDb, idOrName: string): RecipeRow {
+export function mustRecipe(h: ChefDb, idOrName: string): RecipeRow {
   // id 优先：按 id 精确命中一行即返回（id 唯一，不会撞）。
   const byId = qGet<Record<string, unknown>>(h, 'SELECT * FROM recipes WHERE id = ?', [idOrName]);
   if (byId) return toRecipe(byId);
@@ -305,14 +262,7 @@ export function listRecipes(h: ChefDb, opts: { difficulty?: string; includeDepre
   return rows.map(toRecipe);
 }
 
-export function searchRecipes(h: ChefDb, kw: string): RecipeRow[] {
-  if (typeof kw !== 'string' || kw.trim().length === 0) {
-    throw new ChefFetchError('CHEF_BAD_QUERY', '搜索须给关键词（空查询不返全量）');
-  }
-  const k = '%' + kw.trim() + '%';
-  const rows = qAll<Record<string, unknown>>(h, "SELECT DISTINCT r.* FROM recipes r LEFT JOIN ingredients i ON i.recipe_id = r.id WHERE (r.name LIKE ? OR r.description LIKE ? OR i.name LIKE ?) AND r.status != '已废弃' ORDER BY r.name ASC", [k, k, k]);
-  return rows.map(toRecipe);
-}
+// `searchRecipes`／`filterRecipes` 已搬入 `src/search/run.ts`（本域独占；旧址由 `src/fetch/index.ts` 转出，不断链）。
 
 export function getRecipeDetail(h: ChefDb, idOrName: string): { recipe: RecipeRow; ingredients: IngredientRow[]; steps: StepRow[] } {
   if (typeof idOrName !== 'string' || idOrName.trim().length === 0) {
@@ -361,57 +311,7 @@ export function updateRecipe(h: ChefDb, id: string, patch: Record<string, unknow
   return mustRecipe(h, r.id);
 }
 
-export function filterRecipes(h: ChefDb, filters: Record<string, unknown> = {}): RecipeRow[] {
-  const conds = ['1=1'];
-  const params: unknown[] = [];
-  if (filters.status !== undefined && filters.status !== '') { conds.push('r.status = ?'); params.push(String(filters.status)); }
-  else conds.push("r.status != '已废弃'");
-  if (filters.difficulty !== undefined && filters.difficulty !== '') { conds.push('r.difficulty = ?'); params.push(String(filters.difficulty)); }
-  if (filters.maxTime !== undefined && filters.maxTime !== '') { conds.push('r.total_time_minutes <= ?'); params.push(Number(filters.maxTime)); }
-  const exists = (table: string, col: string, val: unknown): void => {
-    conds.push('EXISTS (SELECT 1 FROM ' + table + ' t WHERE t.recipe_id = r.id AND t.' + col + ' = ?)');
-    params.push(String(val));
-  };
-  if (filters.cuisine !== undefined && filters.cuisine !== '') exists('recipe_categories', 'cuisine_type', filters.cuisine);
-  if (filters.season !== undefined && filters.season !== '') exists('recipe_seasons', 'season', filters.season);
-  if (filters.method !== undefined && filters.method !== '') exists('recipe_cooking_methods', 'method', filters.method);
-  if (filters.flavor !== undefined && filters.flavor !== '') exists('recipe_flavors', 'flavor', filters.flavor);
-  if (filters.tag !== undefined && filters.tag !== '') exists('recipe_diet_tags', 'tag', filters.tag);
-  if (filters.meal !== undefined && filters.meal !== '') exists('recipe_meal_types', 'meal_type', filters.meal);
-  if (filters.cookware !== undefined && filters.cookware !== '') exists('cookware', 'name', filters.cookware);
-  const rows = qAll<Record<string, unknown>>(h, 'SELECT DISTINCT r.* FROM recipes r WHERE ' + conds.join(' AND ') + ' ORDER BY r.name ASC', params);
-  return rows.map(toRecipe);
-}
-
-export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: number | null; feedback?: string; cook_date?: string }): HistoryRow {
-  const rid = typeof input?.recipe_id === 'string' ? input.recipe_id.trim() : '';
-  if (!rid) throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给 recipe_id');
-  const recipe = mustRecipe(h, rid);
-  let rating: number | null = null;
-  const rawRt = (input as Record<string, unknown>).rating;
-  // 818 定案（甲）：老库 rating REAL NOT NULL，本次不改 schema；卡面“选填”暂改“必填”，缺评分不写历史，直接拦下。
-  if (rawRt === undefined || rawRt === null || rawRt === '') throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给评分 rating（0-5 数字；老库 NOT NULL，未评分请先问用户要分）');
-  {
-    const n = typeof rawRt === 'string' ? Number(String(rawRt).trim()) : rawRt;
-    if (typeof n !== 'number' || !Number.isFinite(n)) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须为数字');
-    if (n < 0 || n > 5) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须在 0-5 内');
-    rating = n as number;
-  }
-  const cookDate = typeof input.cook_date === 'string' && input.cook_date.trim() ? input.cook_date.trim() : today();
-  const maxRow = qGet<{ m: number | null }>(h, 'SELECT MAX(cook_sequence) AS m FROM recipe_history WHERE recipe_id = ?', [recipe.id]);
-  const seq = (maxRow?.m ?? 0) + 1;
-  const id = randomUUID();
-  try {
-    qRun(h, 'INSERT INTO recipe_history (id, recipe_id, cook_date, cook_sequence, rating, feedback) VALUES (?, ?, ?, ?, ?, ?)', [id, recipe.id, cookDate, seq, rating, input.feedback ?? '']);
-    if (recipe.status === '未做') qRun(h, 'UPDATE recipes SET status = ?, updated_at = ? WHERE id = ?', ['已做', now(), recipe.id]);
-  } catch (e) {
-    if (e instanceof ChefFetchError) throw e;
-    throw new ChefFetchError('CHEF_DB_UNREADABLE', '历史写盘失败', { cause: e });
-  }
-  const row = qGet<Record<string, unknown>>(h, 'SELECT * FROM recipe_history WHERE id = ?', [id]);
-  if (!row) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '历史写后读回失败');
-  return toHistory(row);
-}
+// `filterRecipes` 已搬入 `src/search/run.ts`（本域独占，见上）；`recordHistory` 已搬入 `src/history/run-record.ts`（本域独占；旧址由 `src/fetch/index.ts` 转出，不断链）。
 
 export function queryHistory(h: ChefDb, recipeId?: string): HistoryRow[] {
   if (recipeId === undefined || recipeId === null || recipeId === '') {
@@ -431,54 +331,5 @@ export function historyStats(h: ChefDb, recipeId: string): { count: number; avgR
   return { count, avgRating: avg };
 }
 
-export function buildShoppingList(h: ChefDb, names: string[]): ShoppingItem[] {
-  if (!Array.isArray(names) || names.length === 0) {
-    throw new ChefFetchError('CHEF_BAD_QUERY', '采购须给菜名（空查询不返空）');
-  }
-  const ids: string[] = [];
-  const nameById = new Map<string, string>();
-  for (const n of names) {
-    if (typeof n !== 'string' || !n.trim()) throw new ChefFetchError('CHEF_BAD_QUERY', '采购菜名含空串');
-    const r = mustRecipe(h, n.trim());
-    if (!ids.includes(r.id)) { ids.push(r.id); nameById.set(r.id, r.name); }
-  }
-  const placeholders = ids.map(() => '?').join(',');
-  const rows = qAll<Record<string, unknown>>(h, 'SELECT i.*, r.name AS _recipe_name FROM ingredients i JOIN recipes r ON r.id = i.recipe_id WHERE i.recipe_id IN (' + placeholders + ') ORDER BY i.name ASC', ids);
-  const merged = new Map<string, ShoppingItem>();
-  for (const r of rows) {
-    const ing = toIngredient(r);
-    const recipeName = String(r._recipe_name ?? nameById.get(ing.recipe_id) ?? '');
-    const key = ing.name + '|||' + ing.unit;
-    const qty = ing.quantity ?? 0;
-    const hit = merged.get(key);
-    const qt = ing.quantity_text || (ing.quantity !== null ? String(ing.quantity) + ing.unit : '');
-    if (!hit) {
-      merged.set(key, { name: ing.name, quantity: qty, unit: ing.unit, recipes: [recipeName], quantity_text: qt, from: recipeName, optional: ing.is_optional === 1, category: ing.category });
-    } else {
-      hit.quantity += qty;
-      if (!hit.recipes.includes(recipeName)) hit.recipes.push(recipeName);
-      hit.from = hit.recipes.join('+');
-      if (ing.is_optional !== 1) hit.optional = false;
-    }
-  }
-  return [...merged.values()].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
-}
-
-export function healthCheck(h: ChefDb): HealthIssue[] {
-  const issues: HealthIssue[] = [];
-  try {
-    const noIng = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN ingredients i ON i.recipe_id = r.id WHERE i.id IS NULL AND r.status != '已废弃'");
-    for (const r of noIng) issues.push({ level: 'warn', message: '无食材：' + String(r.name ?? '') });
-    const noStep = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN cooking_steps s ON s.recipe_id = r.id WHERE s.id IS NULL AND r.status != '已废弃'");
-    for (const r of noStep) issues.push({ level: 'warn', message: '无步骤：' + String(r.name ?? '') });
-    const noHeat = qAll<Record<string, unknown>>(h, "SELECT r.name AS name, s.sequence AS seq FROM cooking_steps s JOIN recipes r ON r.id = s.recipe_id WHERE (s.heat_level IS NULL OR s.heat_level = '') AND r.status != '已废弃'");
-    for (const r of noHeat) issues.push({ level: 'warn', message: '步骤缺火候：' + String(r.name ?? '') + '第' + String(r.seq ?? '') + '步' });
-    const never = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN recipe_history hh ON hh.recipe_id = r.id WHERE hh.id IS NULL AND r.status != '已废弃'");
-    for (const r of never) issues.push({ level: 'info', message: '从未做过：' + String(r.name ?? '') });
-  } catch (e) {
-    if (e instanceof ChefFetchError) throw e;
-    throw new ChefFetchError('CHEF_DB_UNREADABLE', '体检查询失败', { cause: e });
-  }
-  issues.sort((a, b) => (a.level < b.level ? -1 : a.level > b.level ? 1 : String(a.message ?? '').localeCompare(String(b.message ?? ''), 'zh')));
-  return issues;
-}
+// `buildShoppingList` 已搬入 `src/shopping/run.ts`、`healthCheck` 已搬入 `src/data/run-query.ts`
+//（各本域独占；旧址由 `src/fetch/index.ts` 转出，不断链）。本文件到此结束。

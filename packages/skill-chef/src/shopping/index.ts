@@ -6,3 +6,4 @@
 
 export { SHOPPING_COMMANDS } from './commands.js';
 export { SHOPPING_ROUTES } from './routes.js';
+export { buildShopping, buildShoppingList, runShoppingQuery } from './run.js';

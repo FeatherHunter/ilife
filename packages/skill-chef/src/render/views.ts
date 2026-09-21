@@ -1,6 +1,6 @@
 // 渲染层·视图数据装配：DB 行 → 8 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
 // getRecipeDetail 形状假设见 RecipeDetail（与 fetch 并行 agent 对齐，差异见回包）。
-import type { RecipeRow, IngredientRow, StepRow, HistoryRow, ShoppingItem } from '../fetch/db.js';
+import type { RecipeRow, IngredientRow, StepRow } from '../fetch/db.js';
 
 export interface RecipeItem {
   id: string; name: string; description: string; difficulty: string;
@@ -45,12 +45,8 @@ export function recipeDetail(detail: RecipeDetail): { item: Record<string, unkno
   };
 }
 
-// 搜菜/筛菜/全部：items + total + kind。
-export function buildRecipeSearch(kind: string, items: RecipeItem[]): { items: RecipeItem[]; total: number; kind: string } {
-  return { items, total: items.length, kind };
-}
-
-// 写菜回执 receipt。
+// 搜菜/筛菜/全部装配 `buildRecipeSearch` 已搬入 `src/search/run.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
+// 写菜回执 receipt（update/add 两域共用，留守）。
 export function buildRecipeReceipt(message: string): { ok: boolean; message: string } {
   return { ok: true, message };
 }
@@ -61,53 +57,19 @@ export interface CookingStep extends Record<string, unknown> {
   ingredients?: Record<string, unknown>[];
 }
 
-// 开做 list：items 为步骤（内联食材）+ total；recipe/份数放大说明/历史提示作扩展字段（list 形只校验 items/total）。
-export function buildCookingRun(args: {
-  recipe: RecipeItem;
-  steps: CookingStep[];
-  servings?: number;
-  history?: RecipeHistoryStats | null;
-}): { items: CookingStep[]; total: number; recipe: RecipeItem; servingsNote: string; historyHint: string; steps: CookingStep[] } {
-  const base = args.recipe.servings > 0 ? args.recipe.servings : 2;
-  const servings = args.servings ?? base;
-  const factor = Math.round((servings / base) * 100) / 100;
-  const servingsNote = servings === base
-    ? '按原份量 ' + base + ' 人份备料'
-    : '已按 ' + servings + ' 人份放大（原 ' + base + ' 人份，倍率 ' + factor + '，食材用量同倍）';
-  const h = args.history;
-  const historyHint = h && h.count > 0
-    ? '做过 ' + h.count + ' 次' + (h.avgRating !== null && h.avgRating !== undefined ? '，平均评分 ' + h.avgRating : '') + '；本次做完请走 chef.history.record 记录'
-    : '还没做过；本次做完请走 chef.history.record 记录';
-  return { items: args.steps, total: args.steps.length, recipe: args.recipe, servingsNote, historyHint, steps: args.steps };
-}
-
+// 开做装配 `buildCookingRun` 已搬入 `src/cook/run.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
 // 采购行复用 fetch ShoppingItem（跨菜合并行：name/quantity/unit/recipes），不另建影子类型。
 
-// 跨菜合并采购 list：items（fetch 合并行 name/quantity/unit/recipes）+ total + recipes（+servings/excludeOptional 回显）。
-export function buildShopping(args: {
-  items: ShoppingItem[]; recipes: string[]; servings?: number; excludeOptional?: boolean;
-}): { items: ShoppingItem[]; total: number; recipes: string[]; servings?: number; excludeOptional: boolean } {
-  const out: { items: ShoppingItem[]; total: number; recipes: string[]; servings?: number; excludeOptional: boolean } =
-    { items: args.items, total: args.items.length, recipes: args.recipes, excludeOptional: args.excludeOptional === true };
-  if (args.servings !== undefined) out.servings = args.servings;
-  return out;
-}
+// 跨菜合并采购装配 `buildShopping` 已搬入 `src/shopping/run.ts`（本域独占；旧址由 `src/render/index.ts` 转出）.
 
-// 记做菜回执 receipt。
-export function buildHistoryRecord(message: string): { ok: boolean; message: string } {
-  return { ok: true, message };
-}
+// 记做菜回执 `buildHistoryRecord` 已搬入 `src/history/run-record.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
 
 // 查历史统一 list：timeline/stats/quality/backup 全作条目（单 key 单 shape=list）。
 export function buildHistoryQuery(kind: string, items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number; kind: string } {
   return { items, total: items.length, kind };
 }
 
-export function toHistoryItem(h: HistoryRow, recipeName?: string): Record<string, unknown> {
-  const out: Record<string, unknown> = { ...h };
-  if (recipeName !== undefined) out.recipe_name = recipeName;
-  return out;
-}
+// 历史行装配 `toHistoryItem` 已搬入 `src/history/run-query.ts`（本域独占；旧址由 `src/render/index.ts` 转出）。
 
 // HELP 现找：list（短语→key/cli/一句话，构建期快照进 SKILL.md，运行时按需过滤）。
 export interface HelpItem { phrase: string; key: string; shape: string; cli: string; desc: string; }

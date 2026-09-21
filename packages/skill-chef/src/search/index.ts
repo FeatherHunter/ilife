@@ -6,3 +6,4 @@
 
 export { SEARCH_COMMANDS } from './commands.js';
 export { SEARCH_ROUTES } from './routes.js';
+export { FILTER_KEYS, buildRecipeSearch, filterRecipes, runRecipeSearch, searchRecipes } from './run.js';
