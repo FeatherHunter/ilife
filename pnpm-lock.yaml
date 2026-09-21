@@ -149,7 +149,7 @@ importers:
         specifier: ^0.3.6
         version: link:../plugin-manager
       skill-schedule:
-        specifier: 0.3.2
+        specifier: 0.3.3
         version: link:../skill-schedule
     devDependencies:
       '@types/react':
