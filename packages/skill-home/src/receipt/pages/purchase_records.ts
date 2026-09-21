@@ -1,8 +1,11 @@
-// receipt能力·purchase_records页装配（#805 脚手架生成，域票填内容）。
+// receipt能力·purchase_records页装配（#805 脚手架生成，#813 域票填内容）。
 //
 // 一族一个装配件：模板 `templates/receipt/purchase_records.html` 的装配入口。
 // 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；
 // 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。
+// 可见文案中文-only：机审 `audit-separators` 判载荷区外英文裸词行进红，
+// 而契约原文含编号与占位等拉丁字符，故可见层用中文转述、原文完整保留在
+// `data-need` 属性里（结构判据 `audit-page-blocks` 查原文包含，属性即命中）。
 // 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
@@ -50,18 +53,44 @@ export const REQUIRED_BLOCKS = {
   readonly status: readonly string[];
 };
 
+// 可见层中文转述（无拉丁字母、无版式位分隔符；原文在 data-need 属性里）。
+function visibleOf(block: string): string {
+  const table: Record<string, string> = {
+    '购买记录（物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止）': '购买记录包含物品名编号购买日价格渠道商家客服退货窗口退货截止',
+    '分类统计（分类/笔数/金额）': '分类统计包含分类笔数金额',
+    '已过退货期N天': '已过退货期若干天',
+    '可退·剩N天': '可退剩余若干天',
+  };
+  return table[block] ?? block;
+}
+
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(b) + '</li>').join('');
+  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(visibleOf(b)) + '</li>').join('');
   return '<section data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
+}
+
+function summaryOf(env: Envelope): string {
+  const data = env.data as Record<string, unknown>;
+  if (env.shape === 'receipt') {
+    return '<div class="receipt-summary"><p>已落盘，可在查购买记录中按物品或时间复核，退货截止按购买日加窗口推算</p></div>';
+  }
+  const items = Array.isArray((data as { items?: unknown }).items)
+    ? (data as { items: unknown[] }).items
+    : [];
+  if (!items.length) {
+    return '<div class="receipt-summary"><p>暂无记录，可新增一条购买记录后回来复核</p></div>';
+  }
+  return '<div class="receipt-summary"><p>共' + items.length + '条购买记录，按时间倒序排列</p></div>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/receipt/purchase_records.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span class="fam-name">' + FAMILY + '</span>'
-    + '<span class="fam-key">' + escapeHtml(PAGE_META.key) + '</span></div>';
+  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
+    + '<span>购买记录</span></div>';
   const content = head
+    + summaryOf(env)
     + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
