@@ -180,6 +180,24 @@ export function memoRuntimeJs(): string {
     '    }',
     '    return html + "</div>";',
     '  };',
+    // ── 键值行（#878）：公共层 `ilife-block-fact-strip` 的形状①——一格「标签 ＋ 值」，格与格靠版式
+    //  分开，文本里一个分隔符都不留。存的理由：`生成时刻 · 场景` 那种串不许再拿 `·` 顶版式
+    //  （`t849-视觉基准.md` §3：`·` 串单实体的多字段 → 键值行），而三份模板各拼一遍拼装就是
+    //  「同一件事各写一遍」的病（同 §3 点名的那一族）。本件**不产样式**：类名、字号与间距全吃
+    //  `pageShapeCss()` 的形状①，与上面两张卡同一条口径。
+    '  window.factStrip = function (facts) {',
+    '    var cells = [];',
+    '    (facts || []).forEach(function (f) {',
+    '      var v = String(f && f.value == null ? "" : f.value);',
+    '      if (v === "") return;',                        // 值空着的格子不出（与公共层「空段丢弃」同口径）
+    '      var label = String(f && f.label == null ? "" : f.label);',
+    '      cells.push(\'<div class="ilife-block-fact-strip-item">\'',
+    '        + \'<span class="ilife-block-fact-strip-label">\' + esc(label) + "</span>"',
+    '        + \'<span class="ilife-block-fact-strip-value">\' + esc(v) + "</span>"',
+    '        + "</div>");',
+    '    });',
+    '    return cells.length ? \'<div class="ilife-block-fact-strip">\' + cells.join("") + "</div>" : "";',
+    '  };',
     '  window.esc = esc;',
     '  window.copyText = function (text, opts) { copyViaLayer(text, opts || {}); };',
     // 页内提示：本页按钮的复制提示由公共层委派自己出（同句同字），这里只处理模板显式要说的那一句。

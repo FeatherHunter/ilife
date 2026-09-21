@@ -88,16 +88,33 @@ const REMOTE_LABEL: Record<string, string> = {
   'not-applicable': '不适用（这条没有飞书任务）',
 };
 
-/** 回执三行：本地侧／远端侧／远端标识。取值不认得的原样透出，不静默吞掉。 */
+/** 三格里的**前三行**：对象（本地记录号）／本地侧／远端侧——屏上与数据面共用过一段，一处定义。
+ *  取值不认得的原样透出，不静默吞掉。 */
+function receiptUserRows(r: ReceiptRows): string[] {
+  return [
+    '对象：' + r.entityLabel + ' #' + String(r.entityId),
+    '本地侧：' + (LOCAL_LABEL[r.local] ?? r.local),
+    '远端侧：' + (REMOTE_LABEL[r.remote] ?? r.remote),
+  ];
+}
+
+/** 数据面（#876）：三格里的**第四行「远端标识」只进 `snapshot.sections`（页内载荷），不上屏**。
+ *
+ *  为什么屏上没有它：那一格装的是**远端平台的机器值**（`tk_done` 这类 guid），用户既认不出、
+ *  也拿它做不了任何事；而「飞书那边成了没有」这件事，`远端侧` 那一行已经用人话说全了
+ *  （`已在飞书新建任务`／`已同步飞书`／`飞书同步失败`／`不适用（这条没有飞书任务）`）——
+ *  再印一串 guid 就是同一事实一页两遍，且两遍里有一遍是黑话。
+ *  用户真要用标识指代对象时，给的是**本地记录号**（`对象` 那一行的 `#N`），不是远端 guid。
+ *
+ *  收掉不等于丢掉：#657／#658 合成写契约要求的三格（本地侧／远端侧／远端标识）**仍逐格读得到** ——
+ *  它仍在下面这份载荷里，仍是命令出口回执 JSON 的 `local`／`remote`／`remoteId`
+ *  （`docs/agents/合成写判据.md` §一判据 4 的「机器读在哪」逐字写的是**出口回执行**；
+ *  契约管的是那份 JSON，不是页面形状）。模板侧 `renderRows()` 按 heading「处理结果」把这整段滤掉，
+ *  故本段只作数据面，一个字都不上屏。 */
 function receiptSection(r: ReceiptRows): PageSnapshot['sections'][number] {
   return {
     heading: '处理结果',
-    rows: [
-      '对象：' + r.entityLabel + ' #' + String(r.entityId),
-      '本地侧：' + (LOCAL_LABEL[r.local] ?? r.local),
-      '远端侧：' + (REMOTE_LABEL[r.remote] ?? r.remote),
-      '远端标识：' + (r.remoteId === null || r.remoteId === '' ? '无' : r.remoteId),
-    ],
+    rows: [...receiptUserRows(r), '远端标识：' + (r.remoteId === null || r.remoteId === '' ? '无' : r.remoteId)],
   };
 }
 
@@ -119,7 +136,7 @@ export function buildReceiptPage(input: ReceiptPageInput): { html: string; stem:
         message: input.message,
         category: input.badges.category,
         sub: input.badges.sub ?? '',
-        rows: receiptSection(input.receipt).rows,
+        rows: receiptUserRows(input.receipt),
         retry_prompt: input.retryPrompt,
       },
     },

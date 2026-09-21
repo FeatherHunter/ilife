@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#822 册子冻结 · 待确认三问</title>
+<style>
+:root{--blue:#007aff;--green:#34c759;--amber:#ff9500;--red:#ff3b30;--fg:#1d1d1f;--fg2:#424245;--fg3:#86868b;--bg:#f5f5f7;--card:#fff;--line:#e3e3e8;--soft:#fafafc;--r:14px;--r-s:9px}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7;padding:0 20px 64px}
+.wrap{max-width:880px;margin:0 auto}
+.head{padding:36px 0 6px}
+.eyebrow{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--blue);background:#eaf3ff;border-radius:100px;padding:4px 12px}
+h1{font-size:27px;margin:14px 0 8px;letter-spacing:-.01em}
+.lede{font-size:14.5px;color:var(--fg2);max-width:68ch}
+.lede b{color:var(--fg)}
+.lede a{color:var(--blue)}
+.fix{background:#fff5f4;border:1px solid #f7d4d1;border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;font-size:13.5px;color:var(--fg2);margin-top:18px}
+.fix b{color:var(--fg)}
+h2{font-size:18px;margin:30px 0 4px;display:flex;gap:9px;align-items:center}
+h2 .bar{width:4px;height:18px;border-radius:2px;background:var(--blue)}
+.sub{font-size:13px;color:var(--fg3);margin-bottom:6px}
+.q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:12px}
+.q-head{display:flex;gap:12px;align-items:flex-start}
+.q-id{flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+.q-t{font-size:16.5px;font-weight:700;padding-top:3px}
+.why{font-size:13.5px;color:var(--fg2);margin-top:10px}
+.why p+p{margin-top:8px}
+.why b{color:var(--fg)}
+.why code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:100px;padding:3px 11px;color:var(--fg2)}
+.chip.bad{border-color:#f7d4d1;background:#fff5f4;color:#a8241c}
+.chip.ok{border-color:#c9ead3;background:#f4fcf6;color:#1c7a35}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{border:1px solid var(--line);border-radius:var(--r-s);padding:13px 15px;background:var(--soft)}
+.opt.pick{border-color:#b8e6c4;background:#f3fbf5}
+.opt-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;color:var(--fg3);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.opt-h strong{font-size:14px}
+.badge{font-size:11.5px;font-weight:700;color:#1c7a35;background:#d8f3e0;border-radius:100px;padding:2px 9px}
+.opt p{font-size:13px;color:var(--fg2);margin-top:6px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pc div{font-size:12.5px;padding-left:18px;position:relative;color:var(--fg2)}
+.pc .p::before{content:"＋";position:absolute;left:0;color:var(--green);font-weight:700}
+.pc .c::before{content:"−";position:absolute;left:0;color:var(--amber);font-weight:700}
+.rec{margin-top:12px;border-left:3px solid var(--green);background:#f3fbf5;border-radius:0 var(--r-s) var(--r-s) 0;padding:11px 14px;font-size:13.5px;color:var(--fg2)}
+.rec b{color:var(--fg)}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--fg3)}
+@media(max-width:640px){body{padding:0 14px 48px}h1{font-size:22px}.pc{grid-template-columns:1fr}}
+@media print{body{background:#fff;padding:0}.q{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="head">
+<span class="eyebrow">待确认 · 3 问</span>
+<h1>#822 册子冻结：份数 · 命名 · 边界</h1>
+<p class="lede">给 <a href="https://github.com/FeatherHunter/ilife/issues/822">#822</a> 拍板用。地图见 <a href="https://github.com/FeatherHunter/ilife/issues/820">#820</a>。本票只冻 <b>多少格、每格叫什么、落哪、属哪族</b>，不出代码，独占写集为册子 JSON＋<code>t822-*.md</code>。</p>
+<div class="fix"><b>先更正一处：</b>先前的 64 格把 10 条读类场景的「查看＋回执」数了两遍（同一条命令的两面）。下面三问已按 34 / 54 重算，64 不再是选项。</div>
+</header>
+
+<h2><span class="bar"></span>第一性推导 · 为什么只能这样</h2>
+<p class="sub">起点：#820 的四条唯一住处＋备忘录三个物理事实。每个决策都过了“是否帮地图四条达成”这一关。</p>
+<section class="q">
+<div class="why">
+<p><b>F3 产物名一处 → Q2：</b>真产物是<code>主体_时间戳.html</code>实例（盘上 216 件＋真跑 4 件同式）。冻全文件名则墙 <code>--check</code> 必红（D5 死链门）。故只冻主体算法＋时间戳规则，清单 <code>file</code> 存主体。</p>
+<p><b>D2 页是交互需要 → Q1：</b>备忘录采集在同一次 prompt 填空完成（20 带采集但仅 5 真缺槽位）。采集页无独立理由；读类查看与回执是同一页。故 34＝30 结果＋4 向导过程，64/54 排除。</p>
+<p><b>F2 样式一处＋老实物 3 族 → Q1 归并：</b>6 模板天然 3 族（查询／向导／报告，wish 两份类集相同）＋复制区 6 份各写一遍（基线 7 处同句）。16 条无基准收进通用回执族，16 次设计收成 1 次，否则 D5 最低页分不可控。</p>
+<p><b>F3＋D4 单前缀 → Q2 目录：</b>216 件已扁平（#220），新旧同生命周期。另开层让链路总表处理双前缀，无质量收益。</p>
+<p><b>对抗结论：</b>三问任一反向（64 双份／20 采集页／冻全文件名／另开层／本票定 CSS 实现）都会让 D5（逐页 ≥90）或并发写集先红。故维持 Q1A/Q2A/Q3A。</p>
+</div>
+</section>
+
+<h2><span class="bar"></span>Q1 · 出多少份，如何归并</h2>
+<p class="sub">前因：HELP 的 types 组合只有三种；老技能 30 场景只出 14 份页，16 条只回 JSON，无版式基准。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">1</div><div class="q-t">34 格＋4 族＋1 共用件，是否接受？</div></div>
+<div class="why">
+<p>组合：<b>16 条</b>采集＋回执 ／ <b>10 条</b>查看＋回执 ／ <b>4 条</b>向导＋采集＋回执。备忘录的采集多在同一次 prompt 填空完成，不必成页。</p>
+<div class="chips"><span class="chip ok">A 34：30 结果页＋4 向导过程页</span><span class="chip">B 54：A＋20 采集页（多 20 格上墙与打分）</span><span class="chip bad">C 64：重复计数，已排除</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>34 格，收成 4 族＋1 共用件</strong><span class="badge">推荐</span></div>
+<p>列表查询族（10 读类）／向导族（4 过程页）／报告族（同步＋初始化）／通用回执族（无基准 16 条，只参数化，不单独设计）。另单列 1 共用件：复制区按钮排＋说明行（6 份各写一遍，基线 7 处同句）。</p>
+<div class="pc"><div class="p">与老技能同构，老从不为采集单出页</div><div class="p">16 条无基准页 16 次设计收成 1 次</div><div class="c">比老技能多 20 份回执页（正是“每唤醒词可点开”的代价）</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>54 格（A＋20 采集页）</strong></div>
+<p>把“参数没填全时补一次”也做成页，与记账线形状一致。</p>
+<div class="pc"><div class="p">与记账形状一致</div><div class="c">多数是同一张填空表换字段；多 20 格工作量</div></div>
+</div>
+</div>
+<div class="rec"><b>推荐 A。</b>拍板后 B/C 不再出现，8 张域票与 #825 按 34 格开工。</div>
+</section>
+
+<h2><span class="bar"></span>Q2 · 每份叫什么名</h2>
+<p class="sub">前因：一词两场景会撞名；真产物是时间戳实例，册子冻的是主体算法。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">2</div><div class="q-t">冻“主体算法＋时间戳规则”，是否接受？</div></div>
+<div class="why">
+<p><code>备忘改分类</code>同时是单条（<code>memo_change_category_single</code>）与批量向导（<code>memo_batch_change_category</code>），按“唤醒词＋<code>.html</code>”直接撞名。真跑产物是<code>主体_时间戳.html</code>（如 <code>批量改分类_&lt;TS&gt;.html</code>），清单若冻全文件名，<code>--check</code> 永远对不上。</p>
+<div class="chips"><span class="chip bad">撞名 1 对：备忘改分类 ×2</span><span class="chip ok">清单 file 只存主体一处</span><span class="chip">时间戳沿盘上 216 件格式</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>唤醒词转义＋最少后缀</strong><span class="badge">推荐</span></div>
+<p>28 条保持唤醒词主体；仅撞名对加形态后缀（<code>备忘改分类.html</code> 与 <code>备忘改分类-批量.html</code>）。转义规则与时间戳规则同册一处，发布脚本与墙共用，墙按主体前缀匹配实例。</p>
+<div class="pc"><div class="p">可读，链路一行一场景不重复</div><div class="p">单处算法，两侧不死链</div><div class="c">墙生成器需加 5 行前缀匹配</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>全按场景 id（英文）命名</strong></div>
+<p>如 <code>memo_change_category_single.html</code>，永不撞。</p>
+<div class="pc"><div class="p">永不撞</div><div class="c">全英文内部话，与给人看的名字相悖</div></div>
+</div>
+</div>
+<div class="rec"><b>推荐 A。</b>目录沿 #220 扁平 <code>&lt;库目录&gt;/memo_html/</code>，与现有 216 件并排，不另开层。</div>
+</section>
+
+<h2><span class="bar"></span>Q3 · CSS 底座归谁</h2>
+<p class="sub">前因：地图说 #824 与本票正交；评论说份数与底座互相牵制。后者是对的。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">3</div><div class="q-t">本票只冻 What，How 留给 #824，是否接受？</div></div>
+<div class="why">
+<p>基线：触摸目标 <code>&lt;44px</code> 合计 <b>82 处</b>且三档相同（从无触摸适配）；公共层 13 类命中全 0（走自持 CSS）。若新页继续自持，82 处原样带入 34 格，逐页 ≥90 过不了线。</p>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>What/How 切分</strong><span class="badge">推荐</span></div>
+<p>本票定族名＋每族管哪几格＋共用件是哪块；实现（4 族＋1 件走公共层还是自持）留 #824，族表写“渲染路径待 #824 定”。两票写集互斥。</p>
+<div class="pc"><div class="p">牵制解除，域票不开工即分叉</div><div class="c">本票不给 CSS 结论，#824 必须随后定</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>本票连 CSS 一起定</strong></div>
+<p>快，但 #824 被架空，两票写同一条结论。</p>
+</div>
+</div>
+<div class="rec"><b>推荐 A。</b>82 处由 #824 的 5 处集中改，34 格自动跟。</div>
+</section>
+
+<footer>依据：t822 输入表／现状链路表／基线读数 §6／老技能未读面 §三／墙预演／真产物探针。结论已定（Q1A/Q2A/Q3A），正文见 #822；待最终效果验收。下一步：跑 /to-spec 固化 30 行表＋册子 JSON（挂 #820 做 subissue）。</footer>
+</div>
+</body>
+</html>

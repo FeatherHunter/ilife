@@ -50,15 +50,15 @@ export function runTripManage(params: Record<string, unknown>, handle: HomeDb): 
   }
 
   const ids = Array.isArray(params.ids) ? (params.ids as unknown[]).filter((x) => Number.isInteger(x)) as number[] : [];
+  for (const id of ids) setLocationStatus(handle, id, '旅游中');
+  // 汇总口径：本次带出「ids.length」件，库里处于旅游中的还有先前带出的；inTrip 取真条数，不拿截断行数当总数。
+  const inTrip = (handle.db.prepare("SELECT count(DISTINCT item_id) AS n FROM item_locations WHERE location_status='旅游中'").get() as { n: number }).n;
   if (ids.length) {
-    for (const id of ids) setLocationStatus(handle, id, '旅游中');
     const items = tripCards(handle, '旅游中', (name, loc) => name + '放在' + (loc || '行李中') + '出发前核对');
-    return { ...buildReceipt('已带出：' + ids.length + ' 件（已标旅游中）'), trip: { mode, tripType: type, days, items } };
+    return { ...buildReceipt('已带出：' + ids.length + ' 件（已标旅游中）；旅游中共 ' + inTrip + ' 件'), trip: { mode, tripType: type, days, items } };
   }
   const marked = tripCards(handle, '旅游中', (name, loc) => name + '放在' + (loc || '行李中') + '出发前核对');
   const todo = marked.length ? [] : tripCards(handle, '在家', (name, loc) => name + '放在' + (loc || '家中') + '建议带上').slice(0, 8);
-  const message = marked.length
-    ? '出行清单已生成（旅游中' + marked.length + '件待核对）'
-    : '出行清单已生成（旅游中暂无衣物，下方为待选，请勾选后带出）';
+  const message = marked.length ? '出行清单已生成（旅游中' + inTrip + '件待核对）' : '出行清单已生成（旅游中暂无衣物，下方为待选，请勾选后带出）';
   return { ...buildReceipt(message), trip: { mode, tripType: type, days, items: [...marked, ...todo] } };
 }

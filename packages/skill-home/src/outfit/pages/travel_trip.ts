@@ -12,7 +12,7 @@
 // 按 `trip.mode` 分流（pack 出发核对／return 归位确认）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
 
 export const FAMILY = 'travel_trip' as const;
 
@@ -117,7 +117,7 @@ export function renderFamilyPage(env: Envelope): string {
   } as TripItem));
   const message = str((data as Record<string, unknown>).message);
   // 理由行去重：命令给的 reason 形如「<物品名>放在<位置>出发前核对」，名称与位置本行已经给过，
-  // 页上只留它独有的那半句（「出发前核对」／「恢复在家」）并折进同一行的数据格，不在下面另起一行复述。
+  // 页上只留它独有的那半句（「恢复在家」之类）；与卡片标题同字的通用句（「出发前核对」）不再渲染。
   const whyTail = (x: TripItem): string => {
     const r = x.reason;
     if (!r) return '';
@@ -125,8 +125,8 @@ export function renderFamilyPage(env: Envelope): string {
     if (!r.startsWith(pre)) return r;
     const rest = r.slice(pre.length);
     const loc = (x.location || '').replace(/×\d+(\[[^\]]*\])?$/, '');
-    const tail = loc !== '' && rest.startsWith(loc) ? rest.slice(loc.length) : rest;
-    return tail.trim();
+    const tail = (loc !== '' && rest.startsWith(loc) ? rest.slice(loc.length) : rest).trim();
+    return tail === '出发前核对' ? '' : tail;
   };
 
   const metrics = '<div class="of-metrics">'
@@ -143,7 +143,7 @@ export function renderFamilyPage(env: Envelope): string {
       : '清单为空，先从待选中挑选要带的衣物，或按行程规则生成后再来核对') + '</div>';
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
-      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
+      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
       + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location.replace(/×\d+(\[[^\]]*\])?$/, '')) : '')
       + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + '</td></tr></table>'
       + '</div></div>').join('')

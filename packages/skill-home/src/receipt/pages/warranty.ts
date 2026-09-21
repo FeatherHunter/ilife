@@ -73,15 +73,9 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
 
 function summaryOf(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
-  if (env.shape === 'receipt') {
-    // 每条写操作说本操作那一件事（消息文本带动作词，据此分流），不再把五种语义都塞进一句。
-    const msg = String((data as { message?: unknown }).message ?? '');
-    const byOp = /保养周期/.test(msg) ? '下次保养按本次周期与上次执行日推算'
-      : /执行保养/.test(msg) ? '本次执行日已记入，下次保养按周期往后推'
-        : /维修/.test(msg) ? '维修日期与花费已记入该物品的服务事件'
-          : /保修/.test(msg) ? '到期日按起始日加保修时长自动算出' : '已落盘，可在查保修状态中按状态筛选复核';
-    return '<div class="receipt-summary"><p>' + byOp + '</p></div>';
-  }
+  // 回执形：回执卡已说本操作那一件事（编号），摘要位不再复述同一事实；
+  // 起始日／时长／到期日／维修费用／物品名不在信封里，故既不编值也不讲算法。
+  if (env.shape === 'receipt') return '';
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: unknown[] }).items
     : [];

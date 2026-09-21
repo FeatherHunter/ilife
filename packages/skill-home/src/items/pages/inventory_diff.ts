@@ -69,8 +69,6 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + 'summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
 + '.grp{border:1px solid #eef0f4;border-radius:14px;padding:14px;margin:10px 0}'
 + '.grp h3{font-size:15px;margin-bottom:8px}'
-+ '.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:800;color:#fff;margin-right:8px}'
-+ '.tag.miss{background:#ff3b30}.tag.extra{background:#34c759}.tag.diff{background:#ff9500}.tag.pending{background:#8e8e93}'
 + '.actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}'
 + '.act{border:1.5px solid #d2d2d7;background:#fff;border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer;min-height:44px}'
 + '.act.on{background:#007aff;color:#fff;border-color:#007aff}'
@@ -111,12 +109,8 @@ export function renderFamilyPage(env: Envelope): string {
   const data = (env.data ?? {}) as Record<string, unknown>;
   const rid = parseResolve(str(data.message));
 
-  const group = (
-    cls: string, tag: string, title: string, note: string,
-    acts: string[], extraInput: string,
-  ): string =>
-    '<div class="grp"><h3><span class="tag ' + cls + '">' + escapeHtml(tag) + '</span>' + escapeHtml(title) + '</h3>'
-    + '<p class="lead">' + escapeHtml(note) + '</p>'
+  const group = (title: string, acts: string[], extraInput: string): string =>
+    '<div class="grp"><h3>' + escapeHtml(title) + '</h3>'
     + '<div class="actrow">' + acts.map((a) => '<button class="act" onclick="pickAct(this)">' + escapeHtml(a) + '</button>').join('')
     + extraInput + '</div></div>';
 
@@ -124,17 +118,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="lead">缺多异待确认四组，逐项指定处理再批量确认</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>差异分组</h2>'
     + '<dl class="kv"><dt>所属盘点记录</dt><dd>记录<span id="recid">' + escapeHtml(rid) + '</span></dd></dl>'
+    + '<div class="empty">—</div>'
     + '<h2>动作集</h2>'
-    + group('miss', '缺', '缺组', '账面有而实际找不到，确认后按实际更新或先不处理',
-      ['按实际更新', '忽略', '先不处理'],
+    + group('缺组', ['按实际更新', '忽略', '先不处理'],
       '<p class="actline">新位置输入:<input placeholder="挪走的新位置选填"></p>')
-    + group('extra', '多', '多组', '实际多出清单之外的物品，可录入为新物品或忽略',
-      ['录入为新物品', '忽略'], '')
-    + group('diff', '异', '异组', '数量或状态与系统不一致，按实际更新或忽略',
-      ['按实际更新', '忽略'], '')
-    + group('pending', '待确认', '待确认组', '拿不准的先标记复查，下次盘点置顶',
-      ['标记复查', '先不处理'], '')
-    + '<h2>批量行</h2><div class="btnrow">'
+    + group('多组', ['录入为新物品', '忽略'], '')
+    + group('异组', ['按实际更新', '忽略'], '')
+    + group('待确认组', ['标记复查', '先不处理'], '')
+    + '<div class="btnrow">'
     + '<button class="btn green" onclick="collectResolve()">批量确认</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'

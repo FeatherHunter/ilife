@@ -117,7 +117,7 @@ export function renderFamilyPage(env: Envelope): string {
   const P_TH = '请加载居家管家技能，帮我查看囤货并设置阈值';
 
   let body = style;
-  body += '<p class="x-lead">勾选缺货物品加入购物清单，阈值来自囤货设置，建议买按两倍阈值缓冲算出</p>';
+  body += '<p class="x-lead">勾选缺货物品加入购物清单，建议买按两倍阈值缓冲算出</p>';
   body += '<div class="x-metrics">'
     + '<span class="x-pill">缺货 ' + items.length + ' 件</span>'
     + '<span class="x-pill">检测范围 ' + escapeHtml(scope) + '</span>'
@@ -125,7 +125,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div>';
 
   if (items.length) {
-    body += '<section><h2>缺货物品</h2><p class="x-meta""x-list">'
+    body += '<section><h2>缺货物品</h2><div id="x-list">'
       + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-suggest="' + it.suggest + '">'
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-state ' + (it.status === '空' ? 'empty' : 'low') + '">' + escapeHtml(it.status) + '</span></div>'

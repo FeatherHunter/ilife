@@ -169,7 +169,9 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   it('1-3 批量录入：件数与全部确认对得上', () => {
     const html = read('批量录入_1-3_' + STAMP + '.html');
     assert.ok(html.includes('已批量录入'), '回执缺席');
-    assert.ok(html.includes('本次共 2 件'), '件数缺席');
+    // 断言的意思是「件数在页上有处可查」；#817 收口按「同一事实不说两遍」删掉了与回执、数量行
+    // 重复的「本次共 2 件」半句，故改查件数本身，不再钉那句老文案。
+    assert.ok(/2\s*件/.test(html), '件数缺席');
     assert.ok(html.includes('全部确认'), '全部确认缺席');
   });
 
@@ -213,7 +215,9 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
     const html = read('筛选浏览_2-4_' + STAMP + '.html');
     assert.ok(html.includes(CATNAME), '当前分组缺席：' + CATNAME);
     assert.ok(html.includes('计数'), '计数缺席');
-    assert.ok(html.includes('排序固定按相关来'), '排序缺席');
+    // 断言的意思是「分组浏览有真的分组切换入口」；#817 收口把页上那句排序声称删了（页上没有排序
+    // 控件），并把「全部」按钮从空转改成真切回全部分组，故改查这个真入口，不钉那句老文案。
+    assert.ok(html.includes('showGroup(-1)'), '全部分组入口缺席');
   });
 
   it('2-5 拍照找物品：与查物品同表', () => {

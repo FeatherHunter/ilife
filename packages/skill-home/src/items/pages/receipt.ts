@@ -138,35 +138,35 @@ export function renderFamilyPage(env: Envelope): string {
   const title = MODE_TITLE[mode];
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
 
-  // 当前状态只写拿得到的真值；拿不到的写「—」，不写「见某节」「以回执为准」这类绕路话。
+  // 当前状态：env 只带 message（无物品明细），名称／分类／位置与数量／状态／备注 需数据，写「—」。
   const idOf = (s: string): string => s.match(/[：:]\s*(\d+)/)?.[1] ?? '—';
 
   let changeRows = '';
   if (mode === 'move') {
     const m = msg.match(/^已移动：(.+)→(.+)$/);
     changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原位置</span><span>已迁出</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原位置</span><span>—</span></div></div>'
       + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">新位置</span> ' + locSegs(m?.[2] ?? '') + '</div></div>';
   } else if (mode === 'qty') {
     const m = msg.match(/^已变更数量：(.+)$/);
     changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前后</div><div class="fp-v">数量已按本次指令更新，减到零会提示补货</div></div>';
+      + '<div class="fp-row"><div class="fp-k">变更前后</div><div class="fp-v">—</div></div>';
   } else if (mode === 'status') {
     const m = msg.match(/^已变更状态：(.+)→(.+)$/);
     changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原状态</span><span>已流转</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原状态</span><span>—</span></div></div>'
       + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">现状态</span> <span class="fp-pill">' + esc(m?.[2] ?? '') + '</span></div></div>';
   } else if (mode === 'tags') {
     const m = msg.match(/^已更新标签：(.+)$/);
     changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">标签变更</div><div class="fp-v">已按本次指令增减标签，去除与新增见下</div></div>';
+      + '<div class="fp-row"><div class="fp-k">标签变更</div><div class="fp-v">—</div></div>';
   } else {
     changeRows = '<div class="fp-row"><div class="fp-k">回执</div><div class="fp-v">' + esc(msg) + '</div></div>';
   }
 
   const tagBlock = mode === 'tags'
-    ? '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">本次去掉的标签已从该物品摘除</div></div>'
-      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">本次加上的标签已贴到该物品</div></div>'
+    ? '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">—</div></div>'
+      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">—</div></div>'
     : '<p class="fp-empty">本次没有改标签，需要改标签时用标物品</p>';
 
   const tail: Record<ReceiptMode, string> = {
@@ -194,13 +194,11 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="fp-row"><div class="fp-k">分类</div><div class="fp-v">—</div></div>'
     + '<div class="fp-row"><div class="fp-k">位置与数量</div><div class="fp-v">—</div></div>'
     + '<div class="fp-row"><div class="fp-k">状态</div><div class="fp-v">—</div></div>'
-    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">' + (mode === 'tags' ? '已按本次指令更新' : '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">—</div></div>'
     + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">—</div></div>'
     + '</section>'
     + (mode === 'tags' ? '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>' : '')
-    + '<section class="fp-sec"><h2 class="fp-sec-t">处理明细</h2>'
-    + '<div class="fp-row"><div class="fp-k">本次处理</div><div class="fp-v">本次' + esc(title) + '已经处理完毕</div></div>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">收尾语</h2>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">后续可做</h2>'
     + '<p class="fp-note">' + esc(tail[mode]) + '</p></section>'
     + '<div class="fp-actions">'
     + copyBtn('撤销', 'fp-receipt-undo', 'fp-btn-danger')

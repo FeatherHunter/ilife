@@ -80,9 +80,9 @@ const reShort = new RegExp('(' + [...clockDates].join('|') + ') \\d{2}:\\d{2}(?!
 const normalize = (t) => t.replace(reFull, '<TS>').replace(reShort, '<TS>');
 
 const DB = mkdtempSync(join(tmpdir(), 't689-fp-db-'));
-// #763：隔离通道改**家目录注入**——`DB` 当**家目录**，配置落 `<DB>/.life/bill.yaml`（`db.dir = DB` 不动，
+// #763：隔离通道改**家目录注入**——`DB` 当**家目录**，配置落 `<DB>/.ilife/bill.yaml`（`db.dir = DB` 不动，
 // 库还在原地 ⇒ 指纹口径与重录判据一个字不变）；两格都设：win32 认 `USERPROFILE`、POSIX 认 `HOME`。
-const CFG_DIR = join(DB, '.life');
+const CFG_DIR = join(DB, '.ilife');
 mkdirSync(CFG_DIR, { recursive: true });
 writeFileSync(join(CFG_DIR, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(DB) + '\n', 'utf8');
 const env = { ...process.env, USERPROFILE: DB, HOME: DB };

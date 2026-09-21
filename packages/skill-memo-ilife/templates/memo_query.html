@@ -18,7 +18,9 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 .item{margin:12px 0}.item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.id{color:var(--blue);font-weight:800}.content{font-size:17px;margin:10px 0;white-space:pre-wrap}.muted{color:var(--fg2)}.small{font-size:13px;color:var(--fg3)}.badge{display:inline-block;background:var(--soft);color:var(--blue);padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;margin:3px 5px 3px 0}.badge.warn{background:var(--soft);color:var(--blue2);border:1px solid var(--blue)}.badge.ok{background:var(--soft);color:var(--ok)}
 #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch;margin:14px 0}
 #list .item{margin:0;padding:14px;display:flex;flex-direction:column;height:100%}
-#list .hm-empty{grid-column:1/-1}
+/* 空态件由公共层给：`window.emptyState` 吐 `ilife-empty-*`（见 `src/render/memoPageAssets.ts`），
+   类名须与它逐字一致，否则本规则空转、空卡落进两列栅格的第一列（#877）。 */
+#list .ilife-empty{grid-column:1/-1}
 #list .item-head{flex-wrap:nowrap;gap:6px;min-height:32px;align-items:center}
 #list .id{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #list .item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}

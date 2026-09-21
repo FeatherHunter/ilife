@@ -117,19 +117,18 @@ export function renderFamilyPage(env: Envelope): string {
       + '</td><td>' + escapeHtml(String(c.quantity ?? ''))
       + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('')
     + '</table></div>').join('');
+  const allButton = '<button class="op" data-t="' + escapeHtml('请加载居家管家技能，帮我筛选浏览全部物品') + '" onclick="showGroup(-1)">全部</button>';
   const body = cards.length
-    ? '<p>计数：共 ' + cards.length + ' 件，分 ' + names.length + ' 组，当前分组名：' + escapeHtml(names[0] ?? '') + '。</p>'
-      + '<div>' + op('全部', '请加载居家管家技能，帮我筛选浏览全部物品', false) + switchButtons + '</div>'
+    ? '<p>计数：共 ' + cards.length + ' 件，分 ' + names.length + ' 组。</p>'
+      + '<div>' + allButton + switchButtons + '</div>'
       + tables
     : '<div class="hm-empty">没有匹配的物品，换个条件再筛一次吧。</div>';
   const content = PAGE_CSS
-    + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}</script>'
-    + '<p class="greet">筛选浏览按分类分组，点分组名就切换到那一组，排序固定按相关来。</p>'
+    + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}</script>'
+    + '<p class="greet">筛选浏览按分类分组，点分组名就切换到那一组，点「全部」回到全部分组。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>分组浏览</h2>' + body + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>空态说明</h2>'
-    + '<p>有匹配物品时上表直接列出，没有匹配时这里会提示换条件。</p></section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态说明</h2>'
-    + '<p>每行的状态就是物品状态。</p></section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有匹配时</h2><p>换个条件再筛一次。</p></section>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2><p>表里那一列写的是这件物品现在的状态。</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('分组切换', '请加载居家管家技能，帮我切换浏览分组', false)
     + op('复制数据', '请加载居家管家技能，帮我复制本次浏览的数据', true)

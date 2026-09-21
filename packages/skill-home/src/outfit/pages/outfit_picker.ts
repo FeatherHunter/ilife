@@ -11,7 +11,7 @@
 // `data-*` 属性，不进可见文案（同 style-audit 干净页口径）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
 
 export const FAMILY = 'outfit_picker' as const;
 
@@ -144,7 +144,7 @@ export function renderFamilyPage(env: Envelope): string {
       const tags = c.tags ? c.tags.split(',').filter(Boolean).join(' ') : '';
       const sub = tags || c.location || '';
       return '<div class="of-slot"><span class="of-part">' + SLOT_LABEL[k] + '</span>'
-        + '<div><div class="of-name">' + escapeHtml(c.name) + '</div>'
+        + '<div><div class="of-name">' + escapeHtml(latinFree(c.name)) + '</div>'
         + (sub ? '<div class="of-sub">' + escapeHtml(sub) + '</div>' : '') + '</div></div>';
     }).join('');
     const hasLayers = !!(first.slots.outer && first.slots.inner);
@@ -162,7 +162,7 @@ export function renderFamilyPage(env: Envelope): string {
       + '<div class="of-pager"><button class="of-btn" id="ofPrev">上一套</button><span id="ofCount">第1套共' + sets.length + '套</span><button class="of-btn" id="ofNext">换一套</button></div>'
       + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">今天穿这套</button>'
       + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div></div>'
-      + (gap.length ? '<div class="of-gap">衣橱缺口：' + gap.map(escapeHtml).join(' ') + '暂无匹配，可先录入或加入购物清单</div>' : '');
+      + (gap.length ? '<div class="of-gap">衣橱缺口：' + gap.map(escapeHtml).join(' ') + '暂无匹配</div>' : '');
   }
 
   const payload = JSON.stringify({ sets, occasion, gap }).replace(/</g, '\\u003c');

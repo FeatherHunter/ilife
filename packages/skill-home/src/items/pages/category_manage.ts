@@ -1,8 +1,8 @@
 // items能力·category_manage页装配（#807 域票填内容，骨架由 #805 生成）。
 //
 // 只服务 4-2 管分类：信息结构对齐老 `物品/category_manage.html`（分类树／操作提示／
-// 删除拦截说明）。新链回执只有节点总数，树明细走查标签命令，本页给出总数、操作
-// 指引与拦截说明（数据缺口见域对账）。
+// 删除拦截说明）。新链回执只有节点总数（页首带出），树明细与每类计数需数据：env 未带，
+// 域对账留缺口，页上写「—」。
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
@@ -97,8 +97,6 @@ export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/category_manage.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-  const m = msg.match(/(\d+)\s*节点/);
-  const count = m?.[1] ?? '';
 
   const dataText = JSON.stringify({ key, message: msg });
   const logText = '回执｜管分类｜' + msg;
@@ -110,10 +108,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="fp-lead">' + esc(visibleMsg(msg)) + '</p>'
     + '<span class="fp-stage">查看页</span></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">分类树</h2>'
-    + '<div class="fp-row"><div class="fp-k">节点总数</div><div class="fp-v">' + esc(count ? '共 ' + count + ' 个分类节点' : '见回执原文') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">顶级分类下挂二级分类</div></div>'
-    + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">—</div></div>'
-    + '<p class="fp-note">完整树明细走查标签命令看分类表，本页只收总数与操作入口</p></section>'
+    + '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">—</div></div></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">操作提示</h2>'
     + '<p class="fp-note">改名、合并或移动分类在对话里说一句就行，本页只给总数与入口</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">删除拦截说明</h2>'

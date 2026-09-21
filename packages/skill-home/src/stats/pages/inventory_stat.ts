@@ -77,6 +77,7 @@ const CSS = '<style>'
   + '.st-hint{font-size:11px;color:#86868b;font-weight:400}.st-need{margin:8px 0 0 18px;font-size:12px;color:#6e6e73}'
   + '.st-badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700}.st-ok{background:#e7f8ec;color:#157a35}.st-info{background:#eef4ff;color:#0a63d6}'
   + '.st-sug{background:linear-gradient(135deg,#f0f7ff,#eafaf1);border:1px solid #cfe6ff;border-radius:14px;padding:12px 14px;font-size:13px;margin:12px 0}'
+  + '.st-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:13px;margin:8px 0}.st-kv b{color:#6e6e73;font-weight:600}.st-kv span{overflow-wrap:anywhere}'
   + '.st-empty{background:#fff;border:1px dashed #c7cbd1;border-radius:14px;padding:28px 16px;text-align:center;color:#6e6e73}'
   + '.st-empty b{display:block;font-size:16px;color:#1d1d1f;margin-bottom:6px}'
   + '.st-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.st-actions.center{justify-content:center}'
@@ -103,23 +104,22 @@ function dataText(records: number, items: number): string {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/stats/inventory_stat.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { metrics?: Record<string, number> };
+  const d = (env.data ?? {}) as { metrics?: Record<string, number>; inventory?: { scope: string; location: string; date: string; total: number; missing: number; extra: number } | null };
   const m = d.metrics ?? {};
   const records = typeof m.records === 'number' ? m.records : 0;
   const items = typeof m.items === 'number' ? m.items : 0;
-  const head = '<div class="fam-head"><span class="fam-name" data-family="inventory_stat">统计总览</span>'
-    + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">盘点统计</span></div>';
-  const hero = '<div class="st st-hero"><span class="st-wake">盘点统计</span>'
-    + '<p class="st-lead">已有' + records + '条盘点记录，覆盖库内' + items + '件物品，差异复查从这里进</p></div>';
+  const head = '<div class="fam-head"><span class="fam-name" data-family="inventory_stat">统计总览</span><span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">盘点统计</span></div>';
+  const hero = '<div class="st st-hero"><span class="st-wake">盘点统计</span><p class="st-lead">已有' + records + '条盘点记录，覆盖库内' + items + '件物品</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>盘点记录</b><span>' + records + '</span><small>历史盘点条数</small></div>'
     + '<div class="st-card"><b>库内物品</b><span>' + items + '</span><small>盘点覆盖范围基数</small></div>'
     + '<div class="st-card"><b>有无数据</b><span>' + (records > 0 ? '有' : '无') + '</span><small>有没有盘点过</small></div></div>';
-  const sug = '<div class="st st-sug">智能建议：'
-    + (records > 0 ? '建议优先复查遗留差异，再补下一次盘点' : '先完成首次盘点，这里才会出现完成率与趋势') + '</div>';
+  const sug = '<div class="st st-sug">' + (records > 0 ? '建议优先复查遗留差异，再补下一次盘点' : '先完成首次盘点，这里才会出现完成率与趋势') + '</div>';
+  const inv = d.inventory ?? null;
   const detail = records > 0
-    ? '<div class="st st-sec"><h2 class="st-sec-t">盘点明细 <span class="st-hint">无明细数据</span></h2>'
-    + '<p><span class="st-badge st-ok">最近一次盘点已在库</span></p>'
+    ? '<div class="st st-sec"><h2 class="st-sec-t">盘点明细</h2>'
+    + (inv ? '<div class="st-kv"><b>时间</b><span>' + escapeHtml(inv.date || '—') + '</span><b>范围</b><span>' + escapeHtml(inv.scope === '' || inv.scope === 'all' ? '全屋' : inv.scope === 'location' ? (inv.location || '按位置') : inv.scope) + '</span><b>缺少</b><span>' + inv.missing + ' 件</span><b>多余</b><span>' + inv.extra + ' 件</span><b>遗留差异</b><span>' + (inv.missing + inv.extra) + ' 件</span></div>'
+      : '<p><span class="st-badge st-ok">最近一次盘点已在库</span></p>')
     + '<div class="st-actions"><button class="st-btn pri" data-t="帮我复查最近一次盘点的遗留差异">复查盘点</button></div></div>'
     : '<div class="st st-empty"><b>还没有盘点记录</b>完成首次盘点后，这里会显示完成率，差异趋势与优先盘点建议'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我开始第一次盘点">复制首次盘点</button></div></div>';

@@ -78,10 +78,9 @@ function op(label: string, load: string, alt: boolean): string {
     + label + '</button>';
 }
 
-interface Card {
-  id: number; name: string; location: string; quantity: number;
-  status: string; category: string; tags: string;
-}
+interface Card { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string; }
+
+const cell = (v: unknown): string => escapeHtml(String(v ?? '').trim() || '—');
 
 function cardsOf(env: Envelope): Card[] {
   const d = env.data as Record<string, unknown>;
@@ -95,16 +94,16 @@ function cardsOf(env: Envelope): Card[] {
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/search_list.html', import.meta.url), 'utf8');
   const cards = cardsOf(env);
-  const rows = cards.map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
-    + '</td><td>' + escapeHtml(String(c.id ?? ''))
-    + '</td><td>' + escapeHtml(String(c.category ?? ''))
-    + '</td><td>' + escapeHtml(String(c.location ?? ''))
-    + '</td><td>' + escapeHtml(String(c.quantity ?? ''))
-    + '</td><td>' + escapeHtml(String(c.status ?? ''))
-    + '</td><td>' + escapeHtml(String(c.tags ?? '')) + '</td></tr>').join('');
+  const rows = cards.map((c) => '<tr><td>' + cell(c.name)
+    + '</td><td>' + cell(c.id)
+    + '</td><td>' + cell(c.category)
+    + '</td><td>' + cell(c.location)
+    + '</td><td>' + cell(c.quantity)
+    + '</td><td>' + cell(c.status)
+    + '</td><td>' + cell(c.tags) + '</td></tr>').join('');
   const result = cards.length
     ? '<div class="wrap-x"><table class="kv" id="rows"><tr><th>名称</th><th>编号</th><th>分类</th><th>位置</th><th>数量</th><th>状态</th><th>标签</th></tr>'
-      + rows + '</table></div><p class="note">照片请进详情查看，匹配程度看状态列。</p>'
+      + rows + '</table></div><p class="note">照片请进详情查看。</p>'
     : '<div class="hm-empty">没有命中。换个词再搜一次，还是没有就录入一件新的吧。</div>'
       + '<div>' + op('录入新物品', '请加载居家管家技能，帮我录入一件新物品', false) + '</div>';
   const content = PAGE_CSS
@@ -116,8 +115,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '</table></div>'
     + '<p><input class="find" placeholder="本地筛选，敲字过滤本页" oninput="filterLocal(this.value)"></p></section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>结果</h2>' + result + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态说明</h2>'
-    + '<p>每行的状态就是物品状态，拍照找物品那一格同样看这列。</p></section>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2>'
+    + '<p>表里那一列写的是这件物品现在的状态。</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('搜索', '请加载居家管家技能，帮我搜索一件物品', false)
     + op('本地筛选', '请加载居家管家技能，帮我在刚才的结果里接着筛', true)

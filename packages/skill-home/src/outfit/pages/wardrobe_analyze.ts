@@ -11,7 +11,7 @@
 // `data-*` 属性，不进可见文案（同 style-audit 干净页口径）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
 
 export const FAMILY = 'wardrobe_analyze' as const;
 
@@ -131,7 +131,7 @@ export function renderFamilyPage(env: Envelope): string {
   if (!dormant.length) dormantHtml += '<div class="of-empty">衣橱状态良好，没有长期闲置衣物</div>';
   else {
     dormantHtml += dormant.map((x, i) => '<div class="of-idle" data-pick="' + i + '"><span class="of-check"></span>'
-      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name)
+      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name))
       + (x.estimated ? '<span class="of-est">估算</span>' : '') + '</div>'
       + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.name.includes(x.slot) ? '' : x.slot + '，')
       + (x.daysIdle === null ? '闲置许久' : '闲置' + x.daysIdle + '天')

@@ -77,7 +77,6 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.btn.ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
 + '.btn.red{background:#ff3b30}'
 + '.empty{color:#86868b;padding:12px 0}'
-+ '.tag{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:2px 9px;font-size:12px;margin:2px}'
 + 'details{margin:14px 0;font-size:13px;color:#6e6e73}'
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
@@ -125,9 +124,10 @@ export function renderFamilyPage(env: Envelope): string {
   ].map(([k, v]) => '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd>').join('');
 
   const photoBox = photo !== ''
-    ? '<div class="main">主图共一张，文件名见数据原文</div>'
-      + '<div><span class="tag">主</span><span class="tag">首张即主图</span></div>'
-    : '<div class="empty">暂无照片。点下方「补拍」给这件物品留影。</div>';
+    ? '<div class="main">主图共一张</div>'
+    : manage && message !== ''
+      ? '<div class="main">—</div>'
+      : '<div class="empty">暂无照片。点下方「补拍」给这件物品留影。</div>';
 
   const receipt = manage && message !== ''
     ? '<div class="sec"><h2>管理回执</h2><p>' + escapeHtml(message) + '</p></div>'
@@ -141,12 +141,10 @@ export function renderFamilyPage(env: Envelope): string {
     + photoBox
     + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
     + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
-    + '</div><p class="lead">类型筛选默认走全部</p></section>'
+    + '</div></section>'
     + receipt
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" onclick="chipType(document.querySelector(\'.chip\'))">全部</button>'
-    + '<button class="btn ghost" onclick="document.querySelector(\'.chips\').scrollIntoView()">类型筛选</button>'
     + '<button class="btn ghost" data-act="order" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'order\')">确认顺序变更</button>'
     + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">加图·补拍</button>'
     + '<button class="btn red" data-act="del" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'del\')">删除选中</button>'

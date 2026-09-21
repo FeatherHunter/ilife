@@ -4,7 +4,7 @@
 
 import type { HomeDb } from '../fetch/db.js';
 import { addItem, getCategoryById } from '../fetch/index.js';
-import { isFoodItem, validateAddInput } from '../policy/index.js';
+import { validateAddInput } from '../policy/index.js';
 import { checkDate } from '../policy/index.js';
 import { fail } from '../shared/fail.js';
 import { buildReceipt } from '../render/index.js';
@@ -28,11 +28,6 @@ export function runItemAdd(params: Record<string, unknown>, handle: HomeDb): unk
   // 批量/补录日期守卫
   if (op === 'backfill' && params.backfill_date !== undefined) checkDate(params.backfill_date, 'backfill_date');
   const item = addItem(handle, { ...v, category: cat.name });
-  const food = isFoodItem(cat.name, item.name);
-  const hasPrice = v.purchase_price !== null;
-  let tip = '';
-  if (food) tip += '（顺路：记到卡路里走后续票）';
-  if (hasPrice) tip += '（顺路：记到记账走后续票）';
-  if (params.preview === true) return buildReceipt('预览通过：' + item.name + ' ' + v.location + tip + '（确认后去掉 preview 落盘；本调用已落盘，预览仅口径提示）');
-  return buildReceipt('已录物品：' + item.id + ' ' + item.name + tip);
+  if (params.preview === true) return buildReceipt('预览通过：' + item.name + ' ' + v.location + '（确认后去掉 preview 落盘；本调用已落盘，预览仅口径提示）');
+  return buildReceipt('已录物品：' + item.id + ' ' + item.name);
 }

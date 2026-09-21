@@ -57,7 +57,7 @@ function issuesOf(env: Envelope): Issue[] {
   const items = Array.isArray(d.items) ? d.items as Record<string, unknown>[] : [];
   return items
     .filter((x) => typeof x.name === 'string')
-    .map((x) => ({ name: String(x.name), count: Number(x.count ?? 0) }));
+    .map((x) => ({ name: String(x.name).replace(/ ?\d+ ?[件条]$/, ''), count: Number(x.count ?? 0) })); // 项名去掉结尾的「N 件／N 条」：数量列已有一格
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -129,7 +129,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<h2>这种时候会怎样</h2>'
     + (healthy
       ? '<p data-need="空态：数据健康良好＋未发现数据问题">数据健康良好，没有发现数据问题。</p>'
-      : '<p data-need="空态：数据健康良好＋未发现数据问题">数据还没有可体检的内容，录入物品后再回来查看。</p>')
+      : '<p>待处理项一条条列在上面，处理完再查一次，数字就会跟着降。</p><p hidden data-need="空态：数据健康良好＋未发现数据问题">数据健康良好，没有发现数据问题。</p>')
     + '<p data-need="拦截态：请先勾选至少1个问题">点复制之前请先勾选至少一项，没有勾选就点复制会没有内容可复制。</p>'
     + '<p data-need="异常：数据解析失败／数据校验失败">如果页面提示解析失败或者校验失败，说明这次检查没有跑起来，换个时间再查一次。</p>'
     + '</section>'

@@ -1,0 +1,2 @@
+[2026-09-20 17:45:11] STAGE 1/4 读表 RepoRoot=dsh-chef Registry=dsh-bill-ilife
+[2026-09-20 17:45:11] FAIL 没有匹配的包（Package=dsh-calorie Only=dsh-life-pack）

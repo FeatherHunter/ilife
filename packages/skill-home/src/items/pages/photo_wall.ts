@@ -1,7 +1,7 @@
 // items能力·photo_wall真页面（#808 域票填内容，5-3 照片墙）。
 //
 // 信息结构对齐老 `物品/photo_wall.html`：分组＋照片网格＋补拍引导，网格墙版式。
-// 信封只带条目卡（无二进制图），格面如实呈现名称与位置，点图复制详情 prompt。
+// 信封只带条目卡（无二进制图）：格面只写名称（位置由分组标题承担），点图复制详情 prompt。
 // 必需块原文＝契约附录：含拉丁字符的块（补充态：还有N件无照片→去补拍、
 // 点图复制详情prompt）只进 data-need 属性，其余块进真实 UI。
 import { readFileSync } from 'node:fs';
@@ -74,7 +74,6 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.tile{aspect-ratio:1;border-radius:12px;background:#f0f3f8;overflow:hidden;cursor:pointer;position:relative;border:none;padding:0;text-align:left}'
 + '.tile .nm{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;font-size:12px;padding:14px 8px 6px}'
 + '.tile .has{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;border-radius:6px;padding:2px 6px}'
-+ '.tile .lc{position:absolute;top:6px;left:6px;background:rgba(255,255,255,.9);color:#1d1d1f;font-size:10px;border-radius:6px;padding:2px 6px}'
 + '.warnbox{border-left:3px solid #ff9500;background:#fff8e8;padding:10px 14px;border-radius:8px;margin:8px 0;font-size:14px}'
 + '.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
@@ -136,7 +135,6 @@ export function renderFamilyPage(env: Envelope): string {
     '<h3>' + escapeHtml(g) + ' <span class="count">' + list.length + '</span></h3>'
     + '<div class="wall">' + list.map((c) =>
       '<button class="tile" data-nm="' + escapeHtml(c.name) + '" onclick="tileDetail(this)">'
-      + '<span class="lc">' + escapeHtml(groupOf(c.loc)) + '</span>'
       + '<span class="has">有照片</span>'
       + '<span class="nm">' + escapeHtml(c.name) + '</span></button>',
     ).join('') + '</div>',
@@ -145,7 +143,7 @@ export function renderFamilyPage(env: Envelope): string {
   const bodyWall = cards.length > 0
     ? groupHtml
     : '<div class="empty">没有带照片的物品</div>';
-  const typeHint = '<p class="lead" id="typehint" style="display:none">该类型下暂无照片，类型落点待补齐后生效</p>';
+  const typeHint = '<p class="lead" id="typehint" style="display:none">该类型下暂无照片</p>';
 
   const content = '<div class="hero"><p class="eyebrow">查看</p>'
     + '<p class="lead">回忆式浏览，按位置分组，共' + total + '张</p></div>'
@@ -154,19 +152,16 @@ export function renderFamilyPage(env: Envelope): string {
     + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
     + '</div>' + typeHint
     + '<h2>照片网格</h2>' + bodyWall
-    + '<h2>无照片件数</h2><div class="warnbox">墙外物品见补拍引导<button class="btn ghost" onclick="wallCmd(\'add\')">去补拍</button></div>'
+    + '<h2>无照片件数</h2><div class="warnbox">— 件无照片<button class="btn ghost" onclick="wallCmd(\'add\')">去补拍</button></div>'
     + '</section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>照片类型</h2>'
-    + '<p class="lead">类型筛选默认走全部，点图复制该物品的详情查看话术</p></section>'
+    + '<p class="lead">点图复制该物品的详情查看话术</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" onclick="chipType(document.querySelector(\'.chip\'))">全部</button>'
-    + '<button class="btn ghost" onclick="document.querySelector(\'.chips\').scrollIntoView()">类型筛选</button>'
-    + '<button class="btn ghost" onclick="wallCmd(\'add\')">去补拍</button>'
     + '<button class="btn ghost" onclick="wallCmd(\'loc\')">按位置浏览</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
-    + '</div><p class="lead">点任意一格复制详情查看话术</p></section>'
+    + '</div></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';

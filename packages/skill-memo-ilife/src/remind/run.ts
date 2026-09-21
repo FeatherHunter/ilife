@@ -123,6 +123,12 @@ function reminderTypeRuleOf(params: Record<string, unknown>, at: string | null):
   return { type, rule };
 }
 
+/** 提醒状态 → 人话（#876）：`reminders.status` 是 `active`／`dismissed` 两个**后端取值**，
+ *  印给用户看的要换成中文。两个中文说法取自本域既有的那一套（列表视图副标题写
+ *  「有效期内的提醒 N 条」／「已废弃的提醒 N 条」，`src/help/scenes/remind.ts` 的参数说明写
+ *  「有效(默认)／已废弃」），不去造第三套词。不认得的取值原样透出，不静默吞掉。 */
+const STATUS_LABEL: Record<string, string> = { active: '有效', dismissed: '已废弃' };
+
 /** `memo.reminder`：给已有笔记加提醒（`note_id` 可选）或建一条独立提醒；只 INSERT，不建笔记。 */
 export function runReminder(params: Record<string, unknown>, db: MemoDb): CommandOut {
   const noteId = reminderNoteIdOf(params);
@@ -154,7 +160,9 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
       '提醒内容：' + content,
     ],
     sections: [
-      { heading: '提醒行', rows: ['提醒 ID：' + row.id, '状态：' + row.status, '写入时间：' + row.created_at] },
+      // #876 · 这三行原先是库行 dump（`提醒 ID：4`／`状态：active`）：`ID` 是**列名裸奔**、
+      // `active` 是**后端取值上屏**。改成人话后同两样信息都还在，且 4 号那条提醒仍指代得清。
+      { heading: '提醒行', rows: ['提醒编号：' + row.id, '状态：' + (STATUS_LABEL[row.status] ?? row.status), '写入时间：' + row.created_at] },
     ],
     receipt: {
       entityLabel: note === null ? '提醒' : note.category,
@@ -169,7 +177,7 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
       call_chain: 'memo.reminder → addReminderRow → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
       exception: '无',
     },
-    retryPrompt: '若这条提醒不对，请把要改的提醒 ID 与要改成的样子发我，我废弃旧条重开一条：设提醒',
+    retryPrompt: '若这条提醒不对，请把要改的提醒编号与要改成的样子发我，我废弃旧条重开一条：设提醒',
   });
   return {
     data: {

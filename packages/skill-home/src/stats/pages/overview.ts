@@ -133,8 +133,7 @@ export function renderFamilyPage(env: Envelope): string {
   const head = '<div class="fam-head"><span class="fam-name" data-family="overview">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">统物品</span></div>';
   const hero = '<div class="st st-hero"><span class="st-wake">统物品</span>'
-    + '<p class="st-lead">家底一览：逐维明细见下方分布卡。共' + n('items') + '件物品，' + n('categories') + '个分类，'
-    + n('locations') + '个位置点，' + n('tags') + '个标签</p></div>';
+    + '<p class="st-lead">家底一览：共' + n('items') + '件物品，' + n('categories') + '个分类，' + n('locations') + '个位置点，' + n('tags') + '个标签</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>物品条数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
     + '<div class="st-card"><b>物品总件数</b><span>' + n('quantity') + '</span><small>按数量合计</small></div>'
@@ -152,19 +151,20 @@ export function renderFamilyPage(env: Envelope): string {
   const dist = (t: string, ctx: string, cmd: string) => '<div class="st-row"><div class="st-name">' + t
     + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">复制指令</button></div></div>';
   const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">无逐维明细</span></h2>'
-    + '<p class="st-sub">逐类、逐位置、逐状态、逐归属的件数还没有对应聚合，这四行先给总量与入口</p>'
     + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量')
     + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量')
     + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量')
     + dist('归属分布', '库内物品默认归属使用者', '帮我按归属人统计物品数量') + '</div>';
-  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行与趋势 <span class="st-hint">无价格数据</span></h2>'
-    + '<div class="st-empty"><b>还没有价格数据</b>给物品补上价格后，这里会出现价值排行与近30天趋势'
-    + '<div class="st-actions center"><button class="st-btn" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div></div></div>';
+  const vals = Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v })).sort((a, b) => b.price - a.price);
+  const valMax = vals.length ? Math.max(...vals.map((t) => t.price), 1) : 1;
+  const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name)) + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div><div class="st-num">' + t.price + ' 元</div></div>').join('');
+  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行 <span class="st-hint">' + (vals.length ? '有价格' + n('price.covered') + '件，合计' + n('price.total') + '元' : '无价格数据') + '</span></h2>'
+    + (vals.length ? valRows + '<div class="st-actions"><button class="st-btn soft" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div>' : '<div class="st-empty"><b>还没有价格数据</b>给物品补上价格后，这里会出现价值排行'
+      + '<div class="st-actions center"><button class="st-btn" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div></div>') + '</div>';
   const empty = n('items') === 0 ? '<div class="st st-empty"><b>还没有物品</b>录入第一批物品后，这里就是你的家底总览'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我录入第一批物品">复制初始化</button></div></div>' : '';
-  const sug = '<div class="st st-sug">家底已有' + n('items') + '件物品，'
-    + (tops.length ? '最常看的是' + escapeHtml(latinFree(tops[0].name)) + '，' : '')
-    + '分布明细补齐后，这里的建议会更准</div>';
+  const sug = '<div class="st st-sug">家底已有' + n('items') + '件物品'
+    + (tops.length ? '，最常看的是' + escapeHtml(latinFree(tops[0].name)) : '') + '</div>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button>'

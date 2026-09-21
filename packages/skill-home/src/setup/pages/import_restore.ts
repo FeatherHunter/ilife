@@ -126,21 +126,20 @@ export function renderFamilyPage(env: Envelope): string {
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<h2>导入与恢复</h2>'
     + '<p class="su-lead">先选文件看预告，确认后再真正导入。导入前会自动备份现有数据，失败会自动回滚。</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="四步（选择文件/校验结果/冲突预览/确认导入）">四个步骤</h2>'
     + '<div class="su-steps" data-need="done" data-extra="current">' + steps + '</div>'
     + '<h2 data-need="校验项">校验结果</h2>'
     + '<div class="su-tablewrap"><table class="su-table">'
-    + '<tr><th>备份中物品</th><td>' + escapeHtml(nums.backup) + ' 件</td></tr>'
-    + '<tr><th>当前库物品</th><td>' + escapeHtml(nums.current) + ' 件</td></tr>'
-    + (isDone ? '<tr><th>导入后物品</th><td>' + escapeHtml(nums.after) + ' 件</td></tr>' : '')
+    + '<tr><th>备份中物品</th><td>' + (nums.backup === '—' ? '—' : escapeHtml(nums.backup) + ' 件') + '</td></tr>'
+    + '<tr><th>当前库物品</th><td>' + (nums.current === '—' ? '—' : escapeHtml(nums.current) + ' 件') + '</td></tr>'
+    + (isDone ? '<tr><th>导入后物品</th><td>' + (nums.after === '—' ? '—' : escapeHtml(nums.after) + ' 件') + '</td></tr>' : '')
     + (safety !== '' ? '<tr><th>恢复前备份</th><td>' + escapeHtml(safety) + '</td></tr>' : '')
     + '</table></div>'
     + '<h2 data-need="冲突名单">冲突预览</h2>'
-    + '<p data-need="冲突处理下拉" data-mode-a="跳过同名" data-mode-b="覆盖同名">本期是整库覆盖：恢复会整体替换当前库，不做逐条比对，所以没有逐条冲突名单。以前的两种口径（跳过同名、覆盖同名）只在整库覆盖里统一处理，恢复前那份自动备份就是兜底。</p>'
-    + '<p class="su-note" data-need="冲突超10条折叠"只看前十条，其余只报总数，本次整库覆盖没有逐条名单。</p>'
+    + '<p data-need="冲突处理下拉" data-mode-a="跳过同名" data-mode-b="覆盖同名">恢复会整体替换当前库，不做逐条比对，也不出逐条名单：跳过同名和覆盖同名都按整库覆盖处理，恢复前自动留的那份备份就是兜底。</p>'
+    + '<p class="su-note" hidden data-need="冲突超10条折叠">只看前十条，其余只报总数。</p>'
     + '<h2 data-need="导入结果">导入结果</h2>'
     + (isDone
       ? '<p>导入完成，当前库已经是备份里的样子。想反悔就用恢复前那份自动备份恢复回去。</p>'

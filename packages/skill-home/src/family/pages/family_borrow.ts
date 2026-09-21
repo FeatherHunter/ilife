@@ -101,7 +101,7 @@ interface BorrowRec {
   id: string;
   objectName: string;
   direction: string;
-  status: string;
+  status: string; due: string;
   detail: string;
   returnPrompt: string;
   remindPrompt: string;
@@ -116,11 +116,9 @@ function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// 富化一行：只用行自带的字段，不猜。方向缺省按借出归位并在页内明示。
+// 富化一行：只用行自带的字段，不猜。分区与状态按记录自己的 op（借出／借入／归还）判，缺省才退回 direction／action。
 function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
-  const rawAction = str(item.action);
-  const rawDirection = str(item.direction);
-  const direction = rawDirection === '借入' || rawAction === '借入' ? '借入' : '借出';
+  const op = str(item.op) || str(item.direction) || str(item.action);
   const name = str(item.name);
   const objectName = name.startsWith('借用') && name.length > 2 ? name.slice(2) : (str(item.member) || str(item.object_name) || name || '未留对象');
   const itemName = str(item.item_name) || (typeof item.item_id === 'number' ? '库内物品' : '');
@@ -129,24 +127,20 @@ function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
   const returnedAt = str(item.returned_at);
   const days = str(item.days_borrowed) || (/^\d+$/.test(str(item.days)) ? str(item.days) : '');
   const remark = str(item.remark);
+  const returned = op === '归还' || op === 'return' || returnedAt !== '';
+  const direction = op === '借入' ? '借入' : '借出';
   let status = '借用中';
-  let returned = false;
-  if (returnedAt || rawAction === '归还' || rawAction === 'return') {
-    status = '已归还';
-    returned = true;
-  } else if (due) {
+  if (returned) status = '已归还';
+  else if (due) {
     const t = todayStr();
     if (due < t) status = '已超期';
     else if (due === t) status = '今日到期';
   }
   const id = str(item.id) || String(idx + 1);
-  const shownItem = itemName || '物品未登记';
-  const detailBits = [
-    '对象' + objectName,
-    ...(borrowed ? ['借出' + borrowed] : []),
-    ...(due ? ['约定归还' + due] : []),
-  ];
-  if (days !== '') detailBits.push('已借' + days + '天');
+  const shownItem = itemName || '未登记';
+  // 对象名已在卡头，明细行不再重复；物品名与三个日期位照实写，无值的位写「—」。
+  const dateLabel = returned ? '归还' : direction === '借入' ? '借入' : '借出';
+  const detailBits = ['物品' + shownItem, dateLabel + (borrowed || '—'), '约定归还' + (due || '—'), '已借天数' + (days || '—')];
   if (remark !== '') detailBits.push('备注' + remark);
   const detail = detailBits.join('，');
   const returnPrompt = '【确认归还】请帮我在居家管家确认归还一笔借用。\n借用记录：' + id + '\n物品：' + shownItem + '\n借用对象：' + objectName;
@@ -158,7 +152,7 @@ function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
       : direction === '借出'
         ? remindBase + '记得还哦'
         : remindBase + '我记着呢';
-  return { id, objectName, direction, status, detail, returnPrompt, remindPrompt, returned };
+  return { id, objectName, direction, status, detail, due, returnPrompt, remindPrompt, returned };
 }
 
 function pill(status: string): string {
@@ -206,11 +200,14 @@ export function renderFamilyPage(env: Envelope): string {
   const out = recs.filter((r) => r.direction === '借出');
   const inn = recs.filter((r) => r.direction === '借入');
   const overdue = recs.filter((r) => r.status.startsWith('已超期')).length;
+  const hasDue = recs.some((r) => r.due !== ''); // 约定归还日一个都没有 → 超期算不出来，值位写「—」
   const receiptMsg = isReceipt ? str((d as { message?: unknown }).message) : '';
 
-  const banner = overdue > 0
-    ? '<div class="bw-warn">超期提醒：有' + overdue + '件超期未还，记得催一下</div>'
-    : '<div class="bw-calm">超期提醒：当前没有超期记录</div>';
+  const banner = recs.length === 0 || (hasDue && overdue === 0)
+    ? '<div class="bw-calm">超期提醒：当前没有超期记录</div>'
+    : hasDue
+      ? '<div class="bw-warn">超期提醒：有' + overdue + '件超期未还，记得催一下</div>'
+      : '<div class="bw-calm">超期提醒：约定归还日未记录，暂时算不出超期</div>';
   const emptyNote = recs.length === 0
     ? '<div class="bw-sec"><div class="bw-meta">还没有借用记录，先在下面登记第一笔吧</div></div>'
     : '';
@@ -229,7 +226,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="bw-metrics">'
     + '<div class="bw-num"><b>借出中</b><span>' + out.filter((r) => !r.returned).length + '</span></div>'
     + '<div class="bw-num"><b>借入中</b><span>' + inn.filter((r) => !r.returned).length + '</span></div>'
-    + '<div class="bw-num"><b>超期件数</b><span>' + overdue + '</span></div>'
+    + '<div class="bw-num"><b>超期件数</b><span>' + (hasDue ? String(overdue) : recs.length === 0 ? '0' : '—') + '</span></div>'
     + '</div>'
     + banner + receiptBanner + emptyNote + thinNote
     + '<section class="bw-sec"><h2>借出区</h2>'

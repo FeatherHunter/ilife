@@ -108,9 +108,8 @@ export function renderFamilyPage(env: Envelope): string {
     + (mainId || '___') + '\n  关联物品：编号' + (peerId || '___');
 
   const listBlock = mainId && peerId
-    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + ' <span class="fp-pill">关系类型：常用搭配（回执未带）</span></b>'
+    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + ' <span class="fp-pill">关系类型：—</span></b>'
       + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
-      + '<p class="fp-note">新链回执没有带关系类型，本次按常用搭配建档，准确类型可以在下一次设置时注明</p>'
     : '<p class="fp-empty">暂无关联，配件与配套关系可以在这里建立</p>';
 
   const content = PAGE_CSS
@@ -120,15 +119,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="fp-lead">' + esc(msg) + '</p>'
     + '<span class="fp-stage">查看页</span></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">主物品</h2>'
-    + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '见回执原文') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">名称与位置去详情看，本页只记关系</div></div>'
+    + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">—</div></div>'
     + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">关联列表</h2>' + listBlock + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">建立新关联</h2>'
     + '<p class="fp-empty">告诉我关联关系，例如这个充电器是那台手机的配件</p>'
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-rel-link\')">设置关联</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-rel-unlink\')">解除关联</button>'
     + '</div></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">关系类型</h2>'
     + '<div><span class="fp-pill">配件</span><span class="fp-pill">配套</span><span class="fp-pill">替代</span>'

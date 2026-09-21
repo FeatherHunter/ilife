@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置面板视觉变体 · 30 版（饼干记账样板 · 第 2 版）</title>
+<!--
+  原型件（不是生产代码，不参与构建，不承载任何真逻辑）。
+  用途：把「饼干记账设置面板」这一屏按 30 种做法画出来，由维护者逐版回答「好看／不好看」，
+        以此把「质感」这个口头词换成可判定的偏好读数。
+
+  第 2 版改了什么（相对第 1 版）：
+    1. 颜色不再是自配色。三套主题全部取真实值——
+       · 「现场」＝从 2026-09-21 真机截图逐点取色：底 #080808、卡面 #101010、抬升面 #181818、
+         描边 #202020／#282828、正文 #e0e0e0、强调色 #f8b080（那枚橙色页签的填充值）。
+       · 「DSH 深色／浅色」＝@deepseek-ai/dsh-client-ui-theme 出厂 token 的真值
+         （深色：底 #151517／卡面 #232324／描边 #ffffff0f／正文 #f9fafb／brand-primary #f9fafb；
+          浅色：底与卡面同为 #fff／描边 #0000001a／正文 #0f1115／brand-primary #0f1115）。
+    2. 修掉一处真缺陷：第 1 版的「主按钮」是「填 brand-primary ＋ 白字」——
+       深色下 brand-primary 是近白（#f9fafb），那就是白底白字。本版按 DSH 的正确配法
+       走「button-primary-fill ＋ label-primary-foreground」，即强调色填充配**反色**文字。
+    3. 删掉第 1 版里三个「换色相」的变体（蓝／青绿／低饱和橙）：那是写死色，与主题机制相冲。
+       换成同一强调色的**四种用法**（做面／做点／低饱和／不用），这才是真能裁的东西。
+    4. 导出结果带机器可读的逐版轴标（排布／形状／密度／只读／页签／按钮／强调用法），
+       便于把 30 个判定回归到「哪条轴决定了好看」。
+
+  内容取自真面板（packages/plugin-bill-ilife/src/settings.ts 与 client.ts）：文案、行数、
+  只读行、按钮名逐字相同；只有做法在变。
+-->
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit}
+
+/* ── 顶栏 ───────────────────────────────────────────── */
+.tb{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 20px;background:#101013;border-bottom:1px solid #232329}
+.tb h1{font-size:14.5px;margin:0;font-weight:600;color:#e8e8ec}
+.tb .sub{font-size:12.5px;color:#8b8b95}
+.tb .sp{flex:1}
+.tbtn{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.tbtn:hover{border-color:#3d3d47}
+.tbtn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.tbtn.acc{background:#2f6fed;border-color:#2f6fed;color:#fff}
+.prog{font-size:12.5px;color:#9a9aa4}
+
+/* ── 逐版台 ─────────────────────────────────────────── */
+.stagewrap{display:flex;justify-content:center;padding:18px 14px 130px}
+.stage{width:1040px;flex:0 0 auto;background:var(--bg);color:var(--text);border-radius:12px;padding:24px 28px 28px;font-family:var(--font,inherit)}
+.strip{width:1040px;flex:0 0 auto;padding:10px 14px;border:1px solid #232329;border-radius:10px;background:#101013;margin-bottom:12px}
+.strip .s1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.strip .no{font-size:13px;color:#8b8b95;font-variant-numeric:tabular-nums}
+.strip .nm{font-size:15px;font-weight:600;color:#e8e8ec}
+.strip .what{font-size:12.5px;color:#9a9aa4;margin-top:5px;line-height:1.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chipx{font-size:11.5px;color:#a9a9b3;border:1px solid #2b2b33;border-radius:999px;padding:1px 8px;background:#17171c}
+.col{display:flex;flex-direction:column;align-items:center}
+
+/* ── 面板（变体内容，全部走变量） ───────────────────── */
+.pgrow{display:flex;align-items:center;gap:10px}
+.pgh1{font-size:19px;font-weight:640;margin:0;letter-spacing:.2px;color:var(--text)}
+.pgacts{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ico{color:var(--muted);font-size:15px;line-height:1}
+.pgver{color:var(--muted);font-size:12.5px;margin-top:3px}
+.health{margin-top:15px}
+.hlab{font-weight:600;font-size:13.5px}
+.hstat{color:var(--faint);font-size:12.5px}
+.health .btn{margin-left:auto}
+.tabs{display:flex;flex-wrap:wrap;margin:14px 0 15px}
+.tab{font-size:13px;cursor:pointer;background:none;border:0;color:var(--muted);padding:5px 12px;border-radius:999px}
+.tab:hover{color:var(--text)}
+/* 页签：胶囊（现状） */
+.t-pill{gap:8px}
+.t-pill .tab{border:1px solid var(--line2)}
+.t-pill .tab::before{content:'•';margin-right:6px;color:var(--faint)}
+.t-pill .tab.on{font-weight:500}
+/* 页签：下划线 */
+.t-underline{gap:18px;border-bottom:1px solid var(--line);margin-bottom:17px}
+.t-underline .tab{border-radius:0;padding:6px 0 9px;border-bottom:2px solid transparent}
+.t-underline .tab.on{color:var(--text);font-weight:600}
+/* 页签：chip */
+.t-chip{gap:7px}
+.t-chip .tab{border:1px solid var(--line);font-size:12.5px;padding:4px 11px}
+/* 页签：纯文字 */
+.t-plain{gap:20px}
+.t-plain .tab{padding:4px 0}
+.t-plain .tab.on{color:var(--text);font-weight:600}
+/* 强调色用法：面 */
+.a-fill .tab.on{background:var(--accent);border-color:var(--accent);color:var(--accentInk)}
+.a-fill .tab.on::before{color:var(--accentInk)}
+.a-fill .t-underline .tab.on{border-bottom-color:var(--accent);background:none;color:var(--text)}
+/* 强调色用法：低饱和 */
+.a-soft .tab.on{background:var(--accentSoft);border-color:var(--accentLine);color:var(--accent)}
+.a-soft .tab.on::before{color:var(--accent)}
+.a-soft .t-underline .tab.on{border-bottom-color:var(--accentLine);background:none}
+/* 强调色用法：点 */
+.a-dot .tab.on{color:var(--accent);font-weight:600}
+.a-dot .tab.on::before{color:var(--accent)}
+.a-dot .t-underline .tab.on{border-bottom-color:var(--accent)}
+/* 强调色用法：不用 */
+.a-none .tab.on{color:var(--text);font-weight:600}
+.a-none .t-underline .tab.on{border-bottom-color:var(--text)}
+
+.card{background:var(--cardBg);border:var(--cardBorder);border-radius:var(--radius);padding:var(--pad);box-shadow:var(--shadow)}
+.card+.card{margin-top:14px}
+.ctitle{font-size:14.5px;font-weight:640}
+.ctitle.sm{font-size:13.5px;font-weight:600}
+.cmeta{color:var(--muted);font-size:12.5px;margin-top:5px;word-break:break-all;line-height:1.6}
+.cmeta .k{color:var(--faint);margin-right:6px}
+.mono,code{font-family:var(--mono);font-size:12.5px}
+.muted{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.6}
+
+.btn{font-size:12.5px;padding:5px 12px;border-radius:var(--btnRadius);border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accentInk);font-weight:500}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--text)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.mini{font-size:11.5px;padding:2px 8px;color:var(--muted)}
+
+.rows{margin-top:13px;border-top:1px solid var(--line);padding-top:13px}
+.row{margin-bottom:var(--rowGap)}
+.rlabel{font-weight:var(--labelWeight);font-size:var(--labelSize);color:var(--text)}
+.rhint{color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.55}
+.f{width:100%;background:var(--inputBg);border:1px solid var(--inputLine);border-radius:var(--rSm);color:var(--text);padding:var(--inputPad);font-family:var(--font);font-size:13px}
+.f:disabled{color:var(--muted)}
+.pickwrap{display:flex;gap:6px;align-items:center;margin-top:6px}
+.plainval{display:flex;gap:9px;align-items:center;margin-top:6px;color:var(--text);word-break:break-all}
+.rochip{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:0 7px;color:var(--faint);margin-left:8px;font-weight:400;white-space:nowrap}
+.groupnote{color:var(--faint);font-size:12px;border-left:2px solid var(--line2);padding-left:9px;margin:0 0 13px;line-height:1.6}
+.adv{margin-top:15px;border-top:1px solid var(--line);padding-top:11px}
+.advsum{cursor:pointer;font-weight:var(--labelWeight);font-size:13px;color:var(--text);list-style:none;display:flex;align-items:center;gap:7px}
+.advsum::-webkit-details-marker{display:none}
+.advsum::before{content:'›';color:var(--muted);transition:.15s}
+details[open] .advsum::before{transform:rotate(90deg)}
+.advnote{color:var(--faint);font-size:12px;margin:7px 0 12px}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+.bar .note{color:var(--accent);font-size:12.5px;margin-right:auto}
+.bar.sticky{position:sticky;bottom:0;background:var(--bg);padding-bottom:4px;z-index:2}
+.bar.seg{border:1px solid var(--line2);border-radius:var(--rSm);padding:3px;gap:0;display:inline-flex;margin-top:16px;border-top:1px solid var(--line2)}
+.bar.seg .btn{border:0;border-radius:calc(var(--rSm) - 2px)}
+
+/* 排布：左右两栏 */
+.l-inline .rows{margin-top:6px;border-top:0;padding-top:0}
+.l-inline .row{display:grid;grid-template-columns:238px 1fr;gap:4px 22px;align-items:start;padding:11px 0;margin-bottom:0;border-bottom:1px solid var(--line)}
+.l-inline .row:last-child{border-bottom:0}
+.l-inline .rctl{display:flex;gap:6px;align-items:center;min-width:0}
+.l-inline .rhint{margin-top:2px}
+.l-inline .pickwrap{margin-top:0}
+.l-inline .plainval{margin-top:0}
+.l-inline .bar{margin-top:14px}
+
+/* 排布：定义表 */
+.l-def .rows{margin-top:4px;border-top:0;padding-top:0}
+.l-def .row{display:grid;grid-template-columns:250px 1fr;gap:4px 24px;padding:12px 0;margin-bottom:0;border-bottom:1px solid var(--line)}
+.l-def .row:last-child{border-bottom:0}
+.l-def .dval{font-family:var(--mono);font-size:12.5px;color:var(--text);display:flex;gap:10px;align-items:center;word-break:break-all;line-height:1.6}
+.l-def .pickwrap{margin-top:0}
+.l-def .colstack{display:flex;flex-direction:column;gap:4px;min-width:0}
+
+/* 排布：路径卡片 */
+.l-cg .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.l-cg .fcard{border:1px solid var(--line);border-radius:var(--rSm);padding:11px 13px;background:var(--surface2)}
+.l-cg .fcard .ft{font-weight:var(--labelWeight);font-size:13px;display:flex;align-items:center;gap:8px}
+.l-cg .fcard .fh{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.55}
+.l-cg .fcard .fv{margin-top:9px}
+.l-cg .fcard.wide{grid-column:1 / -1}
+
+/* 排布：树形缩进 */
+.l-tree .parent{display:flex;gap:9px;align-items:center;margin-top:13px}
+.l-tree .parent .tt{font-weight:var(--labelWeight);font-size:var(--labelSize);min-width:76px}
+.l-tree .kids{margin:8px 0 0 12px;border-left:1px solid var(--line2);padding-left:16px}
+.l-tree .kid{display:grid;grid-template-columns:172px 1fr;gap:4px 16px;padding:7px 0;align-items:baseline}
+.l-tree .kid .kt{font-size:12.5px;color:var(--muted)}
+.l-tree .kid .kv{font-family:var(--mono);font-size:12.5px;color:var(--text);word-break:break-all}
+.l-tree .note{color:var(--faint);font-size:12px;margin:4px 0 0 12px;padding-left:16px}
+
+/* 排布：分组面板 */
+.l-groups .gsec{border:1px solid var(--line);border-radius:var(--rSm);padding:13px 15px;margin-top:11px}
+.l-groups .gtitle{font-size:12px;color:var(--faint);font-weight:600;letter-spacing:.5px;margin-bottom:11px}
+.l-groups .gsec .row:last-child{margin-bottom:0}
+
+/* 排布：折叠分区 */
+.l-acc .asec{border:1px solid var(--line);border-radius:var(--rSm);margin-top:10px;background:var(--surface2);overflow:hidden}
+.l-acc .asum{cursor:pointer;padding:12px 15px;font-weight:var(--labelWeight);font-size:13px;display:flex;align-items:center;gap:9px;list-style:none}
+.l-acc .asum::-webkit-details-marker{display:none}
+.l-acc .asum::before{content:'›';color:var(--muted);transition:.15s}
+.l-acc details[open] .asum::before{transform:rotate(90deg)}
+.l-acc .abody{padding:2px 15px 14px}
+.l-acc .asum .badge{margin-left:auto;font-size:11.5px;color:var(--faint);font-weight:400}
+
+/* ── 总览 ───────────────────────────────────────────── */
+.ov{padding:20px 0 90px}
+.ovgrid{display:grid;grid-template-columns:repeat(3,354px);gap:16px;justify-content:center}
+.tile{border:1px solid #232329;border-radius:12px;overflow:hidden;background:#101013}
+.tilehead{padding:8px 10px;border-bottom:1px solid #202027;display:flex;gap:8px;align-items:baseline}
+.tilehead b{font-weight:600;color:#e8e8ec;font-size:12.5px}
+.tilehead .tt{color:#8b8b95;font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vb{font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap}
+.vb.g{background:rgba(78,201,160,.18);color:#4ec9a0}
+.vb.b{background:rgba(224,104,95,.16);color:#e0685f}
+.vb.n{background:#1b1b21;color:#77777f}
+.tilebox{width:354px;overflow:hidden;cursor:zoom-in;position:relative}
+.tilebox .scaler{zoom:.34038}
+.tilebox .stage{border-radius:0;padding-bottom:18px}
+.tilefoot{padding:7px 10px;border-top:1px solid #202027;display:flex;gap:6px;align-items:center}
+.tilefoot .mini{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#c8c8d0;cursor:pointer}
+.tilefoot .mini.g.on{background:rgba(78,201,160,.2);border-color:#4ec9a0;color:#4ec9a0}
+.tilefoot .mini.b.on{background:rgba(224,104,95,.18);border-color:#e0685f;color:#e0685f}
+
+/* ── 底栏 ───────────────────────────────────────────── */
+.bbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 20px;background:rgba(16,16,19,.97);border-top:1px solid #26262c}
+.bbar .nav{font-size:12.5px;padding:5px 12px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.bbar .navk{font-size:12.5px;color:#9a9aa4;min-width:250px}
+.vote{font-size:13px;padding:6px 16px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.vote.g.on{background:#175c46;border-color:#2f9e78;color:#d6fff0}
+.vote.b.on{background:#5c2420;border-color:#b1493f;color:#ffdfdc}
+.bnote{flex:1;min-width:170px;font:inherit;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid #2e2e36;background:#141418;color:#e0e0e6}
+.kbd{font-size:11px;color:#77777f;border:1px solid #2e2e36;border-radius:5px;padding:0 5px}
+
+/* ── 导出浮层 ───────────────────────────────────────── */
+.mask{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{width:820px;max-width:100%;max-height:88vh;background:#141418;border:1px solid #2b2b33;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.modal h2{margin:0;font-size:15px;color:#e8e8ec}
+.modal p{margin:0;font-size:12.5px;color:#8b8b95;line-height:1.65}
+.modal textarea{width:100%;height:48vh;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;color:#dfe3ea;background:#0e0e11;border:1px solid #2b2b33;border-radius:10px;padding:11px}
+.modal .mrow{display:flex;gap:9px;justify-content:flex-end}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="tb">
+  <h1>配置面板视觉变体 · 30 版</h1>
+  <span class="sub">饼干记账样板 · 逐版点「好看／不好看」→ 右上「导出判定」贴回</span>
+  <span class="sp"></span>
+  <span class="prog" id="prog"></span>
+  <button class="tbtn" id="btnOv">总览</button>
+  <button class="tbtn on" id="btnOne">逐版</button>
+  <button class="tbtn" id="btnTheme">主题：现场</button>
+  <button class="tbtn" id="btnState">状态：干净</button>
+  <button class="tbtn acc" id="btnExp">导出判定</button>
+</div>
+
+<div id="view"></div>
+
+<footer class="bbar" id="bbar">
+  <button class="nav" id="prev">‹ 上一版</button>
+  <button class="nav" id="next">下一版 ›</button>
+  <span class="navk" id="navk"></span>
+  <button class="vote g" id="vg">好看 <span class="kbd">1</span></button>
+  <button class="vote b" id="vb">不好看 <span class="kbd">2</span></button>
+  <input class="bnote" id="bnote" placeholder="这一版为什么（可不填）：一句话就够">
+  <span class="sub" style="font-size:11.5px;color:#77777f">← → 翻版 · 0 清空</span>
+</footer>
+
+<div class="mask hidden" id="mask">
+  <div class="modal">
+    <h2>把这段贴回对话</h2>
+    <p>整段复制粘回对话即可。下半段是逐版轴标，我按它把你的判定回归到「哪条轴决定好看」。判定只存在这台浏览器里。</p>
+    <textarea id="exp" readonly></textarea>
+    <div class="mrow">
+      <button class="tbtn" id="copyBtn">复制</button>
+      <button class="tbtn" id="closeExp">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ══ 真面板的内容（逐字取自 settings.ts／client.ts） ══ */
+var D = {
+  page:'爱生活',
+  ver:'总管 dsh-life-pack · 0.3.6',
+  hl:{lab:'配置体检', stat:'还没体检', act:'体检一次'},
+  tabs:['饼干记账','卡路里','备忘录','作息管家','居家管家','私家大厨'],
+  card:'饼干记账 · 配置',
+  cfgPath:'C:\\Users\\辰辰洋洋\\.ilife\\bill.yaml',
+  dataDir:'C:\\Users\\辰辰洋洋\\.ilife\\data',
+  fields:[
+    {t:'数据目录', h:'库文件与备份的根目录。留空＝用默认目录。', v:'C:\\Users\\辰辰洋洋\\.ilife\\data', ro:false},
+    {t:'库文件名', h:'数据目录下的库文件。', v:'C:\\Users\\辰辰洋洋\\.ilife\\data\\biscuit_accountant.db', ro:true},
+    {t:'预算／账户文件名', h:'与库同目录的预算与账户文件。', v:'C:\\Users\\辰辰洋洋\\.ilife\\data\\goals.json', ro:true},
+    {t:'HELP 产物目录名', h:'HELP 与速查表的存放目录。', v:'C:\\Users\\辰辰洋洋\\.ilife\\data\\biscuit_accountant_html', ro:true}
+  ],
+  adv:[
+    {t:'备份目录', h:'备份与恢复的读写目录。', v:'C:\\Users\\辰辰洋洋\\.ilife\\data\\backup', ro:true},
+    {t:'备份文件名前缀', h:'备份文件名的前缀，后面自动加时间戳。', v:'biscuit_20260921_1830.db', ro:true}
+  ],
+  check:{t:'饼干记账 · 体检', x:'还没体检：点上面那个「体检一次」。'}
+};
+
+/* ══ 三套主题：全部真实取值（不是自配色） ══ */
+var THEMES = {
+  live:{
+    label:'现场',
+    note:'从真机截图逐点取色：调色板主题（中性灰阶 ＋ 橙 #f8b080）',
+    bg:'#080808', surface:'#101010', surface2:'#181818', surface3:'#202020',
+    line:'#1c1c1c', line2:'#282828', text:'#e0e0e0', muted:'#a8a8a8', faint:'#7c7c7c',
+    accent:'#f8b080', accentInk:'#1a1206', accentSoft:'rgba(248,176,128,.13)', accentLine:'rgba(248,176,128,.42)',
+    inputBg:'#0b0b0b', inputLine:'#282828'
+  },
+  dshDark:{
+    label:'DSH 深色',
+    note:'出厂 token 真值：底 #151517／卡面 #232324／正文 #f9fafb／brand-primary #f9fafb（近白）',
+    bg:'#151517', surface:'#232324', surface2:'#2c2c2e', surface3:'#353638',
+    line:'#2a2a2c', line2:'#3a3a3d', text:'#f9fafb', muted:'#cfd3d6', faint:'#adb2b8',
+    accent:'#f9fafb', accentInk:'#0f1115', accentSoft:'rgba(249,250,251,.12)', accentLine:'rgba(249,250,251,.45)',
+    inputBg:'#1b1b1c', inputLine:'#3a3a3d'
+  },
+  dshLight:{
+    label:'DSH 浅色',
+    note:'出厂 token 真值：底与卡面同为 #fff（靠 1px 描边分层）／正文 #0f1115／brand-primary #0f1115',
+    bg:'#ffffff', surface:'#ffffff', surface2:'#f9fafb', surface3:'#e9ecf2',
+    line:'rgba(0,0,0,.10)', line2:'rgba(0,0,0,.18)', text:'#0f1115', muted:'#61666b', faint:'#81858c',
+    accent:'#0f1115', accentInk:'#ffffff', accentSoft:'rgba(15,17,21,.07)', accentLine:'rgba(15,17,21,.35)',
+    inputBg:'#ffffff', inputLine:'rgba(0,0,0,.18)'
+  }
+};
+
+/* ══ 形状／密度 ══ */
+var FONT='-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+var MONO='ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace';
+var FORMS = {
+  current:{radius:'10px',rSm:'6px',pad:'12px 14px',rowGap:'10px',labelWeight:'600',labelSize:'1em',inputPad:'5px 9px',btnRadius:'6px',shadow:'none',cardBorder:'1px solid var(--line)',cardBg:'var(--surface)'},
+  soft:{radius:'12px',rSm:'8px',pad:'16px 18px',rowGap:'14px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'8px',shadow:'none',cardBorder:'1px solid var(--line)',cardBg:'var(--surface)'},
+  crisp:{radius:'4px',rSm:'4px',pad:'14px 16px',rowGap:'12px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'3px',shadow:'none',cardBorder:'1px solid var(--line2)',cardBg:'var(--surface)'},
+  crisp2:{radius:'2px',rSm:'2px',pad:'14px 16px',rowGap:'12px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'2px',shadow:'none',cardBorder:'1px solid var(--line2)',cardBg:'var(--surface)'},
+  flat:{radius:'0',rSm:'6px',pad:'2px 0',rowGap:'18px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'6px',shadow:'none',cardBorder:'none',cardBg:'transparent'},
+  flatfill:{radius:'0',rSm:'8px',pad:'18px 20px',rowGap:'16px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'8px',shadow:'none',cardBorder:'none',cardBg:'var(--surface2)'},
+  tight:{radius:'8px',rSm:'6px',pad:'10px 12px',rowGap:'7px',labelWeight:'600',labelSize:'.96em',inputPad:'4px 8px',btnRadius:'6px',shadow:'none',cardBorder:'1px solid var(--line)',cardBg:'var(--surface)'},
+  loose:{radius:'14px',rSm:'10px',pad:'22px 26px',rowGap:'22px',labelWeight:'600',labelSize:'1.02em',inputPad:'8px 11px',btnRadius:'10px',shadow:'none',cardBorder:'1px solid var(--line)',cardBg:'var(--surface)'},
+  round:{radius:'18px',rSm:'12px',pad:'20px 22px',rowGap:'18px',labelWeight:'600',labelSize:'1em',inputPad:'8px 12px',btnRadius:'999px',shadow:'none',cardBorder:'1px solid var(--line)',cardBg:'var(--surface)'},
+  hover:{radius:'12px',rSm:'8px',pad:'16px 18px',rowGap:'14px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'8px',shadow:'0 6px 22px rgba(0,0,0,.45)',cardBorder:'1px solid var(--line)',cardBg:'var(--surface3)'},
+  glass:{radius:'12px',rSm:'8px',pad:'16px 18px',rowGap:'14px',labelWeight:'600',labelSize:'1em',inputPad:'6px 10px',btnRadius:'8px',shadow:'inset 0 1px 0 rgba(255,255,255,.07), 0 12px 34px rgba(0,0,0,.4)',cardBorder:'1px solid var(--line2)',cardBg:'linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,0) 62%), var(--surface)'}
+};
+
+/* ══ 30 版 ══ */
+function V(id,name,what,o){
+  var v=o||{};
+  return{id:id,name:name,what:what,
+    layout:v.layout||'stack', form:v.form||'soft', ro:v.ro||'badge',
+    tabs:v.tabs||'pill', btn:v.btn||'outline', accent:v.accent||'fill',
+    density:v.density||'normal', seg:v.seg===true, sticky:v.sticky===true, icons:v.icons===true};
+}
+
+var VARIANTS = [
+/* 一 · 基线 */
+V(1,'现状对照','留住今天的做法当尺子：行上下堆叠、只读也画输入框、逐行重复「只读，要改请编辑配置文件」、三个按钮等权。',{form:'current',ro:'suffix'}),
+V(2,'现状 · 只读说明只出现一次','结构不动，把重复四遍的那句话收成行首一枚「只读」标记——先看「少说一遍」值多少分。',{form:'current',ro:'badge'}),
+V(3,'现状 · 只读改纯文本','只读三行不再画输入框，直接印等宽路径＋复制入口；可改那行仍是输入框，一眼分得开。',{form:'current',ro:'plain'}),
+V(4,'现状 · 保存做主按钮','保存填色做主按钮（文字走反色，跟 DSH 自己的配法一致），重置与重读降为描边／文字。',{form:'current',ro:'badge',btn:'primary'}),
+V(5,'现状 · 页签换下划线','胶囊页签换成下划线页签、去掉装饰圆点：更像「导航」，不像「按钮」。',{form:'current',ro:'badge',tabs:'underline'}),
+
+/* 二 · 行排布 */
+V(6,'左右两栏','标题在左、控件在右的两列表单，行与行对齐成一条中轴，扫读快。',{layout:'inline',form:'soft',ro:'badge'}),
+V(7,'左右两栏 · 标签右对齐','标签与说明右对齐贴住控件，中轴更硬，左半边成为留白。',{layout:'inline',form:'soft',ro:'badge',tabs:'underline'}),
+V(8,'定义表 · 发丝分隔线','不画容器也不画输入框：靠发丝线与留白分行，值一律等宽字体。',{layout:'def',form:'flat',ro:'groupnote',tabs:'underline',btn:'text'}),
+V(9,'路径卡片 · 每项一张','每个落点一张小卡，卡片自带标题、路径、复制入口——信息块自足，扫读最强。',{layout:'cg',form:'soft',ro:'plain'}),
+V(10,'树形缩进 · 把从属关系画出来','数据目录当父行，库文件／预算文件／产物目录缩进成子行：一眼看出「都在数据目录下」。',{layout:'tree',form:'crisp',ro:'groupnote',tabs:'underline',btn:'text'}),
+
+/* 三 · 密度与容器 */
+V(11,'分组面板 · 库与产物两块','按用途分两块、各带一个小标题，把「库」和「产物」分开。',{layout:'groups',form:'soft',ro:'badge'}),
+V(12,'折叠分区 · 三类各成一段','落点／备份／体检各成可折叠段，默认只开落点——一屏内看不到全部，换的是安静。',{layout:'acc',form:'crisp',ro:'plain',tabs:'underline',btn:'text'}),
+V(13,'高密度紧凑','行距与内边距压到最紧，一屏看全、少滚动。',{form:'tight',ro:'badge',tabs:'chip',density:'tight'}),
+V(14,'宽松留白','加大留白与行距，把层级交给空白而不是线框。',{form:'loose',ro:'badge',density:'loose'}),
+V(15,'无容器 · 纯留白','完全去掉卡片边框与输入框边界，只留文字层级。',{layout:'def',form:'flat',ro:'plain',tabs:'plain',btn:'text'}),
+V(16,'填充面板 · 无边框','用比底色亮一档的表面色分区、不画边框：块感来自明度差，不来自线条。',{form:'flatfill',ro:'badge',tabs:'chip'}),
+
+/* 四 · 形状 */
+V(17,'浮起卡片 · 投影','卡片带投影浮在底色上，层次靠深度。',{form:'hover',ro:'badge'}),
+V(18,'大圆角柔和','圆角放到 18px、按钮转胶囊，整体更软。',{form:'round',ro:'badge'}),
+V(19,'锐利直角','圆角收到 2px、线更实：工程工具那种硬朗。',{form:'crisp2',ro:'badge',tabs:'underline'}),
+V(20,'顶部高光 · 玻璃感','卡片顶边一层高光＋更深底，做出材质（玻璃）感。',{form:'glass',ro:'badge'}),
+
+/* 五 · 只读怎么画 */
+V(21,'只读 · 纯文本＋复制','只读一律不画框，值用等宽字＋行尾复制，可改那行才画输入框。',{form:'soft',ro:'plain'}),
+V(22,'只读 · 整组一句说明','只读三行上方一句「以下几项由技能算出」，行内不再重复。',{form:'soft',ro:'groupnote'}),
+V(23,'只读 · 行首标记','保留输入框的样子，只加一枚「只读」标记与更暗的字色。',{form:'soft',ro:'badge'}),
+V(24,'只读 · 逐行重复（现状）','维持现状那句逐行重复，作为对照——看它到底扣多少分。',{form:'soft',ro:'suffix'}),
+V(25,'只读 · 锁形标记','行首加一枚锁形符号，其余同现状。',{form:'soft',ro:'badge',icons:true}),
+
+/* 六 · 强调色怎么用（同一个色，四种用法） */
+V(26,'强调色做面','主色铺开：当前页签整块填充、主按钮填充、焦点环——最显眼，也最吵。',{form:'soft',ro:'badge',accent:'fill',btn:'primary'}),
+V(27,'强调色只做点','主色只出现在很少的地方（当前页签的字＋一条 2px 底线），按钮全中性。',{form:'soft',ro:'badge',accent:'dot',tabs:'underline',btn:'text'}),
+V(28,'强调色做低饱和','主色以低不透明度出现（浅底＋同色字），有颜色但不跳。',{form:'soft',ro:'badge',accent:'soft',tabs:'chip'}),
+V(29,'不用强调色 · 全灰阶','一点彩色都不要：层级全靠字重、明度与线。',{form:'soft',ro:'badge',accent:'none',btn:'primary'}),
+V(30,'按钮与底栏 · 分段控件＋吸底','三个动作合成一段分段控件，并吸在底部：动作永远在手边。',{form:'soft',ro:'badge',seg:true,sticky:true,btn:'primary'})
+];
+
+/* ══ 渲染 ══ */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var THEME='live';
+function tokens(v){
+  var t=THEMES[THEME], f=FORMS[v.form]||FORMS.soft;
+  return ['--bg:'+t.bg,'--surface:'+t.surface,'--surface2:'+t.surface2,'--surface3:'+t.surface3,
+    '--line:'+t.line,'--line2:'+t.line2,'--text:'+t.text,'--muted:'+t.muted,'--faint:'+t.faint,
+    '--accent:'+t.accent,'--accentInk:'+t.accentInk,'--accentSoft:'+t.accentSoft,'--accentLine:'+t.accentLine,
+    '--inputBg:'+t.inputBg,'--inputLine:'+t.inputLine,
+    '--radius:'+f.radius,'--rSm:'+f.rSm,'--pad:'+f.pad,'--rowGap:'+f.rowGap,'--shadow:'+f.shadow,
+    '--cardBorder:'+f.cardBorder,'--cardBg:'+f.cardBg,'--btnRadius:'+f.btnRadius,
+    '--labelWeight:'+f.labelWeight,'--labelSize:'+f.labelSize,'--inputPad:'+f.inputPad,
+    '--font:'+FONT,'--mono:'+MONO].join(';');
+}
+function styleBlock(){return VARIANTS.map(function(v){return '[data-v="'+v.id+'"]{'+tokens(v)+'}';}).join('\n');}
+function styleHost(){
+  var el=document.getElementById('vars');
+  if(!el){ el=document.createElement('style'); el.id='vars'; document.head.appendChild(el); }
+  el.textContent=styleBlock();
+}
+
+function hintOf(f,v){return esc(f.h)+((f.ro&&v.ro==='suffix')?'只读，要改请编辑配置文件。':'');}
+function titleOf(f,v){
+  if(!f.ro) return esc(f.t);
+  if(v.ro==='badge') return esc(f.t)+'<span class="rochip">只读</span>';
+  if(v.icons) return '<span style="color:var(--faint);margin-right:6px">▣</span>'+esc(f.t);
+  return esc(f.t);
+}
+function ctlOf(f,v){
+  if(!f.ro) return '<div class="pickwrap"><input class="f" value="'+esc(f.v)+'"><button class="btn">浏览</button></div>';
+  if(v.ro==='plain') return '<div class="plainval mono">'+esc(f.v)+'<button class="btn mini">复制</button></div>';
+  return '<input class="f" disabled value="'+esc(f.v)+'">';
+}
+function inlineCtl(f,v){
+  if(!f.ro) return '<div class="rctl"><input class="f" value="'+esc(f.v)+'"><button class="btn">浏览</button></div>';
+  if(v.ro==='plain') return '<div class="rctl"><div class="plainval mono" style="margin-top:0">'+esc(f.v)+'<button class="btn mini">复制</button></div></div>';
+  return '<div class="rctl"><input class="f" disabled value="'+esc(f.v)+'"></div>';
+}
+function headHTML(v){
+  return '<div class="pgrow"><h1 class="pgh1">'+esc(D.page)+'</h1>'+
+    '<div class="pgacts"><button class="btn">检查更新</button><span class="ico">★</span><span class="ico">◍</span></div></div>'+
+    '<div class="pgver">'+esc(D.ver)+'</div>'+
+    '<div class="pgrow health"><span class="hlab">'+esc(D.hl.lab)+'</span><span class="hstat">'+esc(D.hl.stat)+'</span>'+
+    '<button class="btn '+(v.accent==='none'?'':'ghost')+'">'+esc(D.hl.act)+'</button></div>'+
+    '<div class="tabs t-'+v.tabs+' a-'+v.accent+'">'+D.tabs.map(function(t,i){return '<button class="tab'+(i===0?' on':'')+'">'+esc(t)+'</button>';}).join('')+'</div>';
+}
+function barHTML(v,dirty){
+  var saveCls = v.btn==='primary' ? 'btn pri' : (v.btn==='text' ? 'btn ghost' : 'btn');
+  var lbl = dirty ? '保存（1 项未保存）' : '保存';
+  var note = dirty ? '<span class="note">浏览改动后请点保存（1 项未保存），保存后跟随项自动更新</span>' : '';
+  var bar = '<div class="bar'+((v.seg?' seg':'')+(v.sticky?' sticky':''))+'">'+note+
+    '<button class="'+saveCls+'"'+(dirty?'':' disabled')+'>'+lbl+'</button>'+
+    '<button class="'+(v.btn==='text'?'btn ghost':'btn')+'">重置为默认</button>'+
+    '<button class="'+(v.btn==='text'?'btn ghost':'btn')+'">重新读取</button></div>';
+  return v.sticky ? '<div style="position:sticky;bottom:0;background:var(--bg);padding-top:2px">'+bar+'</div>' : bar;
+}
+function checkCard(v){return '<div class="card"><div class="ctitle sm">'+esc(D.check.t)+'</div><div class="muted">'+esc(D.check.x)+'</div></div>';}
+function metaHTML(){return '<div class="cmeta"><span class="k">配置文件</span><span class="mono">'+esc(D.cfgPath)+'</span></div>'+
+  '<div class="cmeta"><span class="k">数据目录</span><span class="mono">'+esc(D.dataDir)+'</span></div>';}
+function advRows(v,list){return list.map(function(f){return '<div class="row"><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div>'+ctlOf(f,v)+'</div>';}).join('');}
+
+function bodyHTML(v,dirty){
+  var html=headHTML(v);
+  var roNote = v.ro==='groupnote' ? '<div class="groupnote">以下几项由技能按数据目录算出，面板上不能改；要改请编辑配置文件。</div>' : '';
+  var f0=D.fields[0], rest=D.fields.slice(1);
+
+  if(v.layout==='inline'){
+    html+='<div class="card l-inline"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+'<div class="rows">';
+    D.fields.forEach(function(f){
+      html+='<div class="row"><div><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div></div><div class="rcol">'+inlineCtl(f,v)+'</div></div>';
+    });
+    html+='</div><details class="adv" open><summary class="advsum">高级</summary><div class="advnote">不常改。留空＝用默认值。</div>';
+    D.adv.forEach(function(f){
+      html+='<div class="row" style="display:grid;grid-template-columns:238px 1fr;gap:4px 22px;padding:11px 0;border-bottom:1px solid var(--line)"><div><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div></div><div class="rcol">'+inlineCtl(f,v)+'</div></div>';
+    });
+    html+='</details>'+barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  if(v.layout==='def'){
+    html+='<div class="card l-def"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+roNote+'<div class="rows">';
+    D.fields.forEach(function(f){
+      html+='<div class="row"><div><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div></div><div class="dval">'+
+        (f.ro?'<span>'+esc(f.v)+'</span><button class="btn mini">复制</button>'
+             :'<div class="colstack"><div class="pickwrap" style="margin-top:0"><input class="f" value="'+esc(f.v)+'"><button class="btn">浏览</button></div></div>')+'</div></div>';
+    });
+    html+='</div><details class="adv" open><summary class="advsum">高级</summary><div class="advnote">不常改。留空＝用默认值。</div>';
+    D.adv.forEach(function(f){
+      html+='<div class="row"><div><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div></div><div class="dval"><span>'+esc(f.v)+'</span><button class="btn mini">复制</button></div></div>';
+    });
+    html+='</details>'+barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  if(v.layout==='cg'){
+    html+='<div class="card l-cg"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+roNote+'<div class="grid">';
+    html+='<div class="fcard wide"><div class="ft">'+esc(f0.t)+'</div><div class="fh">'+esc(f0.h)+'</div><div class="fv"><div class="pickwrap" style="margin-top:0"><input class="f" value="'+esc(f0.v)+'"><button class="btn">浏览</button></div></div></div>';
+    rest.forEach(function(f){
+      html+='<div class="fcard"><div class="ft">'+esc(f.t)+'</div><div class="fh">'+esc(f.h)+'</div><div class="fv plainval mono" style="margin-top:9px">'+esc(f.v)+'<button class="btn mini">复制</button></div></div>';
+    });
+    html+='</div><details class="adv" open><summary class="advsum">高级</summary><div class="advnote">不常改。留空＝用默认值。</div><div class="grid" style="margin-top:10px">';
+    D.adv.forEach(function(f){
+      html+='<div class="fcard"><div class="ft">'+esc(f.t)+'</div><div class="fh">'+esc(f.h)+'</div><div class="fv plainval mono" style="margin-top:9px">'+esc(f.v)+'</div></div>';
+    });
+    html+='</div></details>'+barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  if(v.layout==='tree'){
+    html+='<div class="card l-tree"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+
+      '<div class="parent"><span style="color:var(--muted)">▾</span><span class="tt">数据目录</span><input class="f" value="'+esc(f0.v)+'" style="flex:0 1 560px"><button class="btn">浏览</button></div>'+
+      '<div class="note">'+esc(f0.h)+'</div><div class="kids">'+
+      rest.map(function(f){return '<div class="kid"><span class="kt">'+esc(f.t)+'</span><span class="kv">'+esc(f.v)+'</span></div>';}).join('')+'</div>'+
+      '<div class="note" style="margin-top:10px">以上三项都在数据目录下，由技能按目录算出；要改请编辑配置文件。</div>'+
+      '<details class="adv" open><summary class="advsum">高级</summary><div class="advnote">不常改。留空＝用默认值。</div>'+
+      D.adv.map(function(f){return '<div class="kid" style="border-top:1px solid var(--line)"><span class="kt">'+esc(f.t)+'</span><span class="kv">'+esc(f.v)+'</span></div>';}).join('')+
+      '</details>'+barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  if(v.layout==='groups'){
+    html+='<div class="card l-groups"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+
+      '<div class="gsec"><div class="gtitle">库与预算</div>'+
+      [D.fields[0],D.fields[1],D.fields[2]].map(function(f){return '<div class="row"><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div>'+ctlOf(f,v)+'</div>';}).join('')+'</div>'+
+      '<div class="gsec"><div class="gtitle">产物与备份</div>'+
+      [D.fields[3],D.adv[0],D.adv[1]].map(function(f){return '<div class="row"><div class="rlabel">'+titleOf(f,v)+'</div><div class="rhint">'+hintOf(f,v)+'</div>'+ctlOf(f,v)+'</div>';}).join('')+'</div>'+
+      barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  if(v.layout==='acc'){
+    html+='<div class="card l-acc"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+
+      '<details open class="asec"><summary class="asum">落点<span class="badge">1 项可改</span></summary><div class="abody">'+advRows(v,D.fields)+'</div></details>'+
+      '<details class="asec"><summary class="asum">备份<span class="badge">2 项</span></summary><div class="abody">'+advRows(v,D.adv)+'</div></details>'+
+      barHTML(v,dirty)+'</div>'+checkCard(v);
+    return html;
+  }
+  html+='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHTML()+roNote+'<div class="rows">'+advRows(v,D.fields)+'</div>'+
+    '<details class="adv" open><summary class="advsum">高级</summary><div class="advnote">不常改。留空＝用默认值。</div>'+advRows(v,D.adv)+'</details>'+
+    barHTML(v,dirty)+'</div>'+checkCard(v);
+  return html;
+}
+function panelHTML(v,dirty){return '<div class="stage" data-v="'+v.id+'">'+bodyHTML(v,dirty)+'</div>';}
+
+/* ══ 轴标（导出用，也画成 chip） ══ */
+var AXIS={layout:{stack:'stack',inline:'inline',def:'def',cg:'cardgrid',tree:'tree',groups:'groups',acc:'accordion'},
+  ro:{suffix:'ro-suffix',badge:'ro-badge',plain:'ro-plain',groupnote:'ro-groupnote'},
+  tabs:{pill:'pill',underline:'underline',chip:'chip',plain:'plain'},
+  btn:{outline:'btn-outline',primary:'btn-primary',text:'btn-text'},
+  density:{tight:'tight',loose:'loose',normal:'normal'},
+  accent:{fill:'accent-fill',soft:'accent-soft',dot:'accent-dot',none:'accent-none'}};
+function traits(v){
+  var L={stack:'排布：上下堆叠',inline:'排布：左右两栏',def:'排布：定义表',cg:'排布：路径卡片',tree:'排布：树形缩进',groups:'排布：分组面板',acc:'排布：折叠分区'}[v.layout];
+  var R={suffix:'只读：逐行重复说明',badge:'只读：行首标记',plain:'只读：纯文本＋复制',groupnote:'只读：整组一句'}[v.ro];
+  var A={fill:'强调：做面',soft:'强调：低饱和',dot:'强调：只做点',none:'强调：不用'}[v.accent];
+  var B={outline:'按钮：三等分描边',primary:'按钮：主次分明',text:'按钮：文字＋填充'}[v.btn];
+  var TB={pill:'页签：胶囊',underline:'页签：下划线',chip:'页签：chip',plain:'页签：纯文字'}[v.tabs];
+  var FD={tight:'密度：紧凑',loose:'密度：宽松'}[v.density];
+  var FM={current:'形状：现状',soft:'形状：柔和',crisp:'形状：锐利',crisp2:'形状：直角',flat:'形状：无容器',flatfill:'形状：填充面板',tight:'形状：紧凑',loose:'形状：宽松',round:'形状：大圆角',hover:'形状：投影',glass:'形状：玻璃'}[v.form];
+  return [L,FM,R,A,TB,B,FD,v.seg?'控件：分段':null,v.sticky?'操作条：吸底':null,v.icons?'标记：锁形':null].filter(Boolean);
+}
+
+/* ══ 状态 ══ */
+var KEY='ilife-panel-taste-v2';
+var store={votes:{},top:''};
+try{var raw=localStorage.getItem(KEY); if(raw){var p=JSON.parse(raw); store.votes=p.votes||{}; store.top=p.top||'';}}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+var cur=1, dirtyDemo=false, mode='one';
+function vById(id){for(var i=0;i<VARIANTS.length;i++){if(VARIANTS[i].id===id)return VARIANTS[i];}return VARIANTS[0];}
+var view=document.getElementById('view'), bbar=document.getElementById('bbar');
+
+function renderOne(){
+  var v=vById(cur);
+  document.title='视觉变体 · 第 '+v.id+' 版 '+v.name;
+  view.innerHTML='<div class="stagewrap" style="flex-direction:column;align-items:center">'+
+    '<div class="strip"><div class="s1"><span class="no">第 '+v.id+' 版 / 共 '+VARIANTS.length+' 版</span><span class="nm">'+esc(v.name)+'</span></div>'+
+    '<div class="what">这一版在试什么：'+esc(v.what)+'</div>'+
+    '<div class="chips">'+traits(v).map(function(t){return '<span class="chipx">'+esc(t)+'</span>';}).join('')+'</div></div>'+
+    panelHTML(v,dirtyDemo)+'</div>';
+  bbar.classList.remove('hidden');
+  var rec=store.votes[v.id]||{};
+  document.getElementById('vg').classList.toggle('on',rec.vote==='good');
+  document.getElementById('vb').classList.toggle('on',rec.vote==='bad');
+  document.getElementById('bnote').value=rec.note||'';
+  document.getElementById('navk').textContent='第 '+v.id+' 版 · '+v.name;
+  updateProg();
+}
+function tileHTML(v){
+  var rec=store.votes[v.id]||{};
+  var cls=rec.vote==='good'?'g':(rec.vote==='bad'?'b':'n');
+  var txt=rec.vote==='good'?'好看':(rec.vote==='bad'?'不好看':'未评');
+  return '<div class="tile"><div class="tilehead"><b>'+v.id+'</b><span class="tt">'+esc(v.name)+'</span><span class="vb '+cls+'">'+txt+'</span></div>'+
+    '<div class="tilebox" data-open="'+v.id+'" title="点开看整版"><div class="scaler">'+panelHTML(v,false)+'</div></div>'+
+    '<div class="tilefoot"><button class="mini g'+(rec.vote==='good'?' on':'')+'" data-vote="'+v.id+':good">好看</button>'+
+    '<button class="mini b'+(rec.vote==='bad'?' on':'')+'" data-vote="'+v.id+':bad">不好看</button>'+
+    '<span style="flex:1"></span><span style="font-size:11px;color:#66666e">'+esc(traits(v)[0])+'</span></div></div>';
+}
+function renderOverview(){
+  document.title='视觉变体 · 总览 30 版';
+  view.innerHTML='<div class="ov"><div style="max-width:1100px;margin:0 auto 16px;font-size:12.5px;color:#8b8b95;line-height:1.8">'+
+    '30 版同内容、同文案，只有做法不同。点任意一版看整版，或在格子下方直接点「好看／不好看」。<br>'+
+    '最想留下的三版：<input id="topin" class="bnote" style="display:inline-block;width:250px;min-width:0;padding:3px 8px" placeholder="填序号，例：08、15、28" value="'+esc(store.top)+'">'+
+    '</div><div class="ovgrid">'+VARIANTS.map(tileHTML).join('')+'</div></div>';
+  bbar.classList.add('hidden');
+  updateProg();
+}
+function updateProg(){
+  var g=0,b=0;
+  VARIANTS.forEach(function(v){var r=store.votes[v.id]; if(r&&r.vote==='good')g++; if(r&&r.vote==='bad')b++;});
+  document.getElementById('prog').textContent='已评 '+(g+b)+' / '+VARIANTS.length+'（好看 '+g+' · 不好看 '+b+'）';
+}
+function vote(kind){
+  var id=vById(cur).id, rec=store.votes[id]||{};
+  rec.vote=(rec.vote===kind)?null:kind;
+  if(!rec.vote) delete rec.vote;
+  rec.note=document.getElementById('bnote').value||'';
+  store.votes[id]=rec; persist(); renderOne();
+}
+function goto(id){cur=Math.min(VARIANTS.length,Math.max(1,id)); if(mode!=='one'){mode='one';syncMode();} renderOne();}
+
+document.getElementById('vg').onclick=function(){vote('good');};
+document.getElementById('vb').onclick=function(){vote('bad');};
+document.getElementById('prev').onclick=function(){goto(cur-1);};
+document.getElementById('next').onclick=function(){goto(cur+1);};
+document.getElementById('bnote').oninput=function(){
+  var id=vById(cur).id, rec=store.votes[id]||{}; rec.note=this.value; store.votes[id]=rec; persist();
+};
+function syncMode(){
+  document.getElementById('btnOne').classList.toggle('on',mode==='one');
+  document.getElementById('btnOv').classList.toggle('on',mode==='ov');
+}
+document.getElementById('btnOne').onclick=function(){mode='one';syncMode();renderOne();};
+document.getElementById('btnOv').onclick=function(){mode='ov';syncMode();renderOverview();};
+document.getElementById('btnState').onclick=function(){
+  dirtyDemo=!dirtyDemo; this.textContent='状态：'+(dirtyDemo?'有改动':'干净');
+  if(mode==='one') renderOne();
+};
+var TKEYS=['live','dshDark','dshLight'], ti=0;
+document.getElementById('btnTheme').onclick=function(){
+  ti=(ti+1)%TKEYS.length; THEME=TKEYS[ti]; styleHost();
+  this.textContent='主题：'+THEMES[THEME].label;
+  this.title=THEMES[THEME].note;
+  if(mode==='one') renderOne(); else renderOverview();
+};
+view.addEventListener('click',function(e){
+  var t=e.target; if(!t||!t.getAttribute) return;
+  if(t.getAttribute('data-open')){goto(parseInt(t.getAttribute('data-open'),10));return;}
+  if(t.getAttribute('data-vote')){
+    var parts=t.getAttribute('data-vote').split(':'), id=parseInt(parts[0],10), kind=parts[1];
+    var rec=store.votes[id]||{}; rec.vote=(rec.vote===kind)?null:kind; if(!rec.vote) delete rec.vote;
+    store.votes[id]=rec; persist(); renderOverview(); return;
+  }
+});
+view.addEventListener('input',function(e){ if(e.target&&e.target.id==='topin'){store.top=e.target.value;persist();} });
+document.addEventListener('keydown',function(e){
+  if(mode!=='one') return;
+  var t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')) return;
+  if(e.key==='ArrowLeft'){goto(cur-1);}
+  else if(e.key==='ArrowRight'){goto(cur+1);}
+  else if(e.key==='1'){vote('good');}
+  else if(e.key==='2'){vote('bad');}
+  else if(e.key==='0'){var id=vById(cur).id; store.votes[id]={note:''}; persist(); renderOne();}
+});
+
+/* ══ 导出（上半段给人读，下半段给机器读） ══ */
+function pad(x){return x<10?'0'+x:''+x;}
+function exportText(){
+  var g=[],b=[],n=[];
+  VARIANTS.forEach(function(v){
+    var r=store.votes[v.id];
+    if(r&&r.vote==='good')g.push(v.id); else if(r&&r.vote==='bad')b.push(v.id); else n.push(v.id);
+  });
+  var L=[];
+  L.push('配置面板视觉变体 · 判定回执（第 2 版 · 30 版 · 主题＝'+THEMES[THEME].label+'）');
+  L.push('');
+  L.push('好看（'+g.length+'）：'+(g.map(pad).join('、')||'—'));
+  L.push('不好看（'+b.length+'）：'+(b.map(pad).join('、')||'—'));
+  L.push('未评（'+n.length+'）：'+(n.map(pad).join('、')||'—'));
+  L.push('最想留下的三版：'+(store.top||'—'));
+  L.push('');
+  L.push('— 逐版备注 —');
+  VARIANTS.forEach(function(v){
+    var r=store.votes[v.id];
+    if(r&&r.note) L.push(pad(v.id)+' '+v.name+'：'+r.note);
+  });
+  L.push('');
+  L.push('— 逐版轴标（序号|排布|只读|页签|按钮|强调|形状|密度|判定|备注）—');
+  VARIANTS.forEach(function(v){
+    var r=store.votes[v.id]||{};
+    L.push([pad(v.id),AXIS.layout[v.layout],AXIS.ro[v.ro],AXIS.tabs[v.tabs],AXIS.btn[v.btn],
+      AXIS.accent[v.accent],v.form,AXIS.density[v.density],
+      (r.vote||'none'),(r.note||'').replace(/\|/g,'/')].join('|'));
+  });
+  return L.join('\n');
+}
+document.getElementById('btnExp').onclick=function(){
+  document.getElementById('exp').value=exportText();
+  document.getElementById('mask').classList.remove('hidden');
+};
+document.getElementById('closeExp').onclick=function(){document.getElementById('mask').classList.add('hidden');};
+document.getElementById('copyBtn').onclick=function(){
+  var ta=document.getElementById('exp'); ta.select();
+  try{document.execCommand('copy'); this.textContent='已复制';}catch(e){this.textContent='请手动全选复制';}
+  var self=this; setTimeout(function(){self.textContent='复制';},1600);
+};
+document.getElementById('mask').addEventListener('click',function(e){ if(e.target===this) this.classList.add('hidden'); });
+
+styleHost();
+document.getElementById('btnTheme').title=THEMES[THEME].note;
+var q=/[?&]v=(\d+)/.exec(location.search);
+var dv=q?parseInt(q[1],10):0;
+if(dv>=1&&dv<=VARIANTS.length){mode='one';cur=dv;} else {mode='ov';}
+syncMode();
+if(mode==='one') renderOne(); else renderOverview();
+})();
+</script>
+</body>
+</html>

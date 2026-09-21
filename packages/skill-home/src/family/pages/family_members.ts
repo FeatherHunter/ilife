@@ -99,13 +99,13 @@ function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }
 
-// 只用行自带的字段，不编关系与归属数；缺失处留占位。
+// 只用行自带的字段，不编关系与归属数；归属件数只认 item_count（真值），没有就写「—」。
 function toMember(item: Record<string, unknown>): Member {
   const name = str(item.name) || '未留称呼';
   const relation = str(item.relation);
   const note = str(item.note);
-  const count = typeof item.count === 'number'
-    ? String(item.count)
+  const count = typeof item.item_count === 'number'
+    ? String(item.item_count)
     : (str(item.item_count) !== '' ? str(item.item_count) : '—');
   return { name, relation, note, itemCount: count };
 }
@@ -149,7 +149,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="bm-lead">成员增减与物品归属标记都在这一页</p>'
     + '<div class="bm-metrics">'
     + '<div class="bm-num"><b>成员数</b><span>' + members.length + '</span></div>'
-    + '<div class="bm-num"><b>物品总数（暂未统计）</b><span>' + (hasItemDetail ? rows.length : '—') + '</span></div>'
+    + '<div class="bm-num"><b>物品总数</b><span>—</span></div>'
     + '</div>'
     + receiptBanner + emptyBanner
     + '<section class="bm-sec"><h2>成员列表</h2>'
@@ -159,7 +159,7 @@ export function renderFamilyPage(env: Envelope): string {
     + (hasItemDetail
       ? '<div class="bm-check">' + rows.map((it) => '<label><input type="checkbox" value="'
         + escapeHtml(str(it.id)) + '">' + escapeHtml(str(it.name)) + '</label>').join('') + '</div>'
-      : '<p class="bm-hint">库里还没有物品，录入物品后可在这里勾选标记归属</p>')
+      : '<p class="bm-hint">本页不含物品明细，物品列表在物品页看</p>')
     + '<div class="bm-fgrid"><label>归属成员<select id="aMember"><option value="">请选择</option>' + memberOpts + '</select></label></div>'
     + '<button class="bm-btn primary" id="btnAssign">确认标记归属</button></section>'
     + '<section class="bm-sec"><h2>添加成员表单</h2><div class="bm-fgrid">'

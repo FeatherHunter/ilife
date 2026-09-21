@@ -155,17 +155,17 @@ export function statsOverview(handle: HomeDb): Record<string, number> {
 export function highFreq(handle: HomeDb, limit = 10): { id: number; name: string; count: number }[] {
   return handle.db.prepare('SELECT id, name, access_count AS count FROM items ORDER BY access_count DESC LIMIT ?').all(limit) as unknown as { id: number; name: string; count: number }[];
 }
-export function idleItems(handle: HomeDb, days: number): { id: number; name: string }[] {
+export function idleItems(handle: HomeDb, days: number): { id: number; name: string; category: string }[] {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   const cut = cutoff.toISOString();
   try {
     return handle.db.prepare(
-      'SELECT id, name FROM items WHERE (last_accessed_at IS NULL OR last_accessed_at < ?) ORDER BY last_accessed_at LIMIT 50',
-    ).all(cut) as unknown as { id: number; name: string }[];
+      "SELECT id, name, ifnull(category,'') AS category FROM items WHERE (last_accessed_at IS NULL OR last_accessed_at < ?) ORDER BY last_accessed_at LIMIT 50",
+    ).all(cut) as unknown as { id: number; name: string; category: string }[];
   } catch (e) { throw new HomeFetchError('HOME_DB_UNREADABLE', '闲置查询失败', { cause: e }); }
 }
-export function expiringItems(handle: HomeDb, days: number, expiredOnly: boolean): { item_id: number; location: string; expiration_date: string }[] {
+export function expiringItems(handle: HomeDb, days: number, expiredOnly: boolean): { item_id: number; location: string; expiration_date: string; item_name: string; category: string }[] { // #817：行标题要物品名（位置不是身份），分类同给。
   const today = new Date().toISOString().slice(0, 10);
   const end = new Date();
   end.setDate(end.getDate() + days);
@@ -173,11 +173,11 @@ export function expiringItems(handle: HomeDb, days: number, expiredOnly: boolean
   try {
     if (expiredOnly) {
       return handle.db.prepare(
-        'SELECT item_id, location, expiration_date FROM item_locations WHERE expiration_date IS NOT NULL AND expiration_date < ? ORDER BY expiration_date LIMIT 50',
-      ).all(today) as unknown as { item_id: number; location: string; expiration_date: string }[];
+        "SELECT l.item_id, l.location, l.expiration_date, ifnull(i.name,'') AS item_name, ifnull(i.category,'') AS category FROM item_locations l LEFT JOIN items i ON i.id=l.item_id WHERE l.expiration_date IS NOT NULL AND l.expiration_date < ? ORDER BY l.expiration_date LIMIT 50",
+      ).all(today) as unknown as { item_id: number; location: string; expiration_date: string; item_name: string; category: string }[];
     }
     return handle.db.prepare(
-      'SELECT item_id, location, expiration_date FROM item_locations WHERE expiration_date IS NOT NULL AND expiration_date <= ? ORDER BY expiration_date LIMIT 50',
-    ).all(endS) as unknown as { item_id: number; location: string; expiration_date: string }[];
+      "SELECT l.item_id, l.location, l.expiration_date, ifnull(i.name,'') AS item_name, ifnull(i.category,'') AS category FROM item_locations l LEFT JOIN items i ON i.id=l.item_id WHERE l.expiration_date IS NOT NULL AND l.expiration_date <= ? ORDER BY l.expiration_date LIMIT 50",
+    ).all(endS) as unknown as { item_id: number; location: string; expiration_date: string; item_name: string; category: string }[];
   } catch (e) { throw new HomeFetchError('HOME_DB_UNREADABLE', '过期查询失败', { cause: e }); }
 }

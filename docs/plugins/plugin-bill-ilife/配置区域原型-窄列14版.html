@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置区域原型（第三轮）· 真实窄列 14 配方</title>
+<!--
+  原型件（不是生产代码，不参与构建，不承载任何真逻辑）。
+
+  第三轮：**按真实可用尺寸做**。
+  从 2026-09-21 的整屏截图实测（红线框像素 1162 × 1224，截屏 DPR ≈ 2.1）：
+    配置区域可视区 ≈ 550 × 580 CSS px，可上下滚动。
+  前两轮原型是按 1040 宽画的 —— 几乎是真实可用宽度的两倍，所以「数据表五列」「抽屉两栏」
+  「卡片网格两列」这些在真机里根本站不住（你自己也看出抽屉左侧太空）。
+
+  本轮只保留上一轮你判「好看」的元素，按 6 条决策轴组合成 14 个配方：
+    从属怎么表达 / 行怎么组织 / 保存与反馈 / 动作入口 / 材质 / 附加层。
+  被否的 10 个（就地编辑、值块、大字号、母版副本、拖放、面包屑、对话、属性网格、代码块、工程风）不再出现。
+
+  颜色取真值（现场：底 #080808／卡面 #101010／正文 #e0e0e0／强调 #f8b080）。
+  内容逐字取自真面板（packages/plugin-bill-ilife/src/settings.ts 与 client.ts）。
+-->
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit}
+.tb{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 20px;background:#101013;border-bottom:1px solid #232329}
+.tb h1{font-size:14.5px;margin:0;font-weight:600;color:#e8e8ec}
+.tb .sub{font-size:12.5px;color:#8b8b95}
+.tb .sp{flex:1}
+.tbtn{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.tbtn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.tbtn.acc{background:#2f6fed;border-color:#2f6fed;color:#fff}
+.prog{font-size:12.5px;color:#9a9aa4}
+.wrap{display:flex;flex-direction:column;align-items:center;padding:18px 14px 130px}
+.strip{width:560px;padding:10px 13px;border:1px solid #232329;border-radius:10px;background:#101013;margin-bottom:10px}
+.strip .s1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.strip .no{font-size:12.5px;color:#8b8b95;font-variant-numeric:tabular-nums}
+.strip .nm{font-size:14.5px;font-weight:600;color:#e8e8ec}
+.strip .fam{font-size:11px;color:#cfcfd4;border:1px solid #2b2b33;border-radius:999px;padding:1px 7px;background:#17171c}
+.strip .what{font-size:12px;color:#9a9aa4;margin-top:5px;line-height:1.6}
+.strip .size{font-size:11.5px;color:#7c7c7c;margin-top:6px}
+.frame{position:relative;width:560px}
+.stage{width:560px;background:var(--bg);color:var(--text);border-radius:12px;padding:18px 20px 20px;font-family:var(--font,inherit)}
+.vline{position:absolute;left:-10px;right:-10px;top:580px;border-top:1px dashed #e0a33e;pointer-events:none}
+.vline span{position:absolute;right:0;top:-16px;font-size:10.5px;color:#e0a33e;background:#050505;padding:0 5px}
+
+/* 通用件 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.ctitle{font-size:13.5px;font-weight:640}
+.cmeta{color:var(--muted);font-size:11.5px;margin-top:4px;word-break:break-all;line-height:1.5}
+.cmeta .k{color:var(--faint);margin-right:5px}
+.mono,code{font-family:var(--mono);font-size:11.5px}
+.muted{color:var(--muted);font-size:12px;line-height:1.55}
+.faint{color:var(--faint);font-size:11.5px;line-height:1.5}
+.btn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accentInk);font-weight:500}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.mini{font-size:11px;padding:2px 7px;color:var(--muted)}
+.btn[disabled]{opacity:.4}
+.f{width:100%;background:var(--inputBg);border:1px solid var(--inputLine);border-radius:5px;color:var(--text);padding:5px 8px;font-family:var(--font);font-size:12.5px}
+.chipr{font-size:10.5px;border:1px solid var(--line2);border-radius:999px;padding:0 6px;color:var(--faint);margin-left:7px;font-weight:400;white-space:nowrap}
+.chipa{font-size:10.5px;border:1px solid var(--accent);border-radius:999px;padding:0 6px;color:var(--accent);margin-left:7px;font-weight:400;white-space:nowrap}
+.lt{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.lt.ok{background:#4ec9a0}.lt.warn{background:#e0a33e}.lt.off{background:#4a4a52}
+.bar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--line);padding-top:11px}
+.rowl{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rowl:last-child{border-bottom:0}
+.kv{display:flex;flex-direction:column;min-width:0;flex:1}
+.kv .k2{font-size:12.5px;font-weight:550;display:flex;align-items:center}
+.kv .v2{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all}
+.acts{display:flex;gap:4px;flex:0 0 auto}
+
+/* 从属 */
+.under{margin-left:8px;border-left:1px solid var(--line2);padding-left:13px;margin-top:5px}
+.under .ui{display:grid;grid-template-columns:112px 1fr auto;gap:4px 10px;padding:6px 0;align-items:baseline;border-bottom:1px solid var(--line)}
+.under .ui:last-child{border-bottom:0}
+.under .uk{font-size:11.5px;color:var(--muted)}
+.under .uv{font-family:var(--mono);font-size:11px;word-break:break-all}
+.eq{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all}
+.eq b{color:var(--accent);font-weight:500}
+.tree{font-size:12px;margin-top:10px}
+.tnode{display:flex;gap:8px;align-items:center;padding:5px 0}
+.tnode .glyph{color:var(--faint);width:12px;text-align:center}
+.tkids{margin-left:13px;border-left:1px solid var(--line);padding-left:10px}
+.badge{font-size:10px;border:1px solid var(--line2);border-radius:999px;padding:0 5px;color:var(--faint)}
+.ios{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ios .ir{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.ios .ir:last-child{border-bottom:0}
+.ios .ir .val{margin-left:auto;color:var(--muted);font-size:11px;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+.ios .ir .ch{color:var(--faint)}
+.acc details{border:1px solid var(--line);border-radius:9px;margin-top:8px;background:var(--surface2);overflow:hidden}
+.acc summary{cursor:pointer;padding:10px 12px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px;list-style:none}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::before{content:'›';color:var(--muted)}
+.acc details[open] summary::before{transform:rotate(90deg);display:inline-block}
+.acc .abody{padding:2px 12px 12px}
+.blk{border:1px solid var(--line);border-radius:9px;padding:11px 12px;background:var(--surface2);margin-top:9px}
+.blk .t{display:flex;align-items:center;font-size:12.5px;font-weight:600}
+.blk .v{font-family:var(--mono);font-size:11px;margin-top:6px;word-break:break-all}
+.blk .m{font-size:11px;color:var(--faint);margin-top:6px}
+table.tb3{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+table.tb3 th{text-align:left;font-weight:600;color:var(--faint);font-size:10.5px;padding:7px 6px;border-bottom:1px solid var(--line2);white-space:nowrap}
+table.tb3 td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.tb3 tr:last-child td{border-bottom:0}
+.dif{background:#0a0a0c;border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11.5px;overflow:hidden;margin-top:10px}
+.dif .h{padding:8px 11px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px}
+.dif .l{padding:2px 11px;white-space:pre}
+.dif .del{background:rgba(224,90,80,.13);color:#e08d86}
+.dif .add{background:rgba(78,201,160,.13);color:#7ed3b2}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;padding:3px;gap:0}
+.seg .btn{border:0;border-radius:6px}
+.toast{display:flex;align-items:center;gap:9px;margin-top:11px;padding:9px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--surface3);font-size:12px}
+.toast .undo{margin-left:auto;color:var(--accent);cursor:pointer}
+.flash{display:inline-flex;align-items:center;gap:6px;color:#7ed3b2;font-size:11.5px}
+.dirtybar{display:flex;gap:8px;align-items:center;margin-top:12px;padding:9px 12px;border:1px solid var(--accent);border-radius:8px;background:var(--surface3)}
+.gl3{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.gl3 .g3in{background:var(--surface3);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;margin-top:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.gl3 .g3deep{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin-top:8px}
+
+/* 总览 */
+.ov{padding:20px 0 90px}
+.ovgrid{display:grid;grid-template-columns:repeat(3,354px);gap:16px;justify-content:center}
+.tile{border:1px solid #232329;border-radius:12px;overflow:hidden;background:#101013}
+.tilehead{padding:8px 10px;border-bottom:1px solid #202027;display:flex;gap:8px;align-items:baseline}
+.tilehead b{font-weight:600;color:#e8e8ec;font-size:12.5px}
+.tilehead .tt{color:#8b8b95;font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vb{font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap}
+.vb.g{background:rgba(78,201,160,.18);color:#4ec9a0}
+.vb.b{background:rgba(224,104,95,.16);color:#e0685f}
+.vb.n{background:#1b1b21;color:#77777f}
+.tilebox{width:354px;max-height:380px;overflow:hidden;cursor:zoom-in;position:relative}
+.tilebox .scaler{zoom:1;display:flex;justify-content:center}
+.tilebox .stage{transform:scale(.63);transform-origin:top center}
+.tilewrap{height:380px;overflow:hidden}
+.tilefoot{padding:7px 10px;border-top:1px solid #202027;display:flex;gap:6px;align-items:center}
+.tilefoot .mini{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#c8c8d0;cursor:pointer}
+.tilefoot .mini.g.on{background:rgba(78,201,160,.2);border-color:#4ec9a0;color:#4ec9a0}
+.tilefoot .mini.b.on{background:rgba(224,104,95,.18);border-color:#e0685f;color:#e0685f}
+
+/* 底栏 */
+.bbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 20px;background:rgba(16,16,19,.97);border-top:1px solid #26262c}
+.bbar .nav{font-size:12.5px;padding:5px 12px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.bbar .navk{font-size:12.5px;color:#9a9aa4;min-width:230px}
+.vote{font-size:13px;padding:6px 16px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.vote.g.on{background:#175c46;border-color:#2f9e78;color:#d6fff0}
+.vote.b.on{background:#5c2420;border-color:#b1493f;color:#ffdfdc}
+.bnote{flex:1;min-width:160px;font:inherit;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid #2e2e36;background:#141418;color:#e0e0e6}
+.kbd{font-size:11px;color:#77777f;border:1px solid #2e2e36;border-radius:5px;padding:0 5px}
+.mask{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{width:820px;max-width:100%;max-height:88vh;background:#141418;border:1px solid #2b2b33;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.modal h2{margin:0;font-size:15px;color:#e8e8ec}
+.modal p{margin:0;font-size:12.5px;color:#8b8b95;line-height:1.65}
+.modal textarea{width:100%;height:46vh;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;color:#dfe3ea;background:#0e0e11;border:1px solid #2b2b33;border-radius:10px;padding:11px}
+.modal .mrow{display:flex;gap:9px;justify-content:flex-end}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="tb">
+  <h1>配置区域原型 · 第三轮（真实窄列 560 宽）</h1>
+  <span class="sub">间距＝真机 · 逐版点「好看／不好看」→ 导出贴回</span>
+  <span class="sp"></span>
+  <span class="prog" id="prog"></span>
+  <button class="tbtn" id="btnOv">总览</button>
+  <button class="tbtn on" id="btnOne">逐版</button>
+  <button class="tbtn" id="btnTheme">主题：现场</button>
+  <button class="tbtn" id="btnLine">可视线：开</button>
+  <button class="tbtn acc" id="btnExp">导出判定</button>
+</div>
+<div id="view"></div>
+<footer class="bbar" id="bbar">
+  <button class="nav" id="prev">‹ 上一版</button>
+  <button class="nav" id="next">下一版 ›</button>
+  <span class="navk" id="navk"></span>
+  <button class="vote g" id="vg">好看 <span class="kbd">1</span></button>
+  <button class="vote b" id="vb">不好看 <span class="kbd">2</span></button>
+  <input class="bnote" id="bnote" placeholder="这一版为什么（可不填）">
+  <span class="sub" style="font-size:11.5px;color:#77777f">← → 翻版 · 0 清空</span>
+</footer>
+<div class="mask hidden" id="mask">
+  <div class="modal">
+    <h2>把这段贴回对话</h2>
+    <p>整段复制粘回对话即可。下半段是配方轴标，我按它收敛出最终形态。</p>
+    <textarea id="exp" readonly></textarea>
+    <div class="mrow"><button class="tbtn" id="copyBtn">复制</button><button class="tbtn" id="closeExp">关闭</button></div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var D={card:'饼干记账 · 配置',cfg:'C:\\Users\\辰辰洋洋\\.ilife\\bill.yaml',dir:'C:\\Users\\辰辰洋洋\\.ilife\\data',
+  db:'biscuit_accountant.db',goals:'goals.json',html:'biscuit_accountant_html',bdir:'backup',bstem:'biscuit_'};
+var THEMES={
+  live:{label:'现场',bg:'#080808',surface:'#101010',surface2:'#181818',surface3:'#202020',line:'#1c1c1c',line2:'#282828',text:'#e0e0e0',muted:'#a8a8a8',faint:'#7c7c7c',accent:'#f8b080',accentInk:'#1a1206',inputBg:'#0b0b0b',inputLine:'#282828'},
+  dshDark:{label:'DSH 深色',bg:'#151517',surface:'#232324',surface2:'#2c2c2e',surface3:'#353638',line:'#2a2a2c',line2:'#3a3a3d',text:'#f9fafb',muted:'#cfd3d6',faint:'#adb2b8',accent:'#f9fafb',accentInk:'#0f1115',inputBg:'#1b1b1c',inputLine:'#3a3a3d'},
+  dshLight:{label:'DSH 浅色',bg:'#ffffff',surface:'#ffffff',surface2:'#f9fafb',surface3:'#e9ecf2',line:'rgba(0,0,0,.10)',line2:'rgba(0,0,0,.18)',text:'#0f1115',muted:'#61666b',faint:'#81858c',accent:'#0f1115',accentInk:'#ffffff',inputBg:'#ffffff',inputLine:'rgba(0,0,0,.18)'}
+};
+var THEME='live';
+function tokens(){var t=THEMES[THEME],a=[];for(var k in t){if(k!=='label')a.push('--'+k+':'+t[k]);}
+  a.push('--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif');
+  a.push('--mono:ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace');return a.join(';');}
+var V=[];
+function add(id,fam,name,what,fn){V.push({id:id,fam:fam,name:name,what:what,fn:fn});}
+function styleHost(){var el=document.getElementById('vars');if(!el){el=document.createElement('style');el.id='vars';document.head.appendChild(el);}
+  el.textContent=V.map(function(v){return '[data-v="'+v.id+'"]{'+tokens()+'}';}).join('\n');}
+
+/* 内容 */
+var ROS=[{k:'库文件名',v:D.db},{k:'预算／账户文件名',v:D.goals},{k:'HELP 产物目录名',v:D.html},{k:'备份目录',v:D.bdir},{k:'备份文件名前缀',v:D.bstem}];
+function head(){return '<div class="ctitle">'+esc(D.card)+'</div><div class="cmeta"><span class="k">配置文件</span>'+esc(D.cfg)+'</div>';}
+function acts(){return '<div class="bar"><button class="btn pri">保存</button><button class="btn">重置为默认</button><button class="btn">重新读取</button></div>';}
+function ro(u){return '<span class="acts"><button class="btn mini">复制</button><button class="btn mini">打开</button></span>';}
+function editRow(){return '<div class="kv"><div class="k2">数据目录<span class="chipa">可改</span></div><input class="f" style="margin-top:6px" value="'+esc(D.dir)+'">'+
+  '<div style="display:flex;gap:5px;margin-top:6px"><button class="btn mini">浏览…</button><button class="btn mini">用默认位置</button></div></div>';}
+
+/* 组合配方 */
+add(1,'竖线 + 行尾三动作 + 脏态条','配方 A','保守形态：数据目录在上，5 项用竖线挂在下面；每行行尾挂复制／打开；只在有改动时浮出保存条。',function(){
+  var h='<div class="card">'+head()+'<div style="margin-top:11px">'+editRow()+
+  '<div class="under">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+ro()+'</div>';}).join('')+'</div></div>';
+  return h+'<div class="dirtybar"><span style="color:var(--accent);font-size:12px">改了 1 项，还没保存</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn pri">保存</button><button class="btn">放弃</button></span></div></div>';
+});
+add(2,'竖线 + 自动保存回执','配方 B','同 A 的骨架，但不要保存按钮：改完失焦即存，底部一行回执写「什么时候写进去的、备份在哪」。',function(){
+  return '<div class="card">'+head()+'<div style="margin-top:11px">'+editRow()+
+  '<div class="under">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+ro()+'</div>';}).join('')+'</div></div>'+
+  '<div style="display:flex;gap:8px;align-items:center;margin-top:12px;border-top:1px solid var(--line);padding-top:11px">'+
+  '<span class="lt ok"></span><span class="faint">已写入 bill.yaml · 20:41 · 原文件备份为 .bak</span><button class="btn ghost" style="margin-left:auto">重新读取</button></div></div>';
+});
+add(3,'竖线 + 撤销条','配方 C','同 A 的骨架，保存后底部出「已写入 · 撤销」，5 秒内可退。',function(){
+  return '<div class="card">'+head()+'<div style="margin-top:11px">'+editRow()+
+  '<div class="under">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+ro()+'</div>';}).join('')+'</div>'+
+  acts()+'</div><div class="toast"><span class="lt ok"></span><span>已写入 bill.yaml（原文件备份为 .bak）</span><span class="undo">撤销</span><span class="faint">5s</span></div>';
+});
+add(4,'算式 + 分段控件','配方 D','只读项写成 `= ‹数据目录› \\ 文件名`，明说「这是算出来的」；三个动作合成一段分段控件。',function(){
+  var eq=[['库文件名','biscuit_accountant.db'],['预算／账户文件名','goals.json'],['HELP 产物目录名','biscuit_accountant_html'],['备份目录','backup'],['备份文件名前缀','biscuit_ + 时间戳']];
+  return '<div class="card">'+head()+'<div class="rowl" style="border-bottom:1px solid var(--line)">'+editRow()+'</div>'+
+  eq.map(function(r){return '<div class="rowl"><div class="kv"><div class="k2">'+r[0]+'<span class="chipr">只读</span></div><div class="eq">= <b>‹数据目录›</b> \\ '+esc(r[1])+'</div></div>'+ro()+'</div>';}).join('')+
+  '<div style="display:flex;justify-content:flex-end;margin-top:12px"><span class="seg"><button class="btn" disabled>保存</button><button class="btn">重置</button><button class="btn">重读</button></span></div></div>';
+});
+add(5,'树 + 脏态条','配方 E','真目录树当主视图，文件节点行尾挂动作；有改动时浮出保存条。',function(){
+  return '<div class="card">'+head()+'<div class="tree">'+
+  '<div class="tnode" style="background:var(--surface2);border-radius:6px;padding:5px 8px"><span class="glyph">▾</span><span style="font-weight:550">data</span><span class="badge">数据目录 · 可改</span></div>'+
+  '<div class="tkids">'+
+  '<div class="tnode"><span class="glyph">·</span><span>biscuit_accountant.db</span><span class="badge">库</span>'+ro()+'</div>'+
+  '<div class="tnode"><span class="glyph">·</span><span>goals.json</span><span class="badge">预算</span>'+ro()+'</div>'+
+  '<div class="tnode"><span class="glyph">▸</span><span style="color:var(--muted)">biscuit_accountant_html</span><span class="badge">产物</span>'+ro()+'</div>'+
+  '<div class="tnode"><span class="glyph">▸</span><span>backup</span><span class="badge">备份</span>'+ro()+'</div>'+
+  '</div></div>'+
+  '<div class="dirtybar"><span style="color:var(--accent);font-size:12px">改了 1 项，还没保存</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn pri">保存</button><button class="btn">放弃</button></span></div></div>';
+});
+add(6,'iOS 列表 + 自动保存','配方 F','分组列表、行高 40、值靠右省略、行尾 ›；改完自动存，底部一行回执。手机上最好用的一套。',function(){
+  return '<div class="card" style="padding:12px">'+
+  '<div style="font-size:11px;color:var(--faint);padding:0 2px 6px">落点</div><div class="ios">'+
+  '<div class="ir"><span>数据目录</span><span class="val">…\\.ilife\\data</span><span class="ch">›</span></div>'+
+  ROS.slice(0,2).map(function(r){return '<div class="ir"><span>'+esc(r.k)+'</span><span class="val">'+esc(r.v)+'</span><span class="ch">›</span></div>';}).join('')+'</div>'+
+  '<div style="font-size:11px;color:var(--faint);padding:12px 2px 6px">产物与备份</div><div class="ios">'+
+  ROS.slice(2).map(function(r){return '<div class="ir"><span>'+esc(r.k)+'</span><span class="val">'+esc(r.v)+'</span><span class="ch">›</span></div>';}).join('')+'</div>'+
+  '<div style="display:flex;gap:8px;align-items:center;margin-top:11px"><span class="lt ok"></span><span class="faint">已写入 · 20:41</span><button class="btn ghost" style="margin-left:auto">重新读取</button></div></div>';
+});
+add(7,'iOS 列表 + 撤销条 + 玻璃','配方 G','iOS 列表套一层玻璃材质（底／面／浮三档 + 内高光），保存后出撤销条。',function(){
+  return '<div class="gl3">'+head()+'<div class="g3in" style="padding:8px 10px">'+
+  '<div class="rowl" style="padding:4px 0;border-bottom:1px solid var(--line2)"><div class="kv"><div class="k2">数据目录<span class="chipa">可改</span></div></div><button class="btn mini">改</button></div>'+
+  ROS.map(function(r){return '<div class="rowl" style="padding:4px 0;border-bottom:1px solid var(--line)"><div class="kv"><div class="k2" style="font-weight:500;font-size:12px">'+esc(r.k)+'</div></div><span class="uv mono" style="color:var(--muted);max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.v)+'</span><span class="ch faint">›</span></div>';}).join('')+
+  '</div><div style="display:flex;gap:7px;margin-top:11px"><button class="btn pri">保存</button><button class="btn">重新读取</button></div></div>'+
+  '<div class="toast"><span class="lt ok"></span><span>已写入 bill.yaml</span><span class="undo">撤销</span></div>';
+});
+add(8,'折叠分区 + 脏态条','配方 H','只开「落点」一段，其余折叠，段标题印当前值摘要；改动时浮出保存条。',function(){
+  return '<div class="card acc">'+head()+
+  '<details open><summary>落点<span class="faint" style="margin-left:auto;font-weight:400;font-family:var(--mono);font-size:11px">…\\.ilife\\data</span></summary><div class="abody">'+
+  '<div class="faint">库文件与备份的根目录。留空＝用默认目录。</div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'">'+
+  ROS.slice(0,2).map(function(r){return '<div style="margin-top:9px;display:flex;align-items:center"><div><div style="font-size:12px;font-weight:550">'+esc(r.k)+'</div><div class="mono faint" style="margin-top:2px">'+esc(r.v)+'</div></div>'+ro()+'</div>';}).join('')+
+  '</div></details>'+
+  '<details><summary>产物与备份<span class="faint" style="margin-left:auto;font-weight:400">3 项</span></summary><div class="abody">'+
+  ROS.slice(2).map(function(r){return '<div style="margin-top:6px"><div style="font-size:12px;font-weight:550">'+esc(r.k)+'</div><div class="mono faint" style="margin-top:2px">'+esc(r.v)+'</div></div>';}).join('')+'</div></details>'+
+  '<div class="dirtybar"><span style="color:var(--accent);font-size:12px">改了 1 项</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn pri">保存</button><button class="btn">放弃</button></span></div></div>';
+});
+add(9,'卡片 + 轻量信息（带口径）','配方 I','窄列下单列卡片；每张卡的轻量信息**写明口径**：「库文件 7.1 MB · 7412 条记录 · 3 分钟前写过」——回答上一轮你问的「这数字哪来的」。',function(){
+  function card(t,v,m,ro,fox){return '<div class="blk"'+(fox?' style="border-color:var(--accent)"':'')+'><div class="t">'+t+(fox?'<span class="chipa">可改</span>':'<span class="chipr">只读</span>')+'</div>'+
+    '<div class="v">'+esc(v)+'</div>'+(m?'<div class="m">'+m+'</div>':'')+(fox?'<div style="display:flex;gap:5px;margin-top:8px"><button class="btn mini">改</button><button class="btn mini">浏览…</button></div>':'')+'</div>';}
+  return '<div class="card" style="padding:12px">'+head()+
+  card('数据目录',D.dir,'目录里现在 3 个文件 · 共 12.4 MB · 1 分钟前写过',false,true)+
+  card('库文件名',D.db,'这个文件 7.1 MB · 7412 条记账记录 · 3 分钟前写过',true)+
+  card('预算／账户文件名',D.goals,'这个文件 412 B · 3 个预算目标 · 昨天改过',true)+
+  card('HELP 产物目录名',D.html,'这个目录还没建 · 说一次「饼干记账HELP」就会建',true)+
+  card('备份目录',D.bdir,'这个目录 7 份备份 · 最近一份 3 天前',true)+
+  card('备份文件名前缀',D.bstem,'文件名形如 biscuit_20260921_1830.db',true)+
+  acts()+'</div>';
+});
+add(10,'窄列数据表','配方 J','五列砍到三列：落点 · 当前值 · 动作（来源与信息并在提示里）。窄列下最容易扫。',function(){
+  var rows=[['数据目录',D.dir,'改'],['库文件名',D.db,'复制'],['预算／账户文件名',D.goals,'复制'],['HELP 产物目录名',D.html,'生成'],['备份目录',D.bdir,'打开'],['备份文件名前缀',D.bstem,'复制']];
+  return '<div class="card" style="padding:12px 13px">'+head()+
+  '<table class="tb3"><thead><tr><th>落点</th><th>当前值</th><th style="text-align:right">动作</th></tr></thead><tbody>'+
+  rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="mono">'+esc(r[1])+'</td><td style="text-align:right"><button class="btn mini">'+r[2]+'</button></td></tr>';}).join('')+
+  '</tbody></table>'+acts()+'</div>';
+});
+add(11,'显式编辑态 + 脏态条 + 玻璃','配方 K','平时是只读快照 +「编辑」按钮；点开会变表单并浮出保存条。改配置是一件「明确开始」的事。',function(){
+  return '<div class="gl3"><div style="display:flex;align-items:center"><div class="ctitle">'+esc(D.card)+'</div><button class="btn" style="margin-left:auto">编辑</button></div>'+
+  '<div class="cmeta" style="margin-top:4px"><span class="k">配置文件</span>'+esc(D.cfg)+'</div>'+
+  ROS.map(function(r){return '<div class="rowl" style="padding:7px 0"><div class="kv"><div class="k2" style="font-weight:500">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div><span class="faint" style="font-size:10.5px">只读</span></div>';}).join('')+
+  '<div class="g3in" style="border-color:var(--accent)"><div class="k2" style="font-size:12.5px;font-weight:600">数据目录<span class="chipa">正在编辑</span></div>'+
+  '<input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>'+
+  '<div class="dirtybar"><span style="color:var(--accent);font-size:12px">1 项未保存</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn pri">保存</button><button class="btn">取消</button></span></div></div>';
+});
+add(12,'保存时的 diff 确认层','配方 L','点保存之后、真正落盘之前，插一层补丁预览：改的是哪一行、旧值新值分别是什么。把「我到底改了什么」变成看得见的一步。',function(){
+  return '<div class="card">'+head()+'<div class="rowl" style="border-bottom:1px solid var(--line)">'+editRow()+'</div>'+
+  ROS.map(function(r){return '<div class="rowl"><div class="kv"><div class="k2" style="font-weight:500">'+esc(r.k)+'<span class="chipr">只读</span></div><div class="v2">'+esc(r.v)+'</div></div></div>';}).join('')+
+  '<div class="dif"><div class="h">保存后要写入 '+esc(D.cfg)+' 的这一行</div>'+
+  '<div class="l del">-  db.dir     C:\\Users\\辰辰洋洋\\.ilife\\data</div>'+
+  '<div class="l add">+  db.dir     D:\\账本</div></div>'+
+  '<div class="faint" style="margin-top:8px">库文件 · 预算文件 · 产物目录 · 备份目录 4 项跟着变（它们不在文件里写死）</div>'+
+  '<div class="bar"><button class="btn pri">确认写入</button><button class="btn">改回去</button><button class="btn ghost">先备份再写</button></div></div>';
+});
+add(13,'竖线 + 轻量信息（保守版）','配方 M','竖线骨架不变，只在**那一行值下面**加一句有口径的信息，且只给「在不在／多大／什么时候写过」这三样。上一轮被否的 04 的修正版。',function(){
+  return '<div class="card">'+head()+'<div style="margin-top:11px">'+editRow()+
+  '<div class="faint" style="margin-top:6px">这个目录里现在 3 个文件，共 12.4 MB，1 分钟前写过。</div>'+
+  '<div class="under">'+ROS.map(function(r,i){
+    var info=['7.1 MB · 7412 条记录','412 B · 3 个目标','目录还没建','7 份备份','后面自动加时间戳'][i];
+    return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+ro()+'</div>'+
+      '<div style="padding:0 0 6px 0;margin-top:-2px" class="faint">'+info+'</div>';}).join('')+'</div></div>'+acts()+'</div>';
+});
+add(14,'跟随主题的浅色','配方 N','同一套骨架，浅色下走纸感（暖白、细下划线值），深色下自动回深色。不做固定浅色皮肤。',function(){
+  return '<div class="card">'+head()+'<div style="margin-top:11px"><div class="k2" style="font-size:12.5px;font-weight:600">数据目录<span class="chipa">可改</span></div>'+
+  '<input class="f" style="margin-top:6px" value="'+esc(D.dir)+'"></div>'+
+  '<div class="under">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+ro()+'</div>';}).join('')+'</div>'+
+  acts()+'</div>';
+});
+
+/* 渲染 */
+function norm(h){var t=document.createElement('div');t.innerHTML=h;return t.innerHTML;}
+function stageHTML(v){return '<div class="stage" data-v="'+v.id+'">'+norm(v.fn())+'</div>';}
+function frameHTML(v,line){
+  return '<div class="frame">'+stageHTML(v)+(line?'<div class="vline"><span>真机可视高度到此（约 580px）</span></div>':'')+'</div>';
+}
+function stripHTML(v){return '<div class="strip"><div class="s1"><span class="no">配方 '+v.id+' / '+V.length+'</span><span class="nm">'+esc(v.name)+'</span><span class="fam">'+esc(v.fam)+'</span></div>'+
+  '<div class="what">'+esc(v.what)+'</div><div class="size">设计尺寸 560 宽（真机可视约 550 × 580，可上下滚动）；虚线＝真机可视高度</div></div>';}
+var KEY='ilife-panel-cfg3-v1';
+var store={votes:{},top:''};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);store.votes=p.votes||{};store.top=p.top||'';}}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+var cur=1,mode='one',showLine=true;
+function vById(id){for(var i=0;i<V.length;i++){if(V[i].id===id)return V[i];}return V[0];}
+var view=document.getElementById('view'),bbar=document.getElementById('bbar');
+function renderOne(){
+  var v=vById(cur);document.title='配方 '+v.id+' · '+v.name;
+  view.innerHTML='<div class="wrap">'+stripHTML(v)+frameHTML(v,showLine)+'</div>';
+  bbar.classList.remove('hidden');
+  var rec=store.votes[v.id]||{};
+  document.getElementById('vg').classList.toggle('on',rec.vote==='good');
+  document.getElementById('vb').classList.toggle('on',rec.vote==='bad');
+  document.getElementById('bnote').value=rec.note||'';
+  document.getElementById('navk').textContent='配方 '+v.id+' · '+v.name;
+  updateProg();
+}
+function tileHTML(v){
+  var rec=store.votes[v.id]||{},cls=rec.vote==='good'?'g':(rec.vote==='bad'?'b':'n');
+  var txt=rec.vote==='good'?'好看':(rec.vote==='bad'?'不好看':'未评');
+  return '<div class="tile"><div class="tilehead"><b>'+v.id+'</b><span class="tt">'+esc(v.name)+'</span><span class="vb '+cls+'">'+txt+'</span></div>'+
+  '<div class="tilebox" data-open="'+v.id+'" title="点开看整版"><div class="scaler">'+frameHTML(v,false)+'</div></div>'+
+  '<div class="tilefoot"><button class="mini g'+(rec.vote==='good'?' on':'')+'" data-vote="'+v.id+':good">好看</button>'+
+  '<button class="mini b'+(rec.vote==='bad'?' on':'')+'" data-vote="'+v.id+':bad">不好看</button>'+
+  '<span style="flex:1"></span><span style="font-size:11px;color:#66666e">'+esc(v.fam)+'</span></div></div>';
+}
+function renderOverview(){
+  document.title='配置区域 · 第三轮总览';
+  view.innerHTML='<div class="ov"><div style="max-width:1100px;margin:0 auto 16px;font-size:12.5px;color:#8b8b95;line-height:1.8">'+
+  '全部按真机窄列（560 宽）画，格子里的缩略是按比例缩过的。点格子看整版。<br>'+
+  '最想留下的三版：<input id="topin" class="bnote" style="display:inline-block;width:240px;min-width:0;padding:3px 8px" placeholder="填配方号，例：01、04、12" value="'+esc(store.top)+'"></div>'+
+  '<div class="ovgrid">'+V.map(tileHTML).join('')+'</div></div>';
+  bbar.classList.add('hidden');updateProg();
+}
+function updateProg(){var g=0,b=0;V.forEach(function(v){var r=store.votes[v.id];if(r&&r.vote==='good')g++;if(r&&r.vote==='bad')b++;});
+  document.getElementById('prog').textContent='已评 '+(g+b)+' / '+V.length+'（好看 '+g+' · 不好看 '+b+'）';}
+function vote(kind){var id=vById(cur).id,rec=store.votes[id]||{};rec.vote=(rec.vote===kind)?null:kind;if(!rec.vote)delete rec.vote;
+  rec.note=document.getElementById('bnote').value||'';store.votes[id]=rec;persist();renderOne();}
+function goto(id){cur=Math.min(V.length,Math.max(1,id));renderOne();}
+document.getElementById('vg').onclick=function(){vote('good');};
+document.getElementById('vb').onclick=function(){vote('bad');};
+document.getElementById('prev').onclick=function(){goto(cur-1);};
+document.getElementById('next').onclick=function(){goto(cur+1);};
+document.getElementById('bnote').oninput=function(){var id=vById(cur).id,rec=store.votes[id]||{};rec.note=this.value;store.votes[id]=rec;persist();};
+function syncMode(){document.getElementById('btnOne').classList.toggle('on',mode==='one');document.getElementById('btnOv').classList.toggle('on',mode==='ov');}
+document.getElementById('btnOne').onclick=function(){mode='one';syncMode();renderOne();};
+document.getElementById('btnOv').onclick=function(){mode='ov';syncMode();renderOverview();};
+document.getElementById('btnLine').onclick=function(){showLine=!showLine;this.textContent='可视线：'+(showLine?'开':'关');if(mode==='one')renderOne();};
+var TK=['live','dshDark','dshLight'],ti=0;
+document.getElementById('btnTheme').onclick=function(){ti=(ti+1)%TK.length;THEME=TK[ti];styleHost();this.textContent='主题：'+THEMES[THEME].label;if(mode==='one')renderOne();else renderOverview();};
+view.addEventListener('click',function(e){var t=e.target;if(!t||!t.getAttribute)return;
+  if(t.getAttribute('data-open')){goto(parseInt(t.getAttribute('data-open'),10));return;}
+  if(t.getAttribute('data-vote')){var a=t.getAttribute('data-vote').split(':'),id=parseInt(a[0],10),k=a[1];
+    var rec=store.votes[id]||{};rec.vote=(rec.vote===k)?null:k;if(!rec.vote)delete rec.vote;store.votes[id]=rec;persist();renderOverview();}});
+view.addEventListener('input',function(e){if(e.target&&e.target.id==='topin'){store.top=e.target.value;persist();}});
+document.addEventListener('keydown',function(e){if(mode!=='one')return;
+  var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+  if(e.key==='ArrowLeft'){goto(cur-1);}else if(e.key==='ArrowRight'){goto(cur+1);}
+  else if(e.key==='1'){vote('good');}else if(e.key==='2'){vote('bad');}
+  else if(e.key==='0'){var id=vById(cur).id;store.votes[id]={note:''};persist();renderOne();}});
+function pad(x){return x<10?'0'+x:''+x;}
+function exportText(){
+  var g=[],b=[],n=[];V.forEach(function(v){var r=store.votes[v.id];if(r&&r.vote==='good')g.push(v.id);else if(r&&r.vote==='bad')b.push(v.id);else n.push(v.id);});
+  var L=['配置区域原型（第三轮·窄列）· 判定回执（14 配方 · 主题＝'+THEMES[THEME].label+'）','',
+    '好看（'+g.length+'）：'+(g.map(pad).join('、')||'—'),
+    '不好看（'+b.length+'）：'+(b.map(pad).join('、')||'—'),
+    '未评（'+n.length+'）：'+(n.map(pad).join('、')||'—'),
+    '最想留下的三版：'+(store.top||'—'),'','— 逐版备注 —'];
+  V.forEach(function(v){var r=store.votes[v.id];if(r&&r.note)L.push(pad(v.id)+' '+v.name+'：'+r.note);});
+  L.push('','— 逐版（配方|名称|判定|备注）—');
+  V.forEach(function(v){var r=store.votes[v.id]||{};L.push([pad(v.id),v.name,(r.vote||'none'),(r.note||'').replace(/\|/g,'/')].join('|'));});
+  return L.join('\n');
+}
+document.getElementById('btnExp').onclick=function(){document.getElementById('exp').value=exportText();document.getElementById('mask').classList.remove('hidden');};
+document.getElementById('closeExp').onclick=function(){document.getElementById('mask').classList.add('hidden');};
+document.getElementById('copyBtn').onclick=function(){var ta=document.getElementById('exp');ta.select();
+  try{document.execCommand('copy');this.textContent='已复制';}catch(e){this.textContent='请手动全选复制';}
+  var self=this;setTimeout(function(){self.textContent='复制';},1600);};
+document.getElementById('mask').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+styleHost();syncMode();
+var q=/[?&]v=(\d+)/.exec(location.search),dv=q?parseInt(q[1],10):0;
+if(dv>=1&&dv<=V.length){mode='one';cur=dv;syncMode();renderOne();}else{mode='ov';syncMode();renderOverview();}
+})();
+</script>
+</body>
+</html>

@@ -97,6 +97,8 @@ function baseName(name: string): string {
   return m ? m[1] : name;
 }
 
+const cell = (v: unknown): string => escapeHtml(String(v ?? '').trim() || '—');
+
 function groupCount(name: string): string {
   const m = name.match(/×(\d+)$/);
   return m ? m[1] : '1';
@@ -121,24 +123,21 @@ export function renderFamilyPage(env: Envelope): string {
     const n = groupCount(String(head?.name ?? ''));
     return '<h3>' + escapeHtml(g) + '</h3>'
       + '<div class="wrap-x"><table class="kv">'
-      + row('组内件数', escapeHtml(n))
-      + row('首件状态', escapeHtml(String(head?.status ?? '')))
-      + row('位置/数量', escapeHtml(String(head?.location ?? '')) + '，共 ' + escapeHtml(String(head?.quantity ?? '')) + ' 件')
-      + row('分类', escapeHtml(String(head?.category ?? '')))
+      + row('组内件数', cell(n))
+      + row('首件状态', cell(head?.status))
+      + row('位置/数量', cell(head?.location) + '，共 ' + cell(head?.quantity) + ' 件')
+      + row('分类', cell(head?.category))
       + row('价格', '—')
       + '</table></div>';
   }).join('');
   const body = names.length
-    ? '<p>共 ' + names.length + ' 组疑似重复，点开每组看组内件数与首件状态。</p>' + tables
-      + '<p class="note">横线表示本次回执没有带出该字段。</p>'
+    ? '<p>共 ' + names.length + ' 组疑似重复。</p>' + tables
     : '<div class="hm-empty">没有发现重复物品，各自都是独立录入的。</div>';
   const content = PAGE_CSS
     + '<p class="greet">查重复把同名的归到一组，组内几件，首件什么状态，一目了然。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>重复分组</h2>' + body + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>空态说明</h2>'
-    + '<p>没有重复时上节直接提示，各自独立录入即可。</p></section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态说明</h2>'
-    + '<p>首件状态就是该组第一件的物品状态。</p></section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有重复时</h2><p>没有重复就各自独立录入，不必合并。</p></section>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2><p>首件状态就是该组第一件物品现在的状态。</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('独立录入', '请加载居家管家技能，帮我独立录入一件物品', false)
     + op('复制合并建议', '请加载居家管家技能，帮我复制合并建议', true)

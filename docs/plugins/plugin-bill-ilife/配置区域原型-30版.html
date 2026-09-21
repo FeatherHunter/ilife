@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置区域原型 30 版（只在画「配置」，不画体检）</title>
+<!--
+  原型件（不是生产代码，不参与构建，不承载任何真逻辑）。
+
+  本屏只画「配置区域」——就是 `饼干记账 · 配置` 这一张卡：
+    1 个可改（数据目录）＋ 5 个只读落点（库文件名／预算账户文件名／HELP 产物目录名／备份目录／备份文件名前缀）
+    ＋ 三个动作（保存／重置为默认／重新读取）。
+  页头（爱生活）、配置体检那一行、六个技能页签：本次不画（页签被体检功能占用）。
+
+  允许：配置区域对自己这些落点做**轻量自检**——体积、条数、最近写入时间、在不在、可不可写（你点名要的方向 04 那类）。
+  不做：体检功能本身（另有专门的结果展示区域）。
+
+  颜色取真值（现场：底 #080808／卡面 #101010／正文 #e0e0e0／强调 #f8b080）。
+  内容逐字取自真面板（packages/plugin-bill-ilife/src/settings.ts 与 client.ts）。
+-->
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit}
+.tb{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 20px;background:#101013;border-bottom:1px solid #232329}
+.tb h1{font-size:14.5px;margin:0;font-weight:600;color:#e8e8ec}
+.tb .sub{font-size:12.5px;color:#8b8b95}
+.tb .sp{flex:1}
+.tbtn{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.tbtn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.tbtn.acc{background:#2f6fed;border-color:#2f6fed;color:#fff}
+.prog{font-size:12.5px;color:#9a9aa4}
+.stagewrap{display:flex;justify-content:center;padding:18px 14px 130px}
+.stage{width:1040px;flex:0 0 auto;background:var(--bg);color:var(--text);border-radius:12px;padding:22px 26px 26px;font-family:var(--font,inherit)}
+.strip{width:1040px;flex:0 0 auto;padding:10px 14px;border:1px solid #232329;border-radius:10px;background:#101013;margin-bottom:12px}
+.strip .s1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.strip .no{font-size:13px;color:#8b8b95;font-variant-numeric:tabular-nums}
+.strip .nm{font-size:15px;font-weight:600;color:#e8e8ec}
+.strip .fam{font-size:11.5px;color:#cfcfd4;border:1px solid #2b2b33;border-radius:999px;padding:1px 8px;background:#17171c}
+.strip .what{font-size:12.5px;color:#9a9aa4;margin-top:5px;line-height:1.6}
+.only{font-size:11.5px;color:#7c7c7c;margin-top:6px}
+
+/* 通用件 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.ctitle{font-size:14.5px;font-weight:640}
+.ctitle.sm{font-size:13px;font-weight:600}
+.cmeta{color:var(--muted);font-size:12.5px;margin-top:5px;word-break:break-all;line-height:1.6}
+.cmeta .k{color:var(--faint);margin-right:6px}
+.mono,code{font-family:var(--mono);font-size:12.5px}
+.muted{color:var(--muted);font-size:12.5px;line-height:1.6}
+.faint{color:var(--faint);font-size:12px;line-height:1.6}
+.btn{font-size:12.5px;padding:5px 12px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accentInk);font-weight:500}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.mini{font-size:11.5px;padding:2px 8px;color:var(--muted)}
+.btn[disabled]{opacity:.4}
+.f{width:100%;background:var(--inputBg);border:1px solid var(--inputLine);border-radius:6px;color:var(--text);padding:6px 10px;font-family:var(--font);font-size:13px}
+.chipr{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:0 7px;color:var(--faint);margin-left:8px;font-weight:400;white-space:nowrap}
+.chipa{font-size:11px;border:1px solid var(--accent);border-radius:999px;padding:0 7px;color:var(--accent);margin-left:8px;font-weight:400;white-space:nowrap}
+.lt{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.lt.ok{background:#4ec9a0}.lt.warn{background:#e0a33e}.lt.off{background:#4a4a52}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px}
+.blk{border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:var(--surface2)}
+.blk .t{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.blk .v{font-family:var(--mono);font-size:12.5px;color:var(--text);margin-top:8px;word-break:break-all}
+.blk .m{font-size:11.5px;color:var(--faint);margin-top:7px;display:flex;gap:9px;flex-wrap:wrap}
+.rows{margin-top:13px}
+.row{border-top:1px solid var(--line);padding:11px 0}
+.row:first-child{border-top:0}
+.rowl{display:flex;align-items:center;gap:9px}
+.kv{display:flex;flex-direction:column;min-width:0;flex:1}
+.kv .k2{font-size:13px;font-weight:550;display:flex;align-items:center}
+.kv .v2{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px;word-break:break-all}
+.acts{display:flex;gap:5px;flex:0 0 auto}
+
+/* 从属 */
+.under{margin-left:10px;border-left:1px solid var(--line2);padding-left:16px;margin-top:6px}
+.under .ui{display:grid;grid-template-columns:158px 1fr;gap:3px 14px;padding:6px 0;align-items:baseline}
+.under .uk{font-size:12.5px;color:var(--muted)}
+.under .uv{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.eq{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:3px}
+.eq b{color:var(--accent);font-weight:500}
+.tree{font-size:12.5px;margin-top:12px}
+.tnode{display:flex;gap:9px;align-items:center;padding:6px 0}
+.tnode .glyph{color:var(--faint);width:13px;text-align:center}
+.tnode .vv{font-family:var(--mono);color:var(--muted);margin-left:auto}
+.tkids{margin-left:15px;border-left:1px solid var(--line);padding-left:11px}
+.badge{font-size:10.5px;border:1px solid var(--line2);border-radius:999px;padding:0 6px;color:var(--faint)}
+.crumb{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.crumb .seg{font-family:var(--mono);font-size:12.5px;padding:5px 10px;border:1px solid var(--line2);border-radius:6px;background:var(--surface2);cursor:pointer;white-space:nowrap}
+.crumb .seg.on{border-color:var(--accent);color:var(--accent)}
+.crumb .sp{color:var(--faint)}
+
+/* 编辑态与浮层 */
+.drawer{display:grid;grid-template-columns:1fr 388px;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:13px}
+.drow{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.drow:last-child{border-bottom:0}
+.drow.on{background:var(--surface2)}
+.dpanel{background:var(--surface2);border-left:1px solid var(--line);padding:15px}
+.dialog{margin-top:14px;border:1px solid var(--line2);border-radius:12px;background:var(--surface3);padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.drop{margin-top:14px;border:1px dashed var(--line2);border-radius:12px;padding:26px;text-align:center;background:var(--surface2)}
+.toast{display:flex;align-items:center;gap:11px;margin-top:14px;padding:10px 14px;border:1px solid var(--line2);border-radius:9px;background:var(--surface3);font-size:12.5px}
+.toast .undo{margin-left:auto;color:var(--accent);cursor:pointer}
+.flash{display:inline-flex;align-items:center;gap:7px;color:#7ed3b2;font-size:12.5px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;padding:3px;gap:0;margin-top:16px}
+.seg .btn{border:0;border-radius:7px}
+.acc details{border:1px solid var(--line);border-radius:10px;margin-top:10px;background:var(--surface2);overflow:hidden}
+.acc summary{cursor:pointer;padding:12px 15px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;list-style:none}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::before{content:'›';color:var(--muted)}
+.acc details[open] summary::before{transform:rotate(90deg);display:inline-block}
+.acc .abody{padding:2px 15px 14px}
+
+/* 表格与密集 */
+table.tb3{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}
+table.tb3 th{text-align:left;font-weight:600;color:var(--faint);font-size:11.5px;padding:9px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+table.tb3 td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.tb3 tr:last-child td{border-bottom:0}
+.pgrid{display:grid;grid-template-columns:180px 1fr;font-size:12.5px;margin-top:12px}
+.pgrid .pk{padding:6px 12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--line)}
+.pgrid .pv{padding:6px 12px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+.ios{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
+.ios .ir{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid var(--line);font-size:13.5px}
+.ios .ir:last-child{border-bottom:0}
+.ios .ir .val{margin-left:auto;color:var(--muted);font-size:12.5px;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ios .ir .ch{color:var(--faint)}
+
+/* 文本 */
+.code{background:#0a0a0c;border:1px solid var(--line);border-radius:9px;padding:11px 0;font-family:var(--mono);font-size:12.5px;line-height:1.95;overflow-x:auto;margin-top:12px}
+.code .ln{display:flex;gap:12px;padding:0 15px;white-space:pre}
+.code .no{color:#4a4a52;user-select:none;min-width:16px;text-align:right}
+.Tk{color:#8ab4f8}.Ts{color:#c3e88d}.Tc{color:#63636b}
+.dif{background:#0a0a0c;border:1px solid var(--line);border-radius:9px;font-family:var(--mono);font-size:12.5px;overflow:hidden;margin-top:12px}
+.dif .h{padding:9px 13px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11.5px}
+.dif .l{padding:2px 13px}
+.dif .del{background:rgba(224,90,80,.13);color:#e08d86}
+.dif .add{background:rgba(78,201,160,.13);color:#7ed3b2}
+
+/* 排版材质 */
+.big{font-size:26px;font-weight:640;letter-spacing:-.6px}
+.bigv{font-family:var(--mono);font-size:19px;margin-top:6px;word-break:break-all}
+.bigk{font-size:12px;color:var(--faint);letter-spacing:1.2px;margin-top:20px;text-transform:uppercase}
+.paper{--bg:#f4f2ee;--surface:#fbfaf7;--surface2:#f1efe9;--surface3:#efece5;--line:#e3dfd6;--line2:#d6d1c6;--text:#26241f;--muted:#6b665c;--faint:#938d81;--accent:#b4632b;--accentInk:#fff;--inputBg:#fff;--inputLine:#d6d1c6}
+.paper .prow{padding:15px 0;border-bottom:1px solid var(--line)}
+.paper .pu{font-family:var(--mono);font-size:13px;border-bottom:1px dashed var(--line2);padding-bottom:3px;display:inline-block}
+.gl3{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.gl3 .g3in{background:var(--surface3);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;margin-top:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.gl3 .g3deep{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:9px}
+.brut{--bg:#000;--surface:#000;--surface2:#000;--surface3:#000;--line:#2a2a2a;--line2:#4a4a4a;--text:#fff;--muted:#b8b8b8;--faint:#8a8a8a;--accent:#ffd23f;--accentInk:#000}
+.brut .bsect{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--accent);border-bottom:1px solid var(--line2);padding-bottom:6px;margin-top:18px}
+.brut .brow{display:grid;grid-template-columns:210px 1fr;gap:14px;padding:7px 0;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid #141414}
+
+/* 总览 */
+.ov{padding:20px 0 90px}
+.ovgrid{display:grid;grid-template-columns:repeat(3,354px);gap:16px;justify-content:center}
+.tile{border:1px solid #232329;border-radius:12px;overflow:hidden;background:#101013}
+.tilehead{padding:8px 10px;border-bottom:1px solid #202027;display:flex;gap:8px;align-items:baseline}
+.tilehead b{font-weight:600;color:#e8e8ec;font-size:12.5px}
+.tilehead .tt{color:#8b8b95;font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vb{font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap}
+.vb.g{background:rgba(78,201,160,.18);color:#4ec9a0}
+.vb.b{background:rgba(224,104,95,.16);color:#e0685f}
+.vb.n{background:#1b1b21;color:#77777f}
+.tilebox{width:354px;max-height:400px;overflow:hidden;cursor:zoom-in;position:relative}
+.tilebox .scaler{zoom:.34038}
+.tilebox .stage{border-radius:0;padding-bottom:14px}
+.tilefoot{padding:7px 10px;border-top:1px solid #202027;display:flex;gap:6px;align-items:center}
+.tilefoot .mini{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#c8c8d0;cursor:pointer}
+.tilefoot .mini.g.on{background:rgba(78,201,160,.2);border-color:#4ec9a0;color:#4ec9a0}
+.tilefoot .mini.b.on{background:rgba(224,104,95,.18);border-color:#e0685f;color:#e0685f}
+
+/* 底栏 */
+.bbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 20px;background:rgba(16,16,19,.97);border-top:1px solid #26262c}
+.bbar .nav{font-size:12.5px;padding:5px 12px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.bbar .navk{font-size:12.5px;color:#9a9aa4;min-width:250px}
+.vote{font-size:13px;padding:6px 16px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.vote.g.on{background:#175c46;border-color:#2f9e78;color:#d6fff0}
+.vote.b.on{background:#5c2420;border-color:#b1493f;color:#ffdfdc}
+.bnote{flex:1;min-width:170px;font:inherit;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid #2e2e36;background:#141418;color:#e0e0e6}
+.kbd{font-size:11px;color:#77777f;border:1px solid #2e2e36;border-radius:5px;padding:0 5px}
+.mask{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{width:820px;max-width:100%;max-height:88vh;background:#141418;border:1px solid #2b2b33;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.modal h2{margin:0;font-size:15px;color:#e8e8ec}
+.modal p{margin:0;font-size:12.5px;color:#8b8b95;line-height:1.65}
+.modal textarea{width:100%;height:48vh;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;color:#dfe3ea;background:#0e0e11;border:1px solid #2b2b33;border-radius:10px;padding:11px}
+.modal .mrow{display:flex;gap:9px;justify-content:flex-end}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="tb">
+  <h1>配置区域原型 · 30 版</h1>
+  <span class="sub">只画配置区域 · 逐版点「好看／不好看」→ 右上「导出判定」贴回</span>
+  <span class="sp"></span>
+  <span class="prog" id="prog"></span>
+  <button class="tbtn" id="btnOv">总览</button>
+  <button class="tbtn on" id="btnOne">逐版</button>
+  <button class="tbtn" id="btnTheme">主题：现场</button>
+  <button class="tbtn acc" id="btnExp">导出判定</button>
+</div>
+<div id="view"></div>
+<footer class="bbar" id="bbar">
+  <button class="nav" id="prev">‹ 上一版</button>
+  <button class="nav" id="next">下一版 ›</button>
+  <span class="navk" id="navk"></span>
+  <button class="vote g" id="vg">好看 <span class="kbd">1</span></button>
+  <button class="vote b" id="vb">不好看 <span class="kbd">2</span></button>
+  <input class="bnote" id="bnote" placeholder="这一版为什么（可不填）：一句话就够">
+  <span class="sub" style="font-size:11.5px;color:#77777f">← → 翻版 · 0 清空</span>
+</footer>
+<div class="mask hidden" id="mask">
+  <div class="modal">
+    <h2>把这段贴回对话</h2>
+    <p>整段复制粘回对话即可。下半段是逐版族标，我按它把你的判定归到「哪一类配置呈现法」。</p>
+    <textarea id="exp" readonly></textarea>
+    <div class="mrow"><button class="tbtn" id="copyBtn">复制</button><button class="tbtn" id="closeExp">关闭</button></div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+var D={
+  card:'饼干记账 · 配置', cfg:'C:\\Users\\辰辰洋洋\\.ilife\\bill.yaml',
+  dir:'C:\\Users\\辰辰洋洋\\.ilife\\data',
+  db:'biscuit_accountant.db', goals:'goals.json', html:'biscuit_accountant_html',
+  bdir:'backup', bstem:'biscuit_'
+};
+var THEMES={
+  live:{label:'现场',bg:'#080808',surface:'#101010',surface2:'#181818',surface3:'#202020',line:'#1c1c1c',line2:'#282828',text:'#e0e0e0',muted:'#a8a8a8',faint:'#7c7c7c',accent:'#f8b080',accentInk:'#1a1206',inputBg:'#0b0b0b',inputLine:'#282828'},
+  dshDark:{label:'DSH 深色',bg:'#151517',surface:'#232324',surface2:'#2c2c2e',surface3:'#353638',line:'#2a2a2c',line2:'#3a3a3d',text:'#f9fafb',muted:'#cfd3d6',faint:'#adb2b8',accent:'#f9fafb',accentInk:'#0f1115',inputBg:'#1b1b1c',inputLine:'#3a3a3d'},
+  dshLight:{label:'DSH 浅色',bg:'#ffffff',surface:'#ffffff',surface2:'#f9fafb',surface3:'#e9ecf2',line:'rgba(0,0,0,.10)',line2:'rgba(0,0,0,.18)',text:'#0f1115',muted:'#61666b',faint:'#81858c',accent:'#0f1115',accentInk:'#ffffff',inputBg:'#ffffff',inputLine:'rgba(0,0,0,.18)'}
+};
+var THEME='live';
+/* 第 28 版是「纸感」——整屏换色，所以它不跟三套主题，自带一套。 */
+var PAPER={bg:'#f4f2ee',surface:'#fbfaf7',surface2:'#f1efe9',surface3:'#efece5',line:'#e3dfd6',line2:'#d6d1c6',text:'#26241f',muted:'#6b665c',faint:'#938d81',accent:'#b4632b',accentInk:'#ffffff',inputBg:'#ffffff',inputLine:'#d6d1c6'};
+function tokens(v){var t=(v&&v.id===28)?PAPER:THEMES[THEME],a=[];for(var k in t){if(k!=='label')a.push('--'+k+':'+t[k]);}
+  a.push('--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif');
+  a.push('--mono:ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace');return a.join(';');}
+
+var V=[];
+function add(id,fam,name,what,fn){V.push({id:id,fam:fam,name:name,what:what,fn:fn});}
+function styleHost(){var el=document.getElementById('vars');if(!el){el=document.createElement('style');el.id='vars';document.head.appendChild(el);}
+  el.textContent=V.map(function(v){return '[data-v="'+v.id+'"]{'+tokens(v)+'}';}).join('\n');}
+
+/* 公共片段：六个落点 */
+var RW={k:'数据目录',v:D.dir,ro:false,meta:'12.4 MB · 1 分钟前写过'};
+var ROS=[
+  {k:'库文件名',v:D.db,ro:true,meta:'7.1 MB · 7412 行 · 3 分钟前写过'},
+  {k:'预算／账户文件名',v:D.goals,ro:true,meta:'412 B · 3 个目标 · 昨天'},
+  {k:'HELP 产物目录名',v:D.html,ro:true,meta:'目录还没建'},
+  {k:'备份目录',v:D.bdir,ro:true,meta:'7 份 · 最近 3 天前'},
+  {k:'备份文件名前缀',v:D.bstem,ro:true,meta:'后面自动加时间戳'}
+];
+function metaHead(){return '<div class="cmeta"><span class="k">配置文件</span><span class="mono">'+esc(D.cfg)+'</span></div>';}
+function acts(pri){return '<div class="bar"><button class="btn'+(pri===false?'':' pri')+'">保存</button><button class="btn">重置为默认</button><button class="btn">重新读取</button></div>';}
+
+/* A · 值怎么画 */
+add(1,'值怎么画','就地编辑','值就是文本，点一下它就地变成输入框——没有「编辑态」，没有第二个界面。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">';
+  h+='<div class="row"><div class="kv"><div class="k2">数据目录</div><div class="v2" style="color:var(--faint);font-size:11.5px;font-family:var(--font);margin-top:4px">库文件与备份的根目录。留空＝用默认目录。</div></div></div>'+
+     '<input class="f" style="margin-top:7px" value="'+esc(D.dir)+'">'+
+     '<div class="faint" style="margin-top:5px">回车确定 · esc 取消 · 点别处也算确定</div>';
+  ROS.forEach(function(r){
+    h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div>'+
+       '<span class="faint" style="cursor:pointer">改</span></div></div>';
+  });
+  return h+'</div>'+acts()+'</div>';
+});
+add(2,'值怎么画','行尾三动作','每一行只读，动作挂在行尾：复制 · 打开 · 改。把「读」和「写」分到两个手势上。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">';
+  h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">数据目录<span class="chipa">可改</span></div><div class="v2">'+esc(D.dir)+'</div></div>'+
+     '<span class="acts"><button class="btn mini">复制</button><button class="btn mini">打开</button><button class="btn pri" style="padding:3px 11px">改</button></span></div></div>';
+  ROS.forEach(function(r){
+    h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'<span class="chipr">只读</span></div><div class="v2">'+esc(r.v)+'</div></div>'+
+       '<span class="acts"><button class="btn mini">复制</button><button class="btn mini">打开</button></span></div></div>';
+  });
+  return h+'</div>'+acts()+'</div>';
+});
+add(3,'值怎么画','配置文件 vs 生效值','两栏对照：左边是 bill.yaml 里写着的，右边是技能真用的。留空、被覆盖、算出来的差别一眼看见。',function(){
+  var rows=[['db.dir',D.dir,D.dir],['db.name','（空）',D.db],['db.goals','（空）',D.goals],['html.dir','（空）',D.html],['backup.dir','（空）',D.bdir],['backup.stem','（空）',D.bstem]];
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<table class="tb3"><thead><tr><th>键</th><th>配置文件里写的</th><th>技能实际用的</th></tr></thead><tbody>'+
+  rows.map(function(r){return '<tr><td class="mono" style="color:var(--muted)">'+r[0]+'</td><td class="mono" style="color:var(--faint)">'+esc(r[1])+'</td><td class="mono">'+esc(r[2])+'</td></tr>';}).join('')+
+  '</tbody></table><div class="faint" style="margin-top:10px">右栏带「（空）⇒ 按数据目录算」的项不能单独改——它们是数据目录的派生值。</div>'+acts()+'</div>';
+});
+add(4,'值怎么画','值块 + 轻量信息','每个落点一块：路径是主角，下面挂一行轻量事实（体积／条数／最近写入／在不在）。配置区域自己顺手告诉你「这玩意儿现在什么样」。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">';
+  h+='<div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录</div><div class="faint" style="margin-top:3px">库文件与备份的根目录</div>'+
+     '<div class="mono" style="font-size:13.5px;margin-top:8px;word-break:break-all">'+esc(D.dir)+'</div>'+
+     '<div class="blk m" style="margin-top:8px">12.4 MB<span>可写</span><span>1 分钟前写过</span></div>'+
+     '<div style="display:flex;gap:6px;margin-top:9px"><button class="btn mini">改</button><button class="btn mini">浏览…</button><button class="btn mini">打开</button></div></div>';
+  ROS.forEach(function(r){
+    h+='<div class="row"><div class="k2" style="font-size:13px;font-weight:600">'+esc(r.k)+'<span class="chipr">只读</span></div>'+
+       '<div class="mono" style="font-size:13.5px;margin-top:7px;word-break:break-all">'+esc(r.v)+'</div>'+
+       '<div class="faint" style="margin-top:6px">'+esc(r.meta)+'</div></div>';
+  });
+  return h+'</div>'+acts()+'</div>';
+});
+add(5,'值怎么画','大字号值','主角是值：19px 等宽路径，标签退成小灰字。不画框不画线，层级全靠字号。',function(){
+  var h='<div class="card" style="padding:22px 24px"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead();
+  h+='<div style="margin-top:6px"><div class="bigk">数据目录 · 可改</div><div class="bigv">'+esc(D.dir)+'</div>'+
+     '<div class="faint" style="margin-top:3px">12.4 MB · 1 分钟前写过</div></div>';
+  ROS.forEach(function(r){h+='<div><div class="bigk">'+esc(r.k)+' · 只读</div><div class="bigv">'+esc(r.v)+'</div></div>';});
+  return h+acts()+'</div>';
+});
+
+/* B · 从属关系 */
+add(6,'从属关系','从属竖线','数据目录在上，其余 5 项用一条竖线挂在它下面。比树轻、比缩进明确，直说「它们都跟着上面那格走」。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div style="margin-top:13px"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">可改</span></div>'+
+  '<input class="f" style="margin-top:7px" value="'+esc(D.dir)+'">'+
+  '<div class="faint" style="margin-top:5px">改这一格，下面 5 项全部跟着变。</div>'+
+  '<div class="under">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span></div>';}).join('')+'</div></div>';
+  return h+acts()+'</div>';
+});
+add(7,'从属关系','母版—副本','上面一格叫「母版」，下面 5 行叫「副本」，中间一条箭头写着「跟着变」。把派生关系说成人话。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div style="margin-top:13px;border:1px solid var(--accent);border-radius:10px;padding:13px 14px;background:var(--surface2)">'+
+  '<div class="k2" style="font-size:13px;font-weight:600">母版 · 数据目录</div><div class="mono" style="margin-top:7px;font-size:12.5px;word-break:break-all">'+esc(D.dir)+'</div>'+
+  '<input class="f" style="margin-top:9px" value="'+esc(D.dir)+'"></div>'+
+  '<div style="display:flex;align-items:center;gap:9px;margin:10px 0 0 16px"><span class="faint">↓ 跟着变</span><span class="chipr" style="margin-left:0">5 项</span></div>'+
+  '<div class="under" style="margin-left:10px">'+ROS.map(function(r){return '<div class="ui"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span></div>';}).join('')+'</div>';
+  return h+acts()+'</div>';
+});
+add(8,'从属关系','派生算式','只读项写成算式：`= ‹数据目录› \\ biscuit_accountant.db`。把「不能改」变成「算出来的」。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">'+
+  '<div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">可改</span></div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>';
+  var eq=[[ '库文件名','biscuit_accountant.db'],['预算／账户文件名','goals.json'],['HELP 产物目录名','biscuit_accountant_html'],['备份目录','backup'],['备份文件名前缀','biscuit_ + 时间戳']];
+  eq.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+r[0]+'<span class="chipr">只读</span></div>'+
+    '<div class="eq">= <b>‹数据目录›</b> \\ '+esc(r[1])+'</div></div></div></div>';});
+  return h+'</div>'+acts()+'</div>';
+});
+add(9,'从属关系','目录树','真目录树：节点带角色徽标，还没落盘的画虚线。用户在自己的文件系统里看懂这六项。',function(){
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div class="tree">'+
+  '<div class="tnode"><span class="glyph">▾</span><span>.ilife</span></div><div class="tkids">'+
+  '<div class="tnode" style="background:var(--surface2);border-radius:6px;padding:6px 9px"><span class="glyph">▾</span><span style="font-weight:550">data</span><span class="badge">数据目录 · 可改</span><span class="vv">12.4 MB</span></div>'+
+  '<div class="tkids">'+
+  '<div class="tnode"><span class="glyph">·</span><span>biscuit_accountant.db</span><span class="badge">库</span><span class="vv">7.1 MB</span></div>'+
+  '<div class="tnode"><span class="glyph">·</span><span>goals.json</span><span class="badge">预算／账户</span><span class="vv">412 B</span></div>'+
+  '<div class="tnode"><span class="glyph">▸</span><span style="color:var(--muted)">biscuit_accountant_html</span><span class="badge">产物</span><span class="vv" style="color:var(--faint)">还没建</span></div>'+
+  '<div class="tnode"><span class="glyph">▸</span><span>backup</span><span class="badge">备份</span><span class="vv">7 份</span></div>'+
+  '</div></div><div class="tnode"><span class="glyph">·</span><span>bill.yaml</span><span class="badge">配置文件</span></div>'+
+  '</div></div>'+acts()+'</div>';
+});
+
+/* C · 编辑时机与方式 */
+add(10,'编辑方式','就地即时保存','没有保存按钮：改完失焦就存，右上角闪一下「已保存」。配置变成「随时改、立刻生效」。',function(){
+  var h='<div class="card"><div style="display:flex;align-items:center"><div class="ctitle">'+esc(D.card)+'</div><span class="flash" style="margin-left:auto"><span class="lt ok"></span>已保存 · 刚刚</span></div>'+metaHead();
+  h+='<div class="rows"><div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录</div><div class="faint" style="margin-top:3px">改完点别处即存</div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div><span class="faint">✓ 已生效</span></div></div>';});
+  return h+'</div><div class="bar"><button class="btn">重新读取</button><button class="btn ghost">重置为默认</button></div></div>';
+});
+add(11,'编辑方式','抽屉','列表只看值；点「改」才从右边滑出一块小面板，输入框、浏览、保存都在那里面。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div class="drawer"><div class="dlist">'+
+  '<div class="drow on"><div class="kv"><div class="k2">数据目录</div><div class="v2">'+esc(D.dir)+'</div></div><span class="faint">›</span></div>';
+  ROS.forEach(function(r){h+='<div class="drow"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div><span class="faint">›</span></div>';});
+  h+='</div><div class="dpanel"><div style="font-size:13px;font-weight:600">改数据目录</div>'+
+  '<div class="muted" style="margin-top:6px">库文件与备份的根目录。改完全部派生落点跟着走。</div>'+
+  '<input class="f" style="margin-top:10px" value="'+esc(D.dir)+'">'+
+  '<div style="display:flex;gap:7px;margin-top:9px"><button class="btn pri">保存</button><button class="btn">浏览…</button><button class="btn ghost">取消</button></div>'+
+  '<div class="faint" style="margin-top:14px">这个目录里现在有：</div><div class="mono faint" style="margin-top:5px;line-height:1.9">biscuit_accountant.db<br>goals.json<br>backup/</div></div></div>';
+  return h+'</div>';
+});
+add(12,'编辑方式','显式编辑态','平时整块是只读快照，右上角一颗「编辑」；点了才整块变成表单，并出现保存／取消。改配置是一件「明确开始」的事。',function(){
+  var h='<div class="card"><div style="display:flex;align-items:center"><div class="ctitle">'+esc(D.card)+'</div><button class="btn" style="margin-left:auto">编辑</button></div>'+metaHead()+'<div class="rows">';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div></div></div>';});
+  h+='<div class="row" style="background:var(--surface2);border-radius:8px;padding:11px 12px;border-top:1px solid var(--line)"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">正在编辑</span></div>'+
+  '<input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div></div>'+
+  '<div class="bar"><button class="btn pri">保存</button><button class="btn">取消</button><span class="faint">1 项未保存</span></div></div>';
+  return h;
+});
+add(13,'编辑方式','拖放目标','把文件夹从资源管理器直接拖到这块上就改完了。给「只改一处」的配置一条最短路径。',function(){
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div class="drop"><div style="font-size:14px;font-weight:600">把文件夹拖到这里</div>'+
+  '<div class="faint" style="margin-top:6px">当前数据目录 '+esc(D.dir)+'</div>'+
+  '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><button class="btn">或者浏览…</button><button class="btn ghost">用默认位置</button></div></div>'+
+  '<div class="rows">'+ROS.map(function(r){return '<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div><span class="faint">跟着走</span></div></div>';}).join('')+'</div>'+
+  acts()+'</div>';
+});
+add(14,'编辑方式','面包屑分段改','路径按段切成可点块，改路径＝改一段，旁边写着每段是什么。长字符串变成一串可点的地方。',function(){
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div style="margin-top:14px"><div class="faint">点任意一段就能改那一段：</div>'+
+  '<div class="crumb" style="margin-top:10px"><span class="seg">C:\\</span><span class="sp">›</span><span class="seg">Users</span><span class="sp">›</span>'+
+  '<span class="seg">辰辰洋洋</span><span class="sp">›</span><span class="seg">.ilife</span><span class="sp">›</span><span class="seg on">data</span></div>'+
+  '<div class="faint" style="margin-top:8px">盘符 › 用户 › 数据目录根 › <b style="color:var(--text)">正在改这段</b></div>'+
+  '<input class="f" style="margin-top:12px" value="data">'+
+  '<div style="display:flex;gap:7px;margin-top:9px"><button class="btn pri">改这段</button><button class="btn">浏览…</button><button class="btn ghost">取消</button></div>'+
+  '<div class="rows" style="margin-top:16px">'+ROS.map(function(r){return '<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div></div></div>';}).join('')+'</div></div></div>';
+});
+add(15,'编辑方式','说一句就改','顶部一个输入框：「把数据目录改到 D:\\账本」。配置区域接受人话，回执写在下面。',function(){
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div style="display:flex;gap:8px;margin-top:13px"><input class="f" value="把数据目录改到 D:\\账本"><button class="btn pri">执行</button></div>'+
+  '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">'+
+  '<div style="font-size:12.5px"><span class="faint">你：</span>把数据目录改到 D:\\账本</div>'+
+  '<div style="font-size:12.5px;margin-top:7px;color:#7ed3b2"><span class="faint">技能：</span>已改；改动前那份存成了 bill.yaml.bak</div>'+
+  '<div class="faint" style="margin-top:5px">库 · 预算 · 产物 · 备份 4 项跟着落到 D:\\账本</div></div>'+
+  '<div class="rows" style="margin-top:14px">'+ROS.map(function(r){return '<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div></div></div>';}).join('')+'</div>'+
+  '<div class="bar"><button class="btn">重新读取</button><button class="btn ghost">重置为默认</button></div></div>';
+});
+
+/* D · 动作与反馈 */
+add(16,'动作反馈','脏态浮出','干净时底部只有一行细字；一旦有未保存的改动，动作条才浮出来，并把「几项没存」写在上面。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">'+
+  '<div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">1 项未保存</span></div><input class="f" style="margin-top:7px;border-color:var(--accent)" value="D:\\账本"></div>';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div><span class="faint" style="font-size:11.5px">将跟随更新</span></div></div>';});
+  h+='</div><div style="display:flex;gap:8px;align-items:center;margin-top:16px;padding:10px 13px;border:1px solid var(--accent);border-radius:9px;background:var(--surface3)">'+
+  '<span style="color:var(--accent);font-size:12.5px">浏览改动后请点保存（1 项未保存）</span>'+
+  '<span style="margin-left:auto;display:flex;gap:7px"><button class="btn pri">保存（1）</button><button class="btn">重置为默认</button><button class="btn ghost">重新读取</button></span></div>';
+  return h+'</div>';
+});
+add(17,'动作反馈','分段控件','三个动作合成一段分段控件，贴在手边；干净时整段是灰的。',function(){
+  var h='<div class="card"><div style="display:flex;align-items:center"><div class="ctitle">'+esc(D.card)+'</div>'+
+  '<span class="seg" style="margin-left:auto;margin-top:0"><button class="btn pri" disabled>保存</button><button class="btn">重置为默认</button><button class="btn">重新读取</button></span></div>'+metaHead();
+  h+='<div class="rows"><div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">可改</span></div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'<span class="chipr">只读</span></div><div class="v2">'+esc(r.v)+'</div></div></div></div>';});
+  return h+'</div></div>';
+});
+add(18,'动作反馈','自动保存 + 回执','改完就走，不用点保存；底部一行小回执说明「什么时候写进去的、失败没有」。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div class="faint" style="margin-top:6px">这一项改完自动写入，不用点保存。</div><div class="rows">'+
+  '<div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录<span class="chipa">可改</span></div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div></div></div>';});
+  h+='</div><div style="display:flex;gap:8px;align-items:center;margin-top:14px;border-top:1px solid var(--line);padding-top:12px">'+
+  '<span class="lt ok"></span><span class="faint">已写入 '+esc(D.cfg)+' · 20:41:07 · 改动前备份 bill.yaml.bak</span>'+
+  '<button class="btn ghost" style="margin-left:auto">重新读取</button></div>';
+  return h+'</div>';
+});
+add(19,'动作反馈','撤销条','保存后底部出一条「已写入 · 撤销」，5 秒内可退。错误成本降到一次点击。',function(){
+  var h='<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="rows">'+
+  '<div class="row"><div class="k2" style="font-size:13px;font-weight:600">数据目录</div><input class="f" style="margin-top:7px" value="'+esc(D.dir)+'"></div>';
+  ROS.forEach(function(r){h+='<div class="row"><div class="rowl"><div class="kv"><div class="k2">'+esc(r.k)+'</div><div class="v2">'+esc(r.v)+'</div></div></div></div>';});
+  h+='</div>'+acts()+'</div><div class="toast" style="max-width:1040px"><span class="lt ok"></span><span>已写入 bill.yaml（原文件备份为 .bak）</span><span class="undo">撤销</span><span class="faint">5s</span></div>';
+  return h;
+});
+
+/* E · 密度与扫描 */
+add(20,'密度扫描','数据表','五列：落点 · 当前值 · 来源 · 轻量信息 · 动作。一屏看全，适合「对着读」。',function(){
+  var rows=[['数据目录',D.dir,'配置文件','12.4 MB · 可写','改'],
+    ['库文件名',D.db,'按数据目录算','7.1 MB · 7412 行','复制'],
+    ['预算／账户文件名',D.goals,'按数据目录算','412 B · 3 个目标','复制'],
+    ['HELP 产物目录名',D.html,'按数据目录算','目录还没建','生成'],
+    ['备份目录',D.bdir,'按数据目录算','7 份 · 最近 3 天前','打开'],
+    ['备份文件名前缀',D.bstem,'配置文件','加时间戳','复制']];
+  return '<div class="card" style="padding:14px 16px"><div class="ctitle">'+esc(D.card)+'</div>'+
+  '<table class="tb3"><thead><tr><th>落点</th><th>当前值</th><th>来源</th><th>轻量信息</th><th style="text-align:right">动作</th></tr></thead><tbody>'+
+  rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="mono">'+esc(r[1])+'</td><td class="faint">'+r[2]+'</td><td class="faint">'+r[3]+'</td><td style="text-align:right"><button class="btn mini">'+r[4]+'</button></td></tr>';}).join('')+
+  '</tbody></table>'+acts()+'</div>';
+});
+add(21,'密度扫描','属性网格','两列紧凑属性网格（每行 28px），分组标题分隔。信息密度最高的一种。',function(){
+  function pk(k){return '<div class="pk">'+k+'</div>';}
+  function pv(v,ed){return '<div class="pv" style="'+(ed?'color:var(--accent)':'')+'">'+esc(v)+'</div>';}
+  return '<div class="card" style="padding:0;overflow:hidden"><div style="padding:9px 13px;background:var(--surface2);font-size:11.5px;color:var(--faint);border-bottom:1px solid var(--line2)">落点</div>'+
+  '<div class="pgrid" style="margin-top:0">'+pk('数据目录')+pv(D.dir,true)+pk('库文件名')+pv(D.db)+pk('预算／账户文件名')+pv(D.goals)+pk('HELP 产物目录名')+pv(D.html)+'</div>'+
+  '<div style="padding:9px 13px;background:var(--surface2);font-size:11.5px;color:var(--faint);border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)">备份</div>'+
+  '<div class="pgrid" style="margin-top:0">'+pk('备份目录')+pv(D.bdir)+pk('备份文件名前缀')+pv(D.bstem)+'</div>'+
+  '<div style="display:flex;gap:8px;padding:12px 13px">'+acts().replace('<div class="bar">','<div style="display:flex;gap:8px">').replace('</div>','</div>')+'</div></div>';
+});
+add(22,'密度扫描','iOS 分组列表','分组圆角列表、行高 44px、值右对齐、行尾 ›。手机上最好用的一套。',function(){
+  var h='<div class="card"><div class="ios" style="margin-top:0">'+
+  '<div class="ir"><span>数据目录</span><span class="val mono">…\\.ilife\\data</span><span class="ch">›</span></div>'+
+  ROS.slice(0,2).map(function(r){return '<div class="ir"><span>'+esc(r.k)+'</span><span class="val mono">'+esc(r.v)+'</span><span class="ch">›</span></div>';}).join('')+'</div>'+
+  '<div style="font-size:11.5px;color:var(--faint);margin:14px 0 6px;padding-left:4px">产物与备份</div>'+
+  '<div class="ios" style="margin-top:0">'+ROS.slice(2).map(function(r){return '<div class="ir"><span>'+esc(r.k)+'</span><span class="val mono">'+esc(r.v)+'</span><span class="ch">›</span></div>';}).join('')+'</div>'+
+  '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn pri">保存</button><button class="btn">重新读取</button></div></div>';
+  return h;
+});
+add(23,'密度扫描','折叠分区','只开「落点」一段，其余折叠；每段标题直接印当前值摘要。占屏面积砍半。',function(){
+  return '<div class="card acc"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<details open><summary>落点<span class="faint" style="margin-left:auto;font-weight:400;font-family:var(--mono);font-size:11.5px">…\\.ilife\\data</span></summary><div class="abody">'+
+  '<div class="faint">库文件与备份的根目录。留空＝用默认目录。</div><input class="f" style="margin-top:8px" value="'+esc(D.dir)+'">'+
+  ROS.slice(0,2).map(function(r){return '<div style="margin-top:10px"><div style="font-size:13px;font-weight:550">'+esc(r.k)+'</div><div class="mono faint" style="margin-top:3px">'+esc(r.v)+'</div></div>';}).join('')+
+  '</div></details>'+
+  '<details><summary>产物与备份<span class="faint" style="margin-left:auto;font-weight:400">2 项</span></summary><div class="abody">'+
+  ROS.slice(2,4).map(function(r){return '<div style="margin-top:6px"><div style="font-size:13px;font-weight:550">'+esc(r.k)+'</div><div class="mono faint" style="margin-top:3px">'+esc(r.v)+'</div></div>';}).join('')+'</div></details>'+
+  acts()+'</div>';
+});
+add(24,'密度扫描','卡片网格','每个落点一张卡：名称、路径、一行轻量信息、行尾动作。卡片自足，扫读最快。',function(){
+  var cards='<div class="blk" style="grid-column:1/-1;border-color:var(--accent)"><div class="t">数据目录<span class="chipa">可改</span></div>'+
+  '<div class="v">'+esc(D.dir)+'</div><div class="m"><span>12.4 MB</span><span>可写</span><span>1 分钟前写过</span></div>'+
+  '<div style="display:flex;gap:6px;margin-top:10px"><button class="btn mini">改</button><button class="btn mini">浏览…</button></div></div>'+
+  ROS.map(function(r){return '<div class="blk"><div class="t">'+esc(r.k)+'</div><div class="v">'+esc(r.v)+'</div><div class="m"><span>'+esc(r.meta)+'</span></div></div>';}).join('');
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="grid2">'+cards+'</div>'+acts()+'</div>';
+});
+
+/* F · 开发者形态 */
+add(25,'开发者形态','yaml 本体','配置区域就是一份带行号的 bill.yaml：只读行是普通行，可改行点开变输入。所见即文件。',function(){
+  var L=[['# 饼干记账配置 · 只读字段由技能算出','Tc'],['db:','Tk'],['  dir: C:\\Users\\辰辰洋洋\\.ilife\\data','Ts'],
+    ['  name: biscuit_accountant.db','Ts'],['  goals: goals.json','Ts'],['html:','Tk'],['  dir: biscuit_accountant_html','Ts'],
+    ['backup:','Tk'],['  dir: backup','Ts'],['  stem: biscuit_','Ts']];
+  var h='';
+  L.forEach(function(r,i){var n=('0'+(i+1)).slice(-2);
+    if(i===2) h+='<div class="ln" style="background:rgba(248,176,128,.09)"><span class="no">'+n+'</span><span class="Ts">  dir: </span><span style="color:var(--accent)">C:\\Users\\辰辰洋洋\\.ilife\\data</span><span class="faint" style="margin-left:14px">← 可改</span></div>';
+    else h+='<div class="ln"><span class="no">'+n+'</span><span class="'+r[1]+'">'+esc(r[0])+'</span></div>';});
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+'<div class="code">'+h+'</div>'+
+  '<div class="bar"><button class="btn pri">保存到文件</button><button class="btn">放弃改动</button><button class="btn ghost">打开配置文件</button></div></div>';
+});
+add(26,'开发者形态','diff 预览','改动先给一份补丁（绿加红减）再问「应用／丢弃」。配置＝一份待审批的改动。',function(){
+  return '<div class="card"><div class="ctitle">'+esc(D.card)+'</div>'+metaHead()+
+  '<div class="dif"><div class="h">改动预览 · 1 处 · bill.yaml</div>'+
+  '<div class="l">db:</div><div class="l del">-  dir: C:\\Users\\辰辰洋洋\\.ilife\\data</div><div class="l add">+  dir: D:\\账本</div>'+
+  '<div class="l">  name: biscuit_accountant.db</div><div class="l">  goals: goals.json</div></div>'+
+  '<div class="faint" style="margin-top:10px">跟着变的：库文件 · 预算文件 · 产物目录 · 备份目录（都在新目录下）</div>'+
+  '<div class="bar"><button class="btn pri">应用改动</button><button class="btn">丢弃</button><button class="btn ghost">先备份再应用</button></div></div>';
+});
+add(27,'开发者形态','代码块 + 复制','一屏等宽配置块，右上角「复制全部」；改配置去编辑文件，面板只负责「看得清、拿得走」。',function(){
+  return '<div class="card"><div style="display:flex;align-items:center;gap:10px"><div class="ctitle">'+esc(D.card)+'</div>'+
+  '<button class="btn mini" style="margin-left:auto">复制全部</button><button class="btn mini">打开配置文件</button></div>'+metaHead()+
+  '<div class="code">'+
+  '<div class="ln"><span class="Tc"># 只读字段由技能按数据目录算出</span></div>'+
+  '<div class="ln"><span class="Tk">db:</span></div><div class="ln"><span class="Ts">  dir: C:\\Users\\辰辰洋洋\\.ilife\\data</span></div>'+
+  '<div class="ln"><span class="Ts">  name: biscuit_accountant.db</span></div><div class="ln"><span class="Ts">  goals: goals.json</span></div>'+
+  '<div class="ln"><span class="Tk">html:</span></div><div class="ln"><span class="Ts">  dir: biscuit_accountant_html</span></div>'+
+  '<div class="ln"><span class="Tk">backup:</span></div><div class="ln"><span class="Ts">  dir: backup</span></div><div class="ln"><span class="Ts">  stem: biscuit_</span></div></div>'+
+  '<div class="bar"><button class="btn">重新读取</button><button class="btn ghost">重置为默认</button></div></div>';
+});
+
+/* G · 排版材质 */
+add(28,'排版材质','纸感浅色','浅色纸底、无边框、大留白，值像填空题带下划线，暖棕强调。整套气质换掉。',function(){
+  return '<div class="card paper" style="border:0"><div style="font-size:19px;font-weight:620">饼干记账 · 放哪儿</div>'+
+  '<div class="faint" style="margin-top:6px">配置文件 '+esc(D.cfg)+'</div>'+
+  '<div class="prow"><div style="font-weight:600">数据目录</div><div class="faint" style="margin-top:3px">库文件与备份的根目录 · 12.4 MB · 1 分钟前写过</div><div class="pu" style="margin-top:8px">'+esc(D.dir)+'</div></div>'+
+  ROS.map(function(r){return '<div class="prow"><div style="font-weight:600">'+esc(r.k)+'</div><div class="faint" style="margin-top:3px">'+esc(r.meta)+'</div><div class="pu" style="margin-top:8px">'+esc(r.v)+'</div></div>';}).join('')+
+  '<div style="display:flex;gap:9px;margin-top:20px"><button class="btn pri">保存</button><button class="btn">重置为默认</button><button class="btn ghost">重新读取</button></div></div>';
+});
+add(29,'排版材质','玻璃三档层级','底／面／浮三档明度 + 内高光 + 细描边，把材质做到成品级。排布不变，只换质感。',function(){
+  function row(k,v,m,ro){return '<div class="g3in"><div style="display:flex;align-items:center;font-size:13px;font-weight:600">'+esc(k)+'<span class="'+(ro?'chipr':'chipa')+'">'+(ro?'只读':'可改')+'</span></div>'+
+    '<div class="g3deep mono" style="color:'+(ro?'var(--muted)':'var(--text)')+'">'+esc(v)+'</div>'+
+    (m?'<div class="faint" style="margin-top:6px">'+esc(m)+'</div>':'')+'</div>';}
+  return '<div class="gl3"><div style="font-size:14.5px;font-weight:640">'+esc(D.card)+'</div>'+metaHead()+
+  row('数据目录',D.dir,'12.4 MB · 可写 · 1 分钟前写过',false)+
+  row('库文件名',D.db,'7.1 MB · 7412 行',true)+row('预算／账户文件名',D.goals,'412 B',true)+
+  row('HELP 产物目录名',D.html,'目录还没建',true)+row('备份目录',D.bdir,'7 份',true)+
+  acts()+'</div>';
+});
+add(30,'排版材质','工程风高对比','纯黑底 + 1px 亮线 + 全等宽字 + 大写字距小标题 + 高饱和黄。像仪器铭牌。',function(){
+  return '<div class="brut"><div style="font-family:var(--mono);font-size:15px;font-weight:600">饼干记账 · 配置</div>'+
+  '<div class="bsect">DATA LOCATIONS</div>'+
+  '<div class="brow"><span style="color:#8a8a8a">DB.DIR</span><span>'+esc(D.dir)+'</span></div>'+
+  '<div class="brow"><span style="color:#8a8a8a">DB.NAME</span><span>biscuit_accountant.db</span></div>'+
+  '<div class="brow"><span style="color:#8a8a8a">DB.GOALS</span><span>goals.json</span></div>'+
+  '<div class="brow"><span style="color:#8a8a8a">HTML.DIR</span><span style="color:#8a8a8a">biscuit_accountant_html&nbsp;&nbsp;— NOT CREATED</span></div>'+
+  '<div class="bsect">BACKUP</div>'+
+  '<div class="brow"><span style="color:#8a8a8a">BACKUP.DIR</span><span>backup</span></div>'+
+  '<div class="brow"><span style="color:#8a8a8a">BACKUP.STEM</span><span>biscuit_ + TIMESTAMP</span></div>'+
+  '<div style="display:flex;gap:9px;margin-top:20px;font-family:var(--mono);font-size:12.5px">'+
+  '<button class="btn pri">[ SAVE ]</button><button class="btn">[ RESET ]</button><button class="btn ghost">[ REREAD ]</button></div></div>';
+});
+
+/* ══ 渲染 ══ */
+function norm(html){var t=document.createElement('div');t.innerHTML=html;return t.innerHTML;}
+function stageHTML(v){return '<div class="stage" data-v="'+v.id+'">'+norm(v.fn())+'</div>';}
+function stripHTML(v){return '<div class="strip"><div class="s1"><span class="no">第 '+v.id+' 版 / '+V.length+'</span><span class="nm">'+esc(v.name)+'</span><span class="fam">'+esc(v.fam)+'</span></div>'+
+  '<div class="what">'+esc(v.what)+'</div><div class="only">本屏只画配置区域（页头、配置体检那一行、六个技能页签都不画；体检另有专门的结果展示区域）</div></div>';}
+var KEY='ilife-panel-cfg-v1';
+var store={votes:{},top:''};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);store.votes=p.votes||{};store.top=p.top||'';}}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+var cur=1,mode='one';
+function vById(id){for(var i=0;i<V.length;i++){if(V[i].id===id)return V[i];}return V[0];}
+var view=document.getElementById('view'),bbar=document.getElementById('bbar');
+function renderOne(){
+  var v=vById(cur);document.title='配置区域 · 第 '+v.id+' 版 '+v.name;
+  view.innerHTML='<div class="stagewrap" style="flex-direction:column;align-items:center">'+stripHTML(v)+stageHTML(v)+'</div>';
+  bbar.classList.remove('hidden');
+  var rec=store.votes[v.id]||{};
+  document.getElementById('vg').classList.toggle('on',rec.vote==='good');
+  document.getElementById('vb').classList.toggle('on',rec.vote==='bad');
+  document.getElementById('bnote').value=rec.note||'';
+  document.getElementById('navk').textContent='第 '+v.id+' 版 · '+v.name;
+  updateProg();
+}
+function tileHTML(v){
+  var rec=store.votes[v.id]||{},cls=rec.vote==='good'?'g':(rec.vote==='bad'?'b':'n');
+  var txt=rec.vote==='good'?'好看':(rec.vote==='bad'?'不好看':'未评');
+  return '<div class="tile"><div class="tilehead"><b>'+v.id+'</b><span class="tt">'+esc(v.name)+'</span><span class="vb '+cls+'">'+txt+'</span></div>'+
+  '<div class="tilebox" data-open="'+v.id+'" title="点开看整版"><div class="scaler">'+stageHTML(v)+'</div></div>'+
+  '<div class="tilefoot"><button class="mini g'+(rec.vote==='good'?' on':'')+'" data-vote="'+v.id+':good">好看</button>'+
+  '<button class="mini b'+(rec.vote==='bad'?' on':'')+'" data-vote="'+v.id+':bad">不好看</button>'+
+  '<span style="flex:1"></span><span style="font-size:11px;color:#66666e">'+esc(v.fam)+'</span></div></div>';
+}
+function renderOverview(){
+  document.title='配置区域原型 · 总览 30 版';
+  view.innerHTML='<div class="ov"><div style="max-width:1100px;margin:0 auto 16px;font-size:12.5px;color:#8b8b95;line-height:1.8">'+
+  '只在画配置区域。点格子看整版，或直接点格子下方「好看／不好看」。<br>'+
+  '最想留下的三版：<input id="topin" class="bnote" style="display:inline-block;width:250px;min-width:0;padding:3px 8px" placeholder="填序号，例：04、16、29" value="'+esc(store.top)+'"></div>'+
+  '<div class="ovgrid">'+V.map(tileHTML).join('')+'</div></div>';
+  bbar.classList.add('hidden');updateProg();
+}
+function updateProg(){var g=0,b=0;V.forEach(function(v){var r=store.votes[v.id];if(r&&r.vote==='good')g++;if(r&&r.vote==='bad')b++;});
+  document.getElementById('prog').textContent='已评 '+(g+b)+' / '+V.length+'（好看 '+g+' · 不好看 '+b+'）';}
+function vote(kind){var id=vById(cur).id,rec=store.votes[id]||{};rec.vote=(rec.vote===kind)?null:kind;if(!rec.vote)delete rec.vote;
+  rec.note=document.getElementById('bnote').value||'';store.votes[id]=rec;persist();renderOne();}
+function goto(id){cur=Math.min(V.length,Math.max(1,id));renderOne();}
+document.getElementById('vg').onclick=function(){vote('good');};
+document.getElementById('vb').onclick=function(){vote('bad');};
+document.getElementById('prev').onclick=function(){goto(cur-1);};
+document.getElementById('next').onclick=function(){goto(cur+1);};
+document.getElementById('bnote').oninput=function(){var id=vById(cur).id,rec=store.votes[id]||{};rec.note=this.value;store.votes[id]=rec;persist();};
+function syncMode(){document.getElementById('btnOne').classList.toggle('on',mode==='one');document.getElementById('btnOv').classList.toggle('on',mode==='ov');}
+document.getElementById('btnOne').onclick=function(){mode='one';syncMode();renderOne();};
+document.getElementById('btnOv').onclick=function(){mode='ov';syncMode();renderOverview();};
+var TK=['live','dshDark','dshLight'],ti=0;
+document.getElementById('btnTheme').onclick=function(){ti=(ti+1)%TK.length;THEME=TK[ti];styleHost();this.textContent='主题：'+THEMES[THEME].label;if(mode==='one')renderOne();else renderOverview();};
+view.addEventListener('click',function(e){var t=e.target;if(!t||!t.getAttribute)return;
+  if(t.getAttribute('data-open')){goto(parseInt(t.getAttribute('data-open'),10));return;}
+  if(t.getAttribute('data-vote')){var a=t.getAttribute('data-vote').split(':'),id=parseInt(a[0],10),k=a[1];
+    var rec=store.votes[id]||{};rec.vote=(rec.vote===k)?null:k;if(!rec.vote)delete rec.vote;store.votes[id]=rec;persist();renderOverview();}});
+view.addEventListener('input',function(e){if(e.target&&e.target.id==='topin'){store.top=e.target.value;persist();}});
+document.addEventListener('keydown',function(e){if(mode!=='one')return;
+  var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+  if(e.key==='ArrowLeft'){goto(cur-1);}else if(e.key==='ArrowRight'){goto(cur+1);}
+  else if(e.key==='1'){vote('good');}else if(e.key==='2'){vote('bad');}
+  else if(e.key==='0'){var id=vById(cur).id;store.votes[id]={note:''};persist();renderOne();}});
+function pad(x){return x<10?'0'+x:''+x;}
+function exportText(){
+  var g=[],b=[],n=[];V.forEach(function(v){var r=store.votes[v.id];if(r&&r.vote==='good')g.push(v.id);else if(r&&r.vote==='bad')b.push(v.id);else n.push(v.id);});
+  var L=['配置区域原型 · 判定回执（30 版 · 主题＝'+THEMES[THEME].label+'）','',
+    '好看（'+g.length+'）：'+(g.map(pad).join('、')||'—'),
+    '不好看（'+b.length+'）：'+(b.map(pad).join('、')||'—'),
+    '未评（'+n.length+'）：'+(n.map(pad).join('、')||'—'),
+    '最想留下的三版：'+(store.top||'—'),'','— 逐版备注 —'];
+  V.forEach(function(v){var r=store.votes[v.id];if(r&&r.note)L.push(pad(v.id)+' '+v.name+'：'+r.note);});
+  L.push('','— 逐版（序号|族|方向|判定|备注）—');
+  V.forEach(function(v){var r=store.votes[v.id]||{};L.push([pad(v.id),v.fam,v.name,(r.vote||'none'),(r.note||'').replace(/\|/g,'/')].join('|'));});
+  return L.join('\n');
+}
+document.getElementById('btnExp').onclick=function(){document.getElementById('exp').value=exportText();document.getElementById('mask').classList.remove('hidden');};
+document.getElementById('closeExp').onclick=function(){document.getElementById('mask').classList.add('hidden');};
+document.getElementById('copyBtn').onclick=function(){var ta=document.getElementById('exp');ta.select();
+  try{document.execCommand('copy');this.textContent='已复制';}catch(e){this.textContent='请手动全选复制';}
+  var self=this;setTimeout(function(){self.textContent='复制';},1600);};
+document.getElementById('mask').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+styleHost();syncMode();
+var q=/[?&]v=(\d+)/.exec(location.search),dv=q?parseInt(q[1],10):0;
+if(dv>=1&&dv<=V.length){mode='one';cur=dv;syncMode();renderOne();}else{mode='ov';syncMode();renderOverview();}
+})();
+</script>
+</body>
+</html>

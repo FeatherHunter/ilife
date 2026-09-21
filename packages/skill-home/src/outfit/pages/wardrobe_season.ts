@@ -10,7 +10,7 @@
 // 属性，不进可见文案（同 style-audit 干净页口径）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
 
 export const FAMILY = 'wardrobe_season' as const;
 
@@ -118,7 +118,7 @@ export function renderFamilyPage(env: Envelope): string {
     listHtml += '<div class="of-empty">没有带「' + escapeHtml(season) + '」标签的在家衣物，建议先给衣物打季节标签再来换季</div>';
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
-      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(x.name) + '</div>'
+      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
       + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.categoryName || x.tags.join(' ') || '衣物')
         + (x.location ? '，放在' + x.location : '')) + '</td></tr></table></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn" id="ofAll">全选切换</button>'

@@ -119,7 +119,7 @@ function listGroups(env: Envelope): string {
   for (const g of order) {
     const list = groups.get(g);
     if (!list || !list.length) continue;
-    parts.push('<h3>' + escapeHtml(g) + '（共' + list.length + '个）</h3>');
+    parts.push('<h2>' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
     parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
@@ -128,26 +128,26 @@ function listGroups(env: Envelope): string {
   const rest = [...groups.keys()].filter((k) => !order.includes(k));
   for (const g of rest) {
     const list = groups.get(g) as AccountRow[];
-    parts.push('<h3>' + escapeHtml(g) + '（共' + list.length + '个）</h3>');
+    parts.push('<h2>' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
     parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
       + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
         + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
       + '</tbody></table></div>');
   }
-  parts.push('<p>清单只显掩码，复制文本默认不含密码</p></div>');
+  parts.push('</div>');
   return parts.join('');
 }
 
 function receiptNote(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
   const msg = String((data as { message?: unknown }).message ?? '已落盘');
-  // 脱敏口径与 envelope 分节页一致：含「密码」的回执**不落明文**（明文只走对话 JSON 回显）。
-  const safe = /密码/.test(msg) ? '密码已回显（只经对话回显，页上不落明文）' : msg;
-  // 存账号（新增）多说一句密码怎么存；改账号（更新）说清只填要改的——消息文本带动作词，据此分流。
+  // 明文只走对话 JSON 回显；「页上不展示明文」这条由页首敏感横幅说一次，回执里不再说。
+  const safe = /密码/.test(msg) ? '密码已回显' : msg;
+  // 存账号（新增）补一句密码怎么存；改账号（更新）说清只填要改的——消息文本带动作词，据此分流。
   const byOp = /(新增|新建|已存)/.test(msg)
-    ? '<p>密码加密落库，只在对话里回显，页上不落明文</p>'
+    ? '<p>密码加密落库，只在对话里回显</p>'
     : /(更新|已改|修改)/.test(msg) ? '<p>只填要改的字段，其余留空即保持原值</p>' : '';
-  // 真实回执放绿卡；「页上不展示明文」这条由页首敏感横幅统一说一次，这里不重复。
+  // 真实回执放绿卡。
   return '<div>' + byOp + '<p class="receipt">' + escapeHtml(safe) + '</p></div>';
 }
 

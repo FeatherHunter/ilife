@@ -192,9 +192,12 @@ describe('#810 穿搭出行域：5 条真链＋真产物', () => {
     assert.match(basename(env.delivery.path), STEM('旅行穿搭', 'SM3-5'), '默认落盘命名逐字');
     const html = await render('trip_outfit_plan', env);
     assertShell(html, 'trip_outfit_plan', blocksOf('trip_outfit_plan'));
-    for (const s of ['每日穿搭', '第1天', '第2天', '第3天', '按季节估算', '冲突提示', '行李汇总', '采纳这天', '生成行李清单', '海边']) {
+    // 断言的意思是「每日计划里天数与温度位都在」；#817 收口把温度占位说明句「按季节估算」改成
+    // 值位写「—」（温度无外部来源，值位不写说明句），故改查温度位本身，不再钉那句占位话。
+    for (const s of ['每日穿搭', '第1天', '第2天', '第3天', '冲突提示', '行李汇总', '采纳这天', '生成行李清单', '海边']) {
       assert.ok(html.includes(s), 'SM3-5 缺内容：' + s);
     }
+    assert.ok(html.includes('of-temp'), 'SM3-5 温度位缺席');
     const bytes = writeProduct('旅行穿搭_SM3-5_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
   });

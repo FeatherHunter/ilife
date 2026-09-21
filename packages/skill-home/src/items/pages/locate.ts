@@ -91,7 +91,7 @@ function cardsOf(env: Envelope): Card[] {
 }
 
 function topRows(c: Card): string {
-  return row('照片', '详情查看')
+  return row('照片', '—')
     + row('名称', escapeHtml(String(c.name ?? '')))
     + row('编号', escapeHtml(String(c.id ?? '')))
     + row('位置', escapeHtml(String(c.location ?? '')))
@@ -107,7 +107,7 @@ export function renderFamilyPage(env: Envelope): string {
   const first = cards[0];
   const top = first
     ? '<div class="wrap-x"><table class="kv top">'
-      + row('查询词', '按本次命令条件')
+      + row('查询词', '—')
       + topRows(first)
       + '</table></div><p class="note">照片请进详情查看。</p>'
     : '<div class="hm-empty">没找到。试试扩大寻找，或考虑是不是该录入。</div>'
@@ -124,8 +124,8 @@ export function renderFamilyPage(env: Envelope): string {
       ? '<p>没有其余候选。</p>'
       : '<div class="wrap-x"><table class="kv"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
     + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态说明</h2>'
-    + '<p>置顶卡片里的状态就是物品状态。</p></section>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2>'
+    + '<p>置顶卡片里那格写的是这件物品现在的状态。</p></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('我找到了', '请加载居家管家技能，我找到了这件物品', false)
     + op('分享位置', '请加载居家管家技能，帮我分享这件物品的位置', true)

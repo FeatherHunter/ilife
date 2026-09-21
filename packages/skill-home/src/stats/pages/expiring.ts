@@ -124,7 +124,7 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
   + 'var ok=document.getElementById("stConfirm");if(ok){ok.addEventListener("click",function(){var ids=Object.keys(sel);if(!ids.length){toast("还没有勾选任何处理");return}var lines=ids.map(function(id){var el=document.querySelector(".st-item[data-id=\\""+id+"\\"]");var nm=el?el.getAttribute("data-name"):"#"+id;return nm+"："+sel[id]});cp("请处理以下过期物品："+lines.join("；"))})}paint();})();</script>';
 
-interface AlertItem { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string }
+interface AlertItem { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string; place?: string }
 
 function dayStamp(d: Date): string {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -148,7 +148,7 @@ function badgeOf(dl: number | null): { cls: string; text: string } {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/stats/expiring.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number };
+  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
   const items = Array.isArray(d.items) ? d.items : [];
   const today = dayStamp(new Date());
   const rows = items.map((it) => {
@@ -161,14 +161,13 @@ export function renderFamilyPage(env: Envelope): string {
   const upcoming = rows.filter((r) => !(r.dl !== null && r.dl < 0));
   const head = '<div class="fam-head"><span class="fam-name" data-family="expiring">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查过期</span></div>';
+  // 页首写建议（两数已由下面卡片给出，页首再复述一遍是同一事实说两遍）。
   const hero = '<div class="st st-hero"><span class="st-wake">查过期</span>'
-    + '<p class="st-lead">已过期' + expired.length + '件，未来所选天数内预告' + upcoming.length
-    + '件，勾选后确认处理</p></div>';
+    + '<p class="st-lead">先处理已过期的那批，再看未来预告；拿不准的选忽略</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>已过期</b><span>' + expired.length + '</span><small>到期日在今天之前</small></div>'
     + '<div class="st-card"><b>未来预告</b><span>' + upcoming.length + '</span><small>今天到期与未来到期</small></div>'
-    + '<div class="st-card"><b>预告范围</b><span>所选天数</span><small>下单时指定，默认30天</small></div></div>';
-  const sug = '<div class="st st-sug">先处理已过期的那批，再看未来预告；拿不准的选忽略</div>';
+    + '<div class="st-card"><b>预告范围</b><span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + ' 天' : '—') + '</span><small>下单时指定</small></div></div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
   const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
     + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
@@ -176,7 +175,7 @@ export function renderFamilyPage(env: Envelope): string {
   const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id
     + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">'
     + '<div class="st-name">' + escapeHtml(latinFree(r.place || r.it.name)) + '（编号' + r.it.id + '）</div>'
-    + '<div class="st-sub">到期' + escapeHtml(r.it.location || '日期待补') + '</div>'
+    + '<div class="st-sub">到期' + escapeHtml(r.it.location || '日期待补') + (r.it.place ? '，放在' + escapeHtml(r.it.place) : '') + '</div>'
     + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>'
     + '<div class="st-ops tight"><button class="st-btn" data-act="已用完" data-item="' + r.it.id + '">已用完</button>'
     + '<button class="st-btn" data-act="废弃" data-item="' + r.it.id + '">废弃</button>'
@@ -195,7 +194,7 @@ export function renderFamilyPage(env: Envelope): string {
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
-  const content = CSS + head + '<div class="fam-content st">' + hero + cards + sug + list + '</div>'
+  const content = CSS + head + '<div class="fam-content st">' + hero + cards + list + '</div>'
     + bar + raw + blocks
     + '<div class="st-toast" id="stToast"></div>' + JS;
   return fillTemplate(template, content);

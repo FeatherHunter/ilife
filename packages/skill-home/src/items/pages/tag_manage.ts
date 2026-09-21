@@ -113,33 +113,31 @@ export function renderFamilyPage(env: Envelope): string {
   const modeName = tidy ? '整理建议' : '总览';
   const title = tidy ? '整理建议' : '管标签';
 
-  const totalM = msg.match(/^标签总览：(\d+) 个标签/);
-  const total = totalM?.[1] ?? '';
+  // 相近对逐对渲染（回执上限 10 对），页首只写对数，不把 9 对标签再列一遍。
+  const pairs = tidy && msg !== '无相近标签'
+    ? msg.replace(/^相近标签：/, '').split('、').map((s) => s.trim()).filter(Boolean).slice(0, 10)
+    : [];
+  const leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签' : visibleMsg(msg);
 
   let mainSec = '';
   if (!tidy) {
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
-      + '<div class="fp-row"><div class="fp-k">标签总数</div><div class="fp-v">' + esc(total ? '共 ' + total + ' 个' : msg) + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">每个标签的件数与使用次数去查标签看</div></div>'
-      + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">贴了该标签的物品数量</div></div>'
-      + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">标签被引用的累计次数</div></div>'
-      + '<p class="fp-note">明细走查标签命令，改名与合并在下面操作区</p></section>'
+      + '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">—</div></div>'
+      + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
+      + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div></section>'
       + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
-      + '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
-      + '<p class="fp-note">没有可清理标签的时候，一键清理按钮不会出现</p></section>';
+      + '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p></section>';
   } else if (msg === '无相近标签') {
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
   } else {
-    const body = msg.replace(/^相近标签：/, '');
-    const pairs = body.split('、').map((s) => s.trim()).filter(Boolean).slice(0, 10);
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + pairs.map((p, i) => {
         const ab = p.split('~');
         const a = (ab[0] ?? '').trim();
         const b = (ab[1] ?? '').trim();
         return '<div class="fp-pair"><div class="fp-pair-info">第 ' + (i + 1) + ' 对：<b>' + esc(a) + '</b> 与 <b>' + esc(b)
-          + '</b> <span class="fp-pill">相似度待核对</span></div>'
+          + '</b> <span class="fp-pill">相似度 —</span></div>'
           + '<div class="fp-actions">'
           + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">合并</button>'
           + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">忽略</button>'
@@ -158,14 +156,9 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + esc(tidy ? 'tidy' : 'overview') + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 标签</div>'
     + '<div class="fp-title">' + esc(title) + '</div>'
-    + '<p class="fp-lead">' + esc(visibleMsg(msg)) + '</p>'
+    + '<p class="fp-lead">' + esc(leadText) + '</p>'
     + '<span class="fp-stage">当前：' + esc(modeName) + '</span></div>'
     + mainSec
-    + '<section class="fp-sec"><h2 class="fp-sec-t">当前模式</h2>'
-    + '<div class="fp-row"><div class="fp-k">模式</div><div class="fp-v">' + esc(modeName) + '（总览与整理建议同页，靠模式切换）</div></div>'
-    + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">相似度公式</h2>'
-    + '<p class="fp-note">首字相同且长度相近的两个标签会被检出为相近对，公式为百分之百减去距离乘以四十，低分对优先人工看一眼</p></section>'
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">合并</button>'

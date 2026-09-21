@@ -72,7 +72,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f6fbf7);border-radius
 + '.eyebrow{color:#34c759;font-size:12px;font-weight:800;letter-spacing:.1em;margin-bottom:6px}'
 + '.lead{color:#6e6e73;font-size:14px}'
 + '.sec{background:#fff;border-radius:16px;padding:18px;margin:14px 0}'
-+ '.sec h2{font-size:17px;margin-bottom:10px}'
++ '.sec h2{font-size:17px;margin-bottom:10px}.sec h3{font-size:15px;margin:12px 0 8px}'
 + 'summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
 + '.kv{display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:14px}'
 + '.kv dt{color:#86868b}.kv dd{color:#1d1d1f}'
@@ -131,11 +131,11 @@ export function renderFamilyPage(env: Envelope): string {
     + '<dt>所属记录</dt><dd>记录<span id="recid">' + escapeHtml(round.id) + '</span></dd>'
     + '<dt>清单规模</dt><dd>共' + escapeHtml(round.total) + '条位置记录</dd></dl></section>'
     + '<section class="sec"><h2>上次待复查置顶</h2>'
-    + '<p class="lead">以上次缺件为准，动手前先看盘点记录再置顶复查</p>'
+    + '<div class="empty">—</div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'records\')">查看盘点记录</button></div></section>'
     + '<section class="sec"><h2>核对清单</h2>'
-    + (empty ? '<div class="empty">范围内没有物品</div>' : '<p class="lead">清单条目随本次盘点范围展开，逐件点选后提交差异</p>')
-    + '<h2>三态判定</h2><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">在</button>'
+    + (empty ? '<div class="empty">范围内没有物品</div>' : '<div class="empty">—</div>')
+    + '<h3>三态判定</h3><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">在</button>'
     + '<button class="tri" data-v="不在" onclick="setTri(this)">不在</button>'
     + '<button class="tri" data-v="不确定" onclick="setTri(this)">不确定</button></div>'
     + '<div class="frow">状态修正:<select><option>状态不变</option><option>在家</option><option>备用</option><option>借用中</option><option>维修中</option><option>找不到</option><option>已废弃</option></select></div>'

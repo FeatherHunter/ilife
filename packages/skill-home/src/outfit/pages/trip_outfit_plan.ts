@@ -8,11 +8,11 @@
 //
 // #810 说明：可见文案一律中文（机审 ascii 门）；`data-need` 属性保留块原文作机器锚点，
 // 其中 2 处可见改写（去英文与三段以上并列，见 scene-outfit.md 映射表）；页族与命令标识只进
-// `data-*` 属性，不进可见文案（同 style-audit 干净页口径）。温度无外部来源，按季节估算
-// 并诚实标注（见 scene-outfit.md 老实现缺口）。
+// `data-*` 属性，不进可见文案（同 style-audit 干净页口径）。温度无外部来源：温度位写「—」，
+// 不写占位说明句（见 scene-outfit.md 老实现缺口）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
 
 export const FAMILY = 'trip_outfit_plan' as const;
 
@@ -109,7 +109,7 @@ export function renderFamilyPage(env: Envelope): string {
   const p = (data.tripPlan ?? {}) as Record<string, unknown>;
   const destination = str(p.destination) || '远行';
   const plans = arr(p.plans).map((x) => ({
-    day: num(x.day), tempDesc: str(x.tempDesc) || '按季节估算',
+    day: num(x.day), tempDesc: str(x.tempDesc),
     style: str(x.style) || '日常', reason: str(x.reason),
     slots: ((x.slots ?? {}) as Partial<Record<string, Card>>),
   } as Plan));
@@ -131,7 +131,7 @@ export function renderFamilyPage(env: Envelope): string {
       + plans.map((x, i) => '<button class="of-btn' + (i === 0 ? ' on' : '') + '" data-day="' + i + '">第' + x.day + '天</button>').join('')
       + '</div><div id="ofDay">'
       + '<div class="of-dayhead">第' + first.day + '天 ' + escapeHtml(first.style) + '</div>'
-      + '<div class="of-temp">温度' + escapeHtml(first.tempDesc) + '</div>'
+      + '<div class="of-temp">温度' + escapeHtml(first.tempDesc || '—') + '</div>'
       + '<table class="of-slots">'
       + SLOT_ORDER.filter((k) => first.slots[k]).map((k) => '<tr><th class="of-part">'
         + SLOT_LABEL[k] + '</th><td class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</td></tr>').join('')
@@ -150,7 +150,7 @@ export function renderFamilyPage(env: Envelope): string {
 
   let lugHtml = '<div class="of-card"><h2>行李汇总</h2>';
   lugHtml += luggage.length
-    ? '<table class="of-lugs">' + luggage.map((x) => '<tr><td class="of-nm">' + escapeHtml(x.name) + '</td><td class="of-temp">穿' + x.days + '天</td></tr>').join('') + '</table>'
+    ? '<table class="of-lugs">' + luggage.map((x) => '<tr><td class="of-nm">' + escapeHtml(latinFree(x.name)) + '</td><td class="of-temp">穿' + x.days + '天</td></tr>').join('') + '</table>'
       + '<div class="of-actions"><button class="of-btn" id="ofLug">生成行李清单</button></div>'
     : '<div class="of-empty">暂无</div>';
   lugHtml += '</div>';
@@ -163,7 +163,7 @@ export function renderFamilyPage(env: Envelope): string {
     + 'var PART={outer:"外套",inner:"内搭",bottom:"下装",shoes:"鞋",hat:"帽子",acce:"配饰"};'
     + 'function tpEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}'
     + 'function tpShow(i){DAYI=(i+TP.plans.length)%TP.plans.length;var p=TP.plans[DAYI];var el=document.getElementById("ofDay");if(!el)return;'
-    + 'var h="<div class=\'of-dayhead\'>第"+p.day+"天 "+tpEsc(p.style)+"</div><div class=\'of-temp\'>温度"+tpEsc(p.tempDesc)+"</div>";'
+    + 'var h="<div class=\'of-dayhead\'>第"+p.day+"天 "+tpEsc(p.style)+"</div><div class=\'of-temp\'>温度"+(p.tempDesc?tpEsc(p.tempDesc):"—")+"</div>";'
     + '["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=p.slots[k];if(c)h+="<div class=\'of-slot\'><span class=\'of-part\'>"+PART[k]+"</span><span class=\'of-nm\'>"+tpEsc(c.name)+"</span></div>";});'
     + 'if(p.reason)h+="<div class=\'of-temp\'>"+tpEsc(p.reason)+"</div>";el.innerHTML=h;'
     + 'var btns=document.querySelectorAll("[data-day]");for(var k=0;k<btns.length;k++){btns[k].className="of-btn"+(Number(btns[k].getAttribute("data-day"))===DAYI?" on":"");}}'

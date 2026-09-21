@@ -129,15 +129,15 @@ interface AlertItem { id: number; name: string; location: string; quantity: numb
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/stats/idle.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number };
+  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
   const items = Array.isArray(d.items) ? d.items : [];
   const head = '<div class="fam-head"><span class="fam-name" data-family="idle">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查闲置</span></div>';
   const hero = '<div class="st st-hero"><span class="st-wake">查闲置</span>'
     + '<p class="st-lead">共' + items.length + '件超过所选天数未使用，勾选后确认处理</p></div>';
   const cards = '<div class="st st-cards">'
-    + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span><small>超过所选天数未使用</small></div>'
-    + '<div class="st-card"><b>闲置标准</b><span>所选天数</span><small>下单时指定，默认90天</small></div></div>';
+    + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span></div>'
+    + '<div class="st-card"><b>闲置标准</b><span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + ' 天' : '—') + '</span><small>下单时指定</small></div></div>';
   const sug = '<div class="st st-sug">先处理占地方的大件与重复款，'
     + (items.length ? '拿不准的选先不处理' : '当前没有需要处理的闲置物品') + '</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];

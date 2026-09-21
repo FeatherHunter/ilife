@@ -68,16 +68,15 @@ function pickSets(handle: HomeDb, cards: ItemCard[], rows: HomeItem[]): {
     }
     const tags = Object.values(slots).flatMap((c) => String(c?.tags ?? '').split(',').filter(Boolean));
     const style = tags.includes('正式') ? '正式' : tags.includes('运动') ? '运动' : '日常';
-    const parts = SLOT_ORDER.map((k) => slots[k]?.name).filter(Boolean);
-    sets.push({ style, reason: style + '场合适配，' + parts.join('配') + '，色系相近好搭', slots });
+    sets.push({ style, reason: style + '场合适配，色系相近好搭', slots }); // 理由不列部件名：上面槽位行已逐件写过名字。
   }
   return { sets, gap };
 }
 
 export function runOutfitPick(params: Record<string, unknown>, handle: HomeDb): unknown {
   const kind = (params.kind as string | undefined) ?? 'pick';
-  // 穿搭只取前 5 候选做套装；分析类默认看全衣橱（上限 20，与接口约束一致）。
-  const limit = params.limit !== undefined ? Number(params.limit) : (kind === 'pick' ? 5 : 20);
+  // 候选池取满上限 20（与接口约束一致）：只取前 5 件时，排在访问次数榜外的内搭／鞋会整档缺位。
+  const limit = params.limit !== undefined ? Number(params.limit) : 20;
   if (!Number.isInteger(limit) || limit <= 0 || limit > 20) fail(2, 'limit 须为 1~20 正整数');
   const rows = clothingRows(handle, limit);
   const cards = rows.map((it) => toItemCard(it, listLocationsByItem(handle, it.id), listTagsByItem(handle, it.id)));
@@ -99,7 +98,7 @@ function buildWardrobe(handle: HomeDb, rows: HomeItem[], cards: ItemCard[]): unk
     const label = slot ? SLOT_NAMES[slot] : '其他';
     counts.set(label, (counts.get(label) ?? 0) + (cards[i]?.quantity || 1));
   });
-  const total = Math.max(1, [...counts.values()].reduce((a, b) => a + b, 0));
+  const pieces = [...counts.values()].reduce((a, b) => a + b, 0); const total = Math.max(1, pieces); // 汇总与构成同按件数。
   const distribution = [...counts.entries()].map(([label, count]) => ({
     label, count, pct: Math.round((count * 100) / total),
   }));
@@ -118,13 +117,13 @@ function buildWardrobe(handle: HomeDb, rows: HomeItem[], cards: ItemCard[]): unk
         location: locs[0]?.location ?? '', estimated: it.last_accessed_at === null,
       };
     });
-  const scarcest = [...counts.entries()].sort((a, b) => a[1] - b[1])[0];
+  const scarcest = [...counts.entries()].filter(([label]) => label !== '其他').sort((a, b) => a[1] - b[1])[0]; // 「其他」是兜底桶，不是部位。
   const advice = (scarcest ? '衣橱里' + scarcest[0] + '最少（' + scarcest[1] + '件），可优先补充。' : '衣橱暂无可分析衣物，先录入几件。')
     + (dormant.length ? '有' + dormant.length + '件久未穿，先处理再买新衣。' : '件件常穿，继续保持。');
   return {
     distribution, dormant, advice,
     summary: [
-      { label: '在穿衣物', value: String(rows.length) },
+      { label: '在穿衣物', value: String(pieces) },
       { label: '闲置', value: String(dormant.length) },
       { label: '部位最缺', value: scarcest ? scarcest[0] : '待录入' },
     ],
@@ -144,7 +143,7 @@ function buildSeason(handle: HomeDb, params: Record<string, unknown>, rows: Home
       id: it.id, name: it.name, categoryName: it.category ?? '',
       tags, location: locs[0]?.location ?? '',
     }));
-  const places = [...new Set(listLocationNodes(handle).map((p) => String(p).split('/')[0]).filter(Boolean))].slice(0, 12);
+  const places = [...new Set(listLocationNodes(handle).map((p) => String(p).split('/')[0]).filter(Boolean))]; // 不截断：截了「阳台」这类真位置就选不到，「候选位置 N 处」也会报截断数。
   return { season, action, items, places };
 }
 
@@ -156,7 +155,7 @@ function buildTripPlan(handle: HomeDb, params: Record<string, unknown>, rows: Ho
   const base = sets.length ? sets : [{ style: '日常', reason: '衣橱暂无候选，先录入再计划', slots: {} }];
   const plans = Array.from({ length: days }, (_, d) => {
     const set = base[d % base.length];
-    return { day: d + 1, tempDesc: '按季节估算', style: set.style, reason: set.reason, slots: set.slots };
+    return { day: d + 1, style: set.style, reason: set.reason, slots: set.slots }; // 温度无外部来源：不给占位说明句，页上温度位留「—」。
   });
   const seen = new Map<number, number[]>();
   plans.forEach((p) => Object.values(p.slots).forEach((c) => {

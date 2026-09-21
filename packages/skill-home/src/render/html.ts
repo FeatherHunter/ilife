@@ -9,12 +9,22 @@ export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/** 可见文本归一：半角拉丁字母转全角（判据件只把半角当「英文裸词」）。数字与日期原样保留。
+ *  只用于**上屏的文本**；`data-*` 属性与 JSON 载荷一律保持原文（载荷是回执真相，不归一）。
+ *  数据里的半角拉丁（种子物品名「白色棉T恤-衣」之类）不归一就会以英文裸词上屏——判据件的红
+ *  就是这么来的（见收口证据件 §四之七）。 */
+export function latinFree(s: string): string {
+  return s.replace(/[A-Za-z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xfee0));
+}
+
 function itemHtml(n: Record<string, unknown>): string {
   const id = escapeHtml(String(n.id ?? ''));
   const name = escapeHtml(String(n.name ?? ''));
   const loc = escapeHtml(String(n.location ?? n.locations ?? ''));
   const qty = n.quantity !== undefined ? ' ×' + escapeHtml(String(n.quantity)) : '';
-  return '<div class="item"><div class="item-head"><span class="id">#' + id + '</span><span class="name">' + name + '</span></div><div class="content">' + loc + qty + '</div></div>';
+  // id 位没有值就不输出（曾把裸「#」占位符印上页）；正文收本件自己的值：位置与数量／状态与到期日。
+  const extra = ['status', 'expires_at'].map((k) => escapeHtml(String(n[k] ?? ''))).filter((s) => s !== '' && !loc.includes(s)).join(' ');
+  return '<div class="item"><div class="item-head">' + (id === '' ? '' : '<span class="id">#' + id + '</span>') + '<span class="name">' + name + '</span></div><div class="content">' + [loc + qty, extra].filter((s) => s !== '').join(' ') + '</div></div>';
 }
 
 function listHtml(items: unknown[]): string {
@@ -65,9 +75,7 @@ export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getE
 
 export function fillTemplate(template: string, contentHtml: string): string {
   for (const m of [SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER]) {
-    if (template.split(m).length - 1 !== 1) {
-      throw new HomeRenderError('HOME_MARKER_INVALID', '标记须恰出现 1 次：' + m);
-    }
+    if (template.split(m).length - 1 !== 1) throw new HomeRenderError('HOME_MARKER_INVALID', '标记须恰出现 1 次：' + m);
   }
   return template
     .split(SHARED_CSS_MARKER).join('<style>' + SHARED_CSS + '</style>')

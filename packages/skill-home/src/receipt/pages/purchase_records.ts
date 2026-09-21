@@ -69,32 +69,38 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
+/** 逐笔行与年度统计行的判别：逐笔行 `items[].name` 形如「购买2026-08-15」。摘要与表两处共用这一份。 */
+function isDatedRows(items: Record<string, unknown>[]): boolean {
+  return items.some((it) => /^购买/.test(String(it.name ?? '')));
+}
+
 function summaryOf(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
-  if (env.shape === 'receipt') {
-    return '<div class="receipt-summary"><p>已落盘，可在查购买记录中按物品或时间复核，退货截止按购买日加窗口推算</p></div>';
-  }
+  // 回执形：回执卡已说「已登记购买：编号」，这里再复述一遍就是同一事实说两遍；
+  // 日期／价格／渠道不在信封里，故本页摘要位留空（不编值）。
+  if (env.shape === 'receipt') return '';
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: unknown[] }).items
     : [];
   if (!items.length) {
     return '<div class="receipt-summary"><p>暂无记录，可新增一条购买记录后回来复核</p></div>';
   }
-  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日先后列出（金额与渠道在物品详情）</p></div>';
+  // 年度统计行那张表里已经有金额列了，摘要就别再说「金额在物品详情」（同页两处相左）。
+  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日先后列出'
+    + (isDatedRows(items as Record<string, unknown>[]) ? '（金额与渠道在物品详情）' : '（渠道在物品详情）') + '</p></div>';
 }
 
-/** 记录表：同一天两笔购买时行文逐字相同，逐行给序号让每行自解释（也免了两行一模一样的字）。
- *  口径：行值只从信封取（`items[].name` 形如「购买2026-08-15」），不自己造数。 */
+/** 记录表：行值只从信封取。逐笔行 `items[].name` 形如「购买2026-08-15」，信封不带价格与渠道，
+ *  只列购买日；年度统计行取 `items[].count`（年度合计），列头按金额。 */
 function purchaseTable(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
-  const items = Array.isArray((data as { items?: unknown }).items)
-    ? (data as { items: Record<string, unknown>[] }).items
-    : [];
+  const items = Array.isArray((data as { items?: unknown }).items) ? (data as { items: Record<string, unknown>[] }).items : [];
   if (env.shape === 'receipt' || !items.length) return '';
-  const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>'
-    + escapeHtml(String(it.name ?? '').replace(/^购买/, '')) + '</td></tr>').join('');
-  return '<div class="fam-content"><table><thead><tr><th>序号</th><th>购买日</th></tr></thead><tbody>'
-    + rows + '</tbody></table><p>金额与渠道进物品详情看。</p></div>';
+  const dated = isDatedRows(items);
+  const cols = dated ? '<th>序号</th><th>购买日</th>' : '<th>序号</th><th>金额</th>';
+  const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(dated
+    ? String(it.name ?? '').replace(/^购买/, '') : (typeof it.count === 'number' ? String(it.count) : '—')) + '</td></tr>').join('');
+  return '<div class="fam-content"><table><thead><tr>' + cols + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 /** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；补一行入口后

@@ -2,7 +2,8 @@
 //
 // 信息结构对齐老 `物品/history.html`：位置轨迹＋时间线＋类型筛选＋展开详情＋撤销。
 // 命令信封带事件串（类型与摘要，无发生时刻，时刻由命令侧增补后展开，见域对账说明），
-// 本页按信封如实解析为时间线：序号代替时刻，轨迹取位置类明细，撤销组装话术。
+// 本页按信封如实解析为时间线：序号代替时刻，轨迹取位置类明细，撤销组装话术；
+// 事件摘要只写明细（类型词由类型标签写出，不重复）。
 // 必需块原文＝契约附录：时间线（N条）、事件条目（类型/摘要/diff展开）含拉丁字符，
 // 只进 data-need 属性。
 import { readFileSync } from 'node:fs';
@@ -133,9 +134,8 @@ function summarize(type: string, detail: string): string {
     if (m) return '与物品' + m[1] + '建立' + m[2];
     return '建立关联' + detail;
   }
-  if (type === 'create') return '录入，位置' + (detail || '未记');
-  if (type === 'undo') return '撤销' + detail;
-  return typeLabel(type) + (detail === '' ? '' : '，' + detail);
+  if (type === 'create') return '位置' + (detail || '未记');
+  return detail === '' ? '—' : detail;
 }
 
 function isLocationDetail(type: string, detail: string): boolean {
@@ -160,6 +160,7 @@ export function renderFamilyPage(env: Envelope): string {
 
   const chips = '<button class="chip on" data-t="all" onclick="chipFilter(this)">全部</button>'
     + types.map((t) => '<button class="chip" data-t="' + escapeHtml(t) + '" onclick="chipFilter(this)">' + escapeHtml(typeLabel(t)) + '</button>').join('');
+  const typeTags = types.length > 0 ? types.map((t) => '<span class="pill">' + escapeHtml(typeLabel(t)) + '</span>').join('') : '<span class="pill">—</span>';
 
   const timeline = events.length > 0
     ? events.map((e, i) =>
@@ -180,10 +181,9 @@ export function renderFamilyPage(env: Envelope): string {
     + '<h2>时间线共' + events.length + '条</h2>'
     + '<div class="chips">' + chips + '</div>'
     + '<h2>事件条目</h2><div class="tl">' + timeline + '</div></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>类型筛选</h2>'
-    + '<div class="chips"><span class="chip">状态变更</span><span class="chip">盘点</span><span class="chip">差异处理</span><span class="chip">已撤销</span></div>'
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>本次事件类型</h2><div class="chips">' + typeTags + '</div></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
-    + '<div class="btnrow"><button class="btn ghost" data-t="all" onclick="chipFilter(this)">全部</button>'
+    + '<div class="btnrow">'
     + '<button class="btn ghost" onclick="document.querySelector(\'.tl\').scrollIntoView()">类型筛选</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'

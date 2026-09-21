@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#837 命令面四问 · 待确认</title>
+<style>
+:root{--blue:#007aff;--green:#34c759;--amber:#ff9500;--red:#ff3b30;--fg:#1d1d1f;--fg2:#424245;--fg3:#86868b;--bg:#f5f5f7;--card:#fff;--line:#e3e3e8;--soft:#fafafc;--r:14px;--r-s:9px}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7;padding:0 20px 64px}
+.wrap{max-width:880px;margin:0 auto}
+.head{padding:36px 0 6px}
+.eyebrow{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--blue);background:#eaf3ff;border-radius:100px;padding:4px 12px}
+h1{font-size:27px;margin:14px 0 8px;letter-spacing:-.01em}
+.lede{font-size:14.5px;color:var(--fg2);max-width:68ch}
+.lede b{color:var(--fg)}
+.lede a{color:var(--blue)}
+.risk{background:#fff5f4;border:1px solid #f7d4d1;border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;font-size:13.5px;color:var(--fg2);margin-top:18px}
+.risk b{color:var(--fg)}
+h2{font-size:18px;margin:30px 0 4px;display:flex;gap:9px;align-items:center}
+h2 .bar{width:4px;height:18px;border-radius:2px;background:var(--blue)}
+.sub{font-size:13px;color:var(--fg3);margin-bottom:6px}
+.q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:12px}
+.q-head{display:flex;gap:12px;align-items:flex-start}
+.q-id{flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+.q-t{font-size:16.5px;font-weight:700;padding-top:3px}
+.why{font-size:13.5px;color:var(--fg2);margin-top:10px}
+.why p+p{margin-top:8px}
+.why b{color:var(--fg)}
+.why code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:100px;padding:3px 11px;color:var(--fg2)}
+.chip.bad{border-color:#f7d4d1;background:#fff5f4;color:#a8241c}
+.chip.ok{border-color:#c9ead3;background:#f4fcf6;color:#1c7a35}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{border:1px solid var(--line);border-radius:var(--r-s);padding:13px 15px;background:var(--soft)}
+.opt.pick{border-color:#b8e6c4;background:#f3fbf5}
+.opt.out{opacity:.75}
+.opt-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;color:var(--fg3);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.opt-h strong{font-size:14px}
+.badge{font-size:11.5px;font-weight:700;color:#1c7a35;background:#d8f3e0;border-radius:100px;padding:2px 9px}
+.opt p{font-size:13px;color:var(--fg2);margin-top:6px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pc div{font-size:12.5px;padding-left:18px;position:relative;color:var(--fg2)}
+.pc .p::before{content:"＋";position:absolute;left:0;color:var(--green);font-weight:700}
+.pc .c::before{content:"−";position:absolute;left:0;color:var(--amber);font-weight:700}
+.rec{margin-top:12px;border-left:3px solid var(--green);background:#f3fbf5;border-radius:0 var(--r-s) var(--r-s) 0;padding:11px 14px;font-size:13.5px;color:var(--fg2)}
+.rec b{color:var(--fg)}
+.ask{margin-top:10px;font-size:13px;color:var(--fg2);background:#fff;border:1px dashed var(--line);border-radius:var(--r-s);padding:10px 14px}
+.ask b{color:var(--fg)}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--fg3)}
+@media(max-width:640px){body{padding:0 14px 48px}h1{font-size:22px}.pc{grid-template-columns:1fr}}
+@media print{body{background:#fff;padding:0}.q{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="head">
+<span class="eyebrow">待确认 · 4 问</span>
+<h1>#837 命令面与交互四问：首次使用 · 时间语义 · 设提醒 · 删确认</h1>
+<p class="lede">给 <a href="https://github.com/FeatherHunter/ilife/issues/837">#837</a> 拍板用。地图见 <a href="https://github.com/FeatherHunter/ilife/issues/820">#820</a>。本票只定<b>开几条命令、参数面长什么样、删的确认从哪来</b>，不出代码。这四条不定，后面 9 张票开不了工。</p>
+<div class="risk"><b>先说一条危险缺陷：</b><code>删心愿／删打卡／删情绪日记</code>三行今天指向 <code>memo.update</code>（只改分类、不删）。修法（改指 <code>memo.remove</code>）已定，只剩 Q4 把确认来源定死。</div>
+</header>
+
+<h2><span class="bar"></span>Q1 · 首次使用落到哪条命令（Q④）</h2>
+<p class="sub">前因：新仓 12 条命令无初始化类，<code>init_report.html</code> 零接线；HELP 有场景而命令接不住。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">1</div><div class="q-t">新开一条渲染命令 <code>memo.init</code>，是否接受？</div></div>
+<div class="why">
+<p>老技能有真命令 <code>init-report --data &lt;JSON&gt;</code>：<b>只渲染不搭环境</b>（AI 先诊断，再把 <code>{items, todos, verify}</code> 传进来出报告页）。HELP 的 <code>types</code> 是向导／采集／回执，与 <code>help.lookup</code> 的交付索引不是同一种形状。</p>
+<div class="chips"><span class="chip ok">老 init-report 只渲染</span><span class="chip">HELP 首次使用有场景卡</span><span class="chip bad">复用 help 会一命令两形状</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>新开渲染命令</strong><span class="badge">推荐</span></div>
+<p>输入诊断 JSON，输出初始化报告页；库不在也能跑（开库前分派，与 <code>help.lookup</code> 同位置）；不建库不写配置。</p>
+<div class="pc"><div class="p">与老技能一一对应，有对照基准</div><div class="p">形状干净，一个命令一种回执</div><div class="c">命令面＋1</div><div class="c">必须做开库前分派，否则鸡生蛋</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>复用 <code>memo.help.lookup</code> 出初始化页</strong></div>
+<p>省一个命令，但 HELP 索引与初始化报告两种产物挤进同一条命令，意图靠猜分流。</p>
+<div class="pc"><div class="p">省命令</div><div class="c">一命令两形状，登记过不了</div><div class="c">“看帮助”与“帮我搭好”混一起</div></div>
+</div>
+</div>
+<div class="rec"><b>推荐 A。</b>命令名取 <code>memo.init</code>（别名初始化／新手留 HELP，不进路由表）。</div>
+<div class="ask"><b>待你确认：</b>名用 <code>memo.init</code>？接受“开库前分派＋只渲染”这两条约束？</div>
+</section>
+
+<h2><span class="bar"></span>Q2 · 时间参数形状与过滤语义（Q⑤）</h2>
+<p class="sub">前因：现表示例 <code>2026-09</code> 无出处；HELP 字段是 <code>start＋end</code>；场景写“按创建时间倒序”，而现实现只会过滤排期日期，时间槽位被丢掉。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">2</div><div class="q-t"><code>start＋end</code> 按创建时间过滤，<code>timeRange</code> 退役，是否接受？</div></div>
+<div class="why">
+<p>老 <code>search-date start end</code> 就是 <code>WHERE created_at BETWEEN</code> 按创建时间倒序（默认 20 条）；HELP 的可填字段也是 <code>start／end／category</code>。月份形表达不了区间。</p>
+<div class="chips"><span class="chip ok">HELP start＋end 双日期</span><span class="chip ok">老 search-date 同形</span><span class="chip bad">timeRange 自造、无出处</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>认 HELP，双必填按创建时间</strong><span class="badge">推荐</span></div>
+<p><code>memo.search</code> 新增创建时间区间通道（与排期 <code>due</code> 正交可叠加）；<code>start&gt;end</code> 报错；缺一边报缺槽位。</p>
+<div class="pc"><div class="p">两边权威一致，有 SQL 对照</div><div class="p">区间表达完整</div><div class="c">要新增一条过滤通道</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>照现表月份形</strong></div>
+<p>改动最小，但与 HELP 字段名对不上，且 <code>2026-07-01~07-07</code> 写不出来。</p>
+<div class="pc"><div class="p">不动代码</div><div class="c">违 HELP，且结果等于列全表</div></div>
+</div>
+</div>
+<div class="rec"><b>推荐 A。</b><code>timeRange</code> 一词退役，不做兼容（自造名，不留第二个说法）。</div>
+<div class="ask"><b>待你确认：</b>单边只给一边时按报错办（同老，双必填）？</div>
+</section>
+
+<h2><span class="bar"></span>Q3 · 给已有笔记加提醒落在哪（Q⑥，真分叉）</h2>
+<p class="sub">前因：今天根本走不通。<code>设提醒→memo.create</code> 只会新建笔记再挂提醒；全包无 <code>note_id</code> 通道。旧侧 <code>remind [note_id]</code> 可选（给了校验存在并写入，不给就是独立提醒）。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">3</div><div class="q-t">新开写命令 <code>memo.reminder</code>（B 精确版）还是给 <code>memo.create</code> 补参数（A）？</div></div>
+<div class="why">
+<p>关键约束：新仓 <code>memo.remind</code> 已是<b>读命令</b>（列表形）。把写塞进去会一命令两形状。所谓“单列一条 <code>remind</code>”必须澄清为<b>新开写命令</b>，不是复用读命令。<code>记提醒</code>（建笔记＋挂提醒）与<code>设提醒</code>（只建提醒，<code>note_id</code> 可选）是两个意图。</p>
+<div class="chips"><span class="chip ok">HELP note_id 可选</span><span class="chip">老 remind 写／reminders 读分开</span><span class="chip bad">memo.remind 已是读，不可复用</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">B</span><strong>新写命令 <code>memo.reminder</code></strong><span class="badge">推荐</span></div>
+<p>只做 INSERT 提醒行（同老落盘形状）；<code>memo.create</code> 的两步合一不动。与 Q1 相加命令面共＋2。</p>
+<div class="pc"><div class="p">职责干净，与老一一对应</div><div class="p">读写不混，形状各归各</div><div class="c">命令面＋1，要确认 #658 不返工</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">A</span><strong><code>memo.create</code> 补可选 <code>noteId</code></strong></div>
+<p>给了就是给既有笔记挂提醒，不给就是今天的两步合一。改动最小。</p>
+<div class="pc"><div class="p">不动命令数</div><div class="c">一写命令两条路，测试缝多一倍</div></div>
+</div>
+<div class="opt out">
+<div class="opt-h"><span class="tag">C</span><strong>补到看提醒读命令上</strong></div>
+<p>出局：会把读命令写坏。</p>
+</div>
+</div>
+<div class="rec"><b>推荐 B 精确版。</b>这是四问里最贵的一次取舍（命令面＋1）。</div>
+<div class="ask"><b>待你确认：</b>B 还是 A？若选 B，新名用 <code>memo.reminder</code>？</div>
+</section>
+
+<h2><span class="bar"></span>Q4 · 用户说删算不算已确认（Q⑦）</h2>
+<p class="sub">前因：新仓真删须 <code>confirm:true</code>；老 <code>delete</code> 非交互直删，但有两道闸：无 <code>--with-reminders</code> 有关联则报错；有 <code>active</code> 提醒无 <code>-y</code> 则交互确认。</p>
+<section class="q">
+<div class="q-head"><div class="q-id">4</div><div class="q-t">用户说删即确认＋分层闸，是否接受？</div></div>
+<div class="why">
+<p>“删这条”只覆盖对笔记的确认，没覆盖“关联提醒一起删”。新仓两个参数各管一层：<code>confirm</code> 管笔记，<code>withReminders</code> 管级联。两个都自动带会误删；只带前者则有关联时删不掉。</p>
+<div class="chips"><span class="chip ok">老非交互直删</span><span class="chip">两道闸：关联报错＋active 确认</span><span class="chip bad">三删指错键先改 memo.remove</span></div>
+</div>
+<div class="opts">
+<div class="opt pick">
+<div class="opt-h"><span class="tag">A</span><strong>算确认＋分层闸</strong><span class="badge">推荐</span></div>
+<p>无关联直删；有超限关联先出清单再要 <code>withReminders</code>；批量一律先出清单（≥2 即清单，只回 JSON，不另出整页）。</p>
+<div class="pc"><div class="p">与老体验一致，自动化不断</div><div class="p">级联有显式闸，不误删提醒</div><div class="c">有提醒时多一轮清单</div></div>
+</div>
+<div class="opt">
+<div class="opt-h"><span class="tag">B</span><strong>每次先反问</strong></div>
+<p>最保险，但与老体验不符，打断自动化。</p>
+<div class="pc"><div class="p">零误删</div><div class="c">每次多一轮，不像老技能</div></div>
+</div>
+</div>
+<div class="rec"><b>推荐 A＋分层。</b><code>废弃提醒</code>走 <code>abandon</code> 支，不经此闸（笔记保留）。</div>
+<div class="ask"><b>待你确认：</b>批量阈值≥2、清单只回 JSON（不出整页），是否接受？</div>
+</section>
+
+<footer>依据：HELP 场景资产（init／search／remind）／老 <code>memo_cli.py</code>（init-report／search-date／remind／delete 两道闸）／唤醒词对账 §4①／现状链路表。你回“按优化版办”或点名改哪条，我即写回 #837 正文（进度＋下一步）并收口到口径文件；全对齐后提醒跑 /to-spec（规格单挂 #820 做 subissue）。</footer>
+</div>
+</body>
+</html>

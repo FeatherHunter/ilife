@@ -73,7 +73,6 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#fff8f2);border-radius
 + '.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
 + '.btn.ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
-+ '.note{background:#f2f8ff;border-radius:12px;padding:12px 14px;font-size:14px;margin:8px 0}'
 + 'details{margin:14px 0;font-size:13px;color:#6e6e73}'
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
@@ -97,18 +96,16 @@ export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/items/move_checklist.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const committed = str(data.message).includes('已提交');
-  const stateText = committed ? '已统一确认' : '搬家清单已生成，带走与不带走待确认';
+  const stateText = committed ? '已提交' : '未提交';
 
   const content = '<div class="hero"><p class="eyebrow">标记后确认</p>'
     + '<p class="lead">全屋清单按位置分组，二态带走或不带走</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
     + '<dl class="kv"><dt>清单状态</dt><dd>' + escapeHtml(stateText) + '</dd></dl>'
-    + '<div class="note">分组明细随全屋清单展开，标记时以实际物品为准</div>'
-    + '<h2>物品编号与位置</h2><p class="lead">逐件点选二态，整组可用全带走或全不带走</p>'
+    + '<h2>物品编号与位置</h2><p class="lead">—</p>'
     + '<h2>二态标记</h2><div class="binrow"><button class="bin" data-v="带走" onclick="setBin(this)">带走</button>'
     + '<button class="bin" data-v="不带走" onclick="setBin(this)">不带走</button></div></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>去向二态</h2>'
-    + '<p class="lead">不带走的后续走废弃或送人</p></section>'
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow"><button class="btn ghost" onclick="moveCmd(\'take\')">全带走</button>'
     + '<button class="btn ghost" onclick="moveCmd(\'leave\')">全不带走</button>'

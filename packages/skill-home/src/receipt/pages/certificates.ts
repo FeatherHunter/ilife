@@ -192,7 +192,7 @@ function listTable(env: Envelope): string {
     + '<div class="rc-scroll"><table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
     + '<th>剩余天数</th><th>证件状态</th><th>到期文案</th><th>脱敏号码</th><th>备注</th></tr></thead>'
     + '<tbody>' + body + '</tbody></table></div>'
-    + '<p>表内九列，手机上可左右滑动看全；号码只显后四位，复制文本不含完整号码</p></div>';
+    + '<p>号码只显后四位，复制文本不含完整号码</p></div>';
 }
 
 function receiptNote(env: Envelope): string {

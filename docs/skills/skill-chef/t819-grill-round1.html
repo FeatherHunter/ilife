@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#819 Round1 · 前提层四问</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1a1d21;--mut:#5f6b76;--line:#e5e8ec;--b1:#2563eb;--b2:#475569;--b3:#c2410c;--b4:#b91c1c;--rec:#ecfdf5;--recbd:#10b981}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.hero h1{margin:0 0 6px;font-size:21px}.hero p{margin:4px 0;color:var(--mut)}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{font-size:12.5px;border:1px solid var(--line);background:#fbfcfd;border-radius:999px;padding:4px 11px;color:var(--mut)}
+.pill b{color:var(--ink)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:640px){.facts{grid-template-columns:1fr}}
+.fact{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:12px;padding:12px 14px}
+.fact.g1{border-left-color:var(--b1)}.fact.g2{border-left-color:var(--b3)}
+.fact h2{margin:0 0 4px;font-size:14.5px}.fact p{margin:4px 0;font-size:13.5px;color:var(--mut)}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#f1f4f8;border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:14px 0;overflow:hidden}
+.bar{display:flex;gap:10px;align-items:center;padding:13px 16px;color:#fff;font-weight:700}
+.q1 .bar{background:var(--b1)}.q2 .bar{background:var(--b2)}.q3 .bar{background:var(--b3)}.q4 .bar{background:var(--b4)}
+.num{background:rgba(255,255,255,.22);border-radius:8px;padding:1px 9px;font-size:13px}
+.body{padding:14px 16px 16px}
+.body h3{margin:12px 0 6px;font-size:13px;letter-spacing:.04em;color:var(--mut)}
+.body p{margin:6px 0}
+.kv{background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:9px 12px;font-size:13.5px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#f8fafc;color:var(--mut);font-weight:600;width:88px}
+td.pro{color:#047857}td.con{color:#92400e}
+.rec{background:var(--rec);border:1px solid var(--recbd);border-radius:10px;padding:9px 12px;margin-top:10px;font-size:14px}
+.rec b{color:#065f46}
+.foot{color:var(--mut);font-size:13px;margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+<h1>#819 · Round1 前提层四问 <span style="color:#5f6b76;font-weight:400;font-size:14px">（答完再进选项 / 决策）</span></h1>
+<p>裁定对象：<b>G1</b> recipes.name 唯一约束在老库未生效 ＋ <b>G2</b> 新技能未开 foreign_keys。硬边界：老 schema 权威、本次不改 schema；不碰真库，只跑副本库。</p>
+<div class="pills">
+<span class="pill">进度 <b>0% → 待你回 Q1–Q4</b></span>
+<span class="pill">本轮只定 <b>目标 / 边界</b></span>
+<span class="pill">不等你确认，<b>不写 issue 正文</b></span>
+</div>
+</div>
+
+<div class="facts">
+<div class="fact g1"><h2>G1 · 重名进得来</h2><p>新技能 DDL 声明 <code>UNIQUE</code>，但 <code>CREATE TABLE IF NOT EXISTS</code> 在老库整句跳过 ⇒ 约束从未生效，副本库重名 INSERT 成功。</p><p><code>db.ts:51</code> · <code>db.ts:182</code> · <code>t769 §2.4/§3.1-4</code></p></div>
+<div class="fact g2"><h2>G2 · 外键没开</h2><p>老件每连接 <code>PRAGMA foreign_keys=ON</code>；新技能 <code>openChefDb</code> 只设 WAL＋busy_timeout，没开外键 ⇒ CASCADE / SET NULL 不生效。</p><p><code>db_config.py:_configure_connection</code> · <code>db.ts:174-176</code></p></div>
+</div>
+
+<div class="card q1"><div class="bar"><span class="num">Q1</span>重名口径：什么算“重名”？</div><div class="body">
+<h3>前因后果</h3><p>G1 要拦重名，但“相等规则”没定：精确相等 vs 去空格 vs 大小写归一，查重 SQL 与验收读数完全不同。现在 <code>addRecipe</code> 写前只做了 <code>trim</code>，不限其他归一。</p>
+<h3>关键信息</h3><div class="kv">现状 <code>db.ts:202 name.trim()</code> · 待定：<code>SELECT id FROM recipes WHERE name=?</code> 的 <code>=</code> 是否加归一化</div>
+<table><tr><th>选项</th><td><b>A 精确＋trim</b>（最小口径）<br><b>B 再加大小写/全半角归一</b></td></tr>
+<tr><th>利</th><td class="pro">A：改动最小、验收最稳；B：拦得更严</td></tr>
+<tr><th>弊</th><td class="con">A：“宫保 / 宮保”类仍进得来；B：规则要另写进决议，校验脚本变复杂，本票膨胀</td></tr></table>
+<div class="rec">➡️ 推荐 <b>A</b>：先补齐约束，归一化另立票。</div>
+</div></div>
+
+<div class="card q2"><div class="bar"><span class="num">Q2</span>边界：本次真的一行 schema 都不动？</div><div class="body">
+<h3>前因后果</h3><p>issue 写明“老 schema 权威、本次不改 schema”。若此条松动，G1 可直接建唯一索引，一轮就完；若不动，G1 只能“应用层查重＋另开 schema 票”，本票只出决议＋校验脚本。</p>
+<h3>关键信息</h3><div class="kv">本票交付物 = <code>t819-db-全局缺口决议.md</code> ＋ <code>t819-db-check.mjs</code>；建索引的动作归属 = 待定的 schema 票</div>
+<table><tr><th>选项</th><td><b>A 硬前提不变</b>（本票不动 schema）<br><b>B 本票直接建索引</b></td></tr>
+<tr><th>利</th><td class="pro">A：风险最小、可回滚；B：一步到位</td></tr>
+<tr><th>弊</th><td class="con">A：重名风险多留一轮，需应用层先顶；B：违反既定边界，老库一旦有重名行建索引即失败，需先清洗</td></tr></table>
+<div class="rec">➡️ 推荐 <b>A</b>：本票只决议＋校验，建索引留给 schema 票。</div>
+</div></div>
+
+<div class="card q3"><div class="bar"><span class="num">Q3</span>G2 开多大：只开外键，还是照搬老件全部 PRAGMA？</div><div class="body">
+<h3>前因后果</h3><p>老件每连接设了 5 项（WAL / busy_timeout / foreign_keys / synchronous / cache_size），新技能只设了前两项。一次搬全 vs 只补外键，diff 与回归面差很多，且本票要求“不改变既有读命令对外行为”。</p>
+<h3>关键信息</h3><div class="kv">差集 = <code>foreign_keys=ON</code> ＋ <code>synchronous=NORMAL</code> ＋ <code>cache_size=-8000</code>；改点限定 <code>db.ts</code> 一处</div>
+<table><tr><th>选项</th><td><b>A 只补 foreign_keys=ON</b><br><b>B 照搬老件 5 项</b></td></tr>
+<tr><th>利</th><td class="pro">A：diff 一行、回归面最小；B：与老件行为完全一致</td></tr>
+<tr><th>弊</th><td class="con">A：同步/缓存语义仍与老件有差；B：改动超纲，读路径性能语义可能变化，验收变难</td></tr></table>
+<div class="rec">➡️ 推荐 <b>A</b>：只补一句，要搬另立票。</div>
+</div></div>
+
+<div class="card q4"><div class="bar"><span class="num">Q4</span>G2 底线：有孤儿行还开吗？</div><div class="body">
+<h3>前因后果</h3><p>外键一开，孤儿行不再是“脏着但能写”，而是直接写失败。若老库已有孤儿，“统一开”＝先逼出一次清洗；若无孤儿，直接开零成本。没数就裁＝赌。</p>
+<h3>关键信息</h3><div class="kv">待跑：副本库各外键表 <code>LEFT JOIN … WHERE 父id IS NULL</code> 计数；决议分支 = 无孤儿直接开 / 有孤儿则“开＋清洗前置”</div>
+<table><tr><th>选项</th><td><b>A 先实测孤儿计数再裁</b><br><b>B 无条件统一开</b></td></tr>
+<tr><th>利</th><td class="pro">A：决策有数、可写进正反例读数；B：快</td></tr>
+<tr><th>弊</th><td class="con">A：多跑一条计数脚本；B：若有孤儿，首开即炸，失败面不可预期</td></tr></table>
+<div class="rec">➡️ 推荐 <b>A</b>：把孤儿计数写进校验正例再裁。</div>
+</div></div>
+
+<div class="foot">下一步：等你逐条回 Q1–Q4（A/B 或你自己的 C）。回完我重算 frontier，下一轮只问选项权衡＋决策；全部对齐后，我会提醒你跑 <code>/to-spec</code> 固化规格。</div>
+
+</div>
+</body>
+</html>

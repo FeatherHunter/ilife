@@ -131,16 +131,16 @@ export function renderFamilyPage(env: Envelope): string {
       + row('最后使用', cell((item as { last_used?: unknown }).last_used))
       + row('录入时间', cell((item as { created_at?: unknown }).created_at))
       + row('照片', cell((item as { photo?: unknown }).photo))
-      + '</table></div><p class="note">横线表示本次回执没有带出该字段。</p>'
+      + '</table></div>'
     : '<div class="hm-empty">没有找到这件物品，核对编号再试一次吧。</div>';
   const content = PAGE_CSS
     + '<p class="greet">看物品把这一件的底细一次摊开，快捷操作都在表后面，历史在最下面。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>底细</h2>' + main + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>关联与邻居</h2>'
     + '<div class="wrap-x"><table class="kv">'
-    + row('关联物品', '本次回执没有带出关联明细')
-    + row('同位置邻居', '本次回执没有带出邻居明细')
-    + row('相似物品', '本次回执没有带出相似明细')
+    + row('关联物品', '—')
+    + row('同位置邻居', '—')
+    + row('相似物品', '—')
     + '</table></div></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>快捷操作</h2><div>'
     + op('改', '请加载居家管家技能，帮我改这件物品', false)
@@ -156,7 +156,6 @@ export function renderFamilyPage(env: Envelope): string {
     + op('复制日志', '请加载居家管家技能，帮我复制这件物品的日志', true)
     + '</div></section>'
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态与历史</h2>'
-    + '<p>物品状态见上表状态行。</p>'
     + (history === '' ? '<p>暂无记录</p>' : '<p>' + escapeHtml(history) + '</p>')
     + '</section>';
   return fillTemplate(template, content);

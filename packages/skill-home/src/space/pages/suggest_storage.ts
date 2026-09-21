@@ -120,7 +120,7 @@ function recSection(r: Recommendation): string {
       + escapeHtml(a.location + '：' + a.reason) + '</td></tr>').join('') + '</table>';
   return '<section class="card" data-block="fields" data-need="推荐列表（推荐位置/理由/备选位置）">'
     + head + curLine + '<div class="rec">' + main
-    + '<div class="alt"><h4>备选位置</h4>' + alt + '</div></div></section>';
+    + '<div class="alt"><h3>备选位置</h3>' + alt + '</div></div></section>';
 }
 
 function actionsBar(env: Envelope, batch: boolean): string {
