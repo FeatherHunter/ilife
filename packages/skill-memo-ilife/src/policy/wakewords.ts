@@ -1,5 +1,4 @@
 // 口径层·唤醒词路由（M3）：查询类 + 写入类 ＋ #850 两新键（`memo.init`／`memo.reminder`）；最长匹配；批量改分类向导与改子分类按“批量”消歧；无命中/缺槽位 throw。
-import { MemoPolicyError } from '../fetch/errors.js';
 import { WAKE_TOPS } from './category.js';
 
 export type MemoKey =
@@ -51,23 +50,10 @@ for (const [p, top] of Object.entries(WAKE_TOPS)) {
   else WAKE_TABLE.push({ phrase: p, key: 'memo.update', needs: ['id'], preset: { category: top } });
 }
 
+// #855 · 运行期路由已搬到 `src/triggers/routing.ts`（读生成物 `WAKE_ROUTES`）。
+// 本件保留 `WAKE_TABLE` 手写表——它是 HELP 速查（`src/help/lookup.ts` → SKILL.md）的上游，
+// 其清理（别名退总表、`废弃提醒` 撤行、`memo.stats` 相关）归 #858；本票不动它，只加一道防漂移断言
+// （`test/route-table-parity-855.test.mjs`：旧表每行 ⊆ 生成表，语义逐字一致）。
 // 最长匹配优先，保证“批量改分类”不落入“改子分类”。
-const SORTED = [...WAKE_TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
-
-export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): WakeRoute {
-  if (typeof text !== 'string' || text.length === 0) throw new MemoPolicyError('POLICY_NO_MATCH', '唤醒词为空');
-  const hit = SORTED.find((e) => text.includes(e.phrase));
-  if (!hit) throw new MemoPolicyError('POLICY_NO_MATCH', '无命中唤醒词：' + text);
-  for (const s of hit.needs || []) {
-    if (ctx[s] === undefined || ctx[s] === null || ctx[s] === '') {
-      throw new MemoPolicyError('POLICY_MISSING_SLOT', '缺槽位 ' + s + '：' + hit.phrase);
-    }
-  }
-  return { key: hit.key, params: { ...(hit.preset || {}), ...pickCtx(ctx, hit.needs || []) } };
-}
-
-function pickCtx(ctx: Record<string, unknown>, needs: string[]): Record<string, unknown> {
-  const o: Record<string, unknown> = {};
-  for (const k of needs) o[k] = ctx[k];
-  return o;
-}
+export { routeWakeword } from '../triggers/routing.js';
+export type { ResolvedRoute } from '../triggers/routing.js';

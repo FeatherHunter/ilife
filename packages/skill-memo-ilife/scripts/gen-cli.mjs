@@ -101,12 +101,13 @@ function parseValue(text, i, where) {
   }
   const m = /^-?\d+(?:\.\d+)?/.exec(text.slice(i));
   if (m) return { value: Number(m[0]), next: i + m[0].length };
-  // 裸标识符（如 `run: runWish` 的处理函数引用）：生成器**不解释**它，只当不透明值带过——
-  // 登记表要的是键与元数据，处理函数由生成物在运行期从各域门取数组得到（`registry.ts` 的 `build(SOURCES)`）。
-  const id = /^[A-Za-z_$][A-Za-z0-9_$.]*/.exec(text.slice(i));
-  if (id) return { value: { __ref: id[0] }, next: i + id[0].length };
   if (text.startsWith('true', i)) return { value: true, next: i + 4 };
   if (text.startsWith('false', i)) return { value: false, next: i + 5 };
+  // 裸标识符（如 `run: runWish` 的处理函数引用）：生成器**不解释**它，只当不透明值带过——
+  // 登记表要的是键与元数据，处理函数由生成物在运行期从各域门取数组得到（`registry.ts` 的 `build(SOURCES)`）。
+  // 注意：`true`／`false` 已在上面先认，这里只剩真正的引用名。
+  const id = /^[A-Za-z_$][A-Za-z0-9_$.]*/.exec(text.slice(i));
+  if (id) return { value: { __ref: id[0] }, next: i + id[0].length };
   die(where, '只认字面量（串／数／真伪／数组／对象／裸标识符），实得：' + JSON.stringify(text.slice(i, i + 24)));
 }
 /** 取 `export const <NAME>_<SUFFIX> … = [ … ]` 的数组体与数组名前缀（恰好一处，多一处即抛）。 */
@@ -305,6 +306,17 @@ function renderRegistry(names, entries) {
   L.push('');
   return L.join('\n');
 }
+/** 字面量序列化（生成物里的值必须与声明的字面量**同类型**）：串加引号、数与真伪裸写、
+ *  数组与对象递归；函数引用（`__ref`）到这里就是生成器 bug，直接抛（不静默降级成串）。 */
+function lit(v, where) {
+  if (typeof v === 'string') return q(v);
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (Array.isArray(v)) return '[' + v.map((x) => lit(x, where)).join(', ') + ']';
+  if (typeof v === 'object' && v !== null) {
+    return '{ ' + Object.entries(v).map(([k, x]) => k + ': ' + lit(x, where)).join(', ') + ' }';
+  }
+  throw new Error(where + '：生成物里出现了不可序列化的值（函数引用不该进记录面）：' + JSON.stringify(v));
+}
 function renderRoutes(merged) {
   const L = ['/** ' + BANNER, ' *',
     ' * 唤醒词记录面：' + merged.length + ' 条（各域 `routes.ts` 的声明按 `order` 升序拼出）。',
@@ -314,9 +326,9 @@ function renderRoutes(merged) {
     'export const WAKE_ROUTES: readonly WakeRoute[] = ['];
   for (const r of merged) {
     const parts = ['wakeWord: ' + q(r.wakeWord), 'scene: ' + q(r.scene), 'key: ' + q(r.key), 'cli: ' + q(r.cli)];
-    if (r.needs !== undefined) parts.push('needs: [' + r.needs.map(q).join(', ') + ']');
+    if (r.needs !== undefined) parts.push('needs: [' + r.needs.map((s) => lit(s, r.wakeWord)).join(', ') + ']');
     if (r.preset !== undefined) {
-      parts.push('preset: { ' + Object.entries(r.preset).map(([k, v]) => k + ': ' + q(v)).join(', ') + ' }');
+      parts.push('preset: ' + lit(r.preset, r.wakeWord));
     }
     L.push('  { ' + parts.join(', ') + ' },');
   }

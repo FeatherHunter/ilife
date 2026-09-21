@@ -26,7 +26,6 @@ export const WISH_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_complete_wish',
     key: 'memo.update',
     cli: 'memo-cmd-read memo.update --params \'{"id":1,"done":true}\'',
-    needs: ['id'],
     preset: { done: true },
   },
   {

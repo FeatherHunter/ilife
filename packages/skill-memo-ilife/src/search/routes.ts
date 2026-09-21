@@ -61,5 +61,6 @@ export const SEARCH_ROUTES: readonly RouteDecl[] = [
     scene: 'memo_search_wish',
     key: 'memo.wish',
     cli: 'memo-cmd-read memo.wish',
+    preset: { category: '心愿' },
   },
 ];

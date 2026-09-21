@@ -33,4 +33,40 @@ export const MOOD_ROUTES: readonly RouteDecl[] = [
     needs: ['id'],
     preset: { category: '情绪日记' },
   },
+  // ↓↓ 后 4 行是旧表的长式别名（#821 保留作别名）：与短式主名同场景，`needs`／`preset` 与旧表逐字一致。
+  // 最长匹配保证长式优先命中；别名不上链路总表（#842 Q③，归 #858）。
+  {
+    order: 36,
+    wakeWord: '记情绪日记',
+    scene: 'memo_add_mood',
+    key: 'memo.create',
+    cli: 'memo-cmd-read memo.create --params \'{"title":"今天很开心","category":"情绪日记"}\'',
+    preset: { category: '情绪日记' },
+  },
+  {
+    order: 37,
+    wakeWord: '查情绪日记',
+    scene: 'memo_search_mood',
+    key: 'memo.search',
+    cli: 'memo-cmd-read memo.search --params \'{"category":"情绪日记"}\'',
+    preset: { category: '情绪日记' },
+  },
+  {
+    order: 38,
+    wakeWord: '改情绪日记',
+    scene: 'memo_update_mood',
+    key: 'memo.update',
+    cli: 'memo-cmd-read memo.update --params \'{"id":1,"body":"今天很开心"}\'',
+    needs: ['id'],
+    preset: { category: '情绪日记' },
+  },
+  {
+    order: 39,
+    wakeWord: '删情绪日记',
+    scene: 'memo_delete_mood',
+    key: 'memo.remove',
+    cli: 'memo-cmd-read memo.remove --params \'{"id":1,"confirm":true}\'',
+    needs: ['id'],
+    preset: { category: '情绪日记' },
+  },
 ];
