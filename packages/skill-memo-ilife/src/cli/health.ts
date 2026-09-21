@@ -5,11 +5,12 @@
  * 出口（面板点一下才跑），没有唤醒词、不进 HELP，故按「一条命令的事实只住一处」与三个配置命令并列；
  * `cmd_read.ts` 在**进预检与分派层之前**拦下它（体检不该要求库目录已配——它要报的正是「库在哪、通不通」）。
  *
- * 判据与文案住在 `src/health.ts`；本件只做包封，不重写一个字。
+ * 判据与文案住在 `src/cli/health/`（#855 分件：`configRead.ts` 只读解析／`probe.ts` 机器面探针／
+ * `items.ts` 九条体检项与报告组装）；本件只做包封，不重写一个字。
  */
 import { ENVELOPE_VERSION } from 'base-link-core';
 import type { EnvelopeShape } from 'base-link-core';
-import { buildMemoHealthReport } from '../health.js';
+import { buildMemoHealthReport } from './health/index.js';
 
 /** 体检命令名（插件侧镜像同值，见 `packages/plugin-memo-ilife/src/bridge.ts`）。 */
 export const HEALTH_CHECK_KEY = 'memo.config.check' as const;

@@ -1,6 +1,6 @@
 {
   "ticket": "#855",
-  "madeAt": "2026-09-21T05:14:22.546Z",
+  "madeAt": "2026-09-21T05:22:37.411Z",
   "cases": [
     {
       "name": "记一条（备忘）",
@@ -121,11 +121,11 @@
       "exit": 0,
       "key": "memo.init",
       "shape": "receipt",
-      "landing": "〈临时根〉\\memo_html\\初始化报告_〈时间戳〉.html",
+      "landing": "〈临时根〉\\memo_html\\首次使用_〈时间戳〉.html",
       "bytes": 80017,
       "sha256": "2c975cccd7d03176694eb0a1d6a4b308fa401f20a181d8b78273047abb197ee7",
       "products": [
-        "初始化报告_〈时间戳〉.html"
+        "首次使用_〈时间戳〉.html"
       ]
     },
     {
