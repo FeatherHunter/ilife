@@ -31,7 +31,7 @@ import { configPaths } from 'base-link-core';
 import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
 // #764：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
 // 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadScheduleConfig()`（文件不在即落一份默认件）。
-import { dbDirOf, dbFileOf, htmlDirOf } from './fetch/paths.js';
+import { dbDirOf, dbFileOf, htmlDirOf, resolvedHtmlDirs } from './fetch/paths.js';
 // #764：飞书 CLI 的查找只剩兜底探测（配置项 `lark.cliPath` 已删），候选顺序的唯一定义地是
 // `src/fetch/feishu.ts` 的 `larkCliCandidates()`——本件直接调它，不留第二份表。
 import { findLarkCli, larkVersion } from './fetch/feishu.js';
@@ -484,8 +484,9 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
 
   // ④ 产物**根**目录：在不在、能不能写（还没建＝绿：交付页面时才落这里，那时自动建）。
   // #843 起产品分两支：页面落这个根下，HELP 落根下的 `html.helpDir` 子目录（面板那一行显示的是子目录）。
-  const htmlDirValue = textOf(readValue(values, 'html', 'dir'));
-  const htmlDir = htmlDirOf(dataDir, htmlDirValue);
+  // 根一律取 `resolvedHtmlDirs()` 的生效值——老配置文件里的两级 `html.dir` 由它认账（#862），
+  // 体检与设置页不许各算一份（同一件事只有一个定义地）。
+  const htmlDir = htmlDirOf(dataDir, resolvedHtmlDirs().rootDir);
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({

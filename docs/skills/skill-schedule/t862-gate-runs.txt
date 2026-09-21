@@ -1,0 +1,9 @@
+# #862 的运行条目录出件（协议 §2.3.4）
+# 源：.scratch/locks/gate-runs.log 里 ticket=862 的全部条目，逐字抄录。
+# 更新时间：2026-09-21
+
+START ticket=862 runId=e0450947-a6ca-4122-a794-c86e1105f7eb cmd="node .scratch/t862/run.mjs" waitedMs=0 pid=47572 at=2026-09-21T07:38:38.073Z
+RUN ticket=862 runId=e0450947-a6ca-4122-a794-c86e1105f7eb cmd="node .scratch/t862/run.mjs" waitedMs=0 exit=0 pid=47572 at=2026-09-21T07:38:54.159Z
+START ticket=862 runId=58c9e279-7062-4621-acdc-3706f5dc9265 cmd="node .scratch/t862/commit.mjs" waitedMs=1 pid=4292 at=2026-09-21T07:39:27.607Z
+RUN ticket=862 runId=58c9e279-7062-4621-acdc-3706f5dc9265 cmd="node .scratch/t862/commit.mjs" waitedMs=1 exit=1 pid=4292 at=2026-09-21T07:39:27.763Z
+START ticket=862 runId=da42edb9-8d3a-4c1b-a72b-ab7c951e904f cmd="node .scratch/t862/commit.mjs" waitedMs=0 pid=48200 at=2026-09-21T07:39:43.020Z

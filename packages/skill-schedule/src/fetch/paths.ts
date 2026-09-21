@@ -59,9 +59,9 @@ export function htmlDirOf(dbDir: string, configured: string): string {
   return join(dbDir, ...dirSegments(configured !== '' ? configured : DEFAULT_HTML_DIR));
 }
 
-/** 产物根目录：配置 `html.dir` 的解析结果（算式见 `htmlDirOf`）。只算路径，落盘归交付那条链。 */
+/** 产物根目录：配置 `html.dir` 的解析结果（算式见 `htmlDirOf`；老形状见 `resolvedHtmlDirs`）。只算路径，落盘归交付那条链。 */
 export function resolveHtmlDir(dbDir = resolveDbDir()): string {
-  return htmlDirOf(dbDir, loadScheduleConfig().values.html.dir);
+  return htmlDirOf(dbDir, resolvedHtmlDirs().rootDir);
 }
 
 /** HELP 落点算式：**产物根 ＋ `html.helpDir` 一段**（#843 的落点分家的唯一算式）。
@@ -70,10 +70,27 @@ export function helpDirOf(pagesRoot: string, configured: string): string {
   return join(pagesRoot, configured !== '' ? configured : DEFAULT_HELP_DIR);
 }
 
-/** HELP 产物目录：配置 `html.helpDir` 的解析结果（算式见 `helpDirOf`）——设置页那个只读格调的正是它。
- *  零 IO、不建目录。 */
+/** 生效的产物两支：产物根（`html.dir`）与 HELP 子目录（`html.helpDir`）——**认 #843 之前的两级老值**。
+ *
+ *  #843 之前 `html.dir` 记的是「产物根 ＋ HELP 子目录」两级（老默认 `schedule_html/help`，HELP 直接落它下面，
+ *  见常量注释）；#843 起它只记**产物根**，HELP 那一级另由 `html.helpDir` 补。老配置文件里的两级值照新算式算
+ *  会多出一级（`<库>/schedule_html/help/help`），产物根也会被塞进 HELP 目录里——那是用户没做错的事
+ *  （#762 的同一口径：老配置文件不该让用户为我们改的东西买单）。故这里认这个形状：
+ *  **值的末段与生效的 `html.helpDir` 逐字相同、且值本身多于一段**时，把末段还给 `helpDir`；
+ *  算式结果与升级前逐字相同，新形状（`schedule_html`）不受影响。 */
+export function resolvedHtmlDirs(): { readonly rootDir: string; readonly helpDir: string } {
+  const cfg = loadScheduleConfig().values.html;
+  const root = dirSegments(cfg.dir !== '' ? cfg.dir : DEFAULT_HTML_DIR);
+  const helpDir = cfg.helpDir !== '' ? cfg.helpDir : DEFAULT_HELP_DIR;
+  const help = dirSegments(helpDir);
+  const legacy = root.length > help.length && help.every((seg, i) => seg === root[root.length - help.length + i]);
+  return { rootDir: (legacy ? root.slice(0, root.length - help.length) : root).join('/'), helpDir };
+}
+
+/** HELP 产物目录：配置 `html.helpDir` 的解析结果（算式见 `helpDirOf`；老形状见 `resolvedHtmlDirs`）
+ *  ——设置页那个只读格调的正是它。零 IO、不建目录。 */
 export function resolveHelpDirOf(): string {
-  return helpDirOf(resolveHtmlDir(), loadScheduleConfig().values.html.helpDir);
+  return helpDirOf(resolveHtmlDir(), resolvedHtmlDirs().helpDir);
 }
 
 export function resolveDbPath(filename = dbFilename(), dir = resolveDbDir()): string {
@@ -93,14 +110,16 @@ export interface ScheduleResolvedPaths {
 }
 
 /** 算那一组解析后的绝对路径。**只算路径、不建目录、不写盘**（设置页与体检都能随时调）。
- *  `htmlDir` 这一格是 **HELP 产物目录**这一行的显示值（#843 起＝产物根下的 `html.helpDir` 一支）：
+ *  `htmlDir` 这一格是 **HELP 产物目录**这一行的显示值（#843 起＝产物根下的 `html.helpDir` 一支；
+ *  老配置文件里的两级 `html.dir` 由 `resolvedHtmlDirs` 认账，落点与升级前逐字相同，见 #862）：
  *  行表（`packages/plugin-schedule-ilife/src/settings.ts`）与格名都不动，值随落点算法一起走。 */
 export function resolvedSchedulePaths(): ScheduleResolvedPaths {
   const cfg = loadScheduleConfig();
   const dbDir = resolveDbDir();
+  const html = resolvedHtmlDirs();
   return {
     dbDir,
     dbFile: dbFileOf(dbDir, dbFilename()),
-    htmlDir: helpDirOf(htmlDirOf(dbDir, cfg.values.html.dir), cfg.values.html.helpDir),
+    htmlDir: helpDirOf(htmlDirOf(dbDir, html.rootDir), html.helpDir),
   };
 }
