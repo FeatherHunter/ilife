@@ -430,10 +430,10 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
-  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
+  // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', MEMO_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
   if (read.kind === 'bad') {
     items.push({
       id: 'config.file', title: '配置文件', status: 'red',

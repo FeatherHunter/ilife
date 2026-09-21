@@ -3,7 +3,7 @@
  * #726 起落点的唯一真相是配置文件（`src/config.ts` 的 `BILL_CONFIG_DEFAULTS` ＋ `loadBillConfig()`），
  * 环境变量读取已按「配置的存与生效口径裁定」（#675）全部删除：
  *   - 库目录：`db.dir` 非空即用它；**空串＝按默认落点**（`loadBillConfig().dataDir`，默认 `~/.ilife/data/`，
- *     配置目录可由 `ILIFE_CONFIG_DIR` 整体改基座 —— 那个覆盖的删除点是 #754）；
+ *     配置目录只此一处，覆盖口子已随 #754 删除）；
  *   - 库文件名：`db.name`（默认 `biscuit_accountant.db`）；第二份库：`db.goals`（默认 `goals.json`）；
  *   - 产物目录：`join(库目录, html.dir)`（默认子目录名 `biscuit_accountant_html`）；
  *   - 备份目录：`backup.dir` 绝对即用它，相对按 `<库目录>/<值>` 解，空串＝`<库目录>/backups`（#749）；

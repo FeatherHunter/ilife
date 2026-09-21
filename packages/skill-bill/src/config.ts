@@ -2,7 +2,7 @@
  *
  * 口径出处（「配置的存与生效口径裁定」#675 的解决评论，本票 #677 落地；卡路里那一份是
  * `packages/skill-calorie/src/config.ts`，本件与它同形）：
- *   · 每个技能一份 YAML 配置文件，默认 `~/.ilife/bill.yaml`；`ILIFE_CONFIG_DIR` 可覆盖位置；
+ *   · 每个技能一份 YAML 配置文件，默认 `~/.ilife/bill.yaml`（只此一处，由 `os.homedir()` 派生）；
  *   · **配置文件是唯一真相**，环境变量不参与配置；
  *   · 「重置为默认」先自动备份 `.bak`，备份失败即不写盘、原文件保持不动。
  * 读写实现（受限 YAML 子集解析、键表与类型校验、备份、建目录）住 `base-link-core` 的 `src/config/`
@@ -84,7 +84,7 @@ export interface LoadedBillConfig {
   readonly values: BillConfigValues;
 }
 
-/** 每进程按**配置目录**记一份：`ILIFE_CONFIG_DIR` 一变（测试逐用例换临时目录）即现读，
+/** 每进程按**配置目录**记一份：家目录一变（测试逐用例换临时家目录）即现读，
  *  同一目录里不反复读盘（「保存即生效」由 `saveBillConfig`／`resetBillConfig` 清记忆保证，
  *  不靠长连接）。记忆位不绑「进程」而绑「配置文件路径」，是为了不让换目录后的读落到上一份的缓存上
  *  ——照 `packages/skill-calorie/src/config.ts:47-67` 同形（#718 那一侧先落的这条）。 */

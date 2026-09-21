@@ -45,7 +45,7 @@ function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
 /** 预检：只查 node 版本。**不再读任何环境变量**——库目录从配置文件取（#695；口径见 #675 解决评论），
- *  「没配」这件事由 `resolveDbPath()` 那一趟的配置件报错承担（测试进程缺 `ILIFE_CONFIG_DIR` 即响亮失败）。 */
+ *  「没配」这件事由 `resolveDbPath()` 那一趟的配置件报错承担（测试进程要落到真实家目录即响亮失败）。 */
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
@@ -359,7 +359,7 @@ async function main() {
     if (e instanceof ScheduleFetchError) fail(4, (e as Error).message);
     if (e instanceof ScheduleRenderError) fail(5, (e as Error).message);
     // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
-    // #695 起「库目录没配」也走这条——测试进程缺 `ILIFE_CONFIG_DIR` 时报 `测试缺隔离…`。
+    // #695 起「库目录没配」也走这条——测试进程要落到真实家目录时报 `测试缺隔离…`。
     if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     fail(4, '取数失败：' + (e as Error).message);
   }

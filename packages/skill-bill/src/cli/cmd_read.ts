@@ -49,7 +49,7 @@ function note(msg: string): void { console.error('NOTE: ' + msg); }
 
 /** 预检只留 node 版本这一道门（#726）：库目录不再要求环境变量——落点由配置文件唯一决定，
  *  缺项一律按默认落点走，故「没配」不再是阻断项。测试隔离那道响亮失败住 `base-link-core`
- *  （跑在 `node --test` 里却没设 `ILIFE_CONFIG_DIR` 即抛 `CONFIG_TEST_ISOLATION_MISSING`）。 */
+ *  （跑在 `node --test` 里却要落到真实家目录即抛 `CONFIG_TEST_ISOLATION_MISSING`）。 */
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
@@ -139,7 +139,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
 
 /** 迁移过的命令入口（写入域两条 ＋ 查询域四条 ＋ 账户域两条）：查注册表命中即走**命令声明里的 `run`**。
  *  开库／关库与老路同一套；**写库开关已退役（#726）**：`BILL_FORCE_PROD` 那个 opt-in 随 #675 删除，
- *  落点改由配置文件唯一决定（口径「照写」，替代护栏＝测试基座的 `ILIFE_CONFIG_DIR`）。
+ *  落点改由配置文件唯一决定（口径「照写」，替代护栏＝家目录注入＋真实家目录守卫）。
  *  这些命令的整页（采集页／回执页／查询列表页／账户表单与汇总页）住各自能力目录，
  *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。
  *  #691 起**不再按域写死入口**（改前是 `spec.kind === 'write' ? runRecordWrite : runQueryRead` 两条）：

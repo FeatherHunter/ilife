@@ -24,7 +24,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
-import { HOME_CONFIG_DEFAULTS, HOME_CONFIG_STEM } from './config.js';
+import { HOME_CONFIG_STEM } from './config.js';
+import { dbDirOf, dbFileOf, htmlDirOf, keyFileOf, DEFAULT_MASTER_KEY_FILENAME } from './fetch/paths.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -50,8 +51,8 @@ export const DB_TABLE_THRESHOLD = 16 as const;
 
 const SKILL = 'home' as const;
 
-/** 主密钥文件名（老 `accounts.py:32-56` 四级定位的那个文件名，逐字不变）。 */
-const MASTER_KEY_NAME = '.master.key' as const;
+/** 老四级定位的那个文件名（#794 起只是只读提示里的名字，判据以配置 `key.file` 为准）。 */
+const MASTER_KEY_NAME = DEFAULT_MASTER_KEY_FILENAME;
 
 /** 包根：`dist/health.js` 上一级。 */
 function packageRoot(): string {
@@ -266,17 +267,10 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
   return present.has(key) ? '配置文件' : '默认值';
 }
 
-/** 目录那一项的形状是**段串**（本家默认 `home_manager_html` 一段），段数与 `src/config.ts` 自己的
- *  `splitDirSegments` 同一口径。本件不 import 它：health 面与配置面互锁没有好处，而这条规则只有三行。 */
-function splitDirSegments(value: string): string[] {
-  return value.split(/[\\/]+/).filter((s) => s.length > 0);
-}
-
-/** 主密钥文件按老 `accounts.py:32-56` 那四级定位的**第一处存在**位置（照源码算，不猜）：
- *  ① 数据目录（老技能里是 `SKILLS_DB_PATH` 那一档）→ ② 包根 → ③ 包根任一父目录下的 `.db/` → ④ 包根下的 `.db/`。
- *  老实现在第 ① 档是「无论是否存在都用它」，新仓的数据目录恒有默认值，故这里仍按「四级里第一处真在的」
- *  报；一处都没有时报第 ① 档那个落点（用它说明「该放哪」）。 */
-function masterKeyCandidates(dataDir: string): string[] {
+/** 老 `accounts.py:32-56` 那四级定位的落点（#794 起只是**只读提示**，判据以配置 `key.file` 为准）：
+ *  ① 数据目录 → ② 包根 → ③ 包根任一父目录下的 `.db/` → ④ 包根下的 `.db/`。
+ *  配置那处不在、而这四处某处真在时，⑧ 那条按下复制指引报。 */
+function legacyKeyCandidates(dataDir: string): string[] {
   const root = packageRoot();
   const parents: string[] = [];
   let now = dirname(root);
@@ -375,10 +369,10 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const present: ReadonlySet<string> = read.kind === 'ok' ? read.present : new Set<string>();
 
-  // ① 配置文件本身：能不能解析；它落在默认位置还是被 ILIFE_CONFIG_DIR 指到别处（只陈述，不评价）。
+  // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', HOME_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置被 ILIFE_CONFIG_DIR 指到这里' : '默认位置';
+  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
   if (read.kind === 'bad') {
     items.push({
       id: 'config.file', title: '配置文件', status: 'red',
@@ -402,9 +396,9 @@ export function buildHomeHealthReport(): HomeHealthReport {
     });
   }
 
-  // ② 数据目录：在不在、能不能写。
+  // ② 数据目录：在不在、能不能写（算式与回执同源：`src/fetch/paths.ts` 的 `dbDirOf`）。
   const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
-  const dataDir = dbDirConfigured !== '' ? dbDirConfigured : paths.dataDir;
+  const dataDir = dbDirOf(paths.dataDir, dbDirConfigured);
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
@@ -421,16 +415,15 @@ export function buildHomeHealthReport(): HomeHealthReport {
     source: dataDirSource,
   });
 
-  // ③ 库文件：在不在 ＋ 表数够不够。
+  // ③ 库文件：在不在 ＋ 表数够不够（算式与回执同源：`src/fetch/paths.ts` 的 `dbFileOf`）。
   const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
-  const dbName = dbNameConfigured !== '' ? dbNameConfigured : String(HOME_CONFIG_DEFAULTS.db.name);
-  const dbFile = join(dataDir, dbName);
+  const dbFile = dbFileOf(dataDir, dbNameConfigured);
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
       id: 'db.file', title: '库文件', status: 'red',
       message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对；新装的话，跑一条会写库的命令即会建库。',
+      action: '新装的话，跑一条会写库的命令即会建库；要换库文件名，编辑配置文件里的 db.name。',
       source: dbSource,
     });
   } else {

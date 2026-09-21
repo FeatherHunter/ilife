@@ -9,7 +9,8 @@ import {
   resolveDbDir, resolveDbPath, dbFilename, openHomeDb, closeHomeDb,
   addItem, getItemById, listLocationsByItem, listTagsByItem, searchItems, updateItem,
   adjustQuantity, setLocationStatus, moveLocation, setItemTags, listAllTags, mergeTags,
-  listCategories, getCategoryById, encryptPassword, decryptPassword, assertMasterKey,
+  listCategories, getCategoryById, encryptPassword, decryptPassword,
+  loadMasterKey, retiredParamMessage, hasParamMasterKey, resolveKeyFile,
   addInventoryRecord, listInventoryRecords, listLocationNodes, ensureLocationNode,
   listShopping, addShopping, checkShopping, missingItems, stockList, setThreshold,
   listPurchases, addPurchase, purchaseYearStats, listWarranties, addWarranty, addServiceEvent,
@@ -146,7 +147,8 @@ function dispatchBackup(key: string, params: Record<string, unknown>): unknown |
   if (key !== 'home.care.write') return null;
   if (kind === 'backup') {
     const r = createBackup({ keepN: keepNOf(params) });
-    return buildReceipt('已备份：' + r.items + ' 件 → ' + r.file + '（' + fmtBytes(r.size) + '，保留 ' + r.keep_n + ' 份）');
+    return buildReceipt('已备份：' + r.items + ' 件 → ' + r.file + '（' + fmtBytes(r.size) + '，保留 ' + r.keep_n + ' 份）。'
+      + '本备份不含主密钥文件：换机恢复后要用账号密码，把它一起带过去。');
   }
   if (kind === 'export') {
     const r = exportData({ format: params.format as string | undefined, output: params.output as string | undefined });
@@ -691,13 +693,15 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
           }
           fail(2, '未知 cert op：' + op); return null;
         }
-        // account（master-key 门）
+        // account（主密钥文件门：#794 起口令只从 `key.file` 指的文件读，调用参数退场）
         const op = String(params.op ?? 'add');
-        const master = assertMasterKey(params.master_key ?? params.masterKey);
+        const keyFile = resolveKeyFile();
+        if (hasParamMasterKey(params)) fail(2, retiredParamMessage(keyFile));
+        const master = loadMasterKey(keyFile);
         if (op === 'add') {
           const platform = params.platform as string | undefined;
           const user = params.user as string | undefined, pass = params.pass as string | undefined;
-          if (!platform || !user || !pass) fail(2, '存账号须给 platform+user+pass+master-key');
+          if (!platform || !user || !pass) fail(2, '存账号须给 platform+user+pass（主密钥从文件读：' + keyFile + '）');
           const enc = encryptPassword(master, pass as string);
           try { handle.db.prepare('INSERT INTO accounts (platform, username, encrypted_password, type) VALUES (?,?,?,?)').run(platform, user, enc, String(params.type ?? '其他')); }
           catch (e) { throw new HomeFetchError('HOME_DB_UNREADABLE', '存账号失败（平台已存在？）', { cause: e }); }
@@ -705,7 +709,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         }
         if (op === 'update') {
           const platform = params.platform as string | undefined;
-          if (!platform) fail(2, '改账号须给 platform+master-key');
+          if (!platform) fail(2, '改账号须给 platform（主密钥从文件读：' + keyFile + '）');
           const hit = handle.db.prepare('SELECT * FROM accounts WHERE platform=?').get(platform) as Record<string, unknown> | undefined;
           if (!hit) throw new HomeFetchError('HOME_ACCOUNT_MISSING', '无此账号：' + platform);
           // 主密钥校验（解密一次）
@@ -721,7 +725,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         }
         if (op === 'show') {
           const platform = params.platform as string | undefined;
-          if (!platform) fail(2, '看密码须给 platform+master-key');
+          if (!platform) fail(2, '看密码须给 platform（主密钥从文件读：' + keyFile + '）');
           const hit = handle.db.prepare('SELECT * FROM accounts WHERE platform=?').get(platform) as Record<string, unknown> | undefined;
           if (!hit) throw new HomeFetchError('HOME_ACCOUNT_MISSING', '无此账号：' + platform);
           const plain = decryptPassword(master, String(hit.encrypted_password));
@@ -875,7 +879,7 @@ async function main() {
     if (e instanceof HomeFetchError) fail(4, (e as Error).message);
     if (e instanceof HomeRenderError) fail(5, (e as Error).message);
     // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
-    // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却没设 `ILIFE_CONFIG_DIR` 时响亮失败。
+    // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却要落到真实家目录时响亮失败。
     if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
     fail(4, '取数失败：' + (e as Error).message);
   }
