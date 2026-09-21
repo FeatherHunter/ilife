@@ -132,7 +132,7 @@ const eventList = (spec) => spec.map(([time_start, time_end, title, category]) =
  *  `absent` 是本票的反面判据（该档页上**不许**出现的东西）。 */
 const CONTRACT = {
   [P_ENSURE_NEW]: [
-    { block: '新事件回执（f15）', needs: ['补计划回执', '这一趟的结果', 'ilife-block-conclusion-bar', 'ilife-block-kpi-card'], absent: ['这一步没有新建'] },
+    { block: '新事件回执（f15）', needs: ['补计划回执', '这一趟的结果', 'ilife-block-conclusion', 'ilife-block-kpi-card'], absent: ['这一步没有新建'] },
   ],
   [P_ENSURE_HIT]: [
     { block: '新事件回执（f15）', needs: ['补计划回执', '这一趟的结果'] },

@@ -89,7 +89,7 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
     title: '这一步没有新建',
     toast: {
       icon: 'info',
-      msg: '这个日期配这一段起止本来就有一条了，补计划认了原来那条，没有重复建；回执里的编号还是它。',
+      msg: '这个日期配这一段起止本来就有一条了，补计划认了原来那条，没有重复建。回执里的编号还是它。',
     },
     staticNotice: true,
   });
@@ -277,7 +277,7 @@ export function updateReceiptPage(
         title: '时段变了，飞书那条也换过',
         toast: {
           icon: 'warn',
-          msg: '远端日历没有「改时间」这个动作，所以这一趟是先按新时段建一条，建好之后把旧的那条删掉；两步都成了才算远端侧成功。',
+          msg: '远端日历没有「改时间」这个动作，所以这一趟是先按新时段建一条，建好之后把旧的那条删掉。两步都成了才算远端侧成功。',
         },
         staticNotice: true,
       })
@@ -320,7 +320,7 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
   };
   const content = [
     renderConclusionBar('这一条已经不再算进 ' + before.date + ' 了，这一天现在排着 ' + day.length
-      + ' 件；库里那一条没有真的删掉，只是标记成不再算。'),
+      + ' 件。库里那一条没有真的删掉，只是标记成不再算。'),
     renderKpiGrid([
       { label: '事件编号', value: String(before.id), detail: before.date },
       { label: '删掉的时段', value: fmtDurShort(minutes), detail: span(before.time_start, before.time_end) },
@@ -336,7 +336,7 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
       title: '这是软删，不是抹掉',
       toast: {
         icon: 'info',
-        msg: '库里那一条还在，只是不再算进这一天的排布；同槽位上属于本技能的远端对象一并清掉，别的对象不动。',
+        msg: '库里那一条还在，只是不再算进这一天的排布。同槽位上属于本技能的远端对象一并清掉，别的对象不动。',
       },
       staticNotice: true,
     }),
