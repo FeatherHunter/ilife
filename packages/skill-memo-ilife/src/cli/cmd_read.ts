@@ -244,7 +244,7 @@ function dispatchInit(params: Record<string, unknown>): DispatchOut {
   return {
     data: { ok: true, message, items: diag.items.length, todos: diag.todos.length, verify: diag.verify.length },
     exit: 0,
-    deliver: { html: page.html, stem: '初始化报告' },
+    deliver: { html: page.html, stem: bookletFileStem(INIT_SCENE_ID, page.kind) },
   };
 }
 
