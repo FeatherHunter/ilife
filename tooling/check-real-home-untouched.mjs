@@ -54,6 +54,7 @@ export const SUITE_GLOBS = [
   'packages/skill-memo-ilife/test/*.test.mjs',
   'packages/skill-schedule/test/*.test.mjs',
   'packages/skill-home/test/*.test.mjs',
+  'packages/skill-home/test/*/*.test.mjs',
   'packages/skill-bill/test/*.test.mjs',
   'packages/skill-chef/test/*.test.mjs',
   'packages/plugin-manager/test/*.test.mjs',
