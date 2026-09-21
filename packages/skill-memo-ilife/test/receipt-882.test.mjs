@@ -142,3 +142,29 @@ describe('#882 · 18 格单条场景不吃这一改（回归锁）', () => {
     assert.equal(objectRowOf(jsonOf(latestOf('删备忘'))), '对象：备忘 #' + id);
   });
 });
+
+// 字符串形态在域里一共三处：批量支（本票目标）＋ 两处兜底。墙上 34 格跑不到兜底那两处，
+// 但本票改了它们**上屏的样子**（`#未新建` → `未新建`、`#—` → `—`），故在这里按定义级锁住形状：
+// **本票只去 `#`，不改措辞**（措辞的去留见票面 §四，另开票）。
+describe('#882 · 字符串形态的另外两处兜底（定义级：只去 `#`，不改措辞）', () => {
+  it('记心愿没拿到记录号时：`对象：心愿 —`（旧写法是 `#—`）', async () => {
+    const { buildWishReceipt } = await import(dist('wish/receipt.js'));
+    const page = buildWishReceipt({
+      scene: 'memo_add_wish',
+      title: '记心愿',
+      loc: null,
+      receipt: { ok: true, message: '已记一条：7', local: 'created', remote: 'not-applicable', remoteId: null },
+    });
+    assert.equal(objectRowOf(jsonOf(page.html)), '对象：心愿 —');
+  });
+
+  it('记情绪没拿到记录号时：`对象：情绪日记 未新建`（旧写法是 `#未新建`）', async () => {
+    const { buildReceipt } = await import(dist('memo/receiptPage.js'));
+    const page = buildReceipt(
+      'memo_add_mood', '记情绪',
+      { ok: false, message: '已记一条：7；远端没成（未登录）', local: 'created', remote: 'failed', remoteId: null },
+      { entityLabel: '情绪日记', entityId: '未新建', summary: ['本次未新建笔记'] },
+    );
+    assert.equal(objectRowOf(jsonOf(page.html)), '对象：情绪日记 未新建');
+  });
+});
