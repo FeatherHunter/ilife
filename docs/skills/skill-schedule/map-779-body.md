@@ -20,7 +20,7 @@
 ## Notes
 
 - **权威来源**：老作息管家 `D:\2Study\StudyNotes\SKILLS\作息管家` 是**内容与版式素材**的权威；**视觉基座**是新仓公共层 `base-paint`（与卡路里、记账同族）。取长补短，不是二选一。
-- **必读**：`docs/agents/structure.md`（五条铁律 ＋ 必报五步）、`docs/agents/命令登记纪律.md`、`docs/agents/编排纪律.md`、`docs/agents/视觉验收墙.md`、**`docs/subagent-concurrency-protocol.md`（并发正本）**。编译／测试／git 写一律经 `tooling/run-locked.mjs --ticket <号>` 排队。
+- **必读**：`docs/agents/structure.md`（五条铁律 ＋ 必报五步）、`docs/agents/命令登记纪律.md`、`docs/agents/编排纪律.md`、`docs/agents/视觉验收墙.md`、**`docs/subagent-concurrency-protocol.md`（并发正本）**；**出页票（#783–#790）另读 `docs/skills/skill-schedule/出页交接-页型配方怎么用.md`**（形状住哪／口径住哪／四道门／四条已踩过的坑）。编译／测试／git 写一律经 `tooling/run-locked.mjs --ticket <号>` 排队。
 - **并发设计（本图的硬口径）**：`packages/skill-schedule` 是**单写者资源**——三处物理共享点绕不开：`tooling/skill-html.snapshot.json`（一个文件覆盖 5 技能 187 件）、三件生成物（生成器扫全包，会把别人的半成品扫进来）、`dist`（混合态读数作废，协议 §2.6）。所以：**主干（写包）任何时刻只有一张票**，八张域票串成**写者互斥链**；**并发放在写面不相交的支线**（清单取证、种子、链路页生成器、证据件撰写）。
 - **边的性质**（别把锁当依赖读）：**语义依赖**＝交付面←结构、种子←结构、形状←结构＋交付面＋种子＋清单、八张域票←结构＋形状、链路页←八张域票、收口←链路页；**写者互斥序**＝八张域票之间的 7 条链边（共享快照与 `SKILL.md`，同一时刻只允许一个写者）。
 - **每票都有「写面」段**（协议 §1 路径所有权）：只写自己声明的路径；要碰别人的路径＝报编排者转票。
