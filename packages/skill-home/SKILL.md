@@ -52,13 +52,47 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 | 居家管家 帮助 | home.help.lookup | list | `home-cmd-read home.help.lookup` |
 | 居家管家帮助 | home.help.lookup | list | `home-cmd-read home.help.lookup` |
 | 居家管家能做什么 | home.help.lookup | list | `home-cmd-read home.help.lookup` |
+| 查快递 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"express"}'` |
+| 购物清单 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"list"}'` |
+| 缺货检测 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"missing"}'` |
+| 囤货盘点 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"stock"}'` |
+| 改购物清单 | home.shopping.write | receipt | `home-cmd-read home.shopping.write --params '{"op":"check"}'` |
+| 查异常 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"lint"}'` |
+| 借用 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"borrow"}'` |
+| 借出 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"borrow","op":"borrow"}'` |
+| 借入 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"borrow","op":"borrow"}'` |
+| 归还 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"borrow","op":"return"}'` |
+| 催还 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"borrow"}'` |
+| 家人档案 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"member"}'` |
+| 首次使用 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"init"}'` |
+| 备份导出 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"backup"}'` |
+| 导入恢复 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"import"}'` |
 | 查物品(HTML) | home.item.search | list | `home-cmd-read home.item.search` |
-| 看物品(HTML) | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"id":1}'` |
-| 统物品(HTML) | home.stats.overview | stat | `home-cmd-read home.stats.overview` |
 | 查物品 | home.item.search | list | `home-cmd-read home.item.search` |
+| 紧急定位 | home.item.search | list | `home-cmd-read home.item.search --params '{"locate":true}'` |
+| 筛选浏览 | home.item.search | list | `home-cmd-read home.item.search --params '{"browse":true}'` |
+| 拍照找物品 | home.item.search | list | `home-cmd-read home.item.search --params '{"photo":true}'` |
+| 查重复 | home.item.search | list | `home-cmd-read home.item.search --params '{"dupes":true}'` |
+| 照片墙 | home.item.search | list | `home-cmd-read home.item.search --params '{"wall":true}'` |
+| 搜索物品 | home.item.search | list | `home-cmd-read home.item.search` |
+| 找一下物品 | home.item.search | list | `home-cmd-read home.item.search` |
+| 帮我找找 | home.item.search | list | `home-cmd-read home.item.search` |
+| 看看家里有啥 | home.item.search | list | `home-cmd-read home.item.search` |
+| 看物品(HTML) | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"id":1}'` |
 | 看物品 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"id":1}'` |
+| 查看照片 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"view":"photos","id":1}'` |
+| 历史 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"view":"history","id":1}'` |
+| 查看物品 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"id":1}'` |
+| 物品详情 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"id":1}'` |
 | 录物品 | home.item.add | receipt | `home-cmd-read home.item.add` |
 | 拍物品 | home.item.add | receipt | `home-cmd-read home.item.add --params '{"photo":"1"}'` |
+| 批量录入 | home.item.add | receipt | `home-cmd-read home.item.add --params '{"op":"batch"}'` |
+| 补录 | home.item.add | receipt | `home-cmd-read home.item.add --params '{"op":"backfill"}'` |
+| 登记物品 | home.item.add | receipt | `home-cmd-read home.item.add` |
+| 添加物品 | home.item.add | receipt | `home-cmd-read home.item.add` |
+| 帮我记一下 | home.item.add | receipt | `home-cmd-read home.item.add` |
+| 家里又多了个东西 | home.item.add | receipt | `home-cmd-read home.item.add` |
+| 新到货了 | home.item.add | receipt | `home-cmd-read home.item.add` |
 | 改物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"id":1}'` |
 | 移物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"move","id":1}'` |
 | 补物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"qty","id":1}'` |
@@ -67,61 +101,36 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 | 废物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"status","id":1}'` |
 | 借物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"status","id":1}'` |
 | 修物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"status","id":1}'` |
+| 合并物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"merge","id":1}'` |
+| 撤销操作 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"undo"}'` |
+| 物品关联 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"relate","id":1}'` |
+| 管照片 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"photo","id":1}'` |
+| 数量变更 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"qty","id":1}'` |
+| 状态变更 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"status","id":1}'` |
+| 看标签 | home.tag.query | list | `home-cmd-read home.tag.query` |
+| 管标签 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"overview"}'` |
+| 管分类 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"category"}'` |
+| 整理建议 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"tidy"}'` |
+| 合标签 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"merge"}'` |
 | 盘物品 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
 | 盘全部 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round","scope":"all"}'` |
+| 盘点 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
+| 差异处理 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"resolve"}'` |
+| 搬家盘点 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"move"}'` |
+| 清点物品 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
+| 核对库存 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
+| 数数这里 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
+| 盘点记录 | home.inventory.records | list | `home-cmd-read home.inventory.records` |
 | 穿什么 | home.outfit.pick | list | `home-cmd-read home.outfit.pick` |
+| 衣橱分析 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"wardrobe"}'` |
+| 换季 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"season"}'` |
+| 旅行穿搭 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"trip-plan"}'` |
 | 带物品 | home.trip.manage | receipt | `home-cmd-read home.trip.manage --params '{"mode":"pack"}'` |
 | 归物品 | home.trip.manage | receipt | `home-cmd-read home.trip.manage --params '{"mode":"return"}'` |
-| 统物品 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
-| 查高频 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
-| 查低频 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"idle"}'` |
-| 查过期 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"expiring"}'` |
-| 看标签 | home.tag.query | list | `home-cmd-read home.tag.query` |
-| 合标签 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"merge"}'` |
-| 查快递 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"express"}'` |
-| 推位置 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"suggest"}'` |
-| 找位置 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"find"}'` |
 | 查账号 | home.ticket.query | list | `home-cmd-read home.ticket.query --params '{"kind":"account"}'` |
 | 存账号 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"account","op":"add"}'` |
 | 改账号 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"account","op":"update"}'` |
 | 看密码 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"account","op":"show"}'` |
-| 查异常 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"lint"}'` |
-| 借用 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"borrow"}'` |
-| 家人档案 | home.care.query | list | `home-cmd-read home.care.query --params '{"kind":"member"}'` |
-| 管位置 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"manage"}'` |
-| 固定位 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"fixed"}'` |
-| 收纳建议 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"storage"}'` |
-| 空间视图 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"space"}'` |
-| 查闲置 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"idle"}'` |
-| 盘点统计 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"inventory"}'` |
-| 首次使用 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"init"}'` |
-| 备份导出 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"backup"}'` |
-| 导入恢复 | home.care.write | receipt | `home-cmd-read home.care.write --params '{"kind":"import"}'` |
-| 批量录入 | home.item.add | receipt | `home-cmd-read home.item.add --params '{"op":"batch"}'` |
-| 补录 | home.item.add | receipt | `home-cmd-read home.item.add --params '{"op":"backfill"}'` |
-| 紧急定位 | home.item.search | list | `home-cmd-read home.item.search --params '{"locate":true}'` |
-| 筛选浏览 | home.item.search | list | `home-cmd-read home.item.search --params '{"browse":true}'` |
-| 拍照找物品 | home.item.search | list | `home-cmd-read home.item.search --params '{"photo":true}'` |
-| 查重复 | home.item.search | list | `home-cmd-read home.item.search --params '{"dupes":true}'` |
-| 合并物品 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"merge","id":1}'` |
-| 撤销操作 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"undo"}'` |
-| 物品关联 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"relate","id":1}'` |
-| 管标签 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"overview"}'` |
-| 管分类 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"category"}'` |
-| 整理建议 | home.tag.write | receipt | `home-cmd-read home.tag.write --params '{"op":"tidy"}'` |
-| 查看照片 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"view":"photos","id":1}'` |
-| 管照片 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"photo","id":1}'` |
-| 照片墙 | home.item.search | list | `home-cmd-read home.item.search --params '{"wall":true}'` |
-| 盘点记录 | home.inventory.records | list | `home-cmd-read home.inventory.records` |
-| 差异处理 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"resolve"}'` |
-| 搬家盘点 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"move"}'` |
-| 历史 | home.item.detail | detail | `home-cmd-read home.item.detail --params '{"view":"history","id":1}'` |
-| 数量变更 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"qty","id":1}'` |
-| 状态变更 | home.item.update | receipt | `home-cmd-read home.item.update --params '{"op":"status","id":1}'` |
-| 盘点 | home.inventory.round | receipt | `home-cmd-read home.inventory.round --params '{"op":"round"}'` |
-| 购物清单 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"list"}'` |
-| 缺货检测 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"missing"}'` |
-| 囤货盘点 | home.shopping.query | list | `home-cmd-read home.shopping.query --params '{"kind":"stock"}'` |
 | 查购买记录 | home.ticket.query | list | `home-cmd-read home.ticket.query --params '{"kind":"purchase"}'` |
 | 查上月购买 | home.ticket.query | list | `home-cmd-read home.ticket.query --params '{"kind":"purchase","range":"last-month"}'` |
 | 查今年花费 | home.ticket.query | list | `home-cmd-read home.ticket.query --params '{"kind":"purchase","range":"year"}'` |
@@ -136,13 +145,48 @@ home-cmd-read home.help.lookup --params '{"q":"查物品"}'
 | 登记证件 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"cert","op":"add"}'` |
 | 证件归档 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"cert","op":"archive"}'` |
 | 更新证件 | home.ticket.write | receipt | `home-cmd-read home.ticket.write --params '{"kind":"cert","op":"update"}'` |
-| 衣橱分析 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"wardrobe"}'` |
-| 换季 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"season"}'` |
-| 旅行穿搭 | home.outfit.pick | list | `home-cmd-read home.outfit.pick --params '{"kind":"trip-plan"}'` |
-| 改购物清单 | home.shopping.write | receipt | `home-cmd-read home.shopping.write --params '{"op":"check"}'` |
+| 推位置 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"suggest","category_id":"<值>"}'` |
+| 找位置 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"find","reference":"<值>"}'` |
+| 管位置 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"manage"}'` |
+| 固定位 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"fixed"}'` |
+| 收纳建议 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"storage"}'` |
+| 空间视图 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"space"}'` |
+| 位置管理 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"manage"}'` |
+| 整理一下家里的位置 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"manage"}'` |
+| 位置怎么分的 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"manage"}'` |
+| 设置固定位 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"fixed"}'` |
+| 给我定个固定位置 | home.location.write | receipt | `home-cmd-read home.location.write --params '{"op":"fixed"}'` |
+| 收纳位置建议 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"storage"}'` |
+| 帮我找个地方放 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"storage"}'` |
+| 浏览空间视图 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"space"}'` |
+| 看看家里每个地方都有啥 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"space"}'` |
+| 客厅里都有什么 | home.location.query | list | `home-cmd-read home.location.query --params '{"mode":"space"}'` |
+| 统物品(HTML) | home.stats.overview | stat | `home-cmd-read home.stats.overview` |
+| 统物品 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 查高频 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 盘点统计 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"inventory"}'` |
+| 统计物品 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 物品总览 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 家里都有啥 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 给我个总数 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 一共多少件 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 整体啥情况 | home.stats.overview | stat | `home-cmd-read home.stats.overview --params '{"kind":"summary"}'` |
+| 查低频 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"idle"}'` |
+| 查过期 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"expiring"}'` |
+| 查闲置 | home.stats.alert | list | `home-cmd-read home.stats.alert --params '{"kind":"idle"}'` |
 
 相关场景：home.care.query、home.care.write、home.help.lookup、home.inventory.records、home.inventory.round、home.item.add、home.item.detail、home.item.search、home.item.update、home.location.query、home.location.write、home.outfit.pick、home.shopping.query、home.shopping.write、home.stats.alert、home.stats.overview、home.tag.query、home.tag.write、home.ticket.query、home.ticket.write、home.trip.manage（21 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->
+
+## 输出位置（链路：唤醒词 → 命令 → 落盘 HTML 绝对路径）
+
+本图链路是「唤醒词 → 命令 → **落盘 HTML 绝对路径**」：读技能的是 AI，AI 必须把路径交给用户——
+
+- **缺省即落 HTML**（不再是「只回 JSON」）：跑一条命令，产物落一份 HTML 文件，回执里带 `delivery.path` **绝对路径**（`delivery{mode,path,bytes}` 只追加，既有字段一字不改）。**把 `delivery.path` 告诉用户**（他要点开的就是这一份），落点一律以回执为准。
+- **产物落在哪**：`<库目录>/<产物目录>/`（库目录＝配置文件 `~/.ilife/home.yaml` 的 `db.dir`，空串＝数据目录；产物目录＝同文件的 `html.dir`，默认 `home_manager_html`）。HELP 与速查表落同目录（主体见上节）。
+- **用户怎么点开**：把 `delivery.path` 原样给他（本地绝对路径，双击即开；链路总览页里同路径另有 `file:///` 可点链接）。
+- **完成判据**：`delivery.path` 指的文件**存在**，且它的大小（字节）＝回执里的 `delivery.bytes`（两处对不上就是没做完，别把回执当完成）。
+- 口径先行说明：数据与过程命令的默认落盘实施随票 4（#801）落地，本节先定口径；`--html <路径>` 通用出口（所有 key 通用）今天已可用。
 
 ## 环境与出 scope
 

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#799 契约冻结 · grill 决策页</title>
+<style>
+:root{--ink:#1d1d1f;--ink2:#3a3a3c;--mute:#6e6e73;--line:#e2e2e8;--bg:#f5f5f7;--card:#fff;--accent:#0a6cff;--soft:#eef4ff;--ok:#0b7a45;--okbg:#e8f6ee;--warn:#8a5a00;--warnbg:#fff4dd;--no:#a8382c;--nobg:#fdecea;--r:14px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;font-size:15px}
+.wrap{max-width:960px;margin:0 auto;padding:0 18px 120px}
+.top{position:sticky;top:0;z-index:20;background:rgba(245,245,247,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{max-width:960px;margin:0 auto;padding:10px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.top h1{font-size:15px;font-weight:700}
+.top nav{display:flex;gap:8px;flex-wrap:wrap}
+.top nav a{font-size:12.5px;color:var(--accent);text-decoration:none;border:1px solid var(--line);background:#fff;padding:3px 10px;border-radius:999px}
+.status{font-size:11.5px;font-weight:700;color:var(--warn);background:var(--warnbg);padding:3px 10px;border-radius:999px}
+header.head{padding:28px 0 4px}
+header.head h2{font-size:24px;letter-spacing:-.3px}
+header.head p{color:var(--ink2);margin-top:8px;font-size:14px}
+.meta{margin-top:10px;font-size:12.5px;color:var(--mute)}
+.meta code{background:#eeeef2;border-radius:4px;padding:1px 6px;font-size:12px}
+section{margin-top:30px}
+section>h3{font-size:13px;color:var(--mute);letter-spacing:1.5px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:12px}
+.card.key{border-color:#bcd2ff;box-shadow:0 0 0 3px var(--soft)}
+.qhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.qid{font-weight:800;color:var(--accent);font-size:13px}
+.card h4{font-size:17px;font-weight:700}
+.badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px}
+.badge.rec{color:#fff;background:var(--accent)}
+.badge.risk{color:var(--no);background:var(--nobg)}
+.badge.wait{color:var(--warn);background:var(--warnbg)}
+.ctx{margin-top:10px;font-size:13.5px;color:var(--ink2);border-left:3px solid var(--line);padding-left:12px}
+.ctx b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f7f7fa;font-size:12px;color:var(--mute)}
+td code,.ctx code,li code{background:#f1f1f4;border-radius:4px;padding:1px 5px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pc div{font-size:12.5px;border-radius:9px;padding:8px 10px}
+.pro{background:var(--okbg);color:#0a5f37}
+.con{background:var(--nobg);color:#7a2b22}
+.rec-line{margin-top:12px;background:var(--soft);border:1px dashed #9dbcf7;border-radius:10px;padding:10px 12px;font-size:13.5px}
+.rec-line b{color:var(--accent)}
+.ex{margin-top:8px;font-size:12.5px;color:var(--ink2)}
+details{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:700;font-size:14px}
+details p,details li{font-size:13px;color:var(--ink2);margin-top:6px}
+footer{margin-top:34px;font-size:13px;color:var(--mute)}
+@media(max-width:640px){.pc{grid-template-columns:1fr}.wrap{padding-bottom:80px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in">
+<h1>#799 契约冻结 · grill 决策页</h1><span class="status">待你裁定 · 未落盘</span>
+<nav><a href="#bg">背景</a><a href="#q6">Q6 命名</a><a href="#q7">Q7 页族界</a><a href="#q8">Q8 分层</a><a href="#pre">前提</a></nav>
+</div></div>
+<div class="wrap">
+
+<header class="head">
+<h2>三件事定完，11 张票才能开工</h2>
+<p>本票（map #797 的票 2）是全图唯一人工门：阻塞票 3 与全部 11 张域票。契约只回答“11 席不经协商也能合并”的最小条件，其余留给各票。</p>
+<div class="meta">issue <code>#799</code> · map <code>#797</code> · 唤醒词票 <code>#845</code> · 册子 <code>pages-ledger.md</code> · 2026-09-21 · 确认前不改 issue 正文</div>
+</header>
+
+<section id="bg"><h3>背景 · 前因后果</h3>
+<div class="card">
+<div class="ctx"><b>前因：</b>70 场景要在 11 张票里并行做出真页面。老实现是模板→中文名 1:1（<code>scripts/render/__init__.py:130-147</code>），<code>物品/receipt.html</code> 与 <code>物品/add_form.html</code> 各吃 4 条场景——照搬会互相覆盖。<b>后果：</b>形状、命名、页族归属、写集、共用位五条不在写页面前一次裁定，各席写完无法合并。</div>
+<div class="ctx"><b>地面真相（三条）：</b>① 册子 49 个老模板引用全存在，减 <code>link</code> 3 族 → 实做 <b>46 族 / 70 场景 / 8 域</b>；② 现状 <code>src/render/templates.ts:33-58</code> 是 <code>key→模板</code> 1:1，一个 <code>home.item.update</code> 要覆盖 9 条场景，一个模板表达不了；③ “哪些词落哪族”归票 22（#845），本票只定 <code>(key, preset)→页族</code>，不重复裁。</div>
+<div class="ctx"><b>对抗审查结论：</b>原推荐 <code>&lt;唤醒词&gt;_&lt;戳&gt;</code> 有非法字符与不稳定键两处硬伤；46 族前置全量论证会饿死 15 张票。重推为<b>薄契约 + 分层冻结</b>（见 Q6–Q8）。</div>
+</div></section>
+
+<section id="q6"><h3>关键决策 · Q6</h3>
+<div class="card key">
+<div class="qhead"><span class="qid">Q6</span><h4>产物命名：二选一</h4><span class="badge wait">待定</span></div>
+<div class="ctx"><b>前因：</b>票 4 落盘与票 7 清单驱动都从这条规则读，不再各自定义。<b>硬伤：</b><code>查物品(HTML)</code> 含括号、<code>带物品/归物品</code>（SM3-4）含 <code>/</code>（Windows 非法）、<code>帮我记一下</code> 含空格；且 20 条无场景词 + 42 条变体的归宿在票 22 未定——词进文件名等于地基建在流沙上。<b>判据：</b>文件名须同时满足唯一（70 条不覆盖）、稳定（票 22 改词不改名）、可读。</div>
+<table><tr><th>选项</th><th>形态与真实例</th><th>利 / 弊</th></tr>
+<tr><td><b>(a′) 稳定版</b> <span class="badge rec">推荐</span></td><td><code>&lt;命令中文名&gt;_&lt;场景id&gt;_&lt;戳&gt;.html</code><div class="ex">录物品_1-1_….html<br>移物品_3-2_….html<br>查购买记录_SM6-1_….html</div></td><td><div class="pc"><div class="pro">利：场景 id 是 yaml 主键，永不改；唯一 + 稳定全满足</div><div class="con">弊：比唤醒词长；可读性靠链路页附注补</div></div></td></tr>
+<tr><td><b>(b′) 可读版</b></td><td><code>&lt;场景id&gt;_&lt;唤醒词slug&gt;_&lt;戳&gt;.html</code><div class="ex">1-1_录物品_….html<br>3-2_移物品_….html<br>SM3-4_出行清单_….html（双词取综合名）</div></td><td><div class="pc"><div class="pro">利：人一眼看出场景；场景 id 保唯一稳定</div><div class="con">弊：需另定 slug 转义（去 /()空格）；SM3-4 需综合名兜底</div></div></td></tr></table>
+<div class="rec-line">➡️ <b>推荐 (a′)：</b>可读性在链路页呈现层补（印唤醒词别名），不进文件名。若你坚持可读进文件名，选 (b′) 并接受 slug 规则。</div>
+</div></section>
+
+<section id="q7"><h3>关键决策 · Q7</h3>
+<div class="card key">
+<div class="qhead"><span class="qid">Q7</span><h4>页族的界：46 先冻还是前置全拆？</h4><span class="badge wait">待定</span></div>
+<div class="ctx"><b>前因：</b><code>物品/receipt.html</code> 1 模板吃移物品 / 数量变更 / 状态变更 / 标物品 4 条，信息结构并不相同；<code>receipt</code> 域 18 场景压到 4 族最狠。<b>关键定义：页族 = 装配件边界</b>（一族 = <code>templates/&lt;域&gt;/&lt;族&gt;.html</code> + <code>src/&lt;域&gt;/pages/&lt;族&gt;.ts</code> 一对文件），信息结构是分界依据，不是页族本身。</div>
+<table><tr><th>选项</th><th>做法</th><th>利 / 弊</th></tr>
+<tr><td><b>先冻 + 补丁流</b> <span class="badge rec">推荐</span></td><td>46 名先按老模板名冻结；差异在族内用 <code>mode</code> 消化；装不下由票 8 提拆/合补丁回写票 2</td><td><div class="pc"><div class="pro">利：契约今晚可冻，不饿死 15 张票；写集不相交，他人不受累</div><div class="con">弊：首版 receipt 4 条合一族略别扭，留给补丁</div></div></td></tr>
+<tr><td><b>前置全论证</b></td><td>本票一次写完 46 条拆/合理由 + 70 条必需块全文</td><td><div class="pc"><div class="pro">利：一次到位</div><div class="con">弊：契约过千行，写不完则全图停工 <span class="badge risk">饿死风险</span></div></div></td></tr></table>
+<div class="rec-line">➡️ <b>推荐先冻：</b><code>物品/receipt.html</code> 的 4 条首版合一族（<code>receipt</code>），差异走族内条件块。</div>
+</div></section>
+
+<section id="q8"><h3>关键决策 · Q8</h3>
+<div class="card key">
+<div class="qhead"><span class="qid">Q8</span><h4>分层冻结放行：打破单点阻塞</h4><span class="badge wait">待定</span></div>
+<div class="ctx"><b>前因：</b>票 2 今天阻塞票 3 + 11 张域票（15 张），契约写不完一票都开不了工（仅 #802/#803/#804 三张 AFK 票能动）。<b>后果：</b>大爆炸一次过 = 单点饿死；分层冻 = 先放行与命名/页族界无关的部分。</div>
+<table><tr><th>层</th><th>内容</th><th>放行</th></tr>
+<tr><td><b>Layer 0 · 今晚冻</b></td><td>形状 8 域 + 标准件；写集按页族文件切；共用位归票 3；锁 <code>--max-wait-ms 600000</code> + 排队；<code>link</code> 只留注册表一行、不建目录</td><td>票 3 前半先开工</td></tr>
+<tr><td><b>Layer 1 · 次冻</b></td><td>判定函数签名 <code>(key, preset)→页族</code> + 46 名表；等票 22 词归宿输入，可并行</td><td>票 3 页族解析</td></tr>
+<tr><td><b>Layer 2 · 后冻</b></td><td>命名函数（Q6）+ 必需块 JSON（从册子派生，不手抄，票 6/票 8 只消费 JSON）</td><td>不阻塞开工</td></tr></table>
+<div class="rec-line">➡️ <b>推荐接受分层：</b>契约文档按三层标注冻结态，节数仍 ≥6，验收另加机器可验项（族名表可读、判定函数可执行）。</div>
+</div></section>
+
+<section id="pre"><h3>前提 · Q1 / Q2 / Q5（第一轮，已收敛，待你一并点头）</h3>
+<details><summary>Q1 目标与验收：只出契约文档，不写代码</summary>
+<p>交付 <code>scene-pages-contract.md</code>（<code>##</code> ≥6）+ 你评论区点头原话为唯一过门；不改 <code>src/</code>/<code>templates/</code>，不碰生产库。硬约束只写接口与归属、不写实现。➡️ 推荐：按票面原样锁定。</p></details>
+<details><summary>Q2 形状：8 域 + 标准四件</summary>
+<p>目录 <code>items/space/outfit/stats/express/receipt/family/setup</code>（<code>link</code> 不建目录，沿用 #183 票 13）；每能力 <code>index.ts / commands.ts / routes.ts / pages/&lt;族&gt;.ts</code>，页族文件 <code>templates/&lt;域&gt;/&lt;族&gt;.html</code> + <code>src/&lt;域&gt;/pages/&lt;族&gt;.ts</code>；超线件处置留给票 3。➡️ 推荐：照卡路里定死。</p></details>
+<details><summary>Q5 并行硬规矩：写集 / 共用位 / 锁 / 判定+必需块</summary>
+<p>① 同域多票靠页族文件天然不相交；② <code>src/render/**</code>、<code>package.json</code>、<code>SKILL.md</code>、派生件归票 3 唯一写者；③ <code>run-locked</code> 带 <code>--max-wait-ms 600000</code>；④ 两层解析 + 必需块清单（来源=册子表一，供票 6/票 8 消费，全文后冻）。➡️ 推荐：四条全立。</p></details>
+</section>
+
+<footer>下一步：你回 <b>Q6 / Q7 / Q8</b>（Q1/Q2/Q5 一并点头或标改）→ 我按正文格式回写 #799（<code>## 进度</code> + 下一步）→ 全部对齐后提醒你跑 <code>/to-spec</code>，规格单挂到 map #797 当 subissue。本页只是讨论页，不是契约本身。</footer>
+
+</div>
+</body>
+</html>

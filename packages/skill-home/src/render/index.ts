@@ -12,3 +12,5 @@ export {
 } from './html.js';
 export { HOME_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { HomeTemplate } from './templates.js';
+// #800 · 页族两层解析（票 2 契约 L1）：`(key, preset) → 页族`，旧 1:1 `templateFor` 原样保留。
+export { UNKNOWN_FAMILY, resolvePageFamily } from './pageFamilies.js';

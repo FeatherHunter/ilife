@@ -1,30 +1,11 @@
 // 渲染层·envelope：21 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { HomeRenderError } from './errors.js';
+// #800 起形状分配表住派生件 `src/cli/keys.ts`（各能力 `commands.ts` 声明合成），
+// 本文件只消费不定义：同一件事（key→shape）只有一个定义地。
+import { HOME_KEY_SHAPES as GENERATED_SHAPES } from '../cli/keys.js';
 
-export const HOME_KEY_SHAPES: Record<string, EnvelopeShape> = {
-  'home.item.search': 'list',
-  'home.item.detail': 'detail',
-  'home.item.add': 'receipt',
-  'home.item.update': 'receipt',
-  'home.tag.query': 'list',
-  'home.tag.write': 'receipt',
-  'home.inventory.round': 'receipt',
-  'home.inventory.records': 'list',
-  'home.location.query': 'list',
-  'home.location.write': 'receipt',
-  'home.outfit.pick': 'list',
-  'home.trip.manage': 'receipt',
-  'home.stats.overview': 'stat',
-  'home.stats.alert': 'list',
-  'home.shopping.query': 'list',
-  'home.shopping.write': 'receipt',
-  'home.ticket.query': 'list',
-  'home.ticket.write': 'receipt',
-  'home.care.query': 'list',
-  'home.care.write': 'receipt',
-  'home.help.lookup': 'list',
-};
+export const HOME_KEY_SHAPES: Record<string, EnvelopeShape> = GENERATED_SHAPES as Record<string, EnvelopeShape>;
 
 export function homeShapeFor(key: string): EnvelopeShape {
   const s = HOME_KEY_SHAPES[key];

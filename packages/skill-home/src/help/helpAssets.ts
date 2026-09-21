@@ -1,7 +1,7 @@
 // 本文件由 packages/skill-home/scripts/gen-help-assets.mjs 生成 —— 禁止手工修改。
 // 改动一律走生成器（手改会被 --check 判漂移、被 test/help-assets.test.mjs 的摘要锁打红）。
 //
-// 事实源（仓内唯一）：src/help/scenarios.yaml · 46123 字节 · sha256 3fa35b0bfd9d325c9173cb8abdec52519bd4031fc9e6bf85c1acb8b67b44f558
+// 事实源（仓内唯一）：src/help/scenarios.yaml · 46849 字节 · sha256 9b32b3a9592daadd0f646de80e9fab944e50b132b419e76cf21c201693a1cf61
 // 重算摘要：node -e "const f=require('fs'),c=require('crypto');console.log(c.createHash('sha256').update(f.readFileSync('packages/skill-home/src/help/helpAssets.ts')).digest('hex'))"
 // icon／label／id：逐字取事实源 domains[].icon/name/key（老骨架自带 9 个域图标，不另立图标表）。
 // types 词表：共享 help 模板的配色表 packages/base-render/assets/help-template.html:1698-1709（TYPE_DEFAULT 10 词）。

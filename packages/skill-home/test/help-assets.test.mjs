@@ -16,10 +16,10 @@ const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
 /** 仓内事实源摘要（重算：`node -e "…createHash('sha256').update(readFileSync('packages/skill-home/src/help/scenarios.yaml')).digest('hex')"`）。 */
-const YAML_SHA256 = '3fa35b0bfd9d325c9173cb8abdec52519bd4031fc9e6bf85c1acb8b67b44f558';
-const YAML_BYTES = 46123;
+const YAML_SHA256 = '9b32b3a9592daadd0f646de80e9fab944e50b132b419e76cf21c201693a1cf61';
+const YAML_BYTES = 46849;
 /** 生成物摘要（重算命令见 `src/help/helpAssets.ts` 头注释）——手改生成物即变红。 */
-const ASSET_SHA256 = 'dbb186be754b2e66fa0bff0b456c051df84746518fc181edc1c6801b6a135e06';
+const ASSET_SHA256 = '7c4d039002b68e9b6e001c0f8808389d93f68a9abfd4b8fb694d8d9a08387cfc';
 
 /** 期望形状（老骨架 9 域／30 二级组／73 场景，含联动 3 条登记位）：夹具自持，生成器改数不替它作证。 */
 const EXPECT_SHAPE = { domains: 9, subgroups: 30, scenes: 73, linkScenes: 3 };
@@ -54,9 +54,11 @@ const TYPE_FROM_ASSET = (() => {
 const GROUPS = assetJson('HELP_GROUPS');
 const SCENES = GROUPS.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
 const DOC = parseScenarioYaml(readFileSync(SRC_YAML, 'utf8'));
+// #800 起口径层词表的记录面住派生件（各能力 routes.ts 声明组装）：读生成件即读同一张表。
+const ROUTES_SRC = readFileSync(join(pkgDir, 'src', 'policy', 'routes.generated.ts'), 'utf8');
+const WAKE_ENTRIES = [...ROUTES_SRC.slice(ROUTES_SRC.indexOf('export const ROUTES_GENERATED'))
+  .matchAll(/\{ phrase: '((?:[^'\\]|\\.)*)', key: '([^']+)'/g)].map((m) => ({ phrase: m[1].replace(/\\'/g, "'"), key: m[2] }));
 const WAKE_SRC = readFileSync(join(pkgDir, 'src', 'policy', 'wakewords.ts'), 'utf8');
-const WAKE_ENTRIES = [...WAKE_SRC.slice(WAKE_SRC.indexOf('export const WAKE_TABLE'), WAKE_SRC.indexOf('export const DEPRECATED_PHRASES'))
-  .matchAll(/\{ phrase: '([^']*)', key: '([^']+)'/g)].map((m) => ({ phrase: m[1], key: m[2] }));
 const DEPRECATED = [.../export const DEPRECATED_PHRASES = \[([^\]]*)\]/.exec(WAKE_SRC)[1].matchAll(/'([^']*)'/g)].map((m) => m[1]);
 /** 速查口径的命中规则（与 `src/help/lookup.ts:53-56 lookupHelp` 同一判据：双向包含）。 */
 const hits = (w) => WAKE_ENTRIES.filter((e) => w.includes(e.phrase) || e.phrase.includes(w.trim()));
@@ -69,21 +71,73 @@ const UNLANDED = [
   '看标签', '合标签', // ④ 票 13 裁定：看标签作「管标签」卡附属词，不独立成卡
   '推位置', '找位置', // ⑤ 票 13 裁定：留在「位置管理 › 管位置」卡
 ].sort();
+/** #800 进表变体中仍无场景落点的 26 条（yaml 标 route:true，宿主见注释；另 4 条
+ * 因含主词子串自然落点，不在此列：设置固定位／给我定个固定位置→固定位、
+ * 浏览空间视图→空间视图、查看物品→看物品）。 */
+const ROUTED_VARIANTS_NONSCENE = [
+  '登记物品', '添加物品', '帮我记一下', '家里又多了个东西', '新到货了', // 宿主 1-1 录物品
+  '搜索物品', '找一下物品', '帮我找找', '看看家里有啥', // 宿主 2-1 查物品
+  '物品详情', // 宿主 2-2 看物品
+  '清点物品', '核对库存', '数数这里', // 宿主 6-1 盘点
+  '位置管理', '整理一下家里的位置', '位置怎么分的', // 宿主 SM2-1 管位置
+  '收纳位置建议', '帮我找个地方放', // 宿主 SM2-3 收纳建议
+  '看看家里每个地方都有啥', '客厅里都有什么', // 宿主 SM2-4 空间视图
+  '统计物品', '物品总览', '家里都有啥', '给我个总数', '一共多少件', '整体啥情况', // 宿主 SM4-1 物品总览
+].sort();
+/** #800 借用写侧 4 词（宿主 SM7-1 借用管理，prompt 操作含借出／借入／归还／催还）。 */
+const BORROW_WRITE_WORDS = ['借出', '借入', '归还', '催还'];
+/** 速查有行、资产无主词的词全集（16＋26＋4＝46）：每词有名有姓，差一条即红。 */
+const LANDED_NONSCENE = [...UNLANDED, ...ROUTED_VARIANTS_NONSCENE, ...BORROW_WRITE_WORDS].sort();
 
-/** 口径层 `WAKE_TABLE` 的「唤醒词 → 命令 key」**全表**（91 条，照文件出现序）。
+/** 口径层路由记录面的「唤醒词 → 命令 key」**全表**（125 条，照派生件出现序＝
+ * 技能级入口 3 行＋能力名升序＋声明出现序）。
  *  只比 phrase 不比 key 会漏掉「词还在、key 被改指」的洞（审查 A 实测：改 `录物品` 的 key 仍全绿），
- *  故这里把对应关系整体钉住：口径层改词或改 key，本表同步改，否则本用例红。 */
+ *  故这里把对应关系整体钉住：能力声明改词或改 key（跑 `pnpm gen` 重生成派生件后），本表同步改，否则本用例红。 */
 const WAKE_KEY_TABLE = [
   ['居家管家 帮助', 'home.help.lookup'],
   ['居家管家帮助', 'home.help.lookup'],
   ['居家管家能做什么', 'home.help.lookup'],
+  ['查快递', 'home.shopping.query'],
+  ['购物清单', 'home.shopping.query'],
+  ['缺货检测', 'home.shopping.query'],
+  ['囤货盘点', 'home.shopping.query'],
+  ['改购物清单', 'home.shopping.write'],
+  ['查异常', 'home.care.query'],
+  ['借用', 'home.care.query'],
+  ['借出', 'home.care.write'],
+  ['借入', 'home.care.write'],
+  ['归还', 'home.care.write'],
+  ['催还', 'home.care.query'],
+  ['家人档案', 'home.care.query'],
+  ['首次使用', 'home.care.write'],
+  ['备份导出', 'home.care.write'],
+  ['导入恢复', 'home.care.write'],
   ['查物品(HTML)', 'home.item.search'],
-  ['看物品(HTML)', 'home.item.detail'],
-  ['统物品(HTML)', 'home.stats.overview'],
   ['查物品', 'home.item.search'],
+  ['紧急定位', 'home.item.search'],
+  ['筛选浏览', 'home.item.search'],
+  ['拍照找物品', 'home.item.search'],
+  ['查重复', 'home.item.search'],
+  ['照片墙', 'home.item.search'],
+  ['搜索物品', 'home.item.search'],
+  ['找一下物品', 'home.item.search'],
+  ['帮我找找', 'home.item.search'],
+  ['看看家里有啥', 'home.item.search'],
+  ['看物品(HTML)', 'home.item.detail'],
   ['看物品', 'home.item.detail'],
+  ['查看照片', 'home.item.detail'],
+  ['历史', 'home.item.detail'],
+  ['查看物品', 'home.item.detail'],
+  ['物品详情', 'home.item.detail'],
   ['录物品', 'home.item.add'],
   ['拍物品', 'home.item.add'],
+  ['批量录入', 'home.item.add'],
+  ['补录', 'home.item.add'],
+  ['登记物品', 'home.item.add'],
+  ['添加物品', 'home.item.add'],
+  ['帮我记一下', 'home.item.add'],
+  ['家里又多了个东西', 'home.item.add'],
+  ['新到货了', 'home.item.add'],
   ['改物品', 'home.item.update'],
   ['移物品', 'home.item.update'],
   ['补物品', 'home.item.update'],
@@ -92,61 +146,36 @@ const WAKE_KEY_TABLE = [
   ['废物品', 'home.item.update'],
   ['借物品', 'home.item.update'],
   ['修物品', 'home.item.update'],
+  ['合并物品', 'home.item.update'],
+  ['撤销操作', 'home.item.update'],
+  ['物品关联', 'home.item.update'],
+  ['管照片', 'home.item.update'],
+  ['数量变更', 'home.item.update'],
+  ['状态变更', 'home.item.update'],
+  ['看标签', 'home.tag.query'],
+  ['管标签', 'home.tag.write'],
+  ['管分类', 'home.tag.write'],
+  ['整理建议', 'home.tag.write'],
+  ['合标签', 'home.tag.write'],
   ['盘物品', 'home.inventory.round'],
   ['盘全部', 'home.inventory.round'],
+  ['盘点', 'home.inventory.round'],
+  ['差异处理', 'home.inventory.round'],
+  ['搬家盘点', 'home.inventory.round'],
+  ['清点物品', 'home.inventory.round'],
+  ['核对库存', 'home.inventory.round'],
+  ['数数这里', 'home.inventory.round'],
+  ['盘点记录', 'home.inventory.records'],
   ['穿什么', 'home.outfit.pick'],
+  ['衣橱分析', 'home.outfit.pick'],
+  ['换季', 'home.outfit.pick'],
+  ['旅行穿搭', 'home.outfit.pick'],
   ['带物品', 'home.trip.manage'],
   ['归物品', 'home.trip.manage'],
-  ['统物品', 'home.stats.overview'],
-  ['查高频', 'home.stats.overview'],
-  ['查低频', 'home.stats.alert'],
-  ['查过期', 'home.stats.alert'],
-  ['看标签', 'home.tag.query'],
-  ['合标签', 'home.tag.write'],
-  ['查快递', 'home.shopping.query'],
-  ['推位置', 'home.location.query'],
-  ['找位置', 'home.location.query'],
   ['查账号', 'home.ticket.query'],
   ['存账号', 'home.ticket.write'],
   ['改账号', 'home.ticket.write'],
   ['看密码', 'home.ticket.write'],
-  ['查异常', 'home.care.query'],
-  ['借用', 'home.care.query'],
-  ['家人档案', 'home.care.query'],
-  ['管位置', 'home.location.write'],
-  ['固定位', 'home.location.write'],
-  ['收纳建议', 'home.location.query'],
-  ['空间视图', 'home.location.query'],
-  ['查闲置', 'home.stats.alert'],
-  ['盘点统计', 'home.stats.overview'],
-  ['首次使用', 'home.care.write'],
-  ['备份导出', 'home.care.write'],
-  ['导入恢复', 'home.care.write'],
-  ['批量录入', 'home.item.add'],
-  ['补录', 'home.item.add'],
-  ['紧急定位', 'home.item.search'],
-  ['筛选浏览', 'home.item.search'],
-  ['拍照找物品', 'home.item.search'],
-  ['查重复', 'home.item.search'],
-  ['合并物品', 'home.item.update'],
-  ['撤销操作', 'home.item.update'],
-  ['物品关联', 'home.item.update'],
-  ['管标签', 'home.tag.write'],
-  ['管分类', 'home.tag.write'],
-  ['整理建议', 'home.tag.write'],
-  ['查看照片', 'home.item.detail'],
-  ['管照片', 'home.item.update'],
-  ['照片墙', 'home.item.search'],
-  ['盘点记录', 'home.inventory.records'],
-  ['差异处理', 'home.inventory.round'],
-  ['搬家盘点', 'home.inventory.round'],
-  ['历史', 'home.item.detail'],
-  ['数量变更', 'home.item.update'],
-  ['状态变更', 'home.item.update'],
-  ['盘点', 'home.inventory.round'],
-  ['购物清单', 'home.shopping.query'],
-  ['缺货检测', 'home.shopping.query'],
-  ['囤货盘点', 'home.shopping.query'],
   ['查购买记录', 'home.ticket.query'],
   ['查上月购买', 'home.ticket.query'],
   ['查今年花费', 'home.ticket.query'],
@@ -161,10 +190,35 @@ const WAKE_KEY_TABLE = [
   ['登记证件', 'home.ticket.write'],
   ['证件归档', 'home.ticket.write'],
   ['更新证件', 'home.ticket.write'],
-  ['衣橱分析', 'home.outfit.pick'],
-  ['换季', 'home.outfit.pick'],
-  ['旅行穿搭', 'home.outfit.pick'],
-  ['改购物清单', 'home.shopping.write'],
+  ['推位置', 'home.location.query'],
+  ['找位置', 'home.location.query'],
+  ['管位置', 'home.location.write'],
+  ['固定位', 'home.location.write'],
+  ['收纳建议', 'home.location.query'],
+  ['空间视图', 'home.location.query'],
+  ['位置管理', 'home.location.write'],
+  ['整理一下家里的位置', 'home.location.write'],
+  ['位置怎么分的', 'home.location.write'],
+  ['设置固定位', 'home.location.write'],
+  ['给我定个固定位置', 'home.location.write'],
+  ['收纳位置建议', 'home.location.query'],
+  ['帮我找个地方放', 'home.location.query'],
+  ['浏览空间视图', 'home.location.query'],
+  ['看看家里每个地方都有啥', 'home.location.query'],
+  ['客厅里都有什么', 'home.location.query'],
+  ['统物品(HTML)', 'home.stats.overview'],
+  ['统物品', 'home.stats.overview'],
+  ['查高频', 'home.stats.overview'],
+  ['盘点统计', 'home.stats.overview'],
+  ['统计物品', 'home.stats.overview'],
+  ['物品总览', 'home.stats.overview'],
+  ['家里都有啥', 'home.stats.overview'],
+  ['给我个总数', 'home.stats.overview'],
+  ['一共多少件', 'home.stats.overview'],
+  ['整体啥情况', 'home.stats.overview'],
+  ['查低频', 'home.stats.alert'],
+  ['查过期', 'home.stats.alert'],
+  ['查闲置', 'home.stats.alert'],
 ];
 
 /** 解析器用例的小样本：只覆盖「收得下」的写法（含 html／variants 子树、跨行引号标量、空集合字面量）。 */
@@ -187,6 +241,7 @@ const PARSE_SAMPLE = [
   '  variants:',                      // 16 ← 第二棵不收子树
   '  - direction: 同义',              // 17 ← 子树里的缩进 2 块序列项
   '    phrase: 登记物品',             // 18
+  '    route: true',                  // 18b ← #800 变体路由标记：子树整棵跳过，解析结果不变
   '  result: 走录入流程',             // 19 ← 子树收尾后回到字段行
 ];
 const sampleWith = (k, text) => PARSE_SAMPLE.map((l, idx) => (idx === k ? text : l)).join('\n');
@@ -278,13 +333,13 @@ describe('#188 居家管家内容资产', () => {
   });
 
   it('与速查表 WAKE_TABLE 双向对账：资产 73 条中 70 条有落、3 条＝登记位', () => {
-    assert.equal(WAKE_ENTRIES.length, 91, '速查表条数变了');
+    assert.equal(WAKE_ENTRIES.length, 125, '速查表条数变了');
     const noHit = SCENES.filter((s) => hits(s.wake_word).length === 0).map((s) => s.wake_word).sort();
     assert.deepEqual(noHit, [...DEPRECATED].sort(), '除登记位 3 条外，资产的唤醒词必须条条能在速查命中');
     const words = SCENES.map((s) => s.wake_word);
     const unlanded = WAKE_ENTRIES.filter((e) => !words.some((w) => w.includes(e.phrase) || e.phrase.includes(w.trim())))
       .map((e) => e.phrase).sort();
-    assert.deepEqual(unlanded, UNLANDED, '速查里列出的词必须条条有落点（差异＝上面逐条点名的 16 条）');
+    assert.deepEqual(unlanded, LANDED_NONSCENE, '速查里列出的词必须条条有落点（差异＝上面逐条点名的 46 条）');
     const helpWords = WAKE_ENTRIES.filter((e) => e.key === 'home.help.lookup').map((e) => e.phrase);
     assert.equal(helpWords.length, 3, 'HELP 自指 3 词');
     assert.deepEqual(helpWords.filter((p) => words.includes(p)), [], 'HELP 自指词不进场景目录');

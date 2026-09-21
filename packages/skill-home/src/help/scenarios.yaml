@@ -57,16 +57,22 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 登记物品
+    route: true
   - direction: 同义
     phrase: 添加物品
+    route: true
   - direction: 口语
     phrase: 帮我记一下
+    route: true
   - direction: 口语
     phrase: 家里又多了个东西
+    route: true
   - direction: 模糊
     phrase: 这个收进来
+    route: false
   - direction: 模糊
     phrase: 新到货了
+    route: true
 - id: 1-2
   domain: items
   sub: 录入
@@ -138,16 +144,22 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 搜索物品
+    route: true
   - direction: 同义
     phrase: 找一下物品
+    route: true
   - direction: 口语
     phrase: 帮我找找
+    route: true
   - direction: 口语
     phrase: 看看家里有啥
+    route: true
   - direction: 模糊
     phrase: 那个啥在哪
+    route: false
   - direction: 模糊
     phrase: 我之前放哪了
+    route: false
 - id: 2-2
   domain: items
   sub: 查找
@@ -166,16 +178,22 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 查看物品
+    route: true
   - direction: 同义
     phrase: 物品详情
+    route: true
   - direction: 口语
     phrase: 给我看看这个
+    route: false
   - direction: 口语
     phrase: 这件东西啥情况
+    route: false
   - direction: 模糊
     phrase: 那个东西的信息
+    route: false
   - direction: 模糊
     phrase: 它具体是啥
+    route: false
 - id: 2-3
   domain: items
   sub: 查找
@@ -480,16 +498,22 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 清点物品
+    route: true
   - direction: 同义
     phrase: 核对库存
+    route: true
   - direction: 口语
     phrase: 数数这里
+    route: true
   - direction: 口语
     phrase: 这堆对一下
+    route: false
   - direction: 模糊
     phrase: 看看齐不齐
+    route: false
   - direction: 模糊
     phrase: 还剩多少
+    route: false
 - id: 6-2
   domain: items
   sub: 盘点
@@ -569,10 +593,13 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 位置管理
+    route: true
   - direction: 口语
     phrase: 整理一下家里的位置
+    route: true
   - direction: 口语
     phrase: 位置怎么分的
+    route: true
 - id: SM2-2
   domain: space
   sub: 固定位
@@ -592,10 +619,13 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 设置固定位
+    route: true
   - direction: 口语
     phrase: 钥匙固定放哪来着
+    route: false
   - direction: 口语
     phrase: 给我定个固定位置
+    route: true
 - id: SM2-3
   domain: space
   sub: 收纳建议
@@ -614,10 +644,13 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 收纳位置建议
+    route: true
   - direction: 口语
     phrase: 这东西该放哪
+    route: false
   - direction: 口语
     phrase: 帮我找个地方放
+    route: true
 - id: SM2-4
   domain: space
   sub: 空间视图
@@ -636,10 +669,13 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 浏览空间视图
+    route: true
   - direction: 口语
     phrase: 看看家里每个地方都有啥
+    route: true
   - direction: 口语
     phrase: 客厅里都有什么
+    route: true
 - id: SM3-1
   domain: outfit
   sub: 穿搭推荐
@@ -736,16 +772,22 @@ scenarios:
   variants:
   - direction: 同义
     phrase: 统计物品
+    route: true
   - direction: 同义
     phrase: 物品总览
+    route: true
   - direction: 口语
     phrase: 家里都有啥
+    route: true
   - direction: 口语
     phrase: 给我个总数
+    route: true
   - direction: 模糊
     phrase: 一共多少件
+    route: true
   - direction: 模糊
     phrase: 整体啥情况
+    route: true
 - id: SM4-2
   domain: stats
   sub: 统计总览
