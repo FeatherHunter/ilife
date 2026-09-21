@@ -90,7 +90,8 @@ const CONTRACT = {
   ],
   [P_COMPARE_MIX]: [
     { block: '4 卡对照（f03）', needs: ['四卡对照', '工作日', '周末'] },
-    { block: '7 维差异（f03）', needs: ['7 维差异', '💼 工作 -6h16m，-100%'] },
+    // 名字与读数分居两枚元素（名字在 `-name`、差值在 `-delta`），故分两条断言——`-` 在串里即按标记面查。
+    { block: '7 维差异（f03）', needs: ['💼 工作', '-6h16m，-100%'] },
     { block: 'AI 钩子位（f03）', needs: ['AI 思考钩子', '「工作」这一维的日均差了'] },
   ],
   [P_CATEGORY_RANGE]: [
@@ -124,7 +125,7 @@ const GENERATED_BASELINE = {
 const ROUTES_SHA = '01933ec9a6f761b3';
 
 /** **本票收口那一刻**的编译态指纹（`FINGERPRINT:` 行里那两枚 sha，逐字抄自干净窗口那次跑）。 */
-const FROZEN_FINGERPRINT = { src: '', dist: '' };
+const FROZEN_FINGERPRINT = { src: '3889af7c9953e2ae', dist: 'a6dfe40b24ee723d' };
 const NO_BASELINE = process.argv.includes('--no-baseline');
 
 const reds = [];
