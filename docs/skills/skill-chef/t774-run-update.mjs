@@ -243,18 +243,18 @@ try {
   const c3file = join(OUT, 'update_ingredient.html');
   const c3cmp = join(OUT, 'update_ingredient--对比.html');
   writeFile(c3cmp, page('修改食材对比', '私家大厨 ｜ 修改', '修改食材对比', [
-    concl('盐改用量。生抽添新。关联步骤本期不开。确认无误再写库。'),
+    concl('盐改用量。生抽添新。关联步骤暂不支持。确认无误再写库。'),
     fact([{ label: '菜名', value: dish }, { label: '确认', value: '用量数字齐再写' }]),
     ingTable(g3before, '改前三味'),
     B.renderDisclosure({ title: '确认条件', open: true, contentHtml: B.renderProseBlock({ text: '目标食材在本菜。用量给有限数字。添新带数字加文字。关联参数一个不带。确认执行。' }) }),
-    caliber('口径：用量必填数字。文字用量走用量说明。关联本期不开。遇到即拦。'),
+    caliber('口径：用量必填数字。文字用量走用量说明。关联暂不支持。遇到即拦。'),
   ]));
   writeFile(c3file, page('修改食材回执', '私家大厨 ｜ 修改', '修改食材回执', [
     concl('食材用量与新增已落库。'),
     fact([{ label: '菜名', value: dish }, { label: '食材数', value: g3after.length + ' 味' }]),
     changeRows([['盐用量', '5 克', '8 克'], ['新增', '无', '生抽 15 毫升']]),
     ingTable(g3after, '改后四味'),
-    caliber('查询显示数字加用量说明。关联步骤本期不开。'),
+    caliber('查询显示数字加用量说明。关联步骤暂不支持。'),
     renderActionBar({ buttons: [{ label: '再看一遍食材', kind: 'primary', actionId: 't774-c3-view' }] }),
     B.renderCopyBlock({ title: '复制变更', dataActionId: 't774-c3-copy', dataText: dish + ' 盐改为8克。新增生抽15毫升' }),
   ]));

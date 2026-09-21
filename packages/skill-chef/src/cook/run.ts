@@ -247,7 +247,7 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
   head.push(progress);
   // 断点续做口径：会话记忆由 AI 侧承担，页面只承当前进度与下一步（缺字段不编）。
   if (opts.kind === 'resume') {
-    head.push(renderCaliberLine('断点续接：会话记住做到第 ' + (cur - 1) + ' 步，页面只承当前进度与下一步，跨会话进度另立票承载。'));
+    head.push(renderCaliberLine('断点续接：会话记住做到第 ' + (cur - 1) + ' 步，页面只承当前进度与下一步，跨会话进度暂不保留。'));
   }
   const cards = data.steps.map((s) => renderDisclosure({
     title: stepTitle(s.sequence, s.sequence < cur), open: s.sequence === cur,

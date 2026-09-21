@@ -23,7 +23,7 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
     eyebrow: '私家大厨 ｜ 开始使用',
     title: '首次使用',
     content: [
-      renderConclusionBar('本地菜谱库已就绪，空库直接录第一道菜即上手。'),
+      renderConclusionBar('菜谱库已就绪，空库直接录第一道菜即上手。'),
       renderFactStrip({
         items: [
           { label: '业务表', value: String(input.tables) + '张' },
@@ -53,7 +53,7 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
       renderCopyBlock({
         title: '复制上手说明',
         dataActionId: 'setup-copy',
-        dataText: '本地菜谱库已就绪（' + input.tables + '张表' + done + '），空库直接录第一道菜。',
+        dataText: '菜谱库已就绪（' + input.tables + '张表' + done + '），空库直接录第一道菜。',
       }),
     ].join(''),
   });

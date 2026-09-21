@@ -43,7 +43,7 @@ export function relationAddPage(input: { parent: string; child: string; relation
       ],
     }),
     renderProseBlock({ text: input.changeSummary }),
-    renderCaliberLine('这组关系已写进本地菜谱库。'),
+    renderCaliberLine('这组关系已写进菜谱库。'),
     act([
       { label: '看看子菜的家族', kind: 'primary', actionId: 'relation-tree' },
       { label: '再记一组关系', kind: 'ghost', actionId: 'relation-again' },

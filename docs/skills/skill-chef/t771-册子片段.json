@@ -8,8 +8,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\search_by_name_keyword.html",
     "exit": 0,
-    "bytes": 89864,
-    "sha256": "abf6b0a563388c9e1ccdb5234006dd5c2cf2499aba1c37bd53086f65e89af1d1"
+    "bytes": 89840,
+    "sha256": "3b6d4b10c0bbc816033040f4d6cdff40477c30cc2480409592f291a5b36beb5b"
   },
   {
     "卡": "search_fuzzy_match",
@@ -20,8 +20,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\search_fuzzy_match.html",
     "exit": 0,
-    "bytes": 89878,
-    "sha256": "af87901bed609f2e5b66d066883c331c0c171f8d1a1dff142d30528a2efd67ed"
+    "bytes": 89854,
+    "sha256": "48dab014ba6f2b3090121fec0c4b7168be2d2bca6e479b0ddaa58ef50d1d83bb"
   },
   {
     "卡": "filter_cuisine_basic",
@@ -32,8 +32,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_cuisine_basic.html",
     "exit": 0,
-    "bytes": 89832,
-    "sha256": "db4e3451d1e6c1955a71e1173826644836eab520ba4a3c0d4b0e4179d95481d4"
+    "bytes": 89808,
+    "sha256": "31b0d41e6f4924e44931b1a6775a2daa6ccdffe6a060080e7346867a50f77324"
   },
   {
     "卡": "filter_combined",
@@ -46,8 +46,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_combined.html",
     "exit": 0,
-    "bytes": 89917,
-    "sha256": "9cf5812821307fd045480e42e9b131bf0ba41be03abfcadaca7ab7d8504bbe77"
+    "bytes": 89893,
+    "sha256": "922a54370f2c97e7c43d452098969e002b2a524657e27ec84a00c8167f50b56f"
   },
   {
     "卡": "filter_by_ingredient_basic",
@@ -58,8 +58,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_by_ingredient_basic.html",
     "exit": 0,
-    "bytes": 89862,
-    "sha256": "e0cd38ec3626347e0607f35acb8b72d54b657d955a574dc48f81083f41d08dbf"
+    "bytes": 89838,
+    "sha256": "0ccd423ea2e065783e416b0794ae6092bc1067bdaebc1da7bae0f89b6678c787"
   },
   {
     "卡": "filter_exclude_ingredient",
@@ -70,8 +70,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_exclude_ingredient.html",
     "exit": 0,
-    "bytes": 89861,
-    "sha256": "1041e60b716a02fab6636a9fa38900420fb14e57059ee3b5470b48fcb72ee33c"
+    "bytes": 89837,
+    "sha256": "9b78132be986571fa2e4131ea281bed15cb0363e3011b596226c64953f5db45b"
   },
   {
     "卡": "filter_difficulty_easy",
@@ -82,8 +82,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_difficulty_easy.html",
     "exit": 0,
-    "bytes": 89840,
-    "sha256": "aad8e225b5ea6f86986d3a13d0cabd6623d3e2d64541495048b124001b2f4311"
+    "bytes": 89816,
+    "sha256": "2a36438f3ff33f61b322508c5c6e6324407719f52d1716743f4e841260c96c7a"
   },
   {
     "卡": "filter_time_quick",
@@ -94,8 +94,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_time_quick.html",
     "exit": 0,
-    "bytes": 89859,
-    "sha256": "7987ff659fb765b55e5bf508815d358cd64e7c61debfaca6dd28439ef88c1cf9"
+    "bytes": 89835,
+    "sha256": "4cf786721ab44b8c799c62a97e21c14d0cb12bbdca208ac71dde0ad108ac3a99"
   },
   {
     "卡": "filter_by_cookware",
@@ -106,8 +106,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_by_cookware.html",
     "exit": 0,
-    "bytes": 89836,
-    "sha256": "f0e0a875e6bfc3ec1f49b560f6defff35aa81bea00fa4f034e72870e1ea8b47b"
+    "bytes": 89812,
+    "sha256": "2c3a957c4ea54d82b08a2755fe26b87cc95b4a0507413d18208afd2c86cf16f4"
   },
   {
     "卡": "filter_by_flavor",
@@ -118,8 +118,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_by_flavor.html",
     "exit": 0,
-    "bytes": 89828,
-    "sha256": "ffaec6699d6331dbfaaa9adcb0e36950b7ac4e5173a9982786bc1585631342dd"
+    "bytes": 89804,
+    "sha256": "e35c888667b89f840e2d9362b0f86be0927b1ee074e7c7b4ecccefc66efdf265"
   },
   {
     "卡": "filter_by_season",
@@ -130,8 +130,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_by_season.html",
     "exit": 0,
-    "bytes": 89834,
-    "sha256": "867fd5f4b4d0927c03ae04f38894f3da74586442f9a75374cf9a7d50d2762df1"
+    "bytes": 89810,
+    "sha256": "918449616b4faffa48b1c08a6d36160a8e0ab7c343ba73003e806595ebc98f44"
   },
   {
     "卡": "filter_by_status",
@@ -142,8 +142,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\filter_by_status.html",
     "exit": 0,
-    "bytes": 89822,
-    "sha256": "f25a1a262b15feaecbe3cc185932d325d1fd5ea01e4d24ca3b8d4662ae883001"
+    "bytes": 89798,
+    "sha256": "659cdc253d087a1fafe35f4ebbf630a0c69a3501ffe5c551187494e58378cef2"
   },
   {
     "卡": "list_all_recipes",
@@ -154,7 +154,7 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t771\\list_all_recipes.html",
     "exit": 0,
-    "bytes": 89828,
-    "sha256": "ae80f3e12b3155a7b9e56469e5b32389c9fb3d59535af17c269157984446ddbb"
+    "bytes": 89804,
+    "sha256": "d095348036095c934570fa10794a694e4953ff6a47a7c1c8f94361cdf62f7d14"
   }
 ]

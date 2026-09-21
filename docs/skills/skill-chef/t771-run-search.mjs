@@ -157,10 +157,10 @@ function buildPage(card, data, metas) {
     title: '复制这次筛选结果', dataActionId: 't771-copy-' + card.id,
     dataText: JSON.stringify({ 条件: card.desc, 总数: data.total, 菜: data.items.map((it) => it.name) }, null, 2),
   });
-  const foot = B.renderCaliberLine('来源：本地菜谱库副本，结果按菜名排序');
+  const foot = B.renderCaliberLine('来源：菜谱库，结果按菜名排序');
   const shell = B.renderPageShell({ eyebrow, title: card.title, content: facts + concl + correction + cards + copy + foot });
   return renderDocShell({
-    docTitle: card.title + '（搜索筛选域 票 771）',
+    docTitle: card.title + ' ｜ 私家大厨',
     bodyHtml: shell,
     extraCss: pageUiCss() + '\n' + pageShapeCss(),
     pageUi: true,

@@ -155,7 +155,7 @@ function runUpdateIngredient(handle: ChefDb, params: Record<string, unknown>): u
   const rid = detail.recipe.id;
   for (const k of ['step_id', 'link_step', 'step', 'quantity_used', 'introduced_at'] as const) {
     if (params[k] !== undefined) {
-      throw new ChefPolicyError('POLICY_BAD_INPUT', '食材关联步骤本期不开（818 定案）：' + k + ' 暂不接受，请只改用量／文字或走添加食材');
+      throw new ChefPolicyError('POLICY_BAD_INPUT', '食材与步骤的关联暂不支持，改不了 ' + k + '；请只改用量／文字，或改用添加食材');
     }
   }
   const key = params.ingredient ?? params.name ?? params.ingredient_id ?? params.id;

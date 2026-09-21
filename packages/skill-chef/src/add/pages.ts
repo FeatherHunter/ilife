@@ -112,8 +112,8 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
     '场景标识：录入食谱 · 唤醒词' + input.wakeWord + ' · 场景' + input.cardId,
     '思考链：意图理解 → 字段收集 → 校验 → 写入',
     '数据结构：菜谱一行＋食材' + ingredients.length + '行＋步骤' + steps.length + '行',
-    '调用链：录入采集 → 确认写入 → 写副本库',
-    '时间戳：本次运行 · 副本库',
+    '调用链：录入采集 → 确认写入 → 写菜谱库',
+    '时间戳：本次运行',
     '异常信息：无',
   ].join('\n');
   const content =
@@ -136,7 +136,7 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
         { label: '步骤', before: '0 步', after: steps.length + ' 步' },
       ],
     }) +
-    renderCaliberLine('记录已写进副本库，真库只读对照') +
+    renderCaliberLine('记录已写进菜谱库。') +
     renderActionBar({
       buttons: [
         { label: '看这道菜', kind: 'ghost', actionId: 't773-view-' + input.cardId },

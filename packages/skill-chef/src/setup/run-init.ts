@@ -17,5 +17,5 @@ export function runSetupInit(handle: ChefDb): unknown {
   if (handle.initialized) {
     return buildRecipeReceipt('首次使用已就绪：本次建齐' + tables + '张表（空库直接录第一道菜即上手）');
   }
-  return buildRecipeReceipt('本地菜谱库已就绪：' + tables + '张表齐全，跳过建库（老库仅提示迁移，不自动迁移）');
+  return buildRecipeReceipt('菜谱库已就绪：' + tables + '张表齐全，跳过建库（老库仅提示迁移，不自动迁移）');
 }

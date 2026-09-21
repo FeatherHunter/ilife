@@ -99,7 +99,7 @@ export function renderRecordPage(input: RecordPageInput): string {
     ]),
     renderProseBlock({ text: input.feedback }),
     renderChangeRows({ rows: changes }),
-    renderCaliberLine('记录写进本地菜谱库。'),
+    renderCaliberLine('记录写进菜谱库。'),
     renderActionBar({
       buttons: [
         { label: '看这道菜的历史', kind: 'primary', actionId: 'h775-record-history' },

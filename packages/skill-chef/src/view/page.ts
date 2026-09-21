@@ -1,4 +1,4 @@
-/** 查看域 8 卡结果型页面装配（#770）。
+﻿/** 查看域 8 卡结果型页面装配（#770）。
  *
  * 卡清单唯一出处＝HELP 场景资产（`src/help/sceneData.ts:52-67`，5 组 8 卡），本件只组装不另立清单。
  * 形状唯一依据＝配方件（`docs/skills/skill-chef/t768-页面族配方.md` §2 结果型 14 格）：每一格都是一次
@@ -101,11 +101,21 @@ function nutritionOf(d: ViewItem): string {
   });
 }
 
+/** 数据侧的机器标注（真库里那一条的原文形状：`(AI 补:用户手写本没写,根据常识补)`）。
+ *
+ * #871 C 类裁定（维护者 2026-09-21 授权自裁）：**渲染侧清洗**——标注是作者写的机器记号，不是内容，
+ * 用户口径「文字不能出现冗余和不合理」；**库仍是权威、不改库**。窄口径：只剥「括号包起来的
+ * `AI` ＋ 冒号」这一种；正文自己的括号（如「湖南人叫它土菜」）一字不动。
+ * 清洗落在本域（全库实测只此一处，见 #871 证据件）；第二个用法出现再提共用件。
+ */
+const MACHINE_ANNOTATION = /[（(]\s*AI\s*补?\s*[:：][^）)]*[）)]/g;
+const cleanOf = (s: string): string => s.replace(MACHINE_ANNOTATION, '');
+
 function backgroundOf(d: ViewItem): string {
   if (!d.background) return '';
-  return renderProseBlock({ text: str(d.background.origin_story) })
-    + renderProseBlock({ text: str(d.background.historical_background) })
-    + renderProseBlock({ text: str(d.background.cultural_significance) });
+  return renderProseBlock({ text: cleanOf(str(d.background.origin_story)) })
+    + renderProseBlock({ text: cleanOf(str(d.background.historical_background)) })
+    + renderProseBlock({ text: cleanOf(str(d.background.cultural_significance)) });
 }
 
 function historyOf(d: ViewItem): string {
@@ -146,6 +156,10 @@ function actionsOf(): string {
 }
 
 // 全量节（含锚点 id）：只看 X 卡复用同一节字符串，保证锚点逐字相同。
+// #871 D 类裁定（维护者 2026-09-21 授权自裁）：原先另有一节「切配清单」（`renderListRows`，成对键值
+// 清单）只由完整食谱页用，画的是同一批食材的**同两列**（name ＋ quantity_text，数据表已有）⇒ 同一份
+// 内容画两遍、两段还共用一个 `id="section-ingredients"`。**保留三列数据表**（多「用量」一列、列头承担
+// 语义），删掉清单——配方格 7「切配建议」的内容由表的「说明」列承载，锚点随之唯一。
 function sectionsOf(d: ViewItem): Record<string, string> {
   const prep = ingredientsTableOf(d, '食材（' + d.ingredients.length + ' 味）', false);
   const grouped = [...new Set(d.ingredients.map((g) => str(g.category)))].map((c) => renderDisclosure({
@@ -158,11 +172,9 @@ function sectionsOf(d: ViewItem): Record<string, string> {
       })),
     }),
   })).join('');
-  const cut = renderListRows({ items: d.ingredients.filter((g) => str(g.quantity_text) !== '').map((g) => ({ main: str(g.name), right: str(g.quantity_text) })), emptyText: '无切配说明' });
   return {
     ingredients: '<div id="section-ingredients">' + prep + '</div>',
     grouped: '<div id="section-ingredients">' + grouped + '</div>',
-    cut: '<div id="section-ingredients">' + cut + '</div>',
     steps: '<div id="section-steps">' + stepCardsOf(d, true) + '</div>',
     nutrition: '<div id="section-nutrition">' + nutritionOf(d) + '</div>',
     background: '<div id="section-background">' + backgroundOf(d) + '</div>',
@@ -193,7 +205,7 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
         { id: 'section-ingredients', text: '食材与备料' }, { id: 'section-steps', text: '步骤' },
         { id: 'section-nutrition', text: '营养' }, { id: 'section-background', text: '背景' },
       ] });
-      return shellOf(d.name, head + toc + sec.ingredients + sec.cut + sec.steps + sec.nutrition + sec.background + tail);
+      return shellOf(d.name, head + toc + sec.ingredients + sec.steps + sec.nutrition + sec.background + tail);
     }
     case 'view_for_beginner': {
       const keys = renderDisclosure({

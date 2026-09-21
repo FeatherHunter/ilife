@@ -45,7 +45,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
       const n = typeof g?.name === 'string' ? (g.name as string).trim() : '';
       if (!n) throw new ChefPolicyError('POLICY_MISSING_SLOT', '食材须给名 name');
       const cur = qAll<Record<string, unknown>>(handle, 'SELECT * FROM ingredients WHERE recipe_id = ? AND name = ?', [recipe.id, n]);
-      if (!cur.length) throw new ChefFetchError('CHEF_BAD_QUERY', '无此食材：' + n + '（本期只改既有行）');
+      if (!cur.length) throw new ChefFetchError('CHEF_BAD_QUERY', '无此食材：' + n + '（批量改只改已有的食材，不新增）');
       if (g.quantity === undefined) throw new ChefFetchError('CHEF_BAD_QUERY', '改用量须给数字 quantity（老库 NOT NULL）');
       const qn = typeof g.quantity === 'string' ? Number((g.quantity as string).trim()) : g.quantity;
       if (typeof qn !== 'number' || !Number.isFinite(qn)) throw new ChefFetchError('CHEF_BAD_QUERY', '改用量须给数字 quantity');
@@ -58,7 +58,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
       const seq = typeof seqRaw === 'string' ? Number(seqRaw.trim()) : seqRaw;
       if (!Number.isInteger(seq) || (seq as number) <= 0) throw new ChefPolicyError('POLICY_MISSING_SLOT', '步骤须给正整数 sequence');
       const cur = qAll<Record<string, unknown>>(handle, 'SELECT * FROM cooking_steps WHERE recipe_id = ? AND sequence = ?', [recipe.id, seq as number]);
-      if (!cur.length) throw new ChefFetchError('CHEF_BAD_QUERY', '无此步骤：第' + String(seq) + '步（本期只改既有行）');
+      if (!cur.length) throw new ChefFetchError('CHEF_BAD_QUERY', '无此步骤：第' + String(seq) + '步（批量改只改已有的步骤，不新增）');
       const patch: Record<string, unknown> = {};
       if ((s as Record<string, unknown>).action !== undefined) {
         const a = String((s as Record<string, unknown>).action ?? '').trim();

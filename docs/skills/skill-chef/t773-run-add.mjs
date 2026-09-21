@@ -23,7 +23,7 @@ const CARDS = [
   {
     id: 'add_from_image', wake: '录入食谱', source: '图片录入', file: 't773-add-from-image.html',
     title: '番茄炒蛋',
-    channel: '图片通道：用户先发菜谱图片，AI 把图片里的菜名与用料转成结构化内容后再调用录入。本票只做给了结构化内容之后的落库，图片识别本身另立票。',
+    channel: '图片通道：用户先发菜谱图片，AI 把图片里的菜名与用料转成结构化内容后再调用录入；这里只承接结构化之后落库这一步，读图本身由 AI 在对话里完成。',
     params: { op: 'add', name: '番茄炒蛋', servings: 2, total_time_minutes: 20, difficulty: '快手菜', description: '图片转结构化后录入', source: '图片录入',
       ingredients: [
         { name: '番茄', category: '蔬菜', quantity: 300, unit: 'g', quantity_text: '约 2 个' },
@@ -38,7 +38,7 @@ const CARDS = [
   {
     id: 'add_from_markdown', wake: '录入食谱', source: '文档录入', file: 't773-add-from-markdown.html',
     title: '青椒肉丝',
-    channel: '文档通道：用户发一份菜谱文档，AI 按文档里的食材与步骤转成结构化内容后再调用录入。本票只做转成结构化内容之后的落库。',
+    channel: '文档通道：用户发一份菜谱文档，AI 按文档里的食材与步骤转成结构化内容后再调用录入；这里只承接结构化之后落库这一步。',
     params: { op: 'add', name: '青椒肉丝', servings: 2, total_time_minutes: 22, difficulty: '简单', description: '文档转结构化后录入', source: '文档录入',
       ingredients: [
         { name: '青椒', category: '蔬菜', quantity: 200, unit: 'g', quantity_text: '约 3 根' },
@@ -53,7 +53,7 @@ const CARDS = [
   {
     id: 'add_from_conversation', wake: '录入食谱', source: '对话录入', file: 't773-add-from-conversation.html',
     title: '麻婆豆腐',
-    channel: '对话通道：AI 逐轮问清菜名与用料，集齐后再调用录入。本票先跑通这条最短路径，缺项当场问用户要。',
+    channel: '对话通道：AI 逐轮问清菜名与用料，集齐后再调用录入；缺项当场问用户要。',
     params: { op: 'add', name: '麻婆豆腐', servings: 2, total_time_minutes: 25, difficulty: '简单', description: '对话逐步收集后录入', source: '对话录入',
       ingredients: [
         { name: '嫩豆腐', category: '豆制品', quantity: 400, unit: 'g', quantity_text: '1 盒' },
@@ -83,7 +83,7 @@ const CARDS = [
   {
     id: 'import_from_json', wake: '导入食谱', source: '数据导入', file: 't773-import-from-json.html',
     title: '鱼香肉丝',
-    channel: '文件通道：用户给一份导入文件，AI 先校验必填字段，齐了才调用录入。维度表本期不写，只落三张主表。',
+    channel: '文件通道：用户给一份导入文件，AI 先校验必填字段，齐了才调用录入。维度表暂不写，只落三张主表。',
     params: { op: 'add', name: '鱼香肉丝', servings: 2, total_time_minutes: 25, difficulty: '中等', description: '导入文件校验后录入', source: '数据导入',
       ingredients: [
         { name: '猪里脊', category: '肉类', quantity: 200, unit: 'g', quantity_text: '切丝' },
@@ -154,7 +154,7 @@ async function runAll() {
         reason: '食材须给数字用量，花生缺用量，已拦下，未写半条。',
         keyData: '菜名' + c.params.name + '，缺花生用量',
         nextStep: '补上花生用量数字后重试',
-        missingSummary: '缺失字段已标红，补齐后重试才落库。维度表本期不写。',
+        missingSummary: '缺失字段已标红，补齐后重试才落库。维度表暂不写。',
         payloadText: JSON.stringify(bad).slice(0, 800),
         logText: '校验拒绝 · 未写库',
       });

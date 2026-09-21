@@ -1,11 +1,17 @@
 /** 数据管理能力的页面装配（三卡各一页，全走公共层区块，不自写样式）。
  *
  * 配方来源：`docs/skills/skill-chef/t768-页面族配方.md`
- *   · 体检走结果型（结论条＋事实条＋读数卡＋逐菜折叠）；
+ *   · 体检走结果型（结论条＋事实条＋逐菜折叠）；
  *   · 批量改走过程型目标形态（事实条＋分组折叠＋变更行＋动作行）；
  *   · 备份走回执型（结论条＋事实条＋动作行＋复制区）。
  * 老件对照：体检逐菜详情见 `data_quality_report.html`，批量三页见 `batch_edit.html`，
  * 备份完成页见 `backup_receipt.html`（信息组织取老件，视觉走公共层）。
+ *
+ * #871 E 类裁定（2026-09-21）：原体检页／备份页各有一组**读数卡**（`renderKpiGrid`，3 张），
+ * 读数与紧邻的事实条**同源重复**；公共层 `pageUi` ⑥ 在 ≤640 档把读数卡栅格写成两列 ⇒ 3 张卡必然
+ * 排成「两格 ＋ 一张孤卡、右侧整格空着」（390 端实测，终审 68 分那一格）。本包不许改公共层，
+ * 故在页面侧收口：**读数只留事实条一份**（flex 按内容换行，无栅格空位），不再出读数卡网格。
+ * 若日后要恢复三格读数卡，须先给公共层补「奇数格在 ≤640 档」一条规则（另立票，见 #871 遗留出口）。
  */
 
 import { renderActionBar, renderFactStrip } from 'base-paint';
@@ -16,7 +22,6 @@ import {
   renderCopyBlock,
   renderDataTable,
   renderDisclosure,
-  renderKpiGrid,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
@@ -56,14 +61,10 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
       items: [
         { label: '菜数', value: String(input.items.length) + '道' },
         { label: '满分', value: String(full) + '道' },
+        { label: '待补', value: String(todo) + '道' },
         { label: '满分线', value: '八十分' },
       ],
     }),
-    renderKpiGrid([
-      { label: '菜数', value: String(input.items.length), unit: '道' },
-      { label: '满分', value: String(full), unit: '道' },
-      { label: '待补', value: String(todo), unit: '道' },
-    ]),
     ...input.items.map((it) =>
       renderDisclosure({
         title: it.name + '（' + it.score + '分）',
@@ -87,7 +88,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
             : renderProseBlock({ text: it.name + '五项齐全，无需补。' })),
       }),
     ),
-    renderCaliberLine('口径为完整度，口碑另立票，两者不混。'),
+    renderCaliberLine('评分只看完整度，口碑不计入。'),
     renderActionBar({
       buttons: [
         { label: '补最差那道菜', kind: 'primary', actionId: 'quality-fix' },
@@ -111,7 +112,7 @@ export function dataBatchPage(input: { name: string; diffs: { field: string; bef
     renderChangeRows({
       rows: input.diffs.map((d) => ({ label: d.field, before: d.before || '无', after: d.after || '无' })),
     }),
-    renderProseBlock({ text: '页面只改既有行，不新增食材与步骤，关联步骤本期不开。' }),
+    renderProseBlock({ text: '只改已有的食材与步骤，不新增；关联步骤暂不支持。' }),
     renderCaliberLine('缺数字用量与时长会当场拦下，补齐再试。'),
     renderActionBar({
       buttons: [
@@ -139,11 +140,6 @@ export function dataBackupPage(input: { recipeCount: number; tableCount: number;
         { label: '大小', value: String(input.bytes) + '字节' },
       ],
     }),
-    renderKpiGrid([
-      { label: '菜数', value: String(input.recipeCount), unit: '道' },
-      { label: '表数', value: String(input.tableCount), unit: '张' },
-      { label: '大小', value: String(input.bytes), unit: '字节' },
-    ]),
     renderProseBlock({ text: '恢复时解压再逐个导入，定时与增量以后再做。' }),
     renderCaliberLine('默认不含已废弃。'),
     renderActionBar({
