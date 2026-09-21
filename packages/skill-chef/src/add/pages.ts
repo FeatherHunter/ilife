@@ -5,7 +5,8 @@
  * 每一格都是一次公共层区块调用，页面不自写样式（`extraCss` 只拼公共层两份配方样式）。
  */
 
-import { renderActionBar, renderErrorReceipt, renderFactStrip, pageShapeCss, pageUiCss } from 'base-paint';
+import { renderActionBar, renderErrorReceipt, renderFactStrip } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 import {
   renderCaliberLine,
   renderChangeRows,
@@ -62,7 +63,7 @@ function shellDoc(docTitle: string, bodyHtml: string): string {
   return renderDocShell({
     docTitle,
     bodyHtml,
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }

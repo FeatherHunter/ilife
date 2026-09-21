@@ -14,7 +14,7 @@ import {
   renderProseBlock,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { pageShapeCss, pageUiCss } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 
 /** 首次使用向导页（过程型：分节折叠＋动作行）。 */
 export function setupInitPage(input: { tables: number; initialized: boolean }): string {
@@ -60,7 +60,7 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
   return renderDocShell({
     docTitle: '首次使用',
     bodyHtml: body,
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }

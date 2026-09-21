@@ -15,7 +15,7 @@ import {
   renderPageShell,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { pageShapeCss, pageUiCss } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 import type { ShoppingItem } from '../fetch/db.js';
 
 /** 生成清单页（结果型）。 */
@@ -83,7 +83,7 @@ export function shoppingListPage(input: {
   return renderDocShell({
     docTitle: '生成清单',
     bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 采购', title: '生成清单', content: blocks.join('') }),
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }

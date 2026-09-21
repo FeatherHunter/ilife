@@ -18,7 +18,7 @@
  *
  * 页面形状：照 `docs/skills/skill-chef/t768-页面族配方.md` §2 结果型配方表组装，每一格都是
  * 一次公共层区块调用（`base-render` 的 `blocks`＋`docShell`，`pageUi` 开）；正文段落用 #860 交的
- * `renderProseBlock`，不写页内补丁样式（`extraCss` 只挂 `pageUiCss`＋`pageShapeCss`）。
+ * `renderProseBlock`，不写页内补丁样式（`extraCss` 只调本技能渲染包的 `chefSceneCss()` 一个入口）。
  * 标签口径：六张关联表（`recipe_categories`／`recipe_flavors`／`recipe_seasons`／
  * `recipe_meal_types`／`recipe_diet_tags`／`recipe_cooking_methods`）聚合为一行徽章，
  * 与 #770 共用同一条口径（同一批关联表、同一套徽章形状），见本票证据件。
@@ -39,7 +39,9 @@ const WANT_SHOTS = ARGS.has('--shots');
 
 const B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
 const { renderDocShell } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'docShell.js')).href);
-const { pageShapeCss, pageUiCss, renderFactStrip } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href);
+const { renderFactStrip } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href);
+/** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
+const { chefSceneCss } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href);
 const { printGate, runGate, withBrowser } = await import('./t768-质量门.mjs');
 const DIST = join(ROOT, 'packages', 'skill-chef', 'dist');
 const D = (p) => pathToFileURL(join(DIST, p)).href;
@@ -162,7 +164,7 @@ function buildPage(card, data, metas) {
   return renderDocShell({
     docTitle: card.title + ' ｜ 私家大厨',
     bodyHtml: shell,
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }

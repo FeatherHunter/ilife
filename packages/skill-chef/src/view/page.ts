@@ -1,4 +1,4 @@
-﻿/** 查看域 8 卡结果型页面装配（#770）。
+/** 查看域 8 卡结果型页面装配（#770）。
  *
  * 卡清单唯一出处＝HELP 场景资产（`src/help/sceneData.ts:52-67`，5 组 8 卡），本件只组装不另立清单。
  * 形状唯一依据＝配方件（`docs/skills/skill-chef/t768-页面族配方.md` §2 结果型 14 格）：每一格都是一次
@@ -12,7 +12,8 @@ import {
   renderProseBlock, renderTocBlock,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { pageShapeCss, pageUiCss, renderActionBar, renderFactStrip, renderStatusBadge, renderTimelineRows } from 'base-paint';
+import { renderActionBar, renderFactStrip, renderStatusBadge, renderTimelineRows } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 
 /** 8 卡清单（id／标题／唤醒词；出处见文件头注释，细节在 HELP 场景资产里）。 */
 export const VIEW_CARDS: readonly { id: string; title: string; wake: string }[] = [
@@ -185,9 +186,9 @@ function sectionsOf(d: ViewItem): Record<string, string> {
 function shellOf(title: string, content: string): string {
   return renderDocShell({
     // 文档标题与页标题错开一句（页标题只说这是什么页，文档标题带技能名），不互相复读。
-    // 页面级两层走公共层函数（`pageUiCss`＋`pageShapeCss`，与 t768 原型同装配）：事实条多列、
-    // 表格双端行为都在这两层里；本页零自写样式。
-    docTitle: title + ' - 私家大厨', extraCss: pageUiCss() + '\n' + pageShapeCss(), pageUi: true,
+    // 页面级样式走单一入口 `chefSceneCss()`（公共层两配方 ＋ 私家大厨皮肤）：事实条多列、
+    // 表格双端行为与皮肤都在它里面；本页零自写样式。
+    docTitle: title + ' - 私家大厨', extraCss: chefSceneCss(), pageUi: true,
     bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 查看', title, content }),
   });
 }

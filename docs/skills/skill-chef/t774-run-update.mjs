@@ -86,12 +86,15 @@ function cli(key, params) {
 }
 
 /* ── 页面装配（只用公共层区块；本页零新增样式）────────────────────── */
-let B, renderDocShell, pageShapeCss, pageUiCss, renderActionBar, renderFactStrip, renderStatusBadge;
+let B, renderDocShell, renderActionBar, renderFactStrip, renderStatusBadge;
+/** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
+let chefSceneCss;
 async function loadBlocks() {
   B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
   ({ renderDocShell } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'docShell.js')).href));
-  ({ pageShapeCss, pageUiCss, renderActionBar, renderFactStrip, renderStatusBadge } =
+  ({ renderActionBar, renderFactStrip, renderStatusBadge } =
     await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href));
+  ({ chefSceneCss } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href));
 }
 const fact = (items) => renderFactStrip({ items });
 const concl = (t) => B.renderConclusionBar(t);
@@ -100,7 +103,7 @@ const badge = (text, status) => renderStatusBadge({ status: status ?? 'ok', text
 function page(docTitle, eyebrow, title, blocks) {
   const shell = B.renderPageShell({ eyebrow, title, content: blocks.join('') });
   // docTitle 与页标题必须不同句（机审⑥重复句按整页可见文本判，含 <title>）。
-  return renderDocShell({ docTitle: docTitle + '｜私家大厨修改域', bodyHtml: shell, extraCss: pageUiCss() + '\n' + pageShapeCss(), pageUi: true });
+  return renderDocShell({ docTitle: docTitle + '｜私家大厨修改域', bodyHtml: shell, extraCss: chefSceneCss(), pageUi: true });
 }
 /** 回执原文里的行编号是 ASCII 长串（机审⑤英文裸词会点名），且编号不对用户暴露：
  * 页上只留菜名作标识，编号整段拿掉（vision 过程审查 V1 缺陷 6 当场改）。 */

@@ -17,13 +17,13 @@ import {
   renderProseBlock,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { pageShapeCss, pageUiCss } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 
 function shell(title: string, eyebrow: string, blocks: string[]): string {
   return renderDocShell({
     docTitle: title,
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }

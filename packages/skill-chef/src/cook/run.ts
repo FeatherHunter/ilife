@@ -22,7 +22,8 @@ import {
   renderDataTable, renderDisclosure, renderKpiCard, renderPageShell, renderProseBlock,
 } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
-import { pageShapeCss, pageUiCss, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
+import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 
 // 开做 list：items 为步骤（内联本步用料）+ total；recipe/份数放大说明/历史提示作扩展字段（list 形只校验 items/total）。
 // 原 `src/render/views.ts`，本域独占。
@@ -327,6 +328,6 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
     // 文档标题与页内标题错开一处（后者缀技能名）：否则同一句在 `<title>` 与页标题各出现一次，
     // 质量门「重复句」列会红（`t768` 原型即用不同标题避开此列）。
     docTitle: '做菜模式：' + data.recipe.name + '（私家大厨）', bodyHtml: body,
-    extraCss: pageUiCss() + '\n' + pageShapeCss(), pageUi: true,
+    extraCss: chefSceneCss(), pageUi: true,
   });
 }

@@ -4,7 +4,7 @@
  * 都在这里装配。每一格都是一次公共层区块调用（`t768-页面族配方.md` §7 第 1 条）：
  * 内容件走 `base-paint/blocks`，事实条／时间轴走 `base-paint` 的页面级形状件，
  * 文档壳走 `base-paint/docShell`（`pageUi: true`，手机 390 照 HELP 触屏口径）。
- * 本文件不写一条自有样式（`extraCss` 只拼 `pageUiCss + pageShapeCss` 两层公共配方）。
+ * 本文件不写一条自有样式（`extraCss` 只调 `chefSceneCss()` 一个入口：公共层两配方 ＋ 私家大厨皮肤）。
  *
  * 与信封的关系：CLI 的 `chef.history.query` 仍是 `list` 形（行为不变）；
  * 这里的四页是各卡自己的结果型／回执型页，不共用同一个列表信封（本票目标 2）。
@@ -23,7 +23,8 @@ import {
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
-import { pageShapeCss, pageUiCss, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
+import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
+import { chefSceneCss } from '../render/skin.js';
 import { renderDocShell } from 'base-paint/docShell';
 import type { HistoryGlobalPortrait } from './run-query.js';
 
@@ -47,7 +48,7 @@ function docOf(docTitle: string, eyebrow: string, title: string, blocks: readonl
   return renderDocShell({
     docTitle: docTitle + ' ｜ 私家大厨',
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: pageUiCss() + '\n' + pageShapeCss(),
+    extraCss: chefSceneCss(),
     pageUi: true,
   });
 }
