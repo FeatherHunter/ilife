@@ -11,9 +11,9 @@
 //    · `sharedHelpersJs`：`buildSharedHelpersJs()`——复制按钮的**唯一激活通道**（页面内事件委派，
 //      认 `data-action-id` 与 `data-t` 两个冻结属性名）＋ toast 栈与 HELP 壳增强。
 //
-// ② **补上模板仍在用的七个页面级全局**（`memoRuntimeJs()`）：它们住的层本来不对（一套写进技能包的
+// ② **补上模板仍在用的八个页面级全局**（`memoRuntimeJs()`）：它们住的层本来不对（一套写进技能包的
 //    窄镜像），但模板调用点一字不改 ⇒ 这几个名字得有人给。给的**不是**第二套实现：凡是公共层已有
-//    对应物的（转义表、复制激活、toast 通道、空态与错误卡类名）一律走公共层那一条，
+//    对应物的（转义表、复制激活、toast 通道、空态与错误卡类名、键值行的格）一律走公共层那一条，
 //    只有「备忘录信封怎么投影成一段可粘贴文本」这一件是本域自己的口径。
 import { blocksCss } from 'base-paint/blocks';
 import { buildSharedHelpersJs, buildStyleSheet, pageShapeCss, pageUiCss } from 'base-paint';
@@ -51,13 +51,16 @@ export function memoPageAssets(): MemoPageAssets {
  *  | `copyText` ／ `toast` | 公共层的激活通道：把文案写进 `data-t`，交给已注入的公共层委派（`data-action-id` ＋ `data-t` 两个冻结属性名同源）。**成功提示归公共层**（「已复制／粘贴给 AI」） |
  *  | 空态卡 | 公共层的 `ilife-empty-*` 三件（样式住 `buildStyleSheet()` 的 `emptyState` 区） |
  *  | 错误回执卡 | 公共层的 `ilife-error` ／ `ilife-error-title` ／ `ilife-error-actions` ＋ `ilife-copy-btn` 家族（样式住 `errorReceipt` 区）；三颗按钮各带 `data-action-id` ＋ `data-t`，激活走同一条委派 |
+ *  | 键值行 | 公共层的 `ilife-block-fact-strip` 三件（一格「标签 ＋ 值」；类名、字号与间距全吃 `pageShapeCss()` 的形状①）——**#878 追加** |
  *  | `buildDataText` ／ `buildLogText` | **本域口径**：`scene.snapshot` 与 `copy_log` 怎么投影成一段可粘贴文本 |
  *  | `__hmToastFlush` | 截图与测试清屏用的一次性收尾（不参与页面行为） |
  *
  *  **记账（与旧镜像的差异）**：旧镜像自带一套剪贴板降级与自己的 toast 栈、关闭按钮写死
  *  `min-height:40px`（改前基线「触摸档 <44px 共 82 处」里的一份）；本件不产样式，尺寸一律吃公共层
  *  （`ACTION_BAR_DEFAULTS.minHeightPx` ＝ 44）。复制成功的提示文案由公共层给，与旧镜像的
- *  「已复制／粘贴给 AI」同句同字，失败提示走公共层同一条（`复制失败／长按选择文本手动复制`）。 */
+ *  「已复制／粘贴给 AI」同句同字，失败提示走公共层同一条（`复制失败／长按选择文本手动复制`）。
+ *  **#878 追加**：键值行的页面侧产出者 `factStrip`（只拼公共层类名，不产样式）—— 同步报告页状态卡
+ *  与两份向导页页头那三处「生成时间 · 场景」的串，由它落成键值行。 */
 export function memoRuntimeJs(): string {
   const src = [
     '(function () {',

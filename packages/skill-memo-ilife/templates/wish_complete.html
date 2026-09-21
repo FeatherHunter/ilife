@@ -13,7 +13,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .eyebrow{font-size:13px;color:var(--blue);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
 h1{font-size:36px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}
 .lead{color:var(--fg2);font-size:17px}
-.meta{margin-top:14px;color:var(--fg3);font-size:13px}
+/* #878：页头时刻行不再拿 `·` 顶版式，改落公共层的键值行（`#meta` 里装 `ilife-block-fact-strip`）。 */
 .badge{display:inline-block;background:var(--soft,#f5f8ff);color:var(--blue);padding:4px 11px;border-radius:999px;font-size:13px;font-weight:700;margin:2px 6px 2px 0}
 .badge.ok{background:#ecfff2;color:#178a3a}
 .badge.warn{background:#fff7e8;color:#b25b00}
@@ -54,7 +54,7 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <header class="hero">
 <h1 id="title">心愿完成向导</h1>
 <p class="lead" id="subtitle">数据加载中</p>
-<p class="meta" id="meta"></p>
+<div id="meta"></div>
 </header>
 <section id="injectError" style="display:none"></section>
 
@@ -112,7 +112,10 @@ function init(){
   document.getElementById('title').textContent=d.title||'心愿完成向导';
   document.getElementById('subtitle').textContent=payload.message||'勾选要完成的心愿';
   var meta=d.meta||{};
-  document.getElementById('meta').textContent=`生成时间：${d.generated_at||''} · 场景：${meta.command_cn||d.command||'wish-complete'}`;
+  document.getElementById('meta').innerHTML=window.factStrip([
+    {label:'生成时间', value:d.generated_at||''},
+    {label:'场景', value:meta.command_cn||d.command||'wish-complete'}
+  ]);
   if(d.default_content){document.getElementById('globalContent').value=d.default_content}
   renderKPIs();renderList();
   // success: 心愿列表已加载,等待用户勾选完成

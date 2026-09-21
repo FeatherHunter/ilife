@@ -100,7 +100,8 @@ body{
   color:var(--fg3);
   font-variant-numeric:tabular-nums;
 }
-.status-meta span+span::before{content:"·";margin:0 8px;color:var(--fg4)}
+/* #878：状态行那枚 `·` 原本由伪元素生成（`.status-meta span+span::before{content:"·"}`），
+   判据读不到、屏上却看得见；分隔改由版式承担 —— 状态行落成公共层的键值行（`ilife-block-fact-strip`）。 */
 
 /* ===== KPI 网格(第二屏 · 数字概览) ===== */
 .kpis{
@@ -409,12 +410,12 @@ function init(){
     desc.innerHTML = '扫到飞书数据但本次没有实际变更。' + (totalSkipped > 0 ? '有 ' + totalSkipped + ' 条跳过，可展开查看。' : '');
   }
 
-  /* ----- meta 行 ----- */
+  /* ----- meta 行（#878：`22:35 · 同步飞书` 那串改键值行，事实一条不减） ----- */
   function commandToChinese(c){return c==='sync-from-feishu'?'同步飞书':c}
-  var metaParts = [];
-  if(d.generated_at) metaParts.push('<span>' + fmtTime(d.generated_at) + '</span>');
-  if(d.scene&&d.scene.scene_id) metaParts.push('<span>' + esc(commandToChinese(d.scene.scene_id)) + '</span>');
-  meta.innerHTML = metaParts.join('');
+  var metaFacts = [];
+  if(d.generated_at) metaFacts.push({label:'生成时间', value:fmtTime(d.generated_at)});
+  if(d.scene&&d.scene.scene_id) metaFacts.push({label:'场景', value:commandToChinese(d.scene.scene_id)});
+  meta.innerHTML = window.factStrip(metaFacts);
 
   /* ----- KPI 网格 ----- */
   var kpis = [

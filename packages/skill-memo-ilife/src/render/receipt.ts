@@ -46,7 +46,14 @@ export interface ReceiptBadges {
   readonly sub?: string | null;
 }
 
-/** 回执三行（取自写命令回执：`src/wish/ensure.ts` 的 `WishReceipt`）。 */
+/** 回执三行（取自写命令回执：`src/wish/ensure.ts` 的 `WishReceipt`）。
+ *
+ *  「对象」那一格的两半（#882 定形）：`entityLabel` 写**对象是什么**（分类名／`批量改分类` 这类），
+ *  `entityId` 写**对象的后半**，按类型分两种读法——
+ *    - **数字＝记录号**：族里给它加 `#`（`备忘 #18`）；口径出处 `t869-机审读数.md` §二 允许清单第 3 条；
+ *    - **字符串＝域侧自述文案**：原样上屏，**不吃 `#`**（批量这类没有单条对象的场景走这一支，如 `1 条`）。
+ *  为什么按类型分：记录号在 `notes` 表里就是整数，域侧本来就用它区分「指向某一条」与「自述一条事实」；
+ *  族里按同一个区分渲染即可——不另立字段，也不让族去猜文案。 */
 export interface ReceiptRows {
   readonly entityLabel: string;
   readonly entityId: string | number;
