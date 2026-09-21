@@ -135,9 +135,11 @@ export function probeDir(dir) {
   if (!statSync(abs).isDirectory()) throw new Error('--dir 不是目录：' + dir);
   const files = readdirSync(abs).filter((f) => f.toLowerCase().endsWith('.html')).sort();
   const pages = {};
+  const seen = new Map();
   for (const f of files) {
     const row = probePage(readFileSync(join(abs, f), 'utf8'), f);
-    if (pages[row.key] !== undefined) throw new Error('页键撞车（文件名主体重复）：' + row.key);
+    if (seen.has(row.key)) throw new Error('页键撞车（文件名主体重复）：' + row.key + '（' + seen.get(row.key) + ' 与 ' + f + ' 撞同一个键）');
+    seen.set(row.key, f);
     pages[row.key] = row;
   }
   return {

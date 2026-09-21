@@ -19,7 +19,7 @@
  *  （逐条点名）；2＝用法错或 reader 基础设施失败（缺浏览器、参数错）。
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pageKeyOf, probeDir } from './t867-dom-probe.mjs';
 
@@ -64,6 +64,9 @@ function argOf(argv, name, dflt) {
 }
 
 export function parseArgs(argv) {
+  for (const flag of ['--dir', '--human', '--json', '--readings', '--widths']) {
+    if (argv.filter((a) => a === flag).length > 1) throw new Abort('同一个开关写了两次：' + flag + '（首见并不优先，直接算用法错）');
+  }
   const dir = argOf(argv, '--dir', '');
   const human = argOf(argv, '--human', '');
   const json = argOf(argv, '--json', '');
@@ -74,6 +77,9 @@ export function parseArgs(argv) {
       + ' [--readings <读数目录>] [--no-readers] [--widths 390,768,1440]');
   }
   if (widths.length === 0 || widths.some((w) => !Number.isFinite(w))) throw new Abort('--widths 解析不出宽度：' + argOf(argv, '--widths', ''));
+  for (const w of DEFAULT_WIDTHS) {
+    if (!widths.includes(w)) throw new Abort('--widths 少了判据档 ' + w + '（四件读数按三档 390／768／1440 出；少了档下游判分引擎吃不了）');
+  }
   return {
     dir: resolve(dir), human: resolve(human), json: resolve(json),
     readings: readings === '' ? dirname(resolve(json)) : resolve(readings),
@@ -85,7 +91,9 @@ export function parseArgs(argv) {
 /** 一条 `- 列 = 数值 ｜ 判=… ｜ 出处=… ｜ 理由=…`。 */
 const COLUMN_LINE = /^-\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)\s*(.*)$/;
 
-export function parseHuman(text) {
+/** 解析人核档。重复（同一页两次、同一页同一列两次）与不认识的列名都记进 `bugs`／`warnings`，不抛异常——
+ *  它们是**输入数据**的问题（exit 1 并点名），不是用法错（exit 2）。 */
+export function parseHuman(text, bugs = []) {
   const pages = {};
   const warnings = [];
   let page = null;
@@ -93,8 +101,8 @@ export function parseHuman(text) {
     const head = raw.match(/^###\s+(.+?)\s*$/);
     if (head) {
       page = head[1];
-      if (pages[page] !== undefined) throw new Abort('人核档里同一页出现两次（`### ' + page + '`）');
-      pages[page] = {};
+      if (pages[page] !== undefined) bugs.push('人核档里同一页出现两次（`### ' + page + '`）');
+      else pages[page] = {};
       continue;
     }
     const line = raw.match(COLUMN_LINE);
@@ -105,7 +113,7 @@ export function parseHuman(text) {
       warnings.push('人核档里出现不在契约里的列名（已忽略，请查用词）：' + name + '（页 ' + page + '）');
       continue;
     }
-    if (pages[page][name] !== undefined) throw new Abort('人核档里同一页同一列写了两次：' + name + '（页 ' + page + '）');
+    if (pages[page][name] !== undefined) { bugs.push('人核档里同一页同一列写了两次：' + name + '（页 ' + page + '）'); continue; }
     const fields = {};
     for (const part of rest.split('｜')) {
       const kv = part.match(/^\s*([^=]+?)\s*=\s*(.*?)\s*$/);
@@ -272,6 +280,18 @@ export function checkReadings(readingsDir, pageFiles, widths, bugs) {
   }
 }
 
+/** 红的一跑：逐条点名 ＋ **不许留旧读数**（落点上若已有上一跑写的 facts.json，就地作废并点名——
+ *  否则「四件照旧齐」的现场会让下游批处理静默拿旧读数出分）。 */
+function failRun(args, bugs, log) {
+  for (const b of bugs.slice(0, 12)) log('FAIL: ' + b);
+  if (bugs.length > 12) log('FAIL: …另有 ' + (bugs.length - 12) + ' 条，见契约件 §六 的清单');
+  if (existsSync(args.json)) {
+    rmSync(args.json, { force: true });
+    log('STALE-DROPPED ' + args.json + '（上一跑留下的 facts.json 与本跑不一致，已作废；下游只认 exit 0 的那一跑）');
+  }
+  return { ok: false, bugs, facts: null };
+}
+
 /* ── 主装配 ────────────────────────────────────────────────────────────── */
 export function assemble(args, log = () => {}) {
   const bugs = [];
@@ -279,7 +299,18 @@ export function assemble(args, log = () => {}) {
   if (!existsSync(args.human)) throw new Abort('人核档不存在：' + args.human);
   const pageFiles = readdirSync(args.dir).filter((f) => f.toLowerCase().endsWith('.html')).sort();
   if (pageFiles.length === 0) throw new Abort('页群目录里没有 .html：' + args.dir);
+
+  // 页键先算：撞车早报（不白跑两趟浏览器），并按契约 §六#8 点名是哪两个文件撞的。
+  const byKey = {};
+  for (const f of pageFiles) {
+    const key = pageKeyOf(f);
+    if (byKey[key] !== undefined) bugs.push('页键撞车（文件名主体重复）：' + key + '（' + byKey[key] + ' 与 ' + f + ' 撞同一个键）');
+    else byKey[key] = f;
+  }
+  if (bugs.length > 0) return failRun(args, bugs, log);
+
   mkdirSync(args.readings, { recursive: true });
+  mkdirSync(dirname(args.json), { recursive: true });
 
   const readers = {};
   for (const spec of READERS) {
@@ -292,15 +323,9 @@ export function assemble(args, log = () => {}) {
   checkReadings(args.readings, pageFiles, args.widths, bugs);
 
   const dom = probeDir(args.dir);
-  const human = parseHuman(readFileSync(args.human, 'utf8'));
+  const human = parseHuman(readFileSync(args.human, 'utf8'), bugs);
   for (const w of human.warnings) log('WARN ' + w);
 
-  const byKey = {};
-  for (const f of pageFiles) {
-    const key = pageKeyOf(f);
-    if (byKey[key] !== undefined) bugs.push('页键撞车（文件名主体重复）：' + key + '（' + byKey[key] + ' 与 ' + f + '）');
-    byKey[key] = f;
-  }
   for (const key of Object.keys(byKey)) {
     if (human.pages[key] === undefined) bugs.push('人核档里没有这一页：' + key + '（页群目录里是 ' + byKey[key] + '）');
   }
@@ -369,6 +394,12 @@ export function assemble(args, log = () => {}) {
   if (bugs.length > 0) {
     for (const b of bugs.slice(0, 12)) log('FAIL: ' + b);
     if (bugs.length > 12) log('FAIL: …另有 ' + (bugs.length - 12) + ' 条，见契约件 §六 的清单');
+    // 本跑红就不许留旧读数：落点上若已有上一跑写的 facts.json，就地作废并点名——
+    // 否则「四件照旧齐」的现场会让下游（批处理的收口/引擎）静默拿旧读数出分。
+    if (existsSync(args.json)) {
+      rmSync(args.json, { force: true });
+      log('STALE-DROPPED ' + args.json + '（上一跑留下的 facts.json 与本跑不一致，已作废；下游只认 exit 0 的那一跑）');
+    }
     return { ok: false, bugs, facts };
   }
   writeFileSync(args.json, JSON.stringify(facts, null, 1), 'utf8');
