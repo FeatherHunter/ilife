@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>饼干记账 · 配置与库落点调查报告（2026-09-20）</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1b1b1f; --muted: #6b6b76; --line: #e3e3e8;
+    --box: #f7f7fa; --accent: #2f6fed; --ok: #12805c; --warn: #a35a00; --bad: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --fg: #e8e8ea; --muted: #9a9aa4; --line: #2c2f36;
+      --box: #1e2126; --accent: #7aa7ff; --ok: #4fd1a5; --warn: #e0a458; --bad: #ff8f86;
+    }
+  }
+  html { background: var(--bg); }
+  body {
+    margin: 0; padding: 28px 20px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.75 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  main { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 1.8em; line-height: 1.35; margin: 0 0 6px; }
+  h2 { font-size: 1.3em; margin: 44px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  h3 { font-size: 1.08em; margin: 26px 0 8px; }
+  p, li { margin: 8px 0; }
+  .lead { color: var(--muted); margin-top: 0; }
+  code, .mono { font-family: "Cascadia Mono", Consolas, "SFMono-Regular", monospace; font-size: 0.92em; }
+  code { background: var(--box); padding: 1px 5px; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.94em; }
+  th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--box); font-weight: 600; }
+  tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--box) 55%, transparent); }
+  .badge { display: inline-block; font-size: 0.76em; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .b-run { color: var(--ok); }
+  .b-src { color: var(--accent); }
+  .b-doc { color: var(--muted); }
+  .b-none { color: var(--bad); }
+  .box { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; background: var(--box); padding: 12px 16px; margin: 16px 0; }
+  .box.warn { border-left-color: var(--warn); }
+  .box.bad { border-left-color: var(--bad); }
+  .box.ok { border-left-color: var(--ok); }
+  .box h3, .box h4 { margin-top: 0; }
+  nav.toc { border: 1px solid var(--line); border-radius: 8px; background: var(--box); padding: 12px 20px; margin: 22px 0 0; }
+  nav.toc ol { margin: 6px 0 0; padding-left: 22px; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  .q { border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 14px 0; }
+  .q .qt { font-weight: 700; }
+  .q .rec { margin-top: 8px; padding-left: 10px; border-left: 3px solid var(--ok); color: var(--fg); }
+  .q .rec b { color: var(--ok); }
+  ul.tight { margin: 6px 0; }
+  ul.tight li { margin: 3px 0; }
+  .src { color: var(--muted); font-size: 0.88em; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 36px 0; }
+  .kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; font-size: 0.85em; background: var(--box); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>饼干记账 · 配置与库落点调查报告</h1>
+<p class="lead">调查日期 2026-09-20 ｜ 范围：<code>packages/skill-bill</code>（技能侧）＋ <code>packages/plugin-bill-ilife</code>（设置页）＋ <code>packages/base-link-core</code>（配置实现）｜ 本机 Windows 现场读数<br>
+用途：<b>理解项目</b>——「库到底是怎么被找到的」「bill.yaml 是什么机制」「设置页那 8 项各自在做什么」。<b>不是修复故障的施工单</b>；文末的 8 个问题是留给你裁决的设计岔口。</p>
+
+<nav class="toc">
+  <b>目录</b>
+  <ol>
+    <li><a href="#s1">一句话结论</a></li>
+    <li><a href="#s2">证据等级：怎么读这份文件</a></li>
+    <li><a href="#s3">取库链路：从「记一笔」到打开 SQLite</a></li>
+    <li><a href="#s4">bill.yaml 是什么机制（10 条口径）</a></li>
+    <li><a href="#s5">设置页 8 个配置项逐项</a></li>
+    <li><a href="#s6">「能不能生效」：6 处配了不等于如愿</a></li>
+    <li><a href="#s7">本机现场：两份库，一份 0 行、一份 7127 行</a></li>
+    <li><a href="#s8">这套口径是谁定的，哪些方案被否过</a></li>
+    <li><a href="#s9">老家（Python 版）机制与 TS 线的有意偏离</a></li>
+    <li><a href="#s10">已登记的挂账与仍开着的口子</a></li>
+    <li><a href="#s11">六家技能的差异：同一条机制的六种落地</a></li>
+    <li><a href="#s12">待裁决的 8 个问题（Q0–Q7）</a></li>
+    <li><a href="#s13">附录 A · 本机实测探针与读数</a></li>
+    <li><a href="#s14">附录 B · 引用清单</a></li>
+    <li><a href="#s15">附录 C · 取证边界与「没找到」的</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1 · 一句话结论</h2>
+
+<div class="box">
+<p><b>记账技能不「记住」库在哪，它每次被调用时现读一份配置文件算出落点。</b>那份配置文件是 <code>~/.ilife/bill.yaml</code>（本机：<code>C:\Users\辰辰洋洋\.ilife\bill.yaml</code>），它是<b>唯一真相</b>——环境变量在 2026-09-19 的 #726 之后一个都不参与配置。链路是：<b>命令 → 现读 bill.yaml → 算出绝对路径（顺手 <code>mkdir -p</code>）→ 用 node 内置的 <code>node:sqlite</code> 打开 → 缺表就 DDL 自愈</b>。</p>
+<p>而这次调查最重要的发现不在配置项里：<b>技能现在读的是一份 0 行的库，你 2022-01-01 到 2026-09-16 的 7127 条记录躺在另一个目录里，当前的默认落点看不见它。</b>见 <a href="#s7">第 7 节</a>。</p>
+</div>
+
+<h2 id="s2">2 · 证据等级：怎么读这份文件</h2>
+
+<table>
+<thead><tr><th style="width:120px">标记</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><span class="badge b-run">实测</span></td><td>我在这台机器上真跑过命令，读数逐字贴出来（附录 A 有命令）。</td></tr>
+<tr><td><span class="badge b-src">源码</span></td><td>读仓库源码得到，附 <code>文件:行</code>。</td></tr>
+<tr><td><span class="badge b-doc">文档</span></td><td>引自仓库内文档（含票面证据件），附 <code>文件:行</code>。</td></tr>
+<tr><td><span class="badge b-doc">调查</span></td><td>来自本次并行做的一次<b>只读</b>文档调查（未改任何文件），出处已逐条给出；这部分我没有逐件亲自复读。</td></tr>
+<tr><td><span class="badge b-none">未找到</span></td><td>仓内查不到裁定件或挂账记录——这是「不知道答案」，不是「答案是否」。</td></tr>
+</tbody>
+</table>
+
+<h2 id="s3">3 · 取库链路：从「记一笔」到打开 SQLite</h2>
+
+<p>你在对话里说一句「记一笔」，到 SQLite 文件被打开，中间是这 8 跳：</p>
+
+<table>
+<thead><tr><th style="width:28px">#</th><th>发生了什么</th><th>住哪</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>DSH 侧把技能唯一出口开成一个 agent 工具 <code>run_bill_command</code>：<b>不经会话 shell、不读 PATH</b>，在宿主进程里 spawn 技能 CLI。</td><td><span class="badge b-src">源码</span> <code>packages/plugin-bill-ilife/src/skill-tool.ts:20</code>（工具名）、<code>:101-117</code>（执行）</td></tr>
+<tr><td>2</td><td>入口路径不写死：读技能包 <code>package.json</code> 的 <code>bin</code> 声明，挑名字以 <code>-cmd-read</code> 结尾那条；运行时用宿主自带的执行体（Electron 宿主＝该二进制加 <code>ELECTRON_RUN_AS_NODE=1</code>）。</td><td><span class="badge b-src">源码</span> <code>skill-tool.ts:41-52</code>、<code>packages/plugin-bill-ilife/src/bridge.ts:82-85</code></td></tr>
+<tr><td>3</td><td>真正跑起来的是 <code>packages/skill-bill/dist/cli/cmd_read.js</code>，取一个 <code>bill.*</code> 命令键 ＋ <code>--params JSON</code>。</td><td><span class="badge b-src">源码</span> <code>skill-tool.ts:108</code>；出口契约见 <code>packages/skill-bill/src/cli/cmd_read.ts:1-4</code></td></tr>
+<tr><td>4</td><td>出口先拦两类「设置页专用」键（配置读写、配置体检），<b>再</b>做预检——因为「读写配置」不该要求库已经配好。</td><td><span class="badge b-src">源码</span> <code>cmd_read.ts:221-230</code>；<code>packages/skill-bill/src/cli/config.ts:66-84</code></td></tr>
+<tr><td>5</td><td>预检只剩一道门：node 版本 ≥ 22.13（<code>node:sqlite</code> 的要求）。老线那道「必须设 <code>SKILLS_DB_PATH</code>」已经整道删掉。</td><td><span class="badge b-src">源码</span> <code>cmd_read.ts:53-56</code></td></tr>
+<tr><td>6</td><td><b>算落点</b>：<code>resolveDbPath()</code> → 现读配置 → <code>db.dir</code> 非空即用它，空串＝配置数据目录（默认 <code>~/.ilife/data</code>）→ <code>join(目录, db.name)</code>，并<b>顺手把目录建出来</b>（<code>mkdir -p</code>）。</td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/fetch/paths.ts:45-55</code></td></tr>
+<tr><td>7</td><td>现读配置那一步：定位配置目录 → 文件不在就<b>按默认值落一份</b> → 在就解析＋校验＋把缺的项补默认值。</td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/config.ts:50-67</code>、<code>packages/base-link-core/src/config/store.ts:135-145</code></td></tr>
+<tr><td>8</td><td><b>开库</b>：<code>new DatabaseSync(路径)</code>（node 内置 sqlite，无第三方依赖）→ <code>PRAGMA journal_mode=WAL</code> ＋ <code>busy_timeout=5000</code> → <code>CREATE TABLE IF NOT EXISTS bills</code>（10 列）＋两个索引 → 老库缺 <code>deleted_at</code> 就 <code>ALTER TABLE</code> 补上。<b>跑完 finally 里关库。</b></td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/fetch/db.ts:31-42</code>（DDL）、<code>:52-77</code>（开库）、<code>cmd_read.ts:147-158</code></td></tr>
+</tbody>
+</table>
+
+<div class="box ok">
+<h4>两条容易忽略的性质</h4>
+<ul class="tight">
+<li><b>「看帮助」不开库</b>：HELP 在开库之前分派，初始化状态只看「库文件在不在」（<span class="badge b-src">源码</span> <code>cmd_read.ts:62-77</code>、<code>:103-105</code>）。但注意它仍会<b>建目录</b>——因为落点函数本身就带 <code>mkdirSync</code>。</li>
+<li><b>记账有两份「库」</b>：SQLite 一份（<code>biscuit_accountant.db</code>，单表 <code>bills</code>）＋ JSON 一份（<code>goals.json</code>，装预算／储蓄目标／账户）。后者走「临时文件 ＋ 改名」的原子写（<span class="badge b-src">源码</span> <code>fetch/db.ts:253-260</code>）。</li>
+</ul>
+</div>
+
+<h2 id="s4">4 · bill.yaml 是什么机制（10 条口径）</h2>
+
+<table>
+<thead><tr><th style="width:28px">#</th><th>口径</th><th>出处</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>落点是 <code>&lt;配置目录&gt;/bill.yaml</code>；配置目录＝环境变量 <code>ILIFE_CONFIG_DIR</code>（设了且非空）否则 <code>os.homedir()/.ilife</code>。<b>不读 <code>$DSH_HOME</code></b>——技能要能在没有 DSH 的平台上单独跑。</td><td><span class="badge b-src">源码</span> <code>packages/base-link-core/src/config/dirs.ts:3,40-49,52-63</code></td></tr>
+<tr><td>2</td><td><b>配置文件是唯一真相，环境变量全部退役</b>：老那套 <code>SKILLS_DB_PATH</code>、五个写库开关（<code>*_FORCE_PROD</code>）、两个钉钟变量读取点一个不剩。现在环境变量只剩两个角色：<code>ILIFE_CONFIG_DIR</code>（位置口子）与运行期继承类（<code>PATH</code>／<code>NODE_OPTIONS</code>）。</td><td><span class="badge b-doc">文档</span> <code>docs/env.md:3-9</code>；记账侧落地读数 <code>docs/skills/skill-bill/t726-证据.md:13-23</code>（<code>git grep process.env -- packages/skill-bill/src</code> 零命中）</td></tr>
+<tr><td>3</td><td>格式是<b>手写的受限 YAML 子集</b>（全仓零 YAML 依赖）：一层嵌套、缩进恰好 2 个空格、不支持列表、标量只有字符串／数字／布尔。不支持的写法会给人话报错＋行号。</td><td><span class="badge b-src">源码</span> <code>packages/base-link-core/src/config/yaml.ts:74-140</code>（解析）、<code>:45-67</code>（形状校验）、<code>:213-225</code>（生成）</td></tr>
+<tr><td>4</td><td>写出去恒是<b>完整一份</b>：没给的项按默认值补齐 ⇒ 盘上的文件永远只有默认值表那一组键。</td><td><span class="badge b-src">源码</span> <code>store.ts:147-159</code>；<code>store.ts:89-107</code></td></tr>
+<tr><td>5</td><td><b>「读配置」有落盘副作用</b>：文件不在 → 按默认值落一份（<code>created: true</code>）；配置目录与数据目录也会被建出来（<code>mkdir -p</code>）。所以「打开一次设置页」就会落一份 bill.yaml。</td><td><span class="badge b-src">源码</span> <code>store.ts:137-141</code>、<code>dirs.ts:65-76</code></td></tr>
+<tr><td>6</td><td>校验是<b>硬失败</b>：不认识的键、类型不符一律抛错，报文带<b>行号＋文件名</b>；出口把 <code>CONFIG_*</code> 这类错误映成 exit 1。</td><td><span class="badge b-src">源码</span> <code>store.ts:44-86</code>；<code>cmd_read.ts:271-273</code></td></tr>
+<tr><td>7</td><td><b>空串＝按默认落点</b>，不是「没配、失败」，也不是「禁用」。⇒ 没有任何一项是必设的，缺配置不会 exit 1。</td><td><span class="badge b-doc">文档</span> <code>docs/env.md:15</code>；<code>packages/skill-bill/src/config.ts:11-12</code></td></tr>
+<tr><td>8</td><td>「重置为默认」＝先把现有文件另存 <code>bill.yaml.bak</code>（已有就覆盖）再按默认值重写；<b>备份失败即不写盘</b>，原文件保持不动；本来没有文件时 <code>backupPath</code> 为 null。</td><td><span class="badge b-src">源码</span> <code>store.ts:161-180</code>；<code>packages/skill-bill/src/config.ts:77-81</code></td></tr>
+<tr><td>9</td><td><b>保存即生效</b>：每进程按「配置文件路径」记住一份，写／重置会清掉记忆 ⇒ 同进程后续读也现取，不用重启宿主。</td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/config.ts:43-47,70-74</code></td></tr>
+<tr><td>10</td><td><b>测试隔离护栏</b>：跑在 <code>node --test</code> 里却没设 <code>ILIFE_CONFIG_DIR</code> 直接抛 <code>CONFIG_TEST_ISOLATION_MISSING</code>。这是删掉五个写库哨兵之后的替代护栏——把「忘了配」从「静默写真实数据」变成「响亮失败」。</td><td><span class="badge b-src">源码</span> <code>dirs.ts:28-48</code>；<span class="badge b-doc">文档</span> <code>docs/base/base-link-core/t694-证据.md:73-76</code></td></tr>
+</tbody>
+</table>
+
+<h3>谁能改它、谁只看不改</h3>
+<table>
+<thead><tr><th style="width:150px">角色</th><th>怎么碰它</th><th>出处</th></tr></thead>
+<tbody>
+<tr><td>设置页（插件）</td><td>只经 RPC → 宿主 spawn 技能 CLI 的三个配置 key：<code>bill.config.read</code>／<code>write</code>／<code>reset</code>。插件自己不读盘、不算默认值。</td><td><span class="badge b-src">源码</span> <code>packages/plugin-bill-ilife/src/bridge.ts:125-144</code>、<code>src/index.ts:34-58</code>、<code>packages/skill-bill/src/cli/config.ts:17-21</code></td></tr>
+<tr><td>你（手工编辑）</td><td>可以直接改。代价见 <a href="#s6">第 6 节第 6 条</a>：保存会整份重写；手工加未知键会让技能整体 exit 1。</td><td><span class="badge b-doc">文档</span> <code>docs/research/bill-config-and-db-landing-survey-20260920</code> 本次调查结论</td></tr>
+<tr><td>配置体检（只读）</td><td><code>bill.config.check</code>：<b>刻意不调 <code>loadBillConfig()</code></b>（那会落一份默认件），包内自带一份只读解析器，报 7 条判据。</td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/health.ts:1-9,68-80,99-225</code></td></tr>
+<tr><td>doctor（运维命令行）</td><td>只报「配置目录在不在、能不能写」＋「六份 <code>&lt;技能&gt;.yaml</code> 落没落」，<b>只提示、不替用户落一份</b>。</td><td><span class="badge b-doc">文档</span> <code>docs/env.md:38</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="s5">5 · 设置页 8 个配置项逐项</h2>
+
+<p>页面分两组：常用 4 项直接画出来，其余 4 项收在默认折叠的「高级」里（<span class="badge b-src">源码</span> <code>packages/plugin-bill-ilife/src/settings.ts:50-116</code>）。你截图里 8 行与 <code>BILL_CONFIG_DEFAULTS</code> 逐字对得上，且<b>当前取值全是默认值</b>。</p>
+
+<table>
+<thead><tr><th style="width:150px">键 / 页面标题</th><th style="width:120px">默认值</th><th>谁真读它（读取点）</th><th>实际影响什么</th><th style="width:150px">必要性判断</th></tr></thead>
+<tbody>
+<tr>
+<td><code>db.dir</code><br>数据目录<br><span class="src">常用 · 目录选择</span></td>
+<td><code>""</code></td>
+<td><code>resolveDbDir()</code> <code>fetch/paths.ts:45</code> → <code>cli/cmd_read.ts:150,162</code>（每条数据命令）、<code>:104</code>（判初始化）、<code>:123,134</code>（产物落点）、<code>setup/blocked.ts:51,54</code></td>
+<td>库文件、第二份库、HELP 产物目录、默认备份目录的<b>根</b></td>
+<td><b>硬必要</b>。本机它还是唯一能看见老账的旋钮（<a href="#s7">第 7 节</a>）</td>
+</tr>
+<tr>
+<td><code>db.name</code><br>库文件名<br><span class="src">常用 · 文本</span></td>
+<td><code>biscuit_accountant.db</code></td>
+<td><code>dbFilename()</code> <code>paths.ts:33</code> → <code>resolveDbPath()</code> <code>:52</code></td>
+<td>账单表所在的那一个文件</td>
+<td><b>危险旋钮</b>：改名＝换库，旧库留在盘上没人读（页面 hint 自己承认）</td>
+</tr>
+<tr>
+<td><code>db.goals</code><br>预算／账户文件名<br><span class="src">常用 · 文本</span></td>
+<td><code>goals.json</code></td>
+<td><code>goalsFilename()</code> <code>paths.ts:39</code> → <code>goal/read.ts:45</code>、<code>goal/write.ts:102</code>、<code>account/read.ts:33</code>、<code>account/write.ts:119</code>、<code>setup/{run:133,restore:36,92,97,import:93}</code></td>
+<td>预算／储蓄目标／账户三样</td>
+<td><b>最可疑</b>：拆名几乎没有正当用法，而读不到时静默变空（<code>db.ts:247</code>）</td>
+</tr>
+<tr>
+<td><code>html.dir</code><br>HELP 产物目录名<br><span class="src">常用 · 文本</span></td>
+<td><code>biscuit_accountant_html</code></td>
+<td><code>htmlDirName()</code> <code>help/helpPaths.ts:30</code> → <code>cmd_read.ts:123,134</code></td>
+<td><b>只有</b> HELP 与速查表落在哪个子目录（记账其余命令不落 HTML）</td>
+<td>半必要：可配空间只有「子目录名」</td>
+</tr>
+<tr>
+<td><code>backup.dir</code><br>备份目录<br><span class="src">高级 · 目录选择</span></td>
+<td><code>""</code>（＝库目录下 <code>backups</code>）</td>
+<td><code>resolveBackupDir()</code> <code>paths.ts:65</code> → <code>setup/run.ts:133,150</code>、<code>setup/restore.ts:36</code>、<code>setup/import.ts:93</code></td>
+<td>备份写哪、恢复从哪读</td>
+<td><b>硬必要</b>（备份要放另一块盘才有意义）</td>
+</tr>
+<tr>
+<td><code>backup.stem</code><br>备份名主体<br><span class="src">高级 · 文本</span></td>
+<td><code>biscuit_</code></td>
+<td><code>backupFileName()</code> <code>paths.ts:71</code> → <code>setup/backups.ts:118</code></td>
+<td>备份文件名 <code>biscuit_&lt;时间戳&gt;.db</code> ＋ 影子件 <code>biscuit_&lt;时间戳&gt;.goals.json</code></td>
+<td>低（纯命名）</td>
+</tr>
+<tr>
+<td><code>html.helpStem</code><br>产物名主体 · HELP<br><span class="src">高级 · 文本</span></td>
+<td><code>饼干记账_HELP</code></td>
+<td><code>helpFileStem()</code> <code>help/helpFile.ts:31</code> → <code>cmd_read.ts:86,129</code></td>
+<td>HELP 文件名前缀；<b>也是 24 小时「复用窗口」的判据</b>（改名后旧产物不再被复用，会重落一份）</td>
+<td>低（纯命名）</td>
+</tr>
+<tr>
+<td><code>html.quickRefStem</code><br>产物名主体 · 速查表<br><span class="src">高级 · 文本</span></td>
+<td><code>饼干记账_速查表</code></td>
+<td><code>lookupFileStem()</code> <code>helpPaths.ts:36</code> → <code>cmd_read.ts:86,119</code></td>
+<td>速查表文件名前缀</td>
+<td>低（纯命名）</td>
+</tr>
+</tbody>
+</table>
+
+<div class="box warn">
+<h4>必要性三分（回答「是否每个配置项都有存在的必要」）</h4>
+<ul class="tight">
+<li><b>硬必要 2 项</b>：<code>db.dir</code>、<code>backup.dir</code>——只有它们能改「数据落在哪块盘」。</li>
+<li><b>危险旋钮 2 项</b>：<code>db.name</code>、<code>db.goals</code>——实际语义是「换一个文件」，而记账<b>没有切换库的入口</b>；<code>db.goals</code> 更极端：预算／账户与账单本是一套数据，读不到时 <code>loadGoals()</code> 静默返回空三组，不报错。</li>
+<li><b>只影响文件名 4 项</b>：<code>html.dir</code>、<code>backup.stem</code>、<code>html.helpStem</code>、<code>html.quickRefStem</code>。</li>
+<li><b>根因</b>：这 8 项之所以<b>都在</b>配置文件里，是 #726 的迁移口径——默认值逐字等于老代码常量、老落点一个不变（<span class="badge b-doc">文档</span> <code>docs/skills/skill-bill/t726-证据.md:42-44</code>）。但「能配」不等于「该画在页面上」：页面把 8 个旋钮并排画出来，用户看到的是 8 个可动的东西，其中 5 个一动就「旧数据不再被读入」。</li>
+<li><b>仓内先例</b>：卡路里的 <code>xunji.cli</code> 就是「在默认值表里、不在设置页」的<b>页外键</b>，依据是 t692 的裁定（<span class="badge b-src">源码</span> <code>packages/skill-calorie/src/config.ts:22</code>「训记 CLI 入口属『包内固定、不上设置页』的三项之一」；测试用 <code>PAGE_EXTERNAL = ['xunji.cli']</code> 白名单锁死，<code>packages/plugin-calorie/test/config-surface-676.test.mjs:79</code>）。⇒「配置项但不上设置页」这条口径已经裁过一次。</li>
+</ul>
+</div>
+
+<h2 id="s6">6 · 「能不能生效」：8 项都接在活代码上，但有 6 处配了不等于如愿</h2>
+
+<p>先给结论：<b>8 项全部真接在执行路径上</b>（第 5 节每一行的读取点都是活代码，不是死配置）。但下面 6 处会让「配了」≠「如愿」。前 4 条里，带 <span class="badge b-run">实测</span> 的是我在这台机器上真跑过探针的。</p>
+
+<div class="box bad">
+<h3>① 设置页那个「数据目录」框，此刻正在骗你 <span class="badge b-run">实测</span></h3>
+<p>你截图里「数据目录」框写着 <code>C:\Users\辰辰洋洋\.ilife\data</code>，而你 <code>bill.yaml</code> 里是 <code>db.dir: ""</code>。这是 #743 加的<b>预填</b>：取值空着时把技能算好的默认落点显示出来（<span class="badge b-src">源码</span> <code>settings.ts:46,57</code>；<code>client.ts:194</code>）。</p>
+<p>问题在写回：<code>fromDraft()</code> 提交<b>全部 8 项</b>（<code>client.ts:200-214</code>），所以只要你改了任意一行再点「保存」，<code>db.dir</code> 就从 <code>""</code> 被写成那串绝对路径——「留空＝用默认目录」这条语义当场失效；此后再换机器、换用户名、换 <code>ILIFE_CONFIG_DIR</code>，库都不会跟着走。测试甚至把「空值预填后的显示」与「配了同一条路径的显示」断言成相等（<code>packages/plugin-bill-ilife/test/config-surface-677.test.mjs:354</code>）——页面上这两种状态无法区分。</p>
+<p class="src">#743 当初解决的是另一个面：「打开面板不会凭空变『未保存』」（<code>docs/plugins/plugin-bill-ilife/t743-证据.md:14</code>）。同一条代码的相反面没有被覆盖。</p>
+</div>
+
+<div class="box warn">
+<h3>② 相对路径会落在「宿主进程的当刻工作目录」 <span class="badge b-run">实测</span></h3>
+<p><code>resolveDbDir()</code> 把 <code>db.dir</code> <b>原样返回</b>（<code>paths.ts:48</code>），<code>mkdirSync</code> 与 <code>new DatabaseSync</code> 都按 <code>process.cwd()</code> 解析；而宿主 spawn 技能出口时<b>不传 <code>cwd</code></b>（<code>bridge.ts:92</code>、<code>skill-tool.ts:77</code>）。实测把一个相对路径交给 <code>DatabaseSync</code>：它按调用者的 cwd 解，cwd 不对就是 <code>unable to open database file</code>。</p>
+<p>⇒ 填 <code>db.dir: 账单</code> 不是「放在配置目录旁边」，而是在宿主的工作目录下静默建一个新的空库。</p>
+<p class="src">对照：同一份配置里 <code>backup.dir</code> 非空走 <code>resolve()</code>（<code>paths.ts:65-68</code>）——<b>同名「目录项」两种相对语义</b>；调查确认仓内没把这条记为挂账。</p>
+</div>
+
+<div class="box warn">
+<h3>③ <code>db.name</code>／<code>backup.stem</code> 能写进路径分隔符，落点悄悄变成子目录，而目录不会建 <span class="badge b-run">实测</span></h3>
+<p>实测：<code>db.name: sub/x.db</code> → 父目录 <code>sub</code> 不建 → <code>ERR_SQLITE_ERROR unable to open database file</code> → 记账侧包成 <code>BILL_DB_UNREADABLE</code>、exit 4。<code>backup.stem: sub/biscuit_</code> → <code>copyFileSync</code> 到不存在的目录、exit 5。这两项是纯文本框，没有任何形状校验。</p>
+</div>
+
+<div class="box warn">
+<h3>④ <code>html.dir</code> 填绝对路径会拼出跑不出来的路径，而体检判它绿 <span class="badge b-run">实测</span></h3>
+<p>落点算式是 <code>join(库目录, htmlDirName())</code>（<code>cmd_read.ts:123,134</code>）。实测 <code>join(dataDir, 'D:\help')</code> → <code>…\data\D:\help</code>，<code>mkdir</code> 抛 <code>ENOENT</code> ⇒ 交付时落盘失败（exit 5）。而体检那条判据「目录不存在」一律判绿，文案还写「交付页面时才落这里，那时自动建」（<span class="badge b-src">源码</span> <code>health.ts:416-431</code>）——这条死配置在体检里读起来是正常的。</p>
+</div>
+
+<div class="box">
+<h3>⑤ 三个「名字主体」项体检不覆盖</h3>
+<p>体检一共 7 条：配置文件／数据目录／库文件／产物目录／这个值从哪来／第二份库／备份目录（<span class="badge b-src">源码</span> <code>health.ts:325-486</code>）。<code>html.helpStem</code>、<code>html.quickRefStem</code>、<code>backup.stem</code> 填错了不会红，只有产物名字变了才看得出来。</p>
+</div>
+
+<div class="box">
+<h3>⑥ 改名＝换库，没有任何提示；另有一条配置文件的读写隐患</h3>
+<p><code>db.name</code> 一改，<code>openBillDb</code> 就按新名字 DDL 自愈建一张空表（<code>db.ts:57-71</code>），旧库留在原地、技能不再看它——没有一句回执说「旧库还在 &lt;旧路径&gt;」。</p>
+<p>另外两条与配置文件本身有关（<span class="badge b-doc">调查</span>）：<b>保存会把文件整份重写成默认键组</b>（你手写的注释与排布都会没）；<b>写盘无锁、无版本、last-writer-wins</b>（<code>store.ts:4,117-124</code> 是裸 <code>writeFileSync</code>，对照 DSH 自己的设置服务用 <code>writeFileAtomic</code>＋文件锁）。反过来，你手工加一个不认识的行 → 下一次<b>任何</b>命令都 <code>CONFIG_UNKNOWN_KEY</code> → exit 1，是技能整体起不来，不是那一项失效。仓内没把这条记为挂账。</p>
+</div>
+
+<h2 id="s7">7 · 本机现场：两份库，一份 0 行、一份 7127 行</h2>
+
+<p>这是本次调查里最需要你知道的一条。<b>技能现在读的库是空的。</b></p>
+
+<table>
+<thead><tr><th style="width:230px">库</th><th>路径</th><th style="width:110px">字节</th><th style="width:80px">行数</th><th>时间范围</th></tr></thead>
+<tbody>
+<tr><td>技能<b>现在</b>读的<br><span class="src">新线默认落点</span></td><td class="mono">C:\Users\辰辰洋洋\.ilife\data\biscuit_accountant.db</td><td>20,480</td><td><b>0</b></td><td>—</td></tr>
+<tr><td>技能<b>看不见</b>的<br><span class="src">老线默认落点</span></td><td class="mono">D:\2Study\StudyNotes\.db\biscuit_accountant.db</td><td>1,277,952</td><td><b>7,127</b></td><td>2022-01-01 10:55 → 2026-09-16 18:26</td></tr>
+</tbody>
+</table>
+
+<p><span class="badge b-run">实测</span> 我是用 <code>node:sqlite</code> <b>只读</b>打开量的（只读打开会摸一下 <code>-wal</code>／<code>-shm</code> 旁件，数据一个字节没改；那份 <code>-wal</code> 是 0 字节，没有未回写的事务）。</p>
+
+<h3>怎么变成这样的（能对上号）</h3>
+<ol>
+<li>#726 之前，TS 线读的是环境变量 <code>SKILLS_DB_PATH</code>；你那时指的应该就是这个老目录——<b>老库里已经有 <code>deleted_at</code> 列和 <code>idx_bills_time</code>／<code>idx_bills_category</code> 两个索引，与本机新库逐字相同</b>（<span class="badge b-run">实测</span> 两次 <code>PRAGMA table_info</code>／<code>sqlite_master</code> 对比）。那两个索引名正是新线 DDL 里的名字（<code>db.ts:68-69</code>）。</li>
+<li>#726 把环境变量全删、落点改读配置文件 ⇒ <code>db.dir: ""</code> 落到新默认目录 <code>~/.ilife/data/</code> ⇒ 账「没了」。</li>
+<li>而 #675 的裁定原文写的是「<b>老配置兼容：不做</b>——我们现在没有老用户，我们就是第一批用户」。<b>你这台机器就是这个前提的反例。</b></li>
+</ol>
+
+<div class="box warn">
+<p><b>同一个现象不是记账一家：</b>那个老目录里躺着六家的老数据（<span class="badge b-run">实测</span> 目录清单）：<code>calorie_data.db</code> 3.0 MB、<code>schedule_data.db</code> 2.4 MB、<code>home.db</code> 1.7 MB、<code>memo.db</code> 238 KB、<code>chef_data.db</code> 294 KB⋯而新默认目录 <code>~/.ilife/data</code> 里目前只有记账与卡路里的库。</p>
+<p>老目录本身是个 git 仓库（<code>.git</code> 在），旁边还有 <code>feathersdata-git-sync-*.py</code> 与 <code>biscuit_accountant.db.sql</code>（1.17 MB 的 SQL 导出）——<b>你的老数据本来就带一套导出／同步备份，新目录没有这套东西。</b></p>
+</div>
+
+<h3>老库旁边还有什么（<span class="badge b-run">实测</span>）</h3>
+<ul class="tight">
+<li><code>biscuit_accountant_backups\</code>——老线备份：两个<b>时间戳目录</b>（<code>20260811_164013</code>／<code>20260811_165523</code>）。对照新线备份是<b>一个文件＋同名影子件</b>（<span class="badge b-doc">文档</span> <code>docs/skills/skill-bill/t731-差异表.md:34-35</code>）。</li>
+<li><code>biscuit_accountant_html\</code>——老 HELP 产物目录（与现在配置里那个 <code>html.dir</code> 同名）。</li>
+<li><code>goals.json</code>（2,116 字节，2026-09-02）：顶层键<b>只有 <code>accounts</code>（15 项）</b>——没有 <code>budgets</code>、没有 <code>savings</code>。老线脚本里还有的第四键 <code>ledgers</code>（账本表）在新仓 <code>packages/**</code> 里<b>零命中</b>（我复核过），新仓把账本做成了 <code>bills.ledger</code> 这一列。</li>
+<li>而 <code>~/.ilife/data\</code> 里<b>根本没有 goals.json</b> ⇒ 这台机器上预算／账户功能从没被新线用过。</li>
+</ul>
+
+<h2 id="s8">8 · 这套口径是谁定的，哪些方案被否过</h2>
+
+<table>
+<thead><tr><th style="width:150px">问题</th><th>答案</th><th>出处</th></tr></thead>
+<tbody>
+<tr><td>裁定在哪</td><td>票 <code>#675</code>「配置的存与生效口径裁定」的解决评论（2026-09-18）。落地顺序：#694（公共层配置件）→ #676／#718（卡路里）→ #695（chef／home／memo／schedule）→ #726（记账）＋ #677／#696（设置页）＋ #706（体检）。</td><td><span class="badge b-doc">文档</span> <code>docs/base/base-link-core/t694-证据.md:7</code>、<code>docs/env.md:3-9</code></td></tr>
+<tr><td>裁定原文</td><td><b>不在 <code>docs/</code> 里</b>——只在仓根一份未入仓快照 <code>.tmp-675-comments.json</code>（<code>…/issues/675#issuecomment-5728849036</code>）。仓内所有 <code>#675</code> 都是转引。</td><td><span class="badge b-doc">调查</span>；旁证 <code>packages/skill-bill/src/config.ts:3-9</code></td></tr>
+<tr><td>逐字口径</td><td>「不再用环境变量承载配置，改成每个技能一份配置文件」；「配置文件是唯一真相」；「默认落点 <code>~/.ilife/&lt;技能&gt;.yaml</code>，由 <code>os.homedir()</code> 派生——平台无关」；「位置覆盖｜保留一个 <code>ILIFE_CONFIG_DIR</code>」；「数据目录默认 <code>~/.ilife/data/</code>，首次运行自动建」；「环境变量｜全部删掉」；「生效时机｜保存即生效」；「重置为默认｜重置前先自动备份一份 <code>.bak</code>」；<b>「老配置兼容｜不做」</b>。</td><td><span class="badge b-doc">调查</span>（快照原文）；家族结论面 <code>docs/env.md:11-15</code></td></tr>
+<tr><td>有过什么反对意见</td><td>裁定前那份 grill 页曾建议<b>留一个例外清单</b>：五个测试哨兵（含 <code>BILL_FORCE_PROD</code>）永远环境优先、面板不许写，理由是「那几个变量一旦被设成 1，生产库会被当测试库写——这是数据安全，不是偏好」。<b>该例外未被采纳</b>；替代护栏＝测试基座强制 <code>ILIFE_CONFIG_DIR</code>＋缺了抛错。</td><td><span class="badge b-doc">调查</span> <code>docs/research/decision-671-life-panel-grill-20260917.html:187-195</code>；替代护栏 <code>docs/base/base-link-core/t694-证据.md:73-76</code>；记账侧处置依据 <code>docs/skills/skill-bill/t726-证据.md:154-160</code></td></tr>
+<tr><td>「空串＝按默认落点」谁定的</td><td>不是 #675 直接写的，而是卡路里样板票的<b>有意改判</b>：「老的『缺 <code>SKILLS_DB_PATH</code> 即抛』在配置文件是唯一真相之后没有意义，改成『缺项即按默认数据目录』」，随后成文于 <code>docs/env.md:15</code> 与各包件头。<br>为什么不是「报错」：老口径在配置文件成唯一真相后没意义，且会把非 DSH 平台的新用户第一次跑就挡住。为什么不是「禁用」：仓里<b>没有一处</b>把空串定义成禁用；能力类项另有语义（<code>photos.dir</code> 空＝还没配、<code>lark.cliPath</code> 空＝走本机自动探测）。</td><td><span class="badge b-doc">调查</span> <code>docs/plugins/plugin-calorie/t676-技能侧-证据.md:35-37</code>；<code>docs/env.md:15,19,23</code></td></tr>
+<tr><td>哪些是明写「可推翻」的</td><td>只找到两处：YAML 解析器的落点（「工程决定，可推翻」）＋「这份子集若在实际使用中不够……攒到本图收尾再裁要不要扩子集」。</td><td><span class="badge b-doc">调查</span> <code>packages/base-link-core/README.md:75</code></td></tr>
+<tr><td>仍开着的相邻口子</td><td>总管面板的「总设置区」（全局数据目录＋六家配置文件位置＋重置为默认）<b>没票也没做</b>；2026-09-17 原裁决选的「六个技能共用一份全局设置」在承载方式换成「每技能一份配置文件」后自然降解成「各家配置文件路径」。</td><td><span class="badge b-doc">调查</span> <code>docs/plugins/plugin-manager/t671-收口调查-决策页.html:105-107,155-156,196-211</code>；<code>docs/plugins/plugin-manager/t727-发版走查单.md:275</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="s9">9 · 老家（Python 版）机制与 TS 线的有意偏离</h2>
+
+<p>老家源码不在仓内（<span class="badge b-doc">文档</span> <code>docs/bill-migration-split.md:52</code>「仓内零 py……老家只读对照」），下面是本次<b>只读</b>打开仓外实现得到的结论。</p>
+
+<table>
+<thead><tr><th style="width:150px">面</th><th>老家（Python）</th><th>TS 线</th></tr></thead>
+<tbody>
+<tr><td>落点查找</td><td><code>_find_db_path()</code> 两层查找：环境变量 <code>SKILLS_DB_PATH</code> 优先，否则落到 <code>D:/.db</code>（并 <code>mkdir</code>）；<code>DB_PATH</code> 在 <b>import 时</b>即算定</td><td>读配置文件算落点，<b>不继承 fallback 链</b>：<code>paths.ts:10-11</code> 逐字「老家缺 <code>SKILLS_DB_PATH</code> 时静默落 <code>D:/.db</code>；TS 线改成『配置缺项即按默认落点落』，绝不静默写到真实生产库里那个老路径」</td></tr>
+<tr><td>必设性</td><td>必设，没有默认值</td><td>没有任何一项必设（空串＝默认落点）</td></tr>
+<tr><td>写库开关</td><td>—</td><td><code>BILL_FORCE_PROD</code> 先加后删：#675 之后口径从「不安全就不写」改成<b>照写</b></td></tr>
+<tr><td>只读命令</td><td><code>fetch_all()</code> 内部先调 <code>init_db()</code>——<b>光读历史也会对库发建表语句</b></td><td>读命令不许建库：HELP 在开库之前分派</td></tr>
+<tr><td>备份形态</td><td>一个<b>时间戳目录</b>（目录里放库与 <code>goals.json</code>）</td><td>一个<b>文件</b>（<code>backup.stem</code>＋时间戳）＋同主体的影子件</td></tr>
+</tbody>
+</table>
+
+<p class="src">出处：&lt;仓外只读&gt; <code>D:\2Study\StudyNotes\SKILLS\饼干记账\scripts\db.py:30-39,18-28,42,48-51</code>；仓内转引 <code>docs/skills/skill-bill/t407-老样-产出清单.md:51</code>、<code>docs/bill-migration-split.md:9,52</code>、<code>packages/skill-bill/src/fetch/paths.ts:10-11</code>、<code>docs/skills/skill-bill/t731-差异表.md:34-36</code>。</p>
+
+<h2 id="s10">10 · 已登记的挂账与仍开着的口子</h2>
+
+<table>
+<thead><tr><th style="width:150px">口子</th><th>内容</th><th>出处</th></tr></thead>
+<tbody>
+<tr><td>A 老数据发现不了</td><td>#675 明写「老配置兼容：不做」；「默认值逐项等于老常量」只保<b>文件名／目录名</b>不变，<b>不保去老目录找库</b>。仓内没有找老库／迁老库的实现（「真实数据禁迁」已登记），要看见老库只有手工把 <code>db.dir</code> 指过去（说明面教的正是这条）。</td><td><span class="badge b-doc">文档</span> <code>packages/skill-bill/SKILL.md:140</code>、<code>docs/skills/skill-bill/t682-已否决与已延后的结构决定台账.md:218</code>；本机现场见 <a href="#s7">第 7 节</a></td></tr>
+<tr><td>B 数据目录与 <code>db.dir</code></td><td>数据目录＝<code>&lt;配置目录&gt;/data/</code>，首次读自动建；<code>db.dir</code> 空＝它，非空<b>原样用、不 <code>resolve()</code></b>，而 <code>backup.dir</code> 非空走 <code>resolve()</code> ⇒ <b>同族两个「目录项」两种相对语义</b>。仓内<b>没记为挂账</b>（本次调查读出来的）。另一个面：只读配置也会建目录。</td><td><span class="badge b-src">源码</span> <code>dirs.ts:15-16,57-62,65-76</code>、<code>paths.ts:45-49,65-68</code>；<span class="badge b-doc">调查</span>「仓内未记」</td></tr>
+<tr><td>C 体检</td><td>① 同一套落点算式在 <code>paths.ts</code> 与 <code>health.ts</code> <b>两处</b>，靠件头注释约束「两处不许走散」；② 体检刻意不调 <code>load*Config()</code>、不建目录；③ <b>六家 <code>src/health.ts</code> 全超 350 行告警线</b>（记账 486），拆法待收口票；④ 判据与检查表曾走散过（四条「不在＝红」被单方面下调成黄又改回）。</td><td><span class="badge b-src">源码</span> <code>paths.ts:19-20</code>、<code>health.ts:99-225,416-431</code>；<span class="badge b-doc">文档</span> <code>docs/plugins/plugin-manager/t706-证据.md:112-116,129-138</code></td></tr>
+<tr><td>D 设置页写入 vs 手工编辑</td><td><b>没找到</b>任何把它记成挂账的条目；事实是：保存落盘完整一份且只留默认键组、手工未知键直接让技能 exit 1、写文件无锁无原子替换、保存即生效靠现读。</td><td><span class="badge b-doc">调查</span>；<span class="badge b-src">源码</span> <code>store.ts:4,117-124,147-159</code></td></tr>
+<tr><td>E 并发写与 WAL</td><td>记账开库即 WAL ＋ <code>busy_timeout=5000</code>；备份前先 <code>PRAGMA wal_checkpoint(TRUNCATE)</code> 再拷（不然会漏掉 WAL 里没回写的事务）；恢复前清掉 <code>-wal</code>／<code>-shm</code>。</td><td><span class="badge b-src">源码</span> <code>db.ts:62-63</code>、<code>setup/backups.ts:117-121,144-154</code>；<span class="badge b-doc">文档</span> <code>docs/skills/skill-bill/t731-差异表.md:36</code>、<code>docs/plugins/plugin-home-ilife/t707-备份取舍.md:28-33</code></td></tr>
+<tr><td>F 两份「库」为什么拆</td><td><b>没有裁定件</b>——只能查到「继承老家」（老家＝单 <code>bills</code> 表 ＋ <code>goals.json</code> 三顶层键）＋使用侧后果：账户／目标不在 SQLite ⇒ 没有 <code>total_changes()</code>，改动条数只能<b>自报</b>。<br>另外本次比出一条仓内未记的事实：老家 <code>goals.json</code> 还有第四键 <code>ledgers</code>（账本表），新仓 <code>packages/**</code> 零命中、也没有「账本管理」命令；<code>loadGoals</code> 用展开保留未知键，所以老文件那一键不会被删、也没人读。</td><td><span class="badge b-none">未找到</span>裁定件；<span class="badge b-doc">文档</span> <code>docs/bill-migration-split.md:3,9</code>、<code>docs/skills/skill-bill/t691-差异表.md:34</code>、<code>docs/skills/skill-bill/t730-差异表.md:39</code>；<span class="badge b-src">源码</span> <code>fetch/db.ts:230-231,245</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="s11">11 · 六家技能的差异：同一条机制的六种落地</h2>
+
+<table>
+<thead><tr><th style="width:110px">技能</th><th>在这条机制上与本家不同的地方</th><th>出处</th></tr></thead>
+<tbody>
+<tr><td>备忘录</td><td>库<b>不建目录</b>（「备忘的库由用户／老技能建，本包不建空库」）；记账等家都 <code>mkdirSync</code>。</td><td><span class="badge b-doc">调查</span> <code>packages/skill-memo-ilife/src/fetch/paths.ts:24-27</code></td></tr>
+<tr><td>居家</td><td><code>backup.dir</code> <b>相对库目录解</b>；记账的 <code>backup.dir</code> 非空走 <code>resolve()</code>（相对当刻工作目录）——<b>同名键、两种相对语义</b>。</td><td><span class="badge b-doc">调查</span> <code>packages/skill-home/src/fetch/backup.ts:105-114</code>；<code>docs/env.md:22</code></td></tr>
+<tr><td>卡路里</td><td>① 有<b>页外键</b> <code>xunji.cli</code>（在默认值表、不上设置页）；② 唯一保留 <code>assertWritablePath</code>「非 tmp 一律拒」的家，且只服务迁移／运维 CLI；③ <code>photos.dir</code> 空＝「还没配」，非落点类。</td><td><span class="badge b-src">源码</span> <code>packages/skill-calorie/src/config.ts:22</code>；<span class="badge b-doc">调查</span> <code>docs/env.md:19</code>、<code>docs/skills/skill-bill/t726-证据.md:160</code></td></tr>
+<tr><td>大厨 / 作息</td><td><code>html.dir</code> 默认是<b>两段</b>（<code>cook_html/help</code>、<code>schedule_html/help</code>），其余四家一段。</td><td><span class="badge b-doc">调查</span> <code>docs/env.md:20-24</code>、<code>docs/research/t692-six-skill-paths-survey.md:202</code></td></tr>
+<tr><td>作息</td><td>「看帮助」会顺手建数据目录；与居家／大厨／备忘「不许走 <code>resolveDbPath()</code>」相反，两次调查都记为遗留且复核结论不变。</td><td><span class="badge b-doc">调查</span> <code>packages/skill-schedule/src/cli/cmd_read.ts:100</code>、<code>docs/research/t692-six-skill-paths-survey.md:228-235</code></td></tr>
+<tr><td>键表规模</td><td>配置键数：记账 8、卡路里 12、大厨／居家／备忘／作息各若干；体检条数：记账 7、大厨 7、作息 8、居家 9、备忘 9、卡路里 12。</td><td><span class="badge b-doc">文档</span> <code>docs/env.md:19-24</code>；<span class="badge b-doc">调查</span> <code>docs/plugins/plugin-manager/t706-证据.md:129-138</code></td></tr>
+<tr><td>共同点</td><td>读写实现只有一处（<code>base-link-core/src/config/</code>），六家各只有「默认值表 ＋ 薄转调」；<code>ILIFE_CONFIG_DIR</code> 语义、<code>CONFIG_TEST_ISOLATION_MISSING</code> 门、<code>&lt;配置目录&gt;/data/</code> 全由公共层定，别家无偏离。</td><td><span class="badge b-src">源码</span> <code>packages/skill-bill/src/config.ts:8-9</code>「一份实现不抄第二处」</td></tr>
+</tbody>
+</table>
+
+<h2 id="s12">12 · 待裁决的 8 个问题（Q0–Q7）</h2>
+
+<p>下面是这次调查读出来的设计岔口。<b>每条只给一次推荐，等你答完再进下一轮</b>（`/grill-me` 的规矩：先把当下的岔口一次问全，答案会改写下游的问题）。</p>
+
+<div class="q">
+<p class="qt">❓ Q0 · 那 7,127 条老账怎么办</p>
+<p>甲）永久把 <code>db.dir</code> 指到 <code>D:\2Study\StudyNotes\.db</code>；乙）把老库与 <code>goals.json</code> 拷进 <code>~/.ilife/data/</code>、<code>db.dir</code> 保持空；丙）在技能里加「检测到老库在 &lt;路径&gt;，要不要用它」的探测（等于改 #675 的「不做兼容」）；丁）封存不动。</p>
+<p class="rec"><b>推荐 甲</b>：① 零拷贝、零风险，且两边 <code>bills</code> 的列与两个索引<b>逐字相同</b>，指过去不会触发任何 DDL 变更；② 六家老数据都在那同一个目录里，指过去是<b>六家一起回位</b>，而不是记账单独搬家；③ 那个目录是 git 仓库、旁边有导出与同步脚本，搬走反而脱离原有备份。代价要认：<code>db.dir</code> 从此是一条钉死的绝对路径（这恰好是 Q1 那个「保存＝钉死」语义在这里<b>帮</b>你的地方）。<br>落地＝设置页「数据目录」那一行填 <code>D:\2Study\StudyNotes\.db</code> 再保存。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q1 · 设置页那个输入框，代表「空」还是代表「那一条路径」</p>
+<p>甲）提交时只送真改过的键（没碰的行不写回，技能侧的 <code>mergeValues</code> 本来就支持只给一部分）；乙）框里保持空、用灰色占位符显示默认落点；丙）承认「保存＝钉死」，把文案改成「这里显示当前生效目录，保存即固定」。</p>
+<p class="rec"><b>推荐 甲</b>：改动只在插件侧、技能侧一行不动，而且它把「留空＝默认」这条已经写进文档的语义还给用户。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q2 · 五个「只影响文件名」的项该不该留在页面上</p>
+<p>甲）全留；乙）四项进「高级」并加一句「改名＝旧数据不再被读」；丙）从页面撤下、只留在配置文件里（技能照读）；丁）连配置项一起删。</p>
+<p class="rec"><b>推荐 丙</b>：#726 要求的是「默认值等于老常量、老落点不变」，配置文件里留着它们并不违约；而仓内已有先例（卡路里 <code>xunji.cli</code> 就是页外键）。页面上少画 5 个「一动就丢数据」的旋钮，收益大于「配置得全」这个表面整齐。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q3 · 落点类取值要不要收形状</p>
+<p>甲）一律只收绝对路径／纯文件名，形状不符即报错（带行号、exit 1）；乙）只对 <code>db.dir</code> 收严；丙）保持现状、靠体检报红。</p>
+<p class="rec"><b>推荐 甲</b>：这三处（相对路径、路径分隔符、绝对路径填进 <code>html.dir</code>）是同一类错误——「表面生效、实际落点跑偏」，而响亮失败正是这套配置机制一贯的口径（不认识的键、类型不符都是硬失败）。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q4 · <code>db.name</code>／<code>db.goals</code> 改名时要不要给一句回执</p>
+<p>甲）<code>bill.config.write</code> 回执里带一格警告（旧文件在、新文件不在 ⇒ 页面显示「旧库还在 &lt;路径&gt;，数据不会被自动搬过去」）；乙）只改页面 hint；丙）不管。</p>
+<p class="rec"><b>推荐 甲</b>：改名的意图 99% 是「换个名接着用」，而现状会让人以为数据丢了——这是最容易伤信任的一类静默失败。不自动改名（那是动用户数据）。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q5 · 两份「库」（<code>biscuit_accountant.db</code> ＋ <code>goals.json</code>）继续拆吗</p>
+<p>甲）继续拆，但把 <code>bill.yaml</code> 的写盘也改成「临时文件 ＋ 改名」（现在 <code>goals.json</code> 是原子写、<code>bill.yaml</code> 是直接覆盖）；乙）合并进 SQLite；丙）维持现状。</p>
+<p class="rec"><b>推荐 甲</b>：拆的代价（备份要带影子件、体检多一条）已经付掉了；但「最小的那份配置文件反而最脆」没有道理。另外<b>拆分本身没有裁定件</b>——所以这一问同时也是在补一张缺失的裁定。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q6 · 体检要不要覆盖到 8 项，以及那份「第二解析器」的归属</p>
+<p>前半：甲）补三条（两个产物名主体、备份名主体可判「非空 ＋ 不含路径分隔符」）；乙）不补，体检只答「数据通不通」。后半：甲）给公共层开一个真正的只读出口、体检改转调它；乙）保留体检包内那份复刻的解析器。</p>
+<p class="rec"><b>推荐</b>：前半 <b>乙</b>（体检只答「通不通」，命名类不进体检）；后半 <b>甲</b>（一份解析口径两处实现，正是仓规「一条实现不抄第二处」要拦的；而且六家 <code>health.ts</code> 全超线，拆法要六家一起裁）。</p>
+</div>
+
+<div class="q">
+<p class="qt">❓ Q7 · 配置文件的演进与并发</p>
+<p>甲）保持未知键硬失败，但把说明面里「改不动就手工改配置文件」的指引改成「用设置页改」；乙）未知键降级为警告＋忽略；丙）加版本键＋迁移表；丁）写盘改原子替换（临时文件＋改名）＋保存前比一次文件修改时间，发现被别的进程改过就拒绝保存。</p>
+<p class="rec"><b>推荐 丁 ＋ 甲</b>：先解决「两个写入者互相覆盖」和「写坏半份文件」这两件真会丢数据的事；未知键继续硬失败（错字早暴露），但页面上别再教人手工编辑。</p>
+</div>
+
+<h2 id="s13">13 · 附录 A · 本机实测探针与读数</h2>
+
+<p>全部在系统临时目录里跑，<b>没有动仓库任何文件</b>；对老库只有一次<b>只读</b>打开（<code>readOnly: true</code>）。node 版本 v24.19.0。</p>
+
+<table>
+<thead><tr><th style="width:56px">探针</th><th>输入</th><th>读数</th></tr></thead>
+<tbody>
+<tr><td>①</td><td><code>join(dataDir, 'D:\help')</code> 再 <code>mkdirSync(recursive)</code></td><td><code>C:\...\bill-probe-*\D:\help</code> → <code>mkdir=THROW ENOENT</code></td></tr>
+<tr><td>②</td><td><code>db.name = 'sub/x.db'</code>（父目录不存在）</td><td>父目录在吗=false → <code>open=THROW ERR_SQLITE_ERROR unable to open database file</code></td></tr>
+<tr><td>③</td><td>平铺文件名 <code>ok.db</code></td><td><code>open=ok</code>，文件落盘</td></tr>
+<tr><td>④</td><td>相对路径交给 <code>new DatabaseSync('rel/relative-test.db')</code></td><td>按<b>调用者 cwd</b> 解析（cwd 不对即 <code>unable to open database file</code>）⇒ 证明相对落点跟着 cwd 漂</td></tr>
+<tr><td>⑤</td><td>两份库 <code>SELECT COUNT(*), MIN(time), MAX(time) FROM bills</code></td><td>新库 0 行；老库 7,127 行，2022-01-01 10:55:49 → 2026-09-16 18:26:00</td></tr>
+<tr><td>⑥</td><td>两份库 <code>PRAGMA table_info(bills)</code> ＋ <code>sqlite_master</code> 索引名</td><td>列＝<code>id,category,time,amount,account,ledger,currency,note,created_at,deleted_at</code>（两边逐字相同）；索引＝<code>idx_bills_time</code>／<code>idx_bills_category</code>（两边都已有）</td></tr>
+<tr><td>⑦</td><td>老目录清单 ＋ 老 <code>goals.json</code> 顶层键</td><td>老目录含六家老库与 <code>biscuit_accountant_backups\</code>／<code>biscuit_accountant_html\</code>；老 <code>goals.json</code> 顶层键<b>只有 <code>accounts</code>（15 项）</b></td></tr>
+<tr><td>⑧</td><td>本机 <code>bill.yaml</code>（逐字读回）</td><td>8 项全是默认值，<code>db.dir: ""</code>；没有 <code>bill.yaml.bak</code>（其余五家都有 ⇒ 本家没点过「重置为默认」）</td></tr>
+</tbody>
+</table>
+
+<h2 id="s14">14 · 附录 B · 引用清单（按主题）</h2>
+
+<h3>技能侧（<code>packages/skill-bill</code>）</h3>
+<ul class="tight mono">
+<li>src/config.ts:3-9,11-12（默认值表与口径注释）、:24-30（<code>BILL_CONFIG_DEFAULTS</code>）、:43-47（记忆位）、:50-67（读）、:70-74（写）、:77-81（重置）</li>
+<li>src/fetch/paths.ts:10-11（有意偏离）、:27,33-42（文件名）、:45-49（<code>db.dir</code>）、:52-55（完整路径＋建目录）、:58-61（第二份库）、:65-68（备份目录）、:71-74（备份名）</li>
+<li>src/fetch/db.ts:31-42（DDL）、:52-77（开库）、:103-113（查）、:180-228（增／改／软删／恢复）、:230-251（<code>loadGoals</code>）、:253-260（<code>saveGoals</code> 原子写）</li>
+<li>src/cli/cmd_read.ts:1-4（出口契约）、:53-56（预检）、:62-77（HELP 不开库）、:103-138（HELP 分派）、:147-158（注册表入口）、:221-230（前置拦截）、:264-275（错误映射）</li>
+<li>src/cli/config.ts:17-21（三个配置 key）、:66-84（读写重置的载荷与回执）</li>
+<li>src/health.ts:1-9（只读口径）、:99-225（包内复刻的解析器）、:260-262（段串切分）、:272-281（写探针）、:306-322（只读读表数）、:325-486（7 条判据装配）</li>
+<li>src/help/helpPaths.ts:22,27,30-38；src/help/helpFile.ts:28,31-34</li>
+<li>src/setup/backups.ts:110-129（造备份，含 checkpoint）、:144-154（恢复，含清 WAL 旁件）；src/setup/blocked.ts:51,54</li>
+<li>SKILL.md:140（教人把 <code>db.dir</code> 指到老库）</li>
+</ul>
+
+<h3>公共层（<code>packages/base-link-core</code>）</h3>
+<ul class="tight mono">
+<li>src/config/dirs.ts:3（不读 $DSH_HOME）、:10（<code>ILIFE_CONFIG_DIR</code>）、:28-48（测试隔离门）、:52-63（<code>configPaths</code>）、:65-76（建目录）</li>
+<li>src/config/store.ts:44-86（键表校验）、:89-107（补默认）、:117-124（写文件，无锁无原子）、:135-145（读，含落默认件）、:152-159（写完整一份）、:161-180（重置先备份）</li>
+<li>src/config/yaml.ts:45-67（子集形状）、:74-140（解析）、:213-225（生成）</li>
+<li>README.md:75（子集扩展的唯一出口）</li>
+</ul>
+
+<h3>插件（<code>packages/plugin-bill-ilife</code>）</h3>
+<ul class="tight mono">
+<li>src/skill-tool.ts:20,41-52,101-117（agent 工具与入口解析）</li>
+<li>src/bridge.ts:82-85（node 可执行体）、:88-112（spawn 取数）、:125-144（三个配置 key ＋ 体检 key）、:146-151（体检透传）</li>
+<li>src/index.ts:34-58（RPC 端点分发）、:96-114（通道注册）</li>
+<li>src/settings.ts:46,50-116（行表与分级）、:126-147（路径读写）</li>
+<li>src/client.ts:185-197（<code>toDraft</code> 预填）、:200-214（<code>fromDraft</code> 提交全表）、:422（未保存基线）、:440-460（保存／重置）、:462-475（页头两行）</li>
+<li>src/contract.ts:69-79（配置面回执形状）</li>
+<li>test/config-surface-677.test.mjs:354（把两种状态断言成相等）</li>
+</ul>
+
+<h3>文档与票面证据</h3>
+<ul class="tight mono">
+<li>docs/env.md:3-9,11-15,17-24,38-39（六家配置面全表与通则）</li>
+<li>docs/base/base-link-core/t694-证据.md:7,73-76（口径来源与测试隔离）</li>
+<li>docs/skills/skill-bill/t726-证据.md:13-23,42-44,84-85,154-160（记账落地：环境变量全删、默认值逐字等老常量、写库开关处置）</li>
+<li>docs/plugins/plugin-bill-ilife/t743-证据.md:14,87-97,106（预填与「写完重读整面」）</li>
+<li>docs/plugins/plugin-manager/t706-证据.md:112-116,129-138（体检条数与六家 health 超线）</li>
+<li>docs/skills/skill-bill/t731-差异表.md:6-14,34-36（与老侧的备份与形态差异）</li>
+<li>docs/research/t692-six-skill-paths-survey.md:202,228-235（六家路径调查）</li>
+<li>docs/research/decision-671-life-panel-grill-20260917.html:187-195（被否的例外清单建议）</li>
+<li>docs/plugins/plugin-calorie/t676-技能侧-证据.md:35-37（「空串＝默认落点」的有意改判）</li>
+<li>docs/plugins/plugin-manager/t671-收口调查-决策页.html:105-107,155-156,196-211（总管总设置区仍未做）</li>
+<li>docs/bill-migration-split.md:3,9,43-44,52（迁移图：老家机制、零迁移、仓内零 py）</li>
+<li>docs/skills/skill-bill/t682-已否决与已延后的结构决定台账.md:218（真实数据禁迁）</li>
+</ul>
+
+<h2 id="s15">15 · 附录 C · 取证边界与「没找到」的</h2>
+
+<ul>
+<li><b>#675 的裁定原文不在 <code>docs/</code> 里</b>：只在仓根一份未入仓快照 <code>.tmp-675-comments.json</code>（UTF-16LE，第二段 body 即裁定，<code>…/issues/675#issuecomment-5728849036</code>）。仓内所有 <code>#675</code> 引用都是转引。本报告第 8 节引的原文皆出自该快照。</li>
+<li><b>老家 Python 源码仓内无副本</b>：第 9 节的仓外行号来自一次只读打开（<code>D:\2Study\StudyNotes\SKILLS\饼干记账\scripts\db.py</code>），未复制进仓。</li>
+<li><b>三次「没找到」</b>（是「查不到」，不是「没有」）：① <code>goals.json</code> 与 SQLite 为什么拆——没有裁定件，只有「继承老家」；② 「设置页写入 vs 手工编辑」冲突——没有具名挂账，只有可摆的几条事实；③ 体检与手工编辑相关的判据档位曾走散后的收口记录，只在票面证据里，没有独立裁决件。</li>
+<li><b>本报告没有做的事</b>：没有改任何文件；没有跑 <code>pnpm</code>／编译／测试（并发纪律：编译与测试要经 <code>node tooling/run-locked.mjs</code> 排队）；没有在真机上点过设置页的「保存」（那一步会真的写 <code>bill.yaml</code>）；<b>没有建议你立刻改任何东西</b>——文末 8 问是给你裁决的，不是施工单。</li>
+<li><b>一处已知的口径漂移</b>：<code>docs/env.md:41-43</code> 登记着「卡路里两处用户可见文案仍教人设已删变量」，与本家无关，列此备查。</li>
+</ul>
+
+<hr>
+<p class="src">本文件由一次只读调查写成：技能侧与插件侧源码逐件读过、公共层配置实现逐件读过、并行做过一次只读文档调查（票面证据与决议页），并在本机跑了 8 组只读探针。生成日期 2026-09-20。</p>
+
+</main>
+</body>
+</html>
