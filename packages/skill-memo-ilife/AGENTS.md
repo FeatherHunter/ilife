@@ -39,6 +39,7 @@
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
 | `scripts/build-help.mjs` | 38 | 38 | 未越线，在册备查 |
+| `scripts/check-listpage-empty-span.mjs` | 203 | 203 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 293 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
@@ -86,25 +87,25 @@
 | `src/memo/crud.ts` | 30 | 51 | 未越线，在册备查 |
 | `src/memo/index.ts` | 7 | 9 | 未越线，在册备查 |
 | `src/memo/media.ts` | 90 | 90 | 未越线，在册备查 |
-| `src/memo/receipt.ts` | 83 | 83 | 未越线，在册备查 |
+| `src/memo/receipt.ts` | 83 | 87 | 未越线，在册备查 |
 | `src/memo/receiptPage.ts` | 72 | 72 | 未越线，在册备查 |
 | `src/memo/routes.ts` | 89 | 89 | 未越线，在册备查 |
-| `src/memo/run.ts` | 310 | 340 | 未越线，在册备查 |
+| `src/memo/run.ts` | 310 | 343 | 未越线，在册备查 |
 | `src/mood/routes.ts` | 72 | 72 | 未越线，在册备查 |
 | `src/remind/commands.ts` | 30 | 30 | 未越线，在册备查 |
 | `src/remind/index.ts` | 7 | 10 | 未越线，在册备查 |
 | `src/remind/policy.ts` | 90 | 90 | 未越线，在册备查 |
 | `src/remind/routes.ts` | 57 | 67 | 未越线，在册备查 |
-| `src/remind/run.ts` | 100 | 188 | 未越线，在册备查 |
+| `src/remind/run.ts` | 100 | 196 | 未越线，在册备查 |
 | `src/remind/store.ts` | 302 | 302 | 未越线，在册备查 |
 | `src/render/envelope.ts` | 52 | 52 | 未越线，在册备查 |
 | `src/render/errors.ts` | 11 | 11 | 未越线，在册备查 |
 | `src/render/html.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |
 | `src/render/listPage.ts` | 69 | 69 | 未越线，在册备查 |
-| `src/render/memoPageAssets.ts` | 229 | 229 | 未越线，在册备查 |
+| `src/render/memoPageAssets.ts` | 229 | 250 | 未越线，在册备查 |
 | `src/render/pages.ts` | 261 | 253 | 未越线，在册备查 |
-| `src/render/receipt.ts` | 107 | 129 | 未越线，在册备查 |
+| `src/render/receipt.ts` | 107 | 160 | 未越线，在册备查 |
 | `src/render/templates.ts` | 27 | 27 | 未越线，在册备查 |
 | `src/search/commands.ts` | 29 | 29 | 未越线，在册备查 |
 | `src/search/index.ts` | 9 | 9 | 未越线，在册备查 |
