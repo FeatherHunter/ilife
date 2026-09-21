@@ -50,7 +50,8 @@ if (!CFG_DIR.replace(/\\/g, '/').includes('/.scratch/')) throw new Error('配置
 mkdirSync(CFG_DIR, { recursive: true });
 mkdirSync(HTML_DIR, { recursive: true });
 mkdirSync(PHOTOS_DIR, { recursive: true });
-writeFileSync(join(CFG_DIR, 'calorie.yaml'), [
+mkdirSync(join(CFG_DIR, '.ilife'), { recursive: true }); // #754：写配置前目录得在
+writeFileSync(join(CFG_DIR, '.ilife', 'calorie.yaml'), [
   'db:',
   '  dir: ' + JSON.stringify(DB_DIR),
   'html:',
@@ -61,7 +62,7 @@ writeFileSync(join(CFG_DIR, 'calorie.yaml'), [
   '  stateDir: ' + JSON.stringify(join(HERE, 'xunji-state')),
   '',
 ].join('\n'), 'utf8');
-const CHILD_ENV = { ...process.env, ILIFE_CONFIG_DIR: CFG_DIR, SKILLS_DB_PATH: DB_DIR };
+const CHILD_ENV = { ...process.env, USERPROFILE: CFG_DIR, HOME: CFG_DIR, SKILLS_DB_PATH: DB_DIR };
 
 /* ── 1. 种子库（自有目录，真库零触碰；口径照 .scratch/t518/gen31.mjs） ─────────────── */
 const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

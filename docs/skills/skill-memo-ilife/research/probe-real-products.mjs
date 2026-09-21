@@ -30,11 +30,11 @@ seeded.push(seedNote(dbDir, { content: '今天走了 8000 步，状态不错', c
 seeded.push(seedNote(dbDir, { content: '项目评审过了，松了一口气', category: '情绪日记' }));
 const rid = seedReminder(dbDir, { noteId: seeded[0], at: plus(1) + ' 09:00:00', content: '整理书架' });
 
-// ── 2 隔离配置（db.dir 指向临时库）──────────────────────────────────────────
+// ── 2 隔离配置（db.dir 指向临时库；#754 起配置只落 <家>/.ilife）─────────────────────────────
 const cfgDir = join(OUT, 'config');
-mkdirSync(cfgDir, { recursive: true });
+mkdirSync(join(cfgDir, '.ilife'), { recursive: true });
 writeFileSync(
-  join(cfgDir, 'memo.yaml'),
+  join(cfgDir, '.ilife', 'memo.yaml'),
   ['db:', "  dir: " + JSON.stringify(dbDir.replace(/\\/g, '/')), '  name: memo.db',
    'html:', '  dir: memo_html', 'files:', '  help: 备忘录_HELP', '  lookup: 备忘录_速查表',
    'media:', '  dir: media', 'lark:', '  cliPath: ""', '  qrDir: ""', ''].join('\n'),
@@ -47,7 +47,7 @@ const run = (key, params) => {
   try {
     const out = execFileSync(process.execPath, args, {
       encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
-      env: { ...process.env, ILIFE_CONFIG_DIR: cfgDir },
+      env: { ...process.env, USERPROFILE: cfgDir, HOME: cfgDir},
     });
     const j = JSON.parse(out);
     return { ok: true, exit: 0, delivery: j.delivery ?? null, message: j.message ?? '' };

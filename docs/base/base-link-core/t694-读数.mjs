@@ -6,11 +6,11 @@
  *   读数2 删文件 → 回到默认
  *   读数3 改坏一行 → 报错带行号且不崩
  *
- * 只在系统临时目录里落文件（`ILIFE_CONFIG_DIR` 指向它），不碰仓库、不碰真实家目录。
+ * 只在系统临时目录里落文件（家目录指到它），不碰仓库、不碰真实家目录。
  * 跑法：`node docs/base/base-link-core/t694-读数.mjs`（需先 `tsc -b packages/base-link-core`）。
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -25,7 +25,9 @@ const DEFAULTS = {
 };
 
 const dir = mkdtempSync(join(tmpdir(), 'ilife-t694-'));
-process.env.ILIFE_CONFIG_DIR = dir;
+mkdirSync(join(dir, '.ilife'), { recursive: true }); // #754：配置落 <家>/.ilife，写之前目录得在
+process.env.USERPROFILE = dir;
+process.env.HOME = dir;
 const configFile = configPaths('calorie').configFile;
 
 /** 子进程读一次盘（证明「下次读得到」不是同进程的缓存）。 */

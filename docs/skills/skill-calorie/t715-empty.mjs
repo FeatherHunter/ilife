@@ -92,7 +92,7 @@ export function emptyWindowCliProbe(bin, dbDir, cases) {
   const fails = [];
   for (const [label, key, params] of cases) {
     const r = spawnSync(process.execPath, [bin, key, '--params', JSON.stringify(params)], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: dbDir }, timeout: 60000,
+      encoding: 'utf8', env: { ...process.env, USERPROFILE: dbDir, HOME: dbDir}, timeout: 60000,
     });
     const err = String(r.stderr || '');
     if (r.status !== 4 || !/ERR 4:/.test(err) || !/缺失阻断/.test(err)) {

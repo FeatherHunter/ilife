@@ -18,7 +18,7 @@
  *     不是来自搬家。
  *
  * 只写 `.scratch/t715/`（本票独占草稿目录）。零源码改动、零 git 动作、真库零触碰
- * （库与配置都住本票草稿目录，由 `ILIFE_CONFIG_DIR` 指过去）。
+ * （库与配置都住本票草稿目录，家目录指过去（家目录注入））。
  *
  * 用法：
  *   node .scratch/t715/seed.mjs                                  # 先建种子库
@@ -92,7 +92,7 @@ function renderAll(label) {
     const stem = `${num(i)}-${fileWord(wake)}`;
     const pagePath = join(dir, `${stem}.html`);
     const r = spawnSync(process.execPath, ['--import', pathToFileURL(join(HERE, 'freeze.mjs')).href, BIN, key, '--params', JSON.stringify(params), '--html', pagePath], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: DB_DIR }, timeout: 120000,
+      encoding: 'utf8', env: { ...process.env, USERPROFILE: DB_DIR, HOME: DB_DIR}, timeout: 120000,
     });
     const tail = (s, n) => String(s || '').trimEnd().split(/\r?\n/).slice(-n).join('\n');
     if (r.status !== 0) {

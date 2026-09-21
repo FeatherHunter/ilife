@@ -110,7 +110,7 @@ for (let d = '2026-06-01'; d <= TODAY; d = shiftDay(d, 1)) {
 export function seed(dir = DIR) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  const env = { ...process.env, ...freezeClock(TODAY), ILIFE_CONFIG_DIR: calorieConfigDir(dir) };
+  const env = { ...process.env, ...freezeClock(TODAY), USERPROFILE: calorieConfigDir(dir), HOME: calorieConfigDir(dir)};
   const out = join(HERE, 'tmp-out', 'seed.html');
   mkdirSync(dirname(out), { recursive: true });
   const run = (key, params, tag) => {

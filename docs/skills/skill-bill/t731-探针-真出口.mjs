@@ -27,11 +27,11 @@ const OUT = mkdtempSync(join(tmpdir(), 't731-html-'));
 const CSV = join(DB, 'bills.csv');
 
 // 配置基座：库与备份目录都落临时目录（#726 起落点由配置文件唯一决定，环境变量已退役）
-const env = { ...process.env, ILIFE_CONFIG_DIR: DB };
+const env = { ...process.env, USERPROFILE: DB, HOME: DB};
 const run = (args) => spawnSync(process.execPath, [BIN, ...args], { cwd: ROOT, encoding: 'utf8', env });
 const P = (o) => JSON.stringify(o);
 const lastJson = (s) => JSON.parse(String(s || '').trim().split(/\r?\n/).filter(Boolean).pop());
-const DATA = join(DB, 'data'); // 落点：`ILIFE_CONFIG_DIR` 是配置目录，数据目录是它下面的 `data/`（config/dirs.ts:61）
+const DATA = join(DB, '.ilife', 'data'); // 数据目录跟着家目录走：<家>/.ilife/data // 落点：配置目录＝<家>/.ilife，数据目录是它下面的 `data/`
 const backupDir = join(DATA, 'backups');
 /** 现有记录条数：走本域「初始化状态」（`receipt.records`）——空库／空窗口上都 exit 0（`bill.record.range` 在空窗口是 exit 4）。 */
 const records = () => lastJson(run(['bill.setup.run', '--params', P({ op: 'init-status' })]).stdout).data.receipt.records;
@@ -272,13 +272,13 @@ step('空备份目录 · 「查看备份」出空态与引导、不报错', () =
   const EMPTY = mkdtempSync(join(tmpdir(), 't731-empty-'));
   const file = join(OUT, 'backup-empty.html');
   const r = spawnSync(process.execPath, [BIN, 'bill.setup.run', '--params', P({ op: 'backup-list' }), '--html', file],
-    { cwd: ROOT, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: EMPTY } });
+    { cwd: ROOT, encoding: 'utf8', env: { ...process.env, USERPROFILE: EMPTY, HOME: EMPTY} });
   check(r.status === 0, 'exit=' + r.status);
   const text = readFileSync(file, 'utf8');
   check(text.includes('还没有备份'), '缺空态句');
   check(text.includes('数据来源'), '空态页不完整（缺来源脚注）');
   const res = spawnSync(process.execPath, [BIN, 'bill.setup.run', '--params', P({ op: 'restore' }), '--html', join(OUT, 'restore-empty.html')],
-    { cwd: ROOT, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: EMPTY } });
+    { cwd: ROOT, encoding: 'utf8', env: { ...process.env, USERPROFILE: EMPTY, HOME: EMPTY} });
   check(res.status === 0, '没有备份时恢复向导应照样 exit 0，实得 ' + res.status);
   check(readFileSync(join(OUT, 'restore-empty.html'), 'utf8').includes('还没有备份可恢复'), '缺空态句');
   return 'ok';

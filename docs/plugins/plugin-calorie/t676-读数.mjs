@@ -32,7 +32,7 @@ const tmpDir = selfTest ? mkdtempSync(join(tmpdir(), 't676-read-')) : null;
 try {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
-  if (tmpDir !== null) env.ILIFE_CONFIG_DIR = tmpDir;
+  if (tmpDir !== null) { env.USERPROFILE = tmpDir; env.HOME = tmpDir; }
 
   console.log('MODE=' + (selfTest ? 'self-test（临时目录 ' + tmpDir + '）' : '真机（默认落点）'));
   console.log('BRIDGE=' + BRIDGE);

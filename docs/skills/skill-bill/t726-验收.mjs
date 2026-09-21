@@ -42,21 +42,21 @@ function scalar(value) {
 /** 造一份配置目录：`groups` 为 `{db:{dir,name…}, html:{…}, backup:{…}}`；文件写不写由调用方决定。 */
 function configDir(tag, groups = null) {
   const dir = join(ROOT, tag);
-  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(dir, '.ilife'), { recursive: true });
   if (groups !== null) {
     const lines = [];
     for (const [group, inner] of Object.entries(groups)) {
       lines.push(group + ':');
       for (const [k, v] of Object.entries(inner)) lines.push('  ' + k + ': ' + scalar(v));
     }
-    writeFileSync(join(dir, 'bill.yaml'), lines.join('\n') + '\n', 'utf8');
+    writeFileSync(join(dir, '.ilife', 'bill.yaml'), lines.join('\n') + '\n', 'utf8');
   }
   return dir;
 }
 function run(cfgDir, args) {
   return spawnSync(process.execPath, [BIN, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, ILIFE_CONFIG_DIR: cfgDir },
+    env: { ...process.env, USERPROFILE: cfgDir, HOME: cfgDir},
   });
 }
 function envelope(r) {
@@ -86,7 +86,7 @@ check('① 老常量：速查表主体 饼干记账_速查表',
 
 /* ── ② 一份配置都不给：落点＝数据目录 ＋ 全默认 ────────────────────────────────────────── */
 const bare = configDir('bare');
-check('② 首次读自动落一份默认 bill.yaml', (run(bare, ['bill.help.lookup']).status === 0) && existsSync(join(bare, 'bill.yaml')));
+check('② 首次读自动落一份默认 bill.yaml', (run(bare, ['bill.help.lookup']).status === 0) && existsSync(join(bare, '.ilife', 'bill.yaml')));
 
 const helpOut = envelope(run(bare, ['bill.help.lookup'])).delivery.path;
 check('② HELP 落 <配置目录>/data/biscuit_accountant_html/饼干记账_HELP_<TS>.html',

@@ -56,7 +56,10 @@ export function seed(dir = DIR) {
     files.push(p);
   }
 
-  const env = { ...process.env, ...freezeClock(TODAY), ILIFE_CONFIG_DIR: calorieConfigDir(dir, { photos: { dir: photos } }) };
+  // #754：隔离＝家目录注入——`calorieConfigDir(dir, {…})` 把 `dir` 当家目录并落 `<dir>/.ilife/calorie.yaml`，
+  // 两格环境都指过去（win32 认 USERPROFILE、POSIX 认 HOME）。
+  const cfgHome = calorieConfigDir(dir, { photos: { dir: photos } });
+  const env = { ...process.env, ...freezeClock(TODAY), USERPROFILE: cfgHome, HOME: cfgHome };
   const out = join(HERE, 'tmp-out', 'seed.html');
   mkdirSync(dirname(out), { recursive: true });
   const run = (key, params, tag) => {

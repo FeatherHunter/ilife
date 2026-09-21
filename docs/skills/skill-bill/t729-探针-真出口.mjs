@@ -11,7 +11,7 @@
 //      没有禁入色／深色区标记；
 //   ③ **读数**：这一条场景自己那句断言（读页面上的数，与 `test/helpers/bill-seed.mjs` 的夹具手算值比）。
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,14 +31,15 @@ const ROOT = repoRoot(dirname(fileURLToPath(import.meta.url)));
 const BIN = join(ROOT, 'packages', 'skill-bill', 'dist', 'cli', 'cmd_read.js');
 const FREEZE = join(ROOT, 'packages', 'skill-bill', 'test', 'helpers', 'freeze-clock.cjs');
 const CFG = mkdtempSync(join(tmpdir(), 't729-cfg-'));
+mkdirSync(join(CFG, '.ilife'), { recursive: true }); // #754：配置落 <家>/.ilife，写之前目录得在
 const OUT = mkdtempSync(join(tmpdir(), 't729-html-'));
 
 // 配置基座（#726 起落点由配置文件唯一决定）＋ 合成库 ＋ 钉钟（窗口类场景全部以 SEED_TODAY 为「今天」）。
-writeFileSync(join(CFG, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(CFG) + '\n', 'utf8');
+writeFileSync(join(CFG, '.ilife', 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(CFG) + '\n', 'utf8');
 seedBillDb(CFG);
 const env = {
   ...process.env,
-  ILIFE_CONFIG_DIR: CFG,
+  USERPROFILE: CFG, HOME: CFG,
   NODE_OPTIONS: '--require ' + FREEZE,
   FAKE_NOW_ISO: SEED_TODAY + 'T12:00:00',
 };
@@ -241,9 +242,10 @@ step('空窗 · 窗口内零记录时仍出完整页（不是 exit 4）', () => 
 });
 step('空库 · 一条记录都没有仍是 exit 4（不得改成出页）', () => {
   const EMPTY = mkdtempSync(join(tmpdir(), 't729-empty-'));
-  writeFileSync(join(EMPTY, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(EMPTY) + '\n', 'utf8');
+  mkdirSync(join(EMPTY, '.ilife'), { recursive: true });
+  writeFileSync(join(EMPTY, '.ilife', 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(EMPTY) + '\n', 'utf8');
   const r = spawnSync(process.execPath, [BIN, 'bill.analysis.overview', '--params', P({ kind: 'monthly', month: '2026-05' })], {
-    cwd: ROOT, encoding: 'utf8', env: { ...env, ILIFE_CONFIG_DIR: EMPTY },
+    cwd: ROOT, encoding: 'utf8', env: { ...env, USERPROFILE: EMPTY, HOME: EMPTY},
   });
   check(r.status === 4, '空库应 exit 4，实得 ' + String(r.status) + ' stderr=' + String(r.stderr).slice(0, 200));
   return 'exit=4';

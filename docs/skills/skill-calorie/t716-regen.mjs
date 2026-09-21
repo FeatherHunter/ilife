@@ -17,7 +17,7 @@
  *     它们必须也逐字节不变——它们变了就说明抖动来自重出器或种子库本身，不是来自搬家。
  *
  * 只写 `.scratch/t716/`（本票独占草稿目录）。零源码改动、零 git 动作、真库零触碰
- * （库与配置都住本票草稿目录，由 `ILIFE_CONFIG_DIR` 指过去）。
+ * （库与配置都住本票草稿目录，家目录指过去（家目录注入））。
  *
  * 用法：
  *   node .scratch/t716/seed.mjs                                  # 先建种子库
@@ -86,7 +86,7 @@ function renderAll(label) {
     const stem = `${num(i)}-${fileWord(wake)}`;
     const pagePath = join(dir, `${stem}.html`);
     const r = spawnSync(process.execPath, ['--import', pathToFileURL(join(HERE, 'freeze.mjs')).href, BIN, key, '--params', JSON.stringify(params), '--html', pagePath], {
-      encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: DB_DIR }, timeout: 120000,
+      encoding: 'utf8', env: { ...process.env, USERPROFILE: DB_DIR, HOME: DB_DIR}, timeout: 120000,
     });
     const tail = (s, n) => String(s || '').trimEnd().split(/\r?\n/).slice(-n).join('\n');
     if (r.status !== 0) {
@@ -119,9 +119,9 @@ function renderAll(label) {
 
 /* 种子库必须先在位：缺了会让 GIF 规划器与两条对照页全走空态，判据覆盖不到有数据的分支而不报错。 */
 try {
-  readFileSync(join(DB_DIR, 'calorie.yaml'), 'utf8');
+  readFileSync(join(DB_DIR, '.ilife', 'calorie.yaml'), 'utf8');
 } catch {
-  console.log(`FAIL 种子库缺配置（${join(DB_DIR, 'calorie.yaml')}）：先跑 node .scratch/t716/seed.mjs`);
+  console.log(`FAIL 种子库缺配置（${join(DB_DIR, '.ilife', 'calorie.yaml')}）：先跑 node .scratch/t716/seed.mjs`);
   process.exit(1);
 }
 

@@ -43,7 +43,8 @@ const SELF_TEST = argv.includes('--self-test');
 let temp = null;
 if (SELF_TEST) {
   temp = mkdtempSync(join(tmpdir(), 'ilife-t696-读数-'));
-  process.env.ILIFE_CONFIG_DIR = temp;
+  process.env.USERPROFILE = temp;
+  process.env.HOME = temp;
 }
 
 /** 「新进程再读」：全新 node 进程 import 同一个 bridge，读回这一项。 */

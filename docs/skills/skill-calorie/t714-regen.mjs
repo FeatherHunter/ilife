@@ -68,9 +68,9 @@ if (/\s/.test(FREEZE_CJS)) {
 /* ── 1. 配置文件：库目录与训记状态目录都指进本票草稿目录，真库与真实家目录零接触。
    （与测试隔离基座 `test/helpers/config-test.mjs:50` 同一份口径：`db.dir` ＋ `xunji.stateDir`。） ── */
 function writeConfig(dir, dbDir) {
-  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(dir, '.ilife'), { recursive: true });
   const q = (s) => JSON.stringify(String(s));
-  writeFileSync(join(dir, 'calorie.yaml'), 'db:\n  dir: ' + q(dbDir) + '\nxunji:\n  stateDir: ' + q(join(dir, 'xunji-state')) + '\n', 'utf8');
+  writeFileSync(join(dir, '.ilife', 'calorie.yaml'), 'db:\n  dir: ' + q(dbDir) + '\nxunji:\n  stateDir: ' + q(join(dir, 'xunji-state')) + '\n', 'utf8');
   return dir;
 }
 
@@ -199,7 +199,7 @@ function renderAll(label) {
       timeout: 60000,
       env: {
         ...process.env,
-        ILIFE_CONFIG_DIR: CFG_DIR[dbIdx],
+        USERPROFILE: CFG_DIR[dbIdx], HOME: CFG_DIR[dbIdx],
         NODE_OPTIONS: '--require ' + FREEZE_CJS,
         FAKE_NOW_ISO,
       },

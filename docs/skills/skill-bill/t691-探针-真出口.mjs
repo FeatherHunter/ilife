@@ -4,7 +4,7 @@
 //   node tooling/run-locked.mjs --ticket 691 -- node docs/skills/skill-bill/t691-探针-真出口.mjs
 // 它只读 `packages/skill-bill/dist/`，产物与库都落临时目录（不改工作区）；末行打 `RESULT: n/m`。
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -24,9 +24,10 @@ const BIN = join(ROOT, 'packages', 'skill-bill', 'dist', 'cli', 'cmd_read.js');
 const DB = mkdtempSync(join(tmpdir(), 't691-db-'));
 const OUT = mkdtempSync(join(tmpdir(), 't691-html-'));
 
-// 配置基座：库落临时目录（#726 起落点由配置文件唯一决定，环境变量已退役）
-writeFileSync(join(DB, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(DB) + '\n', 'utf8');
-const env = { ...process.env, ILIFE_CONFIG_DIR: DB };
+// 配置基座：库落临时目录（#726 起落点由配置文件唯一决定，环境变量已退役；#754 起配置只落 <家>/.ilife）
+mkdirSync(join(DB, '.ilife'), { recursive: true });
+writeFileSync(join(DB, '.ilife', 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(DB) + '\n', 'utf8');
+const env = { ...process.env, USERPROFILE: DB, HOME: DB};
 
 const run = (args) => spawnSync(process.execPath, [BIN, ...args], { cwd: ROOT, encoding: 'utf8', env });
 const P = (o) => JSON.stringify(o);
@@ -183,9 +184,10 @@ step('看账户汇总 · 一整页（读数／账户卡／占比条／流水／�
 });
 step('看账户汇总 · 空库照出完整页（空态 ＋ 引导句 ＋ 脚注）', () => {
   const EMPTY = mkdtempSync(join(tmpdir(), 't691-empty-'));
-  writeFileSync(join(EMPTY, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(EMPTY) + '\n', 'utf8');
+  mkdirSync(join(EMPTY, '.ilife'), { recursive: true });
+  writeFileSync(join(EMPTY, '.ilife', 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(EMPTY) + '\n', 'utf8');
   const file = join(OUT, 'summary-empty.html');
-  const r = spawnSync(process.execPath, [BIN, 'bill.account.query', '--html', file], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, ILIFE_CONFIG_DIR: EMPTY } });
+  const r = spawnSync(process.execPath, [BIN, 'bill.account.query', '--html', file], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, USERPROFILE: EMPTY, HOME: EMPTY} });
   check(r.status === 0, '空库 exit=' + r.status);
   const text = readFileSync(file, 'utf8');
   check(/<!doctype html>/i.test(text) && text.includes('数据来源'), '空库页不完整');

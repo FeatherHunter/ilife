@@ -7,7 +7,7 @@
 // 「今天」钉在 2026-09-15（`test/helpers/freeze-clock.cjs` 预载）：月底预测三态与目标期算法都要一个固定的今天，
 // 否则判据随真实日期漂移（本域探针的第一版就因为真实日期跑出过「预计持平」以外的读数）。
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -31,11 +31,12 @@ const TODAY = '2026-09-15';
 /** 一个隔离的配置基座：库与产物都落这个临时目录（#726 起落点由配置文件唯一决定）。 */
 function configBase(tag) {
   const dir = mkdtempSync(join(tmpdir(), tag));
-  writeFileSync(join(dir, 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(dir) + '\n', 'utf8');
+  mkdirSync(join(dir, '.ilife'), { recursive: true }); // #754：配置落 <家>/.ilife，写之前目录得在
+  writeFileSync(join(dir, '.ilife', 'bill.yaml'), 'db:\n  dir: ' + JSON.stringify(dir) + '\n', 'utf8');
   return dir;
 }
 function envOf(dir) {
-  return { ...process.env, ILIFE_CONFIG_DIR: dir, NODE_OPTIONS: '--require ' + FREEZE, FAKE_NOW_ISO: TODAY + 'T12:00:00' };
+  return { ...process.env, USERPROFILE: dir, HOME: dir, NODE_OPTIONS: '--require ' + FREEZE, FAKE_NOW_ISO: TODAY + 'T12:00:00' };
 }
 function run(dir, args) {
   return spawnSync(process.execPath, [BIN, ...args], { cwd: ROOT, encoding: 'utf8', env: envOf(dir) });

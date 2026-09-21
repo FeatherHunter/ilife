@@ -95,7 +95,8 @@ function mkCfg(tag) {
   const dir = mkdtempSync(join(tmpdir(), tag));
   const dbDir = join(dir, 'db');
   mkdirSync(dbDir, { recursive: true });
-  writeFileSync(join(dir, 'calorie.yaml'),
+  mkdirSync(join(dir, '.ilife'), { recursive: true });
+  writeFileSync(join(dir, '.ilife', 'calorie.yaml'),
     ['db:', '  dir: ' + JSON.stringify(dbDir), '  name: calorie_data.db', 'html:', '  dir: calorie_html', ''].join('\n'),
     'utf8');
   const seed = spawnSync(process.execPath, ['--input-type=module', '-e', `
@@ -119,7 +120,7 @@ function cli(key, params, cfgDir) {
       encoding: 'utf8',
       env: {
         ...process.env,
-        ILIFE_CONFIG_DIR: cfgDir,
+        USERPROFILE: cfgDir, HOME: cfgDir,
         NODE_OPTIONS: '--require ' + FREEZE_CJS,   // 钉「今天」（`CALORIE_TODAY` 已删，钉钟走这件）
         FAKE_NOW_ISO: SEED_ISO,
       },
