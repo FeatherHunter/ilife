@@ -90,7 +90,10 @@ const S = {
     whiteSpace: 'nowrap',
     cursor: 'pointer',
   } as React.CSSProperties,
-  bar: { display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' } as React.CSSProperties,
+  bar: { display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', position: 'sticky', bottom: 0, zIndex: 1, background: 'var(--dsw-alias-bg-layer-1, #232329)', padding: '8px 0', borderTop: '1px solid var(--dsw-alias-border, rgba(128,128,128,.25))' } as React.CSSProperties,
+  saveMsg: { marginRight: 'auto', alignSelf: 'center', color: 'var(--dsw-alias-state-warning-primary, #b26a00)', fontSize: '0.9em' } as React.CSSProperties,
+  dirtyDot: { color: 'var(--dsw-alias-state-warning-primary, #b26a00)', fontSize: '0.85em', marginLeft: 6, fontWeight: 400 } as React.CSSProperties,
+  followNote: { color: 'var(--dsw-alias-state-warning-primary, #b26a00)', fontSize: '0.85em', marginBottom: 4 } as React.CSSProperties,
   btn: {
     padding: '4px 12px',
     borderRadius: 6,
@@ -518,6 +521,17 @@ export function createBrowseHandler(deps: {
  * **只读行（#757）**：`item.readonly` 为真时控件一律 `disabled`（值只经技能侧解析后显示、不给改），
  * 目录行的浏览按钮**保留但不可点击**（#748 定稿：入口不作废，只是不能改）。控件文案**不出现省略号**
  * （#746 处置 9）——按钮就写「选择文件夹」／「浏览」两个字面。 */
+/** 跟随映射（#863）：触发键一脏，这些只读派生行就进“将跟随更新”态。纯函数，面板与单测共用。 */
+const DB_FOLLOWERS: readonly string[] = ['db.name', 'html.dir', 'xunji.stateDir', 'photos.gifs'];
+const PHOTOS_FOLLOWERS: readonly string[] = ['photos.gifs'];
+
+/** 脏键 → 跟随行（#863 纯函数，供面板与单测共用）。 */
+export function followKeysOf(dirtyKeys: readonly string[]): readonly string[] {
+  const out = dirtyKeys.includes('db.dir') ? [...DB_FOLLOWERS] : [];
+  if (dirtyKeys.includes('photos.dir') && !out.includes('photos.gifs')) out.push('photos.gifs');
+  return out;
+}
+
 export function Row(props: {
   readonly item: ConfigItem;
   readonly value: string;
@@ -525,6 +539,10 @@ export function Row(props: {
   readonly onChange: (key: string, next: string) => void;
   /** 目录行才有：入口三态（`native`／`browse`／`none`）。 */
   readonly browser?: DirectoryRowEntry | null | undefined;
+  /** 脏行（#863）：这一行与已保存值不一致时画标记。 */
+  readonly dirty?: boolean;
+  /** 跟随行（#863）：只读派生行在触发键变脏时给“将跟随更新”态。 */
+  readonly follow?: boolean;
 }): React.ReactElement {
   const { item } = props;
   const readonly = item.readonly === true;
@@ -540,7 +558,11 @@ export function Row(props: {
           onChange: readonly ? undefined : (e: React.ChangeEvent<HTMLInputElement>) => props.onChange(item.key, e.target.checked ? 'true' : 'false'),
         })
       : React.createElement('input', {
-          style: S.input,
+          style: props.dirty === true
+            ? { ...S.input, borderColor: 'var(--dsw-alias-state-warning-primary, #b26a00)' }
+            : readonly && props.follow === true
+              ? { ...S.input, opacity: 0.55 }
+              : S.input,
           type: item.control === 'number' ? 'number' : 'text',
           value: props.value,
           disabled,
@@ -567,8 +589,9 @@ export function Row(props: {
   return React.createElement(
     'div',
     { style: S.row },
-    React.createElement('div', { style: S.label }, item.title),
+    React.createElement('div', { style: S.label }, item.title, props.dirty === true ? React.createElement('span', { style: S.dirtyDot }, '●已改动') : null),
     React.createElement('div', { style: S.hint }, item.hint),
+    readonly && props.follow === true ? React.createElement('div', { style: S.followNote }, '将跟随更新，保存后生效。') : null,
     browse === null ? control : React.createElement('div', { style: S.pickRow }, control, browse),
   );
 }
@@ -694,6 +717,14 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
   /** 脏值只看**可改行**（#757）：只读行显示的是技能算好的绝对路径，拿它当「改动」会让打开面板就变「未保存」。 */
   const editableItems = CONFIG_ITEMS.filter((i) => i.readonly !== true);
   const dirty = surface !== null && editableItems.some((i) => (draft[i.key] ?? '') !== (toDraft(surface.values, surface)[i.key] ?? ''));
+  /** 脏键（#863）：脏检查命中的可改行，脏标记与保存计数都认它，与 `dirty` 同口径。 */
+  const baseline = surface !== null ? toDraft(surface.values, surface) : null;
+  const dirtyKeys: readonly string[] = surface !== null && baseline !== null
+    ? editableItems.filter((i) => (draft[i.key] ?? '') !== (baseline[i.key] ?? '')).map((i) => i.key)
+    : [];
+  const dirtyCount = dirtyKeys.length;
+  /** 跟随行（#863）：触发键一脏就给“将跟随更新”态，值仍显示旧回执值，保存重读后自然变新。 */
+  const followKeys = followKeysOf(dirtyKeys);
 
   /** 写完（保存／重置）之后重新读一份整面：写回执是 `{path, values}`、重置回执是 `{path, backupPath}`，
    *  都不是整面——拿写回执当整面用，页头那行「数据目录」会显示成 undefined（#743 实测）。 */
@@ -780,6 +811,8 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
       disabled: busy,
       onChange,
       browser: rowEntry,
+      dirty: dirtyKeys.includes(item.key),
+      follow: followKeys.includes(item.key),
     });
 
   return React.createElement(
@@ -797,10 +830,13 @@ function CalorieConfig(props: { getCall: GetCall; pickerSource: () => DirectoryP
     React.createElement(
       'div',
       { style: S.bar },
+      dirtyCount > 0
+        ? React.createElement('div', { style: S.saveMsg }, `浏览改动后请点保存（${dirtyCount} 项未保存），保存后跟随项自动更新`)
+        : null,
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: busy || !dirty, onClick: () => void onSave() },
-        busy ? '处理中' : '保存',
+        busy ? '处理中' : dirtyCount > 0 ? `保存（${dirtyCount} 项未保存）` : '保存',
       ),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void onReset() }, '重置为默认'),
       React.createElement('button', { style: S.btn, type: 'button', disabled: busy, onClick: () => void load() }, '重新读取'),
