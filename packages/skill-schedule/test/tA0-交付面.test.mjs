@@ -126,7 +126,7 @@ describe('#843 交付面', () => {
       // 这张名单是「哪些键的处理函数自己给整页」的**唯一清单**，加一条＝那一票自己加。
       const FULL_PAGE_KEYS = new Set([
         'schedule.record.write', 'schedule.record.today', 'schedule.record.range',
-        'schedule.plan.today', 'schedule.record.detail',
+        'schedule.plan.today', 'schedule.record.detail', 'schedule.plan.write',
       ]);
       const substantive = entry.key === 'schedule.help.lookup'
         ? html.includes('<script id="help-data" type="application/json">')
