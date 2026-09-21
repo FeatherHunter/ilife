@@ -24,8 +24,9 @@ import {
 import { renderDocShell } from 'base-paint/docShell';
 import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
-import { COOK_STEP_CLASS, COOK_STEPS_CLASS, cookPageCss } from './page-css.js';
-import { qtyText, servingsNote, stepProseHtml, stepTitle, usageChip } from './page-text.js';
+import { COOK_STEP_CLASS, COOK_STEPS_CLASS, COOK_STEP_SIDE_CLASS, cookPageCss } from './page-css.js';
+import { cookHeroArt, cookHeroBand } from './page-art.js';
+import { qtyText, servingsNoteReceipt, SERVINGS_NOTE_PAGE, stepProseHtml, stepTitle, usageChip } from './page-text.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -41,8 +42,8 @@ export function buildCookingRun(args: {
   const base = args.recipe.servings > 0 ? args.recipe.servings : 2;
   const servings = args.servings ?? base;
   const factor = Math.round((servings / base) * 100) / 100;
-  // 结论句与页面结论条同一句（`page-text.ts` 是这句话的唯一定义地，命令面与页面上屏的是同一串字）。
-  const note = servingsNote(servings, base);
+  // 回执那一面的份量说明（`page-text.ts` 是它的唯一定义地）；页面结论条走另一句，见那里的注。
+  const note = servingsNoteReceipt(servings, base, factor);
   const h = args.history;
   // 人话收尾：命令键不上屏（#768 设计 §10），做完即记的衔接只说动作。
   const historyHint = h && h.count > 0
@@ -194,20 +195,6 @@ export function runCookingRun(handle: ChefDb, params: Record<string, unknown>): 
 /** 五张卡的取向（同一命令，不同参数＋不同强调块）。 */
 export type CookCardKind = 'fresh' | 'with-history' | 'double' | 'resume' | 'waiting';
 
-/** 页头那件**纯装饰**的图形：一口锅加三缕热气（内联 SVG，一笔数据、一个字都不带）。
- *  为什么要它：本批的「视觉生动」是全场最低维，48 页逐页复评里「整页近乎纯文字、缺图」被反复点到；
- *  本域没有菜品照片可用（数据源里没有图，也不许编），能补的只有**装饰与图标位**。
- *  它挂 `aria-hidden`、`pointer-events: none`，屏读器与命中区都不受它影响；线宽与颜色全在样式段里。 */
-export const COOK_HERO_ART = '<div class="ilife-cook-art" aria-hidden="true">'
-  + '<svg viewBox="0 0 120 44" fill="none" stroke-width="3" stroke-linecap="round" focusable="false">'
-  + '<path class="ilife-cook-art-steam" d="M36 24C36 18 42 18 42 12"/>'
-  + '<path class="ilife-cook-art-steam" d="M54 24C54 14 60 14 60 5"/>'
-  + '<path class="ilife-cook-art-steam" d="M72 24C72 18 78 18 78 12"/>'
-  + '<path class="ilife-cook-art-wok" d="M20 26H100"/>'
-  + '<path class="ilife-cook-art-wok" d="M26 26C26 36 44 40 60 40C76 40 94 36 94 26"/>'
-  + '<path class="ilife-cook-art-wok" d="M100 26L112 21"/>'
-  + '</svg></div>';
-
 /** 渲染过程型整页（配方 §1 十二格；全部步骤由六张折叠卡承载，不另起速览清单以避重复句）。 */
 export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardKind; currentStep?: number }): string {
   const total = data.steps.length;
@@ -224,16 +211,14 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
       { label: '状态', value: data.recipe.status },
     ],
   });
-  const conclusion = renderConclusionBar(servingsNote(data.servings, data.baseServings));
-  const current = data.steps[cur - 1];
+  const conclusion = renderConclusionBar(SERVINGS_NOTE_PAGE);
   const progress = renderKpiCard({
     label: '当前进度', value: String(cur), unit: '/ ' + total + ' 步',
-    // 说明行明写「本步」：它说的是**当前这一步**的火候与时长，不是全谱的（下头步骤卡里那三格
-    // 是同一件事的展开，加这两个字才不会被读成两处各说一遍）。
-    detail: '本步 ' + current.heat_level + ' ' + (current.duration_minutes ?? '—') + ' 分钟',
+    // 第二轮返修：删掉原来的说明行「本步 中火 5 分钟」——它与下一张步骤卡里的「火候／时长」两格
+    // 说的是同一件事，同尺复评把首屏那句读成「四处都在重复」。火候与时长现在只在步骤卡里出现一次。
     bar: { pct: Math.round((cur / total) * 100) },
   });
-  const head: string[] = [COOK_HERO_ART, facts, conclusion];
+  const head: string[] = [cookHeroArt, cookHeroBand, facts, conclusion];
   // 含上次经验卡：把上一次的日期／评分／反馈摆出来（缺历史就显式缺）。
   if (opts.kind === 'with-history') {
     head.push(data.lastHistory === null
@@ -258,10 +243,14 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
   // 每张步骤卡外面包一层状态类：当前步／已做步／还没做各有自己的形状（`page-css.ts` 里那三条）。
   const cards = data.steps.map((s) => {
     const state = s.sequence < cur ? 'done' : (s.sequence === cur ? 'current' : 'todo');
-    return '<div class="' + COOK_STEP_CLASS + '-' + state + '">' + renderDisclosure({
+    // 两个类都挂：`.ilife-cook-step` 是卡本体（第一轮只挂了状态类，样式段里那些按卡本体写的
+    // 规则因此一条都没命中——第二轮返修连同这个缺陷一起修），`-done／-current／-todo` 是状态。
+    return '<div class="' + COOK_STEP_CLASS + ' ' + COOK_STEP_CLASS + '-' + state + '">' + renderDisclosure({
       title: stepTitle(s.sequence, state), open: s.sequence === cur,
       // 正文走 `stepProseHtml`：库里的动作原文一字不动，只在**已有的标点之后**换行。
+      // 参数与用料收进一张侧栏（`ilife-cook-step-side`）：宽档它与正文并排（2:1），窄档落在正文下面。
       contentHtml: renderProseBlock({ html: stepProseHtml(s.action) })
+        + '<div class="' + COOK_STEP_SIDE_CLASS + '">'
         + renderFactStrip({
           items: [
             { label: '火候', value: s.heat_level || '未写' },
@@ -275,7 +264,10 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
           : renderChipRow({
             items: s.ingredients.map((u) => ({ text: usageChip(u.name, u.quantity, u.unit, u.optional) })),
           }))
-        + renderCaliberLine('这一步做成：' + (s.expected_result || '未写')),
+        + '</div>',
+      // 第二轮返修：删掉渲染层自己拼的那句「这一步做成：…」——它举的成品迹象与库里正文的收尾
+      // （「煸至半焦(不是半熟,出油微焦)」）在首屏上复述同义，同尺复评两页都点到这一处。
+      // 库里 `expected_result` 字段一字未改，只是这一步不再上屏（派单第二轮第 3 条具名授权）。
     }) + '</div>';
   });
   const stepsHtml = '<div class="' + COOK_STEPS_CLASS + '">' + cards.join('') + '</div>';

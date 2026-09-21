@@ -28,8 +28,11 @@ const STEAM_COLOR = CHART_PALETTE[2];
 /** 步骤卡的状态类（`run.ts` 挂在卡外层：当前步／已做步／未开始）。 */
 export const COOK_STEP_CLASS = 'ilife-cook-step';
 
-/** 步骤卡列表的外层类（宽档下这一层排成两栏）。 */
+/** 步骤卡列表的外层类（`run.ts` 把六张卡收进这一层）。 */
 export const COOK_STEPS_CLASS = 'ilife-cook-steps';
+
+/** 步骤卡的侧栏类（参数三行 ＋ 本步用料；宽档与正文按 2:1 并排）。 */
+export const COOK_STEP_SIDE_CLASS = 'ilife-cook-step-side';
 
 /** 页内收口样式段（本件唯一出口）。恒返回非空 CSS 文本。 */
 export function cookPageCss(): string {
@@ -47,24 +50,39 @@ export function cookPageCss(): string {
     '  box-sizing: border-box;',
     '  min-width: 0;',
     '}',
-    /* ① 步骤参数条：三条三等分（火候／时长／锅温）。恒三条只有本域知道。此前按内容宽排 ⇒
-       三条宽窄不齐、标签与值都不成列、末条右侧还留一截空（#873 第 1 格的扣分项）。
-       等分之后三条同宽同基线：标签成一列、值成一列。 */
-    root + ' .ilife-block-disclosure-body > .ilife-block-fact-strip {',
+    /* ① 步骤参数：**一行一条**（标签一列、值一列）。恒三条（火候／时长／锅温）只有本域知道。
+       第二轮返修换过一次形状：原来三条等分瓦片，390 档必然把整行铺满，同尺复评两轮都读成
+       「手机端首步卡右侧三粒紧贴边缘几近溢出」。改成键值行之后，横向不再有铺满整行的块、
+       标签与值各成一列，值短、右端自然留白；三条之间的发丝线仍把「这是三件事」摆出来。 */
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' > .ilife-block-fact-strip {',
     '  display: grid;',
-    '  grid-template-columns: repeat(3, minmax(0, 1fr));',
-    '  gap: 8px;',
+    '  grid-template-columns: minmax(0, 1fr);',
+    '  gap: 0;',
     '  margin-top: 14px;',
-    '  padding-top: 12px;',
-    '  border-top: 1px dashed var(--line);',
+    '  padding-top: 10px;',
+    '  border-top: 1px solid var(--line);',
     '}',
-    root + ' .ilife-block-disclosure-body > .ilife-block-fact-strip > .ilife-block-fact-strip-item {',
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' > .ilife-block-fact-strip > .ilife-block-fact-strip-item {',
+    '  display: grid;',
+    '  grid-template-columns: 52px minmax(0, 1fr);',
+    '  align-items: baseline;',
+    '  gap: 12px;',
     '  box-sizing: border-box;',
     '  min-width: 0;',
-    '  padding: 6px 8px;',
-    '  background: var(--soft);',
+    '  padding: 7px 0;',
+    '  border: 0;',
+    '  border-top: 1px solid var(--line);',
+    '  border-radius: 0;',
+    '  background: none;',
     '}',
-    root + ' .ilife-block-disclosure-body .ilife-block-fact-strip-value {',
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' > .ilife-block-fact-strip > .ilife-block-fact-strip-item:first-child {',
+    '  border-top: 0;',
+    '  padding-top: 2px;',
+    '}',
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' .ilife-block-fact-strip-label {',
+    '  color: var(--blue2);',
+    '}',
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' .ilife-block-fact-strip-value {',
     '  font-variant-numeric: tabular-nums;',
     '}',
     /* ② 步骤卡：卡与卡之间恒一条 16px 的气口（外层包了一层状态类与列表层，公共层那条
@@ -107,13 +125,13 @@ export function cookPageCss(): string {
     '  padding-right: 4px;',
     '  line-height: 1.85;',
     '}',
-    /* ③ 步骤卡里的四块（正文／参数／用料／做成）此前是挤成一摞的四层：这里逐块给气口。
-       取值按「读得开」与「首屏别被一张卡吃掉」两头折中：再大一档就会把后续步骤整段挤出首屏。 */
-    root + ' .' + COOK_STEP_CLASS + ' .ilife-block-disclosure-body > .ilife-block-chip-row {',
+    /* ③ 侧栏（参数三行 ＋ 本步用料）：与正文之间给一格气口；用料那行与参数条之间再给一档。 */
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' .ilife-block-chip-row {',
     '  margin-top: 12px;',
     '}',
-    root + ' .' + COOK_STEP_CLASS + ' .ilife-block-disclosure-body > .ilife-block-caliber {',
+    root + ' .' + COOK_STEP_SIDE_CLASS + ' > .ilife-block-caliber {',
     '  margin-top: 12px;',
+    '  line-height: 1.75;',
     '}',
     root + ' .ilife-block-disclosure-body > .ilife-block-caliber,',
     root + ' .ilife-block-page-shell-body > .ilife-block-caliber {',
@@ -147,21 +165,28 @@ export function cookPageCss(): string {
     root + ' .ilife-block-page-shell-body > .ilife-block-conclusion {',
     '  margin-top: 12px;',
     '}',
-    /* ⑤ 页头装饰图形（锅与热气）：钉在页头右上角的空处，不占正文一行，也不参与命中区。
-       窄档收到 76px（不许压到标题那两行的行宽里），宽档放 124px 去填桌面档标题右侧那片空。 */
+    /* ⑤ 页头装饰（锅与热气 ＋ 一条波线带）：都不占正文一行、也不参与命中区。
+       第二轮返修把图形收成**一张与别的卡同色基、同描边、同圆角的牌**——同尺复评原话
+       「插画与暖色渐变风格与卡片式表单略脱节」，脱节的根源就是它只有线稿、没有卡面。 */
     root + ' .ilife-block-page-shell {',
     '  position: relative;',
     '}',
     root + ' .ilife-cook-art {',
     '  position: absolute;',
-    '  top: 26px;',
-    '  right: 16px;',
+    '  top: 14px;',
+    '  right: 14px;',
+    '  display: flex;',
+    '  align-items: center;',
+    '  padding: 5px 8px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: 14px;',
+    '  background: var(--card);',
     '  pointer-events: none;',
     '}',
     root + ' .ilife-cook-art svg {',
     '  display: block;',
-    '  width: 76px;',
-    '  height: 28px;',
+    '  width: 68px;',
+    '  height: 26px;',
     '}',
     root + ' .ilife-cook-art path {',
     '  fill: none;',
@@ -174,41 +199,75 @@ export function cookPageCss(): string {
     root + ' .ilife-cook-art-steam {',
     '  stroke: ' + STEAM_COLOR + ';',
     '}',
+    /* 装饰带：大标题那条横线与事实条之间的一条波线（纯装饰、无数据、不可点）。 */
+    root + ' .ilife-cook-band {',
+    '  margin: 0;',
+    '}',
+    root + ' .ilife-cook-band svg {',
+    '  display: block;',
+    '  width: 100%;',
+    '  height: 14px;',
+    '}',
+    root + ' .ilife-cook-band path {',
+    '  fill: none;',
+    '  stroke: ' + STEAM_COLOR + ';',
+    '  stroke-width: 2;',
+    '  stroke-linecap: round;',
+    '  opacity: .42;',
+    '}',
     /* 窄档：页头四格缩一档内距，值不许折行（「18 分钟」这种值折行会把格子撑成两行）；
-       装饰图形上提到眉标那一行的右端（标题那两行一个字都不许被它压住）。 */
+       装饰牌上提到眉标那一行的右端（标题那两行一个字都不许被它压住）。 */
     '@media (max-width: 640px) {',
     '  ' + root + ' .ilife-block-page-shell-body > .ilife-block-fact-strip > .ilife-block-fact-strip-item {',
     '    padding-left: 8px;',
     '    padding-right: 8px;',
     '  }',
     '  ' + root + ' .ilife-cook-art {',
-    '    top: 18px;',
-    '    right: 14px;',
+    '    top: 12px;',
+    '    right: 12px;',
     '  }',
     '}',
-    /* 宽档：步骤卡排成两栏。一栏时卡宽 880、内容只占得住上半张，下半张空着（#873 复评：
-       「留白过多」）；两栏后每张卡约 430 宽，正文与参数各归其位，一屏里也容得下更多步。
-       装饰图形同时放大一档，摆到标题右侧那片空里。 */
+    /* 宽档：**步骤卡保持单列满宽**（第二轮返修：双列时正文列被挤窄，同尺复评原话「桌面端
+       步骤卡双列后左侧被严重挤压」，撤回第一轮的双列）；改成一栏之内**按 2:1 分栏**——
+       正文与侧栏并排，正文列约 560px（一行读得完的宽度），卡也不再是「内容挤在上半张、
+       下半张全空」。装饰牌放大一档，摆到标题右侧那片空里。 */
     '@media (min-width: 1001px) {',
-    '  ' + root + ' .' + COOK_STEPS_CLASS + ' {',
+    '  ' + root + ' .' + COOK_STEP_CLASS + ' .ilife-block-disclosure-body {',
     '    display: grid;',
-    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
-    '    gap: 16px;',
+    '    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);',
+    '    gap: 10px 30px;',
     '    align-items: start;',
     '  }',
-    '  ' + root + ' .' + COOK_STEP_CLASS + ' + .' + COOK_STEP_CLASS + ' {',
-    '    margin-top: 0;',
+    '  ' + root + ' .' + COOK_STEP_CLASS + ' .ilife-block-disclosure-body > .ilife-block-prose {',
+    '    grid-column: 1;',
+    '    grid-row: 1;',
     '  }',
-    '  ' + root + ' .' + COOK_STEP_CLASS + ' .ilife-block-disclosure-body > .ilife-block-caliber {',
-    '    margin-top: 12px;',
+    '  ' + root + ' .' + COOK_STEP_CLASS + ' .' + COOK_STEP_SIDE_CLASS + ' {',
+    '    grid-column: 2;',
+    '    grid-row: 1;',
+    '    padding: 12px 14px;',
+    '    border-radius: 14px;',
+    '    background: var(--soft);',
+    '  }',
+    /* 侧栏收成一张浅底面板之后，里面那条首行分隔线就不再需要了（面板边界已经说明「这是另一栏」）。 */
+    '  ' + root + ' .' + COOK_STEP_CLASS + ' .' + COOK_STEP_SIDE_CLASS + ' > .ilife-block-fact-strip {',
+    '    margin-top: 0;',
+    '    padding-top: 0;',
+    '    border-top: 0;',
+    '  }',
+    /* 宽档侧栏里的值靠右站：一栏一值（火候→中火、时长→5 分钟、锅温→180度）排成一张规格表，
+       右侧那截空位从「缺内容」变成「留白」。窄档不靠右——卡片内沿与值之间不够一档内距。 */
+    '  ' + root + ' .' + COOK_STEP_CLASS + ' .' + COOK_STEP_SIDE_CLASS + ' .ilife-block-fact-strip-value {',
+    '    text-align: right;',
     '  }',
     '  ' + root + ' .ilife-cook-art {',
-    '    top: 42px;',
+    '    top: 26px;',
     '    right: 24px;',
+    '    padding: 7px 10px;',
     '  }',
     '  ' + root + ' .ilife-cook-art svg {',
-    '    width: 124px;',
-    '    height: 46px;',
+    '    width: 110px;',
+    '    height: 40px;',
     '  }',
     '}',
   ].join(LF);
