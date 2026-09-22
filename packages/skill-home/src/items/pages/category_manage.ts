@@ -48,6 +48,9 @@ export const REQUIRED_BLOCKS = {
 
 const esc = (v: unknown): string => escapeHtml(String(v ?? ''));
 
+/** `detail.tree` 的一行（#817 起分组与空档折叠都按它算）。 */
+interface CatNode { id: string; parent: string; name: string; items: string; quantity: string; }
+
 function msgOf(env: Envelope): string {
   const d = env.data as Record<string, unknown>;
   return String((d as { message?: unknown }).message ?? '');
@@ -85,6 +88,7 @@ const PAGE_CSS = '<style>'
   + '.fp-stage{display:inline-block;background:#f5f8ff;color:#007aff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin-top:10px}'
   + '.fp-sec{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin:12px 0}'
   + '.fp-sec-t{font-size:17px;font-weight:750;margin:0 0 10px}'
+  + '.fp-group{font-size:13px;font-weight:800;color:#007aff;margin:14px 0 4px}'
   + '.fp-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #ececf1}'
   + '.fp-row:last-child{border-bottom:none}'
   + '.fp-k{color:#6e6e73;font-size:14px}'
@@ -104,30 +108,42 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/category_manage.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-  // #864 加厚：树节点写真层级与计数（子分类缩进一格），无 detail 回退破折号。
+  // #864 加厚：树节点写真层级与计数；#817（⑤文案不冗余）：层级词从逐行重复升成两个分组标题，
+  // 没有物品的分类不再逐行写「共 0 个物品，共 0 件」，折成一行名单；无 detail 回退破折号。
   const det = detailOf(env);
-  const nodes: { id: string; parent: string; name: string; items: string; quantity: string }[] = Array.isArray(det.tree)
+  const nodes: CatNode[] = Array.isArray(det.tree)
     ? (det.tree as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => ({
       id: String(r.id ?? ''), parent: String(r.parent_id ?? ''), name: String(r.name ?? ''),
       items: String(r.items ?? ''), quantity: String(r.quantity ?? ''),
     }))
     : [];
   const hasTree = Array.isArray(det.tree);
+  const isChild = (n: CatNode): boolean => n.parent !== '' && n.parent !== 'null';
+  const isBlank = (n: CatNode): boolean => !(Number(n.items) > 0) && !(Number(n.quantity) > 0);
+  const named = (n: CatNode): string => esc(n.name === '' ? '—' : n.name);
+  /** 一档（顶级／子）一组：组名与档内个数只在标题里出现一次；没物品的那批折成一行名单，名字仍可见。 */
+  const groupOf = (title: string, list: CatNode[]): string => {
+    const blank = list.filter(isBlank);
+    return list.length === 0 ? '' : '<h3 class="fp-group">' + title + '（' + list.length + '）</h3>'
+      + list.filter((n) => !isBlank(n)).map((n) => '<p class="fp-v">' + named(n)
+        + '，共 ' + esc(n.items) + ' 个物品，共 ' + esc(n.quantity) + ' 件</p>').join('')
+      + (blank.length === 0 ? '' : '<p class="fp-note">还没有物品：' + blank.map(named).join('、') + '</p>');
+  };
   const treeBlock = !hasTree
     ? '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">—</div></div>'
       + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">—</div></div>'
     : (nodes.length
-      ? nodes.map((n) => '<div class="fp-row"><div class="fp-k">' + (n.parent !== '' && n.parent !== 'null' ? '子分类' : '顶级分类') + '</div><div class="fp-v"><span>'
-        + (n.parent !== '' && n.parent !== 'null' ? '　' : '') + esc(n.name === '' ? '—' : n.name)
-        + '，共 ' + esc(n.items) + ' 个物品，共 ' + esc(n.quantity) + ' 件</span></div></div>').join('')
+      ? groupOf('顶级分类', nodes.filter((n) => !isChild(n))) + groupOf('子分类', nodes.filter(isChild))
       : '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">树是空的，先新建顶级分类</div></div>');
 
+  // #817（⑤文案不冗余）：头卡不再复述 h1 的「管分类」，也不挂「查看页」这种页型名徽章；
+  // 导语改说本页总数（没有 detail 才回退回执原文），「详情走 查标签（分类表）」那类内部词随之退场。
+  const total = typeof det.total === 'number' ? det.total : nodes.length;
+  const lead = hasTree ? '共 ' + total + ' 个分类' : visibleMsg(msg);
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 分类</div>'
-    + '<div class="fp-title">管分类</div>'
-    + '<p class="fp-lead">' + esc(visibleMsg(msg)) + '</p>'
-    + '<span class="fp-stage">查看页</span></div>'
+    + '<p class="fp-lead">' + esc(lead) + '</p></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">分类树</h2>'
     + treeBlock + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">操作提示</h2>'

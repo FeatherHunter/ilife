@@ -79,13 +79,6 @@ function itemsOf(env: Envelope): Record<string, unknown>[] {
   return Array.isArray(d.items) ? (d.items as Record<string, unknown>[]) : [];
 }
 
-function summaryOf(env: Envelope, items: Record<string, unknown>[]): string {
-  // 回执形（回执卡已说编号）／空态（改由内容位渲染）／年度统计行（行标签已说年度合计）：摘要位都不写句。
-  if (env.shape === 'receipt' || !items.length || !isDatedRows(items)) return '';
-  // 表里只有序号与购买日两列，日期由表列排出；摘要只说行数与其余字段的去处，不声称排序方向。
-  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日排列（金额与渠道在物品详情）</p></div>';
-}
-
 /** 记录表：行值只从信封取。逐笔行 `items[].name` 形如「购买2026-08-15」，信封不带价格与渠道，只列购买日；
  *  年度统计行取 `items[].count`，行标签带上信封里「年度花费」这个语义（不印裸数字），故不带序号列。
  *
@@ -111,10 +104,11 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
   + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}</style>';
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  // #817（⑤文案不冗余）：第三颗原标签与场景名（查退货窗口）逐字相同＝自指，换成动作说法；载荷 data-t 不动。
   return '<div class="rc-ops">'
     + '<button type="button" data-t="请查购买记录，按物品复核">按物品复核</button>'
     + '<button type="button" data-t="请登记购买记录">新增记录</button>'
-    + '<button type="button" data-t="请查退货窗口">查退货窗口</button>'
+    + '<button type="button" data-t="请查退货窗口">按物品查退货期</button>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
@@ -134,16 +128,19 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/receipt/purchase_records.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
-    + '<span>购买记录</span></div>';
+    // #817（⑤文案不冗余）：抬头只留域标签——原本写族名「购买记录」，与场景名回填后的 h1（查购买记录／
+    // 查上月购买／登记购买记录…）相邻重复；交付链 `withSceneIdentity` 也只保留头一个 span。
+    + '<span>票据凭证</span></div>';
   const items = itemsOf(env);
-  // 空态由内容位渲染：摘要位不留空态句，data-block 标记照旧在位。
+  // 空态由内容位渲染：data-block 标记照旧在位。
   const main = env.shape === 'receipt'
     ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     : items.length
       ? purchaseTable(env, items)
       : '<div class="fam-content" data-block="empty"><p>本次查询没有命中购买记录，可先登记一条再回来复核</p></div>';
+  // #817（⑤文案不冗余）：摘掉摘要句（原为「本次清单共N行，按购买日排列（金额与渠道在物品详情）」）——
+  // 行数表里数得出来、字段去处是取数说明；属实现说明当正文。
   const content = head
-    + summaryOf(env, items)
     + main
     + PAGE_CSS
     + opsBlock(env, ctx)

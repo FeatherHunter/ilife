@@ -108,7 +108,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const head = '<div class="fam-head"><span class="fam-name" data-family="inventory_stat">统计总览</span><span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">盘点统计</span></div>';
   const inv = d.inventory ?? null;
   // 摘要不复述两张卡的两个数（盘点记录条数／库内物品件数）：只说卡片里没有的差异口径结论。
-  const hero = '<div class="st st-hero"><span class="st-wake">盘点统计</span><p class="st-lead">'
+  // #817（⑤文案不冗余）：h1 由场景名回填＝本页名（盘点统计），hero 胶囊不再复述同一个词。
+  const hero = '<div class="st st-hero"><p class="st-lead">'
     + (records === 0 ? '还没有盘点记录，先完成首次盘点' : '最近一次盘点的差异按缺与多两项合计') + '</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>盘点记录</b><span>' + records + '</span><small>历史盘点条数</small></div>'
@@ -124,7 +125,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="st-actions"><button class="st-btn pri" data-t="帮我复查最近一次盘点的遗留差异">复查盘点</button></div></div>'
     : '<div class="st st-empty"><b>还没有盘点记录</b>完成首次盘点后，这里会显示完成率，差异趋势与优先盘点建议'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我开始第一次盘点">复制首次盘点</button></div></div>';
-  const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势 <span class="st-hint">待盘点</span></h2>'
+  // #817（⑤文案不冗余）：「待盘点」与块内「趋势数据不足」说同一件事，只留块内那处。
+  const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势</h2>'
     + '<div class="st-empty"><b>趋势数据不足</b>多盘点几次，完成率曲线与遗留差异总数会在这里成形</div></div>';
   const tail = '<div class="st-actions">' + homeCopyArea({
       data: { envelope: env },

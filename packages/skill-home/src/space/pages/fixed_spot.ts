@@ -85,7 +85,8 @@ function fixedCard(entries: FixedEntry[]): string {
       + '<button class="btn ghost" data-copy="' + attr(clearPrompt) + '" data-need="解除">解除</button></div>';
   }).join('');
   return '<section class="card" data-block="fields" data-need="现有固定位清单（名称/ID/当前活跃位置/固定位）">'
-    + '<h2>现有固定位 <span class="hint">红色「不在固定位」表示当前不在固定位</span></h2>'
+    // #817（⑤文案不冗余）：删掉「红色「不在固定位」表示当前不在固定位」——同义反复，而且与徽章自己说的是同一件事。
+    + '<h2>现有固定位</h2>'
     + rows + '</section>';
 }
 

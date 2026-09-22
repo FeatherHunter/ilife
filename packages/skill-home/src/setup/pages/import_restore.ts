@@ -152,7 +152,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<h2>可以做的操作</h2>'
     + '<div class="su-actions">'
     + '<button class="su-btn" data-need="选择文件" data-t="我马上发一份备份文件，请进入等待状态">选择文件</button>'
-    + '<button class="su-btn" data-need="确认导入" data-t="请确认导入，恢复前请先自动备份">确认导入</button>'
+    // #817（④触控够大·主次可辨）：「确认导入」是整库覆盖的破坏性一步，不再与主操作「选择文件」同为实心蓝，
+    // 降 ghost；「撤销导入」「知道了」原本就是 ghost，不动。载荷 data-t 与块登记的 data-need 一字不动。
+    + '<button class="su-btn ghost" data-need="确认导入" data-t="请确认导入，恢复前请先自动备份">确认导入</button>'
     + '<button class="su-btn ghost" data-need="撤销导入" data-t="请用恢复前备份恢复，撤销上次导入">撤销导入</button>'
     + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
     + '</div>'
