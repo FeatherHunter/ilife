@@ -130,8 +130,8 @@ export function runLark(cli: string, args: string[], timeoutMs = LARK_DEFAULT_TI
     return { ok: true, stdout: out };
   } catch (e) {
     const err = e as { code?: unknown; status?: number | null; stderr?: unknown; message?: string };
-    if (err.code === 'ENOENT') throw new MemoFetchError('LARK_UNAVAILABLE', 'lark-cli 不可用：' + cli);
-    if (err.code === 'ETIMEDOUT') throw new MemoFetchError('LARK_TIMEOUT', 'lark-cli 超时：' + args.join(' '));
+    if (err.code === 'ENOENT') throw new MemoFetchError('LARK_UNAVAILABLE', '飞书命令行工具不可用：程序无法启动');
+    if (err.code === 'ETIMEDOUT') throw new MemoFetchError('LARK_TIMEOUT', '飞书命令行工具超时：命令没在时限内返回');
     return { ok: false, exit: err.status ?? null, stderr: String(err.stderr ?? err.message ?? e) };
   }
 }
@@ -145,13 +145,13 @@ export function larkVersion(cli: string): string {
 // 身份真值源：auth status 输出 identities.user.openId；无 openId 即未登录 throw。
 export function authOpenId(cli: string): string {
   const r = runLark(cli, ['auth', 'status']);
-  if (!r.ok) throw new MemoFetchError('LARK_NOT_LOGGED_IN', 'lark-cli auth status 失败（未登录？）');
+  if (!r.ok) throw new MemoFetchError('LARK_NOT_LOGGED_IN', '飞书登录状态查询失败：可能还没登录，先登录一次');
   let j: unknown = null;
   try { j = JSON.parse(r.stdout); }
-  catch { throw new MemoFetchError('LARK_BAD_RESPONSE', 'lark-cli auth status 非 JSON'); }
+  catch { throw new MemoFetchError('LARK_BAD_RESPONSE', '飞书登录状态读不出内容：先按安装指引重新登录一次'); }
   const id = (j as { identities?: { user?: { openId?: unknown } } }).identities?.user?.openId;
   if (typeof id !== 'string' || id.length === 0) {
-    throw new MemoFetchError('LARK_NOT_LOGGED_IN', 'lark-cli 未登录（无 openId，先 auth login）');
+    throw new MemoFetchError('LARK_NOT_LOGGED_IN', '飞书未登录：登录状态里没有你的身份，先登录一次');
   }
   return id;
 }
@@ -166,10 +166,10 @@ export interface LarkReady { cliPath: string; version: string; openId: string; }
 // 四门全绿才取数：存在→版本→登录→scope；任一红 throw（调用方阻断，不返空）。
 export function larkReady(scope = LARK_WISH_SCOPE): LarkReady {
   const cli = findLarkCli();
-  if (!cli) throw new MemoFetchError('LARK_UNAVAILABLE', 'lark-cli 未找到：缺失阻断取数');
+  if (!cli) throw new MemoFetchError('LARK_UNAVAILABLE', '飞书命令行工具未找到：这一步要它，先按安装指引装好');
   const version = larkVersion(cli);
   const openId = authOpenId(cli);
-  if (!checkScope(cli, scope)) throw new MemoFetchError('LARK_DENIED', '缺 scope 授权：' + scope);
+  if (!checkScope(cli, scope)) throw new MemoFetchError('LARK_DENIED', '飞书授权不足：这一步要的权限还没给，重新授权时请一并勾上');
   return { cliPath: cli, version, openId };
 }
 

@@ -333,7 +333,7 @@ describe('#760 设置页收窄 · 技能侧回执与落点', () => {
       withEmptyDb();
       const r = runMemo('memo.auth', { step: 'status' }, noLarkPathEnv(home));
       assert.equal(r.code, 4, '缺席走 exit 4');
-      assert.match(r.stderr, /lark-cli 未找到/);
+      assert.match(r.stderr, /飞书命令行工具未找到/);
       assert.ok(r.stderr.includes(WEBSITE_LINE), '官网行逐字：' + r.stderr);
       assert.match(r.stderr, /lark\.prompt/);
     });

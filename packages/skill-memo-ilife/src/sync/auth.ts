@@ -8,7 +8,7 @@ import { MemoFetchError } from '../shared/errors.js';
 /** 当前 lark-cli 授权状态（诊断用）。 */
 export function authStatus(): Record<string, unknown> {
   const cli = findLarkCli();
-  if (!cli) throw new MemoFetchError('LARK_UNAVAILABLE', 'lark-cli 未找到：缺失阻断取数');
+  if (!cli) throw new MemoFetchError('LARK_UNAVAILABLE', '飞书命令行工具未找到：这一步要它，先按安装指引装好');
   const r = runLark(cli, ['auth', 'status']);
   if (!r.ok) throw new MemoFetchError('LARK_TASK_FAILED', '授权状态查询失败：' + r.stderr.slice(0, 300));
   try {

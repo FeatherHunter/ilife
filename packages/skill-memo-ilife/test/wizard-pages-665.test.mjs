@@ -138,7 +138,7 @@ test('#665 W6 飞书缺席即大声失败＋带安装指引（#760）', () => {
     env: noLarkPathEnv(home),
   });
   assert.equal(r.status, 4, '缺席走 exit 4：' + String(r.stderr));
-  assert.match(String(r.stderr), /lark-cli 未找到/, '点名缺席：' + String(r.stderr));
+  assert.match(String(r.stderr), /飞书命令行工具未找到/, '点名缺席：' + String(r.stderr));
   assert.match(String(r.stderr), /飞书CLI官网为：https:\/\/www\.feishu\.cn\/feishu-cli/, '官网行逐字：' + String(r.stderr));
   assert.match(String(r.stderr), /lark\.prompt/, '指到复制安装指引：' + String(r.stderr));
 });
