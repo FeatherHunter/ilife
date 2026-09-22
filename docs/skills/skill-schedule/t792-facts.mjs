@@ -61,11 +61,19 @@ function factsOf(html) {
   const englishHits = [...new Set((text.match(/[A-Za-z][A-Za-z-]{2,}/g) ?? []))]
     .filter((w) => !ALLOW.has(w))
     .map((w) => ({ word: w, times: count(text, new RegExp('\\b' + w.replace(/[-]/g, '\\-') + '\\b', 'g')) }));
-  // 机器候选：重复事实（同一段事实文本在页上出现 >1 次的条数）
+  // 机器候选：重复事实（同一段**事实句**在页上出现 >1 次的条数）
+  //
+  //  ⚠️ 口径修正（#792 第二段实测后改，2026-09-22）：只数**长事实句**，不数短量值。
+  //  为什么：`23h59m`／`2h30m`／`07:30 至 08:00`／`2026-09-16` 这类**同一个量值**在
+  //  「总览条 → KPI 卡 → 逐行列表 → 表格」各印一次，是**正当的重复出现**（同一份数据三处口径），
+  //  不是「同一事实印两遍」。改正前的版本把这些短量值也算成候选，25 页里绝大多数是这一类**误判**
+  //  —— 与 #892 票面里那几处真重复（长句，如「与历史不同：该时段近几天主要是「维持.用餐」…」）
+  //  是两回事。判据用**长度 + 是否含句读**两条：≥14 字且含「：」或「。」的，才算「事实句」。
   const seen = new Map();
   for (const n of nodes) {
-    if (n.length < 6 || n.length > 80) continue;
-    if (!/[\d年月日：:]/.test(n)) continue;   // 只挑「含数字的事实句」，避免把标题算进去
+    if (n.length < 14 || n.length > 120) continue;
+    if (!/[\d年月日：:]/.test(n)) continue;      // 挑含数字的
+    if (!/[：。]/.test(n)) continue;              // 并含句读 ⇒ 是一句话，不是一格量值
     seen.set(n, (seen.get(n) ?? 0) + 1);
   }
   const dupFacts = [...seen.values()].filter((n) => n > 1).length;
