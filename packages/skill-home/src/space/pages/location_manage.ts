@@ -73,9 +73,11 @@ function copyBtn(prompt: string, label: string, need: string, ghost: boolean): s
 
 function hero(total: number): string {
   // 标题已在模板 h1（管位置），此处只放计数徽章，不重复族名。
+  // #817 ⑤：说明句原写「位置树总览加相似位置检测，改名合并影响一目了然」——复述下面两个卡片的
+  // 标题与行内按钮名（同一件事说两遍），换一句不复述版面的短句。
   return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">'
     + '<div class="eyebrow"><span class="chip">共' + total + '个位置</span></div>'
-    + '<p class="lead">位置树总览加相似位置检测，改名合并影响一目了然</p></div>';
+    + '<p class="lead">名字越规整，找东西越快</p></div>';
 }
 
 function treeCard(nodes: LocNode[]): string {

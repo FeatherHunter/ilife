@@ -224,7 +224,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const tail: Record<ReceiptMode, string> = {
     move: '位置已记入台账，找东西时直接查物品即可',
     qty: '数量已经同步，是否缺货可以去缺货检测看',
-    status: '状态已经流转，废弃属于软删除可以恢复',
+    status: '这次改动已生效，废弃的物品还可以恢复',
     tags: '标签已经同步，还可以去整理建议合并相近标签',
     generic: '变更已经记入台账，可以继续下一步操作',
   };
@@ -243,7 +243,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + mode + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 更新</div>'
-    + '<div class="fp-title">' + esc(title) + '完成</div>'
+    // #817 ⑤：头卡标题不再复述场景名——交付链把 h1 回填成命令中文名（移物品／数量变更／状态变更／
+    // 标物品），原「<场景名>完成」与 h1 相距 40px 同词；改用本次物品名，拿不到快照时回退原样。
+    + '<div class="fp-title">' + (snap !== null && snap.name !== '' ? esc(snap.name) : esc(title) + '完成') + '</div>'
     + '<p class="fp-lead">' + esc(msg) + '</p></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">变更结果</h2>' + changeRows + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">当前状态</h2>'

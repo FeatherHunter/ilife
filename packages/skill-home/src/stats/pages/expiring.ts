@@ -163,7 +163,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const head = '<div class="fam-head"><span class="fam-name" data-family="expiring">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查过期</span></div>';
   // 页首写建议（两数已由下面卡片给出，页首再复述一遍是同一事实说两遍）。
-  const hero = '<div class="st st-hero"><span class="st-wake">查过期</span>'
+  // #817 ⑤：胶囊原写「查过期」，与 h1（交付链回填的场景名）同名 40px 相邻；换成携带信息的词。
+  const hero = '<div class="st st-hero"><span class="st-wake">到期预警</span>'
     + '<p class="st-lead">先处理已过期的那批，再看未来预告；拿不准的选忽略</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>已过期</b><span>' + expired.length + '</span><small>到期日在今天之前</small></div>'

@@ -127,9 +127,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 关联</div>'
-    + '<div class="fp-title">' + (unlinked ? '关联已经解除' : '物品关联已记入') + '</div>'
-    + '<p class="fp-lead">' + esc(msg) + '</p>'
-    + '<span class="fp-stage">查看页</span></div>'
+    + '<div class="fp-title">' + (unlinked ? '已经解除' : '已建立关联') + '</div>'
+    + '<p class="fp-lead">' + esc(msg) + '</p></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">主物品</h2>'
     + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'
     + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">' + esc(mainName !== '' ? mainName : '—') + '</div></div>'

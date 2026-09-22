@@ -79,7 +79,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     return '<div class="su-step" data-status="' + st + '"><b>' + (i + 1) + '</b>'
       + escapeHtml(t) + '<i>' + label + '</i></div>';
   }).join('');
-  const opInit = '<button class="su-btn" data-need="开始初始化" data-t="请帮我完成首次使用初始化">开始初始化</button>';
+  // #817 ④：实心只留「开始录入第一批」（页内「下一步」指向它），「开始初始化」降 ghost（只在完成后那支渲染）。
+  const opInit = '<button class="su-btn ghost" data-need="开始初始化" data-t="请帮我完成首次使用初始化">开始初始化</button>';
   const opGuide = '<button class="su-btn' + (done ? '' : ' alt') + '" data-need="开始录入第一批" data-t="请帮我录入第一批物品">开始录入第一批</button>';
   const opFirst = done ? opGuide + opInit
     : '<button class="su-btn" data-need="开始初始化" data-t="请帮我完成首次使用初始化">开始初始化</button>' + opGuide;
