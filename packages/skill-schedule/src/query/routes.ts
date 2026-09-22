@@ -1,4 +1,4 @@
-/** 查询与浏览的路由声明（**权威源**，19 条：单日查 8／区间 3／详情 3／查日程 4／周视图 1）。
+/** 查询与浏览的路由声明（**权威源**，18 条：单日查 7／区间 3／详情 3／查日程 4／周视图 1）。
  *
  * `schedule.plan.today` 的 4 条住这里（唤醒词 #12／#15／#16 在 HELP 查询组）：路由跟键走，
  * 一键的路由只住一处。`order`＝今日 `WAKE_TABLE` 下标，归并保序。
@@ -9,6 +9,10 @@
  * 唤醒词的先例）：`view=week` 让处理函数出周视图那张页，缺省档仍是区间汇总。不新造 key 的理由：
  * 新 key 会牵动 `src/policy/wakewords.ts` 的 `ScheduleKey` 联合与快照门 `schedule/keys` 件，
  * 两处都不在本票写面（见票面「写面」段）。
+ *
+ * #790 · 「初始化数据库」这一条搬去 `src/admin/routes.ts`（清单里它是 admin 域的行，
+ * 页只能落 `src/admin/`）：本文件只删这一行，order 原槽位由 admin 那边原样接过去，
+ * 其余行一个不动，页组件一行不动。
  */
 import type { RouteEntry } from '../shared/commandSpec.js';
 
@@ -19,7 +23,6 @@ export const QUERY_ROUTES: readonly RouteEntry[] = [
   { phrase: '今天作息', key: 'schedule.record.today', order: 7 },
   { phrase: '查作息时间轴', key: 'schedule.record.today', order: 8 },
   { phrase: '查作息状态', key: 'schedule.record.today', order: 9 },
-  { phrase: '初始化数据库', key: 'schedule.record.today', order: 10 },
   { phrase: '查作息', key: 'schedule.record.today', order: 11 },
   { phrase: '汇总作息', key: 'schedule.record.range', needs: ['start', 'end'], order: 12 },
   { phrase: '查作息范围', key: 'schedule.record.range', needs: ['start', 'end'], order: 13 },

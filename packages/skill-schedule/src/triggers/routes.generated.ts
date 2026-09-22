@@ -10,7 +10,7 @@ export const SCHEDULE_ROUTES = [
   { phrase: '今天作息', key: 'schedule.record.today', order: 7 },
   { phrase: '查作息时间轴', key: 'schedule.record.today', order: 8 },
   { phrase: '查作息状态', key: 'schedule.record.today', order: 9 },
-  { phrase: '初始化数据库', key: 'schedule.record.today', order: 10 },
+  { phrase: '初始化数据库', key: 'schedule.help.lookup', preset: {"view":"init"}, order: 10 },
   { phrase: '查作息', key: 'schedule.record.today', order: 11 },
   { phrase: '汇总作息', key: 'schedule.record.range', needs: ['start', 'end'], order: 12 },
   { phrase: '查作息范围', key: 'schedule.record.range', needs: ['start', 'end'], order: 13 },
@@ -50,4 +50,5 @@ export const SCHEDULE_ROUTES = [
   { phrase: '复盘', key: 'schedule.plan.write', preset: {"op":"review"}, order: 47 },
   { phrase: '周视图', key: 'schedule.record.range', preset: {"view":"week"}, order: 48 },
   { phrase: '按 ID 查记录', key: 'schedule.record.detail', needs: ['id'], order: 49 },
+  { phrase: '首次使用', key: 'schedule.help.lookup', preset: {"view":"firstUse"}, order: 50 },
 ] as const;
