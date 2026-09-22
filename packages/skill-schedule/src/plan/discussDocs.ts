@@ -26,6 +26,7 @@ import {
 } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
 import { clockOf, gapsOf, minutesOfDayEnd } from './planDocs.js';
 import { shiftDay } from './iso.js';
@@ -165,11 +166,11 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
     title: '商量计划预览',
     subtitle: '候选 ' + String(candidates.length) + ' 段排的是 ' + date + '，这一步只预览，没有写库。',
   };
-  const content = [
-    renderConclusionBar('候选 ' + String(candidates.length) + ' 段把 ' + date + ' 的 24 小时接满，'
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar('候选 ' + String(candidates.length) + ' 段把 ' + date + ' 的 24 小时接满，'
       + '共 ' + fmtDur(covered) + '。这一天现在已有 ' + String(locked.length) + ' 件，其中 '
-      + String(overlaps.length) + ' 处与候选时段重叠。'),
-    renderKpiGrid([
+      + String(overlaps.length) + ' 处与候选时段重叠。') },
+    { navText: '这一版候选的读数', html: renderKpiGrid([
       { label: '候选段数', value: String(candidates.length) + ' 段', detail: '这一版商量出来的' },
       {
         label: '24 小时覆盖', value: fmtDur(covered),
@@ -178,9 +179,10 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
       },
       { label: '与已有重叠', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '落盘前先看一眼' },
       { label: '这一天已有', value: String(locked.length) + ' 件', detail: '现在库里的排布' },
-    ], { title: '这一版候选的读数' }),
-    renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: '候选的 24 小时', height: 120 }),
-    renderDataTable({
+    ], { title: '这一版候选的读数' }) },
+    // 段名是「候选的 24 小时」；目录收成短名（口径见 `shared/pageNav.ts`）。
+    { navText: '候选的时段', html: renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: '候选的 24 小时', height: 120 }) },
+    { html: renderDataTable({
       caption: '候选事件',
       columns: [
         { key: 'time', label: '时段' },
@@ -190,29 +192,29 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
       ],
       rows,
       emptyText: '这一版一段也没给',
-    }),
-    renderCaliberLine('候选是把这一天整段重排 ｜ 落盘时先按日期整日覆盖，候选之外的那些会被标记成不再算'),
-    renderDisclosure({
+    }) },
+    { html: renderCaliberLine('候选是把这一天整段重排 ｜ 落盘时先按日期整日覆盖，候选之外的那些会被标记成不再算') },
+    { html: renderDisclosure({
       title: '锁定事件区',
       contentHtml: (locked.length === 0
         ? '<p class="sch-pl-note">这一天现在库里没有别的安排，落盘不会顶掉任何一件。</p>'
         : '<p class="sch-pl-note">这些是这一天现在库里的排布，落盘时会被候选整段换掉。</p>')
         + renderListRows({ items: lockedRows, emptyText: '这一天现在库里没有别的安排' }),
-    }),
-    renderDisclosure({
+    }) },
+    { html: renderDisclosure({
       title: '空隙提示',
       contentHtml: renderListRows({
         items: gaps.map((g) => ({ left: span(clockOf(g.start), clockOf(g.end)), main: '空隙', right: fmtDurShort(g.end - g.start) })),
         emptyText: '候选把 24 小时一段接一段接满了，没有空隙。',
       }),
-    }),
-    renderPreBlock({
+    }) },
+    { html: renderPreBlock({
       label: '认可这一版就说这一句',
       command: '按这一版把 ' + date + ' 的计划落下来',
       actionId: 'ilife-sch-plan-copy-next',
       copyLabel: '复制这句话',
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -222,9 +224,9 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"preview","date":"' + date + '"}',
         source: '日程计划表与作息记录表（近 ' + String(HISTORY_DAYS) + ' 天）',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
 
 /* ─────────────────────── ② 制定次日计划结果（老侧 f17） ─────────────────────── */
@@ -260,12 +262,12 @@ export function resultPage(
     subtitle: '落下来的是 ' + date + '，候选 ' + String(candidates.length) + ' 段，'
       + '贴历史 ' + String(match) + ' 段，偏离 ' + String(drift) + ' 段。',
   };
-  const content = [
-    renderConclusionBar('这一版已经落盘：' + date + ' 现在排着 ' + String(written.length) + ' 件，'
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar('这一版已经落盘：' + date + ' 现在排着 ' + String(written.length) + ' 件，'
       + '共 ' + fmtDur(covered) + '。' + (rate === null
         ? '近 ' + String(HISTORY_DAYS) + ' 天没有作息记录，贴合与否无从比较。'
-        : '与近 ' + String(HISTORY_DAYS) + ' 天的作息习惯贴合率 ' + String(rate) + '%。')),
-    renderKpiGrid([
+        : '与近 ' + String(HISTORY_DAYS) + ' 天的作息习惯贴合率 ' + String(rate) + '%。')) },
+    { navText: '这一版的读数', html: renderKpiGrid([
       { label: '候选段数', value: String(candidates.length) + ' 段', detail: date },
       {
         label: '历史贴合率', value: rate === null ? '—' : String(rate) + '%',
@@ -274,17 +276,18 @@ export function resultPage(
       },
       { label: '偏离与无参考', value: String(drift) + ' 段偏离', detail: '另有 ' + String(none) + ' 段无历史可参照' },
       { label: '冲突', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '采纳前先看一眼' },
-    ], { title: '这一版的读数' }),
-    renderHourBand(cellsOf(written), { order: L1_ORDER, title: '24 小时时间轴与分类色带', height: 140 }),
-    renderFactStrip({
+    ], { title: '这一版的读数' }) },
+    // 段名是「24 小时时间轴与分类色带」；目录收成短名（口径见 `shared/pageNav.ts`）。
+    { navText: '时间轴与分类色带', html: renderHourBand(cellsOf(written), { order: L1_ORDER, title: '24 小时时间轴与分类色带', height: 140 }) },
+    { html: renderFactStrip({
       items: [
         { label: '历史窗口', value: String(HISTORY_DAYS) + ' 天' },
         { label: '这段窗口的作息记录', value: String(records.length) + ' 条' },
         { label: '远端侧', value: REMOTE_LABEL[remote] },
         { label: '这一天现在', value: String(written.length) + ' 件' },
       ],
-    }),
-    renderFeedbackBlock({
+    }) },
+    { navText: '历史贴合提示', html: renderFeedbackBlock({
       title: '历史贴合提示',
       toast: {
         icon: rate === null ? 'info' : (drift === 0 ? 'ok' : 'warn'),
@@ -295,8 +298,8 @@ export function resultPage(
         lines: fits.filter((f) => f.fit === 'drift').map((f) => f.hint),
       },
       staticNotice: true,
-    }),
-    renderDataTable({
+    }) },
+    { html: renderDataTable({
       caption: '逐段贴合',
       columns: [
         { key: 'time', label: '时段' },
@@ -306,8 +309,8 @@ export function resultPage(
       ],
       rows: fitRows,
       emptyText: '这一版一段也没给',
-    }),
-    drift === 0 ? '' : renderFeedbackBlock({
+    }) },
+    { navText: drift === 0 ? '' : '偏离警示', html: drift === 0 ? '' : renderFeedbackBlock({
       title: '偏离警示',
       toast: {
         icon: 'warn',
@@ -315,8 +318,8 @@ export function resultPage(
         lines: fits.filter((f) => f.fit === 'drift').map((f) => span(f.event.time_start, f.event.time_end) + ' ' + f.event.title),
       },
       staticNotice: true,
-    }),
-    renderFeedbackBlock({
+    }) },
+    { navText: '冲突与警告', html: renderFeedbackBlock({
       title: '冲突与警告',
       toast: overlaps.length === 0
         ? { icon: 'ok', msg: '这一版候选与这一天原来的排布没有时段重叠。' }
@@ -326,14 +329,14 @@ export function resultPage(
           lines: overlaps.map((o) => o.candidate + ' ↔ ' + o.locked + '，重叠 ' + o.overlap + '（' + String(o.minutes) + ' 分钟）'),
         },
       staticNotice: true,
-    }),
-    renderPreBlock({
+    }) },
+    { html: renderPreBlock({
       label: '要再改这一版就说这一句',
       command: '把 ' + date + ' 的计划再调整一版',
       actionId: 'ilife-sch-plan-copy-next',
       copyLabel: '复制这句话',
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -345,7 +348,7 @@ export function resultPage(
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"upsert","date":"' + date + '"}',
         source: '日程计划表（' + date + ' 落库 ' + String(written.length) + ' 件）',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }

@@ -18,6 +18,10 @@
  *  （卡片格／对照行／框），不拿 `、`／`·`／`｜`／`；`／`~` 这些符号顶替设计——范围一律写「至」，
  *  不用波浪号。`lark-cli` 是例外（照 #788：它是用户要自己动手装的东西，老侧 HELP 与本仓
  *  SKILL.md 都用这个词，故有意不在禁用词里）；页上其余文案零命令键、零库列名、零参数名、零票号。
+ *
+ *  #891 补的**页内定位**（不动件序列，只给已有的段名加锚点与页首目录）：判据（小节数 ≥ 3 出目录）
+ *  与装配的唯一一处定义地在 `shared/pageNav.ts` 的 `SECTION_TOC_MIN`。两张页都恒 ≥4 小节（长页）：
+ *  初始化回执 4 颗（`这一趟的读数`／`三张表`／`下一步`／`复制初始化结果`）、向导 7 颗。
  */
 import {
   renderCaliberLine, renderConclusionBar, renderDataTable, renderKpiGrid, renderProseBlock,
@@ -26,6 +30,7 @@ import {
 import { renderActionBar } from 'base-paint';
 import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import {
   adminPartsCss, renderSectionTitle, renderSteps, renderVerifyList, type AdminStepView,
 } from './adminParts.js';
@@ -101,11 +106,10 @@ export function renderInitReceiptPage(input: InitReceiptInput): string {
     { 表: '每日摘要', 行数: countText(input.counts.summaries), 管什么: '按天按类汇总的分钟数' },
     { 表: '日程计划', 行数: countText(input.counts.plans), 管什么: '未来排布的事件' },
   ];
-  const content = [
-    renderConclusionBar(conclusion),
-    renderKpiGrid(cards, { title: '这一趟的读数' }),
-    renderSectionTitle('三张表'),
-    renderDataTable({
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar(conclusion) },
+    { navText: '这一趟的读数', html: renderKpiGrid(cards, { title: '这一趟的读数' }) },
+    { navText: '三张表', html: renderSectionTitle('三张表') + renderDataTable({
       columns: [
         { key: '表', label: '表' },
         { key: '行数', label: '行数', align: 'right' },
@@ -113,15 +117,15 @@ export function renderInitReceiptPage(input: InitReceiptInput): string {
       ],
       rows: tableRows,
       emptyText: '三张表一行没有',
-    }),
-    renderCaliberLine('再跑一次只会补齐缺的表，已有数据一条不动'),
+    }) },
+    { html: renderCaliberLine('再跑一次只会补齐缺的表，已有数据一条不动') },
     // #887：这一处原先是「库文件路径」那个复制区（一页里的第二处复制按钮排），现在收成一行确认语 ＋
     // 单颗复制按钮——完整路径进 `data-t`，页上不印路径（落点名只写人话）。
-    pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-init-copy-path'),
-    renderSectionTitle('下一步'),
-    renderProseBlock({ text: '刚装好就说「首次使用」，向导带你走完六步。平时记一条作息只说一句话就行。' }),
+    { html: pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-init-copy-path') },
+    { navText: '下一步', html: renderSectionTitle('下一步')
+      + renderProseBlock({ text: '刚装好就说「首次使用」，向导带你走完六步。平时记一条作息只说一句话就行。' }) },
     // #887：一页**一个**复制区（数据＝初始化回执整份、日志＝这一趟六段），原先的第二对按钮合并到这里。
-    scheduleCopyArea({
+    { navText: '复制初始化结果', html: scheduleCopyArea({
       title: '复制初始化结果',
       dataActionId: 'ilife-sch-init-copy-data',
       logActionId: 'ilife-sch-init-copy-log',
@@ -141,9 +145,9 @@ export function renderInitReceiptPage(input: InitReceiptInput): string {
         source: '建库与三张表（辅助与管理）',
         actionAt: scheduleNowStamp(),
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: adminPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: adminPartsCss() });
 }
 
 /** 向导的一步（调用方排好 6 步，含状态与一句话说明）。 */
@@ -201,35 +205,33 @@ export function renderFirstUsePage(input: FirstUseInput): string {
       rows: input.todos.map((t) => ({ 待办: t.title, 怎么做: t.steps.join('／') })),
       emptyText: '这一趟没有待办',
     });
-  const content = [
-    renderConclusionBar(conclusion),
-    renderSectionTitle('六步向导'),
-    renderSteps(views),
-    renderSectionTitle('路径确认'),
-    renderProseBlock({ text: '四处落点都在下面，点一下就复制完整路径。落点由配置文件决定，改动去改配置，不用重装。' }),
-    // #887：四处落点各**一枚**复制按钮（原先四个复制区＝四对按钮，现各收成一行确认语 ＋ 一颗按钮）。
-    pathCopyRow('库目录', input.paths.dbDir, 'ilife-sch-firstuse-copy-dbdir'),
-    pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-firstuse-copy-dbfile'),
-    pathCopyRow('产物根目录', input.paths.pagesRoot, 'ilife-sch-firstuse-copy-pages'),
-    pathCopyRow('帮助页', input.paths.helpDir, 'ilife-sch-firstuse-copy-help'),
-    renderSectionTitle('初始化报告'),
-    renderCaliberLine('建库动作 ｜ ' + (input.created ? '三张表本次新建' : '三张表沿用已有')),
-    renderCaliberLine('库内现状 ｜ 作息记录 ' + countText(input.counts.records)
-      + ' 条，日程计划 ' + countText(input.counts.plans) + ' 条'),
-    todoBlock,
-    renderSectionTitle('完成验证清单'),
-    renderVerifyList(input.verify),
-    renderSectionTitle('飞书强引导'),
-    renderProseBlock({ text: '配合飞书效果最好，日程能出现在飞书日历上。只有你明确说不用，才跳过这一步。' }),
-    renderProseBlock({ text: input.feishu.note }),
-    input.feishu.unavailable
-      ? renderConclusionBar('飞书同步不可用（先把上面那几道门补上）')
-      : renderCaliberLine('飞书三道门都过了，想看档位就说「飞书探测」'),
-    renderSectionTitle('完成'),
-    renderProseBlock({ text: '下一句说「作息管家 HELP」看全部功能，现在就可以记下第一条作息。' }),
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar(conclusion) },
+    { navText: '六步向导', html: renderSectionTitle('六步向导') + renderSteps(views) },
+    { navText: '路径确认', html: renderSectionTitle('路径确认')
+      + renderProseBlock({ text: '四处落点都在下面，点一下就复制完整路径。落点由配置文件决定，改动去改配置，不用重装。' })
+      // #887：四处落点各**一枚**复制按钮（原先四个复制区＝四对按钮，现各收成一行确认语 ＋ 一颗按钮）。
+      + pathCopyRow('库目录', input.paths.dbDir, 'ilife-sch-firstuse-copy-dbdir')
+      + pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-firstuse-copy-dbfile')
+      + pathCopyRow('产物根目录', input.paths.pagesRoot, 'ilife-sch-firstuse-copy-pages')
+      + pathCopyRow('帮助页', input.paths.helpDir, 'ilife-sch-firstuse-copy-help') },
+    { navText: '初始化报告', html: renderSectionTitle('初始化报告')
+      + renderCaliberLine('建库动作 ｜ ' + (input.created ? '三张表本次新建' : '三张表沿用已有'))
+      + renderCaliberLine('库内现状 ｜ 作息记录 ' + countText(input.counts.records)
+        + ' 条，日程计划 ' + countText(input.counts.plans) + ' 条')
+      + todoBlock },
+    { navText: '完成验证清单', html: renderSectionTitle('完成验证清单') + renderVerifyList(input.verify) },
+    { navText: '飞书强引导', html: renderSectionTitle('飞书强引导')
+      + renderProseBlock({ text: '配合飞书效果最好，日程能出现在飞书日历上。只有你明确说不用，才跳过这一步。' })
+      + renderProseBlock({ text: input.feishu.note })
+      + (input.feishu.unavailable
+        ? renderConclusionBar('飞书同步不可用（先把上面那几道门补上）')
+        : renderCaliberLine('飞书三道门都过了，想看档位就说「飞书探测」')) },
+    { navText: '完成', html: renderSectionTitle('完成')
+      + renderProseBlock({ text: '下一句说「作息管家 HELP」看全部功能，现在就可以记下第一条作息。' }) },
     // #887：一页**一个**复制区（数据＝向导报告整份、日志＝这一趟六段）——原先五对按钮合并到这里。
     // 报告里带 `初始化 prompt` 那一条：复制出去的文本里就有与 HELP 单源的那一句（探针量的是标记面）。
-    scheduleCopyArea({
+    { navText: '复制初始化 prompt', html: scheduleCopyArea({
       title: '复制初始化 prompt',
       dataActionId: 'ilife-sch-firstuse-copy-data',
       logActionId: 'ilife-sch-firstuse-copy-log',
@@ -252,7 +254,7 @@ export function renderFirstUsePage(input: FirstUseInput): string {
         source: '六步向导与四处落点（辅助与管理）',
         actionAt: scheduleNowStamp(),
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: adminPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: adminPartsCss() });
 }

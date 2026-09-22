@@ -16,6 +16,11 @@
  *
  *  **本件只认形状，不认口径**：进来的是摆好的数据（谁的时长、哪一类的色，都由 `query` 侧算好），
  *  出去的是 HTML 串。域票要出这一页，只许调本函数——骨架不许各域自造。
+ *
+ *  #891 补的**页内定位**（不动件序列，只给已有的段名加锚点与页首目录）：本页的**小节**＝页内
+ *  `<h2>` 段名所领的那一段，共 3 颗（`24 小时时间轴`／`作息库现状`／`复制与留档`；`status` 不给时
+ *  只剩 2 颗 ⇒ 按 `pageNav` 的长页判据 **≤2 小节判为短页**，页首不出目录）。判据与目录装配的唯一
+ *  一处定义地在 `./pageNav.ts`（`SECTION_TOC_MIN`）。
  */
 import {
   renderConclusionBar, renderDisclosure, renderDistributionRows, renderListRows,
@@ -24,6 +29,7 @@ import {
 import { renderFactStrip, type FactItemInput } from 'base-paint';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
+import { pageSections } from './pageNav.js';
 import { categoryColor, renderHourBand, type HourCell } from './pageParts.js';
 
 /** 「今天总结」一页要的全部东西（10 个字段，口径都在调用方）。 */
@@ -52,28 +58,41 @@ export interface DayPageData {
 
 /** 出「今天总结」整页。 */
 export function renderDayPage(data: DayPageData): string {
-  const content = [
-    renderConclusionBar(data.conclusion),
-    renderHourBand(data.cells, { order: data.order, title: '24 小时时间轴', height: 140 }),
-    renderFactStrip({ items: data.facts }),
-    renderListRows({ items: data.timeline, emptyText: '这一天还没有记录' }),
-    renderFactStrip({ items: data.sleep }),
-    renderDisclosure({
-      title: '分类进度（一级分类分布）',
-      // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，七条一样看不出分别。
-      contentHtml: renderDistributionRows({
-        rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
+  // 每一段两件：`navText` 给了＝这一段是**小节**（进页内目录、包一层带 `id` 的 `<section>`）；
+  // 不给＝不是小节（原样透传）。目录项与段名只在本清单里写一份（见 `./pageNav.ts` 的件头）。
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar(data.conclusion) },
+    // 段名是「24 小时时间轴」（图表块自己那颗 `<h2>`）；目录收成短名（口径见 `./pageNav.ts`）。
+    { navText: '时间轴', html: renderHourBand(data.cells, { order: data.order, title: '24 小时时间轴', height: 140 }) },
+    { html: renderFactStrip({ items: data.facts }) },
+    { html: renderListRows({ items: data.timeline, emptyText: '这一天还没有记录' }) },
+    { html: renderFactStrip({ items: data.sleep }) },
+    {
+      html: renderDisclosure({
+        title: '分类进度（一级分类分布）',
+        // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，七条一样看不出分别。
+        contentHtml: renderDistributionRows({
+          rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
+        }),
       }),
-    }),
-    renderStatusBlock(data.status),
-    scheduleCopyArea({
-      title: '复制与留档',
-      dataActionId: 'ilife-sch-day-copy-data',
-      logActionId: 'ilife-sch-day-copy-log',
-      ...data.copy,
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head: data.head, content });
+    },
+    { navText: statusNavText(data.status), html: renderStatusBlock(data.status) },
+    {
+      navText: '复制与留档',
+      html: scheduleCopyArea({
+        title: '复制与留档',
+        dataActionId: 'ilife-sch-day-copy-data',
+        logActionId: 'ilife-sch-day-copy-log',
+        ...data.copy,
+      }),
+    },
+  ]);
+  return assembleDocPage({ head: data.head, content: toc + body });
+}
+
+/** **作息库现状**那一段的段名（页内目录与段名一处派生：不给这一段就不占目录条目）。 */
+function statusNavText(status: DayPageData['status']): string {
+  return status === undefined || status.items.length === 0 ? '' : status.title;
 }
 
 /** **作息库现状**那一段的装配（今天总结页与时间轴页共用一处，两页的说法不各写一遍）。

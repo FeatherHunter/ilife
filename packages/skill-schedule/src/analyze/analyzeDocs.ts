@@ -24,6 +24,11 @@
  *  **页上文案纪律**：不出现命令键、库列名、参数名、英文裸词；并列关系一律用版面表达
  *  （卡片格／对照行／框），不拿 `、`／`·`／`｜`／`；`／`~` 这些符号顶替设计——范围一律写「至」，
  *  不用波浪号。需要一行里并列两件事时走公共层 `renderCaliberLine`（它按全角竖线拆成两段版面）。
+ *
+ *  #891 补的**页内定位**（不动件序列，只给已有的段名加锚点与页首目录）：判据（小节数 ≥ 3 出目录）
+ *  与装配的唯一一处定义地在 `shared/pageNav.ts` 的 `SECTION_TOC_MIN`。三张页都是长页：
+ *  作息对比 4 小节、类别深挖 5 小节、异常检测 4 小节（段名见各自的件序列；带读数的那两颗段名
+ *  〔`24h × N 天热力图`〕在目录里收成短名 `热力图`，读数留在大段名上）。
  */
 import {
   renderCaliberLine, renderConclusionBar, renderDataTable, renderDistributionRows,
@@ -37,6 +42,7 @@ import {
 import { buildCategoryDeep, buildRecordCompare } from '../render/index.js';
 import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { categoryColor, hourCellsOf, renderHeatMatrix, type HeatRow } from '../shared/pageParts.js';
 import type { ScheduleRecord } from '../fetch/db.js';
 import {
@@ -244,20 +250,20 @@ export function renderComparePage(input: ComparePageInput): string {
   const conclusion = input.labelA + ' 与 ' + input.labelB + '：总时长从 ' + fmtDur(totalA) + ' 到 ' + fmtDur(totalB)
     + '。按有记录的天数摊平，日均从 ' + fmtDur(Math.round(avgA)) + ' 到 ' + fmtDur(Math.round(avgB))
     + '。七个维度里有 ' + String(changed.length) + ' 个的日均变化过了一成。';
-  const content = [
-    renderKpiGrid(cards, { title: '四卡对照' }),
-    renderConclusionBar(conclusion),
-    renderSectionTitle('7 维差异'),
-    renderCaliberLine('A 段＝' + input.labelA + '，' + input.startA + ' 至 ' + input.endA
-      + ' ｜ B 段＝' + input.labelB + '，' + input.startB + ' 至 ' + input.endB),
-    renderCaliberLine('柱长按这一维里两段的较大者比 ｜ 差值是 B 减 A，涨绿降红 ｜ 七维按一级分类合计，创作不参评'),
-    renderDiffBars(rows),
-    renderSectionTitle('AI 思考钩子'),
-    renderCaliberLine('这一节是留给 AI 的入口：把下面任意一句复制给 AI，它就着这两个区间往下聊'),
-    // 逐句一段正文（**不用列表行**：那一件是「一行一格、超出裁掉」的形状，窄屏上问题会被省略号吃掉——
-    //  #789 的响应式读数在 390 档实测裁掉过四成，见证据件第四节）。
-    ...compareQuestions(rows, input.labelA, input.labelB).map((text) => renderProseBlock({ text })),
-    scheduleCopyArea({
+  const { toc, body } = pageSections([
+    { navText: '四卡对照', html: renderKpiGrid(cards, { title: '四卡对照' }) },
+    { html: renderConclusionBar(conclusion) },
+    { navText: '7 维差异', html: renderSectionTitle('7 维差异')
+      + renderCaliberLine('A 段＝' + input.labelA + '，' + input.startA + ' 至 ' + input.endA
+        + ' ｜ B 段＝' + input.labelB + '，' + input.startB + ' 至 ' + input.endB)
+      + renderCaliberLine('柱长按这一维里两段的较大者比 ｜ 差值是 B 减 A，涨绿降红 ｜ 七维按一级分类合计，创作不参评')
+      + renderDiffBars(rows) },
+    { navText: 'AI 思考钩子', html: renderSectionTitle('AI 思考钩子')
+      + renderCaliberLine('这一节是留给 AI 的入口：把下面任意一句复制给 AI，它就着这两个区间往下聊')
+      // 逐句一段正文（**不用列表行**：那一件是「一行一格、超出裁掉」的形状，窄屏上问题会被省略号吃掉——
+      //  #789 的响应式读数在 390 档实测裁掉过四成，见证据件第四节）。
+      + compareQuestions(rows, input.labelA, input.labelB).map((text) => renderProseBlock({ text })).join('') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-compare-copy-data',
       logActionId: 'ilife-sch-compare-copy-log',
@@ -270,9 +276,9 @@ export function renderComparePage(input: ComparePageInput): string {
         source: '作息记录表（' + String(input.a.length + input.b.length) + ' 行）',
         actionAt: scheduleNowStamp(),
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: analyzePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: analyzePartsCss() });
 }
 
 /* ─────────────────────────── ② 类别深挖（老侧 f04） ─────────────────────────── */
@@ -351,36 +357,37 @@ export function renderCategoryPage(input: CategoryPageInput): string {
   const caliber = input.requested === input.level1
     ? '这一维按一级分类算 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格'
     : '「' + input.requested + '」按一级分类归到「' + input.level1 + '」 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格';
-  const content = [
-    renderKpiGrid(cards, { title: '这一段的读数' }),
-    renderCaliberLine(caliber),
-    renderHeatMatrix(capped, {
+  const { toc, body } = pageSections([
+    { navText: '这一段的读数', html: renderKpiGrid(cards, { title: '这一段的读数' }) },
+    { html: renderCaliberLine(caliber) },
+    // 段名是「24h × N 天热力图」；目录收成短名（口径见 `shared/pageNav.ts`）。
+    { navText: '热力图', html: renderHeatMatrix(capped, {
       order: [input.level1],
       id: 'sch-an-heat',
       title: '24h × ' + String(dates.length) + ' 天热力图',
       legend: true,
       withTotal: true,
       dayLabel: (row) => row.label + ' ' + row.date.slice(5),
-    }),
-    capped.length === rows.length
+    }) },
+    { html: capped.length === rows.length
       ? ''
-      : renderCaliberLine('这一段跨了 ' + String(rows.length) + ' 天，热力图只印最近 ' + String(capped.length) + ' 天'),
-    renderSectionTitle('分类总览'),
-    renderCaliberLine('这一维下面各二级分类的时长与占比 ｜ 只有一级分类的记录归在「未分二级」'),
-    renderDistributionRows({ rows: secondRows }),
-    renderSectionTitle('记录明细'),
-    renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        { key: 'time', label: '时段' },
-        { key: 'activity', label: '活动' },
-        { key: 'category', label: '分类' },
-        { key: 'duration', label: '时长', align: 'right' },
-      ],
-      rows: detailRows,
-      emptyText: '这一段里这一维没有记录',
-    }),
-    scheduleCopyArea({
+      : renderCaliberLine('这一段跨了 ' + String(rows.length) + ' 天，热力图只印最近 ' + String(capped.length) + ' 天') },
+    { navText: '分类总览', html: renderSectionTitle('分类总览')
+      + renderCaliberLine('这一维下面各二级分类的时长与占比 ｜ 只有一级分类的记录归在「未分二级」')
+      + renderDistributionRows({ rows: secondRows }) },
+    { navText: '记录明细', html: renderSectionTitle('记录明细')
+      + renderDataTable({
+        columns: [
+          { key: 'date', label: '日期' },
+          { key: 'time', label: '时段' },
+          { key: 'activity', label: '活动' },
+          { key: 'category', label: '分类' },
+          { key: 'duration', label: '时长', align: 'right' },
+        ],
+        rows: detailRows,
+        emptyText: '这一段里这一维没有记录',
+      }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-category-copy-data',
       logActionId: 'ilife-sch-category-copy-log',
@@ -392,9 +399,9 @@ export function renderCategoryPage(input: CategoryPageInput): string {
         source: '作息记录表（' + String(hits.length) + ' 行）',
         actionAt: scheduleNowStamp(),
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: analyzePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: analyzePartsCss() });
 }
 
 /* ─────────────────────────── ③ 异常检测（老侧 f05） ─────────────────────────── */
@@ -460,33 +467,33 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
     prev: Math.round(baseDaily[dim]),
     move: signedShort(curDaily[dim] - baseDaily[dim]),
   }));
-  const content = [
-    renderKpiGrid(cards, { title: '这一趟检测的读数' }),
-    renderSectionTitle('异常详情'),
-    renderCaliberLine('红框＝偏离过两成 ｜ 黄框＝偏离过一成 ｜ 基线＝' + input.baselineStart
-      + ' 至 ' + input.end + ' 这 30 天的日均'),
-    renderAnomalyFrames(frames, emptyText),
-    renderSectionTitle('7 维雷达'),
-    renderRadar({
-      dims: DIMS.map((dim) => ({ label: dim, current: curDaily[dim], baseline: baseDaily[dim] })),
-      currentLabel: '最近 ' + String(w) + ' 天',
-      baselineLabel: '近 30 天',
-      caption: '蓝面＝最近 ' + String(w) + ' 天的日均，灰面＝近 30 天的日均。每一个轴按这一维里两段的较大者铺满，谁缩进去谁就少。',
-    }),
-    renderDataTable({
-      columns: [
-        { key: 'dim', label: '维度' },
-        { key: 'cur', label: '这一段日均', align: 'right' },
-        { key: 'prev', label: '基线日均', align: 'right' },
-        { key: 'move', label: '日均变化', align: 'right' },
-      ],
-      rows: radarRows.map((row) => {
-        const glyph = getEmojiPrefix(row.dim);
-        return { dim: glyph === '' ? row.dim : glyph + ' ' + row.dim, cur: fmtDur(row.cur), prev: fmtDur(row.prev), move: row.move };
-      }),
-      caption: '七维的日均读数（创作不参评）',
-    }),
-    scheduleCopyArea({
+  const { toc, body } = pageSections([
+    { navText: '这一趟检测的读数', html: renderKpiGrid(cards, { title: '这一趟检测的读数' }) },
+    { navText: '异常详情', html: renderSectionTitle('异常详情')
+      + renderCaliberLine('红框＝偏离过两成 ｜ 黄框＝偏离过一成 ｜ 基线＝' + input.baselineStart
+        + ' 至 ' + input.end + ' 这 30 天的日均')
+      + renderAnomalyFrames(frames, emptyText) },
+    { navText: '7 维雷达', html: renderSectionTitle('7 维雷达')
+      + renderRadar({
+        dims: DIMS.map((dim) => ({ label: dim, current: curDaily[dim], baseline: baseDaily[dim] })),
+        currentLabel: '最近 ' + String(w) + ' 天',
+        baselineLabel: '近 30 天',
+        caption: '蓝面＝最近 ' + String(w) + ' 天的日均，灰面＝近 30 天的日均。每一个轴按这一维里两段的较大者铺满，谁缩进去谁就少。',
+      })
+      + renderDataTable({
+        columns: [
+          { key: 'dim', label: '维度' },
+          { key: 'cur', label: '这一段日均', align: 'right' },
+          { key: 'prev', label: '基线日均', align: 'right' },
+          { key: 'move', label: '日均变化', align: 'right' },
+        ],
+        rows: radarRows.map((row) => {
+          const glyph = getEmojiPrefix(row.dim);
+          return { dim: glyph === '' ? row.dim : glyph + ' ' + row.dim, cur: fmtDur(row.cur), prev: fmtDur(row.prev), move: row.move };
+        }),
+        caption: '七维的日均读数（创作不参评）',
+      }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-anomaly-copy-data',
       logActionId: 'ilife-sch-anomaly-copy-log',
@@ -505,7 +512,7 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
         source: '作息记录表（窗口 ' + String(input.records.length) + ' 行）',
         actionAt: scheduleNowStamp(),
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: analyzePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: analyzePartsCss() });
 }

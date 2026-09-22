@@ -24,6 +24,7 @@ import { listPlanEvents } from '../fetch/index.js';
 import { VALID_COMPLETIONS, fmtDurShort, l1Of } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
 import { planCopyArea } from './receipt.js';
@@ -79,39 +80,39 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
     '③ 把标记交给 AI 落库：把下面那一句复制给 AI，它按你标的状态与原因逐条写回，写完再回这一页看。',
     '④ 收尾看结论：落库之后这一页的完成率与状态分布会跟着更新，那就是这一天的复盘结论。',
   ];
-  const content = [
-    renderKpiGrid(kpis, { title: '这一天的复盘进度' }),
-    renderConclusionBar(conclusion),
-    renderSectionTitle('逐条复盘'),
-    '<p class="sch-pl-note">每条计划的完成状态与原因逐条列出，状态取的是库里现在那一串，一个字都没有折算。</p>',
-    renderDataTable({
-      columns: [
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '计划' },
-        { key: 'category', label: '分类' },
-        { key: 'state', label: '完成状态' },
-        { key: 'note', label: '原因' },
-      ],
-      rows,
-      emptyText: '这一天没有活跃的计划',
-    }),
-    renderFactStrip({
-      items: counts.map((c) => ({ label: c.state, value: String(c.count) + ' 条' })),
-    }),
-    renderSectionTitle('讨论区'),
-    renderListRows({
-      items: discussion.map((text) => ({ main: text })),
-      emptyText: '这一天没有可讨论的对象',
-    }),
-    renderPreBlock({
+  const { toc, body } = pageSections([
+    { navText: '这一天的复盘进度', html: renderKpiGrid(kpis, { title: '这一天的复盘进度' }) },
+    { html: renderConclusionBar(conclusion) },
+    { navText: '逐条复盘', html: renderSectionTitle('逐条复盘')
+      + '<p class="sch-pl-note">每条计划的完成状态与原因逐条列出，状态取的是库里现在那一串，一个字都没有折算。</p>'
+      + renderDataTable({
+        columns: [
+          { key: 'time', label: '时段' },
+          { key: 'title', label: '计划' },
+          { key: 'category', label: '分类' },
+          { key: 'state', label: '完成状态' },
+          { key: 'note', label: '原因' },
+        ],
+        rows,
+        emptyText: '这一天没有活跃的计划',
+      })
+      + renderFactStrip({
+        items: counts.map((c) => ({ label: c.state, value: String(c.count) + ' 条' })),
+      }) },
+    { navText: '讨论区', html: renderSectionTitle('讨论区')
+      + renderListRows({
+        items: discussion.map((text) => ({ main: text })),
+        emptyText: '这一天没有可讨论的对象',
+      }) },
+    { html: renderPreBlock({
       label: events.length === 0 ? '先排这一天的计划就说这一句' : '把标记交回 AI 就说这一句',
       command: events.length === 0
         ? '商量一下 ' + date + ' 这一天的计划'
         : '按这一页标好的状态与原因，把 ' + date + ' 这天的计划逐条写回库里',
       actionId: 'ilife-sch-review-copy-next',
       copyLabel: '复制这句话',
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-review-copy-data',
       logActionId: 'ilife-sch-review-copy-log',
@@ -122,7 +123,7 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
           + date + '"}',
         source: '日程计划表（' + String(events.length) + ' 行）',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }

@@ -23,6 +23,7 @@ import { renderFactStrip } from 'base-paint';
 import { LEVEL1_WHITELIST, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections, type PageSection } from '../shared/pageNav.js';
 import { categoryColor, hourCellsOf, renderHeatMatrix, renderHourBand, type HeatRow } from '../shared/pageParts.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { HEAT_DAYS_CAP, LIST_ROWS_CAP, PAIR_ROWS_CAP, replayData, type ReplayData, type ReplayGranularity, type ReplayWindow } from './replayDocs.js';
@@ -47,7 +48,7 @@ const minutesOf = minutesOfDayEnd;
 
 /** 计划 vs 实际对照（老侧 day 档的第一段）：逐条计划一行，计划时长与实际时长并排。
  *  通用档（跨了月）只印头几条：逐条那一段是给单日／短区间看的，长区间的账走聚合那几块。 */
-function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): string {
+function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): PageSection[] {
   const cap = capped ? PAIR_ROWS_CAP : data.cross.pairs.length;
   const rows: DataTableRow[] = data.cross.pairs.slice(0, cap).map((p) => {
     const sign = p.deltaMinutes >= 0 ? '+' : '−';
@@ -71,7 +72,7 @@ function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): st
     { key: 'completion', label: '完成状态' },
   ];
   const rest = data.cross.pairs.length - rows.length;
-  return renderSectionTitle('计划 vs 实际对照')
+  return [{ navText: '计划 vs 实际对照', html: renderSectionTitle('计划 vs 实际对照')
     + renderDataTable({
       columns, rows,
       emptyText: data.plans.length === 0
@@ -80,11 +81,13 @@ function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): st
     })
     + (rest <= 0 ? '' : '<p class="sch-pl-note">计划与记录相交的一共 ' + String(data.cross.pairs.length)
       + ' 条，这里印的是头 ' + String(rows.length) + ' 条，另有 ' + String(rest) + ' 条。</p>')
-    + renderCaliberLine('实际时长按记录与计划时段相交的部分累加，同一时段记了多条就一起算进去');
+    + renderCaliberLine('实际时长按记录与计划时段相交的部分累加，同一时段记了多条就一起算进去') }];
 }
 
-/** 实际作息（老侧 day／month／通用档的第一段）：分类聚合分布行；单日另给 24 小时色带。 */
-function segRecord(data: ReplayData): string {
+/** 实际作息（老侧 day／month／通用档的第一段）：分类聚合分布行；单日另给 24 小时色带。
+ *  #891：这一段里有**两颗**段名（`实际作息`／`这一天的 24 小时`），故拆成两小节，
+ *  另加第三小节 `分类聚合`——一节一条目录条目，件序列与顺序一处未动。 */
+function segRecord(data: ReplayData): PageSection[] {
   const ranked = Object.keys(data.byL1).sort((a, b) => (data.byL1[b] ?? 0) - (data.byL1[a] ?? 0));
   const distribution: readonly DistributionRowInput[] = ranked.map((name) => ({
     label: name,
@@ -98,16 +101,20 @@ function segRecord(data: ReplayData): string {
     }))),
     { order: L1_ORDER, title: '这一天的 24 小时', height: 120 },
   );
-  return renderSectionTitle('实际作息') + band + renderSectionTitle('分类聚合')
-    + renderDistributionRows({ rows: distribution });
+  return [
+    { navText: '实际作息', html: renderSectionTitle('实际作息') },
+    // 段名是「这一天的 24 小时」；目录收成短名（口径见 `shared/pageNav.ts`）。
+    { navText: band === '' ? '' : '这一天的时段', html: band },
+    { navText: '分类聚合', html: renderSectionTitle('分类聚合') + renderDistributionRows({ rows: distribution }) },
+  ];
 }
 
 /** 7 维趋势（老侧 week／通用档）：一维一条折线，一天一个点。 */
-function segTrend(data: ReplayData): string {
+function segTrend(data: ReplayData): PageSection[] {
   const days = data.days.filter((d) => d.records.length > 0);
-  if (days.length < 2) return '';
+  if (days.length < 2) return [];
   const labels = days.map((d) => d.date.slice(5));
-  return renderChartBlock({
+  return [{ navText: '7 维趋势', html: renderChartBlock({
     kind: 'line',
     title: '7 维趋势',
     input: {
@@ -121,15 +128,15 @@ function segTrend(data: ReplayData): string {
         legend: true, height: 190, labels: 'select' as const, showValues: false as const,
       },
     },
-  });
+  }) }];
 }
 
 /** 24h × N 天热力图（老侧 week／通用档）：一行一天，行尾当日合计。
  *  通用档只印最近那几天（上界见 `replayDocs.HEAT_DAYS_CAP`，口径行里写明）。 */
-function segHeat(data: ReplayData): string {
+function segHeat(data: ReplayData): PageSection[] {
   const all = data.days;
   const days = data.win.effective === 'week' ? all : all.filter((d) => d.records.length > 0);
-  if (days.length === 0) return '';
+  if (days.length === 0) return [];
   const capped = days.length > HEAT_DAYS_CAP ? days.slice(days.length - HEAT_DAYS_CAP) : days;
   const rows: HeatRow[] = capped.map((d) => ({
     label: weekdayOf(d.date),
@@ -139,20 +146,21 @@ function segHeat(data: ReplayData): string {
     }))),
     sum: d.minutes > 0 ? fmtDurShort(d.minutes) : '无记录',
   }));
-  return renderHeatMatrix(rows, {
+  // 段名是「24h × N 天热力图」；目录收成短名（口径见 `shared/pageNav.ts`）。
+  return [{ navText: '热力图', html: renderHeatMatrix(rows, {
     order: L1_ORDER, id: 'replay-heat', title: '24h × N 天热力图', legend: true, withTotal: true,
   }) + (capped.length === days.length ? ''
     : renderCaliberLine('这一段跨了 ' + String(days.length) + ' 天，热力图只印最近 ' + String(capped.length)
-      + ' 天，整段的读数看上面的分类聚合与 7 维趋势'));
+      + ' 天，整段的读数看上面的分类聚合与 7 维趋势')) }];
 }
 
 /** 计划执行（老侧 day／月／通用档）：六态分布 ＋ 按一级分类拆解。 */
-function segPlan(data: ReplayData): string {
+function segPlan(data: ReplayData): PageSection[] {
   const counts = data.completionCounts.map((c) => ({ state: c.state, count: String(c.count) }));
   const byCat: DataTableRow[] = data.completionByL1.map((c) => ({
     name: c.name, total: String(c.total), done: String(c.done), rate: pctText(c.rate),
   }));
-  return renderSectionTitle('计划执行')
+  return [{ navText: '计划执行', html: renderSectionTitle('计划执行')
     + '<p class="sch-pl-note">这一段排了 ' + String(data.plans.length) + ' 条计划，其中 '
       + String(data.marked) + ' 条标过完成状态，完成率 ' + pctText(data.completionRate)
       + '（分母是标过的那些，还没标的不算输）。</p>'
@@ -170,12 +178,12 @@ function segPlan(data: ReplayData): string {
       ],
       rows: byCat,
       emptyText: '这一段没有计划',
-    });
+    }) }];
 }
 
 /** 跨域对比（老侧 day／通用档）：未执行、超计划、计划外记录三张清单。
  *  `aggregate`（通用档跨了月）＝逐条那几张只给头几条并写明另有几条，计划外那一张改成按一级分类聚合。 */
-function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): string {
+function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): PageSection[] {
   const tag = (date: string): string => (withDate ? date.slice(5) + ' ' : '');
   const limited = <T,>(rows: readonly T[]): { readonly rows: readonly T[]; readonly rest: number } =>
     (aggregate ? { rows: rows.slice(0, LIST_ROWS_CAP), rest: Math.max(0, rows.length - LIST_ROWS_CAP) } : { rows, rest: 0 });
@@ -210,7 +218,7 @@ function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): stri
       + String(limited(data.cross.unexpected).rest) + ' 块没逐条印。</p>')
     : renderListRows({ items: limited(unexpectedRows).rows, emptyText: '这一段的记录都落在某条计划的时段里' });
   const restLine = (n: number): string => (n === 0 ? '' : '<p class="sch-pl-note">另有 ' + String(n) + ' 条没印出来。</p>');
-  return renderSectionTitle('跨域对比')
+  return [{ navText: '跨域对比', html: renderSectionTitle('跨域对比')
     + renderCaliberLine('计划外＝这天没有任何计划与它时段相交的记录。溢出＝与计划搭边的记录里，落在计划时段之外的那部分合计到了计划时长的两成以上。')
     + renderDisclosure({
       title: '没做成的计划',
@@ -226,11 +234,12 @@ function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): stri
       title: '计划之外的记录',
       open: true,
       contentHtml: unexpectedHtml,
-    });
+    }) }];
 }
 
-/** 健康分（全档）：单日给当天分，多日给均值与逐日曲线，七维明细逐条给。 */
-function segHealth(data: ReplayData): string {
+/** 健康分（全档）：单日给当天分，多日给均值与逐日曲线，七维明细逐条给。
+ *  #891：这一段里有**两颗**段名（`健康分`／逐日曲线那颗 `逐日健康分`），故拆成两小节。 */
+function segHealth(data: ReplayData): PageSection[] {
   const single = data.win.effective === 'day';
   const dims: readonly DistributionRowInput[] = DIM_ORDER.map((dim) => ({
     label: dim,
@@ -247,24 +256,26 @@ function segHealth(data: ReplayData): string {
       options: { height: 170, labels: 'select' as const, showValues: false as const },
     },
   });
-  return renderSectionTitle('健康分')
-    + renderFactStrip({
-      items: single
-        ? [{ label: '这一天', value: String(data.healthScore) }]
-        : [
-          { label: '均值', value: String(data.healthMean) },
-          { label: '有记录的天数', value: String(data.activeDays) + ' 天' },
-          { label: '最高的一天', value: series.length === 0 ? '—' : String(Math.max(...series.map((h) => h.score))) },
-          { label: '最低的一天', value: series.length === 0 ? '—' : String(Math.min(...series.map((h) => h.score))) },
-        ],
-    })
-    + chart
-    + renderCaliberLine('七个维度各自按目标时长给分再取均（创作不参评），单日与整段都是这一条算式')
-    + renderDistributionRows({ rows: dims });
+  return [
+    { navText: '健康分', html: renderSectionTitle('健康分')
+      + renderFactStrip({
+        items: single
+          ? [{ label: '这一天', value: String(data.healthScore) }]
+          : [
+            { label: '均值', value: String(data.healthMean) },
+            { label: '有记录的天数', value: String(data.activeDays) + ' 天' },
+            { label: '最高的一天', value: series.length === 0 ? '—' : String(Math.max(...series.map((h) => h.score))) },
+            { label: '最低的一天', value: series.length === 0 ? '—' : String(Math.min(...series.map((h) => h.score))) },
+          ],
+      })
+      + renderCaliberLine('七个维度各自按目标时长给分再取均（创作不参评），单日与整段都是这一条算式')
+      + renderDistributionRows({ rows: dims }) },
+    { navText: chart === '' ? '' : '逐日健康分', html: chart },
+  ];
 }
 
 /** 环比对比（老侧 month 档）：本月与上月同期逐分类并排。 */
-function segMonthCompare(data: ReplayData): string {
+function segMonthCompare(data: ReplayData): PageSection[] {
   const rows: DataTableRow[] = data.monthCompare.map((m) => ({
     name: m.name,
     cur: fmtDurShort(m.cur),
@@ -272,7 +283,7 @@ function segMonthCompare(data: ReplayData): string {
     delta: m.deltaPct === null ? '上月没有' : (m.deltaPct >= 0 ? '+' : '−') + String(Math.abs(m.deltaPct)) + '%',
   }));
   const rate = data.monthRateCompare;
-  return renderSectionTitle('环比对比')
+  return [{ navText: '环比对比', html: renderSectionTitle('环比对比')
     + '<p class="sch-pl-note">对照窗口是 ' + span(data.prevSpan.start, data.prevSpan.end)
       + '（起止各往前挪一个自然月）。</p>'
     + renderDataTable({
@@ -284,14 +295,14 @@ function segMonthCompare(data: ReplayData): string {
       emptyText: '本月与上月同期都没有记录',
     })
     + (rate === null ? '' : '<p class="sch-pl-note">计划完成率：本月 ' + String(rate.cur) + '%，上月同期 '
-      + String(rate.prev) + '%，差 ' + (rate.deltaPct >= 0 ? '+' : '−') + String(Math.abs(rate.deltaPct)) + ' 个百分点。</p>');
+      + String(rate.prev) + '%，差 ' + (rate.deltaPct >= 0 ? '+' : '−') + String(Math.abs(rate.deltaPct)) + ' 个百分点。</p>') }];
 }
 
 /** 目标达成（老侧 month 档）：完成率、维持（睡眠）占比、记录覆盖三格。 */
-function segGoals(data: ReplayData): string {
+function segGoals(data: ReplayData): PageSection[] {
   const maintain = data.byL1['维持'] ?? 0;
   const lastDay = data.win.end;
-  return renderSectionTitle('目标达成')
+  return [{ navText: '目标达成', html: renderSectionTitle('目标达成')
     + renderGoalCards([
       {
         label: '计划完成率',
@@ -314,11 +325,12 @@ function segGoals(data: ReplayData): string {
         value: String(data.healthScore),
         hint: '整段按七个维度取均，逐日曲线在下面那一段',
       },
-    ]);
+    ]) }];
 }
 
-/** 亮点与问题（老侧那一段 AI 洞察的位置）：拿前一段等长区间做对照，红黄逐条点名。 */
-function segInsights(data: ReplayData): string {
+/** 亮点与问题（老侧那一段 AI 洞察的位置）：拿前一段等长区间做对照，红黄逐条点名。
+ *  #891：这一段里有**两颗**段名（`亮点与问题`／`与上一段比`），故拆成两小节。 */
+function segInsights(data: ReplayData): PageSection[] {
   const red = data.anomalies.filter((a) => a.level === 'red');
   const yellow = data.anomalies.filter((a) => a.level === 'yellow');
   const line = (a: Anomaly): string => {
@@ -327,8 +339,9 @@ function segInsights(data: ReplayData): string {
     return a.dim + ' ' + arrow + ' ' + pct + '%（上一段 ' + fmtDurShort(a.prev) + '，这一段 ' + fmtDurShort(a.cur) + '）';
   };
   const none = data.anomalies.length === 0;
-  return renderSectionTitle('亮点与问题')
-    + renderFeedbackBlock({
+  return [
+    { navText: '亮点与问题', html: renderSectionTitle('亮点与问题') },
+    { navText: '与上一段比', html: renderFeedbackBlock({
       title: '与上一段比',
       toast: none
         ? {
@@ -343,13 +356,14 @@ function segInsights(data: ReplayData): string {
           lines: [...red, ...yellow].slice(0, 6).map(line),
         },
       staticNotice: true,
-    });
+    }) },
+  ];
 }
 
 /** 缺计划补齐引导（老侧 day 档）：这一天没有计划可对照时给这一块，**不降级**成一句空话。 */
-function segPlanGuide(data: ReplayData): string {
-  if (data.win.effective !== 'day' || data.plans.length > 0) return '';
-  return renderSectionTitle('缺计划补齐引导')
+function segPlanGuide(data: ReplayData): PageSection[] {
+  if (data.win.effective !== 'day' || data.plans.length > 0) return [];
+  return [{ navText: '缺计划补齐引导', html: renderSectionTitle('缺计划补齐引导')
     + renderFeedbackBlock({
       title: '这一天还没有计划',
       toast: {
@@ -363,12 +377,12 @@ function segPlanGuide(data: ReplayData): string {
       command: '商量一下 ' + data.win.start + ' 这一天的计划',
       actionId: 'ilife-sch-replay-copy-plan',
       copyLabel: '复制这句话',
-    });
+    }) }];
 }
 
 /** 页尾那一段（全档）：复盘接计划（老侧跨场景约定 C）。 */
-function segNext(data: ReplayData): string {
-  return renderSectionTitle('复盘到明天的衔接')
+function segNext(data: ReplayData): PageSection[] {
+  return [{ navText: '复盘到明天的衔接', html: renderSectionTitle('复盘到明天的衔接')
     + '<p class="sch-pl-note">复盘看完了，下一步是给 ' + data.nextDay
       + ' 排日程：说「商量计划」或「规划明天」，也可以把下面这一句复制给 AI 接着走。</p>'
     + renderPreBlock({
@@ -376,21 +390,23 @@ function segNext(data: ReplayData): string {
       command: '商量一下 ' + data.nextDay + ' 的计划',
       actionId: 'ilife-sch-replay-copy-next',
       copyLabel: '复制这句话',
-    });
+    }) }];
 }
 
 /* ─────────────────────────── 整页 ─────────────────────────── */
 
-/** 各档的区块序列（本页档路由的唯一定义地，与 `replayDocs.ts` 的窗口路由分开住两处职能）。 */
-function sectionsOf(data: ReplayData): string[] {
+/** 各档的区块序列（本页档路由的唯一定义地，与 `replayDocs.ts` 的窗口路由分开住两处职能）。
+ *  #891：每一支返回的是**小节清单**（一段一条目录条目），不再是拼好的字符串——
+ *  段名与目录条目同住一处，不会走散。 */
+function sectionsOf(data: ReplayData): PageSection[] {
   const g = data.win.effective;
   const multi = data.win.days > 1;
   if (g === 'day') {
-    return [segPlanActual(data, multi, false), segPlanGuide(data), segRecord(data), segPlan(data), segCross(data, multi, false), segHealth(data), segInsights(data)];
+    return [...segPlanActual(data, multi, false), ...segPlanGuide(data), ...segRecord(data), ...segPlan(data), ...segCross(data, multi, false), ...segHealth(data), ...segInsights(data)];
   }
-  if (g === 'week') return [segTrend(data), segHeat(data), segHealth(data), segInsights(data)];
-  if (g === 'month') return [segRecord(data), segMonthCompare(data), segGoals(data), segHealth(data), segInsights(data)];
-  return [segRecord(data), segTrend(data), segHeat(data), segPlan(data), segPlanActual(data, multi, true), segCross(data, multi, true), segHealth(data), segInsights(data)];
+  if (g === 'week') return [...segTrend(data), ...segHeat(data), ...segHealth(data), ...segInsights(data)];
+  if (g === 'month') return [...segRecord(data), ...segMonthCompare(data), ...segGoals(data), ...segHealth(data), ...segInsights(data)];
+  return [...segRecord(data), ...segTrend(data), ...segHeat(data), ...segPlan(data), ...segPlanActual(data, multi, true), ...segCross(data, multi, true), ...segHealth(data), ...segInsights(data)];
 }
 
 function kpisOf(data: ReplayData): readonly KpiCardInput[] {
@@ -449,19 +465,19 @@ export function replayPage(handle: ScheduleDb, win: ReplayWindow): string {
       + pctText(data.completionRate) + '。'
       + (win.requested === 'range' && g !== 'range' ? '这一段的跨度是 ' + String(win.days) + ' 天，按' + GRAN_CN[g] + '档画。' : ''),
   };
-  const content = [
-    renderKpiGrid(kpisOf(data), { title: '这一段的总览' }),
-    renderConclusionBar(conclusionOf(data)),
+  const content = pageSections([
+    { navText: '这一段的总览', html: renderKpiGrid(kpisOf(data), { title: '这一段的总览' }) },
+    { html: renderConclusionBar(conclusionOf(data)) },
     ...sectionsOf(data),
-    segNext(data),
-    scheduleCopyArea({
+    ...segNext(data),
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-replay-copy-data',
       logActionId: 'ilife-sch-replay-copy-log',
       ...copyOf(data),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: content.toc + content.body });
 }
 
 /** 结论条那一句：这一段干了什么、对照下来的结论是什么。 */

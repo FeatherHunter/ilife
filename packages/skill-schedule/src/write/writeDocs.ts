@@ -16,6 +16,12 @@
  *  **页上文案纪律**：一页里不出现命令键、库列名、英文裸词；并列关系一律用版面表达（卡片格／徽章列／
  *  键值行／对照行），不拿 `、`／`·`／`｜`／`；`／`~` 这些符号顶替设计——本票证据件里那条机器判据
  *  （分隔符门）量的就是这条。范围一律写「至」，不用波浪号。
+ *
+ *  #891 补的**页内定位**（不动件序列，只给已有的段名加锚点与页首目录）：判据（小节数 ≥ 3 出目录）
+ *  与装配的唯一一处定义地在 `shared/pageNav.ts` 的 `SECTION_TOC_MIN`。
+ *  **这一页型里被判为短页的是「写作息摘要回执」**：它恒 2 小节（`这次写了什么`／`复制与留档`）
+ *  ⇒ `tocEl` 保持 0、D5 那条腿照旧扣 4；「批量导入回执」在有条目没通过校验时才出第 3 小节
+ *  （`有几条没写进去`），全过那一档仍判短页。
  */
 import {
   renderCaliberLine, renderConclusionBar, renderDataTable,
@@ -31,6 +37,7 @@ import { buildRecordToday } from '../render/index.js';
 import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import type { ScheduleDb, ScheduleRecord } from '../fetch/db.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand, type HourCell } from '../shared/pageParts.js';
 import { renderDiffPanel, renderChipBand, renderPastHours, writePartsCss, type PastHourCard } from './writeParts.js';
 
@@ -205,26 +212,26 @@ export function recordResultPage(handle: ScheduleDb, record: ScheduleRecord, now
     subtitle: '刚写入的是 ' + date + ' 的 ' + span(record.time_start, record.time_end)
       + '，活动是「' + record.activity + '」，分类是「' + record.category + '」。',
   };
-  const content = [
-    level2 === null ? l1OnlyNotice(level1) : '',
-    renderConclusionBar('已记下这一条，' + date + ' 一共 ' + view.total + ' 块记录，健康分 ' + view.score + '。'),
-    renderKpiGrid(kpis, { title: '当前状态总览' }),
-    renderHourBand(cellsOf(records), { order: orderOf(), title: '全天作息时间轴', height: 140 }),
-    renderFactStrip({
+  const { toc, body } = pageSections([
+    { navText: level2 === null ? '这条可以再细一档' : '', html: level2 === null ? l1OnlyNotice(level1) : '' },
+    { html: renderConclusionBar('已记下这一条，' + date + ' 一共 ' + view.total + ' 块记录，健康分 ' + view.score + '。') },
+    { navText: '当前状态总览', html: renderKpiGrid(kpis, { title: '当前状态总览' }) },
+    { navText: '全天作息时间轴', html: renderHourBand(cellsOf(records), { order: orderOf(), title: '全天作息时间轴', height: 140 }) },
+    { html: renderFactStrip({
       items: [
         { label: '回溯窗口', value: span(hhmm(windowStart), record.time_end) },
         { label: '刚记录', value: span(record.time_start, record.time_end) },
         { label: '本类已有', value: String(sameCategory) + ' 块' },
         { label: '本类占比', value: fmtPct(record.duration_minutes ?? 0, view.coverage) + '%' },
       ],
-    }),
-    renderPastHours({
+    }) },
+    { navText: '过去几小时推断回溯', html: renderPastHours({
       title: '过去几小时推断回溯',
       cards,
       emptyText: '回溯窗口里还没有别的记录，这是窗口里的第一笔。',
-    }),
-    nextSteps(date, record),
-    scheduleCopyArea({
+    }) },
+    { html: nextSteps(date, record) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
@@ -237,9 +244,9 @@ export function recordResultPage(handle: ScheduleDb, record: ScheduleRecord, now
         + '","time_start":"' + record.time_start + '","time_end":"' + record.time_end
         + '","activity":"' + record.activity + '","category":"' + record.category + '"}',
       '作息记录表（这一条已入库）'),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: writePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
 }
 
 /* ─────────────────────────── ② 修正作息回执（老侧 f09） ─────────────────────────── */
@@ -290,25 +297,25 @@ export function amendReceiptPage(
     subtitle: '这条记录改过 ' + after.edit_count + ' 次，这次动的是 ' + after.date
       + ' 的 ' + span(after.time_start, after.time_end) + '。',
   };
-  const content = [
-    stale,
-    renderConclusionBar('这条记录已经改好，改的是哪几格，原来是什么值，下面逐格对照。'),
-    renderKpiGrid([
+  const { toc, body } = pageSections([
+    { html: stale },
+    { html: renderConclusionBar('这条记录已经改好，改的是哪几格，原来是什么值，下面逐格对照。') },
+    { navText: '这条记录现在的样子', html: renderKpiGrid([
       { label: '记录日期', value: after.date, detail: span(after.time_start, after.time_end) },
       { label: '修改次数', value: '第 ' + after.edit_count + ' 次', detail: '库里这条被改过几次' },
       { label: '现在的分类', value: after.category, detail: '一级 ' + l1Of(after.category) },
       { label: '现在的活动', value: after.activity, detail: fmtDur(after.duration_minutes ?? 0) },
-    ], { title: '这条记录现在的样子' }),
-    renderDiffPanel({ title: '这次改了什么', rows }),
-    renderDisclosure({
+    ], { title: '这条记录现在的样子' }) },
+    { navText: '这次改了什么', html: renderDiffPanel({ title: '这次改了什么', rows }) },
+    { html: renderDisclosure({
       title: '改完之后的完整一条',
       contentHtml: renderDataTable({
         columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
         rows: current,
       }),
-    }),
-    renderCaliberLine('改前那一格画着删除线，改后那一格是新值 ｜ 时长按时段实算，跟起止对得上'),
-    scheduleCopyArea({
+    }) },
+    { html: renderCaliberLine('改前那一格画着删除线，改后那一格是新值 ｜ 时长按时段实算，跟起止对得上') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
@@ -320,9 +327,9 @@ export function amendReceiptPage(
         '修改次数：' + after.edit_count,
       ], 'schedule-cmd-read schedule.record.write --params {"op":"amend","id":' + String(after.id) + '}',
       '作息记录表（这一条已改好，第 ' + String(after.edit_count) + ' 次）'),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: writePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
 }
 
 /* ─────────────────────────── ③ 批量导入回执 ─────────────────────────── */
@@ -361,19 +368,19 @@ export function batchReceiptPage(input: {
     title: '批量导入回执',
     subtitle: '导入的是 ' + input.date + ' 的记录，一共收到 ' + total + ' 条，写入 ' + done + ' 条。',
   };
-  const content = [
-    failed === 0 ? '' : renderFeedbackBlock({
+  const { toc, body } = pageSections([
+    { navText: failed === 0 ? '' : '有几条没写进去', html: failed === 0 ? '' : renderFeedbackBlock({
       title: '有几条没写进去',
       toast: {
         icon: 'warn',
         msg: '没通过的 ' + failed + ' 条没有写进库，改好之后可以再导一次。',
       },
       staticNotice: true,
-    }),
-    renderConclusionBar(failed === 0
+    }) },
+    { html: renderConclusionBar(failed === 0
       ? '这次收到 ' + total + ' 条，全都写进库了。'
-      : '这次收到 ' + total + ' 条，写进 ' + done + ' 条，另有 ' + failed + ' 条没通过校验。'),
-    renderKpiGrid([
+      : '这次收到 ' + total + ' 条，写进 ' + done + ' 条，另有 ' + failed + ' 条没通过校验。') },
+    { navText: '这一趟的结果', html: renderKpiGrid([
       { label: '收到条数', value: String(total) + ' 条', detail: input.date },
       { label: '写入成功', value: String(done) + ' 条', detail: '已进作息记录' },
       { label: '没通过', value: String(failed) + ' 条', detail: failed === 0 ? '一条不差' : '没有写进库' },
@@ -381,8 +388,8 @@ export function batchReceiptPage(input: {
         label: '写入进度', value: String(total === 0 ? 0 : Math.round((done / total) * 100)) + '%',
         detail: String(done) + ' ／ ' + String(total),
       },
-    ], { title: '这一趟的结果' }),
-    renderDataTable({
+    ], { title: '这一趟的结果' }) },
+    { html: renderDataTable({
       caption: '逐条结果',
       columns: [
         { key: 'n', label: '第几条' },
@@ -393,9 +400,9 @@ export function batchReceiptPage(input: {
       ],
       rows: tableRows,
       emptyText: '这一趟一条也没收到',
-    }),
-    left <= 0 ? '' : renderCaliberLine('另有 ' + left + ' 条没有摆上来，完整清单在复制出去的数据里'),
-    scheduleCopyArea({
+    }) },
+    { html: left <= 0 ? '' : renderCaliberLine('另有 ' + left + ' 条没有摆上来，完整清单在复制出去的数据里') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
@@ -405,9 +412,9 @@ export function batchReceiptPage(input: {
         ...input.rows.map((r) => '第 ' + r.seq + ' 条：' + r.time + ' ' + r.activity + ' ' + r.result),
       ], 'schedule-cmd-read schedule.record.write --params {"records":[' + String(total) + ' 条]}',
       '作息记录表（这一趟写入 ' + done + ' 条）', failed === 0),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: writePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
 }
 
 /* ─────────────────────────── ④ 写作息摘要回执 ─────────────────────────── */
@@ -427,24 +434,24 @@ export function summaryReceiptPage(
     subtitle: '写的是 ' + summary.date + ' 的「' + summary.category + '」摘要，一共 '
       + fmtDur(summary.totalMinutes) + '。',
   };
-  const content = [
-    renderConclusionBar('这一条摘要已经写进库：' + summary.date + ' 的「' + summary.category + '」记作 '
-      + fmtDur(summary.totalMinutes) + '。'),
-    renderKpiGrid([
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar('这一条摘要已经写进库：' + summary.date + ' 的「' + summary.category + '」记作 '
+      + fmtDur(summary.totalMinutes) + '。') },
+    { navText: '这次写了什么', html: renderKpiGrid([
       { label: '摘要日期', value: summary.date, detail: '写进每日摘要' },
       { label: '一级分类', value: summary.category, detail: '八类之一' },
       { label: '写入时长', value: fmtDur(summary.totalMinutes), detail: '这一次写的值' },
       { label: '当天记录', value: String(inLevel1.length) + ' 块', detail: '同一天同一支' },
-    ], { title: '这次写了什么' }),
-    renderFactStrip({
+    ], { title: '这次写了什么' }) },
+    { html: renderFactStrip({
       items: [
         { label: '当天这支记录合计', value: fmtDur(level1Minutes) },
         { label: '当天全部记录合计', value: fmtDur(dayMinutes) },
         { label: '这支占当天', value: fmtPct(level1Minutes, dayMinutes) + '%' },
       ],
-    }),
-    renderCaliberLine('摘要与记录是两支账 ｜ 摘要按天按一级分类各存一行，记录表照原样留着'),
-    scheduleCopyArea({
+    }) },
+    { html: renderCaliberLine('摘要与记录是两支账 ｜ 摘要按天按一级分类各存一行，记录表照原样留着') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
@@ -456,7 +463,7 @@ export function summaryReceiptPage(
       ], 'schedule-cmd-read schedule.record.write --params {"op":"summary","date":"' + summary.date
         + '","category":"' + summary.category + '","total_minutes":' + String(summary.totalMinutes) + '}',
       '每日摘要表（这一天这一支已入库）'),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: writePartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
 }

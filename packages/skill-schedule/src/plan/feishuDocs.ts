@@ -19,6 +19,7 @@ import { listPlanEvents } from '../fetch/index.js';
 import { fmtDurShort, l1Of } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
 import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
@@ -95,52 +96,52 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
     { step: '授权登录过', state: report.openId === null ? '没过' : '过了', why: report.openId === null ? '终端里查不到登录身份' : '查到了登录身份' },
     { step: '日历拉得动', state: report.calendar ? '拉得动' : '拉不动', why: report.calendar ? '今日议程这一问有回应' : '今日议程那一问没成' },
   ];
-  const content = [
-    renderKpiGrid(kpis, { title: '这一趟探测的结论' }),
-    renderConclusionBar('飞书能力：' + TIER_CN[report.tier] + '。' + plain(report.why)
-      + '。要动远端就说「日程管家同步」，要留个只读的快照就是这一页。'),
-    renderSectionTitle('三道门逐道看'),
-    renderDataTable({
-      columns: [
-        { key: 'step', label: '探什么' },
-        { key: 'state', label: '结果' },
-        { key: 'why', label: '怎么看出来的' },
-      ],
-      rows: steps,
-    }),
-    renderFactStrip({
+  const { toc, body } = pageSections([
+    { navText: '这一趟探测的结论', html: renderKpiGrid(kpis, { title: '这一趟探测的结论' }) },
+    { html: renderConclusionBar('飞书能力：' + TIER_CN[report.tier] + '。' + plain(report.why)
+      + '。要动远端就说「日程管家同步」，要留个只读的快照就是这一页。') },
+    { navText: '三道门逐道看', html: renderSectionTitle('三道门逐道看')
+      + renderDataTable({
+        columns: [
+          { key: 'step', label: '探什么' },
+          { key: 'state', label: '结果' },
+          { key: 'why', label: '怎么看出来的' },
+        ],
+        rows: steps,
+      }) },
+    { html: renderFactStrip({
       items: [
         { label: '命令行版本', value: report.version === null ? '没装' : report.version.replace(/^lark-cli\s*/i, '') },
         { label: '探测日期', value: date },
         { label: '本地这一天的计划', value: String(local.total) + ' 条' },
         { label: '远端这一趟', value: '没碰' },
       ],
-    }),
-    renderSectionTitle('下一步怎么走'),
-    renderListRows({
-      items: TIER_NEXT[report.tier].map((text) => ({ main: text })),
-      emptyText: '没有下一步',
-    }),
-    renderSectionTitle('本地这一天的账'),
-    '<p class="sch-pl-note">这一份读的是本地库：这一天排了几条计划，其中几条已经带上远端标识。远端那一边这一趟没拉，故不报对方的条数。</p>',
-    renderDataTable({
-      columns: [
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '计划' },
-        { key: 'category', label: '分类' },
-        { key: 'remote', label: '远端标识' },
-      ],
-      rows: eventRows(listPlanEvents(handle, date)),
-      emptyText: '这一天本地没有计划',
-    }),
-    renderCaliberLine('探测只读，三道门都只问不写，本地库这一趟也没动过'),
-    renderPreBlock({
+    }) },
+    { navText: '下一步怎么走', html: renderSectionTitle('下一步怎么走')
+      + renderListRows({
+        items: TIER_NEXT[report.tier].map((text) => ({ main: text })),
+        emptyText: '没有下一步',
+      }) },
+    { navText: '本地这一天的账', html: renderSectionTitle('本地这一天的账')
+      + '<p class="sch-pl-note">这一份读的是本地库：这一天排了几条计划，其中几条已经带上远端标识。远端那一边这一趟没拉，故不报对方的条数。</p>'
+      + renderDataTable({
+        columns: [
+          { key: 'time', label: '时段' },
+          { key: 'title', label: '计划' },
+          { key: 'category', label: '分类' },
+          { key: 'remote', label: '远端标识' },
+        ],
+        rows: eventRows(listPlanEvents(handle, date)),
+        emptyText: '这一天本地没有计划',
+      })
+      + renderCaliberLine('探测只读，三道门都只问不写，本地库这一趟也没动过') },
+    { html: renderPreBlock({
       label: '要真同步就说这一句',
       command: '同步 ' + date + ' 的日程到飞书',
       actionId: 'ilife-sch-probe-copy-next',
       copyLabel: '复制这句话',
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-probe-copy-data',
       logActionId: 'ilife-sch-probe-copy-log',
@@ -150,9 +151,9 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"sync","dryRun":true,"date":"' + date + '"}',
         source: '本机命令行探测与本地日程计划表',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
 
 /* ─────────────────────── ② 日程管家同步（回执） ─────────────────────── */
@@ -196,55 +197,55 @@ export function syncPage(handle: ScheduleDb, date: string, payload: SyncPayload)
     unit: '笔',
     detail: c.hint,
   }));
-  const content = [
-    renderKpiGrid(kpis, { title: '这一趟的账' }),
-    renderConclusionBar(syncConclusion(payload)),
-    renderFactStrip({
+  const { toc, body } = pageSections([
+    { navText: '这一趟的账', html: renderKpiGrid(kpis, { title: '这一趟的账' }) },
+    { html: renderConclusionBar(syncConclusion(payload)) },
+    { html: renderFactStrip({
       items: [
         { label: '同步的日期', value: date },
         { label: '远端侧', value: REMOTE_LABEL[payload.remote] },
         { label: '本地这一天的计划', value: String(events.length) + ' 条' },
         { label: '没成的', value: String(failed) + ' 笔' },
       ],
-    }),
-    renderFeedbackBlock({
+    }) },
+    { navText: '这一趟的结果', html: renderFeedbackBlock({
       title: '这一趟的结果',
       toast: failed === 0
         ? { icon: payload.remote === 'unavailable' ? 'warn' : 'ok', msg: plain(payload.message) }
         : { icon: 'danger', msg: plain(payload.message), lines: payload.errors.map(plain) },
       staticNotice: true,
-    }),
-    ...(payload.notes.length === 0 ? [] : [renderSectionTitle('顺带记下的'),
-      renderListRows({ items: payload.notes.map((text) => ({ main: plain(text) })), emptyText: '没有顺带记下的' })]),
-    ...(payload.errors.length === 0 ? [] : [renderSectionTitle('没成的逐条名单'),
-      renderListRows({ items: payload.errors.map((text) => ({ main: plain(text) })), emptyText: '没有没成的' })]),
-    renderSectionTitle('本地这一天的排布'),
-    renderCaliberLine('远端只动带归属标记的对象，你在飞书日历上自己加的那些一律不碰'),
-    renderDataTable({
-      columns: [
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '计划' },
-        { key: 'category', label: '分类' },
-        { key: 'remote', label: '远端标识' },
-      ],
-      rows: eventRows(events),
-      emptyText: '这一天本地没有计划',
-    }),
-    renderSectionTitle('下一步'),
-    renderListRows({
-      items: [
-        { main: '要看另一天的差异，把日期一并说清楚，比如「同步 2026-09-22 的日程」。' },
-        { main: '只想先看一眼而不动远端，就说「飞书探测」，那一页只读。' },
-      ],
-      emptyText: '没有下一步',
-    }),
-    renderPreBlock({
+    }) },
+    { navText: payload.notes.length === 0 ? '' : '顺带记下的', html: payload.notes.length === 0 ? '' : renderSectionTitle('顺带记下的')
+      + renderListRows({ items: payload.notes.map((text) => ({ main: plain(text) })), emptyText: '没有顺带记下的' }) },
+    { navText: payload.errors.length === 0 ? '' : '没成的逐条名单', html: payload.errors.length === 0 ? '' : renderSectionTitle('没成的逐条名单')
+      + renderListRows({ items: payload.errors.map((text) => ({ main: plain(text) })), emptyText: '没有没成的' }) },
+    { navText: '本地这一天的排布', html: renderSectionTitle('本地这一天的排布')
+      + renderCaliberLine('远端只动带归属标记的对象，你在飞书日历上自己加的那些一律不碰')
+      + renderDataTable({
+        columns: [
+          { key: 'time', label: '时段' },
+          { key: 'title', label: '计划' },
+          { key: 'category', label: '分类' },
+          { key: 'remote', label: '远端标识' },
+        ],
+        rows: eventRows(events),
+        emptyText: '这一天本地没有计划',
+      }) },
+    { navText: '下一步', html: renderSectionTitle('下一步')
+      + renderListRows({
+        items: [
+          { main: '要看另一天的差异，把日期一并说清楚，比如「同步 2026-09-22 的日程」。' },
+          { main: '只想先看一眼而不动远端，就说「飞书探测」，那一页只读。' },
+        ],
+        emptyText: '没有下一步',
+      }) },
+    { html: renderPreBlock({
       label: '再同步一天就说这一句',
       command: '同步 ' + date + ' 的日程到飞书',
       actionId: 'ilife-sch-sync-copy-next',
       copyLabel: '复制这句话',
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-sync-copy-data',
       logActionId: 'ilife-sch-sync-copy-log',
@@ -256,8 +257,8 @@ export function syncPage(handle: ScheduleDb, date: string, payload: SyncPayload)
         source: '本地日程计划表与飞书日历',
         ok: payload.errors.length === 0,
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
+    }) },
+  ]);
   return assembleDocPage({
     head: {
       docTitle: '作息管家 日程管家同步',
@@ -265,7 +266,7 @@ export function syncPage(handle: ScheduleDb, date: string, payload: SyncPayload)
       title: '日程管家同步',
       subtitle: date + ' 这一天本地与飞书对了一遍，这一页报的是这一趟真做了什么。',
     },
-    content,
+    content: toc + body,
     extraCss: planPartsCss(),
   });
 }

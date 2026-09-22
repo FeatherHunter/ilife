@@ -18,6 +18,10 @@
  *  **本件只认形状，不认口径**：字段怎么取、缺失写什么、段名怎么拼，都由 `query` 侧算好再进来
  *  （与 `rangePage.ts`／`overviewPage.ts` 同一分工）。件序列**不随数据多寡变形**：
  *  按日查（N 条）与按 ID 查（1 条）走同一套，一条也走这一套。
+ *
+ *  #891 补的**页内定位**（不动件序列）：小节＝每条记录的段名 ＋ 它那颗「AI 推理链」＋ 复制区。
+ *  按 `./pageNav.ts` 的长页判据（小节数 ≥ `SECTION_TOC_MIN`）：按 ID 查＝3 小节（长页，出目录）；
+ *  按日查＝「2 × 条数 ＋ 1」小节（长页）。
  */
 import {
   renderConclusionBar, renderKpiGrid, renderProseBlock,
@@ -26,11 +30,15 @@ import {
 import { renderFactStrip, type FactItemInput } from 'base-paint';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
+import { pageSections } from './pageNav.js';
 
 /** 一条记录在页上的一段（段名 ＋ 字段 ＋ 推理链）。 */
 export interface RecordDetailItem {
   /** 段名（记录号、日期、起止与活动，调用方拼好）。 */
   readonly title: string;
+  /** 这一段的**短名**（页内目录的条目文本）：只写记录号那一截，日期与起止留在大段名上
+   *  （口径见 `./pageNav.ts` 的件头）。 */
+  readonly navText: string;
   /** 这一条除 `analysis_reasoning` 以外的字段（老侧那一套；空值写「无」，由调用方定）。 */
   readonly fields: readonly FactItemInput[];
   /** `analysis_reasoning` **全文**（老侧那 11 个字段里的第 11 个）：空的那一条写「（无）」，
@@ -51,23 +59,23 @@ export interface DetailPageData {
 
 /** 出「作息详情」整页。 */
 export function renderDetailPage(data: DetailPageData): string {
-  const records = data.records.map((rec) => (
-    '<h2 class="heat-title">' + escText(rec.title) + '</h2>'
-    + renderFactStrip({ items: rec.fields })
-    + '<h2 class="heat-title">AI 推理链</h2>' + renderProseBlock({ text: rec.reasoning })
-  )).join('');
-  const content = [
-    renderKpiGrid(data.kpis),
-    renderConclusionBar(data.conclusion),
-    records,
-    scheduleCopyArea({
+  const { toc, body } = pageSections([
+    { html: renderKpiGrid(data.kpis) },
+    { html: renderConclusionBar(data.conclusion) },
+    // 一条记录＝两小节（记录那一段 ＋ 它的「AI 推理链」）：段名与从它派生的目录条目写在同一处。
+    ...data.records.flatMap((rec) => [
+      { navText: rec.navText, html: '<h2 class="heat-title">' + escText(rec.title) + '</h2>'
+        + renderFactStrip({ items: rec.fields }) },
+      { navText: 'AI 推理链', html: '<h2 class="heat-title">AI 推理链</h2>' + renderProseBlock({ text: rec.reasoning }) },
+    ]),
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-detail-copy-data',
       logActionId: 'ilife-sch-detail-copy-log',
       ...data.copy,
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head: data.head, content });
+    }) },
+  ]);
+  return assembleDocPage({ head: data.head, content: toc + body });
 }
 
 /** 五字符转义（与公共层同口径；本件只为段名用一次，与 `dayPage.ts` 那一处同法）。 */

@@ -479,6 +479,8 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
     },
     days: days.map((day) => ({
       title: weekdayLabelOf(day.date) + ' ' + day.date + ' 已排 ' + day.plannedHours + ' 格',
+      // 页内目录的条目文本（#891）：只写星期与日期，已排格数是排布读数、留在大段名上。
+      navText: weekdayLabelOf(day.date) + ' ' + day.date.slice(5),
       rows: day.hours.map((hour) => ({
         left: String(hour.hour).padStart(2, '0') + ':00',
         main: hour.text,
@@ -529,6 +531,12 @@ function detailTitleOf(record: ScheduleRecord): string {
     + ' ' + record.activity;
 }
 
+/** 同一条记录在**页内目录**里的短名（#891）：只留记录号那一截，跳转仍落在同一段上。
+ *  与段名同住一处，两处写法不会走散（段名改了这里跟着改）。 */
+function detailNavOf(record: ScheduleRecord): string {
+  return '记录号 ' + record.id;
+}
+
 /** 「作息详情」整页（形状＝`shared/detailPage.ts`；老侧 f06 的两个必现块都在）。
  *
  *  `opts.date`＝这一趟查的那一天（页头与结论文案用）；`opts.pickedId`＝按 ID 查时点名的记录号
@@ -552,6 +560,8 @@ export function renderRecordDetailPage(
     : (withReasoning === records.length ? '每一条都留着 AI 推理链。' : '其中 ' + withReasoning + ' 条留着 AI 推理链。');
   const items: RecordDetailItem[] = records.map((r) => ({
     title: detailTitleOf(r),
+    // 页内目录的条目文本（#891）：只写记录号那一截（日期／起止／活动留在大段名上）。
+    navText: detailNavOf(r),
     fields: detailFieldsOf(r),
     // 空的写「（无）」（老侧页同一个写法）：这一块**恒在**，11 个字段一个不少。
     reasoning: (r.analysis_reasoning ?? '') === '' ? '（无）' : (r.analysis_reasoning ?? ''),

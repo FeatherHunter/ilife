@@ -12,6 +12,10 @@
  *
  *  #786 动过两处（都不动件序列）：事件卡那一段收公共层行列表的入参（空列表那句话随查法变）、
  *  筛选位那句说明句改成行文（`、` 是 #516 分隔符门点名的并列符号）。
+ *
+ *  #891 补的**页内定位**（不动件序列）：本页**小节恒 2 颗**（`24 小时覆盖`／`复制与留档`），
+ *  按 `./pageNav.ts` 的长页判据（小节数 ≥ `SECTION_TOC_MIN`）**这一页被判为短页**，页首不出页内目录；
+ *  两颗段名照旧各包一层带 `id` 的 `<section>`（锚点仍在，只有目录不出）。
  */
 import {
   renderConclusionBar, renderDisclosure, renderKpiGrid, renderListRows,
@@ -19,6 +23,7 @@ import {
 } from 'base-paint/blocks';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
+import { pageSections } from './pageNav.js';
 import { renderHourBand, type HourCell } from './pageParts.js';
 
 /** 「查日程」一页要的全部东西（字段数：`head`／`cells`／`order`／`kpis`／`conclusion`／`events`／
@@ -47,20 +52,24 @@ export interface PlanPageData {
 
 /** 出「查日程」整页。 */
 export function renderPlanPage(data: PlanPageData): string {
-  const content = [
-    renderKpiGrid(data.kpis),
-    renderConclusionBar(data.conclusion),
-    renderHourBand(data.cells, { order: data.order, title: '24 小时覆盖', height: 120 }),
-    renderListRows(data.events),
-    renderDisclosure({ title: data.gaps.length > 0 ? '空档' : '空档（无）', contentHtml: renderListRows({ items: data.gaps, emptyText: '整天都被事件占满' }) }),
+  const { toc, body } = pageSections([
+    { html: renderKpiGrid(data.kpis) },
+    { html: renderConclusionBar(data.conclusion) },
+    // 段名是「24 小时覆盖」（图表块自己那颗 `<h2>`）；目录收成短名（口径见 `./pageNav.ts`）。
+    { navText: '覆盖条', html: renderHourBand(data.cells, { order: data.order, title: '24 小时覆盖', height: 120 }) },
+    { html: renderListRows(data.events) },
+    { html: renderDisclosure({ title: data.gaps.length > 0 ? '空档' : '空档（无）', contentHtml: renderListRows({ items: data.gaps, emptyText: '整天都被事件占满' }) }) },
     // 说明句不堆并列分隔符（`、` 是 #516 分隔符门点名的并列符号之一）：写成一句行文。
-    renderParamForm({ description: '换一个日期，或者按分类与状态再收一收。', fields: data.filters }),
-    scheduleCopyArea({
-      title: '复制与留档',
-      dataActionId: 'ilife-sch-plan-copy-data',
-      logActionId: 'ilife-sch-plan-copy-log',
-      ...data.copy,
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head: data.head, content });
+    { html: renderParamForm({ description: '换一个日期，或者按分类与状态再收一收。', fields: data.filters }) },
+    {
+      navText: '复制与留档',
+      html: scheduleCopyArea({
+        title: '复制与留档',
+        dataActionId: 'ilife-sch-plan-copy-data',
+        logActionId: 'ilife-sch-plan-copy-log',
+        ...data.copy,
+      }),
+    },
+  ]);
+  return assembleDocPage({ head: data.head, content: toc + body });
 }

@@ -13,6 +13,9 @@
  *
  *  **本件只认形状，不认口径**：哪 7 维、每格多少分钟、分布行怎么排序、睡眠取哪几类，都由 `query` 侧
  *  算好再进来（与 `weekPage.ts` 同一分工）。
+ *
+ *  #891 补的**页内定位**（不动件序列）：本页**小节恒 3 颗**（`分类聚合`／`7 维趋势`／`复制与留档`），
+ *  按 `./pageNav.ts` 的长页判据（小节数 ≥ `SECTION_TOC_MIN`）**这一页是长页**，页首出页内目录。
  */
 import {
   renderChartBlock, renderConclusionBar, renderDistributionRows,
@@ -22,6 +25,7 @@ import {
 import { renderFactStrip, type FactItemInput } from 'base-paint';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
+import { pageSections } from './pageNav.js';
 import { categoryColor } from './pageParts.js';
 
 /** 「区间汇总」一页要的全部东西（8 个字段）。 */
@@ -45,25 +49,25 @@ export interface RangePageData {
 
 /** 出「区间汇总」整页。 */
 export function renderRangePage(data: RangePageData): string {
-  const content = [
-    renderKpiGrid(data.kpis),
-    renderConclusionBar(data.conclusion),
+  const { toc, body } = pageSections([
+    { html: renderKpiGrid(data.kpis) },
+    { html: renderConclusionBar(data.conclusion) },
     // 分类聚合这一段要有名字（老侧 f02 的必现块就叫「分类聚合」）：段名走 `heat-title` 这个公共层
     // 已有的段名类（今天总结页的「作息库现状」与周视图的矩阵段名都走它），不新造类名、不新添 CSS。
-    '<h2 class="heat-title">分类聚合</h2>',
-    // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
-    renderDistributionRows({
-      rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
-    }),
-    renderChartBlock({ ...data.trend, title: '7 维趋势' }),
-    renderFactStrip({ items: data.sleep }),
-    renderListRows({ items: data.daily, emptyText: '这一区间没有记录' }),
-    scheduleCopyArea({
+    { navText: '分类聚合', html: '<h2 class="heat-title">分类聚合</h2>'
+      // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
+      + renderDistributionRows({
+        rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
+      }) },
+    { navText: '7 维趋势', html: renderChartBlock({ ...data.trend, title: '7 维趋势' }) },
+    { html: renderFactStrip({ items: data.sleep }) },
+    { html: renderListRows({ items: data.daily, emptyText: '这一区间没有记录' }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-range-copy-data',
       logActionId: 'ilife-sch-range-copy-log',
       ...data.copy,
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head: data.head, content });
+    }) },
+  ]);
+  return assembleDocPage({ head: data.head, content: toc + body });
 }

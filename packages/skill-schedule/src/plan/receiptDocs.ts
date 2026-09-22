@@ -17,6 +17,11 @@
  *  **页上文案纪律**：一页里不出现命令键、库列名、参数名、票号；并列关系一律用版面表达（对照行／卡片格／
  *  表格列），不拿 `·`／`｜`／`~`／`、`／`；` 这些符号顶替设计——本票证据件里那条机器判据（分隔符门）量的
  *  就是这条。范围一律写「至」，不用波浪号。
+ *
+ *  #891 补的**页内定位**（不动件序列，只给已有的段名加锚点与页首目录）：判据（小节数 ≥ 3 出目录）
+ *  与装配的唯一一处定义地在 `shared/pageNav.ts` 的 `SECTION_TOC_MIN`。
+ *  **这一页型里被判为短页的是「批量补计划回执」**：它恒 2 小节（`这一趟的结果`／`复制与留档`）
+ *  ⇒ `tocEl` 保持 0、D5 那条腿照旧扣 4；另外三张回执恒 ≥4 小节（补计划回执 4／5 小节按有没有命中注记位）。
  */
 import {
   renderCaliberLine, renderConclusionBar, renderDataTable, renderDisclosure,
@@ -28,6 +33,7 @@ import { listPlanEvents } from '../fetch/index.js';
 import { fmtDur, fmtDurShort, l1Of, toMinutes, LEVEL1_WHITELIST } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
+import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
 import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
 import { planPartsCss, renderChangePanel } from './planParts.js';
@@ -105,13 +111,13 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
     { k: '备注', v: empty(event.notes) },
     { k: '完成状态', v: empty(event.completion) },
   ];
-  const content = [
-    r.created ? '' : hit,
-    renderConclusionBar(r.created
+  const { toc, body } = pageSections([
+    { navText: r.created ? '' : '这一步没有新建', html: r.created ? '' : hit },
+    { html: renderConclusionBar(r.created
       ? '已经补上 ' + r.date + ' 的 ' + (event === undefined ? '这一条' : span(event.time_start, event.time_end))
         + '，这一天现在排了 ' + day.length + ' 件。'
-      : '这一天本来就有这一段，这一步没有新建，' + r.date + ' 现在排了 ' + day.length + ' 件。'),
-    renderKpiGrid([
+      : '这一天本来就有这一段，这一步没有新建，' + r.date + ' 现在排了 ' + day.length + ' 件。') },
+    { navText: '这一趟的结果', html: renderKpiGrid([
       { label: '事件编号', value: String(r.id), detail: r.date },
       {
         label: '本地这一半', value: r.created ? '新建' : '原有',
@@ -119,20 +125,20 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
       },
       { label: '时段', value: event === undefined ? '—' : fmtDurShort(minutes), detail: event === undefined ? '—' : span(event.time_start, event.time_end) },
       { label: '这一天', value: String(day.length) + ' 件', detail: '同一分类 ' + String(sameCategory) + ' 件' },
-    ], { title: '这一趟的结果' }),
-    renderChangePanel({ title: '这一条的前后', rows: [
+    ], { title: '这一趟的结果' }) },
+    { navText: '这一条的前后', html: renderChangePanel({ title: '这一条的前后', rows: [
       { label: '库里有没有', before: r.created ? '没有' : '已经有了', after: '有这一条' },
       { label: '事件编号', before: r.created ? '—' : String(r.id), after: String(r.id), arrow: false },
-    ] }),
-    renderFactStrip({
+    ] }) },
+    { html: renderFactStrip({
       items: [
         { label: '远端侧', value: REMOTE_LABEL[r.remote] },
         { label: '这一天现有', value: String(day.length) + ' 件' },
         { label: '同分类', value: String(sameCategory) + ' 件' },
         { label: '完成状态', value: event === undefined ? '—' : empty(event.completion) },
       ],
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -143,8 +149,8 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"ensure","date":"' + r.date + '"}',
         source: '日程计划表（' + r.date + ' 现有 ' + String(day.length) + ' 件）',
       }),
-    }),
-    renderDisclosure({
+    }) },
+    { html: renderDisclosure({
       title: '这一条现在的样子',
       contentHtml: renderDataTable({
         caption: '库里这一条',
@@ -152,12 +158,13 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
         rows: current,
         emptyText: '库里没有找到这一条',
       }),
-    }),
-    event === undefined ? '' : renderHourBand(cellsOf(day), {
+    }) },
+    // 段名是「<日期> 这一天现在的排布」；目录收成短名（日期留在大标题上，口径见 `shared/pageNav.ts`）。
+    { navText: '这一天现在的排布', html: event === undefined ? '' : renderHourBand(cellsOf(day), {
       order: L1_ORDER, title: r.date + ' 这一天现在的排布', height: 120,
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
 
 /** 批量补计划（`dates[]`）逐天一份结果：本地新建还是命中、远端侧成没成。 */
@@ -192,17 +199,17 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
     subtitle: '补的是 ' + (sorted.length === 0 ? '一个日期也没给' : sorted[0] + ' 至 ' + sorted[sorted.length - 1])
       + '，一共 ' + days.length + ' 天。',
   };
-  const content = [
-    renderConclusionBar(failed === 0
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar(failed === 0
       ? '这次 ' + days.length + ' 天都补上了，新建 ' + created + ' 天，命中已有 ' + found + ' 天。'
-      : '这次 ' + days.length + ' 天里 ' + failed + ' 天的远端侧没成，本地那一半照写。'),
-    renderKpiGrid([
+      : '这次 ' + days.length + ' 天里 ' + failed + ' 天的远端侧没成，本地那一半照写。') },
+    { navText: '这一趟的结果', html: renderKpiGrid([
       { label: '天数', value: String(days.length) + ' 天', detail: '这一趟补的' },
       { label: '新建', value: String(created) + ' 天', detail: '本地原来没有这一段' },
       { label: '命中已有', value: String(found) + ' 天', detail: '同一天同一段起止已存在' },
       { label: '远端侧没成', value: String(failed) + ' 天', detail: failed === 0 ? '一天不差' : '本地那一半照写' },
-    ], { title: '这一趟的结果' }),
-    renderDataTable({
+    ], { title: '这一趟的结果' }) },
+    { html: renderDataTable({
       caption: '逐天结果',
       columns: [
         { key: 'date', label: '日期' },
@@ -213,9 +220,9 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
       ],
       rows: tables,
       emptyText: '这一趟一天也没收到',
-    }),
-    renderCaliberLine('同一天同一段起止只留一条 ｜ 再补一次不算新建，也不会重复'),
-    scheduleCopyArea({
+    }) },
+    { html: renderCaliberLine('同一天同一段起止只留一条 ｜ 再补一次不算新建，也不会重复') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -226,9 +233,9 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
           + days.map((d) => '"' + d.date + '"').join(',') + ']}',
         source: '日程计划表（' + String(days.length) + ' 天）',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
 
 /* ─────────────────────────── ② 改计划回执（老侧 f14） ─────────────────────────── */
@@ -258,18 +265,18 @@ export function updateReceiptPage(
     subtitle: '改的是 ' + after.date + ' 的 ' + span(before.time_start, before.time_end)
       + '，改完是 ' + span(after.time_start, after.time_end) + '。',
   };
-  const content = [
-    renderConclusionBar(moved
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar(moved
       ? '这一条已经改好，时段挪到了 ' + span(after.time_start, after.time_end) + '，改的是哪几格下面逐格对照。'
-      : '这一条已经改好，时段没动，改的是哪几格下面逐格对照。'),
-    renderKpiGrid([
+      : '这一条已经改好，时段没动，改的是哪几格下面逐格对照。') },
+    { navText: '这一趟的结果', html: renderKpiGrid([
       { label: '事件编号', value: String(after.id), detail: after.date },
       { label: '现在的时段', value: fmtDurShort(toMinutes(after.time_end) - toMinutes(after.time_start)), detail: span(after.time_start, after.time_end) },
       { label: '改动处数', value: String(rows.length) + ' 处', detail: moved ? '其中时段也变了' : '时段没动' },
       { label: '这一天', value: String(day.length) + ' 件', detail: '改完之后的排布' },
-    ], { title: '这一趟的结果' }),
-    renderChangePanel({ title: '这次改了什么', rows }),
-    moved
+    ], { title: '这一趟的结果' }) },
+    { navText: '这次改了什么', html: renderChangePanel({ title: '这次改了什么', rows }) },
+    { navText: '时段变了，飞书那条也换过', html: moved
       ? renderFeedbackBlock({
         title: '时段变了，飞书那条也换过',
         toast: {
@@ -278,16 +285,16 @@ export function updateReceiptPage(
         },
         staticNotice: true,
       })
-      : '',
-    renderFactStrip({
+      : '' },
+    { html: renderFactStrip({
       items: [
         { label: '远端侧', value: REMOTE_LABEL[remote] },
         { label: '现在的标题', value: after.title },
         { label: '现在的分类', value: categoryOf(after) },
         { label: '完成状态', value: empty(after.completion) },
       ],
-    }),
-    scheduleCopyArea({
+    }) },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -298,9 +305,9 @@ export function updateReceiptPage(
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"update","id":' + String(after.id) + '}',
         source: '日程计划表（' + after.date + ' 现有 ' + String(day.length) + ' 件）',
       }),
-    }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
 
 /* ─────────────────────────── ③ 删计划回执（老侧 f14 同一家族） ─────────────────────────── */
@@ -315,38 +322,38 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
     title: '删计划回执',
     subtitle: '删的是 ' + before.date + ' 的 ' + span(before.time_start, before.time_end) + '，标题是「' + before.title + '」。',
   };
-  const content = [
-    renderConclusionBar('这一条已经不再算进 ' + before.date + ' 了，这一天现在排着 ' + day.length
-      + ' 件。库里那一条没有真的删掉，只是标记成不再算。'),
-    renderKpiGrid([
+  const { toc, body } = pageSections([
+    { html: renderConclusionBar('这一条已经不再算进 ' + before.date + ' 了，这一天现在排着 ' + day.length
+      + ' 件。库里那一条没有真的删掉，只是标记成不再算。') },
+    { navText: '这一趟的结果', html: renderKpiGrid([
       { label: '事件编号', value: String(before.id), detail: before.date },
       { label: '删掉的时段', value: fmtDurShort(minutes), detail: span(before.time_start, before.time_end) },
       { label: '这一天', value: String(day.length) + ' 件', detail: '比删之前少一件' },
       { label: '本地这一半', value: '不再算', detail: '标记成不活跃' },
-    ], { title: '这一趟的结果' }),
-    renderChangePanel({ title: '这一条的前后', rows: [
+    ], { title: '这一趟的结果' }) },
+    { navText: '这一条的前后', html: renderChangePanel({ title: '这一条的前后', rows: [
       { label: '这一条', before: '在排', after: '不再算' },
       { label: '这一天在排的件数', before: String(day.length + 1) + ' 件', after: String(day.length) + ' 件' },
       { label: '远端那条', before: before.feishu_event_id === null ? '没有' : '有', after: before.feishu_event_id === null ? '没有' : '按这一趟的结果处理' },
-    ] }),
-    renderFeedbackBlock({
+    ] }) },
+    { navText: '这是软删，不是抹掉', html: renderFeedbackBlock({
       title: '这是软删，不是抹掉',
       toast: {
         icon: 'info',
         msg: '库里那一条还在，只是不再算进这一天的排布。同槽位上属于本技能的远端对象一并清掉，别的对象不动。',
       },
       staticNotice: true,
-    }),
-    renderFactStrip({
+    }) },
+    { html: renderFactStrip({
       items: [
         { label: '远端侧', value: REMOTE_LABEL[remote] },
         { label: '原来的标题', value: before.title },
         { label: '原来的分类', value: categoryOf(before) },
         { label: '完成状态', value: empty(before.completion) },
       ],
-    }),
-    renderCaliberLine('删计划只动这一条 ｜ 别的事件与别的日期一件不动'),
-    scheduleCopyArea({
+    }) },
+    { html: renderCaliberLine('删计划只动这一条 ｜ 别的事件与别的日期一件不动') },
+    { navText: '复制与留档', html: scheduleCopyArea({
       title: '复制与留档',
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
@@ -357,8 +364,9 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"deactivate","id":' + String(before.id) + '}',
         source: '日程计划表（' + before.date + ' 现有 ' + String(day.length) + ' 件）',
       }),
-    }),
-    renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }),
-  ].filter((seg) => seg !== '').join('');
-  return assembleDocPage({ head, content, extraCss: planPartsCss() });
+    }) },
+    // 段名是「<日期> 这一天现在的排布」；目录收成短名（日期留在大标题上，口径见 `shared/pageNav.ts`）。
+    { navText: '这一天现在的排布', html: renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }) },
+  ]);
+  return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }
