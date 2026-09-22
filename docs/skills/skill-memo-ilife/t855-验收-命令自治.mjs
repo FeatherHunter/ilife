@@ -38,15 +38,12 @@ if (!existsSync(distAbs('cli/registry.js'))) {
   process.exit(2);
 }
 
-/** 口径豁免（键 → 为什么没有词面 ＋ 出处）。改口径＝改本表（`src/shared/commandSpec.ts` 已允许 `wakeWord` 缺）。 */
+/** 口径豁免（键 → 为什么没有词面 ＋ 出处）。改口径＝改本表（`src/shared/commandSpec.ts` 已允许 `wakeWord` 缺）。
+ *  #858：`memo.stats` 那条随「统计命令整条退役」撤行——键已不在登记表里，占位等于给不存在的键留豁免。 */
 const EXEMPT = {
   'memo.auth': {
     why: '无唤醒词：「飞书授权」唤醒短语随授权三支退役（#760），键保留给只读诊断（`step:"status"`／`"diag"`）',
-    from: 'src/help/lookup.ts:40-41、src/sync/commands.ts:5',
-  },
-  'memo.stats': {
-    why: '无唤醒词：老骨架 30 场景里 0 条统计内容（票 6 U5=A 裁「照老的来 ⇒ 不展」，只在口径区留一行），键与读口保留（命令面处置归 #842／#858）',
-    from: 'src/memo/commands.ts:6、src/triggers/wakewords.ts:55；票 6 定案 docs/skills/skill-memo-ilife/t226-body.md:43（U5=A）',
+    from: 'src/help/lookup.ts:44-45、src/sync/commands.ts:5',
   },
 };
 
@@ -58,13 +55,14 @@ const FRAMEWORK = {
   },
 };
 
-/** 词面里暂时没有 HELP 场景出处的词，或场景别名暂时没接词面的词（在册待办，必须带票）。 */
-const PENDING_WORDS = {
-  '废弃提醒': { why: '旧表别名，HELP 30 场景没有它的出处', ticket: '#858（别名总表；`wakewords.ts` 注：本行撤行）' },
-  '完成打卡': { why: '场景 `memo_complete_wish` 的别名，词面未接（本票是结构票，接词＝行为变更）', ticket: '#858（别名总表）' },
-  '初始化': { why: '场景 `memo_init_setup` 的别名，词面未接（#850 只落了主名 `首次使用`）', ticket: '#858（别名总表）' },
-  '新手': { why: '场景 `memo_init_setup` 的别名，词面未接（同上）', ticket: '#858（别名总表）' },
-};
+/** 词面里暂时没有 HELP 场景出处的词，或场景别名暂时没接词面的词（在册待办，必须带票）。
+ *  **#858 已把四条全部结清**（本表由它的复核翻出来）：
+ *   · `废弃提醒` —— 词随行退役（#842 Q②）：词面与场景面都不再有它，待办自然消失；
+ *   · `初始化`／`新手` —— 接进 `src/init/routes.ts`（→ `memo.init`，场景 `memo_init_setup`）；
+ *   · `完成打卡` —— 接进 `src/wish/routes.ts`（→ `memo.update {done:true}`，场景 `memo_complete_wish`）。
+ *  空表是**实况**：三条别名现在条条有词面、条条路由得回原场景。
+ *  （判读口径见 `packages/skill-memo-ilife/test/route-cleanup-858.test.mjs` ②。） */
+const PENDING_WORDS = {};
 
 /** 场景卡暂时没有可用词的场景（在册待办，必须带票）。 */
 const PENDING_SCENES = {};

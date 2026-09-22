@@ -63,7 +63,7 @@
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 220 | 未越线，在册备查 |
 | `src/help/index.ts` | 4 | 4 | 未越线，在册备查 |
-| `src/help/lookup.ts` | 56 | 77 | 未越线，在册备查 |
+| `src/help/lookup.ts` | 56 | 85 | 未越线，在册备查 |
 | `src/help/manifest.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/help/sceneData.ts` | 64 | 64 | 未越线，在册备查 |
 | `src/help/scenes/checkin.ts` | 71 | 71 | 未越线，在册备查 |
@@ -79,7 +79,7 @@
 | `src/init/diagnosis.ts` | 133 | 134 | 未越线，在册备查 |
 | `src/init/index.ts` | 42 | 42 | 未越线，在册备查 |
 | `src/init/page.ts` | 243 | 245 | 未越线，在册备查 |
-| `src/init/routes.ts` | 15 | 15 | 未越线，在册备查 |
+| `src/init/routes.ts` | 15 | 32 | 未越线，在册备查 |
 | `src/init/run.ts` | 71 | 71 | 未越线，在册备查 |
 | `src/memo/batch.ts` | 62 | 66 | 未越线，在册备查 |
 | `src/memo/category.ts` | 32 | 32 | 未越线，在册备查 |
@@ -136,7 +136,7 @@
 | `src/wish/policy.ts` | 14 | 14 | 未越线，在册备查 |
 | `src/wish/receipt.ts` | 94 | 111 | 未越线，在册备查 |
 | `src/wish/reconcile.ts` | 153 | 153 | 未越线，在册备查 |
-| `src/wish/routes.ts` | 57 | 57 | 未越线，在册备查 |
+| `src/wish/routes.ts` | 57 | 68 | 未越线，在册备查 |
 | `src/wish/run.ts` | 67 | 140 | 未越线，在册备查 |
 | `src/wish/taskRemove.ts` | 20 | 20 | 未越线，在册备查 |
 | `src/wish/taskSync.ts` | 63 | 63 | 未越线，在册备查 |

@@ -6,8 +6,8 @@
  * 按**产物文本**读（构建期注入物，不是源码）。
  *
  * 七条对应票面 Testing Decisions 的七个面：
- *   ① 速查块：一场景主名一行，行数＝场景主名数，同词不重复；
- *   ② 别名：全部退出速查块，但仍在 HELP 资产 `aliases` 里、仍按词可路由（撤的是行不是词）；
+ *   ① 速查块：一场景一行，行数＝场景数（30），别名与退役词都不在；
+ *   ② 别名：全部退出速查块，但仍在 HELP 资产 `aliases` 里、**12 条条条**按词可路由（撤的是行不是词）；
  *   ③ 废弃提醒：短语无命中，能力仍在 `memo.remove {mode:"abandon"}`（真出口跑，笔记保留）；
  *   ④ 统计命令：按键报未知键，形状表与速查块里都没有它；
  *   ⑤ 飞书授权：短语无命中，两诊断档不被拒，退役三支报错指去安装指引；
@@ -55,6 +55,9 @@ function sceneAssets() {
 }
 
 function seam(prefix) { return makeSeam('memo', { prefix }); }
+
+/** 满槽位上下文：喂运行期路由用（哪条记录需要什么槽位就全给上）。 */
+const FULL = { id: 1, start: '2026-07-01', end: '2026-07-07', remind_at: '2026-10-01 09:00', remindAt: '2026-10-01 09:00', content: '取牛奶', note_id: 1 };
 /** 跑一次出口：退出码 ＋ 回执 ＋ stderr 一次取齐（断言只读这三处）。 */
 function run(s, key, params) {
   const home = mkMemoConfig({ db: { dir: s.dbPath } }, 't858-cfg-');
@@ -65,33 +68,54 @@ function run(s, key, params) {
 }
 
 describe('#858 路由表清理四问实施', () => {
-  it('① 速查块＝一场景主名一行：行数＝场景主名数（29），同词不重复', () => {
+  it('① 速查块＝一场景一行：行数＝场景数（30），每场景恰一行、别名与退役词都不在', () => {
     const rows = quickRefRows();
-    const mains = [...new Set(sceneAssets().map((s) => s.wake_word))];
-    assert.equal(mains.length, 29, 'HELP 场景主名数变了（30 场景里 `备忘改分类` 单条与批量共用一词）');
-    assert.equal(rows.length, mains.length, '速查块行数 ≠ 场景主名数：' + JSON.stringify(rows));
-    assert.equal(new Set(rows).size, rows.length, '速查块里出现了重复词（同名两行＝让人猜）');
-    assert.deepEqual([...rows].sort(), [...mains].sort(), '速查块列出的词 ≠ 场景主名集合（别名或退役词混进来了）');
-    // 表里的每一行都能按词路由回它自己那个键（速查与运行期同源）。
-    for (const h of buildHelpLookup()) {
-      const row = WAKE_ROUTES.find((r) => r.wakeWord === h.phrase);
-      const ctx = {}; for (const n of (row.needs || [])) ctx[n] = 'x';
-      assert.equal(routeWakeword(h.phrase, ctx).key, h.key, h.phrase + ' 的速查键与路由结果不一致');
+    const scenes = sceneAssets();
+    const mains = new Set(scenes.map((s) => s.wake_word));
+    assert.equal(scenes.length, 30, 'HELP 场景数变了');
+    assert.equal(new Set(scenes.map((s) => s.id)).size, 30, 'HELP 场景 id 不唯一');
+    assert.equal(mains.size, 29, '场景主名唯一词数变了（`备忘改分类` 服务两张卡）');
+    assert.equal(rows.length, scenes.length, '速查块行数 ≠ 场景数（一场景一行）：' + JSON.stringify(rows));
+    for (const w of rows) assert.ok(mains.has(w), w + ' 不是场景主名（别名或退役词混进来了）');
+    // `备忘改分类` 那两张卡各占一行（命令不同），其余词一行。
+    const shared = [...mains].filter((w) => scenes.filter((s) => s.wake_word === w).length > 1);
+    assert.deepEqual(shared, ['备忘改分类'], '共用主名的场景变了');
+    for (const w of rows) {
+      const want = scenes.filter((s) => s.wake_word === w).length;
+      assert.equal(rows.filter((x) => x === w).length, want, w + ' 的行数 ≠ 它服务的场景数');
+    }
+    // 表里的每一行都能在路由声明里找到对应记录；不共词的每一行按词真能路由回自己那个键。
+    const hits = buildHelpLookup();
+    assert.equal(hits.length, rows.length, 'buildHelpLookup() 的条数与注入块不一致');
+    for (const h of hits) {
+      const rec = WAKE_ROUTES.find((r) => r.wakeWord === h.phrase && r.key === h.key);
+      assert.ok(rec !== undefined, h.phrase + ' → ' + h.key + ' 在路由声明里找不到对应记录');
+      if (shared.includes(h.phrase)) continue; // 共词那一格见下（运行期并列取 order 最小那条）
+      assert.equal(routeWakeword(h.phrase, FULL).key, h.key, h.phrase + ' 的速查键与路由结果不一致');
+    }
+    // 共词那一格（批量）：运行期并列按 `order` 先到先得 ⇒ 裸词走单条那条；批量格由它的**别名**到达。
+    assert.equal(routeWakeword('备忘改分类', FULL).key, 'memo.update', '裸词「备忘改分类」的运行期胜出者变了');
+    assert.equal(routeWakeword('批量改分类', {}).key, 'memo.batch', '别名「批量改分类」接不回批量那一格');
+    // 每个有词面的键都要在速查面有行（与 `t855-验收-命令自治.mjs` 的 ⑤ 面判据同款）。
+    const rowKeys = new Set(hits.map((h) => h.key));
+    for (const k of new Set(WAKE_ROUTES.map((r) => r.key))) {
+      assert.ok(rowKeys.has(k), '键 ' + k + ' 有词面、但速查面没有行（SKILL.md 那张表会漏词）');
     }
   });
 
-  it('② 别名退出速查块，但仍住 HELP 资产且按词可路由（撤的是行不是词）', () => {
+  it('② 别名退出速查块，但仍住 HELP 资产且**条条**按词可路由（撤的是行不是词）', () => {
     const rows = new Set(quickRefRows());
     const aliases = sceneAssets().flatMap((s) => s.aliases || []);
     assert.equal(aliases.length, 12, 'HELP 资产的别名条数变了（生成器另有形状断言，此处是现场读数）');
     for (const w of aliases) {
       assert.ok(!rows.has(w), '别名 ' + w + ' 仍在速查块里（#842 Q③：总表只列主名）');
       assert.ok(sceneAssets().some((s) => (s.aliases || []).includes(w)), w + ' 不在任何场景的 aliases 里（词被撤掉了）');
-      const routes = WAKE_ROUTES.filter((r) => r.wakeWord === w);
-      for (const r of routes) {
-        const ctx = {}; for (const n of (r.needs || [])) ctx[n] = 'x';
-        assert.equal(routeWakeword(w, ctx).key, r.key, '别名 ' + w + ' 不再能路由到 ' + r.key);
-      }
+      // #858 独立复核翻出的缺口：三条未接线的别名（初始化／新手／完成打卡）会被下面这个循环**空转豁免**，
+      // 故这里先钉「12 条一条不少地能路由」，再逐条比键（缺词面即当场红）。
+      const r = WAKE_ROUTES.find((x) => x.wakeWord === w);
+      assert.ok(r !== undefined, '别名 ' + w + ' 在路由表里没有词面（HELP 资产登记了、命令面接不住）');
+      const ctx = {}; for (const n of (r.needs || [])) ctx[n] = 'x';
+      assert.equal(routeWakeword(w, ctx).key, r.key, '别名 ' + w + ' 路由不到 ' + r.key);
     }
     // 现场抽查票面点名的四条长式／新词（老侧的口径：长式是历史漂移，新仓收成别名）。
     for (const w of ['记一条', '添加笔记', '查提醒', '改情绪日记']) {
@@ -120,14 +144,17 @@ describe('#858 路由表清理四问实施', () => {
   });
 
   it('④ 统计命令整条退役：按键报未知键，形状表与速查块里都没有它', () => {
+    // 先读**静态面**（形状表 / SKILL.md）：这一层在「只把键加回形状表」的变异下就要红，
+    // 不能排在真出口那一步之后（#858 独立复核指出：旧序会让形状表那条断言执行不到）。
+    assert.ok(!Object.prototype.hasOwnProperty.call(MEMO_KEY_SHAPES, 'memo.stats'), '形状表里还留着 memo.stats');
+    assert.ok(!Object.values(MEMO_KEY_SHAPES).includes('stat'), 'memo 的形状表里还留着 stat 形（只有 stats 用过它）');
+    assert.ok(!SKILL.includes('memo.stats'), 'SKILL.md 里还提到 memo.stats');
+    assert.ok(!/统计/.test(SKILL.split('---')[1] || ''), 'frontmatter 的能力面里还写着「统计」');
+    // 再读真出口那一步。
     const s = seam('t858-stats-');
     const r = run(s, 'memo.stats', {});
     assert.equal(r.exit, 3, '退役后按键应报未知键（exit 3），实得 ' + r.exit);
     assert.match(r.stderr, /未知联动 key/);
-    assert.ok(!Object.prototype.hasOwnProperty.call(MEMO_KEY_SHAPES, 'memo.stats'), '形状表里还留着 memo.stats');
-    assert.ok(!Object.values(MEMO_KEY_SHAPES).includes('stat'), 'memo 的形状表里还留着 stat 形（只有 stats 用过它）');
-    assert.ok(!SKILL.includes('memo.stats'), 'SKILL.md 里还提到 memo.stats');
-    assert.ok(!/统计/.test(SKILL.split('---')[1] || ''), 'frontmatter 的去向说明里还写着「统计」');
   });
 
   it('⑤ 飞书授权短语无命中；两诊断档不被拒，退役三支指去安装指引', () => {

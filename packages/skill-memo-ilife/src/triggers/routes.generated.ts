@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * 唤醒词记录面：39 条（各域 `routes.ts` 的声明按 `order` 升序拼出）。
+ * 唤醒词记录面：42 条（各域 `routes.ts` 的声明按 `order` 升序拼出）。
  * 权威是声明层（`src/<域>/routes.ts`）；本件不含任何顺序知识——顺序事实只住声明的 `order` 字段，
  * 故把记录换文件搬动也不会打乱顺序。运行期路由（`src/triggers/routing.ts`）只读本件。
  */
@@ -46,4 +46,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '查情绪日记', scene: 'memo_search_mood', key: 'memo.search', cli: 'memo-cmd-read memo.search --params \'{"category":"情绪日记"}\'', preset: { category: '情绪日记' } },
   { wakeWord: '改情绪日记', scene: 'memo_update_mood', key: 'memo.update', cli: 'memo-cmd-read memo.update --params \'{"id":1,"body":"今天很开心"}\'', needs: ['id'], preset: { category: '情绪日记' } },
   { wakeWord: '删情绪日记', scene: 'memo_delete_mood', key: 'memo.remove', cli: 'memo-cmd-read memo.remove --params \'{"id":1,"confirm":true}\'', needs: ['id'], preset: { category: '情绪日记' } },
+  { wakeWord: '初始化', scene: 'memo_init_setup', key: 'memo.init', cli: 'memo-cmd-read memo.init --params \'{"data":{"items":[{"name":"数据目录","status":"ok"}],"todos":[],"verify":[]}}\'' },
+  { wakeWord: '新手', scene: 'memo_init_setup', key: 'memo.init', cli: 'memo-cmd-read memo.init --params \'{"data":{"items":[{"name":"数据目录","status":"ok"}],"todos":[],"verify":[]}}\'' },
+  { wakeWord: '完成打卡', scene: 'memo_complete_wish', key: 'memo.update', cli: 'memo-cmd-read memo.update --params \'{"id":1,"done":true}\'', preset: { done: true } },
 ];

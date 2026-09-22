@@ -54,4 +54,15 @@ export const WISH_ROUTES: readonly RouteDecl[] = [
     needs: ['id'],
     preset: { category: '心愿' },
   },
+  // #858 补入本场景的**别名** `完成打卡`（老 `SKILL.md:262`／`:300` 登记的词）：住 HELP 资产的
+  // `aliases`（`src/help/scenes/wish.ts`）、不进联动速查，但按词要能路由到同一格——`t855-验收-命令自治.mjs`
+  // 的 `PENDING_WORDS` 把它挂在「#858 别名总表」名下。
+  {
+    order: 41,
+    wakeWord: '完成打卡',
+    scene: 'memo_complete_wish',
+    key: 'memo.update',
+    cli: 'memo-cmd-read memo.update --params \'{"id":1,"done":true}\'',
+    preset: { done: true },
+  },
 ];

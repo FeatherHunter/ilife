@@ -57,6 +57,7 @@ memo-cmd-read memo.help.lookup                      # 说「备忘录 HELP」（
 | 删备忘 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"id":1,"confirm":true}'` |
 | 备忘改分类 | memo.update | receipt | `memo-cmd-read memo.update --params '{"id":1,"category":"打卡"}'` |
 | 备忘改子分类 | memo.update | receipt | `memo-cmd-read memo.update --params '{"id":1,"sub":"早起"}'` |
+| 备忘改分类 | memo.batch | receipt | `memo-cmd-read memo.batch --params '{"fromCategory":"备忘"}'` |
 | 完成心愿 | memo.update | receipt | `memo-cmd-read memo.update --params '{"id":1,"done":true}'` |
 | 记心愿 | memo.create | receipt | `memo-cmd-read memo.create --params '{"title":"学游泳","category":"心愿"}'` |
 | 删心愿 | memo.remove | receipt | `memo-cmd-read memo.remove --params '{"id":1,"confirm":true}'` |

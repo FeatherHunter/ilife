@@ -38,7 +38,8 @@ const CASES = [
   { name: '看备忘（单条）', db: 'two', args: ['memo.detail', '--params', '{"id":1}'] },
   { name: '改备忘', db: 'two', args: ['memo.update', '--params', '{"id":1,"body":"买牛奶两盒"}'] },
   { name: '批量改分类（收集向导）', db: 'two', args: ['memo.batch', '--params', '{"fromCategory":"备忘"}'] },
-  { name: '统计', db: 'two', args: ['memo.stats'] },
+  // #858：`memo.stats`（统计）整条退役 ⇒ 本表撤掉它那条用例（键不存在了，留着只会常年报 DIFF）。
+  // 本件是 #855 时代的搬迁基线快照，其余条目对不上属**先于本票的漂移**，不在本票收口面。
   { name: '看提醒', db: 'reminder', args: ['memo.remind'] },
   { name: '设提醒（挂旧笔记）', db: 'two', args: ['memo.reminder', '--params', '{"note_id":1,"content":"取牛奶","remind_at":"2026-10-01 09:00","repeat_type":"一次性"}'] },
   { name: '查心愿', db: 'wish', args: ['memo.wish'] },

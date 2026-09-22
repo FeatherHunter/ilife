@@ -87,7 +87,7 @@ export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandO
         // 不必翻速查表。HELP 交付面写不了这句：那份资产的可见文案闸（`VISIBLE_FORBIDDEN`）禁 `memo.`／`--`。
         thinking: '提醒列表视图 · ' + (status === 'active'
           ? '只看有效（status=active）；已废弃＝撤下这条提醒、笔记保留，调用形 memo.remove --params \'{"mode":"abandon","id":<提醒 id>}\'（独立废弃支，不经删确认闸）'
-          : '只看已废弃（status=dismissed）；废弃＝提醒撤下、笔记保留（调用形同左）'),
+          : '只看已废弃（status=dismissed）；废弃＝提醒撤下、笔记保留，调用形 memo.remove --params \'{"mode":"abandon","id":<提醒 id>}\'（独立废弃支，不经删确认闸）'),
         data_structure: 'reminders 表 · id／note_id／remind_at／repeat_type／repeat_rule／content／status／note_content',
         call_chain: 'memo.remind → listReminderRows → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
         exception: '无',

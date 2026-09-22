@@ -43,7 +43,7 @@ export interface ReadCommandSpec {
   readonly key: string;
   readonly shape: EnvelopeShape;
   readonly title: string;
-  /** 代表唤醒词（生成 SKILL.md 速查表那一列用）；**可缺**（如 `memo.stats` 没有词）；
+  /** 代表唤醒词（生成 SKILL.md 速查表那一列用）；**可缺**（如 `memo.auth` 只有诊断两档、没有唤醒词）；
    *  给定时必须是路由声明里真有的词（生成期拦，见 `scripts/gen-cli.mjs`）。 */
   readonly wakeWord?: string;
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列用）；缺它或为空即生成期抛。 */

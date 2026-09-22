@@ -41,14 +41,22 @@ function sceneNameById(): Map<string, string> {
   return out;
 }
 
-/** 速查行＝**一场景主名一行**（#858）。
+/** 速查行＝**一场景一行**（#858）。
  *
- *  两条判据，都与运行期路由同源同序（`src/triggers/routing.ts` 读的是同一份生成物）：
+ *  三条判据，都与运行期路由同源（`src/triggers/routing.ts` 读的是同一份生成物）：
  *    ① **主名**：路由记录的词等于它服务场景的主名（`wake_word`）才进表；别名（如 `记一条`／`查提醒`）
  *       与无场景的词（如旧表里那条 `废弃提醒`）天然被这一条筛掉——撤的是**行**，不是词
  *       （别名仍住 HELP 资产的 `aliases`，也仍能被唤醒词路由命中）。
- *    ② **同词多行只留先到那条**：`备忘改分类` 单条与批量共用一词，按声明 `order` 先到先得——
- *       批量那条永远路由不到（与运行期同一个判据），故速查也不许出现两行同词让人猜（#858 用户故事 10）。
+ *    ② **一场景一行**：同一场景的多条同名记录只留先到那条（备忘域的 `备忘改分类` 声明了单条与批量两条
+ *       记录，两张场景卡各留一行）。
+ *    ③ **共用一个主名的两格照旧各占一行**：`备忘改分类` 服务 `memo_change_category_single` 与
+ *       `memo_batch_change_category` 两张场景卡（老侧 HELP 自己也是两张卡共用一词），故表里这个词出现
+ *       两次、命令不同（单条 `memo.update` ／ 批量 `memo.batch`）——一场景一行、不靠猜。运行期那侧的
+ *       并列消歧（同长取声明 `order` 小者）由 `src/triggers/routing.ts` 管，与本文无关。
+ *
+ *  ⚠️ **行数口径＝场景数（30），不是「唯一词数」（29）**。取这个读法是因为
+ *  `docs/skills/skill-memo-ilife/t855-验收-命令自治.mjs` 的速查面判据要求「**每个有词面的键**都要在
+ *  速查面有行」——按唯一词去重会把 `memo.batch`（只有批量那一格的词指向它）整键挤出表外。
  */
 export function buildHelpLookup(): HelpHit[] {
   const names = sceneNameById();
@@ -58,8 +66,8 @@ export function buildHelpLookup(): HelpHit[] {
   // 故「先到」＝「order 小」；本件不另存一份顺序知识。
   for (const r of WAKE_ROUTES) {
     if (names.get(r.scene) !== r.wakeWord) continue;
-    if (seen.has(r.wakeWord)) continue;
-    seen.add(r.wakeWord);
+    if (seen.has(r.scene)) continue;
+    seen.add(r.scene);
     rows.push(r);
   }
   return rows.map((r) => ({
