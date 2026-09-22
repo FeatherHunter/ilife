@@ -15,12 +15,12 @@ import { CHART_PALETTE, CSS_VAR_TOKENS, renderActionBar } from 'base-paint';
 import {
   renderCaliberLine,
   renderConclusionBar,
-  renderCopyBlock,
   renderDataTable,
   renderDisclosure,
   renderKpiGrid,
   renderPageShell,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import type { ShoppingItem } from '../fetch/db.js';
 
@@ -169,10 +169,20 @@ export function shoppingListPage(input: {
       }),
     ),
     ...(caveat === '' ? [] : [renderCaliberLine(caveat)]),
-    renderCopyBlock({
+    chefCopyArea({
       title: '复制采购清单',
       dataActionId: 'shopping-copy',
-      dataText: input.recipes.join('、') + '：' + input.items.map((g) => g.name + round(Number(g.quantity)) + g.unit).join('、'),
+      data: {
+        key: 'chef.shopping.query', shape: 'list',
+        items: input.items.map((g) => ({
+          食材: g.name,
+          用量: g.quantity === null || g.quantity === undefined
+            ? g.quantity_text || '适量'
+            : String(round(Number(g.quantity))) + ' ' + g.unit,
+          ...(input.recipes.length > 1 ? { 来自: g.recipes.join('、') } : {}),
+        })),
+        total: input.items.length,
+      },
     }),
   ];
   return renderSceneShell({

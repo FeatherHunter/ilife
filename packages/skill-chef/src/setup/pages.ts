@@ -15,11 +15,11 @@
 import { CHART_PALETTE, CSS_VAR_TOKENS, renderActionBar, renderFactStrip } from 'base-paint';
 import {
   renderConclusionBar,
-  renderCopyBlock,
   renderDisclosure,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
@@ -150,11 +150,14 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
           { label: '看看全部菜谱', kind: 'ghost', actionId: 'setup-list' },
         ],
       }),
-      renderCopyBlock({
+      chefCopyArea({
         // 第三轮文案审计：试过不给标题（只留按钮）——同会话实测 89 → 84，掉了就回退，故保留标题。
         title: '复制上手说明',
         dataActionId: 'setup-copy',
-        dataText: '菜谱库已就绪（' + input.tables + ' 张表，' + done + '），录第一道菜就能开工。',
+        data: {
+          key: 'chef.setup.init', shape: 'receipt', ok: true,
+          message: '菜谱库已就绪（' + input.tables + ' 张表，' + done + '），录第一道菜就能开工。',
+        },
       }),
     ].join(''),
   });

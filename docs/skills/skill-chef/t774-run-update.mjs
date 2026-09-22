@@ -93,11 +93,14 @@ function cli(key, params) {
 let B, renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS;
 /** 页壳装配的单一入口（装饰带 ＋ 族级标准 ＋ 文档壳）住本技能的渲染包，见 `src/render/sceneShell.ts`。 */
 let renderSceneShell;
+/** 复制区共用件（复制数据恒三格式菜单）：`src/render/copyArea.ts`，经编译产物取。 */
+let chefCopyArea;
 async function loadBlocks() {
   B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'blocks.js')).href);
   ({ renderActionBar, renderFactStrip, renderStatusBadge, CHART_PALETTE, CSS_VAR_TOKENS } =
     await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href));
   ({ renderSceneShell } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href));
+  ({ chefCopyArea } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'copyArea.js')).href));
 }
 const fact = (items) => renderFactStrip({ items });
 const concl = (t) => B.renderConclusionBar(t);
@@ -448,10 +451,13 @@ try {
       ['份量', before0.recipe.servings + ' 人份', after1.recipe.servings + ' 人份'],
       ['难度', before0.recipe.difficulty, after1.recipe.difficulty],
     ])),
-    B.renderCopyBlock({
+    chefCopyArea({
       dataActionId: 't774-c1-copy',
-      dataText: dish + '：份量 ' + before0.recipe.servings + ' 人份改成 ' + after1.recipe.servings
-        + ' 人份，难度 ' + before0.recipe.difficulty + ' 改成 ' + after1.recipe.difficulty,
+      data: {
+        key: 'chef.recipe.write', shape: 'receipt', ok: true,
+        message: dish + '：份量 ' + before0.recipe.servings + ' 人份改成 ' + after1.recipe.servings
+          + ' 人份，难度 ' + before0.recipe.difficulty + ' 改成 ' + after1.recipe.difficulty,
+      },
     }),
     renderActionBar({ buttons: [{ label: '再看一遍菜谱', kind: 'primary', actionId: 't774-c1-view' }] }),
   ]));
@@ -488,9 +494,12 @@ try {
       ['第三步', '调味出锅', '备料切配'],
     ])),
     stepList(s2after, '改后三步'),
-    B.renderCopyBlock({
+    chefCopyArea({
       dataActionId: 't774-c2-copy',
-      dataText: dish + '：第二步改内容，第一步与第三步换序',
+      data: {
+        key: 'chef.recipe.write', shape: 'receipt', ok: true,
+        message: dish + '：第二步改内容，第一步与第三步换序',
+      },
     }),
     renderActionBar({ buttons: [{ label: '再看一遍步骤', kind: 'primary', actionId: 't774-c2-view' }] }),
   ]));
@@ -521,9 +530,12 @@ try {
     /* 这一页不出标记行：「用量」与表列头同词、「4 味」与表行数同义（实测点名重复冗余）。 */
     group('改前改后', band() + changeRows([['盐用量', '5 克', '8 克'], ['新增食材', '无', '生抽 15 毫升']])),
     ingTable(g3after, '改后四味'),
-    B.renderCopyBlock({
+    chefCopyArea({
       dataActionId: 't774-c3-copy',
-      dataText: dish + '：盐改成 8 克，新增生抽 15 毫升',
+      data: {
+        key: 'chef.recipe.write', shape: 'receipt', ok: true,
+        message: dish + '：盐改成 8 克，新增生抽 15 毫升',
+      },
     }),
     renderActionBar({ buttons: [{ label: '再看一遍食材', kind: 'primary', actionId: 't774-c3-view' }] }),
   ]));
@@ -551,9 +563,12 @@ try {
     /* 这一页不出标记行：结论条与「默认列表 在列 → 已移出」已经把「现在是什么样」说完，
        再挂一枚「记录保留」胶囊只会多一张卡（实测复评点名「语义模糊 ＋ 卡片堆叠偏紧」）。 */
     group('改前改后', band() + changeRows([['默认列表', '在列', '已移出']])),
-    B.renderCopyBlock({
+    chefCopyArea({
       dataActionId: 't774-c4-copy',
-      dataText: dish + ' 已废弃，默认列表里不再出现',
+      data: {
+        key: 'chef.recipe.write', shape: 'receipt', ok: true,
+        message: dish + ' 已废弃，默认列表里不再出现',
+      },
     }),
     renderActionBar({ buttons: [{ label: '查看这道菜', kind: 'primary', actionId: 't774-c4-view' }] }),
   ]));

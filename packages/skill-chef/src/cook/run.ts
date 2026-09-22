@@ -18,9 +18,10 @@ import type { CookingStep, RecipeHistoryStats, RecipeItem } from '../render/view
 import { toRecipeItem } from '../render/views.js';
 import { needServings, resolveNameOrId } from '../shared/slots.js';
 import {
-  renderCaliberLine, renderChipRow, renderConclusionBar, renderCopyBlock,
+  renderCaliberLine, renderChipRow, renderConclusionBar,
   renderDataTable, renderDisclosure, renderKpiCard, renderPageShell, renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
@@ -327,11 +328,18 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
       { label: '看这道菜的历史', kind: 'ghost', actionId: prefix + '-history' },
     ],
   });
-  const copyText = ['备料清单（' + data.servings + ' 人份）']
-    .concat(data.ingredients.map((g) => g.name + ' ' + qtyText(g.quantity, g.unit)))
-    .concat(['进度：第 ' + cur + ' 步 / 共 ' + total + ' 步',
-      '评分：做过 ' + data.count + ' 次' + (data.avgRating === null ? '' : '，平均 ' + data.avgRating + ' 分')]).join('\n');
-  const copy = renderCopyBlock({ title: '复制备料清单与进度', dataActionId: prefix + '-copy', dataText: copyText });
+  // 复制区（三格式菜单）：行文与改前逐行同义（备料行／进度行／评分行），`list` 形逐行透传。
+  const copy = chefCopyArea({
+    title: '复制备料清单与进度',
+    dataActionId: prefix + '-copy',
+    data: {
+      key: 'chef.cooking.run', shape: 'list',
+      items: ['备料清单（' + data.servings + ' 人份）']
+        .concat(data.ingredients.map((g) => g.name + ' ' + qtyText(g.quantity, g.unit)))
+        .concat(['进度：第 ' + cur + ' 步 / 共 ' + total + ' 步',
+          '评分：做过 ' + data.count + ' 次' + (data.avgRating === null ? '' : '，平均 ' + data.avgRating + ' 分')]),
+    },
+  });
   const body = renderPageShell({
     eyebrow: '私家大厨 ｜ 做菜', title: '做菜模式：' + data.recipe.name,
     content: head.join('') + stepsHtml + stepper + tail.join('') + prep + ware + done + copy,

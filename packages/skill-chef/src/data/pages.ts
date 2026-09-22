@@ -25,12 +25,12 @@ import {
   renderChangeRows,
   renderChipRow,
   renderConclusionBar,
-  renderCopyBlock,
   renderDisclosure,
   renderDistributionRows,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
@@ -255,10 +255,13 @@ export function dataBatchPage(input: { name: string; diffs: { field: string; bef
         { label: '再看一遍菜谱', kind: 'ghost', actionId: 'batch-view' },
       ],
     }),
-    renderCopyBlock({
+    chefCopyArea({
       title: '改动说明',
       dataActionId: 'batch-copy-data',
-      dataText: input.name + '改' + input.diffs.length + '处：' + input.diffs.map((d) => d.field + d.before + '到' + d.after).join('；'),
+      data: {
+        key: 'chef.data.batch', shape: 'receipt', ok: true,
+        message: input.name + '改' + input.diffs.length + '处：' + input.diffs.map((d) => d.field + d.before + '到' + d.after).join('；'),
+      },
     }),
   ];
   return shell('批量改回执', '私家大厨 ｜ 数据管理', blocks, { page: 'batch', family: 'receipt' });
@@ -283,11 +286,15 @@ export function dataBackupPage(input: { recipeCount: number; tableCount: number;
         { label: '再备一份', kind: 'ghost', actionId: 'backup-again' },
       ],
     }),
-    renderCopyBlock({
+    chefCopyArea({
       // 删掉说明行：它与标题「复制备份回执」＋按钮「复制数据」说的是同一件事（判官点名的「文案叠说」）。
       title: '复制备份回执',
       dataActionId: 'backup-copy-data',
-      dataText: '已备份' + input.recipeCount + '道菜（' + input.tableCount + '张表，共' + input.bytes + '字节）。',
+      // 备份走 `history.query` 的 kind=backup，信封 key 随 CLI 取 `chef.history.query`。
+      data: {
+        key: 'chef.history.query', shape: 'list',
+        items: [{ 菜数: input.recipeCount, 表数: input.tableCount, 大小: input.bytes }],
+      },
     }),
   ];
   return shell('备份回执', '私家大厨 ｜ 数据管理', blocks, { page: 'backup', family: 'receipt' });

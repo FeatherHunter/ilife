@@ -12,10 +12,10 @@ import { renderActionBar, renderStatusBadge } from 'base-paint';
 import {
   renderCaliberLine,
   renderConclusionBar,
-  renderCopyBlock,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml } from '../render/index.js';
 import { relationShapeCss } from './shapes.js';
@@ -201,9 +201,12 @@ export function relationAddPage(input: { parent: string; child: string; relation
       { label: '看家族树', kind: 'primary', actionId: 'relation-tree' },
       { label: '再记一组', kind: 'ghost', actionId: 'relation-again' },
     ]),
-    renderCopyBlock({
+    chefCopyArea({
       dataActionId: 'relation-copy',
-      dataText: input.parent + '到' + input.child + '（' + input.relationType + '）：' + input.changeSummary,
+      data: {
+        key: 'chef.relation.write', shape: 'receipt', ok: true,
+        message: input.parent + '到' + input.child + '（' + input.relationType + '）：' + input.changeSummary,
+      },
     }),
   ];
   return shell('记派生关系回执', '私家大厨 ｜ 派生', blocks);
@@ -237,9 +240,12 @@ export function relationDerivePage(input: { parent: string; child: string; diffe
       { label: '看做菜步骤', kind: 'primary', actionId: 'relation-view' },
       { label: '看家族树', kind: 'ghost', actionId: 'relation-tree' },
     ]),
-    renderCopyBlock({
+    chefCopyArea({
       dataActionId: 'derive-copy',
-      dataText: '由' + input.parent + '派生' + input.child + '：' + input.differences,
+      data: {
+        key: 'chef.relation.write', shape: 'receipt', ok: true,
+        message: '由' + input.parent + '派生' + input.child + '：' + input.differences,
+      },
     }),
   ];
   return shell('派生新菜回执', '私家大厨 ｜ 派生', blocks);

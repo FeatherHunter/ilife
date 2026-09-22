@@ -17,13 +17,13 @@ import {
   renderChangeRows,
   renderChipRow,
   renderConclusionBar,
-  renderCopyBlock,
   renderDisclosure,
   renderKpiGrid,
   renderListRows,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { renderSceneShell } from '../render/sceneShell.js';
 import type { SceneFamily } from '../render/sceneBand.js';
@@ -162,10 +162,18 @@ export function renderRecordPage(input: RecordPageInput): string {
         { label: '撤销这次记录', kind: 'ghost', actionId: 'h775-record-undo' },
       ],
     }),
-    renderCopyBlock({
+    chefCopyArea({
       title: '复制这条记录',
-      dataText: input.name + '\n' + input.cookDate + ' 第' + input.cookSequence + '次 评分' + input.rating + '\n' + input.feedback,
-      logText: '记录做菜 ' + input.name + ' ' + input.cookDate + ' 评分' + input.rating + ' 记录' + input.historyId,
+      data: {
+        key: 'chef.history.record', shape: 'receipt', ok: true,
+        message: input.name + '\n' + input.cookDate + ' 第' + input.cookSequence + '次 评分' + input.rating + '\n' + input.feedback,
+      },
+      // 手拼日志迁六段：调用链沿用原先那句过程证据，时间戳取这次做菜日期；给不出的来源如实缺省。
+      log: {
+        command: 'chef.history.record',
+        m5Line: '记录做菜 ' + input.name + ' ' + input.cookDate + ' 评分' + input.rating + ' 记录' + input.historyId,
+        actionAt: input.cookDate,
+      },
     }),
   ]);
 }
@@ -205,9 +213,13 @@ export function renderTimelinePage(input: TimelinePageInput): string {
     renderConclusionBar('共做过 ' + input.count + ' 次，平均 ' + fmtAvg(input.avgRating) + ' 分。'),
     renderFactStrip({ items: facts }),
     timeline,
-    renderCopyBlock({
+    chefCopyArea({
       title: '复制这份时间线',
-      dataText: input.rows.map((r) => r.cookDate + ' 第' + r.cookSequence + '次 评分' + r.rating + ' ' + r.feedback).join('\n'),
+      data: {
+        key: 'chef.history.query', shape: 'list',
+        items: input.rows.map((r) => ({ 日期: r.cookDate, 第几次: r.cookSequence, 评分: r.rating, 反馈: r.feedback })),
+        total: input.count,
+      },
     }),
   ]);
 }
@@ -256,10 +268,15 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
       { label: '评分区间', value: range, unit: input.maxRating === null ? '' : '分' },
       { label: '最近一次', value: dash(input.lastDate) },
     ]),
-    renderCopyBlock({
+    chefCopyArea({
       title: '这份统计',
-      dataText:
-        input.name + ' 共' + input.count + '次 平均' + fmtAvg(input.avgRating) + ' 最高' + dash(input.maxRating) + ' 最低' + dash(input.minRating) + ' 最近' + dash(input.lastDate),
+      data: {
+        key: 'chef.history.query', shape: 'list',
+        items: [{
+          菜: input.name, 状态: input.status, 次数: input.count, 平均: input.avgRating,
+          最高: input.maxRating, 最低: input.minRating, 最近: input.lastDate,
+        }],
+      },
     }),
     // 本页启用「首屏填满度」那一组页内规则（同会话实测：本页 81 → 83）。
   ], true);
@@ -316,13 +333,15 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
     renderCaliberLine('最近 5 道按末次做菜日期倒序。'),
     renderDisclosure({ title: '做过的菜（' + portrait.perRecipe.length + ' 道）', contentHtml: cookedList, open: true }),
     renderDisclosure({ title: '还没做过的菜（' + portrait.neverCooked.length + ' 道）', contentHtml: never, open: false }),
-    renderCopyBlock({
+    chefCopyArea({
       // 第二轮返修：评委原话「'复制这份画像'与'复制数据'重复啰嗦」——标题只说这一块是什么，
       // 动词留给按钮。
       title: '这份统计',
-      dataText:
-        '做过' + portrait.cookedCount + '道 共' + portrait.totalCooks + '次\n' +
-        portrait.recent.map((r) => r.name + ' ' + r.lastDate).join('\n'),
+      data: {
+        key: 'chef.history.query', shape: 'list',
+        items: portrait.perRecipe.map((r) => ({ 菜名: r.name, 次数: r.count, 均分: r.avgRating })),
+        total: portrait.perRecipe.length,
+      },
     }),
     // 与单菜统计页同一条口径：本页也启用填满度那组（同会话实测 89 对 85）。
   ], true);

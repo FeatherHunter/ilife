@@ -58,6 +58,8 @@ const B = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist
 const { renderFactStrip, CHART_PALETTE, CSS_VAR_TOKENS } = await import(pathToFileURL(join(ROOT, 'packages', 'base-render', 'dist', 'index.js')).href);
 /** 页面样式层的单一入口（公共层两配方 ＋ 私家大厨皮肤）住本技能的渲染包，见 `src/render/skin.ts`。 */
 const { renderSceneShell } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'index.js')).href);
+/** 复制区共用件（复制数据恒三格式菜单）：`src/render/copyArea.ts`，经编译产物取。 */
+const { chefCopyArea } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-chef', 'dist', 'render', 'copyArea.js')).href);
 const { printGate, runGate, withBrowser } = await import('./t768-质量门.mjs');
 const DIST = join(ROOT, 'packages', 'skill-chef', 'dist');
 const D = (p) => pathToFileURL(join(DIST, p)).href;
@@ -609,11 +611,15 @@ function buildPage(card, data, metas) {
     const body = head + chips + proseHtml(it);
     return B.renderDisclosure({ title: it.name, open: true, contentHtml: body });
   }).join('');
-  const copy = B.renderCopyBlock({
+  const copy = chefCopyArea({
     // 不再给标题：按钮自己写着「复制数据」，上面再压一行「复制这次筛选结果」是同义复述
     // （复评原话：「『这次的』／『这次的筛选结果』等冗余文案」「复制区在首屏被压在页外属冗余装饰」）。
     dataActionId: 't771-copy-' + card.id,
-    dataText: JSON.stringify({ 条件: card.desc, 总数: data.total, 菜: data.items.map((it) => it.name) }, null, 2),
+    data: {
+      key: 'chef.recipe.search', shape: 'list',
+      items: data.items.map((it) => ({ 菜名: it.name, 难度: it.difficulty, 份量: it.servings, 总时长: it.total_time_minutes })),
+      total: data.total,
+    },
   });
   // 页内**不再**自带装饰带：页头那一条由页壳件的 `renderSceneShell({family:'result'})` 出
   // （族级标准，器物剪影＋饱和色填充），页内再挂一条就是两条带并存 —— 重复装饰。

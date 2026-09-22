@@ -16,10 +16,11 @@
  */
 
 import {
-  renderCaliberLine, renderChangeRows, renderChips, renderConclusionBar, renderCopyBlock,
+  renderCaliberLine, renderChangeRows, renderChips, renderConclusionBar,
   renderDataTable, renderDisclosure, renderKpiCard, renderPageShell,
   renderProseBlock, renderTocBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
@@ -243,9 +244,12 @@ function footerOf(d: ViewItem): string {
 }
 
 function copyOf(d: ViewItem): string {
-  return renderCopyBlock({
+  return chefCopyArea({
     title: '复制这份菜谱', dataActionId: 't770-copy-recipe',
-    dataText: JSON.stringify({ 菜名: d.name, 食材数: d.ingredients.length, 步骤数: d.steps.length }, null, 2),
+    data: {
+      key: 'chef.recipe.view', shape: 'detail',
+      item: { 菜名: d.name, 食材数: d.ingredients.length, 步骤数: d.steps.length },
+    },
   });
 }
 

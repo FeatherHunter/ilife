@@ -8,12 +8,12 @@
 import { renderActionBar, renderErrorReceipt, renderFactStrip } from 'base-paint';
 import {
   renderConclusionBar,
-  renderCopyBlock,
   renderDataTable,
   renderListRows,
   renderPageShell,
   renderProseBlock,
 } from 'base-paint/blocks';
+import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 
 interface AddIngredientView {
@@ -360,26 +360,21 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
   const ingredients = [...input.ingredients];
   const steps = [...input.steps].sort((a, b) => a.sequence - b.sequence);
   const table = ingredientTable(ingredients);
-  const copyData = JSON.stringify(
-    {
-      scene_id: input.cardId,
-      wake_word: input.wakeWord,
-      recipe: input.recipeName,
-      recipe_id: input.recipeId,
-      servings: input.servings,
-      source: input.caliberNote,
-      ingredients: ingredients.map((g) => ({ name: g.name, quantity: g.quantity, unit: g.unit })),
-      steps: steps.map((s) => ({ sequence: s.sequence, action: s.action })),
+  // 复制区（三格式菜单 ＋ 六段日志）：数据位是写入回执的摘要；日志位的过程证据由输入派生、
+  // 给不出的时间戳如实缺省（`(未知)` 口径），不编数冒充。
+  const copy = chefCopyArea({
+    title: '复制区',
+    data: {
+      key: 'chef.recipe.write', shape: 'receipt', ok: true,
+      message: input.recipeName + '已写进菜谱：' + input.servings + '人份，备料'
+        + ingredients.length + '味，共' + steps.length + '步。',
     },
-    null,
-    2,
-  );
-  const copyLog = [
-    '唤醒词：' + input.wakeWord + ' · 场景 ' + input.cardId,
-    '写入：菜谱 1 行 ＋ 食材 ' + ingredients.length + ' 行 ＋ 步骤 ' + steps.length + ' 行',
-    '写入时间：本次运行',
-    '异常信息：无',
-  ].join('\n');
+    log: {
+      command: 'chef.recipe.write',
+      source: input.caliberNote,
+      m5Line: '菜谱 1 行 ＋ 食材 ' + ingredients.length + ' 行 ＋ 步骤 ' + steps.length + ' 行',
+    },
+  });
   const content =
     renderConclusionBar(CONCLUSION_TEXT) +
     renderFactStrip({
@@ -398,7 +393,7 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
         { label: '再录一道', kind: 'primary', actionId: 't773-add-' + input.cardId },
       ],
     }) +
-    renderCopyBlock({ title: '复制区', dataText: copyData, logText: copyLog });
+    copy;
   const shell = renderPageShell({
     eyebrow: '私家大厨 ｜ 录入',
     title: '录入回执：' + input.recipeName,
