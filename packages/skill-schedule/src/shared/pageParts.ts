@@ -167,7 +167,7 @@ export function pagePartsCss(): string {
     '@media (max-width: 820px) {',
     '  .heat-row { grid-template-columns: 52px minmax(0, 1fr); gap: 8px; }',
     '  .heat-row-total { grid-template-columns: 52px minmax(0, 1fr) 50px; }',
-    '  .heat-day, .heat-sum { font-size: 11px; }',
+    // #893 正文类下限 12px：窄屏不把 heat-day／heat-sum 压到 11，沿用基线 12（留此行防回退）。
     '  .heat-cell { height: 15px; border-radius: 3px; }',
     '}',
     '@media print { .heat-cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }',

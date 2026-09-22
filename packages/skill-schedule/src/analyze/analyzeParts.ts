@@ -24,7 +24,8 @@ import { CHART_PALETTE } from 'base-paint';
 const FS_TITLE = 15;
 const FS_BODY = 13;
 const FS_SMALL = 12;
-const FS_TINY = 11;
+/* #893 正文类下限 12px（PAGE_LIMITS.textMinPx）：TINY 不许低于 12，与 SMALL 同值是刻意的。 */
+const FS_TINY = 12;
 const GAP = 8;
 const ROW_GAP = 10;
 const PAD_Y = 12;
