@@ -3,7 +3,7 @@
  * 权威是声明层：各能力 `src/<能力>/routes.ts`（一能力一件，一条命令一个定义地）。
  * 本件只做「按 `list` 分组、按 `order` 升序」的
  * 排序与拼接，不含任何顺序知识——顺序事实只住声明的 `order` 字段，换文件搬动不会打乱顺序。
- * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 69 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 507 条（与声明逐条自洽：`pnpm gen:check` 验真）。
+ * 本次生成：WAKE_ROUTES 437 条 ＋ NEW_KEY_ROUTES 72 条 ＋ COVERAGE_REPAIR_ROUTES 1 条，合计 510 条（与声明逐条自洽：`pnpm gen:check` 验真）。
  */
 import type { ExecWakeRoute, WakeRoute } from './routeSpec.js';
 
@@ -448,7 +448,7 @@ export const WAKE_ROUTES: readonly WakeRoute[] = [
   { wakeWord: '定运动目标', scene: '06', kind: 'exec', key: 'calorie.goal.exercise', cli: 'calorie-cmd-read calorie.goal.exercise --params \'{"goal":300}\'' },
 ];
 
-/** 69 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
+/** 72 条新拟入口（D-4：键内无同形入口的补入口，唤醒词新拟、不写入冻结表） */
 export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '存身材照', scene: '09', kind: 'exec', key: 'calorie.photo.add', cli: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { wakeWord: '移除身材照', scene: '09', kind: 'exec', key: 'calorie.photo.remove', cli: 'calorie-cmd-read calorie.photo.remove --params \'{"id":1}\'' },
@@ -519,6 +519,9 @@ export const NEW_KEY_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '确认撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete', cli: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
   { wakeWord: '选身材照', scene: '09', kind: 'exec', key: 'calorie.view.photo-picker', cli: 'calorie-cmd-read calorie.view.photo-picker' },
   { wakeWord: '卡路里HELP', scene: '09', kind: 'exec', key: 'calorie.help.center', cli: 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'' },
+  { wakeWord: '查训记KEY状态', scene: '05', kind: 'exec', key: 'calorie.view.xunji-key', cli: 'calorie-cmd-read calorie.view.xunji-key' },
+  { wakeWord: '设训记KEY', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-key-set', cli: 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'' },
+  { wakeWord: '清训记KEY', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-key-clear', cli: 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'' },
 ];
 
 /** 1 条覆盖修复入口（FX-81-5：键失去唯一可跑入口时补的单命令入口） */
@@ -526,5 +529,5 @@ export const COVERAGE_REPAIR_ROUTES: readonly ExecWakeRoute[] = [
   { wakeWord: '看目标推荐', scene: '06', kind: 'exec', key: 'calorie.view.goal-recommend', cli: 'calorie-cmd-read calorie.view.goal-recommend --params \'{"profile":"cut"}\'' },
 ];
 
-/** 全量路由（437 条 SoT ＋ 69 条新拟 ＋ 1 条覆盖修复） */
+/** 全量路由（437 条 SoT ＋ 72 条新拟 ＋ 1 条覆盖修复） */
 export const ALL_ROUTES: readonly WakeRoute[] = [...WAKE_ROUTES, ...NEW_KEY_ROUTES, ...COVERAGE_REPAIR_ROUTES];

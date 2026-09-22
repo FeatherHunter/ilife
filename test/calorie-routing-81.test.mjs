@@ -106,7 +106,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       nonExec: 12,
       outOfScope: 3,
       legacyChain: 9,
-      newEntries: 69,
+      newEntries: 72, // 69 ＋ 本票训记 KEY 自救链 3 条（order69–71；total／exec 等 wake 侧数字系他席在途，票号待主人认领）
       repairEntries: 1,
       coveredKeys: DECLARED_KEYS.length,
     });
@@ -122,7 +122,7 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     }
   });
 
-  it('D2③ 全量键（条数 == 权威声明）全部有可执行入口（436 条 ＋ 69 条新拟入口）', () => {
+  it('D2③ 全量键（条数 == 权威声明）全部有可执行入口（436 条 ＋ 72 条新拟入口）', () => {
     const covered = new Set(ALL_ROUTES.filter((r) => r.kind === 'exec').map((r) => r.key));
     assert.deepEqual([...covered].sort(), [...KEY_LIST].sort());
     assert.equal(covered.size, DECLARED_KEYS.length, '键覆盖数 == 权威声明');
@@ -240,16 +240,17 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
     assert.equal(ROUTES_BY_WAKE_WORD['记身材照'].length, 3);
     assert.equal(
       Object.values(ROUTES_BY_WAKE_WORD).reduce((n, rs) => n + rs.length, 0),
-      507, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）＋ #283 +1（删照候选 order=67）＋ #651 +1（卡路里HELP 新拟入口 order=68）
+      510, // #251 +1（看目标预检）＋ #348 +5（训练计划确认执行入口）＋ 他席在途新键 +5（#383 时点值，见 D2⑤）＋ #283 +1（删照候选 order=67）＋ #651 +1（卡路里HELP 新拟入口 order=68）＋ 训记 KEY 自救链 +3（查训记KEY状态／设训记KEY／清训记KEY，order=69–71）
     );
     for (const w of new Set(WAKE_ROUTES.map((r) => r.wakeWord))) {
       assert.ok(routesFor(w).length >= 1, w);
     }
   });
 
-  it('D2⑤ 新增入口（69 键，#113 +8／#86 +4／#179 +1／#251 +1／#348 +5 训练计划确认执行入口 ＋ 他席在途新键 +5 ＋ #283 +1 删照候选）与施工前既有入口零重复', () => {
+  it('D2⑤ 新增入口（72 键，#113 +8／#86 +4／#179 +1／#251 +1／#348 +5 训练计划确认执行入口 ＋ 他席在途新键 +5 ＋ #283 +1 删照候选 ＋ 训记 KEY 自救链 +3 查设清 order69–71）与施工前既有入口零重复', () => {
     // ＋5 系他席新键（#283 时点 NEW_KEY_ROUTES 68；#651 +1「卡路里HELP」后实测 69，恰与本断言持平；key 前缀多为 photo／goal／plan 系，票号待主人认领；以主人版为准重改）＋ #283 1 键（photo-picker／选身材照／order=67，69＝68＋#651 的 1）。
-    assert.equal(NEW_KEY_ROUTES.length, 69);
+    // 本票 ＋3：查训记KEY状态（calorie.view.xunji-key）／设训记KEY（calorie.workout.xunji-key-set）／清训记KEY（calorie.workout.xunji-key-clear），order=69–71，三键三词互异（无 #651 式一键两条）。
+    assert.equal(NEW_KEY_ROUTES.length, 72);
     // 「施工前既有入口」＝#81 施工点上冻结表可达的 **43 键**（冻结直连 cli 33 键 ＋ 当时补偿表 22 条映射出的
     // 10 个新键）。#180 把 375 条命令字段逐字改写成路由层命令后，这层基线**已无法从冻结表反推**——反推得
     // 75 键，其中 32 键正是 #81 新拟入口本尊（自己与自己比，判据失去鉴别力）→ 按议题《影响清单第一步补记》
@@ -296,8 +297,8 @@ describe('#81 唤醒词路由层（路由与 parity 分家）', () => {
       assert.match(r.cli, /^calorie-cmd-read calorie\./);
       assert.equal(/python/i.test(r.cli), false);
     }
-    assert.equal(newKeys.size, 68); // #651 起：条数 69 ≠ 互异键数 68——`calorie.help.center` 一键占两条（order17＋order68），故互异键比条数少 1；与 #283 时点 69 相比另少 1 系他席在途（有条新拟记录被移走／改列，票号待主人认领），非本票所动，本票只 +1 条目、+0 互异键。
-    assert.equal(newWords.size, 69); // 词仍互异（#651 的词是新词），条数＝词数＝69。
+    assert.equal(newKeys.size, 71); // #651 起：条数 69 ≠ 互异键数 68——`calorie.help.center` 一键占两条（order17＋order68），故互异键比条数少 1；与 #283 时点 69 相比另少 1 系他席在途（有条新拟记录被移走／改列，票号待主人认领），非本票所动；本票 ＋3 条目 ＋3 互异键（71＝68＋3），词亦 ＋3。
+    assert.equal(newWords.size, 72); // 词仍互异（#651 的词是新词），条数＝词数＝72（69＋本票 3）。
     assert.deepEqual([...dupKeys].sort(), ['calorie.help.center'],
       '新拟键重复集合走散（#651 例外只许 help.center 一键两条，多一键即红）');
   });

@@ -1,8 +1,8 @@
 /** 落地训练两页（HELP 场景 05「健身计划」下一级「落地训练」· 宿主独用）。
  *
  * 两态（同一命令，`dryRun` 分流）：
- * - 过程页（`dryRun`）：可复制 prompt 先出 ＋ 四步预告（待写日历段／待记心愿／待推送段／回写区间），
- *   远端未调用写在页头，不进任何子进程；
+ * - 过程页（`dryRun`）：可复制 prompt 先出 ＋ 四步预告（待写日历段／待记心愿／待推送段／回写区间）
+ *   ＋ 训记 KEY 有无 ＋ 空天原因，远端未调用写在页头，不进任何子进程；
  * - 结果页：四步逐段结局 ＋ 新增更新合计 ＋ 本地远端分清，每步读数都在页上。
  *
  * 显示口径（唯一定义地，别处引用）：时段空即默认 07:00~08:00／标题 `健身 段 时分`／
@@ -14,6 +14,7 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { promptCopyArea } from '../shared/copyArea.js';
 import { copyBlock } from '../shared/copyBlock.js';
 import type { PlanSessionRow } from './planStore.js';
+import { xunjiKeyRow } from './xunjiKey.js';
 
 const DOC_TITLE = '卡路里·健身计划回执';
 
@@ -55,10 +56,12 @@ export function landRealCommand(date: string): string {
 /** 过程页（`dryRun`）：可复制 prompt 先出 ＋ 四步预告；远端未调用写在页头。 */
 export function buildLandProcessPage(input: {
   key: string; params: Record<string, unknown>; date: string;
-  sessions: readonly PlanSessionRow[]; receipt: CrudReceipt;
+  sessions: readonly PlanSessionRow[]; receipt: CrudReceipt; startDate: string | null;
 }): string {
-  const { key, params, date, sessions, receipt } = input;
+  const { key, params, date, sessions, receipt, startDate } = input;
   const moves = sessions.reduce((n, s) => n + (Array.isArray(s.movements) ? s.movements.length : 0), 0);
+  const emptyWhy = '这天没排练（休息日或超出计划周：本计划开始于'
+    + (startDate ?? '未知') + '，先用 看完整计划 核对），四步即过零段';
   const content = [
     promptCopyArea(landRealCommand(date), '复制实跑指令'),
     renderKpiGrid([
@@ -72,7 +75,7 @@ export function buildLandProcessPage(input: {
     renderDataTable({
       columns: [{ key: 'label', label: '训练段' }, { key: 'time', label: '时间' }, { key: 'moves', label: '动作' }],
       rows: sessions.length === 0
-        ? [{ label: '空天', time: '无', moves: '这天没排练，四步即过零段' }]
+        ? [{ label: '空天', time: '无', moves: emptyWhy }]
         : sessions.map((s, i) => {
           const { ts, te } = landSpanOf(s, i);
           return {
@@ -97,6 +100,8 @@ export function buildLandProcessPage(input: {
         { k: '待回写', v: date + ' 往前 1 天' },
         { k: '本地', v: '计划已读 ' + sessions.length + ' 段' },
         { k: '远端', v: '未调用' },
+        xunjiKeyRow(),
+        { k: '预演说明', v: '本页只看不写，不代表落地成功：实跑以结果页为准' },
       ],
       caption: '本地成远端没成分得清',
     }),

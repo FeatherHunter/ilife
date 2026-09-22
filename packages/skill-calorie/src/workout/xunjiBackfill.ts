@@ -7,7 +7,7 @@
  *   （码翻译见跑道；修掉老「写库失败仍退 0」，`#608 §三·5`），失败不落成功页。
  *
  * 两态（同一命令，`dryRun` 分流）：
- * - `dryRun: true` → 过程页（回写区间 ＋ 三步预告 ＋ 幂等与冲突口径，远端未调用）；
+ * - `dryRun: true` → 过程页（回写区间 ＋ 三步预告 ＋ 幂等与冲突口径 ＋ 训记 KEY 有无，远端未调用）；
  * - 缺省 → 结果页（逐天回写结局 ＋ 新增／更新合计 ＋ 本地／远端区分）。
  *
  * 本命令不读计划、不读运动记录：区间展开与落库都在子进程里（`backfill.ts`），父进程只传
@@ -24,6 +24,7 @@ import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
+import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
 
 export const XUNJI_BACKFILL_KEY = 'calorie.workout.xunji-backfill';
 const XUNJI_BACKFILL_WAKE = '拉训记实绩';
@@ -86,10 +87,10 @@ function dayFailures(data: unknown): string[] {
   return out;
 }
 
-/** 回写失败：本地缺 KEY 点名没调远端（exit 3），其余按天点名失败分类（exit 4）。 */
+/** 回写失败：本地缺 KEY 点名没调远端＋可复制的下一步（exit 3），其余按天点名失败分类（exit 4）。 */
 function failBackfill(end: string, days: number, call: XunjiCall): never {
   if (call.code === 2) {
-    fail(3, '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）：本地缺 KEY（没调远端）：先看训记 KEY 状态再重试');
+    fail(3, '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）：本地缺 KEY（没调远端）：' + xunjiKeyNext());
   }
   const named = dayFailures(call.data);
   fail(
@@ -153,6 +154,7 @@ function backfillProcessPage(params: Record<string, unknown>, end: string, days:
         { k: '空天', v: '训记那天空无训练即跳过，不算失败' },
         { k: '本地', v: '参数已验过，区间与口径见上两表' },
         { k: '远端', v: '未调用（预演不调训记接口）' },
+        xunjiKeyRow(),
         ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
       ],
       caption: '本地成远端没成分得清',

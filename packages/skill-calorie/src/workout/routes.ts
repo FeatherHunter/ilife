@@ -57,4 +57,7 @@ export const WORKOUT_ROUTES: readonly RouteDecl[] = [
   { list: 'new', order: 64, wakeWord: '确认删某天训练', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete-day', cli: 'calorie-cmd-read calorie.workout.plan-delete-day --params \'{"week":1,"dayOfWeek":3}\'' },
   { list: 'new', order: 65, wakeWord: '确认改动作', scene: '05', kind: 'exec', key: 'calorie.workout.plan-update-movement', cli: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { list: 'new', order: 66, wakeWord: '确认撤销训练计划', scene: '05', kind: 'exec', key: 'calorie.workout.plan-delete', cli: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
+  { list: 'new', order: 69, wakeWord: '查训记KEY状态', scene: '05', kind: 'exec', key: 'calorie.view.xunji-key', cli: 'calorie-cmd-read calorie.view.xunji-key' },
+  { list: 'new', order: 70, wakeWord: '设训记KEY', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-key-set', cli: 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'' },
+  { list: 'new', order: 71, wakeWord: '清训记KEY', scene: '05', kind: 'exec', key: 'calorie.workout.xunji-key-clear', cli: 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'' },
 ];

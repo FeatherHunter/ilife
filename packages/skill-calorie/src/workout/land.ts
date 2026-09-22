@@ -8,8 +8,9 @@
  * （`xunji backfill --days 1`，天数与落地天数同源，修掉老 `--days` 与 `--backfill-days` 两张皮）。
  *
  * 两态（同一命令，`dryRun` 分流）：
- * - `dryRun: true` → 过程页（可复制 prompt 先出，远端未调用，不进任何子进程）；
- * - 缺省 → 结果页（四步逐段结局 ＋ 本地远端分清，任一步失败即非 0 点名哪一步）。
+ * - `dryRun: true` → 过程页（可复制 prompt 先出，远端未调用，不进任何子进程；
+ *   页上带训记 KEY 有无与空天原因，不拿预演页当成功用）；
+ * - 缺省 → 结果页（四步逐段结局 ＋ 本地远端分清，任一步失败即非 0 点名哪一步＋下一步）。
  *
  * 三旧坑落点：① 任一步失败即非 0（用法 2／本地缺 KEY 3／其余 4，失败不落成功页）；
  * ② 外部调用无保护 → 跑道预检＋限时＋失败进码；③ 回执渲染器不调外部 → 调用与回执收进同一命令。
@@ -33,6 +34,7 @@ import type { PlanSessionRow } from './planStore.js';
 import { invokeLandBackfill, invokeLandPush, invokeMemo, invokeSchedule } from './landRunner.js';
 import { buildLandProcessPage, buildLandResultPage, landNotesOf, landSpanOf, landTitleOf } from './landPages.js';
 import type { LandStepRead } from './landPages.js';
+import { xunjiKeyNext } from './xunjiKey.js';
 
 export const LAND_KEY = 'calorie.workout.land';
 const LAND_WAKE = '落地训练';
@@ -218,7 +220,10 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
     });
     return {
       data: { ok: true, message, receipt },
-      html: buildLandProcessPage({ key: LAND_KEY, params, date, sessions, receipt }),
+      html: buildLandProcessPage({
+        key: LAND_KEY, params, date, sessions, receipt,
+        startDate: getPlan(db).config?.start_date ?? null,
+      }),
     };
   }
   const steps: LandStepRead[] = [];
@@ -265,7 +270,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
   const push = invokeLandPush(date, '推送');
   if (push.code !== 0) {
     if (push.code === 2 || pushLocalNoKey(push.data)) {
-      failStep('推送', 3, '本地缺 KEY（没调远端）：先看训记 KEY 状态再重试', push.stderr);
+      failStep('推送', 3, '本地缺 KEY（没调远端）：' + xunjiKeyNext(), push.stderr);
     }
     const o = push.data as { ok_count?: unknown; fail_count?: unknown; session_count?: unknown } | null;
     const counts = typeof o === 'object' && o !== null
@@ -282,7 +287,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
   });
   const back = invokeLandBackfill(date, '回写');
   if (back.code !== 0) {
-    if (back.code === 2) failStep('回写', 3, '本地缺 KEY（没调远端）：先看训记 KEY 状态再重试', back.stderr);
+    if (back.code === 2) failStep('回写', 3, '本地缺 KEY（没调远端）：' + xunjiKeyNext(), back.stderr);
     failStep('回写', 4, '训记回写失败：稍后重试', back.stderr);
   }
   const bs = back.data as { total_inserted?: unknown; total_updated?: unknown } | null;

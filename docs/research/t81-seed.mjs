@@ -27,6 +27,9 @@ export const PLACEHOLDER_SUBSTITUTIONS = new Map([
   ['<对比开始日期>', '2026-08-23'],
   ['<对比结束日期>', '2026-08-29'],
   ['<日期>', '2026-09-06'],
+  // 设训记 KEY 示例的占位符：示例值（真跑会写进**临时家目录**的配置文件，不碰真实 KEY；
+  // 家目录隔离见下 `runCli`，#763 起测试隔离一律改家目录、不读环境变量开关）。
+  ['<KEY值>', 'EXAMPLE-ONLY-KEY-0000'],
 ]);
 /** 占位符位于 JSON 字符串内，替换值须 JSON 转义（Windows 路径含反斜杠）。 */
 const jsonEscape = (s) => JSON.stringify(String(s)).slice(1, -1);
@@ -170,12 +173,22 @@ export function createHarness() {
     const dir = join(workDir, 'run-' + runSeq);
     mkdirSync(dir, { recursive: true });
     copyFileSync(templateDb, join(dir, DB_FILENAME));
+    // 家目录隔离（#763 口径）：子进程的家目录指到本次运行的临时目录，并在那里落一份
+    // 只写库目录的配置文件——于是子进程读到的库正是上面拷过去的种子库副本，写也只写临时目录。
+    // 背景：`SKILLS_DB_PATH` 等环境变量已退役（#675／#676），不指家目录就落到真实家目录
+    // （2026-09-22 实测：示例门禁把真库写脏）。两格（USERPROFILE／HOME）与本仓测试基座同口径。
+    const fakeHome = join(dir, 'home');
+    mkdirSync(join(fakeHome, '.ilife'), { recursive: true });
+    writeFileSync(join(fakeHome, '.ilife', 'calorie.yaml'), 'db:\n  dir: ' + JSON.stringify(dir) + '\n', 'utf8');
     const toks = tokenize(effective);
     const r = spawnSync(NODE, [CLI, ...toks.slice(1)], {
       encoding: 'utf8',
       // #250 · 把「今天」钉到种子库的数据日：路由表的窗口自本票起是**相对窗口**（今日／本周／最近 N 天…），
       // 不钉时钟就按机器当天取窗（落在种子数据之外）→ 全线路 missing-data，判据失去意义。
-      env: { ...process.env, SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir, CALORIE_TODAY: SEED_TODAY },
+      env: {
+        ...process.env, SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir, CALORIE_TODAY: SEED_TODAY,
+        USERPROFILE: fakeHome, HOME: fakeHome,
+      },
     });
     let envelopeKey = null;
     try { envelopeKey = JSON.parse(String(r.stdout || '').trim()).key ?? null; } catch { envelopeKey = null; }

@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 52 ＋ 读 82 ＝ 134 条。
+ * registry 合法键表：写 54 ＋ 读 83 ＝ 137 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）；本文件只是那处的派生，不手改。
  *
  * 键序＝写键（键名升序）在前、读键（键名升序）在后（确定性排序，见生成器）。
@@ -70,6 +70,8 @@ export const CALORIE_WRITE_COMBOS = {
   'calorie.workout.plan-update-day': { shape: 'receipt' as EnvelopeShape, title: '改某天训练' },
   'calorie.workout.plan-update-movement': { shape: 'receipt' as EnvelopeShape, title: '改动作' },
   'calorie.workout.xunji-backfill': { shape: 'receipt' as EnvelopeShape, title: '拉训记实绩' },
+  'calorie.workout.xunji-key-clear': { shape: 'receipt' as EnvelopeShape, title: '清训记KEY' },
+  'calorie.workout.xunji-key-set': { shape: 'receipt' as EnvelopeShape, title: '设训记KEY' },
   'calorie.workout.xunji-push': { shape: 'receipt' as EnvelopeShape, title: '同步到训记' },
 } as const;
 
@@ -163,6 +165,7 @@ export const CALORIE_COMBOS = {
   'calorie.view.weight-compare': { shape: 'stat' as EnvelopeShape, title: '体重对比' },
   'calorie.view.weight-history': { shape: 'stat' as EnvelopeShape, title: '体重历史' },
   'calorie.view.weight-review': { shape: 'stat' as EnvelopeShape, title: '体重复核' },
+  'calorie.view.xunji-key': { shape: 'stat' as EnvelopeShape, title: '查训记KEY状态' },
 } as const;
 
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;

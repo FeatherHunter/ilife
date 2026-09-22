@@ -259,6 +259,16 @@ combos:
     shape: receipt
     title: 拉训记实绩
     cmd: skill-calorie
+  - key: calorie.workout.xunji-key-clear
+    skill: calorie
+    shape: receipt
+    title: 清训记KEY
+    cmd: skill-calorie
+  - key: calorie.workout.xunji-key-set
+    skill: calorie
+    shape: receipt
+    title: 设训记KEY
+    cmd: skill-calorie
   - key: calorie.workout.xunji-push
     skill: calorie
     shape: receipt
@@ -673,6 +683,11 @@ combos:
     skill: calorie
     shape: stat
     title: 体重复核
+    cmd: skill-calorie
+  - key: calorie.view.xunji-key
+    skill: calorie
+    shape: stat
+    title: 查训记KEY状态
     cmd: skill-calorie
 # -- GEN-CLI-END calorie 段
   - key: home.help.lookup

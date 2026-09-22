@@ -11,7 +11,8 @@
  *   点名第几天＋日期＋原因，非 0 退出。
  *
  * 两态（同一命令，`dryRun` 分流，与单日链同形）：
- * - `dryRun: true` → 过程页（可复制实跑指令先出，**零子进程**，远端未调用）；
+ * - `dryRun: true` → 过程页（可复制实跑指令先出，**零子进程**，远端未调用；
+ *   页上带训记 KEY 有无与 0 段原因，不拿预演页当成功用）；
  * - 缺省 → 结果页（逐天结局 ＋ 推送回写天数 ＋ 本地远端分清）。
  *
  * 挡板缝（#676 已退役）：原先的 `CALORIE_LAND_BATCH_FAIL_DATE` 短路（某天强制失败）与单日四路
@@ -248,7 +249,10 @@ function writeLandBatch(
     });
     return {
       data: { ok: true, message, receipt },
-      html: buildLandBatchProcessPage({ key, params, wake, scopeLabel, anchor, dates, perDay, receipt }),
+      html: buildLandBatchProcessPage({
+        key, params, wake, scopeLabel, anchor, dates, perDay, receipt,
+        planStart: plan.config?.start_date ?? null,
+      }),
     };
   }
   const summary: LandBatchSummary = {

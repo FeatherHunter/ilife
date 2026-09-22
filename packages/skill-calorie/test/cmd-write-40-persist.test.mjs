@@ -1056,6 +1056,32 @@ test('落库 · 落地训练族 5 条命令：跨技能走文件缝、训记走 
       assert.deepEqual(snapJson(db), before, 'xunji-backfill 路径改了本地库');
     });
   }
+  // xunji-key-set：设训记 KEY 只写配置文件（真训记入口，不走 fixture），本地库零写
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const before = snapLocal(dir);
+    const r = run('calorie.workout.xunji-key-set', { xunjiKey: 'PERSIST-ONLY-KEY' }, { ...homeEnvOf(calorieConfigDir(dir))});
+    assert.equal(r.status, 0, 'xunji-key-set 应成功：' + String(r.stderr).slice(-300));
+    assert.match(JSON.parse(r.stdout).data.message, /已写入/);
+    withRead(dir, 'calorie.workout.xunji-key-set', (db) => {
+      assert.deepEqual(snapJson(db), before, 'xunji-key-set 路径改了本地库');
+    });
+  }
+  // xunji-key-clear：清训记 KEY 只写配置文件，本地库零写（先设后清，不断言配置内容只断库）
+  {
+    const dir = mkEmpty();
+    seedPlan(dir);
+    const env = { ...homeEnvOf(calorieConfigDir(dir)) };
+    assert.equal(run('calorie.workout.xunji-key-set', { xunjiKey: 'PERSIST-ONLY-KEY' }, env).status, 0);
+    const before = snapLocal(dir);
+    const r = run('calorie.workout.xunji-key-clear', { confirm: true }, env);
+    assert.equal(r.status, 0, 'xunji-key-clear 应成功：' + String(r.stderr).slice(-300));
+    assert.match(JSON.parse(r.stdout).data.message, /已清除/);
+    withRead(dir, 'calorie.workout.xunji-key-clear', (db) => {
+      assert.deepEqual(snapJson(db), before, 'xunji-key-clear 路径改了本地库');
+    });
+  }
 });
 
 // ---------------------------------------------------------------- 覆盖门

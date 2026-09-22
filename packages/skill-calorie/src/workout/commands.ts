@@ -15,7 +15,8 @@
  * `dryRun` 转预演过程页）；「落地到本周末」／「落地到本月底」#613 起有写键
  * `workout.land-weekend`／`workout.land-monthend`（天数自算＋逐天复用单日链，`dryRun` 同形）；「同步到训记」「拉训记实绩」两条是训记模块
  * 对外命令的薄包装（`xunjiPush.ts`／`xunjiBackfill.ts`：审计／调用／过程页／结果页收进同一命令），
- * 写键形（`workout.xunji-*`），`dryRun` 转预演过程页。
+ * 写键形（`workout.xunji-*`），`dryRun` 转预演过程页。「查训记 KEY 状态」是只读自救入口
+ * （`xunjiKey.ts`：`view.xunji-key`），「设／清训记 KEY」是写自救入口（`workout.xunji-key-*`：写配置文件）。
  *
  * #703 · 写命令的**信封形状**不写在声明上（写命令一律 `receipt` 形，那件事实的唯一定义地在生成器
  * `scripts/gen-cli.mjs` 合成的 `cli/keys.ts`）；带整页回执的写命令另在声明上挂 `doc:` 那一位。
@@ -30,6 +31,7 @@ import { writeLand } from './land.js';
 import { writeLandMonthend, writeLandWeekend } from './landBatch.js';
 import { writeXunjiBackfill } from './xunjiBackfill.js';
 import { writeXunjiPush } from './xunjiPush.js';
+import { viewXunjiKeyStatus, writeXunjiKeyClear, writeXunjiKeySet } from './xunjiKey.js';
 import {
   writePlanAddMovement,
   writePlanCopy,
@@ -65,6 +67,9 @@ export const WORKOUT_COMMANDS = [
   { kind: 'write', key: 'calorie.workout.land', title: '落地训练', wakeWord: '落地训练', run: writeLand, example: 'calorie-cmd-read calorie.workout.land --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.land-weekend', title: '落地到本周末', wakeWord: '落地到本周末', run: writeLandWeekend, example: 'calorie-cmd-read calorie.workout.land-weekend --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.land-monthend', title: '落地到本月底', wakeWord: '落地到本月底', run: writeLandMonthend, example: 'calorie-cmd-read calorie.workout.land-monthend --params \'{"date":"2026-09-07","dryRun":true}\'' },
+  { kind: 'read', key: 'calorie.view.xunji-key', shape: 'stat', title: '查训记KEY状态', wakeWord: '查训记KEY状态', run: viewXunjiKeyStatus, example: 'calorie-cmd-read calorie.view.xunji-key' },
   { kind: 'write', key: 'calorie.workout.xunji-push', title: '同步到训记', wakeWord: '同步到训记', run: writeXunjiPush, example: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.xunji-backfill', title: '拉训记实绩', wakeWord: '拉训记实绩', run: writeXunjiBackfill, example: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-key-set', title: '设训记KEY', wakeWord: '设训记KEY', run: writeXunjiKeySet, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-key-clear', title: '清训记KEY', wakeWord: '清训记KEY', run: writeXunjiKeyClear, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'' },
 ] satisfies readonly CommandSpec[];

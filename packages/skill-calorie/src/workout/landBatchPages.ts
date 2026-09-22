@@ -2,7 +2,7 @@
  *
  * 两态（同一命令，`dryRun` 分流，与单日链同形）：
  * - 过程页（`dryRun`）：可复制实跑指令先出 ＋ 逐天待落地表（日期／段／动作）＋
- *   待推送／待回写天数，远端未调用写在页头，不进任何子进程；
+ *   待推送／待回写天数 ＋ 训记 KEY 有无 ＋ 0 段原因，远端未调用写在页头，不进任何子进程；
  * - 结果页：逐天结局表（日期／结局／说明）＋ 推送回写天数合计 ＋ 本地远端分清。
  *
  * 显示口径与单日链同源：逐天表直接摆计划行（段标签／动作名原文，不另算）；
@@ -15,6 +15,7 @@ import { promptCopyArea } from '../shared/copyArea.js';
 import { copyBlock } from '../shared/copyBlock.js';
 import type { PlanSessionRow } from './planStore.js';
 import type { LandBatchSummary } from './landBatch.js';
+import { xunjiKeyRow } from './xunjiKey.js';
 
 const DOC_TITLE = '卡路里·健身计划回执';
 
@@ -27,17 +28,19 @@ export function landBatchRealCommand(key: string, anchor: string): string {
 export function buildLandBatchProcessPage(input: {
   key: string; params: Record<string, unknown>; wake: string; scopeLabel: string; anchor: string;
   dates: readonly string[]; perDay: readonly { date: string; sessions: readonly PlanSessionRow[] }[];
-  receipt: CrudReceipt;
+  receipt: CrudReceipt; planStart: string | null;
 }): string {
-  const { key, params, wake, scopeLabel, anchor, dates, perDay, receipt } = input;
+  const { key, params, wake, scopeLabel, anchor, dates, perDay, receipt, planStart } = input;
   const segs = perDay.reduce((n, d) => n + d.sessions.length, 0);
   const end = dates[dates.length - 1] ?? anchor;
+  const emptyWhy = '这批共 0 段：这些天在计划里都是空天（休息日或超出计划周：本计划开始于'
+    + (planStart ?? '未知') + '，先用 看完整计划 核对开始日期与周次）';
   const content = [
     promptCopyArea(landBatchRealCommand(key, anchor), '复制实跑指令'),
     renderKpiGrid([
       { label: '范围', value: anchor + ' 至 ' + end, detail: '落地到' + scopeLabel },
       { label: '待落地天', value: dates.length + ' 天', detail: '逐天复用单日链' },
-      { label: '待落地段', value: segs + ' 段', detail: '多天共用同一份段表' },
+      { label: '待落地段', value: segs + ' 段', detail: segs === 0 ? emptyWhy : '多天共用同一份段表' },
     ]),
     renderDataTable({
       columns: [{ key: 'date', label: '日期' }, { key: 'segs', label: '训练段' }, { key: 'moves', label: '动作' }],
@@ -57,6 +60,9 @@ export function buildLandBatchProcessPage(input: {
         { k: '待回写', v: dates.length + ' 天与推送同一份天数' },
         { k: '本地', v: '计划已读 ' + segs + ' 段' },
         { k: '远端', v: '未调用' },
+        xunjiKeyRow(),
+        ...(segs === 0 ? [{ k: '0 段说明', v: emptyWhy }] : []),
+        { k: '预演说明', v: '本页只看不写，不代表落地成功：实跑以结果页为准' },
       ],
       caption: '本地成远端没成分得清',
     }),

@@ -8,7 +8,7 @@
  *    `dryRun` 转 `--dry-run`，零远端调用）；⑤ 任一步失败即非 0（码翻译见跑道）＋失败不落成功页。
  *
  * 两态（同一命令，`dryRun` 分流）：
- * - `dryRun: true` → 过程页（审计结论 ＋ 待推送段 ＋ 转换读数，远端未调用）；
+ * - `dryRun: true` → 过程页（审计结论 ＋ 待推送段 ＋ 转换读数 ＋ 训记 KEY 有无，远端未调用）；
  * - 缺省 → 结果页（逐段推送结局 ＋ 训记回显说明 ＋ 本地／远端区分）。
  */
 import type { DatabaseSync } from 'node:sqlite';
@@ -27,6 +27,7 @@ import { getPlan } from './planStore.js';
 import type { PlanSessionRow } from './planStore.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
+import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
 
 export const XUNJI_PUSH_KEY = 'calorie.workout.xunji-push';
 const XUNJI_PUSH_WAKE = '同步到训记';
@@ -111,10 +112,10 @@ function localNoKey(data: unknown): boolean {
   });
 }
 
-/** 推送失败：本地缺 KEY 点名没调远端（exit 3），远端失败点名段数与子进程尾行（exit 4）。 */
+/** 推送失败：本地缺 KEY 点名没调远端＋可复制的下一步（exit 3），远端失败点名段数与子进程尾行（exit 4）。 */
 function failPush(date: string, call: XunjiCall): never {
   if (call.code === 2 || localNoKey(call.data)) {
-    fail(3, '同步到训记失败（' + date + '）：本地缺 KEY（没调远端）：先看训记 KEY 状态再重试');
+    fail(3, '同步到训记失败（' + date + '）：本地缺 KEY（没调远端）：' + xunjiKeyNext());
   }
   const o = call.data as { ok_count?: unknown; fail_count?: unknown; session_count?: unknown } | null;
   const counts = typeof o === 'object' && o !== null
@@ -191,6 +192,7 @@ function pushProcessPage(
       rows: [
         { k: '本地', v: '转换成功：备好 ' + summary.session_count + ' 段' },
         { k: '远端', v: '未调用（预演不调训记接口）' },
+        xunjiKeyRow(),
         ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
       ],
       caption: '本地成远端没成分得清',

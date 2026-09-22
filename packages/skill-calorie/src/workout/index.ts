@@ -10,7 +10,8 @@
  *
  * 本场景**有写键**：`commands.ts` 里 `workout.plan-*` 那一族十条 ＋「落地训练」`workout.land`（#612）、
  * 「同步到训记」／「拉训记实绩」`workout.xunji-*`（#614）、「落地到本周末」／「落地到本月底」
- * `workout.land-weekend`／`workout.land-monthend`（#613）；加写键仍只改 `commands.ts` ＋ 子功能文件。
+ * `workout.land-weekend`／`workout.land-monthend`（#613）＋「设训记 KEY」／「清训记 KEY」
+ * `workout.xunji-key-*` 与查询「查训记 KEY 状态」`view.xunji-key`（缺 KEY 自救链）；加写键仍只改 `commands.ts` ＋ 子功能文件。
  *
  * 域内其他件（子功能 `plan.ts`／`wizard.ts`／`review.ts`／`contraindication.ts`／`progress.ts`）
  * **不出这个目录**，故不在这里转出。

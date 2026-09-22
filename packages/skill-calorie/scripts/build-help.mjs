@@ -81,6 +81,8 @@ const REPR = {
   'calorie.workout.plan-update-day': '确认改某天训练',
   'calorie.workout.plan-update-movement': '确认改动作',
   'calorie.workout.xunji-backfill': '拉训记实绩',
+  'calorie.workout.xunji-key-clear': '清训记KEY',
+  'calorie.workout.xunji-key-set': '设训记KEY',
   'calorie.workout.xunji-push': '同步到训记',
   'calorie.help.center': '卡路里HELP',
   'calorie.history': '查热量历史',
@@ -149,6 +151,7 @@ const REPR = {
   'calorie.view.weight-compare': '对比体重：本月 vs 上月',
   'calorie.view.weight-history': '看本周体重',
   'calorie.view.weight-review': '看体重复核',
+  'calorie.view.xunji-key': '查训记KEY状态',
 };
 // -- GEN-CLI-END REPR 表
 
@@ -211,6 +214,8 @@ const EXAMPLES = {
   'calorie.workout.plan-update-day': 'calorie-cmd-read calorie.workout.plan-update-day --params \'{"week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}\'',
   'calorie.workout.plan-update-movement': 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'',
   'calorie.workout.xunji-backfill': 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'',
+  'calorie.workout.xunji-key-clear': 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'',
+  'calorie.workout.xunji-key-set': 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'',
   'calorie.workout.xunji-push': 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'',
   'calorie.help.center': 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'',
   'calorie.help.lookup': 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'',
@@ -294,6 +299,7 @@ const EXAMPLES = {
   'calorie.view.weight-compare': 'calorie-cmd-read calorie.view.weight-compare --params \'{"window":"30d","compareWindow":"prev"}\'',
   'calorie.view.weight-history': 'calorie-cmd-read calorie.view.weight-history --params \'{"days":7}\'',
   'calorie.view.weight-review': 'calorie-cmd-read calorie.view.weight-review',
+  'calorie.view.xunji-key': 'calorie-cmd-read calorie.view.xunji-key',
 };
 // -- GEN-CLI-END EXAMPLE 表
 
