@@ -86,8 +86,18 @@ describe('#240 · 自持件已删（防这笔债再长回来）', () => {
     const srcDir = join(pkgDir, 'src');
     const files = walkTs(srcDir);
     assert.ok(files.length > 0, 'src 下应当有源码件（测试自身的现场检查）');
-    const banned = /nextExclusiveCandidate|writeFileExclusiveWithRetry|flag:\s*['"]wx['"]/;
-    const hits = files.filter((f) => banned.test(readFileSync(f, 'utf8')));
+    // #874 · 门收窄：`flag:'wx'` 只查落盘装配面（`src/render/`＋`src/help/`，前自持件 `src/help/memoOutput.ts` 所在面），
+    // `src/cli/health/probe.ts` 的目录可写性探针（`writeProbe`，文件名带 pid＋时间戳、当场删）不在此列，故豁免；
+    // 命名通式／递补两名仍全包查（第二份落盘逻辑必带其一）。
+    const exclusiveName = /nextExclusiveCandidate|writeFileExclusiveWithRetry/;
+    const wxFlag = /flag:\s*['"]wx['"]/;
+    const isLandingSurface = (f) => {
+      const rel = f.slice(pkgDir.length + 1).replace(/\\/g, '/');
+      return rel.startsWith('src/render/') || rel.startsWith('src/help/');
+    };
+    const nameHits = files.filter((f) => exclusiveName.test(readFileSync(f, 'utf8')));
+    const wxHits = files.filter((f) => isLandingSurface(f) && wxFlag.test(readFileSync(f, 'utf8')));
+    const hits = [...new Set([...nameHits, ...wxHits])].sort();
     assert.deepEqual(hits, [], '命名通式／独占创建／递补的逻辑归共用件 `saveHtmlFile`，本包不许自持第二份（铁律二）');
   });
 
