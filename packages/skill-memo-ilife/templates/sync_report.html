@@ -99,6 +99,9 @@ body{
   font-size:12px;
   color:var(--fg3);
   font-variant-numeric:tabular-nums;
+  /* 状态卡整体居中（`.status-card{text-align:center}`），这条 meta 带沿用居中：把键值行整体摆在
+     带子中间——改前那句 `22:35 · 同步飞书` 也是居中的，本票只换形状、不改这条带的版式语法。 */
+  display:flex;justify-content:center;
 }
 /* #878：状态行那枚 `·` 原本由伪元素生成（`.status-meta span+span::before{content:"·"}`），
    判据读不到、屏上却看得见；分隔改由版式承担 —— 状态行落成公共层的键值行（`ilife-block-fact-strip`）。 */

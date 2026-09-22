@@ -11,8 +11,9 @@
 //    · `sharedHelpersJs`：`buildSharedHelpersJs()`——复制按钮的**唯一激活通道**（页面内事件委派，
 //      认 `data-action-id` 与 `data-t` 两个冻结属性名）＋ toast 栈与 HELP 壳增强。
 //
-// ② **补上模板仍在用的八个页面级全局**（`memoRuntimeJs()`）：它们住的层本来不对（一套写进技能包的
-//    窄镜像），但模板调用点一字不改 ⇒ 这几个名字得有人给。给的**不是**第二套实现：凡是公共层已有
+// ② **补上模板仍在用的页面级全局**（`memoRuntimeJs()`）：它们住的层本来不对（一套写进技能包的
+//    窄镜像），但模板调用点一字不改 ⇒ 这几个名字得有人给，**逐条见下表**（不记数：数会过期，
+//    表跟着代码走）。给的**不是**第二套实现：凡是公共层已有
 //    对应物的（转义表、复制激活、toast 通道、空态与错误卡类名、键值行的格）一律走公共层那一条，
 //    只有「备忘录信封怎么投影成一段可粘贴文本」这一件是本域自己的口径。
 import { blocksCss } from 'base-paint/blocks';
@@ -42,13 +43,14 @@ export function memoPageAssets(): MemoPageAssets {
   };
 }
 
-/** 模板仍在用的七个页面级全局的源码（裸 JS 文本，`fillTemplate` 按 `ASSET_WRAPPERS` 自己包
- *  `<script>`；与 `buildSharedHelpersJs()` 同一条约约定）。
+/** 模板仍在用的页面级全局的源码（裸 JS 文本，`fillTemplate` 按 `ASSET_WRAPPERS` 自己包
+ *  `<script>`；与 `buildSharedHelpersJs()` 同一条约约定）。**下表是这套全局的全部**——加一个名字就补一行。
  *
  *  | 全局 | 谁给的 |
  *  |---|---|
  *  | `esc` | 五字符转义表与公共层 `esc` 逐值同（`&<>"'` 的映射与序照抄，不自造第二份形状） |
  *  | `copyText` ／ `toast` | 公共层的激活通道：把文案写进 `data-t`，交给已注入的公共层委派（`data-action-id` ＋ `data-t` 两个冻结属性名同源）。**成功提示归公共层**（「已复制／粘贴给 AI」） |
+ *  | `memoAttachCopyArea` | 页尾接线：把「复制数据／复制日志」两枚按钮的载荷写进 `data-t`（模板末尾调一次；页面自己已写好的载荷让路） |
  *  | 空态卡 | 公共层的 `ilife-empty-*` 三件（样式住 `buildStyleSheet()` 的 `emptyState` 区） |
  *  | 错误回执卡 | 公共层的 `ilife-error` ／ `ilife-error-title` ／ `ilife-error-actions` ＋ `ilife-copy-btn` 家族（样式住 `errorReceipt` 区）；三颗按钮各带 `data-action-id` ＋ `data-t`，激活走同一条委派 |
  *  | 键值行 | 公共层的 `ilife-block-fact-strip` 三件（一格「标签 ＋ 值」；类名、字号与间距全吃 `pageShapeCss()` 的形状①）——**#878 追加** |
