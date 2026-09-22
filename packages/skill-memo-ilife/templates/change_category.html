@@ -199,6 +199,7 @@ function selectAll(on){
     var cb=document.getElementById('cb_'+w.id);
     if(cb){cb.checked=on;document.getElementById('note_'+w.id).classList.toggle('off',!on)}
   });
+  updateSelCount();
 }
 
 function selectedRows(){
