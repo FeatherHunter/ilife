@@ -161,18 +161,20 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
       + unusedBlock + '</section>';
   } else if (msg === '无相近标签') {
-    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对（相似度%）</h2>'
       + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
   } else {
     // #864 加厚：相似度有 detail 写真数值，无则回退破折号。
-    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
+    // 判据件口径（票 #866「值位不算文案冗余」的对偶）：标签名与单位只出现一次——放段落标题（与
+    // 必需块登记的「相似标签对（相似度%）」逐字一致），每对的胶囊只写值（90%／—），不逐行重复「相似度」。
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对（相似度%）</h2>'
       + pairs.map((p, i) => {
         const ab = p.split('~');
         const a = (ab[0] ?? '').trim();
         const b = (ab[1] ?? '').trim();
         const sim = pairSims[i];
         return '<div class="fp-pair"><div class="fp-pair-info">第 ' + (i + 1) + ' 对：<b>' + esc(a) + '</b> 与 <b>' + esc(b)
-          + '</b> <span class="fp-pill">相似度 ' + (sim === null ? '—' : esc(String(sim)) + '%') + '</span></div>'
+          + '</b> <span class="fp-pill">' + (sim === null ? '—' : esc(String(sim)) + '%') + '</span></div>'
           + '<div class="fp-actions">'
           + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">合并</button>'
           + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">忽略</button>'
