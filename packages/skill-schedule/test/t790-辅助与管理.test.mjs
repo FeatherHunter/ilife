@@ -91,7 +91,7 @@ describe('#790 辅助与管理', () => {
     const html = renderInitReceiptPage({ created: true, paths: PATHS, counts: COUNTS });
     assertWholePage(html);
     const text = textOf(html);
-    for (const need of ['本次新建了三张表', '三张表', '库文件落在这里', '下一步', '复制初始化结果', '作息记录', '每日摘要', '日程计划']) {
+    for (const need of ['本次新建了三张表', '三张表', '复制库文件路径', '下一步', '复制初始化结果', '作息记录', '每日摘要', '日程计划']) {
       assert.ok(text.includes(need), '缺必现块：' + need);
     }
     assertNoDebt(html);
@@ -115,7 +115,8 @@ describe('#790 辅助与管理', () => {
     });
     assertWholePage(html);
     const text = textOf(html);
-    for (const need of ['六步向导', '环境检测', '路径确认', '建库', '状态确认', '初始化报告', '完成',
+    for (const need of ['六步向导', '环境检测', '路径确认', '复制库目录路径', '复制库文件路径',
+      '复制产物根目录路径', '复制帮助页路径', '建库', '状态确认', '初始化报告', '完成',
       '飞书强引导', '配合飞书效果最好', '飞书探测', '复制初始化 prompt', '完成验证清单', '飞书同步不可用']) {
       assert.ok(text.includes(need), '缺必现块：' + need);
     }

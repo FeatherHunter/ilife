@@ -41,8 +41,6 @@ const SEED = join(REPO, '.scratch', 't844', 'home', '.ilife', 'data', 'schedule_
 const OUT = resolve(process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : join(REPO, '.scratch', 't790'));
 const PROD = join(OUT, '成品');
 const WALL = join(OUT, '墙');
-const HOME = join(OUT, 'home');
-const HOME_SEED = join(OUT, 'home-seed');
 const NO_SHOTS = process.argv.includes('--no-shots');
 const ALLOW_DIRTY = process.argv.includes('--allow-dirty');
 
@@ -68,14 +66,14 @@ const CONTRACT = {
   [P_INIT_NEW]: [
     { block: '初始化结论（新建档）', needs: ['本次新建了三张表'], absent: ['三张表都在'] },
     { block: '三张表', needs: ['三张表', '作息记录', '每日摘要', '日程计划'] },
-    { block: '库路径', needs: ['库文件落在这里'] },
+    { block: '库路径', needs: ['复制库文件路径'] },
     { block: '下一步', needs: ['下一步', '首次使用'] },
     { block: '复制位', needs: ['复制初始化结果'] },
   ],
   [P_INIT_READY]: [
     { block: '初始化结论（已就绪档）', needs: ['三张表都在'], absent: ['本次新建'] },
     { block: '三张表', needs: ['三张表', '作息记录', '每日摘要', '日程计划'] },
-    { block: '库路径', needs: ['库文件落在这里'] },
+    { block: '库路径', needs: ['复制库文件路径'] },
     { block: '下一步', needs: ['下一步', '首次使用'] },
   ],
   [P_INIT_SEED]: [
@@ -84,7 +82,7 @@ const CONTRACT = {
   ],
   [P_FIRST_USE]: [
     { block: '六步向导', needs: ['六步向导', '环境检测', '路径确认', '建库', '状态确认', '初始化报告', '完成'] },
-    { block: '路径确认', needs: ['库目录', '库文件', '页面落在这里', '帮助页落在这里'] },
+    { block: '路径确认', needs: ['路径确认', '四处落点都在下面', '复制库目录路径', '复制库文件路径', '复制产物根目录路径', '复制帮助页路径'] },
     { block: '初始化报告', needs: ['建库动作', '库内现状', '完成验证清单'] },
     { block: '飞书强引导', needs: ['飞书强引导', '配合飞书效果最好', '飞书探测'] },
     { block: '完成与复制位', needs: ['作息管家 HELP', '复制初始化 prompt'] },
@@ -196,6 +194,11 @@ ok('编译指纹：' + fingerprint);
   }
 }
 
+/* 家目录走中性固定目录（不带票号、不带随机驼峰）：页上要印库路径，家目录里带 `t790`
+ * 会把票号印上页，`mkdtemp` 的随机后缀（如 `vhPmSs`）会命中驼峰那一条，
+ * 分隔符门与本探针的反面判据都会红。产物与墙仍落 `.scratch/t790/`（收口票读同一处）。 */
+const HOME = join(tmpdir(), 'sch-admin-fresh');
+const HOME_SEED = join(tmpdir(), 'sch-admin-seed');
 rmSync(HOME, { recursive: true, force: true });
 rmSync(HOME_SEED, { recursive: true, force: true });
 rmSync(PROD, { recursive: true, force: true });
