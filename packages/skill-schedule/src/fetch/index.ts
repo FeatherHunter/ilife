@@ -17,6 +17,7 @@ export {
   LARK_TIMEOUT_SHORT_MS, LARK_TIMEOUT_NORMAL_MS, LARK_TIMEOUT_LONG_MS, LARK_CALENDAR_SCOPE,
   LARK_CALENDAR_ID, FEISHU_OWNER_MARK, FEISHU_SENTINEL_MARK,
   larkCliCandidates, findLarkCli, runLark, larkVersion, authOpenId, checkCalendar, larkReady,
+  shortLarkVersion, maskLarkCli,
   composeFeishuDescription, isOwnedDescription,
   larkAgenda, larkSearchEvents, larkGetEvent, larkCreateEvent, larkUpdateEvent, larkDeleteEvent,
 } from './feishu.js';

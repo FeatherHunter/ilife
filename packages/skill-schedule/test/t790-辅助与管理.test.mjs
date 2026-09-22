@@ -40,8 +40,7 @@ function assertWholePage(html) {
   assert.ok(!html.includes('@import'), '不许有 @import');
 }
 
-/** 反面判据（#516 分隔符门那几种并列符号 ＋ 内部标识）：两张页一颗都不许有。
- *  `lark-cli` 是例外（照 #788：它是用户要自己动手装的东西）。 */
+/** 反面判据（#516 分隔符门那几种并列符号 ＋ 内部标识 ＋ #895 内部命令名）：两张页一颗都不许有。 */
 function assertNoDebt(html) {
   const text = textOf(html);
   for (const ch of ['·', '；', '～', '~', '、', '｜']) {
@@ -49,6 +48,9 @@ function assertNoDebt(html) {
   }
   for (const word of ['schedule.', 'time_start', 'time_end', 'duration_minutes', 'view=', 't790', '#790']) {
     assert.ok(!text.includes(word), '可见文本里出现内部标识 ' + word);
+  }
+  for (const word of ['lark-cli', 'auth', 'status', 'version', 'openId', 'scope']) {
+    assert.ok(!text.toLowerCase().includes(word.toLowerCase()), '可见文本里出现内部命令名 ' + word);
   }
   assert.ok(!/\bt\d{3,}\b/.test(text), '可见文本里出现票号');
   assert.ok(!/#[0-9]{2,}\b/.test(text), '可见文本里出现编号');

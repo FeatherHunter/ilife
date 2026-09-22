@@ -15,7 +15,7 @@ import {
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
-import { listPlanEvents } from '../fetch/index.js';
+import { listPlanEvents, shortLarkVersion } from '../fetch/index.js';
 import { fmtDurShort, l1Of } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
@@ -36,6 +36,9 @@ function plain(text: string): string {
     .replace(/，{2,}/g, '，')
     .replace(/，([）)】」])/g, '$1');
 }
+
+/** 事实条「命令行版本」只印数字（口径唯一定义地是 `fetch` 门的 `shortLarkVersion`）。
+ *  `null`（没装）印「没装」，`unknown`／无数字印「读不到」。 */
 
 /** 同步回执的分格（`runSync` 的 `counts`）在页上的名字与读法，一处定义。 */
 const COUNT_LABELS: readonly { readonly key: string; readonly label: string; readonly hint: string }[] = [
@@ -111,7 +114,7 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
       }) },
     { html: renderFactStrip({
       items: [
-        { label: '命令行版本', value: report.version === null ? '没装' : report.version.replace(/^lark-cli\s*/i, '') },
+        { label: '命令行版本', value: report.version === null ? '没装' : shortLarkVersion(report.version) },
         { label: '探测日期', value: date },
         { label: '本地这一天的计划', value: String(local.total) + ' 条' },
         { label: '远端这一趟', value: '没碰' },

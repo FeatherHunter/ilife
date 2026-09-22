@@ -202,14 +202,15 @@ describe('#764 作息设置页收窄 · 技能侧', () => {
       const item = JSON.parse(String(r.stdout)).data.items.find((x) => x.id === 'lark.cli');
       assert.ok(item, '须有飞书 CLI 那一项');
       assert.equal(item.status, 'yellow', 'auth 不过 ⇒ 黄');
-      assert.match(item.message, /找到了 .*，但还没登录／日历读不到/);
+      assert.match(item.message, /找到了飞书命令行，但还没登录／日历读不到/);
+      assert.ok(!/lark-cli|openId|auth status/i.test(item.message), '体检报文含内部命令名：' + item.message);
       console.log('#764 体检黄读数：' + P(item));
     } finally {
       useHome(HOME1);
     }
   });
 
-  it('体检绿档：挡板就绪 ⇒ 绿，带路径与版本（面板同一判据）', () => {
+  it('体检绿档：挡板就绪 ⇒ 绿，带目录与数字版本（#895：裸路径与英文原文不上屏）', () => {
     const seam = makeScheduleSeam({ prefix: 't764-green-' });
     try {
       const r = seam.runNew('schedule.config.check', {});
@@ -217,8 +218,9 @@ describe('#764 作息设置页收窄 · 技能侧', () => {
       const item = JSON.parse(String(r.stdout)).data.items.find((x) => x.id === 'lark.cli');
       assert.ok(item, '须有飞书 CLI 那一项');
       assert.equal(item.status, 'green', '两条都过 ⇒ 绿');
-      assert.match(item.message, /已就绪：.*lark-cli/);
-      assert.match(item.message, /版本 /);
+      assert.match(item.message, /已就绪：飞书命令行可用/);
+      assert.match(item.message, /版本 1\.0\.59/);
+      assert.ok(!/lark-cli|openId|auth status/i.test(item.message), '体检报文含内部命令名：' + item.message);
       assert.equal(item.action, '');
       console.log('#764 体检绿读数：' + P(item));
     } finally {

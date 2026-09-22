@@ -101,8 +101,8 @@ export function runLark(cli: string, args: string[], timeoutMs = LARK_TIMEOUT_NO
     return { ok: true, stdout: out };
   } catch (e) {
     const err = e as { code?: unknown; status?: number | null; stderr?: unknown; message?: string };
-    if (err.code === 'ENOENT') throw new ScheduleFetchError('LARK_UNAVAILABLE', 'lark-cli 不可用：' + cli);
-    if (err.code === 'ETIMEDOUT') throw new ScheduleFetchError('LARK_TIMEOUT', 'lark-cli 超时：' + args.join(' '));
+    if (err.code === 'ENOENT') throw new ScheduleFetchError('LARK_UNAVAILABLE', '飞书命令行不可用：没找到可执行文件');
+    if (err.code === 'ETIMEDOUT') throw new ScheduleFetchError('LARK_TIMEOUT', '飞书命令行超时：等太久没回应，稍后重试');
     return { ok: false, exit: err.status ?? null, stderr: String(err.stderr ?? err.message ?? e) };
   }
 }
@@ -113,16 +113,29 @@ export function larkVersion(cli: string): string {
   return r.stdout.trim().split('\n')[0] || 'unknown';
 }
 
+/** 版本显示口径（唯一定义地）：`--version` 首行原文与 `unknown` 都不许上屏，只留首个数字段，无则「读不到」。
+ *  取用者：`src/plan/feishuDocs.ts` 版本格、`src/health.ts` 体检绿档。 */
+export function shortLarkVersion(raw: string): string {
+  const m = raw.match(/\d+(?:\.\d+)*/);
+  return m ? m[0] : '读不到';
+}
+
+/** 工具名遮蔽（唯一定义地）：外部串（路径等）里的 `lark-cli` 字样换中文显示用名，原串不动。
+ *  取用者：`src/health.ts` 目录显示（scoop 那档目录名本身就含工具名）。 */
+export function maskLarkCli(s: string): string {
+  return s.replace(/lark-cli/gi, '飞书命令行');
+}
+
 // 身份真值源：auth status 输出 identities.user.openId；无 openId 即未登录 throw。
 export function authOpenId(cli: string): string {
   const r = runLark(cli, ['auth', 'status'], LARK_TIMEOUT_SHORT_MS);
-  if (!r.ok) throw new ScheduleFetchError('LARK_NOT_LOGGED_IN', 'lark-cli auth status 失败（未登录？）');
+  if (!r.ok) throw new ScheduleFetchError('LARK_NOT_LOGGED_IN', '还没登录：登录查询没通过');
   let j: unknown = null;
   try { j = JSON.parse(r.stdout); }
-  catch { throw new ScheduleFetchError('LARK_BAD_RESPONSE', 'lark-cli auth status 非 JSON'); }
+  catch { throw new ScheduleFetchError('LARK_BAD_RESPONSE', '登录信息读不懂：重登一次再探'); }
   const id = (j as { identities?: { user?: { openId?: unknown } } }).identities?.user?.openId;
   if (typeof id !== 'string' || id.length === 0) {
-    throw new ScheduleFetchError('LARK_NOT_LOGGED_IN', 'lark-cli 未登录（无 openId，先 auth login）');
+    throw new ScheduleFetchError('LARK_NOT_LOGGED_IN', '还没登录：查不到登录身份');
   }
   return id;
 }
@@ -137,10 +150,10 @@ export interface LarkReady { cliPath: string; version: string; openId: string; }
 // 四门全绿才取数/同步：存在→版本→登录→日历；任一红 throw（调用方阻断，不返空）。
 export function larkReady(): LarkReady {
   const cli = findLarkCli();
-  if (!cli) throw new ScheduleFetchError('LARK_UNAVAILABLE', 'lark-cli 未找到：缺失阻断同步');
+  if (!cli) throw new ScheduleFetchError('LARK_UNAVAILABLE', '没找到飞书命令行：缺失阻断同步');
   const version = larkVersion(cli);
   const openId = authOpenId(cli);
-  if (!checkCalendar(cli)) throw new ScheduleFetchError('LARK_DENIED', '日历不可达（缺授权？先 lark-cli auth login）');
+  if (!checkCalendar(cli)) throw new ScheduleFetchError('LARK_DENIED', '日历拉不动：多半是缺日历授权，补一次授权再探');
   return { cliPath: cli, version, openId };
 }
 

@@ -18,6 +18,8 @@
  *   V8 飞书探测只读三档：没装／不完全／全通，exit 都 0，页上明说「这一趟只探」
  *   V9 日程管家同步：挡板上真建对象，页上报这一趟的账（远端新建 N 笔）＋ 下一步留出口
  *   V10 页上可见文本不出现命令键、库列名、参数名，也不出现分隔符门那几种并列符号
+  *   V11（#895）飞书探测三页可见文本零内部命令名，版本格只留数字
+  *   V12（#895）七条抛出文案中文含义可核且零内部命令名
  *
  * 现场数据**自己种**（#763 家目录隔离，不碰真库、也不依赖 #844 的种子库）：一天 17 条首尾相接的记录
  * ＋ 三条计划（一条已完成、两条未复盘）；周档另往前铺满 6 天；月档另铺上月同期的记录（环比要它）。
@@ -35,6 +37,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
+import { openScheduleDb, closeScheduleDb } from '../dist/fetch/db.js';
+import { runLark, authOpenId, larkReady, shortLarkVersion, maskLarkCli } from '../dist/fetch/feishu.js';
+import { probePage } from '../dist/plan/feishuDocs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -118,8 +123,15 @@ if (log) appendFileSync(log, mode + '\\t' + argv.join(' ') + '\\n');
 const say = (o) => process.stdout.write(JSON.stringify(o));
 const arg = (name) => { const i = argv.indexOf(name); return i < 0 ? '' : (argv[i + 1] ?? ''); };
 if (argv[0] === '--version') { process.stdout.write('lark-cli version 9.9.9\\n'); process.exit(0); }
-if (argv[0] === 'auth') { if (mode === 'no-auth') process.exit(1); say({ identities: { user: { openId: 'ou-test' } } }); process.exit(0); }
+if (mode === 'hang') { const t0 = Date.now(); while (Date.now() - t0 < 2000) {} }
+if (argv[0] === 'auth') {
+  if (mode === 'no-auth') process.exit(1);
+  if (mode === 'bad-json') { process.stdout.write('not-json{{{'); process.exit(0); }
+  if (mode === 'no-openid') { say({}); process.exit(0); }
+  say({ identities: { user: { openId: 'ou-test' } } }); process.exit(0);
+}
 if (argv[0] === 'calendar') {
+  if (mode === 'no-calendar') process.exit(1);
   const sub = argv[1];
   if (sub === '+agenda') { say({ data: [] }); process.exit(0); }
   if (sub === '+search-event') { say({ data: { items: [] } }); process.exit(0); }
@@ -278,7 +290,7 @@ test('V8 飞书探测：三档各出一张页，exit 都 0，且一趟都不写�
   SHIM_MODE = 'no-auth';
   const partial = page({ op: 'sync', dryRun: true, date: DAY });
   assert.ok(has(partial.html, '不完全'), '没登录那一档须报「不完全」');
-  assert.ok(has(partial.html, '把 lark-cli 的授权补上'), '没登录那一档须给授权指引');
+  assert.ok(has(partial.html, '把飞书命令行的授权补上'), '没登录那一档须给授权指引');
   SHIM_MODE = 'full';
   // 「没装」那一档：把挡板挪开（它正落在隔离家目录的候选路径上）＋ 清空查找路径，
   // 于是「家目录候选」与「where 那一档」都探不到——真机上装没装 lark-cli 都不影响这一档的读数。
@@ -328,5 +340,121 @@ test('V10 页上可见文本：零并列分隔符、零内部标识', () => {
       assert.ok(!text.includes(w), '可见文本里出现了内部标识：' + w);
     }
     assert.ok(!/\bt\d{3,}\b/.test(text) && !/#[0-9]{2,}\b/.test(text), '可见文本里出现了票号');
+  }
+});
+
+/* ─────────────────── V11 · #895 零内部命令名（可红判据） ─────────────────── */
+
+test('V11 飞书探测三页可见文本：零内部命令名，版本格只留数字', () => {
+  const forbid = ['lark-cli', 'auth', 'status', 'version', 'openId', 'scope'];
+  // 命令原文（子命令与参数面）：页上同样一处不许有。
+  const cmdBits = ['--version', '+agenda', 'auth login', '--calendar-id', 'events delete'];
+  const hitsOf = (html) => {
+    const t = textOf(html).toLowerCase();
+    return forbid.filter((w) => t.includes(w.toLowerCase()));
+  };
+  SHIM_MODE = 'full';
+  const full = page({ op: 'sync', dryRun: true, date: DAY }).html;
+  SHIM_MODE = 'no-auth';
+  const partial = page({ op: 'sync', dryRun: true, date: DAY }).html;
+  SHIM_MODE = 'full';
+  const shimPath = join(HOME, 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
+  renameSync(shimPath, shimPath + '.off');
+  let missing;
+  try {
+    missing = page({ op: 'sync', dryRun: true, date: DAY }, { env: { PATH: '' } }).html;
+  } finally {
+    renameSync(shimPath + '.off', shimPath);
+  }
+  for (const [name, html] of [['全通', full], ['不完全', partial], ['没装', missing]]) {
+    assert.deepEqual(hitsOf(html), [], name + '档可见文本含内部命令名');
+    const t = textOf(html);
+    for (const b of cmdBits) assert.ok(!t.includes(b), name + '档可见文本含命令原文：' + b);
+  }
+  // 版本格只留数字：挡板吐 `lark-cli version 9.9.9`，页上须是 `9.9.9`（`version` 字样清零由上式覆盖）。
+  assert.ok(has(full, '9.9.9'), '全通档版本格须印出数字版本号');
+  // `unknown` 挡住：直调 probePage，version=`unknown` 须印「读不到」且仍零禁词。
+  const dir = mkdtempSync(join(tmpdir(), 'sched895-'));
+  try {
+    const handle = openScheduleDb(join(dir, 'schedule_data.db'));
+    try {
+      const html = probePage(handle, DAY, {
+        tier: 'full', cliPath: 'C:/x/lark-cli.cmd', version: 'unknown',
+        openId: 'ou-x', authenticated: true, calendar: true, why: '飞书命令行在场，授权与日历两道门都过了，可以同步',
+      });
+      assert.ok(textOf(html).includes('读不到'), '版本读不到须印「读不到」');
+      assert.deepEqual(hitsOf(html), [], 'unknown 档可见文本含内部命令名');
+    } finally {
+      closeScheduleDb(handle);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/* ─────────────────── V12 · #895 七条抛出中文含义可核 ─────────────────── */
+
+test('V12 七条抛出文案：四门中文含义各在，且零内部命令名', () => {
+  const keep = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE, PATH: process.env.PATH, MODE: process.env.T788_SHIM_MODE };
+  process.env.HOME = HOME;
+  process.env.USERPROFILE = HOME;
+  // 挡板子进程读 `process.env.T788_SHIM_MODE`（`page()` 经 `run()` 显式传，直调则读当刻进程）：两边一起设。
+  const setMode = (m) => { SHIM_MODE = m; process.env.T788_SHIM_MODE = m; };
+  const cli = join(HOME, 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
+  const msgs = [];
+  const grab = (fn) => {
+    try { fn(); } catch (e) { msgs.push(String((e instanceof Error ? e.message : String(e)))); return msgs[msgs.length - 1]; }
+    assert.fail('应当抛出而没有抛');
+  };
+  try {
+    // ① 不可用（ENOENT）② 超时（挡板 hang＋50ms）③ 没登录①（status 非 0）
+    grab(() => runLark(join(HOME, 'no-such-dir', 'lark-cli-xyz'), ['--version'], 5000));
+    setMode('hang');
+    grab(() => runLark(cli, ['--version'], 50));
+    setMode('no-auth');
+    grab(() => authOpenId(cli));
+    // ④ 返回读不懂 ⑤ 查不到登录身份 ⑥ 没装 ⑦ 日历拉不动
+    setMode('bad-json');
+    grab(() => authOpenId(cli));
+    setMode('no-openid');
+    grab(() => authOpenId(cli));
+    const shimPath = join(HOME, 'AppData', 'Roaming', 'npm', 'lark-cli.cmd');
+    renameSync(shimPath, shimPath + '.off');
+    process.env.PATH = '';
+    try {
+      grab(() => larkReady());
+    } finally {
+      process.env.PATH = keep.PATH;
+      renameSync(shimPath + '.off', shimPath);
+    }
+    setMode('no-calendar');
+    grab(() => larkReady());
+    assert.equal(msgs.length, 7, '七条须逐条抛：' + JSON.stringify(msgs));
+    assert.deepEqual(msgs, [
+      '飞书命令行不可用：没找到可执行文件',
+      '飞书命令行超时：等太久没回应，稍后重试',
+      '还没登录：登录查询没通过',
+      '登录信息读不懂：重登一次再探',
+      '还没登录：查不到登录身份',
+      '没找到飞书命令行：缺失阻断同步',
+      '日历拉不动：多半是缺日历授权，补一次授权再探',
+    ], '七条全文须逐字对上（两条没登录以后缀区分）：' + JSON.stringify(msgs));
+    // 显示口径直断（`fetch` 门唯二定义地）：版本号只留数字、`unknown` 读不到；scoop 那档目录名含工具名也遮掉。
+    assert.equal(shortLarkVersion('lark-cli version 9.9.9'), '9.9.9');
+    assert.equal(shortLarkVersion('lark-cli version 1.0.59-stub'), '1.0.59');
+    assert.equal(shortLarkVersion('unknown'), '读不到');
+    assert.equal(maskLarkCli('C:/P/Programs/lark-cli'), 'C:/P/Programs/飞书命令行');
+    assert.ok(!/lark-cli/i.test(maskLarkCli('D:/a/lark-cli.cmd')));
+    for (const m of msgs) {
+      assert.ok(!/lark-cli|auth status|openId|auth login|scope/i.test(m), '抛出文案含内部命令名：' + m);
+      assert.ok(!/--version|\+agenda|calendar/i.test(m), '抛出文案含命令原文：' + m);
+    }
+  } finally {
+    process.env.HOME = keep.HOME;
+    process.env.USERPROFILE = keep.USERPROFILE;
+    process.env.PATH = keep.PATH;
+    if (keep.MODE === undefined) delete process.env.T788_SHIM_MODE;
+    else process.env.T788_SHIM_MODE = keep.MODE;
+    SHIM_MODE = 'full';
   }
 });

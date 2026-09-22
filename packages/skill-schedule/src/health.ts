@@ -34,7 +34,7 @@ import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
 import { dbDirOf, dbFileOf, htmlDirOf, resolvedHtmlDirs } from './fetch/paths.js';
 // #764：飞书 CLI 的查找只剩兜底探测（配置项 `lark.cliPath` 已删），候选顺序的唯一定义地是
 // `src/fetch/feishu.ts` 的 `larkCliCandidates()`——本件直接调它，不留第二份表。
-import { findLarkCli, larkVersion } from './fetch/feishu.js';
+import { findLarkCli, larkVersion, shortLarkVersion, maskLarkCli } from './fetch/feishu.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -518,15 +518,18 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
   // **红只留给「没找到 CLI」这个确定性事实**（#761 定稿第 6 条）。
   const larkCli = findLarkCli();
   const tier = larkTier(larkCli);
-  const larkWhere = larkCli === null ? '' : p(larkCli);
-  const larkVersionText = tier === 'full' && larkCli !== null ? larkVersion(larkCli) : '';
+  // #895：报文是正文位，可执行文件名（含 `lark-cli`）与 `--version` 原文都不许上屏——
+  // 版本与工具名遮蔽都走 `fetch` 门的同一口径（`shortLarkVersion`／`maskLarkCli`），这里只传参。
+  // 目录取所在目录（可执行文件名已剥掉）；scoop 那档目录名本身含工具名，一并遮蔽。
+  const larkDir = larkCli === null ? '' : maskLarkCli(p(dirname(larkCli)));
+  const larkVersionNum = tier !== 'full' || larkCli === null ? '' : shortLarkVersion(larkVersion(larkCli));
   items.push({
     id: 'lark.cli', title: '飞书 CLI',
     status: tier === 'full' ? 'green' : tier === 'partial' ? 'yellow' : 'red',
     message: tier === 'full'
-      ? '已就绪：' + larkWhere + '（版本 ' + larkVersionText + '）。'
+      ? '已就绪：飞书命令行可用（版本 ' + larkVersionNum + '，目录 ' + larkDir + '）。'
       : tier === 'partial'
-        ? '找到了 ' + larkWhere + '，但还没登录／日历读不到。'
+        ? '在 ' + larkDir + ' 找到了飞书命令行，但还没登录／日历读不到。'
         : '没找到飞书 CLI：面板「飞书 CLI」那一行有安装指引（复制 prompt 照做）。',
     action: tier === 'full'
       ? ''

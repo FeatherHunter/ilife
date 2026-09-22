@@ -39,29 +39,29 @@ export function probeTiers(): TierReport {
   if (cli === null) {
     return {
       tier: 'missing', cliPath: null, version: null, openId: null, calendar: false,
-      why: '本机没找到 lark-cli，同步与探测都跑不了。装它需要你自己动手（本技能不代装）',
+      why: '本机没找到飞书命令行，同步与探测都跑不了。装它需要你自己动手（本技能不代装）',
     };
   }
   const version = larkVersion(cli);
   let openId: string | null = null;
   try {
     openId = authOpenId(cli);
-  } catch (e) {
+  } catch {
     return {
       tier: 'partial', cliPath: cli, version, openId: null, calendar: false,
-      why: 'lark-cli 装了但没登录（' + (e instanceof Error ? e.message : String(e)) + '），先在终端里跑一次授权登录',
+      why: '飞书命令行装了但没登录，先在终端里跑一次授权登录',
     };
   }
   const calendar = checkCalendar(cli);
   if (!calendar) {
     return {
       tier: 'partial', cliPath: cli, version, openId, calendar: false,
-      why: 'lark-cli 装了也登录了，但日历拉不动（多半是缺日历授权），补一次授权再探',
+      why: '飞书命令行装了也登录了，但日历拉不动（多半是缺日历授权），补一次授权再探',
     };
   }
   return {
     tier: 'full', cliPath: cli, version, openId, calendar: true,
-    why: 'lark-cli 在场，授权与日历两道门都过了，可以同步',
+    why: '飞书命令行在场，授权与日历两道门都过了，可以同步',
   };
 }
 
@@ -114,11 +114,11 @@ export const TIER_NEXT: Record<FeishuTier, readonly string[]> = {
     '要动的是别的一天，把日期一并说清楚（比如「同步 2026-09-22 的日程」）。',
   ],
   partial: [
-    '先在终端里把 lark-cli 的授权补上，再回来说一次「飞书探测」。',
+    '先在终端里把飞书命令行的授权补上，再回来说一次「飞书探测」。',
     '授权没过之前，「日程管家同步」会停在阻断那一档，本地照写，远端一行不动。',
   ],
   missing: [
-    'lark-cli 没装：装与不装由你定，本技能不代装也不代登。',
+    '飞书命令行没装：装与不装由你定，本技能不代装也不代登。',
     '不装也能用：本地那些事照跑（记作息，排计划，复盘），只是日程不会出现在飞书日历上。',
     '要装的话，用你惯用的包管理器装一个全局命令行即可，装完回来说「飞书探测」。',
   ],
