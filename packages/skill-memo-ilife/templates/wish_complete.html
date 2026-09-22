@@ -63,7 +63,7 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <section class="panel">
 <div style="font-weight:700;margin-bottom:10px">✏️ 默认打卡内容（可选）</div>
 <p style="color:var(--fg2);font-size:13px;margin-bottom:10px">填了会应用到所有勾选的心愿，也能每条单独改。不填就用心愿原本的内容当打卡内容。</p>
-<input type="text" id="globalContent" placeholder="如:今天完成了 / 2026-07-03 已打卡" />
+<input type="text" id="globalContent" placeholder="如：今天完成了 ／ 2026-07-03 已打卡" />
 <div class="toolbar" style="margin-top:14px">
 <button class="ghost" onclick="applyGlobalContent()">应用到所有勾选</button>
 <button class="ghost" onclick="selectAll(true)">全选</button>
@@ -127,7 +127,7 @@ function renderKPIs(){
   document.getElementById('kpis').innerHTML=[
     ['待完成',all.length,'勾选后转打卡'],
     ['已同步飞书',withFeishu,'完成后飞书任务同步标记完成'],
-    ['其他',all.length-withFeishu,'没有飞书任务,只在本机完成'],
+    ['其他',all.length-withFeishu,'没有飞书任务，只在本机完成'],
   ].map(x=>`<div class="stat"><b>${x[1]}</b><span>${x[0]}</span><div style="color:var(--fg3);font-size:12px;margin-top:4px">${esc(x[2])}</div></div>`).join('');
 }
 
@@ -158,8 +158,8 @@ ${w.feishu_task_guid?`<span class="badge ok">已同步飞书</span>`:'<span clas
 ${w.due?`<span class="badge warn">原排期：${esc(w.due)}</span>`:''}
 </div>
 <div class="wish-content-input">
-<label style="color:var(--fg2);font-size:13px;display:block;margin-bottom:6px">打卡内容(覆盖)</label>
-<textarea id="content_${w.id}" placeholder="默认使用:${esc(w.content).slice(0,20)}${w.content.length>20?'…':''}"></textarea>
+<label style="color:var(--fg2);font-size:13px;display:block;margin-bottom:6px">打卡内容（覆盖）</label>
+<textarea id="content_${w.id}" placeholder="默认使用：${esc(w.content).slice(0,20)}${w.content.length>20?'…':''}"></textarea>
 </div>
 </article>`;
 }
