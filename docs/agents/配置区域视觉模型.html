@@ -61,7 +61,7 @@
 .ic-meta{color:var(--ic-faint);font-size:11.5px;margin-top:8px}
 
 .ic-under{margin:9px 0 0 8px;border-left:1px solid var(--ic-line-strong);padding-left:13px}
-.ic-row{display:grid;grid-template-columns:116px minmax(0,1fr) auto;gap:4px 10px;align-items:center;
+.ic-row{display:grid;grid-template-columns:104px minmax(0,1fr) auto;gap:4px 10px;align-items:center;
   padding:7px 0;border-bottom:1px solid var(--ic-line)}
 .ic-row:last-child{border-bottom:0}
 .ic-row .ic-k{font-size:11.5px;color:var(--ic-muted)}
@@ -297,11 +297,27 @@ const SURFACES = {
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 /* 路径类一律「中间省略」：保住盘符与文件名两头——文件名才是识别信息。
-   真实现里同一个函数用（React 那边也是切字符串，不是靠 CSS text-overflow）。 */
-function mid(s, keep){
-  if (s.length <= keep) return s;
-  const head = Math.ceil((keep - 1) / 2), tail = Math.floor((keep - 1) / 2);
-  return s.slice(0, head) + '…' + s.slice(s.length - tail);
+   按**显示列**算，不是按字符数：CJK 是双宽，路径里混了中文名时按字符数算会切不够，
+   CSS 的 text-overflow 再补一个省略号 —— 一行两个省略号就是这么来的（维护者现场逮到）。 */
+const wOf = ch => (/[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/.test(ch) ? 2 : 1);
+const colsOf = s => [...String(s)].reduce((n, ch) => n + wOf(ch), 0);
+function midCols(s, budget){
+  s = String(s);
+  if (colsOf(s) <= budget) return s;          /* 装得下就原样给，不打省略号 */
+  const cs = [...s], target = budget - 1;     /* 留一列给省略号 */
+  let head = '', hw = 0, i = 0;
+  while (i < cs.length && hw + wOf(cs[i]) <= Math.ceil(target / 2)) { head += cs[i]; hw += wOf(cs[i]); i++; }
+  let tail = '', tw = 0, j = cs.length - 1;
+  while (j >= i && tw + wOf(cs[j]) <= target - hw) { tail = cs[j] + tail; tw += wOf(cs[j]); j--; }
+  return head + '…' + tail;
+}
+/* 派生项相对母版的那一段：值在母版目录下才给，否则回 null（退回完整路径 + 中间省略）。 */
+function relTo(value, base){
+  if (!base) return null;
+  const v = String(value).replace(/[\\/]+$/, ''), b = String(base).replace(/[\\/]+$/, '');
+  if (!v || v.toLowerCase() === b.toLowerCase()) return null;
+  return v.toLowerCase().startsWith((b + '\\').toLowerCase()) || v.toLowerCase().startsWith((b + '/').toLowerCase())
+    ? v.slice(b.length + 1) : null;
 }
 const rowKey = r => r.kind + '|' + r.label;
 const allRows = s => [].concat(s.common, ...s.common.map(m => m.children || []), s.advanced);
@@ -391,12 +407,17 @@ function fill(slot, html){
   el.innerHTML = html;
   el.classList.add('ic-arrive');
 }
-function valueHTML(r){
+function valueHTML(r, base){
   if (r.kind === 'number') return `<span class="ic-num" title="${esc(r.value)}">${esc(r.value)}</span>`;
-  return `<span class="ic-v" title="${esc(r.value)}">${esc(r.value)}</span>`;
+  /* 派生行只显示「母版之下的那一段」——组标题已经把母版的完整路径印出来了，
+     行里再写一遍就是同一个字符串在 40px 之内重复两次，正是这次把行撑爆的原因。
+     读法跟目录树一致：组标题给基准，行给余项。悬停与复制给完整绝对路径。 */
+  const rel = base ? relTo(r.value, base) : null;
+  const shown = rel !== null ? rel : midCols(r.value, 36);   /* 36 列 ≈ 值列实测可用宽 */
+  return `<span class="ic-v" title="${esc(r.value)}">${esc(shown)}</span>`;
 }
-function fillRow(r){
-  fill('v:' + rowKey(r), valueHTML(r));
+function fillRow(r, base){
+  fill('v:' + rowKey(r), valueHTML(r, base));
   if (r.kind !== 'number') fill('a:' + rowKey(r),
     '<span style="display:flex;gap:4px"><button class="ic-btn is-mini">复制</button><button class="ic-btn is-mini">打开</button></span>');
 }
@@ -409,9 +430,10 @@ function applyFast(){
     fill('input:' + m.key, `<input value="${esc(m.value)}" placeholder="${m.secret && !m.value ? '未配置' : ''}" spellcheck="false">`);
     if (!m.secret) fill('acts:' + m.key,
       '<div class="ic-acts"><button class="ic-btn is-mini">浏览…</button><button class="ic-btn is-mini">用默认位置</button></div>');
-    (m.children || []).forEach(fillRow);
+    (m.children || []).forEach(c => fillRow(c, m.value));
   });
-  s.advanced.forEach(fillRow);
+  const ownerVal = key => { const m = s.common.find(x => x.key === key); return m ? m.value : null; };
+  s.advanced.forEach(r => fillRow(r, r.owner ? ownerVal(r.owner) : null));
   fill('bar', `<div class="ic-bar">
       <button class="ic-btn" disabled>保存</button>
       <button class="ic-btn">重置为默认</button>
@@ -427,7 +449,7 @@ function applySlow(){
     const dot = frame.querySelector('[data-slot="dot"]');
     if (dot) dot.className = 'ic-dot is-' + s.status.level;
     fill('stxt', esc(s.status.verdict));              // 结论：短句，整句显示
-    fill('spath', esc(mid(s.status.found, 46)));      // 证据：路径中间省略，两头保住
+    fill('spath', esc(midCols(s.status.found, 52)));  // 证据：路径中间省略，两头保住
     const p = frame.querySelector('[data-slot="spath"]');
     if (p) p.title = s.status.found;                  // 悬停看全
     if (s.status.ver){
