@@ -19,12 +19,64 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadClientBundle, nodesOfType, textOf } from '../../../test/helpers/client-bundle.mjs';
+import { Row } from 'dsh-life-pack/config-panel';
+import { toDraft as sharedToDraft, fromDraft as sharedFromDraft } from '../../plugin-manager/dist/config-panel-value.js';
+import { loadClientBundle } from '../../../test/helpers/client-bundle.mjs';
 import { CONFIG_ITEMS } from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CLIENT = loadClientBundle(join(HERE, '..'));
-const { Row, toDraft, fromDraft, LarkStatus, copyPrompt } = CLIENT.exports;
+/** 自家附加块（飞书状态行／复制通道）仍住本家，从产物取；行渲染与取值／填值收进共用件（#909）。 */
+const { LarkStatus, copyPrompt } = loadClientBundle(join(HERE, '..')).exports;
+
+/* ═══ 读那棵树的小工具 ═══
+   行渲染与附加块都从共用面板／本家产物取：那是**真 React**，元素树里子节点住在 `props.children`，
+   故不能用 `test/helpers/client-bundle.mjs` 那套替身遍历（它读的是 `node.children`）。 */
+/** 展开一层函数组件（只展开**纯组件**：用到 hook 的组件跳过，绝不把面板带下来）。 */
+function expandNode(tree) {
+  if (tree === null || tree === undefined || typeof tree !== 'object' || Array.isArray(tree)) return tree;
+  if (typeof tree.type !== 'function') return tree;
+  try {
+    return tree.type(tree.props);
+  } catch {
+    return tree;
+  }
+}
+
+function descendants(tree, out = []) {
+  const node = expandNode(tree);
+  if (node === null || node === undefined || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const child of node) descendants(child, out);
+    return out;
+  }
+  out.push(node);
+  // 两种树都要认：共用面板经**真 React** 出树（子节点在 `props.children`），
+  // 本家产物经替身 `createElement` 出树（子节点直接挂在节点上）。
+  descendants(node.props?.children ?? node.children, out);
+  return out;
+}
+const nodesOfType = (tree, type) => descendants(tree).filter((n) => n.type === type);
+function textOf(tree) {
+  let text = '';
+  const walk = (node) => {
+    const item = expandNode(node);
+    if (item === null || item === undefined || typeof item === 'boolean') return;
+    if (typeof item === 'string' || typeof item === 'number') { text += item; return; }
+    if (Array.isArray(item)) {
+      for (const child of item) walk(child);
+      return;
+    }
+    walk(item.props?.children ?? item.children);
+  };
+  walk(tree);
+  return text;
+}
+/** 一枚按钮是不是目录入口那枚（定稿 v3 ②起两档字面合一，叫「浏览文件夹」）。 */
+const isBrowseButton = (node) => textOf(node) === '浏览文件夹';
+
+/** 取值／填值收进共用件（#909）：这里按本家行表绑一次，调用口径与改版前逐条相同。 */
+const toDraft = (values, source = {}) => sharedToDraft(CONFIG_ITEMS, values, source);
+const fromDraft = (draft) => sharedFromDraft(CONFIG_ITEMS, draft);
 
 /** 官网行独立字面量（与技能侧 `LARK_WEBSITE_LINE` 逐字对读）。 */
 const WEBSITE_LINE = '飞书CLI官网为：https://www.feishu.cn/feishu-cli';
@@ -117,24 +169,22 @@ describe('#760 备忘录设置页收窄 · 插件侧', () => {
       assert.equal(inputs[0].props.onChange, undefined, '只读行不接 onChange');
     });
 
-    it('可改目录行：按钮可用，文案逐字无省略号', () => {
+    it('可改目录行：目录入口可用，文案两档合一的「浏览文件夹」', () => {
       const item = CONFIG_ITEMS.find((i) => i.key === 'media.dir');
-      for (const [mode, want] of [['native', '选择文件夹'], ['browse', '浏览']]) {
+      for (const mode of ['native', 'browse']) {
         const node = Row({ item, value: '/d/media', disabled: false, onChange: () => {}, browser: fakeBrowser(mode) });
-        const buttons = nodesOfType(node, 'button');
-        assert.equal(buttons.length, 1);
-        assert.equal(textOf(buttons[0]), want);
-        assert.equal(buttons[0].props.disabled, false);
+        const browse = nodesOfType(node, 'button').filter(isBrowseButton);
+        assert.equal(browse.length, 1, mode + ' 档应有恰一枚目录入口');
+        assert.equal(textOf(browse[0]), '浏览文件夹');
+        assert.equal(browse[0].props.disabled, false);
       }
     });
 
-    it('只读目录行（合成项）：按钮保留但不可点击', () => {
+    it('只读目录行（合成项）：一枚浏览按钮都不画（定稿 v3 ①）', () => {
       const item = { key: 'x.dir', title: '合成只读目录', tier: 'common', control: 'directory', hint: '合成', readonly: true, resolveFrom: 'dbDir' };
       const node = Row({ item, value: '/d', disabled: false, onChange: () => {}, browser: fakeBrowser('native') });
-      const buttons = nodesOfType(node, 'button');
-      assert.equal(buttons.length, 1, '按钮保留');
-      assert.equal(buttons[0].props.disabled, true, '但不可点击');
-      assert.equal(textOf(buttons[0]), '选择文件夹');
+      assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
+      assert.equal(nodesOfType(node, 'input')[0].props.disabled, true, '控件仍不可改');
     });
 
     it('行表文案无省略号（标题／hint）', () => {

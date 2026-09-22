@@ -17,13 +17,65 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configDirOf, setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
-import { loadClientBundle, nodesOfType, textOf } from '../../../test/helpers/client-bundle.mjs';
+import { Row } from 'dsh-life-pack/config-panel';
+import { toDraft as sharedToDraft, fromDraft as sharedFromDraft } from '../../plugin-manager/dist/config-panel-value.js';
+import { loadClientBundle } from '../../../test/helpers/client-bundle.mjs';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, readPath } from '../dist/index.js';
 import { readConfigSurface, readConfigHealth } from '../dist/bridge.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CLIENT = loadClientBundle(join(HERE, '..'));
-const { Row, toDraft, fromDraft, larkItemOf, copyText, clipboardOf, LARK_OFFICIAL_LINE, LARK_OFFICIAL_URL, LARK_PROMPT_V5 } = CLIENT.exports;
+/** 飞书状态行那几件仍住本家，从产物取；行渲染与取值／填值收进共用件（#909）。 */
+const { larkItemOf, copyText, clipboardOf, LARK_OFFICIAL_LINE, LARK_OFFICIAL_URL, LARK_PROMPT_V5 } = loadClientBundle(join(HERE, '..')).exports;
+
+/* ═══ 读那棵树的小工具 ═══
+   行渲染从共用面板的公开门取（#909）：那是**真 React**，元素树里子节点住在 `props.children`，
+   故不能用 `test/helpers/client-bundle.mjs` 那套替身遍历（它读的是 `node.children`）。 */
+/** 展开一层函数组件（只展开**纯组件**：用到 hook 的组件跳过，绝不把面板带下来）。 */
+function expandNode(tree) {
+  if (tree === null || tree === undefined || typeof tree !== 'object' || Array.isArray(tree)) return tree;
+  if (typeof tree.type !== 'function') return tree;
+  try {
+    return tree.type(tree.props);
+  } catch {
+    return tree;
+  }
+}
+
+function descendants(tree, out = []) {
+  const node = expandNode(tree);
+  if (node === null || node === undefined || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const child of node) descendants(child, out);
+    return out;
+  }
+  out.push(node);
+  // 两种树都要认：共用面板经**真 React** 出树（子节点在 `props.children`），
+  // 本家产物经替身 `createElement` 出树（子节点直接挂在节点上）。
+  descendants(node.props?.children ?? node.children, out);
+  return out;
+}
+const nodesOfType = (tree, type) => descendants(tree).filter((n) => n.type === type);
+function textOf(tree) {
+  let text = '';
+  const walk = (node) => {
+    const item = expandNode(node);
+    if (item === null || item === undefined || typeof item === 'boolean') return;
+    if (typeof item === 'string' || typeof item === 'number') { text += item; return; }
+    if (Array.isArray(item)) {
+      for (const child of item) walk(child);
+      return;
+    }
+    walk(item.props?.children ?? item.children);
+  };
+  walk(tree);
+  return text;
+}
+/** 一枚按钮是不是目录入口那枚（定稿 v3 ②起两档字面合一，叫「浏览文件夹」）。 */
+const isBrowseButton = (node) => textOf(node) === '浏览文件夹';
+
+/** 取值／填值收进共用件（#909）：这里按本家行表绑一次，调用口径与改版前逐条相同。 */
+const toDraft = (values, source = {}) => sharedToDraft(CONFIG_ITEMS, values, source);
+const fromDraft = (draft) => sharedFromDraft(CONFIG_ITEMS, draft);
 
 describe('#764 作息设置页收窄 · 插件侧', () => {
   let base;
@@ -99,27 +151,31 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       assert.equal(inputs[0].props.onChange, undefined);
     });
 
-    it('只读目录行：浏览按钮保留但不可点（入口不作废，只是不能改）', () => {
+    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', () => {
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
       const readonlyDir = { ...dirItem, readonly: true };
       const node = Row({ item: readonlyDir, value: 'D:\\x', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } });
-      const buttons = nodesOfType(node, 'button');
-      assert.equal(buttons.length, 1, '按钮保留');
-      assert.equal(buttons[0].props.disabled, true, '但不可点');
-      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } }), 'button')[0].props.disabled, false,
-        '可改行（数据目录）的按钮照常可点');
+      assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
+      assert.equal(nodesOfType(node, 'input')[0].props.disabled, true, '控件仍不可改');
+      const editable = nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } }), 'button').filter(isBrowseButton);
+      assert.equal(editable.length, 1, '可改行（数据目录）照旧有那枚入口');
+      assert.equal(editable[0].props.disabled, false);
     });
   });
 
   describe('E 控件文案零省略号', () => {
-    it('源码里没有 …；按钮字面就是「选择文件夹」／「浏览」', () => {
+    it('源码里没有 …；目录入口字面两档合一的「浏览文件夹」', () => {
       const src = readFileSync(join(HERE, '..', 'src', 'client.ts'), 'utf8');
       assert.equal(src.includes('…'), false, '控件文案不得出现省略号');
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
-      const native = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } });
-      assert.equal(textOf(native).replace(/.*(选择文件夹).*/, '$1'), '选择文件夹');
-      const browse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } });
-      assert.equal(textOf(browse).replace(/.*(浏览).*/, '$1'), '浏览');
+      for (const mode of ['native', 'browse']) {
+        const node = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode, onOpen: () => {} } });
+        const browse = nodesOfType(node, 'button').filter(isBrowseButton);
+        assert.equal(browse.length, 1, mode + ' 档应有恰一枚目录入口');
+        assert.equal(textOf(browse[0]), '浏览文件夹', mode + ' 档的字面应是「浏览文件夹」');
+      }
+      const labels = nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } }), 'button').map(textOf);
+      for (const old of ['选择文件夹', '浏览']) assert.equal(labels.includes(old), false, '两档字面已合一，不该再有「' + old + '」');
     });
   });
 

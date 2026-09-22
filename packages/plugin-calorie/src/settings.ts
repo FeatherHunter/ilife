@@ -56,12 +56,11 @@ export interface ConfigItem {
   /** 只读行的**显示值来源**：回执 `resolved` 组里的哪一格。标了它 ⇒ 显示技能算好的绝对路径；
    *  不标 ⇒ 显示配置文件里那个值本身（数字类只读项走这一档，见 #749 补注二的甲档）。 */
   readonly resolveFrom?: ResolvedField;
-  /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
-   *  `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
-  readonly prefillFrom?: 'dataDir';
-  /** 可改目录行的第二落点来源：取值空着且 `prefillFrom` 没有时，拿回执 `resolved` 组里这一格显示。
-   *  `photos.dir` 标它（`photosDir`）——空串按默认落点，面板直接显示生效绝对路径。 */
-  readonly prefillResolved?: ResolvedField;
+  /** 目录行的**落点来源**：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
+   *  取法先看回执 `resolved` 组同名格，再看回执顶层同名格：`db.dir` 标 `dataDir`（顶层那一格＝
+   *  技能真会用的那个目录），`photos.dir` 标 `photosDir`（空串即默认落点 `<数据目录>/photos`）。
+   *  #909 起与兄弟五家同字段（原名 `prefillResolved` 只有两家有，收件时统一掉）。 */
+  readonly prefillFrom?: ResolvedField | 'dataDir';
 }
 
 /** 常用项：数据目录／库文件名／产物目录名／照片目录／训记 KEY（可改 3 ＋ 只读 2）。 */
@@ -98,7 +97,7 @@ const COMMON: readonly ConfigItem[] = [
     title: '照片目录',
     tier: 'common',
     control: 'directory',
-    prefillResolved: 'photosDir',
+    prefillFrom: 'photosDir',
     hint: '身材照的存放目录。留空＝用默认目录（数据目录下的 photos）。',
   },
   {

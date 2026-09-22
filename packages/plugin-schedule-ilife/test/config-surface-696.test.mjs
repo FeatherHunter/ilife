@@ -20,7 +20,12 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configDirOf, requireConfigTestBase, setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
-import { loadClientBundle, nodesOfType, textOf } from '../../../test/helpers/client-bundle.mjs';
+import { loadClientBundle } from '../../../test/helpers/client-bundle.mjs';
+// #909 起设置页本体收进共用件：行渲染从它的公开门取，取值／填值与整面渲染从它的实现件取。
+import { Row } from 'dsh-life-pack/config-panel';
+import { readPickAnswer } from 'dsh-life-pack/directory-browser';
+import { PanelBody } from '../../plugin-manager/dist/config-panel-view.js';
+import { toDraft as sharedToDraft } from '../../plugin-manager/dist/config-panel-value.js';
 import { CONFIG_ITEMS, COMMON_ITEM_COUNT, CONFIG_STEM, SETTINGS_OWNER, readPath, writePath } from '../dist/index.js';
 import { CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY, readConfigSurface, writeConfigValues, resetConfigToDefaults, resolveNodeBin } from '../dist/bridge.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, parseSavePayload, isRpcResult } from '../dist/contract.js';
@@ -63,9 +68,104 @@ function probeGuard(extraEnv = {}) {
   }
 }
 
-/** client 真产物（#736 组件级读数用；缺产物在这里响亮失败，不静默跳过）。 */
+/** client 真产物（#909 起只用来跑 `apply` 抓接入面：行渲染与取值／填值都收进共用件了）。 */
 const CLIENT = loadClientBundle(join(HERE, '..'));
-const { Row, resolveDirectoryPicker, pickDirectory, readPickAnswer, toDraft, createBrowseHandler } = CLIENT.exports;
+
+/** 取值收进共用件（#909）：按本家行表绑一次，判据与改版前逐条相同。 */
+const toDraft = (values, source = {}) => sharedToDraft(CONFIG_ITEMS, values, source);
+
+/* ═══ 读那棵树的小工具 ═══
+   行渲染与整面都从共用面板取（#909）：那是**真 React**，元素树里子节点住在 `props.children`，
+   故不能用 `test/helpers/client-bundle.mjs` 那套替身遍历（它读的是 `node.children`）。 */
+/** 展开一层函数组件（只展开**纯组件**：用到 hook 的组件跳过，绝不把面板带下来）。 */
+function expandNode(tree) {
+  if (tree === null || tree === undefined || typeof tree !== 'object' || Array.isArray(tree)) return tree;
+  if (typeof tree.type !== 'function') return tree;
+  try {
+    return tree.type(tree.props);
+  } catch {
+    return tree;
+  }
+}
+
+function descendants(tree, out = []) {
+  const node = expandNode(tree);
+  if (node === null || node === undefined || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const child of node) descendants(child, out);
+    return out;
+  }
+  out.push(node);
+  // 两种树都要认：共用面板经**真 React** 出树（子节点在 `props.children`），
+  // 本家产物经替身 `createElement` 出树（子节点直接挂在节点上）。
+  descendants(node.props?.children ?? node.children, out);
+  return out;
+}
+const nodesOfType = (tree, type) => descendants(tree).filter((n) => n.type === type);
+function textOf(tree) {
+  let text = '';
+  const walk = (node) => {
+    const item = expandNode(node);
+    if (item === null || item === undefined || typeof item === 'boolean') return;
+    if (typeof item === 'string' || typeof item === 'number') { text += item; return; }
+    if (Array.isArray(item)) {
+      for (const child of item) walk(child);
+      return;
+    }
+    walk(item.props?.children ?? item.children);
+  };
+  walk(tree);
+  return text;
+}
+/** 一枚按钮是不是目录入口那枚（定稿 v3 ②起两档字面合一，叫「浏览文件夹」）。 */
+const isBrowseButton = (node) => textOf(node) === '浏览文件夹';
+
+/** #909 起设置页本体住在共用件里：本家交出去的就是「行表 ＋ 通道名 ＋ 三格接线」。
+ *  拿桩 ctx 走一遍 `apply`，把这一次注册抓出来——F／H 两组的判据都咬这份**接入面**。 */
+function registeredConfig(get) {
+  let seen = null;
+  CLIENT.exports.apply({
+    slots: {
+      inject: (_key, callback) => { callback(); return () => {}; },
+      register: (options, component) => { seen = { options, component }; return () => {}; },
+    },
+    connection: { rpc: { call: () => {} } },
+    ...(get === undefined ? {} : { get }),
+    effect: (fn) => { const dispose = fn(); if (typeof dispose === 'function') dispose(); },
+  });
+  assert.notEqual(seen, null, 'apply 没把设置页注册进爱生活页签槽');
+  // 注册交出去的是一个组件工厂（页签槽的既定形状）：调一次拿到那一棵元素，props 就是本家的接入面。
+  const element = seen.component({});
+  assert.notEqual(element, null, '设置页组件工厂没交出元素');
+  return { options: seen.options, props: element.props };
+}
+
+/** 整面那一张卡的就绪态输入（给「高级组怎么画」「供不了那句人话上屏」两条用）。 */
+const PANEL_SURFACE = { path: 'C:\\探针\\.ilife\\probe.yaml', dataDir: 'C:\\探针\\.ilife', created: false, values: { db: { dir: '' } } };
+function panelTree(over = {}) {
+  return PanelBody({
+    title: "作息管家",
+    items: CONFIG_ITEMS,
+    state: { kind: 'ready', surface: PANEL_SURFACE },
+    draft: toDraft(PANEL_SURFACE.values, PANEL_SURFACE),
+    busy: false,
+    notice: null,
+    writeError: null,
+    error: null,
+    picking: false,
+    browseRow: null,
+    rowEntry: null,
+    dirtyKeys: [],
+    followKeys: [],
+    copy: null,
+    onCopy: () => {},
+    onChange: () => {},
+    onSave: () => {},
+    onReset: () => {},
+    onRetry: () => {},
+    ...over,
+  });
+}
 
 /** 把一层嵌套的默认值表摊平成 `a.b` 键集。 */
 function flattenKeys(record, prefix = '') {
@@ -260,40 +360,44 @@ describe('#696 作息设置页 · 配置面', () => {
   describe('F 设置页只配置、不干活', () => {
     const clientSrc = readFileSync(join(HERE, '..', 'src', 'client.ts'), 'utf8');
 
-    function configComponentSource() {
-      const start = clientSrc.indexOf('function ScheduleConfig(');
-      assert.ok(start > 0, 'client.ts 里应有 ScheduleConfig');
-      const end = clientSrc.indexOf('export function apply(');
-      assert.ok(end > start);
-      return clientSrc.slice(start, end);
-    }
-
     it('设置页组件里没有干活入口（没有记作息／看时间轴之类的取数调用）', () => {
-      const body = configComponentSource();
-      assert.ok(!body.includes('fetchRead'), '设置页不该调取数');
-      assert.ok(!body.includes('DEFAULT_READ_KEY'), '设置页不该带默认读键');
-      assert.ok(!body.includes('schedule.record'), '设置页不该直接点名干活命令的 key');
-      assert.ok(!body.includes('schedule.plan'), '设置页不该直接点名干活命令的 key');
-      assert.ok(!body.includes('schedule.help'), '设置页不该直接点名干活命令的 key');
+      const props = registeredConfig().props;
+      // #909 起设置页本体就交给共用面板这几格——多一格就是多一条取数口；行表本身只有配置项。
+      assert.deepEqual(Object.keys(props).sort(),
+        ['channel', 'extra', 'followKeysOf', 'getCall', 'getService', 'items', 'title'],
+        '设置页的接入面超出「行表 ＋ 通道名 ＋ 三个可选钩子 ＋ 取数接线」');
+      assert.deepEqual([...props.items], [...CONFIG_ITEMS], '设置页只画本家那张配置行表');
+      assert.equal(JSON.stringify(props).includes("schedule.record"), false, '设置页的接入面里不该出现干活命令的 key：' + "schedule.record");
+      assert.equal(JSON.stringify(props).includes("schedule.plan"), false, '设置页的接入面里不该出现干活命令的 key：' + "schedule.plan");
+      assert.equal(JSON.stringify(props).includes("schedule.help"), false, '设置页的接入面里不该出现干活命令的 key：' + "schedule.help");
     });
 
     it('设置页只走三个配置端点', () => {
-      const body = configComponentSource();
-      assert.ok(body.includes('fetchConfigSurface'));
-      assert.ok(body.includes('saveConfigSurface'));
-      assert.ok(body.includes('resetConfigSurface'));
+      const { props, options } = registeredConfig();
+      // 三通电话（`config.get`／`config.save`／`config.reset`）收进共用件，本家只连通道路由名。
+      assert.equal(props.channel, RPC_CHANNEL);
+      assert.equal(options.channel, RPC_CHANNEL);
+      for (const gone of ['config.get', 'config.save', 'config.reset']) {
+        assert.equal(clientSrc.includes(gone), false, '本家不该再写死配置端点名：' + gone);
+      }
     });
 
-    it('高级项进默认收起的 details 组，常用项直画', () => {
-      const body = configComponentSource();
-      assert.ok(body.includes("'details'"), '高级组应是 details');
-      assert.ok(body.includes('COMMON_ITEM_COUNT'), '常用项数取自行表');
+    it('高级项进默认收起的 details 组，常用项直画（本家高级组为空 ⇒ 屏上不该有那一组）', () => {
+      // #909 起分组那一段是共用面板按行表 `tier` 切的：本家没有 advanced 行，屏上就不该出现「高级」。
+      assert.deepEqual(CONFIG_ITEMS.filter((i) => i.tier === 'advanced').map((i) => i.key), []);
+      const tree = panelTree();
+      assert.doesNotMatch(textOf(tree), /高级/, '本家没有高级项，屏上不该画那个分组');
+      for (const item of CONFIG_ITEMS) {
+        assert.ok(textOf(tree).includes(item.title), item.key + ' 这一行没画出来');
+      }
     });
+
 
     it('设置页仍注册进爱生活页签槽（改版没有把注册删掉）', () => {
+      const { options } = registeredConfig();
+      assert.equal(options.name, 'ilife.config-tab');
+      assert.equal(options.id, SETTINGS_OWNER);
       assert.ok(clientSrc.includes("ctx.slots.inject('ilife.config-tab'"));
-      assert.ok(clientSrc.includes("name: 'ilife.config-tab'"));
-      assert.ok(clientSrc.includes('id: PLUGIN'));
     });
 
     it('设置页仍报 SETTINGS_OWNER（设置页住单品包）', () => {
@@ -303,10 +407,10 @@ describe('#696 作息设置页 · 配置面', () => {
     it('插件 src 一行没 import 技能实现或 base 包（只经 CLI 取用）', () => {
       const srcDir = join(HERE, '..', 'src');
       const files = ['bridge.ts', 'client.ts', 'contract.ts', 'dsh-ctx.ts', 'index.ts', 'settings.ts', 'slot.ts', 'skill-provider.ts'];
-      for (const f of files) {
-        const t = readFileSync(join(srcDir, f), 'utf8');
-        assert.ok(!/from\s+['"]base-/.test(t), `${f} 不该 import base-*`);
-        assert.ok(!/from\s+['"]skill-/.test(t), `${f} 不该 import skill-*（测试件除外）`);
+      for (const file of files) {
+        const text = readFileSync(join(srcDir, file), 'utf8');
+        assert.ok(!/from\s+['"]base-/.test(text), `${file} 不该 import base-*`);
+        assert.ok(!/from\s+['"]skill-/.test(text), `${file} 不该 import skill-*（测试件除外）`);
       }
     });
   });
@@ -318,125 +422,108 @@ describe('#696 作息设置页 · 配置面', () => {
       for (const e of set) assert.match(e, /^config\./);
     });
   });
-  describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正）', () => {
+  describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正；#909 收进共用件）', () => {
     it('目录档只发给目录类行：数据目录（本包恰一行，其余两行不动档）', () => {
       const dirs = CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort();
-      assert.deepEqual(dirs, ['db.dir'], '目录行集合＝{db.dir}（本包恰一行目录）');
-      for (const k of ['db.name', 'html.dir']) {
-        assert.equal(CONFIG_ITEMS.find((i) => i.key === k).control, 'text', `${k} 不该改档`);
-      }
+      assert.deepEqual(dirs, ["db.dir"].sort(), '目录行集合＝{db.dir}');
     });
 
     it('命名空间拿不到 ⇒ 没有入口（软依赖；守卫拒绝也当没有）', () => {
-      for (const absent of [undefined, null, () => undefined, () => ({}), () => ({ pick: 'nope' })]) {
-        assert.equal(resolveDirectoryPicker(absent), null, '拿不到就不给入口：' + String(absent));
+      // #909 起形状守卫收进共用件（`resolvePicker`）：本家那一格只做**原样透传**——
+      // 「认不出就当没有」「守卫拒绝也不把设置页带下来」两条判断只有一处，住 `dsh-life-pack/config-panel`。
+      const serviceWith = (get) => registeredConfig(get).props.getService;
+      assert.equal(typeof serviceWith(() => undefined), 'function', '本家须交出宿主服务查找（目录选择是软依赖）');
+      assert.equal(serviceWith(undefined)('remote.directoryPicker'), undefined, '宿主没给 ⇒ 那一格回 undefined');
+      assert.equal(serviceWith(null)('remote.directoryPicker'), undefined);
+      assert.equal(serviceWith(() => undefined)('remote.directoryPicker'), undefined);
+      // 本家不认形状（判断只有一处）：宿主给什么就原样交出去。
+      const oddShape = {};
+      assert.equal(serviceWith(() => oddShape)('remote.directoryPicker'), oddShape, '形状怪也照原样交出去，本家不自己判断');
+      const picker = { pick: async () => ({ ok: true, value: null }) };
+      assert.equal(serviceWith(() => picker)('remote.directoryPicker'), picker, '拿到命名空间就原样交出去');
+      // 本家不自己吞守卫的拒绝：拒绝当没有是共用件的判断（吞一半＝两处判断）。
+      const refusing = serviceWith(() => { throw new Error('service "remote.directoryPicker" is not declared'); });
+      assert.throws(() => refusing('remote.directoryPicker'), /is not declared/, '本家不许自己吞掉守卫的拒绝');
+      // 入口供不了 ⇒ 那一枚按钮不画，文本框照旧（定稿 v3 ②：不摆点了没反应的死按钮）。
+      const dirItem = CONFIG_ITEMS.find((i) => i.control === 'directory');
+      for (const browser of [null, undefined, { mode: 'none', onOpen: () => {} }]) {
+        const node = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser });
+        assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [],
+          '入口缺席 ⇒ 不画目录按钮（供不了就收起入口，文本框照旧）');
+        assert.equal(nodesOfType(node, 'input').length, 1);
       }
-      assert.equal(resolveDirectoryPicker(() => { throw new Error('service "remote.directoryPicker" is not declared'); }), null,
-        '守卫拒绝当没有，不许把设置页带下来');
-      const picker = resolveDirectoryPicker((name) => (name === 'remote.directoryPicker' ? { pick: async () => ({ ok: true, value: null }) } : undefined));
-      assert.ok(picker !== null && typeof picker.pick === 'function', '拿到命名空间就用它');
     });
 
-    it('按钮按档渲染：目录行恰一枚、非目录行没有；onBrowse 缺席时不画按钮', () => {
-      const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
-      const textItem = CONFIG_ITEMS.find((i) => i.key === 'db.name');
+    it('按钮按档渲染：可改目录行恰一枚目录入口 ＋ 每行一枚复制；非目录行没有目录入口', () => {
+      const dirItem = CONFIG_ITEMS.find((i) => i.control === 'directory');
+      const textItem = CONFIG_ITEMS.find((i) => i.control === 'text');
       const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } });
-      const buttons = nodesOfType(withBrowse, 'button');
-      assert.equal(buttons.length, 1, '目录行恰一枚按钮');
-      assert.equal(buttons[0].props.type, 'button');
-      assert.match(textOf(buttons[0]), /浏览/);
-      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {} }), 'button').length, 0,
-        '入口缺席 ⇒ 不画按钮（供不了就收起入口，文本框照旧）');
-      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').length, 0,
-        '非目录行不画按钮');
-      assert.equal(nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'input').length, 1,
-        '目录行仍是文本框 ＋ 按钮');
+      const browse = nodesOfType(withBrowse, 'button').filter(isBrowseButton);
+      assert.equal(browse.length, 1, '可改目录行恰一枚目录入口');
+      assert.equal(browse[0].props.type, 'button');
+      assert.equal(nodesOfType(Row({ item: textItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } }), 'button').filter(isBrowseButton).length, 0,
+        '非目录行不画目录入口');
+      assert.equal(nodesOfType(withBrowse, 'input').length, 1, '目录行仍是文本框 ＋ 按钮');
     });
 
-    it('点按钮 → 唤一次 pick → 按**平台信封**回填该行；取消一字不动', async () => {
+    it('点按钮 → 把那**一行**的键交给入口回填；取消一字不动', () => {
+      // #909 起「先应用内浏览、被拒换系统对话框」那一条动作住在共用件里（面板的 `onOpenRow`／`openNative`）；
+      // 本家不再自己接线，故这里咬两件仍看得见的事实：① 按钮把这一行的键交出去；② 回执按平台信封解。
       const seen = [];
-      const picker = { pick: async () => { seen.push('pick'); return { ok: true, value: 'D:\\爱生活数据' }; } };
+      const dirItem = CONFIG_ITEMS.find((i) => i.control === 'directory');
       const node = Row({
-        item: CONFIG_ITEMS.find((i) => i.key === 'db.dir'),
+        item: dirItem,
         value: '',
         disabled: false,
-        onChange: (k, v) => seen.push([k, v]),
-        browser: {
-          mode: 'native',
-          onOpen: (key) =>
-            createBrowseHandler({
-              picker,
-              onChange: (k, v) => seen.push([k, v]),
-              onUnavailable: (m) => seen.push(['!', m]),
-            })(key),
-        },
+        onChange: () => {},
+        browser: { mode: 'native', onOpen: (key) => { seen.push(key); } },
       });
-      const clicked = nodesOfType(node, 'button')[0].props.onClick();
-      assert.equal(typeof clicked?.then, 'function', '按钮的 onClick 要回那枚 Promise（用例据此可判）');
-      await clicked;
-      assert.deepEqual(seen, ['pick', ['db.dir', 'D:\\爱生活数据']], '信封里的 value 才是那条绝对路径，回填给这一行');
-
-      const cancelled = [];
-      const handler = createBrowseHandler({
-        picker: { pick: async () => ({ ok: true, value: null }) },
-        onChange: (k, v) => cancelled.push([k, v]),
-        onUnavailable: (m) => cancelled.push(['!', m]),
-      });
-      await handler('db.dir');
-      assert.deepEqual(cancelled, [], 'value:null ＝用户取消 ⇒ 这一行的值一字不动');
+      nodesOfType(node, 'button').filter(isBrowseButton)[0].props.onClick();
+      assert.deepEqual(seen, [dirItem.key], '点了就该把这一行的键交出去（入口据此回填这一行）');
+      assert.deepEqual(readPickAnswer({ ok: true, value: 'D:\\爱生活数据' }), { kind: 'picked', path: 'D:\\爱生活数据' },
+        '信封里的 value 才是那条绝对路径');
+      assert.deepEqual(readPickAnswer({ ok: true, value: null }), { kind: 'cancelled' },
+        'value:null ＝用户取消 ⇒ 这一行的值一字不动');
     });
 
-    it('#743 回归：平台回 ok:false（**不抛**）也要出人话——被吞掉就成「点了没反应」', async () => {
-      const seen = [];
-      const handler = createBrowseHandler({
-        picker: { pick: async () => ({ ok: false, error: { code: 'directory-picker/unavailable', message: 'the composition cannot serve pick' } }) },
-        onChange: (k, v) => seen.push([k, v]),
-        onUnavailable: (m) => seen.push(['!', m]),
-      });
-      await handler('db.dir');
-      assert.equal(seen.length, 1, '被拒只出一条');
-      assert.equal(seen[0][0], '!', '被拒不写值，只给人话');
-      assert.match(seen[0][1], /系统文件夹对话框/);
-      assert.match(seen[0][1], /绝对路径/);
-      assert.match(seen[0][1], /cannot serve/, '平台给的原话要带上，别吞');
+    it('#743 回归：平台回 ok:false（**不抛**）也要出人话——被吞掉就成「点了没反应」', () => {
+      const r = readPickAnswer({ ok: false, error: { code: 'directory-picker/unavailable', message: 'the composition cannot serve pick' } });
+      assert.equal(r.kind, 'unavailable', 'ok:false 是「供不了」，不是「取消」');
+      assert.match(r.message, /系统文件夹对话框/);
+      assert.match(r.message, /绝对路径/);
+      assert.match(r.message, /cannot serve/, '平台给的原话要带上，别吞');
     });
 
-    it('这条路供不了（传输层直接抛）⇒ 同样给人话、不写值', async () => {
-      const seen = [];
-      const handler = createBrowseHandler({
-        picker: { pick: async () => { throw new Error('the composition cannot serve pick'); } },
-        onChange: (k, v) => seen.push([k, v]),
-        onUnavailable: (m) => seen.push(['!', m]),
-      });
-      await handler('db.dir');
-      assert.equal(seen.length, 1, '被拒只出一条');
-      assert.equal(seen[0][0], '!', '被拒不写值，只给人话');
-      assert.match(seen[0][1], /系统文件夹对话框/);
-      assert.match(seen[0][1], /绝对路径/);
+    it('这条路供不了 ⇒ 屏上出那句人话（就地失败那一支），不写值', () => {
+      const phrase = readPickAnswer({ ok: false, error: { message: 'the composition cannot serve pick' } }).message;
+      const tree = panelTree({ error: phrase });
+      assert.match(textOf(tree), /系统文件夹对话框/, '供不了要出人话（被吞掉就成「点了没反应」）');
+      assert.match(textOf(tree), /绝对路径/);
+      // 「不写值」由面板的单一路径保证：只有 onChange 动草稿，失败只落 `error` 那一格。
+      for (const node of nodesOfType(tree, 'input')) assert.notEqual(node.props.value, phrase);
     });
 
-    it('pickDirectory 按平台信封归一三态且永不抛', async () => {
-      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: 'D:\\x' }) }), { kind: 'picked', path: 'D:\\x' });
-      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: null }) }), { kind: 'cancelled' });
-      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: true, value: '   ' }) }), { kind: 'cancelled' }, '空白串视同取消，不算选中');
-      assert.deepEqual(await pickDirectory({ pick: async () => ({ ok: false, error: { message: 'no native backend' } }) }),
-        { kind: 'unavailable', message: '打不开系统文件夹对话框（no native backend）：请直接在框里填绝对路径。' });
-      assert.equal((await pickDirectory({ pick: async () => { throw new Error('x'); } })).kind, 'unavailable');
-      assert.deepEqual(await pickDirectory({ pick: async () => 'D:\\裸串' }), { kind: 'picked', path: 'D:\\裸串' }, '裸串照收（老形状兜底）');
+    it('回执按平台信封归一三态且永不抛', () => {
+      assert.deepEqual(readPickAnswer({ ok: true, value: 'D:\\x' }), { kind: 'picked', path: 'D:\\x' });
+      assert.deepEqual(readPickAnswer({ ok: true, value: null }), { kind: 'cancelled' });
+      assert.deepEqual(readPickAnswer({ ok: true, value: '   ' }), { kind: 'cancelled' }, '空白串视同取消，不算选中');
+      assert.deepEqual(readPickAnswer('D:\\裸串'), { kind: 'picked', path: 'D:\\裸串' }, '裸串照收（老形状兜底）');
       assert.equal(readPickAnswer(undefined).kind, 'unavailable', '认不出的形状当「供不了」报出来，不当取消吞掉');
+      assert.equal(readPickAnswer(null).kind, 'unavailable');
+      assert.equal(readPickAnswer({}).kind, 'unavailable');
     });
 
-    it('#743：「db.dir」那行把解析好的绝对路径预填出来（用户不必自己拼）', () => {
+    it('#743：目录行把解析好的绝对路径预填出来（用户不必自己拼）', () => {
       const dir = 'C:\\Users\\x\\.ilife\\data';
-      assert.equal(toDraft({}, { dataDir: dir })['db.dir'], dir, '取值空着 ⇒ 直接显示回执里那条绝对路径');
-      assert.equal(toDraft({ db: { dir: 'D:\\elsewhere' } }, { dataDir: dir })['db.dir'], 'D:\\elsewhere', '配了值 ⇒ 显示配置里的值');
-      assert.equal(toDraft({}, {})['db.dir'], '', '没有落点回执 ⇒ 保持空，不编一个路径出来');
-      assert.equal(toDraft({}, { dataDir: dir })['db.dir'], toDraft({ db: { dir: dir } }, { dataDir: dir })['db.dir'],
+      const dirKey = CONFIG_ITEMS.find((i) => i.prefillFrom === 'dataDir').key;
+      assert.equal(toDraft({}, { dataDir: dir })[dirKey], dir, '取值空着 ⇒ 直接显示回执里那条绝对路径');
+      assert.equal(toDraft({ db: { dir: 'D:\\elsewhere' } }, { dataDir: dir })[dirKey], 'D:\\elsewhere', '配了值 ⇒ 显示配置里的值');
+      assert.equal(toDraft({}, {})[dirKey], '', '没有落点回执 ⇒ 保持空，不编一个路径出来');
+      assert.equal(toDraft({}, { dataDir: dir })[dirKey], toDraft({ db: { dir: dir } }, { dataDir: dir })[dirKey],
         '预填出来的表单态与显式配置同读数 ⇒ 打开面板不会凭空变「未保存」');
     });
 
     it('client 短名声明没被改动（不许写成硬依赖：写进去整包会被停靠）', () => {
       assert.deepEqual(CLIENT.exports.inject, ['slots', 'connection']);
     });
-  });
-});
+  });});

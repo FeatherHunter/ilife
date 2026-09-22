@@ -44,8 +44,9 @@ export type ConfigTier = 'common' | 'advanced';
  * `directory` 是**字符串那一档的页面形态**——取值仍是串，只是多一个唤起系统文件夹选择器的入口，见 #736）。 */
 export type ConfigControl = 'text' | 'number' | 'switch' | 'directory';
 
-/** 只读行显示的那一格：技能侧回执 `resolved` 组里的格名（面板只显示、不计算）。 */
-export type MemoResolvedField = 'dbDir' | 'dbFile' | 'htmlDir' | 'mediaDir';
+/** 只读行显示的那一格：技能侧回执 `resolved` 组里的格名（面板只显示、不计算）。
+ *  #909 起与兄弟五家同名（原名 `MemoResolvedField` 只此一家有，收件时统一掉）。 */
+export type ResolvedField = 'dbDir' | 'dbFile' | 'htmlDir' | 'mediaDir';
 
 export interface ConfigItem {
   /** 配置文件里的键路径，一层嵌套用 `.` 连接，例 `media.dir`。 */
@@ -60,13 +61,12 @@ export interface ConfigItem {
    *  只读行**不参与**保存（`fromDraft` 不收它，免得把显示用的绝对路径写回配置）。 */
   readonly readonly?: boolean;
   /** 只读行的**显示值来源**：回执 `resolved` 组里的哪一格。标了它 ⇒ 显示技能算好的绝对路径。 */
-  readonly resolveFrom?: MemoResolvedField;
-  /** 目录行的落点来源：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
-   *  只有 `db.dir` 标它——回执里的 `dataDir` 就是技能真会用的那个目录，逐字相同。 */
-  readonly prefillFrom?: 'dataDir';
-  /** 可改目录行的第二落点来源：取值空着且 `prefillFrom` 没标时，拿回执 `resolved` 组里这一格显示。
-   *  只有 `media.dir` 标它——空串即默认落点 `<数据目录>/media`，显示的就是技能真会用的那个目录。 */
-  readonly prefillResolved?: MemoResolvedField;
+  readonly resolveFrom?: ResolvedField;
+  /** 目录行的**落点来源**：这一行取值空着时，页面上拿配置面回执里的哪一格当它显示的绝对路径。
+   *  取法先看回执 `resolved` 组同名格，再看回执顶层同名格：`db.dir` 标 `dataDir`（顶层那一格＝
+   *  技能真会用的那个目录），`media.dir` 标 `mediaDir`（空串即默认落点 `<数据目录>/media`）。
+   *  #909 起与兄弟五家同字段（原名 `prefillResolved` 只有两家有，收件时统一掉）。 */
+  readonly prefillFrom?: ResolvedField | 'dataDir';
 }
 
 /** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
@@ -104,7 +104,7 @@ const COMMON: readonly ConfigItem[] = [
     tier: 'common',
     control: 'directory',
     // 留空＝<数据目录>/media；页面上把解析出来的绝对路径直接填进这一行；目录必须已存在，技能不建。
-    prefillResolved: 'mediaDir',
+    prefillFrom: 'mediaDir',
     hint: '附件的存放根目录。留空＝数据目录下的 media（目录须已存在，技能不替你建）。',
   },
 ];
