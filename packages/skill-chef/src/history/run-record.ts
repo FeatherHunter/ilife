@@ -26,8 +26,9 @@ export function recordHistory(h: ChefDb, input: { recipe_id: string; rating?: nu
   // 818 定案（甲）：老库 rating REAL NOT NULL，本次不改 schema；卡面“选填”暂改“必填”，缺评分不写历史，直接拦下。
   if (rawRt === undefined || rawRt === null || rawRt === '') throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给评分 rating（0-5 数字；老库 NOT NULL，未评分请先问用户要分）');
   {
-    const n = typeof rawRt === 'string' ? Number(String(rawRt).trim()) : rawRt;
-    if (typeof n !== 'number' || !Number.isFinite(n)) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须为数字');
+    // 空串／纯空白同样按「没给」处理（与 `recordHistory` 同口径：一份缺值只认一个定义地）。
+    const n = typeof rawRt === 'string' ? (rawRt.trim() === '' ? rawRt : Number(rawRt.trim())) : rawRt;
+    if (typeof n !== 'number' || !Number.isFinite(n)) throw new ChefFetchError('CHEF_BAD_QUERY', '记录做菜须给评分 rating（0-5 数字；老库 NOT NULL，未评分请先问用户要分）');
     if (n < 0 || n > 5) throw new ChefFetchError('CHEF_HISTORY_CORRUPT', '评分须在 0-5 内');
     rating = n as number;
   }
@@ -65,8 +66,12 @@ export function runHistoryRecord(handle: ChefDb, params: Record<string, unknown>
   const detail = getRecipeDetail(handle, name);
   let rating: number | null = null;
   if (params.rating !== undefined) {
-    const raw = typeof params.rating === 'string' && (params.rating as string).trim() !== '' ? Number((params.rating as string).trim()) : params.rating;
-    rating = validateRating(raw);
+    const raw = params.rating;
+    // 空串／纯空白＝「用户啥也没填」，与「键不传」同义（#853 契约：缺评分 → 取数失败档 4 且点名 rating）。
+    // 不这么归一，`rating: ''` 会先撞口径校验（`validateRating` 只认数字 ⇒ exit 2「缺槽位」），
+    // 同一个场景因「空串 vs 不传」分叉成两种错误档——同一件事两个定义地。
+    const blank = typeof raw === 'string' && raw.trim() === '';
+    rating = blank ? null : validateRating(typeof raw === 'string' ? Number(raw.trim()) : raw);
   }
   const feedback = validateFeedback(params.feedback);
   const dateRaw = params.date === undefined ? params.cook_date : params.date;
