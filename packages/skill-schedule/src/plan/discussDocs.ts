@@ -22,7 +22,7 @@ import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb, ScheduleRecord } from '../fetch/db.js';
 import { listPlanEvents, listRecordsRange } from '../fetch/index.js';
 import {
-  LEVEL1_WHITELIST, fmtDur, fmtDurShort, fmtPct, l1Of, toMinutes, type PlanEventInput,
+  LEVEL1_WHITELIST, fmtDur, fmtDurShort, l1Of, type PlanEventInput,
 } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
