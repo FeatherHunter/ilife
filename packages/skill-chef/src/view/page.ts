@@ -24,7 +24,7 @@ import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { viewPageCss } from './pageCss.js';
-import { heroBandOf, paramBandOf, sectionOf } from './pageSection.js';
+import { paramBandOf, sectionOf } from './pageSection.js';
 import type { SecHead } from './pageSection.js';
 
 /** 换行（本件只在拼 `extraCss` 时用一次）。 */
@@ -95,24 +95,24 @@ function secHeadsOf(d: ViewItem): Record<'ingredients' | 'steps' | 'nutrition' |
 }
 
 function factsOf(d: ViewItem): string {
+  // 三格（#873 第三轮）：原先第四格是「状态 已做」，与结论条的「做过 N 次」说同一件事（判官两轮都点
+  // 「'已做／做过 1 次' 文案仍可再精炼」）；撤掉那一格之后这一行在 390 档也不再把三枚标签挤到贴边
+  // （判官原话「四枚水平并排出现明显挤压」）。状态本身没有丢：结论条的「做过 N 次／还没做过」就是它。
   const items: { label: string; value: string; tone?: 'ok' | 'warn' | 'danger' }[] = [
     { label: '难度', value: d.difficulty || '未写' },
     { label: '份量', value: d.servings + ' 人份' },
     { label: '总时长', value: d.total_time_minutes + ' 分钟' },
   ];
-  // #873 ③：「已做」是这一条菜的状态，不是口味／季节那一类标签——它住事实条，不进标签块。
-  if (d.status !== '') {
-    if (d.status === '已做') items.push({ label: '状态', value: d.status, tone: 'ok' });
-    else items.push({ label: '状态', value: d.status });
-  }
-  // 宽档四格等宽铺满版心（`chef-view-facts` 那一组在 `viewPageCss()` 的桌面档里）。
   return renderFactStrip({ extraClass: 'chef-view-facts', items });
 }
 
 function conclusionOf(d: ViewItem): string {
-  const avg = d.history.avgRating === null ? '暂无评分' : '平均 ' + d.history.avgRating + ' 分';
-  // 不写「这道菜」：标题就是菜名，句子里再点一次同名是复述（判官点过这一句「冗余」）。
-  return renderConclusionBar('做过 ' + d.history.count + ' 次，' + avg + '。');
+  const count = d.history.count;
+  // 结论条只说「做过几次 ＋ 最近一次几分」，**不再报平均分**——平均分是页尾读数卡那一位的活
+  // （判官第三轮仍点「'平均 4 分' 句式略冗余」）。最近一次的分数取时间轴上最新的一条；没记过就退回平均分。
+  const last = d.history_timeline[0];
+  const latest = last !== undefined && last.rating !== null ? '最近一次 ' + last.rating + ' 分' : '还没记过评分';
+  return renderConclusionBar(count === 0 ? '还没做过，暂无评分。' : '做过 ' + count + ' 次，' + latest + '。');
 }
 
 /** 分组标签块（#873 ②）：一枚维度一枚维度地排，不再是 13 枚无名色块挤成一片标签云。 */
@@ -303,10 +303,13 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
   const d = asItem(item);
   if (!d.name) throw new Error('无此菜谱：页面缺菜名（' + cardId + '）');
   const sec = sectionsOf(d);
-  // 页族装饰带紧跟在页头之后：八页共用的那条器物剪影带（`heroBandOf()`，纯装饰、不承载数据）。
-  const head = factsOf(d) + conclusionOf(d) + heroBandOf();
+  // 页头不再挂页内装饰带：族级带由页壳（`renderSceneShell`）插在版面根首节点，页内再挂一条＝重复装饰。
+  const head = factsOf(d) + conclusionOf(d);
   // #873 ②：标签块排在正文之后——它此前排在页头，13 枚色块把真正的内容挤到次屏。
-  const tail = tagsOf(d) + historyOf(d) + footerOf(d) + actionsOf() + copyOf(d);
+  // #873 第三轮：标签块与下厨记录收进同一行容器 `chef-view-side`——宽档两栏借位（判官点
+  // 「桌面版仍堆叠一列未借位」），窄档照旧一列往下排。
+  const tail = '<div class="chef-view-side">' + tagsOf(d) + historyOf(d) + '</div>'
+    + footerOf(d) + actionsOf() + copyOf(d);
   switch (cardId) {
     case 'view_full_recipe': {
       // 页内导航的标签取短名（390 档四枚胶囊要排得下，长名会被裁到右缘）；分区标题仍带读数。

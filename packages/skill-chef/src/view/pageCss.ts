@@ -128,6 +128,11 @@ export function viewPageCss(input?: ViewPageCssInput): string {
     '  color: var(--fg3);',
     '  font-size: 12px;',
     '}',
+    /* ②b 标签块与下厨记录的行容器：窄档一列往下排；宽档两栏借位（见 ⑪ 桌面档那一段）。 */
+    pv + 'side {',
+    '  display: grid;',
+    '  gap: 20px;',
+    '}',
     /* ③ 新手要点：序号牌（形状件）＋ 一句话；卡与卡之间靠间距分组，不靠分隔符字符。 */
     pv + 'keys {',
     '  display: grid;',
@@ -231,24 +236,9 @@ export function viewPageCss(input?: ViewPageCssInput): string {
     '    font-size: 12px;',
     '  }',
     '}',
-    /* ⑦ 页族装饰带：页头下一排器物剪影压在一张暖色渐变上。本席八页里「视觉生动」是唯一的共同缺口
-       （13–15／20），判官原话一律是「缺图像与插画／偏素」，而编造菜品图是禁用项 ⇒ 装饰带是唯一还能补的
-       那一层「图」。它**不是图位**：不承载数据、不声称是实拍，`aria-hidden`，纯装饰。 */
-    pv + 'band {',
-    '  box-sizing: border-box;',
-    '  margin: 14px 0 0;',
-    '  padding: 0 10px;',
-    '  overflow: hidden;',
-    '  border-radius: ' + RADIUS.md + 'px;',
-    '  background-image: linear-gradient(100deg, ' + CHART_PALETTE[6] + ', ' + WARM
-      + ' 55%, ' + CHART_PALETTE[8] + ');',
-    '  color: var(--card);',
-    '}',
-    pv + 'band-art {',
-    '  display: block;',
-    '  width: 100%;',
-    '  height: 46px;',
-    '}',
+    /* ⑦ 页内不再挂装饰带（第三轮撤）：族级带由页壳 `renderSceneShell` 插在版面根首节点，
+       页内再挂一条就是两带并存＝重复装饰。页内只留**载内容的形状**（分区题头、营养瓦片、参数带、行卡），
+       色基与族级带共用同一族暖色（`CHART_PALETTE` 上相邻两色）。 */
     /* ⑧ 步骤三件套：图标位 ＋ 标签 ＋ 值。火候／时长／锅温此前是一行事实条（三格白瓦片），
        与页里其它瓦片同形；换成带图标位的参数带之后，每张步骤卡上有一处色彩锚点。
        **窄档一行一件**（图标＋标签＋值同一行，吃满整宽）：三件并排时每格约 100px，
@@ -315,9 +305,6 @@ export function viewPageCss(input?: ViewPageCssInput): string {
        桌面端反复被点「左右大片留白、短块只占左半、表格横向拉伸」。四处收口：
        事实条四格等宽铺满、页内导航四枚等宽、标签块与要点列表各走两栏、食材表按列语义定宽。 */
     '@media (min-width: 1001px) {',
-    '  ' + root + ' .chef-view-band-art {',
-    '    height: 62px;',
-    '  }',
     '  ' + root + ' .chef-view-params {',
     '    grid-template-columns: repeat(3, minmax(0, 1fr));',
     '  }',
@@ -332,6 +319,13 @@ export function viewPageCss(input?: ViewPageCssInput): string {
     '  ' + root + ' .chef-view-tags,',
     '  ' + root + ' .chef-view-keys {',
     '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '  }',
+    /* 宽档借位：标签块与下厨记录并成一行两栏（判官点「桌面版仍堆叠一列未借位」）。
+       两栏各自 `stretch`（不收窄、不写 `margin: auto`——栅格项上的 auto 外边距会关掉 `justify-self: stretch`）。 */
+    '  ' + root + ' .chef-view-side {',
+    '    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);',
+    '    column-gap: 24px;',
+    '    align-items: start;',
     '  }',
     '  ' + root + ' .chef-view-sec-body .' + p + 'block-data-table:has(td[data-label]) th:nth-child(1) {',
     '    width: 34%;',

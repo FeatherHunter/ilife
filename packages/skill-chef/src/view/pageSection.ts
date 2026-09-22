@@ -4,7 +4,7 @@
  * 为什么另立一件：`page.ts` 已经贴着本包 `AGENTS.md` 钉的 350 LF 告警线走（装配逻辑本身就在那份文件里）；
  * 「一页长什么样」的形状件与「这一页摆什么」的装配逻辑分开之后，两件各自只讲一件事。
  *
- * 图标位与装饰带一律是**内联 SVG 的纯装饰**：`aria-hidden`，一个字都不进 CSS，也不进可见文本
+ * 图标位一律是**内联 SVG 的纯装饰**：`aria-hidden`，一个字都不进 CSS，也不进可见文本
  * （词不许只活在样式里）。**不用 `<img>`、不引外部图**——验收墙的造册判据拒收带惰性加载属性的产物，
  * 而仓内的图片件（`renderMediaFigure`）产出器会写那个属性。
  */
@@ -56,31 +56,6 @@ export function sectionOf(anchor: string, tone: IconTone, head: SecHead, inner: 
     + '</div>'
     + '<div class="chef-view-sec-body"' + (anchor === '' ? '' : ' id="' + esc(anchor) + '"') + '>'
     + inner + '</div></section>';
-}
-
-/** 页族装饰带上的器物／几何剪影（一条连续构图，不是一排等大的图标）。
- *
- * 为什么是**一整张连续构图**而不是「六枚图标并排」：第一版就是这么写的，判读里被读成
- * 「桌面端底部厨房工具栏」（一排等大的圆角图标，间距均匀，读起来像按钮）⇒ 改成一条起伏的基线
- * ＋ 沿线散落的器物剪影（锅／蒸汽／辣椒／砧板／碗／环），尺寸与位置都不均匀，读起来是插画带。
- * `preserveAspectRatio="xMidYMid slice"`：窄档裁掉右段（每段自成一组，裁哪一段都读得通），
- * 宽档横向铺满。 */
-const BAND_ART = '<svg class="chef-view-band-art" viewBox="0 0 720 56" preserveAspectRatio="xMidYMid slice"'
-  + ' fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"'
-  + ' aria-hidden="true">'
-  + '<path d="M0 46c90-14 180 8 270 2s180-16 270-6 90 12 180 4" opacity=".5"/>'
-  + '<path d="M78 18h44a22 22 0 0 1-44 0Z"/><path d="M122 18h14"/>'
-  + '<path d="M196 8c-7 9 7 12 0 21"/><path d="M212 8c-7 9 7 12 0 21"/>'
-  + '<path d="M286 22c0 4 3 6 6 6"/><path d="M290 28c8 13 7 29-5 36-10 6-22 1-26-10"/>'
-  + '<rect x="356" y="16" width="46" height="20" rx="4"/><path d="M372 16v20"/>'
-  + '<path d="M462 18h50a25 25 0 0 1-50 0Z"/><path d="M457 18h60"/>'
-  + '<path d="M580 6c-7 9 7 12 0 21"/><path d="M596 6c-7 9 7 12 0 21"/>'
-  + '<circle cx="678" cy="14" r="9"/><circle cx="678" cy="14" r="2.5"/></svg>';
-
-/** 页族装饰带：页头下的一条器物剪影带（八页共用），纯装饰。
- *  **不是图位**：不承载任何数据，也不声称这是这道菜的实拍（本席不许编造菜品图）。 */
-export function heroBandOf(): string {
-  return '<div class="chef-view-band" aria-hidden="true">' + BAND_ART + '</div>';
 }
 
 /** 步骤三件套的三种图标位（火候／时长／锅温）。 */
