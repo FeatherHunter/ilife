@@ -4,7 +4,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies. **先将验收命令写进票面，再过 `编排纪律.md` 第十条三问（能复现／有现存票或 MAP 可认领／是已承诺的目标），三问全过才建**；写不出验收命令的事写进文档，不建票。
+- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies. **先把「这一条验收命令」写进票面（现在跑出假、修完跑出真），再过 `编排纪律.md` 第十条三问（能复现／有现存票或 MAP 可认领／是已承诺的目标），三问全过才建**；写不出这条命令的事写进文档，不建票。
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
