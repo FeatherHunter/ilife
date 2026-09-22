@@ -7,7 +7,7 @@
 // 可见行只放中文（无拉丁字母，`AI` 一律转写，映射见 scene-stats.md）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'inventory_stat' as const;
 
@@ -96,11 +96,10 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast("已复制")},function(){fb(s)})}else{fb(s)}}'
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})})})();</script>';
 
-function dataText(records: number, items: number): string { return '【盘点统计】盘点记录' + records + '条，库内物品' + items + '件'; }
-
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/inventory_stat.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { metrics?: Record<string, number>; inventory?: { scope: string; location: string; date: string; total: number; missing: number; extra: number } | null };
   const m = d.metrics ?? {};
@@ -127,7 +126,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我开始第一次盘点">复制首次盘点</button></div></div>';
   const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势 <span class="st-hint">待盘点</span></h2>'
     + '<div class="st-empty"><b>趋势数据不足</b>多盘点几次，完成率曲线与遗留差异总数会在这里成形</div></div>';
-  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(records, items)) + '">复制数据</button><button class="st-btn soft" data-t="' + escapeHtml('场景：盘点统计与建议，唤醒词盘点统计；异常：无') + '">复制日志</button></div>';
+  const tail = '<div class="st-actions">' + homeCopyArea({
+      data: { envelope: env },
+      log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+    }) + '</div>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>' + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作') + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';

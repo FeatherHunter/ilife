@@ -7,7 +7,7 @@
 // 回执原文含 mode 字样同样只进数据原文，不进可见文案（机审英文裸词行零容忍）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'move_checklist' as const;
 
@@ -91,7 +91,7 @@ function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 二态标记清单真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/move_checklist.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const committed = str(data.message).includes('已提交');
@@ -110,9 +110,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="btn ghost" onclick="moveCmd(\'leave\')">全不带走</button>'
     + '<button class="btn" onclick="moveCmd(\'commit\')">统一确认</button>'
     + '<button class="btn ghost" onclick="moveCmd(\'list\')">复制清单</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="moveLog()">复制日志</button>'
-    + '</div></section>'
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section hidden class="sec" data-block="empty" data-need="' + NEED.empty + '"><h2>空态说明</h2>'
     + '<p class="lead">本页无空态，清单恒在</p></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'

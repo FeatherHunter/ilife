@@ -7,7 +7,7 @@
 // 可见行只放中文（无拉丁字母，`AI／N` 一律转写，映射见 scene-stats.md）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'idle' as const;
 
@@ -127,7 +127,8 @@ interface AlertItem { id: number; name: string; location: string; quantity: numb
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/idle.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
   const items = Array.isArray(d.items) ? d.items : [];
@@ -153,9 +154,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="st-btn soft" data-act="先不处理" data-item="' + it.id + '">先不处理</button></div></div>').join('');
   const list = items.length ? filter + rows : '<div class="st st-empty"><b>衣橱状态良好</b>没有超过所选天数未使用的物品</div>';
   const bar = '<div class="st-actions"><button class="st-btn pri" id="stConfirm">确认处理</button>'
-    + '<button class="st-btn" data-t="' + escapeHtml('【闲置物品检测】共' + items.length + '件：'
-      + items.map((it) => it.name + '（编号' + it.id + '）').join('；')) + '">复制数据</button>'
-    + '<button class="st-btn soft" data-t="' + escapeHtml('场景：闲置物品检测，唤醒词查闲置；异常：无') + '">复制日志</button></div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      }) + '</div>'
     + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';

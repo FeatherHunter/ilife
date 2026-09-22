@@ -12,7 +12,7 @@
 // 不写占位说明句（见 scene-outfit.md 老实现缺口）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'trip_outfit_plan' as const;
 
@@ -103,7 +103,8 @@ const CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/outfit/trip_outfit_plan.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const p = (data.tripPlan ?? {}) as Record<string, unknown>;
@@ -137,8 +138,11 @@ export function renderFamilyPage(env: Envelope): string {
         + SLOT_LABEL[k] + '</th><td class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</td></tr>').join('')
       + (first.reason ? '<tr><td class="of-temp" colspan="2">' + escapeHtml(first.reason) + '</td></tr>' : '')
       + '</table></div>'
-      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">采纳这天</button>'
-      + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div>';
+      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">采纳这天</button></div>'
+      + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      });
   }
   planHtml += '</div>';
 

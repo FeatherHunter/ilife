@@ -7,7 +7,7 @@
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'undo_select' as const;
 
@@ -105,7 +105,7 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/undo_select.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
@@ -113,9 +113,6 @@ export function renderFamilyPage(env: Envelope): string {
   const evId = m?.[1] ?? '';
   const evRaw = m?.[2] ?? '';
   const evName = evId ? eventCn(evRaw) : '';
-
-  const dataText = JSON.stringify({ key, message: msg });
-  const logText = '回执｜撤销操作｜' + msg;
 
   const evBlock = evId
     ? '<div class="fp-ev" data-ev="' + esc(evId) + '" onclick="this.classList.toggle(\'fp-ev-on\');var c=this.querySelector(\'input\');c.checked=!c.checked;">'
@@ -138,13 +135,11 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="fp-groupline">关系类：物品关联、合并物品</div>'
     + '<div class="fp-groupline">盘点照护类：盘点、借用登记、备份导入</div>'
     + '</section>'
-    + '<div class="fp-actions">'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-undo-data\')">复制数据</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-undo-log\')">复制日志</button>'
-    + '</div>'
     + '<script>function copyUndoSelected(){var ids=[];document.querySelectorAll(\'.fp-ev-on\').forEach(function(x){ids.push(x.getAttribute(\'data-ev\'));});var hint=document.getElementById(\'fp-undo-hint\');if(!ids.length){if(hint){hint.hidden=false;}return;}if(hint){hint.hidden=true;}var t=\'请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\\n\\n  撤销：事件\'+ids.join(\'、\');if(navigator.clipboard){navigator.clipboard.writeText(t);}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');ta.remove();}}</script>'
-    + '<pre id="fp-undo-data" hidden>' + esc(dataText) + '</pre>'
-    + '<pre id="fp-undo-log" hidden>' + esc(logText) + '</pre>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + needs()
     + '</div>';
   return fillTemplate(template, content);

@@ -6,7 +6,7 @@
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'tag_manage' as const;
 
@@ -55,6 +55,14 @@ const esc = (v: unknown): string => escapeHtml(String(v ?? ''));
 
 function msgOf(env: Envelope): string { return String((env.data as { message?: unknown }).message ?? ''); }
 
+// #864 加厚：detail.tags 与 detail.unused 与 detail.pairs（无则回退旧逻辑，旧信封兼容）。
+function detailOf(env: Envelope): Record<string, unknown> {
+  const d = env.data as Record<string, unknown>;
+  const det = (d as { detail?: unknown }).detail;
+  if (det && typeof det === 'object' && !Array.isArray(det)) return det as Record<string, unknown>;
+  return {};
+}
+
 // 回执原文里的命令写法转成中文再上屏（原文完整保留在复制载荷里）。
 function visibleMsg(msg: string): string {
   return msg
@@ -102,42 +110,69 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/tag_manage.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
   const tidy = msg.startsWith('相近标签：') || msg === '无相近标签';
   const modeName = tidy ? '整理建议' : '总览';
-  const title = tidy ? '整理建议' : '管标签';
 
   // 相近对逐对渲染（回执上限 10 对），页首只写对数，不把 9 对标签再列一遍。
   const pairs = tidy && msg !== '无相近标签'
     ? msg.replace(/^相近标签：/, '').split('、').map((s) => s.trim()).filter(Boolean).slice(0, 10)
     : [];
   const leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签' : visibleMsg(msg);
+  // #864 加厚：逐标签明细、未使用清单、相似度数值（无 detail 回退旧破折号）。
+  const det = detailOf(env);
+  const tagRows: { name: string; items: string; uses: string }[] = Array.isArray(det.tags)
+    ? (det.tags as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => ({
+      name: String(r.name ?? ''), items: String(r.items ?? ''), uses: String(r.uses ?? ''),
+    }))
+    : [];
+  const hasTagDetail = Array.isArray(det.tags);
+  const unusedNames: string[] = Array.isArray(det.unused)
+    ? (det.unused as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => String(r.name ?? '')).filter((s) => s !== '')
+    : [];
+  const hasUnusedDetail = Array.isArray(det.unused);
+  const pairSims: (number | null)[] = pairs.map((_, i) => {
+    const pd = Array.isArray(det.pairs) ? (det.pairs as unknown[])[i] : null;
+    if (pd && typeof pd === 'object' && !Array.isArray(pd) && typeof (pd as Record<string, unknown>).similarity === 'number') {
+      return (pd as Record<string, unknown>).similarity as number;
+    }
+    return null;
+  });
 
   let mainSec = '';
   if (!tidy) {
-    // 标签名／件数／使用次数需数据：`home.tag.write op=overview` 只回「标签总览：N 个标签」一句，
-    // 信封不带逐标签明细，故三行值位保持「—」（不去改命令层）。
+    const overviewRows = !hasTagDetail
+      ? '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">—</div></div>'
+        + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
+        + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div>'
+      : (tagRows.length
+        ? tagRows.map((t) => '<div class="fp-row"><div class="fp-k">' + esc(t.name === '' ? '—' : t.name) + '</div><div class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</div></div>').join('')
+        : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
+    const unusedBlock = !hasUnusedDetail
+      ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
+      : (unusedNames.length
+        ? unusedNames.map((n) => '<div class="fp-row"><div class="fp-k">闲置</div><div class="fp-v">' + esc(n) + '</div></div>').join('')
+        : '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>');
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
-      + '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">—</div></div>'
-      + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
-      + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div></section>'
+      + overviewRows + '</section>'
       + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
-      + '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p></section>';
+      + unusedBlock + '</section>';
   } else if (msg === '无相近标签') {
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
   } else {
-    // 相似度需数据：信封只带相近对（标签名对），相似度数值不在信封里，故各对保持「—」。
+    // #864 加厚：相似度有 detail 写真数值，无则回退破折号。
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + pairs.map((p, i) => {
         const ab = p.split('~');
         const a = (ab[0] ?? '').trim();
         const b = (ab[1] ?? '').trim();
+        const sim = pairSims[i];
         return '<div class="fp-pair"><div class="fp-pair-info">第 ' + (i + 1) + ' 对：<b>' + esc(a) + '</b> 与 <b>' + esc(b)
-          + '</b> <span class="fp-pill">相似度 —</span></div>'
+          + '</b> <span class="fp-pill">相似度 ' + (sim === null ? '—' : esc(String(sim)) + '%') + '</span></div>'
           + '<div class="fp-actions">'
           + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">合并</button>'
           + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">忽略</button>'
@@ -148,9 +183,6 @@ export function renderFamilyPage(env: Envelope): string {
       }).join('')
       + '<p class="fp-note">合并会动到贴着源标签的物品，源标签随后消失，请逐对确认</p></section>';
   }
-
-  const dataText = JSON.stringify({ key, message: msg });
-  const logText = '回执｜' + title + '｜' + msg;
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + esc(tidy ? 'tidy' : 'overview') + '">'
@@ -165,16 +197,16 @@ export function renderFamilyPage(env: Envelope): string {
     + (tidy ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '') // 总览回执不带未使用标签、页上那格写着没有：总览态不出「一键清理」（empty 块「无可清理标签时不出」）
     + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-data\')">复制数据</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-log\')">复制日志</button>'
     + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
     + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：___\n  目标标签：___') + '</pre>'
     + (tidy ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
     + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>')
     + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
-    + '<pre id="fp-tag-data" hidden>' + esc(dataText) + '</pre>'
-    + '<pre id="fp-tag-log" hidden>' + esc(logText) + '</pre>'
     + needs()
     + '</div>';
   return fillTemplate(template, content);

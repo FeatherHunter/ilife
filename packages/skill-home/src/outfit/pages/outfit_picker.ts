@@ -11,7 +11,7 @@
 // `data-*` 属性，不进可见文案（同 style-audit 干净页口径）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'outfit_picker' as const;
 
@@ -117,7 +117,8 @@ function setsOf(data: Record<string, unknown>): OutfitSet[] {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/outfit/outfit_picker.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const items = arr(data.items) as unknown as Card[];
@@ -162,8 +163,11 @@ export function renderFamilyPage(env: Envelope): string {
       + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + '">第' + (i + 1) + '套 ' + escapeHtml(s.style) + '</div>').join('')
       + '</div>'
       + '<div class="of-pager"><button class="of-btn" id="ofPrev">上一套</button><span id="ofCount">第1套共' + sets.length + '套</span><button class="of-btn" id="ofNext">换一套</button></div>'
-      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">今天穿这套</button>'
-      + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div></div>'
+      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">今天穿这套</button></div>'
+      + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      }) + '</div>'
       + (gap.length ? '<div class="of-gap">衣橱缺口：' + gap.map(escapeHtml).join(' ') + '暂无匹配</div>' : '');
   }
 

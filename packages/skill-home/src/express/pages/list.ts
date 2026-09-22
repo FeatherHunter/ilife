@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'list' as const;
 
@@ -87,7 +87,8 @@ function asListItems(env: Envelope): ListItem[] {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/express/list.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head"><span>快递购物</span>'
     + '<span>购物清单</span></div>';
@@ -153,8 +154,6 @@ export function renderFamilyPage(env: Envelope): string {
       + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
       + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
       + '<button class="x-btn danger" data-prompt="' + escapeHtml(P_CLEAN) + '">清掉已买记录</button>'
-      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
-      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">清单是空的<br>可以先看看家里缺什么，或者记一笔要买的<div class="x-actions" style="justify-content:center">'
@@ -167,9 +166,15 @@ export function renderFamilyPage(env: Envelope): string {
     + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
     + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
     + 'function xCheck(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选买到的条目");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我标记购物清单条目已买到："+names+" 编号["+ids+"]");}'
-    + 'function xCopyData(){xCopy(document.title+" 数据共"+document.querySelectorAll("#x-list .x-row").length+"行");}'
-    + 'function xCopyLog(){xCopy(document.title+" 日志 "+new Date().toLocaleString());}'
+    + 'function xCopyData(){}'
+    + 'function xCopyLog(){}'
     + '</script>';
+
+  // 主 operations 唯一复制区（envelope 投影；旧标题计数按钮已删，只留这一处）。
+  body += homeCopyArea({
+    data: { envelope: env },
+    log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+  });
 
   const content = head
     + body

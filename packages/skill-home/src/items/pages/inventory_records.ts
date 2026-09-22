@@ -7,7 +7,7 @@
 // 必需块原文＝契约附录：历史盘点（N）含拉丁字符，只进 data-need 属性。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'inventory_records' as const;
 
@@ -113,7 +113,7 @@ function parseRow(name: string, count: unknown): RecRow {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 记录列表真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/inventory_records.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const rawItems = Array.isArray(data.items) ? (data.items as Record<string, unknown>[]) : [];
@@ -143,9 +143,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="chips"><span class="pill">进行中</span><span class="pill">已完成</span><span class="pill">已处理</span><span class="pill">已复查</span></div></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow two"><button class="btn ghost" onclick="recCmd(this,\'start\')">开始盘点</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="recLog()">复制日志</button>'
-    + '</div></section>'
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';

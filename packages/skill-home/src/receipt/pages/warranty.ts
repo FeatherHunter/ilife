@@ -6,7 +6,7 @@
 // 故状态／到期日等字段的值位由本页排出，信封没带的写「—」（见 `cardsOf`）；数据形状声明见 PAGE_META。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'warranty' as const;
 
@@ -96,14 +96,17 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
   + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}'
   + '.item table{font-size:13px;border-collapse:collapse}.item th{color:#6e6e73;font-weight:600;text-align:left;padding:2px 8px 2px 0}</style>';
 
-function opsBlock(): string {
+function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   return '<div class="rc-ops">'
     + '<button type="button" data-t="请查保修状态">按状态复核</button>'
     + '<button type="button" data-t="请登记保修">新增保修</button>'
     + '<button type="button" data-t="请记录一次维修">记录维修</button>'
     + '<button type="button" data-t="请执行一次保养">执行保养</button>'
-    + '<button type="button" data-t="复制保修保养数据">复制数据</button>'
-    + '<button type="button" data-t="复制保修保养日志">复制日志</button></div>';
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 6 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -113,7 +116,8 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
   + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){copyText(b.getAttribute("data-t")||"");});});</script>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/receipt/warranty.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>保修与保养</span></div>';
@@ -124,7 +128,7 @@ export function renderFamilyPage(env: Envelope): string {
   const main = env.shape === 'receipt' ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     : items.length ? cardsOf(items)
       : '<div class="fam-content" data-block="empty"><p>本次查询没有命中保修保养记录，可新增一条后回来复核</p></div>';
-  const content = head + summaryOf(env, items) + main + PAGE_CSS + opsBlock() + PAGE_SCRIPT
+  const content = head + summaryOf(env, items) + main + PAGE_CSS + opsBlock(env, ctx) + PAGE_SCRIPT
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词');
   return fillTemplate(template, content);

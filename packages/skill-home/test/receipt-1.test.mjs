@@ -173,10 +173,13 @@ describe('#813 票据凭证（一）：两族装配与三方对账', () => {
         }
       }
       // 可见层无拉丁字母（机审英文裸词的回归钉：剥标签后逐行查字母）
+      // #886：三格式菜单项（`data-fmt`，纯文本／JSON／CSV）是 base-paint 冻结格式名
+      //（`COPY_FORMAT_LABELS`），非作者行文——页内代码从不产出该属性，整颗剥除后再查。
       const visible = html
         .replace(/<title>[\s\S]*?<\/title>/gi, '')
         .replace(/<style[\s\S]*?<\/style>/gi, '')
         .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<button\b[^>]*\bdata-fmt=[^>]*>[\s\S]*?<\/button>/gi, '')
         .replace(/data-t="[^"]*"/g, '')
         .replace(/<pre[\s\S]*?<\/pre>/gi, '')
         .replace(/<p class="cmd">[\s\S]*?<\/p>/gi, '')

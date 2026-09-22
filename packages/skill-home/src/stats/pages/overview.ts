@@ -7,7 +7,7 @@
 // 可见行只放中文（无拉丁字母，`AI／TOP／prompt／N` 一律转写，映射见 scene-stats.md）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'overview' as const;
 
@@ -112,16 +112,10 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
   + 'document.querySelectorAll("[data-bar]").forEach(function(r){r.addEventListener("click",function(){cp(r.getAttribute("data-bar"))})});})();</script>';
 
-function dataText(m: Record<string, number>): string {
-  return '【物品总览】件数' + (m.items ?? 0) + '，位置点' + (m.locations ?? 0) + '，标签' + (m.tags ?? 0) + '个，分类' + (m.categories ?? 0) + '个';
-}
-function logText(): string {
-  return '场景：物品总览，唤醒词统物品；数据：物品与位置聚合只读；渲染：统计总览页族装配；异常：无';
-}
-
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/overview.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { metrics?: Record<string, number> };
   const m = d.metrics ?? {};
@@ -170,7 +164,10 @@ export function renderFamilyPage(env: Envelope): string {
   const trend = '<div class="st st-sec"><h2 class="st-sec-t">趋势 <span class="st-hint">近30天变动</span></h2>'
     + '<div class="st-empty"><b>趋势数据不足</b>库内还没有足量的变更记录，攒够之后这里给近30天的变动曲线</div></div>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>' + escapeHtml(JSON.stringify(env)) + '</pre></details>';
-  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button><button class="st-btn soft" data-t="' + escapeHtml(logText()) + '">复制日志</button></div>';
+  const tail = '<div class="st-actions">' + homeCopyArea({
+      data: { envelope: env },
+      log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+    }) + '</div>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>' + sectionOf('fields', '字段') + sectionOf('operations', '操作') + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
   const content = CSS + head + '<div class="fam-content st">' + hero + cards + empty + freq + dists + more + trend + sug + '</div>'
     + tail + raw + blocks

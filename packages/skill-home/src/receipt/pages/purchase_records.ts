@@ -10,7 +10,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'purchase_records' as const;
 
@@ -110,13 +110,16 @@ function purchaseTable(env: Envelope, items: Record<string, unknown>[]): string 
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
   + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}</style>';
 
-function opsBlock(): string {
+function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   return '<div class="rc-ops">'
     + '<button type="button" data-t="请查购买记录，按物品复核">按物品复核</button>'
     + '<button type="button" data-t="请登记购买记录">新增记录</button>'
     + '<button type="button" data-t="请查退货窗口">查退货窗口</button>'
-    + '<button type="button" data-t="复制购买记录数据">复制数据</button>'
-    + '<button type="button" data-t="复制购买记录日志">复制日志</button></div>';
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -127,7 +130,8 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/receipt/purchase_records.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>购买记录</span></div>';
@@ -142,7 +146,7 @@ export function renderFamilyPage(env: Envelope): string {
     + summaryOf(env, items)
     + main
     + PAGE_CSS
-    + opsBlock()
+    + opsBlock(env, ctx)
     + PAGE_SCRIPT
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')

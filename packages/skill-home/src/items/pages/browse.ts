@@ -10,7 +10,7 @@
 // 页内小助手就地定义：共用位归票 3，本票不新建共用文件（写集边界）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'browse' as const;
 
@@ -92,7 +92,7 @@ function groupOf(c: Card): string {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/browse.html', import.meta.url), 'utf8');
   const cards = cardsOf(env);
   const groups = new Map<string, Card[]>();
@@ -131,8 +131,11 @@ export function renderFamilyPage(env: Envelope): string {
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('分组切换', '请加载居家管家技能，帮我切换浏览分组', false)
-    + op('复制数据', '请加载居家管家技能，帮我复制本次浏览的数据', true)
-    + op('复制日志', '请加载居家管家技能，帮我复制本次浏览的日志', true)
-    + '</div></section>';
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>';
   return fillTemplate(template, content);
 }

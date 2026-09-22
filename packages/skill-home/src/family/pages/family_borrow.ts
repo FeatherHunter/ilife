@@ -16,7 +16,7 @@
 // 小于四十四像素（`audit-responsive.mjs`）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'family_borrow' as const;
 
@@ -191,7 +191,8 @@ function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: st
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/family/family_borrow.html', import.meta.url), 'utf8');
   const d = env.data as Record<string, unknown>;
   const isReceipt = env.shape === 'receipt';
@@ -249,11 +250,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="bw-legend">状态分四种：已超期，今日到期，已归还，借用中</p>'
     + '</section>'
     + '<section hidden class="bw-sec"><h2>数据快照</h2>' + snapshotHtml(env, rows)
-    + '<div class="bw-copy2"><button class="bw-copy" data-t="'
-    + escapeHtml('【借用管理数据快照】借出' + out.length + '件，借入' + inn.length + '件，超期' + overdue + '件')
-    + '" onclick="copyText(this.dataset.t)">复制数据</button><button class="bw-copy" data-t="'
-    + escapeHtml('【借用管理日志】场景借用，借出借入分区列出，超期自动提醒')
-    + '" onclick="copyText(this.dataset.t)">复制日志</button></div></section>'
+    + '<div class="bw-copy2">' + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      }) + '</div></section>'
     + needList('fields', '必需块对照（字段）')
     + needList('operations', '必需块对照（操作）')
     + needList('empty', '必需块对照（空态与异常）')

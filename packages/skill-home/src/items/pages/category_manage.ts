@@ -1,12 +1,11 @@
 // items能力·category_manage页装配（#807 域票填内容，骨架由 #805 生成）。
 //
 // 只服务 4-2 管分类：信息结构对齐老 `物品/category_manage.html`（分类树／操作提示／
-// 删除拦截说明）。新链回执只有节点总数（页首带出），树明细与每类计数需数据：env 未带，
-// 域对账留缺口，页上写「—」。
+// 删除拦截说明）。#864 起回执带分类树数组（层级＋每类计数），有则写真，无则回退破折号。
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'category_manage' as const;
 
@@ -54,6 +53,14 @@ function msgOf(env: Envelope): string {
   return String((d as { message?: unknown }).message ?? '');
 }
 
+// #864 加厚：detail.tree 分类树数组（无则回退破折号，旧信封兼容）。
+function detailOf(env: Envelope): Record<string, unknown> {
+  const d = env.data as Record<string, unknown>;
+  const det = (d as { detail?: unknown }).detail;
+  if (det && typeof det === 'object' && !Array.isArray(det)) return det as Record<string, unknown>;
+  return {};
+}
+
 // 回执原文里的命令写法转成中文再上屏（原文完整保留在复制载荷里）。
 function visibleMsg(msg: string): string {
   return msg
@@ -93,13 +100,27 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/category_manage.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-
-  const dataText = JSON.stringify({ key, message: msg });
-  const logText = '回执｜管分类｜' + msg;
+  // #864 加厚：树节点写真层级与计数（子分类缩进一格），无 detail 回退破折号。
+  const det = detailOf(env);
+  const nodes: { id: string; parent: string; name: string; items: string; quantity: string }[] = Array.isArray(det.tree)
+    ? (det.tree as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => ({
+      id: String(r.id ?? ''), parent: String(r.parent_id ?? ''), name: String(r.name ?? ''),
+      items: String(r.items ?? ''), quantity: String(r.quantity ?? ''),
+    }))
+    : [];
+  const hasTree = Array.isArray(det.tree);
+  const treeBlock = !hasTree
+    ? '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">—</div></div>'
+      + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">—</div></div>'
+    : (nodes.length
+      ? nodes.map((n) => '<div class="fp-row"><div class="fp-k">' + (n.parent !== '' && n.parent !== 'null' ? '子分类' : '顶级分类') + '</div><div class="fp-v"><span>'
+        + (n.parent !== '' && n.parent !== 'null' ? '　' : '') + esc(n.name === '' ? '—' : n.name)
+        + '，共 ' + esc(n.items) + ' 个物品，共 ' + esc(n.quantity) + ' 件</span></div></div>').join('')
+      : '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">树是空的，先新建顶级分类</div></div>');
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
@@ -108,8 +129,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="fp-lead">' + esc(visibleMsg(msg)) + '</p>'
     + '<span class="fp-stage">查看页</span></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">分类树</h2>'
-    + '<div class="fp-row"><div class="fp-k">层级</div><div class="fp-v">—</div></div>'
-    + '<div class="fp-row"><div class="fp-k">每类计数</div><div class="fp-v">—</div></div></section>'
+    + treeBlock + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">操作提示</h2>'
     + '<p class="fp-note">改名、合并或移动分类在对话里说一句就行，本页只给总数与入口</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">删除拦截说明</h2>'
@@ -121,14 +141,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-cat-rename\')">改名</button>'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-cat-merge\')">合并</button>'
     + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-cat-new\')">新建顶级分类</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-cat-data\')">复制数据</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-cat-log\')">复制日志</button>'
     + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + '<pre id="fp-cat-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理分类（唤醒词：管分类）：\n\n  操作：重命名\n  分类：___\n  新名称：___') + '</pre>'
     + '<pre id="fp-cat-merge" hidden>' + esc('请加载「居家管家」技能，帮我管理分类（唤醒词：管分类）：\n\n  操作：合并\n  分类：___\n  并入：___') + '</pre>'
     + '<pre id="fp-cat-new" hidden>' + esc('请加载「居家管家」技能，帮我管理分类（唤醒词：管分类）：\n\n  操作：新建顶级分类\n  名称：___') + '</pre>'
-    + '<pre id="fp-cat-data" hidden>' + esc(dataText) + '</pre>'
-    + '<pre id="fp-cat-log" hidden>' + esc(logText) + '</pre>'
     + needs()
     + '</div>';
   return fillTemplate(template, content);

@@ -11,9 +11,14 @@
 //
 // 密码红线：明文永不进页（含可见文本、复制载荷、预埋摘要）；
 // 本页只显脱敏符号与操作入口，查看与复制均经对话二次确认。
+//
+// 保守处置（#886）：数据位不走 envelope 投影——清单信封虽已脱敏（`listAccounts`
+// 只取平台/用户名/类型三字段），但看密码回执的 message 含明文（`ticket.ts` 看密码
+// 分支），`buildDataText` 会把 message 原样打出；故数据位保留原占位按钮，
+// 日志位走共用件（日志首段只派生 skill.key(shape)，不含 message，安全）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'accounts' as const;
 
@@ -151,13 +156,15 @@ function receiptNote(env: Envelope): string {
   return '<div>' + byOp + '<p class="receipt">' + escapeHtml(safe) + '</p></div>';
 }
 
-function opsBlock(): string {
+function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   return '<div>'
     + '<button type="button" data-t="请新增账号">新增账号</button>'
     + '<button type="button" data-t="请查看密码，经对话回显">查看密码</button>'
     + '<button type="button" data-t="请复制密码，复制前二次确认">复制密码</button>'
     + '<button type="button" data-t="复制账号脱敏数据">复制数据</button>'
-    + '<button type="button" data-t="复制账号日志">复制日志</button>'
+    + homeCopyArea({
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + '</div>';
 }
 
@@ -189,7 +196,8 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 日志位走共用件（卡路里同款六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/receipt/accounts.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>账号密码</span></div>';
@@ -198,7 +206,7 @@ export function renderFamilyPage(env: Envelope): string {
     + head
     + sensitiveBanner()
     + main
-    + opsBlock()
+    + opsBlock(env, ctx)
     + PAGE_SCRIPT
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')

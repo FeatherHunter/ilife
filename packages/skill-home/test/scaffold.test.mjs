@@ -162,7 +162,10 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
       scripts.forEach((s, i) => {
         assert.doesNotThrow(() => new Function(s), fam.family + ' 内联脚本#' + (i + 1) + ' 解析失败（整段脚本不解析＝页上按钮与勾选全死）');
       });
-      const dtBtns = (html.match(/<button\b[^>]*\bdata-t=/gi) || []).length;
+      // #886：`data-action-id` 按钮与 `data-fmt` 菜单项走 base-paint 共享运行时委派，
+      // 不由页内脚本绑定——计数时排除，只查页内自有 `data-t` 按钮（#817 门的原意不变；
+      // 页内代码从不产出这两个属性，见 `src/render/html.ts` 注释，误排除不了自有按钮）。
+      const dtBtns = (html.match(/<button\b(?![^>]*\b(?:data-action-id|data-fmt)=)[^>]*\bdata-t=/gi) || []).length;
       if (dtBtns > 0) {
         const js = scripts.join('\n');
         const withOnclick = (html.match(/<button\b[^>]*\bdata-t=[^>]*\bonclick=/gi) || []).length;

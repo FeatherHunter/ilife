@@ -12,7 +12,7 @@
 // 按 `trip.mode` 分流（pack 出发核对／return 归位确认）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, latinFree } from '../../render/index.js';
+import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'travel_trip' as const;
 
@@ -103,7 +103,8 @@ const CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/outfit/travel_trip.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const t = (data.trip ?? {}) as Record<string, unknown>;
@@ -147,8 +148,11 @@ export function renderFamilyPage(env: Envelope): string {
       + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + (x.status ? '，' + escapeHtml(x.status) : '，—') + '</td></tr></table>'
       + '</div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'
-      + (mode === 'return' ? '确认归位' : '确认带出') + '</button>'
-      + '<button class="of-btn" id="ofCopyData">复制数据</button><button class="of-btn" id="ofCopyLog">复制日志</button></div>';
+      + (mode === 'return' ? '确认归位' : '确认带出') + '</button></div>'
+      + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      });
   }
   listHtml += '</div>';
   if (message) listHtml += '<div class="of-card"><h2>汇总</h2><div class="of-why">' + escapeHtml(message) + '</div></div>';

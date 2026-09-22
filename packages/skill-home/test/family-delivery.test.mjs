@@ -5,7 +5,8 @@
 //     且恰有一个候选域目录装得上那一族，附录的 `domain` 与落盘目录逐条一致；
 //  ② 降级分支可达：表外命令无候选域、未知族返回 `null`、装配抛错也返回 `null`（调用方据此降级）；
 //  ③ 真链：隔离家目录跑若干键，`delivery.path` 指的那份**是族页**（含 `data-block=`）、
-//     逐字节等于 `renderFamilyPage(env)`、大小 ＝ 回执 `delivery.bytes`；`--html` 显式出口同内容。
+//     逐字节等于 `renderFamilyPage(env, ctx)`（#886 起 ctx 含命令原文与渲染时刻，时间戳归一后比对）、
+//     大小 ＝ 回执 `delivery.bytes`；`--html` 显式出口同内容。
 //
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`。
 import { describe, it, before } from 'node:test';
@@ -103,9 +104,14 @@ describe('#872 真链：缺省落盘与显式出口都落族页', () => {
       const { delivery: _drop, ...bare } = env;
       // 交付链在装配结果上还回填了「场景身份」（`<title>`／`<h1>` 用场景的命令中文名，见 #817 收口）：
       // 页族模板写的是族名（add_form 一族服务 录物品／拍物品／批量录入／补录），故比对前先施加同一层。
+      // #886：交付链经 ctx 下发「命令原文（含 params）＋渲染时刻」给复制区；期望侧施加同一 ctx
+      //（命令拼法与 `familyPage` 同形），时间戳是动态值、比对前在两侧归一（格式另由 `copy-area-886` 锁）。
+      const command = 'home-cmd-read ' + key + " --params '" + JSON.stringify(preset) + "'";
+      const ctx = { command, actionAt: render.homeNowStamp() };
       const sceneName = render.sceneNameOf(key, preset);
       assert.ok(sceneName !== null, key + ' 取不到场景名');
-      assert.equal(render.withSceneIdentity(mod.renderFamilyPage(bare), sceneName), html,
+      const normStamp = (s) => s.replace(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g, '<STAMP>');
+      assert.equal(normStamp(render.withSceneIdentity(mod.renderFamilyPage(bare, ctx), sceneName)), normStamp(html),
         key + ' 落盘内容应逐字节等于「族页装配 ＋ 场景身份回填」');
     });
   }

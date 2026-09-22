@@ -1,12 +1,11 @@
 // items能力·relations页装配（#807 域票填内容，骨架由 #805 生成）。
 //
 // 只服务 3-7 物品关联：信息结构对齐老 `物品/relations.html`（主物品／关联列表／
-// 建立区／关系类型五值）。新链回执只有编号对，没有关系类型字段（缺口见域对账），
-// 本页如实展示编号对并给出五类关系的建立指引。
+// 建立区／关系类型五值）。#864 起回执带关系类型与对方名称，有则写真，无则回退破折号。
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'relations' as const;
 
@@ -56,6 +55,14 @@ function msgOf(env: Envelope): string {
   return String((d as { message?: unknown }).message ?? '');
 }
 
+// #864 加厚：detail 写真关系类型与对方名称（无则回退破折号，旧信封兼容）。
+function detailOf(env: Envelope): Record<string, unknown> {
+  const d = env.data as Record<string, unknown>;
+  const det = (d as { detail?: unknown }).detail;
+  if (det && typeof det === 'object' && !Array.isArray(det)) return det as Record<string, unknown>;
+  return {};
+}
+
 function needs(): string {
   const groups = ['fields', 'operations', 'empty', 'status'] as const;
   return groups.map((g) => '<div data-block="' + g + '" hidden aria-hidden="true"><ul>'
@@ -90,7 +97,7 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/relations.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
@@ -99,16 +106,21 @@ export function renderFamilyPage(env: Envelope): string {
   const mainId = (m?.[2] ?? '').trim();
   const peerId = (m?.[3] ?? '').trim();
   const unlinked = verb === '解除关联';
+  // #864 加厚：detail.relation 与 detail.peer.name 写真类型与对方名称。
+  const det = detailOf(env);
+  const relation = typeof det.relation === 'string' && det.relation !== '' ? det.relation : '';
+  const peerRec = det.peer && typeof det.peer === 'object' && !Array.isArray(det.peer) ? det.peer as Record<string, unknown> : null;
+  const peerName = peerRec && typeof peerRec.name === 'string' && peerRec.name !== '' && peerRec.name !== '—' ? peerRec.name : '';
+  const mainRec = det.main && typeof det.main === 'object' && !Array.isArray(det.main) ? det.main as Record<string, unknown> : null;
+  const mainName = mainRec && typeof mainRec.name === 'string' && mainRec.name !== '' ? mainRec.name : '';
 
-  const dataText = JSON.stringify({ key, message: msg });
-  const logText = '回执｜物品关联｜' + msg;
   const linkPrompt = '请加载「居家管家」技能，帮我设置物品关联（唤醒词：物品关联）：\n\n  主物品：编号'
     + (mainId || '___') + '\n  关联物品：___\n  关系（配件、配套、替代、同捆、常用搭配）：___';
   const unlinkPrompt = '请加载「居家管家」技能，帮我解除物品关联（唤醒词：物品关联）：\n\n  主物品：编号'
     + (mainId || '___') + '\n  关联物品：编号' + (peerId || '___');
 
   const listBlock = mainId && peerId
-    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + ' <span class="fp-pill">关系类型：—</span></b>'
+    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + (peerName !== '' ? ' ' + esc(peerName) : '') + ' <span class="fp-pill">关系类型：' + esc(relation !== '' ? relation : '—') + '</span></b>'
       + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
     : '<p class="fp-empty">暂无关联，配件与配套关系可以在这里建立</p>';
 
@@ -120,7 +132,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<span class="fp-stage">查看页</span></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">主物品</h2>'
     + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">—</div></div>'
+    + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">' + esc(mainName !== '' ? mainName : '—') + '</div></div>'
     + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">关联列表</h2>' + listBlock + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">建立新关联</h2>'
@@ -132,14 +144,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div><span class="fp-pill">配件</span><span class="fp-pill">配套</span><span class="fp-pill">替代</span>'
     + '<span class="fp-pill">同捆</span><span class="fp-pill">常用搭配</span></div>'
     + '<p class="fp-note">五种关系里选一种，替代适合新旧交替，同捆适合成套收纳</p></section>'
-    + '<div class="fp-actions">'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-rel-data\')">复制数据</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-rel-log\')">复制日志</button>'
-    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + '<pre id="fp-rel-link" hidden>' + esc(linkPrompt) + '</pre>'
     + '<pre id="fp-rel-unlink" hidden>' + esc(unlinkPrompt) + '</pre>'
-    + '<pre id="fp-rel-data" hidden>' + esc(dataText) + '</pre>'
-    + '<pre id="fp-rel-log" hidden>' + esc(logText) + '</pre>'
     + needs()
     + '</div>';
   return fillTemplate(template, content);

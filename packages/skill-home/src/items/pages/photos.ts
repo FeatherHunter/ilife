@@ -7,7 +7,7 @@
 // 照片类型筛选默认走全部（类型无 schema 落点，见 #857，域票不伪造类型）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'photos' as const;
 
@@ -97,7 +97,7 @@ function num(v: unknown): number | null { return typeof v === 'number' && Number
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/photos.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const manage = env.key === 'home.item.update';
@@ -147,9 +147,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">加图·补拍</button>'
     + '<button class="btn red" data-act="del" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'del\')">删除选中</button>'
     + '<button class="btn ghost" data-act="dl" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'dl\')">下载照片</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
-    + '</div></section>'
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';

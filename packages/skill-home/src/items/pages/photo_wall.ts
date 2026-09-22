@@ -7,7 +7,7 @@
 // 点图复制详情prompt）只进 data-need 属性，其余块进真实 UI。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'photo_wall' as const;
 
@@ -112,7 +112,7 @@ function groupOf(loc: string): string {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 网格墙真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/photo_wall.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const rawItems = Array.isArray(data.items) ? (data.items as Record<string, unknown>[]) : [];
@@ -159,9 +159,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
     + '<button class="btn ghost" onclick="wallCmd(\'loc\')">按位置浏览</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="wallLog()">复制日志</button>'
-    + '</div></section>'
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';

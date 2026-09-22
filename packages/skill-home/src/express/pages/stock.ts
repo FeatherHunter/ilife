@@ -12,7 +12,7 @@ function latinFree(s: string): string {
   return s.replace(/[A-Za-z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xFEE0));
 }
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'stock' as const;
 
@@ -98,7 +98,8 @@ function asStock(env: Envelope): { items: StockItem[]; hints: StockHint[] } {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/express/stock.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head"><span>快递购物</span>'
     + '<span>囤货盘点</span></div>';
@@ -146,14 +147,10 @@ export function renderFamilyPage(env: Envelope): string {
       + '<button class="x-btn" onclick="xFix()">修正实际数量</button>'
       + '<button class="x-btn ghost" onclick="xThr()">设置阈值</button>'
       + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
-      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
-      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">还没有设阈值的物品<br>给常用消耗品设个阈值，缺货检测就能自动提醒<div class="x-actions" style="justify-content:center">'
       + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
-      + '<button class="x-btn alt" onclick="xCopyData()">复制数据</button>'
-      + '<button class="x-btn alt" onclick="xCopyLog()">复制日志</button>'
       + '</div></div></section>';
   }
 
@@ -173,9 +170,15 @@ export function renderFamilyPage(env: Envelope): string {
     + 'function xFix(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要修正的物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我修正物品实际数量："+names+" 编号["+ids+"] 修正后数量___");}'
     + 'function xThr(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要设置阈值的物品");return;}var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我设置囤货阈值："+names+" 阈值___");}'
     + 'function xOneThr(b){xCopy("请加载居家管家技能，帮我设置囤货阈值："+b.getAttribute("data-name")+" 编号["+b.getAttribute("data-id")+"] 阈值___");}'
-    + 'function xCopyData(){xCopy(document.title+" 数据共"+document.querySelectorAll("#x-list .x-row").length+"行");}'
-    + 'function xCopyLog(){xCopy(document.title+" 日志 "+new Date().toLocaleString());}'
+    + 'function xCopyData(){}'
+    + 'function xCopyLog(){}'
     + '</script>';
+
+  // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
+  body += homeCopyArea({
+    data: { envelope: env },
+    log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+  });
 
   const content = head
     + body

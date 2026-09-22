@@ -7,7 +7,7 @@
 // 可见行只放中文（无拉丁字母，`N` 一律转写，映射见 scene-stats.md）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'expiring' as const;
 
@@ -146,7 +146,8 @@ function badgeOf(dl: number | null): { cls: string; text: string } {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/expiring.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
   const items = Array.isArray(d.items) ? d.items : [];
@@ -185,9 +186,10 @@ export function renderFamilyPage(env: Envelope): string {
   const list = items.length ? filter + group('已过期', expired) + group('未来预告', upcoming)
     : '<div class="st st-empty"><b>没有即将过期的物品</b>已检查未来所选天数，档位可在下单时调整</div>';
   const bar = '<div class="st-actions"><button class="st-btn pri" id="stConfirm">确认处理</button>'
-    + '<button class="st-btn" data-t="' + escapeHtml('【过期检查】已过期' + expired.length + '件，未来预告'
-      + upcoming.length + '件：' + rows.map((r) => r.place + '（' + r.badge.text + '）').join('；')) + '">复制数据</button>'
-    + '<button class="st-btn soft" data-t="' + escapeHtml('场景：过期检查与预告，唤醒词查过期；异常：无') + '">复制日志</button></div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      }) + '</div>'
     + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
     + escapeHtml(JSON.stringify(env)) + '</pre></details>';

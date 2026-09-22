@@ -6,7 +6,7 @@
 // 必需块原文＝契约附录：核对清单（ID/位置/数量/状态）含拉丁字符，只进 data-need 属性。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'inventory_round' as const;
 
@@ -119,7 +119,7 @@ function parseRound(message: string): { id: string; scope: string; total: string
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 盘点任务单真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/inventory_round.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const round = parseRound(str(data.message));
@@ -143,8 +143,12 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'extra\')">发现清单外物品</button>'
     + '<button class="btn ghost" onclick="roundCmd(\'save\')">保存进度</button>'
     + '<button class="btn green" onclick="roundCmd(\'commit\')">确认提交含差异</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="roundLog()">复制日志</button></div></section>'
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '" hidden></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'

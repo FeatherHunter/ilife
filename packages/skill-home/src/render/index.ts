@@ -10,6 +10,8 @@ export {
   HOME_HTML_MAX_BYTES, escapeHtml, latinFree, renderEnvelopeHtml, estimateBytes, assertHtmlSize,
   SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER, SHARED_CSS, SHARED_HELPERS, fillTemplate,
 } from './html.js';
+export { homeCopyArea, homeCopyLog, homeNowStamp } from './copyArea.js';
+export type { HomeCopyAreaInput, HomeCopyLogInput } from './copyArea.js';
 export { HOME_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { HomeTemplate } from './templates.js';
 // #800 · 页族两层解析（票 2 契约 L1）：`(key, preset) → 页族`，旧 1:1 `templateFor` 原样保留。

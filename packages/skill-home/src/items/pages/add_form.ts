@@ -10,7 +10,7 @@
 // 页内小助手就地定义：共用位归票 3，本票不新建共用文件（写集边界）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'add_form' as const;
 
@@ -117,7 +117,7 @@ function pickCount(msg: string): string {
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/add_form.html', import.meta.url), 'utf8');
   const msg = receiptOf(env);
   const name = pickName(msg);
@@ -154,8 +154,11 @@ export function renderFamilyPage(env: Envelope): string {
     + (isUpdate ? op('确认变更', '请加载居家管家技能，帮我确认变更' + modeText, false)
       : op('确认写入', '请加载居家管家技能，帮我确认写入' + modeText, false))
     + (isBatch ? op('全部确认', '请加载居家管家技能，帮我全部确认本次 ' + count + ' 件', true) : '')
-    + op('复制数据', '请加载居家管家技能，帮我复制' + modeText + '的数据', true)
-    + op('复制日志', '请加载居家管家技能，帮我复制' + modeText + '的日志', true)
-    + '</div></section>';
+    + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>';
   return fillTemplate(template, content);
 }

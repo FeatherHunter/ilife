@@ -87,15 +87,19 @@ export async function renderFamilyHtml(
 ): Promise<string | null> {
   const family = resolvePageFamily(key, params);
   if (family === UNKNOWN_FAMILY) return null;
+  // 复制日志第 4 段「照抄能重跑」的命令原文：调用方（知道 params 的这一层）供给，页模块只拿 envelope 不编命令。
+  const command = 'home-cmd-read ' + key + " --params '" + JSON.stringify(params) + "'";
+  const { homeNowStamp } = await import('./copyArea.js');
+  const ctx = { command, actionAt: homeNowStamp() };
   for (const domain of domainsFor(key)) {
     const file = familyModulePath(domain, family);
     if (file === null) continue;
     try {
       const mod = (await import(pathToFileURL(file).href)) as {
-        renderFamilyPage?: (e: Envelope) => string;
+        renderFamilyPage?: (e: Envelope, c?: { readonly command?: string; readonly actionAt?: string }) => string;
       };
       if (typeof mod.renderFamilyPage !== 'function') continue;
-      const html = mod.renderFamilyPage(env);
+      const html = mod.renderFamilyPage(env, ctx);
       if (typeof html === 'string' && html.length > 0) {
         const sceneName = sceneNameOf(key, params);
         return sceneName === null ? html : withSceneIdentity(html, sceneName);

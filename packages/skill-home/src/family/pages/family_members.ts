@@ -13,7 +13,7 @@
 // 无英文、无中点竖线分隔符；可点件高度不小于四十四像素）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';
+import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'family_members' as const;
 
@@ -128,7 +128,8 @@ function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: st
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/family/family_members.html', import.meta.url), 'utf8');
   const d = env.data as Record<string, unknown>;
   const isReceipt = env.shape === 'receipt';
@@ -170,11 +171,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<p class="bm-legend">关系一栏不限定写法，未标记的物品一律记在使用者名下</p>'
     + '</section>'
     + '<section hidden class="bm-sec"><h2>数据快照</h2><div>' + renderEnvelopeHtml(env) + '</div>'
-    + '<div class="bm-copy2"><button class="bm-copy" data-t="'
-    + escapeHtml('【家人档案数据快照】成员' + members.length + '位')
-    + '" onclick="copyText(this.dataset.t)">复制数据</button><button class="bm-copy" data-t="'
-    + escapeHtml('【家人档案日志】场景家人档案，成员列表增减与归属标记')
-    + '" onclick="copyText(this.dataset.t)">复制日志</button></div></section>'
+    + '<div class="bm-copy2">' + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      }) + '</div></section>'
     + needList('fields', '必需块对照（字段）')
     + needList('operations', '必需块对照（操作）')
     + needList('empty', '必需块对照（空态与异常）')

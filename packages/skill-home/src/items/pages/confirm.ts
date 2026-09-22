@@ -7,7 +7,7 @@
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'confirm' as const;
 
@@ -53,6 +53,14 @@ function msgOf(env: Envelope): string {
   return String((d as { message?: unknown }).message ?? '');
 }
 
+// #864 加厚：detail.sources 来源条目清单（无则回退破折号，旧信封兼容）。
+function detailOf(env: Envelope): Record<string, unknown> {
+  const d = env.data as Record<string, unknown>;
+  const det = (d as { detail?: unknown }).detail;
+  if (det && typeof det === 'object' && !Array.isArray(det)) return det as Record<string, unknown>;
+  return {};
+}
+
 function needs(): string {
   const groups = ['fields', 'operations', 'empty', 'status'] as const;
   return groups.map((g) => '<div data-block="' + g + '" hidden aria-hidden="true"><ul>'
@@ -89,7 +97,7 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/confirm.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
@@ -97,9 +105,21 @@ export function renderFamilyPage(env: Envelope): string {
   const target = (m?.[1] ?? '').trim();
   const moved = (m?.[2] ?? '').trim();
 
-  const dataText = JSON.stringify({ key, message: msg });
-  const logText = '回执｜合并物品｜' + msg;
   const archivePrompt = '请加载「居家管家」技能，帮我确认合并归档（唤醒词：合并物品）：\n\n  结果：' + msg;
+  // #864 加厚：来源清单有 detail 写真条目（编号＋名称＋件数），无则回退破折号。
+  const det = detailOf(env);
+  const rawSources = det.sources;
+  const sources: { id: string; name: string; quantity: string }[] = Array.isArray(rawSources)
+    ? (rawSources as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => ({
+      id: String(r.id ?? ''), name: String(r.name ?? ''), quantity: String(r.quantity ?? ''),
+    }))
+    : [];
+  const hasSources = Array.isArray(rawSources);
+  const sourceRows = !hasSources
+    ? '<div class="fp-row"><div class="fp-k">来源条目</div><div class="fp-v">—</div></div>'
+    : (sources.length
+      ? sources.map((s) => '<div class="fp-row"><div class="fp-k">编号 ' + esc(s.id) + '</div><div class="fp-v">' + esc(s.name === '' ? '—' : s.name) + '，共 ' + esc(s.quantity === '' ? '—' : s.quantity) + ' 件</div></div>').join('')
+      : '<div class="fp-row"><div class="fp-k">来源条目</div><div class="fp-v">无</div></div>');
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
@@ -110,7 +130,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<section class="fp-sec"><div class="fp-grid2">'
     // 主条编号只在「变更前」写这一处；「变更后」写这次真变了的量，逐条明细不再重复编号。
     + '<div class="fp-compare fp-compare-before"><h2 class="fp-sec-t">变更前</h2>'
-    + '<div class="fp-row"><div class="fp-k">来源条目</div><div class="fp-v">—</div></div>'
+    + sourceRows
     + '<div class="fp-row"><div class="fp-k">主条</div><div class="fp-v">编号 ' + esc(target || '—') + '</div></div>'
     + '</div>'
     + '<div class="fp-compare fp-compare-after"><h2 class="fp-sec-t">变更后</h2>'
@@ -119,18 +139,19 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">逐条明细</h2>'
     + '<div class="fp-row"><div class="fp-k">保留条目</div><div class="fp-v">主条</div></div>'
+    + (hasSources ? sources.map((s) => '<div class="fp-row"><div class="fp-k">并入</div><div class="fp-v">编号 ' + esc(s.id) + ' ' + esc(s.name === '' ? '—' : s.name) + '</div></div>').join('') : '')
     + '<div class="fp-row"><div class="fp-k">合并记录</div><div class="fp-v">' + esc(msg) + '</div></div>'
     + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">影响说明</h2>'
     + '<p class="fp-note">来源条目的位置与标签记录已经删除，只保留主条；数量已经相加；这次合并不能自动撤销，错了需要手动分账</p></section>'
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-confirm-archive\')">确认</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-confirm-data\')">复制数据</button>'
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-confirm-log\')">复制日志</button>'
     + '</div>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
     + '<pre id="fp-confirm-archive" hidden>' + esc(archivePrompt) + '</pre>'
-    + '<pre id="fp-confirm-data" hidden>' + esc(dataText) + '</pre>'
-    + '<pre id="fp-confirm-log" hidden>' + esc(logText) + '</pre>'
     + needs()
     + '</div>';
   return fillTemplate(template, content);

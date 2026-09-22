@@ -1,6 +1,8 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 // 看密码 HTML 脱敏：ticket.write kind=account op=show 的 message 含明文时，HTML 快照仅占位（JSON 真相不受影响）。
 import type { Envelope } from 'base-link-core';
+import { buildSharedHelpersJs, buildStyleSheet } from 'base-paint';
+import { blocksCss } from 'base-paint/blocks';
 import { HomeRenderError } from './errors.js';
 
 export const HOME_HTML_MAX_BYTES = 256 * 1024;
@@ -70,8 +72,14 @@ export const SHARED_CSS_MARKER = '<!--SHARED-CSS-->';
 export const SHARED_HELPERS_MARKER = '<!--SHARED-HELPERS-->';
 export const CONTENT_MARKER = '<!--CONTENT-->';
 
-export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}';
-export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>';
+export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}'
+  // 卡路里同款复制区样式：公共层样式表 ＋ 区块样式（复制块／动作条／三格式菜单／toast）。
+  // 落在 `<!--SHARED-CSS-->` 槽，随模板全页下发；页内 `PAGE_CSS` 不动。
+  + '\n' + buildStyleSheet().css + '\n' + blocksCss();
+export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
+  // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
+  // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。
+  + '\n<script>' + buildSharedHelpersJs() + '</script>';
 
 export function fillTemplate(template: string, contentHtml: string): string {
   for (const m of [SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER]) {
