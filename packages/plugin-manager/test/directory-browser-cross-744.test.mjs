@@ -50,14 +50,21 @@ describe('#744 解耦守卫：六家零互引', () => {
     assert.deepEqual(offenders, [], '六家源码里出现了别家包名：' + offenders.join('；'));
   });
 
-  it('六家不 deep-import 共用件（只许 dsh-life-pack 与它的两条子路径）', () => {
+  it('六家不 deep-import 共用件（只许 dsh-life-pack 与它的三条子路径）', () => {
+    // #908 加了第三条子路径 `./config-panel`（共用配置面板）：先把字面放行，六家改接它由下一张票落。
+    const ALLOWED = new Set([
+      'dsh-life-pack',
+      'dsh-life-pack/directory-browser',
+      'dsh-life-pack/directory-browser-ui',
+      'dsh-life-pack/config-panel',
+    ]);
     const offenders = [];
     for (const pkg of Object.keys(SIX)) {
       for (const file of sourceFiles(pkg)) {
         const text = readFileSync(file, 'utf8');
         for (const match of text.matchAll(/from '(dsh-life-pack[^']*)'/g)) {
           const spec = match[1];
-          if (spec === 'dsh-life-pack' || spec === 'dsh-life-pack/directory-browser' || spec === 'dsh-life-pack/directory-browser-ui') continue;
+          if (ALLOWED.has(spec)) continue;
           offenders.push(`${pkg}/${file.split(/[\\/]/).pop()} → ${spec}`);
         }
       }
@@ -65,11 +72,16 @@ describe('#744 解耦守卫：六家零互引', () => {
     assert.deepEqual(offenders, [], '六家用了计划外的取用路径：' + offenders.join('；'));
   });
 
-  it('六家确实都经那两条子路径取共用件（每家用到的至少一条）', () => {
+  it('六家确实都经子路径取共用件（每家用到的至少一条）', () => {
+    const TAKEN = [
+      "from 'dsh-life-pack/directory-browser'",
+      "from 'dsh-life-pack/directory-browser-ui'",
+      "from 'dsh-life-pack/config-panel'",
+    ];
     for (const pkg of Object.keys(SIX)) {
       const joined = sourceFiles(pkg).map((f) => readFileSync(f, 'utf8')).join('\n');
       assert.ok(
-        joined.includes("from 'dsh-life-pack/directory-browser'") || joined.includes("from 'dsh-life-pack/directory-browser-ui'"),
+        TAKEN.some((spec) => joined.includes(spec)),
         `${pkg} 没有从共用件取任何东西（接线可能没落地）`,
       );
     }

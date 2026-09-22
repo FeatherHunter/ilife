@@ -135,18 +135,32 @@ describe('P10 槽位定案', () => {
       assert.equal(row.title, productName, plugin + ' 的页签名不是产品名：' + row.title);
     }
   });
-  it('写死原生组件：无动态按需加载、无外嵌页、无数据轮询（注册有界重试除外）', () => {
+  it('写死原生组件：无动态按需加载、无外嵌页、无数据轮询（两档例外见下）', () => {
     for (const d of SINGLES.concat(['plugin-manager'])) {
       const t = srcText(d);
       assert.ok(!/import\s*\(/.test(t), d + ' 禁动态 import');
       assert.ok(!/iframe/i.test(t), d + ' 禁外嵌页');
-      if (/setInterval|setTimeout/.test(t)) {
-        // grill 定案（Q12 软依赖）：唯一允许的定时器是 sidebar槽注册有界重试
-        // （skills-deck 同款；注册重试非数据轮询）。静态门要求三件套：
-        // 有清理（clear*）+ 有次数上限（tries>=N）+ 有例外依据注释。
-        assert.ok(/clearInterval|clearTimeout/.test(t), d + ' 定时器须有清理');
-        assert.ok(/tries\s*>=/.test(t), d + ' 定时器须有次数上限');
-        assert.ok(/有界重试/.test(t), d + ' 定时器须注例外依据');
+    }
+    // 定时器**逐文件**查（票 #908 摆正）：原先按整包拼接文本查，于是新加一个定时器可以靠
+    // **别处那份**三件套蒙混过关（实测：新增文件里删掉 clearTimeout 仍然全绿）。门要的是
+    // 「这一个定时器自己站得住」，故改成每份含定时器的源码各查一遍。
+    // 只许两档，各有各的三件套：
+    //   ① 有界重试（grill 定案 Q12 软依赖：sidebar槽注册重试，非数据轮询）
+    //      —— 有清理（clear*）＋ 有次数上限（tries>=N）＋ 注「有界重试」依据；
+    //   ② 一次性 UI 回执（#908：目录行那枚「复制」点后就地变「已复制」，1.5 秒后复位）
+    //      —— 有清理（clear*）＋ 注「一次性」依据（它没有「次数」可言，故不要求次数上限）。
+    // **数据轮询两档都不认**：反复取数就是这道门要挡的东西，本意不变。
+    for (const d of SINGLES.concat(['plugin-manager'])) {
+      for (const f of srcFiles(d)) {
+        const t = readFileSync(join(root, 'packages', d, 'src', f), 'utf8');
+        if (!/setInterval|setTimeout/.test(t)) continue;
+        const where = d + '/src/' + f;
+        assert.ok(/clearInterval|clearTimeout/.test(t), where + ' 定时器须有清理');
+        if (/tries\s*>=/.test(t)) {
+          assert.ok(/有界重试/.test(t), where + ' 有界重试须注例外依据');
+          continue;
+        }
+        assert.ok(/一次性/.test(t), where + ' 定时器须注例外依据（有界重试或一次性 UI 回执）');
       }
     }
   });

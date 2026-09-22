@@ -10,6 +10,7 @@
     "./client": "./dist/client.js",
     "./directory-browser": "./dist/directory-browser-api.js",
     "./directory-browser-ui": "./dist/directory-browser-ui.js",
+    "./config-panel": "./dist/config-panel-api.js",
     "./package.json": "./package.json"
   },
   "files": [

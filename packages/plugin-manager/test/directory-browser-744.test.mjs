@@ -335,11 +335,15 @@ describe('#744 解密判据：共用件不认识宿主', () => {
     }
   });
 
-  it('出口只经两条子路径：纯逻辑一条、视图一条（视图那条是给六家 require 的）', () => {
+  it('出口只经这三条子路径：目录浏览器两条（纯逻辑／视图）＋ 配置面板一条（#908 只加一条）', () => {
+    // 包门只许收窄：这里把「开了哪几条对外路径」钉成一张清单，多开一条就必须在这里说得出为什么。
+    // #908 加的第三条 `./config-panel`＝共用配置面板（六家的设置页收进它），是同一件事的第二个出口，
+    // 不新增「逻辑出口」（没有第二消费方）。
     const manifest = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8'));
     assert.deepEqual(Object.keys(manifest.exports).sort(), [
       '.',
       './client',
+      './config-panel',
       './directory-browser',
       './directory-browser-ui',
       './package.json',

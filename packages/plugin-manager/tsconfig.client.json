@@ -17,6 +17,11 @@
     "src/directory-browser-state.ts",
     "src/directory-browser-parts.ts",
     "src/directory-browser-roots.ts",
-    "src/directory-browser-ui.ts"
+    "src/directory-browser-ui.ts",
+    "src/config-panel-contract.ts",
+    "src/config-panel-value.ts",
+    "src/config-panel-view.ts",
+    "src/config-panel.ts",
+    "src/config-panel-api.ts"
   ]
 }
