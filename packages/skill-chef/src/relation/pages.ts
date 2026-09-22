@@ -18,7 +18,7 @@ import {
 } from 'base-paint/blocks';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml } from '../render/index.js';
-import { relationShapeCss, TONE } from './shapes.js';
+import { relationShapeCss } from './shapes.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -154,15 +154,10 @@ function relationBranch(rows: readonly RelationRow[]): string {
   return '<ul class="ilife-relation-branch">' + items + '</ul>';
 }
 
-/** 空层的占位件：虚线瘦条里一句人话。层名与条数已经在层头上写着（「向上祖先 0 道」），
- *  这一句只补「为什么没有」，不做第二次说明；下一步动作由页底那颗按钮给。 */
-function relationGhost(text: string): string {
-  return '<div class="ilife-relation-ghost">'
-    + '<span class="ilife-relation-ghost-mark" aria-hidden="true"></span>'
-    + '<div class="ilife-relation-ghost-body">'
-    + '<p class="ilife-relation-ghost-text">' + escapeHtml(text) + '</p>'
-    + '</div>'
-    + '</div>';
+/** 空层的占位件：一个字都不写。层头已经写着「向上祖先 0 道」、那层空着由 `-empty` 的虚线边说明——
+ *  再补一句「还没有上游的菜」就是把层头的话说第二遍（第三轮按「删掉这句，用户会少知道什么」逐句清过）。 */
+function relationGhost(): string {
+  return '';
 }
 
 /** 三层家族树：层与层之间一条竖向连接件 ＋ 箭头，三层关系一眼看得出来。 */
@@ -173,10 +168,10 @@ function relationTreeTree(input: {
 }): string {
   const joint = '<div class="ilife-relation-joint" aria-hidden="true"></div>';
   const upBody = input.ancestors.length === 0
-    ? relationGhost('还没有上游的菜')
+    ? relationGhost()
     : relationBranch(input.ancestors);
   const downBody = input.descendants.length === 0
-    ? relationGhost('还没有下游的菜')
+    ? relationGhost()
     : relationBranch(input.descendants);
   return '<div class="ilife-relation-tree">'
     + relationTier({
@@ -203,11 +198,10 @@ export function relationAddPage(input: { parent: string; child: string; relation
     relationPair('父菜', input.parent, input.relationType, '子菜', input.child),
     relationNote(input.changeSummary),
     act([
-      { label: '看子菜的家族', kind: 'primary', actionId: 'relation-tree' },
+      { label: '看家族树', kind: 'primary', actionId: 'relation-tree' },
       { label: '再记一组', kind: 'ghost', actionId: 'relation-again' },
     ]),
     renderCopyBlock({
-      title: '复制关系说明',
       dataActionId: 'relation-copy',
       dataText: input.parent + '到' + input.child + '（' + input.relationType + '）：' + input.changeSummary,
     }),
@@ -215,22 +209,7 @@ export function relationAddPage(input: { parent: string; child: string; relation
   return shell('记派生关系回执', '私家大厨 ｜ 派生', blocks);
 }
 
-/** 页头右侧的装饰图形：一枝抽象的树（纯装饰，画的是形状不是数据，一个字都不上屏；宽档才显）。
- *  为什么给家族树这一页加它：这一页此前整屏只有色块与几何图标，评委两次点到「偏静态、无插画感」；
- *  装饰件不是第二棵树——它不承载任何一条关系，层与层的对应仍由三层树本身承担。 */
-function relationOrnament(): string {
-  return '<span class="ilife-relation-ornament" aria-hidden="true">'
-    + '<svg viewBox="0 0 120 72" width="120" height="72" fill="none" stroke-linecap="round">'
-    + '<path d="M14 66V24" stroke="' + TONE.up + '" stroke-width="3"/>'
-    + '<path d="M14 32c2-11 13-19 27-19" stroke="' + TONE.up + '" stroke-width="3"/>'
-    + '<path d="M14 48c2-9 12-16 25-16" stroke="' + TONE.here + '" stroke-width="3"/>'
-    + '<circle cx="47" cy="12" r="6" fill="' + TONE.up + '"/>'
-    + '<circle cx="45" cy="32" r="6" fill="' + TONE.here + '"/>'
-    + '<circle cx="14" cy="66" r="5" fill="' + TONE.down + '"/>'
-    + '</svg></span>';
-}
-
-/** 家族树页（结果型）。两侧都空时三层照样出：空的那层给占位件，不摆空架子。 */
+/** 家族树页（结果型）。三层照样出：没数的那层只留层头（条数写着 0 道），不另写一句占位话。 */
 export function relationTreePage(input: {
   root: string;
   ancestors: readonly RelationRow[];
@@ -238,12 +217,9 @@ export function relationTreePage(input: {
 }): string {
   const total = input.ancestors.length + input.descendants.length;
   const blocks = [
-    '<div class="ilife-relation-verdict">'
-      + renderConclusionBar(total === 0
-        ? '这道菜还没有和别的菜连上关系。'
-        : '这道菜共有' + total + '组上下游关系。')
-      + relationOrnament()
-      + '</div>',
+    relationVerdict(total === 0
+      ? '这道菜还没有和别的菜连上关系。'
+      : '这道菜共有' + total + '组上下游关系。', false),
     relationTreeTree(input),
     renderCaliberLine('废弃菜谱不入树，代数由近及远。'),
     act([{ label: '记一组关系', kind: 'primary', actionId: 'relation-add' }]),
@@ -262,7 +238,6 @@ export function relationDerivePage(input: { parent: string; child: string; diffe
       { label: '看家族树', kind: 'ghost', actionId: 'relation-tree' },
     ]),
     renderCopyBlock({
-      title: '复制这次改动',
       dataActionId: 'derive-copy',
       dataText: '由' + input.parent + '派生' + input.child + '：' + input.differences,
     }),
