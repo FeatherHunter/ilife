@@ -122,6 +122,12 @@ describe('#883 差集（只对差项判红）', () => {  const mk = (text) => ({
     assert.equal(diffHits([a], [b]).diff.length, 1);
     assert.equal(diffHits([a], [{ ...a }]).diff.length, 0);
   });
+  it('占位串走同一套规则（半角红、全角绿）', () => {
+    const half = { where: '正文位<filter>', line: 'placeholder', text: '如:今天 / 明天', cls: 'filter', tag: 'input.placeholder' };
+    const full = { where: '正文位', line: 'placeholder', text: '如：今天 ／ 明天', cls: '', tag: 'input.placeholder' };
+    assert.equal(applyHits([half]).red.length, 1);
+    assert.equal(applyHits([full]).red.length, 0);
+  });
 });
 
 describe('#883 静态读盘入口（main 与测试共用，防 import 漏件）', () => {

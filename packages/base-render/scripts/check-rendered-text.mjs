@@ -18,6 +18,8 @@
  * 位置名册初值取 t869（备忘录域重写，#869 自述名册按域重写），渲染面新增装饰位：
  * `.status-icon` 的装饰字形是图形、不是并列分隔符（Q2 裁定，出处 #878 评论），
  * 进允许清单并逐条写理由；同一字符按角色判。
+ * 渲染取串三类：可见文本节点（隐藏子树剪除）＋伪元素 content＋可见输入框占位文字
+ * （`placeholder` 是屏上文案，判；`value` 是用户数据，不判；出处 #880 R3）。
  *
  * 复用（不另写第二份渲染管线）：静态剥壳用 `test/separator-probe.mjs` 导出的
  * `visibleText`（既有先例 `t867-dom-probe.mjs` 同方向引用）；渲染口径抽取自
@@ -276,7 +278,16 @@ const PROBE_JS = `(function () {
       pseudos.push({ line: pseudo, text: pt.slice(0, 200), cls: cls, tag: el.tagName.toLowerCase() + pseudo });
     }
   }
-  return { nodes: nodes, pseudos: pseudos, elements: all.length };
+  var holders = [];
+  var fields = document.body.querySelectorAll('input[placeholder], textarea[placeholder]');
+  for (var f = 0; f < fields.length; f += 1) {
+    var fd = fields[f];
+    if (concealed(fd)) continue;
+    var ph = (fd.getAttribute('placeholder') || '').replace(/\\s+/g, ' ').trim();
+    if (ph === '') continue;
+    holders.push({ line: 'placeholder', text: ph.slice(0, 200), cls: nearestCls(fd), tag: fd.tagName.toLowerCase() + '.placeholder' });
+  }
+  return { nodes: nodes, pseudos: pseudos, holders: holders, elements: all.length };
 }())`;
 
 /* ── CLI（参数解析只在 main 里做，import 无副作用） ───────────────────────── */
@@ -403,7 +414,7 @@ async function main() {
       failures.push(page + ' 渲染取串失败：' + String(e.message).slice(0, 120));
       continue;
     }
-    const rendered = [...probe.nodes, ...probe.pseudos];
+    const rendered = [...probe.nodes, ...probe.pseudos, ...(probe.holders || [])];
     const rendRes = applyHits(rendered);
     const { diff, staticOnlyCount } = diffHits(statRes.red, rendRes.red);
     statSep += statRes.red.filter((h) => h.kind === '⑤').length;
