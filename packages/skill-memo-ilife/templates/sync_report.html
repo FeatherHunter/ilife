@@ -266,17 +266,6 @@ body{
 /* ===== 页内导航（公共层目录形状 `ilife-block-toc`；#832 补：本页三屏，长页需定位） ===== */
 #statusCard,#kpis,#details,#dataPanel{scroll-margin-top:20px}
 
-/* ===== 数据与日志 ===== */
-.data-panel{
-  background:var(--card);
-  border-radius:16px;
-  box-shadow:var(--shadow-sm);
-  padding:16px 18px;
-  margin-top:14px;
-}
-.data-panel strong{font-size:14.5px}
-.data-panel .hint{font-size:12px;color:var(--fg3);margin-top:6px}
-
 /* ===== 超小屏微调已并入基样式 =====
    #832：原先有一段 `@media(max-width:360px)` 的「超小屏微调」，而 360 不在仓内既有断点集合
    （400／640／820／1001／1200，`t849-视觉基准.md` §2 禁令「零新断点」）里。本页是 mobile-first、
@@ -297,7 +286,6 @@ body{
 
 /* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
 input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
-input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
@@ -324,13 +312,12 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <!-- ===== 明细区(按需展开 · 原生 details) ===== -->
 <div id="details"></div>
 
-<!-- ===== 数据与日志(#299 08 硬标准) ===== -->
-<section class="data-panel ilife-block ilife-block-copy-block" id="dataPanel">
-<strong>数据与日志</strong>
-<p class="ilife-block-copy-block-hint">左边那枚存下本次同步结果，可粘贴存档。右边那枚给出排查用的日志，不含隐私内容。</p>
-<div class="hm-actions">
-<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-data">复制数据</button>
-<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-log">复制日志</button>
+<section class="ilife-block ilife-block-copy-block" id="dataPanel">
+<div class="ilife-action-bar">
+<div class="ilife-action-row ilife-action-row-ghost">
+<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-data">复制数据</button>
+<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-log">复制日志</button>
+</div>
 </div>
 </section>
 </div>

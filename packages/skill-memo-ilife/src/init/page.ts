@@ -207,8 +207,9 @@ function pageContent(input: InitPageInput, counts: Counts, forGuide: boolean): s
     }));
   }
 
+  /* 负责人 2026-09-22：这块**不出标题、不出说明行**——与卡路里同形，只剩一行 ghost 按钮
+     （公共层 `renderActionBar` 的 `ilife-action-row-ghost`）。`renderCopyBlock` 的 `title`／`hint` 两位都不给。 */
   parts.push(renderCopyBlock({
-    title: '数据与日志',
     dataText: input.dataText,
     logText: input.logText,
   }));

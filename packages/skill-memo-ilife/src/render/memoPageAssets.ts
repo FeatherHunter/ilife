@@ -32,13 +32,36 @@ function pageLevelCss(): string {
   return pageUiCss() + LF + pageShapeCss();
 }
 
+/** **表单控件的尺寸口径**（本包自有，唯一一处）。
+ *
+ *  **为什么单列**：勾选框原先在**七份模板里各写一遍** `input[type=checkbox]{min-height:44px;min-width:44px}` ——
+ *  命中区够了，但**视觉**也是一枚 44px 的大方块（负责人 2026-09-22 看墙时点名「太大了」）。
+ *  这里把两件事拆开：**命中区仍 ≥44×44px**（#870 立的线、`t849` §2 硬线；`t835-计算样式面` 的
+ *  「触摸<44=0」把 `input` 一并算可点元素），**视觉**只画一枚 20px 的小方框。
+ *
+ *  实现：`appearance:none` 去掉原生外观，容器留 44×44 并把内部那枚小框交给 `::before`（勾中态由
+ *  同一个伪元素换底色 ＋ 一枚内联 SVG 对勾，零字符、不新增元素）。 */
+function memoFormCss(): string {
+  const TICK = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.5 10.6l3.6 3.6 7.4-7.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
+  return [
+    '/* 表单控件：命中区 ≥44×44px；勾选框的视觉尺寸另算（20px，见 memoFormCss 的头注） */',
+    'input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}',
+    'input[type=checkbox]{appearance:none;-webkit-appearance:none;min-height:44px;min-width:44px;box-sizing:border-box;',
+    'margin:0;display:flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer}',
+    'input[type=checkbox]::before{content:"";display:block;width:20px;height:20px;box-sizing:border-box;',
+    'border:2px solid var(--line);border-radius:6px;background:var(--card)}',
+    'input[type=checkbox]:checked::before{border-color:var(--blue);',
+    'background:var(--blue) ' + TICK + ' center/14px 14px no-repeat}',
+  ].join(LF);
+}
+
 /** 备忘录七个数据页的唯一资产产出者。
  *
  *  **两处一起给**：只换 CSS 不换运行时＝按钮点了没反应（按钮只带 `data-action-id`，激活靠
  *  `buildSharedHelpersJs()` 的委派）；只换运行时不换 CSS＝公共层那条委派产出的 toast 与回执卡无样式。 */
 export function memoPageAssets(): MemoPageAssets {
   return {
-    sharedCssText: buildStyleSheet().css + LF + blocksCss() + LF + pageLevelCss(),
+    sharedCssText: buildStyleSheet().css + LF + blocksCss() + LF + pageLevelCss() + LF + memoFormCss(),
     sharedHelpersJs: buildSharedHelpersJs() + LF + memoRuntimeJs(),
   };
 }

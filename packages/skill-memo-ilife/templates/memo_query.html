@@ -34,7 +34,6 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 
 /* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
 input[type=text],input[type=date],input[type=search],input:not([type]),select{min-height:44px;box-sizing:border-box}
-input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin:0}
 </style>
 </head>
 <body>
@@ -61,12 +60,12 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 <div class="toolbar"><button class="copy ghost" data-copy-receipt onclick="copyFiltered()">复制筛选结果</button></div>
 <pre id="receipt" style="display:none"></pre>
 </section>
-<section class="panel ilife-block ilife-block-copy-block" id="data-panel">
-<strong>数据与日志</strong>
-<p class="ilife-block-copy-block-hint">左边那枚存下当前结果，可粘贴到笔记存档。右边那枚给出排查用的日志，不含隐私内容。</p>
-<div class="hm-actions">
-<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-data">复制数据</button>
-<button class="copy ghost ilife-copy-btn" data-action-id="memo-copy-log">复制日志</button>
+<section class="ilife-block ilife-block-copy-block" id="data-panel">
+<div class="ilife-action-bar">
+<div class="ilife-action-row ilife-action-row-ghost">
+<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-data">复制数据</button>
+<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-log">复制日志</button>
+</div>
 </div>
 </section>
 </div>

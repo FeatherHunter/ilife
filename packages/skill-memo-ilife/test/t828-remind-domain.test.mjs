@@ -217,7 +217,10 @@ describe('#828 · 产物形状（册子格的页型）', () => {
     for (const f of listing().filter((x) => x.startsWith('设提醒_') || x.startsWith('记提醒_'))) {
       const html = readFileSync(join(landingDir(), f), 'utf8');
       assert.match(html, /^<!doctype html>/i, f + ' 应是整页');
-      assert.match(html, /数据与日志/, f + ' 回执页要有复制区');
+      assert.match(html, /<section class="ilife-block ilife-block-copy-block">/, f + ' 回执页要有复制区（公共层复制区块：无标题、无说明行）');
+      assert.match(html, /data-action-id="memo-copy-data"/, f + ' 回执页缺「复制数据」按钮');
+      assert.match(html, /data-action-id="memo-copy-log"/, f + ' 回执页缺「复制日志」按钮');
+      assert.ok(!html.includes('数据与日志'), f + ' 复制区不再出「数据与日志」标题（负责人 2026-09-22）');
     }
   });
 
