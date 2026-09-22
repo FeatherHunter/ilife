@@ -115,7 +115,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + extraInput + '</div></div>';
 
   const content = '<div class="hero"><p class="eyebrow">选择后确认</p>'
-    + '<p class="lead">缺多异待确认四组，逐项指定处理再批量确认</p></div>'
+    + '<p class="lead">缺／多／异／待确认四组，逐项指定处理再批量确认</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>差异分组</h2>'
     + '<dl class="kv"><dt>所属盘点记录</dt><dd>记录<span id="recid">' + escapeHtml(rid) + '</span></dd></dl>'
     + '<div class="empty">—</div>'

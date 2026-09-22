@@ -83,7 +83,13 @@ const PAGE_CSS = '<style>'
   + '.greet{font-size:15px;color:#333}'
   + '.pill{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:6px 12px;margin:3px;font-size:13px}'
   + '.find{min-height:44px;width:100%;padding:10px 12px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:15px;box-sizing:border-box}'
-  + '@media(max-width:480px){.kv th{width:6em}}'
+  + '.list{min-height:96px;line-height:1.5;font-family:inherit;resize:vertical}'
+  // #817（③双端不塌）：390 档不再把字段名列压到 6em 靠断字折行 —— 明细表行卡化：
+  // 字段名独占一行、值独占一行，「录入日期（补录）」「标签（逗号分隔）」整词上屏。
+  + '@media(max-width:480px){.kv,.kv tbody,.kv tr,.kv th,.kv td{display:block;width:auto}'
+  + '.kv tr{border:1px solid #e8e8ee;border-radius:10px;margin:0 0 8px;overflow:hidden}'
+  + '.kv th{border:0;border-bottom:1px solid #e8e8ee}.kv td{border:0}'
+  + '.kv th,.kv td{padding:8px 10px}}'
   + '</style>';
 
 function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string {
@@ -94,9 +100,12 @@ function row(head: string, value: string): string {
   return '<tr><th>' + head + '</th><td>' + value + '</td></tr>';
 }
 
-function op(label: string, load: string, alt: boolean): string {
+function op(label: string, load: string, alt: boolean, id = ''): string {
+  // 属性序固定（`data-t` 在 `onclick` 前）：机审按「带 data-t 的按钮必须真的绑了处理」逐颗数，
+  // 顺序一变就数不上（见 `test/scaffold.test.mjs` ⑤）。
   return '<button class="op' + (alt ? ' alt' : '') + '" data-t="' + escapeHtml(load) + '"'
-    + ' onclick="if(navigator.clipboard){navigator.clipboard.writeText(this.getAttribute(\'data-t\'))}">'
+    + ' onclick="if(navigator.clipboard){navigator.clipboard.writeText(this.getAttribute(\'data-t\'))}"'
+    + (id === '' ? '' : ' id="' + id + '"') + '>'
     + label + '</button>';
 }
 
@@ -144,23 +153,33 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + row('录入日期（补录）', '<input class="find" placeholder="YYYY-MM-DD，例如 2026-08-21">')
     + row('标签（逗号分隔）', '—')
     + row('备注', '—')
+    // #817 seq 2：拍物品那一页的明细原先没有照片这一行（照片只写在别处那句导语里）。照片是明细的一件，
+    // 就在明细表里占一行；原句里「照片随本次一起存」这半句一字不动地搬过来（交付用例按这半句点验，
+    // 故不再另造一句同义话，也不在别处重复）。
+    + (isUpdate ? '' : '<tr><td colspan="2" class="note">照片随本次一起存。</td></tr>')
     + '</table></div></section>'
-    + (isUpdate ? '<section class="sec" data-block="empty" data-need="' + needs('empty') + '" hidden></section>'
-      : '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>' + (isBatch ? '批量清单' : '三处分流') + '</h2>'
-        + (isBatch ? '<p>清单可文字逐行写，也可用照片或文件。</p></section>'
-          : '<p>拍照录入与单条同页，照片随本次一起存。</p></section>'))
+    // #817（②层级清／① 空壳）：非批量的「三处分流」段是施工话标题＋判据句，整段收起（块位与
+    // data-need 原文留住，判据件照读）；批量那一档原先是无控件空壳，改成真清单框（敲进去的行
+    // 随「全部确认」一起进复制载荷）。
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"' + (isBatch ? '' : ' hidden') + '>'
+    + (isBatch ? '<h2>批量清单</h2><textarea class="find list" id="batchList" placeholder="每行一件，例如：口罩 2 包 客厅/抽屉"></textarea>' : '')
+    + '</section>'
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态候选</h2><div>'
     + REQUIRED_BLOCKS.status.map((s) => '<span class="pill">' + escapeHtml(s) + '</span>').join('')
     + '</div></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + (isUpdate ? op('确认变更', '请加载居家管家技能，帮我确认变更' + modeText, false)
       : op('确认写入', '请加载居家管家技能，帮我确认写入' + modeText, false))
-    + (isBatch ? op('全部确认', '请加载居家管家技能，帮我全部确认本次 ' + count + ' 件', true) : '')
+    + (isBatch ? op('全部确认', '请加载居家管家技能，帮我全部确认本次 ' + count + ' 件', true, 'batchSend') : '')
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
-    + '</section>';
+    + '</section>'
+    // 清单框是真控件：边敲边把内容接在「全部确认」的复制载荷后面（按钮本身仍走通用的 data-t 复制）。
+    + (isBatch ? '<script>(function(){var t=document.getElementById("batchList");var b=document.getElementById("batchSend");'
+      + 'if(!t||!b)return;var base=b.getAttribute("data-t");'
+      + 't.addEventListener("input",function(){b.setAttribute("data-t",base+"\\n清单：\\n"+t.value);});})();</script>' : '');
   return fillTemplate(template, content);
 }

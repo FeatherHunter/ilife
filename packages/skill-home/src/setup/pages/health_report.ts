@@ -69,11 +69,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const real = issues.filter((x) => !x.name.startsWith('健康'));
   const total = real.reduce((a, x) => a + (Number.isFinite(x.count) ? x.count as number : 0), 0);
   const healthy = real.length === 0;
-  const rows = real.map((x, i) => '<tr><td><input type="checkbox" class="su-check" data-idx="' + i
+  const rows = real.map((x, i) => '<tr>'
+    + '<td class="ilife-block-data-table-cell-left" data-label="勾选"><input type="checkbox" class="su-check" data-idx="' + i
     + '" aria-label="勾选第' + (i + 1) + '项"></td>'
-    + '<td>' + escapeHtml(x.name) + '</td>'
-    + '<td>' + escapeHtml(String(x.count)) + '</td>'
-    + '<td>' + escapeHtml(actionOf(x.name)) + '</td></tr>').join('');
+    + '<td class="ilife-block-data-table-cell-left" data-label="检查项">' + escapeHtml(x.name) + '</td>'
+    + '<td class="ilife-block-data-table-cell-left" data-label="数量">' + escapeHtml(String(x.count)) + '</td>'
+    + '<td class="ilife-block-data-table-cell-left" data-label="动作">' + escapeHtml(actionOf(x.name)) + '</td></tr>').join('');
   const content = '<style>'
     + '.su-wrap{max-width:960px;margin:0 auto;padding:0 0 24px}'
     + '.su-hero{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #e3e3e8;border-radius:20px;padding:24px;margin:0 0 16px}'
@@ -85,10 +86,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.su-card b{display:block;font-size:13px;color:#6e6e73;margin-bottom:4px}'
     + '.su-card span{font-size:22px;font-weight:750}'
     + '.su-ok{color:#1d7a3f}.su-bad{color:#c22e2e}.su-warn{color:#b07000}'
-    + '.su-tablewrap{overflow-x:auto;max-width:100%}'
-    + '.su-table{width:100%;border-collapse:collapse;font-size:14px}'
-    + '.su-table th,.su-table td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee;vertical-align:middle}'
-    + '.su-table th{color:#6e6e73;font-weight:600;white-space:nowrap}'
+    // #817 seq 68（③双端不塌）：这张表原先用自家 .su-table —— 390 档四列被压成窄列、单元格词中折行。
+    // 改用公共层表格块（`.ilife-block-data-table` ＋ 每格 data-label）：≤640 档它把行块级化成
+    // 「列名 ＋ 值」一格格排下去，390 档不再分窄列；宽档仍是普通表格。表头折叠后仍留「勾选／检查项／
+    // 数量／动作」四处 data-label，行与列的对应关系不丢。
     + '.su-check{width:44px;height:44px;accent-color:#007aff}'
     + '.su-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}'
     + '.su-btn{min-height:44px;border:none;border-radius:999px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;background:#007aff;color:#fff}'
@@ -115,7 +116,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<h2 data-need="检查项列表">检查项</h2>'
     + (healthy
       ? '<p class="su-note">当前没有待处理项，继续保持即可。</p><p hidden><span data-need="勾选"></span><span data-need="动作列"></span></p>'
-      : '<div class="su-tablewrap"><table class="su-table"><tr><th data-need="勾选">勾选</th><th>检查项</th><th>数量</th><th data-need="动作列">动作</th></tr>' + rows + '</table></div>')
+      : '<div class="ilife-block-data-table"><table class="ilife-block-data-table-table">'
+        + '<thead><tr><th scope="col" class="ilife-block-data-table-cell-left" data-need="勾选">勾选</th>'
+        + '<th scope="col" class="ilife-block-data-table-cell-left">检查项</th>'
+        + '<th scope="col" class="ilife-block-data-table-cell-left">数量</th>'
+        + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="动作列">动作</th></tr></thead>'
+        + '<tbody>' + rows + '</tbody></table></div>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
     + '<h2>可以做的操作</h2>'

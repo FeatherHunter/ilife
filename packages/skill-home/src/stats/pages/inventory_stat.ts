@@ -88,7 +88,11 @@ const CSS = '<style>'
   + '.st-raw{margin:12px 0;font-size:12px}.st-raw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#0a63d6;font-weight:700}'
   + '.st-raw pre{background:#1d1d1f;color:#e8e8e8;border-radius:10px;padding:12px;overflow:auto;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.st-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}'
-  + '.st-toast.show{opacity:1}@media(max-width:560px){.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}}'
+  + '.st-toast.show{opacity:1}'
+  // #817 seq 42（③双端不塌，与 seq 41 同款处置）：390 档三张卡按 140px 下限排成 2+1，末行空掉半行。
+  // 窄档把列宽下限收到 96px（三张各有 96px 以上就一行排满），列宽跟着可用宽自适应，不留空槽。
+  + '@media(max-width:560px){.st-cards{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}'
+  + '.st-card{box-sizing:border-box;padding:10px}.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}}'
   + '</style>';
 
 const JS = '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'

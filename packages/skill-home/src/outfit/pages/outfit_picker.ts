@@ -92,6 +92,7 @@ const CSS = '<style>'
   + '.of-styles span{background:#f3ecdc;color:#8a744f;border-radius:99px;padding:6px 12px;font-size:13px}'
   + '.of-reason{color:#6d5c3d;font-size:14px;margin:6px 0 0}'
   + '.of-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
+  + '.of-chiplab{color:#8a744f;font-size:12px;font-weight:700;align-self:center;margin-right:2px}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.on{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
@@ -128,10 +129,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const weather = str(o.weather);
   const gap = arr(o.gap).map(String);
 
+  // #817 seq 34（②层级清）：顶部那颗「场合＋值」的胶囊与下行「场合」按钮行是同一个字段，两处同词；
+  // 只留按钮行那一处（值由高亮按钮承担），顶部不再挂同名字段。
   const metrics = '<div class="of-metrics">'
     + '<span>候选' + items.length + '件</span>'
     + '<span>搭配' + sets.length + '套</span>'
-    + '<span id="ofOccChip">场合' + escapeHtml(occasion || '—') + '</span>'
     + (weather ? '<span>天气' + escapeHtml(weather) + '</span>' : '')
     + '</div>';
 
@@ -154,10 +156,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     designed = '<div class="of-card" id="ofNow"><h2>今日这一套</h2><div id="ofSlots">' + slotRows + '</div>'
       + '<div class="of-styles" id="ofStyles"><span>' + escapeHtml(first.style) + '</span></div>'
       + '<p class="of-reason" id="ofReason">' + escapeHtml((occasion !== '' && occasion !== first.style ? first.reason.split('场合适配').join('风格') : first.reason) || '—') + '</p>'
-      + '<div class="of-chips" id="ofOcc">'
+      + '<div class="of-chips" id="ofOcc"><span class="of-chiplab">场合</span>'
       + ['上班', '约会', '运动', '家居', '正式', '自定义'].map((x) => '<button class="of-btn' + (occasion === x ? ' on' : '') + '" data-occ="' + x + '">' + x + '</button>').join('')
       + '</div>'
-      + (hasLayers ? '<div class="of-chips" id="ofLayer"><button class="of-btn on" data-layer="outer">外层</button><button class="of-btn" data-layer="inner">内搭</button></div>' : '')
+      + (hasLayers ? '<div class="of-chips" id="ofLayer"><span class="of-chiplab">层次</span><button class="of-btn on" data-layer="outer">外层</button><button class="of-btn" data-layer="inner">内搭</button></div>' : '')
       + '</div>'
       + '<div class="of-card"><h2>备选组合</h2><div class="of-strip" id="ofStrip">'
       + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + '">第' + (i + 1) + '套 ' + escapeHtml(s.style) + '</div>').join('')
@@ -176,10 +178,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'var OF=' + payload + ';OF.occ=OF.occasion||"";OF.layer="outer";var OFI=0;'
     + 'function ofToast(m){var t=document.getElementById("ofToast");if(!t){t=document.createElement("div");t.id="ofToast";t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
     + 'function ofCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){ofToast("已复制");}).catch(function(){ofToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ofToast("已复制");}catch(e){ofToast("复制失败");}ta.remove();}}'
-    + 'function ofPlain(s){return String(s==null?"":s).replace(/[A-Za-z]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+0xFEE0);});}function ofTxt(s){return ofPlain(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}function ofMark(id,base,attr,val){var box=document.getElementById(id);if(!box)return;var els=box.children;for(var i=0;i<els.length;i++){els[i].className=base+(els[i].getAttribute(attr)===val?" on":"");}}'
+    + 'function ofPlain(s){return String(s==null?"":s).replace(/[A-Za-z]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+0xFEE0);});}function ofTxt(s){return ofPlain(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}function ofMark(id,base,attr,val){var box=document.getElementById(id);if(!box)return;var els=box.children;for(var i=0;i<els.length;i++){var a=els[i].getAttribute(attr);if(a===null)continue;els[i].className=base+(a===val?" on":"");}}'
     + 'function ofReason(){var s=OF.sets[OFI]||{};var o=OF.occ||"";var r=(o&&o!==s.style)?String(s.reason||"").split("场合适配").join("风格"):s.reason;return r||"—";}'
     + 'function ofPaint(){var s=OF.sets[OFI];if(!s)return;var O=["outer","inner","bottom","shoes","hat","acce"];var L={outer:"外套",inner:"内搭",bottom:"下装",shoes:"鞋",hat:"帽子",acce:"配饰"};var h="";for(var k=0;k<O.length;k++){var c=s.slots[O[k]];if(!c)continue;var t=c.tags?c.tags.split(",").filter(Boolean).join(" "):(c.location||"");h+="<div class=\'of-slot"+(OF.layer===O[k]?" on":"")+"\'><span class=\'of-part\'>"+L[O[k]]+"</span><div><div class=\'of-name\'>"+ofTxt(c.name)+"</div>"+(t?"<div class=\'of-sub\'>"+ofTxt(t)+"</div>":"")+"</div></div>";}'
-    + 'var sl=document.getElementById("ofSlots");if(sl)sl.innerHTML=h;var sty=document.getElementById("ofStyles");if(sty)sty.innerHTML="<span>"+ofTxt(s.style||"—")+"</span>";var oc1=document.getElementById("ofOccChip");if(oc1)oc1.textContent="场合"+(OF.occ||"—");var rs=document.getElementById("ofReason");if(rs)rs.textContent=ofPlain(ofReason());var cn=document.getElementById("ofCount");if(cn)cn.textContent="第"+(OFI+1)+"套共"+OF.sets.length+"套";ofMark("ofStrip","of-mini","data-set",String(OFI));ofMark("ofOcc","of-btn","data-occ",OF.occ);ofMark("ofLayer","of-btn","data-layer",OF.layer);}'
+    + 'var sl=document.getElementById("ofSlots");if(sl)sl.innerHTML=h;var sty=document.getElementById("ofStyles");if(sty)sty.innerHTML="<span>"+ofTxt(s.style||"—")+"</span>";var rs=document.getElementById("ofReason");if(rs)rs.textContent=ofPlain(ofReason());var cn=document.getElementById("ofCount");if(cn)cn.textContent="第"+(OFI+1)+"套共"+OF.sets.length+"套";ofMark("ofStrip","of-mini","data-set",String(OFI));ofMark("ofOcc","of-btn","data-occ",OF.occ);ofMark("ofLayer","of-btn","data-layer",OF.layer);}'
     + 'function ofShow(i){if(!OF.sets.length)return;OFI=(i+OF.sets.length)%OF.sets.length;ofPaint();}var pv=document.getElementById("ofPrev");if(pv)pv.onclick=function(){ofShow(OFI-1);};var nx=document.getElementById("ofNext");if(nx)nx.onclick=function(){ofShow(OFI+1);};'
     + 'var st=document.getElementById("ofStrip");if(st)st.onclick=function(e){var t=e.target.closest("[data-set]");if(t)ofShow(Number(t.getAttribute("data-set")));};var ad=document.getElementById("ofAdopt");if(ad)ad.onclick=function(){var s=OF.sets[OFI];if(!s)return;var L=["穿搭确认：今天穿第"+(OFI+1)+"套（"+s.style+"）"+(OF.occ?"，场合"+OF.occ:""),""];["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=s.slots[k];if(c)L.push("穿搭："+c.name+"（今日穿这套）");});ofCopy(L.join("\\n"));};'
     + 'var oc=document.getElementById("ofOcc");if(oc)oc.onclick=function(e){var b=e.target.closest("[data-occ]");if(!b)return;OF.occ=b.getAttribute("data-occ");ofPaint();};var ly=document.getElementById("ofLayer");if(ly)ly.onclick=function(e){var b=e.target.closest("[data-layer]");if(!b)return;OF.layer=b.getAttribute("data-layer");ofPaint();};'
