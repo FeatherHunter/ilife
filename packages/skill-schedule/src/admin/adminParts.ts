@@ -30,7 +30,8 @@ const PAD_X = 14;
 const RADIUS = 12;
 const HAIRLINE = 1;
 const NUM_W = 26;
-const BOX = 16;
+/* 触摸下限 44px（PAGE_LIMITS.touchMinPx）：与公共层同值是刻意的（本件不引区块层内部件，见件头）。 */
+const HIT = 44;
 const NARROW = 820;
 
 const COLOR_OK = 'var(--green)';
@@ -65,8 +66,8 @@ export function adminPartsCss(): string {
     '.sch-ad-badge-ok{color:' + COLOR_OK + ';border-color:' + COLOR_OK + '}',
     '.sch-ad-badge-todo{color:' + COLOR_TODO + ';border-color:' + COLOR_TODO + '}',
     '.sch-ad-badge-do{color:' + COLOR_DO + ';border-color:' + COLOR_DO + '}',
-    '.sch-ad-check{display:flex;gap:' + px(GAP) + 'px;align-items:flex-start;padding:' + px(GAP) + ' ' + px(PAD_X) + '}',
-    '.sch-ad-check input{width:' + px(BOX) + ';height:' + px(BOX) + '}',
+    '.sch-ad-check{display:flex;gap:' + px(GAP) + ';align-items:center;min-height:' + px(HIT) + ';padding:' + px(GAP) + ' ' + px(PAD_X) + '}',
+    '.sch-ad-check input{width:' + px(HIT) + ';height:' + px(HIT) + ';margin:0;flex:0 0 auto}',
     '@media (max-width:' + px(NARROW) + '){.sch-ad-step{flex-wrap:wrap}}',
   ].join(LF);
 }

@@ -294,8 +294,8 @@ export function resultPage(
         msg: rate === null
           ? '近 ' + String(HISTORY_DAYS) + ' 天没有作息记录，这一版没有历史可参照，逐段都按无参考算。'
           : '拿近 ' + String(HISTORY_DAYS) + ' 天的作息记录按整点归类：贴合 ' + String(match) + ' 段，偏离 '
-            + String(drift) + ' 段，无参考 ' + String(none) + ' 段。',
-        lines: fits.filter((f) => f.fit === 'drift').map((f) => f.hint),
+            + String(drift) + ' 段，无参考 ' + String(none) + ' 段。'
+            + (drift === 0 ? '' : '逐段原因见下表「逐段贴合」。'),
       },
       staticNotice: true,
     }) },
