@@ -159,8 +159,8 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
         emptyText: '库里没有找到这一条',
       }),
     }) },
-    // 段名是「<日期> 这一天现在的排布」；目录收成短名（日期留在大标题上，口径见 `shared/pageNav.ts`）。
-    { navText: '这一天现在的排布', html: event === undefined ? '' : renderHourBand(cellsOf(day), {
+    // 段名是「<日期> 这一天现在的排布」；目录项与它逐字同源（同一句拼接写两处）。
+    { navText: r.date + ' 这一天现在的排布', html: event === undefined ? '' : renderHourBand(cellsOf(day), {
       order: L1_ORDER, title: r.date + ' 这一天现在的排布', height: 120,
     }) },
   ]);
@@ -365,8 +365,8 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
         source: '日程计划表（' + before.date + ' 现有 ' + String(day.length) + ' 件）',
       }),
     }) },
-    // 段名是「<日期> 这一天现在的排布」；目录收成短名（日期留在大标题上，口径见 `shared/pageNav.ts`）。
-    { navText: '这一天现在的排布', html: renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }) },
+    // 段名是「<日期> 这一天现在的排布」；目录项与它逐字同源。
+    { navText: before.date + ' 这一天现在的排布', html: renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }

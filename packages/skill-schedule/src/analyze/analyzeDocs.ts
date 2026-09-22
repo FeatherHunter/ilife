@@ -357,14 +357,15 @@ export function renderCategoryPage(input: CategoryPageInput): string {
   const caliber = input.requested === input.level1
     ? '这一维按一级分类算 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格'
     : '「' + input.requested + '」按一级分类归到「' + input.level1 + '」 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格';
+  const heatTitle = '24h × ' + String(dates.length) + ' 天热力图';
   const { toc, body } = pageSections([
     { navText: '这一段的读数', html: renderKpiGrid(cards, { title: '这一段的读数' }) },
     { html: renderCaliberLine(caliber) },
-    // 段名是「24h × N 天热力图」；目录收成短名（口径见 `shared/pageNav.ts`）。
-    { navText: '热力图', html: renderHeatMatrix(capped, {
+    // 段名是「24h × N 天热力图」（N 随这一段的天数变）；目录项与它逐字同源（同一个常量写两处拼接）。
+    { navText: heatTitle, html: renderHeatMatrix(capped, {
       order: [input.level1],
       id: 'sch-an-heat',
-      title: '24h × ' + String(dates.length) + ' 天热力图',
+      title: heatTitle,
       legend: true,
       withTotal: true,
       dayLabel: (row) => row.label + ' ' + row.date.slice(5),

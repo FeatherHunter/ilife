@@ -479,8 +479,6 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
     },
     days: days.map((day) => ({
       title: weekdayLabelOf(day.date) + ' ' + day.date + ' 已排 ' + day.plannedHours + ' 格',
-      // 页内目录的条目文本（#891）：只写星期与日期，已排格数是排布读数、留在大段名上。
-      navText: weekdayLabelOf(day.date) + ' ' + day.date.slice(5),
       rows: day.hours.map((hour) => ({
         left: String(hour.hour).padStart(2, '0') + ':00',
         main: hour.text,

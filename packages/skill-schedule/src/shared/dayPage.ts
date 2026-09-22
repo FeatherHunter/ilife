@@ -62,8 +62,8 @@ export function renderDayPage(data: DayPageData): string {
   // 不给＝不是小节（原样透传）。目录项与段名只在本清单里写一份（见 `./pageNav.ts` 的件头）。
   const { toc, body } = pageSections([
     { html: renderConclusionBar(data.conclusion) },
-    // 段名是「24 小时时间轴」（图表块自己那颗 `<h2>`）；目录收成短名（口径见 `./pageNav.ts`）。
-    { navText: '时间轴', html: renderHourBand(data.cells, { order: data.order, title: '24 小时时间轴', height: 140 }) },
+    // 段名是「24 小时时间轴」（图表块自己那颗 `<h2>`）；目录项逐字用它。
+    { navText: '24 小时时间轴', html: renderHourBand(data.cells, { order: data.order, title: '24 小时时间轴', height: 140 }) },
     { html: renderFactStrip({ items: data.facts }) },
     { html: renderListRows({ items: data.timeline, emptyText: '这一天还没有记录' }) },
     { html: renderFactStrip({ items: data.sleep }) },

@@ -41,8 +41,8 @@ export interface WeekPageData {
 export function renderWeekPage(data: WeekPageData): string {
   const { toc, body } = pageSections([
     { html: renderKpiGrid(data.kpis) },
-    // 段名是「7×24 全分类热力图」；目录收成短名（口径见 `./pageNav.ts`）。
-    { navText: '热力图', html: renderHeatMatrix(data.rows, { order: data.order, id: 'week-heat', title: '7×24 全分类热力图', legend: true }) },
+    // 段名是「7×24 全分类热力图」；目录项逐字用它。
+    { navText: '7×24 全分类热力图', html: renderHeatMatrix(data.rows, { order: data.order, id: 'week-heat', title: '7×24 全分类热力图', legend: true }) },
     // 分类总览按名上色（与矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
     { html: renderDistributionRows({
       rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),

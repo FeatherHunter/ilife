@@ -103,8 +103,8 @@ function segRecord(data: ReplayData): PageSection[] {
   );
   return [
     { navText: '实际作息', html: renderSectionTitle('实际作息') },
-    // 段名是「这一天的 24 小时」；目录收成短名（口径见 `shared/pageNav.ts`）。
-    { navText: band === '' ? '' : '这一天的时段', html: band },
+    // 段名是「这一天的 24 小时」；目录项逐字用它。
+    { navText: band === '' ? '' : '这一天的 24 小时', html: band },
     { navText: '分类聚合', html: renderSectionTitle('分类聚合') + renderDistributionRows({ rows: distribution }) },
   ];
 }
@@ -146,8 +146,8 @@ function segHeat(data: ReplayData): PageSection[] {
     }))),
     sum: d.minutes > 0 ? fmtDurShort(d.minutes) : '无记录',
   }));
-  // 段名是「24h × N 天热力图」；目录收成短名（口径见 `shared/pageNav.ts`）。
-  return [{ navText: '热力图', html: renderHeatMatrix(rows, {
+  // 段名是「24h × N 天热力图」；目录项逐字用它。
+  return [{ navText: '24h × N 天热力图', html: renderHeatMatrix(rows, {
     order: L1_ORDER, id: 'replay-heat', title: '24h × N 天热力图', legend: true, withTotal: true,
   }) + (capped.length === days.length ? ''
     : renderCaliberLine('这一段跨了 ' + String(days.length) + ' 天，热力图只印最近 ' + String(capped.length)

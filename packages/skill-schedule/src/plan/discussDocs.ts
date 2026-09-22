@@ -180,8 +180,8 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
       { label: '与已有重叠', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '落盘前先看一眼' },
       { label: '这一天已有', value: String(locked.length) + ' 件', detail: '现在库里的排布' },
     ], { title: '这一版候选的读数' }) },
-    // 段名是「候选的 24 小时」；目录收成短名（口径见 `shared/pageNav.ts`）。
-    { navText: '候选的时段', html: renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: '候选的 24 小时', height: 120 }) },
+    // 段名是「候选的 24 小时」；目录项逐字用它。
+    { navText: '候选的 24 小时', html: renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: '候选的 24 小时', height: 120 }) },
     { html: renderDataTable({
       caption: '候选事件',
       columns: [
@@ -277,8 +277,8 @@ export function resultPage(
       { label: '偏离与无参考', value: String(drift) + ' 段偏离', detail: '另有 ' + String(none) + ' 段无历史可参照' },
       { label: '冲突', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '采纳前先看一眼' },
     ], { title: '这一版的读数' }) },
-    // 段名是「24 小时时间轴与分类色带」；目录收成短名（口径见 `shared/pageNav.ts`）。
-    { navText: '时间轴与分类色带', html: renderHourBand(cellsOf(written), { order: L1_ORDER, title: '24 小时时间轴与分类色带', height: 140 }) },
+    // 段名是「24 小时时间轴与分类色带」；目录项逐字用它。
+    { navText: '24 小时时间轴与分类色带', html: renderHourBand(cellsOf(written), { order: L1_ORDER, title: '24 小时时间轴与分类色带', height: 140 }) },
     { html: renderFactStrip({
       items: [
         { label: '历史窗口', value: String(HISTORY_DAYS) + ' 天' },

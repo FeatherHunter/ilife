@@ -28,11 +28,8 @@ import { pageSections } from './pageNav.js';
 
 /** 逐日那一段（一天一段：段名 ＋ 24 格 ＋ 该日的随附读数）。 */
 export interface OverviewDaySection {
-  /** 段名（日期与星期 ＋ 已排格数，调用方拼好）。 */
+  /** 段名（日期与星期 ＋ 已排格数，调用方拼好）；**页内目录的条目与它逐字同源**。 */
   readonly title: string;
-  /** 这一段的**短名**（页内目录的条目文本）：日期与星期，含排布格数的读数不进目录、
-   *  留在大段名上（口径见 `./pageNav.ts` 的件头）。 */
-  readonly navText: string;
   /** 这一天 24 格（时:00 ／ 内容）；空桶也占一行，形状不随数据变。 */
   readonly rows: readonly ListRowInput[];
   /** 该日的随附读数（首建与末改时间）；不给＝这一段不出脚注。 */
@@ -69,7 +66,7 @@ export function renderOverviewPage(data: OverviewPageData): string {
       ...(data.table.caption === undefined ? {} : { caption: data.table.caption }),
     }) },
     ...data.days.map((day) => ({
-      navText: day.navText,
+      navText: day.title,
       html: '<h2 class="heat-title">' + escText(day.title) + '</h2>'
         + renderListRows({ items: day.rows, emptyText: '这一天没有安排' })
         + (day.footnote === undefined || day.footnote === '' ? '' : renderCaliberLine(day.footnote)),

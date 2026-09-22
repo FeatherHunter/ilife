@@ -55,8 +55,8 @@ export function renderPlanPage(data: PlanPageData): string {
   const { toc, body } = pageSections([
     { html: renderKpiGrid(data.kpis) },
     { html: renderConclusionBar(data.conclusion) },
-    // 段名是「24 小时覆盖」（图表块自己那颗 `<h2>`）；目录收成短名（口径见 `./pageNav.ts`）。
-    { navText: '覆盖条', html: renderHourBand(data.cells, { order: data.order, title: '24 小时覆盖', height: 120 }) },
+    // 段名是「24 小时覆盖」（图表块自己那颗 `<h2>`）；目录项逐字用它。
+    { navText: '24 小时覆盖', html: renderHourBand(data.cells, { order: data.order, title: '24 小时覆盖', height: 120 }) },
     { html: renderListRows(data.events) },
     { html: renderDisclosure({ title: data.gaps.length > 0 ? '空档' : '空档（无）', contentHtml: renderListRows({ items: data.gaps, emptyText: '整天都被事件占满' }) }) },
     // 说明句不堆并列分隔符（`、` 是 #516 分隔符门点名的并列符号之一）：写成一句行文。
