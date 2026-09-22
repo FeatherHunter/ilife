@@ -157,7 +157,8 @@ export function pagePartsCss(): string {
     '.heat-day { color: var(--fg2); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }',
     '.heat-cells { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; }',
     '.heat-cell { display: block; height: 18px; border-radius: 4px; background: var(--soft); }',
-    '.heat-ticks { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; color: var(--fg3); font-size: 11px; font-variant-numeric: tabular-nums; }',
+    // #893 小时刻度 11→12：探针量全部非 SVG 可见文本，刻度进 min，留 11 会继续扣 5 分。
+    '.heat-ticks { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; color: var(--fg3); font-size: 12px; font-variant-numeric: tabular-nums; }',
     '.heat-ticks span { white-space: nowrap; overflow: hidden; }',
     '.heat-row-total { grid-template-columns: 64px minmax(0, 1fr) 60px; }',
     '.heat-sum { color: var(--fg2); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }',
