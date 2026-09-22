@@ -179,7 +179,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 h1{font-size:22px;font-weight:600;margin-bottom:6px}
 .sub{color:#6e6e73;font-size:13.5px;margin-bottom:20px;line-height:1.7}
 .sub b{color:#1d1d1f}
-.grid{display:grid;grid-template-columns:repeat(COLS,BOXWpx);gap:18px;align-items:start;justify-content:start}
+/* 桌面墙把 1280 宽产物按 0.469 整体缩显示 ⇒ 一格只有 600px 宽；此时 justify-content:start
+   会把整列甩在左半边、右半屏空着（2026-09-22 实看查出；自检查的是链接，查不到版式）。
+   手机墙 3 列共 1224px 仍留在左缘（与列数匹配、不居中抖），桌面单列才居中。 */
+.grid{display:grid;grid-template-columns:repeat(COLS,BOXWpx);gap:18px;align-items:start;justify-content:COLALIGN}
 figure{background:#fff;border:1px solid #d2d2d7;border-radius:12px;overflow:hidden;width:BOXWpx}
 figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 10px;font-size:12.5px;font-weight:600;border-bottom:1px solid #e8e8ed}
 figcaption a{color:#007aff;text-decoration:none}
@@ -212,7 +215,7 @@ function buildWall(dir, rows, out, w, h, gateAt) {
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(out)}（${rows.length} 格 × ${w} 宽）</title>
 <style>
-${STYLE.replace(/COLS/g, String(cols)).replace(/BOXW/g, String(boxW))}
+${STYLE.replace(/COLS/g, String(cols)).replace(/BOXW/g, String(boxW)).replace(/COLALIGN/g, cols === 1 ? 'center' : 'start')}
 </style></head><body><div class="wrap">
 <h1>私家大厨验收墙 · ${rows.length} 格 × ${w} 宽（格高 ${h}）</h1>
 <div class="sub">每格是一份产物在 <b>${w} 宽</b>下的<b>真实渲染</b>（可交互、媒体查询按该宽生效）。点标题在新标签打开整页。
