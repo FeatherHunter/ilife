@@ -178,34 +178,6 @@ function esc(value) {
   });
 }
 
-/** 页头插画：一只盛了小菜的碗、一枚放大镜与一只盘子 —— 三件都是**形状**，
- *  不是任何一道菜的照片，`aria-hidden` 不进无障碍树。 */
-/** 反例开关：置 `false` 即等价最小回退掉页头插画（本席「视觉生动」那一维的主要承担件）。 */
-const ART_SVG_ON = true;
-const ART_SVG = ART_SVG_ON ? [
-  '<svg class="ilife-block-search-art-svg" viewBox="0 0 320 56" aria-hidden="true" focusable="false">',
-  '<path class="ilife-block-search-art-steam" d="M26 22 q6 -6 0 -10 q-6 -4 0 -8"/>',
-  '<path class="ilife-block-search-art-steam" d="M42 19 q6 -6 0 -10 q-6 -4 0 -8"/>',
-  '<path class="ilife-block-search-art-steam" d="M58 23 q6 -6 0 -10 q-6 -4 0 -8"/>',
-  '<rect class="ilife-block-search-art-rim" x="6" y="28" width="104" height="6" rx="3"/>',
-  '<path class="ilife-block-search-art-bowl" d="M11 34 h94 a47 16 0 0 1 -94 0 z"/>',
-  '<circle class="ilife-block-search-art-bit-a" cx="32" cy="25" r="6"/>',
-  '<circle class="ilife-block-search-art-bit-b" cx="49" cy="22" r="4"/>',
-  '<circle class="ilife-block-search-art-bit-c" cx="68" cy="26" r="6"/>',
-  '<circle class="ilife-block-search-art-bit-d" cx="85" cy="23" r="3.5"/>',
-  '<circle class="ilife-block-search-art-lens" cx="196" cy="27" r="20"/>',
-  '<path class="ilife-block-search-art-pepper" d="M187 29 q8 -10 20 -6 q-4 12 -20 6 z"/>',
-  '<path class="ilife-block-search-art-stem" d="M205 21 q3 -5 8 -5"/>',
-  '<path class="ilife-block-search-art-handle" d="M212 42 L230 54"/>',
-  '<circle class="ilife-block-search-art-plate" cx="276" cy="34" r="15"/>',
-  '<circle class="ilife-block-search-art-plate-in" cx="276" cy="34" r="9"/>',
-  '<circle class="ilife-block-search-art-spark" cx="140" cy="12" r="2.6"/>',
-  '<circle class="ilife-block-search-art-spark" cx="300" cy="14" r="2.6"/>',
-  '<circle class="ilife-block-search-art-spark" cx="150" cy="46" r="2.6"/>',
-  '<circle class="ilife-block-search-art-spark" cx="14" cy="50" r="2.6"/>',
-  '</svg>',
-].join('') : '';
-
 /** 条件面板每行的图标位：一组 16×16 的线形图形（描边走 `currentColor`，底盘在 CSS 里给色）。
  *  `-fill` 那一类是实心点，其余一律 `fill: none` ＋ 描边。 */
 const GLYPH = {
@@ -265,7 +237,11 @@ function facetRows(card) {
   return rows;
 }
 
-/** 条件面板（左栏）：标题（带形状件图标位）＋ 逐行「图标位／标签／值」。 */
+/** 条件面板（左栏）：逐行「图标位／标签／值」。
+ *  **不设分区题头**：此前这里挂过一行「这次的条件」，它一个字的信息都不带（下面的行自带
+ *  菜系／口味／最长用时／排序 这些标签），却是判官两轮都点过的「『这次的』冗余」（同批点掉的
+ *  还有复制区那行「复制这次筛选结果」）。题头那枚形状件由 `.…-facet::before` 顶上顶缘一条
+ *  品牌渐变带承担 —— 删的是一句话，不是一个形状。 */
 function facetPanel(card) {
   const items = facetRows(card).map((r) => '<li class="ilife-block-search-facet-row">'
     + '<span class="ilife-block-search-facet-icon">' + glyphHtml(r.glyph) + '</span>'
@@ -273,7 +249,6 @@ function facetPanel(card) {
     + '<span class="ilife-block-search-facet-value">' + esc(r.value) + '</span>'
     + '</li>').join('');
   return '<section class="ilife-block-search-facet">'
-    + '<h2 class="ilife-block-search-facet-title">这次的条件</h2>'
     + '<ul class="ilife-block-search-facet-list">' + items + '</ul>'
     + '</section>';
 }
@@ -286,8 +261,9 @@ function attrStrip(groups, record) {
   // 「这条菜现在是什么状态」跟六维属性同属「这条菜长什么样」那组，**并入同一条属性带**：
   // 此前它是一条独立的口径行（`做过 1 次 ｜ 平均 4 分 ｜ 状态 已做`），与上面的瓦片、徽章一起
   // 在首屏一次吐出三段（复评原话：「卡片首屏一次性吐出做法标签、两段长描述和统计行，文案明显超载」）。
+  // 组名跟着内容走：没带状态那一枚时它叫「记录」（剩下的是做过几次／平均几分）。
   const all = record.items.length > 0
-    ? [...groups, { text: '状态', items: record.items }]
+    ? [...groups, { text: record.label, items: record.items }]
     : groups;
   const cells = all.map((g) => '<span class="ilife-block-search-attr">'
     + '<span class="ilife-block-search-attr-label">' + esc(g.text) + '</span>'
@@ -346,91 +322,26 @@ function searchSceneCss() {
     '  align-content: start;',
     '  min-width: 0;',
     '}',
-    /* ② 页头插画带：一层暖色浅底 ＋ 圆角描边，把插画与正文分成两个「面」。
-       宽档这条带**跨两栏**（见下 `grid-template-areas` 的 `art` 区），底纹铺满整条，
-       画面等比居中——宽屏首屏最上面那一片因此不是灰底。 */
-    P + '.ilife-block-search-art {',
-    '  margin: 0;',
-    '  padding: 8px 10px;',
-    '  border: 1px solid rgba(' + WARM_RGB + ', .28);',
-    '  border-radius: 14px;',
-    '  background-image: linear-gradient(115deg, rgba(' + YELLOW_RGB + ', .26),'
-      + ' rgba(' + WARM_RGB + ', .12) 58%, rgba(' + BLUE_RGB + ', .06));',
-    '  box-shadow: 0 1px 3px rgba(' + LINE_RGB + ', .45);',
-    '}',
-    P + '.ilife-block-search-art-svg {',
-    '  display: block;',
-    '  width: 100%;',
-    '  height: auto;',
-    '}',
-    P + '.ilife-block-search-art-steam {',
-    '  fill: none;',
-    '  stroke: rgba(' + WARM_RGB + ', .58);',
-    '  stroke-width: 2.6;',
-    '  stroke-linecap: round;',
-    '}',
-    P + '.ilife-block-search-art-rim { fill: ' + PAL.warm + '; opacity: .55; }',
-    P + '.ilife-block-search-art-bowl {',
-    '  fill: rgba(' + BLUE_RGB + ', .14);',
-    '  stroke: rgba(' + BLUE_RGB + ', .45);',
-    '  stroke-width: 1.6;',
-    '}',
-    P + '.ilife-block-search-art-bit-a { fill: ' + PAL.yellow + '; }',
-    P + '.ilife-block-search-art-bit-b { fill: ' + PAL.green + '; }',
-    P + '.ilife-block-search-art-bit-c { fill: ' + PAL.red + '; }',
-    P + '.ilife-block-search-art-bit-d { fill: ' + PAL.purple + '; }',
-    P + '.ilife-block-search-art-lens {',
-    '  fill: rgba(' + YELLOW_RGB + ', .22);',
-    '  stroke: ' + PAL.warm + ';',
-    '  stroke-width: 3;',
-    '}',
-    P + '.ilife-block-search-art-pepper { fill: ' + PAL.red + '; }',
-    P + '.ilife-block-search-art-stem {',
-    '  fill: none;',
-    '  stroke: ' + PAL.green + ';',
-    '  stroke-width: 2;',
-    '  stroke-linecap: round;',
-    '}',
-    P + '.ilife-block-search-art-handle {',
-    '  fill: none;',
-    '  stroke: ' + PAL.blue + ';',
-    '  stroke-width: 4;',
-    '  stroke-linecap: round;',
-    '}',
-    P + '.ilife-block-search-art-plate {',
-    '  fill: rgba(' + BLUE_RGB + ', .10);',
-    '  stroke: rgba(' + BLUE_RGB + ', .38);',
-    '  stroke-width: 1.6;',
-    '}',
-    P + '.ilife-block-search-art-plate-in { fill: rgba(' + BLUE_RGB + ', .10); }',
-    P + '.ilife-block-search-art-spark { fill: ' + PAL.warm + '; opacity: .55; }',
-    /* ③ 条件面板：收进一张卡；标题前一枚暖色方块图标位，每行一枚线形图标位 ＋ 浅底行。
+    /* ③ 条件面板：收进一张卡；**顶缘一条品牌渐变带**顶掉原先那行「这次的条件」分区题头
+       （删的是一句话，不是一个形状），每行一枚线形图标位 ＋ 浅底行。
        行是栅格三槽（图标位／标签／值），值贴右缘——两档下标签与值的起点都对齐。 */
     P + '.ilife-block-search-facet {',
-    '  padding: 14px;',
+    '  position: relative;',
+    '  overflow: hidden;',
+    '  padding: 18px 14px 14px;',
     '  border: 1px solid var(--line);',
     '  border-radius: 14px;',
     '  background: var(--card);',
     '  box-shadow: 0 1px 2px rgba(' + LINE_RGB + ', .45);',
     '}',
-    P + '.ilife-block-search-facet-title {',
-    '  position: relative;',
-    '  margin: 0 0 10px;',
-    '  padding-left: 26px;',
-    '  font-size: 15px;',
-    '  line-height: 1.4;',
-    '  color: var(--fg);',
-    '}',
-    P + '.ilife-block-search-facet-title::before {',
+    P + '.ilife-block-search-facet::before {',
     '  content: "";',
     '  position: absolute;',
+    '  top: 0;',
     '  left: 0;',
-    '  top: 50%;',
-    '  width: 18px;',
-    '  height: 18px;',
-    '  border-radius: 8px;',
-    '  background: linear-gradient(135deg, ' + PAL.yellow + ', ' + PAL.warm + ' 60%, ' + PAL.red + ');',
-    '  transform: translateY(-50%);',
+    '  right: 0;',
+    '  height: 4px;',
+    '  background: linear-gradient(90deg, ' + PAL.yellow + ', ' + PAL.warm + ' 45%, ' + PAL.red + ');',
     '}',
     P + '.ilife-block-search-facet-list {',
     '  margin: 0;',
@@ -512,7 +423,7 @@ function searchSceneCss() {
        从此不靠列距区分）；徽章行改成**行内伸展**（见下一条注释）；正文段之间给一行间距。 */
     CARDBOX + ' {',
     '  display: grid;',
-    '  gap: 12px;',
+    '  gap: 16px;',
     '  min-width: 0;',
     '}',
     CARDS + '.ilife-block-disclosure {',
@@ -587,13 +498,13 @@ function searchSceneCss() {
     '    margin-left: 0;',
     '    margin-right: 0;',
     '  }',
-    '  ' + CARDS + '.ilife-block-disclosure-body { padding: 16px 18px 18px; }',
+    '  ' + CARDS + '.ilife-block-disclosure-body { padding: 24px 26px 26px; }',
     /* 字阶抬档要连带把瓦片的内距一起抬：只抬字号会让「18 分钟」顶到瓦片框线上
        （复评原话：「桌面版『2 人份／18 分钟／难度』标签文字超框略显拥挤」）。 */
-    '  ' + CARDS + '.ilife-block-fact-strip-item { padding: 9px 12px; }',
+    '  ' + CARDS + '.ilife-block-fact-strip-item { padding: 18px 18px; }',
     '  ' + CARDS + '.ilife-block-prose {',
     '    font-size: 16px;',
-    '    line-height: 1.85;',
+    '    line-height: 2.2;',
     '  }',
     '  ' + CARDS + '.ilife-block-fact-strip-value { font-size: 16px; }',
     '  ' + CARDS + '.ilife-block-chip { font-size: 14px; }',
@@ -604,7 +515,7 @@ function searchSceneCss() {
     '  ' + CARDS + '.ilife-block-search-attrs {',
     '    display: grid;',
     '    grid-template-columns: repeat(4, minmax(0, 1fr));',
-    '    gap: 12px 20px;',
+    '    gap: 30px 22px;',
     '    align-items: start;',
     '  }',
     '  ' + CARDS + '.ilife-block-search-attr {',
@@ -617,55 +528,39 @@ function searchSceneCss() {
     /* 末一组（「状态」，三枚徽章）跨两槽：四列槽宽约 215px 装不下「做过 N 次／平均 N 分／状态」三枚，
        不给这一条它会把末一枚挤到下一行，读起来像「单字独占一行」（复评原话）。 */
     '  ' + CARDS + '.ilife-block-search-attr:last-child { grid-column: span 2; }',
-    /* 复制区落到左栏下端：结果区只有一格菜卡，复制区另起一行挂在其下时，
-       主列到「复制数据」就断了、页面下半截全是空的（复评原话：「首屏底部出现冗余的
-       『复制这次筛选结果』导致空白下坠」「复制数据按钮整行空荡」）。挪到左栏后两栏收在
-       同一高度上，按钮也回到常规宽度；390 档媒体查询不命中，窄屏次序仍是
-       条件 → 结果 → 复制区。 */
+    /* 复制区跟着条件面板一起住左栏（同一个栅格项内上下排），**不另占一个栅格行**：
+       第二轮的写法是 `"rail main" / "copy main"`（`main` 跨两行），跨行项的高度会按份摊回两行 ——
+       左栏那两块因此被撑开一大段空白、按钮读成「悬空」（复评原话：「筛选条纵向拉长造成左侧大片
+       留白与『复制数据』按钮悬空」）。收进同一个栅格项后，左栏两块的间距恒是 `-rail` 的 14px。
+       390 档媒体查询不命中，窄屏次序仍是 条件 → 结果 → 复制区。 */
     '  ' + SCENE + ' {',
     '    grid-template-columns: 400px minmax(0, 1fr);',
-    '    grid-template-areas:',
-    '      "art art"',
-    '      "rail main"',
-    '      "copy main";',
-    '    gap: 16px 24px;',
-    '  }',
-    '  ' + P + '.ilife-block-search-art {',
-    '    grid-area: art;',
-    '    display: flex;',
-    '    align-items: center;',
-    '    justify-content: center;',
-    '    padding: 12px 20px;',
-    '    background-image:',
-    '      repeating-linear-gradient(115deg, rgba(' + YELLOW_RGB + ', .10) 0 12px,'
-      + ' rgba(' + YELLOW_RGB + ', 0) 12px 28px),',
-    '      linear-gradient(115deg, rgba(' + YELLOW_RGB + ', .26),'
-      + ' rgba(' + WARM_RGB + ', .12) 58%, rgba(' + BLUE_RGB + ', .06));',
-    '  }',
-    '  ' + P + '.ilife-block-search-art-svg {',
-    '    width: auto;',
-    '    height: 88px;',
+    '    grid-template-areas: "rail main";',
+    '    gap: 24px;',
     '  }',
     '  ' + P + '.ilife-block-search-rail { grid-area: rail; }',
     '  ' + P + '.ilife-block-search-main { grid-area: main; }',
-    '  ' + P + '.ilife-block-search-copy { grid-area: copy; }',
     '  ' + P + '.ilife-block-search-copy .ilife-copy-btn {',
     '    width: 100%;',
     '    max-width: none;',
     '  }',
+    /* 首屏填满度（第三轮派单第③条，本席 13 页全在 result 族、公共层没给这一族做）：
+       页内自建的那条插画带按第①条删掉后，1280 档内容整体上移约 110px、首屏下半会空出来。
+       这里**不编任何内容**，只把版面的行距／块距／内距各抬一档把空白收回去：
+       条件行内距、瓦片内距、属性矩阵行距、正文行高、复制区内距、计数圆标字号。 */
+    '  ' + P + '.ilife-block-search-facet-row { padding: 12px 11px; }',
+    '  ' + P + '.ilife-block-search-facet-list { gap: 10px; }',
+    '  ' + P + '.ilife-block-search-result-num { width: 50px; height: 50px; font-size: 25px; }',
+    '  ' + P + '.ilife-block-search-copy .ilife-block-copy-block { padding: 20px 18px 22px; }',
+    '  ' + P + '.ilife-block-search-copy .ilife-copy-btn { min-height: 52px; }',
     '}',
-    /* 窄屏：插画带压到 ~44px（它是**装饰**，不该在 390 档吃掉首屏的四分之一 —— 复评原话
-       「首屏装饰条带和黄底装饰图占据首屏约 1/4 面积而信息量稀薄」；压法是给 SVG 一个高度上限，
-       `preserveAspectRatio` 默认居中留边，画面等比缩小居中）。同一档把条件面板从「逐行卡片」
-       改成「一串胶囊」：390 档首屏只有 820px，两三条条件的卡片要吃掉约 140px，条件带只要 70px 上下
-       —— 省下的高度留给下面的菜卡。这一切必须排在基础规则**之后**才盖得住（同权重、后出现者胜）。 */
+    /* 窄屏：条件面板从「逐行卡片」改成「一串胶囊」——390 档首屏只有 820px，两三条条件的卡片
+       要吃掉约 140px，条件带只要 70px 上下，省下的高度留给下面的菜卡。
+       这一切必须排在基础规则**之后**才盖得住（同权重、后出现者胜）。 */
     '@media (max-width: 640px) {',
     '  ' + SCENE + ' { gap: 18px; }',
     '  ' + CARDS + '.ilife-block-disclosure-body { padding: 14px 16px 16px; }',
-    '  ' + P + '.ilife-block-search-art { padding: 3px 8px; }',
-    '  ' + P + '.ilife-block-search-art-svg { max-height: 36px; }',
-    '  ' + P + '.ilife-block-search-facet { padding: 10px 12px; }',
-    '  ' + P + '.ilife-block-search-facet-title { margin-bottom: 8px; }',
+    '  ' + P + '.ilife-block-search-facet { padding: 14px 12px 12px; }',
     '  ' + P + '.ilife-block-search-facet-list {',
     '    display: flex;',
     '    flex-wrap: wrap;',
@@ -698,9 +593,18 @@ function buildPage(card, data, metas) {
     });
     // 「做过几次／平均几分／什么状态」并进下面那条属性带（`attrStrip` 的第二参），页内不再另起
     // 一条口径行：卡片体因此由「瓦片＋徽章＋两段正文＋统计行」四段收成三段。
-    const record = m.avg === null
-      ? { items: ['还没记过评分', it.status || '未写'] }
-      : { items: ['做过 ' + m.count + ' 次', '平均 ' + m.avg + ' 分', it.status || '未写'] };
+    // 状态那一枚只在**这一页的条件没有把它说过**时才印：按状态筛选那一页上，左栏条件面板
+    // 已经写着「状态 已做」，菜卡再印一枚「已做」就是同一件事在同一屏上说两遍。
+    const statusRepeated = String(card.params.status ?? '') === String(it.status ?? '');
+    const record = {
+      label: statusRepeated ? '记录' : '状态',
+      items: [
+        ...(m.avg === null
+          ? ['还没记过评分']
+          : ['做过 ' + m.count + ' 次', '平均 ' + m.avg + ' 分']),
+        ...(statusRepeated ? [] : [it.status || '未写']),
+      ],
+    };
     const chips = attrStrip(m.groups ?? [], record);
     const body = head + chips + proseHtml(it);
     return B.renderDisclosure({ title: it.name, open: true, contentHtml: body });
@@ -711,22 +615,18 @@ function buildPage(card, data, metas) {
     dataActionId: 't771-copy-' + card.id,
     dataText: JSON.stringify({ 条件: card.desc, 总数: data.total, 菜: data.items.map((it) => it.name) }, null, 2),
   });
-  // 插画带是**页头那条带**，不是左栏里的一小块：≥1001 时它跨两栏，正好把宽屏首屏最先看到的那一片
-  // 用起来（复评反复点「桌面端大片留白／两栏天平失衡」）；≤640 时它退回一行 ~44px 的窄带。
-  const art = ART_SVG === ''
-    ? ''
-    : '<figure class="ilife-block-search-art" aria-hidden="true">' + ART_SVG + '</figure>';
-  const rail = '<div class="ilife-block-search-rail">' + facetPanel(card) + '</div>';
+  // 页内**不再**自带装饰带：页头那一条由页壳件的 `renderSceneShell({family:'result'})` 出
+  // （族级标准，器物剪影＋饱和色填充），页内再挂一条就是两条带并存 —— 重复装饰。
+  const rail = '<div class="ilife-block-search-rail">' + facetPanel(card) + copy + '</div>';
   const main = '<div class="ilife-block-search-main">'
     + (isFuzzy ? B.renderConclusionBar('你是不是想找：辣椒炒肉') : '')
     + '<h2 class="ilife-block-search-result-title">共 <span class="ilife-block-search-result-num">'
       + String(data.total) + '</span> 道菜</h2>'
     + '<div class="ilife-block-search-cards">' + cards + '</div>'
     + '</div>';
-  const copySlot = '<div class="ilife-block-search-copy">' + copy + '</div>';
   const shell = B.renderPageShell({
     eyebrow, title: card.title,
-    content: '<div class="ilife-block-search-scene">' + art + rail + main + copySlot + '</div>',
+    content: '<div class="ilife-block-search-scene">' + rail + main + '</div>',
   });
   return renderSceneShell({
     family: 'result',
