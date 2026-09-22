@@ -4,6 +4,14 @@
 
 ## Agent skills
 
+### ISSUE 创建纪律（宁少勿多）
+
+**默认不建。** 只有当场能写出「一条跑得红的命令」的事才建 issue；想法、改进、看不顺眼的、拿不准的，一律写进文档，不占票。
+
+建之前过 `docs/agents/编排纪律.md` 第十条的三问（能复现／有现存票或 MAP 可认领／是已承诺的目标），**三问全过**才建；有现存票就回写那张，不另起新票。票建完回头自检一遍：过不了三问的自己关掉。
+
+违反：拿不准就建票，事后没人认领——那张票只制造噪音，建来做什么。
+
 ### Issue tracker
 
 Issue tracker（`gh` CLI）：建／读／评论／打标签／关 issue、外部 PR 分流、技能说 publish／fetch 时的转译、`/wayfinder` 的 map／child／blocking／frontier —— 见 `docs/agents/issue-tracker.md`。
