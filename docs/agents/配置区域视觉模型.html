@@ -37,6 +37,7 @@
   --ic-accent-ink:    var(--dsw-alias-label-primary-foreground, #0f1115);
   --ic-ok:            var(--dsw-alias-state-success-primary, #4ec9a0);
   --ic-attn:          var(--dsw-alias-state-warn-primary, #e0a33e);
+  --ic-danger:        var(--dsw-alias-state-error-primary, #e0685f);
   --ic-attn-ink:      color-mix(in srgb, var(--ic-attn) 18%, #000);   /* 铺面上的深字，跟任何主题都不会反过来 */
   --ic-warn:          var(--dsw-alias-state-warn-primary, #e0a33e);
   --ic-bad:           var(--dsw-alias-state-error-primary, #e0685f);
@@ -148,18 +149,24 @@
 /* ② 脏输入框：2px 状态黄描边 + 一圈同色外发光 */
 .ic-master input.is-dirty{border:2px solid var(--ic-attn);padding:4px 7px;
   box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-attn) 22%, transparent)}
-/* ③ 脏态动作条：**整条实心**（不是深底 + 1px 彩边——那读起来像装饰）。
-   吸底是因为真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上。 */
-.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
+/* ②③ 需要你行动的动作条（未保存 / 待确认）：**整条实心**。
+   细描边 + 小号彩字在深色底上只算装饰；抓眼睛的是色块面积。
+   吸底是因为真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上。
+   两个状态共用同一个形制（③ 的「确认写入」跟 ② 一样是等你拍板的一刻，没理由更弱）。 */
+.ic-attnbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
   border:0;border-radius:9px;background:var(--ic-attn);color:var(--ic-attn-ink);
   position:sticky;bottom:6px;z-index:3;
   box-shadow:0 10px 28px rgba(0,0,0,.62)}
-.ic-dirty .ic-dtxt{color:var(--ic-attn-ink);font-size:13px;font-weight:650}
-.ic-dirty .ic-dacts{margin-left:auto;display:flex;gap:6px}
+.ic-attnbar .ic-dtxt{color:var(--ic-attn-ink);font-size:13px;font-weight:650}
+.ic-attnbar .ic-dacts{margin-left:auto;display:flex;gap:6px}
+/* ③ 的条**不吸底**：它必须跟上面那份写入预览捆在一起看。
+   吸底会把预览那几行盖住（本版实测踩到），而预览正是点「确认写入」前唯一要看的东西。
+   真实现里吸底那条（②）还要给配置容器留出底部内边距，别让最后一行永远躲在条下面。 */
+.ic-attnbar.is-static{position:static;box-shadow:none}
 /* 实心条里的按钮要反色，否则按钮跟条同色＝看不见 */
-.ic-dirty .ic-btn{background:transparent;color:var(--ic-attn-ink);
+.ic-attnbar .ic-btn{background:transparent;color:var(--ic-attn-ink);
   border-color:color-mix(in srgb, var(--ic-attn-ink) 45%, transparent)}
-.ic-dirty .ic-btn.is-primary{background:var(--ic-attn-ink);border-color:var(--ic-attn-ink);
+.ic-attnbar .ic-btn.is-primary{background:var(--ic-attn-ink);border-color:var(--ic-attn-ink);
   color:var(--ic-attn);font-weight:600}
 /* ④ 跟随行：同族色，但**只上色不铺面**（面积分级：实心条/徽标是主信号，细字是附属说明） */
 .ic-follow{font-size:11px;color:var(--ic-attn);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
@@ -176,6 +183,9 @@
   box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-ok) 16%, transparent)}
 .ic-done .ic-dtxt{color:var(--ic-ok);font-size:12.5px;font-weight:600}
 .ic-done .ic-dacts{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* 「撤销」是往回退的一步——用危险色，跟绿色的「已保存」拉开，一眼分得清哪个是"退" */
+.ic-done .ic-undo{color:var(--ic-danger);font-weight:600;cursor:pointer}
+.ic-done .ic-cd{color:var(--ic-danger);opacity:.85;font-size:11.5px;font-variant-numeric:tabular-nums}
 .ic-toast{display:flex;gap:9px;align-items:center;margin-top:10px;padding:9px 12px;
   border:1px solid var(--ic-line-strong);border-radius:8px;background:var(--ic-raised);font-size:12px}
 .ic-toast .ic-undo{margin-left:auto;color:var(--ic-accent);cursor:pointer}
@@ -537,20 +547,22 @@ function applyFast(){
       <button class="ic-btn">重新读取</button>
       <span class="ic-note">没有未保存的改动</span></div>`;
   if (st === 'dirty'){
-    fill('bar', `<div class="ic-dirty"><span class="ic-dtxt">1 项改动还没保存</span>
+    fill('bar', `<div class="ic-attnbar"><span class="ic-dtxt">1 项改动还没保存</span>
       <span class="ic-dacts"><button class="ic-btn is-primary">保存这 1 项</button><button class="ic-btn">放弃</button></span></div>`);
   } else if (st === 'confirm'){
+    /* ③ 先给写入预览（深色、像代码），底下一条跟 ② 同形制的实心条——同样是等你拍板的一刻 */
     fill('bar', `<div class="ic-dif">
         <div class="ic-dh">保存后要写入 ${esc(s.configFile)} 的这一行</div>
         <div class="ic-dl ic-del">-  ${esc(ed.key)}      ${esc(master ? master.value : '')}</div>
         <div class="ic-dl ic-add">+  ${esc(ed.key)}      ${esc(ed.to)}</div></div>
-      <div class="ic-bar"><button class="ic-btn is-primary">确认写入</button><button class="ic-btn">改回去</button>
-      <button class="ic-btn is-ghost">先备份再写</button></div>`);
+      <div class="ic-attnbar is-static"><span class="ic-dtxt">即将写入 1 行到配置文件</span>
+        <span class="ic-dacts"><button class="ic-btn is-primary">确认写入</button>
+        <button class="ic-btn">改回去</button><button class="ic-btn">先备份再写</button></span></div>`);
   } else if (st === 'saved'){
     /* ④ 只留一条：成功回执**替掉**普通动作条（上一版两条相似的横条叠着，像重复噪声） */
     fill('bar', `<div class="ic-done"><span class="ic-dtxt">已保存 · 写入 bill.yaml（原文件备份为 .bak）</span>
       <span class="ic-dacts"><button class="ic-btn">重新读取</button>
-      <span class="ic-undo">撤销</span><span class="ic-note" style="margin-left:0">5s</span></span></div>`);
+      <span class="ic-undo">撤销</span><span class="ic-cd">5s</span></span></div>`);
   } else {
     fill('bar', baseBar);
   }
