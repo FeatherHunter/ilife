@@ -137,9 +137,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + (weather ? '<span>天气' + escapeHtml(weather) + '</span>' : '')
     + '</div>';
 
+  // #886：复制区提到「有没有搭配可选」的分支之外——数据位与日志位都不再随空态消失。
+  // 原来两样都关在 `else` 里，空衣橱时这页连一条复制通道都没有（`scaffold.test.mjs` ⑥ 门实测点名）。
+  // 数据位给的是本页信封本身（空结果也是本页的数据，转 JSON／CSV 仍然是可机器读的一份）；
+  // 同批 45 族的空态分支也照这个口径——复制区不跟着内容多少开合。
+  const copyZone = homeCopyArea({
+    data: { envelope: env },
+    log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+  });
   let designed = '';
   if (!sets.length) {
-    designed = '<div class="of-empty">衣橱还没有可搭配的衣物，先去录入几件再来挑选今日穿搭</div>';
+    designed = '<div class="of-empty">衣橱还没有可搭配的衣物，先去录入几件再来挑选今日穿搭</div>'
+      + copyZone;
   } else {
     const first = sets[0];
     const slotRows = SLOT_ORDER.filter((k) => first.slots[k]).map((k) => {
@@ -166,10 +175,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '</div>'
       + '<div class="of-pager"><button class="of-btn" id="ofPrev">上一套</button><span id="ofCount">第1套共' + sets.length + '套</span><button class="of-btn" id="ofNext">换一套</button></div>'
       + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">今天穿这套</button></div>'
-      + homeCopyArea({
-        data: { envelope: env },
-        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      }) + '</div>'
+      + copyZone + '</div>'
       + (gap.length ? '<div class="of-gap">衣橱缺口：' + gap.map(escapeHtml).join(' ') + '暂无匹配</div>' : '');
   }
 

@@ -131,6 +131,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   }
   distHtml += '</div>';
 
+  // #886：复制区提到「闲置清单空不空」的分支之外——空态下也留数据位与日志位（口径同同批 45 族：
+  // 复制区不跟着内容多少开合）。原来两样都关在 `else` 里，空态这页一条复制通道都没有
+  // （`scaffold.test.mjs` ⑥ 门实测点名 outfit_picker／wardrobe_analyze／wardrobe_season 三族）。
+  const copyZone = homeCopyArea({
+    data: { envelope: env },
+    log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+  });
   let dormantHtml = '<div class="of-card"><h2>闲置清单</h2>';
   if (!dormant.length) dormantHtml += '<div class="of-empty">衣橱状态良好，没有长期闲置衣物</div>';
   else {
@@ -149,13 +156,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '</table></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofDrop">标记废弃</button>'
       + '<button class="of-btn" id="ofGive">送人</button><button class="of-btn" id="ofHold">先不处理</button>'
-      + '<button class="of-btn" id="ofShop">加入购物清单</button></div>'
-      + homeCopyArea({
-        data: { envelope: env },
-        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      });
+      + '<button class="of-btn" id="ofShop">加入购物清单</button></div>';
   }
-  dormantHtml += '</div>';
+  dormantHtml += copyZone + '</div>';
 
   const adviceHtml = advice ? '<div class="of-card"><h2>智能建议</h2><div class="of-advice">' + escapeHtml(advice) + '</div></div>' : '';
 

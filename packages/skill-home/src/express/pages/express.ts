@@ -162,8 +162,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
     + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
     + 'function xReceive(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选收到的物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我确认收货："+names+" 编号["+ids+"]");}'
-    + 'function xCopyData(){}'
-    + 'function xCopyLog(){}'
+    // #886：`xCopyData`／`xCopyLog` 两个空壳随复制区一起删——本页复制数据／复制日志已由
+    // `homeCopyArea` 出（三格式菜单＋六段日志），这两颗 `function (){}` 没有任何调用方。
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。

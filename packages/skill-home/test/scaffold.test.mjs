@@ -1,9 +1,10 @@
 // 票 #805 · 脚手架装配契约测试（验收命令见票面）。
 //
-// 断三件事（46 族逐族）：
+// 断四件事（46 族逐族）：
 // ① 生成的骨架能被**真命令链**渲染（spawn 真 `home-cmd-read`，不是只跑 lint）；
 // ② 带齐契约要求的块位（四组 `data-block`＋每块 `data-need` 原文在位）；
-// ③ 三方对账（页模块／登记表／契约附录走散即红），两层解析现场复核。
+// ③ 三方对账（页模块／登记表／契约附录走散即红），两层解析现场复核；
+// ④ 复制区口径（#886）：数据位＝共用件的三格式菜单，日志位＝共用件的六段（豁免只一族，见下）。
 //
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`
 // （页模块经 `dist/<域>/pages/<族>.js` 进入本用例）。
@@ -15,12 +16,24 @@ import { mkdtempSync, readdirSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+// #886 复制区口径门的两个真相源都取公共层冻结常量（不在这里抄第二份格式名与段名）。
+import { LOG_SECTIONS, LOG_SECTION_TITLES } from 'base-paint';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = join(here, '..');
 const repoRoot = join(pkgDir, '..', '..');
 const bin = join(pkgDir, 'dist', 'cli', 'cmd_read.js');
 const appendix = JSON.parse(readFileSync(join(repoRoot, 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
+
+/** #886 复制数据三格式菜单的**红线豁免族**：只有密码红线一族。
+ *
+ *  为什么它可以是例外：`accounts` 的数据位取的是 `home.ticket.write` 回执信封，而看密码那条
+ *  回执的 `message` 逐字含明文口令（取数侧 `src/receipt/ticket.ts:139`：`'密码：' + plain + …`），
+ *  `buildDataText` 会把 `message` 原样打进复制载荷——与本页件头写的「明文永不进页（含可见文本、
+ *  复制载荷、预埋摘要）」直接冲突。故该族数据位保持原样（一颗自带载荷的操作按钮，点得动），
+ *  日志位照走共用件（日志第 1 段只派生 `skill`／`key`／`shape`，不含 `message`）。
+ *  这不是「判据为好看让步」：豁免只此一族、理由可复算，其余 45 族一位不让。 */
+const COPY_AREA_RED_LINE_EXEMPT = new Set(['accounts']);
 
 let HOME = '';
 const homeEnv = () => ({ ...process.env, USERPROFILE: HOME, HOME });
@@ -173,6 +186,29 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
           /\[data-t\]/.test(js) || /dataset\.t\b/.test(js) || withOnclick === dtBtns,
           fam.family + ' 有 ' + dtBtns + ' 颗 data-t 按钮却没绑处理函数（点了没反应）',
         );
+      }
+      // ⑥ #886 复制区口径门（逐族点名）：复制数据走共用件的**三格式菜单**（纯文本／JSON／CSV
+      //    三选一），复制日志走共用件的**六段**。两条都在这里按族查上屏产物——
+      //    共用件自己的单测（`copy-area-886.test.mjs`）只证明「件」对，证明不了「这一族真的接上了件」；
+      //    少了这一条，某一族把数据位退回单格式（或漏掉日志位）时四道门全绿。
+      //    豁免见 `COPY_AREA_RED_LINE_EXEMPT`：只有密码红线一族（理由与取数证据写在
+      //    `src/receipt/pages/accounts.ts` 件头），它的数据位不得出 envelope 投影。
+      // 日志位：**按六段段名查**，不查「复制日志」这四个字——那四个字在每族的必需块
+      //  `operations` 里本就有一份（`data-need` 属性），拿它当判据等于永远绿。
+      for (const seg of LOG_SECTIONS) {
+        const title = LOG_SECTION_TITLES[seg];
+        assert.ok(
+          html.includes(title),
+          fam.domain + '/' + fam.family + ' 复制日志缺段：' + title + '（没有可复制数据时也要留日志位：日志讲这一页由哪条命令渲染）',
+        );
+      }
+      if (!COPY_AREA_RED_LINE_EXEMPT.has(fam.family)) {
+        for (const k of ['text', 'json', 'csv']) {
+          assert.ok(
+            html.includes('data-fmt="' + k + '"'),
+            fam.domain + '/' + fam.family + ' 复制区缺三格式菜单项 data-fmt="' + k + '"（数据位退回单格式）',
+          );
+        }
       }
     });
   }

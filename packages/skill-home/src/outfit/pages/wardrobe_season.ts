@@ -136,6 +136,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + (places.length ? '' : '<option>自定义（复制回执时填）</option>')
     + '</select></div></div>';
 
+  // #886：复制区提到「这一季有没有衣物」的分支之外（口径同同批 45 族：复制区不跟着内容多少开合）。
+  // 原来两样都关在 `else` 里，空清单这页一条复制通道都没有（`scaffold.test.mjs` ⑥ 门实测点名三族）。
+  const copyZone = homeCopyArea({
+    data: { envelope: env },
+    log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+  });
   let listHtml = '<div class="of-card"><h2>' + escapeHtml(season) + '衣物清单</h2>';
   if (!items.length) {
     listHtml += '<div class="of-empty">没有带「' + escapeHtml(season) + '」标签的在家衣物，建议先给衣物打季节标签再来换季</div>';
@@ -146,13 +152,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '<div class="of-loc"><span class="of-lb">位置</span>'
       + (x.location !== '' ? locSegs(x.location) : '<span class="of-seg">未记</span>') + '</div></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn" id="ofAll">全选切换</button>'
-      + '<button class="of-btn primary" id="ofGo">确认' + action + '</button></div>'
-      + homeCopyArea({
-        data: { envelope: env },
-        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      });
+      + '<button class="of-btn primary" id="ofGo">确认' + action + '</button></div>';
   }
-  listHtml += '</div>';
+  listHtml += copyZone + '</div>';
 
   const payload = JSON.stringify({ season, action, items }).replace(/</g, '\\u003c');
   const js = '<script>'

@@ -174,8 +174,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'function xFix(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要修正的物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我修正物品实际数量："+names+" 编号["+ids+"] 修正后数量___");}'
     + 'function xThr(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要设置阈值的物品");return;}var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我设置囤货阈值："+names+" 阈值___");}'
     + 'function xOneThr(b){xCopy("请加载居家管家技能，帮我设置囤货阈值："+b.getAttribute("data-name")+" 编号["+b.getAttribute("data-id")+"] 阈值___");}'
-    + 'function xCopyData(){}'
-    + 'function xCopyLog(){}'
+    // #886：`xCopyData`／`xCopyLog` 两个空壳随复制区一起删（本页复制数据／复制日志已由
+    // `homeCopyArea` 出：三格式菜单＋六段日志），这两颗 `function (){}` 没有调用方。
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
