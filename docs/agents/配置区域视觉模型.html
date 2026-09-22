@@ -96,17 +96,24 @@
 .ic-num{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ic-text);background:var(--ic-raised);
   border:1px solid var(--ic-line-strong);border-radius:6px;padding:1px 9px;white-space:nowrap}
 
-/* 状态行（飞书 CLI）：不是配置项，所以长相也不该是一条配置行 */
+/* 状态行（飞书 CLI）：不是配置项，所以长相也不该是一条配置行。
+   三行各管一件事：① 结论（短、不截断）② 证据（路径，中间省略、可复制）③ 指引（官网）。
+   教训：结论与证据塞进同一句话、长路径夹在中间 ⇒ 省略号会正好截掉结论（维护者现场逮到）。 */
 .ic-status{margin-top:11px;padding:10px 12px;background:var(--ic-sunken);
   border:1px solid var(--ic-line-strong);border-radius:8px}
-.ic-status .ic-srow{display:flex;align-items:center;gap:8px;font-size:12px}
+.ic-status .ic-srow{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
 .ic-status .ic-dot{width:8px;height:8px;border-radius:50%;background:var(--ic-faint);flex:0 0 auto}
 .ic-status .ic-dot.is-ok{background:var(--ic-ok)}
 .ic-status .ic-dot.is-warn{background:var(--ic-warn)}
 .ic-status .ic-dot.is-bad{background:var(--ic-bad)}
 .ic-status .ic-sname{font-weight:600;white-space:nowrap}
-.ic-status .ic-stxt{color:var(--ic-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ic-status .ic-url{display:block;margin-top:6px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);cursor:pointer}
+.ic-status .ic-stxt{color:var(--ic-muted);min-width:0}          /* 结论：整句换行，绝不省略 */
+.ic-status .ic-sfind{display:flex;align-items:center;gap:8px;margin-top:7px}
+.ic-status .ic-spath{font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);
+  min-width:0;white-space:nowrap}
+.ic-status .ic-ver{font-size:10px;color:var(--ic-faint);border:1px solid var(--ic-line-strong);
+  border-radius:999px;padding:0 6px;white-space:nowrap}
+.ic-status .ic-url{display:block;margin-top:7px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);cursor:pointer}
 .ic-status .ic-url:hover{color:var(--ic-accent)}
 
 .ic-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--ic-line)}
@@ -238,7 +245,8 @@ const SURFACES = {
     ],
     advanced:[],
     status:{ name:'飞书 CLI', level:'warn',
-      text:'找到了 ' + D.user + '\\.local\\bin\\lark-cli.cmd，但还没登录或没拿到 task 域授权',
+      verdict:'还没登录，或没拿到 task 域授权',
+      found:D.user+'\\.local\\bin\\lark-cli.cmd',
       url:'飞书CLI官网为：https://www.feishu.cn/feishu-cli' }
   },
   schedule: {
@@ -253,7 +261,8 @@ const SURFACES = {
     ],
     advanced:[],
     status:{ name:'飞书 CLI', level:'ok',
-      text:'已登录且 task 域可写：' + D.user + '\\.local\\bin\\lark-cli.cmd（0.8.2）',
+      verdict:'已登录，task 域可写',
+      found:D.user+'\\.local\\bin\\lark-cli.cmd', ver:'0.8.2',
       url:'飞书CLI官网为：https://www.feishu.cn/feishu-cli' }
   },
   home: {
@@ -287,6 +296,13 @@ const SURFACES = {
 };
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* 路径类一律「中间省略」：保住盘符与文件名两头——文件名才是识别信息。
+   真实现里同一个函数用（React 那边也是切字符串，不是靠 CSS text-overflow）。 */
+function mid(s, keep){
+  if (s.length <= keep) return s;
+  const head = Math.ceil((keep - 1) / 2), tail = Math.floor((keep - 1) / 2);
+  return s.slice(0, head) + '…' + s.slice(s.length - tail);
+}
 const rowKey = r => r.kind + '|' + r.label;
 const allRows = s => [].concat(s.common, ...s.common.map(m => m.children || []), s.advanced);
 
@@ -320,6 +336,9 @@ function statusShell(st){
       <span class="ic-sname">${esc(st.name)}</span>
       <span class="ic-stxt" data-slot="stxt">检测中…</span>
       <button class="ic-btn is-mini" style="margin-left:auto">复制安装指引</button></div>
+    <div class="ic-sfind"><span class="ic-spath" data-slot="spath"><span class="ic-sk" style="width:180px"></span></span>
+      <span class="ic-ver" data-slot="sver" hidden></span>
+      <button class="ic-btn is-mini" style="margin-left:auto">复制路径</button></div>
     <span class="ic-url">${esc(st.url)}</span>
   </div>`;
 }
@@ -407,7 +426,14 @@ function applySlow(){
     fill('dot', '');                                  // 占位点换成真灯
     const dot = frame.querySelector('[data-slot="dot"]');
     if (dot) dot.className = 'ic-dot is-' + s.status.level;
-    fill('stxt', esc(s.status.text));
+    fill('stxt', esc(s.status.verdict));              // 结论：短句，整句显示
+    fill('spath', esc(mid(s.status.found, 46)));      // 证据：路径中间省略，两头保住
+    const p = frame.querySelector('[data-slot="spath"]');
+    if (p) p.title = s.status.found;                  // 悬停看全
+    if (s.status.ver){
+      const v = frame.querySelector('[data-slot="sver"]');
+      if (v){ v.hidden = false; v.textContent = s.status.ver; }
+    }
   }
 }
 
