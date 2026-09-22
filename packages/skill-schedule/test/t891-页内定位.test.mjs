@@ -1,11 +1,15 @@
-/** #891 页内定位用例：**判据本身**（长页出页内目录 ＋ 每颗 `<h2>` 段名一条条目 ＋ 锚点吃定位避让）。
+/** #891 页内定位用例：**判据本身**（长页出页内目录 ＋ 每一小节一条条目 ＋ 锚点吃定位避让）。
  *
  *  运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-schedule --force`（用例读 `dist/**`），
  *  再 `node --test --test-concurrency=1 packages/skill-schedule/test/t891-页内定位.test.mjs`。
  *
  *  **测的是外部行为**：只读渲染出来的 HTML（目录块、条目数、锚点落点、样式表里那条避让声明），
  *  不测 `pageNav` 的内部实现。判据的唯一一处定义地在 `src/shared/pageNav.ts` 的 `SECTION_TOC_MIN`，
- *  本件按它逐页对照：**小节数 ＝ 页内 `<h2>` 数**（与 #891 票面现状表的读数同口径）。
+ *  本件按它逐页对照：**小节数 ＝ 页壳正文里带 `id="sec-N"` 的 `<section>` 数**（＝ `pageSections` 里给了
+ *  `navText` 的那几段，也就是目录条目数）。
+ *  ⚠️ #906 改口径（据实）：原来是数**页内 `<h2>` 数**，与 #891 票面现状表同源；但 `pageNav.ts` 的判据
+ *  写的是「小节＝带 `navText` 的那一段」，从来没规定那一段里必须有 `<h2>` —— 复制区那行小标题（#906 删掉的那行）
+ *  一走，数 `<h2>` 就假红（今天总结满档：目录 3 条／`<h2>` 2 颗）。数 `<section id="sec-N">` 才对得上判据本身。
  *
  *  数据是**临时库**（`node:sqlite` 开在系统临时目录，用完即删），不碰种子库：本包用例要在任何机器上
  *  都能跑；真产物那一条链由八支域探针（t783–t790）与 `.scratch/t891/` 的读数走。
@@ -42,8 +46,10 @@ const markupOf = (html) => html
   .replace(/<script[\s\S]*?<\/script>/gi, '');
 const count = (body, re) => (body.match(re) ?? []).length;
 
-/** 页内小节数＝页内 `<h2>` 数（票面现状表那条口径）。 */
-const sectionsOf = (html) => count(markupOf(html), /<h2\b/gi);
+/** 页内小节数＝页壳正文里带 `id="sec-N"` 的 `<section>` 数（＝ `pageSections` 里给了 `navText` 的那几段）。
+ *  #906 前这里数的是 `<h2>` 数：口径与 `pageNav.ts` 的判据不一致（判据只看「这一段有没有 navText」），
+ *  复制区那行小标题一删就假红。 */
+const sectionsOf = (html) => count(markupOf(html), /<section id="sec-\d+">/g);
 
 /** 页内目录的条目（`nav.ilife-block-toc` 里的锚点）。没有目录块 ⇒ 空数组。 */
 function tocItemsOf(html) {

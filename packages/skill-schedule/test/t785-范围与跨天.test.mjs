@@ -170,7 +170,12 @@ test('#785 V5 周视图：唤醒词落 schedule.record.range ＋ view=week，真
   assert.equal(count(marks, DIST_ROW), 8, '分类总览（必现块②）');
   assert.ok(text.includes('健康分'), '健康分（必现块③）');
   assert.equal(count(marks, LIST_ROW), 7, '每日汇总 7 行（必现块④）');
-  assert.ok(text.includes('复制给 AI'), '复制 prompt 位（必现块⑤）');
+  // #906：复制区那行小标题（原「复制给 AI」）已不上屏 ⇒ 这一格按**复制区自己的标记**判
+  // （三格式菜单 ＋ 复制日志按钮），别再拿那串字面当判据。
+  assert.ok(marks.includes('ilife-block-copy-block'), '复制 prompt 位（必现块⑤）：复制区块');
+  assert.ok(marks.includes('data-fmt-open="1"'), '复制 prompt 位（必现块⑤）：复制数据按钮');
+  assert.ok(marks.includes('data-fmt="text"'), '复制 prompt 位（必现块⑤）：三格式菜单');
+  assert.match(marks, /data-action-id="[^"]*-copy-log"/, '复制 prompt 位（必现块⑤）：复制日志按钮');
   assert.ok(text.includes('2026-09-14 至 2026-09-20'), '窗口＝锚点那周的周一至周日');
   console.log('#785 V5 读数：key=' + route.key + ' preset=' + JSON.stringify(route.params) + ' 格数=' + count(marks, /class="heat-cell"/g));
 });

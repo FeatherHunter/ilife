@@ -167,7 +167,8 @@ const CONTRACT = {
     { block: '历史贴合提示（f17）', needs: ['历史贴合提示', '逐段贴合'] },
     { block: '冲突红徽章位（f17）', needs: ['冲突与警告'] },
     { block: '偏离警示位（f17）', needs: ['偏离警示'] },
-    { block: '复制 prompt 位（f17）', needs: ['复制与留档', 'ilife-block-pre-block'] },
+    // #906：复制区小标题不上屏 ⇒ 这一块按复制区标记 ＋ 那一行提示块判（`复制与留档` 字面已从正文删掉）。
+    { block: '复制 prompt 位（f17）', needs: ['ilife-block-copy-block', 'data-fmt-open', 'ilife-block-pre-block'] },
   ],
   [P_RESULT_ADJUST]: [
     { block: '时间轴＋分类色带（f17）', needs: ['24 小时时间轴与分类色带'] },

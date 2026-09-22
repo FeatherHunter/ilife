@@ -115,7 +115,9 @@ const CONTRACT = {
     { block: '分类总览', needs: ['ilife-block-dist-row', 'heat-legend'] },
     { block: '每日汇总', needs: ['ilife-block-list-rows-row'] },
     { block: '健康分', needs: ['健康分', 'ilife-block-kpi-card-value'] },
-    { block: '复制 prompt 位', needs: ['复制给 AI'] },
+    // #906：复制区那行小标题不再上屏 —— 本块按**复制区自己的标记**判（三格式菜单 ＋ 复制日志按钮），
+    // 旧判据 `needs: ['复制给 AI']` 是本票要删的字面，留着会变成假红。
+    { block: '复制 prompt 位', needs: ['ilife-block-copy-block', 'data-fmt-open', 'data-fmt="text"', '-copy-log"'] },
   ],
 };
 

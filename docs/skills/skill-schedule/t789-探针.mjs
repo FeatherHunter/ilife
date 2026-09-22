@@ -81,7 +81,8 @@ const CONTRACT = {
   [P_COMPARE_MONTHS]: [
     { block: '4 卡对照（f03）', needs: ['四卡对照', '区间 A', '区间 B', '总时长差', '日均差'] },
     { block: '7 维差异（f03）', needs: ['7 维差异', '🌱 维持', '💪 健康', '💼 工作', '📖 学习', '😌 调整', '📋 日常', '🤝 投入'] },
-    { block: 'AI 钩子位（f03）', needs: ['AI 思考钩子', '复制给 AI'] },
+    // #906：`复制给 AI` 那行小标题已不上屏 ⇒ 钩子位按钩子标题 ＋ 复制区标记判。
+    { block: 'AI 钩子位（f03）', needs: ['AI 思考钩子', 'ilife-block-copy-block', 'data-fmt-open'] },
   ],
   [P_COMPARE_WEEK]: [
     { block: '4 卡对照（f03）', needs: ['四卡对照', '上周', '这周'] },
