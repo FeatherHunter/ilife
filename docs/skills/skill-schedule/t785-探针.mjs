@@ -135,8 +135,8 @@ const ROUTES_SHA = '784062f712af8df8';
  *  ⚠️ 别的席若在本包之外重编过（`pnpm build` 会重写本包 dist），dist 那枚会变——那是**同源产物**、
  *  不是漂移：那种时候显式加 `--no-baseline` 再跑，并在读数里写清为什么。 */
 const FROZEN_FINGERPRINT = {
-  src: '08b442d711df344f',
-  dist: '388c63df4ff63408',
+  src: '5f5ed35549bbe1f0',
+  dist: '42024e47b554d74f',
 };
 const NO_BASELINE = process.argv.includes('--no-baseline');
 
