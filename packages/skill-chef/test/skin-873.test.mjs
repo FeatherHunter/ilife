@@ -150,7 +150,14 @@ describe('#873 十处壳接线（③）', () => {
       assert.ok(!src.includes('renderDocShell('), '还有一处自己拼文档壳');
       assert.ok(!src.includes('pageUiCss'), '旧的两层拼接还剩一处');
       assert.ok(!src.includes('pageShapeCss'), '旧的两层拼接还剩一处');
-      assert.ok(/family:\s*'(result|process|receipt)'/.test(src), '这一处没给族名（或给了闭集外的值）');
+      // 族名可以直写（family: 'receipt'），也可以经由 file-local 的 docOf('receipt', …) 透传
+      // （透传层的形参是 `family: SceneFamily`，闭集由 tsc 守）；两种写法的字面量逐个验闭集。
+      const fams = [...src.matchAll(/family:\s*'([^']+)'/g)].map((m) => m[1]);
+      const wrapped = [...src.matchAll(/\bdocOf\(\s*'([^']+)'/g)].map((m) => m[1]);
+      const seen = [...fams, ...wrapped];
+      assert.ok(seen.length > 0, '没找到族名字面量（直写或 docOf 透传）');
+      const badFam = seen.filter((x) => x !== 'result' && x !== 'process' && x !== 'receipt');
+      assert.deepEqual(badFam, [], '族名落在闭集外：' + badFam.join('、'));
     });
   }
 });
