@@ -98,13 +98,6 @@ function statusOf(days: number | null): string {
   return '有效';
 }
 
-function phraseOf(days: number | null): string {
-  if (days === null) return '有效';
-  if (days < 0) return '已过期' + String(-days) + '天';
-  if (days === 0) return '今天到期';
-  return String(days) + '天后到期';
-}
-
 function parseThinName(name: string): { certType: string; expires: string } {
   const i = name.indexOf('到期');
   if (i < 0) return { certType: name, expires: '' };
@@ -118,7 +111,6 @@ type CertRow = {
   expires: string;
   days: number | null;
   status: string;
-  phrase: string;
   masked: string;
   note: string;
 };
@@ -134,7 +126,6 @@ function rowFromThin(item: Record<string, unknown>): CertRow {
     expires: parsed.expires === '' ? '待补' : parsed.expires,
     days,
     status: statusOf(days),
-    phrase: phraseOf(days),
     masked: '未登记',
     note: '待补',
   };
@@ -153,7 +144,7 @@ function rowFromRich(item: Record<string, unknown>): CertRow {
     ? String((item as { number_masked?: unknown }).number_masked)
     : maskDisplay((item as { number?: unknown }).number);
   const note = String((item as { note?: unknown }).note ?? '待补');
-  return { certType, holder, idText, expires, days, status, phrase: phraseOf(days), masked, note };
+  return { certType, holder, idText, expires, days, status, masked, note };
 }
 
 function isRich(item: Record<string, unknown>): boolean {
@@ -177,6 +168,8 @@ function listTable(env: Envelope): string {
     if (b.days === null) return -1;
     return a.days - b.days;
   });
+  // #817（⑤文案不冗余）：删「到期文案」列——剩余天数、证件状态、到期文案说的是同一件事，一页说三遍；
+  // 该列也不在必需块的证件清单字段里（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）。
   const body = rows.map((r) => '<tr>'
     + '<td>' + escapeHtml(r.certType) + '</td>'
     + '<td>' + escapeHtml(r.holder) + '</td>'
@@ -184,13 +177,12 @@ function listTable(env: Envelope): string {
     + '<td>' + escapeHtml(r.expires) + '</td>'
     + '<td>' + (r.days === null ? '待补' : String(r.days)) + '</td>'
     + '<td>' + escapeHtml(r.status) + '</td>'
-    + '<td>' + escapeHtml(r.phrase) + '</td>'
     + '<td>' + escapeHtml(r.masked) + '</td>'
     + '<td>' + escapeHtml(r.note) + '</td>'
     + '</tr>').join('');
   return '<div><p>共' + rows.length + '本证件，按到期先后排列</p>'
     + '<div class="rc-scroll"><table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
-    + '<th>剩余天数</th><th>证件状态</th><th>到期文案</th><th>脱敏号码</th><th>备注</th></tr></thead>'
+    + '<th>剩余天数</th><th>证件状态</th><th>脱敏号码</th><th>备注</th></tr></thead>'
     + '<tbody>' + body + '</tbody></table></div>'
     + '<p>号码只显后四位，复制文本不含完整号码</p></div>';
 }

@@ -109,27 +109,30 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/undo_select.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-  const m = msg.match(/^最近操作：#(\d+)\s+(\S+)/);
+  // #817（⑤文案不冗余）：回执在事件名后还缀着一段括号说明，旧写法（`\S+`）把说明一并吞进事件名，
+  // 于是任何一条都落到兜底的「其他操作」；条目名要写用户看得懂的词，故只取事件名本身。
+  const m = msg.match(/^最近操作：#(\d+)\s+([^\s（(]+)/);
   const evId = m?.[1] ?? '';
   const evRaw = m?.[2] ?? '';
   const evName = evId ? eventCn(evRaw) : '';
 
+  // #817（⑤文案不冗余）：条目名只写一次——旧版把事件名在粗体里与胶囊里各写一遍，还用「·」并两个判据标签。
   const evBlock = evId
     ? '<div class="fp-ev" data-ev="' + esc(evId) + '" onclick="this.classList.toggle(\'fp-ev-on\');var c=this.querySelector(\'input\');c.checked=!c.checked;">'
       + '<input type="checkbox" value="' + esc(evId) + '" onclick="event.stopPropagation();this.closest(\'.fp-ev\').classList.toggle(\'fp-ev-on\',this.checked);">'
-      + '<div class="fp-ev-sum"><b>' + esc(evName) + '（第 ' + esc(evId) + ' 条记录）</b>'
-      + '<div class="fp-ev-meta">物品台账事件 · <span class="fp-pill">' + esc(evName) + '</span></div></div></div>'
+      + '<div class="fp-ev-sum"><b>' + esc(evName) + '</b>'
+      + '<div class="fp-ev-meta">第 ' + esc(evId) + ' 条记录</div></div></div>'
       + '<div class="fp-warnbox">撤销录入会连带删除该物品的位置与标签记录，撤销只有一次机会</div>'
       + '<p class="fp-warnbox" id="fp-undo-hint" hidden>请先勾选要撤销的操作</p><div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">确认撤销勾选项</button></div>'
     : '<p class="fp-empty">暂无可撤销操作，先去做一次录入或者更新再来</p>';
 
+  // #817（⑤文案不冗余）：删两处判据件术语——页型名徽章「选择页」，与复述验收判据的灰字（「没有勾选就点确认时…」）。
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 撤销</div>'
-    + '<div class="fp-title">撤销最近操作</div>'
-    + '<span class="fp-stage">选择页</span></div>'
+    + '<div class="fp-title">撤销最近操作</div></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">可撤销操作</h2>' + evBlock
-    + '<p class="fp-note">没有勾选就点确认时，页上会给出先勾选的拦截提示</p></section>'
+    + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">通用操作分组</h2>'
     + '<div class="fp-groupline">录入更新类：录入、更新、移动位置、数量与状态变更</div>'
     + '<div class="fp-groupline">关系类：物品关联、合并物品</div>'

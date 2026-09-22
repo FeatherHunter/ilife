@@ -121,7 +121,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="empty">—</div>'
     + '<h2>动作集</h2>'
     + group('缺组', ['按实际更新', '忽略', '先不处理'],
-      '<p class="actline">新位置输入:<input placeholder="挪走的新位置选填"></p>')
+      // #817（⑤文案不冗余）：左标签已经写了「新位置输入」，占位符不再把同一件事再说一遍，改给一条填写举例。
+      '<p class="actline">新位置输入:<input placeholder="例：书房/书架"></p>')
     + group('多组', ['录入为新物品', '忽略'], '')
     + group('异组', ['按实际更新', '忽略'], '')
     + group('待确认组', ['标记复查', '先不处理'], '')

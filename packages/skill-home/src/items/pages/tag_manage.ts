@@ -115,13 +115,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
   const tidy = msg.startsWith('相近标签：') || msg === '无相近标签';
-  const modeName = tidy ? '整理建议' : '总览';
 
   // 相近对逐对渲染（回执上限 10 对），页首只写对数，不把 9 对标签再列一遍。
   const pairs = tidy && msg !== '无相近标签'
     ? msg.replace(/^相近标签：/, '').split('、').map((s) => s.trim()).filter(Boolean).slice(0, 10)
     : [];
-  const leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签' : visibleMsg(msg);
   // #864 加厚：逐标签明细、未使用清单、相似度数值（无 detail 回退旧破折号）。
   const det = detailOf(env);
   const tagRows: { name: string; items: string; uses: string }[] = Array.isArray(det.tags)
@@ -134,6 +132,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     ? (det.unused as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => String(r.name ?? '')).filter((s) => s !== '')
     : [];
   const hasUnusedDetail = Array.isArray(det.unused);
+  // #817（⑤文案不冗余）：导语只说本页总数（没有明细才回退回执原文），「详情走 查标签」那类内部词退场；
+  // 与同族的 category_manage 同款。
+  const leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签'
+    : (hasTagDetail ? '共 ' + tagRows.length + ' 个标签' : visibleMsg(msg));
   const pairSims: (number | null)[] = pairs.map((_, i) => {
     const pd = Array.isArray(det.pairs) ? (det.pairs as unknown[])[i] : null;
     if (pd && typeof pd === 'object' && !Array.isArray(pd) && typeof (pd as Record<string, unknown>).similarity === 'number') {
@@ -149,12 +151,14 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
         + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div>'
       : (tagRows.length
-        ? tagRows.map((t) => '<div class="fp-row"><div class="fp-k">' + esc(t.name === '' ? '—' : t.name) + '</div><div class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</div></div>').join('')
+        // #817（⑤文案不冗余）：名字与计数并成一行（名字不再在左列重复一遍），与 category_manage 同款。
+        ? tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>').join('')
         : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
     const unusedBlock = !hasUnusedDetail
       ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
       : (unusedNames.length
-        ? unusedNames.map((n) => '<div class="fp-row"><div class="fp-k">闲置</div><div class="fp-v">' + esc(n) + '</div></div>').join('')
+        // #817（⑤文案不冗余）：闲置标签折成一行名单，不再逐行重复「闲置」这个左列词。
+        ? '<p class="fp-v">闲置：' + unusedNames.map((n) => esc(n)).join('、') + '</p>'
         : '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>');
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
       + overviewRows + '</section>'
@@ -191,11 +195,14 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 标签</div>'
     + '<div class="fp-title">' + esc(tidy ? '逐对合并或忽略' : '改名、合并与新建标签') + '</div>'
     + '<p class="fp-lead">' + esc(leadText) + '</p>'
-    + '<span class="fp-stage">当前：' + esc(modeName) + '</span></div>'
+    // #817（⑤文案不冗余）：整理态不挂徽章——徽章若写「整理建议」就与 h1（交付链回填的场景名）同词；
+    // 总览态照旧标模式（4-1 的 check 要「模式」在位）。
+    + (tidy ? '' : '<span class="fp-stage">当前：总览</span>') + '</div>'
     + mainSec
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
-    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">合并</button>'
+    // #817（⑤文案不冗余）：整理态逐对已有「合并」，底部这颗又是另一档作用，故按本页模式改名（总览态照旧「合并」）。
+    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">' + (tidy ? '全部合并' : '合并') + '</button>'
     + (tidy ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '') // 总览回执不带未使用标签、页上那格写着没有：总览态不出「一键清理」（empty 块「无可清理标签时不出」）
     + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
@@ -205,7 +212,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
     + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
-    + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：___\n  目标标签：___') + '</pre>'
+    + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n'
+      + (tidy ? '  范围：全部相近标签对' : '  源标签：___\n  目标标签：___')) + '</pre>'
     + (tidy ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
     + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>')
     + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
