@@ -36,6 +36,8 @@
   --ic-accent:        var(--dsw-alias-brand-primary, #f9fafb);
   --ic-accent-ink:    var(--dsw-alias-label-primary-foreground, #0f1115);
   --ic-ok:            var(--dsw-alias-state-success-primary, #4ec9a0);
+  --ic-attn:          var(--dsw-alias-state-warn-primary, #e0a33e);
+  --ic-attn-ink:      color-mix(in srgb, var(--ic-attn) 18%, #000);   /* 铺面上的深字，跟任何主题都不会反过来 */
   --ic-warn:          var(--dsw-alias-state-warn-primary, #e0a33e);
   --ic-bad:           var(--dsw-alias-state-error-primary, #e0685f);
   --ic-mono:          ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace;
@@ -133,32 +135,34 @@
 .ic-head{display:flex;align-items:center;gap:10px}
 .ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
   display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
-/* ② 徽标：**实心填充**。细描边 + 小号彩字在深色底上只算装饰，抓眼睛的是色块面积。 */
-.ic-badge.is-dirty{color:var(--ic-accent-ink);background:var(--ic-accent);border-color:var(--ic-accent);
+/* ② 徽标：**实心填充**。细描边 + 小号彩字在深色底上只算装饰，抓眼睛的是色块面积。
+   颜色用「状态黄」不是品牌色：未保存是「待你处理」，不是「出错」——红要留给真错误
+   （值非法／目录不可写／写入失败），否则真出错时红就不值钱了。 */
+.ic-badge.is-dirty{color:var(--ic-attn-ink);background:var(--ic-attn);border-color:var(--ic-attn);
   font-weight:600}
-.ic-badge.is-dirty .ic-bd{background:var(--ic-accent-ink);animation:ic-pulse 1.8s ease-in-out infinite}
+.ic-badge.is-dirty .ic-bd{background:var(--ic-attn-ink);animation:ic-pulse 1.8s ease-in-out infinite}
 @keyframes ic-pulse{0%,100%{opacity:1}50%{opacity:.2}}
 .ic-badge.is-ok{color:var(--ic-ok);border-color:var(--ic-ok);
   background:color-mix(in srgb, var(--ic-ok) 14%, transparent)}
 .ic-badge .ic-bd{width:6px;height:6px;border-radius:50%;background:currentColor}
-/* ② 脏输入框：2px 强调描边 + 一圈同色外发光 */
-.ic-master input.is-dirty{border:2px solid var(--ic-accent);padding:4px 7px;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-accent) 22%, transparent)}
+/* ② 脏输入框：2px 状态黄描边 + 一圈同色外发光 */
+.ic-master input.is-dirty{border:2px solid var(--ic-attn);padding:4px 7px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-attn) 22%, transparent)}
 /* ③ 脏态动作条：**整条实心**（不是深底 + 1px 彩边——那读起来像装饰）。
    吸底是因为真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上。 */
 .ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
-  border:0;border-radius:9px;background:var(--ic-accent);color:var(--ic-accent-ink);
+  border:0;border-radius:9px;background:var(--ic-attn);color:var(--ic-attn-ink);
   position:sticky;bottom:6px;z-index:3;
   box-shadow:0 10px 28px rgba(0,0,0,.62)}
-.ic-dirty .ic-dtxt{color:var(--ic-accent-ink);font-size:13px;font-weight:650}
+.ic-dirty .ic-dtxt{color:var(--ic-attn-ink);font-size:13px;font-weight:650}
 .ic-dirty .ic-dacts{margin-left:auto;display:flex;gap:6px}
 /* 实心条里的按钮要反色，否则按钮跟条同色＝看不见 */
-.ic-dirty .ic-btn{background:transparent;color:var(--ic-accent-ink);
-  border-color:color-mix(in srgb, var(--ic-accent-ink) 45%, transparent)}
-.ic-dirty .ic-btn.is-primary{background:var(--ic-accent-ink);border-color:var(--ic-accent-ink);
-  color:var(--ic-accent);font-weight:600}
-/* ④ 跟随行的标记：加箭头，不再是"一句小灰字" */
-.ic-follow{font-size:11px;color:var(--ic-accent);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.ic-dirty .ic-btn{background:transparent;color:var(--ic-attn-ink);
+  border-color:color-mix(in srgb, var(--ic-attn-ink) 45%, transparent)}
+.ic-dirty .ic-btn.is-primary{background:var(--ic-attn-ink);border-color:var(--ic-attn-ink);
+  color:var(--ic-attn);font-weight:600}
+/* ④ 跟随行：同族色，但**只上色不铺面**（面积分级：实心条/徽标是主信号，细字是附属说明） */
+.ic-follow{font-size:11px;color:var(--ic-attn);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .ic-follow::before{content:'↳';opacity:.8}
 .ic-dif{background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:8px;
   font-family:var(--ic-mono);font-size:11.5px;overflow:hidden;margin-top:14px}
