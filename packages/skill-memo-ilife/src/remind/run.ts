@@ -82,7 +82,12 @@ export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandO
       summary: snap.summary,
       sections: snap.sections,
       copyLog: {
-        thinking: '提醒列表视图 · ' + (status === 'active' ? '只看有效（status=active）' : '只看已废弃（status=dismissed）'),
+        // #858：看提醒页的状态说明补上**已废弃语义与废弃调用形**——「废弃提醒」这条唤醒词已退役
+        // （#842 Q②），能力仍在 `memo.remove` 的 `mode:"abandon"` 支上，故调用形要在页内读得到，
+        // 不必翻速查表。HELP 交付面写不了这句：那份资产的可见文案闸（`VISIBLE_FORBIDDEN`）禁 `memo.`／`--`。
+        thinking: '提醒列表视图 · ' + (status === 'active'
+          ? '只看有效（status=active）；已废弃＝撤下这条提醒、笔记保留，调用形 memo.remove --params \'{"mode":"abandon","id":<提醒 id>}\'（独立废弃支，不经删确认闸）'
+          : '只看已废弃（status=dismissed）；废弃＝提醒撤下、笔记保留（调用形同左）'),
         data_structure: 'reminders 表 · id／note_id／remind_at／repeat_type／repeat_rule／content／status／note_content',
         call_chain: 'memo.remind → listReminderRows → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
         exception: '无',

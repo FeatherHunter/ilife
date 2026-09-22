@@ -9,7 +9,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkMemoDb, seedNote, seedReminder, countNotes } from './helpers/memo-sqlite.mjs';
 import { mkMemoConfig, noLarkPathEnv } from './helpers/config-base.mjs';
 import { MEMO_KEY_SHAPES } from '../dist/render/index.js';
-import { routeWakeword } from '../dist/triggers/wakewords.js';;
+import { routeWakeword } from '../dist/triggers/routing.js';;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -228,7 +228,9 @@ describe('#850 命令面四问（唯一出口端到端）', () => {
     assert.equal(routeWakeword('删备忘', { id: 1 }).key, 'memo.remove');
     assert.ok(Object.keys(MEMO_KEY_SHAPES).includes('memo.init'));
     assert.ok(Object.keys(MEMO_KEY_SHAPES).includes('memo.reminder'));
-    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 14, '命令面净增两条（12→14）');
+    // #858：命令面 14 → 13（`memo.stats` 整条退役，见 `render/envelope.ts` 表头注）——
+    // 本票加的两条仍在，净增那句的历史读数是「12 → 14 → 13」。
+    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 13, '命令面条数变了（#850 净增两条，其后 #858 退役一条）');
   });
   it('读列表／写回执各归各（一个命令一种形状）', () => {
     assert.equal(MEMO_KEY_SHAPES['memo.search'], 'list');

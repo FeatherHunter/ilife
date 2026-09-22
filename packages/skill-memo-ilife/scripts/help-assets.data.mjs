@@ -7,10 +7,12 @@
  *
  * 摘录自原件（逐字，未改一个字符）：
  */
-/** 摘要锁（fail-closed）：① 老实物文件字节；② 老 30 条老骨架 canonical；③ 清洗后 30 条 canonical。 */
+/** 摘要锁（fail-closed）：① 老实物文件字节；② 老 30 条老骨架 canonical；③ 清洗后 30 条 canonical。
+ *  #858 起 ③ 由 `444f6451…` 变为 `bdac11bc…`：唯一改动是 `memo_reminders_active` 的 `status` 提示
+ *  补了一句已废弃语义（`TEXT_EDITS` 那条），逐字对账见 `docs/skills/skill-memo-ilife/t858-实施-证据.md`。 */
 const SOURCE_SHA256 = '8a25dd587d6b96ae2b56a16a17812def84d819dafefa4daa134e1c01b68efd8a';
 const LEGACY_DIGEST = '0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c';
-const ASSET_DIGEST = '444f64515150e55bae81a49f11663b02a89697a5d6cc1ba5e0e3b6102bc94613';
+const ASSET_DIGEST = 'bdac11bc62cb603c7f135a25e092b5b7342f084f5a1eb753991098e0f6d0c0a1';
 
 /** 声明 2 · `prompt_template` 清洗表：`[场景 id, 老片段(逐字), 新片段, 类]`。
  *  类 `CLI` ＝ 用户 U6 的命令去化：`--html` 6 个场景 ＋ 子命令名 4 个场景 ＋ `-c` 1 个场景，**并集 8**；
@@ -62,7 +64,7 @@ const PROMPT_EDITS = [
 const TEXT_EDITS = [
   ['title', 'memo_wish_schedule', '(同步飞书 due)', '(同步到飞书)'],
   ['hint:tasklist_guid', 'memo_add_wish', '飞书任务清单 GUID(可选)', '飞书任务清单 ID(可选)'],
-  ['hint:status', 'memo_reminders_active', 'active(默认)/dismissed', '有效(默认)/已废弃'],
+  ['hint:status', 'memo_reminders_active', 'active(默认)/dismissed', '有效(默认)/已废弃(废弃=撤下这条提醒,笔记保留)'],
   ['hint:sub_category', 'memo_change_subcategory', "'null' 清除", '留空即清除'],
   ['title', 'memo_complete_wish', '(原子操作)', '(转成打卡记录)'],
   ['title', 'memo_batch_change_category', '(过程型 HTML 向导)', '(网页向导)'],

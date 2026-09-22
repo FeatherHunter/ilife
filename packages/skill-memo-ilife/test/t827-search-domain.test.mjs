@@ -29,7 +29,7 @@ import { envelope, makeSeam } from '../../../tooling/contract-seam.mjs';
 import { configEnv, mkMemoConfig } from './helpers/config-base.mjs';
 import { seedNote } from './helpers/memo-sqlite.mjs';
 import { bookletFileStem } from '../dist/help/booklet.js';
-import { routeWakeword } from '../dist/triggers/wakewords.js';
+import { routeWakeword } from '../dist/triggers/routing.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skillPath = join(here, '..', 'SKILL.md');
@@ -78,14 +78,9 @@ describe('#827 查找域 7 场景端到端（唤醒词 → 命令 → 册子格�
       const hit = routeWakeword(sc.wake, sc.ctx);
       assert.equal(hit.key, sc.key, sc.wake + ' 须路由到 ' + sc.key);
       const row = md.split('\n').find((l) => l.startsWith('| ' + sc.wake + ' |'));
-      if (row === undefined) {
-        // SKILL.md 的速查表由**遗留手写表** `src/triggers/wakewords.ts` 派生（不是运行期路由表
-        // `src/triggers/routes.generated.ts`）；运行期路由已经收 `查情绪`（本域 routes.ts），
-        // 而遗留表里只有别名形态 `查情绪日记` —— 主名／别名对齐那一笔归 #858，不在本票写集。
-        // 这条白名单只放宽「已知缺口」：别的词一旦缺行即红。
-        assert.equal(sc.wake, '查情绪', 'SKILL.md 速查块缺 ' + sc.wake + '（AI 无从按唤醒词找到命令）');
-        continue;
-      }
+      // #858：速查表已按场景主名一行重排（上游＝各域 `routes.ts`），7 个场景词条条有行——
+      // 旧版那条「`查情绪` 缺行属已知缺口」的白名单随本票撤掉（缺行即红）。
+      assert.ok(row !== undefined, 'SKILL.md 速查块缺 ' + sc.wake + '（AI 无从按唤醒词找到命令）');
       assert.match(row, new RegExp('\\| ' + sc.key.replace('.', '\\.') + ' \\|'), sc.wake + ' 那一行须指向 ' + sc.key + '：' + row);
     }
     // 反例面：不是「凡含备忘／查就命中」的宽匹配。

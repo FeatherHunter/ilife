@@ -34,9 +34,9 @@ export const MOOD_ROUTES: readonly RouteDecl[] = [
     preset: { category: '情绪日记' },
   },
   // ↓↓ 后 4 行是旧表的长式别名（#821 保留作别名）：与短式主名同场景，`needs`／`preset` 与旧表逐字一致。
-  // 最长匹配保证长式优先命中；别名不上链路总表（#842 Q③，归 #858）。
+  // 最长匹配保证长式优先命中；别名不上链路总表（#842 Q③，已由 #858 落地：速查表按场景主名一行）。
   {
-    order: 36,
+    order: 35,
     wakeWord: '记情绪日记',
     scene: 'memo_add_mood',
     key: 'memo.create',
@@ -44,7 +44,7 @@ export const MOOD_ROUTES: readonly RouteDecl[] = [
     preset: { category: '情绪日记' },
   },
   {
-    order: 37,
+    order: 36,
     wakeWord: '查情绪日记',
     scene: 'memo_search_mood',
     key: 'memo.search',
@@ -52,7 +52,7 @@ export const MOOD_ROUTES: readonly RouteDecl[] = [
     preset: { category: '情绪日记' },
   },
   {
-    order: 38,
+    order: 37,
     wakeWord: '改情绪日记',
     scene: 'memo_update_mood',
     key: 'memo.update',
@@ -61,7 +61,7 @@ export const MOOD_ROUTES: readonly RouteDecl[] = [
     preset: { category: '情绪日记' },
   },
   {
-    order: 39,
+    order: 38,
     wakeWord: '删情绪日记',
     scene: 'memo_delete_mood',
     key: 'memo.remove',

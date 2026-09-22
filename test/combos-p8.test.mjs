@@ -125,7 +125,7 @@ describe('P8 combos 真相源与 HELP 注入', () => {
     assert.equal(read('memo.wish').shape, 'list');
     assert.equal(read('memo.sync').shape, 'receipt');
     assert.equal(read('memo.batch').shape, 'receipt');
-    assert.equal(read('memo.stats').shape, 'stat');
+    // #858：`memo.stats` 整条退役（零唤醒词／HELP 无场景／老技能无命令），此表不再取它。
   });
   it('calorie 四视图取数通（VIEW_KEYS×stat envelope 全字段）', () => {
     for (const k of [VIEW_KEYS.home, VIEW_KEYS.diet, VIEW_KEYS.exercise, VIEW_KEYS.goal]) {

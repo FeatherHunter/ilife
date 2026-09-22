@@ -60,7 +60,6 @@ const KEY_LITERAL_HOMES = {
   'cli/cmd_read.ts': '开库前分派的两条内部断言（`memo.help.lookup`／`memo.init`）——**只许这两个**',
   'cli/config.ts': '设置页四条 key（不是唤醒词命令，见该件头注）',
   'cli/health.ts': '设置页体检 key（同上）',
-  'triggers/wakewords.ts': '手写唤醒词表（HELP 速查面的上游，31 词）：**在册待办**——#858 把它归并到各域词面后，本行该一起撤',
 };
 
 /** 目录下的 `.ts` 源件（递归，绝对路径）。 */

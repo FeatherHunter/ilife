@@ -221,7 +221,7 @@ test('#230 ④ 三支互不串：缺省 HELP 文件 ／ mode:"lookup" 速查表 
 
   // q 支用**独立**的 db 目录：前两支已经把 memo_html 建出来了，共用目录测不出「q 零落盘」。
   const dbQ = join(dir, 'q');
-  const q = runOk(dbQ, [KEY, '--params', JSON.stringify({ q: '查提醒' })]);
+  const q = runOk(dbQ, [KEY, '--params', JSON.stringify({ q: '看提醒' })]);
   assert.equal(q.env.delivery, undefined, 'q＝现找：不默认落盘');
   assert.equal(q.env.data.total, 1);
   assert.equal(q.env.data.items[0].category, 'memo.remind');

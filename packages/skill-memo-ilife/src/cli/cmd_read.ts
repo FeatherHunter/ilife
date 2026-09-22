@@ -124,7 +124,7 @@ function helpInitialized(dbPath: string): boolean {
   try { return existsSync(join(dbPath, dbFilename())); } catch { return false; }
 }
 
-/** 速查支的 `list` 载荷：一行一唤醒词（短语／key／形状／调用形／一句话），全从 `WAKE_TABLE` 派生。 */
+/** 速查支的 `list` 载荷：一行一场景主名（短语／key／形状／调用形／一句话），从各域路由声明的生成物派生。 */
 function buildLookupItems() {
   return buildHelpLookup().map((h) => ({
     id: h.phrase,

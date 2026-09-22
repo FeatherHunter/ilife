@@ -8,7 +8,7 @@
  *   ① 老实物契约载荷 `备忘录_HELP_20260820_162453.html`（老 `script/memo_render.py:527-599` 的产出，逐字零改写）；
  *   ② 老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0，不写死第四份副本，裁决 9）。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           清洗后 30 条 sha256＝444f64515150e55bae81a49f11663b02a89697a5d6cc1ba5e0e3b6102bc94613
+ *           清洗后 30 条 sha256＝bdac11bc62cb603c7f135a25e092b5b7342f084f5a1eb753991098e0f6d0c0a1
  *
  * 与老骨架的**有意偏离**（逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`）：
  *   1. 二级组 id 老 0 起 → 新 1 起（票 6 V8=A）；
@@ -72,7 +72,7 @@ export const MEMO_HELP_REMIND = {
           prompt_template: "请帮我查看有效提醒(唤醒词:看提醒):\n\n请按以下格式填写你的参数:\n\n  状  态: _____________ (选填,默认只看有效提醒)\n\n期望效果:\n  AI 按时间排序列出提醒。并生成可筛选的可视化页。",
           types: ["查看", "回执"],
           editable_fields: [
-            { name: "status", label: "提醒状态", value: "", hint: "有效(默认)/已废弃", required: false },
+            { name: "status", label: "提醒状态", value: "", hint: "有效(默认)/已废弃(废弃=撤下这条提醒,笔记保留)", required: false },
           ],
           aliases: ["查提醒"],
         },

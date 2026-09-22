@@ -56,7 +56,8 @@ export const MEMO_ROUTES: readonly RouteDecl[] = [
     cli: 'memo-cmd-read memo.batch --params \'{"fromCategory":"备忘"}\'',
   },
   // ↓↓ 后 4 行是旧表的别名行（#821 保留 10 作别名）：不是场景主名，但旧行为可路由——
-  // 切表必须原样保留，否则是行为变更。别名不上链路总表（#842 Q③，归 #858）。
+  // 切表必须原样保留，否则是行为变更。别名不上链路总表（#842 Q③，已由 #858 落地：
+  // 速查表按场景主名一行，这些词仍能被路由命中、仍住 HELP 资产的 `aliases`）。
   {
     order: 29,
     wakeWord: '批量改分类',
@@ -73,14 +74,14 @@ export const MEMO_ROUTES: readonly RouteDecl[] = [
     needs: ['id'],
   },
   {
-    order: 34,
+    order: 33,
     wakeWord: '记一条',
     scene: 'memo_add_basic',
     key: 'memo.create',
     cli: 'memo-cmd-read memo.create --params \'{"title":"买牛奶","category":"备忘"}\'',
   },
   {
-    order: 35,
+    order: 34,
     wakeWord: '添加笔记',
     scene: 'memo_add_basic',
     key: 'memo.create',

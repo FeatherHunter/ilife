@@ -60,7 +60,9 @@ const WITH_TEMPLATES = ['skill-calorie', 'skill-chef', 'skill-bill', 'skill-home
 const TEMPLATE_NAMES = {
   'skill-calorie': ['diet', 'exercise', 'goal', 'help', 'home', 'photo-gallery'],
 };
-const CONTRACT_KEY = { 'dsh-calorie': 'calorie.help.center', 'dsh-chef': 'chef.help.lookup', 'dsh-bill-ilife': 'bill.help.lookup', 'dsh-home-ilife': 'home.help.lookup', 'dsh-memo-ilife': 'memo.stats', 'dsh-schedule-ilife': 'schedule.help.lookup' };
+// #858：备忘录的契约键由 `memo.stats` 改指 `memo.help.lookup`——统计命令整条退役（零唤醒词／HELP 无场景／
+// 老技能无 stats），而这几家兄弟技能的契约键本来就是各自的 help 键；G3 那一跑只要求「装出来的技能真能跑通一条键」。
+const CONTRACT_KEY = { 'dsh-calorie': 'calorie.help.center', 'dsh-chef': 'chef.help.lookup', 'dsh-bill-ilife': 'bill.help.lookup', 'dsh-home-ilife': 'home.help.lookup', 'dsh-memo-ilife': 'memo.help.lookup', 'dsh-schedule-ilife': 'schedule.help.lookup' };
 const PLUGIN_OF = { 'dsh-calorie': 'skill-calorie', 'dsh-chef': 'skill-chef', 'dsh-bill-ilife': 'skill-bill', 'dsh-home-ilife': 'skill-home', 'dsh-memo-ilife': 'skill-memo-ilife', 'dsh-schedule-ilife': 'skill-schedule' };
 const DIRM = { 'dsh-calorie': 'plugin-calorie', 'dsh-chef': 'plugin-chef', 'dsh-bill-ilife': 'plugin-bill-ilife', 'dsh-home-ilife': 'plugin-home-ilife', 'dsh-memo-ilife': 'plugin-memo-ilife', 'dsh-schedule-ilife': 'plugin-schedule-ilife', 'dsh-life-pack': 'plugin-manager', 'skill-calorie': 'skill-calorie', 'skill-chef': 'skill-chef', 'skill-bill': 'skill-bill', 'skill-home': 'skill-home', 'skill-memo-ilife': 'skill-memo-ilife', 'skill-schedule': 'skill-schedule', 'base-combos': 'base-combos', 'base-link-core': 'base-link-core', 'base-paint': 'base-render' };
 const pkgDir = (name) => join(root, 'packages', DIRM[name]);

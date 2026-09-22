@@ -4,7 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { writeFileSync, readdirSync, chmodSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildHelpLookup, routeWakeword } from '../packages/skill-memo-ilife/dist/index.js';
+// 包门只转出 `buildHelpLookup`（#703／#855：没人取的对外名不出门），路由按仓例走**深路径**直取。
+import { buildHelpLookup } from '../packages/skill-memo-ilife/dist/index.js';
+import { routeWakeword } from '../packages/skill-memo-ilife/dist/triggers/routing.js';
 import { mkMemoDb, seedNote } from '../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
 import { mkMemoConfig, useHome } from '../packages/skill-memo-ilife/test/helpers/config-base.mjs';
 
@@ -84,7 +86,8 @@ describe('备忘录联动端到端 M7', () => {
     assert.equal(read('memo.detail', { id: 1 }).shape, 'detail');
     assert.equal(read('memo.remind').data.total, 0);
     assert.equal(read('memo.wish').shape, 'list');
-    assert.equal(read('memo.stats').data.metrics.count, 2);
+    // #858：`memo.stats` 整条退役（零唤醒词／HELP 无场景／老技能无命令），此处不再有它那一行；
+    // 退役后按键报未知键的读数在 `packages/skill-memo-ilife/test/route-cleanup-858.test.mjs` ④。
     assert.equal(read('memo.sync').shape, 'receipt');
   });
   it('写键闭环（建→改→删）', () => {

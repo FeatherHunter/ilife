@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { routeWakeword } from '../dist/triggers/wakewords.js';
+import { routeWakeword } from '../dist/triggers/routing.js';
 import { normalizeTop, normalizeSub, MEMO_DEFAULT_TOP } from '../dist/memo/category.js';
 import { routeRemind, normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from '../dist/remind/policy.js';
 import { routeWish, WISH_SYNC_OPS } from '../dist/wish/policy.js';
@@ -38,7 +38,9 @@ describe('memo 口径层', () => {
     assert.deepEqual(routeWakeword('记心愿学琴'), { key: 'memo.create', params: { category: '心愿' } });
     assert.equal(routeWakeword('进入批量改分类向导').key, 'memo.batch');
     assert.equal(routeWakeword('改子分类', { id: 'n2' }).key, 'memo.update');
-    assert.equal(routeWakeword('废弃提醒').key, 'memo.remove');
+    // #858：「废弃提醒」词随行退役（#842 Q②）——它旧表有行、HELP 无场景卡。能力仍在
+    // `memo.remove` 的 `mode:"abandon"` 支上（按键调用，见 cmd-850 的 Q⑦ 那条）。
+    assert.throws(() => routeWakeword('废弃提醒'), (e) => e.code === 'POLICY_NO_MATCH');
     assert.deepEqual(routeWakeword('完成心愿', { id: 'n3' }).key, 'memo.update');
   });
   it('无命中与缺槽位 throw', () => {

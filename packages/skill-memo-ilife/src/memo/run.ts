@@ -1,14 +1,14 @@
 /** 备忘域 · **命令的运行件**（票 #855：域逻辑搬回本域，出口只查表调用）。
  *
- * 五条命令逐字从 `src/cli/cmd_read.ts` 搬来：
+ * 四条命令逐字从 `src/cli/cmd_read.ts` 搬来：
  *   - `memo.create`：增删改参数校验 → 心愿合成写（本地 ＋ 飞书任务一次成）→ 通用回执页缺省落盘；
  *   - `memo.update`：批量排期／完成心愿原子转换／字段改三支（情绪日记那条走通用回执页）；
  *   - `memo.remove`：废弃提醒分支 ＋ 删除分层闸（单条无关联直删／有关联先清单／批量一律先清单）；
- *   - `memo.batch`：收集（出向导页）／执行（逐条改分类）两支；
- *   - `memo.stats`：全表计数（读，无唤醒词）。
+ *   - `memo.batch`：收集（出向导页）／执行（逐条改分类）两支。
+ * （`memo.stats` 第四条读命令已随 #858 退役，见件尾。）
  * 搬迁判据：`node docs/skills/skill-memo-ilife/t855-产物基线.mjs --check` 逐条一致（行为字节不变）。
  *
- * 下面的辅助件（`asIds`／`delete*Of` 三件）只有本域的五条命令在用，随命令一起搬——不留第二份；
+ * 下面的辅助件（`asIds`／`delete*Of` 三件）只有本域的这几条命令在用，随命令一起搬——不留第二份；
  * 页装配那三件（`noteIdOfMessage`／`receiptOptsOf`／`buildReceipt`）住同域 `./receiptPage.js`（#829 拆出，
  * 理由见该件件头：`run.ts` 触到 350 行告警线，而分派与页装配本就是两件活）。
  */
@@ -16,7 +16,7 @@ import type { CommandOut } from '../shared/commandSpec.js';
 import { fail } from '../shared/exit.js';
 import { toRows } from '../shared/rows.js';
 import type { MemoDb, NotePatch } from '../db/readonly.js';
-import { getNote, listNotes, listReminderRows } from '../db/readonly.js';
+import { getNote, listReminderRows } from '../db/readonly.js';
 import { abandonReminder } from '../remind/index.js';
 import { applyBatchCategory, collectBatchItems, countNotesByCategory } from './batch.js';
 import { needId } from '../shared/validators.js';
@@ -334,11 +334,5 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
   };
 }
 
-/** `memo.stats`：全表计数（读，无唤醒词；处置归 #842 后仍保留此读口）。 */
-export function runStats(params: Record<string, unknown>, db: MemoDb): CommandOut {
-  void params;
-  const all = listNotes(db);
-  const metrics: Record<string, number> = { count: all.length };
-  for (const n of all) metrics['cat.' + n.category] = (metrics['cat.' + n.category] || 0) + 1;
-  return { data: { metrics }, exit: 0 };
-}
+/** `memo.stats`（全表计数）已随 #858 整条退役：零唤醒词、HELP 无场景、老技能 21 个子命令无 stats
+ *  （#842 Q④）；本域今天只剩四条写命令，本条不再留读口。 */

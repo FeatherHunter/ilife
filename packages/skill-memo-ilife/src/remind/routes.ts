@@ -54,14 +54,8 @@ export const REMIND_ROUTES: readonly RouteDecl[] = [
     cli: 'memo-cmd-read memo.create --params \'{"title":"取牛奶","category":"备忘","remindAt":"2026-10-01 09:00"}\'',
     needs: ['remindAt'],
   },
-  // `废弃提醒`：旧表有行、无场景卡（#842 Q②：并入「看提醒」已废弃说明后撤行，归 #858）。
-  // 切表必须原样保留（`preset: { mode: 'abandon' }` 走废弃支，不经删确认闸）；#858 撤行时删本条。
-  {
-    order: 33,
-    wakeWord: '废弃提醒',
-    scene: 'memo_reminders_active',
-    key: 'memo.remove',
-    cli: 'memo-cmd-read memo.remove --params \'{"id":1,"confirm":true}\'',
-    preset: { mode: 'abandon' },
-  },
+  // `废弃提醒`（#858 已撤）：旧表有行、无场景卡——#842 Q② 裁定并入「看提醒」的「已废弃」状态说明后
+  // **词随行一起退役**（判据「老技能也有」说的是能力；老侧 `dismiss` 是子命令、`SKILL.md:839` 那段
+  // 没有唤醒词行）。**能力保留**：`memo.remove` 的 `mode:"abandon"` 支照旧（不经删确认闸、笔记保留），
+  // 只是不再有唤醒短语——调用形见 `test/route-cleanup-858.test.mjs` 与 `docs/skills/skill-memo-ilife/t837b-路由清理口径.md`。
 ];

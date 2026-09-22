@@ -13,7 +13,7 @@
 | SKILL | SKILL.md 重写+HELP 互联注入 | 73KB SKILL.md、docs/、references/ | M6 |
 | 收尾 | 10 联动对表+tmp 单测+删 py | tests/ 全量、output/ 产物 | M7 |
 
-## 联动 key×shape 映射（11 处；key 字符串为提案，P8 combos 落表时冻结；analysis/fallback 全 key 可用）
+## 联动 key×shape 映射（10 处；key 字符串为提案，P8 combos 落表时冻结；analysis/fallback 全 key 可用）
 
 ```memo-keys
 memo.search | list
@@ -25,9 +25,12 @@ memo.remind | list
 memo.wish | list
 memo.sync | receipt
 memo.batch | receipt
-memo.stats | stat
 memo.help.lookup | list
 ```
+
+> ⚠️ **原 11 处 → 现 10 处**（#858）：`memo.stats | stat` 整条退役——它零唤醒词、HELP 无场景、
+> 老技能 21 个子命令里也没有它（出处 `t821-唤醒词对账.md` §4 末、`t234-cli-inventory.md` §4），
+> 属「路由表过度开发」那一面；处置见 #842 Q④。本表是 M1 的历史映射，退役后按实况留 10 行。
 
 ## 出 scope（不迁）
 

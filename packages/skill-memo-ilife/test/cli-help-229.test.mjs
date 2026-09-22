@@ -142,7 +142,9 @@ describe('#229 · `--html` 支（真 spawn 出口）', () => {
   it('`q` 支 ＋ `--html`：现找也能显式落盘（出口的第二个调用点，别让它没人守）', () => {
     const db = join(TMP, 'q-html');
     const out = join(db, 'sub', '现找.html');
-    const r = run(db, [KEY, '--params', JSON.stringify({ q: '查提醒' }), '--html', out]);
+    // #858：这里的例子原写 `查提醒` —— 它是场景别名，已随「别名退出速查」撤行（撤的是行不是词，
+    // 它仍能被路由命中）。现找的语料换成主名 `看提醒`：仍然恰一行命中。
+    const r = run(db, [KEY, '--params', JSON.stringify({ q: '看提醒' }), '--html', out]);
     assert.equal(r.status, 0, r.stderr);
     const e = JSON.parse(r.stdout);
     assert.equal(e.delivery.path, out, '逐字落点');

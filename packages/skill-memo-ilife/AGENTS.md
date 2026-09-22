@@ -44,15 +44,15 @@
 | `scripts/gen-cli.mjs` | 380 | 293 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
 | `scripts/gen-help-assets.mjs` | 304 | 304 | 未越线，在册备查 |
-| `scripts/help-assets.data.mjs` | 125 | 125 | 未越线，在册备查 |
+| `scripts/help-assets.data.mjs` | 125 | 127 | 未越线，在册备查 |
 | `scripts/help-assets.render.mjs` | 99 | 99 | 未越线，在册备查 |
 | `scripts/t659-parity-probe.mjs` | 110 | 110 | 未越线，在册备查 |
 | `src/checkin/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/checkin/receipt.ts` | 82 | 82 | 未越线，在册备查 |
 | `src/checkin/routes.ts` | 36 | 40 | 未越线，在册备查 |
 | `src/cli/cmd_read.ts` | 367 | 318 | 已回线内（挂号值 367 留档，只许变短） |
-| `src/cli/config.ts` | 113 | 113 | 未越线，在册备查 |
-| `src/cli/health.ts` | 37 | 37 | 未越线，在册备查 |
+| `src/cli/config.ts` | 113 | 114 | 未越线，在册备查 |
+| `src/cli/health.ts` | 37 | 38 | 未越线，在册备查 |
 | `src/cli/health/configRead.ts` | 208 | 208 | 未越线，在册备查 |
 | `src/cli/health/index.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/cli/health/items.ts` | 240 | 240 | 未越线，在册备查 |
@@ -63,7 +63,7 @@
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 220 | 未越线，在册备查 |
 | `src/help/index.ts` | 4 | 4 | 未越线，在册备查 |
-| `src/help/lookup.ts` | 56 | 61 | 未越线，在册备查 |
+| `src/help/lookup.ts` | 56 | 77 | 未越线，在册备查 |
 | `src/help/manifest.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/help/sceneData.ts` | 64 | 64 | 未越线，在册备查 |
 | `src/help/scenes/checkin.ts` | 71 | 71 | 未越线，在册备查 |
@@ -83,22 +83,22 @@
 | `src/init/run.ts` | 71 | 71 | 未越线，在册备查 |
 | `src/memo/batch.ts` | 62 | 66 | 未越线，在册备查 |
 | `src/memo/category.ts` | 32 | 32 | 未越线，在册备查 |
-| `src/memo/commands.ts` | 53 | 53 | 未越线，在册备查 |
+| `src/memo/commands.ts` | 53 | 47 | 未越线，在册备查 |
 | `src/memo/crud.ts` | 30 | 51 | 未越线，在册备查 |
 | `src/memo/index.ts` | 7 | 9 | 未越线，在册备查 |
 | `src/memo/media.ts` | 90 | 90 | 未越线，在册备查 |
 | `src/memo/receipt.ts` | 83 | 87 | 未越线，在册备查 |
 | `src/memo/receiptPage.ts` | 72 | 72 | 未越线，在册备查 |
-| `src/memo/routes.ts` | 89 | 89 | 未越线，在册备查 |
-| `src/memo/run.ts` | 310 | 344 | 未越线，在册备查 |
+| `src/memo/routes.ts` | 89 | 90 | 未越线，在册备查 |
+| `src/memo/run.ts` | 310 | 338 | 未越线，在册备查 |
 | `src/mood/routes.ts` | 72 | 72 | 未越线，在册备查 |
 | `src/remind/commands.ts` | 30 | 30 | 未越线，在册备查 |
 | `src/remind/index.ts` | 7 | 10 | 未越线，在册备查 |
 | `src/remind/policy.ts` | 90 | 90 | 未越线，在册备查 |
-| `src/remind/routes.ts` | 57 | 67 | 未越线，在册备查 |
-| `src/remind/run.ts` | 100 | 196 | 未越线，在册备查 |
+| `src/remind/routes.ts` | 57 | 61 | 未越线，在册备查 |
+| `src/remind/run.ts` | 100 | 201 | 未越线，在册备查 |
 | `src/remind/store.ts` | 302 | 302 | 未越线，在册备查 |
-| `src/render/envelope.ts` | 52 | 52 | 未越线，在册备查 |
+| `src/render/envelope.ts` | 52 | 53 | 未越线，在册备查 |
 | `src/render/errors.ts` | 11 | 11 | 未越线，在册备查 |
 | `src/render/html.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |
@@ -126,7 +126,6 @@
 | `src/sync/sentinel.ts` | 175 | 174 | 未越线，在册备查 |
 | `src/triggers/routeSpec.ts` | 36 | 36 | 未越线，在册备查 |
 | `src/triggers/routing.ts` | 41 | 41 | 未越线，在册备查 |
-| `src/triggers/wakewords.ts` | 59 | 61 | 未越线，在册备查 |
 | `src/wish/commands.ts` | 22 | 22 | 未越线，在册备查 |
 | `src/wish/complete.ts` | 78 | 78 | 未越线，在册备查 |
 | `src/wish/due.ts` | 61 | 61 | 未越线，在册备查 |

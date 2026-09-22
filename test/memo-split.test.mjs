@@ -11,8 +11,9 @@ const fence = doc.split('```memo-keys')[1].split('```')[0].trim().split('\n');
 const rows = fence.map((l) => l.split('|').map((s) => s.trim()));
 
 describe('备忘录拆分确认 M1', () => {
-  it('11 联动 key×shape 全合法（命名空间+6 形状）', () => {
-    assert.equal(rows.length, 11);
+  // #858：`memo.stats` 整条退役后，本表由 11 行落回 10 行（表的正文里写着这一笔的来由）。
+  it('10 联动 key×shape 全合法（命名空间+6 形状）', () => {
+    assert.equal(rows.length, 10);
     for (const [key, shape] of rows) {
       assert.equal(parseRegistryKey(key).key, key);
       assert.ok(ENVELOPE_SHAPES.includes(shape), '未知 shape：' + shape);
