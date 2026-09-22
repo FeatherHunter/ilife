@@ -33,6 +33,11 @@ const OUT = process.argv[3] ?? '';
 /** **反例口**（§4 必跑那条）：`--missing <文件名>` 把一个盘上没有的名字塞进清单，
  *  生成器必须 exit 1 且点名那一份——走不出这条红，说明自检永远绿。 */
 const FAKE = process.argv.includes('--missing') ? process.argv[process.argv.indexOf('--missing') + 1] : '';
+/** **自包含口**：`--embed` 把产物全文 `srcdoc` 内嵌（墙页能**单发一个文件**，不依赖同目录产物）。
+ *  缺省不嵌（§6.2 那支：同目录相对 `src`，墙页只有几十 KB）。两支的格子内容与格数完全一样。 */
+const EMBED = process.argv.includes('--embed');
+/** `--only <手机墙|桌面墙|文件名>`：只出那一张（改一处时不必重出两张）。 */
+const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '';
 
 /** 两个视口＝两张墙（§6.3 第 2 条）。
  *  `viewport` 一律写 `width=device-width,initial-scale=1`：墙页本身是**响应式**的（列由格子宽决定），
@@ -61,17 +66,28 @@ const reds = [];
 const made = [];
 
 for (const spec of SPECS) {
-  if (OUT !== '' && OUT !== spec.name) continue;
-  const SCALE = spec.W <= 500 ? 1 : Math.min(0.5, 600 / spec.W);
+  const who = spec.W <= 500 ? '手机墙' : '桌面墙';
+  spec.who = who;
+  /** 出哪一张：给了输出名就按名字认（可自定义名，如 `t792-桌面墙-单文件.html`）；
+   *  没给就按 `--only 手机墙|桌面墙` 过滤；两者都没给＝两张都出。 */
+  const named = OUT === spec.name || (OUT !== '' && ONLY === who);
+  if (OUT !== '' && !named) continue;
+  if (OUT === '' && ONLY !== '' && ONLY !== who) continue;
+  /** 两张墙都**不缩**（§6.3 第 3 条那一支留口没删：算式仍在，改这个常量即生效）。
+   *  为什么不缩：这两张墙要量的是产物在 390／1280 下**长什么样**，缩了就不是那个版式。 */
+  const SCALE = 1;
   const cellW = Math.round(spec.W * SCALE);
   const cellH = Math.round(spec.H * SCALE);
+  const innerOf = (r) => EMBED
+    ? '<iframe srcdoc="' + esc(readFileSync(join(SRC, r.file), 'utf8')) + '" width="' + spec.W + '" height="' + spec.H + '" title="' + esc(r.seq + ' ' + r.file.replace(/\.html$/, '')) + '"></iframe>'
+    : '<iframe src="' + esc(r.file) + '" width="' + spec.W + '" height="' + spec.H + '" title="' + esc(r.seq + ' ' + r.file.replace(/\.html$/, '')) + '"></iframe>';
 
   // 按族分组（清单里每个域一行族名，组序＝域票落地序）。
   const families = [...new Set(rows.map((r) => r.family))];
   const cells = families.map((fam) => {
     const inFam = rows.filter((r) => r.family === fam);
     const figs = inFam.map((r) => {
-      const inner = '<iframe src="' + esc(r.file) + '" width="' + spec.W + '" height="' + spec.H + '" title="' + esc(r.seq + ' ' + r.file.replace(/\.html$/, '')) + '"></iframe>';
+      const inner = innerOf(r);
       return '  <figure>\n'
         + '    <figcaption><a href="' + esc(r.file) + '" target="_blank" rel="noopener">'
         + esc(r.seq + ' ' + r.file.replace(/\.html$/, '')) + '</a>'
@@ -116,7 +132,8 @@ for (const spec of SPECS) {
     + ' 行）；重出：<code>node docs/skills/skill-schedule/t792-清单.mjs &amp;&amp; node docs/skills/skill-schedule/t792-墙.mjs</code>。</p>\n'
     + '</body>\n</html>\n';
 
-  const outPath = join(SRC, spec.name);
+  const outName = OUT === '' ? spec.name : OUT;
+  const outPath = join(SRC, outName);
   writeFileSync(outPath, page, 'utf8');
 
   // 链接自检：页面引用（相对路径）逐条探盘（§6.2 的 refs/dead）。
