@@ -30,10 +30,15 @@ const ROOT = resolve(PKG, '..', '..');
 const MENU_MARKERS = ['ilife-copy-menu-wrap', 'data-fmt-open="1"', 'data-fmt="text"', 'data-fmt="json"', 'data-fmt="csv"'];
 /** 开合器的无障碍名（`▾` 不上屏，语义住 `aria-label`，见 `COPY_MENU_OPENER_ARIA`）。 */
 const OPENER_LABEL = 'aria-label="复制数据（点开选格式）"';
+/** 复制日志：按钮文案 ＋ `buildLogText` 的六个段名。
+ *  **2026-09-22 用户口径**：每张页都要有这颗按钮，不许因为调用方没填 `log` 而整颗消失
+ *  （那时 53 件产物里只有 8 件有，45 件缺）。这条从「可选位」升成「恒出位」，故并进 `assertCopyArea`。 */
+const LOG_MARKERS = ['复制日志', '场景标识', 'AI 思考链', '数据结构', '调用链', '时间戳版本', '异常'];
 
-function assertMenu(html, where) {
+function assertCopyArea(html, where) {
   for (const m of MENU_MARKERS) assert.ok(html.includes(m), where + ' 缺菜单标记：' + m);
   assert.ok(html.includes(OPENER_LABEL), where + ' 缺开合器语义：' + OPENER_LABEL);
+  for (const m of LOG_MARKERS) assert.ok(html.includes(m), where + ' 缺复制日志：' + m);
 }
 
 describe('chefCopyArea 恒出三格式菜单', () => {
@@ -42,8 +47,26 @@ describe('chefCopyArea 恒出三格式菜单', () => {
       title: '复制这份菜谱',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉', 食材数: 11, 步骤数: 6 } },
     });
-    assertMenu(html, 'detail');
+    assertCopyArea(html, 'detail');
     assert.ok(!html.includes('ilife-copy-menu-hint'), '三空串 hints 不应渲染提示行');
+  });
+
+  it('调用方不给 log 也出「复制日志」（2026-09-22 用户口径：每张页都要有）', () => {
+    const html = chefCopyArea({
+      title: '复制这份菜谱',
+      data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
+    });
+    assert.ok(html.includes('复制日志'), '不给 log 时仍须出那颗按钮');
+    // 退到的默认值是**真读数**：调用链＝这条命令，不是空串、不是 (未知)。
+    assert.ok(html.includes('chef.recipe.view'), '默认调用链取 data.key');
+    // 反例自证：把默认值抽掉（模拟旧口径）→ 本断言必红。
+    const legacy = chefCopyArea({
+      title: '复制这份菜谱',
+      data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
+      // @ts-expect-error 故意传 null 触发旧口径的「不给就不出」路径已被移除：仍须出按钮
+      log: null,
+    });
+    assert.ok(legacy.includes('复制日志'), 'log 给 null 也须出按钮（旧口径已废）');
   });
 
   it('receipt 形 ＋ 日志位：两颗位齐，日志六段标题在', () => {
@@ -52,7 +75,7 @@ describe('chefCopyArea 恒出三格式菜单', () => {
       data: { key: 'chef.recipe.write', shape: 'receipt', ok: true, message: '辣椒炒肉已写进菜谱。' },
       log: { command: 'chef.recipe.write', m5Line: '菜谱 1 行', actionAt: '2026-09-22' },
     });
-    assertMenu(html, 'receipt+log');
+    assertCopyArea(html, 'receipt+log');
     for (const t of ['场景标识', 'AI 思考链', '数据结构', '调用链', '时间戳版本', '异常']) {
       assert.ok(html.includes(t), '日志缺段：' + t);
     }
@@ -63,7 +86,7 @@ describe('chefCopyArea 恒出三格式菜单', () => {
       title: '复制数据',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
     });
-    assertMenu(html, '同名标题');
+    assertCopyArea(html, '同名标题');
     assert.ok(!html.includes('ilife-block-copy-block-title'), '同名标题不应出 <h2>');
   });
 
@@ -92,7 +115,7 @@ describe('chefCopyLog 六段入参', () => {
 
 describe('八域装配件逐页出菜单（真渲染）', () => {
   it('录入回执', () => {
-    assertMenu(buildAddSuccessHtml({
+    assertCopyArea(buildAddSuccessHtml({
       cardId: 'c1', wakeWord: '录入食谱', sourceLabel: '手工', caliberNote: '',
       recipeName: '辣椒炒肉', recipeId: 'r1', servings: 2, totalTime: 20,
       ingredients: [{ name: '猪里脊', quantity: 400, unit: '克', quantity_text: '', category: '肉' }],
@@ -101,7 +124,7 @@ describe('八域装配件逐页出菜单（真渲染）', () => {
   });
 
   it('做菜模式', () => {
-    assertMenu(renderCookingPage({
+    assertCopyArea(renderCookingPage({
       recipe: { id: 'r1', name: '辣椒炒肉', description: '', difficulty: '快手菜', servings: 2, total_time_minutes: 20, status: '已做' },
       baseServings: 2, servings: 2, factor: 1,
       ingredients: [{ name: '猪里脊', quantity: 400, unit: '克', quantity_text: '', optional: false }],
@@ -111,23 +134,23 @@ describe('八域装配件逐页出菜单（真渲染）', () => {
   });
 
   it('批量改 ＋ 备份', () => {
-    assertMenu(dataBatchPage({ name: '辣椒炒肉', diffs: [{ field: '份量', before: '2 人份', after: '4 人份' }] }), '批量改');
-    assertMenu(dataBackupPage({ recipeCount: 3, tableCount: 9, bytes: 1024 }), '备份');
+    assertCopyArea(dataBatchPage({ name: '辣椒炒肉', diffs: [{ field: '份量', before: '2 人份', after: '4 人份' }] }), '批量改');
+    assertCopyArea(dataBackupPage({ recipeCount: 3, tableCount: 9, bytes: 1024 }), '备份');
   });
 
   it('历史四页', () => {
-    assertMenu(renderRecordPage({
+    assertCopyArea(renderRecordPage({
       name: '辣椒炒肉', cookDate: '2026-09-22', cookSequence: 2, rating: 4, feedback: '很香',
       historyId: 'h1', prevStatus: '未做', newStatus: '已做', prevCount: 1, newCount: 2, avgRating: 4,
     }), '记录做菜');
-    assertMenu(renderTimelinePage({
+    assertCopyArea(renderTimelinePage({
       name: '辣椒炒肉', status: '已做', count: 1, avgRating: 4,
       rows: [{ cookDate: '2026-09-22', cookSequence: 1, rating: 4, feedback: '很香' }],
     }), '时间线');
-    assertMenu(renderSingleStatsPage({
+    assertCopyArea(renderSingleStatsPage({
       name: '辣椒炒肉', status: '已做', count: 1, avgRating: 4, maxRating: 4, minRating: 4, lastDate: '2026-09-22',
     }), '单菜统计');
-    assertMenu(renderGlobalStatsPage({
+    assertCopyArea(renderGlobalStatsPage({
       cookedCount: 1, neverCookedCount: 0, totalCooks: 2, recipeTotal: 1,
       favoriteAvg: { name: '辣椒炒肉', avgRating: 4, times: 2 },
       favoriteMost: { name: '辣椒炒肉', times: 2, avgRating: 4 },
@@ -138,18 +161,18 @@ describe('八域装配件逐页出菜单（真渲染）', () => {
   });
 
   it('派生两页', () => {
-    assertMenu(relationAddPage({ parent: '辣椒炒肉', child: '小炒肉', relationType: '同类', changeSummary: '少放盐' }), '记派生关系');
-    assertMenu(relationDerivePage({ parent: '辣椒炒肉', child: '小炒肉', differences: '少放盐' }), '派生新菜');
+    assertCopyArea(relationAddPage({ parent: '辣椒炒肉', child: '小炒肉', relationType: '同类', changeSummary: '少放盐' }), '记派生关系');
+    assertCopyArea(relationDerivePage({ parent: '辣椒炒肉', child: '小炒肉', differences: '少放盐' }), '派生新菜');
   });
 
   it('开始使用 ＋ 采购 ＋ 查看', () => {
-    assertMenu(setupInitPage({ tables: 9, initialized: true }), '开始使用');
-    assertMenu(shoppingListPage({
+    assertCopyArea(setupInitPage({ tables: 9, initialized: true }), '开始使用');
+    assertCopyArea(shoppingListPage({
       recipes: ['辣椒炒肉'],
       items: [{ name: '猪里脊', quantity: 400, unit: '克', recipes: ['辣椒炒肉'], quantity_text: '', from: '辣椒炒肉', optional: false, category: '肉' }],
       servingsText: '2 人份', excludeOptional: false, stockSkipped: true,
     }), '采购');
-    assertMenu(buildViewHtml('view_full_recipe', {
+    assertCopyArea(buildViewHtml('view_full_recipe', {
       name: '辣椒炒肉', difficulty: '快手菜', servings: 2, total_time_minutes: 20, status: '已做',
       description: '', source: '', source_url: '', created_at: '', updated_at: '',
       ingredients: [{ name: '猪里脊', quantity: 400, unit: '克', quantity_text: '', category: '肉' }],

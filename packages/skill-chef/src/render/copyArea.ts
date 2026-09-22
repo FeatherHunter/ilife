@@ -78,7 +78,8 @@ interface ChefCopyAreaInput {
   readonly logActionId?: string;
   /** 给了就出「复制数据」（三格式菜单），内部走 `buildDataText`。 */
   readonly data?: ChefCopyData;
-  /** 给了就出「复制日志」，内部走 `buildLogText`（须与 `data` 同给：场景由数据信封派生）。 */
+  /** 复制日志的过程证据（第 2–6 段入参）。**不给也出「复制日志」**——退到 `{ command: data.key }`
+   *  （见 `chefCopyArea` 头注）；给了就按给的填，未给的项照 `buildLogText` 的 `(未知)` 口径。 */
   readonly log?: ChefCopyLog;
   /** 数据与日志两样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
   readonly emptyText?: string;
@@ -130,7 +131,11 @@ function formatsOf(data: DataTextInput): {
   };
 }
 
-/** 复制区：数据位恒出三格式菜单（调用方不需要声明）；日志位走 6 段。两样全不给＝一句空态、不出按钮。 */
+/** 复制区：数据位恒出三格式菜单；**日志位恒出「复制日志」**（用户口径 2026-09-22：每张页都要有
+ *  那颗按钮，不许因为调用方没填而整颗消失）。调用方给 `log` 就用它，没给则退到
+ *  `{ command: data.key }` —— 命令键本来就随 `data` 一起进来，退出的六段仍然是**真读数**
+ *  （调用链＝这条命令、数据结构＝库名、思考链与异常按本包口径），不是占位。
+ *  两样全不给＝一句空态、不出按钮。 */
 export function chefCopyArea(input: ChefCopyAreaInput): string {
   const data = input.data;
   const log = input.log;
@@ -138,15 +143,18 @@ export function chefCopyArea(input: ChefCopyAreaInput): string {
   if (data !== undefined || log !== undefined) {
     if (data === undefined) throw new Error('chefCopyArea: log 位须与 data 位同给（日志场景由数据信封派生）');
     const envelope = dataEnvelopeOf(data);
-    const logText = log === undefined
-      ? undefined
-      : buildLogText({ envelope: sceneEnvelopeOf(envelope), copyLog: chefCopyLog(log) });
+    // 日志恒出：调用方没给 log 就退到命令键（见函数头注）。「给不出就整颗不出」是旧口径，
+    // 已废 —— 它让 45/53 张页没有复制日志按钮。
+    const logText = buildLogText({
+      envelope: sceneEnvelopeOf(envelope),
+      copyLog: chefCopyLog(log ?? { command: data.key }),
+    });
     return renderCopyBlock({
       ...(title === undefined ? {} : { title }),
       ...(input.dataActionId === undefined ? {} : { dataActionId: input.dataActionId }),
       ...(input.logActionId === undefined ? {} : { logActionId: input.logActionId }),
       dataFormats: formatsOf({ envelope }),
-      ...(logText === undefined ? {} : { logText }),
+      logText,
     });
   }
   return renderEmptyBlock({

@@ -228,6 +228,22 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
         { label: '导出一份备份', kind: 'ghost', actionId: 'quality-backup' },
       ],
     }),
+    // 2026-09-22 用户口径「每张页都要有复制日志」：本页原**整块复制区都缺**
+    // （53 件产物里只有 51 件有按钮，缺的两件之一就是本页）。
+    chefCopyArea({
+      title: '复制这份体检',
+      dataActionId: 'quality-copy',
+      data: {
+        key: 'chef.history.query', shape: 'list',
+        items: input.items.map((it) => ({ 菜名: it.name, 完整度: it.score, 缺口: it.missing.join('、') })),
+        total: input.items.length,
+      },
+      log: {
+        command: 'chef.history.query',
+        source: '体检（kind=quality）',
+        m5Line: '体检 ' + String(input.items.length) + ' 道（达标 ' + String(full) + ' 道／待补 ' + String(todo) + ' 道）',
+      },
+    }),
   ];
   return shell('数据质量报告', '私家大厨 ｜ 数据管理', blocks, { page: 'quality', family: 'result' });
 }

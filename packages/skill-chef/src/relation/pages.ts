@@ -226,6 +226,24 @@ export function relationTreePage(input: {
     relationTreeTree(input),
     renderCaliberLine('废弃菜谱不入树，代数由近及远。'),
     act([{ label: '记一组关系', kind: 'primary', actionId: 'relation-add' }]),
+    // 2026-09-22 用户口径「每张页都要有复制日志」：本页原**整块复制区都缺**
+    // （53 件产物里只有 51 件有按钮，缺的两件之一就是本页）。
+    chefCopyArea({
+      title: '复制这份关系表',
+      dataActionId: 'relation-tree-copy',
+      data: {
+        key: 'chef.relation.query', shape: 'list',
+        items: [...input.ancestors, ...input.descendants].map((r) => ({
+          菜名: r.name, 代数: r.level, 关系: r.relation_type, 变化: r.change_summary,
+        })),
+        total,
+      },
+      log: {
+        command: 'chef.relation.query',
+        source: '家族树（root＝' + input.root + '）',
+        m5Line: '上游 ' + String(input.ancestors.length) + ' 组／下游 ' + String(input.descendants.length) + ' 组',
+      },
+    }),
   ];
   return shell('家族树', '私家大厨 ｜ 派生', blocks);
 }
