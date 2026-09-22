@@ -18,7 +18,7 @@ import { loadTemplate } from '../dist/render/index.js';
 
 const cc = loadTemplate('change_category');
 const wc = loadTemplate('wish_complete');
-const HINT = '预览即复制原文，符号为 AI 解析保留。';
+const HINT = '下面是复制出去的原文，里面的符号留给 AI 解析。';
 
 describe('#885 条件分支与指令载荷半角清零（混合口径）', () => {
   it('错误分支重试指引两页全角', () => {
@@ -64,8 +64,11 @@ describe('#885 条件分支与指令载荷半角清零（混合口径）', () =>
     assert.ok(wc.includes('打卡内容： "'), '心愿页内容边界引号不在：打卡内容： "');
   });
 
-  it('说明小字两页都在', () => {
-    assert.ok(cc.includes(HINT), '批量页说明小字不在');
-    assert.ok(wc.includes(HINT), '心愿页说明小字不在');
+  it('说明小字两页都在，且与预览同处（#820 收尾：移到预览区、点复制才出现）', () => {
+    for (const [what, html] of [['批量页', cc], ['心愿页', wc]]) {
+      assert.ok(html.includes(HINT), what + '说明小字不在');
+      assert.ok(html.includes('id="previewNote"'), what + '说明小字没有落在预览区（应有 #previewNote）');
+      assert.match(html, /getElementById\('previewNote'\)\.style\.display='block'/, what + '说明小字没有跟预览一起出现');
+    }
   });
 });
