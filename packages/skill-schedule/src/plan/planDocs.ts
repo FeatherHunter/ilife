@@ -16,7 +16,7 @@
  *   · **已软删**（`inactive`，可选）：老侧这条也只出 JSON；软删事件上同一张页，行尾标「已软删」，结论条报条数。
  *     不给时产出与 #782 那张样张页**逐字节相同**（除上面那三处文案修正——那三处是票面点名的债）。
  */
-import { LEVEL1_WHITELIST, fmtDur, fmtDurShort, l1Of, toMinutes } from '../policy/index.js';
+import { LEVEL1_WHITELIST, completionLabelOf, fmtDur, fmtDurShort, l1Of, toMinutes } from '../policy/index.js';
 import { buildPlanToday } from '../render/views.js';
 import { scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import type { PlanEvent } from '../fetch/db.js';
@@ -99,7 +99,7 @@ export function eventsInWindow(
 /** 事件行（事件卡的一行）：`left`＝起止、`main`＝标题、`right`＝完成与同步状态。
  *  软删的那几行右槽写「已软删」——它是这一行的身份，不另立一段。 */
 function eventRowOf(e: PlanEvent, deleted: boolean): { left: string; main: string; right: string } {
-  const completion = e.completion === null || e.completion === '' ? '未复盘' : e.completion;
+  const completion = e.completion === null || e.completion === '' ? '未复盘' : completionLabelOf(e.completion);
   const right = deleted
     ? '已软删'
     : completion + (e.feishu_event_id === null ? '' : '，已同步飞书');

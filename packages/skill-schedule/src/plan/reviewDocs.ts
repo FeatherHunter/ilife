@@ -21,7 +21,7 @@ import {
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
 import { listPlanEvents } from '../fetch/index.js';
-import { VALID_COMPLETIONS, fmtDurShort, l1Of } from '../policy/index.js';
+import { VALID_COMPLETIONS, completionLabelOf, fmtDurShort, l1Of } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections } from '../shared/pageNav.js';
@@ -31,7 +31,10 @@ import { planCopyArea } from './receipt.js';
 
 const EYEBROW = '作息管家 日程与计划';
 
-const stateOf = (p: PlanEvent): string => (p.completion === null || p.completion === '' ? '未复盘' : p.completion);
+const stateOf = (p: PlanEvent): string => {
+  const raw = p.completion === null || p.completion === '' ? '未复盘' : p.completion;
+  return completionLabelOf(raw);
+};
 
 /** 「复盘」（单日、逐条标记）整页：逐条 completion ＋ 讨论区。 */
 export function reviewPage(handle: ScheduleDb, date: string): string {
@@ -46,7 +49,10 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
   const marked = events.filter((p) => p.completion !== null && p.completion !== '').length;
   const done = events.filter((p) => p.completion === '已完成').length;
   const planned = events.reduce((sum, p) => sum + Math.max(0, minutesOfDayEnd(p.time_end) - minutesOfDayEnd(p.time_start)), 0);
-  const counts = VALID_COMPLETIONS.map((state) => ({ state, count: events.filter((p) => stateOf(p) === state).length }));
+  const counts = VALID_COMPLETIONS.map((raw) => ({
+    state: completionLabelOf(raw),
+    count: events.filter((p) => (p.completion === null || p.completion === '' ? '未复盘' : p.completion) === raw).length,
+  }));
   const all = events.length > 0 && marked === events.length;
   const head: PageHead = {
     docTitle: '作息管家 复盘',
@@ -75,7 +81,8 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
     },
   ];
   const discussion = [
-    '① 逐条看状态：下面每一条计划都印着它现在的完成状态。状态是这六种之一：已完成，已完成(超时)，部分完成，未完成，未完成(不可抗力)，未复盘。',
+    '① 逐条看状态：下面每一条计划都印着它现在的完成状态。状态是这六种之一：'
+      + VALID_COMPLETIONS.map((v) => completionLabelOf(v)).join('，') + '。',
     '② 没做成的写原因：状态不是「已完成」的那几条，把原因写清楚，比如加班，比如推延到明天，比如下雨取消。这句会连着状态一起落进库里。',
     '③ 把标记交给 AI 落库：把下面那一句复制给 AI，它按你标的状态与原因逐条写回，写完再回这一页看。',
     '④ 收尾看结论：落库之后这一页的完成率与状态分布会跟着更新，那就是这一天的复盘结论。',

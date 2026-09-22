@@ -14,7 +14,7 @@ export {
 } from './record.js';
 export type { AddInput, CompareKind } from './record.js';
 export {
-  VALID_COMPLETIONS, validateEvent, assertCoverage24h,
+  VALID_COMPLETIONS, COMPLETION_DISPLAY_LABELS, completionLabelOf, validateEvent, assertCoverage24h,
   validateUpsertInput, validateEnsureInput, validateEnsureBatchInput, validateUpdateInput,
   parsePlanOp, parseRecordOp, parseFeishuMode, parsePlanView,
   PLAN_WRITE_OPS_OVERWRITE, PLAN_WRITE_OPS_FILL,

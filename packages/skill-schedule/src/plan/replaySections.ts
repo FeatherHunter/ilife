@@ -20,7 +20,7 @@ import {
   renderPreBlock, type DataTableRow, type DistributionRowInput, type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
-import { LEVEL1_WHITELIST, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
+import { LEVEL1_WHITELIST, completionLabelOf, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections, type PageSection } from '../shared/pageNav.js';
@@ -59,7 +59,7 @@ function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): Pa
       plan: fmtDurShort(p.planMinutes),
       actual: fmtDurShort(p.actualMinutes),
       delta: sign + fmtDurShort(Math.abs(p.deltaMinutes)),
-      completion: p.completion,
+      completion: completionLabelOf(p.completion),
     };
   });
   const columns = [
@@ -156,7 +156,7 @@ function segHeat(data: ReplayData): PageSection[] {
 
 /** 计划执行（老侧 day／月／通用档）：六态分布 ＋ 按一级分类拆解。 */
 function segPlan(data: ReplayData): PageSection[] {
-  const counts = data.completionCounts.map((c) => ({ state: c.state, count: String(c.count) }));
+  const counts = data.completionCounts.map((c) => ({ state: completionLabelOf(c.state), count: String(c.count) }));
   const byCat: DataTableRow[] = data.completionByL1.map((c) => ({
     name: c.name, total: String(c.total), done: String(c.done), rate: pctText(c.rate),
   }));
@@ -192,7 +192,7 @@ function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): Page
   const unexecuted = u.rows.map((p) => ({
     left: tag(p.date) + p.time_start + ' 至 ' + p.time_end,
     main: p.title,
-    right: p.completion === null || p.completion === '' ? '未复盘' : p.completion,
+    right: p.completion === null || p.completion === '' ? '未复盘' : completionLabelOf(p.completion),
   }));
   const overrun = o.rows.map((x) => ({
     left: tag(x.date),

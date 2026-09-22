@@ -30,7 +30,7 @@ import {
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
 import { listPlanEvents } from '../fetch/index.js';
-import { fmtDur, fmtDurShort, l1Of, toMinutes, LEVEL1_WHITELIST } from '../policy/index.js';
+import { fmtDur, fmtDurShort, completionLabelOf, l1Of, toMinutes, LEVEL1_WHITELIST } from '../policy/index.js';
 import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections } from '../shared/pageNav.js';
@@ -57,6 +57,9 @@ const FIELD_LABELS: Readonly<Record<string, string>> = {
 
 const span = (start: string, end: string): string => start + ' 至 ' + end;
 const empty = (v: unknown): string => (v === null || v === undefined || v === '' ? '—' : String(v));
+/** #894 · 完成状态上屏写法：库里存的是半角口径，页上走全角映射（取值不动）。 */
+const completionText = (v: unknown): string =>
+  (v === null || v === undefined || v === '' ? '—' : completionLabelOf(String(v)));
 
 /** 事件行在页上的分类写法：没标分类的那一条写「未分类」（不印空串）。 */
 const categoryOf = (e: PlanEvent): string => (e.category === null || e.category === '' ? '未分类' : e.category);
@@ -109,7 +112,7 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
     { k: '标题', v: event.title },
     { k: '分类', v: categoryOf(event) },
     { k: '备注', v: empty(event.notes) },
-    { k: '完成状态', v: empty(event.completion) },
+    { k: '完成状态', v: completionText(event.completion) },
   ];
   const { toc, body } = pageSections([
     { navText: r.created ? '' : '这一步没有新建', html: r.created ? '' : hit },
@@ -135,7 +138,7 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
         { label: '远端侧', value: REMOTE_LABEL[r.remote] },
         { label: '这一天现有', value: String(day.length) + ' 件' },
         { label: '同分类', value: String(sameCategory) + ' 件' },
-        { label: '完成状态', value: event === undefined ? '—' : empty(event.completion) },
+        { label: '完成状态', value: event === undefined ? '—' : completionText(event.completion) },
       ],
     }) },
     { navText: '复制与留档', html: scheduleCopyArea({
@@ -242,6 +245,7 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
 
 function fieldValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
+  if (key === 'completion') return completionLabelOf(String(value));
   return String(value);
 }
 
@@ -291,7 +295,7 @@ export function updateReceiptPage(
         { label: '远端侧', value: REMOTE_LABEL[remote] },
         { label: '现在的标题', value: after.title },
         { label: '现在的分类', value: categoryOf(after) },
-        { label: '完成状态', value: empty(after.completion) },
+        { label: '完成状态', value: completionText(after.completion) },
       ],
     }) },
     { navText: '复制与留档', html: scheduleCopyArea({
@@ -349,7 +353,7 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
         { label: '远端侧', value: REMOTE_LABEL[remote] },
         { label: '原来的标题', value: before.title },
         { label: '原来的分类', value: categoryOf(before) },
-        { label: '完成状态', value: empty(before.completion) },
+        { label: '完成状态', value: completionText(before.completion) },
       ],
     }) },
     { html: renderCaliberLine('删计划只动这一条 ｜ 别的事件与别的日期一件不动') },

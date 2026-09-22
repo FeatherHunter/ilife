@@ -1,5 +1,6 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 import type { Envelope } from 'base-link-core';
+import { completionLabelOf } from '../policy/plan.js';
 import { ScheduleRenderError } from './errors.js';
 
 export const SCHEDULE_HTML_MAX_BYTES = 256 * 1024;
@@ -20,7 +21,8 @@ function recordItemHtml(n: Record<string, unknown>): string {
 function planItemHtml(n: Record<string, unknown>): string {
   const time = escapeHtml(String(n.time ?? ''));
   const title = escapeHtml(String(n.title ?? ''));
-  const done = n.completion ? ' <span class="done">' + escapeHtml(String(n.completion)) + '</span>' : '';
+  // #894 · 上屏走全角映射（载荷里的 completion 原值不动，只换这一层）。
+  const done = n.completion ? ' <span class="done">' + escapeHtml(completionLabelOf(String(n.completion))) + '</span>' : '';
   const sync = n.synced ? ' <span class="sync">☁</span>' : '';
   return '<div class="item"><div class="item-head"><span class="time">' + time + '</span></div><div class="content">' + title + done + sync + '</div></div>';
 }
