@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置区域 · 六家技能实现稿（同一套模型）</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  六家技能（饼干记账／卡路里／备忘录／作息管家／居家管家／私家大厨）的配置区域，
+  用**同一套模型**实现：
+    · 一份数据表驱动整页（对应各家 plugin-*/src/settings.ts 的 CONFIG_ITEMS）
+    · 行按「来源」分四类：master（可改·母版）/ derived（派生·只读）/
+      fixed（技能固定·只读）/ number（数值·只读）
+    · 颜色全走 DSH 真 token（--dsw-alias-*，带回退）
+    · 取数两段：fast（配置文件＋落点解析）→ slow（体积／条数／最近写入／飞书 CLI 探测）
+  每家的行数、标题、说明、可改/只读、分级，逐字取自源码，不是编的。
+
+  ── 2026-09-21 修的两个缺陷 ──
+  ① 闪烁：旧写法用一个 arrived 布尔同时表示「数据到了」和「这块是这次新到的」，
+     且每次阶段推进都整块重画 ⇒ 标题每次都带进场动画再演一遍。
+     现在：骨架只画一次、只补节点、每个位置只填一次。
+  ② 高级区域没有设计感：旧写法只是把老行平铺。现在按来源分小组 + 同一档材质。
+  ═══════════════════════════════════════════════════════════════════════
+-->
+<style>
+.ilife-config{
+  --ic-bg:            var(--dsw-alias-bg-base, #151517);
+  --ic-surface:       var(--dsw-alias-bg-layer-1, #232324);
+  --ic-raised:        var(--dsw-alias-bg-layer-2, #2c2c2e);
+  --ic-sunken:        var(--dsw-alias-bg-layer-3, #353638);
+  --ic-line:          var(--dsw-alias-border-l1, rgba(255,255,255,.06));
+  --ic-line-strong:   var(--dsw-alias-border-l2, rgba(255,255,255,.12));
+  --ic-text:          var(--dsw-alias-label-primary, #f9fafb);
+  --ic-muted:         var(--dsw-alias-label-secondary, #cfd3d6);
+  --ic-faint:         var(--dsw-alias-label-tertiary, #adb2b8);
+  --ic-accent:        var(--dsw-alias-brand-primary, #f9fafb);
+  --ic-accent-ink:    var(--dsw-alias-label-primary-foreground, #0f1115);
+  --ic-ok:            var(--dsw-alias-state-success-primary, #4ec9a0);
+  --ic-warn:          var(--dsw-alias-state-warn-primary, #e0a33e);
+  --ic-bad:           var(--dsw-alias-state-error-primary, #e0685f);
+  --ic-mono:          ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace;
+  color: var(--ic-text);
+  font: 14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+.ilife-config *{box-sizing:border-box}
+.ic-shell{background:var(--ic-bg);padding:18px 20px;border-radius:12px;position:relative}
+.ic-card{background:var(--ic-surface);border:1px solid var(--ic-line-strong);border-radius:12px;padding:14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06)}
+.ic-title{font-size:13.5px;font-weight:640;display:flex;align-items:center;gap:8px}
+.ic-file{color:var(--ic-muted);font-size:11.5px;margin-top:4px;word-break:break-all}
+.ic-file b{color:var(--ic-faint);font-weight:400;margin-right:5px}
+
+.ic-master{background:var(--ic-sunken);border:1px solid var(--ic-line-strong);border-radius:8px;
+  padding:11px 12px;margin-top:11px;box-shadow: inset 0 1px 0 rgba(255,255,255,.05)}
+.ic-master .ic-lab{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+.ic-master .ic-hint{color:var(--ic-muted);font-size:11.5px;margin-top:3px;line-height:1.5}
+.ic-master input{width:100%;margin-top:7px;padding:5px 8px;font:inherit;font-size:12.5px;
+  background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:6px;color:var(--ic-text);font-family:var(--ic-mono)}
+.ic-master input:focus{outline:2px solid var(--ic-accent);outline-offset:1px}
+.ic-acts{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.ic-meta{color:var(--ic-faint);font-size:11.5px;margin-top:8px}
+
+.ic-under{margin:9px 0 0 8px;border-left:1px solid var(--ic-line-strong);padding-left:13px}
+.ic-row{display:grid;grid-template-columns:116px minmax(0,1fr) auto;gap:4px 10px;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--ic-line)}
+.ic-row:last-child{border-bottom:0}
+.ic-row .ic-k{font-size:11.5px;color:var(--ic-muted)}
+.ic-row .ic-slot{min-width:0;overflow:hidden}
+.ic-row .ic-v{display:block;font-family:var(--ic-mono);font-size:11px;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ic-btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--ic-line-strong);
+  background:transparent;color:var(--ic-text);cursor:pointer;white-space:nowrap}
+.ic-btn:hover{border-color:var(--ic-accent)}
+.ic-btn.is-primary{background:var(--ic-accent);border-color:var(--ic-accent);color:var(--ic-accent-ink);font-weight:500}
+.ic-btn.is-ghost{border-color:transparent;color:var(--ic-muted)}
+.ic-btn.is-mini{font-size:11px;padding:2px 7px;color:var(--ic-muted)}
+.ic-btn[disabled]{opacity:.4;cursor:not-allowed}
+.ic-chip{font-size:10.5px;border:1px solid var(--ic-accent);border-radius:999px;padding:0 6px;color:var(--ic-accent);white-space:nowrap}
+
+.ic-group{margin-top:14px}
+.ic-group > .ic-ghead{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-size:12.5px;font-weight:600;padding:2px 0}
+.ic-group > .ic-ghead::before{content:'›';color:var(--ic-muted);transition:transform .15s}
+.ic-group[open] > .ic-ghead::before{transform:rotate(90deg)}
+.ic-group > .ic-ghead .ic-gnote{color:var(--ic-faint);font-weight:400;font-size:11.5px}
+.ic-group > .ic-gbody{margin-top:9px;padding:11px 12px;background:var(--ic-sunken);
+  border:1px solid var(--ic-line-strong);border-radius:8px;box-shadow: inset 0 1px 0 rgba(255,255,255,.04)}
+.ic-sg + .ic-sg{margin-top:11px;padding-top:11px;border-top:1px solid var(--ic-line)}
+.ic-sgh{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--ic-faint);margin-bottom:5px}
+.ic-sgh .ic-sgsrc{font-family:var(--ic-mono);font-size:10.5px;opacity:.8;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic-sg .ic-under{margin:0;padding-left:12px}
+.ic-num-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;
+  border-bottom:1px solid var(--ic-line)}
+.ic-num-row:last-child{border-bottom:0}
+.ic-num{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ic-text);background:var(--ic-raised);
+  border:1px solid var(--ic-line-strong);border-radius:6px;padding:1px 9px;white-space:nowrap}
+
+/* 状态行（飞书 CLI）：不是配置项，所以长相也不该是一条配置行 */
+.ic-status{margin-top:11px;padding:10px 12px;background:var(--ic-sunken);
+  border:1px solid var(--ic-line-strong);border-radius:8px}
+.ic-status .ic-srow{display:flex;align-items:center;gap:8px;font-size:12px}
+.ic-status .ic-dot{width:8px;height:8px;border-radius:50%;background:var(--ic-faint);flex:0 0 auto}
+.ic-status .ic-dot.is-ok{background:var(--ic-ok)}
+.ic-status .ic-dot.is-warn{background:var(--ic-warn)}
+.ic-status .ic-dot.is-bad{background:var(--ic-bad)}
+.ic-status .ic-sname{font-weight:600;white-space:nowrap}
+.ic-status .ic-stxt{color:var(--ic-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic-status .ic-url{display:block;margin-top:6px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);cursor:pointer}
+.ic-status .ic-url:hover{color:var(--ic-accent)}
+
+.ic-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--ic-line)}
+.ic-bar .ic-note{margin-left:auto;color:var(--ic-faint);font-size:11.5px}
+
+.ic-slot{display:block;min-width:0}
+.ic-sk{display:inline-block;height:11px;border-radius:4px;background:var(--ic-raised)}
+.ic-arrive{animation:ic-in .34s ease-out}
+@keyframes ic-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+
+body{margin:0;background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.demo{padding:18px 14px 60px;display:flex;flex-direction:column;align-items:center}
+.demo-bar{width:560px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:10px;
+  padding:9px 12px;border:1px solid #232329;border-radius:10px;background:#101013;font-size:12px;color:#8b8b95}
+.demo-bar .sp{flex:1 0 100%;height:0}
+.demo-btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.demo-btn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.note{width:560px;margin-top:12px;padding:13px 15px;border:1px solid #232329;border-radius:12px;background:#101013;font-size:12px;color:#9a9aa4;line-height:1.8}
+.note h3{margin:0 0 7px;font-size:12.5px;color:#e8e8ec}
+.note b{color:#cfcfd4}
+.note .li{margin-top:7px;padding-left:11px;border-left:2px solid #2b2b33}
+.note table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.note th{text-align:left;color:#77777f;font-weight:600;padding:4px 6px;border-bottom:1px solid #232329}
+.note td{padding:4px 6px;border-bottom:1px solid #1a1a1e;color:#a9a9b3}
+.frame{width:560px}
+.vline{position:absolute;left:10px;right:10px;top:580px;border-top:1px dashed #e0a33e;pointer-events:none}
+.vline span{position:absolute;right:0;top:-15px;font-size:10.5px;color:#e0a33e;background:#050505;padding:0 5px}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-bar" id="bar">
+    <button class="demo-btn on" data-skill="bill">饼干记账 · 6</button>
+    <button class="demo-btn" data-skill="calorie">卡路里 · 11</button>
+    <button class="demo-btn" data-skill="memo">备忘录 · 4+1</button>
+    <button class="demo-btn" data-skill="schedule">作息管家 · 3+1</button>
+    <button class="demo-btn" data-skill="home">居家管家 · 5</button>
+    <button class="demo-btn" data-skill="chef">私家大厨 · 4</button>
+    <span class="sp"></span>
+    <button class="demo-btn" id="replay" style="margin-left:auto">▶ 回放加载</button>
+    <span id="clock" style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px"></span>
+  </div>
+  <div class="frame" id="frame"></div>
+  <div class="note">
+    <h3>六家各自的形状（行数与分级逐字取自源码）</h3>
+    <table>
+      <tr><th>家</th><th>母版</th><th>派生</th><th>技能自带</th><th>数值</th><th>状态行</th></tr>
+      <tr><td>饼干记账</td><td>1</td><td>5</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>卡路里</td><td>3</td><td>3</td><td>1</td><td>3</td><td>—</td></tr>
+      <tr><td>备忘录</td><td>2</td><td>2</td><td>—</td><td>—</td><td>飞书 CLI</td></tr>
+      <tr><td>作息管家</td><td>1</td><td>2</td><td>—</td><td>—</td><td>飞书 CLI</td></tr>
+      <tr><td>居家管家</td><td>1</td><td>4</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>私家大厨</td><td>1</td><td>3</td><td>—</td><td>—</td><td>—</td></tr>
+    </table>
+    <h3 style="margin-top:14px">这套模型为什么能盖住六家</h3>
+    <div class="li"><b>只认「来源」，不认「是哪个技能」</b>：一行是母版还是派生，由它的 owner 决定，
+      跟它属于哪家无关。所以六家共用一份行渲染器。</div>
+    <div class="li"><b>非路径类不硬塞进路径行</b>：数值走小片（1 天／300 秒），
+      凭据走空输入框（未配置），技能自带路径标「不跟任何可改项」。</div>
+    <div class="li"><b>飞书 CLI 不是配置项</b>，所以长相也不该是配置行——它是块状态条（灯＋一句读数＋复制指引＋官网），
+      而且它最慢（要起子进程探测），归在 slow 面，绝不挡配置。</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   KIND:  master  可改·目录/路径（母版）
+          derived 派生·只读（owner = 母版，值由技能算出）
+          fixed   技能固定·只读（包内路径，不跟任何可改项）
+          number  数值·只读（显示成「1 天」「300 秒」）
+   label / hint 是静态的（住 settings.ts），值才是异步的。
+   ═══════════════════════════════════════════════════════════════════════ */
+const D = {
+  user: 'C:\\Users\\辰辰洋洋', lib: 'D:\\2Study\\StudyNotes\\.db', def: 'C:\\Users\\辰辰洋洋\\.ilife\\data'
+};
+const SURFACES = {
+  bill: {
+    title:'饼干记账 · 配置', configFile: D.user+'\\.ilife\\bill.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与备份的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 12 个文件，共 41.2 MB，1 分钟前写过。',
+        children:[
+          { kind:'derived', label:'库文件名', value:D.lib+'\\biscuit_accountant.db' },
+          { kind:'derived', label:'预算／账户文件名', value:D.lib+'\\goals.json' },
+          { kind:'derived', label:'HELP 产物目录名', value:D.lib+'\\biscuit_accountant_html' }
+        ] }
+    ],
+    advanced:[
+      { kind:'derived', label:'备份目录', owner:'db.dir', value:D.lib+'\\backups' },
+      { kind:'derived', label:'备份文件名前缀', owner:'db.dir', value:D.lib+'\\backups\\biscuit_<时间戳>.db' }
+    ]
+  },
+  calorie: {
+    title:'卡路里 · 配置', configFile: D.user+'\\.ilife\\calorie.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与各类产物的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 23 个文件，共 96.4 MB，2 分钟前写过。',
+        children:[
+          { kind:'derived', label:'库文件名', value:D.lib+'\\calorie_data.db' },
+          { kind:'derived', label:'HTML 产物目录名', value:D.lib+'\\calorie_html' }
+        ] },
+      { kind:'master', key:'photos.dir', label:'照片目录',
+        hint:'身材照的存放目录。留空＝用默认目录（数据目录下的 photos）。',
+        value:D.def+'\\photos', slow:'这个目录里现在 86 张照片，共 312 MB，昨天写过。' },
+      { kind:'master', key:'xunji.key', label:'训记 KEY', secret:true,
+        hint:'训记的凭据。留空＝未配置，推送与回写会被拦下。', value:'' }
+    ],
+    advanced:[
+      { kind:'derived', label:'照片 GIF 子目录', owner:'photos.dir', value:D.def+'\\photos\\gifs' },
+      { kind:'derived', label:'训记状态文件目录', owner:'db.dir', value:D.lib+'\\xunji' },
+      { kind:'fixed', label:'训记动作库路径', value:D.user+'\\.dsh\\profiles\\web\\node_modules\\skill-calorie\\src' },
+      { kind:'number', label:'回写默认天数', value:'1 天' },
+      { kind:'number', label:'训记调用限时', value:'300 秒' },
+      { kind:'number', label:'落地调用限时', value:'60 秒' }
+    ]
+  },
+  memo: {
+    title:'备忘录 · 配置', configFile: D.user+'\\.ilife\\memo.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与产物的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 3 个文件，共 1.8 MB，今天上午写过。',
+        children:[
+          { kind:'derived', label:'库文件名', sub:'备忘不建库，这里显示的是会落在哪', value:D.lib+'\\memo.db' },
+          { kind:'derived', label:'HTML 产物目录名', value:D.lib+'\\memo_html' }
+        ] },
+      { kind:'master', key:'media.dir', label:'附件目录',
+        hint:'附件的存放根目录。留空＝数据目录下的 media（目录须已存在，技能不替你建）。',
+        value:D.def+'\\media', slow:'这个目录现在不存在，第一次存附件时要先建好。' }
+    ],
+    advanced:[],
+    status:{ name:'飞书 CLI', level:'warn',
+      text:'找到了 ' + D.user + '\\.local\\bin\\lark-cli.cmd，但还没登录或没拿到 task 域授权',
+      url:'飞书CLI官网为：https://www.feishu.cn/feishu-cli' }
+  },
+  schedule: {
+    title:'作息管家 · 配置', configFile: D.user+'\\.ilife\\schedule.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与产物的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 9 个文件，共 3.4 MB，5 分钟前写过。',
+        children:[
+          { kind:'derived', label:'库文件名', value:D.lib+'\\schedule_data.db' },
+          { kind:'derived', label:'HELP 产物目录名', value:D.lib+'\\schedule_html\\help' }
+        ] }
+    ],
+    advanced:[],
+    status:{ name:'飞书 CLI', level:'ok',
+      text:'已登录且 task 域可写：' + D.user + '\\.local\\bin\\lark-cli.cmd（0.8.2）',
+      url:'飞书CLI官网为：https://www.feishu.cn/feishu-cli' }
+  },
+  home: {
+    title:'居家管家 · 配置', configFile: D.user+'\\.ilife\\home.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与产物的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 1,724,416 字节的库文件，869 件物品，今天写过。',
+        children:[
+          { kind:'derived', label:'库文件名', value:D.lib+'\\home.db' },
+          { kind:'derived', label:'HTML 产物目录名', hint:'`.`或留空＝产物放库根', value:D.lib+'\\home_html' }
+        ] }
+    ],
+    advanced:[
+      { kind:'derived', label:'备份目录', owner:'db.dir', value:D.lib+'\\backups' },
+      { kind:'derived', label:'主密钥文件', owner:'db.dir', value:D.lib+'\\.master.key' }
+    ]
+  },
+  chef: {
+    title:'私家大厨 · 配置', configFile: D.user+'\\.ilife\\chef.yaml',
+    common:[
+      { kind:'master', key:'db.dir', label:'数据目录', hint:'库文件与产物的根目录。留空＝用默认目录。',
+        value:D.lib, slow:'这个目录里现在 294,912 字节的库文件，17 张表，昨天写过。',
+        children:[
+          { kind:'derived', label:'库文件名', value:D.lib+'\\chef_data.db' },
+          { kind:'derived', label:'HELP 产物目录名', value:D.lib+'\\cook_html\\help' },
+          { kind:'derived', label:'场景产物目录名', value:D.lib+'\\cook_html' }
+        ] }
+    ],
+    advanced:[]
+  }
+};
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rowKey = r => r.kind + '|' + r.label;
+const allRows = s => [].concat(s.common, ...s.common.map(m => m.children || []), s.advanced);
+
+/* ── 骨架：文案全到，值全空 ─────────────────────────────────────────── */
+function rowShell(r){
+  const sub = r.sub ? `<span class="ic-sub" style="display:block;font-size:10.5px;color:var(--ic-faint)">${esc(r.sub)}</span>` : '';
+  return `<div class="ic-row">
+    <span class="ic-k">${esc(r.label)}</span>
+    <span class="ic-slot" data-slot="v:${esc(rowKey(r))}"><span class="ic-sk" style="width:150px"></span>${sub}</span>
+    <span class="ic-slot" data-slot="a:${esc(rowKey(r))}"></span>
+  </div>`;
+}
+function numShell(r){
+  return `<div class="ic-num-row"><span class="ic-k">${esc(r.label)}</span>
+    <span class="ic-slot" data-slot="v:${esc(rowKey(r))}"><span class="ic-sk" style="width:46px"></span></span></div>`;
+}
+function masterShell(m){
+  const kids = (m.children || []).map(rowShell).join('');
+  return `<div class="ic-master">
+    <div class="ic-lab">${esc(m.label)}<span class="ic-chip">可改</span></div>
+    <div class="ic-hint">${esc(m.hint)}</div>
+    <div class="ic-slot" data-slot="input:${esc(m.key)}"><span class="ic-sk" style="width:100%;height:27px;border-radius:6px"></span></div>
+    <div class="ic-slot" data-slot="acts:${esc(m.key)}"></div>
+    ${m.slow ? `<div class="ic-slot ic-meta" data-slot="slow:${esc(m.key)}"><span class="ic-sk" style="width:74%"></span></div>` : ''}
+  </div>${kids ? `<div class="ic-under">${kids}</div>` : ''}`;
+}
+function statusShell(st){
+  if (!st) return '';
+  return `<div class="ic-status">
+    <div class="ic-srow"><span class="ic-dot" data-slot="dot"></span>
+      <span class="ic-sname">${esc(st.name)}</span>
+      <span class="ic-stxt" data-slot="stxt">检测中…</span>
+      <button class="ic-btn is-mini" style="margin-left:auto">复制安装指引</button></div>
+    <span class="ic-url">${esc(st.url)}</span>
+  </div>`;
+}
+function advGroups(s){
+  const order = [], map = new Map();
+  s.advanced.forEach(r => {
+    const g = r.owner ? ('owner:' + r.owner) : (r.kind === 'fixed' ? 'fixed' : 'number');
+    if (!map.has(g)) { map.set(g, []); order.push(g); }
+    map.get(g).push(r);
+  });
+  return order.map(g => ({ g, rows: map.get(g) }));
+}
+function advShell(s){
+  if (!s.advanced.length) return '';
+  return advGroups(s).map(({ g, rows }) => {
+    const m = g.startsWith('owner:') ? s.common.find(x => x.key === g.slice(6)) : null;
+    const head = m ? `跟着「${esc(m.label)}」<span class="ic-sgsrc" title="${esc(m.value)}">${esc(m.value)}</span>`
+      : g === 'fixed' ? '技能自带<span class="ic-sgsrc">不跟任何可改项</span>'
+      : '数值<span class="ic-sgsrc">只读，要改请编辑配置文件</span>';
+    const body = rows.map(r => r.kind === 'number' ? numShell(r) : rowShell(r)).join('');
+    return `<div class="ic-sg"><div class="ic-sgh">${head}</div>
+      <div class="${m ? 'ic-under' : ''}">${body}</div></div>`;
+  }).join('');
+}
+function cardShell(s){
+  return `<div class="ic-card">
+    <div class="ic-slot" data-slot="title"><span class="ic-sk" style="width:120px;height:15px"></span></div>
+    <div class="ic-slot" data-slot="file" style="margin-top:6px"><span class="ic-sk" style="width:280px"></span></div>
+    ${s.common.map(masterShell).join('')}
+    ${statusShell(s.status)}
+    ${s.advanced.length
+      ? `<details class="ic-group" open>
+           <summary class="ic-ghead">高级<span class="ic-gnote">不常改 · ${s.advanced.length} 项</span></summary>
+           <div class="ic-gbody">${advShell(s)}</div>
+         </details>`
+      : ''}
+    <div class="ic-slot" data-slot="bar"></div>
+  </div>`;
+}
+
+/* ── 补节点：每个位置只填一次（动画因此不会重演） ───────────────────── */
+const frame = document.getElementById('frame');
+const clock = document.getElementById('clock');
+const filled = new Set();
+function fill(slot, html){
+  if (filled.has(slot)) return;
+  const el = frame.querySelector(`[data-slot="${slot}"]`);
+  if (!el) return;
+  filled.add(slot);
+  el.innerHTML = html;
+  el.classList.add('ic-arrive');
+}
+function valueHTML(r){
+  if (r.kind === 'number') return `<span class="ic-num" title="${esc(r.value)}">${esc(r.value)}</span>`;
+  return `<span class="ic-v" title="${esc(r.value)}">${esc(r.value)}</span>`;
+}
+function fillRow(r){
+  fill('v:' + rowKey(r), valueHTML(r));
+  if (r.kind !== 'number') fill('a:' + rowKey(r),
+    '<span style="display:flex;gap:4px"><button class="ic-btn is-mini">复制</button><button class="ic-btn is-mini">打开</button></span>');
+}
+/* fast：配置文件 + 落点解析（毫秒级） */
+function applyFast(){
+  const s = SURFACES[stage.skill];
+  fill('title', esc(s.title));
+  fill('file', `<b>配置文件</b>${esc(s.configFile)}`);
+  s.common.forEach(m => {
+    fill('input:' + m.key, `<input value="${esc(m.value)}" placeholder="${m.secret && !m.value ? '未配置' : ''}" spellcheck="false">`);
+    if (!m.secret) fill('acts:' + m.key,
+      '<div class="ic-acts"><button class="ic-btn is-mini">浏览…</button><button class="ic-btn is-mini">用默认位置</button></div>');
+    (m.children || []).forEach(fillRow);
+  });
+  s.advanced.forEach(fillRow);
+  fill('bar', `<div class="ic-bar">
+      <button class="ic-btn" disabled>保存</button>
+      <button class="ic-btn">重置为默认</button>
+      <button class="ic-btn">重新读取</button>
+      <span class="ic-note">没有未保存的改动</span></div>`);
+}
+/* slow：体积／条数／最近写入 ＋ 飞书 CLI 探测（起子进程，最慢） */
+function applySlow(){
+  const s = SURFACES[stage.skill];
+  s.common.forEach(m => { if (m.slow) fill('slow:' + m.key, esc(m.slow)); });
+  if (s.status){
+    fill('dot', '');                                  // 占位点换成真灯
+    const dot = frame.querySelector('[data-slot="dot"]');
+    if (dot) dot.className = 'ic-dot is-' + s.status.level;
+    fill('stxt', esc(s.status.text));
+  }
+}
+
+/* ── 演示驱动（真实现里没有） ──────────────────────────────────────── */
+const stage = { skill:'bill', timers:[] };
+function clearTimers(){ stage.timers.forEach(clearTimeout); stage.timers = []; }
+function mount(){
+  clearTimers(); filled.clear();
+  const s = SURFACES[stage.skill];
+  frame.innerHTML = `<div class="ilife-config"><div class="ic-shell">${cardShell(s)}
+    <div class="vline"><span>真机可视高度到此（约 580px）</span></div></div></div>`;
+  const t0 = Date.now();
+  clock.textContent = '骨架 0.00s';
+  stage.timers.push(setTimeout(() => { applyFast();
+    clock.textContent = `快面 ${((Date.now()-t0)/1000).toFixed(2)}s（可用）`; }, 420));
+  stage.timers.push(setTimeout(() => { applySlow();
+    clock.textContent = `慢面 ${((Date.now()-t0)/1000).toFixed(2)}s（补齐）`; }, 1500));
+}
+document.querySelectorAll('[data-skill]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-skill]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  stage.skill = b.getAttribute('data-skill');
+  mount();
+});
+document.getElementById('replay').onclick = mount;
+mount();
+</script>
+</body>
+</html>

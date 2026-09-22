@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置区域 · 最终形态（一屏，只看行不行）</title>
+<!--
+  原型件（不是生产代码，不参与构建，不承载任何真逻辑）。
+
+  这是四轮判定收敛出的**唯一形态**。你不挑，你只判「行 / 不行」。
+  形态的每一条都有前三轮的票做依据，写在页面上（见「依据」那一栏）。
+
+  另含你要的加载行为：面板先出现，八项数据逐个到位。
+  为什么这样切：快面＝标题＋配置文件＋六个落点（本地一次读）；慢面＝体积／条数／最近写入（要读盘），
+  所以最慢的那一句放最后到位，中途面板已经能看了。
+
+  尺寸按真机：560 宽（真机可视约 550 × 580）。颜色取真值。内容逐字取自真面板。
+-->
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit}
+.tb{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 20px;background:#101013;border-bottom:1px solid #232329}
+.tb h1{font-size:14.5px;margin:0;font-weight:600;color:#e8e8ec}
+.tb .sub{font-size:12.5px;color:#8b8b95}
+.tb .sp{flex:1}
+.tbtn{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.tbtn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.tbtn.acc{background:#2f6fed;border-color:#2f6fed;color:#fff}
+.wrap{display:flex;flex-direction:column;align-items:center;padding:20px 14px 130px}
+.row{display:flex;gap:18px;align-items:flex-start}
+.col{width:560px}
+.note{width:300px;padding:14px 16px;border:1px solid #232329;border-radius:12px;background:#101013;font-size:12px;color:#9a9aa4;line-height:1.75}
+.note h3{margin:0 0 8px;font-size:12.5px;color:#e8e8ec;font-weight:600}
+.note b{color:#cfcfd4;font-weight:600}
+.note .li{margin-top:9px;padding-left:11px;border-left:2px solid #2b2b33}
+.frame{position:relative;width:560px}
+.stage{width:560px;min-height:520px;background:var(--bg);color:var(--text);border-radius:12px;padding:18px 20px 20px;font-family:var(--font,inherit)}
+.vline{position:absolute;left:-10px;right:-10px;top:580px;border-top:1px dashed #e0a33e;pointer-events:none}
+.vline span{position:absolute;right:0;top:-16px;font-size:10.5px;color:#e0a33e;background:#050505;padding:0 5px}
+.states{display:flex;gap:7px;margin:12px 0 10px;flex-wrap:wrap}
+.gl3{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.ctitle{font-size:13.5px;font-weight:640}
+.cmeta{color:var(--muted);font-size:11.5px;margin-top:4px;word-break:break-all}
+.cmeta .k{color:var(--faint);margin-right:5px}
+.mono{font-family:var(--mono);font-size:11.5px}
+.faint{color:var(--faint);font-size:11.5px;line-height:1.5}
+.btn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accentInk);font-weight:500}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.mini{font-size:11px;padding:2px 7px;color:var(--muted)}
+.btn[disabled]{opacity:.4}
+.f{width:100%;background:var(--inputBg);border:1px solid var(--inputLine);border-radius:5px;color:var(--text);padding:5px 8px;font-family:var(--font);font-size:12.5px}
+.chipa{font-size:10.5px;border:1px solid var(--accent);border-radius:999px;padding:0 6px;color:var(--accent);font-weight:400;white-space:nowrap}
+.g3in{background:var(--surface3);border:1px solid var(--line2);border-radius:9px;padding:11px 12px;margin-top:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.under{margin:10px 0 0 8px;border-left:1px solid var(--line2);padding-left:13px}
+.under .ui{display:grid;grid-template-columns:118px 1fr auto;gap:4px 10px;padding:7px 0;align-items:center;border-bottom:1px solid var(--line)}
+.under .ui:last-child{border-bottom:0}
+.under .uk{font-size:11.5px;color:var(--muted)}
+.under .uv{font-family:var(--mono);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.acts{display:flex;gap:4px}
+.dirtybar{display:flex;gap:8px;align-items:center;margin-top:12px;padding:9px 12px;border:1px solid var(--accent);border-radius:8px;background:var(--surface3)}
+.dif{background:#0a0a0c;border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11.5px;overflow:hidden;margin-top:11px}
+.dif .h{padding:8px 11px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px}
+.dif .l{padding:2px 11px;white-space:pre}
+.dif .del{background:rgba(224,90,80,.13);color:#e08d86}
+.dif .add{background:rgba(78,201,160,.13);color:#7ed3b2}
+.toast{display:flex;align-items:center;gap:9px;margin-top:11px;padding:9px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--surface3);font-size:12px}
+.toast .undo{margin-left:auto;color:var(--accent);cursor:pointer}
+.lt{width:7px;height:7px;border-radius:50%;display:inline-block}
+.lt.ok{background:#4ec9a0}
+.sk{height:11px;border-radius:4px;background:var(--surface3);display:inline-block}
+.arrive{animation:ar .34s ease-out}
+@keyframes ar{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.bbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 20px;background:rgba(16,16,19,.97);border-top:1px solid #26262c}
+.vote{font-size:13px;padding:7px 20px;border-radius:8px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.vote.g.on{background:#175c46;border-color:#2f9e78;color:#d6fff0}
+.vote.b.on{background:#5c2420;border-color:#b1493f;color:#ffdfdc}
+.bnote{flex:1;min-width:200px;font:inherit;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid #2e2e36;background:#141418;color:#e0e0e6}
+.kbd{font-size:11px;color:#77777f;border:1px solid #2e2e36;border-radius:5px;padding:0 5px}
+</style>
+</head>
+<body>
+<div class="tb">
+  <h1>配置区域 · 最终形态</h1>
+  <span class="sub">打开时自动回放一次加载 · 你只回一个字：行 / 不行</span>
+  <span class="sp"></span>
+  <button class="tbtn" id="replay">▶ 重播加载</button>
+</div>
+
+<div class="wrap">
+  <div class="row">
+    <div class="col">
+      <div class="states">
+        <button class="tbtn on" data-st="ready">① 就绪</button>
+        <button class="tbtn" data-st="dirty">② 有改动</button>
+        <button class="tbtn" data-st="confirm">③ 保存前（diff）</button>
+        <button class="tbtn" data-st="saved">④ 已保存（可撤销）</button>
+      </div>
+      <div class="frame" id="frame"></div>
+    </div>
+    <div class="note">
+      <h3>这一版是怎么来的</h3>
+      四轮累计 83 个原型，这一版每一条都有票做依据：
+      <div class="li"><b>玻璃材质</b>（底／面／浮三档＋内高光）：2 票全过</div>
+      <div class="li"><b>竖线从属</b>（5 项挂在数据目录下）：3 票全过</div>
+      <div class="li"><b>行尾两动作</b>（复制／打开）：行式组织 4 票全过，树／卡片／数据表全否</div>
+      <div class="li"><b>数据目录下留一句信息</b>：单独一条 ✓，铺成卡片 ✗ —— 只留一条</div>
+      <div class="li"><b>脏态条 / 保存前 diff / 撤销条</b>：动作反馈那一族 4 票全过</div>
+      <h3 style="margin-top:16px">加载怎么走</h3>
+      面板框立刻出现，八项逐个到位：<b>① 标题 ② 数据目录 ③–⑦ 五个只读项 ⑧ 轻量信息</b>。
+      前七项是本地一次读，到位很快；第八项要读盘（体积／条数／最近写入），最慢，所以放最后——
+      中途面板已经能看、能改。
+      <h3 style="margin-top:16px">真机尺寸</h3>
+      560 宽；橙色虚线＝真机可视高度（约 580px）。长文件名走省略号，悬停看全。
+    </div>
+  </div>
+</div>
+
+<footer class="bbar">
+  <button class="vote g" id="vg">行 <span class="kbd">1</span></button>
+  <button class="vote b" id="vb">不行 <span class="kbd">2</span></button>
+  <input class="bnote" id="bnote" placeholder="不行的话一句话说哪里（行了就不用写）">
+  <span class="sub" style="font-size:11.5px;color:#77777f">空格＝重播加载</span>
+</footer>
+
+<script>
+(function(){
+'use strict';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var D={card:'饼干记账 · 配置',cfg:'C:\\Users\\辰辰洋洋\\.ilife\\bill.yaml',dir:'C:\\Users\\辰辰洋洋\\.ilife\\data',
+  foldinfo:'这个目录里现在 3 个文件，共 12.4 MB，1 分钟前写过。'};
+var ROS=[{k:'库文件名',v:'biscuit_accountant.db'},{k:'预算／账户文件名',v:'goals.json'},
+  {k:'HELP 产物目录名',v:'biscuit_accountant_html'},{k:'备份目录',v:'backup'},{k:'备份文件名前缀',v:'biscuit_'}];
+var T={bg:'#080808',surface:'#101010',surface3:'#202020',line:'#1c1c1c',line2:'#282828',text:'#e0e0e0',
+  muted:'#a8a8a8',faint:'#7c7c7c',accent:'#f8b080',accentInk:'#1a1206',inputBg:'#0b0b0b',inputLine:'#282828'};
+function tokens(){var a=[];for(var k in T)a.push('--'+k+':'+T[k]);
+  a.push('--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif');
+  a.push('--mono:ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace');return a.join(';');}
+var st=document.createElement('style');st.textContent='.stage{'+tokens()+'}';document.head.appendChild(st);
+
+/* ── 渲染 ── */
+var STAGE=8,STATE='ready',FRESH=[];
+function row(r,i,opt){
+  opt=opt||{};
+  var right = opt.follow ? '<span class="faint" style="color:var(--accent)">将跟随更新</span>'
+    : '<span class="acts"><button class="btn mini">复制</button><button class="btn mini">打开</button></span>';
+  var cls = FRESH.indexOf(3+i)>=0 ? 'ui arrive' : 'ui';
+  return '<div class="'+cls+'"><span class="uk">'+esc(r.k)+'</span><span class="uv">'+esc(r.v)+'</span>'+right+'</div>';
+}
+function panel(){
+  var h='<div class="gl3">';
+  h += STAGE>=1
+    ? '<div class="ctitle'+(FRESH.indexOf(1)>=0?' arrive':'')+'">'+esc(D.card)+'</div><div class="cmeta'+(FRESH.indexOf(1)>=0?' arrive':'')+'"><span class="k">配置文件</span>'+esc(D.cfg)+'</div>'
+    : '<div class="ctitle"><span class="sk" style="width:104px"></span></div><div class="cmeta"><span class="sk" style="width:250px"></span></div>';
+  if(STAGE>=2){
+    h += '<div class="g3in'+(FRESH.indexOf(2)>=0?' arrive':'')+'"><div style="font-size:12.5px;font-weight:600">数据目录<span class="chipa">可改</span></div>'+
+      '<input class="f" style="margin-top:7px" value="'+esc(D.dir)+'">'+
+      '<div style="display:flex;gap:5px;margin-top:7px"><button class="btn mini">浏览…</button><button class="btn mini">用默认位置</button></div>';
+    h += STAGE>=8 ? '<div class="faint'+(FRESH.indexOf(8)>=0?' arrive':'')+'" style="margin-top:8px">'+esc(D.foldinfo)+'</div>'
+                  : '<div style="margin-top:9px"><span class="sk" style="width:72%"></span></div>';
+    h += '</div>';
+  } else {
+    h += '<div class="g3in"><span class="sk" style="width:74px"></span><div class="sk" style="width:100%;margin-top:10px;height:23px;border-radius:5px"></div></div>';
+  }
+  h += '<div class="under">';
+  ROS.forEach(function(r,i){ h += (STAGE>=3+i) ? row(r,i,{follow:STATE==='dirty'}) : '<div class="ui"><span class="sk" style="width:74px"></span><span class="sk" style="width:150px"></span><span style="width:64px"></span></div>'; });
+  h += '</div>';
+  if(STAGE<8){
+    h += '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px"><span class="sk" style="width:190px"></span></div>';
+  } else if(STATE==='dirty'){
+    h += '<div class="dirtybar"><span style="color:var(--accent);font-size:12px">改了 1 项，还没保存</span>'+
+      '<span style="margin-left:auto;display:flex;gap:6px"><button class="btn pri">保存</button><button class="btn">放弃</button></span></div>';
+  } else if(STATE==='confirm'){
+    h += '<div class="dif"><div class="h">保存后要写入 '+esc(D.cfg)+' 的这一行</div>'+
+      '<div class="l del">-  db.dir     C:\\Users\\辰辰洋洋\\.ilife\\data</div>'+
+      '<div class="l add">+  db.dir     D:\\账本</div></div>'+
+      '<div class="faint" style="margin-top:8px">库文件 · 预算文件 · 产物目录 · 备份目录 4 项跟着变（不在文件里写死）</div>'+
+      '<div style="display:flex;gap:7px;margin-top:11px;border-top:1px solid var(--line);padding-top:11px"><button class="btn pri">确认写入</button><button class="btn">改回去</button><button class="btn ghost">先备份再写</button></div>';
+  } else {
+    h += '<div style="display:flex;gap:8px;align-items:center;margin-top:12px;border-top:1px solid var(--line);padding-top:11px">'+
+      (STATE==='saved'?'<button class="btn">重新读取</button><button class="btn">重置为默认</button><span class="faint" style="margin-left:auto">改动前已备份 bill.yaml.bak</span>'
+                      :'<button class="btn" disabled>保存</button><button class="btn">重置为默认</button><button class="btn">重新读取</button><span class="faint" style="margin-left:auto">没有未保存的改动</span>')+'</div>';
+  }
+  h += '</div>';
+  if(STATE==='saved'&&STAGE>=8) h += '<div class="toast"><span class="lt ok"></span><span>已写入 bill.yaml（原文件备份为 .bak）</span><span class="undo">撤销</span><span class="faint">5s</span></div>';
+  return h;
+}
+function draw(){
+  document.getElementById('frame').innerHTML='<div class="stage">'+panel()+'<div class="vline"><span>真机可视高度到此（约 580px）</span></div></div>';
+}
+/* ── 加载回放 ── */
+var timer=null;
+function replay(){
+  if(timer){clearInterval(timer);}
+  var n=0;STAGE=0;FRESH=[];draw();
+  timer=setInterval(function(){
+    n++;STAGE=n;FRESH=[n];
+    if(n>=8){clearInterval(timer);timer=null;}
+    draw();
+  },300);
+}
+/* ── 状态切换 ── */
+Array.prototype.forEach.call(document.querySelectorAll('[data-st]'),function(b){
+  b.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-st]'),function(x){x.classList.remove('on');});
+    this.classList.add('on');STATE=this.getAttribute('data-st');STAGE=8;FRESH=[];draw();
+  };
+});
+document.getElementById('replay').onclick=replay;
+/* ── 行/不行 ── */
+var KEY='ilife-panel-final-v1',rec={};
+try{var raw=localStorage.getItem(KEY);if(raw)rec=JSON.parse(raw)||{};}catch(e){}
+function paint(){
+  document.getElementById('vg').classList.toggle('on',rec.vote==='good');
+  document.getElementById('vb').classList.toggle('on',rec.vote==='bad');
+  document.getElementById('bnote').value=rec.note||'';
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(rec));}catch(e){}}
+document.getElementById('vg').onclick=function(){rec.vote=(rec.vote==='good')?null:'good';save();paint();};
+document.getElementById('vb').onclick=function(){rec.vote=(rec.vote==='bad')?null:'bad';save();paint();};
+document.getElementById('bnote').oninput=function(){rec.note=this.value;save();};
+document.addEventListener('keydown',function(e){
+  var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+  if(e.key==='1'){rec.vote='good';save();paint();}
+  else if(e.key==='2'){rec.vote='bad';save();paint();}
+  else if(e.key===' '){replay();e.preventDefault();}
+});
+paint();
+STAGE=0;draw();              /* 0ms：先把骨架画出来，面板框立刻可见 */
+setTimeout(replay,320);      /* 320ms 起：八项逐个到位 */
+})();
+</script>
+</body>
+</html>
