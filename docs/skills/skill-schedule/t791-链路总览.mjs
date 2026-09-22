@@ -38,7 +38,7 @@ import { MANIFESTS, ROWS, EXCLUDED } from './t791-数据.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..', '..');
-const ROUTES_JS = join(REPO, 'packages', 'skill-schedule', 'dist', 'triggers', 'routes.generated.js');
+const ROUTES_JS = join(REPO, 'packages', 'skill-schedule', 'src', 'triggers', 'routes.generated.ts');
 const PAGE = join(HERE, '链路总览.html');
 const LEDGER = join(REPO, '.scratch', 't791', 't791-清单.json');
 
@@ -54,7 +54,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 /* ─────────────────────────── 前置件 ─────────────────────────── */
 
 if (!existsSync(ROUTES_JS)) {
-  die2('缺路由表编译产物（先 `node node_modules/typescript/bin/tsc -b packages/skill-schedule`）：' + rel(ROUTES_JS));
+  die2('缺生成的路由表：' + rel(ROUTES_JS) + '（由 `scripts/gen-cli.mjs` 从各能力 routes.ts 派生，别手改）');
 }
 for (const m of MANIFESTS) {
   if (!existsSync(join(REPO, m.file))) die2('缺域清单件：' + m.file + '（八张域票的验收产物，被清了要重跑对应探针）');
@@ -312,7 +312,7 @@ const page = head
 const footSources = MANIFESTS.map((m) => '<code>' + esc(m.file) + '</code>').join('　');
 const pageFoot = '<h2>四、这一页读的是什么</h2>\n'
   + '<div class="card"><p>路由表：<code>packages/skill-schedule/src/triggers/routes.generated.ts</code>'
-  + '（由各能力 <code>routes.ts</code> 派生，编译产物在 <code>dist/triggers/routes.generated.js</code>）。'
+  + '（由各能力 <code>routes.ts</code> 派生，别手改；本页直接读**仓里那一份**，故不要求先编译）。'
   + '唤醒词 → 产物归属：<code>docs/skills/skill-schedule/t791-数据.mjs</code>。'
   + '产物文件名与字节读数：八张域票的清单件（每件一行）</p><p class="srcs">' + footSources + '</p>'
   + '<p>重跑本页：<code>node docs/skills/skill-schedule/t791-链路总览.mjs</code>'

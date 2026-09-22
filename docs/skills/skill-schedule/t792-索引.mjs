@@ -21,7 +21,7 @@ import { MANIFESTS, ROWS, EXCLUDED } from './t791-数据.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..', '..');
 const DIR = join(REPO, '.scratch', 't792');
-const ROUTES_JS = join(REPO, 'packages', 'skill-schedule', 'dist', 'triggers', 'routes.generated.js');
+const ROUTES_JS = join(REPO, 'packages', 'skill-schedule', 'src', 'triggers', 'routes.generated.ts');
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const reds = [];
