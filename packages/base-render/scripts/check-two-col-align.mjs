@@ -19,6 +19,7 @@
  *
  * 用法（仓根）：
  *   node packages/base-render/scripts/check-two-col-align.mjs --dir <页群目录> [--widths 1280,768,390]
+ *   （--dir 递归收页，含子目录；单文件直接列路径，可重复）
  *   node packages/base-render/scripts/check-two-col-align.mjs <a.html> <b.html> …
  *   加 `--json <文件>` 即多写一份逐页逐表机器读数（含零表页，不改变屏幕输出）。
  *
@@ -56,7 +57,16 @@ const FILES = [...positional.map((p) => resolve(p))];
 if (DIR !== '') {
   const dir = resolve(DIR);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) die(2, '目录不存在：' + dir);
-  for (const f of readdirSync(dir)) if (f.toLowerCase().endsWith('.html')) FILES.push(join(dir, f));
+  /** 递归收页（#884）：子目录页与顶层同等受检，不静默漏测。 */
+  const walk = (d) => {
+    for (const f of readdirSync(d)) {
+      const abs = join(d, f);
+      if (statSync(abs).isDirectory()) walk(abs);
+      else if (f.toLowerCase().endsWith('.html')) FILES.push(abs);
+    }
+  };
+  walk(dir);
+  FILES.sort();
 }
 if (FILES.length === 0) die(2, '没有输入页面：给一组 HTML 路径，或用 --dir <目录>');
 

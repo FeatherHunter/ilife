@@ -196,7 +196,11 @@ for (const [label, batch] of Object.entries(batches)) {
   const actual = {};
   for (const f of onDisk) {
     fileCount += 1;
-    const tables = parseTables(readFileSync(join(dir, f), 'utf8'));
+    const html = readFileSync(join(dir, f), 'utf8');
+    if (!/<!doctype html/i.test(html) || !/<\/head>/i.test(html)) {
+      console.log('  · ' + f + ' 无文档壳（片段？standalone 量的是 UA 默认对位，仅供参考）');
+    }
+    const tables = parseTables(html);
     actual[f] = tables;
     tableCount += tables.length;
     if (roster !== null && Object.hasOwn(roster, f)) {
