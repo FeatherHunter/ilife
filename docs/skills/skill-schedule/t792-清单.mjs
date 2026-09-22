@@ -65,17 +65,29 @@ export function buildRows() {
   return { rows, missing };
 }
 
+/** **读数镜像目录**：`t792-读数.mjs` 的缺省 `--pages` 就是它。
+ *  为什么要多这一份：`sep／resp／fmt／facts` 四件读数量的必须是**同一刻**的产物，
+ *  而墙与索引要在**发布副本目录** `.scratch/t792/` 里跑（§3 第 2 条：墙页与产物必须同目录）。
+ *  两处都用**同一批域产物**、名字逐字相同，才谈得上「墙、索引、读数说的是同一批字节」。
+ *
+ *  ⚠️ 2026-09-22 复评实测的坑（写在这里免得后人重踩）：本件原来只刷 `.scratch/t792/` 那份发布副本，
+ *  镜像目录没人刷 ⇒ 五张缺陷票落地后重跑读数，量到的还是 14:50 那一代旧镜像（页分 58/61 假绿），
+ *  而域产物（`.scratch/t787/成品/` 等）早已是修后那一代（真读数 61/61）。故本件把两份一起刷。 */
+const MIRROR = join(OUT, '产物');
+
 const { rows, missing } = buildRows();
 mkdirSync(OUT, { recursive: true });
+mkdirSync(MIRROR, { recursive: true });
 
-/** 产物拷进同一目录（§3 第 2 条）：同名覆盖，名字一字不改。 */
+/** 产物拷进**两个**目录（发布副本 ＋ 读数镜像）：同名覆盖，名字一字不改。 */
 const copied = [];
 for (const r of rows) {
-  const to = join(OUT, r.file);
-  copyFileSync(r.src, to);
-  const sha = createHash('sha256').update(readFileSync(to)).digest('hex').slice(0, 12);
-  if (sha !== r.sha256_12) missing.push(r.file + '（拷进来 sha 对不上）');
-  copied.push({ ...r, src: undefined, inDir: to });
+  for (const to of [join(OUT, r.file), join(MIRROR, r.file)]) {
+    copyFileSync(r.src, to);
+    const sha = createHash('sha256').update(readFileSync(to)).digest('hex').slice(0, 12);
+    if (sha !== r.sha256_12) missing.push(r.file + '（拷进来 sha 对不上）');
+  }
+  copied.push({ ...r, src: undefined, inDir: join(MIRROR, r.file) });
 }
 
 writeFileSync(join(OUT, MANIFEST), JSON.stringify({
@@ -89,5 +101,6 @@ writeFileSync(join(OUT, MANIFEST), JSON.stringify({
 
 const clean = missing.length === 0;
 console.log('清单 ' + copied.length + ' 行；缺 ' + missing.length + ' 件 -> '
-  + (clean ? '可发' : missing.join('、')));
+  + (clean ? '可发' : missing.join('、'))
+  + '（发布副本 ' + OUT + ' ＋ 读数镜像 ' + MIRROR + ' 各 ' + copied.length + ' 件）');
 process.exit(clean ? 0 : 1);
