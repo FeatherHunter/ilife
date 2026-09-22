@@ -35,7 +35,8 @@ const MENU_HINTS: readonly string[] = ['', '', ''];
  *  `key` 是 `SCHEDULE_KEY_SHAPES` 里那八个之一（形状由它定：`list`／`detail`／`stat`／`receipt`／
  *  `analysis`），`payload` 就是这条命令 `data` 位那一份（`EnvelopeDataByShape[shape]`）——错形在
  *  `buildScheduleEnvelope` 里当场 throw（fail-closed，不返空串冒充）。
- *  页型函数负责补 `title`（复制区标题）与两个 actionId：那是**页的常量**，不是调用方的口径。 */
+ *  页型函数负责补 `title`（复制区里装的是哪一份文本，**声明位、不上屏**，见 `scheduleCopyArea` 件头）
+ *  与两个 actionId：那是**页的常量**，不是调用方的口径。 */
 export interface ScheduleCopyAreaInput {
   /** 这一页是哪条命令出的（八键之一）。数据位与日志位共用这一个场景。 */
   readonly key: string;
@@ -44,7 +45,9 @@ export interface ScheduleCopyAreaInput {
   /** 日志位第 2–6 段（走 `scheduleCopyLog` 建）：给了就出「复制日志」六段（不给＝只出数据位那颗按钮）。
    *  第 1 段场景标识与数据位同源（同一个 key／载荷），本件不另要一份。 */
   readonly log?: CopyLogFields;
-  /** 复制区标题；不给＝不出标题（页型函数给的固定句，如「复制与留档」）。 */
+  /** 复制区标题（**声明位，不上屏**，见 `scheduleCopyArea` 的件头）：说的是「这一区装的是哪一份文本」；
+   *  页型函数给的固定句如「复制与留档」／「复制初始化结果」／「复制初始化 prompt」／「复制给 AI」。
+   *  #906 之前它被透传成按钮上方那行 `<h2>`，与紧挨着的「复制数据」按钮重复，现不再渲染。 */
   readonly title?: string;
   /** 数据位输出头覆盖；不给＝公共层缺省头（`【schedule · <key>】`）。 */
   readonly dataTitle?: string;
@@ -106,12 +109,22 @@ function formatsOf(input: ScheduleCopyAreaInput, envelope: SerializableEnvelope)
   };
 }
 
-/** 复制区：数据位恒出三格式菜单（纯文本／JSON／CSV 三选一）；日志位给了就出六段。 */
+/** 复制区：数据位恒出三格式菜单（纯文本／JSON／CSV 三选一）；日志位给了就出六段。
+ *
+ *  **本区不落屏 `title`**（#906，2026-09-22 人滚墙后裁）：`title` 说的是「这一区装的是哪一份文本」
+ *  （`复制与留档`／`复制初始化结果`／`复制初始化 prompt`／`复制给 AI` 四种字面），原先透传给公共层，
+ *  由 `renderCopyBlock` 渲染成按钮**正上方**那行 `<h2 class="ilife-block-copy-block-title">`。
+ *  实测那样等于同一件事印两遍：紧挨着的按钮自己写着「复制数据」／「复制日志」，
+ *  页内导航（`.ilife-block-toc`）也拿同一串字当锚点名（61 页里 50 页如此）。
+ *  故这里**只收声明、不上屏**：`title` 字段与 30 处调用点原样保留，将来公共层若要把它渲染到别处
+ *  （如页头或工具条的说明位），一处接线即生效。
+ *
+ *  为什么不在公共层 `renderCopyBlock` 上删：那一支是六家技能共用的件（卡路里／备忘录／居家都印这行标题），
+ *  删它会顺带改掉别家的产物；本票只治作息这一家，公共层一字不动。 */
 export function scheduleCopyArea(input: ScheduleCopyAreaInput): string {
   const envelope = buildScheduleEnvelope(input.key, input.payload) as unknown as SerializableEnvelope;
   const log = input.log;
   return renderCopyBlock({
-    ...(input.title === undefined ? {} : { title: input.title }),
     dataFormats: formatsOf(input, envelope),
     ...(input.dataActionId === undefined ? {} : { dataActionId: input.dataActionId }),
     ...(log === undefined ? {} : {
