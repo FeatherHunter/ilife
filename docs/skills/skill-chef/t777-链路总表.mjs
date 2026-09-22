@@ -58,26 +58,24 @@ function parseAsset(text) {
     .map((m) => ({ id: m[1], label: m[2], dir: m[3] }));
   const cards = [...text.matchAll(/\{\s*id:\s*'([^']+)'\s*,\s*group:\s*'([^']+)'\s*,\s*domain:\s*'([^']+)'\s*,\s*slug:\s*'([^']+)'\s*\}/g)]
     .map((m) => ({ id: m[1], group: m[2], domain: m[3], slug: m[4] }));
-  const wakes = [...text.matchAll(/\{\s*phrase:\s*'([^']+)'\s*,\s*source:\s*'([^']+)'\s*,\s*routable:\s*(true|false)\s*,\s*key:\s*'([^']+)'\s*,\s*group:\s*'([^']*)'\s*,\s*cards:\s*\[([^\]]*)\]/g)]
-    .map((m) => ({ phrase: m[1], source: m[2], routable: m[3] === 'true', key: m[4], group: m[5], cards: [...m[6].matchAll(/'([^']+)'/g)].map((x) => x[1]) }));
+  const wakes = [...text.matchAll(/\{\s*phrase:\s*'([^']+)'\s*,\s*source:\s*'([^']+)'\s*,\s*routable:\s*(true|false)\s*,\s*key:\s*'([^']+)'\s*,\s*group:\s*'([^']*)'\s*,\s*cards:\s*\[([^\]]*)\]\s*,\s*promptKind:\s*'([^']*)'\s*,\s*promptRef:\s*'((?:[^'\\]|\\.)*)'/g)]
+    .map((m) => ({ phrase: m[1], source: m[2], routable: m[3] === 'true', key: m[4], group: m[5], cards: [...m[6].matchAll(/'([^']+)'/g)].map((x) => x[1]), promptKind: m[7], promptRef: m[8].replace(/\\'/g, "'") }));
   return { domains, cards, wakes };
 }
 if (!existsSync(ASSET)) fail('资产缺失：' + ASSET);
 const A = parseAsset(readFileSync(ASSET, 'utf8'));
 const refPhrases = parseAsset(readFileSync(DEFASSET, 'utf8')).wakes.map((w) => w.phrase);
 
-// ── prompt：sceneData 的 prompt_template（源码转义 \n 还原为真实换行）＋ 3 条新写样本 ──
+// ── prompt：口径取唤醒词资产（promptKind／promptRef），正文取 sceneData 的 prompt_template ──
+// ⚠️ 本件不再自带任何 prompt 文案：`chef-scenes.ts` 的 `promptKind`／`promptRef`（33 group／9 reuse／
+//    3 new／1 param／4 help）是唯一事实源，本件只做分派与呈现——照地图裁决「唤醒词与场景资产单一源」。
 const sceneText = readFileSync(DEFSCENE, 'utf8');
 const promptOf = new Map();
-for (const m of sceneText.matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?prompt_template:\s*'((?:[^'\\]|\\.)*)'/g)) {
+// 按场景对象边界取：`[^{}]*?` 不跨对象，取到的 key 必是卡 id（旧法用 `[\s\S]*?`，48 个键里 33 个是域 id／组名）
+for (const m of sceneText.matchAll(/\{\s*id:\s*'([^']+)'[^{}]*?prompt_template:\s*'((?:[^'\\]|\\.)*)'/g)) {
   promptOf.set(m[1], m[2].replace(/\\n/g, LF).replace(/\\'/g, "'").replace(/\\\\/g, '\\'));
 }
-const NEW_PROMPT = {
-  完成做菜: '{{菜名}}做好了,帮我收尾。（新写样本，t767-对账表 §三；命令分支待实现，产物复用宿主卡内容）',
-  查清单: '请加载私家大厨技能,帮我查看现有采购清单(唤醒词:查清单)。（新写样本；产物复用宿主卡内容）',
-  清空清单: '请加载私家大厨技能,帮我清空采购清单(唤醒词:清空清单)。（新写样本；产物复用宿主卡内容）',
-};
-const HELP_PROMPT = 'HELP 能力速查（复用验收副本 HELP 文件，不另出业务页，t767-命名 §三.1）';
+const HELP_PROMPT = 'HELP 说明页：说出四条 HELP 词中的任意一条，都打开同一份 HELP 文件。';
 
 // ── manifest（48 格）＋ 文件级校验（存在＋bytes/sha256 重算） ──
 if (!existsSync(MF)) fail('册子缺失：' + MF + '（先跑 t777-run-all.mjs）');
@@ -96,9 +94,7 @@ for (const r of mfRows) {
   if (bytes !== r.bytes || sha !== r.sha256) mfProblems.push('册子与文件对不上（' + r['卡id'] + '）：' + p);
 }
 
-// ── 50 行装配 ──
-const VARIANT_WORDS = ['完成做菜', '查清单', '清空清单', '排除可选'];
-const VARIANT_HOST = { 完成做菜: 'cooking_start_fresh', 查清单: 'shopping_generate', 清空清单: 'shopping_generate', 排除可选: 'shopping_generate' };
+// ── 50 行装配：prompt 按 promptKind 五类分派；产物走 canonical 还是另出路径，同样由 promptKind 决定 ──
 const cardOf = new Map(A.cards.map((c) => [c.id, c]));
 const dirOf = (domainId) => (A.domains.find((x) => x.id === domainId) || {}).dir || domainId;
 const rows = [];
@@ -108,35 +104,38 @@ for (const w of A.wakes) {
   let command = w.key;
   let params = {};
   let prompt = '';
-  let note = '';
-  if (w.source === 'help') {
+  let origin = '';
+  if (w.promptKind === 'help') {
+    // 4 条 HELP 词不另出业务页，共用已交付的 HELP 文件。
     file = join(OUT, 'HELP', '私家大厨_HELP_验收副本.html');
-    params = {};
     prompt = HELP_PROMPT;
-  } else if (VARIANT_WORDS.includes(w.phrase)) {
-    const host = VARIANT_HOST[w.phrase];
-    const hc = cardOf.get(host);
-    file = join(OUT, dirOf(hc.domain), host + '--' + w.phrase + '.html');
-    const h = mfByCard.get(host);
-    command = h ? h['命令'] : w.key;
-    params = h ? h['参数'] : {};
-    if (w.phrase === '排除可选') params = { ...(params && typeof params === 'object' ? params : {}), excludeOptional: true };
-    prompt = NEW_PROMPT[w.phrase] || ((promptOf.get(host) || '') + '（参数不同另出路径，产物复用宿主卡内容）');
   } else {
-    const host = w.cards[0];
+    // group → 首卡；reuse／param → promptRef 所指卡；new → 宿主＝首卡，promptRef 是自写样本原文。
+    const refIsCard = w.promptKind === 'reuse' || w.promptKind === 'param';
+    const host = refIsCard ? (w.promptRef || w.cards[0]) : w.cards[0];
     const h = host ? mfByCard.get(host) : undefined;
-    if (!host || !h) {
-      rowProblems.push('词无落点（' + w.phrase + '）：宿主卡 ' + (host || '空') + ' 不在册子里');
+    const hc = host ? cardOf.get(host) : undefined;
+    if (!host || !h || !hc) {
+      rowProblems.push('词无落点（' + w.phrase + '）：宿主卡 ' + (host || '空') + ' 不在资产／册子里');
       continue;
     }
-    file = h['产物绝对路径'];
     command = h['命令'];
     params = h['参数'];
-    prompt = promptOf.get(host) || '';
-    if (w.cards.length > 1) note = '本行代表首卡，组内共 ' + w.cards.length + ' 卡（见卡归属列）';
+    if (w.promptKind === 'new' || w.promptKind === 'param') {
+      // 这两类与 canonical 不同参或不同语义 ⇒ 另出文件 `<slug>--<唤醒词>.html`；其余复用 canonical 文件。
+      file = join(OUT, dirOf(hc.domain), host + '--' + w.phrase + '.html');
+      if (w.promptKind === 'param') params = { ...(params && typeof params === 'object' ? params : {}), excludeOptional: true };
+      prompt = w.promptKind === 'new' ? w.promptRef : (promptOf.get(host) || '');
+      origin = w.promptKind === 'new' ? '本词自写样本（老件无此场景）' : '取自 ' + host;
+    } else {
+      file = h['产物绝对路径'];
+      prompt = promptOf.get(host) || '';
+      origin = '取自 ' + host;
+    }
   }
   if (!existsSync(file)) rowProblems.push('行产物缺失（' + w.phrase + '）：' + file);
-  rows.push({ wake: w.phrase, source: w.source, command, params, prompt, note, cards: w.cards, file });
+  if (!prompt.trim()) rowProblems.push('prompt 取不到（' + w.phrase + '）：promptKind=' + w.promptKind + ' 宿主／引用=' + (w.promptRef || w.cards[0] || '空'));
+  rows.push({ wake: w.phrase, source: w.source, command, params, prompt, origin, cards: w.cards, file });
 }
 
 // ── 覆盖对账 ──
@@ -158,15 +157,17 @@ console.log('词 ' + A.wakes.length + '／卡 ' + coveredCards.size + '／链接
 mkdirSync(OUT, { recursive: true });
 const trs = rows.map((r, i) => {
   const url = pathToFileURL(r.file).href;
-  const cardCell = r.cards.length ? r.cards.join('、') : '—（HELP 词，复用 HELP 文件）';
-  const promptCell = esc(r.prompt) + (r.note ? '<br><span class="dim">' + esc(r.note) + '</span>' : '');
+  const cardCell = r.cards.length
+    ? r.cards.map(esc).join('、') + (r.cards.length > 1 ? '<br><span class="dim">本行产物＝首卡 ' + esc(r.cards[0]) + '（共 ' + r.cards.length + ' 卡）</span>' : '')
+    : '—（HELP 词，共用一份 HELP 文件）';
+  const promptCell = '<span class="prompt">' + esc(r.prompt) + '</span>' + (r.origin ? '<br><span class="dim">' + esc(r.origin) + '</span>' : '');
   let mfLine = '';
   const h = r.cards.length ? mfByCard.get(r.cards[0]) : undefined;
   if (h) mfLine = '<br><span class="dim">exit=' + h.exit + ' · ' + Math.round(h.bytes / 1024) + 'KB</span>';
   return '<tr><td>' + (i + 1) + '</td><td><b>' + esc(r.wake) + '</b><br><span class="dim">' +
     esc(r.source === 'help' ? 'HELP 词' : r.source === 'old-group' ? '老组名' : '新表多出词') + '</span></td><td><code>' +
     esc(r.command) + '</code></td><td><code>' + esc(JSON.stringify(r.params)) + '</code></td><td>' + promptCell +
-    '</td><td>' + esc(cardCell) + '</td><td><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) +
+    '</td><td>' + cardCell + '</td><td><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) +
     '</a>' + mfLine + '</td></tr>';
 });
 const page = '<!doctype html>' + LF +
@@ -184,11 +185,14 @@ const page = '<!doctype html>' + LF +
   'td code{font-size:12px;word-break:break-all}' + LF +
   'td a{color:#007aff;word-break:break-all}' + LF +
   '.dim{color:#86868b;font-size:12px}' + LF +
+  '.prompt{white-space:pre-line}' + LF +
   '</style></head><body>' + LF +
   '<h1>私家大厨链路总表：prompt → 唤醒词 → 命令 → HTML 绝对路径</h1>' + LF +
   '<div class="sub">本页链接指向<strong>验收副本</strong>（与本页同目录）：<code>' + esc(OUT) +
-  '</code><br>50 条唤醒词条条有产物，48 张卡逐卡有落点；HELP 4 词复用同一份 HELP 文件（t767-命名 §三.1），' +
-  '参数不同的新表多出词 4 条各走独立路径（§三.2）。点<strong>产物绝对路径</strong>即在新标签打开那份产物。</div>' + LF +
+  '</code><br>50 条唤醒词条条有产物，48 张卡逐卡有落点。prompt 列逐字取自老件场景资产原文（多行原样保留），' +
+  '每行注明出处：「取自 &lt;卡 id&gt;」＝该卡的老件原文，「本词自写样本」＝新表多出词、老件无此场景；' +
+  '4 条 HELP 词共用同一份 HELP 文件，4 条参数或语义与 canonical 不同的词各走独立路径。' +
+  '点<strong>产物绝对路径</strong>即在新标签打开那份产物。</div>' + LF +
   '<table><thead><tr><th>序</th><th>唤醒词</th><th>命令</th><th>参数</th><th>prompt</th><th>卡归属</th><th>产物绝对路径</th></tr></thead>' + LF +
   '<tbody>' + LF + trs.join(LF) + LF + '</tbody></table>' + LF + '</body></html>' + LF;
 writeFileSync(PAGE, page, 'utf8');
@@ -238,5 +242,12 @@ if (OPEN_CHECK) {
   process.exit(deadLinks.length === 0 && opened.length === rows.length ? 0 : 1);
 }
 
-if (missing !== 0 || A.wakes.length !== EXPECT_WORDS || coveredCards.size !== EXPECT_CARDS) process.exit(1);
-console.log('OK：50 词条条有产物，48 卡逐卡有落点，链接无死链');
+// ── prompt 列与「上屏不许出现工单号／章节号／内部说明语」的判据（#914 补） ──
+const emptyPrompt = rows.filter((r) => !String(r.prompt).trim());
+console.log('prompt 非空 ' + (rows.length - emptyPrompt.length) + '／' + rows.length);
+const visibleText = page.replace(/<head[\s\S]*?<\/head>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]*>/g, ' ');
+const jargon = [...visibleText.matchAll(/t\d{3}-|§|复用宿主卡内容|命令分支待实现|不另出业务页|见卡归属|本行代表/g)].map((m) => m[0]);
+for (const j of jargon) console.error('上屏出现工单号或内部说明语：' + j);
+if (missing !== 0 || emptyPrompt.length + jargon.length !== 0 ||
+  A.wakes.length !== EXPECT_WORDS || coveredCards.size !== EXPECT_CARDS) process.exit(1);
+console.log('OK：50 词条条有产物，48 卡逐卡有落点，链接无死链，prompt 列逐行有内容且无工单号上屏');
