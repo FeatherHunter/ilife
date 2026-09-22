@@ -13,6 +13,7 @@
  * 对外只给两件：`renderInitReportPage` 与 `renderInitGuidePage`（各吃同一个入参对象）。
  */
 import { pageUiCss, renderStatusBadge } from 'base-paint';
+import type { CopyFormatTexts } from 'base-paint';
 import {
   renderConclusionBar,
   renderCopyBlock,
@@ -32,8 +33,8 @@ export interface InitPageInput {
   readonly diagnosis: InitDiagnosis;
   /** 生成时刻（`YYYY-MM-DD HH:MM:SS`，来自信封的 `occurred_at`）。 */
   readonly occurredAt: string;
-  /** 复制区「复制数据」那颗按钮的载荷（文字形态）。 */
-  readonly dataText: string;
+  /** 复制区「复制数据」那颗按钮的三格式载荷（纯文本／JSON／CSV —— 用户点开菜单三选一，#247）。 */
+  readonly dataFormats: CopyFormatTexts;
   /** 复制区「复制日志」那颗按钮的载荷。 */
   readonly logText: string;
 }
@@ -211,9 +212,10 @@ function pageContent(input: InitPageInput, counts: Counts, forGuide: boolean): s
   }
 
   /* 负责人 2026-09-22：这块**不出标题、不出说明行**——与卡路里同形，只剩一行 ghost 按钮
-     （公共层 `renderActionBar` 的 `ilife-action-row-ghost`）。`renderCopyBlock` 的 `title`／`hint` 两位都不给。 */
+     （公共层 `renderActionBar` 的 `ilife-action-row-ghost`）。`renderCopyBlock` 的 `title`／`hint` 两位都不给。
+     复制数据走 `dataFormats`（三格式三选一），与卡路里同一个形态。 */
   parts.push(renderCopyBlock({
-    dataText: input.dataText,
+    dataFormats: input.dataFormats,
     logText: input.logText,
   }));
 

@@ -113,7 +113,14 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section class="ilife-block ilife-block-copy-block">
 <div class="ilife-action-bar">
 <div class="ilife-action-row ilife-action-row-ghost">
-<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-data">复制数据</button>
+<div class="ilife-copy-menu-wrap">
+<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1" aria-haspopup="menu" aria-expanded="false" aria-label="复制数据（点开选格式）">复制数据</button>
+<div class="ilife-copy-menu" role="menu">
+<button type="button" class="ilife-copy-menu-item" data-fmt="text" data-t=""><span class="ilife-copy-menu-label">纯文本</span></button>
+<button type="button" class="ilife-copy-menu-item" data-fmt="json" data-t=""><span class="ilife-copy-menu-label">JSON</span></button>
+<button type="button" class="ilife-copy-menu-item" data-fmt="csv" data-t=""><span class="ilife-copy-menu-label">CSV</span></button>
+</div>
+</div>
 <button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-action-id="memo-copy-log">复制日志</button>
 </div>
 </div>

@@ -218,7 +218,13 @@ describe('#828 · 产物形状（册子格的页型）', () => {
       const html = readFileSync(join(landingDir(), f), 'utf8');
       assert.match(html, /^<!doctype html>/i, f + ' 应是整页');
       assert.match(html, /<section class="ilife-block ilife-block-copy-block">/, f + ' 回执页要有复制区（公共层复制区块：无标题、无说明行）');
-      assert.match(html, /data-action-id="memo-copy-data"/, f + ' 回执页缺「复制数据」按钮');
+      // #820 收尾（负责人 2026-09-22）：复制数据改成公共层的**三格式三选一菜单**（与卡路里同形）——
+      // 开合器**不写** `data-action-id`（它不是复制目标，是开菜单；见 base-render `COPY_MENU_OPEN_ATTR` 注释），
+      // 三项各带 `data-fmt`。旧断言按单按钮形状写，这里按菜单形状重钉。
+      assert.match(html, /data-fmt-open="1"[^>]*aria-label="复制数据（点开选格式）"/, f + ' 回执页缺「复制数据」三格式菜单开合器');
+      for (const fmt of ['text', 'json', 'csv']) {
+        assert.ok(html.includes('class="ilife-copy-menu-item" data-fmt="' + fmt + '"'), f + ' 三格式菜单缺 ' + fmt + ' 那一项');
+      }
       assert.match(html, /data-action-id="memo-copy-log"/, f + ' 回执页缺「复制日志」按钮');
       assert.ok(!html.includes('数据与日志'), f + ' 复制区不再出「数据与日志」标题（负责人 2026-09-22）');
     }

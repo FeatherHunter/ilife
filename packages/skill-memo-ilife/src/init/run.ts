@@ -57,7 +57,13 @@ export function runInit(params: Record<string, unknown>): CommandOut {
   const copyEnvelope = buildMemoEnvelope('memo.init', data) as unknown as MemoCopyEnvelope;
   const page = renderInitPage(mode, diag, {
     occurredAt,
-    dataText: buildDataText({ envelope: copyEnvelope }),
+    /* 复制区载荷：**三格式三选一**（#247 口径，与卡路里同形）——同一份信封出纯文本／JSON／CSV，
+       不在本包另立第二份编码器（公共层 `buildDataText` 的 `format` 字段就是这条口径）。 */
+    dataFormats: {
+      text: buildDataText({ envelope: copyEnvelope, format: 'text' }),
+      json: buildDataText({ envelope: copyEnvelope, format: 'json' }),
+      csv: buildDataText({ envelope: copyEnvelope, format: 'csv' }),
+    },
     logText: buildLogText({
       envelope: copyEnvelope,
       copyLog: envelopeData.copy_log as MemoCopyLogFields,
