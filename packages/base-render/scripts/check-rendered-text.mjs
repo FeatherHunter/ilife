@@ -12,16 +12,19 @@
  *  · ⑤ 分隔符懒政：`[·|｜]` 落在版式位／正文位即红，标题写法位只照打，数据位／载荷位豁免
  *    —— 口径出处 `docs/skills/skill-memo-ilife/t869-机审.mjs` 的 SEP_CHARS 与位置四分。
  *    注意分隔符门（`test/separator-probe.mjs` R1–R3）是另一把尺，本件不碰、不重算。
- *  · ⑥ 英文裸词与半角标点：ALLOW 四条＋ASCII 字母＋HALF 半角集（含数字小数点豁免）
+ *  · ⑥ 英文裸词与半角标点：ALLOW 四条＋ASCII 字母＋HALF 半角集（含数字小数点豁免），
+ *    标题写法位同样参判（同 t869 judgement）
  *    —— 口径出处同上。半角括号静态已有，本件只是同一规则换个面。
  * 位置名册初值取 t869（备忘录域重写，#869 自述名册按域重写），渲染面新增装饰位：
  * `.status-icon` 的装饰字形是图形、不是并列分隔符（Q2 裁定，出处 #878 评论），
  * 进允许清单并逐条写理由；同一字符按角色判。
  *
  * 复用（不另写第二份渲染管线）：静态剥壳用 `test/separator-probe.mjs` 导出的
- * `visibleText`（既有先例 `t867-dom-probe.mjs` 同方向引用）；渲染用真浏览器
- * （CDP 驱动与 `check-two-col-align.mjs` 同形——第二处用法，若再有第三处，
- * 抽 `scripts/cdp-page.mjs`，抽的同时把那一件也迁过来）。
+ * `visibleText`（既有先例 `t867-dom-probe.mjs` 同方向引用）；渲染口径抽取自
+ * `t834-渲染面探针.mjs`（无头跑完脚本＋隐藏剪除＋同套归一，形同；该件 `--dump-dom`
+ * 串行化 DOM 天然不含伪元素文本——本票面①必须另取，故驱动走包内已有的 CDP 形
+ * （与 `check-two-col-align.mjs` 同形，第二处用法；第三处出现即抽 `scripts/cdp-page.mjs`），
+ * 不是另起管线）。
  *
  * 用法（仓根）：
  *   node packages/base-render/scripts/check-rendered-text.mjs --dir <页群目录> [--width 1280] [--json <落点>] [--quiet]
@@ -196,14 +199,16 @@ export function applyHits(strings) {
   return { red, title, deco };
 }
 
-/** 差＝渲染面红命中里静态面没有的文本（按归一文本比对；标题照打与装饰放过不进差）。 */
+/** 差＝渲染面红命中里静态面没有的项（键＝列＋归一文本：同文不同列不互相吞；
+ *  标题照打与装饰放过不进差；位置归属两面天然不同（静态标签栈 vs 活 DOM），故键不含位点，
+ *  点名仍带页＋位＋串）。 */
 export function diffHits(staticRed, renderedRed) {
-  const key = (h) => h.text.replace(/\s+/g, ' ').trim();
+  const key = (h) => (h.kind || '') + '' + h.text.replace(/\s+/g, ' ').trim();
   const known = new Set(staticRed.map(key));
   const seen = new Set(renderedRed.map(key));
   return {
     diff: renderedRed.filter((h) => !known.has(key(h))),
-    staticOnly: staticRed.filter((h) => !seen.has(key(h))).length,
+    staticOnlyCount: staticRed.filter((h) => !seen.has(key(h))).length,
   };
 }
 
@@ -279,6 +284,8 @@ function die(code, msg) {
   console.log('RESULT: ABORT exit=' + code + ' :: ' + msg);
   process.exit(code);
 }
+/** 已起的浏览器子进程（异常退出时兜底杀掉，不留孤儿；正常走 main 尾的 kill）。 */
+let chromeChild = null;
 
 async function main() {
   const argOf = (name, dflt) => {
@@ -317,6 +324,7 @@ async function main() {
     '--disable-extensions', '--disable-background-networking', '--disable-component-update', '--disable-breakpad',
     '--disable-dev-shm-usage', '--hide-scrollbars', '--allow-file-access-from-files',
     '--remote-debugging-port=' + PORT, '--window-size=' + WIDTH + ',900', 'about:blank'], { stdio: 'ignore' });
+  chromeChild = chrome;
   const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
   const TIMEOUT_MS = 30000;
   let devUrl = null;
@@ -371,9 +379,9 @@ async function main() {
   console.log('渲染面文字门 · 页数=' + FILES.length + ' 宽=' + WIDTH + ' 浏览器=' + BROWSER);
   for (const f of FILES) {
     const page = basename(f);
-    let st;
+    let statRes;
     try {
-      st = auditStaticFile(f);
+      statRes = auditStaticFile(f);
     } catch (e) {
       failures.push(page + ' 静态取串失败：' + String(e.message).slice(0, 120));
       continue;
@@ -396,23 +404,23 @@ async function main() {
       continue;
     }
     const rendered = [...probe.nodes, ...probe.pseudos];
-    const rd = applyHits(rendered);
-    const { diff, staticOnly } = diffHits(st.red, rd.red);
-    statSep += st.red.filter((h) => h.kind === '⑤').length;
-    statEng += st.red.filter((h) => h.kind !== '⑤').length;
-    rendSep += rd.red.filter((h) => h.kind === '⑤').length;
-    rendEng += rd.red.filter((h) => h.kind !== '⑤').length;
+    const rendRes = applyHits(rendered);
+    const { diff, staticOnlyCount } = diffHits(statRes.red, rendRes.red);
+    statSep += statRes.red.filter((h) => h.kind === '⑤').length;
+    statEng += statRes.red.filter((h) => h.kind !== '⑤').length;
+    rendSep += rendRes.red.filter((h) => h.kind === '⑤').length;
+    rendEng += rendRes.red.filter((h) => h.kind !== '⑤').length;
     report.push({
-      page, static: st.red, staticTitle: st.title.length, staticDeco: st.deco.length,
-      rendered: rd.red, renderedTitle: rd.title.length, renderedDeco: rd.deco.length,
-      renderedElements: probe.elements, diff, staticOnly,
+      page, static: statRes.red, staticTitle: statRes.title.length, staticDeco: statRes.deco.length,
+      rendered: rendRes.red, renderedTitle: rendRes.title.length, renderedDeco: rendRes.deco.length,
+      renderedElements: probe.elements, diff, staticOnlyCount,
     });
     for (const d of diff) diffs.push({ page, ...d });
-    console.log('FILE ' + page + '  静态⑤' + st.red.filter((h) => h.kind === '⑤').length
-      + '⑥' + st.red.filter((h) => h.kind !== '⑤').length
-      + ' → 渲染⑤' + rd.red.filter((h) => h.kind === '⑤').length
-      + '⑥' + rd.red.filter((h) => h.kind !== '⑤').length
-      + ' 差' + diff.length + '［标题照打' + rd.title.length + ' 装饰放过' + rd.deco.length + '］');
+    console.log('FILE ' + page + '  静态⑤' + statRes.red.filter((h) => h.kind === '⑤').length
+      + '⑥' + statRes.red.filter((h) => h.kind !== '⑤').length
+      + ' → 渲染⑤' + rendRes.red.filter((h) => h.kind === '⑤').length
+      + '⑥' + rendRes.red.filter((h) => h.kind !== '⑤').length
+      + ' 差' + diff.length + '［标题照打' + rendRes.title.length + ' 装饰放过' + rendRes.deco.length + '］');
   }
   if (!QUIET) {
     for (const d of diffs) {
@@ -441,5 +449,8 @@ async function main() {
 const isMainEntry = process.argv[1]
   && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMainEntry) {
-  main().catch((e) => die(2, '异常退出：' + String((e && e.message) || e).slice(0, 200)));
+  main().catch((e) => {
+    try { if (chromeChild !== null) chromeChild.kill(); } catch { /* 退出期杀不掉就算 */ }
+    die(2, '异常退出：' + String((e && e.message) || e).slice(0, 200));
+  });
 }

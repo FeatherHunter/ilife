@@ -104,17 +104,23 @@ describe('#883 取串与命中装配', () => {
   });
 });
 
-describe('#883 差集（只对差项判红）', () => {  const mk = (text) => ({ where: '正文位', line: '#1', text, sep: 1, ascii: false, half: false });
-  it('两面同文 → 无差；渲染独有 → 差 1；静态独有 → 只计数', () => {
-    const { diff, staticOnly } = diffHits([mk('同 · 文')], [mk('同 · 文'), mk('新 · 债')]);
+describe('#883 差集（只对差项判红）', () => {  const mk = (text) => ({ where: '正文位', line: '#1', text, sep: 1, ascii: false, half: false, kind: '⑤' });
+  it('两面同文同列 → 无差；渲染独有 → 差 1；静态独有 → 只计数', () => {
+    const { diff, staticOnlyCount } = diffHits([mk('同 · 文')], [{ ...mk('同 · 文') }, { ...mk('新 · 债') }]);
     assert.equal(diff.length, 1);
     assert.equal(diff[0].text, '新 · 债');
-    assert.equal(staticOnly, 0);
+    assert.equal(staticOnlyCount, 0);
   });
   it('静态独有不判红，只计数', () => {
-    const { diff, staticOnly } = diffHits([mk('旧 · 债')], []);
+    const { diff, staticOnlyCount } = diffHits([mk('旧 · 债')], []);
     assert.equal(diff.length, 0);
-    assert.equal(staticOnly, 1);
+    assert.equal(staticOnlyCount, 1);
+  });
+  it('同文不同列不互相吞（键含列）', () => {
+    const a = { where: '正文位', line: '#1', text: 'X (1)', sep: 0, ascii: false, half: true, kind: '⑥半角' };
+    const b = { where: '正文位', line: '#1', text: 'X (1)', sep: 0, ascii: true, half: false, kind: '⑥英文' };
+    assert.equal(diffHits([a], [b]).diff.length, 1);
+    assert.equal(diffHits([a], [{ ...a }]).diff.length, 0);
   });
 });
 
