@@ -18,7 +18,7 @@
  *  （分隔符门）量的就是这条。范围一律写「至」，不用波浪号。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable,
+  renderCaliberLine, renderConclusionBar, renderDataTable,
   renderDisclosure, renderFeedbackBlock, renderKpiGrid, renderPreBlock,
   type ChangeRowInput, type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
@@ -28,6 +28,7 @@ import {
 } from '../policy/index.js';
 import { listRecordsByDate, listRecordsRange } from '../fetch/index.js';
 import { buildRecordToday } from '../render/index.js';
+import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import type { ScheduleDb, ScheduleRecord } from '../fetch/db.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { hourCellsOf, renderHourBand, type HourCell } from '../shared/pageParts.js';
@@ -113,11 +114,14 @@ function cellsOf(records: readonly ScheduleRecord[]): HourCell[] {
   })));
 }
 
-/** 复制与留档两段文本（同类页共用同一套字段名）。 */
-function copyOf(title: string, lines: readonly string[]): { dataText: string; logText: string } {
+/** 复制区载荷（#887）：这四张页都在 `schedule.record.write` 这一枚 key 上，形状是**回执**
+ *  ——数据位＝一份回执（`ok` ＋ `message`，消息里写清这一趟的事实），日志位＝这一趟的 2–6 段。
+ *  `message` 用逗号串成一句话：复制文本走 `buildDataText` 的 text 口径，行内换行会并成一行。 */
+function writeCopy(title: string, lines: readonly string[], command: string, source: string, ok = true): ScheduleCopyAreaInput {
   return {
-    dataText: '【' + title + '】\n' + lines.join('\n'),
-    logText: '场景：' + title + '\n' + lines.join('\n'),
+    key: 'schedule.record.write',
+    payload: { ok, message: title + '：' + lines.join('，') + '。' },
+    log: scheduleCopyLog({ command, source, actionAt: scheduleNowStamp() }),
   };
 }
 
@@ -220,16 +224,19 @@ export function recordResultPage(handle: ScheduleDb, record: ScheduleRecord, now
       emptyText: '回溯窗口里还没有别的记录，这是窗口里的第一笔。',
     }),
     nextSteps(date, record),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('记作息结果', [
+      dataActionId: 'ilife-sch-write-copy-data',
+      logActionId: 'ilife-sch-write-copy-log',
+      ...writeCopy('记作息结果', [
         '日期：' + date,
         '这一条：' + span(record.time_start, record.time_end) + ' ' + record.activity,
         '分类：' + record.category,
         '今日块数：' + view.total + '，覆盖：' + fmtDur(view.coverage) + '，健康分：' + view.score,
-      ]),
-      dataActionId: 'ilife-sch-write-copy-data',
-      logActionId: 'ilife-sch-write-copy-log',
+      ], 'schedule-cmd-read schedule.record.write --params {"op":"add","date":"' + date
+        + '","time_start":"' + record.time_start + '","time_end":"' + record.time_end
+        + '","activity":"' + record.activity + '","category":"' + record.category + '"}',
+      '作息记录表（这一条已入库）'),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: writePartsCss() });
@@ -301,17 +308,18 @@ export function amendReceiptPage(
       }),
     }),
     renderCaliberLine('改前那一格画着删除线，改后那一格是新值 ｜ 时长按时段实算，跟起止对得上'),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('修正作息回执', [
+      dataActionId: 'ilife-sch-write-copy-data',
+      logActionId: 'ilife-sch-write-copy-log',
+      ...writeCopy('修正作息回执', [
         '日期：' + after.date,
         '这次改了 ' + String(rows.length) + ' 处：' + rows.map((r) => r.label).join('，'),
         '现在的分类：' + after.category,
         '现在的活动：' + after.activity,
         '修改次数：' + after.edit_count,
-      ]),
-      dataActionId: 'ilife-sch-write-copy-data',
-      logActionId: 'ilife-sch-write-copy-log',
+      ], 'schedule-cmd-read schedule.record.write --params {"op":"amend","id":' + String(after.id) + '}',
+      '作息记录表（这一条已改好，第 ' + String(after.edit_count) + ' 次）'),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: writePartsCss() });
@@ -387,15 +395,16 @@ export function batchReceiptPage(input: {
       emptyText: '这一趟一条也没收到',
     }),
     left <= 0 ? '' : renderCaliberLine('另有 ' + left + ' 条没有摆上来，完整清单在复制出去的数据里'),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('批量导入回执', [
+      dataActionId: 'ilife-sch-write-copy-data',
+      logActionId: 'ilife-sch-write-copy-log',
+      ...writeCopy('批量导入回执', [
         '日期：' + input.date,
         '收到：' + total + ' 条，写入：' + done + ' 条，没通过：' + failed + ' 条',
         ...input.rows.map((r) => '第 ' + r.seq + ' 条：' + r.time + ' ' + r.activity + ' ' + r.result),
-      ]),
-      dataActionId: 'ilife-sch-write-copy-data',
-      logActionId: 'ilife-sch-write-copy-log',
+      ], 'schedule-cmd-read schedule.record.write --params {"records":[' + String(total) + ' 条]}',
+      '作息记录表（这一趟写入 ' + done + ' 条）', failed === 0),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: writePartsCss() });
@@ -435,16 +444,18 @@ export function summaryReceiptPage(
       ],
     }),
     renderCaliberLine('摘要与记录是两支账 ｜ 摘要按天按一级分类各存一行，记录表照原样留着'),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('写作息摘要回执', [
+      dataActionId: 'ilife-sch-write-copy-data',
+      logActionId: 'ilife-sch-write-copy-log',
+      ...writeCopy('写作息摘要回执', [
         '日期：' + summary.date,
         '一级分类：' + summary.category,
         '写入时长：' + fmtDur(summary.totalMinutes),
         '当天这支记录合计：' + fmtDur(level1Minutes),
-      ]),
-      dataActionId: 'ilife-sch-write-copy-data',
-      logActionId: 'ilife-sch-write-copy-log',
+      ], 'schedule-cmd-read schedule.record.write --params {"op":"summary","date":"' + summary.date
+        + '","category":"' + summary.category + '","total_minutes":' + String(summary.totalMinutes) + '}',
+      '每日摘要表（这一天这一支已入库）'),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: writePartsCss() });

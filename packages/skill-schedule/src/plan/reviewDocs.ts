@@ -15,16 +15,18 @@
  *  把标记交回 AI 的那一句」，页与命令各管一半（与「商量计划预览」同一分工）。
  */
 import {
-  renderConclusionBar, renderCopyBlock, renderDataTable, renderKpiGrid, renderListRows, renderPreBlock,
+  renderConclusionBar, renderDataTable, renderKpiGrid, renderListRows, renderPreBlock,
   type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
 import { listPlanEvents } from '../fetch/index.js';
 import { VALID_COMPLETIONS, fmtDurShort, l1Of } from '../policy/index.js';
+import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
+import { planCopyArea } from './receipt.js';
 
 const EYEBROW = '作息管家 日程与计划';
 
@@ -109,15 +111,17 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
       actionId: 'ilife-sch-review-copy-next',
       copyLabel: '复制这句话',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 复盘】' + date + '（计划 ' + String(events.length) + ' 条 · 已标 ' + String(marked)
-        + ' 条 · 已完成 ' + String(done) + ' 条）\n'
-        + events.map((p) => p.time_start + ' 至 ' + p.time_end + ' ' + p.title + '：' + stateOf(p)
-          + (p.completion_note === null || p.completion_note === undefined || p.completion_note === '' ? '' : '（' + p.completion_note + '）')).join('\n'),
-      logText: '场景：复盘 ｜ 日期：' + date + ' ｜ 数据来源：日程计划表（' + String(events.length) + ' 行）',
       dataActionId: 'ilife-sch-review-copy-data',
       logActionId: 'ilife-sch-review-copy-log',
+      ...planCopyArea({
+        message: '复盘：日期 ' + date + '，计划 ' + String(events.length) + ' 条，已标 ' + String(marked)
+          + ' 条，已完成 ' + String(done) + ' 条',
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"review","granularity":"day","date":"'
+          + date + '"}',
+        source: '日程计划表（' + String(events.length) + ' 行）',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });

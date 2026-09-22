@@ -4,6 +4,8 @@
 // 老家回执在「命中本地且已有远端标识」那一支根本没有 `feishu` 键（`schedule_db.py:1062` 对 `:1066`／`:1083`），
 // 消费方按字段取会 KeyError。本实现**三格永在**，且「这一趟算不算达成」是显式字段（`achieved`），
 // 由出口映射成退出码（没达成 → 非 0，照裁定 A6②／用户故事 6；降级照老 A6①：远端不可用不拦住本地写）。
+import { scheduleCopyLog, scheduleNowStamp, type ScheduleCopyAreaInput } from '../render/copyArea.js';
+
 export const LOCAL_STATES = ['created', 'found', 'updated', 'deleted', 'upserted', 'unchanged', 'preview', 'reviewed', 'checked'] as const;
 export type LocalState = (typeof LOCAL_STATES)[number];
 
@@ -95,3 +97,26 @@ export const REMOTE_LABEL: Record<RemoteState, string> = {
   skipped: '远端按参数跳过（只做本地）',
   none: '本命令不碰远端',
 };
+
+/** 本域一张页的复制区载荷（#887）：`schedule.plan.write` 下的所有页共用**回执**这一种形状
+ *  （`ok` ＋ `message`），数据位就是这一趟那句话；日志位＝这一趟的 2–6 段。
+ *  `ok` 缺省 `true`：本域这些页都是「本地这一半已经做完」才出的（远端没成由 `message` 里那句讲清）。
+ *  一处定义，五个页装配件共用（回执／商量／复盘／飞书／续跑分节）——别处不各写一份复制区口径。 */
+export function planCopyArea(args: {
+  readonly message: string;
+  readonly command: string;
+  readonly source: string;
+  readonly ok?: boolean;
+  readonly m5Line?: string;
+}): ScheduleCopyAreaInput {
+  return {
+    key: 'schedule.plan.write',
+    payload: { ok: args.ok ?? true, message: args.message },
+    log: scheduleCopyLog({
+      command: args.command,
+      source: args.source,
+      actionAt: scheduleNowStamp(),
+      ...(args.m5Line === undefined ? {} : { m5Line: args.m5Line }),
+    }),
+  };
+}

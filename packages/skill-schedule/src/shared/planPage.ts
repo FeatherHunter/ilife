@@ -14,9 +14,10 @@
  *  筛选位那句说明句改成行文（`、` 是 #516 分隔符门点名的并列符号）。
  */
 import {
-  renderConclusionBar, renderCopyBlock, renderDisclosure, renderKpiGrid, renderListRows,
+  renderConclusionBar, renderDisclosure, renderKpiGrid, renderListRows,
   renderParamForm, type KpiCardInput, type ListRowsInput, type ListRowInput, type ParamFieldInput,
 } from 'base-paint/blocks';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { renderHourBand, type HourCell } from './pageParts.js';
 
@@ -41,7 +42,7 @@ export interface PlanPageData {
   readonly gaps: readonly ListRowInput[];
   /** 筛选位的字段（日期／分类／状态）。 */
   readonly filters: readonly ParamFieldInput[];
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  readonly copy: ScheduleCopyAreaInput;
 }
 
 /** 出「查日程」整页。 */
@@ -54,12 +55,11 @@ export function renderPlanPage(data: PlanPageData): string {
     renderDisclosure({ title: data.gaps.length > 0 ? '空档' : '空档（无）', contentHtml: renderListRows({ items: data.gaps, emptyText: '整天都被事件占满' }) }),
     // 说明句不堆并列分隔符（`、` 是 #516 分隔符门点名的并列符号之一）：写成一句行文。
     renderParamForm({ description: '换一个日期，或者按分类与状态再收一收。', fields: data.filters }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

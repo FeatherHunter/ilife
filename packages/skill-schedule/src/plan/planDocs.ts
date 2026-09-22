@@ -18,6 +18,7 @@
  */
 import { LEVEL1_WHITELIST, fmtDur, fmtDurShort, l1Of, toMinutes } from '../policy/index.js';
 import { buildPlanToday } from '../render/views.js';
+import { scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import type { PlanEvent } from '../fetch/db.js';
 import { hourCellsOf } from '../shared/pageParts.js';
 import { renderPlanPage, type PlanPageData } from '../shared/planPage.js';
@@ -186,11 +187,13 @@ export function renderPlanDayPage(
       { name: 'plan-state', label: '状态', value: '全部', options: ['全部', '已完成', '未完成', '已同步飞书'] },
     ],
     copy: {
-      dataText: '【作息管家 查日程】' + date + '（' + view.total + ' 件 · 已排 ' + fmtDur(busyMinutes)
-        + ' · 空档 ' + gaps.length + ' 段 ' + fmtDur(freeMinutes) + '）\n'
-        + listed.map((e) => spanOf(e.time_start, e.time_end) + ' ' + e.title + '（' + (e.category || '未分类')
-          + '，' + (e.completion ?? '未复盘') + '）').join('\n'),
-      logText: '场景：查日程 ｜ 日期：' + date + ' ｜ 数据来源：日程事件表（' + events.length + ' 行）',
+      key: 'schedule.plan.today',
+      payload: buildPlanToday(date, [...listed]),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.plan.today --params {"date":"' + date + '"}',
+        source: '日程事件表（' + events.length + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
   };
   return renderPlanPage(data);

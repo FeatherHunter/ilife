@@ -113,7 +113,10 @@ describe('#784 单日族「今天总结」页（老侧 f01 四个必现块 ＋ 2
     for (const row of rows) {
       for (const sep of ['·', '；', '｜', '~']) assert.ok(!row.includes(sep), '时间轴那一行不许出现并列分隔符「' + sep + '」：' + row);
     }
-    assert.ok(!body.includes('00:00~06:30'), '页上不再出现波浪号写的起止');
+    // 判据只量**可见文本**：复制区那几份载荷住在 `data-t` 属性里（机器读的那一份，起止怎么写是载荷
+    // 自己的字段口径），不是页上的字。故先把 `data-t` 的内容剥掉再查（#887 起复制区载荷带全量记录）。
+    const visible = body.replace(/data-t="[^"]*"/g, 'data-t=""');
+    assert.ok(!visible.includes('00:00~06:30'), '页上不再出现波浪号写的起止');
   });
 
   it('空数据也出页：0 块、覆盖 0，空态是人话', () => {

@@ -15,17 +15,19 @@
  *  `·`／`；`／`｜`／`、`／`~` 顶替（那是分隔符门 #516 点名的那几种）；范围一律写「至」。
  */
 import {
-  renderCaliberLine, renderChartBlock, renderConclusionBar, renderCopyBlock, renderDataTable,
+  renderCaliberLine, renderChartBlock, renderConclusionBar, renderDataTable,
   renderDisclosure, renderDistributionRows, renderFeedbackBlock, renderKpiGrid, renderListRows,
   renderPreBlock, type DataTableRow, type DistributionRowInput, type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import { LEVEL1_WHITELIST, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { categoryColor, hourCellsOf, renderHeatMatrix, renderHourBand, type HeatRow } from '../shared/pageParts.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { HEAT_DAYS_CAP, LIST_ROWS_CAP, PAIR_ROWS_CAP, replayData, type ReplayData, type ReplayGranularity, type ReplayWindow } from './replayDocs.js';
 import { renderGoalCards, renderSectionTitle } from './planParts.js';
+import { planCopyArea } from './receipt.js';
 import type { ScheduleDb } from '../fetch/db.js';
 
 const EYEBROW = '作息管家 日程与计划';
@@ -413,22 +415,25 @@ function kpisOf(data: ReplayData): readonly KpiCardInput[] {
   ];
 }
 
-function copyOf(data: ReplayData): { dataText: string; logText: string } {
+/** 复制区载荷（#887）：复盘四档共用这一支，都在 `schedule.plan.write` 上，形状是回执——
+ *  数据位＝这一趟那句话，日志位＝这一趟的 2–6 段（口径只此一处，见 `receipt.ts` 的 `planCopyArea`）。 */
+function copyOf(data: ReplayData): ScheduleCopyAreaInput {
   const g = data.win.effective;
-  const head = '【作息管家 · 复盘' + GRAN_CN[g] + '】' + span(data.win.start, data.win.end)
-    + '（' + String(data.win.days) + ' 天 · 记录 ' + String(data.records.length) + ' 块 ' + fmtDur(data.totalMinutes)
-    + ' · 健康分 ' + String(g === 'day' ? data.healthScore : data.healthMean) + '）';
+  const ranked = Object.keys(data.byL1).sort((a, b) => (data.byL1[b] ?? 0) - (data.byL1[a] ?? 0));
   const lines = [
+    '复盘' + GRAN_CN[g] + '：' + span(data.win.start, data.win.end) + '，' + String(data.win.days) + ' 天，记录 '
+      + String(data.records.length) + ' 块共 ' + fmtDur(data.totalMinutes) + '，健康分 '
+      + String(g === 'day' ? data.healthScore : data.healthMean),
     '计划 ' + String(data.plans.length) + ' 条，完成率 ' + pctText(data.completionRate),
-    ...Object.keys(data.byL1).sort((a, b) => (data.byL1[b] ?? 0) - (data.byL1[a] ?? 0))
-      .map((name) => name + '：' + fmtDur(data.byL1[name])),
+    ...ranked.map((name) => name + ' ' + fmtDur(data.byL1[name])),
     ...data.anomalies.map((a) => a.dim + ' 比上一段 ' + (a.deltaPct >= 0 ? '+' : '') + String(a.deltaPct) + '%'),
   ];
-  return {
-    dataText: head + '\n' + lines.join('\n'),
-    logText: '场景：复盘' + GRAN_CN[g] + ' ｜ 区间：' + span(data.win.start, data.win.end)
-      + ' ｜ 数据来源：作息记录表 ' + String(data.records.length) + ' 行与日程计划表 ' + String(data.plans.length) + ' 行',
-  };
+  return planCopyArea({
+    message: lines.join('，'),
+    command: 'schedule-cmd-read schedule.plan.write --params {"op":"review","granularity":"' + g
+      + '","start":"' + data.win.start + '","end":"' + data.win.end + '"}',
+    source: '作息记录表 ' + String(data.records.length) + ' 行与日程计划表 ' + String(data.plans.length) + ' 行',
+  });
 }
 
 /** 「复盘」一体页整页（四档共用这一支，区块按档取）。 */
@@ -449,11 +454,11 @@ export function replayPage(handle: ScheduleDb, win: ReplayWindow): string {
     renderConclusionBar(conclusionOf(data)),
     ...sectionsOf(data),
     segNext(data),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf(data),
       dataActionId: 'ilife-sch-replay-copy-data',
       logActionId: 'ilife-sch-replay-copy-log',
+      ...copyOf(data),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content });

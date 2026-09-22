@@ -15,9 +15,10 @@
  *  件序列**不随数据多寡变形**：一天也走这一套（表退化成一行、24 格只有一段）。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderKpiGrid, renderListRows,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderKpiGrid, renderListRows,
   type DataTableColumn, type DataTableRow, type KpiCardInput, type ListRowInput,
 } from 'base-paint/blocks';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 
 /** 逐日那一段（一天一段：段名 ＋ 24 格 ＋ 该日的随附读数）。 */
@@ -45,7 +46,7 @@ export interface OverviewPageData {
   };
   /** 逐日 24 格：一天一段，顺序即调用方给的顺序。 */
   readonly days: readonly OverviewDaySection[];
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  readonly copy: ScheduleCopyAreaInput;
 }
 
 /** 出「24h 概览（多日）」整页。 */
@@ -65,12 +66,11 @@ export function renderOverviewPage(data: OverviewPageData): string {
       ...(data.table.caption === undefined ? {} : { caption: data.table.caption }),
     }),
     days,
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-overview-copy-data',
       logActionId: 'ilife-sch-overview-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

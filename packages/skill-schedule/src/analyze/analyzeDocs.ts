@@ -26,7 +26,7 @@
  *  不用波浪号。需要一行里并列两件事时走公共层 `renderCaliberLine`（它按全角竖线拆成两段版面）。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderDistributionRows,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderDistributionRows,
   renderKpiGrid, renderProseBlock,
   type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
@@ -34,6 +34,8 @@ import {
   HEALTH_TARGETS, detectAnomalies,
   fmtDur, fmtDurShort, fmtPct, getEmojiPrefix, l1Of, parseCategory, toMinutes,
 } from '../policy/index.js';
+import { buildCategoryDeep, buildRecordCompare } from '../render/index.js';
+import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { categoryColor, hourCellsOf, renderHeatMatrix, type HeatRow } from '../shared/pageParts.js';
 import type { ScheduleRecord } from '../fetch/db.js';
@@ -255,15 +257,19 @@ export function renderComparePage(input: ComparePageInput): string {
     // 逐句一段正文（**不用列表行**：那一件是「一行一格、超出裁掉」的形状，窄屏上问题会被省略号吃掉——
     //  #789 的响应式读数在 390 档实测裁掉过四成，见证据件第四节）。
     ...compareQuestions(rows, input.labelA, input.labelB).map((text) => renderProseBlock({ text })),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 作息对比】' + input.labelA + '（' + input.startA + ' 至 ' + input.endA + '）对 '
-        + input.labelB + '（' + input.startB + ' 至 ' + input.endB + '）\n'
-        + rows.map((row) => row.label + '：' + row.aLong + ' 到 ' + row.bLong + '（' + signedDur(row.deltaMinutes) + '）').join('\n'),
-      logText: '场景：作息对比 ｜ A：' + input.labelA + ' ｜ B：' + input.labelB
-        + ' ｜ 数据来源：作息记录表（' + String(input.a.length + input.b.length) + ' 行）',
       dataActionId: 'ilife-sch-compare-copy-data',
       logActionId: 'ilife-sch-compare-copy-log',
+      key: 'schedule.record.compare',
+      payload: buildRecordCompare({ labelA: input.labelA, labelB: input.labelB, a: [...input.a], b: [...input.b] }),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.compare --params {"kind":"ranges","labelA":"' + input.labelA
+          + '","startA":"' + input.startA + '","endA":"' + input.endA + '","labelB":"' + input.labelB
+          + '","startB":"' + input.startB + '","endB":"' + input.endB + '"}',
+        source: '作息记录表（' + String(input.a.length + input.b.length) + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: analyzePartsCss() });
@@ -374,15 +380,18 @@ export function renderCategoryPage(input: CategoryPageInput): string {
       rows: detailRows,
       emptyText: '这一段里这一维没有记录',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 类别深挖】' + input.level1 + '（' + input.start + ' 至 ' + input.end + '）\n'
-        + '共 ' + fmtDur(total) + '，活跃 ' + String(active) + ' 天，日均 ' + fmtDur(Math.round(dailyAvg)) + '\n'
-        + detailRows.map((row) => String(row.date) + ' ' + String(row.time) + ' ' + String(row.activity)).join('\n'),
-      logText: '场景：类别深挖 ｜ 类别：' + input.level1 + ' ｜ 区间：' + input.start + ' 至 ' + input.end
-        + ' ｜ 数据来源：作息记录表（' + String(hits.length) + ' 行）',
       dataActionId: 'ilife-sch-category-copy-data',
       logActionId: 'ilife-sch-category-copy-log',
+      key: 'schedule.record.compare',
+      payload: buildCategoryDeep(input.start, input.end, input.level1, [...input.records]),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.compare --params {"kind":"category","category":"'
+          + input.level1 + '","start":"' + input.start + '","end":"' + input.end + '"}',
+        source: '作息记录表（' + String(hits.length) + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: analyzePartsCss() });
@@ -477,15 +486,25 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
       }),
       caption: '七维的日均读数（创作不参评）',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 异常检测】最近 ' + String(w) + ' 天（' + windowStart + ' 至 ' + input.end + '）\n'
-        + '基线：' + input.baselineStart + ' 至 ' + input.end + ' 这 30 天的日均\n'
-        + radarRows.map((row) => row.dim + '：这一段 ' + fmtDur(row.cur) + '，基线 ' + fmtDur(row.prev) + '（' + row.move + '）').join('\n'),
-      logText: '场景：异常检测 ｜ 窗口：' + String(w) + ' 天 ｜ 基线：' + input.baselineStart + ' 至 ' + input.end
-        + ' ｜ 数据来源：作息记录表（窗口 ' + String(input.records.length) + ' 行）',
       dataActionId: 'ilife-sch-anomaly-copy-data',
       logActionId: 'ilife-sch-anomaly-copy-log',
+      key: 'schedule.record.compare',
+      // 这一份摘要从页上那几张读数原样拼（不重跑口径：红黄框与逐维日均就是上面算出来的那几行）。
+      payload: {
+        summary: '异常检测：最近 ' + String(w) + ' 天（' + windowStart + ' 至 ' + input.end + '），基线 '
+          + input.baselineStart + ' 至 ' + input.end + ' 这 30 天的日均，检出红框 ' + String(reds)
+          + ' 项、黄框 ' + String(yellows) + ' 项。'
+          + radarRows.map((row) => row.dim + ' 这一段日均 ' + fmtDur(row.cur) + '，基线日均 ' + fmtDur(row.prev)
+            + '（' + row.move + '）。').join(''),
+      },
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.compare --params {"kind":"anomaly","end":"' + input.end
+          + '","windowDays":' + String(w) + '}',
+        source: '作息记录表（窗口 ' + String(input.records.length) + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: analyzePartsCss() });

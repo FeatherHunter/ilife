@@ -10,17 +10,18 @@
  *  不进页）；并列关系用读数卡与表格表达，不拿 `·`／`；`／`｜`／`、`／`~` 顶替。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderFeedbackBlock,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderFeedbackBlock,
   renderKpiGrid, renderListRows, renderPreBlock, type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
 import { listPlanEvents } from '../fetch/index.js';
 import { fmtDurShort, l1Of } from '../policy/index.js';
+import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
-import { REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
 import { TIER_CN, TIER_NEXT, TIER_VALUE, type TierReport } from './probe.js';
 
 const EYEBROW = '作息管家 日程与计划';
@@ -139,15 +140,16 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
       actionId: 'ilife-sch-probe-copy-next',
       copyLabel: '复制这句话',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 飞书探测】' + date + '\n'
-        + '档位：' + TIER_CN[report.tier] + '\n' + '原因：' + report.why + '\n'
-        + '本地这一天：计划 ' + String(local.total) + ' 条，带远端标识 ' + String(local.synced) + ' 条\n'
-        + '这一趟写入：0 笔',
-      logText: '场景：飞书探测 ｜ 日期：' + date + ' ｜ 数据来源：本机命令行探测与本地日程计划表',
       dataActionId: 'ilife-sch-probe-copy-data',
       logActionId: 'ilife-sch-probe-copy-log',
+      ...planCopyArea({
+        message: '飞书探测：日期 ' + date + '，档位 ' + TIER_CN[report.tier] + '，原因 ' + report.why
+          + '，本地这一天计划 ' + String(local.total) + ' 条、带远端标识 ' + String(local.synced) + ' 条，这一趟写入 0 笔',
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"sync","dryRun":true,"date":"' + date + '"}',
+        source: '本机命令行探测与本地日程计划表',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });
@@ -242,14 +244,18 @@ export function syncPage(handle: ScheduleDb, date: string, payload: SyncPayload)
       actionId: 'ilife-sch-sync-copy-next',
       copyLabel: '复制这句话',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: '【作息管家 · 日程管家同步】' + date + '\n' + payload.message + '\n'
-        + COUNT_LABELS.map((c) => c.label + '：' + String(payload.counts[c.key] ?? 0) + ' 笔').join('\n')
-        + (payload.errors.length === 0 ? '' : '\n没成的：\n' + payload.errors.join('\n')),
-      logText: '场景：日程管家同步 ｜ 日期：' + date + ' ｜ 数据来源：本地日程计划表与飞书日历',
       dataActionId: 'ilife-sch-sync-copy-data',
       logActionId: 'ilife-sch-sync-copy-log',
+      ...planCopyArea({
+        message: '日程管家同步：日期 ' + date + '，' + payload.message + '，'
+          + COUNT_LABELS.map((c) => c.label + ' ' + String(payload.counts[c.key] ?? 0) + ' 笔').join('，')
+          + (payload.errors.length === 0 ? '' : '，没成的 ' + payload.errors.join('，')),
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"sync","date":"' + date + '"}',
+        source: '本地日程计划表与飞书日历',
+        ok: payload.errors.length === 0,
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({

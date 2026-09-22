@@ -18,10 +18,11 @@
  *  出去的是 HTML 串。域票要出这一页，只许调本函数——骨架不许各域自造。
  */
 import {
-  renderConclusionBar, renderCopyBlock, renderDisclosure, renderDistributionRows, renderListRows,
+  renderConclusionBar, renderDisclosure, renderDistributionRows, renderListRows,
   type DistributionRowInput, type ListRowInput,
 } from 'base-paint/blocks';
 import { renderFactStrip, type FactItemInput } from 'base-paint';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { categoryColor, renderHourBand, type HourCell } from './pageParts.js';
 
@@ -42,8 +43,8 @@ export interface DayPageData {
   readonly sleep: readonly FactItemInput[];
   /** 分类进度（收在折叠区里）。 */
   readonly distribution: readonly DistributionRowInput[];
-  /** 复制区两段文本（数据／日志）。 */
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  /** 复制区载荷（#887）：数据位＝一条真命令的 key ＋ 该 key 形状的载荷；日志位＝那趟的 2–6 段。 */
+  readonly copy: ScheduleCopyAreaInput;
   /** **作息库现状**（可选；不给＝这一块不出）：老侧 `status` 子命令那几条读数。
    *  `title` 只能是这一块的段落名（`作息库现状`），**不是页头**——页头住在 `head` 里。 */
   readonly status?: { readonly title: string; readonly items: readonly FactItemInput[] };
@@ -65,12 +66,11 @@ export function renderDayPage(data: DayPageData): string {
       }),
     }),
     renderStatusBlock(data.status),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-day-copy-data',
       logActionId: 'ilife-sch-day-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

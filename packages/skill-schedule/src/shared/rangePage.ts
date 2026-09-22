@@ -15,11 +15,12 @@
  *  算好再进来（与 `weekPage.ts` 同一分工）。
  */
 import {
-  renderChartBlock, renderConclusionBar, renderCopyBlock, renderDistributionRows,
+  renderChartBlock, renderConclusionBar, renderDistributionRows,
   renderKpiGrid, renderListRows, type ChartBlockInput, type DistributionRowInput,
   type KpiCardInput, type ListRowInput,
 } from 'base-paint/blocks';
 import { renderFactStrip, type FactItemInput } from 'base-paint';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { categoryColor } from './pageParts.js';
 
@@ -39,7 +40,7 @@ export interface RangePageData {
   readonly sleep: readonly FactItemInput[];
   /** 每日明细（一行一天：日期／块数／当天时长）。 */
   readonly daily: readonly ListRowInput[];
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  readonly copy: ScheduleCopyAreaInput;
 }
 
 /** 出「区间汇总」整页。 */
@@ -57,12 +58,11 @@ export function renderRangePage(data: RangePageData): string {
     renderChartBlock({ ...data.trend, title: '7 维趋势' }),
     renderFactStrip({ items: data.sleep }),
     renderListRows({ items: data.daily, emptyText: '这一区间没有记录' }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-range-copy-data',
       logActionId: 'ilife-sch-range-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

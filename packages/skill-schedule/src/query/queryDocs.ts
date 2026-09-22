@@ -37,7 +37,8 @@ import {
   HEALTH_TARGETS, LEVEL1_WHITELIST, computeHealthScore, fmtDur, fmtDurShort, fmtPct, l1Of,
   recentNDays, relativeToRange, toMinutes,
 } from '../policy/index.js';
-import { buildRecordToday } from '../render/views.js';
+import { buildRecordDetail, buildRecordRange, buildRecordToday } from '../render/views.js';
+import { scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import type { ScheduleRecord } from '../fetch/db.js';
 import type { PlanOverviewPayload } from '../plan/index.js';
 import { categoryColor, hourCellsOf, type HeatRow, type HourCell } from '../shared/pageParts.js';
@@ -192,10 +193,13 @@ export function renderTodaySummaryPage(
       pct: fmtPct(byL1[key], view.coverage),
     })),
     copy: {
-      dataText: '【作息管家 · 今天总结】' + date
-        + '（共 ' + view.total + ' 块 · 覆盖 ' + fmtDur(view.coverage) + ' · 健康分 ' + view.score + '）\n'
-        + ranked.map((key) => key + '：' + fmtDur(byL1[key])).join('\n'),
-      logText: '场景：今天总结 ｜ 日期：' + date + ' ｜ 数据来源：作息记录表（' + records.length + ' 行）',
+      key: 'schedule.record.today',
+      payload: view,
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.today --params {"date":"' + date + '"}',
+        source: '作息记录表（' + records.length + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
     ...(opts.status === undefined ? {} : { status: statusBlockOf(opts.status) }),
   };
@@ -254,10 +258,13 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
       right: row.sum,
     })),
     copy: {
-      dataText: '【作息管家 · 周视图】' + start + ' ~ ' + end
-        + '（共 ' + records.length + ' 块 · 总时长 ' + fmtDur(total) + ' · 健康分 ' + score + '）\n'
-        + ranked.map((key) => key + '：' + fmtDur(byL1[key])).join('\n'),
-      logText: '场景：周视图 ｜ 区间：' + start + ' ~ ' + end + ' ｜ 数据来源：作息记录表（' + records.length + ' 行）',
+      key: 'schedule.record.range',
+      payload: buildRecordRange(start, end, [...records]),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.range --params {"view":"week","date":"' + start + '"}',
+        source: '作息记录表（这一周 ' + records.length + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
   };
   return renderWeekPage(data);
@@ -405,10 +412,13 @@ export function renderRangeSummaryPage(
       return { left: day.slice(5) + ' ' + weekdayLabelOf(day), main: got.blocks + ' 块', right: fmtDurShort(got.minutes) };
     }),
     copy: {
-      dataText: '【作息管家 · 汇总作息】' + start + ' ~ ' + end
-        + '（共 ' + records.length + ' 块 · 总时长 ' + fmtDur(total) + ' · 健康分 ' + score + '）\n'
-        + ranked.map((key) => key + '：' + fmtDur(byDim[key])).join('\n'),
-      logText: '场景：汇总作息 ｜ 区间：' + start + ' ~ ' + end + ' ｜ 数据来源：作息记录表（' + records.length + ' 行）',
+      key: 'schedule.record.range',
+      payload: buildRecordRange(start, end, [...records]),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.range --params {"start":"' + start + '","end":"' + end + '"}',
+        source: '作息记录表（' + records.length + ' 行）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
   });
 }
@@ -476,11 +486,14 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
       footnote: '首建 ' + stamp(day.createdAt) + '，末改 ' + stamp(day.updatedAt),
     })),
     copy: {
-      dataText: '【作息管家 · ' + (single ? '24h 概览' : '查多日计划') + '】' + span
-        + '（' + days.length + ' 天 · 已排 ' + plannedTotal + ' 格 · 空白 ' + emptyTotal + ' 格）\n'
-        + days.map((day) => day.date + '：' + day.hours.filter((h) => h.text !== '未规划').length + ' 格有安排').join('\n'),
-      logText: '场景：' + (single ? '24h 概览' : '查多日计划') + ' ｜ 区间：' + span
-        + ' ｜ 数据来源：日程表（' + days.length + ' 天聚合，丢备注与飞书同步状态）',
+      key: 'schedule.plan.today',
+      payload,
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.plan.today --params {"view":"aggregate","dates":["'
+          + days.map((day) => day.date).join('","') + '"]}',
+        source: '日程事件表（' + days.length + ' 天聚合）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
   });
 }
@@ -571,10 +584,14 @@ export function renderRecordDetailPage(
     conclusion,
     records: items,
     copy: {
-      dataText: '【作息管家 作息详情】' + opts.date + '（' + records.length + ' 条 · 覆盖 ' + fmtDur(total) + '）\n'
-        + records.map((r) => '记录号 ' + r.id + ' ' + timeRangeOf(r.time_start, r.time_end) + ' ' + r.activity
-          + '（' + r.category + '）').join('\n'),
-      logText: '场景：作息详情 ｜ 日期：' + opts.date + ' ｜ 数据来源：作息记录表（' + records.length + ' 行，11 字段全展开）',
+      key: 'schedule.record.detail',
+      payload: records.length === 0 ? { item: {} } : buildRecordDetail(records[0]),
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.record.detail --params '
+          + (opts.pickedId === undefined ? '{"date":"' + opts.date + '"}' : '{"id":' + String(opts.pickedId) + '}'),
+        source: '作息记录表（' + records.length + ' 行，11 字段全展开）',
+        actionAt: scheduleNowStamp(),
+      }),
     },
   });
 }

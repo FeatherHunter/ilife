@@ -14,7 +14,7 @@
  *  `·`／`｜`／`~`／`、`／`；` 顶替设计。范围一律写「至」。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderDisclosure,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderDisclosure,
   renderFeedbackBlock, renderKpiGrid, renderListRows, renderPreBlock,
   type DataTableRow, type ListRowInput,
 } from 'base-paint/blocks';
@@ -24,11 +24,12 @@ import { listPlanEvents, listRecordsRange } from '../fetch/index.js';
 import {
   LEVEL1_WHITELIST, fmtDur, fmtDurShort, fmtPct, l1Of, toMinutes, type PlanEventInput,
 } from '../policy/index.js';
+import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
 import { clockOf, gapsOf, minutesOfDayEnd } from './planDocs.js';
 import { shiftDay } from './iso.js';
-import { REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
 import { planPartsCss } from './planParts.js';
 
 const EYEBROW = '作息管家 日程与计划';
@@ -49,13 +50,6 @@ function cellsOf(events: readonly { readonly time_start: string; readonly time_e
     end: minutesOf(e.time_end),
     key: l1Of(e.category ?? ''),
   })));
-}
-
-function copyOf(title: string, lines: readonly string[]): { dataText: string; logText: string } {
-  return {
-    dataText: '【' + title + '】\n' + lines.join('\n'),
-    logText: '场景：' + title + '\n' + lines.join('\n'),
-  };
 }
 
 /** 这一段覆盖到哪几个整点（末段 24:00 收在 23 点）。 */
@@ -218,16 +212,16 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
       actionId: 'ilife-sch-plan-copy-next',
       copyLabel: '复制这句话',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('商量计划预览', [
-        '日期：' + date,
-        '候选：' + String(candidates.length) + ' 段，共 ' + fmtDur(covered),
-        '与已有重叠：' + String(overlaps.length) + ' 处',
-        ...candidates.map((e) => span(e.time_start, e.time_end) + ' ' + e.title + '（' + categoryOf(e.category) + '）'),
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '商量计划预览：日期 ' + date + '，候选 ' + String(candidates.length) + ' 段共 ' + fmtDur(covered)
+          + '，与已有重叠 ' + String(overlaps.length) + ' 处',
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"preview","date":"' + date + '"}',
+        source: '日程计划表与作息记录表（近 ' + String(HISTORY_DAYS) + ' 天）',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });
@@ -339,19 +333,18 @@ export function resultPage(
       actionId: 'ilife-sch-plan-copy-next',
       copyLabel: '复制这句话',
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('制定次日计划结果', [
-        '日期：' + date,
-        '候选：' + String(candidates.length) + ' 段，共 ' + fmtDur(covered),
-        '历史窗口：近 ' + String(HISTORY_DAYS) + ' 天，' + String(records.length) + ' 条作息记录',
-        '贴合率：' + (rate === null ? '—' : String(rate) + '%'),
-        '贴合 ' + String(match) + ' 段，偏离 ' + String(drift) + ' 段，无参考 ' + String(none) + ' 段',
-        '占比：候选占这一天 ' + fmtPct(covered, HOURS_PER_DAY * 60) + '%',
-        '远端侧：' + REMOTE_LABEL[remote],
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '制定次日计划结果：日期 ' + date + '，候选 ' + String(candidates.length) + ' 段共 ' + fmtDur(covered)
+          + '，历史窗口近 ' + String(HISTORY_DAYS) + ' 天共 ' + String(records.length) + ' 条作息记录，贴合率 '
+          + (rate === null ? '—' : String(rate) + '%') + '（贴合 ' + String(match) + ' 段，偏离 ' + String(drift)
+          + ' 段，无参考 ' + String(none) + ' 段），远端侧 ' + REMOTE_LABEL[remote],
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"upsert","date":"' + date + '"}',
+        source: '日程计划表（' + date + ' 落库 ' + String(written.length) + ' 件）',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });

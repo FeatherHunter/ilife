@@ -20,9 +20,11 @@
  *  SKILL.md 都用这个词，故有意不在禁用词里）；页上其余文案零命令键、零库列名、零参数名、零票号。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderKpiGrid, renderProseBlock,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderKpiGrid, renderProseBlock,
   type DataTableRow, type KpiCardInput,
 } from 'base-paint/blocks';
+import { renderActionBar } from 'base-paint';
+import { scheduleCopyArea, scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import {
   adminPartsCss, renderSectionTitle, renderSteps, renderVerifyList, type AdminStepView,
@@ -30,6 +32,22 @@ import {
 
 /** 页眉那一行域词（两张页同一句）。 */
 const EYEBROW = '作息管家 辅助与管理';
+
+/** 本域两张页的 key：初始化与首次使用都落在 `schedule.help.lookup` 上（路由表逐字），
+ *  形状 `list` ⇒ 复制数据位是一份报告（逐条 `name`／`value`）。 */
+const HELP_KEY = 'schedule.help.lookup';
+
+/** 一处落点的复制按钮（#887）：完整路径只进按钮的 `data-t`，页上只印确认语。
+ *
+ *  **为什么不是「复制区里的自定义按钮」**：`CopyBlockInput.buttons` 收的 `ActionBarButton` 没有
+ *  载荷位（公共层自己的注释就是这么写的：「动作条按钮没有 `data-t` 载荷位」），今天给不出
+ *  「把某一串文本交给它复制」的按钮。故按票面那一条停档：**每个落点各一枚按钮、不再成对**，
+ *  按钮走公共层动作条的数据位（`renderActionBar({ copyData })`，兄弟技能同一条公开面），
+ *  技能侧不手搓按钮 HTML、不另造样式；这一处缺口在 #887 票面留言里点名。 */
+function pathCopyRow(name: string, path: string, actionId: string): string {
+  return renderCaliberLine(name + '已确认')
+    + renderActionBar({ copyData: { actionId, label: '复制' + name + '路径', text: path } });
+}
 
 /** 步骤状态（三态，说人话）。 */
 export type AdminStepStatus = 'ok' | 'todo' | 'do';
@@ -97,24 +115,32 @@ export function renderInitReceiptPage(input: InitReceiptInput): string {
       emptyText: '三张表一行没有',
     }),
     renderCaliberLine('再跑一次只会补齐缺的表，已有数据一条不动'),
-    renderCopyBlock({
-      title: '复制库文件路径',
-      dataText: input.paths.dbFile,
-      logText: '场景：初始化数据库 ｜ 库文件已确认',
-      dataActionId: 'ilife-sch-init-copy-path',
-      logActionId: 'ilife-sch-init-copy-path-log',
-    }),
+    // #887：这一处原先是「库文件路径」那个复制区（一页里的第二处复制按钮排），现在收成一行确认语 ＋
+    // 单颗复制按钮——完整路径进 `data-t`，页上不印路径（落点名只写人话）。
+    pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-init-copy-path'),
     renderSectionTitle('下一步'),
     renderProseBlock({ text: '刚装好就说「首次使用」，向导带你走完六步。平时记一条作息只说一句话就行。' }),
-    renderCopyBlock({
+    // #887：一页**一个**复制区（数据＝初始化回执整份、日志＝这一趟六段），原先的第二对按钮合并到这里。
+    scheduleCopyArea({
       title: '复制初始化结果',
-      dataText: '【作息管家 · 初始化回执】' + conclusion + '\n'
-        + '作息记录 ' + countText(input.counts.records) + ' 条，日程计划 '
-        + countText(input.counts.plans) + ' 条，每日摘要 ' + countText(input.counts.summaries) + ' 组\n'
-        + '库文件：' + input.paths.dbFile,
-      logText: '场景：初始化数据库 ｜ ' + conclusion,
       dataActionId: 'ilife-sch-init-copy-data',
       logActionId: 'ilife-sch-init-copy-log',
+      key: HELP_KEY,
+      payload: {
+        items: [
+          { name: '本次动作', value: input.created ? '新建' : '沿用已有' },
+          { name: '作息记录', value: countText(input.counts.records) + ' 条' },
+          { name: '日程计划', value: countText(input.counts.plans) + ' 条' },
+          { name: '每日摘要', value: countText(input.counts.summaries) + ' 组' },
+          { name: '库文件路径', value: input.paths.dbFile },
+        ],
+        total: 5,
+      },
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.help.lookup --params {"view":"init"}',
+        source: '建库与三张表（辅助与管理）',
+        actionAt: scheduleNowStamp(),
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: adminPartsCss() });
@@ -181,34 +207,11 @@ export function renderFirstUsePage(input: FirstUseInput): string {
     renderSteps(views),
     renderSectionTitle('路径确认'),
     renderProseBlock({ text: '四处落点都在下面，点一下就复制完整路径。落点由配置文件决定，改动去改配置，不用重装。' }),
-    renderCopyBlock({
-      title: '复制库目录路径',
-      dataText: input.paths.dbDir,
-      logText: '场景：首次使用 ｜ 库目录已确认',
-      dataActionId: 'ilife-sch-firstuse-copy-dbdir',
-      logActionId: 'ilife-sch-firstuse-copy-dbdir-log',
-    }),
-    renderCopyBlock({
-      title: '复制库文件路径',
-      dataText: input.paths.dbFile,
-      logText: '场景：首次使用 ｜ 库文件已确认',
-      dataActionId: 'ilife-sch-firstuse-copy-dbfile',
-      logActionId: 'ilife-sch-firstuse-copy-dbfile-log',
-    }),
-    renderCopyBlock({
-      title: '复制产物根目录路径',
-      dataText: input.paths.pagesRoot,
-      logText: '场景：首次使用 ｜ 产物根目录已确认',
-      dataActionId: 'ilife-sch-firstuse-copy-pages',
-      logActionId: 'ilife-sch-firstuse-copy-pages-log',
-    }),
-    renderCopyBlock({
-      title: '复制帮助页路径',
-      dataText: input.paths.helpDir,
-      logText: '场景：首次使用 ｜ 帮助页目录已确认',
-      dataActionId: 'ilife-sch-firstuse-copy-help',
-      logActionId: 'ilife-sch-firstuse-copy-help-log',
-    }),
+    // #887：四处落点各**一枚**复制按钮（原先四个复制区＝四对按钮，现各收成一行确认语 ＋ 一颗按钮）。
+    pathCopyRow('库目录', input.paths.dbDir, 'ilife-sch-firstuse-copy-dbdir'),
+    pathCopyRow('库文件', input.paths.dbFile, 'ilife-sch-firstuse-copy-dbfile'),
+    pathCopyRow('产物根目录', input.paths.pagesRoot, 'ilife-sch-firstuse-copy-pages'),
+    pathCopyRow('帮助页', input.paths.helpDir, 'ilife-sch-firstuse-copy-help'),
     renderSectionTitle('初始化报告'),
     renderCaliberLine('建库动作 ｜ ' + (input.created ? '三张表本次新建' : '三张表沿用已有')),
     renderCaliberLine('库内现状 ｜ 作息记录 ' + countText(input.counts.records)
@@ -224,12 +227,31 @@ export function renderFirstUsePage(input: FirstUseInput): string {
       : renderCaliberLine('飞书三道门都过了，想看档位就说「飞书探测」'),
     renderSectionTitle('完成'),
     renderProseBlock({ text: '下一句说「作息管家 HELP」看全部功能，现在就可以记下第一条作息。' }),
-    renderCopyBlock({
+    // #887：一页**一个**复制区（数据＝向导报告整份、日志＝这一趟六段）——原先五对按钮合并到这里。
+    // 报告里带 `初始化 prompt` 那一条：复制出去的文本里就有与 HELP 单源的那一句（探针量的是标记面）。
+    scheduleCopyArea({
       title: '复制初始化 prompt',
-      dataText: input.prompt,
-      logText: '场景：首次使用 ｜ 六步向导已跑完',
       dataActionId: 'ilife-sch-firstuse-copy-data',
       logActionId: 'ilife-sch-firstuse-copy-log',
+      key: HELP_KEY,
+      payload: {
+        items: [
+          ...input.steps.map((s) => ({ name: s.name, value: s.statusText + '，' + s.desc })),
+          { name: '待办', value: input.todos.length === 0 ? '这一趟没有待办' : String(input.todos.length) + ' 项' },
+          { name: '完成验证清单', value: input.verify.join('，') },
+          { name: '库目录路径', value: input.paths.dbDir },
+          { name: '库文件路径', value: input.paths.dbFile },
+          { name: '产物根目录路径', value: input.paths.pagesRoot },
+          { name: '帮助页路径', value: input.paths.helpDir },
+          { name: '初始化 prompt', value: input.prompt },
+        ],
+        total: input.steps.length + 7,
+      },
+      log: scheduleCopyLog({
+        command: 'schedule-cmd-read schedule.help.lookup --params {"view":"firstUse"}',
+        source: '六步向导与四处落点（辅助与管理）',
+        actionAt: scheduleNowStamp(),
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: adminPartsCss() });

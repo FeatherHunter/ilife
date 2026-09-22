@@ -11,9 +11,10 @@
  *  **本件只认形状，不认口径**：格子取哪个分类、健康分怎么算、顺序表从哪来，都由 `query` 侧给。
  */
 import {
-  renderCopyBlock, renderDistributionRows, renderKpiGrid, renderListRows,
+  renderDistributionRows, renderKpiGrid, renderListRows,
   type DistributionRowInput, type KpiCardInput, type ListRowInput,
 } from 'base-paint/blocks';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { categoryColor, renderHeatMatrix, type HeatRow } from './pageParts.js';
 
@@ -28,7 +29,7 @@ export interface WeekPageData {
   readonly distribution: readonly DistributionRowInput[];
   /** 每日汇总（一行一天）。 */
   readonly daily: readonly ListRowInput[];
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  readonly copy: ScheduleCopyAreaInput;
 }
 
 /** 出「周视图」整页。 */
@@ -41,12 +42,11 @@ export function renderWeekPage(data: WeekPageData): string {
       rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
     }),
     renderListRows({ items: data.daily, emptyText: '这一周没有记录' }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制给 AI',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-week-copy-data',
       logActionId: 'ilife-sch-week-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

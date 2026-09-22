@@ -20,10 +20,11 @@
  *  按日查（N 条）与按 ID 查（1 条）走同一套，一条也走这一套。
  */
 import {
-  renderConclusionBar, renderCopyBlock, renderKpiGrid, renderProseBlock,
+  renderConclusionBar, renderKpiGrid, renderProseBlock,
   type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip, type FactItemInput } from 'base-paint';
+import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 
 /** 一条记录在页上的一段（段名 ＋ 字段 ＋ 推理链）。 */
@@ -45,7 +46,7 @@ export interface DetailPageData {
   readonly conclusion: string;
   /** 逐条详情：一条一段，顺序即调用方给的顺序。 */
   readonly records: readonly RecordDetailItem[];
-  readonly copy: { readonly dataText: string; readonly logText: string };
+  readonly copy: ScheduleCopyAreaInput;
 }
 
 /** 出「作息详情」整页。 */
@@ -59,12 +60,11 @@ export function renderDetailPage(data: DetailPageData): string {
     renderKpiGrid(data.kpis),
     renderConclusionBar(data.conclusion),
     records,
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      dataText: data.copy.dataText,
-      logText: data.copy.logText,
       dataActionId: 'ilife-sch-detail-copy-data',
       logActionId: 'ilife-sch-detail-copy-log',
+      ...data.copy,
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head: data.head, content });

@@ -19,16 +19,17 @@
  *  就是这条。范围一律写「至」，不用波浪号。
  */
 import {
-  renderCaliberLine, renderConclusionBar, renderCopyBlock, renderDataTable, renderDisclosure,
+  renderCaliberLine, renderConclusionBar, renderDataTable, renderDisclosure,
   renderFeedbackBlock, renderKpiGrid, type ChangeRowInput, type DataTableRow,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
 import type { PlanEvent, ScheduleDb } from '../fetch/db.js';
 import { listPlanEvents } from '../fetch/index.js';
 import { fmtDur, fmtDurShort, l1Of, toMinutes, LEVEL1_WHITELIST } from '../policy/index.js';
+import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
-import { REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
 import { planPartsCss, renderChangePanel } from './planParts.js';
 
 /** 域词（页眉那一行）。 */
@@ -60,13 +61,6 @@ function cellsOf(events: readonly PlanEvent[]): ReturnType<typeof hourCellsOf> {
     end: toMinutes(e.time_end),
     key: l1Of(e.category ?? ''),
   })));
-}
-
-function copyOf(title: string, lines: readonly string[]): { dataText: string; logText: string } {
-  return {
-    dataText: '【' + title + '】\n' + lines.join('\n'),
-    logText: '场景：' + title + '\n' + lines.join('\n'),
-  };
 }
 
 /* ─────────────────────────── ① 补计划回执（老侧 f15） ─────────────────────────── */
@@ -138,17 +132,17 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
         { label: '完成状态', value: event === undefined ? '—' : empty(event.completion) },
       ],
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('补计划回执', [
-        '日期：' + r.date,
-        '事件编号：' + String(r.id),
-        '时段：' + (event === undefined ? '—' : span(event.time_start, event.time_end)),
-        '本地这一半：' + (r.created ? '新建' : '命中已有'),
-        '远端侧：' + REMOTE_LABEL[r.remote],
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '补计划回执：日期 ' + r.date + '，事件编号 ' + String(r.id) + '，时段 '
+          + (event === undefined ? '—' : span(event.time_start, event.time_end)) + '，本地这一半 '
+          + (r.created ? '新建' : '命中已有') + '，远端侧 ' + REMOTE_LABEL[r.remote],
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"ensure","date":"' + r.date + '"}',
+        source: '日程计划表（' + r.date + ' 现有 ' + String(day.length) + ' 件）',
+      }),
     }),
     renderDisclosure({
       title: '这一条现在的样子',
@@ -221,14 +215,17 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
       emptyText: '这一趟一天也没收到',
     }),
     renderCaliberLine('同一天同一段起止只留一条 ｜ 再补一次不算新建，也不会重复'),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('批量补计划回执', [
-        '天数：' + String(days.length),
-        ...days.map((d) => d.date + '：' + (d.created ? '新建' : '命中已有') + '，' + REMOTE_LABEL[d.remote]),
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '批量补计划回执：' + String(days.length) + ' 天，'
+          + days.map((d) => d.date + ' ' + (d.created ? '新建' : '命中已有') + ' ' + REMOTE_LABEL[d.remote]).join('，'),
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"ensure","dates":['
+          + days.map((d) => '"' + d.date + '"').join(',') + ']}',
+        source: '日程计划表（' + String(days.length) + ' 天）',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });
@@ -290,17 +287,17 @@ export function updateReceiptPage(
         { label: '完成状态', value: empty(after.completion) },
       ],
     }),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('改计划回执', [
-        '日期：' + after.date,
-        '事件编号：' + String(after.id),
-        '这次改了 ' + String(rows.length) + ' 处：' + rows.map((r) => r.label).join('，'),
-        '现在的时段：' + span(after.time_start, after.time_end),
-        '远端侧：' + REMOTE_LABEL[remote],
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '改计划回执：日期 ' + after.date + '，事件编号 ' + String(after.id) + '，这次改了 '
+          + String(rows.length) + ' 处（' + rows.map((r) => r.label).join('，') + '），现在的时段 '
+          + span(after.time_start, after.time_end) + '，远端侧 ' + REMOTE_LABEL[remote],
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"update","id":' + String(after.id) + '}',
+        source: '日程计划表（' + after.date + ' 现有 ' + String(day.length) + ' 件）',
+      }),
     }),
   ].filter((seg) => seg !== '').join('');
   return assembleDocPage({ head, content, extraCss: planPartsCss() });
@@ -349,17 +346,17 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
       ],
     }),
     renderCaliberLine('删计划只动这一条 ｜ 别的事件与别的日期一件不动'),
-    renderCopyBlock({
+    scheduleCopyArea({
       title: '复制与留档',
-      ...copyOf('删计划回执', [
-        '日期：' + before.date,
-        '事件编号：' + String(before.id),
-        '删掉的时段：' + span(before.time_start, before.time_end),
-        '这一天现在：' + String(day.length) + ' 件',
-        '远端侧：' + REMOTE_LABEL[remote],
-      ]),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
+      ...planCopyArea({
+        message: '删计划回执：日期 ' + before.date + '，事件编号 ' + String(before.id) + '，删掉的时段 '
+          + span(before.time_start, before.time_end) + '，这一天现在 ' + String(day.length) + ' 件，远端侧 '
+          + REMOTE_LABEL[remote],
+        command: 'schedule-cmd-read schedule.plan.write --params {"op":"deactivate","id":' + String(before.id) + '}',
+        source: '日程计划表（' + before.date + ' 现有 ' + String(day.length) + ' 件）',
+      }),
     }),
     renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }),
   ].filter((seg) => seg !== '').join('');
