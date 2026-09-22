@@ -9,13 +9,13 @@
 
 **「最好看」怎么变成可判定的**（Destination 不允许只有愿望）：由**两次人裁**说话——① `【形状】` 票的**页型配方**由人裁过才铺开；② `【收口】` 票的第二段由人**滚墙给逐格结论并签字**。机器侧只作自检门槛：机审六列 0 命中、双端三档溢出 0、vision 逐页 ≥90（**vision 是提示器，不是证据**）。
 
-## 进度：85%
+## 进度：95%
 
-已完成：① 图的准备工作——建图（15 张子票 ＋ 原生 sub-issue 与 blocked_by 边，脚本自校验逐条一致）、建图前六条裁决（用户答复原文见末节）、三轮对抗式审查 ＋ 一轮调整落地（按第一性原理把图改成「主干单写者、支线并行」：新增【交付面】与【种子】两票、`【骨架】` 收成 `【结构】`、`【清单】` 降级为纯取证、八张域票串成写者互斥链，每票补 `## 写面` 段）；② 子票已关 13/15：`【结构】`（#780）、`【清单·取证】`（#781）、`【形状】`（#782，人裁 `B A A`）、`【种子】`（#844）、`【交付面】`（#843）、`【写入与同步】`（#783）、`【查询与浏览·单日族】`（#784）、`【查询与浏览·范围与跨天】`（#785）、`【查询与浏览·日程族】`（#786）、`【日程与计划·写侧】`（#787）、`【日程与计划·复盘与飞书】`（#788）、`【分析与洞察】`（#789）、`【辅助与管理】`（#790）。八张域票八张全关，主干（写包）一路单写者、未出现撞笔。
+已完成：① 图的准备工作（建图 ＋ 15 张子票 ＋ 原生 sub-issue 与 blocked_by 边 ＋ 建图前六条裁决 ＋ 三轮对抗式审查与一轮调整落地）；② 15 张子票已关 **14/15**——八张域票（#783–#790）八张全关，主干（写包）一路单写者、未出现撞笔，【结构】（#780）、【清单·取证】（#781）、【形状】（#782，人裁 B A A）、【种子】（#844）、【交付面】（#843）、**【链路页】（#791）**亦已关。
 
-下一步：【链路页】（#791）——prompt → 唤醒词 → 命令 → 产物绝对路径（一份 HTML，点路径即开）。其后【收口】（#792）。
+下一步：【收口】（#792）——双端墙 ＋ 总索引 ＋ 逐格缺陷清单 → 修完复评 ≥90 → 人签字。
 
-**未到 95%**：八张域票已齐，还差链路页（#791）与收口（#792）；到收口时进度写 95% 必须点名「待用户滚墙肉眼终审并签字」这一件待确认事，未确认不得 close 本图。
+**未到 100%（95%）**：本图唯一的待确认事是**待用户滚墙肉眼终审并签字**（图的目的地里「最好看」那一条只由这一次人裁说话）；人未签字之前本图不 close。
 
 ## Notes
 
@@ -46,7 +46,7 @@
 | [#788](https://github.com/FeatherHunter/ilife/issues/788) | 【日程与计划·复盘与飞书】复盘四档 ＋ 区间复盘一体页 ＋ 飞书探测／同步回执 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#787](https://github.com/FeatherHunter/ilife/issues/787) |
 | [#789](https://github.com/FeatherHunter/ilife/issues/789) | 【分析与洞察】对比两个月／类别深挖／异常检测／写作息摘要／修正作息 出页 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#788](https://github.com/FeatherHunter/ilife/issues/788) |
 | [#790](https://github.com/FeatherHunter/ilife/issues/790) | 【辅助与管理】初始化数据库回执 ＋ 首次使用向导 ＋ 飞书探测页 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) ＋ [#782](https://github.com/FeatherHunter/ilife/issues/782) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) |
-| [#791](https://github.com/FeatherHunter/ilife/issues/791) | 【链路页】prompt → 唤醒词 → 命令 → 产物绝对路径：一份 HTML，点路径即开 | task | 可做 | [#783](https://github.com/FeatherHunter/ilife/issues/783) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) ＋ [#785](https://github.com/FeatherHunter/ilife/issues/785) ＋ [#786](https://github.com/FeatherHunter/ilife/issues/786) ＋ [#787](https://github.com/FeatherHunter/ilife/issues/787) ＋ [#788](https://github.com/FeatherHunter/ilife/issues/788) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) ＋ [#790](https://github.com/FeatherHunter/ilife/issues/790) |
+| [#791](https://github.com/FeatherHunter/ilife/issues/791) | 【链路页】prompt → 唤醒词 → 命令 → 产物绝对路径：一份 HTML，点路径即开 | task | 已关 | [#783](https://github.com/FeatherHunter/ilife/issues/783) ＋ [#784](https://github.com/FeatherHunter/ilife/issues/784) ＋ [#785](https://github.com/FeatherHunter/ilife/issues/785) ＋ [#786](https://github.com/FeatherHunter/ilife/issues/786) ＋ [#787](https://github.com/FeatherHunter/ilife/issues/787) ＋ [#788](https://github.com/FeatherHunter/ilife/issues/788) ＋ [#789](https://github.com/FeatherHunter/ilife/issues/789) ＋ [#790](https://github.com/FeatherHunter/ilife/issues/790) |
 | [#792](https://github.com/FeatherHunter/ilife/issues/792) | 【收口】双端墙 ＋ 总索引 ＋ 逐格缺陷清单 → 修完复评 ≥90 → 人签字 | task | 可做 | [#791](https://github.com/FeatherHunter/ilife/issues/791) |
 | [#843](https://github.com/FeatherHunter/ilife/issues/843) | 【交付面】唤醒词命令缺省落盘 ＋ 产物落点分家 ＋ 命名一处定义 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
 | [#844](https://github.com/FeatherHunter/ilife/issues/844) | 【种子】隔离种子库：锚点日期 ＋ 覆盖五域的可复现数据 | task | 已关 | [#780](https://github.com/FeatherHunter/ilife/issues/780) |
@@ -66,6 +66,8 @@
 - [【日程与计划·复盘与飞书】复盘四档 ＋ 区间复盘一体页 ＋ 飞书探测／同步回执](https://github.com/FeatherHunter/ilife/issues/788) — 复盘四档并成一体页（区间按跨度路由：≤1 天→今日档、≤7 天→本周档、≤31 天→本月档、其余→通用四段），裸词「复盘」另出单日逐条那张（逐条 completion ＋ 讨论区）；飞书两条分家＝探测**只读**三档（补上了被丢掉的 `dryRun`，「飞书探测」不再真跑同步）/同步报这一趟的账；13 页走真出口落盘，探针 `PASS pages=13 scenes=9 red=0`，本包 192 例全绿。
 - [【分析与洞察】对比两个月／类别深挖／异常检测／写作息摘要／修正作息 出页](https://github.com/FeatherHunter/ilife/issues/789) — 三张真页走真出口落盘（**对比**：四卡对照 ＋ 7 维差异柱按「日均」比 ＋ AI 钩子位；**类别深挖**：24h × N 天热力图 ＋ 二级分类总览 ＋ 记录明细，用户说的二级词先按一级归一；**异常检测**：红框黄框条目 ＋ 7 维雷达逐轴归一，两段各自摊成日均再比）；本域 12 行逐行有下文（出页 7 ＋ 有意不出 2 ＋ 归 #783 的 amend 3），探针 `PASS pages=7 scenes=12 red=0`（另有分隔符门 7/7 与 `OVERFLOW-ZERO`），本包 205 例全绿；载荷三句一字未改；「修正作息／写作息摘要」两族按路由归 #783 不重复做
 - [【辅助与管理】初始化数据库回执 ＋ 首次使用向导 ＋ 飞书探测页](https://github.com/FeatherHunter/ilife/issues/790) — 初始化回执（新建／已就绪／有数据三档）＋首次使用向导（老侧 6 步 ＋ 飞书强引导 ＋ 初始化报告）走真出口落盘，路由不新造 key（初始化数据库复用 order 10 原槽位、首次使用 order 50，preset 寄宿自家键）；本域 3 行逐行有下文（出页 2 ＋ 归 #788 的飞书探测 1），探针 `PASS pages=4 scenes=3 red=0`（分隔符门 4/4 与 `OVERFLOW-ZERO`），本包 213 例全绿；飞书探测页由 #788 出不重复做
+
+- [【链路页】prompt → 唤醒词 → 命令 → 产物绝对路径：一份 HTML，点路径即开](https://github.com/FeatherHunter/ilife/issues/791) — 一页 51 行＝47 出页 ＋ 7 有意不出（四条 HELP 别名 ＋ 三条语取链），prompt／唤醒词／命令（含真跑参数）／产物绝对路径四列齐；**名字一处都不自己算**——逐字取八张域票清单件（各域探针从真出口 delivery.path 复制的那一份），61 件产物原地引用、逐件探真在盘；生成器只读（不重跑出页、不改产物），自检 ①51＝47＋7 ②逐件在盘且字节与 sha256 相符 ③零外链零 link ④路径列全绝对 file://；变异（删一件产物）当场红、还原逐字回同枚（页面 97357 字节）。
 
 ## Not yet specified
 
@@ -109,6 +111,9 @@ Q6 A
 将你的问题和回答以清晰的形式输出到html文件中：…
 再进行一轮的检查和调整。然后任务结束
 ```
+
+
+
 
 
 
