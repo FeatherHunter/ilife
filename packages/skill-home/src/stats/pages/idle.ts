@@ -134,8 +134,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const items = Array.isArray(d.items) ? d.items : [];
   const head = '<div class="fam-head"><span class="fam-name" data-family="idle">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查闲置</span></div>';
-  const hero = '<div class="st st-hero"><span class="st-wake">查闲置</span>'
-    + '<p class="st-lead">共' + items.length + '件超过所选天数未使用，勾选后确认处理</p></div>';
+  // #817（⑤文案不冗余）：胶囊原写「查闲置」，与 h1（交付链回填的场景名）同名相邻＝同一个词说两遍
+  // （本页正文里「闲置」另有十几处）。去掉胶囊：这一行的范围由下面那句与「闲置件数」卡承担。
+  const hero = '<div class="st st-hero"><p class="st-lead">共' + items.length + '件超过所选天数未使用，勾选后确认处理</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span></div>'
     + '<div class="st-card"><b>闲置标准</b><span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + ' 天' : '—') + '</span><small>下单时指定</small></div></div>';
@@ -148,7 +149,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const rows = items.map((it) => '<div class="st-item" data-id="' + it.id + '" data-name="' + escapeHtml(it.name)
     + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name))
     + '（编号' + it.id + '）</div>' + locChips(it.location)
-    + '<span class="st-badge">闲置</span>'
+    // #817（⑤文案不冗余）：徽标原写「闲置」——逐行复述页面主题词，等于没带信息；
+    // 改挂该行自己的分类（与上面的分类筛选同一取值），行与筛选口径才对得上。
+    + '<span class="st-badge">' + escapeHtml(latinFree(it.category || '闲置')) + '</span>'
     + '<div class="st-ops tight"><button class="st-btn" data-act="标记废弃" data-item="' + it.id + '">标记废弃</button>'
     + '<button class="st-btn" data-act="送人" data-item="' + it.id + '">送人</button>'
     + '<button class="st-btn soft" data-act="先不处理" data-item="' + it.id + '">先不处理</button></div></div>').join('');

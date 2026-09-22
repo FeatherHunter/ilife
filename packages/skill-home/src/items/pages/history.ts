@@ -74,6 +74,8 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.ev .type{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:2px 9px;font-size:11px;color:#6e6e73}'
 + '.diffx{display:none;background:#f8f9fb;border-radius:10px;padding:10px;font-size:13px;margin-top:6px;white-space:pre-wrap}'
 + '.undoable{font-size:12px;color:#007aff;cursor:pointer;background:none;border:none;padding:0;min-height:44px;min-width:44px;display:inline-flex;align-items:center}'
+// #817（④触控够大）：同一行两颗动作链接原本零间距（看得见的两块拼成一体），补 8px。
++ '.undoable+.undoable{margin-left:8px}'
 + '.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}'
 + '.chip{border:1.5px solid #d2d2d7;background:#fff;border-radius:999px;padding:6px 14px;font-size:12px;cursor:pointer;min-height:44px}'
 + '.chip.on{border-color:#007aff;background:#f5f8ff;color:#007aff;font-weight:700}'
@@ -181,7 +183,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>位置轨迹</h2>' + trajHtml
     + '<h2>时间线共' + events.length + '条</h2><div class="chips">' + chips + '</div>'
     + '<h2>事件条目</h2><div class="tl">' + timeline + '</div></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>本次事件类型</h2><div class="chips">' + typeTags + '</div></section>'
+    // #817（⑤文案不冗余）：「本次事件类型」与上面时间线块的筛选胶囊是同一份取值（同一组类型词），
+    // 双份并排＝一个事实说两遍；段与 data-need 原文照留（判据件读属性），只在页面上不再重复一遍。
+    + '<section class="sec" hidden data-block="status" data-need="' + NEED.status + '"><h2>本次事件类型</h2><div class="chips">' + typeTags + '</div></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
     + '<button class="btn ghost" onclick="typeCycle()">类型筛选</button>'

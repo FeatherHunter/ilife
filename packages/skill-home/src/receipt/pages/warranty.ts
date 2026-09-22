@@ -97,11 +97,13 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
   + '.item table{font-size:13px;border-collapse:collapse}.item th{color:#6e6e73;font-weight:600;text-align:left;padding:2px 8px 2px 0}</style>';
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  // #817（⑤文案不冗余）：后两颗原标签与场景名逐字相同＝自指（在「记录维修」页上写「记录维修」、
+  // 在「执行保养」页上写「执行保养」）；换成动作说法，载荷 data-t 不动。
   return '<div class="rc-ops">'
     + '<button type="button" data-t="请查保修状态">按状态复核</button>'
     + '<button type="button" data-t="请登记保修">新增保修</button>'
-    + '<button type="button" data-t="请记录一次维修">记录维修</button>'
-    + '<button type="button" data-t="请执行一次保养">执行保养</button>'
+    + '<button type="button" data-t="请记录一次维修">记一次维修</button>'
+    + '<button type="button" data-t="请执行一次保养">做一次保养</button>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
@@ -120,7 +122,9 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/receipt/warranty.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
-    + '<span>保修与保养</span></div>';
+    // #817（⑤文案不冗余）：抬头只留域标签——原本写族名「保修与保养」，与回执那行「已登记保修：#8」
+    // 和场景名回填后的大标题（登记保修／记录维修／执行保养…）三行同词；`withSceneIdentity` 也只留头一个 span。
+    + '<span>票据凭证</span></div>';
   const items = Array.isArray((env.data as { items?: unknown }).items) ? (env.data as { items: Record<string, unknown>[] }).items : [];
   // 空态由内容位渲染（摘要位不留空态句），data-block 标记照旧在位；回执形仍走共享回执卡。
   // 需数据（写侧回执）：回执只带编号（「已登记保修：#N」由 `src/receipt/ticket.ts:78` 等组出），
