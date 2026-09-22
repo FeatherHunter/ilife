@@ -44,11 +44,15 @@ body{
   -moz-osx-font-smoothing:grayscale;
   padding:0 env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
 }
+/* #820 收尾：宽档版心对齐本批其余页（原来 480px，1280 下左右各空 415px；老技能同值沿用）。
+   手机端不受影响（窄屏本来就是铺满）。 */
 .wrap{
-  max-width:480px;
+  max-width:980px;
   margin:0 auto;
   padding:max(20px,env(safe-area-inset-top,0)) 16px calc(40px + env(safe-area-inset-bottom,0));
 }
+/* 页级标题：本页原先没有 h1（视觉审查：34 页里唯一一页第一个元素就是导航胶囊）。 */
+h1{font-size:34px;line-height:1.15;letter-spacing:-.035em;margin:0 0 12px}
 
 /* ===== 状态卡(首屏 · 结论优先) ===== */
 .status-card{
@@ -291,6 +295,8 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <body>
 <div class="wrap ilife-page-ui">
 <section id="injectError" style="display:none"></section>
+
+<h1 id="title">备忘录同步</h1>
 
 <!-- ===== 页内导航（公共层目录形状；#832：本页三屏，长页给定位） ===== -->
 <nav class="ilife-block-toc jump" aria-label="页内导航"><a href="#statusCard">结论</a><a href="#kpis">统计</a><a href="#details">明细</a><a href="#dataPanel">数据</a></nav>

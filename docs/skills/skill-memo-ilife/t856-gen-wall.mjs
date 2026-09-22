@@ -22,8 +22,10 @@
  * 自检正反两面：正例打印「N 格；链接 M 条；缺失 0 -> 可发」exit 0；
  * 反例（清单点名却不存在／产物不完整／含惰性加载）exit 1 且逐条点名。
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const MANIFEST = 'manifest.json';
 const INDEX = '总索引.html';
@@ -116,12 +118,54 @@ ${frame}
   </figure>`;
 }
 
-/** ② 出墙：每格一件真产物，格子宽＝要量的那个视口，高一致。 */
+/* ★ #820 收尾（2026-09-22 · 视觉审查翻出）：墙原先给每格一个**死高**（缺省 820），
+   而 34 页真实高度**全部 ≥938px**（最大 4290）⇒ 每格底部都被切掉，人照墙审看不到页脚。
+   现在逐页量真实高度（无头浏览器把 `documentElement.scrollHeight` 写进 title 再 dump），
+   按量到的高度设 iframe；量不到就退回缺省高（宁可退回，也不静默给个错的数）。 */
+function chromePath() {
+  const cands = [process.env.CHROME_PATH,
+    join(process.env.ProgramFiles ?? '', 'Google/Chrome/Application/chrome.exe'),
+    join(process.env['ProgramFiles(x86)'] ?? '', 'Google/Chrome/Application/chrome.exe'),
+    join(process.env.LOCALAPPDATA ?? '', 'Google/Chrome/Application/chrome.exe'),
+    '/usr/bin/google-chrome'];
+  return cands.filter((p) => p && existsSync(p))[0] ?? null;
+}
+
+function measureHeights(dir, rows, fallback) {
+  const chrome = chromePath();
+  if (chrome === null) return new Map();
+  const tmp = join(dir, '.wall-measure.html');
+  const map = new Map();
+  for (const r of rows) {
+    try {
+      const html = readFileSync(join(dir, r.file), 'utf8');
+      const i = html.lastIndexOf('</body>');
+      if (i < 0) continue;
+      writeFileSync(tmp, html.slice(0, i)
+        + '<script>setTimeout(function(){document.title=String(Math.ceil(document.documentElement.scrollHeight))},300)</script>'
+        + html.slice(i), 'utf8');
+      const out = execFileSync(chrome, ['--headless', '--disable-gpu', '--no-sandbox', '--disable-extensions',
+        '--virtual-time-budget=4000', '--dump-dom', pathToFileURL(tmp).href],
+        { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 60000 });
+      const m = out.match(/<title>(\d+)<\/title>/);
+      if (m) map.set(r.file, Math.max(fallback, Math.min(6000, Number(m[1]) + 8)));
+    } catch { /* 量不到就退回缺省高 */ }
+  }
+  rmSync(tmp, { force: true });
+  return map;
+}
+
+/** ② 出墙：每格一件真产物，格子宽＝要量的那个视口；**格高按每页真实高度**（量不到才退回缺省）。 */
 function buildWall(dir, rows, out, w, h) {
   const cols = w <= 500 ? 3 : 1;
   const scale = w <= 500 ? 1 : Math.min(0.5, 600 / w);
   const boxW = Math.round(w * scale);
-  const cells = rows.map((r) => cell(r, w, h, scale)).join('\n');
+  const heights = measureHeights(dir, rows, h);
+  const cells = rows.map((r) => cell(r, w, heights.get(r.file) ?? h, scale)).join('\n');
+  if (heights.size > 0) {
+    const hs = rows.map((r) => heights.get(r.file) ?? h);
+    console.log(`格高逐页实量：${heights.size}/${rows.length} 页；${Math.min(...hs)}–${Math.max(...hs)}px（缺省 ${h}）`);
+  }
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(out)}（${rows.length} 格 × ${w} 宽）</title>
 <style>
