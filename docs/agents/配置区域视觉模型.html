@@ -133,21 +133,30 @@
 .ic-head{display:flex;align-items:center;gap:10px}
 .ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
   display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
-.ic-badge.is-dirty{color:var(--ic-accent);border-color:var(--ic-accent);
-  background:color-mix(in srgb, var(--ic-accent) 14%, transparent)}
+/* ② 徽标：**实心填充**。细描边 + 小号彩字在深色底上只算装饰，抓眼睛的是色块面积。 */
+.ic-badge.is-dirty{color:var(--ic-accent-ink);background:var(--ic-accent);border-color:var(--ic-accent);
+  font-weight:600}
+.ic-badge.is-dirty .ic-bd{background:var(--ic-accent-ink);animation:ic-pulse 1.8s ease-in-out infinite}
+@keyframes ic-pulse{0%,100%{opacity:1}50%{opacity:.2}}
 .ic-badge.is-ok{color:var(--ic-ok);border-color:var(--ic-ok);
   background:color-mix(in srgb, var(--ic-ok) 14%, transparent)}
 .ic-badge .ic-bd{width:6px;height:6px;border-radius:50%;background:currentColor}
-/* ② 脏输入框：2px 强调描边 + 一圈同色外发光（1px 细边在深色底上根本不算信号） */
+/* ② 脏输入框：2px 强调描边 + 一圈同色外发光 */
 .ic-master input.is-dirty{border:2px solid var(--ic-accent);padding:4px 7px;
   box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-accent) 22%, transparent)}
-/* ③ 脏态动作条**吸底**：真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上 */
-.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 12px;
-  border:1px solid var(--ic-accent);border-radius:8px;background:var(--ic-raised);
+/* ③ 脏态动作条：**整条实心**（不是深底 + 1px 彩边——那读起来像装饰）。
+   吸底是因为真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上。 */
+.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
+  border:0;border-radius:9px;background:var(--ic-accent);color:var(--ic-accent-ink);
   position:sticky;bottom:6px;z-index:3;
-  box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 0 3px color-mix(in srgb, var(--ic-accent) 18%, transparent)}
-.ic-dirty .ic-dtxt{color:var(--ic-accent);font-size:12.5px;font-weight:600}
+  box-shadow:0 10px 28px rgba(0,0,0,.62)}
+.ic-dirty .ic-dtxt{color:var(--ic-accent-ink);font-size:13px;font-weight:650}
 .ic-dirty .ic-dacts{margin-left:auto;display:flex;gap:6px}
+/* 实心条里的按钮要反色，否则按钮跟条同色＝看不见 */
+.ic-dirty .ic-btn{background:transparent;color:var(--ic-accent-ink);
+  border-color:color-mix(in srgb, var(--ic-accent-ink) 45%, transparent)}
+.ic-dirty .ic-btn.is-primary{background:var(--ic-accent-ink);border-color:var(--ic-accent-ink);
+  color:var(--ic-accent);font-weight:600}
 /* ④ 跟随行的标记：加箭头，不再是"一句小灰字" */
 .ic-follow{font-size:11px;color:var(--ic-accent);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .ic-follow::before{content:'↳';opacity:.8}
@@ -524,8 +533,8 @@ function applyFast(){
       <button class="ic-btn">重新读取</button>
       <span class="ic-note">没有未保存的改动</span></div>`;
   if (st === 'dirty'){
-    fill('bar', `<div class="ic-dirty"><span class="ic-dtxt">改了 1 项，还没保存</span>
-      <span class="ic-dacts"><button class="ic-btn is-primary">保存</button><button class="ic-btn">放弃</button></span></div>`);
+    fill('bar', `<div class="ic-dirty"><span class="ic-dtxt">1 项改动还没保存</span>
+      <span class="ic-dacts"><button class="ic-btn is-primary">保存这 1 项</button><button class="ic-btn">放弃</button></span></div>`);
   } else if (st === 'confirm'){
     fill('bar', `<div class="ic-dif">
         <div class="ic-dh">保存后要写入 ${esc(s.configFile)} 的这一行</div>
@@ -543,7 +552,7 @@ function applyFast(){
   }
   /* 状态徽标：固定在标题旁那一格，三个态共用（就绪态不显示） */
   fill('badge', st === 'dirty' || st === 'confirm'
-    ? '<span class="ic-badge is-dirty"><span class="ic-bd"></span>未保存</span>'
+    ? '<span class="ic-badge is-dirty"><span class="ic-bd"></span>1 项未保存</span>'
     : st === 'saved'
       ? '<span class="ic-badge is-ok"><span class="ic-bd"></span>已保存 · 刚刚</span>'
       : '');
