@@ -31,8 +31,8 @@ writeFileSync(
   'utf8',
 );
 
-// ── 3 路由：三条唤醒词 ─────────────────────────────────────────────────────
-const { routeWakeword } = await load('packages/skill-memo-ilife/dist/triggers/wakewords.js');
+// ── 3 路由：三条唤醒词（#858：路由件的家从 `triggers/wakewords.js` 改指 `triggers/routing.js`，只改路径）
+const { routeWakeword } = await load('packages/skill-memo-ilife/dist/triggers/routing.js');
 const CASES_ROUTE = [
   ['记打卡', { content: '今天跑步 5 公里', sub_category: '跑步' }],
   ['改打卡', { id: String(noteId), content: '今天跑步 6 公里' }],

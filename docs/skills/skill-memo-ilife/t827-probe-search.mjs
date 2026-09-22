@@ -2,7 +2,8 @@
 //
 // 口径（照 `research/probe-real-products.mjs` 与 `t822-现状链路表.md`）：
 //   ① 唤醒词与场景取自官方源 `src/help/scenes/search.ts`（HELP 是官方源）；
-//   ② 「真路由」＝把主名喂给 `routeWakeword()`（#855 重排后住 `dist/triggers/wakewords.js`），
+//   ② 「真路由」＝把主名喂给 `routeWakeword()`（#855 重排后住 `dist/triggers/routing.js`；
+//      #858 把生成物侧的记录面收成唯一上游，本行随之改指——只改路径，读数口径不动），
 //      两类错分开记：`POLICY_NO_MATCH`（表里没这条词）≠ `POLICY_MISSING_SLOT`（词命中了、槽位没给）；
 //   ③ 每场景补齐它自己的槽位再跑一次真命令（临时库 ＋ 隔离配置，**绝不碰活库**）；
 //   ④ 记退出码 ＋ 回执里 `delivery`（页外无 delivery ＝ 这次没落盘）。
@@ -17,7 +18,7 @@ import { mkdirSync, writeFileSync, readdirSync, statSync, existsSync } from 'nod
 import { execFileSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { mkMemoDb, seedNote, seedReminder } from '../../../packages/skill-memo-ilife/test/helpers/memo-sqlite.mjs';
-import { routeWakeword } from '../../../packages/skill-memo-ilife/dist/triggers/wakewords.js';
+import { routeWakeword } from '../../../packages/skill-memo-ilife/dist/triggers/routing.js';
 
 const ROOT = resolve('.');
 const CLI = join(ROOT, 'packages', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
