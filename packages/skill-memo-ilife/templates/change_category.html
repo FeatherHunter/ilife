@@ -80,7 +80,7 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section class="kpi" id="kpis"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:10px">🎯 改到哪个分类</div>
+<div style="font-weight:700;margin-bottom:10px">改到哪个分类</div>
 <div class="toolbar">
 <label style="color:var(--fg2);font-size:14px">目标分类：</label>
 <select id="toCatSelect">
@@ -100,10 +100,10 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section id="noteList"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:8px">📋 发给助手的指令</div>
+<div style="font-weight:700;margin-bottom:8px">发给助手的指令</div>
 <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给助手，助手会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。</p>
 <div class="toolbar">
-<button class="primary" onclick="adopt()">📋 复制修改指令</button>
+<button class="primary" onclick="adopt()">复制修改指令</button>
 </div>
 <div id="warnArea"></div>
 <p class="small" id="previewNote" style="display:none">下面是复制出去的原文，里面的符号留给 AI 解析。</p>
@@ -232,7 +232,7 @@ function buildPrompt(rows,target,ctx){
 function warnIfAny(rows){
   var notes=[];
   if(rows.length>=10){
-    notes.push(`<div class="notice warn">⚠️ 批量改 ${rows.length} 条分类,请确认都是预期操作</div>`);
+    notes.push(`<div class="notice warn">批量改 ${rows.length} 条分类,请确认都是预期操作</div>`);
   }
   var dup=data().target_conflict_count||0;
   if(dup>0){

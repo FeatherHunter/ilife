@@ -62,7 +62,7 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section class="kpi" id="kpis"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:10px">📅 全局建议排期日期</div>
+<div style="font-weight:700;margin-bottom:10px">全局建议排期日期</div>
 <div class="wish-due-input">
 <input type="date" id="globalDue" />
 <button class="ghost" onclick="applyGlobalToSelected()">应用到所有勾选</button>
@@ -77,10 +77,10 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section id="wishList"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:8px">📋 发给 AI 的指令</div>
+<div style="font-weight:700;margin-bottom:8px">发给 AI 的指令</div>
 <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会按你填的日期更新排期，改完给你回执。</p>
 <div class="toolbar">
-<button class="primary" onclick="adopt()">📋 复制排期指令</button>
+<button class="primary" onclick="adopt()">复制排期指令</button>
 </div>
 <div id="warnArea"></div>
 <pre id="promptOut" style="display:none"></pre>
@@ -217,7 +217,7 @@ function buildPrompt(rows,ctx){
   if(!rows.length) return '未选择任何心愿';
   var missing=rows.filter(r=>!r.due);
   if(missing.length){
-    return `⚠️ 以下 ${missing.length} 条被勾选但未填排期日期:\n${missing.map(r=>`  · #${r.id} ${r.content}`).join('\n')}\n\n请补全后再复制`;
+    return `以下 ${missing.length} 条被勾选但未填排期日期:\n${missing.map(r=>`  · #${r.id} ${r.content}`).join('\n')}\n\n请补全后再复制`;
   }
   return [
     '① 场景: 我用心愿排期向导,给 '+rows.length+' 个心愿设了排期',
@@ -235,7 +235,7 @@ function warnIfAny(rows){
   var notes=[];
   var overwrites=rows.filter(r=>r.current_due&&r.current_due!==r.due);
   if(overwrites.length){
-    notes.push(`<div class="notice warn">⚠️ ${overwrites.length} 条心愿将被覆盖原排期:${overwrites.map(r=>`#${r.id}(${r.current_due}→${r.due})`).join(', ')}</div>`);
+    notes.push(`<div class="notice warn">${overwrites.length} 条心愿将被覆盖原排期:${overwrites.map(r=>`#${r.id}(${r.current_due}→${r.due})`).join(', ')}</div>`);
   }
   var nofb=items().filter(w=>!w.feishu_task_guid);
   var selNoFb=rows.filter(r=>nofb.some(n=>n.id===r.id));
