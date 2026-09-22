@@ -52,8 +52,10 @@ const LAYOUT_CLASS_PARTS = [
 /** 纯数据容器：里面的分隔符只报读数（用户写的内容长什么样就是什么样）。 */
 const DATA_CLASS_PARTS = ['ilife-block-data-table-table', 'ilife-block-disclosure-body', 'ilife-block-timeline', 'ilife-block-list-rows'];
 const SEP_CHARS = ['·', '；', ';', '|'];
-/** 英文裸词白名单：单位与惯用缩写（命中它们只报读数）。 */
-const ASCII_OK = new Set(['g', 'ml', 'kg', 'mg', 'l', 'min', 'h', 's', 'ok', 'id', 'ai', 'html', 'css', 'pdf', 'gif', 'usb', 'os']);
+/** 英文裸词白名单：单位与惯用缩写（命中它们只报读数）。
+ *  另收 `json`／`csv`：三格式菜单的冻结标签（公共层 `COPY_FORMAT_LABELS`，卡路里同款「复制数据 ▾」菜单逐字同形）。
+ *  它们与已收的 `html`／`css`／`pdf`／`gif` 同类——都是格式名，不是该中文化的正文；句里若另有英文实词（如 click／button）仍照常判红，白名单只放过这两个 token 本身。 */
+const ASCII_OK = new Set(['g', 'ml', 'kg', 'mg', 'l', 'min', 'h', 's', 'ok', 'id', 'ai', 'html', 'css', 'pdf', 'gif', 'usb', 'os', 'json', 'csv']);
 const REPEAT_MIN_CHARS = 8;
 
 /* ── HTML 小件（无依赖、够用即止）──────────────────────────────────────── */
