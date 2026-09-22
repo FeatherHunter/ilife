@@ -185,6 +185,7 @@ describe('#760 备忘录设置页收窄 · 插件侧', () => {
       const node = Row({ item, value: '/d', disabled: false, onChange: () => {}, browser: fakeBrowser('native') });
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
       assert.equal(nodesOfType(node, 'input')[0].props.disabled, true, '控件仍不可改');
+      assert.equal(nodesOfType(node, 'input')[0].props.value, '/d', '只读行照旧显示技能算好的那个值');
     });
 
     it('行表文案无省略号（标题／hint）', () => {
