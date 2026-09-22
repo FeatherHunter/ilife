@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配置区域视觉模型 · v3（定稿验收基线：2026-09-22 三条收敛）</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  PROTOTYPE —— 抛弃式原型，不进 packages/，不进测试，双击即跑，无持久化。
+  v1（`配置区域视觉模型.html`）冻结为被审查基线；v2（`配置区域视觉模型-v2.html`）冻结为
+  被审查后重修版；本文件 v3 照 v2 收敛，只改维护者 2026-09-22 三条原话，其余不动。
+  本票不再回问新决策，无猜测点，无需 grilling。
+
+  设计问题：六家技能设置页定稿 v3 长什么样？维护者三条在不在面板上逐条可见。
+  分支判定：UI 分支（界面应该长什么样），但 N=1 单一定稿变体，不做 UI.md 默认的
+  多变体 + 同路由 ?variant= + 底部悬浮切换——因为本票约束：冻结 v1/v2、不动任何
+  packages/ 源码与测试、#745 未推翻定稿一律不动。仍守共同规则：单文件可分享、
+  双击运行、状态外显（切技能／切状态后重渲染徽标／动作条／输入框／跟随标记）。
+
+  相对 v2 只改三条（逐条对应 #899）：
+   ① 只读目录行不再画按钮（推翻 #747／#793／#758⑦ 的保留但不可点）。
+   ② 可改目录行按钮字面由浏览改成浏览文件夹（两档合一）。
+   ③ 复制进真面板，去掉自创的打开与用默认位置：复制该行完整值文本，
+      可改行复制输入框当前值；点后按钮就地变已复制 1.5 秒再变回，不弹提示。
+  一律不动：只读行值完整可见装不下让行让位、状态黄留给未保存一族红留给真错误、
+  v2 慢面演示值示意（b 方案）、高级组默认收起、行数与可改只读 6/11/4/3/5/4。
+
+  验收：只读行零浏览按钮；出现浏览文件夹与复制两个字面（一条 rg 出真假）；
+  人面由维护者在浏览器过一眼 v3 逐条点名三条在不在。
+  ═══════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+.ilife-config{
+  --ic-bg:            var(--dsw-alias-bg-base, #151517);
+  --ic-surface:       var(--dsw-alias-bg-layer-1, #232324);
+  --ic-raised:        var(--dsw-alias-bg-layer-2, #2c2c2e);
+  --ic-sunken:        var(--dsw-alias-bg-layer-3, #353638);
+  --ic-line:          var(--dsw-alias-border-l1, rgba(255,255,255,.06));
+  --ic-line-strong:   var(--dsw-alias-border-l2, rgba(255,255,255,.12));
+  --ic-text:          var(--dsw-alias-label-primary, #f9fafb);
+  --ic-muted:         var(--dsw-alias-label-secondary, #cfd3d6);
+  --ic-faint:         var(--dsw-alias-label-tertiary, #adb2b8);
+  --ic-accent:        var(--dsw-alias-brand-primary, #f9fafb);
+  --ic-accent-ink:    var(--dsw-alias-label-primary-foreground, #0f1115);
+  --ic-ok:            var(--dsw-alias-state-success-primary, #4ec9a0);
+  --ic-attn:          var(--dsw-alias-state-warn-primary, #e0a33e);
+  --ic-danger:        var(--dsw-alias-state-error-primary, #e0685f);
+  /* 铺面上的深字。带字面回退：v1 漏了这条，不支持 color-mix 时文字会落到近白叠黄（≈2:1）。 */
+  --ic-attn-ink:      #241703;
+  --ic-danger-ink:    #fff5f4;
+  --ic-mono:          ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace;
+  color: var(--ic-text);
+  font: 14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+.ilife-config *{box-sizing:border-box}
+.ic-shell{background:var(--ic-bg);padding:18px 20px;border-radius:12px;position:relative}
+.ic-card{background:var(--ic-surface);border:1px solid var(--ic-line-strong);border-radius:12px;padding:14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06)}
+.ic-head{display:flex;align-items:center;gap:10px;min-height:22px}
+.ic-title{font-size:13.5px;font-weight:640}
+.ic-file{color:var(--ic-muted);font-size:11.5px;margin-top:4px;word-break:break-all}
+.ic-file b{color:var(--ic-faint);font-weight:400;margin-right:5px}
+.ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
+.ic-badge .ic-bd{width:6px;height:6px;border-radius:50%;background:currentColor}
+.ic-badge.is-dirty{color:var(--ic-attn-ink);background:var(--ic-attn);border-color:var(--ic-attn);font-weight:600}
+.ic-badge.is-dirty .ic-bd{background:var(--ic-attn-ink);animation:ic-pulse 1.8s ease-in-out infinite}
+@keyframes ic-pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.ic-badge.is-busy{color:var(--ic-attn-ink);background:var(--ic-attn);border-color:var(--ic-attn);font-weight:600}
+.ic-badge.is-ok{color:var(--ic-ok);border-color:var(--ic-ok);background:color-mix(in srgb, var(--ic-ok) 14%, transparent)}
+.ic-badge.is-bad{color:var(--ic-danger-ink);background:var(--ic-danger);border-color:var(--ic-danger);font-weight:600}
+/* 母版行 */
+.ic-master{background:var(--ic-sunken);border:1px solid var(--ic-line-strong);border-radius:8px;
+  padding:11px 12px;margin-top:11px;box-shadow: inset 0 1px 0 rgba(255,255,255,.05)}
+.ic-master .ic-lab{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+.ic-master .ic-hint{color:var(--ic-muted);font-size:11.5px;margin-top:3px;line-height:1.5}
+.ic-master input{display:block;width:100%;margin-top:7px;padding:5px 8px;font:inherit;font-size:12.5px;
+  background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:6px;color:var(--ic-text);font-family:var(--ic-mono)}
+.ic-master input:focus{outline:2px solid var(--ic-accent);outline-offset:1px}
+.ic-master input.is-dirty{border:2px solid var(--ic-attn);padding:4px 7px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-attn) 22%, transparent)}
+.ic-acts{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;align-items:center}
+/* 值非法回落那一行（#761/#793 要求） */
+.ic-invalid{margin-top:7px;padding:7px 9px;border-radius:6px;font-size:11.5px;line-height:1.5;
+  background:color-mix(in srgb, var(--ic-attn) 16%, transparent);border:1px solid var(--ic-attn);color:var(--ic-text)}
+.ic-invalid b{color:var(--ic-attn)}
+.ic-meta{color:var(--ic-faint);font-size:11.5px;margin-top:8px}
+/* 行 */
+.ic-under{margin:9px 0 0 8px;border-left:1px solid var(--ic-line-strong);padding-left:13px}
+.ic-row{--ic-kw:118px;display:grid;grid-template-columns:var(--ic-kw) minmax(0,1fr) auto;gap:4px 10px;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--ic-line)}
+.ic-row:last-child{border-bottom:0}
+.ic-row .ic-k{font-size:11.5px;color:var(--ic-muted)}
+.ic-row .ic-slot{min-width:0;overflow:hidden}
+.ic-row .ic-v{display:block;font-family:var(--ic-mono);font-size:11px;min-width:0;white-space:nowrap}
+.ic-row .ic-num{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ic-text);background:var(--ic-raised);
+  border:1px solid var(--ic-line-strong);border-radius:6px;padding:1px 9px;white-space:nowrap}
+.ic-row .ic-sub{display:block;font-size:10.5px;color:var(--ic-faint);margin-top:2px;white-space:normal;line-height:1.45}
+/* 两行式：值整行独占（长路径不加省略号、也不拆成两半让用户自己拼；整行还装不下就换行，照样完整可见） */
+.ic-row.is-wide{grid-template-columns:minmax(0,1fr) auto;align-items:start}
+.ic-row.is-wide .ic-k{grid-column:1;grid-row:1}
+.ic-row.is-wide .ic-slot[data-slot^="v:"]{grid-column:1 / -1;grid-row:2;padding-top:3px}
+.ic-row.is-wide .ic-v{white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.ic-row.is-wide .ic-slot[data-slot^="a:"]{grid-column:2;grid-row:1}
+.ic-follow{font-size:11px;color:var(--ic-attn);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.ic-follow::before{content:'↳';opacity:.8}
+/* 按钮 */
+.ic-btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--ic-line-strong);
+  background:transparent;color:var(--ic-text);cursor:pointer;white-space:nowrap}
+.ic-btn:hover:not([disabled]){border-color:var(--ic-accent)}
+.ic-btn.is-primary{background:var(--ic-accent);border-color:var(--ic-accent);color:var(--ic-accent-ink);font-weight:500}
+.ic-btn.is-mini{font-size:11px;padding:2px 7px;color:var(--ic-muted)}
+.ic-btn[disabled]{opacity:.4;cursor:not-allowed}
+.ic-chip{font-size:10.5px;border:1px solid var(--ic-accent);border-radius:999px;padding:0 6px;color:var(--ic-accent);white-space:nowrap}
+/* 分组 */
+.ic-group{margin-top:14px}
+.ic-group > .ic-ghead{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-size:12.5px;font-weight:600;padding:2px 0}
+.ic-group > .ic-ghead::-webkit-details-marker{display:none}
+.ic-group > .ic-ghead::before{content:'›';color:var(--ic-muted);transition:transform .15s}
+.ic-group[open] > .ic-ghead::before{transform:rotate(90deg)}
+.ic-group > .ic-ghead .ic-gnote{color:var(--ic-faint);font-weight:400;font-size:11.5px}
+.ic-group > .ic-gbody{margin-top:9px;padding:11px 12px;background:var(--ic-sunken);
+  border:1px solid var(--ic-line-strong);border-radius:8px;box-shadow: inset 0 1px 0 rgba(255,255,255,.04)}
+.ic-sg + .ic-sg{margin-top:11px;padding-top:11px;border-top:1px solid var(--ic-line)}
+.ic-sgh{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--ic-faint);margin-bottom:5px}
+.ic-sgh .ic-sgsrc{font-family:var(--ic-mono);font-size:10.5px;min-width:0;white-space:nowrap;overflow:hidden}
+.ic-sg .ic-under{margin:0;padding-left:12px}
+/* 状态行（飞书 CLI） */
+.ic-status{margin-top:11px;padding:10px 12px;background:var(--ic-sunken);
+  border:1px solid var(--ic-line-strong);border-radius:8px}
+.ic-status .ic-srow{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
+.ic-dot{width:8px;height:8px;border-radius:50%;background:var(--ic-faint);flex:0 0 auto}
+.ic-dot.is-ok{background:var(--ic-ok)}.ic-dot.is-warn{background:var(--ic-attn)}.ic-dot.is-bad{background:var(--ic-danger)}
+.ic-status .ic-sname{font-weight:600;white-space:nowrap}
+.ic-status .ic-stxt{color:var(--ic-muted);min-width:0}
+.ic-sfind{display:flex;align-items:center;gap:8px;margin-top:7px}
+.ic-status .ic-spath{font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);min-width:0;white-space:nowrap;overflow:hidden}
+.ic-status .ic-ver{font-size:10px;color:var(--ic-faint);border:1px solid var(--ic-line-strong);border-radius:999px;padding:0 6px}
+.ic-url{display:inline-block;margin-top:7px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint)}
+.ic-url:hover{color:var(--ic-accent)}
+/* 动作条 */
+.ic-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--ic-line)}
+.ic-bar .ic-note{margin-left:auto;color:var(--ic-faint);font-size:11.5px}
+.ic-attnbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
+  border:0;border-radius:9px;background:var(--ic-attn);color:var(--ic-attn-ink);box-shadow:0 10px 28px rgba(0,0,0,.62)}
+.ic-attnbar.is-sticky{position:sticky;bottom:6px;z-index:3}
+.ic-attnbar .ic-dtxt{color:var(--ic-attn-ink);font-size:13px;font-weight:650}
+.ic-attnbar .ic-dacts{margin-left:auto;display:flex;gap:6px}
+.ic-attnbar .ic-btn{background:transparent;color:var(--ic-attn-ink);border-color:color-mix(in srgb, var(--ic-attn-ink) 45%, transparent)}
+.ic-attnbar .ic-btn.is-primary{background:var(--ic-attn-ink);border-color:var(--ic-attn-ink);color:var(--ic-attn);font-weight:600}
+.ic-failbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 13px;
+  border:0;border-radius:9px;background:var(--ic-danger);color:var(--ic-danger-ink);box-shadow:0 10px 28px rgba(0,0,0,.62)}
+.ic-failbar .ic-dtxt{color:var(--ic-danger-ink);font-size:12.5px;font-weight:650}
+.ic-failbar .ic-dacts{margin-left:auto;display:flex;gap:6px}
+.ic-failbar .ic-btn{background:transparent;color:var(--ic-danger-ink);border-color:rgba(255,255,255,.45)}
+.ic-done{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 12px;
+  border:1px solid var(--ic-ok);border-radius:8px;background:var(--ic-raised);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-ok) 16%, transparent)}
+.ic-done .ic-dtxt{color:var(--ic-ok);font-size:12.5px;font-weight:600}
+.ic-done .ic-dacts{margin-left:auto;display:flex;gap:6px;align-items:center}
+.ic-done .ic-undo{color:var(--ic-danger);font-weight:600;background:none;border:0;cursor:pointer;font:inherit;font-size:12.5px}
+.ic-done .ic-cd{color:var(--ic-danger);opacity:.85;font-size:11.5px;font-variant-numeric:tabular-nums}
+.ic-dif{background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:8px;
+  font-family:var(--ic-mono);font-size:11.5px;overflow:hidden;margin-top:14px}
+.ic-dif .ic-dh{padding:8px 11px;border-bottom:1px solid var(--ic-line);color:var(--ic-faint);font-size:11px}
+.ic-dif .ic-dl{padding:2px 11px;white-space:pre}
+.ic-dif .ic-del{background:rgba(224,90,80,.13);color:#e08d86}
+.ic-dif .ic-add{background:rgba(78,201,160,.13);color:#7ed3b2}
+/* 整面读取失败 */
+.ic-failed{padding:16px 16px 14px;border:1px solid var(--ic-danger);border-radius:12px;background:var(--ic-surface)}
+.ic-failed h3{margin:0 0 8px;font-size:13.5px;color:var(--ic-text);font-weight:640}
+.ic-failed pre{margin:0 0 12px;font-family:var(--ic-mono);font-size:11.5px;color:var(--ic-danger);white-space:pre-wrap}
+/* 骨架 */
+.ic-slot{display:block;min-width:0}
+/* 骨架条按一行正文的高度画（block，不是 inline-block）：inline-block 跟着父级 14px 的行高走，
+   实测骨架行比填充后的文字行高 4px，六家叠起来就是一眼能看见的整片下移。 */
+.ic-sk{display:block;height:17px;border-radius:4px;background:var(--ic-raised)}
+.ic-arrive{animation:ic-in .34s ease-out}
+@keyframes ic-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.ic-spin{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(0,0,0,.25);border-top-color:currentColor;
+  display:inline-block;animation:ic-sp .7s linear infinite}
+@keyframes ic-sp{to{transform:rotate(360deg)}}
+/* 演示外壳 */
+body{margin:0;background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.demo{padding:16px 14px 60px;display:flex;flex-direction:column;align-items:center}
+.demo-bar{width:590px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:8px;
+  padding:9px 12px;border:1px solid #232329;border-radius:10px;background:#101013;font-size:12px;color:#8b8b95}
+.demo-btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid #2e2e36;background:#17171c;color:#d8d8de;cursor:pointer}
+.demo-btn.on{background:#e8e8ec;color:#111;border-color:#e8e8ec}
+.demo-btn.warn.on{background:#e0a33e;border-color:#e0a33e;color:#241703}
+.demo-lab{font-size:11.5px;color:#77777f;margin-right:2px}
+.note{width:590px;margin-top:12px;padding:13px 15px;border:1px solid #232329;border-radius:12px;background:#101013;font-size:12px;color:#9a9aa4;line-height:1.8}
+.note h3{margin:0 0 7px;font-size:12.5px;color:#e8e8ec}
+.note b{color:#cfcfd4}
+.note .li{margin-top:7px;padding-left:11px;border-left:2px solid #2b2b33}
+/* 真机配置区宽约 550px：外壳左右各 20px 内边距 ⇒ 这一层 590px。
+   不写死宽度时 .frame 的 flex 子项会收缩到内容宽（实测只剩 375px），
+   「这行装不装得下」就全按错宽度判了。 */
+/* 真机配置区：约 590×580 的一块可滚动窗口（宽 590 = 卡片 550 ＋ 外壳左右内边距 20×2）。
+   宽度不写死的话，flex 子项会收缩到内容宽（实测只剩 375px），「这行装不装得下」就全按错宽度判了；
+   高度不写死的话，看不到真机里「装不下要滚」这件事，吸底条也吸不到底边。 */
+.frame{width:590px;height:580px;overflow-y:auto;overflow-x:hidden;border-bottom:1px dashed #e0a33e}
+.ilife-config{width:100%}
+.cap{width:590px;margin-top:6px;font-size:11.5px;color:#77777f}
+</style>
+</head>
+<body>
+<div class="demo">
+  <div class="demo-bar" id="skills"></div>
+  <div class="demo-bar" id="states"></div>
+  <div class="demo-bar">
+    <span class="demo-lab">行式</span>
+    <button class="demo-btn" data-layout="compact">紧凑（按实测宽度逐行判）</button>
+    <button class="demo-btn" data-layout="two">两行（路径一律独占一行）</button>
+    <span class="demo-lab" style="margin-left:8px">复制已进真面板（自创的打开与用默认位置已退场，无开关）</span>
+    <button class="demo-btn" id="replay" style="margin-left:auto">▶ 回放加载</button>
+    <span id="clock" style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px"></span>
+  </div>
+  <div class="frame" id="frame"></div>
+  <div class="cap">↑ 这一块就是真机配置区的实际大小（约 590 × 580，橙色虚线是它下沿）：装不下就在这一块里滚，
+    未保存／待确认那条会贴着下沿吸住。切技能、切状态、切行式都在这一块里看。</div>
+  <div class="note">
+    <h3>v3 定稿（照 v2 收敛，只改 2026-09-22 三条）</h3>
+    <div class="li"><b>① 只读目录行不再画按钮</b>：推翻 #747／#793／#758⑦ 的保留但不可点。值完整可见、装不下让行让位这条不动。</div>
+    <div class="li"><b>② 可改目录行按钮字面改成浏览文件夹</b>：两档合一。切到记账数据目录那一行看，按钮只有这一个字面。</div>
+    <div class="li"><b>③ 复制进真面板</b>：每行一枚复制，复制该行完整值文本，可改行复制输入框当前值；点后就地变已复制 1.5 秒再变回，不弹提示。自创的打开与用默认位置已退场，上方无开关。</div>
+    <div class="li"><b>这版还是设计依据，不是落地依据</b>（剩三件，与 v2 相同）：
+      ① 慢面那两行读数在真仓里<b>不存在</b>，这里是演示值，落地走复用 config.check（b 方案示意保留）；
+      ② 六家同形面锁与字号锁的判据得先把共用行渲染件立起来才动得了 `client.ts`；
+      ③ 有未保存改动时切技能的守卫归插件壳，不在配置区域这一层。</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═══ 行表：逐字取自六家插件的 src/settings.ts；跟随关系取自各家 client.ts 的跟随表 ═══ */
+const U = 'C:\\Users\\辰辰洋洋', LIB = 'D:\\2Study\\StudyNotes\\.db';
+const S = {
+  bill: {
+    title:'饼干记账 · 配置', cfg:'bill.yaml',
+    rows:[
+      {key:'db.dir',   title:'数据目录',        tier:'common',   hint:'库文件与备份的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,   title:'库文件名',        tier:'common',   hint:'数据目录下的库文件。', value:LIB+'\\biscuit_accountant.db', from:'dbFile'},
+      {key:'db.goals', ro:true,  title:'预算／账户文件名', tier:'common',   hint:'与库同目录的预算与账户文件。', value:LIB+'\\goals.json', from:'goalsFile'},
+      {key:'html.dir', ro:true,  title:'HELP 产物目录名', tier:'common',   hint:'HELP 与速查表的存放目录。', value:LIB+'\\biscuit_accountant_html', from:'htmlDir'},
+      {key:'backup.dir', ro:true,   title:'备份目录',       tier:'advanced', hint:'备份与恢复的读写目录。', value:LIB+'\\backups', dir:true, from:'backupDir'},
+      {key:'backup.stem', ro:true,  title:'备份文件名前缀', tier:'advanced', hint:'备份文件名的前缀，后面自动加时间戳。', value:LIB+'\\backups\\biscuit_<时间戳>.db', from:'backupSample'}
+    ],
+    follows:{ 'db.dir':['db.name','db.goals','html.dir','backup.dir','backup.stem'] },
+    slow:{ 'db.dir':'这个目录里现在 12 个文件，共 41.2 MB，1 分钟前写过。' },
+    edit:{ key:'db.dir', to:'D:\\账本' }
+  },
+  calorie: {
+    title:'卡路里 · 配置', cfg:'calorie.yaml',
+    rows:[
+      {key:'db.dir',     title:'数据目录',          tier:'common',   hint:'库文件与各类产物的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,     title:'库文件名',          tier:'common',   hint:'数据目录下的数据库文件。', value:LIB+'\\calorie_data.db', from:'dbFile'},
+      {key:'html.dir', ro:true,    title:'HTML 产物目录名',   tier:'common',   hint:'数据目录下存放交付页面的子目录。', value:LIB+'\\calorie_html', from:'htmlDir'},
+      {key:'photos.dir', title:'照片目录',          tier:'common',   hint:'身材照的存放目录。留空＝用默认目录（数据目录下的 photos）。', value:U+'\\.ilife\\data\\photos', dir:true},
+      {key:'xunji.key',  title:'训记 KEY',          tier:'common',   hint:'训记的凭据。留空＝未配置，推送与回写会被拦下。', value:''},
+      {key:'photos.gifs', ro:true,   title:'照片 GIF 子目录', tier:'advanced', hint:'照片目录下存放 GIF 的子目录。', value:U+'\\.ilife\\data\\photos\\gifs', from:'gifsDir'},
+      {key:'xunji.stateDir', ro:true,  title:'训记状态文件目录', tier:'advanced', hint:'训记的限频与同步游标存放目录。', value:LIB+'\\xunji', dir:true, from:'stateDir'},
+      {key:'xunji.catalog', ro:true,   title:'训记动作库路径',   tier:'advanced', hint:'动作名判定用的动作库。', value:U+'\\.dsh\\profiles\\web\\node_modules\\skill-calorie\\xunji\\data\\训记官方动作.json', from:'catalog'},
+      {key:'xunji.backfillDays', ro:true,  title:'回写默认天数',     tier:'advanced', hint:'从训记拉实绩时默认回溯的天数。', value:'1'},
+      {key:'land.xunjiSeconds', ro:true,   title:'训记调用限时（秒）', tier:'advanced', hint:'调用训记的超时秒数。', value:'300'},
+      {key:'land.landSeconds', ro:true,    title:'落地调用限时（秒）', tier:'advanced', hint:'落地训练各步骤的超时秒数。', value:'60'}
+    ],
+    follows:{ 'db.dir':['db.name','html.dir','xunji.stateDir','photos.gifs'], 'photos.dir':['photos.gifs'] },
+    slow:{ 'db.dir':'这个目录里现在 23 个文件，共 96.4 MB，2 分钟前写过。', 'photos.dir':'这个目录里现在 86 张照片，共 312 MB，昨天写过。' },
+    edit:{ key:'db.dir', to:'D:\\账本' }
+  },
+  memo: {
+    title:'备忘录 · 配置', cfg:'memo.yaml',
+    rows:[
+      {key:'db.dir',   title:'数据目录',      tier:'common', hint:'库文件与产物的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,   title:'库文件名',      tier:'common', hint:'数据目录下的库文件（备忘不建库，显示的是会落在哪）。', value:LIB+'\\memo.db', from:'dbFile'},
+      {key:'html.dir', ro:true,  title:'HTML 产物目录名', tier:'common', hint:'数据目录下存放 HELP 页面的子目录名。', value:LIB+'\\memo_html', from:'htmlDir'},
+      {key:'media.dir', title:'附件目录',     tier:'common', hint:'附件的存放根目录。留空＝数据目录下的 media（目录须已存在，技能不替你建）。', value:LIB+'\\media', dir:true}
+    ],
+    follows:{ 'db.dir':['db.name','html.dir'] },
+    slow:{ 'db.dir':'这个目录里现在 3 个文件，共 1.8 MB，今天上午写过。', 'media.dir':'这个目录现在不存在，第一次存附件时要先建好。' },
+    status:{ name:'飞书 CLI', level:'warn', verdict:'还没登录，或没拿到 task 域授权', found:U+'\\.local\\bin\\lark-cli.cmd' },
+    edit:{ key:'media.dir', to:'D:\\备忘录附件' }
+  },
+  schedule: {
+    title:'作息管家 · 配置', cfg:'schedule.yaml',
+    rows:[
+      {key:'db.dir',   title:'数据目录',    tier:'common', hint:'库文件与产物的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,   title:'库文件名',    tier:'common', hint:'数据目录下的库文件。', value:LIB+'\\schedule_data.db', from:'dbFile'},
+      {key:'html.dir', ro:true,  title:'HELP 产物目录', tier:'common', hint:'HELP 页面的存放目录。', value:LIB+'\\schedule_html\\help', from:'htmlDir'}
+    ],
+    follows:{ 'db.dir':['db.name','html.dir'] },
+    slow:{ 'db.dir':'这个目录里现在 9 个文件，共 3.4 MB，5 分钟前写过。' },
+    status:{ name:'飞书 CLI', level:'ok', verdict:'已登录，task 域可写', found:U+'\\.local\\bin\\lark-cli.cmd', ver:'0.8.2' },
+    edit:{ key:'db.dir', to:'D:\\作息' }
+  },
+  home: {
+    title:'居家管家 · 配置', cfg:'home.yaml',
+    rows:[
+      {key:'db.dir',   title:'数据目录',    tier:'common', hint:'库文件与产物的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,   title:'库文件名',    tier:'common', hint:'数据目录下的库文件。', value:LIB+'\\home.db', from:'dbFile'},
+      {key:'html.dir', ro:true,  title:'HTML 产物目录', tier:'common', hint:'交付页面的存放目录。`.`或留空＝产物放库根。', value:LIB+'\\home_html', from:'htmlDir'},
+      {key:'backup.dir', ro:true,  title:'备份目录',  tier:'advanced', hint:'备份与恢复的读写目录。', value:LIB+'\\backups', dir:true, from:'backupDir'},
+      {key:'key.file', ro:true,    title:'主密钥文件', tier:'advanced', hint:'主密钥文件的位置。', value:LIB+'\\.master.key', from:'keyFile'}
+    ],
+    follows:{ 'db.dir':['db.name','html.dir','backup.dir','key.file'] },
+    slow:{ 'db.dir':'这个目录里现在 1,724,416 字节的库文件，869 件物品，今天写过。' },
+    edit:{ key:'db.dir', to:'D:\\居家' }
+  },
+  chef: {
+    title:'私家大厨 · 配置', cfg:'chef.yaml',
+    rows:[
+      {key:'db.dir',   title:'数据目录',    tier:'common', hint:'库文件与产物的根目录。留空＝用默认目录。', value:LIB, dir:true},
+      {key:'db.name', ro:true,   title:'库文件名',    tier:'common', hint:'数据目录下的库文件。', value:LIB+'\\chef_data.db', from:'dbFile'},
+      {key:'html.dir', ro:true,  title:'HELP 产物目录', tier:'common', hint:'HELP 与速查表的存放目录。', value:LIB+'\\cook_html\\help', from:'htmlDir'},
+      {key:'html.sceneDir', ro:true,  title:'场景产物目录', tier:'common', hint:'场景面的存放目录。', value:LIB+'\\cook_html', from:'sceneDir'}
+    ],
+    follows:{ 'db.dir':['db.name','html.dir','html.sceneDir'] },
+    slow:{ 'db.dir':'这个目录里现在 294,912 字节的库文件，17 张表，昨天写过。' },
+    edit:{ key:'db.dir', to:'D:\\做菜' }
+  }
+};
+const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。';
+const LARK_URL = '飞书CLI官网为：https://www.feishu.cn/feishu-cli';
+const ORDER = ['bill','calorie','memo','schedule','home','chef'];
+const LABEL = { bill:'饼干记账', calorie:'卡路里', memo:'备忘录', schedule:'作息管家', home:'居家管家', chef:'私家大厨' };
+
+const stage = { skill:'bill', state:'ready', layout:'compact', extra:false, timers:[] };
+let edit = null, followKeys = new Set();
+const frame = document.getElementById('frame');
+const clock = document.getElementById('clock');
+
+/* ═══ 工具 ═══ */
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rowsOf = sk => S[sk].rows;
+const rowOf = (sk, key) => S[sk].rows.find(r => r.key === key);
+/* 用真字段判类（不再自造类别）：标了 `ro:true`＝只读（显示的是技能解析后的绝对路径，不给改），
+   没标＝可改（母版行，画输入框与浏览文件夹）。六家可改行合计 1／3／2／1／1／1，与跨包锁钉死的定稿一致。 */
+const isMaster = r => r.ro !== true;
+
+/* 隐藏探针：量真文本宽（不再用字符数 × 估算像素） */
+const probe = document.createElement('span');
+probe.style.cssText = 'position:absolute;left:-99999px;top:0;white-space:pre;font-size:11px;font-family:ui-monospace,SFMono-Regular,Consolas,"Cascadia Mono",monospace';
+document.body.appendChild(probe);
+const textWidth = t => { probe.textContent = t; return probe.getBoundingClientRect().width; };
+
+/* ═══ 骨架（文案全到，值全空）═══
+   动作按钮不是数据，骨架期就照画：一是真机（React）本来就立刻有按钮，
+   二是「这行装不装得下」要算上按钮占宽——v1 骨架期不留按钮宽，快面填充时才改行高。 */
+function rowShell(r){
+  return `<div class="ic-row" data-row="${esc(r.key)}">
+    <span class="ic-k">${esc(r.title)}</span>
+    <span class="ic-slot" data-slot="v:${esc(r.key)}"><span class="ic-sk"></span></span>
+    <span class="ic-slot" data-slot="a:${esc(r.key)}">${actionsHTML(r)}</span>
+  </div>`;
+}
+function masterShell(r){
+  return `<div class="ic-master" data-master="${esc(r.key)}">
+    <div class="ic-lab">${esc(r.title)}<span class="ic-chip">可改</span></div>
+    <div class="ic-hint">${esc(r.hint)}</div>
+    <div class="ic-slot" data-slot="input:${esc(r.key)}"><span class="ic-sk" style="width:100%;height:31px;border-radius:6px;margin-top:7px"></span></div>
+    <div class="ic-slot" data-slot="acts:${esc(r.key)}">${masterActionsHTML(r)}</div>
+    <div class="ic-slot" data-slot="invalid:${esc(r.key)}"></div>
+    ${S[stage.skill].slow && S[stage.skill].slow[r.key]
+      ? `<div class="ic-slot ic-meta" data-slot="slow:${esc(r.key)}"><span class="ic-sk" style="width:74%"></span></div>` : ''}
+  </div>`;
+}
+function groupShell(rows, masterKey){
+  const m = masterKey ? rowOf(stage.skill, masterKey) : null;
+  const body = rows.map(r => isMaster(r) ? masterShell(r) : rowShell(r)).join('');
+  if (!m) return `<div class="ic-sg"><div class="ic-gh">${body}</div></div>`;
+  return `<div class="ic-sg"><div class="ic-sgh">跟着「${esc(m.title)}」</div><div class="ic-under">${body}</div></div>`;
+}
+function advShell(){
+  const s = S[stage.skill];
+  const adv = s.rows.filter(r => r.tier === 'advanced');
+  if (!adv.length) return '';
+  const masters = s.rows.filter(r => r.tier === 'common' && isMaster(r));
+  /* 一行可能同时挂在两张跟随表上——卡路里 photos.gifs 既跟 db.dir 又跟 photos.dir，
+     照两张表各画一次就会出现两行同名。只画一次，挂在更具体的那一个下面：
+     db.dir 是六家的根，另有归属时就不算它的（这正是真机那两张表并存的语义）。 */
+  const ownerOf = k => {
+    const ps = masters.filter(m => (s.follows[m.key] || []).includes(k));
+    return ps.length ? (ps.find(m => m.key !== 'db.dir') || ps[0]).key : null;
+  };
+  const used = new Set();
+  const parts = [];
+  masters.forEach(m => {
+    const mine = adv.filter(r => ownerOf(r.key) === m.key);
+    mine.forEach(r => used.add(r.key));
+    if (mine.length) parts.push(groupShell(mine, m.key));
+  });
+  const rest = adv.filter(r => !used.has(r.key));
+  if (rest.length) parts.push(`<div class="ic-sg"><div class="ic-sgh">技能自己用的值</div>${rest.map(rowShell).join('')}</div>`);
+  return parts.join('');
+}
+function commonShell(){
+  const s = S[stage.skill];
+  const common = s.rows.filter(r => r.tier === 'common');
+  const masters = common.filter(isMaster);
+  const used = new Set();
+  const parts = [];
+  masters.forEach(m => {
+    const mine = common.filter(r => !isMaster(r) && (s.follows[m.key] || []).includes(r.key));
+    mine.forEach(r => used.add(r.key));
+    parts.push(masterShell(m) + (mine.length ? `<div class="ic-under">${mine.map(rowShell).join('')}</div>` : ''));
+  });
+  common.filter(r => !used.has(r.key) && !isMaster(r)).forEach(r => parts.push(rowShell(r)));
+  return parts.join('');
+}
+function statusShell(){
+  const st = S[stage.skill].status;
+  if (!st) return '';
+  return `<div class="ic-status">
+    <div class="ic-srow"><span class="ic-dot" data-slot="dot"></span>
+      <span class="ic-sname">${esc(st.name)}</span>
+      <span class="ic-stxt" data-slot="stxt">检测中…</span>
+      <button class="ic-btn is-mini" style="margin-left:auto">复制安装指引</button>
+      <button class="ic-btn is-mini">重新检测</button></div>
+    <div class="ic-sfind"><span class="ic-spath" data-slot="spath"><span class="ic-sk" style="width:180px"></span></span>
+      <span class="ic-ver" data-slot="sver" hidden></span></div>
+    <a class="ic-url" href="https://www.feishu.cn/feishu-cli" target="_blank" rel="noopener">${esc(LARK_URL)}</a>
+  </div>`;
+}
+/* 底部动作条在骨架期就照就绪态画出来（按钮不是数据）：真机 React 一挂载就有这条，
+   不留高度的话「骨架 → 快面」会在页脚再长出一条，和行高一起凑成整页下移。 */
+function readyBarShell(){
+  return `<div class="ic-bar"><button class="ic-btn" disabled>保存</button>
+    <button class="ic-btn">重置为默认</button><button class="ic-btn">重新读取</button>
+    <span class="ic-note">没有未保存的改动</span></div>`;
+}
+function cardShell(){
+  const s = S[stage.skill];
+  const advCount = s.rows.filter(r => r.tier === 'advanced').length;
+  return `<div class="ic-card" data-slot="card">
+    <div class="ic-head">
+      <div class="ic-title" data-slot="title"><span class="ic-sk" style="width:120px;height:15px"></span></div>
+      <span class="ic-slot" data-slot="badge" style="margin-left:auto"></span>
+    </div>
+    <div class="ic-file" data-slot="file"><span class="ic-sk" style="width:280px"></span></div>
+    <div data-slot="body">
+      ${commonShell()}
+      ${statusShell()}
+      ${advCount ? `<details class="ic-group" data-adv><summary class="ic-ghead">高级<span class="ic-gnote">${esc(ADVANCED_GROUP_NOTE)}</span></summary>
+        <div class="ic-gbody">${advShell()}</div></details>` : ''}
+    </div>
+    <div class="ic-slot" data-slot="bar">${readyBarShell()}</div>
+  </div>
+  <div class="ic-slot" data-slot="failed" hidden></div>`;
+}
+
+/* ═══ 幂等写：允许覆写；只有「首次到位」才播进场动画 ═══ */
+const rendered = new Set();
+function node(slot){ return frame.querySelector(`[data-slot="${CSS.escape(slot)}"]`); }
+function fill(slot, html){
+  const el = node(slot);
+  if (!el) return;
+  const first = !rendered.has(slot);
+  rendered.add(slot);
+  el.innerHTML = html;
+  if (first) el.classList.add('ic-arrive');
+}
+function setHTML(slot, html){
+  const el = node(slot);
+  if (!el) return;
+  el.innerHTML = html;
+  el.hidden = false;
+}
+
+/* ═══ 行渲染（v3 定稿） ═══ */
+const actsW = new Map();          /* 骨架期量一次的动作槽宽度：状态切换时不重算 ⇒ 行高不跳 */
+function actionsHTML(r){
+  // v3 定稿①③：只读行不再画浏览按钮；每枚只读行一枚复制（自创的打开已退场）。
+  return `<span style="display:flex;gap:4px"><button class="ic-btn is-mini" data-copy="${esc(r.key)}">复制</button></span>`;
+}
+function masterActionsHTML(r){
+  // v3 定稿②③：可改目录行按钮字面只有浏览文件夹；另加一枚复制（复制输入框当前值）。
+  const key = r && r.key ? esc(r.key) : '';
+  return `<div class="ic-acts"><button class="ic-btn is-mini">浏览文件夹</button><button class="ic-btn is-mini" data-copy-master="${key}">复制</button></div>`;
+}
+/* 该行会不会变成「将跟随更新」——是的话，那一枚标记的宽度得提前留出来，
+   否则触发键一脏、动作槽从按钮缩成标记，这行就可能当场由一行变两行。 */
+const followKeysOfSkill = () => Object.values(S[stage.skill].follows).flat();
+const isFollower = r => followKeysOfSkill().includes(r.key);
+const followReserve = () => textWidth('↳ 将跟随更新') + 6;
+
+/* 这行现在有多宽可用：整行宽 − 定宽标签列 − 动作槽宽 − 两个列间距。
+   动作槽取「骨架期量的按钮宽」与「跟随标记宽」的较大者 ⇒ 与当前状态无关。 */
+function availWidth(r){
+  const rowEl = frame.querySelector(`[data-row="${CSS.escape(r.key)}"]`);
+  if (!rowEl) return 0;
+  /* 标签列宽从样式变量读，不能量 .ic-k 元素：两行式下它在 minmax(0,1fr) 那一列里，
+     量出来是整列宽（实测 488 而不是 118），一旦变两行就再也回不来。 */
+  const kw = parseFloat(getComputedStyle(rowEl).getPropertyValue('--ic-kw')) || 118;
+  const acts = Math.max(actsW.get(r.key) || 0, isFollower(r) ? followReserve() : 0);
+  const gap = parseFloat(getComputedStyle(rowEl).columnGap) || 10;
+  return rowEl.clientWidth - kw - acts - gap * 2;
+}
+/* 填值：先判「一行装得下吗」。装不下就整行独占，仍装不下就换行——**不打省略号**：
+   路径必须完整可见（用户为这一条否掉过相对路径那版），行数让位于完整。 */
+function paintRowValue(r, value){
+  const rowEl = frame.querySelector(`[data-row="${CSS.escape(r.key)}"]`);
+  if (!rowEl) return;
+  const oneLine = textWidth(value) <= availWidth(r);
+  rowEl.classList.toggle('is-wide', stage.layout === 'two' ? true : !oneLine);
+  fill('v:' + r.key, `<span class="ic-v" title="${esc(value)}">${esc(value)}</span>`);
+}
+/* 骨架期就把「这行一行还是两行」定下来：填充时不再改行高，v1 那一次 +194px 的跳变就没了。 */
+function planRows(){
+  S[stage.skill].rows.forEach(r => {
+    if (isMaster(r)) return;
+    const rowEl = frame.querySelector(`[data-row="${CSS.escape(r.key)}"]`);
+    if (!rowEl) return;
+    const aEl = rowEl.querySelector('[data-slot^="a:"]');
+    actsW.set(r.key, aEl ? aEl.getBoundingClientRect().width : 0);
+    const w = textWidth(r.value);
+    const wide = stage.layout === 'two' ? true : w > availWidth(r);
+    rowEl.classList.toggle('is-wide', wide);
+    const sk = rowEl.querySelector('[data-slot^="v:"] .ic-sk');
+    if (sk) sk.style.width = Math.max(40, Math.min(w, rowEl.clientWidth)) + 'px';
+  });
+}
+
+/* ═══ 绘制 ═══ */
+function paintFollow(){
+  const s = S[stage.skill];
+  s.rows.forEach(r => {
+    if (isMaster(r)) return;
+    const slot = 'a:' + r.key;
+    if (followKeys.has(r.key) && (stage.state === 'dirty' || stage.state === 'confirm')){
+      setHTML(slot, '<span class="ic-follow">将跟随更新</span>');
+    } else {
+      setHTML(slot, actionsHTML(r));
+    }
+  });
+}
+function editedValueOf(r){
+  if (!edit || r.key !== edit.key) return r.value;
+  if (stage.state === 'ready' || stage.state === 'failed' || stage.state === 'invalid') return r.value;
+  return edit.to;
+}
+function badgeHTML(){
+  const st = stage.state;
+  if (st === 'dirty' || st === 'confirm') return '<span class="ic-badge is-dirty"><span class="ic-bd"></span>1 项未保存</span>';
+  if (st === 'saving') return '<span class="ic-badge is-busy"><span class="ic-spin"></span>正在写入</span>';
+  if (st === 'saved') return '<span class="ic-badge is-ok"><span class="ic-bd"></span>已保存 · 刚刚</span>';
+  if (st === 'savefail') return '<span class="ic-badge is-bad"><span class="ic-bd"></span>写入失败</span>';
+  if (st === 'invalid') return '<span class="ic-badge is-dirty"><span class="ic-bd"></span>配置里有值用不了</span>';
+  return '';
+}
+function barHTML(){
+  const st = stage.state, s = S[stage.skill];
+  if (st === 'dirty') return `<div class="ic-attnbar is-sticky"><span class="ic-dtxt">1 项改动还没保存</span>
+    <span class="ic-dacts"><button class="ic-btn is-primary">保存这 1 项</button><button class="ic-btn">放弃</button></span></div>`;
+  if (st === 'confirm') return `<div class="ic-dif">
+      <div class="ic-dh">保存后要写入 ${esc(s.title.split(' · ')[0])} 的 ${esc(s.cfg)} 这一行</div>
+      <div class="ic-dl ic-del">-  ${esc(edit.key)}      ${esc(rowOf(stage.skill, edit.key).value)}</div>
+      <div class="ic-dl ic-add">+  ${esc(edit.key)}      ${esc(edit.to)}</div></div>
+    <div class="ic-attnbar"><span class="ic-dtxt">即将写入 1 行到配置文件</span>
+      <span class="ic-dacts"><button class="ic-btn is-primary">确认写入</button><button class="ic-btn">改回去</button>
+      <button class="ic-btn">先备份再写</button></span></div>`;
+  if (st === 'saving') return `<div class="ic-attnbar"><span class="ic-dtxt"><span class="ic-spin" style="vertical-align:-1px"></span> 正在写入 ${esc(s.cfg)}…</span>
+    <span class="ic-dacts"><button class="ic-btn" disabled>取消</button></span></div>`;
+  if (st === 'saved') return `<div class="ic-done" role="status"><span class="ic-dtxt">已保存 · 写入 ${esc(s.cfg)}（原文件已备份为 .bak）</span>
+    <span class="ic-dacts"><button class="ic-btn">重新读取</button>
+    <button class="ic-undo" type="button">撤销</button><span class="ic-cd">5s</span></span></div>`;
+  if (st === 'savefail') return `<div class="ic-failbar" role="alert"><span class="ic-dtxt">写入失败：磁盘只读（EACCES）。改动还在，可以复制出来或另选目录。</span>
+    <span class="ic-dacts"><button class="ic-btn">重试写入</button><button class="ic-btn">另选目录</button></span></div>`;
+  if (st === 'invalid') return `<div class="ic-bar"><button class="ic-btn" disabled>保存</button>
+    <button class="ic-btn">重置为默认</button><button class="ic-btn">重新读取</button>
+    <span class="ic-note">没有未保存的改动</span></div>`;
+  return `<div class="ic-bar"><button class="ic-btn" disabled>保存</button>
+    <button class="ic-btn">重置为默认</button><button class="ic-btn">重新读取</button>
+    <span class="ic-note">没有未保存的改动</span></div>`;
+}
+function invalidHTML(){
+  const m = rowOf(stage.skill, edit.key);
+  return `<div class="ic-invalid">配置里写的是 <b>${esc('Z:\\不存在的盘\\data')}</b>，用不了；现在按默认目录走：
+    <span class="ic-v" style="display:inline">${esc(m.value)}</span>。要改请编辑配置文件。</div>`;
+}
+
+/* 首次全量绘制（切技能 / 回放加载时用） */
+function mount(){
+  stage.timers.forEach(clearTimeout); stage.timers = [];
+  rendered.clear(); followKeys.clear();
+  edit = S[stage.skill].edit;
+  frame.innerHTML = `<div class="ilife-config"><div class="ic-shell">${cardShell()}</div></div>`;
+  actsW.clear();
+  planRows();                     /* 骨架期定行高：快面填充时不再长高 */
+  const t0 = Date.now();
+  clock.textContent = '骨架 0.00s';
+  stage.timers.push(setTimeout(() => { applyFast(); clock.textContent = `快面 ${((Date.now()-t0)/1000).toFixed(2)}s（可用）`; }, 380));
+  stage.timers.push(setTimeout(() => { applySlow(); clock.textContent = `慢面 ${((Date.now()-t0)/1000).toFixed(2)}s（补齐）`; }, 1400));
+}
+function applyFast(){
+  const s = S[stage.skill];
+  fill('title', esc(s.title));
+  fill('file', `<b>配置文件</b>${esc(U + '\\.ilife\\' + s.cfg)}`);
+  s.rows.forEach(r => {
+    if (isMaster(r)) return;
+    setHTML('a:' + r.key, actionsHTML(r));      /* 先填动作，量可用宽时要算上它 */
+  });
+  s.rows.forEach(r => {
+    if (isMaster(r)) return;
+    paintRowValue(r, r.value);
+  });
+  s.rows.filter(isMaster).forEach(r => {
+    fill('input:' + r.key, `<input value="${esc(r.value)}" spellcheck="false">`);
+    fill('acts:' + r.key, masterActionsHTML(r));
+  });
+  paint();
+}
+function applySlow(){
+  const s = S[stage.skill];
+  Object.keys(s.slow || {}).forEach(k => fill('slow:' + k, esc(s.slow[k])));
+  const st = s.status;
+  if (st){
+    const dot = node('dot'); if (dot) dot.className = 'ic-dot is-' + st.level;
+    fill('stxt', esc(st.verdict));
+    fill('spath', esc(st.found));
+    if (st.ver){
+      const v = node('sver');
+      if (v && v.hidden){ v.hidden = false; v.textContent = st.ver; }
+    }
+  }
+}
+/* 状态切换：就地重绘，不重建 DOM（这是 v1 闪烁与串数据的根因） */
+function paint(){
+  const s = S[stage.skill];
+  const failed = stage.state === 'failed';
+  const body = node('body'), card = node('card'), failEl = node('failed');
+  if (body) body.hidden = failed;
+  if (card) card.hidden = failed;
+  if (failEl){
+    failEl.hidden = !failed;
+    if (failed) failEl.innerHTML = `<div class="ic-failed"><h3>没能读到配置</h3>
+      <pre>配置读取超时（20s）：宿主未回。技能可能卡在飞书探测上。</pre>
+      <div class="ic-acts"><button class="ic-btn is-primary">重试</button><button class="ic-btn">重置为默认</button>
+      <button class="ic-btn">打开配置文件</button></div></div>`;
+  }
+  if (failed) { const b = node('bar'); if (b) b.innerHTML = ''; return; }
+  setHTML('badge', badgeHTML());
+  setHTML('bar', barHTML());
+  /* 母版输入框：直接改 value 与 class，不换节点 ⇒ 焦点不丢 */
+  s.rows.filter(isMaster).forEach(r => {
+    /* 非法值那一行先写：不能因为「输入框还没到位」把它一起跳过（骨架期到了这一格就没有输入框）。 */
+    const bad = node('invalid:' + r.key);
+    if (bad) bad.innerHTML = (stage.state === 'invalid' && r.key === edit.key) ? invalidHTML() : '';
+    const inp = frame.querySelector(`[data-slot="${CSS.escape('input:' + r.key)}"] input`);
+    if (!inp) return;
+    const v = editedValueOf(r);
+    if (inp.value !== v) inp.value = v;
+    inp.classList.toggle('is-dirty', r.key === edit.key && (stage.state === 'dirty' || stage.state === 'confirm' || stage.state === 'savefail'));
+  });
+  /* 跟随标记 */
+  followKeys = new Set();
+  if (stage.state === 'dirty' || stage.state === 'confirm'){
+    const trig = edit.key;
+    (s.follows[trig] || []).forEach(k => followKeys.add(k));
+  }
+  paintFollow();
+  /* 存档态：跟随项的值换成新值（母版换了前缀，跟随项跟着换）。
+     base 为空串时 startsWith('') 恒真 ⇒ 会把新前缀平白拼到每个跟随项前面，所以先判 base。 */
+  if (stage.state === 'saved'){
+    const base = rowOf(stage.skill, edit.key).value;
+    (s.follows[edit.key] || []).forEach(k => {
+      const r = rowOf(stage.skill, k);
+      if (!r) return;
+      paintRowValue(r, base && r.value.startsWith(base) ? edit.to + r.value.slice(base.length) : r.value);
+    });
+  } else {
+    s.rows.forEach(r => { if (!isMaster(r)) paintRowValue(r, r.value); });
+  }
+}
+
+/* ═══ 演示外壳 ═══ */
+const SKILL_STATES = [['ready','① 就绪'],['dirty','② 有改动'],['confirm','③ 保存前 diff'],['saving','④ 写入中'],
+  ['saved','⑤ 已保存'],['invalid','⑥ 值非法回落'],['savefail','⑦ 写入失败'],['failed','⑧ 读取失败']];
+document.getElementById('skills').innerHTML = '<span class="demo-lab">技能</span>' +
+  ORDER.map((k,i) => `<button class="demo-btn${i===0?' on':''}" data-skill="${k}">${LABEL[k]} · ${rowsOf(k).length}</button>`).join('');
+document.getElementById('states').innerHTML = '<span class="demo-lab">状态</span>' +
+  SKILL_STATES.map(([v,t],i) => `<button class="demo-btn warn${i===0?' on':''}" data-state="${v}">${t}</button>`).join('');
+function markOn(sel, el){ document.querySelectorAll(sel).forEach(x => x.classList.remove('on')); el.classList.add('on'); }
+document.querySelectorAll('[data-skill]').forEach(b => b.onclick = () => {
+  markOn('[data-skill]', b); stage.skill = b.dataset.skill; mount();
+});
+document.querySelectorAll('[data-state]').forEach(b => b.onclick = () => {
+  markOn('[data-state]', b); stage.state = b.dataset.state; paint();
+});
+document.querySelectorAll('[data-layout]').forEach(b => b.onclick = () => {
+  markOn('[data-layout]', b); stage.layout = b.dataset.layout; rebuildRows();
+});
+document.getElementById('replay').onclick = mount;
+/* 换行式会改节点形状，按"重建一次"处理（不是状态切换那条路径） */
+function rebuildRows(){ mount(); stage.timers.forEach(clearTimeout); stage.timers = []; applyFast(); applySlow(); clock.textContent = ''; }
+
+/* v3 复制：复制该行完整值文本，可改行复制输入框当前值；点后就地变已复制 1.5 秒再变回，不弹提示。 */
+function fallbackCopy(t){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  } catch (e) {}
+}
+frame.addEventListener('click', ev => {
+  const btn = ev.target && ev.target.closest ? ev.target.closest('button[data-copy],button[data-copy-master]') : null;
+  if (!btn || !frame.contains(btn)) return;
+  const key = btn.getAttribute('data-copy') || btn.getAttribute('data-copy-master');
+  const r = rowOf(stage.skill, key);
+  let text = r ? r.value : '';
+  if (btn.hasAttribute('data-copy-master')) {
+    const inp = frame.querySelector('[data-master="' + CSS.escape(key) + '"] input');
+    if (inp) text = inp.value;
+  }
+  const done = () => {
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { fallbackCopy(text); done(); });
+  else { fallbackCopy(text); done(); }
+});
+
+/* 初始：默认给「有改动」这一态，方便一眼看到状态机的差别 */
+document.querySelector('[data-layout="compact"]').classList.add('on');
+stage.state = 'ready';
+document.querySelectorAll('[data-state]').forEach(x => x.classList.toggle('on', x.dataset.state === 'ready'));
+mount();
+</script>
+</body>
+</html>
+
+
+
