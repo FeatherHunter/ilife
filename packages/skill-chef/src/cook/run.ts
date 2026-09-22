@@ -330,7 +330,6 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
   });
   // 复制区（三格式菜单）：行文与改前逐行同义（备料行／进度行／评分行），`list` 形逐行透传。
   const copy = chefCopyArea({
-    title: '复制备料清单与进度',
     dataActionId: prefix + '-copy',
     data: {
       key: 'chef.cooking.run', shape: 'list',

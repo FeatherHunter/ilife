@@ -170,7 +170,6 @@ export function shoppingListPage(input: {
     ),
     ...(caveat === '' ? [] : [renderCaliberLine(caveat)]),
     chefCopyArea({
-      title: '复制采购清单',
       dataActionId: 'shopping-copy',
       data: {
         key: 'chef.shopping.query', shape: 'list',

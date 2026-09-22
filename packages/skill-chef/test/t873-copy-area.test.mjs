@@ -1,11 +1,16 @@
-/** #873 · 复制区三格式菜单的守门测试（改坏必红）。
+/** #873 · 复制区共用件的守门测试（改坏必红）。
  *
  * 判什么：
  * ① 共用件 `chefCopyArea` 出的是「复制数据 ＋ 纯文本／JSON／CSV 三选一菜单」
  *    （`ilife-copy-menu-wrap` ＋ 三项 `data-fmt`），不是单按钮；
- * ② 上面 10 个文件的 18 处调用全部经新 helper 出菜单（每域至少一页真渲染断言）；
+ * ② 上面 11 个文件的 15 处调用全部经新 helper 出菜单（每域至少一页真渲染断言）；
  * ③ 把任意一处改回 `dataText`，本件必红（源码面 grep 断言）；
  * ④ 页面运行时的菜单委派在位（产物里含 `buildSharedHelpersJs` 的菜单委派串）。
+ *
+ * **2026-09-22 用户两次裁定后新增的两条不变量**（并进 `assertCopyArea`，故 13 处逐页断言全部连带上锁）：
+ * ⑤ **「复制日志」恒出**——不许因为调用方没填 `log` 而整颗消失（改前 53 件产物里只有 8 件有）；
+ * ⑥ **不出复制区区块壳**——裁定「乙」：卡片与标题全去，只剩一行 ghost 动作排
+ *    （壳名在内联 CSS 里也有，故断言前先剥 `<style>`，见 `bodyOf`）。
  *
  * 不判什么：三格式文本的具体行文（那是 `buildDataText` 的契约，公共层测试守）。
  */
@@ -34,17 +39,22 @@ const OPENER_LABEL = 'aria-label="复制数据（点开选格式）"';
  *  **2026-09-22 用户口径**：每张页都要有这颗按钮，不许因为调用方没填 `log` 而整颗消失
  *  （那时 53 件产物里只有 8 件有，45 件缺）。这条从「可选位」升成「恒出位」，故并进 `assertCopyArea`。 */
 const LOG_MARKERS = ['复制日志', '场景标识', 'AI 思考链', '数据结构', '调用链', '时间戳版本', '异常'];
+/** 页面正文（剥掉 `<style>`／`<script>`）：区块壳的类名在**页面内联 CSS** 里也出现，
+ *  不剥样式段就会把「样式表里有这条规则」误判成「页面上出了这个壳」。 */
+const bodyOf = (html) => html.replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<script[\s\S]*?<\/script>/gi, ' ');
 
 function assertCopyArea(html, where) {
   for (const m of MENU_MARKERS) assert.ok(html.includes(m), where + ' 缺菜单标记：' + m);
   assert.ok(html.includes(OPENER_LABEL), where + ' 缺开合器语义：' + OPENER_LABEL);
   for (const m of LOG_MARKERS) assert.ok(html.includes(m), where + ' 缺复制日志：' + m);
+  // **2026-09-22 用户裁定「乙」：卡片与标题全去** —— 正文里不许再出现复制区区块壳或它的标题。
+  assert.ok(!bodyOf(html).includes('ilife-block-copy-block'),
+    where + ' 仍出复制区区块壳（裁定「乙」：卡片与标题全去）');
 }
 
 describe('chefCopyArea 恒出三格式菜单', () => {
   it('detail 形：菜单三项齐，空串 hints 不出提示行', () => {
     const html = chefCopyArea({
-      title: '复制这份菜谱',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉', 食材数: 11, 步骤数: 6 } },
     });
     assertCopyArea(html, 'detail');
@@ -53,7 +63,6 @@ describe('chefCopyArea 恒出三格式菜单', () => {
 
   it('调用方不给 log 也出「复制日志」（2026-09-22 用户口径：每张页都要有）', () => {
     const html = chefCopyArea({
-      title: '复制这份菜谱',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
     });
     assert.ok(html.includes('复制日志'), '不给 log 时仍须出那颗按钮');
@@ -61,7 +70,6 @@ describe('chefCopyArea 恒出三格式菜单', () => {
     assert.ok(html.includes('chef.recipe.view'), '默认调用链取 data.key');
     // 反例自证：把默认值抽掉（模拟旧口径）→ 本断言必红。
     const legacy = chefCopyArea({
-      title: '复制这份菜谱',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
       // @ts-expect-error 故意传 null 触发旧口径的「不给就不出」路径已被移除：仍须出按钮
       log: null,
@@ -71,7 +79,6 @@ describe('chefCopyArea 恒出三格式菜单', () => {
 
   it('receipt 形 ＋ 日志位：两颗位齐，日志六段标题在', () => {
     const html = chefCopyArea({
-      title: '复制区',
       data: { key: 'chef.recipe.write', shape: 'receipt', ok: true, message: '辣椒炒肉已写进菜谱。' },
       log: { command: 'chef.recipe.write', m5Line: '菜谱 1 行', actionAt: '2026-09-22' },
     });
@@ -83,7 +90,6 @@ describe('chefCopyArea 恒出三格式菜单', () => {
 
   it('与按钮同名的标题不出（只留动作不留说明文本）', () => {
     const html = chefCopyArea({
-      title: '复制数据',
       data: { key: 'chef.recipe.view', shape: 'detail', item: { 菜名: '辣椒炒肉' } },
     });
     assertCopyArea(html, '同名标题');
@@ -187,6 +193,7 @@ describe('源码面：十处无 dataText（改回即红）', () => {
   /** 白名单 10 路径中仍可出现 `dataText` 的唯一例外：录入失败页走 `renderErrorReceipt`
    * （公共层错误回执无三格式位，动它须改 `base-render`，不在本票范围）。 */
   const FILES = [
+    'packages/skill-chef/src/render/copyArea.ts',
     'packages/skill-chef/src/add/pages.ts',
     'packages/skill-chef/src/cook/run.ts',
     'packages/skill-chef/src/data/pages.ts',

@@ -1,26 +1,36 @@
 /** #873 · 复制区共用件：复制数据恒三格式菜单 ＋ 复制日志六段。
  *
- * 形状照抄卡路里 `packages/skill-calorie/src/shared/copyArea.ts`（#239 件 ＋ #247 三格式）：
  * 本件只装私家大厨要的两样 —— `chefCopyArea`（数据位恒出「复制数据 ＋ 纯文本／JSON／CSV
  * 三选一菜单」，调用方不声明开关）与 `chefCopyLog`（复制日志第 2–6 段入参）。
  * `promptCopyArea`／`notice` 本包没有调用方，不装。
  *
- * 三件东西只接线、不重造（base-render 侧改动为零）：
- * ① 复制按钮与区块 → `base-paint/blocks` 的 `renderCopyBlock({ dataFormats, logText })`
- *   （`dataFormats` 与 `dataText` 互斥，本件恒走前者）；
+ * **2026-09-22 用户两次裁定，形状与旧版不同（读这段再改）**：
+ * ① **日志位恒出**：每张页都要有「复制日志」那颗按钮（改前 53 件产物里只有 8 件有）；
+ * ② **卡片与标题全去**（裁定「乙」）：不再出 `<section class="ilife-block-copy-block">`、
+ *    不再出标题，只剩一行 ghost 动作排。**故本件不再走 `renderCopyBlock`**，改直连
+ *    `base-paint` 的 `renderActionBar` ＋ `COPY_ACTION_IDS`（`renderCopyBlock` 内部调的
+ *    就是同一个 `renderActionBar`，本件不重写编排、也不抄常量）。
+ *
+ * 三件东西只接线、不重造（**base-render 侧改动为零**）：
+ * ① 复制按钮与动作排 → `base-paint` 的 `renderActionBar({ copyData, copyLog })`
+ *   （`formats` 与 `text` 互斥，数据位恒走前者）；
  * ② 复制文本 → `base-paint` 的 `buildDataText`（`detail`／`list`／`receipt`／`stat` 四种通用形，
  *    调用方给纯域数据、本件套信封）／`buildLogText`（6 段日志）；
  * ③ 复制成功与失败的提示 → 页面运行时的菜单委派（`buildSharedHelpersJs`，私家大厨页经
  *    `renderSceneShell` → `renderDocShell` 已注入，本件不产第二条提示通道）。
  *
+ * ⚠️ **只改了本包**：`base-render` 的 `copyBlock` 仍留在它的「12 区块闭集」里，另外五个技能
+ * （卡路里／记账／居家管家／备忘录／作息）的复制区一个字节没动。要不要一起推平，等维护者裁
+ * —— 动公共层须先立公共层 issue（总纲 09）＋ 补 CHANGELOG。
+ *
  * 谁在用（共用位须写得出哪两个在用）：录入／做菜／数据管理／历史／派生／开始使用／采购／查看
- * 8 个域装配件 ＋ 搜索筛选／修改 2 个产物驱动器（共 18 处调用，清单见 `t873-席复制按钮.md`）。
+ * 8 个域装配件 ＋ 搜索筛选／修改 2 个产物驱动器（共 15 处调用，清单见 `t873-席复制按钮.md`）。
  *
  * 对外 2 个名字：`chefCopyArea`／`chefCopyLog`。入参类型不导出 —— 调用方传字面量即可
  * （同卡路里 `copyArea.ts` 的口径）。
  */
-import { renderCopyBlock, renderEmptyBlock } from 'base-paint/blocks';
-import { buildDataText, buildLogText } from 'base-paint';
+import { COPY_ACTION_IDS, renderEmptyBlock } from 'base-paint/blocks';
+import { buildDataText, buildLogText, renderActionBar } from 'base-paint';
 import type { CopyLogFields, DataTextInput, SerializableEnvelope } from 'base-paint';
 import { createEnvelope } from 'base-link-core';
 import { CHEF_CONFIG_DEFAULTS } from '../config.js';
@@ -39,9 +49,6 @@ const COPY_EMPTY_TEXT = '本页没有可复制的数据';
  * （`controls.ts:1376`），形状与「不给 hints」一致，但不依赖公共层那一支的缺省值
  * （与卡路里 `MENU_HINTS` 同口径）。 */
 const MENU_HINTS: readonly string[] = ['', '', ''];
-/** 复制区口径：只留动作不留说明文本 —— `title` 与复制按钮同名（「复制数据」）时只留按钮、
- *  不出标题（公共层 `renderCopyBlock` 另有 #336 兜底；本件与它同口径，双层一致）。 */
-const COPY_TITLE_DUP_OF_BUTTON = '复制数据';
 /** 库文件名（日志第 3 段前半的固定位）：唯一定义地是 `config.ts` 的
  *  `CHEF_CONFIG_DEFAULTS.db.name`，本件只引用、不重写。 */
 const DB_NAME = CHEF_CONFIG_DEFAULTS.db.name;
@@ -70,8 +77,6 @@ interface ChefCopyLog {
 
 /** `chefCopyArea` 的可填位：给了什么出什么，数据位恒出三格式菜单。 */
 interface ChefCopyAreaInput {
-  /** 区块标题；不给＝不出标题。与复制按钮同名（「复制数据」）＝不出标题（只留动作不留说明文本）。 */
-  readonly title?: string;
   /** 复制数据按钮的 `actionId`（须页内唯一；不给＝公共层缺省）。 */
   readonly dataActionId?: string;
   /** 复制日志按钮的 `actionId`（须页内唯一；不给＝公共层缺省）。 */
@@ -131,34 +136,41 @@ function formatsOf(data: DataTextInput): {
   };
 }
 
-/** 复制区：数据位恒出三格式菜单；**日志位恒出「复制日志」**（用户口径 2026-09-22：每张页都要有
- *  那颗按钮，不许因为调用方没填而整颗消失）。调用方给 `log` 就用它，没给则退到
- *  `{ command: data.key }` —— 命令键本来就随 `data` 一起进来，退出的六段仍然是**真读数**
- *  （调用链＝这条命令、数据结构＝库名、思考链与异常按本包口径），不是占位。
- *  两样全不给＝一句空态、不出按钮。 */
+/** 复制区（**2026-09-22 用户裁定「乙」：卡片与标题全去**）。
+ *
+ *  **不再出区块壳**：没有 `<section class="ilife-block-copy-block">`、没有标题，只剩一行 ghost 动作排
+ *  —— `复制数据 ▾`（三格式菜单）＋ `复制日志`，形状与页面其它动作排同列同宽。
+ *  改动只在**本包**（走公共层 `renderActionBar` ＋ `COPY_ACTION_IDS`，不抄常量、不重写编排）；
+ *  `base-render` 的 `copyBlock` 仍留在它的「12 区块闭集」里，其它五个技能的复制区一个字节没动
+ *  —— 要不要一起推平，等维护者裁（动公共层须先立公共层 issue ＋ 补 CHANGELOG）。
+ *
+ *  **日志位恒出**（同日裁定）：调用方给 `log` 就用它，没给则退到 `{ command: data.key }` ——
+ *  命令键本来就随 `data` 一起进来，退出的六段仍是**真读数**（调用链＝这条命令、数据结构＝库名），
+ *  不是占位。「给不出就整颗不出」是旧口径，已废：它让 45/53 张页没有复制日志按钮。
+ *
+ *  两样全不给 ＝ 一句空态、不出按钮（空态不是按钮排，仍走 `renderEmptyBlock`）。 */
 export function chefCopyArea(input: ChefCopyAreaInput): string {
   const data = input.data;
   const log = input.log;
-  const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
   if (data !== undefined || log !== undefined) {
     if (data === undefined) throw new Error('chefCopyArea: log 位须与 data 位同给（日志场景由数据信封派生）');
     const envelope = dataEnvelopeOf(data);
-    // 日志恒出：调用方没给 log 就退到命令键（见函数头注）。「给不出就整颗不出」是旧口径，
-    // 已废 —— 它让 45/53 张页没有复制日志按钮。
     const logText = buildLogText({
       envelope: sceneEnvelopeOf(envelope),
       copyLog: chefCopyLog(log ?? { command: data.key }),
     });
-    return renderCopyBlock({
-      ...(title === undefined ? {} : { title }),
-      ...(input.dataActionId === undefined ? {} : { dataActionId: input.dataActionId }),
-      ...(input.logActionId === undefined ? {} : { logActionId: input.logActionId }),
-      dataFormats: formatsOf({ envelope }),
-      logText,
+    return renderActionBar({
+      copyData: {
+        actionId: input.dataActionId ?? COPY_ACTION_IDS.actionBar.copyData,
+        formats: formatsOf({ envelope }),
+      },
+      copyLog: {
+        actionId: input.logActionId ?? COPY_ACTION_IDS.actionBar.copyLog,
+        text: logText,
+      },
     });
   }
   return renderEmptyBlock({
-    ...(title === undefined ? {} : { title }),
     text: input.emptyText ?? COPY_EMPTY_TEXT,
   });
 }

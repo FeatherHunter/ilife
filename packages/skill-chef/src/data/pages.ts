@@ -231,7 +231,6 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
     // 2026-09-22 用户口径「每张页都要有复制日志」：本页原**整块复制区都缺**
     // （53 件产物里只有 51 件有按钮，缺的两件之一就是本页）。
     chefCopyArea({
-      title: '复制这份体检',
       dataActionId: 'quality-copy',
       data: {
         key: 'chef.history.query', shape: 'list',
@@ -272,7 +271,6 @@ export function dataBatchPage(input: { name: string; diffs: { field: string; bef
       ],
     }),
     chefCopyArea({
-      title: '改动说明',
       dataActionId: 'batch-copy-data',
       data: {
         key: 'chef.data.batch', shape: 'receipt', ok: true,
@@ -303,8 +301,8 @@ export function dataBackupPage(input: { recipeCount: number; tableCount: number;
       ],
     }),
     chefCopyArea({
-      // 删掉说明行：它与标题「复制备份回执」＋按钮「复制数据」说的是同一件事（判官点名的「文案叠说」）。
-      title: '复制备份回执',
+      // 删掉说明行：它与按钮「复制数据」说的是同一件事（判官点名的「文案叠说」）。
+      // （原注还提到标题「复制备份回执」——该标题随 **2026-09-22 用户裁定「乙」** 连同卡片一去去掉了。）
       dataActionId: 'backup-copy-data',
       // 备份走 `history.query` 的 kind=backup，信封 key 随 CLI 取 `chef.history.query`。
       data: {

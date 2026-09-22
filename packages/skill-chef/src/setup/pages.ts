@@ -151,8 +151,10 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
         ],
       }),
       chefCopyArea({
-        // 第三轮文案审计：试过不给标题（只留按钮）——同会话实测 89 → 84，掉了就回退，故保留标题。
-        title: '复制上手说明',
+        // 本页曾带标题「复制上手说明」。**2026-09-22 用户裁定「乙」后标题一并去掉**（卡片与标题全去）。
+        // 留档两条，别当没发生过：① 第三轮文案审计**试过不给标题**（只留按钮），同会话实测 **89 → 84**，
+        // 当时「掉了就回退，故保留标题」；② 现在没有标题是**裁定所致**，不是没有人试过。
+        // ⇒ 若日后本页视觉评分掉档，先怀疑这一条（这是唯一有实测数字的嫌疑点）。
         dataActionId: 'setup-copy',
         data: {
           key: 'chef.setup.init', shape: 'receipt', ok: true,

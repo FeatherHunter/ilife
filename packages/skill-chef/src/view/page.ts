@@ -245,7 +245,7 @@ function footerOf(d: ViewItem): string {
 
 function copyOf(d: ViewItem): string {
   return chefCopyArea({
-    title: '复制这份菜谱', dataActionId: 't770-copy-recipe',
+    dataActionId: 't770-copy-recipe',
     data: {
       key: 'chef.recipe.view', shape: 'detail',
       item: { 菜名: d.name, 食材数: d.ingredients.length, 步骤数: d.steps.length },

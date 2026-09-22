@@ -163,7 +163,6 @@ export function renderRecordPage(input: RecordPageInput): string {
       ],
     }),
     chefCopyArea({
-      title: '复制这条记录',
       data: {
         key: 'chef.history.record', shape: 'receipt', ok: true,
         message: input.name + '\n' + input.cookDate + ' 第' + input.cookSequence + '次 评分' + input.rating + '\n' + input.feedback,
@@ -214,7 +213,6 @@ export function renderTimelinePage(input: TimelinePageInput): string {
     renderFactStrip({ items: facts }),
     timeline,
     chefCopyArea({
-      title: '复制这份时间线',
       data: {
         key: 'chef.history.query', shape: 'list',
         items: input.rows.map((r) => ({ 日期: r.cookDate, 第几次: r.cookSequence, 评分: r.rating, 反馈: r.feedback })),
@@ -269,7 +267,6 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
       { label: '最近一次', value: dash(input.lastDate) },
     ]),
     chefCopyArea({
-      title: '这份统计',
       data: {
         key: 'chef.history.query', shape: 'list',
         items: [{
@@ -336,7 +333,6 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
     chefCopyArea({
       // 第二轮返修：评委原话「'复制这份画像'与'复制数据'重复啰嗦」——标题只说这一块是什么，
       // 动词留给按钮。
-      title: '这份统计',
       data: {
         key: 'chef.history.query', shape: 'list',
         items: portrait.perRecipe.map((r) => ({ 菜名: r.name, 次数: r.count, 均分: r.avgRating })),

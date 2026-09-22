@@ -363,7 +363,6 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
   // 复制区（三格式菜单 ＋ 六段日志）：数据位是写入回执的摘要；日志位的过程证据由输入派生、
   // 给不出的时间戳如实缺省（`(未知)` 口径），不编数冒充。
   const copy = chefCopyArea({
-    title: '复制区',
     data: {
       key: 'chef.recipe.write', shape: 'receipt', ok: true,
       message: input.recipeName + '已写进菜谱：' + input.servings + '人份，备料'
