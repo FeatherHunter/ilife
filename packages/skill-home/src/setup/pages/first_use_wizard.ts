@@ -150,7 +150,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div></section>'
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
-    + '<p data-need="异常：数据解析失败／数据校验失败／初始化失败">如果页面提示解析失败、校验失败或者初始化失败，用下面的一键重试再走一次，大多数情况一次就能过。</p>'
+    // #817：一键重试在「可以做的操作」区，那一段在本段之前，方位词写「上面」。
+    + '<p data-need="异常：数据解析失败／数据校验失败／初始化失败">如果页面提示解析失败、校验失败或者初始化失败，用上面的一键重试再走一次，大多数情况一次就能过。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
     + '<h2>口径说明</h2>'

@@ -140,7 +140,9 @@ export function renderFamilyPage(env: Envelope): string {
     + 'var L=[SN.action+"确认："+SN.season+"季 "+p.length+"件",""];'
     + 'if(SN.action==="收纳"&&place)L.push("目标位置："+place);'
     + 'p.forEach(function(x){if(SN.action==="收纳")L.push("收纳："+x.name+"（移入"+(place||"收纳位")+"加已收纳标）");else L.push("拿出："+x.name+"（恢复在家去已收纳标）");});snCopy(L.join("\\n"));}'
-    + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){snCopy(JSON.stringify(SN.items,null,2));};'
+    // 上面这个 `}` 收的是 `function(){…}`；**必须**跟一个 `;`——整段脚本是一行拼出来的，
+    // 没有换行，ASI 不会补分号，缺了它整段脚本不解析、页上按钮与勾选全死（同 travel_trip 那处）。
+    + ';var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){snCopy(JSON.stringify(SN.items,null,2));};'
     + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){snCopy("换季日志："+SN.season+"季"+SN.action+SN.items.length+"件");};'
     + '</script>';
 

@@ -157,17 +157,14 @@ export function renderFamilyPage(env: Envelope): string {
       + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原状态</span><span>—</span></div></div>'
       + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">现状态</span> <span class="fp-pill">' + esc(m?.[2] ?? '') + '</span></div></div>';
   } else if (mode === 'tags') {
+    // 「标签变更」只在变更结果里写这一处：去除／新增两行并入本段，不再另起一段复述。
     const m = msg.match(/^已更新标签：(.+)$/);
     changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">标签变更</div><div class="fp-v">—</div></div>';
+      + '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">—</div></div>'
+      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">—</div></div>';
   } else {
     changeRows = '<div class="fp-row"><div class="fp-k">回执</div><div class="fp-v">' + esc(msg) + '</div></div>';
   }
-
-  const tagBlock = mode === 'tags'
-    ? '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">—</div></div>'
-      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">—</div></div>'
-    : '<p class="fp-empty">本次没有改标签，需要改标签时用标物品</p>';
 
   const tail: Record<ReceiptMode, string> = {
     move: '位置已记入台账，找东西时直接查物品即可',
@@ -197,7 +194,6 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">—</div></div>'
     + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">—</div></div>'
     + '</section>'
-    + (mode === 'tags' ? '<section class="fp-sec"><h2 class="fp-sec-t">标签变更</h2>' + tagBlock + '</section>' : '')
     + '<section class="fp-sec"><h2 class="fp-sec-t">后续可做</h2>'
     + '<p class="fp-note">' + esc(tail[mode]) + '</p></section>'
     + '<div class="fp-actions">'

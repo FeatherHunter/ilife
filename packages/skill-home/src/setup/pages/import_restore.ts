@@ -1,10 +1,6 @@
-// setup能力·import_restore页装配（#816 域票填内容：导入四步冲突预览页）。
-//
-// 信息结构对齐老 `开始使用/import_restore.html`：四步（选择文件／校验结果／
-// 冲突预览／确认导入）／校验项／冲突名单／导入结果。诚实口径：新实现是整库覆盖
-// （恢复前自动自备份），没有逐条同名比对——冲突区如实说明这一点，不虚构名单；
-// 偏差记入域对账。本族同时服务预告（kind=import-preview）与确认（kind=import）。
-// 必需块原文＝契约附录（事实源），逐条落在 data-need 属性里；三方对账照旧。
+// setup能力·import_restore页装配（#816 域票填内容：导入四步冲突处理页，#817 收口补模式值位与承诺语）。
+// 诚实口径：新实现是整库覆盖（恢复前自动自备份），没有逐条同名比对——冲突区如实说明、不虚构名单，偏差记入域对账。
+// 页面承诺语只说一遍（页首不复述）；必需块原文＝契约附录（事实源），逐条落在 data-need 属性里，三方对账照旧。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml } from '../../render/index.js';
@@ -75,8 +71,7 @@ function safetyOf(msg: string): string {
   return m ? m[1] as string : '';
 }
 
-// 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
-// fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
+// 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/setup/import_restore.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
@@ -93,7 +88,7 @@ export function renderFamilyPage(env: Envelope): string {
     const s = stepState(i);
     return s === 'done' ? '已完成' : s === 'current' ? '进行中' : '待办';
   };
-  const titles = ['选择文件', '校验结果', '冲突预览', '确认导入'];
+  const titles = ['选择文件', '校验结果', '冲突处理', '确认导入'];
   const steps = titles.map((t, i) => '<div class="su-step" data-status="'
     + stepState(i) + '"><b>' + (i + 1) + '</b>' + escapeHtml(t)
     + '<i>' + stepLabel(i) + '</i></div>').join('');
@@ -126,7 +121,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<p class="su-lead">先选文件看预告，确认后再真正导入。导入前会自动备份现有数据，失败会自动回滚。</p></div>'
+    + '<p class="su-lead">先选文件看预告，确认后再真正导入。</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="四步（选择文件/校验结果/冲突预览/确认导入）">四个步骤</h2>'
     + '<div class="su-steps" data-need="done" data-extra="current">' + steps + '</div>'
@@ -137,8 +132,13 @@ export function renderFamilyPage(env: Envelope): string {
     + (isDone ? '<tr><th>导入后物品</th><td>' + (nums.after === '—' ? '—' : escapeHtml(nums.after) + ' 件') + '</td></tr>' : '')
     + (safety !== '' ? '<tr><th>恢复前备份</th><td>' + escapeHtml(safety) + '</td></tr>' : '')
     + '</table></div>'
-    + '<h2 data-need="冲突名单">冲突预览</h2>'
-    + '<p data-need="冲突处理下拉" data-mode-a="跳过同名" data-mode-b="覆盖同名">恢复会整体替换当前库，不做逐条比对，也不出逐条名单：跳过同名和覆盖同名都按整库覆盖处理，恢复前自动留的那份备份就是兜底。</p>'
+    + '<h2 data-need="冲突名单">冲突处理</h2>'
+    + '<div class="su-tablewrap" data-need="冲突处理下拉"><table class="su-table">'
+    + '<tr><th>处理模式</th><th>这一档怎么处理</th></tr>'
+    + '<tr><td data-need="跳过同名">跳过同名</td><td>整库覆盖</td></tr>'
+    + '<tr><td data-need="覆盖同名">覆盖同名</td><td>整库覆盖</td></tr>'
+    + '</table></div>'
+    + '<p class="su-note">恢复不逐条比对同名；兜底是恢复前自动留的那份备份。</p>'
     + '<p class="su-note" hidden data-need="冲突超10条折叠">只看前十条，其余只报总数。</p>'
     + '<h2 data-need="导入结果">导入结果</h2>'
     + (isDone

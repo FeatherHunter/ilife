@@ -240,7 +240,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '<label>方向<select id="fDir"><option value="借出">借出</option><option value="借入">借入</option></select></label>'
     + '<label>对象（家人）<select id="fObj"><option value="">请选择</option>' + memberOpts + '</select></label>'
     + '<label>对象自由输入<input id="fObjName" placeholder="外部联系人"></label>'
-    + '<label>库外物品名<input id="fItemName" placeholder="借入时填这里"></label>'
+    // #817：方向下拉默认「借出」，标签写「库外物品名」会把借出方向的人带偏；按中性的「物品名」写。
+    + '<label>物品名<input id="fItemName" placeholder="借入时填这里"></label>'
     + '<label>借出日期<input id="fBorrowed" type="date"></label>'
     + '<label>约定归还日<input id="fDue" type="date"></label>'
     + '</div>'

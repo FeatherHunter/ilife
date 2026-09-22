@@ -71,6 +71,10 @@ function hero(total: number, mode: string): string {
     + '<p class="lead">按分类常用位置给出安放推荐，采纳后走移物品流程</p></div>';
 }
 
+// 备选区标题保层级（父级是卡 h2，故标题用 h3，不跳级）：模板只定义了 `.rec .alt h4`，缺 h3 那条，
+// 默认字号会大过卡片标题；此处按同款补一条规则（字号／字重／间距对齐 h4），不改模板（#817 复评 seq 32）。
+const ALT_CSS = '<style>.rec .alt h3{font-size:12px;font-weight:700;color:#86868b;margin-bottom:8px}</style>';
+
 function recSection(r: Recommendation): string {
   const it = r.item;
   // 首行只放分类（短行不进重复句）；当前位置只在推荐卡下以单行呈现（逐件唯一）。
@@ -114,8 +118,7 @@ function recSection(r: Recommendation): string {
   }
   const alt = r.alternates.length === 0
     ? '<div class="altrow" data-need="备选空态：暂无其他备选">暂无其他备选</div>'
-    // 每行自带地点（与其理由同一行）：理由可能两条一模一样（同分类同件数同示例件），
-    // 带上地点后每行自解释，也不会在页面上出现两行逐字相同的文字（#817 收口修）。
+    // 每行自带地点（与其理由同一行）：理由可能两条一模一样，带上地点后每行自解释，页上也不出现两行逐字相同的文字。
     : '<table class="alt">' + r.alternates.map((a) => '<tr><td>'
       + escapeHtml(a.location + '：' + a.reason) + '</td></tr>').join('') + '</table>';
   return '<section class="card" data-block="fields" data-need="推荐列表（推荐位置/理由/备选位置）">'
@@ -140,8 +143,7 @@ function actionsBar(env: Envelope, batch: boolean): string {
 }
 
 function genericList(names: string[]): string {
-  // storage 预设运行时走位置总览（#801 偏离：同页族不同数据）：扁平列表如实呈现，不冒充推荐。
-  // 推荐三操作无载体（总览无件可采纳），块位以隐藏载体保留。
+  // storage 预设运行时走位置总览（#801 偏离：同页族不同数据）：扁平列表如实呈现，不冒充推荐；推荐三操作无载体，块位以隐藏载体保留。
   const cards = names.map((n) => '<div class="altrow">' + escapeHtml(n) + '</div>').join('');
   return '<section class="card" data-block="fields">'
     + '<h2>位置总览</h2><div class="alt">' + cards + '</div></section>'
@@ -180,6 +182,6 @@ export function renderFamilyPage(env: Envelope): string {
   }
   const content = hero(recs.length, batch ? 'batch' : 'single')
     + '<div data-block="empty" hidden></div><div data-block="status" hidden></div>' + emptyIndex
-    + body + actionsBar(env, batch);
+    + ALT_CSS + body + actionsBar(env, batch);
   return fillTemplate(template, content);
 }

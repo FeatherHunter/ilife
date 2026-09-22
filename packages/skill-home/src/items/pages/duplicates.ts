@@ -66,9 +66,7 @@ const PAGE_CSS = '<style>'
   + '@media(max-width:480px){.kv th{width:6em}}'
   + '</style>';
 
-function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string {
-  return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；');
-}
+function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string { return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；'); }
 
 function row(head: string, value: string): string {
   return '<tr><th>' + head + '</th><td>' + value + '</td></tr>';
@@ -134,10 +132,11 @@ export function renderFamilyPage(env: Envelope): string {
     ? '<p>共 ' + names.length + ' 组疑似重复。</p>' + tables
     : '<div class="hm-empty">没有发现重复物品，各自都是独立录入的。</div>';
   const content = PAGE_CSS
-    + '<p class="greet">查重复把同名的归到一组，组内几件，首件什么状态，一目了然。</p>'
+    + '<p class="greet">查重复把同名的归到一组，组内件数、位置数量与分类逐组列出。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>重复分组</h2>' + body + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有重复时</h2><p>没有重复就各自独立录入，不必合并。</p></section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2><p>首件状态就是该组第一件物品现在的状态。</p></section>'
+    // 状态块：分组卡片里已经有「首件状态」行（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('独立录入', '请加载居家管家技能，帮我独立录入一件物品', false)
     + op('复制合并建议', '请加载居家管家技能，帮我复制合并建议', true)

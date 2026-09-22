@@ -5,7 +5,7 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update",
-      "name": "修改验证菜20260921175557",
+      "name": "修改验证菜20260921185519",
       "patch": {
         "servings": 4,
         "difficulty": "快手菜"
@@ -13,8 +13,8 @@
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
     "exit": 0,
-    "bytes": 101071,
-    "sha256": "956dea75b34ad3ed3b413aa1cfc7496a09d57e9b1a688a3b0103f7f8b087f30b"
+    "bytes": 107912,
+    "sha256": "94e045d6bb957e7802c024ac886696d361080d464d842a508c52947d23a5b37e"
   },
   {
     "卡": "update_step_content",
@@ -23,12 +23,12 @@
     "参数": {
       "op": "update",
       "target": "step/step-order",
-      "name": "修改验证菜20260921175557"
+      "name": "修改验证菜20260921185519"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
     "exit": 0,
-    "bytes": 102862,
-    "sha256": "a0c250c06a1c0ff9076a6571865bffea061030339681526a65e247a908734560"
+    "bytes": 109703,
+    "sha256": "e06752ff5820014701d4c2ec675d306ad37e6b74e2b263982661878ccbf1e281"
   },
   {
     "卡": "update_ingredient",
@@ -36,12 +36,12 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update/add-ingredient",
-      "name": "修改验证菜20260921175557"
+      "name": "修改验证菜20260921185519"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
     "exit": 0,
-    "bytes": 102566,
-    "sha256": "4f1d2acbf960b8c49886f7f05d1332dbd895021364a56e7ee6970b2285e0ddbf"
+    "bytes": 109407,
+    "sha256": "a8a960080182606b7472e476d4ac5313ccc762a3202148a932530534185c3be6"
   },
   {
     "卡": "discard_recipe",
@@ -49,11 +49,11 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "deprecate",
-      "name": "修改验证菜20260921175557"
+      "name": "修改验证菜20260921185519"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
     "exit": 0,
-    "bytes": 100665,
-    "sha256": "17fe8ffd217c01d387e19a4c36872d31679922e39acf1b03b8ccf5864f52a9fb"
+    "bytes": 107506,
+    "sha256": "507dbeb408700a158b86a40ab134669e8bae55b8102d92d4fe389dc09d3748df"
   }
 ]

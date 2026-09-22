@@ -108,15 +108,15 @@ export function renderFamilyPage(env: Envelope): string {
       + '<div>' + op('录入新物品', '请加载居家管家技能，帮我录入一件新物品', false) + '</div>';
   const content = PAGE_CSS
     + '<script>function filterLocal(kw){var t=document.getElementById("rows");if(!t)return;kw=String(kw||"").toLowerCase();var rs=t.getElementsByTagName("tr");for(var i=1;i<rs.length;i++){rs[i].style.display=rs[i].textContent.toLowerCase().indexOf(kw)>=0?"":"none";}}</script>'
-    + '<p class="greet">查物品结果都在下面这张表里，框里再敲字可以接着筛，没有命中会指去录入。</p>'
+    + '<p class="greet">查物品与拍照找物品共用下面这张表：拍照找物品时把照片一起交来，命中结果同样落在这里；框里再敲字可以接着筛，没有命中会指去录入。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>摘要</h2><div class="wrap-x"><table class="kv">'
     + '<tr><th>查询词</th><td>—</td></tr>'
-    + '<tr><th>摘要指标</th><td>共 ' + cards.length + ' 件</td></tr>'
+    + '<tr><th>命中件数</th><td>共 ' + cards.length + ' 件</td></tr>'
     + '</table></div>'
     + '<p><input class="find" placeholder="本地筛选，敲字过滤本页" oninput="filterLocal(this.value)"></p></section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>结果</h2>' + result + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2>'
-    + '<p>表里那一列写的是这件物品现在的状态。</p></section>'
+    // 状态块：结果表里已经有「状态」列（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('搜索', '请加载居家管家技能，帮我搜索一件物品', false)
     + op('本地筛选', '请加载居家管家技能，帮我在刚才的结果里接着筛', true)

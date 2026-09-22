@@ -84,11 +84,10 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'if(kind==="take")copyText("请加载「居家管家」技能,帮我搬家打包(唤醒词:搬家盘点):\\n\\n  带走: 全部");'
 + 'else if(kind==="leave")copyText("请加载「居家管家」技能,帮我搬家打包(唤醒词:搬家盘点):\\n\\n  不带走: 全部");'
 + 'else if(kind==="commit")copyText("请加载「居家管家」技能,帮我搬家打包(唤醒词:搬家盘点):\\n\\n  带走: ______\\n  不带走: ______\\n  确认提交");'
-+ 'else if(kind==="list")copyText("请加载「居家管家」技能,帮我搬家打包(唤醒词:搬家盘点):\\n\\n  清单: 随全屋实际标记展开");}';
++ 'else if(kind==="list")copyText("请加载「居家管家」技能,帮我搬家打包(唤醒词:搬家盘点):\\n\\n  清单: 随全屋实际标记展开");}'
++ 'function moveLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var b=document.querySelector(".bin.on-take")?"全部带走":(document.querySelector(".bin.on-leave")?"全部不带走":"未标记");copyText("搬家盘点｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜清单状态"+document.getElementById("movestate").textContent+"｜"+b);}';
 
-function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
-}
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 二态标记清单真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
@@ -98,21 +97,21 @@ export function renderFamilyPage(env: Envelope): string {
   const committed = str(data.message).includes('已提交');
   const stateText = committed ? '已提交' : '未提交';
 
-  const content = '<div class="hero"><p class="eyebrow">标记后确认</p>'
-    + '<p class="lead">全屋清单按位置分组，二态带走或不带走</p></div>'
+  const content = '<div class="hero"><p class="eyebrow">标记后确认</p><p class="lead">全屋清单按位置分组，二态带走或不带走</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
-    + '<dl class="kv"><dt>清单状态</dt><dd>' + escapeHtml(stateText) + '</dd></dl>'
+    + '<dl class="kv"><dt>清单状态</dt><dd id="movestate">' + escapeHtml(stateText) + '</dd></dl>'
+    // 物品编号与位置需数据：信封只带清单状态一句回执（物品行由命令侧增补），这一格保持「—」，不编。
     + '<h2>物品编号与位置</h2><p class="lead">—</p>'
     + '<h2>二态标记</h2><div class="binrow"><button class="bin" data-v="带走" onclick="setBin(this)">带走</button>'
     + '<button class="bin" data-v="不带走" onclick="setBin(this)">不带走</button></div></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"></section>'
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow"><button class="btn ghost" onclick="moveCmd(\'take\')">全带走</button>'
     + '<button class="btn ghost" onclick="moveCmd(\'leave\')">全不带走</button>'
     + '<button class="btn" onclick="moveCmd(\'commit\')">统一确认</button>'
     + '<button class="btn ghost" onclick="moveCmd(\'list\')">复制清单</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
+    + '<button class="btn ghost" onclick="moveLog()">复制日志</button>'
     + '</div></section>'
     + '<section hidden class="sec" data-block="empty" data-need="' + NEED.empty + '"><h2>空态说明</h2>'
     + '<p class="lead">本页无空态，清单恒在</p></section>'

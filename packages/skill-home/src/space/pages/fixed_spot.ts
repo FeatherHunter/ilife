@@ -53,9 +53,7 @@ interface FixedCur { location: string; quantity: number; status: string; }
 interface FixedEntry { id: number; name: string; fixed: string; currents: FixedCur[]; warn: boolean; }
 interface FixedDetail { fixed_items?: FixedEntry[]; total?: number; }
 
-function attr(s: string): string {
-  return escapeHtml(s).replace(/"/g, '&quot;');
-}
+function attr(s: string): string { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
 function hero(total: number): string {
   // 标题已在模板 h1（固定位），此处只放计数徽章，不重复族名。
@@ -87,13 +85,14 @@ function fixedCard(entries: FixedEntry[]): string {
       + '<button class="btn ghost" data-copy="' + attr(clearPrompt) + '" data-need="解除">解除</button></div>';
   }).join('');
   return '<section class="card" data-block="fields" data-need="现有固定位清单（名称/ID/当前活跃位置/固定位）">'
-    + '<h2>现有固定位 <span class="hint">' + entries.length + '件，红色「不在固定位」表示当前不在固定位</span></h2>'
+    + '<h2>现有固定位 <span class="hint">红色「不在固定位」表示当前不在固定位</span></h2>'
     + rows + '</section>';
 }
 
+// 表单面板＝页面里与卡片同级的一块（h1→h2，故用 section.card ＋ h2）；「关闭」＝收起本面板（#817 复评 seq 31）。
 function formPanel(): string {
-  return '<div class="panel" data-block="fields">'
-    + '<h3 data-need="设置固定位">设置固定位</h3>'
+  return '<section class="card" id="formPanel" data-block="fields">'
+    + '<h2 data-need="设置固定位">设置固定位</h2>'
     + '<div class="fp-row" data-need="物品表单"><label>物品（常用件名称或编号）</label>'
     + '<input id="fpItem" placeholder="如：钥匙"></div>'
     + '<div class="fp-row" data-need="固定位表单"><label>固定位</label>'
@@ -101,8 +100,8 @@ function formPanel(): string {
     + '<div class="fp-preview" id="fpPreview" data-need="表单空值拦截"></div>'
     + '<div class="fp-actions" data-block="operations">'
     + '<button class="btn" id="fpCopy" data-need="复制prompt">复制提示词</button>'
-    + '<button class="btn ghost" data-need="关闭">关闭</button>'
-    + '</div></div>';
+    + '<button class="btn ghost" id="fpClose" data-need="关闭" onclick="var p=document.getElementById(&quot;formPanel&quot;);if(p)p.hidden=true">关闭</button>'
+    + '</div></section>';
 }
 
 function actionsBar(env: Envelope): string {

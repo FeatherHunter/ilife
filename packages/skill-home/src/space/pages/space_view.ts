@@ -75,7 +75,7 @@ function hero(view: SpaceView): string {
 }
 
 function crumbs(view: SpaceView): string {
-  const homePrompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：顶层';
+  const homePrompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：全屋'; // 按钮写「全屋」，载荷同写「全屋」（#817 复评 seq 33：原先载荷写「顶层」）。
   let html = '<button class="crumb home" data-copy="' + attr(homePrompt) + '" data-need="下钻">全屋</button>';
   for (const c of view.crumbs) {
     const prompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：「' + c.path + '」';
@@ -133,7 +133,7 @@ function hintsBar(view: SpaceView): string {
       + '<span data-need="复制收纳建议"></span></div>';
   }
   const chips = view.hints.map((h) => '<span class="hintpath">' + escapeHtml(h) + '</span>').join('');
-  const prompt = '请加载「居家管家」技能，帮我推荐收纳位置：\n位置：「' + (view.path === '' ? '顶层' : view.path) + '」';
+  const prompt = '请加载「居家管家」技能，帮我推荐收纳位置：\n位置：「' + view.hints[0] + '」'; // hints[0]＝卡上第一个空位置的全路径（#817 复评 seq 33：原先写死「顶层」）。
   return '<div class="tip" data-block="fields" data-need="分层空态提示">空位置节点，可移入物品，或先收纳建议。'
     + '<div class="hintpaths">' + chips + '</div>'
     + '<button class="btn ghost" data-copy="' + attr(prompt) + '" data-need="复制收纳建议">复制收纳建议</button></div>';

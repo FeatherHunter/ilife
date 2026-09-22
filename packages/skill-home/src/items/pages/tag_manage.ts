@@ -53,10 +53,7 @@ export const REQUIRED_BLOCKS = {
 
 const esc = (v: unknown): string => escapeHtml(String(v ?? ''));
 
-function msgOf(env: Envelope): string {
-  const d = env.data as Record<string, unknown>;
-  return String((d as { message?: unknown }).message ?? '');
-}
+function msgOf(env: Envelope): string { return String((env.data as { message?: unknown }).message ?? ''); }
 
 // 回执原文里的命令写法转成中文再上屏（原文完整保留在复制载荷里）。
 function visibleMsg(msg: string): string {
@@ -121,6 +118,8 @@ export function renderFamilyPage(env: Envelope): string {
 
   let mainSec = '';
   if (!tidy) {
+    // 标签名／件数／使用次数需数据：`home.tag.write op=overview` 只回「标签总览：N 个标签」一句，
+    // 信封不带逐标签明细，故三行值位保持「—」（不去改命令层）。
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
       + '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">—</div></div>'
       + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
@@ -131,6 +130,7 @@ export function renderFamilyPage(env: Envelope): string {
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
   } else {
+    // 相似度需数据：信封只带相近对（标签名对），相似度数值不在信封里，故各对保持「—」。
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对</h2>'
       + pairs.map((p, i) => {
         const ab = p.split('~');
@@ -155,23 +155,23 @@ export function renderFamilyPage(env: Envelope): string {
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + esc(tidy ? 'tidy' : 'overview') + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 标签</div>'
-    + '<div class="fp-title">' + esc(title) + '</div>'
+    + '<div class="fp-title">' + esc(tidy ? '逐对合并或忽略' : '改名、合并与新建标签') + '</div>'
     + '<p class="fp-lead">' + esc(leadText) + '</p>'
     + '<span class="fp-stage">当前：' + esc(modeName) + '</span></div>'
     + mainSec
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">合并</button>'
-    + '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>'
-    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>'
+    + (tidy ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '') // 总览回执不带未使用标签、页上那格写着没有：总览态不出「一键清理」（empty 块「无可清理标签时不出」）
+    + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-data\')">复制数据</button>'
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-log\')">复制日志</button>'
     + '</div>'
     + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
     + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：___\n  目标标签：___') + '</pre>'
-    + '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>'
-    + '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>'
+    + (tidy ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
+    + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>')
     + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
     + '<pre id="fp-tag-data" hidden>' + esc(dataText) + '</pre>'
     + '<pre id="fp-tag-log" hidden>' + esc(logText) + '</pre>'

@@ -143,7 +143,8 @@ export function renderFamilyPage(env: Envelope): string {
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-tag' + (it.routine ? '' : ' manual') + '">' + escapeHtml(it.sourceLabel) + '</span>'
         + '<span class="x-tag manual">' + escapeHtml(it.statusLabel) + '</span></div>'
-        + '<div class="x-note">数量 ' + it.quantity + (it.routine ? ' 周期 ' + escapeHtml(it.routine) : '') + '</div></div></div>').join('')
+        // #817：来源标注位已说「例行」，注里不再写「周期 例行」——同一事实两遍。
+        + '<div class="x-note">数量 ' + it.quantity + '</div></div></div>').join('')
       + '</div></section>';
     body += '<section><div class="x-actions">'
       + '<button class="x-btn" onclick="xCheck()">我买到了</button>'

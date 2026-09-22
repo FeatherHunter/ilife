@@ -96,9 +96,7 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast("已复制")},function(){fb(s)})}else{fb(s)}}'
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})})})();</script>';
 
-function dataText(records: number, items: number): string {
-  return '【盘点统计】盘点记录' + records + '条，库内物品' + items + '件';
-}
+function dataText(records: number, items: number): string { return '【盘点统计】盘点记录' + records + '条，库内物品' + items + '件'; }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
@@ -109,13 +107,17 @@ export function renderFamilyPage(env: Envelope): string {
   const records = typeof m.records === 'number' ? m.records : 0;
   const items = typeof m.items === 'number' ? m.items : 0;
   const head = '<div class="fam-head"><span class="fam-name" data-family="inventory_stat">统计总览</span><span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">盘点统计</span></div>';
-  const hero = '<div class="st st-hero"><span class="st-wake">盘点统计</span><p class="st-lead">已有' + records + '条盘点记录，覆盖库内' + items + '件物品</p></div>';
+  const inv = d.inventory ?? null;
+  // 摘要不复述两张卡的两个数（盘点记录条数／库内物品件数）：只说卡片里没有的差异口径结论。
+  const hero = '<div class="st st-hero"><span class="st-wake">盘点统计</span><p class="st-lead">'
+    + (records === 0 ? '还没有盘点记录，先完成首次盘点' : '最近一次盘点的差异按缺与多两项合计') + '</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>盘点记录</b><span>' + records + '</span><small>历史盘点条数</small></div>'
     + '<div class="st-card"><b>库内物品</b><span>' + items + '</span><small>盘点覆盖范围基数</small></div>'
     + '<div class="st-card"><b>有无数据</b><span>' + (records > 0 ? '有' : '无') + '</span><small>有没有盘点过</small></div></div>';
-  const sug = '<div class="st st-sug">' + (records > 0 ? '建议优先复查遗留差异，再补下一次盘点' : '先完成首次盘点，这里才会出现完成率与趋势') + '</div>';
-  const inv = d.inventory ?? null;
+  // 建议按缺＋多是否为 0 分支：遗留差异为 0 时不再让人去复查不存在的东西。
+  const gaps = inv ? inv.missing + inv.extra : 0;
+  const sug = '<div class="st st-sug">' + (records === 0 ? '先完成首次盘点，这里才会出现完成率与趋势' : gaps > 0 ? '建议优先复查遗留差异，再补下一次盘点' : '没有遗留差异要复查，可以直接补下一次盘点') + '</div>';
   const detail = records > 0
     ? '<div class="st st-sec"><h2 class="st-sec-t">盘点明细</h2>'
     + (inv ? '<div class="st-kv"><b>时间</b><span>' + escapeHtml(inv.date || '—') + '</span><b>范围</b><span>' + escapeHtml(inv.scope === '' || inv.scope === 'all' ? '全屋' : inv.scope === 'location' ? (inv.location || '按位置') : inv.scope) + '</span><b>缺少</b><span>' + inv.missing + ' 件</span><b>多余</b><span>' + inv.extra + ' 件</span><b>遗留差异</b><span>' + (inv.missing + inv.extra) + ' 件</span></div>'
@@ -125,13 +127,10 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我开始第一次盘点">复制首次盘点</button></div></div>';
   const trend = '<div class="st st-sec"><h2 class="st-sec-t">完成率与趋势 <span class="st-hint">待盘点</span></h2>'
     + '<div class="st-empty"><b>趋势数据不足</b>多盘点几次，完成率曲线与遗留差异总数会在这里成形</div></div>';
-  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(records, items)) + '">复制数据</button>'
-    + '<button class="st-btn soft" data-t="' + escapeHtml('场景：盘点统计与建议，唤醒词盘点统计；异常：无') + '">复制日志</button></div>';
-  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
-    + escapeHtml(JSON.stringify(env)) + '</pre></details>';
+  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(records, items)) + '">复制数据</button><button class="st-btn soft" data-t="' + escapeHtml('场景：盘点统计与建议，唤醒词盘点统计；异常：无') + '">复制日志</button></div>';
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>' + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
-    + sectionOf('fields', '字段') + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
+    + sectionOf('fields', '字段') + sectionOf('operations', '操作') + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
   const content = CSS + head + '<div class="fam-content st">' + hero + cards + sug + detail + trend + '</div>'
     + tail + raw + blocks
     + '<div class="st-toast" id="stToast"></div>' + JS;

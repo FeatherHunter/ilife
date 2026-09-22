@@ -172,6 +172,13 @@ function sensitiveBanner(): string {
   return '<div><p>说明页不展示明文，查看与复制均需二次确认</p></div>';
 }
 
+/** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
+ *  （本票已发现过两处同类：一页畸形标签让复选框链路恒空、一页少一个分号让整段脚本不解析）。
+ *  照仓内既有写法（`setup/pages/first_use_wizard.ts` 同款）给所有 `[data-t]` 挂 addEventListener；
+ *  载荷只有按钮自带的 data-t 文本，明文密码不在这条链上（密码红线不受影响）。 */
+const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
+  + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){copyText(b.getAttribute("data-t")||"");});});</script>';
+
 /** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动；
  *  清单表套横滑容器（长邮箱等会把表撑宽，容器内滑、不撑破文档）。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
@@ -192,6 +199,7 @@ export function renderFamilyPage(env: Envelope): string {
     + sensitiveBanner()
     + main
     + opsBlock()
+    + PAGE_SCRIPT
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

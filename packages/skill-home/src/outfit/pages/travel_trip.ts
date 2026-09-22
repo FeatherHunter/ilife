@@ -115,6 +115,8 @@ export function renderFamilyPage(env: Envelope): string {
     quantity: num(x.quantity) || 1, status: str(x.status),
     reason: str(x.reason), registered: x.registered !== false,
   } as TripItem));
+  // 预勾选按行内 status：库里已标「旅游中」的就是已经带出的那几件，进度数与汇总句同源，不各说各话。
+  const pre = items.filter((x) => x.status === '旅游中').length;
   const message = str((data as Record<string, unknown>).message);
   // 理由行去重：命令给的 reason 形如「<物品名>放在<位置>出发前核对」，名称与位置本行已经给过，
   // 页上只留它独有的那半句（「恢复在家」之类）；与卡片标题同字的通用句（「出发前核对」）不再渲染。
@@ -129,23 +131,20 @@ export function renderFamilyPage(env: Envelope): string {
     return tail === '出发前核对' ? '' : tail;
   };
 
-  const metrics = '<div class="of-metrics">'
-    + '<span>' + escapeHtml(tripType) + '</span>'
-    + '<span>' + days + '天</span>'
-    + '<span>清单' + items.length + '件</span>'
-    + '</div>';
+  const metrics = '<div class="of-metrics">' + '<span>' + escapeHtml(tripType) + '</span><span>' + days + '天</span>'
+    + '<span>清单' + items.length + '件</span></div>';
 
   let listHtml = '<div class="of-card"><h2>' + (mode === 'return' ? '归位确认' : '出发核对') + '</h2>'
-    + '<div id="ofProg">已装 0/' + items.length + ' 件</div>';
+    + '<div id="ofProg">已装 ' + pre + '/' + items.length + ' 件</div>';
   if (!items.length) {
     listHtml += '<div class="of-empty">' + (mode === 'return'
       ? '没有旅游中的物品，暂无待归位'
       : '清单为空，先从待选中挑选要带的衣物，或按行程规则生成后再来核对') + '</div>';
   } else {
-    listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
+    listHtml += items.map((x, i) => '<div class="of-line' + (x.status === '旅游中' ? ' on' : '') + '" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
       + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location.replace(/×\d+(\[[^\]]*\])?$/, '')) : '')
-      + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + '</td></tr></table>'
+      + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + (x.status ? '，' + escapeHtml(x.status) : '，—') + '</td></tr></table>'
       + '</div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'
       + (mode === 'return' ? '确认归位' : '确认带出') + '</button>'
@@ -156,7 +155,7 @@ export function renderFamilyPage(env: Envelope): string {
 
   const payload = JSON.stringify({ mode, tripType, days, items }).replace(/</g, '\\u003c');
   const js = '<script>'
-    + 'var TR=' + payload + ';var PICK={};'
+    + 'var TR=' + payload + ';var PICK={};TR.items.forEach(function(x,i){if(x.status==="旅游中")PICK[i]=1;});'
     + 'function trToast(m){var t=document.getElementById("trToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
     + 'function trCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){trToast("已复制");}).catch(function(){trToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");trToast("已复制");}catch(e){trToast("复制失败");}ta.remove();}}'
     + 'function trPaint(){var el=document.getElementById("ofProg");if(!el)return;var n=TR.items.filter(function(_,i){return PICK[i];}).length;'
@@ -169,7 +168,7 @@ export function renderFamilyPage(env: Envelope): string {
     + 'var go=document.getElementById("ofGo");if(go)go.onclick=function(){var p=TR.items.filter(function(_,i){return PICK[i];});'
     + 'if(!p.length){trToast("请先勾选物品");return;}'
     + 'if(TR.mode==="return"){var L=["归位确认：归位 "+p.length+"件恢复在家",""];p.forEach(function(x){L.push("归位："+x.name+"（放回"+(x.location||"原位")+"）");});trCopy(L.join("\\n"));return;}'
-    + 'var M=["带出确认：带出 "+p.length+"件标记旅游中",""];p.forEach(function(x){M.push("带出："+x.name+"（状态到旅游中）");});trCopy(M.join("\\n"));}'
+    + 'var M=["带出确认：带出 "+p.length+"件标记旅游中",""];p.forEach(function(x){M.push("带出："+x.name+"（状态到旅游中）");});trCopy(M.join("\\n"));};'
     + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){trCopy(JSON.stringify(TR.items,null,2));};'
     + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){trCopy("出行清单日志："+TR.tripType+TR.days+"天 "+TR.items.length+"件");};'
     + '</script>';

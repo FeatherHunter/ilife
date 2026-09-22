@@ -91,7 +91,9 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'function chipFilter(btn){document.querySelectorAll(".chip[data-t]").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");'
 + 'var t=btn.dataset.t;document.querySelectorAll(".ev").forEach(function(x){x.style.display=(t==="all"||x.dataset.t===t)?"":"none";});}'
 + 'function toggleDiff(id){var d=document.getElementById(id);if(d)d.style.display=(d.style.display==="block")?"none":"block";}'
-+ 'function undoEv(btn){var s=btn.dataset.s||"该操作";copyText("请加载「居家管家」技能,帮我撤销最近操作(唤醒词:撤销操作):\\n\\n  撤  销: "+s);}';
++ 'function undoEv(btn){var s=btn.dataset.s||"该操作";copyText("请加载「居家管家」技能,帮我撤销最近操作(唤醒词:撤销操作):\\n\\n  撤  销: "+s);}'
++ 'function typeCycle(){var cs=document.querySelectorAll(".chip[data-t]");if(!cs.length)return;var i=0;for(var k=0;k<cs.length;k++){if(cs[k].classList.contains("on")){i=k;break;}}var nx=cs[(i+1)%cs.length];chipFilter(nx);nx.scrollIntoView();}'
++ 'function histLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}copyText("物品历史｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜时间线共"+document.querySelectorAll(".ev").length+"条事件");}';
 
 interface HistEvent {
   type: string;
@@ -100,9 +102,7 @@ interface HistEvent {
   detail: string;
 }
 
-function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
-}
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 function typeLabel(t: string): string {
   if (t === 'create') return '录入';
@@ -128,6 +128,8 @@ function parseHistory(raw: string): HistEvent[] {
   });
 }
 
+const FIELD_NAME_DETAIL = /^(?:名称|分类|归属|价格|备注|照片|固定位)(?:、(?:名称|分类|归属|价格|备注|照片|固定位))*$/; // 「更新」事件的明细是字段名，属类型词，不当摘要用
+
 function summarize(type: string, detail: string): string {
   if (type === 'relate') {
     const m = detail.match(/^(\d+)\s*[:：]\s*(.+)$/);
@@ -135,7 +137,7 @@ function summarize(type: string, detail: string): string {
     return '建立关联' + detail;
   }
   if (type === 'create') return '位置' + (detail || '未记');
-  return detail === '' ? '—' : detail;
+  return detail === '' || FIELD_NAME_DETAIL.test(detail) ? '—' : detail;
 }
 
 function isLocationDetail(type: string, detail: string): boolean {
@@ -170,23 +172,21 @@ export function renderFamilyPage(env: Envelope): string {
       + '<div><button class="undoable" onclick="toggleDiff(\'ev' + i + '\')">展开详情</button>'
       + (e.type === 'undo'
         ? '<span class="pill">已撤销</span>'
-        : '<button class="undoable" data-s="' + escapeHtml(e.summary) + '" onclick="undoEv(this)">撤销此操作</button>')
+        : '<button class="undoable" data-s="' + escapeHtml(e.summary === '—' || e.summary === '' ? '第' + (i + 1) + '条 ' + e.label : e.summary) + '" onclick="undoEv(this)">撤销此操作</button>')
       + '</div></div>',
     ).join('')
     : '<div class="empty">暂无事件</div>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p>'
-    + '<p class="lead">' + (name !== '' ? '「' + escapeHtml(name) + '」的一生' : '物品历史') + '，时间倒序</p></div>'
+  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">' + (name !== '' ? '「' + escapeHtml(name) + '」的一生' : '物品历史') + '，时间倒序</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>位置轨迹</h2>' + trajHtml
-    + '<h2>时间线共' + events.length + '条</h2>'
-    + '<div class="chips">' + chips + '</div>'
+    + '<h2>时间线共' + events.length + '条</h2><div class="chips">' + chips + '</div>'
     + '<h2>事件条目</h2><div class="tl">' + timeline + '</div></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>本次事件类型</h2><div class="chips">' + typeTags + '</div></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" onclick="document.querySelector(\'.tl\').scrollIntoView()">类型筛选</button>'
+    + '<button class="btn ghost" onclick="typeCycle()">类型筛选</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
+    + '<button class="btn ghost" onclick="histLog()">复制日志</button>'
     + '</div></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'

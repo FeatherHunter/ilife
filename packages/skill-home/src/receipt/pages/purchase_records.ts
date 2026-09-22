@@ -69,38 +69,40 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
-/** 逐笔行与年度统计行的判别：逐笔行 `items[].name` 形如「购买2026-08-15」。摘要与表两处共用这一份。 */
+/** 逐笔行与年度统计行的判别：逐笔行 `items[].name` 形如「购买2026-08-15」，年度统计行是「年度花费」。 */
 function isDatedRows(items: Record<string, unknown>[]): boolean {
   return items.some((it) => /^购买/.test(String(it.name ?? '')));
 }
 
-function summaryOf(env: Envelope): string {
-  const data = env.data as Record<string, unknown>;
-  // 回执形：回执卡已说「已登记购买：编号」，这里再复述一遍就是同一事实说两遍；
-  // 日期／价格／渠道不在信封里，故本页摘要位留空（不编值）。
-  if (env.shape === 'receipt') return '';
-  const items = Array.isArray((data as { items?: unknown }).items)
-    ? (data as { items: unknown[] }).items
-    : [];
-  if (!items.length) {
-    return '<div class="receipt-summary"><p>暂无记录，可新增一条购买记录后回来复核</p></div>';
-  }
-  // 年度统计行那张表里已经有金额列了，摘要就别再说「金额在物品详情」（同页两处相左）。
-  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日先后列出'
-    + (isDatedRows(items as Record<string, unknown>[]) ? '（金额与渠道在物品详情）' : '（渠道在物品详情）') + '</p></div>';
+function itemsOf(env: Envelope): Record<string, unknown>[] {
+  const d = env.data as { items?: unknown };
+  return Array.isArray(d.items) ? (d.items as Record<string, unknown>[]) : [];
 }
 
-/** 记录表：行值只从信封取。逐笔行 `items[].name` 形如「购买2026-08-15」，信封不带价格与渠道，
- *  只列购买日；年度统计行取 `items[].count`（年度合计），列头按金额。 */
-function purchaseTable(env: Envelope): string {
-  const data = env.data as Record<string, unknown>;
-  const items = Array.isArray((data as { items?: unknown }).items) ? (data as { items: Record<string, unknown>[] }).items : [];
+function summaryOf(env: Envelope, items: Record<string, unknown>[]): string {
+  // 回执形（回执卡已说编号）／空态（改由内容位渲染）／年度统计行（行标签已说年度合计）：摘要位都不写句。
+  if (env.shape === 'receipt' || !items.length || !isDatedRows(items)) return '';
+  // 表里只有序号与购买日两列，日期由表列排出；摘要只说行数与其余字段的去处，不声称排序方向。
+  return '<div class="receipt-summary"><p>本次清单共' + items.length + '行，按购买日排列（金额与渠道在物品详情）</p></div>';
+}
+
+/** 记录表：行值只从信封取。逐笔行 `items[].name` 形如「购买2026-08-15」，信封不带价格与渠道，只列购买日；
+ *  年度统计行取 `items[].count`，行标签带上信封里「年度花费」这个语义（不印裸数字），故不带序号列。
+ *
+ *  需数据（本票裁决：命令层只登记、不回写实现，故本件不改 `src/receipt/ticket.ts`，只把这些缺口登记在此）：
+ *  ① 逐笔行只有序号与购买日——价格／渠道／分类统计缺。行由 `src/receipt/ticket.ts:40` 组出，
+ *     当前只带 `{name, count}`；需命令层补字段：price（价格）、channel（渠道）、category（分类名）。
+ *  ② 「分类统计（分类／笔数／金额）」整块缺；需命令层补聚合行的字段：category、count、amount。
+ *  ③ 年度行只有总额（`src/receipt/ticket.ts:32` 只给 `{name:'年度花费', count: total}`）；
+ *     需命令层补字段：year（年份），以及按分类的聚合 category、count、amount。 */
+function purchaseTable(env: Envelope, items: Record<string, unknown>[]): string {
   if (env.shape === 'receipt' || !items.length) return '';
-  const dated = isDatedRows(items);
-  const cols = dated ? '<th>序号</th><th>购买日</th>' : '<th>序号</th><th>金额</th>';
-  const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(dated
-    ? String(it.name ?? '').replace(/^购买/, '') : (typeof it.count === 'number' ? String(it.count) : '—')) + '</td></tr>').join('');
-  return '<div class="fam-content"><table><thead><tr>' + cols + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  if (!isDatedRows(items)) {
+    const money = typeof items[0].count === 'number' ? String(items[0].count) + ' 元' : '—';
+    return '<div class="fam-content"><table><tbody><tr><th>年度合计</th><td>' + escapeHtml(money) + '</td></tr></tbody></table></div>';
+  }
+  const rows = items.map((it, i) => '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(String(it.name ?? '').replace(/^购买/, '')) + '</td></tr>').join('');
+  return '<div class="fam-content"><table><thead><tr><th>序号</th><th>购买日</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 /** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；补一行入口后
@@ -117,19 +119,31 @@ function opsBlock(): string {
     + '<button type="button" data-t="复制购买记录日志">复制日志</button></div>';
 }
 
+/** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
+ *  （本票已发现过两处同类：一页畸形标签让复选框链路恒空、一页少一个分号让整段脚本不解析）。
+ *  照仓内既有写法（`setup/pages/first_use_wizard.ts` 同款）给所有 `[data-t]` 挂 addEventListener。 */
+const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
+  + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){copyText(b.getAttribute("data-t")||"");});});</script>';
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/receipt/purchase_records.html', import.meta.url), 'utf8');
   const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
     + '<span>购买记录</span></div>';
+  const items = itemsOf(env);
+  // 空态由内容位渲染：摘要位不留空态句，data-block 标记照旧在位。
+  const main = env.shape === 'receipt'
+    ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
+    : items.length
+      ? purchaseTable(env, items)
+      : '<div class="fam-content" data-block="empty"><p>本次查询没有命中购买记录，可先登记一条再回来复核</p></div>';
   const content = head
-    + summaryOf(env)
-    + (env.shape === 'receipt'
-      ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
-      : purchaseTable(env))
+    + summaryOf(env, items)
+    + main
     + PAGE_CSS
     + opsBlock()
+    + PAGE_SCRIPT
     + sectionOf('fields', '字段')
     + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常')

@@ -11,8 +11,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-1-记录做菜回执.html",
     "exit": 0,
-    "bytes": 100385,
-    "sha256": "30aa569e31fb72ccdc91282b756d01a649c5ad183851e30e10dafca425cb050e"
+    "bytes": 106353,
+    "sha256": "70fb71b41f6fbc7da24b0d749ad7a5186ef694a00a417a7ec9de5847b79edcaf"
   },
   {
     "卡id": "hist-2",
@@ -23,8 +23,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-2-历史时间线.html",
     "exit": 0,
-    "bytes": 101932,
-    "sha256": "3478f28675936ac2a0772fda9ccd3209b7a83816aee8f3818c1f8bcf4a386315"
+    "bytes": 107900,
+    "sha256": "a4cef31b0205680f42b443c0ff5fb7a14344586dea8468e9ac33ddef4a0069d4"
   },
   {
     "卡id": "hist-3",
@@ -36,8 +36,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-3-单菜统计.html",
     "exit": 0,
-    "bytes": 99602,
-    "sha256": "1666b531932231968c6f001a7cd886a755e6bd9939c0fe09da2f2dfaa0d32f39"
+    "bytes": 105570,
+    "sha256": "83f346c285dd392ac6daefb3b97ff92f98c76a54a223e2cf89e45bc7cedfb796"
   },
   {
     "卡id": "hist-4",
@@ -48,7 +48,7 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t775\\hist-4-全局统计.html",
     "exit": 0,
-    "bytes": 100172,
-    "sha256": "d9da475666cc9f39092fe20f6f01544f6c2854c1346bbbd1cf63142c4527a405"
+    "bytes": 106140,
+    "sha256": "1ff5e8e76732af8b5ce45b6bc24359cfa31ddca315eb89c28336ee145ffafc73"
   }
 ]

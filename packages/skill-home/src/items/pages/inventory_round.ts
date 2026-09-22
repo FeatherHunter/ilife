@@ -100,7 +100,8 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'if(kind==="extra")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  清单外物品: ______");'
 + 'else if(kind==="save")copyText("请加载「居家管家」技能,帮我继续盘点(唤醒词:盘点):\\n\\n  记  录: "+rec+"\\n  范  围: "+scope);'
 + 'else if(kind==="commit")copyText("请加载「居家管家」技能,帮我完成盘点(唤醒词:盘点):\\n\\n  记  录: "+rec+"\\n  在: ______\\n  不在: ______\\n  不确定: ______");'
-+ 'else if(kind==="records")copyText("请加载「居家管家」技能,帮我查看盘点记录(唤醒词:盘点记录):");}';
++ 'else if(kind==="records")copyText("请加载「居家管家」技能,帮我查看盘点记录(唤醒词:盘点记录):");}'
++ 'function roundLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var g=function(i){return document.getElementById(i).textContent;};copyText("盘点｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜记录"+g("recid")+"｜范围"+g("scope")+"｜清单"+g("total"));}';
 
 function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
@@ -129,22 +130,21 @@ export function renderFamilyPage(env: Envelope): string {
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>范围</h2>'
     + '<dl class="kv"><dt>盘点范围</dt><dd id="scope">' + escapeHtml(round.scope) + '</dd>'
     + '<dt>所属记录</dt><dd>记录<span id="recid">' + escapeHtml(round.id) + '</span></dd>'
-    + '<dt>清单规模</dt><dd>共' + escapeHtml(round.total) + '条位置记录</dd></dl></section>'
-    + '<section class="sec"><h2>上次待复查置顶</h2>'
-    + '<div class="empty">—</div>'
+    + '<dt>清单规模</dt><dd id="total">共' + escapeHtml(round.total) + '条位置记录</dd></dl></section>'
+    + '<section class="sec"><h2>上次待复查置顶</h2><div class="empty">—</div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'records\')">查看盘点记录</button></div></section>'
-    + '<section class="sec"><h2>核对清单</h2>'
-    + (empty ? '<div class="empty">范围内没有物品</div>' : '<div class="empty">—</div>')
+    + '<section class="sec"><h2>核对清单</h2>' + (empty ? '<div class="empty">范围内没有物品</div>' : '<div class="empty">—</div>')
     + '<h3>三态判定</h3><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">在</button>'
     + '<button class="tri" data-v="不在" onclick="setTri(this)">不在</button>'
     + '<button class="tri" data-v="不确定" onclick="setTri(this)">不确定</button></div>'
     + '<div class="frow">状态修正:<select><option>状态不变</option><option>在家</option><option>备用</option><option>借用中</option><option>维修中</option><option>找不到</option><option>已废弃</option></select></div>'
+    + '<div class="frow">数量修正:<input type="number" placeholder="数量修正选填"></div>'
     + '<div class="frow">新位置:<input placeholder="新位置选填"></div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'extra\')">发现清单外物品</button>'
     + '<button class="btn ghost" onclick="roundCmd(\'save\')">保存进度</button>'
     + '<button class="btn green" onclick="roundCmd(\'commit\')">确认提交含差异</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button></div></section>'
+    + '<button class="btn ghost" onclick="roundLog()">复制日志</button></div></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '" hidden></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'

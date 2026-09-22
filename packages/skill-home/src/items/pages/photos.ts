@@ -91,13 +91,9 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'copyText(L.join("\\n"));}'
 + 'function chipType(btn){document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");}';
 
-function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
-}
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
-function num(v: unknown): number | null {
-  return typeof v === 'number' && Number.isInteger(v) ? v : null;
-}
+function num(v: unknown): number | null { return typeof v === 'number' && Number.isInteger(v) ? v : null; }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
@@ -112,7 +108,9 @@ export function renderFamilyPage(env: Envelope): string {
   const name = str(item.name);
   const photo = str((item as Record<string, unknown>).photo);
   const message = str((data as Record<string, unknown>).message);
-  const idText = id === null ? '—' : String(id);
+  // 管理态（改物品 op=photo）信封只带回执「已更新照片：N」：编号照回执接真值，
+  // 名称／位置／数量／分类／标签需数据（信封无物品明细），保持「—」。
+  const idText = id === null ? (manage ? message.match(/[：:]\s*(\d+)/)?.[1] ?? '—' : '—') : String(id);
 
   const kvRows = [
     ['名称', name || '—'],

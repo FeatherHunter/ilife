@@ -171,7 +171,9 @@ export function renderFamilyPage(env: Envelope): string {
     + 'var ad=document.getElementById("ofAdopt");if(ad)ad.onclick=function(){var p=TP.plans[DAYI];if(!p)return;'
     + 'var L=["旅行穿搭确认：采纳第"+p.day+"天（"+p.style+"）",""];'
     + '["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=p.slots[k];if(c)L.push("穿搭："+c.name+"（标记使用）");});tpCopy(L.join("\\n"));}'
-    + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){tpCopy(JSON.stringify(TP.plans[DAYI]||{},null,2));};'
+    // 上面这个 `}` 收的是 `function(){…}`；**必须**跟一个 `;`——整段脚本是一行拼出来的，
+    // 没有换行，ASI 不会补分号，缺了它整段脚本不解析、页上按钮与勾选全死（同 travel_trip 那处）。
+    + ';var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){tpCopy(JSON.stringify(TP.plans[DAYI]||{},null,2));};'
     + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){tpCopy("旅行穿搭日志：第"+(TP.plans[DAYI]||{}).day+"天");};'
     + 'var lg=document.getElementById("ofLug");if(lg)lg.onclick=function(){tpCopy("请生成出行行李清单，行程类型旅行天数"+TP.plans.length+"天。计划涉及衣物"+TP.luggage.map(function(x){return x.name;}).join(" "));};'
     + '</script>';

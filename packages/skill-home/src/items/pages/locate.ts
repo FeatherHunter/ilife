@@ -117,15 +117,15 @@ export function renderFamilyPage(env: Envelope): string {
     + '</td><td>' + escapeHtml(String(c.location ?? ''))
     + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('');
   const content = PAGE_CSS
-    + '<p class="greet">紧急定位只看第一件，照片名称编号位置数量状态都在置顶卡片里。</p>'
+    + '<p class="greet">紧急定位只看第一件，名称编号位置数量状态都在置顶卡片里。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>置顶</h2>' + top + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>其余候选</h2>'
     + (rest === ''
       ? '<p>没有其余候选。</p>'
       : '<div class="wrap-x"><table class="kv"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
     + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2>'
-    + '<p>置顶卡片里那格写的是这件物品现在的状态。</p></section>'
+    // 状态块：置顶卡片里已经有「状态」格（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('我找到了', '请加载居家管家技能，我找到了这件物品', false)
     + op('分享位置', '请加载居家管家技能，帮我分享这件物品的位置', true)

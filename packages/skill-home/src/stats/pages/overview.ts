@@ -113,8 +113,7 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'document.querySelectorAll("[data-bar]").forEach(function(r){r.addEventListener("click",function(){cp(r.getAttribute("data-bar"))})});})();</script>';
 
 function dataText(m: Record<string, number>): string {
-  return '【物品总览】件数' + (m.items ?? 0) + '，位置点' + (m.locations ?? 0)
-    + '，标签' + (m.tags ?? 0) + '个，分类' + (m.categories ?? 0) + '个';
+  return '【物品总览】件数' + (m.items ?? 0) + '，位置点' + (m.locations ?? 0) + '，标签' + (m.tags ?? 0) + '个，分类' + (m.categories ?? 0) + '个';
 }
 function logText(): string {
   return '场景：物品总览，唤醒词统物品；数据：物品与位置聚合只读；渲染：统计总览页族装配；异常：无';
@@ -130,10 +129,11 @@ export function renderFamilyPage(env: Envelope): string {
   const tops = Object.entries(m).filter(([k]) => k.startsWith('top.'))
     .map(([k, v]) => ({ name: k.slice(4), count: v })).sort((a, b) => b.count - a.count);
   const topMax = tops.length ? Math.max(...tops.map((t) => t.count), 1) : 1;
-  const head = '<div class="fam-head"><span class="fam-name" data-family="overview">统计总览</span>'
-    + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">统物品</span></div>';
-  const hero = '<div class="st st-hero"><span class="st-wake">统物品</span>'
-    + '<p class="st-lead">家底一览：共' + n('items') + '件物品，' + n('categories') + '个分类，' + n('locations') + '个位置点，' + n('tags') + '个标签</p></div>';
+  const head = '<div class="fam-head"><span class="fam-name" data-family="overview">统计总览</span><span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">统物品</span></div>';
+  // 摘要不复述五张卡的数字：只说卡片里没有的结论（价格是否补全），覆盖率数字留给价值排行那块。
+  const lead = n('items') === 0 ? '还没有物品，先录入第一批物品'
+    : (n('price.cover') >= 100 ? '价格已经补全，总价与价值排行覆盖全部物品' : '还有物品没补价，总价与价值排行只算得上已经有价格的那部分');
+  const hero = '<div class="st st-hero"><span class="st-wake">统物品</span><p class="st-lead">' + lead + '</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>物品条数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
     + '<div class="st-card"><b>物品总件数</b><span>' + n('quantity') + '</span><small>按数量合计</small></div>'
@@ -146,10 +146,8 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="st-num">' + t.count + '次</div></div>').join('')
     : '<div class="st-empty"><b>还没有访问记录</b>多看看几件物品，这里就会出现高频排行</div>';
   const freq = '<div class="st st-sec"><h2 class="st-sec-t">高频排行</h2>'
-    + '<div class="st-legend"><span><i style="background:#0a63d6"></i>柱长代表访问次数，点一行复制筛选浏览指令</span></div>'
-    + freqRows + '</div>';
-  const dist = (t: string, ctx: string, cmd: string) => '<div class="st-row"><div class="st-name">' + t
-    + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">复制指令</button></div></div>';
+    + '<div class="st-legend"><span><i style="background:#0a63d6"></i>柱长代表访问次数，点一行复制筛选浏览指令</span></div>' + freqRows + '</div>';
+  const dist = (t: string, ctx: string, cmd: string) => '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">复制指令</button></div></div>';
   const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">无逐维明细</span></h2>'
     + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量')
     + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量')
@@ -158,21 +156,23 @@ export function renderFamilyPage(env: Envelope): string {
   const vals = Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v })).sort((a, b) => b.price - a.price);
   const valMax = vals.length ? Math.max(...vals.map((t) => t.price), 1) : 1;
   const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name)) + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div><div class="st-num">' + t.price + ' 元</div></div>').join('');
-  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行 <span class="st-hint">' + (vals.length ? '有价格' + n('price.covered') + '件，合计' + n('price.total') + '元' : '无价格数据') + '</span></h2>'
+  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行 <span class="st-hint">价格覆盖率' + n('price.cover') + '%'
+    + (vals.length ? '，有价格' + n('price.covered') + '件，合计' + n('price.total') + '元' : '') + '</span></h2>'
     + (vals.length ? valRows + '<div class="st-actions"><button class="st-btn soft" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div>' : '<div class="st-empty"><b>还没有价格数据</b>给物品补上价格后，这里会出现价值排行'
       + '<div class="st-actions center"><button class="st-btn" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div></div>') + '</div>';
   const empty = n('items') === 0 ? '<div class="st st-empty"><b>还没有物品</b>录入第一批物品后，这里就是你的家底总览'
     + '<div class="st-actions center"><button class="st-btn pri" data-t="帮我录入第一批物品">复制初始化</button></div></div>' : '';
-  const sug = '<div class="st st-sug">家底已有' + n('items') + '件物品'
-    + (tops.length ? '，最常看的是' + escapeHtml(latinFree(tops[0].name)) : '') + '</div>';
-  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
-    + escapeHtml(JSON.stringify(env)) + '</pre></details>';
-  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button>'
-    + '<button class="st-btn soft" data-t="' + escapeHtml(logText()) + '">复制日志</button></div>';
-  const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
-    + sectionOf('fields', '字段') + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
-  const content = CSS + head + '<div class="fam-content st">' + hero + cards + empty + freq + dists + more + sug + '</div>'
+  // 建议不复述卡片数字（条数／位置数／最常看的名字都在卡片里）：只说按排行能做什么。
+  const sug = '<div class="st st-sug">' + (tops.length
+    ? '访问热度已经攒下来，按高频排行把常用品固定到顺手的位置，闲置久了的顺路清理'
+    : '多让助手查几次物品详情，高频排行才攒得出数据') + '</div>';
+  // 趋势块（票 #865 归数字）：本票只把块与诚实空态放出来，不编趋势数。
+  const trend = '<div class="st st-sec"><h2 class="st-sec-t">趋势 <span class="st-hint">近30天变动</span></h2>'
+    + '<div class="st-empty"><b>趋势数据不足</b>库内还没有足量的变更记录，攒够之后这里给近30天的变动曲线</div></div>';
+  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>' + escapeHtml(JSON.stringify(env)) + '</pre></details>';
+  const tail = '<div class="st-actions"><button class="st-btn" data-t="' + escapeHtml(dataText(m)) + '">复制数据</button><button class="st-btn soft" data-t="' + escapeHtml(logText()) + '">复制日志</button></div>';
+  const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>' + sectionOf('fields', '字段') + sectionOf('operations', '操作') + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
+  const content = CSS + head + '<div class="fam-content st">' + hero + cards + empty + freq + dists + more + trend + sug + '</div>'
     + tail + raw + blocks
     + '<div class="st-toast" id="stToast"></div>' + JS;
   return fillTemplate(template, content);

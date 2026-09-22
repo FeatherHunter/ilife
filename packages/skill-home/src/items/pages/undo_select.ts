@@ -65,6 +65,7 @@ function eventCn(raw: string): string {
   if (t === 'backup') return '备份';
   if (t === 'import') return '导入';
   if (t === 'borrow') return '借用登记';
+  if (t === 'qty') return '数量变更';
   return '其他操作';
 }
 
@@ -122,18 +123,16 @@ export function renderFamilyPage(env: Envelope): string {
       + '<div class="fp-ev-sum"><b>' + esc(evName) + '（第 ' + esc(evId) + ' 条记录）</b>'
       + '<div class="fp-ev-meta">物品台账事件 · <span class="fp-pill">' + esc(evName) + '</span></div></div></div>'
       + '<div class="fp-warnbox">撤销录入会连带删除该物品的位置与标签记录，撤销只有一次机会</div>'
-      + '<div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">确认撤销勾选项</button></div>'
+      + '<p class="fp-warnbox" id="fp-undo-hint" hidden>请先勾选要撤销的操作</p><div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">确认撤销勾选项</button></div>'
     : '<p class="fp-empty">暂无可撤销操作，先去做一次录入或者更新再来</p>';
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
     + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 撤销</div>'
     + '<div class="fp-title">撤销最近操作</div>'
-    + '<p class="fp-lead">刚才做错了就勾选撤销，一次只撤销还没有撤过的记录</p>'
     + '<span class="fp-stage">选择页</span></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">可撤销操作</h2>' + evBlock
-    + '<p class="fp-note">回执登记的是第 ' + esc(evId || '零') + ' 条记录，类型为' + esc(evName || '暂无') + '</p>'
-    + '<p class="fp-note">没有勾选就点确认时，会提示先勾选要撤销的操作</p></section>'
+    + '<p class="fp-note">没有勾选就点确认时，页上会给出先勾选的拦截提示</p></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">通用操作分组</h2>'
     + '<div class="fp-groupline">录入更新类：录入、更新、移动位置、数量与状态变更</div>'
     + '<div class="fp-groupline">关系类：物品关联、合并物品</div>'
@@ -143,7 +142,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-undo-data\')">复制数据</button>'
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-undo-log\')">复制日志</button>'
     + '</div>'
-    + '<script>function copyUndoSelected(){var ids=[];document.querySelectorAll(\'.fp-ev-on\').forEach(function(x){ids.push(x.getAttribute(\'data-ev\'));});var t=ids.length?(\'请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\\n\\n  撤销：事件\'+ids.join(\'、\')):\'请先勾选要撤销的操作\';if(navigator.clipboard){navigator.clipboard.writeText(t);}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');ta.remove();}}</script>'
+    + '<script>function copyUndoSelected(){var ids=[];document.querySelectorAll(\'.fp-ev-on\').forEach(function(x){ids.push(x.getAttribute(\'data-ev\'));});var hint=document.getElementById(\'fp-undo-hint\');if(!ids.length){if(hint){hint.hidden=false;}return;}if(hint){hint.hidden=true;}var t=\'请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\\n\\n  撤销：事件\'+ids.join(\'、\');if(navigator.clipboard){navigator.clipboard.writeText(t);}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');ta.remove();}}</script>'
     + '<pre id="fp-undo-data" hidden>' + esc(dataText) + '</pre>'
     + '<pre id="fp-undo-log" hidden>' + esc(logText) + '</pre>'
     + needs()

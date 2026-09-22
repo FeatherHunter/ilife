@@ -84,10 +84,11 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 
 const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
 + 'function toggleDetail(btn){var d=btn.parentNode.previousElementSibling;if(d&&d.classList.contains("detail"))d.style.display=(d.style.display==="block")?"none":"block";}'
-+ 'function recCmd(btn,kind){var id=btn.dataset.r||"";'
++ 'function recCmd(btn,kind){var id=btn.dataset.r||"";var sc=btn.dataset.sc||"全屋";'
 + 'if(kind==="diff")copyText("请加载「居家管家」技能,帮我处理盘点差异(唤醒词:差异处理):\\n\\n  记  录: 记录"+id+"(先查看该记录缺多异清单,再逐项处理)");'
-+ 'else if(kind==="re")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: 全屋\\n  重点: 上次盘点记录"+id+"缺的件,请重点核对是否找到");'
-+ 'else if(kind==="start")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: ______");}';
++ 'else if(kind==="re")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: "+sc+"\\n  重点: 上次盘点记录"+id+"缺的件,请重点核对是否找到");'
++ 'else if(kind==="start")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: ______");}'
++ 'function recLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var xs=[];document.querySelectorAll(".rec").forEach(function(r){var nm=r.querySelector(".nm");var pill=r.querySelector(".pill");xs.push((nm?nm.textContent:"")+(pill?"("+pill.textContent+")":""));});copyText("盘点记录｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜共"+xs.length+"条"+(xs.length?"｜"+xs.join("、"):""));}';
 
 interface RecRow {
   id: string;
@@ -95,9 +96,7 @@ interface RecRow {
   total: number;
 }
 
-function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
-}
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 // 信封条目形如“盘点#1 全屋”＋count＝规模：解析记录号、范围与规模。
 // 范围词中文化（all→全屋，location→按位置；机审英文裸词行零容忍，原文只进数据原文）。
@@ -120,6 +119,7 @@ export function renderFamilyPage(env: Envelope): string {
   const rawItems = Array.isArray(data.items) ? (data.items as Record<string, unknown>[]) : [];
   const rows: RecRow[] = rawItems.map((c) => parseRow(str(c.name), c.count));
 
+  // 发生时间／记录状态需数据：信封只带记录号、范围与规模（时间与差异计数由命令侧增补），两格保持「—」。
   const cards = rows.map((r) =>
     '<div class="rec"><div class="top"><span class="nm">记录' + escapeHtml(r.id) + '</span>'
     + '<span class="pill">' + escapeHtml(r.scope) + '</span>'
@@ -129,15 +129,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '<div class="detail">记录' + escapeHtml(r.id) + '缺— 多— 异— 待确认—</div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">展开详情</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">处理差异</button>'
-    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'re\')">复查</button>'
+    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" data-sc="' + escapeHtml(r.scope) + '" onclick="recCmd(this,\'re\')">复查</button>'
     + '</div></div>',
   ).join('');
 
   const body = rows.length > 0 ? cards : '<div class="empty">还没有盘点记录</div>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p>'
-    + '<p class="lead">留痕与复查闭环，缺件下次置顶</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>历史盘点共' + rows.length + '条</h2>'
+  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">留痕与复查闭环，缺件下次置顶</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>历史盘点共' + (typeof data.total === 'number' ? data.total : rows.length) + '条</h2>'
     + body
     + '<h2>差异计数</h2><p class="lead">缺— 多— 异— 待确认—</p></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>状态取值</h2>'
@@ -145,7 +144,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow two"><button class="btn ghost" onclick="recCmd(this,\'start\')">开始盘点</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
+    + '<button class="btn ghost" onclick="recLog()">复制日志</button>'
     + '</div></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'

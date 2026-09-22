@@ -63,9 +63,7 @@ interface ManageDetail {
   action?: string; subject?: string;
 }
 
-function attr(s: string): string {
-  return escapeHtml(s).replace(/"/g, '&quot;');
-}
+function attr(s: string): string { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
 /** 复制提示词按钮（载荷进 `data-t`，审计只读中文标签）。 */
 function copyBtn(prompt: string, label: string, need: string, ghost: boolean): string {
@@ -87,11 +85,11 @@ function treeCard(nodes: LocNode[]): string {
   }
   const rows = nodes.map((n) => {
     const indent = (n.depth - 1) * 22;
-    // 次行用面包屑式呈现（› 连接）：与相似卡片里的原始路径串不同串，不互撞重复句；
-    // 多级路径的可读形式（状态块“位置路径多级”的视觉落点），原始串留 data-t。
+    // 次行用面包屑式呈现（› 连接）；单段路径的主名与路径同串，只在多级（depth>1）时才印这一截。
     const crumb = n.path.split('/').join(' › ');
+    const sub = n.depth > 1 ? '<span class="sub">' + escapeHtml(crumb) + '</span>' : '';
     const cell = '<span class="infc"><span class="nm' + (n.empty ? ' isempty' : '') + '">'
-      + escapeHtml(n.name) + '</span><span class="sub">' + escapeHtml(crumb) + '</span></span>';
+      + escapeHtml(n.name) + '</span>' + sub + '</span>';
     const ct = '<span class="ct">' + (n.empty ? '空位置' : n.count + '件') + '</span>';
     const renamePrompt = '请加载「居家管家」技能，帮我改名位置：\n源位置：「' + n.path + '」\n新名称：待填写';
     const delPrompt = '请加载「居家管家」技能，帮我删除位置：\n位置：「' + n.path + '」';
@@ -126,18 +124,19 @@ function similarCard(groups: SimilarGroup[]): string {
     + body + '</section>';
 }
 
+// 表单面板＝页面里与卡片同级的一块（h1→h2，故用 section.card ＋ h2）；「关闭」＝收起本面板（#817 复评 seq 30）。
 function formPanel(): string {
-  return '<div class="panel" id="formPanel" data-mode="create" data-block="fields">'
-    + '<h3 data-need="新建位置">新建位置</h3>'
+  return '<section class="card" id="formPanel" data-mode="create" data-block="fields">'
+    + '<h2 data-need="新建位置">新建位置</h2>'
     + '<div class="fp-row" data-need="源位置表单"><label>源位置</label>'
-    + '<input id="fpSrc" readonly placeholder="改名时由行内按钮填入"></div>'
+    + '<input id="fpSrc" readonly placeholder="—"></div>'
     + '<div class="fp-row" data-need="新位置路径表单"><label>新位置路径</label>'
     + '<input id="fpMain" placeholder="如：客厅电视柜，支持多级"></div>'
     + '<div class="fp-preview" id="fpPreview"></div>'
     + '<div class="fp-actions" data-block="operations">'
     + '<button class="btn" id="fpCopy" data-need="复制prompt">复制提示词</button>'
-    + '<button class="btn ghost" id="fpClose" data-need="关闭">关闭</button>'
-    + '</div></div>';
+    + '<button class="btn ghost" id="fpClose" data-need="关闭" onclick="var p=document.getElementById(&quot;formPanel&quot;);if(p)p.hidden=true">关闭</button>'
+    + '</div></section>';
 }
 
 function actionsBar(env: Envelope): string {

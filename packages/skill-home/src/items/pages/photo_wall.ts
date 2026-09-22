@@ -1,6 +1,7 @@
 // items能力·photo_wall真页面（#808 域票填内容，5-3 照片墙）。
 //
 // 信息结构对齐老 `物品/photo_wall.html`：分组＋照片网格＋补拍引导，网格墙版式。
+// 按位置分组的墙直接挂在「分组」标题下（这些墙就是照片网格，块名留 data-need 追溯）；类型 chips 归「照片类型」块。
 // 信封只带条目卡（无二进制图）：格面只写名称（位置由分组标题承担），点图复制详情 prompt。
 // 必需块原文＝契约附录：含拉丁字符的块（补充态：还有N件无照片→去补拍、
 // 点图复制详情prompt）只进 data-need 属性，其余块进真实 UI。
@@ -91,8 +92,8 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'else if(kind==="add")L.push("", "  动  作: 给没照片的物品补拍","","【照片即将发送:】");'
 + 'copyText(L.join("\\n"));}'
 + 'function chipType(btn){document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");'
-+ 'var t=btn.textContent;var hint=document.getElementById("typehint");'
-+ 'if(hint)hint.style.display=(t==="全部")?"none":"block";}';
++ 'var t=btn.textContent;var hint=document.getElementById("typehint");if(hint)hint.style.display=(t==="全部")?"none":"block";}'
++ 'function wallLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}copyText("照片墙｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜共"+document.querySelectorAll(".tile").length+"张照片｜"+document.querySelectorAll(".wall").length+"个位置分组");}';
 
 interface WallCard {
   id: number;
@@ -101,9 +102,7 @@ interface WallCard {
   qty: number;
 }
 
-function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
-}
+function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 function groupOf(loc: string): string {
   const s = str(loc).split('×')[0].split('[')[0].trim();
@@ -145,22 +144,23 @@ export function renderFamilyPage(env: Envelope): string {
     : '<div class="empty">没有带照片的物品</div>';
   const typeHint = '<p class="lead" id="typehint" style="display:none">该类型下暂无照片</p>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p>'
-    + '<p class="lead">回忆式浏览，按位置分组，共' + total + '张</p></div>'
+  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">回忆式浏览，按位置分组，共' + total + '张</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
-    + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
-    + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
-    + '</div>' + typeHint
-    + '<h2>照片网格</h2>' + bodyWall
-    + '<h2>无照片件数</h2><div class="warnbox">— 件无照片<button class="btn ghost" onclick="wallCmd(\'add\')">去补拍</button></div>'
+    + bodyWall
+    + '<p class="lead">点图复制该物品的详情查看话术</p>'
+    // 无照片件数需数据：信封只带带照片的墙体件（search 侧已滤掉无照片件），全库件数不在信封里；
+    // 算不出就写「—」，值为 0 或拿不到时不出「去补拍」那颗按钮。
+    + '<h2>无照片件数</h2><div class="warnbox">—</div>'
     + '</section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>照片类型</h2>'
-    + '<p class="lead">点图复制该物品的详情查看话术</p></section>'
+    + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
+    + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
+    + '</div>' + typeHint + '</section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
     + '<button class="btn ghost" onclick="wallCmd(\'loc\')">按位置浏览</button>'
     + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制数据</button>'
-    + '<button class="btn ghost" onclick="copyText(document.getElementById(\'raw\').innerText)">复制日志</button>'
+    + '<button class="btn ghost" onclick="wallLog()">复制日志</button>'
     + '</div></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'

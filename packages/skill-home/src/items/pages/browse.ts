@@ -66,9 +66,7 @@ const PAGE_CSS = '<style>'
   + '@media(max-width:480px){.kv th{white-space:normal}}'
   + '</style>';
 
-function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string {
-  return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；');
-}
+function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string { return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；'); }
 
 function op(label: string, load: string, alt: boolean): string {
   return '<button class="op' + (alt ? ' alt' : '') + '" data-t="' + escapeHtml(load) + '"'
@@ -89,8 +87,7 @@ function cardsOf(env: Envelope): Card[] {
 }
 
 function groupOf(c: Card): string {
-  const g = String(c.category ?? '').trim();
-  return g === '' ? '未分类' : g;
+  return String(c.category ?? '').trim() || '未分类';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -105,30 +102,33 @@ export function renderFamilyPage(env: Envelope): string {
     if (list) list.push(c);
     else groups.set(g, [c]);
   }
-  const names = [...groups.keys()].sort();
+  const relOrder = [...groups.keys()];      // 信封返回序＝相关度序（「排序：相关」档位按它重排）
+  const names = [...relOrder].sort();       // 默认按分组名排
   const switchButtons = names.map((g, i) => '<button class="op' + (i === 0 ? '' : ' alt') + '" data-t="'
     + escapeHtml('请加载居家管家技能，帮我筛选浏览' + g + '分组') + '"'
     + ' onclick="showGroup(' + i + ')">' + escapeHtml(g) + '（' + groups.get(g)?.length + '）</button>').join('');
-  const tables = names.map((g, i) => '<h3>' + escapeHtml(g) + '</h3>'
+  const tables = names.map((g, i) => '<div class="grp" data-k="' + escapeHtml(g) + '" data-rel="' + relOrder.indexOf(g) + '"><h3>' + escapeHtml(g) + '</h3>'
     + '<div class="wrap-x"><table class="kv" data-g="' + i + '"><tr><th>名称</th><th>编号</th><th>位置</th><th>数量</th><th>状态</th></tr>'
     + (groups.get(g) ?? []).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
       + '</td><td>' + escapeHtml(String(c.id ?? ''))
       + '</td><td>' + escapeHtml(String(c.location ?? ''))
       + '</td><td>' + escapeHtml(String(c.quantity ?? ''))
       + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('')
-    + '</table></div>').join('');
+    + '</table></div></div>').join('');
   const allButton = '<button class="op" data-t="' + escapeHtml('请加载居家管家技能，帮我筛选浏览全部物品') + '" onclick="showGroup(-1)">全部</button>';
   const body = cards.length
     ? '<p>计数：共 ' + cards.length + ' 件，分 ' + names.length + ' 组。</p>'
       + '<div>' + allButton + switchButtons + '</div>'
-      + tables
+      + '<div><button class="op alt" onclick="sortRel(this)">排序：名称</button><span class="note">按分组名重排</span></div>'
+      + '<div id="grps">' + tables + '</div>'
     : '<div class="hm-empty">没有匹配的物品，换个条件再筛一次吧。</div>';
   const content = PAGE_CSS
-    + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}</script>'
+    + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}function sortRel(b){var box=document.getElementById("grps");if(!box)return;var rel=b.className.indexOf("alt")>=0;var ks=[].slice.call(box.children);ks.sort(function(x,y){if(rel){return Number(x.getAttribute("data-rel"))-Number(y.getAttribute("data-rel"));}var p=x.getAttribute("data-k"),q=y.getAttribute("data-k");return p<q?-1:p>q?1:0;});for(var i=0;i<ks.length;i++){box.appendChild(ks[i]);}b.className=rel?"op":"op alt";b.textContent=rel?"排序：相关":"排序：名称";var nt=b.nextElementSibling;if(nt&&nt.className==="note"){nt.textContent=rel?"按本次查询的相关度重排分组":"按分组名重排";}}</script>'
     + '<p class="greet">筛选浏览按分类分组，点分组名就切换到那一组，点「全部」回到全部分组。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>分组浏览</h2>' + body + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有匹配时</h2><p>换个条件再筛一次。</p></section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>物品状态</h2><p>表里那一列写的是这件物品现在的状态。</p></section>'
+    // 状态块：分组表里已经有「状态」列（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + op('分组切换', '请加载居家管家技能，帮我切换浏览分组', false)
     + op('复制数据', '请加载居家管家技能，帮我复制本次浏览的数据', true)

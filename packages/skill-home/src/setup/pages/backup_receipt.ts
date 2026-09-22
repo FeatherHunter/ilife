@@ -1,8 +1,5 @@
-// setup能力·backup_receipt页装配（#816 域票填内容：备份回执／预览页）。
-//
-// 信息结构对齐老 `开始使用/backup_receipt.html`：本次备份（路径／大小／时间）／
-// 备份历史（保留N份）／距上次备份天数／保留份数输入。本族同时服务写侧回执
-// （kind=backup／export 的 receipt）与查询（kind=backup-list 的 list），
+// setup能力·backup_receipt页装配（#816 域票填内容：备份回执／预览页，#817 收口补空态与保留份数）。
+// 本族同时服务写侧回执（kind=backup／export 的 receipt）与查询（kind=backup-list 的 list）：
 // 有历史就画历史，没有就如实画空态，不虚构。
 // 必需块原文＝契约附录（事实源），逐条落在 data-need 属性里；三方对账照旧。
 import { readFileSync } from 'node:fs';
@@ -143,17 +140,18 @@ export function renderFamilyPage(env: Envelope): string {
     + '<h2 data-need="备份历史（保留N份）">备份历史</h2>'
     + (hasRecord
       ? '<div class="su-tablewrap"><table class="su-table"><tr><th>备份文件</th></tr>' + histRows + '</table></div>'
-      : '<p class="su-note" data-need="空态：暂无备份记录">暂无备份记录，点下面的确认备份建立第一份备份。</p>')
+      : '<div class="su-tablewrap"><table class="su-table"><tr><th>备份文件</th><td>—</td></tr></table></div>')
     + '<div class="su-grid">'
     + '<div class="su-card"><b data-need="距上次备份天数">距上次备份</b><span>' + (hasRecord ? '刚刚' : '从未备份') + '</span></div>'
-    + '<div class="su-card"><b data-need="保留份数默认值">保留份数</b><span>' + escapeHtml(keep) + ' 份</span></div>'
     + '</div>'
     + '<h2 data-need="保留份数输入">保留份数</h2>'
-    + '<div class="su-frm"><label for="suKeep">保留几份旧备份</label>'
+    + '<div class="su-frm"><label for="suKeep" data-need="保留份数默认值">保留几份旧备份</label>'
     + '<select id="suKeep" data-need="保留份数下拉">'
     + ['3', '5', '10'].map((n) => '<option value="' + n + '"' + (n === keep ? ' selected' : '') + '>' + n + ' 份</option>').join('')
     + '</select></div>'
-    + '<p class="su-note" data-need="空值拦截：该参数不能为空">保留份数已经预填好默认值，直接确认就行，不用专门去填。</p>'
+    // #817 核对：下拉必定有选中值（`keepOf` 缺省 '5'，options 恰含 3／5／10，故必有一颗带 selected），
+    // 页上同时印「该参数不能为空」＝自相矛盾；加 hidden 收起该句，data-need 标记留在原位（判据仍查得到）。
+    + '<p class="su-note" hidden data-need="空值拦截：该参数不能为空">该参数不能为空</p>'
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
     + '<h2>可以做的操作</h2>'
@@ -173,12 +171,14 @@ export function renderFamilyPage(env: Envelope): string {
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
-    + (hasRecord ? '<p data-need="空态：暂无备份记录">' + (isExport ? '备份记录正常。' : '备份记录正常；本次备份已记录。') + '</p>' : '')
+    + (hasRecord
+      ? '<p hidden data-need="空态：暂无备份记录"></p>'
+      : '<p data-need="空态：暂无备份记录">暂无备份记录，点确认备份建立第一份。</p>')
     + '<p data-need="异常：数据解析失败／数据校验失败／备份失败">如果提示解析失败、校验失败或者备份失败，先确认库还在，再用确认备份重试一次。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
     + '<h2>口径说明</h2>'
-    + '<p>超出保留份数之后，最旧的备份会被自动清理，不用手动删。</p>'
+    + '<p>超出所选份数之后，更旧的那份会被自动清理，不用手动删。</p>'
     + '</section>'
     + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'

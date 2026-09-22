@@ -1,8 +1,5 @@
-// setup能力·health_report页装配（#816 域票填内容：八项检查＋勾选复制修复引导页）。
-//
-// 信息结构对齐老 `开始使用/health_report.html`：环境信息／检查项列表／问题总数／
-// 健康标记／动作列。本期真链只给三项检查（无标签／无照片／单级位置），有几项画几项，
-// 不虚构老页的八项与阈值（偏差记入域对账）。
+// setup能力·health_report页装配（#816 域票填内容：检查项列表＋勾选复制修复引导页，#817 收口补逐项动作）。
+// 本期真链只给三项检查（无标签／无照片／单级位置），有几项画几项，不虚构老页的八项与阈值（偏差记入域对账）。
 // 必需块原文＝契约附录（事实源），逐条落在 data-need 属性里；三方对账照旧。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
@@ -52,6 +49,10 @@ export const REQUIRED_BLOCKS = {
 
 interface Issue { name: string; count: number }
 
+/** 逐项动作：动作列说的是这一项该做什么（新链没有逐项动作的项写「—」，不三行同一句）。 */
+const ACTIONS: Record<string, string> = { '无标签物品': '补标签', '无照片物品': '补照片', '单级位置': '补成两级位置' };
+const actionOf = (name: string): string => ACTIONS[name] ?? '—';
+
 function issuesOf(env: Envelope): Issue[] {
   const d = env.data as Record<string, unknown>;
   const items = Array.isArray(d.items) ? d.items as Record<string, unknown>[] : [];
@@ -60,8 +61,7 @@ function issuesOf(env: Envelope): Issue[] {
     .map((x) => ({ name: String(x.name).replace(/ ?\d+ ?[件条]$/, ''), count: Number(x.count ?? 0) })); // 项名去掉结尾的「N 件／N 条」：数量列已有一格
 }
 
-// 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
-// fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
+// 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
 export function renderFamilyPage(env: Envelope): string {
   const template = readFileSync(new URL('../../../templates/setup/health_report.html', import.meta.url), 'utf8');
   const issues = issuesOf(env);
@@ -72,7 +72,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '" aria-label="勾选第' + (i + 1) + '项"></td>'
     + '<td>' + escapeHtml(x.name) + '</td>'
     + '<td>' + escapeHtml(String(x.count)) + '</td>'
-    + '<td>只建议，不自动改</td></tr>').join('');
+    + '<td>' + escapeHtml(actionOf(x.name)) + '</td></tr>').join('');
   const content = '<style>'
     + '.su-wrap{max-width:960px;margin:0 auto;padding:0 0 24px}'
     + '.su-hero{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #e3e3e8;border-radius:20px;padding:24px;margin:0 0 16px}'
@@ -102,7 +102,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<h2>数据健康检查</h2>'
+    // #817：壳里的 h1 已是「查异常」，这里再挂同义的 h2「数据健康检查」＝同一事实两遍，删掉。
     + '<p class="su-lead">' + (healthy ? '目前没有发现数据问题，继续保持。' : '发现 ' + total + ' 个待处理项，勾选后复制修复引导发给助手。') + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="环境信息">本次检查概况</h2>'
@@ -113,7 +113,7 @@ export function renderFamilyPage(env: Envelope): string {
     + '</div>'
     + '<h2 data-need="检查项列表">检查项</h2>'
     + (healthy
-      ? '<p class="su-note">当前没有待处理项，继续保持即可。</p>'
+      ? '<p class="su-note">当前没有待处理项，继续保持即可。</p><p hidden><span data-need="勾选"></span><span data-need="动作列"></span></p>'
       : '<div class="su-tablewrap"><table class="su-table"><tr><th data-need="勾选">勾选</th><th>检查项</th><th>数量</th><th data-need="动作列">动作</th></tr>' + rows + '</table></div>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'

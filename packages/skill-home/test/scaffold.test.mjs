@@ -153,6 +153,24 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
           assert.ok(html.includes(escapeHtml(b)), '缺块 [' + g + '] ' + b.slice(0, 24));
         }
       }
+      // ⑤ 页面功能门：内联脚本必须能解析，且带 data-t 的按钮必须真的绑上了处理
+      //    （#817 收口现场踩过三次同类：畸形标签让复选框链路恒空、少一个分号让整段脚本不解析、
+      //     整族 18 页渲染了按钮却没写 <script>——三种都是「页看着在、点了没反应」，
+      //     而三个判据件与七席评分席都查不出来，故把这条钉死在这里。）
+      //    整段脚本是一行拼出来的，没有换行，ASI 不会补分号：`}` 后面直接跟 `var` 就会整段不解析。
+      const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+      scripts.forEach((s, i) => {
+        assert.doesNotThrow(() => new Function(s), fam.family + ' 内联脚本#' + (i + 1) + ' 解析失败（整段脚本不解析＝页上按钮与勾选全死）');
+      });
+      const dtBtns = (html.match(/<button\b[^>]*\bdata-t=/gi) || []).length;
+      if (dtBtns > 0) {
+        const js = scripts.join('\n');
+        const withOnclick = (html.match(/<button\b[^>]*\bdata-t=[^>]*\bonclick=/gi) || []).length;
+        assert.ok(
+          /\[data-t\]/.test(js) || /dataset\.t\b/.test(js) || withOnclick === dtBtns,
+          fam.family + ' 有 ' + dtBtns + ' 颗 data-t 按钮却没绑处理函数（点了没反应）',
+        );
+      }
     });
   }
 });
