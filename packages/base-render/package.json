@@ -28,6 +28,7 @@
     "gen:help-shell:check": "node scripts/gen-help-shell.cjs --check",
     "gate:two-col": "node scripts/check-two-col-align.mjs",
     "gate:two-col-batch": "node scripts/check-two-col-batch.mjs",
+    "gate:rendered-text": "node scripts/check-rendered-text.mjs",
     "test": "node --test ../../test/scaffold.test.mjs"
   }
 }
