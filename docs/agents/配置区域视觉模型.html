@@ -46,8 +46,7 @@
 .ic-shell{background:var(--ic-bg);padding:18px 20px;border-radius:12px;position:relative}
 .ic-card{background:var(--ic-surface);border:1px solid var(--ic-line-strong);border-radius:12px;padding:14px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06)}
-.ic-title{font-size:13.5px;font-weight:640;display:flex;align-items:center;gap:8px}
-.ic-file{color:var(--ic-muted);font-size:11.5px;margin-top:4px;word-break:break-all}
+.ic-title{font-size:13.5px;font-weight:640;display:flex;align-items:center;gap:8px}.ic-file{color:var(--ic-muted);font-size:11.5px;margin-top:4px;word-break:break-all}
 .ic-file b{color:var(--ic-faint);font-weight:400;margin-right:5px}
 
 .ic-master{background:var(--ic-sunken);border:1px solid var(--ic-line-strong);border-radius:8px;
@@ -129,19 +128,41 @@
 /* ── 四个状态：就绪 / 有改动 / 保存前（diff）/ 已保存（可撤销） ────────
    ② 有改动：脏态条浮出，并把「几项没存」写在上面；跟着动的派生行标「将跟随更新」
    ③ 保存前：先给一份写入预览（要写文件的哪一行、旧值新值），再问确认
-   ④ 已保存：底部一条可撤销的回执，写明备份在哪                              */
-.ic-master input.is-dirty{border-color:var(--ic-accent);box-shadow:0 0 0 2px rgba(255,255,255,.06)}
-.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:9px 12px;
-  border:1px solid var(--ic-accent);border-radius:8px;background:var(--ic-raised)}
-.ic-dirty .ic-dtxt{color:var(--ic-accent);font-size:12px}
+   ④ 已保存：只留一条成功色回执（不再叠第二条横条），标题旁换成功徽标           */
+/* ① 状态徽标：固定在标题旁那一个位置，状态机三态共用它——用户滚到哪儿都抬得起头看见 */
+.ic-head{display:flex;align-items:center;gap:10px}
+.ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
+.ic-badge.is-dirty{color:var(--ic-accent);border-color:var(--ic-accent);
+  background:color-mix(in srgb, var(--ic-accent) 14%, transparent)}
+.ic-badge.is-ok{color:var(--ic-ok);border-color:var(--ic-ok);
+  background:color-mix(in srgb, var(--ic-ok) 14%, transparent)}
+.ic-badge .ic-bd{width:6px;height:6px;border-radius:50%;background:currentColor}
+/* ② 脏输入框：2px 强调描边 + 一圈同色外发光（1px 细边在深色底上根本不算信号） */
+.ic-master input.is-dirty{border:2px solid var(--ic-accent);padding:4px 7px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-accent) 22%, transparent)}
+/* ③ 脏态动作条**吸底**：真机可视高度只有约 580px，长列表一滚，不吸底的动作条根本不在屏上 */
+.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 12px;
+  border:1px solid var(--ic-accent);border-radius:8px;background:var(--ic-raised);
+  position:sticky;bottom:6px;z-index:3;
+  box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 0 3px color-mix(in srgb, var(--ic-accent) 18%, transparent)}
+.ic-dirty .ic-dtxt{color:var(--ic-accent);font-size:12.5px;font-weight:600}
 .ic-dirty .ic-dacts{margin-left:auto;display:flex;gap:6px}
-.ic-follow{font-size:10.5px;color:var(--ic-accent);white-space:nowrap}
+/* ④ 跟随行的标记：加箭头，不再是"一句小灰字" */
+.ic-follow{font-size:11px;color:var(--ic-accent);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.ic-follow::before{content:'↳';opacity:.8}
 .ic-dif{background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:8px;
   font-family:var(--ic-mono);font-size:11.5px;overflow:hidden;margin-top:14px}
 .ic-dif .ic-dh{padding:8px 11px;border-bottom:1px solid var(--ic-line);color:var(--ic-faint);font-size:11px}
 .ic-dif .ic-dl{padding:2px 11px;white-space:pre}
 .ic-dif .ic-del{background:rgba(224,90,80,.13);color:#e08d86}
 .ic-dif .ic-add{background:rgba(78,201,160,.13);color:#7ed3b2}
+/* ④ 成功回执：**替掉**普通动作条，不叠第二条横条；成功色一眼可辨 */
+.ic-done{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px 12px;
+  border:1px solid var(--ic-ok);border-radius:8px;background:var(--ic-raised);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-ok) 16%, transparent)}
+.ic-done .ic-dtxt{color:var(--ic-ok);font-size:12.5px;font-weight:600}
+.ic-done .ic-dacts{margin-left:auto;display:flex;gap:6px;align-items:center}
 .ic-toast{display:flex;gap:9px;align-items:center;margin-top:10px;padding:9px 12px;
   border:1px solid var(--ic-line-strong);border-radius:8px;background:var(--ic-raised);font-size:12px}
 .ic-toast .ic-undo{margin-left:auto;color:var(--ic-accent);cursor:pointer}
@@ -411,7 +432,10 @@ function advShell(s){
 }
 function cardShell(s){
   return `<div class="ic-card">
-    <div class="ic-slot" data-slot="title"><span class="ic-sk" style="width:120px;height:15px"></span></div>
+    <div class="ic-head">
+      <div class="ic-slot" data-slot="title"><span class="ic-sk" style="width:120px;height:15px"></span></div>
+      <span class="ic-slot" data-slot="badge" style="margin-left:auto"></span>
+    </div>
     <div class="ic-slot" data-slot="file" style="margin-top:6px"><span class="ic-sk" style="width:280px"></span></div>
     ${s.common.map(masterShell).join('')}
     ${statusShell(s.status)}
@@ -510,11 +534,19 @@ function applyFast(){
       <div class="ic-bar"><button class="ic-btn is-primary">确认写入</button><button class="ic-btn">改回去</button>
       <button class="ic-btn is-ghost">先备份再写</button></div>`);
   } else if (st === 'saved'){
-    fill('bar', baseBar + `<div class="ic-toast"><span class="ic-sdot" style="width:7px;height:7px;border-radius:50%;background:var(--ic-ok);display:inline-block"></span>
-      <span>已写入 bill.yaml（原文件备份为 .bak）</span><span class="ic-undo">撤销</span><span class="ic-note" style="margin-left:0">5s</span></div>`);
+    /* ④ 只留一条：成功回执**替掉**普通动作条（上一版两条相似的横条叠着，像重复噪声） */
+    fill('bar', `<div class="ic-done"><span class="ic-dtxt">已保存 · 写入 bill.yaml（原文件备份为 .bak）</span>
+      <span class="ic-dacts"><button class="ic-btn">重新读取</button>
+      <span class="ic-undo">撤销</span><span class="ic-note" style="margin-left:0">5s</span></span></div>`);
   } else {
     fill('bar', baseBar);
   }
+  /* 状态徽标：固定在标题旁那一格，三个态共用（就绪态不显示） */
+  fill('badge', st === 'dirty' || st === 'confirm'
+    ? '<span class="ic-badge is-dirty"><span class="ic-bd"></span>未保存</span>'
+    : st === 'saved'
+      ? '<span class="ic-badge is-ok"><span class="ic-bd"></span>已保存 · 刚刚</span>'
+      : '');
 }
 /* slow：体积／条数／最近写入 ＋ 飞书 CLI 探测（起子进程，最慢） */
 function applySlow(){
