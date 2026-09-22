@@ -123,12 +123,15 @@ function rgbOf(hex) {
  *  挤在小气泡里」**，文案精炼维反而更低（同一版裁决 79）⇒ 按指示给的例外条款**保持原样**，整串照库里的
  *  值上屏（不与库里不一致）。 */
 
-/** 页族插画带（第二轮）：四张回执页的「改前 → 改后」图形对照带。
+/** 本域回执页的「改前 → 改后」对照带（第二轮立、第三轮与族级带对齐色基）。
  *  **纯内联 SVG**（不是 `<img>`：验收墙的造册判据会拒收含 `loading="lazy"` 的产物），
- *  `aria-hidden` 装饰件——带上一句数据都不写，只表达「一处改动从旧样子流到新样子」这一件事；
- *  色值只取 `CHART_PALETTE`（与本技能皮肤 `skin.ts` 同源同下标）与冻结 token `--line`。 */
+ *  `aria-hidden` 装饰件——带上一句数据都不写，只表达「一处改动从旧样子流到新样子」这一件事。
+ *  与族级带（`src/render/sceneBand.ts` 的 `receipt` 族）**同一套取色**：器物灰取 `CHART_PALETTE[7]`
+ *  （＝族级带的 `METAL` 同下标）、暖色取 `[6]／[2]／[8]`（＝族级带的板色与热气同族）、
+ *  圆角同取 8px 一档；底纹用族级带同一条「暖 → 青 → 蓝」渐变，只是压淡（它是卡内小件，不与页头抢）。 */
 function band() {
-  const line = CSS_VAR_TOKENS['--line'];
+  const metal = CHART_PALETTE[7];
+  const warm = CHART_PALETTE[2];
   return '<div class="ilife-update-band" aria-hidden="true">'
     + '<svg class="ilife-update-band-art" viewBox="0 0 640 40" role="presentation" focusable="false">'
     + '<defs><linearGradient id="t774band" x1="0" y1="0" x2="1" y2="0">'
@@ -136,15 +139,15 @@ function band() {
     + '<stop offset=".55" stop-color="' + CHART_PALETTE[2] + '"/>'
     + '<stop offset="1" stop-color="' + CHART_PALETTE[8] + '"/>'
     + '</linearGradient></defs>'
-    + '<rect x="6" y="12" width="86" height="16" rx="8" fill="none" stroke="' + line
+    + '<rect x="6" y="10" width="116" height="20" rx="8" fill="none" stroke="' + metal
     + '" stroke-width="2" stroke-dasharray="5 4"/>'
-    + '<path d="M108 20H296" fill="none" stroke="' + line + '" stroke-width="2"/>'
-    + '<path d="M290 13l9 7-9 7" fill="none" stroke="' + CHART_PALETTE[2]
+    + '<path d="M142 20H296" fill="none" stroke="' + metal + '" stroke-width="2"/>'
+    + '<path d="M290 13l9 7-9 7" fill="none" stroke="' + warm
     + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
-    + '<rect x="316" y="12" width="132" height="16" rx="8" fill="url(#t774band)"/>'
-    + '<circle cx="476" cy="20" r="4" fill="' + CHART_PALETTE[2] + '" opacity=".85"/>'
-    + '<circle cx="496" cy="20" r="4" fill="' + CHART_PALETTE[2] + '" opacity=".5"/>'
-    + '<circle cx="516" cy="20" r="4" fill="' + CHART_PALETTE[2] + '" opacity=".25"/>'
+    + '<rect x="320" y="10" width="152" height="20" rx="8" fill="url(#t774band)"/>'
+    + '<circle cx="500" cy="20" r="4" fill="' + warm + '" opacity=".85"/>'
+    + '<circle cx="520" cy="20" r="4" fill="' + warm + '" opacity=".5"/>'
+    + '<circle cx="540" cy="20" r="4" fill="' + warm + '" opacity=".25"/>'
     + '</svg></div>';
 }
 
@@ -219,6 +222,13 @@ function updateReceiptCss() {
     '}',
     '.ilife-page-ui .ilife-update-band {',
     '  margin: 2px 0 12px;',
+    '  max-width: 560px;',
+    '  border-radius: 8px;',
+    /* 底纹与族级带同一条「暖 → 青 → 蓝」渐变（`sceneBand.ts` 的板色），压淡到 1/3 上下：
+       卡内小件不与页头那条抢。 */
+    '  background-image: linear-gradient(100deg, rgba(' + rgbOf(CHART_PALETTE[6]) + ', .16), rgba('
+      + rgbOf(CHART_PALETTE[2]) + ', .11) 46%, rgba(' + rgbOf(CHART_PALETTE[9]) + ', .10) 74%, rgba('
+      + rgbOf(CHART_PALETTE[0]) + ', .08));',
     '}',
     '.ilife-page-ui .ilife-update-band-art {',
     '  display: block;',
@@ -276,6 +286,10 @@ function updateReceiptCss() {
     '  .ilife-page-ui .ilife-block-page-shell-body > .ilife-block-data-table {',
     '    grid-column: 3;',
     '    margin-top: 14px;',
+    /* **试过又撤掉的：把改后表撑满行高（`align-self: stretch` ＋ `table { height: 100% }`）**
+       让两栏底边对齐。实测第 29 格**少显示一行**——卡片是 `overflow-x: auto`，表体被撑高后
+       多出来的那截落进滚动区被裁掉（复评 89 → 79）⇒ 撤。 */
+
     '  }',
     /* 没有表格的两页（27／30）**不做左右分栏**：右半幅只有一张复制卡时，整块重心右漂、
        右边空出一大片（实测两次复评点名「孤岛卡片／重心右漂」）⇒ 这两页的每一段都占整幅。 */
@@ -435,7 +449,7 @@ try {
       ['难度', before0.recipe.difficulty, after1.recipe.difficulty],
     ])),
     B.renderCopyBlock({
-      title: '改动的文字', dataActionId: 't774-c1-copy',
+      dataActionId: 't774-c1-copy',
       dataText: dish + '：份量 ' + before0.recipe.servings + ' 人份改成 ' + after1.recipe.servings
         + ' 人份，难度 ' + before0.recipe.difficulty + ' 改成 ' + after1.recipe.difficulty,
     }),
@@ -475,7 +489,7 @@ try {
     ])),
     stepList(s2after, '改后三步'),
     B.renderCopyBlock({
-      title: '改动的文字', dataActionId: 't774-c2-copy',
+      dataActionId: 't774-c2-copy',
       dataText: dish + '：第二步改内容，第一步与第三步换序',
     }),
     renderActionBar({ buttons: [{ label: '再看一遍步骤', kind: 'primary', actionId: 't774-c2-view' }] }),
@@ -504,11 +518,11 @@ try {
   writeFile(c3file, page('修改食材回执', '私家大厨 ｜ 修改', '修改食材回执', [
     concl('改动已保存。'),
     fact([{ label: '菜名', value: dish }]),
-    marks(['用量', '新增食材'], g3after.length + ' 味', 'ok'),
+    /* 这一页不出标记行：「用量」与表列头同词、「4 味」与表行数同义（实测点名重复冗余）。 */
     group('改前改后', band() + changeRows([['盐用量', '5 克', '8 克'], ['新增食材', '无', '生抽 15 毫升']])),
     ingTable(g3after, '改后四味'),
     B.renderCopyBlock({
-      title: '改动的文字', dataActionId: 't774-c3-copy',
+      dataActionId: 't774-c3-copy',
       dataText: dish + '：盐改成 8 克，新增生抽 15 毫升',
     }),
     renderActionBar({ buttons: [{ label: '再看一遍食材', kind: 'primary', actionId: 't774-c3-view' }] }),
@@ -538,7 +552,7 @@ try {
        再挂一枚「记录保留」胶囊只会多一张卡（实测复评点名「语义模糊 ＋ 卡片堆叠偏紧」）。 */
     group('改前改后', band() + changeRows([['默认列表', '在列', '已移出']])),
     B.renderCopyBlock({
-      title: '改动的文字', dataActionId: 't774-c4-copy',
+      dataActionId: 't774-c4-copy',
       dataText: dish + ' 已废弃，默认列表里不再出现',
     }),
     renderActionBar({ buttons: [{ label: '查看这道菜', kind: 'primary', actionId: 't774-c4-view' }] }),
