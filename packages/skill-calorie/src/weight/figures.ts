@@ -237,3 +237,32 @@ export function weightVolatility(db: DatabaseSync, startDate: string, endDate?: 
   const status = stdDev < 0.3 ? 'ok' : stdDev < 0.6 ? 'warn' : 'error';
   return ok({ recordCount: rows.length, dailyStdKg: round2(stdDev), weeklyStdKg: round2(weekStd), label, status, anomalies }, '波动: ' + label);
 }
+
+/** 折线 `labels:'select'` 相邻退化口径（本族日期轴六处共用，一处定义）。
+ *
+ *  引擎取首＋峰＋尾（首个最大值，缺值跳过；`base-paint/src/charts.ts:labelIndexes`），峰贴端点时
+ *  两枚标签同位压字（体重复盘 90 天窗：首日 06-25 与峰值日 06-27 实测撞成 `06-26-27`）。
+ *  相邻两枚下标差占跨度 < 1/8 即退化为首尾（bar 的 select 本来就是首尾，同一退化）。
+ *  1/8 ≈ 默认几何下 57 单位 ≈ 族内最长日期标签（`YY-MM-DD`，8 字）＋ 间距；5 字标签保守侧
+ *  （桌面无碍也可能退化——退化只少一枚日期参照，绝不压字，安全方向）。
+ *  峰在端点时引擎自补中点（`#424`），本件直接放行。
+ *  已知残留：移动端图字号翻倍（公共层媒体查询）服务端盖不住，转公共层票
+ *  （`labelIndexes` 加最小间隔，对标同文件 `valueIndexes` 的 26 单位跳过）。 */
+export function selectOrEdge(values: readonly (number | null)[]): 'select' | 'edge' {
+  const n = values.length;
+  if (n < 3) return 'select';
+  let peak = 0;
+  let peakValue = -Infinity;
+  for (let i = 0; i < n; i++) {
+    const v = values[i];
+    if (v === null || v === undefined) continue;
+    if (v > peakValue) { peakValue = v; peak = i; }
+  }
+  if (peakValue === -Infinity) return 'select';
+  if (peak === 0 || peak === n - 1) return 'select';
+  const picked = Array.from(new Set([0, peak, n - 1])).sort((a, b) => a - b);
+  for (let k = 1; k < picked.length; k++) {
+    if (((picked[k] as number) - (picked[k - 1] as number)) / (n - 1) < 1 / 8) return 'edge';
+  }
+  return 'select';
+}

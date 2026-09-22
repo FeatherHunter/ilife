@@ -56,6 +56,7 @@ import { getWeightGoalValue, getWeightHistory, noteTag } from './records.js';
 import type { WeightHistory } from './records.js';
 import { assertDate, assertRange } from './plate.js';
 import type { WeightHistoryView } from './plate.js';
+import { selectOrEdge } from './figures.js';
 import { scenarioE3 } from './weightCompare2.js';
 import { weightVolatilityV2 } from './volatility.js';
 import {
@@ -691,7 +692,8 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
         options: {
           height: 300,
           format: (v: number) => round1(v) + ' kg',
-          labels: 'select',
+          /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+          labels: selectOrEdge(plan.asc.map((r) => r.weight_kg)),
           yTicks: plan.yTicks,
           yMin: plan.yMin,
           yMax: plan.yMax,

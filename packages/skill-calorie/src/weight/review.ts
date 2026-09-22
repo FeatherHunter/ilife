@@ -53,7 +53,7 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
-import { weightMilestone } from './figures.js';
+import { selectOrEdge, weightMilestone } from './figures.js';
 import type { WeightMilestone } from './figures.js';
 import { getWeightHistory } from './records.js';
 import { assertDate, assertRange } from './plate.js';
@@ -585,8 +585,9 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
         yMin: v.bounds.yMin,
         yMax: v.bounds.yMax,
         format: (kg: number) => kg.toFixed(1) + ' kg',
-        /* `'select'`＝首＋极值＋尾三点（老页 `weight_review.html:119`），**不等于**等距刻度。 */
-        labels: 'select',
+        /* `'select'`＝首＋极值＋尾三点（老页 `weight_review.html:119`），**不等于**等距刻度。
+         *  峰贴端点时退化为首尾（`figures.ts:selectOrEdge`）：两枚标签同位压字，退化只少一枚参照。 */
+        labels: selectOrEdge(v.rows.map((r) => r.kg)),
         highlightLast: true,
         showDots: true,
         /* 平均值横线（#482 缺陷 2）：卡名是「期间平均值」、图例是「平均值」，同一件事实同屏只用一套词。 */

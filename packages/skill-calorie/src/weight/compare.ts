@@ -23,7 +23,7 @@ import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { AnalysisResult } from '../analysis/result.js';
 import { applyOffset, resolveCompareWindow } from '../analysis/series.js';
-import { weightCompare } from './figures.js';
+import { selectOrEdge, weightCompare } from './figures.js';
 import type { CompareSide, WeightCompare } from './figures.js';
 import { assertRange } from './plate.js';
 import type { WeightCompareView } from './plate.js';
@@ -485,7 +485,8 @@ function renderCurveBlock(curve: CompareCurve): string {
       items: curve.items.map((p) => ({ label: p.label, value: p.value })),
       options: {
         height: 160,
-        labels: 'select',
+        /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+        labels: selectOrEdge(curve.items.map((p) => p.value)),
         yTicks: curve.yTicks,
         yMin: curve.yMin,
         yMax: curve.yMax,

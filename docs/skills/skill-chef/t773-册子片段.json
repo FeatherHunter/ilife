@@ -49,8 +49,8 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-image.html",
     "exit": 0,
-    "bytes": 109601,
-    "sha256": "e746be3f1454c7336ff613b530069ed8a00c145b9dd8d80b9b66876691e0227f"
+    "bytes": 109723,
+    "sha256": "301d682903d2ee38a9aa013de22343d74ba375dd0a82f9dbb2ad995beea99f46"
   },
   {
     "card": "add_from_markdown",
@@ -102,8 +102,8 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-markdown.html",
     "exit": 0,
-    "bytes": 109611,
-    "sha256": "6f0c8eed87c940c0bc1aa38fd0ea3e470812f65b795e83bc31e57c0d49261d12"
+    "bytes": 109728,
+    "sha256": "e64c2931c57d8108583704a179a0536524a005827416385f031abb6a37a39db5"
   },
   {
     "card": "add_from_conversation",
@@ -155,8 +155,8 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-conversation.html",
     "exit": 0,
-    "bytes": 109654,
-    "sha256": "4cdcf65291d6da504d10a9e367a353bcab7d1ffacc84fd5b516163cfec79f73f"
+    "bytes": 109749,
+    "sha256": "4737f4449a40a2c64a40f2be028bc05c35c3ebd9ea8be895233643eea54c8245"
   },
   {
     "card": "add_from_template",
@@ -208,8 +208,8 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-add-from-template.html",
     "exit": 0,
-    "bytes": 109614,
-    "sha256": "df06d759622af7a2aa034cb2ec019d185e23b3ccef85572dd7f1dd0eda92b5f3"
+    "bytes": 109740,
+    "sha256": "d8f785f717276ed040b69083d2eeb03c93c65bc82bad2ba49823d832dfcca965"
   },
   {
     "card": "import_from_json",
@@ -261,8 +261,8 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-import-from-json.html",
     "exit": 0,
-    "bytes": 109613,
-    "sha256": "4a6def4c04122baa1168fd5726c53b8f6c82153ef0ed46a56ced012d7df54c31"
+    "bytes": 109731,
+    "sha256": "2a50fa08681dc7e3ea3edb68f8c8f4def233bf14cc0ac934a04d4b98549eaec4"
   },
   {
     "card": "import_validation_failed",
@@ -314,7 +314,7 @@
     },
     "file": "D:\\ilife\\.scratch\\t773\\t773-import-validation-failed.html",
     "exit": 0,
-    "bytes": 109648,
-    "sha256": "b3e60ee9156738efa7405afc832f738c878767fccb12582b24b6129de7f81a79"
+    "bytes": 109753,
+    "sha256": "d81ee9547e752dd28f78c517a72764db04495ec5df2d06ddd6e48423db508ea6"
   }
 ]

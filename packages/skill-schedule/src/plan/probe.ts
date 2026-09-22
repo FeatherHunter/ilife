@@ -13,6 +13,11 @@
  *
  *  **探测结论不是失败**：没装 lark-cli 也 exit 0（回执 remote 记 `none`——本命令不碰远端），
  *  档位与「下一步怎么办」照实写在回执与页上（老侧原话：缺失依赖不报错，调用方按探测结果决定后续流程）。
+ *
+ *  #896 · 授权那道门只传布尔位，不传 openId 原值：`TierReport.openId` 是探测源真值（`probeTiers()`
+ *  里刚拿到的那一个），但回执（`runProbe()` 的 `extra` → `data` 顶层）里只放 `authReady: boolean`，
+ *  不放 openId 原串——页上「授权登录过」与进度条都只读这个布尔位。`handlers.ts` 重建出来的副本
+ *  因此把 `openId` 置 null（仅占形状，页上不读它），显示以 `authenticated` 为准。
  */
 import { authOpenId, checkCalendar, findLarkCli, larkVersion } from '../fetch/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
@@ -26,7 +31,10 @@ export interface TierReport {
   /** lark-cli 的可执行路径（没找到＝null）。 */
   readonly cliPath: string | null;
   readonly version: string | null;
+  /** 探测源真值（`auth status` 里的 openId 原串；回执不带它，页上不读它——显示读 `authenticated`）。 */
   readonly openId: string | null;
+  /** 授权那道门过没过（`openId !== null` 的布尔投影；页上「授权登录过」与进度条只读它）。 */
+  readonly authenticated: boolean;
   /** 日历那一道门的结果（没过或没探到＝false）。 */
   readonly calendar: boolean;
   /** 为什么停在这一档（说人话，进回执与页）。 */
@@ -38,7 +46,7 @@ export function probeTiers(): TierReport {
   const cli = findLarkCli();
   if (cli === null) {
     return {
-      tier: 'missing', cliPath: null, version: null, openId: null, calendar: false,
+      tier: 'missing', cliPath: null, version: null, openId: null, authenticated: false, calendar: false,
       why: '本机没找到飞书命令行，同步与探测都跑不了。装它需要你自己动手（本技能不代装）',
     };
   }
@@ -48,19 +56,19 @@ export function probeTiers(): TierReport {
     openId = authOpenId(cli);
   } catch {
     return {
-      tier: 'partial', cliPath: cli, version, openId: null, calendar: false,
+      tier: 'partial', cliPath: cli, version, openId: null, authenticated: false, calendar: false,
       why: '飞书命令行装了但没登录，先在终端里跑一次授权登录',
     };
   }
   const calendar = checkCalendar(cli);
   if (!calendar) {
     return {
-      tier: 'partial', cliPath: cli, version, openId, calendar: false,
+      tier: 'partial', cliPath: cli, version, openId, authenticated: true, calendar: false,
       why: '飞书命令行装了也登录了，但日历拉不动（多半是缺日历授权），补一次授权再探',
     };
   }
   return {
-    tier: 'full', cliPath: cli, version, openId, calendar: true,
+    tier: 'full', cliPath: cli, version, openId, authenticated: true, calendar: true,
     why: '飞书命令行在场，授权与日历两道门都过了，可以同步',
   };
 }
@@ -80,7 +88,7 @@ export function runProbe(ctx: PlanOpCtx, report: TierReport): PlanOpResult {
     errors: [],
     notes: [report.why],
     ...(date === null ? {} : { date }),
-    counts: { cliInstalled: report.cliPath === null ? 0 : 1, authenticated: report.openId === null ? 0 : 1, calendar: report.calendar ? 1 : 0 },
+    counts: { cliInstalled: report.cliPath === null ? 0 : 1, authenticated: report.authenticated ? 1 : 0, calendar: report.calendar ? 1 : 0 },
     extra: {
       probe: true,
       tier: report.tier,
@@ -88,6 +96,8 @@ export function runProbe(ctx: PlanOpCtx, report: TierReport): PlanOpResult {
       tierWhy: report.why,
       cliPath: report.cliPath,
       cliVersion: report.version,
+      // #896 · 只给布尔位，不给 openId 原串（隐私）：页上「授权登录过」与进度条读它。
+      authReady: report.authenticated,
       calendarReady: report.calendar,
     },
   }));

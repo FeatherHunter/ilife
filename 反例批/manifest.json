@@ -1,0 +1,23 @@
+[
+  {
+    "卡id": "add_from_image",
+    "组": "录入",
+    "域": "add",
+    "唤醒词": "录入食谱",
+    "产物绝对路径": "D:/ilife/.scratch/t873-录入/反例批/add_from_image.html"
+  },
+  {
+    "卡id": "add_from_conversation",
+    "组": "录入",
+    "域": "add",
+    "唤醒词": "录入食谱",
+    "产物绝对路径": "D:/ilife/.scratch/t873-录入/反例批/add_from_conversation.html"
+  },
+  {
+    "卡id": "import_from_json",
+    "组": "录入",
+    "域": "add",
+    "唤醒词": "导入食谱",
+    "产物绝对路径": "D:/ilife/.scratch/t873-录入/反例批/import_from_json.html"
+  }
+]

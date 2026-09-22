@@ -228,7 +228,7 @@ describe('#891 页内定位：长页出页内目录、短页可不出（判据�
     withDb((handle) => {
       const preview = previewPage(handle, DAY, [{ date: DAY, time_start: '08:00', time_end: '09:00', title: '早读', category: '学习.阅读' }]);
       assertPageNav(preview, '商量计划预览');
-      const probe = probePage(handle, DAY, { tier: 'missing', cliPath: null, version: null, openId: null, calendar: false, why: '没有装命令行' });
+      const probe = probePage(handle, DAY, { tier: 'missing', cliPath: null, version: null, openId: null, authenticated: false, calendar: false, why: '没有装命令行' });
       assertPageNav(probe, '飞书探测');
     });
   });

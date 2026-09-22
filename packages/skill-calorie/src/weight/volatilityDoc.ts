@@ -39,6 +39,7 @@ import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
+import { selectOrEdge } from './figures.js';
 import { weightCurvePlan } from './plate.js';
 import type { VolatilityView } from './plate.js';
 import { anomalyReason, baselineDeltaText, deviationText, volatilitySummary } from './volatility.js';
@@ -246,7 +247,8 @@ function deviationChart(o: VolatilityV2): string {
         label: p.date.slice(5), value: p.deviationKg, anomaly: p.level !== 'normal',
       })),
       options: {
-        labels: 'select',
+        /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+        labels: selectOrEdge(o.points.map((p) => p.deviationKg)),
         yTicks: plan.yTicks,
         yMin: plan.yMin,
         yMax: plan.yMax,
@@ -275,7 +277,8 @@ function sigmaChart(o: VolatilityV2): string {
     input: {
       items: o.sigmaTrend.map((s) => ({ label: s.dateStart.slice(5), value: s.sigmaKg })),
       options: {
-        labels: 'select',
+        /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+        labels: selectOrEdge(o.sigmaTrend.map((s) => s.sigmaKg)),
         yTicks: plan.yTicks,
         yMin: plan.yMin,
         yMax: plan.yMax,

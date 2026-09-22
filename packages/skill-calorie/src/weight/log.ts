@@ -33,7 +33,7 @@ import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { nowStamp } from '../render/receipt.js';
 import type { AnalysisResult } from '../analysis/result.js';
-import { getWeightGoalInfo, weightTrend } from './figures.js';
+import { getWeightGoalInfo, selectOrEdge, weightTrend } from './figures.js';
 import type { WeightTrend } from './figures.js';
 import { assertRange, weightCurvePlan } from './plate.js';
 import type { WeightDashboard } from './plate.js';
@@ -291,7 +291,8 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
         options: {
           height: 300,
           format: (v: number) => String(v) + 'kg',
-          labels: 'select',
+          /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+          labels: selectOrEdge(t.logs.map((l) => l.weightKg)),
           yTicks: w.curve.yTicks,
           yMin: w.curve.yMin,
           yMax: w.curve.yMax,

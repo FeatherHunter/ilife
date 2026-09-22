@@ -5,7 +5,7 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update",
-      "name": "修改验证菜20260922022136",
+      "name": "修改验证菜20260922054757",
       "patch": {
         "servings": 4,
         "difficulty": "快手菜"
@@ -13,8 +13,8 @@
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
     "exit": 0,
-    "bytes": 108043,
-    "sha256": "6ae7a2cc0ce633795c11715d2f4d78c68593b8acbc654841cbdf935009547f55"
+    "bytes": 109375,
+    "sha256": "1945c657e75b6d0c0ff0e78f3ac6e36946e5c171895e352821d58a6aa42af1db"
   },
   {
     "卡": "update_step_content",
@@ -23,12 +23,12 @@
     "参数": {
       "op": "update",
       "target": "step/step-order",
-      "name": "修改验证菜20260922022136"
+      "name": "修改验证菜20260922054757"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
     "exit": 0,
-    "bytes": 109834,
-    "sha256": "b131e843febe782bb840fa5d81148cde585e3deeab04e8c96d87bf935d260de1"
+    "bytes": 111136,
+    "sha256": "e0b3ca6fa172a78ae8b18b13aa062c41c1eca44b1272187c5a48f0807456e9fe"
   },
   {
     "卡": "update_ingredient",
@@ -36,12 +36,12 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update/add-ingredient",
-      "name": "修改验证菜20260922022136"
+      "name": "修改验证菜20260922054757"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
     "exit": 0,
-    "bytes": 109337,
-    "sha256": "276e0d4ef23f4d64e75d795ce574e67cc9c13c4ac9387f3d2427f5fed991460b"
+    "bytes": 110623,
+    "sha256": "314d60fb109e5d116140f24568009a9e05ccb0ce2d254457863802a4763921c8"
   },
   {
     "卡": "discard_recipe",
@@ -49,11 +49,11 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "deprecate",
-      "name": "修改验证菜20260922022136"
+      "name": "修改验证菜20260922054757"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
     "exit": 0,
-    "bytes": 107637,
-    "sha256": "8da17fff9bf6d17427ad099c0e03774eefb586aba8e6f5c701a2dbffba3a8bc0"
+    "bytes": 108917,
+    "sha256": "5065acf886bfa13580dc141277db2530943003b12b8425c4be0f35a94dabf810"
   }
 ]

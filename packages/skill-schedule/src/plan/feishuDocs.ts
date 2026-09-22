@@ -72,7 +72,11 @@ function localCounts(handle: ScheduleDb, date: string): { total: number; synced:
 
 /* ─────────────────────── ① 飞书探测（只读，三档） ─────────────────────── */
 
-/** 「飞书探测」整页：三档结论 ＋ 下一步 ＋ 本地这一天的账（**这一趟没写任何对象**）。 */
+/** 「飞书探测」整页：三档结论 ＋ 下一步 ＋ 本地这一天的账（**这一趟没写任何对象**）。
+ *
+ *  #896 · 「授权登录过」与进度条读 `report.authenticated`（布尔位），不读 `report.openId` 原值：
+ *  回执不带 openId 原串（隐私），`handlers.ts` 重建时 `openId` 置 null 仅占形状，显示以布尔位为准。
+ */
 export function probePage(handle: ScheduleDb, date: string, report: TierReport): string {
   const local = localCounts(handle, date);
   const kpis: readonly KpiCardInput[] = [
@@ -84,7 +88,8 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
       value: '0',
       detail: '只读探测，远端一行没动',
       // 三档全通时给满，其余档按三门过了几门给（读数同源：探测结果那一份）。
-      bar: { pct: Math.round(([report.cliPath === null ? 0 : 1, report.openId === null ? 0 : 1, report.calendar ? 1 : 0]
+      // #896 · 读 authenticated 布尔位，不读 openId 原值（回执不带原串，见 probe.ts 件头）。
+      bar: { pct: Math.round(([report.cliPath === null ? 0 : 1, report.authenticated ? 1 : 0, report.calendar ? 1 : 0]
         .reduce((a, b) => a + b, 0) / 3) * 100) },
     },
   ];
@@ -96,7 +101,7 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
   };
   const steps: readonly DataTableRow[] = [
     { step: '装有命令行', state: report.cliPath === null ? '没找到' : '在场', why: report.cliPath === null ? '家目录与查找路径里都没有' : '找到了可执行文件' },
-    { step: '授权登录过', state: report.openId === null ? '没过' : '过了', why: report.openId === null ? '终端里查不到登录身份' : '查到了登录身份' },
+    { step: '授权登录过', state: report.authenticated ? '过了' : '没过', why: report.authenticated ? '查到了登录身份' : '终端里查不到登录身份' },
     { step: '日历拉得动', state: report.calendar ? '拉得动' : '拉不动', why: report.calendar ? '今日议程这一问有回应' : '今日议程那一问没成' },
   ];
   const { toc, body } = pageSections([

@@ -28,7 +28,7 @@ import type { WeightRow } from './records.js';
 import { FetchError } from '../fetch/errors.js';
 import { fieldLabel } from '../shared/fieldLabel.js';
 import { WEIGHT_DOMAIN } from './fieldLabels.js';
-import { getWeightGoalInfo, weightTrend } from './figures.js';
+import { getWeightGoalInfo, selectOrEdge, weightTrend } from './figures.js';
 import { weightCurvePlan } from './plate.js';
 import {
   cell, conclusionBlock, deliveryBlocks, envelopeOf, receiptPageOf, reconcileBlock,
@@ -179,7 +179,8 @@ export function buildLogReceiptDoc(
         options: {
           height: 220,
           format: (v: number) => String(v) + ' kg',
-          labels: 'select',
+          /* 峰贴端点时退化为首尾（`figures.ts:selectOrEdge`），无碰撞时仍是首＋峰＋尾。 */
+          labels: selectOrEdge(series.map((s) => s.value)),
           yTicks: plan.yTicks,
           yMin: plan.yMin,
           yMax: plan.yMax,

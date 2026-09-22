@@ -122,7 +122,11 @@ function pageOf(op: PlanWriteOp, handle: ScheduleDb, data: Record<string, unknow
         tier: (data.tier ?? 'missing') as TierReport['tier'],
         cliPath: typeof data.cliPath === 'string' ? data.cliPath : null,
         version: typeof data.cliVersion === 'string' ? data.cliVersion : null,
+        // #896 · openId 原串不进回执（隐私），重建置 null 仅占形状——页上「授权登录过」与进度条
+        // 读 `authenticated`（来自 `data.authReady`），不读它。写死 null 本身不是 bug，
+        // bug 是此前根本没传布尔位、页上又去读 openId 是否 null。
         openId: null,
+        authenticated: data.authReady === true,
         calendar: data.calendarReady === true,
         why: String(data.tierWhy ?? ''),
       });

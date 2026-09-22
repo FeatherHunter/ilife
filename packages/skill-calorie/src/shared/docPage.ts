@@ -66,6 +66,17 @@ const BLINE_CSS = '.meta-bar{display:flex;justify-content:space-between;align-it
   + '.legend i{display:inline-block;width:16px;height:2px}\n'
   + '.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}\n';
 
+/** 窄屏读数卡两列（`≤640` 恒启用）：公共层同断点是单列（`blocks.ts`），`pageUi` 配方
+ *  同断点已是两列（`pageUi.ts`，值逐字同）——未启用配方的页此前仍是单列，在此统一收成两列
+ *  （已启用的页无视觉变化；`sportUi` 的 `auto-fit` 在正文样式段里更晚、同权重下仍胜出，
+ *  运动族那份刻意保留的版式不受影响）。
+ *  单卡守卫：只有一枚卡时保持通栏（`:has` 口径与公共层同）。
+ *  **首字符不是换行**：它是 `extraCss` 的一段，段前那个换行由骨架件补（与 `BLINE_CSS` 同口径）。 */
+const KPI_MOBILE_CSS = '@media (max-width:640px){'
+  + '.ilife-block-page-shell .ilife-block-kpi-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}'
+  + '.ilife-block-page-shell .ilife-block-kpi-card-grid:has(> :only-child){grid-template-columns:minmax(0,1fr)}'
+  + '}';
+
 /** 眉标里**命令键或英文标识符**的判据：`calorie.view.diet`／`calorie.today`／`app_user` 这类。
  *
  *  `t425-融合基准.md:127-132`（裁定 1）定死「参数名、常量名、英文内部标识符一律不上屏」，
@@ -111,10 +122,13 @@ export function assembleDocPage(input: DocPageInput): string {
   const printable = input.printable === true;
   /** 页面级移动端配方（#525）：同上口径——只认真真值，不给／给假即老路（产出物逐字节不变）。 */
   const pageUi = input.pageUi === true;
-  /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段，都不启用即空串。 */
+  /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段、
+   *  读数卡窄屏两列一段（恒启用：此前未启用配方的页在 `≤640` 仍是单列，见本件 `KPI_MOBILE_CSS`；
+   *  `pageUi` 的「不给即逐字节相同」只保它自己的两段）。 */
   const extraCss = [
     bline ? BLINE_CSS : '',
     pageUi ? pageUiCss() + '\n' + pageShapeCss() : '',
+    KPI_MOBILE_CSS,
   ].filter((seg) => seg !== '').join('\n');
   if (bline) {
     const badge = typeof input.badge === 'string' && input.badge !== '' ? input.badge : null;
