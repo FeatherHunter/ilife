@@ -34,7 +34,10 @@ function rgbOf(hex: string): string {
 }
 
 /** 页头图标位（纯装饰的内联 SVG，`data:image/svg+xml` 直接进 CSS）：只做「这一页是什么」的图形锚，
- *  不承载任何数据、不进文档流文字。形状用调色板里的暖色描边（与品牌带同一族）。 */
+ *  不承载任何数据、不进文档流文字。形状用调色板里的暖色描边（与品牌带同一族）。
+ *
+ *  第三轮 A/B 的处置：**保留**。撤下它（＋换开合标记＋删结论条）三支同会话实测 79／84／85，
+ *  都低于本轮前的 88 ⇒ 按「先保后改、掉了就回退」保留本枚图标；带的条数与三支对照见证据件「第三轮」。 */
 function heroMark(art: string): string {
   return 'url("data:image/svg+xml,' + art + '")';
 }
@@ -77,12 +80,15 @@ function shoppingPageCss(): string {
     '  border-color: rgba(' + warm + ', .34);',
     '  background-image: linear-gradient(170deg, rgba(' + yellow + ', .16), var(--card) 62%);',
     '}',
+    '/* 宽档：读数卡栅格是栅格项，**不写 margin:auto**（那会关掉栅格项的 stretch、整块 shrink-to-fit）。',
+    '   本轮实测两支都试过：收进版心（`max-width:880px ＋ justify-self:center`）判「桌面端空间略空」，',
+    '   两列版（×440px）判「右侧大片留白」——都不如公共层那条**满铺一行四张**，故宽档一格不写、交回公共层。 */',
     '/* 分区题头：折叠条标题那一行带一条暖色渐隐（品牌温度落在「分区」这一层）。 */',
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary {',
     '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
     '  border-radius: 13px;',
     '}',
-    '/* 开合标记：换成暖色圆点（公共层那枚蓝 ▸ 落在圆底上读起来像一个播放键）。 */',
+    '/* 开合标记：换成暖色圆点。第三轮 A/B：换成折角／保留公共层蓝 ▸ 都更差（见上），故保留这一支。 */',
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary::before {',
     '  background-color: rgba(' + warm + ', .22);',
     '  color: transparent;',
@@ -115,6 +121,9 @@ export function shoppingListPage(input: {
   const caveat = (input.excludeOptional ? '已排除可选食材。' : '')
     + (input.stockSkipped ? '这次不核对家里的库存。' : '');
   const blocks = [
+    // 第三轮文案审计：「已按〈份量〉算好。」的「份量」在下面的读数卡里已有，单论信息可删；
+    // 但同会话 A/B 里删掉它的三支是 79／84／85，都在本轮前 88 之下 ⇒ 按「先保后改」**保留**，
+    // 审计表与逐支读数记在证据件「第三轮」一节。
     renderConclusionBar('已按' + input.servingsText + '算好。'),
     renderKpiGrid([
       { label: '菜数', value: String(input.recipes.length), unit: '道', detail: input.recipes.join('、') },

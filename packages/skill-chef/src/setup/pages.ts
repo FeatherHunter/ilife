@@ -31,24 +31,11 @@ function rgbOf(hex: string): string {
   return ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255);
 }
 
-/** 页头图标位（纯装饰的内联 SVG，`data:image/svg+xml` 直接进 CSS）：只做「这一页是什么」的图形锚，
- *  不承载任何数据、不进文档流文字。形状用调色板里的暖色描边（与品牌带同一族）。 */
-function heroMark(art: string): string {
-  return 'url("data:image/svg+xml,' + art + '")';
-}
-
-/** 汤锅（页头图标位）。 */
-const TITLE_MARK = heroMark(
-  '%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E'
-  + '%3Crect%20x=%2714%27%20y=%2728%27%20width=%2736%27%20height=%2724%27%20rx=%278%27'
-  + '%20fill=%27%23ffcc00%27%20fill-opacity=%27.25%27%20stroke=%27%23ff9500%27%20stroke-width=%273%27/%3E'
-  + '%3Cpath%20d=%27M14%2036H6M50%2036h8%27%20stroke=%27%23ff9500%27%20stroke-width=%273%27'
-  + '%20stroke-linecap=%27round%27/%3E'
-  + '%3Cpath%20d=%27M26%2028a6%206%200%200%201%2012%200%27%20fill=%27none%27'
-  + '%20stroke=%27%23ff2d55%27%20stroke-width=%273%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E',
-);
-
-/** 本页收口样式（#873 开始使用席）。每一条都在本技能根类之下，别的技能页一行不变。 */
+/** 本页收口样式（#873 开始使用席）。每一条都在本技能根类之下，别的技能页一行不变。
+ *
+ *  第三轮：**页头不再放本席自己那枚图标**——页族装饰带（`ilife-scene-band-process`）已经占了页头那一格，
+ *  同一处两件装饰是重复。本页留读数带、分区题头暖色渐隐、开合折角，再补一段**窄档填满度**
+ *  （页族填满度公共层只给了回执族，process 族这一页由页内自己收）。 */
 function setupPageCss(): string {
   const yellow = rgbOf(CHART_PALETTE[6]);
   const warm = rgbOf(CHART_PALETTE[2]);
@@ -56,34 +43,19 @@ function setupPageCss(): string {
   const root = '.ilife-page-ui ';
   return [
     '/* #873 开始使用·首次使用 页内收口 · 每一条都挂在根类之下 */',
-    '/* 页头图标位：页名右侧一枚锅（48px，纯装饰）。 */',
-    root + '.ilife-block-page-shell-title {',
-    '  position: relative;',
-    '  padding-right: 56px;',
-    '}',
-    root + '.ilife-block-page-shell-title::after {',
-    '  content: "";',
-    '  position: absolute;',
-    '  right: 0;',
-    '  top: 0;',
-    '  width: 48px;',
-    '  height: 48px;',
-    '  background-image: ' + TITLE_MARK + ';',
-    '  background-repeat: no-repeat;',
-    '  background-size: 48px 48px;',
-    '}',
     '/* 读数带：三条读数收进一张暖色面板，格间发丝线分区（不用任何分隔符字符）。 */',
     root + '.ilife-chef-deck {',
     '  box-sizing: border-box;',
-    '  margin: 16px 0 0;',
+    '  margin: 22px 0 0;',
     '  padding: 0;',
     '  border: 1px solid rgba(' + warm + ', .30);',
     '  border-radius: 14px;',
     '  background-image: linear-gradient(100deg, rgba(' + yellow + ', .20), var(--card) 58%);',
     '  box-shadow: 0 1px 3px rgba(' + line + ', .50);',
     '}',
+    // 窄档不给「等宽挤块」：瓦片按内容宽排（`flex: 0 1 auto`），宽档再让它撑满一行居中。
     root + '.ilife-chef-deck .ilife-block-fact-strip-item {',
-    '  flex: 1 1 auto;',
+    '  flex: 0 1 auto;',
     '  padding: 11px 12px;',
     '  border: 0;',
     '  border-radius: 0;',
@@ -100,9 +72,10 @@ function setupPageCss(): string {
     '  font-size: 17px;',
     '  font-weight: 700;',
     '}',
-    /* 桌面档把瓦片内容居中：三张等宽时短值不再孤零零贴左，一排三张读起来是一组读数。 */
+    /* 宽档：三张各自撑等宽、内容居中（一排三张读起来是一组读数）。 */
     '@media (min-width: 820px) {',
     '  ' + root + '.ilife-chef-deck .ilife-block-fact-strip-item {',
+    '    flex: 1 1 auto;',
     '    align-items: center;',
     '    text-align: center;',
     '  }',
@@ -112,10 +85,31 @@ function setupPageCss(): string {
     '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
     '  border-radius: 13px;',
     '}',
-    '/* 开合标记：换成暖色圆点（公共层那枚蓝 ▸ 落在圆底上读起来像一个播放键）。 */',
-    root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary::before {',
-    '  background-color: rgba(' + warm + ', .22);',
-    '  color: transparent;',
+    '/* 开合标记：换成一枚暖色折角（公共层那枚蓝 ▸ 落在圆底上像播放键；换成实心圆点又被读成空态圆点）。 */',
+    root + '.ilife-block-disclosure-summary::before {',
+    '  content: "";',
+    '  width: 8px;',
+    '  height: 8px;',
+    '  margin-right: 12px;',
+    '  border-right: 2px solid rgba(' + warm + ', .95);',
+    '  border-bottom: 2px solid rgba(' + warm + ', .95);',
+    '  border-radius: 0;',
+    '  background: none;',
+    '  transform: rotate(45deg);',
+    '}',
+    root + '.ilife-block-disclosure[open] > .ilife-block-disclosure-summary::before {',
+    '  transform: rotate(225deg);',
+    '}',
+    '/* 窄档填满度：块距 16→26px、三步可点件 44→54px —— 首屏底空从 128px 收到 119px',
+    '   （页族那份填满度只覆盖回执族，process 族这一页由页内自己收；一个字的内容都不编）。',
+    '   反例读数：撤掉这一段，首屏底空立刻回到 189px、双端自适应 20→17（见证据件「第三轮」）。 */',
+    '@media (max-width: 640px) {',
+    '  ' + root + '.ilife-block-page-shell-body > * + .ilife-block {',
+    '    margin-top: 26px;',
+    '  }',
+    '  ' + root + '.ilife-block-disclosure-summary {',
+    '    min-height: 54px;',
+    '  }',
     '}',
   ].join(LF);
 }
@@ -127,7 +121,8 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
     eyebrow: '私家大厨 ｜ 开始使用',
     title: '首次使用',
     content: [
-      renderConclusionBar('菜谱库已就绪，录第一道菜就能开工。'),
+      // 第三轮文案审计：原结论条「菜谱库已就绪，录第一道菜就能开工。」——删掉它用户一个字都不会少知道
+      // （「已建齐」在读数带的「状态」格里、要做什么在按钮「录第一道菜」上），故删。
       renderFactStrip({
         extraClass: 'ilife-chef-deck',
         items: [
@@ -156,6 +151,7 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
         ],
       }),
       renderCopyBlock({
+        // 第三轮文案审计：试过不给标题（只留按钮）——同会话实测 89 → 84，掉了就回退，故保留标题。
         title: '复制上手说明',
         dataActionId: 'setup-copy',
         dataText: '菜谱库已就绪（' + input.tables + ' 张表，' + done + '），录第一道菜就能开工。',
