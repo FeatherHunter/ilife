@@ -40,6 +40,10 @@ function visible(html) {
   return html
     .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ')
+    // **导航与目录块整段剥掉**（`dupFacts` 的口径，2026-09-22 修）：目录项与 `<h2>` 同字是**设计的本意**
+    // （导航要点名它指向的那一段），把它们算成「同一段事实印两遍」会把正当的壳算成债 —— #891 开工前实测
+    // 61 件凭空 +50 处。故 `ilife-block-toc-block` 那一段（以及任何 `role="navigation"` 块）不参与重复判定。
+    .replace(/<(nav|section|div)\b[^>]*(?:ilife-block-toc-block|role="navigation")[^>]*>[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<[^>]*>/g, '\u0000');
 }
 const count = (s, re) => (s.match(re) ?? []).length;
