@@ -8,8 +8,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_full_recipe.html",
     "exit": 0,
-    "bytes": 132159,
-    "sha256": "55f5bd52d36fd6d0109274ea71503053821a9d0d19e86022be6db857ab9b017d"
+    "bytes": 131009,
+    "sha256": "9aa3357b3a82c6e05cb09dd416e0a02e11e2d897657373e865aef09b3cb51d8e"
   },
   {
     "卡id": "view_for_beginner",
@@ -20,8 +20,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_for_beginner.html",
     "exit": 0,
-    "bytes": 131789,
-    "sha256": "51277f6388f6b92abd3e167af5bad73a72deec7d44d4e20a9f915a486a9df449"
+    "bytes": 130639,
+    "sha256": "34edfda093bb3ae9b3af32e11059b72cec58cdc66d079128d65129daa3373146"
   },
   {
     "卡id": "view_recipe_with_substitution",
@@ -32,8 +32,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_recipe_with_substitution.html",
     "exit": 0,
-    "bytes": 118128,
-    "sha256": "52b777f3d7b4ef846affbd8775e323004785ee62a7d964d4bb4d47070d6c28e4"
+    "bytes": 116978,
+    "sha256": "bb45111de57e4eea960bbb6d24fcd72b382d64a5336a19cf7e9293a8da5c42f2"
   },
   {
     "卡id": "view_ingredients_only",
@@ -44,8 +44,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_ingredients_only.html",
     "exit": 0,
-    "bytes": 116908,
-    "sha256": "bbd6ae7dd909041ba7f8085707123eed2c0f3bb3946343fb4568496272b31a46"
+    "bytes": 115758,
+    "sha256": "9c3c05009cefc6cd7579619558eba2b8c1b7b657d4a67cbb1a680481773b01e6"
   },
   {
     "卡id": "view_ingredients_grouped",
@@ -56,8 +56,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_ingredients_grouped.html",
     "exit": 0,
-    "bytes": 118476,
-    "sha256": "44223d5d41147e7eac01486a1fefe0336550db849ed1a089df3978d40c47158c"
+    "bytes": 117326,
+    "sha256": "7122ec7cc33cc940100d04310d9f577f27f15b7c4f3491669720281a2ffaeccc"
   },
   {
     "卡id": "view_steps_only",
@@ -68,8 +68,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_steps_only.html",
     "exit": 0,
-    "bytes": 124787,
-    "sha256": "26ed929937b00f84b76931884a2941af7a71170f21fc824f0031774c6f4a4362"
+    "bytes": 123637,
+    "sha256": "fd22cd44020bff40ee4fb4301e935487e2f46c6f7dc0920ef68ca6ed9bfba2df"
   },
   {
     "卡id": "view_nutrition_only",
@@ -80,8 +80,8 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_nutrition_only.html",
     "exit": 0,
-    "bytes": 114673,
-    "sha256": "2ea8d6c7565c329223ad106d187ade360b5c7e76590a4161408529fcc75b1c02"
+    "bytes": 113523,
+    "sha256": "1ba5c8b5ea198e27653fde53d0facb87a9d1aa594100c238b5931cf3dce8a50c"
   },
   {
     "卡id": "view_background_only",
@@ -92,7 +92,7 @@
     },
     "产物绝对路径": "D:\\ilife\\.scratch\\t770\\pages\\view_background_only.html",
     "exit": 0,
-    "bytes": 114779,
-    "sha256": "9801ee95a7dd78671e02d85365525e8a2ff765fd63eaec011bb8aefe434a34de"
+    "bytes": 113629,
+    "sha256": "6292d408565563dae2c7690c2260c5b0fe4facc6851689ef0a25c95bba4cd7ae"
   }
 ]

@@ -5,7 +5,7 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update",
-      "name": "修改验证菜20260921185519",
+      "name": "修改验证菜20260922022136",
       "patch": {
         "servings": 4,
         "difficulty": "快手菜"
@@ -13,8 +13,8 @@
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_main_fields.html",
     "exit": 0,
-    "bytes": 107912,
-    "sha256": "94e045d6bb957e7802c024ac886696d361080d464d842a508c52947d23a5b37e"
+    "bytes": 108043,
+    "sha256": "6ae7a2cc0ce633795c11715d2f4d78c68593b8acbc654841cbdf935009547f55"
   },
   {
     "卡": "update_step_content",
@@ -23,12 +23,12 @@
     "参数": {
       "op": "update",
       "target": "step/step-order",
-      "name": "修改验证菜20260921185519"
+      "name": "修改验证菜20260922022136"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_step_content.html",
     "exit": 0,
-    "bytes": 109703,
-    "sha256": "e06752ff5820014701d4c2ec675d306ad37e6b74e2b263982661878ccbf1e281"
+    "bytes": 109834,
+    "sha256": "b131e843febe782bb840fa5d81148cde585e3deeab04e8c96d87bf935d260de1"
   },
   {
     "卡": "update_ingredient",
@@ -36,12 +36,12 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "update/add-ingredient",
-      "name": "修改验证菜20260921185519"
+      "name": "修改验证菜20260922022136"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/update_ingredient.html",
     "exit": 0,
-    "bytes": 109407,
-    "sha256": "a8a960080182606b7472e476d4ac5313ccc762a3202148a932530534185c3be6"
+    "bytes": 109337,
+    "sha256": "276e0d4ef23f4d64e75d795ce574e67cc9c13c4ac9387f3d2427f5fed991460b"
   },
   {
     "卡": "discard_recipe",
@@ -49,11 +49,11 @@
     "命令": "chef.recipe.write",
     "参数": {
       "op": "deprecate",
-      "name": "修改验证菜20260921185519"
+      "name": "修改验证菜20260922022136"
     },
     "产物绝对路径": "D:/ilife/.scratch/t774/修改/discard_recipe.html",
     "exit": 0,
-    "bytes": 107506,
-    "sha256": "507dbeb408700a158b86a40ab134669e8bae55b8102d92d4fe389dc09d3748df"
+    "bytes": 107637,
+    "sha256": "8da17fff9bf6d17427ad099c0e03774eefb586aba8e6f5c701a2dbffba3a8bc0"
   }
 ]
