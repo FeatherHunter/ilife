@@ -7,8 +7,10 @@
  * 老件对照：体检逐菜详情见 `data_quality_report.html`，批量三页见 `batch_edit.html`，
  * 备份完成页见 `backup_receipt.html`（信息组织取老件，视觉走公共层）。
  *
- * 样式分两层（不许拆）：公共层皮肤走 `chefSceneCss()` 一个入口，页内专属的版式（逐菜卡里的完整度条、
- * 变更行的卡、复制按钮不铺满整行、页内插图）由 `dataSeatCss()` 追加在它后面。
+ * 样式分两层（不许拆）：公共层皮肤与**族级装饰带／族节奏**走 `renderSceneShell()` 一个入口，
+ * 页内专属的版式（逐菜卡里的完整度条、变更行的卡、复制按钮不铺满整行）由 `dataSeatCss()` 追加在它后面。
+ * **页内不再出第二条装饰带**（第三轮公共层席把「页头一条族带」定成共用标准；本席第二轮那条 720×120
+ * 满宽带与之重复，已撤）——体检页的完整度条是数据可视化，保留，色基与族带同取 `CHART_PALETTE`。
  *
  * #871 E 类裁定（2026-09-21）：原体检页／备份页各有一组**读数卡**（`renderKpiGrid`，3 张），
  * 读数与紧邻的事实条**同源重复**；公共层 `pageUi` ⑥ 在 ≤640 档把读数卡栅格写成两列 ⇒ 3 张卡必然
@@ -30,7 +32,6 @@ import {
   renderProseBlock,
 } from 'base-paint/blocks';
 import { renderSceneShell } from '../render/sceneShell.js';
-import { chefSceneCss } from '../render/skin.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -39,78 +40,6 @@ const LF = String.fromCharCode(10);
  *  只用两色：四档深浅都要另立语义，本页只有「够不够 80 分」这一个判断。 */
 const BAR_DONE = '--blue';
 const BAR_SHORT = CHART_PALETTE[2];
-
-/** 页族插画带的三张形状（对 720×120 的画布，纯装饰、不载读数，图形居中在 x=360 一处）：
- *  · 体检＝一张体检表（三行读数里最后一行落暖色）＋ 一枚带勾的暖色印记；
- *  · 批量改＝改前改后两张表 ＋ 中间一支主色箭头（暖色只落在「改后」那一栏，与变更行的语义同族）；
- *  · 备份＝叠起来的表 ＋ 一枚带勾的暖色印记。
- *  两张表／一叠表的形状是「这一页在处理几条记录」的图形记号，不带任何具体数字。 */
-const FIGURE_ART = {
-  quality: [
-    '<rect x="316" y="22" width="88" height="76" rx="8" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="332" y="38" width="56" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<rect x="332" y="53" width="40" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<rect x="332" y="68" width="48" height="7" rx="3.5" fill="url(#chefDataWarm)"/>',
-    '<circle cx="410" cy="86" r="13" fill="url(#chefDataWarm)"/>',
-    '<path d="M404 86 l5 5 9 -10" fill="none" stroke="var(--card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
-  ].join(''),
-  batch: [
-    '<rect x="264" y="30" width="72" height="60" rx="8" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="276" y="46" width="48" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<rect x="276" y="61" width="30" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<path d="M346 60 H374" stroke="var(--blue)" stroke-width="4" stroke-linecap="round"/>',
-    '<path d="M366 50 l10 10 -10 10" fill="none" stroke="var(--blue)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
-    '<rect x="384" y="30" width="72" height="60" rx="8" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="396" y="46" width="48" height="7" rx="3.5" fill="url(#chefDataWarm)"/>',
-    '<rect x="396" y="61" width="30" height="7" rx="3.5" fill="var(--soft)"/>',
-  ].join(''),
-  backup: [
-    '<rect x="330" y="18" width="72" height="16" rx="5" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="316" y="30" width="100" height="18" rx="6" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="300" y="44" width="132" height="54" rx="8" fill="var(--card)" stroke="var(--line)"/>',
-    '<rect x="316" y="58" width="64" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<rect x="316" y="73" width="42" height="7" rx="3.5" fill="var(--soft)"/>',
-    '<circle cx="410" cy="84" r="13" fill="url(#chefDataWarm)"/>',
-    '<path d="M404 84 l5 5 9 -10" fill="none" stroke="var(--card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
-  ].join(''),
-} as const;
-
-/** 带里两侧的「记录」记号（越往外越小越淡）：把整条带铺满，不留一片空槽
- *  （#873 第二轮复评点名「桌面端中间空槽浪费空间」，就是只摆一个居中图形留下的两侧空白）。 */
-function recordMark(x: number, y: number, scale: number, opacity: string): string {
-  return '<g opacity="' + opacity + '" transform="translate(' + x + ',' + y + ') scale(' + scale + ')">'
-    + '<rect x="0" y="0" width="72" height="60" rx="8" fill="var(--card)" stroke="var(--line)"/>'
-    + '<rect x="12" y="16" width="40" height="7" rx="3.5" fill="var(--soft)"/>'
-    + '<rect x="12" y="31" width="26" height="7" rx="3.5" fill="var(--soft)"/>'
-    + '</g>';
-}
-
-/** 页族插画带里两侧的记号（左右各两枚，由内向外变小变淡）——节奏件，不载任何读数。 */
-const FIGURE_EDGE = recordMark(58, 48, 0.5, '.28') + recordMark(148, 34, 0.66, '.5')
-  + recordMark(478, 34, 0.66, '.5') + recordMark(572, 48, 0.5, '.28');
-
-/** 页族插画带（纯装饰）：一条满宽的浅暖底横带 ＋ 上面的图形记号。不写一个字，读屏器不进。
- *  暖色取自 `CHART_PALETTE`（与皮肤的品牌带同两枚），底衬与描边走冻结 token。
- *  画布给 720×120、`slice` 铺满：**窄档不让整张图等比缩成一条细线**——记号按高度缩放、
- *  两侧的短条记号先被裁掉，图形本身在 390 与 1280 两档都保持同样大小。 */
-function seatFigure(kind: 'quality' | 'batch' | 'backup'): string {
-  return '<figure class="chef-data-figure" aria-hidden="true">'
-    + '<svg viewBox="0 0 720 120" preserveAspectRatio="xMidYMid slice" focusable="false">'
-    + '<defs>'
-    + '<linearGradient id="chefDataWash" x1="0" y1="0" x2="1" y2="0">'
-    + '<stop offset="0" stop-color="' + CHART_PALETTE[6] + '" stop-opacity=".20"/>'
-    + '<stop offset="1" stop-color="' + CHART_PALETTE[2] + '" stop-opacity=".06"/>'
-    + '</linearGradient>'
-    + '<linearGradient id="chefDataWarm" x1="0" y1="0" x2="1" y2="1">'
-    + '<stop offset="0" stop-color="' + CHART_PALETTE[6] + '"/>'
-    + '<stop offset="1" stop-color="' + CHART_PALETTE[2] + '"/>'
-    + '</linearGradient>'
-    + '</defs>'
-    + '<rect x="0" y="0" width="720" height="120" fill="url(#chefDataWash)"/>'
-    + FIGURE_EDGE
-    + FIGURE_ART[kind]
-    + '</svg></figure>';
-}
 
 /** 本域三页共用的页内版式（追加在公共层皮肤之后，改的只是本页自己的排版）。 */
 function dataSeatCss(page: 'quality' | 'batch' | 'backup'): string {
@@ -121,44 +50,10 @@ function dataSeatCss(page: 'quality' | 'batch' | 'backup'): string {
     root + ' .ilife-block-copy-block .ilife-action-row-ghost-single {',
     '  grid-template-columns: max-content;',
     '}',
-    // 页族插画带：整宽一条定高的带（窄档 96px／宽档 132px），面板的底与描边走 CSS，
-    // 图形交给 SVG 按高度铺满——窄档不再是一条「小插图 ＋ 大片空白」的横槽。
-    root + ' .chef-data-figure {',
-    '  display: block;',
-    '  box-sizing: border-box;',
-    '  width: 100%;',
-    '  height: 88px;',
-    '  margin: 14px 0 0;',
-    '  overflow: hidden;',
-    '  border: 1px solid var(--line);',
-    '  border-radius: 14px;',
-    '}',
-    root + ' .chef-data-figure svg {',
-    '  display: block;',
-    '  width: 100%;',
-    '  height: 100%;',
-    '}',
-    // 页尾一对：装饰带与复制区并排（宽档两栏、窄档上下），两件之间恒留 12px 气口
-    // （窄档紧贴会被读成一块，见图即上下两段）。
-    root + ' .chef-data-pair {',
-    '  display: grid;',
-    '  gap: 12px;',
-    '}',
-    '@media (min-width: 1001px) {',
-    '  ' + root + ' .chef-data-figure {',
-    '    height: 116px;',
-    '  }',
-    '  ' + root + ' .chef-data-pair {',
-    '    grid-template-columns: 340px minmax(0, 1fr);',
-    '    align-items: start;',
-    '    column-gap: 16px;',
-    '  }',
-    '  ' + root + ' .chef-data-pair .chef-data-figure {',
-    '    margin: 0;',
-    '  }',
-    '  ' + root + ' .chef-data-pair .ilife-block-copy-block {',
-    '    margin: 0;',
-    '  }',
+    // 动作行里只剩一颗时让它占满整行（本域批量改页删掉那颗与复制区同义的「复制改动」之后，
+    // 半格宽的一颗按钮会读成「这里少了一件」）。
+    root + ' .ilife-action-row > .ilife-action-btn:only-child {',
+    '  grid-column: 1 / -1;',
     '}',
   ];
   if (page === 'quality') {
@@ -167,21 +62,28 @@ function dataSeatCss(page: 'quality' | 'batch' | 'backup'): string {
       root + ' .ilife-block-disclosure-body .ilife-block-dist-row {',
       '  margin-bottom: 10px;',
       '}',
+      // 完整度条与族级装饰带**同一色基**：卡片的左缘取 `CHART_PALETTE` 下标 2（族带构图与底衬里那枚暖色），
+      // 条本身留在自己那张卡里——它是数据可视化，不随装饰带撤。
+      root + ' .ilife-block-disclosure {',
+      '  border-left-color: ' + CHART_PALETTE[2] + ';',
+      '  border-radius: 14px;',
+      '}',
       // 名称从 `--fg2` 提到 `--fg`：卡片里它才是主信息，条只是它的形状。
       root + ' .ilife-block-dist-row-name {',
       '  color: var(--fg);',
       '  font-weight: 600;',
       '}',
-      // 复评点名「进度条与标签略显单薄」：条抬到 12px、分数抬到 15px，
-      // 五项读数胶囊补一档内距（窄档下每个胶囊自己看得见，不再是一片小字）。
+      // 复评点名「进度条与标签略显单薄」：条抬到 12px、分数抬到 15px。
       root + ' .ilife-block-dist-row-bar {',
       '  height: 12px;',
       '}',
       root + ' .ilife-block-dist-row-val {',
       '  font-size: 15px;',
       '}',
-      root + ' .ilife-block-disclosure-body .ilife-block-chip {',
-      '  padding: 4px 10px;',
+      // 窄档胶囊只补行距（复评「字宽紧贴边缘」）；字号与内距回公共层缺省——
+      // 本轮实测把它们抬高后五项读数在 390 折成两行，复评反读成「视觉冗余」。
+      root + ' .ilife-block-disclosure-body .ilife-block-chip-row {',
+      '  row-gap: 8px;',
       '}',
     );
   }
@@ -236,12 +138,20 @@ function dataSeatCss(page: 'quality' | 'batch' | 'backup'): string {
   return rules.join(LF);
 }
 
-function shell(title: string, eyebrow: string, blocks: string[], page: 'quality' | 'batch' | 'backup'): string {
+/** 页壳：样式入口由公共层席收口成 `renderSceneShell()`（皮肤→族带→族节奏→页内四段合成）。
+ *  族名**在每一页的调用点上逐字给**（体检＝结果型「查到了什么」；批量改与备份＝回执型「写下了什么」），
+ *  与包内守门断言「这一处壳接线要带一个合法族名」同一形状。页内不再出第二条装饰带。 */
+function shell(
+  title: string,
+  eyebrow: string,
+  blocks: string[],
+  seat: { readonly page: 'quality' | 'batch' | 'backup'; readonly family: 'result' | 'receipt' },
+): string {
   return renderSceneShell({
-    family: 'receipt',
+    family: seat.family,
     docTitle: title,
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: dataSeatCss(page),
+    extraCss: dataSeatCss(seat.page),
   });
 }
 
@@ -262,8 +172,10 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
   const full = input.items.filter((x) => x.score >= 80).length;
   const todo = input.items.filter((x) => x.score < 80).length;
   const blocks = [
+    // 结论条只说「先动哪儿」，不再复述第一张卡上已经写着的菜名与分数
+    // （判官两轮点名的「标语与缺失说明语义重复」：卡片标题＋完整度条已经把名与分说全了）。
     renderConclusionBar(
-      worst ? '先补「' + worst.name + '」：完整度 ' + worst.score + ' 分。' : '还没有菜谱可以体检。',
+      worst ? '从下面第一道开始补。' : '还没有菜谱可以体检。',
     ),
     renderFactStrip({
       items: [
@@ -274,8 +186,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
         { label: '达标线', value: '80 分' },
       ],
     }),
-    // 页族插画带：读数与逐菜卡之间一条图形记号（本轮复评点名「桌面端卡片横向留白过多却未补视觉元素」）。
-    seatFigure('quality'),
+    // 页头已有族级装饰带（结果族：碗／椒／放大镜／盘），页内不再摆第二条带。
     // 逐菜一张卡（默认展开）：抬头是完整度条（条长＝得分，0–100 取数侧的五项公式），
     // 下面接五项读数与缺口。一处读数只画一遍——不再另出与它同源的读数卡或第二名册。
     // 默认全展开（#873 复评实测：只开最差那道时其余两张卡只剩一行菜名，两视口都被读成留白，总分反而低 5 分）。
@@ -307,7 +218,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
           // 菜名带着走：同一道菜的缺口句在页里唯一，不会与别的菜的同类句撞成重复行。
           (it.missing.length
             ? renderProseBlock({ text: it.name + '还缺：' + it.missing.join('、') + '。' })
-            : renderProseBlock({ text: it.name + '五项齐全，不用补。' })),
+            : renderProseBlock({ text: '五项齐全。' })),
       }),
     ),
     renderCaliberLine('评分只看完整度，口碑不计入。'),
@@ -318,7 +229,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
       ],
     }),
   ];
-  return shell('数据质量报告', '私家大厨 ｜ 数据管理', blocks, 'quality');
+  return shell('数据质量报告', '私家大厨 ｜ 数据管理', blocks, { page: 'quality', family: 'result' });
 }
 
 /** 批量改页（过程型目标形态：改前对比＋回执）。 */
@@ -335,26 +246,22 @@ export function dataBatchPage(input: { name: string; diffs: { field: string; bef
     renderChangeRows({
       rows: input.diffs.map((d) => ({ label: d.field, before: d.before || '无', after: d.after || '无' })),
     }),
-    renderCaliberLine('用量与时长要写数字。'),
+    // 删掉「用量与时长要写数字」那一行：它是**输入那一刻**的规矩，本页是改完之后的回执，
+    // 页上没有输入位 ⇒ 留着只让我方多说一句（判官三轮点名的「文案叠说」之一）。
     renderActionBar({
       buttons: [
-        { label: '复制改动', kind: 'primary', actionId: 'batch-copy' },
+        // 只留这一颗：「复制改动」那颗主按钮在产物里**没有 `data-t`（点了不复制）**，
+        // 与复制区那颗真按钮同说一件事 ⇒ 删掉，复制入口只留复制区一处。
         { label: '再看一遍菜谱', kind: 'ghost', actionId: 'batch-view' },
       ],
     }),
-    // 页尾一对：装饰带与复制区并排（宽档两栏、窄档上下），把页底那一横排铺满，
-    // 不再留一条「整宽装饰带 ＋ 下面一张稀疏卡」的空槽（#873 第二轮复评点名的同一条）。
-    '<div class="chef-data-pair">'
-      + seatFigure('batch')
-      + renderCopyBlock({
-        // 只说一次「复制」：按钮那块已经在动作行里说过了（#873 复评点名的同义复述）。
-        title: '改动说明',
-        dataActionId: 'batch-copy-data',
-        dataText: input.name + '改' + input.diffs.length + '处：' + input.diffs.map((d) => d.field + d.before + '到' + d.after).join('；'),
-      })
-      + '</div>',
+    renderCopyBlock({
+      title: '改动说明',
+      dataActionId: 'batch-copy-data',
+      dataText: input.name + '改' + input.diffs.length + '处：' + input.diffs.map((d) => d.field + d.before + '到' + d.after).join('；'),
+    }),
   ];
-  return shell('批量改回执', '私家大厨 ｜ 数据管理', blocks, 'batch');
+  return shell('批量改回执', '私家大厨 ｜ 数据管理', blocks, { page: 'batch', family: 'receipt' });
 }
 
 /** 备份回执页（回执型）。 */
@@ -368,25 +275,20 @@ export function dataBackupPage(input: { recipeCount: number; tableCount: number;
         { label: '大小', value: String(input.bytes) + '字节' },
       ],
     }),
-    // 回执页只留一句旁注（原来那句「恢复时…定时与增量以后再做」是排期口吻，复评点名多余）。
-    renderCaliberLine('默认不含已废弃的菜。'),
+    // 只留一句旁注，且改成一口读得懂的短句（原来那句「默认不含已废弃的菜」被复评读成病句）。
+    renderCaliberLine('已废弃的菜不在这一份里。'),
     renderActionBar({
       buttons: [
         { label: '看看全部菜谱', kind: 'primary', actionId: 'backup-list' },
         { label: '再备一份', kind: 'ghost', actionId: 'backup-again' },
       ],
     }),
-    // 页尾一对：装饰带与复制区并排（宽档两栏、窄档上下），与本域批量改页同一处置，
-    // 页底那一横排不再是一条空槽。
-    '<div class="chef-data-pair">'
-      + seatFigure('backup')
-      + renderCopyBlock({
-        title: '复制备份回执',
-        hint: '复制的是这份回执原文，随文件一起留档。',
-        dataActionId: 'backup-copy-data',
-        dataText: '已备份' + input.recipeCount + '道菜（' + input.tableCount + '张表，共' + input.bytes + '字节）。',
-      })
-      + '</div>',
+    renderCopyBlock({
+      // 删掉说明行：它与标题「复制备份回执」＋按钮「复制数据」说的是同一件事（判官点名的「文案叠说」）。
+      title: '复制备份回执',
+      dataActionId: 'backup-copy-data',
+      dataText: '已备份' + input.recipeCount + '道菜（' + input.tableCount + '张表，共' + input.bytes + '字节）。',
+    }),
   ];
-  return shell('备份回执', '私家大厨 ｜ 数据管理', blocks, 'backup');
+  return shell('备份回执', '私家大厨 ｜ 数据管理', blocks, { page: 'backup', family: 'receipt' });
 }
