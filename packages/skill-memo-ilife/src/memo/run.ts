@@ -130,7 +130,8 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
       exit: r.exit,
       deliver: wishReceiptFor('memo_wish_schedule', '心愿排期', r.receipt, null, {
         entityLabel: '心愿批次',
-        entityId: r.receipt.updated,
+        // #882：同上——「这一趟动了几条」是条数，不是记录号 ⇒ 字符串形态，族里不给加 `#`。
+        entityId: r.receipt.updated + ' 条',
         extraSummary: ['本地更新 ' + r.receipt.updated + ' 条', '远端同步 ' + r.receipt.feishuSynced + ' 条', '跳过 ' + r.receipt.skipped + ' 条'],
         extraSections: errors.length === 0 ? [] : [{ heading: '没做成的', rows: [...errors] }],
       }),

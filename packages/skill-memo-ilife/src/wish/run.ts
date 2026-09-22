@@ -122,7 +122,9 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
       title: '心愿排期',
       receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
       entityLabel: '心愿清单',
-      entityId: items.length,
+      // #882：这一格填的是**条数**（多少个），不是记录号 —— 走字符串形态，族里就不给加 `#`
+      // （旧的 `entityId: items.length` 会被拼成 `对象：心愿清单 #4`，读起来像第 4 条记录）。
+      entityId: items.length + ' 个',
       extraSummary: [
         '心愿 ' + items.length + ' 个',
         '已排期 ' + scheduled + ' 个',

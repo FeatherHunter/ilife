@@ -13,13 +13,17 @@ export interface BatchItem {
   readonly selected: boolean;
 }
 
-/** 收集候选。`fromCategory` 为空即全部分类。 */
+/** 收集候选。`fromCategory` 为空即全部分类。
+ *
+ *  #882：`updated_at` 的缺省是 `datetime('now','localtime')`（**秒**分辨率），同一秒里写下的几条会并列 ——
+ *  故补 `id DESC` 作 tiebreaker。少了它，同一份库两次跑批的清单顺序会翻（实测：整批真跑的墙里
+ *  向导页「笔记清单」的 `#1`／`#2` 两次重铺换了位）。 */
 export function collectBatchItems(db: MemoDb, fromCategory?: string | null): BatchItem[] {
   const rows =
     fromCategory === undefined || fromCategory === null
-      ? ((db.conn.prepare('SELECT id, content, sub_category, media_path, due FROM notes ORDER BY updated_at DESC LIMIT 200').all() as Record<string, unknown>[]))
+      ? ((db.conn.prepare('SELECT id, content, sub_category, media_path, due FROM notes ORDER BY updated_at DESC, id DESC LIMIT 200').all() as Record<string, unknown>[]))
       : ((db.conn
-          .prepare('SELECT id, content, sub_category, media_path, due FROM notes WHERE category = ? ORDER BY updated_at DESC LIMIT 200')
+          .prepare('SELECT id, content, sub_category, media_path, due FROM notes WHERE category = ? ORDER BY updated_at DESC, id DESC LIMIT 200')
           .all(fromCategory) as Record<string, unknown>[]));
   return rows.map((r) => ({
     id: r.id as number,

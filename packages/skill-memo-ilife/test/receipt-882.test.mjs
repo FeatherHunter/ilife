@@ -1,11 +1,14 @@
 // #882 · 「对象」那一格的取值形状（回执页族定义级）＋ 批量改分类执行支端到端（真出口）。
 //
 // 这一件要锁住的**口径**：`ReceiptRows.entityId` 是数字⇒记录号（族里加 `#`，`备忘 #18`）；
-// 是字符串⇒域侧自述文案（原样上屏、不吃 `#`，`批量改分类 1 条`）。改回旧写法（一律 `' #' + String(...)`）
-// 本件必红。另锁一条「同一句只拼一遍」：信封的 `data.message` 与页 lead 逐字相同（#882 之前是两份定义）。
+// 是字符串⇒域侧自述文案（原样上屏、不吃 `#`，`批量改分类 1 条`／`心愿清单 4 个`）。域侧的同一条规矩是
+// **条数不许当记录号填**（心愿清单／心愿批次两处已改成字符串形态）。改回旧写法（一律 `' #' + String(...)`）
+// 本件必红。另锁两条：信封的 `data.message` 与页 lead 逐字相同（原先两份定义）；收集清单的顺序稳定
+// （`updated_at` 秒分辨率下的同秒并列按 id 倒序）。
 //
 // 跑的是**仓内 dist 的真出口**（`dist/cli/cmd_read.js`，同 `receipt-831.test.mjs` 的口径）：
-// 改完源码先 `node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife` 再跑本件。
+// 改完源码先 `node node_modules/typescript/bin/tsc -b packages/skill-memo-ilife` 再跑本件；
+// 想顺带守住「dist 不许比 src 旧」，把 `test/cmd-registry-855.test.mjs` 一起跑（它的 ⓪ 就是那条）。
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -112,15 +115,14 @@ describe('#882 · 回执页族「对象」行（定义级：数字＝记录号�
     assert.deepEqual(bad, [], '这几格没按「数字＝记录号」渲染');
   });
 
-  // 调用面审计（静态）：`entityId` 的取值位全包只有三处写字符串字面量，其余都是数字表达式。
-  // 这就是「18 格单条场景仍带 `#`」在仓内的门 —— 新冒一处字符串（把记录号改成文案）即红。
+  // 调用面审计（静态）：`entityId` 的取值位全包只有四处写字符串字面量，其余都是数字表达式。
+  // 这就是「单条场景仍带 `#`」在仓内的门 —— 新冒一处字符串（把记录号改成文案）即红。
   // 现场清单（#882 当刻，10 处取值位）：checkin/receipt.ts `note.id`；memo/receiptPage.ts `note.id`／
-  // `opts.entityId`；memo/receipt.ts `input.updated + ' 条'`（本票目标的字符串形态）；
-  // memo/run.ts `'未新建'`（兜底）／`r.receipt.updated`（**计数**，按类型仍带 `#`，见票面 §四）；
-  // remind/run.ts `note === null ? row.id : note.id`；wish/receipt.ts `input.entityId ?? loc?.id ?? '—'`（兜底）；
-  // wish/run.ts `items.length`（**计数**，同上）。
-  it('调用面：`entityId` 取值位的字符串字面量只许是这三处（新冒一处即红）', () => {
-    const known = [' 条', '未新建', '—']; // 批量支的「N 条」拼接 ／ 记情绪兜底 ／ 记心愿兜底
+  // `opts.entityId`；memo/receipt.ts `input.updated + ' 条'`（批量支）；memo/run.ts `'未新建'`（兜底）／
+  // `r.receipt.updated + ' 条'`（**条数**，心愿批次）；remind/run.ts `note === null ? row.id : note.id`；
+  // wish/receipt.ts `input.entityId ?? loc?.id ?? '—'`（兜底）；wish/run.ts `items.length + ' 个'`（**条数**，心愿清单）。
+  it('调用面：`entityId` 取值位的字符串字面量只许是这四处（新冒一处即红）', () => {
+    const known = [' 个', ' 条', '未新建', '—']; // 条数两处（心愿清单／心愿批次）／批量支／兜底两处
     const hits = [];
     for (const f of srcFiles(join(pkg, 'src'))) {
       const rel = relative(pkg, f).replace(/\\/g, '/');
@@ -211,5 +213,45 @@ describe('#882 · 字符串形态的另外两处兜底（定义级：只锁「�
     const row = objectRowOf(jsonOf(page.html));
     assert.ok(row.startsWith('对象：情绪日记 '), '对象那一半仍是「情绪日记」：' + row);
     assert.ok(!row.includes('#'), '`#` 后面不是记录号，不许再出现：' + row);
+  });
+});
+
+// 「条数」这一支（#882 同批收口）：域侧有两处把**条数**当记录号填 —— 心愿清单与心愿批次。
+// 族里按类型分之后，这两处改填字符串形态（`N 个`／`N 条`），屏上就不再读成「第 N 条记录」。
+describe('#882 · 条数不当记录号（两处计数格 ＋ 收集清单的顺序）', () => {
+  const runEnv = (args, ok = [0]) => {
+    const r = run(args);
+    assert.ok(ok.includes(r.status), String(r.stderr));
+    return JSON.parse(r.stdout);
+  };
+
+  it('心愿排期：`对象：心愿清单 N 个`（不是 `#N`）', () => {
+    seedNote(DB, { content: '学游泳（排期用）', category: '心愿' });
+    seedNote(DB, { content: '学吉他（排期用）', category: '心愿' });
+    const env = runEnv(['memo.wish', '--params', '{}']);
+    const row = objectRowOf(jsonOf(readFileSync(env.delivery.path, 'utf8')));
+    assert.equal(row, '对象：心愿清单 ' + env.data.total + ' 个');
+    assert.ok(!row.includes('#'), row);
+  });
+
+  it('心愿批次：批量排期那一路写 `对象：心愿批次 N 条`（不是 `#N`）', () => {
+    const a = seedNote(DB, { content: '去一趟敦煌', category: '心愿' });
+    const b = seedNote(DB, { content: '学陶艺', category: '心愿' });
+    // 排期是合成写：本机没有飞书时远端那一格没成 ⇒ exit 4，但本地侧已落、页照出（#658 D-25 的边界）。
+    const env = runEnv(['memo.update', '--params', JSON.stringify({ ids: [a, b], due: '2026-10-01' })], [0, 4]);
+    const row = objectRowOf(jsonOf(readFileSync(env.delivery.path, 'utf8')));
+    assert.equal(row, '对象：心愿批次 2 条');
+  });
+
+  it('收集清单的顺序稳定：同一份库跑两次，items 的 id 序逐字相同（同秒并列按 id 倒序）', () => {
+    const ids = [
+      seedNote(DB, { content: '并列甲', category: '备忘' }),
+      seedNote(DB, { content: '并列乙', category: '备忘' }),
+      seedNote(DB, { content: '并列丙', category: '备忘' }),
+    ];
+    const once = () => runEnv(['memo.batch', '--params', JSON.stringify({ fromCategory: '备忘' })]).data.items.map((x) => x.id);
+    const first = once();
+    assert.deepEqual(first, once(), '两次收集的顺序必须一样');
+    assert.deepEqual(first.slice(0, 3), [...ids].sort((x, y) => y - x), '同秒并列按 id 倒序（tiebreaker）：' + JSON.stringify(first));
   });
 });

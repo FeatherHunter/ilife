@@ -1,7 +1,7 @@
 # #882 · gate-runs 导出（受 git 跟踪的对账源，协议 §2.3 第 4 条／§5.1）
 
 > 来源日志：`D:\ilife\.scratch\locks\gate-runs.log`（gitignored，不可单独作为第三方复核依据）
-> 票号过滤：882 ｜ 条目数：10 ｜ 导出时间：2026-09-21T18:51:10.050Z
+> 票号过滤：882 ｜ 条目数：14 ｜ 导出时间：2026-09-22T02:05:12.799Z
 > 复核用法：`node tooling/check-gate-audit.mjs --evidence docs/skills/skill-memo-ilife/t882-实施证据.md --log docs/skills/skill-memo-ilife/t882-gate-runs.log --ticket 882`
 
 ```text
@@ -15,4 +15,8 @@ START ticket=882 runId=11fc5b0b-93a0-4a62-b7ff-4e596c90b4d1 cmd="pwsh -NoProfile
 RUN ticket=882 runId=11fc5b0b-93a0-4a62-b7ff-4e596c90b4d1 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/commit2.ps1" waitedMs=20025 exit=0 pid=29368 at=2026-09-21T18:41:50.859Z
 START ticket=882 runId=617606f0-8207-4be8-8e4d-256bc21400fe cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-改后" waitedMs=0 pid=14144 at=2026-09-21T18:50:16.226Z
 RUN ticket=882 runId=617606f0-8207-4be8-8e4d-256bc21400fe cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-改后" waitedMs=0 exit=0 pid=14144 at=2026-09-21T18:50:55.989Z
+START ticket=882 runId=b04db34c-4b50-4eb4-9e73-0c99f24e7d22 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/pre.ps1" waitedMs=60036 pid=54704 at=2026-09-22T02:02:05.960Z
+RUN ticket=882 runId=b04db34c-4b50-4eb4-9e73-0c99f24e7d22 cmd="pwsh -NoProfile -File packages/skill-memo-ilife/.scratch/t882/pre.ps1" waitedMs=60036 exit=0 pid=54704 at=2026-09-22T02:02:10.930Z
+START ticket=882 runId=7891bdfd-a44c-4f98-a1ac-ca65eef729f9 cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终2 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-终" waitedMs=0 pid=17440 at=2026-09-22T02:02:16.766Z
+RUN ticket=882 runId=7891bdfd-a44c-4f98-a1ac-ca65eef729f9 cmd="pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Out packages/skill-memo-ilife/.scratch/t882/墙-终2 -Baseline packages/skill-memo-ilife/.scratch/t882/墙-终" waitedMs=0 exit=0 pid=17440 at=2026-09-22T02:03:01.945Z
 ```

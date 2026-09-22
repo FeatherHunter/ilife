@@ -39,7 +39,7 @@
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
 | `scripts/build-help.mjs` | 38 | 38 | 未越线，在册备查 |
-| `scripts/check-listpage-empty-span.mjs` | 203 | 203 | 未越线，在册备查 |
+| `scripts/check-listpage-empty-span.mjs` | 203 | 231 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 293 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
@@ -81,7 +81,7 @@
 | `src/init/page.ts` | 243 | 245 | 未越线，在册备查 |
 | `src/init/routes.ts` | 15 | 15 | 未越线，在册备查 |
 | `src/init/run.ts` | 71 | 71 | 未越线，在册备查 |
-| `src/memo/batch.ts` | 62 | 62 | 未越线，在册备查 |
+| `src/memo/batch.ts` | 62 | 66 | 未越线，在册备查 |
 | `src/memo/category.ts` | 32 | 32 | 未越线，在册备查 |
 | `src/memo/commands.ts` | 53 | 53 | 未越线，在册备查 |
 | `src/memo/crud.ts` | 30 | 51 | 未越线，在册备查 |
@@ -90,7 +90,7 @@
 | `src/memo/receipt.ts` | 83 | 87 | 未越线，在册备查 |
 | `src/memo/receiptPage.ts` | 72 | 72 | 未越线，在册备查 |
 | `src/memo/routes.ts` | 89 | 89 | 未越线，在册备查 |
-| `src/memo/run.ts` | 310 | 343 | 未越线，在册备查 |
+| `src/memo/run.ts` | 310 | 344 | 未越线，在册备查 |
 | `src/mood/routes.ts` | 72 | 72 | 未越线，在册备查 |
 | `src/remind/commands.ts` | 30 | 30 | 未越线，在册备查 |
 | `src/remind/index.ts` | 7 | 10 | 未越线，在册备查 |
@@ -103,7 +103,7 @@
 | `src/render/html.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |
 | `src/render/listPage.ts` | 69 | 69 | 未越线，在册备查 |
-| `src/render/memoPageAssets.ts` | 229 | 250 | 未越线，在册备查 |
+| `src/render/memoPageAssets.ts` | 229 | 252 | 未越线，在册备查 |
 | `src/render/pages.ts` | 261 | 253 | 未越线，在册备查 |
 | `src/render/receipt.ts` | 107 | 160 | 未越线，在册备查 |
 | `src/render/templates.ts` | 27 | 27 | 未越线，在册备查 |
@@ -138,7 +138,7 @@
 | `src/wish/receipt.ts` | 94 | 111 | 未越线，在册备查 |
 | `src/wish/reconcile.ts` | 153 | 153 | 未越线，在册备查 |
 | `src/wish/routes.ts` | 57 | 57 | 未越线，在册备查 |
-| `src/wish/run.ts` | 67 | 138 | 未越线，在册备查 |
+| `src/wish/run.ts` | 67 | 140 | 未越线，在册备查 |
 | `src/wish/taskRemove.ts` | 20 | 20 | 未越线，在册备查 |
 | `src/wish/taskSync.ts` | 63 | 63 | 未越线，在册备查 |
 | `src/wish/taskWrite.ts` | 75 | 75 | 未越线，在册备查 |
