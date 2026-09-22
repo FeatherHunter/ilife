@@ -26,6 +26,7 @@ import {
 } from 'base-paint/blocks';
 import { escapeHtml, renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { renderSceneShell } from '../render/sceneShell.js';
+import type { SceneFamily } from '../render/sceneBand.js';
 import { HIST_NODE_TIERS, historyPageCss } from './page-css.js';
 import type { HistoryGlobalPortrait } from './run-query.js';
 
@@ -94,12 +95,12 @@ function fmtNum(v: number): string {
  * 文档标题带应用后缀（浏览器标签「页名 ｜ 私家大厨」常规写法；也使 `<title>`
  * 与页内 `<h1>` 不逐字重复，见质量门「重复句」列）。
  */
-function docOf(docTitle: string, eyebrow: string, title: string, blocks: readonly string[]): string {
+function docOf(family: SceneFamily, docTitle: string, eyebrow: string, title: string, blocks: readonly string[], fill = false): string {
   return renderSceneShell({
-    family: 'result',
+    family,
     docTitle: docTitle + ' ｜ 私家大厨',
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
-    extraCss: historyPageCss(),
+    extraCss: historyPageCss({ family, fill }),
   });
 }
 
@@ -129,7 +130,7 @@ export function renderRecordPage(input: RecordPageInput): string {
           { label: '菜谱状态', before: input.prevStatus, after: input.newStatus },
           { label: '做菜次数', before: input.prevCount + ' 次', after: input.newCount + ' 次' },
         ];
-  return docOf('记录做菜：' + input.name, '私家大厨 ｜ 历史', '记录做菜：' + input.name, [
+  return docOf('receipt', '记录做菜：' + input.name, '私家大厨 ｜ 历史', '记录做菜：' + input.name, [
     // 结论条改印这次记录本身：第几次、几分。改前是「已记下这次做菜。」——与标题
     // 「记录做菜：…」说同一件事（#873 第 31 格扣分项），结论条那一格因此白占一行。
     renderConclusionBar('第 ' + input.cookSequence + ' 次做这道菜，评分 ' + input.rating + ' 分。'),
@@ -156,8 +157,8 @@ export function renderRecordPage(input: RecordPageInput): string {
     renderChangeRows({ rows: changes }),
     renderActionBar({
       buttons: [
-        { label: '看这道菜的历史', kind: 'primary', actionId: 'h775-record-history' },
-        { label: '再看一遍菜谱', kind: 'ghost', actionId: 'h775-record-view' },
+        { label: '看历史', kind: 'primary', actionId: 'h775-record-history' },
+        { label: '看菜谱', kind: 'ghost', actionId: 'h775-record-view' },
         { label: '撤销这次记录', kind: 'ghost', actionId: 'h775-record-undo' },
       ],
     }),
@@ -200,11 +201,10 @@ export function renderTimelinePage(input: TimelinePageInput): string {
     input.rows.length === 0
       ? renderProseBlock({ text: '还没有烹饪记录，做完后记一次就会出现在这里。' })
       : histTimelineHtml(input.rows);
-  return docOf('历史时间线：' + input.name, '私家大厨 ｜ 历史', '历史时间线：' + input.name, [
+  return docOf('receipt', '历史时间线：' + input.name, '私家大厨 ｜ 历史', '历史时间线：' + input.name, [
     renderConclusionBar('共做过 ' + input.count + ' 次，平均 ' + fmtAvg(input.avgRating) + ' 分。'),
     renderFactStrip({ items: facts }),
     timeline,
-    renderCaliberLine('按做菜日期倒序。'),
     renderCopyBlock({
       title: '复制这份时间线',
       dataText: input.rows.map((r) => r.cookDate + ' 第' + r.cookSequence + '次 评分' + r.rating + ' ' + r.feedback).join('\n'),
@@ -237,7 +237,7 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
   // 最高与最低合成一格「评分区间」（第二轮返修：评委原话「平均分/最高分双块冗余」——四张卡里
   // 三张都在印"同一个 0—5 分的数"，合成区间后四张卡各说一件事：次数／均值／区间／日期）。
   const range = input.maxRating === null || input.minRating === null ? '—' : dash(input.minRating) + '-' + dash(input.maxRating);
-  return docOf('单菜统计：' + input.name, '私家大厨 ｜ 历史', '单菜统计：' + input.name, [
+  return docOf('result', '单菜统计：' + input.name, '私家大厨 ｜ 历史', '单菜统计：' + input.name, [
     renderConclusionBar('平均 ' + fmtAvg(input.avgRating) + ' 分，做过 ' + input.count + ' 次。'),
     renderFactStrip({
       items: [
@@ -256,13 +256,13 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
       { label: '评分区间', value: range, unit: input.maxRating === null ? '' : '分' },
       { label: '最近一次', value: dash(input.lastDate) },
     ]),
-    renderCaliberLine('平均分按全部记录算。'),
     renderCopyBlock({
-      title: '复制这份统计',
+      title: '这份统计',
       dataText:
         input.name + ' 共' + input.count + '次 平均' + fmtAvg(input.avgRating) + ' 最高' + dash(input.maxRating) + ' 最低' + dash(input.minRating) + ' 最近' + dash(input.lastDate),
     }),
-  ]);
+    // 本页启用「首屏填满度」那一组页内规则（同会话实测：本页 81 → 83）。
+  ], true);
 }
 
 /** 装配全局统计页（整体画像，老件 `global-stats` 口径：做过几道／总次数／最爱／最近／没做过）。
@@ -304,7 +304,7 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
     })),
     emptyText: '还没有记录。',
   });
-  return docOf('全局统计', '私家大厨 ｜ 历史', '全局统计', [
+  return docOf('result', '全局统计', '私家大厨 ｜ 历史', '全局统计', [
     renderConclusionBar(favLine),
     renderKpiGrid([
       { label: '共收录', value: String(portrait.recipeTotal), unit: '道' },
@@ -324,5 +324,6 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
         '做过' + portrait.cookedCount + '道 共' + portrait.totalCooks + '次\n' +
         portrait.recent.map((r) => r.name + ' ' + r.lastDate).join('\n'),
     }),
-  ]);
+    // 与单菜统计页同一条口径：本页也启用填满度那组（同会话实测 89 对 85）。
+  ], true);
 }

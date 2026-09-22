@@ -49,16 +49,22 @@ export const HIST_NODE_TIERS: Readonly<Record<string, string>> = {
 /** 刻度尺的轨道色（与公共层刻度条同一条中性线）。 */
 const TRACK_RGB = rgbOf(CSS_VAR_TOKENS['--line']);
 
-/** 页内收口样式段（本件唯一出口）。恒返回非空 CSS 文本。 */
-export function historyPageCss(): string {
+/** 页内收口样式段（本件唯一出口）。
+ *
+ *  第三轮：族别进来参——页壳走 `renderSceneShell({family})` 之后，页内只补公共层**没给**的那一半：
+ *   receipt 族（31／32）公共层已给首屏填满度，本件不再动块距；result 族（33／34）公共层没给，
+ *   由本件按「块距／内距／行距」把首屏下半的空白收进 ≤120px（**不加内容**）。 */
+export function historyPageCss(input?: { readonly family?: string; readonly fill?: boolean }): string {
   const root = '.ilife-page-ui';
+  const result = input !== undefined && input !== null && input.family === 'result';
+  /* 填满度那组只挂在**实测为正向**的那一页（33）：同一条规则在第 34 格实测把读数从 92 拉到 89
+     （同会话、只差这一组），故按页开关，不按族一刀切。 */
+  const fill = input !== undefined && input !== null && input.fill === true;
   return [
-    '/* #873 历史域页内收口 · 每一条规则都挂在根类 ' + root + ' 之下 */',
-    /* ④ 页顶品牌带的收边。 */
-    root + '::before {',
-    '  border-radius: 0 0 8px 8px;',
-    '  box-shadow: 0 2px 12px rgba(' + WARM_RGB + ', .38);',
-    '}',
+    '/* #873 历史域页内收口 · 每一条规则都挂在根类 ' + root + ' 之下' + (result ? ' · result 族' : '') + ' */',
+    /* 第三轮撤掉：上一轮自建的「页顶色带收边」（`::before` 圆角＋暖色晕）——公共层族级装饰带
+       已经落在版面根第一个子节点上，两条件叠在一起抢戏（复评原话「装饰条带略抢戏、与下方统计
+       卡片的简洁风格略有割裂」）。页内不再画任何纯装饰带，只留载真数据的评分圆环。 */
     /* ⑥ 刻度条：8px ＋ 5 档刻线（刻线压一层浅底，填充色仍是公共层那三条档位色）。 */
     root + ' .ilife-block-kpi-card-bar {',
     '  position: relative;',
@@ -159,6 +165,32 @@ export function historyPageCss(): string {
     '    grid-auto-columns: minmax(0, 1fr);',
     '    grid-template-columns: none;',
     '  }',
+    /* 第三轮 · result 族（33／34）首屏填满度：公共层只给了回执族，本族由页内收口——
+       手段只有块距／内距／行距三样（**不加一行内容、不动公共层的字号档**）：
+       ① 正文块距 16 → 26；② 读数卡改两列两行（四张卡不再挤成一行、同时多占一行的高度）；
+       ③ 卡内距 14 → 18、时间线行距 12px、折叠条之间留 12px。 */
+    ...(fill ? [
+      '  ' + root + ' .ilife-block-page-shell-body > * + .ilife-block {',
+      '    margin-top: 26px;',
+      '  }',
+      '  ' + root + ' .ilife-block-kpi-card-grid {',
+      '    grid-auto-flow: row;',
+      '    grid-auto-columns: auto;',
+      '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+      '  }',
+      '  ' + root + ' .ilife-block-kpi-card {',
+      '    padding: 18px;',
+      '  }',
+      '  ' + root + ' .ilife-block-kpi-card-bar {',
+      '    height: 10px;',
+      '  }',
+      '  ' + root + ' .ilife-block-timeline-row {',
+      '    padding: 12px 0;',
+      '  }',
+      '  ' + root + ' .ilife-block-disclosure + .ilife-block-disclosure {',
+      '    margin-top: 12px;',
+      '  }',
+    ] : []),
     '}',
     /* 刻度尺（页内 SVG，`pages.ts` 的 `histScaleHtml`）：轨道与刻线由本段给，标尺值走内联属性。 */
     root + ' .ilife-hist-scale {',
