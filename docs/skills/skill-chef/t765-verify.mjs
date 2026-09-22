@@ -22,7 +22,15 @@ if (!Number.isInteger(MAP) || MAP <= 0) {
   process.exit(2);
 }
 
-const gh = (...a) => execFileSync('gh', a, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+// 网络抖动（本机实测 GitHub API 偶发 EOF）不该让校验假失败：同一调用重试 6 次、退避 1.2s 起。
+const gh = (...a) => {
+  let last;
+  for (let i = 0; i < 6; i += 1) {
+    try { return execFileSync('gh', a, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); }
+    catch (e) { last = e; Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200 * (i + 1)); }
+  }
+  throw last;
+};
 const ghJson = (...a) => JSON.parse(gh(...a) || '[]');
 
 /** 本图唯一阻塞真相源（与 t765-v2.mjs 一致；票 4 已关，留作来历）。 */
