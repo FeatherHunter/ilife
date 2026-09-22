@@ -101,7 +101,7 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 
 <section class="panel">
 <div style="font-weight:700;margin-bottom:8px">📋 发给助手的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给助手，助手会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。</p>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">点击后复制指令，粘贴给助手，助手会把勾选笔记的分类改成目标分类（子分类保持不变），改完给你回执。预览即复制原文，符号为 AI 解析保留。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">📋 复制修改指令</button>
 </div>
@@ -128,7 +128,7 @@ var raw=document.getElementById("payload");
 var payload=null,perr=null;
 try{payload=JSON.parse(raw.textContent||"{}");}catch(e){perr=e.message;}
 if(perr){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:"数据解析失败",log:perr,payload:null});return;}
-if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行批量改分类(唤醒词:备忘改分类)",payload:null});return;}
+if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行批量改分类（唤醒词：备忘改分类）",payload:null});return;}
 window.__hmPayload=payload;
 function data(){return payload.data}
 function items(){return data().items||[]}
@@ -217,14 +217,14 @@ function selectedRows(){
 function buildPrompt(rows,target,ctx){
   if(!rows.length) return '未选择任何笔记';
   return [
-    '① 场景: 我用批量改分类向导,把 '+rows.length+' 条「'+ctx.from_cat+'」笔记改到「'+target+'」',
+    '① 场景： 我用批量改分类向导，把 '+rows.length+' 条「'+ctx.from_cat+'」笔记改到「'+target+'」',
     '',
-    '② 数据(要改分类的笔记):',
+    '② 数据（要改分类的笔记）：',
     ...rows.map(r=>`   · 笔记 #${r.id} "${r.content}"`),
     '',
-    '③ 期望: 请把以上笔记的顶层分类从「'+ctx.from_cat+'」改为「'+target+'」,子分类保持不变;改完给我回执。',
+    '③ 期望： 请把以上笔记的顶层分类从「'+ctx.from_cat+'」改为「'+target+'」，子分类保持不变；改完给我回执。',
     '',
-    '④ 来源: 批量改分类向导 · '+ctx.generated_at,
+    '④ 来源： 批量改分类向导 · '+ctx.generated_at,
   ].join('\n');
 }
 
@@ -235,7 +235,7 @@ function warnIfAny(rows){
   }
   var dup=data().target_conflict_count||0;
   if(dup>0){
-    notes.push(`<div class="notice warn">ℹ️ ${dup} 条目标分类(${document.getElementById('toCatSelect').value})下已有同名笔记</div>`);
+    notes.push(`<div class="notice warn">ℹ️ ${dup} 条目标分类（${document.getElementById('toCatSelect').value}）下已有同名笔记</div>`);
   }
   document.getElementById('warnArea').innerHTML=notes.join('');
 }

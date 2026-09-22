@@ -75,7 +75,7 @@ input[type=checkbox]{min-height:44px;min-width:44px;box-sizing:border-box;margin
 
 <section class="panel">
 <div style="font-weight:700;margin-bottom:8px">📋 发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会把这些心愿标记为完成（心愿转成一条打卡），改完给你回执。</p>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会把这些心愿标记为完成（心愿转成一条打卡），改完给你回执。预览即复制原文，符号为 AI 解析保留。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">📋 复制修改指令</button>
 </div>
@@ -102,7 +102,7 @@ var raw=document.getElementById("payload");
 var payload=null,perr=null;
 try{payload=JSON.parse(raw.textContent||"{}");}catch(e){perr=e.message;}
 if(perr){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:"数据解析失败",log:perr,payload:null});return;}
-if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行心愿完成(唤醒词:心愿完成)",payload:null});return;}
+if(!payload||payload.status!=="ok"||!payload.data){document.getElementById("injectError").style.display="block";document.getElementById("injectError").innerHTML=window.errorReceipt({message:(payload&&payload.message)||"数据未注入",retryPrompt:"请重新运行心愿完成（唤醒词：心愿完成）",payload:null});return;}
 window.__hmPayload=payload;
 function data(){return payload.data}
 function items(){return data().items||[]}
@@ -198,21 +198,21 @@ function selectedRows(){
 function buildPrompt(rows,ctx){
   if(!rows.length) return '未选择任何心愿';
   return [
-    '① 场景: 我用心愿完成向导,标记 '+rows.length+' 个心愿为已完成',
+    '① 场景： 我用心愿完成向导，标记 '+rows.length+' 个心愿为已完成',
     '',
-    '② 数据(要完成的心愿):',
-    ...rows.map(r=>`   · 心愿 #${r.id} "${r.content}" → 打卡内容: "${r.override||r.content}"${r.has_feishu?' (飞书任务同步完成)':''}`),
+    '② 数据（要完成的心愿）：',
+    ...rows.map(r=>`   · 心愿 #${r.id} "${r.content}" → 打卡内容： "${r.override||r.content}"${r.has_feishu?' （飞书任务同步完成）':''}`),
     '',
-    '③ 期望: 请把这些心愿标记为完成(每个心愿转成一条打卡),有飞书任务的心愿同步标记完成;完成后给我回执。',
+    '③ 期望： 请把这些心愿标记为完成（每个心愿转成一条打卡），有飞书任务的心愿同步标记完成；完成后给我回执。',
     '',
-    '④ 来源: 心愿完成向导 · '+ctx.generated_at,
+    '④ 来源： 心愿完成向导 · '+ctx.generated_at,
   ].join('\n');
 }
 
 function warnIfAny(rows){
   var nofb=rows.filter(r=>!r.has_feishu);
   if(nofb.length){
-    document.getElementById('warnArea').innerHTML=`<div class="notice warn">ℹ️ ${nofb.length} 条心愿未同步飞书,完成时不会触发飞书联动</div>`;
+    document.getElementById('warnArea').innerHTML=`<div class="notice warn">ℹ️ ${nofb.length} 条心愿未同步飞书，完成时不会触发飞书联动</div>`;
   } else {
     document.getElementById('warnArea').innerHTML='';
   }
