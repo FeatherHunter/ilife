@@ -127,7 +127,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 摘要不复述五张卡的数字：只说卡片里没有的结论（价格是否补全），覆盖率数字留给价值排行那块。
   const lead = n('items') === 0 ? '还没有物品，先录入第一批物品'
     : (n('price.cover') >= 100 ? '价格已经补全，总价与价值排行覆盖全部物品' : '还有物品没补价，总价与价值排行只算得上已经有价格的那部分');
-  const hero = '<div class="st st-hero"><span class="st-wake">统物品</span><p class="st-lead">' + lead + '</p></div>';
+  // #817：h1 与页族名已经是「统物品」，hero 胶囊不再同名，改说这一页的范围。
+  const hero = '<div class="st st-hero"><span class="st-wake">全部物品</span><p class="st-lead">' + lead + '</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>物品条数</b><span>' + n('items') + '</span><small>库内全部物品</small></div>'
     + '<div class="st-card"><b>物品总件数</b><span>' + n('quantity') + '</span><small>按数量合计</small></div>'
@@ -141,12 +142,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     : '<div class="st-empty"><b>还没有访问记录</b>多看看几件物品，这里就会出现高频排行</div>';
   const freq = '<div class="st st-sec"><h2 class="st-sec-t">高频排行</h2>'
     + '<div class="st-legend"><span><i style="background:#0a63d6"></i>柱长代表访问次数，点一行复制筛选浏览指令</span></div>' + freqRows + '</div>';
-  const dist = (t: string, ctx: string, cmd: string) => '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">复制指令</button></div></div>';
+  // #817：四行原本都挂「复制指令」这一颗同名按钮（同页四颗，看不出各自复制什么），改成各写自己的口径。
+  const dist = (t: string, ctx: string, cmd: string, label: string) => '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">' + label + '</button></div></div>';
   const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">无逐维明细</span></h2>'
-    + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量')
-    + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量')
-    + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量')
-    + dist('归属分布', '库内物品默认归属使用者', '帮我按归属人统计物品数量') + '</div>';
+    + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量', '复制分类统计')
+    + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量', '复制位置统计')
+    + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量', '复制状态统计')
+    + dist('归属分布', '库内物品默认归属使用者', '帮我按归属人统计物品数量', '复制归属统计') + '</div>';
   const vals = Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v })).sort((a, b) => b.price - a.price);
   const valMax = vals.length ? Math.max(...vals.map((t) => t.price), 1) : 1;
   const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name)) + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div><div class="st-num">' + t.price + ' 元</div></div>').join('');

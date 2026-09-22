@@ -223,7 +223,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     .map((m) => '<option value="' + escapeHtml(m) + '">' + escapeHtml(m) + '</option>').join('');
 
   const content = '<style>' + CSS + '</style>'
-    + '<p class="bw-lead">借出与借入分开记，超期自动提醒</p>'
+    // #817：导语原说「超期自动提醒」，与下面那条「约定归还日未记录，暂时算不出超期」两种口径；导语改成口径本身。
+    + '<p class="bw-lead">借出与借入分开记，超期按约定归还日算</p>'
     + '<div class="bw-metrics">'
     + '<div class="bw-num"><b>借出中</b><span>' + out.filter((r) => !r.returned).length + '</span></div>'
     + '<div class="bw-num"><b>借入中</b><span>' + inn.filter((r) => !r.returned).length + '</span></div>'

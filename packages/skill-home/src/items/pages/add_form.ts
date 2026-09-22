@@ -126,27 +126,29 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const isUpdate = env.key === 'home.item.update';
   const isBatch = /已批量录入/.test(msg);
   const modeText = isUpdate ? '本次改动' : '本次录入';
+  // #817：回执与标题已经写着「批量」，导语不再重复这个词（同一页同一词三处）。
   const greet = isUpdate ? '改物品只列本次要改的项，其余字段留空即保持原值。'
-    : isBatch ? '批量录入一次过手多件，逐件确认后一起写入。' : '单条录入一次填完，必填标星、空值会被拦下。';
+    : isBatch ? '一次提交多件，逐件确认后一起写入。' : '单条录入一次填完，必填标星、空值会被拦下。';
   const content = PAGE_CSS
     + '<p class="greet">' + greet + '</p><div class="receipt">' + escapeHtml(msg) + '</div>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + modeText + '明细</h2><div class="wrap-x"><table class="kv">'
-    + row('名称*', escapeHtml(name))
-    + row('分类*', '—')
+    + row(isUpdate ? '名称' : '名称*', escapeHtml(name))
+    + row(isUpdate ? '分类' : '分类*', '—')
     + row('数量', isUpdate ? '—' : escapeHtml(count))
     + row('位置（选填）', '—')
     + row('状态', isUpdate ? '—' : '在家')
     + row('价格（选填）', '—')
     + row('购买日期', '—')
     + row('过期日期', '—')
-    + row('录入日期（补录）', '—')
+    // #817：补录日期只留表格这一行（原先「三处分流」段里还有一个同样的输入框，同一字段两处入口）。
+    + row('录入日期（补录）', '<input class="find" placeholder="YYYY-MM-DD，例如 2026-08-21">')
     + row('标签（逗号分隔）', '—')
     + row('备注', '—')
     + '</table></div></section>'
     + (isUpdate ? '<section class="sec" data-block="empty" data-need="' + needs('empty') + '" hidden></section>'
       : '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>' + (isBatch ? '批量清单' : '三处分流') + '</h2>'
         + (isBatch ? '<p>清单可文字逐行写，也可用照片或文件。</p></section>'
-          : '<p>拍照录入与单条同页，照片随本次一起存。补录历史物品时，把旧日期填进下面这格。</p><p><input class="find" placeholder="补录日期，YYYY-MM-DD，例如 2026-08-21"></p></section>'))
+          : '<p>拍照录入与单条同页，照片随本次一起存。</p></section>'))
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态候选</h2><div>'
     + REQUIRED_BLOCKS.status.map((s) => '<span class="pill">' + escapeHtml(s) + '</span>').join('')
     + '</div></section>'

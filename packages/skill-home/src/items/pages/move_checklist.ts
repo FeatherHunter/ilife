@@ -97,7 +97,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const committed = str(data.message).includes('已提交');
   const stateText = committed ? '已提交' : '未提交';
 
-  const content = '<div class="hero"><p class="eyebrow">标记后确认</p><p class="lead">全屋清单按位置分组，二态带走或不带走</p></div>'
+  // #817：导语原先把两个按钮名（带走／不带走）又说了一遍，页上同一对词出现三处；改成只说分组与逐件过一遍。
+  const content = '<div class="hero"><p class="eyebrow">标记后确认</p><p class="lead">全屋清单按位置分组，逐件过一遍</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
     + '<dl class="kv"><dt>清单状态</dt><dd id="movestate">' + escapeHtml(stateText) + '</dd></dl>'
     // 物品编号与位置需数据：信封只带清单状态一句回执（物品行由命令侧增补），这一格保持「—」，不编。
@@ -117,7 +118,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section hidden class="sec" data-block="empty" data-need="' + NEED.empty + '"><h2>空态说明</h2>'
-    + '<p class="lead">本页无空态，清单恒在</p></section>'
+    // #817：「本页无空态，清单恒在」是判据件口径的自述（与空清单自相矛盾），换成真正的空态引导。
+    + '<p class="lead">清单里还没有物品，先录物品再来标记</p></section>'
     + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
     + '<style>' + CSS + '</style><script>' + JS + '</script>';
   return fillTemplate(template, content);
