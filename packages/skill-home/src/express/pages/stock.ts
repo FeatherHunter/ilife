@@ -123,7 +123,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
     + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
-    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
+    // #817 第二波（③双端不塌）：390／820 以下原先把 `.x-btn` 一律拉成整行——行内那颗「设阈值」
+    // 因此变整行白条（一页堆出两千多像素）。收窄到动作行 `.x-actions > .x-btn` 才拉满，
+    // 行内的按钮按内容宽自持（`.x-row` 竖排时 `align-items:stretch` 会把它横着撑满，故还它 flex-start）。
+    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
+    + '.x-actions>.x-btn{width:100%}.x-row>.x-btn{align-self:flex-start}}'
     + '</style>';
 
   const P_MISSING = '请加载居家管家技能，帮我检测缺货';

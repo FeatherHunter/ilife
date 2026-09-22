@@ -147,8 +147,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
     + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
   const rows = items.map((it) => '<div class="st-item" data-id="' + it.id + '" data-name="' + escapeHtml(it.name)
-    + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name))
-    + '（编号' + it.id + '）</div>' + locChips(it.location)
+    + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name)) + '</div>'
+    // #817 第二波（⑥ 分隔符不懒政）：名称行原写「名称（编号13）」，把名称与编号挤成一段括号串；
+    // 编号本来就是独立字段（`id`），拆出来单独一行「编号 13」。
+    // 「过期／临期」这类物品状态在回执里没有独立字段（`status` 恒为闲置），名称里的那半截留给数据层拆。
+    + '<div class="st-sub">编号 ' + escapeHtml(String(it.id)) + '</div>'
+    + locChips(it.location)
     // #817（⑤文案不冗余）：徽标原写「闲置」——逐行复述页面主题词，等于没带信息；
     // 改挂该行自己的分类（与上面的分类筛选同一取值），行与筛选口径才对得上。
     + '<span class="st-badge">' + escapeHtml(latinFree(it.category || '闲置')) + '</span>'

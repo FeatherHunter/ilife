@@ -88,11 +88,15 @@ const CSS = '<style>'
   + '.of-progtxt{font-size:12px;color:#8a744f;margin-bottom:6px;overflow-wrap:anywhere}'
   + '.of-line{display:flex;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px dashed #e4d9c2;min-height:56px;box-sizing:border-box;cursor:pointer}'
   + '.of-line:last-of-type{border-bottom:none}'
+  + '.of-body{flex:1;min-width:0}'
   + '.of-check{flex:0 0 24px;height:24px;border:2px solid #c9b896;border-radius:6px;background:#fff;box-sizing:border-box}'
   + '.of-line.on .of-check{background:#8a744f;border-color:#8a744f}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
-  + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
-  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
+  // ⑥ 槽化（#817 seq 37）：原来「数量1，放在客厅/阳台柜，旅游中」三事挤一行（逗号硬挤）；
+  //   现在一槽一格（数量／位置／理由／状态），窄档由 flex-wrap 自己折行，不靠标点攒段。
+  + '.of-m{width:100%;border-collapse:collapse;margin-top:4px}'
+  + '.of-m tr{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}'
+  + '.of-slot{padding:2px 10px;border:1px solid #e4d9c2;border-radius:99px;background:#fff;font-size:12px;color:#8a744f;max-width:100%;overflow-wrap:anywhere;vertical-align:top;box-sizing:border-box}'
   + '.of-why{font-size:13px;color:#6d5c3d;margin-top:2px;overflow-wrap:anywhere}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
@@ -142,11 +146,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       ? '没有旅游中的物品，暂无待归位'
       : '清单为空，先从待选中挑选要带的衣物，或按行程规则生成后再来核对') + '</div>';
   } else {
-    listHtml += items.map((x, i) => '<div class="of-line' + (x.status === '旅游中' ? ' on' : '') + '" data-pick="' + i + '"><span class="of-check"></span>'
-      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
-      + '<table class="of-m"><tr><td class="of-meta">数量' + x.quantity + (x.location ? '，放在' + escapeHtml(x.location.replace(/×\d+(\[[^\]]*\])?$/, '')) : '')
-      + (whyTail(x) ? '（' + escapeHtml(whyTail(x)) + '）' : '') + (x.status ? '，' + escapeHtml(x.status) : '，—') + '</td></tr></table>'
-      + '</div></div>').join('')
+    listHtml += items.map((x, i) => {
+      const loc = x.location.replace(/×\d+(\[[^\]]*\])?$/, '');
+      const why = whyTail(x);
+      return '<div class="of-line' + (x.status === '旅游中' ? ' on' : '') + '" data-pick="' + i + '"><span class="of-check"></span>'
+        + '<div class="of-body"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
+        + '<table class="of-m"><tr>'
+        + '<td class="of-slot">数量 ' + x.quantity + '</td>'
+        + (loc !== '' ? '<td class="of-slot">位置 ' + escapeHtml(loc) + '</td>' : '')
+        + (why !== '' ? '<td class="of-slot">理由 ' + escapeHtml(why) + '</td>' : '')
+        + '<td class="of-slot">状态 ' + escapeHtml(x.status !== '' ? x.status : '—') + '</td>'
+        + '</tr></table></div></div>';
+    }).join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'
       + (mode === 'return' ? '确认归位' : '确认带出') + '</button></div>'
       + homeCopyArea({

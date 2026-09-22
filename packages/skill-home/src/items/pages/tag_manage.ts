@@ -203,7 +203,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
     // #817（⑤文案不冗余）：整理态逐对已有「合并」，底部这颗又是另一档作用，故按本页模式改名（总览态照旧「合并」）。
     + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">' + (tidy ? '全部合并' : '合并') + '</button>'
-    + (tidy ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '') // 总览回执不带未使用标签、页上那格写着没有：总览态不出「一键清理」（empty 块「无可清理标签时不出」）
+    // #817 第二波（②层级清，核口径后补入口）：口径是 empty 块那句「无可清理标签时不出「一键清理」」
+    // ——反面即「有未使用标签就出」。总览这回执带 7 条闲置标签（本页「未使用标签」一段就是它们），
+    // 旧注释「总览回执不带未使用标签」与当刻回执不符，故按闲置标签在不在场决定这颗按钮在不在位：
+    // 4-1 的 check 要「七个操作按钮齐」，可见按钮＝改名／合并／一键清理／整理建议／新建标签 ＋ 复制数据／复制日志。
+    // 「忽略」只对相似标签对成立，本模式没有对可忽略，故只留在整理建议（4-3）的逐对行里。
+    + (tidy || unusedNames.length > 0 ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '')
     + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
     + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
     + '</div>'
@@ -214,7 +219,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
     + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n'
       + (tidy ? '  范围：全部相近标签对' : '  源标签：___\n  目标标签：___')) + '</pre>'
-    + (tidy ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
+    + (tidy || unusedNames.length > 0 ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
     + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>')
     + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
     + needs()

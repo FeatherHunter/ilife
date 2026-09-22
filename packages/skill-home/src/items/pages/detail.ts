@@ -110,6 +110,15 @@ function cell(v: unknown): string {
   return s === '' ? '—' : escapeHtml(s);
 }
 
+/** 位置位只留位置本身（#817 第二波 ⑥）：回执里的位置串把「路径 × 数量 [状态]」挤成一段，
+ *  而数量与状态在本页是相邻的独立行（字段 `quantity`／`status`），位置行不再复述这两个事实。 */
+function locPath(v: unknown): string {
+  return String(v ?? '').trim()
+    .replace(/\s*×\s*\d+\s*(?:\[[^\]]*\])?\s*$/, '')
+    .replace(/\s*\[[^\]]*\]\s*$/, '')
+    .trim();
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
@@ -122,7 +131,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + row('编号', cell(item.id))
       + row('名称', cell(item.name))
       + row('分类', cell(item.category))
-      + row('位置', cell(item.location))
+      + row('位置', cell(locPath(item.location)))
       + row('数量', cell(item.quantity))
       + row('状态', cell(item.status))
       + row('标签', cell(item.tags))
@@ -134,7 +143,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '</table></div>'
     : '<div class="hm-empty">没有找到这件物品，核对编号再试一次吧。</div>';
   const content = PAGE_CSS
-    + '<p class="greet">看物品把这一件的底细一次摊开，快捷操作都在表后面，历史在最下面。</p>'
+    // #817 第二波（② 层级清）：导语原是版面说明书（「快捷操作都在表后面，历史在最下面」）；
+    // 改说这一件上屏的是哪些事实，层级仍由下面四个小节标题承担。
+    + '<p class="greet">这一件的分类、位置、数量、价格与来去时间，都摊在这一页上。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>底细</h2>' + main + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>关联与邻居</h2>'
     + '<div class="wrap-x"><table class="kv">'

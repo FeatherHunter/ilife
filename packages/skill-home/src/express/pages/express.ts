@@ -109,7 +109,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-metrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}'
     + '.x-pill{border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfbfd}'
     + '.x-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:12px}'
-    + '.x-card{border:1px solid #eee;border-radius:14px;padding:14px;background:#fff}'
+    // ③ 双端不塌（#817 seq 45）：勾选件原来是卡片首行的独占块（下面是块级名称行），390 档一行只剩个方框、
+    //   卡高从 68 涨到约 128px；改 flex 把方框与名称并到同一行，窄档不挤不叠。
+    + '.x-card{display:flex;align-items:flex-start;gap:10px;border:1px solid #eee;border-radius:14px;padding:14px;background:#fff}'
+    + '.x-body{flex:1;min-width:0}'
     + '.x-photo{width:100%;height:56px;border-radius:10px;background:#f0f3f8;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;margin-bottom:10px;overflow:hidden}'
     + '.x-name{font-weight:700;font-size:16px;word-break:break-word}'
     + '.x-state{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:8px}'
@@ -119,7 +122,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;min-height:44px;font-size:15px}'
     + '.x-btn.alt{background:#f2f2f7;color:#111;border:1px solid #ddd}'
     + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
-    + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}.x-check{margin-bottom:8px}'
+    + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
     + '@media(max-width:820px){.x-cards{grid-template-columns:1fr}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
@@ -138,11 +141,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   if (items.length) {
     body += '<section><h2>快递中</h2><div class="x-cards" id="x-list">'
       + items.map((it) => '<div class="x-card"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
+        + '<div class="x-body">'
         // 照片为空时不渲染占位块：灰底「无照片」零信息却占卡片最大面积（#817 seq 45 的 ⑤）。
         + (it.photo === '' ? '' : '<div class="x-photo">' + escapeHtml(it.photo) + '</div>')
         + '<div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-state ' + (it.overdue ? 'over' : 'days') + '">已等 ' + it.days + ' 天' + (it.overdue ? ' 超时' : '') + '</span></div>'
-        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + ' 数量 ' + it.quantity + '</div></div>').join('')
+        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + ' 数量 ' + it.quantity + '</div></div></div>').join('')
       + '</div><div class="x-actions">'
       + '<button class="x-btn" onclick="xReceive()">我收到了</button>'
       + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_BACKUP) + '">收到的放备用</button>'

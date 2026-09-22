@@ -97,8 +97,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const isExport = msg.includes('已导出');
   const hasRecord = file !== '' || hist.length > 0;
   const histRows = hist.length
-    ? hist.map((h) => '<tr><td>' + escapeHtml(h.name) + '</td></tr>').join('')
-    : (file !== '' ? '<tr><td>' + escapeHtml(file) + '</td></tr>' : '');
+    ? hist.map((h) => '<tr><td class="su-path">' + escapeHtml(h.name) + '</td></tr>').join('')
+    : (file !== '' ? '<tr><td class="su-path">' + escapeHtml(file) + '</td></tr>' : '');
   const content = '<style>'
     + '.su-wrap{max-width:960px;margin:0 auto;padding:0 0 24px}'
     + '.su-hero{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #e3e3e8;border-radius:20px;padding:24px;margin:0 0 16px}'
@@ -126,15 +126,26 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'details.su-raw{margin:16px 0;font-size:13px;color:#6e6e73}'
     + 'details.su-raw summary{min-height:44px;display:flex;align-items:center;cursor:pointer}'
     + 'details.su-raw pre{white-space:pre-wrap;word-break:break-word;background:#1d1d1f;color:#f5f5f7;border-radius:12px;padding:12px;font-size:12px}'
-    + '@media(max-width:820px){.su-btn{width:100%}}'
+    // #817（③双端不塌）：390 档「导出格式」表第二列被压成窄列、末行只剩一个字「开」；「本次结果」的路径
+    // 也在词中断行。窄屏把两张表都改成「标签在上、值在下」的块（导出格式表隐去表头行），
+    // 让路径独占一行宽（12px）；宽档仍是原来的两列表。
+    + '@media(max-width:820px){.su-btn{width:100%}'
+    + '.su-fmt tr:first-child{display:none}'
+    + '.su-fmt tr{display:block;padding:8px 0;border-bottom:1px solid #eee}'
+    + '.su-fmt tr:last-child{border-bottom:none}'
+    + '.su-fmt td{display:block;border:0;padding:2px 0}'
+    + '.su-fmt td:first-child{font-weight:600;color:#6e6e73}'
+    + '.su-kv tr,.su-kv th,.su-kv td{display:block;width:auto;border:0;padding:2px 0}'
+    + '.su-path{font-size:12px;word-break:break-all}'
+    + '}'
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
     + '<p class="su-lead">' + (isExport ? '导出完成，文件已经落盘，拿走即可在别处用。' : '备份完成，数据已经打包。') + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="本次备份（路径/大小/时间）">本次结果</h2>'
-    + '<div class="su-tablewrap"><table class="su-table">'
-    + '<tr><th>文件</th><td>' + escapeHtml(file !== '' ? file : '—') + '</td></tr>'
+    + '<div class="su-tablewrap"><table class="su-table su-kv">'
+    + '<tr><th>文件</th><td class="su-path">' + escapeHtml(file !== '' ? file : '—') + '</td></tr>'
     + '<tr><th>大小</th><td>' + escapeHtml(size) + '</td></tr>'
     + '<tr><th>时间</th><td>' + escapeHtml(nowStr()) + '</td></tr>'
     + '</table></div>'
@@ -169,7 +180,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
-    + '<div class="su-tablewrap"><table class="su-table"><tr><th>导出格式</th><th>说明</th></tr>'
+    + '<div class="su-tablewrap"><table class="su-table su-fmt"><tr><th>导出格式</th><th>说明</th></tr>'
     + '<tr><td>数据文件</td><td>全表可迁移，换机恢复用它</td></tr>'
     + '<tr><td>表格文件</td><td>物品加位置便携表，表格软件直接打开</td></tr>'
     + '</table></div>'

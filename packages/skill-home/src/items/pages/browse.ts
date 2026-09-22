@@ -63,7 +63,10 @@ const PAGE_CSS = '<style>'
   + '.op.alt{background:#fff;color:#0a63ce}'
   + '.note{color:#666;font-size:13px}'
   + '.greet{font-size:15px;color:#333}'
-  + '@media(max-width:480px){.kv th{white-space:normal}}'
+  // #817（③双端不塌）：390 档五列表折行——窄屏收起「编号」列（名称／位置／数量／状态 四列），
+  // 四列在 390 宽内各自不折行；`.wrap-x` 横向滚动留作兜底（长名字仍可横看，不裁字）。
+  + '@media(max-width:480px){.kv th,.kv td{white-space:nowrap}'
+  + '.kv th:nth-child(2),.kv td:nth-child(2){display:none}}'
   + '</style>';
 
 function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string { return REQUIRED_BLOCKS[group].map((b) => escapeHtml(b)).join('；'); }
@@ -90,6 +93,18 @@ function groupOf(c: Card): string {
   return String(c.category ?? '').trim() || '未分类';
 }
 
+/** 位置槽只放位置路径（#817 ⑥分隔符不懒政）：信封的 `location` 是复合串
+ *  （`厨房/吊柜×1[在家]`），而数量与状态本来就有自己的两列（`quantity`／`status` 两字段在场）
+ *  —— 位置列再带一遍 `×N[状态]` 是一处信息挤两个槽。拆得开才拆（两字段都在场），
+ *  拆不开（只有一个复合串）原样上屏，绝不丢值、不自己拼数。 */
+function pathOf(raw: string, quantity: unknown, status: unknown): string {
+  const plain = String(quantity ?? '').trim() === '' || String(status ?? '').trim() === '';
+  if (plain) return raw;
+  // 复合串形如 `厨房/吊柜×10[在家]`：先剥尾巴上的状态括号，再剥数量，再兜一次括号（两种顺序都吃得住）。
+  const cut = raw.replace(/\s*\[[^\]]*\]\s*$/, '').replace(/\s*[×x]\s*\d+\s*$/, '').replace(/\s*\[[^\]]*\]\s*$/, '').trim();
+  return cut === '' ? raw : cut;
+}
+
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
@@ -111,7 +126,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="wrap-x"><table class="kv" data-g="' + i + '"><tr><th>名称</th><th>编号</th><th>位置</th><th>数量</th><th>状态</th></tr>'
     + (groups.get(g) ?? []).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
       + '</td><td>' + escapeHtml(String(c.id ?? ''))
-      + '</td><td>' + escapeHtml(String(c.location ?? ''))
+      + '</td><td>' + escapeHtml(pathOf(String(c.location ?? ''), c.quantity, c.status))
       + '</td><td>' + escapeHtml(String(c.quantity ?? ''))
       + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('')
     + '</table></div></div>').join('');
@@ -126,7 +141,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}function sortRel(b){var box=document.getElementById("grps");if(!box)return;var rel=b.className.indexOf("alt")>=0;var ks=[].slice.call(box.children);ks.sort(function(x,y){if(rel){return Number(x.getAttribute("data-rel"))-Number(y.getAttribute("data-rel"));}var p=x.getAttribute("data-k"),q=y.getAttribute("data-k");return p<q?-1:p>q?1:0;});for(var i=0;i<ks.length;i++){box.appendChild(ks[i]);}b.className=rel?"op":"op alt";b.textContent=rel?"排序：相关":"排序：名称";var nt=b.nextElementSibling;if(nt&&nt.className==="note"){nt.textContent=rel?"按本次查询的相关度重排分组":"按分组名重排";}}</script>'
     + '<p class="greet">筛选浏览按分类分组，点分组名就切换到那一组，点「全部」回到全部分组。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>分组浏览</h2>' + body + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有匹配时</h2><p>换个条件再筛一次。</p></section>'
+    // #817（②层级清）：有结果时「没有匹配时」这一段不再与结果同屏（同页 `status` 段同款处置：
+    // 标记与原文留在 HTML 里，靠 `hidden` 收声）。
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"'
+    + (cards.length ? ' hidden' : '') + '><h2>没有匹配时</h2><p>换个条件再筛一次。</p></section>'
     // 状态块：分组表里已经有「状态」列（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'

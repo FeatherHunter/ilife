@@ -65,6 +65,20 @@ type SeasonItem = { id: number; name: string; categoryName: string; tags: string
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v as Record<string, unknown>[] : []);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
+/** 类别／标签各自成一枚徽章（不拿空格把多个标签拼成一行）。类别名缺位时退回标签，再缺位写「衣物」。 */
+function catBadges(x: SeasonItem): string {
+  const bits = x.categoryName !== '' ? [x.categoryName] : x.tags;
+  const use = bits.length > 0 ? bits : ['衣物'];
+  return use.map((t) => '<span class="of-tag">' + escapeHtml(latinFree(t)) + '</span>').join('');
+}
+
+/** 位置值分段呈现（`›` 连接）：值本身是「房间/容器」路径串，正文里不留斜杠拼接（同 items 域 receipt.ts 的写法）。 */
+function locSegs(loc: string): string {
+  return loc.split('/').map((s) => s.trim()).filter(Boolean)
+    .map((s) => '<span class="of-seg">' + escapeHtml(s) + '</span>')
+    .join('<span class="of-sep">›</span>');
+}
+
 const CSS = '<style>'
   + '.of-eye{color:#8a744f;font-size:12px;letter-spacing:.12em;margin:4px 0 10px}'
   + '.of-metrics{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}'
@@ -78,8 +92,16 @@ const CSS = '<style>'
   + '.of-check{flex:0 0 24px;height:24px;border:2px solid #c9b896;border-radius:6px;background:#fff;box-sizing:border-box}'
   + '.of-line.on .of-check{background:#8a744f;border-color:#8a744f}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
-  + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
-  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
+  + '.of-body{flex:1;min-width:0}'
+  // #817（⑥分隔符不懒政）第二波：类别升成徽章、位置独立成列——此前一句副文把「类别，放在位置」
+  // 用逗号挤在一行（位置值内部又是「房间/容器」斜杠拼接）。现在两件各占一个元素：
+  // 类别一行徽章（多个标签各成一个徽章，不拿空格拼），位置一行带字段名，值按 `›` 分段。
+  + '.of-sub{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}'
+  + '.of-tag{display:inline-block;background:#fff;border:1px solid #e4d9c2;border-radius:99px;padding:1px 9px;font-size:12px;color:#8a744f}'
+  + '.of-loc{display:flex;gap:4px;align-items:baseline;margin-top:3px;font-size:12px;color:#4a3d28;overflow-wrap:anywhere}'
+  + '.of-lb{flex:0 0 28px;color:#a8957a;font-size:12px}'
+  + '.of-seg{display:inline-block}'
+  + '.of-sep{color:#c9b896;margin:0 3px;font-size:11px}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
   + '.of-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}'
@@ -119,9 +141,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     listHtml += '<div class="of-empty">没有带「' + escapeHtml(season) + '」标签的在家衣物，建议先给衣物打季节标签再来换季</div>';
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
-      + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
-      + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.categoryName || x.tags.join(' ') || '衣物')
-        + (x.location ? '，放在' + x.location : '')) + '</td></tr></table></div></div>').join('')
+      + '<div class="of-body"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
+      + '<div class="of-sub">' + catBadges(x) + '</div>'
+      + '<div class="of-loc"><span class="of-lb">位置</span>'
+      + (x.location !== '' ? locSegs(x.location) : '<span class="of-seg">未记</span>') + '</div></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn" id="ofAll">全选切换</button>'
       + '<button class="of-btn primary" id="ofGo">确认' + action + '</button></div>'
       + homeCopyArea({

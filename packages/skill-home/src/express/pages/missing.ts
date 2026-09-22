@@ -95,7 +95,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const { items, scope } = asMissing(env);
 
   const style = '<style>'
-    + '.x-lead{color:#3a3a3c;font-size:15px;line-height:1.7;margin:12px 0}'
+    + '.x-lead{color:#3a3a3c;font-size:15px;line-height:1.7;margin:12px 0;text-wrap:pretty}'
     + '.x-metrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}'
     + '.x-pill{border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfbfd}'
     + '.x-row{display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid #eee;flex-wrap:wrap}'
@@ -111,14 +111,16 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-btn.ghost{background:#fff;color:#007aff;border:1px solid #007aff}'
     + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
-    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
+    + '@media(max-width:820px){.x-row{align-items:center}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
 
   const P_SCOPE = '请加载居家管家技能，帮我按范围检测缺货';
   const P_TH = '请加载居家管家技能，帮我查看囤货并设置阈值';
 
   let body = style;
-  body += '<p class="x-lead">勾选缺货物品加入购物清单，建议买按两倍阈值缓冲算出</p>';
+  // #817（③双端不塌）第二波：说明句压到 390 档一行放得下（20 字）——原来 25 字在 390 档折行后
+  // 第二行只剩一个「出」孤字。
+  body += '<p class="x-lead">勾选后加入购物清单，建议买量按两倍阈值算</p>';
   body += '<div class="x-metrics">'
     + '<span class="x-pill">缺货 ' + items.length + ' 件</span>'
     + '<span class="x-pill">检测范围 ' + escapeHtml(scope) + '</span>'

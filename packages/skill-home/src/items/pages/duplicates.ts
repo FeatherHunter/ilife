@@ -124,7 +124,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + row('组内件数', cell(n))
       + row('首件状态', cell(head?.status))
       // #817（⑤文案不冗余）：件数只在「组内件数」行写一次，值位不再复述「共 N 件」。
-      + row('位置/数量', cell(head?.location))
+      // #817 第二波（⑥ 分隔符不懒政）：行名原写「位置/数量」把一个斜杠当两个字段名，
+      // 拆成两行，值位各接回执里自己的字段（`location`／`quantity`）。
+      + row('位置', cell(head?.location))
+      + row('数量', cell(head?.quantity))
       + row('分类', cell(head?.category))
       + row('价格', '—')
       + '</table></div>';
@@ -136,7 +139,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     // #817（⑤文案不冗余）：副标题不再逐字复述字段清单（那是判据件术语），改说这页要人做什么。
     + '<p class="greet">同名的物品归到一组，逐组核对清楚再决定要不要合并。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>重复分组</h2>' + body + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>没有重复时</h2><p>没有重复就各自独立录入，不必合并。</p></section>'
+    // #817 第二波（① 空态与正文同屏自相矛盾）：有分组时这一段整段收起来（「没有重复」的空态
+    // 只在真没有重复时露头）；块位与 `data-need` 原文照留，结构块判据件照旧读得到。
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"' + (names.length ? ' hidden' : '') + '><h2>没有重复时</h2><p>没有重复就各自独立录入，不必合并。</p></section>'
     // 状态块：分组卡片里已经有「首件状态」行（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'

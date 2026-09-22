@@ -115,7 +115,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-btn.danger{background:#fff;color:#c00;border:1px solid #ffb4ae}'
     + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
-    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-name{flex:none}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
+    // #817（③双端不塌）：390 档原来把整行改成竖排，44px 勾选件独占首行、行高 68→128px，一屏少看一条
+    //  ——窄屏仍走横排（勾选件在左、文字在右），只把动作区改成一列两格。
+    + '@media(max-width:820px){.x-row{flex-direction:row;align-items:center}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
 
   const P_NEW = '请加载居家管家技能，帮我录入新买的物品';

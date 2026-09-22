@@ -73,26 +73,28 @@ function needs(): string {
 const PAGE_CSS = '<style>'
   + '.fp-page{max-width:720px;margin:0 auto;padding:4px 2px 20px}'
   + '.fp-hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:12px 0}'
-  + '.fp-eyebrow{color:#007aff;font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:6px}'
-  + '.fp-title{font-size:24px;font-weight:800;margin:0 0 8px}'
+  // ② 层级阶梯：页大标题（模板 h1）＞头卡标题 21px/800＞区块标题 15px/700＞键 13px＞值 14px。
+  + '.fp-title{font-size:21px;font-weight:800;margin:0 0 8px}'
   + '.fp-lead{color:#6e6e73;font-size:15px;margin:0}'
-  + '.fp-stage{display:inline-block;background:#f5f8ff;color:#007aff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin-top:10px}'
   + '.fp-sec{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin:12px 0}'
-  + '.fp-sec-t{font-size:17px;font-weight:750;margin:0 0 10px}'
+  + '.fp-sec-t{font-size:15px;font-weight:700;color:#3a3a3c;margin:0 0 10px}'
   + '.fp-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #ececf1}'
   + '.fp-row:last-child{border-bottom:none}'
-  + '.fp-k{color:#6e6e73;font-size:14px}'
+  + '.fp-k{color:#6e6e73;font-size:13px}'
   + '.fp-v{font-weight:600;font-size:14px;word-break:break-word}'
-  + '.fp-rel{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid #eee;border-radius:14px;margin:8px 0}'
-  + '.fp-rel b{flex:1;font-size:14px}'
-  + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;margin:2px;font-size:13px}'
+  // ⑥ 关联行拆槽（#817 seq 17）：一行四段（编号／名称／关系类型／按钮）改成三段「字段名＋值」加一行动作，
+  //   关系类型单独一格放胶囊，不再靠空格与冒号硬挤。
+  + '.fp-rel{border:1px solid #eee;border-radius:14px;padding:6px 14px;margin:8px 0}'
+  + '.fp-rel .fp-row:last-of-type{border-bottom:none}'
+  + '.fp-rel .fp-actions{grid-template-columns:1fr}'
+  + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;margin:2px 0;font-size:13px}'
   + '.fp-note{color:#6e6e73;font-size:13.5px;margin:8px 0 0}'
   + '.fp-empty{color:#86868b;font-size:14px;margin:6px 0}'
   + '.fp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
   + '.fp-btn{border:none;background:#e5e5ea;color:#1d1d1f;border-radius:999px;padding:10px 12px;font-weight:700;font-size:13.5px;min-height:44px;cursor:pointer}'
   + '.fp-btn-primary{background:#007aff;color:#fff}'
   + '.fp-btn-ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
-  + '@media(max-width:820px){.fp-row{grid-template-columns:1fr;gap:2px}.fp-title{font-size:21px}.fp-rel{flex-direction:column;align-items:stretch}}'
+  + '@media(max-width:820px){.fp-row{grid-template-columns:1fr;gap:2px}.fp-title{font-size:20px}}'
   + '</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -120,14 +122,17 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + (mainId || '___') + '\n  关联物品：编号' + (peerId || '___');
 
   const listBlock = mainId && peerId
-    ? '<div class="fp-rel"><b>对方编号 ' + esc(peerId) + (peerName !== '' ? ' ' + esc(peerName) : '') + ' <span class="fp-pill">关系类型：' + esc(relation !== '' ? relation : '—') + '</span></b>'
-      + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
+    ? '<div class="fp-rel">'
+      + '<div class="fp-row"><div class="fp-k">对方物品</div><div class="fp-v">' + esc(peerName !== '' ? peerName : '—') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(peerId) + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">关系类型</div><div class="fp-v"><span class="fp-pill">' + esc(relation !== '' ? relation : '—') + '</span></div></div>'
+      + '<div class="fp-actions"><button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
+      + '</div>'
     : '<p class="fp-empty">暂无关联，配件与配套关系可以在这里建立</p>';
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 关联</div>'
-    + '<div class="fp-title">' + (unlinked ? '已经解除' : '已建立关联') + '</div>'
+    + '<div class="fp-hero"><div class="fp-title">' + (unlinked ? '已经解除' : '已建立关联') + '</div>'
     + '<p class="fp-lead">' + esc(msg) + '</p></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">主物品</h2>'
     + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'

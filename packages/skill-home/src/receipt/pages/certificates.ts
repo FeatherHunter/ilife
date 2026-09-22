@@ -170,15 +170,17 @@ function listTable(env: Envelope): string {
   });
   // #817（⑤文案不冗余）：删「到期文案」列——剩余天数、证件状态、到期文案说的是同一件事，一页说三遍；
   // 该列也不在必需块的证件清单字段里（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）。
+  // #817（③双端不塌）：每个值位带 `data-th`（列名）；≤760 档由页内样式把每一行排成卡片、标签印在值左边，
+  // 8 列在 390 档一次看全——此前 `min-width:560px`＋`nowrap` 只露得出前 6 列，右侧三列看不见也没提示。
   const body = rows.map((r) => '<tr>'
-    + '<td>' + escapeHtml(r.certType) + '</td>'
-    + '<td>' + escapeHtml(r.holder) + '</td>'
-    + '<td>' + escapeHtml(r.idText) + '</td>'
-    + '<td>' + escapeHtml(r.expires) + '</td>'
-    + '<td>' + (r.days === null ? '待补' : String(r.days)) + '</td>'
-    + '<td>' + escapeHtml(r.status) + '</td>'
-    + '<td>' + escapeHtml(r.masked) + '</td>'
-    + '<td>' + escapeHtml(r.note) + '</td>'
+    + '<td data-th="类型">' + escapeHtml(r.certType) + '</td>'
+    + '<td data-th="持有人">' + escapeHtml(r.holder) + '</td>'
+    + '<td data-th="编号">' + escapeHtml(r.idText) + '</td>'
+    + '<td data-th="到期日">' + escapeHtml(r.expires) + '</td>'
+    + '<td data-th="剩余天数">' + (r.days === null ? '待补' : String(r.days)) + '</td>'
+    + '<td data-th="证件状态">' + escapeHtml(r.status) + '</td>'
+    + '<td data-th="脱敏号码">' + escapeHtml(r.masked) + '</td>'
+    + '<td data-th="备注">' + escapeHtml(r.note) + '</td>'
     + '</tr>').join('');
   return '<div><p>共' + rows.length + '本证件，按到期先后排列</p>'
     + '<div class="rc-scroll"><table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
@@ -218,12 +220,21 @@ function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly act
 const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
   + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){copyText(b.getAttribute("data-t")||"");});});</script>';
 
-/** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。 */
+/** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动。
+ *  #817（③双端不塌）第二波：宽档（>760）走 8 列表，窄档（390）同一份 DOM 排成卡片——
+ *  行内每个值位用 `data-th` 的列名当标签印在值左边，8 列一次看全，既不横滑、也不留看不见的列。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
   + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.rc-scroll{overflow-x:auto}'
   + '.rc-scroll table{min-width:560px;border-collapse:collapse}'
-  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}</style>';
+  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}'
+  + '@media(max-width:760px){.rc-scroll table{display:block;min-width:0}'
+  + '.rc-scroll thead{display:none}'
+  + '.rc-scroll tbody,.rc-scroll tr,.rc-scroll td{display:block}'
+  + '.rc-scroll tr{border:1px solid #e3e6ea;border-radius:10px;margin:0 0 8px;padding:6px 10px}'
+  + '.rc-scroll td{display:flex;gap:8px;border:0;padding:2px 0;white-space:normal;overflow-wrap:anywhere}'
+  + '.rc-scroll td::before{content:attr(data-th);flex:0 0 60px;color:#86868b}'
+  + '}</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。

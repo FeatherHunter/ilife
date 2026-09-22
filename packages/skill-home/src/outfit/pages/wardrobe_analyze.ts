@@ -79,7 +79,8 @@ const CSS = '<style>'
   + '.of-card{background:linear-gradient(180deg,#fdfaf4,#f6efe0);border:1px solid #eadfc8;border-radius:20px;padding:16px;margin:0 0 12px;max-width:100%;box-sizing:border-box}'
   + '.of-card h2{font-size:16px;margin:0 0 10px;color:#4a3d28}'
   + '.of-bar{margin:8px 0}'
-  + '.of-bar .of-row{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:#4a3d28;margin-bottom:4px;overflow-wrap:anywhere}'
+  + '.of-bar .of-row{display:grid;grid-template-columns:minmax(0,1fr) auto 46px;gap:10px;align-items:baseline;font-size:13px;color:#4a3d28;margin-bottom:4px;overflow-wrap:anywhere}'
+  + '.of-p{text-align:right;color:#8a744f;font-variant-numeric:tabular-nums}'
   + '.of-track{background:#eee5d2;border-radius:99px;height:12px;overflow:hidden}'
   + '.of-fill{background:#8a744f;border-radius:99px;height:12px}'
   + '.of-advice{background:#f3ecdc;border:1px solid #e4d9c2;border-radius:12px;padding:10px 14px;font-size:14px;color:#6d5c3d;overflow-wrap:anywhere}'
@@ -89,8 +90,9 @@ const CSS = '<style>'
   + '.of-idle.on .of-check{background:#8a744f;border-color:#8a744f}'
   + '.of-nm{font-size:15px;font-weight:700;color:#4a3d28;overflow-wrap:anywhere}'
   + '.of-est{background:#b4552d;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px}'
-  + '.of-meta{font-size:12px;color:#8a744f;margin-top:2px;overflow-wrap:anywhere}'
-  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:0;border:0;vertical-align:top}'
+  + '.of-m{width:100%;border-collapse:collapse}.of-m td{padding:1px 0;border:0;vertical-align:top}'
+  + '.of-k{width:64px;color:#8a744f;font-size:12px;white-space:nowrap}'
+  + '.of-v{color:#6d5c3d;font-size:13px;overflow-wrap:anywhere}'
   + '.of-btn{border:1px solid #e4d9c2;background:#fff;border-radius:99px;padding:8px 16px;font-size:14px;color:#8a744f;min-height:44px;box-sizing:border-box;cursor:pointer}'
   + '.of-btn.primary{background:#8a744f;border-color:#8a744f;color:#fff;font-weight:700}'
   + '.of-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}'
@@ -122,8 +124,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   if (!dist.length) distHtml += '<div class="of-empty">衣橱还没有在家衣物，先去录入第一批再来看构成</div>';
   else {
     const max = Math.max(1, ...dist.map((d) => d.count));
-    distHtml += dist.map((d) => '<div class="of-bar"><div class="of-row"><span>' + escapeHtml(d.label)
-      + '</span><span>' + escapeHtml(d.count + '件' + d.pct + '%') + '</span></div>'
+    // #817（⑥分隔符不懒政）：原来件数与占比贴成一个串（「外套 5件36%」）——占比移独立列、右对齐。
+    distHtml += dist.map((d) => '<div class="of-bar"><div class="of-row"><span class="of-lb">' + escapeHtml(d.label)
+      + '</span><span class="of-n">' + escapeHtml(d.count + '件') + '</span><span class="of-p">' + escapeHtml(d.pct + '%') + '</span></div>'
       + '<div class="of-track"><div class="of-fill" style="width:' + Math.round((d.count * 100) / max) + '%"></div></div></div>').join('');
   }
   distHtml += '</div>';
@@ -131,13 +134,19 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   let dormantHtml = '<div class="of-card"><h2>闲置清单</h2>';
   if (!dormant.length) dormantHtml += '<div class="of-empty">衣橱状态良好，没有长期闲置衣物</div>';
   else {
+    // #817（⑥分隔符不懒政）：副文原来把类别／闲置／最后使用／位置用逗号＋斜杠挤成一行
+    //  （「闲置许久，从未使用过，放在玄关/鞋柜」）——拆成字段列（一格一个事实、左标签右值）；
+    //  值仍写在 `<td>` 里（判据件的重复句豁免按单元格算，两件物品的值可逐字相同）。
+    //  位置值本身仍是「房间/容器」复合串，拆成两个字段要数据层给拆好的字段。
     dormantHtml += dormant.map((x, i) => '<div class="of-idle" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name))
       + (x.estimated ? '<span class="of-est">估算</span>' : '') + '</div>'
-      + '<table class="of-m"><tr><td class="of-meta">' + escapeHtml((x.name.includes(x.slot) ? '' : x.slot + '，')
-      + (x.daysIdle === null ? '闲置许久' : '闲置' + x.daysIdle + '天')
-      + (x.lastUsed === '从未使用' ? '，从未使用过' : '，最后使用' + x.lastUsed)
-      + (x.location ? '，放在' + x.location : '')) + '</td></tr></table></div></div>').join('')
+      + '<table class="of-m">'
+      + (x.name.includes(x.slot) ? '' : '<tr><td class="of-k">类别</td><td class="of-v">' + escapeHtml(x.slot) + '</td></tr>')
+      + '<tr><td class="of-k">闲置时长</td><td class="of-v">' + (x.daysIdle === null ? '许久' : x.daysIdle + ' 天') + '</td></tr>'
+      + '<tr><td class="of-k">最后使用</td><td class="of-v">' + (x.lastUsed === '从未使用' ? '从未使用' : escapeHtml(x.lastUsed)) + '</td></tr>'
+      + (x.location ? '<tr><td class="of-k">位置</td><td class="of-v">' + escapeHtml(x.location) + '</td></tr>' : '')
+      + '</table></div></div>').join('')
       + '<div class="of-actions"><button class="of-btn primary" id="ofDrop">标记废弃</button>'
       + '<button class="of-btn" id="ofGive">送人</button><button class="of-btn" id="ofHold">先不处理</button>'
       + '<button class="of-btn" id="ofShop">加入购物清单</button></div>'

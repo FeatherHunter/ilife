@@ -126,7 +126,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const empty = round.total === '0';
 
   const content = '<div class="hero"><p class="eyebrow">填写后确认完成</p>'
-    + '<p class="lead">逐件确认在不在不确定，数量不同即为异</p></div>'
+    // 三态词之间给足分隔（此前连写成「在不在不确定」，读起来有歧义：#817 seq 25 的 ⑥）。
+    + '<p class="lead">逐件确认：在／不在／不确定；数量不同即为异</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>范围</h2>'
     + '<dl class="kv"><dt>盘点范围</dt><dd id="scope">' + escapeHtml(round.scope) + '</dd>'
     + '<dt>所属记录</dt><dd>记录<span id="recid">' + escapeHtml(round.id) + '</span></dd>'

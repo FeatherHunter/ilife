@@ -65,6 +65,12 @@ interface ManageDetail {
 
 function attr(s: string): string { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
+/** 页内样式（#817 seq 30 的 ③）：390 档底栏折行是「两列对半切」切出来的——模板
+ *  `@media(max-width:720px){.actions{display:grid;grid-template-columns:repeat(2,1fr)}}` 先把底栏切成两列，
+ *  共用复制区自己的 `.ilife-action-row` 再对半一次（每列约 85px），「复制数据」四字于是在胶囊里折成两行。
+ *  页内把底栏改回整幅单列，复制区拿回整幅宽度（共用层与模板的根治仍归 #886 那批，本席不碰那两个件）。 */
+const PAGE_CSS = '<style>@media(max-width:720px){.actions{display:block}}</style>';
+
 /** 复制提示词按钮（载荷进 `data-t`，审计只读中文标签）。 */
 function copyBtn(prompt: string, label: string, need: string, ghost: boolean): string {
   return '<button class="' + (ghost ? 'btn ghost' : 'btn') + '" data-copy="' + attr(prompt)
@@ -82,8 +88,9 @@ function hero(total: number): string {
 
 function treeCard(nodes: LocNode[]): string {
   if (nodes.length === 0) {
+    // ③（#817 seq 30）：空态这句原是一长句，390 档折行后末字孤在第二行；断成两句短句，落行不再挂单字。
     return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">'
-      + '<h2>还没有位置</h2>先建第一个位置（如客厅电视柜），录物品时也能顺手建。</div>';
+      + '<h2>还没有位置</h2>先建第一个位置，如客厅电视柜<br>录物品时也能顺手建</div>';
   }
   const rows = nodes.map((n) => {
     const indent = (n.depth - 1) * 22;
@@ -103,7 +110,7 @@ function treeCard(nodes: LocNode[]): string {
       + '</span></div>';
   }).join('');
   return '<section class="card" data-block="fields" data-need="位置树">'
-    + '<h2>位置树 <span class="hint">点每行的按钮改名或删除（合并见下方相似位置检测）</span></h2>'
+    + '<h2>位置树 <span class="hint">点行内按钮改名或删除</span></h2>'
     + '<div class="tree" data-need="位置路径多级">' + rows + '</div></section>';
 }
 
@@ -178,7 +185,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 空态索引（有数据时空态区不 render，机审仍读原文；空态真 render 由测试空库断言覆盖）。
   const emptyIndex = nodes.length === 0 ? '' : '<div hidden data-block="empty">'
     + '<span data-need="空态：还没有位置＋建第一个位置引导"></span></div>';
-  const content = hero(total) + receiptHtml
+  const content = PAGE_CSS + hero(total) + receiptHtml
     + '<div data-block="status" hidden></div>' + emptyIndex
     + treeCard(nodes) + similarCard(groups) + formPanel() + actionsBar(env, ctx);
   return fillTemplate(template, content);

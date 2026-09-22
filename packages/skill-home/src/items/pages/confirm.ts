@@ -71,7 +71,6 @@ function needs(): string {
 const PAGE_CSS = '<style>'
   + '.fp-page{max-width:720px;margin:0 auto;padding:4px 2px 20px}'
   + '.fp-hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:12px 0}'
-  + '.fp-eyebrow{color:#007aff;font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:6px}'
   + '.fp-title{font-size:24px;font-weight:800;margin:0 0 8px}'
   + '.fp-lead{color:#6e6e73;font-size:15px;margin:0}'
   + '.fp-stage{display:inline-block;background:#f5f8ff;color:#007aff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin-top:10px}'
@@ -88,7 +87,7 @@ const PAGE_CSS = '<style>'
   + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;margin:2px;font-size:13px}'
   + '.fp-tag{background:#eef5ff;color:#0a63ce;border-radius:999px;padding:4px 10px;margin:2px;font-size:13px;display:inline-block}'
   + '.fp-impact{background:#f2f8ff;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:14px}'
-  + '.fp-note{color:#6e6e73;font-size:13.5px;margin:8px 0 0}'
+  + '.fp-impact ul{margin:0;padding-left:20px}.fp-impact li{margin:4px 0}'
   + '.fp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
   + '.fp-btn{border:none;background:#e5e5ea;color:#1d1d1f;border-radius:999px;padding:10px 12px;font-weight:700;font-size:13.5px;min-height:44px;cursor:pointer}'
   + '.fp-btn-primary{background:#007aff;color:#fff}'
@@ -123,27 +122,32 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    // 头卡写结果值，不写页型名与操作名（#817 复评 seq 15：徽章「确认页」是页型名、「合并」与 h1 同词）。
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理</div>'
+    // 头卡只写结果值：页型名徽章删了（#817 seq 15 的 ②：徽章是页型名，不是内容）。
+    + '<div class="fp-hero">'
     + '<div class="fp-title">' + (target === '' ? '合并物品已执行' : '已合并到 ' + esc(target)) + '</div>'
-    + '<p class="fp-lead">多条重复物品已经并入主条，请核对影响范围后归档</p></div>'
+    + '<p class="fp-lead">重复的那几条已经并入留下的这件，请核对范围后归档</p></div>'
     + '<section class="fp-sec"><div class="fp-grid2">'
-    // 主条编号只在「变更前」写这一处；「变更后」写这次真变了的量，逐条明细不再重复编号。
+    // 保留的这条编号只在「变更前」写这一处；「变更后」写这次真变了的量，逐条明细不再重复编号。
     + '<div class="fp-compare fp-compare-before"><h2 class="fp-sec-t">变更前</h2>'
     + sourceRows
-    + '<div class="fp-row"><div class="fp-k">主条</div><div class="fp-v">编号 ' + esc(target || '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">留下的这件</div><div class="fp-v">编号 ' + esc(target || '—') + '</div></div>'
     + '</div>'
     + '<div class="fp-compare fp-compare-after"><h2 class="fp-sec-t">变更后</h2>'
     + '<div class="fp-row"><div class="fp-k">并入数量</div><div class="fp-v">' + (moved === '' ? '—' : '共 ' + esc(moved) + ' 件') + '</div></div>'
     + '</div>'
     + '</div></section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">逐条明细</h2>'
-    + '<div class="fp-row"><div class="fp-k">保留条目</div><div class="fp-v">主条</div></div>'
+    + '<div class="fp-row"><div class="fp-k">保留条目</div><div class="fp-v">留下的这件</div></div>'
     + (hasSources ? sources.map((s) => '<div class="fp-row"><div class="fp-k">并入</div><div class="fp-v">编号 ' + esc(s.id) + ' ' + esc(s.name === '' ? '—' : s.name) + '</div></div>').join('') : '')
     + '<div class="fp-row"><div class="fp-k">合并记录</div><div class="fp-v">' + esc(msg) + '</div></div>'
     + '</section>'
+    // 影响说明拆三条：原先是一句六十多字、用分号硬挤的串（#817 seq 15 的 ⑥）。
     + '<section class="fp-sec"><h2 class="fp-sec-t">影响说明</h2>'
-    + '<p class="fp-note">来源条目的位置与标签记录已经删除，只保留主条；数量已经相加；这次合并不能自动撤销，错了需要手动分账</p></section>'
+    + '<div class="fp-impact"><ul>'
+    + '<li>来源条目的位置与标签记录已经删除，只保留留下的这件</li>'
+    + '<li>并入的件数已经加到留下的这件上</li>'
+    + '<li>这次合并不能自动撤销，错了要手动把这些条目再拆开</li>'
+    + '</ul></div></section>'
     + '<div class="fp-actions">'
     + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-confirm-archive\')">确认</button>'
     + '</div>'

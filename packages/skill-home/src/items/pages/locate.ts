@@ -61,7 +61,11 @@ const PAGE_CSS = '<style>'
   + '.note{color:#666;font-size:13px}'
   + '.greet{font-size:15px;color:#333}'
   + '.top{border:2px solid #0a63ce}'
-  + '@media(max-width:480px){.kv th{width:6em}}'
+  // 390 档（≤480）：其余候选这张四列表把「在家」挤成两行（#817 seq 7 的 ③），
+  // 收起成两列——只留找东西用得上的名称与位置，编号与状态在手机上让位（宽屏照旧四列）。
+  + '@media(max-width:480px){.kv th{width:6em}'
+  + '.kv.rest th,.kv.rest td{white-space:nowrap}'
+  + '.kv.rest th:nth-child(2),.kv.rest td:nth-child(2),.kv.rest th:nth-child(4),.kv.rest td:nth-child(4){display:none}}'
   + '</style>';
 
 function needs(group: 'fields' | 'operations' | 'empty' | 'status'): string {
@@ -117,12 +121,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '</td><td>' + escapeHtml(String(c.location ?? ''))
     + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('');
   const content = PAGE_CSS
-    + '<p class="greet">紧急定位只看第一件，名称编号位置数量状态都在置顶卡片里。</p>'
+    // 抬头说人话（此前那句是取数规则说明书：#817 seq 7 的 ②）。
+    + '<p class="greet">东西急用？先看置顶这一件，找到了就点「我找到了」。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>置顶</h2>' + top + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>其余候选</h2>'
     + (rest === ''
       ? '<p>没有其余候选。</p>'
-      : '<div class="wrap-x"><table class="kv"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
+      : '<div class="wrap-x"><table class="kv rest"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
     + '</section>'
     // 状态块：置顶卡片里已经有「状态」格（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'

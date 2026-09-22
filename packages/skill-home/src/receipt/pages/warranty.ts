@@ -71,7 +71,9 @@ function summaryOf(env: Envelope, items: Record<string, unknown>[]): string {
   // 回执形：回执卡已说本操作那一件事（编号），摘要位不再复述；空态改由内容位渲染（页上没有别的空态块）。
   if (env.shape === 'receipt' || !items.length) return '';
   // 信封不带起始日／时长／到期日，列表也不按到期日排，故不声称「按到期先后排列」。
-  return '<div class="receipt-summary"><p>共' + items.length + '项保修保养权益</p></div>';
+  // #817（②层级清）：原来是一句摘要在前、7 张卡平铺在后，两层之间没有归属关系——改成承载清单的
+  // 分组标题（h1 → h2 → 卡），件数收进括号里，不再另起一句。
+  return '<h2 class="rc-group">保修保养权益（共 ' + items.length + ' 项）</h2>';
 }
 
 /** 卡体字段值位：左键名、右值位；键名＝命令层补齐后信封里该带的字段名，信封没带的写「—」。
@@ -82,28 +84,46 @@ function summaryOf(env: Envelope, items: Record<string, unknown>[]): string {
  *  expires_at（到期日）、remaining_days（剩余天数）、repair_count（维修次数）、service_events（服务事件）。 */
 const CARD_FIELDS: readonly (readonly [string, string])[] = [['物品名', 'item_name'], ['类型', 'kind'], ['状态', 'status'], ['到期日', 'expires_at'], ['剩余天数', 'remaining_days'], ['维修次数', 'repair_count'], ['服务事件', 'service_events']];
 
-/** 一项保修保养一张卡：卡头是信封给的「保修#N」，卡体是本页自绘的值位（不是空的 div）。 */
+/** 一项保修保养一张卡：卡头是信封给的「保修#N」，卡体是本页自绘的值位（不是空的 div）。
+ *  #817（②层级清）：卡头原来与字段值同字号同色、7 张卡平铺无归属；改为卡头 16px 标题＋一条分隔线、
+ *  字段名 12px 灰、值 14px 深色（三级层次），卡身两列字段位（7 行压成 4 行），整段挂在分组标题下。 */
 function cardsOf(items: Record<string, unknown>[]): string {
   const cell = (it: Record<string, unknown>, key: string): string => escapeHtml(
     typeof it[key] === 'string' || typeof it[key] === 'number' ? String(it[key]) : '—');
-  const cards = items.map((it) => '<div class="item"><div class="item-head"><span class="name">' + escapeHtml(String(it.name ?? ''))
-    + '</span></div><table>' + CARD_FIELDS.map(([label, key]) => '<tr><th>' + label + '</th><td>' + cell(it, key) + '</td></tr>').join('') + '</table></div>').join('');
+  const cards = items.map((it) => '<div class="rc-card"><div class="rc-card-head"><span class="rc-card-title">'
+    + escapeHtml(String(it.name ?? ''))
+    + '</span></div><dl class="rc-fields">'
+    + CARD_FIELDS.map(([label, key]) => '<div class="rc-field"><dt>' + label + '</dt><dd>' + cell(it, key) + '</dd></div>').join('')
+    + '</dl></div>').join('');
   return '<div class="fam-content">' + cards + '</div>';
 }
 
 /** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；卡体值位另配轻量表格样式。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
-  + '.rc-ops{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}'
-  + '.item table{font-size:13px;border-collapse:collapse}.item th{color:#6e6e73;font-weight:600;text-align:left;padding:2px 8px 2px 0}</style>';
+  + '.rc-ops{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;margin:10px 0}'
+  + '.rc-copy{margin:8px 0 12px}'
+  + '.rc-group{font-size:17px;font-weight:700;color:#1d1d1f;margin:18px 0 10px}'
+  + '.fam-content{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px}'
+  + '.rc-card{border:1px solid #e3e3e8;border-radius:14px;padding:12px 14px}'
+  + '.rc-card-head{border-bottom:1px solid #ececf1;padding-bottom:8px;margin-bottom:6px}'
+  + '.rc-card-title{font-size:16px;font-weight:700;color:#1d1d1f}'
+  + '.rc-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:2px 14px;margin:0}'
+  + '.rc-field{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0;padding:4px 0;border-bottom:1px dashed #f2f2f5}'
+  + '.rc-field dt{flex:none;font-size:12px;color:#86868b}'
+  + '.rc-field dd{margin:0;font-size:14px;font-weight:600;color:#1d1d1f;text-align:right;overflow-wrap:anywhere}</style>';
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   // #817（⑤文案不冗余）：后两颗原标签与场景名逐字相同＝自指（在「记录维修」页上写「记录维修」、
   // 在「执行保养」页上写「执行保养」）；换成动作说法，载荷 data-t 不动。
+  // #817（③双端不塌）：复制区原先是这条 flex 行里的第 5 个兄弟，390 档第 4 颗按钮与它同处一行、
+  // 被它撑成约 100px 高（前三个 44px）；复制区移出成独立段，动作行只剩 44px 按钮。
   return '<div class="rc-ops">'
     + '<button type="button" data-t="请查保修状态">按状态复核</button>'
     + '<button type="button" data-t="请登记保修">新增保修</button>'
     + '<button type="button" data-t="请记录一次维修">记一次维修</button>'
     + '<button type="button" data-t="请执行一次保养">做一次保养</button>'
+    + '</div>'
+    + '<div class="rc-copy">'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },

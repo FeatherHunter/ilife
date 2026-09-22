@@ -80,15 +80,22 @@ const CSS = '<style>'
   + '.fam-head{display:flex;gap:8px;align-items:baseline;margin:0 0 10px}.fam-name{font-size:12px;font-weight:800;color:#0a63d6}.fam-key{font-size:12px;color:#86868b}'
   + '.st{font-size:14px;color:#1d1d1f}.st-hero{background:linear-gradient(180deg,#fff,#f4f8ff);border:1px solid #dfe8f5;border-radius:16px;padding:16px;margin:0 0 12px}'
   + '.st-wake{display:inline-block;background:#eef4ff;color:#0a63d6;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700}'
-  + '.st-lead{color:#55585f;font-size:13px;margin-top:6px}.st-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}'
-  + '.st-card{background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:12px}.st-card b{display:block;font-size:12px;color:#6e6e73;font-weight:600}'
+  + '.st-lead{color:#55585f;font-size:13px;margin-top:6px}.st-cards{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}'
+  // #817 第二波（③双端不塌）：五张卡原走 `auto-fit minmax(140px,1fr)`——桌面一行塞四张、末行剩一张孤卡。
+  // 改 flex 自适应：桌面上五张同排、各摊等宽，窄屏按 108px 基宽折行且末行那张摊满（不留半行空槽）。
+  + '.st-card{flex:1 1 108px;background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:12px}.st-card b{display:block;font-size:12px;color:#6e6e73;font-weight:600}'
   + '.st-card span{font-size:22px;font-weight:800}.st-card small{display:block;font-size:11px;color:#86868b;margin-top:2px}'
   + '.st-sec{background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:14px;margin:12px 0}.st-sec-t{font-size:15px;font-weight:800;margin-bottom:8px}'
-  + '.st-hint{font-size:11px;color:#86868b;font-weight:400}.st-need{margin:8px 0 0 18px;font-size:12px;color:#6e6e73}'
+  // #817 第二波（②层级清）：灰字与子行原来是同一个 11px（"无逐维明细"那种口径术语与行说明同层）。
+  // 三档拉开：区块标题 15px/800 ＞ 行名 14px/700 ＞ 行说明 12.5px/400，灰字只做注脚 12px。
+  + '.st-hint{font-size:12px;color:#8a8a8f;font-weight:400}.st-need{margin:8px 0 0 18px;font-size:12px;color:#6e6e73}'
   + '.st-blocks{background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:4px 14px;margin:12px 0}'
   + '.st-blocks summary{min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:700;color:#0a63d6;cursor:pointer}'
   + '.st-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f3}'
-  + '.st-name{min-width:0;overflow-wrap:anywhere;font-weight:600;font-size:13px}.st-sub{font-size:11px;color:#6e6e73;margin-top:2px}'
+  + '.st-name{min-width:0;overflow-wrap:anywhere;font-weight:700;font-size:14px}.st-sub{font-size:12.5px;color:#55585f;margin-top:2px}'
+  + '.st-meta{display:flex;flex-wrap:wrap;gap:10px 12px;margin:0 0 10px;padding:10px 12px;background:#f7f8fb;border:1px solid #eceef3;border-radius:10px}'
+  + '.st-meta-i{flex:1 1 96px;display:flex;flex-direction:column;gap:2px}'
+  + '.st-meta-i b{font-size:11.5px;color:#6e6e73;font-weight:600}.st-meta-i span{font-size:15px;font-weight:800;color:#1d1d1f}'
   + '.st-track{height:8px;background:#eef1f5;border-radius:99px;margin-top:6px;overflow:hidden}.st-fill{display:block;height:100%;background:#0a63d6;border-radius:99px}'
   + '.st-num{font-weight:800;font-size:14px;flex:none}.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}'
   + '.st-chip{background:#f0f3f8;color:#3a3a3c;border-radius:99px;padding:2px 10px;font-size:11px}'
@@ -144,16 +151,24 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="st-legend"><span><i style="background:#0a63d6"></i>柱长代表访问次数，点一行复制筛选浏览指令</span></div>' + freqRows + '</div>';
   // #817：四行原本都挂「复制指令」这一颗同名按钮（同页四颗，看不出各自复制什么），改成各写自己的口径。
   const dist = (t: string, ctx: string, cmd: string, label: string) => '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">' + label + '</button></div></div>';
-  const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">无逐维明细</span></h2>'
+  // #817 第二波（②层级清）：灰字原是「无逐维明细」——数据口径术语，读的人不知道那是什么；
+  // 改成说这一块怎么用（点右边按钮复制该维统计）。
+  const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">点右侧按钮，复制该维统计</span></h2>'
     + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量', '复制分类统计')
     + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量', '复制位置统计')
     + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量', '复制状态统计')
-    + dist('归属分布', '库内物品默认归属使用者', '帮我按归属人统计物品数量', '复制归属统计') + '</div>';
+    // #817 第二波（②层级清）：四块里只有这一块没有总量（check 要「四个分布分块是否有总量与入口」）——补上。
+    + dist('归属分布', '默认归使用者，库内共 ' + n('items') + ' 件', '帮我按归属人统计物品数量', '复制归属统计') + '</div>';
   const vals = Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v })).sort((a, b) => b.price - a.price);
   const valMax = vals.length ? Math.max(...vals.map((t) => t.price), 1) : 1;
   const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name)) + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div><div class="st-num">' + t.price + ' 元</div></div>').join('');
-  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行 <span class="st-hint">价格覆盖率' + n('price.cover') + '%'
-    + (vals.length ? '，有价格' + n('price.covered') + '件，合计' + n('price.total') + '元' : '') + '</span></h2>'
+  // #817 第二波（⑥分隔符不懒政）：原先三个口径（覆盖率／有价格件数／合计价值）挤在标题那一行的小灰字里，
+  // 靠「，」硬串；改成三格注脚，一格一个口径名＋一个值，窄屏自动折行。
+  const priceMeta = '<div class="st-meta">'
+    + '<div class="st-meta-i"><b>价格覆盖率</b><span>' + n('price.cover') + '%</span></div>'
+    + '<div class="st-meta-i"><b>已有价格</b><span>' + n('price.covered') + ' 件</span></div>'
+    + '<div class="st-meta-i"><b>合计价值</b><span>' + n('price.total') + ' 元</span></div></div>';
+  const more = '<div class="st st-sec"><h2 class="st-sec-t">价值排行</h2>' + priceMeta
     + (vals.length ? valRows + '<div class="st-actions"><button class="st-btn soft" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div>' : '<div class="st-empty"><b>还没有价格数据</b>给物品补上价格后，这里会出现价值排行'
       + '<div class="st-actions center"><button class="st-btn" data-t="帮我找出没有价格的物品，我逐个补价">复制补价提示</button></div></div>') + '</div>';
   const empty = n('items') === 0 ? '<div class="st st-empty"><b>还没有物品</b>录入第一批物品后，这里就是你的家底总览'

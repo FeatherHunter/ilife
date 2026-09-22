@@ -79,8 +79,7 @@ function needs(): string {
 const PAGE_CSS = '<style>'
   + '.fp-page{max-width:720px;margin:0 auto;padding:4px 2px 20px}'
   + '.fp-hero{background:linear-gradient(180deg,#fff,#fffafa);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:12px 0}'
-  + '.fp-eyebrow{color:#ff3b30;font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:6px}'
-  + '.fp-title{font-size:24px;font-weight:800;margin:0 0 8px}'
+  + '.fp-title{font-size:24px;font-weight:800;margin:0}'
   + '.fp-lead{color:#6e6e73;font-size:15px;margin:0}'
   + '.fp-stage{display:inline-block;background:#fff8e8;color:#ff9500;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin-top:10px}'
   + '.fp-sec{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin:12px 0}'
@@ -89,7 +88,7 @@ const PAGE_CSS = '<style>'
   + '.fp-ev-on{border-color:#ff3b30;background:#fff5f4}'
   + '.fp-ev input{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat}.fp-ev input:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
   + '.fp-ev-sum{flex:1}'
-  + '.fp-ev-sum b{font-size:15px}'
+  + '.fp-ev-name{font-size:15px;font-weight:750;color:#1d1d1f}'
   + '.fp-ev-meta{color:#86868b;font-size:12px}'
   + '.fp-pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 10px;font-size:12px}'
   + '.fp-groupline{padding:8px 0;border-bottom:1px solid #ececf1;font-size:14px}'
@@ -120,17 +119,19 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const evBlock = evId
     ? '<div class="fp-ev" data-ev="' + esc(evId) + '" onclick="this.classList.toggle(\'fp-ev-on\');var c=this.querySelector(\'input\');c.checked=!c.checked;">'
       + '<input type="checkbox" value="' + esc(evId) + '" onclick="event.stopPropagation();this.closest(\'.fp-ev\').classList.toggle(\'fp-ev-on\',this.checked);">'
-      + '<div class="fp-ev-sum"><b>' + esc(evName) + '</b>'
+      + '<div class="fp-ev-sum"><span class="fp-ev-name">' + esc(evName) + '</span>'
       + '<div class="fp-ev-meta">第 ' + esc(evId) + ' 条记录</div></div></div>'
       + '<div class="fp-warnbox">撤销录入会连带删除该物品的位置与标签记录，撤销只有一次机会</div>'
       + '<p class="fp-warnbox" id="fp-undo-hint" hidden>请先勾选要撤销的操作</p><div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">确认撤销勾选项</button></div>'
     : '<p class="fp-empty">暂无可撤销操作，先去做一次录入或者更新再来</p>';
 
   // #817（⑤文案不冗余）：删两处判据件术语——页型名徽章「选择页」，与复述验收判据的灰字（「没有勾选就点确认时…」）。
+  // #817（②层级清／⑥分隔符不懒政）第二波：页头那枚小标（原「物品管理 · 撤销」）整块删掉——
+  // 它既是第 3 层级的页型名，又拿 `·` 把「域」与「场景」挤成一行；页头只留 h1 一个主标题，
+  // 层级＝主标题＞区块标题＞条目名＞条目副行（`.fp-ev-name` 有类名，不再靠 `<b>` 顶层级）。
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 撤销</div>'
-    + '<div class="fp-title">撤销最近操作</div></div>'
+    + '<div class="fp-hero"><div class="fp-title">撤销最近操作</div></div>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">可撤销操作</h2>' + evBlock
     + '</section>'
     + '<section class="fp-sec"><h2 class="fp-sec-t">通用操作分组</h2>'

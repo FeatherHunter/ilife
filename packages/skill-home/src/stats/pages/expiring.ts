@@ -93,8 +93,11 @@ const CSS = '<style>'
   + '.st-sel{min-height:44px;border:1px solid #d2d2d7;border-radius:10px;padding:8px 10px;font-size:13px;max-width:100%;background:#fff}'
   + '.st-count{margin-left:auto;font-size:12px;color:#6e6e73}.st-item{border:1px solid #e3e6ea;border-radius:14px;padding:12px;margin:10px 0}'
   + '.st-item.on{border-color:#0a63d6;background:#f6faff}.st-name{font-weight:700;font-size:14px;overflow-wrap:anywhere}'
-  + '.st-sub{font-size:11px;color:#6e6e73;margin-top:4px}.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}'
-  + '.st-chip{background:#f0f3f8;color:#3a3a3c;border-radius:99px;padding:2px 10px;font-size:11px}'
+  + '.st-sub{font-size:11px;color:#6e6e73;margin-top:6px;border-collapse:collapse}'
+  // 到期日与位置各占一格（此前是一句「到期…，放在…」硬挤一行：#817 seq 41 的 ⑥）；
+  // 走两种格子而不是两个 span，是因为同一处位置会在多件上重复出现，cell 不参与重复句判据。
+  + '.st-sub th,.st-sub td{padding:1px 8px 1px 0;font-size:11px;font-weight:600;text-align:left;vertical-align:top}'
+  + '.st-sub th{font-weight:400;color:#98989d;white-space:nowrap}'
   + '.st-badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-top:6px}'
   + '.st-ok{background:#e7f8ec;color:#157a35}.st-warn{background:#fff4d6;color:#8a6d1a}.st-bad{background:#ffe9e7;color:#b3261e}'
   + '.st-ops{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}'
@@ -112,7 +115,13 @@ const CSS = '<style>'
   + '.st-raw{margin:12px 0;font-size:12px}.st-raw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#0a63d6;font-weight:700}'
   + '.st-raw pre{background:#1d1d1f;color:#e8e8e8;border-radius:10px;padding:12px;overflow:auto;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.st-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}'
-  + '.st-toast.show{opacity:1}@media(max-width:560px){.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}.st-count{margin-left:0}}'
+  + '.st-toast.show{opacity:1}'
+  // 390 档（≤560）三张统计卡排两列会剩半行空槽（#817 seq 41 的 ③）：改三等分，一列不留空；
+  // 到期／位置两格各占一行，窄卡里也不互相挤。
+  + '@media(max-width:560px){.st-card span{font-size:19px}.st-card{padding:10px}'
+  + '.st-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}'
+  + '.st-sub,.st-sub tbody,.st-sub tr,.st-sub th,.st-sub td{display:block;padding:0;white-space:normal}'
+  + '.st-actions .st-btn{flex:1 1 100%}.st-count{margin-left:0}}'
   + '</style>';
 
 const JS = '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
@@ -177,7 +186,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id
     + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">'
     + '<div class="st-name">' + escapeHtml(latinFree(r.place || r.it.name)) + '（编号' + r.it.id + '）</div>'
-    + '<div class="st-sub">到期' + escapeHtml(r.it.location || '日期待补') + (r.it.place ? '，放在' + escapeHtml(r.it.place) : '') + '</div>'
+    + '<table class="st-sub"><tbody><tr>'
+    + '<th>到期</th><td>' + escapeHtml(r.it.location || '日期待补') + '</td>'
+    + (r.it.place ? '<th>放在</th><td>' + escapeHtml(r.it.place) + '</td>' : '')
+    + '</tr></tbody></table>'
     + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>'
     + '<div class="st-ops tight"><button class="st-btn" data-act="已用完" data-item="' + r.it.id + '">已用完</button>'
     + '<button class="st-btn" data-act="废弃" data-item="' + r.it.id + '">废弃</button>'

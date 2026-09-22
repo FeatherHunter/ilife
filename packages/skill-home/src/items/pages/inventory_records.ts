@@ -59,6 +59,11 @@ const NEED = {
   status: '进行中|已完成|已处理|已复查',
 } as const;
 
+/** 差异计数四格（#817 ⑥分隔符不懒政）：原来把「缺— 多— 异— 待确认—」四段标签＋空值挤成一行正文，
+ *  靠空格与破折号断句；改成四个字段位（标签在上、值在下），空值照全批口径如实写「—」。
+ *  需数据：信封 `data.items[]` 只带 `{name:'盘点#N 范围', count}`，四计数由命令侧增补（同上「发生时间」）。 */
+const DIFF_SLOTS: readonly string[] = ['缺', '多', '异', '待确认'];
+
 const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;margin:14px 0}'
 + '.eyebrow{color:#007aff;font-size:12px;font-weight:800;letter-spacing:.1em;margin-bottom:6px}'
 + '.lead{color:#6e6e73;font-size:14px}'
@@ -72,7 +77,10 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.kv{display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:14px;margin-top:8px}'
 + '.kv dt{color:#86868b}.kv dd{color:#1d1d1f}'
 + '.detail{display:none;margin-top:10px;border-top:1px solid #ececf1;padding-top:10px;font-size:13px;color:#6e6e73}'
-+ '.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}'
++ '.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0 0}'
++ '.cnt{background:#f8f9fb;border:1px solid #eef0f4;border-radius:12px;padding:8px 6px;text-align:center}'
++ '.cnt b{display:block;font-size:12px;color:#86868b;font-weight:600;margin-bottom:2px}'
++ '.cnt span{font-size:15px;font-weight:700;color:#1d1d1f}'
 + '.btnrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}'
 + '.btnrow.two{grid-template-columns:1fr 1fr}'
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
@@ -138,9 +146,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">留痕与复查闭环，缺件下次置顶</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>历史盘点共' + (typeof data.total === 'number' ? data.total : rows.length) + '条</h2>'
     + body
-    + '<h2>差异计数</h2><p class="lead">缺— 多— 异— 待确认—</p></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>状态取值</h2>'
-    + '<div class="chips"><span class="pill">进行中</span><span class="pill">已完成</span><span class="pill">已处理</span><span class="pill">已复查</span></div></section>'
+    + '<h2>差异计数</h2><div class="counts">'
+    + DIFF_SLOTS.map((k) => '<div class="cnt"><b>' + k + '</b><span>—</span></div>').join('')
+    + '</div></section>'
+    // #817（②层级清）：原来把判据件的状态枚举「进行中／已完成／已处理／已复查」当正文摆在页尾；记录状态
+    // 值位由命令侧增补，当刻四张卡的状态全写「—」，枚举上屏既无值可筛也无值可对，故收进判据槽（`hidden`，
+    // `data-block`／`data-need` 原样在位）。改真筛选控件要数据层先给每条记录的状态。
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow two"><button class="btn ghost" onclick="recCmd(this,\'start\')">开始盘点</button>'
     + '</div>'

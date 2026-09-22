@@ -82,6 +82,13 @@ const CSS = [
   '.bw-pill.bad{background:#ffebea;color:#d70015}',
   '.bw-pill.mute{background:#eef1f4;color:#86868b}',
   '.bw-meta{color:#6e6e73;font-size:13px;margin-top:6px}',
+  '.bw-seq{font-size:12px;color:#86868b;margin-left:auto}',
+  // #817 第二波（⑥ 分隔符不懒政）：明细原先是「物品…，借出日…，约定归还…，已借天数…，备注…」
+  // 五段事实逗号串一行（390 档折行、行行相似）；改成四组（有备注时五组）标签＋值。
+  '.bw-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:4px 12px;margin:8px 0 0;font-size:13px}',
+  '.bw-fields>div{min-width:0}',
+  '.bw-fields dt{color:#86868b;font-size:12px}',
+  '.bw-fields dd{margin:0;font-weight:600;overflow-wrap:anywhere}',
   '.bw-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}',
   '.bw-btn{font:inherit;font-size:14px;font-weight:600;border:1px solid #d2d2d7;background:#fff;border-radius:99px;padding:6px 16px;cursor:pointer;min-height:44px}',
   '.bw-btn.primary{background:#007aff;border-color:#007aff;color:#fff}',
@@ -102,7 +109,11 @@ interface BorrowRec {
   objectName: string;
   direction: string;
   status: string; due: string;
-  detail: string;
+  itemName: string;
+  dateLabel: string;
+  borrowed: string;
+  days: string;
+  remark: string;
   returnPrompt: string;
   remindPrompt: string;
   returned: boolean;
@@ -138,11 +149,8 @@ function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
   }
   const id = str(item.id) || String(idx + 1);
   const shownItem = itemName || '未登记';
-  // 对象名已在卡头，明细行不再重复；物品名与三个日期位照实写，无值的位写「—」。
+  // 对象名已在卡头，明细行不再重复；物品名与三个日期位各占一组「标签＋值」，无值的位写「—」。
   const dateLabel = returned ? '归还' : direction === '借入' ? '借入' : '借出';
-  const detailBits = ['物品' + shownItem, dateLabel + (borrowed || '—'), '约定归还' + (due || '—'), '已借天数' + (days || '—')];
-  if (remark !== '') detailBits.push('备注' + remark);
-  const detail = detailBits.join('，');
   const returnPrompt = '【确认归还】请帮我在居家管家确认归还一笔借用。\n借用记录：' + id + '\n物品：' + shownItem + '\n借用对象：' + objectName;
   const remindBase = objectName + '，之前借的' + shownItem;
   const remindPrompt = returned
@@ -152,7 +160,21 @@ function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
       : direction === '借出'
         ? remindBase + '记得还哦'
         : remindBase + '我记着呢';
-  return { id, objectName, direction, status, detail, due, returnPrompt, remindPrompt, returned };
+  return { id, objectName, direction, status, due, itemName: shownItem, dateLabel, borrowed, days, remark, returnPrompt, remindPrompt, returned };
+}
+
+/** 明细四组「标签＋值」（有备注时五组）：一格一事实，窄屏按 `auto-fit` 折成两列或一列，
+ *  不再把五段事实逗号串一行（#817 第二波 ⑥）。 */
+function detailFields(r: BorrowRec): string {
+  const pairs: [string, string][] = [
+    ['物品', r.itemName],
+    [r.dateLabel, r.borrowed || '—'],
+    ['约定归还', r.due || '—'],
+    ['已借天数', r.days || '—'],
+  ];
+  if (r.remark !== '') pairs.push(['备注', r.remark]);
+  return '<dl class="bw-fields">' + pairs.map(([k, v]) =>
+    '<div><dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd></div>').join('') + '</dl>';
 }
 
 function pill(status: string): string {
@@ -171,8 +193,9 @@ function recCard(r: BorrowRec, seq: string): string {
       + '" onclick="copyText(this.dataset.t)">确认归还</button><button class="bw-btn" data-t="'
       + escapeHtml(r.remindPrompt) + '" onclick="copyText(this.dataset.t)">复制催还文案</button></div>';
   return '<div class="bw-rec' + (r.returned ? ' done' : '') + '"><div class="bw-top">' + thumb
-    + '<span class="bw-name">' + escapeHtml(r.objectName) + '</span>' + pill(r.status) + '</div>'
-    + '<div class="bw-meta">' + escapeHtml(seq + '，' + r.detail) + '</div>' + btns + '</div>';
+    + '<span class="bw-name">' + escapeHtml(r.objectName) + '</span>' + pill(r.status)
+    + '<span class="bw-seq">' + escapeHtml(seq) + '</span></div>'
+    + detailFields(r) + btns + '</div>';
 }
 
 // 数据快照：真链回执的逐行编号呈现（行内容原样，只加序号；同成员多行

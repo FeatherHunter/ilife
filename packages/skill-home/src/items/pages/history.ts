@@ -70,7 +70,16 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.pill{display:inline-block;border:1px solid #d2d2d7;background:#fbfbfd;border-radius:999px;padding:3px 9px;font-size:12px;margin:2px}'
 + '.tl{position:relative;margin-left:14px;border-left:2px solid #e6e8ee;padding-left:20px}'
 + '.ev{position:relative;padding:10px 0}'
-+ '.ev .sum{font-size:14px;margin:2px 0}'
+// #817（⑥分隔符不懒政）第二波：摘要三件（序号／字段名／值）拆成三个元素——序号独立成徽标，
+// 字段名独立成小标，值独立成位；位置值内部仍是「房间/容器」路径串，照本域 receipt.ts 的同一写法
+// 分段呈现（`›` 连接），正文里不留斜杠拼接。
++ '.ev .top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}'
++ '.ev .ord{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;color:#6e6e73}'
++ '.ev .sum{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;font-size:14px;margin:4px 0 2px;overflow-wrap:anywhere}'
++ '.ev .sum .k{color:#86868b;font-size:12px}'
++ '.ev .sum .v{color:#1d1d1f;font-weight:600}'
++ '.ev .seg{display:inline-block}'
++ '.ev .sep{color:#b0b0b6;margin:0 4px;font-size:12px}'
 + '.ev .type{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:2px 9px;font-size:11px;color:#6e6e73}'
 + '.diffx{display:none;background:#f8f9fb;border-radius:10px;padding:10px;font-size:13px;margin-top:6px;white-space:pre-wrap}'
 + '.undoable{font-size:12px;color:#007aff;cursor:pointer;background:none;border:none;padding:0;min-height:44px;min-width:44px;display:inline-flex;align-items:center}'
@@ -100,9 +109,12 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 interface HistEvent {
   type: string;
   label: string;
-  summary: string;
+  summary: HistSummary;
   detail: string;
 }
+
+/** 事件摘要的两件：#817 ⑥ 要求字段名与值各归各位，不再把「序号＋字段名＋值」串成一行。 */
+type HistSummary = { label: string; value: string; loc: boolean };
 
 function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
@@ -132,14 +144,28 @@ function parseHistory(raw: string): HistEvent[] {
 
 const FIELD_NAME_DETAIL = /^(?:名称|分类|归属|价格|备注|照片|固定位)(?:、(?:名称|分类|归属|价格|备注|照片|固定位))*$/; // 「更新」事件的明细是字段名，属类型词，不当摘要用
 
-function summarize(type: string, detail: string): string {
+function summarize(type: string, detail: string): HistSummary {
   if (type === 'relate') {
     const m = detail.match(/^(\d+)\s*[:：]\s*(.+)$/);
-    if (m) return '与物品' + m[1] + '建立' + m[2];
-    return '建立关联' + detail;
+    if (m) return { label: '关联', value: '与物品' + m[1] + '建立' + m[2], loc: false };
+    return { label: '关联', value: detail === '' ? '—' : '建立关联' + detail, loc: false };
   }
-  if (type === 'create') return '位置' + (detail || '未记');
-  return detail === '' || FIELD_NAME_DETAIL.test(detail) ? '—' : detail;
+  if (type === 'create') return { label: '位置', value: detail === '' ? '未记' : detail, loc: detail !== '' };
+  if (detail === '' || FIELD_NAME_DETAIL.test(detail)) return { label: '', value: '—', loc: false };
+  if (isLocationDetail(type, detail)) return { label: '位置', value: detail, loc: true };
+  return { label: '', value: detail, loc: false };
+}
+
+/** 位置值分段呈现（`›` 连接）：值本身是「房间/容器」路径串，正文里不留斜杠拼接（同本域 receipt.ts 的写法）。 */
+function locSegs(loc: string): string {
+  return loc.split('/').map((s) => s.trim()).filter(Boolean)
+    .map((s) => '<span class="seg">' + escapeHtml(s) + '</span>')
+    .join('<span class="sep">›</span>');
+}
+
+/** 复制载荷里的那一句话术：字段名与值合成一行纯文本（供「撤销此操作」按钮带上）。 */
+function plainSum(s: HistSummary): string {
+  return (s.label === '' ? '' : s.label + ' ') + s.value;
 }
 
 function isLocationDetail(type: string, detail: string): boolean {
@@ -159,7 +185,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const types = [...new Set(events.map((e) => e.type))];
 
   const trajHtml = traj.length > 0
-    ? '<div class="traj">' + traj.map((l) => '<span class="pill">' + escapeHtml(l) + '</span>').join('<span> → </span>') + '</div>'
+    ? '<div class="traj">' + traj.map((l) => '<span class="pill">' + locSegs(l) + '</span>').join('<span> → </span>') + '</div>'
     : '<p class="lead">暂无轨迹</p>';
 
   const chips = '<button class="chip on" data-t="all" onclick="chipFilter(this)">全部</button>'
@@ -167,16 +193,20 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const typeTags = types.length > 0 ? types.map((t) => '<span class="pill">' + escapeHtml(typeLabel(t)) + '</span>').join('') : '<span class="pill">—</span>';
 
   const timeline = events.length > 0
-    ? events.map((e, i) =>
-      '<div class="ev" data-t="' + escapeHtml(e.type) + '"><div><span class="type">' + escapeHtml(e.label) + '</span></div>'
-      + '<div class="sum">第' + (i + 1) + '条 ' + escapeHtml(e.summary) + '</div>'
+    ? events.map((e, i) => {
+      const s = e.summary;
+      const plain = plainSum(s);
+      return '<div class="ev" data-t="' + escapeHtml(e.type) + '">'
+      + '<div class="top"><span class="ord">第' + (i + 1) + '条</span><span class="type">' + escapeHtml(e.label) + '</span></div>'
+      + '<div class="sum">' + (s.label === '' ? '' : '<span class="k">' + escapeHtml(s.label) + '</span>')
+      + '<span class="v">' + (s.loc ? locSegs(s.value) : escapeHtml(s.value)) + '</span></div>'
       + '<div class="diffx" id="ev' + i + '">' + escapeHtml(e.detail || '无') + '</div>'
       + '<div><button class="undoable" onclick="toggleDiff(\'ev' + i + '\')">展开详情</button>'
       + (e.type === 'undo'
         ? '<span class="pill">已撤销</span>'
-        : '<button class="undoable" data-s="' + escapeHtml(e.summary === '—' || e.summary === '' ? '第' + (i + 1) + '条 ' + e.label : e.summary) + '" onclick="undoEv(this)">撤销此操作</button>')
-      + '</div></div>',
-    ).join('')
+        : '<button class="undoable" data-s="' + escapeHtml(plain === '—' ? '第' + (i + 1) + '条 ' + e.label : plain) + '" onclick="undoEv(this)">撤销此操作</button>')
+      + '</div></div>';
+    }).join('')
     : '<div class="empty">暂无事件</div>';
 
   const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">' + (name !== '' ? '「' + escapeHtml(name) + '」的一生' : '物品历史') + '，时间倒序</p></div>'

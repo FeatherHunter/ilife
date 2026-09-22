@@ -103,13 +103,24 @@ function groupTitle(t: string): string {
   return '其他';
 }
 
+/** 一组账号的清单表：表头四列，格子挂 `data-label`（390 档改纵排卡片时由 CSS 伪元素挂字段名，
+ *  主字段「密码」不再被横滑区推到屏外，见 PAGE_CSS 的 560 断点）。 */
+function rowsTable(list: AccountRow[]): string {
+  return '<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
+    + list.map((r) => '<tr><td data-label="平台">' + escapeHtml(r.platform) + '</td>'
+      + '<td data-label="用户名">' + escapeHtml(r.username) + '</td>'
+      + '<td data-label="类型">' + escapeHtml(groupTitle(r.typeText)) + '</td>'
+      + '<td data-label="密码">******</td></tr>').join('')
+    + '</tbody></table></div>';
+}
+
 function listGroups(env: Envelope): string {
   const data = env.data as Record<string, unknown>;
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: Record<string, unknown>[] }).items
     : [];
   if (!items.length) {
-    return '<div><p>暂无账号，可新增一个账号后回来按类型复核</p></div>';
+    return '<div><p class="rc-note">暂无账号，可新增一个账号后回来按类型复核</p></div>';
   }
   const rows = items.map(rowOf);
   const groups = new Map<string, AccountRow[]>();
@@ -124,20 +135,14 @@ function listGroups(env: Envelope): string {
   for (const g of order) {
     const list = groups.get(g);
     if (!list || !list.length) continue;
-    parts.push('<h2>' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
-    parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
-      + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
-        + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
-      + '</tbody></table></div>');
+    parts.push('<h2 class="rc-group">' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
+    parts.push(rowsTable(list));
   }
   const rest = [...groups.keys()].filter((k) => !order.includes(k));
   for (const g of rest) {
     const list = groups.get(g) as AccountRow[];
-    parts.push('<h2>' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
-    parts.push('<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
-      + list.map((r) => '<tr><td>' + escapeHtml(r.platform) + '</td><td>' + escapeHtml(r.username)
-        + '</td><td>' + escapeHtml(groupTitle(r.typeText)) + '</td><td>******</td></tr>').join('')
-      + '</tbody></table></div>');
+    parts.push('<h2 class="rc-group">' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
+    parts.push(rowsTable(list));
   }
   parts.push('</div>');
   return parts.join('');
@@ -150,10 +155,10 @@ function receiptNote(env: Envelope): string {
   const safe = /密码/.test(msg) ? '密码已回显' : msg;
   // 存账号（新增）补一句密码怎么存；改账号（更新）说清只填要改的——消息文本带动作词，据此分流。
   const byOp = /(新增|新建|已存)/.test(msg)
-    ? '<p>密码加密落库，只在对话里回显</p>'
-    : /(更新|已改|修改)/.test(msg) ? '<p>只填要改的字段，其余留空即保持原值</p>' : '';
-  // 真实回执放绿卡。
-  return '<div>' + byOp + '<p class="receipt">' + escapeHtml(safe) + '</p></div>';
+    ? '<p class="rc-note">密码加密落库，只在对话里回显</p>'
+    : /(更新|已改|修改)/.test(msg) ? '<p class="rc-note">只填要改的字段，其余留空即保持原值</p>' : '';
+  // 真实回执放绿卡（回执是本页主内容，字号／字重抬到说明句之上，见 PAGE_CSS 的层级阶梯）。
+  return '<div>' + byOp + '<p class="receipt rc-receipt">' + escapeHtml(safe) + '</p></div>';
 }
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
@@ -177,7 +182,7 @@ function envelopeBrief(env: Envelope): string {
 }
 
 function sensitiveBanner(): string {
-  return '<div><p>说明页不展示明文，查看与复制均需二次确认</p></div>';
+  return '<div><p class="rc-note">说明页不展示明文，查看与复制均需二次确认</p></div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -189,13 +194,29 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
 
 /** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动；
  *  清单表套横滑容器（长邮箱等会把表撑宽，容器内滑、不撑破文档）；
- *  操作区主按钮（`rc-primary`＝新增账号）实心蓝，与其余三颗白底按钮分出主次（#817 seq 61–64 的 ④）。 */
+ *  操作区主按钮（`rc-primary`＝新增账号）实心蓝，与其余三颗白底按钮分出主次（#817 seq 61–64 的 ④）。
+ *
+ *  第二波（#817 seq 61–64 的 ②／③）：
+ *  ② 层级阶梯——组头（`.rc-group`）从浏览器缺省 h2（22.5px/700，比区块标头还大＝倒挂）降到 15px/700
+ *     并加下边线；说明句／空态句（`.rc-note`）降到 12.5px 灰字；回执（`.rc-receipt`）抬到 15.5px/600。
+ *  ③ 390 档不裁列——560 断点把清单表改纵排卡片，每格用 `data-label` 伪元素挂字段名，
+ *     主字段「密码」不再被 `min-width:520px` 推到横滑区外。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
   + 'button.rc-primary{background:#007aff;border-color:#007aff;color:#fff}'
   + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.rc-scroll{overflow-x:auto}'
   + '.rc-scroll table{min-width:520px;border-collapse:collapse}'
-  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}</style>';
+  + 'th,td{border:1px solid #e3e6ea;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}'
+  + '.rc-group{font-size:15px;font-weight:700;color:#1d1d1f;margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid #ececf1}'
+  + '.rc-note{font-size:12.5px;line-height:1.6;color:#6e6e73;margin:8px 0}'
+  + '.rc-receipt{font-size:15.5px;font-weight:600}'
+  + '@media(max-width:560px){'
+  + '.rc-scroll table{min-width:0}'
+  + '.rc-scroll thead{display:none}'
+  + '.rc-scroll tr{display:block;border:1px solid #e3e6ea;border-radius:12px;padding:8px 10px;margin:0 0 8px}'
+  + '.rc-scroll td{display:block;border:none;padding:3px 0;white-space:normal;overflow-wrap:anywhere}'
+  + '.rc-scroll td::before{content:attr(data-label);display:inline-block;min-width:3.6em;color:#6e6e73}'
+  + '}</style>';
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。

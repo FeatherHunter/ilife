@@ -58,13 +58,16 @@ const PAGE_CSS = '<style>'
   + '.sec{background:#fff;border:1px solid #e4e4e8;border-radius:14px;padding:14px;margin:12px 0}'
   + '.sec h2{font-size:17px;margin:0 0 10px}'
   + '.kv{width:100%;border-collapse:collapse;font-size:14px}'
-  + '.kv th,.kv td{border:1px solid #e8e8ee;padding:8px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}'
+  + '.kv th,.kv td{border:1px solid #e8e8ee;padding:8px 10px;text-align:left;vertical-align:top;overflow-wrap:break-word}'
   + '.kv th{background:#f6f7f9;color:#555;font-weight:600;white-space:nowrap}'
+  // #817 第二波（③ 双端不塌）：结果表七列在 390 档放不下，原先靠 `.kv td{overflow-wrap:anywhere}`
+  // 把「食物与饮品」拆成三行；改成本页的表格整表横向滚动（列宽按内容定，值位不再词中折行）。
+  + '#rows th,#rows td{white-space:nowrap}'
   + '.wrap-x{overflow-x:auto}'
   + '.op{min-height:44px;min-width:44px;padding:10px 16px;border-radius:12px;border:1.5px solid #0a63ce;background:#0a63ce;color:#fff;font-size:15px;margin:4px 6px 4px 0}'
   + '.op.alt{background:#fff;color:#0a63ce}'
   + '.note{color:#666;font-size:13px}'
-  + '.greet{font-size:15px;color:#333}@media(max-width:480px){.kv th{white-space:normal}}'
+  + '.greet{font-size:15px;color:#333}'
   + '.find{min-height:44px;width:100%;padding:10px 12px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:15px;box-sizing:border-box}'
   + '</style>';
 
@@ -82,6 +85,16 @@ interface Card { id: number; name: string; location: string; quantity: number; s
 
 const cell = (v: unknown): string => escapeHtml(String(v ?? '').trim() || '—');
 
+/** 位置值只留位置本身（#817 第二波 ⑥）：回执里的位置串把「路径 × 数量 [状态]」挤在一起，
+ *  而数量与状态本来就是同一行里的独立字段（`quantity`／`status`），位置列不再复述这两个事实；
+ *  只有一个复合串、没有独立字段时才原样上屏。 */
+function locPath(v: unknown): string {
+  return String(v ?? '').trim()
+    .replace(/\s*×\s*\d+\s*(?:\[[^\]]*\])?\s*$/, '')
+    .replace(/\s*\[[^\]]*\]\s*$/, '')
+    .trim();
+}
+
 function cardsOf(env: Envelope): Card[] {
   const d = env.data as Record<string, unknown>;
   const items = (d as { items?: unknown }).items;
@@ -98,7 +111,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const rows = cards.map((c) => '<tr><td>' + cell(c.name)
     + '</td><td>' + cell(c.id)
     + '</td><td>' + cell(c.category)
-    + '</td><td>' + cell(c.location)
+    + '</td><td>' + cell(locPath(c.location))
     + '</td><td>' + cell(c.quantity)
     + '</td><td>' + cell(c.status)
     + '</td><td>' + cell(c.tags) + '</td></tr>').join('');
@@ -109,7 +122,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '<div>' + op('录入新物品', '请加载居家管家技能，帮我录入一件新物品', false) + '</div>';
   const content = PAGE_CSS
     + '<script>function filterLocal(kw){var t=document.getElementById("rows");if(!t)return;kw=String(kw||"").toLowerCase();var rs=t.getElementsByTagName("tr");for(var i=1;i<rs.length;i++){rs[i].style.display=rs[i].textContent.toLowerCase().indexOf(kw)>=0?"":"none";}}</script>'
-    + '<p class="greet">查物品与拍照找物品共用下面这张表。</p>'
+    // #817 第二波（② 层级清）：导语原写「查物品与拍照找物品共用下面这张表」，那是页面的实现说明；
+    // 改说这页拿什么线索找人（两个场景共用本页，线索口径对两边都成立）。
+    + '<p class="greet">名字、颜色、大概放哪儿，记得哪条说哪条，都能拿来找。</p>'
     + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>摘要</h2><div class="wrap-x"><table class="kv">'
     + '<tr><th>查询词</th><td>—</td></tr>'
     + '<tr><th>命中件数</th><td>共 ' + cards.length + ' 件</td></tr>'

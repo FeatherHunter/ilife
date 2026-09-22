@@ -75,6 +75,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
 + '.btn.ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'
 + '.btn.red{background:#ff3b30}'
++ '.btn.wide{grid-column:1/-1}'
 + '.empty{color:#86868b;padding:12px 0}'
 + 'details{margin:14px 0;font-size:13px;color:#6e6e73}'
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
@@ -84,7 +85,8 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 + 'function photoAct(btn,kind){var nm=btn.dataset.nm||"物品";var id=btn.dataset.id||"";'
 + 'var L=["请加载「居家管家」技能,帮我管照片(唤醒词:管照片):","","  物  品: "+nm+"(编号"+id+")"];'
 + 'if(kind==="order")L.push("  动  作: 换主图,新顺序: ______");'
-+ 'else if(kind==="add")L.push("  动  作: 补拍","","【照片即将发送:】");'
++ 'else if(kind==="add")L.push("  动  作: 加图");'
++ 'else if(kind==="shoot")L.push("  动  作: 补拍","","【照片即将发送:】");'
 + 'else if(kind==="del")L.push("  动  作: 删除第 ______ 张");'
 + 'else if(kind==="dl")L.push("  动  作: 下载照片");'
 + 'copyText(L.join("\\n"));}'
@@ -93,6 +95,36 @@ const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.wri
 function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 function num(v: unknown): number | null { return typeof v === 'number' && Number.isInteger(v) ? v : null; }
+
+interface SnapLoc { readonly location: string; readonly quantity: number; readonly status: string }
+interface Snapshot {
+  readonly id: number; readonly name: string; readonly category: string;
+  readonly locations: readonly SnapLoc[]; readonly tags: readonly string[];
+}
+
+// 管理态回执带 `detail.snapshot`（#864 加厚）：位置那一件已经拆成 location／quantity／status
+// 三件，本页按这三件逐格渲染（#817 seq 23「值位拆列」）。形状不对（旧信封／缺字段）返 null，
+// 页面退回顶层 item＋回执编号，不让缺字段变成半个空页。
+function snapshotOf(data: Record<string, unknown>): Snapshot | null {
+  const det = data.detail;
+  if (!det || typeof det !== 'object' || Array.isArray(det)) return null;
+  const raw = (det as Record<string, unknown>).snapshot;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const s = raw as Record<string, unknown>;
+  const id = num(s.id);
+  if (id === null) return null;
+  const locs = Array.isArray(s.locations) ? s.locations : [];
+  const tags = Array.isArray(s.tags) ? s.tags : [];
+  return {
+    id,
+    name: str(s.name),
+    category: str(s.category),
+    locations: locs
+      .filter((l): l is Record<string, unknown> => !!l && typeof l === 'object' && !Array.isArray(l))
+      .map((l) => ({ location: str(l.location), quantity: num(l.quantity) ?? 0, status: str(l.status) })),
+    tags: tags.map((t) => String(t)),
+  };
+}
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 真页面。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
@@ -106,18 +138,29 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const name = str(item.name);
   const photo = str((item as Record<string, unknown>).photo);
   const message = str((data as Record<string, unknown>).message);
-  // 管理态（改物品 op=photo）信封只带回执「已更新照片：N」：编号照回执接真值，
-  // 名称／位置／数量／分类／标签需数据（信封无物品明细），保持「—」。
-  const idText = id === null ? (manage ? message.match(/[：:]\s*(\d+)/)?.[1] ?? '—' : '—') : String(id);
+  // 管理态（改物品 op=photo）回执的 `detail.snapshot` 里名称／分类／标签／位置俱在，卡片读它；
+  // 只有旧信封（无 detail）才退回回执编号与「—」。
+  const snap = snapshotOf(data);
+  const idText = snap !== null
+    ? String(snap.id)
+    : id === null ? (manage ? message.match(/[：:]\s*(\d+)/)?.[1] ?? '—' : '—') : String(id);
 
-  const kvRows = [
-    ['名称', name || '—'],
-    ['编号', idText],
-    ['位置', str(item.location) || '—'],
-    ['数量', String(num(item.quantity) ?? '—')],
-    ['分类', str(item.category) || '—'],
-    ['标签', str(item.tags) || '—'],
-  ].map(([k, v]) => '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd>').join('');
+  const kvRows: [string, string][] = [];
+  if (snap !== null) {
+    kvRows.push(['名称', snap.name || '—'], ['编号', idText]);
+    for (const l of snap.locations) {
+      kvRows.push(['位置', l.location || '—'], ['数量', String(l.quantity)], ['状态', l.status || '—']);
+    }
+    kvRows.push(['分类', snap.category || '—'], ['标签', snap.tags.length > 0 ? snap.tags.join('、') : '—']);
+  } else {
+    // 详情态回执只给复合串（`客厅/阳台柜×1[在家]`），位置路径拆不出来（需数据层，见 #817 seq 22）；
+    // 串里已经带了件数与状态，故不再另立「数量」格——同一数据只说一遍。
+    kvRows.push(['名称', name || '—'], ['编号', idText], ['位置', str(item.location) || '—'],
+      ['分类', str(item.category) || '—'], ['标签', str(item.tags) || '—']);
+  }
+
+  const kvHtml = kvRows
+    .map(([k, v]) => '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd>').join('');
 
   const photoBox = photo !== ''
     ? '<div class="main">主图共一张</div>'
@@ -133,7 +176,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const content = '<div class="hero">'
     + '<p class="lead">首张为主图，共四种类型，当前模式：' + escapeHtml(modeText) + '</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>物品</h2>'
-    + '<dl class="kv">' + kvRows + '</dl></section>'
+    + '<dl class="kv">' + kvHtml + '</dl></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>照片列表</h2>'
     + photoBox
     + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
@@ -143,9 +186,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
     + '<div class="btnrow">'
     + '<button class="btn ghost" data-act="order" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'order\')">确认顺序变更</button>'
-    + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">加图·补拍</button>'
+    + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">加图</button>'
+    + '<button class="btn ghost" data-act="shoot" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'shoot\')">补拍</button>'
     + '<button class="btn red" data-act="del" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'del\')">删除选中</button>'
-    + '<button class="btn ghost" data-act="dl" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'dl\')">下载照片</button>'
+    + '<button class="btn ghost wide" data-act="dl" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'dl\')">下载照片</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
