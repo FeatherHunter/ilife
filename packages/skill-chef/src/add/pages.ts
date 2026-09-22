@@ -5,7 +5,7 @@
  * 每一格都是一次公共层区块调用；页内版式只走本页自己那一段 `extraCss`（`addPageCss()`）。
  */
 
-import { CHART_PALETTE, renderActionBar, renderErrorReceipt, renderFactStrip } from 'base-paint';
+import { renderActionBar, renderErrorReceipt, renderFactStrip } from 'base-paint';
 import {
   renderConclusionBar,
   renderCopyBlock,
@@ -69,54 +69,32 @@ function shellDoc(docTitle: string, bodyHtml: string): string {
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
 const LF = String.fromCharCode(10);
 
+/** 成功页的结论句。
+ *
+ *  **不放菜名**：菜名这一页已经印了三处（页头 `录入回执：<菜名>`、复制区的 `recipe` 位、
+ *  复制日志的来源行），结论条再印一遍是判官两轮都点的那条「同一件事说三遍」。
+ *  结论条这一句只承「这件事成了」——**删掉它用户不会少知道任何一件具体的事**，
+ *  所以它保留、但不再复述菜名。 */
+const CONCLUSION_TEXT = '已写进菜谱，可以随时翻出来看。';
+
 /** 暖色小砌块（顶部 5px 渐变条与分区标题的图标位）：色值取自 `CHART_PALETTE` 的那三档
  *  （黄 `#ffcc00`／橙 `#ff9500`／粉红 `#ff2d55`），不在本件另发明十六进制串。 */
 const WARM_CHIP = 'linear-gradient(135deg, #ffcc00, #ff9500 60%, #ff2d55)';
 
-/** 桌面档（≥641）备料表／步骤行／动作行三块的**宽度上限**：**460px**。
+/** 桌面档（≥641）整页正文块的**同一条左沿与同一个宽**：备料表、步骤行、动作行、事实条都是
+ *  `400px`，**左沿统一到 880 版心那一列的左缘**（`justify-self: start`）。
  *
- *  取 `width: fit-content` ＋ `max-width`（不是固定 `width`）：备料表那一张卡只有两列内容，
- *  固定 460 会让卡里空出半张（第 39 格「横向拉伸且留白过大」的另一种形态）；
- *  `fit-content` 让卡跟着内容走、`max-width` 只兜住上限。动作行取固定 460（两枚按钮各占一半，
- *  按钮要有可点的量）。外层 880 是公共层 `pageUi.ts` 宽屏档正文列的可用宽，460 是它的一半多一点。 */
-const TABLE_MAX_WIDTH_PX = 460;
-/** 备料表本体的宽度：比同组那几块再收窄一档（两列内容本来就窄，不占满 460 的余量）。
- *  取 400：`食材 · 量词` 与 `400 g` 两列各 200px 内够放，卡里不再空出半张。 */
+ *  取 400：`食材 · 量词` 与 `400 g` 两列各 200px 内够放，卡里不再空出半张（第 39 格
+ *  「横向拉伸且留白过大」）；外层 880 是公共层 `pageUi.ts` 宽屏档正文列的可用宽。
+ *  **不用 `margin: auto`**（它是页壳栅格的项，`margin:auto` 会关掉 `stretch` ⇒ shrink-to-fit），
+ *  一律 `width` ＋ `justify-self`。 */
 const ING_TABLE_WIDTH_PX = 400;
 
-/** 页头装饰插画带：一枚器物剪影 ＋ 一条虚线点。
- *
- *  为什么是内联 SVG 而不是图：验收墙的造册判据拒收含 `loading="lazy"` 的产物，而图件产出器会写它；
- *  内联 SVG 没有 `loading` 属性，也**不引外部资源**。画的是**几何形状与器物轮廓**（锅＋盖、砧板＋刀、
- *  火苗），**不是菜品照片、也不是任何一份数据**——本件不编造数据，也不画写实菜品。（`aria-hidden`
- *  与 `focusable="false"` 让它不进无障碍树与 Tab 序。） */
-const ADD_ICONS_CSS = 'ilife-add-icons';
-function illustrationBand(): string {
-  // 色值一律从既有调色板取（4＝橙、6＝黄、8＝粉红），本件一个凭空发明的十六进制串都没有。
-  const orange = CHART_PALETTE[4];
-  const yellow = CHART_PALETTE[6];
-  const pink = CHART_PALETTE[8];
-  const pot = '<path d="M10 16h20l-1.6 12.2A5 5 0 0 1 23.5 32h-7A5 5 0 0 1 11.6 28.2z"'
-    + ' fill="rgba(255,149,0,.16)" stroke="' + orange + '" stroke-width="2" stroke-linejoin="round"/>'
-    + '<path d="M20 12v4M7 19h26" stroke="' + pink + '" stroke-width="2" stroke-linecap="round"/>';
-  const board = '<rect x="8" y="20" width="24" height="9" rx="4" fill="rgba(255,204,0,.18)" stroke="' + yellow
-    + '" stroke-width="2"/>'
-    + '<path d="M22 8l8 8M28 6l3 3" stroke="' + pink + '" stroke-width="2" stroke-linecap="round"/>';
-  const flame = '<path d="M20 6c5 6 8 8 8 13a8 8 0 0 1-16 0c0-5 3-7 8-13z" fill="rgba(255,149,0,.18)"'
-    + ' stroke="' + orange + '" stroke-width="2" stroke-linejoin="round"/>'
-    + '<path d="M20 18c2 3 3 4 3 6a3 3 0 0 1-6 0c0-2 1-3 3-6z" fill="' + yellow + '"/>';
-  // 幅面 460×44 与桌面档那三块同宽（不随版心拉长——拉长会变成一条空腰带）。
-  return '<svg class="' + ADD_ICONS_CSS + '" viewBox="0 0 460 44" width="460" height="44"'
-    + ' role="img" aria-label="锅、砧板与火苗的装饰图" focusable="false">'
-    + '<rect x="0" y="0" width="460" height="44" rx="14" fill="rgba(255,204,0,.10)"/>'
-    + '<line x1="22" y1="22" x2="438" y2="22" stroke="rgba(255,149,0,.45)" stroke-width="2"'
-    + ' stroke-dasharray="2 10" stroke-linecap="round"/>'
-    + '<g transform="translate(26,6)">' + pot + '</g>'
-    + '<g transform="translate(148,6)">' + board + '</g>'
-    + '<g transform="translate(270,6)">' + flame + '</g>'
-    + '<g transform="translate(392,6)">' + pot + '</g>'
-    + '</svg>';
-}
+/** 页内不再自建装饰带（#873 第三轮撤）：页头那条**族级**装饰带由公共层
+ *  `renderSceneShell({ family: 'receipt' })` 插在版面根的第一个子节点上（`sceneBand.ts`）。
+ *  本域第二轮自建过一条同形的内联 SVG 器物带，与族级带并存＝**同一件装饰画两遍** ⇒ 整段删除。
+ *  器物图标只留在真承内容的位置：列头带（暖色浅底＋下缘细线）、事实条瓦片（暖色基＋轮转点缀色）、
+ *  结论条渐变、表注顶缘横条 —— 这四处都在承内容，不是空装饰。 */
 
 /** 录入域页内那一段样式（追加在公共层皮肤之后，不回退页壳的单入口）。
  *
@@ -158,25 +136,6 @@ function addPageCss(): string {
     '  font-size: 12px;',
     '  font-weight: 400;',
     '}',
-    /* 页头装饰插画带（内联 SVG）：窄屏按容器缩放铺满（374px），宽档收在 460px 与下面三块同宽。 */
-    root + ' svg.' + ADD_ICONS_CSS + ' {',
-    '  display: block;',
-    '  width: 100%;',
-    '  height: auto;',
-    '  margin: 12px 0 0;',
-    '}',
-    '@media (min-width: 641px) {',
-    '  ' + root + ' svg.' + ADD_ICONS_CSS + ' {',
-    '    width: ' + TABLE_MAX_WIDTH_PX + 'px;',
-    '    justify-self: center;',
-    '  }',
-    /* 事实条同宽：四格一行排在 460px 内，与插画带、备料表、步骤行、动作行同一条左沿
-       （整页只有一条竖线，不再有「宽一段、窄一段」的天平失衡）。 */
-    '  ' + root + ' .' + p + 'block-fact-strip {',
-    '    width: ' + TABLE_MAX_WIDTH_PX + 'px;',
-    '    justify-self: center;',
-    '  }',
-    '}',
     /* 窄屏两件事：
        ① 四格事实条排成两行（每格至少占 46%），别把四件事挤成一行（第 37 格读到的「移动端芯片拥挤」）。
        ② 正文列从 358px 放到 374px（页内边距 16 → 8）：两列各自的标签与值都松一档，
@@ -185,12 +144,39 @@ function addPageCss(): string {
        下面那段（表格行卡化）与这两条同一个断点，只多一条媒体块 —— 两条分开写只为各自的注释就近。 */
     '@media (max-width: 640px) {',
     '  ' + root + ' .' + p + 'block-fact-strip-item {',
-    '    min-width: 46%;',
-    '    flex: 1 1 46%;',
+    '    box-sizing: border-box;',
+    '    min-width: calc(50% - 5px);',
+    '    flex: 1 1 calc(50% - 5px);',
     '  }',
-    '  ' + root + ' .' + p + 'block-page-shell {',
-    '    padding-left: 8px;',
-    '    padding-right: 8px;',
+    '}',
+    /* 宽档：事实条与备料表／步骤行／动作行**同宽同左沿**（400px）。
+       四枚瓦片在 400px 内排成 2×2（每枚 190px 上下），不再各拉成一条 200px 的宽带
+       —— 第 41 格读到的「配料表撑得过宽、四宫格小卡间距被压缩」要销的就是这一条。
+       **`grid-column` 必须显式写 `1 / -1`**：公共层给正文块默认 `grid-column: 2`（880 那一列），
+       而备料表／步骤行／动作行三条自带 `grid-column: 1 / -1`（公共层宽屏白名单）⇒ 不写这一条，
+       同一条左沿的块会一半落在第 2 列（x=200）、一半落在第 1 列（x=20）。 */
+    '@media (min-width: 641px) {',
+    '  ' + root + ' .' + p + 'block-fact-strip {',
+    '    width: ' + ING_TABLE_WIDTH_PX + 'px;',
+    '    margin-left: 0;',
+    '    margin-right: 0;',
+    '    grid-column: 1 / -1;',
+    '    justify-self: start;',
+    '  }',
+    '  ' + root + ' .' + p + 'block-fact-strip-item {',
+    '    box-sizing: border-box;',
+    '    flex: 1 1 calc(50% - 6px);',
+    '    min-width: calc(50% - 6px);',
+    '  }',
+    /* 族级装饰带（公共层 `sceneBand.ts`）也跟到同一条左沿：只改摆位（`width`／`max-width`／
+       外边距／栅格列），带子自己的高／底／图一字不动。 */
+    '  ' + root + ' .ilife-scene-band {',
+    '    width: ' + ING_TABLE_WIDTH_PX + 'px;',
+    '    max-width: ' + ING_TABLE_WIDTH_PX + 'px;',
+    '    margin-left: 0;',
+    '    margin-right: 0;',
+    '    grid-column: 1 / -1;',
+    '    justify-self: start;',
     '  }',
     '}',
     /* 390 档：每行收成一行 —— 左边「食材 ＋（估计量词）」，右边「用量 数字 ＋ 单位」。
@@ -264,14 +250,15 @@ function addPageCss(): string {
        ③ 三个块（插画带／事实条／备料表／步骤行／动作行）的宽度**显式写成 `width` ＋
           `justify-self: center`**：它们是 `.ilife-block-page-shell-body` 的栅格项，
           **只给 `margin: auto` 会关掉栅格项的 `justify-self: stretch`**，整块按内容宽
-          shrink-to-fit（收窄会变成另一回事）——收窄一律走 `width` ＋ `justify-self`，
-          不靠外边距。**取 `center` 不取 `start`**：这些块与上面的插画带同挂 `grid-column: 2`
-          （880px 那一列），取 `start` 会把它们推到**第 1 列**去（实测 1280 档落在 x=20，
-          与 880 版心错位）。 */
+          shrink-to-fit（收窄会变成另一回事）——收窄一律走 `width` ＋ `justify-self`。
+          **这一轮把左沿统一到版心左（`start`）**：第一版取 `center` 时实测这些块与页头带、
+          事实条左右各错开 209px，第 41 格读到的「配料表撑得过宽、四宫格小卡间距被压缩」
+          正是两套对齐叠加出来的（族级带与页头左沿一条线、正文块居中另一条线）。
+          本轮**同会话改前改后各跑一遍**再定（判据见证据件 §第三轮）。 */
     '@media (min-width: 641px) {',
     '  ' + root + ' .' + p + 'block-data-table {',
     '    width: ' + ING_TABLE_WIDTH_PX + 'px;',
-    '    justify-self: center;',
+    '    justify-self: start;',
     '  }',
     '  ' + root + ' .' + p + 'block-data-table td.' + p + 'block-data-table-cell-left,',
     '  ' + root + ' .' + p + 'block-data-table td.' + p + 'block-data-table-cell-right,',
@@ -289,13 +276,14 @@ function addPageCss(): string {
     '  }',
     /* 步骤行与备料表同一个左沿与同一个宽（同一条竖线收口），右侧不再是一条横贯版心的长行。 */
     '  ' + root + ' .' + p + 'block-list-rows {',
-    '    width: ' + TABLE_MAX_WIDTH_PX + 'px;',
-    '    justify-self: center;',
+    '    width: ' + ING_TABLE_WIDTH_PX + 'px;',
+    '    justify-self: start;',
     '  }',
-    /* 动作行与备料表同一个宽度上限：两枚按钮仍是各占一半（第 37 格那条「偏出栅格」的另一半账）。 */
+    /* 动作行与备料表同宽同左沿：两枚按钮各占一半（第 37 格那条「偏出栅格」的另一半账）。 */
     '  ' + root + ' .' + p + 'action-bar {',
-    '    width: ' + TABLE_MAX_WIDTH_PX + 'px;',
-    '    justify-self: center;',
+    '    width: ' + ING_TABLE_WIDTH_PX + 'px;',
+    '    grid-column: 1 / -1;',
+    '    justify-self: start;',
     '  }',
     '}',
   ].join(LF);
@@ -393,8 +381,7 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
     '异常信息：无',
   ].join('\n');
   const content =
-    renderConclusionBar('已录入「' + input.recipeName + '」。') +
-    illustrationBand() +
+    renderConclusionBar(CONCLUSION_TEXT) +
     renderFactStrip({
       items: [
         { label: '用时', value: input.totalTime + ' 分钟' },
