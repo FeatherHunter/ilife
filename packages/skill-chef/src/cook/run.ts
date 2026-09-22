@@ -25,8 +25,7 @@ import { renderSceneShell } from '../render/sceneShell.js';
 import { renderActionBar, renderFactStrip, renderTimelineRows } from 'base-paint';
 import { chefSceneCss } from '../render/skin.js';
 import { COOK_STEP_CLASS, COOK_STEPS_CLASS, COOK_STEP_SIDE_CLASS, cookPageCss } from './page-css.js';
-import { cookHeroArt, cookHeroBand } from './page-art.js';
-import { qtyText, servingsNoteReceipt, SERVINGS_NOTE_PAGE, stepProseHtml, stepTitle, usageChip } from './page-text.js';
+import { cookCountNote, qtyText, servingsNoteReceipt, stepProseHtml, stepTitle, usageChip } from './page-text.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -211,14 +210,18 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
       { label: '状态', value: data.recipe.status },
     ],
   });
-  const conclusion = renderConclusionBar(SERVINGS_NOTE_PAGE);
+  // 结论条：只说「这道菜做过几次」（见 `cookCountNote` 的注：份量/用料/步骤别处都有，复述不加信息）。
+  const conclusion = renderConclusionBar(cookCountNote(data.count));
   const progress = renderKpiCard({
     label: '当前进度', value: String(cur), unit: '/ ' + total + ' 步',
     // 第二轮返修：删掉原来的说明行「本步 中火 5 分钟」——它与下一张步骤卡里的「火候／时长」两格
     // 说的是同一件事，同尺复评把首屏那句读成「四处都在重复」。火候与时长现在只在步骤卡里出现一次。
     bar: { pct: Math.round((cur / total) * 100) },
   });
-  const head: string[] = [cookHeroArt, cookHeroBand, facts, conclusion];
+  // 第三轮返修：页头**只留族级装饰带**（`sceneShell` 插在版面根首节点的那条 process 带）。
+  // 本域第二轮自己加的两件——「锅＋热气」图形牌与横贯波线带——是纯装饰且与族级带同题材，
+  // 按公共层第三轮的契约撤掉（对照读数见证据件 §7.4）。
+  const head: string[] = [facts, conclusion];
   // 含上次经验卡：把上一次的日期／评分／反馈摆出来（缺历史就显式缺）。
   if (opts.kind === 'with-history') {
     head.push(data.lastHistory === null
@@ -236,9 +239,11 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
       }));
   }
   head.push(progress);
-  // 断点续做口径：会话记忆由 AI 侧承担，页面只承当前进度与下一步（缺字段不编）。
+  // 断点续做口径：会话记忆由 AI 侧承担（缺字段不编）。第三轮返修：只留「换新会话会怎样」这条
+  // 读者真会少知道的事——「上次做到第 3 步、这次从第 4 步接着做」在进度卡（4 / 6 步）与展开的
+  // 第 4 步卡上都已经写着，删掉它用户一点不少知道。
   if (opts.kind === 'resume') {
-    head.push(renderCaliberLine('断点续接：上次做到第 ' + (cur - 1) + ' 步，这次从第 ' + cur + ' 步接着做。换新会话后进度不保留。'));
+    head.push(renderCaliberLine('断点续接：换新会话后进度不保留。'));
   }
   // 每张步骤卡外面包一层状态类：当前步／已做步／还没做各有自己的形状（`page-css.ts` 里那三条）。
   const cards = data.steps.map((s) => {
@@ -283,7 +288,9 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
     const longest = [...data.steps].sort((a, b) => (b.duration_minutes ?? 0) - (a.duration_minutes ?? 0)).slice(0, 2);
     tail.push(renderDisclosure({
       title: '等待时可并行', open: true,
-      contentHtml: renderCaliberLine('本谱没有炖烤腌这类等待步骤，按最耗时的两步给并行建议。')
+      // 第三轮返修：删掉「以下按耗时最长的两步给并行建议」——那是把实现讲给读者听；下面两行
+  // 已经写着第几步、约几分钟、下一步备什么料。留下的半句是读者真会少知道的（本谱为何没有等待位）。
+  contentHtml: renderCaliberLine('本谱没有炖烤腌这类等待步骤。')
         + renderTimelineRows({
           // 建议写“备下一步”，注里就摆下一步的料名（当前步的料已在步骤卡里，不复读）。
           rows: longest.map((s) => {

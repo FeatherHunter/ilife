@@ -17,13 +17,8 @@
  * （`pageUi.ts` 的 `PAGE_LIMITS.breakpointsPx`）；本件不含任何 `:root` 改写、禁入 token
  * 与深色区选择器（公共层 `buildStyleSheet` 的三禁）。
  */
-import { CHART_PALETTE } from 'base-paint';
-
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
-
-/** 页头装饰里的热气色：取公共层调色板的下标（色值的唯一定义地是 `spec/charts.ts`）。 */
-const STEAM_COLOR = CHART_PALETTE[2];
 
 /** 步骤卡的状态类（`run.ts` 挂在卡外层：当前步／已做步／未开始）。 */
 export const COOK_STEP_CLASS = 'ilife-cook-step';
@@ -88,7 +83,7 @@ export function cookPageCss(): string {
     /* ② 步骤卡：卡与卡之间恒一条 16px 的气口（外层包了一层状态类与列表层，公共层那条
        「同级区块之间」的选择器命中不到包层，故这里自己给；首卡与进度卡之间多留 2px）。 */
     root + ' .' + COOK_STEPS_CLASS + ' {',
-    '  margin-top: 18px;',
+    '  margin-top: 16px;',
     '}',
     root + ' .' + COOK_STEP_CLASS + ' > .ilife-block-disclosure {',
     '  margin: 0;',
@@ -147,7 +142,7 @@ export function cookPageCss(): string {
     '  line-height: 1.8;',
     '}',
     root + ' .ilife-block-timeline-row {',
-    '  padding: 8px 0;',
+    '  padding: 7px 0;',
     '}',
     /* ③ 当前进度卡：读数抬到 28px（一屏里最大的一个数），说明行与读数行之间给气口；
        进度条取主色——低档红条在这页读成「出错」，「做到第几步」本身没有告警语义。 */
@@ -165,66 +160,16 @@ export function cookPageCss(): string {
     root + ' .ilife-block-page-shell-body > .ilife-block-conclusion {',
     '  margin-top: 12px;',
     '}',
-    /* ⑤ 页头装饰（锅与热气 ＋ 一条波线带）：都不占正文一行、也不参与命中区。
-       第二轮返修把图形收成**一张与别的卡同色基、同描边、同圆角的牌**——同尺复评原话
-       「插画与暖色渐变风格与卡片式表单略脱节」，脱节的根源就是它只有线稿、没有卡面。 */
-    root + ' .ilife-block-page-shell {',
-    '  position: relative;',
-    '}',
-    root + ' .ilife-cook-art {',
-    '  position: absolute;',
-    '  top: 14px;',
-    '  right: 14px;',
-    '  display: flex;',
-    '  align-items: center;',
-    '  padding: 5px 8px;',
-    '  border: 1px solid var(--line);',
-    '  border-radius: 14px;',
-    '  background: var(--card);',
-    '  pointer-events: none;',
-    '}',
-    root + ' .ilife-cook-art svg {',
-    '  display: block;',
-    '  width: 68px;',
-    '  height: 26px;',
-    '}',
-    root + ' .ilife-cook-art path {',
-    '  fill: none;',
-    '  stroke-width: 3;',
-    '  stroke-linecap: round;',
-    '}',
-    root + ' .ilife-cook-art-wok {',
-    '  stroke: var(--blue2);',
-    '}',
-    root + ' .ilife-cook-art-steam {',
-    '  stroke: ' + STEAM_COLOR + ';',
-    '}',
-    /* 装饰带：大标题那条横线与事实条之间的一条波线（纯装饰、无数据、不可点）。 */
-    root + ' .ilife-cook-band {',
-    '  margin: 0;',
-    '}',
-    root + ' .ilife-cook-band svg {',
-    '  display: block;',
-    '  width: 100%;',
-    '  height: 14px;',
-    '}',
-    root + ' .ilife-cook-band path {',
-    '  fill: none;',
-    '  stroke: ' + STEAM_COLOR + ';',
-    '  stroke-width: 2;',
-    '  stroke-linecap: round;',
-    '  opacity: .42;',
-    '}',
-    /* 窄档：页头四格缩一档内距，值不许折行（「18 分钟」这种值折行会把格子撑成两行）；
-       装饰牌上提到眉标那一行的右端（标题那两行一个字都不许被它压住）。 */
+    /* ⑤ 第三轮返修：本域第二轮自己加的两件页头装饰（「锅＋热气」图形牌与横贯波线装饰带）**已撤**。
+       公共层第三轮立了页头契约——**页头只能有族级装饰带**（本域五页是 process 族，`sceneShell`
+       已把那条带插在版面根首节点）；页内再摆一条同题材的装饰就是重复，而这两件都是纯装饰、不载内容。
+       撤掉时连它的定位锚点（版面根 `position: relative`）与配色常量一起撤，本件不再有装饰件规则。 */
+
+    /* 窄档：页头四格缩一档内距，值不许折行（「18 分钟」这种值折行会把格子撑成两行）。 */
     '@media (max-width: 640px) {',
     '  ' + root + ' .ilife-block-page-shell-body > .ilife-block-fact-strip > .ilife-block-fact-strip-item {',
     '    padding-left: 8px;',
     '    padding-right: 8px;',
-    '  }',
-    '  ' + root + ' .ilife-cook-art {',
-    '    top: 12px;',
-    '    right: 12px;',
     '  }',
     '}',
     /* 宽档：**步骤卡保持单列满宽**（第二轮返修：双列时正文列被挤窄，同尺复评原话「桌面端
@@ -259,15 +204,6 @@ export function cookPageCss(): string {
        右侧那截空位从「缺内容」变成「留白」。窄档不靠右——卡片内沿与值之间不够一档内距。 */
     '  ' + root + ' .' + COOK_STEP_CLASS + ' .' + COOK_STEP_SIDE_CLASS + ' .ilife-block-fact-strip-value {',
     '    text-align: right;',
-    '  }',
-    '  ' + root + ' .ilife-cook-art {',
-    '    top: 26px;',
-    '    right: 24px;',
-    '    padding: 7px 10px;',
-    '  }',
-    '  ' + root + ' .ilife-cook-art svg {',
-    '    width: 110px;',
-    '    height: 40px;',
     '  }',
     '}',
   ].join(LF);
