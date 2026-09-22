@@ -7,10 +7,18 @@ import { memoPageAssets } from './memoPageAssets.js';
 import { assertHtmlSize, MEMO_HTML_MAX_BYTES } from './html.js';
 import { loadTemplate } from './templates.js';
 
+/** 区块里的一行：**要么整行文字，要么带结构的行**（#820 收尾：编号与状态不再拼进同一串 ——
+ *  屏上落成「编号徽章 ＋ 正文 ＋ 状态徽章」，`#5 xxx：未排期` 那种两个冒号串三件事的写法退场）。 */
+export interface PageRow {
+  readonly text: string;
+  readonly id?: string | number;
+  readonly status?: string;
+}
+
 export interface PageSnapshot {
   readonly title: string;
   readonly summary: string[];
-  readonly sections: { readonly heading: string; readonly rows: string[] }[];
+  readonly sections: { readonly heading: string; readonly rows: (string | PageRow)[] }[];
 }
 
 export interface PageCopyLog {

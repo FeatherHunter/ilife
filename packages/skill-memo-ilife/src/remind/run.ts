@@ -159,8 +159,9 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
     message: '提醒已设置' + (noteId !== null ? '（笔记 ' + noteId + '）' : '（独立提醒）'),
     badges: { category: note === null ? '独立提醒' : note.category, sub: note === null ? null : note.sub_category },
     summary: [
-      note === null ? '对象：独立提醒（未关联笔记）' : '对象：' + note.content.slice(0, 40),
-      '提醒时间：' + (at ?? '(未定)'),
+      // #820 收尾：四格一律「标签：值」；空值不再写「(未定)」这种括号注记，直接写「未定」。
+      note === null ? '对象：独立提醒' : '对象：' + note.content.slice(0, 40),
+      '提醒时间：' + (at ?? '未定'),
       '重复：' + type + (rule === null ? '' : '（' + rule + '）'),
       '提醒内容：' + content,
     ],

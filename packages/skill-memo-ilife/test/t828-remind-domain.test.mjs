@@ -250,13 +250,15 @@ describe('#828 · 产物形状（册子格的页型）', () => {
     }
   });
 
-  it('运行时渲染的元信息行：时间与唤醒词都在，且不再用「·」串', () => {
+  it('运行时渲染的元信息行：时间与唤醒词各成一组「标签＋值」，且不用「·」串', () => {
     for (const f of listing().filter((x) => x.startsWith('记提醒_') || x.startsWith('设提醒_'))) {
       const html = readFileSync(join(landingDir(), f), 'utf8');
-      const line = (/getElementById\("meta"\)\.textContent=([^;]+);/.exec(html) || [])[1] ?? '';
+      const line = (/getElementById\("meta"\)\.innerHTML=([^;]+);/.exec(html) || [])[1] ?? '';
+      const pairs = (/function metaPairs[\s\S]*?\n\}/.exec(html) || [])[0] ?? '';
       assert.ok(line !== '', f + ' 回执页要有元信息行');
-      assert.ok(line.includes('generated_at') && line.includes('wake_word'), f + ' 元信息行要有时间与唤醒词两件事实');
-      assert.ok(!line.includes('·'), f + ' 元信息行不许用「·」串（分隔符探针读不到运行时文本）');
+      assert.ok(pairs.includes('generated_at') && pairs.includes('wake_word'), f + ' 元信息行要有时间与唤醒词两件事实');
+      assert.ok(pairs.includes('fact-k') && pairs.includes('fact-v'), f + ' 两件事实各自是「标签＋值」两组，不是一句话');
+      assert.ok(!line.includes('·') && !pairs.includes('·'), f + ' 元信息行不许用「·」串（分隔符探针读不到运行时文本）');
     }
   });
 });

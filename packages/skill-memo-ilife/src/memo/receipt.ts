@@ -78,9 +78,11 @@ export function memoBatchResultPage(input: {
     entityId: input.updated + ' 条',
     category: input.to,
     summary: [
-      '原分类 ' + (input.from ?? '全部') + '，目标分类 ' + input.to,
-      '更新 ' + input.updated + ' 条',
-      '跳过 ' + input.skipped + ' 条',
+      // #820 收尾：两类分类各占一格，不再挤成「原分类 X，目标分类 Y」一句话；计数两格补标签冒号。
+      '原分类：' + (input.from ?? '全部'),
+      '目标分类：' + input.to,
+      '更新：' + input.updated + ' 条',
+      '跳过：' + input.skipped + ' 条',
       ...input.errors.map((e) => '没做成：' + e),
     ],
   });

@@ -14,17 +14,26 @@ h1{font-size:36px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}
 .lead{color:var(--fg);font-size:17px;font-weight:600}
 .badges{margin-top:14px}
 .badge{display:inline-block;background:var(--soft,#f5f8ff);color:var(--blue);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;margin:2px 8px 2px 0;min-height:28px;line-height:1.4}
-.meta{margin-top:12px;color:var(--fg3);font-size:13px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;color:var(--fg3);font-size:13px}
+.meta-pair{display:inline-flex;align-items:baseline;gap:6px}
+.meta .fact-v{color:var(--fg2);font-weight:600}
 .panel{background:var(--card);border-radius:20px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin:14px 0}
 .panel h2{font-size:16px;margin-bottom:12px}
-.facts{display:flex;flex-wrap:wrap;gap:8px}
-.fact{background:var(--soft,#f5f8ff);border-radius:12px;padding:10px 14px;font-size:14px}
+/* 「这次的结果」与「处理结果」用**同一个形状**：标签＋值两列（窄屏堆成一列）。
+   不再拿 `：`／`／`／空格把两个事实挤进一格（负责人 2026-09-22：符号顶替设计的地方要改成 UI 设计）。 */
+.facts{display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:10px 16px;font-size:15px}
+.fact{display:contents}
+.fact-k{color:var(--fg2)}
+.fact-v{font-weight:600;word-break:break-word}
+.fact-note{grid-column:1/-1;color:var(--fg2);font-size:14px}
 .kv{display:grid;grid-template-columns:minmax(84px,auto) 1fr;gap:10px 16px;font-size:15px}
 .kv dt{color:var(--fg2)}
 .kv dd{font-weight:600;word-break:break-word}
 .rows{list-style:none}
-.rows li{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.rows li{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
 .rows li:last-child{border-bottom:0}
+.row-id{color:var(--blue);font-weight:800;flex:none}
+.rows .badge{background:var(--soft,#f5f8ff);color:var(--fg2);padding:3px 10px;font-size:12px;min-height:0;line-height:1.5;flex:none;margin:0}
 .hint{font-size:12px;color:var(--fg3);margin-top:6px}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;align-items:center}
 button{border:0;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit}
@@ -33,8 +42,8 @@ button.copy{background:var(--card);color:var(--blue);border:1.5px solid var(--bl
   .wrap{padding:28px 14px 70px}
   .hero{padding:26px 20px;border-radius:22px}
   h1{font-size:30px}
-  .kv{grid-template-columns:1fr;gap:2px 0}
-  .kv dd{margin-bottom:10px}
+  .kv,.facts{grid-template-columns:1fr;gap:2px 0}
+  .kv dd,.fact-v{margin-bottom:10px}
 }
 
 /* #870 · 表单控件命中区 ≥44×44px（t849 §2 硬线；实测基线 33 处不足全在这一族） */
@@ -100,7 +109,7 @@ function init(){
   if(r.category)b.push('<span class="badge">'+esc(r.category)+'</span>');
   if(r.sub)b.push('<span class="badge">'+esc(r.sub)+'</span>');
   document.getElementById("badges").innerHTML=b.join("");
-  document.getElementById("meta").textContent="时间："+(d.generated_at||"")+(meta.wake_word?("　唤醒词「"+meta.wake_word+"」"):"");
+  document.getElementById("meta").innerHTML=metaPairs(d,meta);
   renderFacts();
   renderResult();
   renderRows();
@@ -108,11 +117,24 @@ function init(){
   document.getElementById("btnLog").setAttribute("data-t",window.buildLogText(payload));
 }
 
+/** 页首那一行：时间与唤醒词各成一组「标签＋值」（原先用全角空格把两件事挤成一行 —— 同一类符号顶替设计）。 */
+function metaPairs(d,meta){
+  var out=[];
+  if(d.generated_at) out.push('<span class="meta-pair"><span class="fact-k">时间</span><span class="fact-v">'+esc(d.generated_at)+'</span></span>');
+  if(meta.wake_word) out.push('<span class="meta-pair"><span class="fact-k">唤醒词</span><span class="fact-v">「'+esc(meta.wake_word)+'」</span></span>');
+  return out.join("");
+}
+
+/** 事实条：一条一格「标签＋值」（冒号只作**数据分隔**，屏上是两列，不是一句话）；没冒号的当整行说明。 */
 function renderFacts(){
   var s=snap();var sum=Array.isArray(s.summary)?s.summary:[];
   if(!sum.length)return;
   document.getElementById("factsPanel").style.display="block";
-  document.getElementById("facts").innerHTML=sum.map(function(x){return '<span class="fact">'+esc(x)+'</span>'}).join("");
+  document.getElementById("facts").innerHTML=sum.map(function(x){
+    var t=String(x);var i=t.indexOf("：");
+    if(i<0)return '<div class="fact-note">'+esc(t)+'</div>';
+    return '<div class="fact"><span class="fact-k">'+esc(t.slice(0,i))+'</span><span class="fact-v">'+esc(t.slice(i+1))+'</span></div>';
+  }).join("");
 }
 
 function renderResult(){
@@ -135,10 +157,21 @@ function renderRows(){
   var li=[];
   rest.forEach(function(sec){
     sec.rows.forEach(function(row){
-      li.push('<li>'+esc(typeof row==="object"&&row!==null?row.text:row)+'</li>');
+      li.push('<li>'+rowHtml(row)+'</li>');
     });
   });
   document.getElementById("rows").innerHTML=li.join("");
+}
+
+/** 一行：带结构的（`{id,text,status}`）落成「编号徽章 ＋ 正文 ＋ 状态徽章」；
+ *  纯字符串原样上屏（老形状）。编号与状态都是**另一个维度**，不拼进正文那一串里。 */
+function rowHtml(row){
+  if(typeof row!=="object"||row===null)return esc(String(row));
+  var h='';
+  if(row.id!==undefined&&row.id!==null&&row.id!=="")h+='<span class="row-id">#'+esc(String(row.id))+'</span>';
+  h+=esc(String(row.text||""));
+  if(row.status)h+='<span class="badge">'+esc(String(row.status))+'</span>';
+  return h;
 }
 
 function dataText(){

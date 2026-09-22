@@ -29,12 +29,14 @@ interface CheckinPage {
   readonly stem: string;
 }
 
-/** 打卡那一行的事实条：编号 ／ 正文 ／ 分类（子分类空即不显示那一段）。 */
+/** 打卡那一行的事实条：编号 ／ 正文 ／ 分类 ／ 子分类 —— 一只一格「标签：值」（#820 收尾：
+ *  标签与备忘族统一用「正文」（原先本域写「内容」，同一件事两个名字）；两级分类各占一格，不再拼「／」）。 */
 function summaryOf(note: MemoNote): string[] {
   return [
-    '打卡编号 ' + note.id,
-    '内容：' + note.content,
-    '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category),
+    '打卡编号：' + note.id,
+    '正文：' + note.content,
+    '分类：' + note.category,
+    ...(note.sub_category === null ? [] : ['子分类：' + note.sub_category]),
   ];
 }
 

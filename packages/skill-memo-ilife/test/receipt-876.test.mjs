@@ -91,7 +91,7 @@ describe('#876 · 定义级：回执族一处定义，19 格同时受益', () =>
     title: '记心愿',
     message: '已记一条：7',
     badges: { category: '心愿', sub: null },
-    summary: ['心愿编号 7', '排期 未定'],
+    summary: ['心愿编号：7', '排期：未定'],
     sections: [],
     receipt: { entityLabel: '心愿', entityId: 7, local: 'created', remote: 'created', remoteId: 'tk_seed_876' },
     copyLog: { thinking: '', data_structure: '', call_chain: '', exception: '' },

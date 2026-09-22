@@ -51,12 +51,15 @@ export interface WishReceiptInput {
   };
 }
 
-/** 一条心愿的摘要（页首事实条）：心愿编号 ／ 心愿内容 ／ 排期；`loc` 缺则只剩结论那一条。 */
-function summaryOf(title: string, loc: MemoNote | null, extra: readonly string[]): string[] {
-  const out: string[] = [title + '：' + (loc === null ? '见下方结果' : loc.content)];
+/** 一条心愿的摘要（事实条）：正文 ／ 心愿编号 ／ 排期 —— 一格一件事、一律「标签：值」。
+ *  #820 收尾（负责人 2026-09-22）：① 不再自指命令名（页题已说明是什么命令，「记心愿：学吉他」是废话）；
+ *  ② 不再用「见下方结果」当占位（下面那张清单本身就是结果）；③ 编号与排期两格补上标签冒号。 */
+function summaryOf(loc: MemoNote | null, extra: readonly string[]): string[] {
+  const out: string[] = [];
   if (loc !== null) {
-    out.push('心愿编号 ' + loc.id);
-    out.push('排期 ' + dueText(loc.due));
+    out.push('正文：' + loc.content);
+    out.push('心愿编号：' + loc.id);
+    out.push('排期：' + dueText(loc.due));
   }
   for (const line of extra) out.push(line);
   return out;
@@ -80,7 +83,7 @@ export function buildWishReceipt(input: WishReceiptInput): { readonly html: stri
     title: input.title,
     message: r.message,
     badges: { category: loc?.category ?? '心愿', sub: loc?.sub_category ?? null },
-    summary: summaryOf(input.title, loc, input.extraSummary ?? []),
+    summary: summaryOf(loc, input.extraSummary ?? []),
     sections: [...(input.extraSections ?? [])],
     receipt: { entityLabel, entityId, local: r.local, remote: r.remote, remoteId: r.remoteId },
     copyLog: {

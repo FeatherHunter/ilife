@@ -35,9 +35,12 @@ export function receiptOptsOf(note: { id: number; category: string; sub_category
     category: note.category,
     sub: note.sub_category,
     summary: [
-      '笔记编号 ' + note.id,
+      // #820 收尾（负责人 2026-09-22）：事实条一律「标签：值」，一格说一件事 ——
+      // 分类与子分类**各占一格**，不再用「／」把两级拼在一格（符号顶替设计）；标签统一用「正文」。
+      '笔记编号：' + note.id,
       '正文：' + note.content,
-      '分类 ' + note.category + (note.sub_category === null ? '' : '／' + note.sub_category),
+      '分类：' + note.category,
+      ...(note.sub_category === null ? [] : ['子分类：' + note.sub_category]),
     ],
   };
 }

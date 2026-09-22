@@ -103,7 +103,7 @@ describe('#829 · wish 域 5 场景端到端（真出口）', () => {
     assert.equal(fresh.length, 1, '产物：' + s.listing().join(','));
     const html = s.html(fresh[0]);
     assert.match(html, /学游泳（改后）/);
-    assert.match(html, new RegExp('心愿编号 ' + s.ids.swim));
+    assert.match(html, new RegExp('心愿编号：' + s.ids.swim));
   });
 
   it('序21 删心愿：memo.remove 出「删心愿」，笔记真删、页内是删前那一行', () => {

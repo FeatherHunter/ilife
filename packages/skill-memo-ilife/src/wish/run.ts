@@ -126,14 +126,16 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
       // （旧的 `entityId: items.length` 会被拼成 `对象：心愿清单 #4`，读起来像第 4 条记录）。
       entityId: items.length + ' 个',
       extraSummary: [
-        '心愿 ' + items.length + ' 个',
-        '已排期 ' + scheduled + ' 个',
-        '未排期 ' + (items.length - scheduled) + ' 个',
-        ...(due === null ? [] : ['这一趟排期至 ' + due]),
+        // #820 收尾：事实条一格一件事、一律「标签：值」（原先这几格没有标签，屏上落成整行说明）。
+        '心愿：' + items.length + ' 个',
+        '已排期：' + scheduled + ' 个',
+        '未排期：' + (items.length - scheduled) + ' 个',
+        ...(due === null ? [] : ['排期至：' + due]),
       ],
       extraSections: [{
         heading: '心愿清单',
-        rows: items.map((n) => '#' + n.id + ' ' + n.content + '：' + (n.due === null ? '未排期' : n.due)),
+        // 编号与排期状态各走自己的维度（徽章），不再拼成 `#5 xxx：未排期` 一串（两个冒号串三件事）。
+        rows: items.map((n) => ({ id: n.id, text: n.content, status: n.due === null ? '未排期' : n.due })),
       }],
     }),
   };
