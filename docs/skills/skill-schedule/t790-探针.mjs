@@ -100,7 +100,7 @@ const GENERATED_BASELINE = {
 const ROUTES_SHA = '784062f712af8df8';
 
 /** **本票收口那一刻**的编译态指纹（`FINGERPRINT:` 行里那两枚 sha，逐字抄自干净窗口那次跑）。 */
-const FROZEN_FINGERPRINT = { src: '', dist: '' };
+const FROZEN_FINGERPRINT = { src: '58faf0be1469d8d6', dist: 'ddab614705ccb0b7' };
 const NO_BASELINE = process.argv.includes('--no-baseline');
 
 const reds = [];
