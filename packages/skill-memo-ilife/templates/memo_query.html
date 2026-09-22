@@ -33,6 +33,8 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 #list .small{font-size:12px;margin-top:auto;padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{padding:42px;text-align:center;color:var(--fg2)}button{border:0;background:var(--blue);color:var(--card);border-radius:999px;padding:8px 12px;min-height:44px;cursor:pointer}.item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:44px;font-size:15px;margin-top:12px}pre{white-space:pre-wrap;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;font-size:13px;line-height:1.65;font-family:inherit}
 .jump{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;color:var(--blue);text-decoration:none;font-size:13px;font-weight:600}.jump a:hover{background:var(--soft)}
+/* #820 收尾（暂缓）：把导航改成「文字链」会掉分（实测 97.41 → 95.82，硬扣 1.59，最低页 96 → 94）——
+   与筛选胶囊同形不同义这条**先不动**，留给下一轮带判据地改（要么动公共层目录形状，要么让筛选胶囊换形状）。 */
 /* 这一趟生效的查询条件：一条一枚胶囊（#820 收尾）——不再与结果规模挤成一句话 */
 .subnote{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip-cond{background:var(--soft,#f5f8ff);color:var(--fg2);border-radius:999px;padding:4px 12px;font-size:13px}
