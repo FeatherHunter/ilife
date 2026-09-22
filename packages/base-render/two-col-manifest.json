@@ -1,0 +1,2153 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-22T02:48:22.278Z",
+  "generator": "packages/base-render/scripts/check-two-col-batch.mjs --write-manifest",
+  "batches": {
+    "memo-34": {
+      "dir": "packages/skill-memo-ilife/.scratch/t882/墙-终2",
+      "pages": {
+        "删备忘.html": {
+          "tables": []
+        },
+        "删心愿.html": {
+          "tables": []
+        },
+        "删情绪.html": {
+          "tables": []
+        },
+        "删打卡.html": {
+          "tables": []
+        },
+        "备忘录同步.html": {
+          "tables": []
+        },
+        "备忘改分类-批量-向导.html": {
+          "tables": []
+        },
+        "备忘改分类-批量.html": {
+          "tables": []
+        },
+        "备忘改分类.html": {
+          "tables": []
+        },
+        "备忘改子分类.html": {
+          "tables": []
+        },
+        "完成心愿-向导.html": {
+          "tables": []
+        },
+        "完成心愿.html": {
+          "tables": []
+        },
+        "心愿排期-向导.html": {
+          "tables": []
+        },
+        "心愿排期.html": {
+          "tables": []
+        },
+        "按时间搜备忘.html": {
+          "tables": []
+        },
+        "搜备忘.html": {
+          "tables": []
+        },
+        "改备忘.html": {
+          "tables": []
+        },
+        "改心愿.html": {
+          "tables": []
+        },
+        "改情绪.html": {
+          "tables": []
+        },
+        "改打卡.html": {
+          "tables": []
+        },
+        "查备忘.html": {
+          "tables": []
+        },
+        "查已提醒备忘.html": {
+          "tables": []
+        },
+        "查心愿.html": {
+          "tables": []
+        },
+        "查情绪.html": {
+          "tables": []
+        },
+        "查打卡.html": {
+          "tables": []
+        },
+        "看备忘.html": {
+          "tables": []
+        },
+        "看提醒.html": {
+          "tables": []
+        },
+        "记备忘.html": {
+          "tables": []
+        },
+        "记心愿.html": {
+          "tables": []
+        },
+        "记情绪.html": {
+          "tables": []
+        },
+        "记打卡.html": {
+          "tables": []
+        },
+        "记提醒.html": {
+          "tables": []
+        },
+        "设提醒.html": {
+          "tables": []
+        },
+        "首次使用-向导.html": {
+          "tables": [
+            {
+              "id": "待办/怎么做",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "首次使用.html": {
+          "tables": [
+            {
+              "id": "待办/怎么做",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "calorie-87": {
+      "dir": "docs/skills/skill-calorie/scene02-验收墙",
+      "pages": {
+        "下架食品.html": {
+          "tables": [
+            {
+              "id": "改前 → 改后对照",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "删一餐.html": {
+          "tables": [
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "删某日饮食.html": {
+          "tables": [
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "删饮食记录.html": {
+          "tables": [
+            {
+              "id": "删除前的原值（逐条）",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "复制昨日饮食.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "存食品.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "总索引.html": {
+          "tables": []
+        },
+        "手机墙-390.html": {
+          "tables": []
+        },
+        "批量删饮食.html": {
+          "tables": [
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "批量导入食品.html": {
+          "tables": [
+            {
+              "id": "逐条预览（仅预览，不写库）",
+              "columns": 7,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "批量补记饮食.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "拍营养表补记一餐.html": {
+          "tables": [
+            {
+              "id": "识别结果（照老实物那八个字段，缺的写 —）",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "这一餐会写进饮食记录的字段与取值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "拍营养表记一餐.html": {
+          "tables": [
+            {
+              "id": "识别结果（照老实物那八个字段，缺的写 —）",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "这一餐会写进饮食记录的字段与取值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "搜食品.html": {
+          "tables": []
+        },
+        "改某日饮食.html": {
+          "tables": [
+            {
+              "id": "改前 → 改后对照",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "改食品.html": {
+          "tables": [
+            {
+              "id": "改前 → 改后对照",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "改饮食记录.html": {
+          "tables": [
+            {
+              "id": "改前 → 改后对照",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "查营养配比.html": {
+          "tables": [
+            {
+              "id": "推荐范围对比（克数均为这 7 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "查食品.html": {
+          "tables": []
+        },
+        "查食品库.html": {
+          "tables": []
+        },
+        "查食品（按分类）.html": {
+          "tables": []
+        },
+        "查高热量排行.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "校验批量导入.html": {
+          "tables": [
+            {
+              "id": "逐行校验结果（只校验，不写库）",
+              "columns": 7,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "桌面墙-1280.html": {
+          "tables": []
+        },
+        "看「有备注」的饮食记录.html": {
+          "tables": [
+            {
+              "id": "今日明细（共 1 条）",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看上周饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看上月饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看今日喝水.html": {
+          "tables": [
+            {
+              "id": "今日每杯（共 3 杯）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看今日营养.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 1 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看今日饮水.html": {
+          "tables": [
+            {
+              "id": "今日每杯（共 3 杯）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看今日饮食.html": {
+          "tables": [
+            {
+              "id": "今日明细（共 4 条）",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看今日饮食记录.html": {
+          "tables": [
+            {
+              "id": "今日明细（共 4 条）",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看低热量榜.html": {
+          "tables": [
+            {
+              "id": "🥬 低热量健康榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看低热量榜（最近 30 天）.html": {
+          "tables": [
+            {
+              "id": "🥬 低热量健康榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看低热量榜（本月）.html": {
+          "tables": [
+            {
+              "id": "🥬 低热量健康榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看低热量榜（自定义）.html": {
+          "tables": [
+            {
+              "id": "🥬 低热量健康榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看全部排行榜.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            },
+            {
+              "id": "🥬 低热量健康榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            },
+            {
+              "id": "📅 常吃榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            },
+            {
+              "id": "🍚 高碳水榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            },
+            {
+              "id": "💪 高蛋白榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看全部餐别分布（最近 7 天）.html": {
+          "tables": [
+            {
+              "id": "明细（共 28 条）",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看加餐（最近 7 天）.html": {
+          "tables": [
+            {
+              "id": "明细（共 7 条）",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看午餐（最近 7 天）.html": {
+          "tables": [
+            {
+              "id": "明细（共 7 条）",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看去重报告.html": {
+          "tables": [
+            {
+              "id": "食品名/品牌/条数/记录编号",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看批量导入预览.html": {
+          "tables": [
+            {
+              "id": "逐条预览（仅预览，不写库）",
+              "columns": 7,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看早餐（最近 7 天）.html": {
+          "tables": [
+            {
+              "id": "明细（共 7 条）",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看昨日饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看晚餐（最近 7 天）.html": {
+          "tables": [
+            {
+              "id": "明细（共 7 条）",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看最近 30 天饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看最近 7 天饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看有备注的饮食记录.html": {
+          "tables": [
+            {
+              "id": "今日明细（共 1 条）",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看本周饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看本月饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看某段时间饮食.html": {
+          "tables": [
+            {
+              "id": "按日汇总",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "日期时间/餐别/食物/克数/热量/蛋白/碳水/脂肪/备注",
+              "columns": 9,
+              "aligns": [
+                "left",
+                "left",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看每日六因素.html": {
+          "tables": [
+            {
+              "id": "六因素明细（2026-09-15，得分 3/6）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看营养分析.html": {
+          "tables": [
+            {
+              "id": "微量营养素 vs 推荐",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "right",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看营养素明细.html": {
+          "tables": [
+            {
+              "id": "完成度＝每天平均摄入 ÷ 每天推荐量",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看营养素深度.html": {
+          "tables": [
+            {
+              "id": "完成度＝每天平均摄入 ÷ 每天推荐量",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看营养结构.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 7 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看频繁吃榜.html": {
+          "tables": [
+            {
+              "id": "📅 常吃榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看频繁吃榜（最近 30 天）.html": {
+          "tables": [
+            {
+              "id": "📅 常吃榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看频繁吃榜（本月）.html": {
+          "tables": [
+            {
+              "id": "📅 常吃榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看频繁吃榜（自定义）.html": {
+          "tables": [
+            {
+              "id": "📅 常吃榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看食品库（去重）.html": {
+          "tables": [
+            {
+              "id": "食品名/品牌/条数/记录编号",
+              "columns": 4,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看食品来源分布.html": {
+          "tables": [
+            {
+              "id": "按来源分组统计",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看食品来源统计.html": {
+          "tables": [
+            {
+              "id": "按来源分组统计",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            }
+          ]
+        },
+        "看饮食复盘.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 1 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看饮食总览.html": {
+          "tables": []
+        },
+        "看高热量榜.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高热量榜（最近 30 天）.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高热量榜（本月）.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高热量榜（自定义）.html": {
+          "tables": [
+            {
+              "id": "🔥 热量炸弹榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高碳水榜.html": {
+          "tables": [
+            {
+              "id": "🍚 高碳水榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高碳水榜（最近 30 天）.html": {
+          "tables": [
+            {
+              "id": "🍚 高碳水榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高碳水榜（本月）.html": {
+          "tables": [
+            {
+              "id": "🍚 高碳水榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高碳水榜（自定义）.html": {
+          "tables": [
+            {
+              "id": "🍚 高碳水榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高蛋白榜.html": {
+          "tables": [
+            {
+              "id": "💪 高蛋白榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高蛋白榜（最近 30 天）.html": {
+          "tables": [
+            {
+              "id": "💪 高蛋白榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高蛋白榜（本月）.html": {
+          "tables": [
+            {
+              "id": "💪 高蛋白榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "看高蛋白榜（自定义）.html": {
+          "tables": [
+            {
+              "id": "💪 高蛋白榜",
+              "columns": 6,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "补记饮食.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "记一餐.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "记一餐（含备注）.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "记喝水.html": {
+          "tables": [
+            {
+              "id": "新增内容（本次写入的字段）",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "今日累计",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "本次逐条明细（共 1 条）",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "left",
+                "left"
+              ]
+            },
+            {
+              "id": "项/值",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "链路总表.html": {
+          "tables": []
+        },
+        "饮食复盘（今年）.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 258 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "饮食复盘（最近 90 天）.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 90 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "饮食复盘（本周）.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 2 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "饮食复盘（本月）.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 15 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "饮食复盘（自定义时间）.html": {
+          "tables": [
+            {
+              "id": "高频食物 TOP5",
+              "columns": 5,
+              "aligns": [
+                "right",
+                "left",
+                "right",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "按餐汇总",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "right"
+              ]
+            },
+            {
+              "id": "推荐范围对比（克数均为这 7 天合计）",
+              "columns": 6,
+              "aligns": [
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "bill-7": {
+      "dir": "docs/skills/skill-bill/验收墙",
+      "pages": {
+        "p1-today.html": {
+          "tables": [
+            {
+              "id": "查到的记录",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "p2-empty.html": {
+          "tables": []
+        },
+        "p3-range.html": {
+          "tables": [
+            {
+              "id": "查到的记录",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "p4-search.html": {
+          "tables": [
+            {
+              "id": "查到的记录",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "p5-recent.html": {
+          "tables": [
+            {
+              "id": "查到的记录",
+              "columns": 7,
+              "aligns": [
+                "left",
+                "left",
+                "right",
+                "left",
+                "left",
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "p6-detail.html": {
+          "tables": [
+            {
+              "id": "字段明细",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        },
+        "p7-detail-deleted.html": {
+          "tables": [
+            {
+              "id": "字段明细",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "left"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "chef-录入": {
+      "dir": "packages/skill-chef/.scratch/t873-录入",
+      "pages": {
+        "after-01-counter.html": {
+          "tables": []
+        },
+        "after-01.html": {
+          "tables": []
+        },
+        "after-02.html": {
+          "tables": []
+        },
+        "after-03.html": {
+          "tables": []
+        },
+        "after-04.html": {
+          "tables": []
+        },
+        "after-05.html": {
+          "tables": []
+        },
+        "after-06.html": {
+          "tables": []
+        },
+        "before-36.html": {
+          "tables": []
+        },
+        "before-37.html": {
+          "tables": []
+        },
+        "before-38.html": {
+          "tables": []
+        },
+        "before-39.html": {
+          "tables": []
+        },
+        "before-39b.html": {
+          "tables": []
+        },
+        "before-40.html": {
+          "tables": []
+        },
+        "before-41.html": {
+          "tables": []
+        },
+        "compose.html": {
+          "tables": []
+        },
+        "r2-01.html": {
+          "tables": []
+        },
+        "r2-02.html": {
+          "tables": []
+        },
+        "r2-03.html": {
+          "tables": []
+        },
+        "r2-04.html": {
+          "tables": []
+        },
+        "r2-05.html": {
+          "tables": []
+        },
+        "r2-06.html": {
+          "tables": []
+        },
+        "r3-03.html": {
+          "tables": []
+        },
+        "实图/录入/改前.html": {
+          "tables": [
+            {
+              "id": "备料",
+              "columns": 3,
+              "aligns": [
+                "left",
+                "right",
+                "left"
+              ]
+            }
+          ]
+        },
+        "实图/录入/改后.html": {
+          "tables": [
+            {
+              "id": "备料",
+              "columns": 2,
+              "aligns": [
+                "left",
+                "right"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

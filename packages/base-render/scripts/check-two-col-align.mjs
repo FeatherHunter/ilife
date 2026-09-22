@@ -20,17 +20,19 @@
  * 用法（仓根）：
  *   node packages/base-render/scripts/check-two-col-align.mjs --dir <页群目录> [--widths 1280,768,390]
  *   node packages/base-render/scripts/check-two-col-align.mjs <a.html> <b.html> …
+ *   加 `--json <文件>` 即多写一份逐页逐表机器读数（含零表页，不改变屏幕输出）。
  *
  * 退出码：0 ＝ 全绿；1 ＝ 有判红（逐条点名）；2 ＝ 输入缺失／无浏览器（不静默变绿）。
  * 依赖：本机 headless Chrome／Edge（`DSH_BROWSER=<路径>` 可指定）、Node ≥ 22。**零第三方依赖。**
  */
 import { spawn } from 'node:child_process';
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 
 const P = 'ilife-';
 const TOL_PX = 2;
 const DEFAULT_WIDTHS = [1280, 768, 390];
+const LF = String.fromCharCode(10);
 
 function argOf(name, dflt) {
   const i = process.argv.indexOf(name);
@@ -38,7 +40,9 @@ function argOf(name, dflt) {
 }
 const WIDTHS = argOf('--widths', '').split(',').filter((s) => s !== '').map(Number);
 if (WIDTHS.length === 0) WIDTHS.push(...DEFAULT_WIDTHS);
-const FLAGS = ['--dir', '--widths', '--timeout'];
+/** 机器输出（#884 批量汇总的输入）：逐页逐表行，不改变默认人类输出。 */
+const JSON_OUT = argOf('--json', '');
+const FLAGS = ['--dir', '--widths', '--timeout', '--json'];
 const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && !FLAGS.includes(all[i - 1]));
 const DIR = argOf('--dir', '');
 const TIMEOUT_MS = Number(argOf('--timeout', '30000'));
@@ -183,6 +187,8 @@ const evaluate = async (expression) => {
 
 /** 一条判红：逐条点名（页面 ＋ 表序 ＋ 列序 ＋ 实际读数 ＋ 差多少）。 */
 const reds = [];
+/** 逐页逐表机器行（#884）：零表页也留一条空表记录，不静默丢页。 */
+const report = [];
 let checked = 0;
 let tables = 0;
 for (const W of WIDTHS) {
@@ -198,6 +204,7 @@ for (const W of WIDTHS) {
       reds.push('[' + W + '] ' + page + ' 读数失败：' + String(e.message).slice(0, 160));
       continue;
     }
+    report.push({ page, width: W, tables: r.tables.map((t) => ({ card: t.card, rows: t.rows, cols: t.cols })) });
     if (r.tables.length === 0) continue;
     tables += 1;
     for (const t of r.tables) {
@@ -221,6 +228,15 @@ for (const red of reds) console.log('✗ ' + red);
 console.log('RESULT: ' + (reds.length === 0 ? '对位全绿' : '判红 ' + reds.length + ' 条')
   + '；页数=' + FILES.length + ' 档=' + WIDTHS.join('/') + ' 含表页=' + tables
   + ' 受检列=' + checked + ' 容差=' + TOL_PX + 'px');
+if (JSON_OUT !== '') {
+  const out = resolve(JSON_OUT);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, JSON.stringify({
+    gate: 'two-col-align', widths: WIDTHS, tolerancePx: TOL_PX, at: new Date().toISOString(),
+    pages: report, reds,
+  }, null, 2) + LF, 'utf8');
+  console.log('JSON-WROTE ' + out);
+}
 cdp.close();
 chrome.kill();
 process.exit(reds.length === 0 ? 0 : 1);
