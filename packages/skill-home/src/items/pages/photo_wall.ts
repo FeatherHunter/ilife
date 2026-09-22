@@ -147,7 +147,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">回忆式浏览，按位置分组，共' + total + '张</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
     + bodyWall
-    + '<p class="lead">点图复制该物品的详情查看话术</p>'
+    + '<p class="lead">点图复制该物品的详情查看指令</p>'
     // 无照片件数需数据：信封只带带照片的墙体件（search 侧已滤掉无照片件），全库件数不在信封里；
     // 算不出就写「—」，值为 0 或拿不到时不出「去补拍」那颗按钮。
     + '<h2>无照片件数</h2><div class="warnbox">—</div>'

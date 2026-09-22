@@ -123,10 +123,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 合并</div>'
-    + '<div class="fp-title">合并物品已执行</div>'
-    + '<p class="fp-lead">多条重复物品已经并入主条，请核对影响范围后归档</p>'
-    + '<span class="fp-stage">确认页</span></div>'
+    // 头卡写结果值，不写页型名与操作名（#817 复评 seq 15：徽章「确认页」是页型名、「合并」与 h1 同词）。
+    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理</div>'
+    + '<div class="fp-title">' + (target === '' ? '合并物品已执行' : '已合并到 ' + esc(target)) + '</div>'
+    + '<p class="fp-lead">多条重复物品已经并入主条，请核对影响范围后归档</p></div>'
     + '<section class="fp-sec"><div class="fp-grid2">'
     // 主条编号只在「变更前」写这一处；「变更后」写这次真变了的量，逐条明细不再重复编号。
     + '<div class="fp-compare fp-compare-before"><h2 class="fp-sec-t">变更前</h2>'

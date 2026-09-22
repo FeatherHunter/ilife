@@ -143,12 +143,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + row('相似物品', '—')
     + '</table></div></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>快捷操作</h2><div>'
-    + op('改', '请加载居家管家技能，帮我改这件物品', false)
-    + op('移', '请加载居家管家技能，帮我移这件物品', true)
-    + op('补', '请加载居家管家技能，帮我补这件物品的数量', true)
-    + op('减', '请加载居家管家技能，帮我减这件物品的数量', true)
-    + op('标', '请加载居家管家技能，帮我标这件物品', true)
-    + op('废', '请加载居家管家技能，帮我废弃这件物品', true)
+    + op('修改', '请加载居家管家技能，帮我改这件物品', false)
+    + op('移动', '请加载居家管家技能，帮我移这件物品', true)
+    + op('补录', '请加载居家管家技能，帮我补这件物品的数量', true)
+    + op('减量', '请加载居家管家技能，帮我减这件物品的数量', true)
+    + op('打标', '请加载居家管家技能，帮我标这件物品', true)
+    + op('废弃', '请加载居家管家技能，帮我废弃这件物品', true)
     + op('标记使用', '请加载居家管家技能，帮我标记使用这件物品', true)
     + op('查看完整历史', '请加载居家管家技能，帮我查看这件物品的完整历史', true)
     + op('查看照片', '请加载居家管家技能，帮我查看这件物品的照片', true)

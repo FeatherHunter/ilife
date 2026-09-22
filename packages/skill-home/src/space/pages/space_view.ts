@@ -67,10 +67,10 @@ function attr(s: string): string {
 
 function hero(view: SpaceView): string {
   const at = view.path === '' ? '整个家的位置树，逐层逛下去' : '当前位置：' + view.path;
-  // 标题已在模板 h1（空间视图），此处只放层名与计数徽章，不重复族名。
+  // 当前层名只由面包屑承担（#817 复评 seq 33：原先那颗徽章与面包屑末段逐字重复）；
+  // 标题已在模板 h1（空间视图），此处只放路径总数，不重复族名与层名。
   return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">'
-    + '<div class="eyebrow"><span class="chip" data-need="当前层名/路径">' + escapeHtml(view.name) + '</span>'
-    + '<span class="chip" data-need="路径总数">共' + view.total + '个位置</span></div>'
+    + '<div class="eyebrow" data-need="当前层名/路径"><span class="chip" data-need="路径总数">共' + view.total + '个位置</span></div>'
     + '<p class="lead">' + escapeHtml(at) + '</p></div>';
 }
 
@@ -123,7 +123,7 @@ function itemsCard(view: SpaceView): string {
       + '</div></div>';
   }).join('');
   return '<section class="card" data-block="fields">'
-    + '<h2>本层物品 <span class="hint">快捷操作：移补减</span></h2>'
+    + '<h2>本层物品</h2>'
     + '<div class="items">' + cards + '</div></section>';
 }
 
@@ -155,10 +155,10 @@ function emptyState(view: SpaceView): string {
 }
 
 function actionsBar(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
-  // 「建位置」是场景按钮，原样保留；复制数据／复制日志走共用件（envelope 投影，三格式恒开）。
+  // 可视化标签与必需块登记逐字同写「复制建位置」（#817 复评 seq 33：原先写「建位置」，与空态那颗按钮两个名字）。
   const buildPrompt = '请加载「居家管家」技能，帮我新建位置：\n位置：待填写';
   return '<div class="actions" data-block="operations">'
-    + '<button class="btn" data-copy="' + attr(buildPrompt) + '" data-need="复制建位置">建位置</button>'
+    + '<button class="btn" data-copy="' + attr(buildPrompt) + '" data-need="复制建位置">复制建位置</button>'
     + '<span data-need="复制数据" hidden></span><span data-need="复制日志" hidden></span>'
     + homeCopyArea({
         data: { envelope: env },
