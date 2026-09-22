@@ -189,7 +189,7 @@ const GENERATED_BASELINE = {
   'src/cli/keys.ts': '691b89fd588edac3',
   'src/cli/registry.ts': '77a852766cf2f12a',
 };
-const ROUTES_SHA = '01933ec9a6f761b3';
+const ROUTES_SHA = '784062f712af8df8';
 
 /** **本票收口那一刻**的编译态指纹（`FINGERPRINT:` 行里那两枚 sha，逐字抄自干净窗口那次跑）。 */
 const FROZEN_FINGERPRINT = { src: '', dist: '' };

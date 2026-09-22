@@ -128,15 +128,15 @@ const GENERATED_BASELINE = {
   'src/cli/registry.ts': '77a852766cf2f12a',
 };
 /** 本票收口那一刻 `routes.generated.ts` 的 sha（由生成器写出；解冻锚，防手改后重签混过去）。 */
-const ROUTES_SHA = '6cc1fedf8fb4e14f';
+const ROUTES_SHA = '784062f712af8df8';
 
 /** **本票收口那一刻**的编译态指纹（`FINGERPRINT:` 行里那两枚 sha，逐字抄自干净窗口那次跑）。
  *  默认照它比：两枚都对得上＝「这份读数就是收口那一刻那棵 src 树／那批 dist 编出来的」。
  *  ⚠️ 别的席若在本包之外重编过（`pnpm build` 会重写本包 dist），dist 那枚会变——那是**同源产物**、
  *  不是漂移：那种时候显式加 `--no-baseline` 再跑，并在读数里写清为什么。 */
 const FROZEN_FINGERPRINT = {
-  src: '7e7b3912888ce0fb',
-  dist: 'a4f98dbc707d474c',
+  src: '08b442d711df344f',
+  dist: '388c63df4ff63408',
 };
 const NO_BASELINE = process.argv.includes('--no-baseline');
 
