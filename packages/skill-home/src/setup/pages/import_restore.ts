@@ -3,7 +3,7 @@
 // 页面承诺语只说一遍（页首不复述）；必需块原文＝契约附录（事实源），逐条落在 data-need 属性里，三方对账照旧。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'import_restore' as const;
 
@@ -72,7 +72,8 @@ function safetyOf(msg: string): string {
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（envelope 投影，三格式恒开；receipt 形 data={ok,message} 同走 buildDataText）；`ctx.command` 由交付链供给，直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/setup/import_restore.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const isPreview = msg.includes('预告通过');
@@ -153,10 +154,15 @@ export function renderFamilyPage(env: Envelope): string {
     + '<button class="su-btn" data-need="选择文件" data-t="我马上发一份备份文件，请进入等待状态">选择文件</button>'
     + '<button class="su-btn" data-need="确认导入" data-t="请确认导入，恢复前请先自动备份">确认导入</button>'
     + '<button class="su-btn ghost" data-need="撤销导入" data-t="请用恢复前备份恢复，撤销上次导入">撤销导入</button>'
-    + '<button class="su-btn alt" data-need="复制数据" id="suCopyData">复制数据</button>'
-    + '<button class="su-btn ghost" data-need="复制日志" id="suCopyLog">复制日志</button>'
     + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
-    + '</div></section>'
+    + '</div>'
+    + '<span data-need="复制数据" hidden></span>'
+    + '<span data-need="复制日志" hidden></span>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</section>'
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
     + '<p data-need="承诺语：导入前自动备份＋失败回滚">导入前会自动备份现有数据，万一失败会自动回滚，现有数据不会丢。</p>'
@@ -175,8 +181,6 @@ export function renderFamilyPage(env: Envelope): string {
     + 'function suCopy(text,ok){function fb(){try{var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(ta);return ok}catch(e){return false}}'
     + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:"复制失败，请长按手动复制")})}else{suToast(fb()?ok:"复制失败，请长按手动复制")}}'
     + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){suCopy(b.getAttribute("data-t"),"指令已复制，发给助手即可执行")})});'
-    + 'var cd=document.getElementById("suCopyData");if(cd)cd.addEventListener("click",function(){suCopy(' + JSON.stringify(JSON.stringify(env.data)) + ',"数据已复制")});'
-    + 'var cl=document.getElementById("suCopyLog");if(cl)cl.addEventListener("click",function(){suCopy(' + JSON.stringify(JSON.stringify({ key: env.key, shape: env.shape })) + ',"日志已复制")});'
     + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast("收到")});'
     + '</script>';
   return fillTemplate(template, content);

@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'fixed_spot' as const;
 
@@ -104,21 +104,21 @@ function formPanel(): string {
     + '</div></section>';
 }
 
-function actionsBar(env: Envelope): string {
-  const dataJson = attr(JSON.stringify(env.data ?? {}));
-  const logText = attr('场景：固定位\n命令：home.location.write\n回执：'
-    + (typeof (env.data as { message?: unknown })?.message === 'string'
-      ? String((env.data as { message?: unknown }).message) : ''));
+function actionsBar(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  // 底部复制区走共用件（envelope 投影，三格式恒开）；表单面板的复制提示词是场景按钮，原样保留。
   return '<div class="actions" data-block="operations">'
-    + '<button class="btn ghost" data-t="' + dataJson + '" data-need="复制数据" '
-    + 'onclick="copyText(this.getAttribute(&quot;data-t&quot;),&quot;数据已复制&quot;)">复制数据</button>'
-    + '<button class="btn ghost" data-t="' + logText + '" data-need="复制日志" '
-    + 'onclick="copyText(this.getAttribute(&quot;data-t&quot;),&quot;日志已复制&quot;)">复制日志</button></div>';
+    + '<span data-need="复制数据" hidden></span><span data-need="复制日志" hidden></span>'
+    + homeCopyArea({
+        data: { envelope: env },
+        log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
+      })
+    + '</div>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
-export function renderFamilyPage(env: Envelope): string {
+// 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
+export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/space/fixed_spot.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as { message?: unknown; detail?: FixedDetail };
   let entries: FixedEntry[] = [];
@@ -133,6 +133,6 @@ export function renderFamilyPage(env: Envelope): string {
   const emptyIndex = entries.length === 0 ? '' : '<div hidden data-block="empty">'
     + '<span data-need="空态：还没有固定位＋常用件引导"></span></div>';
   const content = hero(entries.length) + receiptHtml + emptyIndex
-    + fixedCard(entries) + formPanel() + actionsBar(env);
+    + fixedCard(entries) + formPanel() + actionsBar(env, ctx);
   return fillTemplate(template, content);
 }
