@@ -73,6 +73,7 @@ describe('#894 完成状态上屏全角（取值不动）', () => {
     assert.equal(completionLabelOf('未完成'), '未完成');
     assert.equal(completionLabelOf('未复盘'), '未复盘');
     assert.equal(completionLabelOf('自造(态)'), '自造（态）');
+    assert.equal(completionLabelOf('WIP(x)'), 'WIP(x)');
     assert.equal(COMPLETION_DISPLAY_LABELS['已完成(超时)'], '已完成（超时）');
   });
 

@@ -14,7 +14,7 @@ export const VALID_COMPLETIONS = [
  *  为什么是映射而不是改取值：`VALID_COMPLETIONS` 是 `completion` 字段的载荷／判定口径
  *  （回执、跨技能对照、用户历史数据里存的都是它）；页上给人读的写法走这一支。
  *  中文语境里的括注一律用全角（`t849-视觉基准.md` §3），故半角括号含中文的都换成全角。
- *  未知串兜底也换括号，保证旧数据与未来新增态上屏都不漏半角。 */
+ *  未知串兜底只换**含中文**的那对括号（纯英文括号不动），保证旧数据与未来新增态上屏都不漏半角。 */
 export const COMPLETION_DISPLAY_LABELS: Readonly<Record<string, string>> = {
   '已完成': '已完成',
   '已完成(超时)': '已完成（超时）',
@@ -27,7 +27,7 @@ export const COMPLETION_DISPLAY_LABELS: Readonly<Record<string, string>> = {
 export function completionLabelOf(value: string): string {
   const hit = COMPLETION_DISPLAY_LABELS[value];
   if (hit !== undefined) return hit;
-  return value.replace(/\(/g, '（').replace(/\)/g, '）');
+  return value.replace(/\(([^)]*[一-鿿][^)]*)\)/g, '（$1）');
 }
 
 export interface PlanEventInput {
