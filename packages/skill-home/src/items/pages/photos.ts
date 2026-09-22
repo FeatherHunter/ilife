@@ -61,7 +61,6 @@ const NEED = {
 } as const;
 
 const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:20px;padding:22px;margin:14px 0}'
-+ '.eyebrow{color:#007aff;font-size:12px;font-weight:800;letter-spacing:.1em;margin-bottom:6px}'
 + '.lead{color:#6e6e73;font-size:14px}'
 + '.sec{background:#fff;border-radius:16px;padding:18px;margin:14px 0}'
 + '.sec h2{font-size:17px;margin-bottom:10px}'
@@ -102,7 +101,6 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const data = (env.data ?? {}) as Record<string, unknown>;
   const manage = env.key === 'home.item.update';
   const modeText = manage ? '管理' : '查看';
-  const stage = manage ? '排序确认' : '查看';
   const item = (data.item ?? {}) as Record<string, unknown>;
   const id = num(item.id);
   const name = str(item.name);
@@ -131,7 +129,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     ? '<div class="sec"><h2>管理回执</h2><p>' + escapeHtml(message) + '</p></div>'
     : '';
 
-  const content = '<div class="hero"><p class="eyebrow">' + escapeHtml(stage) + '</p>'
+  // 头卡只说一次当前模式（此前 eyebrow 的「查看／排序确认」与这句重复一个词，见 #817 seq 22 的 ⑤）。
+  const content = '<div class="hero">'
     + '<p class="lead">首张为主图，共四种类型，当前模式：' + escapeHtml(modeText) + '</p></div>'
     + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>物品</h2>'
     + '<dl class="kv">' + kvRows + '</dl></section>'

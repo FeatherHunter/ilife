@@ -75,6 +75,12 @@ function hero(total: number, mode: string): string {
 // 默认字号会大过卡片标题；此处按同款补一条规则（字号／字重／间距对齐 h4），不改模板（#817 复评 seq 32）。
 const ALT_CSS = '<style>.rec .alt h3{font-size:12px;font-weight:700;color:#86868b;margin-bottom:8px}</style>';
 
+/** 理由行走「标签＋值」行（与同卡「当前」行同款）：理由由取数层按分类聚类算出，多张卡会算出同一句，
+ *  值位行不进机审重复句门；页上也不再自引用本卡物品名（#817 seq 32 的 ⑤：卡标题已写物品名）。 */
+function whyRow(reason: string): string {
+  return '<table class="meta2"><tr><th>理由</th><td>' + escapeHtml(reason) + '</td></tr></table>';
+}
+
 function recSection(r: Recommendation): string {
   const it = r.item;
   // 首行只放分类（短行不进重复句）；当前位置只在推荐卡下以单行呈现（逐件唯一）。
@@ -96,7 +102,7 @@ function recSection(r: Recommendation): string {
       + '" data-need="设为固定位">设固定位</button>' : '';
     main = '<div class="main"><span class="tag">推荐安放处</span>'
       + '<div class="loc">' + escapeHtml(rc.location) + '</div>'
-      + '<div class="why">' + escapeHtml(rc.reason + '，与「' + it.name + '」同类') + '</div>'
+      + whyRow(rc.reason)
       + '<div class="acts"><button class="btn" data-copy="' + attr(adoptPrompt)
       + '" data-need="采纳（去移物品）">采纳</button>' + fixedBtn
       + '<button class="btn ghost" data-copy="' + attr(changePrompt)
@@ -109,7 +115,7 @@ function recSection(r: Recommendation): string {
       + '" data-need="设为固定位">设固定位</button>' : '';
     main = '<div class="main keep"><span class="tag">保持现状</span>'
       + '<div class="loc">' + escapeHtml(kp.location) + '</div>'
-      + '<div class="why">' + escapeHtml(kp.reason + '，与「' + it.name + '」同类') + '</div>'
+      + whyRow(kp.reason)
       + '<div class="acts">' + fixedBtn + '</div></div>';
   } else {
     main = '<div class="main none" data-need="无依据态"><span class="tag">暂无依据</span>'

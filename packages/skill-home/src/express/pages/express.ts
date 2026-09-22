@@ -138,7 +138,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   if (items.length) {
     body += '<section><h2>快递中</h2><div class="x-cards" id="x-list">'
       + items.map((it) => '<div class="x-card"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
-        + '<div class="x-photo">' + (it.photo ? escapeHtml(it.photo) : '无照片') + '</div>'
+        // 照片为空时不渲染占位块：灰底「无照片」零信息却占卡片最大面积（#817 seq 45 的 ⑤）。
+        + (it.photo === '' ? '' : '<div class="x-photo">' + escapeHtml(it.photo) + '</div>')
         + '<div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-state ' + (it.overdue ? 'over' : 'days') + '">已等 ' + it.days + ' 天' + (it.overdue ? ' 超时' : '') + '</span></div>'
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + ' 数量 ' + it.quantity + '</div></div>').join('')

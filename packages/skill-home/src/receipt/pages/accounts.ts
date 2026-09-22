@@ -157,8 +157,9 @@ function receiptNote(env: Envelope): string {
 }
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  // 主次：四颗动作按钮里「新增账号」是本页主命令（写类入口），走实心蓝；其余三颗保持白底（#817 seq 61–64 的 ④）。
   return '<div>'
-    + '<button type="button" data-t="请新增账号">新增账号</button>'
+    + '<button type="button" class="rc-primary" data-t="请新增账号">新增账号</button>'
     + '<button type="button" data-t="请查看密码，经对话回显">查看密码</button>'
     + '<button type="button" data-t="请复制密码，复制前二次确认">复制密码</button>'
     + '<button type="button" data-t="复制账号脱敏数据">复制数据</button>'
@@ -187,8 +188,10 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
   + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){copyText(b.getAttribute("data-t")||"");});});</script>';
 
 /** 页内样式（#817 收口补）：裸 <button> 升到 44px 命中区；<pre> 折行，免得长 JSON 把 390 档撑出横向滚动；
- *  清单表套横滑容器（长邮箱等会把表撑宽，容器内滑、不撑破文档）。 */
+ *  清单表套横滑容器（长邮箱等会把表撑宽，容器内滑、不撑破文档）；
+ *  操作区主按钮（`rc-primary`＝新增账号）实心蓝，与其余三颗白底按钮分出主次（#817 seq 61–64 的 ④）。 */
 const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#1d1d1f;cursor:pointer;margin:4px 6px 4px 0}'
+  + 'button.rc-primary{background:#007aff;border-color:#007aff;color:#fff}'
   + 'pre{white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.rc-scroll{overflow-x:auto}'
   + '.rc-scroll table{min-width:520px;border-collapse:collapse}'
