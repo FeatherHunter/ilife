@@ -126,6 +126,26 @@
 .ic-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--ic-line)}
 .ic-bar .ic-note{margin-left:auto;color:var(--ic-faint);font-size:11.5px}
 
+/* ── 四个状态：就绪 / 有改动 / 保存前（diff）/ 已保存（可撤销） ────────
+   ② 有改动：脏态条浮出，并把「几项没存」写在上面；跟着动的派生行标「将跟随更新」
+   ③ 保存前：先给一份写入预览（要写文件的哪一行、旧值新值），再问确认
+   ④ 已保存：底部一条可撤销的回执，写明备份在哪                              */
+.ic-master input.is-dirty{border-color:var(--ic-accent);box-shadow:0 0 0 2px rgba(255,255,255,.06)}
+.ic-dirty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:9px 12px;
+  border:1px solid var(--ic-accent);border-radius:8px;background:var(--ic-raised)}
+.ic-dirty .ic-dtxt{color:var(--ic-accent);font-size:12px}
+.ic-dirty .ic-dacts{margin-left:auto;display:flex;gap:6px}
+.ic-follow{font-size:10.5px;color:var(--ic-accent);white-space:nowrap}
+.ic-dif{background:var(--ic-bg);border:1px solid var(--ic-line-strong);border-radius:8px;
+  font-family:var(--ic-mono);font-size:11.5px;overflow:hidden;margin-top:14px}
+.ic-dif .ic-dh{padding:8px 11px;border-bottom:1px solid var(--ic-line);color:var(--ic-faint);font-size:11px}
+.ic-dif .ic-dl{padding:2px 11px;white-space:pre}
+.ic-dif .ic-del{background:rgba(224,90,80,.13);color:#e08d86}
+.ic-dif .ic-add{background:rgba(78,201,160,.13);color:#7ed3b2}
+.ic-toast{display:flex;gap:9px;align-items:center;margin-top:10px;padding:9px 12px;
+  border:1px solid var(--ic-line-strong);border-radius:8px;background:var(--ic-raised);font-size:12px}
+.ic-toast .ic-undo{margin-left:auto;color:var(--ic-accent);cursor:pointer}
+
 .ic-slot{display:block;min-width:0}
 .ic-sk{display:inline-block;height:11px;border-radius:4px;background:var(--ic-raised)}
 .ic-arrive{animation:ic-in .34s ease-out}
@@ -160,6 +180,10 @@ body{margin:0;background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,Blin
     <button class="demo-btn" data-skill="home">居家管家 · 5</button>
     <button class="demo-btn" data-skill="chef">私家大厨 · 4</button>
     <span class="sp"></span>
+    <button class="demo-btn" data-state="ready">① 就绪</button>
+    <button class="demo-btn" data-state="dirty">② 有改动</button>
+    <button class="demo-btn" data-state="confirm">③ 保存前 diff</button>
+    <button class="demo-btn" data-state="saved">④ 已保存</button>
     <button class="demo-btn" id="replay" style="margin-left:auto">▶ 回放加载</button>
     <span id="clock" style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px"></span>
   </div>
@@ -421,33 +445,76 @@ function valueHTML(r){
      只有连一整行都装不下的极端路径（> 66 列）才退到中间省略。 */
   return `<span class="ic-v" title="${esc(r.value)}">${esc(midCols(r.value, WIDE_COLS))}</span>`;
 }
-function fillRow(r){
+function fillRow(r, follow){
   const wide = r.kind !== 'number' && colsOf(r.value) > NARROW_COLS;
   if (wide){
     const el = frame.querySelector(`[data-row="${rowKey(r)}"]`);
     if (el) el.classList.add('is-wide');
   }
   fill('v:' + rowKey(r), valueHTML(r));
-  if (r.kind !== 'number') fill('a:' + rowKey(r),
+  if (r.kind === 'number') return;
+  /* 这一项跟着被改的母版走 ⇒ 不摆动作，改说「将跟随更新」（保存后自然变新值） */
+  if (follow && follow.has(rowKey(r))){
+    fill('a:' + rowKey(r), '<span class="ic-follow">将跟随更新</span>');
+    return;
+  }
+  fill('a:' + rowKey(r),
     '<span style="display:flex;gap:4px"><button class="ic-btn is-mini">复制</button><button class="ic-btn is-mini">打开</button></span>');
 }
 /* fast：配置文件 + 落点解析（毫秒级） */
 function applyFast(){
   const s = SURFACES[stage.skill];
+  const ed = EDIT[stage.skill];
+  const st = stage.state;
+  const edited = st === 'dirty' || st === 'confirm' || st === 'saved';   /* 值已改成新值 */
+  const mark   = st === 'dirty' || st === 'confirm';                     /* 未落盘：标「将跟随更新」 */
+  const master = s.common.find(m => m.key === ed.key);
+  const follow = new Set();
+  if (master && edited){
+    (master.children || []).forEach(c => follow.add(rowKey(c)));
+    s.advanced.forEach(r => { if (r.owner === ed.key) follow.add(rowKey(r)); });
+  }
+  /* 保存后重读回执拿到的就是新值：跟随项的路径要跟着母版换掉前缀，
+     否则存档态会显示旧路径——「已保存」却不一致（这是本版修掉的一处自相矛盾）。 */
+  const rowFor = r => {
+    if (st !== 'saved' || !master || !follow.has(rowKey(r))) return r;
+    const base = master.value;
+    return r.value.startsWith(base) ? { ...r, value: ed.to + r.value.slice(base.length) } : r;
+  };
   fill('title', esc(s.title));
   fill('file', `<b>配置文件</b>${esc(s.configFile)}`);
   s.common.forEach(m => {
-    fill('input:' + m.key, `<input value="${esc(m.value)}" placeholder="${m.secret && !m.value ? '未配置' : ''}" spellcheck="false">`);
+    const isEd = edited && m.key === ed.key;
+    const val = isEd ? ed.to : m.value;
+    fill('input:' + m.key,
+      `<input class="${isEd && mark ? 'is-dirty' : ''}" value="${esc(val)}" placeholder="${m.secret && !m.value ? '未配置' : ''}" spellcheck="false">`);
     if (!m.secret) fill('acts:' + m.key,
       '<div class="ic-acts"><button class="ic-btn is-mini">浏览…</button><button class="ic-btn is-mini">用默认位置</button></div>');
-    (m.children || []).forEach(fillRow);
+    (m.children || []).forEach(c => fillRow(rowFor(c), mark ? follow : null));
   });
-  s.advanced.forEach(fillRow);
-  fill('bar', `<div class="ic-bar">
+  s.advanced.forEach(r => fillRow(rowFor(r), mark ? follow : null));
+  /* ④ 已保存：动作条照旧（无未保存改动），底下多一条可撤销的回执 */
+  const baseBar = `<div class="ic-bar">
       <button class="ic-btn" disabled>保存</button>
       <button class="ic-btn">重置为默认</button>
       <button class="ic-btn">重新读取</button>
-      <span class="ic-note">没有未保存的改动</span></div>`);
+      <span class="ic-note">没有未保存的改动</span></div>`;
+  if (st === 'dirty'){
+    fill('bar', `<div class="ic-dirty"><span class="ic-dtxt">改了 1 项，还没保存</span>
+      <span class="ic-dacts"><button class="ic-btn is-primary">保存</button><button class="ic-btn">放弃</button></span></div>`);
+  } else if (st === 'confirm'){
+    fill('bar', `<div class="ic-dif">
+        <div class="ic-dh">保存后要写入 ${esc(s.configFile)} 的这一行</div>
+        <div class="ic-dl ic-del">-  ${esc(ed.key)}      ${esc(master ? master.value : '')}</div>
+        <div class="ic-dl ic-add">+  ${esc(ed.key)}      ${esc(ed.to)}</div></div>
+      <div class="ic-bar"><button class="ic-btn is-primary">确认写入</button><button class="ic-btn">改回去</button>
+      <button class="ic-btn is-ghost">先备份再写</button></div>`);
+  } else if (st === 'saved'){
+    fill('bar', baseBar + `<div class="ic-toast"><span class="ic-sdot" style="width:7px;height:7px;border-radius:50%;background:var(--ic-ok);display:inline-block"></span>
+      <span>已写入 bill.yaml（原文件备份为 .bak）</span><span class="ic-undo">撤销</span><span class="ic-note" style="margin-left:0">5s</span></div>`);
+  } else {
+    fill('bar', baseBar);
+  }
 }
 /* slow：体积／条数／最近写入 ＋ 飞书 CLI 探测（起子进程，最慢） */
 function applySlow(){
@@ -469,19 +536,32 @@ function applySlow(){
 }
 
 /* ── 演示驱动（真实现里没有） ──────────────────────────────────────── */
-const stage = { skill:'bill', timers:[] };
+/* 每个技能演示「改这一项」：把它的数据目录改到别处（配置文件的哪一行、旧值新值都真给） */
+const EDIT = {
+  bill:     { key:'db.dir',    to:'D:\\账本' },
+  calorie:  { key:'db.dir',    to:'D:\\账本' },
+  memo:     { key:'media.dir', to:'D:\\备忘录附件' },
+  schedule: { key:'db.dir',    to:'D:\\作息' },
+  home:     { key:'db.dir',    to:'D:\\居家' },
+  chef:     { key:'db.dir',    to:'D:\\做菜' }
+};
+const stage = { skill:'bill', state:'ready', timers:[] };
 function clearTimers(){ stage.timers.forEach(clearTimeout); stage.timers = []; }
 function mount(){
   clearTimers(); filled.clear();
   const s = SURFACES[stage.skill];
   frame.innerHTML = `<div class="ilife-config"><div class="ic-shell">${cardShell(s)}
     <div class="vline"><span>真机可视高度到此（约 580px）</span></div></div></div>`;
-  const t0 = Date.now();
-  clock.textContent = '骨架 0.00s';
-  stage.timers.push(setTimeout(() => { applyFast();
-    clock.textContent = `快面 ${((Date.now()-t0)/1000).toFixed(2)}s（可用）`; }, 420));
-  stage.timers.push(setTimeout(() => { applySlow();
-    clock.textContent = `慢面 ${((Date.now()-t0)/1000).toFixed(2)}s（补齐）`; }, 1500));
+  if (stage.state === 'loading'){
+    const t0 = Date.now();
+    clock.textContent = '骨架 0.00s';
+    stage.timers.push(setTimeout(() => { applyFast();
+      clock.textContent = `快面 ${((Date.now()-t0)/1000).toFixed(2)}s（可用）`; }, 420));
+    stage.timers.push(setTimeout(() => { applySlow();
+      clock.textContent = `慢面 ${((Date.now()-t0)/1000).toFixed(2)}s（补齐）`; }, 1500));
+  } else {
+    applyFast(); applySlow(); clock.textContent = '';
+  }
 }
 document.querySelectorAll('[data-skill]').forEach(b => b.onclick = () => {
   document.querySelectorAll('[data-skill]').forEach(x => x.classList.remove('on'));
@@ -489,7 +569,17 @@ document.querySelectorAll('[data-skill]').forEach(b => b.onclick = () => {
   stage.skill = b.getAttribute('data-skill');
   mount();
 });
-document.getElementById('replay').onclick = mount;
+document.querySelectorAll('[data-state]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-state]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  stage.state = b.getAttribute('data-state');
+  mount();
+});
+document.getElementById('replay').onclick = () => {
+  document.querySelectorAll('[data-state]').forEach(x => x.classList.remove('on'));
+  stage.state = 'loading';
+  mount();
+};
 mount();
 </script>
 </body>
