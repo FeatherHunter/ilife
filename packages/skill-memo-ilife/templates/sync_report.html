@@ -392,10 +392,13 @@ function init(){
     if(synced > 0) parts.push('<b>' + synced + '</b> 条心愿在飞书勾选，本机已转打卡');
     if(backfilled > 0) parts.push('<b>' + backfilled + '</b> 条本机心愿补建到飞书');
     if(dueChanged > 0) parts.push('<b>' + dueChanged + '</b> 条排期已按飞书更新');
-    desc.innerHTML = parts.join('<br>') + '。';
+    // #820 收尾：这串是**并列的计数行**，不是一句话 —— 原先 join('<br>') 后再补一个「。」，
+    // 句号只挂在最后一行，读起来像「第一行没写完」（同两行标点不一）。并列行一律不带句尾标点。
+    desc.innerHTML = parts.join('<br>');
   }else{
     card.className = 'status-card warn';
-    icon.textContent = '·';
+    // #820 收尾：状态图标原先是一枚「·」（拿标点当图标）——与「完全一致」那一档的破折号统一。
+    icon.textContent = '—';
     title.textContent = '同步完成，无变更';
     desc.innerHTML = '扫到飞书数据但本次没有实际变更。' + (totalSkipped > 0 ? '有 ' + totalSkipped + ' 条跳过，可展开查看。' : '');
   }
@@ -430,13 +433,13 @@ function init(){
   if(synced > 0){
     var body = '<p>本次有 <b>' + synced + '</b> 条心愿在飞书勾选完成，本机已转为打卡记录。</p>' +
                '<p class="note">如需查看具体心愿，可用「查心愿」唤醒词查看本机心愿清单。</p>';
-    details.push(makeDetail('✓ 完成同步', 'ok', synced, body, true));
+    details.push(makeDetail('完成同步', 'ok', synced, body, true));
   }
 
   // 2. 补建明细
   if(backfilled > 0){
     var body2 = '<p>本次有 <b>' + backfilled + '</b> 条本机心愿补建到飞书任务，已建立双向关联。</p>';
-    details.push(makeDetail('+ 补建到飞书', 'ok', backfilled, body2));
+    details.push(makeDetail('补建到飞书', 'ok', backfilled, body2));
   }
 
   // 3. 排期变更明细
@@ -447,7 +450,7 @@ function init(){
     if(dueRemoved > 0) parts3.push('清除排期 ' + dueRemoved + ' 条');
     var body3 = '<p>本次排期变更：<b>' + parts3.join('，') + '</b>。</p>' +
                 '<p class="note">飞书任务的排期已同步到本机心愿。飞书优先，本机跟随。</p>';
-    details.push(makeDetail('📅 排期变更', 'warn', dueChanged, body3));
+    details.push(makeDetail('排期变更', 'warn', dueChanged, body3));
   }
 
   // 4. 跳过明细(平静展示)
@@ -461,7 +464,7 @@ function init(){
     if(skippedNoLocal > 0){
       body4 += '<p class="note">可能你最近清理过本机库，或这些任务是飞书原生建的。通常无需操作。如需排查可用「查心愿」唤醒词查看本机心愿清单。</p>';
     }
-    details.push(makeDetail('○ 跳过', 'warn', totalSkipped, body4));
+    details.push(makeDetail('跳过', 'warn', totalSkipped, body4));
   }
 
   // 5. 错误明细
@@ -469,7 +472,7 @@ function init(){
     var body5 = '<ul class="err-list">' + (d.errors||[]).map(function(e){
       return '<li>' + esc(e) + '</li>';
     }).join('') + '</ul>';
-    details.push(makeDetail('⚠ 错误', 'err', errs, body5));
+    details.push(makeDetail('错误', 'err', errs, body5));
   }
 
   // 6. 全空兜底(empty 状态 · #299 Base emptyState)

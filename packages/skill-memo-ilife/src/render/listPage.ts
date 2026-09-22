@@ -33,6 +33,9 @@ export interface ListPageInput {
   readonly title: string;
   /** 页内标题旁那句话（如「共 3 条有效期内的提醒」）。 */
   readonly subtitle: string;
+  /** 这一趟生效的查询条件（**一条一枚**）：屏上落成一排胶囊，不拼进 subtitle 那一句里。
+   *  #820 收尾加的位：原先「共 N 条，条件：关键词『X』」是一句话里两件事实。 */
+  readonly condition?: readonly string[];
   /** 事实条（≤4 条，只放这一次的读数）。 */
   readonly summary: readonly string[];
   readonly sections: PageSnapshot['sections'];
@@ -55,7 +58,7 @@ export function buildListPage(input: ListPageInput): { html: string; stem: strin
     summary: [...input.summary],
     sections: [...input.sections],
     copyLog: input.copyLog,
-    extra: { items: toRows(input.items), subtitle: input.subtitle },
+    extra: { items: toRows(input.items), subtitle: input.subtitle, condition: [...(input.condition ?? [])] },
     message: input.subtitle,
   });
   return { html: fillMemoPage('memo_query', payload), stem: bookletFileStem(input.scene) };

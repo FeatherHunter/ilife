@@ -91,11 +91,14 @@ function sceneOf(params: Record<string, unknown>, fallback: SearchScene): Search
   fail(2, 'scene 只认本域这 5 格：' + SEARCH_SCENES.join('／'));
 }
 
-/** 列表页交付：快照走列表族共用的 `querySnapshot`，页壳与文件名主体全在族定义地与册子。 */
+/** 列表页交付：快照走列表族共用的 `querySnapshot`，页壳与文件名主体全在族定义地与册子。
+ *  #820 收尾：`subtitle` 只留**一句话结论**（规模），查询条件另走 `condition`（**一条一枚**）——
+ *  屏上落成一排条件胶囊，不再把几件事用逗号或竖线串成一句（那正是「符号顶替设计」）。 */
 function listDeliver(input: {
   scene: DomainScene;
   items: readonly object[];
   subtitle: string;
+  condition?: readonly string[];
   copyLog: { thinking: string; data_structure: string; call_chain: string; exception: string };
 }): { html: string; stem: string } {
   const snap = querySnapshot(toRows(input.items));
@@ -103,6 +106,7 @@ function listDeliver(input: {
     scene: input.scene,
     title: SCENE_TITLES[input.scene],
     subtitle: input.subtitle,
+    condition: input.condition ?? [],
     summary: snap.summary,
     sections: snap.sections,
     copyLog: input.copyLog,
@@ -144,9 +148,12 @@ export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandO
       deliver: listDeliver({
         scene: sceneOf(params, 'memo_search_by_date'),
         items: hit,
-        subtitle: '创建时间 ' + start + ' 至 ' + end + '，共 ' + hit.length + ' 条'
-          + (category === undefined ? '' : '（分类「' + category + '」）')
-          + (limit === 20 ? '' : '，最多取前 ' + limit + ' 条'),
+        subtitle: '共 ' + hit.length + ' 条',
+        condition: [
+          '创建时间 ' + start + ' 至 ' + end,
+          ...(category === undefined ? [] : ['分类「' + category + '」']),
+          ...(limit === 20 ? [] : ['最多取前 ' + limit + ' 条']),
+        ],
         copyLog: {
           thinking: '按创建时间区间查 · 按 created_at 过滤后倒序，排期条件可另叠',
           data_structure: 'notes 表 · id／content／category／sub_category／due／created_at（按 created_at 倒序）',
@@ -167,7 +174,8 @@ export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandO
     deliver: listDeliver({
       scene: sceneOf(params, words.scene),
       items: hit,
-      subtitle: '共 ' + hit.length + ' 条' + (words.text === '' ? '' : '，条件：' + words.text),
+      subtitle: '共 ' + hit.length + ' 条',
+      condition: words.text === '' ? [] : [words.text],
       copyLog: {
         thinking: '关键词／分类查 · 命中即列，页内可再筛选与复制',
         data_structure: 'notes 表 · id／content／category／sub_category／due／media_path／created_at',

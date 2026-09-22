@@ -100,7 +100,8 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
       deliver: buildListPage({
         scene: 'memo_search_wish',
         title: '查心愿',
-        subtitle: '共 ' + hit.length + ' 个心愿' + (q === '' ? '' : '，条件：关键词「' + q + '」'),
+        subtitle: '共 ' + hit.length + ' 个心愿',
+        condition: q === '' ? [] : ['关键词「' + q + '」'],
         summary: snap.summary,
         sections: snap.sections,
         copyLog: {

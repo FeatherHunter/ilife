@@ -29,6 +29,9 @@ h1{font-size:38px;line-height:1.15;letter-spacing:-.035em;margin-bottom:12px}.le
 #list .small{font-size:12px;margin-top:auto;padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{padding:42px;text-align:center;color:var(--fg2)}button{border:0;background:var(--blue);color:var(--card);border-radius:999px;padding:8px 12px;min-height:44px;cursor:pointer}.item-head button.copy{flex:0 0 auto;min-height:44px;padding:8px 16px;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:44px;font-size:15px;margin-top:12px}pre{white-space:pre-wrap;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;font-size:13px;line-height:1.65;font-family:inherit}
 .jump{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;color:var(--blue);text-decoration:none;font-size:13px;font-weight:600}.jump a:hover{background:var(--soft)}
+/* 这一趟生效的查询条件：一条一枚胶囊（#820 收尾）——不再与结果规模挤成一句话 */
+.subnote{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip-cond{background:var(--soft,#f5f8ff);color:var(--fg2);border-radius:999px;padding:4px 12px;font-size:13px}
 #stats,#list,#data-panel{scroll-margin-top:20px}
 @media(max-width:820px){.wrap{padding:28px max(14px,env(safe-area-inset-right)) 70px max(14px,env(safe-area-inset-left))}.hero{padding:26px 20px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}#list{grid-template-columns:1fr}h1{font-size:30px}.item-head{flex-wrap:wrap}}
 
@@ -41,6 +44,7 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <header class="hero">
 <h1 id="title">备忘录查询结果</h1>
 <p class="lead" id="subtitle">数据加载中</p>
+<p class="subnote" id="subtitleExtra"></p>
 <p class="meta" id="meta"></p>
 <nav class="ilife-block-toc jump" aria-label="页内导航"><a href="#stats">统计</a><a href="#list">结果</a><a href="#data-panel">日志</a></nav>
 </header>
@@ -56,7 +60,7 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section id="list"></section>
 <section class="panel">
 <strong>筛选快照</strong>
-<p class="small" style="margin-top:6px">跟随筛选与展开实时变化，可直接粘贴给助手继续下一步。这里存档的是初始的全量数据。</p>
+<p class="small" style="margin-top:6px">复制的是这一屏筛出来的结果（页内搜索词与分类筛选都算在内），可直接粘贴给助手继续下一步。</p>
 <div class="toolbar"><button class="copy ghost" data-copy-receipt onclick="copyFiltered()">复制筛选结果</button></div>
 <pre id="receipt" style="display:none"></pre>
 </section>
@@ -83,8 +87,10 @@ window.__hmPayload=payload;
 const MAX_DEFAULT = 50;
 var appState={category:'全部',q:'',showAll:false};
 function dataRows(){var d=payload.data;if(Array.isArray(d))return d;if(Array.isArray(d.items))return d.items;if(d.item)return [d.item];return []}
-function init(){var d=payload.data;document.getElementById('title').textContent=d.title||'备忘录查询结果';document.getElementById('subtitle').textContent=payload.message||d.subtitle||'查询完成';var meta=d.meta||{};document.getElementById('meta').textContent=`生成时间：${d.generated_at||''}`;renderStats();renderChips();renderList();renderReceipt();// success: 数据加载完成,内容已渲染
+function init(){var d=payload.data;document.getElementById('title').textContent=d.title||'备忘录查询结果';document.getElementById('subtitle').textContent=payload.message||d.subtitle||'查询完成';renderCondition();var meta=d.meta||{};document.getElementById('meta').textContent=`生成时间：${d.generated_at||''}`;renderStats();renderChips();renderList();renderReceipt();// success: 数据加载完成,内容已渲染
 }
+/* 查询条件：一条一枚胶囊（`data.condition` 是数组；老页没有这一位即整行不出）。 */
+function renderCondition(){var d=payload.data;var list=Array.isArray(d.condition)?d.condition:[];var box=document.getElementById('subtitleExtra');box.innerHTML=list.map(function(c){return '<span class="chip-cond">'+esc(String(c))+'</span>'}).join("")}
 function rowsFiltered(){var rows=dataRows();if(appState.category!=='全部')rows=rows.filter(x=>(x.category||x.repeat_type||'未分类')===appState.category);if(appState.q){var q=appState.q.toLowerCase();rows=rows.filter(x=>String(x.content||'').toLowerCase().includes(q))}return rows}
 function categories(){return ['全部',...Array.from(new Set(dataRows().map(x=>x.category||x.repeat_type||'未分类').filter(Boolean)))]}
 function renderStats(){var rows=dataRows();var due=rows.filter(x=>x.due).length;var sample=rows[0]||{};var hasMediaField='media_path' in sample;var media=hasMediaField?rows.filter(x=>x.media_path).length:'—';var reminders=rows.filter(x=>x.remind_at||x.reminder_id).length;document.getElementById('stats').innerHTML=[['总数',rows.length],['有排期',due],['有附件',media],['有提醒',reminders]].map(x=>`<div class="stat"><b>${x[1]}</b><span>${esc(x[0])}</span></div>`).join('')}

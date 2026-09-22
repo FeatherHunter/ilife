@@ -93,9 +93,11 @@ function verifyRows(verify: readonly InitVerifyEntry[]): { readonly main: string
   return verify.map((v) => (v.status === undefined ? { main: v.text } : { main: v.text, right: statusText(v.status) }));
 }
 
-/** 就绪度三个数（报告页与引导页各用一次，措辞同一套）。 */
-function summaryLine(counts: Counts): string {
-  return '检查 ' + counts.items + ' 项，就绪 ' + counts.ready + ' 项，待补 ' + counts.warn + ' 项，必装缺失 ' + counts.err + ' 项';
+/** 报告页的副标题：**只作页面导语**（这一页有什么），不再把四个数报一遍 ——
+ *  那四个数下面有 KPI 卡、结论条里又说了一遍（#820 收尾：同一事实一页三处是冗余）。 */
+function reportSubtitle(): string {
+  // 用词避免顿号并列：分隔符探针的 R5 档把「A、B、C」当分隔符懒政（实测扣分），故写成一句白话。
+  return '这份报告列出检查结果与待办指引';
 }
 
 /** 结论条那句话（报告页顶部；同一事实只在这里说一次）。 */
@@ -169,7 +171,8 @@ function pageContent(input: InitPageInput, counts: Counts, forGuide: boolean): s
         ],
   ));
   parts.push(renderConclusionBar(forGuide
-    ? '先处理必装缺失，再补待办项。每做完一批，回来说一声「重新检查」，我重跑诊断。'
+    // #820 收尾：「回来说一声『重新检查』」这句只留一处 —— 页头副标题已经说了，结论条不再复读。
+    ? '先处理必装缺失，再补待办项。'
     : conclusionOf(counts)));
 
   if (sections.length >= 2) parts.push(renderTocBlock({ items: sections }));
@@ -230,7 +233,7 @@ function assemble(title: string, docTitle: string, subtitle: string, content: st
 /** 结果页（报告族）：`首次使用` —— 搭得怎么样。 */
 export function renderInitReportPage(input: InitPageInput): string {
   const counts = countOf(input.diagnosis);
-  return assemble(REPORT_STEM_TITLE, '备忘录初始化报告', summaryLine(counts), pageContent(input, counts, false));
+  return assemble(REPORT_STEM_TITLE, '备忘录初始化报告', reportSubtitle(), pageContent(input, counts, false));
 }
 
 /** 过程页（向导族）：`首次使用-向导` —— 接下来怎么做。 */
@@ -240,7 +243,7 @@ export function renderInitGuidePage(input: InitPageInput): string {
   return assemble(
     GUIDE_STEM_TITLE,
     '备忘录首次使用引导',
-    steps === 0 ? '没有要处理的项，直接进功能浏览' : '共 ' + steps + ' 项要处理，做完回来说一声「重新检查」',
+    steps === 0 ? '没有要处理的项，直接进功能浏览' : '按下面的步骤做完，回来说一声「重新检查」',
     pageContent(input, counts, true),
   );
 }
