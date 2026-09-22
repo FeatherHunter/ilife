@@ -257,7 +257,7 @@ function adopt(){
   // 说明与预览一起出现（#820 收尾：原先它挂在按钮上方的说明里，讲的是点完才看得到的东西）
   document.getElementById('previewNote').style.display='block';
   window.copyText(text,{silent:true});
-  window.toast('指令已复制','粘贴发给 AI 即可执行',{icon:'ok'});
+  window.toast('指令已复制','粘贴发给助手 即可执行',{icon:'ok'});
 }
 
 function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}

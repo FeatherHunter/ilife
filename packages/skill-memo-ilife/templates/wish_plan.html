@@ -77,8 +77,8 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section id="wishList"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:8px">发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会按你填的日期更新排期，改完给你回执。</p>
+<div style="font-weight:700;margin-bottom:8px">发给助手的指令</div>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给助手，它会按你填的日期更新排期，改完给你回执。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">复制排期指令</button>
 </div>
@@ -261,7 +261,7 @@ function adopt(){
   var out=document.getElementById('promptOut');
   out.textContent=text;out.style.display='block';
   window.copyText(text,{silent:true});
-  window.toast('指令已复制','粘贴发给 AI 即可执行',{icon:'ok'});
+  window.toast('指令已复制','粘贴发给助手 即可执行',{icon:'ok'});
 }
 
 function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}

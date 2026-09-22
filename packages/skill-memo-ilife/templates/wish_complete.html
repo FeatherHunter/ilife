@@ -74,8 +74,8 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 <section id="wishList"></section>
 
 <section class="panel">
-<div style="font-weight:700;margin-bottom:8px">发给 AI 的指令</div>
-<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给 AI，它会把这些心愿标记为完成（心愿转成一条打卡），改完给你回执。</p>
+<div style="font-weight:700;margin-bottom:8px">发给助手的指令</div>
+<p style="color:var(--fg2);font-size:13px;margin-bottom:12px">复制指令发给助手，它会把这些心愿标记为完成（心愿转成一条打卡），改完给你回执。</p>
 <div class="toolbar">
 <button class="primary" onclick="adopt()">复制修改指令</button>
 </div>
@@ -232,7 +232,7 @@ function adopt(){
   // 说明与预览一起出现（#820 收尾：原先它挂在按钮上方的说明里，讲的是点完才看得到的东西）
   document.getElementById('previewNote').style.display='block';
   window.copyText(text,{silent:true});
-  window.toast('指令已复制','粘贴发给 AI 即可执行',{icon:'ok'});
+  window.toast('指令已复制','粘贴发给助手 即可执行',{icon:'ok'});
 }
 
 function copyData(){window.memoAttachCopyArea();window.toast('数据已复制','人类可读快照 · 可粘贴到笔记存档',{icon:'copy'});}

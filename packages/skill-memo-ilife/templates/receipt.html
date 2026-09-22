@@ -67,7 +67,7 @@ input[type=text],input[type=date],input[type=search],input:not([type]),select{mi
 
 <section class="panel" id="resultPanel" style="display:none">
 <h2>处理结果</h2>
-<dl class="kv" id="result"></dl>
+<div class="facts" id="result"></div>
 </section>
 
 <section class="panel" id="rowsPanel" style="display:none">
@@ -104,7 +104,7 @@ function init(){
   var d=data(),s=snap(),r=receipt(),meta=d.meta||{};
   document.title=d.title||"备忘录回执";
   document.getElementById("title").textContent=d.title||"备忘录回执";
-  document.getElementById("lead").textContent=payload.message||r.message||"";
+  document.getElementById("lead").textContent=leadText(payload.message||r.message||"");
   var b=[];
   if(r.category)b.push('<span class="badge">'+esc(r.category)+'</span>');
   if(r.sub)b.push('<span class="badge">'+esc(r.sub)+'</span>');
@@ -125,6 +125,26 @@ function metaPairs(d,meta){
   return out.join("");
 }
 
+/* #820 收尾（终审 D3·H3）：写侧 message 末尾那个数字是**记录号**（`已记一条：18`＝这条的编号是 18），
+   不是条数 —— 读起来像「记了 18 条」；而同一个号在卡里还印两遍（`笔记编号 18`／`备忘 #18`）。
+   上屏时把尾号剁掉（号在卡里读得到），**原始 message 一个字不改**：复制日志的「结论」与载荷
+   仍是机器面原样（`buildLogText` 用的是 `payload.message`，不走本函数）。 */
+function leadText(m){
+  var t=String(m||"");var x=/^(.*?)[：:]\s*\d+\s*$/.exec(t);
+  return x===null?t:x[1];
+}
+
+/** 一格「标签＋值」；值若写成「结论（说明）」，把说明拆到**下一行**（灰、整宽）。
+ *
+ *  #820 收尾（终审 D3）：原先说明塞在值格里，`远端侧　不适用（这条没有飞书任务）` 的值行长度
+ *  是同类行长的两三倍，窄屏更挤。拆开后值格只留结论，说明整宽单独一行。 */
+function factHtml(k,v){
+  var m=/^(.*?)（([^（）]+)）$/.exec(v);
+  var note=(m===null)?"":'<div class="fact-note">'+esc(m[2])+'</div>';
+  return '<div class="fact"><span class="fact-k">'+esc(k)+'</span><span class="fact-v">'
+       + esc(m===null?v:m[1])+'</span></div>'+note;
+}
+
 /** 事实条：一条一格「标签＋值」（冒号只作**数据分隔**，屏上是两列，不是一句话）；没冒号的当整行说明。 */
 function renderFacts(){
   var s=snap();var sum=Array.isArray(s.summary)?s.summary:[];
@@ -133,18 +153,19 @@ function renderFacts(){
   document.getElementById("facts").innerHTML=sum.map(function(x){
     var t=String(x);var i=t.indexOf("：");
     if(i<0)return '<div class="fact-note">'+esc(t)+'</div>';
-    return '<div class="fact"><span class="fact-k">'+esc(t.slice(0,i))+'</span><span class="fact-v">'+esc(t.slice(i+1))+'</span></div>';
+    return factHtml(t.slice(0,i),t.slice(i+1));
   }).join("");
 }
 
+/** 「处理结果」与「这次的结果」**同一形状**（#820 收尾：原先这一块是 `<dl><dt><dd>` 另一套行型）。 */
 function renderResult(){
   var rows=receipt().rows;
   if(!Array.isArray(rows)||!rows.length)return;
   document.getElementById("resultPanel").style.display="block";
   document.getElementById("result").innerHTML=rows.map(function(line){
-    var i=String(line).indexOf("：");
-    if(i<0)return "<dt></dt><dd>"+esc(line)+"</dd>";
-    return "<dt>"+esc(String(line).slice(0,i))+"</dt><dd>"+esc(String(line).slice(i+1))+"</dd>";
+    var t=String(line);var i=t.indexOf("：");
+    if(i<0)return '<div class="fact-note">'+esc(t)+'</div>';
+    return factHtml(t.slice(0,i),t.slice(i+1));
   }).join("");
 }
 
