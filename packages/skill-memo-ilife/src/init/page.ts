@@ -220,11 +220,15 @@ function pageContent(input: InitPageInput, counts: Counts, forGuide: boolean): s
   return parts.join('');
 }
 
+/** 页面级补丁样式（#820 收尾 · 视觉审查 H1）：公共层数据表窄档叠成卡片时，
+ *  右列那一格的长句会越过卡片右内边距、末字被边框切。这里只补「换行」这一条，不改公共层。 */
+const INIT_TABLE_WRAP_FIX = '.ilife-block-data-table-cell-left,.ilife-block-data-table-table td,.ilife-block-data-table-table th{white-space:normal;overflow-wrap:anywhere;word-break:break-word}';
+
 function assemble(title: string, docTitle: string, subtitle: string, content: string): string {
   return renderDocShell({
     docTitle,
     bodyHtml: renderPageShell({ eyebrow: EYEBROW, title, subtitle, content }),
-    extraCss: pageUiCss(),
+    extraCss: pageUiCss() + INIT_TABLE_WRAP_FIX,
     doctypeCase: 'upper',
     pageUi: true,
   });

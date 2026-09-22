@@ -154,13 +154,21 @@ function renderRows(){
   if(!rest.length)return;
   document.getElementById("rowsPanel").style.display="block";
   document.getElementById("rowsHead").textContent=rest.length===1?rest[0].heading:"明细";
-  var li=[];
+  /* #820 收尾（视觉审查 H4）：一页只有一种键值形状 —— 区块里若整组都是「标签：值」，
+     就跟「这次的结果」用同一种排法（标签＋值两列），不再另起一套「标签：值」同行＋细线。 */
+  var html=[];
   rest.forEach(function(sec){
-    sec.rows.forEach(function(row){
-      li.push('<li>'+rowHtml(row)+'</li>');
-    });
+    var rows=sec.rows,kv=rows.length>0&&rows.every(function(r){return typeof r==="string"&&r.indexOf("：")>0});
+    if(kv){
+      html.push('<div class="facts">'+rows.map(function(r){
+        var t=String(r),i=t.indexOf("：");
+        return '<div class="fact"><span class="fact-k">'+esc(t.slice(0,i))+'</span><span class="fact-v">'+esc(t.slice(i+1))+'</span></div>';
+      }).join("")+'</div>');
+      return;
+    }
+    html.push('<ul class="rows">'+rows.map(function(row){return '<li>'+rowHtml(row)+'</li>'}).join("")+'</ul>');
   });
-  document.getElementById("rows").innerHTML=li.join("");
+  document.getElementById("rows").innerHTML=html.join("");
 }
 
 /** 一行：带结构的（`{id,text,status}`）落成「编号徽章 ＋ 正文 ＋ 状态徽章」；

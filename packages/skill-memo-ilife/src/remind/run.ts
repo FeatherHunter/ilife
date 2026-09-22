@@ -160,7 +160,9 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
     badges: { category: note === null ? '独立提醒' : note.category, sub: note === null ? null : note.sub_category },
     summary: [
       // #820 收尾：四格一律「标签：值」；空值不再写「(未定)」这种括号注记，直接写「未定」。
-      note === null ? '对象：独立提醒' : '对象：' + note.content.slice(0, 40),
+      // #820 收尾：① 第一格改「笔记内容」（原写「对象」，而下面「处理结果」里也有一格「对象」，
+      // 同页两个「对象」指两件事）；② 独立提醒不再写「（未关联笔记）」这种括号注记。
+      note === null ? '笔记内容：无（独立提醒）' : '笔记内容：' + note.content.slice(0, 40),
       '提醒时间：' + (at ?? '未定'),
       '重复：' + type + (rule === null ? '' : '（' + rule + '）'),
       '提醒内容：' + content,
@@ -168,7 +170,7 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
     sections: [
       // #876 · 这三行原先是库行 dump（`提醒 ID：4`／`状态：active`）：`ID` 是**列名裸奔**、
       // `active` 是**后端取值上屏**。改成人话后同两样信息都还在，且 4 号那条提醒仍指代得清。
-      { heading: '提醒行', rows: ['提醒编号：' + row.id, '状态：' + (STATUS_LABEL[row.status] ?? row.status), '写入时间：' + row.created_at] },
+      { heading: '这条提醒', rows: ['提醒编号：' + row.id, '状态：' + (STATUS_LABEL[row.status] ?? row.status), '写入时间：' + row.created_at] },
     ],
     receipt: {
       entityLabel: note === null ? '提醒' : note.category,
