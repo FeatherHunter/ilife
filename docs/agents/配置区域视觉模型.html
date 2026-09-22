@@ -68,6 +68,13 @@
 .ic-row .ic-slot{min-width:0;overflow:hidden}
 .ic-row .ic-v{display:block;font-family:var(--ic-mono);font-size:11px;min-width:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 路径必须完整可读（维护者定：让用户自己拼前缀，体验比省略号更差）。
+   所以紧凑列装不下时，让位的不是路径，是**行**：值换到自己一行，占满整宽。
+   第一行留给「标签 + 动作」，第二行整行给路径。 */
+.ic-row.is-wide{grid-template-columns:minmax(0,1fr) auto;align-items:start}
+.ic-row.is-wide .ic-k{grid-column:1;grid-row:1}
+.ic-row.is-wide .ic-slot[data-slot^="v:"]{grid-column:1 / -1;grid-row:2;padding-top:3px}
+.ic-row.is-wide .ic-slot[data-slot^="a:"]{grid-column:2;grid-row:1}
 
 .ic-btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--ic-line-strong);
   background:transparent;color:var(--ic-text);cursor:pointer;white-space:nowrap}
@@ -173,6 +180,9 @@ body{margin:0;background:#050505;color:#cfcfd4;font:14px/1.55 -apple-system,Blin
       跟它属于哪家无关。所以六家共用一份行渲染器。</div>
     <div class="li"><b>非路径类不硬塞进路径行</b>：数值走小片（1 天／300 秒），
       凭据走空输入框（未配置），技能自带路径标「不跟任何可改项」。</div>
+    <div class="li"><b>路径一律完整显示，装不下就让行让位</b>：路径长到一栏放不下时，
+      不加省略号、也不拆成「母版 + 余项」让用户自己拼——而是把值挪到自己一整行。
+      只有连一整行都装不下的极端路径（&gt; 66 列）才退到中间省略。</div>
     <div class="li"><b>飞书 CLI 不是配置项</b>，所以长相也不该是配置行——它是块状态条（灯＋一句读数＋复制指引＋官网），
       而且它最慢（要起子进程探测），归在 slow 面，绝不挡配置。</div>
   </div>
@@ -311,21 +321,17 @@ function midCols(s, budget){
   while (j >= i && tw + wOf(cs[j]) <= target - hw) { tail = cs[j] + tail; tw += wOf(cs[j]); j--; }
   return head + '…' + tail;
 }
-/* 派生项相对母版的那一段：值在母版目录下才给，否则回 null（退回完整路径 + 中间省略）。 */
-function relTo(value, base){
-  if (!base) return null;
-  const v = String(value).replace(/[\\/]+$/, ''), b = String(base).replace(/[\\/]+$/, '');
-  if (!v || v.toLowerCase() === b.toLowerCase()) return null;
-  return v.toLowerCase().startsWith((b + '\\').toLowerCase()) || v.toLowerCase().startsWith((b + '/').toLowerCase())
-    ? v.slice(b.length + 1) : null;
-}
+/* 值一栏在紧凑布局里能放多少列（104 标签 + 动作 ~80 + 间距 20，余下约 250px ≈ 36 列）。
+   超过这个数就换 is-wide：路径占自己一整行，不省略、不让用户拼。 */
+const NARROW_COLS = 34;
+const WIDE_COLS   = 66;   /* 整行 455px 实测约 69 列，留 3 列余量 */
 const rowKey = r => r.kind + '|' + r.label;
 const allRows = s => [].concat(s.common, ...s.common.map(m => m.children || []), s.advanced);
 
 /* ── 骨架：文案全到，值全空 ─────────────────────────────────────────── */
 function rowShell(r){
   const sub = r.sub ? `<span class="ic-sub" style="display:block;font-size:10.5px;color:var(--ic-faint)">${esc(r.sub)}</span>` : '';
-  return `<div class="ic-row">
+  return `<div class="ic-row" data-row="${esc(rowKey(r))}">
     <span class="ic-k">${esc(r.label)}</span>
     <span class="ic-slot" data-slot="v:${esc(rowKey(r))}"><span class="ic-sk" style="width:150px"></span>${sub}</span>
     <span class="ic-slot" data-slot="a:${esc(rowKey(r))}"></span>
@@ -407,17 +413,21 @@ function fill(slot, html){
   el.innerHTML = html;
   el.classList.add('ic-arrive');
 }
-function valueHTML(r, base){
+function valueHTML(r){
   if (r.kind === 'number') return `<span class="ic-num" title="${esc(r.value)}">${esc(r.value)}</span>`;
-  /* 派生行只显示「母版之下的那一段」——组标题已经把母版的完整路径印出来了，
-     行里再写一遍就是同一个字符串在 40px 之内重复两次，正是这次把行撑爆的原因。
-     读法跟目录树一致：组标题给基准，行给余项。悬停与复制给完整绝对路径。 */
-  const rel = base ? relTo(r.value, base) : null;
-  const shown = rel !== null ? rel : midCols(r.value, 36);   /* 36 列 ≈ 值列实测可用宽 */
-  return `<span class="ic-v" title="${esc(r.value)}">${esc(shown)}</span>`;
+  /* 路径**一律完整显示**（维护者定：用户要一眼看出「改完长什么样」；
+     让他自己拿前缀去拼，比省略号更差）。
+     装不下时让位的是行，不是路径：这一版行会加 is-wide，把值放到自己一整行。
+     只有连一整行都装不下的极端路径（> 66 列）才退到中间省略。 */
+  return `<span class="ic-v" title="${esc(r.value)}">${esc(midCols(r.value, WIDE_COLS))}</span>`;
 }
-function fillRow(r, base){
-  fill('v:' + rowKey(r), valueHTML(r, base));
+function fillRow(r){
+  const wide = r.kind !== 'number' && colsOf(r.value) > NARROW_COLS;
+  if (wide){
+    const el = frame.querySelector(`[data-row="${rowKey(r)}"]`);
+    if (el) el.classList.add('is-wide');
+  }
+  fill('v:' + rowKey(r), valueHTML(r));
   if (r.kind !== 'number') fill('a:' + rowKey(r),
     '<span style="display:flex;gap:4px"><button class="ic-btn is-mini">复制</button><button class="ic-btn is-mini">打开</button></span>');
 }
@@ -430,10 +440,9 @@ function applyFast(){
     fill('input:' + m.key, `<input value="${esc(m.value)}" placeholder="${m.secret && !m.value ? '未配置' : ''}" spellcheck="false">`);
     if (!m.secret) fill('acts:' + m.key,
       '<div class="ic-acts"><button class="ic-btn is-mini">浏览…</button><button class="ic-btn is-mini">用默认位置</button></div>');
-    (m.children || []).forEach(c => fillRow(c, m.value));
+    (m.children || []).forEach(fillRow);
   });
-  const ownerVal = key => { const m = s.common.find(x => x.key === key); return m ? m.value : null; };
-  s.advanced.forEach(r => fillRow(r, r.owner ? ownerVal(r.owner) : null));
+  s.advanced.forEach(fillRow);
   fill('bar', `<div class="ic-bar">
       <button class="ic-btn" disabled>保存</button>
       <button class="ic-btn">重置为默认</button>
