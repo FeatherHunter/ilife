@@ -109,10 +109,13 @@ test('#134 ⑤ token 覆盖序：壳 :root 在前，共享 token A 组在后', (
   assert.ok(html.includes('--fg:#1d1d1f'), '壳主文字 token 须在');
 });
 
-test('#134 ⑥ 数据契约：5 键＋10组/54子组/437场景＋subtitle 分钟', () => {
+test('#134 ⑥ 数据契约：6 键＋10组/54子组/437场景＋subtitle 分钟＋版本号', () => {
   const data = buildHelpFileData(D0);
   const back = parseHelpData(renderHelpShellHtml(data));
-  assert.deepEqual(Object.keys(back).sort(), ['contact', 'groups', 'skill_name', 'subtitle', 'title']);
+  // #139 时这里是 5 键（照老实物键集）；用户 2026-09-23 图报「关于」Tab 后补上第 6 键 `version`
+  // ——关于 Tab 版本段那一个数由它来（老实物 F3 无此字段，页上一直印「v · HELP 模板 v4」）。
+  assert.deepEqual(Object.keys(back).sort(),
+    ['contact', 'groups', 'skill_name', 'subtitle', 'title', 'version']);
   assert.equal(back.subtitle, '10 分类 · 437 场景 · 更新于 2026-09-06 22:07');
   assert.equal(back.groups.length, 10);
   assert.equal(back.groups.reduce((n, g) => n + g.subgroups.length, 0), 54);
@@ -120,6 +123,11 @@ test('#134 ⑥ 数据契约：5 键＋10组/54子组/437场景＋subtitle 分钟
     back.groups.reduce((n, g) => n + g.subgroups.reduce((a, s) => a + s.scenes.length, 0), 0),
     437,
   );
+  // 版本号＝包自身 package.json 的 version（发版即跟变，故只断「非空且像版本号」，不断具体值）。
+  assert.match(back.version, /^\d+\.\d+\.\d+/,
+    '关于 Tab 版本段的那个数须是真版本号，不许空（空即渲染成「v · HELP 模板 v4」）');
+  // 「一键复制」那一行由 `contact.copy_all` 真值决定（模板 `:1835`）。
+  assert.ok(back.contact.copy_all, '联系作者段须带 copy_all，否则复制按钮不出现');
 });
 
 test('#134 ⑦ 接线转发一致：renderHelpFileHtml ≡ renderHelpShellHtml', () => {
