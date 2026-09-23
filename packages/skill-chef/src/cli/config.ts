@@ -13,6 +13,7 @@ import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadChefConfig, resetChefConfig, saveChefConfig } from '../config.js';
 import { resolvedChefPaths } from '../fetch/paths.js';
+import { buildChefHealthReport } from '../health.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-chef/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -74,12 +75,31 @@ function withHumanError<T>(run: () => T): T {
  * `resolved`（#796，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用：库文件／
  * HELP 产物目录／场景产物根（算式唯一定义地＝`src/fetch/paths.ts`，面板不自己拼路径）。
  * 六家的 `*.config.read` 都扩这样一组，各自的格子按自家落点项来。
+ *
+ * `alerts`（#915 第二步）＝只有 `db.dir` 真用不了时才有这一格（缺席＝不亮，面板原样画 `message`）。
  */
+/**
+ * #915 第二步：只给 `db.dir` 的行告警（本家唯一可改目录行、唯一体检判红的格）。
+ *
+ * 结论复用体检 `db.dir` 那一项（`src/health.ts` 的 `dirVerdict`：不在／在但写不进去／
+ * 在且能写），红才给，`message` 原样取体检那句故障本身，不合成新句子；绿＝缺席（面板不亮）。
+ * 故障码只按体检报文首字区分，供判据与回执用，面板只画 `message`。
+ */
+function chefAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const item = buildChefHealthReport().items.find((entry) => entry.id === 'db.dir');
+  if (item === undefined || item.status !== 'red') return undefined;
+  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  return { 'db.dir': { code, message: item.message } };
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadChefConfig());
     const resolved = withHumanError(() => resolvedChefPaths());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
+    const alerts = withHumanError(() => chefAlerts());
+    const data: Record<string, unknown> = { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved };
+    if (alerts !== undefined) data['alerts'] = alerts;
+    return envelope(key, 'detail', data);
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
