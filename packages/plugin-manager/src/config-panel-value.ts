@@ -152,28 +152,12 @@ export function noFollowKeys(): readonly string[] {
   return [];
 }
 
-/** 「值非法回落」那一条要的两个事实（不为空就说明这一行写的值与生效值不是一个）。
- *
- * 本件只能看见**两个事实**：配置里写的是什么、技能算出来的生效值是什么。所以这里只报事实，
- * **不下「用不了」的判断**——写的是相对路径、尾分隔符写法不同、大小写不同，都会让两个字符串不等，
- * 而那几种情形下配置其实是生效的。判断留给技能侧（它的回执里有且只有一个生效值）。 */
-export interface FallbackFacts {
-  readonly written: string;
-  readonly effective: string;
-}
-
-/** 这一行有没有「写的值 ≠ 生效值」这回事：只要是可改行、标了落点来源、写的非空、
- *  且技能算出来的生效值另有其值（去掉尾分隔符后仍不同），就报这两个事实。 */
-export function fallbackFactsOf(item: ConfigItem, raw: string, source: DraftSource): FallbackFacts | null {
-  if (item.readonly === true || item.prefillFrom === undefined) return null;
-  const written = raw.trim();
-  if (written === '') return null;
-  const effective = prefillValueOf(source, item.prefillFrom);
-  if (effective === undefined) return null;
-  const strip = (path: string): string => path.replace(/[\\/]+$/, '');
-  if (strip(written) === strip(effective)) return null;
-  return { written, effective };
-}
+/* 「写的值 ≠ 生效值」那支黄字已删（#915）：面板手上只有「配置里写的」与「技能回执里的默认落点」
+ * 两个事实，凭这两个比字符串**判不出**值用不用得了——写的是相对路径、尾分隔符写法不同、大小写不同、
+ * 或者（本项目维护者自己的六份配置就是如此）写了一个完全正常、正在用的自定义目录，都会让两个字符串不等。
+ * 后果是那行黄字对合法值恒亮，还声称「现在生效的是 &lt;默认落点&gt;」——那是面板替技能侧下的判断，
+ * 而技能侧**有意不做隐式回落**（例 `packages/skill-bill/src/fetch/paths.ts:6`：「拒绝隐式写生产」）。
+ * 要恢复这一支，事实必须由技能侧给出（布尔 ＋ 故障码 ＋ 报文），面板只画、不比较。 */
 
 /** 配置面报错 → 人话指引。
  *

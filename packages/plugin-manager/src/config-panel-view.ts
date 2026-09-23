@@ -17,8 +17,6 @@
 import * as React from 'react';
 import { ADVANCED_GROUP_NOTE, ADVANCED_GROUP_TITLE } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
-import { fallbackFactsOf } from './config-panel-value.js';
-import type { DraftSource, FallbackFacts } from './config-panel-value.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
 import type { DirectoryRowEntry } from './directory-browser-api.js';
@@ -133,8 +131,6 @@ export interface RowProps {
   readonly onCopy?: ((key: string, text: string) => void) | undefined;
   /** 复制那一枚按钮当刻的字面（不给＝「复制」）。 */
   readonly copyState?: CopyState | undefined;
-  /** 「写的值 ≠ 生效值」两个事实：给了就在这一行下面画一段黄字。 */
-  readonly fallback?: FallbackFacts | null | undefined;
 }
 
 /** 一行输入（四种控件对齐受限 YAML 子集：文本／数字／布尔／目录）。
@@ -198,7 +194,6 @@ export function Row(props: RowProps): React.ReactElement {
     copyLabelOf(props.copyState),
   );
   const acts = React.createElement('div', { style: S.acts }, browse, copy);
-  const facts = props.fallback ?? null;
   return React.createElement(
     'div',
     { style: S.row },
@@ -210,17 +205,6 @@ export function Row(props: RowProps): React.ReactElement {
     ),
     React.createElement('div', { style: S.hint }, item.hint),
     readonly && props.follow === true ? React.createElement('div', { style: S.followNote }, '将跟随更新，保存后生效。') : null,
-    facts === null
-      ? null
-      : React.createElement(
-          'div',
-          { style: S.invalid },
-          '配置里写的是 ',
-          React.createElement('b', null, facts.written),
-          '；现在生效的是 ',
-          React.createElement('b', null, facts.effective),
-          '。',
-        ),
     React.createElement('div', { style: S.pickRow }, control, acts),
   );
 }
@@ -304,16 +288,6 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const parts: PanelParts = { styles: S, reply: surface };
   const extra = props.extra === undefined ? null : props.extra(parts);
 
-  if (state.kind === 'loading') {
-    return React.createElement(
-      'div',
-      { style: S.card },
-      head,
-      React.createElement('div', { style: S.muted }, '配置读取中'),
-      extra,
-    );
-  }
-
   if (state.kind === 'failed') {
     return React.createElement(
       'div',
@@ -332,29 +306,31 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
 
   const common = props.items.filter((item) => item.tier === 'common');
   const advanced = props.items.filter((item) => item.tier === 'advanced');
+  /** 还没读到整面（`loading`）时**框架照画**：行表与控件形状是客户端常量，不必等任何回执。
+   *  值先空着、控件与三枚底栏键一律不可用；回执到了由 `ready` 那一支把值填上（见 `config-panel.ts`）。 */
+  const ready = state.kind === 'ready';
+  const frozen = props.busy || !ready;
   const renderRow = (item: ConfigItem) =>
     React.createElement(Row, {
       key: item.key,
       item,
       value: props.draft[item.key] ?? '',
-      disabled: props.busy,
+      disabled: frozen,
       onChange: props.onChange,
       browser: props.rowEntry,
-      dirty: props.dirtyKeys.includes(item.key),
-      follow: props.followKeys.includes(item.key),
-      onCopy: props.onCopy,
+      dirty: ready && props.dirtyKeys.includes(item.key),
+      follow: ready && props.followKeys.includes(item.key),
+      onCopy: ready ? props.onCopy : undefined,
       copyState: props.copy !== null && props.copy.key === item.key ? (props.copy.ok ? 'done' : 'failed') : 'idle',
-      fallback: item.readonly !== true && item.prefillFrom !== undefined
-        ? fallbackFactsOf(item, props.draft[item.key] ?? '', draftSourceOf(surface))
-        : null,
     });
 
   const dirtyCount = props.dirtyKeys.length;
-  const dirty = dirtyCount > 0;
+  const dirty = ready && dirtyCount > 0;
   return React.createElement(
     'div',
     { style: S.card },
     head,
+    ready ? null : React.createElement('div', { style: S.muted }, '配置读取中'),
     React.createElement('div', { style: S.rows }, common.map(renderRow)),
     advanced.length === 0
       ? null
@@ -374,11 +350,11 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
         : null,
       React.createElement(
         'button',
-        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: props.busy || !dirty, onClick: props.onSave },
+        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, onClick: props.onSave },
         props.busy ? '处理中' : dirty ? `保存（${dirtyCount} 项未保存）` : '保存',
       ),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: props.busy, onClick: props.onReset }, '重置为默认'),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: props.busy, onClick: props.onRetry }, '重新读取'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, onClick: props.onReset }, '重置为默认'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, onClick: props.onRetry }, '重新读取'),
     ),
     props.picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     props.browseRow !== null
@@ -390,10 +366,4 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     props.error !== null ? React.createElement('div', { style: S.error }, props.error) : null,
     props.notice !== null ? React.createElement('div', { style: S.okText }, props.notice) : null,
   );
-}
-
-/** 「写的值 ≠ 生效值」两个事实要的那几格：整面回执里取值本身、落点顶层那一个、`resolved` 组。 */
-function draftSourceOf(surface: ConfigSurfaceReply | null): DraftSource {
-  if (surface === null) return { values: {} };
-  return { values: surface.values, dataDir: surface.dataDir, resolved: surface.resolved };
 }

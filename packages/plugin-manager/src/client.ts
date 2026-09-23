@@ -308,6 +308,25 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       return new Set([...previous, active]);
     });
   }, [active]);
+  /** 预热：section 一挂载，就把其余几家**错峰**挂上（隐藏面板照常挂载、只切 `hidden`），
+   *  让各家那一次配置读提前跑掉——用户点哪个页签，多半值已经在了。
+   *  错峰（每 150ms 一家）是为了不让六家子进程同时抢开工：首帧那一口气优先留给框架。
+   *  只在页签账本非空时起一次（`rows` 要等各家 slot 注入后才齐）。 */
+  const warmed = React.useRef(false);
+  const tabCount = rows.length;
+  React.useEffect(() => {
+    if (warmed.current || tabCount === 0) return;
+    warmed.current = true;
+    const STAGGER_MS = 150;
+    const timers = MANAGER_TABS
+      .filter((tab) => rows.some((row) => row.id === tab.plugin))
+      .map((tab, index) => setTimeout(() => {
+        setVisitedIds((previous) => (previous.has(tab.plugin) ? previous : new Set([...previous, tab.plugin])));
+      }, STAGGER_MS * (index + 1)));
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+    };
+  }, [tabCount]);
   function labelFor(tab: ManagerTab): string {
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;

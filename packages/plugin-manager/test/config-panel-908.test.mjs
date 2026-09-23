@@ -28,7 +28,7 @@ const view = await import('../dist/config-panel-view.js');
 const contract = await import('../dist/config-panel-contract.js');
 
 const { ConfigPanel, Row } = gate;
-const { toDraft, fromDraft, dirtyKeysOf, humanizeConfigFailure, fallbackFactsOf, fetchConfigSurface, saveConfigSurface } = value;
+const { toDraft, fromDraft, dirtyKeysOf, humanizeConfigFailure, fetchConfigSurface, saveConfigSurface } = value;
 const { PanelBody, copyLabelOf } = view;
 
 /* ═══ 读那棵树的小工具（不碰 DOM：组件都是纯函数，当普通函数调就行） ═══ */
@@ -366,20 +366,34 @@ describe('#908 整面怎么画：三支错误落位与附加块槽', () => {
     assert.notEqual(writeIndex, errorIndex, '两支错误各占一处，不许合成同一段');
   });
 
-  it('支三 · 写的值与生效值不是一个：那一行下面出两个事实；一致时什么都不出', () => {
-    const facts = fallbackFactsOf(ITEMS[0], 'Z:\\不存在的盘\\data', SURFACE);
-    assert.deepEqual(facts, { written: 'Z:\\不存在的盘\\data', effective: 'C:\\Users\\me\\.ilife' });
-    const tree = bodies();
-    assert.match(textOf(tree), /配置里写的是/);
-    assert.match(textOf(tree), /现在生效的是/);
-    assert.match(textOf(tree), /Z:\\不存在的盘\\data/);
-    // 一致（只差尾分隔符也算一致）时那一段不出现。
-    assert.equal(fallbackFactsOf(ITEMS[0], 'C:\\Users\\me\\.ilife\\', SURFACE), null);
-    assert.doesNotMatch(textOf(PanelBody(bodyProps())), /配置里写的是/);
-    function bodies() {
-      const draft = { ...toDraft(ITEMS, SURFACE.values, SURFACE), 'db.dir': 'Z:\\不存在的盘\\data' };
-      return PanelBody(bodyProps({ draft }));
+  it('支三（#915 改判）· 写的值不等于默认落点时报什么都不出，判据本身也已删除', () => {
+    // 维护者现场那一种（2026-09-23）：写的是存在且在用的自定义目录，回执顶层那一格是默认落点。
+    // 老形状在这里画「配置里写的是 X；现在生效的是 Y」——那是面板替技能侧下的判断，删掉。
+    const draft = { ...toDraft(ITEMS, SURFACE.values, SURFACE), 'db.dir': 'D:\\2Study\\StudyNotes\\.db' };
+    const text = textOf(PanelBody(bodyProps({ draft })));
+    assert.doesNotMatch(text, /现在生效的是/, '面板不许再说「现在生效的是 …」');
+    assert.doesNotMatch(text, /配置里写的是/, '这一段整个不该再画');
+    assert.equal(value.fallbackFactsOf, undefined, '判据要删掉（不是改文案）：面板不再持有它');
+    assert.doesNotMatch(textOf(PanelBody(bodyProps())), /现在生效的是|配置里写的是/);
+  });
+
+  it('支零（#917 首帧）· 读取中就把整张框架画出来：行与控件数同就绪态，底栏三键都在但都点不动', () => {
+    const loading = PanelBody(bodyProps({ state: { kind: 'loading' } }));
+    const ready = PanelBody(bodyProps());
+    const countOf = (tree, tag) => nodes(tree).filter((n) => n.type === tag).length;
+    // 行表是客户端常量 ⇒ 输入框数／行数不必等回执（老形状：读取中一个控件都没有）。
+    assert.equal(countOf(loading, 'input'), countOf(ready, 'input'), '读取中的输入框数应与就绪态一致');
+    assert.ok(countOf(loading, 'input') > 0, '读取中至少要画出一行');
+    for (const label of ['保存', '重置为默认', '重新读取']) {
+      const button = buttonWith(loading, label);
+      assert.ok(button !== undefined, '读取中也要有「' + label + '」');
+      assert.equal(button.props.disabled, true, '读取中「' + label + '」必须点不动');
     }
+    assert.match(textOf(loading), /配置读取中/, '框架之上仍要有一句读数提示');
+    // 每行那枚「复制」照画（定稿 v3：每行一枚），但读取中一律点不动——不许时是禁用，不是不画。
+    const copies = buttons(loading).filter((b) => textOf(b) === '复制');
+    assert.ok(copies.length > 0, '读取中也要画出每行那枚「复制」');
+    assert.ok(copies.every((b) => b.props.disabled === true), '读取中「复制」必须点不动');
   });
 
   it('附加块：画在面板主体之后、动作条之前，拿得到样式表与整面回执', () => {
