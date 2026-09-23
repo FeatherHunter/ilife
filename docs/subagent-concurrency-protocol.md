@@ -111,6 +111,13 @@ try {
 2. **安静窗口（这类读数一律挪到合并点安静态执行）**：承 §5.1「关闭口径以**合并点安静态复核**为准」——① 开窗前先确认没有别的席位在改本包 `src`（看 `git status --short -- packages/<包>/src` 与锁目录 `owner.json` 的属主）；② 读数窗口内不得有别人的源文件写入，做不到「无写者」时用第 1 条把该窗口**判**出来（漂移即作废），**不得**用「重跑一次碰运气」代替判定；③ 结论只对本窗口有效且**绑定 `src-sha`**：`src-sha` 一变，之前以该 `dist` 为前提的读数全部作废，须在安静态重跑。
 3. **「多加一次 `--force` 重编」不是解法**：它只把窗口收窄，不解决读到混合态；也不得据此放松第 1、2 条。
 
+### 2.7 全仓锁的候选改法（未实施）
+
+- **现象**：所有编译／测试／git 写共用一把全仓锁（`tooling/run-locked.mjs` 的 `.scratch/locks/gate.lock`）。实测等待：本席一条命令等 **140 秒**；一个夜跑窗口里有一席连续占用数小时（#921 lane），另一席（#915 的五家技能交付）整晚大段在排队。
+- **候选改法（两级锁）**：① **包级** —— 同一个包的两个 `tsc -b`／`build:client` 串行，不同包可并行（各包 `dist/` 是它的私有写面）；② **全仓级** —— 留四类：上游（`plugin-manager`）被重建时、仓根 `test/*` 的跨包判据（`panel-copy-743`／`panel-type-739`／`plugin-p10-boundaries` 等要同时读多个包的 `dist`）、`git add/commit`（索引全仓只有一个）、`pnpm install`／`pnpm gen`（共享 store）。
+- **前提**：包级并行只在「上游不需要重建」时成立 —— 六家插件的 `tsconfig.json` 都 `references` `../plugin-manager`，`tsc -b` 会顺手编译上游，故实现时得先用 `tsc -b --dry` 之类的探法把这一情形拦到全仓级。
+- **状态**：**未实施**，仅登记（维护者 2026-09-23：不轻易开票）。
+
 ## 3. git 纪律（最危险区）
 
 - **禁止**：`git stash`、`git checkout -- .`、`git reset --hard`、`git clean`、`git restore .`、切分支（`git switch`／`git checkout <branch>`）。这些会**摧毁并发伙伴的未提交工作**。
