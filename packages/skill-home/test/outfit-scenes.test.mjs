@@ -9,6 +9,9 @@
 //
 // 文件名说明：写集写的是 `outfit.test.mjs`，实际落 `outfit-scenes.test.mjs`——
 // 票面验收 glob 是 `<域>-*.test.mjs`（`outfit.test.mjs` 匹配不上），以验收为准，见说明件。
+//
+// 场景只按规范词认：断言标签用命令中文名（`appendix.scenarios[].commandCn`，70 条两两不重），
+// 页模块对账用命令键＋预设（`rowsOf` 现算）；场景 id 只住事实源与机器附录，不进本件。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -24,6 +27,9 @@ const repoRoot = join(pkgDir, '..', '..');
 const bin = join(pkgDir, 'dist', 'cli', 'cmd_read.js');
 const outDir = join(repoRoot, '.scratch', '810');
 const appendix = JSON.parse(readFileSync(join(repoRoot, 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
+
+/** 一族的服务场景行（命令键＋预设），由附录现算。 */
+const rowsOf = (fam) => appendix.scenarios.filter((s) => s.family === fam.family).map((s) => ({ key: s.key, preset: s.preset }));
 
 let HOME = '';
 const P = (o) => JSON.stringify(o);
@@ -131,73 +137,73 @@ before(() => {
 });
 
 describe('#810 穿搭出行域：5 条真链＋真产物', () => {
-  it('SM3-1 穿什么：拼贴卡（槽位＋风格＋理由＋备选横滑）', async () => {
+  it('穿什么：拼贴卡（槽位＋风格＋理由＋备选横滑）', async () => {
     await backdate();
-    const env = runOk('home.outfit.pick', {}, 'SM3-1 真链');
+    const env = runOk('home.outfit.pick', {}, '穿什么 真链');
     assert.match(basename(env.delivery.path), STEM('穿什么'), '默认落盘命名逐字');
     assert.equal(env.delivery.bytes, statSync(env.delivery.path).size, '回执字节＝实测');
     const html = await render('outfit_picker', env);
     assertShell(html, 'outfit_picker', blocksOf('outfit_picker'));
     for (const s of ['今日这一套', '备选组合', '上一套', '换一套', '今天穿这套', '外套', '内搭', '鞋', '牛仔外套-衣', '白色棉短袖-衣', '白色运动鞋-鞋']) {
-      assert.ok(html.includes(s), 'SM3-1 缺内容：' + s);
+      assert.ok(html.includes(s), '穿什么 缺内容：' + s);
     }
-    assert.ok(html.includes('衣橱缺口'), 'SM3-1 下装缺口诚实提示（种子无下装）');
+    assert.ok(html.includes('衣橱缺口'), '穿什么 下装缺口诚实提示（种子无下装）');
     const bytes = writeProduct('穿什么_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
   });
 
-  it('SM3-2 衣橱分析：构成分布＋闲置清单', async () => {
-    const env = runOk('home.outfit.pick', { kind: 'wardrobe' }, 'SM3-2 真链');
+  it('衣橱分析：构成分布＋闲置清单', async () => {
+    const env = runOk('home.outfit.pick', { kind: 'wardrobe' }, '衣橱分析 真链');
     assert.match(basename(env.delivery.path), STEM('衣橱分析'), '默认落盘命名逐字');
     const html = await render('wardrobe_analyze', env);
     assertShell(html, 'wardrobe_analyze', blocksOf('wardrobe_analyze'));
     for (const s of ['衣橱构成', '闲置清单', '智能建议', '外套', '内搭', '标记废弃', '送人', '先不处理', '加入购物清单', '旧款风衣-衣', '压箱毛衣-衣', '估算']) {
-      assert.ok(html.includes(s), 'SM3-2 缺内容：' + s);
+      assert.ok(html.includes(s), '衣橱分析 缺内容：' + s);
     }
     const bytes = writeProduct('衣橱分析_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
   });
 
-  it('SM3-3 换季：季节清单＋收纳位置下拉', async () => {
-    const env = runOk('home.outfit.pick', { kind: 'season', season: '冬季', action: '收纳' }, 'SM3-3 真链');
+  it('换季：季节清单＋收纳位置下拉', async () => {
+    const env = runOk('home.outfit.pick', { kind: 'season', season: '冬季', action: '收纳' }, '换季 真链');
     assert.match(basename(env.delivery.path), STEM('换季'), '默认落盘命名逐字');
     const html = await render('wardrobe_season', env);
     assertShell(html, 'wardrobe_season', blocksOf('wardrobe_season'));
     for (const s of ['目标位置', '冬季衣物清单', '全选切换', '确认收纳', '羊毛大衣-衣', '压箱毛衣-衣']) {
-      assert.ok(html.includes(s), 'SM3-3 缺内容：' + s);
+      assert.ok(html.includes(s), '换季 缺内容：' + s);
     }
     const bytes = writeProduct('换季_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
   });
 
-  it('SM3-4 带物品／归物品：同一族 mode 分流', async () => {
-    const pack = runOk('home.trip.manage', { mode: 'pack', ids: [IDS.get('旅行洗漱包'), IDS.get('登机箱')] }, 'SM3-4 带出');
+  it('带物品／归物品：同一族 mode 分流', async () => {
+    const pack = runOk('home.trip.manage', { mode: 'pack', ids: [IDS.get('旅行洗漱包'), IDS.get('登机箱')] }, '出行清单 带出');
     assert.match(basename(pack.delivery.path), STEM('出行清单'), '默认落盘命名逐字');
     const html = await render('travel_trip', pack);
     assertShell(html, 'travel_trip', blocksOf('travel_trip'));
     for (const s of ['出发核对', '确认带出', '旅行洗漱包', '登机箱', '已装']) {
-      assert.ok(html.includes(s), 'SM3-4 缺内容：' + s);
+      assert.ok(html.includes(s), '出行清单 缺内容：' + s);
     }
     const bytes = writeProduct('出行清单_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
-    const ret = runOk('home.trip.manage', { mode: 'return' }, 'SM3-4 归位');
+    const ret = runOk('home.trip.manage', { mode: 'return' }, '出行清单 归位');
     assert.match(basename(ret.delivery.path), STEM('出行清单'), '归位同宿主场景名');
     assert.match(String(ret.data.message), /已归位：2 件/, '归位 2 件');
     const html2 = await render('travel_trip', ret);
     assert.ok(html2.includes('归位确认'), '归位视图切换');
   });
 
-  it('SM3-5 旅行穿搭：逐日计划＋冲突＋行李', async () => {
-    const env = runOk('home.outfit.pick', { kind: 'trip-plan', days: 3, destination: '海边' }, 'SM3-5 真链');
+  it('旅行穿搭：逐日计划＋冲突＋行李', async () => {
+    const env = runOk('home.outfit.pick', { kind: 'trip-plan', days: 3, destination: '海边' }, '旅行穿搭 真链');
     assert.match(basename(env.delivery.path), STEM('旅行穿搭'), '默认落盘命名逐字');
     const html = await render('trip_outfit_plan', env);
     assertShell(html, 'trip_outfit_plan', blocksOf('trip_outfit_plan'));
     // 断言的意思是「每日计划里天数与温度位都在」；#817 收口把温度占位说明句「按季节估算」改成
     // 值位写「—」（温度无外部来源，值位不写说明句），故改查温度位本身，不再钉那句占位话。
     for (const s of ['每日穿搭', '第1天', '第2天', '第3天', '冲突提示', '行李汇总', '采纳这天', '生成行李清单', '海边']) {
-      assert.ok(html.includes(s), 'SM3-5 缺内容：' + s);
+      assert.ok(html.includes(s), '旅行穿搭 缺内容：' + s);
     }
-    assert.ok(html.includes('of-temp'), 'SM3-5 温度位缺席');
+    assert.ok(html.includes('of-temp'), '旅行穿搭 温度位缺席');
     const bytes = writeProduct('旅行穿搭_' + STAMP + '.html', html);
     assert.ok(bytes > 2000, '产物非空壳：' + bytes);
   });
@@ -228,7 +234,7 @@ describe('#810 穿搭出行域：5 条真链＋真产物', () => {
     for (const f of appendix.families.filter((x) => x.domain === 'outfit')) {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'outfit', 'pages', f.family + '.js')).href);
       assert.equal(page.FAMILY, f.family);
-      assert.deepEqual(page.PAGE_META.scenarios, f.scenarios);
+      assert.deepEqual([...page.PAGE_META.rows], rowsOf(f));
       assert.deepEqual(page.REQUIRED_BLOCKS, f.requiredBlocks);
       assert.deepEqual(blocksFor(f.family).requiredBlocks, f.requiredBlocks);
     }

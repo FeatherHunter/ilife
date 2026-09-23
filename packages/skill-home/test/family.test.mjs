@@ -9,6 +9,8 @@
 //
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`
 // （页模块经 `dist/family/pages/*.js` 进入本用例）。
+//
+// 场景按命令键＋预设认（页模块现导出行清单 `PAGE_META.rows`）；场景 id 只住事实源与机器附录，不进本件。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -106,7 +108,7 @@ describe('#815 两页装配（真 envelope → 必需块在位）', () => {
     const env = runOk('home.care.query', { kind: 'borrow' }, '借用清单');
     const page = await import(pathToFileURL(join(pkgDir, 'dist', 'family', 'pages', 'family_borrow.js')).href);
     assert.equal(page.FAMILY, 'family_borrow');
-    assert.deepEqual([...page.PAGE_META.scenarios], ['SM7-1']);
+    assert.deepEqual([...page.PAGE_META.rows], [{ key: 'home.care.query', preset: { kind: 'borrow' } }]);
     const html = page.renderFamilyPage(env);
     for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {
       assert.ok(!html.includes(m), '标记未填充：' + m);
@@ -153,7 +155,7 @@ describe('#815 两页装配（真 envelope → 必需块在位）', () => {
     const env = runOk('home.care.query', { kind: 'member' }, '家人档案清单');
     const page = await import(pathToFileURL(join(pkgDir, 'dist', 'family', 'pages', 'family_members.js')).href);
     assert.equal(page.FAMILY, 'family_members');
-    assert.deepEqual([...page.PAGE_META.scenarios], ['SM7-2']);
+    assert.deepEqual([...page.PAGE_META.rows], [{ key: 'home.care.query', preset: { kind: 'member' } }]);
     const html = page.renderFamilyPage(env);
     for (const g of ['fields', 'operations', 'empty', 'status']) {
       assert.ok(html.includes('data-block="' + g + '"'), '缺块组：' + g);

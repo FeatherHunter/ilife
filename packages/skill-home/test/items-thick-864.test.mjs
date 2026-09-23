@@ -65,7 +65,7 @@ before(() => {
   ENVS.merge = runOk('home.item.update', { id: IDA, op: 'merge', target: IDA, sources: String(IDB) }, '真链 merge');
 });
 
-describe('#864 缺口一：更新回执带物品快照（3-2／3-3／3-4／3-8）', () => {
+describe('#864 缺口一：更新回执带物品快照（移物品／数量变更／状态变更／标物品）', () => {
   it('move 消息不变且快照与变更前后写真', () => {
     assert.equal(ENVS.move.data.message, '已移动：' + IDA + '→书房/书架');
     assert.equal(ENVS.move.data.detail.snapshot.name, '厚甲');
@@ -92,7 +92,7 @@ describe('#864 缺口一：更新回执带物品快照（3-2／3-3／3-4／3-8�
   });
 });
 
-describe('#864 缺口二：合并带来源清单（3-5）', () => {
+describe('#864 缺口二：合并带来源清单（合并物品）', () => {
   it('merge 消息前缀不变且来源写真', () => {
     assert.ok(String(ENVS.merge.data.message).startsWith('已合并到 ' + IDA + '：+'));
     assert.ok(ENVS.merge.data.detail.sources.some((s) => s.id === IDB && s.name === '厚乙'));
@@ -103,7 +103,7 @@ describe('#864 缺口二：合并带来源清单（3-5）', () => {
   });
 });
 
-describe('#864 缺口三：关联带关系类型（3-7）', () => {
+describe('#864 缺口三：关联带关系类型（物品关联）', () => {
   it('relate 消息不变且类型写真', () => {
     assert.equal(ENVS.relate.data.message, '已关联：' + IDA + '×' + IDB);
     assert.equal(ENVS.relate.data.detail.relation, '配件');
@@ -118,7 +118,7 @@ describe('#864 缺口三：关联带关系类型（3-7）', () => {
   });
 });
 
-describe('#864 缺口四：标签与分类明细（4-1／4-2／4-3）', () => {
+describe('#864 缺口四：标签与分类明细（管标签／管分类／整理建议）', () => {
   it('overview 逐标签写真件数与使用次数', () => {
     assert.ok(String(ENVS.overview.data.message).startsWith('标签总览：'));
     const hit = ENVS.overview.data.detail.tags.find((t) => t.name === '常用');

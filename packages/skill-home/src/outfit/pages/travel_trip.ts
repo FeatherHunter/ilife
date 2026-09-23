@@ -22,7 +22,7 @@ export const PAGE_META = {
   key: 'home.trip.manage',
   shape: 'receipt',
   preset: {"mode":"pack"} as Record<string, unknown>,
-  scenarios: ["SM3-4"] as readonly string[],
+  rows: [{"key":"home.trip.manage","preset":{"mode":"pack"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

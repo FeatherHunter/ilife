@@ -15,7 +15,7 @@ export const PAGE_META = {
   key: 'home.tag.write',
   shape: 'receipt',
   preset: {"op":"category"} as Record<string, unknown>,
-  scenarios: ["4-2"] as readonly string[],
+  rows: [{"key":"home.tag.write","preset":{"op":"category"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

@@ -1,10 +1,10 @@
 // 票 #809 · 空间与位置域 4 场景真页面（验收命令见票面①）。
 //
 // 逐条真命令链（spawn 真 `home-cmd-read`，隔离家目录，不碰生产库）：
-//   SM2-1 管位置      home.location.write {op:'manage', action:'add'}
-//   SM2-2 固定位      home.location.write {op:'fixed', item_id, fixed_location}
-//   SM2-3 收纳建议    home.location.query {mode:'suggest', category_id}
-//   SM2-4 空间视图    home.location.query {mode:'space'}（＋path 下钻断言）
+//   管位置（SM2-1）    home.location.write {op:'manage', action:'add'}
+//   固定位（SM2-2）    home.location.write {op:'fixed', item_id, fixed_location}
+//   收纳建议（SM2-3）  home.location.query {mode:'suggest', category_id}
+//   空间视图（SM2-4）  home.location.query {mode:'space'}（＋path 下钻断言）
 // 每条 envelopes → 对应 `renderFamilyPage` 装配 → 产物落 `.scratch/809/`（文件名主体走
 // `resolveSceneStem` 单一算法，戳固定 `809` 保证可复现）＋ `manifest.json`（墙与链路页的清单）。
 // 空态分支（空库）不断言产物文件，只断言 render 字符串含空态文案（目录保持 4 产物干净）。
@@ -131,9 +131,9 @@ async function assemble(family, env) {
 const MANIFEST_ROWS = [];
 
 describe('#809 空间与位置：4 条真链装配＋产物', () => {
-  it('SM2-1 管位置（write manage/add → 位置树＋相似组＋表单）', async () => {
+  it('管位置（write manage/add → 位置树＋相似组＋表单）', async () => {
     const params = { op: 'manage', action: 'add', path: '书房/书架/顶层' };
-    const env = runOk('home.location.write', params, 'SM2-1');
+    const env = runOk('home.location.write', params, '管位置');
     assert.equal(env.key, 'home.location.write');
     assert.equal(env.shape, 'receipt');
     assert.equal(M.resolvePageFamily(env.key, { op: 'manage' }), 'location_manage');
@@ -143,8 +143,8 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.ok(detail.nodes.length >= 10, '树节点数 nodes=' + detail.nodes.length);
     assert.ok(detail.similar_groups.length >= 1, '相似组应含预置碰撞');
     const html = await assemble('location_manage', env);
-    assertProduct(html, 'location_manage', 'SM2-1');
-    assert.ok(html.includes('工具间') && html.includes('确认合并') && html.includes('新建位置'), 'SM2-1 真内容');
+    assertProduct(html, 'location_manage', '管位置');
+    assert.ok(html.includes('工具间') && html.includes('确认合并') && html.includes('新建位置'), '管位置 真内容');
     const file = fileName(stem);
     writeFileSync(join(outDir, file), html, 'utf8');
     MANIFEST_ROWS.push({
@@ -156,9 +156,9 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     });
   });
 
-  it('SM2-2 固定位（write fixed → 清单＋在位对照＋表单）', async () => {
+  it('固定位（write fixed → 清单＋在位对照＋表单）', async () => {
     const params = { op: 'fixed', item_id: KEY_ID, fixed_location: '玄关/抽屉' };
-    const env = runOk('home.location.write', params, 'SM2-2');
+    const env = runOk('home.location.write', params, '固定位');
     assert.equal(env.key, 'home.location.write');
     assert.equal(M.resolvePageFamily(env.key, { op: 'fixed' }), 'fixed_spot');
     const stem = M.resolveSceneStem(env.key, params);
@@ -168,8 +168,8 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.ok(items.some((e) => e.name === '钥匙' && e.warn === false), '钥匙应在位');
     assert.ok(items.some((e) => e.name === '充电器' && e.warn === true), '充电器应告警');
     const html = await assemble('fixed_spot', env);
-    assertProduct(html, 'fixed_spot', 'SM2-2');
-    assert.ok(html.includes('钥匙') && html.includes('不在固定位') && html.includes('在固定位') && html.includes('解除'), 'SM2-2 真内容');
+    assertProduct(html, 'fixed_spot', '固定位');
+    assert.ok(html.includes('钥匙') && html.includes('不在固定位') && html.includes('在固定位') && html.includes('解除'), '固定位 真内容');
     const file = fileName(stem);
     writeFileSync(join(outDir, file), html, 'utf8');
     MANIFEST_ROWS.push({
@@ -181,9 +181,9 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     });
   });
 
-  it('SM2-3 收纳建议（query suggest → 推荐＋理由＋备选）', async () => {
+  it('收纳建议（query suggest → 推荐＋理由＋备选）', async () => {
     const params = { mode: 'suggest', category_id: CID1 };
-    const env = runOk('home.location.query', params, 'SM2-3');
+    const env = runOk('home.location.query', params, '收纳建议');
     assert.equal(env.key, 'home.location.query');
     assert.equal(M.resolvePageFamily(env.key, params), 'suggest_storage');
     const stem = M.resolveSceneStem(env.key, params);
@@ -205,9 +205,9 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     const noBasis = retired.data.items.find((r) => r.item.name === '旧遥控器');
     assert.ok(noBasis && noBasis.recommend === null && noBasis.keep === null, '废弃件应无依据');
     const html = await assemble('suggest_storage', env);
-    assertProduct(html, 'suggest_storage', 'SM2-3');
-    assert.ok(html.includes('推荐安放处') && html.includes('工具间/抽屉') && html.includes('采纳'), 'SM2-3 真内容');
-    assert.ok(!html.includes('通用列表'), 'SM2-3 不得压成通用列表');
+    assertProduct(html, 'suggest_storage', '收纳建议');
+    assert.ok(html.includes('推荐安放处') && html.includes('工具间/抽屉') && html.includes('采纳'), '收纳建议 真内容');
+    assert.ok(!html.includes('通用列表'), '收纳建议 不得压成通用列表');
     const file = fileName(stem);
     writeFileSync(join(outDir, file), html, 'utf8');
     MANIFEST_ROWS.push({
@@ -219,9 +219,9 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     });
   });
 
-  it('SM2-4 空间视图（query space → 面包屑＋下钻＋本层物品）', async () => {
+  it('空间视图（query space → 面包屑＋下钻＋本层物品）', async () => {
     const params = { mode: 'space' };
-    const env = runOk('home.location.query', params, 'SM2-4');
+    const env = runOk('home.location.query', params, '空间视图');
     assert.equal(env.key, 'home.location.query');
     assert.equal(M.resolvePageFamily(env.key, params), 'space_view');
     const stem = M.resolveSceneStem(env.key, params);
@@ -235,9 +235,9 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.deepEqual(dv.crumbs.map((c) => c.name), ['工具间', '抽屉']);
     assert.equal(dv.items.length, 3);
     const html = await assemble('space_view', env);
-    assertProduct(html, 'space_view', 'SM2-4');
-    assert.ok(html.includes('全屋') && html.includes('下一层') && html.includes('工具间'), 'SM2-4 真内容');
-    assert.ok(!html.includes('通用列表'), 'SM2-4 不得压成通用列表');
+    assertProduct(html, 'space_view', '空间视图');
+    assert.ok(html.includes('全屋') && html.includes('下一层') && html.includes('工具间'), '空间视图 真内容');
+    assert.ok(!html.includes('通用列表'), '空间视图 不得压成通用列表');
     const file = fileName(stem);
     writeFileSync(join(outDir, file), html, 'utf8');
     MANIFEST_ROWS.push({

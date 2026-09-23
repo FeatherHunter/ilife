@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.location.write',
   shape: 'receipt',
   preset: {"op":"manage"} as Record<string, unknown>,
-  scenarios: ["SM2-1"] as readonly string[],
+  rows: [{"key":"home.location.write","preset":{"op":"manage"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

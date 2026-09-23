@@ -4,7 +4,7 @@
 // → manifest.json → 双墙（手机 390／桌面 1280）→ 墙自检。
 // 隔离：家目录指临时目录；种子库用票 5 的仓内种子（幂等补齐后拷入临时家，不碰生产库）。
 // 产物与墙落 `.scratch/808/`（工作区内，与验收墙同向）；命名走契约唯一算法
-// `<命令中文名>_<场景 id>_<戳>.html`（戳＝YYYYMMDD_HHMMSS，只含数字与下划线）。
+// `<命令中文名>_<戳>.html`（戳＝YYYYMMDD_HHMMSS，只含数字与下划线；#859 起文件名不拼场景 id）。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -50,12 +50,14 @@ function runOk(key, params) {
 
 const products = [];
 
-function product(commandCn, sceneId, wake, title, family, check, env) {
-  return { commandCn, sceneId, wake, title, family, check, env };
+/** 一行一件产物：命令中文名（场景唯一句柄，附录 70 条两两不重）＋唤醒词＋场景标题＋页族＋该确认什么＋真信封。 */
+function product(commandCn, wake, title, family, check, env) {
+  return { commandCn, wake, title, family, check, env };
 }
 
+/** 产物文件名通式（契约唯一算法）：`<命令中文名>_<戳>.html`。 */
 function fileOf(p) {
-  return `${p.commandCn}_${p.sceneId}_${stamp}.html`;
+  return `${p.commandCn}_${stamp}.html`;
 }
 
 before(async () => {
@@ -85,22 +87,22 @@ before(async () => {
   const histCard = runOk('home.item.detail', { id: histId, view: 'history' });
   const histName = String(histCard.data.item.name || '');
 
-  // 8 条真链路（唤醒词 → 命令 → 信封）。
-  products.push(product('查看照片', '5-1', '查看照片', '查看物品照片(含类型筛选)', 'photos',
+  // 8 条真链路（唤醒词 → 命令 → 信封）；本域八条的唤醒词与命令中文名同词（附录逐行）。
+  products.push(product('查看照片', '查看照片', '查看物品照片(含类型筛选)', 'photos',
     '确认主图与类型选择及查看态动作齐全', runOk('home.item.detail', { id: photoId, view: 'photos' })));
-  products.push(product('管照片', '5-2', '管照片', '管理物品照片(排序换主图加图)', 'photos',
+  products.push(product('管照片', '管照片', '管理物品照片(排序换主图加图)', 'photos',
     '确认管理回执与三处照片动作可用', runOk('home.item.update', { id: photoId, op: 'photo', photo: 'seed-jacket-red.png' })));
-  products.push(product('照片墙', '5-3', '照片墙', '浏览物品照片墙(分类位置类型)', 'photo_wall',
+  products.push(product('照片墙', '照片墙', '浏览物品照片墙(分类位置类型)', 'photo_wall',
     '确认网格分组与补拍引导完整', wall));
-  products.push(product('盘点', '6-1', '盘点', '盘点核对(按位置分类全屋)', 'inventory_round',
+  products.push(product('盘点', '盘点', '盘点核对(按位置分类全屋)', 'inventory_round',
     '确认三态判定与修正入口齐备', runOk('home.inventory.round', { op: 'round', scope: 'all' })));
-  products.push(product('差异处理', '6-2', '差异处理', '处理盘点差异(缺多异待确认)', 'inventory_diff',
+  products.push(product('差异处理', '差异处理', '处理盘点差异(缺多异待确认)', 'inventory_diff',
     '确认四组动作与批量确认可用', runOk('home.inventory.round', { op: 'resolve', record_id: 1 })));
-  products.push(product('盘点记录', '6-3', '盘点记录', '查看盘点记录(含复查)', 'inventory_records',
+  products.push(product('盘点记录', '盘点记录', '查看盘点记录(含复查)', 'inventory_records',
     '确认记录卡与复查入口齐备', runOk('home.inventory.records', {})));
-  products.push(product('搬家盘点', '6-4', '搬家盘点', '搬家打包盘点(带走不带走)', 'move_checklist',
+  products.push(product('搬家盘点', '搬家盘点', '搬家打包盘点(带走不带走)', 'move_checklist',
     '确认二态标记与统一确认可用', runOk('home.inventory.round', { op: 'move' })));
-  products.push(product('历史', '7-1', '历史', '查看物品历史(时间线轨迹)', 'history',
+  products.push(product('历史', '历史', '查看物品历史(时间线轨迹)', 'history',
     '确认时间线与轨迹筛选可用', histCard));
 
   // 产物落盘：renderFamilyPage(真信封) → 命名算法文件名。
@@ -110,9 +112,9 @@ before(async () => {
     const mod = await import(pathToFileURL(join(pkgDir, 'dist', 'items', 'pages', `${p.family}.js`)).href);
     const html = mod.renderFamilyPage(p.env);
     for (const m of ['<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CONTENT-->']) {
-      assert.ok(!html.includes(m), `${p.sceneId} 标记未填充：${m}`);
+      assert.ok(!html.includes(m), `${p.commandCn} 标记未填充：${m}`);
     }
-    assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'), `${p.sceneId} 缺壳`);
+    assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'), `${p.commandCn} 缺壳`);
     const f = fileOf(p);
     writeFileSync(join(outDir, f), html, 'utf8');
     p.file = f;
@@ -122,7 +124,7 @@ before(async () => {
   // 清单（墙与索引的唯一事实源）→ 双墙 → 自检。
   const manifest = {
     batch: '物品管理-3',
-    naming: '命令中文名_场景id_戳（契约唯一算法）',
+    naming: '命令中文名_戳（契约唯一算法）',
     notShipped: [{ what: '无', why: '本域8场景全部出产物' }],
     readings: { '域测试': '8场景真链路全绿', '产物': '8份', '墙自检': '双墙可发' },
     rows: products.map((p, i) => ({
@@ -146,55 +148,55 @@ before(async () => {
 });
 
 describe('#808 物品管理域（三）：8 场景真链路', () => {
-  it('5-1 查看照片：信封带照片文件名，产物含主图与类型', () => {
-    const p = products.find((x) => x.sceneId === '5-1');
+  it('查看照片：信封带照片文件名，产物含主图与类型', () => {
+    const p = products.find((x) => x.commandCn === '查看照片');
     assert.equal(p.env.shape, 'detail');
     assert.ok(String(p.env.data.item.photo || '') !== '', '照片文件名空');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('当前模式：查看') || html.includes('查看'), '缺查看态');
     assert.ok(html.includes('说明书-使用'), '缺类型词');
   });
-  it('5-2 管照片：管理回执，产物为管理态', () => {
-    const p = products.find((x) => x.sceneId === '5-2');
+  it('管照片：管理回执，产物为管理态', () => {
+    const p = products.find((x) => x.commandCn === '管照片');
     assert.equal(p.env.shape, 'receipt');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('当前模式：管理'), '缺管理态');
     assert.ok(html.includes('确认顺序变更') && html.includes('加图·补拍') && html.includes('删除选中'), '缺管理动作');
   });
-  it('5-3 照片墙：网格分组与补拍引导', () => {
-    const p = products.find((x) => x.sceneId === '5-3');
+  it('照片墙：网格分组与补拍引导', () => {
+    const p = products.find((x) => x.commandCn === '照片墙');
     assert.ok(p.env.data.total >= 1, '墙空');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('照片网格'), '缺网格块');
     assert.ok(html.includes('去补拍'), '缺补拍引导');
   });
-  it('6-1 盘点：三态判定与修正入口', () => {
-    const p = products.find((x) => x.sceneId === '6-1');
+  it('盘点：三态判定与修正入口', () => {
+    const p = products.find((x) => x.commandCn === '盘点');
     assert.equal(p.env.shape, 'receipt');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('三态判定') && html.includes('数量修正') && html.includes('新位置'), '缺核对块');
     assert.ok(html.includes('确认提交含差异') || html.includes('确认提交'), '缺提交动作');
   });
-  it('6-2 差异处理：四组与批量确认', () => {
-    const p = products.find((x) => x.sceneId === '6-2');
+  it('差异处理：四组与批量确认', () => {
+    const p = products.find((x) => x.commandCn === '差异处理');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('所属盘点记录'), '缺所属记录');
     assert.ok(html.includes('批量确认') && html.includes('按实际更新') && html.includes('标记复查'), '缺分组动作');
   });
-  it('6-3 盘点记录：记录卡与复查入口', () => {
-    const p = products.find((x) => x.sceneId === '6-3');
+  it('盘点记录：记录卡与复查入口', () => {
+    const p = products.find((x) => x.commandCn === '盘点记录');
     assert.ok(p.env.data.total >= 1, '无记录');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('记录状态') && html.includes('复查') && html.includes('开始盘点'), '缺记录块');
   });
-  it('6-4 搬家盘点：二态标记与统一确认', () => {
-    const p = products.find((x) => x.sceneId === '6-4');
+  it('搬家盘点：二态标记与统一确认', () => {
+    const p = products.find((x) => x.commandCn === '搬家盘点');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('二态标记') && html.includes('统一确认'), '缺二态块');
     assert.ok(html.includes('全带走') && html.includes('全不带走'), '缺整组动作');
   });
-  it('7-1 历史：时间线与位置轨迹', () => {
-    const p = products.find((x) => x.sceneId === '7-1');
+  it('历史：时间线与位置轨迹', () => {
+    const p = products.find((x) => x.commandCn === '历史');
     const html = readFileSync(join(outDir, p.file), 'utf8');
     assert.ok(html.includes('位置轨迹'), '缺轨迹块');
     assert.ok(html.includes('第1条'), '缺时间线条目');
@@ -210,9 +212,9 @@ describe('#808 产物与墙：机审前置', () => {
     for (const p of products) {
       const html = readFileSync(join(outDir, p.file), 'utf8');
       for (const g of ['fields', 'operations', 'empty', 'status']) {
-        assert.ok(html.includes(`data-block="${g}"`), `${p.sceneId} 缺块组 ${g}`);
+        assert.ok(html.includes(`data-block="${g}"`), `${p.commandCn} 缺块组 ${g}`);
         for (const b of fams.get(p.family).requiredBlocks[g]) {
-          assert.ok(html.includes(escapeHtml(b)), `${p.sceneId} 缺块 [${g}] ${b.slice(0, 20)}`);
+          assert.ok(html.includes(escapeHtml(b)), `${p.commandCn} 缺块 [${g}] ${b.slice(0, 20)}`);
         }
       }
     }

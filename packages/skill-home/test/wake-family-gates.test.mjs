@@ -3,6 +3,9 @@
 // 进包内 test 门；改内容资产（scenarios.yaml／WAKE 声明）后同批重跑 `pnpm gen`
 // 与 `pnpm gen:help-assets` 并更新摘要锁。「改坏一句即红」的负向证据见
 // `docs/skills/skill-home/structure-landing.md`（变异跑分记录）。
+//
+// 本件按命令中文名认场景（`appendix.scenarios[].commandCn`，70 条两两不重）；
+// 场景 id 只住事实源与机器附录，不进本件。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -18,6 +21,8 @@ const yaml = readFileSync(join(pkgDir, 'src', 'help', 'scenarios.yaml'), 'utf8')
 const appendix = JSON.parse(readFileSync(join(pkgDir, '..', '..', 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
 
 // —— 事实源解析（与 audit-wakewords.mjs 同一口径：CRLF／direction→phrase→route）——
+// 事实源把唤醒词挂在场景码上；附录是场景码的家，这里现读换成本件唯一说的命令中文名。
+const cnOfCode = new Map(appendix.scenarios.map((s) => [s.id, s.commandCn]));
 const sceneOfWord = new Map();
 const variantHost = new Map();
 const variantNonRouted = new Set();
@@ -33,7 +38,7 @@ const variantNonRouted = new Set();
       inV = false; pending = null;
     }
     const wm = !inV && /^  wake_word: (.+)$/.exec(line);
-    if (wm) for (const w of wm[1].split('/')) sceneOfWord.set(w.trim(), cur);
+    if (wm) for (const w of wm[1].split('/')) sceneOfWord.set(w.trim(), cnOfCode.get(cur));
     const dm = inV && /^  - direction: (.+)$/.exec(line);
     if (dm) { pending = { phrase: null, route: null }; continue; }
     const pm = inV && pending && /^    phrase: (.+)$/.exec(line);
@@ -41,31 +46,33 @@ const variantNonRouted = new Set();
     const rm = inV && pending && /^    route: (true|false)$/.exec(line);
     if (rm) {
       assert.ok(pending.phrase, '变体项缺 phrase');
-      if (rm[1] === 'true') variantHost.set(pending.phrase, cur);
+      if (rm[1] === 'true') variantHost.set(pending.phrase, cnOfCode.get(cur));
       else variantNonRouted.add(pending.phrase);
       pending = null;
     }
   }
   assert.equal(pending, null, '变体项缺 route 标记');
 }
-// 归宿确认 18 词→场景（唤醒词层规格三桶：无争议并入 7＋单审确认 7＋借用写侧 4）。
+// 归宿确认 18 词的宿主场景：唤醒词层规格三桶（无争议并入 7＋单审确认 7＋借用写侧 4），
+// 宿主一律说命令中文名（附录 `commandCn`，70 条两两不重）。
 const HOSTED = new Map(Object.entries({
-  '补物品': '3-3', '减物品': '3-3', '废物品': '3-4', '借物品': '3-4', '修物品': '3-4',
-  '盘物品': '6-1', '盘全部': '6-1',
-  '查高频': 'SM4-1', '查低频': 'SM4-2', '看标签': '4-1', '合标签': '4-1',
-  '推位置': 'SM2-3', '找位置': 'SM2-4', '改购物清单': 'SM5-1',
-  '借出': 'SM7-1', '借入': 'SM7-1', '归还': 'SM7-1', '催还': 'SM7-1',
+  '补物品': '数量变更', '减物品': '数量变更', '废物品': '状态变更', '借物品': '状态变更', '修物品': '状态变更',
+  '盘物品': '盘点', '盘全部': '盘点',
+  '查高频': '统物品', '查低频': '查闲置', '看标签': '管标签', '合标签': '管标签',
+  '推位置': '收纳建议', '找位置': '空间视图', '改购物清单': '购物清单',
+  '借出': '借用', '借入': '借用', '归还': '借用', '催还': '借用',
 }));
 const HELP_ENTRY = new Set(['居家管家 帮助', '居家管家帮助', '居家管家能做什么']);
 // 待复裁 3 词（兼容词，票 4 落默认 HTML 后复裁；路由保持现状，不擅自废弃）。
 const PENDING_DEPRECATED = new Set(['查物品(HTML)', '看物品(HTML)', '统物品(HTML)']);
-const sceneKey = new Map(appendix.scenarios.map((s) => [s.id, s.key]));
-// 多键场景的可达键集（附录只列主键；读写两面同属一场，见 ledger）：4-1 管标签（查／合）、
-// SM5-1 购物清单（查／改）、SM7-1 借用管理（查／借／还）。
-const SCENE_KEYS = new Map([
-  ['4-1', new Set(['home.tag.query', 'home.tag.write'])],
-  ['SM5-1', new Set(['home.shopping.query', 'home.shopping.write'])],
-  ['SM7-1', new Set(['home.care.query', 'home.care.write'])],
+/** 命令中文名 → 附录行（场景 id 的替身：70 条两两不重，可安全当键）。 */
+const byCn = new Map(appendix.scenarios.map((s) => [s.commandCn, s]));
+// 多键场景的可达键集（附录只列主键；读写两面同属一场，见 ledger）：
+// 管标签（4-1）查／合；购物清单（SM5-1）查／改；借用（SM7-1）查／借／还。
+const KEYS_BY_CN = new Map([
+  ['管标签', new Set(['home.tag.query', 'home.tag.write'])],
+  ['购物清单', new Set(['home.shopping.query', 'home.shopping.write'])],
+  ['借用', new Set(['home.care.query', 'home.care.write'])],
 ]);
 
 describe('#800 唤醒词层四分类（出现三不管即红）', () => {
@@ -96,9 +103,9 @@ describe('#800 唤醒词层四分类（出现三不管即红）', () => {
 
   it('三向对账：主词−联动全进表／route:true 全进表／route:false 全不进表／废弃＝联动 3', () => {
     const inTable = new Set(WAKE_TABLE.map((e) => e.phrase));
-    for (const [w, id] of sceneOfWord) {
+    for (const [w, cn] of sceneOfWord) {
       if (/^联动|^记到/.test(w)) continue;
-      assert.ok(inTable.has(w), '主词无路由：' + w + ' ← ' + id);
+      assert.ok(inTable.has(w), '主词无路由：' + w + ' ← ' + cn);
     }
     for (const w of variantHost.keys()) assert.ok(inTable.has(w), 'route:true 变体无路由：' + w);
     for (const w of variantNonRouted) assert.ok(!inTable.has(w), 'route:false 变体进了路由：' + w);
@@ -114,12 +121,12 @@ describe('#800 逐行对照（词→场景→key→页族，一行不落）', ()
       let scene = null;
       if (HELP_ENTRY.has(e.phrase)) scene = 'HELP';
       else if (sceneOfWord.has(e.phrase) && !DEPRECATED_PHRASES.includes(e.phrase)) scene = sceneOfWord.get(e.phrase);
-      else if (PENDING_DEPRECATED.has(e.phrase)) scene = { '查物品(HTML)': '2-1', '看物品(HTML)': '2-2', '统物品(HTML)': 'SM4-1' }[e.phrase];
+      else if (PENDING_DEPRECATED.has(e.phrase)) scene = { '查物品(HTML)': '查物品', '看物品(HTML)': '看物品', '统物品(HTML)': '统物品' }[e.phrase];
       else if (variantHost.has(e.phrase)) scene = variantHost.get(e.phrase);
       else if (HOSTED.has(e.phrase)) scene = HOSTED.get(e.phrase);
       assert.ok(scene, '场景不定：' + e.phrase);
       if (scene !== 'HELP') {
-        const allowed = SCENE_KEYS.get(scene) ?? new Set([sceneKey.get(scene)]);
+        const allowed = KEYS_BY_CN.get(scene) ?? new Set([byCn.get(scene)?.key]);
         assert.ok(allowed.has(e.key), 'key 与场景不一致：' + e.phrase + ' 路由 ' + e.key + '／场景 ' + scene + ' 可达 ' + [...allowed].join('、'));
       } else {
         assert.equal(e.key, 'home.help.lookup');
@@ -134,12 +141,12 @@ describe('#800 逐行对照（词→场景→key→页族，一行不落）', ()
 
   it('附录 70 场景自匹配：resolve 结果与附录 family 逐条一致（防走散）', () => {
     for (const s of appendix.scenarios) {
-      assert.equal(resolvePageFamily(s.key, s.preset ?? {}), s.family, '附录走散：' + s.id + ' 期望 ' + s.family);
+      assert.equal(resolvePageFamily(s.key, s.preset ?? {}), s.family, '附录走散：' + s.commandCn + ' 期望 ' + s.family);
     }
     assert.equal(appendix.families.length, 46);
   });
 
-  it('单审确认（推位置→SM2-3／找位置→SM2-4）：路由与页族双锁，擅动即红', () => {
+  it('单审确认（推位置→收纳建议／找位置→空间视图）：路由与页族双锁，擅动即红', () => {
     const r1 = routeWakeword('推位置看看', { category_id: 1 });
     assert.equal(r1.key, 'home.location.query');
     assert.deepEqual(r1.params, { mode: 'suggest', category_id: 1 });

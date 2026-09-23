@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.location.query',
   shape: 'list',
   preset: {"mode":"storage"} as Record<string, unknown>,
-  scenarios: ["SM2-3"] as readonly string[],
+  rows: [{"key":"home.location.query","preset":{"mode":"storage"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

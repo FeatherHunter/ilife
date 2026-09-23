@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.shopping.query',
   shape: 'list',
   preset: {"kind":"missing"} as Record<string, unknown>,
-  scenarios: ["SM5-2"] as readonly string[],
+  rows: [{"key":"home.shopping.query","preset":{"kind":"missing"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

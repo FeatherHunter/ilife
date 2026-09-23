@@ -20,6 +20,7 @@
  * 用法（仓根）：
  *   node tooling/run-locked.mjs --ticket 817 --max-wait-ms 600000 -- node docs/skills/skill-home/t817-run-70-scenes.mjs
  *   … --keep-home    复用上一次的隔离家目录（默认每次重建，保证跑批可复现）
+ *   … --out <目录>   换产物根（默认 `.scratch/817`）；#859 命名改版重跑用 `.scratch/859/batch70`
  * 退出码：0＝70 条全部 exit 0 且产物齐；1＝有场景失败（逐条点名）；2＝用法／环境错。
  */
 import { spawnSync } from 'node:child_process';
@@ -33,7 +34,10 @@ const repoRoot = resolve(here, '..', '..', '..');
 const pkgDir = join(repoRoot, 'packages', 'skill-home');
 const bin = join(pkgDir, 'dist', 'cli', 'cmd_read.js');
 const seedDir = join(repoRoot, '.scratch', 'home-seed');
-const outRoot = join(repoRoot, '.scratch', '817');
+const outArg = process.argv.indexOf('--out');
+const outRoot = outArg >= 0 && process.argv[outArg + 1]
+  ? resolve(repoRoot, process.argv[outArg + 1])
+  : join(repoRoot, '.scratch', '817');
 const homeDir = join(outRoot, 'home');
 const dataDir = join(homeDir, '.ilife', 'data');
 const rawDir = join(outRoot, 'raw');

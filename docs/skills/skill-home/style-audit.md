@@ -72,14 +72,14 @@ harness 与卡路里同形（零第三方依赖），一处故意不同：`mobil
 `defaults[]` 7 条是现状骨架可机检块（`doc-doctype`／`doc-lang`／`shell-page`／`page-title`／
 `cmd-line`／`content-filled`／`css-inlined`）：渲染管线的结构事实。
 `pages[]` 46 条是领域必需块（2026-09-21 由契约附录派生：46 族 755 块，见 §五），
-每条按产物命名“`_<场景id>_`”段匹配（`pattern`，如 `detail` 族是 `_(2-2)_`），
+每条按产物命名“**命令中文名** 开头”匹配（`pattern`，如 `detail` 族是 `^(看物品)_`；#859 改名后不再认场景 id 段），
 块 id 形如 `<族>:<组>:<序号>`（如 `detail:fields:0`），缺块点名到文件＋块。
 checker 不用改：只读 `file` 精确名／`pattern` 正则＋`blocks[]`，其余字段（`family`／
-`domain`／`scenarios`）是给人看的。
+`domain`／`names`）是给人看的。
 
 输入口径：本件查的是**装配后的产物**（`CONTENT` 已填充、样式已内联），不是原始模板——
-原始模板带未填充标记是设计使然，本来就该红，不进本门。无场景 id 的装配页
-（如通用页）只走 7 条默认块，`pattern` 不误伤。
+原始模板带未填充标记是设计使然，本来就该红，不进本门。名字不以任何族命令中文名开头的
+装配页（如通用页）只走 7 条默认块，`pattern` 不误伤。
 
 附录变更后重跑派生（只换 `pages[]` 与 `note`，`defaults` 与 checker 不动）：
 
@@ -116,7 +116,7 @@ HELP 页（有 viewport，390 真宽）：溢出 0，但 77 件可点件短边�
 - 三方对账：`dist` 装配登记／契约附录／合同 `pages[]` 的 `detail` 族 29 块原文一致
   （`.scratch/803-expand-proof.mjs` 先对账，对不上直接抛错、不出“绿”）。
 - 假例（真装配齐全页 `看物品_2-2_20260921T000000.html`，经 `renderFamilyPage` 实组装，
-  非合成夹具）：`blocks=36/36`（默认 7＋`detail` 族 29）；同目录通用页（无场景 id）
+  非合成夹具）：`blocks=36/36`（默认 7＋`detail` 族 29）；同目录通用页（名字不认任何族）
   `blocks=7/7` → `RESULT: 2/2 PASS`。
 - 真例（同页摘掉 `detail:fields:0` 全部出现处）：`blocks=35/36`、
   `缺块 [detail:fields:0] kind=substr value=ID` → `RESULT: 0/1 FAIL` exit 1。

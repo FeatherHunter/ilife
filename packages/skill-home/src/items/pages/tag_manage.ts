@@ -16,7 +16,7 @@ export const PAGE_META = {
   key: 'home.tag.write',
   shape: 'receipt',
   preset: {"op":"overview"} as Record<string, unknown>,
-  scenarios: ["4-1","4-3"] as readonly string[],
+  rows: [{"key":"home.tag.write","preset":{"op":"overview"}},{"key":"home.tag.write","preset":{"op":"tidy"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {
@@ -206,7 +206,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     // #817 第二波（②层级清，核口径后补入口）：口径是 empty 块那句「无可清理标签时不出「一键清理」」
     // ——反面即「有未使用标签就出」。总览这回执带 7 条闲置标签（本页「未使用标签」一段就是它们），
     // 旧注释「总览回执不带未使用标签」与当刻回执不符，故按闲置标签在不在场决定这颗按钮在不在位：
-    // 4-1 的 check 要「七个操作按钮齐」，可见按钮＝改名／合并／一键清理／整理建议／新建标签 ＋ 复制数据／复制日志。
+    // 管理标签（4-1）的 check 要「七个操作按钮齐」，可见按钮＝改名／合并／一键清理／整理建议／新建标签 ＋ 复制数据／复制日志。
     // 「忽略」只对相似标签对成立，本模式没有对可忽略，故只留在整理建议（4-3）的逐对行里。
     + (tidy || unusedNames.length > 0 ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '')
     + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出

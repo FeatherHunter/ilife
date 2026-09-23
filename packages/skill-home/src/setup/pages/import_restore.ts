@@ -13,7 +13,7 @@ export const PAGE_META = {
   key: 'home.care.write',
   shape: 'receipt',
   preset: {"kind":"import"} as Record<string, unknown>,
-  scenarios: ["SM8-4"] as readonly string[],
+  rows: [{"key":"home.care.write","preset":{"kind":"import"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

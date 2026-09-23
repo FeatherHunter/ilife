@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.inventory.round',
   shape: 'receipt',
   preset: {"op":"move"} as Record<string, unknown>,
-  scenarios: ["6-4"] as readonly string[],
+  rows: [{"key":"home.inventory.round","preset":{"op":"move"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

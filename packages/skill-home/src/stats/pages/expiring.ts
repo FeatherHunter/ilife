@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.stats.alert',
   shape: 'list',
   preset: {"kind":"expiring"} as Record<string, unknown>,
-  scenarios: ["SM4-3"] as readonly string[],
+  rows: [{"key":"home.stats.alert","preset":{"kind":"expiring"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

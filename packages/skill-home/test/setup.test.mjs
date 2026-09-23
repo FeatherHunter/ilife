@@ -4,7 +4,7 @@
 // ① 真链 exit 0 且 envelope 的 key／shape 对（导入恢复走预告＋确认两步）；
 // ② 两层解析＋产物命名现场复核（契约 L1／命名函数，不猜）；
 // ③ 页模块装配：三方对账（页模块／登记表／附录）＋四组 data-block＋每块原文在位＋壳标记无残留；
-// ④ 默认落盘回执：delivery.path 存在且文件名通式 `<命令中文名>_<场景 id>_<戳>.html`。
+// ④ 默认落盘回执：delivery.path 存在且文件名通式 `<命令中文名>_<戳>.html`。
 //
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`。
 // 隔离：家目录指临时目录（照 scaffold.test.mjs），不碰生产库。
@@ -21,6 +21,9 @@ const pkgDir = join(here, '..');
 const repoRoot = join(pkgDir, '..', '..');
 const bin = join(pkgDir, 'dist', 'cli', 'cmd_read.js');
 const appendix = JSON.parse(readFileSync(join(repoRoot, 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
+
+/** 一族的服务场景行（命令键＋预设），由附录现算（场景 id 只住事实源与机器附录，不进本件）。 */
+const rowsOf = (fam) => appendix.scenarios.filter((s) => s.family === fam.family).map((s) => ({ key: s.key, preset: s.preset }));
 
 let HOME = '';
 const homeEnv = () => ({ ...process.env, USERPROFILE: HOME, HOME });
@@ -63,7 +66,7 @@ async function renderOf(domain, family) {
   return (await import(pathToFileURL(join(pkgDir, 'dist', domain, 'pages', family + '.js')).href));
 }
 
-async function checkBlocks(t, domain, family, env, sceneId) {
+async function checkBlocks(t, domain, family, env, cn) {
   const fam = appendix.families.find((f) => f.domain === domain && f.family === family);
   assert.ok(fam, '附录缺族 ' + domain + '/' + family);
   const page = await renderOf(domain, family);
@@ -72,7 +75,7 @@ async function checkBlocks(t, domain, family, env, sceneId) {
   const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
   const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
   assert.equal(page.FAMILY, family);
-  assert.deepEqual([...page.PAGE_META.scenarios], fam.scenarios);
+  assert.deepEqual([...page.PAGE_META.rows], rowsOf(fam));
   assert.deepEqual(page.REQUIRED_BLOCKS, fam.requiredBlocks);
   assert.deepEqual(blocksFor(family).requiredBlocks, fam.requiredBlocks);
   const html = page.renderFamilyPage(env);
@@ -95,9 +98,9 @@ function checkDelivery(env, stemRe, label) {
   assert.match(basename(env.delivery.path), stemRe, label + ' 文件名通式不对：' + basename(env.delivery.path));
 }
 
-describe('#816 SM8-1 首次使用：真链＋真页', () => {
+describe('#816 首次使用：真链＋真页', () => {
   it('init 回执 → 向导页（幂等可重试）', async (t) => {
-    const env = runOk('home.care.write', { kind: 'init' }, 'SM8-1 真链');
+    const env = runOk('home.care.write', { kind: 'init' }, '首次使用 真链');
     assert.equal(env.key, 'home.care.write');
     assert.equal(env.shape, 'receipt');
     assert.match(String(env.data.message), /已初始化/);
@@ -105,14 +108,14 @@ describe('#816 SM8-1 首次使用：真链＋真页', () => {
     assert.equal(resolvePageFamily('home.care.write', { kind: 'init' }), 'first_use_wizard');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
     assert.equal(resolveSceneStem('home.care.write', { kind: 'init' }), '首次使用');
-    await checkBlocks(t, 'setup', 'first_use_wizard', env, 'SM8-1');
-    checkDelivery(env, /^首次使用_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-1');
+    await checkBlocks(t, 'setup', 'first_use_wizard', env, '首次使用');
+    checkDelivery(env, /^首次使用_\d{8}_\d{6}(_\d+)?\.html$/, '首次使用');
   });
 });
 
-describe('#816 SM8-2 查异常：真链＋真页', () => {
+describe('#816 查异常：真链＋真页', () => {
   it('lint 列表 → 健康页（勾选复制修复引导）', async (t) => {
-    const env = runOk('home.care.query', { kind: 'lint' }, 'SM8-2 真链');
+    const env = runOk('home.care.query', { kind: 'lint' }, '查异常 真链');
     assert.equal(env.key, 'home.care.query');
     assert.equal(env.shape, 'list');
     assert.ok(Array.isArray(env.data.items) && env.data.items.length > 0, '种子库应有检查项');
@@ -120,43 +123,43 @@ describe('#816 SM8-2 查异常：真链＋真页', () => {
     assert.equal(resolvePageFamily('home.care.query', { kind: 'lint' }), 'health_report');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
     assert.equal(resolveSceneStem('home.care.query', { kind: 'lint' }), '查异常');
-    await checkBlocks(t, 'setup', 'health_report', env, 'SM8-2');
-    checkDelivery(env, /^查异常_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-2');
+    await checkBlocks(t, 'setup', 'health_report', env, '查异常');
+    checkDelivery(env, /^查异常_\d{8}_\d{6}(_\d+)?\.html$/, '查异常');
   });
 });
 
-describe('#816 SM8-3 备份导出：真链＋真页', () => {
+describe('#816 备份导出：真链＋真页', () => {
   it('backup 回执 → 回执页（含历史与保留份数）', async (t) => {
-    const env = runOk('home.care.write', { kind: 'backup' }, 'SM8-3 真链');
+    const env = runOk('home.care.write', { kind: 'backup' }, '备份导出 真链');
     assert.equal(env.key, 'home.care.write');
     assert.match(String(env.data.message), /已备份/);
-    await checkBlocks(t, 'setup', 'backup_receipt', env, 'SM8-3');
-    checkDelivery(env, /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-3');
+    await checkBlocks(t, 'setup', 'backup_receipt', env, '备份导出');
+    checkDelivery(env, /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, '备份导出');
   });
 
   it('backup-list 查询 → 同一族历史页（宿主行）', async (t) => {
-    const env = runOk('home.care.query', { kind: 'backup-list' }, 'SM8-3 查询真链');
+    const env = runOk('home.care.query', { kind: 'backup-list' }, '备份导出 查询真链');
     assert.equal(env.key, 'home.care.query');
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.query', { kind: 'backup-list' }), 'backup_receipt');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
     assert.equal(resolveSceneStem('home.care.query', { kind: 'backup-list' }), '备份导出');
-    await checkBlocks(t, 'setup', 'backup_receipt', env, 'SM8-3');
+    await checkBlocks(t, 'setup', 'backup_receipt', env, '备份导出');
   });
 });
 
-describe('#816 SM8-4 导入恢复：真链两步＋真页', () => {
+describe('#816 导入恢复：真链两步＋真页', () => {
   it('预告 → 确认 → 导入页（恢复前自备份）', async (t) => {
-    const prev = runOk('home.care.write', { kind: 'import-preview', file: BACKUP_ZIP }, 'SM8-4 预告');
+    const prev = runOk('home.care.write', { kind: 'import-preview', file: BACKUP_ZIP }, '导入恢复 预告');
     assert.match(String(prev.data.message), /预告通过/);
-    await checkBlocks(t, 'setup', 'import_restore', prev, 'SM8-4');
-    const env = runOk('home.care.write', { kind: 'import', file: BACKUP_ZIP, confirm: true }, 'SM8-4 确认');
+    await checkBlocks(t, 'setup', 'import_restore', prev, '导入恢复');
+    const env = runOk('home.care.write', { kind: 'import', file: BACKUP_ZIP, confirm: true }, '导入恢复 确认');
     assert.match(String(env.data.message), /已从备份恢复/);
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.write', { kind: 'import' }), 'import_restore');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
     assert.equal(resolveSceneStem('home.care.write', { kind: 'import' }), '导入恢复');
-    await checkBlocks(t, 'setup', 'import_restore', env, 'SM8-4');
-    checkDelivery(env, /^导入恢复_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-4');
+    await checkBlocks(t, 'setup', 'import_restore', env, '导入恢复');
+    checkDelivery(env, /^导入恢复_\d{8}_\d{6}(_\d+)?\.html$/, '导入恢复');
   });
 });

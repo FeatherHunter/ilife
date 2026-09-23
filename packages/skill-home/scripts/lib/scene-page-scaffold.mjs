@@ -76,10 +76,18 @@ function templateText(rep) {
     + '</html>\n';
 }
 
+// 一族的场景行：每场景只取（命令键，预设）两样。
+// 场景 id（字母码与数字码）只住事实源与机器附录，不进产物——产物层认的是命令键与预设。
+function familyRows(appendix, fam) {
+  return fam.scenarios.map((id) => {
+    const s = scenarioById(appendix, id);
+    return { key: s.key, preset: s.preset || {} };
+  });
+}
+
 // —— 骨架②：页装配模块（对外恰 4 个：FAMILY／PAGE_META／REQUIRED_BLOCKS／renderFamilyPage）——
-function pageText(fam, rep, shape) {
+function pageText(fam, rep, shape, rows) {
   const blocks = JSON.stringify(fam.requiredBlocks, null, 2);
-  const scenarios = JSON.stringify(fam.scenarios);
   const preset = JSON.stringify(rep.preset || {});
   const L = [];
   L.push('// ' + fam.domain + '能力·' + fam.family + '页装配（#805 脚手架生成，域票填内容）。');
@@ -88,7 +96,7 @@ function pageText(fam, rep, shape) {
   L.push('// 必需块原文＝契约附录（事实源），登记表 `scripts/lib/page-blocks.mjs` 由同一附录派生；');
   L.push('// 三方（本件／登记表／附录）由 `test/scaffold.test.mjs` 逐族对账，走散即红。');
   L.push('// 空态与异常态位：`renderFamilyPage` 按 REQUIRED_BLOCKS.empty 原样输出槽位，域票把真空态填进来。');
-  L.push('// 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。');
+  L.push('// 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景行）。');
   L.push("import { readFileSync } from 'node:fs';");
   L.push("import type { Envelope } from 'base-link-core';");
   L.push("import { fillTemplate, renderEnvelopeHtml, escapeHtml } from '../../render/index.js';");
@@ -101,7 +109,7 @@ function pageText(fam, rep, shape) {
   L.push("  key: '" + rep.key + "',");
   L.push("  shape: '" + shape + "',");
   L.push('  preset: ' + preset + ' as Record<string, unknown>,');
-  L.push('  scenarios: ' + scenarios + ' as readonly string[],');
+  L.push('  rows: ' + JSON.stringify(rows) + ' as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],');
   L.push('} as const;');
   L.push('');
   L.push('export const REQUIRED_BLOCKS = ' + blocks + ' as {');
@@ -137,7 +145,7 @@ function pageText(fam, rep, shape) {
 // —— 登记表（生成物）：族→必需块，供票 6 结构判据件消费 ——
 function registryText(appendix) {
   const entries = appendix.families.map((f) => '  \'' + f.family + '\': { domain: \''
-    + f.domain + '\', scenarios: ' + JSON.stringify(f.scenarios)
+    + f.domain + '\', rows: ' + JSON.stringify(familyRows(appendix, f))
     + ', requiredBlocks: ' + JSON.stringify(f.requiredBlocks) + ' },');
   const L = [];
   L.push('// 必需块登记表（#805 脚手架生成物，事实源＝契约附录）。');
@@ -146,10 +154,10 @@ function registryText(appendix) {
   L.push('// 手改无效：下次跑 `new-scene-page.mjs` 即被附录覆盖；三方对账见 `test/scaffold.test.mjs`。');
   L.push('export const PAGE_BLOCKS_VERSION = 1;');
   L.push('');
-  L.push('/** 一族的必需块登记（domain／服务场景／四组必需块）。');
+  L.push('/** 一族的必需块登记（domain／服务场景行／四组必需块）。');
   L.push(' * @typedef {Object} FamilyBlocks');
   L.push(' * @property {string} domain');
-  L.push(' * @property {string[]} scenarios');
+  L.push(' * @property {Array<{key: string, preset: object}>} rows');
   L.push(' * @property {{fields: string[], operations: string[], empty: string[], status: string[]}} requiredBlocks');
   L.push(' */');
   L.push('');
@@ -189,7 +197,7 @@ export function generateFamily(appendix, shapes, domain, family, write) {
   const tFile = join(pkgDir, 'templates', domain, family + '.html');
   const pFile = join(pkgDir, 'src', domain, 'pages', family + '.ts');
   const tText = templateText(rep);
-  const pText = pageText(fam, rep, shape);
+  const pText = pageText(fam, rep, shape, familyRows(appendix, fam));
   if (write) {
     mkdirSync(dirname(tFile), { recursive: true });
     mkdirSync(dirname(pFile), { recursive: true });

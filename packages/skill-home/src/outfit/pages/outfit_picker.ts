@@ -21,7 +21,7 @@ export const PAGE_META = {
   key: 'home.outfit.pick',
   shape: 'list',
   preset: {} as Record<string, unknown>,
-  scenarios: ["SM3-1"] as readonly string[],
+  rows: [{"key":"home.outfit.pick","preset":{}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

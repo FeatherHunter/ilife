@@ -127,10 +127,12 @@ describe('#805 脚手架：生成器与登记表齐套', () => {
 });
 
 describe('#805 脚手架：46 族逐族真链装配', () => {
-  const byId = new Map(appendix.scenarios.map((s) => [s.id, s]));
+  // 场景 id 只住事实源与机器附录（本件不算它的家）：按族现算服务场景行与代表场景。
+  const rowsOf = (fam) => appendix.scenarios.filter((s) => s.family === fam.family).map((s) => ({ key: s.key, preset: s.preset }));
+  const repOf = (fam) => appendix.scenarios.find((s) => s.family === fam.family);
   for (const fam of appendix.families) {
-    const rep = byId.get(fam.scenarios[0]);
-    it(fam.domain + '/' + fam.family + '（' + rep.key + ' ' + fam.scenarios[0] + '）', async () => {
+    const rep = repOf(fam);
+    it(fam.domain + '/' + fam.family + '（' + rep.key + ' ' + rep.commandCn + '）', async () => {
       // ① 真命令链（导入恢复走预告＋确认两步，其余一步）
       let env;
       if (fam.family === 'import_restore') {
@@ -148,7 +150,7 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
       const { PAGE_BLOCKS, blocksFor } = await import(pathToFileURL(join(pkgDir, 'scripts', 'lib', 'page-blocks.mjs')).href);
       const { escapeHtml } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'html.js')).href);
       assert.equal(page.FAMILY, fam.family);
-      assert.deepEqual([...page.PAGE_META.scenarios], fam.scenarios);
+      assert.deepEqual([...page.PAGE_META.rows], rowsOf(fam));
       assert.equal(page.PAGE_META.domain, fam.domain);
       assert.deepEqual(page.REQUIRED_BLOCKS, fam.requiredBlocks);
       assert.deepEqual(blocksFor(fam.family).requiredBlocks, fam.requiredBlocks);

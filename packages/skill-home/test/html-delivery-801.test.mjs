@@ -7,6 +7,9 @@
 // ④ 退出码矩阵（正例 0／参数 2／未知键 3／落盘失败 5，失败时 stdout 空）。
 // 附录对账（命名 69 行逐字＋storage 偏离显式断言）也在本件，防与票 2 契约走散。
 //
+// 本件按命令中文名认场景（`appendix.scenarios[].commandCn`，70 条两两不重）；
+// 场景 id 只住事实源与机器附录，不进本件。
+//
 // 纪律（照 test/help-delivery-190.test.mjs）：落点值／名字通式在本文件里**写死逐字**
 // （不从 `dist/help/manifest.js` 取），否则改实现点会同时改期望值，锁变成同义反复。
 import { test, describe } from 'node:test';
@@ -103,9 +106,9 @@ describe('#801 默认落盘', () => {
     const dir = mkDir('hosts');
     const { id } = seed(dir);
     const b = runOk(dir, ['home.care.write', '--params', P({ kind: 'borrow', item_id: id })]);
-    assert.match(basename(b.env.delivery.path), /^借用_\d{8}_\d{6}(_\d+)?\.html$/, '借用写侧宿主 SM7-1');
+    assert.match(basename(b.env.delivery.path), /^借用_\d{8}_\d{6}(_\d+)?\.html$/, '借用写侧宿主＝借用');
     const l = runOk(dir, ['home.care.query', '--params', P({ kind: 'backup-list' })]);
-    assert.match(basename(l.env.delivery.path), /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, '备份查询宿主 SM8-3');
+    assert.match(basename(l.env.delivery.path), /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, '备份查询宿主＝备份导出');
   });
 
   test('④ `--html` 显式优先：只落一份、单回执指逐字路径', () => {
@@ -170,13 +173,13 @@ describe('#801 命名对账（附录 70 行，防与票 2 契约走散）', () =
   test('69 行逐字：resolveSceneStem(key, preset) ＝ 命令中文名（＝文件名主体）', () => {
     let n = 0;
     for (const s of appendix.scenarios) {
-      if (s.id === 'SM2-3') continue; // 偏离行见下一条（运行时 storage 走位置总览，不走收纳建议）
-      assert.equal(resolveSceneStem(s.key, s.preset ?? {}), s.commandCn, '附录走散：' + s.id);
+      if (s.commandCn === '收纳建议') continue; // 偏离行见下一条（运行时 storage 走位置总览，不走收纳建议）
+      assert.equal(resolveSceneStem(s.key, s.preset ?? {}), s.commandCn, '附录走散：' + s.commandCn);
       n++;
     }
     assert.equal(n, 69, '附录 70 行 − 偏离 1 行 ＝ 69');
   });
-  test('偏离行显式锁定：storage 行为是位置总览，宿主＝管位置（SM2-1，已向票 2 登记补丁）', () => {
+  test('偏离行显式锁定：storage 行为是位置总览，宿主＝管位置（已向票 2 登记补丁）', () => {
     assert.equal(resolveSceneStem('home.location.query', { mode: 'storage' }), '管位置');
     assert.equal(resolveSceneStem('home.location.query', { mode: 'suggest', category_id: 1 }), '收纳建议');
   });

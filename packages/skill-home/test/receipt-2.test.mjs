@@ -4,6 +4,9 @@
 // 真 spawn 跑 8 条命令（exit 0＋delivery 绝对路径），族页经 dist 装配，
 // 产物双写（断言用临时目录＋交付用 .scratch/814），再跑三件判据与脱敏自证。
 //
+// 本件按命令中文名认场景（`appendix.scenarios[].commandCn`，70 条两两不重）；
+// 场景 id 只住事实源与机器附录，不进本件。
+//
 // 写集：本文件＋`src/receipt/pages/certificates|accounts`＋模板壳＋
 // `docs/skills/skill-home/scene-receipt-2.md`＋`.scratch/814/`；
 // 不碰共用件、派生件、其它域页族（要改回写票 2／票 3）。
@@ -29,6 +32,11 @@ const SCRATCH = join(REPO, '.scratch', '814');
 const SEP = join(PKG, 'scripts', 'audit-separators.mjs');
 const BLOCKS = join(PKG, 'scripts', 'audit-page-blocks.mjs');
 const CONTRACT = join(PKG, 'scripts', 'page-blocks.json');
+const APPENDIX = join(REPO, 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json');
+const appendix = JSON.parse(readFileSync(APPENDIX, 'utf8'));
+
+/** 命令中文名→附录行（场景 id 的替身：70 条两两不重）。 */
+const byCn = new Map(appendix.scenarios.map((s) => [s.commandCn, s]));
 
 const P = (o) => JSON.stringify(o);
 let HOME_DIR = '';
@@ -115,16 +123,16 @@ before(() => {
   copyFileSync(SEED_KEY, join(dataDir(), '.master.key'));
   mkdirSync(SCRATCH, { recursive: true });
 
-  // 8 条真链（写类用唯一后缀避平台唯一键冲突；读类直接查）。
-  ENVS['SM6-11'] = runOk('home.ticket.query', { kind: 'cert' }, '查证件到期');
-  ENVS['SM6-12'] = runOk('home.ticket.write', { kind: 'cert', op: 'add', type: '测试证', expires_at: '2028-01-01', holder: '测试人', number: 'T00001111' }, '登记证件');
-  ENVS['SM6-13'] = runOk('home.ticket.write', { kind: 'cert', op: 'archive', photo: 'seed-cert-id.png' }, '证件归档');
-  ENVS['SM6-14'] = runOk('home.ticket.write', { kind: 'cert', op: 'update' }, '更新证件');
-  ENVS['SM6-15'] = runOk('home.ticket.query', { kind: 'account' }, '查账号');
+  // 8 条真链（以命令中文名为键；写类用唯一后缀避平台唯一键冲突；读类直接查）。
+  ENVS['查证件到期'] = runOk('home.ticket.query', { kind: 'cert' }, '查证件到期');
+  ENVS['登记证件'] = runOk('home.ticket.write', { kind: 'cert', op: 'add', type: '测试证', expires_at: '2028-01-01', holder: '测试人', number: 'T00001111' }, '登记证件');
+  ENVS['证件归档'] = runOk('home.ticket.write', { kind: 'cert', op: 'archive', photo: 'seed-cert-id.png' }, '证件归档');
+  ENVS['更新证件'] = runOk('home.ticket.write', { kind: 'cert', op: 'update' }, '更新证件');
+  ENVS['查账号'] = runOk('home.ticket.query', { kind: 'account' }, '查账号');
   const stamp = String(Date.now()).slice(-6);
-  ENVS['SM6-16'] = runOk('home.ticket.write', { kind: 'account', op: 'add', platform: '测平台' + stamp, user: '测用户', pass: '测口令' + stamp, type: '购物' }, '存账号');
-  ENVS['SM6-17'] = runOk('home.ticket.write', { kind: 'account', op: 'update', platform: '淘宝', user: 'home-user' }, '改账号');
-  ENVS['SM6-18'] = runOk('home.ticket.write', { kind: 'account', op: 'show', platform: '淘宝' }, '看密码');
+  ENVS['存账号'] = runOk('home.ticket.write', { kind: 'account', op: 'add', platform: '测平台' + stamp, user: '测用户', pass: '测口令' + stamp, type: '购物' }, '存账号');
+  ENVS['改账号'] = runOk('home.ticket.write', { kind: 'account', op: 'update', platform: '淘宝', user: 'home-user' }, '改账号');
+  ENVS['看密码'] = runOk('home.ticket.write', { kind: 'account', op: 'show', platform: '淘宝' }, '看密码');
 
   // 富信封：查类用隔离库全行直读补齐（掩码＋状态现场算，明文只存库、不进信封）。
   const certRows = readTempCerts().map((r) => ({
@@ -142,45 +150,47 @@ before(() => {
     })(),
     note: '待补',
   }));
-  RICH['SM6-11'] = { ...ENVS['SM6-11'], data: { items: certRows, total: certRows.length } };
+  RICH['查证件到期'] = { ...ENVS['查证件到期'], data: { items: certRows, total: certRows.length } };
   const accRows = readTempAccounts().map((r) => ({
     platform: String(r.platform),
     username: String(r.username),
     type: String(r.type),
     password_masked: '******',
   }));
-  RICH['SM6-15'] = { ...ENVS['SM6-15'], data: { items: accRows, total: accRows.length } };
-  for (const k of ['SM6-12', 'SM6-13', 'SM6-14', 'SM6-16', 'SM6-17', 'SM6-18']) RICH[k] = ENVS[k];
+  RICH['查账号'] = { ...ENVS['查账号'], data: { items: accRows, total: accRows.length } };
+  for (const cn of ['登记证件', '证件归档', '更新证件', '存账号', '改账号', '看密码']) RICH[cn] = ENVS[cn];
 });
 
 describe('票据凭证域（二）8 条真页（#814）', () => {
   it('8 信封形状与默认落盘齐', () => {
-    assert.equal(ENVS['SM6-11'].shape, 'list');
-    assert.equal(ENVS['SM6-15'].shape, 'list');
-    for (const k of ['SM6-12', 'SM6-13', 'SM6-14', 'SM6-16', 'SM6-17', 'SM6-18']) {
-      assert.equal(ENVS[k].shape, 'receipt');
+    assert.equal(ENVS['查证件到期'].shape, 'list');
+    assert.equal(ENVS['查账号'].shape, 'list');
+    for (const cn of ['登记证件', '证件归档', '更新证件', '存账号', '改账号', '看密码']) {
+      assert.equal(ENVS[cn].shape, 'receipt');
     }
     // 看密码 JSON 含明文（仅对话回显），断言链路通（页上不得出现由下节断言）。
-    assert.match(String(ENVS['SM6-18'].data.message), /密码/);
+    assert.match(String(ENVS['看密码'].data.message), /密码/);
   });
 
   it('8 产物落盘＋双写（临时断言＋.scratch 交付）', async () => {
     const certPage = await import(pathToFileURL(join(PKG, 'dist', 'receipt', 'pages', 'certificates.js')).href);
     const accPage = await import(pathToFileURL(join(PKG, 'dist', 'receipt', 'pages', 'accounts.js')).href);
+    // 命令中文名→该场景的产物文件名（中文名＋戳）。
     const names = {
-      'SM6-11': '查证件到期_20260921T000000.html',
-      'SM6-12': '登记证件_20260921T000000.html',
-      'SM6-13': '证件归档_20260921T000000.html',
-      'SM6-14': '更新证件_20260921T000000.html',
-      'SM6-15': '查账号_20260921T000000.html',
-      'SM6-16': '存账号_20260921T000000.html',
-      'SM6-17': '改账号_20260921T000000.html',
-      'SM6-18': '看密码_20260921T000000.html',
+      '查证件到期': '查证件到期_20260921T000000.html',
+      '登记证件': '登记证件_20260921T000000.html',
+      '证件归档': '证件归档_20260921T000000.html',
+      '更新证件': '更新证件_20260921T000000.html',
+      '查账号': '查账号_20260921T000000.html',
+      '存账号': '存账号_20260921T000000.html',
+      '改账号': '改账号_20260921T000000.html',
+      '看密码': '看密码_20260921T000000.html',
     };
-    for (const [id, file] of Object.entries(names)) {
-      const page = id <= 'SM6-14' ? certPage : accPage;
-      const html = page.renderFamilyPage(RICH[id]);
-      assert.ok(html.includes('<!DOCTYPE html>') && !html.includes('<!--CONTENT-->'), id + ' 须为整页且标记已填');
+    for (const [cn, file] of Object.entries(names)) {
+      // 该场景归哪族由附录现读（本件两族：证件／账号），装配取对应族页。
+      const page = byCn.get(cn).family === 'certificates' ? certPage : accPage;
+      const html = page.renderFamilyPage(RICH[cn]);
+      assert.ok(html.includes('<!DOCTYPE html>') && !html.includes('<!--CONTENT-->'), cn + ' 须为整页且标记已填');
       writeFileSync(join(OUT, file), html, 'utf8');
       writeFileSync(join(SCRATCH, file), html, 'utf8');
     }

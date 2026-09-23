@@ -43,6 +43,10 @@ function ymd(offsetDays) {
 
 const FAMS = ['overview', 'idle', 'expiring', 'inventory_stat'];
 const STAMP = stamp();
+/** 一族的服务场景行（命令键＋预设），由附录现算。 */
+const rowsOf = (fam) => appendix.scenarios.filter((s) => s.family === fam).map((s) => ({ key: s.key, preset: s.preset }));
+/** 一族的场景码（取自附录；本件只在产物文件名里拼它，判据件按 `_<码>_` 段认族）。 */
+const sceneCodeOf = (fam) => appendix.families.find((f) => f.family === fam).scenarios[0];
 
 before(async () => {
   assert.ok(existsSync(bin), 'dist 未建：先跑 node node_modules/typescript/bin/tsc -b packages/skill-home');
@@ -97,7 +101,7 @@ describe('#811 统计总览域：真链与两层解析', () => {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'stats', 'pages', fam + '.js')).href);
       const want = appendix.families.find((f) => f.family === fam).requiredBlocks;
       assert.deepEqual(page.REQUIRED_BLOCKS, want);
-      assert.deepEqual([...page.PAGE_META.scenarios], appendix.families.find((f) => f.family === fam).scenarios);
+      assert.deepEqual([...page.PAGE_META.rows], rowsOf(fam));
     }
   });
 });
@@ -108,12 +112,12 @@ describe('#811 统计总览域：装配产物与三件判据', () => {
     dir = mkdtempSync(join(tmpdir(), 'stats811prod-'));
     const { escapeHtml } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'html.js')).href);
     const cases = [
-      ['overview', 'SM4-1', '统物品'],
-      ['idle', 'SM4-2', '查闲置'],
-      ['expiring', 'SM4-3', '查过期'],
-      ['inventory_stat', 'SM4-4', '盘点统计'],
+      ['overview', '统物品'],
+      ['idle', '查闲置'],
+      ['expiring', '查过期'],
+      ['inventory_stat', '盘点统计'],
     ];
-    for (const [fam, sid, cn] of cases) {
+    for (const [fam, cn] of cases) {
       const env = runOk(keyFor(fam), paramsFor(fam), '装配真链 ' + fam);
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'stats', 'pages', fam + '.js')).href);
       const html = page.renderFamilyPage(env);
@@ -126,7 +130,7 @@ describe('#811 统计总览域：装配产物与三件判据', () => {
         assert.ok(html.includes('data-block="' + g + '"'), fam + ' 缺块组：' + g);
         for (const b of famRow.requiredBlocks[g]) assert.ok(html.includes(escapeHtml(b)), fam + ' 缺块 [' + g + '] ' + b.slice(0, 20));
       }
-      writeFileSync(join(dir, cn + '_' + sid + '_' + STAMP + '.html'), html, 'utf8');
+      writeFileSync(join(dir, cn + '_' + sceneCodeOf(fam) + '_' + STAMP + '.html'), html, 'utf8');
     }
     // 空态真路径：新库总览必现空态引导
     const home2 = mkdtempSync(join(tmpdir(), 'stats811empty-'));

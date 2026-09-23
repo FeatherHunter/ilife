@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.item.detail',
   shape: 'detail',
   preset: {"view":"photos"} as Record<string, unknown>,
-  scenarios: ["5-1","5-2"] as readonly string[],
+  rows: [{"key":"home.item.detail","preset":{"view":"photos"}},{"key":"home.item.update","preset":{"op":"photo"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

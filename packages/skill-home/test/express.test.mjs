@@ -3,6 +3,8 @@
 // 真命令链（spawn 真 home-cmd-read，经隔离 HOME＋种子库）→ 4 族逐族装配
 // → 落 .scratch/812/4 份产物＋manifest.json。墙与判据另走验收命令②③④，
 // 本件只断：真链 exit 0、页族解析对、块位齐、壳标记已填、产物与清单一致。
+//
+// 场景认页族名＋命令键＋预设三样规范词；场景 id 只住事实源与机器附录，不进本件。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -36,24 +38,26 @@ const stamp = () => {
   return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
 };
 
+// 每行＝一条场景：认它的页族名（family）＋命令键（key）＋预设（preset）三样规范词。
+// （场景 id 只住事实源与机器附录，不进本件。）
 const CASES = [
   {
-    family: 'list', scenario: 'SM5-1', wake: '购物清单', title: '购物清单', prompt: '请加载居家管家技能，帮我列购物清单',
+    family: 'list', wake: '购物清单', title: '购物清单', prompt: '请加载居家管家技能，帮我列购物清单',
     key: 'home.shopping.query', preset: { kind: 'list' }, stem: '购物清单',
     check: '待买数量与来源是否对得上，查重提示是否在，勾选后能否划掉',
   },
   {
-    family: 'missing', scenario: 'SM5-2', wake: '缺货检测', title: '缺货检测', prompt: '请加载居家管家技能，帮我检测缺货',
+    family: 'missing', wake: '缺货检测', title: '缺货检测', prompt: '请加载居家管家技能，帮我检测缺货',
     key: 'home.shopping.query', preset: { kind: 'missing' }, stem: '缺货检测',
     check: '缺货数量与阈值以及建议量是否在，范围是否写清，能否一键进清单',
   },
   {
-    family: 'express', scenario: 'SM5-3', wake: '查快递', title: '快递跟踪', prompt: '请加载居家管家技能，帮我查在途快递',
+    family: 'express', wake: '查快递', title: '快递跟踪', prompt: '请加载居家管家技能，帮我查在途快递',
     key: 'home.shopping.query', preset: { kind: 'express' }, stem: '查快递',
     check: '在途件数与已等天数以及超时标红是否在，收货确认是否顺手',
   },
   {
-    family: 'stock', scenario: 'SM5-4', wake: '囤货盘点', title: '囤货盘点', prompt: '请加载居家管家技能，帮我盘点囤货',
+    family: 'stock', wake: '囤货盘点', title: '囤货盘点', prompt: '请加载居家管家技能，帮我盘点囤货',
     key: 'home.shopping.query', preset: { kind: 'stock' }, stem: '囤货盘点',
     check: '数量与阈值以及库存状态是否在，无阈值提示与修正入口是否在',
   },
@@ -80,14 +84,14 @@ before(() => {
 
 describe('#812 快递购物域：4 族真链装配＋产物落盘', () => {
   for (const c of CASES) {
-    it(c.family + '（' + c.scenario + ' ' + c.wake + '）', async () => {
+    it(c.family + '（' + c.wake + '）', async () => {
       const env = runOk(c.key, c.preset, '真链 ' + c.family);
       assert.equal(env.key, c.key);
       const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
       assert.equal(resolvePageFamily(c.key, c.preset), c.family);
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'express', 'pages', c.family + '.js')).href);
       assert.equal(page.FAMILY, c.family);
-      assert.deepEqual([...page.PAGE_META.scenarios], [c.scenario]);
+      assert.deepEqual([...page.PAGE_META.rows], [{ key: c.key, preset: c.preset }]);
       const html = page.renderFamilyPage(env);
       for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {
         assert.ok(!html.includes(m), '标记未填充：' + m);

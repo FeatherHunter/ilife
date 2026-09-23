@@ -28,7 +28,7 @@ export const PAGE_META = {
   key: 'home.ticket.query',
   shape: 'list',
   preset: {"kind":"account"} as Record<string, unknown>,
-  scenarios: ["SM6-15","SM6-16","SM6-17","SM6-18"] as readonly string[],
+  rows: [{"key":"home.ticket.query","preset":{"kind":"account"}},{"key":"home.ticket.write","preset":{"kind":"account","op":"add"}},{"key":"home.ticket.write","preset":{"kind":"account","op":"update"}},{"key":"home.ticket.write","preset":{"kind":"account","op":"show"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

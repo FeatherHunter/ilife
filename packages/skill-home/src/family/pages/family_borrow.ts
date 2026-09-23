@@ -26,7 +26,7 @@ export const PAGE_META = {
   key: 'home.care.query',
   shape: 'list',
   preset: {"kind":"borrow"} as Record<string, unknown>,
-  scenarios: ["SM7-1"] as readonly string[],
+  rows: [{"key":"home.care.query","preset":{"kind":"borrow"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

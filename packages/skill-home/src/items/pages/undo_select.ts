@@ -17,7 +17,7 @@ export const PAGE_META = {
   key: 'home.item.update',
   shape: 'receipt',
   preset: {"op":"undo"} as Record<string, unknown>,
-  scenarios: ["3-6"] as readonly string[],
+  rows: [{"key":"home.item.update","preset":{"op":"undo"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {

@@ -187,15 +187,15 @@ describe('结构合同 pages[]（领域半段：附录 46 族派生）', () => {
     for (const f of appendix.families) {
       const entry = contract.pages.find((p) => p.family === f.family);
       assert.ok(entry, '合同缺族：' + f.family);
-      const ids = appendix.scenarios.filter((s) => s.family === f.family).map((s) => s.id);
-      assert.deepEqual(entry.scenarios, ids);
+      const names = appendix.scenarios.filter((s) => s.family === f.family).map((s) => s.commandCn);
+      assert.deepEqual(entry.names, names);
       const want = [];
       for (const g of GROUP_ORDER) want.push(...f.requiredBlocks[g].map((v, i) => ({ id: `${f.family}:${g}:${i}`, value: v })));
       assert.deepEqual(entry.blocks.map((b) => ({ id: b.id, value: b.value })), want);
       assert.ok(entry.blocks.every((b) => b.kind === 'substr'));
     }
   });
-  /** 用合同自己的 detail 块拼装配形页：文件名带场景 id 段 `_2-2_` 即命中该族 29 块＋默认 7 块。 */
+  /** 用合同自己的 detail 块拼装配形页：文件名以该族命令中文名开头（`看物品_<戳>.html`）即命中该族 29 块＋默认 7 块。 */
   function detailGoodHtml() {
     const { contract } = loadBoth();
     const entry = contract.pages.find((p) => p.family === 'detail');
@@ -203,7 +203,7 @@ describe('结构合同 pages[]（领域半段：附录 46 族派生）', () => {
     return CLEAN.replace('</div></body>', `<ul>${lis}</ul></div></body>`);
   }
   it('场景页齐全 exit 0（36/36），无场景页只走默认 7 块（pattern 不误伤）', () => {
-    const d = seed({ '看物品_2-2_20260921T000000.html': detailGoodHtml(), '通用页.html': CLEAN });
+    const d = seed({ '看物品_20260921T000000.html': detailGoodHtml(), '通用页.html': CLEAN });
     const r = run(BLOCKS, ['--dir', d, '--blocks', CONTRACT]);
     assert.equal(r.status, 0, r.out);
     assert.match(r.out, /RESULT: 2\/2/);
@@ -217,10 +217,10 @@ describe('结构合同 pages[]（领域半段：附录 46 族派生）', () => {
     const victim = entry.blocks.find((b) => b.id === 'detail:fields:0');
     const bad = detailGoodHtml().split(victim.value).join('【已摘除】');
     assert.ok(!bad.includes(victim.value));
-    const d = seed({ '看物品_2-2_20260921T000001.html': bad });
+    const d = seed({ '看物品_20260921T000001.html': bad });
     const r = run(BLOCKS, ['--dir', d, '--blocks', CONTRACT]);
     assert.equal(r.status, 1, r.out);
-    assert.match(r.out, /看物品_2-2_20260921T000001\.html/);
+    assert.match(r.out, /看物品_20260921T000001\.html/);
     assert.match(r.out, /缺块 \[detail:fields:0\]/);
   });
 });

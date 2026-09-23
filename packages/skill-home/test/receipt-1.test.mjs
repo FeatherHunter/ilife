@@ -7,6 +7,9 @@
 // ③ 页模块装配含必需块原文（`data-need` 属性命中）且可见层无拉丁字母
 //   （`audit-separators` 英文裸词进红的回归钉）。
 //
+// 本件按命令中文名认场景（`appendix.scenarios[].commandCn`，70 条两两不重）；
+// 场景 id 只住事实源与机器附录，不进本件。
+//
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`
 // （页模块经 `dist/receipt/pages/*.js` 进入本用例）。
 // 隔离：家目录指临时目录（同 `scaffold.test.mjs` 的家目录通道），不碰生产库。
@@ -24,6 +27,11 @@ const pkgDir = join(here, '..');
 const repoRoot = join(pkgDir, '..', '..');
 const bin = join(pkgDir, 'dist', 'cli', 'cmd_read.js');
 const appendix = JSON.parse(readFileSync(join(repoRoot, 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
+
+/** 命令中文名→附录行（场景 id 的替身：70 条两两不重）。 */
+const byCn = new Map(appendix.scenarios.map((s) => [s.commandCn, s]));
+/** 一族的服务场景行（命令键＋预设），由附录现算。 */
+const rowsOf = (fam) => appendix.scenarios.filter((s) => s.family === fam.family).map((s) => ({ key: s.key, preset: s.preset }));
 
 let HOME = '';
 const homeEnv = () => ({ ...process.env, USERPROFILE: HOME, HOME });
@@ -54,86 +62,85 @@ before(() => {
   IDA = items.find((x) => x.name === '收据甲').id;
   IDB = items.find((x) => x.name === '收据乙').id;
   // 10 条真链（顺序有依赖：先查空态，再写，再查有数；保修写需物品，维修保养需保修单）
-  ENVS.set('SM6-1', runOk('home.ticket.query', { kind: 'purchase' }, 'SM6-1 查购买记录'));
-  ENVS.set('SM6-2', runOk('home.ticket.query', { kind: 'purchase', range: 'last-month' }, 'SM6-2 查上月购买'));
-  ENVS.set('SM6-3', runOk('home.ticket.query', { kind: 'purchase', range: 'year' }, 'SM6-3 查今年花费'));
-  ENVS.set('SM6-4', runOk('home.ticket.query', { kind: 'purchase', range: 'return', item_id: IDA }, 'SM6-4 查退货窗口'));
-  ENVS.set('SM6-5', runOk('home.ticket.write', { kind: 'purchase', op: 'add', item_id: IDA, date: '2026-09-10', price: 199.5, channel: '京东' }, 'SM6-5 登记购买记录'));
-  ENVS.set('SM6-6', runOk('home.ticket.query', { kind: 'warranty' }, 'SM6-6 查保修状态空态'));
-  ENVS.set('SM6-7', runOk('home.ticket.write', { kind: 'warranty', op: 'register', item_id: IDA, start_date: '2026-01-01', duration_days: 365 }, 'SM6-7 登记保修'));
+  ENVS.set('查购买记录', runOk('home.ticket.query', { kind: 'purchase' }, '查购买记录'));
+  ENVS.set('查上月购买', runOk('home.ticket.query', { kind: 'purchase', range: 'last-month' }, '查上月购买'));
+  ENVS.set('查今年花费', runOk('home.ticket.query', { kind: 'purchase', range: 'year' }, '查今年花费'));
+  ENVS.set('查退货窗口', runOk('home.ticket.query', { kind: 'purchase', range: 'return', item_id: IDA }, '查退货窗口'));
+  ENVS.set('登记购买记录', runOk('home.ticket.write', { kind: 'purchase', op: 'add', item_id: IDA, date: '2026-09-10', price: 199.5, channel: '京东' }, '登记购买记录'));
+  ENVS.set('查保修状态', runOk('home.ticket.query', { kind: 'warranty' }, '查保修状态空态'));
+  ENVS.set('登记保修', runOk('home.ticket.write', { kind: 'warranty', op: 'register', item_id: IDA, start_date: '2026-01-01', duration_days: 365 }, '登记保修'));
   const wlist = runOk('home.ticket.query', { kind: 'warranty' }, 'wlist 取保修单');
   const m = String(wlist.data.items?.[0]?.name || '').match(/#(\d+)/);
   assert.ok(m, '保修单未落盘，取不到单号');
   WID = Number(m[1]);
-  ENVS.set('SM6-8', runOk('home.ticket.write', { kind: 'warranty', op: 'repair', warranty_id: WID, date: '2026-09-15', cost: 50 }, 'SM6-8 记录维修'));
-  ENVS.set('SM6-9', runOk('home.ticket.write', { kind: 'warranty', op: 'cycle', item_id: IDB, start_date: '2026-09-01', duration_days: 90 }, 'SM6-9 设置保养周期'));
+  ENVS.set('记录维修', runOk('home.ticket.write', { kind: 'warranty', op: 'repair', warranty_id: WID, date: '2026-09-15', cost: 50 }, '记录维修'));
+  ENVS.set('设置保养周期', runOk('home.ticket.write', { kind: 'warranty', op: 'cycle', item_id: IDB, start_date: '2026-09-01', duration_days: 90 }, '设置保养周期'));
   const wlist2 = runOk('home.ticket.query', { kind: 'warranty' }, 'wlist2 取保养单');
   assert.ok((wlist2.data.items || []).length >= 2, '保养单未落盘');
   // 保养单是后建的那一张（单号较大者）
   const ids = (wlist2.data.items || []).map((x) => Number(String(x.name || '').match(/#(\d+)/)?.[1] || 0)).filter((n) => n > 0);
   WID2 = Math.max(...ids);
   assert.ok(WID2 !== WID, '保养单号应与保修单号不同');
-  ENVS.set('SM6-10', runOk('home.ticket.write', { kind: 'warranty', op: 'maintain', warranty_id: WID2, date: '2026-09-16' }, 'SM6-10 执行保养'));
+  ENVS.set('执行保养', runOk('home.ticket.write', { kind: 'warranty', op: 'maintain', warranty_id: WID2, date: '2026-09-16' }, '执行保养'));
 });
 
 describe('#813 票据凭证（一）：10 条真链回执形状', () => {
-  it('SM6-1 查购买记录 list 形', () => {
-    const e = ENVS.get('SM6-1');
+  it('查购买记录：list 形', () => {
+    const e = ENVS.get('查购买记录');
     assert.equal(e.key, 'home.ticket.query');
     assert.equal(e.shape, 'list');
     assert.ok(Array.isArray(e.data.items));
   });
-  it('SM6-2 查上月购买 list 形（range 预设）', () => {
-    const e = ENVS.get('SM6-2');
+  it('查上月购买：list 形（range 预设）', () => {
+    const e = ENVS.get('查上月购买');
     assert.equal(e.key, 'home.ticket.query');
     assert.equal(e.shape, 'list');
   });
-  it('SM6-3 查今年花费 list 形（含年度统计行）', () => {
-    const e = ENVS.get('SM6-3');
+  it('查今年花费：list 形（含年度统计行）', () => {
+    const e = ENVS.get('查今年花费');
     assert.equal(e.key, 'home.ticket.query');
     assert.equal(e.shape, 'list');
     assert.ok((e.data.items || []).length >= 1);
   });
-  it('SM6-4 查退货窗口 list 形（须带物品）', () => {
-    const e = ENVS.get('SM6-4');
+  it('查退货窗口：list 形（须带物品）', () => {
+    const e = ENVS.get('查退货窗口');
     assert.equal(e.key, 'home.ticket.query');
     assert.equal(e.shape, 'list');
   });
-  it('SM6-5 登记购买记录 receipt 形（含单号回执语义）', () => {
-    const e = ENVS.get('SM6-5');
+  it('登记购买记录：receipt 形（含单号回执语义）', () => {
+    const e = ENVS.get('登记购买记录');
     assert.equal(e.key, 'home.ticket.write');
     assert.equal(e.shape, 'receipt');
     assert.match(String(e.data.message || ''), /已登记购买/);
   });
-  it('SM6-6 查保修状态 list 形', () => {
-    const e = ENVS.get('SM6-6');
+  it('查保修状态：list 形', () => {
+    const e = ENVS.get('查保修状态');
     assert.equal(e.key, 'home.ticket.query');
     assert.equal(e.shape, 'list');
   });
-  it('SM6-7 登记保修 receipt 形（含到期推算回执语义）', () => {
-    const e = ENVS.get('SM6-7');
+  it('登记保修：receipt 形（含到期推算回执语义）', () => {
+    const e = ENVS.get('登记保修');
     assert.equal(e.shape, 'receipt');
     assert.match(String(e.data.message || ''), /已登记保修/);
   });
-  it('SM6-8 记录维修 receipt 形（进服务事件）', () => {
-    const e = ENVS.get('SM6-8');
+  it('记录维修：receipt 形（进服务事件）', () => {
+    const e = ENVS.get('记录维修');
     assert.equal(e.shape, 'receipt');
     assert.match(String(e.data.message || ''), /已记录维修/);
   });
-  it('SM6-9 设置保养周期 receipt 形（含下次推算回执语义）', () => {
-    const e = ENVS.get('SM6-9');
+  it('设置保养周期：receipt 形（含下次推算回执语义）', () => {
+    const e = ENVS.get('设置保养周期');
     assert.equal(e.shape, 'receipt');
     assert.match(String(e.data.message || ''), /已设置保养周期/);
   });
-  it('SM6-10 执行保养 receipt 形（刷新下次日）', () => {
-    const e = ENVS.get('SM6-10');
+  it('执行保养：receipt 形（刷新下次日）', () => {
+    const e = ENVS.get('执行保养');
     assert.equal(e.shape, 'receipt');
     assert.match(String(e.data.message || ''), /已执行保养/);
   });
 });
 
 describe('#813 票据凭证（一）：两族装配与三方对账', () => {
-  const byId = new Map(appendix.scenarios.map((s) => [s.id, s]));
   const fams = appendix.families.filter((f) => f.domain === 'receipt' && ['purchase_records', 'warranty'].includes(f.family));
   it('两族三方对账（页模块／登记表／附录一致）', async () => {
     assert.equal(fams.length, 2);
@@ -141,21 +148,21 @@ describe('#813 票据凭证（一）：两族装配与三方对账', () => {
     for (const fam of fams) {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'receipt', 'pages', fam.family + '.js')).href);
       assert.equal(page.FAMILY, fam.family);
-      assert.deepEqual([...page.PAGE_META.scenarios], fam.scenarios);
+      assert.deepEqual([...page.PAGE_META.rows], rowsOf(fam));
       assert.equal(page.PAGE_META.domain, 'receipt');
       assert.deepEqual(page.REQUIRED_BLOCKS, fam.requiredBlocks);
       assert.deepEqual(blocksFor(fam.family).requiredBlocks, fam.requiredBlocks);
       assert.ok(PAGE_BLOCKS[fam.family]);
     }
   });
-  for (const sid of ['SM6-1', 'SM6-2', 'SM6-3', 'SM6-4', 'SM6-5', 'SM6-6', 'SM6-7', 'SM6-8', 'SM6-9', 'SM6-10']) {
-    it(sid + ' 装配含必需块原文且可见层无拉丁字母', async () => {
-      const rep = byId.get(sid);
-      const famName = ['SM6-1', 'SM6-2', 'SM6-3', 'SM6-4', 'SM6-5'].includes(sid) ? 'purchase_records' : 'warranty';
+  for (const cn of ['查购买记录', '查上月购买', '查今年花费', '查退货窗口', '登记购买记录', '查保修状态', '登记保修', '记录维修', '设置保养周期', '执行保养']) {
+    it(cn + ' 装配含必需块原文且可见层无拉丁字母', async () => {
+      const rep = byCn.get(cn);
+      const famName = rep.family;
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'receipt', 'pages', famName + '.js')).href);
       const { escapeHtml } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'html.js')).href);
-      const env = ENVS.get(sid);
-      assert.ok(env, '缺 envelope ' + sid);
+      const env = ENVS.get(cn);
+      assert.ok(env, '缺 envelope ' + cn);
       // 两层解析现场复核（同一预设只到一族）
       const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
       assert.equal(resolvePageFamily(rep.key, rep.preset || {}), famName);
@@ -167,9 +174,9 @@ describe('#813 票据凭证（一）：两族装配与三方对账', () => {
       // 必需块原文在 data-need 属性里（结构判据查原文包含即命中）
       const fam = fams.find((f) => f.family === famName);
       for (const g of ['fields', 'operations', 'empty', 'status']) {
-        assert.ok(html.includes('data-block="' + g + '"'), sid + ' 缺块组：' + g);
+        assert.ok(html.includes('data-block="' + g + '"'), cn + ' 缺块组：' + g);
         for (const b of fam.requiredBlocks[g]) {
-          assert.ok(html.includes('data-need="' + escapeHtml(b) + '"'), sid + ' 缺块 [' + g + '] ' + b.slice(0, 24));
+          assert.ok(html.includes('data-need="' + escapeHtml(b) + '"'), cn + ' 缺块 [' + g + '] ' + b.slice(0, 24));
         }
       }
       // 可见层无拉丁字母（机审英文裸词的回归钉：剥标签后逐行查字母）
@@ -189,7 +196,7 @@ describe('#813 票据凭证（一）：两族装配与三方对账', () => {
         .filter(Boolean)
         .map((s) => s.replace(/20\d\d-\d\d-\d\d|\d\d:\d\d|\d+\.\d{2}/g, ''))
         .filter((s) => /[A-Za-z]/.test(s));
-      assert.deepEqual(visible, [], sid + ' 可见层含拉丁字母：' + visible.slice(0, 3).join('｜'));
+      assert.deepEqual(visible, [], cn + ' 可见层含拉丁字母：' + visible.slice(0, 3).join('｜'));
     });
   }
 });

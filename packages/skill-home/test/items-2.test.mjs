@@ -1,7 +1,7 @@
 // 票 #807 · 物品管理域（二）更新与标签分类 11 产物测试。
 //
 // 本票 6 个页族（receipt／confirm／undo_select／relations／tag_manage／
-// category_manage）＋ 3-1 借用 #806 的 add_form 页族，各跑真命令链
+// category_manage）＋ 改物品（3-1）借用 #806 的 add_form 页族，各跑真命令链
 // （spawn 真 `home-cmd-read`，隔离家目录，不碰生产库），逐场景装配真页面后
 // 落 `.scratch/807/`，再跑墙自检与三件判据。add_form 只读调用，不改 #806 的文件。
 //
@@ -43,19 +43,20 @@ function spawnOk(cmd, args, label) {
   return (r.stdout || '') + (r.stderr || '');
 }
 
-// 场景表（11 条全覆盖；3-1 的页族 add_form 归 #806，本测试只读调用）。
+// 场景表（11 条全覆盖；改物品（3-1）的页族 add_form 归 #806，本测试只读调用）。
+// 场景的唯一句柄＝命令中文名 `commandCn`（附录 70 条两两不重）；场景 id 只住事实源与机器附录。
 const SCENES = [
-  { id: '3-1', wake: '改物品', title: '修改物品信息', key: 'home.item.update', preset: {}, family: 'add_form', commandCn: '改物品', prompt: '请加载「居家管家」技能，帮我修改物品信息（唤醒词：改物品）', check: '表单字段与改物品分流是否在位' },
-  { id: '3-2', wake: '移物品', title: '移动物品位置', key: 'home.item.update', preset: { op: 'move' }, family: 'receipt', commandCn: '移物品', prompt: '请加载「居家管家」技能，帮我移动物品位置（唤醒词：移物品）', check: '原位置与新位置是否都写明，分段位置是否清晰' },
-  { id: '3-3', wake: '数量变更', title: '变更物品数量', key: 'home.item.update', preset: { op: 'qty' }, family: 'receipt', commandCn: '数量变更', prompt: '请加载「居家管家」技能，帮我变更物品数量（唤醒词：数量变更）', check: '数量变更前后与补货提示是否在位' },
-  { id: '3-4', wake: '状态变更', title: '变更物品状态', key: 'home.item.update', preset: { op: 'status' }, family: 'receipt', commandCn: '状态变更', prompt: '请加载「居家管家」技能，帮我变更物品状态（唤醒词：状态变更）', check: '状态流转前后与软删除说明是否在位' },
-  { id: '3-5', wake: '合并物品', title: '合并重复物品', key: 'home.item.update', preset: { op: 'merge' }, family: 'confirm', commandCn: '合并物品', prompt: '请加载「居家管家」技能，帮我合并重复物品（唤醒词：合并物品）', check: '变更前、变更后、影响说明三段是否齐，确认是否为留档式' },
-  { id: '3-6', wake: '撤销操作', title: '撤销最近操作', key: 'home.item.update', preset: { op: 'undo' }, family: 'undo_select', commandCn: '撤销操作', prompt: '请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）', check: '可撤销条目与勾选交互是否可用，分组指引是否清晰' },
-  { id: '3-7', wake: '物品关联', title: '设置物品关联', key: 'home.item.update', preset: { op: 'relate' }, family: 'relations', commandCn: '物品关联', prompt: '请加载「居家管家」技能，帮我设置物品关联（唤醒词：物品关联）', check: '主物品与对方编号是否在位，五种关系是否齐' },
-  { id: '3-8', wake: '标物品', title: '修改物品标签', key: 'home.item.update', preset: { op: 'tags' }, family: 'receipt', commandCn: '标物品', prompt: '请加载「居家管家」技能，帮我修改物品标签（唤醒词：标物品）', check: '去除与新增两行是否在位' },
-  { id: '4-1', wake: '管标签', title: '管理标签', key: 'home.tag.write', preset: { op: 'overview' }, family: 'tag_manage', commandCn: '管标签', prompt: '请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）', check: '总数、模式与七个操作按钮是否齐' },
-  { id: '4-2', wake: '管分类', title: '管理分类', key: 'home.tag.write', preset: { op: 'category' }, family: 'category_manage', commandCn: '管分类', prompt: '请加载「居家管家」技能，帮我管理分类（唤醒词：管分类）', check: '总数、操作提示、拦截说明与种子分类说明是否齐' },
-  { id: '4-3', wake: '整理建议', title: '标签分类整理建议', key: 'home.tag.write', preset: { op: 'tidy' }, family: 'tag_manage', commandCn: '整理建议', prompt: '请加载「居家管家」技能，帮我做标签分类整理（唤醒词：整理建议）', check: '相近对与合并忽略操作是否逐对在位，公式说明是否在位' },
+  { wake: '改物品', title: '修改物品信息', key: 'home.item.update', preset: {}, family: 'add_form', commandCn: '改物品', prompt: '请加载「居家管家」技能，帮我修改物品信息（唤醒词：改物品）', check: '表单字段与改物品分流是否在位' },
+  { wake: '移物品', title: '移动物品位置', key: 'home.item.update', preset: { op: 'move' }, family: 'receipt', commandCn: '移物品', prompt: '请加载「居家管家」技能，帮我移动物品位置（唤醒词：移物品）', check: '原位置与新位置是否都写明，分段位置是否清晰' },
+  { wake: '数量变更', title: '变更物品数量', key: 'home.item.update', preset: { op: 'qty' }, family: 'receipt', commandCn: '数量变更', prompt: '请加载「居家管家」技能，帮我变更物品数量（唤醒词：数量变更）', check: '数量变更前后与补货提示是否在位' },
+  { wake: '状态变更', title: '变更物品状态', key: 'home.item.update', preset: { op: 'status' }, family: 'receipt', commandCn: '状态变更', prompt: '请加载「居家管家」技能，帮我变更物品状态（唤醒词：状态变更）', check: '状态流转前后与软删除说明是否在位' },
+  { wake: '合并物品', title: '合并重复物品', key: 'home.item.update', preset: { op: 'merge' }, family: 'confirm', commandCn: '合并物品', prompt: '请加载「居家管家」技能，帮我合并重复物品（唤醒词：合并物品）', check: '变更前、变更后、影响说明三段是否齐，确认是否为留档式' },
+  { wake: '撤销操作', title: '撤销最近操作', key: 'home.item.update', preset: { op: 'undo' }, family: 'undo_select', commandCn: '撤销操作', prompt: '请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）', check: '可撤销条目与勾选交互是否可用，分组指引是否清晰' },
+  { wake: '物品关联', title: '设置物品关联', key: 'home.item.update', preset: { op: 'relate' }, family: 'relations', commandCn: '物品关联', prompt: '请加载「居家管家」技能，帮我设置物品关联（唤醒词：物品关联）', check: '主物品与对方编号是否在位，五种关系是否齐' },
+  { wake: '标物品', title: '修改物品标签', key: 'home.item.update', preset: { op: 'tags' }, family: 'receipt', commandCn: '标物品', prompt: '请加载「居家管家」技能，帮我修改物品标签（唤醒词：标物品）', check: '去除与新增两行是否在位' },
+  { wake: '管标签', title: '管理标签', key: 'home.tag.write', preset: { op: 'overview' }, family: 'tag_manage', commandCn: '管标签', prompt: '请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）', check: '总数、模式与七个操作按钮是否齐' },
+  { wake: '管分类', title: '管理分类', key: 'home.tag.write', preset: { op: 'category' }, family: 'category_manage', commandCn: '管分类', prompt: '请加载「居家管家」技能，帮我管理分类（唤醒词：管分类）', check: '总数、操作提示、拦截说明与种子分类说明是否齐' },
+  { wake: '整理建议', title: '标签分类整理建议', key: 'home.tag.write', preset: { op: 'tidy' }, family: 'tag_manage', commandCn: '整理建议', prompt: '请加载「居家管家」技能，帮我做标签分类整理（唤醒词：整理建议）', check: '相近对与合并忽略操作是否逐对在位，公式说明是否在位' },
 ];
 
 const ENVS = {};
@@ -81,23 +82,23 @@ before(() => {
   // 相近标签对（整理建议用）：首字相同且长度差一。
   runOk('home.item.update', { id: IDA, op: 'tags', tags: '常用,常用品' }, 'seed tags');
   // 11 条真链（顺序保证依赖：改物品先行；关联先于撤销，整理先于改标签，合并最后删条目）。
-  ENVS['3-1'] = runOk('home.item.update', { id: IDA, remark: '域二复核备注' }, '真链 3-1');
-  ENVS['3-2'] = runOk('home.item.update', { id: IDA, op: 'move', new_location: '阳台/收纳柜' }, '真链 3-2');
-  ENVS['3-3'] = runOk('home.item.update', { id: IDA, op: 'qty', plus: 2 }, '真链 3-3');
-  ENVS['3-4'] = runOk('home.item.update', { id: IDA, op: 'status', status: '备用' }, '真链 3-4');
-  ENVS['3-7'] = runOk('home.item.update', { id: IDA, op: 'relate', related: IDB }, '真链 3-7');
-  ENVS['3-6'] = runOk('home.item.update', { id: IDA, op: 'undo' }, '真链 3-6');
-  ENVS['4-3'] = runOk('home.tag.write', { op: 'tidy' }, '真链 4-3');
-  ENVS['4-1'] = runOk('home.tag.write', { op: 'overview' }, '真链 4-1');
-  ENVS['4-2'] = runOk('home.tag.write', { op: 'category' }, '真链 4-2');
-  ENVS['3-8'] = runOk('home.item.update', { id: IDA, op: 'tags', tags: '常用,出差' }, '真链 3-8');
-  ENVS['3-5'] = runOk('home.item.update', { id: IDA, op: 'merge', target: IDA, sources: String(IDC) }, '真链 3-5');
-  for (const s of SCENES) assert.equal(ENVS[s.id].key, s.key, '回执命令 ' + s.id);
+  ENVS['改物品'] = runOk('home.item.update', { id: IDA, remark: '域二复核备注' }, '真链 改物品');
+  ENVS['移物品'] = runOk('home.item.update', { id: IDA, op: 'move', new_location: '阳台/收纳柜' }, '真链 移物品');
+  ENVS['数量变更'] = runOk('home.item.update', { id: IDA, op: 'qty', plus: 2 }, '真链 数量变更');
+  ENVS['状态变更'] = runOk('home.item.update', { id: IDA, op: 'status', status: '备用' }, '真链 状态变更');
+  ENVS['物品关联'] = runOk('home.item.update', { id: IDA, op: 'relate', related: IDB }, '真链 物品关联');
+  ENVS['撤销操作'] = runOk('home.item.update', { id: IDA, op: 'undo' }, '真链 撤销操作');
+  ENVS['整理建议'] = runOk('home.tag.write', { op: 'tidy' }, '真链 整理建议');
+  ENVS['管标签'] = runOk('home.tag.write', { op: 'overview' }, '真链 管标签');
+  ENVS['管分类'] = runOk('home.tag.write', { op: 'category' }, '真链 管分类');
+  ENVS['标物品'] = runOk('home.item.update', { id: IDA, op: 'tags', tags: '常用,出差' }, '真链 标物品');
+  ENVS['合并物品'] = runOk('home.item.update', { id: IDA, op: 'merge', target: IDA, sources: String(IDC) }, '真链 合并物品');
+  for (const s of SCENES) assert.equal(ENVS[s.commandCn].key, s.key, '回执命令 ' + s.commandCn);
 });
 
 describe('#807 两层解析现场复核（契约 L1：同一预设只到一族）', () => {
   for (const s of SCENES) {
-    it(s.id + ' ' + s.key + ' → ' + s.family, async () => {
+    it(s.commandCn + ' ' + s.key + ' → ' + s.family, async () => {
       const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
       assert.equal(resolvePageFamily(s.key, s.preset), s.family);
     });
@@ -109,7 +110,7 @@ describe('#807 真链装配＋产物落盘（11 份）', () => {
     it(s.commandCn + '（' + s.family + '）', async () => {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'items', 'pages', s.family + '.js')).href);
       assert.equal(page.FAMILY, s.family);
-      const html = page.renderFamilyPage(ENVS[s.id]);
+      const html = page.renderFamilyPage(ENVS[s.commandCn]);
       for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {
         assert.ok(!html.includes(m), '标记未填充：' + m);
       }
@@ -130,7 +131,7 @@ describe('#807 真链装配＋产物落盘（11 份）', () => {
       batch: '物品管理（二）', madeAt: '2026-09-21',
       naming: '文件名只从本清单 file 字段读；生成器不算名、不裁规则',
       notShipped: [],
-      readings: { 产物: '11 份真链装配页（3-1 到 4-3 全覆盖）' },
+      readings: { 产物: '11 份真链装配页（改物品 到 整理建议 全覆盖）' },
       rows,
     };
     writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1), 'utf8');

@@ -20,7 +20,7 @@ export const PAGE_META = {
   key: 'home.ticket.query',
   shape: 'list',
   preset: {"kind":"purchase"} as Record<string, unknown>,
-  scenarios: ["SM6-1","SM6-2","SM6-3","SM6-4","SM6-5"] as readonly string[],
+  rows: [{"key":"home.ticket.query","preset":{"kind":"purchase"}},{"key":"home.ticket.query","preset":{"kind":"purchase","range":"last-month"}},{"key":"home.ticket.query","preset":{"kind":"purchase","range":"year"}},{"key":"home.ticket.query","preset":{"kind":"purchase","range":"return"}},{"key":"home.ticket.write","preset":{"kind":"purchase","op":"add"}}] as readonly { readonly key: string; readonly preset: Record<string, unknown> }[],
 } as const;
 
 export const REQUIRED_BLOCKS = {
