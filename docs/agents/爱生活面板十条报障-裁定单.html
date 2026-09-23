@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>爱生活面板十条报障 · 裁定单</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#151517; --ink2:#5b6169; --ink3:#8a9098;
+    --line:#e4e6ea; --rec:#1a7f5a; --recbg:#eefaf4; --warn:#a8631a; --warnbg:#fdf6ec;
+    --bad:#b3392f; --badbg:#fdefee; --accent:#2b5ce6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  a{color:var(--accent)}
+  header{position:sticky;top:0;z-index:9;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 22px}
+  header h1{margin:0 0 6px;font-size:19px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:1px 10px;background:#fff}
+  .chip.ok{border-color:var(--rec);color:var(--rec)}
+  .chip.wait{border-color:var(--warn);color:var(--warn)}
+  wrap{display:block;max-width:1080px;margin:0 auto;padding:18px 22px 120px}
+  .howto{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 16px;margin:0 0 18px;font-size:14px}
+  .howto b{color:var(--accent)}
+  h2{font-size:16px;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  table.sum{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px}
+  table.sum th,table.sum td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  table.sum th{background:#fafbfc;color:var(--ink2);font-weight:600;white-space:nowrap}
+  table.sum tr:last-child td{border-bottom:0}
+  .card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .card.done{border-left-color:var(--rec)}
+  .card h3{margin:0 0 4px;font-size:16.5px}
+  .card h3 .id{font-size:12.5px;color:var(--ink3);font-weight:400;margin-left:6px}
+  .ctx{color:var(--ink2);font-size:13.8px;margin:6px 0 10px}
+  .ctx .k{background:#fff6d6;padding:0 3px;border-radius:3px}
+  details{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:8px 0 10px;font-size:13px;color:var(--ink2)}
+  details summary{cursor:pointer;color:var(--ink2);font-weight:600}
+  details p{margin:8px 0 4px}
+  code{background:#eef0f3;padding:1px 5px;border-radius:4px;font-size:12.6px}
+  .ask{font-weight:600;margin:12px 0 8px}
+  .opt{display:block;border:1px solid var(--line);border-radius:9px;padding:9px 12px 9px 12px;margin:7px 0;cursor:pointer;transition:.12s}
+  .opt:hover{border-color:#c8ccd3}
+  .opt input{margin-right:8px;vertical-align:1px}
+  .opt.on{border-color:var(--rec);background:var(--recbg)}
+  .opt.rec .tag{background:var(--rec);color:#fff}
+  .tag{display:inline-block;font-size:11.5px;border-radius:999px;padding:0 7px;margin-left:6px;background:#eef0f3;color:var(--ink2);vertical-align:1px}
+  .pl{display:block;margin-top:4px;font-size:13px;color:var(--ink2)}
+  .pl b.p{color:var(--rec)} .pl b.c{color:var(--warn)}
+  footer{max-width:1080px;margin:0 auto;padding:0 22px 60px;color:var(--ink3);font-size:13px}
+  .dock{position:fixed;right:18px;bottom:18px;z-index:20;background:#151517;color:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25);font-size:13.5px;min-width:260px}
+  .dock .n{font-variant-numeric:tabular-nums}
+  .dock button{margin-top:8px;width:100%;border:0;border-radius:8px;padding:8px 10px;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .dock button.primary{background:#3d7bff;color:#fff}
+  .dock button.ghost{background:rgba(255,255,255,.14);color:#fff;margin-top:6px}
+  .dock .hint{color:#b9bfc7;font-size:12px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>爱生活面板十条报障 · 裁定单</h1>
+  <div class="chips">
+    <span class="chip ok">调查 6/6 已完成</span>
+    <span class="chip wait">待你裁定：9 张卡</span>
+    <span class="chip">本图只出规格、不落码</span>
+    <span class="chip">地图 <a href="https://github.com/FeatherHunter/ilife/issues/929">#929</a></span>
+  </div>
+</header>
+<wrap>
+
+<div class="howto" style="border-left-color:#1a7f5a;background:#f4fbf7">
+  <b>进度（本单已部分落定）：</b>#931 = **A** ／ #932 = 按 **#941 方案乙**（白底＋`1px #cfd2d8`）／ #933 = **A**（容器层 gap，间距 10，外观并票）／ #934 = 推荐（彻底不说 ＋ 一并删）／ #936 = **候选一**（收进母版行盒）／ #937 = 推荐 ／ #938 = **甲（删 4 项）** ／ #939 = 灰条保留 ＋ 浅色条 `#d8dade` ＋ 骨架≡终态 ／ #941 = **方案乙**。<br>
+  <b>仍未定（只剩三条）：</b>① 4 条漂名令牌：另开收容票 / 就地摆正；② 5 个文件的 `S` 表：先记雾 / 现在下沉共用件；③ 边界：施工在本图内另开执行票 / 另起一图。<br>
+  <b>原型对照（要看界面就开这个）：</b><a href="爱生活面板十条报障-原型对照.html"><b>《原型对照》</b></a> —— ② 输入框（已按方案乙重做）、⑧ 浅色层级、⑨ 飞书 CLI 区，都在里面。
+</div>
+
+<div class="howto">
+  <b>怎么用：</b>每张卡点一个选项（推荐项标了 <span class="tag" style="background:var(--rec);color:#fff">推荐</span>），右下角点 <b>“一键全选推荐”</b> 再点 <b>“复制我的选择”</b>，把那段文字贴回对话即可。
+  我不替你决定这些：它们都是你可见的设计取向与范围问题。<br>
+  <b>看不清就别猜：</b>界面类的每一项都有实际渲染的原型对照 —— <a href="爱生活面板十条报障-原型对照.html"><b>打开《原型对照》（可切深色／浅色、可只看推荐）</b></a>，里面是「现状 vs 各候选」并排，用真实令牌值画的。<br>
+  <b>每张卡的前因都写了"真因已查实"的读数</b>——展开 <code>展开读数</code> 看证据，不展开也能决定。
+</div>
+
+<h2>一页速览</h2>
+<table class="sum">
+  <thead><tr><th>票</th><th>一句话</th><th>推荐</th><th>状态</th></tr></thead>
+  <tbody id="sumBody"></tbody>
+</table>
+
+<h2>逐条决定</h2>
+<div id="cards"></div>
+
+</wrap>
+
+<footer>
+  <p>未列入本单：<b>§五 四件遗留</b>（体重数据本身的问题、公共层转票、<code>0.3.13</code> 发版、5 卡末格半宽）与工作区里 17 件未提交的 <code>0.3.13</code> 版本号抬升——都不在本图范围，我没有动。</p>
+  <p><b>#935 星星悬停文案</b>（<code>你的🌟是我夜空中最亮的星。</code>）规格已备、无需决定，已挂 <code>ready-for-agent</code>。</p>
+</footer>
+
+<div class="dock">
+  <div>已选 <span class="n" id="cnt">0</span> / <span class="n" id="total">0</span> 项</div>
+  <button class="primary" id="allrec">一键全选推荐</button>
+  <button class="ghost" id="clear">清空重选</button>
+  <div class="hint" id="copyhint">复制后贴回对话即可</div>
+</div>
+
+<script>
+const DATA = [
+  {
+    id:'#931', title:'图一 · 深色主题下选中的页签，字看不见', ask:'接受"选中＝近白药丸"这个宿主设计吗？',
+    ctx:'深色下六枚页签里<b>被选中那一枚</b>的文字与药丸底几乎同色，读不出来；其余五枚正常。',
+    why:'真因已查实：选中底取的是宿主 <code>--dsw-alias-brand-primary</code>（浅 <code>#0f1115</code>／深 <code>#f9fafb</code>，是<b>反相墨色</b>），而它的<b>配对前景</b>被写死成字面 <code>#fff</code>（三处：<code>client.ts:105</code>、<code>update-panel.ts:38/115</code>）⇒ 深色 <b>1.045:1</b>、浅色 18.90:1。',
+    detail:'宿主自己的 settings 主按钮与 message-feedback 里那个"选中药签"都用同一对别名；我们要改的只是"取别名、别写字面"。',
+    opts:[
+      {t:'A 接受 —— 三处换成配对别名 <code>--dsw-alias-label-primary-foreground</code>', p:'守住宿主"选中＝反色"的既有设计；浅色<b>零回退</b>（18.90:1 不变）；改动最小（三行）。', c:'深色下选中的是一块<b>浅色药丸</b>，与"深色界面"的直觉相反。', rec:true},
+      {t:'B 不接受 —— 改用宿主"浅底＋主字"档 <code>--dsw-specific-sidebar-nav-item-active</code>', p:'深色下选中是深底浅字，最符合直觉；对比 16.2:1／9.18:1。', c:'与宿主自身"选中＝反色"的用法分道，面板与宿主其它控件从此不一致。'}
+    ],
+    row:{t:'#931 深色选中药签', k:'接受"近白药丸"'}
+  },
+  {
+    id:'#932', title:'图七 · 浅色主题下输入框与卡面同色', ask:'边界怎么补？',
+    ctx:'浅色下输入框填充 <code>#ffffff</code>、卡片底 <code>#f8f8f8</code>，几乎同色，只剩一条极浅描边；深色下之所以好看，是因为输入框底 <code>#151517</code> 落在卡面 <code>#232324</code> 上<b>天然有面差</b>。',
+    why:'真因已查实：浅色下<b>四层底同值 <code>#fff</code></b>（bg-base = layer-1/2/3）⇒"比卡面深一档"在令牌体系里<b>不存在</b>；边界只能靠描边档。现状 <code>border-l2</code> 合成 <code>#e5e5e5</code> = <b>1.26:1</b>，而宿主自己的输入框一律用 <code>l4</code>（1.45:1）或 0.5px elevation stroke。',
+    detail:'我上一轮图里给的"候选 C 换沉底＋描边"已作废——浅色没有更深的底可取；要做得靠派生自定值（候选 D）。',
+    opts:[
+      {t:'A 换描边档：底不动，<code>border-l2 → border-l4</code>（或补 <code>elevation-soft</code> 阴影）', p:'只换档、不加自定值、<b>不破 #920 的取值锚</b>；与宿主同款做法。', c:'对比只到 1.45:1，是"可见"的最低档；改完仍需你肉眼验浅色。', rec:true},
+      {t:'D 派生自定值（<code>color-mix</code> 做出真面差）', p:'边界更明显。', c:'新增取值锚、与 #920 的取值口径冲突，且是全仓第一处派生色。'}
+    ],
+    row:{t:'#932 浅色输入框', k:'换描边档 vs 派生值'}
+  },
+  {
+    id:'#933', title:'图二 · 体检卡片与上方卡片零间隙', ask:'三小问（间距 / 并票 / 修法）',
+    ctx:'配置面板底部，"保存／重置为默认／重新读取"那一排卡片与下方「＜技能＞ · 体检」卡片<b>边线直接相接</b>——实测两线之间底色 <b>0 行</b>（不是"几乎贴合"）。',
+    why:'真因已查实：两张卡并列在一个<b>无样式的 div</b> 里，容器没有堆叠间距口径（面板卡零 margin、体检卡只有 marginBottom）⇒ 相邻外边距 <code>max(0,0)=0</code>。修法应在<b>容器层</b>，不是给某张卡加 margin。',
+    detail:'普查：全设置区只有这一对间距为 0（六家各一处、同一段码）；其余相邻对有主（16／10／8／11-9-14）。修法 A 必须同时把 <code>hidden:!selected</code> 换成显式 <code>style</code>，否则 UA 的 <code>[hidden]</code> 输给内联样式、六个预热页签会全露（我已全仓核过：该陷阱只此一处）。',
+    opts:[
+      {t:'间距取 10 ＋ 卡片外观（圆角 12 vs 10、两套边框色）<b>并票对齐</b> ＋ 修法 A（容器层加 gap）', p:'10 是壳里既有口径（四处同值）；并票＝按"就地摆正"一次改完；A 一处覆盖六家。', c:'并票让改动面跨两件、窗口更大；A 要连带那一处 <code>hidden</code> 改法。', rec:true},
+      {t:'间距取 16 ＋ 不并票 ＋ 修法 B（把体检表并进面板卡内）', p:'16 与"卡片间距"观感更统一；B 之后体检表与面板同卡，天然没有缝。', c:'16 要一并改 summaryRow/meta/tablist；B 要改共用面板插入点、六家附加块一起动，且推翻 #732 定稿形态。'}
+    ],
+    row:{t:'#933 图二零间隙', k:'10 ＋ 并票 ＋ 容器层 gap'}
+  },
+  {
+    id:'#934', title:'图三 · 面板里的版本行与「高级」说明', ask:'删掉之后的口径 ＋ 零消费者样式槽',
+    ctx:'卡路里／备忘录面板底部各有一行 <code>0.3.13 · 技能 0.3.13</code>；所有"高级"组标题右侧都带一句「不常改。留空＝用默认值。」。你已裁定两处都删。',
+    why:'删除面已查实 <b>18 处</b>（版本行 3 处 ＋ 那句文案 15 处：合约常量、渲染位、六家各一份字面副本与各一条转出）；连带断言 6 条（2 必改 4 登记）。<code>VersionLine</code>／<code>fetchVersions</code> <b>要留</b>（sidebar 卡片仍在用）；版本仍可从 sidebar 卡片、装机包描述文件、版本魔键三路取到。',
+    detail:'我独立 grep 复核过定义／复制／转出／断言四点，全部对上。另：<code>docs/</code> 下还有 6 处复制了这句文案——文档不归结构纪律管，施工只删源码面。',
+    opts:[
+      {t:'那句话删后<b>彻底不说</b> ＋ 零消费者的 <code>S.version</code>／<code>S.groupNote</code> <b>一并删</b>', p:'零成本，且该口径已<b>逐行住在每条的 hint 里</b>（合约本就要求 hint 写"留空会怎样"）；三家高级项全是只读行、根本没有"留空"。删掉没人取的槽位，正是本批问题的根。', c:'高级组少了总说明（可接受）；删 <code>S.version</code> 要连带改 <code>panel-type-739</code> 的一条断言。', rec:true},
+      {t:'另立更短说法 ＋ 只删 <code>S.groupNote</code>', p:'保留一句总说明，改动面略小。', c:'要多一个定义地 ＋ 一个对外名 ＋ 一条锁字面断言，且"留空"只读行不成立。'}
+    ],
+    row:{t:'#934 版本行与高级说明', k:'彻底不说 ＋ 一并删'}
+  },
+  {
+    id:'#936', title:'图四／图五 · 备忘录与作息的「飞书 CLI」区', ask:'走哪版原型？（上方那张对照图）',
+    ctx:'这块现在是<b>裸块</b>：大标题 ＋ 两行正文 ＋ 两个描边按钮 ＋ 一条带下划线的官网链接；没有卡片外框，也没有面板其它行的结构，视觉上像外来物。',
+    why:'研究把"结构不同形"定住了：面板里每个块都应是行件系统的成员。关键是别丢掉它特有的"多行诊断结论"。',
+    detail:'落地路径已备：推荐<b>下沉到 <code>plugin-manager</code> 共用件</b>做一个"状态块行件"，两家只交数据——现在正好是第二个用法。判据文案逐字不动。',
+    opts:[
+      {t:'候选一 · 收进「母版行」沉底盒（标签 ＋ 状态胶囊 ＋ 说明 ＋ 动作行 ＋ 链接行）', p:'外形与面板同形；多行说明不丢；三档状态（未登录／已就绪／没找到）一眼可辨。', c:'三档文案要从长句改成短词，长句留在说明行。', rec:true},
+      {t:'候选二 · 拆成标准行（左标签＋右值＋下边线，说明缩进挂行下）', p:'最像配置项，与"数据目录"完全同族。', c:'说明＋按钮＝行下一堆附属，行表节奏被打断。'},
+      {t:'候选三 · 只补外框与层级（内容一字不动）', p:'改动最小、零语义风险。', c:'"标题 ＋ 两行正文"的叙述块形态仍与面板其它行不同形。'}
+    ],
+    row:{t:'#936 飞书区原型', k:'候选一（母版行盒）'}
+  },
+  {
+    id:'#937', title:'图六 · 标题行的版本胶囊 ＋ "加载慢"', ask:'四个小问（占位 / 读不到 / 可点 / 宿主侧改动 / 字号）',
+    ctx:'标题「爱生活」下面单独占一行 <code>总管 dsh-life-pack · 0.3.13</code>；你要去掉"总管"、并到同一行做胶囊，且"版本字加载很慢应该很快就出现"。',
+    why:'<b>反转</b>：面板首帧<b>本来就不等版本</b>（初值就是"未知"、无条件渲染）⇒ 单纯"加占位"对现状零改动、不算解决；磁盘取数被实测证伪（懒建表 1.8ms／<code>readManagerVersion</code> 0.22ms／整张表 4.6ms），唯一没量到的只剩那通 <code>POST /api/ilife-manager</code> 的往返。',
+    detail:'顺带挖出一个真 bug：<b>取版本一次失败永不重试</b>，会永久停在 <code>unknown</code>（<code>client.ts:264-272</code>）——已列为本票必改项，与 TTFB 结论无关。',
+    opts:[
+      {t:'占位 <code>…</code> ＋ 读不到印<b>中文</b> ＋ 胶囊<b>不可点</b> ＋ 宿主侧改动"<b>只在 TTFB 证明需要时</b>才做" ＋ 字号按<b>源码</b>（15／12）', p:'`…` 最短不占宽，且这处在 <code>client.ts</code>、不撞"共用件零省略号"锁；中文对人友好；不可点则不进导航、零额外状态；不拿读数就不白改宿主；源码是权威尺寸。', c:'`…` 信息量少；中文与卡路里现状（印 unknown）暂时不一致；少了更新入口；宿主侧那 1–2ms 的收益要你看一次 DevTools 的 TTFB 才能定；若你的截图没缩放，观感确实偏小（可另开一票谈字号）。', rec:true},
+      {t:'占位 <code>dsh-life-pack · …</code> ＋ 读不到印 <code>unknown</code> ＋ 胶囊可点 ＋ 现在就改宿主 ＋ 字号按截图（20–24／12–14）', p:'占位信息更全；与卡路里现状一致；多一个入口；宿主侧改动立刻生效；字号更醒目。', c:'占位更长会挤压标题行；`unknown` 是给机器看的；可点要接更新面板、多一层状态；立刻改宿主可能白做（链路只有 1–2ms）；截图疑似缩放，按它改会把全站字号带偏。'}
+    ],
+    row:{t:'#937 版本胶囊与慢', k:'占位 … ＋ 中文 ＋ 不可点 ＋ 按需动宿主'}
+  },
+  {
+    id:'#938', title:'问题四 · 体检 4 项在装好的机器上恒红', ask:'删掉 / 留一格（＋两小问）',
+    ctx:'你在装好的 DSH 里点体检，4 项报红（备忘场景资产／大厨场景资产／作息分类清单／居家种子分类），"去哪修"还建议"重装这个技能包即会补齐"。',
+    why:'真因已查实：四包 <code>package.json</code> 的 <code>files</code> <b>只发 <code>dist</code>／<code>SKILL.md</code>／<code>templates</code></b> ⇒ 装机态<b>按设计没有 <code>src/</code></b>，"重装即补齐"给不出；而且真缺那件产物时 CLI 的静态 import 会先崩、<b>体检报告本身出不来</b> ⇒ 这 4 条红<b>不可达</b>，只会在装好的机器上恒红。',
+    detail:'我实地探过装机包：顶层只有 <code>dist, node_modules, templates, package.json, SKILL.md</code>，4 个 <code>src/…</code> 探针 <code>Test-Path</code> 全 False、对应 <code>dist/…js</code> 全 True。',
+    opts:[
+      {t:'甲 <b>删掉这 4 项</b> ＋ 作息那条旧文件名<b>换新仓名字</b> ＋ <code>publish:fresh</code> 的 <code>--only</code> <b>先不动、另记</b>', p:'不再给装好的机器恒红与错建议；"包坏了"其实有更早的信号（命令跑不起来）。', c:'少了 4 条"包不完整"的检查项（但那类坏法本来就有更早的信号）。', rec:true},
+      {t:'乙 留一格：改探 <code>dist/</code> ＋ 加内容口径断言，<b>只落 CI 装机判据、不上面板</b>', p:'保留一条装机自检。', c:'阈值会变成第二份会过期的清单；还要在 CI 里补覆盖这四家。'}
+    ],
+    row:{t:'#938 体检 4 项', k:'甲 · 删项'}
+  },
+  {
+    id:'#939', title:'第十条 · 首屏两行不占位，读到值后整块下跳', ask:'占位形态 ＋ 高度口径 ＋ 首次运行那行',
+    ctx:'刚打开面板时这块只显示一行小灰字「配置读取中」，两行（配置文件／数据目录）等回执到了才出现 ⇒ 控件高度从 1 行变 3 行、下方内容下移。你要"首屏就按两行占位、读到后原地填值、高度不变"。',
+    why:'位移 <b>21px</b> 已算清，与取数快慢无关——它是"渲染了什么"的函数；「配置读取中」<b>不能直接删</b>（首屏没有第二个"正在读"表示），应搬到底栏 note 槽。<b>"灰条"被推翻</b>：浅色下四层底同值 <code>#fff</code>（灰条＝白底白条；宿主专属骨架档 <code>bg-skeleton</code> 只有 1.09:1，天花板 1.45:1）。',
+    detail:'文本占位候选的读数：<code>label-tertiary</code> 对比 浅 <b>3.71</b> ／ 深 7.36–5.67；用的是中点 <code>···</code>（U+00B7），<b>不撞</b>"共用件视图件零 <code>…</code>"那条锁。',
+    opts:[
+      {t:'值位用<b>文本占位 <code>···</code></b>（取 <code>label-tertiary</code>）＋ 高度口径取<b>骨架 ≡ 终态、回执零位移</b> ＋ 首次运行那行<b>算在本条口径内</b>', p:'对比高、语义正、顺手画出值位宽度；不推翻 #920 的既有定稿；首次运行也一并说清。', c:'不是"图形骨架"（但值位本来就是文本）；真值很长时仍会折行（那是就绪态今天就有的行为）。', rec:true},
+      {t:'值位用<b>灰条</b>（需你批准 <code>color-mix</code> 派生值）＋ 高度口径取<b>硬不变式</b>（固定行高截断／单行省略）', p:'灰条更像"加载中"；硬不变式字面上"高度永不变"。', c:'派生值新增取值锚、破 #920；硬不变式要推翻 #920 的"零截断／零省略号"定稿。'}
+    ],
+    row:{t:'#939 首屏骨架', k:'文本占位 ··· ＋ 骨架≡终态'}
+  },
+  {
+    id:'#930-其余', title:'样式地基的其余三问（令牌与结构）', ask:'漂名令牌 / S 表归属 / 门槛',
+    ctx:'地基普查顺手查出：本包 <code>src</code> 用的 18 条 <code>--dsw-*</code> 里，<b>4 条在宿主里根本不存在</b>（<code>--dsw-alias-border</code>、<code>bg-elevated</code>、<code>label-error</code>、<code>state-warning-primary</code>）——这些位永远走我们写的字面回退。',
+    why:'另外两条：5 个插件文件各抱一套 <code>S</code> 样式表（纪律允许下沉共用件，但要有第二个用法）；判据门槛要定数字，而宿主自己的浅色输入框也达不到 WCAG 3:1。',
+    detail:'门槛取 1.45 的理由：那是宿主自身水平；取 3:1 等于给整仓开红。',
+    opts:[
+      {t:'4 条漂名令牌<b>另开一张收容票</b> ＋ <code>S</code> 表<b>先记雾、另议</b> ＋ 门槛<b>取 1.45</b>', p:'漂名清理跨 5 个文件、属另一件事，不占本图；不动结构；门槛贴着宿主现状，不给自己开红。', c:'多一张票；样式表仍分散；门槛低于无障碍通行的 3:1（但宿主自己也不达标）。', rec:true},
+      {t:'4 条<b>就地摆正</b> ＋ <code>S</code> 表<b>现在就下沉共用件</b> ＋ 门槛<b>取更高（如 3:1）</b>', p:'一次收干净；样式表集中。', c:'漂名清理会把本图改动面撑大；下沉是新建共用位、没有第二个用法支撑；3:1 会让全仓输入框判红。'}
+    ],
+    row:{t:'#930 其余三问', k:'另开收容票 ＋ 记雾 ＋ 门槛 1.45'}
+  },
+  {
+    id:'边界', title:'边界 · 规格齐了以后，施工怎么走', ask:'一处决定',
+    ctx:'这张图按规矩只产出"可直接施工的规格"，不落码。',
+    why:'出口票 <b>[出口] 施工切票</b>（<a href="https://github.com/FeatherHunter/ilife/issues/940">#940</a>）已经建好：它要把十条规格落成"冲突面矩阵 ＋ 执行顺序 ＋ 合票口径"，并被上面 9 张票原生挡着。',
+    detail:'已知冲突面：#931／#933／#937 都碰 <code>client.ts</code>；#932／#934／#939 都碰 <code>config-panel-view.ts</code> ⇒ 必须串行或合票。',
+    opts:[
+      {t:'在本图内另开执行票（规格与施工同一处可追）', p:'裁定落地后我立刻能把 9 张票关掉、解阻 #940；施工期间判据与规格就在同一棵树里对照。', c:'这张图会更长一点。', rec:true},
+      {t:'另起一张新图（施工单独一图）', p:'本图干净收在"规格"上。', c:'要多一次图的开销，且规格与施工之间的对应关系要靠外部引用维持。'}
+    ],
+    row:{t:'边界', k:'本图内另开执行票'}
+  }
+];
+
+const wrap = document.getElementById('cards');
+const sumBody = document.getElementById('sumBody');
+const cntEl = document.getElementById('cnt');
+document.getElementById('total').textContent = DATA.length;
+
+DATA.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card-' + i;
+  const opts = c.opts.map((o, j) =>
+    `<label class="opt${o.rec ? ' rec' : ''}" data-i="${i}" data-j="${j}">
+       <input type="radio" name="g${i}" value="${j}">
+       <b>${o.t}</b>${o.rec ? '<span class="tag">推荐</span>' : ''}
+       <span class="pl"><b class="p">利：</b>${o.p}</span>
+       <span class="pl"><b class="c">弊：</b>${o.c}</span>
+     </label>`).join('');
+  card.innerHTML = `
+    <h3>${c.title}<span class="id">${c.id}</span></h3>
+    <div class="ctx">${c.ctx}</div>
+    <div class="ctx">${c.why}</div>
+    <details><summary>展开读数与补充</summary><p>${c.detail}</p></details>
+    <div class="ask">要你定：${c.ask}</div>
+    ${opts}`;
+  wrap.appendChild(card);
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${c.row.t}</td><td>${c.row.k}</td><td style="color:var(--rec)">推荐</td><td id="st-${i}" style="color:var(--warn)">待选</td>`;
+  sumBody.appendChild(tr);
+});
+
+function picked() {
+  return DATA.map((c, i) => {
+    const el = document.querySelector(`input[name="g${i}"]:checked`);
+    return el ? Number(el.value) : null;
+  });
+}
+function refresh() {
+  const p = picked();
+  const n = p.filter((x) => x !== null).length;
+  cntEl.textContent = n;
+  p.forEach((v, i) => {
+    const st = document.getElementById('st-' + i);
+    st.textContent = v === null ? '待选' : '已选';
+    st.style.color = v === null ? 'var(--warn)' : 'var(--rec)';
+    document.getElementById('card-' + i).classList.toggle('done', v !== null);
+  });
+}
+document.addEventListener('change', (e) => {
+  const i = e.target.dataset ? e.target.dataset.i : null;
+  if (i === undefined || i === null) return;
+  document.querySelectorAll(`.opt[data-i="${i}"]`).forEach((el) => el.classList.toggle('on', el.querySelector('input').checked));
+  refresh();
+});
+document.getElementById('allrec').onclick = () => {
+  DATA.forEach((c, i) => {
+    const j = c.opts.findIndex((o) => o.rec);
+    const el = document.querySelector(`input[name="g${i}"][value="${j}"]`);
+    el.checked = true;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+};
+document.getElementById('clear').onclick = () => {
+  document.querySelectorAll('input[type=radio]').forEach((el) => { el.checked = false; el.dispatchEvent(new Event('change', { bubbles: true })); });
+};
+document.getElementById('copyhint').onclick = null;
+document.querySelector('.dock').addEventListener('click', (e) => {
+  if (e.target.id !== 'copyhint') return;
+});
+function copyText() {
+  const lines = ['爱生活面板十条报障 · 我的裁定：'];
+  picked().forEach((v, i) => {
+    const c = DATA[i];
+    const o = c.opts[v === null ? c.opts.findIndex((x) => x.rec) : v];
+    const rec = (v === null || v === c.opts.findIndex((x) => x.rec)) ? '（推荐）' : '';
+    lines.push(`- ${c.row.t}：${o.t.replace(/<[^>]+>/g, '')}${v === null ? '〔未选，按推荐〕' : rec}`);
+  });
+  const txt = lines.join('\n');
+  navigator.clipboard.writeText(txt).then(() => {
+    document.getElementById('copyhint').textContent = '已复制 —— 贴回对话即可';
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    document.getElementById('copyhint').textContent = '已复制 —— 贴回对话即可';
+  });
+}
+const b = document.createElement('button');
+b.className = 'primary'; b.id = 'copy'; b.textContent = '复制我的选择';
+b.onclick = copyText;
+const dock = document.querySelector('.dock');
+dock.insertBefore(b, document.getElementById('copyhint'));
+refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>爱生活面板十条报障 · 原型对照</title>
+<style>
+  :root[data-theme="dark"]{
+    --page:#0f0f11; --card:#232324; --sunken:#353638; --sunken2:#2b2c2e;
+    --l1:rgba(255,255,255,.06); --l2:rgba(255,255,255,.12); --l4:rgba(255,255,255,.28);
+    --ink:#f9fafb; --ink2:#cfd3d6; --ink3:#adb2b8;
+    --brand:#f9fafb; --brandfg:#0f1115;
+    --nav:#43454a; --navfg:#f9fafb;
+    --skel:rgba(255,255,255,.09);
+    --warn:#e0a33e; --bad:#e0685f; --ok:#4ec9a0;
+    --chipbg:#353638;
+  }
+  :root[data-theme="light"]{
+    --page:#ffffff; --card:#ffffff; --sunken:#ffffff; --sunken2:#ffffff;
+    --l1:#ececec; --l2:#e5e5e5; --l4:#d6d6d6;
+    --ink:#151517; --ink2:#5b6169; --ink3:#858585;
+    --brand:#0f1115; --brandfg:#ffffff;
+    --nav:#ebeef2; --navfg:#0f1115;
+    --skel:rgba(0,0,0,.045);
+    --warn:#a8631a; --bad:#b3392f; --ok:#1a7f5a;
+    --chipbg:#f2f2f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:20;background:var(--page);border-bottom:1px solid var(--l1);padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0}
+  header .sp{flex:1}
+  .btn{border:1px solid var(--l2);background:transparent;color:var(--ink);border-radius:8px;padding:5px 12px;font:inherit;cursor:pointer}
+  .btn.on{background:var(--brand);color:var(--brandfg);border-color:var(--brand)}
+  a{color:inherit}
+  nav{max-width:1100px;margin:14px auto 0;padding:0 22px;display:flex;gap:8px;flex-wrap:wrap;font-size:13px}
+  nav a{border:1px solid var(--l2);border-radius:999px;padding:2px 11px;text-decoration:none;color:var(--ink2)}
+  main{max-width:1100px;margin:0 auto;padding:8px 22px 90px}
+  section{margin:30px 0 0}
+  h2{font-size:16px;margin:0 0 4px}
+  .lead{color:var(--ink2);font-size:13.5px;margin:0 0 12px}
+  .grid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .shot{flex:1 1 340px;min-width:310px}
+  .lab{font-size:12.5px;color:var(--ink3);margin:0 0 6px;display:flex;align-items:center;gap:7px}
+  .tag{font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--l2);color:var(--ink2);white-space:nowrap}
+  .tag.rec{background:var(--ok);border-color:var(--ok);color:#fff}
+  .tag.now{background:var(--bad);border-color:var(--bad);color:#fff}
+  /* 面板壳 */
+  .panel{border:1px solid var(--l1);border-radius:12px;padding:16px 18px;background:var(--page)}
+  .panel.solid{background:var(--card)}
+  .title{font-size:15px;font-weight:700;margin:0 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .meta{font-size:12.5px;color:var(--ink3);margin:0 0 12px}
+  .capsule{border:1px solid var(--l2);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:400;color:var(--ink2);background:var(--chipbg);white-space:nowrap}
+  .capsule.big{font-size:12.5px;padding:2px 11px}
+  /* 页签 */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--l2);border-radius:999px;padding:3px 11px;font-size:13px;color:var(--ink);background:transparent;white-space:nowrap}
+  .tab i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+  .tab.sel-nowimei{background:var(--brand);border-color:var(--brand);color:var(--brand)}
+  .tab.sel-a{background:var(--brand);border-color:var(--brand);color:var(--brandfg)}
+  .tab.sel-b{background:var(--nav);border-color:var(--l4);color:var(--navfg)}
+  /* 卡片 */
+  .card{background:var(--card);border:1px solid var(--l1);border-radius:12px;padding:14px 16px}
+  .card.r10{border-radius:10px;border-color:var(--l2)}
+  .card h4{margin:0 0 8px;font-size:14.5px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--l1)}
+  .row:last-child{border-bottom:0}
+  .k{font-size:12px;color:var(--ink3);min-width:104px}
+  .v{font-size:13.5px;color:var(--ink)}
+  .input{display:block;width:100%;margin-top:4px;padding:5px 8px;border-radius:6px;background:var(--page);color:var(--ink);font:inherit}
+  .input.b-l2{border:1px solid var(--l2)}
+  .input.b-l4{border:1px solid var(--l4)}
+  .input.d-derived{border:1px solid var(--l4);background:var(--sunken2)}
+  .stack{display:flex;flex-direction:column}
+  .stack.g0{gap:0}
+  .stack.g10{gap:10px}
+  .stack.g16{gap:16px}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:10px;margin-top:10px;border-top:1px solid var(--l1);font-size:12.5px;color:var(--ink3)}
+  .act{border:1px solid var(--l2);border-radius:6px;padding:3px 10px;font-size:12.5px;color:var(--ink);background:transparent;cursor:pointer;white-space:nowrap}
+  .muted{color:var(--ink3);font-size:12.5px}
+  .hint{color:var(--ink2);font-size:12.5px;margin-top:3px}
+  .bigtitle{font-size:15px;font-weight:700;margin:0}
+  .notes{margin:6px 0 0;font-size:12.5px;color:var(--ink3)}
+  .skel-bar{height:14px;border-radius:4px;background:var(--skel);width:70%}
+  .skel-empty{height:14px;border-radius:4px;border:1px solid var(--l2);width:70%}
+  .ph{color:var(--ink3)}
+  .warnrow{color:var(--bad);font-size:13px}
+  .okrow{color:var(--ok);font-size:13px}
+  .split{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}
+  .split b{font-weight:600;color:var(--ink2)}
+  .cap{font-size:12px;color:var(--ink3);margin:8px 0 0}
+  footer{max-width:1100px;margin:0 auto;padding:0 22px 60px;color:var(--ink3);font-size:12.5px}
+  .hide{display:none}
+  /* 强制浅色：这一节无论在哪个主题下都按浅色渲染（因为要看的正是浅色） */
+  .force-light{--page:#ffffff;--card:#ffffff;--sunken:#ffffff;--sunken2:#ffffff;
+    --l1:#ececec;--l2:#e5e5e5;--l4:#d6d6d6;--ink:#151517;--ink2:#5b6169;--ink3:#858585;
+    --skel:rgba(0,0,0,.05);--chipbg:#f2f2f2;color:var(--ink)}
+  .force-dark{--page:#151517;--card:#232324;--sunken:#353638;--sunken2:#2b2c2e;
+    --l1:rgba(255,255,255,.06);--l2:rgba(255,255,255,.12);--l4:rgba(255,255,255,.28);
+    --ink:#f9fafb;--ink2:#cfd3d6;--ink3:#adb2b8;--skel:rgba(255,255,255,.09);--chipbg:#353638;color:var(--ink)}
+  .swatch{display:inline-block;width:56px;height:16px;border-radius:4px;border:1px solid var(--l2);vertical-align:-3px;margin-right:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>原型对照 · 十条面板报障</h1>
+  <span class="tag">真实令牌值渲染</span>
+  <span class="sp"></span>
+  <button class="btn" id="theme">切到浅色主题</button>
+  <button class="btn" id="only">只看推荐</button>
+  <a class="btn" href="爱生活面板十条报障-裁定单.html">← 回裁定单</a>
+</header>
+
+<nav>
+  <a href="#s1">① 图一 深色选中药签</a>
+  <a href="#s2">② 图七 输入框边界</a>
+  <a href="#s3">③ 图二 卡片间距</a>
+  <a href="#s4">④ 图三 版本行/高级说明</a>
+  <a href="#s5">⑤ 图六 版本胶囊</a>
+  <a href="#s6">⑥ 第十条 首屏骨架</a>
+  <a href="#s7">⑦ 问题四 体检表</a>
+  <a href="#s8">⑧ 新增 · 浅色没有卡片感</a>
+  <a href="#s9">⑨ 飞书区（旧稿·作废）</a>
+  <a href="#s10">⑩ 飞书区 · 照 v3.1 真源</a>
+</nav>
+
+<main>
+
+<!-- ① 图一 -->
+<section id="s1">
+  <h2>① 图一 · 深色主题下选中的页签字看不见</h2>
+  <p class="lead">现象：被选中那一枚的文字与药丸底几乎同色（实测对比 <b>1.045:1</b>）。真因：选中底取的是宿主 <code>--dsw-alias-brand-primary</code>（深 <code>#f9fafb</code>，反相墨色），而配对前景被写死成 <code>#fff</code>。下面三块只在"选中那一枚"上不同。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>字看不见</div>
+      <div class="panel solid">
+        <div class="tabs">
+          <span class="tab sel-nowimei"><i></i>饼干记账</span>
+          <span class="tab"><i></i>卡路里</span><span class="tab"><i></i>备忘录</span><span class="tab"><i></i>作息管家</span>
+        </div>
+        <p class="notes">药丸底 <code>#f9fafb</code>、文字 <code>#fff</code> ⇒ 1.045:1</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 候选 A</span>底不动，换配对前景</div>
+      <div class="panel solid">
+        <div class="tabs">
+          <span class="tab sel-a"><i></i>饼干记账</span>
+          <span class="tab"><i></i>卡路里</span><span class="tab"><i></i>备忘录</span><span class="tab"><i></i>作息管家</span>
+        </div>
+        <p class="notes">文字取 <code>--dsw-alias-label-primary-foreground</code>（深 <code>#0f1115</code>）⇒ 对比达标；浅色下该别名就是 <code>#fff</code>，零回退。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">候选 B</span>选中改成深底浅字（不反色）</div>
+      <div class="panel solid">
+        <div class="tabs">
+          <span class="tab sel-b"><i></i>饼干记账</span>
+          <span class="tab"><i></i>卡路里</span><span class="tab"><i></i>备忘录</span><span class="tab"><i></i>作息管家</span>
+        </div>
+        <p class="notes">取宿主 <code>--dsw-specific-sidebar-nav-item-active</code>（深 <code>#43454a</code>，16.2:1／9.18:1）——更符合直觉，但与宿主自身"选中＝反色"的用法分道。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 图七 -->
+<section id="s2">
+  <h2>② 图七 · 浅色主题下输入框与卡面同色（已按你的裁定重做）</h2>
+  <p class="lead">真因：浅色下四层底都挤在近白档 —— 页 <code>#f4f5f7</code>／卡 <code>#ffffff</code>／沉底盒 <code>#f1f2f4</code>／输入框 <code>#ffffff</code>，相邻只差 2–5%、几乎没有可见描边 ⇒ 输入框与卡面糊在一起。<br>
+  <b>你的裁定</b>：旧的「只换描边档」不够用 → 按 <a href="#s8"><b>⑧ 新增 · 浅色没有卡片感</b></a> 取 <b>方案乙</b>：卡＋<code>1px #dcdee2</code>｜沉底盒 <code>#eef0f3</code>｜输入框白＋<code>1px #cfd2d8</code>。下面四块按各自主题固定渲染（不受右上角开关影响），直接比。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>输入框在沉底盒里看不出边界</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:transparent">
+          <div style="background:#f1f2f4;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #e5e5e5;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">输入框白 on 沉底盒 <code>#f1f2f4</code>、描边 <code>#e5e5e5</code>（1.26:1）—— 只有一点点亮，边界近乎不存在。</p>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">已被你否</span>只换描边档（旧候选 A）</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:transparent">
+          <div style="background:#f1f2f4;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #d6d6d6;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">只把描边从 1.26:1 提到 1.45:1 —— 你判"不够明显、效果不好"，因为<b>卡与沉底盒的面差没动</b>。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">已采用 · 方案乙</span>三层面差 ＋ 两条描边</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#dcdee2">
+          <div style="background:#eef0f3;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #cfd2d8;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">卡＋<code>1px #dcdee2</code>｜沉底盒 <code>#eef0f3</code>（比卡暗两档）｜输入框白＋<code>1px #cfd2d8</code>（≈1.6:1）—— 卡片、盒子、输入框三层各自站得住。</p>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">深色对照</span>同一块（不动）</div>
+      <div class="panel force-dark">
+        <div class="card">
+          <div style="background:#353638;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#cfd3d6;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#151517;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">深色天然四档（卡 <code>#232324</code>／盒 <code>#353638</code>／输入框反相下沉 <code>#151517</code>），这次不动它。</p>
+    </div>
+  </div>
+  <p class="cap">※ 三层的完整取值表、骨架条配色见 <a href="#s8">⑧</a>；这一节只看"输入框在它那块沉底盒里"是否站得住。乙已写进票 #941，并据此回填 #932（输入框边界）与 #939（浅色骨架条）。</p>
+</section>
+
+<!-- ③ 图二 -->
+<section id="s3">
+  <h2>③ 图二 · 卡片之间的间距（实测 0）</h2>
+  <p class="lead">真因：两张卡并列在一个<b>无样式的 div</b> 里，容器没有堆叠间距口径 ⇒ 相邻外边距 <code>max(0,0)=0</code>。修法在容器层。下面间距依次 0／10／16；第四块是"修法 B：体检并进面板卡"。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>间距 0（两线相接）</div>
+      <div class="panel">
+        <div class="stack g0">
+          <div class="card">
+            <div class="bar" style="border-top:0;margin-top:0;padding-top:0"><button class="act">保存</button><button class="act">重置为默认</button><button class="act">重新读取</button><span style="margin-left:auto">没有未保存的改动</span></div>
+          </div>
+          <div class="card r10"><h4>饼干记账 · 体检</h4><span class="muted">还没体检：点上面那个「体检一次」。</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 间距 10</span>壳里既有口径（四处同值）</div>
+      <div class="panel">
+        <div class="stack g10">
+          <div class="card">
+            <div class="bar" style="border-top:0;margin-top:0;padding-top:0"><button class="act">保存</button><button class="act">重置为默认</button><button class="act">重新读取</button><span style="margin-left:auto">没有未保存的改动</span></div>
+          </div>
+          <div class="card r10"><h4>饼干记账 · 体检</h4><span class="muted">还没体检：点上面那个「体检一次」。</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">间距 16</span>要看是否统一升档</div>
+      <div class="panel">
+        <div class="stack g16">
+          <div class="card">
+            <div class="bar" style="border-top:0;margin-top:0;padding-top:0"><button class="act">保存</button><button class="act">重置为默认</button><button class="act">重新读取</button><span style="margin-left:auto">没有未保存的改动</span></div>
+          </div>
+          <div class="card r10"><h4>饼干记账 · 体检</h4><span class="muted">还没体检：点上面那个「体检一次」。</span></div>
+        </div>
+        <p class="notes">选 16 就要一并改 <code>summaryRow</code>／<code>meta</code>／<code>tablist</code>，否则面板里出现三套间距。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">候选 B</span>体检并进面板卡（无独立卡）</div>
+      <div class="panel">
+        <div class="card">
+          <div class="row" style="border-top:0"><span class="k">数据目录</span><span class="v">D:\2Study\StudyNotes\.db</span></div>
+          <div class="bar"><button class="act">保存</button><button class="act">重置为默认</button><button class="act">重新读取</button><span style="margin-left:auto">没有未保存的改动</span></div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--l1)">
+            <h4 style="margin-bottom:6px">体检</h4><span class="muted">还没体检：点上面那个「体检一次」。</span>
+          </div>
+        </div>
+        <p class="notes">天然没有缝，但要改共用面板插入点、六家附加块一起动，并推翻 #732 定稿形态。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ 图三 -->
+<section id="s4">
+  <h2>④ 图三 · 删掉的两处冗余文字</h2>
+  <p class="lead">左：现状（「高级」右侧带一句 + 面板底部一行版本号）。右：删掉之后的形态。<b>两处都删已由你裁定</b>，这里只让你确认删后不长出空白或断头。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>带说明 ＋ 版本行</div>
+      <div class="panel solid">
+        <div class="row"><span class="k">数据目录</span><span class="v">D:\2Study\StudyNotes\.db</span></div>
+        <div style="margin:12px 0 6px;font-weight:600">› 高级 <span class="muted" style="font-weight:400">不常改。留空＝用默认值。</span></div>
+        <div class="row"><span class="k">备份目录</span><span class="v">（空）</span></div>
+        <p class="notes" style="margin-top:14px;border-top:1px solid var(--l1);padding-top:10px">0.3.13 · 技能 0.3.13</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 删后</span>只留「高级」</div>
+      <div class="panel solid">
+        <div class="row"><span class="k">数据目录</span><span class="v">D:\2Study\StudyNotes\.db</span></div>
+        <div style="margin:12px 0 6px;font-weight:600">› 高级</div>
+        <div class="row"><span class="k">备份目录</span><span class="v">（空）</span></div>
+        <p class="notes">「留空＝默认值」这条口径已逐行住在每条的 hint 里（合约本就要求 hint 写"留空会怎样"），且三家高级项全是只读行、根本没有"留空"。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ 图六 -->
+<section id="s5">
+  <h2>⑤ 图六 · 标题行的版本胶囊</h2>
+  <p class="lead">左：现状（<code>总管 dsh-life-pack · 0.3.13</code> 独占一行）。右：胶囊并到标题行，三种状态一次看完（读中／读不到／读到了）。下面还有一组"可点 vs 不可点"与"字号"对照。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>版本独占一行</div>
+      <div class="panel">
+        <div class="bigtitle">爱生活</div>
+        <p class="meta">总管 dsh-life-pack · 0.3.13</p>
+        <div class="tabs"><span class="tab sel-a"><i></i>饼干记账</span><span class="tab"><i></i>卡路里</span></div>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 胶囊同行</span>占位 <code>…</code>／读到后填值</div>
+      <div class="panel">
+        <div class="title">爱生活 <span class="capsule">…</span></div>
+        <p class="meta" style="margin-bottom:10px">首帧即出——不等版本</p>
+        <div class="title">爱生活 <span class="capsule">版本未知</span></div>
+        <p class="meta" style="margin-bottom:10px">读不到时（现为 <code>unknown</code>，候选改中文）</p>
+        <div class="title">爱生活 <span class="capsule">dsh-life-pack · 0.3.13</span></div>
+        <p class="meta" style="margin-bottom:0">读到之后；去掉「总管」两字</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">字号对照</span>源码 15／12 vs 截图 20–24／12–14</div>
+      <div class="panel">
+        <div class="title" style="font-size:15px">爱生活 <span class="capsule">dsh-life-pack · 0.3.13</span></div>
+        <p class="meta">按源码：标题 15px（推荐，源码是权威）</p>
+        <div class="title" style="font-size:23px">爱生活 <span class="capsule big">dsh-life-pack · 0.3.13</span></div>
+        <p class="meta" style="margin-bottom:0">按你的截图：标题 23px（截图疑似缩放，按它改会带偏全站字号）</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ 第十条 -->
+<section id="s6">
+  <h2>⑥ 第十条 · 首屏两行骨架（切到浅色主题看关键差异）</h2>
+  <p class="lead">现状：加载时只画一行灰字「配置读取中」，回执到了才长出两行 ⇒ 高度从 1 行变 3 行、下方内容下移 <b>21px</b>。要"首屏就按两行占位"。<b>维护者裁定：灰条保留</b>（深色下看起来舒服），<b>浅色换一个颜色的条</b> ⇒ 浅色条色在 <a href="#s8"><b>⑧</b></a> 里给三档。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状 加载态</span>一行灰字</div>
+      <div class="panel solid">
+        <div class="title">饼干记账 · 配置</div>
+        <p class="muted" style="margin:0">配置读取中</p>
+        <div style="margin-top:10px" class="row"><span class="k">数据目录</span><span class="v" style="opacity:.5">…</span></div>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状 就绪态</span>两行＋一行灰字消失 ⇒ 跳 21px</div>
+      <div class="panel solid">
+        <div class="title">饼干记账 · 配置</div>
+        <div class="row" style="border-top:1px solid var(--l1);padding-top:8px"><span class="k">配置文件</span><span class="v">C:\Users\…\.ilife\bill.yaml</span></div>
+        <div class="row"><span class="k">数据目录</span><span class="v">D:\2Study\StudyNotes\.db</span></div>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 骨架 ≡ 终态</span>加载时就把两行连标签画出来</div>
+      <div class="panel solid">
+        <div class="title">饼干记账 · 配置</div>
+        <div class="row" style="border-top:1px solid var(--l1);padding-top:8px"><span class="k">配置文件</span><span class="v ph">···</span></div>
+        <div class="row"><span class="k">数据目录</span><span class="v ph">···</span></div>
+        <p class="notes">与就绪态<b>同高同形</b>；「配置读取中」搬到底栏 note 槽，不删也不占高度。</p>
+      </div>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">灰条（已否）</span>浅色下几乎看不见</div>
+      <div class="panel solid">
+        <div class="row" style="border-top:1px solid var(--l1);padding-top:8px"><span class="k">数据目录</span></div>
+        <div class="skel-bar" style="margin:4px 0 8px 0"></div>
+        <p class="notes">浅色四层底同白 ⇒ 对比 1.000；宿主专属骨架档 <code>bg-skeleton</code> 也只有 1.09:1。深色下可见（切主题对比）。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">空槽＋细描边</span>最省</div>
+      <div class="panel solid">
+        <div class="row" style="border-top:1px solid var(--l1);padding-top:8px"><span class="k">数据目录</span></div>
+        <div class="skel-empty" style="margin:4px 0 8px 0"></div>
+        <p class="notes">占位感最弱，但只需一条描边档（与 #932 共用同一绳档）。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">高度口径对照</span>长路径折行时</div>
+      <div class="panel solid">
+        <div class="row"><span class="k">数据目录</span><span class="v">D:\2Study\StudyNotes\超长目录名\再长一点\还要长\db</span></div>
+        <p class="notes">口径 C（推荐）：允许折行——这与就绪态今天就有的行为一致；硬不变式则要"固定行高截断／单行省略"，会推翻 #920 的"零截断／零省略号"定稿。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ 问题四 -->
+<section id="s7">
+  <h2>⑦ 问题四 · 体检表里那 4 条恒红的项</h2>
+  <p class="lead">真因：4 项探的是 <code>src/…</code>，而装机包按设计只发 <code>dist</code> ⇒ 在装好的机器上<b>必然恒红</b>，且"重装即补齐"这条建议给不出。左＝现状，右＝删掉之后。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>4 条红项</div>
+      <div class="panel solid">
+        <div class="warnrow">✕ 场景资产 ｜ 不在：…\skill-memo-ilife\src\help\sceneData.ts</div>
+        <div class="warnrow">✕ 分类允许清单 ｜ 不在：…\skill-schedule\src\policy\category.ts</div>
+        <div class="warnrow">✕ 种子分类 ｜ 不在：…\skill-home\src\policy\category.ts</div>
+        <div class="warnrow">✕ 场景资产 ｜ 不在：…\skill-chef\src\help\sceneData.ts</div>
+        <p class="notes">"去哪修：重装这个技能包即会补齐" —— 装多少次都不会有 <code>src/</code>。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 甲 删项</span>其余检查项照旧</div>
+      <div class="panel solid">
+        <div class="okrow">✓ 数据目录 ｜ 在且可写</div>
+        <div class="okrow">✓ 模板目录 ｜ 在</div>
+        <div class="warnrow" style="color:var(--ink3)">（原 4 条已删；它们要查的资产在 <code>dist</code> 里，真缺了命令会先跑不起来）</div>
+        <p class="notes">另选项乙：留一格、改探 <code>dist</code> ＋ 内容口径断言，<b>只落 CI 装机判据、不上面板</b>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑧ 浅色层级 -->
+<section id="s8">
+  <h2>⑧ 新增 · 浅色主题下没有卡片感（你刚报的）</h2>
+  <p class="lead">你的原话：「浅色主题时配置面板完全没有那种卡片感。深色有卡片感，浅色什么都没有。」<br>
+  实测（你这两张截图）：<b>浅色</b>四层是 页 <code>#f4f5f7</code>／卡 <code>#ffffff</code>／沉底盒 <code>#f1f2f4</code>／输入框 <code>#ffffff</code> —— 相邻只差 <b>2–5%</b>、且几乎没有可见描边，所以卡片和输入框在视觉上<b>糊成同一块</b>；<b>深色</b>四层是 <code>#151517</code>／<code>#232324</code>／<code>#353638</code>／输入框反相下沉，四档拉得开，卡片感就成立。</p>
+  <p class="lead">⇒ 结论：浅色缺的不是"更白的输入框"，而是<b>一套可用的档距</b>。下面三块都固定用浅色渲染（不受右上角主题开关影响），只看这三块即可比较。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>四层挤在近白档</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:transparent">
+          <div style="background:#f1f2f4;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #e5e5e5;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">卡与页差 2%、沉底盒与卡差 2%、输入框与卡同色 —— 三层看不出边界。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐 · 方案甲（中）</span>拉档 ＋ 两条描边</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#e5e5e5">
+          <div style="background:#f4f6f8;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #d6d6d6;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">卡＋<code>1px #e5e5e5</code>（卡片有了轮廓）；沉底盒 <code>#f4f6f8</code>（比卡暗一档）；输入框白＋<code>1px #d6d6d6</code>（1.45:1）—— 三层各自站得住。</p>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">方案乙（强）</span>档距再拉大一档</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#dcdee2">
+          <div style="background:#eef0f3;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #cfd2d8;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">最清楚，但与"面板轻一点"的观感更远；且改动面最大（三处底＋两处描边都要动）。</p>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">推荐</span>骨架条的三档浅色（你说"换一个颜色的条"）</div>
+      <div class="panel force-light">
+        <div class="row" style="border-top:0"><span class="k">数据目录</span><span class="v"><span class="swatch" style="background:#e6e7ea"></span>#e6e7ea ｜ 1.24:1 ｜ 偏淡</span></div>
+        <div class="row"><span class="k">数据目录</span><span class="v"><span class="swatch" style="background:#d8dade"></span>#d8dade ｜ 1.43:1 ｜ <b>推荐</b></span></div>
+        <div class="row"><span class="k">数据目录</span><span class="v"><span class="swatch" style="background:#c9ccd2"></span>#c9ccd2 ｜ 1.6:1 ｜ 偏重</span></div>
+        <p class="notes">你在深色下觉得舒服的那条，实测只有 <code>1.26:1</code>（<code>bg-skeleton</code> 白 9%）⇒ 原先那条"占位图形 ≥2.1"的门槛<b>作废</b>；浅色取 <b>1.4 上下</b>即可与深色观感对齐。</p>
+      </div>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">对照</span>深色下你觉得舒服的那条</div>
+      <div class="panel force-dark">
+        <div class="row" style="border-top:0"><span class="k">数据目录</span><span class="v"><span class="swatch" style="background:rgba(255,255,255,.09)"></span>白 9%（1.26:1）—— 保留不动</span></div>
+        <p class="notes">深色这套不动：卡片 <code>#232324</code>、沉底盒 <code>#353638</code>、输入框 <code>#151517</code>（反相下沉）本来就是四档分明的。</p>
+      </div>
+    </div>
+  </div>
+  <h2 style="font-size:15px;margin:22px 0 6px">⑧-b 更强档（你点的"更强档"）—— 乙 / 丙 / 丁 三档并排</h2>
+  <p class="lead">先说清一件事：<b>页面底与卡片底的关系由宿主决定</b>（`bg-base`／`bg-layer-*`），我们只能在<b>卡片、沉底盒、输入框</b>这三层上做文章。所以"更强"只有三条路：描边加深、盒底加深、加一层极淡外阴影。下面三块都固定浅色渲染。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">乙（已定档）</span>只靠描边 ＋ 盒底一档</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#dcdee2">
+          <div style="background:#eef0f3;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #cfd2d8;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">卡 <code>1px #dcdee2</code>／盒 <code>#eef0f3</code>／输入框 <code>1px #cfd2d8</code>／条 <code>#d8dade</code></p>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">丙 · 加深一档</span>描边与盒底都再深一档</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#cfd2d8">
+          <div style="background:#e7eaee;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #c2c6cc;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">卡 <code>1px #cfd2d8</code>／盒 <code>#e7eaee</code>／输入框 <code>1px #c2c6cc</code>／条 <code>#c9ccd2</code> —— 层次最分明，但整页会显得"重"一些</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">丁 · 丙 ＋ 极淡外阴影</span>最接近"卡片浮起来"</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#cfd2d8;box-shadow:0 1px 2px rgba(0,0,0,.07)">
+          <div style="background:#e7eaee;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #c2c6cc;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">在丙的基础上给卡片加 <code>box-shadow:0 1px 2px rgba(0,0,0,.07)</code>（很淡的一层）。<b>注意</b>：深色主题下阴影几乎不可见，所以这一档只在浅色生效——要不要破"深浅同形"这条，需要你点头。</p>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">飞书盒 · 乙</span>浅色</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div style="padding:10px 12px;background:#eef0f3;border:1px solid #dde1e6;border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#1a7f5a"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#5b6169">已登录，task 域可写</span></div>
+          <div style="margin-top:7px"><span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#858585">C:\…\lark-cli.cmd</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">飞书盒 · 丁</span>同一档口径</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div style="padding:10px 12px;background:#e7eaee;border:1px solid #cfd2d8;border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#1a7f5a"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#5b6169">已登录，task 域可写</span></div>
+          <div style="margin-top:7px"><span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#858585">C:\…\lark-cli.cmd</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">※ 本节的取值若定下来，会同时定掉三处：#932 输入框边界、#939 浅色骨架条、以及飞书区（#936 已定"照 v3.1 真源 `.ic-status`"）那种盒的面色——一次口径，三处共用。</p>
+</section>
+
+<!-- ⑨ 飞书 CLI 区 -->
+<section id="s9">
+  <h2>⑨ 图四／图五 · 飞书 CLI 区（旧稿 · 作废）</h2>
+  <p class="lead"><b>这一节作废</b>：下面画的是我自己拟的"母版行盒"，<b>不是</b> v3.1 真源的形状。维护者指出"无论是骨架、骨架变真实信息的过渡，还是最终展示，都没有还原好"，并给了真源截图 ⇒ 以 <a href="#s10"><b>⑩ 照 v3.1 真源</b></a> 为准；这一节只留作对照。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状</span>裸块：没有盒子，像外来物</div>
+      <div class="panel force-dark">
+        <div style="font-size:15px;font-weight:700">飞书 CLI</div>
+        <div style="font-size:13px;color:#cfd3d6;margin-top:3px">找到了 C:\Users\辰辰洋洋\AppData\Roaming\npm\lark-cli.cmd，但还没登录或没拿到 task 域授权</div>
+        <div style="margin-top:9px"><button class="act">复制 prompt</button> <button class="act">重新检测</button></div>
+        <div style="margin-top:9px;font-size:12.5px;color:#cfd3d6;text-decoration:underline">飞书 CLI 官网为：https://www.feishu.cn/feishu-cli</div>
+      </div>
+      <p class="notes">大标题 ＋ 两行正文 ＋ 两个按钮 ＋ 一条链接：与面板其它行不同形，所以"丑"。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">已定 · 候选一（深色）</span>母版行盒 ＋ 状态胶囊</div>
+      <div class="panel force-dark">
+        <div style="background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:11px 12px;margin-bottom:8px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #4ec9a0;color:#4ec9a0;border-radius:999px;padding:0 6px;margin-left:6px">已就绪</span></div>
+          <div style="font-size:12.5px;color:#cfd3d6;margin-top:3px">飞书 CLI 已登录，task 域可写。</div>
+        </div>
+        <div style="background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:11px 12px;margin-bottom:8px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #e0a33e;color:#e0a33e;border-radius:999px;padding:0 6px;margin-left:6px">未登录</span></div>
+          <div style="font-size:12.5px;color:#cfd3d6;margin-top:3px">找到了 C:\…\npm\lark-cli.cmd，但还没登录或没拿到 task 域授权</div>
+          <div style="margin-top:7px"><button class="act">复制 prompt</button> <button class="act">重新检测</button></div>
+        </div>
+        <div style="background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:11px 12px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #e0685f;color:#e0685f;border-radius:999px;padding:0 6px;margin-left:6px">没找到</span></div>
+          <div style="font-size:12.5px;color:#cfd3d6;margin-top:3px">没找到飞书 CLI：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli）</div>
+          <div style="margin-top:7px"><button class="act">复制 prompt</button></div>
+          <div style="margin-top:9px;font-size:12.5px;color:#cfd3d6;text-decoration:underline">飞书 CLI 官网为：https://www.feishu.cn/feishu-cli</div>
+        </div>
+      </div>
+      <p class="notes">形状＝「数据目录」那一族：沉底盒 ＋ 粗体标签 ＋ 状态胶囊 ＋ 说明 ＋ 动作行（＋ 链接行）。三档状态一眼可辨，判据文案逐字不动（长句仍住说明行）。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">已定 · 候选一（浅色，按方案乙）</span>沉底盒 <code>#eef0f3</code></div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div style="background:#eef0f3;border-radius:8px;padding:11px 12px;margin-bottom:8px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #1a7f5a;color:#1a7f5a;border-radius:999px;padding:0 6px;margin-left:6px">已就绪</span></div>
+          <div style="font-size:12.5px;color:#5b6169;margin-top:3px">飞书 CLI 已登录，task 域可写。</div>
+        </div>
+        <div style="background:#eef0f3;border-radius:8px;padding:11px 12px;margin-bottom:8px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #a8631a;color:#a8631a;border-radius:999px;padding:0 6px;margin-left:6px">未登录</span></div>
+          <div style="font-size:12.5px;color:#5b6169;margin-top:3px">找到了 C:\…\npm\lark-cli.cmd，但还没登录或没拿到 task 域授权</div>
+          <div style="margin-top:7px"><button class="act">复制 prompt</button> <button class="act">重新检测</button></div>
+        </div>
+        <div style="background:#eef0f3;border-radius:8px;padding:11px 12px">
+          <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #b3392f;color:#b3392f;border-radius:999px;padding:0 6px;margin-left:6px">没找到</span></div>
+          <div style="font-size:12.5px;color:#5b6169;margin-top:3px">没找到飞书 CLI：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli）</div>
+          <div style="margin-top:7px"><button class="act">复制 prompt</button></div>
+          <div style="margin-top:9px;font-size:12.5px;color:#5b6169;text-decoration:underline">飞书 CLI 官网为：https://www.feishu.cn/feishu-cli</div>
+        </div>
+      </div>
+      <p class="notes">浅色下靠你刚定的方案乙成立：卡片白＋<code>1px #dcdee2</code>、沉底盒 <code>#eef0f3</code>（比卡暗两档）⇒ 盒子看得见，胶囊与说明也站得住。</p>
+    </div>
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag">同族对照（浅色）</span>数据目录盒 vs 飞书盒</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div class="card" style="background:#ffffff;border-color:#dcdee2">
+          <div style="background:#eef0f3;border-radius:8px;padding:11px 12px;margin-bottom:10px">
+            <div style="font-weight:600">数据目录 <span class="tag" style="background:transparent">可改</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">库文件与备份的根目录。留空 = 用默认目录。</div>
+            <div style="margin-top:7px;background:#ffffff;border:1px solid #cfd2d8;border-radius:6px;padding:5px 8px">D:\2Study\StudyNotes\.db</div>
+            <div style="margin-top:7px"><button class="act">浏览文件夹</button> <button class="act">复制</button></div>
+          </div>
+          <div style="background:#eef0f3;border-radius:8px;padding:11px 12px">
+            <div style="font-weight:600">飞书 CLI <span style="font-size:11.5px;border:1px solid #a8631a;color:#a8631a;border-radius:999px;padding:0 6px;margin-left:6px">未登录</span></div>
+            <div style="font-size:12.5px;color:#5b6169;margin-top:3px">找到了 C:\…\npm\lark-cli.cmd，但还没登录或没拿到 task 域授权</div>
+            <div style="margin-top:7px"><button class="act">复制 prompt</button> <button class="act">重新检测</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="notes">两块同圆角、同底、同内距、同标签层级 ⇒ 一眼看出是同一族；区别只在可改项有输入框、状态块有胶囊。</p>
+    </div>
+  </div>
+  <p class="cap">※ 这一块的两家实现会收进共用件的「状态块行件」（#936 已定）；判据文案逐字保留：标题「飞书 CLI」、三档状态、两行说明、按钮字面、官网行。</p>
+</section>
+
+<!-- ⑩ 飞书 CLI 区 · 照 v3.1 真源 -->
+<section id="s10">
+  <h2>⑩ 飞书 CLI 区 · 照 v3.1 真源（你要的最终模样）</h2>
+  <p class="lead">真源 `docs/agents/配置区域视觉模型-v3.1.html` 里这块叫 <b>`.ic-status`</b>，逐值是：盒 <code>padding:10px 12px</code>／底 <code>--ic-sunken</code>／<code>1px --ic-line-strong</code>／圆角 <code>8px</code>；
+  <b>第一行</b> <code>flex;gap:8px;font-size:12px</code> ＝ 状态点（8px 圆）＋「飞书 CLI」（600）＋状态文字（次要色），行尾两枚 <code>is-mini</code> 按钮（11px、第一枚 <code>margin-left:auto</code> 顶右）；
+  <b>第二行</b> <code>margin-top:7px</code> ＝ 路径（等宽 10.5px、次要色）＋<b>版本胶囊</b>（10px、1px 描边、999 圆角）；
+  <b>第三行</b> ＝ 官网行（等宽 10.5px）。<br>
+  <b>骨架期</b>：点＝默认灰、状态文字＝「检测中…」、路径位画 <code>.ic-sk</code> 灰条（<code>height:17px;border-radius:4px;background:--ic-raised</code>、宽 180px）、版本胶囊 <code>hidden</code>、两个按钮照画 ⇒ 与就绪态<b>同高</b>（真源注释：骨架期就要定行高，填充时不再长高）。</p>
+  <div class="grid">
+    <div class="shot" data-rec="0">
+      <div class="lab"><span class="tag now">现状（我们的实现）</span>缺四样</div>
+      <div class="panel force-dark">
+        <div style="font-size:15px;font-weight:700">飞书 CLI</div>
+        <div style="font-size:13px;color:#cfd3d6;margin-top:3px">找到了 C:\Users\辰辰洋洋\AppData\Roaming\npm\lark-cli.cmd，但还没登录或没拿到 task 域授权</div>
+        <div style="margin-top:9px"><button class="act">复制 prompt</button> <button class="act">重新检测</button></div>
+        <div style="margin-top:9px;font-size:12.5px;color:#cfd3d6;text-decoration:underline">飞书 CLI 官网为：https://www.feishu.cn/feishu-cli</div>
+      </div>
+      <p class="notes">差四样：<b>没有状态点</b>／<b>状态写成长句而非一行短句</b>／<b>没有路径行与版本胶囊</b>／<b>按钮字面不同</b>（我们写「复制 prompt」，真源是「复制安装指引」）。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">照真源 · 骨架期</span>「检测中…」＋路径位灰条</div>
+      <div class="panel force-dark">
+        <div style="padding:10px 12px;background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap">
+            <span style="width:8px;height:8px;border-radius:50%;background:#adb2b8;flex:0 0 auto"></span>
+            <span style="font-weight:600;white-space:nowrap">飞书 CLI</span>
+            <span style="color:#cfd3d6">检测中…</span>
+            <button class="act" style="margin-left:auto;font-size:11px;padding:2px 7px;color:#cfd3d6">复制安装指引</button>
+            <button class="act" style="font-size:11px;padding:2px 7px;color:#cfd3d6">重新检测</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+            <span style="display:block;width:180px;height:17px;border-radius:4px;background:#2c2c2e"></span>
+          </div>
+          <a style="display:inline-block;margin-top:7px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#adb2b8;text-decoration:none">飞书CLI官网为：https://www.feishu.cn/feishu-cli</a>
+        </div>
+      </div>
+      <p class="notes">灰条＝<code>.ic-sk</code>（17px 高／圆角 4／底 <code>--ic-raised</code>）；版本胶囊此时 <code>hidden</code>；两枚按钮照画 ⇒ <b>与就绪态同高，填充时不跳</b>。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">照真源 · 就绪</span>点变绿 ＋ 路径 ＋ 版本胶囊</div>
+      <div class="panel force-dark">
+        <div style="padding:10px 12px;background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap">
+            <span style="width:8px;height:8px;border-radius:50%;background:#4ec9a0;flex:0 0 auto"></span>
+            <span style="font-weight:600;white-space:nowrap">飞书 CLI</span>
+            <span style="color:#cfd3d6">已登录，task 域可写</span>
+            <button class="act" style="margin-left:auto;font-size:11px;padding:2px 7px;color:#cfd3d6">复制安装指引</button>
+            <button class="act" style="font-size:11px;padding:2px 7px;color:#cfd3d6">重新检测</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#adb2b8;white-space:nowrap;overflow:hidden">C:\Users\辰辰洋洋\.local\bin\lark-cli.cmd</span>
+            <span style="font-size:10px;color:#adb2b8;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:0 6px">0.8.2</span>
+          </div>
+          <a style="display:inline-block;margin-top:7px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#adb2b8;text-decoration:none">飞书CLI官网为：https://www.feishu.cn/feishu-cli</a>
+        </div>
+      </div>
+      <p class="notes">路径与胶囊同一行（<code>.ic-sfind</code>，gap 8）；胶囊里是 <b>lark-cli 的版本</b>（真源演示值 <code>0.8.2</code>）。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">照真源 · 三档</span>点色即状态</div>
+      <div class="panel force-dark">
+        <div style="padding:10px 12px;background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#e0685f"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#cfd3d6">没找到飞书 CLI</span>
+          </div>
+          <div style="margin-top:7px"><span style="display:block;width:180px;height:17px;border-radius:4px;background:#2c2c2e"></span></div>
+        </div>
+        <div style="padding:10px 12px;background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#e0a33e"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#cfd3d6">找到了，但还没登录</span>
+          </div>
+        </div>
+        <div style="padding:10px 12px;background:#353638;border:1px solid rgba(255,255,255,.12);border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#4ec9a0"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#cfd3d6">已登录，task 域可写</span>
+          </div>
+        </div>
+      </div>
+      <p class="notes">点色三档＝<code>is-bad</code>（红 <code>--ic-danger</code>）／<code>is-warn</code>（黄 <code>--ic-attn</code>）／<code>is-ok</code>（绿 <code>--ic-ok</code>），默认灰 <code>--ic-faint</code>。</p>
+    </div>
+    <div class="shot" data-rec="1">
+      <div class="lab"><span class="tag rec">照真源 · 浅色（按你定的方案乙）</span>同一形状</div>
+      <div class="panel force-light" style="background:#f4f5f7">
+        <div style="padding:10px 12px;background:#eef0f3;border:1px solid #dde1e6;border-radius:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap">
+            <span style="width:8px;height:8px;border-radius:50%;background:#4ec9a0"></span>
+            <span style="font-weight:600;white-space:nowrap">飞书 CLI</span>
+            <span style="color:#5b6169">已登录，task 域可写</span>
+            <button class="act" style="margin-left:auto;font-size:11px;padding:2px 7px;color:#5b6169">复制安装指引</button>
+            <button class="act" style="font-size:11px;padding:2px 7px;color:#5b6169">重新检测</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#858585;white-space:nowrap;overflow:hidden">C:\Users\辰辰洋洋\.local\bin\lark-cli.cmd</span>
+            <span style="font-size:10px;color:#858585;border:1px solid #cfd2d8;border-radius:999px;padding:0 6px">0.8.2</span>
+          </div>
+          <a style="display:inline-block;margin-top:7px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:#858585;text-decoration:none">飞书CLI官网为：https://www.feishu.cn/feishu-cli</a>
+        </div>
+        <div style="padding:10px 12px;background:#eef0f3;border:1px solid #dde1e6;border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#858585"></span><span style="font-weight:600">飞书 CLI</span><span style="color:#5b6169">检测中…</span>
+          </div>
+          <div style="margin-top:7px"><span style="display:block;width:180px;height:17px;border-radius:4px;background:#d8dade"></span></div>
+        </div>
+      </div>
+      <p class="notes">浅色照 <b>方案乙</b>：盒 <code>#eef0f3</code>＋<code>1px #dde1e6</code>；骨架条取你定的 <code>#d8dade</code>（1.43:1）。深色那套不动。</p>
+    </div>
+  </div>
+  <p class="cap">※ 两处必须先定的口径：① 按钮字面照真源改成「<b>复制安装指引</b>」（现在的实现是「复制 prompt」）；② 版本胶囊要显示 <b>lark-cli 的版本</b>（真源写 0.8.2 是演示值），而当前技能侧回执只交「路径 ＋ 三档状态」，<b>没有版本号这一格</b> ⇒ 要么技能侧加交一格，要么胶囊先保持 <code>hidden</code>。</p>
+</section>
+
+</main>
+
+<footer>
+  <p>这份只画"看得见的部分"；数值、判据、连带断言在 <a href="爱生活面板十条报障-裁定单.html">裁定单</a> 与各票的评论里。<b>#936 飞书区的三版原型</b>另有一张图（对话里已发过，也在裁定单第 5 张卡里）。</p>
+  <p>渲染用的是普查读到的真实令牌值；浅色主题下卡片与页面同为 <code>#fff</code>、只靠描边分层——这正是本批问题的来源之一。</p>
+</footer>
+
+<script>
+const root = document.documentElement;
+const tBtn = document.getElementById('theme');
+tBtn.onclick = () => {
+  const dark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  tBtn.textContent = dark ? '切到深色主题' : '切到浅色主题';
+};
+const onlyBtn = document.getElementById('only');
+let onlyRec = false;
+onlyBtn.onclick = () => {
+  onlyRec = !onlyRec;
+  onlyBtn.classList.toggle('on', onlyRec);
+  document.querySelectorAll('.shot').forEach((s) => {
+    s.classList.toggle('hide', onlyRec && s.dataset.rec === '0');
+  });
+};
+</script>
+</body>
+</html>
