@@ -7,7 +7,7 @@
  * `fail()` 即 `process.exit`，失败路径一律走真子进程断言（in-process 调会自杀）。
  *
  * 票面验收（各有独立用例）：
- * ① 前两步真跑（dryRun 过程页 ＋ 合成写经 fixture 成功 ＋ 推送缺 KEY 即停）；无段（空天／越窗）即缺失阻断（#943）；
+ * ① 前两步真跑（dryRun 过程页 ＋ 合成写经 fixture 成功 ＋ 推送缺 KEY 即停）；无段（空天／越窗）回「无事可做」页（#943）；
  * ② 真出口读数：真 CLI 落盘，`data.output` 绝对路径存在；
  * ③ 任一步失败非 0 点名（用法 2／无计划 4／记心愿 4／补计划 4／推送缺 KEY 3）；
  * ④ 计划读得到（种子库 1 段＋动作名上页）。
@@ -123,34 +123,43 @@ describe('#612 落地训练', () => {
     }
   });
 
-  it('①b 空天即缺失阻断（#943）：exit 4 点名休息日，不回 envelope、不落页', () => {
+  it('①b 空天回「无事可做」页（#943 第三选项）：exit 0 ＋ 说明页，回执不写成功', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.land', { date: '2026-09-04', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
-    assert.match(r.stderr, /没有可落地的训练段/);
-    assert.match(r.stderr, /这天是休息日/);
-    assert.equal(r.stdout.trim(), '', '缺失阻断只走 stderr：不许回 envelope（旧口径回的是成功回执页）');
+    const a = cli('calorie.workout.land', { date: '2026-09-04', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(a.code, 0, a.stderr.slice(-300));
+    const env = JSON.parse(a.stdout);
+    assert.equal(env.key, 'calorie.workout.land');
+    assert.equal(env.data.ok, true, '命令没出错（既不算成功、也不算失败）');
+    assert.match(env.data.message, /没有可落地的训练段：这天是休息日/);
+    assert.equal(env.data.receipt.noChange, true, '什么都没发生：回执按全仓既有口径标 noChange');
+    assert.deepEqual(env.data.receipt.writtenFields, []);
+    assert.equal(env.data.receipt.items[0].status, '没有安排', '状态串不写「成功」');
+    const html = readFileSync(env.data.output, 'utf8');
+    assert.match(html, /这天没有安排（无事可做）/);
+    assert.match(html, /这天是休息日/);
   });
 
-  it('①d 越窗即缺失阻断（#943）：这天在计划之外，点名计划范围', () => {
+  it('①d 越窗回「无事可做」页（#943 第三选项）：点名计划范围', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.land', { date: '2026-10-20', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
-    assert.match(r.stderr, /这天在计划之外/);
-    assert.match(r.stderr, /2026-09-01 起共 4 周/);
+    const a = cli('calorie.workout.land', { date: '2026-10-20', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(a.code, 0, a.stderr.slice(-300));
+    const env = JSON.parse(a.stdout);
+    assert.match(env.data.message, /这天在计划之外：本计划 2026-09-01 起共 4 周/);
+    assert.match(readFileSync(env.data.output, 'utf8'), /这天没有安排（无事可做）/);
   });
 
   it('①e 空天实跑：一步都不跑（fixture 流水里不许出现补计划／记心愿／推送／回写）', () => {
     const { dir, db } = seedDir();
     db.close();
     const log = join(dir, 'fixture-calls.jsonl');
-    const r = cli('calorie.workout.land', { date: '2026-09-04' }, {
+    const a = cli('calorie.workout.land', { date: '2026-09-04' }, {
       ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_LOG: log,
     });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
+    assert.equal(a.code, 0, a.stderr.slice(-300));
     assert.ok(!existsSync(log), '空天不该调任何外部：' + (existsSync(log) ? readFileSync(log, 'utf8') : ''));
+    assert.match(JSON.parse(a.stdout).data.message, /没有可落地的训练段/);
   });
 
   it('①c 四步走通（跨技能走文件缝、训记走配置 fixture）：四步结局＋本地远端分清＋调用面留痕', () => {

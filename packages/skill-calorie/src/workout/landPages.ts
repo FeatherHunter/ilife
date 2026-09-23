@@ -1,9 +1,10 @@
-/** 落地训练两页（HELP 场景 05「健身计划」下一级「落地训练」· 宿主独用）。
+/** 落地训练三页（HELP 场景 05「健身计划」下一级「落地训练」· 宿主独用）。
  *
- * 两态（同一命令，`dryRun` 分流）：
+ * 三态：
  * - 过程页（`dryRun`）：可复制 prompt 先出 ＋ 四步预告（待写日历段／待记心愿／待推送段／回写区间）
  *   ＋ 训记 KEY 有无 ＋ 空天原因，远端未调用写在页头，不进任何子进程；
- * - 结果页：四步逐段结局 ＋ 新增更新合计 ＋ 本地远端分清，每步读数都在页上。
+ * - 结果页：四步逐段结局 ＋ 新增更新合计 ＋ 本地远端分清，每步读数都在页上；
+ * - 「这天没有安排」页（#943：这天／这段没有可落地的训练段，四步一步没跑——既不是成功也不是失败）。
  *
  * 显示口径（唯一定义地，别处引用）：时段空即默认 07:00~08:00／标题 `健身 段 时分`／
  * 备注前 3 动作 `、` 连接（`;` 不上屏）。宿主编排（`land.ts`）与本页用同一套，不另起第二份。
@@ -155,6 +156,38 @@ export function buildLandResultPage(input: {
     title: '落地训练',
     eyebrow: '健身计划',
     subtitle: '结果页',
+    content,
+    pageUi: true,
+  });
+}
+
+/** 「这天没有安排」页（#943 第三选项）：无事可做那一态——说明为什么、下一步去哪，四步标「没跑」。
+ *  与过程页／结果页都不同：过程页是「预演（只看不写）」，结果页是「四步都跑了」；本页是**一步没跑**。 */
+export function buildLandNothingPage(input: {
+  key: string; params: Record<string, unknown>; wake: string; scope: string; why: string; receipt: CrudReceipt;
+}): string {
+  const { key, params, wake, scope, why, receipt } = input;
+  const content = [
+    renderKpiGrid([
+      { label: '范围', value: scope, detail: '这次要落地的那一天／那一段' },
+      { label: '可落地段', value: '0 段', detail: '这天没有安排' },
+      { label: '四步', value: '没跑', detail: '没写任何东西，也没调训记' },
+    ]),
+    renderDataTable({
+      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      rows: [
+        { k: '为什么没得落地', v: why },
+        { k: '本页口径', v: '无事可做：既不是成功、也不是失败——四步一步没跑，外部一个没调' },
+      ],
+      caption: '为什么没得落地',
+    }),
+    copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 没有安排'),
+  ].join('');
+  return assembleDocPage({
+    docTitle: DOC_TITLE,
+    title: wake,
+    eyebrow: '健身计划',
+    subtitle: '这天没有安排（无事可做）',
     content,
     pageUi: true,
   });

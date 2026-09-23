@@ -153,17 +153,21 @@ describe('训记 KEY 自救链', () => {
     }
   });
 
-  it('⑦ 批量预演 0 段即缺失阻断（#943）：exit 4 点名，不回 0 段空页', () => {
+  it('⑦ 批量预演 0 段回「无事可做」页（#943 第三选项）：exit 0，不跑四步', () => {
     const dir = tmp('zero');
     const db = openDb(join(dir, 'calorie_data.db'));
     seedPlan(db);
     db.close();
     // 2026-09-22 起 6 天在种子计划里全是空天（第 4 周，周二起无排练）。
-    // #943 起这种「整段范围一天都没排训练段」不再回一张 0 段过程页，改走缺失阻断点名。
-    const r = cli('calorie.workout.land-weekend', { date: '2026-09-22', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
-    assert.match(r.stderr, /落地到本周末没有可落地的训练段/);
-    assert.match(r.stderr, /共 6 天里一天都没排训练段/);
-    assert.equal(r.stdout.trim(), '', '缺失阻断只走 stderr：不许回 envelope');
+    // #943 第三选项：这种「整段范围一天都没排训练段」回一张说明页（exit 0），四步一天不跑。
+    const a = cli('calorie.workout.land-weekend', { date: '2026-09-22', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(a.code, 0, a.stderr.slice(-300));
+    const env = JSON.parse(a.stdout);
+    assert.match(env.data.message, /没有可落地的训练段/);
+    assert.equal(env.data.receipt.noChange, true);
+    assert.equal(env.data.receipt.items[0].status, '没有安排');
+    const html = readFileSync(env.data.output, 'utf8');
+    assert.match(html, /这天没有安排（无事可做）/);
+    assert.match(html, /2026-09-22 至 2026-09-27 共 6 天/);
   });
 });

@@ -11,8 +11,8 @@
  * ② 7 天全过 → 推送与回写各 7 天（同一份天数，修老“批量只进 Step3”）；
  * ③ 失败天 → 回执点名那一天且退出非 0；
  * ④ 真出口读数：真 CLI 落盘，`data.output` 绝对路径存在（过程页 dryRun＋结果页实跑）；
- * ⑥ 无段即缺失阻断（#943）：整段范围里一天都没排段 ⇒ exit 4 点名、不落页；范围里有段 ⇒ 只跑有段的天，
- *    推送／回写天数＝有段的天数（旧口径把休息日也数成一"天"，报出的天数因此是假的）。
+ * ⑥ 无段回「无事可做」页（#943 第三选项）：整段范围里一天都没排段 ⇒ 回说明页（`exit 0`、`noChange`）、一天不跑；
+ *    范围里有段 ⇒ 只跑有段的天，推送／回写天数＝有段的天数（旧口径把休息日也数成一"天"，报出的天数因此是假的）。
  * ⑤ R3 双桥真实现（作息／备忘缺省走真合成写，可注入 `RunSyncDeps` 同形函数）。
  */
 import { describe, it, before, after, afterEach } from 'node:test';
@@ -208,14 +208,18 @@ describe('#613 批量落地', () => {
     }
   });
 
-  it('④b dryRun 全范围无段即缺失阻断（#943）：exit 4 点名，不回成功页', () => {
+  it('④b dryRun 全范围无段回「无事可做」页（#943 第三选项）：exit 0，一天不跑', () => {
     const { dir, db } = seedDir();
     db.close();
-    const r = cli('calorie.workout.land-monthend', { date: '2026-09-30', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
-    assert.equal(r.code, 4, r.stderr.slice(-300));
-    assert.match(r.stderr, /落地到本月底没有可落地的训练段/);
-    assert.match(r.stderr, /2026-09-30 至 2026-09-30 共 1 天里一天都没排训练段/);
-    assert.equal(r.stdout.trim(), '', '缺失阻断只走 stderr：不许回 envelope（旧口径回的是成功回执页）');
+    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(a.code, 0, a.stderr.slice(-300));
+    const env = JSON.parse(a.stdout);
+    assert.match(env.data.message, /没有可落地的训练段/);
+    assert.equal(env.data.receipt.noChange, true);
+    assert.equal(env.data.receipt.items[0].status, '没有安排');
+    const html = readFileSync(env.data.output, 'utf8');
+    assert.match(html, /这天没有安排（无事可做）/);
+    assert.match(html, /2026-09-30 至 2026-09-30 共 1 天/);
   });
 
   it('④c 真出口读数：真 CLI dryRun 落盘，回执绝对路径存在', () => {

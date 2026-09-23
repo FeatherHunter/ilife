@@ -13,7 +13,8 @@
  * 两态（同一命令，`dryRun` 分流，与单日链同形）：
  * - `dryRun: true` → 过程页（可复制实跑指令先出，**零子进程**，远端未调用；
  *   页上带训记 KEY 有无与 0 段原因，不拿预演页当成功用）；
- * - 缺省 → 结果页（逐天结局 ＋ 推送回写天数 ＋ 本地远端分清）。
+ * - 缺省 → 结果页（逐天结局 ＋ 推送回写天数 ＋ 本地远端分清）；
+ * - 整段范围没有安排 → 「无事可做」页（`landPages.ts#buildLandNothingPage`，`exit 0`、`noChange`）。
  *
  * 挡板缝（#676 已退役）：原先的 `CALORIE_LAND_BATCH_FAIL_DATE` 短路（某天强制失败）与单日四路
  * `CALORIE_LAND_*_STUB` 环境变量读取全部删除（配置文件是唯一真相）。#757 起跨技能两出口删键，
@@ -31,8 +32,9 @@ import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
 // #943 · 「某天有几段／为什么没得落地」只有一个定义地（`land.ts`），本件引它，不另算一遍。
-import { landNoSegmentWhy, landSessionsOf } from './land.js';
+import { landNoSegmentWhy, landNothing, landPlanGate, landSessionsOf } from './land.js';
 import { buildLandBatchProcessPage, buildLandBatchResultPage } from './landBatchPages.js';
+import { buildLandNothingPage } from './landPages.js';
 
 export const LAND_WEEKEND_KEY = 'calorie.workout.land-weekend';
 export const LAND_MONTH_KEY = 'calorie.workout.land-monthend';
@@ -214,7 +216,8 @@ function failBatch(wake: string, read: LandBatchDayRead): never {
 
 /** 批量宿主编排（两条写命令共用；`scope` 定天数口径与文案，页装配走 `landBatchPages.ts`）。
  *
- *  #943 · 无段即缺失阻断：整段范围里一天都没排训练段 ⇒ `fail(4, …)` 点名，不落页、不调任何外部。
+ *  #943 · 无段回「无事可做」页（当事人裁定的第三选项）：整段范围里一天都没排训练段 ⇒ 一天都不跑、
+ *  外部一个不调，回说明页 ＋ 回执（`exit 0`／`noChange`／状态串「没有安排」，同单日链一份判据）。
  *  范围里**有段的天才跑**单日链（休息日跳过）：旧口径把空天也当成功的一"天"，
  *  于是 7 天里只有 1 天有训练段也报「推送 7 天 回写 7 天」——那次成功是假的。 */
 function writeLandBatch(
@@ -230,15 +233,18 @@ function writeLandBatch(
   }
   const scopeLabel = LAND_BATCH_SCOPE_LABEL[scope];
   const plan = getPlan(db);
+  landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4
   const perDay = dates.map((date) => ({ date, sessions: landSessionsOf(plan, date) }));
   const segs = perDay.reduce((n, d) => n + d.sessions.length, 0);
   const runDays = perDay.filter((d) => d.sessions.length > 0).map((d) => d.date);
   const first = dates[0] as string;
   const last = dates[dates.length - 1] as string;
+  const scopeLine = first + ' 至 ' + last + ' 共 ' + dates.length + ' 天';
   if (segs === 0) {
-    // 范围级判据走 `landNoSegmentWhy` 同一份：（含第一天的诊断），别处不许再算一遍。
-    fail(4, '落地到' + scopeLabel + '没有可落地的训练段：' + first + ' 至 ' + last + ' 共 ' + dates.length
-      + ' 天里一天都没排训练段。' + (landNoSegmentWhy(plan, first) ?? '先看完整计划核对哪里排了训练'));
+    // 整段范围没有安排：「无事可做」页（#943 第三选项）——一天都不跑，外部一个不调。
+    const why = landNoSegmentWhy(plan, first) ?? '这一整段里一天都没排训练段';
+    return landNothing(wake, params, why, scopeLine, (receipt) =>
+      buildLandNothingPage({ key, params, wake, scope: scopeLine, why, receipt }));
   }
   if (dryRun) {
     const message = '预演：' + anchor + ' 至' + scopeLabel + ' ' + dates.length + ' 天 ' + segs + ' 段待落地（远端未调用）';

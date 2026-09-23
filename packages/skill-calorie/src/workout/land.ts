@@ -14,8 +14,10 @@
  *
  * 三旧坑落点：① 任一步失败即非 0（用法 2／本地缺 KEY 3／其余 4，失败不落成功页）；
  *
- * 无段即缺失阻断（#943）：这一天一段可落的训练段都没有时，两态都不进——`fail(4, …)` 点名
- * 「为什么 ＋ 下一步」，不落页、不进任何子进程（判据 `landNoSegmentWhy`，批量宿主引同一份）。
+ * 无段回「无事可做」页（#943，当事人裁定的第三选项）：这一天一段可落的训练段都没有时，两态都不进——
+ * 四步一步不跑、外部一个不调（推送／回写也不调），回一张说明页 ＋ 回执：`exit 0`（命令没出错）、
+ * `noChange:true`、`writtenFields:[]`、状态串写「没有安排」而**不写「成功」**。判据 `landNoSegmentWhy`，
+ * 批量宿主引同一份。只有**结构性缺失**（库／计划行不在、计划缺开始日期）才缺失阻断 `fail(4)`（判据 `landPlanGate`）。
  * 旧口径把「0 段」当正常读数回成功回执页，用户现场就是「无计划可落地却拿到一张预演回执」。
  * ② 外部调用无保护 → 跑道预检＋限时＋失败进码；③ 回执渲染器不调外部 → 调用与回执收进同一命令。
  * 审计（动作名校验）不在本链：推送前不校验、原样上报（沿 `#607 §八·7`，审计由薄命令层做）。
@@ -30,13 +32,14 @@ import { todayISO } from '../analysis/utils.js';
 import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { openDbReadOnly } from '../db/readonly.js';
 import { weekOfDate } from '../render/planPlate.js';
+import type { CrudReceipt } from '../render/receipt.js';
 import { dayField, fail } from '../shared/params.js';
 import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
 import type { PlanConfigRow, PlanSessionRow } from './planStore.js';
 import { invokeLandBackfill, invokeLandPush, invokeMemo, invokeSchedule } from './landRunner.js';
-import { buildLandProcessPage, buildLandResultPage, landNotesOf, landSpanOf, landTitleOf } from './landPages.js';
+import { buildLandNothingPage, buildLandProcessPage, buildLandResultPage, landNotesOf, landSpanOf, landTitleOf } from './landPages.js';
 import type { LandStepRead } from './landPages.js';
 import { xunjiKeyNext } from './xunjiKey.js';
 
@@ -197,18 +200,25 @@ export function landSessionsOf(plan: LandPlan, date: string): PlanSessionRow[] {
   return plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
 }
 
-/** 这一天**没得落地**的原因（有段回 `null`）。五种各给一句「为什么 ＋ 下一步」：
- *  无训练计划／计划缺开始日期／计划里一段都没排／这天在计划之外／这天是休息日。
+/** 计划的**结构性**门（单日链与批量宿主共用）：库／计划行不在、或计划缺开始日期即 `fail(4)`——
+ *  这两种是「你的计划本身有问题」，得先修计划；它们跟「这天／这段没有安排」不是一回事（后者回说明页，见下）。 */
+export function landPlanGate(plan: LandPlan): void {
+  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
+  if (!plan.config?.start_date) fail(4, '计划缺开始日期，无法定位周次');
+}
+
+/** 这一天**没有安排**的原因（有段回 `null`）。三种各给一句「为什么 ＋ 下一步」：
+ *  计划里一段都没排／这天在计划之外／这天是休息日。
  *
- *  单日链与批量宿主共用这一份判据：**没有可落地的训练段＝缺失阻断**（`fail(4, …)`），
- *  四步一步都不跑，也不许回成功回执页（沿 `cli/cmd_read.ts` 件头「空库／空窗／无目标一律抛，
- *  不返空数组冒充正常」）。旧口径把空天当正常读数回成功页，正是「无计划可落地却拿到预演回执」那条缺陷。 */
+ *  单日链与批量宿主共用这一份判据。**「没有安排」不是错误**（#943 第三选项，当事人裁定）：
+ *  命令没出错（`exit 0`）、也没做事（四步一步不跑，推送／回写一个不调），回一张说明页 ＋ 回执；
+ *  回执按全仓既有的「什么都没发生」口径标（`noChange:true` ＋ `idSource:'none'` ＋ `writtenFields:[]`），
+ *  状态串写「没有安排」、**不写「成功」**——旧口径正是把这种日子当成功读数回了一张预演页。 */
 export function landNoSegmentWhy(plan: LandPlan, date: string): string | null {
   if (landSessionsOf(plan, date).length > 0) return null;
-  if (!plan.config && plan.sessions.length === 0) return '无训练计划（先定训练计划）';
   const start = plan.config?.start_date;
-  if (!start) return '计划缺开始日期，无法定位周次';
-  if (plan.sessions.length === 0) return '这份计划里一段训练都没排（先定训练计划，或先给它加训练动作）';
+  if (!start) return null; // 结构性缺失由 `landPlanGate` 拦；走到这里说明计划行与开始日期都在
+  if (plan.sessions.length === 0) return '这份计划里还没有排训练段（先定训练计划，或先给它加训练动作）';
   const { week } = weekOfDate(start, date);
   const total = plan.config?.total_weeks ?? null;
   if (week < 1) return '这天在计划开始日（' + start + '）之前（先换日期，或改计划开始日）';
@@ -216,6 +226,23 @@ export function landNoSegmentWhy(plan: LandPlan, date: string): string | null {
     return '这天在计划之外：本计划 ' + start + ' 起共 ' + total + ' 周（先换日期，或先把计划加长）';
   }
   return '这天是休息日：计划里这一周这一天没有训练段（换一个有安排的日子，或先给它加训练动作）';
+}
+
+/** 回执里「没有安排」那一格的状态串（单日链与批量宿主共用一个词，别处不许再写第二个说法）。 */
+export const LAND_NOTHING_STATUS = '没有安排';
+
+/** 「没有安排」那一态（#943 第三选项）：命令没出错、也没做事——回说明页 ＋ 回执，`exit 0`。
+ *  **不调任何外部**：推送／回写与四步一样一步不跑（旧口径在 0 段时照样调推送与回写）。 */
+export function landNothing(
+  wake: string, params: Record<string, unknown>, why: string, scopeLine: string,
+  buildPage: (receipt: CrudReceipt, why: string) => string,
+): WriteOut {
+  const message = '没有可落地的训练段：' + why;
+  const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 没有安排', {
+    recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
+    items: [{ status: LAND_NOTHING_STATUS, reason: why, detail: scopeLine }],
+  });
+  return { data: { ok: true, message, receipt }, html: buildPage(receipt, why) };
 }
 
 /** 推训记无 KEY 的数据分流（与 `xunjiPush.ts#localNoKey` 同判据：码 3 但逐段没调网即本地档）。 */
@@ -241,10 +268,13 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
   const date = dayField(params, 'date') ?? todayISO();
   const dryRun = readDryRun(params);
   const plan = getPlan(db);
-  // 缺失阻断不返空：这天没有一段可落的训练段（无计划／越窗／休息日）时，四步一步都不跑，
-  // 也不许回成功回执页——「无计划可落地」是缺数据，不是一次成功的落地。判据住 `landNoSegmentWhy`。
+  landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4
+  // 这天没有安排：不跑四步、不调外部（推送／回写也不调），回一张说明页——#943 第三选项，见 `landNothing` 件头。
   const why = landNoSegmentWhy(plan, date);
-  if (why !== null) fail(4, '落地训练没有可落地的训练段：' + why);
+  if (why !== null) {
+    return landNothing(LAND_WAKE, params, why, date, (receipt) =>
+      buildLandNothingPage({ key: LAND_KEY, params, wake: LAND_WAKE, scope: date, why, receipt }));
+  }
   const sessions = landSessionsOf(plan, date);
   if (dryRun) {
     const message = '预演：' + date + ' ' + sessions.length + ' 段待落地（远端未调用）';
