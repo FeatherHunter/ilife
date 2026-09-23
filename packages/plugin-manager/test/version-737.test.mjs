@@ -92,14 +92,18 @@ describe('票 #737 ② 不手写回潮：版本号不是面板写死的', () => 
 });
 
 describe('票 #737 ③ 屏幕那行跟着宿主跑（真产物渲一次）', () => {
-  it('宿主回哨兵版本 → 屏上就是哨兵（写死常量、面板自己编值，都过不了）', async () => {
+  // #937 维护者裁定：版本不再单独起一行，改成胶囊与「爱生活」标题同行（「总管」两个字去掉）。
+  // 判据不变——**屏上那串字只能是宿主读回来的值**：哨兵件就要印出哨兵，读不到就不许编一个版本号出来。
+  it('宿主回哨兵版本 → 胶囊里就是哨兵（写死常量、面板自己编值，都过不了）', async () => {
     const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
-    assert.ok(text.includes('总管 dsh-life-pack · ' + SENTINEL), '屏上那行不是哨兵，取到的是：' + text.slice(0, 160));
+    assert.ok(text.includes('dsh-life-pack · ' + SENTINEL), '胶囊里不是哨兵，取到的是：' + text.slice(0, 160));
+    assert.ok(!text.includes('总管 dsh-life-pack'), '「总管」又回到版本胶囊里了');
   });
 
-  it('宿主回 unknown（读不到）→ 屏上就是 unknown，不抛也不编值', async () => {
+  it('宿主回 unknown（读不到）→ 胶囊只说读不到，不抛也不编版本号', async () => {
     const { text } = await renderManagerPanel({ reply: { fail: true } });
-    assert.ok(text.includes('总管 dsh-life-pack · ' + VERSION_UNKNOWN), '读不到时屏上该是 unknown，取到的是：' + text.slice(0, 160));
+    assert.ok(text.includes('版本未知'), '读不到时胶囊该说读不到，取到的是：' + text.slice(0, 160));
+    assert.equal(/dsh-life-pack · \d/.test(text), false, '读不到却编了一个版本号出来：' + text.slice(0, 160));
   });
 });
 

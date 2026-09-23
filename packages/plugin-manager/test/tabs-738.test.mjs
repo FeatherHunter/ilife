@@ -124,10 +124,12 @@ describe('票 #738 ④ 那行静态文本', () => {
     assert.ok(!text.includes('总开关'), '屏上还有「总开关」这四个字');
   });
 
-  it('那段没被误伤：「爱生活」标题与版本行都还在屏上', async () => {
+  it('那段没被误伤：「爱生活」标题与版本胶囊都还在屏上（#937 起同一行）', async () => {
     const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
     assert.ok(text.includes('爱生活'), '总设置区那段被整段删掉了');
-    assert.ok(text.includes('总管 dsh-life-pack · ' + SENTINEL), '版本行没了');
+    // #937 维护者裁定：版本不再单独起一行，改成胶囊与「爱生活」标题同行；「总管」两个字从胶囊里去掉。
+    assert.ok(text.includes('dsh-life-pack · ' + SENTINEL), '版本胶囊没了');
+    assert.ok(!text.includes('总管 dsh-life-pack'), '「总管」又回到版本胶囊里了');
   });
 
   it('七家插件包的源码与产物里搜不到「总开关」这四个字', () => {

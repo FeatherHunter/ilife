@@ -118,10 +118,11 @@ const S = {
   statusText: { color: 'var(--dsw-alias-label-secondary, #cfd3d6)', minWidth: 0 } as React.CSSProperties,
   /** `.ic-sfind{display:flex;align-items:center;gap:8px;margin-top:7px}`。 */
   statusFind: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 } as React.CSSProperties,
-  /** `.ic-spath{font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);white-space:nowrap;overflow:hidden}`
-   *  ——单行不折、超出裁掉（**不写省略号**：本件有一条"零省略号"的跨包锁）。 */
+  /** `.ic-spath{font-size:10.5px;color:var(--ic-faint);white-space:nowrap;overflow:hidden}`
+   *  ——单行不折、超出裁掉（**不写省略号**：本件有一条"零省略号"的跨包锁）。
+   *  **不写 `fontFamily`**：v3.1 这一格要 `var(--ic-mono)`，但 `#739 ①` 明令共用件零字族（宿主没有界面字族
+   *  token，钉死会在别的窗口尺寸上失真）——与真源的同一处已知不同，账在 #920 证据件里。 */
   statusPath: {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     fontSize: '0.75em',
     color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
     minWidth: 0,
@@ -137,11 +138,11 @@ const S = {
     padding: '0 6px',
     whiteSpace: 'nowrap',
   } as React.CSSProperties,
-  /** `.ic-url{display:inline-block;margin-top:7px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint)}`。 */
+  /** `.ic-url{display:inline-block;margin-top:7px;font-size:10.5px;color:var(--ic-faint)}`
+   *  ——字族同样继承宿主（`#739 ①`：共用件零 `fontFamily`），理由同上一格。 */
   statusUrl: {
     display: 'inline-block',
     marginTop: 7,
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     fontSize: '0.75em',
     color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
   } as React.CSSProperties,
