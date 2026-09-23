@@ -13,6 +13,7 @@ import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadScheduleConfig, resetScheduleConfig, saveScheduleConfig } from '../config.js';
 import { resolvedSchedulePaths } from '../fetch/paths.js';
+import { dbDirAlert } from '../health.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-schedule-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -73,12 +74,30 @@ function withHumanError<T>(run: () => T): T {
  *
  * `resolved`（#764，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用：库文件／
  * HELP 产物目录（算式唯一定义地＝`src/fetch/paths.ts`，面板不自己拼路径）。
+ *
+ * `alerts`（#915 第二步）＝只有 `db.dir` 真用不了时才有这一格（缺席＝不亮，面板原样画 `message`）。
  */
+/**
+ * #915 第二步：只给 `db.dir` 的行告警（本家唯一可改目录行、唯一体检判红的格）。
+ *
+ * 结论复用体检 `db.dir` 那一项（`src/health.ts` 的 `dbDirAlert`，判据与 `dirVerdict` 同源），
+ * 红才给，`message` 原样取体检那句故障本身，不合成新句子；绿＝缺席（面板不亮）。
+ * 注意：这里不调整份体检——体检链带 lark 探测那一支，在家目录落 `.lark-cli`，
+ * 跟进读路径会弄脏 `#763` 的家目录纯度口径（`config-695` 钉着它）。
+ */
+function scheduleAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const alert = withHumanError(() => dbDirAlert());
+  return alert === undefined ? undefined : { 'db.dir': alert };
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadScheduleConfig());
     const resolved = withHumanError(() => resolvedSchedulePaths());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
+    const alerts = withHumanError(() => scheduleAlerts());
+    const data: Record<string, unknown> = { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved };
+    if (alerts !== undefined) data['alerts'] = alerts;
+    return envelope(key, 'detail', data);
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];

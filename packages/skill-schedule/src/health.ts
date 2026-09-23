@@ -391,6 +391,46 @@ function larkTier(cli: string | null): 'missing' | 'partial' | 'full' {
   return runLark(cli, ['calendar', '+agenda'], LARK_CALENDAR_TIMEOUT_MS).ok ? 'full' : 'partial';
 }
 
+/** `db.dir` 那一项的体检结论（#915 第二步：`*.config.read` 的行告警复用它，不自己再判一遍）。
+ *
+ * 只碰目录本身（`dirVerdict` 那一支），不跑 lark 链——`config.read` 落盘只许 `.ilife` 那一份，
+ * 体检链里那个来路不明的家目录写盘（`.lark-cli`）不许跟进行告警这条路。 */
+export function dbDirHealthItem(
+  values: Record<string, Record<string, unknown>>,
+  present: ReadonlySet<string>,
+  defaultDataDir: string,
+): HealthItem {
+  const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
+  const dataDir = dbDirOf(defaultDataDir, dbDirConfigured);
+  const dataDirSource = sourceOf(present, 'db.dir');
+  const dataDirVerdict = dirVerdict(dataDir);
+  return {
+    id: 'db.dir', title: '数据目录',
+    status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
+    message: !dataDirVerdict.exists
+      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
+      : dataDirVerdict.writable
+        ? '在且能写：' + p(dataDir) + '。'
+        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+    action: !dataDirVerdict.exists
+      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
+      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+    source: dataDirSource,
+  };
+}
+
+/** `*.config.read` 行告警用的 `db.dir` 结论：红才回 `{code, message}`（`message` 原样），否则缺席。
+ *  只读：读配置不落盘、不探 lark（见 `dbDirHealthItem` 的注释）。 */
+export function dbDirAlert(): { readonly code: string; readonly message: string } | undefined {
+  const paths = configPaths(SCHEDULE_CONFIG_STEM);
+  const read = readScheduleConfigReadOnly();
+  if (read.kind !== 'ok') return undefined;
+  const item = dbDirHealthItem(read.values, read.present, paths.dataDir);
+  if (item.status !== 'red') return undefined;
+  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  return { code, message: item.message };
+}
+
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
 export function buildScheduleHealthReport(): ScheduleHealthReport {
   const paths = configPaths(SCHEDULE_CONFIG_STEM);
@@ -426,24 +466,11 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     });
   }
 
-  // ② 数据目录：在不在、能不能写。
-  const dbDirConfigured = textOf(readValue(values, 'db', 'dir'));
-  const dataDir = dbDirOf(paths.dataDir, dbDirConfigured);
+  // ② 数据目录：在不在、能不能写（结论构造只有一处定义地＝上面的 `dbDirHealthItem`，行告警复用它）。
+  items.push(dbDirHealthItem(values, present, paths.dataDir));
+  // 后面几条还要用生效数据目录与它的来源：同一条 `dbDirOf` 算式与 `sourceOf` 口径，不另算一份。
+  const dataDir = dbDirOf(paths.dataDir, textOf(readValue(values, 'db', 'dir')));
   const dataDirSource = sourceOf(present, 'db.dir');
-  const dataDirVerdict = dirVerdict(dataDir);
-  items.push({
-    id: 'db.dir', title: '数据目录',
-    status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
-    message: !dataDirVerdict.exists
-      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
-      : dataDirVerdict.writable
-        ? '在且能写：' + p(dataDir) + '。'
-        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
-    action: !dataDirVerdict.exists
-      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
-      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
-    source: dataDirSource,
-  });
 
   // ③ 库文件：在不在 ＋ 表数够不够。
   const dbNameConfigured = textOf(readValue(values, 'db', 'name'));
