@@ -345,9 +345,9 @@ for (let i = 0; i < SCENES.length; i += 1) {
     continue;
   }
   const stem = resolveSceneStem(sc.key, params);
-  if (stem !== sc.commandCn + '_' + sc.id) {
+  if (stem !== sc.commandCn) {
     failed += 1;
-    rec.error = `命名走散：resolveSceneStem=${stem} 附录=${sc.commandCn + '_' + sc.id}`;
+    rec.error = `命名走散：resolveSceneStem=${stem} 附录=${sc.commandCn}`;
     evidence.push(rec);
     console.log(`${String(i + 1).padStart(2)} ${sc.id.padEnd(6)} ${rec.error}`);
     continue;
