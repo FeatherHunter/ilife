@@ -560,6 +560,7 @@ function renderComparePage(core: CompareCore): string {
     subtitle: core.subtitle,
     content: parts.join(''),
     charts: core.curve !== null,
+    pageUi: true,
   });
 }
 

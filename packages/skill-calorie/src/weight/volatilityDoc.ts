@@ -357,6 +357,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
       subtitle,
       content: parts.join(''),
       charts: false,
+      pageUi: true,
     });
   }
   if (only) {
@@ -397,6 +398,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
     subtitle,
     content: parts.join(''),
     charts,
+    pageUi: true,
   });
 }
 

@@ -56,6 +56,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 要把插件上架到 awesome 精选列表、改条目里的描述或分类、或补截图／下载量／README 时读 `docs/agents/awesome插件市场投稿.md`——那一份自包含，可以整份拷给别的项目；本仓七个插件上架到哪一步、下载量与截图的现场读数看 `docs/agents/awesome插件市场-上架台账.md`。
 
+### 终端纪律
+
+一切终端命令一律在 better-sidebar 的终端里执行（终端工具起的 sidebar 终端，标题 `<票号>-<用途>`）；不用 `pwsh` 工具直接跑。长命令落盘＋等标记＋只读尾，编译／测试／git 写操作经 `node tooling/run-locked.mjs` 排队，结束前关闭终端。细则见 `docs/subagent-concurrency-protocol.md` §2–§4。
+
 ### 编排纪律
 
 切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。

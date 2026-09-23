@@ -176,6 +176,7 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
     summary: goalSummaryOf(v),
     content: body,
     charts: false,
+    pageUi: true,
   });
 }
 
@@ -247,6 +248,7 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
       + recorded + ' 天、达标 ' + v.completedCount + ' 天（完成率 ' + pct + '），本窗日均摄入 ' + v.trendAvg + ' 卡。',
     content: body,
     charts: false,
+    pageUi: true,
   });
 }
 
@@ -305,6 +307,7 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
       + ' 天，' + (v.expiring ? '已经落进窗口，该安排收尾了。' : '还没进窗口，暂时不用处理。'),
     content: body,
     charts: false,
+    pageUi: true,
   });
 }
 
@@ -317,7 +320,7 @@ function simpleGoalDoc(key: string, title: string, badge: string, metaLeft: stri
     section('sec-detail', renderDataTable({ columns: [{ key: 'item', label: '项目' }, { key: 'reading', label: '读数', align: 'right' }, { key: 'note', label: '说明' }], rows, caption, emptyText: '暂无明细' })),
     tailOf(key, metrics, command, '目标表', calibers),
   ].join('');
-  return assembleDocPage({ docTitle: DOC_TITLE, title, eyebrow: '', subtitle: null, metaLeft, badge, summary, content: body, charts: false });
+  return assembleDocPage({ docTitle: DOC_TITLE, title, eyebrow: '', subtitle: null, metaLeft, badge, summary, content: body, charts: false, pageUi: true });
 }
 
 export function buildGoalConfigDoc(g: GoalConfig, metrics: Record<string, number>, command: string): string {

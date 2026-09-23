@@ -13,7 +13,8 @@
  *   ④ 目标缺席：走专门空态、页内不出现环形进度容器（变异①的靶子）；
  *   ⑤ 截断一致：超上限窗口（365 天）的截断明示与页眉条数／可见行数口径一致（变异②的靶子）；
  *   ⑥ 三类工程话**全文**断言：摘掉复制载荷后命令键 0 处、票号 0 处、工序词「移植」0 处
- *      （票号与工序词连复制载荷里也不许有；命令键只许落在复制载荷里，那是可照抄重跑的命令原文）；
+ *      （票号与工序词连复制载荷里也不许有；命令键只许落在复制载荷里，那是可照抄重跑的命令原文。
+ *      #921 起票号那一类扫去样式段的文本——样式段带的是公共层配方的记账注释，不是上屏文本）；
  *   ⑦ 口径单源：周口径那句（「每日目标 × 7」）在 `packages/skill-calorie/src` 只命中一个文件；
  *   ⑧ 页头写人话：`<title>` 与眉标里无命令键、无票号、无「移植」。
  *
@@ -186,6 +187,15 @@ function stripCopyPayload(html) {
   return html.replace(/data-t="[^"]*"/g, 'data-t="［复制载荷］"');
 }
 
+/** 页内样式段（`<style>`／`<script>`）：公共层配方把自己的记账注释落在这里，**它不是上屏文本**。
+ *  #921：本族接上 `pageUi: true`（页面级移动端配方）后，这一截带进了公共层配方定义地的记账注释
+ *  （`base-render/src/pageUi.ts` 与 `base-render/src/pageUiToast.ts` 里的 `t728`／`t849`）——
+ *  实测真产物整份 2 处票号样式命中、全在 `<style>` 段内，去样式段后 0 处；
+ *  故票号判据按**上屏面**取文本，样式段之外的任何一处票号仍必红。 */
+function stripPageStyle(html) {
+  return html.replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<script>[\s\S]*?<\/script>/g, '');
+}
+
 /** 工程话三条的**全文**断言（命令键／票号／工序词「移植」各 0）＋ 可见文本零 snake_case ＋ 页头人话。
  *  命令键**有意**落在复制载荷里（复制日志末段是可照抄重跑的命令原文，三格式数据里也带 envelope 的 key），
  *  故全文断言的写法是：**摘掉复制载荷后整份产物零命令键**；票号与工序词连复制载荷里也不许有。 */
@@ -195,7 +205,8 @@ function assertNoEngineerWords(html, what) {
   assert.ok(!body.includes('calorie.view.'), what + ' 的复制载荷之外出现命令键 calorie.view.*');
   for (const [where, text] of [['全文（除复制载荷）', body], ['复制载荷', html]]) {
     assert.ok(!text.includes('calorie.exercise.'), what + ' 的' + where + '里出现命令键 calorie.exercise.*');
-    assert.ok(!/\bt\d{3}\b/.test(text), what + ' 的' + where + '里出现票号样式');
+    // #921：票号那一类只扫上屏面（样式段的记账注释见 `stripPageStyle` 的注释）；两处落点都不放过。
+    assert.ok(!/\bt\d{3}\b/.test(stripPageStyle(text)), what + ' 的' + where + '里出现票号样式');
     assert.ok(!text.includes('移植'), what + ' 的' + where + '里出现工序词「移植」');
   }
   // 族票共同要求：**可见文本零 snake_case**（库表名那种写法只许留在复制载荷里）。

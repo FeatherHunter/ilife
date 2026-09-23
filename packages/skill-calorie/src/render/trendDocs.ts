@@ -325,7 +325,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
      *  不改成「与 H1 不同名的一句」的理由：这里没有第二种页型要区分（11 个配对同版式，差异全在 H1 里）。 */
     summary,
     content: parts.join(''),
-    charts,
+    charts, pageUi: true,
   });
 }
 
@@ -381,7 +381,7 @@ export function buildAnomalyDoc(v: AnomalyView): string {
     eyebrow: '异常诊断 · 趋势分析域',
     subtitle: dg.insight ? humanText(dg.insight) : null,
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -506,7 +506,7 @@ export function buildContraDoc(v: ContraView): string {
     eyebrow: '健身计划',
     subtitle: v.part === 'all' ? '全部部位' : '只看' + v.part,
     content: pageChromeCss(960) + CONTRA_MOBILE_CSS + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 

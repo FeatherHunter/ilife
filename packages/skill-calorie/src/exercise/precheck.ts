@@ -141,6 +141,7 @@ export function buildExerciseGoalPrecheckDoc(v: ExerciseGoalPrecheckView): strin
     subtitle: '还没设每日运动消耗目标，先定目标值再看对照',
     content,
     printable: true,
+    pageUi: true,
   });
 }
 

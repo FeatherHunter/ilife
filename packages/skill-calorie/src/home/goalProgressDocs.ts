@@ -441,6 +441,6 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
     eyebrow: EYEBROW,
     subtitle: input.start + ' 至 ' + input.end,
     content,
-    charts: !empty && f.loggedDays >= 2,
+    charts: !empty && f.loggedDays >= 2, pageUi: true,
   });
 }

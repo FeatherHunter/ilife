@@ -86,5 +86,6 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     eyebrow: '基础信息 · 写后回执',
     subtitle: localizeEnums(receipt.summary),
     content,
+    pageUi: true,
   });
 }

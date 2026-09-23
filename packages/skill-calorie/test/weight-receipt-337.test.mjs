@@ -187,7 +187,12 @@ function assertReceipt(r, what) {
   const body = visibleBody(r.file);
   assert.ok(!body.includes('·'), what + ' 正文里仍有 `·`：' + (body.match(/.{0,24}·.{0,24}/) ?? [''])[0]);
   assert.ok(!body.includes('；'), what + ' 正文里仍有 `；`：' + (body.match(/.{0,24}；.{0,24}/) ?? [''])[0]);
-  assert.doesNotMatch(r.file, /page-shell-title[^>]*>[^<]*·/, what + ' 页题里仍有 `·`');
+  /* #921：本族接上 `pageUi: true`（页面级移动端配方）后，页内样式段带进了配方自己的记账注释
+   *  （`pageUi.ts` 那条 `#525 页面级移动端配方 · 只对根类…生效` 的 CSS 注释）。旧写法拿裸图案扫
+   *  **整份文件**，命中的正是那条注释（假红，页题本身没有 `·`）；页题判据只该看**页题节点**，
+   *  取法照既有 `t511-清尾二.test.mjs:129`／`t630-今日营养题名.test.mjs:68` 的 `<h1 …page-shell-title…>` 写法。 */
+  assert.doesNotMatch(r.file, /<h1[^>]*class="[^"]*ilife-block-page-shell-title[^"]*"[^>]*>[^<]*·/,
+    what + ' 页题里仍有 `·`');
   assert.ok(r.file.includes('<p class="wui-verdict">'), what + ' 结论块正文不是形状元素（判语块缺失或被转义）');
   assert.ok(!/&lt;(p|div|span|ul) class=&quot;wui-/.test(r.file), what + ' 形状词汇被当成字面量印上了屏');
 }

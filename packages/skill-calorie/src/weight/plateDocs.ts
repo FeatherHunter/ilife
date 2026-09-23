@@ -175,6 +175,7 @@ export function receiptPageOf(receipt: CrudReceipt, content: string, subtitle?: 
     eyebrow: '',
     subtitle: visualSubtitleOf(subtitle ?? receipt.summary),
     content: weightUiCss() + content,
+    pageUi: true,
   });
 }
 

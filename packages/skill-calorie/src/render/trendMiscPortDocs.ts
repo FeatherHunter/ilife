@@ -222,7 +222,7 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
     badge: '',
     summary,
     content: parts.join(''),
-    charts: true,
+    charts: true, pageUi: true,
   });
 }
 
@@ -332,7 +332,7 @@ export function buildLongTrendDoc(v: LongTrendView): string {
      *  徽章再印一遍是同页同词两遍。 */
     badge: '',
     content: parts.join(''),
-    charts,
+    charts, pageUi: true,
   });
 }
 
@@ -423,7 +423,7 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
     /* #511 · 原副题「配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）」——「配比／微量／规则建议」是内部叫法，括号里那半句还是开发过程说明（审查件第 82 条）⇒ 换成一句「这页有什么」。 */
     subtitle: '三大营养素比例与其他营养素摄入，以及据此给出的建议',
     content: dietUiCss() + parts.join(''),
-    charts,
+    charts, pageUi: true,
   });
 }
 
@@ -492,7 +492,7 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     subtitle: '这 6 项达标了几项（热量按千卡计）',
     /* #616 · 日期退出 H1：搬进正文首件窗口条——单日窗退化成**一枚日期块**（`diet/dietUi.ts` 现成件，页内样式随件带入）。 */
     content: dietUiCss() + windowStrip(v.date, v.date) + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -538,7 +538,7 @@ export function buildLintHealthDoc(v: LintHealthView): string {
     eyebrow: '卡路里 · 趋势',
     subtitle: '未匹配库/零负热量/未来日期/疑似重复（只读，不写库）',
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -570,7 +570,7 @@ export function buildProcessProgressDoc(v: ProcessProgressView): string {
     eyebrow: '卡路里 · 趋势',
     subtitle: '计划配置＋近 7 天执行（无计划且无执行即阻断）',
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -613,6 +613,6 @@ export function buildReviewTemplateDoc(v: ReviewTemplateView): string {
     eyebrow: '卡路里 · 趋势',
     subtitle: '三面小结＋派生要点（要点为规则输出，非 AI 建议）',
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }

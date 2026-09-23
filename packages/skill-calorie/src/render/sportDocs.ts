@@ -334,6 +334,7 @@ export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
         hint: '先说一句「记运动」把这一次补上，或把窗口换成最近 7 天再看。',
       }) + '</section>',
       printable: true,
+      pageUi: true,
     }) + copy;
   }
   const cards = summaryCards(v);
@@ -345,6 +346,7 @@ export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
     content: windowStrip(v.start, v.end, daysIn(v.start, v.end) + ' 天')
       + pageBody(cards, [], '', copy),
     charts: true, printable: true,
+    pageUi: true,
   });
 }
 
@@ -446,6 +448,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
         hint: '先说一句「定营养目标」把每日运动消耗目标定下来，再看这张对照页。',
       }) + '</section>',
       printable: true,
+      pageUi: true,
     }) + copy;
   }
   const goalTotal = v.goalTotal;
@@ -460,6 +463,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
     content: windowStrip(v.start, v.end, v.days + ' 天')
       + pageBody(cards, goalCalibers(v, goalTotal), source, copy),
     printable: true,
+    pageUi: true,
   });
 }
 

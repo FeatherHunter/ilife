@@ -150,6 +150,16 @@ export function weightUiCss(): string {
     // `.ilife-block-disclosure`（`<details>/<summary>`）**一行不碰**，只在本族页内给这两块补这两条。
     + '.ilife-block-feedback-block,.wui-verdict,.wui-note{'
     + '-webkit-tap-highlight-color:transparent;touch-action:manipulation}'
+    // ── 表格卡左右留白对齐（红框那张「写入后的现值」看着贴边）──
+    // 病根：共用层 `blocks.ts` 的表格在 ≤640 行卡化时标题横向只 10px、行只 12px，
+    // 而同页 KPI 卡／图表卡／结论体都是 14px（`block-kpi-card{padding:14px}`／
+    // `block-chart-block{padding:14px}`／`block-disclosure-body{padding:0 14px 14px}`），
+    // 并排一比表格那张窄半格、字看着咬边框。桌面档标题／格本就是 14px，一字不动；
+    // 这里只把窄屏那两处横向补齐到 14px。放本族页内样式段、同权重靠后胜出，不碰公共层。
+    + '@media (max-width:640px){'
+    + '  .ilife-block-data-table-caption{padding-left:14px;padding-right:14px}'
+    + '  .ilife-block-data-table tr{padding-left:14px;padding-right:14px}'
+    + '}'
     + '</style>';
 }
 

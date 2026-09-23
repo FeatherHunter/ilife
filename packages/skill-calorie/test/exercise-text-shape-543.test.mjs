@@ -207,7 +207,9 @@ test('#543 ① 分隔符：回执族页面的可见文本零 `·`／`；`／≥3
 
 test('#543 ② 文案：零机器词上屏（库表名／常量名／参数名）＋ 页头零 `·`', () => {
   const NAMED = ['exercise_log', 'daily_goal', 'total_changes', 'CALORIE_TODAY', 'calorie.view.'];
-  const ROOT = /<div class="wrap ilife-page">/;
+  // #921：本族回执页接上 `pageUi: true`（页面级移动端配方）后，版面根多一颗配方根类——
+  // 旧串 `<div class="wrap ilife-page">` 换成新串（同形先例：`test/t535-读侧族-重排.test.mjs:138`）。
+  const ROOT = /<div class="wrap ilife-page ilife-page-ui">/;
   let bad = 0;
   for (const [name, build] of PAGES) {
     const html = build();

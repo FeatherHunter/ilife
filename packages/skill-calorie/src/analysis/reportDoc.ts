@@ -85,7 +85,7 @@ export function buildReportDoc(plate: ReportPlate, command: string): string {
       + sourceFootnoteOf(plate),
     metaLeft: metaLeftOf(plate),
     badge: '报告',
-    summary: null,
+    summary: null, pageUi: true,
   });
 }
 

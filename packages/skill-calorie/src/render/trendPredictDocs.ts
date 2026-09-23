@@ -286,7 +286,7 @@ export function buildDeficitDoc(d: DeficitData): string {
      *  见 `./pageChromeCss.ts` 件头）。1440 档从两侧各空 240px 收成各 160px（主列 960→1120）。
      *  不新增公共层件（编排者裁定 3）、不新建形状（基准件 §4.3 具名清单仍为空）。 */
     content: pageChromeCss(1120) + t571DeficitCss() + t573CrossCss() + parts.join(''),
-    charts,
+    charts, pageUi: true,
   });
 }
 
@@ -674,7 +674,7 @@ export function buildPredictDoc(v: PredictView): string {
     eyebrow: '预测体重',
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -736,7 +736,7 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
     eyebrow: '预测体重',
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -802,7 +802,7 @@ export function buildSimCutDoc(v: WeightSimCut): string {
     eyebrow: '模拟减重',
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t569SimCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -875,7 +875,7 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
     eyebrow: '模拟减重',
     subtitle: null,
     content: pageChromeCss(1120) + t569SimCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -979,7 +979,7 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
      *  三列表不动（R-16 归 #570）；本改动只增益，#570 可在其上继续。
      * #570 R-16/R-17/R-20/R-21：本族网格两列＋三列表堆叠＋列宽＋徽章升格（`t570IntakeCss`）。 */
     content: pageChromeCss(1120) + t569ForecastCss() + t570IntakeCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -1034,7 +1034,7 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
     subtitle: null,
     /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。 */
     content: pageChromeCss(1120) + t570IntakeCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -1087,7 +1087,7 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
     subtitle: null,
     /* #570 R-20：本族网格两列（`t570IntakeCss`）。 */
     content: pageChromeCss(1120) + t570IntakeCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -1137,7 +1137,7 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
     /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。
      * #625 A团再加本页末格补齐（`t625StabilityCss`，只本页）。 */
     content: pageChromeCss(1120) + t570IntakeCss() + t625StabilityCss() + t573CrossCss() + parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }
 
@@ -1185,6 +1185,6 @@ export function buildGoalPredictDoc(v: GoalPredictView): string {
     eyebrow: '目标预测达成 · 趋势分析域',
     subtitle: null,
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }

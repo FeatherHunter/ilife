@@ -456,6 +456,7 @@ export function buildWeightReviewDoc(v: WeightReviewView, command?: string): str
     subtitle: m.status,
     content: parts.join(''),
     charts: false,
+    pageUi: true,
   });
 }
 
@@ -664,6 +665,7 @@ export function buildWeightReviewPeriodDoc(v: WeightReviewPeriodView, command?: 
     subtitle: windowText(v.start, v.end),
     content: parts.join(''),
     charts: true,
+    pageUi: true,
   });
 }
 
@@ -751,5 +753,6 @@ export function buildWeightMilestonesDoc(v: WeightMilestonesView, command?: stri
     subtitle: '每减 5 kg 记一次，记的是第一次达到那天',
     content: parts.join(''),
     charts: false,
+    pageUi: true,
   });
 }

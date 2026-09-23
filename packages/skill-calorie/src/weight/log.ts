@@ -333,6 +333,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     subtitle: '',
     content: parts.join(''),
     charts: true,
+    pageUi: true,
   });
 }
 
@@ -366,6 +367,7 @@ function buildWeightEmptyDoc(start: string, end: string, command: string): strin
     eyebrow: '',
     subtitle: '这段时间还没有体重记录',
     content: parts.join(''),
+    pageUi: true,
   });
 }
 

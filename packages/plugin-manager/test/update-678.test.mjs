@@ -12,6 +12,7 @@ import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-ta
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
 import { isAbsent, cardActionOf, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
+import { hasInstallingRow, runSerialUpdateAll, updateBusyFailure } from '../dist/update-queue.js';
 import { readPanelRegistered, readTargetEnvironment } from '../dist/update-env.js';
 
 const PROFILE = 'dsh-profile-web';
@@ -578,6 +579,147 @@ describe('#678 宿主读数：已装产物里有没有页签槽注册代码', ()
       assert.equal(await readPanelRegistered(HOST, dir), true, '不重读就等于把装机读数缓存住了：装完不重启也不改态');
     } finally {
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// 票 #926 并发门禁（一键排队串行＋全局互斥）：只用假传输口，不碰真机。
+// 判据：串行顺序写死（改成并行必红）、失败继续（挡住下一家必红）、待重启跳过（多装一次必红）、
+// 有 installing 时 checkAll/act 拒绝且不改行（敢改一行必红）、人话沿用 update-busy 原句。
+describe('#926 一键串行与并发门禁', () => {
+  const present = (key, pkg) => ({
+    key,
+    title: key,
+    packageName: pkg,
+    phones: { status: key + '.status', check: key + '.check', install: key + '.install' },
+    runningVersion: '0.2.5',
+    installedVersion: '0.2.5',
+    skill: null,
+  });
+  const snap = (patch) => ({
+    runningVersion: '0.2.5',
+    installedVersion: '0.2.5',
+    latestVersion: '0.3.0',
+    canInstall: true,
+    blockedReason: null,
+    job: null,
+    ...patch,
+  });
+  const outcomeOf = (patch) => ({
+    snapshot: snap(patch),
+    manual: null,
+    receipt: { checkId: 'chk-' + Math.random().toString(36).slice(2), checkedAt: 0, expiresAt: 10 },
+  });
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  function harness(targets, behavior = {}) {
+    const order = [];
+    const rows = {};
+    for (const t of targets) rows[t.key] = { phase: 'idle', outcome: null, failure: null };
+    const deps = {
+      check: async (target) => {
+        order.push('check:' + target.key);
+        if (behavior.checkFail === target.key) return { ok: false, code: 'check-failed', message: 'x', details: {}, manual: null };
+        if (behavior.restartPending === target.key) {
+          return { ok: true, value: outcomeOf({ installedVersion: '0.3.0', blockedReason: 'pending-restart' }) };
+        }
+        return { ok: true, value: outcomeOf({}) };
+      },
+      checkStatus: async (target) => {
+        order.push('status:' + target.key);
+        return { ok: true, value: outcomeOf({ installedVersion: '0.3.0' }) };
+      },
+      installAbsent: async (target, version) => {
+        order.push('installAbsent:' + target.key);
+        return { ok: true, value: { packageName: target.packageName, version } };
+      },
+      installPresent: async (target) => {
+        order.push('install:' + target.key);
+        await sleep(5);
+        if (behavior.installFail === target.key) {
+          return { ok: false, code: 'install-failed', message: 'bad', details: {}, manual: 'cmd-' + target.key };
+        }
+        return { ok: true, value: outcomeOf({ installedVersion: '0.3.0' }) };
+      },
+      patch: (key, next) => {
+        order.push('patch:' + key + ':' + next.phase);
+        rows[key] = next;
+      },
+      getRow: (key) => rows[key],
+    };
+    return { order, rows, deps };
+  }
+
+  it('串行收尾：两家按顺序查→装→轮询，各自行 ready，他行 phase 不动', async () => {
+    const a = present('calorie', 'dsh-calorie');
+    const b = present('chef', 'dsh-chef');
+    const c = present('memo', 'dsh-memo');
+    const { order, rows, deps } = harness([a, b]);
+    rows[c.key] = { phase: 'ready', outcome: outcomeOf({}), failure: null };
+    const beforeC = rows[c.key];
+    await runSerialUpdateAll([a, b], deps);
+    assert.deepEqual(
+      order.filter((x) => !x.startsWith('patch:')),
+      ['check:calorie', 'install:calorie', 'status:calorie', 'check:chef', 'install:chef', 'status:chef'],
+      '一家收尾才起下一家：并行发起（双 check 打头）即错',
+    );
+    assert.equal(rows.calorie.phase, 'ready');
+    assert.equal(rows.chef.phase, 'ready');
+    assert.equal(rows[c.key], beforeC, '他行保持各自 phase：串行不许碰别家');
+  });
+
+  it('失败一家记 failed 继续下一家，不挡其余', async () => {
+    const a = present('calorie', 'dsh-calorie');
+    const b = present('chef', 'dsh-chef');
+    const { order, rows, deps } = harness([a, b], { installFail: 'calorie' });
+    await runSerialUpdateAll([a, b], deps);
+    assert.equal(rows.calorie.phase, 'failed');
+    assert.equal(rows.chef.phase, 'ready', '失败一家必须继续下一家');
+    assert.ok(order.includes('check:chef'), '下一家的检查必须真的发生');
+  });
+
+  it('待重启跳过安装继续下一家（由横幅点名，不在这里装第二遍）', async () => {
+    const a = present('calorie', 'dsh-calorie');
+    const b = present('chef', 'dsh-chef');
+    const { order, rows, deps } = harness([a, b], { restartPending: 'calorie' });
+    await runSerialUpdateAll([a, b], deps);
+    assert.equal(rows.calorie.phase, 'ready');
+    assert.ok(!order.includes('install:calorie'), '待重启那家不许再提交一次安装');
+    assert.ok(order.includes('install:chef'), '下一家照常安装');
+    assert.equal(rows.chef.phase, 'ready');
+  });
+
+  it('忙守卫：任一行 installing 时 checkAll/act 拒绝且不改行，人话沿用 update-busy 原句', () => {
+    assert.equal(hasInstallingRow({ a: { phase: 'installing' }, b: { phase: 'ready' } }), true);
+    assert.equal(hasInstallingRow({ a: { phase: 'ready' }, b: { phase: 'failed' } }), false);
+    assert.equal(hasInstallingRow({}), false);
+    // 模拟 checkAll/act 入口：有忙直接返回，不改 rows。
+    const rows = {
+      calorie: { phase: 'installing', outcome: null, failure: null },
+      chef: { phase: 'ready', outcome: null, failure: null },
+    };
+    const before = structuredClone(rows);
+    const fakeCheckAll = () => {
+      if (hasInstallingRow(rows)) return false;
+      rows.chef = { phase: 'checking', outcome: null, failure: null };
+      return true;
+    };
+    const fakeAct = () => {
+      if (hasInstallingRow(rows)) return updateBusyFailure('chef');
+      rows.chef = { phase: 'installing', outcome: null, failure: null };
+      return null;
+    };
+    assert.equal(fakeCheckAll(), false, 'checkAll 有忙必须拒绝');
+    assert.deepEqual(rows, before, 'checkAll 拒绝时不改任何行');
+    const rejected = fakeAct();
+    assert.equal(rejected.code, 'update-busy', 'act 有忙拒 update-busy（含同家第二点，不进队列）');
+    assert.equal(rejected.message, reasonText('update-busy'), '人话沿用原句，不另写一套');
+    assert.deepEqual(rows, before, 'act 拒绝时不改任何行');
+  });
+
+  it('产物含一键按钮名与四动作名（#926 产物门禁）', () => {
+    const bundle = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
+    for (const label of ['装上', '装上更新', '重试安装', '重新检查', '全部更新']) {
+      assert.ok(bundle.includes(label), '产物里缺按钮名：' + label);
     }
   });
 });

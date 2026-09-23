@@ -120,7 +120,6 @@ export function assembleDocPage(input: DocPageInput): string {
   const bline = metaLeft !== null;
   /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
   const printable = input.printable === true;
-  /** 页面级移动端配方（#525）：同上口径——只认真真值，不给／给假即老路（产出物逐字节不变）。 */
   const pageUi = input.pageUi === true;
   /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段、
    *  读数卡窄屏两列一段（恒启用：此前未启用配方的页在 `≤640` 仍是单列，见本件 `KPI_MOBILE_CSS`；

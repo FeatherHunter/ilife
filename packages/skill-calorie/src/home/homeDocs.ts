@@ -329,6 +329,6 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     eyebrow: HOME_EYEBROW,
     subtitle: subtitleText(d),
     content,
-    charts: body.charts,
+    charts: body.charts, pageUi: true,
   });
 }

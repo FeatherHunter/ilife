@@ -115,5 +115,6 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
     subtitle: '',
     content: parts.join(''),
     charts: false,
+    pageUi: true,
   });
 }

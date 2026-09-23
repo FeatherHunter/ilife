@@ -104,7 +104,12 @@ function assertTextDiscipline(html, what) {
   const body = stripCopyPayload(html);
   assert.ok(body.length < html.length, what + ' 产物里读不到复制载荷（形制不对，全文断言无从谈起）');
   assert.ok(!body.includes('calorie.view.'), what + ' 除复制载荷外出现命令键 calorie.view.*');
-  assert.ok(!/\bt\d{3}\b/i.test(html), what + ' 出现票号样式');
+  // #921：本页接上 `pageUi: true`（页面级移动端配方）后，页内样式段带进了公共层配方定义地的记账注释
+  // （`base-render/src/pageUi.ts` 里的 `t728`／`t849`）。票号判据的落点是**上屏文本**——样式段不是正文，
+  // 公共层的记账注释也不该算在本页账上（同批先例 `exercise-records-fusion-451.test.mjs:153-157`）。
+  // 实测：整份 2 处命中、全在 `<style>` 段内；去样式段后 0 处。牙口只放开这一处：样式段之外的任何票号仍必红。
+  const noStyle = html.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ');
+  assert.ok(!/\bt\d{3}\b/i.test(noStyle), what + ' 出现票号样式');
   const snake = /\b[a-z][a-z0-9]*_[a-z0-9_]+\b/.exec(body);
   assert.equal(snake, null, what + ' 可见面出现 snake_case：' + (snake === null ? '' : snake[0]));
   // 裸英文枚举：trend 的 up／down／flat、缺口的 loss／gain／flat、以及 null／undefined 这类。

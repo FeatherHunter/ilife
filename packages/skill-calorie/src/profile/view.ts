@@ -261,5 +261,6 @@ export function buildProfileViewDoc(v: ProfileView): string {
     eyebrow: '基础信息 · 看档案',
     subtitle: '你的档案现值与最近一次体重',
     content,
+    pageUi: true,
   });
 }

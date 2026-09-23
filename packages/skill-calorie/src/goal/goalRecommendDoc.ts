@@ -107,5 +107,6 @@ export function buildGoalRecommendDoc(g: GoalRecommend, metrics: Record<string, 
     summary: recommendSummary(g),
     content: body,
     charts: false,
+    pageUi: true,
   });
 }

@@ -756,6 +756,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     subtitle: '',
     content: parts.join(''),
     charts,
+    pageUi: true,
   });
 }
 

@@ -266,7 +266,7 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     /* §五 第 3 行：结论句（句内只留合计一句，窗口与五事实明细在页顶形状条；#551 去文字串）。 */
     subtitle: '本窗合计 ' + o.totalCalories + ' 卡',
     content: parts.join(''),
-    charts,
+    charts, pageUi: true,
   });
 }
 
@@ -345,6 +345,6 @@ export function buildHealthDoc(h: HealthPlate): string {
     eyebrow: 'calorie.view.health · 饮食域',
     subtitle: h.dashboard.message,
     content: parts.join(''),
-    charts: false,
+    charts: false, pageUi: true,
   });
 }

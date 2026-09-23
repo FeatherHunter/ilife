@@ -246,5 +246,6 @@ export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
     eyebrow: '目标管理 · 预检确认',
     subtitle: '这一页只做预检、不写目标；确认下面的值无误后，把指令复制给 AI 执行',
     content,
+    pageUi: true,
   });
 }

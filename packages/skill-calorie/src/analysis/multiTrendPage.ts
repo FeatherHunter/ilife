@@ -414,7 +414,7 @@ function buildBDoc(v: MultiTrendView): string {
     badge: NO_BADGE,
     summary: bSummaryLine(v),
     content: parts.join(''),
-    charts: true,
+    charts: true, pageUi: true,
   });
 }
 
@@ -518,6 +518,6 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
     badge: NO_BADGE,
     summary: bSummaryLine(v),
     content: parts.join(''),
-    charts: true,
+    charts: true, pageUi: true,
   });
 }

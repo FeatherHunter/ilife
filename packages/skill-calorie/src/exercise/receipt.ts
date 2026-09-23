@@ -460,5 +460,6 @@ export function buildExerciseReceiptDoc(
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），
     // 打印规则（隐藏页内导航与区块复制区、具名页 `@page printable`）见 `base-render/src/blocks.ts`。
     printable: true,
+    pageUi: true,
   });
 }

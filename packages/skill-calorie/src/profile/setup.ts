@@ -362,7 +362,7 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
     title: '档案预检',
     eyebrow: '基础信息 · 预检确认',
     subtitle: '这一页只做预检、不写档案；确认下面的值无误后，把指令复制给 AI 执行',
-    content,
+    content, pageUi: true,
   });
 }
 
@@ -442,6 +442,6 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
     title: receipt.scene + ' · 回执',
     eyebrow: '基础信息 · 写后回执',
     subtitle: localizeEnums(receipt.summary),
-    content,
+    content, pageUi: true,
   });
 }

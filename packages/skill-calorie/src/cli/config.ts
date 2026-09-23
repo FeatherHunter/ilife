@@ -14,6 +14,7 @@ import type { ConfigRecord } from 'base-link-core';
 import { CALORIE_SKILL, ENVELOPE_VERSION } from './keys.js';
 import { loadCalorieConfig, resetCalorieConfig, saveCalorieConfig } from '../config.js';
 import { dbFileOf, gifsDirOf, htmlDirOf, photosDirOf, resolveDbDir, resolveDbFileName, stateDirOf } from '../paths.js';
+import { buildCalorieHealthReport } from '../health.js';
 import { XUNJI_CATALOG } from '../xunji/index.js';
 import { fail } from '../shared/params.js';
 
@@ -63,7 +64,7 @@ function withHumanError<T>(run: () => T): T {
 /**
  * 跑一个配置 key，返回整行 envelope JSON。
  *
- * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved}`；写 → 入参 `{values}`，回执 `{path, values}`；
+ * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved[, alerts]}`；写 → 入参 `{values}`，回执 `{path, values}`；
  * 重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
  *
  * `resolved`（#757，照记账 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用：
@@ -105,11 +106,34 @@ export function resolvedCaloriePaths(): CalorieResolvedPaths {
   };
 }
 
+/**
+ * #915 第二步：只给可改目录行（`db.dir`／`photos.dir`）的行告警。
+ *
+ * 结论复用体检对应项（`src/health.ts` 的 `dirVerdict`：不在／在但写不进去／在且能写），
+ * 只有体检判红的那一格才进 `alerts`，`message` 原样取体检那句故障本身，不合成新句子；
+ * 全绿＝缺席（面板不亮）。`xunji.key` 非目录不给，只读行一律不给。
+ * 故障码只按体检报文首字区分（`不在`／`同名`→缺失，其余→写不进去），供判据与回执用，面板只画 `message`。
+ */
+function calorieAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const items = buildCalorieHealthReport().items;
+  const out: Record<string, { readonly code: string; readonly message: string }> = {};
+  for (const id of ['db.dir', 'photos.dir'] as const) {
+    const item = items.find((entry) => entry.id === id);
+    if (item === undefined || item.status !== 'red') continue;
+    const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+    out[id] = { code, message: item.message };
+  }
+  return Object.keys(out).length === 0 ? undefined : out;
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadCalorieConfig());
     const resolved = withHumanError(() => resolvedCaloriePaths());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
+    const alerts = withHumanError(() => calorieAlerts());
+    const data: Record<string, unknown> = { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved };
+    if (alerts !== undefined) data['alerts'] = alerts;
+    return envelope(key, 'detail', data);
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
