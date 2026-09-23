@@ -141,14 +141,15 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
     });
   });
 
-  describe('D 只读渲染', () => {
-    it('只读文本行：控件 disabled、不接 onChange', () => {
+  describe('D 只读渲染（v3 rowShell：零输入框、值原样上屏、行尾一枚复制）', () => {
+    it('只读文本行：零输入框、值原样上屏、行尾恰一枚复制', () => {
       const item = CONFIG_ITEMS.find((i) => i.key === 'db.name');
       const node = Row({ item, value: 'D:\\x\\schedule_data.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
-      const inputs = nodesOfType(node, 'input');
-      assert.equal(inputs.length, 1);
-      assert.equal(inputs[0].props.disabled, true);
-      assert.equal(inputs[0].props.onChange, undefined);
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
+      assert.match(textOf(node), /schedule_data\.db/, '显示技能算好的绝对路径');
+      const buttons = nodesOfType(node, 'button');
+      assert.equal(buttons.length, 1, '行尾恰一枚复制');
+      assert.equal(textOf(buttons[0]), '复制');
     });
 
     it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', () => {
@@ -156,7 +157,8 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       const readonlyDir = { ...dirItem, readonly: true };
       const node = Row({ item: readonlyDir, value: 'D:\\x', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } });
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
-      assert.equal(nodesOfType(node, 'input')[0].props.disabled, true, '控件仍不可改');
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（改不动）');
+      assert.equal(nodesOfType(node, 'button').length, 1, '行尾那一枚复制照旧');
       const editable = nodesOfType(Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } }), 'button').filter(isBrowseButton);
       assert.equal(editable.length, 1, '可改行（数据目录）照旧有那枚入口');
       assert.equal(editable[0].props.disabled, false);

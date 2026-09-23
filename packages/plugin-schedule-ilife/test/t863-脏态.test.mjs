@@ -100,11 +100,12 @@ describe('#863 脏标记与跟随态（作息）', () => {
     assert.deepEqual(followKeysOf([]), []);
   });
 
-  it('脏行：标题旁有已改动标记，输入框描边变色', () => {
+  it('脏行：输入框 2px 描边＋内边距对消（v3 .is-dirty，行级"已改动"字样已退役）', () => {
     const node = Row({ item: itemOf('db.dir'), value: 'D:\\新目录', disabled: false, onChange: () => {}, dirty: true });
-    assert.match(textOf(node), /已改动/);
-    assert.equal(nodesOfType(node, 'input')[0].props.style.borderColor,
-      'var(--dsw-alias-state-warning-primary, #b26a00)');
+    const input = nodesOfType(node, 'input')[0];
+    assert.equal(input.props.style.border, '2px solid var(--dsw-alias-state-warn-primary, #e0a33e)');
+    assert.equal(input.props.style.padding, '4px 7px', '2px 描边与 5→4 的内边距对消（宽高不变）');
+    assert.match(String(input.props.style.boxShadow), /color-mix/);
   });
 
   it('干净行：无标记无变色（与旧渲染一致）', () => {
@@ -113,13 +114,15 @@ describe('#863 脏标记与跟随态（作息）', () => {
     assert.equal(nodesOfType(node, 'input')[0].props.style.borderColor, undefined);
   });
 
-  it('跟随行：只读行出跟随提示并置灰；不跟随时没有', () => {
+  it('跟随行：只读行出跟随提示；不跟随时没有（v3 只读行零输入框，复制照旧）', () => {
     const on = Row({ item: itemOf('db.name'), value: 'C:\\x\\a.db', disabled: false, onChange: () => {}, follow: true });
     assert.match(textOf(on), /将跟随更新/);
-    assert.equal(nodesOfType(on, 'input')[0].props.style.opacity, 0.55);
-    assert.equal(nodesOfType(on, 'input')[0].props.disabled, true, '跟随态仍不可编辑');
+    assert.deepEqual(nodesOfType(on, 'input'), [], '只读跟随行不画输入框（跟随态仍不可编辑）');
+    assert.equal(nodesOfType(on, 'button').length, 1, '行尾那一枚复制照旧');
+    assert.equal(textOf(nodesOfType(on, 'button')[0]), '复制');
     const off = Row({ item: itemOf('db.name'), value: 'C:\\x\\a.db', disabled: false, onChange: () => {} });
     assert.doesNotMatch(textOf(off), /将跟随更新/);
+    assert.equal(nodesOfType(off, 'button').length, 1, '不跟随的行复制照旧');
   });
 
   it('保存栏吸底常显＋脏计数文案', () => {

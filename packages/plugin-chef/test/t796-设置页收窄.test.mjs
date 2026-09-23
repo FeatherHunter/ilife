@@ -184,15 +184,15 @@ describe('#796 私家大厨设置页收窄（照 #749 样板）', () => {
     });
   });
 
-  describe('④ 只读渲染：控件 disabled、只读目录行不画入口', () => {
-    it('文本只读行：一个 disabled 的文本框、不接 onChange', () => {
+  describe('④ 只读渲染：零输入框、值原样上屏、只读目录行不画入口（v3 rowShell）', () => {
+    it('文本只读行：零输入框、值原样上屏、行尾恰一枚复制', () => {
       const item = itemOf('db.name');
-      const node = Row({ item, value: 'C:\\x\\chef_data.db', disabled: false, onChange: () => {} });
-      const inputs = nodesOfType(node, 'input');
-      assert.equal(inputs.length, 1);
-      assert.equal(inputs[0].props.disabled, true, '只读行须 disabled');
-      assert.equal(inputs[0].props.onChange, undefined, '只读行不接 onChange（不给「改得动」留假象）');
-      assert.equal(inputs[0].props.value, 'C:\\x\\chef_data.db', '显示技能算好的绝对路径');
+      const node = Row({ item, value: 'C:\\x\\chef_data.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
+      assert.match(textOf(node), /chef_data\.db/, '显示技能算好的绝对路径');
+      const buttons = nodesOfType(node, 'button');
+      assert.equal(buttons.length, 1, '行尾恰一枚复制');
+      assert.equal(textOf(buttons[0]), '复制');
     });
 
     it('只读目录行（合成项）：一枚浏览按钮都不画（定稿 v3 ①）', () => {
@@ -213,7 +213,8 @@ describe('#796 私家大厨设置页收窄（照 #749 样板）', () => {
         browser: { mode: 'browse', onOpen: () => {} },
       });
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
-      assert.equal(nodesOfType(node, 'input')[0].props.disabled, true);
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框');
+      assert.equal(nodesOfType(node, 'button').length, 1, '行尾那一枚复制照旧');
     });
 
     it('可改目录行（数据目录）照旧：控件可写、目录入口可点', () => {
@@ -258,9 +259,9 @@ describe('#796 私家大厨设置页收窄（照 #749 样板）', () => {
     });
   });
 
-  describe('⑥ 只读数字行的形态（补注二的甲档）：disabled 的 number 控件，值＝生效数字', () => {
+  describe('⑥ 只读数字行的形态（补注二的甲档）：与只读文本行同形，值＝生效数字（v3：零输入框）', () => {
     /** 本家三行都是路径／名字类，没有数字项；这一条是**样板定的形态**，与记账 #749 同形。
-     *  甲＝照只读文本行画（`disabled` 的 `number` 输入框）；乙（不进面板）与丙（只画一句话）都被否：
+     *  v3 起只读行不画输入框：甲＝照只读文本行画（值文本上屏）；乙（不进面板）与丙（只画一句话）都被否：
      *  乙让用户在页面上找不到这一格，丙要多写一套渲染分支（行表 → 行 的单一路径断掉）。 */
     const synthetic = {
       key: 'probe.days',
@@ -271,14 +272,12 @@ describe('#796 私家大厨设置页收窄（照 #749 样板）', () => {
       hint: '探针行（合成项）：只读数字行的形态读数。',
     };
 
-    it('合成一条只读数字行 ⇒ disabled 的 number 输入框，值就是生效数字', () => {
-      const node = Row({ item: synthetic, value: '30', disabled: false, onChange: () => {} });
-      const inputs = nodesOfType(node, 'input');
-      assert.equal(inputs.length, 1);
-      assert.equal(inputs[0].props.type, 'number', '甲档：与只读路径行同形，不引入第五种控件');
-      assert.equal(inputs[0].props.disabled, true);
-      assert.equal(inputs[0].props.value, '30', '值＝生效数字（看得见当前生效值）');
-      assert.equal(inputs[0].props.onChange, undefined);
+    it('合成一条只读数字行 ⇒ 与只读文本行同形，值就是生效数字', () => {
+      const node = Row({ item: synthetic, value: '30', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
+      assert.deepEqual(nodesOfType(node, 'input'), [], '甲档：与只读路径行同形，不引入第五种控件');
+      assert.equal(textOf(node), '回写天数30复制', '值＝生效数字（标题—值同行＋行尾复制）');
+      const buttons = nodesOfType(node, 'button');
+      assert.equal(buttons.length, 1, '行尾恰一枚复制');
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '数字行不是目录行，不画目录入口');
     });
 

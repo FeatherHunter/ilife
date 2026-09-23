@@ -159,14 +159,15 @@ describe('#760 备忘录设置页收窄 · 插件侧', () => {
     });
   });
 
-  describe('④ Row：只读 disabled＋无 onChange，按钮保留但不可点，文案无省略号', () => {
-    it('只读文本行：input disabled，onChange 不接', () => {
+  describe('④ Row：只读零输入框、值原样上屏、行尾一枚复制，文案无省略号（v3 rowShell）', () => {
+    it('只读文本行：零输入框、值原样上屏、行尾恰一枚复制', () => {
       const item = CONFIG_ITEMS.find((i) => i.key === 'db.name');
-      const node = Row({ item, value: '/d/memo.db', disabled: false, onChange: () => {} });
-      const inputs = nodesOfType(node, 'input');
-      assert.equal(inputs.length, 1);
-      assert.equal(inputs[0].props.disabled, true);
-      assert.equal(inputs[0].props.onChange, undefined, '只读行不接 onChange');
+      const node = Row({ item, value: '/d/memo.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
+      assert.match(textOf(node), /memo\.db/, '显示技能算好的绝对路径');
+      const buttons = nodesOfType(node, 'button');
+      assert.equal(buttons.length, 1, '行尾恰一枚复制');
+      assert.equal(textOf(buttons[0]), '复制');
     });
 
     it('可改目录行：目录入口可用，文案两档合一的「浏览文件夹」', () => {
@@ -180,12 +181,13 @@ describe('#760 备忘录设置页收窄 · 插件侧', () => {
       }
     });
 
-    it('只读目录行（合成项）：一枚浏览按钮都不画（定稿 v3 ①）', () => {
+    it('只读目录行（合成项）：一枚浏览按钮都不画（定稿 v3 ①），值原样上屏＋一枚复制', () => {
       const item = { key: 'x.dir', title: '合成只读目录', tier: 'common', control: 'directory', hint: '合成', readonly: true, resolveFrom: 'dbDir' };
-      const node = Row({ item, value: '/d', disabled: false, onChange: () => {}, browser: fakeBrowser('native') });
+      const node = Row({ item, value: '/d', disabled: false, onChange: () => { throw new Error('只读行不该被改'); }, browser: fakeBrowser('native') });
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '只读目录行不该有目录入口按钮');
-      assert.equal(nodesOfType(node, 'input')[0].props.disabled, true, '控件仍不可改');
-      assert.equal(nodesOfType(node, 'input')[0].props.value, '/d', '只读行照旧显示技能算好的那个值');
+      assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（改不动）');
+      assert.match(textOf(node), /\/d/, '只读行照旧显示技能算好的那个值');
+      assert.equal(nodesOfType(node, 'button').length, 1, '行尾那一枚复制照旧');
     });
 
     it('行表文案无省略号（标题／hint）', () => {
