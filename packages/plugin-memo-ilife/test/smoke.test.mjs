@@ -8,8 +8,10 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { initMemoTestDb } from '../../../tooling/contract-seam.mjs';
-import { PLUGIN, PLUGIN_VERSION, SKILL_VERSION } from '../dist/slot.js';
+import { PLUGIN } from '../dist/slot.js';
 import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_PACKAGE, SkillBridgeError, assertCliPresent, cliPath, readViaCli } from '../dist/index.js';
+import { readInstalledVersions } from '../dist/bridge.js';
+import { VERSION_READ_KEY } from '../dist/contract.js';
 import { configDirOf, homeEnvOf, useHome } from '../../../test/helpers/home-test-base.mjs';
 const requirePkg = createRequire(import.meta.url);
 
@@ -88,11 +90,19 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.deepEqual(data.items, []);
     assert.equal(data.total, 0);
   });
-  it('版本行与双 package.json 一致（面板自报家门，防漂移）', () => {
+  it('版本行与双 package.json 一致（面板自报家门，防漂移）', async () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
+    const skillVer = requirePkg(SKILL_PACKAGE + '/package.json').version;
     assert.equal(PLUGIN, pkg.name);
-    assert.equal(PLUGIN_VERSION, pkg.version);
-    assert.equal(SKILL_VERSION, requirePkg(SKILL_PACKAGE + '/package.json').version);
+    // #918：那两个号由宿主半按**包名**读**已装**的那份 package.json（唯一定义＝总管 installedVersionOf），
+    // 客户端只渲染 —— 屏上那行与装机包由构造一致，发版不再有第二个同步点。
+    assert.deepEqual(readInstalledVersions(), { plugin: pkg.version, skill: skillVer });
+    // 面板那条真通路：同一条 READ 端点 ＋ 版本魔键（客户端 fetchVersions 打的就是这一格）。
+    assert.deepEqual(readViaCli(VERSION_READ_KEY, {}), { plugin: pkg.version, skill: skillVer });
+    // 手写常量彻底出局（连产物一起）：不许再冒出一个「第二真相源」。
+    const slotMod = await import('../dist/slot.js');
+    assert.equal('PLUGIN_VERSION' in slotMod, false, 'slot.ts 不得再手写版本常量');
+    assert.equal('SKILL_VERSION' in slotMod, false, 'slot.ts 不得再手写版本常量');
   });
 });

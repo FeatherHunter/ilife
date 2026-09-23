@@ -133,3 +133,20 @@ export function isRpcResult(raw: unknown): raw is RpcResult {
   const ok = (raw as { ok?: unknown }).ok;
   return ok === true || ok === false;
 }
+
+/** #918 面板版本行：同一条 READ 端点上的**版本魔键**（形状照卡路里 #130 那条）。
+ *
+ * 命中这个键时宿主半不经技能 CLI，直接回装机版本对 `InstalledVersions`
+ * （两份 `package.json` 的 `version`；读值见 `bridge.ts` 的 `readInstalledVersions`）。
+ * 键住 port（本文件零 node 导入）：宿主半与客户端同引一处定义，两侧不必各写一份镜像。 */
+export const VERSION_READ_KEY = 'dsh-memo-ilife.version' as const;
+
+/** 版本读不到时屏上那两个字面（口径同总管 `installedVersionOf` 的回退值）：客户端在
+ *  通道缺席／抛错／空值这一档也回它——读不到就说读不到，不编一个号出来。 */
+export const VERSION_UNKNOWN = 'unknown' as const;
+
+/** 面板版本行的一对号（宿主半回执与客户端渲染共用同形）。 */
+export interface InstalledVersions {
+  readonly plugin: string;
+  readonly skill: string;
+}

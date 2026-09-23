@@ -11,9 +11,13 @@ import { accessSync, constants } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ConfigSurfaceReply } from './contract.js';
+import { installedVersionOf } from 'dsh-life-pack';
+import { VERSION_READ_KEY } from './contract.js';
+import type { ConfigSurfaceReply, InstalledVersions } from './contract.js';
+import { PLUGIN, SKILL_PACKAGE } from './slot.js';
 
-export const SKILL_PACKAGE = 'skill-memo-ilife' as const;
+/** 技能包名：**唯一定义地在 `slot.ts`**（本处只转出，包内各处仍按原路径取用）。 */
+export { SKILL_PACKAGE };
 export const SKILL_CLI = 'packages/skill-memo-ilife/dist/cli/cmd_read.js' as const;
 export const HOST_CALL_METHOD = 'ilife.memo.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
@@ -84,8 +88,20 @@ export function resolveNodeBin(execPath: string = process.execPath): { readonly 
   return { bin: execPath, extraEnv: { ELECTRON_RUN_AS_NODE: '1' } };
 }
 
+/** 面板版本行的那两个号（#918）：插件自己那份 ＋ 已装技能包那份。
+ *
+ * 读值只在宿主侧，且走总管的**唯一定义** `installedVersionOf`（按包名解析**已装**的那份
+ * `package.json`，不是构建期抄进代码里的字面量）；本家不再手写常量，也不把「读 package.json」抄第二遍。
+ * 永不抛：读不到的一侧回 'unknown'，由共用件按路径与原因 warn 留痕。 */
+export function readInstalledVersions(): InstalledVersions {
+  return { plugin: installedVersionOf(PLUGIN, import.meta.url), skill: installedVersionOf(SKILL_PACKAGE, import.meta.url) };
+}
+
 /** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
 export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
+  // #918 版本魔键：同一条 READ 端点上的这一个键不走技能 CLI spawn，直接回装机版本对
+  // （形状与卡路里 #130 那条同形）；面板照原样渲染，读不到侧显示 unknown。
+  if (key === VERSION_READ_KEY) return readInstalledVersions();
   const bin = cliPath();
   assertCliPresent(bin);
   const { bin: node, extraEnv } = resolveNodeBin();

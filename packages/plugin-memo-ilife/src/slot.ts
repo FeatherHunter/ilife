@@ -14,11 +14,9 @@ export const PLUGIN = 'dsh-memo-ilife' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 export const SKILL_PACKAGE = 'skill-memo-ilife' as const;
 
-/** 版本行唯一来源（面板展示用；smoke 断言与两处 package.json 一致，防漂移）。
- * 发版 bump 时同步改这里（与 package.json 同值）：0.3.2 那轮之前停在 0.2.1——
- * 面板自报家门报了旧号（#743 真机截图逮到），本票一并摆正。 */
-export const PLUGIN_VERSION = '0.3.8' as const;
-export const SKILL_VERSION = '0.3.0' as const;
+/** #918：面板版本行不再有手写常量——两个号由宿主半按包名读**已装**的那份 `package.json`
+ *  （总管 `installedVersionOf`，见 `bridge.ts` 的 `readInstalledVersions`），客户端只渲染宿主回的值。
+ *  故本文件不持任何版本号：发版只改各处 `package.json` 一处，屏上那行由构造保证跟着走。 */
 
 export interface SlotDescriptor {
   readonly skill: string;

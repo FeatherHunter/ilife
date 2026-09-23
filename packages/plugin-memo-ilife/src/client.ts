@@ -16,14 +16,21 @@
  * 文件里剩下那张 `W` 样式表是**技能功能页**（sidebar 槽那张卡）自己的，与设置页无关；
  * 附加块的视觉走面板经插槽传进来的样式（`PanelParts.styles`），不另外抄一份。
  * 照 CONTEXT.md，「技能设置页」只配置、不干活：本页没有查数／记一条之类的入口。
+ *
+ * #918：版本行不再读 `slot.ts` 的手写常量——两个号由宿主半按包名读**已装**的包
+ * （`bridge.ts` 的 `readInstalledVersions`），本页经同一条 READ 端点 ＋ 版本魔键
+ * （`VERSION_READ_KEY`）取到后**纯渲染**（读不到显示 unknown，形状照卡路里 #130 那条）。
  */
 import * as React from 'react';
 import { ConfigPanel } from 'dsh-life-pack/config-panel';
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
-import type { LarkState } from './contract.js';
-import { SLOT_TITLE, PLUGIN_VERSION, SKILL_VERSION } from './slot.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
+import type { InstalledVersions, LarkState } from './contract.js';
+import { SLOT_TITLE } from './slot.js';
 import { CONFIG_ITEMS } from './settings.js';
 import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
+
+/** 版本读取键与 unknown 显示值住 port（`contract.ts`，browser 安全）：导出供单测复用。 */
+export { VERSION_READ_KEY, VERSION_UNKNOWN };
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
  * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
@@ -56,10 +63,64 @@ const W = {
   } as React.CSSProperties,
 };
 
-/** 版本行：插件与技能双版本号（面板自报家门，排障时看这台装的是哪版）。
- * 只留两个号——包名在页签上已经写着，重复一遍只是噪音（#743）。 */
-function VersionLine(): React.ReactElement {
-  return React.createElement('div', { style: W.version }, `${PLUGIN_VERSION} · 技能 ${SKILL_VERSION}`);
+/** 版本行（#918）：两个号都来自宿主——客户端不持任何版本字面量，只渲染宿主回的值。
+ *
+ * 取数形状照卡路里 #130 那条（同一条 READ 端点 ＋ 版本魔键）：宿主半按 `VERSION_READ_KEY` 回
+ * `{ plugin, skill }`，两个号是**已装包**的 `package.json` 版本（读值只在宿主侧，见 `bridge.ts`）。
+ * 本文件禁 node／禁 DOM 直写，故不直读文件；通道缺席／抛错／空值一律显示 unknown，
+ * 骨架不断、单次取数不轮询、永不抛。 */
+export function normalizeVersion(v: unknown): string {
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : VERSION_UNKNOWN;
+}
+
+/** 版本行文本（纯函数，供 VersionLine 与单测复用）。 */
+export function formatVersionLine(pluginVersion: unknown, skillVersion: unknown): string {
+  return `${normalizeVersion(pluginVersion)} · 技能 ${normalizeVersion(skillVersion)}`;
+}
+
+/** 版本行：纯渲染宿主给的两个号（读不到侧已归一成 unknown）。 */
+export function VersionLine(props: { readonly pluginVersion?: unknown; readonly skillVersion?: unknown }): React.ReactElement {
+  return React.createElement('div', { style: W.version }, formatVersionLine(props.pluginVersion, props.skillVersion));
+}
+
+/** 版本取值：走同一条 READ 端点 ＋ 版本魔键；单次、无轮询、永不抛（任何毛病 ⇒ 双 unknown）。 */
+export async function fetchVersions(call: unknown): Promise<InstalledVersions> {
+  const fallback: InstalledVersions = { plugin: VERSION_UNKNOWN, skill: VERSION_UNKNOWN };
+  if (typeof call !== 'function') return { ...fallback };
+  try {
+    const raw: unknown = await withTimeout(
+      (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_READ, payload: { key: VERSION_READ_KEY, params: {} } }, AbortSignal.timeout(READ_TIMEOUT_MS)),
+      READ_TIMEOUT_MS,
+    );
+    if (!isRpcResult(raw) || !raw.ok) return { ...fallback };
+    const value = (raw as { value?: unknown }).value;
+    if (typeof value !== 'object' || value === null) return { ...fallback };
+    const rec = value as { plugin?: unknown; skill?: unknown };
+    return { plugin: normalizeVersion(rec.plugin), skill: normalizeVersion(rec.skill) };
+  } catch {
+    return { ...fallback };
+  }
+}
+
+/** 本家版本行（设置页附加块 ＋ 技能功能页共用）：自己持这点状态取一次，读不到显示 unknown。 */
+export function HostVersionLine(props: { readonly getCall: GetCall }): React.ReactElement {
+  const [versions, setVersions] = React.useState<InstalledVersions>({ plugin: VERSION_UNKNOWN, skill: VERSION_UNKNOWN });
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const v = await fetchVersions(props.getCall());
+        if (!alive) return;
+        setVersions(v);
+      } catch {
+        /* fetchVersions 永不抛；此处兜底不炸面板 */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [props.getCall]);
+  return React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill });
 }
 
 type PanelState =
@@ -165,14 +226,14 @@ function MemoWork(props: { getCall: GetCall }): React.ReactElement {
       { style: W.card },
       React.createElement('div', { style: W.title }, SLOT_TITLE),
       React.createElement('div', { style: W.total }, `total ${state.total}`),
-      React.createElement(VersionLine, null),
+      React.createElement(HostVersionLine, { getCall: props.getCall }),
     );
   }
   return React.createElement(
     'div',
     { style: W.card },
     React.createElement('div', { style: state.kind === 'absent' ? W.muted : W.error }, state.message),
-    React.createElement(VersionLine, null),
+    React.createElement(HostVersionLine, { getCall: props.getCall }),
   );
 }
 
@@ -273,13 +334,16 @@ function larkOf(reply: unknown): LarkState | undefined {
 
 /** 自家附加块（设置页那张卡的插槽）：版本行 ＋「飞书 CLI」状态行。
  *
- * 为什么单起一个组件：版本号是本家常量，飞书状态是本家回执多带的那一格（共用面板不认识它），
- * 复制回执也住在本家——组件自己持这点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。 */
+ * 为什么单起一个组件：#918 起版本是**本家自己的一通电话**（`VERSION_READ_KEY`，宿主回装机版本对），
+ * 飞书状态是本家回执多带的那一格（共用面板不认识它），复制回执也住在本家——
+ * 组件自己持这点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。 */
 function MemoExtras(props: {
   /** 整面读到了没有：状态行照改版前的形状只在就绪态画，读取中／读取失败那两屏不占这一行。 */
   readonly hasReply: boolean;
   readonly lark: LarkState | undefined;
   readonly styles: PanelStyleSlots;
+  /** 取数口：版本行自己那通电话走它（`apply` 现取现给，connection 后到也照样取）。 */
+  readonly getCall: GetCall;
 }): React.ReactElement {
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
   const onCopy = (prompt: string): void => {
@@ -288,7 +352,7 @@ function MemoExtras(props: {
   return React.createElement(
     'div',
     null,
-    React.createElement(VersionLine, null),
+    React.createElement(HostVersionLine, { getCall: props.getCall }),
     props.hasReply ? React.createElement(LarkStatus, { lark: props.lark, onCopy, styles: props.styles }) : null,
     copied === 'done' ? React.createElement('div', { style: props.styles.okText }, '已复制，去粘贴给 AI') : null,
     copied === 'failed' ? React.createElement('div', { style: props.styles.error }, '复制失败，长按选择下方文本手动复制') : null,
@@ -333,6 +397,7 @@ export function apply(ctx: ClientCtx): void {
           hasReply: parts.reply !== null,
           lark: larkOf(parts.reply),
           styles: parts.styles,
+          getCall,
         }),
         getCall,
         getService,
