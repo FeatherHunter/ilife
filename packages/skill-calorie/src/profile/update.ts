@@ -87,5 +87,8 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     subtitle: localizeEnums(receipt.summary),
     content,
     pageUi: true,
+    // 宽屏单列锁（#946 同款修法，理由见 `../shared/docPage.ts` 的 `ONE_COLUMN_CSS`）：
+    // 逐字段对照表与读数卡在 ≥1001 档收回 880 正文列，不横跨整壳。
+    lockColumn: true,
   });
 }

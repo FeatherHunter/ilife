@@ -52,6 +52,10 @@ interface DocPageInput {
    *  **不给／给假 → 产出物与旧版逐字节相同**（多出的只有这一位；样式与根类都不出现）。
    *  定义地：`base-render/src/pageUi.ts`（配方）＋ `base-render/src/pageShapes.ts`（形状件）。 */
   readonly pageUi?: boolean;
+  /** **宽屏单列锁**（#946 同款修法）：为真时在 ≥1001px 的档位把正文子件一律收回 **880 那一列**
+   *  （页级配方 ⑧ 默认让读数卡／表／图／折叠区／列表行横跨整壳 1240，比页头三级左右各宽 180px）。
+   *  **不给／给假 → 产出物与旧版逐字节相同**（多出的只有这一段 CSS）。见下方 `ONE_COLUMN_CSS`。 */
+  readonly lockColumn?: boolean;
 }
 
 /** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。
@@ -76,6 +80,19 @@ const KPI_MOBILE_CSS = '@media (max-width:640px){'
   + '.ilife-block-page-shell .ilife-block-kpi-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}'
   + '.ilife-block-page-shell .ilife-block-kpi-card-grid:has(> :only-child){grid-template-columns:minmax(0,1fr)}'
   + '}';
+
+/** **宽屏单列锁**（`lockColumn: true` 时才出这一段；#946 的同一处修法，先例住
+ *  `src/render/workoutPlanCss.ts` 的 `PREVIEW_COLUMN_CSS`）。
+ *
+ *  病：页级配方 ⑧ 在 ≥1001 档把页头三级与正文收成 880 一列居中（`base-render/src/pageUi.ts`），
+ *  同时把读数卡／表／图／折叠区／列表行归进「满铺」清单 —— 这些块因此横跨整壳（1280 − 左右各 20
+ *  内距 ＝ 1240），比页头左右各宽 180px（#944 故障 1 在归档页 1440／1280 实测；本包档案族
+ *  2026-09-24 桌面端复现同形：用户在图上报的正是「内容超出 880 正文列」）。
+ *
+ *  为什么盖得住公共层那条：选择器与它**同权**（都只到「根类 ＋ 正文容器」两个类），而这一段随
+ *  `extraCss` 排在那两段**之后** ⇒ 同权重下后出现者胜；`base-render/**` 一行不动（红线）。
+ *  同权是本条的边界：权重再高一点就会连别的页一起改掉，故刻意与它同权。 */
+const ONE_COLUMN_CSS = '@media (min-width:1001px){.ilife-page-ui .ilife-block-page-shell-body>*{grid-column:2}}';
 
 /** 眉标里**命令键或英文标识符**的判据：`calorie.view.diet`／`calorie.today`／`app_user` 这类。
  *
@@ -121,12 +138,15 @@ export function assembleDocPage(input: DocPageInput): string {
   /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
   const printable = input.printable === true;
   const pageUi = input.pageUi === true;
+  /** 宽屏单列锁（`lockColumn`）：只对开了页面级配方的页有意义——没那一套就没有 880 那一列。 */
+  const lockColumn = pageUi && input.lockColumn === true;
   /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段、
    *  读数卡窄屏两列一段（恒启用：此前未启用配方的页在 `≤640` 仍是单列，见本件 `KPI_MOBILE_CSS`；
-   *  `pageUi` 的「不给即逐字节相同」只保它自己的两段）。 */
+   *  `pageUi` 的「不给即逐字节相同」只保它自己的两段）。单列锁排在配方那两段之后（同权重靠后取胜）。 */
   const extraCss = [
     bline ? BLINE_CSS : '',
     pageUi ? pageUiCss() + '\n' + pageShapeCss() : '',
+    lockColumn ? ONE_COLUMN_CSS : '',
     KPI_MOBILE_CSS,
   ].filter((seg) => seg !== '').join('\n');
   if (bline) {

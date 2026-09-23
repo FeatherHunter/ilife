@@ -262,5 +262,8 @@ export function buildProfileViewDoc(v: ProfileView): string {
     subtitle: '你的档案现值与最近一次体重',
     content,
     pageUi: true,
+    // 宽屏单列锁（#946 同款修法）：读数卡与两张表在 ≥1001 档默认横跨整壳 1240、比页头宽 180px，
+    // 用户 2026-09-24 在图上报「桌面端超出 880 正文列」⇒ 本页与档案族另三页一并收回中间那一列。
+    lockColumn: true,
   });
 }

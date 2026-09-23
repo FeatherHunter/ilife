@@ -120,7 +120,7 @@
 - **类名命名空间**：`ilife-` 前缀。
 - **必需属性**：用**原生** `<details>/<summary>`（键盘可达，无需自绘）；折叠头必须含可读标题；`[open]` 属性驱动展开态。
 - **数值规格**：折叠箭头为字符指示器、`[open]` 时旋转 90°、过渡 ≤150ms（旧版实测 `transform .12s`）。
-- **状态**：默认展开／折叠由层级决定（HELP 二级默认展开）；点击复制按钮**不得**触发折叠 toggle（50ms 兜底检查，`docs/research/t71-help-dissect.md:408`）。
+- **状态**：默认展开／折叠由层级决定（HELP 二级**每页只第一个默认展开**、其余折叠——用户 2026-09-24 裁定，替换旧口径「二级全展开」；搜索命中的组只在搜索期展开，清空搜索即回落成该默认态）；点击复制按钮**不得**触发折叠 toggle（50ms 兜底检查，`docs/research/t71-help-dissect.md:408`）。
 - **证据**：`fixtures/help-instances/卡路里_HELP_20260731_201530.html:114,137,157,451`（`[open]` 与箭头旋转）；`docs/research/t72-shared-layer-gap.md:140`（旧 `foldBox`）；`docs/research/t71-help-dissect.md:408`。
 - **可断言形式**：折叠节点 tagName === `DETAILS` 且子节点含 `SUMMARY`；`[open]` 时 `summary::before` 的 computed `transform` 为旋转 90°；点击 `.copy-btn` 后 50ms 内 `open` 属性不变。
 - **裁定**：已定（编排者 R35）——**强制原生 `<details>`**（DB-4 取推荐 a）。

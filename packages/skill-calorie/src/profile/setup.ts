@@ -363,6 +363,9 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
     eyebrow: '基础信息 · 预检确认',
     subtitle: '这一页只做预检、不写档案；确认下面的值无误后，把指令复制给 AI 执行',
     content, pageUi: true,
+    // 宽屏单列锁（#946 同款修法，理由见 `../shared/docPage.ts` 的 `ONE_COLUMN_CSS`）：
+    // 读数卡／现值表／三处折叠区在 ≥1001 档收回 880 正文列，不横跨整壳。
+    lockColumn: true,
   });
 }
 
@@ -443,5 +446,7 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
     eyebrow: '基础信息 · 写后回执',
     subtitle: localizeEnums(receipt.summary),
     content, pageUi: true,
+    // 宽屏单列锁（同上）：写后回执的读数卡与写后档案表同样收回 880 正文列。
+    lockColumn: true,
   });
 }
