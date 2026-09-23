@@ -82,10 +82,14 @@ export function buildShoppingList(items: { name: string; quantity?: number }[]):
   return { items, total: items.length };
 }
 
-/** 清单载荷（#890 起可带「本次查询条件」）：`extra` 里的键原样并到 `data` 上，页面据此回显
- *  「这一次查的是谁」（查退货窗口这类按物品查、又可能 0 命中的场景）。不给即与改动前同形。 */
-export function buildTicketList(items: Record<string, unknown>[], extra?: Record<string, unknown>): { items: Record<string, unknown>[]; total: number } & Record<string, unknown> {
-  return { ...(extra ?? {}), items, total: items.length };
+/** 清单载荷（#890 起可带「本次查询条件」）：按物品查又可能 0 命中的场景（查退货窗口），
+ *  把「这一次查的是谁」写进 `data.query`，页面据此回显；不传即无该键，与改动前同形。
+ *  形状写死在这里，不用索引签名——调用方与页面都按这两个字段读写（铁律三）。 */
+export function buildTicketList(
+  items: Record<string, unknown>[],
+  query?: { item_id: number; item_name: string },
+): { items: Record<string, unknown>[]; total: number; query?: { item_id: number; item_name: string } } {
+  return { ...(query === undefined ? {} : { query }), items, total: items.length };
 }
 
 export function buildCareList(items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number } {

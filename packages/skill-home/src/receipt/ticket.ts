@@ -59,14 +59,14 @@ export function runTicketQuery(params: Record<string, unknown>, handle: HomeDb):
     let rows: Record<string, unknown>[];
     // #890：按物品查（退货窗口）时把「这一次查的是谁」一起带回——0 命中时页面原先只说
     // 「没有命中购买记录」，认不出查的是哪一件。物品名从库里取；id 非法时不阻断查询本身。
-    let queryEcho: Record<string, unknown> | undefined;
+    let query: { item_id: number; item_name: string } | undefined;
     if (params.range === 'return') {
       const id = params.item_id ?? params.itemId;
       if (id === undefined) fail(2, '查退货窗口须给 item_id');
       rows = listPurchases(handle, { itemId: Number(id) });
       let name = '';
       try { name = String(getItemById(handle, Number(id)).name); } catch { name = ''; }
-      queryEcho = { query: { item_id: Number(id), item_name: name } };
+      query = { item_id: Number(id), item_name: name };
     } else {
       rows = listPurchases(handle, f);
     }
@@ -80,7 +80,7 @@ export function runTicketQuery(params: Record<string, unknown>, handle: HomeDb):
       price: r.price ?? null,
       channel: r.channel ?? null,
       ...(i === 0 && categories.length ? { categories } : {}),
-    })), queryEcho);
+    })), query);
   }
   if (kind === 'warranty') {
     const st = params.status !== undefined ? String(params.status) : undefined;
