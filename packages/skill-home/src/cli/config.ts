@@ -13,6 +13,7 @@ import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadHomeConfig, resetHomeConfig, saveHomeConfig } from '../config.js';
 import { resolvedHomePaths } from '../fetch/paths.js';
+import { homeDataDirAlert } from '../health.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-home-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -79,7 +80,16 @@ export function runConfigKey(key: string, params: Record<string, unknown>): stri
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadHomeConfig());
     const resolved = withHumanError(() => resolvedHomePaths());
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved });
+    // #915 第二步：只把「数据目录真用不了」这件事当独立事实交出去，面板原样画；能用就缺席（没问题不显示）。
+    const alerts = homeDataDirAlert(c.values as unknown, c.dataDir);
+    return envelope(key, 'detail', {
+      path: c.path,
+      dataDir: c.dataDir,
+      created: c.created,
+      values: c.values,
+      resolved,
+      ...(alerts === undefined ? {} : { alerts }),
+    });
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];

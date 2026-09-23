@@ -89,26 +89,33 @@ export interface LoadedHomeConfig {
   readonly values: HomeConfigValues;
 }
 
-/** 每进程只读一次：配置文件的「保存即生效」靠**下一次调用现读**，同一个进程里不反复读盘。 */
-let memo: LoadedHomeConfig | null = null;
+/** 每进程按**配置文件路径**记一份（#915 就地摆正：与五家兄弟件同形，`skill-bill/src/config.ts` 的
+ *  理由逐字相同——「记忆位不绑『进程』而绑『配置文件路径』，是为了不让换目录后的读落到上一份的缓存上」：
+ *  测试逐用例换临时家目录、同一进程里连读几份配置，绑进程就会把第二份读成第一份）。
+ *  「保存即生效」仍由写路径清记忆保证（见 `saveHomeConfig`／`resetHomeConfig`），不靠长连接。 */
+let memo: { file: string; loaded: LoadedHomeConfig } | null = null;
 
 /** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。
  *
  *  读回来的 `values` 是**文件里那份 ⊕ 默认值**（文件里写空串则仍是空串＝按默认落点）；
  *  首次落文件时写下去的是 `writableDefaults()`（可改落点＝绝对路径）。 */
 export function loadHomeConfig(): LoadedHomeConfig {
-  if (memo === null) {
+  const file = configPaths(HOME_CONFIG_STEM).configFile;
+  if (memo === null || memo.file !== file) {
     const loaded = loadConfig(HOME_CONFIG_STEM, writableDefaults(), HOME_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
     memo = {
-      path: loaded.path,
-      dataDir: loaded.dataDir,
-      created: loaded.created,
-      values: loaded.values as unknown as HomeConfigValues,
+      file,
+      loaded: {
+        path: loaded.path,
+        dataDir: loaded.dataDir,
+        created: loaded.created,
+        values: loaded.values as unknown as HomeConfigValues,
+      },
     };
   }
-  return memo;
+  return memo.loaded;
 }
 
 /** 写一份配置（写出去的是完整一份：没给的项按默认值补齐）。写完清记忆，同进程后续读也现取。 */

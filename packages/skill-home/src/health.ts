@@ -362,6 +362,28 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
 }
 
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
+/** 数据目录那一行的告警事实（#915 第二步）：**真用不了**才给一格，能用就缺席（没问题就不显示）。
+ *
+ *  只算「数据目录」这一格——**不跑整份体检**（那份报告要碰库表数、主密钥、包内种子那些与读配置无关的链，
+ *  读一次配置不该被它们拖累）。判定与文案逐字复用体检②那条（`dirVerdict` ＋ 同一句「不在／在，但写不进去」），
+ *  避免同一件事在两处各写一套措辞。面板只画 `message`，不比较、不合成。 */
+export function homeDataDirAlert(
+  values: unknown,
+  defaultDataDir: string,
+): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const dataDir = dbDirOf(defaultDataDir, textOf(readValue(values as Record<string, Record<string, unknown>>, 'db', 'dir')));
+  const verdict = dirVerdict(dataDir);
+  if (verdict.exists && verdict.writable) return undefined;
+  return {
+    'db.dir': {
+      code: verdict.exists ? 'DIR_UNWRITABLE' : 'DIR_MISSING',
+      message: !verdict.exists
+        ? '不在：' + p(dataDir) + (verdict.reason !== '' ? '（' + verdict.reason + '）' : '')
+        : '在，但写不进去：' + p(dataDir) + '（' + verdict.reason + '）。',
+    },
+  };
+}
+
 export function buildHomeHealthReport(): HomeHealthReport {
   const paths = configPaths(HOME_CONFIG_STEM);
   const items: HealthItem[] = [];
