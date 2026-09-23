@@ -129,6 +129,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const P_BACKUP = '请加载居家管家技能，帮我确认收货，收到的放备用';
   const P_NEW = '请加载居家管家技能，帮我录入新到的物品';
+  // #890：「我收到了」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
+  const P_RECEIVE = '请加载居家管家技能，帮我确认收货';
 
   let body = style;
   body += '<p class="x-lead">勾选收到的快递，点下方的按钮标记到家，超过 ' + timeout + ' 天会标红提醒</p>';
@@ -148,22 +150,24 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<span class="x-state ' + (it.overdue ? 'over' : 'days') + '">已等 ' + it.days + ' 天' + (it.overdue ? ' 超时' : '') + '</span></div>'
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + ' 数量 ' + it.quantity + '</div></div></div>').join('')
       + '</div><div class="x-actions">'
-      + '<button class="x-btn" onclick="xReceive()">我收到了</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_BACKUP) + '">收到的放备用</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
+      + '<button class="x-btn" data-action-id="x-receive" data-t="' + escapeHtml(P_RECEIVE) + '" onclick="xReceive(this)">我收到了</button>'
+      + '<button class="x-btn ghost" data-action-id="x-backup" data-t="' + escapeHtml(P_BACKUP) + '">收到的放备用</button>'
+      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">当前没有快递中<br>新到的物品可以先录入<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
+      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
       + '</div></div></section>';
   }
 
+  // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`），
+  // 不再页内自造 `xCopy`（无反馈／无 `catch`／无 `execCommand` 降级）。按钮带 `data-action-id`
+  // ＋ `data-t` 即由 document 委派复制；按当刻勾选现算的那一颗，用元素级 `onclick` 先把载荷写回
+  // 自己的 `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
-    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
-    + 'function xReceive(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选收到的物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我确认收货："+names+" 编号["+ids+"]");}'
-    // #886：`xCopyData`／`xCopyLog` 两个空壳随复制区一起删——本页复制数据／复制日志已由
-    // `homeCopyArea` 出（三格式菜单＋六段日志），这两颗 `function (){}` 没有任何调用方。
+    + 'function xReceive(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选收到的物品");return;}'
+    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
+    + 'b.setAttribute("data-t","请加载居家管家技能，帮我确认收货："+names+" 编号["+ids+"]");}'
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。

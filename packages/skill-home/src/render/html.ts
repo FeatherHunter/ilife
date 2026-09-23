@@ -75,7 +75,15 @@ export const CONTENT_MARKER = '<!--CONTENT-->';
 export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}'
   // 卡路里同款复制区样式：公共层样式表 ＋ 区块样式（复制块／动作条／三格式菜单／toast）。
   // 落在 `<!--SHARED-CSS-->` 槽，随模板全页下发；页内 `PAGE_CSS` 不动。
-  + '\n' + buildStyleSheet().css + '\n' + blocksCss();
+  + '\n' + buildStyleSheet().css + '\n' + blocksCss()
+  // #890 · 页族抬头（`.fam-head`）：43–64 共 22 页此前**没有任何规则**碰它，抬头与正文同一档，
+  // 「这一页属于哪个域」在版面上读不出层级（六维 ② 恒 1）。`.fam-head` 的标记由各页族模块自己写
+  // （8 个域 26 页），故规则只能住共用样式表这一层，住哪一页都漏其余的页。
+  // 外观与「统计总览」四页（`stats/pages/*.ts` 的 `.fam-name`／`.fam-key`）一致：小字＋加重＋域色。
+  // `:not([class])` 只吃没有自己命名的裸 `<span>` —— stats 四页给两个 span 起了 `.fam-name`／
+  // `.fam-key` 名（各页 PAGE_CSS 后到，但本规则若不加这个排除会因选择器更具体而盖掉它们的灰字）。
+  + '\n.fam-head{display:flex;gap:8px;align-items:baseline;margin:0 0 10px}'
+  + '.fam-head>span:not([class]){font-size:12px;font-weight:800;color:#0a63d6}';
 export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
   // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
   // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。

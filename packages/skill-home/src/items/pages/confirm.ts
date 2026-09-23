@@ -139,7 +139,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="fp-sec"><h2 class="fp-sec-t">逐条明细</h2>'
     + '<div class="fp-row"><div class="fp-k">保留条目</div><div class="fp-v">留下的这件</div></div>'
     + (hasSources ? sources.map((s) => '<div class="fp-row"><div class="fp-k">并入</div><div class="fp-v">编号 ' + esc(s.id) + ' ' + esc(s.name === '' ? '—' : s.name) + '</div></div>').join('') : '')
-    + '<div class="fp-row"><div class="fp-k">合并记录</div><div class="fp-v">' + esc(msg) + '</div></div>'
+    // #890（⑤文案不冗余）：原先这一节末尾还有一行「合并记录：已合并到 63：+1 件」——它把回执短句
+    // 原样再说一遍，而这一句的每一半都已经在别处落位（「已合并到 63」在头卡大字、「共 1 件」在
+    // 「变更后 → 并入数量」）。重复的一行删掉，逐条明细只留判据要的 entries（保留条目＋逐条并入）。
     + '</section>'
     // 影响说明拆三条：原先是一句六十多字、用分号硬挤的串（#817 seq 15 的 ⑥）。
     + '<section class="fp-sec"><h2 class="fp-sec-t">影响说明</h2>'

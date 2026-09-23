@@ -125,9 +125,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const P_ADD = '请加载居家管家技能，帮我添加购物清单条目';
   const P_MISSING = '请加载居家管家技能，帮我检测缺货';
   const P_CLEAN = '请加载居家管家技能，帮我清理已买的购物清单条目';
+  // #890：「我买到了」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
+  const P_CHECK = '请加载居家管家技能，帮我标记购物清单条目已买到';
 
   let body = style;
-  body += '<p class="x-lead">勾选买到的条目，点下方的按钮划掉，例行物品会按周期自动提醒</p>';
+  // #890（说明句与真实行为不符）：原文写「点下方的按钮划掉」——点下方那颗只把一句指令复制进剪贴板，
+  // 页上不会划掉任何条目；划掉是回到对话里让助手执行的那一步。改成两句都说得上的说法。
+  body += '<p class="x-lead">勾选买到的条目，点「我买到了」复制指令</p>';
   body += '<div class="x-metrics">'
     + '<span class="x-pill">待买 ' + pending.length + ' 件</span>'
     + '<span class="x-pill">已买 ' + done.length + ' 件</span>'
@@ -150,26 +154,28 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="x-note">数量 ' + it.quantity + '</div></div></div>').join('')
       + '</div></section>';
     body += '<section><div class="x-actions">'
-      + '<button class="x-btn" onclick="xCheck()">我买到了</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_NEW) + '">清单外新买的</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_RESTOCK) + '">给已有物品补数量</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
-      + '<button class="x-btn danger" data-prompt="' + escapeHtml(P_CLEAN) + '">清掉已买记录</button>'
+      + '<button class="x-btn" data-action-id="x-check" data-t="' + escapeHtml(P_CHECK) + '" onclick="xCheck(this)">我买到了</button>'
+      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">清单外新买的</button>'
+      + '<button class="x-btn ghost" data-action-id="x-restock" data-t="' + escapeHtml(P_RESTOCK) + '">给已有物品补数量</button>'
+      + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
+      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
+      + '<button class="x-btn danger" data-action-id="x-clean" data-t="' + escapeHtml(P_CLEAN) + '">清掉已买记录</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">清单是空的<br>可以先看看家里缺什么，或者记一笔要买的<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
+      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
+      + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
       + '</div></div></section>';
   }
 
+  // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`），
+  // 不再页内自造 `xCopy`：按钮带 `data-action-id` ＋ `data-t` 即由 document 委派复制，
+  // 双通道复制 ＋ toast ＋ `execCommand` 降级都走共用件。按当刻勾选现算的那一颗，用元素级
+  // `onclick` 先把载荷写回自己的 `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
-    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
-    + 'function xCheck(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选买到的条目");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我标记购物清单条目已买到："+names+" 编号["+ids+"]");}'
-    // #886：`xCopyData`／`xCopyLog` 两个空壳随复制区一起删（本页复制数据／复制日志已由
-    // `homeCopyArea` 出：三格式菜单＋六段日志），这两颗 `function (){}` 没有调用方。
+    + 'function xCheck(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选买到的条目");return;}'
+    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
+    + 'b.setAttribute("data-t","请加载居家管家技能，帮我标记购物清单条目已买到："+names+" 编号["+ids+"]");}'
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；旧标题计数按钮已删，只留这一处）。

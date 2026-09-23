@@ -17,6 +17,23 @@ export function toItemCard(item: HomeItem, locations: HomeLocation[], tags: stri
   };
 }
 
+/** `toItemCard` 那个复合串的逆：`客厅/阳台柜×1[在家]` → `客厅/阳台柜`。
+ *
+ *  为什么跟 `toItemCard` 住一个文件：复合串的格式只由上面那一个 `map` 定义（`位置×件数[状态]`，
+ *  多位置用 `；` 连），它的解析规则只有跟定义住一起才不会走散（铁律二）。
+ *
+ *  为什么需要它：页面把「位置／数量／状态」当三个独立字段位渲染时（#890 seq 22 查看照片、
+ *  seq 7 紧急定位的置顶与其余候选），直接印复合串会让同一个值位同时带 `/`、`×`、`[]` 三套符号，
+ *  且件数与状态跟旁边的独立字段位说两遍。本函数只吃 `toItemCard` 产出的形状——位置路径里
+ *  不含 `×` 与 `[]`，故按段剥；`(无位置)` 这类没有复合尾巴的原样返回。 */
+export function locationPath(location: string): string {
+  return String(location ?? '')
+    .split('；')
+    .map((seg) => seg.replace(/\s*×\s*\d+\s*/g, '').replace(/\[[^\]]*\]/g, '').trim())
+    .filter((seg) => seg !== '')
+    .join('；');
+}
+
 export function buildSearchList(cards: ItemCard[]): { items: ItemCard[]; total: number } {
   return { items: cards, total: cards.length };
 }

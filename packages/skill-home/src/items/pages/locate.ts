@@ -10,7 +10,7 @@
 // 页内小助手就地定义：共用位归票 3，本票不新建共用文件（写集边界）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { fillTemplate, escapeHtml, locationPath, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'locate' as const;
 
@@ -98,7 +98,9 @@ function topRows(c: Card): string {
   return row('照片', '—')
     + row('名称', escapeHtml(String(c.name ?? '')))
     + row('编号', escapeHtml(String(c.id ?? '')))
-    + row('位置', escapeHtml(String(c.location ?? '')))
+    // #890 seq 7（⑥分隔符不懒政）：原先位置格直接印 `toItemCard` 的复合串（`客厅/阳台柜×1[在家]`），
+    // 与紧邻的「数量」「状态」两格说两遍同一件事，且一个值位挤了三套符号。位置格只留路径。
+    + row('位置', escapeHtml(locationPath(String(c.location ?? ''))))
     + row('数量', escapeHtml(String(c.quantity ?? '')))
     + row('状态', escapeHtml(String(c.status ?? '')));
 }
@@ -118,7 +120,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       + '<div>' + op('扩大寻找', '请加载居家管家技能，帮我扩大寻找这件物品', false) + '</div>';
   const rest = cards.slice(1).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
     + '</td><td>' + escapeHtml(String(c.id ?? ''))
-    + '</td><td>' + escapeHtml(String(c.location ?? ''))
+    // 位置列同样只留路径（同上，复合串的件数与状态另有独立列）。
+    + '</td><td>' + escapeHtml(locationPath(String(c.location ?? '')))
     + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('');
   const content = PAGE_CSS
     // 抬头说人话（此前那句是取数规则说明书：#817 seq 7 的 ②）。

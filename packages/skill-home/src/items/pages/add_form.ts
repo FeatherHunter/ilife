@@ -81,7 +81,11 @@ const PAGE_CSS = '<style>'
   + '.op.alt{background:#fff;color:#0a63ce}'
   + '.note{color:#666;font-size:13px}'
   + '.greet{font-size:15px;color:#333}'
-  + '.pill{display:inline-block;border:1px solid #d2d2d7;border-radius:999px;padding:6px 12px;margin:3px;font-size:13px}'
+  // #890：状态候选由「看着像选择器、点了没反应的 <span>」（实测 33–34px，短边不到 44）改成真控件。
+  // 本页其它控件的交互语言就是「点一下把一句提示词复制进剪贴板」，这里同一套：按钮带
+  // `data-action-id` ＋ `data-t`，复制交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的
+  // `buildSharedHelpersJs`，双通道复制 ＋ toast ＋ `execCommand` 降级），页内不再自造复制路径。
+  + '.pill{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d2d2d7;background:#fff;color:#1d1d1f;border-radius:999px;padding:6px 14px;margin:3px;font-size:13px;font-family:inherit;min-height:44px;min-width:44px;cursor:pointer}'
   + '.find{min-height:44px;width:100%;padding:10px 12px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:15px;box-sizing:border-box}'
   + '.list{min-height:96px;line-height:1.5;font-family:inherit;resize:vertical}'
   // #817（③双端不塌）：390 档不再把字段名列压到 6em 靠断字折行 —— 明细表行卡化：
@@ -165,7 +169,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + (isBatch ? '<h2>批量清单</h2><textarea class="find list" id="batchList" placeholder="每行一件，例如：口罩 2 包 客厅/抽屉"></textarea>' : '')
     + '</section>'
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态候选</h2><div>'
-    + REQUIRED_BLOCKS.status.map((s) => '<span class="pill">' + escapeHtml(s) + '</span>').join('')
+    + REQUIRED_BLOCKS.status.map((s, i) => '<button type="button" class="pill" data-action-id="x-status-' + (i + 1) + '"'
+      + ' data-t="' + escapeHtml('请加载居家管家技能，帮我把物品状态设为「' + s + '」') + '">' + escapeHtml(s) + '</button>').join('')
     + '</div></section>'
     + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
     + (isUpdate ? op('确认变更', '请加载居家管家技能，帮我确认变更' + modeText, false)

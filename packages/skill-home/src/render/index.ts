@@ -1,7 +1,7 @@
 export { HomeRenderError } from './errors.js';
 export { HOME_KEY_SHAPES, homeShapeFor, buildHomeEnvelope, parseHomeEnvelope } from './envelope.js';
 export {
-  toItemCard, buildSearchList, buildDetail, buildReceipt, buildTagList,
+  toItemCard, locationPath, buildSearchList, buildDetail, buildReceipt, buildTagList,
   buildInventoryRecords, buildLocationList, buildOutfitList, buildStatsOverview,
   buildStatsAlert, buildShoppingList, buildTicketList, buildCareList, buildHelpItems,
 } from './views.js';

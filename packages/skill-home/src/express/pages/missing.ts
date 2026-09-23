@@ -116,6 +116,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const P_SCOPE = '请加载居家管家技能，帮我按范围检测缺货';
   const P_TH = '请加载居家管家技能，帮我查看囤货并设置阈值';
+  // #890：「加入购物清单」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
+  const P_LIST = '请加载居家管家技能，帮我将缺货物品加入购物清单';
 
   let body = style;
   // #817（③双端不塌）第二波：说明句压到 390 档一行放得下（20 字）——原来 25 字在 390 档折行后
@@ -135,22 +137,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 当前 ' + it.current + ' 阈值 ' + it.threshold + '</div></div>'
         + '<span class="x-suggest">建议买 <b>' + it.suggest + '</b></span></div>').join('')
       + '</div><div class="x-actions">'
-      + '<button class="x-btn" onclick="xToList()">加入购物清单</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_SCOPE) + '">按范围检测</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_TH) + '">设置阈值</button>'
+      + '<button class="x-btn" data-action-id="x-to-list" data-t="' + escapeHtml(P_LIST) + '" onclick="xToList(this)">加入购物清单</button>'
+      + '<button class="x-btn ghost" data-action-id="x-scope" data-t="' + escapeHtml(P_SCOPE) + '">按范围检测</button>'
+      + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">设置阈值</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">库存充足没有缺货<br>范围 ' + escapeHtml(scope) + '<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_TH) + '">设置阈值</button>'
+      + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">设置阈值</button>'
       + '</div></div></section>';
   }
 
+  // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`）——
+  // 页内自造 `xCopy`（无反馈／无 `catch`／无 `execCommand` 降级）与 #886 收口时漏删的
+  // `xCopyData`／`xCopyLog` 两个空壳（`function (){}`，无调用方）一并清掉。接法＝按钮带
+  // `data-action-id` ＋ `data-t`；按当刻勾选现算的那一颗，用元素级 `onclick` 先把载荷写回自己的
+  // `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
-    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
-    + 'function xToList(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选缺货物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name")+"建议买"+c.getAttribute("data-suggest");}).join("、");xCopy("请加载居家管家技能，帮我将缺货物品加入购物清单："+names+" 编号["+ids+"]");}'
-    + 'function xCopyData(){}'
-    + 'function xCopyLog(){}'
+    + 'function xToList(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选缺货物品");return;}'
+    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name")+"建议买"+c.getAttribute("data-suggest");}).join("、");'
+    + 'b.setAttribute("data-t","请加载居家管家技能，帮我将缺货物品加入购物清单："+names+" 编号["+ids+"]");}'
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。

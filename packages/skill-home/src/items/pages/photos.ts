@@ -7,7 +7,7 @@
 // 照片类型筛选默认走全部（类型无 schema 落点，见 #857，域票不伪造类型）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { fillTemplate, escapeHtml, locationPath, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'photos' as const;
 
@@ -153,9 +153,14 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     }
     kvRows.push(['分类', snap.category || '—'], ['标签', snap.tags.length > 0 ? snap.tags.join('、') : '—']);
   } else {
-    // 详情态回执只给复合串（`客厅/阳台柜×1[在家]`），位置路径拆不出来（需数据层，见 #817 seq 22）；
-    // 串里已经带了件数与状态，故不再另立「数量」格——同一数据只说一遍。
-    kvRows.push(['名称', name || '—'], ['编号', idText], ['位置', str(item.location) || '—'],
+    // 详情态回执的 `item.location` 是 `toItemCard` 的复合串（`客厅/阳台柜×1[在家]`）。
+    // #890 seq 22（⑥分隔符不懒政）：不再把整串印在一个值位里——串尾的件数与状态已由卡上的
+    // `quantity`／`status` 两件单独带出，位置这一格只留路径（`locationPath` 剥复合尾巴）。
+    // 形状与上面的管理态一致（位置／数量／状态三格），两态同一把尺。
+    kvRows.push(['名称', name || '—'], ['编号', idText],
+      ['位置', locationPath(str(item.location)) || '—'],
+      ['数量', num(item.quantity) === null ? '—' : String(item.quantity)],
+      ['状态', str(item.status) || '—'],
       ['分类', str(item.category) || '—'], ['标签', str(item.tags) || '—']);
   }
 

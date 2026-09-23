@@ -134,7 +134,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<span class="pill">规模' + r.total + '条</span></div>'
     + '<dl class="kv"><dt>发生时间</dt><dd>—</dd>'
     + '<dt>记录状态</dt><dd>—</dd></dl>'
-    + '<div class="detail">记录' + escapeHtml(r.id) + '缺— 多— 异— 待确认—</div>'
+    // #890（⑥分隔符不懒政）：折叠区里原先是「记录4缺— 多— 异— 待确认—」——四段标签＋空值靠
+    // 空格与破折号挤成一行正文。DIFF_SLOTS 与 `.counts`／`.cnt` 这套四格字段位本页早就有了
+    // （见下面「差异计数」那一段），这里改成同一套，折叠区与汇总区同一个形状。
+    + '<div class="detail"><div class="counts">'
+    + DIFF_SLOTS.map((k) => '<div class="cnt"><b>' + k + '</b><span>—</span></div>').join('')
+    + '</div></div>'
     + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">展开详情</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">处理差异</button>'
     + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" data-sc="' + escapeHtml(r.scope) + '" onclick="recCmd(this,\'re\')">复查</button>'

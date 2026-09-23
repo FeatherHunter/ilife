@@ -124,13 +124,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-check{width:44px;height:44px;flex:none;appearance:none;border:1.5px solid #c7c7cc;border-radius:12px;background:#fff center/22px 22px no-repeat;margin:0 6px 0 0;vertical-align:middle}.x-check:checked{border-color:#0a63ce;background-color:#0a63ce;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%223%22><path d=%22M4 12l6 6L20 6%22/></svg>\')}'
     + '.x-empty{text-align:center;color:#666;padding:26px 0;line-height:2}'
     // #817 第二波（③双端不塌）：390／820 以下原先把 `.x-btn` 一律拉成整行——行内那颗「设阈值」
-    // 因此变整行白条（一页堆出两千多像素）。收窄到动作行 `.x-actions > .x-btn` 才拉满，
-    // 行内的按钮按内容宽自持（`.x-row` 竖排时 `align-items:stretch` 会把它横着撑满，故还它 flex-start）。
-    + '@media(max-width:820px){.x-row{flex-direction:column;align-items:stretch}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
-    + '.x-actions>.x-btn{width:100%}.x-row>.x-btn{align-self:flex-start}}'
+    // 因此变整行白条（一页堆出两千多像素）。收窄到动作行 `.x-actions > .x-btn` 才拉满。
+    // #890：`.x-row` 一并改回横排——上一波只收了 `.x-btn`，行本身仍 `flex-direction:column`，
+    // 44px 勾选件因此独占首行（行高 68→128px，一屏少看一条）；口径与同域 43／44／45 三页一致
+    // （`list.ts:120`／`missing.ts:114`／`express.ts:127` 都是横排）。行内按钮回到垂直居中。
+    + '@media(max-width:820px){.x-row{flex-direction:row;align-items:center}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
+    + '.x-actions>.x-btn{width:100%}.x-row>.x-btn{align-self:center}}'
     + '</style>';
 
   const P_MISSING = '请加载居家管家技能，帮我检测缺货';
+  // #890：选择区两颗的初始载荷（点了以后由页内监听按当刻勾选改写 `data-t`，见件尾脚本）。
+  const P_FIX = '请加载居家管家技能，帮我修正物品实际数量';
+  const P_THR = '请加载居家管家技能，帮我设置囤货阈值';
 
   let body = style;
   body += '<p class="x-lead">阈值是缺货检测的提醒线，盘点时发现数量不对，勾选后修正</p>';
@@ -148,13 +153,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 阈值 ' + it.threshold + ' 当前 ' + it.current + '</div></div>'
         + '</div>').join('')
       + '</div><div class="x-actions">'
-      + '<button class="x-btn" onclick="xFix()">修正实际数量</button>'
-      + '<button class="x-btn ghost" onclick="xThr()">设阈值</button>'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
+      + '<button class="x-btn" data-action-id="x-fix" data-t="' + escapeHtml(P_FIX) + '" onclick="xFix(this)">修正实际数量</button>'
+      + '<button class="x-btn ghost" data-action-id="x-thr" data-t="' + escapeHtml(P_THR) + '" onclick="xThr(this)">设阈值</button>'
+      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
       + '</div></section>';
   } else {
     body += '<section><div class="x-empty">还没有设阈值的物品<br>给常用消耗品设个阈值，缺货检测就能自动提醒<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-prompt="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
+      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
       + '</div></div></section>';
   }
 
@@ -164,18 +169,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     const uniqHints = hints.filter((h) => (seenHint.has(h.name) ? false : seenHint.add(h.name)));
     body += '<section><h2>常用品还没设阈值</h2><div>'
       + uniqHints.map((h) => '<div class="x-row"><div class="x-name">' + escapeHtml(latinFree(h.name)) + '</div><div class="x-meta">' + escapeHtml(h.category_name) + '</div>'
-        + '<button class="x-btn ghost" data-id="' + h.id + '" data-name="' + escapeHtml(h.name) + '" onclick="xOneThr(this)">设阈值</button></div>').join('')
+        + '<button class="x-btn ghost" data-action-id="x-one-thr" data-t="' + escapeHtml(P_THR) + '" data-id="' + h.id + '" data-name="' + escapeHtml(h.name) + '" onclick="xOneThr(this)">设阈值</button></div>').join('')
       + '</div></section>';
   }
 
+  // #890：本页原先自带 `xCopy(t){if(navigator.clipboard){…}}`——无反馈、无 `catch`、无 `execCommand`
+  // 降级。按铁律一「把对方那份抄一遍不算走了接口」，不在这里再抄一份更厚的 `xCopy`，而是把复制
+  // 交给公共层共享运行时（模板 `<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`，见 `render/html.ts`）：
+  // 双通道复制 ＋ toast 反馈 ＋ `execCommand` 降级 ＋ 两通道皆败的失败提示。接法＝按钮带
+  // `data-action-id` ＋ `data-t`，运行时在 document 上委派（与 #886 的复制区同一口径）。
+  // 选择区两颗要按当刻勾选现算载荷：元素级 `onclick` 在目标阶段先跑、把载荷写回自己的 `data-t`，
+  // 随后才冒泡到 document 被复制；没勾选时把 `data-t` 置空（空串在共享运行时里短路、不出
+  // 「已复制」的假反馈）并保留原来的拦截提示。
   body += '<script>'
-    + 'function xCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t);}}'
-    + 'document.querySelectorAll("[data-prompt]").forEach(function(b){if(b.getAttribute("onclick"))return;b.addEventListener("click",function(){xCopy(b.getAttribute("data-prompt")||"");});});'
-    + 'function xFix(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要修正的物品");return;}var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我修正物品实际数量："+names+" 编号["+ids+"] 修正后数量___");}'
-    + 'function xThr(){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){alert("请先勾选要设置阈值的物品");return;}var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");xCopy("请加载居家管家技能，帮我设置囤货阈值："+names+" 阈值___");}'
-    + 'function xOneThr(b){xCopy("请加载居家管家技能，帮我设置囤货阈值："+b.getAttribute("data-name")+" 编号["+b.getAttribute("data-id")+"] 阈值___");}'
-    // #886：`xCopyData`／`xCopyLog` 两个空壳随复制区一起删（本页复制数据／复制日志已由
-    // `homeCopyArea` 出：三格式菜单＋六段日志），这两颗 `function (){}` 没有调用方。
+    + 'function xFix(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选要修正的物品");return;}'
+    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
+    + 'b.setAttribute("data-t","请加载居家管家技能，帮我修正物品实际数量："+names+" 编号["+ids+"] 修正后数量___");}'
+    + 'function xThr(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选要设置阈值的物品");return;}'
+    + 'b.setAttribute("data-t","请加载居家管家技能，帮我设置囤货阈值："+s.map(function(c){return c.getAttribute("data-name");}).join("、")+" 阈值___");}'
+    + 'function xOneThr(b){b.setAttribute("data-t","请加载居家管家技能，帮我设置囤货阈值："+b.getAttribute("data-name")+" 编号["+b.getAttribute("data-id")+"] 阈值___");}'
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
