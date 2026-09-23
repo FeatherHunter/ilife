@@ -146,7 +146,7 @@ export const S = {
     borderTop: '1px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.25))',
   } as React.CSSProperties,
   target: { marginRight: 'auto', fontSize: 12, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as React.CSSProperties,
-  error: { color: 'var(--dsw-alias-label-error, #e66)' } as React.CSSProperties,
+  error: { color: 'var(--dsw-alias-state-error-primary, #e66)' } as React.CSSProperties,
 } as const;
 
 /** 面包屑：从文件系统根到当前层，每一格都是跳转目标（`listing.crumbs` 由取数方给）。 */

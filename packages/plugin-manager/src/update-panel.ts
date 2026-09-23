@@ -24,7 +24,7 @@ export const PANEL_STYLE = {
   meta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12, lineHeight: 1.7, marginBottom: 10 } as React.CSSProperties,
   tablist: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } as React.CSSProperties,
   tab: {
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
     background: 'transparent',
     color: 'var(--dsw-alias-label-primary, inherit)',
     borderRadius: 999,
@@ -42,7 +42,7 @@ export const PANEL_STYLE = {
   reco: {
     padding: '12px 14px',
     borderRadius: 10,
-    border: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.45))',
+    border: '1px dashed var(--dsw-alias-border-l1, rgba(128,128,128,.45))',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
     fontSize: 13,
     lineHeight: 1.7,
@@ -59,7 +59,7 @@ export const PANEL_STYLE = {
     userSelect: 'all',
   } as React.CSSProperties,
   btn: {
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
     background: 'transparent',
     color: 'var(--dsw-alias-label-primary, inherit)',
     borderRadius: 8,
@@ -71,7 +71,7 @@ export const PANEL_STYLE = {
     padding: '10px 12px',
     marginBottom: 10,
     borderRadius: 8,
-    border: '1px solid var(--dsw-alias-state-warning-primary, #d8a300)',
+    border: '1px solid var(--dsw-alias-state-warn-primary, #d8a300)',
     background: 'var(--dsw-alias-bg-base, rgba(216,163,0,.12))',
     color: 'var(--dsw-alias-label-primary, inherit)',
     fontSize: 13,
@@ -81,7 +81,7 @@ export const PANEL_STYLE = {
     padding: '10px 12px',
     marginBottom: 8,
     borderRadius: 10,
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.3))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.3))',
     borderLeftWidth: 3,
     fontSize: 13,
     lineHeight: 1.7,
@@ -143,8 +143,8 @@ export const PANEL_STYLE = {
     flexDirection: 'column',
     overflow: 'hidden',
     borderRadius: 12,
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.4))',
-    background: 'var(--dsw-alias-bg-elevated, var(--dsw-alias-bg-base, #222))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.4))',
+    background: 'var(--dsw-alias-bg-layer-2, var(--dsw-alias-bg-base, #222))',
     color: 'var(--dsw-alias-label-primary, inherit)',
     boxShadow: '0 12px 32px rgba(0,0,0,.35)',
   } as React.CSSProperties,
@@ -155,7 +155,7 @@ export const PANEL_STYLE = {
     gap: 8,
     flex: '0 0 auto',
     padding: '12px 14px',
-    borderBottom: '1px solid var(--dsw-alias-border, rgba(128,128,128,.3))',
+    borderBottom: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.3))',
   } as React.CSSProperties,
   dialogTitle: { fontSize: 14, fontWeight: 700 } as React.CSSProperties,
   /** 唯一会滚的那一段。 */
@@ -166,7 +166,7 @@ export const PANEL_STYLE = {
     padding: '12px 14px',
   } as React.CSSProperties,
   close: {
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
     background: 'transparent',
     color: 'var(--dsw-alias-label-primary, inherit)',
     borderRadius: 8,
@@ -185,7 +185,7 @@ type RowTone = 'ok' | 'update' | 'blocked' | 'failed' | 'idle';
 
 const ROW_TONE: Readonly<Record<RowTone, { readonly mark: string; readonly color: string; readonly tint: string }>> = {
   update: { mark: '↑', color: 'var(--dsw-alias-brand-primary, #0a84ff)', tint: 'rgba(10,132,255,.08)' },
-  blocked: { mark: '!', color: 'var(--dsw-alias-state-warning-primary, #d8a300)', tint: 'rgba(216,163,0,.10)' },
+  blocked: { mark: '!', color: 'var(--dsw-alias-state-warn-primary, #d8a300)', tint: 'rgba(216,163,0,.10)' },
   failed: { mark: '✕', color: 'var(--dsw-alias-state-error-primary, #ff6b6b)', tint: 'rgba(255,107,107,.10)' },
   ok: { mark: '✓', color: 'var(--dsw-alias-state-success-primary, #4ec9a0)', tint: 'transparent' },
   idle: { mark: '·', color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', tint: 'transparent' },

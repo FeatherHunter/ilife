@@ -104,7 +104,7 @@ const S = {
   } as React.CSSProperties,
   tablist: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } as React.CSSProperties,
   tab: {
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
     background: 'transparent',
     color: 'var(--dsw-alias-label-primary, inherit)',
     borderRadius: 999,
@@ -123,7 +123,7 @@ const S = {
   reco: {
     padding: '12px 14px',
     borderRadius: 10,
-    border: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.45))',
+    border: '1px dashed var(--dsw-alias-border-l1, rgba(128,128,128,.45))',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
     fontSize: 13,
     lineHeight: 1.7,
@@ -143,7 +143,7 @@ const S = {
     marginTop: 16,
     padding: '10px 12px',
     borderRadius: 10,
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
   } as React.CSSProperties,
   moreTitle: {
     fontSize: 13,

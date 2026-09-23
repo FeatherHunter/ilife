@@ -46,7 +46,7 @@ const STATUS_MARK: Readonly<Record<HealthStatus, string>> = { red: '✕', yellow
 /** 面板上的文字色与分隔线（与 `client.ts` 同一套别名）。 */
 const INK = 'var(--dsw-alias-label-primary, inherit)';
 const INK_DIM = 'var(--dsw-alias-label-secondary, #9a9a9a)';
-const BORDER = 'var(--dsw-alias-border, rgba(128,128,128,.35))';
+const BORDER = 'var(--dsw-alias-border-l1, rgba(128,128,128,.35))';
 
 export const HEALTH_STYLE = {
   box: {

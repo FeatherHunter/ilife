@@ -45,7 +45,7 @@ const W = {
   card: {
     padding: '12px 14px',
     borderRadius: 10,
-    border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
     background: 'var(--dsw-alias-bg-base, transparent)',
     color: 'var(--dsw-alias-label-primary, inherit)',
     lineHeight: 1.6,
@@ -53,11 +53,11 @@ const W = {
   title: { fontSize: '1.08em', fontWeight: 700, marginBottom: 8 } as React.CSSProperties,
   total: { fontSize: 22, fontWeight: 700, margin: '2px 0 4px' } as React.CSSProperties,
   muted: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: '0.92em'} as React.CSSProperties,
-  error: { marginTop: 8, color: 'var(--dsw-alias-label-error, #b3261e)', fontSize: '1em', whiteSpace: 'pre-wrap' } as React.CSSProperties,
+  error: { marginTop: 8, color: 'var(--dsw-alias-state-error-primary, #b3261e)', fontSize: '1em', whiteSpace: 'pre-wrap' } as React.CSSProperties,
   version: {
     marginTop: 8,
     paddingTop: 8,
-    borderTop: '1px dashed var(--dsw-alias-border, rgba(128,128,128,.25))',
+    borderTop: '1px dashed var(--dsw-alias-border-l1, rgba(128,128,128,.25))',
     color: 'var(--dsw-alias-label-tertiary, #8a8a8a)',
     fontSize: '0.92em',
   } as React.CSSProperties,
