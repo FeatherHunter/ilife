@@ -278,6 +278,8 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   const baseline = surface !== null ? toDraft(props.items, surface.values, surface) : null;
   const dirtyKeys: readonly string[] = baseline === null ? [] : dirtyKeysOf(props.items, draft, baseline);
   const followKeys = (props.followKeysOf ?? noFollowKeys)(dirtyKeys);
+  /** 技能侧报出「有格子真用不了」⇒ 标题行那枚「配置里有值用不了」徽标才亮（#915 第二步）。 */
+  const hasAlert = surface !== null && surface.alerts !== undefined && Object.keys(surface.alerts).length > 0;
   /** 静态那一份（与脏不脏无关）：画跟随行的缩进用（v3.1 的 `.ic-under`）。 */
   const followerKeys = followerKeysOf(props.items, props.followKeysOf);
   const mode = pickerModeOf(picker);
@@ -298,6 +300,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     dirtyKeys,
     followKeys,
     followerKeys,
+    invalid: hasAlert,
     copy,
     onCopy,
     onChange,

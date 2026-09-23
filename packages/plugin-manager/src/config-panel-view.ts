@@ -509,6 +509,9 @@ export interface RowProps {
   readonly onCopy?: ((key: string, text: string) => void) | undefined;
   /** 复制那一枚按钮当刻的字面（不给＝「复制」）。 */
   readonly copyState?: CopyState | undefined;
+  /** 技能侧报出的「这一行真用不了」（#915 第二步）：给了就原样画 `message`，不比较、不合成。
+   *  缺席＝这一行没问题，什么都不画。 */
+  readonly alert?: { readonly code: string; readonly message: string } | null | undefined;
   /** 这一行是所在那一组的最后一行（v3.1 的 `.ic-row:last-child{border-bottom:0}`；
    *  内联样式没有 `:last-child`，行序是客户端常量，故由画整面的人算好交进来）。 */
   readonly last?: boolean | undefined;
@@ -610,6 +613,9 @@ export function Row(props: RowProps): React.ReactElement {
     React.createElement('div', { style: S.hint }, item.hint),
     control,
     React.createElement('div', { style: S.acts }, browse, copy),
+    props.alert == null
+      ? null
+      : React.createElement('div', { style: S.invalid }, props.alert.message),
   );
 }
 
@@ -754,6 +760,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       follow: ready && props.followKeys.includes(item.key),
       onCopy: ready ? props.onCopy : undefined,
       copyState: props.copy !== null && props.copy.key === item.key ? (props.copy.ok ? 'done' : 'failed') : 'idle',
+      alert: ready ? surface?.alerts?.[item.key] ?? null : null,
       last,
       nested: followers.includes(item.key),
     });

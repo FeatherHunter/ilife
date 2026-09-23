@@ -52,6 +52,15 @@ export interface ConfigSurfaceReply {
   readonly values: Record<string, unknown>;
   /** 一组解析后的绝对路径，给只读行显示用；**可选**：装的是旧技能时这一格缺席。 */
   readonly resolved?: Readonly<Record<string, string | undefined>>;
+  /** 按行键给的告警（#915 第二步）：**只有技能侧真判出「这一格用不了」时才有这一格**；
+   *  缺席＝这一行没问题，面板不亮任何东西。面板只原样画 `message`，不比较、不合成新句子。 */
+  readonly alerts?: Readonly<Record<string, ConfigRowAlert>> | undefined;
+}
+
+/** 技能侧报出的「这一格真用不了」：一句人话 ＋ 故障码（面板只画 `message`，`code` 给判据与回执用）。 */
+export interface ConfigRowAlert {
+  readonly code: string;
+  readonly message: string;
 }
 
 /** 面板对配置面的三通电话：读整面／保存一份取值／重置为默认。三个名字各家逐字相同，收在这里一处。 */

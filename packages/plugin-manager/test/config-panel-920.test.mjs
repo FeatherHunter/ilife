@@ -97,11 +97,13 @@ const kidsOf = (tree) => (Array.isArray(tree.props.children) ? tree.props.childr
 const barOf = (tree) =>
   kidsOf(tree).find((k) => k !== null && typeof k === 'object' && ofType(k, 'button').some((b) => textOf(b).startsWith('保存')));
 
-/** 某一行的那个盒子：只读行＝三件套（标签／值／动作槽）、可改行＝四件套（标签行／说明／控件／按钮行）。 */
+/** 某一行的那个盒子：只读行＝三件套（标签／值／动作槽）、可改行＝四件套（标签行／说明／控件／按钮行）
+ *  ＋ 可选的第 5 件告警槽（#915 第二步：有告警才画，没告警是 `null` 占位——`createElement` 会把 `null` 留在
+ *  `children` 里，所以这里按 3／4／5 件找，不按"非空孩子数"找）。 */
 function rowBoxOf(tree, label) {
   return ofType(tree, 'div').find((d) => {
     const kids = Array.isArray(d.props.children) ? d.props.children : [d.props.children];
-    if (kids.length !== 3 && kids.length !== 4) return false;
+    if (kids.length !== 3 && kids.length !== 4 && kids.length !== 5) return false;
     return textOf(kids[0]) === label;
   });
 }
@@ -210,9 +212,11 @@ describe('#920 ① 只读行：标签—值同行 · 行尾一枚「复制」 ·
 });
 
 describe('#920 ② 可改行：「可改」徽标 · 说明 · 整行输入框 · 按钮行', () => {
-  it('就四件：标签带「可改」／说明／整行输入框／按钮行', () => {
+  it('就四件＋可选的告警槽：标签带「可改」／说明／整行输入框／按钮行（第 5 件只能是 #915 的告警位）', () => {
     const kids = kidsOf(masterRow());
-    assert.equal(kids.length, 4, '可改行该恰有四件（v3.1 的 masterShell 去掉两格慢面槽）');
+    // #915 第二步给可改行加了第 5 件告警槽（有告警才画，没告警是 `null` 占位——`createElement` 会把它留在 children 里）。
+    assert.ok(kids.length === 4 || kids.length === 5, '可改行是四件 ＋ 可选的告警槽，实际 ' + kids.length + ' 件');
+    if (kids.length === 5) assert.equal(kids[4], null, '没告警时第 5 件只能是 null 占位');
     assert.equal(textOf(kids[0]), ITEMS[0].title + '可改', '标签后面要跟一枚「可改」徽标');
     assert.equal(textOf(kids[1]), ITEMS[0].hint, '第二件是人话说明');
     const input = ofType(kids[2], 'input')[0];
@@ -482,5 +486,34 @@ describe('#920 ④ 几何：换行不按字符数估宽（审查 P0-4）', () =>
     assert.deepEqual(hit, [], '共用件里又出现了按字符数估宽的痕迹：' + hit.join('、'));
     // 正向：整行让位这件事由 CSS 表达（行容器 flex-wrap ＋ 值列 flex-basis 取内容宽）。
     assert.match(entryBody(VIEW_SRC, 'row'), /flexWrap:\s*'wrap'/);
+  });
+});
+
+describe('#915 第二步 · 技能侧报出的行告警：原样画，不比较、不合成', () => {
+  const ALERT = { code: 'DIR_UNWRITABLE', message: '这个目录写不进去：在，但写不进去：Z:\\只读\\data。' };
+  const surfaced = (alerts) => ({ ...SURFACE, alerts });
+  /** 黄字那一格（`S.invalid`）：样式表的 `invalid` 拿来就是干这个的。 */
+  const invalidBlocks = (tree) =>
+    ofType(tree, 'div').filter((d) => d.props.style !== undefined && d.props.style.padding === '7px 9px');
+
+  it('有告警的那一行：message 原样上屏，且不出现「生效的是」这类合成句', () => {
+    const tree = PanelBody(bodyProps({ state: { kind: 'ready', surface: surfaced({ 'db.dir': ALERT }) } }));
+    const text = textOf(tree);
+    assert.match(text, /这个目录写不进去/);
+    assert.doesNotMatch(text, /现在生效的是/);
+    assert.doesNotMatch(text, /配置里写的是/);
+    assert.equal(invalidBlocks(tree).length, 1, '有且只有那一行亮黄字');
+  });
+
+  it('没告警的行与整面：一个告警节点都不画（没问题就不显示）', () => {
+    const clean = PanelBody(bodyProps());
+    assert.equal(invalidBlocks(clean).length, 0);
+    assert.doesNotMatch(textOf(clean), /现在生效的是/);
+    assert.doesNotMatch(textOf(clean), /配置里写的是/);
+  });
+
+  it('告警只跟那一行走：别的行不受影响', () => {
+    const tree = PanelBody(bodyProps({ state: { kind: 'ready', surface: surfaced({ 'db.dir': ALERT }) } }));
+    assert.equal(invalidBlocks(tree).length, 1, '只有 db.dir 那一行亮');
   });
 });
