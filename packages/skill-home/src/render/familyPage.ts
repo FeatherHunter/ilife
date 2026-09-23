@@ -49,12 +49,10 @@ export function familyModulePath(domain: string, family: string): string | null 
   return existsSync(file) ? file : null;
 }
 
-/** 场景的命令中文名（＝文件名主体 `<命令中文名>_<场景 id>` 的前半；`resolveSceneStem` 是那段唯一算法）。 */
+/** 场景的命令中文名（＝产物文件名主体；`resolveSceneStem` 是那段唯一算法，本函数只做「解析不到即 null」的包装）。 */
 export function sceneNameOf(key: string, params: Record<string, unknown>): string | null {
   try {
-    const stem = resolveSceneStem(key, params);
-    const cut = stem.lastIndexOf('_');
-    return cut > 0 ? stem.slice(0, cut) : stem;
+    return resolveSceneStem(key, params);
   } catch {
     return null;
   }

@@ -104,7 +104,7 @@ before(async () => {
   let seq = 0;
   for (const sc of SCENARIOS) {
     seq += 1;
-    const file = sc.cn + '_' + sc.id + '_' + STAMP + '.html';
+    const file = sc.cn + '_' + STAMP + '.html';
     const html = await render(sc.family, ENVS[sc.id]);
     writeFileSync(join(OUT_DIR, file), html, 'utf8');
     const bytes = Buffer.byteLength(html, 'utf8');
@@ -155,19 +155,19 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   });
 
   it('1-1 单条录入：回执与本次名称在位', () => {
-    const html = read('录物品_1-1_' + STAMP + '.html');
+    const html = read('录物品_' + STAMP + '.html');
     assert.ok(html.includes('已录物品'), '回执缺席');
     assert.ok(html.includes('探针杯'), '本次名称缺席');
   });
 
   it('1-2 拍照录入：回执在位且拍照分流有交代', () => {
-    const html = read('拍物品_1-2_' + STAMP + '.html');
+    const html = read('拍物品_' + STAMP + '.html');
     assert.ok(html.includes('已录物品'), '回执缺席');
     assert.ok(html.includes('照片随本次一起存'), '拍照分流缺席');
   });
 
   it('1-3 批量录入：件数与全部确认对得上', () => {
-    const html = read('批量录入_1-3_' + STAMP + '.html');
+    const html = read('批量录入_' + STAMP + '.html');
     assert.ok(html.includes('已批量录入'), '回执缺席');
     // 断言的意思是「件数在页上有处可查」；#817 收口按「同一事实不说两遍」删掉了与回执、数量行
     // 重复的「本次共 2 件」半句，故改查件数本身，不再钉那句老文案。
@@ -176,14 +176,14 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   });
 
   it('1-4 补录：补录日期有处可填', () => {
-    const html = read('补录_1-4_' + STAMP + '.html');
+    const html = read('补录_' + STAMP + '.html');
     assert.ok(html.includes('已录物品'), '回执缺席');
     // 旧断言查的是占位残句「补录场景在此填写」；#817 收口按复核意见把它换成完整日期示例，断言同步。
     assert.ok(html.includes('录入日期（补录）') && html.includes('YYYY-MM-DD'), '补录位缺席');
   });
 
   it('2-1 查物品：结果与摘要在位', () => {
-    const html = read('查物品_2-1_' + STAMP + '.html');
+    const html = read('查物品_' + STAMP + '.html');
     assert.ok(html.includes('探针杯'), '结果缺席');
     assert.ok(html.includes('共 2 件'), '摘要缺席');
     assert.ok(html.includes('本地筛选'), '筛选框缺席');
@@ -198,21 +198,21 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   });
 
   it('2-2 看物品：底细与快捷操作在位', () => {
-    const html = read('看物品_2-2_' + STAMP + '.html');
+    const html = read('看物品_' + STAMP + '.html');
     assert.ok(html.includes('探针杯'), '名称缺席');
     assert.ok(html.includes('快捷操作'), '快捷操作缺席');
     assert.ok(html.includes('暂无记录'), '历史空态缺席');
   });
 
   it('2-3 紧急定位：置顶卡片在位', () => {
-    const html = read('紧急定位_2-3_' + STAMP + '.html');
+    const html = read('紧急定位_' + STAMP + '.html');
     assert.ok(html.includes('置顶'), '置顶缺席');
     assert.ok(html.includes('探针杯'), '首件缺席');
     assert.ok(html.includes('扩大寻找'), '扩大寻找缺席');
   });
 
   it('2-4 筛选浏览：分组与计数在位', () => {
-    const html = read('筛选浏览_2-4_' + STAMP + '.html');
+    const html = read('筛选浏览_' + STAMP + '.html');
     assert.ok(html.includes(CATNAME), '当前分组缺席：' + CATNAME);
     assert.ok(html.includes('计数'), '计数缺席');
     // 断言的意思是「分组浏览有真的分组切换入口」；#817 收口把原来那句假的排序声称删了，
@@ -222,22 +222,22 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
   });
 
   it('2-5 拍照找物品：与查物品同表', () => {
-    const html = read('拍照找物品_2-5_' + STAMP + '.html');
+    const html = read('拍照找物品_' + STAMP + '.html');
     assert.ok(html.includes('探针杯'), '结果缺席');
     assert.ok(html.includes('拍照找物品'), '拍照位缺席');
   });
 
   it('2-6 查重复：同名归组在位', () => {
-    const html = read('查重复_2-6_' + STAMP + '.html');
+    const html = read('查重复_' + STAMP + '.html');
     assert.ok(html.includes('双子杯'), '重复组缺席');
     assert.ok(html.includes('组内件数'), '组内件数缺席');
     assert.ok(html.includes('复制合并建议'), '合并建议缺席');
   });
 
-  it('文件名通式逐字：<命令中文名>_<场景编号>_<戳>', () => {
+  it('文件名通式逐字：<命令中文名>_<戳>', () => {
     const mf = JSON.parse(read('manifest.json'));
     for (const r of mf.rows) {
-      assert.match(basename(r.file), /^(.+)_(.+)_(\d{8}_\d{6})\.html$/, r.file);
+      assert.match(basename(r.file), /^(.+)_(\d{8}_\d{6})\.html$/, r.file);
     }
   });
 });

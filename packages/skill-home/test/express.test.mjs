@@ -39,22 +39,22 @@ const stamp = () => {
 const CASES = [
   {
     family: 'list', scenario: 'SM5-1', wake: '购物清单', title: '购物清单', prompt: '请加载居家管家技能，帮我列购物清单',
-    key: 'home.shopping.query', preset: { kind: 'list' }, stem: '购物清单_SM5-1',
+    key: 'home.shopping.query', preset: { kind: 'list' }, stem: '购物清单',
     check: '待买数量与来源是否对得上，查重提示是否在，勾选后能否划掉',
   },
   {
     family: 'missing', scenario: 'SM5-2', wake: '缺货检测', title: '缺货检测', prompt: '请加载居家管家技能，帮我检测缺货',
-    key: 'home.shopping.query', preset: { kind: 'missing' }, stem: '缺货检测_SM5-2',
+    key: 'home.shopping.query', preset: { kind: 'missing' }, stem: '缺货检测',
     check: '缺货数量与阈值以及建议量是否在，范围是否写清，能否一键进清单',
   },
   {
     family: 'express', scenario: 'SM5-3', wake: '查快递', title: '快递跟踪', prompt: '请加载居家管家技能，帮我查在途快递',
-    key: 'home.shopping.query', preset: { kind: 'express' }, stem: '查快递_SM5-3',
+    key: 'home.shopping.query', preset: { kind: 'express' }, stem: '查快递',
     check: '在途件数与已等天数以及超时标红是否在，收货确认是否顺手',
   },
   {
     family: 'stock', scenario: 'SM5-4', wake: '囤货盘点', title: '囤货盘点', prompt: '请加载居家管家技能，帮我盘点囤货',
-    key: 'home.shopping.query', preset: { kind: 'stock' }, stem: '囤货盘点_SM5-4',
+    key: 'home.shopping.query', preset: { kind: 'stock' }, stem: '囤货盘点',
     check: '数量与阈值以及库存状态是否在，无阈值提示与修正入口是否在',
   },
 ];

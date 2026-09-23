@@ -92,26 +92,26 @@ if (ap) {
     fails.push('附录缺 dualWord 双词说明（SM3-4 带物品／归物品）');
   }
 
-  // ④ 命名函数唯一稳定
+  // ④ 命名函数唯一稳定（#859 命名纪律改版：文件名主体＝命令中文名，不再拼场景 id）
   const sanitize = (stem) => stem.replace(/[\\/:*?"<>|\s]/g, '_');
-  const fileName = (commandCn, id, stamp) => `${sanitize(commandCn)}_${id}_${stamp}.html`;
+  const fileName = (commandCn, stamp) => `${sanitize(commandCn)}_${stamp}.html`;
   const stamp = '20260921_120000';
   const names = new Map();
   for (const s of ap.scenarios || []) {
-    const n = fileName(s.commandCn, s.id, stamp);
+    const n = fileName(s.commandCn, stamp);
     ok(!/[\\/:*?"<>|]/.test(n), `命名含非法字符：${n}`);
     ok(!/\s/.test(n.split('_').slice(0, -1).join('_')), `命名主体含空格：${n}`);
-    if (names.has(n)) fails.push(`命名冲突：${n} 同时给 ${names.get(n)} 与 ${s.id}`);
-    else names.set(n, s.id);
+    if (names.has(n)) fails.push(`命名冲突：${n} 同时给 ${names.get(n)} 与 ${s.commandCn}`);
+    else names.set(n, s.commandCn);
   }
   ok(names.size === 70, `命名唯一性：70 场景应得 70 个不同文件名，实得 ${names.size}`);
   // 稳定性：同场景同时戳同名
   const s0 = (ap.scenarios || [])[0];
   if (s0) {
-    ok(fileName(s0.commandCn, s0.id, stamp) === fileName(s0.commandCn, s0.id, stamp), '命名不稳定');
+    ok(fileName(s0.commandCn, stamp) === fileName(s0.commandCn, stamp), '命名不稳定');
   }
   // 真实例
-  for (const ex of ['录物品_1-1_', '移物品_3-2_', '查购买记录_SM6-1_']) {
+  for (const ex of ['录物品_', '移物品_', '查购买记录_']) {
     ok([...names.keys()].some((n) => n.startsWith(ex)), `缺真实例前缀：${ex}<戳>.html`);
   }
 

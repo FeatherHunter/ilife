@@ -138,7 +138,7 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.equal(env.shape, 'receipt');
     assert.equal(M.resolvePageFamily(env.key, { op: 'manage' }), 'location_manage');
     const stem = M.resolveSceneStem(env.key, params);
-    assert.equal(stem, '管位置_SM2-1');
+    assert.equal(stem, '管位置');
     const detail = env.data.detail;
     assert.ok(detail.nodes.length >= 10, '树节点数 nodes=' + detail.nodes.length);
     assert.ok(detail.similar_groups.length >= 1, '相似组应含预置碰撞');
@@ -162,7 +162,7 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.equal(env.key, 'home.location.write');
     assert.equal(M.resolvePageFamily(env.key, { op: 'fixed' }), 'fixed_spot');
     const stem = M.resolveSceneStem(env.key, params);
-    assert.equal(stem, '固定位_SM2-2');
+    assert.equal(stem, '固定位');
     const items = env.data.detail.fixed_items;
     assert.equal(items.length, 2);
     assert.ok(items.some((e) => e.name === '钥匙' && e.warn === false), '钥匙应在位');
@@ -187,7 +187,7 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.equal(env.key, 'home.location.query');
     assert.equal(M.resolvePageFamily(env.key, params), 'suggest_storage');
     const stem = M.resolveSceneStem(env.key, params);
-    assert.equal(stem, '收纳建议_SM2-3');
+    assert.equal(stem, '收纳建议');
     const recs = env.data.items;
     assert.equal(recs.length, 6);
     const strong = recs.find((r) => r.item.name === '螺丝刀');
@@ -225,7 +225,7 @@ describe('#809 空间与位置：4 条真链装配＋产物', () => {
     assert.equal(env.key, 'home.location.query');
     assert.equal(M.resolvePageFamily(env.key, params), 'space_view');
     const stem = M.resolveSceneStem(env.key, params);
-    assert.equal(stem, '空间视图_SM2-4');
+    assert.equal(stem, '空间视图');
     const view = env.data.items[0];
     assert.equal(view.kind, 'space_view');
     assert.ok(view.children.some((c) => c.name === '工具间'), '顶层应含工具间');

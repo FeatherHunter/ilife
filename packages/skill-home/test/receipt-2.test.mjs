@@ -168,14 +168,14 @@ describe('票据凭证域（二）8 条真页（#814）', () => {
     const certPage = await import(pathToFileURL(join(PKG, 'dist', 'receipt', 'pages', 'certificates.js')).href);
     const accPage = await import(pathToFileURL(join(PKG, 'dist', 'receipt', 'pages', 'accounts.js')).href);
     const names = {
-      'SM6-11': '查证件到期_SM6-11_20260921T000000.html',
-      'SM6-12': '登记证件_SM6-12_20260921T000000.html',
-      'SM6-13': '证件归档_SM6-13_20260921T000000.html',
-      'SM6-14': '更新证件_SM6-14_20260921T000000.html',
-      'SM6-15': '查账号_SM6-15_20260921T000000.html',
-      'SM6-16': '存账号_SM6-16_20260921T000000.html',
-      'SM6-17': '改账号_SM6-17_20260921T000000.html',
-      'SM6-18': '看密码_SM6-18_20260921T000000.html',
+      'SM6-11': '查证件到期_20260921T000000.html',
+      'SM6-12': '登记证件_20260921T000000.html',
+      'SM6-13': '证件归档_20260921T000000.html',
+      'SM6-14': '更新证件_20260921T000000.html',
+      'SM6-15': '查账号_20260921T000000.html',
+      'SM6-16': '存账号_20260921T000000.html',
+      'SM6-17': '改账号_20260921T000000.html',
+      'SM6-18': '看密码_20260921T000000.html',
     };
     for (const [id, file] of Object.entries(names)) {
       const page = id <= 'SM6-14' ? certPage : accPage;
@@ -207,7 +207,7 @@ describe('票据凭证域（二）8 条真页（#814）', () => {
       assert.ok(html.includes('****') || html.includes('未登记') || html.includes('脱敏') || html.includes('明文'), f + ' 须见脱敏痕迹');
     }
     // 改坏必红：向一份好页注入一条完整号码与一条口令，检查函数须点名。
-    const good = readFileSync(join(OUT, '查证件到期_SM6-11_20260921T000000.html'), 'utf8');
+    const good = readFileSync(join(OUT, '查证件到期_20260921T000000.html'), 'utf8');
     const bad = good + '\n' + certNumbers[0] + '\nseed-pass-taobao-01\n';
     assert.deepEqual(containsRaw(good, [certNumbers[0], 'seed-pass-taobao-01']), []);
     assert.ok(containsRaw(bad, [certNumbers[0], 'seed-pass-taobao-01']).length === 2, '注入后须变红并点名两处');

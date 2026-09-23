@@ -25,7 +25,7 @@ const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'n
 
 /** 落点值逐字（配置默认值 `home_manager_html`；这里写死，不做同义反复）。 */
 const HTML_DIR = 'home_manager_html';
-const STEM_RE = /^(.+)_(.+)_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
+const STEM_RE = /^(.+)_(\d{8}_\d{6})(?:_(\d+))?\.html$/;
 
 const mkDir = (tag) => mkdtempSync(join(tmpdir(), 'home801-' + tag + '-'));
 const dataDirOf = (dir) => join(configDirOf(dir), 'data');
@@ -76,9 +76,8 @@ describe('#801 默认落盘', () => {
     assert.ok(resolve(out) === out && out.startsWith(dir), 'delivery.path 为绝对路径：' + out);
     assert.ok(existsSync(out), '回执路径真的存在');
     const m = basename(out).match(STEM_RE);
-    assert.ok(m, '文件名通式逐字 `<命令中文名>_<场景 id>_<戳>.html`：' + basename(out));
-    assert.equal(m[1], '统物品', '命令中文名逐字');
-    assert.equal(m[2], 'SM4-1', '场景 id 逐字（缺省 kind=summary 的宿主行）');
+    assert.ok(m, '文件名通式逐字 `<命令中文名>_<戳>.html`：' + basename(out));
+    assert.equal(m[1], '统物品', '命令中文名逐字（缺省 kind=summary 的宿主行）');
     assert.equal(r.env.delivery.bytes, statSync(out).size, 'delivery.bytes ＝实际 statSync().size');
     assert.equal(r.env.delivery.bytes, Buffer.byteLength(readFileSync(out, 'utf8'), 'utf8'));
     const html = readFileSync(out, 'utf8');
@@ -93,8 +92,8 @@ describe('#801 默认落盘', () => {
     const qty = runOk(dir, ['home.item.update', '--params', P({ id, op: 'qty', plus: 1 })]);
     const n1 = basename(mv.env.delivery.path);
     const n2 = basename(qty.env.delivery.path);
-    assert.match(n1, /^移物品_3-2_\d{8}_\d{6}(_\d+)?\.html$/, '移物品 stem 逐字：' + n1);
-    assert.match(n2, /^数量变更_3-3_\d{8}_\d{6}(_\d+)?\.html$/, '数量变更 stem 逐字：' + n2);
+    assert.match(n1, /^移物品_\d{8}_\d{6}(_\d+)?\.html$/, '移物品 stem 逐字：' + n1);
+    assert.match(n2, /^数量变更_\d{8}_\d{6}(_\d+)?\.html$/, '数量变更 stem 逐字：' + n2);
     assert.notEqual(n1, n2, '两份产物不互盖');
     assert.equal(mv.env.delivery.bytes, statSync(mv.env.delivery.path).size);
     assert.equal(qty.env.delivery.bytes, statSync(qty.env.delivery.path).size);
@@ -104,9 +103,9 @@ describe('#801 默认落盘', () => {
     const dir = mkDir('hosts');
     const { id } = seed(dir);
     const b = runOk(dir, ['home.care.write', '--params', P({ kind: 'borrow', item_id: id })]);
-    assert.match(basename(b.env.delivery.path), /^借用_SM7-1_\d{8}_\d{6}(_\d+)?\.html$/, '借用写侧宿主 SM7-1');
+    assert.match(basename(b.env.delivery.path), /^借用_\d{8}_\d{6}(_\d+)?\.html$/, '借用写侧宿主 SM7-1');
     const l = runOk(dir, ['home.care.query', '--params', P({ kind: 'backup-list' })]);
-    assert.match(basename(l.env.delivery.path), /^备份导出_SM8-3_\d{8}_\d{6}(_\d+)?\.html$/, '备份查询宿主 SM8-3');
+    assert.match(basename(l.env.delivery.path), /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, '备份查询宿主 SM8-3');
   });
 
   test('④ `--html` 显式优先：只落一份、单回执指逐字路径', () => {
@@ -168,17 +167,17 @@ describe('#801 默认落盘', () => {
 describe('#801 命名对账（附录 70 行，防与票 2 契约走散）', () => {
   const appendix = JSON.parse(readFileSync(
     join(HERE, '..', '..', '..', 'docs', 'skills', 'skill-home', 'scene-pages-contract.appendix.json'), 'utf8'));
-  test('69 行逐字：resolveSceneStem(key, preset) ＝ `<命令中文名>_<场景 id>`', () => {
+  test('69 行逐字：resolveSceneStem(key, preset) ＝ 命令中文名（＝文件名主体）', () => {
     let n = 0;
     for (const s of appendix.scenarios) {
       if (s.id === 'SM2-3') continue; // 偏离行见下一条（运行时 storage 走位置总览，不走收纳建议）
-      assert.equal(resolveSceneStem(s.key, s.preset ?? {}), s.commandCn + '_' + s.id, '附录走散：' + s.id);
+      assert.equal(resolveSceneStem(s.key, s.preset ?? {}), s.commandCn, '附录走散：' + s.id);
       n++;
     }
     assert.equal(n, 69, '附录 70 行 − 偏离 1 行 ＝ 69');
   });
-  test('偏离行显式锁定：storage 行为是位置总览，宿主 SM2-1（已向票 2 登记补丁）', () => {
-    assert.equal(resolveSceneStem('home.location.query', { mode: 'storage' }), '管位置_SM2-1');
-    assert.equal(resolveSceneStem('home.location.query', { mode: 'suggest', category_id: 1 }), '收纳建议_SM2-3');
+  test('偏离行显式锁定：storage 行为是位置总览，宿主＝管位置（SM2-1，已向票 2 登记补丁）', () => {
+    assert.equal(resolveSceneStem('home.location.query', { mode: 'storage' }), '管位置');
+    assert.equal(resolveSceneStem('home.location.query', { mode: 'suggest', category_id: 1 }), '收纳建议');
   });
 });

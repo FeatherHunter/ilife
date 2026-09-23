@@ -64,7 +64,7 @@ describe('#815 借用四写操作真链', () => {
     const env = runOk('home.care.write', { kind: 'borrow', op: 'borrow', item_id: DRILL, member: '邻居王阿姨', date: '2026-09-01' }, '借出');
     assert.match(env.data.message, /已借用登记/);
     assertDelivery(env, '借出');
-    assert.match(basename(env.delivery.path), /^借用_SM7-1_\d{8}_\d{6}(-\d+)?(_\d+)?\.html$/);
+    assert.match(basename(env.delivery.path), /^借用_\d{8}_\d{6}(-\d+)?(_\d+)?\.html$/);
   });
 
   it('借入：库外物品名登记（无 item_id）', () => {
@@ -91,7 +91,7 @@ describe('#815 家人档案读写真链', () => {
     const env = runOk('home.care.query', { kind: 'member' }, '查家人档案');
     assert.ok(env.data.items.some((x) => x.name === '妈妈'), '种子成员须在列表里');
     assertDelivery(env, '查家人档案');
-    assert.match(basename(env.delivery.path), /^家人档案_SM7-2_\d{8}_\d{6}(-\d+)?(_\d+)?\.html$/);
+    assert.match(basename(env.delivery.path), /^家人档案_\d{8}_\d{6}(-\d+)?(_\d+)?\.html$/);
   });
 
   it('加家人档案', () => {

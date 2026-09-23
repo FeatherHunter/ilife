@@ -106,7 +106,7 @@ describe('#807 两层解析现场复核（契约 L1：同一预设只到一族�
 
 describe('#807 真链装配＋产物落盘（11 份）', () => {
   for (const s of SCENES) {
-    it(s.commandCn + '_' + s.id + '（' + s.family + '）', async () => {
+    it(s.commandCn + '（' + s.family + '）', async () => {
       const page = await import(pathToFileURL(join(pkgDir, 'dist', 'items', 'pages', s.family + '.js')).href);
       assert.equal(page.FAMILY, s.family);
       const html = page.renderFamilyPage(ENVS[s.id]);
@@ -114,7 +114,7 @@ describe('#807 真链装配＋产物落盘（11 份）', () => {
         assert.ok(!html.includes(m), '标记未填充：' + m);
       }
       assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'));
-      const file = s.commandCn + '_' + s.id + '_' + STAMP + '.html';
+      const file = s.commandCn + '_' + STAMP + '.html';
       writeFileSync(join(outDir, file), html, 'utf8');
       assert.ok(existsSync(join(outDir, file)));
     });
@@ -122,7 +122,7 @@ describe('#807 真链装配＋产物落盘（11 份）', () => {
 
   it('写清单 manifest.json（11 行）', () => {
     const rows = SCENES.map((s, i) => ({
-      seq: i + 1, wake: s.wake, file: s.commandCn + '_' + s.id + '_' + STAMP + '.html',
+      seq: i + 1, wake: s.wake, file: s.commandCn + '_' + STAMP + '.html',
       domain: 'items', family: s.family, title: s.title, prompt: s.prompt,
       command: s.key, check: s.check,
     }));
@@ -154,14 +154,14 @@ describe('#807 墙与判据（生成器＋三件机审）', () => {
   });
 
   it('分隔符机审 0 命中 exit 0', () => {
-    const files = SCENES.map((s) => join(outDir, s.commandCn + '_' + s.id + '_' + STAMP + '.html'));
+    const files = SCENES.map((s) => join(outDir, s.commandCn + '_' + STAMP + '.html'));
     spawnOk(process.execPath, [join(pkgDir, 'scripts', 'audit-separators.mjs'), ...files], '分隔符');
   });
 
   it('结构块机审 exit 0（scope＝11 份产物，墙是生成器产物走墙自检）', () => {
     const staging = mkdtempSync(join(tmpdir(), 'items2-blocks-'));
     for (const s of SCENES) {
-      const f = s.commandCn + '_' + s.id + '_' + STAMP + '.html';
+      const f = s.commandCn + '_' + STAMP + '.html';
       writeFileSync(join(staging, f), readFileSync(join(outDir, f), 'utf8'), 'utf8');
     }
     spawnOk(process.execPath, [join(pkgDir, 'scripts', 'audit-page-blocks.mjs'), '--dir', staging, '--blocks', join(pkgDir, 'scripts', 'page-blocks.json')], '结构块');

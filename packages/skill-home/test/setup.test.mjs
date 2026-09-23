@@ -104,9 +104,9 @@ describe('#816 SM8-1 首次使用：真链＋真页', () => {
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.write', { kind: 'init' }), 'first_use_wizard');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
-    assert.equal(resolveSceneStem('home.care.write', { kind: 'init' }), '首次使用_SM8-1');
+    assert.equal(resolveSceneStem('home.care.write', { kind: 'init' }), '首次使用');
     await checkBlocks(t, 'setup', 'first_use_wizard', env, 'SM8-1');
-    checkDelivery(env, /^首次使用_SM8-1_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-1');
+    checkDelivery(env, /^首次使用_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-1');
   });
 });
 
@@ -119,9 +119,9 @@ describe('#816 SM8-2 查异常：真链＋真页', () => {
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.query', { kind: 'lint' }), 'health_report');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
-    assert.equal(resolveSceneStem('home.care.query', { kind: 'lint' }), '查异常_SM8-2');
+    assert.equal(resolveSceneStem('home.care.query', { kind: 'lint' }), '查异常');
     await checkBlocks(t, 'setup', 'health_report', env, 'SM8-2');
-    checkDelivery(env, /^查异常_SM8-2_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-2');
+    checkDelivery(env, /^查异常_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-2');
   });
 });
 
@@ -131,7 +131,7 @@ describe('#816 SM8-3 备份导出：真链＋真页', () => {
     assert.equal(env.key, 'home.care.write');
     assert.match(String(env.data.message), /已备份/);
     await checkBlocks(t, 'setup', 'backup_receipt', env, 'SM8-3');
-    checkDelivery(env, /^备份导出_SM8-3_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-3');
+    checkDelivery(env, /^备份导出_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-3');
   });
 
   it('backup-list 查询 → 同一族历史页（宿主行）', async (t) => {
@@ -140,7 +140,7 @@ describe('#816 SM8-3 备份导出：真链＋真页', () => {
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.query', { kind: 'backup-list' }), 'backup_receipt');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
-    assert.equal(resolveSceneStem('home.care.query', { kind: 'backup-list' }), '备份导出_SM8-3');
+    assert.equal(resolveSceneStem('home.care.query', { kind: 'backup-list' }), '备份导出');
     await checkBlocks(t, 'setup', 'backup_receipt', env, 'SM8-3');
   });
 });
@@ -155,8 +155,8 @@ describe('#816 SM8-4 导入恢复：真链两步＋真页', () => {
     const { resolvePageFamily } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'pageFamilies.js')).href);
     assert.equal(resolvePageFamily('home.care.write', { kind: 'import' }), 'import_restore');
     const { resolveSceneStem } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'sceneNaming.js')).href);
-    assert.equal(resolveSceneStem('home.care.write', { kind: 'import' }), '导入恢复_SM8-4');
+    assert.equal(resolveSceneStem('home.care.write', { kind: 'import' }), '导入恢复');
     await checkBlocks(t, 'setup', 'import_restore', env, 'SM8-4');
-    checkDelivery(env, /^导入恢复_SM8-4_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-4');
+    checkDelivery(env, /^导入恢复_\d{8}_\d{6}(_\d+)?\.html$/, 'SM8-4');
   });
 });
