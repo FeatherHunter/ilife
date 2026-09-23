@@ -1,4 +1,4 @@
-/** T2-②a #133 · HELP 落盘的**本技能自己的值**（目录名、扩展名、速查台主体；零 IO、零逻辑）。
+/** T2-②a #133 · HELP 落盘的**本技能自己的值**（目录名、扩展名；零 IO、零逻辑）。
  *
  * #237 改判（**就地改正上一轮的结论**）：时间戳格式 `YYYYMMDD_HHMMSS`（本地时间）与通式
  * `〈文件名主体〉_<stamp>[_N].html` **不再住这里**——维护者 2026-09-12 裁决 8「不应该是一个独立的 base 包，
@@ -19,5 +19,3 @@ export const HELP_HTML_DIR_NAME = 'calorie_html';
 /** HELP 产物扩展名。 */
 export const HELP_HTML_EXT = '.html';
 
-/** 速查台（#88，须显式 `mode` 才出）的文件名主体：与 HELP 文件分名，两份产物不撞名。 */
-export const SHEET_FILE_STEM = '卡路里_速查台';

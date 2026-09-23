@@ -122,7 +122,7 @@ export const TWIN_WAKE_WORDS: readonly string[] = [
 
 /** 三个列表与全量路由：**记录数据住生成物** `./routes.generated.js`（`pnpm gen` 产出，按声明的
  * `(list, order)` 排序复原）；本文件只再导出——导出面与改造前逐名一致（`routesFor` 被
- * `src/render/helpCenter.ts:46` 用着）。改动顺序请改声明件的 `order`，不要改生成物。
+ * `src/photo/helpScene.ts:HELP_GROUPS` 用着）。改动顺序请改声明件的 `order`，不要改生成物。
  */
 
 /** FX-81-5 覆盖修复：3 条链式 wizard 词的键失去**唯一**可跑入口，故补 1 条单命令入口。

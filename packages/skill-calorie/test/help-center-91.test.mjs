@@ -1,15 +1,11 @@
-/** #91 · `calorie.help.center` 承载**全量速查台**（裁决 Q9）＋ envelope 新契约（Q8 无 `status`）。
+/** #91 · `calorie.help.center` 的交付与 envelope 契约（Q9／Q8 无 `status`）。
  *
- * 本文件锁四件事（逐条对票面验收）：
- *  ① 缺省语义（#139 改判，见下）：默认（无参）＝「卡路里help」的交付物＝老实物同款 HELP 文件
- *     （`卡路里_HELP_<TS>.html`，V4 三级目录壳）；速查台改由**显式** `mode:'file'` 取得。
- *     三态同源（同一 437 场景，顺序一致）：`file` 产物＝完整 HTML 文档，`inline` 产物＝片段，`text` 产物＝纯文本索引。
- *     改判依据：地图 #131 目的地（Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）优先于旧地图 Q9
- *     口径；速查台本体（#88／#106／#107）内容与三态语义一字未动，只是不再占缺省位。
- *  ② 照片 10 键（#652 删单已下线，测试整节删除；`q` 进来 exit 2 指路 lookup，见 ④）。
- *  ③ envelope 全字段＝`version/skill/shape/key/data`（**无 `status`**，Q8），`data` 只回索引＋落点＋字节数，
- *     不把 1 MB 产物塞进 envelope（`inline` 片段亦不入 envelope）。
- *  ④ 参数纪律：`q` 进来即 exit 2 下线指路、`mode` 非法／非字符串 exit 2（D6 显式且被校验）。
+ * 本文件锁两件事（速查台那三节随用户 2026-09-24 裁定整支下线，删单判据并入 ④ 与 `help-paths-133` ⑮）：
+ *  ① 缺省语义（#139 改判）：默认（无参）＝「卡路里help」的交付物＝老实物同款 HELP 文件
+ *     （`卡路里_HELP_<TS>.html`，V4 三级目录壳）＋ envelope 10 分组索引；改判依据：地图 #131 目的地
+ *     （Q2「整个卡路里只有一个 HELP」＋ Q17「比对以老实物为准」）优先于旧地图 Q9 口径。
+ *  ② envelope 全字段＝`version/skill/shape/key/data`（**无 `status`**，Q8），`data` 只回索引＋落点＋字节数。
+ *  ④ 参数纪律：`q`／`mode` 两支进来即 exit 2（下线指路：本技能只有一份 HELP HTML）。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/help-center-91.test.mjs`
  */
@@ -119,104 +115,7 @@ test('#91 ① 缺省（无参）＝HELP 文件：envelope 索引不变 ＋ 落 �
   assert.equal(html.includes('id="ilife-help-shell"'), false, '缺省产物不再是速查台壳');
 });
 
-test('#91 ①b 速查台＝显式 mode file：完整文档落盘 ＋ 独立命名 ＋ #88 结构不动', () => {
-  const dir = mkEnv();
-  const r = runOk(dir, { mode: 'file' });
-  const d = r.env.data;
-  assert.equal(d.mode, 'file');
-  assert.equal(d.sceneTotal, 437);
-
-  const html = readFileSync(d.output, 'utf8');
-  assert.equal(statSync(d.output).size, d.bytes, 'data.bytes ＝ 落盘字节数');
-  assert.equal(Buffer.byteLength(html, 'utf8'), d.bytes);
-  assert.ok(html.startsWith('<!DOCTYPE html>'), 'file 态＝完整文档');
-  assert.ok(html.includes('<meta charset="utf-8">'));
-  assert.equal(countOf(html, 'data-scene-id="'), 437);
-  assert.equal(countOf(html, 'data-subgroup-id="'), 54);
-  assert.equal(countOf(html, 'data-action-id="'), 1311, '复制按钮 1311（#88/#90 接线保持，每卡 3）');
-  assert.match(basename(d.output), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/, '#139 速查台独立命名');
-  assert.ok(d.bytes > 900_000, 'file 产物量级（≠ 旧 10 键片段 31KB），实际 ' + d.bytes + ' B');
-
-  // 字节稳定：同一参数两次调用产物逐字相同（P-2：无时间戳）
-  const second = runOk(dir, { mode: 'file' });
-  assert.equal(readFileSync(second.env.data.output, 'utf8'), html, '两次调用产物逐字相等');
-  const strip = (o) => { const c = { ...o.data }; delete c.output; return JSON.stringify(c); };
-  assert.equal(strip(second.env), strip(r.env), '除落点外 data 逐字相等');
-  // #245：速查台也吃「一天内复用」窗口 ⇒ 第二次调用**复用同一份**（不新建、不改写）。
-  assert.equal(second.env.data.output, d.output, '窗口内复用同一份（#245：一天内只留一份）');
-  assert.equal(statSync(d.output).size, d.bytes, '复用不改写已有那份（字节数不变）');
-  assert.equal(readdirSync(join(dir, 'calorie_html')).length, 1, '目录里只有这一份速查台');
-});
-
-/* ── ② 三态（显式 mode，D6）＋ 三态同源 ＋ inline/text 不入 envelope ───────────── */
-
-test('#91 ② mode 显式三态：file／inline／text 同源 437 场景，inline 片段与 text 文本不入 envelope', () => {
-  const dir = mkEnv();
-  const db = openDb(join(dir, 'calorie_data.db'));
-  try {
-    const out = {};
-    for (const mode of ['file', 'inline', 'text']) {
-      out[mode] = withDbDir(dir, () => dispatch('calorie.help.center', { mode }, db));
-    }
-
-    assert.equal(out.file.data.mode, 'file');
-    assert.equal(out.inline.data.mode, 'inline');
-    assert.equal(out.text.data.mode, 'text');
-
-    // 三态同源：同一 437 场景、同一顺序
-    const fileIds = htmlSceneIds(out.file.html);
-    const inlineIds = htmlSceneIds(out.inline.html);
-    assert.equal(fileIds.length, 437);
-    assert.deepEqual(fileIds, SCENE_IDS, 'file 态场景 id 序 ＝ 模块级 SceneData 序');
-    assert.deepEqual(inlineIds, fileIds, 'inline 与 file 场景 id 序逐字相同');
-    const textIds = textSceneIds(out.text.html);
-    assert.deepEqual(textIds, SCENE_IDS, 'text 态场景 id 序逐字相同');
-    for (const id of SCENE_IDS) assert.ok(out.text.html.includes(id), 'text 覆盖全部 id：' + id);
-
-    // 形态：file＝完整文档；inline＝片段（自带 style ＋ 壳 section ＋ helpers）；text＝无标签
-    assert.ok(out.file.html.startsWith('<!DOCTYPE html>'));
-    assert.ok(out.inline.html.startsWith('<style'), 'inline 片段钉死 <style> 落点');
-    assert.ok(out.inline.html.includes('<section class="ilife-help-shell" id="ilife-help-shell">'), 'inline 含壳 section');
-    assert.equal(countOf(out.inline.html, '<!DOCTYPE'), 0, 'inline 不是完整文档');
-    assert.ok(out.inline.html.includes(COPY_RUNTIME_JS), 'inline 片段自带页面运行时');
-    assert.doesNotMatch(out.text.html, /<(section|style|script|div|button)\b/, 'text 态零标签');
-    assert.ok(out.text.html.split('\n').length > 500);
-
-    // 字节数：file > inline > text；envelope 只回 bytes 不回产物
-    for (const mode of ['file', 'inline', 'text']) {
-      assert.equal(out[mode].data.bytes, Buffer.byteLength(out[mode].html, 'utf8'), mode + ' bytes 如实');
-      assert.equal('html' in out[mode].data, false, mode + ' 不得把产物塞进 envelope');
-    }
-    assert.ok(out.file.data.bytes > out.inline.data.bytes && out.inline.data.bytes > out.text.data.bytes);
-    assert.ok(out.inline.data.bytes > 700_000 && out.inline.data.bytes < out.file.data.bytes);
-
-    // text 态把文本一并回传（文本即交付物）；file／inline 只回路径
-    assert.equal(typeof out.text.data.text, 'string');
-    assert.equal(out.text.data.text, out.text.html, 'data.text 逐字等于 text 产物');
-    assert.equal('text' in out.file.data, false);
-    assert.equal('text' in out.inline.data, false);
-  } finally {
-    db.close();
-  }
-});
-
-test('#91 ②b mode=text 走 CLI：data.text 与落盘产物逐字一致，stdout 不含 1 MB 产物', () => {
-  const dir = mkEnv();
-  const r = runOk(dir, { mode: 'text' });
-  const d = r.env.data;
-  assert.equal(d.mode, 'text');
-  assert.equal(d.bytes, Buffer.byteLength(d.text, 'utf8'));
-  assert.equal(readFileSync(d.output, 'utf8'), d.text, '落盘产物 ＝ data.text');
-  assert.ok(r.stdout.length < 60_000, 'text 态 stdout 量级（实际 ' + r.stdout.length + ' B）');
-  assert.equal('status' in r.env, false);
-});
-
-/* ── ③ 照片 10 键兼容（既有两条测试的语义，逐条复证） ─────────────────────────── */
-
-
-/* ── ④ 参数纪律（D6：mode 显式且被校验） ─────────────────────────────────────── */
-
-test('#91 ④ q 支已下线、mode 非法／非字符串一律 exit 2', () => {
+test('#91 ④ 参数纪律：q／mode 两支进来即 exit 2（下线指路），mode 非字符串仍 exit 2', () => {
   const dir = mkEnv();
   const qx = run(dir, { q: '记身材照' });
   assert.equal(qx.status, 2, 'q 支已下线');
@@ -226,9 +125,13 @@ test('#91 ④ q 支已下线、mode 非法／非字符串一律 exit 2', () => {
   assert.equal(both.status, 2, 'q+mode 同走下线');
   assert.match(String(both.stderr), /下线/);
 
+  // 速查台删单（用户 2026-09-24）：任何 mode 值进来都是显式要那份产物 ⇒ 一律 exit 2 并指路。
   const bogus = run(dir, { mode: 'bogus' });
   assert.equal(bogus.status, 2, '未知 mode');
-  assert.match(String(bogus.stderr), /mode 非法/);
+  assert.match(String(bogus.stderr), /速查台（mode=bogus）已下线/);
+  const plain = run(dir, { mode: 'file' });
+  assert.equal(plain.status, 2, '曾经唯一的合法值 file 同样删单');
+  assert.match(String(plain.stderr), /速查台（mode=file）已下线/);
 
   const wrongType = run(dir, { mode: 1 });
   assert.equal(wrongType.status, 2, 'mode 须为字符串');

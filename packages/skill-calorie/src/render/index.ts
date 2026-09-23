@@ -105,12 +105,13 @@ export {
 } from './html.js';
 export type { HelpLookupHit } from './html.js';
 export { CALORIE_COPY_ACTION, COPY_BUTTON_ATTRS, COPY_RUNTIME_JS, copyActionHtml, copyRuntimeScriptHtml } from './copy.js';
-/** #88 · HELP 速查台（取 F3）：数据模型（运行期派生自 TRIGGERS）＋ 壳落地（三态同源）。 */
+/** HELP 的场景数据模型（运行期派生自 TRIGGERS）——**唯一交付面 HELP HTML 的取数面**
+ *  （速查台那份组件式产物已按用户 2026-09-24 裁定整支下线，见 `photo/helpScene.ts` 件头）。 */
 export {
-  HELP_CONTACT, HELP_CENTER_MODES, HELP_GROUPS, HELP_LEGACY_CATEGORY, HELP_LEGACY_SUBGROUP,
+  HELP_CONTACT, HELP_GROUPS, HELP_LEGACY_CATEGORY, HELP_LEGACY_SUBGROUP,
   HELP_SKILL_NAME, HELP_SUBFUNC_ORDER, HELP_TITLE, HELP_TYPE_BADGES,
-  buildHelpSceneData, helpCenterAssets, renderHelpCenterHtml,
-} from '../photo/helpCenter.js';
-export type { HelpCenterMode, HelpCenterRenderOptions, HelpCenterRenderResult, HelpSceneDataOptions } from '../photo/helpCenter.js';
+  buildHelpSceneData,
+} from '../photo/helpScene.js';
+export type { HelpSceneDataOptions } from '../photo/helpScene.js';
 export { PHOTO_VIEW_KEYS, PHOTO_VIEW_SHAPES, photoShapeFor } from './envelope.js';
 export type { PhotoViewName } from './envelope.js';

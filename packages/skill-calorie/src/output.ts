@@ -33,7 +33,6 @@ import { CalorieRenderError } from './render/errors.js';
 import { htmlDirOf, resolveDbDir } from './paths.js';
 import { loadCalorieConfig } from './config.js';
 import { HELP_FILE_STEM } from './photo/helpFile.js';
-import { SHEET_FILE_STEM } from './photo/helpPaths.js';
 
 /** HTML 产物目录名：唯一定义地＝`src/paths.ts` 的 `HTML_DIR_NAME`，本件薄转出（既有调用方导入面不变）。 */
 export { HTML_DIR_NAME } from './paths.js';
@@ -170,7 +169,7 @@ export function resolveExplicitHtmlPath(file: string): string {
  *  - 大小写不敏感（Windows `normcase`，#87 F2）由 `wx` 天然覆盖：`.HTML` 占位同样 `EEXIST`；
  *  - 仅 `EEXIST` 递补；只读类（`EACCES` 等）仍走 #83 内联回退，其余原样抛出走回执；
  *  - 显式 `--html` 保持覆盖语义（共用件 `onExists:'overwrite'`），不参与递补：那是用户逐字指定的落点；
- *  - `target`（HELP 文件／速查台／回执落点）与默认路径同走独占递补。
+ *  - `target`（HELP 文件／回执落点）与默认路径同走独占递补。
  */
 
 /* ── #83 · 三态交付：落盘／只读回退（M4「必须渲染并打开」的机械保证） ───────────────────────── */
@@ -189,15 +188,16 @@ export type HtmlDelivery =
   | { readonly mode: 'file'; readonly path: string; readonly bytes: number }
   | { readonly mode: 'inline'; readonly reason: string; readonly bytes: number };
 
-/** 吃复用窗口的 HELP 产物名（本技能自己的三个主体）。#245：判据**按落点名**而不是按 key——
- *  `calorie.help.center` 这个键下挂着三种 HELP 产物（HELP 文件／照片 HELP／速查台），三种都算「反复读的
- *  HELP 产物」；业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是
+/** 吃复用窗口的 HELP 产物名（本技能自己的产物主体）。#245：判据**按落点名**而不是按 key——
+ *  `calorie.help.center` 这个键下的 HELP 产物（HELP 文件／照片 HELP）都算「反复读的 HELP 产物」；
+ *  业务页面（`<中文command>_<类型段>…`）与渲染失败回执（`操作失败`）**不吃窗口**——那是
  *  另一次操作的产物，少一份就等于少一次留档；`--html` 逐字落点也不吃（说哪落哪）。
  *
  *  ⚠️ **两种内容不许共用一个主体名**：照片 HELP（`q` 那支）曾走「按 `<中文command>` 自动命名」兜底，
  *  主体与「看身材照」那条**业务命令**同名（`看身材照`），既与主 HELP 分不开、也让「哪份是哪份」不可辨。
- *  #245 给它一个**自己的主体**（`卡路里_照片HELP`）：一个主体一种产物，窗口才不会把两种内容互相顶掉。 */
-const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, PHOTO_HELP_FILE_STEM, SHEET_FILE_STEM];
+ *  #245 给它一个**自己的主体**（`卡路里_照片HELP`）：一个主体一种产物，窗口才不会把两种内容互相顶掉。
+ *  速查台那支（`卡路里_速查台`）已按用户 2026-09-24 裁定整支下线，故不在本表。 */
+const HELP_REUSE_STEMS: readonly string[] = [HELP_FILE_STEM, PHOTO_HELP_FILE_STEM];
 
 /** 本次交付吃不吃复用窗口 ⇒ 给出窗口毫秒数（不吃 = `undefined`，交付退回「独占创建 ＋ 递补」老口径）。
  *
@@ -217,8 +217,8 @@ function windowForHelpDelivery(key: string, stem: string, params: Record<string,
 /** 交付一次 HTML 产物（**唯一落盘点**）：
  *  - `explicit`（`--html`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'`，语义不变）
  *    ——**优先级最高**（用户指定胜过默认落点）；**不吃复用窗口**（逐字落点＝说哪落哪）；
- *  - `target`（HELP 文件／速查台／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
- *    其中 HELP 产物（`卡路里_HELP`／`卡路里_照片HELP`／`卡路里_速查台`）另带**复用窗口**
+ *  - `target`（HELP 文件／回执的落点意图）→ **独占创建 ＋ 同秒递补**（共用件缺省 `succession`）；
+ *    其中 HELP 产物（`卡路里_HELP`／`卡路里_照片HELP`）另带**复用窗口**
  *    （#245：缺省一天内只留一份，窗口由 `--params` 的 `reuseHours` 定）；
  *  - 两者都没有 → 默认 `<库目录>/calorie_html/<中文command>_<TS>[_N].html`（库目录＝配置项 `db.dir`，空＝数据目录）→ **独占创建 ＋ 同秒递补**；
  *  - 只读类失败 → `{mode:'inline'}`（调用方把产物随 envelope 回传）；其余失败**原样抛出**（走回执）。
@@ -226,7 +226,7 @@ function windowForHelpDelivery(key: string, stem: string, params: Record<string,
  *  #237：`bytes` 由共用件**写后回读**给出（实际落盘字节数）；`inline` 态无文件可读，仍按 UTF-8 期望值算。
  *
  *  ⚠️ #245 修一处静默的优先级反了：原先 `target` 那支先判、直接 return ⇒ 给了显式落点的 HELP 键
- *  （`calorie.help.center` 的缺省／速查台两支都带 `target`）**显式落点被无声忽略**，产物照落 `calorie_html/`。
+ *  （`calorie.help.center` 的缺省支带 `target`）**显式落点被无声忽略**，产物照落 `calorie_html/`。
  *  这与 `--html` 的文档口径（「任意路径，覆盖写」）相反，故把 `explicit` 提到最前。 */
 export function deliverHtml(input: {
   key: string;

@@ -1,21 +1,10 @@
-/** #471 · `list:'new'` 族（新词）在 HELP 两个面上的逐词判据。
+/** #471 · 「新词别名」（`list:'new'` 族）的**查找面**：`searchHelp`／`lookupWake`／`calorie.help.lookup` 真出口。
  *
- * 票面（#471 裁定 B）：数据源不动——`buildHelpSceneData()` 仍只收 `SceneTrigger`；另起一节
- * 「新词别名」把 `new` 族按「词 → 命令」列出来，并在查找面（`help-lookup.ts`）登记。
+ * 速查台上那一节（`meta_blocks` ＋ text 段的投影）已按用户 2026-09-24 裁定下线——用户对那 72 条「补口词」
+ * 的裁定是「不单独上页」（页面上只剩一份 HELP HTML，查单条走 `calorie.help.lookup`）。故本文件只留**查找面**：
+ * ① 声明件扫描；⑤ 逐词 `searchHelp`／`lookupWake` 首命中＝自己的键与 CLI；⑥ 逐词真出口 exit 0；⑦ 兜底收窄。
  *
- * 七组判据（**逐词，不抽样**；条数一律从声明件派生，本件不写一个条数）：
- *   ① 派生对账：`src/**\/*.ts` 里 `list: 'new'` 的逐行记录 ↔ 生成物 `NEW_KEY_ROUTES` 逐条相同；
- *   ② 节面：`buildHelpNewAliases()` ↔ 同一批记录逐条投影，节标题里的条数＝现算（不是字面量）；
- *   ③ `text` 态：节标题 ＋ 逐词一行「词 · 命令名」，且 4 空格场景行数与尖括号集 `{<N>}`（#88 D-3）不动；
- *   ④ `file` 态：节块恰 1 处 ＋ 逐词在册；**场景面不动**（新词不进 `groups`／不是任何场景的 id 或唤醒词）；
- *   ⑤ 查找面（内进程）：逐词 `searchHelp`／`lookupWake` 首命中＝这条词**自己**的键与 CLI；
- *   ⑥ 真出口：逐词 `calorie.help.lookup` → `exit 0` ＋ 首条键／CLI 逐字等于声明件那一行；
- *   ⑦ 兜底收窄（宁缺勿错）：含已登记整词的查询不许被「含目标就合成 `定营养目标`」顶掉；
- *      ＋ 变异自证（夹具改坏必红）。
- *
- * 运行（持锁，票 471）：
- *   node tooling/run-locked.mjs --ticket 471 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie
- *   node tooling/run-locked.mjs --ticket 471 -- node --test packages/skill-calorie/test/help-new-family-471.test.mjs
+ * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/help-new-family-471.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
@@ -27,10 +16,7 @@ import { test } from 'node:test';
 
 import { NEW_KEY_ROUTES } from '../dist/triggers/routing.js';
 import { HELP_LOOKUP, TRIGGERS, lookupWake, searchHelp } from '../dist/triggers/index.js';
-import {
-  HELP_NEW_ALIASES_META_ID, HELP_NEW_ALIASES_META_TITLE, buildHelpNewAliases, buildHelpSceneData,
-  helpNewAliasesMetaBlock, newAliasesTitle, renderHelpCenterHtml, renderNewAliasesHtml,
-} from '../dist/photo/helpCenter.js';
+import { buildHelpSceneData } from '../dist/photo/helpScene.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
@@ -121,66 +107,6 @@ test('#471 ① 声明件 `list: \'new\'` 逐行 ↔ 生成物 `NEW_KEY_ROUTES` �
 
 /* ── ② 节面 ──────────────────────────────────────────────────────────────── */
 
-test('#471 ② 新词别名节逐条派生：词／键／CLI ↔ 记录；标题条数现算', () => {
-  const aliases = buildHelpNewAliases();
-  assert.deepEqual(aliases, NEW_KEY_ROUTES.map((r) => ({ wakeWord: r.wakeWord, key: r.key, cli: r.cli })),
-    '节的内容必须逐条＝生成物投影');
-  assert.equal(aliases.length, DECLARED.length, '节条数 ≠ 声明件条数');
-  assert.equal(HELP_NEW_ALIASES_META_ID, 'new-word-aliases');
-  const block = helpNewAliasesMetaBlock();
-  assert.equal(block.title, newAliasesTitle(DECLARED.length), '标题条数必须现算（不得嵌死）');
-  assert.equal(block.title, HELP_NEW_ALIASES_META_TITLE + '（' + String(DECLARED.length) + ' 条）');
-  // 转义后的原样落地：`<照片路径>` 这类占位符必须转义（文里不得出现裸标签）。
-  assertSectionCovers(block.html, DECLARED);
-  assert.equal(block.html.includes('<照片路径>'), false, '节里出现未转义的占位符＝破壳');
-  const withAngle = DECLARED.filter((rec) => rec.cli.includes('<'));
-  assert.ok(withAngle.length > 0, '前置自证：族里得有带尖括号占位符的 CLI（否则下面这条无鉴别力）');
-  for (const rec of withAngle) {
-    assert.ok(block.html.includes(esc(rec.cli)), rec.wakeWord + ' 的 CLI 没进节（转义形态）：' + rec.cli);
-  }
-});
-
-/* ── ③ text 态 ───────────────────────────────────────────────────────────── */
-
-test('#471 ③ text 态：节标题＋逐词一行「词 · 命令名」；场景行与尖括号集不动', () => {
-  const text = renderHelpCenterHtml({ mode: 'text' }).html;
-  const lines = text.split('\n');
-  assert.ok(lines.includes('[' + newAliasesTitle(DECLARED.length) + ']'), 'text 缺节标题');
-  for (const rec of DECLARED) {
-    assert.ok(lines.includes('  ' + rec.wakeWord + ' · ' + rec.key), 'text 缺行：' + rec.wakeWord);
-  }
-  // 场景行（4 空格）＝场景面自己的条数，与本票无关（本节一律 2 空格缩进）。
-  const sceneLines = lines.filter((line) => line.startsWith('    '));
-  const sceneCount = buildHelpSceneData().groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes)).length;
-  assert.equal(sceneLines.length, sceneCount, 'text 的 4 空格场景行数 ≠ 场景面条数（本节污染了场景序）');
-  // #88 D-3 冻结口径不破：text 态尖括号集恒 {<N>}（所以本节只发命令名、不发 CLI）。
-  assert.deepEqual([...new Set([...text.matchAll(/<[^<>]*>/g)].map((m) => m[0]))], ['<N>']);
-  assert.equal(text.includes('可执行命令'), false, 'text 态不得出现 CLI 字段名（#106 口径）');
-});
-
-/* ── ④ file 态 ＋ 场景面不动 ──────────────────────────────────────────────── */
-
-test('#471 ④ file 态：节块恰 1 ＋ 逐词在册；新词不进场景面（数据源不动）', () => {
-  const data = buildHelpSceneData();
-  const scenes = data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
-  assert.equal(scenes.length, TRIGGERS.length,
-    '场景数 ≠ 冻结词表条数（取数面被改动了：一条记录一个场景是既定口径）');
-  const sceneIds = new Set(scenes.map((s) => s.id));
-  const sceneWords = new Set(scenes.map((s) => s.wake_word));
-  for (const rec of DECLARED) {
-    assert.equal(sceneIds.has(rec.key), false, '新词的命令键进了场景面：' + rec.key);
-    assert.equal(sceneWords.has(rec.wakeWord), false, '新词进了场景面：' + rec.wakeWord);
-  }
-  const file = renderHelpCenterHtml({ mode: 'file' }).html;
-  assert.equal(file.split('data-meta-id="' + HELP_NEW_ALIASES_META_ID + '"').length - 1, 1, 'file 缺节块');
-  assert.equal(file.split('data-new-alias="').length - 1, DECLARED.length, 'file 节里逐词条数不对');
-  for (const rec of DECLARED) assert.ok(file.includes('data-new-alias="' + rec.wakeWord + '"'), 'file 缺词：' + rec.wakeWord);
-  const inline = renderHelpCenterHtml({ mode: 'inline' }).html;
-  assert.equal(inline.split('data-meta-id="' + HELP_NEW_ALIASES_META_ID + '"').length - 1, 1, 'inline 缺节块');
-});
-
-/* ── ⑤ 查找面（内进程，逐词） ─────────────────────────────────────────────── */
-
 test('#471 ⑤ 逐词 searchHelp／lookupWake 首命中＝自己的键与 CLI', () => {
   for (const rec of DECLARED) {
     const hits = searchHelp(TRIGGERS, rec.wakeWord);
@@ -238,20 +164,4 @@ test('#471 ⑦ 兜底收窄：含已登记整词的查询不许被「含目标�
     const hits = searchHelp(TRIGGERS, probe);
     assert.equal(hits.some((h) => h.cli === base[0].cli), false, probe + ' 仍被兜底顶掉（收窄失效）');
   }
-});
-
-test('#471 ⑦ 变异自证：节少一条／别名少一条必红（夹具级）', () => {
-  const aliases = buildHelpNewAliases();
-  const rows = DECLARED.map((rec) => ({ wakeWord: rec.wakeWord, key: rec.key }));
-  const full = renderNewAliasesHtml(aliases);
-  assertSectionCovers(full, rows); // 正面：全量过
-  // 变异一：把取数面改回「只收场景」（模拟 `isSceneTrigger` 过滤）——族里绝大多数词会掉出节。
-  const sceneOnly = renderNewAliasesHtml(aliases.filter((a) => a.key.startsWith('calorie.view.')));
-  assert.throws(() => assertSectionCovers(sceneOnly, rows), /节缺词/);
-  // 变异二：别名表少一条（词掉了）——夹具侧同一判据必须报。
-  const droppedWord = aliases[0].wakeWord;
-  const missingWord = renderNewAliasesHtml(aliases.filter((a) => a.wakeWord !== droppedWord));
-  assert.throws(() => assertSectionCovers(missingWord, rows), /节缺词/);
-  // 对称面：真的少了一条时，判据对**剩下的**那批不再报（免得判据只是「永远抛」）。
-  assertSectionCovers(renderNewAliasesHtml(aliases.slice(1)), rows.filter((r) => r.wakeWord !== droppedWord));
 });

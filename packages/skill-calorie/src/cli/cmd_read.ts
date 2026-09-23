@@ -15,9 +15,9 @@
  * 中文 command 取 CALORIE_COMBOS[key].title；显式 `--html` 覆盖任意路径。
  * ⚠️ 老技能的 `--output` 别名**已由 #245 收口删除**（与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
  * 落点随 envelope 的 data.output 回传（additive 字段，六形状守卫不校验 data 额外键）。
- * #91 · `calorie.help.center` 承载**全量速查台**（Q9）：`--params '{"mode":"file|inline|text"}'` 显式选交付形态
- * （D6，缺省 `file`）；`q`／`keyword` 保留**照片 10 键**语义（非空＝现找、空串＝全量 10 键）。envelope 恒五字段
- * `version/skill/shape/key/data`（Q8：**无 `status`**），`data` 只回索引与落点／字节数，不回 1 MB 产物。
+ * #91 · `calorie.help.center` **只出一份产物**（Q9 那条「全量速查台」的 `mode` 三态已按用户 2026-09-24 裁定整支下线）：
+ * 缺省即「卡路里help」的老实物同款 HELP 文件；`mode`／`q`／`keyword` 进来一律 exit 2 并指路（`q` 归 #652、`mode` 归速查台删单）。
+ * envelope 恒五字段 `version/skill/shape/key/data`（Q8：**无 `status`**），`data` 只回索引与落点／字节数，不回产物本体。
  */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';

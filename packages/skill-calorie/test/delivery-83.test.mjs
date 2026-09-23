@@ -8,8 +8,9 @@
  *     `delivery.path` 与 `data.output` 同值同源、绝对路径、落盘字节数如实；stdout 仍**一行 JSON**（P9）。
  *  ② 内联态：只读／沙箱（`EACCES|EPERM|EROFS|EBUSY`）→ 产物随 envelope 的 `data.html` 回传、
  *     无 `data.output`、**绝不降级为文字答**；与 ① 的落盘产物**逐字相同**（三态同源）。
- *  ③ 文本态：渲染层已定文本（`help.center` 的 `mode:'text'`，保留 #91 落盘行为）或用户明确要文本
- *     （`--params '{"delivery":"text"}'`，只走 envelope）→ `data.text` ＝ 同一份 `data` 的 #77 `buildDataText` 投影。
+ *  ③ 文本态：**渲染层已定的文本态只余用户明确要文本那一支**（`--params '{"delivery":"text"}'`，只走 envelope）
+ *     → `data.text` ＝ 同一份 `data` 的 #77 `buildDataText` 投影；`help.center` 的 `mode:'text'` 随速查台
+ *     下线（用户 2026-09-24），进来即 exit 2。
  *  ④ 渲染失败回执：结构错落点 → exit 5 ＋ stdout 空 ＋ stderr 一行 `RECEIPT {…}`（模板化回执
  *     `renderErrorHtml`／`buildErrorReceipt`，非手写 HTML），含原因／建议命令／回执自身的 delivery。
  *  ⑤ 与 #81 联动：唤醒词 → exec 路由 → CLI → **文件态产物**（命中即渲染，不是文字答）。
@@ -159,7 +160,7 @@ test('#83 ① 文件态（默认）：delivery 顶层追加六字段 ＋ 绝对�
   assert.equal(r.stdout.trim().split('\n').length, 1, 'P9：stdout 恒一行 JSON');
 });
 
-test('#83 ① 产物族结构判定：doc-shell（缺省＝HELP 文件）／help-shell（速查台 mode=file）／doc-shell（视图全文档）逐例', () => {
+test('#83 ① 产物族结构判定：doc-shell（缺省＝HELP 文件）／doc-shell（视图全文档）逐例', () => {
   const dir = mkDb('tpl', true);
   // #139 改判：缺省＝「卡路里help」的老实物同款 HELP 文件（V4 文档壳，名卡路里_HELP_<TS>.html）。
   const help = runOk(dir, 'calorie.help.center');
@@ -168,12 +169,6 @@ test('#83 ① 产物族结构判定：doc-shell（缺省＝HELP 文件）／help
     'HELP 文件量级（对齐老实物 303KB）：' + help.env.delivery.bytes);
   assert.ok(readFileSync(help.env.delivery.path, 'utf8').startsWith('<!DOCTYPE html>'));
   assert.match(basename(help.env.delivery.path), /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/);
-
-  // 速查台（#88 壳）仍在，但要显式 mode，且独立命名（两份产物不撞名）。
-  const sheet = runOk(dir, 'calorie.help.center', { mode: 'file' });
-  assert.equal(sheet.env.delivery.template, 'help-shell');
-  assert.ok(sheet.env.delivery.bytes > 900_000, '速查台量级：' + sheet.env.delivery.bytes);
-  assert.match(basename(sheet.env.delivery.path), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/);
 
   const doc = runOk(dir, 'calorie.view.diet', { start: '2026-09-05', end: '2026-09-07' });
   assert.equal(doc.env.delivery.template, 'doc-shell');
@@ -217,16 +212,13 @@ test('#83 ② 内联态：只读目录 → 产物随 envelope 回传（与 ① �
 
 /* ── ③ 文本态 ─────────────────────────────────────────────────────────────────── */
 
-test('#83 ③ 文本态（渲染层已定）：help.center mode=text 保留落盘，delivery.template=text', () => {
+test('#83 ③ 文本态：help.center 的 mode 三态已下线（进来即 exit 2），落盘行为只归 HELP 文件那一支', () => {
   const dir = mkDb('text');
-  const r = runOk(dir, 'calorie.help.center', { mode: 'text' });
-  assert.equal(r.env.delivery.mode, 'text');
-  assert.equal(r.env.delivery.template, 'text');
-  assert.equal(r.env.delivery.path, r.env.data.output, '文本态落点与 data.output 同值');
-  assert.equal(readFileSync(r.env.data.output, 'utf8'), r.env.data.text, '#91 既有落盘行为保留');
-  assert.equal(r.env.delivery.bytes, Buffer.byteLength(r.env.data.text, 'utf8'));
-  assert.equal('html' in r.env.data, false);
-  assert.doesNotMatch(r.env.data.text, /<(section|style|script|div|button)\b/, '文本态零标签');
+  const r = run(dir, 'calorie.help.center', { mode: 'text' });
+  assert.equal(r.status, 2, '速查台删单须 exit 2');
+  assert.match(String(r.stderr), /速查台（mode=text）已下线/, '报文须点名删单：' + r.stderr);
+  assert.equal(String(r.stdout), '', '阻断路 stdout 纯净');
+  assert.equal(existsSync(join(dir, 'calorie_html')), false, '删单不得落任何产物');
 });
 
 test('#83 ③ 文本态（用户明确要文本）：delivery:"text" 只走 envelope ＋ 同源 buildDataText 投影', () => {

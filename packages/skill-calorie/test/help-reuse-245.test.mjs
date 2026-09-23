@@ -7,7 +7,8 @@
  * 本文件锁七件事：
  *  ① **缺省＝一天**：连读 2 次目录**文件数不增**，两次 `data.output` 同一份、`delivery.bytes` 同值；
  *  ② 那份**一字未改**（复用＝只读：内容与 mtime 都不动）；
- *  ③ **速查台那支也吃窗口**（同一个键的两种产物都要停涨）；
+ *  ③ **速查台已下线**（用户 2026-09-24 裁定：只有一个 HELP HTML）——`mode` 进来即 exit 2，本键下不再有
+ *     第二种产物，窗口只对 HELP 文件那一份生效；
  *  ④ `reuseHours` 换窗口：`3` 同效（窗口内仍复用）、`0`＝**每次都要一份最新的**（落新的、不覆盖旧的）；
  *  ⑤ **坏参阻断**：负数／非数／布尔一律 exit 2（不静默当 0、不静默当缺省）；
  *  ⑥ **不吃窗口的那些路照旧**：业务页面（`calorie.view.diet`）连跑两次仍各留一份；`--html` 仍是逐字覆盖；
@@ -92,13 +93,12 @@ test('#245 ② 复用＝只读：那份的字节与 mtime 都不动', () => {
   assert.equal(b.env.delivery.bytes, before.length);
 });
 
-test('#245 ③ 速查台那支也吃窗口：两次 mode:"file" 落同一份', () => {
+test('#245 ③ 速查台已下线：mode 进来即 exit 2（不落第二种产物、不进窗口）', () => {
   const dir = mkDb('sheet');
-  const a = runOk(dir, { mode: 'file' });
-  const b = runOk(dir, { mode: 'file' });
-  assert.match(basename(a.env.data.output), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/);
-  assert.equal(b.env.data.output, a.env.data.output, '速查台第二次复用同一份');
-  assert.equal(namesOf(dir).length, 1, '目录里只有这一份速查台');
+  const r = run(dir, { mode: 'file' });
+  assert.equal(r.status, 2, '删单须 exit 2（stderr：' + r.stderr + '）');
+  assert.match(r.stderr, /速查台（mode=file）已下线/, '报文须点名删单：' + r.stderr);
+  assert.equal(existsSync(join(dir, 'calorie_html')), false, '删单不得落任何产物');
 });
 
 

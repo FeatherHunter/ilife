@@ -26,7 +26,7 @@ import { BODY_COMMANDS } from '../dist/body/commands.js';
 import {
   HELP_COMMAND_FIELD_LABEL, HELP_COMMAND_FIELD_NAME, HELP_FLOW_FIELD_LABEL, HELP_FLOW_FIELD_NAME,
   buildHelpSceneData, helpSceneCommand,
-} from '../dist/photo/helpCenter.js';
+} from '../dist/photo/helpScene.js';
 import { routesFor } from '../dist/triggers/routing.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';

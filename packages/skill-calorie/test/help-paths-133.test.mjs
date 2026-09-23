@@ -5,8 +5,9 @@
  * `formatHelpStamp`／`buildHelpFileName`／`resolveStemTarget`。原来那批对它们的金值型单测
  * （①–④、⑧、⑨、⑬–⑮）**不再住这里**：通式本身的唯一定义地与用例归共用件
  * （`packages/base-render/test/output-save-html-237.test.mjs`）。本文件改为锁三件事：
- *  ① 本技能自己的三个值（目录名／扩展名／速查台主体）；
- *  ② 真出口（spawn `dist/cli/cmd_read.js`）的落点：HELP 文件与速查台**两份产物分名**、都落 `<db>/calorie_html/`；
+ *  ① 本技能自己的值（目录名／扩展名）；
+ *  ② 真出口（spawn `dist/cli/cmd_read.js`）的落点：HELP 文件落 `<db>/calorie_html/`，且**只有这一份**
+ *     （速查台那支已按用户 2026-09-24 裁定下线：`mode` 进来即 exit 2，见 ⑮）；
  *  ③ 相对 `SKILLS_DB_PATH` 亦回传**绝对路径**（#83 返修 R-1 口径；#237 起由共用件 `resolve(dir)` 保证）。
  */
 import { strict as assert } from 'node:assert';
@@ -16,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { HELP_HTML_DIR_NAME, HELP_HTML_EXT, SHEET_FILE_STEM } from '../dist/photo/helpPaths.js';
+import { HELP_HTML_DIR_NAME, HELP_HTML_EXT } from '../dist/photo/helpPaths.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
@@ -27,7 +28,6 @@ const BIN = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 const NODE_BIN = /node(\.exe)?$/i.test(process.execPath) ? process.execPath : 'node';
 const KEY = 'calorie.help.center';
 const HELP_NAME_RE = /^卡路里_HELP_\d{8}_\d{6}(_\d+)?\.html$/;
-const SHEET_NAME_RE = /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/;
 
 function tmpDbDir(tag) {
   return mkdtempSync(join(tmpdir(), 't133-' + tag + '-'));
@@ -51,10 +51,9 @@ function runCfg(cfgDir, dbDir, args = [KEY], cwd) {
   return { status: r.status, stderr: String(r.stderr), env };
 }
 
-test('#133 ⑫ 三个值字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html；速查台与 HELP 分名）', () => {
+test('#133 ⑫ 两个值字面量（防漂移：老 `SKILL_HTML_NAME + "_html"` → calorie_html）', () => {
   assert.equal(HELP_HTML_DIR_NAME, 'calorie_html');
   assert.equal(HELP_HTML_EXT, '.html');
-  assert.equal(SHEET_FILE_STEM, '卡路里_速查台');
 });
 
 test('#133 ⑬ 真出口缺省：HELP 文件落 <db>/calorie_html/卡路里_HELP_<TS>.html（干净目录无 _N）', () => {
@@ -70,16 +69,18 @@ test('#133 ⑬ 真出口缺省：HELP 文件落 <db>/calorie_html/卡路里_HELP
   assert.equal(readdirSync(join(dbDir, HELP_HTML_DIR_NAME)).length, 1, '干净目录只落一份');
 });
 
-test('#133 ⑮ 速查台与 HELP 文件分名：两份产物同时在，互不覆盖', () => {
+test('#133 ⑮ 单交付面：给了 mode 即 exit 2，目录里只留一份 HELP 文件（速查台已下线）', () => {
   const dbDir = tmpDbDir('sheet');
   const help = run(dbDir);
-  const sheet = run(dbDir, [KEY, '--params', '{"mode":"file"}']);
-  assert.equal(sheet.status, 0, sheet.stderr);
+  assert.equal(help.status, 0, help.stderr);
   assert.match(basename(help.env.data.output), HELP_NAME_RE);
-  assert.match(basename(sheet.env.data.output), SHEET_NAME_RE, '速查台独立命名：' + basename(sheet.env.data.output));
-  assert.notEqual(help.env.data.output, sheet.env.data.output, '两份产物分名');
-  const files = readdirSync(join(dbDir, HELP_HTML_DIR_NAME)).sort();
-  assert.equal(files.length, 2, '两份产物同时在：' + files.join(','));
+
+  const sheet = run(dbDir, [KEY, '--params', '{"mode":"file"}']);
+  assert.equal(sheet.status, 2, '速查台删单：mode 进来即 exit 2');
+  assert.match(sheet.stderr, /速查台（mode=file）已下线/, '报文须点名删单并指路：' + sheet.stderr);
+
+  const files = readdirSync(join(dbDir, HELP_HTML_DIR_NAME));
+  assert.deepEqual(files, [basename(help.env.data.output)], '只有 HELP 文件这一份产物：' + files.join(','));
   assert.ok(readFileSync(help.env.data.output, 'utf8').includes('<title>卡路里 · 唤醒词速查台</title>'));
 });
 

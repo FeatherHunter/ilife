@@ -7,14 +7,14 @@ description: "「卡路里HELP」→calorie.help.center 出老技能同款 HELP 
 
 饮食/体重/运动/身体/目标/照片/分析/复盘一期全量：13 表（终态 11 张持久表）+ 10 场景 436 唤醒词 + 取数/口径/渲染全 TS。唯一出口 `calorie-cmd-read <calorie.key>`，argv+JSON(stdout)+exit，非 0 走 stderr。
 
-- 用户说「**卡路里HELP**」→ 跑 `calorie-cmd-read calorie.help.center`（缺省）出**老技能同款 HELP 文件**（`卡路里_HELP_<时间戳>.html`，V4 三级目录壳）；速查台与另两态、照片 10 键见下文 HELP 节。
+- 用户说「**卡路里HELP**」→ 跑 `calorie-cmd-read calorie.help.center`（缺省）出**老技能同款 HELP 文件**（`卡路里_HELP_<时间戳>.html`，V4 三级目录壳）——本技能**只有这一份 HELP 产物**（速查台那支已下线，见下文 HELP 节）；照片 10 键见下文 HELP 节。
 - **配置型写词**（记体脂／记围度／定训练计划／设置档案／设活动量／改档案类）命中，先按「Wizard Verify 铁则」分流再调会改数据库的命令。
 - 唤醒词 → key 对照表见下方「联动速查」（构建期注入 99 键）。
 
 ## 快速开始
 
 ```sh
-calorie-cmd-read calorie.help.center                                    # 卡路里HELP：老技能同款 HELP 文件（缺省；速查台加 --params '{"mode":"file"}'）
+calorie-cmd-read calorie.help.center                                    # 卡路里HELP：老技能同款 HELP 文件（缺省；本技能只有这一份 HELP 产物）
 calorie-cmd-read calorie.diet.add --params '{"foodName":"鸡胸","calories":200,"protein":35}'
 calorie-cmd-read calorie.weight.log --params '{"kg":70.5}'
 calorie-cmd-read calorie.view.home --params '{"date":"今日"}'
@@ -320,12 +320,12 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - 权威源：唤醒词与它的类型住 HELP 资产 `src/triggers/wake-assets.ts` 的「饮食」组（与冻结唤醒词表 `src/triggers/scene-02-diet.ts` 逐词相同，构建期核对，差一条即停）；命令与参数住路由层 `src/diet/routes.ts`；那张表由 `pnpm help:build` 生成，谁都不手改。
 - 三类各自的条数不在此处手写：见上方那张表的自述行（构建期按当刻数据算）。
 
-## HELP 交付与速查台
+## HELP 交付
 
 - **「卡路里HELP」＝老技能同款 HELP 文件**（#139 起）：`calorie-cmd-read calorie.help.center` 缺省即出 `卡路里_HELP_<时间戳>.html`（老命名，V4 三级目录壳，与老技能视觉一致；落 `data.output`，约 300 KB **只落盘**、不进 envelope）。**除下面的复用窗口外别再给它加参数**——缺省就是目的地交付物。
-- **反复读不再涨目录（#245）**：HELP 文件与速查台**同一主体一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；`data.output` 给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内已有一份、而你刚改过内容时，那份旧产物**不会自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。业务页面与失败回执**不吃窗口**（每跑一次仍各留一份）。
-- **速查台（#88，须显式要）**：`--params '{"mode":"file"}'` 出完整 HTML 速查台（436 场景／54 子功能／10 分组，卡级复制按钮，约 1 MB，落 `卡路里_速查台_<时间戳>.html`）；`{"mode":"inline"}` 出内嵌片段／`{"mode":"text"}` 出纯文本索引；非法 `mode` 与 `q`＋`mode` 同给一律 exit 2。
-- **照片 11 键的「现找」支已下线（#652）**：早年那条「`--params '{"q":"记身材照"}'` 现找／`{"q":""}` 全表」**已经退场**——现在带 `q`／`keyword` 进 `calorie.help.center` 即 `exit 2`，并指路下一条的通用唤醒词现找。缺省 `calorie.help.center` 仍是老技能同款 HELP 文件，`mode` 三态见上条；照片 11 键本身没变，命令照「联动速查」表。
+- **反复读不再涨目录（#245）**：HELP 产物**同一主体一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；`data.output` 给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内已有一份、而你刚改过内容时，那份旧产物**不会自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。业务页面与失败回执**不吃窗口**（每跑一次仍各留一份）。
+- **速查台已下线（用户 2026-09-24 裁定：不存在这种实际场景，我们只有 HELP HTML）**：`--params '{"mode":"file"|"inline"|"text"}'` 一律 `exit 2` 并指路——本键下不再有第二种产物，`卡路里_速查台_*.html` 只作历史留档（不再新出）。
+- **照片 11 键的「现找」支已下线（#652）**：早年那条「`--params '{"q":"记身材照"}'` 现找／`{"q":""}` 全表」**已经退场**——现在带 `q`／`keyword` 进 `calorie.help.center` 即 `exit 2`，并指路下一条的通用唤醒词现找。缺省 `calorie.help.center` 仍是老技能同款 HELP 文件（`mode` 支同样已下线，见上条）；照片 11 键本身没变，命令照「联动速查」表。
 - **通用唤醒词现找**：`calorie.help.lookup --params '{"q":"<唤醒词/分类/描述子串>"}'`（436 唤醒词全量，10 场景，空串抛，不返全表冒充命中）。
 - 二进制原样：照片只 render 文件名 <img> 引用 + fileExists 位，不嵌 base64；GIF 只出任务描述不碰二进制。
 

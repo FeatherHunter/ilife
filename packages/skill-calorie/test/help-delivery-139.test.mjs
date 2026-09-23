@@ -133,19 +133,13 @@ test('#139 ② 壳＝老实物同款 V4 三级目录（10 分类／437 场景）
     '量级对齐老实物 303KB，实际 ' + r.env.data.bytes + ' B');
 });
 
-test('#139 ③ 反向：缺省不是速查台（无 ilife-help-shell 锚），速查台须显式 mode', () => {
+test('#139 ③ 反向：缺省产物不是组件壳（无 ilife-help-shell 锚）', () => {
   const dir = mkDir('negative');
   const r = runOk(dir, undefined);
   const html = readFileSync(r.env.data.output, 'utf8');
-  assert.equal(html.includes('id="ilife-help-shell"'), false, '缺省产物不得是速查台壳');
-
-  // 速查台仍在：显式 mode:'file' → 独立命名（卡路里_速查台_<TS>.html），与 HELP 文件不撞名。
-  const sheet = runOk(dir, { mode: 'file' });
-  assert.equal(sheet.env.delivery.template, 'help-shell', '速查台＝ilife-base 壳');
-  assert.match(basename(sheet.env.data.output), /^卡路里_速查台_\d{8}_\d{6}(_\d+)?\.html$/,
-    '速查台独立命名：' + basename(sheet.env.data.output));
-  assert.equal(basename(sheet.env.data.output).includes('身材照'), false, 'M-era 名不得回归');
-  assert.ok(sheet.env.data.bytes > 900_000, '速查台量级 ≈1 MB，实际 ' + sheet.env.data.bytes + ' B');
+  assert.equal(html.includes('id="ilife-help-shell"'), false, '缺省产物不得是组件壳');
+  assert.equal(basename(r.env.data.output).includes('身材照'), false, 'M-era 名不得回归');
+  // 速查台那支已下线（用户 2026-09-24）：删单断言住 `help-paths-133.test.mjs` ⑮ 与 `help-reuse-245.test.mjs` ③。
 });
 
 test('#139 ④ 并发两次调用：不静默覆盖（缺省复用可让两者落同一份）；`reuseHours:0` 则落点互异', async () => {

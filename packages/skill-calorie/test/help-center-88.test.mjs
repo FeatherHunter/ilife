@@ -1,14 +1,12 @@
-/** #88 实施 A 段 · HELP 速查台自证（S1 数据模型／S2 壳落地／S3 三守卫）。
+/** #88 实施 A 段 · **HELP 场景数据模型**自证（S1 数据模型；S2 壳落地／S3 三守卫随速查台下线）。
  *
- * 三条守卫（#88 验收原文 ＋ 返修单 R1-2）：
- *  ① 占位符 **6/6 冻结标记逐个 0 残留** ＋ 泛化 `<!--[A-Z0-9-]+-->` 残留 0 ＋ `report.markers` 六键；
- *  ② **id 唯一**（数据层 437/437 ＋ HTML 层 ＋ 人为重复抛 `duplicate-id`）；
- *  ③ **copyText 单实现**（`COPY_RUNTIME_JS === buildSharedHelpersJs()`；剥掉 helpers 块后全文
- *     `navigator.clipboard`／`execCommand`／`onclick=` 命中 0；技能侧 src 零复制实现）。
+ * 速查台（同一内容的第二份产物、组件式三态壳）已按用户 2026-09-24 裁定整支下线，故本文件只留**数据模型**
+ * 那半（`helpScene.ts`：`buildHelpSceneData` ＋ `HELP_GROUPS`／`HELP_SUBFUNC_ORDER`／`HELP_TYPE_BADGES`）；
+ * 原 S2（壳结构／三态同源）与 S3（标记残留／HTML 层 id 唯一／copyText 单实现）随壳一起删单——那几条判据的
+ * 落点面（`renderHelpShell` 的产物）已不在本技能。历史证据件 `docs/research/t88-impl-a.md` 原样留档。
  *
  * 运行：先 `pnpm build`，再 `node --test packages/skill-calorie/test/help-center-88.test.mjs`
- * 每个用例名后括号里是「红点」＝把它改坏时本用例必须变红的那一处（变异自证口径，见
- * `docs/research/t88-impl-a.md` §4）。
+ * 每个用例名后括号里是「红点」＝把它改坏时本用例必须变红的那一处（变异自证口径）。
  */
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
@@ -20,8 +18,8 @@ import {
   SPEC_FROZEN_SURFACE, TEMPLATE_MARKERS, buildSharedHelpersJs, renderHelpShell,
 } from 'base-paint';
 import {
-  COPY_RUNTIME_JS, HELP_CENTER_MODES, HELP_GROUPS, HELP_SKILL_NAME, HELP_SUBFUNC_ORDER,
-  HELP_TITLE, HELP_TYPE_BADGES, buildHelpSceneData, helpCenterAssets, renderHelpCenterHtml,
+  HELP_GROUPS, HELP_SKILL_NAME, HELP_SUBFUNC_ORDER,
+  HELP_TITLE, HELP_TYPE_BADGES, buildHelpSceneData,
 } from '../dist/render/index.js';
 import { CATEGORIES, TRIGGERS } from '../dist/triggers/index.js';
 import { configTestBase } from './helpers/config-test.mjs';
@@ -30,18 +28,12 @@ import { configTestBase } from './helpers/config-test.mjs';
 configTestBase();
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SRC_HELP_CENTER = readFileSync(join(HERE, '..', 'src', 'photo', 'helpCenter.ts'), 'utf8');
 
 const count = (haystack, needle) => haystack.split(needle).length - 1;
 const flat = (data) => data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
 const updatedAt = '2026-09-09 12:00';
 const sceneData = buildHelpSceneData({ updatedAt });
-const file = renderHelpCenterHtml({ mode: 'file', updatedAt });
-const inline = renderHelpCenterHtml({ mode: 'inline', updatedAt });
-const text = renderHelpCenterHtml({ mode: 'text', updatedAt });
 
-/** 剥掉共享 helpers 块（唯一运行时块，逐字等于 `COPY_RUNTIME_JS` 的包裹形态）。 */
-const stripHelpers = (html) => html.split('<script>' + COPY_RUNTIME_JS + '</script>').join('');
 
 /* ── S1 数据模型（A1） ─────────────────────────────────────────── */
 
@@ -190,92 +182,10 @@ test('D-1 三档徽章色**逐条**映射 = F3 TYPE_DEFAULT（红点：互换 re
   );
 });
 
-test('D-3 text 态裸 `<N>` = legacy CLI 原文（逐字保留、非 HTML；红点：把原文转义成 &lt;N&gt;）', () => {
-  const angles = [...new Set([...text.html.matchAll(/<[^<>]*>/g)].map((m) => m[0]))];
-  assert.deepEqual(angles, ['<N>'], 'text 态的尖括号文本必须恰为 legacy CLI 原文的 <N>（不得新增别的）');
-  const originals = flat(sceneData).flatMap((s) => [s.id, s.wake_word, s.title, s.prompt_template]);
-  for (const seq of angles) {
-    assert.ok(originals.some((o) => o.includes(seq)), '尖括号文本必须逐字来自 prompt／CLI 原文：' + seq);
-  }
-  assert.ok(flat(sceneData).filter((s) => s.types === undefined).some((s) => s.id.includes('<N>')),
-    '前置：legacy CLI 里确实有 <N> 原文（否则本用例无鉴别力）');
-  assert.ok(!text.html.includes('&lt;'), 'text 态是纯文本载体，不得做 HTML 转义（须与 CLI 原文逐字一致）');
-});
-
-/* ── S2 壳落地（A2） ───────────────────────────────────────────── */
-
 test('A2 复用冻结面 130 条 implemented／0 pending（红点：base-render 新增契约面）', () => {
   // 总数不写死（#645：base 侧 #525 已 130→148；总数由 base 自家签名测试锁，本处只守零 pending 且全 implemented）。
   assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'pending').length, 0);
   assert.equal(SPEC_FROZEN_SURFACE.filter((entry) => entry.status === 'implemented').length, SPEC_FROZEN_SURFACE.length);
-});
-
-test('A2 file 态：完整文档 ＋ 437 卡／54 子功能／1311 复制按钮（红点：壳结构改动）', () => {
-  assert.match(file.html, /^<!DOCTYPE html>/);
-  assert.match(file.html, /<meta charset="utf-8">/);
-  assert.match(file.html, /<\/html>\s*$/);
-  // 卡数／子功能数／复制按钮数派生（#645）：按钮恒每卡 3（HELP_COPY_TARGETS prompt／wakeWord／params）。
-  const expectedScenes = flat(sceneData).length;
-  const expectedSubgroups = sceneData.groups.reduce((n, g) => n + g.subgroups.length, 0);
-  assert.equal(count(file.html, 'data-scene-id='), expectedScenes);
-  assert.equal(count(file.html, 'data-subgroup-id='), expectedSubgroups);
-  assert.equal(count(file.html, 'data-action-id='), expectedScenes * 3);
-  assert.equal(file.mode, 'file');
-});
-
-test('P-5 inline 态：只取 <section> 片段 ＋ <style> 落点钉死（红点：inline 返回整页／丢样式）', () => {
-  assert.equal(inline.html.indexOf('<style>'), 0, '<style> 必须落在片段最前');
-  assert.equal(count(inline.html, '<style>'), 1);
-  assert.ok(inline.html.indexOf('<style>') < inline.html.indexOf('<section'));
-  assert.ok(inline.html.includes('id="ilife-help-shell"'));
-  assert.ok(!inline.html.includes('<!DOCTYPE'));
-  assert.ok(!inline.html.includes('<head>') && !inline.html.includes('</head>'));
-  assert.ok(!inline.html.includes('<html') && !inline.html.includes('<body'));
-  assert.ok(inline.html.trimEnd().endsWith('</script>'), 'helpers 必须在片段最后');
-});
-
-test('三态同源：file／inline 的 437 个 data-scene-id 逐字同序；text 覆盖同一 437 个 id（红点：三态各派生一份数据）', () => {
-  const ids = (html) => [...html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
-  assert.deepEqual(ids(inline.html), ids(file.html));
-  assert.equal(ids(file.html).length, flat(sceneData).length);
-  for (const scene of flat(sceneData)) assert.ok(text.html.includes(scene.id), 'text 缺场景：' + scene.id);
-  assert.ok(!/<(section|style|script|div|article|details|span|button)\b/.test(text.html));
-  assert.deepEqual([...HELP_CENTER_MODES], ['file', 'inline', 'text']);
-  assert.equal(renderHelpCenterHtml({ updatedAt }).mode, 'file', '缺省交付形态 = file（P-5）');
-  assert.throws(() => renderHelpCenterHtml({ mode: 'bogus' }), (err) => err.code === 'bad-input');
-});
-
-/* ── S3 三守卫 ─────────────────────────────────────────────────── */
-
-test('守卫① 6/6 冻结标记逐个残留 0（红点：任一标记泄漏进产物）', () => {
-  const markers = Object.values(TEMPLATE_MARKERS);
-  assert.equal(markers.length, 6);
-  assert.deepEqual(markers.slice().sort(), ['<!--CHARTS-HELPERS-->', '<!--CONTENT-->', '<!--INJECT-DATA-->',
-    '<!--NO-SHARED-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']);
-  for (const html of [file.html, inline.html]) {
-    for (const marker of markers) assert.equal(count(html, marker), 0, '标记残留：' + marker);
-  }
-});
-
-test('守卫① 泛化 `<!--[A-Z0-9-]+-->` 残留 0（红点：新标记泄漏，旧 5 字面量口径会静默通过）', () => {
-  const residue = [...file.html.matchAll(/<!--[A-Z0-9-]+-->/g)].map((m) => m[0]);
-  assert.deepEqual(residue, []);
-  assert.deepEqual([...inline.html.matchAll(/<!--[A-Z0-9-]+-->/g)].map((m) => m[0]), []);
-});
-
-test('守卫① report.markers 六键（计数与 filled 口径钉死）（红点：填充器报告口径漂移）', () => {
-  const report = file.report.markers;
-  assert.deepEqual(report.map((m) => m.key),
-    ['injectData', 'content', 'sharedHelpers', 'sharedCss', 'chartsHelpers', 'noShared']);
-  const byKey = Object.fromEntries(report.map((m) => [m.key, m]));
-  for (const key of ['injectData', 'sharedCss', 'sharedHelpers']) {
-    assert.equal(byKey[key].count, 1, key + ' 必须恰 1 次');
-    assert.equal(byKey[key].filled, true, key + ' 必须已填充');
-  }
-  for (const key of ['content', 'chartsHelpers', 'noShared']) {
-    assert.equal(byKey[key].count, 0, key + ' 必须 0 次');
-    assert.equal(byKey[key].filled, false, key + ' 不得填充');
-  }
 });
 
 test('守卫② id 唯一：数据层 437/437 ＋ 子功能 54/54（红点：id 派生规则碰撞）', () => {
@@ -284,52 +194,4 @@ test('守卫② id 唯一：数据层 437/437 ＋ 子功能 54/54（红点：id 
   const subgroupIds = sceneData.groups.flatMap((g) => g.subgroups.map((s) => s.id));
   assert.equal(new Set(subgroupIds).size, subgroupIds.length);
   assert.ok(subgroupIds.every((id, i, all) => all.indexOf(id) === i));
-});
-
-test('守卫② id 唯一：HTML 层 data-scene-id 437/437 ＋ 元素 id 全唯一（红点：壳内 id 派生用数据里的重复值）', () => {
-  const sceneIds = [...file.html.matchAll(/data-scene-id="([^"]*)"/g)].map((m) => m[1]);
-  assert.equal(sceneIds.length, flat(sceneData).length);
-  assert.equal(new Set(sceneIds).size, sceneIds.length);
-  const elementIds = [...file.html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(elementIds.length > 0);
-  assert.equal(new Set(elementIds).size, elementIds.length, 'HTML id 重复：'
-    + JSON.stringify(elementIds.filter((x, i) => elementIds.indexOf(x) !== i)));
-});
-
-test('守卫② 人为重复 id → 抛 `duplicate-id`（红点：壳不再校验唯一性）', () => {
-  const scene = (id) => ({ id, title: 'T', wake_word: 'W', status: '', prompt_template: 'P' });
-  const dup = {
-    skill_name: 'x',
-    title: 'y',
-    groups: [{ id: 'g', label: 'G', subgroups: [{ id: 'g_1', label: 'S', scenes: [scene('same'), scene('same')] }] }],
-  };
-  assert.throws(
-    () => renderHelpShell({ sceneData: dup, assets: helpCenterAssets() }),
-    (err) => err.code === 'duplicate-id',
-  );
-});
-
-test('守卫③ copyText 单实现：COPY_RUNTIME_JS === buildSharedHelpersJs()（红点：技能侧自产第二套运行时）', () => {
-  assert.equal(COPY_RUNTIME_JS, buildSharedHelpersJs());
-  assert.equal(helpCenterAssets().sharedHelpersJs, COPY_RUNTIME_JS);
-  assert.equal(helpCenterAssets().sharedCssText.length > 0, true);
-});
-
-test('守卫③ 剥掉 helpers 块后全文 `navigator.clipboard`／`execCommand`／`onclick=` 命中 0（红点：内联 onclick／自写复制）', () => {
-  for (const [label, html] of [['file', file.html], ['inline', inline.html]]) {
-    const stripped = stripHelpers(html);
-    for (const needle of ['navigator.clipboard', 'execCommand', 'onclick=']) {
-      assert.equal(count(stripped, needle), 0, label + ' 剥离 helpers 后仍含 ' + needle);
-    }
-    assert.equal(count(html, 'navigator.clipboard'), 1, label + ' 全文只允许 helpers 里 1 处');
-    assert.equal(count(html, 'execCommand'), 1, label + ' 全文只允许 helpers 里 1 处');
-  }
-});
-
-test('守卫③ 技能侧零复制实现：helpCenter.ts 源码不含复制通道（红点：技能侧自写 execCommand／onclick）', () => {
-  for (const needle of ['navigator.clipboard', 'execCommand', 'onclick=', 'document.createElement']) {
-    assert.equal(count(SRC_HELP_CENTER, needle), 0, 'helpCenter.ts 不得出现 ' + needle);
-  }
-  assert.ok(SRC_HELP_CENTER.includes("from '../render/copy.js'"), '页面运行时必须取 copy.ts 的冻结常量');
-  assert.ok(SRC_HELP_CENTER.includes('renderHelpShell'), '壳必须走 base-paint 冻结入口');
 });
