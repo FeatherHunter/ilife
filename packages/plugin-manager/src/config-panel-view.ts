@@ -94,6 +94,57 @@ const S = {
     borderRadius: 4,
     background: PANEL_SKELETON_FILL,
   } as React.CSSProperties,
+  /** #936：状态行那一块（照真源 `.ic-status`）——沉底面盒子，里面三行：状态行／路径行／官网行。 */
+  statusBox: {
+    marginTop: 11,
+    padding: '10px 12px',
+    background: PANEL_SUNKEN_FILL,
+    border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    borderRadius: 8,
+  } as React.CSSProperties,
+  /** `.ic-srow{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}`（12px ⇒ 0.86em）。 */
+  statusRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: '0.86em',
+    flexWrap: 'wrap',
+  } as React.CSSProperties,
+  /** `.ic-dot{width:8px;height:8px;border-radius:50%}`——底色按档位在组件里补。 */
+  statusDot: { width: 8, height: 8, borderRadius: '50%', flex: '0 0 auto' } as React.CSSProperties,
+  /** `.ic-sname{font-weight:600;white-space:nowrap}`。 */
+  statusName: { fontWeight: 600, whiteSpace: 'nowrap' } as React.CSSProperties,
+  /** `.ic-stxt{color:var(--ic-muted);min-width:0}`。 */
+  statusText: { color: 'var(--dsw-alias-label-secondary, #cfd3d6)', minWidth: 0 } as React.CSSProperties,
+  /** `.ic-sfind{display:flex;align-items:center;gap:8px;margin-top:7px}`。 */
+  statusFind: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 } as React.CSSProperties,
+  /** `.ic-spath{font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint);white-space:nowrap;overflow:hidden}`
+   *  ——单行不折、超出裁掉（**不写省略号**：本件有一条"零省略号"的跨包锁）。 */
+  statusPath: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: '0.75em',
+    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
+    minWidth: 0,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+  } as React.CSSProperties,
+  /** `.ic-ver{font-size:10px;border:1px solid var(--ic-line-strong);border-radius:999px;padding:0 6px}`。 */
+  statusVersion: {
+    fontSize: '0.72em',
+    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
+    border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    borderRadius: 999,
+    padding: '0 6px',
+    whiteSpace: 'nowrap',
+  } as React.CSSProperties,
+  /** `.ic-url{display:inline-block;margin-top:7px;font-family:var(--ic-mono);font-size:10.5px;color:var(--ic-faint)}`。 */
+  statusUrl: {
+    display: 'inline-block',
+    marginTop: 7,
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: '0.75em',
+    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
+  } as React.CSSProperties,
   /** `.ic-file b{color:var(--ic-faint);font-weight:400;margin-right:5px}`（「配置文件」「数据目录」那两个字）。 */
   fileLabel: {
     color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
@@ -866,5 +917,86 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       : null,
     props.error !== null ? React.createElement('div', { style: S.error }, props.error) : null,
     props.notice !== null ? React.createElement('div', { style: S.okText }, props.notice) : null,
+  );
+}
+
+/** #936：**状态行**（照真源 v3.1 的 `.ic-status`）——两家（备忘／作息）共用这一件，各自只交数据。
+ *
+ * 形状（逐值照真源）：
+ *   ① 盒子：`padding:10px 12px` ＋ 沉底面 ＋ `1px` 描边 ＋ 圆角 `8px`；
+ *   ② 第一行：状态点（8px 圆，底色按档位）＋ 名字（600）＋ 一行短句；动作按钮靠 `margin-left:auto` 顶到行尾；
+ *   ③ 第二行：路径（等宽、单行不折、超出裁掉）＋ 版本胶囊（`version === null` 就不画——真源骨架期就是 `hidden`）；
+ *   ④ 官网行（等宽、可点新窗口）。
+ *
+ * 骨架期（`path === null`）：值位画骨架条（同一个 `.ic-sk` 口径），两枚按钮照画 ⇒ 与就绪态**同高**、
+ * 填充时不跳（真源 `planRows()` 的口径）。 */
+export type StatusTone = 'ok' | 'warn' | 'bad' | 'pending';
+
+/** 状态点的底色：三档状态色 ＋ 默认灰（照真源 `.is-ok／.is-warn／.is-bad` 与 `.ic-dot` 的默认档）。 */
+const STATUS_DOT_COLOR: Record<StatusTone, string> = {
+  ok: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
+  warn: 'var(--dsw-alias-state-warn-primary, #e0a33e)',
+  bad: 'var(--dsw-alias-state-error-primary, #e0685f)',
+  pending: 'var(--dsw-alias-label-tertiary, #adb2b8)',
+};
+
+export interface StatusBlockProps {
+  /** 名字（真源 `.ic-sname`），屏上逐字显示。 */
+  readonly name: string;
+  /** 档位：点色与默认灰。 */
+  readonly tone: StatusTone;
+  /** 一行短句（真源 `.ic-stxt`）。 */
+  readonly text: string;
+  /** 第二行的路径；`null` ⇒ 画骨架条（加载期）。 */
+  readonly path: string | null;
+  /** 版本胶囊里的版本号；`null`／不传 ⇒ 不画胶囊。 */
+  readonly version?: string | null | undefined;
+  /** 动作按钮（0-2 枚；第一枚顶到行尾）。 */
+  readonly actions?: readonly { readonly text: string; readonly onPress: () => void }[] | undefined;
+  /** 官网行：显示文字 ＋ 跳转目标（面板不自己拼地址）；不给 ⇒ 不画这一行。 */
+  readonly link?: { readonly text: string; readonly href: string } | undefined;
+}
+
+export function StatusBlock(props: StatusBlockProps): React.ReactElement {
+  const actions = props.actions ?? [];
+  return React.createElement(
+    'div',
+    { style: S.statusBox, 'data-ilife-status': 'block' },
+    React.createElement(
+      'div',
+      { style: S.statusRow },
+      React.createElement('span', { style: { ...S.statusDot, background: STATUS_DOT_COLOR[props.tone] } }),
+      React.createElement('span', { style: S.statusName }, props.name),
+      React.createElement('span', { style: S.statusText }, props.text),
+      ...actions.map((action, index) =>
+        React.createElement(
+          'button',
+          {
+            key: action.text,
+            style: index === 0 ? { ...S.btnPick, marginLeft: 'auto' } : S.btnPick,
+            type: 'button',
+            onClick: action.onPress,
+          },
+          action.text,
+        ),
+      ),
+    ),
+    React.createElement(
+      'div',
+      { style: S.statusFind },
+      props.path === null
+        ? React.createElement('span', { style: S.skeleton, 'data-ilife-skeleton': 'statusPath' })
+        : React.createElement('span', { style: S.statusPath }, props.path),
+      props.version === undefined || props.version === null || props.version === ''
+        ? null
+        : React.createElement('span', { style: S.statusVersion }, props.version),
+    ),
+    props.link === undefined
+      ? null
+      : React.createElement(
+          'a',
+          { style: S.statusUrl, href: props.link.href, target: '_blank', rel: 'noreferrer' },
+          props.link.text,
+        ),
   );
 }

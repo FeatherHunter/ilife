@@ -17,7 +17,7 @@
  * 照 CONTEXT.md，「技能设置页」只配置、不干活：本页没有记作息／看时间轴之类的入口。
  */
 import * as React from 'react';
-import { ConfigPanel } from 'dsh-life-pack/config-panel';
+import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_CHECK, isRpcResult } from './contract.js';
 import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
 import { CONFIG_ITEMS } from './settings.js';
@@ -178,19 +178,23 @@ export interface PanelStyleSlots {
   readonly btn?: React.CSSProperties | undefined;
 }
 
-/** 飞书状态行的三档读数。 */
+/** 飞书状态行的三档读数（`reading` ＝ 体检回执新交的 `lark` 格，带路径与短版本号；旧技能包为 null）。 */
 type LarkReading =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly item: HealthItemLite }
+  | { readonly kind: 'ready'; readonly item: HealthItemLite; readonly reading: LarkCell | null }
   | { readonly kind: 'failed'; readonly message: string };
 
-/** 「飞书 CLI」状态行（#764，定稿 #761）：不是配置项——三档读数由技能侧体检出，面板只显示；
- *  三档都有「复制 prompt」按钮与官网那一行（逐字、可点击）。
+/** 体检回执里 `lark` 那一格的形状（#936 技能侧交）。 */
+type LarkCell = { readonly tier: string; readonly cliPath: string | null; readonly version: string | null };
+
+/** 「飞书 CLI」状态行（#764 定稿 #761；**#936 起照真源 `.ic-status` 画**）：不是配置项——
+ *  三档读数由技能侧体检出，面板只显示；**形状由共用件的 `StatusBlock` 给**（两家同形）。
+ *  两枚按钮的字面照真源：左「复制安装指引」、右「重新检测」。骨架期画「检测中」＋ 路径位骨架条、
+ *  两枚按钮照画 ⇒ 与就绪态同高（真源 `planRows()` 的口径：骨架期就定行高，填充时不跳）。
  *
  * 为什么单起一个组件：这通体检电话是本家自己的（共用面板不认识 `config.check` 的回执），
  * 组件自己持读数与「复制回执」两点状态，面板只管把它画进插槽。 */
 function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyleSlots }): React.ReactElement {
-  const S = props.styles;
   const [lark, setLark] = React.useState<LarkReading>({ kind: 'loading' });
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
 
@@ -202,7 +206,11 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
       return;
     }
     const item = larkItemOf(r.report);
-    setLark(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item });
+    setLark(
+      item === null
+        ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' }
+        : { kind: 'ready', item, reading: r.report.lark ?? null },
+    );
   }, [props.getCall]);
 
   React.useEffect(() => {
@@ -216,50 +224,63 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
   };
 
   if (lark.kind === 'loading') {
-    return React.createElement(
-      'div',
-      { style: S.rows },
-      React.createElement('div', { style: S.label }, '飞书 CLI'),
-      React.createElement('div', { style: S.muted }, '飞书 CLI 检测中'),
-    );
+    // 骨架期照真源：状态点默认灰 ＋「检测中」＋ 路径位骨架条 ＋ 版本胶囊不画；两枚按钮**照画**
+    // ⇒ 与就绪态同高，填充时不跳（真源 `planRows()` 的口径）。
+    return React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      tone: 'pending',
+      // 真源在「检测中」后面带一个省略号，本仓有一条跨包锁（控件文案零省略号，`t764` 的 E 组）⇒
+      // 这里去掉那一个字符，是本件与真源唯一的字面差（已记账）。
+      text: '检测中',
+      path: null,
+      version: null,
+      actions: [
+        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
+        { text: '重新检测', onPress: () => void loadHealth() },
+      ],
+      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+    });
   }
   if (lark.kind === 'failed') {
-    return React.createElement(
-      'div',
-      { style: S.rows },
-      React.createElement('div', { style: S.label }, '飞书 CLI'),
-      React.createElement('div', { style: S.error }, lark.message),
-      React.createElement(
-        'div',
-        { style: S.bar },
-        React.createElement('button', { style: S.btn, type: 'button', onClick: () => void loadHealth() }, '重新检测'),
-      ),
-    );
+    return React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      tone: 'bad',
+      text: lark.message,
+      path: '',
+      actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+    });
   }
   const item = lark.item;
-  const tone = item.status === 'green' ? S.okText : item.status === 'red' ? S.error : S.muted;
+  const reading = lark.reading;
   return React.createElement(
     'div',
-    { style: S.rows },
-    React.createElement('div', { style: S.label }, '飞书 CLI'),
-    React.createElement('div', { style: tone }, item.message),
-    item.action === '' ? null : React.createElement('div', { style: S.hint }, item.action),
-    React.createElement(
-      'div',
-      { style: S.bar },
-      React.createElement('button', { style: S.btn, type: 'button', onClick: () => void onCopyPrompt() }, '复制 prompt'),
-      React.createElement('button', { style: S.btn, type: 'button', onClick: () => void loadHealth() }, '重新检测'),
-    ),
+    null,
+    React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      // 档位与真源同：绿点＝就绪／红点＝没找到／黄点＝找到了但还差点什么。
+      tone: item.status === 'green' ? 'ok' : item.status === 'red' ? 'bad' : 'warn',
+      // 短句按档给（真源 `.ic-stxt` 就是一行短句）；「去哪修」那句长话不在这一行里。
+      text:
+        item.status === 'green'
+          ? '已登录，日历可读'
+          : item.status === 'red'
+            ? '没找到飞书 CLI'
+            : '找到了，但还没登录／日历读不到',
+      // 路径与版本胶囊取体检回执新交的那一格（#936 技能侧）；旧技能包不带 ⇒ 路径空、无胶囊。
+      path: reading?.cliPath ?? '',
+      version: reading?.version ?? null,
+      actions: [
+        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
+        { text: '重新检测', onPress: () => void loadHealth() },
+      ],
+      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+    }),
     copied === 'done'
-      ? React.createElement('div', { style: S.okText }, '已复制安装指引')
+      ? React.createElement('div', { style: props.styles.okText }, '已复制安装指引')
       : copied === 'failed'
-        ? React.createElement('div', { style: S.error }, '复制失败：剪贴板不可用，请手动复制对话框里的安装指引')
+        ? React.createElement('div', { style: props.styles.error }, '复制失败：剪贴板不可用，请手动复制对话框里的安装指引')
         : null,
-    React.createElement(
-      'div',
-      { style: S.info },
-      React.createElement('a', { href: LARK_OFFICIAL_URL, target: '_blank', rel: 'noreferrer' }, LARK_OFFICIAL_LINE),
-    ),
   );
 }
 

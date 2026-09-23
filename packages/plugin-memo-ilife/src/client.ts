@@ -22,7 +22,7 @@
  * （`VERSION_READ_KEY`）取到后**纯渲染**（读不到显示 unknown，形状照卡路里 #130 那条）。
  */
 import * as React from 'react';
-import { ConfigPanel } from 'dsh-life-pack/config-panel';
+import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
 import type { InstalledVersions, LarkState } from './contract.js';
 import { SLOT_TITLE } from './slot.js';
@@ -271,49 +271,43 @@ export interface PanelStyleSlots {
   readonly btn?: React.CSSProperties | undefined;
 }
 
-/** 「飞书 CLI」状态行（#760，定稿 #759；不是配置项）：三档读数 ＋ 复制安装指引按钮 ＋ 官网链接。
+/** 「飞书 CLI」状态行（#760 定稿 #759；**#936 起照真源 `.ic-status` 画**）：三档读数 ＋ 复制安装指引 ＋ 官网链接。
  *
- * 判据由技能侧出（回执 `lark` 格），面板只显示：
- *   · 没找到 CLI → 红「没找到飞书 CLI」＋ 复制安装指引按钮 ＋ 官网链接；
- *   · 找到了但没登录／缺 task 权限 → 黄「找到了〈路径〉，但还没登录或没拿到 task 域授权」＋ 同一个按钮 ＋ 官网链接；
- *   · 就绪 → 绿「已登录且 task 域可写：〈路径〉（〈版本〉）」＋ 同一个按钮 ＋ 官网链接。
- * 官网行三档逐字显示「飞书CLI官网为：https://www.feishu.cn/feishu-cli」，显示成文字＋点一下新窗口跳转。
- * 旧技能（回执无 `lark` 格）⇒ 只显示一行弱提示，不报错、不探测。 */
+ * 判据由技能侧出（回执 `lark` 格），面板只显示；**形状由共用件的 `StatusBlock` 给**（两家同形，真源那一件）：
+ *   · 没找到 → 红点「没找到飞书 CLI」；
+ *   · 找到了但没登录／缺 task 权限 → 黄点「找到了，但还没登录或没拿到 task 域授权」＋ 路径行；
+ *   · 就绪 → 绿点「已登录，task 域可写」＋ 路径行 ＋ 版本胶囊（`lark.version`，技能侧交的短版本号）。
+ * 官网行三档逐字显示，显示成文字＋点一下新窗口跳转。旧技能（回执无 `lark` 格）⇒ 只显示一行弱提示，不报错、不探测。 */
 export function LarkStatus(props: {
   readonly lark: LarkState | undefined;
   readonly onCopy: (prompt: string) => void;
   /** 面板经插槽给的样式（不给＝不写内联样式，文案与交互照旧）。 */
   readonly styles?: PanelStyleSlots | undefined;
 }): React.ReactElement {
-  const S = props.styles ?? {};
   const lark = props.lark;
   if (lark === undefined) {
-    return React.createElement(
-      'div',
-      { style: S.rows },
-      React.createElement('div', { style: S.label }, '飞书 CLI'),
-      React.createElement('div', { style: S.muted }, '状态未知（技能回执无此格，请升级技能包）。'),
-    );
+    return React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      tone: 'pending',
+      text: '状态未知（技能回执无此格，请升级技能包）',
+      path: '',
+    });
   }
-  const status =
-    lark.tier === 'missing'
-      ? '没找到飞书 CLI'
-      : lark.tier === 'partial'
-        ? '找到了 ' + (lark.cliPath ?? '飞书 CLI') + '，但还没登录或没拿到 task 域授权'
-        : '已登录且 task 域可写：' + (lark.cliPath ?? '') + (lark.version !== null ? '（' + lark.version + '）' : '');
-  const statusStyle = lark.tier === 'full' ? S.okText : lark.tier === 'partial' ? S.muted : S.error;
-  return React.createElement(
-    'div',
-    { style: S.rows },
-    React.createElement('div', { style: S.label }, '飞书 CLI'),
-    React.createElement('div', { style: statusStyle }, status),
-    React.createElement(
-      'div',
-      { style: S.bar },
-      React.createElement('button', { style: S.btn, type: 'button', onClick: () => props.onCopy(lark.prompt) }, '复制安装指引'),
-      React.createElement('a', { href: lark.websiteUrl, target: '_blank', rel: 'noreferrer' }, lark.websiteLine),
-    ),
-  );
+  return React.createElement(StatusBlock, {
+    name: '飞书 CLI',
+    tone: lark.tier === 'full' ? 'ok' : lark.tier === 'partial' ? 'warn' : 'bad',
+    text:
+      lark.tier === 'full'
+        ? '已登录，task 域可写'
+        : lark.tier === 'partial'
+          ? '找到了，但还没登录或没拿到 task 域授权'
+          : '没找到飞书 CLI',
+    // 路径从原先把状态写成一句长话里拆出来，单独一行（真源 `.ic-spath`）；找不到 CLI 时这一格留空。
+    path: lark.cliPath ?? '',
+    version: lark.version,
+    actions: [{ text: '复制安装指引', onPress: () => props.onCopy(lark.prompt) }],
+    link: { text: lark.websiteLine, href: lark.websiteUrl },
+  });
 }
 
 /** 跟随映射（#863）：触发键一脏，这些只读派生行就进“将跟随更新”态。纯函数，面板与单测共用。 */
@@ -332,10 +326,11 @@ function larkOf(reply: unknown): LarkState | undefined {
   return typeof lark === 'object' && lark !== null ? (lark as LarkState) : undefined;
 }
 
-/** 自家附加块（设置页那张卡的插槽）：版本行 ＋「飞书 CLI」状态行。
+/** 自家附加块（设置页那张卡的插槽）：「飞书 CLI」状态行。
  *
- * 为什么单起一个组件：#918 起版本是**本家自己的一通电话**（`VERSION_READ_KEY`，宿主回装机版本对），
- * 飞书状态是本家回执多带的那一格（共用面板不认识它），复制回执也住在本家——
+ * #934 起**这里不再有版本行**（维护者裁定：面板内那行 `总管 …· 版本` 整条撤掉；
+ * 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到）。
+ * 状态行住这里的原因：飞书状态是本家回执多带的那一格（共用面板不认识它），复制回执也住在本家——
  * 组件自己持这点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。 */
 function MemoExtras(props: {
   /** 整面读到了没有：状态行照改版前的形状只在就绪态画，读取中／读取失败那两屏不占这一行。 */
@@ -352,7 +347,6 @@ function MemoExtras(props: {
   return React.createElement(
     'div',
     null,
-    React.createElement(HostVersionLine, { getCall: props.getCall }),
     props.hasReply ? React.createElement(LarkStatus, { lark: props.lark, onCopy, styles: props.styles }) : null,
     copied === 'done' ? React.createElement('div', { style: props.styles.okText }, '已复制，去粘贴给 AI') : null,
     copied === 'failed' ? React.createElement('div', { style: props.styles.error }, '复制失败，长按选择下方文本手动复制') : null,

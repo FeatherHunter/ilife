@@ -44,6 +44,9 @@ export interface HealthReport {
   /** 实际生效的数据目录。 */
   readonly dataDir: string;
   readonly items: readonly HealthItem[];
+  /** #936：飞书 CLI 那一格（**可选**——只有作息那种"状态行数据从体检出"的家才带；旧技能包不带）。
+   *  形状与技能侧体检回执的 `lark` 格同形：档位 ＋ 路径 ＋ 短版本号。 */
+  readonly lark?: { readonly tier: string; readonly cliPath: string | null; readonly version: string | null } | undefined;
 }
 
 /** 体检出口：技能侧在**进分派层之前**拦下的那一类只读命令名（照三个配置命令的先例）。

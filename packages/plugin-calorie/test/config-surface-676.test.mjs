@@ -321,9 +321,10 @@ describe('#676 卡路里设置页 · 配置面', () => {
     it('设置页组件里没有干活入口（没有查数／记一餐之类的取数调用）', () => {
       const props = registeredConfig().props;
       // #909 起设置页本体就交给共用面板这几格——多一格就是多一条取数口；行表本身只有配置项。
+      // #934：`extra`（面板插槽里那行版本行）已按维护者裁定撤掉 ⇒ 接入面少一格，这条跟着收窄。
       assert.deepEqual(Object.keys(props).sort(),
-        ['channel', 'extra', 'followKeysOf', 'getCall', 'getService', 'items', 'title'],
-        '设置页的接入面超出「行表 ＋ 通道名 ＋ 三个可选钩子 ＋ 取数接线」');
+        ['channel', 'followKeysOf', 'getCall', 'getService', 'items', 'title'],
+        '设置页的接入面超出「行表 ＋ 通道名 ＋ 两个可选钩子 ＋ 取数接线」');
       assert.deepEqual([...props.items], [...CONFIG_ITEMS], '设置页只画本家那张配置行表');
 
     });

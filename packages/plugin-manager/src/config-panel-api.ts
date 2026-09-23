@@ -8,7 +8,9 @@
  *   ① `ConfigPanel`——面板组件本体（六家把它注册进爱生活页签槽）；
  *   ② `Row`——一行怎么画（跨包锁要拿它当函数调）；
  *   ③④ `ConfigControl`／`ConfigTier`——行表里两格的字面表；
- *   ⑤ `ConfigItem`——行表每一行的形状。
+ *   ⑤ `ConfigItem`——行表每一行的形状；
+ *   ⑥ `StatusBlock`——**状态行**（#936：照真源 `.ic-status`；备忘／作息两家各有一段"不是配置项的状态"要画，
+ *      这是第二个用法 ⇒ 形状收在共用件，两家只交数据）。
  *
  * **取值与填值的路径读写是内部实现**（`config-panel-value.ts`），不在这里出门：
  * 它只经「取值／填值」两条被验，外面不需要自己拆一份配置取值。
@@ -18,6 +20,7 @@
 
 export { ConfigPanel } from './config-panel.js';
 
-export { Row } from './config-panel-view.js';
+export { Row, StatusBlock } from './config-panel-view.js';
 
 export type { ConfigItem, ConfigControl, ConfigTier } from './config-panel-contract.js';
+export type { StatusBlockProps, StatusTone } from './config-panel-view.js';

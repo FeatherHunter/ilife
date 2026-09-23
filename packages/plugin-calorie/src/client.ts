@@ -268,32 +268,8 @@ export function followKeysOf(dirtyKeys: readonly string[]): readonly string[] {
   return [...new Set(keys)];
 }
 
-/** 自家附加块（设置页那张卡的版本行）：共用面板留的插槽，画在面板主体之后、动作条之前。
- *
- * 为什么单起一个组件：版本是**本家自己的一通电话**（`dsh-calorie.version`），共用面板不认识它；
- * 组件自己持状态，面板只管把它画进插槽。 */
-function CalorieVersionLine(props: { readonly getCall: GetCall }): React.ReactElement {
-  const [versions, setVersions] = React.useState<{ readonly plugin: string; readonly skill: string }>({
-    plugin: VERSION_UNKNOWN,
-    skill: VERSION_UNKNOWN,
-  });
-  React.useEffect(() => {
-    let alive = true;
-    void (async () => {
-      try {
-        const v = await fetchVersions(props.getCall());
-        if (!alive) return;
-        setVersions(v);
-      } catch {
-        /* fetchVersions 永不抛，此处兜底不炸面板 */
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [props.getCall]);
-  return React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill });
-}
+// #934：原先这里有一个 `CalorieVersionLine`（面板插槽里的版本行），已按维护者裁定整条删除——
+// 零消费者的组件不留；`VersionLine`／`formatVersionLine`／`fetchVersions` 仍被 sidebar 干活区卡片用，保留。
 
 interface BetterSidebarService {
   registerTab(descriptor: {
@@ -329,7 +305,8 @@ export function apply(ctx: ClientCtx): void {
         items: CONFIG_ITEMS,
         title: SLOT_TITLE,
         followKeysOf,
-        extra: () => React.createElement(CalorieVersionLine, { getCall }),
+        // #934：原先这里挂了一行版本行（`CalorieVersionLine`）——维护者裁定整条撤掉；
+        // 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到。
         getCall,
         getService,
       }),
