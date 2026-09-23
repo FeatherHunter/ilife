@@ -15,6 +15,7 @@ import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadMemoConfig, resetMemoConfig, saveMemoConfig } from '../config.js';
 import { resolvedMemoPaths } from '../shared/paths.js';
 import type { MemoResolvedPaths } from '../shared/paths.js';
+import { buildMemoHealthReport } from './health/index.js';
 import { larkTierInfo, larkSetupInfo, LARK_WEBSITE_URL } from '../sync/index.js';
 import type { LarkTier } from '../sync/index.js';
 
@@ -72,7 +73,7 @@ function withHumanError<T>(run: () => T): T {
 /**
  * 跑一个配置 key，返回整行 envelope JSON。
  *
- * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved, lark}`；写 → 入参 `{values}`，
+ * 三个 key 的载荷：读 → `{path, dataDir, created, values, resolved, lark[, alerts]}`；写 → 入参 `{values}`，
  * 回执 `{path, values}`；重置 → `{path, backupPath}`（`backupPath` 为 null 表示本来就没有配置文件）。
  *
  * `resolved`（#760，照 #749 样板）＝一组**解析后的绝对路径**，给设置页的只读行显示用
@@ -89,17 +90,35 @@ export interface MemoConfigReadLark {
   readonly websiteUrl: string;
 }
 
+/**
+ * #915 第二步：只给 `db.dir` 的行告警（本家唯一体检判红的格）。
+ *
+ * 结论复用体检 `db.dir` 那一项（`src/cli/health/` 的 `dirVerdict`：不在／在但写不进去／
+ * 在且能写），红才给，`message` 原样取体检那句故障本身，不合成新句子；绿＝缺席（面板不亮）。
+ * `media.dir`（附件目录）与 `html.dir` 的体检最高只到黄（提醒、非"用不了"），一律不给——
+ * 它们照旧只在体检视图里可见。故障码只按体检报文首字区分，供判据与回执用，面板只画 `message`。
+ */
+function memoAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const item = buildMemoHealthReport().items.find((entry) => entry.id === 'db.dir');
+  if (item === undefined || item.status !== 'red') return undefined;
+  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  return { 'db.dir': { code, message: item.message } };
+}
+
 export function runConfigKey(key: string, params: Record<string, unknown>): string {
   if (key === CONFIG_KEYS.read) {
     const c = withHumanError(() => loadMemoConfig());
     const resolved: MemoResolvedPaths = withHumanError(() => resolvedMemoPaths());
     const tier = withHumanError(() => larkTierInfo());
     const setup = larkSetupInfo();
+    const alerts = withHumanError(() => memoAlerts());
     const lark: MemoConfigReadLark = {
       tier: tier.tier, cliPath: tier.cliPath, version: tier.version,
       prompt: setup.prompt, websiteLine: setup.websiteLine, websiteUrl: LARK_WEBSITE_URL,
     };
-    return envelope(key, 'detail', { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved, lark });
+    const data: Record<string, unknown> = { path: c.path, dataDir: c.dataDir, created: c.created, values: c.values, resolved, lark };
+    if (alerts !== undefined) data['alerts'] = alerts;
+    return envelope(key, 'detail', data);
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];

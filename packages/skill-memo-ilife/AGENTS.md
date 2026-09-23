@@ -51,7 +51,7 @@
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |
 | `src/checkin/routes.ts` | 36 | 40 | 未越线，在册备查 |
 | `src/cli/cmd_read.ts` | 367 | 318 | 已回线内（挂号值 367 留档，只许变短） |
-| `src/cli/config.ts` | 113 | 114 | 未越线，在册备查 |
+| `src/cli/config.ts` | 113 | 133 | 未越线，在册备查 |
 | `src/cli/health.ts` | 37 | 38 | 未越线，在册备查 |
 | `src/cli/health/configRead.ts` | 208 | 208 | 未越线，在册备查 |
 | `src/cli/health/index.ts` | 17 | 17 | 未越线，在册备查 |
