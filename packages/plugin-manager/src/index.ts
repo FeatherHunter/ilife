@@ -88,3 +88,5 @@ export { MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '
 /** 本机「根」清单（#744）：宿主半取数，六家的目录浏览器经 `ilife-manager.roots` 取用。 */
 export { clearRootsCache, listRoots, parseDriveRows, rootsReply } from './roots.js';
 export type { RootsDeps } from './roots.js';
+/** #918：读**任意装机包**版本的那一处唯一定义（备忘宿主侧取用；卡路里那份随后迁移）。 */
+export { installedVersionOf } from './manager-version.js';
