@@ -42,8 +42,13 @@ export function buildDetail(card: ItemCard, extra?: Record<string, unknown>): { 
   return { item: { ...card, ...(extra ?? {}) } as Record<string, unknown> };
 }
 
-export function buildReceipt(message: string): { ok: boolean; message: string } {
-  return { ok: true, message };
+/** 写库回执（#890 起可带「本次写入字段」）：`message` 仍是那一句人话（对话里读的就是它）；
+ *  `fields` 是本次真写进去的字段逐行（键名与值都由命令层给中文，页面与渲染层不翻译英文键）。
+ *  不给 `fields` 时载荷形状与本改动之前逐字节同形——旧调用方不受影响。 */
+export function buildReceipt(message: string, fields?: readonly { readonly k: string; readonly v: string }[]): { ok: boolean; message: string; detail?: { fields: readonly { readonly k: string; readonly v: string }[] } } {
+  return fields === undefined || fields.length === 0
+    ? { ok: true, message }
+    : { ok: true, message, detail: { fields } };
 }
 
 export function buildTagList(tags: { tag: string; count: number }[], categories?: { id: number; name: string }[]): { items: unknown[]; total: number } {
@@ -77,8 +82,10 @@ export function buildShoppingList(items: { name: string; quantity?: number }[]):
   return { items, total: items.length };
 }
 
-export function buildTicketList(items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number } {
-  return { items, total: items.length };
+/** 清单载荷（#890 起可带「本次查询条件」）：`extra` 里的键原样并到 `data` 上，页面据此回显
+ *  「这一次查的是谁」（查退货窗口这类按物品查、又可能 0 命中的场景）。不给即与改动前同形。 */
+export function buildTicketList(items: Record<string, unknown>[], extra?: Record<string, unknown>): { items: Record<string, unknown>[]; total: number } & Record<string, unknown> {
+  return { ...(extra ?? {}), items, total: items.length };
 }
 
 export function buildCareList(items: Record<string, unknown>[]): { items: Record<string, unknown>[]; total: number } {

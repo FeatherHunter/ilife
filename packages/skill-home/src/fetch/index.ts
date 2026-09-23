@@ -22,4 +22,6 @@ export {
   // #865：统计取数补齐（分布明细／价值与高频排行／趋势／盘点明细）。
   localToday, frequentTopItems, valueTopItems, categoryDistribution, locationDistribution,
   statusDistribution, ownerDistribution, recordTrend, inventoryDetail,
+  // #890：证件号码脱敏的唯一一处（命令层据此出 `number_masked`，页面侧旧信封回退也读它）。
+  maskCertNumber,
 } from './domains.js';

@@ -67,13 +67,16 @@ export function setThreshold(handle: HomeDb, itemId: number, threshold: number):
 }
 
 // ---- 票据：purchase/warranty/cert/account ----
+/** 购买记录（#890 起带物品名与分类名）：页面要按判据那一行「物品名/ID/购买日/价格/渠道/…」逐格填值，
+ *  `purchase_records` 只挂 `item_id`，名称与分类在 `items` 上，故这里 LEFT JOIN 带出（键名与页面读的
+ *  `item_name` 对齐）；物品被删时 `item_id` 被置空，JOIN 不到即留空，页面照全批口径写「—」。 */
 export function listPurchases(handle: HomeDb, f: { itemId?: number; year?: string; month?: string }): Record<string, unknown>[] {
-  let sql = 'SELECT * FROM purchase_records WHERE 1=1';
+  let sql = 'SELECT p.*, i.name AS item_name, i.category AS item_category FROM purchase_records p LEFT JOIN items i ON i.id = p.item_id WHERE 1=1';
   const args: (string | number | null)[] = [];
-  if (f.itemId !== undefined) { sql += ' AND item_id=?'; args.push(f.itemId); }
-  if (f.year !== undefined) { sql += ' AND substr(date,1,4)=?'; args.push(f.year); }
-  if (f.month !== undefined) { sql += ' AND substr(date,6,2)=?'; args.push(f.month); }
-  sql += ' ORDER BY date DESC LIMIT 100';
+  if (f.itemId !== undefined) { sql += ' AND p.item_id=?'; args.push(f.itemId); }
+  if (f.year !== undefined) { sql += ' AND substr(p.date,1,4)=?'; args.push(f.year); }
+  if (f.month !== undefined) { sql += ' AND substr(p.date,6,2)=?'; args.push(f.month); }
+  sql += ' ORDER BY p.date DESC LIMIT 100';
   return q(handle, sql, ...args);
 }
 export function addPurchase(handle: HomeDb, itemId: number, date: string, price: number | null, channel: string | null, scene: string | null): number {
@@ -84,11 +87,14 @@ export function purchaseYearStats(handle: HomeDb, year: string): { count: number
   const r = one(handle, 'SELECT count(*) AS c, ifnull(sum(price),0) AS t FROM purchase_records WHERE substr(date,1,4)=?', year) as unknown as { c: number; t: number } | undefined;
   return { count: r?.c ?? 0, total: r?.t ?? 0 };
 }
+/** 保修／保养（#890 起带物品名与派生值）：页面卡体的七个值位读 `item_name`／`kind`／`status`／
+ *  `expires_at`／`remaining_days`／`repair_count`／`service_events`。前两件在 `warranties` 与 `items`，
+ *  后五件都由 `start_date ＋ duration_days` 现算（本条命令本来就在 filter 分支里算 `st`，这里把它
+ *  提成返回字段，口径一字不改：`<0` 已过／`≤30` 即将到期／其余在保）。服务事件只算次数并把日期串起来。 */
 export function listWarranties(handle: HomeDb, status?: string): Record<string, unknown>[] {
-  const rows = q(handle, 'SELECT * FROM warranties ORDER BY start_date DESC LIMIT 100');
-  if (!status || status === '全部') return rows;
+  const rows = q(handle, 'SELECT w.*, i.name AS item_name FROM warranties w LEFT JOIN items i ON i.id = w.item_id ORDER BY w.start_date DESC LIMIT 100');
   const now = new Date().toISOString().slice(0, 10);
-  return rows.filter((r) => {
+  const derived = rows.map((r) => {
     const start = String(r.start_date);
     const days = Number(r.duration_days);
     const end = new Date(start);
@@ -96,8 +102,15 @@ export function listWarranties(handle: HomeDb, status?: string): Record<string, 
     const endS = end.toISOString().slice(0, 10);
     const remain = (new Date(endS).getTime() - new Date(now).getTime()) / 86400000;
     const st = remain < 0 ? '已过' : remain <= 30 ? '即将到期' : '在保';
-    return st === status;
+    const evs = q(handle, 'SELECT date, cost FROM service_events WHERE warranty_id=? ORDER BY date', Number(r.id));
+    const pieces = evs.map((e) => String(e.date) + (e.cost === null || e.cost === undefined ? '' : ' ' + String(e.cost) + ' 元'));
+    return {
+      ...r, status: st, expires_at: endS, remaining_days: Math.round(remain),
+      repair_count: evs.length, service_events: pieces.join('；'),
+    };
   });
+  if (!status || status === '全部') return derived;
+  return derived.filter((r) => r.status === status);
 }
 export function addWarranty(handle: HomeDb, itemId: number, kind: string, startDate: string, durationDays: number, scene: string | null): number {
   if (!['保修', '保养'].includes(kind)) throw new HomeFetchError('HOME_BAD_QUERY', 'kind 须 保修/保养');
@@ -111,8 +124,24 @@ export function addServiceEvent(handle: HomeDb, warrantyId: number, date: string
   run(handle, 'INSERT INTO service_events (warranty_id, date, cost, scene) VALUES (?,?,?,?)', warrantyId, date, cost, scene);
   return (one(handle, 'SELECT last_insert_rowid() AS id') as unknown as { id: number }).id;
 }
+/** 证件号码脱敏：只出后四位，前面一律 `****`（#890）。**库里的明文号码不许进信封**——页面、复制载荷、
+ *  数据原文三处都可能落盘，故脱敏在取数这一层做完，出去的就只有 `number_masked`。
+ *  规则与 `receipt/pages/certificates.ts` 原来的 `maskDisplay` 逐字同一条（那处改读本函数，见铁律二）。 */
+export function maskCertNumber(raw: unknown): string {
+  if (typeof raw !== 'string') return '未登记';
+  const s = raw.trim();
+  if (s === '') return '未登记';
+  if (s.length <= 4) return '****';
+  return '****' + s.slice(-4);
+}
+/** 证件清单（#890 起带持有人与脱敏号码）：页面要按「类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注」
+ *  逐格填值；号码在这一层换成 `number_masked`，明文字段不出本函数。 */
 export function listCerts(handle: HomeDb): Record<string, unknown>[] {
-  return q(handle, 'SELECT id, type, expires_at, holder FROM certificates ORDER BY expires_at LIMIT 100');
+  return q(handle, 'SELECT id, type, expires_at, holder, number FROM certificates ORDER BY expires_at LIMIT 100')
+    .map((r) => ({
+      id: r.id, type: r.type, cert_type: r.type, holder: r.holder,
+      expires_at: r.expires_at, number_masked: maskCertNumber(r.number),
+    }));
 }
 export function addCert(handle: HomeDb, type: string, expiresAt: string, holder: string | null, number: string | null, photo: string | null, scene: string | null): number {
   run(handle, 'INSERT INTO certificates (type, expires_at, holder, number, photo, scene) VALUES (?,?,?,?,?,?)', type, expiresAt, holder, number, photo, scene);

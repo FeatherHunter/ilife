@@ -34,6 +34,20 @@ function listHtml(items: unknown[]): string {
   return items.map((x) => itemHtml(x as Record<string, unknown>)).join('');
 }
 
+/** 写库回执的「本次写入字段」逐行（#890）：`data.detail.fields` 是 `[{k,v}]`，键名与值都由命令层给
+ *  中文（渲染层不翻译英文键，英文键上屏会被文案机审判成英文裸词）。形状不对就当没有，不抛。 */
+function receiptFields(d: Record<string, unknown>): string {
+  const det = d.detail;
+  if (!det || typeof det !== 'object' || Array.isArray(det)) return '';
+  const raw = (det as { fields?: unknown }).fields;
+  if (!Array.isArray(raw)) return '';
+  return raw
+    .filter((f): f is Record<string, unknown> => !!f && typeof f === 'object' && !Array.isArray(f))
+    .map((f) => '<div class="receipt-detail-row"><span class="receipt-detail-k">' + escapeHtml(String(f.k ?? ''))
+      + '</span><span class="receipt-detail-v">' + escapeHtml(String(f.v ?? '')) + '</span></div>')
+    .join('');
+}
+
 // 按形状渲染 envelope 为 section 页；未知形状 throw 不返空页。
 // #43 H2：analysis/fallback 经 HOME_KEY_SHAPES 不可达（21 键仅 list/detail/receipt/stat），保留作显式降级与未来扩展直调分支，单测直构 envelope 覆盖。
 export function renderEnvelopeHtml(env: Envelope): string {
@@ -46,7 +60,12 @@ export function renderEnvelopeHtml(env: Envelope): string {
       let msg = String((d as { message?: unknown }).message ?? '');
       // 看密码脱敏：HTML 快照不落明文（JSON 真相仍含明文，仅对话回显）。
       if (env.key === 'home.ticket.write' && /密码/.test(msg)) msg = '密码已脱敏（仅对话 JSON 回显，不进 HTML）';
-      return head + '<div class="receipt">' + escapeHtml(msg) + '</div></section>';
+      // #890：写库回执可以带「本次写入字段」逐行（`detail.fields`，键名与值都由命令层给中文）。
+      // 原先回执只印 message 一句（「已登记购买：#11」），写进去的价格／渠道／到期日全在页上看不见。
+      // 这里统一渲染成两列字段位；没有 `detail` 的回执照旧只印那一句。
+      const rows = receiptFields(d);
+      const body = rows === '' ? '' : '<div class="receipt-detail">' + rows + '</div>';
+      return head + '<div class="receipt">' + escapeHtml(msg) + body + '</div></section>';
     }
     case 'stat': {
       const rows = Object.entries((d.metrics || {}) as Record<string, number>);
@@ -83,7 +102,11 @@ export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720p
   // `:not([class])` 只吃没有自己命名的裸 `<span>` —— stats 四页给两个 span 起了 `.fam-name`／
   // `.fam-key` 名（各页 PAGE_CSS 后到，但本规则若不加这个排除会因选择器更具体而盖掉它们的灰字）。
   + '\n.fam-head{display:flex;gap:8px;align-items:baseline;margin:0 0 10px}'
-  + '.fam-head>span:not([class]){font-size:12px;font-weight:800;color:#0a63d6}';
+  + '.fam-head>span:not([class]){font-size:12px;font-weight:800;color:#0a63d6}'
+  // #890 · 回执行「本次写入字段」的两列字段位（见 `receiptFields`）：左键名右值，长值回行不撑破卡。
+  + '\n.receipt-detail{margin:10px 0 2px;display:grid;gap:4px}'
+  + '.receipt-detail-row{display:grid;grid-template-columns:88px 1fr;gap:8px;font-size:13.5px}'
+  + '.receipt-detail-k{color:#6e6e73}.receipt-detail-v{color:#1d1d1f;font-weight:600;overflow-wrap:anywhere}';
 export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
   // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
   // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。

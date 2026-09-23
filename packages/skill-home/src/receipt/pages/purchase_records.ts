@@ -79,6 +79,19 @@ function itemsOf(env: Envelope): Record<string, unknown>[] {
   return Array.isArray(d.items) ? (d.items as Record<string, unknown>[]) : [];
 }
 
+/** 本次查询条件的回显行（#890）：命令层按物品查时把 `query` 带回；缺了返空串（旧信封不硬造）。 */
+function queryEchoOf(env: Envelope): string {
+  const q = (env.data as { query?: unknown }).query;
+  if (!q || typeof q !== 'object' || Array.isArray(q)) return '';
+  const itemId = (q as { item_id?: unknown }).item_id;
+  const name = String((q as { item_name?: unknown }).item_name ?? '');
+  if (itemId === undefined && name === '') return '';
+  return '<div class="rc-meta">'
+    + metaRow('查询物品', name === '' ? '—' : name)
+    + metaRow('物品编号', itemId === undefined ? '—' : '编号 ' + String(itemId))
+    + '</div>';
+}
+
 /** 缺值一律如实写这个（#817 第二波：槽位齐全，值不给就空着，不编、不猜、不留白）。 */
 const BLANK = '—';
 
@@ -256,7 +269,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     ? '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
     : items.length
       ? purchaseTable(env, items)
-      : '<div class="fam-content" data-block="empty"><p>本次查询没有命中购买记录，可先登记一条再回来复核</p></div>';
+      // #890：按物品查（退货窗口）0 命中时回显「这一次查的是谁」——原先只有一句「没有命中购买记录」，
+      // 认不出查的是哪一件。`query` 由命令层带回（`buildTicketList` 的第二个入参），缺了照旧只写那一句。
+      : '<div class="fam-content" data-block="empty">' + queryEchoOf(env)
+        + '<p>本次查询没有命中购买记录，可先登记一条再回来复核</p></div>';
   // #817（⑤文案不冗余）：摘掉摘要句（原为「本次清单共N行，按购买日排列（金额与渠道在物品详情）」）——
   // 行数表里数得出来、字段去处是取数说明；属实现说明当正文。
   const content = head

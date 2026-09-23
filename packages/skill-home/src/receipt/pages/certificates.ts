@@ -14,6 +14,8 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+// #890：证件号码脱敏的唯一一处规则住取数层（旧信封回退也读它，不再在页里自留一份）。
+import { maskCertNumber } from '../../fetch/index.js';
 
 export const FAMILY = 'certificates' as const;
 
@@ -73,13 +75,9 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
-function maskDisplay(raw: unknown): string {
-  if (typeof raw !== 'string') return '未登记';
-  const s = raw.trim();
-  if (s === '') return '未登记';
-  if (s.length <= 4) return '****';
-  return '****' + s.slice(-4);
-}
+// #890：脱敏规则搬到取数层（`fetch/domains.ts` 的 `maskCertNumber`，命令层出 `number_masked` 用的就是它）
+// ——同一件事只有一个定义地（铁律二）。本页这处只留给旧信封（无 `number_masked` 才走到），故直接转调。
+const maskDisplay = maskCertNumber;
 
 function daysLeftOf(expires: string): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(expires);
