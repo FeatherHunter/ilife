@@ -92,6 +92,10 @@ const CSS = '<style>'
   + '.st-filter{display:flex;gap:10px;align-items:center;margin:12px 0;flex-wrap:wrap}'
   + '.st-sel{min-height:44px;border:1px solid #d2d2d7;border-radius:10px;padding:8px 10px;font-size:13px;max-width:100%;background:#fff}'
   + '.st-count{margin-left:auto;font-size:12px;color:#6e6e73}.st-item{border:1px solid #e3e6ea;border-radius:14px;padding:12px;margin:10px 0}'
+  // #865：可调档位 chip（在用那一档实心）；与分类筛选的当前取值同一「选中态」语言。
+  + '.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}'
+  + '.st-chip{background:#f0f3f8;color:#3a3a3c;border-radius:99px;padding:2px 10px;font-size:11px}'
+  + '.st-chip.on{background:#0a63d6;color:#fff;font-weight:700}'
   + '.st-item.on{border-color:#0a63d6;background:#f6faff}.st-name{font-weight:700;font-size:14px;overflow-wrap:anywhere}'
   + '.st-sub{font-size:11px;color:#6e6e73;margin-top:6px;border-collapse:collapse}'
   // 到期日与位置各占一格（此前是一句「到期…，放在…」硬挤一行：#817 seq 41 的 ⑥）；
@@ -133,12 +137,20 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
   + 'var ok=document.getElementById("stConfirm");if(ok){ok.addEventListener("click",function(){var ids=Object.keys(sel);if(!ids.length){toast("还没有勾选任何处理");return}var lines=ids.map(function(id){var el=document.querySelector(".st-item[data-id=\\""+id+"\\"]");var nm=el?el.getAttribute("data-name"):"#"+id;return nm+"："+sel[id]});cp("请处理以下过期物品："+lines.join("；"))})}paint();})();</script>';
 
-interface AlertItem { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string; place?: string }
+interface AlertItem {
+  id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string;
+  place?: string; daysLeft?: number | null; expirationDate?: string;
+}
 
 function dayStamp(d: Date): string {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
-// 剩余天数（服务端现算，真值；到期日缺失返回空）。
+// 剩余天数：优先吃回执 `daysLeft`（取数层按本地日期现算的真值）；
+// 缺该字段时按到期日现算（直调本装配的老回执仍可用），到期日缺失为空。
+function daysLeftOf(it: AlertItem, today: string): number | null {
+  if (typeof it.daysLeft === 'number') return it.daysLeft;
+  return daysLeft(String(it.expirationDate ?? it.location ?? ''), today);
+}
 function daysLeft(exp: string, today: string): number | null {
   if (!/^\d{4}-\d{2}-\d{2}/.test(exp)) return null;
   const a = new Date(exp.slice(0, 10) + 'T00:00:00');
@@ -158,11 +170,11 @@ function badgeOf(dl: number | null): { cls: string; text: string } {
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/expiring.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
+  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number; allowed?: number[] };
   const items = Array.isArray(d.items) ? d.items : [];
   const today = dayStamp(new Date());
   const rows = items.map((it) => {
-    const dl = daysLeft(it.location, today);
+    const dl = daysLeftOf(it, today);
     const badge = badgeOf(dl);
     const place = it.name.replace(/^#\d+\s*/, '');
     return { it, dl, badge, place };
@@ -183,12 +195,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
     + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
     + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
+  // #865：可调档位由回执 `allowed` 给（老 expiring.py ALLOWED_DAYS）；本次在用的那一档实心标出。
+  const gears = Array.isArray(d.allowed) && d.allowed.length
+    ? '<div class="st-chips">' + d.allowed.map((g) => '<span class="st-chip' + (g === d.days ? ' on' : '') + '">'
+      + escapeHtml(String(g)) + ' 天</span>').join('') + '</div>'
+    : '';
   const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id
     + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">'
     + '<div class="st-name">' + escapeHtml(latinFree(r.place || r.it.name)) + '（编号' + r.it.id + '）</div>'
     + '<table class="st-sub"><tbody><tr>'
-    + '<th>到期</th><td>' + escapeHtml(r.it.location || '日期待补') + '</td>'
+    + '<th>到期</th><td>' + escapeHtml(r.it.expirationDate ?? r.it.location ?? '') + '</td>'
     + (r.it.place ? '<th>放在</th><td>' + escapeHtml(r.it.place) + '</td>' : '')
+    + (typeof r.it.quantity === 'number' && r.it.quantity > 0 ? '<th>数量</th><td>' + r.it.quantity + '</td>' : '')
     + '</tr></tbody></table>'
     + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>'
     + '<div class="st-ops tight"><button class="st-btn" data-act="已用完" data-item="' + r.it.id + '">已用完</button>'
@@ -209,7 +227,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
-  const content = CSS + head + '<div class="fam-content st">' + hero + cards + list + '</div>'
+  const content = CSS + head + '<div class="fam-content st">' + hero + cards + gears + list + '</div>'
     + bar + raw + blocks
     + '<div class="st-toast" id="stToast"></div>' + JS;
   return fillTemplate(template, content);

@@ -71,6 +71,8 @@ function latinFree(s: string): string {
   return s.replace(/[A-Za-z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xFEE0));
 }
 
+interface DistRow { name: string; count: number; totalValue?: number; pct?: number }
+
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
   const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(showOf(b)) + '</li>').join('');
   return '<section class="st-sec" hidden data-block="' + group + '"><h2 class="st-sec-t">' + title + '</h2><ul class="st-need">' + items + '</ul></section>';
@@ -110,7 +112,26 @@ const CSS = '<style>'
   + '.st-raw{margin:12px 0;font-size:12px}.st-raw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#0a63d6;font-weight:700}'
   + '.st-raw pre{background:#1d1d1f;color:#e8e8e8;border-radius:10px;padding:12px;overflow:auto;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}'
   + '.st-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}'
-  + '.st-toast.show{opacity:1}@media(max-width:560px){.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}}'
+  // #865：分布逐项计数（名／条／计）与趋势四桶柱列。分布行是三格定宽栅格，窄屏不掉字；
+  // 趋势柱列用定高轨道＋底对齐填充，四桶在 390 档仍同排（每桶两柱 14px）。
+  + '.st-dim{margin:2px 0 10px}'
+  + '.st-drow{display:grid;grid-template-columns:minmax(0,1fr) 72px 34px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f8}'
+  + '.st-dname{min-width:0;overflow-wrap:anywhere;font-size:12.5px;color:#3a3a3c}.st-dtrack{margin:0}'
+  + '.st-dnum{font-size:12.5px;font-weight:800;text-align:right;color:#1d1d1f}'
+  + '.st-dpct{display:block;font-size:11px;font-weight:400;color:#8a8a8f}'
+  // 「标签＋值」的行内两格（标签与值各是一个节点，读的人分得清哪个是哪个）。
+  + '.st-kv{display:inline-flex;gap:6px;align-items:baseline;font-size:12px;color:#55585f}'
+  + '.st-kv b{font-size:11px;color:#8a8a8f;font-weight:400}'
+  + '.st-trend{display:flex;gap:8px;align-items:flex-end;margin:10px 0 4px}'
+  + '.st-tb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}'
+  + '.st-tcols{display:flex;gap:6px;align-items:flex-end}'
+  + '.st-tcell{display:flex;flex-direction:column;align-items:center;gap:3px}'
+  + '.st-tcol{display:flex;align-items:flex-end;width:14px;height:88px;background:#f0f3f8;border-radius:3px;overflow:hidden}'
+  + '.st-tfill{display:block;width:100%;background:#0a63d6;border-radius:3px 3px 0 0;min-height:3px}'
+  + '.st-tcol.del .st-tfill{background:#c7cbd1}'
+  + '.st-tcell b{font-size:11px;font-weight:700;color:#6e6e73}.st-tl{font-size:11px;color:#6e6e73}'
+  + '.st-toast.show{opacity:1}@media(max-width:560px){.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}'
+  + '.st-drow{grid-template-columns:minmax(0,1fr) 54px 30px;gap:6px}.st-tcols{gap:4px}}'
   + '</style>';
 
 const JS = '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
@@ -124,11 +145,20 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/overview.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { metrics?: Record<string, number> };
+  const d = (env.data ?? {}) as {
+    metrics?: Record<string, number>;
+    distributions?: { categories?: DistRow[]; locations?: DistRow[]; statuses?: DistRow[]; owners?: DistRow[] };
+    topValue?: { name: string; price: number; category: string }[];
+    topFreq?: { name: string; count: number; lastAccessedAt: string }[];
+    trend?: { days: number; note: string; buckets: { label: string; added: number; discarded: number }[] };
+  };
   const m = d.metrics ?? {};
   const n = (k: string): number => (typeof m[k] === 'number' ? m[k] : 0);
-  const tops = Object.entries(m).filter(([k]) => k.startsWith('top.'))
-    .map(([k, v]) => ({ name: k.slice(4), count: v })).sort((a, b) => b.count - a.count);
+  // #865：高频排行吃 `topFreq`（完整名称＋最后使用日）；缺该字段时回落既有 `top.*` 指标（既有键不动）。
+  const tops = (Array.isArray(d.topFreq) && d.topFreq.length
+    ? d.topFreq
+    : Object.entries(m).filter(([k]) => k.startsWith('top.')).map(([k, v]) => ({ name: k.slice(4), count: v, lastAccessedAt: '' })))
+    .slice().sort((a, b) => b.count - a.count);
   const topMax = tops.length ? Math.max(...tops.map((t) => t.count), 1) : 1;
   const head = '<div class="fam-head"><span class="fam-name" data-family="overview">统计总览</span><span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">统物品</span></div>';
   // 摘要不复述五张卡的数字：只说卡片里没有的结论（价格是否补全），覆盖率数字留给价值排行那块。
@@ -144,24 +174,50 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="st-card"><b>分类数</b><span>' + n('categories') + '</span><small>启用中的分类</small></div></div>';
   const freqRows = tops.length ? tops.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：'
     + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name))
+    // #865：最后使用日来自 `topFreq.lastAccessedAt`（老「高频 TOP」表带这一列）；标签与日期各占一格，无值不占位。
+    + (t.lastAccessedAt ? '<div class="st-sub"><span class="st-kv"><b>最后使用</b>'
+      + escapeHtml(String(t.lastAccessedAt).slice(0, 10)) + '</span></div>' : '')
     + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.count / topMax) * 100) + '%"></span></div></div>'
     + '<div class="st-num">' + t.count + '次</div></div>').join('')
     : '<div class="st-empty"><b>还没有访问记录</b>多看看几件物品，这里就会出现高频排行</div>';
   const freq = '<div class="st st-sec"><h2 class="st-sec-t">高频排行</h2>'
     + '<div class="st-legend"><span><i style="background:#0a63d6"></i>柱长代表访问次数，点一行复制筛选浏览指令</span></div>' + freqRows + '</div>';
-  // #817：四行原本都挂「复制指令」这一颗同名按钮（同页四颗，看不出各自复制什么），改成各写自己的口径。
-  const dist = (t: string, ctx: string, cmd: string, label: string) => '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div><div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">' + label + '</button></div></div>';
+  // #865：四个分布各出逐项计数（老 `top_category_rows`／`_location_distribution`／`_status_distribution`／`_owner_distribution` 口径）。
+  // 口径原文只住 `data-need` 属性；可见行是「名称＋柱长＋计数」，三格定宽栅格，窄屏不掉字也不靠分隔符拼串。
+  const dims = d.distributions ?? {};
+  const dimRows = (rows: DistRow[] | undefined): string => {
+    const list = Array.isArray(rows) ? rows.slice(0, 8) : [];
+    if (!list.length) return '';
+    const max = Math.max(...list.map((r) => r.count), 1);
+    // 值与占比拆成两个节点（占比另起一行小灰字）：两件不同的东西分别是「件数」与「占比」，
+    // 挤进一个串看不出哪个是哪个；拆开也避免同一串在多行重复时被判据当成重复句。
+    return '<div class="st-dim">' + list.map((r) => '<div class="st-drow"><span class="st-dname">'
+      + escapeHtml(latinFree(r.name)) + '</span><span class="st-track st-dtrack"><span class="st-fill" style="width:'
+      + Math.round((r.count / max) * 100) + '%"></span></span><span class="st-dnum">' + r.count + ' 件'
+      + (typeof r.pct === 'number' ? '<span class="st-dpct">' + r.pct + '%</span>' : '') + '</span></div>').join('') + '</div>';
+  };
+  const dist = (t: string, ctx: string, cmd: string, label: string, rows?: DistRow[]): string =>
+    '<div class="st-row"><div class="st-name">' + t + '<div class="st-sub">' + ctx + '</div></div>'
+    + '<div><button class="st-btn soft" data-t="' + escapeHtml(cmd) + '">' + label + '</button></div></div>' + dimRows(rows);
   // #817 第二波（②层级清）：灰字原是「无逐维明细」——数据口径术语，读的人不知道那是什么；
   // 改成说这一块怎么用（点右边按钮复制该维统计）。
   const dists = '<div class="st st-sec"><h2 class="st-sec-t">分布 <span class="st-hint">点右侧按钮，复制该维统计</span></h2>'
-    + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量', '复制分类统计')
-    + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量', '复制位置统计')
-    + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量', '复制状态统计')
+    + dist('分类分布', '库内共有' + n('categories') + '个分类', '帮我按分类统计物品数量', '复制分类统计', dims.categories)
+    + dist('位置分布', '库内共有' + n('locations') + '个位置点', '帮我按位置统计物品数量', '复制位置统计', dims.locations)
+    + dist('状态分布', '库内共有' + n('items') + '件物品', '帮我按状态统计物品数量', '复制状态统计', dims.statuses)
     // #817 第二波（②层级清）：四块里只有这一块没有总量（check 要「四个分布分块是否有总量与入口」）——补上。
-    + dist('归属分布', '默认归使用者，库内共 ' + n('items') + ' 件', '帮我按归属人统计物品数量', '复制归属统计') + '</div>';
-  const vals = Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v })).sort((a, b) => b.price - a.price);
+    + dist('归属分布', '默认归使用者，库内共 ' + n('items') + ' 件', '帮我按归属人统计物品数量', '复制归属统计', dims.owners) + '</div>';
+  // #865：价值排行吃 `topValue`（带分类名，价格大于 0 口径）；缺该字段时回落既有 `value.*` 指标。
+  const vals = (Array.isArray(d.topValue) && d.topValue.length
+    ? d.topValue
+    : Object.entries(m).filter(([k]) => k.startsWith('value.')).map(([k, v]) => ({ name: k.slice(6), price: v, category: '' })))
+    .slice().sort((a, b) => b.price - a.price);
   const valMax = vals.length ? Math.max(...vals.map((t) => t.price), 1) : 1;
-  const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0"><div class="st-name">' + escapeHtml(latinFree(t.name)) + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div><div class="st-num">' + t.price + ' 元</div></div>').join('');
+  const valRows = vals.map((t) => '<div class="st-row" data-bar="帮我筛选浏览物品：' + escapeHtml(t.name) + '" role="button" tabindex="0">'
+    + '<div class="st-name">' + escapeHtml(latinFree(t.name))
+    + (t.category ? '<div class="st-sub">' + escapeHtml(latinFree(t.category)) + '</div>' : '')
+    + '<div class="st-track"><span class="st-fill" style="width:' + Math.round((t.price / valMax) * 100) + '%"></span></div></div>'
+    + '<div class="st-num">' + t.price + ' 元</div></div>').join('');
   // #817 第二波（⑥分隔符不懒政）：原先三个口径（覆盖率／有价格件数／合计价值）挤在标题那一行的小灰字里，
   // 靠「，」硬串；改成三格注脚，一格一个口径名＋一个值，窄屏自动折行。
   const priceMeta = '<div class="st-meta">'
@@ -177,9 +233,20 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const sug = '<div class="st st-sug">' + (tops.length
     ? '访问热度已经攒下来，按高频排行把常用品固定到顺手的位置，闲置久了的顺路清理'
     : '多让助手查几次物品详情，高频排行才攒得出数据') + '</div>';
-  // 趋势块（票 #865 归数字）：本票只把块与诚实空态放出来，不编趋势数。
-  const trend = '<div class="st st-sec"><h2 class="st-sec-t">趋势 <span class="st-hint">近30天变动</span></h2>'
-    + '<div class="st-empty"><b>趋势数据不足</b>库内还没有足量的变更记录，攒够之后这里给近30天的变动曲线</div></div>';
+  // #865：趋势吃 `trend.buckets`（近30天四桶：近7天／8-14天／15-21天／22-30天，老 `_trend_buckets` 分档）。
+  // 每桶两柱（录入／废弃）＋桶下计数；桶全空时仍给诚实空态，不画一条零线冒充曲线。
+  const buckets = Array.isArray(d.trend?.buckets) ? d.trend.buckets : [];
+  const trendMax = buckets.length ? Math.max(...buckets.map((b) => Math.max(b.added, b.discarded)), 1) : 1;
+  const trendPct = (v: number): string => Math.round((v / trendMax) * 100) + '%';
+  const trendChart = buckets.length
+    ? '<div class="st-trend">' + buckets.map((b) => '<div class="st-tb"><div class="st-tcols">'
+      + '<span class="st-tcell"><span class="st-tcol"><i class="st-tfill" style="height:' + trendPct(b.added) + '"></i></span><b>' + b.added + '</b></span>'
+      + '<span class="st-tcell"><span class="st-tcol del"><i class="st-tfill" style="height:' + trendPct(b.discarded) + '"></i></span><b>' + b.discarded + '</b></span>'
+      + '</div><div class="st-tl">' + escapeHtml(b.label) + '</div></div>').join('')
+      + '</div><div class="st-legend"><span><i style="background:#0a63d6"></i>录入</span><span><i style="background:#c7cbd1"></i>废弃</span></div>'
+      + '<div class="st-sub">' + escapeHtml(d.trend?.note ?? '') + '</div>'
+    : '<div class="st-empty"><b>趋势数据不足</b>库内还没有足量的变更记录，攒够之后这里给近30天的变动曲线</div>';
+  const trend = '<div class="st st-sec"><h2 class="st-sec-t">趋势 <span class="st-hint">近30天变动</span></h2>' + trendChart + '</div>';
   const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>' + escapeHtml(JSON.stringify(env)) + '</pre></details>';
   const tail = '<div class="st-actions">' + homeCopyArea({
       data: { envelope: env },

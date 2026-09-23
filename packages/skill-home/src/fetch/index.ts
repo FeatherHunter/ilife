@@ -19,4 +19,7 @@ export {
   listPurchases, addPurchase, purchaseYearStats, listWarranties, addWarranty, addServiceEvent,
   listCerts, addCert, listAccounts, listMembers, addMember, listBorrows, addBorrow,
   statsOverview, highFreq, idleItems, expiringItems,
+  // #865：统计取数补齐（分布明细／价值与高频排行／趋势／盘点明细）。
+  localToday, frequentTopItems, valueTopItems, categoryDistribution, locationDistribution,
+  statusDistribution, ownerDistribution, recordTrend, inventoryDetail,
 } from './domains.js';

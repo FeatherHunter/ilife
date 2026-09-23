@@ -44,7 +44,7 @@ function ymd(offsetDays) {
 const FAMS = ['overview', 'idle', 'expiring', 'inventory_stat'];
 const STAMP = stamp();
 
-before(() => {
+before(async () => {
   assert.ok(existsSync(bin), 'dist 未建：先跑 node node_modules/typescript/bin/tsc -b packages/skill-home');
   HOME = mkdtempSync(join(tmpdir(), 'stats811-'));
   runOk('home.stats.overview', {}, 'seed overview');
@@ -54,6 +54,17 @@ before(() => {
   runOk('home.item.add', { name: '用例雨衣', category_id: cid, location: '阳台/柜子', expiration_date: ymd(-3) }, 'seed exp-past');
   runOk('home.item.add', { name: '用例扳手', category_id: cid, location: '书房/抽屉' }, 'seed plain');
   runOk('home.inventory.round', { op: 'round', scope: 'all' }, 'seed round');
+  // #865：闲置判据改按 `coalesce(last_accessed_at, created_at)` 算（老 idle.py 口径），
+  // 刚录入、从没用过的件不再算闲置——本用例要把种子件真置成闲置（回拨最后一次使用日）。
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(join(HOME, '.ilife', 'data', 'home.db'));
+  try {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - 120);
+    db.prepare("UPDATE items SET last_accessed_at=? WHERE name LIKE '用例%'").run(cut.toISOString());
+  } finally {
+    db.close();
+  }
 });
 
 function paramsFor(family) {

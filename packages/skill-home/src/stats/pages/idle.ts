@@ -93,8 +93,13 @@ const CSS = '<style>'
   + '.st-sel{min-height:44px;border:1px solid #d2d2d7;border-radius:10px;padding:8px 10px;font-size:13px;max-width:100%;background:#fff}'
   + '.st-count{margin-left:auto;font-size:12px;color:#6e6e73}.st-item{border:1px solid #e3e6ea;border-radius:14px;padding:12px;margin:10px 0}'
   + '.st-item.on{border-color:#0a63d6;background:#f6faff}.st-name{font-weight:700;font-size:14px;overflow-wrap:anywhere}'
-  + '.st-sub{font-size:11px;color:#6e6e73;margin-top:4px}.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}'
+  + '.st-sub{font-size:11px;color:#6e6e73;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px}.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}'
+  // #865：「标签＋值」行内两格（标签与值各是一个节点，读的人分得清哪个是哪个）。
+  + '.st-kv{display:inline-flex;gap:5px;align-items:baseline}'
+  + '.st-kv b{font-size:11px;color:#8a8a8f;font-weight:400}'
   + '.st-chip{background:#f0f3f8;color:#3a3a3c;border-radius:99px;padding:2px 10px;font-size:11px}'
+  // #865：档位 chip 的在用那一档实心（与上面 select 的当前分类同一「选中态」语言）。
+  + '.st-chip.on{background:#0a63d6;color:#fff;font-weight:700}'
   + '.st-badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;background:#fff0d9;color:#8a5a00;margin-top:6px}'
   + '.st-ops{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}'
   + '.st-ops.tight{flex-wrap:nowrap}.st-ops.tight .st-btn{flex:1 1 0;padding:10px 4px;font-size:12px}'
@@ -123,23 +128,34 @@ const JS = '<script>(function(){var t=null;function toast(m){var e=document.getE
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
   + 'var ok=document.getElementById("stConfirm");if(ok){ok.addEventListener("click",function(){var ids=Object.keys(sel);if(!ids.length){toast("还没有勾选任何处理");return}var lines=ids.map(function(id){var el=document.querySelector(".st-item[data-id=\\""+id+"\\"]");var nm=el?el.getAttribute("data-name"):"#"+id;return nm+"："+sel[id]});cp("请处理以下闲置物品："+lines.join("；"))})}paint();})();</script>';
 
-interface AlertItem { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string }
+interface AlertItem {
+  id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string;
+  daysIdle?: number; source?: string;
+}
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/stats/idle.html', import.meta.url), 'utf8');
-  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number };
+  const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number; allowed?: number[] };
   const items = Array.isArray(d.items) ? d.items : [];
   const head = '<div class="fam-head"><span class="fam-name" data-family="idle">统计总览</span>'
     + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查闲置</span></div>';
   // #817（⑤文案不冗余）：胶囊原写「查闲置」，与 h1（交付链回填的场景名）同名相邻＝同一个词说两遍
   // （本页正文里「闲置」另有十几处）。去掉胶囊：这一行的范围由下面那句与「闲置件数」卡承担。
-  const hero = '<div class="st st-hero"><p class="st-lead">共' + items.length + '件超过所选天数未使用，勾选后确认处理</p></div>';
+  // #865：本次判定档位来自回执 `days`（真值），不再写死文案里的默认值。
+  const stdDays = typeof d.days === 'number' && d.days > 0 ? d.days : null;
+  const hero = '<div class="st st-hero"><p class="st-lead">共' + items.length + '件超过'
+    + (stdDays === null ? '所选天数' : stdDays + ' 天') + '未使用，勾选后确认处理</p></div>';
   const cards = '<div class="st st-cards">'
     + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span></div>'
-    + '<div class="st-card"><b>闲置标准</b><span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + ' 天' : '—') + '</span><small>下单时指定</small></div></div>';
+    + '<div class="st-card"><b>闲置标准</b><span>' + (stdDays === null ? '—' : stdDays + ' 天') + '</span><small>下单时指定</small></div></div>';
+  // #865：可调档位由回执 `allowed` 给（老 idle.py ALLOWED_THRESHOLDS）；本次在用的那一档实心标出。
+  const gears = Array.isArray(d.allowed) && d.allowed.length
+    ? '<div class="st-chips">' + d.allowed.map((g) => '<span class="st-chip' + (g === stdDays ? ' on' : '') + '">'
+      + escapeHtml(String(g)) + ' 天</span>').join('') + '</div>'
+    : '';
   const sug = '<div class="st st-sug">先处理占地方的大件与重复款，'
     + (items.length ? '拿不准的选先不处理' : '当前没有需要处理的闲置物品') + '</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
@@ -150,8 +166,13 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name)) + '</div>'
     // #817 第二波（⑥ 分隔符不懒政）：名称行原写「名称（编号13）」，把名称与编号挤成一段括号串；
     // 编号本来就是独立字段（`id`），拆出来单独一行「编号 13」。
-    // 「过期／临期」这类物品状态在回执里没有独立字段（`status` 恒为闲置），名称里的那半截留给数据层拆。
-    + '<div class="st-sub">编号 ' + escapeHtml(String(it.id)) + '</div>'
+    // #865：闲置天数与时长来源来自回执（`daysIdle` 按 `coalesce(last_accessed_at, created_at)` 算，`source` 记来源）。
+    // 走「标签＋值」的行内两格：两个事实各有自己的格子，不靠分隔符串成一句，也不会让同一串在多行重复。
+    + '<div class="st-sub"><span class="st-kv"><b>编号</b>' + escapeHtml(String(it.id)) + '</span>'
+    + (typeof it.daysIdle === 'number' ? '<span class="st-kv"><b>闲置</b>' + it.daysIdle + ' 天</span>' : '')
+    + (it.source ? '<span class="st-kv"><b>时长来源</b>' + escapeHtml(latinFree(it.source)) + '</span>' : '')
+    + (typeof it.quantity === 'number' && it.quantity > 1 ? '<span class="st-kv"><b>数量</b>' + it.quantity + ' 件</span>' : '')
+    + '</div>'
     + locChips(it.location)
     // #817（⑤文案不冗余）：徽标原写「闲置」——逐行复述页面主题词，等于没带信息；
     // 改挂该行自己的分类（与上面的分类筛选同一取值），行与筛选口径才对得上。
@@ -171,7 +192,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
     + sectionOf('fields', '字段') + sectionOf('operations', '操作')
     + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
-  const content = CSS + head + '<div class="fam-content st">' + hero + cards + sug + list + '</div>'
+  const content = CSS + head + '<div class="fam-content st">' + hero + cards + gears + sug + list + '</div>'
     + bar + raw + blocks
     + '<div class="st-toast" id="stToast"></div>' + JS;
   return fillTemplate(template, content);
