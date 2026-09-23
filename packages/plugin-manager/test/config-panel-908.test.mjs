@@ -268,19 +268,25 @@ describe('#908 一行怎么画：四支控件与 v3 定稿三条', () => {
     }
   });
 
-  it('v3 ①：只读目录行一枚浏览按钮都不画，且控件改不动', () => {
+  /* ═══ #920 改判两条（票面「与本票冲突的既有断言按新形状改判并写明理由」）═══
+     改判理由：#920 阶段二把只读行的行模板照 v3.1 的 `rowShell` 换掉——只读行＝**标签—值同行**，
+     值是一段文本而不是一格 disabled 输入框。老断言咬的是「有一格 disabled 的输入框」，那是**老形状**
+     的记号；同一件性质（「这一行用户改不动」）在 v3.1 的形状里由「压根没有可改控件」给出。
+     判据一件不删：见下图两条，零目录入口、零输入框、值原样上屏三条都在。 */
+
+  it('v3 ①（#920 改判）：只读目录行一枚浏览按钮都不画，也没有可改控件', () => {
     const tree = rowOf('backup.dir', { browser: entryOf('native'), value: 'C:\\探针\\只读目录' });
     const browse = buttons(tree).filter((b) => textOf(b) === '浏览文件夹');
     assert.deepEqual(browse, [], '只读目录行不该有浏览按钮');
-    const input = ofType(tree, 'input')[0];
-    assert.equal(input.props.disabled, true, '只读行的控件须 disabled');
-    assert.equal(input.props.onChange, undefined, '只读行不接 onChange');
+    assert.deepEqual(ofType(tree, 'input'), [], '只读行不该画输入框（v3.1 的只读行是标签—值同行）');
+    assert.match(textOf(tree), /C:\\探针\\只读目录/, '只读行的值要原样上屏（且不截断）');
   });
 
-  it('只读行（非目录）同样改不动', () => {
-    const input = ofType(rowOf('db.name'), 'input')[0];
-    assert.equal(input.props.disabled, true);
-    assert.equal(input.props.onChange, undefined);
+  it('只读行（非目录）同样没有可改控件（#920 改判）', () => {
+    const tree = rowOf('db.name');
+    assert.deepEqual(ofType(tree, 'input'), [], '只读行不该画输入框');
+    assert.equal(buttonWith(tree, '浏览文件夹'), undefined, '只读行不该有目录入口');
+    assert.equal(textOf(tree), '库文件名' + 'C:\\Users\\me\\.ilife\\bill.db' + '复制', '只读行＝标签＋值＋那枚复制');
   });
 
   it('v3 ③：每一行都有一枚「复制」，字面随回执走', () => {
@@ -314,8 +320,16 @@ describe('#908 一行怎么画：四支控件与 v3 定稿三条', () => {
     ]);
   });
 
-  it('脏行带记号、跟随行给「将跟随更新」，两者都不给时都不画', () => {
-    assert.match(textOf(rowOf('db.dir', { dirty: true })), /已改动/);
+  it('脏行带记号（#920 改判）、跟随行给「将跟随更新」，两者都不给时都不画', () => {
+    // #920 改判：v3.1 的脏记号**不是一行字**，而是输入框的注意力描边（`.ic-master input.is-dirty`：
+    // 2px 琥珀描边 ＋ 3px 光晕，与 5→4 的内边距对消，宽高不变），字数那一档落在卡片标题行的徽标上。
+    // 判据一件不删：老断言咬「脏行带记号」，这里改咬同一件性质的两个新落点（输入框那圈描边 ＋ 标题行徽标）。
+    const dirtyInput = ofType(rowOf('db.dir', { dirty: true }), 'input')[0];
+    assert.match(String(dirtyInput.props.style.border), /state-warn-primary/, '脏行的输入框没有注意力描边');
+    assert.match(String(dirtyInput.props.style.boxShadow), /state-warn-primary/, '脏行的输入框没有那圈光晕');
+    const cleanInput = ofType(rowOf('db.dir'), 'input')[0];
+    assert.doesNotMatch(String(cleanInput.props.style.border), /state-warn-primary/, '不脏的行不该带注意力描边');
+    assert.match(textOf(PanelBody(bodyProps({ dirtyKeys: ['db.dir'] }))), /1 项未保存/, '标题行徽标要报未保存数');
     assert.match(textOf(rowOf('backup.dir', { follow: true })), /将跟随更新/);
     assert.doesNotMatch(textOf(rowOf('db.dir')), /已改动|将跟随更新/);
   });

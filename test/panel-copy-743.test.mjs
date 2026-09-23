@@ -26,6 +26,9 @@
 //      行数同步钉死：6／11／4／3／5／4——仍读各家行表；
 //   ⑦（#758）只读行的目录入口：只读目录行**一枚浏览按钮都不画**（#747 定稿 v3 ①：不摆点了也没反应的
 //      死按钮）；可改目录行照旧恰一枚（#743 改前是「保留但不可点击」）；
+//      **#920 改判**：只读行的行模板换成 v3.1 的「标签—值同行」之后，该行没有输入框了
+//      （改前咬「恰一格 disabled 输入框 ＋ 不接 onChange」，是老形状的记号）；同一件性质
+//      （用户改不动它）改由「零 input ＋ 值原样上屏 ＋ 恰一枚复制」三条给出，判据一件不删。
 //   ⑧（#758）控件文案不含省略号：共用件源码与产物零 `…`；各行标题与 hint 零 `…` 与 `...`；
 //      目录行两档按钮字面合一为「浏览文件夹」且无省略号；
 //   ⑨（#910）六家产物仍接上了：各自 `dist/client.js` 里那枚页签注册仍在、行表仍从各自的设置页元数据来
@@ -263,10 +266,17 @@ describe('#743 六家设置页：间距一致 · 文案有界 · 数据目录预
       for (const item of readonlyDir) {
         const node = render(item, { mode: 'browse', onOpen: () => {} });
         assert.equal(browseButtonsOf(node).length, 0, pkg + ' ' + item.key + ' 是非可改目录行，不该画目录入口按钮');
-        const inputs = sharedNodesOfType(node, 'input');
-        assert.equal(inputs.length, 1, pkg + ' ' + item.key + ' 应有一格输入框');
-        assert.equal(inputs[0].props.disabled, true, pkg + ' ' + item.key + ' 的输入框须 disabled');
-        assert.equal(inputs[0].props.onChange, undefined, pkg + ' ' + item.key + ' 不接 onChange');
+        /* #920 改判（票面：「与本票冲突的既有断言按新形状改判并写明理由」）——
+           改前这两条咬的是「恰有一格 disabled 输入框 ＋ 不接 onChange」，那是**老形状**的记号。
+           #920 阶段二把只读行照 v3.1 的 `rowShell` 换成「标签—值同行」，值是一段文本、
+           **压根没有可改控件**；同一件性质（用户改不动它）由「零 input」直接给出，更硬。
+           判据一件不删：下面三条把老的两条换成三条（零 input／值原样上屏／那枚复制照旧恰一枚）。 */
+        assert.equal(sharedNodesOfType(node, 'input').length, 0,
+          pkg + ' ' + item.key + ' 是只读行，不该画输入框（v3.1 的只读行是标签—值同行，不是 disabled 的框）');
+        assert.ok(sharedTextOf(node).includes('C:\\探针\\只读目录'),
+          pkg + ' ' + item.key + ' 的只读值没有原样上屏（只读行的值必须完整可见）');
+        assert.equal(sharedNodesOfType(node, 'button').filter((b) => sharedTextOf(b) === '复制').length, 1,
+          pkg + ' ' + item.key + ' 应恰有一枚「复制」');
       }
     }
     // 反向对照：可改目录行的目录入口照旧在（零按钮是针对**只读**那一档，不是把入口一刀切掉）。
