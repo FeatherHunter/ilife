@@ -328,3 +328,37 @@ $b = [System.IO.File]::ReadAllBytes($p)
 - 9 域读数（命令 3）：items 29 场景／19 页族、space 4/4、outfit 5/5、stats 4/4、express 4/4、receipt 18/4、family 2/2、setup 4/4、link 3/3；页族合计 **49**。
 - 老模板全库（命令 4）：**67** 个 `.html`（＝ yaml 引用 49 ＋ legacy 18）。
 - 编码（命令 5）：**BOM 无**、全文 **LF**（含 CR 的字节数 0）、本册 **260 行**；没有把字面 `\n` 当换行用 —— 该模式只命中 3 行（`:313` 是「不得有字面 `\n`」这句说明本身、`:320` 是命令 5 自己的 `-Pattern`、`:330` 是本行读数），均为举例/命令文本，非正文换行。
+
+## 六 · 仓库外原型附录（#859 User Story 12 补登，2026-09-21）
+
+票 1 的清点范围只有 `templates\`（§四 4.1 末行「老技能 · 目录清点」），缺口册 `html-scenes-gap-inventory.md` 也自陈跳过 `.scratch`／`.notes`。2026-09-21 作全树穷举补登：老技能全树 **1217** 个 `.html` ＝ `output\` 584 ＋ `.scratch\` 500 ＋ `templates\` 67 ＋ `docs\` 46 ＋ `.notes\` 17 ＋ 根 1 ＋ `.db\` 1 ＋ `_grilling\` 1。
+
+其中 `templates\` 那 67 份真模板**已 100% 在册**（表一 49 ＋ §三 ④ 18），且 `templates\` 之外没有第二处模板目录；真正的**设计原型只有 10 份**，此前全仓无一处登记，本附录把它们进货：
+
+| 路径（老技能内） | 字节 | 它是什么 | 新技能对位 |
+| --- | --- | --- | --- |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-原型.html` | 60408 | SM3-1 穿什么的拼贴卡原型（整页探索稿） | `templates/outfit/outfit_picker.html` ＋ `src/outfit/pages/outfit_picker.ts` |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-原型-无图版.html` | 60377 | 同上，无图稿 | 同上 |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-F1.html` | 14141 | 拼贴卡版式 F1 稿 | 同上 |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-F1-配色.html` | 16989 | F1 配色稿 | 同上 |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-F1-浅色.html` | 21410 | F1 浅色稿 | 同上 |
+| `.scratch/v2.0-spec-map/prototype/拼贴卡-F1-相册风.html` | 19635 | F1 相册风稿（**出货模板的设计祖先**，证据见下） | 同上 |
+| `.scratch/v2.0-spec-map/prototype/HELP-结构原型.html` | 66180 | 技能级 HELP 页结构原型（件头自注 `PROTOTYPE — throwaway, not production`） | 技能级 HELP 件（`packages/skill-home/src/help/**` ＋ `templates/help.html`），不在 46 族内 |
+| `.notes/HELP_demo.html` | 17637 | HELP 页设计稿 | 同上 |
+| `.notes/HELP_demo_FINAL.html` | 17761 | HELP 页设计稿（定稿迭代） | 同上 |
+| `.notes/HELP_fixed.html` | 18446 | HELP 页设计稿（修版） | 同上 |
+
+**祖先关系硬证据**：`.scratch/v2.0-spec-map/prototype/拼贴卡-F1-相册风.html:10` 与出货件 `templates/穿搭/outfit_picker.html:9` 的 `:root` 自定义属性逐字相同（`--paper1:#fdfaf4;--paper2:#f1ead9;--line:rgba(120,105,80,.20);--label:#8a744f;`），舞台同为 `250×360` ＋ 同一 `radial-gradient(ellipse at 50% 16%,var(--paper1),var(--paper2))`。即这批原型丢掉的是过程稿，版式已在出货件里。
+
+**不属本附录的其余 1140 份**：渲染产物与按次留档（`output\` 584）、审查与探针页（`.scratch\` 500、`docs\` 46）、行动计划与提问页（`.notes\` 的 `PLAN-*` 5 ＋ `q-*` 4 ＋ `HELP-audit*` 4 ＋ `audit-*` 1）、同步测试页（`.db\` 1）——都不是设计原型。
+
+**复核命令**（在老技能根目录内跑）：
+
+```powershell
+(Get-ChildItem -Recurse -File -Filter *.html).Count                          # 1217
+(Get-ChildItem '.scratch\v2.0-spec-map\prototype' -File -Filter *.html).Count # 7
+(Get-ChildItem '.notes' -File -Filter 'HELP_*.html').Count                    # 3
+$needle = '--paper1:#fdfaf4;--paper2:#f1ead9;--line:rgba(120,105,80,.20);--label:#8a744f;'
+(Select-String -Path '.scratch\v2.0-spec-map\prototype\拼贴卡-F1-相册风.html' -Pattern $needle -SimpleMatch).Count  # 1
+(Select-String -Path 'templates\穿搭\outfit_picker.html' -Pattern $needle -SimpleMatch).Count                       # 1
+```
