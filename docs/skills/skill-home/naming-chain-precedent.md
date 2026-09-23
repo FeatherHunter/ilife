@@ -62,7 +62,8 @@
 
 ```powershell
 # ① 命名纪律（零越界 ＋ 70 行命令中文名两两不重）
-node --test packages/skill-home/test/naming-discipline.test.mjs
+node packages/skill-home/scripts/audit-naming.mjs
+#   收口期可按写集分批：--except src/express,src/stats （命中即跳过该文件，收口完即不用）
 
 # ② 契约与附录（含命名函数唯一稳定、真实例前缀）
 node docs/skills/skill-home/check-scene-contract.mjs
@@ -74,6 +75,8 @@ node --test packages/skill-home/test/wake-family-gates.test.mjs
 node docs/skills/skill-home/gen-scene-wall.mjs --check <产物目录> <墙文件名>
 node docs/skills/skill-home/gen-chain-page.mjs <产物目录>
 ```
+
+命名审计件现在按**独立审计件**跑（不进包内 test glob）：越界清零后接进包内 test 门，避免收口期间给共用工作区留一盏红灯。
 
 ## 五 · 不做
 
