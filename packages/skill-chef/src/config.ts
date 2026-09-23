@@ -21,6 +21,7 @@
  * #796 起这条约定的**两半分头**：**读**认空串；**写**（首次落文件／保存／重置）把面板上可改的
  * 那一格（`db.dir`）落成算出来的绝对路径——见下面 `writableDefaults()` 的注释。
  */
+import { normalize } from 'node:path';
 import { configPaths, loadConfig, resetConfig, saveConfig } from 'base-link-core';
 import type { ConfigRecord } from 'base-link-core';
 
@@ -45,6 +46,17 @@ export const CHEF_CONFIG_RETIRED: readonly string[] = ['files.help', 'files.look
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type ChefConfigValues = typeof CHEF_CONFIG_DEFAULTS;
 
+/** 可改落点那一格（`db.dir`）的**规范形**：非空即按**平台原生分隔符**（Windows 反斜杠）。
+
+ *  为什么要有这一格：用户在设置页里手输路径时两种斜杠都会用（`D:/a/b` 与 `D:\a\b` 指同一个地方），
+ *  而值是逐字存进配置文件的——存成 `D:/2Study/StudyNotes/.db` 之后，面板上「数据目录」那行与紧挨着的
+ *  「配置文件 C:\…\chef.yaml」那行斜杠方向就不一致（维护者 2026-09-23 报的就是这一处）。
+ *  读回来时归一（面板显示与生效路径同一串）＋写盘时归一（配置文件里也只剩一种斜杠），两处同一个算式。
+ *  **空串不动**：空串＝按默认落点（另一条语义），而 `path.normalize('')` 会回 `'.'`，那是另一回事。 */
+function toNativeDir(value: string): string {
+  return value === '' ? '' : normalize(value);
+}
+
 /** 写盘那一份用的默认值表：**可改落点**（`db.dir`）写成算出来的绝对路径（#746 总口径回灌，本票 #796 落地）。
  *
  * 为什么写绝对路径：面板上「数据目录」那一格显示的是从配置文件算出的生效值，而空串的语义是「按默认落点」
@@ -62,14 +74,15 @@ function writableDefaults(): ConfigRecord {
 
 /** 写盘前把可改落点那一格的**空白值**去掉：空串＝按默认落点，而写的时候那个落点要落成绝对路径
  *  （见 `writableDefaults`）——去掉这一格，`base-link-core` 的 `fillDefaults` 自会补上写盘用的默认值。
- *  组里一个子项都不剩时连组一起去掉（空组写出去解析不回来）。 */
+ *  组里一个子项都不剩时连组一起去掉（空组写出去解析不回来）。
+ *  非空值在这一步过 `toNativeDir`：用户手输的正斜杠与旧文件里留下的正斜杠，都归成平台原生那一串。 */
 function withoutBlankEditableDir(values: ConfigRecord): ConfigRecord {
   const group = values['db'];
   if (typeof group !== 'object' || group === null || Array.isArray(group)) return values;
   const dir = (group as Record<string, unknown>)['dir'];
-  if (typeof dir !== 'string' || dir !== '') return values;
+  if (typeof dir !== 'string') return values;
   const next: Record<string, unknown> = { ...(group as Record<string, unknown>) };
-  delete next['dir'];
+  if (dir === '') { delete next['dir']; } else { next['dir'] = toNativeDir(dir); }
   const out: ConfigRecord = { ...values };
   if (Object.keys(next).length === 0) delete out['db'];
   else out['db'] = next as ConfigRecord['db'];
@@ -93,20 +106,22 @@ let memo: { file: string; loaded: LoadedChefConfig } | null = null;
 /** 读一份配置（文件不存在即按默认值落一份并把配置目录／数据目录建出来）。
  *
  *  读回来的 `values` 是**文件里那份 ⊕ 默认值**（文件里写空串则仍是空串＝按默认落点）；
- *  首次落文件时写下去的是 `writableDefaults()`（可改落点＝绝对路径）。 */
+ *  首次落文件时写下去的是 `writableDefaults()`（可改落点＝绝对路径）。
+ *  可改落点那一格在这里过 `toNativeDir`：文件里是什么斜杠，面板与生效路径上都是平台原生那一串。 */
 export function loadChefConfig(): LoadedChefConfig {
   const file = configPaths(CHEF_CONFIG_STEM).configFile;
   if (memo === null || memo.file !== file) {
     const loaded = loadConfig(CHEF_CONFIG_STEM, writableDefaults(), CHEF_CONFIG_RETIRED);
     // base-link-core 读回来时已经过了「键齐 ＋ 类型对」两道校验（不认识的键、类型不符一律抛），
     // 故这一处从宽松记录到形状记录的转换是有依据的投影，不是猜测。
+    const values = loaded.values as unknown as ChefConfigValues;
     memo = {
       file,
       loaded: {
         path: loaded.path,
         dataDir: loaded.dataDir,
         created: loaded.created,
-        values: loaded.values as unknown as ChefConfigValues,
+        values: { ...values, db: { ...values.db, dir: toNativeDir(values.db.dir) } },
       },
     };
   }

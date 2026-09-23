@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CHEF_CONFIG_DEFAULTS, CHEF_CONFIG_RETIRED, CHEF_CONFIG_STEM } from '../dist/config.js';
 import { parseConfigYaml } from '../../base-link-core/dist/config/yaml.js';
@@ -154,6 +154,41 @@ describe('#695 私家大厨配置面', () => {
     const l = runOk(cfg, ['chef.help.lookup', '--params', P({ mode: 'lookup', reuseHours: 0 })]);
     assert.match(l.delivery.path, /私家大厨_速查表_\d{8}_\d{6}\.html$/);
     assert.equal(readdirSync(htmlDir).length, 2);
+  });
+
+  it('⑤ 可改落点那一格带正斜杠：读回来与落盘都归一成平台原生分隔符（维护者 2026-09-23 报）', () => {
+    const cfg = mkCfg('slash');
+    mkdirSync(configDirOf(cfg), { recursive: true });
+    // 现场那份配置：用户在面板里手输过正斜杠（`D:/2Study/StudyNotes/.db`），值被逐字存档；
+    // 面板上「数据目录」那行于是与紧挨着的「配置文件 C:\…\chef.yaml」那行方向不一致。
+    const typed = 'D:/2Study/StudyNotes/.db';
+    writeFileSync(join(configDirOf(cfg), 'chef.yaml'), [
+      'db:',
+      '  dir: ' + JSON.stringify(typed),
+      '  name: chef_data.db',
+      'html:',
+      '  dir: cook_html/help',
+      '  sceneDir: cook_html',
+      '',
+    ].join('\n'), 'utf8');
+
+    const want = normalize(typed);
+    if (process.platform === 'win32') assert.equal(want.includes('/'), false, '前提：这一格在 Windows 上确实会被归一');
+    const read = runOk(cfg, ['chef.config.read']);
+    assert.equal(read.data.values.db.dir, want, '取值那一格归成原生分隔符（面板输入框显示的就是它）');
+    assert.equal(read.data.resolved.dbDir, want, '生效路径／页头那行「数据目录」也是同一串');
+
+    // 面板提交的是输入框里那串原文（用户可能刚敲了正斜杠）⇒ 写盘这一步也归一：
+    // 下次打开配置文件只剩平台原生那一种斜杠。
+    runOk(cfg, ['chef.config.write', '--params', P({ values: { db: { dir: typed } } })]);
+    const onDisk = parseConfigYaml(readFileSync(join(configDirOf(cfg), 'chef.yaml'), 'utf8'), 'chef.yaml').values;
+    assert.equal(onDisk.db.dir, want, '提交正斜杠 ⇒ 落盘那一格也是原生分隔符（写盘与显示同一个算式）');
+    assert.equal(runOk(cfg, ['chef.config.read']).data.values.db.dir, want, '再读一次：盘上那份与服务那份同一串');
+
+    // 空串仍＝按默认落点：`path.normalize('')` 回 `'.'`，不许把这条语义吃掉。
+    runOk(cfg, ['chef.config.write', '--params', P({ values: { db: { dir: '' } } })]);
+    const cleared = parseConfigYaml(readFileSync(join(configDirOf(cfg), 'chef.yaml'), 'utf8'), 'chef.yaml').values;
+    assert.equal(cleared.db.dir, join(configDirOf(cfg), 'data'), '空串写盘仍是算出来的默认绝对路径');
   });
 
   it('④ 测试进程缺隔离（家目录＝真实家目录）⇒ 配置读取响亮失败，不许静默落到真实家目录', () => {
