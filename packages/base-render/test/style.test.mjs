@@ -49,7 +49,11 @@ const SRC_STYLE = readFileSync(new URL('../src/style.ts', import.meta.url), 'utf
 const SRC_CHARTS_DIR = fileURLToPath(new URL('../src/components/charts/', import.meta.url));
 const SRC_CHARTS = readdirSync(SRC_CHARTS_DIR).filter((f) => f.endsWith('.ts')).sort()
   .map((f) => readFileSync(SRC_CHARTS_DIR + f, 'utf8')).join(LF);
-const SRC_CONTROLS = readFileSync(new URL('../src/controls.ts', import.meta.url), 'utf8');
+/** 目录化批次⑤：controls 的实现从 `src/controls.ts` 一件切成 `src/components/controls/**` 一族多件。
+ *  （本常量此刻没人用；仍指向**实现所在目录**，免得日后有人拿它写断言时读到薄转出、判据空转。） */
+const SRC_CONTROLS_DIR = fileURLToPath(new URL('../src/components/controls/', import.meta.url));
+const SRC_CONTROLS = readdirSync(SRC_CONTROLS_DIR).filter((f) => f.endsWith('.ts')).sort()
+  .map((f) => readFileSync(SRC_CONTROLS_DIR + f, 'utf8')).join(LF);
 const SRC_HELP = readFileSync(new URL('../src/help.ts', import.meta.url), 'utf8');
 const SELF = readFileSync(fileURLToPath(import.meta.url), 'utf8');
 

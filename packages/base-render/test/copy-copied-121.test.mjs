@@ -1,6 +1,6 @@
 /** #121 复制按钮 `copied` 态（H-16 JS 侧）——**无浏览器**也能跑的产出面 ＋ 行为面测试。
  *
- *  被验对象：`packages/base-render/src/controls.ts` 的 `buildSharedHelpersJs()` 复制反馈路径
+ *  被验对象：`packages/base-render/src/components/controls/helpers.ts` 的 `buildSharedHelpersJs()` 复制反馈路径
  *  ＋ `packages/base-render/src/style.ts` 的 `copied` 态 CSS（`copyButton` 区既有 ＋ helpShell 区新增）。
  *
  *  为什么**不用**只查字符串出现：字符串断言在「变异掉 markCopied 调用但留下常量文本」时仍会绿。

@@ -1,6 +1,6 @@
 /** #88 S4（实施 B）——HELP 速查台运行时增强的行为测试。
  *
- *  被验对象：`packages/base-render/src/controls.ts` 的 `buildSharedHelpersJs()`（签名不变，功能面扩展）
+ *  被验对象：`packages/base-render/src/components/controls/helpers.ts` 的 `buildSharedHelpersJs()`（签名不变，功能面扩展）
  *  ＋ `packages/base-render/src/style.ts` 的 helpShell 区新类（#88 R1-6）。
  *
  *  验收面（`.scratch/orchestrator/t88-acceptance.md` ＋ 返修单 R1-1／R1-6／R1-8 ＋ 蓝队 N-4）：
