@@ -1,5 +1,9 @@
 /** #950 · 页面级导航一件：**分段导航**（`renderSegmentedNav`）。
  *
+ *  **住址**：目录化批次①把它从 `src/pageNav.ts` 搬到这里（同批 `pageNavCss.ts` → `./style.ts`），
+ *  进出面一字未动：根出口仍出 `SEG_NAV_ICONS`／`pageNavCss`／`renderSegmentedNav` 与三个类型，
+ *  搬迁判据＝产物逐字节相同（`docs/base/base-render/组件目录架构.md`）。
+ *
  *  谁在用：本包（base-paint）的页面级形状层。落点口径与 `pageShapes.ts` 同：样式随本件出
  *  （`pageNavCss()` 由 `pageShapeCss()` 汇总进页），是否生效由整页装配的 `pageUi` 位决定。
  *
@@ -145,5 +149,5 @@ export function renderSegmentedNav(input: SegmentedNavInput): string {
     + body + '</nav>';
 }
 
-export { pageNavCss } from './pageNavCss.js';
+export { pageNavCss } from './style.js';
 

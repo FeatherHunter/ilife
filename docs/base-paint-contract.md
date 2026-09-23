@@ -903,8 +903,10 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 3.7 页面级导航与横条件（#950）
 
-这一节是**后追加**的一节（#950）：新增两族页面级件 —— `src/pageNav.ts` 的**分段导航**
-与 `src/pageBars.ts` 的**横条三件**（时间格带／等式条／态声明条）。
+这一节是**后追加**的一节（#950）：新增两族页面级件 —— 分段导航与横条三件（时间格带／等式条／态声明条）。
+两者自 `#950` 目录化批次①起住 `src/components/page-nav/` 与 `src/components/page-bars/`（此前是
+`src/pageNav.ts`／`src/pageBars.ts` 平铺件；搬迁判据＝产物逐字节相同，见
+`docs/base/base-render/组件目录架构.md`），对外仍从根出口。
 
 - **为什么另立两件、不并进 `pageShapes.ts`**：那一件已 452 行、越过本包 350 行告警线
   （第四步已当场报出，见 `docs/base/base-render/行数告警线评估.md`）；本批按**变化频率**切：

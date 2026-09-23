@@ -1,6 +1,11 @@
 /** #950 · 页面级横条三件：**时间格带**（`renderDayStrip`）、**等式条**（`renderEquationBar`）、
  *  **态声明条**（`renderStateBanner`）。样式随本件出（`pageBarsCss()` 由 `pageShapeCss()` 汇总进页）。
  *
+ *  **住址**：目录化批次①把它从 `src/pageBars.ts` 搬到这里（同批 `pageBarsCss.ts` → `./style.ts`），
+ *  进出面一字未动（根出口仍出 `CAPTION_TONES`／`DAY_STRIP_EMPTY_MARK`／`STATE_TONES`／
+ *  `pageBarsCss`／三个 `render*` 与六个类型）；判据＝产物逐字节相同
+ *  （`docs/base/base-render/组件目录架构.md`）。
+ *
  *  为什么要这三件（第一性：**三种「一行说不完」的信息各有其形**）：
  *   · **时间格带**：N 天窗口里「哪几天有记录、哪几天缺数」此前被压成一句「有记录 1/7 天」——
  *     句子说得出数量，说不出**哪几天**。一格一天的形状把它画出来（缺数格留空槽，不补零）。
@@ -237,5 +242,5 @@ export function renderStateBanner(input: StateBannerInput): string {
     + '</div>';
 }
 
-export { pageBarsCss } from './pageBarsCss.js';
+export { pageBarsCss } from './style.js';
 

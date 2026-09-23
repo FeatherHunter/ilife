@@ -1,6 +1,9 @@
 /** pageBarsCss · #950：本族样式的**唯一产出者**（自产出器那件整段搬来，选择器与值一字未改）。
  *
- *  为什么分开住：产出器那件（`./pageBars.js`）带上这一整段就 455 行、越过本包 350 行告警线；
+ *  **住址**：目录化批次①把它从 `src/pageBarsCss.ts` 搬到 `src/components/page-bars/style.ts`
+ *  （同批产出器 → `./index.ts`）；判据＝产物逐字节相同（`docs/base/base-render/组件目录架构.md`）。
+ *
+ *  为什么分开住：产出器那件带上这一整段就越过本包 350 行告警线；
  *  照仓内先例（`src/render/reviewDocsCss.ts`：样式另立姊妹件、出口经件薄转出），本族样式单独一件，
  *  产出器那件只留形状与类型，两边都落回线内。由 `pageShapeCss()` 汇总进页。
  */

@@ -24,8 +24,8 @@
 
 /* #950：本批新立的姊妹件（导航族／横条族）的样式**经本函数汇总**进页——调用方一行不用改，
    启用口径仍是 `pageUi` 位。两件都不反向 import 本件，无环。 */
-import { pageNavCss } from './pageNav.js';
-import { pageBarsCss } from './pageBars.js';
+import { pageNavCss } from './components/page-nav/index.js';
+import { pageBarsCss } from './components/page-bars/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts` 同）。 */
 const LF = String.fromCharCode(10);
