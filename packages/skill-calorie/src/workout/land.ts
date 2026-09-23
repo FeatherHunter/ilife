@@ -34,6 +34,7 @@ import { openDbReadOnly } from '../db/readonly.js';
 import { weekOfDate } from '../render/planPlate.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { dayField, fail } from '../shared/params.js';
+import { isRealISODate } from '../shared/time.js';
 import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
@@ -266,6 +267,9 @@ function failStep(step: string, code: number, why: string, tail: string): never 
 /** `calorie.workout.land` · 落地训练（读计划 → 补计划 → 记心愿 → 推送 → 回写，同一命令）。 */
 export function writeLand(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const date = dayField(params, 'date') ?? todayISO();
+  // 形状对、日历上没这一天的那种日期（2026-13-40）会算出 NaN 周次，被下面误判成「这天是休息日」——
+  // 先在用法层拦掉（exit 2），别把它回成一张「无事可做」页。
+  if (!isRealISODate(date)) fail(2, 'date 不是真实日历日（实际：' + date + '）');
   const dryRun = readDryRun(params);
   const plan = getPlan(db);
   landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4
@@ -273,7 +277,10 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
   const why = landNoSegmentWhy(plan, date);
   if (why !== null) {
     return landNothing(LAND_WAKE, params, why, date, (receipt) =>
-      buildLandNothingPage({ key: LAND_KEY, params, wake: LAND_WAKE, scope: date, why, receipt }));
+      buildLandNothingPage({
+        key: LAND_KEY, params, wake: LAND_WAKE, scope: date, why, receipt,
+        unitLabel: '可落地段', stepLabel: '四步', whyLabel: '为什么没得落地',
+      }));
   }
   const sessions = landSessionsOf(plan, date);
   if (dryRun) {

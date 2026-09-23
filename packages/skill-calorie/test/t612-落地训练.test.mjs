@@ -199,10 +199,14 @@ describe('#612 落地训练', () => {
     assert.match(readFileSync(env.data.output, 'utf8'), /ilife-page/);
   });
 
-  it('③a 用法错 exit 2 点名（非布尔 dryRun）', () => {
+  it('③a 用法错 exit 2 点名（非布尔 dryRun／非真实日历日）', () => {
     const { dir, db } = seedDir();
     db.close();
     assert.equal(cli('calorie.workout.land', { dryRun: 'yes' }, { ...homeEnvOf(calorieConfigDir(dir))}).code, 2);
+    // 形状过（YYYY-MM-DD）但日历上没这一天：算不出周次，会被人话误判成「这天是休息日」——故先在用法层拦。
+    const bad = cli('calorie.workout.land', { date: '2026-13-40', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir))});
+    assert.equal(bad.code, 2, bad.stderr.slice(-300));
+    assert.match(bad.stderr, /date 不是真实日历日（实际：2026-13-40）/);
   });
 
   it('③b 无计划 exit 4 点名（空库，不调外部）', () => {

@@ -1,30 +1,34 @@
 /** 同步到训记（HELP 场景 05「健身计划」下一级「落地训练」）：`calorie.workout.xunji-push` 写。
  *
  * 链（老 `render_plan_receipt.py --live-plan-sync` 的 "1.审计动作名→2.推送→3.回执"，`t168:104`）：
- * ① 参数先验（用法错 exit 2，不调外部）；② 读当天训练段（workout 自有 `planStore`，只读，
- *    与 `write.ts` 同一对引用：`./planStore.js` ＋ `render/planPlate.ts#weekOfDate`，不另起取数）；
+ * ① 参数先验（用法错 exit 2，不调外部）；② 读当天训练段（workout 自有 `planStore`，只读，与 `write.ts`
+ *    同一对引用：`./planStore.js` ＋ 落地链取数件 `./land.js` 的 `landSessionsOf`，不另起取数）；
  * ③ 审计动作名（训记能力门 `verifyMovements`，只读校验、原样上报；审计只提示不拦推，
  *    沿 `#607 §八·7`「推送前不校验动作库」）；④ 调 `xunji push-plan`（经 `./xunjiRunner.js` 子进程；
  *    `dryRun` 转 `--dry-run`，零远端调用）；⑤ 任一步失败即非 0（码翻译见跑道）＋失败不落成功页。
  *
- * 两态（同一命令，`dryRun` 分流）：
- * - `dryRun: true` → 过程页（审计结论 ＋ 待推送段 ＋ 转换读数 ＋ 训记 KEY 有无，远端未调用）；
- * - 缺省 → 结果页（逐段推送结局 ＋ 训记回显说明 ＋ 本地／远端区分）。
+ * 三态：
+ * - 结构性缺失（没计划／计划缺开始日期）→ `landPlanGate` 阻断，exit 4（与落地链同一份判据）；
+ * - 当天没排训练段 → `landNothing` 回「无事可做」页，exit 0，不调训记、不起子进程（`#943` 第三选项）；
+ * - 有段 → `dryRun: true` 过程页（审计结论 ＋ 待推送段 ＋ 转换读数 ＋ 训记 KEY 有无，远端未调用）／
+ *   缺省 结果页（逐段推送结局 ＋ 训记回显说明 ＋ 本地／远端区分）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderDataTable, renderKpiGrid } from 'base-paint/blocks';
 import { todayISO } from '../analysis/utils.js';
-import { weekOfDate } from '../render/planPlate.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { verifyMovements } from '../xunji/index.js';
 import type { MovementVerifyReport } from '../xunji/index.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyBlock } from '../shared/copyBlock.js';
 import { dayField, fail } from '../shared/params.js';
+import { isRealISODate } from '../shared/time.js';
 import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
 import type { PlanSessionRow } from './planStore.js';
+import { landNoSegmentWhy, landNothing, landPlanGate, landSessionsOf } from './land.js';
+import { buildLandNothingPage } from './landPages.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
@@ -66,16 +70,6 @@ function readDryRun(params: Record<string, unknown>): boolean {
   if (v === undefined || v === null) return false;
   if (typeof v !== 'boolean') fail(2, '参数 dryRun 须为布尔值');
   return v as boolean;
-}
-
-/** 当天训练段（只读；无计划／缺开始日期即 exit 4，空天回空表——调用方按老 `push.py:135-143` 出空天读数）。 */
-function daySessions(db: DatabaseSync, date: string): { sessions: PlanSessionRow[]; week: number; dow: number } {
-  const plan = getPlan(db);
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
-  const start = plan.config?.start_date ?? null;
-  if (!start) fail(4, '计划缺开始日期，无法定位周次');
-  const { week, dow } = weekOfDate(start as string, date);
-  return { sessions: plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow), week, dow };
 }
 
 /** 审计动作名（只读；库读不出即「无法验证」，不拦推——提示在页上，不进退出码）。 */
@@ -131,8 +125,23 @@ function failPush(date: string, call: XunjiCall): never {
 /** `calorie.workout.xunji-push` · 同步到训记（审计 → 推送 → 回执同一命令）。 */
 export function writeXunjiPush(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const date = dayField(params, 'date') ?? todayISO();
+  // 形状对、日历上没这一天的那种日期（2026-13-40）算不出周次，会被下面误判成「这天是休息日」——
+  // 先在用法层拦掉（exit 2），别把它回成一张「无事可做」页（旧口径这一档由子进程拦，exit 4）。
+  if (!isRealISODate(date)) fail(2, 'date 不是真实日历日（实际：' + date + '）');
   const dryRun = readDryRun(params);
-  const { sessions } = daySessions(db, date);
+  const plan = getPlan(db);
+  landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4（与落地链同一份判据）
+  const sessions = landSessionsOf(plan, date);
+  if (sessions.length === 0) {
+    // 这天没有安排（#943 第三选项，与落地三条键同一张页、同一个回执口径）：不调训记、不起子进程，
+    // 回「无事可做」页。旧口径在这里照样起子进程拿 0 段读数，再回一张写着「已同步 … 0 段成功」的页。
+    const why = landNoSegmentWhy(plan, date) ?? '这天没有可推送的训练段';
+    return landNothing(XUNJI_PUSH_WAKE, params, why, date, (receipt) =>
+      buildLandNothingPage({
+        key: XUNJI_PUSH_KEY, params, wake: XUNJI_PUSH_WAKE, scope: date, why, receipt,
+        unitLabel: '待推送段', stepLabel: '推送', whyLabel: '为什么没得推送',
+      }));
+  }
   const audit = auditMovements(sessions);
   const invalid = audit === null ? 0 : audit.invalid_count;
   const argv = dryRun ? ['push-plan', '--date', date, '--dry-run'] : ['push-plan', '--date', date];

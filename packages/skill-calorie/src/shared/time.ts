@@ -36,3 +36,15 @@ export function shiftISODate(iso: string, deltaDays: number): string {
   if (Number.isNaN(t)) throw new Error('[calorie] 日期非法: ' + iso);
   return new Date(t + deltaDays * 86400000).toISOString().slice(0, 10);
 }
+
+/** ISO 日期是不是**真实日历日**（`2026-09-07` 是，`2026-13-40`／`2026-02-30` 不是）。
+ *
+ *  `params.ts#assertISO` 只管形状，这类「形状对、日历上没这一天」的值会一路算下去，在计划链上
+ *  让周次算式出 `NaN`、被误判成「这天是休息日」——所以定计划相关的那几条命令要在用法层先拦。
+ *  判据与 `landBatch.ts#assertRealDate`（批量天数表那一路）一字同源。 */
+export function isRealISODate(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number) as [number, number, number];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}

@@ -161,25 +161,32 @@ export function buildLandResultPage(input: {
   });
 }
 
-/** 「这天没有安排」页（#943 第三选项）：无事可做那一态——说明为什么、下一步去哪，四步标「没跑」。
- *  与过程页／结果页都不同：过程页是「预演（只看不写）」，结果页是「四步都跑了」；本页是**一步没跑**。 */
+/** 「这天没有安排」页（#943 第三选项）：无事可做那一态——说明为什么、下一步去哪，要跑的那几步标「没跑」。
+ *  与过程页／结果页都不同：过程页是「预演（只看不写）」，结果页是「四步都跑了」；本页是**一步没跑**。
+ *  落地三条键与「同步到训记」共用这一张页（同一件事一个形状）：两个格名由调用方给。 */
 export function buildLandNothingPage(input: {
   key: string; params: Record<string, unknown>; wake: string; scope: string; why: string; receipt: CrudReceipt;
+  /** 被数的那一格叫什么（落地链＝「可落地段」，训记推送＝「待推送段」）。 */
+  readonly unitLabel: string;
+  /** 这一族要跑的那几步在人话里叫什么（落地链＝「四步」，训记推送＝「推送」）。 */
+  readonly stepLabel: string;
+  /** 那一行「为什么」的行名（落地链＝「为什么没得落地」，训记推送＝「为什么没得推送」）。 */
+  readonly whyLabel: string;
 }): string {
-  const { key, params, wake, scope, why, receipt } = input;
+  const { key, params, wake, scope, why, receipt, unitLabel, stepLabel, whyLabel } = input;
   const content = [
     renderKpiGrid([
-      { label: '范围', value: scope, detail: '这次要落地的那一天／那一段' },
-      { label: '可落地段', value: '0 段', detail: '这天没有安排' },
-      { label: '四步', value: '没跑', detail: '没写任何东西，也没调训记' },
+      { label: '范围', value: scope, detail: '这次要看的那一天／那一回' },
+      { label: unitLabel, value: '0 段', detail: '这天没有安排' },
+      { label: stepLabel, value: '没跑', detail: '没写任何东西，也没调外部' },
     ]),
     renderDataTable({
       columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
       rows: [
-        { k: '为什么没得落地', v: why },
-        { k: '本页口径', v: '无事可做：既不是成功、也不是失败——四步一步没跑，外部一个没调' },
+        { k: whyLabel, v: why },
+        { k: '本页口径', v: '无事可做：既不是成功、也不是失败——要跑的那一步没跑，外部一个没调' },
       ],
-      caption: '为什么没得落地',
+      caption: whyLabel,
     }),
     copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 没有安排'),
   ].join('');

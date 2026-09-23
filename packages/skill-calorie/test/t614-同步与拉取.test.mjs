@@ -133,17 +133,25 @@ describe('#614 同步与拉取', () => {
     }
   });
 
-  it('①b push dryRun 空天走通（这天没排练，段数 0，仍 exit 0 口径）', () => {
+  it('①b push 空天回「无事可做」页（#943 第三选项）：exit 0 ＋ 说明页，回执不写成功，子进程一次不调', () => {
     const { dir, db } = seedDir();
-    try {
-      calorieConfigDir(dir);
-      const out = dispatchWrite('calorie.workout.xunji-push', { date: '2026-09-04', dryRun: true }, db);
-      assert.equal(out.data.ok, true);
-      assert.match(out.data.message, /0 段待推送/);
-      assert.match(out.html, /空天/);
-    } finally {
-      db.close();
-    }
+    db.close();
+    const log = join(dir, 'fixture-calls.jsonl');
+    const r = cli('calorie.workout.xunji-push', { date: '2026-09-04', dryRun: true }, {
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_LOG: log,
+    });
+    assert.equal(r.code, 0, r.stderr.slice(-300));
+    const env = JSON.parse(r.stdout);
+    assert.equal(env.key, 'calorie.workout.xunji-push');
+    assert.equal(env.data.ok, true, '命令没出错（既不算成功、也不算失败）');
+    assert.match(env.data.message, /没有可落地的训练段：这天是休息日/);
+    assert.equal(env.data.receipt.noChange, true, '什么都没发生：回执按全仓既有口径标 noChange');
+    assert.deepEqual(env.data.receipt.writtenFields, []);
+    assert.equal(env.data.receipt.items[0].status, '没有安排', '状态串不写「成功」');
+    const html = readFileSync(env.data.output, 'utf8');
+    assert.match(html, /这天没有安排（无事可做）/);
+    assert.match(html, /这天是休息日/);
+    assert.ok(!existsSync(log), '空天不该起推送子进程：' + (existsSync(log) ? readFileSync(log, 'utf8') : ''));
   });
 
   it('①c push dryRun 审计只提示不拦推（深蹲不在库：不通过＋建议名＋仍出页）', () => {
@@ -216,14 +224,16 @@ describe('#614 同步与拉取', () => {
     assert.ok(isAbsolute(envb.data.output) && existsSync(envb.data.output), '回执页未落盘');
   });
 
-  it('③a 用法错 exit 2 点名（坏 days／非布尔 dryRun）＋ 现实非法日期 exit 4（子进程点名）', () => {
+  it('③a 用法错 exit 2 点名（坏 days／非布尔 dryRun／非真实日历日）', () => {
     const { dir, db } = seedDir();
     db.close();
     assert.equal(cli('calorie.workout.xunji-backfill', { days: 0 }, { ...homeEnvOf(calorieConfigDir(dir))}).code, 2);
     assert.equal(cli('calorie.workout.xunji-push', { dryRun: 'yes' }, { ...homeEnvOf(calorieConfigDir(dir))}).code, 2);
-    // 形状过（YYYY-MM-DD）但不是真实日历日：父进程放行，子进程现实校验拦下并点名（仍非 0）。
+    // 形状过（YYYY-MM-DD）但日历上没这一天：算不出周次，会被人话误判成「这天是休息日」——
+    // 故父进程在用法层就拦（exit 2）。旧口径这一档由子进程的现实校验拦，退 4。
     const bad = cli('calorie.workout.xunji-push', { date: '2026-13-40' }, { ...homeEnvOf(calorieConfigDir(dir))});
-    assert.equal(bad.code, 4);
+    assert.equal(bad.code, 2, bad.stderr.slice(-300));
+    assert.match(bad.stderr, /date 不是真实日历日（实际：2026-13-40）/);
   });
 
   it('③b 无计划 exit 4 点名（空库，不调外部）', () => {

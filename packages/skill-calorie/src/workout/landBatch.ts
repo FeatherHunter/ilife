@@ -244,7 +244,10 @@ function writeLandBatch(
     // 整段范围没有安排：「无事可做」页（#943 第三选项）——一天都不跑，外部一个不调。
     const why = landNoSegmentWhy(plan, first) ?? '这一整段里一天都没排训练段';
     return landNothing(wake, params, why, scopeLine, (receipt) =>
-      buildLandNothingPage({ key, params, wake, scope: scopeLine, why, receipt }));
+      buildLandNothingPage({
+        key, params, wake, scope: scopeLine, why, receipt,
+        unitLabel: '可落地段', stepLabel: '四步', whyLabel: '为什么没得落地',
+      }));
   }
   if (dryRun) {
     const message = '预演：' + anchor + ' 至' + scopeLabel + ' ' + dates.length + ' 天 ' + segs + ' 段待落地（远端未调用）';
