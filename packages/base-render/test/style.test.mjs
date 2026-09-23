@@ -43,7 +43,11 @@ import * as BASE_PAINT from '../dist/index.js';
 import { TemplateError } from '../dist/template.js';
 
 const LF = String.fromCharCode(10);
-const SRC_STYLE = readFileSync(new URL('../src/style.ts', import.meta.url), 'utf8');
+/** 目录化批次⑥：style 的实现从 `src/style.ts` 一件切成 `src/components/style/**` 一族多件；
+ *  本判据读**整族**——读转出件只会看到一行 `export *`，下面的否定式断言会全部空转。 */
+const SRC_STYLE_DIR = fileURLToPath(new URL('../src/components/style/', import.meta.url));
+const SRC_STYLE = readdirSync(SRC_STYLE_DIR).filter((f) => f.endsWith('.ts')).sort()
+  .map((f) => readFileSync(SRC_STYLE_DIR + f, 'utf8')).join(LF);
 /** 目录化批次④：charts 的实现从 `src/charts.ts` 一件切成 `src/components/charts/**` 一族多件；
  *  本判据读**整族**（读转出件会因为「只剩一行 export *」而假绿）。 */
 const SRC_CHARTS_DIR = fileURLToPath(new URL('../src/components/charts/', import.meta.url));
@@ -344,8 +348,8 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     assert.ok(custom.includes(chartsCss('x-')), '自定义前缀须经 chartsCss 机械改写（裁定 R5②）');
     assert.ok(!custom.includes(chartsCss(STYLE_PREFIX)), '自定义前缀下不得残留缺省前缀的 charts 文本');
     // 防重述：实现文件不得出现第二份图表 CSS 字面量，且必须从 charts.ts 取值。
-    assert.ok(SRC_STYLE.includes("from './charts.js'"), 'style.ts 必须从 charts.ts 取图表 CSS');
-    assert.ok(!/['"]\.?\s*charts-/.test(SRC_STYLE), 'style.ts 不得重述图表 CSS 类名文本');
+    assert.ok(/import \{ chartsCss \} from '[^']*charts\.js'/.test(SRC_STYLE), 'style 族必须从 charts 模块取图表 CSS');
+    assert.ok(!/['"]\.?\s*charts-/.test(SRC_STYLE), 'style 族不得重述图表 CSS 类名文本');
     assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts 族的导出（#75 复用点）');
   });
 
