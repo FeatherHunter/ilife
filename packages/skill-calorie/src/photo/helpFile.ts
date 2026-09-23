@@ -17,7 +17,7 @@
  *     模板源在 `packages/base-render/assets/help-template.html`，改动走 `gen:help-shell`）。
  */
 import { CalorieRenderError } from '../render/errors.js';
-import { HELP_CONTACT } from './helpCenter.js';
+import { HELP_CONTACT, HELP_LEGACY_SUBGROUP, HELP_SUBFUNC_ORDER } from './helpCenter.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
 import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
@@ -79,9 +79,36 @@ function withScene09Prompts(groups: readonly WakeGroupAsset[]): readonly WakeGro
   }));
 }
 
+/** 二级分组的**显示序**：按 `HELP_SUBFUNC_ORDER` 的显式序排；表里没列的组保持资产原序；
+ *  `既有唤醒词` 恒最后（与速查台 `subfuncKey` 同一口径，两个 HELP 面只有那一份顺序）。
+ *
+ *  为什么不直接改资产：`wake-assets.ts` 是**老实物逐字落地**（顺序一并落地，供逐条对账），
+ *  它的可对账性不能动；顺序是**呈现规则**，故照本文件既有的「装配期按 SoT 覆盖」家法
+ *  （同 `withScene09Prompts`）在这里加一层。
+ *
+ *  效果（用户 2026-09-23 裁定）：体重组的「量体重」由最末提到最前。其余九组里，
+ *  `HELP_SUBFUNC_ORDER` 已列的七组资产序本就等于表序（逐组对账过），故一位不动；
+ *  未列的主页／分析两组保持资产原序。 */
+function withSubgroupOrder(groups: readonly WakeGroupAsset[]): readonly WakeGroupAsset[] {
+  return groups.map((g) => {
+    const order = HELP_SUBFUNC_ORDER[g.label];
+    if (order === undefined) return g;
+    const rank = (label: string, assetIndex: number): readonly [number, number] => {
+      if (label === HELP_LEGACY_SUBGROUP) return [2, assetIndex];
+      const i = order.indexOf(label);
+      return i >= 0 ? [0, i] : [1, assetIndex];
+    };
+    const sorted = g.subgroups
+      .map((sg, i) => ({ sg, key: rank(sg.label, i) }))
+      .sort((a, b) => (a.key[0] !== b.key[0] ? a.key[0] - b.key[0] : a.key[1] - b.key[1]))
+      .map((x) => x.sg);
+    return { ...g, subgroups: sorted };
+  });
+}
+
 /** 资产 → 5 键 JSON（纯函数；组数／场景数由资产派生，不写死 10／436）。 */
 export function buildHelpFileData(now: Date = new Date()): HelpFileData {
-  const groups: readonly WakeGroupAsset[] = withScene09Prompts(WAKE_GROUPS);
+  const groups: readonly WakeGroupAsset[] = withSubgroupOrder(withScene09Prompts(WAKE_GROUPS));
   if (groups.length === 0 || WAKE_ASSETS.length === 0) {
     throw new CalorieRenderError('missing-data', 'HELP 资产分组缺失（WAKE_GROUPS 空）');
   }

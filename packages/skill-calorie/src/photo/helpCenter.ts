@@ -81,8 +81,17 @@ export const HELP_GROUPS: readonly { readonly id: string; readonly icon: string;
     { id: 'analysis', icon: '📊', label: '分析' },
   ]);
 
-/** 7 个分组的**子功能显式顺序**（逐字照抄 `render_help_center.py:61-69`；未列出的子功能按首次
- *  出现序，`既有唤醒词` 恒最后）。 */
+/** 分组的**子功能显式顺序**（前 7 组逐字照抄 `render_help_center.py:61-69`；未列出的子功能按首次
+ *  出现序，`既有唤醒词` 恒最后）。
+ *
+ *  **「体重」一项不是 F3 原样，是本仓的用户裁定**（用户 2026-09-23 逐字：「体重TAB下最底部的 量体重
+ *  这个模块放到排序的一个。现在在底部用户很难用到。」）：F3 实物把「量体重」摆在体重组最末，
+ *  而这一组八条里只有它带写入动作（记体重／补录／批量补录／看今日体重），日常用得最频，摆最末够不到。
+ *  其余七条照 SoT 场景表《03-体重》的八条流程正序（与 `scripts/build-help.mjs` 的 `BODY_HELP_FLOWS` 同序，
+ *  那八条流程名的事实住各命令声明的 `flows`）。
+ *
+ *  这张表**同时管两个 HELP 面**：速查台（本文件的 `buildHelpSceneData`）与 HELP 文件
+ *  （`helpFile.ts:withSubgroupOrder`）——二级分组的显示序只有这一份定义地，两面不许各排各的。 */
 export const HELP_SUBFUNC_ORDER: Readonly<Record<string, readonly string[]>> = Object.freeze({
   '基础信息': ['设置资料', '看档案', '改资料'],
   '目标管理': ['定目标', '看目标', '改目标'],
@@ -91,6 +100,7 @@ export const HELP_SUBFUNC_ORDER: Readonly<Record<string, readonly string[]>> = O
   '身材照片': ['存身材照', '看身材照', '比身材照', '管身材照'],
   '饮食': ['记饮食', '改饮食', '看饮食', '查食品', '看营养', '看排行', '饮食复盘', '餐别分布'],
   '健身计划': ['定训练计划', '看训练计划', '改训练计划', '落地训练', '计划复盘', '安全检查'],
+  '体重': ['量体重', '改体重记录', '看体重明细', '看体重曲线', '看体重稳不稳', '看体重备注', '对比体重', '体重复盘'],
 });
 
 /** legacy 分组收口：`复盘` → `分析`（`render_help_center.py:56-58`）。 */
