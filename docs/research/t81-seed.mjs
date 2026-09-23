@@ -129,6 +129,10 @@ export function seedFull(db) {
   //   走的是「只改种子库」这条：示例口径（src/workout/commands.ts ＋ scripts/build-help.mjs ＋ SKILL.md）一字未动。
   db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (2, 1, 1, ?, ?)').run('上肢', JSON.stringify([{ name: '硬拉', part: '背', type: '力量', sets: [] }]));
   db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (1, 3, 1, ?, ?)').run('下肢', JSON.stringify([{ name: '深蹲', part: '腿', type: '力量', sets: [] }]));
+  // #943：`<日期>` 占位符落在 2026-09-06（周日＝第 1 周第 7 天）。旧口径下这天 0 段也回 exit 0，
+  //   示例门看不出问题；「无段即缺失阻断」落地后，三行落地示例（落地训练／落地到本周末／落地到本月底）
+  //   必须落在一个真有训练段的日子上——走的是「只改种子库」这条（同 #308 的做法，示例口径一字未动）。
+  db.prepare('INSERT INTO workout_plans (week_number, day_of_week, session_index, session_label, movements) VALUES (1, 7, 1, ?, ?)').run('有氧', JSON.stringify([{ name: '慢跑', part: '全身', type: '有氧', sets: [] }]));
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('鸡胸肉', '测试', 165, 31, 3.6, 0, 70, '蛋白类', '测试')").run();
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('鸡胸肉', '测试', 170, 30, 4, 0, 72, '蛋白类', '测试')").run();
   db.prepare("INSERT INTO nutrition_products (product_name, brand, calories, protein, fat, carbohydrates, sodium, category, source) VALUES ('米饭', '测试', 130, 2.7, 0.3, 28, 1, '主食', '测试')").run();

@@ -13,6 +13,10 @@
  * - 缺省 → 结果页（四步逐段结局 ＋ 本地远端分清，任一步失败即非 0 点名哪一步＋下一步）。
  *
  * 三旧坑落点：① 任一步失败即非 0（用法 2／本地缺 KEY 3／其余 4，失败不落成功页）；
+ *
+ * 无段即缺失阻断（#943）：这一天一段可落的训练段都没有时，两态都不进——`fail(4, …)` 点名
+ * 「为什么 ＋ 下一步」，不落页、不进任何子进程（判据 `landNoSegmentWhy`，批量宿主引同一份）。
+ * 旧口径把「0 段」当正常读数回成功回执页，用户现场就是「无计划可落地却拿到一张预演回执」。
  * ② 外部调用无保护 → 跑道预检＋限时＋失败进码；③ 回执渲染器不调外部 → 调用与回执收进同一命令。
  * 审计（动作名校验）不在本链：推送前不校验、原样上报（沿 `#607 §八·7`，审计由薄命令层做）。
  *
@@ -30,7 +34,7 @@ import { dayField, fail } from '../shared/params.js';
 import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
-import type { PlanSessionRow } from './planStore.js';
+import type { PlanConfigRow, PlanSessionRow } from './planStore.js';
 import { invokeLandBackfill, invokeLandPush, invokeMemo, invokeSchedule } from './landRunner.js';
 import { buildLandProcessPage, buildLandResultPage, landNotesOf, landSpanOf, landTitleOf } from './landPages.js';
 import type { LandStepRead } from './landPages.js';
@@ -179,14 +183,39 @@ function readDryRun(params: Record<string, unknown>): boolean {
   return v as boolean;
 }
 
-/** 当天训练段（只读；无计划／缺开始日期即 exit 4，空天回空表，调用方按空天出读数）。 */
-function daySessions(db: DatabaseSync, date: string): PlanSessionRow[] {
-  const plan = getPlan(db);
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
-  const start = plan.config?.start_date ?? null;
-  if (!start) fail(4, '计划缺开始日期，无法定位周次');
-  const { week, dow } = weekOfDate(start as string, date);
+/** 计划形状（本件与批量宿主共用的那两份取数形状，不另起别名表）。 */
+export interface LandPlan {
+  readonly config: PlanConfigRow | null;
+  readonly sessions: readonly PlanSessionRow[];
+}
+
+/** 这一天的训练段（只读；与计划库同口径）。**单日链与批量宿主共用这一份取数**，别处不许再算一遍。 */
+export function landSessionsOf(plan: LandPlan, date: string): PlanSessionRow[] {
+  const start = plan.config?.start_date;
+  if (!start) return []; // 空串与 NULL 同档：都定不了周次（沿旧口径的 falsy 判）
+  const { week, dow } = weekOfDate(start, date);
   return plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
+}
+
+/** 这一天**没得落地**的原因（有段回 `null`）。五种各给一句「为什么 ＋ 下一步」：
+ *  无训练计划／计划缺开始日期／计划里一段都没排／这天在计划之外／这天是休息日。
+ *
+ *  单日链与批量宿主共用这一份判据：**没有可落地的训练段＝缺失阻断**（`fail(4, …)`），
+ *  四步一步都不跑，也不许回成功回执页（沿 `cli/cmd_read.ts` 件头「空库／空窗／无目标一律抛，
+ *  不返空数组冒充正常」）。旧口径把空天当正常读数回成功页，正是「无计划可落地却拿到预演回执」那条缺陷。 */
+export function landNoSegmentWhy(plan: LandPlan, date: string): string | null {
+  if (landSessionsOf(plan, date).length > 0) return null;
+  if (!plan.config && plan.sessions.length === 0) return '无训练计划（先定训练计划）';
+  const start = plan.config?.start_date;
+  if (!start) return '计划缺开始日期，无法定位周次';
+  if (plan.sessions.length === 0) return '这份计划里一段训练都没排（先定训练计划，或先给它加训练动作）';
+  const { week } = weekOfDate(start, date);
+  const total = plan.config?.total_weeks ?? null;
+  if (week < 1) return '这天在计划开始日（' + start + '）之前（先换日期，或改计划开始日）';
+  if (total !== null && week > total) {
+    return '这天在计划之外：本计划 ' + start + ' 起共 ' + total + ' 周（先换日期，或先把计划加长）';
+  }
+  return '这天是休息日：计划里这一周这一天没有训练段（换一个有安排的日子，或先给它加训练动作）';
 }
 
 /** 推训记无 KEY 的数据分流（与 `xunjiPush.ts#localNoKey` 同判据：码 3 但逐段没调网即本地档）。 */
@@ -211,7 +240,12 @@ function failStep(step: string, code: number, why: string, tail: string): never 
 export function writeLand(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const date = dayField(params, 'date') ?? todayISO();
   const dryRun = readDryRun(params);
-  const sessions = daySessions(db, date);
+  const plan = getPlan(db);
+  // 缺失阻断不返空：这天没有一段可落的训练段（无计划／越窗／休息日）时，四步一步都不跑，
+  // 也不许回成功回执页——「无计划可落地」是缺数据，不是一次成功的落地。判据住 `landNoSegmentWhy`。
+  const why = landNoSegmentWhy(plan, date);
+  if (why !== null) fail(4, '落地训练没有可落地的训练段：' + why);
+  const sessions = landSessionsOf(plan, date);
   if (dryRun) {
     const message = '预演：' + date + ' ' + sessions.length + ' 段待落地（远端未调用）';
     const receipt = R('落地训练', 'create', message, LAND_WAKE, '训练计划（workout_plans）＋ 四步预演', {
@@ -222,7 +256,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
       data: { ok: true, message, receipt },
       html: buildLandProcessPage({
         key: LAND_KEY, params, date, sessions, receipt,
-        startDate: getPlan(db).config?.start_date ?? null,
+        startDate: plan.config?.start_date ?? null,
       }),
     };
   }

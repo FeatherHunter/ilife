@@ -153,19 +153,17 @@ describe('训记 KEY 自救链', () => {
     }
   });
 
-  it('⑦ 批量预演 0 段有点名原因（开始日期＋看完整计划），不是空页', () => {
+  it('⑦ 批量预演 0 段即缺失阻断（#943）：exit 4 点名，不回 0 段空页', () => {
     const dir = tmp('zero');
     const db = openDb(join(dir, 'calorie_data.db'));
     seedPlan(db);
-    try {
-      calorieConfigDir(dir);
-      // 2026-09-22 起 6 天在种子计划里全是空天（第 4 周，周二起无排练）。
-      const out = dispatchWrite('calorie.workout.land-weekend', { date: '2026-09-22', dryRun: true }, db);
-      assert.match(out.data.message, /6 天 0 段/);
-      assert.match(out.html, /0 段说明/);
-      assert.match(out.html, /看完整计划/);
-    } finally {
-      db.close();
-    }
+    db.close();
+    // 2026-09-22 起 6 天在种子计划里全是空天（第 4 周，周二起无排练）。
+    // #943 起这种「整段范围一天都没排训练段」不再回一张 0 段过程页，改走缺失阻断点名。
+    const r = cli('calorie.workout.land-weekend', { date: '2026-09-22', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(r.code, 4, r.stderr.slice(-300));
+    assert.match(r.stderr, /落地到本周末没有可落地的训练段/);
+    assert.match(r.stderr, /共 6 天里一天都没排训练段/);
+    assert.equal(r.stdout.trim(), '', '缺失阻断只走 stderr：不许回 envelope');
   });
 });

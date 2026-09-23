@@ -9,8 +9,10 @@
  * 票面验收（各有独立用例）：
  * ① 给定日期 → 天数正确（含跨月：周末批可进下月；闰月月末收敛）；
  * ② 7 天全过 → 推送与回写各 7 天（同一份天数，修老“批量只进 Step3”）；
- * ③ 第 3 天失败 → 回执点名第 3 天且退出非 0；
+ * ③ 失败天 → 回执点名那一天且退出非 0；
  * ④ 真出口读数：真 CLI 落盘，`data.output` 绝对路径存在（过程页 dryRun＋结果页实跑）；
+ * ⑥ 无段即缺失阻断（#943）：整段范围里一天都没排段 ⇒ exit 4 点名、不落页；范围里有段 ⇒ 只跑有段的天，
+ *    推送／回写天数＝有段的天数（旧口径把休息日也数成一"天"，报出的天数因此是假的）。
  * ⑤ R3 双桥真实现（作息／备忘缺省走真合成写，可注入 `RunSyncDeps` 同形函数）。
  */
 import { describe, it, before, after, afterEach } from 'node:test';
@@ -206,16 +208,14 @@ describe('#613 批量落地', () => {
     }
   });
 
-  it('④b dryRun 月末走通（09-30→1 天，同一条链）', () => {
+  it('④b dryRun 全范围无段即缺失阻断（#943）：exit 4 点名，不回成功页', () => {
     const { dir, db } = seedDir();
-    try {
-      cfg(dir);
-      const out = dispatchWrite('calorie.workout.land-monthend', { date: '2026-09-30', dryRun: true }, db);
-      assert.equal(out.data.ok, true);
-      assert.match(out.data.message, /预演：2026-09-30 至本月底 1 天/);
-    } finally {
-      db.close();
-    }
+    db.close();
+    const r = cli('calorie.workout.land-monthend', { date: '2026-09-30', dryRun: true }, { ...homeEnvOf(calorieConfigDir(dir)) });
+    assert.equal(r.code, 4, r.stderr.slice(-300));
+    assert.match(r.stderr, /落地到本月底没有可落地的训练段/);
+    assert.match(r.stderr, /2026-09-30 至 2026-09-30 共 1 天里一天都没排训练段/);
+    assert.equal(r.stdout.trim(), '', '缺失阻断只走 stderr：不许回 envelope（旧口径回的是成功回执页）');
   });
 
   it('④c 真出口读数：真 CLI dryRun 落盘，回执绝对路径存在', () => {
@@ -230,34 +230,35 @@ describe('#613 批量落地', () => {
     assert.match(readFileSync(env.data.output, 'utf8'), /ilife-page/);
   });
 
-  it('④d 真出口实跑 7 天（跨技能走文件缝、训记走配置 fixture）：推送 7 天 回写 7 天', () => {
+  it('④d 真出口实跑本周末（跨技能走文件缝、训记走配置 fixture）：只跑有段的天', () => {
     const { dir, db } = seedDir();
     db.close();
     const a = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, { ...homeEnvOf(cfg(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-500));
     const env = JSON.parse(a.stdout);
-    assert.match(env.data.message, /共 7 天 推送 7 天 回写 7 天/);
+    // 09-07~09-13 里只有 09-07 排了段：休息日不许再算成「已落地的一天」（#943 前这里报的是「推送 7 天」）。
+    assert.match(env.data.message, /共 7 天里 1 天有训练段（6 天空天跳过） 推送 1 天 回写 1 天/);
     assert.ok(existsSync(env.data.output), '回执页未落盘：' + env.data.output);
     assert.match(readFileSync(env.data.output, 'utf8'), /逐天结局/);
   });
 
-  it('④e 真出口实跑月末 1 天（09-30）：推送 1 天 回写 1 天', () => {
+  it('④e 真出口实跑月末（09-07 起，范围里有段）：推送 1 天 回写 1 天', () => {
     const { dir, db } = seedDir();
     db.close();
-    const a = cli('calorie.workout.land-monthend', { date: '2026-09-30' }, { ...homeEnvOf(cfg(dir))});
+    const a = cli('calorie.workout.land-monthend', { date: '2026-09-07' }, { ...homeEnvOf(cfg(dir))});
     assert.equal(a.code, 0, a.stderr.slice(-500));
     const env = JSON.parse(a.stdout);
-    assert.match(env.data.message, /共 1 天 推送 1 天 回写 1 天/);
+    assert.match(env.data.message, /共 24 天里 1 天有训练段（23 天空天跳过） 推送 1 天 回写 1 天/);
   });
 
-  it('③b 真 CLI 第 3 天失败 → exit 非 0 且点名第 3 天日期（fail-fast，前两天计入）', () => {
+  it('③b 真 CLI 首个有段的天失败 → exit 非 0 且点名第 1 天日期（fail-fast）', () => {
     const { dir, db } = seedDir();
     db.close();
     const r = cli('calorie.workout.land-weekend', { date: '2026-09-07' }, {
-      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_FAIL_DATE: '2026-09-09',
+      ...homeEnvOf(cfg(dir)), T676_LAND_FIXTURE_FAIL_DATE: '2026-09-07',
     });
     assert.notEqual(r.code, 0, r.stderr.slice(-300));
-    assert.match(r.stderr, /失败在第 3 天 2026-09-09/);
+    assert.match(r.stderr, /失败在第 1 天 2026-09-07/);
   });
 
   it('③c 真 CLI 用法错 exit 2（非布尔 dryRun）＋ 空库 exit 4 ＋ 缺开始日期 exit 4', () => {

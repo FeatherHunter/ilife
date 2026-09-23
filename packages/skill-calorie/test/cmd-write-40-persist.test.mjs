@@ -1020,12 +1020,13 @@ test('落库 · 落地训练族 5 条命令：跨技能走文件缝、训记走 
       assert.deepEqual(snapJson(db), before, 'land-weekend 路径改了本地库');
     });
   }
-  // land-monthend：月末锚点 → 只跑 1 天（`t613` 同形，避免整月子进程拖慢本门）
+  // land-monthend：锚点取计划内的有段日（09-09）→ 09-09 至月底里只有这一天有训练段，只跑 1 天
+  // （#943 起休息日不再进单日链；锚点取 09-30 会因「整段范围一天都没排训练段」而缺失阻断 exit 4）
   {
     const dir = mkEmpty();
     seedPlan(dir);
     const before = snapLocal(dir);
-    const r = run('calorie.workout.land-monthend', { date: '2026-09-30' }, { ...homeEnvOf(cfgLand(dir))});
+    const r = run('calorie.workout.land-monthend', { date: '2026-09-09' }, { ...homeEnvOf(cfgLand(dir))});
     assert.equal(r.status, 0, 'land-monthend 应成功：' + String(r.stderr).slice(-300));
     assert.match(JSON.parse(r.stdout).data.message, /已批量/);
     withRead(dir, 'calorie.workout.land-monthend', (db) => {

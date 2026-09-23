@@ -5,8 +5,8 @@
  *   `monthend`＝今天 → 本月末（含今天，月底即 1 天）。唯一定义地 `batchDates`；
  * - 逐天循环复用 #612 单日链：每天调一次 `calorie.workout.land`（子进程边界，
  *   与 `landRunner.ts` 同形），**不重复实现**四步；
- * - 推送与回写用同一份天数：单日链每天内推当天＋回写当天（同源），批量成功 N 天
- *   即推送 N 天、回写 N 天（构造即成立，`t613` 钉死）；
+ * - 推送与回写用同一份天数：单日链每天内推当天＋回写当天（同源），**有训练段的天**才跑，
+ *   于是推送天数＝回写天数＝范围内有段的天数（#943；旧口径把休息日也数成一"天"，报出 7 天全是假的）；
  * - 失败逐天读数：首个失败天即停（与单日链／`run-sync` 的 fail-fast 一致），
  *   点名第几天＋日期＋原因，非 0 退出。
  *
@@ -26,12 +26,12 @@ import { fileURLToPath } from 'node:url';
 import type { DatabaseSync } from 'node:sqlite';
 import { todayISO } from '../analysis/utils.js';
 import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
-import { weekOfDate } from '../render/planPlate.js';
 import { dayField, fail } from '../shared/params.js';
 import { R, provided } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { getPlan } from './planStore.js';
-import type { PlanSessionRow } from './planStore.js';
+// #943 · 「某天有几段／为什么没得落地」只有一个定义地（`land.ts`），本件引它，不另算一遍。
+import { landNoSegmentWhy, landSessionsOf } from './land.js';
 import { buildLandBatchProcessPage, buildLandBatchResultPage } from './landBatchPages.js';
 
 export const LAND_WEEKEND_KEY = 'calorie.workout.land-weekend';
@@ -206,24 +206,17 @@ function readDryRun(params: Record<string, unknown>): boolean {
   return v as boolean;
 }
 
-/** 某天训练段（只读；与 `land.ts#daySessions` 同取数：自有 store＋`weekOfDate`，不新增直引种类）。 */
-function daySessionsOf(
-  plan: { config: { start_date: string | null } | null; sessions: PlanSessionRow[] },
-  date: string,
-): PlanSessionRow[] {
-  const start = plan.config?.start_date ?? null;
-  if (!start) return [];
-  const { week, dow } = weekOfDate(start, date);
-  return plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
-}
-
 function failBatch(wake: string, read: LandBatchDayRead): never {
   const code = read.code === 2 ? 2 : read.code === 3 ? 3 : 4;
   const why = read.tail !== '' ? read.tail : read.message !== '' ? read.message : '单日链没过';
   fail(code, '批量' + wake + '失败在第 ' + read.index + ' 天 ' + read.date + '：' + why);
 }
 
-/** 批量宿主编排（两条写命令共用；`scope` 定天数口径与文案，页装配走 `landBatchPages.ts`）。 */
+/** 批量宿主编排（两条写命令共用；`scope` 定天数口径与文案，页装配走 `landBatchPages.ts`）。
+ *
+ *  #943 · 无段即缺失阻断：整段范围里一天都没排训练段 ⇒ `fail(4, …)` 点名，不落页、不调任何外部。
+ *  范围里**有段的天才跑**单日链（休息日跳过）：旧口径把空天也当成功的一"天"，
+ *  于是 7 天里只有 1 天有训练段也报「推送 7 天 回写 7 天」——那次成功是假的。 */
 function writeLandBatch(
   params: Record<string, unknown>, db: DatabaseSync, scope: LandBatchScope, key: string, wake: string,
 ): WriteOut {
@@ -237,11 +230,17 @@ function writeLandBatch(
   }
   const scopeLabel = LAND_BATCH_SCOPE_LABEL[scope];
   const plan = getPlan(db);
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
-  if (plan.sessions.length > 0 && !plan.config?.start_date) fail(4, '计划缺开始日期，无法定位周次');
+  const perDay = dates.map((date) => ({ date, sessions: landSessionsOf(plan, date) }));
+  const segs = perDay.reduce((n, d) => n + d.sessions.length, 0);
+  const runDays = perDay.filter((d) => d.sessions.length > 0).map((d) => d.date);
+  const first = dates[0] as string;
+  const last = dates[dates.length - 1] as string;
+  if (segs === 0) {
+    // 范围级判据走 `landNoSegmentWhy` 同一份：（含第一天的诊断），别处不许再算一遍。
+    fail(4, '落地到' + scopeLabel + '没有可落地的训练段：' + first + ' 至 ' + last + ' 共 ' + dates.length
+      + ' 天里一天都没排训练段。' + (landNoSegmentWhy(plan, first) ?? '先看完整计划核对哪里排了训练'));
+  }
   if (dryRun) {
-    const perDay = dates.map((date) => ({ date, sessions: daySessionsOf(plan, date) }));
-    const segs = perDay.reduce((n, d) => n + d.sessions.length, 0);
     const message = '预演：' + anchor + ' 至' + scopeLabel + ' ' + dates.length + ' 天 ' + segs + ' 段待落地（远端未调用）';
     const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 批量预演', {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
@@ -256,12 +255,14 @@ function writeLandBatch(
     };
   }
   const summary: LandBatchSummary = {
-    scope, anchor, start: dates[0] as string, end: dates[dates.length - 1] as string,
-    ...runLandBatchDays(dates),
+    scope, anchor, start: first, end: last,
+    ...runLandBatchDays(runDays),
   };
   if (summary.failed !== null) failBatch(wake, summary.failed);
-  const message = '已批量' + wake + ' ' + summary.start + ' 至 ' + summary.end + '：共 ' + dates.length
-    + ' 天 推送 ' + summary.pushDays + ' 天 回写 ' + summary.backfillDays + ' 天';
+  const skipped = dates.length - runDays.length;
+  const message = '已批量' + wake + ' ' + first + ' 至 ' + last + '：共 ' + dates.length + ' 天里 '
+    + runDays.length + ' 天有训练段' + (skipped === 0 ? '' : '（' + skipped + ' 天空天跳过）')
+    + ' 推送 ' + summary.pushDays + ' 天 回写 ' + summary.backfillDays + ' 天';
   const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 批量读数', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
     items: [{ status: '成功', reason: '', detail: message }],
