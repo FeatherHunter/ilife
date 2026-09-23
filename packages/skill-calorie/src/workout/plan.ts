@@ -18,7 +18,17 @@ import { previewWrite } from './write.js';
 
 /** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。
  *  无计划（空库／撤销后）就照 `buildPlanView` 的缺失阻断抛 `missing-data`（调用方走 fallback，不静默空页）：
- *  读命令要能区分「没有计划」与「有计划」，不许用 catch 把它吞成一张好看的空态页。 */
+ *  读命令要能区分「没有计划」与「有计划」，不许用 catch 把它吞成一张好看的空态页。
+ *
+ *  **#947 · 目标日下传 ＋ 两张新读数**（报障单 #944 故障 4／5）：
+ *  ① 目标日（`params.date`）经 `dayField` 进 `buildPlanView` 的 `dateISO`——页面四态（已结束／未开始／
+ *     本日无课／真无计划）由取数层按这一个日子判，命令层不再自己算周次；
+ *  ② `data.metrics` 里那三个键**保持现义**（`totalSessions`／`totalMovements`＝本次过滤取到的，
+ *     `totalWeeks`＝配置全量）：它们是**报文契约**，`test/scene05-read`（8 条读词）与
+ *     `test/scene05-write-create`／`scene05-write-mutate` 三件冻结用例按「本次取到几场」读它们，
+ *     本票不动这三件的路径，故不动这三个键的语义；
+ *  ③ 于是**计划全量**另出两个键 `planSessions`／`planMovements`（与 `totalWeeks` 同源），页面「总场次／
+ *     总动作」两张卡读的就是这两个——带参与不带参两页因此逐字相等（票面判据 ④）。 */
 export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const v = buildPlanView(db, {
     dateISO: dayField(params, 'date') ?? undefined,
@@ -27,7 +37,10 @@ export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): Vie
     anchorISO: anchorOf(params),
     movement: optStr(params, 'movement') || undefined,
   });
-  const metrics = nums({ totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks });
+  const metrics = nums({
+    totalSessions: v.totalSessions, totalMovements: v.totalMovements, totalWeeks: v.totalWeeks,
+    planSessions: v.planSessions, planMovements: v.planMovements,
+  });
   return { data: { metrics }, html: renderPlanHtml(v, { key: 'calorie.view.plan', command: commandLine('calorie.view.plan', params) }) };
 }
 

@@ -18,20 +18,18 @@
  */
 import type { SerializableEnvelope } from 'base-paint';
 import { HELP_COPY_ACTIONS, escapeHtml, renderActionBar } from 'base-paint';
-import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
+import { renderDataTable, renderConclusionBar, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from '../workout/planCopyBlock.js';
 // #946：本页的页框样式走 `planPreviewCss()`（页面级段 ＋ 同权单列规则）；`pageChromeCss` 不再由本件直取。
 import { planPageCss, planPreviewCss, planViewCss } from './workoutPlanCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
-import { weekOfDate } from './planPlate.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanSessionRow } from '../workout/planStore.js';
 import type { PreviewLine, WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
-import { todayISO } from '../analysis/utils.js';
 import { DASH } from './workoutMovementTable.js';
 
 const DOC_VERSION = '0.1.0';
@@ -118,11 +116,71 @@ function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
   return '第 ' + wn + ' 周 · ' + list.length + ' 场 · ' + brief.join(' · ');
 }
 
-/** 结果/读验证（order176–184）：页头＋指标卡＋两级页签（周／日）＋场次卡四列明细＋空态＋复制区。
+/** #947 · 计划页没有周区块可出时那一块空态（判据点名的四句话都在这儿）。
+ *
+ *  为什么单独一件：改前这里只有一句「这一周没有训练安排（换一周看，或先定训练计划）」——**三态共用**，
+ *  且那句许诺的两个出口（换一周看＝两级页签、先定训练计划＝入口）随周区块一起消失，#944 故障 4 的
+ *  现场读数就是它。
+ *
+ *  **只有「本日无课」与「真无计划」走本件**：越界两态（`ended`／`future`）取数层回的是**全量**，
+ *  页上照出整份计划的周区块（那是可点出口），故它们的状态词不走空态块——那两句住下面的
+ *  `planStateBadge()`／`planStateSummary()`（页头徽章与摘要行，与周区块**同时**在场）。
+ *  文案里的日期与周数都由 `PlanView` 给（取数层是唯一出处），本件不自己算。 */
+function planEmptyBlock(v: PlanView, planWeeks: number): string {
+  if (v.planState === 'empty') {
+    return renderEmptyBlock({
+      title: '训练安排',
+      text: '计划里还没有任何训练安排（计划在，一行课都没有）',
+      hint: '要说「定训练计划」，把第一周排出来',
+    });
+  }
+  return renderEmptyBlock({
+    title: '训练安排',
+    text: '这一天没有训练安排',
+    hint: '点上面那一周的「周一…周日」页签换一天看，或点「第 N 周」换一周看',
+  });
+}
+
+/** #947 · 页面顶部的**态别结论条**：越界两态各一句状态词＋计划范围（说明「已结束／还没开始」是
+ *  相对哪一段说的）；其余状态返回空串 ⇒ 一行都不出（常态页与改前逐字相同）。
+ *
+ *  为什么住正文而不走页头徽章／摘要：结果页走的是**老 A 壳**（`assembleDocPage` 只在给了
+ *  `metaLeft` 时才走 B 线，而 A 线忽略 `badge`／`summary`）——要落页头就得整页换壳，那会把不带参数
+ *  那一页也一起改掉（票面反向锁不许）。故状态词落在正文首件：它和周区块**同时**在场，不像空态块
+ *  只在没有周区块时才出。 */
+function planStateNote(v: PlanView, planWeeks: number): string {
+  if (v.planState !== 'ended' && v.planState !== 'future') return '';
+  const what = v.planState === 'ended' ? '计划已结束' : '计划还没开始';
+  if (v.planStart === null || v.planEnd === null) return renderConclusionBar(what);
+  return renderConclusionBar(what + '：计划范围 ' + v.planStart + ' 至 ' + v.planEnd
+    + '（共 ' + String(planWeeks) + ' 周）');
+}
+
+/** 结果/读验证（order176–184）：页头＋指标卡＋两级页签（周／日）＋场次卡四列明细＋态别空态＋复制区。
  *  T351-v6：两级页签各钉一个**默认选中项**——周＝**本周**（按计划起始日与今天算出，`weekOfDate` 是周次
  *  换算的唯一出处；算不出或那一周不在本页时由 `planWeeksHtml` 兜底选第 1 周），日＝周一（住
- *  `./workoutPlanLook.ts`）。页签里不再有「全部周次／全部」两枚（负责人裁定去掉）。 */
+ *  `./workoutPlanLook.ts`）。页签里不再有「全部周次／全部」两枚（负责人裁定去掉）。
+ *
+ *  **#947 四态出页 ＋ KPI 同口径**（报障单 #944 故障 4／5）：
+ *  ① 取数层 `PlanView` 给出四态（`planState`：`ok`／`ended`／`future`／`empty`）与两个边界（`planStart`／
+ *     `planEnd`），本件按态出页、**每态都留可点出口**——`ended`／`future` 两态里取数层回的是全量，故
+ *     周区块照出一个不少（`data-wk` 全在，周次页签与星期页签都点得到，改前正是这两态被并成空态块、
+ *     页签随切片消失）；只有「真无计划」（`empty`）与「日期过滤后空窗」两种才走空态块，且空态块里的
+ *     `hint` 逐字写清往哪儿点。
+ *  ② KPI 三张卡一律读**计划全量**（`planSessions`／`planMovements`／`totalWeeks` 同源）——改前「总场次／
+ *     总动作」读的是过滤后那一份，于是 `date` 落在越界／空窗那天时页上印出 `总场次 0 ／ 总动作 0 ／
+ *     总周数 4`，被读成空壳计划（#944 故障 5 的现场读数）。当次过滤到多少改由第 4 张卡「本周」表达。
+ *  ③ 页底复制载荷的 `total` 仍用 `v.totalSessions`（＝过滤后那一份，报文现义保留）；复制行的数据本来就是
+ *     页上那几周，「总场次」卡与载荷各说各的口径、各有各的出处，不互相冒充。 */
 export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
+  // 页上要出的周区块＝取数层本次给的那几周（`v.sessions`）：
+  //  · `date` 落在计划范围外的两态（`ended`／`future`）下取数层回的是**全量**（口径见 `./planPlate.js` 的
+  //    `PlanView`：那一档照过滤结果出页会只剩空态、周区块随切片一起消失）⇒ 整份计划的周区块铺在页上，
+  //    `data-wk` 一个不少，周次页签与星期页签都点得到：**那正是这两态的可点出口**；
+  //  · `ok` 态＝本次过滤后那几周，与改前逐字一致（`date` 落在某一天时只出那一周、`weekOffset`／`week`
+  //    的周窗与 `movement` 照旧；`date` 那天没课但那一周有课时，页上出的是**那一周的全周场次**）；
+  //  · `empty` 态没有周可出。
+  // 走空态块的两档：「本日无课」（`ok` ＋ 日期档读 0 行）与「真无计划」。
   const byWeek = new Map<number, PlanSessionRow[]>();
   for (const s of v.sessions) {
     const list = byWeek.get(s.week_number) ?? [];
@@ -132,9 +190,9 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   const weeks: PlanWeek[] = [...byWeek.keys()].sort((a, b) => a - b)
     .map((week) => ({ week, sessions: byWeek.get(week) ?? [] }));
   const planName = v.title === null || v.title === '' ? '未命名计划' : v.title;
-  // 周页签的默认选中项＝**本周**：计划起始日与今天都齐才算得出（`weekOfDate` 按「起始日那一周的周一为
-  // 第 1 周」口径给周次号，与计划库 `day_of_week` 同源）；缺起始日 ⇒ 算不出 ⇒ 传 null 让它兜底第 1 周。
-  const currentWeek = v.startDate === null || v.startDate === '' ? null : weekOfDate(v.startDate, todayISO()).week;
+  // 周页签的默认选中项＝**本周**：周次由取数层按同一个 `weekOfDate` 算出（`PlanView.anchorWeek`，显式
+  // 日期入参优先、否则今天）；算不出或那一周不在本页时由 `planWeeksHtml` 兜底选第 1 周。
+  const currentWeek = v.anchorWeek;
   // 副标题只留一件事：计划名。T351-v9（负责人 2026-09-15 第 ⑤ 条）把原来那串
   // `计划名 · 说明 · 起日 日期` 拆掉——三件事用 `·` 串成一行，正是「拿符号顶替设计」。
   // 说明与起日改住页头下的**计划信息条**：起日是一个「键＋值」，说明原文里若带 `·`
@@ -155,17 +213,30 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
       : '<span class="ilw-meta-k">起日</span><span class="ilw-meta-v">' + escapeHtml(v.startDate) + '</span>')
     + descHtml
     + '</div>';
+  // #947 ②：三张卡一律读**计划全量**（`planSessions`／`planMovements`／`totalWeeks` 同源），
+  // 故带参与不带参两页的「总场次」逐字相等；当次过滤读到多少由第 4 张卡「本周」表达。
+  // 前两张卡的槽位与改前逐字相同（只换取数字段），不添说明行——不带参数那一页的读数按票面要逐字一致。
+  const planWeeks = v.totalWeeks ?? weeks.length;
   const parts: string[] = [
     metaStrip,
+    planStateNote(v, planWeeks),
     renderKpiGrid([
-      { label: '总场次', value: String(v.totalSessions), unit: '场' },
-      { label: '总动作', value: String(v.totalMovements), unit: '个' },
-      { label: '总周数', value: String(v.totalWeeks ?? weeks.length), unit: '周',
+      { label: '总场次', value: String(v.planSessions), unit: '场' },
+      { label: '总动作', value: String(v.planMovements), unit: '个' },
+      { label: '总周数', value: String(planWeeks), unit: '周',
         detail: '其中 ' + weeks.length + ' 周有安排' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
+      // 「本周」口径＝**本次过滤真读到多少**（越界／未开始的日子落在计划外 ⇒ 照实 0，不编数；
+      // 本日无课 ⇒ 0 场，不拿「为保住出口而上屏的整周」冒充）。
+      { label: '本周', value: String(v.visibleSessions), unit: '场',
+        detail: (v.anchorWeek === null ? '算不出周次' : '第 ' + v.anchorWeek + ' 周')
+          + ' · 动作 ' + v.visibleMovements + ' 个' },
     ]),
-    weeks.length === 0
-      ? renderEmptyBlock({ title: '训练安排', text: '这一周没有训练安排（换一周看，或先定训练计划）' })
-      : planWeeksHtml(weeks, currentWeek),
+    // #947 ③：**本日无课**那一档（`ok` 态 ＋ 按日期过滤真读到 0 场）——那一周照出（要留住「换一天看」
+    // 的星期页签），空态句另出一块说明「这一天没有安排」。判据读 `visibleSessions`（取数层的**过滤结果**），
+    // 不拿 `weeks.length`：本档上屏的那一周是有内容的（为保住出口而上屏），拿它判会把这句空态吞掉。
+    v.planState === 'ok' && v.scope === 'day' && v.visibleSessions === 0 && weeks.length > 0
+      ? planEmptyBlock(v, planWeeks) : '',
+    weeks.length === 0 ? planEmptyBlock(v, planWeeks) : planWeeksHtml(weeks, currentWeek),
     planCopyBlock({
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
