@@ -18,6 +18,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFamilySource } from './_src-family.mjs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -37,7 +38,8 @@ import {
 
 const execFileAsync = promisify(execFile);
 const LF = String.fromCharCode(10);
-const SRC_HELP = readFileSync(new URL('../src/help.ts', import.meta.url), 'utf8');
+/** 目录化批次⑥：实现住 `src/components/help/**`；读整族（读薄转出件会让下面的类名抽取抽空）。 */
+const SRC_HELP = readFamilySource('components/help');
 
 /** 样式区名：**从 `CONTROL_STYLE_SECTIONS` 闭集派生**（kebab 后与 `HELP_SHELL_ID` 同值者），不写字面量。 */
 const HELP_SECTION = CONTROL_STYLE_SECTIONS.find(

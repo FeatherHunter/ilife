@@ -41,6 +41,7 @@ import {
 import { chartsCss } from '../dist/charts.js';
 import * as BASE_PAINT from '../dist/index.js';
 import { TemplateError } from '../dist/template.js';
+import { readFamilySource } from './_src-family.mjs';
 
 const LF = String.fromCharCode(10);
 /** 目录化批次⑥：style 的实现从 `src/style.ts` 一件切成 `src/components/style/**` 一族多件；
@@ -58,7 +59,8 @@ const SRC_CHARTS = readdirSync(SRC_CHARTS_DIR).filter((f) => f.endsWith('.ts')).
 const SRC_CONTROLS_DIR = fileURLToPath(new URL('../src/components/controls/', import.meta.url));
 const SRC_CONTROLS = readdirSync(SRC_CONTROLS_DIR).filter((f) => f.endsWith('.ts')).sort()
   .map((f) => readFileSync(SRC_CONTROLS_DIR + f, 'utf8')).join(LF);
-const SRC_HELP = readFileSync(new URL('../src/help.ts', import.meta.url), 'utf8');
+/** 目录化批次⑥：help 的实现住 `src/components/help/**`；读整族（读薄转出件会让类名抽取抽空）。 */
+const SRC_HELP = readFamilySource('components/help');
 const SELF = readFileSync(fileURLToPath(import.meta.url), 'utf8');
 
 /** 冻结 token 名（顺序即常量声明序）。 */

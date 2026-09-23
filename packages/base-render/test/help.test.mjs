@@ -13,6 +13,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readFamilyDist, readFamilySource } from './_src-family.mjs';
 import { fileURLToPath } from 'node:url';
 
 import { HelpSchemaError, renderHelpShell } from '../dist/help.js';
@@ -825,22 +826,26 @@ function stripComments(source) {
 }
 
 describe('renderHelpShell：模块纯度与单一真相（R8／R13）', () => {
-  const distPath = fileURLToPath(new URL('../dist/help.js', import.meta.url));
-  const srcPath = fileURLToPath(new URL('../src/help.ts', import.meta.url));
-  const distCode = stripComments(readFileSync(distPath, 'utf8'));
-  const srcCode = stripComments(readFileSync(srcPath, 'utf8'));
+  const distCode = stripComments(readFamilyDist('components/help'));
+  /* 目录化批次⑥：实现住 `src/components/help/**`；源码面与产物面**都读整族**——
+   *  读旧路径只会看到一行 `export *`，下面的依赖面与否定式断言会全部空转。 */
+  const srcCode = stripComments(readFamilySource('components/help'));
 
-  it('dist/help.js（剥注释）：零 DOM／零 node:／零第三方 import', () => {
+  it('help 族（dist，剥注释）：零 DOM／零 node:／零第三方 import', () => {
     for (const needle of ['document.', 'window.', 'globalThis.', 'node:', 'require(']) {
       assert.equal(distCode.includes(needle), false, '模块纯度违规：' + needle);
     }
     const specifiers = [...distCode.matchAll(/from\s*'([^']+)'/g)].map((match) => match[1]).sort();
-    assert.deepEqual(specifiers, [
-      './contract.js', './spec/controls.js', './spec/help.js', './spec/style.js', './spec/template.js',
-      './style.js', './template.js',
-    ], '依赖面必须恰为包内相对路径（零第三方；含被消费的 CONTROL_STYLE_SECTIONS 所在模块）');
+    assert.ok(specifiers.length > 0, '防剥空：必须读到依赖面');
     for (const specifier of specifiers) {
-      assert.equal(specifier.indexOf('./') === 0 || specifier.indexOf('../') === 0, true, '第三方依赖：' + specifier);
+      assert.equal(/^\.\.?\//.test(specifier), true, '第三方依赖：' + specifier);
+    }
+    /* 正控：实现必须真的消费这几件冻结来源——否则「零第三方」可能是空集凑出来的。 */
+    for (const need of [
+      '../../spec/help.js', '../../spec/template.js', '../../spec/controls.js',
+      '../../contract.js', '../../template.js', '../../style.js',
+    ]) {
+      assert.ok(specifiers.includes(need), '依赖面必须含被消费的：' + need);
     }
   });
 
@@ -879,7 +884,7 @@ describe('renderHelpShell：模块纯度与单一真相（R8／R13）', () => {
     /* W17：产出侧纯度已有「dist/help.js」用例，但 `src/help.ts` **模块自身**从无仓内断言
      * （R8：模块代码零 `document.`／`window.`／`globalThis.`，DOM 只允许出现在**产出文本**里）。
      * 口径与 A1c 的 `charts.test.mjs`「H.纯度（src 侧）」一致：剥注释 → 剥字面量 → 逐项零命中。 */
-    const raw = readFileSync(srcPath, 'utf8');
+    const raw = readFamilySource('components/help');
     const code = stripComments(raw)
       .replace(/'(?:[^'\\]|\\.)*'/g, "''")
       .replace(/"(?:[^"\\]|\\.)*"/g, '""');

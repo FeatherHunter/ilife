@@ -11,7 +11,7 @@ export type { MountHandle, MountOptions, SlotsPort, TabEntry, TabScope, TabSeed 
 export * from './spec/index.js';
 /** #74 统一占位符填充器（契约 §3.1／§6.1）。`TemplateError` **不在此导出**：
  *  冻结面 `SPEC_FROZEN_SURFACE` 无该运行时条目，调用方按 `name`／`code` 判定。 */
-export { fillTemplate } from './template.js';
+export { fillTemplate } from './components/template/index.js';
 /** #76 控件层（契约 §3.3／§6.3）：六个控件的产出与复制编排。`ControlsError` **不在此导出**——
  *  与 `TemplateError` 同口径（冻结面 44 条内无该运行时条目，调用方按 `name`／`code` 判定）。 */
 export {
@@ -29,7 +29,7 @@ export {
 /** #77 复制文本序列化（契约 §3.4／§6.4）：envelope 逐 shape 投影 → text／json／csv。
  *  `TextError` **不在此导出**——与 `TemplateError`／`ControlsError` 同口径（冻结面无该运行时条目，
  *  调用方按 `name`／`code` 判定）。 */
-export { buildDataText, buildLogText } from './text.js';
+export { buildDataText, buildLogText } from './components/text/index.js';
 /** #78 图表层（契约 §3.5／§6.5）：`charts`（8 接口，纯 CSS+SVG 字符串产出）＋
  *  `buildChartsHelpersJs`（图表 helpers JS 唯一产出者，自注入 `CHARTS_STYLE_ID` 样式）。
  *  `ChartError` **不在此导出**——与 `TemplateError`／`ControlsError` 同口径（冻结面无该运行时条目，
@@ -37,7 +37,7 @@ export { buildDataText, buildLogText } from './text.js';
 export { buildChartsHelpersJs, charts } from './components/charts/index.js';
 /** #78 HELP模板（契约 §3.5.3／§6.5）：数据页分型，走 `fillTemplate`，`#88` 直接复用 `HelpShellInput`。
  *  `HelpSchemaError`／内置help模板 **不在此导出**（同口径；模板可经 `HelpShellInput.template` 覆盖）。 */
-export { renderHelpShell } from './help.js';
+export { renderHelpShell } from './components/help/index.js';
 /** #525 页面级两层（只追加，不动上面任何一条 export）：**移动端配方**（断点／触摸区／安全区／
  *  窄屏表格行为／页内定位）与**页面级形状件**（事实条／图片与 GIF 容器／时间轴条／媒体占位件）。
  *  与 `blocks.js` 的 12 区块样式区分住：这两层是「整页怎么摆」，不参与区块组合；
