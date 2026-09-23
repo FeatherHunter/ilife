@@ -74,6 +74,12 @@ export interface ChartCommonOptions {
   readonly format?: (value: number) => string;
   readonly animation?: boolean;
   readonly emptyText?: string;
+  /** **点数闸**（#950 B3；**缺省不启用 ＝ 旧行为逐字节不变**）：有效点少于它 ⇒ 走空态
+   *  （`CHART_EMPTY_RULE = 'emptyState'`），不出「一条只有一个点的线」。
+   *  折线／柱／迷你线／散点／组合五支吃它；`donut`（占比）不看它。 */
+  readonly minPoints?: number;
+  /** 点数闸触发时那行小字（缺省用一句带数字的缺省话术；`emptyText` 仍是正文）。 */
+  readonly minPointsHint?: string;
   readonly tooltip?: boolean;
   readonly labels?: 'edge' | 'all' | 'none' | 'select';
   /** 数值标签：`true` 全量／`false` 无／`'edge'` 首尾有效点／`'last'` 只标末值（#567）。

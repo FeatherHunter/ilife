@@ -249,8 +249,8 @@ describe('冻结面清单（SPEC_FROZEN_SURFACE）', () => {
       assert.equal(typeof e.name, 'string');
       assert.ok(['runtime', 'type'].includes(e.kind), e.name + ' kind 非法');
       assert.ok(['implemented', 'pending'].includes(e.status), e.name + ' status 非法');
-      assert.ok(['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '5', '7'].includes(e.section), e.name + ' section 非法');
-      assert.ok(['#74', '#75', '#76', '#77', '#78', '#92', '#525'].includes(e.ticket), e.name + ' ticket 非法');
+      assert.ok(['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '5', '7'].includes(e.section), e.name + ' section 非法');
+      assert.ok(['#74', '#75', '#76', '#77', '#78', '#92', '#525', '#950'].includes(e.ticket), e.name + ' ticket 非法');
       assert.ok(e.signature.length > 0, e.name + ' 缺逐字签名');
       assert.ok(!names.has(e.name), '重名：' + e.name);
       names.add(e.name);

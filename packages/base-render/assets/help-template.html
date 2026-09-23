@@ -1803,8 +1803,10 @@ var h = '<div class="app"><div class="app-inner">' +
   '<div class="pages" id="pages">';
 GROUPS.forEach(function(g){
   h += '<div class="page" data-page="' + g.key + '">';
-  g.subgroups.forEach(function(sg){
-    h += '<details class="subgroup" open><summary>' + sg.name + '<span class="sg-count">' + sg.scenes.length + '</span></summary><div class="sg-body"><div class="grid">';
+  g.subgroups.forEach(function(sg, si){
+    /* 默认只展开本页第一个二级分组（其余折叠）：首屏看得见一组内容，又不被十几个分组撑成长卷。
+       用户 2026-09-24 裁定；搜索清空后也回到这一态，见 doSearch 的复位支。 */
+    h += '<details class="subgroup"' + (si === 0 ? ' open' : '') + '><summary>' + sg.name + '<span class="sg-count">' + sg.scenes.length + '</span></summary><div class="sg-body"><div class="grid">';
     sg.scenes.forEach(function(s){
       h += '<div class="mini" data-key="' + s.id + '">' +
         '<div class="m-top">' + chipHTML(s) + '</div>' +
@@ -2029,7 +2031,8 @@ function doSearch(){
         m.style.display = '';
         m.querySelector('.m-name').innerHTML = esc(SCENE[m.dataset.key].name);
       });
-      pg.querySelectorAll('.subgroup').forEach(function(sg){ sg.style.display = ''; });
+      /* 清空搜索＝回到默认态：只第一个二级分组展开（搜索期把命中的组都打开过，不复位就留下了）。 */
+      pg.querySelectorAll('.subgroup').forEach(function(sg, si){ sg.style.display = ''; sg.open = si === 0; });
     });
     /* 恢复全量后必须同步重算高度锁: 筛选期 .pages 被锁在「筛选后」的当页高, 不重算就当页被锁矮,
        后半页连同末张场景卡一起滚不到 —— 这里的 scrollTo 目标就是当前位置(不触发 scroll 事件), 兜不住这次重算 */

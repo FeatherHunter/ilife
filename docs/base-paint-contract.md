@@ -877,14 +877,18 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | `PAGE_UI_CLASS` | runtime | #525 | implemented | 3.6 | `'ilife-page-ui'` |
 | `PAGE_UI_VIEWPORT` | runtime | #525 | implemented | 3.6 | `'width=device-width,initial-scale=1,viewport-fit=cover'` |
 | `pageUiCss` | runtime | #525 | implemented | 3.6 | `(input?: PageUiCssInput): string` |
+| `PAGE_COLUMNS` | runtime | #950 | implemented | 3.6 | `readonly ['centered', 'wide', 'full', 'locked']` |
+| `PAGE_COLUMN_WIDTH_PX` | runtime | #950 | implemented | 3.6 | `{ centered: 880; wide: 1120 }` |
 | `MEDIA_RATIOS` | runtime | #525 | implemented | 3.6 | `readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']` |
 | `pageShapeCss` | runtime | #525 | implemented | 3.6 | `(input?: { prefix?: string }): string` |
 | `renderFactStrip` | runtime | #525 | implemented | 3.6 | `(input: FactStripInput): string` |
+| `FACT_STRIP_MISSING_MARK` | runtime | #950 | implemented | 3.6 | `'—'` |
 | `renderMediaFigure` | runtime | #525 | implemented | 3.6 | `(input: MediaFigureInput): string` |
 | `renderMediaPlaceholder` | runtime | #525 | implemented | 3.6 | `(input: MediaPlaceholderInput): string` |
 | `renderTimelineRows` | runtime | #525 | implemented | 3.6 | `(input: TimelineRowsInput): string` |
-| `PageUiCssInput` | type | #525 | implemented | 3.6 | `{ prefix?: string }` |
-| `FactItemInput` | type | #525 | implemented | 3.6 | `{ label: string; value: string; tone?: FactTone }` |
+| `PageUiCssInput` | type | #525 | implemented | 3.6 | `{ prefix?: string; column?: PageColumn }` |
+| `PageColumn` | type | #950 | implemented | 3.6 | `'centered' \| 'wide' \| 'full' \| 'locked'` |
+| `FactItemInput` | type | #525 | implemented | 3.6 | `{ label: string; value: string \| null; tone?: FactTone; unit?: string }` |
 | `FactStripInput` | type | #525 | implemented | 3.6 | `{ items: readonly FactItemInput[]; extraClass?: string }` |
 | `FactTone` | type | #525 | implemented | 3.6 | `readonly ['ok', 'warn', 'danger']` |
 | `MediaFigureInput` | type | #525 | implemented | 3.6 | `{ src?: string; alt: string; ratio: MediaRatio; fit?: 'contain' \| 'cover'; caption?: string; note?: string; placeholder?: string; id?: string }` |
@@ -896,6 +900,56 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 **所属包**：`base-paint`。**旧侧对应物**：无（新增面）；形状债的旧样子（`·`／`；` 串）见
 `docs/skills/skill-calorie/t524-改前读数.md`。
+
+### 3.7 页面级导航与横条件（#950）
+
+这一节是**后追加**的一节（#950）：新增两族页面级件 —— `src/pageNav.ts` 的**导航与元信息**
+（分段导航／胶囊行）与 `src/pageBars.ts` 的**横条三件**（时间格带／等式条／态声明条）。
+
+- **为什么另立两件、不并进 `pageShapes.ts`**：那一件已 452 行、越过本包 350 行告警线
+  （第四步已当场报出，见 `docs/base/base-render/行数告警线评估.md`）；本批按**变化频率**切：
+  `pageShapes` 管媒体与事实，`pageNav` 管导航与元信息（随整页骨架动），`pageBars` 管「一行说不完」的三态信息。
+- **形状与角色同义**：分段导航做**动作**的形（等宽分格 ＋ 选中实底 ＋ 图标位），与状态胶囊
+  （`blocks.ts` 的 chip 样式区）在形状上分得开；`renderChipRow` 给裸 chip 一个**容器**——
+  裸行内元素落进 ≥1001px 页壳网格（§3.6 ⑧ 的 `> * { grid-column: 2 }`）时会被逐枚提升成整行。
+- **样式归口**：两族样式由 `pageShapeCss()` **汇总**进页，调用方不必另接样式函数。
+- **影响面（说清楚）**：不启用 `pageUi` 的页产出物**逐字节不变**；启用 `pageUi` 的页
+  其 `sharedCss` 段多出本批两族的选择器（其余字节不变，逐件差异见本票证据件）。
+- **单位与数字归调用方**：值位只吃「已经是给人看的样子」的串，本层不做取整与单位口径。
+
+<!-- FROZEN-SURFACE-TABLE-START -->
+| 名字 | kind | ticket | status | section | 签名 |
+|---|---|---|---|---|---|
+| `CHIP_TONES` | runtime | #950 | implemented | 3.7 | `readonly ['neutral', 'ok', 'warn', 'danger']` |
+| `SEG_NAV_ICONS` | runtime | #950 | implemented | 3.7 | `readonly ['grid', 'line', 'table', 'copy', 'goal', 'drop', 'scale', 'flame']` |
+| `pageNavCss` | runtime | #950 | implemented | 3.7 | `(input?: { prefix?: string }): string` |
+| `renderChipRow` | runtime | #950 | implemented | 3.7 | `(input: ChipRowInput): string` |
+| `renderSegmentedNav` | runtime | #950 | implemented | 3.7 | `(input: SegmentedNavInput): string` |
+| `CAPTION_TONES` | runtime | #950 | implemented | 3.7 | `readonly ['plain', 'ok', 'warn', 'danger']` |
+| `DAY_STRIP_EMPTY_MARK` | runtime | #950 | implemented | 3.7 | `'—'` |
+| `STATE_TONES` | runtime | #950 | implemented | 3.7 | `readonly ['info', 'warn', 'danger']` |
+| `pageBarsCss` | runtime | #950 | implemented | 3.7 | `(input?: { prefix?: string }): string` |
+| `renderDayStrip` | runtime | #950 | implemented | 3.7 | `(input: DayStripInput): string` |
+| `renderEquationBar` | runtime | #950 | implemented | 3.7 | `(input: EquationBarInput): string` |
+| `renderStateBanner` | runtime | #950 | implemented | 3.7 | `(input: StateBannerInput): string` |
+| `ChipTone` | type | #950 | implemented | 3.7 | `'neutral' \| 'ok' \| 'warn' \| 'danger'` |
+| `ChipInput` | type | #950 | implemented | 3.7 | `{ label: string; tone?: ChipTone }` |
+| `ChipRowInput` | type | #950 | implemented | 3.7 | `{ chips: readonly ChipInput[]; role?: 'list' \| 'none'; extraClass?: string }` |
+| `SegNavIcon` | type | #950 | implemented | 3.7 | `'grid' \| 'line' \| 'table' \| 'copy' \| 'goal' \| 'drop' \| 'scale' \| 'flame'` |
+| `SegNavItemInput` | type | #950 | implemented | 3.7 | `{ id: string; label: string; icon?: SegNavIcon; count?: string }` |
+| `SegmentedNavInput` | type | #950 | implemented | 3.7 | `{ items: readonly SegNavItemInput[]; current?: string; sticky?: boolean; ariaLabel?: string; extraClass?: string }` |
+| `CaptionTone` | type | #950 | implemented | 3.7 | `'plain' \| 'ok' \| 'warn' \| 'danger'` |
+| `DayCellInput` | type | #950 | implemented | 3.7 | `{ label: string; value: string \| null; today?: boolean }` |
+| `DayStripCaptionInput` | type | #950 | implemented | 3.7 | `{ text: string; tone?: CaptionTone }` |
+| `DayStripInput` | type | #950 | implemented | 3.7 | `{ days: readonly DayCellInput[]; emptyMark?: string; caption?: readonly DayStripCaptionInput[]; density?: 'comfortable' \| 'compact'; extraClass?: string }` |
+| `EquationSegmentInput` | type | #950 | implemented | 3.7 | `{ label: string; value: number }` |
+| `EquationBarInput` | type | #950 | implemented | 3.7 | `{ segments: readonly EquationSegmentInput[]; total: number; heading?: { label: string; value: string }; endLabels?: boolean; extraClass?: string }` |
+| `StateTone` | type | #950 | implemented | 3.7 | `'info' \| 'warn' \| 'danger'` |
+| `StateBannerInput` | type | #950 | implemented | 3.7 | `{ tone: StateTone; badge: string; text?: string; action?: { label: string; actionId: string }; extraClass?: string }` |
+<!-- FROZEN-SURFACE-TABLE-END -->
+
+**所属包**：`base-paint`。**旧侧对应物**：无（新增面）；形状债的旧样子（三枚裸 `block-chip` 独占整行、
+缺口卡 33 字长句、态写成结论句前缀）见 `docs/skills/skill-calorie/t950-证据.md`。
 
 ## 4. 归属边界
 

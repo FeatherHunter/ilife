@@ -525,10 +525,11 @@ function renderSceneCard(data: SceneData, group: SceneGroup, scene: Scene): stri
     + '</article>';
 }
 
-/** 二级折叠（`<details open>`；子功能名 ＋ 场景数）。 */
-function renderSubgroup(data: SceneData, group: SceneGroup, subgroup: SceneSubgroup): string {
+/** 二级折叠（子功能名 ＋ 场景数）；**默认只展开本页第一个**（`open` 由调用方按序位给，
+ *  与 A 路模板同口径：首屏看得见一组内容，又不被十几个分组撑成长卷。用户 2026-09-24 裁定）。 */
+function renderSubgroup(data: SceneData, group: SceneGroup, subgroup: SceneSubgroup, open: boolean): string {
   const cards = subgroup.scenes.map((scene) => renderSceneCard(data, group, scene));
-  return '<details class="' + cls('subgroup') + '"' + attr('data-subgroup-id', subgroup.id) + ' open>'
+  return '<details class="' + cls('subgroup') + '"' + attr('data-subgroup-id', subgroup.id) + (open ? ' open>' : '>')
     + '<summary class="' + cls('subgroup-summary') + '">' + text(subgroup.label)
     + '<span class="' + cls('count') + '">' + text(String(subgroup.scenes.length)) + '</span></summary>'
     + '<div class="' + cls('subgroup-body') + '">'
@@ -539,7 +540,7 @@ function renderSubgroup(data: SceneData, group: SceneGroup, subgroup: SceneSubgr
 
 /** 分组页（自带 `:checked` radio ＋ 同级页面体：CSS-only Tab 的结构前提）。 */
 function renderGroupPage(data: SceneData, group: SceneGroup, index: number, checked: boolean): string {
-  const subgroups = group.subgroups.map((subgroup) => renderSubgroup(data, group, subgroup));
+  const subgroups = group.subgroups.map((subgroup, si) => renderSubgroup(data, group, subgroup, si === 0));
   return '<section class="' + cls('page') + '"' + attr('data-group-id', group.id) + '>'
     + '<input class="' + cls('tab-input') + '" type="radio"' + attr('name', TAB_GROUP_NAME) + attr('id', tabRadioId(index))
     + (checked ? ' checked' : '') + '>'

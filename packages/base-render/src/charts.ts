@@ -344,6 +344,27 @@ function emptyOutput(kind: ChartKind, raw: unknown, hint?: string): ChartOutput 
   return { kind, html, empty: true, points: 0 };
 }
 
+/** #950 B3：`minPoints` 闸（**缺省不启用** ⇒ 恒 `false`，旧调用点产物逐字节不变）。
+ *  给了且有效点少于它 ⇒ 该支走空态。非法值点名抛 `structure-invalid`（不新增错误码：本批不加宽冻结面）。 */
+function belowMinPoints(raw: unknown, count: number): boolean {
+  const o = isPlainObject(raw) ? (raw as ChartCommonOptions) : undefined;
+  const min = o === undefined ? undefined : o.minPoints;
+  if (min === undefined) return false;
+  if (!isNum(min) || !Number.isInteger(min) || min < 1) {
+    throw new ChartError('structure-invalid', 'charts: minPoints 必须是 ≥1 的整数');
+  }
+  return count < min;
+}
+
+/** 点数闸触发时那行小字：调用方给了 `minPointsHint` 就用它，否则用一句带数字的缺省（正文仍走 `emptyText`）。 */
+function minPointsHintOf(raw: unknown, count: number): string {
+  const o = isPlainObject(raw) ? (raw as ChartCommonOptions) : undefined;
+  const custom = o === undefined ? undefined : o.minPointsHint;
+  if (typeof custom === 'string' && custom !== '') return custom;
+  const min = o === undefined ? undefined : o.minPoints;
+  return '本窗只有 ' + String(count) + ' 个点，画不出趋势（至少 ' + String(min) + ' 个）';
+}
+
 /* ── 坐标（`CHART_COORD_RULE = 'viewBox-only'`） ───────────────────────── */
 
 interface Frame {
@@ -927,6 +948,7 @@ function renderLine(raw: LineChartInput): ChartOutput {
   };
   const items = normalizeItems(input.items, 'line', true);
   if (items.length === 0) return emptyOutput('line', input.options);
+  if (belowMinPoints(input.options, items.length)) return emptyOutput('line', input.options, minPointsHintOf(input.options, items.length));
   /* 点密度（#424）：`showDots` 未显式给且点数超上限 → 隔 k 个画一个（n=90 → k=3 → 30 个）。
    *  末点**只按 stride 命中**时才画：`highlightLast` 会另外补一个实心末点圈（同 x，r 大 1），
    *  两条路都无条件画会叠出「双圈」——所以末点改由 `highlightLast` 单独负责（调用方开它）。 */
@@ -1386,6 +1408,7 @@ function renderBar(raw: BarChartInput): ChartOutput {
   const multi = stacked || grouped;
   const items = normalizeItems(input.items, 'bar', false, multi ? 'values' : 'value');
   if (items.length === 0) return emptyOutput('bar', input.options);
+  if (belowMinPoints(input.options, items.length)) return emptyOutput('bar', input.options, minPointsHintOf(input.options, items.length));
   const stackMode = opts !== undefined && opts.stackMode === 'absolute' ? 'absolute' : 'percent';
   const gap = CHART_BREAKPOINTS.stackedGapPx;
 
@@ -1724,6 +1747,9 @@ function renderCombo(raw: ComboChartInput): ChartOutput {
   const bars = normalizeItems(input.bars, 'combo', false);
   const lines = normalizeItems(input.lines, 'combo', false);
   if (bars.length === 0 && lines.length === 0) return emptyOutput('combo', input.options);
+  // #950 B3：组合图的有效点取两支里多的那一支（「几处有数据」是读者关心的事）。
+  const comboPoints = Math.max(bars.length, lines.length);
+  if (belowMinPoints(input.options, comboPoints)) return emptyOutput('combo', input.options, minPointsHintOf(input.options, comboPoints));
   if (bars.length > 0 && lines.length > 0) {
     if (bars.length !== lines.length) {
       badStructure('charts.combo: bars 与 lines 长度不一致 (' + bars.length + ' vs ' + lines.length + ')');
@@ -1823,6 +1849,7 @@ function renderSparkline(raw: SparklineChartInput): ChartOutput {
   const opts = isPlainObject(input.options) ? (input.options as SparklineChartOptions) : undefined;
   const items = normalizeItems(input.items, 'sparkline', false);
   if (items.length === 0) return emptyOutput('sparkline', input.options);
+  if (belowMinPoints(input.options, items.length)) return emptyOutput('sparkline', input.options, minPointsHintOf(input.options, items.length));
 
   const values = items.map((item) => item.value as number);
   const min = Math.min(...values);
@@ -1923,6 +1950,7 @@ function renderScatter(raw: ScatterChartInput): ChartOutput {
   const opts = isPlainObject(input.options) ? (input.options as ScatterChartOptions) : undefined;
   const items = normalizeScatterItems(input.items);
   if (items.length === 0) return emptyOutput('scatter', input.options);
+  if (belowMinPoints(input.options, items.length)) return emptyOutput('scatter', input.options, minPointsHintOf(input.options, items.length));
 
   const xs = items.map((item) => item.x);
   const ys = items.map((item) => item.y);

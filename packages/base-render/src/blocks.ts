@@ -323,7 +323,19 @@ export function renderCaliberLine(text: string): string {
     + segs.map((seg) => '<span>' + esc(seg) + '</span>').join(' ') + '</p>';
 }
 
-/** #507 结论条（审查必改 #3）：一行判定句的浅底条，形状住公共层、**调用方只传文本**。
+/** 结论条的语气闭集（#950 B2）：`ok` 主色／`warn` 琥珀／`danger` 红／`info` 蓝，只改**强调条**底色。 */
+export const CONCLUSION_TONES = ['ok', 'warn', 'danger', 'info'] as const;
+export type ConclusionTone = (typeof CONCLUSION_TONES)[number];
+
+/** #950 B2 结论条的入参形态（对象式）：文本 ＋ 语气 ＋ 态徽标。 */
+export interface ConclusionBarInput {
+  readonly text: string;
+  readonly tone?: ConclusionTone;
+  /** 态徽标短词（如「目标暂停中」）——**前提声明**与结论句同处一行时的落点。 */
+  readonly badge?: string;
+}
+
+/** #507 结论条（审查必改 #3）＋ #950 B2 扩参：一行判定句的浅底条，形状住公共层、**调用方只传文本**。
  *
  *  与 `renderCaliberLine` 同族（页面级、单参纯文本、五字符转义同源 `esc`；样式随 `pageShell` 区落盘，
  *  不进 `BLOCK_STYLE_SECTIONS` 那 12 项闭集）。区别只在角色：口径行是**旁注**（灰小字），
@@ -332,9 +344,33 @@ export function renderCaliberLine(text: string): string {
  *  此前这条形状是**页面内联 8 个魔法值**（`homeDocs.ts` 的 `CONCLUSION_STYLE`，逐字照搬老实物
  *  `.view-summary`），与本仓「版面单源住公共层」的纪律冲突——该件自述「本页不再出现任何一条
  *  自写 `font-size`／`color` 规则」，而 `color:var(--blue2)` 就在那串内联里。搬到这里之后，
- *  页面侧只留「传什么文本」。 */
-export function renderConclusionBar(text: string): string {
-  return '<p class="' + pageLevelBlock('conclusion') + '">' + esc(reqText(text, 'renderConclusionBar: text')) + '</p>';
+ *  页面侧只留「传什么文本」。
+ *
+ *  **#950 B2 扩参（两种入参形态，串形态逐字节不变）**：
+ *   · 串：`renderConclusionBar('热量在目标内，还差 990 卡。')` —— 改前那条路，产物**一字不差**；
+ *   · 对象：`{ text, tone?, badge? }` —— 多出「语气」与「态徽标」两位：
+ *     语气只改左侧强调条的底色（1 档 3 色，取本文件里既有的同族色值），不改文字与底色；
+ *     徽标是「这句话在什么前提下成立」的短词（如「目标暂停中」），与结论句同处一行。
+ *   同时把左边框的承载方式从 `border-left` 改成 `::before`——原来 `border-left:3px` 与
+ *   `border-radius` 同处一盒时，圆角会把那条 3px 边裁成**月牙**，窄屏上读成一个游离的「(」。 */
+export function renderConclusionBar(input: string | ConclusionBarInput): string {
+  if (typeof input === 'string') {
+    return '<p class="' + pageLevelBlock('conclusion') + '">' + esc(reqText(input, 'renderConclusionBar: text')) + '</p>';
+  }
+  assertPlainObject(input, 'renderConclusionBar: input');
+  assertNoInlineHandler(input, 'renderConclusionBar: input');
+  const bar = input as ConclusionBarInput;
+  const text = reqText(bar.text, 'renderConclusionBar: input.text');
+  const tone = bar.tone;
+  if (tone !== undefined && !(CONCLUSION_TONES as readonly string[]).includes(tone)) {
+    badInput('renderConclusionBar: input.tone 必须是 ' + CONCLUSION_TONES.join('／') + ' 之一');
+  }
+  const badge = optText(bar.badge);
+  const cls = pageLevelBlock('conclusion')
+    + (tone === undefined ? '' : ' ' + pageLevelPart('conclusion', 'tone-' + tone));
+  return '<p class="' + cls + '">'
+    + (badge === undefined ? '' : '<span class="' + pageLevelPart('conclusion', 'badge') + '">' + esc(badge) + '</span>')
+    + esc(text) + '</p>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -650,14 +686,29 @@ export function renderChangeRows(input: ChangeRowsInput): string {
 
 export interface KpiCardInput {
   readonly label: string;
-  readonly value: string;
+  /** 值位。**#950 B1 起可缺省**：不给 ＝ **判定卡**（这一格的答案是一句话而不是数字，
+   *  判定词住 `status` 徽标、说明住 `detail`）。改前该位必填非空，产不出「没有值位的卡」，
+   *  别处只能拿 `detail` 补话、值位整格撤掉（见 `#518 W6` 的绕行）。给了就走改前那条路（逐字节相同）。 */
+  readonly value?: string;
   readonly unit?: string;
   readonly detail?: string;
   readonly status?: StatusKind;
   readonly statusText?: string;
   /** 可选进度条（#418）：百分比 0–100；不给＝不产条（零变）。 */
   readonly bar?: { readonly pct: number };
+  /** **还差多少**（#950 B1）：给了就出一枚「还差 N 单位」徽章。
+   *  与 `status` **同住徽章槽**，两位只能给一个（给两个即点名拒，不做静默择一）。 */
+  readonly gap?: { readonly value: string; readonly unit?: string };
+  /** **有目标、无记录**（#950 B1）：值位（没给 `value` 时）印 `—`、进度条归零、徽章出「未记录」。
+   *  与 `value` 只能给一个（未记录 ＝ 值位没有数）。 */
+  readonly pending?: boolean;
 }
+
+/** 未记录态的两个字面（值位占位与徽标词），与仓内「缺数一律写 —」同字。 */
+const KPI_PENDING_MARK = '\u2014';
+const KPI_PENDING_TEXT = '未记录';
+/** 「还差」徽章的前缀词（`gap` 位）。 */
+const KPI_GAP_PREFIX = '还差 ';
 
 /** #418 条位判档（只此一处）：>=90 高档／>=60 中档／其余低档。 */
 function kpiBarClass(pct: number): string {
@@ -666,29 +717,47 @@ function kpiBarClass(pct: number): string {
   return 'bar-low';
 }
 
-/** B-02：单张 KPI 卡（value 带 `tnum`；非法 status 由冻结语义降级 `empty`）。 */
+/** B-02：单张 KPI 卡（value 带 `tnum`；非法 status 由冻结语义降级 `empty`）。
+ *
+ *  **#950 B1 扩参**：值位可缺省（判定卡）＋「还差 N」徽章 ＋「未记录」态。
+ *  两条互斥硬止（都是「一个槽两个来源」，点名拒而不是静默择一）：
+ *   · `gap` 与 `status` 同住徽章槽；· `pending` 与 `value` 同住值位。
+ *  给了 `value`／`status`／`bar` 的既有调用点产物**逐字节不变**（本函数只加分支，不改旧路）。 */
 export function renderKpiCard(input: KpiCardInput): string {
   assertPlainObject(input, 'renderKpiCard: input');
   assertNoInlineHandler(input, 'renderKpiCard: input');
   const card = input as KpiCardInput;
   const label = reqText(card.label, 'renderKpiCard: input.label');
-  const value = reqText(card.value, 'renderKpiCard: input.value');
-  const parts: string[] = ['<div class="' + blockRoot('kpiCard') + '">'];
+  const pending = card.pending === true;
+  if (card.gap !== undefined && card.status !== undefined) {
+    badInput('renderKpiCard: input.gap 与 input.status 只能给一个（同住徽章槽）');
+  }
+  if (pending && card.value !== undefined) {
+    badInput('renderKpiCard: input.pending 与 input.value 只能给一个（未记录＝值位没有数）');
+  }
+  const rootCls = blockRoot('kpiCard') + (pending ? ' ' + blockPart('kpiCard', 'pending') : '');
+  const parts: string[] = ['<div class="' + rootCls + '">'];
   parts.push('<div class="' + blockPart('kpiCard', 'label') + '">' + esc(label) + '</div>');
-  parts.push('<div class="' + blockPart('kpiCard', 'value-row') + '">'
-    + '<span class="' + blockPart('kpiCard', 'value') + '">' + esc(value) + '</span>');
+  // 值位三态：有值（旧路）／未记录（占位）／不给（判定卡：整格不出）。
   const unit = optText(card.unit);
-  if (unit !== undefined) parts.push('<span class="' + blockPart('kpiCard', 'unit') + '">' + esc(unit) + '</span>');
-  parts.push('</div>');
+  if (card.value !== undefined || pending) {
+    const shown = pending ? KPI_PENDING_MARK : reqText(card.value, 'renderKpiCard: input.value');
+    parts.push('<div class="' + blockPart('kpiCard', 'value-row') + '">'
+      + '<span class="' + blockPart('kpiCard', 'value') + '">' + esc(shown) + '</span>');
+    if (unit !== undefined) parts.push('<span class="' + blockPart('kpiCard', 'unit') + '">' + esc(unit) + '</span>');
+    parts.push('</div>');
+  }
   const detail = optText(card.detail);
   if (detail !== undefined) parts.push('<div class="' + blockPart('kpiCard', 'detail') + '">' + esc(detail) + '</div>');
   const bar = card.bar;
   if (bar !== undefined) {
     assertPlainObject(bar, 'renderKpiCard: bar');
-    const pct: unknown = (bar as { pct: unknown }).pct;
-    if (typeof pct !== 'number' || !Number.isFinite(pct) || pct < 0 || pct > 100) {
+    const pctRaw: unknown = (bar as { pct: unknown }).pct;
+    if (typeof pctRaw !== 'number' || !Number.isFinite(pctRaw) || pctRaw < 0 || pctRaw > 100) {
       badInput('renderKpiCard: bar.pct 必须在 0–100 之间');
     }
+    // 未记录时进度不可知：条照出（形状不塌），宽度归零。
+    const pct = pending ? 0 : pctRaw;
     parts.push('<div class="' + blockPart('kpiCard', 'bar') + '">'
       + '<div class="' + blockPart('kpiCard', 'bar-fill') + ' ' + blockPart('kpiCard', kpiBarClass(pct)) + '" style="width:' + pct + '%"></div>'
       + '</div>');
@@ -699,6 +768,16 @@ export function renderKpiCard(input: KpiCardInput): string {
       card.statusText === undefined ? { status } : { status, text: card.statusText },
     );
     parts.push('<div class="' + blockPart('kpiCard', 'badge') + '">' + badge + '</div>');
+  } else if (card.gap !== undefined) {
+    assertPlainObject(card.gap, 'renderKpiCard: gap');
+    const gapValue = reqText((card.gap as { value: unknown }).value, 'renderKpiCard: input.gap.value');
+    const gapUnit = optText((card.gap as { unit?: string }).unit);
+    parts.push('<div class="' + blockPart('kpiCard', 'badge') + '">'
+      + '<span class="' + blockPart('kpiCard', 'gap') + '">' + KPI_GAP_PREFIX + esc(gapValue)
+      + (gapUnit === undefined ? '' : ' ' + esc(gapUnit)) + '</span></div>');
+  } else if (pending) {
+    parts.push('<div class="' + blockPart('kpiCard', 'badge') + '">'
+      + '<span class="' + blockPart('kpiCard', 'gap') + '">' + KPI_PENDING_TEXT + '</span></div>');
   }
   parts.push('</div>');
   return parts.join('');
@@ -1566,15 +1645,53 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     // 审查第 3 点给的形态就是这一条「左 3px 主色边 ＋ 浅底」，它同时把**结论条**与 `renderStatusBadge`
     // 的「`--soft` 底 ＋ 色字」形态分开——此前两者底同、字色同，一个静态陈述一个算出来的档位却长得一样。
     '.' + p + 'block-conclusion {',
+    '  position: relative;',
     '  margin: 0 0 16px;',
     '  padding: 12px 16px;',
-    '  border-left: 3px solid var(--blue);',
     '  border-radius: ' + RADIUS_MD + 'px;',
     '  background: var(--card);',
     '  color: var(--blue2);',
     // #567 J4（§5.2 区块标题 15 吸收 14／15）。
     '  font-size: 15px;',
     '  font-weight: 600;',
+    '}',
+    // #950 B2：左边框改由伪元素承载。原来 `border-left: 3px solid` 与 `border-radius: 14px` 同处一盒，
+    // 圆角会把那条 3px 边**裁成月牙**（窄屏上读成一个游离的「(」，用户 2026-09-24 图报）；
+    // 伪元素与圆角互不干涉，强调条的位置与粗细逐值不变（左 0／宽 3px／上下各让 12px 内距）。
+    '.' + p + 'block-conclusion::before {',
+    '  content: "";',
+    '  position: absolute;',
+    '  left: 0;',
+    '  top: 12px;',
+    '  bottom: 12px;',
+    '  width: 3px;',
+    '  border-radius: 2px;',
+    '  background: var(--blue);',
+    '}',
+    // #950 B2 语气四档：**只改强调条底色**（文字色与底一个字不动——不引入新的浅底色值）。
+    // 三档取本文件里既有的同族色值（条位三档同源 `#34c759`／`#ff9500`／`#ff3b30`），`info` 用主色 token。
+    '.' + p + 'block-conclusion-tone-ok::before {',
+    '  background: #34c759;',
+    '}',
+    '.' + p + 'block-conclusion-tone-warn::before {',
+    '  background: #ff9500;',
+    '}',
+    '.' + p + 'block-conclusion-tone-danger::before {',
+    '  background: #ff3b30;',
+    '}',
+    '.' + p + 'block-conclusion-tone-info::before {',
+    '  background: var(--blue);',
+    '}',
+    // #950 B2 态徽标（「这句话在什么前提下成立」的短词，与结论句同处一行）。
+    '.' + p + 'block-conclusion-badge {',
+    '  display: inline-block;',
+    '  margin-right: 8px;',
+    '  padding: 2px 8px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '  font-weight: 700;',
     '}',
     // #860 正文段落件（一段正文的落点）：排印与正文同档（15px／1.7），色只取冻结 `--fg`；
     // 取值出处＝`t768` 原型页内补丁 `.v768-prose`（15px／1.7／`var(--fg)`）逐值上移，
@@ -1950,6 +2067,19 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-kpi-card-bar-low {',
     '  background: #ff3b30;',
+    '}',
+    // #950 B1：「还差 N 单位」徽章（与状态徽章**同槽**，故同位同形）＋「未记录」态的值位降调。
+    '.' + p + 'block-kpi-card-gap {',
+    '  display: inline-block;',
+    '  padding: 2px 8px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: var(--soft);',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '  font-weight: 600;',
+    '}',
+    '.' + p + 'block-kpi-card-pending .' + p + 'block-kpi-card-value {',
+    '  color: var(--fg2);',
     '}',
     // #507 段标题统一（审查必改 #5）：`blocks.ts` 从 #401 起就给过这条类名产出器的位置
     // （`homeDocs.ts:247` 用 `<h2 class="ilife-block-kpi-card-title">` 出「今日速览」段标题），

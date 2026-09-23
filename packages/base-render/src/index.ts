@@ -42,9 +42,10 @@ export { renderHelpShell } from './help.js';
  *  窄屏表格行为／页内定位）与**页面级形状件**（事实条／图片与 GIF 容器／时间轴条／媒体占位件）。
  *  与 `blocks.js` 的 12 区块样式区分住：这两层是「整页怎么摆」，不参与区块组合；
  *  是否启用由整页装配的 `pageUi` 位决定，不启用则产出物逐字节不变。 */
-export { PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageUiCss } from './pageUi.js';
-export type { PageUiCssInput } from './pageUi.js';
+export { PAGE_COLUMNS, PAGE_COLUMN_WIDTH_PX, PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageUiCss } from './pageUi.js';
+export type { PageColumn, PageUiCssInput } from './pageUi.js';
 export {
+  FACT_STRIP_MISSING_MARK,
   MEDIA_RATIOS,
   pageShapeCss,
   renderFactStrip,
@@ -62,3 +63,45 @@ export type {
   TimelineRowInput,
   TimelineRowsInput,
 } from './pageShapes.js';
+/** #950 页面级导航与横条件（本批新立两族，与 `pageShapes.ts` 同层，出口经根）：
+ *   · `pageNav.ts`：**分段导航**（`renderSegmentedNav`：页内导航的「动作」形状，与状态胶囊分得开）
+ *     与**胶囊行**（`renderChipRow`：给裸 chip 一个容器，宽屏不再被网格提升成整行）。
+ *   · `pageBars.ts`：**时间格带**（`renderDayStrip`：把「哪几天有记录」画出来）、
+ *     **等式条**（`renderEquationBar`：`A＋B＝C` 的最小形状）、**态声明条**（`renderStateBanner`：
+ *     「这句话在什么前提下成立」，与「结论」分住）。
+ *  两族的样式由 `pageShapeCss()` 汇总进页（调用方不必另接样式函数）；
+ *  启用口径仍由整页装配的 `pageUi` 位决定，不启用则产出物逐字节不变。 */
+export {
+  CHIP_TONES,
+  SEG_NAV_ICONS,
+  pageNavCss,
+  renderChipRow,
+  renderSegmentedNav,
+} from './pageNav.js';
+export type {
+  ChipInput,
+  ChipRowInput,
+  ChipTone,
+  SegNavIcon,
+  SegNavItemInput,
+  SegmentedNavInput,
+} from './pageNav.js';
+export {
+  CAPTION_TONES,
+  DAY_STRIP_EMPTY_MARK,
+  STATE_TONES,
+  pageBarsCss,
+  renderDayStrip,
+  renderEquationBar,
+  renderStateBanner,
+} from './pageBars.js';
+export type {
+  CaptionTone,
+  DayCellInput,
+  DayStripCaptionInput,
+  DayStripInput,
+  EquationBarInput,
+  EquationSegmentInput,
+  StateBannerInput,
+  StateTone,
+} from './pageBars.js';

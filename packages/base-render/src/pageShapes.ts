@@ -22,6 +22,11 @@
  *  色值与圆角只用冻结 token 与圆角闭集 `{8,14,20,999}`，不新增。
  */
 
+/* #950：本批新立的姊妹件（导航族／横条族）的样式**经本函数汇总**进页——调用方一行不用改，
+   启用口径仍是 `pageUi` 位。两件都不反向 import 本件，无环。 */
+import { pageNavCss } from './pageNav.js';
+import { pageBarsCss } from './pageBars.js';
+
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts` 同）。 */
 const LF = String.fromCharCode(10);
 
@@ -59,9 +64,14 @@ export type FactTone = 'ok' | 'warn' | 'danger';
 export interface FactItemInput {
   /** 这格说的是什么（人话短标签，如「拍摄」「标签」）。 */
   readonly label: string;
-  /** 这格的值（已是给人看的样子；数字口径由调用方定）。 */
-  readonly value: string;
+  /** 这格的值（已是给人看的样子；数字口径由调用方定）。
+   *  **#950 B4：`null` ＝ 缺数**——可见面印 `FACT_STRIP_MISSING_MARK`（`—`，与全仓「缺数一律写 —」同字），
+   *  并带 `…-value-missing` 类降调；机器面（复制载荷）留空由调用方定，两条口径**分开**。 */
+  readonly value: string | null;
   readonly tone?: FactTone;
+  /** **单位**（#950 B4）：给了就紧跟值位出一枚小号单位（值位本身只吃数，不带单位）。
+   *  缺数与单位同给时只印缺数占位（没有数，单位无意义）。 */
+  readonly unit?: string;
 }
 
 export interface FactStripInput {
@@ -71,7 +81,12 @@ export interface FactStripInput {
   readonly extraClass?: string;
 }
 
-/** 事实条：一行 N 件事的呈现形状（替掉 `A · B · C` 那种串）。空数组出不了一个字。 */
+/** #950 B4：事实条的缺数占位（与全仓「缺数一律写 —」同字）。 */
+export const FACT_STRIP_MISSING_MARK = '\u2014';
+
+/** 事实条：一行 N 件事的呈现形状（替掉 `A · B · C` 那种串）。空数组出不了一个字。
+ *  **#950 B4 扩参**：值位可给 `null`（缺数 → 印 `—`，与「0」区分开）＋ 可选单位位。
+ *  给了字符串值又不给单位的既有调用点产物**逐字节不变**。 */
 export function renderFactStrip(input: FactStripInput): string {
   const items = input.items;
   if (!Array.isArray(items)) throw new Error('pageShapes: renderFactStrip: input.items 必须是数组');
@@ -80,15 +95,20 @@ export function renderFactStrip(input: FactStripInput): string {
   const cells = items.map((item, i) => {
     const field = 'renderFactStrip: input.items[' + i + ']';
     const label = reqText(item.label, field + '.label');
-    const value = reqText(item.value, field + '.value');
     const tone = item.tone;
     if (tone !== undefined && tone !== 'ok' && tone !== 'warn' && tone !== 'danger') {
       throw new Error('pageShapes: ' + field + '.tone 必须是 ok／warn／danger 之一');
     }
+    const unit = optText(item.unit, field + '.unit');
+    const missing = item.value === null || item.value === undefined;
+    const value = missing ? FACT_STRIP_MISSING_MARK : reqText(item.value, field + '.value');
     return '<div class="ilife-block-fact-strip-item">'
       + '<span class="ilife-block-fact-strip-label">' + esc(label) + '</span>'
       + '<span class="ilife-block-fact-strip-value'
-      + (tone === undefined ? '' : ' ilife-block-fact-strip-value-' + tone) + '">' + esc(value) + '</span>'
+      + (tone === undefined ? '' : ' ilife-block-fact-strip-value-' + tone)
+      + (missing ? ' ilife-block-fact-strip-value-missing' : '') + '">' + esc(value)
+      + (missing || unit === undefined ? '' : '<span class="ilife-block-fact-strip-unit">' + esc(unit) + '</span>')
+      + '</span>'
       + '</div>';
   }).join('');
   return '<div class="ilife-block-fact-strip' + (extra === undefined ? '' : ' ' + extra) + '">' + cells + '</div>';
@@ -316,6 +336,18 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     root + ' .' + p + 'block-fact-strip-value-danger {',
     '  color: #a83228;',
     '}',
+    '/* #950 B4：缺数（`value: null`）——占位字 `—` ＋ 降调；与「0」在观感上分开。 */',
+    root + ' .' + p + 'block-fact-strip-value-missing {',
+    '  color: var(--fg3);',
+    '  font-weight: 500;',
+    '}',
+    '/* #950 B4：单位位（值位只吃数，单位小一号跟在后面）。 */',
+    root + ' .' + p + 'block-fact-strip-unit {',
+    '  margin-left: 4px;',
+    '  color: var(--fg2);',
+    '  font-size: 12px;',
+    '  font-weight: 500;',
+    '}',
     '/* ② 图片／GIF 容器：比例写在容器上，图按 object-fit 摆；没有图时是人话占位，不出黑底条。 */',
     root + ' .' + p + 'block-media {',
     '  margin: 16px 0;',
@@ -448,5 +480,9 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     '  font-size: 12px;',
     '  line-height: 1.6;',
     '}',
+    '/* ④ 导航族与横条族（#950）：样式住在各自的姊妹件里，出口经本函数汇总；',
+    '   顺序在页面级配方与形状件之后，同权重时按「后出现」取胜。 */',
+    pageNavCss({ prefix: p }),
+    pageBarsCss({ prefix: p }),
   ].join(LF);
 }

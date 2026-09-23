@@ -52,9 +52,100 @@ export const PAGE_LIMITS = Object.freeze({
   breakpointsPx: Object.freeze([400, 640, 820, 1001, 1200]),
 } as const);
 
+/** #950 C1 正文列宽四档（闭集）：**缺省 `centered` ＝ 改前行为**。
+ *  · `centered`：正文 880 居中 ＋ 满铺白名单（表／图／卡排／键值行满铺）；
+ *  · `wide`：正文 1120 居中（同族先例：缺口页页宽 1120）；
+ *  · `full`：不收窄，正文满铺页壳（1280）；
+ *  · `locked`：880 居中且**满铺白名单失效**（所有子件都收进正文列）——这一档正是两个技能包
+ *    各自写过的垫片（`skill-calorie` 的 `ONE_COLUMN_CSS`／`workoutPlanCss.ts` 的 `PREVIEW_COLUMN_CSS`），
+ *    「两个包各写一份垫片 ＝ 公共层缺一个参数」，故提到这里当参数。 */
+export const PAGE_COLUMNS = ['centered', 'wide', 'full', 'locked'] as const;
+export type PageColumn = (typeof PAGE_COLUMNS)[number];
+
+/** 两档正文列宽（px）：`centered`／`locked` 用 880（改前既有值），`wide` 用 1120。 */
+export const PAGE_COLUMN_WIDTH_PX = Object.freeze({ centered: 880, wide: 1120 } as const);
+
 export interface PageUiCssInput {
   /** 类名前缀；缺省 `ilife-`（与 `blocksCss({ prefix })` 同口径）。 */
   readonly prefix?: string;
+  /** **正文列宽档**（#950 C1）：缺省 `centered`（＝改前行为，选择器与值逐条不变）。 */
+  readonly column?: PageColumn;
+}
+
+/** #950 C1：宽屏档（≥1001px）那一段 CSS——按 `column` 四档生成。
+ *  `centered` 档吐出的选择器与值**逐条与改前相同**（顺序也相同），只在最前补一句档位说明。 */
+function columnCss(column: PageColumn, root: string, p: string): string[] {
+  const width = column === 'wide' ? PAGE_COLUMN_WIDTH_PX.wide : PAGE_COLUMN_WIDTH_PX.centered;
+  const out: string[] = [
+    '/* #950 C1 正文列宽档：`' + column + '`（`centered` 缺省＝改前行为；`wide` 1120／`full` 满铺／',
+    '   `locked` 满铺白名单失效——后两档分别替掉页面侧改宽度与锁单列的垫片）。 */',
+    '/* ⑧ 宽屏把可用宽用起来（#525 第二轮；来源＝#525 席位版面档重判里**双方都认的那一条**',
+    '   「1280 档没把宽屏用起来」，以及编排者 2026-09-15 的补记：页面模板 960 在 1280 档左右各空 140px）。',
+    '   口径＝「宽屏不空荡、正文不散」：页面模板从 `blocks.ts` 的 960（那儿是别票写集，本件不改它）',
+    '   放宽到 **1280**，正文收成 **880px 一列**居中，栅格类与真二维数据（读数卡／表／图／键值行／',
+    '   列表行）满铺可用宽。为什么用栅格而不是 12 条 `max-width`：正文类块在各票里长得不一样，',
+    '   靠「不漏掉某个类名」的清单法必然漏（第一版注入候选就漏了无类名的 `section`），',
+    '   栅格是**默认收窄、显式放宽**，漏不掉。',
+    '   `box-sizing: border-box` 是本条的前提：本仓没有 `*{box-sizing}` 全局复位（`blocks.ts` 的',
+    '   pageShell 区注明「不搬 HELP 那一条」），页面模板是 content-box ⇒ 不写它则 `max-width` 只管内容宽、',
+    '   实占 1320（1440 档左右各空 60，不是 80）。 */',
+    '@media (min-width: 1001px) {',
+    '  ' + root + ' .' + p + 'block-page-shell {',
+    '    box-sizing: border-box;',
+    '    max-width: 1280px;',
+    '  }',
+  ];
+  if (column !== 'full') {
+    out.push('  ' + root + ' .' + p + 'block-page-shell-body {');
+    out.push('    display: grid;');
+    out.push('    grid-template-columns: minmax(0, 1fr) ' + String(width) + 'px minmax(0, 1fr);');
+    out.push('  }');
+    out.push('  ' + root + ' .' + p + 'block-page-shell-body > * {');
+    out.push('    grid-column: 2;');
+    out.push('  }');
+    if (column !== 'locked') {
+      out.push('  /* 宽的走满铺（`:where()` 保零权重，覆盖既有 `auto-fit` 时按「同权重、后出现」取胜） */');
+      out.push('  ' + root + ' .' + p + 'block-page-shell-body > :where(');
+      out.push('    .' + p + 'block-kpi-card-grid,');
+      out.push('    .' + p + 'block-data-table,');
+      out.push('    .' + p + 'block-chart-block,');
+      out.push('    .' + p + 'block-detail-section,');
+      out.push('    .' + p + 'block-list-rows');
+      out.push('  ) {');
+      out.push('    grid-column: 1 / -1;');
+      out.push('  }');
+    }
+    out.push('  /* #950（C2 守卫）：**行内级子件不被拉伸**。上面那条 `> * { grid-column: 2 }` 给每个直接子节点');
+    out.push('     整列宽（880），裸的 `span`／`a`／`b` 因此变成一条 880px 的长条——用户截图里那三根「很丑的');
+    out.push('     独占一行」正是这么来的（同一份标记窄屏好、宽屏坏）。正确入口是包一层 `renderChipRow`；');
+    out.push('     本条把「忘了包」的代价从「塌成表单」降到「各自一行、各自宽度」。 */');
+    out.push('  ' + root + ' .' + p + 'block-page-shell-body > :where(');
+    out.push('    span, a, b, i, em, strong, code, small');
+    out.push('  ) {');
+    out.push('    justify-self: start;');
+    out.push('  }');
+    out.push('  /* #728 收口：页头三级（眉标／标题／副题）跟着正文列走。');
+    out.push('     ⑧ 只把**正文**那层收成 880 居中，页头是它的兄弟节点 ⇒ 不写这一条，标题会贴在版心最左、');
+    out.push('     正文居中，整页左右不对称（t728 复评实测：标题 x≈26、正文 x≈202）。');
+    out.push('     只收宽屏档；窄屏页头与正文同为 16px 内距，本来就对齐。 */');
+    out.push('  ' + root + ' .' + p + 'block-page-shell-eyebrow,');
+    out.push('  ' + root + ' .' + p + 'block-page-shell-title,');
+    out.push('  ' + root + ' .' + p + 'block-page-shell-subtitle {');
+    out.push('    max-width: ' + String(width) + 'px;');
+    out.push('    margin-left: auto;');
+    out.push('    margin-right: auto;');
+    out.push('  }');
+  }
+  out.push('  /* 读数卡一行四张：960 档的 `auto-fit minmax(150px,1fr)` 只排得出 2 张，一行两张在宽屏上');
+  out.push('     就是「右半边空着」。四张同高靠既有 `grid-auto-rows: 1fr`（本件不动它）。');
+  out.push('     **#919 加一道守卫**：只有真排得满 4 张时才定 4 列（`:has(> :nth-child(4))`）——1～3 张卡的页');
+  out.push('     退回区块层那条 `auto-fit`（卡片自己撑满一行）。不守的代价实测过：两张卡的页在 ≥1001 缩成');
+  out.push('     各占 1/4、右半整块空着，比不开配方还难看。 */');
+  out.push('  ' + root + ' .' + p + 'block-kpi-card-grid:has(> :nth-child(4)) {');
+  out.push('    grid-template-columns: repeat(4, minmax(0, 1fr));');
+  out.push('  }');
+  out.push('}');
+  return out;
 }
 
 /** 页面级移动端配方的样式资产唯一产出者。恒返回非空 CSS 文本。 */
@@ -62,6 +153,13 @@ export function pageUiCss(input?: PageUiCssInput): string {
   const p = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
+
+  /* #950 C1：正文列宽档（缺省 centered ＝ 改前行为）。 */
+  const columnRaw: unknown = input === undefined || input === null ? undefined : input.column;
+  if (columnRaw !== undefined && !(PAGE_COLUMNS as readonly string[]).includes(columnRaw as string)) {
+    throw new Error('pageUi: input.column 必须是 ' + PAGE_COLUMNS.join('／') + ' 之一');
+  }
+  const column: PageColumn = columnRaw === undefined ? 'centered' : (columnRaw as PageColumn);
   return [
     '/* #525 页面级移动端配方 · 只对根类 ' + root + ' 的页面生效 */',
     '/* ① 图片与矢量图兜底：任何一张图都不许撑破容器（结果型页面的第一类溢出源）。 */',
@@ -250,58 +348,8 @@ export function pageUiCss(input?: PageUiCssInput): string {
     '    padding-right: 10px;',
     '  }',
     '}',
-    '/* ⑧ 宽屏把可用宽用起来（#525 第二轮；来源＝#525 席位版面档重判里**双方都认的那一条**',
-    '   「1280 档没把宽屏用起来」，以及编排者 2026-09-15 的补记：页面模板 960 在 1280 档左右各空 140px）。',
-    '   口径＝「宽屏不空荡、正文不散」：页面模板从 `blocks.ts` 的 960（那儿是别票写集，本件不改它）',
-    '   放宽到 **1280**，正文收成 **880px 一列**居中，栅格类与真二维数据（读数卡／表／图／键值行／',
-    '   列表行）满铺可用宽。为什么用栅格而不是 12 条 `max-width`：正文类块在各票里长得不一样，',
-    '   靠「不漏掉某个类名」的清单法必然漏（第一版注入候选就漏了无类名的 `section`），',
-    '   栅格是**默认收窄、显式放宽**，漏不掉。',
-    '   `box-sizing: border-box` 是本条的前提：本仓没有 `*{box-sizing}` 全局复位（`blocks.ts` 的',
-    '   pageShell 区注明「不搬 HELP 那一条」），页面模板是 content-box ⇒ 不写它则 `max-width` 只管内容宽、',
-    '   实占 1320（1440 档左右各空 60，不是 80）。 */',
-    '@media (min-width: 1001px) {',
-    '  ' + root + ' .' + p + 'block-page-shell {',
-    '    box-sizing: border-box;',
-    '    max-width: 1280px;',
-    '  }',
-    '  ' + root + ' .' + p + 'block-page-shell-body {',
-    '    display: grid;',
-    '    grid-template-columns: minmax(0, 1fr) 880px minmax(0, 1fr);',
-    '  }',
-    '  ' + root + ' .' + p + 'block-page-shell-body > * {',
-    '    grid-column: 2;',
-    '  }',
-    '  /* 宽的走满铺（`:where()` 保零权重，覆盖既有 `auto-fit` 时按「同权重、后出现」取胜） */',
-    '  ' + root + ' .' + p + 'block-page-shell-body > :where(',
-    '    .' + p + 'block-kpi-card-grid,',
-    '    .' + p + 'block-data-table,',
-    '    .' + p + 'block-chart-block,',
-    '    .' + p + 'block-detail-section,',
-    '    .' + p + 'block-list-rows',
-    '  ) {',
-    '    grid-column: 1 / -1;',
-    '  }',
-    '  /* #728 收口：页头三级（眉标／标题／副题）跟着正文列走。',
-    '     ⑧ 只把**正文**那层收成 880 居中，页头是它的兄弟节点 ⇒ 不写这一条，标题会贴在版心最左、',
-    '     正文居中，整页左右不对称（t728 复评实测：标题 x≈26、正文 x≈202）。',
-    '     只收宽屏档；窄屏页头与正文同为 16px 内距，本来就对齐。 */',
-    '  ' + root + ' .' + p + 'block-page-shell-eyebrow,',
-    '  ' + root + ' .' + p + 'block-page-shell-title,',
-    '  ' + root + ' .' + p + 'block-page-shell-subtitle {',
-    '    max-width: 880px;',
-    '    margin-left: auto;',
-    '    margin-right: auto;',
-    '  }',
-    '  /* 读数卡一行四张：960 档的 `auto-fit minmax(150px,1fr)` 只排得出 2 张，一行两张在宽屏上',
-    '     就是「右半边空着」。四张同高靠既有 `grid-auto-rows: 1fr`（本件不动它）。',
-    '     **#919 加一道守卫**：只有真排得满 4 张时才定 4 列（`:has(> :nth-child(4))`）——1～3 张卡的页',
-    '     退回区块层那条 `auto-fit`（卡片自己撑满一行）。不守的代价实测过：两张卡的页在 ≥1001 缩成',
-    '     各占 1/4、右半整块空着，比不开配方还难看。 */',
-    '  ' + root + ' .' + p + 'block-kpi-card-grid:has(> :nth-child(4)) {',
-    '    grid-template-columns: repeat(4, minmax(0, 1fr));',
-    '  }',
-    '}',
+    /* ⑧ 宽屏正文列宽段（#525 ＋ #950 C1 四档）：由 `columnCss()` 按档生成。 */
+    ...columnCss(column, root, p),
     '/* ⑨ 状态字抬到与正文同档（#525 第二轮票面第 3 条：状态类文字在手机档偏小）。',
     '   390 档的徽章（`block-chip`）与读数卡说明（`block-kpi-card-detail`）都是 12px，与正文差 3px、',
     '   与读数卡标签 12px 齐平 ⇒ 「状态」看不出是另一类信息。抬到 **13px**：',

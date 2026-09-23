@@ -600,10 +600,20 @@ describe('#434 操作卡头部／结论条（公共层 pageShell 区）', () => 
     }
   });
 
-  it('结论条保留 #507 既有形态（不对齐样张 one-line）', () => {
+  it('结论条形态：左 3px 主色强调条仍在（#950 B2 起见：改由 ::before 承载，去月牙）', () => {
     const css = blocksCss();
     assert.ok(css.includes('.ilife-block-conclusion {'), '缺结论条规则');
-    assert.ok(css.includes('border-left: 3px solid var(--blue)'), '结论条左 3px 主色边不得丢');
+    const base = css.slice(css.indexOf('.ilife-block-conclusion {'));
+    const rule = base.slice(0, base.indexOf('}') + 1);
+    assert.ok(rule.includes('position: relative'), '强调条的定位锚点（::before 的前提）');
+    // #950 B2（用户 2026-09-24 裁定「去月牙」）：`border-left: 3px` 与 `border-radius: 14px` 同处一盒时，
+    // 圆角会把那条 3px 边裁成月牙（窄屏上读成一个游离的「(」）⇒ 承载方式改成伪元素，
+    // **形态口径不变**：仍是「左 3px 主色强调条」（下面两条断的就是这件事）。
+    assert.ok(!rule.includes('border-left'), '`border-left` 已撤（它才是月牙的来源）');
+    const before = css.slice(css.indexOf('.ilife-block-conclusion::before {'));
+    const accent = before.slice(0, before.indexOf('}') + 1);
+    assert.ok(accent.includes('width: 3px'), '强调条仍是 3px');
+    assert.ok(accent.includes('background: var(--blue)'), '强调条仍是主色 var(--blue)');
   });
 });
 

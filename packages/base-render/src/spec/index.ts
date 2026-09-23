@@ -27,11 +27,11 @@ export const BASE_PAINT_CONTRACT_VERSION = '0.1.0' as const;
 
 export type FrozenSurfaceKind = 'runtime' | 'type';
 export type FrozenSurfaceStatus = 'implemented' | 'pending';
-/** 节号闭集：`3.1`–`3.5` 是 v1 五节（#74–#78），`3.6` 是 **#525 追加**的「页面级移动端配方与形状件」
- *  （根出口新增的八个运行时名字必须有处挂号，否则 `test/contract-signatures.test.mjs` 的
- *  「运行时出口面锁」一节必红）；`5`／`7` 是 #92 的版本机制与签名测试两节。 */
-export type FrozenSurfaceSection = '3.1' | '3.2' | '3.3' | '3.4' | '3.5' | '3.6' | '5' | '7';
-export type FrozenSurfaceTicket = '#74' | '#75' | '#76' | '#77' | '#78' | '#92' | '#525';
+/** 节号闭集：`3.1`–`3.5` 是 v1 五节（#74–#78），`3.6` 是 **#525 追加**的「页面级移动端配方与形状件」，
+ *  `3.7` 是 **#950 追加**的「页面级导航与横条件」（根出口新增的十二个运行时名字必须有处挂号，
+ *  否则 `test/contract-signatures.test.mjs` 的「运行时出口面锁」一节必红）；`5`／`7` 是 #92 的版本机制与签名测试两节。 */
+export type FrozenSurfaceSection = '3.1' | '3.2' | '3.3' | '3.4' | '3.5' | '3.6' | '3.7' | '5' | '7';
+export type FrozenSurfaceTicket = '#74' | '#75' | '#76' | '#77' | '#78' | '#92' | '#525' | '#950';
 
 export interface FrozenSurfaceEntry {
   readonly name: string;
@@ -191,16 +191,22 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'PAGE_UI_CLASS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'ilife-page-ui'" },
   { name: 'PAGE_UI_VIEWPORT', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "'width=device-width,initial-scale=1,viewport-fit=cover'" },
   { name: 'pageUiCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: PageUiCssInput): string' },
+  // #950 C1：正文列宽四档（页面级配方的参数面；缺省 `centered` ＝ 改前行为）。
+  { name: 'PAGE_COLUMNS', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.6', signature: "readonly ['centered', 'wide', 'full', 'locked']" },
+  { name: 'PAGE_COLUMN_WIDTH_PX', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.6', signature: '{ centered: 880; wide: 1120 }' },
   { name: 'MEDIA_RATIOS', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']" },
   { name: 'pageShapeCss', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input?: { prefix?: string }): string' },
+  // #950 B4：事实条的缺数占位常量（与全仓「缺数一律写 —」同字）。
+  { name: 'FACT_STRIP_MISSING_MARK', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.6', signature: "'\u2014'" },
   { name: 'renderFactStrip', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: FactStripInput): string' },
   { name: 'renderMediaFigure', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: MediaFigureInput): string' },
   // 追加窄席位（票号沿用 #525，本节归它）：媒体占位件——与 `renderMediaFigure` **同规格**
   // （同宽高比容器／同圆角／同外边距／同图注槽），换的只是框里那点内容（一句原因 ＋ 可选下一步）。
   { name: 'renderMediaPlaceholder', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: MediaPlaceholderInput): string' },
   { name: 'renderTimelineRows', kind: 'runtime', ticket: '#525', status: 'implemented', section: '3.6', signature: '(input: TimelineRowsInput): string' },
-  { name: 'PageUiCssInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ prefix?: string }' },
-  { name: 'FactItemInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ label: string; value: string; tone?: FactTone }' },
+  { name: 'PageUiCssInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ prefix?: string; column?: PageColumn }' },
+  { name: 'PageColumn', kind: 'type', ticket: '#950', status: 'implemented', section: '3.6', signature: "'centered' | 'wide' | 'full' | 'locked'" },
+  { name: 'FactItemInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ label: string; value: string | null; tone?: FactTone; unit?: string }' },
   { name: 'FactStripInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ items: readonly FactItemInput[]; extraClass?: string }' },
   { name: 'FactTone', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['ok', 'warn', 'danger']" },
   { name: 'MediaFigureInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ src?: string; alt: string; ratio: MediaRatio; fit?: \'contain\' | \'cover\'; caption?: string; note?: string; placeholder?: string; id?: string }' },
@@ -208,6 +214,36 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'MediaRatio', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: "readonly ['natural', '1-1', '3-4', '4-5', '4-3', '9-16', '16-9']" },
   { name: 'TimelineRowInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ time: string; main: string; note?: string }' },
   { name: 'TimelineRowsInput', kind: 'type', ticket: '#525', status: 'implemented', section: '3.6', signature: '{ rows: readonly TimelineRowInput[]; extraClass?: string }' },
+
+  // ── §3.7 页面级导航与横条件（#950） ──
+  // 与 §3.6 同层同口径：都是「整页怎么摆」，不参与 `blocks.ts` 的 12 区块组合，故走根出口。
+  // 十二个运行时名字与 `dist/index.js` 的新增导出逐字一致；样式由 `pageShapeCss()` 汇总进页。
+  { name: 'CHIP_TONES', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['neutral', 'ok', 'warn', 'danger']" },
+  { name: 'SEG_NAV_ICONS', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['grid', 'line', 'table', 'copy', 'goal', 'drop', 'scale', 'flame']" },
+  { name: 'pageNavCss', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input?: { prefix?: string }): string' },
+  { name: 'renderChipRow', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: ChipRowInput): string' },
+  { name: 'renderSegmentedNav', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: SegmentedNavInput): string' },
+  { name: 'CAPTION_TONES', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['plain', 'ok', 'warn', 'danger']" },
+  { name: 'DAY_STRIP_EMPTY_MARK', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "'\u2014'" },
+  { name: 'STATE_TONES', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['info', 'warn', 'danger']" },
+  { name: 'pageBarsCss', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input?: { prefix?: string }): string' },
+  { name: 'renderDayStrip', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: DayStripInput): string' },
+  { name: 'renderEquationBar', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: EquationBarInput): string' },
+  { name: 'renderStateBanner', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: StateBannerInput): string' },
+  { name: 'ChipTone', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'neutral' | 'ok' | 'warn' | 'danger'" },
+  { name: 'ChipInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ label: string; tone?: ChipTone }' },
+  { name: 'ChipRowInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ chips: readonly ChipInput[]; role?: 'list' | 'none'; extraClass?: string }" },
+  { name: 'SegNavIcon', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'grid' | 'line' | 'table' | 'copy' | 'goal' | 'drop' | 'scale' | 'flame'" },
+  { name: 'SegNavItemInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ id: string; label: string; icon?: SegNavIcon; count?: string }' },
+  { name: 'SegmentedNavInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ items: readonly SegNavItemInput[]; current?: string; sticky?: boolean; ariaLabel?: string; extraClass?: string }" },
+  { name: 'CaptionTone', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'plain' | 'ok' | 'warn' | 'danger'" },
+  { name: 'DayCellInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ label: string; value: string | null; today?: boolean }' },
+  { name: 'DayStripCaptionInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ text: string; tone?: CaptionTone }' },
+  { name: 'DayStripInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ days: readonly DayCellInput[]; emptyMark?: string; caption?: readonly DayStripCaptionInput[]; density?: 'comfortable' | 'compact'; extraClass?: string }" },
+  { name: 'EquationSegmentInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ label: string; value: number }' },
+  { name: 'EquationBarInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ segments: readonly EquationSegmentInput[]; total: number; heading?: { label: string; value: string }; endLabels?: boolean; extraClass?: string }' },
+  { name: 'StateTone', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'info' | 'warn' | 'danger'" },
+  { name: 'StateBannerInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ tone: StateTone; badge: string; text?: string; action?: { label: string; actionId: string }; extraClass?: string }' },
 
   // ── §5 版本机制 ──
   { name: 'BASE_PAINT_CONTRACT_VERSION', kind: 'runtime', ticket: '#92', status: 'implemented', section: '5', signature: "'0.1.0'" },
