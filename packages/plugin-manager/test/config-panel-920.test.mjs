@@ -39,6 +39,45 @@ const ADVANCED_GROUP_TITLE = contract.ADVANCED_GROUP_TITLE;
 
 /** 视图半的源码：样式表取值与「按字符数估宽」那类痕迹都只在这里读得到。 */
 const VIEW_SRC = readFileSync(join(PKG, 'src', 'config-panel-view.ts'), 'utf8');
+/** 壳半与更新面板半的源码（#931／#933／#937 的判据落在这两件上）。 */
+const CLIENT_SRC = readFileSync(join(PKG, 'src', 'client.ts'), 'utf8');
+const UPDATE_SRC = readFileSync(join(PKG, 'src', 'update-panel.ts'), 'utf8');
+
+describe('#931／#933／#937：三条票面判据（静态面，改坏必红）', () => {
+  it('#931 品牌底上的前景一律取配对别名，三处都不许再写死 `#fff`', () => {
+    // 三处：壳半的页签选中态、更新面板的页签选中态与行内主按钮。
+    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-panel.ts', UPDATE_SRC]]) {
+      const hits = [...src.matchAll(/color:\s*'var\(--dsw-alias-label-primary-foreground/g)].length;
+      assert.ok(hits >= 1, name + ' 里品牌底上的前景没有取配对别名');
+    }
+    // 反向：这两件里不许再出现"品牌底 ＋ 写死白字"那一对。
+    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-panel.ts', UPDATE_SRC]]) {
+      const brandBlocks = [...src.matchAll(/background:\s*'var\(--dsw-alias-brand-primary[^}]*}/g)].map((m) => m[0]);
+      for (const block of brandBlocks) {
+        assert.doesNotMatch(block, /color:\s*'#fff'/, name + ' 里品牌底上还写着死白字（深色下 1.045:1、读不出）');
+      }
+    }
+  });
+
+  it('#933 卡片间距由容器给，且页面切换不用 `hidden` 属性', () => {
+    // `tabStack` 住壳半（`client.ts` 的样式表），不是视图半那张表——直接按源码断。
+    assert.match(CLIENT_SRC, /tabStack:\s*\{[^}]*display:\s*'flex'[^}]*gap:\s*10\b/, 'tabStack：弹性列容器 ＋ 间距 10');
+    assert.match(CLIENT_SRC, /style:\s*S\.tabStack/, '页签格里那一列要挂 tabStack（间距不然没人给）');
+    assert.match(CLIENT_SRC, /style:\s*selected \? undefined : \{ display: 'none' \}/, '未选中的页签格要显式 display:none');
+    // 反向：这一格不许再用 `hidden` 属性——UA 的 `[hidden]{display:none}` 会输给内联的 display:flex。
+    assert.doesNotMatch(CLIENT_SRC, /hidden:\s*!selected/, '又用回 hidden 属性了（六个预热页签会全露出来）');
+  });
+
+  it('#937 版本改成标题行胶囊；读中／读不到两态与失败重试都在', () => {
+    assert.match(CLIENT_SRC, /S\.versionCapsule/, '标题行里要有版本胶囊（形状照真源 .ic-ver）');
+    assert.match(CLIENT_SRC, /VERSION_PENDING_TEXT = '…'/, '读中的占位符是 …');
+    assert.match(CLIENT_SRC, /VERSION_MISSING_TEXT = '版本未知'/, '读不到给人话，不把 unknown 印给人看');
+    assert.match(CLIENT_SRC, /VERSION_RETRY_MS[^=]*=\s*\[1000, 3000, 8000\]/, '失败要退避重试三次');
+    assert.match(CLIENT_SRC, /setTimeout\(\(\) => attempt\(index \+ 1\)/, '重试要真的接上下一次');
+    // 反向：原先"独占一行"的版本行（`总管 …` 那行）不许回来。
+    assert.doesNotMatch(CLIENT_SRC, /'总管 ' \+ MANAGER_PLUGIN/, '独占一行的版本行又回来了');
+  });
+});
 
 /* ═══ 读那棵树的小工具（不碰 DOM：组件都是纯函数，当普通函数调就行） ═══ */
 
