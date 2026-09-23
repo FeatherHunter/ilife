@@ -903,18 +903,24 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 
 ### 3.7 页面级导航与横条件（#950）
 
-这一节是**后追加**的一节（#950）：新增两族页面级件 —— `src/pageNav.ts` 的**导航与元信息**
-（分段导航／胶囊行）与 `src/pageBars.ts` 的**横条三件**（时间格带／等式条／态声明条）。
+这一节是**后追加**的一节（#950）：新增两族页面级件 —— `src/pageNav.ts` 的**分段导航**
+与 `src/pageBars.ts` 的**横条三件**（时间格带／等式条／态声明条）。
 
 - **为什么另立两件、不并进 `pageShapes.ts`**：那一件已 452 行、越过本包 350 行告警线
   （第四步已当场报出，见 `docs/base/base-render/行数告警线评估.md`）；本批按**变化频率**切：
-  `pageShapes` 管媒体与事实，`pageNav` 管导航与元信息（随整页骨架动），`pageBars` 管「一行说不完」的三态信息。
+  `pageShapes` 管媒体与事实，`pageNav` 管导航（随整页骨架动），`pageBars` 管「一行说不完」的三态信息。
 - **形状与角色同义**：分段导航做**动作**的形（等宽分格 ＋ 选中实底 ＋ 图标位），与状态胶囊
-  （`blocks.ts` 的 chip 样式区）在形状上分得开；`renderChipRow` 给裸 chip 一个**容器**——
-  裸行内元素落进 ≥1001px 页壳网格（§3.6 ⑧ 的 `> * { grid-column: 2 }`）时会被逐枚提升成整行。
-- **样式归口**：两族样式由 `pageShapeCss()` **汇总**进页，调用方不必另接样式函数。
-- **影响面（说清楚）**：不启用 `pageUi` 的页产出物**逐字节不变**；启用 `pageUi` 的页
-  其 `sharedCss` 段多出本批两族的选择器（其余字节不变，逐件差异见本票证据件）。
+  （`blocks.ts` 的 chip 样式区）在形状上分得开。
+- **收口（同批内改过一次，记在此免得读者对不上）**：`renderChipRow` 最初在本批于根上另立了一件
+  （入参 `{ chips }`），与 `blocks.ts` 早已有、且产线 8 处调用点在用的那件**同名、同容器类、入参却不兼容**；
+  同一容器类还被两层各定义一次样式，页面层那条会吃掉区块层的 `margin`。收口按「一个问题在公共面上
+  只留一条路」**并回区块层**：语气位 `ChipItemInput.tone` 与 `role`／`extraClass` 并进 `blocks.ts` 那件，
+  根出口**转出同一实现**（不是第二个实现）。本节仍登记这五个名字，因为「一行元信息小签」是本批的对外用法。
+- **样式归口**：两族样式由 `pageShapeCss()` **汇总**进页，调用方不必另接样式函数；
+  胶囊行与语气色的样式住在区块层（`blocks.ts`），随 `blocksCss()` 进页。
+- **影响面（说清楚）**：`pageShapeCss()` 恒返回非空 CSS，两族样式因此随它进**每一个调用方**的页，
+  与 `pageUi` 开关无关；**看不看得出来**才由 `pageUi` 决定（选择器都挂在 `.ilife-page-ui` 下，
+  类名不在页上即死字节）。启用 `pageUi` 的页其 `sharedCss` 段多出本批两族的选择器（逐件差异见本票证据件）。
 - **单位与数字归调用方**：值位只吃「已经是给人看的样子」的串，本层不做取整与单位口径。
 
 <!-- FROZEN-SURFACE-TABLE-START -->
@@ -933,8 +939,8 @@ export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;
 | `renderEquationBar` | runtime | #950 | implemented | 3.7 | `(input: EquationBarInput): string` |
 | `renderStateBanner` | runtime | #950 | implemented | 3.7 | `(input: StateBannerInput): string` |
 | `ChipTone` | type | #950 | implemented | 3.7 | `'neutral' \| 'ok' \| 'warn' \| 'danger'` |
-| `ChipInput` | type | #950 | implemented | 3.7 | `{ label: string; tone?: ChipTone }` |
-| `ChipRowInput` | type | #950 | implemented | 3.7 | `{ chips: readonly ChipInput[]; role?: 'list' \| 'none'; extraClass?: string }` |
+| `ChipItemInput` | type | #950 | implemented | 3.7 | `{ text: string; tone?: ChipTone }` |
+| `ChipRowInput` | type | #950 | implemented | 3.7 | `{ items: readonly ChipItemInput[]; tailHtml?: string; role?: 'list' \| 'none'; extraClass?: string }` |
 | `SegNavIcon` | type | #950 | implemented | 3.7 | `'grid' \| 'line' \| 'table' \| 'copy' \| 'goal' \| 'drop' \| 'scale' \| 'flame'` |
 | `SegNavItemInput` | type | #950 | implemented | 3.7 | `{ id: string; label: string; icon?: SegNavIcon; count?: string }` |
 | `SegmentedNavInput` | type | #950 | implemented | 3.7 | `{ items: readonly SegNavItemInput[]; current?: string; sticky?: boolean; ariaLabel?: string; extraClass?: string }` |

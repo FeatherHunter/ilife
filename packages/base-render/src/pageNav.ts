@@ -1,19 +1,21 @@
-/** #950 · 页面级导航与元信息两件：**分段导航**（`renderSegmentedNav`）与**胶囊行**（`renderChipRow`）。
+/** #950 · 页面级导航一件：**分段导航**（`renderSegmentedNav`）。
  *
  *  谁在用：本包（base-paint）的页面级形状层。落点口径与 `pageShapes.ts` 同：样式随本件出
  *  （`pageNavCss()` 由 `pageShapeCss()` 汇总进页），是否生效由整页装配的 `pageUi` 位决定。
  *
- *  为什么要这两件（第一性：**形状必须与角色同义**）：
+ *  为什么要这件（第一性：**形状必须与角色同义**）：
  *   · **分段导航**：页内导航是**动作**，但 `renderTocBlock` 的胶囊与状态徽章（`ilife-block-chip`）
  *     同形——读者把「能点的」读成「标签」。分段控件的隐喻是「同层互斥切换」，
  *     与状态胶囊在形状上分得开（等宽分格 ＋ 选中项实底白卡 ＋ 图标位）。
- *   · **胶囊行**：`renderChips` 逐项出一枚裸 `<span class="ilife-block-chip">`，**没有容器**；
- *     裸行内元素落进 ≥1001px 的页壳网格（`pageUi.ts` ⑧ 的 `> * { grid-column: 2 }`）时，
- *     会被逐枚提升成**独占一行的整宽条**（用户截图那三根长条就是这么来的：同一份标记窄屏好、宽屏坏）。
- *     本件给一个「必须整行地出现」的入口，并把「行内元素不被拉伸」写进样式（对应 C2 守卫）。
+ *
+ *  **本件原与「胶囊行」同住**（`#950` 同批立两件），收口时按「一个问题在公共面上只留一条路」
+ *  把胶囊行**并回区块层** `blocks.ts`：那一层早已有 `renderChipRow`（`#728`，产线 8 处调用点在用），
+ *  两件同名、同容器类、入参却不兼容，且同一容器类被两层各定义一次样式会互相盖（页面层那条
+ *  会吃掉区块层的 `margin`）。语气位（`ChipItemInput.tone`）与 `role`／`extraClass` 一并并过去，
+ *  本件此后只管导航。
  *
  *  为什么另立一件（不并进 `pageShapes.ts`）：那一件已 452 行、越过本包 350 行告警线，
- *  且它的三支管「媒体与事实」；本件管「导航与元信息」，变化频率不同（导航随整页骨架动）。
+ *  且它的三支管「媒体与事实」；本件管「导航」，变化频率不同（导航随整页骨架动）。
  *  **已超线，需要根据规则进行重构**（指 `pageShapes.ts`，非本件）：本件即按该拆法新立的姊妹件之一；
  *  收口票可把 `pageShapes.ts` 再按「媒体／事实／时间轴」切三支，出口留它薄转出。
  *
@@ -50,54 +52,6 @@ function optText(value: unknown, field: string): string | undefined {
 function assertItems(value: unknown, field: string): readonly unknown[] {
   if (!Array.isArray(value)) throw new Error('pageNav: ' + field + ' 必须是数组');
   return value;
-}
-
-/* ══════════════════════════════════════════════════════════════
- * ① 胶囊行：一行 N 枚元信息小签（**带容器**，这是与 `renderChips` 的唯一区别）
- * ══════════════════════════════════════════════════════════════ */
-
-/** 胶囊语气闭集（`neutral` ＝ 中性灰，缺省）：取自同仓语义色，不发明新色值。 */
-export const CHIP_TONES = ['neutral', 'ok', 'warn', 'danger'] as const;
-export type ChipTone = (typeof CHIP_TONES)[number];
-
-export interface ChipInput {
-  /** 这一枚说的是什么（人话短词，如「有记录 1/7 天」）。 */
-  readonly label: string;
-  readonly tone?: ChipTone;
-}
-
-export interface ChipRowInput {
-  /** 一行里的胶囊；0 枚＝空串（与「没内容不留空块」同口径）。 */
-  readonly chips: readonly ChipInput[];
-  /** 无障碍角色：`list`（缺省，逐枚 role=listitem）／`none`（纯版面）。 */
-  readonly role?: 'list' | 'none';
-  /** 版面根的附加类名（空格分隔）。 */
-  readonly extraClass?: string;
-}
-
-/** 胶囊行：把元信息收成**一行**（宽屏不被网格提升成整行；窄屏自动折行）。
- *  **用它代替裸 `renderChips`**——后者没有容器，正是宽屏塌成长条的根因。 */
-export function renderChipRow(input: ChipRowInput): string {
-  const chips = assertItems(input.chips, 'renderChipRow: input.chips');
-  if (chips.length === 0) return '';
-  const role = input.role ?? 'list';
-  if (role !== 'list' && role !== 'none') {
-    throw new Error('pageNav: renderChipRow: input.role 必须是 list／none 之一');
-  }
-  const extra = optText(input.extraClass, 'renderChipRow: input.extraClass');
-  const body = chips.map((raw, i) => {
-    const field = 'renderChipRow: input.chips[' + i + ']';
-    const chip = raw as ChipInput;
-    const label = reqText(chip.label, field + '.label');
-    const tone = chip.tone ?? 'neutral';
-    if (!(CHIP_TONES as readonly string[]).includes(tone)) {
-      throw new Error('pageNav: ' + field + '.tone 必须是 ' + CHIP_TONES.join('／') + ' 之一');
-    }
-    return '<span class="ilife-block-chip ilife-block-chip-' + tone + '"'
-      + (role === 'list' ? ' role="listitem"' : '') + '>' + esc(label) + '</span>';
-  }).join('');
-  return '<div class="ilife-block-chip-row' + (extra === undefined ? '' : ' ' + extra) + '"'
-    + (role === 'list' ? ' role="list"' : '') + '>' + body + '</div>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -139,7 +93,8 @@ export interface SegNavItemInput {
 export interface SegmentedNavInput {
   /** 分格；0 格＝空串。 */
   readonly items: readonly SegNavItemInput[];
-  /** 当前项 id：给了就给它实底 ＋ `aria-current="true"`（分格的选中态）。 */
+  /** 当前项 id：给了就给它实底 ＋ `aria-current="page"`（分格的选中态）。
+   *  用规范值 `page` 而非 `true`：读屏报「当前页面」；`true` 只说「已选中」，语义弱一档。 */
   readonly current?: string;
   /** 是否吸顶（缺省 `true`）：长页滚动时导航留在视口顶。 */
   readonly sticky?: boolean;
@@ -178,7 +133,7 @@ export function renderSegmentedNav(input: SegmentedNavInput): string {
     const on = current !== undefined && current === id;
     return '<a href="#' + esc(id) + '"'
       + ' class="ilife-block-seg-nav-item' + (on ? ' is-on' : '') + '"'
-      + (on ? ' aria-current="true"' : '') + '>'
+      + (on ? ' aria-current="page"' : '') + '>'
       + (icon === undefined ? '' : iconSvg(icon))
       + '<span class="ilife-block-seg-nav-label">' + esc(label) + '</span>'
       + (count === undefined ? '' : '<span class="ilife-block-seg-nav-count">' + esc(count) + '</span>')

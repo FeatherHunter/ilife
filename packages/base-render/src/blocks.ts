@@ -591,17 +591,24 @@ export function renderDistributionRows(input: DistributionRowsInput): string {
   }).join('');
 }
 
+/** 胶囊语气闭集（`neutral` ＝ 中性，`ok`／`warn`／`danger` 三档改边线与底色）。#950 从页面层并进来：
+ *  胶囊是区块自己的形状，它的语气与它同住一处；色值取自同仓语义色，不发明新值。 */
+export const CHIP_TONES = ['neutral', 'ok', 'warn', 'danger'] as const;
+export type ChipTone = (typeof CHIP_TONES)[number];
+
 export interface ChipItemInput {
   readonly text: string;
+  /** 语气档（可选）：**不给＝不多出任何类名**（既有调用点因此逐字节不变）。 */
+  readonly tone?: ChipTone;
 }
 
 export interface ChipsInput {
   readonly items: readonly ChipItemInput[];
 }
 
-/** #421-3 徽章（并列小标签，如分类／标签这类短词并排）：逐项 `<span class="ilife-block-chip">`。
- *  项即件（不另加容器类）；`items: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。 */
-export function renderChips(input: ChipsInput): string {
+/** 徽章串的**唯一**产出器（`renderChips` 与 `renderChipRow` 都走这里，两件不各写一份）。
+ *  `role` 只有徽章行会给：`renderChips` 恒不给 ⇒ 它的产物里零 aria 属性（#421 的口径锁着这一条）。 */
+function chipsHtml(input: ChipsInput, role: 'list' | 'none' | undefined): string {
   assertPlainObject(input, 'renderChips: input');
   assertNoInlineHandler(input, 'renderChips: input');
   const block = input as ChipsInput;
@@ -611,9 +618,23 @@ export function renderChips(input: ChipsInput): string {
     const field = 'renderChips: input.items[' + i + ']';
     assertPlainObject(entry, field);
     assertNoInlineHandler(entry as unknown as object, field);
-    return '<span class="' + pageLevelBlock(CHIP_NAME) + '">'
-      + esc(reqText((entry as ChipItemInput).text, field + '.text')) + '</span>';
+    const text = reqText((entry as ChipItemInput).text, field + '.text');
+    const tone = (entry as ChipItemInput).tone;
+    if (tone !== undefined && !(CHIP_TONES as readonly string[]).includes(tone)) {
+      badInput(field + '.tone 必须是 ' + CHIP_TONES.join('／') + ' 之一');
+    }
+    return '<span class="' + pageLevelBlock(CHIP_NAME)
+      + (tone === undefined ? '' : ' ' + pageLevelBlock(CHIP_NAME + '-' + tone)) + '"'
+      + (role === 'list' ? ' role="listitem"' : '') + '>'
+      + esc(text) + '</span>';
   }).join('');
+}
+
+/** #421-3 徽章（并列小标签，如分类／标签这类短词并排）：逐项 `<span class="ilife-block-chip">`。
+ *  项即件（不另加容器类）；`items: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。
+ *  要「成一行」就换 `renderChipRow`——它给这一串加容器。 */
+export function renderChips(input: ChipsInput): string {
+  return chipsHtml(input, undefined);
 }
 
 export interface ChipRowInput extends ChipsInput {
@@ -621,6 +642,12 @@ export interface ChipRowInput extends ChipsInput {
    *  `renderStatusBadge` 的产出——它和徽章同属「这一页现在是什么样」那一组，得在同一行里）。
    *  不给／空串＝只出行里那几枚徽章。 */
   readonly tailHtml?: string;
+  /** 无障碍角色：`list` ⇒ 容器 `role="list"` ＋ 逐枚 `role="listitem"`；`none` ＝ 显式不出角色。
+   *  **不给＝零 aria 属性**——既有 8 处调用点已在产线跑（skill-bill ×4、skill-chef ×3），
+   *  默认给角色会改它们的产物，故照「不给即逐字节相同」留空。 */
+  readonly role?: 'list' | 'none';
+  /** 容器上的附加类名（空格分隔；可选）。 */
+  readonly extraClass?: string;
 }
 
 /** #728 徽章行（**并列标签要对齐成一行**时用这一件）：把 `renderChips` 那一串裸 `<span>` 收进一个
@@ -631,12 +658,22 @@ export interface ChipRowInput extends ChipsInput {
  *  于是「一行徽章」会被摊成「一行一枚」。有了本件，徽章行是一个块级子件，栅格里占一格。
  *  `items: []` 且没给 `tailHtml` ＝ 空串（与 `renderChips` 同口径：没内容不留空块）；
  *  `items` 缺失／非数组 → `bad-input`；`tailHtml` 给了字符串即透传（与 `renderPageShell` 的
- *  `content` 同一条受信口径）。 */
+ *  `content` 同一条受信口径）。
+ *
+ *  `#950`：本件此后是**唯一**的徽章行实现。页面层原先另立过一件**同名不同参**的（入参 `{ chips }`），
+ *  两件的容器类名相同、`ChipRowInput` 类型名也相同，样式被两层各定义一次互相盖——已按「一个问题在
+ *  公共面上只留一条路」并回本件：语气位走 `ChipItemInput.tone`，`role`／`extraClass` 走本件可选位。 */
 export function renderChipRow(input: ChipRowInput): string {
-  const inner = renderChips(input);
+  const role = input.role;
+  if (role !== undefined && role !== 'list' && role !== 'none') {
+    badInput('renderChipRow: input.role 必须是 list／none 之一');
+  }
+  const inner = chipsHtml(input, role);
   const tail = typeof input.tailHtml === 'string' ? input.tailHtml : '';
   if (inner === '' && tail === '') return '';
-  return '<div class="' + pageLevelBlock('chip-row') + '">' + inner + tail + '</div>';
+  const extra = optText(input.extraClass);
+  return '<div class="' + pageLevelBlock('chip-row') + (extra === undefined ? '' : ' ' + esc(extra)) + '"'
+    + (role === 'list' ? ' role="list"' : '') + '>' + inner + tail + '</div>';
 }
 
 export interface ChangeRowInput {
@@ -1898,6 +1935,26 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  padding-top: 0;',
     '  padding-bottom: 0;',
     '}',
+    // #950：胶囊语气三档（`ok`／`warn`／`danger`）随件**移籍**到这里——原先住在页面层
+    //   （`pageNavCss` 的 chip 段，前缀 `.ilife-page-ui`）。移籍两个理由：① 胶囊的语气是胶囊
+    //   自己的皮肤，跟它同住一处；② 两层各定义一次同一个容器类会互相盖（页面层那条会吃掉
+    //   区块层的 `margin: 0 0 8px`，既有调用点的下边距被悄悄改）。值一字未改。
+    //   `neutral` 不写规则：它与「不给 tone」同色，只是类名在场，方便页面自己再加工。
+    '.' + p + 'block-chip-ok {',
+    '  border-color: rgba(52, 199, 89, .38);',
+    '  background: rgba(52, 199, 89, .12);',
+    '  color: #1a7f4b;',
+    '}',
+    '.' + p + 'block-chip-warn {',
+    '  border-color: rgba(199, 119, 0, .34);',
+    '  background: rgba(255, 159, 10, .14);',
+    '  color: #a15a06;',
+    '}',
+    '.' + p + 'block-chip-danger {',
+    '  border-color: rgba(192, 57, 43, .34);',
+    '  background: rgba(255, 59, 48, .12);',
+    '  color: #8f2f24;',
+    '}',
     '.' + p + 'block-change-row {',
     '  display: flex;',
     '  align-items: baseline;',
@@ -2788,3 +2845,18 @@ export type {
   StatusKind,
   ToastInput,
 };
+
+/* ── 就地可编辑值（`editableValue`，与 12 区块并列的**可演进组合层**） ──
+ *
+ * 为什么走本文件的出口而不是根出口：根出口（`src/index.ts`）与 `SPEC_FROZEN_SURFACE` 逐名绑死
+ * （签名测试钉死「新增运行时出口恰好等于清单里 implemented 的项」）；本件属**防火墙层**
+ * （不进 `SPEC_FROZEN_SURFACE`、不从根导出，见件头），组件在这里可以演进而不动冻结面。
+ * 样式与运行时**随页 opt-in**（`renderDocShell({ editableValue: true })`）⇒ 不用它的页产物零变化。 */
+export {
+  buildEditableValueJs, editableValueCss, renderEditableValue,
+  EDIT_AFFORDANCE_ATTR, EDIT_AFFORDANCES, EDIT_BOUND_ATTR, EDIT_DISPLAY_ATTR, EDIT_EVENT_CANCEL,
+  EDIT_EVENT_COMMIT, EDIT_HIT_ATTR, EDIT_KINDS, EDIT_KIND_ATTR, EDIT_LABEL_ATTR, EDIT_MAX_ATTR,
+  EDIT_MIN_ATTR, EDIT_NAME_ATTR, EDIT_OPTIONS_ATTR, EDIT_PLACEHOLDER_ATTR, EDIT_REQUIRED_ATTR,
+  EDIT_STEP_ATTR, EDIT_UNIT_ATTR, EDIT_VALUE_ATTR, EDIT_VALUE_CLASS,
+};
+export type { EditableValueAffordance, EditableValueInput, EditableValueKind, EditableValueOption };

@@ -218,6 +218,9 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   // ── §3.7 页面级导航与横条件（#950） ──
   // 与 §3.6 同层同口径：都是「整页怎么摆」，不参与 `blocks.ts` 的 12 区块组合，故走根出口。
   // 十二个运行时名字与 `dist/index.js` 的新增导出逐字一致；样式由 `pageShapeCss()` 汇总进页。
+  // 收口说明：`renderChipRow`／`CHIP_TONES`／`ChipTone`／`ChipItemInput`／`ChipRowInput` 五条
+  //   的**实现住在区块层** `blocks.ts`（`#728` 那件，本批把语气位并了进去），根出口只转出同一实现；
+  //   它们仍登记在本节，因为「一行元信息小签」是本批的对外用法。
   { name: 'CHIP_TONES', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['neutral', 'ok', 'warn', 'danger']" },
   { name: 'SEG_NAV_ICONS', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: "readonly ['grid', 'line', 'table', 'copy', 'goal', 'drop', 'scale', 'flame']" },
   { name: 'pageNavCss', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input?: { prefix?: string }): string' },
@@ -231,8 +234,8 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'renderEquationBar', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: EquationBarInput): string' },
   { name: 'renderStateBanner', kind: 'runtime', ticket: '#950', status: 'implemented', section: '3.7', signature: '(input: StateBannerInput): string' },
   { name: 'ChipTone', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'neutral' | 'ok' | 'warn' | 'danger'" },
-  { name: 'ChipInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ label: string; tone?: ChipTone }' },
-  { name: 'ChipRowInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ chips: readonly ChipInput[]; role?: 'list' | 'none'; extraClass?: string }" },
+  { name: 'ChipItemInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ text: string; tone?: ChipTone }' },
+  { name: 'ChipRowInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ items: readonly ChipItemInput[]; tailHtml?: string; role?: 'list' | 'none'; extraClass?: string }" },
   { name: 'SegNavIcon', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "'grid' | 'line' | 'table' | 'copy' | 'goal' | 'drop' | 'scale' | 'flame'" },
   { name: 'SegNavItemInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: '{ id: string; label: string; icon?: SegNavIcon; count?: string }' },
   { name: 'SegmentedNavInput', kind: 'type', ticket: '#950', status: 'implemented', section: '3.7', signature: "{ items: readonly SegNavItemInput[]; current?: string; sticky?: boolean; ariaLabel?: string; extraClass?: string }" },

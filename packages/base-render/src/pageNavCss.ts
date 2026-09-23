@@ -3,6 +3,9 @@
  *  为什么分开住：产出器那件（`./pageNav.js`）带上这一整段就 455 行、越过本包 350 行告警线；
  *  照仓内先例（`src/render/reviewDocsCss.ts`：样式另立姊妹件、出口经件薄转出），本族样式单独一件，
  *  产出器那件只留形状与类型，两边都落回线内。由 `pageShapeCss()` 汇总进页。
+ *
+ *  `#950` 收口：原先住这里的**胶囊行**那一段（容器 ＋ 语气色 ＋ 行内元素不被网格拉伸）已随件
+ *  移籍区块层 `blocks.ts`——同一容器类被两层各定义一次会互相盖，且胶囊的语气是胶囊自己的皮肤。
  */
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
@@ -12,45 +15,15 @@ const LF = String.fromCharCode(10);
  * 样式（本族）：与产出器**分住两件**（本件）——照仓内 `reviewDocsCss.ts` 的先例，产出器那件只留形状与类型。
  * ══════════════════════════════════════════════════════════════ */
 
-/** 两件的样式唯一产出者。恒返回非空 CSS 文本（由 `pageShapeCss()` 汇总进页）。 */
+/** 本族样式的唯一产出者。恒返回非空 CSS 文本（由 `pageShapeCss()` 汇总进页）。 */
 export function pageNavCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   return [
-    '/* ① 胶囊行：**带容器**的一行小签。胶囊本体沿用既有 `block-chip` 形状（`blocks.ts` 的 */',
-    '/*   `chipButton` 区），本条只补「容器 ＋ 语气色 ＋ 行内元素不被网格拉伸」三件。 */',
-    root + ' .' + p + 'block-chip-row {',
-    '  display: flex;',
-    '  flex-wrap: wrap;',
-    '  align-items: center;',
-    '  gap: 6px 8px;',
-    '  margin: 0;',
-    '}',
-    root + ' .' + p + 'block-chip-row > .' + p + 'block-chip {',
-    '  display: inline-flex;',
-    '  align-items: center;',
-    '  box-sizing: border-box;',
-    '  min-height: 30px;',
-    '  /* C2 守卫：行内级元素**不被网格拉伸**（⑧ 的 `> *` 会给它整列宽，看上去像一根长条） */',
-    '  max-width: 100%;',
-    '  white-space: nowrap;',
-    '}',
-    root + ' .' + p + 'block-chip-ok {',
-    '  border-color: rgba(52, 199, 89, .38);',
-    '  background: rgba(52, 199, 89, .12);',
-    '  color: #1a7f4b;',
-    '}',
-    root + ' .' + p + 'block-chip-warn {',
-    '  border-color: rgba(199, 119, 0, .34);',
-    '  background: rgba(255, 159, 10, .14);',
-    '  color: #a15a06;',
-    '}',
-    root + ' .' + p + 'block-chip-danger {',
-    '  border-color: rgba(192, 57, 43, .34);',
-    '  background: rgba(255, 59, 48, .12);',
-    '  color: #8f2f24;',
-    '}',
+    '/* ① 胶囊行（容器 ＋ 语气色 ＋ 行内元素不被网格拉伸）已于 #950 收口时**移籍区块层** */',
+    '/*   （`blocks.ts` 的 `chipButton` 区）：容器类 `ilife-block-chip-row` 的样式原在两处各定义 */',
+    '/*   一次、页面层那条会吃掉区块层的 `margin`；且胶囊的语气本就是胶囊自己的皮肤。本件只管导航。 */',
     '/* ② 分段导航：等宽分格 ＋ 选中实底。做「动作」的形，不做「状态」的形。 */',
     root + ' .' + p + 'block-seg-nav {',
     '  display: flex;',

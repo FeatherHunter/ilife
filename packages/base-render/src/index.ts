@@ -64,28 +64,21 @@ export type {
   TimelineRowsInput,
 } from './pageShapes.js';
 /** #950 页面级导航与横条件（本批新立两族，与 `pageShapes.ts` 同层，出口经根）：
- *   · `pageNav.ts`：**分段导航**（`renderSegmentedNav`：页内导航的「动作」形状，与状态胶囊分得开）
- *     与**胶囊行**（`renderChipRow`：给裸 chip 一个容器，宽屏不再被网格提升成整行）。
+ *   · `pageNav.ts`：**分段导航**（`renderSegmentedNav`：页内导航的「动作」形状，与状态胶囊分得开）。
  *   · `pageBars.ts`：**时间格带**（`renderDayStrip`：把「哪几天有记录」画出来）、
  *     **等式条**（`renderEquationBar`：`A＋B＝C` 的最小形状）、**态声明条**（`renderStateBanner`：
  *     「这句话在什么前提下成立」，与「结论」分住）。
  *  两族的样式由 `pageShapeCss()` 汇总进页（调用方不必另接样式函数）；
  *  启用口径仍由整页装配的 `pageUi` 位决定，不启用则产出物逐字节不变。 */
-export {
-  CHIP_TONES,
-  SEG_NAV_ICONS,
-  pageNavCss,
-  renderChipRow,
-  renderSegmentedNav,
-} from './pageNav.js';
-export type {
-  ChipInput,
-  ChipRowInput,
-  ChipTone,
-  SegNavIcon,
-  SegNavItemInput,
-  SegmentedNavInput,
-} from './pageNav.js';
+export { SEG_NAV_ICONS, pageNavCss, renderSegmentedNav } from './pageNav.js';
+export type { SegNavIcon, SegNavItemInput, SegmentedNavInput } from './pageNav.js';
+/** #950 收口：**胶囊行不在上面那一族**。`renderChipRow` 与语气闭集 `CHIP_TONES` 原先在本批于根上
+ *  另立过一件，收口时按「一个问题在公共面上只留一条路」并回区块层 `blocks.ts`——那里早有同名、
+ *  同容器类、且已在产线上跑的一件（`#728`），两件入参不兼容、样式两层各定义一次会互相盖。
+ *  这里只把**同一个实现**从根转出：根与 `base-paint/blocks` 拿到的是同一个函数，语气位见
+ *  `ChipItemInput.tone`、无障碍角色见 `ChipRowInput.role`。 */
+export { CHIP_TONES, renderChipRow } from './blocks.js';
+export type { ChipItemInput, ChipRowInput, ChipTone } from './blocks.js';
 export {
   CAPTION_TONES,
   DAY_STRIP_EMPTY_MARK,
