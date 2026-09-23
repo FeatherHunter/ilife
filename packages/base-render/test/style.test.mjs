@@ -10,7 +10,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -44,7 +44,11 @@ import { TemplateError } from '../dist/template.js';
 
 const LF = String.fromCharCode(10);
 const SRC_STYLE = readFileSync(new URL('../src/style.ts', import.meta.url), 'utf8');
-const SRC_CHARTS = readFileSync(new URL('../src/charts.ts', import.meta.url), 'utf8');
+/** 目录化批次④：charts 的实现从 `src/charts.ts` 一件切成 `src/components/charts/**` 一族多件；
+ *  本判据读**整族**（读转出件会因为「只剩一行 export *」而假绿）。 */
+const SRC_CHARTS_DIR = fileURLToPath(new URL('../src/components/charts/', import.meta.url));
+const SRC_CHARTS = readdirSync(SRC_CHARTS_DIR).filter((f) => f.endsWith('.ts')).sort()
+  .map((f) => readFileSync(SRC_CHARTS_DIR + f, 'utf8')).join(LF);
 const SRC_CONTROLS = readFileSync(new URL('../src/controls.ts', import.meta.url), 'utf8');
 const SRC_HELP = readFileSync(new URL('../src/help.ts', import.meta.url), 'utf8');
 const SELF = readFileSync(fileURLToPath(import.meta.url), 'utf8');
@@ -338,7 +342,7 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     // 防重述：实现文件不得出现第二份图表 CSS 字面量，且必须从 charts.ts 取值。
     assert.ok(SRC_STYLE.includes("from './charts.js'"), 'style.ts 必须从 charts.ts 取图表 CSS');
     assert.ok(!/['"]\.?\s*charts-/.test(SRC_STYLE), 'style.ts 不得重述图表 CSS 类名文本');
-    assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts.ts 的导出（#75 复用点）');
+    assert.ok(SRC_CHARTS.includes('export function chartsCss'), 'chartsCss 必须是 charts 族的导出（#75 复用点）');
   });
 
   it('T23 运行时 toast 结构对齐（W1 根因修 ＋ F-c 图标）：helpers 与静态产出器同构 ＋ 权宜补丁已删', () => {

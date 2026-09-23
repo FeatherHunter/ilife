@@ -9,7 +9,7 @@
 // `.scratch/t78/a1-evidence.md`）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -1721,10 +1721,14 @@ describe('H 常量与规则', () => {
     assert.equal(countOf(charts.donut({ items: [{ label: 'A', value: 0 }] }).html, '合计为零, 无环形数据'), 1, 'donut 合计为零的专属 hint');
   });
 
-  it('H.纯度（src 侧）：src/charts.ts 模块代码零 DOM 全局／node:', () => {
-    /* W17：产出侧纯度已有 `H.纯度`，但 `src/charts.ts` 自身从无仓内断言
-     * （R8：模块代码零 `document.`／`window.`／`globalThis.`，DOM 只允许出现在 helpers JS 模板串里）。 */
-    const src = readFileSync(fileURLToPath(new URL('../src/charts.ts', import.meta.url)), 'utf8');
+  it('H.纯度（src 侧）：charts 族模块代码零 DOM 全局／node:', () => {
+    /* W17：产出侧纯度已有 `H.纯度`，但 charts 族的**模块代码**自身从无仓内断言
+     * （R8：模块代码零 `document.`／`window.`／`globalThis.`，DOM 只允许出现在 helpers JS 模板串里）。
+     * 目录化批次④：实现从 `src/charts.ts` 一件切成 `src/components/charts/**` 一族多件，
+     * 本判据**跟着实现走**（读整族、不读转出件——读转出件会因为「只剩一行 export *」而假绿）。 */
+    const dir = fileURLToPath(new URL('../src/components/charts/', import.meta.url));
+    const src = readdirSync(dir).filter((f) => f.endsWith('.ts')).sort()
+      .map((f) => readFileSync(dir + f, 'utf8')).join(LF_CHAR);
     const lineComment = new RegExp('(^|[^:])//[^' + LF_CHAR + ']*', 'g');
     const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(lineComment, '$1')
       .replace(/'(?:[^'\\]|\\.)*'/g, "''")

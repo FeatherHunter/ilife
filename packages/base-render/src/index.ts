@@ -34,7 +34,7 @@ export { buildDataText, buildLogText } from './text.js';
  *  `buildChartsHelpersJs`（图表 helpers JS 唯一产出者，自注入 `CHARTS_STYLE_ID` 样式）。
  *  `ChartError` **不在此导出**——与 `TemplateError`／`ControlsError` 同口径（冻结面无该运行时条目，
  *  调用方按 `name`／`code` 判定）。 */
-export { buildChartsHelpersJs, charts } from './charts.js';
+export { buildChartsHelpersJs, charts } from './components/charts/index.js';
 /** #78 HELP模板（契约 §3.5.3／§6.5）：数据页分型，走 `fillTemplate`，`#88` 直接复用 `HelpShellInput`。
  *  `HelpSchemaError`／内置help模板 **不在此导出**（同口径；模板可经 `HelpShellInput.template` 覆盖）。 */
 export { renderHelpShell } from './help.js';
