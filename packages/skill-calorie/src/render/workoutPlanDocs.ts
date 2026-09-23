@@ -12,15 +12,17 @@
  * `WritePreview`），不跨能力取数；动作字段形状的唯一出处是 `workout/planStore.ts` 的 `PlanMovement`
  * （本件不认动作字段，全部经 `./workoutPlanLook.js` 与 `./workoutMovementTable.js`）。
  * 内容只用共用位（`shared/docPage` ＋ `base-paint/blocks` 的整页版式／指标卡／表格／折叠／空态）＋本族页内样式。
- * 过程型两页走原五段式（本轮不动），页底加本写词的逐字 prompt（预检确认页要能复制 prompt 回给 AI）。
+ * 过程型两页走原五段式（本轮不动），页底出**两枚载荷**（#946；`#944` 故障 3／8）：确认指令＝可原样执行的
+ * 命令串（带本次改后值）、修改指令＝回话模板＋同一条命令名——两枚由 `../workout/planPreviewPayloads.js`
+ * 按本次 op 与本次参数算出，见 `./workoutPlanDocs.js` 的 `payloadBar`。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { escapeHtml } from 'base-paint';
+import { HELP_COPY_ACTIONS, escapeHtml, renderActionBar } from 'base-paint';
 import { renderDataTable, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
 import { nowStamp } from './receipt.js';
 import { planCopyBlock } from '../workout/planCopyBlock.js';
-import { planPageCss, planViewCss } from './workoutPlanCss.js';
-import { pageChromeCss } from './pageChromeCss.js';
+// #946：本页的页框样式走 `planPreviewCss()`（页面级段 ＋ 同权单列规则）；`pageChromeCss` 不再由本件直取。
+import { planPageCss, planPreviewCss, planViewCss } from './workoutPlanCss.js';
 import { DOW, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
 import { weekOfDate } from './planPlate.js';
@@ -53,24 +55,51 @@ interface PlanDocOpts {
   readonly key: string;
   readonly command: string;
   readonly wakeWord?: string;
-  /** 该写词的逐字 prompt（预检确认页「复制 prompt」那一路）；结果页不传。 */
+  /** **保留字段**：`render/html.ts` 的老入口 `renderPlanWritePreviewHtml` 仍带它（那是别人的件，本票不改）。
+   *  #946 起写前预览页**不再出这一段**——页底那枚「复制指令」（载荷＝入口唤醒词的 `prompt_template`）
+   *  已由下面两枚载荷取代（`#944` 故障 3／8），本页传空即不出。 */
   readonly prompt?: string;
+  /** 确认指令（`#946`）：一条**可原样执行**的命令串，带本次改后值。缺省不出这一枚。 */
+  readonly confirmPayload?: string;
+  /** 修改指令（`#946`）：报障人要的那句话 ＋ 同一条命令名。缺省不出这一枚。 */
+  readonly modifyPayload?: string;
 }
 
-/** 复制区（过程型两页）：与结果页同形——冻结双按钮，并前置本写词的逐字 prompt（预检确认页的核心是
- *  「复制 prompt 回给 AI」，顺序照 `copyArea` 的 prompt 在前；两段的装配住 `./planCopyBlock.js`）。
+/** 写前预览页底部的两枚载荷（确认指令／修改指令），两枚骑在**同一条按钮行**上。
+ *
+ *  为什么用 `copyData`／`copyLog` 两个位：`renderActionBar` 的复制按钮位只有这两个（ghost 行两颗按
+ *  #247 两列平分）；场景按钮位（`buttons`）不写 `data-t`，运行时认领不到，做成第三颗就是个点不动的死按钮
+ *  （口径见 `../workout/planCopyBlock.js` 的件头）。两颗用的都是冻结表 `HELP_COPY_ACTIONS` 里的 `actionId`：
+ *  本页不再出「复制指令」那一段，故 `ilife-help-copy-prompt` 与 `ilife-help-copy-params` 在本页各只出现一次。 */
+function payloadBar(confirmPayload: string, modifyPayload: string): string {
+  if (confirmPayload === '' && modifyPayload === '') return '';
+  return renderActionBar({
+    ...(confirmPayload === '' ? {} : {
+      copyData: {
+        actionId: HELP_COPY_ACTIONS.prompt.actionId, label: '复制确认指令', text: confirmPayload,
+      },
+    }),
+    ...(modifyPayload === '' ? {} : {
+      copyLog: {
+        actionId: HELP_COPY_ACTIONS.params.actionId, label: '复制修改指令', text: modifyPayload,
+      },
+    }),
+  });
+}
+
+/** 复制区（过程型两页）：与结果页同形——冻结双按钮。两段的装配住 `./planCopyBlock.js`。
  *  `dataTitle` 为必填的中文标题：不给时 `buildDataText` 回落到信封 `key`，页面上就会
  *  出现英文命令键（如 `calorie.view.plan-write-preview`）——负责人已明令中文单语，别退回去。 */
 function dualCopy(input: {
   readonly key: string; readonly command: string; readonly source: string;
-  readonly dataTitle: string; readonly prompt: string; readonly metrics: Record<string, number | null | undefined>;
+  readonly dataTitle: string; readonly metrics: Record<string, number | null | undefined>;
 }): string {
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: input.key,
     data: { metrics: metricsOf(input.metrics) },
   };
   return planCopyBlock({
-    envelope, dataTitle: input.dataTitle, prompt: input.prompt,
+    envelope, dataTitle: input.dataTitle,
     log: copyLog({
       command: input.command, source: input.source,
       actionAt: nowStamp(), version: DOC_VERSION,
@@ -257,14 +286,17 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
       title: '确认说明', open: true,
       contentHtml: renderListRows({
         items: [
-          { left: '方式', main: '复制指令后执行写命令', right: '' },
+          { left: '方式', main: '复制确认指令后执行写命令', right: '' },
           { left: '影响', main: v.note === '' ? DASH : v.note, right: '' },
         ],
       }),
     }),
+    // 两枚载荷（`#946`）：确认＝可原样执行的命令串；修改＝回话模板＋同一条命令名。这一枚的位置就是原来
+    // 「复制指令」预览块那一处（那一段的载荷是入口唤醒词的 `prompt_template`，`#944` 故障 3 点名要换掉）。
+    payloadBar(opts.confirmPayload ?? '', opts.modifyPayload ?? ''),
     dualCopy({
       key: opts.key, command: opts.command, source: 'workout_plans（写前预览，只读）',
-      dataTitle: '【calorie · 写前预览】', prompt: opts.prompt ?? '',
+      dataTitle: '【calorie · 写前预览】',
       metrics: { beforeLines: v.before.length, afterLines: v.after.length },
     }),
   ];
@@ -275,7 +307,8 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
     // 副标题只留一件事：这一页具体要写什么（`v.title` 例如「定第 1 周计划」）。
     // 另外那半句「这是哪一条写词」已由标题「写前预览」与表标题交代，不再叠一层重复。
     subtitle: v.title,
-    content: pageChromeCss(960) + parts.join(''),
+    // #946：本页的页内样式段多一条**同权单列规则**（正文子件一律住 880 那一列），见 `./workoutPlanCss.ts`。
+    content: planPreviewCss() + parts.join(''),
     pageUi: true,
   });
 }

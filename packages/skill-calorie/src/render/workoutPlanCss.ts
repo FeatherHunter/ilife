@@ -191,6 +191,24 @@ export function planPageCss(): string {
   return pageChromeCss(900) + '<style>\n' + PLAN_TOUCH_CSS + '\n</style>';
 }
 
+/** #946 · 写前预览页的**同权单列规则**（#944 故障 1 的修法）。
+ *
+ *  病：页级配方 ⑧ 在 ≥1001 档把正文收成 880 一列居中（`packages/base-render/src/pageUi.ts:263-274`），
+ *  同时把 `.ilife-block-data-table` 归进「满铺」清单（同件 `:276-284`）——本页「改前／改后」两张表因此
+ *  横跨整壳（1280 − 左右各 20 内距 ＝ 1240），比页头三级（880）左右各宽 180px（归档页 1440／1280 实测）。
+ *  修法＝**本页**把正文子件一律收回中间那一列，公共层一行不动（`base-render/**` 属 #921／#919 的盘子）。
+ *
+ *  为什么能盖住公共层那条：选择器与它**同权**（都是「根类 ＋ 正文容器」两个类 ＋ 0 权的通配／`:where()`），
+ *  而本页样式段随正文进内容区、**晚于** head 里的共享样式表 ⇒ 同权重下后者胜（同权重、后出现）。
+ *  权重再高一点就会连「本页只想收回自己这一页」的边界也一起改，故刻意与它同权。 */
+const PREVIEW_COLUMN_CSS = '@media (min-width:1001px){.ilife-page-ui .ilife-block-page-shell-body>*{grid-column:2}}';
+
+/** 写前预览页（`buildPlanProcessDoc`）的页内样式块：页面级段（`pageChromeCss(960)`，本页原来的页宽口径）
+ *  ＋ 上面那一条同权单列规则。本族另外两页（看计划／计划对比实际）不受影响——本条只随本页产物出。 */
+export function planPreviewCss(): string {
+  return pageChromeCss(960) + '<style>\n' + PREVIEW_COLUMN_CSS + '\n</style>';
+}
+
 /** 页内样式块（含 `<style>` 包裹，照包内先例 `FOOD_CSS`／`MEASURE_CSS` 直插正文）：页面级段 ＋
  *  本族静态段 ＋ 按周数生成的页签规则（零脚本页签的另一半）。`weekCount` ＝ 页内周区块数
  *  （0 ＝ 无周区块，两层页签都不出现，此处只出静态段）。

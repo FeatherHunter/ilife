@@ -7,12 +7,13 @@
  * 本能力只经它们的公开函数调用，不把那份取数抄进自己目录（铁律一）。
  */
 import type { DatabaseSync } from 'node:sqlite';
-import { renderPlanHtml, renderPlanVsActualHtml, renderPlanWritePreviewHtml } from '../render/html.js';
+import { renderPlanHtml, renderPlanVsActualHtml } from '../render/html.js';
+import { buildPlanProcessDoc } from '../render/workoutPlanDocs.js';
 import { buildPlanView, buildPlanVsActualView } from '../render/planPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { anchorOf, assertISO, dayField, fail, nums, optInt, optStr, windowRange } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
-import { previewPrompt } from './precheckPrompt.js';
+import { planConfirmCommand, planModifyPayload } from './planPreviewPayloads.js';
 import { previewWrite } from './write.js';
 
 /** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。
@@ -31,13 +32,22 @@ export function viewPlan(params: Record<string, unknown>, db: DatabaseSync): Vie
 }
 
 /** `calorie.view.plan-write-preview` · 写前预览（只读：改前 → 改后，不写库；与写实现同一定位规则）。
- *  页面底部还要「复制 prompt」那一段：prompt 原文按 op 认领本写词，逐字取自 `precheckPrompt.ts`
- *  （读 `prompt_template` 的活留在命令层，`render/` 不 import `triggers/`）。 */
+ *  页面底部出**两枚载荷**（`#946`；`#944` 故障 3／8）：确认指令＝本次 op 那条会改数据库的命令、带本次
+ *  改后值、可原样执行；修改指令＝「我现在需要把什么修改为什么，确定录入，可以进行修改了」＋同一条命令名。
+ *  两枚按本次 op 与本次参数现算（`./planPreviewPayloads.js`），交给页面装配件 `../render/workoutPlanDocs.js`
+ *  的 `buildPlanProcessDoc`（`../render/html.ts` 那个薄转出仍留原签名，本页不再走它：它只带得动一个 `prompt` 位）。 */
 export function viewPlanWritePreview(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const v = previewWrite(params, db);
   const metrics = nums({ beforeLines: v.before.length, afterLines: v.after.length });
-  const opts = { key: 'calorie.view.plan-write-preview', command: commandLine('calorie.view.plan-write-preview', params), prompt: previewPrompt(v.op) };
-  return { data: { metrics }, html: renderPlanWritePreviewHtml(v, opts) };
+  return {
+    data: { metrics },
+    html: buildPlanProcessDoc(v, {
+      key: 'calorie.view.plan-write-preview',
+      command: commandLine('calorie.view.plan-write-preview', params),
+      confirmPayload: planConfirmCommand(v.op, params),
+      modifyPayload: planModifyPayload(v.op),
+    }),
+  };
 }
 /** `calorie.view.plan-vs-actual` · 计划比实际（窗内计划动作 × 运动记录逐日命中；缺 `window` 即本周）。 */
 export function viewPlanVsActual(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
