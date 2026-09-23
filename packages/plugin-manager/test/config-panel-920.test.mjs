@@ -440,11 +440,14 @@ describe('#920 样式表：取值照 v3.1 那一件，逐项锚住（不许自�
     }
   });
 
-  it('v3.1 用的那十三条主题别名一条不少（颜色跟宿主主题走，写死值只做回退）', () => {
+  it('v3.1 用的那十三条主题别名：除 #941 明令替换的那一条外，一条不少', () => {
+    // #941（维护者裁定，方案丁）：`--dsw-alias-bg-layer-3` 不再用于沉底面——宿主在**浅色主题下
+    // `bg-base = bg-layer-1/2/3` 全同值（#fff），照它画出来的沉底盒与卡片同白、等于没有盒子。
+    // 沉底面改由 `label-primary` 按墨色派生（浅色近黑／深色近白 ⇒ 同一条表达式两套主题都成立），
+    // 这条偏离由下面的 `derive` 用例钉住；其余十二条别名一字不动。
     const TOKENS = [
       '--dsw-alias-bg-base',
       '--dsw-alias-bg-layer-1',
-      '--dsw-alias-bg-layer-3',
       '--dsw-alias-border-l1',
       '--dsw-alias-border-l2',
       '--dsw-alias-label-primary',
@@ -458,6 +461,28 @@ describe('#920 样式表：取值照 v3.1 那一件，逐项锚住（不许自�
     ];
     const missing = TOKENS.filter((t) => !VIEW_SRC.includes(t));
     assert.deepEqual(missing, [], '样式表少了这几条别名：' + missing.join('、'));
+  });
+
+  it('#941 真源增补：三处面走派生值，百分比与方案丁逐字对上（别让它悄悄漂）', () => {
+    // 这一节是 v3.1 **从未覆盖**的那一格（真源只有深色一套 token），故不属"重新设计"，
+    // 而是真源增补：维护者 2026-09-23 选定方案丁后落的四个百分比。
+    assert.match(VIEW_SRC, /PANEL_CARD_EDGE\s*=\s*inkMix\(19\)/, '卡描边应为 19%');
+    assert.match(VIEW_SRC, /PANEL_SUNKEN_FILL\s*=\s*inkMix\(9,/, '沉底盒底应为 9%');
+    assert.match(VIEW_SRC, /PANEL_FIELD_EDGE\s*=\s*inkMix\(24\)/, '输入框描边应为 24%');
+    assert.match(VIEW_SRC, /PANEL_SKELETON_FILL\s*=\s*inkMix\(21\)/, '骨架条应为 21%');
+    assert.match(entryBody(VIEW_SRC, 'card'), /border:\s*'1px solid '\s*\+\s*PANEL_CARD_EDGE/, '卡片描边走派生值');
+    assert.match(entryBody(VIEW_SRC, 'master'), /background:\s*PANEL_SUNKEN_FILL/, '母版行底走派生值');
+    assert.match(entryBody(VIEW_SRC, 'groupBody'), /background:\s*PANEL_SUNKEN_FILL/, '高级组体底走派生值');
+    assert.match(entryBody(VIEW_SRC, 'input'), /border:\s*'1px solid '\s*\+\s*PANEL_FIELD_EDGE/, '输入框描边走派生值');
+    assert.match(VIEW_SRC, /const inkMix = \(percent: number, into\?: string\)/, '派生只有一处定义（`inkMix`）');
+  });
+
+  it('#939 骨架：两行骨架与终态同形，且骨架条照真源 `.ic-sk` 的尺寸', () => {
+    assert.match(entryBody(VIEW_SRC, 'skeleton'), /display:\s*'block'/, '骨架条按 block 画（inline-block 会跟着父级行高走）');
+    assert.match(entryBody(VIEW_SRC, 'skeleton'), /height:\s*17\b/, '骨架条高 17px（照 `.ic-sk`）');
+    assert.match(entryBody(VIEW_SRC, 'skeleton'), /borderRadius:\s*4\b/, '骨架条圆角 4px');
+    assert.match(VIEW_SRC, /state\.kind === 'loading'/, '加载态判断按 `state.kind`（照 `surface === null` 会让失败屏长出假骨架）');
+    assert.doesNotMatch(VIEW_SRC, /ready \? null : React\.createElement\('div', \{ style: S\.muted \}, '配置读取中'\)/, '「配置读取中」不许再独占头部那一行');
   });
 
   it('值列与标签列的字号是相对单位（宿主没有界面字号 token，绝对 px 会失真）', () => {

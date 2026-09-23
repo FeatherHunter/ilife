@@ -44,6 +44,27 @@ import type { DirectoryRowEntry } from './directory-browser-api.js';
  * 键名一个都不许改：六家附加块真消费 `okText`／`error`／`rows`／`label`／`muted`／`hint`／`info`／
  * `bar`／`btn` 这九格（`plugin-memo-ilife/src/client.ts`、`plugin-schedule-ilife/src/client.ts` 的
  * `PanelStyleSlots`），跨包锁另钉 `card`／`input`／`btnPrimary`／`btnPick`／`summary`／`title`／`version`。 */
+/** #941／丁：**浅色档距自合成**——宿主在浅色下四层底同白（`bg-base = bg-layer-1/2/3`），
+ *  拿不到可用的层级差，所以三处面（卡描边／沉底盒底／输入框描边）由我们自己按墨色派生。
+ *
+ *  取 `label-primary` 当墨色分母：浅色下它是近黑、深色下它是近白 ⇒ **同一条表达式两套主题都成立**
+ *  （浅色补出可用的档距，深色退化成今天那几档观感）。百分比来自维护者选定的方案丁：
+ *  卡描边 19%／沉底盒底 9%／输入框描边 24%／骨架条 21%。这是本仓第一处"自定值"，属真源增补
+ *  （v3.1 只有深色一套 token，从未覆盖浅色）。 */
+const PANEL_INK = 'var(--dsw-alias-label-primary, #f9fafb)';
+const inkMix = (percent: number, into?: string): string =>
+  into === undefined
+    ? `color-mix(in srgb, ${PANEL_INK} ${percent}%, transparent)`
+    : `color-mix(in srgb, ${PANEL_INK} ${percent}%, ${into})`;
+/** 卡片描边：浅色 ≈`#cfcfcf` ⇔ 深色 ≈`#4a4b4d`。 */
+const PANEL_CARD_EDGE = inkMix(19);
+/** 沉底盒底（母版行／高级组体／状态行）：浅色 ≈`#e9e9e9` ⇔ 深色 ≈`#3a3b3d`。 */
+const PANEL_SUNKEN_FILL = inkMix(9, 'var(--dsw-alias-bg-layer-1, #232324)');
+/** 输入框描边：浅色 ≈`#c4c4c4` ⇔ 深色 ≈`#5a5b5d`。 */
+const PANEL_FIELD_EDGE = inkMix(24);
+/** 骨架条：浅色 ≈`#c9ccd2`（1.6:1）⇔ 深色 ≈`#404143`。 */
+const PANEL_SKELETON_FILL = inkMix(21);
+
 const S = {
   /** `.ic-card`：`background:var(--ic-surface)`（＝bg-layer-1）＋`border:1px solid var(--ic-line-strong)`
    *  ＋`border-radius:12px`＋`padding:14px`＋`box-shadow:inset 0 1px 0 rgba(255,255,255,.06)`。
@@ -51,7 +72,8 @@ const S = {
   card: {
     padding: 14,
     borderRadius: 12,
-    border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    // #941：卡片的边界在浅色下原本等于没有（四层底同白）⇒ 改成按墨色派生的可见描边。
+    border: '1px solid ' + PANEL_CARD_EDGE,
     background: 'var(--dsw-alias-bg-layer-1, #232324)',
     color: 'var(--dsw-alias-label-primary, #f9fafb)',
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,.06)',
@@ -63,6 +85,15 @@ const S = {
   /** `.ic-file{margin-top:4px}` 的那 4px 挂在两行的公共容器上：`info` 自己一格 margin 都不写
    *  （#743 ①：头部两行间距不一家一个数，故这一项一律不写 margin）。 */
   fileWrap: { marginTop: 4 } as React.CSSProperties,
+  /** #939：骨架条（照真源 `.ic-sk`：`display:block;height:17px;border-radius:4px`）。
+   *  高度按一行正文画——inline-block 跟着父级行高走会让骨架行比填充后的文字行高 4px、六家叠起来就是一片下移。
+   *  底色走派生值（宿主专用骨架档 `bg-skeleton` 在浅色下只有 1.09:1，等于看不见）。 */
+  skeleton: {
+    display: 'block',
+    height: 17,
+    borderRadius: 4,
+    background: PANEL_SKELETON_FILL,
+  } as React.CSSProperties,
   /** `.ic-file b{color:var(--ic-faint);font-weight:400;margin-right:5px}`（「配置文件」「数据目录」那两个字）。 */
   fileLabel: {
     color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
@@ -185,7 +216,8 @@ const S = {
   /** `.ic-master`：母版行那一块盒子（`--ic-sunken` 底 ＋ `border-radius:8px` ＋ `padding:11px 12px`
    *  ＋ `margin-top:11px` ＋ 内高光）。 */
   master: {
-    background: 'var(--dsw-alias-bg-layer-3, #353638)',
+    // #941：沉底盒的底改成按墨色派生——浅色下 `bg-layer-3` 与卡面同白（盒子看不见），派生值给出一档可见的面差。
+    background: PANEL_SUNKEN_FILL,
     border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
     borderRadius: 8,
     padding: '11px 12px',
@@ -220,7 +252,9 @@ const S = {
     padding: '5px 8px',
     boxSizing: 'border-box',
     background: 'var(--dsw-alias-bg-base, #151517)',
-    border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    // #932／#941：描边换成按墨色派生的可见档——原 `border-l2` 在浅色下只有 1.26:1，等于没有边界
+    //（维护者判"不够明显"），派生值给到 ≈1.6:1；深色下比原先略亮一档。
+    border: '1px solid ' + PANEL_FIELD_EDGE,
     borderRadius: 6,
     color: 'var(--dsw-alias-label-primary, #f9fafb)',
   } as React.CSSProperties,
@@ -287,7 +321,8 @@ const S = {
   groupBody: {
     marginTop: 9,
     padding: '11px 12px',
-    background: 'var(--dsw-alias-bg-layer-3, #353638)',
+    // #941：同母版行——沉底面走派生值（浅色下 `bg-layer-3` 与卡面同白）。
+    background: PANEL_SUNKEN_FILL,
     border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
     borderRadius: 8,
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,.04)',
@@ -344,7 +379,7 @@ const S = {
     whiteSpace: 'nowrap',
   } as React.CSSProperties,
   /** #934：原先这里有一格 `version`（各家附加块的版本行字面）。版本行已按维护者裁定整条撤掉
-   *（卡路里／备忘录面板内那两处渲染 ＋ 六家那份字面副本），这一格随之删除：没人取的槽位不留。 */
+   *（那两家面板内的渲染点 ＋ 六家各自那份字面副本），这一格随之删除：没人取的槽位不留。 */
   /** `.ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
    *  display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}`（11px ⇒ `0.88em`）。 */
   badge: {
@@ -690,25 +725,37 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     React.createElement('div', { style: S.title }, headText),
     React.createElement(PanelBadgeView, { kind: badge, dirtyCount }),
   );
+  /** #939：这一块的高度由**客户端常量**决定、不由回执时序决定——加载期就把两行连标签一起画出来，
+   *  值位画骨架条（`.ic-sk`），回执到了**原地填值** ⇒ 回执零位移（原先加载期只画一行小灰字、
+   *  回执到了才长出两行，整块下移 21px）。
+   *
+   *  判断式按 `state.kind`：**不许**照 `surface === null` 写——它同时覆盖失败态，照写会让失败屏长出两行假骨架。 */
+  const loading = state.kind === 'loading';
+  const fileValue = (text: string | null): React.ReactNode =>
+    text === null ? React.createElement('span', { style: S.skeleton, 'data-ilife-skeleton': 'value' }) : text;
+  const fileRow = (label: string, text: string | null, tail?: React.ReactNode): React.ReactElement =>
+    React.createElement(
+      'div',
+      { style: S.info },
+      React.createElement('b', { style: S.fileLabel }, label),
+      fileValue(text),
+      tail === undefined ? null : tail,
+    );
   const fileLines =
-    surface === null
+    !loading && surface === null
       ? null
       : React.createElement(
           'div',
           { style: S.fileWrap },
-          React.createElement(
-            'div',
-            { style: S.info },
-            React.createElement('b', { style: S.fileLabel }, '配置文件'),
-            surface.path,
+          fileRow(
+            '配置文件',
+            surface === null ? null : surface.path,
+            // #939：这一句原先独占第三行、首次运行时会多 17px ⇒ 挂到同一行的行尾，两行高度恒定。
+            surface !== null && surface.created
+              ? React.createElement('span', { style: S.muted }, '（配置文件刚按默认值生成）')
+              : null,
           ),
-          React.createElement(
-            'div',
-            { style: S.info },
-            React.createElement('b', { style: S.fileLabel }, '数据目录'),
-            headDataDir,
-          ),
-          surface.created ? React.createElement('div', { style: S.muted }, '（配置文件刚按默认值生成）') : null,
+          fileRow('数据目录', surface === null ? null : headDataDir),
         );
 
   const parts: PanelParts = { styles: S, reply: surface };
@@ -767,7 +814,6 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     { style: S.card },
     head,
     fileLines,
-    ready ? null : React.createElement('div', { style: S.muted }, '配置读取中'),
     React.createElement(
       'div',
       { style: S.rows },
@@ -807,7 +853,9 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
         ? React.createElement('div', { style: S.saveMsg }, `浏览改动后请点保存（${dirtyCount} 项未保存），保存后跟随项自动更新`)
         : ready
           ? React.createElement('div', { style: S.barNote }, '没有未保存的改动')
-          : null,
+          // #939：原先加载期在头部独占一行「配置读取中」；搬到底栏这一格——不删（首屏没有第二个"正在读"的表示），
+          // 但也不占头部那两行的高度（`config-panel-908` 仍按文字断言它在这张卡里）。
+          : React.createElement('div', { style: S.barNote }, '配置读取中'),
     ),
     props.picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
     props.browseRow !== null
