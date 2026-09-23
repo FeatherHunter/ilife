@@ -56,13 +56,17 @@ foreach ($p in $targets) {
 }
 Write-Host ''
 Write-Host '=== 装机不变量自检：三层（插件／技能／公共层）同套装号 ＋ 直依赖干净 ＋ 无分裂副本 ===' -ForegroundColor Cyan
-# 为什么每次装机都要跑：2026-09-23 的现场是「技能跑得动，但顶层公共层停在旧版 ＋ 六个技能各带一份嵌套副本」，
+# 为什么每次装机都要跑：2026-09-23 的现场是「技能跑得动，但顶层公共层停在旧版 ＋ 六个技能各带一份自备副本」，
 # 而没有任何一处读数会说出来（面板只看插件版本）。判据与现场见 `docs/agents/更新链路-配套不变式-方案.md`。
+# 三态：0=PASS（全配套）／2=PARTIAL（未配套，合法中间态）／1=BROKEN（真错，逐条 RED 在上）。
 node (Join-Path $RepoRoot 'tooling\check-install-state.mjs') --profile $Profile
 $invariantCode = $LASTEXITCODE
-if ($invariantCode -ne 0) {
-  Write-Host '装机不变量自检红了——看上面 RED 逐条。（按 -Only 只装了几家时，别家还停在上一个套装号，属预期；全量装完仍红，就是要修的现场。）' -ForegroundColor Red
+if ($invariantCode -eq 1) {
+  Write-Host '装机不变量自检 BROKEN——见上面 RED 逐条，这就是要修的现场。' -ForegroundColor Red
+} elseif ($invariantCode -eq 2) {
+  Write-Host '装机不变量自检 PARTIAL——未配套（有几家还停在上一个套装号，或落伍那几家各带自备副本）。这不是故障：每条链解析到的仍是自己声明的那一版；跑一次全量更新即收敛为 PASS。' -ForegroundColor Yellow
 }
 Write-Host ''
 Write-Host '装完请重启 DSH（宿主），再在会话里说一句「卡路里 help」验收。' -ForegroundColor Green
+# 全量装机（不带 -Only）要求收敛成 PASS；只装几家（-Only）时 PARTIAL 属预期，不判失败。
 if ($Only.Count -eq 0 -and $invariantCode -ne 0) { exit 1 }
