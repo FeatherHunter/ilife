@@ -74,11 +74,39 @@ export interface PlanValidation {
   warnings: string[];
 }
 
+/** 计划锚点（`start_date`）的**严格日期**判据——本仓唯一一处：写路径（`workout/write.ts` 的
+ *  `writePlanUpdate`）与校验器（`validatePlan`）都取它，免得两条路对同一个串各判一个结果。
+ *
+ *  为什么形状那一半不够：共用位 `shared/params.ts` 的 `assertISO` 只查 `\d{4}-\d{2}-\d{2}` 这个形状，
+ *  `2026-13-45` 这种「形状对、数值不存在」的串它照放行；而锚点一旦是它，`weekOfDate` 得 NaN
+ *  ⇒ 按日期过滤恒空 ⇒ 页上落成「这一周没有训练安排」那句空态：**一个静默的坏锚点冒充「计划没有内容」**。
+ *
+ *  口径与同族先例逐字同形（`render/planPlate.ts:17` 的 `assertDate` 一族，本包同名写法另有 7 处）：
+ *  `Date.parse(v + 'T12:00:00Z')` 得 NaN 即不算日期（`2026-13-45` 的月 13 即 NaN）。
+ *  **`2026-02-30` 这类「形状对、日也在 01–31 内、但那个月没有这一天」的串仍放行**：
+ *  按票面遗留出口，那一档要不要一起收另票定，本票只到「这个串是不是一个日期」。 */
+export function startDateInvalid(v: string): boolean {
+  return !/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v + 'T12:00:00Z'));
+}
+
 export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string> } = {}): PlanValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
   const catalog = opts.catalog ? new Set(opts.catalog) : new Set<string>();
   const config = plan.config ?? {};
+  // #944 故障 7：`start_date` 是计划的**时间锚点**（`weekOfDate` 按它把「第 N 周 周 M」翻成具体日），
+  // 而本函数原来一处不查它——写库那条路（`writePlan`）只做 `?? todayISO()` 的空值兜底，于是
+  // `2026-13-45` 这类串照样落库：坏锚点让按日期过滤恒空，页上落成「这一周没有训练安排」那句空态，
+  // **一个静默的坏锚点冒充「计划没有内容」**。缺省（`undefined`／`null`）仍照旧兜底到今天；
+  // 只有**给了但不合日期**才记一条校验错（只加严，不放宽既有那条「非空字符串」）。
+  // 为什么不是当场调 `shared/params.ts` 的 `assertISO`（它只查形状）或 `fail()`：① 形状那一半不够，
+  // 见 `startDateInvalid` 上的注释；② 本函数的契约是**收集**校验项、由调用方决定怎么处置——写路径
+  // （`writePlanSet` → `fail(2, '计划校验未通过：…')`）与向导页（`planPlate.buildPlanWizardView` 数
+  // `errorCount`）两条路都要走它，退出码不在这里定。消息形状与同层先例 `src/goal/goalStore.ts:106` 同形。
+  const anchor = config.start_date;
+  if (typeof anchor === 'string' && startDateInvalid(anchor)) {
+    errors.push('开始日期非法（须 YYYY-MM-DD）：' + anchor);
+  }
   const level = config.user_level ?? '中手';
   const availableEquip = config.available_equipment ?? [];
   const lvl = LEVEL_CONFIG[level] ?? LEVEL_CONFIG['中手'];

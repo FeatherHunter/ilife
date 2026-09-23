@@ -22,6 +22,7 @@ import {
   deletePlan,
   deleteSession,
   getPlan,
+  startDateInvalid,
   updateConfig,
   updateSession,
   writePlan,
@@ -357,7 +358,10 @@ export function previewUpdate(params: Record<string, unknown>, db: DatabaseSync)
   };
   const before = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(cur[k] ?? '（空）')));
   const after = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(optStr(params, k))));
-  return { op: 'update', title: '改训练计划配置', before, after, note: '确认后写入计划库' };
+  // 「影响」按**本次真改的字段**派生（`keys` 与上面改前／改后两栏同源、同顺序）：多字段同改就一条一句并排，
+  // 没改 `start_date` 时不出现周次计算那一句。页面装配件只管把这句话印出来，一个字都不用改。
+  const impact = keys.map((k) => CONFIG_IMPACT[k] ?? '').filter((s) => s !== '').join('；');
+  return { op: 'update', title: '改训练计划配置', before, after, note: impact };
 }
 
 export function previewUpdateDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -459,6 +463,28 @@ export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSy
 
 const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本', description: '描述', start_date: '开始日期' };
 
+/** `start_date` 的日期体检（写路径这一侧，与同件三处日期位 `date` 同源）：
+ *  ① **形状**走共用位 `shared/params.ts` 的 `assertISO`（唯一定义地，报 `start_date 非法（须 YYYY-MM-DD）`）；
+ *  ② **这个串是不是一个日期**走 `planStore.ts` 的 `startDateInvalid`（本仓唯一一处）——形状那一半
+ *     放行 `2026-13-45` 这种「形状对、数值不存在」的串，而它正是坏锚点本身。
+ *  两条都不过就 exit 2；既有那条「不得为空」在上面、一个字没动（本票只加严）。 */
+function assertStartDate(v: string): void {
+  assertISO(v, 'start_date');
+  if (startDateInvalid(v)) fail(2, 'start_date 非法（须 YYYY-MM-DD）：' + v);
+}
+
+/** 四个配置字段各自**改下去的影响**（写前预览页「确认说明」块里「影响」那一格的正文）。
+ *  与 `CONFIG_LABEL` 同一处定义、同一套字段名：改哪个字段就说哪个字段的影响，别处不再写第二份。
+ *  话术取自报障单 #944（故障 7）里报障人的话——改计划配置向来只印一句与字段无关的
+ *  「确认后写入计划库」，而「改训练计划」这条唤醒词要的正是「改完并提示影响（如改开始日期
+ *  会影响周次计算）」（`src/triggers/scene-05-workout.ts` 的 `prompt_template` 原文）。 */
+const CONFIG_IMPACT: Record<string, string> = {
+  title: '只改标题，不影响周次与训练内容',
+  version: '只改版本号，不影响周次与训练内容',
+  description: '只改描述，不影响周次与训练内容',
+  start_date: '改开始日期会影响周次计算：按周次推出的日期整体平移，已经记过的运动记录不动',
+};
+
 /** `calorie.workout.plan-update` · 改训练计划（配置字段；总周数由行数决定，不直接改）。 */
 export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   if (params['totalWeeks'] !== undefined || params['total_weeks'] !== undefined) {
@@ -469,6 +495,10 @@ export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSyn
     const v = optStr(params, k);
     if (v !== undefined) {
       if (v === '') fail(2, k + ' 不得为空');
+      // 四个字段里只有 `start_date` 是个日期位：它原来只挡空串，任何字符串都进 `updateConfig` 落库。
+      // 坏锚点会让 `weekOfDate` 算出 NaN ⇒ 按日期过滤恒空 ⇒ 页上落成「这一周没有训练安排」那句空态——
+      // 一个静默的坏锚点会伪装成「计划没有内容」。体检口径见 `assertStartDate`（同件三处日期位同源）。
+      if (k === 'start_date') assertStartDate(v);
       (fields as Record<string, string>)[k] = v;
     }
   }
