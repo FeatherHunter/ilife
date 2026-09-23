@@ -124,6 +124,9 @@ export const PLAN_EDITOR_CSS = `
 /* 产物区 */
 .pe-out{margin:18px 0 0}
 .pe-out-t{font-size:13.5px;font-weight:700;margin:0 0 8px}
+/* #948 · 产物区给的是那条落库命令（页底复制区同一份文本）：长串要能换行、逐字可核 */
+.pe-cmd-hint{margin:0 0 6px;font-size:12.5px;color:var(--fg3)}
+.pe-cmd{margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-all}
 /* 窄屏 */
 @media (max-width:820px){
 .pe-setup{gap:8px;padding:12px 14px}

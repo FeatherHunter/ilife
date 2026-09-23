@@ -15,7 +15,7 @@ import { pageChromeCss } from '../render/pageChromeCss.js';
 import { planCopyBlock } from './planCopyBlock.js';
 import { PLAN_EDITOR_CSS } from './planEditorCss.js';
 import { serializeState, type EditorState } from './planEditor.js';
-import { PLAN_EDITOR_JS } from './planEditorRuntime.js';
+import { PLAN_EDITOR_PAGE_JS, planEditorSetCommand } from './planEditorRuntime.js';
 import { nowStamp } from '../render/receipt.js';
 
 const DOC_VERSION = '0.1.0';
@@ -48,9 +48,12 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
         },
       } satisfies SerializableEnvelope,
       dataTitle: '【calorie · 定训练计划】',
-      // 指令正文由运行时按当前状态整段重写进 `data-t`（状态在页上会变，TS 写死一份立刻过期）。
-      // 但不能传空串：空串会让「复制指令」这颗主按钮整个不渲染（验收墙上抓到过）。
-      prompt: '请你加载技能 卡路里，执行唤醒词「' + state.wakeWord + '」。明细见下面的计划表。',
+      // #948 · 故障 9②：这一段**就是本页要交付的那条命令**（`calorie.workout.plan-set` ＋ 本次状态），
+      // 出处与页内运行时同一份（`planEditorRuntime.ts` 的模板 ＋ 同一个状态转写）。
+      // 页内运行时按当刻状态整段重写进 `data-t` 与预览块（状态在页上会变）；这里先给一份**开页那份状态**
+      // 的实串——交付出的 HTML 里就带着一条能跑的命令，页内那份是它的当刻版本。
+      // 原来这里是一句占位串（「…明细见下面的计划表。」）：既不是命令、也与页内那份走散。
+      prompt: planEditorSetCommand(state),
       log: copyLog({
         command: opts.command, source: '计划编辑器，页内状态，尚未写库',
         actionAt: nowStamp(), version: DOC_VERSION,
@@ -64,7 +67,7 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
     subtitle: null,
     content: pageChromeCss(1080) + '<style>\n' + PLAN_EDITOR_CSS + '\n</style>' + parts.join('')
       + '<script type="application/json" id="pe-state">' + serializeState(state) + '</script>'
-      + '<script>' + PLAN_EDITOR_JS + '</script>',
+      + '<script>' + PLAN_EDITOR_PAGE_JS + '</script>',
     pageUi: true,
   });
 }

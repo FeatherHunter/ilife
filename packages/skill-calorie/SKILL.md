@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-calorie
 description: "「卡路里HELP」→calorie.help.center 出老技能同款 HELP 文件（V4 三级目录壳）；唯一出口 calorie-cmd-read。触发词：看今日主页、看今日热量预算、记一餐、拍营养表记一餐、看今日饮食、记喝水、补记饮食、复制昨日饮食、改饮食记录、删饮食记录、看本周饮食、查食品、存食品、改食品、下架食品、批量导入食品、看营养结构、看今日营养、看饮食总览、看营养素深度、看高热量榜、看低热量榜、看频繁吃榜、看高碳水榜、看高蛋白榜、饮食复盘（本周）、看全部餐别分布（最近 7 天）、记体重、补录体重、看今日体重、看体重曲线、对比体重：最近 30 天 vs 之前 30 天、体重复盘（本周）、记运动、记力量训练、记有氧运动、补记运动、看今日运动、看运动趋势、运动复盘（本周）、看计划概览、看完整计划、看某天练什么、看某动作安排、定训练计划、落地训练、同步到训记、定营养目标、定体重目标、定饮水目标、看今日目标进度、记体脂（皮褶钳）、记围度、看体脂趋势、看围度趋势、记身材照、查身材照、生成身材照GIF、对比两张照片、设置档案、改档案、查档案、查健康报告、查热量趋势、查热量缺口、复盘、开启定时复盘、本周复盘、本月复盘"
 ---
@@ -76,6 +76,9 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 - **禁止**：用户给了数据仍跳过 verify 直接调写键（数据看起来对也不例外）——v2.4.2 → v2.4.3 的根因就是这条。正解＝按场景分流。
 - **违反 = 协议 fail mode**：违反时向用户输出违规回执（逐字）：「我跳过了 M6 verify 直接写库，违反 Wizard Verify 铁则；已停止后续写入，请确认数据后重来」；不得静默补记、不得事后补 verify 掩盖；同轮修正循环 ≤ 3 次。
 - **两条 vs 目标词前置（#622）**：`看今日运动（vs 目标）`／`看本周运动（vs 目标）`在无目标且窗内有运动记录时先出预检确认页（过程型 HTML：现值缺席说明＋目标值输入指引＋确认后复制指令），用户确认后调 `calorie.goal.exercise` 写入再重跑看终页；有目标直出终页不变，不画空环。HELP 侧两条词的 prompt 原文已含「先问我目标值」，本条即工作流程的第一步（HELP 源正被他席改动，本票不碰，只记对齐）。
+- **写前预览页出页之后怎么走（#944 故障 2）**：能出写前预览页（`calorie.view.plan-write-preview`，九个 `op` 共用一页）的九条唤醒词，都是「读—确认—写」：页出之后，用户回「**确认**」（只回「确认」两个字也算）＝ Wizard Verify 场景 3 的**明确授权**。授权对象是**上一轮预检页的那个 `op`**——直接跑该 `op` 的确认命令落库（`op` → 确认命令＝`src/workout/planPreviewPayloads.ts` 的九条字面量表：`copy` → `calorie.workout.plan-copy`／`set-week` → `calorie.workout.plan-set-week`／`add-movement` → `calorie.workout.plan-add-movement`／`set-rest` → `calorie.workout.plan-set-rest`／`update` → `calorie.workout.plan-update`／`update-day` → `calorie.workout.plan-update-day`／`delete-day` → `calorie.workout.plan-delete-day`／`update-movement` → `calorie.workout.plan-update-movement`／`delete` → `calorie.workout.plan-delete`；速查表里那九条「确认…」唤醒词（`确认复制训练计划`／`确认定一周计划`／`确认加训练动作`／`确认定休息日`／`确认改训练计划`／`确认改某天训练`／`确认删某天训练`／`确认改动作`／`确认撤销训练计划`）与它们逐条对应，路由出处＝`src/workout/routes.ts`）。**不得**改走「定训练计划」的计划编辑器；只有用户明说「定训练计划」才出计划编辑器。（页面载荷那一半归 #946，本条只记「回确认之后跑哪条命令」的契约。）
+- **计划编辑器两种调用形态（#944 故障 9①）**：`calorie.view.plan-wizard` 这一键接**两种** `plan` 形态，两种都是 `exit 0`、都不写库（可写页只出页）：① **不给 `plan`** ＝ 从**空模板**开编（`calorie-cmd-read calorie.view.plan-wizard`；`data.metrics.weeks` 为 0，页上那颗「定一份计划」把空态变成母版周）；② **给部分 `plan`** ＝ 按所给的预填，没给的留空（`calorie-cmd-read calorie.view.plan-wizard --params '{"plan":{"config":{"title":"减脂4周"}}}'`；例子里那个「部分」＝只给标题，还可以只给周数、只给第 1 周的动作）。速查表「例」列给的是第 ① 种（照抄即跑的那一行），第 ② 种的写法住本段。
+- **编辑器页复制到手的是一条命令（#944 故障 9②）**：计划编辑器页底那块复制区，载荷与预览块都是**同一条可原样执行**的命令——`calorie-cmd-read calorie.workout.plan-set --params '{"plan":…本次页上状态…}'`，不是自然语言、也不是「明细见下面的计划表」那类占位串。这条命令**会改数据库**且**整份替换**（`writePlanSet` 先全量校验，有硬止即 `exit 2` 不写库）：照原样贴回来跑一次＝整份计划按页上那份落库，页上少排的周落库后就没了。要改一部分就别整份落库，用写前预览页那九条（`calorie.workout.plan-set-week`／`plan-add-movement` 等）。
 
 ## 联动速查（构建期注入，勿手改）
 
@@ -179,7 +182,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 查营养配比 | calorie.view.nutrition-ratio | stat |  |  | `calorie-cmd-read calorie.view.nutrition-ratio --params '{"window":"7d"}'` |
 | calorie.view.photo-log-wizard | calorie.view.photo-log-wizard | stat |  |  | `calorie-cmd-read calorie.view.photo-log-wizard` |
 | calorie.view.photo-picker | calorie.view.photo-picker | list |  |  | `calorie-cmd-read calorie.view.photo-picker` |
-| 看计划概览 | calorie.view.plan | stat |  |  | `calorie-cmd-read calorie.view.plan --params '{"date":"今日"}'` |
+| 看计划概览 | calorie.view.plan | stat |  |  | `calorie-cmd-read calorie.view.plan` |
 | 看计划 vs 实际 | calorie.view.plan-vs-actual | stat |  |  | `calorie-cmd-read calorie.view.plan-vs-actual --params '{"window":"本周"}'` |
 | calorie.view.plan-wizard | calorie.view.plan-wizard | stat |  |  | `calorie-cmd-read calorie.view.plan-wizard --params '{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}'` |
 | calorie.view.plan-write-preview | calorie.view.plan-write-preview | stat |  |  | `calorie-cmd-read calorie.view.plan-write-preview --params '{"op":"copy"}'` |

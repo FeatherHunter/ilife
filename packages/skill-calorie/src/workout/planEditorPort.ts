@@ -41,6 +41,7 @@ import { WIZARD_WAKE_WORD } from './precheckPrompt.js';
 import { inferEquipment } from './planStore.js';
 import type { EditorDay, EditorMove, EditorState, EditorWeek } from './planEditor.js';
 import { buildPlanEditorDoc } from './planEditorDocs.js';
+import { PLAN_SET_COMMAND_TEMPLATE } from './planEditorRuntime.js';
 import { buildPlanWizardView } from '../render/planPlate.js';
 
 /** 这条键：186「定训练计划」的过程页就是它（换装前后键名不变，见件头）。 */
@@ -232,6 +233,11 @@ export function editorStateFromPlan(plan: unknown, opts: { catalog?: readonly st
 export function viewPlanEditor(params: Record<string, unknown>, _db: DatabaseSync): ViewOut {
   const catalog = catalogOf(params);
   const state = editorStateFromPlan(params['plan'], { catalog, openWeek: openWeekOf(params) });
+  // #948 · 故障 9②：页内那条「复制就能落库」的命令，模板由 TS 侧给（唯一出处住
+  // `planEditorRuntime.ts` 的 `PLAN_SET_COMMAND_TEMPLATE`）——这一行是把它接进页面的那一段接线。
+  // 页内运行时按当刻状态（加了几周、哪几天有训练、每个动作几组几次）把标记换成本次载荷；
+  // 本函数不改那个模板的内容，也不在页面上另拼一份命令。
+  state.setCommand = PLAN_SET_COMMAND_TEMPLATE;
   // 校验读数只在真有周的时候跑（空态是兜底，不是失败）；形状与旧件逐键同形，既有断言不动。
   const checked = state.weeks.length === 0
     ? { errorCount: 0, warningCount: 0, checkedSessions: 0 }

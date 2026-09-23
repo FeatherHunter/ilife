@@ -88,6 +88,11 @@ export interface EditorState {
   readonly openPicker?: { readonly w: number; readonly d: number; readonly s: number } | null;
   /** 首屏停在第几个周页签（样张用；不传＝第 1 周）。 */
   readonly openWeek?: number;
+  /** #948 · 故障 9② · 页内那条落库命令的**模板**（含 `__PLAN__` 标记）：由命令层
+   *  `planEditorPort.ts` 从 `planEditorRuntime.ts` 的 `PLAN_SET_COMMAND_TEMPLATE` 接进来，
+   *  随状态序列化进 `#pe-state`；页内运行时只把标记换成本次载荷，不自己拼命令名。
+   *  这一位**不是**「页面上的状态」——它是那条命令的出处，故不进 `editorStateFromPlan` 的翻译。 */
+  setCommand?: string;
 }
 
 /** 把状态序列化进页面：`<` 写成 `\u003c`，防 `</script>` 断标签（与契约 INJECT-DATA 同法）。 */

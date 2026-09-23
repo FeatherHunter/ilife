@@ -10,12 +10,34 @@
  *   ③ **文案零分隔符**（负责人 2026-09-15 第 4 条）：不拿 `|`／`-`／`·` 拼一句话；
  *      要并列就摆成元素（页签、胶囊、表格列、缩进行）。**日期也走 `cnDate`**（2026年9月7日）。
  *   ④ **不重写共享运行时的职责**：复制仍由共享 helpers 的 `bindCopyAction` 委派，本件只更新 `data-t`。
+ *   ⑤ **页内不许出现 TS 的 import**：那一段是 JS 文本、要逐字进页面。下面那行 `import type`（#948 加）
+ *      是**类型面**的、编译后为零字节，故不违这一条；真正进页面的只有那几个导出串。
  */
+import type { EditorState } from './planEditor.js';
+/* #948 · 那条落库命令的载荷（模板 ＋ 状态转写 ＋ 器材归属 ＋ 页内换法）已整支搬进姊妹件 './planPayload.ts'。
+   分工：本件是「页面行为」（周页签／日／段／参数／产物与复制区），那一件是「页上那条命令的出处」。
+   为什么搬：本件是模板串、注释里不许出现反引号（铁律①）；载荷那几段挤在串外只会把本件撑长。
+   TS 侧真函数与进页面的那几段 JS 文本由那一件**同一份源**派生，故两侧必然同源。 */
+import {
+  COMMAND_TEXT_JS, EQUIP_OF_JS, PLAN_MARKER, PLAN_PAYLOAD_JS, PLAN_SET_COMMAND_TEMPLATE,
+  planEditorPayload, planEditorSetCommand,
+} from './planPayload.js';
+/* 调用方按原地址取用（`./planEditorDocs.ts` 与 `./planEditorPort.ts`）：本件薄转出，一行不改。 */
+export {
+  COMMAND_TEXT_JS, EQUIP_OF_JS, PLAN_MARKER, PLAN_PAYLOAD_JS, PLAN_SET_COMMAND_TEMPLATE,
+  planEditorPayload, planEditorSetCommand,
+};
+
 export const PLAN_EDITOR_JS = `
 (function(){
   var root = document.getElementById('pe-root');
   if (!root) return;
   var S = JSON.parse(document.getElementById('pe-state').textContent);
+  /* 落库命令的模板：TS 侧随状态给了就用它（commandText() 只换标记），没给＝空串（页上不出命令）。 */
+  S.setCommand = S.setCommand || '';
+  /* 载荷那两段（器材归属 ＋ 计划转写）由 TS 侧同源注入：改那份源文件即改这里，不另抄一份页内实现。 */
+  __EQUIP_OF_JS__
+  __PLAN_PAYLOAD_JS__
   var SLOTS = S.slots || ['凌晨','上午','下午','晚上'];
   var MAXD = S.maxSessionsPerDay || 4;
   var MAXM = S.maxMovesPerSession || 6;
@@ -266,71 +288,29 @@ export const PLAN_EDITOR_JS = `
       + '</div></div>';
   }
 
-  /* ── 产物：一张规范表 ＋ 一段缩进文本（**不用分隔符**，并列靠换行与缩进） ── */
-  /* 时间上屏：起止都有就连起来，只一边就有哪边说哪边，两边都没有就直说没定（不留空让人猜）。 */
-  function timeText(a, b){
-    a = a || ''; b = b || '';
-    if (a === '' && b === '') return '没定时间';
-    if (a !== '' && b !== '') return a + '到' + b;
-    if (a !== '') return a + '起';
-    return '到' + b;
-  }
-  function planRows(){
-    var out = [], w, d, s, i, j;
-    for (w = 0; w < S.weeks.length; w++){
-      for (d = 0; d < 7; d++){
-        for (s = 0; s < S.weeks[w].days[d].sessions.length; s++){
-          var se = S.weeks[w].days[d].sessions[s];
-          for (i = 0; i < se.moves.length; i++){
-            var mv = se.moves[i];
-            out.push({
-              week: w + 1, dow: DOW[d], slot: se.slot, time: timeText(se.timeStart, se.timeEnd),
-              name: mv.name, part: mv.part, type: mv.type,
-              amount: mv.kind === '有氧' ? (mv.minutes + ' 分钟')
-                : (mv.sets + ' 组乘 ' + mv.reps + ' 次'),
-              load: mv.kind === '有氧' ? '' : (mv.mode === 'rm' ? (mv.load + ' RM') : (mv.load ? (mv.load + ' kg') : '自重')),
-            });
-          }
-        }
-      }
-    }
-    return out;
-  }
-  function promptText(){
-    var rows = planRows(), lines = [], curWeek = 0, curDay = '', i;
-    lines.push('请你加载技能 卡路里，执行唤醒词「' + S.wakeWord + '」。');
-    lines.push('');
-    lines.push('计划名称：' + S.title);
-    lines.push('开始日期：' + cnDate(S.startDate));
-    lines.push('总周数：' + S.weeks.length + ' 周');
-    lines.push('');
-    for (i = 0; i < rows.length; i++){
-      var r = rows[i];
-      if (r.week !== curWeek){ lines.push('第 ' + r.week + ' 周'); curWeek = r.week; curDay = ''; }
-      if (r.dow !== curDay){ lines.push('  ' + r.dow); curDay = r.dow; }
-      lines.push('    ' + r.slot + (r.time === '没定时间' ? '' : (' ' + r.time)) + '　' + r.name + '　' + r.part + '　' + r.type + '　' + r.amount + (r.load ? ('　' + r.load) : ''));
-    }
-    lines.push('');
-    lines.push('请按这份表落库，完成后给我回执 HTML。');
-    return lines.join('\\n');
-  }
+  /* ── 产物：**一条可原样执行**的命令串（#948 故障 9②） ──
+     这一页是「定训练计划」的过程页：用户改完，要拿到一条**贴给 AI 就能落库**的命令。
+     此前这一处出的是自然语言（「请你加载技能…明细见下面的计划表」）＋一张人读的表——粘贴出去
+     谁也执行不了（跑不动的自然语言），页面底部那块复制区还印着一句占位串。现在只有这一条：
+     calorie.workout.plan-set 的命令 ＋ 本次状态；命令名只写在 TS 侧那份模板里（planPayload.ts），
+     页内只把标记换成本次载荷——那一段就在这里注入（见 PLAN_EDITOR_PAGE_JS）。 */
+  __COMMAND_TEXT_JS__
   function syncCopy(){
+    var cmd = commandText();
     var btn = document.querySelector('[data-action-id="ilife-help-copy-prompt"]');
-    if (btn) btn.setAttribute('data-t', promptText());
+    if (btn) btn.setAttribute('data-t', cmd);
+    /* 页底预览块与刚复制到手的载荷是同一份文本（此前它是一句占位串：「…明细见下面的计划表。」）。
+       预览不是第二份事实，就是把这一条命令原样摆出来给人核对。
+       选法是那个冻结 class（B-06 指令块，base-render/src/blocks.ts:955；它不带 id，
+       也不在某个带 id 的容器里，页上这一处只有这一个）。 */
+    var pre = document.querySelector('pre.ilife-block-pre-block-code');
+    if (pre) pre.textContent = cmd;
     var out = document.getElementById('pe-out-body');
     if (!out) return;
-    var rows = planRows(), tr = [], i;
-    for (i = 0; i < rows.length; i++){
-      var r = rows[i];
-      tr.push('<tr><td>第 ' + r.week + ' 周</td><td>' + esc(r.dow) + '</td><td>' + esc(r.slot) + '</td><td>' + esc(r.name)
-        + '</td><td>' + esc(r.part) + '</td><td>' + esc(r.type) + '</td><td>' + esc(r.amount) + '</td><td>' + esc(r.load)
-        + '</td><td>' + esc(r.time) + '</td></tr>');
-    }
-    out.innerHTML = '<table class="ilife-block-data-table"><caption class="ilife-block-data-table-caption">计划明细（' + rows.length + ' 行）</caption>'
-      + '<thead><tr><th>周次</th><th>星期</th><th>时段</th><th>动作</th><th>部位</th><th>类型</th><th>量</th><th>负重</th><th>时间</th></tr></thead>'
-      + '<tbody>' + (tr.length ? tr.join('') : '<tr><td colspan="9">还没有排动作</td></tr>') + '</tbody></table>';
+    /* 产物区：这一页要交付的就是**一条命令**，不是一张人读的表——命令串摆在 pre 里逐字可核。 */
+    out.innerHTML = '<p class="pe-cmd-hint">照这条落库（复制区那颗按钮给的就是它）：</p>'
+      + '<pre class="pe-cmd">' + esc(cmd) + '</pre>';
   }
-
   /* ── 事件：一处委派，零内联处理器 ── */
   root.addEventListener('click', function(e){
     var el = e.target.closest ? e.target.closest('[data-act]') : null;
@@ -424,3 +404,10 @@ export const PLAN_EDITOR_JS = `
   render();
 })();
 `;
+/** 页内运行时的最终文本：三段同源逻辑按占位符名逐段注入（占位符自己一行，整行换成那一段）。
+ *  三段正文住姊妹件 './planPayload.ts'（页上那条命令的出处），本件只做「接线」：
+ *  TS 侧与页内两侧因此必然同源——那边一份源同时派生出 TS 真函数与这三段 JS 文本。 */
+export const PLAN_EDITOR_PAGE_JS = PLAN_EDITOR_JS
+  .split('__EQUIP_OF_JS__').join(EQUIP_OF_JS.trimEnd())
+  .split('__PLAN_PAYLOAD_JS__').join(PLAN_PAYLOAD_JS.trimEnd())
+  .split('__COMMAND_TEXT_JS__').join(COMMAND_TEXT_JS.trimEnd());
