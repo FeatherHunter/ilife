@@ -237,5 +237,6 @@ export function buildReviewDoc(v: ReviewView): string {
     eyebrow: '健身计划',
     subtitle: v.planTitle === '' ? null : v.planTitle,
     content: parts.join(''),
+    pageUi: true,
   });
 }

@@ -82,7 +82,8 @@ async function checkBlocks(t, domain, family, env, cn) {
   for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {
     assert.ok(!html.includes(m), family + ' 标记未填充：' + m);
   }
-  assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'));
+  // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+  assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page ilife-page-ui"'));
   for (const g of ['fields', 'operations', 'empty', 'status']) {
     assert.ok(html.includes('data-block="' + g + '"'), family + ' 缺块组：' + g);
     for (const b of fam.requiredBlocks[g]) {

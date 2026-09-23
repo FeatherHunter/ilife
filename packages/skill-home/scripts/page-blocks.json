@@ -15,7 +15,7 @@
   {
    "id": "shell-page",
    "kind": "substr",
-   "value": "class=\"page\""
+   "value": "class=\"page ilife-page-ui\""
   },
   {
    "id": "page-title",

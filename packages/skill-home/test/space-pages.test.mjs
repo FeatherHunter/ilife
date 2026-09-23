@@ -106,7 +106,8 @@ function assertProduct(html, family, label) {
     assert.ok(!html.includes(m), label + ' 标记未填充：' + m);
   }
   assert.ok(html.includes('<!DOCTYPE html>') && html.includes('<html lang="zh-CN">'), label + ' 文档壳');
-  assert.ok(html.includes('class="page"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'), label + ' 壳三件');
+  // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+  assert.ok(html.includes('class="page ilife-page-ui"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'), label + ' 壳三件');
   assert.ok(/<style>[^<]*\.page\{/.test(html), label + ' 样式已内联');
   for (const g of ['fields', 'operations', 'empty', 'status']) {
     assert.ok(html.includes('data-block="' + g + '"'), label + ' 缺块组：' + g);

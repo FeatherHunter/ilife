@@ -97,7 +97,8 @@ describe('#812 快递购物域：4 族真链装配＋产物落盘', () => {
         assert.ok(!html.includes(m), '标记未填充：' + m);
       }
       assert.ok(html.includes('<!DOCTYPE html>') && html.includes('<html lang="zh-CN">'));
-      assert.ok(html.includes('class="page"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'));
+      // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+      assert.ok(html.includes('class="page ilife-page-ui"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'));
       const { escapeHtml } = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'html.js')).href);
       for (const g of ['fields', 'operations', 'empty', 'status']) {
         assert.ok(html.includes('data-block="' + g + '"'), '缺块组：' + g);

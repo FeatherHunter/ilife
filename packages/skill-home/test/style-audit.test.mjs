@@ -30,7 +30,10 @@ function run(script, args) {
 
 const CLEAN = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">'
   + '<title>查物品</title><style>.page{max-width:720px}</style></head>'
-  + '<body><div class="page"><h1>查物品</h1>'
+  // #920：版面根接了页面级移动端配方，合同的 shell-page 块（`scripts/page-blocks.json` 的
+  // `defaults[shell-page]`）随之从 `class="page"` 更新成 `class="page ilife-page-ui"`；
+  // 本夹具是「干净页」样本，跟着新形状走（判据强度不变，仍是原文必须出现）。
+  + '<body><div class="page ilife-page-ui"><h1>查物品</h1>'
   + '<p class="cmd">home-cmd-read home.item.search</p>'
   + '<div class="content">客厅/冰箱</div></div></body></html>';
 const DEBT_SEP = CLEAN.replace('</h1>', '</h1><p><span class="badge">在家 · 备用</span></p>');

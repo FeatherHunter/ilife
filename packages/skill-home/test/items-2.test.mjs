@@ -114,7 +114,8 @@ describe('#807 真链装配＋产物落盘（11 份）', () => {
       for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {
         assert.ok(!html.includes(m), '标记未填充：' + m);
       }
-      assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'));
+      // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+      assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page ilife-page-ui"'));
       const file = s.commandCn + '_' + STAMP + '.html';
       writeFileSync(join(outDir, file), html, 'utf8');
       assert.ok(existsSync(join(outDir, file)));

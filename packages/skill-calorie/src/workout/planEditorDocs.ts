@@ -65,5 +65,6 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
     content: pageChromeCss(1080) + '<style>\n' + PLAN_EDITOR_CSS + '\n</style>' + parts.join('')
       + '<script type="application/json" id="pe-state">' + serializeState(state) + '</script>'
       + '<script>' + PLAN_EDITOR_JS + '</script>',
+    pageUi: true,
   });
 }

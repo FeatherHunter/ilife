@@ -180,5 +180,6 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
     // （计数器取的是**文档顺序上它之前**的累计值，排最后才数得全）。
     content: pageChromeCss(960) + planWizardCss() + '<div class="ilw-wiz">' + parts.join('')
       + '<span class="ilw-count">你已改的内容 <b></b></span></div>',
+    pageUi: true,
   });
 }

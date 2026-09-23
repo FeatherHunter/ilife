@@ -114,7 +114,8 @@ before(async () => {
     for (const m of ['<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CONTENT-->']) {
       assert.ok(!html.includes(m), `${p.commandCn} 标记未填充：${m}`);
     }
-    assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page"'), `${p.commandCn} 缺壳`);
+    // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+    assert.ok(html.includes('<!DOCTYPE html>') && html.includes('class="page ilife-page-ui"'), `${p.commandCn} 缺壳`);
     const f = fileOf(p);
     writeFileSync(join(outDir, f), html, 'utf8');
     p.file = f;

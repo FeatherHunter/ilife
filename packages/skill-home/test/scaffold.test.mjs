@@ -161,7 +161,9 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
         assert.ok(!html.includes(m), '标记未填充：' + m);
       }
       assert.ok(html.includes('<!DOCTYPE html>') && html.includes('<html lang="zh-CN">'));
-      assert.ok(html.includes('class="page"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'));
+      // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`
+      // （投影在 `src/render/html.ts` 的 `fillTemplate` 里做，模板一个字未改）。
+      assert.ok(html.includes('class="page ilife-page-ui"') && /<h1[^>]*>.+?<\/h1>/.test(html) && html.includes('class="cmd"'));
       for (const g of ['fields', 'operations', 'empty', 'status']) {
         assert.ok(html.includes('data-block="' + g + '"'), '缺块组：' + g);
         for (const b of fam.requiredBlocks[g]) {

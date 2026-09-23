@@ -146,7 +146,8 @@ describe('#806 物品管理域（一）：10 条真链与产物', () => {
       const html = read(r.file);
       assert.ok(html.includes('<!DOCTYPE html>'), r.file);
       assert.ok(html.includes('<html lang="zh-CN">'), r.file);
-      assert.ok(html.includes('class="page"'), r.file);
+      // #920：版面根接了页面级移动端配方，根类串由 `class="page"` 变成 `class="page ilife-page-ui"`。
+      assert.ok(html.includes('class="page ilife-page-ui"'), r.file);
       assert.ok(/<h1[^>]*>.+?<\/h1>/.test(html), r.file);
       assert.ok(html.includes('class="cmd"'), r.file);
       for (const m of ['<!--CONTENT-->', '<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->']) {

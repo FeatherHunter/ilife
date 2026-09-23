@@ -158,6 +158,7 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     // 页内样式（本族唯一产出者，见 `./workoutPlanCss.ts`）随正文进内容区：晚于 head 的共享样式表，
     // 同特异性下本页胜；只作用本页（样式块不在别的页上）。
     content: planViewCss(weeks.length) + parts.join(''),
+    pageUi: true,
   });
 }
 
@@ -211,6 +212,7 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
     // 窗口用 `→` 摆在副标题（唯一一处），不再进指标卡副行当重复件，也不用 `·` 串第二件事。
     subtitle: v.start + ' → ' + v.end,
     content: planPageCss() + parts.join(''),
+    pageUi: true,
   });
 }
 
@@ -274,6 +276,7 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
     // 另外那半句「这是哪一条写词」已由标题「写前预览」与表标题交代，不再叠一层重复。
     subtitle: v.title,
     content: pageChromeCss(960) + parts.join(''),
+    pageUi: true,
   });
 }
 

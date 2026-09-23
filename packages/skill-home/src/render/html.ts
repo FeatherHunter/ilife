@@ -1,7 +1,10 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 // 看密码 HTML 脱敏：ticket.write kind=account op=show 的 message 含明文时，HTML 快照仅占位（JSON 真相不受影响）。
 import type { Envelope } from 'base-link-core';
-import { buildSharedHelpersJs, buildStyleSheet } from 'base-paint';
+import {
+  PAGE_UI_CLASS, PAGE_UI_VIEWPORT,
+  buildSharedHelpersJs, buildStyleSheet, pageShapeCss, pageUiCss,
+} from 'base-paint';
 import { blocksCss } from 'base-paint/blocks';
 import { HomeRenderError } from './errors.js';
 
@@ -91,6 +94,18 @@ export const SHARED_CSS_MARKER = '<!--SHARED-CSS-->';
 export const SHARED_HELPERS_MARKER = '<!--SHARED-HELPERS-->';
 export const CONTENT_MARKER = '<!--CONTENT-->';
 
+/** 页面级配方的两处**模板投影串**（#920）：60 份模板一个字不改，由 `fillTemplate` 把这两串换成新形状。
+ *  各自须**恰出现 1 次**，缺任一即抛（与上方三枚标记同一 fail-closed 口径，逐条判定同为 1）。
+ *  为什么不静默降级：整套配方规则挂在根类 `.ilife-page-ui` 之下，投影漏一处就是「样式在、根类不在」
+ *  的半接状态——页面上看不出任何异常，只有窄档的两列表还是老形状（「项／值 逐格重印列名」），
+ *  正是本票要消掉的那一类静默失效。 */
+const TEMPLATE_ROOT_ATTR = 'class="page"';
+const TEMPLATE_VIEWPORT_META = 'content="width=device-width,initial-scale=1"';
+/** 投影目标：版面根加上配方根类 ＋ viewport 换带 `viewport-fit=cover` 的串（`env(safe-area-inset-*)`
+ *  在 iOS 上不写它恒取 0）。两个取值都从公共层 `pageUi.ts` 取，本件不另写一份字面量。 */
+const PAGE_UI_ROOT_ATTR = 'class="page ' + PAGE_UI_CLASS + '"';
+const PAGE_UI_VIEWPORT_META = 'content="' + PAGE_UI_VIEWPORT + '"';
+
 export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}'
   // 卡路里同款复制区样式：公共层样式表 ＋ 区块样式（复制块／动作条／三格式菜单／toast）。
   // 落在 `<!--SHARED-CSS-->` 槽，随模板全页下发；页内 `PAGE_CSS` 不动。
@@ -106,7 +121,14 @@ export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720p
   // #890 · 回执行「本次写入字段」的两列字段位（见 `receiptFields`）：左键名右值，长值回行不撑破卡。
   + '\n.receipt-detail{margin:10px 0 2px;display:grid;gap:4px}'
   + '.receipt-detail-row{display:grid;grid-template-columns:88px 1fr;gap:8px;font-size:13.5px}'
-  + '.receipt-detail-k{color:#6e6e73}.receipt-detail-v{color:#1d1d1f;font-weight:600;overflow-wrap:anywhere}';
+  + '.receipt-detail-k{color:#6e6e73}.receipt-detail-v{color:#1d1d1f;font-weight:600;overflow-wrap:anywhere}'
+  // #920 页面级移动端配方（#525 公共层两件）接进本包：**整包恒开**，不走逐页 opt-in。
+  // 此前本包 60 份模板自拼文档壳，只有 `buildStyleSheet()+blocksCss()`（区块样式），没有
+  // **页面级**那一层（断点／44px 触摸区／安全区／窄屏表格行为／页内定位）——窄档下两列表
+  // 渲染成「项／值 逐格重印列名」。两件都从 `base-paint` 顶层取，本件只负责拼进共享样式槽。
+  // 规则全套挂在根类 `.ilife-page-ui` 之下（`pageUi.ts` 的口径），根类由下面的 `fillTemplate`
+  // 投影加到版面根上——两处必须成对出现，缺一处即整套规则一条不命中。
+  + '\n' + pageUiCss() + '\n' + pageShapeCss();
 export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
   // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
   // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。
@@ -116,7 +138,12 @@ export function fillTemplate(template: string, contentHtml: string): string {
   for (const m of [SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER]) {
     if (template.split(m).length - 1 !== 1) throw new HomeRenderError('HOME_MARKER_INVALID', '标记须恰出现 1 次：' + m);
   }
+  for (const s of [TEMPLATE_ROOT_ATTR, TEMPLATE_VIEWPORT_META]) {
+    if (template.split(s).length - 1 !== 1) throw new HomeRenderError('HOME_MARKER_INVALID', '配方投影串须恰出现 1 次：' + s);
+  }
   return template
+    .split(TEMPLATE_ROOT_ATTR).join(PAGE_UI_ROOT_ATTR)
+    .split(TEMPLATE_VIEWPORT_META).join(PAGE_UI_VIEWPORT_META)
     .split(SHARED_CSS_MARKER).join('<style>' + SHARED_CSS + '</style>')
     .split(SHARED_HELPERS_MARKER).join(SHARED_HELPERS)
     .split(CONTENT_MARKER).join(contentHtml);

@@ -139,6 +139,7 @@ function buildWorkoutReceiptDoc(
     // 状态卡说（`receipt.summary`，例如「已定训练计划：1 周 1 场」）——原来两处都印同一句，读两遍。
     subtitle: receipt.scene,
     content: pageChromeCss(960) + content,
+    pageUi: true,
   });
 }
 

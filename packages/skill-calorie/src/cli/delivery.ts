@@ -210,6 +210,7 @@ function failWithBodyReceipt(reason: string, key: string, code: 2 | 4): never {
       badge: '失败',
       summary: reason + '｜重试指令：' + fix + '｜建议下一步：见页内清单',
       content: fragment,
+      pageUi: true,
     });
     let delivery: Delivery;
     try {
