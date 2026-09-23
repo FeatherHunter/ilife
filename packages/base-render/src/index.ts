@@ -42,8 +42,8 @@ export { renderHelpShell } from './help.js';
  *  窄屏表格行为／页内定位）与**页面级形状件**（事实条／图片与 GIF 容器／时间轴条／媒体占位件）。
  *  与 `blocks.js` 的 12 区块样式区分住：这两层是「整页怎么摆」，不参与区块组合；
  *  是否启用由整页装配的 `pageUi` 位决定，不启用则产出物逐字节不变。 */
-export { PAGE_COLUMNS, PAGE_COLUMN_WIDTH_PX, PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageUiCss } from './pageUi.js';
-export type { PageColumn, PageUiCssInput } from './pageUi.js';
+export { PAGE_COLUMNS, PAGE_COLUMN_WIDTH_PX, PAGE_UI_CLASS, PAGE_UI_VIEWPORT, pageUiCss } from './components/page-ui/index.js';
+export type { PageColumn, PageUiCssInput } from './components/page-ui/index.js';
 export {
   FACT_STRIP_MISSING_MARK,
   MEDIA_RATIOS,
@@ -52,7 +52,7 @@ export {
   renderMediaFigure,
   renderMediaPlaceholder,
   renderTimelineRows,
-} from './pageShapes.js';
+} from './components/page/index.js';
 export type {
   FactItemInput,
   FactStripInput,
@@ -62,7 +62,7 @@ export type {
   MediaRatio,
   TimelineRowInput,
   TimelineRowsInput,
-} from './pageShapes.js';
+} from './components/page/index.js';
 /** #950 页面级导航与横条件（本批新立两族，出口经根）：
  *   · `src/components/page-nav/`：**分段导航**（`renderSegmentedNav`：页内导航的「动作」形状，与状态胶囊分得开）。
  *   · `src/components/page-bars/`：**时间格带**（`renderDayStrip`：把「哪几天有记录」画出来）、
