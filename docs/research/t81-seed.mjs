@@ -46,8 +46,26 @@ function nodeBin() {
 }
 const NODE = nodeBin();
 
-/** 种子库的数据日（＝跑快照时钉住的「今天」，见 runCli 的 `CALORIE_TODAY`）。 */
+/** 种子库的数据日（＝跑快照时钉住的「今天」）。 */
 export const SEED_TODAY = '2026-09-07';
+
+/** 钉钟预载件（`node --require` 载入，只替换 `Date` 一个内建）。
+ *  #943：`CALORIE_TODAY` 这颗旧钉子**已随 #675／#676 退役**（「环境变量读取全部删除」），再设它等于没钉——
+ *  「今日／本周／最近 N 天」这类相对窗口会按**机器当天**取窗，种子数据全在窗外，本门就随墙钟变红
+ *  （2026-09-23 实测：137 行里 25 行红，全是「无今日数据（2026-09-23…）」）。替代品是仓内既有的这一件，
+ *  与技能侧测试基座（`packages/skill-calorie/test/helpers/config-test.mjs#freezeClock`）**同一件**，不另写第二份。 */
+const FREEZE_CLOCK_CJS = join(ROOT, 'packages', 'skill-calorie', 'test', 'freeze-clock.cjs');
+
+/** 子进程的钉钟环境：`--require` 预载 ＋ `FAKE_NOW_ISO`（缺一不可——只给变量不预载没人读它）。
+ *  当刻进程已有 `NODE_OPTIONS`（如测试运行器自己那些）时**追加**，不覆盖。 */
+function fakeClockEnv() {
+  const preload = '--require ' + FREEZE_CLOCK_CJS;
+  const prior = process.env['NODE_OPTIONS'] ?? '';
+  return {
+    NODE_OPTIONS: prior.includes('freeze-clock.cjs') ? prior : (prior === '' ? preload : prior + ' ' + preload),
+    FAKE_NOW_ISO: SEED_TODAY + 'T12:00:00',
+  };
+}
 
 /** 标准种子库（覆盖被跑键所需数据区间；只写系统 tmp）。 */
 export function seedFull(db) {
@@ -187,10 +205,11 @@ export function createHarness() {
     const toks = tokenize(effective);
     const r = spawnSync(NODE, [CLI, ...toks.slice(1)], {
       encoding: 'utf8',
-      // #250 · 把「今天」钉到种子库的数据日：路由表的窗口自本票起是**相对窗口**（今日／本周／最近 N 天…），
-      // 不钉时钟就按机器当天取窗（落在种子数据之外）→ 全线路 missing-data，判据失去意义。
+      // #943 · 钉钟：`CALORIE_TODAY` 已退役（见 `fakeClockEnv` 件头），改用 `--require` 预载件钉住 `Date`。
+      // 原先还设的 `SKILLS_DB_PATH`／`CALORIE_PHOTOS_DIR` 同为退役开关（源码里已无读取点），一并删——
+      // 库与照片目录的唯一真相是下面那份 `calorie.yaml` ＋ 家目录隔离。
       env: {
-        ...process.env, SKILLS_DB_PATH: dir, CALORIE_PHOTOS_DIR: photosDir, CALORIE_TODAY: SEED_TODAY,
+        ...process.env, ...fakeClockEnv(),
         USERPROFILE: fakeHome, HOME: fakeHome,
       },
     });

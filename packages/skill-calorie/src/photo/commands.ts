@@ -25,7 +25,9 @@ import { writePhotoAdd } from './store.js';
 import { viewGifPlanner, viewPhotoLogWizard } from './wizard.js';
 
 export const PHOTO_COMMANDS = [
-  { kind: 'read', key: 'calorie.help.center', shape: 'list', title: '身材照HELP', wakeWord: '卡路里HELP', run: viewPhotoHelpCenter, example: 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'' },
+  /* #943 · 「例」列改**缺省形态**：`#652` 已把 `q` 支下线（进来即 `exit 2` 指路 `calorie.help.lookup`），
+     而「例」是照抄即跑的示例——留着 `{"q":"记身材照"}` 就是一条照抄必挂的示例（`#99` 示例可执行门当场红）。 */
+  { kind: 'read', key: 'calorie.help.center', shape: 'list', title: '身材照HELP', wakeWord: '卡路里HELP', run: viewPhotoHelpCenter, example: 'calorie-cmd-read calorie.help.center' },
   { kind: 'write', key: 'calorie.photo.add', title: '记身材照', wakeWord: '记身材照', run: writePhotoAdd, example: 'calorie-cmd-read calorie.photo.add --params \'{"srcPaths":["<照片路径>"],"tag":"正面"}\'' },
   { kind: 'read', key: 'calorie.photo.compare', shape: 'list', title: '对比照片', wakeWord: '对比两张照片', run: viewPhotoCompare, example: 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'' },
   /* #343 · `calorie.photo.detail` **不给 `wakeWord`**：本键自己的入口词是自造词 `查身材照详情`

@@ -217,7 +217,7 @@ const EXAMPLES = {
   'calorie.workout.xunji-key-clear': 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'',
   'calorie.workout.xunji-key-set': 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'',
   'calorie.workout.xunji-push': 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'',
-  'calorie.help.center': 'calorie-cmd-read calorie.help.center --params \'{"q":"记身材照"}\'',
+  'calorie.help.center': 'calorie-cmd-read calorie.help.center',
   'calorie.help.lookup': 'calorie-cmd-read calorie.help.lookup --params \'{"q":"看今日主页"}\'',
   'calorie.history': 'calorie-cmd-read calorie.history --params \'{"days":7}\'',
   'calorie.photo.compare': 'calorie-cmd-read calorie.photo.compare --params \'{"id1":1,"id2":2}\'',

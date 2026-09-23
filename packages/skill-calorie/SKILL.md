@@ -104,7 +104,7 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 定营养目标 | calorie.goal.set | receipt |  |  | `calorie-cmd-read calorie.goal.set --params '{"calorie":1800,"protein":150,"carbs":200,"fat":50}'` |
 | 定饮水目标 | calorie.goal.water | receipt |  |  | `calorie-cmd-read calorie.goal.water --params '{"water":2000}'` |
 | 定体重目标 | calorie.goal.weight | receipt |  |  | `calorie-cmd-read calorie.goal.weight --params '{"kg":68}'` |
-| 卡路里HELP | calorie.help.center | list |  |  | `calorie-cmd-read calorie.help.center --params '{"q":"记身材照"}'` |
+| 卡路里HELP | calorie.help.center | list |  |  | `calorie-cmd-read calorie.help.center` |
 | calorie.help.lookup | calorie.help.lookup | list |  |  | `calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'` |
 | 查热量历史 | calorie.history | list |  |  | `calorie-cmd-read calorie.history --params '{"days":7}'` |
 | 记身材照 | calorie.photo.add | receipt |  |  | `calorie-cmd-read calorie.photo.add --params '{"srcPaths":["<照片路径>"],"tag":"正面"}'` |
