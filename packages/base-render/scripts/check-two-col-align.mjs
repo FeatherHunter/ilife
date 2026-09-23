@@ -12,6 +12,11 @@
  *    容差 2px（子像素与字体度量）。
  *  · 表头隐藏时（窄档卡片化，`thead{display:none}`）：不比表头与值的对位（表头都收起了），
  *    只判「值都在、没被裁」——这一档的对位口径见窄档卡片规则本身。
+ *  · 表头隐藏时**另加两条内距读数**（#919，只对「一行一条事实」那一型 —— 表头收起 ＋ 首格没有
+ *    标签回填）：① 表标题文字左缘与首格文字左缘必须落在同一条竖线（容差 2px）；② 行文字到卡片
+ *    左右边框各留 ≥`MIN_INSET_PX`。为什么这两条只有真浏览器量得出：#919 实测这一型把行的左右
+ *    内距写成了 0 ⇒ 文字压在卡片边框上，而同一张表的标题有 10px 内距；静态文本里只看得见
+ *    「有没有写 padding」，看不见「看上去贴不贴边、标题和行对不对得齐」。
  *
  * 为什么要按档分派：只判右缘会把**左对齐的键值表**全部判红（表头右缘与值右缘天然相差
  * 「谁更长」那一段），那是误报。#879 改后实测：表头右缘 204.45 vs 值右缘 349（差 144.55），
@@ -32,6 +37,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 
 const P = 'ilife-';
 const TOL_PX = 2;
+/** 窄档「一行一条事实」那一型的左右内距下限（#919）：行文字到卡片边框的缝低于此即判红。 */
+const MIN_INSET_PX = 8;
 const DEFAULT_WIDTHS = [1280, 768, 390];
 const LF = String.fromCharCode(10);
 
@@ -149,6 +156,27 @@ const PROBE = `(function () {
     if (ths.length === 0 || trs.length === 0) continue;
     var thead = t.querySelector('thead');
     var headVisible = thead !== null && getComputedStyle(thead).display !== 'none' && ths[0].getBoundingClientRect().height > 0;
+    /* #919 内距读数：表标题文字左缘、首/末格文字盒、卡片边框盒，以及首格是否带标签回填。 */
+    var cap = cards[ci].querySelector('.' + P + 'block-data-table-caption');
+    var capLeft = cap === null ? null : textBox(cap).left;
+    var boxes = null;
+    if (trs.length > 0) {
+      var tds0 = trs[0].querySelectorAll('td');
+      if (tds0.length > 0) {
+        var cardBox = cards[ci].getBoundingClientRect();
+        boxes = {
+          cardLeft: cardBox.left, cardRight: cardBox.right,
+          firstCellLeft: textBox(tds0[0]).left,
+          lastCellRight: textBox(tds0[tds0.length - 1]).right,
+          noLabel: getComputedStyle(tds0[0], '::before').content === 'none',
+          /* 折叠体（details 收起）里的表全零盒：零盒不算读数，否则会把「没渲染」读成「内距 0」。 */
+          rendered: cardBox.width > 1 && cardBox.height > 1 && tds0[0].getBoundingClientRect().height > 1,
+          /* 再加一道可见性判据（Chrome 的 checkVisibility）：收起的 details 内容一律不参与内距判。
+             老引擎没有这个方法时退回 true（不因此判红）。 */
+          visible: typeof tds0[0].checkVisibility === 'function' ? tds0[0].checkVisibility() : true,
+        };
+      }
+    }
     var cols = [];
     for (var c = 0; c < ths.length; c += 1) {
       var align = getComputedStyle(ths[c]).textAlign;
@@ -176,7 +204,8 @@ const PROBE = `(function () {
         worst: Math.round(worst * 100) / 100, worstRow: worstRow,
       });
     }
-    out.push({ card: ci + 1, cols: cols, rows: trs.length });
+    out.push({ card: ci + 1, cols: cols, rows: trs.length, colCount: ths.length, headVisible: headVisible,
+      captionLeft: capLeft, boxes: boxes });
   }
   return { overflow: document.documentElement.scrollWidth - window.innerWidth, tables: out };
 }())`;
@@ -201,6 +230,8 @@ const reds = [];
 const report = [];
 let checked = 0;
 let tables = 0;
+/** 受内距判据检的表数（#919，只数「一行一条事实」那一型）。 */
+let insetChecked = 0;
 for (const W of WIDTHS) {
   await s('Emulation.setDeviceMetricsOverride', { width: W, height: 900, deviceScaleFactor: 1, mobile: false });
   for (const f of FILES) {
@@ -214,7 +245,15 @@ for (const W of WIDTHS) {
       reds.push('[' + W + '] ' + page + ' 读数失败：' + String(e.message).slice(0, 160));
       continue;
     }
-    report.push({ page, width: W, tables: r.tables.map((t) => ({ card: t.card, rows: t.rows, cols: t.cols })) });
+    report.push({ page, width: W, tables: r.tables.map((t) => ({
+      card: t.card, rows: t.rows, colCount: t.colCount, headVisible: t.headVisible, cols: t.cols,
+      inset: t.boxes === null ? null : {
+        left: Math.round((t.boxes.firstCellLeft - t.boxes.cardLeft) * 100) / 100,
+        right: Math.round((t.boxes.cardRight - t.boxes.lastCellRight) * 100) / 100,
+        captionToCellLeft: t.captionLeft === null
+          ? null : Math.round(Math.abs(t.captionLeft - t.boxes.firstCellLeft) * 100) / 100,
+      },
+    })) });
     if (r.tables.length === 0) continue;
     tables += 1;
     for (const t of r.tables) {
@@ -229,6 +268,24 @@ for (const W of WIDTHS) {
             + ' 档对位线差 ' + c.worst + 'px（第' + (c.worstRow + 1) + ' 行最大，容差 ' + TOL_PX + 'px）');
         }
       }
+      /* #919 内距（只判「一行一条事实」那一型：表头收起 ＋ 首格无标签回填 ＋ 恰两列）。 */
+      if (!t.headVisible && t.colCount === 2 && t.boxes !== null && t.boxes.noLabel
+        && t.boxes.rendered === true && t.boxes.visible === true) {
+        if (t.captionLeft !== null) {
+          const d = Math.abs(t.captionLeft - t.boxes.firstCellLeft);
+          if (d > TOL_PX) {
+            reds.push('[' + W + '] ' + page + ' 表' + t.card + '：表标题文字左缘与首格文字左缘差 '
+              + Math.round(d * 100) / 100 + 'px（容差 ' + TOL_PX + 'px）');
+          }
+        }
+        const insL = t.boxes.firstCellLeft - t.boxes.cardLeft;
+        const insR = t.boxes.cardRight - t.boxes.lastCellRight;
+        if (insL < MIN_INSET_PX || insR < MIN_INSET_PX) {
+          reds.push('[' + W + '] ' + page + ' 表' + t.card + '：行文字到卡片边框内距 左 '
+            + Math.round(insL * 100) / 100 + 'px／右 ' + Math.round(insR * 100) / 100 + 'px（下限 ' + MIN_INSET_PX + 'px）');
+        }
+        insetChecked += 1;
+      }
     }
     if (r.overflow > 0) reds.push('[' + W + '] ' + page + ' 横向溢出 ' + r.overflow + 'px');
   }
@@ -237,7 +294,7 @@ for (const W of WIDTHS) {
 for (const red of reds) console.log('✗ ' + red);
 console.log('RESULT: ' + (reds.length === 0 ? '对位全绿' : '判红 ' + reds.length + ' 条')
   + '；页数=' + FILES.length + ' 档=' + WIDTHS.join('/') + ' 含表页=' + tables
-  + ' 受检列=' + checked + ' 容差=' + TOL_PX + 'px');
+  + ' 受检列=' + checked + ' 容差=' + TOL_PX + 'px 受检内距表=' + insetChecked);
 if (JSON_OUT !== '') {
   const out = resolve(JSON_OUT);
   mkdirSync(dirname(out), { recursive: true });
