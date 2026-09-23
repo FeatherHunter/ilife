@@ -311,7 +311,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   /** 预热：section 一挂载，就把其余几家**错峰**挂上（隐藏面板照常挂载、只切 `hidden`），
    *  让各家那一次配置读提前跑掉——用户点哪个页签，多半值已经在了。
    *  错峰（每 150ms 一家）是为了不让六家子进程同时抢开工：首帧那一口气优先留给框架。
-   *  只在页签账本非空时起一次（`rows` 要等各家 slot 注入后才齐）。 */
+   *  只在页签账本非空时起一次（`rows` 要等各家 slot 注入后才齐）。
+   *
+   *  **一次性**（p10 定时器门的例外依据）：每个页签只挂一次（`warmed` 闸门 ＋ 一批固定数量的定时器），
+   *  不是轮询、也不是重试——它没有「次数」可言；卸载即 `clearTimeout` 清干净。
+   *  不做轮询是本意：这里只补一次提前量，取数与刷新仍旧由各家用例自己的通道走。 */
   const warmed = React.useRef(false);
   const tabCount = rows.length;
   React.useEffect(() => {
