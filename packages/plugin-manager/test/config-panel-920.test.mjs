@@ -36,7 +36,6 @@ const { PanelBody, Row, panelBadgeOf, badgeTextOf, copyLabelOf } = view;
 const { followerKeysOf } = panel;
 const { toDraft } = value;
 const ADVANCED_GROUP_TITLE = contract.ADVANCED_GROUP_TITLE;
-const ADVANCED_GROUP_NOTE = contract.ADVANCED_GROUP_NOTE;
 
 /** 视图半的源码：样式表取值与「按字符数估宽」那类痕迹都只在这里读得到。 */
 const VIEW_SRC = readFileSync(join(PKG, 'src', 'config-panel-view.ts'), 'utf8');
@@ -304,12 +303,14 @@ describe('#920 ②b 跟随行按 v3.1 的 `.ic-under` 缩进（母版行不缩�
 });
 
 describe('#920 ③ 高级组收起 · 底栏三键贴下沿吸住', () => {
-  it('高级组默认收起，标题与副文案照共用常量，左边一枚静态「›」', () => {
+  it('高级组默认收起，标题照共用常量，左边一枚静态「›」；#934 副文案已整条撤掉', () => {
     const details = ofType(PanelBody(bodyProps()), 'details')[0];
     assert.ok(details !== undefined, '缺高级组');
     assert.equal(details.props.open, undefined, '高级组不许默认展开');
     const summary = ofType(details, 'summary')[0];
-    assert.equal(textOf(summary), '›' + ADVANCED_GROUP_TITLE + ADVANCED_GROUP_NOTE);
+    // #934：原先这里是 `'›' + TITLE + NOTE`；副文案（「不常改。留空＝用默认值。」）按维护者裁定整条删除，
+    // 且**删后不另找地方说**——它说的口径本就逐行住在每条的 hint 里。
+    assert.equal(textOf(summary), '›' + ADVANCED_GROUP_TITLE);
     assert.equal(summary.props.style.listStyle, 'none', '要点掉原生那枚三角（v3.1 的 `list-style:none`）');
     assert.equal(summary.props.style.cursor, 'pointer');
   });

@@ -55,7 +55,6 @@ const RELATIVE_REQUIRED = {
   hint: '0.92em',
   okText: '0.96em',
   error: '1em',
-  version: '0.92em',
 };
 
 /** **该继承字号的项**且共用件里有：出现这些样式项时，一条都不许写 fontSize（字号跟着宿主走）。 */
@@ -64,7 +63,7 @@ const INHERIT_FONT_SIZE_PRESENT = ['card', 'label', 'input', 'btn', 'btnPrimary'
 /** 共用件里**没有**的样式项（登记在册，防「扫不到就跳过」把判据空转掉；多一项少一项都会红）。
  *  `total` 是卡路里／备忘**技能功能页**那一格数字的字面（`const W = { total: { fontSize: 22 … } }`），
  *  与设置页无关，本单不动它，故在这里登记「共用件里没有」。 */
-const ABSENT_IN_SHARED = ['total', 'advSummary'];
+const ABSENT_IN_SHARED = ['total', 'advSummary', 'version', 'groupNote'];
 
 /** 取共用件源码（每次现读：文件读到一半的读数不算数）。 */
 const readShared = () => readFileSync(SHARED_VIEW, 'utf8');
@@ -117,12 +116,12 @@ describe('#739 六家设置页文字表：字号相对、字族交给宿主（#9
     }
   });
 
-  it('③ `version`（版本行／状态行那份字面）在共用件里、且是相对字号', () => {
+  it('③ `version`（版本行那份字面）已随 #934 整条撤掉：共用件里不许再出现', () => {
     const keys = styleKeysOf(readShared());
-    assert.equal(keys.has('version'), true, '共用件少了 version 样式项（附加块那份字面也归它一处）');
-    assert.equal(fontSizeOf(readShared(), 'version'), "'0.92em'", '共用件的 version 字号应为 0.92em');
-    // 只读共用件：六家的**技能功能页**另有自己那张表（`const W = { total: { fontSize: 22 … } }`），
-    // 与设置页无关，本单照旧不动它（#909 已如实登记为票外事项）。
+    // #934：维护者裁定删掉面板内的版本行（卡路里／备忘录那两处渲染 ＋ 六家那份字面副本），
+    // 零消费者的 `version` 样式槽一并删。这一条从「必须在」翻成「必须不在」——留着它正是本批问题的根。
+    assert.equal(keys.has('version'), false, '共用件里又长回了 version 样式槽（版本行已按 #934 整条撤掉）');
+    assert.equal(keys.has('groupNote'), false, '共用件里又长回了 groupNote 样式槽（高级组副文案已按 #934 整条撤掉）');
   });
 
   it('④ 该继承字号的项：共用件里出现的每一项都不写 fontSize（字号跟着宿主走）', () => {

@@ -33,7 +33,7 @@
  */
 
 import * as React from 'react';
-import { ADVANCED_GROUP_NOTE, ADVANCED_GROUP_TITLE } from './config-panel-contract.js';
+import { ADVANCED_GROUP_TITLE } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
@@ -281,12 +281,7 @@ const S = {
   } as React.CSSProperties,
   /** `.ic-ghead::before{content:'›';color:var(--ic-muted)}`——画成真的那一个字符（内联样式给不出伪元素）。 */
   groupMark: { color: 'var(--dsw-alias-label-secondary, #cfd3d6)' } as React.CSSProperties,
-  /** `.ic-ghead .ic-gnote{color:var(--ic-faint);font-weight:400;font-size:11.5px}`（11.5px ⇒ `0.92em`）。 */
-  groupNote: {
-    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
-    fontWeight: 400,
-    fontSize: '0.92em',
-  } as React.CSSProperties,
+  /** #934：`.ic-gnote` 那条副文案的样式随之删除——副文案本身已按维护者裁定整条撤掉（零消费者的槽位不留）。 */
   /** `.ic-group > .ic-gbody{margin-top:9px;padding:11px 12px;background:var(--ic-sunken);
    *  border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}`。 */
   groupBody: {
@@ -348,14 +343,8 @@ const S = {
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   } as React.CSSProperties,
-  /** 附加块（版本行／状态行）那份字面：`--ic-faint` ＋ `0.92em`（#739 ③ 钉死这一格）。 */
-  version: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTop: '1px dashed var(--dsw-alias-border-l1, rgba(255,255,255,.06))',
-    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
-    fontSize: '0.92em',
-  } as React.CSSProperties,
+  /** #934：原先这里有一格 `version`（各家附加块的版本行字面）。版本行已按维护者裁定整条撤掉
+   *（卡路里／备忘录面板内那两处渲染 ＋ 六家那份字面副本），这一格随之删除：没人取的槽位不留。 */
   /** `.ic-badge{font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;
    *  display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}`（11px ⇒ `0.88em`）。 */
   badge: {
@@ -794,7 +783,6 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
             { style: S.summary },
             React.createElement('span', { style: S.groupMark }, '›'),
             ADVANCED_GROUP_TITLE,
-            React.createElement('span', { style: S.groupNote }, ADVANCED_GROUP_NOTE),
           ),
           React.createElement(
             'div',

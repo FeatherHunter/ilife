@@ -68,9 +68,12 @@ export const RPC_ENDPOINT_CONFIG_GET = 'config.get' as const;
 export const RPC_ENDPOINT_CONFIG_SAVE = 'config.save' as const;
 export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
 
-/** 高级组标题与副文案（六家逐字相同，收在这里一处）。 */
+/** 高级组标题（六家逐字相同，收在这里一处）。
+ *
+ * #934：原先还有一条副文案 `ADVANCED_GROUP_NOTE`（「不常改。留空＝用默认值。」），
+ * 维护者裁定**整条删除、删后不另找地方说**——理由：三家高级项全是只读行、不参与保存、根本没有"留空"，
+ * 而"留空会怎样"这条口径本就逐行住在每条的 `hint` 里（见本件 `ConfigItem.hint` 的契约）。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
-export const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。' as const;
 
 /** 请求超时毫秒：与宿主侧 SPAWN_TIMEOUT_MS 同级，界面永不无限转圈。 */
 export const READ_TIMEOUT_MS = 20_000 as const;

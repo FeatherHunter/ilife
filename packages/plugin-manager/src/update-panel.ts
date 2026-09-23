@@ -35,7 +35,8 @@ export const PANEL_STYLE = {
   tabActive: {
     background: 'var(--dsw-alias-brand-primary, #0a84ff)',
     borderColor: 'transparent',
-    color: '#fff',
+    // 同 #931：与 brand-primary 成对的前景别名，别写死 `#fff`。
+    color: 'var(--dsw-alias-label-primary-foreground, #0f1115)',
     fontWeight: 700,
   } as React.CSSProperties,
   reco: {
@@ -112,7 +113,8 @@ export const PANEL_STYLE = {
   btnPrimary: {
     border: '1px solid transparent',
     background: 'var(--dsw-alias-brand-primary, #0a84ff)',
-    color: '#fff',
+    // 同 #931：品牌底上的前景一律取配对别名。
+    color: 'var(--dsw-alias-label-primary-foreground, #0f1115)',
     borderRadius: 8,
     padding: '5px 14px',
     fontSize: 13,

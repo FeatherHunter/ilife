@@ -107,7 +107,6 @@ export const COMMON_ITEM_COUNT = COMMON.length;
 
 /** 高级组标题与副文案。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
-export const ADVANCED_GROUP_NOTE = '不常改。留空＝用默认值。' as const;
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

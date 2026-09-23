@@ -88,7 +88,20 @@ const S = {
     fontSize: 14,
     lineHeight: 1,
   } as React.CSSProperties,
-  meta: { color: 'var(--dsw-alias-label-secondary, #9a9a9a)', fontSize: 12, lineHeight: 1.7, marginBottom: 10 } as React.CSSProperties,
+  /** #933：页签格里「配置卡 ＋ 体检卡」这一列的堆叠间距（唯一口径，别再给某一张卡加 margin）。 */
+  tabStack: { display: 'flex', flexDirection: 'column', gap: 10 } as React.CSSProperties,
+  /** #937：标题行里那枚版本胶囊（形状照真源 v3.1 的 `.ic-ver`：10px 字、1px 描边、999 圆角）。 */
+  versionCapsule: {
+    fontSize: 10.5,
+    lineHeight: 1.6,
+    color: 'var(--dsw-alias-label-tertiary, #adb2b8)',
+    border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    borderRadius: 999,
+    padding: '0 7px',
+    whiteSpace: 'nowrap',
+    flex: '0 0 auto',
+    fontWeight: 400,
+  } as React.CSSProperties,
   tablist: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } as React.CSSProperties,
   tab: {
     border: '1px solid var(--dsw-alias-border, rgba(128,128,128,.35))',
@@ -102,7 +115,9 @@ const S = {
   tabActive: {
     background: 'var(--dsw-alias-brand-primary, #0a84ff)',
     borderColor: 'transparent',
-    color: '#fff',
+    // 前景取**与 brand-primary 成对**的宿主别名（#931）：写死 `#fff` 会在深色主题下撞色
+    // （宿主的 brand-primary 在深色是近白 `#f9fafb`，白字压上去只有 1.045:1）。
+    color: 'var(--dsw-alias-label-primary-foreground, #0f1115)',
     fontWeight: 700,
   } as React.CSSProperties,
   reco: {
@@ -255,22 +270,46 @@ function MorePluginsCard(): React.ReactElement {
   );
 }
 
-/** 总管自述版本（票 #737）：**不手写**，问宿主——宿主读自己这份已安装包的 `package.json`。
+/** 总管自述版本（票 #737；#937 改口）：**不手写**，问宿主——宿主读自己这份已安装包的 `package.json`。
  *
- * 单次取数（`loadManagerVersion`），无轮询；初值 `unknown`，读不到也停在 `unknown`。
+ * 三态（#937）：`loading`（首帧就画胶囊占位 `…`）／`ready`（读到，画包名 · 版本）／`missing`（读不到，画「版本未知」）。
+ * **失败要重试**：原先只取一次、一失败就永远停在未知（#937 查出来的真缺陷）；这里按 1s／3s／8s 退避重试三次。
  * 与卡路里 #130 同一条路：面板是浏览器产物、禁 node 内建，读盘只许在宿主半。 */
-function useManagerVersion(getCall: () => CallFace | null): string {
-  const [version, setVersion] = React.useState<string>(VERSION_UNKNOWN);
+/** 读中 / 读不到 两种胶囊文案（#937：占位符用 `…`，读不到给人话，不把 `unknown` 印给人看）。 */
+const VERSION_PENDING_TEXT = '…';
+const VERSION_MISSING_TEXT = '版本未知';
+type ManagerVersionState =
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'ready'; readonly version: string }
+  | { readonly kind: 'missing' };
+
+/** 重试间隔（#937）：三次退避，之后不再打扰宿主。 */
+const VERSION_RETRY_MS: readonly number[] = [1000, 3000, 8000];
+
+function useManagerVersion(getCall: () => CallFace | null): ManagerVersionState {
+  const [state, setState] = React.useState<ManagerVersionState>({ kind: 'loading' });
   React.useEffect(() => {
     let alive = true;
-    void loadManagerVersion(getCall()).then((next) => {
-      if (alive) setVersion(next);
-    });
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
+    const attempt = (index: number): void => {
+      void loadManagerVersion(getCall()).then((next) => {
+        if (!alive) return;
+        if (next !== VERSION_UNKNOWN) {
+          setState({ kind: 'ready', version: next });
+          return;
+        }
+        setState({ kind: 'missing' });
+        const wait = VERSION_RETRY_MS[index];
+        if (wait !== undefined) timers.push(setTimeout(() => attempt(index + 1), wait));
+      });
+    };
+    attempt(0);
     return () => {
       alive = false;
+      for (const id of timers) clearTimeout(id);
     };
   }, [getCall]);
-  return version;
+  return state;
 }
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
@@ -359,6 +398,16 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       'div',
       { style: S.headRow },
       React.createElement('div', { style: S.head }, '爱生活'),
+      // #937：版本改成**同一行的胶囊**（原先独占一行）。占位、读不到、读到三种文案都在这里出。
+      React.createElement(
+        'span',
+        { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
+        managerVersion.kind === 'ready'
+          ? MANAGER_PLUGIN + ' · ' + managerVersion.version
+          : managerVersion.kind === 'missing'
+            ? VERSION_MISSING_TEXT
+            : VERSION_PENDING_TEXT,
+      ),
       // 三件并排：本票的「检查更新」在左，隔壁票（#679）的星与气泡在右，整组靠右（窄窗口折行）。
       React.createElement(
         'div',
@@ -366,14 +415,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
         React.createElement(CheckUpdateButton, { face }),
         React.createElement(PanelActions, null),
       ),
-    ),
-    React.createElement(
-      'div',
-      { style: S.meta },
-      // 版本行（#737）：包名取自 nav.ts 那处唯一定义，版本号取自宿主读到的装机包版本。
-      // 这段 meta 区此前还挂着一行静态文本，说有个「缺省启用、只读的开关」——那个开关今天并不存在
-      // （全仓没有任何代码读它或写它，设置页的行表里也没有「启用」这一项），票 #738 原地删除。
-      React.createElement('div', null, '总管 ' + MANAGER_PLUGIN + ' · ' + managerVersion),
     ),
     React.createElement(UpdateResults, { face }),
     React.createElement(HealthSummaryLine, {
@@ -456,12 +497,16 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
           id: tabsId + '-panel-' + tab.plugin,
           role: 'tabpanel',
           'aria-labelledby': tabsId + '-tab-' + tab.plugin,
-          hidden: !selected,
+          // #933：这一格**不能**用 `hidden` 属性——UA 的 `[hidden]{display:none}` 会输给下面内联的
+          // `display:flex`，六个预热页签会全露出来。显式写 display 才是唯一口径（未选中的整格不画）。
+          style: selected ? undefined : { display: 'none' },
         },
         present.has(tab.plugin)
           ? React.createElement(
+              // #933：配置卡与体检卡之间的空隙由**容器**给（原先两张卡边线直接相接、间距 0）。
+              // 取 10＝壳里块间距的既有口径（与 `S.head`／`S.tablist` 那几处同值）。
               'div',
-              null,
+              { style: S.tabStack },
               props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode,
               // 那家的体检表：与总览那行读同一份快照（`health.rows`），不是各算一遍。
               React.createElement(HealthTable, {

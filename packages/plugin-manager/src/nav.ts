@@ -112,7 +112,7 @@ export interface PanelLinkRow {
  * 三件并排里的第三件「检查更新」住隔壁票（#678），本表不管它。
  */
 export const PANEL_LINKS: readonly PanelLinkRow[] = [
-  { key: 'star', glyph: '⭐', tip: '去 GitHub 点 Star', url: 'https://github.com/FeatherHunter/ilife' },
+  { key: 'star', glyph: '⭐', tip: '你的🌟是我夜空中最亮的星。', url: 'https://github.com/FeatherHunter/ilife' },
   { key: 'feedback', glyph: '💬', tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
 ];
 
