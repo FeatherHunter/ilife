@@ -113,6 +113,36 @@ const S = {
     gap: '4px 10px',
     padding: '7px 0',
   } as React.CSSProperties,
+  /** `.ic-under{margin:9px 0 0 8px;border-left:1px solid var(--ic-line-strong);padding-left:13px}`：
+   *  **跟随行**相对它的可改行（母版行）缩进 8＋1＋13＝**22px**，左边挂一条线。
+   *
+   *  取值逐字照抄；只有一处形态差别要说清：`.ic-under` 在 v3.1 里是**一整块**（同一个可改行的一批
+   *  跟随者共用一个 div、共一条左边线、块首还有 9px 上边距），而共用件手上只有「谁是跟随行」这一个
+   *  集合（由六家交的 `followKeysOf` 钩子逐键探出），**没有**「这一行归哪一块」的分块归属
+   *  （同一个键可以同时挂在两张跟随表上，钩子只回一个去重后的并集）。故这里按**行**落这条缩进：
+   *  缩进量与左边线同值，块首那 9px 上边距不落（落下去会在每两行之间多出一道 9px 的缝）。 */
+  followerRow: {
+    position: 'relative',
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '4px 10px',
+    padding: '7px 0 7px 13px',
+    marginLeft: 8,
+    borderLeft: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+    borderBottom: '1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.06))',
+  } as React.CSSProperties,
+  /** 跟随行的最后一行：同上，去掉下边线（照 `.ic-row:last-child{border-bottom:0}`）。 */
+  followerRowLast: {
+    position: 'relative',
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '4px 10px',
+    padding: '7px 0 7px 13px',
+    marginLeft: 8,
+    borderLeft: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+  } as React.CSSProperties,
   /** `.ic-row .ic-k{font-size:11.5px;color:var(--ic-muted)}`；`--ic-kw:118px` 是标签列的定宽。 */
   rowKey: {
     flex: '0 0 auto',
@@ -482,6 +512,9 @@ export interface RowProps {
   /** 这一行是所在那一组的最后一行（v3.1 的 `.ic-row:last-child{border-bottom:0}`；
    *  内联样式没有 `:last-child`，行序是客户端常量，故由画整面的人算好交进来）。 */
   readonly last?: boolean | undefined;
+  /** **跟随行**：这一行跟着某个可改行变（静态关系，与当刻脏不脏无关）⇒ 照 v3.1 的 `.ic-under`
+   *  相对那个可改行缩进 22px、左边挂一条线。只读行才用得上（可改行自己是母版行，不缩进）。 */
+  readonly nested?: boolean | undefined;
 }
 
 /** 一行怎么画（照 v3.1 的两套行模板）：
@@ -518,9 +551,12 @@ export function Row(props: RowProps): React.ReactElement {
       : null;
 
   if (readonly) {
+    /** 跟随行落 `.ic-under` 那一档缩进；其余按是不是本组最后一行挑有没有下边线。 */
+    const rowStyle =
+      props.nested === true ? (props.last === true ? S.followerRowLast : S.followerRow) : props.last === true ? S.rowLast : S.row;
     return React.createElement(
       'div',
-      { style: props.last === true ? S.rowLast : S.row },
+      { style: rowStyle },
       React.createElement('span', { style: S.rowKey }, item.title),
       React.createElement('span', { style: S.rowValue }, props.value),
       React.createElement('span', { style: S.rowActs }, follow, copy),
@@ -602,6 +638,9 @@ export interface PanelBodyProps {
   readonly rowEntry: DirectoryRowEntry | null;
   readonly dirtyKeys: readonly string[];
   readonly followKeys: readonly string[];
+  /** **静态**跟随行名单（由各家交的 `followKeysOf` 钩子逐键探出来的，与当刻脏不脏无关）：
+   *  名单里的只读行按 v3.1 的 `.ic-under` 缩进；空缺＝一行都不缩进。 */
+  readonly followerKeys?: readonly string[] | undefined;
   readonly copy: { readonly key: string; readonly ok: boolean } | null;
   /** 技能侧报出的「配置里有值用不了」那一格事实（#915 第二步落地前缺席＝不亮那一档）。 */
   readonly invalid?: boolean | undefined;
@@ -702,6 +741,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   /** 还没读到整面（`loading`）时**框架照画**：行表与控件形状是客户端常量，不必等任何回执。
    *  值先空着、控件与三枚底栏键一律不可用；回执到了由 `ready` 那一支把值填上（见 `config-panel.ts`）。 */
   const frozen = props.busy || !ready;
+  const followers = props.followerKeys ?? [];
   const renderRow = (item: ConfigItem, last: boolean) =>
     React.createElement(Row, {
       key: item.key,
@@ -715,6 +755,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       onCopy: ready ? props.onCopy : undefined,
       copyState: props.copy !== null && props.copy.key === item.key ? (props.copy.ok ? 'done' : 'failed') : 'idle',
       last,
+      nested: followers.includes(item.key),
     });
   /** 每组最后那一行才免掉下边线（`.ic-row:last-child`）；母版行自己不带线，不必管。 */
   const lastIndexOf = (list: readonly ConfigItem[]) => {

@@ -102,6 +102,22 @@ export interface ConfigPanelProps {
   readonly getService?: ((name: string) => unknown) | undefined;
 }
 
+/** **静态**跟随行名单：给行表里每个键喂一遍六家交的钩子，收它返回的跟随者。
+ *
+ * 为什么能这么探：`followKeysOf` 是**纯函数**，六家的实现都只是「脏键里有没有这一格」那一下判断
+ * （各家 `src/client.ts`），喂单键即得「谁跟着它」——**与当刻脏不脏无关**。有了这个集合，共用件就能
+ * 照 v3.1 的 `.ic-under` 把跟随行相对它的可改行缩进（#920 补），**六家源码一个字节不用改**。
+ * 拿不到钩子时回空表（一行都不缩进，照旧平铺）。 */
+export function followerKeysOf(
+  items: readonly ConfigItem[],
+  hook: ((dirtyKeys: readonly string[]) => readonly string[]) | undefined,
+): readonly string[] {
+  if (hook === undefined) return [];
+  const out = new Set<string>();
+  for (const item of items) for (const key of hook([item.key])) out.add(key);
+  return [...out];
+}
+
 /** 技能设置页：承载一家自己的全部可配置项（只配置，不干活）。 */
 export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   const [state, setState] = React.useState<PanelState>({ kind: 'loading' });
@@ -262,6 +278,8 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   const baseline = surface !== null ? toDraft(props.items, surface.values, surface) : null;
   const dirtyKeys: readonly string[] = baseline === null ? [] : dirtyKeysOf(props.items, draft, baseline);
   const followKeys = (props.followKeysOf ?? noFollowKeys)(dirtyKeys);
+  /** 静态那一份（与脏不脏无关）：画跟随行的缩进用（v3.1 的 `.ic-under`）。 */
+  const followerKeys = followerKeysOf(props.items, props.followKeysOf);
   const mode = pickerModeOf(picker);
   const rowEntry: DirectoryRowEntry | null = mode === 'none' ? null : { mode, onOpen: onOpenRow };
 
@@ -279,6 +297,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     rowEntry,
     dirtyKeys,
     followKeys,
+    followerKeys,
     copy,
     onCopy,
     onChange,

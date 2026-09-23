@@ -29,8 +29,11 @@ const view = await import('../dist/config-panel-view.js');
 const value = await import('../dist/config-panel-value.js');
 /** 契约半（高级组那两行字面的唯一定义地）。 */
 const contract = await import('../dist/config-panel-contract.js');
+/** 组件本体半（`followerKeysOf` 那一处纯函数住在这里）。 */
+const panel = await import('../dist/config-panel.js');
 
 const { PanelBody, Row, panelBadgeOf, badgeTextOf, copyLabelOf } = view;
+const { followerKeysOf } = panel;
 const { toDraft } = value;
 const ADVANCED_GROUP_TITLE = contract.ADVANCED_GROUP_TITLE;
 const ADVANCED_GROUP_NOTE = contract.ADVANCED_GROUP_NOTE;
@@ -93,6 +96,15 @@ const kidsOf = (tree) => (Array.isArray(tree.props.children) ? tree.props.childr
 /** 动作条是哪一个节点（它里面装着「保存／重置为默认／重新读取」那三枚）。 */
 const barOf = (tree) =>
   kidsOf(tree).find((k) => k !== null && typeof k === 'object' && ofType(k, 'button').some((b) => textOf(b).startsWith('保存')));
+
+/** 某一行的那个盒子：只读行＝三件套（标签／值／动作槽）、可改行＝四件套（标签行／说明／控件／按钮行）。 */
+function rowBoxOf(tree, label) {
+  return ofType(tree, 'div').find((d) => {
+    const kids = Array.isArray(d.props.children) ? d.props.children : [d.props.children];
+    if (kids.length !== 3 && kids.length !== 4) return false;
+    return textOf(kids[0]) === label;
+  });
+}
 
 /* ═══ 现场：与六家同形的一张行表 ═══ */
 
@@ -239,6 +251,54 @@ describe('#920 ② 可改行：「可改」徽标 · 说明 · 整行输入框 �
   });
 });
 
+describe('#920 ②b 跟随行按 v3.1 的 `.ic-under` 缩进（母版行不缩进）', () => {
+  /** 与六家同形的那个钩子（各家 `client.ts` 里逐字就是这个形状：纯函数、只做一次 includes）。 */
+  const hook = (dirtyKeys) => (dirtyKeys.includes('db.dir') ? ['db.name'] : []);
+
+  it('静态跟随行名单由钩子逐键探出来：与当刻脏不脏无关，拿不到钩子就一行都不缩进', () => {
+    assert.deepEqual(followerKeysOf(ITEMS, hook), ['db.name'], '喂单键就该问出「谁跟着它」');
+    assert.deepEqual(followerKeysOf(ITEMS, () => []), [], '没有跟随关系的家：空表');
+    assert.deepEqual(followerKeysOf(ITEMS, undefined), [], '钩子缺席：空表（照旧平铺）');
+    // 探的时候喂的是「单键」，不是当刻的脏键——所以哪怕一行都没改也探得出来。
+    assert.deepEqual(followerKeysOf(ITEMS, (keys) => (keys.length === 1 ? hook(keys) : [])), ['db.name']);
+  });
+
+  it('跟随行缩进 8＋1＋13＝22px（照 `.ic-under`），左边挂一条线', () => {
+    const box = rowBoxOf(PanelBody(bodyProps({ followerKeys: ['db.name'] })), ITEMS[1].title);
+    assert.ok(box !== undefined, '找不到那条跟随行');
+    assert.equal(box.props.style.marginLeft, 8, '`.ic-under{margin-left:8px}`');
+    assert.equal(box.props.style.padding, '7px 0 7px 13px', '`.ic-under{padding-left:13px}` ＋ `.ic-row{padding:7px 0}`');
+    assert.equal(box.props.style.borderLeft, '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+      '`.ic-under{border-left:1px solid var(--ic-line-strong)}`');
+  });
+
+  it('母版行不缩进，也不在它身上挂那条左边线（缩进量两者必须不等）', () => {
+    const tree = PanelBody(bodyProps({ followerKeys: ['db.name'] }));
+    const master = rowBoxOf(tree, ITEMS[0].title + '可改');
+    assert.ok(master !== undefined, '找不到那条可改行');
+    assert.equal(master.props.style.marginLeft, undefined);
+    assert.equal(master.props.style.paddingLeft, undefined);
+    assert.equal(master.props.style.borderLeft, undefined);
+    assert.notEqual(master.props.style.padding, '7px 0 7px 13px');
+  });
+
+  it('名单外的只读行不缩进（不是「只读行一律缩进」）', () => {
+    const box = rowBoxOf(PanelBody(bodyProps({ followerKeys: [] })), ITEMS[1].title);
+    assert.ok(box !== undefined);
+    assert.equal(box.props.style.marginLeft, undefined);
+    assert.equal(box.props.style.padding, '7px 0');
+    assert.equal(box.props.style.borderLeft, undefined);
+  });
+
+  it('跟随行的最后一行照旧免掉下边线（缩进照留）', () => {
+    const tree = PanelBody(bodyProps({ items: [ITEMS[0], ITEMS[1]], followerKeys: ['db.name'] }));
+    const box = rowBoxOf(tree, ITEMS[1].title);
+    assert.equal(box.props.style.marginLeft, 8, '免下边线不等于不缩进');
+    assert.equal(box.props.style.borderBottom, undefined);
+    assert.equal(box.props.style.borderLeft, '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))');
+  });
+});
+
 describe('#920 ③ 高级组收起 · 底栏三键贴下沿吸住', () => {
   it('高级组默认收起，标题与副文案照共用常量，左边一枚静态「›」', () => {
     const details = ofType(PanelBody(bodyProps()), 'details')[0];
@@ -344,6 +404,10 @@ describe('#920 样式表：取值照 v3.1 那一件，逐项锚住（不许自�
       ['fileWrap', /marginTop:\s*4\b/, '`.ic-file{margin-top:4px}`'],
       ['fileLabel', /marginRight:\s*5\b/, '`.ic-file b{margin-right:5px}`'],
       ['rowKey', /minWidth:\s*118\b/, '`.ic-row{--ic-kw:118px}`'],
+      ['followerRow', /marginLeft:\s*8\b/, '`.ic-under{margin:9px 0 0 8px}`'],
+      ['followerRow', /padding:\s*'7px 0 7px 13px'/, '`.ic-under{padding-left:13px}` ＋ `.ic-row{padding:7px 0}`'],
+      ['followerRow', /borderLeft:\s*'1px solid var\(--dsw-alias-border-l2/, '`.ic-under{border-left:1px solid var(--ic-line-strong)}`'],
+      ['followerRowLast', /marginLeft:\s*8\b/, '同上（免下边线那一档照留缩进）'],
       ['rowValue', /overflowWrap:\s*'anywhere'/, '`.ic-row.is-wide .ic-v{overflow-wrap:anywhere}`'],
       ['rowActs', /top:\s*7\b/, '`.ic-row{padding:7px 0}`（动作槽与第一行齐）'],
       ['followMark', /opacity:\s*0\.8/, '`.ic-follow::before{opacity:.8}`'],
