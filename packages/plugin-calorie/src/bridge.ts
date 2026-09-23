@@ -7,10 +7,11 @@
  * 技能包不动（只读）；combos.yaml 不动。
  */
 import { spawnSync } from 'node:child_process';
-import { accessSync, constants, readFileSync } from 'node:fs';
+import { accessSync, constants } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { installedVersionOf } from 'dsh-life-pack';
 import type { ConfigSurfaceReply } from './contract.js';
 
 export const SKILL_PACKAGE = 'skill-calorie' as const;
@@ -21,14 +22,24 @@ export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 export const MANAGER_MISSING_HINT =
   '总管缺席，请补装：dsh plugin add dsh-life-pack dsh-calorie（不许单卸总管）';
 
-/** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染）。
+/** #130 版本通道（host 侧动态读取已安装版本，client 纯渲染）；#918 阶段三起读值走总管共用件。
  *
  * 唯一真相源=磁盘 package.json：插件取自身 package.json 的 version，
- * skill 取已安装 skill-calorie/package.json 的 version（createRequire 按包名定位安装态）。
+ * skill 取已安装 skill-calorie/package.json 的 version。
+ * 这两处读取**只有一处定义**＝总管（dsh-life-pack）的 `installedVersionOf(包名, from)`：
+ * 它从 `from` 那份模块按包名解析**已装**的 `<包名>/package.json`，只解析 `version`，永不抛。
+ * 本家原先自己那套（自家算两份 manifest 的路径 ＋ 自家读盘 ＋ 自家兜底）已随之删掉——
+ * 路径解析、读盘、'unknown' 兜底与 warn 留痕都不再在本文件有第二份实现。
  * client 禁 node（见 client.ts 头注释），故读取只许在 host 侧（本文件），
  * 经现有 connection.rpc.call 模式（同 READ 端点、VERSION_READ_KEY 魔键）传给面板，
  * client 只渲染 host 给的值，读不到侧显示 unknown（见 client normalizeVersion）。
  * 不引入新运行时依赖；只解析 version 字段，不读 SKILL 正文、不改 provider 解析路径。
+ */
+
+/** 面板骨架的 unknown 占位（与共用件那处的 `VERSION_UNKNOWN` 同值 'unknown'）。
+ *
+ * 读失败的兜底住在共用件（本文件不再自己兜底）；本常量只为既有导出面与面板骨架保留，
+ * client 侧另有一份镜像（client 禁直引 bridge，见 client.ts）。
  */
 export const VERSION_UNKNOWN = 'unknown' as const;
 export const VERSION_READ_KEY = 'dsh-calorie.version' as const;
@@ -38,80 +49,16 @@ export interface InstalledVersions {
   readonly skill: string;
 }
 
-/** 插件自身 package.json 路径（dist/bridge.js → ../package.json；dev 单仓与安装态 node_modules 同形）。 */
-export function pluginPackageJsonPath(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
-}
-
-/** 已安装 skill 包 package.json 路径（按包名解析安装态；失败回退单仓相对路径）。 */
-export function skillPackageJsonPath(): string {
-  try {
-    return createRequire(import.meta.url).resolve(SKILL_PACKAGE + '/package.json');
-  } catch {
-    return join(repoRoot(), 'packages', SKILL_PACKAGE, 'package.json');
-  }
-}
-
-function readOneVersion(path: string): { readonly version: string | null; readonly reason: string } {
-  let raw: string;
-  try {
-    raw = readFileSync(path, 'utf8');
-  } catch (e) {
-    return { version: null, reason: 'read failed: ' + (e instanceof Error ? e.message : String(e)) };
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch (e) {
-    return { version: null, reason: 'parse failed: ' + (e instanceof Error ? e.message : String(e)) };
-  }
-  const v = (parsed as { version?: unknown } | null | undefined)?.version;
-  if (typeof v !== 'string' || v.trim().length === 0) return { version: null, reason: 'version field missing or empty' };
-  return { version: v.trim(), reason: '' };
-}
-
-/** host 侧读已安装双 package.json（永不抛；失败侧 unknown＋warn 留痕，含路径与原因）。 */
-export function readInstalledVersions(opts?: {
-  readonly pluginPath?: string;
-  readonly skillPath?: string;
-  readonly logger?: { warn?: (...args: unknown[]) => void };
-}): InstalledVersions {
-  try {
-    const pluginPath = opts?.pluginPath ?? pluginPackageJsonPath();
-    const skillPath = opts?.skillPath ?? skillPackageJsonPath();
-    const warn =
-      opts?.logger && typeof opts.logger.warn === 'function'
-        ? opts.logger.warn.bind(opts.logger)
-        : console.warn.bind(console);
-    const p = readOneVersion(pluginPath);
-    const s = readOneVersion(skillPath);
-    if (!p.version) {
-      try {
-        warn('[dsh-calorie] version read failed (plugin): path=' + pluginPath + ' reason=' + p.reason);
-      } catch {
-        /* warn 不得抛，面板降级不受影响 */
-      }
-    }
-    if (!s.version) {
-      try {
-        warn('[dsh-calorie] version read failed (skill): path=' + skillPath + ' reason=' + s.reason);
-      } catch {
-        /* warn 不得抛 */
-      }
-    }
-    return { plugin: p.version ?? VERSION_UNKNOWN, skill: s.version ?? VERSION_UNKNOWN };
-  } catch (e) {
-    try {
-      const warn =
-        opts?.logger && typeof opts.logger.warn === 'function'
-          ? opts.logger.warn.bind(opts.logger)
-          : console.warn.bind(console);
-      warn('[dsh-calorie] version read failed (both): reason=' + (e instanceof Error ? e.message : String(e)));
-    } catch {
-      /* 兜底不抛 */
-    }
-    return { plugin: VERSION_UNKNOWN, skill: VERSION_UNKNOWN };
-  }
+/** host 侧读已安装双 package.json（永不抛；读不到侧由共用件回 'unknown' 并 warn 留痕，含包名与原因）。
+ *
+ * 两个包名按字面给：技能包名与 `SKILL_PACKAGE` 同值（那是本包自己的定义，见上），
+ * 插件包名即本包名（与 index.ts 的 `name`／slot.ts 的 `PLUGIN` 同值）。
+ * `from` 传本模块 URL：共用件据此按 Node 解析规则找 `<包名>/package.json`
+ * （插件与技能包的 `exports` 都留了 `./package.json` 这一条），故开发单仓
+ * （`packages/plugin-calorie/dist/bridge.js`）与安装态（`node_modules/dsh-calorie/dist/bridge.js`）
+ * 走同一条路，读的都是**已装的那份**，不是构建期抄进代码里的字面量。 */
+export function readInstalledVersions(): InstalledVersions {
+  return { plugin: installedVersionOf('dsh-calorie', import.meta.url), skill: installedVersionOf(SKILL_PACKAGE, import.meta.url) };
 }
 
 export class SkillBridgeError extends Error {
@@ -179,7 +126,8 @@ export function resolveNodeBin(execPath: string = process.execPath): { readonly 
 
 /** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
 export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
-  // #130 版本通道：不走 CLI spawn，直接读已安装 package.json；永不抛，失败侧 unknown＋warn。
+  // #130 版本通道：不走 CLI spawn，直接读已安装 package.json（#918 阶段三起读值走总管共用件
+  // installedVersionOf）；永不抛，失败侧 unknown＋warn。
   // 经现有 connection.rpc.call 模式（同 READ 端点）透传，index.ts 无需改动。
   if (key === VERSION_READ_KEY) return readInstalledVersions();
   const bin = cliPath();

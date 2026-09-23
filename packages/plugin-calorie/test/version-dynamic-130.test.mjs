@@ -1,7 +1,13 @@
 // #130 面板版本号动态读取已安装版本 —— 逐条机器锁票面验收 5 条。
+//   #918 阶段三（本文件同步改）：读值口径迁到总管共用件 `dsh-life-pack.installedVersionOf(包名, from)`，
+//   自家 `readOneVersion` 与 `pluginPackageJsonPath`／`skillPackageJsonPath` 两个 path 函数已删。
+//   故本文件的**注入缝**跟着换：不再有 pluginPath／skillPath／logger 三个注入口（那是删掉的自家读法才有的），
+//   失败态一律用「模拟安装里那份 manifest 坏掉／缺席」注入；断言的**事实**一条不减
+//   （单侧坏只影响该侧、双坏双 unknown、永不抛、warn 留痕含包名与原因、落点＝已装的那两份 manifest）。
 //
 // 被测真件（不是替身）：
-//  - host 读值：dist/bridge.js（readInstalledVersions／readViaCli／pluginPackageJsonPath／skillPackageJsonPath）
+//  - host 读值：dist/bridge.js（readInstalledVersions／readViaCli；读值走总管共用件，
+//    总管那份真件以 junction 进模拟安装——`dsh-life-pack` 本来就是插件声明过的依赖）
 //  - client 渲染：dist/client.js（真产物，按 DSH classic script loader 语义执行后取 exports）
 // 版本读取是一条跨 host/client 的路：磁盘 package.json → host 读 → RPC（键 dsh-calorie.version）→ client 骨架文本。
 // 本文件只喂桩值／桩回执（哨兵），并且全程不改任何真实文件：源码、产物、仓库 package.json
@@ -11,13 +17,13 @@
 // 与 test/client-bundle-48.test.mjs（client 束纯度，21/21）各自守。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, copyFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, copyFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { readInstalledVersions, readViaCli, VERSION_READ_KEY, pluginPackageJsonPath, skillPackageJsonPath } from '../dist/bridge.js';
+import { readInstalledVersions, readViaCli, VERSION_READ_KEY } from '../dist/bridge.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = resolve(HERE, '..'); // packages/plugin-calorie
@@ -103,23 +109,42 @@ async function panelVersionLine(host) {
   return { text: CLIENT.exports.formatVersionLine(versions.plugin, versions.skill), versions };
 }
 
-/** 造一份「模拟安装布局」：node_modules/dsh-calorie/{package.json,dist/bridge.js} ＋ node_modules/skill-calorie/package.json。
- * 真产物原样拷贝（源码不动），只有两处 package.json 的 version 可被改写——正是「只 bump package.json」的重演。 */
+/** 造一份「模拟安装布局」：`node_modules/dsh-calorie/{package.json,dist/bridge.js}`
+ *  ＋ `node_modules/<技能包名>/package.json` ＋ `node_modules/dsh-life-pack`（junction → 真总管包）。
+ * 真产物原样拷贝（源码不动），只有两处 package.json 的 version 可被改写——正是「只 bump package.json」的重演。
+ * #918 阶段三起，拷进去的那份 bridge 会 `import 'dsh-life-pack'`（读值共用件的入口），
+ * 故模拟安装必须带上这条**声明过的依赖**（真装机的 node_modules 里本来就有它，见 package.json 的 dependencies），
+ * 且总管那份是**真件**不是替身。`skillVersion === null` ＝ 技能包 manifest 不落盘（技能没装进来那一态）。 */
+const MANAGER_DIR = join(REPO, 'packages', 'plugin-manager');
+
 function makeFakeInstall(pluginVersion, skillVersion) {
   const root = mkdtempSync(join(tmpdir(), 't130-install-'));
   const pluginDir = join(root, 'node_modules', PLUGIN_NAME);
-  const skillDir = join(root, 'node_modules', SKILL_NAME);
   mkdirSync(join(pluginDir, 'dist'), { recursive: true });
-  mkdirSync(skillDir, { recursive: true });
   copyFileSync(join(DIST, 'bridge.js'), join(pluginDir, 'dist', 'bridge.js'));
-  writeJson(join(skillDir, 'package.json'), { ...readJson(SKILL_PKG_PATH), version: skillVersion });
   writeJson(join(pluginDir, 'package.json'), { ...PLUGIN_PKG, version: pluginVersion });
+  if (skillVersion !== null) {
+    const skillDir = join(root, 'node_modules', SKILL_NAME);
+    mkdirSync(skillDir, { recursive: true });
+    writeJson(join(skillDir, 'package.json'), { ...readJson(SKILL_PKG_PATH), version: skillVersion });
+  }
+  try {
+    symlinkSync(MANAGER_DIR, join(root, 'node_modules', 'dsh-life-pack'), 'junction');
+  } catch (e) {
+    rmSync(root, { recursive: true, force: true });
+    throw new Error('模拟安装缺总管链接（dsh-life-pack 是插件声明过的依赖）：' + (e instanceof Error ? e.message : String(e)));
+  }
   return {
     root,
     pluginPkgPath: join(pluginDir, 'package.json'),
-    skillPkgPath: join(skillDir, 'package.json'),
+    skillPkgPath: join(root, 'node_modules', SKILL_NAME, 'package.json'),
     bridge: join(pluginDir, 'dist', 'bridge.js'),
   };
+}
+
+/** 用完就清（force 吞掉 Windows 上的偶发占用；清理失败不许把判据染红）。 */
+function dispose(install) {
+  try { rmSync(install.root, { recursive: true, force: true }); } catch { /* 清理失败不影响判据 */ }
 }
 
 function writeJson(path, value) {
@@ -138,23 +163,39 @@ describe('#130 面板版本行动态读取已安装版本', () => {
       const P2 = '9.9.902';
       const S2 = '8.8.803';
       const install = makeFakeInstall(P1, S1);
-      const host = await hostOf(install.bridge);
-      assert.equal((await panelVersionLine(host)).text, line(P1, S1), '装新版插件后版本行须说真话');
-      // 第二轮：只改两处 package.json 的 version（不重建、不改任何源码行、不动产物）
-      writeJson(install.pluginPkgPath, { ...readJson(install.pluginPkgPath), version: P2 });
-      writeJson(install.skillPkgPath, { ...readJson(install.skillPkgPath), version: S2 });
-      assert.equal((await panelVersionLine(host)).text, line(P2, S2), '再 bump package.json 版本行仍须跟随（无缓存、无源码参与）');
-      // 源码与产物全程未被触碰：版本只能来自 package.json，不来自任何源码行
-      assert.equal(treeHash(join(PKG_DIR, 'src'), ['.ts']), srcHashBefore, '本测试不得触碰源码');
-      assert.equal(fileHash(join(DIST, 'bridge.js')), bridgeHashBefore, '本测试不得触碰产物');
+      try {
+        const host = await hostOf(install.bridge);
+        assert.equal((await panelVersionLine(host)).text, line(P1, S1), '装新版插件后版本行须说真话');
+        // 第二轮：只改两处 package.json 的 version（不重建、不改任何源码行、不动产物）
+        writeJson(install.pluginPkgPath, { ...readJson(install.pluginPkgPath), version: P2 });
+        writeJson(install.skillPkgPath, { ...readJson(install.skillPkgPath), version: S2 });
+        assert.equal((await panelVersionLine(host)).text, line(P2, S2), '再 bump package.json 版本行仍须跟随（无缓存、无源码参与）');
+        // 源码与产物全程未被触碰：版本只能来自 package.json，不来自任何源码行
+        assert.equal(treeHash(join(PKG_DIR, 'src'), ['.ts']), srcHashBefore, '本测试不得触碰源码');
+        assert.equal(fileHash(join(DIST, 'bridge.js')), bridgeHashBefore, '本测试不得触碰产物');
+      } finally {
+        dispose(install);
+      }
     });
 
-    it('读值落点＝已安装位置的 package.json（插件自身＋已装 skill 包），不是源码常量', async () => {
+    it('读值落点＝已安装位置那两份 manifest（插件自身＋已装 skill 包），不是源码常量', async () => {
       const install = makeFakeInstall('9.9.903', '8.8.804');
-      const host = await hostOf(install.bridge);
-      assert.equal(host.pluginPackageJsonPath(), install.pluginPkgPath, '插件版本须读自己的 package.json');
-      assert.equal(host.skillPackageJsonPath(), install.skillPkgPath, 'skill 版本须读已安装 skill 包的 package.json');
-      assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.903', skill: '8.8.804' });
+      try {
+        const host = await hostOf(install.bridge);
+        // #918 阶段三：落点不再靠 path 函数返回的字符串证明（那个函数已删），改由**读数**证明——
+        // 改写哪一份 manifest，哪一格就跟着变、另一格不动 ⇒ 两格各自落在已装的那份文件上。
+        assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.903', skill: '8.8.804' });
+        writeJson(install.skillPkgPath, { ...readJson(install.skillPkgPath), version: '8.8.805' });
+        assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.903', skill: '8.8.805' },
+          'skill 那一格读的是已装技能包那份 manifest');
+        writeJson(install.pluginPkgPath, { ...readJson(install.pluginPkgPath), version: '9.9.904' });
+        assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.904', skill: '8.8.805' },
+          '插件那一格读的是插件包自己那份 manifest');
+        assert.notEqual(host.readInstalledVersions().plugin, PLUGIN_PKG.version,
+          '哨兵值法：读到的不是仓库那份 manifest 的版本（更不是任何源码常量）');
+      } finally {
+        dispose(install);
+      }
     });
   });
 
@@ -184,56 +225,123 @@ describe('#130 面板版本行动态读取已安装版本', () => {
   });
 
   describe('③ 读失败降级：unknown 骨架、余部正常、无异常、host 有 warn', () => {
-    it('host 侧：文件缺席／JSON 损坏／version 字段缺失 ⇒ 该侧 unknown、另一侧照常，并写 warn（含路径与原因）', () => {
+    it('host 侧：manifest 缺席／JSON 损坏／version 字段缺失 ⇒ 该侧 unknown、另一侧照常，并写 warn（含包名与原因）', async () => {
+      // #918 阶段三：失败态注入改走「模拟安装里那份 manifest 坏掉／缺席」——
+      // 读值走总管共用件（按包名解析已装包），不再有 pluginPath／skillPath／logger 三个注入口。
       const warns = [];
-      const logger = { warn: (...a) => warns.push(a.map(String).join(' ')) };
-      const good = join(PKG_DIR, 'package.json');
-      const missing = join(tmpdir(), 't130-absent-' + Date.now(), 'package.json');
-
-      const r1 = readInstalledVersions({ pluginPath: good, skillPath: missing, logger });
-      assert.equal(r1.skill, 'unknown', '读不到侧须 unknown');
-      assert.equal(r1.plugin, PLUGIN_PKG.version, '降级只影响该侧，另一侧照常');
-      assert.ok(warns.some((w) => w.includes('version read failed (skill)') && w.includes(missing)),
-        'warn 须含读了哪个路径，实际：' + warns.join(' | '));
-
-      const dir = mkdtempSync(join(tmpdir(), 't130-bad-'));
-      const broken = join(dir, 'package.json');
-      writeFileSync(broken, '{ 这不是 JSON', 'utf8');
-      warns.length = 0;
-      const r2 = readInstalledVersions({ pluginPath: broken, skillPath: SKILL_PKG_PATH, logger });
-      assert.equal(r2.plugin, 'unknown');
-      assert.equal(r2.skill, SKILL_VERSION);
-      assert.ok(warns.some((w) => w.includes('parse failed') && w.includes(broken)),
-        'warn 须含失败原因，实际：' + warns.join(' | '));
-
-      const noField = join(dir, 'no-version.json');
-      writeJson(noField, { name: SKILL_NAME });
-      warns.length = 0;
-      assert.deepEqual(readInstalledVersions({ pluginPath: noField, skillPath: missing, logger }),
-        { plugin: 'unknown', skill: 'unknown' }, '两侧皆读不到 ⇒ 双 unknown，骨架不破');
-      assert.equal(warns.length, 2, '两侧读失败各留一条 warn');
-
-      // 永不抛（任何失败组合都不炸 host）
-      for (const opts of [{}, { pluginPath: missing }, { skillPath: missing }, { pluginPath: dir, skillPath: dir, logger: {} }]) {
-        assert.doesNotThrow(() => readInstalledVersions(opts));
-      }
-    });
-
-    it('host 侧：默认日志通道也留 warn（console.warn，含路径与原因）', () => {
-      const seen = [];
       const original = console.warn;
-      console.warn = (...a) => { seen.push(a.map(String).join(' ')); };
+      console.warn = (...a) => { warns.push(a.map(String).join(' ')); };
       try {
-        readInstalledVersions({
-          pluginPath: join(tmpdir(), 't130-none-a', 'package.json'),
-          skillPath: join(tmpdir(), 't130-none-b', 'package.json'),
-        });
+        // ① 技能包 manifest 缺席（技能没装进来）⇒ 只坏一侧
+        const miss = makeFakeInstall('9.9.905', null);
+        try {
+          const host = await hostOf(miss.bridge);
+          assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.905', skill: 'unknown' },
+            '读不到侧须 unknown，另一侧照常');
+          assert.equal(warns.length, 1, '坏一侧留一条 warn');
+          assert.ok(warns[0].includes('version read failed') && warns[0].includes(SKILL_NAME),
+            'warn 须点是哪个包读了没读到，实际：' + warns.join(' | '));
+        } finally {
+          dispose(miss);
+        }
+
+        // ② manifest 不是 JSON ⇒ 只坏一侧
+        const broken = makeFakeInstall('9.9.906', '8.8.806');
+        try {
+          writeFileSync(broken.skillPkgPath, '{ 这不是 JSON', 'utf8');
+          warns.length = 0;
+          const host = await hostOf(broken.bridge);
+          assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.906', skill: 'unknown' },
+            'JSON 坏了那一侧 unknown，另一侧照常');
+          assert.ok(warns.some((w) => w.includes('version read failed') && w.includes(SKILL_NAME)),
+            'warn 须含失败侧包名，实际：' + warns.join(' | '));
+        } finally {
+          dispose(broken);
+        }
+
+        // ③ version 字段缺失 ⇒ 该侧 unknown，warn 带上原因原文
+        const noField = makeFakeInstall('9.9.907', '8.8.807');
+        try {
+          writeJson(noField.skillPkgPath, { name: SKILL_NAME });
+          warns.length = 0;
+          const host = await hostOf(noField.bridge);
+          assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.907', skill: 'unknown' }, 'version 字段缺失 ⇒ unknown');
+          assert.ok(warns.some((w) => w.includes('version read failed') && w.includes('version field missing')),
+            'warn 须含失败原因（version 字段缺失），实际：' + warns.join(' | '));
+        } finally {
+          dispose(noField);
+        }
+
+        // ④ 两侧皆坏 ⇒ 双 unknown，骨架不破，两条 warn
+        const both = makeFakeInstall('9.9.908', null);
+        try {
+          rmSync(both.pluginPkgPath);
+          warns.length = 0;
+          const host = await hostOf(both.bridge);
+          assert.deepEqual(host.readInstalledVersions(), { plugin: 'unknown', skill: 'unknown' },
+            '两侧皆读不到 ⇒ 双 unknown，骨架不破');
+          assert.equal(warns.length, 2, '两侧读失败各留一条 warn');
+        } finally {
+          dispose(both);
+        }
       } finally {
         console.warn = original;
       }
-      assert.equal(seen.length, 2, '两侧读失败须各留一条 warn（on-call 的可观测信号）');
-      assert.ok(seen.every((w) => w.includes('version read failed') && w.includes('path=') && w.includes('reason=')),
-        'warn 须含路径与原因，实际：' + seen.join(' | '));
+    });
+
+    it('host 侧：默认日志通道也留 warn（console.warn，含包名与原因）', async () => {
+      const seen = [];
+      const original = console.warn;
+      const install = makeFakeInstall('9.9.909', null); // 技能包 manifest 缺席
+      console.warn = (...a) => { seen.push(a.map(String).join(' ')); };
+      try {
+        const host = await hostOf(install.bridge);
+        assert.deepEqual(host.readInstalledVersions(), { plugin: '9.9.909', skill: 'unknown' });
+      } finally {
+        console.warn = original;
+        dispose(install);
+      }
+      assert.equal(seen.length, 1, '读失败须留一条 warn（on-call 的可观测信号）');
+      assert.ok(seen.every((w) => w.includes('version read failed') && w.includes('reason=')),
+        'warn 须含原因，实际：' + seen.join(' | '));
+      assert.ok(seen.every((w) => w.includes(SKILL_NAME)), 'warn 须缺哪个包就报哪个包');
+    });
+
+    it('host 侧：manifest 各种坏法都不抛（永不抛，任何失败组合都不炸 host）', async () => {
+      // 坏法都落在**读值**这一层。插件自己那份 manifest 若是坏 JSON，Node 的 ESM 加载器会先抛
+      // ERR_INVALID_PACKAGE_CONFIG（连 bridge.js 都进不来）——那是加载器级、不是本桥能兜的失败，
+      // 故这里的「插件侧」坏法都用**仍是合法 JSON 对象**的 manifest（缺字段／字段类型不对）。
+      const cases = [
+        ['插件 manifest 缺席', (i) => rmSync(i.pluginPkgPath)],
+        ['技能 manifest 缺席', (i) => rmSync(i.skillPkgPath)],
+        ['两份都缺席', (i) => { rmSync(i.pluginPkgPath); rmSync(i.skillPkgPath); }],
+        ['插件 manifest 无 version 字段', (i) => writeJson(i.pluginPkgPath, { ...PLUGIN_PKG, version: undefined })],
+        ['插件 version 是数字', (i) => writeJson(i.pluginPkgPath, { ...PLUGIN_PKG, version: 42 })],
+        ['技能 manifest 不是 JSON', (i) => writeFileSync(i.skillPkgPath, 'nope', 'utf8')],
+        ['技能 manifest 是 JSON 但不是对象', (i) => writeFileSync(i.skillPkgPath, '[]', 'utf8')],
+        ['技能 version 是空白串', (i) => writeJson(i.skillPkgPath, { ...readJson(SKILL_PKG_PATH), version: '   ' })],
+      ];
+      const original = console.warn;
+      console.warn = () => {};
+      try {
+        for (const [name, breakIt] of cases) {
+          const install = makeFakeInstall('9.9.910', '8.8.810');
+          try {
+            breakIt(install);
+            const host = await hostOf(install.bridge);
+            let got;
+            assert.doesNotThrow(() => { got = host.readInstalledVersions(); }, name + ' 不得抛');
+            for (const side of ['plugin', 'skill']) {
+              assert.equal(typeof got[side], 'string', name + '：' + side + ' 那一格须仍是字符串（骨架不破）');
+              assert.ok(got[side].length > 0, name + '：' + side + ' 那一格不得为空');
+            }
+          } finally {
+            dispose(install);
+          }
+        }
+      } finally {
+        console.warn = original;
+      }
     });
 
     it('host 侧：版本键走 package.json 读取路（不经技能 CLI spawn），双坏也返回未知骨架而不抛', async () => {
@@ -241,12 +349,16 @@ describe('#130 面板版本行动态读取已安装版本', () => {
       assert.deepEqual(direct, { plugin: PLUGIN_PKG.version, skill: SKILL_VERSION }, '版本键回执须是 {plugin, skill}（不是 CLI envelope 的 key/data 形状）');
       // 双 package.json 都被拿掉（读失败两侧皆中）⇒ 返回 unknown 骨架、不抛
       const install = makeFakeInstall(PLUGIN_PKG.version, SKILL_VERSION);
-      const host = await hostOf(install.bridge);
-      rmSync(install.pluginPkgPath);
-      rmSync(install.skillPkgPath);
-      let both;
-      assert.doesNotThrow(() => { both = host.readViaCli(VERSION_READ_KEY, {}); });
-      assert.deepEqual(both, { plugin: 'unknown', skill: 'unknown' });
+      try {
+        const host = await hostOf(install.bridge);
+        rmSync(install.pluginPkgPath);
+        rmSync(install.skillPkgPath);
+        let both;
+        assert.doesNotThrow(() => { both = host.readViaCli(VERSION_READ_KEY, {}); });
+        assert.deepEqual(both, { plugin: 'unknown', skill: 'unknown' });
+      } finally {
+        dispose(install);
+      }
     });
 
     it('client 侧：通道缺席／抛错／错误信封／空值 ⇒ 双 unknown，永不抛', async () => {
