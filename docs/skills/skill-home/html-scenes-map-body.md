@@ -120,6 +120,7 @@
 - [交付链接合：数据与过程命令缺省落族页（页族装配接进 cmd_read）＋ package.json files 补族页模板子目录](https://github.com/FeatherHunter/ilife/issues/872) — 新增 `src/render/familyPage.ts`（`resolvePageFamily` 两层解析 → 按候选域装入 `dist/<域>/pages/<族>.js` → 失败返回 `null`，不猜名）；`cmd_read.ts` 的缺省落盘与 `--html` 显式出口都先走族页，解析不到族即降级 21 模板分节页并在 stderr 记 note（退出码不变）；`files` 补 `templates/**`（装上包能读到 46 份族页模板）。独立复核（2026-09-22，HEAD 5f14debc）：四条判据复跑成立——包内 312/312、隔离家目录 39/39 exit-0 场景落盘即族页、`gen:check` exit 0、族模板改名负向探针成立（降级＋note＋退出码不变，改回即恢复）。
 - [物品管理域（二）回执数据缺口：场景数据加厚（3-2／3-5／3-7／4-x）](https://github.com/FeatherHunter/ilife/issues/864) — 回执一句话不变多带 detail 载荷，四条缺口写真（快照／来源清单／关系类型／标签分类明细），新测试 14/14＋域测试 27/27 全绿，100% 关闭
 - [种子发现：照片类型与多照片排序无 schema 落点（5-1／5-2）](https://github.com/FeatherHunter/ilife/issues/857) — 裁决：缺口在**代码侧不在设计侧**——老技能（权威）早有 `photo(item_id, sort_order, photo_type, file_path, created_at)` 表，且**生产库 `home.db` 里已存在（0 行）**，是新技能 `db.ts` 建表清单漏了它；处置＝照权威 DDL 补齐＋命令读写类型/顺序/主图＋种子补类型＋5-1／5-2／5-3 判据重跑（另立 [#889](https://github.com/FeatherHunter/ilife/issues/889)），生产库零改动。
+- [新居家管家命名纪律＋链路四段呈现＋老原型借鉴](https://github.com/FeatherHunter/ilife/issues/859) — 产物名改 `<命令中文名>_<戳>.html`：场景 id 不再进文件名与运行期代码（全包去码 827→0，立审计门 `scripts/audit-naming.mjs` 并接进包内 test 门）；改名连带修掉一处静默退化（结构判据认族口原按旧文件名段 `_(场景 id)_` 认族，已改「命令中文名开头」，由新产物 70/70 逐族真查证回覆盖）；薄规格落 `naming-chain-precedent.md`；10 份仓库外原型登记进册子 §六。
 
 ## Not yet specified
 
