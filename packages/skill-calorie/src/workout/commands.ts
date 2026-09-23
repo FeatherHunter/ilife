@@ -64,12 +64,16 @@ export const WORKOUT_COMMANDS = [
   { kind: 'write', key: 'calorie.workout.plan-delete-day', title: '删某天训练', wakeWord: '确认删某天训练', run: writePlanDeleteDay, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.plan-delete-day --params \'{"week":1,"dayOfWeek":3}\'' },
   { kind: 'write', key: 'calorie.workout.plan-update-movement', title: '改动作', wakeWord: '确认改动作', run: writePlanUpdateMovement, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.plan-update-movement --params \'{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}\'' },
   { kind: 'write', key: 'calorie.workout.plan-delete', title: '撤销训练计划', wakeWord: '确认撤销训练计划', run: writePlanDelete, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.plan-delete --params \'{"confirm":true}\'' },
+  /* #943 · 五条键的「例」列：训记那两条（只碰训记，种子的训记入口可按配置指挡板）已改回**实跑形态**；
+     落地三条仍是**预演形态**——真落地链的第一步要写飞书日历（`schedule.plan.write` 的远端门要本机
+     `lark-cli` 已登录），标准种子环境到不了，而「例」列是「照抄即跑」、示例门（`#99`）要求它 exit 0。
+     两态各是什么、实跑怎么跑，见 `SKILL.md`「联动速查」节首那条说明。 */
   { kind: 'write', key: 'calorie.workout.land', title: '落地训练', wakeWord: '落地训练', run: writeLand, example: 'calorie-cmd-read calorie.workout.land --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.land-weekend', title: '落地到本周末', wakeWord: '落地到本周末', run: writeLandWeekend, example: 'calorie-cmd-read calorie.workout.land-weekend --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'write', key: 'calorie.workout.land-monthend', title: '落地到本月底', wakeWord: '落地到本月底', run: writeLandMonthend, example: 'calorie-cmd-read calorie.workout.land-monthend --params \'{"date":"2026-09-07","dryRun":true}\'' },
   { kind: 'read', key: 'calorie.view.xunji-key', shape: 'stat', title: '查训记KEY状态', wakeWord: '查训记KEY状态', run: viewXunjiKeyStatus, example: 'calorie-cmd-read calorie.view.xunji-key' },
-  { kind: 'write', key: 'calorie.workout.xunji-push', title: '同步到训记', wakeWord: '同步到训记', run: writeXunjiPush, example: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07","dryRun":true}\'' },
-  { kind: 'write', key: 'calorie.workout.xunji-backfill', title: '拉训记实绩', wakeWord: '拉训记实绩', run: writeXunjiBackfill, example: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1,"dryRun":true}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-push', title: '同步到训记', wakeWord: '同步到训记', run: writeXunjiPush, example: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"2026-09-07"}\'' },
+  { kind: 'write', key: 'calorie.workout.xunji-backfill', title: '拉训记实绩', wakeWord: '拉训记实绩', run: writeXunjiBackfill, example: 'calorie-cmd-read calorie.workout.xunji-backfill --params \'{"date":"2026-09-07","days":1}\'' },
   { kind: 'write', key: 'calorie.workout.xunji-key-set', title: '设训记KEY', wakeWord: '设训记KEY', run: writeXunjiKeySet, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.xunji-key-set --params \'{"xunjiKey":"<KEY值>"}\'' },
   { kind: 'write', key: 'calorie.workout.xunji-key-clear', title: '清训记KEY', wakeWord: '清训记KEY', run: writeXunjiKeyClear, doc: workoutReceiptDoc, example: 'calorie-cmd-read calorie.workout.xunji-key-clear --params \'{"confirm":true}\'' },
 ] satisfies readonly CommandSpec[];

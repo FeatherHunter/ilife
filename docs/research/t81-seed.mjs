@@ -56,6 +56,10 @@ export const SEED_TODAY = '2026-09-07';
  *  与技能侧测试基座（`packages/skill-calorie/test/helpers/config-test.mjs#freezeClock`）**同一件**，不另写第二份。 */
 const FREEZE_CLOCK_CJS = join(ROOT, 'packages', 'skill-calorie', 'test', 'freeze-clock.cjs');
 
+/** 训记出口的挡板（#943）：指到本仓既有的那个 fixture（技能侧 `t612`／`t613`／`t614` 用的同一件）。
+ *  它按 `argv[0]` 认身份，`push-plan`／`backfill` 缺省吐成功回执；不给 `T676_LAND_FIXTURE` 即全绿。 */
+const XUNJI_STUB = join(ROOT, 'packages', 'skill-calorie', 'test', 'helpers', 'land-fixture.mjs');
+
 /** 子进程的钉钟环境：`--require` 预载 ＋ `FAKE_NOW_ISO`（缺一不可——只给变量不预载没人读它）。
  *  当刻进程已有 `NODE_OPTIONS`（如测试运行器自己那些）时**追加**，不覆盖。 */
 function fakeClockEnv() {
@@ -201,7 +205,15 @@ export function createHarness() {
     // （2026-09-22 实测：示例门禁把真库写脏）。两格（USERPROFILE／HOME）与本仓测试基座同口径。
     const fakeHome = join(dir, 'home');
     mkdirSync(join(fakeHome, '.ilife'), { recursive: true });
-    writeFileSync(join(fakeHome, '.ilife', 'calorie.yaml'), 'db:\n  dir: ' + JSON.stringify(dir) + '\n', 'utf8');
+    // #943 · 训记入口指到本仓既有的挡板：落地训练族五条键的**实跑**形态要调训记两步
+    // （`push-plan`／`backfill`），而种子环境无 KEY 无网 ⇒ 实跑恒非 0 ⇒ 「例」列只能写成预演形态，
+    // 照抄示例的 AI 一次真落地也做不成。这是**生产自己留的那一个配置口**（`xunjiRunner.ts` 件头：
+    // 外调只留 `xunji.cli` 一个口），不是为门新开的后门；作息／备忘两步走真实兄弟包（家目录已隔离）。
+    writeFileSync(
+      join(fakeHome, '.ilife', 'calorie.yaml'),
+      'db:\n  dir: ' + JSON.stringify(dir) + '\n' + 'xunji:\n  cli: ' + JSON.stringify(XUNJI_STUB) + '\n',
+      'utf8',
+    );
     const toks = tokenize(effective);
     const r = spawnSync(NODE, [CLI, ...toks.slice(1)], {
       encoding: 'utf8',

@@ -79,6 +79,8 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 
 ## 联动速查（构建期注入，勿手改）
 
+- **落地训练族五条键（落地训练／落地到本周末／落地到本月底／同步到训记／拉训记实绩）分两态**：唤醒词说的是「把计划**真正落地执行**」，而这条链要往外写三处——作息（写飞书日历，要本机飞书命令行已登录）、备忘（记心愿）、训记（要 `xunji.key`）。「例」列是**照抄即跑**的那一行，示例门跑在一个没有飞书登录、也没有训记 KEY 的标准种子库上，所以往下写飞书那三条的示例是**预演形态**（`{"dryRun":true}`，只看不写）：**要真落地就把 `dryRun` 去掉**——预演页第一位也印着实跑命令原文，复制即用；预演只回答「这天几段待落地」，不代表落地成功。训记那两条只碰训记，示例已是实跑形态。
+
 <!-- HELP-AUTO-START -->
 | 唤醒词 | key | shape | 预检页 | 流程 | 例 |
 |---|---|---|---|---|---|
@@ -215,10 +217,10 @@ calorie-cmd-read calorie.help.lookup --params '{"q":"看今日主页"}'
 | 确认改训练计划 | calorie.workout.plan-update | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update --params '{"title":"示例改名"}'` |
 | 确认改某天训练 | calorie.workout.plan-update-day | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update-day --params '{"week":1,"dayOfWeek":3,"newLabel":"下肢＋核心"}'` |
 | 确认改动作 | calorie.workout.plan-update-movement | receipt |  |  | `calorie-cmd-read calorie.workout.plan-update-movement --params '{"oldMovement":"硬拉","newMovement":{"name":"杠铃划船"}}'` |
-| 拉训记实绩 | calorie.workout.xunji-backfill | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-backfill --params '{"date":"<日期>","days":1,"dryRun":true}'` |
+| 拉训记实绩 | calorie.workout.xunji-backfill | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-backfill --params '{"date":"<日期>","days":1}'` |
 | 清训记KEY | calorie.workout.xunji-key-clear | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-key-clear --params '{"confirm":true}'` |
 | 设训记KEY | calorie.workout.xunji-key-set | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-key-set --params '{"xunjiKey":"<KEY值>"}'` |
-| 同步到训记 | calorie.workout.xunji-push | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-push --params '{"date":"<日期>","dryRun":true}'` |
+| 同步到训记 | calorie.workout.xunji-push | receipt |  |  | `calorie-cmd-read calorie.workout.xunji-push --params '{"date":"<日期>"}'` |
 
 「唤醒词」列是这条命令的代表词，四个来源逐条自述：饮食场景的命令取它自己那条词（源＝路由层，25 条）；目标管理场景 06 的命令取它自己那条词（源＝路由层场景 06，新词优先否则冻结首词，9 条，缺项构建期硬失败）；其余取命令声明里的代表词（`gen-cli.mjs` 写 `REPR` 表，89 条）；只为页面服务、没有唤醒词的命令列命令名自身（14 条）。本生成器不另存第二份唤醒词。「预检页」列是该写命令**先出的预检确认页命令**（查询命令与「读—确认—写」那一类留空，事实出处＝`src/body/wizardPlate.ts` 的 `WIZARD_WRITE_KEYS`）；「流程」列是它服务的工作流程名。三列的事实都住各自能力目录的声明与路由，本表由 `pnpm help:build` 生成。
 体重一族 58 条唤醒词各归**一条**工作流程（八条流程的步骤与逐条对照见「场景 03 体重工作流程」一节与 `docs/skills/skill-calorie/t338-流程接线-证据.md` §3）；流程名的事实住命令声明（`src/weight/commands.ts` 与 `src/goal/commands.ts` 的 `flows`），本表由 `pnpm help:build` 生成。
