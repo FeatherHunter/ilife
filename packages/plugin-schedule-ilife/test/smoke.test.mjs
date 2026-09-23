@@ -27,9 +27,11 @@ describe('dsh-schedule-ilife 烟囱', () => {
   it('#50 安装布局：单品声明总管同版本线 ＋ 技能精确 pin（正式版号，无 workspace）', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
-    // 本批发版窗口（作息线首发 0.2.0）：总管走 ^0.2.0 同版本线；
+    // 2026-09-23 口径改：总管走工作区版本的**精确版**（原先 `^0.3.` 会把「装到哪一版总管」交给解析器与
+    // 机器存量——只更新一家时顶层留旧总管、插件包内自带新总管，两个总管同时在机器上）；
     // 技能按 #129 用**精确 pin**——caret ＋ 存量 lockfile 会让旧 skill 残留，exact 才强制重解。
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.3\./);
+    const packVer = JSON.parse(readFileSync(join(here, '..', '..', 'plugin-manager', 'package.json'), 'utf8')).version;
+    assert.equal(dep['dsh-life-pack'], packVer);
     // #129：断言与版本号解耦——与 SKILL 包当前 version 逐字比对（照 plugin-bill-ilife 烟囱同形）。
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-schedule', 'package.json'), 'utf8')).version;
     assert.equal(dep['skill-schedule'], skillVer);

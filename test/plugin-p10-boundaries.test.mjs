@@ -28,14 +28,15 @@ describe('P10 依赖方向', () => {
     const depBlob = JSON.stringify({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies });
     for (const n of SINGLE_NPMS) assert.ok(!depBlob.includes(n), '总管不许依赖单品：' + n);
     // #48 样板线：plugin-calorie 总管依赖已转正式版号（B① 全部换已发布号）；#50 首对复制 plugin-chef、home 对 plugin-home-ilife、bill 对 plugin-bill-ilife、schedule 对 plugin-schedule-ilife、memo 对复制 plugin-memo-ilife 同改（见 docs/skill-landing-r2.md）。
-    // 本批发版窗口扩到备忘录线 → 作息线 → 记账线／大厨线／居家线：总管＝工作区**同版本线 caret**，
-    // 技能＝**#129 精确 pin**（caret ＋ 存量 lockfile 会让旧 skill 残留）。两个期望值都**现取自工作区**
+    // 2026-09-23 口径改：总管与技能都走**精确版**——caret ＋ 机器存量会让「装到哪一版」由存量决定
+    // （技能那条 #129 已定；总管那条实测过「只更新一家 ⇒ 顶层旧总管 ＋ 插件包内新总管」两个总管并存，
+    // 见 `docs/agents/更新链路-配套不变式-方案.md` 第三节）。两个期望值都**现取自工作区**
     // （#123 口径：断言与版本号解耦——旧实现硬编码 `^0.1.0`，发版即红）。
     const SKILL_OF = { 'plugin-calorie': 'skill-calorie', 'plugin-chef': 'skill-chef', 'plugin-home-ilife': 'skill-home', 'plugin-bill-ilife': 'skill-bill', 'plugin-schedule-ilife': 'skill-schedule', 'plugin-memo-ilife': 'skill-memo-ilife' };
     const packVer = pkg('plugin-manager').version;
     for (const d of SINGLES) {
       const j = pkg(d);
-      assert.equal(j.dependencies?.['dsh-life-pack'], '^' + packVer, d + ' 总管硬依赖口径（工作区同版本线 caret）');
+      assert.equal(j.dependencies?.['dsh-life-pack'], packVer, d + ' 总管硬依赖口径（工作区精确版）');
       assert.equal(j.dependencies?.[SKILL_OF[d]], pkg(SKILL_OF[d]).version, d + ' 须精确 pin 工作区技能版本（#129）');
     }
   });

@@ -72,36 +72,24 @@ let bad = 0;
 const ok = (m) => console.log('OK: ' + m);
 const fail = (m) => { console.error('FAIL: ' + m); bad++; };
 
-/** #123：依赖范围断言版本无关化。
+/** #123 起的「版本无关化」断言；2026-09-23 口径统一成**精确 pin 工作区版本**。
  *
- * 旧实现硬编码 `/^\^0\.1\./`（:84,:86）→ 发版一改 range（`^0.1.0` → `^0.2.0`）门禁即红，
- * 与「发版」这件事本身冲突。新实现保留两条**有意义**的语义、去掉版本硬编码：
+ * 旧实现（#123）对「总管」那条只要求 caret ＋ 同 major.minor，理由写「同版本线」；2026-09-23 统一改精确版，
+ * 因为 caret 把「装到哪一版」交给了解析器与机器存量，实测三种结果（`docs/agents/更新链路-配套不变式-方案.md` 第三节）：
+ *   · 干净机器装 0.3.12 那套技能 → 公共层落到 0.3.13（区间内最高版，一个从没一起验证过的组合）；
+ *   · 有旧存量的机器（使用范围自己声明 `base-link-core: 0.3.7`）→ 停在 0.3.7 不动；
+ *   · 只更新一家 → 顶层留旧总管、插件包内自带新总管（两个总管同时在机器上）。
+ * 精确 pin 让任何机器、任何日期装同一套都得同一套。判据两条（版本号一律现取自工作区，不硬编码）：
  *   ① 必须声明该依赖（缺失即红）；
- *   ② 声明的 caret 的 `major.minor` 必须等于该依赖在**工作区**的实际版本
- *      （`^0.2.0` ↔ 工作区 `0.2.0` 通过；`^0.1.0` ↔ 工作区 `0.2.0` 红）——即「同版本线」，
- *      比 `/^\^\d+\.\d+\.\d+$/`（会放行 `^9.9.9`，R1 FX-R1-10）强，且不含任何具体版本号。
- *   形态上只认 `^major.minor.patch`：`workspace:`（:78 另查）、tag、`>=…<…` 区间一律红。
- *   唯一例外（#129）：插件→其单品必须精确 pin（caret＋存量 lockfile 会让旧 skill
- *   残留），且 pin 值逐字等于该单品在**工作区**的实际版本（与 skill-pin.test.mjs
- *   同语义；`0.2.2` ↔ 工作区 `0.2.2` 通过，其余一律红）。
+ *   ② 声明值必须逐字等于该依赖在**工作区**的实际版本（`0.3.13` ↔ 工作区 `0.3.13` 通过；`^0.3.13`、`0.3.7` 一律红）。
  */
 function assertSameVersionLine(dependent, depName, range) {
   if (!range) { fail(dependent + ' 未声明 ' + depName); return; }
   if (!DIRM[depName]) { fail(dependent + ' 的 ' + depName + ' 不在本仓包清单（无法比对工作区版本）'); return; }
   const want = pkgJson(depName).version;
-  if (PLUGIN_OF[dependent] === depName) {
-    if (range === want) { ok(dependent + ' 精确 pin ' + depName + ' ' + range + '（工作区 ' + want + '，#129）'); return; }
-    fail(dependent + ' 的 ' + depName + ' 必须精确 pin 工作区版本 ' + want + '（#129），现为「' + range + '」');
-    return;
-  }
-  const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(range);
-  if (!m) { fail(dependent + ' 的 ' + depName + ' 范围「' + range + '」非 ^major.minor.patch 形态'); return; }
-  const [maj, min] = String(want).split('.');
-  if (m[1] !== maj || m[2] !== min) {
-    fail(dependent + ' 的 ' + depName + ' 范围「' + range + '」与工作区版本 ' + want + ' 的 major.minor 不一致');
-    return;
-  }
-  ok(dependent + ' 声明 ' + depName + ' ' + range + '（工作区 ' + want + '，同版本线）');
+  if (range === want) { ok(dependent + ' 精确 pin ' + depName + ' ' + range + '（工作区 ' + want + '）'); return; }
+  fail(dependent + ' 的 ' + depName + ' 必须精确 pin 工作区版本 ' + want + '，现为「' + range + '」'
+    + '（范围写法会让装机结果取决于机器存量与安装日期）');
 }
 
 function gatePre() {

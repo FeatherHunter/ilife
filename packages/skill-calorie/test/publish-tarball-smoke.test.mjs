@@ -125,17 +125,16 @@ test('S1-① dist 引用的 base-paint 子路径必须全在 base-paint exports 
     const abs = join(baseDir, target);
     assert.ok(existsSync(abs) && statSync(abs).isFile(), `exports ${sub} → ${target} 在包内无对应文件（files 未随包发）`);
   }
-  // 同版本线（与 publish 门 G1 B③ 同语义）：skill 的 floor 必须跟住工作区 base-paint 的 major.minor，
-  // 否则发版后用户按 range 装到旧 base-paint 即复现本 S1。
+  // 精确 pin（2026-09-23 改口径：原先是「floor 跟住 major.minor」）：skill 声明的 base-paint 必须逐字
+  // 等于工作区那一版，否则用户按范围装会拿到另一个版本——干净机器取区间内最高版（未验证组合），
+  // 有存量的机器停在旧版（本 S1 的原形）。
   const skillPkg = JSON.parse(readFileSync(join(skillDir, 'package.json'), 'utf8'));
   const range = skillPkg.dependencies?.['base-paint'];
-  const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(String(range ?? ''));
-  assert.ok(m, `skill 对 base-paint 的声明非 ^major.minor.patch 形：${range}`);
-  const [maj, min] = String(basePkg.version).split('.');
+  assert.match(String(range ?? ''), /^\d+\.\d+\.\d+$/, `skill 对 base-paint 的声明非精确 x.y.z 形：${range}`);
   assert.equal(
-    `${m[1]}.${m[2]}`,
-    `${maj}.${min}`,
-    `skill 声明 base-paint ${range} 与工作区 ${basePkg.version} 非同版本线`,
+    range,
+    basePkg.version,
+    `skill 声明 base-paint ${range} 与工作区 ${basePkg.version} 不逐字相等`,
   );
 });
 

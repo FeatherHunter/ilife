@@ -5,13 +5,20 @@
  * 病（#861 实测）：六技能的配置表把一批键删掉、改由「已退休键清单」交给公共层，
  * 而 `package.json` 里那行仍写 `"base-link-core": "^0.3.0"`——装机时 pnpm 沿用锁里那份 0.3.6
  * （它满足 `^0.3.0`，却不懂退休清单），于是六个配置面板全部读不出配置。
- * 根子是：**声明允许的最低版本，并不是我们构建与验证它时用的那一版**。这道门钉死这件事。
+ * 根子是：**声明允许的最低版本，并不是我们构建与验证它时用的那一版**。
  *
- * 判据（一条）：**消费方在 `dependencies`／`peerDependencies` 里声明的 base-* 下界，
- * 必须逐字等于仓内那个 base 包的版本**（`^0.3.7` 对仓内 0.3.7）。
- *   · 下界更低 ⇒ 红（#861 的原形：声明放行一个我们没验证过的旧公共层）；
- *   · 下界更高 ⇒ 红（要求一个还没发出去的版本，装机必然找不到）；
- *   · 范围写法认不出、或 base 包名在 `packages/` 里找不到 ⇒ 红（不给「看不出来就放行」留口子）；
+ * 第二轮（2026-09-23）：下界只是 `^` 这条病的一半。#861 把下界抬到「仓内那一版」之后，caret
+ * 仍把**装到哪一版**交给解析器与存量：实测（`docs/agents/更新链路-配套不变式-方案.md` 第三节）
+ * 同一台干净机器装 0.3.12 那套技能，公共层落到 **0.3.13**（区间内最高版，一个从没一起验证过的组合）；
+ * 而有旧存量的机器（使用范围自己声明 `base-link-core: 0.3.7`）又停在 **0.3.7** 不动。
+ * ⇒ **声明必须是精确版本**，装出来的那一套才与机器存量、安装日期无关。
+ *
+ * 判据（一条）：**消费方在 `dependencies`／`peerDependencies` 里声明的 base-* 版本，
+ * 必须是一个精确 `x.y.z`，且逐字等于仓内那个 base 包的版本**。
+ *   · 写成范围（`^`／`~`／`>=`／区间／`||`／`latest`／`*`）⇒ 红（#861 原形的另一半）；
+ *   · 精确但更低 ⇒ 红（放行一个我们没验证过的旧公共层）；
+ *   · 精确但更高 ⇒ 红（要求一个还没发出去的版本，装机必然找不到）；
+ *   · base 包名在 `packages/` 里找不到 ⇒ 红（不给「看不出来就放行」留口子）；
  *   · 一条边都没扫到 ⇒ 红（缩面＝放宽，扫描面为空不许当绿）。
  *
  * 只管 `dependencies` 与 `peerDependencies`——会随包发布、由安装方去满足的那两份。
@@ -20,7 +27,7 @@
  *
  * 用法：node tooling/check-base-floor.mjs [--root <目录>]      # `--root` 给自证与变异用
  * 读数：BASE name=<包名> version=<版本> dir=<目录>
- *      EDGE <消费方> → <base 包> 声明=<范围> 下界=<v> 期望=<v>
+ *      EDGE <消费方> → <base 包> 声明=<写法> 精确=是/否 期望=<仓内版本>
  *      RESULT: n/n　　末行 PASS 或 FAIL（逐条 FAIL 行在上）
  * 退出码：0＝全过；1＝有红；2＝用法／扫描失败。
  */
@@ -31,6 +38,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** 会随包发布、由安装方满足的两份依赖表；`devDependencies` 不在内（见文件头）。 */
 const SHIPPED_SECTIONS = ['dependencies', 'peerDependencies'];
+
+/** 唯一认得的声明形态：精确 `x.y.z`。其余（`^`／`~`／`>=`／区间／`||`／`latest`／`*`）一律红。 */
+const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 
 /** 把 `x.y.z` 读成可比较的数组；不是三段数字即 null。 */
 function parseVersion(text) {
@@ -81,7 +91,7 @@ export function readLocalPackages(root) {
   return byName;
 }
 
-/** 扫描全部消费方 → base-* 的边，逐条判下界。返回 {bases, edges, findings}，只报事实不打印。 */
+/** 扫描全部消费方 → base-* 的边，逐条判「声明形态必须是精确版本、且逐字等于仓内那一版」。返回 {bases, edges, findings}，只报事实不打印。 */
 export function audit(root) {
   const locals = readLocalPackages(root);
   const bases = [...locals.values()].filter((p) => p.name.startsWith('base-')).sort((a, b) => a.name.localeCompare(b.name));
@@ -99,7 +109,10 @@ export function audit(root) {
         }
         const floor = minAdmitted(range);
         edges.push({ consumer: consumer.name, dep, range, floor, expected: base.version });
-        if (floor === null) { findings.push({ kind: 'unreadable-range', consumer: consumer.name, dep, range }); continue; }
+        if (floor === null || !EXACT_VERSION.test(String(range).trim())) {
+          findings.push({ kind: 'not-exact', consumer: consumer.name, dep, range, expected: base.version });
+          continue;
+        }
         if (compareVersion(floor, parseVersion(base.version)) !== 0) {
           findings.push({ kind: 'floor-mismatch', consumer: consumer.name, dep, range, floor, expected: base.version });
         }
@@ -112,12 +125,13 @@ export function audit(root) {
 
 /** 一行人话：这条红是什么。 */
 function describe(f) {
+  if (f.kind === 'not-exact') {
+    return `FAIL ${f.consumer} → ${f.dep}：声明「${f.range}」不是精确版本（必须逐字写成 ${f.expected ?? 'x.y.z'}）——`
+      + '范围会把「装到哪一版」交给解析器与存量：同一技能版本在不同机器／不同安装日期落出不同公共层';
+  }
   if (f.kind === 'floor-mismatch') {
     return `FAIL ${f.consumer} → ${f.dep}：声明「${f.range}」的允许最低版是 ${f.floor.join('.')}，`
       + `而仓内 ${f.dep} 是 ${f.expected}——下界必须逐字等于仓内那一版（低＝放行没验证过的旧公共层，高＝要求还没发的版本）`;
-  }
-  if (f.kind === 'unreadable-range') {
-    return `FAIL ${f.consumer} → ${f.dep}：认不出的范围写法「${f.range}」（只认 ^／~／>=／精确／「x - y」与由它们组成的 ||）`;
   }
   if (f.kind === 'unknown-base') {
     return `FAIL ${f.consumer} → ${f.dep}：packages/ 里没有这个 base 包（包名与目录名对不上时按 package.json 的 name 认）`;
@@ -142,8 +156,10 @@ function main(argv) {
   const { bases, edges, findings } = report;
   for (const b of bases) console.log(`BASE name=${b.name} version=${b.version} dir=packages/${b.dir}`);
   for (const e of edges) {
-    console.log(`EDGE ${e.consumer} → ${e.dep} 声明=${e.range} 下界=${e.floor === null ? '认不出' : e.floor.join('.')} 期望=${e.expected ?? '认不出'}`
-      + (e.floor !== null && e.expected !== null && e.floor.join('.') === e.expected ? ' OK' : ' RED'));
+    const exact = e.floor !== null && /^\d+\.\d+\.\d+$/.test(String(e.range).trim());
+    const ok = exact && e.expected !== null && e.floor.join('.') === e.expected;
+    console.log(`EDGE ${e.consumer} → ${e.dep} 声明=${e.range} 精确=${exact ? '是' : '否'} 期望=${e.expected ?? '认不出'}`
+      + (ok ? ' OK' : ' RED'));
   }
   for (const f of findings) console.error(describe(f));
   console.log(`RESULT: ${edges.length - findings.length}/${edges.length}`);

@@ -1,6 +1,6 @@
 {
   "name": "skill-schedule",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "description": "作息管家SKILL一期：取数+口径+渲染+出口（record/plan 双域），依 link-core",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,8 +22,8 @@
     "schedule-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "^0.3.12",
-    "base-paint": "^0.3.12"
+    "base-link-core": "0.3.13",
+    "base-paint": "0.3.13"
   },
   "engines": {
     "node": ">=22.13"

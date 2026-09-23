@@ -1,6 +1,6 @@
 {
   "name": "dsh-home-ilife",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "description": "爱生活单品插件 P10 脚手架：居家（ilife:home order 85），硬依赖总管 dsh-life-pack",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,8 +30,8 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "dsh-life-pack": "^0.3.12",
-    "skill-home": "0.3.12"
+    "dsh-life-pack": "0.3.13",
+    "skill-home": "0.3.13"
   },
   "dsh": {
     "bundle": {

@@ -3,7 +3,9 @@
 // 口径（与 `tooling/check-publish.mjs` 的 #123 返修同源：**版本无关化**）：
 //   - 断言的是「三包 `version` 彼此逐字相等」，**不写死任何具体版本号**——发版改号不该打红这条门；
 //   - 断言 `.changeset/config.json` 的 `fixed` 组**恰好**覆盖这三包（B8 的机制面）；
-//   - 断言包内 caret 范围的 `major.minor` 等于被依赖包的工作区版本（同版本线）。
+//   - 断言包内与技能面声明**逐字等于被依赖包的工作区版本**（2026-09-23 改口径：原先是「caret 且同 major.minor」，
+//     但 caret 会把「装到哪一版」交给解析器与机器存量——实测干净机器装 0.3.12 那套技能会拿到 0.3.13 公共层，
+//     有旧存量的机器又停在 0.3.7；见 `docs/agents/更新链路-配套不变式-方案.md` 第三节）。
 // 破界/偏斜即红，`pnpm test`（CI build-test 与 win-detail 两处）都会跑到。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,9 +53,8 @@ describe('#79 base-* 三包版本 lockstep', () => {
     );
   });
 
-  it('包内 caret 范围与工作区版本同 major.minor（同版本线）＋ 发布面零 workspace:（G-3 改判 #140）', () => {
+  it('包内依赖声明逐字等于工作区版本（精确版）＋ 发布面零 workspace:（G-3 改判 #140）', () => {
     const versionOf = (name) => manifests.find((m) => m.name === name)?.json.version;
-    const lineOf = (v) => v.split('.').slice(0, 2).join('.');
     const cases = [
       {
         from: 'base-combos',
@@ -78,31 +79,28 @@ describe('#79 base-* 三包版本 lockstep', () => {
         !c.range.startsWith('workspace:'),
         `${c.from} 的 ${c.dep} 范围「${c.range}」不得带 workspace: 前缀（发布面外泄；G-3 改判见 #140）`,
       );
-      const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(c.range);
-      assert.ok(m, `${c.from} 的 ${c.dep} 范围「${c.range}」必须是 ^x.y.z 形态`);
+      assert.match(
+        c.range,
+        /^\d+\.\d+\.\d+$/,
+        `${c.from} 的 ${c.dep} 声明「${c.range}」必须是精确 x.y.z（范围写法会把「装到哪一版」交给解析器与机器存量）`,
+      );
       assert.equal(
-        `${m[1]}.${m[2]}`,
-        lineOf(versionOf(c.dep)),
-        `${c.from} 的 ${c.dep} 范围「${c.range}」与工作区版本 ${versionOf(c.dep)} 不同版本线`,
+        c.range,
+        versionOf(c.dep),
+        `${c.from} 的 ${c.dep} 声明「${c.range}」必须逐字等于工作区版本 ${versionOf(c.dep)}`,
       );
     }
   });
 
-  it('技能面 base-link-core runtime range 与工作区版本同 major.minor（D-1）', () => {
+  it('技能面 base-link-core 声明逐字等于工作区版本（精确版，D-1）', () => {
     const coreVersion = manifests.find((m) => m.name === 'base-link-core')?.json.version;
-    const lineOf = (v) => v.split('.').slice(0, 2).join('.');
-    // 六个 runtime 消费技能：dependencies 必须同版本线（任一退回 ^0.1.0 即红，MUT-4）。
+    // 六个 runtime 消费技能：dependencies 必须逐字等于工作区那一版（任一退回 `^` 或旧版本即红，MUT-4）。
     const runtimeSkills = ['skill-bill', 'skill-calorie', 'skill-chef', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
     for (const dir of runtimeSkills) {
       const range = pkg(dir).dependencies?.['base-link-core'];
       assert.ok(range, `${dir} 必须在 dependencies 声明 base-link-core`);
-      const m = /^\^(\d+)\.(\d+)\.\d+$/.exec(range);
-      assert.ok(m, `${dir} 的 base-link-core 范围「${range}」必须是 ^x.y.z`);
-      assert.equal(
-        `${m[1]}.${m[2]}`,
-        lineOf(coreVersion),
-        `${dir} 的 base-link-core 范围「${range}」与工作区版本 ${coreVersion} 不同版本线`,
-      );
+      assert.match(range, /^\d+\.\d+\.\d+$/, `${dir} 的 base-link-core 声明「${range}」必须是精确 x.y.z`);
+      assert.equal(range, coreVersion, `${dir} 的 base-link-core 声明必须逐字等于工作区版本 ${coreVersion}`);
     }
     // skill-calorie 的 G-2 例外已就地摆正（#861）：那条例外钉的是它当年的 `devDependencies["base-link-core"] === "^0.1.0"`，
     // 而该 devDep 早已随它的配置面改造消失（当刻两张依赖表里只有 `dependencies`），例外断言因此恒红——

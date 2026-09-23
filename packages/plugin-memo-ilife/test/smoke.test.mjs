@@ -34,7 +34,9 @@ describe('dsh-memo-ilife 烟囱', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-memo-ilife', 'package.json'), 'utf8')).version;
-    assert.match(dep['dsh-life-pack'] ?? '', /^\^0\.3\./);
+    const packVer = JSON.parse(readFileSync(join(here, '..', '..', 'plugin-manager', 'package.json'), 'utf8')).version;
+    // 2026-09-23：总管依赖由 `^0.3.` 改**精确版**——caret 会让「装到哪一版总管」由机器存量决定。
+    assert.equal(dep['dsh-life-pack'], packVer);
     assert.equal(dep['skill-memo-ilife'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
