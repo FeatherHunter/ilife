@@ -10,10 +10,12 @@
  *
  * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
- * ＋ 居家特有 4 条（产物根 vs 库根／种子分类／主密钥文件／包内模板目录）。
+ * ＋ 居家特有 3 条（产物根 vs 库根／主密钥文件／包内模板目录）。
+ * 检查表上「种子分类」那条已撤：它探的是 `src/policy/category.ts`——包按设计只发 dist，
+ * 装机态恒没有 `src/`，这条红不可达（真缺 dist 产物则静态 import 先崩、报告本身出不来）。
  *
  * **判据查的路径一律是新仓的**（票面第 2 条「缺配置会怎样按新仓＋新机制写」）：检查表里那些老仓
- * 文件名（例：种子分类的老 `references/seed_categories.yaml`）只作注释里的出处，不进用户看到的报文。
+ * 文件名只作注释里的出处，不进用户看到的报文。
  *
  * 本件与卡路里那份 `packages/skill-calorie/src/health.ts` 同形（同一套受限子集解析、同一套写探针、
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
@@ -512,24 +514,7 @@ export function buildHomeHealthReport(): HomeHealthReport {
     source: htmlSource,
   });
 
-  // ⑦ 种子分类（居家特有）：查的是**新仓这份口径的入口件**＝`src/policy/category.ts`
-  // （`HOME_TOPS` 那 8 个顶级分类；老仓那个 `references/seed_categories.yaml` 只作注释里的出处，
-  // 不出现报文里——新仓没有 `references/` 这个目录）。不在＝黄：包内源码件，缺了多半是包装坏了。
-  const seedSource = join(packageRoot(), 'src', 'policy', 'category.ts');
-  const seedExists = existsSync(seedSource);
-  items.push({
-    id: 'seed.file', title: '种子分类',
-    // 档位＝检查表原话「不在＝红」（`docs/research/check-table-671-life-panel-20260917.html` 居家那行）。
-    // 中间几轮曾按「新仓没有这个文件、缺的是包内源码件」下调成黄——那是**改判据**，对抗式审查两轴都点了；
-    // 按「判据是用户逐条划过的唯一真相」还原成红。
-    status: seedExists ? 'green' : 'red',
-    message: seedExists
-      ? '在：' + p(seedSource) + '（新仓的种子分类口径住这里）。'
-      : '不在：' + p(seedSource) + '（新仓的种子分类口径；包内源码件，缺了多半是包装坏了）。',
-    action: seedExists ? '' : '重装这个技能包即会补齐；缺了它建分类时没有顶级分类口径。',
-  });
-
-  // ⑧ 主密钥文件（居家特有）：判据＝配置 `key.file` 那一处（在／不在）；老四级定位只读提示——
+  // ⑦ 主密钥文件（居家特有）：判据＝配置 `key.file` 那一处（在／不在）；老四级定位只读提示——
   // 配置那处不在、而老四处某处真在，就报"把它复制到 <配置那处>，或把 `key.file` 指过去"。
   const keyConfigured = textOf(readValue(values, 'key', 'file'));
   const keyFile = keyFileOf(paths.dataDir, keyConfigured);
@@ -558,7 +543,7 @@ export function buildHomeHealthReport(): HomeHealthReport {
     });
   }
 
-  // ⑨ 包内模板目录（居家特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
+  // ⑧ 包内模板目录（居家特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
   const templatesDir = join(packageRoot(), 'templates');
   const templatesOk = existsSync(templatesDir);
   const templateCount = templatesOk ? templateFileCount(templatesDir) : 0;

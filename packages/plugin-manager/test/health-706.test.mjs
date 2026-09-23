@@ -70,16 +70,18 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 const REPO = join(HERE, '..', '..', '..');
 
-/** 检查表 `docs/research/check-table-671-life-panel-20260917.html` 那 27 条候选
- *（六家通用 5×6＝30 条 ＋ 各家特有 22 条；作息「第二份库」已由编者撤回，不进报告）。 */
+/** 检查表 `docs/research/check-table-671-life-panel-20260917.html` 那批候选
+ *（六家通用 5×6＝30 条 ＋ 各家特有 18 条；作息「第二份库」已由编者撤回，另四条探包内 `src/` 的已撤，见下）。 */
+// 2026-09-17 撤项（四条）：大厨／备忘「场景资产」、居家「种子分类」、作息「分类允许清单」——它们的判据探的是
+// 包内 `src/` 下的文件，而各家 `files` 只发 `dist`／`SKILL.md`／`templates` ⇒ 装机态恒红且不可达，故整条删除。
 const EXPECT = {
   calorie: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'photos.dir', 'photos.gifs', 'xunji.key', 'xunji.cli', 'xunji.stateDir', 'land.cli', 'xunji.catalog'],
   bill: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'goals.file', 'backup.dir'],
-  chef: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'templates.dir', 'scenarios.file'],
-  home: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'paths.split', 'seed.file', 'key.file', 'templates.dir'],
+  chef: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'templates.dir'],
+  home: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'paths.split', 'key.file', 'templates.dir'],
   // 备忘的「附件前缀」随 #712 落成真目录 → 这一项的 id 与判据按目录写。
-  memo: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'media.dir', 'lark.cli', 'templates.dir', 'scenarios.file'],
-  schedule: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'lark.cli', 'whitelist.file', 'templates.dir'],
+  memo: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'media.dir', 'lark.cli', 'templates.dir'],
+  schedule: ['config.file', 'db.dir', 'db.file', 'html.dir', 'value.source', 'lark.cli', 'templates.dir'],
 };
 
 /** 报告构造函数的导出名（懒加载：谁的 `dist/health.js` 还没构建，就跳过谁并点名）。 */
@@ -645,7 +647,7 @@ describe('#706 配置体检 · 面板侧', () => {
   describe('E 全量对齐门', () => {
     // 体检会读盘（`configPaths` 在测试运行器里没设隔离即响亮报错），故整段先立隔离基座。
     const base = setupConfigTestBase();
-    it('六家合起来 27 条候选都在（检查表那 27 条：通用 5×6 ＋ 各家特有 22）', async () => {
+    it('六家合起来 48 条都在（通用 5×6 ＋ 各家特有 18）', async () => {
       const { builders, missing } = await loadBuilders();
       // 六家一件不少才算过：谁没构建好就点名（这一条是「全量」门，不容缺件）。
       assert.deepEqual(missing, [], '这几家的 dist/health.js 还没构建好：' + missing.join('、'));
@@ -665,8 +667,8 @@ describe('#706 配置体检 · 面板侧', () => {
         total += ids.length;
         unique += ids.filter((id) => !COMMON.includes(id)).length;
       }
-      assert.equal(total, 52, '报告条数＝通用 5×6 ＋ 各家特有 22：现在数是 ' + String(total));
-      assert.equal(unique, 22, '检查表「各家特有」是 22 条：现在数是 ' + String(unique));
+      assert.equal(total, 48, '报告条数＝通用 5×6 ＋ 各家特有 18（四家各撤掉一条探包内 `src/` 的）：现在数是 ' + String(total));
+      assert.equal(unique, 18, '各家特有的检查项 18 条（大厨／居家／备忘／作息 各撤掉一条）：现在数是 ' + String(unique));
     });
 
     it('六家通用那 5 条每家都齐（形状一样，一条不少）', () => {
@@ -678,21 +680,20 @@ describe('#706 配置体检 · 面板侧', () => {
       }
     });
 
-    it('档位照检查表：四条「不在＝红」的包内固定件不许被下调成黄', async () => {
-      // 检查表 `docs/research/check-table-671-life-panel-20260917.html` 对大厨／居家／备忘／作息的
-      // 包内固定件写的是「不在＝红」。这四家的本席机器上那些文件确实不在（新仓还没有 `references/` 与
-      // `公共组件/`），所以今天它们就是红——**这条断言就是防「按后果自行下调档位」再发生**。
+    it('包内固定件那四条已整条删除：报告里不许再冒出这四个 id', async () => {
+      // 原先这条守的是：大厨／备忘「场景资产」、居家「种子分类」、作息「分类允许清单」这四条包内固定件
+      // 按检查表是「不在＝红」，不许被下调成黄。四条已整条删除——判据探的是包内 `src/` 下的文件，而各家
+      // `files` 只发 `dist`／`SKILL.md`／`templates` ⇒ 装机态里恒定红、用户也不可达。删项之后这一层
+      // 改守另一件事：**不许把它们加回来**——加回来，装机态每家又恒挂一条红报告，而面板看不见原因。
       const { builders, missing } = await loadBuilders();
       assert.deepEqual(missing, [], '这几家的 dist/health.js 还没构建好：' + missing.join('、'));
-      const mustBeRed = [
+      const withdrawn = [
         ['chef', 'scenarios.file'], ['home', 'seed.file'],
         ['memo', 'scenarios.file'], ['schedule', 'whitelist.file'],
       ];
-      for (const [skill, id] of mustBeRed) {
+      for (const [skill, id] of withdrawn) {
         const item = builders[skill]().items.find((one) => one.id === id);
-        assert.ok(item, skill + ' 缺那条：' + id);
-        if (item.status === 'green') continue; // 把这四个件补进包之后就该是绿，那时这条自动放行
-        assert.equal(item.status, 'red', skill + '/' + id + ' 的档位被下调了（检查表写的是「不在＝红」）');
+        assert.equal(item, undefined, skill + ' 又长回了那条探包内 `src/` 的检查项：' + id);
       }
     });
 

@@ -181,6 +181,10 @@ describe('#764 作息设置页收窄 · 技能侧', () => {
     assert.ok(item, '须有飞书 CLI 那一项');
     assert.equal(item.status, 'red', '没找到 CLI ⇒ 红（红只留给这个确定性事实）');
     assert.match(item.message, /没找到飞书 CLI/);
+    // #936：同一份读数的结构化出口（面板「飞书 CLI」状态区第二行「路径 ＋ 版本胶囊」读它）——
+    // 没找到 CLI ⇒ 路径与版本都不交值（null），面板据此不画版本胶囊。
+    assert.deepEqual(r.env.data.lark, { tier: 'missing', cliPath: null, version: null },
+      '#936：回执那一格照实报三档；没找到 CLI 时路径与版本都不交值');
     console.log('#764 体检红读数：' + P(item));
   });
 
@@ -199,11 +203,15 @@ describe('#764 作息设置页收窄 · 技能侧', () => {
       seam.setRemote({ mode: 'unavailable' });
       const r = seam.runNew('schedule.config.check', {});
       assert.equal(r.status, 0, '体检本身只读不拦：' + (r.stderr || '').slice(0, 200));
-      const item = JSON.parse(String(r.stdout)).data.items.find((x) => x.id === 'lark.cli');
+      const data = JSON.parse(String(r.stdout)).data;
+      const item = data.items.find((x) => x.id === 'lark.cli');
       assert.ok(item, '须有飞书 CLI 那一项');
       assert.equal(item.status, 'yellow', 'auth 不过 ⇒ 黄');
       assert.match(item.message, /找到了飞书命令行，但还没登录／日历读不到/);
       assert.ok(!/lark-cli|openId|auth status/i.test(item.message), '体检报文含内部命令名：' + item.message);
+      // #936：找到 CLI 就不藏版本（partial 也照实交，面板按档决定画不画）；这一格与上面那条同判据。
+      assert.equal(data.lark.tier, 'partial', '#936：这一格与 items 里那条同判据');
+      assert.equal(data.lark.version, '1.0.59', '#936：拿到就交版本号（partial 也给）');
       console.log('#764 体检黄读数：' + P(item));
     } finally {
       useHome(HOME1);
@@ -215,13 +223,18 @@ describe('#764 作息设置页收窄 · 技能侧', () => {
     try {
       const r = seam.runNew('schedule.config.check', {});
       assert.equal(r.status, 0, '体检本身只读不拦：' + (r.stderr || '').slice(0, 200));
-      const item = JSON.parse(String(r.stdout)).data.items.find((x) => x.id === 'lark.cli');
+      const data = JSON.parse(String(r.stdout)).data;
+      const item = data.items.find((x) => x.id === 'lark.cli');
       assert.ok(item, '须有飞书 CLI 那一项');
       assert.equal(item.status, 'green', '两条都过 ⇒ 绿');
       assert.match(item.message, /已就绪：飞书命令行可用/);
       assert.match(item.message, /版本 1\.0\.59/);
       assert.ok(!/lark-cli|openId|auth status/i.test(item.message), '体检报文含内部命令名：' + item.message);
       assert.equal(item.action, '');
+      // #936：面板「飞书 CLI」状态区第二行「路径 ＋ 版本胶囊」的数据源＝这一格（与 items 那条同源同判据）。
+      assert.equal(data.lark.tier, 'full', '#936：这一格与 items 里那条同判据');
+      assert.ok(typeof data.lark.cliPath === 'string' && data.lark.cliPath.length > 0, '#936：路径交出来（面板第二行印它）');
+      assert.equal(data.lark.version, '1.0.59', '#936：版本胶囊只吃版本号（挡板吐 `lark-cli version 1.0.59-stub`）');
       console.log('#764 体检绿读数：' + P(item));
     } finally {
       useHome(HOME1);

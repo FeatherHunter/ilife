@@ -10,13 +10,15 @@
  *
  * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
- * ＋ 作息特有 3 条（飞书 CLI／分类允许清单／包内模板目录）。
+ * ＋ 作息特有 2 条（飞书 CLI／包内模板目录）。
+ * 检查表上「分类允许清单」那条已撤：它探的是 `src/policy/category.ts`——包按设计只发 dist，
+ * 装机态恒没有 `src/`，这条红不可达（真缺 dist 产物则静态 import 先崩、报告本身出不来）。
  * **本家第 4 条（作息第二份库 `daily_recorder.db`）已由编者从检查表里撤回**，见票 #706 的遗留出口
  * （老技能默认链算出的 `D:\.db\daily_recorder.db` 与实测那个不是同一个文件，事实在核）——故未实现，
  * 报告里也不出现这一项。
  *
  * **判据查的路径一律是新仓的**（票面第 2 条「缺配置会怎样按新仓＋新机制写」）：检查表里那些老仓
- * 文件名（例：分类允许清单的老 `category_whitelist.yaml`）只作注释里的出处，不进用户看到的报文。
+ * 文件名只作注释里的出处，不进用户看到的报文。
  *
  * 本件与卡路里那份 `packages/skill-calorie/src/health.ts` 同形（同一套受限子集解析、同一套写探针、
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
@@ -34,7 +36,7 @@ import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
 import { dbDirOf, dbFileOf, htmlDirOf, resolvedHtmlDirs } from './fetch/paths.js';
 // #764：飞书 CLI 的查找只剩兜底探测（配置项 `lark.cliPath` 已删），候选顺序的唯一定义地是
 // `src/fetch/feishu.ts` 的 `larkCliCandidates()`——本件直接调它，不留第二份表。
-import { findLarkCli, larkVersion, shortLarkVersion, maskLarkCli } from './fetch/feishu.js';
+import { findLarkCli, larkVersion, shortLarkVersion, larkVersionCell, maskLarkCli, type LarkStatusReading } from './fetch/feishu.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -53,6 +55,11 @@ export interface ScheduleHealthReport {
   readonly configPath: string;
   readonly dataDir: string;
   readonly items: readonly HealthItem[];
+  /** #936：面板「飞书 CLI」状态区要的三格（三档 ＋ 路径 ＋ 版本号），与备忘录 `memo.config.read` 回执里
+   *  那个 `lark` 格**同组名、同字段名**（形状＝`LarkStatusReading`，住 `src/fetch/feishu.ts`）。
+   *  为什么住在体检回执而不进 `schedule.config.read`：那一条读路径不许探 lark（见 `src/cli/config.ts` 的注），
+   *  面板本来也只在这通体检电话里取「飞书 CLI」那一行。`items` 里那条 `lark.cli` 的话术不动，两处同源。 */
+  readonly lark: LarkStatusReading;
 }
 
 /** 库表数门槛：`src/fetch/db.ts` 三张建表（`schedule_records`／`daily_summary`／`schedule_plans`）齐了算正常。 */
@@ -549,7 +556,20 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
   // 版本与工具名遮蔽都走 `fetch` 门的同一口径（`shortLarkVersion`／`maskLarkCli`），这里只传参。
   // 目录取所在目录（可执行文件名已剥掉）；scoop 那档目录名本身含工具名，一并遮蔽。
   const larkDir = larkCli === null ? '' : maskLarkCli(p(dirname(larkCli)));
-  const larkVersionNum = tier !== 'full' || larkCli === null ? '' : shortLarkVersion(larkVersion(larkCli));
+  // #936：版本读数**一次读、两处用**——报文那一格（只在全通档给，口径不变）与回执那一格（找到 CLI 就照实给）。
+  // 读失败（超时／非 0 退出／程序起不来）只让版本这一格留空：**不抛**（体检不许因为读版本崩），
+  // 也不改上面那三档判定——`larkTier` 早就把档位定完了，这里只是顺手把版本号读回来。
+  let larkRawVersion = '';
+  if (larkCli !== null) {
+    try { larkRawVersion = larkVersion(larkCli); } catch { larkRawVersion = ''; }
+  }
+  const larkVersionNum = tier !== 'full' || larkCli === null ? '' : shortLarkVersion(larkRawVersion);
+  const larkReading: LarkStatusReading = {
+    tier,
+    cliPath: larkCli,
+    // 「拿不到就不交这一格」：没找到 CLI 或读不到版本号 ⇒ null（面板据此不画版本胶囊），不编任何占位串。
+    version: larkCli === null || larkRawVersion === '' ? null : larkVersionCell(larkRawVersion),
+  };
   items.push({
     id: 'lark.cli', title: '飞书 CLI',
     status: tier === 'full' ? 'green' : tier === 'partial' ? 'yellow' : 'red',
@@ -566,25 +586,6 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     source: '默认值',
   });
 
-  // ⑦ 分类允许清单（作息特有）：查的是**新仓这份实现**＝`src/policy/category.ts`
-  // （`LEVEL1_WHITELIST` 一级 8 个固定 ＋ `DEFAULT_WHITELIST` 二级内置默认，见该件 :2-3 的口径）。
-  // 老仓那个 `category_whitelist.yaml`（以及它那句逐字 action，出处 `scripts/setup_scenarios.py:230-231`）
-  // 只作注释里的出处，不出现报文里——新仓没有那个文件，用户 YAML 增量也不迁。
-  // 不在＝黄：包内源码件，缺了多半是包装坏了，重装即补齐。
-  const whitelistSource = join(packageRoot(), 'src', 'policy', 'category.ts');
-  const whitelistExists = existsSync(whitelistSource);
-  items.push({
-    id: 'whitelist.file', title: '分类允许清单',
-    // 档位与 action 都照检查表原话（`docs/research/check-table-671-life-panel-20260917.html` 作息那行：
-    // 「不在＝红（action 文案逐字有）」）。中间几轮曾按新仓事实下调成黄、并换掉那句逐字 action——
-    // 那是改判据，对抗式审查两轴都点了；这里还原成检查表的写法。
-    status: whitelistExists ? 'green' : 'red',
-    message: whitelistExists
-      ? '在：' + p(whitelistSource) + '（新仓的分类允许清单住这里：一级固定 ＋ 二级内置默认）。'
-      : '不在：' + p(whitelistSource) + '（新仓的分类允许清单；包内源码件，缺了多半是包装坏了）。',
-    action: whitelistExists ? '' : '缺失 category_whitelist.yaml,请检查技能目录完整性',
-  });
-
   // ⑧ 包内模板目录（作息特有）：业务页模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
   const templatesDir = join(packageRoot(), 'templates');
   const templatesOk = existsSync(templatesDir);
@@ -598,5 +599,5 @@ export function buildScheduleHealthReport(): ScheduleHealthReport {
     action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
   });
 
-  return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };
+  return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items, lark: larkReading };
 }

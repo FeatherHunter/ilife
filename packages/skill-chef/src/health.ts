@@ -10,7 +10,7 @@
  *
  * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
- * ＋ 大厨特有 2 条（包内模板目录／场景资产）。
+ * ＋ 大厨特有 1 条（包内模板目录）。
  *
  * **判据查的路径一律是新仓的**（票面第 2 条「缺配置会怎样按新仓＋新机制写」）：检查表里那些老仓
  * 文件名（例：场景资产的老 `references/scenarios.yaml`）只作注释里的出处，不进用户看到的报文。
@@ -470,24 +470,6 @@ export function buildChefHealthReport(): ChefHealthReport {
       ? '在，' + String(templateCount) + ' 件模板：' + p(templatesDir) + '。'
       : '不在：' + p(templatesDir) + '。',
     action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
-  });
-
-  // ⑦ 场景资产（大厨特有）：查的是**新仓这份事实源**＝`src/help/sceneData.ts`
-  // （typed TS 资产，生成器 `scripts/gen-help-assets.mjs` 读它；老仓那个 `references/scenarios.yaml`
-  // 只作注释里的出处，不出现报文里——新仓没有 `references/` 这个目录）。
-  // 不在＝黄：缺的是生成器输入，功能页照常，重装包即补齐。
-  const scenariosFile = join(packageRoot(), 'src', 'help', 'sceneData.ts');
-  const scenariosExists = existsSync(scenariosFile);
-  items.push({
-    id: 'scenarios.file', title: '场景资产',
-    // 档位＝检查表原话「不在＝红」（`docs/research/check-table-671-life-panel-20260917.html` 大厨那两行）。
-    // 本席的实现在中间那几轮曾按「新仓没有这个文件、缺的是生成器输入」下调成黄——那是**改判据**，
-    // 对抗式审查（Standards/Spec 两轴）都点了这一条；按「判据是用户逐条划过的唯一真相」还原成红。
-    status: scenariosExists ? 'green' : 'red',
-    message: scenariosExists
-      ? '在：' + p(scenariosFile) + '（新仓的场景资产事实源住这里）。'
-      : '不在：' + p(scenariosFile) + '（新仓的场景资产事实源；缺了 HELP 与场景面取不到）。',
-    action: scenariosExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
   });
 
   return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };

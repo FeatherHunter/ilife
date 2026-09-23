@@ -51,11 +51,11 @@
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |
 | `src/checkin/routes.ts` | 36 | 40 | 未越线，在册备查 |
 | `src/cli/cmd_read.ts` | 367 | 318 | 已回线内（挂号值 367 留档，只许变短） |
-| `src/cli/config.ts` | 113 | 133 | 未越线，在册备查 |
+| `src/cli/config.ts` | 113 | 139 | 未越线，在册备查 |
 | `src/cli/health.ts` | 37 | 38 | 未越线，在册备查 |
 | `src/cli/health/configRead.ts` | 208 | 208 | 未越线，在册备查 |
 | `src/cli/health/index.ts` | 17 | 17 | 未越线，在册备查 |
-| `src/cli/health/items.ts` | 240 | 240 | 未越线，在册备查 |
+| `src/cli/health/items.ts` | 240 | 227 | 未越线，在册备查 |
 | `src/cli/health/probe.ts` | 185 | 185 | 未越线，在册备查 |
 | `src/config.ts` | 154 | 154 | 未越线，在册备查 |
 | `src/db/readonly.ts` | 333 | 333 | 未越线，在册备查 |
@@ -119,7 +119,7 @@
 | `src/shared/validators.ts` | 14 | 14 | 未越线，在册备查 |
 | `src/sync/auth.ts` | 19 | 19 | 未越线，在册备查 |
 | `src/sync/commands.ts` | 29 | 30 | 未越线，在册备查 |
-| `src/sync/feishu.ts` | 221 | 221 | 未越线，在册备查 |
+| `src/sync/feishu.ts` | 221 | 248 | 未越线，在册备查 |
 | `src/sync/index.ts` | 7 | 10 | 未越线，在册备查 |
 | `src/sync/routes.ts` | 16 | 16 | 未越线，在册备查 |
 | `src/sync/run.ts` | 57 | 57 | 未越线，在册备查 |

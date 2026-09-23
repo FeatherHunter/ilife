@@ -80,10 +80,16 @@ function withHumanError<T>(run: () => T): T {
  * （算式唯一定义地＝`src/shared/paths.ts`，面板不自己拼路径）。
  * `lark`（#760，定稿 #759）＝飞书 CLI 三档读数 ＋ 复制安装指引全文 ＋ 官网行
  * （判据唯一定义地＝`src/sync/feishu.ts` 的 `larkTierInfo`，面板只显示）。
+ *
+ * `lark.version`（#936）＝ `lark-cli --version` 里那个**版本号**（首个数字段，如 `1.0.82`）：
+ * 面板「飞书 CLI」状态区第二行「路径（`cliPath`）＋ 版本胶囊」的胶囊就是它。读不到＝`null`
+ * ——这一格**不交值**（不编 `unknown` 之类），面板拿 `null` 就把胶囊留空；探测照样出三档，不因此失败。
+ * 镜面：`packages/plugin-memo-ilife/src/contract.ts` 的 `LarkState.version`。
  */
 export interface MemoConfigReadLark {
   readonly tier: LarkTier;
   readonly cliPath: string | null;
+  /** `lark-cli --version` 的版本号（首个数字段）；没找到 CLI 或读不到＝`null`（这一格不交值）。 */
   readonly version: string | null;
   readonly prompt: string;
   readonly websiteLine: string;

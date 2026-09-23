@@ -1,8 +1,10 @@
-/** 配置体检 · **九条体检项**（票 #706 的检查表落地，票 #855 从这里分件出来）。
+/** 配置体检 · **八条体检项**（票 #706 的检查表落地，票 #855 从这里分件出来）。
  *
  * 检查项与检查表 `docs/research/check-table-671-life-panel-20260917.html` 逐条对应：
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
- * ＋ 备忘特有 4 条（附件目录／飞书 CLI／包内模板＋公共组件／场景资产）。
+ * ＋ 备忘特有 3 条（附件目录／飞书 CLI／包内模板目录）。
+ * 「场景资产」那条已删（维护者裁定）：包 `files` 只发 `dist`／`SKILL.md`／`templates`，
+ * 装机态按设计没有 `src/` ⇒ 那条恒红，且真缺 dist 产物时 CLI 的静态 import 先崩、报告本身出不来。
  * 「附件」那一项的形状跟着 #712 走：附件从「字符串前缀」改成**真目录 ＋ 真包含判定**。
  *
  * 口径（票面「开工前的形状裁定」）：
@@ -11,7 +13,7 @@
  *   · **只报不改**——不建目录、不写文件、不落那份默认配置；因此**不许**调 `loadMemoConfig()`（文件不在即落默认件）。
  *   · 判据查的路径一律是**新仓的**：检查表里那些老仓文件名只作注释里的出处，不进用户看到的报文。
  *
- * 搬迁状态（#855）：九条今天同住本件；按域归位（`src/<域>/health.ts`）随各域目录建立时落，届时本件只留聚合。
+ * 搬迁状态（#855）：八条今天同住本件；按域归位（`src/<域>/health.ts`）随各域目录建立时落，届时本件只留聚合。
  */
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -219,21 +221,6 @@ export function buildMemoHealthReport(): MemoHealthReport {
       ? '在，' + String(templateCount) + ' 件模板：' + p(templatesDir) + '。'
       : '不在：' + p(templatesDir) + '。',
     action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
-  });
-
-  // ⑨ 场景资产（备忘特有）：查的是**新仓这份事实源**＝`src/help/sceneData.ts`（8 个域数据件
-  // `src/help/scenes/*.ts` 的组装件，生成器 `scripts/gen-help-assets.mjs` 读它；老仓那个
-  // `references/scenarios.yaml` 只作注释里的出处，不出现报文里——新仓没有 `references/` 这个目录）。
-  // 不在＝红：缺的是 HELP 与场景面的事实源，重装包即补齐（档位＝检查表原话「不在＝红」）。
-  const scenariosFile = join(packageRoot(), 'src', 'help', 'sceneData.ts');
-  const scenariosExists = existsSync(scenariosFile);
-  items.push({
-    id: 'scenarios.file', title: '场景资产',
-    status: scenariosExists ? 'green' : 'red',
-    message: scenariosExists
-      ? '在：' + p(scenariosFile) + '（新仓的场景资产事实源住这里）。'
-      : '不在：' + p(scenariosFile) + '（新仓的场景资产事实源；缺了 HELP 与场景面取不到）。',
-    action: scenariosExists ? '' : '技能包装得不完整：重装这个技能包即会补齐。',
   });
 
   return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };

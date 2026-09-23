@@ -100,6 +100,8 @@ describe('memo 取数层', () => {
     const tier = larkTierInfo();
     assert.equal(tier.tier, 'full');
     assert.equal(tier.cliPath, found);
-    assert.match(String(tier.version), /fake/);
+    // #936：回执那一格只交**版本号**（首个数字段）——挡板吐 `lark-cli 9.9.9-fake`，这一格是 `9.9.9`；
+    // `--version` 首行原文（连工具名）留在 `larkVersion()` 那个门禁口径里，不上这一格。
+    assert.equal(tier.version, '9.9.9', '版本胶囊吃的是版本号，不是 --version 原文');
   });
 });

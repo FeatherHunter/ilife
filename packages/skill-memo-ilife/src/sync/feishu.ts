@@ -142,6 +142,28 @@ export function larkVersion(cli: string): string {
   return r.stdout.trim().split('\n')[0] || 'unknown';
 }
 
+/** 读不到版本时的占位串（唯一定义地）：只许出现在**报文／页**里；回执那一格拿它换 `null`（＝不交值）。 */
+export const LARK_VERSION_UNREADABLE = '读不到' as const;
+
+/** 版本显示口径（唯一定义地）：`lark-cli --version` 的首行原文（本机实测 `lark-cli version 1.0.82`）只留
+ *  首个数字段（`1.0.82`），工具名与 `version` 字样都不上屏；取不到数字段就给占位串「读不到」。
+ *  取用者：回执那一格（下面的 `larkVersionCell`）。
+ *  **与作息管家 `skill-schedule` 的 `src/fetch/feishu.ts` 那一份逐字同形**（跨包锁进 #936）：同一个正则、
+ *  同一个占位串、同一个 `null` 兜底。 */
+export function shortLarkVersion(raw: string): string {
+  const m = raw.match(/\d+(?:\.\d+)*/);
+  return m ? m[0] : LARK_VERSION_UNREADABLE;
+}
+
+/** 回执那一格的版本号（#936）：**只交版本号**（首个数字段），读不到＝`null`（这一格不交值，面板就不画胶囊）。
+ *
+ *  为什么与 `shortLarkVersion` 分成两个：那个占位串是给人看的报文用词，不许进面板的版本胶囊；
+ *  提取口径只有一处（上面那个正则），两处的差别只在兜底——报文给「读不到」，回执给 `null`。 */
+export function larkVersionCell(raw: string): string | null {
+  const v = shortLarkVersion(raw);
+  return v === LARK_VERSION_UNREADABLE ? null : v;
+}
+
 // 身份真值源：auth status 输出 identities.user.openId；无 openId 即未登录 throw。
 export function authOpenId(cli: string): string {
   const r = runLark(cli, ['auth', 'status']);
@@ -181,13 +203,18 @@ export interface LarkTierInfo {
   readonly tier: LarkTier;
   /** 找到的 CLI 绝对路径（missing 时为 null）。 */
   readonly cliPath: string | null;
-  /** `lark-cli --version` 原文（missing 时为 null；partial 时也照实给，面板按档决定显不显示）。 */
+  /** `lark-cli --version` 里的**版本号**（首个数字段，如 `1.0.82`）——#936：面板「飞书 CLI」状态区第二行的
+   *  版本胶囊就读这一格。读了拿不到（没找到 CLI／超时／非 0 退出／首行里没有数字段）＝`null`：
+   *  **这一格不交值**，不编 `unknown` 之类的占位串，也不让整条回执失败；面板拿 `null` 就把胶囊留空。
+   *  与作息管家的 `LarkStatusReading.version` **同口径**（跨包锁进 #936）。
+   *  （`--version` 首行原文仍归 `larkVersion`，门禁 `larkReady` 那条路一个字不改。） */
   readonly version: string | null;
 }
 
 /** 探一遍三档：CLI 都不在就停在第 1 档，不往下起子进程试登录。**不抛**——面板与回执要的是状态，不是异常。
  *  调不动的候选（无扩展名 shim 之类 ENOENT）按 partial 计（找得到条目但用不了≈没登录那一档的黄），
- *  绝不把一次探测变成 `memo.config.read` 的 exit 1。 */
+ *  绝不把一次探测变成 `memo.config.read` 的 exit 1。
+ *  #936 只动版本这一格的**值口径**（原文 → 版本号，读不到 → null）：三档判定与分支顺序一步不动。 */
 export function larkTierInfo(scope = LARK_WISH_SCOPE): LarkTierInfo {
   let cli: string | null = null;
   try {
@@ -196,9 +223,9 @@ export function larkTierInfo(scope = LARK_WISH_SCOPE): LarkTierInfo {
     cli = null;
   }
   if (cli === null) return { tier: 'missing', cliPath: null, version: null };
-  let version = 'unknown';
+  let version: string | null = null;
   try {
-    version = larkVersion(cli);
+    version = larkVersionCell(larkVersion(cli));
   } catch {
     return { tier: 'partial', cliPath: cli, version };
   }

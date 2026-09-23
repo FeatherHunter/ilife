@@ -242,7 +242,9 @@ describe('#760 设置页收窄 · 技能侧回执与落点', () => {
       const data = dataOf('memo.config.read', {}, stubPathEnv(home, stub.dir));
       assert.equal(data.lark.tier, 'full');
       assert.ok(String(data.lark.cliPath).length > 0);
-      assert.ok(String(data.lark.version).length > 0 && data.lark.version !== 'unknown');
+      // #936：这一格只交**版本号**（挡板吐 `lark-cli version 1.0.59-stub` ⇒ 交 `1.0.59`）；
+      // `--version` 原文与工具名都不进这一格（面板的版本胶囊只印版本号）。
+      assert.equal(data.lark.version, '1.0.59', '版本胶囊吃的是版本号，不是 --version 原文');
     });
 
     it('prompt 关键句齐（读者是 AI／只装官方包／终态三条／/wizard／参考官网）', () => {
