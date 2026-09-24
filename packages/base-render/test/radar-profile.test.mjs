@@ -899,7 +899,8 @@ describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chr
                 width + ' 档 ' + skin + ' ' + c.name + '：有点跑出图框左边 ' + b.minLeft + ' < ' + b.plotLeft);
               assert.ok(b.minTop >= b.plotTop - 1, width + ' 档 ' + skin + ' ' + c.name + '：有点跑出图框上边');
               assert.ok(b.maxBottom <= b.plotBottom + 1, width + ' 档 ' + skin + ' ' + c.name + '：有点跑出图框下边');
-              seen.push({ width, skin, name: c.name, plotW: b.plotW, n: b.n });
+              seen.push({ width, skin, name: c.name, plotW: b.plotW, n: b.n,
+                rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW });
             }
           }
         }
@@ -940,12 +941,17 @@ describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chr
         assert.equal(colors.mark, toRgb(vals.accent), skin + '：轨道上那根竖线取 accent');
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
+      /* 四档读数原文（回执抄的就是这几行）：根的 scroll／client、图宽、顶点数。 */
       for (const w of WIDTHS) {
-        const rows = seen.filter((s) => s.width === w && s.skin === SKIN_NAMES[0]);
-        console.log('READING radar-profile container=' + w + ' 图宽（polygon/sixchars）＝'
-          + rows.filter((s) => s.name === 'polygon').map((s) => s.plotW).join('、') + '／'
-          + rows.filter((s) => s.name === 'sixchars').map((s) => s.plotW).join('、')
-          + ' 顶点数=' + rows.filter((s) => s.name === 'polygon').map((s) => s.n).join('、'));
+        const rows = seen.filter((s) => s.width === w);
+        const mine = rows.filter((s) => s.skin === SKIN_NAMES[0]);
+        console.log('READING radar-profile container=' + w
+          + ' 根 scroll/client（四套皮肤八格取最坏）＝'
+          + Math.max(...rows.map((s) => s.rootScrollW)) + '/' + Math.min(...rows.map((s) => s.rootClientW))
+          + ' 图宽 polygon＝' + mine.filter((s) => s.name === 'polygon').map((s) => s.plotW).join('、')
+          + ' 图宽 sixchars＝' + mine.filter((s) => s.name === 'sixchars').map((s) => s.plotW).join('、')
+          + ' 顶点＝' + mine.filter((s) => s.name === 'polygon').map((s) => s.n).join('、')
+          + ' 量到的格数＝' + rows.length);
       }
     } finally { page.close(); }
   });
