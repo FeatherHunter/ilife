@@ -1,16 +1,17 @@
 /** punch-strip · **样式段**（本组件唯一的样式来源）。
  *
  *  纪律（与本层其余件同一份）：只读冻结 token，不新增 token 名；全部规则 scope 在 `.<prefix>page-ui` 下。
+ *  **字面经 `skinVar()` 读皮肤**：颜色走那 11 个冻结 token 名（皮肤作用域有旧名映射），字面没有旧名可映射 ⇒ 显式走皮肤读法。
  *
  *  几何契约（钉在测试里）：
  *   · 格宽是**份数**（`flex: 1 1 0`）⇒ 总宽永远等于容器宽，N 格换 M 格不横滑（390 档无横滚）；
  *   · 空心盒与实心盒**同一副盒模型**（描边改成实色、不删边框）⇒ 有数／没数的格子等高等宽，不跳版；
- *   · 日期位与盒子里的小字都走 `PAPER_MONO_STACK`（原型 `.punch .d`／`.b.on` 同款）。
+ *   · 日期位与盒子里的小字（两处都是"数"）都经 `skinVar('font-num')` 读皮肤的数字字面。
  *
  *  色：暖档纸面 token 集里没有（同 `sheet-frame` 的纸边与 `scale-bar` 的语义红先例）⇒
  *  打孔虚线用原型 `--dash` 的字面 `#d8d2c2`，朱红描边用朱红印那支字面 `#b3402b`（与印章同一支）。
  */
-import { PAPER_MONO_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -59,7 +60,7 @@ export function punchStripCss(input?: { readonly prefix?: string }): string {
     '  gap: 4px;',
     '}',
     s + '-date {',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: 10px;',
     '  letter-spacing: -.02em;',
     '  color: var(--fg3);',
@@ -75,7 +76,7 @@ export function punchStripCss(input?: { readonly prefix?: string }): string {
     '  align-items: flex-end;',
     '  justify-content: center;',
     '  padding-bottom: 4px;',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: 10.5px;',
     '  color: var(--fg3);',
     '  overflow: hidden;',

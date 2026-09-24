@@ -1,14 +1,16 @@
 /** entry-rows · **样式段**（本组件唯一的样式来源）。
  *
  *  纪律（与本层其余件同一份）：只读冻结 token，不新增 token 名；全部规则 scope 在 `.<prefix>page-ui` 下。
+ *  **字面经 `skinVar()` 读皮肤**（颜色走的是那 11 个冻结 token 名，皮肤作用域里有旧名映射、挂皮肤即跟着走；
+ *  字面**没有**旧名可映射 ⇒ 只有它必须显式走皮肤读法）。本件三处数字位都取 `font-num`。
  *
  *  几何契约（钉在测试里）：
- *   · 时间槽定宽（`min-width`）＋ 等宽数字 ⇒ 逐条记录的时间竖排在同一列；
- *   · 值槽右对齐、等宽数字 ⇒ 热量逐条对齐；
+ *   · 时间槽定宽（`min-width`）＋ 数字位走皮肤的 `font-num` ⇒ 逐条记录的时间竖排在同一列；
+ *   · 值槽右对齐、数字位走皮肤的 `font-num` ⇒ 热量逐条对齐；
  *   · 行与行之间是**点线**、与"账目行"的 hairline 分得开（同一页出现两族时不混成一片）；
  *   · 备注占满一整行（`flex-basis:100%`）并缩进到名称列，**行高随备注长出来**、不挤压上一行的槽位。
  */
-import { PAPER_MONO_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -58,7 +60,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  flex: 0 0 auto;',
     '  min-width: ' + ENTRY_ROW_TIME_MIN_WIDTH_PX + 'px;',
     '  color: var(--fg3);',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-variant-numeric: tabular-nums;',
     '}',
     s + '-badge {',
@@ -80,7 +82,8 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  flex: 0 0 auto;',
     '  color: var(--fg3);',
     '  font-size: 12px;',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    /* 数量位是"数"（`2000 g`）：经 `skinVar('font-num')` 读皮肤的数字字面。 */
+    '  font-family: ' + skinVar('font-num') + ';',
     '}',
     s + '-leader {',
     '  flex: 1 1 auto;',
@@ -93,7 +96,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  flex: 0 0 auto;',
     '  color: var(--fg);',
     '  font-weight: 800;',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-variant-numeric: tabular-nums;',
     '  text-align: right;',
     '}',

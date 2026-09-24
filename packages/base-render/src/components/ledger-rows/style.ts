@@ -1,13 +1,14 @@
 /** ledger-rows · **样式段**（本组件唯一的样式来源）。
  *
  *  纪律（与本层其余件同一份）：只读冻结 token，不新增 token 名；全部规则 scope 在 `.<prefix>page-ui` 下。
+ *  **字面经 `skinVar()` 读皮肤**：颜色走那 11 个冻结 token 名（皮肤作用域有旧名映射），字面没有旧名可映射 ⇒ 显式走皮肤读法。
  *
  *  几何契约（钉在测试里）：
- *   · 值列**右对齐且等宽数字**（`tabular-nums`）⇒ 逐行竖读时小数点／单位在同一列；
+ *   · 值列**右对齐且数字位走皮肤的 `font-num`**（`tabular-nums`）⇒ 逐行竖读时小数点／单位在同一列；
  *   · 引导线是**零高度的下边框**（`flex:1` 撑开、`translateY` 抬到基线），开关它不改任何行的行高；
  *   · 行距与"明细行"同档（padding 6px 0）⇒ 两件混排时行高一致。
  */
-import { PAPER_MONO_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -63,8 +64,8 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  flex: 0 0 auto;',
     '  color: var(--fg);',
     '  font-weight: 700;',
-    /* 值位是"数"：走原型 `--mono`（与 `.line .v` 同款）——与主数字头同一支字面。 */
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    /* 值位是"数"：经 `skinVar('font-num')` 读皮肤的数字字面（与主数字头同一支字面）。 */
+    '  font-family: ' + skinVar('font-num') + ';',
     '  letter-spacing: -.01em;',
     '  font-variant-numeric: tabular-nums;',
     '  text-align: right;',

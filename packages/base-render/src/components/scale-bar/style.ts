@@ -1,13 +1,14 @@
 /** scale-bar · **样式段**（本组件唯一的样式来源）。
  *
  *  纪律（与本层其余件同一份）：只读冻结 token，不新增 token 名；全部规则 scope 在 `.<prefix>page-ui` 下。
+ *  **字面经 `skinVar()` 读皮肤**：颜色走那 11 个冻结 token 名（皮肤作用域有旧名映射），字面没有旧名可映射 ⇒ 显式走皮肤读法。
  *
  *  几何契约（钉在测试里）：
  *   · 两形态的**根高度相同**（刻度 22px ＋ 可选一行 18px）——同一页换形态不跳版；
  *   · 条形码逐格等宽（`flex:1 1 0`），格间距 3px，总宽永远等于容器宽（窄屏不横滑）；
  *   · 超目标（`is-over`）只换颜色（走语义色），**形状不变**：仍是满格／满轨，不画第二圈。
  */
-import { PAPER_MONO_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 import { SCALE_BAR_DEFAULT_CELLS } from './render.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
@@ -73,8 +74,8 @@ export function scaleBarCss(input?: { readonly prefix?: string }): string {
     '  justify-content: space-between;',
     '  gap: 4px 12px;',
     '  color: var(--fg2);',
-    /* 两端读数都是"数"：走原型 `--mono`（`.code-row .pct` 同款）。 */
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    /* 两端读数都是"数"：经 `skinVar('font-num')` 读皮肤的数字字面。 */
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: 11.5px;',
     '  font-variant-numeric: tabular-nums;',
     '}',

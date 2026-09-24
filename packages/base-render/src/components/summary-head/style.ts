@@ -1,6 +1,7 @@
 /** summary-head · **样式段**（本组件唯一的样式来源）。
  *
  *  纪律（与本层其余件同一份）：只读冻结 token，不新增 token 名；全部规则 scope 在 `.<prefix>page-ui` 下。
+ *  **字面经 `skinVar()` 读皮肤**：颜色走那 11 个冻结 token 名（皮肤作用域有旧名映射），字面没有旧名可映射 ⇒ 显式走皮肤读法。
  *
  *  几何契约（钉在测试里）：三档字号只改 `-value` 的 `font-size` 与字距，**盒模型与槽位不动**——
  *  同一页把 `m` 换成 `xl`，脚行与印章仍在同一行位置（不重排）。
@@ -9,7 +10,7 @@
  *  宽度只许听**容器**（`container-type: inline-size` ＋ `@container`，零 `@media (max-width: …)`）：
  *  本件会被嵌进侧栏／面板／卡片，**视口宽 ≠ 件宽**——按视口分档会在「宽屏里的小面板」上判错。
  */
-import { PAPER_MONO_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 import { SUMMARY_HEAD_SIZES } from './render.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
@@ -60,9 +61,9 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     s + '-value {',
     '  color: var(--fg);',
     '  font-weight: 800;',
-    /* 数字位走原型的 `--mono`（主数字是"数"，不是"字"；原型 `.total .n` 同款）。
-       `sans` 档也不改字面——原型的大数字本来就是等宽栈，那个"0 带斜杠"的观感来自这里。 */
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    /* 主数字是"数"：经 `skinVar('font-num')` 读皮肤的数字字面（paper 下即原型 `.total .n` 那支等宽栈，
+       那个"0 带斜杠"的观感来自这里）。`sans` 档也不改字面——档位管字号，字面归皮肤。 */
+    '  font-family: ' + skinVar('font-num') + ';',
     '  line-height: 1;',
     '  letter-spacing: -.04em;',
     '  font-variant-numeric: tabular-nums;',
@@ -76,7 +77,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '}',
     s + '-denom {',
     '  color: var(--fg2);',
-    '  font-family: ' + PAPER_MONO_STACK + ';',
+    '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: 15px;',
     '  font-variant-numeric: tabular-nums;',
     '}',

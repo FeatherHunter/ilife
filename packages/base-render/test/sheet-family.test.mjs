@@ -1,9 +1,11 @@
-// 单据族（sheet-frame／summary-head／scale-bar／ledger-rows／entry-rows）· 判据件。
+// 单据族（sheet-frame／summary-head／scale-bar／ledger-rows／entry-rows／punch-strip）· 判据件。
 //
 // 断言对象是**消费方真走的那条出口**：`dist/blocks.js`（组件层的对外路径，层规：
 // 组件层不进冻结面、不从根出口）。每组断四类：
 //   ① 形状（类名与结构）② 边界（空数组／越界值／非法枚举／非对象入参）
 //   ③ 样式纪律（scope、禁入 token、零 `:root`／`!important`）④ 层红线（零 DOM、只留一条出口）。
+// 另有一组**字面走皮肤**（#950）：数字位读 `var(--ilife-font-num…)`、纸面正文读 `var(--ilife-font,…)`，
+// 产物里零写死的字面栈（写死则换皮只换得动颜色、换不动字体）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -23,6 +25,7 @@ import {
   SUMMARY_HEAD_VALUE_PX,
   entryRowsCss,
   ledgerRowsCss,
+  punchStripCss,
   renderEntryRows,
   renderLedgerRows,
   renderScaleBar,
@@ -35,7 +38,9 @@ import {
 } from '../dist/blocks.js';
 import * as root from '../dist/index.js';
 
-const CSS_FUNCS = { sheetFrameCss, summaryHeadCss, scaleBarCss, ledgerRowsCss, entryRowsCss, sheetCss };
+const CSS_FUNCS = {
+  sheetFrameCss, summaryHeadCss, scaleBarCss, ledgerRowsCss, entryRowsCss, punchStripCss, sheetCss,
+};
 
 /** 剥掉 CSS 注释再断规则（注释会**提到**类名，拿裸串断会把"解释"当"规则"）。 */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -305,6 +310,38 @@ describe('单据族 ⑥ 样式纪律与层红线', () => {
       assert.equal(css.includes('--pink'), false, name + ' 不得用禁入 token');
       const decls = css.match(/--[a-z0-9-]+\s*:/g) || [];
       assert.equal(decls.length, 0, name + ' 不得定义新 token：' + decls.join(' '));
+    }
+  });
+
+  it('字面走皮肤（#950）：九处数字位读 `font-num`、纸面正文读 `font`，产物里零写死的字面栈', () => {
+    // 断的是「**经皮肤读法读**」这条事实（`skinVar()` 产出的 `var(--ilife-…)` 串）——写死字面栈时，
+    // 换皮只换得动颜色、换不动字体（`ink`／`terminal` 下会看出"换皮换了一半"）。
+    // 处数是**钉住的读数**：日后谁把某一处改回字面栈、或漏掉一处，这里当场红（不许改成"不断"）。
+    const NUM_SLOTS = [
+      ['entryRowsCss', entryRowsCss(), 3],      // 时间／数量／值
+      ['ledgerRowsCss', ledgerRowsCss(), 1],    // 值位
+      ['punchStripCss', punchStripCss(), 2],    // 日期位／盒内小字
+      ['scaleBarCss', scaleBarCss(), 1],        // 两端读数
+      ['summaryHeadCss', summaryHeadCss(), 2],  // 主数字／分母
+      ['sheetFrameCss', sheetFrameCss(), 0],    // 纸面的"字"：没有数字位
+    ];
+    let total = 0;
+    for (const [name, css, want] of NUM_SLOTS) {
+      const got = (stripComments(css).match(/var\(--ilife-font-num/g) || []).length;
+      assert.equal(got, want, name + ' 的数字位处数不对（期望 ' + want + ' 处读 font-num，实际 ' + got + '）');
+      total += got;
+    }
+    assert.equal(total, 9, '本族数字位合计处数变了（改样式段时同步这张表）');
+    // 纸面正文字面：整族只有纸框这一处，且取 `font`（本族这六件没有标题位，用不上 `font-display`）。
+    assert.equal((stripComments(sheetFrameCss()).match(/var\(--ilife-font,/g) || []).length, 1,
+      '纸面的正文字面必须恰好一处、且经 `skinVar(\'font\')` 读');
+    // 两条**旧**字面栈清零（这两串是 #950 整改前 `PAPER_MONO_STACK`／`PAPER_SANS_STACK` 的逐字前缀；
+    // 它们现在只作 `paper` 皮肤 `font-num` 的**取值**用——样式段只许读 token，不许抄值）。
+    const OLD_STACKS = ['ui-monospace, SFMono-Regular, "SF Mono"', '-apple-system, BlinkMacSystemFont, "PingFang SC"'];
+    for (const [name, css] of NUM_SLOTS) {
+      for (const old of OLD_STACKS) {
+        assert.equal(stripComments(css).includes(old), false, name + ' 里还有写死的字面栈：' + old);
+      }
     }
   });
 

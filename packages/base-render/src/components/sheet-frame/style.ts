@@ -3,14 +3,15 @@
  *  两条纪律（与 `editable-value`／`page-bars` 同一份层规，见 `src/components/README.md`）：
  *   1. 只读冻结 token（`CSS_VAR_TOKENS`），**不新增 token 名**、不写 `:root`／`!important`；
  *      暖纸那一档 token 集里没有 ⇒ 用**局部字面色**并在行内注明（同族先例：`page-bars/style.ts`
- *      的 `#a15a06`／`rgba(255,159,10,.22)`）。
+ *      的 `#a15a06`／`rgba(255,159,10,.22)`）。**字面经 `skinVar()` 读皮肤**（颜色走旧 token 名的
+ *      皮肤映射；字面没有旧名可映射 ⇒ 纸面的正文字面显式取 `font`、本族的数字位取 `font-num`）。
  *   2. 全部规则 scope 在 `.<prefix>page-ui` 之下 ⇒ **不开 `pageUi` 的页零命中**（加法式的机械保证）。
  *
  *  几何契约（钉在测试里）：
  *   · 撕口是**画在纸边上**的两枚半圆（圆心落在纸边线上），不占版面宽度 ⇒ 开关它不改任何列的 x；
  *   · 裁切线与纸面同宽（左右各探出一个内距），底下不占高度。
  */
-import { PAPER_SANS_STACK } from '../shared/typography.js';
+import { skinVar } from '../skin/contract.js';
 import { entryRowsCss } from '../entry-rows/style.js';
 import { ledgerRowsCss } from '../ledger-rows/style.js';
 import { punchStripCss } from '../punch-strip/style.js';
@@ -35,10 +36,9 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     s + ' {',
     '  position: relative;',
     '  box-sizing: border-box;',
-    /* 纸的**正文**字面＝原型 `--sans` 的原序（字符串住 `../shared/typography.ts`，族内一份事实）。
-       注意：纸上那些**数字**不走这一串——原型给数字另写了 `--mono`（Consolas，0 带斜杠），
-       本族按数字位各自挂 `PAPER_MONO_STACK`；两条栈的分工见 `../shared/typography.ts` 件头。 */
-    '  font-family: ' + PAPER_SANS_STACK + ';',
+    /* 纸的**正文**字面：经 `skinVar('font')` 读皮肤的正文栈（挂皮肤＝纸面正文也跟着换）。
+       注意：纸上那些**数字**不走这一串——它们各自取 `skinVar('font-num')`（本族的数字位读法）。 */
+    '  font-family: ' + skinVar('font') + ';',
     '  background: var(--card);',
     '  border: 1px solid var(--line);',
     '  border-radius: ' + 14 + 'px;',
