@@ -262,3 +262,118 @@ describe('件清单 ⑤ 缺项照实报（抽不出的字段照实写，不静�
     if (gaps.length > 0) console.log('读数：形态闭集抽不出的件 ' + gaps.length + '：' + gaps.join('、'));
   });
 });
+
+/* ── ⑧ 示例入参**直渲**：清单里每一件的样例都要能直接渲染成功（不许靠补参） ──── */
+
+/** **豁免表**（带日期；**只许加不许悄悄删**——每一条都逐条打一行警告）。
+ *  一条写三样：**件名 ＋ 为什么现在渲染不出来 ＋ 去处**。
+ *
+ *  为什么要有这一张：`清单.ts` 那个字段本来的用途就是「皮肤矩阵拿它渲染每一件」。
+ *  而按类型派生的样例**数组恒只给一个元素**，说不出「档数必须是奇数」「一周恰好七格」这类约束 ⇒
+ *  一半的样例是坏的，坏处又被皮肤矩阵的补参机制（照 render 的报错反复补）擦掉了——
+ *  等于**没有一个地方保证「示例入参真的能用」**。这一步是把坏处摆到台面上：
+ *  不在表里的件必须直渲成功；在表里的件逐条挂警告，去处写「待派活」。
+ *  `since` 记**加表那天**；条目要删，另开一步改代码，不许顺手抹掉。
+ */
+const SAMPLE_RENDER_EXEMPT = new Map([
+  // 加表那天的读数：63 件里 22 件直渲不过（`spread-dist`／`radar-profile` 已在本批补了显式块，故不在表里）。
+  // 这 22 件的共同原因：**README 的入参表只说得出字段面**，说不出「一周恰好七格」「档数必须是奇数」
+  // 「max 必须大于 min」这类约束，而按类型派生**数组恒只给一个元素、`string` 恒给 `示例`** ⇒ 直渲必抛。
+  // 出路（都归各件自己的席）：在该件 README 里写一个「示例入参」显式块，把元素个数与取值按约束给够。
+  ['calendar-month', { since: '2026-09-25', why: '`cells` 的长度必须是 7 的倍数（一周七格），派生样例按数组恒只给 1 格', todo: '待派活' }],
+  ['command-palette', { since: '2026-09-25', why: '`id` 只许标识符字符（还要当 id 与 popovertarget），派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
+  ['dialog', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
+  ['drawer-sheet', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
+  ['filter-chips', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  ['goal-stairs', { since: '2026-09-25', why: '`steps` 至少 2 个分段，派生样例按数组恒只给 1 段', todo: '待派活' }],
+  ['heat-grid', { since: '2026-09-25', why: '`rows[].values` 必须恰好 7 个数（一周七天），派生样例按数组恒只给 1 个', todo: '待派活' }],
+  ['hour-band', { since: '2026-09-25', why: '`intervals[].from` 必须是有限数字，派生给的元素是空对象（元素字段表抽不出必填）', todo: '待派活' }],
+  ['invoice-lines', { since: '2026-09-25', why: '`lines` 至少要两行，派生样例按数组恒只给 1 行（照 render 报错补也补不出来）', todo: '待派活' }],
+  ['number-stepper', { since: '2026-09-25', why: '`max` 必须大于 `min`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
+  ['photo-compare', { since: '2026-09-25', why: '`before` 必须是对象，派生按声明类型给了串', todo: '待派活' }],
+  ['photo-grid', { since: '2026-09-25', why: '`photos` 与 `groups` 恰好给一个，派生样例两个都给了', todo: '待派活' }],
+  ['popover-menu', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
+  ['range-bar', { since: '2026-09-25', why: '`domain.min` 必须是有限数字，派生给的 `domain` 是空对象', todo: '待派活' }],
+  ['result-row', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  ['search-field', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  ['slider-row', { since: '2026-09-25', why: '`max` 必须大于 `min`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
+  ['small-multiples', { since: '2026-09-25', why: '`periods` 至少 2 条，派生样例按数组恒只给 1 条', todo: '待派活' }],
+  ['sort-toggle', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  ['tooltip', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
+  ['window-picker', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  ['wizard-shell', { since: '2026-09-25', why: '`total` 必须大于 `index`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
+]);
+
+const msgOf = (e) => String(e && e.message ? e.message : e);
+
+/** 一件的「示例入参直渲」读数：**直接**拿清单里那份样例渲染一次（不补参、不改样例）。 */
+async function sampleRenderOnce(row) {
+  if (row.sample === null) {
+    return { ok: false, why: '清单里这件**抽不出示例入参**（README 没有入参表，也没写「示例入参」显式块）' };
+  }
+  const entry = join(PKG, 'dist', 'components', row.name, 'index.js');
+  if (!existsSync(entry)) {
+    return { ok: false, why: '编译产物缺：dist/components/' + row.name + '/index.js'
+      + '（先跑 node node_modules/typescript/bin/tsc -b packages/base-render/tsconfig.json）' };
+  }
+  let mod;
+  try { mod = await import(pathToFileURL(entry).href); } catch (e) { return { ok: false, why: '产物装不上：' + msgOf(e) }; }
+  if (row.render === '' || typeof mod[row.render] !== 'function') {
+    return { ok: false, why: '渲染入口 `' + row.render + '` 取不到（清单里抽不出，或产物里不是函数）' };
+  }
+  try {
+    const html = mod[row.render](row.sample);
+    if (typeof html !== 'string') return { ok: false, why: '渲染入口没吐出字符串（读到 ' + typeof html + '）' };
+    return { ok: true, bytes: html.length };
+  } catch (e) {
+    return { ok: false, why: msgOf(e) };
+  }
+}
+
+const SAMPLE_RENDER = [];
+for (const row of PIECES) SAMPLE_RENDER.push({ name: row.name, ...(await sampleRenderOnce(row)) });
+const SAMPLE_RENDER_BAD = SAMPLE_RENDER.filter((r) => !r.ok);
+const SAMPLE_RENDER_NEW = SAMPLE_RENDER_BAD.filter((r) => !SAMPLE_RENDER_EXEMPT.has(r.name));
+
+console.log('示例入参直渲：清单里 ' + PIECES.length + ' 件，直接渲染成功 ' + (PIECES.length - SAMPLE_RENDER_BAD.length)
+  + '；渲染不出来 ' + SAMPLE_RENDER_BAD.length + '（' + (SAMPLE_RENDER_BAD.map((r) => r.name).join('、') || '—') + '）');
+if (SAMPLE_RENDER_BAD.length > 0) {
+  console.log('读数：示例入参**直渲**渲染不出来的件（逐条原文）：');
+  for (const r of SAMPLE_RENDER_BAD) console.log('  · ' + r.name + '：' + r.why);
+}
+for (const [name, ex] of SAMPLE_RENDER_EXEMPT) {
+  const hit = SAMPLE_RENDER_BAD.some((r) => r.name === name);
+  console.log('⚠ 豁免示例入参直渲：' + name + '（加表 ' + ex.since + '）——现在渲染不出来的原因：' + ex.why
+    + ' ⇒ 去处：' + ex.todo + '；本次' + (hit ? '仍不通过' : '**已经不命中**，条目可以删了（删要另开一步改代码）'));
+}
+
+describe('件清单 ⑧ 示例入参直渲（每一件的样例都要能直接 render 成功，不许靠补参）', () => {
+  it('逐件直渲；除豁免表之外一律红', () => {
+    const reds = SAMPLE_RENDER_NEW.map((r) => '  · ' + r.name + '：' + r.why);
+    assert.deepEqual(reds, [],
+      '这几件的示例入参**直接渲染**就报错：\n' + reds.join('\n')
+      + '\n修法：在 README 里写一个「示例入参」显式块（派生器会原样用它），把元素个数按入参表的约束给够——'
+      + '按类型派生**数组恒只给一个元素**，给不出「档数必须是奇数」这类约束。'
+      + '\n这条判据不吃「照 render 的报错补一补就渲染出来了」：示例入参的用途就是**能直接用**。'
+      + '\n确实一时补不上的，写进 SAMPLE_RENDER_EXEMPT（带日期 ＋ 为什么 ＋ 去处），每条会打一行警告。');
+  });
+
+  it('豁免表每一格写全（日期／为什么／去处），件名在磁盘上真的存在', () => {
+    for (const [name, ex] of SAMPLE_RENDER_EXEMPT) {
+      assert.ok(PIECES.some((p) => p.name === name),
+        '豁免表里的 ' + name + ' 磁盘上已没有这件（幽灵条目——删除要另开一步改代码）');
+      for (const k of ['since', 'why', 'todo']) {
+        assert.ok(typeof ex[k] === 'string' && ex[k].trim() !== '',
+          name + ' 的豁免少了 `' + k + '`：一条豁免要写清**件名 ＋ 为什么现在渲染不出来 ＋ 去处**');
+      }
+    }
+    console.log('读数：示例入参直渲豁免表 ' + SAMPLE_RENDER_EXEMPT.size + ' 条'
+      + (SAMPLE_RENDER_EXEMPT.size === 0 ? '' : '（' + [...SAMPLE_RENDER_EXEMPT.keys()].join('、') + '）'));
+  });
+
+  it('件数写进测试输出（不因件少而跳过）', () => {
+    assert.ok(PIECES.length > 0, '一件都没有 ⇒ 判据空转，不许绿');
+    console.log('示例入参直渲：' + (PIECES.length - SAMPLE_RENDER_BAD.length) + '／' + PIECES.length + ' 件直渲成功');
+  });
+});
+

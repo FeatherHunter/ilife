@@ -11,6 +11,17 @@
  *   · `shared/`（跨族小件）与 `skin/`（皮肤层）**不是件**；
  *   · 缺文件的目录按**族目录**跳过，跳过的目录名与原因照实记进清单（`COMPONENT_SKIPPED`）。
  *
+ *  **「示例入参」从哪来**（皮肤矩阵判据拿它渲染每一件，所以它必须**能直接渲染成功**）：
+ *   · README 里写了**显式示例入参块** ⇒ **原样用它**。块的认法＝围栏代码块的信息串里带「示例入参」四字：
+ *     ```` ```json 示例入参 ````；块里必须是一份**合法 JSON 对象**（就是一份能直接喂给 `render*()` 的入参）。
+ *     写法（README 里就照这个抄；上面那行 HTML 注释是给人看的，不进解析）：
+ *     `<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->` ＋ ```` ```json 示例入参 ```` ＋ 正文 ＋ ```` ``` ````。
+ *   · 没写 ⇒ 退回**按入参表的声明类型派生**（数组**恒只给一个元素**）。
+ *     故凡「元素个数有下限／上限／奇偶约束」的件（`spread-dist` 的 `stops` 要 3／5／7 档那种），
+ *     **必须**写显式块——按类型派生出来的样例直渲必抛 `BlocksError`。
+ *   · 写了却**不是合法 JSON／不是对象／一块以上** ⇒ **非零退出并点名**（哪一件、第几行、为什么）。
+ *     **不许静默退回派生**：那样等于把「示例入参真的能用」这件事重新变成没人保证。
+ *
  *  跑法（workdir＝仓根；不经 shell、不依赖 PATH）：
  *   node packages/base-render/scripts/gen-components.mjs             # 写：派生并落盘
  *   node packages/base-render/scripts/gen-components.mjs --check     # 门：一致 exit 0；漂移 exit 1 并点名
@@ -229,6 +240,59 @@ function sampleOf(readmeText) {
   return Object.keys(out).length === 0 ? null : out;
 }
 
+/* ── README 的**显式示例入参块**（写了就原样用它；没写才退回按类型派生） ──── */
+
+/** 显式块的**标记**：围栏代码块的信息串里带这四个字（语言标记随便写，`json` 只是惯例）。 */
+const SAMPLE_MARK = '示例入参';
+/** 围栏那一行：缩进 ＋ 三个以上反引号或波浪号 ＋ 信息串。 */
+const FENCE_RE = /^\s*(`{3,}|~{3,})\s*(.*)$/;
+
+/**
+ * README 里的显式示例入参块 → `{ at, value }`；没写 ⇒ `null`。
+ *
+ * **解析失败一律抛错点名，不静默退回派生**（退回＝把「示例入参真的能用」这件事重新变成没人保证）。
+ * 点名的三样：件名、块开在哪一行、为什么不行（不是合法 JSON／不是对象／一块以上）。
+ */
+function explicitSample(name, text) {
+  const lines = text.split('\n');
+  const found = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = FENCE_RE.exec(lines[i]);
+    if (m === null) continue;
+    const fence = m[1];
+    const body = [];
+    let j = i + 1;
+    for (; j < lines.length; j += 1) {
+      const close = /^\s*(`{3,}|~{3,})\s*$/.exec(lines[j]);
+      if (close !== null && close[1].charAt(0) === fence.charAt(0) && close[1].length >= fence.length) break;
+      body.push(lines[j]);
+    }
+    if (m[2].trim().includes(SAMPLE_MARK)) found.push({ at: i + 1, text: body.join('\n') });
+    i = j;                                   // 跳过整块，围栏里的 ` 不会当成新的围栏
+  }
+  if (found.length === 0) return null;
+  if (found.length > 1) {
+    throw new Error('件 ' + name + ' 的 README 里有 ' + String(found.length) + ' 个「' + SAMPLE_MARK
+      + '」块（分别开在第 ' + found.map((f) => String(f.at)).join('、') + ' 行）'
+      + '——一件只许有一份示例入参（两份就不知道拿哪一份渲染了），请删到只剩一块');
+  }
+  const one = found[0];
+  let value;
+  try {
+    value = JSON.parse(one.text);
+  } catch (e) {
+    throw new Error('件 ' + name + ' 的 README 第 ' + String(one.at) + ' 行的「' + SAMPLE_MARK
+      + '」块**不是合法 JSON**：' + String(e && e.message ? e.message : e)
+      + '——这一块必须原样就是一份能直接喂给 render*() 的入参（不许写注释、不许带尾逗号）');
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('件 ' + name + ' 的 README 第 ' + String(one.at) + ' 行的「' + SAMPLE_MARK
+      + '」块**不是 JSON 对象**（读到 ' + (Array.isArray(value) ? '数组' : typeof value)
+      + '）——一份入参就是一个对象（渲染入口吃的那一个）');
+  }
+  return { at: one.at, value };
+}
+
 /* ── 派生 ─────────────────────────────────────────────────────── */
 
 /** 扫组件层 → `{ pieces, skipped }`（全部字段现算；同输入必同输出）。 */
@@ -244,6 +308,8 @@ export function derive(root = ROOT) {
 
   const names = [];
   const skipped = [];
+  /** 写了显式示例入参块的件（读数，见 `derive()` 的返回）。 */
+  const explicitNames = [];
   for (const e of readdirSync(layer, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
     if (!e.isDirectory()) continue;
     const inLayer = noteFam.has(e.name);
@@ -270,6 +336,9 @@ export function derive(root = ROOT) {
   const pieces = names.map((name) => {    const dir = join(layer, name);
     const exports = exportNames(read(join(dir, 'index.ts')));
     const { cn, readme, text } = readmeOf(dir);
+    // 示例入参：README 写了显式块就**原样用它**；没写才退回按类型派生（写了却写坏＝抛错点名，见上面的函数）。
+    const explicit = readme === '有' ? explicitSample(name, text) : null;
+    if (explicit !== null) explicitNames.push({ name, at: explicit.at });
     const fns = css.get(name);
     const own = fns.find((f) => f.name === camel(name) + 'Css');
     const style = own !== undefined ? own.name : (fns.length > 0 ? fns[0].name : '');
@@ -290,10 +359,17 @@ export function derive(root = ROOT) {
       familyCss,
       runtime: runtimeOf(dir, exports),
       readme,
-      sample: readme === '有' ? sampleOf(text) : null,
+      sample: explicit !== null ? explicit.value : (readme === '有' ? sampleOf(text) : null),
     };
   });
-  return { pieces, skipped, missingDirs: missingDirsOf(layer, noteFam), sharedExports: sharedExportsOf(pieces) };
+  return {
+    pieces,
+    skipped,
+    missingDirs: missingDirsOf(layer, noteFam),
+    sharedExports: sharedExportsOf(pieces),
+    /** 写了显式示例入参块的件（**读数用**，不进 `清单.ts`——列的字段面一个不动，别的件逐字节不变）。 */
+    explicitSamples: explicitNames.toSorted((a, b) => (a.name < b.name ? -1 : 1)),
+  };
 }
 
 /** **名册里有、盘上没有**的目录（层出口点了名，可目录还没落地）——照实记，不许静默跳过。 */
@@ -388,7 +464,11 @@ export function renderManifest(data) {
     ' *',
     ' *  「族」＝层出口（`src/components/index.ts`）上这件所在注记块的族名；`—`＝那一行没有族注记（独立成件）。',
     ' *  「层出口」＝层出口加没加这件那一行（`无`＝件已在磁盘上、`base-paint/blocks` 还取不到它）。',
-    ' *  「示例入参」＝README 入参表里**必填**字段按声明类型各给一个确定值（皮肤矩阵判据拿它渲染每一件）。',
+    ' *  「示例入参」＝**皮肤矩阵判据拿它渲染本件**的那份样例，必须能**直接渲染成功**（不靠补参）。它有两个来源：',
+    ' *   · README 里写了**显式示例入参块**（认法：围栏代码块的信息串带「示例入参」四字，块里是一份合法 JSON 对象）',
+    ' *     ⇒ **原样用它**；写坏了（不是合法 JSON／不是对象／一块以上）派生器**非零退出并点名**，不静默退回派生；',
+    ' *   · 没写 ⇒ 按 README 入参表里**必填**字段的**声明类型**各给一个确定值（数组**恒只给一个元素**）——',
+    ' *     故「元素个数有下限／上限／奇偶约束」的件派生不出合法样例，**必须**写显式块。',
     ' */',
     '',
     '/** 跳过的目录（名字 ＋ 原因：不是件，或不是「一件一目录」的形状）。 */',
@@ -563,6 +643,10 @@ function notes(data) {
     + '（名册里有、盘上没有）');
   out.push('跨件重名 ' + data.sharedExports.length + '：'
     + (data.sharedExports.map((s) => s.name + '（' + s.pieces.join('／') + '）').join('、') || '—'));
+  const explicit = data.explicitSamples === undefined ? [] : data.explicitSamples;
+  out.push('示例入参来源：README 显式块 ' + explicit.length + ' 件（'
+    + (explicit.map((e) => e.name + '（第 ' + String(e.at) + ' 行）').join('、') || '—')
+    + '）；其余按入参表的声明类型派生（数组恒一个元素）');
   for (const p of data.pieces) {
     const gaps = [];
     if (p.cn.startsWith('—')) gaps.push('中文名');
@@ -676,7 +760,8 @@ function runSelftest() {
     console.log = (...a) => lines.push(a.join(' '));
     console.error = (...a) => lines.push(a.join(' '));
     let code;
-    try { code = fn(); } finally { console.log = log; console.error = err; }
+    try { code = fn(); } catch (e) { lines.push(String(e && e.stack ? e.stack : e)); code = 1; }
+    finally { console.log = log; console.error = err; }
     return { code, text: lines.join('\n') };
   };
   try {
@@ -726,6 +811,27 @@ function runSelftest() {
     writeFileSync(join(layer, 'toy-a', 'README.md'), '# toy-a · 玩具' + LF + LF
       + '| 字段 | 类型 | 缺省 | 说明 |' + LF + '|---|---|---|---|' + LF + '| `value` | `string` | 必填 | 值 |' + LF);
     step('补回 README → 应绿', capture(() => runCheck(base)), 0);
+    // 显式示例入参块（README 写了就原样用它；写坏了非零退出并点名，不许静默退回派生）。
+    const readmeA = join(layer, 'toy-a', 'README.md');
+    const keptReadme = read(readmeA);
+    const sampleOfA = () => JSON.stringify(
+      parseManifest(read(out)).rows.find((r) => r.name === 'toy-a').sample);
+    const block = (body) => LF + '<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->' + LF
+      + '```json 示例入参' + LF + body + LF + '```' + LF;
+    writeFileSync(readmeA, keptReadme + block('{ "value": "显式那一份" }'));
+    step('README 写了显式示例入参块 → 重生应绿', capture(() => runWrite(base)), 0);
+    steps.push({ what: '显式块原样进清单（toy-a.sample ＝ 块里那一份）',
+      ok: sampleOfA() === JSON.stringify({ value: '显式那一份' }), why: '清单里是 ' + sampleOfA() });
+    writeFileSync(readmeA, keptReadme + block('{ "value": 坏 }'));
+    step('显式块写成坏 JSON → --check 应红且点名 toy-a', capture(() => runCheck(base)), 1, 'toy-a');
+    step('同一份坏块 → 重生也应红（不许静默退回按类型派生）', capture(() => runWrite(base)), 1, 'toy-a');
+    writeFileSync(readmeA, keptReadme + block('[1, 2]'));
+    step('显式块不是对象（是数组）→ 应红且点名 toy-a', capture(() => runCheck(base)), 1, 'toy-a');
+    writeFileSync(readmeA, keptReadme);
+    step('改回没写显式块 → 重生应绿（退回按类型派生）', capture(() => runWrite(base)), 0);
+    steps.push({ what: '退回派生时样例＝按类型给的那一份', ok: sampleOfA() === JSON.stringify({ value: '示例' }),
+      why: '清单里是 ' + sampleOfA() });
+    step('（退回后）--check → 应绿', capture(() => runCheck(base)), 0);
     piece('toy-c');
     writeFileSync(join(layer, 'index.ts'), layerIndex());
     step('别席落下新件（toy-c）→ 宽松 --check 仍应绿（报读数）', capture(() => runCheck(base)), 0, 'toy-c');
