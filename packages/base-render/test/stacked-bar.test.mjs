@@ -357,7 +357,9 @@ describe('stacked-bar ④ 两档几何（真机 headless Chrome ＋ CDP）', () 
               assert.notEqual(mid, 'missing', width + ' 档 ' + skin + '：14% 那一段的段内字不见了（标记层就没了？）');
               assert.equal(mid === 'none', width === 390,
                 width + ' 档 ' + skin + '：窄档才让位图例，宽档要写出来（实测 display=' + mid + '）');
-              /* 深端两档的段内字用强调底上的字色，浅端用主文字色（色值取皮肤取值表，不抄字面量）。 */
+              /* 段内字色**逐档定**（面与它面上的字）：最深那一档取强调底上的字色，其余各档取主文字色
+                 （色值取皮肤取值表，不抄字面量）。**只查两端**：k1 代表"深端"、k3 代表"浅端"；
+                 逐档 × 四套皮肤的 4.5:1 读完数写在 `src/components/stacked-bar/style.ts` 段内字那一段注释里。 */
               const vals = SKIN_VALUES[skin];
               const pair = await page.ev('(function(){var q=function(c){var el=document.querySelector('
                 + JSON.stringify(scope) + '+c);return el===null?null:getComputedStyle(el).color;};'

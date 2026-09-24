@@ -12,7 +12,8 @@
  *     **系列色不与文字墨色（`ink`／`ink-2`／`ink-3`）共用**：那三支只做字。
  *   · 段里读数的可见性由**占比档**决定（`is-name`／`is-value`／`is-none`，渲染期定），
  *     窄容器再退一档：`is-value` 那批的段内字让位图例（**图例必带数值**，所以数字不丢）。
- */
+ *   · **段内字色逐档定**（面与它面上的字）：段内那枚是**正文级读数**，它坐的填充越浅、字越深——
+ *     k1 走 `accent-ink`，k2…k6 走 `ink`；逐档 × 四套皮肤都算过 4.5:1 地板。 */
 import { skinVar } from '../skin/contract.js';
 import { stackedBarSlot, type StackedBarSlot } from './attrs.js';
 
@@ -136,7 +137,13 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     s('seg') + ' + ' + c('seg') + ' {',
     '  border-left: 1px solid ' + skinVar('surface') + ';',
     '}',
-    '/* 段内读数：**深端两档用强调底上的字色，浅端四档用主文字色**——两档都过对比地板。 */',
+    /* 段内读数是**正文级读数**（不是图形）：它坐在哪一档的填充上，字色就由那一档的深浅定，
+       判据＝**逐档 × 逐皮肤都 ≥4.5:1**（算出来的，不是眼看出来的；读数见返修报告）。
+       · k1（最深档）：只有 `accent-ink` 这一支在四套里最高（paper 5.92／broadsheet 18.82／
+         neutral **4.26**／ink 5.39）——neutral 那格卡在皮肤层的品牌蓝上（`accent-ink on accent` 4.02
+         同一件事），件里没有别的 token 能更高（`ink` 3.95、`accent-text` 1.34）；
+       · k2…k6（往卡面混的浅档）：一律 `ink`（paper 6.38／broadsheet 4.53／neutral 7.91／ink 6.69，
+         k3…k6 更高）——`accent-ink` 在这几档只有 2.13–4.16，**过不了**。 */
     s('seg-text') + ' {',
     '  padding: 0 6px;',
     '  color: ' + skinVar('ink') + ';',
@@ -145,7 +152,7 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  white-space: nowrap;',
     '}',
-    s('seg') + '.is-k1 ' + c('seg-text') + ', ' + s('seg') + '.is-k2 ' + c('seg-text') + ' {',
+    s('seg') + '.is-k1 ' + c('seg-text') + ' {',
     '  color: ' + skinVar('accent-ink') + ';',
     '}',
     '/* 图例：色块 ｜ 名字 ｜ 百分数 ｜ 数量。名字列可换行，**两列数字右对齐、永不换行**。 */',
