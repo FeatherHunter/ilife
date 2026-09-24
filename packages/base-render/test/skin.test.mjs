@@ -17,7 +17,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 import {
   BROADSHEET_VALUES,
-  BLUEPRINT_VALUES,
   INK_VALUES,
   NEUTRAL_VALUES,
   PAPER_VALUES,
@@ -26,7 +25,6 @@ import {
   SKINS,
   SKIN_TOKENS,
   SKIN_TOKEN_NAMES,
-  TERMINAL_VALUES,
   skinClass,
   skinCss,
   skinTokenVar,
@@ -56,13 +54,11 @@ const VALUES = {
   paper: PAPER_VALUES,
   broadsheet: BROADSHEET_VALUES,
   neutral: NEUTRAL_VALUES,
-  terminal: TERMINAL_VALUES,
   ink: INK_VALUES,
-  blueprint: BLUEPRINT_VALUES,
 };
 
 describe('皮肤 ① 契约对账', () => {
-  it('三套皮肤都在注册表里，且与 SKIN_NAMES 逐名对上', () => {
+  it('皮肤都在注册表里，且与 SKIN_NAMES 逐名对上', () => {
     assert.deepEqual(Object.keys(SKINS), [...SKIN_NAMES]);
     assert.equal(SKIN_NAMES.includes(SKIN_DEFAULT), true, '缺省皮肤必须在闭集里');
   });

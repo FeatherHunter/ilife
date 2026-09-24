@@ -12,9 +12,12 @@
 import type { CssVarName } from '../../spec/style.js';
 
 /** 皮肤名闭集（与 `skinCss()` 产出的类名一一对应）。
- *  前三套＝原型墙打分胜出者那一批；后三套＝2026-09-24 追加的方向探索（暗色／水墨／图纸），
+ *  四套＝**原型墙打分胜出那一批**（paper／broadsheet／neutral）＋ **2026-09-24 新皮肤墙唯一活下来的 ink**。
+ *  同日被整体否掉的两套（`terminal` 终端暗色／`blueprint` 蓝图工程）**已删**——理由见
+ *  `docs/base/base-render/选中态与皮肤语言.md` 第六节：留在注册表里的每一套皮肤都是一份承诺
+ *  （对比地板、判据、清单、维护），**不能被选中的皮肤只剩负债**，且会诱人误用。
  *  **顺序必须与 `SKINS` 的键顺序一致**（判据 `assert.deepEqual(Object.keys(SKINS), [...SKIN_NAMES])`）。 */
-export const SKIN_NAMES = ['paper', 'broadsheet', 'neutral', 'terminal', 'ink', 'blueprint'] as const;
+export const SKIN_NAMES = ['paper', 'broadsheet', 'neutral', 'ink'] as const;
 export type SkinName = (typeof SKIN_NAMES)[number];
 
 /** 缺省皮肤：原型墙打分胜出者（3.83 分，≥4 占 76.6%）。 */

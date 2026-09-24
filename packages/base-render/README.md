@@ -100,7 +100,7 @@ const sharedHelpersJs = buildSharedHelpersJs() + buildSwitchRowJs();
 const withSwitch = renderSwitchRow({ name: 'feishuSync', checked: true, label: '记完自动同步飞书' });
 const sharedCss2 = sharedCss + switchRowCss();
 
-// ④ 皮肤：一次 skinCss() ＋ 祖先上的一个类（六套任选，缺省 paper）
+// ④ 皮肤：一次 skinCss() ＋ 祖先上的一个类（四套任选，缺省 paper）
 const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwitch}</main>`;
 ```
 
@@ -113,16 +113,22 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
   （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。51 件的名字面全部经 `base-paint/blocks` 转出；
   包没有 `./components` 子路径，别去引 `dist/` 深处。
 
-## 1.3 皮肤：六套取值，一件控件
+## 1.3 皮肤：四套取值，一件控件
 
-`paper`（小票纸，缺省）· `broadsheet`（大字报刊）· `neutral`（中性）· `terminal`（终端暗色）· `ink`（水墨宣纸）· `blueprint`（蓝图工程）
+`paper`（小票纸，缺省）· `broadsheet`（大字报刊）· `neutral`（中性）· `ink`（水墨·宣纸）
 
-挂法就是 §1.2 的第 ④ 步：`skinCss()` 产出一段 CSS（六套各自的类），页面在**祖先**上加 `ilife-skin-<名>`。
-件**不感知**皮肤：同一份入参在六套皮肤下产出的**标记逐字节相同**（这一条有判据钉着），换的只是取值
+> 2026-09-24 有过另外两套（`terminal` 终端暗色／`blueprint` 蓝图工程），用户看完整体否掉，**已删**。
+> 留下的每一套皮肤都是一份承诺（对比地板、判据、清单、维护），**不能被选中的皮肤只剩负债**——
+> 口径与理由见 `docs/base/base-render/选中态与皮肤语言.md`。
+
+挂法就是 §1.2 的第 ④ 步：`skinCss()` 产出一段 CSS（四套各自的类），页面在**祖先**上加 `ilife-skin-<名>`。
+件**不感知**皮肤：同一份入参在四套皮肤下产出的**标记逐字节相同**（这一条有判据钉着），换的只是取值
 （颜色、圆角、阴影、字面、字号、间距）。所以：
 
-- 加第七套皮肤＝加一张取值表 ＋ 注册表一行，**组件代码零改动**；
+- 加第五套皮肤＝加一张取值表 ＋ 注册表一行，**组件代码零改动**；
 - 不挂皮肤也不崩：每个 `var()` 都带兜底链（例 `var(--ilife-ink-3, var(--fg3, #86868b))`），落到冻结 token 与字面。
+- **选中／强调一律走强调色系**（`accent-soft` 底 ＋ `accent-text` 字 ＋ `accent` 描边；无文字的点格条走 `accent` 实底），
+  **不许拿正文墨色 `ink` 当面**——那是把"字色"当"面"，在纸面语言里只能读成一块坏斑。
 
 ## 1.4 细节在哪看（层层递进，别跳）
 
