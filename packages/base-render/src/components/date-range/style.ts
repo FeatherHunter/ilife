@@ -29,6 +29,12 @@ const NARROW_PX = 420;
 /** 日历格之间的矩阵缝（px）：见文件头「有意偏离」那一段。 */
 const CELL_GAP_PX = 4;
 
+/** 日历块的宽度上限（px）：一个月有自己的自然宽度（原型给的是 430px）。
+ *  不设它，1280 档下一格天会铺成 170px、数字孤零零吊在中间——真机截图里亲眼看到的。 */
+const CALENDAR_MAX_PX = 430;
+/** 格宽的期望量级（px）：写在这里是为了让"格宽稳在多少"有一个可对账的读数（判据断 ≥44）。 */
+const CELL_MIN_W_PX = 44;
+
 /** 按下反馈的时长（ms）：≤80ms。 */
 const PRESS_MS = 80;
 
@@ -170,11 +176,15 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     s('preset') + '[aria-pressed="true"]' + inBox('mark') + ' {',
     '  display: inline;',
     '}',
-    '/* 日历块：软底块 ＋ 发丝线（零阴影下用它立边界）。 */',
+    '/* 日历块：软底块 ＋ 发丝线（零阴影下用它立边界）。',
+    '   **宽度上限 ' + String(CALENDAR_MAX_PX) + 'px**：一个月有自己的自然宽度——1000px 宽的格子里',
+    '   一格天铺成 170px、数字孤零零吊在中间，读起来不像日历（真机 1280 档亲眼看过才发现）。',
+    '   超过上限的宽度留在块外（其余几行照常占满），格宽稳在 ' + String(CELL_MIN_W_PX) + 'px 上下。 */',
     s('calendar') + ' {',
     '  display: grid;',
     '  gap: ' + String(DATE_RANGE_GAP_PX) + 'px;',
     '  min-width: 0;',
+    '  max-width: ' + String(CALENDAR_MAX_PX) + 'px;',
     '  padding: 10px;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',

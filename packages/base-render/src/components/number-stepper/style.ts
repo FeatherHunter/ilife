@@ -30,6 +30,9 @@ const NARROW_PX = 340;
 /** 按下反馈的时长（ms）：≤80ms（真按下要立刻看得见，慢过它就不像"按到了"）。 */
 const PRESS_MS = 80;
 
+/** 值位的宽度上限（px）：宽档下不跟着容器一路拉宽（否则 1000px 的空槽里数字吊在中间）。 */
+const NUMBER_STEPPER_VALUE_MAX_PX = 240;
+
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function numberStepperCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
@@ -92,11 +95,14 @@ export function numberStepperCss(input?: { readonly prefix?: string }): string {
     '  text-align: center;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 「− n ＋」三个可点区：**不做连体**，相邻留 ' + String(NUMBER_STEPPER_GAP_PX) + 'px 缝（防误点）。 */',
+    '/* 「− n ＋」三个可点区：**不做连体**，相邻留 ' + String(NUMBER_STEPPER_GAP_PX) + 'px 缝（防误点）。',
+    '   宽档下这是一簇**靠右的紧凑控件**（值位不跟着容器一路拉宽：1000px 的空值框里数字吊在中间，',
+    '   读起来不像一个控件——真机 1280 档亲眼看过才发现）；窄档改成一格一行（见下面 @container）。 */',
     s('controls') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
     '  align-items: stretch;',
+    '  justify-content: flex-end;',
     '  gap: ' + String(NUMBER_STEPPER_GAP_PX) + 'px;',
     '  min-width: 0;',
     '}',
@@ -123,10 +129,11 @@ export function numberStepperCss(input?: { readonly prefix?: string }): string {
     '  touch-action: manipulation;',
     '  transition: transform ' + String(PRESS_MS) + 'ms cubic-bezier(.22,1,.36,1);',
     '}',
-    '/* 值位（第三个可点区）：软底块 ＋ 等宽数字；最小宽度把整排钉住。',
-    '   `flex-basis: 0` 与行内编辑器**同一条**：两者都只按剩余空间分配 ⇒ 进出编辑逐像素同宽。 */',
+    '/* 值位（第三个可点区）：软底块 ＋ 等宽数字；最小宽度把整排钉住，**宽度上限**防止它在宽档里',
+    '   拉成一条空槽。`flex-basis: 0` 与行内编辑器**同一条**：两者都只按剩余空间分配 ⇒ 进出编辑同宽。 */',
     s('value') + ' {',
     '  flex: 1 1 0;',
+    '  max-width: ' + String(NUMBER_STEPPER_VALUE_MAX_PX) + 'px;',
     '  display: inline-flex;',
     '  align-items: baseline;',
     '  justify-content: center;',

@@ -13,7 +13,7 @@
  *  `at(width)` 导航到该档并跑调用方给的读数表达式。本机没有 Chrome 时返回 `null`（调用方 `t.skip`）。
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -79,22 +79,30 @@ export async function startControlsPage(opts) {
     writeFileSync(p, pageOf(w), 'utf8');
     pages[w] = p;
   }
-  const port = 9760 + (process.pid % 200) + (opts.portOffset === undefined ? 0 : opts.portOffset);
+  /* **端口不许猜**：`--remote-debugging-port=0` 让浏览器自己挑一个空闲端口，再读它写下的
+     `<user-data-dir>/DevToolsActivePort`。全包并行跑时十几个测试件同时起 Chrome，
+     「9700 + pid % 200」这种算法会撞车 —— 撞上就会连到别人的浏览器上，量出别人的页面（实测过的假红）。 */
   const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
     '--disable-extensions', '--hide-scrollbars', '--allow-file-access-from-files',
-    '--remote-debugging-port=' + port, '--user-data-dir=' + profileDir, '--window-size=1440,900', 'about:blank'],
+    '--remote-debugging-port=0', '--user-data-dir=' + profileDir, '--window-size=1440,900', 'about:blank'],
   { stdio: ['ignore', 'ignore', 'ignore'] });
+  const portFile = join(profileDir, 'DevToolsActivePort');
   const cleanup = () => {
     try { chrome.kill(); } catch { /* 已退出 */ }
     for (const d of [profileDir, dir]) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 临时目录 */ } }
   };
   try {
     let devUrl = null;
-    for (let i = 0; i < 120 && devUrl === null; i += 1) {
-      try {
-        const r = await fetch('http://127.0.0.1:' + port + '/json/version');
-        if (r.ok) devUrl = (await r.json()).webSocketDebuggerUrl;
-      } catch { /* 等端口 */ }
+    for (let i = 0; i < 160 && devUrl === null; i += 1) {
+      if (existsSync(portFile)) {
+        const port = readFileSync(portFile, 'utf8').split('\n')[0].trim();
+        if (/^\d+$/.test(port)) {
+          try {
+            const r = await fetch('http://127.0.0.1:' + port + '/json/version');
+            if (r.ok) devUrl = (await r.json()).webSocketDebuggerUrl;
+          } catch { /* 端口刚写下来，服务还没起 */ }
+        }
+      }
       if (devUrl === null) await sleep(250);
     }
     if (devUrl === null) throw new Error('CDP 未就绪（headless Chrome 起不来）');
@@ -133,12 +141,27 @@ export async function startControlsPage(opts) {
     return {
       ev,
       at,
-      /** 页内强制某元素进 `:focus-visible` 后的描边读数（焦点地板的真机判据）。 */
-      focusOutline: async (selector) => {
+      /** 轮询一个页内表达式直到它等于期望值（默认最多 2s）——**全包并行跑时机器很忙**，
+       *  固定 `sleep` 会假红：等的是"这一格真变了"，不是"过了多少毫秒"。返回最后一次读到的值。 */
+      until: async (expr, want, timeoutMs) => {
+        const cap = timeoutMs === undefined ? 2000 : timeoutMs;
+        const deadline = Date.now() + cap;
+        let got;
+        for (;;) {
+          got = await ev(expr);
+          if (JSON.stringify(got) === JSON.stringify(want)) return got;
+          if (Date.now() >= deadline) return got;
+          await sleep(25);
+        }
+      },
+      /** 页内强制某元素进 `:focus-visible` 后的描边读数（焦点地板的真机判据）。
+       *  `readSelector` 不给＝量那个元素自己；给了＝量它（例如焦点在原生 `input` 上、描边画在轨道上）。 */
+      focusOutline: async (selector, readSelector) => {
+        const target = readSelector === undefined ? selector : readSelector;
         const { root: docRoot } = await s('DOM.getDocument', { depth: 1 });
         const { nodeId } = await s('DOM.querySelector', { nodeId: docRoot.nodeId, selector });
         await s('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['focus-visible'] });
-        const out = await ev('(function(){var cs=getComputedStyle(document.querySelector(' + JSON.stringify(selector)
+        const out = await ev('(function(){var cs=getComputedStyle(document.querySelector(' + JSON.stringify(target)
           + '));return {w:parseFloat(cs.outlineWidth),style:cs.outlineStyle};}())');
         await s('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
         return out;

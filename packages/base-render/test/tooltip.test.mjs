@@ -44,9 +44,9 @@ describe('tooltip ① 渲染契约', () => {
     assert.match(html, /^<span class="ilife-block-tooltip is-wide" data-ilife-tooltip="tip-share">/, html.slice(0, 90));
     assert.ok(html.includes('popovertarget="tip-share"'), '词用原生 popovertarget（零脚本也点得开）');
     assert.ok(html.includes('aria-describedby="tip-share"'), '屏读器能读到这条说明');
-    assert.ok(html.includes('style="anchor-name:--ilife-tooltip-tip-share"'), '逐实例锚名在词上');
+    assert.ok(html.includes('style="anchor-name:--tooltip-tip-share"'), '逐实例锚名在词上（不带 ilife- 前缀）');
     assert.ok(html.includes('id="tip-share" popover="auto" role="tooltip"'), '气泡是 popover ＋ tooltip');
-    assert.ok(html.includes('style="position-anchor:--ilife-tooltip-tip-share"'), '气泡写同一个锚名');
+    assert.ok(html.includes('style="position-anchor:--tooltip-tip-share"'), '气泡写同一个锚名');
     assert.ok(html.includes('-badge">口径<'), '眉标取现成话');
     assert.ok(html.includes('-title">「均摊」是怎么算的<'), '小标题');
     assert.ok(html.includes('-text">一笔年费按 12 个月摊开'), '解释那一段');
@@ -134,8 +134,10 @@ describe('tooltip ② 样式纪律', () => {
     assert.ok(css.includes('top:calc(anchor(bottom) + 8px)'), '竖轴贴词');
     assert.ok(css.includes('left:max(12px, calc(50% - 280px))'), '横轴夹在容器里');
     assert.ok(css.includes('width:min(560px, calc(100% - 12px - 12px))'), '宽度上下限');
-    assert.ok(css.includes('position-try-fallbacks:--ilife-tooltip-up'), '贴不下要翻到词上方');
-    assert.ok(css.includes('@position-try --ilife-tooltip-up{top:auto;bottom:calc(anchor(top) + 8px)}'), '翻上去那条');
+    assert.ok(css.includes('position-try-fallbacks:--tooltip-up'), '贴不下要翻到词上方');
+    assert.ok(css.includes('@position-try --tooltip-up{top:auto;bottom:calc(anchor(top) + 8px)}'), '翻上去那条');
+    /* 方位名与锚名是**结构**，不占皮肤 token 的命名空间（`--ilife-*` 只放皮肤取值）。 */
+    assert.equal(/--ilife-tooltip/.test(css), false, '样式段里不许出现 --ilife-tooltip-*（那是皮肤命名空间）');
     const js = buildTooltipJs();
     assert.ok(js.includes(JSON.stringify('anchor-name: --a')), '运行时读的能力查询串与 CSS 同源');
   });

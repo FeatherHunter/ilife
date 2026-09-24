@@ -76,8 +76,11 @@ export const TOOLTIP_BOUND_ATTR = 'data-ilife-tooltip-bound';
 
 /** 锚定定位的两条能力查询：**CSS 与运行时读同一个串**。 */
 export const TOOLTIP_ANCHOR_QUERY = 'anchor-name: --a';
-/** 逐实例锚名的前缀（完整名＝`--ilife-tooltip-<id>`；词与气泡**写同一个名字**）。 */
-export const TOOLTIP_ANCHOR_PREFIX = '--ilife-tooltip-';
+/** 逐实例锚名的前缀（完整名＝`--tooltip-<id>`；词与气泡**写同一个名字**）。
+ *  **不带 `ilife-`**：`--ilife-*` 是**皮肤 token 的命名空间**（名单住 `skin/contract.ts`），
+ *  而锚名是**结构**不是语言——占了那个前缀，横切判据（`test/皮肤矩阵.test.mjs`）会把它当"拼错的 token"抓出来，
+ *  日后真加一条同名 token 也会撞车。 */
+export const TOOLTIP_ANCHOR_PREFIX = '--tooltip-';
 
 /** 词后那枚问号（纯装饰；「这是个可以问一句的词」的记号）。 */
 export const TOOLTIP_MARK = '?';

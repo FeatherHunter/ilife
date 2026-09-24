@@ -78,6 +78,7 @@ export * from './window-picker/index.js';
 /* 表与输入 */
 export * from './number-stepper/index.js';
 export * from './slider-row/index.js';
+export * from './switch-row/index.js';
 export * from './date-range/index.js';
 /* 选择与打分 */
 export * from './radio-cards/index.js';

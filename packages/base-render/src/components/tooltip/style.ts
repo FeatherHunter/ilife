@@ -6,7 +6,8 @@
  *  定位两道：
  *   · **@supports (anchor-name: --a) 之内**：`top: calc(anchor(bottom) + 8px)`（**竖轴贴词**）＋
  *     横轴 `left: max(12px, calc(50% - 280px))` ＋ `width: min(560px, 100% - 24px)`（**横轴夹在容器里**）；
- *     贴不下时 `position-try-fallbacks: --ilife-tooltip-up` 翻到词的上方。
+ *     贴不下时 `position-try-fallbacks: --tooltip-up` 翻到词的上方（**名字不带 `ilife-`**：
+ *     `--ilife-*` 是皮肤 token 的命名空间，方位名是结构不是语言——见 `attrs.ts` 的 `TOOLTIP_ANCHOR_PREFIX`）。
  *     —— 宽气泡**不跟词对齐**：一条 560px 的气泡挂在句子中间那个词上，跟词对齐在窄屏必然越界。
  *   · **之外**：同一套横轴 + `position: fixed; inset: auto`（普通定位元素），打开时运行时算 `top`。
  *
@@ -66,8 +67,8 @@ export function tooltipCss(input?: TooltipCssInput): string {
     /* 锚定定位（**只在支持锚定 API 的引擎里**生效；能力查询串与运行时同一份常量）。 */
     '@supports (' + TOOLTIP_ANCHOR_QUERY + '){',
     '  ' + bubble + ':popover-open{top:calc(anchor(bottom) + ' + off + ');',
-    '    position-try-fallbacks:' + '--ilife-tooltip-up}',
-    '  @position-try --ilife-tooltip-up{top:auto;bottom:calc(anchor(top) + ' + off + ')}',
+    '    position-try-fallbacks:' + '--tooltip-up}',
+    '  @position-try --tooltip-up{top:auto;bottom:calc(anchor(top) + ' + off + ')}',
     '}',
     root + ' ' + slot('head') + '{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;',
     '  padding-bottom:8px;border-bottom:1px solid ' + skinVar('line') + '}',

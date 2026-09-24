@@ -540,22 +540,19 @@ describe('numberStepper ④ 真机两档（390／1280 容器；视口恒 1440）
         + 'var s=r.querySelector(' + JSON.stringify('[data-ilife-stepper-state]') + ');return s?s.textContent:"";}())';
       const disabledOf = (name, kind) => 'document.querySelector(' + inside(name, kind) + ').hasAttribute("disabled")';
 
-      /* 加减：各一档，事件逐条落账 */
+      /* 加减：各一档，事件逐条落账（等的是"这一格真变了"，不是固定毫秒——全包并行跑时机器很忙） */
       assert.equal(await p.ev(valueOf('portion')), '1.5');
       await p.ev(click('portion', 'inc'));
-      await sleep(60);
-      assert.equal(await p.ev(valueOf('portion')), '2', '＋ 走一档');
+      assert.equal(await p.until(valueOf('portion'), '2'), '2', '＋ 走一档');
       await p.ev(click('portion', 'dec'));
-      await sleep(60);
-      assert.equal(await p.ev(valueOf('portion')), '1.5', '− 走一档');
+      assert.equal(await p.until(valueOf('portion'), '1.5'), '1.5', '− 走一档');
       assert.equal((await p.events(NUMBER_STEPPER_EVENT_CHANGE))[0].value, 2, '变更事件带新值');
       assert.equal((await p.events(NUMBER_STEPPER_EVENT_CHANGE))[0].prev, 1.5, '变更事件带改前值');
       assert.equal((await p.events(NUMBER_STEPPER_EVENT_CHANGE)).length, 2, '两次真变两条事件');
 
       /* 常用值：点一下落到那一档 */
       await p.ev(click('portion', 'preset') /* 第一枚＝0.5 */);
-      await sleep(60);
-      assert.equal(await p.ev(valueOf('portion')), '0.5', '常用值落到那一档');
+      assert.equal(await p.until(valueOf('portion'), '0.5'), '0.5', '常用值落到那一档');
       assert.equal(await p.ev(stateOf('portion')), '已到下限', '到下限给状态字');
       assert.equal(await p.ev(disabledOf('portion', 'dec')), true, '到下限时 − 落 disabled');
 
@@ -568,7 +565,8 @@ describe('numberStepper ④ 真机两档（390／1280 容器；视口恒 1440）
       const before = await p.ev(geomOf('portion'));
       assert.equal(before.editor, null, '默认没有编辑器');
       await p.ev(click('portion', 'value'));
-      await sleep(60);
+      assert.equal(await p.until('document.querySelector(' + JSON.stringify('.' + CLS + '-editor') + ')!==null', true), true,
+        '点值位开出编辑器');
       const editing = await p.ev(geomOf('portion'));
       assert.equal(before.root[0], editing.root[0], '进出编辑不得改变件宽');
       assert.equal(editing.value[2], 0, '编辑期值位收起（盒高 0）');
@@ -578,7 +576,8 @@ describe('numberStepper ④ 真机两档（390／1280 容器；视口恒 1440）
       /* 越界拦截：留在编辑态 ＋ 写在控件旁边的错误行 ＋ aria-describedby */
       await p.ev('(function(){var i=document.querySelector(' + JSON.stringify('.' + CLS + '-editor') + ');'
         + 'i.value="99";i.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));return true}())');
-      await sleep(80);
+      assert.equal(await p.until('(function(){var r=document.querySelector(' + sel('portion') + ');'
+        + 'return !!r.querySelector(' + JSON.stringify('.' + CLS + '-error') + ');}())', true), true, '错误行出现');
       const err = await p.ev('(function(){var r=document.querySelector(' + sel('portion') + ');'
         + 'var e=r.querySelector(' + JSON.stringify('.' + CLS + '-error') + ');'
         + 'var i=r.querySelector(' + JSON.stringify('.' + CLS + '-editor') + ');'
@@ -599,11 +598,11 @@ describe('numberStepper ④ 真机两档（390／1280 容器；视口恒 1440）
 
       /* 合法输入提交 */
       await p.ev(click('portion', 'value'));
-      await sleep(60);
+      assert.equal(await p.until('document.querySelector(' + JSON.stringify('.' + CLS + '-editor') + ')!==null', true), true,
+        '再次开出编辑器');
       await p.ev('(function(){var i=document.querySelector(' + JSON.stringify('.' + CLS + '-editor') + ');'
         + 'i.value="2.5";i.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));return true}())');
-      await sleep(80);
-      assert.equal(await p.ev(valueOf('portion')), '2.5', '编辑器提交合法值');
+      assert.equal(await p.until(valueOf('portion'), '2.5'), '2.5', '编辑器提交合法值');
       assert.equal(await p.ev(stateOf('portion')), '', '回到区间中间 ⇒ 状态字收起');
       assert.equal(await p.ev(disabledOf('portion', 'dec')), false, '离开下限 ⇒ − 恢复可点');
 
