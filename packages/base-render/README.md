@@ -6,14 +6,14 @@
 
 | 你要做的事 | 走哪条路 | 里面有什么 |
 |---|---|---|
-| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **51 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
+| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **59 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
 | 调既有页面的老函数 | **冻结面** → `base-paint` 根出口 | 12 区块 ＋ 控件 ＋ 图表 ＋ 页面级那批函数，签名逐名锁死（本 README 第二节速查） |
 
 ---
 
 # 一、组件层：该用哪一件
 
-## 1.1 按你要展示的东西找（51 件路由）
+## 1.1 按你要展示的东西找（59 件路由）
 
 粗体是件名，照抄进 import 即可；括号里是中文名。**没有一件是"另一种皮肤下的同一件"**——
 换皮只换取值，见 §1.3。
@@ -42,9 +42,14 @@
 - `sub-list`（分组清单）：分组 ＋ 组级小计 ＋ 进度，一组一枚原生折页。
 - `window-picker`（窗口选择器）：**看哪一段**——档 ＋ 起止 ＋ 「共 N 天」，改起止自动落「自定义」档。
 - `date-range`（日期范围）：**选起止**（日历缩略 ＋ 起止两格 ＋ 快捷档），与页面读数无关。
+- `cash-waterline`（现金水位）：**钱还剩多少、还能撑几天**——逐日水位柱／每周子弹图／进出水三栏（三形态都在）。
+- `gantt-timeline`（甘特时间线）：**并行的时候哪条资源被占住、哪条还空着**——资源泳道 × 关键路径带（当前只有 `C` 一档）。
+- `goal-stairs`（目标阶梯）：**分几段走、每段最晚哪天动手**——目标日往回倒推成一段一行的日程（当前只有 `C` 一档）。
 
 **对照与榜单**
 - `compare-columns`（双列对照）：同一指标两栏并排（新旧、你我、两期）。· `rank-list`（榜单）：单期名次。
+- `scatter-fit`（相关性散点）：**两个读数之间是什么关系**——散点 ＋ 拟合线／分箱趋势带／滞后相关（三形态都在）。
+- `small-multiples`（小倍数面板）：**同一个读数在多个期间并排**——一期一根迷你柱，横着比高低（当前只有 `columns` 一档）。
 
 **状态与台账**
 - `status-row`（状态台账行）：一笔一行——轨道点（形）＋ 阶段徽标（字）＋ 金额；第二行补充与到期日。
@@ -57,16 +62,19 @@
 - `task-list`（勾选清单）：纯勾选 ＋ 组内进度（买菜清单、盘库、待办）。
 - `multi-checks`（多选清单）：全选头 ＋ 分组 ＋ 底部动作条，给「批量改」用。
 - `radio-cards`（单选卡组）：一次选一个（餐别、账户、类别）。· `rating-row`（评分行）：星级 ＋ 数字读数。
+- `bulk-bar`（批量操作条）：**勾几条一起改一个字段**——选中后浮出操作条，改之前先看见会改哪几条（当前只有 `A` 一档）。
 
 **搜索与筛选**
 - `search-field`（搜索框）：**本页内**搜索，结果就摆在页面里。· `filter-chips`（筛选条）：按属性取子集。
 - `sort-toggle`（排序切换）：换排序口径（体检排序这类）。· `result-row`（结果行）：搜索结果一行（标题 ＋ 高亮 ＋ 值 ＋ 缩略图）。
+- `command-palette`（命令面板）：**跨技能找「哪一页、哪个动作」**——单栏分组结果：动作在前、页面在后（当前只有 `A` 一档）。
 
 **表与输入**
 - `number-stepper`（数量步进）：`− n ＋` ＋ 常用值（份数、份量、数量）。
 - `slider-row`（滑块行）：拖动 ＋ 常用档（热量目标、预算、库存下限）。
 - `switch-row`（开关行）：设置项一行（开／关／禁用三态，说明写清「打开会怎样」）。
 - `editable-value`（就地可编辑值）：**值即入口**——值旁边一枚铅笔，同格变编辑器，进出不变形。
+- `wizard-shell`（分步录入壳）：**一趟多问的录入，一问一屏**——一条细进度 ＋ 大字问题 ＋ 这一问的答法（当前只有 `one` 一档）。
 
 **反馈与确认**
 - `confirm-strip`（二次确认条）：危险动作的二次确认（删记录）。· `skeleton`（加载骨架）：等数据那一两秒。
@@ -94,7 +102,7 @@ import { pageUiCss } from 'base-paint';
 import { blocksCss, skinCss, skinClass } from 'base-paint/blocks';
 const sharedCss = pageUiCss() + blocksCss() + skinCss() + statusRowCss();
 
-// ③ 运行时段：只有交互件才有（51 件里 23 件有；其余是零脚本件，跳到 ④）
+// ③ 运行时段：只有交互件才有（59 件里 26 件有；其余是零脚本件，跳到 ④）
 import { buildSwitchRowJs, renderSwitchRow, switchRowCss } from 'base-paint/blocks';
 const sharedHelpersJs = buildSharedHelpersJs() + buildSwitchRowJs();
 const withSwitch = renderSwitchRow({ name: 'feishuSync', checked: true, label: '记完自动同步飞书' });
@@ -104,13 +112,13 @@ const sharedCss2 = sharedCss + switchRowCss();
 const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwitch}</main>`;
 ```
 
-**三条会咬人的口径**
+**四条会咬人的口径**
 - **加法式**：不调 `②`／`③` 的页面产物**逐字节不变**——所以老页面可以零风险地逐件接。
 - **样式只挂一次**：同页挂两遍同一件的样式段不会更"生效"，只会更大。
 - **入参错了会抛**：件对非法入参一律抛 `badInput`（`err.code === 'bad-input'`，消息点名到字段），
   静默降级不会发生——把它当断言用。
 - **名字从清单里摸**：`dist/components/清单.js` 每一行有 `render`／`style`／`runtime` 三列——那就是该件的三个出口名
-  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。51 件的名字面全部经 `base-paint/blocks` 转出；
+  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。59 件的名字面全部经 `base-paint/blocks` 转出；
   包没有 `./components` 子路径，别去引 `dist/` 深处。
 
 ## 1.3 皮肤：四套取值，一件控件
@@ -135,7 +143,7 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
 | 你要知道 | 上哪儿看 |
 |---|---|
 | 有哪些件、中文名、导出名、**示例入参** | `base-paint/dist/components/清单.js`（机器清单，随包发布；`COMPONENTS[].sample` 可直接喂渲染函数） |
-| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（51 份，唯一权威） |
+| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（59 份，唯一权威） |
 | 件的实现与样式函数 | `base-paint/dist/components/<件名>/index.js`（`renderX`／`xStyle`／`buildXJs` 三件出口） |
 | 改这个层（写新件／改样式）的规矩 | `packages/base-render/src/components/README.md`（本层红线与横切判据） |
 | 冻结面的逐名签名 | `packages/base-render/src/spec/` ↔ `docs/base-paint-contract.md`（由 `test/contract-signatures.test.mjs` 逐字锁死） |
