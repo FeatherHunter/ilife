@@ -129,8 +129,21 @@ test('#950 折线纵轴：含 0、且不出现负数刻度', () => {
   assert.ok(ticks.every((n) => n >= 0), '纵轴出现负数刻度（#544 打过的那类缺陷）：' + ticks.join('／'));
 });
 
-/* ── ⑤ 五档各自的形状 ───────────────────────────────────────────────────── */
+test('#950 今天没有记录时：整排未记录态、不出等式条、结论不替没记的那顿背书', () => {
+  // 取种子库窗口里**没有记录的那一天**（`SEED_TODAY` 的次日）：窗口仍有记录（不触发缺失阻断），
+  // 而「今天」这一天一条饮食都没有——这正是用户当天还没记东西时看到的那一页。
+  const next = new Date(Date.parse(SEED_TODAY) + 86400000).toISOString().slice(0, 10);
+  const { html } = render({ date: next });
+  assert.ok(html.includes('<p class="ilife-block-conclusion">今天还没有记录'),
+    '结论条还在替没记的那顿背书（说「热量在目标内」）');
+  assert.ok(!hasEquation(html), '没有记录还出了等式条（会出现 0＋0≠合计 的读数）');
+  const values = [...html.matchAll(/kpi-card-value">([^<]*)</g)].map((m) => m[1]);
+  assert.ok(values.length >= 6, '「今日速览」该有六张卡，实得 ' + values.length);
+  assert.ok(values.every((v) => v === '—'), '未记录态的值位该全是 —：' + values.join('／'));
+  assert.ok((html.match(/kpi-card-gap">未记录</g) ?? []).length >= 6, '六张卡都该出「未记录」徽章');
+});
 
+/* ── ⑤ 五档各自的形状 ───────────────────────────────────────────────────── */
 test('#950 五档都带导航与记录带；等式条只归 overview；budget 出剩余预算', () => {
   for (const section of ['overview', 'week', 'streak', 'budget', 'month']) {
     const { html } = render({ date: '今日', section });

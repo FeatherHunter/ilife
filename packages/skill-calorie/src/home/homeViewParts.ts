@@ -347,10 +347,15 @@ export function viewTitle(section: HomeSection, d: HomeData): string {
   }
 }
 
-/** 五档的**结论句**（读序＝标题 → 一句结论 → 数字卡）：每档说各自主角那件事，不复述别档的读数。 */
+/** 五档的**结论句**（读序＝标题 → 一句结论 → 数字卡）：每档说各自主角那件事，不复述别档的读数。
+ *  **今天还没有记录**时（`entryCount === 0`）`overview`／`budget` 两档不给「在目标内／还剩多少」那类
+ *  判语：那一天没有摄入读数，说「热量在目标内」是**替没记的那顿背书**（实跑抓到），换成一句人话。 */
 export function viewConclusion(section: HomeSection, d: HomeData): string {
   const cal = d.daily.totals.cal;
   const goal = d.calorieGoal;
+  if ((section === 'overview' || section === 'budget') && d.daily.entryCount === 0) {
+    return '今天还没有记录。记一餐，完成度与缺口就有数了。';
+  }
   if (section === 'streak') {
     return d.streakDays === 0
       ? '今天还没有记录，连续记录今天会断。'

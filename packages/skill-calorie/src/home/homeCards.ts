@@ -110,9 +110,28 @@ function deficitCard(d: HomeData): KpiCardInput {
   };
 }
 
-/** 「今日速览」六张卡；`extra` 给了就**替换**缺口卡那张（`budget` 档换成「剩余预算」那个主角）。 */
+/** 把一张卡改成**未记录态**（`renderKpiCard` 的 `pending` 位，#950 B1 就是为「有目标、无记录」造的）：
+ *  值位印 `—`、进度条归零、徽章出「未记录」。
+ *  **值位与 `gap`／`status` 两处必须撤掉**——`renderKpiCard` 对「一个槽两个来源」是点名拒的
+ *  （`pending` 与 `value` 互斥、`gap` 与 `status` 互斥）。 */
+function dropToPending(card: KpiCardInput): KpiCardInput {
+  return {
+    label: card.label,
+    ...(card.detail === undefined ? {} : { detail: card.detail }),
+    ...(card.unit === undefined ? {} : { unit: card.unit }),
+    ...(card.bar === undefined ? {} : { bar: card.bar }),
+    pending: true,
+  };
+}
+
+/** 「今日速览」六张卡；`extra` 给了就**替换**缺口卡那张（`budget` 档换成「剩余预算」那个主角）。
+ *
+ *  **今天还没有记录时整排走未记录态**（`d.daily.entryCount === 0`）：这一天不是「摄入 0 卡」而是
+ *  **没有数**——照旧印「完成 0%」「还差 135 克」「摄入与消耗持平」是**假精度**（读者会以为真吃了 0）；
+ *  改走 `pending`：值位 `—`、徽章「未记录」，目标与消耗那两行照旧在（那两件本来就取得到）。 */
 export function todayCards(d: HomeData, extra?: KpiCardInput): readonly KpiCardInput[] {
-  return [...macroCards(d), extra ?? deficitCard(d)];
+  const cards = [...macroCards(d), extra ?? deficitCard(d)];
+  return d.daily.entryCount === 0 ? cards.map(dropToPending) : cards;
 }
 
 /** 「今日速览」的卡排：**一张网格、六张卡**。
@@ -131,12 +150,17 @@ export function todayGridHtml(d: HomeData, extra?: KpiCardInput): string {
 }
 
 /** 缺口那条 `A＋B＝C` 的等式条（原型：摄入加缺口等于消耗）：两段轨道 ＋ 逐段读数 ＋ 合计。
- *  **给不出等式就不出这一块**：缺口为负（吃超了）时「摄入＋缺口＝消耗」的两段轨道铺不出来，
- *  宁可不出形状，也不拿钳位后的宽度冒充事实（缺数不画，与全页缺值口径同）。 */
+ *  **给不出等式就不出这一块**，三种给不出：
+ *   · **今天没有记录**（`entryCount === 0`）：这一天的「缺口」是取数层的占位 0，不是算出来的差——
+ *     照印会得到「摄入 0 ｜ 缺口 0 ｜ 合计 2872」这种**算式不成立**的读数（实跑抓到）；
+ *   · 缺口为负（吃超了）：两段轨道铺不出来；
+ *   · 缺口或消耗缺数。
+ *  宁可不出形状，也不拿钳位后的宽度或占位值冒充事实（缺数不画，与全页缺值口径同）。 */
 export function equationBlock(d: HomeData): string {
   const intake = d.daily.totals.cal;
   const gap = d.deficitToday;
   const burn = d.burnToday;
+  if (d.daily.entryCount === 0) return '';
   if (gap === null || gap === undefined || burn === null || burn === undefined) return '';
   if (gap < 0 || burn <= 0) return '';
   return renderEquationBar({
