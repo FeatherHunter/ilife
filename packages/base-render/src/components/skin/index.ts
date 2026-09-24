@@ -84,7 +84,7 @@ export function skinCss(input?: SkinCssInput): string {
   const want = input === undefined || input === null || input.skins === undefined
     ? SKIN_NAMES
     : input.skins;
-  const out: string[] = ['/* skin：三套语言的取值表（组件只读 token 名，值住这里）。 */'];
+  const out: string[] = ['/* skin：' + SKIN_NAMES.length + ' 套语言的取值表（组件只读 token 名，值住这里）。 */'];
   for (const name of want) {
     if (!(SKIN_NAMES as readonly string[]).includes(name)) {
       const err = new Error('skin: 未知皮肤 `' + String(name) + '`，须是 ' + SKIN_NAMES.join('／') + ' 之一');
