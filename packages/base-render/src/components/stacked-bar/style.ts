@@ -7,8 +7,9 @@
  *
  *  几何契约（判据钉住）：
  *   · 段宽之和恒为 100%（行内 `flex` 是千分比整数）⇒ 条永远填满整宽、根不留横向滚动；
- *   · 数据色**全部算出来**：`is-k1`…`is-k6` 从强调色往主文字（深端）／往卡面（浅端）混，
- *     强调色变黑时自动退化成灰阶（浅端仍与卡面分得开）；
+ *   · 数据色**全部算出来**：`is-k1`…`is-k5` 从强调色往**它的文本档**（深端）／往卡面（浅端）混，
+ *     强调色变黑时自动退化成灰阶（浅端仍与卡面分得开）；`is-k6` 是"其他"，取分隔线那一支中性色。
+ *     **系列色不与文字墨色（`ink`／`ink-2`／`ink-3`）共用**：那三支只做字。
  *   · 段里读数的可见性由**占比档**决定（`is-name`／`is-value`／`is-none`，渲染期定），
  *     窄容器再退一档：`is-value` 那批的段内字让位图例（**图例必带数值**，所以数字不丢）。
  */
@@ -44,7 +45,8 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
 
   return [
     '/* stacked-bar（构成条 · 形态 A「100% 堆叠 ＋ 图例」）：一整块按占比切成几段，图例必带数值。',
-    '   六档数据色从强调色算出来（往主文字混＝深端、往卡面混＝浅端）：换皮只换取值，色序不写死。 */',
+    '   六档数据色从强调色算出来（往强调色的文本档混＝深端、往卡面混＝浅端，第六档取中性档）：',
+    '   换皮只换取值，色序不写死、也不与文字墨色共用。 */',
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折行。 */
     '  container-type: inline-size;',
@@ -89,9 +91,11 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  white-space: nowrap;',
     '}',
-    /* 六档数据色：`is-k1` 最深 → `is-k6` 最浅。强调色本身是**非文本**档，正合用在这里。 */
+    /* 六档数据色：`is-k1` 最深 → `is-k6` 最浅（`is-k6` 是"其他"，走上一条中性档）。
+       深端往**强调色自己的文本档**混（不能用"主文字"——那支 token 与文字墨色共用，
+       `ink` 皮肤下会把标题与数据条染成同一支色）。强调色本身是**非文本**档，正合用在这里。 */
     s('seg') + '.is-k1, ' + s('swatch') + '.is-k1 {',
-    '  background: ' + series(82, skinVar('ink')) + ';',
+    '  background: ' + series(82, skinVar('accent-text')) + ';',
     '}',
     s('seg') + '.is-k2, ' + s('swatch') + '.is-k2 {',
     '  background: ' + series(55, skinVar('surface')) + ';',
@@ -105,9 +109,10 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     s('seg') + '.is-k5, ' + s('swatch') + '.is-k5 {',
     '  background: ' + series(12, skinVar('surface')) + ';',
     '}',
-    '/* 第六档不是"更浅的强调色"而是"主文字 10% 的底"：尾巴那一段（其他）与强调色序分得开。 */',
+    '/* 第六档＝"其他/其余"那一档：不参加强调色的深浅序，取分隔线那一支中性色——',
+    '   与 k5 的极浅强调色一眼分得开，也不跟任何文字墨色撞（文字那三支都深得多）。 */',
     s('seg') + '.is-k6, ' + s('swatch') + '.is-k6 {',
-    '  background: color-mix(in srgb, ' + skinVar('ink') + ' 10%, ' + skinVar('surface') + ');',
+    '  background: ' + skinVar('line') + ';',
     '}',
     /* 那一根条：段宽由行内 `flex` 给（千分比整数，之和恰好 1000）⇒ 永远填满整宽。 */
     s('bar') + ' {',

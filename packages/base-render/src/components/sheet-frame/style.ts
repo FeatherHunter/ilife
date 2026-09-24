@@ -1,10 +1,11 @@
 /** sheet-frame · **样式段**（本组件的唯一样式来源，同时是**本族的样式汇总入口** `sheetCss()`）。
  *
- *  两条纪律（与 `editable-value`／`page-bars` 同一份层规，见 `src/components/README.md`）：
- *   1. 只读冻结 token（`CSS_VAR_TOKENS`），**不新增 token 名**、不写 `:root`／`!important`；
- *      暖纸那一档 token 集里没有 ⇒ 用**局部字面色**并在行内注明（同族先例：`page-bars/style.ts`
- *      的 `#a15a06`／`rgba(255,159,10,.22)`）。**字面经 `skinVar()` 读皮肤**（颜色走旧 token 名的
- *      皮肤映射；字面没有旧名可映射 ⇒ 纸面的正文字面显式取 `font`、本族的数字位取 `font-num`）。
+ *  两条纪律（与本层其余件同一份，见 `src/components/README.md`）：
+ *   1. **颜色一律经 `skinVar()` 读皮肤**：纸面／纸边／桌面色都是**材料色**，写死就不跟皮肤
+ *      （换到 `ink` 下仍是小票纸的奶白）。此处不许再出现 `#rrggbb`／`rgba()` 字面量。
+ *      `variant`（素纸／小票纸）是**结构**差异（撕口／裁切线／更方的角），**不是**靠写死颜色区分：
+ *      两档各自取一档 token（素纸 `surface`／`line`，小票纸 `surface-2`／`edge`），值由皮肤给。
+ *      字面同理：纸面的正文字面显式取 `font`、本族的数字位取 `font-num`。
  *   2. 全部规则 scope 在 `.<prefix>page-ui` 之下 ⇒ **不开 `pageUi` 的页零命中**（加法式的机械保证）。
  *
  *  几何契约（钉在测试里）：
@@ -21,16 +22,18 @@ import { summaryHeadCss } from '../summary-head/style.js';
 /** 换行（仓库口径：不写字面换行转义，与本层其余件同）。 */
 const LF = String.fromCharCode(10);
 
-/** 小票纸的纸面与纸边（原型实测色）。token 集只有中性档，暖档按纪律写在行内、不新立 token 名。 */
-const PAPER_FILL = '#fffdf7';
-const PAPER_EDGE = '#e7e1d3';
-
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function sheetFrameCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-sheet';
+  /* 材料色四枚 ＋ 桌面色一枚（全部经皮肤读法；本件源码里不出现手写的 `var(--ilife-…)`）。 */
+  const surface = skinVar('surface');
+  const surface2 = skinVar('surface-2');
+  const line = skinVar('line');
+  const edge = skinVar('edge');
+  const ground = skinVar('ground');
   return [
     '/* sheet-frame（纸面页框）：一整页的纸张层。素纸＝中性卡片纸，小票纸＝暖白＋纸边＋撕口＋裁切线。 */',
     s + ' {',
@@ -39,30 +42,30 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     /* 纸的**正文**字面：经 `skinVar('font')` 读皮肤的正文栈（挂皮肤＝纸面正文也跟着换）。
        注意：纸上那些**数字**不走这一串——它们各自取 `skinVar('font-num')`（本族的数字位读法）。 */
     '  font-family: ' + skinVar('font') + ';',
-    '  background: var(--card);',
-    '  border: 1px solid var(--line);',
+    '  background: ' + surface + ';',
+    '  border: 1px solid ' + line + ';',
     '  border-radius: ' + 14 + 'px;',
-    '  box-shadow: var(--shadow);',
+    '  box-shadow: ' + skinVar('shadow') + ';',
     '  padding: 18px 20px 16px;',
     '}',
-    '/* 小票纸：暖白纸面 ＋ 纸边 ＋ 更方的角（单据不是卡片）。 */',
+    '/* 小票纸：暖一档的纸面 ＋ 纸边 ＋ 更方的角（单据不是卡片）。色全走 token ⇒ 换皮时它自己跟着换。 */',
     s + '.is-receipt {',
-    '  background: ' + PAPER_FILL + ';',
-    '  border-color: ' + PAPER_EDGE + ';',
+    '  background: ' + surface2 + ';',
+    '  border-color: ' + edge + ';',
     '  border-radius: ' + 6 + 'px;',
     '}',
     s + '-body {',
     '  min-width: 0;',
     '}',
-    '/* 撕口：圆心落在纸边线上的两枚半圆，用桌面色（--bg）挖出来 ⇒ 换页面底色它自己跟着走。 */',
+    '/* 撕口：圆心落在纸边线上的两枚半圆，用**桌面色**（`ground`）挖出来 ⇒ 换页面底色它自己跟着走。 */',
     s + '-notch {',
     '  position: absolute;',
     '  top: 34px;',
     '  width: 16px;',
     '  height: 16px;',
     '  border-radius: 50%;',
-    '  background: var(--bg);',
-    '  box-shadow: inset 0 0 0 1px ' + PAPER_EDGE + ';',
+    '  background: ' + ground + ';',
+    '  box-shadow: inset 0 0 0 1px ' + edge + ';',
     '}',
     s + '-notch.is-left { left: -9px; }',
     s + '-notch.is-right { right: -9px; }',
@@ -70,7 +73,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     s + '-cut {',
     '  position: relative;',
     '  margin: 14px -20px 0;',
-    '  border-top: 1px dashed ' + PAPER_EDGE + ';',
+    '  border-top: 1px dashed ' + edge + ';',
     '}',
     s + '-cut::before,',
     s + '-cut::after {',
@@ -80,7 +83,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '  width: 9px;',
     '  height: 9px;',
     '  border-radius: 50%;',
-    '  background: var(--bg);',
+    '  background: ' + ground + ';',
     '}',
     s + '-cut::before { left: 8px; }',
     s + '-cut::after { right: 8px; }',

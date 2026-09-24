@@ -29,6 +29,7 @@ export function sortToggleCss(): string {
   const line = skinVar('line');
   const accent = skinVar('accent');
   const accentText = skinVar('accent-text');
+  const accentSoft = skinVar('accent-soft');
   const surface = skinVar('surface');
   const surface2 = skinVar('surface-2');
   const danger = skinVar('danger');
@@ -51,9 +52,12 @@ export function sortToggleCss(): string {
     '  color:' + ink2 + ';font:inherit;font-size:' + fsSm + ';cursor:pointer;white-space:nowrap;',
     '  transition:transform 80ms}',
     R + '-view .' + SORT_ROOT_CLASS + '-n{color:' + ink3 + ';font-size:' + fsXs + ';font-variant-numeric:tabular-nums}',
-    R + '-view[aria-pressed="true"]{background:' + ink + ';border-color:' + ink + ';color:' + surface + ';font-weight:700}',
-    R + '-view[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accentText + '}',
-    R + '-view[aria-pressed="true"] .' + SORT_ROOT_CLASS + '-n{color:' + surface + ';opacity:.8}',
+    /* 选中项＝**有文字的选中面**（`docs/base/base-render/选中态与皮肤语言.md` 第三节）：
+       底 `accent-soft`、字 `accent-text`、描边 `accent`、✓ 走 `accent`、字重 700。
+       旧写法 `background:ink;color:surface` 是"反白"，已按法则表清掉。 */
+    R + '-view[aria-pressed="true"]{background:' + accentSoft + ';border-color:' + accent + ';color:' + accentText + ';font-weight:700}',
+    R + '-view[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accent + '}',
+    R + '-view[aria-pressed="true"] .' + SORT_ROOT_CLASS + '-n{color:' + accentText + ';opacity:.8}',
     R + '-view:active{transform:scale(.98)}',
     R + '-view:focus-visible{outline:2px solid ' + accent + ';outline-offset:2px}',
     R + '-view[disabled]{cursor:not-allowed;color:' + ink3 + ';background:' + surface2 + '}',
@@ -70,7 +74,9 @@ export function sortToggleCss(): string {
     '  min-height:' + T + ';padding:0 14px;border:1px dashed ' + line + ';border-radius:' + radiusPill + ';',
     '  background:' + surface2 + ';color:' + ink2 + ';font:inherit;font-size:' + fsSm + ';cursor:pointer;',
     '  transition:transform 80ms}',
-    R + '-flip[aria-pressed="true"]{border-style:solid;border-color:' + ink + ';color:' + ink + ';font-weight:700}',
+    /* `-flip` 是**文字＋描边**型的选择开关（本来就没有面）：按法则表只改描边与字色为 `accent`／`accent-text`，
+       既不给它软底、也不把底写成墨色。虚线→实线是它自己的第二手段，保留。 */
+    R + '-flip[aria-pressed="true"]{border-style:solid;border-color:' + accent + ';color:' + accentText + ';font-weight:700}',
     R + '-flip:active{transform:scale(.98)}',
     R + '-flip:focus-visible{outline:2px solid ' + accent + ';outline-offset:2px}',
     R + '-flip[disabled]{cursor:not-allowed;color:' + ink3 + '}',
@@ -88,7 +94,7 @@ export function sortToggleCss(): string {
     R + '-empty[hidden],' + R + '-err[hidden]{display:none}',
     '@media (hover:hover) and (pointer:fine){',
     '  ' + R + '-view:hover{border-color:' + ink2 + ';color:' + ink + '}',
-    '  ' + R + '-view[aria-pressed="true"]:hover{border-color:' + ink + ';color:' + surface + '}',
+    '  ' + R + '-view[aria-pressed="true"]:hover{border-color:' + accent + ';color:' + accentText + '}',
     '  ' + R + '-view[disabled]:hover{border-color:' + line + ';color:' + ink3 + '}',
     '  ' + R + '-flip:hover{border-color:' + ink3 + ';color:' + ink + '}',
     '}',

@@ -58,9 +58,12 @@ export function filterChipsCss(): string {
     '  color:' + ink2 + ';font:inherit;font-size:' + fsSm + ';cursor:pointer;white-space:nowrap;',
     '  transition:transform 80ms}',
     R + '-chip .' + CHIPS_ROOT_CLASS + '-n{color:' + ink3 + ';font-size:' + fsXs + ';font-variant-numeric:tabular-nums}',
-    R + '-chip[aria-pressed="true"]{background:' + ink + ';border-color:' + ink + ';color:' + surface + ';font-weight:700}',
-    R + '-chip[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accentText + '}',
-    R + '-chip[aria-pressed="true"] .' + CHIPS_ROOT_CLASS + '-n{color:' + surface + ';opacity:.8}',
+    /* 选中片＝**有文字的选中面**（`docs/base/base-render/选中态与皮肤语言.md` 第三节）：
+       软底 `accent-soft` ＋ 字 `accent-text` ＋ 描边 `accent` ＋ ✓／侧标 `accent` ＋ 字重 700。
+       这里**不许**再拿 `ink` 当面（旧写法 `background:ink;color:surface` 是"反白"，在纸面语言里没有对应语汇）。 */
+    R + '-chip[aria-pressed="true"]{background:' + accentSoft + ';border-color:' + accent + ';color:' + accentText + ';font-weight:700}',
+    R + '-chip[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accent + '}',
+    R + '-chip[aria-pressed="true"] .' + CHIPS_ROOT_CLASS + '-n{color:' + accentText + ';opacity:.8}',
     R + '-chip:active{transform:scale(.98)}',
     R + '-chip:focus-visible{outline:2px solid ' + accent + ';outline-offset:2px}',
     R + '-chip[disabled]{cursor:not-allowed;color:' + ink3 + ';border-color:' + line + ';background:' + surface2 + '}',
@@ -101,7 +104,7 @@ export function filterChipsCss(): string {
     R + '-empty-row[hidden],' + R + '-err[hidden]{display:none}',
     '@media (hover:hover) and (pointer:fine){',
     '  ' + R + '-chip:hover{border-color:' + ink2 + ';color:' + ink + '}',
-    '  ' + R + '-chip[aria-pressed="true"]:hover{border-color:' + ink + ';color:' + surface + '}',
+    '  ' + R + '-chip[aria-pressed="true"]:hover{border-color:' + accent + ';color:' + accentText + '}',
     '  ' + R + '-chip[disabled]:hover{border-color:' + line + ';color:' + ink3 + '}',
     '  ' + R + '-clear:hover{color:' + accent + '}',
     '  ' + R + '-more-sum:hover{border-color:' + ink3 + ';color:' + ink + '}',
@@ -114,7 +117,7 @@ export function filterChipsCss(): string {
     P + '[' + CHIPS_EMPTY_ATTR + '],' + P + '[' + CHIPS_ERROR_ATTR + ']{text-align:left}',
     P + '[' + CHIP_N_ATTR + ']{white-space:nowrap}',
     P + '[data-ilife-chip-item][hidden]{display:none}',
-    /* 选中态的软底（悬停时用）：只在 hover 通路里出现，作辅助不替语义 */
-    R + '-chip[aria-pressed="true"]:focus-visible{background:' + accentSoft + ';color:' + ink + '}',
+    /* 选中态在键盘通路里补齐软底（悬停通路已在上面的规则里给全）：与常态选中同取值，不另说一套语言 */
+    R + '-chip[aria-pressed="true"]:focus-visible{background:' + accentSoft + ';color:' + accentText + '}',
   ].join('\n');
 }

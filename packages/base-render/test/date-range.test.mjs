@@ -355,10 +355,17 @@ describe('dateRange ② 样式纪律', () => {
     assert.match(css, /cursor: not-allowed;/);
     assert.match(css, /cursor: progress;/);
     assert.match(css, /@media \(prefers-reduced-motion:reduce\)/);
-    /* 零阴影立层次：日历块软底 / 区间内纸面 / 两端实心 / 今天一圈发丝线。 */
+    /* 零阴影立层次：日历块软底 / 区间内纸面 / 两端**强调面** / 今天一圈发丝线。 */
     assert.match(css, /-calendar \{[^}]*background: var\(--ilife-surface-2/, '日历块走软底');
     assert.match(css, /-day\.is-in \{[^}]*background: var\(--ilife-surface/, '区间内走纸面块');
-    assert.match(css, /-day\.is-end \{[^}]*background: var\(--ilife-accent/, '两端走实心强调块');
+    /* **本条 2026-09-24 由"实心强调块"（`background: var(--ilife-accent`）改成"强调面"**：
+       `.is-end` 那一格里写着那一天的数字＝**有文字**，按 `docs/base/base-render/选中态与皮肤语言.md`
+       第三节走软底 ＋ 主色字 ＋ 主色描边（旧设计是实心 `accent` 块 ＋ `accent-ink` 字，即"反白"）。 */
+    assert.match(css, /-day\.is-end \{[^}]*background: var\(--ilife-accent-soft/, '两端走强调面：软底');
+    assert.match(css, /-day\.is-end \{[^}]*border-color: var\(--ilife-accent,/, '两端走强调面：主色描边');
+    assert.match(css, /-day\.is-end \{[^}]*color: var\(--ilife-accent-text/, '两端走强调面：主色字');
+    /* 相邻月那一天**可以**是这一段的一端：弱字不许盖掉选中面的 `accent-text`（口径同上第三节的"字"那一格）。 */
+    assert.match(css, /-day\.is-adj:not\(\.is-end\) \{/, '相邻月弱字带 `:not(.is-end)` 护栏');
     assert.match(css, /-day\.is-today \{[^}]*border-color: var\(--ilife-ink-2/, '今天靠发丝线');
   });
 
@@ -384,8 +391,12 @@ describe('dateRange ② 样式纪律', () => {
     }
     const used = new Set([...css.matchAll(/(?:^|[;\s])color: ([^;]+);/g)].map((m) => m[1].trim()));
     for (const value of used) {
-      assert.ok(value === skinVar('accent-ink') || ['ink', 'ink-2', 'ink-3', 'danger'].some((t) => value === skinVar(t)),
-        '文字色只许取 ink／ink-2／ink-3／danger／accent-ink：' + value);
+      /* **本行 2026-09-24 由 `accent-ink` 改成 `accent-text`**：快捷档与日历两端按
+         `docs/base/base-render/选中态与皮肤语言.md` 第三节从"实心反白"（`accent` 底 ＋ `accent-ink` 字）
+         改成**强调面**（`accent-soft` 底 ＋ `accent-text` 字 ＋ `accent` 描边）——那一格里有数字＝有文字。
+         旧的 `accent-ink` 这一档在本件产出的 CSS 里已一个字节都不剩；白名单跟着换，不放宽也不删。 */
+      assert.ok(value === skinVar('accent-text') || ['ink', 'ink-2', 'ink-3', 'danger'].some((t) => value === skinVar(t)),
+        '文字色只许取 ink／ink-2／ink-3／danger／accent-text：' + value);
     }
   });
 

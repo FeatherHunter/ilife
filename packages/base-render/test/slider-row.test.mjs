@@ -348,10 +348,14 @@ describe('sliderRow ② 样式纪律', () => {
         }
       }
     }
+    /* 实际用到的文字色只许这几档。**本行 2026-09-24 由 `accent-ink` 改成 `accent-text`**：
+       常用档按 `docs/base/base-render/选中态与皮肤语言.md` 第三节从"实心反白"（`accent` 底 ＋
+       `accent-ink` 字）改成**强调面**（`accent-soft` 底 ＋ `accent-text` 字 ＋ `accent` 描边），
+       旧的 `accent-ink` 这一档在本件产出的 CSS 里已一个字节都不剩——白名单跟着换，不放宽也不删。 */
     const used = new Set([...css.matchAll(/(?:^|[;\s])color: ([^;]+);/g)].map((m) => m[1].trim()));
     for (const value of used) {
-      assert.ok(value === skinVar('accent-ink') || ['ink', 'ink-2', 'ink-3', 'danger'].some((t) => value === skinVar(t)),
-        '文字色只许取 ink／ink-2／ink-3／danger／accent-ink：' + value);
+      assert.ok(value === skinVar('accent-text') || ['ink', 'ink-2', 'ink-3', 'danger'].some((t) => value === skinVar(t)),
+        '文字色只许取 ink／ink-2／ink-3／danger／accent-text：' + value);
     }
   });
 

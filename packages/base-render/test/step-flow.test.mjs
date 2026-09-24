@@ -156,11 +156,11 @@ describe('step-flow ② 样式与零 DOM 纪律', () => {
 
   it('**三态必须有形状差异**：实心圆／双环内点／虚线空圈 ＋ 连线实线／虚线', () => {
     const css = stripComments(stepFlowCss());
-    assert.ok(/\.is-done [^{]*-node \{[^}]*background: var\(--ilife-ink/.test(css), '已完成：实心圆');
+    assert.ok(/\.is-done [^{]*-node \{[^}]*background: var\(--ilife-accent/.test(css), '已完成：实心圆');
     assert.ok(/\.is-now [^{]*-node::after \{[^}]*background: var\(--ilife-accent/.test(css), '当前：内点');
     assert.ok(/\.is-now [^{]*-node \{[^}]*border: 1\.5px solid/.test(css), '当前：描边');
     assert.ok(/-node \{[^}]*border: 1\.5px dashed/.test(css), '未开始：虚线空圈（节点缺省形状）');
-    assert.ok(/\.is-done[^{]*::after \{ background: var\(--ilife-ink/.test(css), '走过的连线是实线（深色）');
+    assert.ok(/\.is-done[^{]*::after \{ background: var\(--ilife-accent/.test(css), '走过的连线是实线（主色实底）');
     assert.ok(/\.is-todo[^{]*::after \{[^}]*border-left: 1px dashed/.test(css), '没走的连线是虚线');
     assert.ok(/\.is-now \{[^}]*background: var\(--ilife-accent/.test(css), '当前状态字：实底块');
     assert.ok(/\.is-done \{[\s\S]{0,120}?border-bottom: 2px solid/.test(css), '已完成状态字：底线');

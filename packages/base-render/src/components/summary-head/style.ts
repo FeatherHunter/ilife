@@ -37,6 +37,15 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-summary-head';
+  /* 印章那几档颜色一律经皮肤读法取（本件源码里不再出现颜色字面量）。 */
+  const accent = skinVar('accent');
+  const ok = skinVar('ok');
+  const warn = skinVar('warn');
+  const danger = skinVar('danger');
+  /** 同色的**淡档**（旧写法把语义色的 RGB 抄在件里，如 `rgba(168, 50, 40, .5)`）：
+   *  `color-mix(in srgb, <语义 token> N%, transparent)` —— 比例由调用处给、色由皮肤给。 */
+  const mix = (tone: string, percent: number): string =>
+    'color-mix(in srgb, ' + tone + ' ' + String(percent) + '%, transparent)';
   const lines: string[] = [
     '/* summary-head（主数字头）：eyebrow ＋ 主数字（＋单位）＋ 分母 ＋ 脚行（人话 ＋ 印章）。 */',
     s + ' {',
@@ -104,22 +113,30 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '  transform: rotate(-1.2deg);',
     '  font-variant-numeric: tabular-nums;',
     '}',
+    /* 三档语气：**语义档**（法则表第三节末行）——色与描边都取语义 token，不许借 `accent` 或 `ink`。
+       描边是**同色的淡档**（旧写法 `rgba(tone, .55)`／`.5` 把语义色的 RGB 抄在件里）：改用
+       `color-mix(in srgb, <语义色> N%, transparent)` 从 token 算、比例一个字不改 ⇒ 观感逐像素不变，
+       而换皮时它自己跟着换。**不用 `-soft` 当描边**：那两个 token 是"底"（填色语汇），压纸面上淡到
+       看不见，会把印章的框弄丢。 */
     s + '-stamp.is-ok {',
-    '  border-color: rgba(31, 140, 61, .55);',
-    '  color: #1f8c3d;',
+    '  border-color: ' + mix(ok, 55) + ';',
+    '  color: ' + ok + ';',
     '}',
     s + '-stamp.is-warn {',
-    '  border-color: rgba(162, 91, 0, .5);',
-    '  color: #a25b00;',
+    '  border-color: ' + mix(warn, 50) + ';',
+    '  color: ' + warn + ';',
     '}',
     s + '-stamp.is-danger {',
-    '  border-color: rgba(168, 50, 40, .5);',
-    '  color: #a83228;',
+    '  border-color: ' + mix(danger, 50) + ';',
+    '  color: ' + danger + ';',
     '}',
-    '/* 缺省＝原型那枚朱红印（#b3402b）：此前缺省走中性灰、调用方给 warn 又变琥珀，2026-09-24 用户图报「不是那个感觉」⇒ 缺省一律朱红，语气只在显式给 tone 时改色。 */',
+    /* 缺省＝原型那枚朱红印：**语气保留**（仍是那枚朱红，仍是缺省那一档），只把写死的 `#b3402b`
+       换成读皮肤 —— 走 `accent`（皮肤主色）。`ink` 皮肤下 `accent` 自己就是朱砂（`#bf3a22`，
+       正是钤印那一支）、`paper` 下是砖红（`#b5392a`，与原型 `#b3402b` 几乎同色）。
+       语气只在显式给 tone 时改色，这一条用户口径一字未动。 */
     s + '-stamp {',
-    '  border-color: #b3402b;',
-    '  color: #b3402b;',
+    '  border-color: ' + accent + ';',
+    '  color: ' + accent + ';',
     '}',
   ];
   for (const size of SUMMARY_HEAD_SIZES) {

@@ -44,7 +44,9 @@
    `Enter`／失焦提交、`Esc` 取消；越界或不在格子上的数**留在编辑态** ＋ 控件旁边的错误行（`aria-describedby`）。
 3. **到边界给字，不给灰**：值到下限／上限时对应那枚键落 `disabled`，状态字位写「已到下限」／「已到上限」——
    `accent` 在小票纸与大字报刊两套皮肤里接近墨色，只靠底色深浅读不出"还能不能再按"。
-4. **常用值选中态形＋色两样**：`aria-pressed="true"` 那一枚实心反白（`accent` 底 ＋ `accent-ink` 字）**并加粗**。
+4. **常用值选中态形＋字＋色三样**：`aria-pressed="true"` 那一枚走**强调面**（软底 `accent-soft` ＋
+   主色字 `accent-text` ＋ 主色描边 `accent`）**并加粗**。旧写法「实心反白」(`accent` 底 ＋ `accent-ink` 字)
+   已按 `docs/base/base-render/选中态与皮肤语言.md` 第三节清掉：有文字的选中面一律软底 ＋ 主色字 ＋ 主色描边。
 5. **变更事件只在真变时派发**：夹到同值不派发、编辑器原样提交不派发（`detail = { name, label, value, prev, unit }`）。
 6. **样式只经 `skinVar()` 读皮肤**：本件不出现手写的 `var(--ilife-…)`、不写 `:root`／`!important`、
    不定义任何自定义属性；全部规则 scope 在 `.ilife-page-ui` 之下（不挂 = 零命中）。

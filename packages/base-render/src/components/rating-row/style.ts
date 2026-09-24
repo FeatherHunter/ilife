@@ -12,6 +12,9 @@
  *     三套皮肤下都成立「读数 ≥ 正文 1.5 倍」），且走等宽数字（数位一变宽就跳版）；
  *   · 选中态**至少两重标记**：空心星 `☆` → 实心星 `★`（字形换了）＋ 那枚大数字（字）；
  *     颜色只是第三重。皮肤「大字报刊」下强调色＝墨黑 ⇒ 前两重必须自己扛。
+ *   · 颜色这一重按**法则表**走：已填满的星＝**无文字的点状选中** ⇒ 主色实底（`accent` 填满这枚字形，
+ *     不是"反白"、也不是正文墨色）；未填满的星仍是弱文字墨色 `ink-3`。
+ *     口径住 `docs/base/base-render/选中态与皮肤语言.md` 第三、四节。
  */
 import { skinVar } from '../skin/contract.js';
 import { RATING_ROW_HALF_ATTR, ratingRowSlot } from './attrs.js';
@@ -118,6 +121,7 @@ export function ratingRowCss(input?: { readonly prefix?: string }): string {
     '  content: "\\2606";',
     '}',
     star + '[aria-checked="true"] {',
+    '  /* 无文字的点状选中 ⇒ 主色实底：`accent` 把这枚字形填满（图形对比 ≥3:1 即可，不需要字色反白）。 */',
     '  color: ' + skinVar('accent') + ';',
     '}',
     star + '[aria-checked="true"] > ' + c('glyph') + '::before {',
@@ -141,9 +145,11 @@ export function ratingRowCss(input?: { readonly prefix?: string }): string {
     '  overflow: hidden;',
     '  color: ' + skinVar('accent') + ';',
     '}',
-    '/* 鼠标悬停只是**提示**，不是唯一通路（选中态与焦点各有自己的标记）。 */',
+    '/* 鼠标悬停只是**提示**，不是唯一通路（选中态与焦点各有自己的标记）。',
+    '   提示只给**未填满**的星：已填满的星是"无文字的点状选中"，走主色实底（`accent` 填字形），',
+    '   若被 `ink-2` 顶掉，悬停那一刻选中态就掉回正文墨色（口径见 `选中态与皮肤语言.md` 第三节）。 */',
     '@media (hover: hover) and (pointer: fine) {',
-    '  ' + star + ':not([disabled]):hover {',
+    '  ' + star + ':not([aria-checked="true"]):not([disabled]):hover {',
     '    color: ' + skinVar('ink-2') + ';',
     '  }',
     '}',

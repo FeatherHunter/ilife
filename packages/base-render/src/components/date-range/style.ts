@@ -9,7 +9,8 @@
  *   · **日历格之间只留 4px**：7 列 × 44px 是硬约束（44×7 ＋ 6×8 ＋ 内距 ＝ 356px > 390 容器装得下的
  *     日历宽），格与格之间的缝是**矩阵缝**、不是两个独立动作之间的间隔——44 的命中盒优先。
  *
- *  零阴影下立层次：日历块走软底（`surface-2`），区间内的格走纸面（`surface`），两端走实心强调块，
+ *  零阴影下立层次：日历块走软底（`surface-2`），区间内的格走纸面（`surface`），两端走**强调面**
+ *  （软底 `accent-soft` ＋ 主色字 `accent-text` ＋ 主色描边 `accent`：那一格里有数字＝有文字），
  *  「今天」靠一圈发丝线（`border-color`，盒内 1px，不推版）。
  */
 import { skinVar } from '../skin/contract.js';
@@ -120,7 +121,9 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  cursor: pointer;',
     '}',
-    '/* 快捷档那一排：命中的一枚带 ✓ ＋ 实心反白 ＋ 加粗（**形 ＋ 字 ＋ 色**三样一起给）。 */',
+    '/* 快捷档那一排：命中的一枚带 ✓ ＋ 走**强调面**（软底 `accent-soft` ＋ 主色字 `accent-text`',
+    '   ＋ 主色描边 `accent`）＋ 加粗（**形 ＋ 字 ＋ 色**三样一起给）。口径住',
+    '   `docs/base/base-render/选中态与皮肤语言.md` 第三节：有文字的选中面不许写成"实心反白"。 */',
     s('quick') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -155,9 +158,9 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1;',
     '}',
     s('preset') + '[aria-pressed="true"] {',
-    '  background: ' + skinVar('accent') + ';',
+    '  background: ' + skinVar('accent-soft') + ';',
     '  border-color: ' + skinVar('accent') + ';',
-    '  color: ' + skinVar('accent-ink') + ';',
+    '  color: ' + skinVar('accent-text') + ';',
     '  font-weight: 700;',
     '}',
     s('preset') + '[aria-pressed="true"]' + inBox('mark') + ' {',
@@ -167,14 +170,16 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
        一段一段分开长大，汇总在这一次调用里（照 `sheetCss()` 的先例：调用方一行拿全部样式）。
        插在这一行的位置上，是为了**产物逐字节不变**——拆的只是"住哪个文件"。 */
     dateRangeCalendarCss({ prefix: p }),
-    '/* 悬停：只包在设备能力查询里（`hover:hover`），且**不是唯一通路**。 */',
+    '/* 悬停：只包在设备能力查询里（`hover:hover`），且**不是唯一通路**。',
+    '   提示只给**不是两端**的格子：那两格是选中面（软底 ＋ 主色字 ＋ 主色描边），',
+    '   若悬停时把底换成 `surface`、描边换成 `ink-2`，选中态在悬停那一刻就散了。 */',
     '@media (hover:hover) and (pointer:fine) {',
     '  ' + s('nav') + ':hover:not([disabled]),',
-    '  ' + s('day') + ':hover:not([disabled]) {',
+    '  ' + s('day') + ':not(.is-end):hover:not([disabled]) {',
     '    background: ' + skinVar('surface') + ';',
     '    border-color: ' + skinVar('ink-2') + ';',
     '  }',
-    '  ' + s('preset') + ':hover:not([disabled]),',
+    '  ' + s('preset') + ':not([aria-pressed="true"]):hover:not([disabled]),',
     '  ' + s('input') + ':hover:not([disabled]) {',
     '    border-color: ' + skinVar('ink-2') + ';',
     '  }',

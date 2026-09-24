@@ -55,9 +55,13 @@ export function searchFieldCss(): string {
     '  background:transparent;color:' + ink2 + ';font:inherit;font-size:' + fsSm + ';cursor:pointer;white-space:nowrap;',
     '  transition:transform 80ms}',
     R + '-scope-btn .' + SEARCH_ROOT_CLASS + '-n{color:' + ink3 + ';font-size:' + fsXs + ';font-variant-numeric:tabular-nums}',
-    R + '-scope-btn[aria-pressed="true"]{border-bottom-color:' + accent + ';color:' + ink + ';font-weight:700}',
-    R + '-scope-btn[aria-pressed="true"]::before{content:"✓";color:' + accentText + ';font-size:11px}',
-    R + '-scope-btn[aria-pressed="true"] .' + SEARCH_ROOT_CLASS + '-n{color:' + ink2 + '}',
+    /* 聚焦范围钮＝**有文字的选中面**（`docs/base/base-render/选中态与皮肤语言.md` 第三节）：
+       底 `accent-soft`、字 `accent-text`、描边＝主色下划线 `accent`、✓ 走 `accent`、字重 700。
+       本件的形态要害是下划线，故 `border-bottom-color` 直接就是法则表那条「描边 `accent`」。 */
+    R + '-scope-btn[aria-pressed="true"]{background:' + accentSoft + ';border-bottom-color:' + accent + ';'
+      + 'color:' + accentText + ';font-weight:700}',
+    R + '-scope-btn[aria-pressed="true"]::before{content:"✓";color:' + accent + ';font-size:11px}',
+    R + '-scope-btn[aria-pressed="true"] .' + SEARCH_ROOT_CLASS + '-n{color:' + accentText + '}',
     /* 输入行：下划线。行内各件间距 ≥8px（工艺书：相邻触控目标间距 ≥8px——输入框与清空键都是命中盒） */
     R + '-box{display:flex;align-items:center;gap:8px;box-sizing:border-box;min-height:' + T + ';min-width:0;',
     '  border-bottom:2px solid ' + line + ';background:transparent}',

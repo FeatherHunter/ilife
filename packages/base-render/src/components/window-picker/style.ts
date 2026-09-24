@@ -33,6 +33,7 @@ export function windowPickerCss(): string {
   const line = skinVar('line');
   const accent = skinVar('accent');
   const accentText = skinVar('accent-text');
+  const accentSoft = skinVar('accent-soft');
   const surface = skinVar('surface');
   const surface2 = skinVar('surface-2');
   const danger = skinVar('danger');
@@ -58,8 +59,13 @@ export function windowPickerCss(): string {
     '  flex:0 1 auto;min-width:0;min-height:' + T + ';padding:0 12px;border:0;border-radius:' + radiusPill + ';',
     '  background:transparent;color:' + ink2 + ';font:inherit;font-size:' + fsSm + ';cursor:pointer;',
     '  white-space:nowrap;transition:transform 80ms}',
-    R + '-preset[aria-pressed="true"]{background:' + ink + ';color:' + surface + ';font-weight:700}',
-    R + '-preset[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accentText + '}',
+    /* 选中档＝**有文字的选中面**（`docs/base/base-render/选中态与皮肤语言.md` 第三节）：
+       底 `accent-soft`、字 `accent-text`、描边 `accent`、✓ 走 `accent`、字重 700。
+       档位原本无描边，这里把 `accent` 落在**内描边**上（`box-shadow: inset`）：加真 `border` 会改盒模型／
+       折行点，而档位段是 44px 触控盒；`outline` 会与 `:focus-visible` 的焦点圈抢同一个属性（同元件两条通路）。 */
+    R + '-preset[aria-pressed="true"]{background:' + accentSoft + ';color:' + accentText + ';font-weight:700;',
+    '  box-shadow:inset 0 0 0 2px ' + accent + '}',
+    R + '-preset[aria-pressed="true"]::before{content:"✓";font-size:11px;color:' + accent + '}',
     R + '-preset:active{transform:scale(.98)}',
     R + '-preset:focus-visible{outline:2px solid ' + accent + ';outline-offset:2px}',
     R + '-preset[disabled]{cursor:not-allowed;color:' + ink3 + '}',
@@ -90,7 +96,7 @@ export function windowPickerCss(): string {
     R + '-empty[hidden],' + R + '-err[hidden]{display:none}',
     '@media (hover:hover) and (pointer:fine){',
     '  ' + R + '-preset:hover{color:' + ink + ';background:' + surface + '}',
-    '  ' + R + '-preset[aria-pressed="true"]:hover{background:' + ink + ';color:' + surface + '}',
+    '  ' + R + '-preset[aria-pressed="true"]:hover{background:' + accentSoft + ';color:' + accentText + '}',
     '  ' + R + '-preset[disabled]:hover{color:' + ink3 + ';background:transparent}',
     '}',
     '@media (prefers-reduced-motion:reduce){',
