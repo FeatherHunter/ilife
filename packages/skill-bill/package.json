@@ -1,6 +1,6 @@
 {
   "name": "skill-bill",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "饼干记账SKILL一期：取数+口径+渲染+出口（16 联动 key+cmd_read+SKILL+HELP+parity），依 link-core",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,8 +21,8 @@
     "bill-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-link-core": "0.3.14",
-    "base-paint": "0.3.14"
+    "base-link-core": "0.3.15",
+    "base-paint": "0.3.15"
   },
   "engines": {
     "node": ">=22.13"
