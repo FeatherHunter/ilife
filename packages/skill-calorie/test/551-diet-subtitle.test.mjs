@@ -120,16 +120,20 @@ test('#551 ① 副题节点 R1/R2/R3 零命中（有数＋空窗；L6 title 除�
   }
 });
 
-test('#551 ② caption 节点 R1/R2/R3 零命中且只留「按日汇总」，口径注另起形状行', () => {
+test('#551 ② 小标题节点 R1/R2/R3 零命中且「按日汇总」在，口径注另起形状行', () => {
   const html = BUILD_VIEW(sampleInput());
+  /* 落点随版式走（2026-09-24 小票版）：按日汇总从**六列表**换成**账目行**，页面里不再有 `<caption>`；
+     本判改判**本族的小标题节点**（账目行／明细行／打孔格带三类），口径与判据工具逐字同源不变。 */
   const caps = captionsOf(html);
-  assert.ok(caps.includes('按日汇总'), '按日汇总 caption 丢了，实况：' + JSON.stringify(caps));
-  for (const c of caps) {
+  const heads = [...html.matchAll(/<div class="ilife-block-(?:ledger-rows|entry-rows|punch-strip)-heading">([\s\S]*?)<\/div>/g)]
+    .map((m) => dec(m[1]).replace(/\s+/g, ' ').trim());
+  assert.ok(heads.includes('按日汇总'), '按日汇总小标题丢了，实况：' + JSON.stringify(heads));
+  for (const c of [...caps, ...heads]) {
     const tags = judgeR123(c);
     console.log('T551 CAP caption=' + c + ' 命中=' + (tags.join('+') || '0'));
-    assert.deepEqual(tags, [], 'caption 节点仍有分隔符债：' + tags.join('+') + '：' + c);
+    assert.deepEqual(tags, [], '小标题节点仍有分隔符债：' + tags.join('+') + '：' + c);
   }
-  assert.ok(!caps.some((c) => /[~～]/.test(c)), 'caption 里还有 ~ 顶替文字：' + JSON.stringify(caps));
+  assert.ok(![...caps, ...heads].some((c) => /[~～]/.test(c)), '小标题里还有 ~ 顶替文字：' + JSON.stringify(heads));
   const vis = visibleText(html);
   assert.ok(vis.includes('无记录日写 — 不断 0'), '口径事实丢了（无记录日写 — 不断 0 必须另起形状行保留）');
 });
@@ -152,7 +156,13 @@ test('#551 ④ 390 无横滑（静态形状守卫：flex 折行＋820 纵列＋�
   assert.ok(html.includes('max-width:820px'), '形状 CSS 缺 820 纵列（窄屏塌列无落点）');
   const dietCss = (html.match(/<style>[\s\S]*?<\/style>/g) ?? []).join(' ');
   assert.ok(!/\.diet-[^{]*\{[^}]*\bwidth\s*:\s*\d+px/.test(dietCss), '形状里出现定宽 px（390 横滑之源）');
-  assert.ok(html.includes('data-label="日期"'), '按日汇总表缺 data-label（390 卡片化无落点，公共层既有件）');
+  /* 落点随版式走（2026-09-24 小票版）：逐日那一块从**六列表**（`data-label` 卡片化）换成**打孔格带**
+     ＋账目行 ⇒ 表格没了，改判格带的**份数宽**（`flex: 1 1 0` ⇒ 总宽恒等于容器宽，390 档不横滑）。 */
+  assert.ok(html.includes('ilife-block-punch-strip-cells'), '逐日那一段缺打孔格带');
+  const stripCss = /\.ilife-page-ui \.ilife-block-punch-strip-cell \{[^}]*\}/.exec(html);
+  assert.ok(stripCss !== null && stripCss[0].includes('flex: 1 1 0'), '格带的格不是份数宽（390 会横滑）：'
+    + (stripCss === null ? '缺规则' : stripCss[0]));
+  assert.equal((html.match(/class="ilife-block-punch-strip-cell(?=[ "])/g) || []).length, 3, '格带的格数＝窗口天数');
 });
 
 test('#551 变异电池（字串级）：塞回 ·／；／三段并列 ⇒ 守卫必红；还原 ⇒ 必绿', () => {

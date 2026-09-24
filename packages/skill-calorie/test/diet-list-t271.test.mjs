@@ -2,7 +2,8 @@
  *
  *  判据落点（`docs/skills/skill-calorie/t155-派单/02-逐票专属节.md` 的 `## #271`）：
  *   ① 11 条词真出口 exit 0、产物为完整文档（本件守 `calorie.view.diet` 那 8 条与 `calorie.today` 那 3 条）；
- *   ② **备注列有结构化断言**（老实物 `today_meals.html:168` 九列含备注；样张空备注写 `—`）；
+ *   ② **备注有结构化断言**（小票版前：老实物 `today_meals.html:168` 九列含备注；**改版后**：明细行
+ *   自带备注槽，`断言用备注` 原文必须落在槽里）；
  *   ③ 骨架照 `t425-融合基准.md` §五 第 ② 类逐行：眉标／标题／结论句／页内导航／KPI／主图／主表（含备注列）／
  *      空态块＋引导句／口径说明行／复制区双按钮／来源脚注；裁定 1（标识符不上屏）／2（结论句）／
  *      2-补（结论与来源不走深底块）／3（导航＋口径行＋脚注恒出）／4（缺值 `—`）／5（零值不画柱身、
@@ -94,12 +95,13 @@ function callChainOf(tag) {
   return segs[segs.findIndex((s) => s.trim() === '调用链') + 1];
 }
 
-test('#271 骨架：15 行里该出的都出，明细长着备注列', () => {
+test('#271 骨架：小票版该出的都出，日级密度留在按日汇总表', () => {
   const html = BUILD_VIEW(sampleInput());
   for (const cls of [
     'ilife-block-page-shell-title', 'ilife-block-page-shell-subtitle', 'ilife-block-toc',
-    'ilife-block-kpi-card-grid', 'ilife-block-chart-block', 'ilife-block-data-table',
-    'ilife-block-caliber', 'ilife-block-copy-block', 'ilife-block-disclosure',
+    'ilife-block-sheet', 'ilife-block-summary-head', 'ilife-block-scale-bar',
+    'ilife-block-ledger-rows', 'ilife-block-entry-rows', 'ilife-block-punch-strip',
+    'ilife-block-caliber', 'ilife-block-copy-block',
   ]) {
     assert.ok(html.includes(cls), '骨架缺：' + cls);
   }
@@ -108,10 +110,14 @@ test('#271 骨架：15 行里该出的都出，明细长着备注列', () => {
     assert.ok(html.includes('href="#' + id + '"'), '页内导航缺 ' + id);
     assert.ok(html.includes('id="' + id + '"'), '导航指了个不存在的区块：' + id);
   }
-  /* 明细九列逐字（老实物 `today_meals.html:168`）：末列就是备注。 */
-  assert.deepEqual(tableOf(html, '全部记录'), [
-    '日期时间', '餐别', '食物', '克数', '热量', '蛋白', '碳水', '脂肪', '备注',
-  ]);
+  /* 明细从**九列表**改成**明细行**，按日汇总从**六列表**改成**账目行**（小票版，2026-09-24 用户裁定）——
+     判据换形状：这两处都只剩「日期／时间 ＋ 值」两槽，逐日的三宏量在明细行的行下读数里逐条可见。 */
+  assert.ok(html.includes('<div class="ilife-block-ledger-rows-heading">按日汇总</div>'), '按日汇总不是账目行');
+  /* 原型那排「这 N 天」打孔格（用户点名 2026-09-24：「样张右侧有「这 7 天」那个控件，为什么我们没有」）：
+     逐日的一眼落在格带上（窗口 ≤7 天＝整窗），整窗逐日的清单仍住上面那条账目行。 */
+  assert.ok(/ilife-block-punch-strip-heading">这 \d+ 天</.test(html), '打孔格带缺（「这 N 天」）');
+  assert.equal((html.match(/class="ilife-block-punch-strip-cell(?=[ "])/g) || []).length, 3, '格带的格数＝窗口天数');
+  assert.ok(html.includes('ilife-block-entry-row-note'), '明细行没带备注槽');
   const visible = visibleText(html);
   assert.ok(visible.includes('少糖'), '备注原文没上屏');
   assert.ok(visible.includes('2026-09-05 08:10'), '日期时间列没写全，或时间没截到分');
@@ -167,12 +173,17 @@ test('#271 裁定 4／5：空窗仍出完整页；单点不成线；零值不画
       avgCalories: 1700, calorieGoal: 1800, trend: { summary: { trend: '平稳', avg: 1700 } },
     },
   }));
-  assert.ok(visibleText(one).includes('一个点画不成折线'), '单点没出说明句');
-  /* 零值不画柱身：尾日无记录 ⇒ 餐别那支出四张卡、值位 `—`、不出柱图。 */
+  /* 单点那支：折线撤了（小票语汇里"走势"由数字讲）⇒ 出的是「有记录的一天」，不出任何图。 */
+  assert.ok(visibleText(one).includes('有记录的一天'), '单点那支没出「有记录的一天」');
+  /* 断「不出图」要看**正文**：样式段里本来就有 `.ilife-block-chart-block{…}` 那类规则名（同上文空窗那条）。 */
+  const oneBody = one.slice(one.indexOf('</style>'));
+  assert.ok(!oneBody.includes('ilife-block-chart-block'), '单点仍画了图');
+  /* 零值不画柱身：尾日无记录 ⇒ 餐别那支出账目行、值位 `—`、不出柱图。 */
   const zero = BUILD_VIEW(sampleInput({
     dist: { totalCalories: 0, slices: [{ meal: '早餐', count: 0, calories: 0, pct: 0 }] },
   }));
-  assert.ok(visibleText(zero).includes('餐别分布 早餐'), '零值那支没出餐别卡');
+  assert.ok(visibleText(zero).includes('餐别分布'), '零值那支没出餐别这一块');
+  assert.ok(visibleText(zero).includes('早餐'), '零值那支没出餐别名');
   assert.ok(!zero.includes('"type":"bar"') , '零值仍画了柱身');
 });
 
@@ -204,13 +215,13 @@ test('#271 餐别支／总览支：调用点给了取数才换页，区块走 #2
   assert.ok(visibleText(ov).includes('统计到昨日'), '总览支缺 #275 的口径句');
 });
 
-/** 「趋势」读数卡的值格原文（`renderKpiCard` 的 `kpi-card-value`；找不到返 `null`）。 */
+/** 「每日摄入趋势」那一行的值格原文（小票版住账目行 `ilife-block-ledger-row-value`；找不到返 `null`）。 */
 function trendCardValue(html) {
-  const m = /<div class="ilife-block-kpi-card-label">趋势<\/div>\s*<div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">([\s\S]*?)<\/span>/.exec(html);
+  const m = /<span class="ilife-block-ledger-row-label">每日摄入趋势<\/span>[\s\S]*?<span class="ilife-block-ledger-row-value">([\s\S]*?)<\/span>/.exec(html);
   return m === null ? null : m[1];
 }
 
-test('#618 趋势卡：数据层的 up／down／flat 不上屏，值位换中文判语（本页族唯一一处映射）', () => {
+test('#618 趋势：数据层的 up／down／flat 不上屏，账目行值位换中文判语（本页族唯一一处映射）', () => {
   /* 用户缺陷④原话：「17 看本周饮食、18 看上周饮食 的 趋势这个卡片写的是『up/down』不应该有英文」。
      8 张窗口页共走 `buildViewDietDoc` ⇒ 这里直调一页把三档枚举逐档钉住（真出口那一层由证据脚本
      `docs/skills/skill-calorie/t618-真出口断言.mjs` 逐词跑）。枚举口径（取数层）不动，只断言页面侧映射。 */
@@ -259,7 +270,8 @@ test('#271 真跑：calorie.view.diet（窗口词）exit 0＋完整文档＋日�
   assert.ok(r.html.includes('ilife-block-toc'), '缺页内导航');
   /* #560（用户裁决见本件上文）：屏上来源脚注已撤——可见文本 `数据来源` 零命中才是绿；复制载荷里的来源段保留（见 560 用例正证）。 */
   assert.ok(!visibleText(stripCopyPayload(r.html)).includes('数据来源'), '屏上还有来源脚注（#560 已撤）');
-  assert.deepEqual(tableOf(r.html, '全部记录').at(-1), '备注', '真跑的明细末列不是备注');
+  assert.ok(r.html.includes('<div class="ilife-block-ledger-rows-heading">按日汇总</div>'), '真跑的按日汇总不是账目行');
+  assert.ok(r.html.includes('ilife-block-entry-rows'), '真跑的明细不是明细行');
   assert.ok(r.html.includes('复制数据'), '真跑缺「复制数据」按钮');
   /* 复制日志那一颗要处理体把命令原文传进来才**活**：`calorie.view.diet` 的处理体住 `src/home/**`，
      本票按编排者 2026-09-15 的裁定**不接线**（改归 #276 席）⇒ 这里守的是不变量：
@@ -288,11 +300,17 @@ test('#271 真跑：calorie.today 带 hasNote 的备注列＋标题写明筛选�
   const visible = visibleText(r.html);
   assert.ok(visible.includes('只看有备注的'), '标题没写明筛选口径');
   assert.ok(visible.includes('断言用备注'), '备注原文没上屏');
-  assert.ok(tableOf(r.html, '今日明细').at(-1) === '备注', '「有备注」那一支的明细末列不是备注');
-  /* 普通今日页（不给 hasNote）的明细也必须长着备注列——老实物 `today_meals.html:168` 恒有，
+  /* 小票版（2026-09-24 用户裁定）：明细从**九列表**改成**明细行**——判据换形状、事实不换：
+     备注仍在**它自己那一条记录**里逐条印出（落在明细行的备注槽，不并入别处、不漏、不改字）。 */
+  assert.ok(r.html.includes('ilife-block-entry-row-note'), '备注没落在明细行的备注槽里（九列表已下线）');
+  assert.ok(r.html.includes('ilife-block-entry-rows'), '明细不再是明细行');
+  const noteSlots = [...r.html.matchAll(/ilife-block-entry-row-note">([^<]*)</g)].map((m) => m[1]);
+  assert.ok(noteSlots.includes('断言用备注'), '备注槽里没印出那条备注原文：' + noteSlots.join('／'));
+  /* 普通今日页（不给 hasNote）的记录行**同样带备注槽**——老实物 `today_meals.html:168` 恒有，
      融合基准 §五 第 9 行「主表／主列表（含备注列）」恒出。 */
   const plain = run(dir, 'calorie.today', { date: '今日' });
-  assert.ok(tableOf(plain.html, '今日明细').at(-1) === '备注', '普通今日页的明细缺备注列');
+  assert.ok(plain.html.includes('ilife-block-entry-row-note'), '普通今日页的记录行缺备注槽');
+  assert.ok(visibleText(plain.html).includes('断言用备注'), '普通今日页把备注原文漏掉了');
   /* 裁定 7 的真出口证据：处理体在自己声明路径内（`src/diet/today.ts`）⇒ 这一支接上了命令原文。 */
   const tag = logButtonTag(r.html);
   assert.ok(tag !== null && tag.includes('data-t='), 'calorie.today 那一支的「复制日志」不是活按钮：' + tag);

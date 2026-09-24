@@ -3,7 +3,11 @@
  * 原地搬自 `src/render/dietDocs.ts`：本票只换住处，函数体与注释原样照抄，产物逐字节不变。
  * 服务页面类：② 条目列表页。
  */
-import { renderCaliberLine, renderChartBlock, renderEmptyBlock, renderKpiGrid, renderDataTable, renderTocBlock } from 'base-paint/blocks';
+import {
+  renderCaliberLine, renderEmptyBlock, renderEntryRows, renderLedgerRows, renderPunchStrip,
+  renderScaleBar,
+  renderSheetFrame, renderSummaryHead, renderTocBlock,
+} from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dietUiCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
@@ -41,6 +45,9 @@ export interface TodayDietDocInput {
   hasNote?: boolean;
   /** 本次命令原文（复制日志第 4 段，裁定 7）；由 `src/diet/today.ts` 的 `viewToday` 传 `commandLine()`。 */
   readonly command?: string;
+  /** **最近 7 天**（末位＝这一页那天）：原型「今日饮食」页那排「近 7 天」打孔格的数据面。
+   *  不给＝不出格带（直调这一支的产物逐字不变）；由 `src/diet/today.ts` 多取一份 7 天窗带进来。 */
+  readonly week?: readonly { readonly date: string; readonly calories: number | null }[];
 }
 
 /** #496 · 「只看有备注的」那一页的空态页（`calorie.today` 带 `hasNote:true` 而当天一条备注都没有时）。
@@ -55,89 +62,120 @@ export function buildTodayNoteEmptyDoc(date: string): string {
     pageUi: true,
     eyebrow: '卡路里饮食',
     subtitle: MEAL_NOTE,
-    content: dietUiCss() + windowStrip(date, date)
-      + renderEmptyBlock({
-        title: '今天没有带备注的记录',
-        text: '记的时候带一句备注（例如「午餐 鸡胸 150 克 备注：煎的，少油」），这一页就会出现它。',
+    content: dietUiCss({ sheet: true }) + windowStrip(date, date)
+      + renderSheetFrame({
+        variant: 'receipt', notch: true, cutLine: true,
+        content: renderEmptyBlock({
+          title: '今天没有带备注的记录',
+          text: '记的时候带一句备注（例如「午餐 鸡胸 150 克 备注：煎的，少油」），这一页就会出现它。',
+        }),
       }),
     charts: false,
   });
 }
 
 export function buildTodayDietDoc(input: TodayDietDocInput): string {
-  const { overview: o, dist, meals, macro } = input;
+  const { overview: o, dist, meals, macro, week } = input;
   const onlyNote = input.hasNote === true;
   const names = new Set(meals.map((m) => m.food_name));
-  const kpis = renderKpiGrid([
-    { label: '当日摄入', value: String(o.totalCalories), unit: '卡', detail: '目标 ' + o.calorieGoal + ' 卡' },
-    { label: '餐数', value: String(meals.length), unit: '条', detail: names.size + ' 个品种' },
-    { label: '热量目标', value: String(o.calorieGoal), unit: '卡', detail: '剩余 ' + (o.calorieGoal - o.totalCalories) + ' 卡' },
-    { label: '餐别覆盖', value: dist.slices.filter((s) => s.count > 0).length + '/' + dist.slices.length },
-  ]);
+  const left = o.calorieGoal - o.totalCalories;
+  const pct = o.calorieGoal > 0 ? Math.round((o.totalCalories / o.calorieGoal) * 100) : 0;
+  const eaten = dist.slices.filter((s) => s.count > 0).length;
   /* §五 第 4 行：页内导航（只列真会出的区块——点不到的项就是死链接）。 */
   const distChart = dist.totalCalories > 0;
   const macroChart = macro !== null && Boolean(macro.protein || macro.carb || macro.fat);
-  const parts: string[] = [dietUiCss(), windowStrip(o.start, o.start, meals.length + ' 条'), renderTocBlock({
-    items: [
-      { id: 'td-kpi', text: '读数' },
-      ...(distChart ? [{ id: 'td-dist', text: '各餐热量' }] : []),
-      ...(macroChart ? [{ id: 'td-macro', text: '营养配比' }] : []),
-      { id: 'td-table', text: '今日明细' },
-      { id: 'td-copy', text: '复制区' },
-    ],
-  }), anchored('td-kpi', kpis)];
-  let charts = false;
+  const macroRows = macro === null ? [] : [
+    { label: '蛋白', value: String(macro.protein === null ? 0 : macro.protein.pct), unit: '%' },
+    { label: '碳水', value: String(macro.carb === null ? 0 : macro.carb.pct), unit: '%' },
+    { label: '脂肪', value: String(macro.fat === null ? 0 : macro.fat.pct), unit: '%' },
+  ];
+  /** 纸里的正文（小票版）：主数字头 → 刻度条 → 账目 → 各餐 → 营养配比 → 明细 → 口径与来源。
+   *  **复制区不在纸里**：它在裁切线之外（见下方 `td-copy` 那一节）。 */
+  const sheetParts: string[] = [anchored('td-kpi', [
+    renderSummaryHead({
+      eyebrow: '当日摄入',
+      value: String(o.totalCalories),
+      unit: '卡',
+      denominator: '/ ' + o.calorieGoal + ' 卡',
+      note: '已吃目标的 ' + pct + '%',
+      stamp: left >= 0
+        ? { text: '还可吃 ' + left + ' 卡', tone: 'warn' }
+        : { text: '已超目标 ' + (-left) + ' 卡', tone: 'danger' },
+      size: 'm',
+    }),
+    renderScaleBar({
+      value: o.totalCalories,
+      goal: o.calorieGoal,
+      variant: 'cells',
+      leftLabel: String(o.totalCalories) + ' / ' + o.calorieGoal + ' 卡（' + pct + '%）',
+      rightLabel: (left >= 0 ? '差 ' + left : '超 ' + (-left)) + ' 卡',
+    }),
+    /* 原型「今日饮食」页那排「近 7 天」（2026-09-24 用户裁定「今日两页也补」）：一格一天、有数填深色、
+       红圈套今天那一格。7 天窗由调用方（`src/diet/today.ts`）多取一份带进来——本件不取数。 */
+    ...(week === undefined || week.length < 2 ? [] : [renderPunchStrip({
+      heading: '近 7 天',
+      days: week.map((d) => ({
+        label: d.date.slice(5),
+        value: d.calories === null ? null : String(d.calories),
+        selected: d.date === o.end,
+      })),
+    })]),
+    renderLedgerRows({
+      heading: '账目',
+      rows: [
+        { label: '热量目标', value: String(o.calorieGoal), unit: '卡' },
+        { label: '餐数', value: String(meals.length), unit: '条' },
+        { label: '品种', value: String(names.size), unit: '个' },
+        { label: '餐别覆盖', value: eaten + '/' + dist.slices.length },
+        { label: '合计', value: String(o.totalCalories), unit: '卡', kind: 'total' },
+      ],
+    }),
+  ].join(''))];
+  /* 各餐热量（`bar` 图改成账目行：**缺的那几餐写 `—`**，一行一餐，一眼看出哪顿没记）。 */
   if (distChart) {
-    parts.push(anchored('td-dist', renderChartBlock({
-      /* #496 · 原标题「餐别热量占比」画的是四餐的卡数、也没有百分比（审查件第 69 条）⇒ 改「各餐热量（卡）」。 */
-      kind: 'bar',
-      title: '各餐热量（卡）',
-      input: { items: dist.slices.map((s) => ({ label: s.meal, value: s.calories })) },
+    sheetParts.push(anchored('td-dist', renderLedgerRows({
+      heading: '各餐热量（卡）',
+      rows: dist.slices.map((s) => (s.count > 0
+        ? { label: s.meal, value: String(s.calories), unit: '卡' }
+        : { label: s.meal, value: '—' })),
     })));
-    charts = true;
   }
+  /* 营养配比（`donut` 环图改成账目行）：数据层只给占比（`MacroEval` 无克数），故这一段印的是 %。 */
   if (macroChart) {
-    parts.push(anchored('td-macro', renderChartBlock({
-      kind: 'donut',
-      title: '营养配比',
-      input: {
-        items: [
-          { label: '蛋白', value: macro.protein ? macro.protein.pct : 0 },
-          { label: '碳水', value: macro.carb ? macro.carb.pct : 0 },
-          { label: '脂肪', value: macro.fat ? macro.fat.pct : 0 },
-        ],
-        options: { showPercent: true },
-      },
-    })));
-    charts = true;
+    sheetParts.push(anchored('td-macro', renderLedgerRows({ heading: '营养配比', rows: macroRows })));
   }
-  parts.push(anchored('td-table', renderDataTable({
-    columns: [
-      { key: 'time', label: '时间' },
-      { key: 'meal', label: '餐别' },
-      { key: 'food', label: '食物' },
-      { key: 'grams', label: '克数', align: 'right' },
-      { key: 'cal', label: '热量', align: 'right' },
-      { key: 'pro', label: '蛋白', align: 'right' },
-      { key: 'carbs', label: '碳水', align: 'right' },
-      { key: 'fat', label: '脂肪', align: 'right' },
-      /* #271 · 备注列**恒出**：老实物 `today_meals.html:168` 的明细九列末列就是备注（空值出空串），
-         融合基准 `t425-融合基准.md` §五 第 9 行也把「主表／主列表（含备注列）」写成恒出。
-         #496 当年只在「只看有备注的」那一支加过它（件里旧注释记的理由是「普通今日页多数行没备注、
-         多一列空栏」）；本票按老实物与样张口径改回恒出，缺值一律 `—`（裁定 4），不是空栏。 */
-      { key: 'note', label: '备注' },
-    ],
-    /* 裁定 4／移植清单 9：时间只显示到分、缺值写 `—`；备注缺值同样写 `—`（老实物空备注出空串）。 */
-    rows: meals.map((m) => ({
-      time: minuteOf(m.time), meal: inferMealType(String(m.time ?? '')), food: m.food_name,
-      grams: m.grams, cal: m.calories, pro: m.protein, carbs: m.carbs, fat: m.fat,
-      note: noteOf(m.note),
-    })),
-    caption: '今日明细（共 ' + meals.length + ' 条）',
-    emptyText: onlyNote ? '今天没有带备注的记录' : '本日无明细',
+  /* 今日明细（九列表 → 明细行）：时间／餐别／食物／克数 …… 热量，**备注与三宏量各占一行之下**。
+     备注空就不出那一行（明细行的备注槽是可选的，不留空位也不写占位符）；缺的宏量写 `—`。 */
+  sheetParts.push(anchored('td-table', renderEntryRows({
+    heading: '今日明细（共 ' + meals.length + ' 条）',
+    rows: meals.map((m) => {
+      const badge = String(inferMealType(String(m.time ?? '')) ?? '');
+      const note = String(m.note ?? '').trim();
+      return {
+        time: minuteOf(m.time),
+        ...(badge === '' ? {} : { badge }),
+        name: m.food_name,
+        measure: m.grams + ' g',
+        value: String(m.calories),
+        unit: '卡',
+        ...(note === '' ? {} : { note }),
+        facts: [
+          '蛋白 ' + (m.protein === null || m.protein === undefined ? '—' : m.protein + ' g'),
+          '碳水 ' + (m.carbs === null || m.carbs === undefined ? '—' : m.carbs + ' g'),
+          '脂肪 ' + (m.fat === null || m.fat === undefined ? '—' : m.fat + ' g'),
+        ],
+      };
+    }),
+    ...(meals.length === 0 ? { absentLine: onlyNote ? '今天没有带备注的记录' : '本日无明细' } : {}),
   })));
-  /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。 */
-  parts.push(anchored('td-copy', listPageCopy({
+  /* §五 第 13／15 行：口径说明行（图下那一条已在图下说过，这里说缺值口径）＋ 来源脚注一行。
+     小票版把这两行印在**纸里**（明细之后、裁切线之前）——它们属于这张单子，不属于页面脚注。 */
+  sheetParts.push(renderCaliberLine(MEAL_NOTE + '。'));
+  sheetParts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
+  sheetParts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.start, count: meals.length }));
+  /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。
+     **落点在纸外**（裁切线之后）：纸是"这张单子"，复制区是"这张单子的出口"，两者不同层。 */
+  const copy = anchored('td-copy', listPageCopy({
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.today',
     data: {
       items: meals.map((m) => ({
@@ -146,11 +184,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
       })),
       total: meals.length,
     },
-  }, input.command)));
-  /* §五 第 13／15 行：口径说明行（图下那一条已在图下说过，这里说缺值口径）＋ 来源脚注一行。 */
-  parts.push(renderCaliberLine(MEAL_NOTE + '。'));
-  parts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
-  parts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.start, count: meals.length }));
+  }, input.command));
   return assembleDocPage({
     docTitle: DOC_TITLE,
     /* #496 · 页名（唤醒词「看有备注的饮食记录」）承诺看的是有备注的记录，标题原写「今日饮食 〈日期〉」，
@@ -159,14 +193,21 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
     pageUi: true,
     /* #496 · 眉标原写命令键「calorie.today · 饮食域」（裁定 1 不上屏）⇒ 改中文族名。 */
     eyebrow: '卡路里饮食',
-    /* #496 · 副题原本整句就是常量名那一串；现在只留口径小字（加餐是哪两顿），与「餐别覆盖」卡
-       不再各说一遍。裁定 2：结论句（句内含本页读数）也走这一槽，排在标题下第一行。
-       #580 · 条数／总量／目标三数已在三张 KPI 卡，副题不再复述同一组数，只留一句剩余额度的结论。 */
-    subtitle: (o.calorieGoal - o.totalCalories) >= 0
-      ? '今日还剩 ' + (o.calorieGoal - o.totalCalories) + ' 卡可摄入。'
-      : '今日已超目标 ' + (o.totalCalories - o.calorieGoal) + ' 卡。',
-    content: parts.join(''),
-    charts,
+    /* 结论**不住副题**：小票版把它印在纸里的主数字头上（一句人话 ＋ 一枚印章），同一句不说两遍
+       （旧副题「今日还剩 N 卡可摄入」与印章「还可吃 N 卡」是同一件事）。 */
+    subtitle: null,
+    content: dietUiCss({ sheet: true }) + windowStrip(o.start, o.start, meals.length + ' 条') + renderTocBlock({
+      items: [
+        { id: 'td-kpi', text: '读数' },
+        ...(distChart ? [{ id: 'td-dist', text: '各餐热量' }] : []),
+        ...(macroChart ? [{ id: 'td-macro', text: '营养配比' }] : []),
+        { id: 'td-table', text: '今日明细' },
+        { id: 'td-copy', text: '复制区' },
+      ],
+    }) + renderSheetFrame({
+      variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join(''),
+    }) + copy,
+    charts: false,
   });
 }
 

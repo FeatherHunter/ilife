@@ -43,10 +43,13 @@ export function viewToday(params: Record<string, unknown>, db: DatabaseSync): Vi
   if (rows.length === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
   const items = rows.map((r) => ({ id: r.id, date: r.date, time: r.time, food_name: r.food_name, grams: r.grams, calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat, note: r.note ?? '' }));
   const o = buildDietOverview(db, date, date);
+  /* 2026-09-24 用户裁定「今日两页也补打孔格带」：本页原来只取这一天 ⇒ 多取一份**末日＝这天**的 7 天窗，
+     只为让「近 7 天」那排格子画得出"哪几天有、各多少"（这份读数不进任何账目行）。 */
+  const week = buildDietOverview(db, shiftISODate(date, -6), date).series;
   const dist = buildMealDistribution(db, date);
   // #108 · 今日饮食全文档（餐次进度＋营养配比＋今日明细；配比无数据即 skip，不编数）。
   const mt = dietMacroRatio(db, date, date);
-  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null, hasNote: hasNote === true, command: commandLine('calorie.today', params) }) };
+  return { data: { items, total: items.length }, html: buildTodayDietDoc({ overview: o, dist, meals: rows, macro: mt.status === 'ok' ? (mt.data ?? null) : null, hasNote: hasNote === true, week, command: commandLine('calorie.today', params) }) };
 }
 
 /** `calorie.view.today-water` · 今日饮水。 */

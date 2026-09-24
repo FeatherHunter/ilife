@@ -47,12 +47,19 @@ import {
   renderDisclosure,
   renderDistributionRows,
   renderEmptyBlock,
+  renderEntryRows,
   renderFeedbackBlock,
   renderKpiGrid,
+  renderLedgerRows,
+  renderPunchStrip,
+  renderScaleBar,
+  renderSheetFrame,
+  renderSummaryHead,
   renderTocBlock,
 } from 'base-paint/blocks';
+import { renderEquationBar } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dietUiCss, windowStrip } from './dietUi.js';
+import { dietUiCss, sheetStyleCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
@@ -160,8 +167,13 @@ export interface EmptyWindowDocInput {
 export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
   const envelope = statEnvelope(input.key, {});
   const body = [
+    '<style>' + sheetStyleCss() + '</style>',
     renderTocBlock({ items: [{ id: 'sec-empty', text: input.blockTitle }] }),
-    anchored('sec-empty', renderEmptyBlock({ title: input.blockTitle, text: input.emptyText + input.guide })),
+    /* 小票版（2026-09-24 用户裁定）：**空态也进纸**——一张空单子也是单子；复制区仍在纸外。 */
+    renderSheetFrame({
+      variant: 'receipt', notch: true, cutLine: true,
+      content: anchored('sec-empty', renderEmptyBlock({ title: input.blockTitle, text: input.emptyText + input.guide })),
+    }),
     sourceFootnote(input.footnote),
     docCopy(envelope, input.command, DB_FILENAME + ' ｜ ' + input.blockTitle),
   ].join('');
@@ -585,7 +597,6 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
 
 /* ── 今日饮水（老实物 today_water.html：今日进度环＋本周 7 天＋今日每杯） ── */
 
-const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
 
 /** 饮水页结论句（§五 第 3 行）：今日累计 ＋ 进度 ＋ 差额（含「已完成」「超出」两支）。 */
 function waterSummary(v: TodayWaterView, name: string): string {
@@ -599,74 +610,81 @@ function waterSummary(v: TodayWaterView, name: string): string {
 /** 今日饮水区块（进度环／7 天柱图／每杯明细三块，标题逐字取老实物的三个 h2）。
  *  `name`＝这一页的正文叫法（「今日喝水」／「今日饮水」，由入口标记定，见 `ENTRY_DRINK`）。 */
 export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
-  const remainText = v.remainMl > 0
-    ? '还差 ' + v.remainMl + ' ml（占目标 ' + (100 - v.pct) + '%）'
-    : (v.remainMl === 0 ? '已完成目标(100%)' : '超出目标 ' + (-v.remainMl) + ' ml(' + v.pct + '%)');
+  /* 小票版（2026-09-24 用户裁定）：主数字头 ＋ 条形码刻度 ＋ 账目行；环图与柱图两件撤。 */
   const parts: string[] = [
-    anchored('sec-kpi', renderKpiGrid([
-      { label: name, value: String(v.todayMl), unit: 'ml', detail: v.date },
-      /* #496 · 原写 `daily_goal.water_goal（缺省 2000）`——库表名＋列名＋「缺省」都是源码词。 */
-      { label: '目标', value: String(v.targetMl), unit: 'ml', detail: '没设过就是 2000 ml' },
-      {
-        label: '进度', value: String(v.pct) + '%', detail: remainText,
-        status: v.remainMl <= 0 ? 'ok' : 'warn',
-        statusText: v.remainMl > 0 ? '还差 ' + v.remainMl + ' ml' : (v.remainMl === 0 ? '已完成目标' : '超出 ' + (-v.remainMl) + ' ml'),
-      },
-    ])),
-    // 今日进度（老实物的进度环 → 冻结 donut 单段；中心数值老实物在 ring-center，这里走 centerValue）。
-    anchored('sec-ring', renderChartBlock({
-      kind: 'donut',
-      title: '今日进度',
-      input: {
-        items: [
-          { label: '已喝', value: Math.min(v.todayMl, v.targetMl) },
-          { label: '未喝', value: Math.max(v.targetMl - v.todayMl, 0) },
+    anchored('sec-kpi', [
+      renderSummaryHead({
+        eyebrow: name,
+        value: String(v.todayMl),
+        unit: 'ml',
+        denominator: '/ 目标 ' + v.targetMl + ' ml',
+        stamp: v.remainMl > 0
+          ? { text: '还差 ' + v.remainMl + ' ml', tone: 'warn' as const }
+          : (v.remainMl === 0
+            ? { text: '已完成目标', tone: 'ok' as const }
+            : { text: '超出目标 ' + (-v.remainMl) + ' ml', tone: 'danger' as const }),
+        size: 'm' as const,
+      }),
+      renderScaleBar({
+        value: v.todayMl,
+        goal: v.targetMl,
+        variant: 'cells',
+        leftLabel: v.pct + '% ｜ ' + v.todayMl + ' / ' + v.targetMl + ' ml',
+        rightLabel: '共 ' + v.cups.length + ' 杯',
+      }),
+      renderLedgerRows({
+        heading: '账目',
+        rows: [
+          { label: '目标', value: String(v.targetMl), unit: 'ml' },
+          { label: '进度', value: String(v.pct), unit: '%' },
+          { label: '杯数', value: String(v.cups.length), unit: '杯' },
+          { label: '今天喝的水', value: String(v.todayMl), unit: 'ml', kind: 'total' as const },
         ],
-        options: {
-          size: 200, ringWidth: 14, legend: 'none', showPercent: false,
-          centerLabel: name, centerValue: v.todayMl.toLocaleString(),
-        },
-      },
-    })),
+      }),
+    ].join('')),
+    /* 今日进度（老实物的进度环）：环画的是「已喝 ＋ 未喝 ＝ 目标」这一条等式 ⇒ 换成公共层**等式条**
+       （两段轨 ＋ 端点读数），同一份数据换一个更省高度、也读得出两段的形状；目标为 0 时不画（分母不成立）。 */
+    ...(v.targetMl > 0 ? [anchored('sec-ring', renderEquationBar({
+      segments: [
+        { label: '已喝', value: Math.min(v.todayMl, v.targetMl) },
+        { label: '还没喝', value: Math.max(v.targetMl - v.todayMl, 0) },
+      ],
+      total: v.targetMl,
+      heading: { label: '今日进度', value: String(v.pct) + '%' },
+      endLabels: true,
+    }))] : []),
   ];
   if (v.weekMl.some((ml) => ml > 0)) {
-    // 本周 7 天（老实物的 7 根柱：柱上标 ml、柱下标星期，含今日那天）。
-    parts.push(anchored('sec-week', renderChartBlock({
-      kind: 'bar',
-      title: '本周 7 天',
-      input: {
-        items: v.weekMl.map((ml, i) => ({
-          label: (v.weekDates[i] ?? '').slice(5) + '（' + WEEKDAY[weekdayOf(v.weekDates[i] ?? '')] + '）',
-          value: ml,
-        })),
-        options: { showValues: true },
-      },
-    })));
+    /* 本周 7 天（老实物的 7 根柱 → 账目行 → 2026-09-24 **打孔格带**，用户裁定「今日两页也补」）：
+       一格一天、有数填深色、值写格内，红圈套今天那一格；单位随格带走一条口径行。 */
+    parts.push(anchored('sec-week', renderPunchStrip({
+      heading: '本周 7 天',
+      days: v.weekMl.map((ml, i) => ({
+        label: (v.weekDates[i] ?? '').slice(5),
+        value: ml > 0 ? String(ml) : null,
+        selected: (v.weekDates[i] ?? '') === v.date,
+      })),
+    }) + renderCaliberLine('格内数字是毫升（ml）。')));
   } else {
     parts.push(anchored('sec-week', renderEmptyBlock({
       title: '本周 7 天',
       text: '7 天窗内没有饮水记录。',
     })));
   }
-  parts.push(anchored('sec-cups', renderDataTable({
-    columns: [
-      { key: 'time', label: '时间' },
-      { key: 'ml', label: '饮水量ml', align: 'right' },
-    ],
-    rows: v.cups.map((c) => ({ time: c.time === '' ? '—' : c.time, ml: c.ml })),
-    caption: '今日每杯（共 ' + v.cups.length + ' 杯）',
-    emptyText: '今天还没有喝水记录',
+  /* 今日每杯（两列表 → 明细行）：一条一杯，时间在左、水量在右；一杯都没有时出缺记那一句。 */
+  parts.push(anchored('sec-cups', renderEntryRows({
+    heading: '今日每杯（共 ' + v.cups.length + ' 杯）',
+    rows: v.cups.map((c) => ({
+      time: c.time === '' ? '—' : c.time,
+      name: '饮水',
+      value: String(c.ml),
+      unit: 'ml',
+    })),
+    ...(v.cups.length === 0 ? { absentLine: '今天还没有喝水记录' } : {}),
   })));
   parts.push(sourceFootnote('📊 数据来源 · 饮水记录 · ' + v.date));
   /* 块层不给复制区（集成归宿主页）——整页那一支由 `buildTodayWaterDoc` 出。 */
   return parts.join('');
-}
-
-/** 星期下标（`日`..`六`）；按 UTC 取，避开时区把日期挪一天。非法日期回落 `日`。 */
-function weekdayOf(date: string): number {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!m) return 0;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay();
 }
 
 export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: string): string {
@@ -679,7 +697,7 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
     todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
   }));
   const body = [
-    dietUiCss(),
+    dietUiCss({ sheet: true }),
     windowStrip(v.date, v.date, v.cups.length + ' 杯'),
     renderTocBlock({ items: [
       { id: 'sec-kpi', text: '今日读数' },
@@ -687,7 +705,10 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
       { id: 'sec-week', text: '本周 7 天' },
       { id: 'sec-cups', text: '今日每杯' },
     ] }),
-    buildTodayWaterBlock(v, name),
+    /* 小票版：正文进纸，复制区在纸外（与今日页／窗口页同一落点）。 */
+    renderSheetFrame({
+      variant: 'receipt', notch: true, cutLine: true, content: buildTodayWaterBlock(v, name),
+    }),
     docCopy(envelope, command, DB_FILENAME + ' ｜ 饮水记录'),
   ].join('');
   return assembleDocPage({
@@ -702,7 +723,7 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
     badge: BADGE,
     summary: waterSummary(v, name),
     content: body,
-    charts: true,
+    charts: false,
   });
 }
 

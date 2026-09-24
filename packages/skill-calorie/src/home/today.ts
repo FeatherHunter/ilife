@@ -156,9 +156,17 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
     'meal.晚餐': dist.slices.find((s) => s.meal === '晚餐')?.calories,
     'meal.加餐': dist.slices.find((s) => s.meal === '加餐')?.calories,
   });
+  /** 窗口词 → 页名（2026-09-24 用户裁定「不同场景出的 HTML 不该都叫饮食总览」）：
+   *  与 `src/triggers/scene-02-diet.ts` 里那 8 条窗口词的 `window` 参数逐字对应；
+   *  表外（`entry=overview` 那条总览词、`今日` 概览词）回落「饮食总览」。 */
+  const WINDOW_TITLE: Record<string, string> = {
+    '昨日': '昨日饮食', '本周': '本周饮食', '上周': '上周饮食', '本月': '本月饮食', '上月': '上月饮食',
+    '7d': '最近 7 天饮食', '30d': '最近 30 天饮食', 'custom': '某段时间饮食',
+  };
   return { data: { metrics }, html: buildViewDietDoc({
     overview: o, dist, distDate: date as string, days: o.series,
     meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP, command,
+    title: WINDOW_TITLE[optStr(params, 'window') ?? ''] ?? '饮食总览',
     /* 只在给了 `meal` 时带上这一个位：`buildViewDietDoc` 一见它就整页换餐别分布页
        （`render/dietDocs.ts`），并带上本次命令原文供复制区用。 */
     ...(mealView === undefined

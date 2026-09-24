@@ -18,16 +18,21 @@
  */
 import {
   renderCaliberLine,
-  renderChartBlock,
   renderDataTable,
   renderDisclosure,
-  renderEmptyBlock,
+  renderEntryRows,
   renderKpiGrid,
+  renderLedgerRows,
   renderListRows,
+  renderPunchStrip,
+  renderScaleBar,
+  renderSheetFrame,
+  renderSummaryHead,
   renderTocBlock,
 } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
+import { dietHead, sheetStyleCss } from '../diet/dietUi.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { DIET_LIST_COLUMNS, buildDietOverviewPage, buildMealDistributionPage, listPageCopy, minuteOf, noteOf } from '../diet/todayDocs.js';
@@ -73,20 +78,6 @@ const TREND_ZH: Record<string, string> = { up: '上升', down: '下降', flat: '
  *  现在只留读者用得上的那半句：加餐是哪几顿（#591：「、」也去掉，两顿用「和」并列）。 */
 const MEAL_NOTE = '加餐时段：下午茶和夜宵';
 
-/* ── #551 · 副题与 caption 一带的形状件（写集只给本件：窗口条＋事实条，字号 12／13，断点 820 照 HELP）── */
-const DIET_SHAPE_CSS = '<style>.diet-window,.diet-facts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:4px 0 12px}'
-  + '.diet-date{font-size:13px;font-weight:600;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 8px}'
-  + '.diet-arrow{font-size:13px;color:var(--fg3)}.diet-chip{font-size:12px;font-weight:700;color:var(--blue2);background:var(--soft);border-radius:999px;padding:4px 8px}'
-  + '.diet-fact{display:inline-flex;gap:8px;align-items:baseline}.diet-fact-k{font-size:12px;color:var(--fg3);white-space:nowrap}'
-  + '.diet-fact-v{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}'
-  + '@media (max-width:820px){.diet-facts{flex-direction:column;align-items:stretch;gap:8px}.diet-fact{justify-content:space-between}}</style>';
-const dietEsc = (s: string): string => s.replace(/[&<>"']/g, (c) => c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;');
-function dietHead(start: string, end: string, chip: string, facts: ReadonlyArray<readonly [string, string]>): string {
-  const mid = start === end ? '<span class="diet-date">' + dietEsc(start) + '（单日）</span>' : '<span class="diet-date">' + dietEsc(start) + '</span><span class="diet-arrow">→</span><span class="diet-date">' + dietEsc(end) + '</span>';
-  return DIET_SHAPE_CSS + '<div class="diet-window">' + mid + '<span class="diet-chip">' + dietEsc(chip) + '</span></div><div class="diet-facts">'
-    + facts.map(([k, v]) => '<span class="diet-fact"><span class="diet-fact-k">' + dietEsc(k) + '</span><span class="diet-fact-v">' + dietEsc(v) + '</span></span>').join('') + '</div>';
-}
-
 /* ── 条目列表页（`calorie.view.diet` 的窗口词；老实物 `today_meals.html` 对照） ── */
 
 /** 区块锚点（页内导航 `renderTocBlock` 的落点；名字照作者认可的样张
@@ -99,6 +90,9 @@ const LIST_ANCHOR = {
 function anchored(id: string, html: string): string {
   return '<section id="' + id + '">' + html + '</section>';
 }
+
+/** 打孔格带一行最多几格（原型是 7 天；本页只在前 7 格上画，更长的窗口由「按日汇总」账目行兜住）。 */
+const STRIP_DAYS = 7;
 
 /** 条目列表页入参：前 7 位是窗口词的取数结果（调用点＝`src/home/today.ts` 的 `viewDietOverview`），
  *  后 3 位是可选位——给了就换页（`mealView`→餐别页／`overviewView`→总览页），
@@ -113,6 +107,9 @@ export interface ViewDietDocInput {
   mealsTruncated: boolean;
   /** 本次命令原文（`commandLine('calorie.view.diet', params)`）。 */
   readonly command?: string;
+  /** **页名**（2026-09-24 用户裁定：8 条窗口词不再都叫「饮食总览」，各自跟自己的唤醒词走）；
+   *  不给＝回落「饮食总览」（直调这一支的产物逐字不变）。 */
+  readonly title?: string;
   /** 餐别筛选那一支的取数（`../diet/review.ts` 的 `buildMealDistributionView` 产出）。 */
   readonly mealView?: MealDistributionView;
   /** 「看饮食总览」那一支的取数（`../diet/nutritionPort.ts` 的 `buildDietOverviewView` 产出）。 */
@@ -140,10 +137,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   /* 移植清单 5 的排序口径（老 `today_meals.html:322`）：明细按日期＋时间**倒序**，最近的排最前。 */
   const rows = [...meals].sort((a, b) => (b.date + (b.time ?? '')).localeCompare(a.date + (a.time ?? '')));
 
-  let charts = false;
-  const parts: string[] = [];
   /* §五 第 4 行：页内导航只列**真会出**的区块（点不到的项就是死链接）。 */
-  parts.push(renderTocBlock({
+  const toc = renderTocBlock({
     items: [
       { id: LIST_ANCHOR.kpi, text: '读数' },
       ...(empty ? [] : [{ id: LIST_ANCHOR.trend, text: '每日摄入' }]),
@@ -154,97 +149,157 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       ]),
       { id: LIST_ANCHOR.copy, text: '复制区' },
     ],
-  }));
-  /* #551 · 副题只留一句结论，五事实落窗口条＋事实条（390 靠 flex-wrap＋820 纵列）。 */
-  parts.push(dietHead(o.start, o.end, '共 ' + o.days + ' 天', [['有记录', o.loggedDays + ' 天'], ['记录', mealTotal + ' 条'], ['合计', o.totalCalories + ' 卡'], ['日均', fmt(o.avgCalories) + ' 卡']]));
-  /* §五 第 5 行：KPI 读数。 */
-  parts.push(anchored(LIST_ANCHOR.kpi, renderKpiGrid([
-    { label: '累计', value: String(o.totalCalories), unit: '卡', detail: o.loggedDays + '/' + o.days + '天有记录' },
-    { label: '日均', value: fmt(o.avgCalories), unit: '卡' },
-    { label: '目标', value: String(o.calorieGoal), unit: '卡' },
-    { label: '趋势', value: TREND_ZH[o.trend.summary.trend] ?? o.trend.summary.trend, detail: '均值 ' + o.trend.summary.avg + ' 卡' },
-  ])));
-  /* §五 第 6 行：主体折线。裁定 5 —— 单点不成线：只画**两点及以上**，否则出一句说明。 */
+  });
+  /* #551 · 页头：窗口条 ＋ 事实条（形状住 `../diet/dietUi.ts`）。事实条**只留一件**——
+     记录／合计／日均／趋势四件都在纸里各住各的槽，页头不再复述同一组数。 */
+  const head = dietHead(o.start, o.end, '共 ' + o.days + ' 天', [['有记录', o.loggedDays + ' 天']]);
+  /* 日均占目标的几成：印章与刻度条两端的判语都由它派生（一处算式，三处只读）。 */
+  const goalPct = o.calorieGoal > 0 && o.avgCalories !== null
+    ? Math.round((o.avgCalories / o.calorieGoal) * 100) : null;
+  const trendZh = TREND_ZH[o.trend.summary.trend] ?? o.trend.summary.trend;
+  const remain = o.avgCalories === null ? null : o.calorieGoal - o.avgCalories;
+  /* 原型里"逐日"的形状是**一排打孔格**（原型 `.punch`，用户点名那件「这 7 天」控件），落点在刻度条
+     与账目之间（原型顺序：刻度 → 这 7 天 → 账目）。窗口 ≤7 天＝整窗都在格上，标题「这 N 天」；
+     更长的窗口格上只放**最近 7 天**（标题「近 7 天」），整窗逐日仍住下面那条「按日汇总」账目行
+     ——格带管"哪几天有数、各是多少"的一眼，账目行管"一天不缺"的清单。单日窗（昨日）不出格带：
+     一格不叫一排（`renderPunchStrip` 的份数宽会把那一格拉满整张纸）。 */
+  const stripCells = days.length <= STRIP_DAYS ? days : days.slice(days.length - STRIP_DAYS);
+  const stripLogged = stripCells.filter((d) => d.calories !== null);
+  /* 红圈＝这一页正在细看的那天（餐别分布的落点日）；那天没记录就退到**最近一个有记录的天**——
+     原型那枚红圈永远套在实心格上（空心底上套红圈，读者会当成错）。 */
+  const stripSel = stripCells.some((d) => d.date === distDate && d.calories !== null)
+    ? distDate
+    : (stripLogged.length === 0 ? null : (stripLogged[stripLogged.length - 1] as DaySeries).date);
+  const stripHtml = days.length < 2 ? '' : renderPunchStrip({
+    heading: days.length <= STRIP_DAYS ? '这 ' + days.length + ' 天' : '近 ' + STRIP_DAYS + ' 天',
+    days: stripCells.map((d) => ({
+      label: d.date.slice(5),
+      value: d.calories === null ? null : fmt(d.calories),
+      selected: stripSel !== null && d.date === stripSel,
+    })),
+  });
+  /** 纸里的正文：主数字头 → 刻度条 → 账目 → 每日摄入 → 餐别分布 → 按日汇总 → 全部记录 → 口径行。 */
+  const sheetParts: string[] = [anchored(LIST_ANCHOR.kpi, [
+    renderSummaryHead({
+      eyebrow: '日均摄入',
+      value: fmt(o.avgCalories),
+      unit: '卡',
+      denominator: '/ ' + o.calorieGoal + ' 卡',
+      ...(goalPct === null ? {} : {
+        stamp: goalPct > 100
+          ? { text: '超目标 ' + (goalPct - 100) + '%', tone: 'danger' as const }
+          : (goalPct < 70
+            ? { text: '只有目标的 ' + goalPct + '%', tone: 'warn' as const }
+            : { text: '达标 ' + goalPct + '%', tone: 'ok' as const }),
+      }),
+      /* 2026-09-24 用户裁定「主数字收到样张那一档（46px，最像小票）」：档名 `m` 就是小票原型
+         `.total .n` 的真数（大字档 `xl` 是 92px，留给大字版式那一套页用）。 */
+      size: 'm' as const,
+    }),
+    renderScaleBar({
+      value: o.avgCalories ?? 0,
+      goal: o.calorieGoal,
+      variant: 'cells',
+      leftLabel: '日均 ' + fmt(o.avgCalories) + ' / ' + o.calorieGoal + ' 卡'
+        + (goalPct === null ? '' : '（' + goalPct + '%）'),
+      rightLabel: remain === null ? '—' : (remain >= 0 ? '差 ' + remain + ' 卡' : '超 ' + (-remain) + ' 卡'),
+    }),
+    stripHtml,
+    renderLedgerRows({
+      heading: '账目',
+      rows: [
+        { label: '热量目标', value: String(o.calorieGoal), unit: '卡' },
+        { label: '记录条数', value: String(mealTotal), unit: '条' },
+        { label: '每日摄入趋势', value: trendZh },
+        { label: '合计', value: String(o.totalCalories), unit: '卡', kind: 'total' as const },
+      ],
+    }),
+  ].join(''))];
+  /* §五 第 6 行：每日摄入。**折线撤**（小票语汇里"走势"由数字讲）：两点以上报**最多／最少的一天**，
+     只有一天就报那一天——旧文案「一个点画不成折线（不画半截线）」随折线一起退场。 */
   if (loggedDays.length >= 2) {
-    parts.push(anchored(LIST_ANCHOR.trend, renderChartBlock({
-      kind: 'line',
-      title: '每日摄入',
-      input: {
-        items: days.map((d) => ({ label: d.date.slice(5), value: d.calories })),
-        options: { markLine: { value: o.avgCalories ?? undefined, label: '日均' } },
-      },
+    const vals = loggedDays as DaySeries[];
+    const max = vals.reduce((a, b) => ((b.calories as number) > (a.calories as number) ? b : a), vals[0] as DaySeries);
+    const min = vals.reduce((a, b) => ((b.calories as number) < (a.calories as number) ? b : a), vals[0] as DaySeries);
+    sheetParts.push(anchored(LIST_ANCHOR.trend, renderLedgerRows({
+      heading: '每日摄入',
+      rows: [
+        { label: '最多的一天 ' + max.date.slice(5), value: fmt(max.calories), unit: '卡' },
+        { label: '最少的一天 ' + min.date.slice(5), value: fmt(min.calories), unit: '卡' },
+        { label: '趋势', value: trendZh },
+      ],
     })));
-    charts = true;
   } else if (loggedDays.length === 1) {
-    parts.push(anchored(LIST_ANCHOR.trend, renderEmptyBlock({
-      title: '每日摄入',
-      text: '本窗只有 ' + (loggedDays[0] as DaySeries).date + ' 一天有记录，一个点画不成折线（不画半截线）。',
+    const only = loggedDays[0] as DaySeries;
+    sheetParts.push(anchored(LIST_ANCHOR.trend, renderLedgerRows({
+      heading: '每日摄入',
+      rows: [{ label: '有记录的一天 ' + only.date.slice(5), value: fmt(only.calories), unit: '卡' }],
     })));
   }
   if (dist.totalCalories > 0) {
-    parts.push(anchored(LIST_ANCHOR.dist, renderChartBlock({
-      kind: 'bar',
-      title: '餐别分布 ' + distDate,
-      input: { items: dist.slices.map((s) => ({ label: s.meal + ' ' + s.count + '餐', value: s.calories })) },
+    /* 餐别分布（柱图 → 账目行）：一行一餐，括号里带这一餐的记录条数；没记的那一餐写 `—`。 */
+    sheetParts.push(anchored(LIST_ANCHOR.dist, renderLedgerRows({
+      heading: '餐别分布 ' + distDate,
+      rows: dist.slices.map((s) => (s.count > 0
+        ? { label: s.meal + '（' + s.count + ' 餐）', value: String(s.calories), unit: '卡' }
+        : { label: s.meal, value: '—' })),
     })));
-    /* #496 · 餐别口径（加餐是哪几顿）只在图下说一次，不带常量名。 */
-    parts.push(renderCaliberLine(MEAL_NOTE));
-    charts = true;
+    /* #496 · 餐别口径（加餐是哪几顿）只在纸里说一次，不带常量名。 */
+    sheetParts.push(renderCaliberLine(MEAL_NOTE));
   } else {
     /* 裁定 5：零值不画柱身；裁定 4：这一支的值位是「尾日没记录」而不是「吃了 0 卡」⇒ 值位写 `—`。 */
-    parts.push(anchored(LIST_ANCHOR.dist, renderKpiGrid(dist.slices.map((s) => ({
-      label: '餐别分布 ' + s.meal, value: '—', detail: distDate + ' 无记录（窗内有数，仅尾日回零）',
-    })))));
+    sheetParts.push(anchored(LIST_ANCHOR.dist, renderLedgerRows({
+      heading: '餐别分布 ' + distDate,
+      rows: dist.slices.map((s) => ({ label: s.meal, value: '—' })),
+    })));
+    sheetParts.push(renderCaliberLine(distDate + ' 这天没有记录，窗内其余日子有数。'));
   }
   if (empty) {
     /* §五 第 12 行：空态块 ＋ 一句「怎么记第一条」的引导句（裁定 4）。 */
-    parts.push(anchored(LIST_ANCHOR.meals, emptyGuide({
+    sheetParts.push(anchored(LIST_ANCHOR.meals, emptyGuide({
       icon: '🍽️',
       text: '这一段时间（' + o.start + ' ~ ' + o.end + '）没有饮食记录。',
       hint: '要让它有内容，说「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。',
     })));
   } else {
-    /* §五 第 9 行：主表两张——按日汇总 ＋ 每日明细（明细含**备注列**）。 */
-    parts.push(anchored(LIST_ANCHOR.daily, renderDataTable({
-      columns: [
-        { key: 'date', label: '日期' },
-        { key: 'cal', label: '摄入', align: 'right' },
-        { key: 'pro', label: '蛋白', align: 'right' },
-        { key: 'carbs', label: '碳水', align: 'right' },
-        { key: 'fat', label: '脂肪', align: 'right' },
-        { key: 'goal', label: '目标', align: 'right' },
-      ],
-      /* 裁定 4：无记录日写 `—`，不写 0、也不留空串（老页留空、样张写 `—`）。 */
-      rows: days.map((d) => ({
-        date: d.date, cal: fmt(d.calories), pro: fmt(d.protein), carbs: fmt(d.carbs), fat: fmt(d.fat),
-        goal: fmt(d.calorieGoal),
-      })),
-      /* #551 · caption 只留表名，窗口与口径事实另有去处（窗口在页顶条，口径在表下行），不删事实。 */
-      caption: '按日汇总',
-      emptyText: '本窗无按日汇总',
+    /* §五 第 9 行：**按日汇总也走账目行**——公共层在窄档把六列表"卡片化"成一列七块（整页 2242px，
+       实测截图），一列「日期 → 摄入」才是小票语汇里日级该有的形状；逐日的三宏量在下面明细行里逐条可见。
+       明细从**九列表改明细行**（一条记录一行：时间／餐别／食物／克数 …… 热量 ＋ 备注行 ＋ 三宏量行下读数）。 */
+    sheetParts.push(anchored(LIST_ANCHOR.daily, renderLedgerRows({
+      heading: '按日汇总',
+      rows: days.map((d) => (d.calories === null
+        ? { label: d.date, value: fmt(d.calories) }
+        : { label: d.date, value: fmt(d.calories), unit: '卡' })),
     })));
-    parts.push(renderCaliberLine('无记录日写 — 不断 0'));
-    parts.push(anchored(LIST_ANCHOR.meals, renderDisclosure({
-      /* #496 · 折行标题原写「窗口明细」——审查件第 63、64、66、68 条点到它：读者看不出「窗口」是哪扇窗，
-         且这一页的明细就是窗内全部记录 ⇒ 改「全部记录（共 N 条）」。 */
-      title: '全部记录（共 ' + mealTotal + ' 条' + (mealsTruncated ? '，仅列前 ' + meals.length + ' 条' : '') + '）',
-      open: true,
-      contentHtml: renderDataTable({
-        columns: [...DIET_LIST_COLUMNS],
-        rows: rows.map((m) => ({
-          when: m.date + ' ' + minuteOf(m.time), meal: inferMealType(String(m.time ?? '')), food: m.food_name,
-          grams: m.grams, cal: m.calories, pro: m.protein, carbs: m.carbs, fat: m.fat, note: noteOf(m.note),
-        })),
-        /* #496 · 这一段原caption 与折叠标题同名同数（「窗口明细（共 N 条）」＋「窗口明细」），
-           读者在同一行读到两遍（审查件第 64、66 条点的同形重复）。折叠标题已经说全 ⇒ caption 删。 */
-        emptyText: '本窗无明细',
+    sheetParts.push(renderCaliberLine('无记录日写 — 不断 0'));
+    sheetParts.push(anchored(LIST_ANCHOR.meals, renderEntryRows({
+      /* #496 · 标题写「全部记录」：这一页的明细就是窗内全部记录（截断时明示只列前 N 条）。 */
+      heading: '全部记录（共 ' + mealTotal + ' 条' + (mealsTruncated ? '，仅列前 ' + meals.length + ' 条' : '') + '）',
+      rows: rows.map((m) => {
+        const badge = String(inferMealType(String(m.time ?? '')) ?? '');
+        const note = String(m.note ?? '').trim();
+        return {
+          time: m.date + ' ' + minuteOf(m.time),
+          ...(badge === '' ? {} : { badge }),
+          name: m.food_name,
+          measure: m.grams + ' g',
+          value: String(m.calories),
+          unit: '卡',
+          ...(note === '' ? {} : { note }),
+          facts: [
+            '蛋白 ' + fmt(m.protein) + ' g',
+            '碳水 ' + fmt(m.carbs) + ' g',
+            '脂肪 ' + fmt(m.fat) + ' g',
+          ],
+        };
       }),
     })));
   }
-  /* §五 第 13 行：口径说明行（餐别口径 ＋ 缺值口径各说一次，不带常量名）；#591 · 门禁 R2：两句原由 `；` 串一行，改一条一行（同 #523／#544 口径行做法）。 */
-  parts.push(renderCaliberLine(MEAL_NOTE) + renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
-  /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。 */
-  parts.push(anchored(LIST_ANCHOR.copy, listPageCopy({
+  /* §五 第 13 行：缺值口径一条（餐别口径已在纸里那一条说过一次，不重复；#591 门禁 R2 的口径行做法照旧）。 */
+  sheetParts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
+  /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。
+     **落点在纸外**（与今日页同一落点：纸是这张单子，复制区是它的出口）。 */
+  const copy = anchored(LIST_ANCHOR.copy, listPageCopy({
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet',
     data: {
       metrics: {
@@ -252,21 +307,27 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
         calorieGoal: o.calorieGoal, distTotal: dist.totalCalories,
       },
     },
-  }, input.command)));
+  }, input.command));
   /* #560 · 屏上来源脚注撤（用户裁决原文：「用户 2026-09-15 点名：所有 HTML 页面底部的「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）。」）；
      `sourceLine` helper 与复制载荷 `copyLog.source` 保留（技术原件，只删屏上脚注）。 */
   return assembleDocPage({
     docTitle: DOC_TITLE,
-    /* 用户缺陷（2026-09-15）：页名不再带窗口日期——窗口区间归副题那一行，全页只出现一次。
-       单日窗「饮食总览 2026-09-07 ~ 2026-09-07」又长又丑；多日窗同样只说「饮食总览」。 */
-    title: '饮食总览',
+    /* 用户缺陷（2026-09-15）：页名不再带窗口日期——窗口区间归页头窗口条，全页只出现一次。
+       2026-09-24 追加：页名跟**唤醒词**走（「本周饮食」等由 `src/home/today.ts` 按 `window` 参数给），
+       不再一律「饮食总览」；不给时回落「饮食总览」。 */
+    title: input.title ?? '饮食总览',
     /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
        定死不上屏；改样张口径的中文族名，#591 再去掉族名里的 `·`（门禁 R1，同 `diet/todayDocs.ts`）。 */
     eyebrow: '卡路里饮食',
-    /* §五 第 3 行：结论句（句内只留合计一句，窗口与五事实明细在页顶形状条；#551 去文字串）。 */
-    subtitle: '本窗合计 ' + o.totalCalories + ' 卡',
-    content: parts.join(''),
-    charts, pageUi: true,
+    /* §五 第 3 行：结论句改成**口径句**（日均只按有记录的天算）——合计住纸里合计行、日均住主数字头、
+       趋势住账目行，副题再报一遍同一组数就是同一件事说第四遍。 */
+    subtitle: o.loggedDays > 0
+      ? '日均只按有记录的 ' + o.loggedDays + ' 天算，其余日子算缺数。'
+      : '本窗还没有饮食记录。',
+    content: '<style>' + sheetStyleCss() + '</style>' + toc + head
+      + renderSheetFrame({ variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join('') })
+      + copy,
+    charts: false, pageUi: true,
   });
 }
 
