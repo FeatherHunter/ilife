@@ -32,6 +32,7 @@ import {
   DATE_RANGE_PRESET_ATTR,
   DATE_RANGE_TOUCH_PX,
   buildDateRangeJs,
+  dateRangeCalendarCss,
   dateRangeCss,
   isIsoDate,
   monthCells,
@@ -411,6 +412,22 @@ describe('dateRange ② 样式纪律', () => {
     assert.ok(x.includes('.x-page-ui .x-block-date-range {'));
     assert.ok(x.includes('.x-block-date-range-day'));
     assert.equal(x.includes('.ilife-'), false, '换前缀后不许残留旧前缀');
+  });
+
+  it('样式段**分两份住**（`style.ts` ＋ `style-calendar.ts`）：汇总把日历那一半**原样**插进来', () => {
+    /* 拆件只许搬代码、不许改样式取值：这一条钉住"汇总＝把那一半原样插进来"这件事
+       （拆件前后 `dateRangeCss()` 的产物逐字节相同，另在拆件记录里对过字节数 10320）。 */
+    const cal = dateRangeCalendarCss();
+    assert.ok(cal.trim() !== '', '日历那一半必须非空');
+    assert.ok(dateRangeCss().includes(cal), '汇总里必须**原样**含日历那一半');
+    assert.equal(dateRangeCss().indexOf(cal), dateRangeCss().lastIndexOf(cal),
+      '日历那一半只许出现一次（不许两头各抄一段）');
+    assert.equal(cal.includes(':root') || cal.includes('!important'), false, '那一半同样受样式纪律约束');
+    assert.ok(cal.includes('.ilife-page-ui .ilife-block-date-range-day'), '日格规则住在那一半里');
+    assert.equal(dateRangeCss({ prefix: 'x-' }).includes(dateRangeCalendarCss({ prefix: 'x-' })), true,
+      '换前缀时两半一起换');
+    assert.equal(dateRangeCss({ prefix: 'x-' }).includes(dateRangeCalendarCss()), false,
+      '换前缀后不许残留默认前缀的那一半');
   });
 });
 

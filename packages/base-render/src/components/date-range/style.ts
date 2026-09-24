@@ -13,12 +13,8 @@
  *  「今天」靠一圈发丝线（`border-color`，盒内 1px，不推版）。
  */
 import { skinVar } from '../skin/contract.js';
-import {
-  DATE_RANGE_GAP_PX,
-  DATE_RANGE_TOUCH_PX,
-  dateRangeSlot,
-  type DateRangeSlot,
-} from './attrs.js';
+import { DATE_RANGE_GAP_PX, DATE_RANGE_TOUCH_PX, dateRangeSlot, type DateRangeSlot } from './attrs.js';
+import { dateRangeCalendarCss } from './style-calendar.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -26,19 +22,10 @@ const LF = String.fromCharCode(10);
 /** 窄容器阈值（px）：**本件自己的宽度**。低于它时起止两格竖排（一格一行，日期串读得全）。 */
 const NARROW_PX = 420;
 
-/** 日历格之间的矩阵缝（px）：见文件头「有意偏离」那一段。 */
-const CELL_GAP_PX = 4;
-
-/** 日历块的宽度上限（px）：一个月有自己的自然宽度（原型给的是 430px）。
- *  不设它，1280 档下一格天会铺成 170px、数字孤零零吊在中间——真机截图里亲眼看到的。 */
-const CALENDAR_MAX_PX = 430;
-/** 格宽的期望量级（px）：写在这里是为了让"格宽稳在多少"有一个可对账的读数（判据断 ≥44）。 */
-const CELL_MIN_W_PX = 44;
-
-/** 按下反馈的时长（ms）：≤80ms。 */
+/** 按下反馈的时长（ms）：≤80ms（与 `style-calendar.ts` 里那一条同一个口径，两段各写一份不互相 import）。 */
 const PRESS_MS = 80;
 
-/** 本组件的样式段。恒返回非空 CSS 文本。 */
+/** 本组件的样式段（＝这一份 ＋ `style-calendar.ts` 那一份，**一次调用拿全部**）。恒返回非空 CSS 文本。 */
 export function dateRangeCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
@@ -176,110 +163,10 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     s('preset') + '[aria-pressed="true"]' + inBox('mark') + ' {',
     '  display: inline;',
     '}',
-    '/* 日历块：软底块 ＋ 发丝线（零阴影下用它立边界）。',
-    '   **宽度上限 ' + String(CALENDAR_MAX_PX) + 'px**：一个月有自己的自然宽度——1000px 宽的格子里',
-    '   一格天铺成 170px、数字孤零零吊在中间，读起来不像日历（真机 1280 档亲眼看过才发现）。',
-    '   超过上限的宽度留在块外（其余几行照常占满），格宽稳在 ' + String(CELL_MIN_W_PX) + 'px 上下。 */',
-    s('calendar') + ' {',
-    '  display: grid;',
-    '  gap: ' + String(DATE_RANGE_GAP_PX) + 'px;',
-    '  min-width: 0;',
-    '  max-width: ' + String(CALENDAR_MAX_PX) + 'px;',
-    '  padding: 10px;',
-    '  border: 1px solid ' + skinVar('line') + ';',
-    '  border-radius: ' + skinVar('radius-sm') + ';',
-    '  background: ' + skinVar('surface-2') + ';',
-    '}',
-    s('calHead') + ' {',
-    '  display: flex;',
-    '  flex-wrap: wrap;',
-    '  align-items: center;',
-    '  gap: ' + String(DATE_RANGE_GAP_PX) + 'px;',
-    '  min-width: 0;',
-    '}',
-    s('nav') + ' {',
-    '  flex: none;',
-    '  display: inline-flex;',
-    '  align-items: center;',
-    '  justify-content: center;',
-    '  box-sizing: border-box;',
-    '  width: ' + touch + ';',
-    '  min-width: ' + touch + ';',
-    '  height: ' + touch + ';',
-    '  padding: 0;',
-    '  border: 1px solid ' + skinVar('line') + ';',
-    '  border-radius: ' + skinVar('radius-sm') + ';',
-    '  background: ' + skinVar('surface') + ';',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: inherit;',
-    '  font-size: ' + skinVar('fs-h3') + ';',
-    '  font-weight: 700;',
-    '  line-height: 1;',
-    '  cursor: pointer;',
-    '  touch-action: manipulation;',
-    '  transition: transform ' + String(PRESS_MS) + 'ms cubic-bezier(.22,1,.36,1);',
-    '}',
-    s('month') + ' {',
-    '  flex: 1 1 auto;',
-    '  min-width: 0;',
-    '  margin-left: 2px;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-num') + ';',
-    '  font-size: ' + skinVar('fs-h3') + ';',
-    '  font-weight: 700;',
-    '  font-variant-numeric: tabular-nums;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    s('week') + ',',
-    s('days') + ' {',
-    '  display: grid;',
-    '  grid-template-columns: repeat(7, minmax(0, 1fr));',
-    '  gap: ' + String(CELL_GAP_PX) + 'px;',
-    '  min-width: 0;',
-    '}',
-    s('week') + ' span {',
-    '  padding: 2px 0;',
-    '  text-align: center;',
-    '  color: ' + skinVar('ink-2') + ';',
-    '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 600;',
-    '}',
-    '/* 每一格天：命中盒 ≥44×44（矩阵缝 4px，见文件头）。',
-    '   四档形状：区间内＝纸面块，两端＝实心强调块，相邻月＝弱字，今天＝一圈发丝线。 */',
-    s('day') + ' {',
-    '  display: inline-flex;',
-    '  align-items: center;',
-    '  justify-content: center;',
-    '  box-sizing: border-box;',
-    '  min-width: 0;',
-    '  min-height: ' + touch + ';',
-    '  padding: 0;',
-    '  border: 1px solid transparent;',
-    '  border-radius: ' + skinVar('radius-sm') + ';',
-    '  background: transparent;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-num') + ';',
-    '  font-size: ' + skinVar('fs-sm') + ';',
-    '  font-variant-numeric: tabular-nums;',
-    '  cursor: pointer;',
-    '  touch-action: manipulation;',
-    '  transition: transform ' + String(PRESS_MS) + 'ms cubic-bezier(.22,1,.36,1);',
-    '}',
-    s('day') + '.is-in {',
-    '  background: ' + skinVar('surface') + ';',
-    '}',
-    s('day') + '.is-end {',
-    '  background: ' + skinVar('accent') + ';',
-    '  border-color: ' + skinVar('accent') + ';',
-    '  color: ' + skinVar('accent-ink') + ';',
-    '  font-weight: 700;',
-    '}',
-    s('day') + '.is-adj {',
-    '  color: ' + skinVar('ink-3') + ';',
-    '}',
-    s('day') + '.is-today {',
-    '  border-color: ' + skinVar('ink-2') + ';',
-    '}',
+    /* 日历那一块（软底块 ＋ 翻月头 ＋ 星期表头 ＋ 42 格的四档形状）住同目录 `style-calendar.ts`：
+       一段一段分开长大，汇总在这一次调用里（照 `sheetCss()` 的先例：调用方一行拿全部样式）。
+       插在这一行的位置上，是为了**产物逐字节不变**——拆的只是"住哪个文件"。 */
+    dateRangeCalendarCss({ prefix: p }),
     '/* 悬停：只包在设备能力查询里（`hover:hover`），且**不是唯一通路**。 */',
     '@media (hover:hover) and (pointer:fine) {',
     '  ' + s('nav') + ':hover:not([disabled]),',

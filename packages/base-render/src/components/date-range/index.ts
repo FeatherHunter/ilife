@@ -44,4 +44,7 @@ export type { DateRangeForm, DateRangeInput, DateRangePreset } from './attrs.js'
 export { isIsoDate, monthCells, rangeDays, shiftMonth } from './model.js';
 export { renderDateRange, sentenceOf } from './render.js';
 export { dateRangeCss } from './style.js';
+/** 样式段的两半：`dateRangeCss()` **汇总**两份（调用方只需这一行）；日历那一半单独转出，
+ *  便于判据只断它、也便于读代码的人一眼看到"哪一段在哪个文件"。 */
+export { dateRangeCalendarCss } from './style-calendar.js';
 export { buildDateRangeJs } from './runtime.js';
