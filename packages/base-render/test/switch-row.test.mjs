@@ -403,9 +403,12 @@ describe('switchRow ⑤ 皮肤矩阵 ＋ 三档形态差异（重做件的核心
     const pills = SKIN_NAMES.map((n) => SKINS[n].values['radius-pill']);
     const sms = SKIN_NAMES.map((n) => SKINS[n].values['radius-sm']);
     const nums = SKIN_NAMES.map((n) => SKINS[n].values['font-num']);
-    assert.equal(new Set(pills).size, 3, '轨道圆角三档必须三种取值：' + pills.join('／'));
-    assert.equal(new Set(sms).size, 3, '状态字圆角三档必须三种取值：' + sms.join('／'));
-    assert.equal(new Set(nums).size, 3, '数字字面三档必须三种取值：' + nums.join('／'));
+    /* 「各皮肤间**取值真的不同**」——**不是**「恰好三种取值」：皮肤闭集是会随需要长的
+       （2026-09-24 从三套扩到六套：terminal／ink／blueprint），写死 `=== 3` 会把这条判成红，
+       而它要断的事实其实只有「不是所有皮肤都长一个样」。 */
+    assert.ok(new Set(pills).size >= 2, '轨道圆角各皮肤间必须真的不同：' + pills.join('／'));
+    assert.ok(new Set(sms).size >= 2, '状态字圆角各皮肤间必须真的不同：' + sms.join('／'));
+    assert.ok(new Set(nums).size >= 2, '数字字面各皮肤间必须真的不同：' + nums.join('／'));
     /* 三档确实落到本件的两处形状上（轨道用 radius-pill、状态字签用 radius-sm）。 */
     const css = switchRowCss();
     assert.ok(css.includes('border-radius: ' + skinVar('radius-pill') + ';'), '轨道圆角读半径 token');
@@ -576,9 +579,10 @@ describe('switchRow ④ 真机两档（390／1280 容器；视口恒 1440）', (
         + 'out[skin]=list;}'
         + 'return out;}())';
       const before = await p.at(390, read);
-      /* 三套皮肤下形状取值确实不同（圆角），而开合读数一致。 */
+      /* 各皮肤下形状取值确实不同（圆角），而开合读数一致。
+         「不同」＝**各皮肤间不都一样**（同上：不写死"恰好三套"）。 */
       const radii = SKIN_NAMES.map((n) => before[n][0].trackRadius);
-      assert.equal(new Set(radii).size, 3, '三档皮肤的轨道圆角必须真的不同：' + radii.join('／'));
+      assert.ok(new Set(radii).size >= 2, '各皮肤间的轨道圆角必须真的不同：' + radii.join('／'));
       for (const name of SKIN_NAMES) {
         const off = before[name][0], on = before[name][1];
         assert.equal(off.state, SWITCH_ROW_OFF, name + '：关态状态字');

@@ -450,7 +450,9 @@ describe('skeleton ⑤ 动效纪律与三皮肤（无头 Chrome）', () => {
           skin + '：行距是硬事实，不随皮肤变');
         colors.add(gg.blockColor[0]);
       }
-      assert.equal(colors.size, 3, '三套皮肤的占位底色必须真的不同（皮肤生效的证据）：' + [...colors].join(' / '));
+      /* 「占位底色各皮肤间不都一样」是「皮肤真的生效」的证据。
+         **不是**「恰好三套颜色」：皮肤闭集 2026-09-24 从三套扩到六套，写死 `=== 3` 会误判。 */
+      assert.ok(colors.size >= 2, '各皮肤间的占位底色必须真的不同（皮肤生效的证据）：' + [...colors].join(' / '));
       console.log('读数 skeleton 动效与皮肤：正常档 animation-name＝' + g.anim[0]
         + '，reduced-motion 下 animation-name＝' + still.anim[0] + '、opacity＝' + still.opacity[0]
         + '，三皮肤占位底色 ' + [...colors].join(' / '));

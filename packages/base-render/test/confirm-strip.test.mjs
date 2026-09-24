@@ -29,13 +29,14 @@ import {
   CONFIRM_STRIP_TOUCH_MIN_PX, CONFIRM_STRIP_UNIT_ATTR, CONFIRM_STRIP_UNIT_DEFAULT, buildConfirmStripJs,
   confirmStripCss, confirmStripSlot, renderConfirmStrip,
 } from '../dist/components/confirm-strip/index.js';
-import { BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, skinCss } from '../dist/components/skin/index.js';
+import { BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, SKINS, skinCss } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
-/** 三套皮肤取值表（「皮肤生效」的比对基准：圆角档逐档对上它才算挂上了）。 */
-const SKIN_VALUES = { paper: PAPER_VALUES, broadsheet: BROADSHEET_VALUES, neutral: NEUTRAL_VALUES };
+/** 取值表**从注册表读**（不写死名单）：皮肤闭集一涨就自动跟上——早先手写三套，闭集扩到六套时
+ *  这里取到 `undefined`，`SKIN_VALUES[skin].radius` 当场抛（2026-09-24 实测踩过）。 */
+const SKIN_VALUES = Object.fromEntries(SKIN_NAMES.map((s) => [s, SKINS[s].values]));
 const DANGER = confirmStripSlot('danger');
 const KEEP = confirmStripSlot('keep');
 const NOTE = confirmStripSlot('note');
