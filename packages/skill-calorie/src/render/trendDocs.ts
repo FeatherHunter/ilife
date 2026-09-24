@@ -402,7 +402,7 @@ function contraCopyBlock(v: ContraView): string {
         }),
       },
     },
-    title: '【calorie · 禁忌扫描】',
+    title: '【calorie 禁忌扫描】',
     format: 'text',
   };
   return renderCopyBlock({

@@ -556,7 +556,7 @@ export type BindCopyAction = (
 | `LOG_UNKNOWN_PLACEHOLDER` | runtime | #77 | implemented | 3.4 | `'(未知)'` |
 | `TEXT_EMPTY_PLACEHOLDER` | runtime | #77 | implemented | 3.4 | `'未填写'` |
 | `TEXT_SENSITIVE_MASK` | runtime | #77 | implemented | 3.4 | `'****'` |
-| `TEXT_HEADER_TEMPLATE` | runtime | #77 | implemented | 3.4 | `'【{skill} · {key}】'` |
+| `TEXT_HEADER_TEMPLATE` | runtime | #77 | implemented | 3.4 | `'【{skill} {key}】'` |
 | `TEXT_JSON_INDENT` | runtime | #77 | implemented | 3.4 | `2` |
 | `TEXT_JSON_LT_RULE` | runtime | #77 | implemented | 3.4 | `'u003c'` |
 | `CSV_DIALECT` | runtime | #77 | implemented | 3.4 | `{ delimiter: ','; quote: '"'; quoteEscape: '""'; lineEnding: 'LF'; header: readonly ['section', 'row'] }` |
@@ -568,7 +568,7 @@ export type BindCopyAction = (
 | `CopyLogFields` | type | #77 | implemented | 3.4 | `{ thinking?: string; dataStructure?: string; callChain?: string; timestamp?: string; exception?: string }` |
 | `LOG_SECTION_SOURCES` | runtime | #77 | implemented | 3.4 | `{ scene: 'envelope'; thinking: 'copyLog.thinking'; dataStructure: 'copyLog.dataStructure'; callChain: 'copyLog.callChain'; timestampVersion: 'copyLog.timestamp'; exception: 'copyLog.exception' }` |
 | `DataProjectionSpec` | type | #77 | implemented | 3.4 | `{ header: string; body: string; tail: string \| null; csvSections: readonly string[] }` |
-| `DATA_TEXT_PROJECTIONS` | runtime | #77 | implemented | 3.4 | `{ stat: { header: '【{skill} · {key}】'; body: 'metrics'; tail: null; csvSections: readonly ['metrics'] }; list: { header: '【{skill} · {key}】'; body: 'items'; tail: 'total'; csvSections: readonly ['items', 'total'] }; detail: { header: '【{skill} · {key}】'; body: 'item'; tail: null; csvSections: readonly ['item'] }; receipt: { header: '【{skill} · {key}】'; body: 'ok'; tail: 'message'; csvSections: readonly ['status', 'message'] }; analysis: { header: '【{skill} · {key}】'; body: 'summary'; tail: null; csvSections: readonly ['summary'] } }` |
+| `DATA_TEXT_PROJECTIONS` | runtime | #77 | implemented | 3.4 | `{ stat: { header: '【{skill} {key}】'; body: 'metrics'; tail: null; csvSections: readonly ['metrics'] }; list: { header: '【{skill} {key}】'; body: 'items'; tail: 'total'; csvSections: readonly ['items', 'total'] }; detail: { header: '【{skill} {key}】'; body: 'item'; tail: null; csvSections: readonly ['item'] }; receipt: { header: '【{skill} {key}】'; body: 'ok'; tail: 'message'; csvSections: readonly ['status', 'message'] }; analysis: { header: '【{skill} {key}】'; body: 'summary'; tail: null; csvSections: readonly ['summary'] } }` |
 | `BuildDataText` | type | #77 | implemented | 3.4 | `(input: DataTextInput) => string` |
 | `buildDataText` | runtime | #77 | implemented | 3.4 | `(input: DataTextInput): string` |
 | `BuildLogText` | type | #77 | implemented | 3.4 | `(input: LogTextInput) => string` |
@@ -597,7 +597,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `receipt` | `{ ok, message }` | 状态行 ＋ 消息行 | `data.ok` 状态行 | `data.message` | `status`／`message` |
 | `analysis` | `{ summary: string }` | 标题行 ＋ 摘要文本 | `data.summary` | 无 | `summary` |
 
-- 标题行逐字 = `TEXT_HEADER_TEMPLATE`（`【{skill} · {key}】`，取 `envelope.skill`／`envelope.key`）；`DataTextInput.title` 可覆盖（**空串视同缺省**，输出头行恒存在，FX-77-6），`occurredAt` 给定时在其后追加时间行。
+- 标题行逐字 = `TEXT_HEADER_TEMPLATE`（`【{skill} {key}】`，取 `envelope.skill`／`envelope.key`）；`DataTextInput.title` 可覆盖（**空串视同缺省**，输出头行恒存在，FX-77-6），`occurredAt` 给定时在其后追加时间行。
 - `json`／`csv` 口径**无输出头**（标题行不输出）；`json` 的键名 = envelope 五字段原样。
 
 **6 段日志 ↔ `CopyLogFields` 对应表（FX-1③，定死）**——机读真相源 `LOG_SECTION_SOURCES`：
@@ -617,7 +617,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 
 | format | 输出头 | 空值口径 | 转义口径 | 分隔／缩进 |
 |---|---|---|---|---|
-| `text`（缺省） | `TEXT_HEADER_TEMPLATE`（`【{skill} · {key}】`）+ 时间行（`occurredAt` 给定时）+ 主体行（投影表 `body`）+ 收尾行（投影表 `tail`） | 数据空值写 `TEXT_EMPTY_PLACEHOLDER`（`未填写`）；日志段缺失写 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`，见下） | 不转 HTML；行内换行替换为空格 | 行分隔 `LF`；分节标题与行各占一行 |
+| `text`（缺省） | `TEXT_HEADER_TEMPLATE`（`【{skill} {key}】`）+ 时间行（`occurredAt` 给定时）+ 主体行（投影表 `body`）+ 收尾行（投影表 `tail`） | 数据空值写 `TEXT_EMPTY_PLACEHOLDER`（`未填写`）；日志段缺失写 `LOG_UNKNOWN_PLACEHOLDER`（`(未知)`，见下） | 不转 HTML；行内换行替换为空格 | 行分隔 `LF`；分节标题与行各占一行 |
 | `json` | 无输出头 | 空值保留 `null`（**不**写「未填写」／「(未知)」，键不省略；`undefined` 属性**归一为 `null`** 以保键，FX-77-1） | 文本中 `<` 一律写成反斜杠 + `u003c`（`TEXT_JSON_LT_RULE`） | 缩进 `TEXT_JSON_INDENT`（2 空格）；键名 = envelope 五字段原样 |
 | `csv` | 无输出头 | 空值写**空字符串**（机器可读，不写占位符） | RFC4180：字段含 `,`／`"`／换行时用 `"` 包裹，内部 `"` 写成 `""`（`CSV_DIALECT`） | 表头 `CSV_DIALECT.header = ['section', 'row']`；行尾 `LF` |
 

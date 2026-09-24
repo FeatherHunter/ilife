@@ -59,7 +59,7 @@ export interface DataTextInput {
   readonly envelope: SerializableEnvelope;
   /** 缺省 `text`。 */
   readonly format?: CopyFormat;
-  /** 覆盖输出头；缺省 `TEXT_HEADER_TEMPLATE`（`'【{skill} · {key}】'`）。 */
+  /** 覆盖输出头；缺省 `TEXT_HEADER_TEMPLATE`（`'【{skill} {key}】'`）。 */
   readonly title?: string;
   /** 时间行；缺省不输出该行。 */
   readonly occurredAt?: string;
@@ -78,7 +78,7 @@ export const LOG_UNKNOWN_PLACEHOLDER = '(未知)';
 export const TEXT_EMPTY_PLACEHOLDER = '未填写';
 export const TEXT_SENSITIVE_MASK = '****';
 /** text 口径输出头（`{skill}`／`{key}` 为替换位，非 HTML 占位符）。 */
-export const TEXT_HEADER_TEMPLATE = '【{skill} · {key}】';
+export const TEXT_HEADER_TEMPLATE = '【{skill} {key}】';
 
 /** **敏感行判定口径（FX-23，机读）**：投影行（`metrics`／`item` 的值、`items` 的元素）取值为
  *  `{ text: string, sensitive: true }` 形态时判为**敏感行**——该形态的**字段名**与旧侧 `_rowText` 一致

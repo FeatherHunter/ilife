@@ -180,7 +180,7 @@ function copyBlock(v: ReviewView): string {
         }),
       },
     },
-    title: '【calorie · 计划复盘】',
+    title: '【calorie 计划复盘】',
     format: 'text',
   };
   return renderCopyBlock({

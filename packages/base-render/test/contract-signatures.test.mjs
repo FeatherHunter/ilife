@@ -485,11 +485,11 @@ describe('冻结口径逐值', () => {
 
   it('逐 shape 投影表（FX-1①）：5 个可序列化 shape 全覆盖且逐值', () => {
     assert.deepEqual(Object.keys(DATA_TEXT_PROJECTIONS).sort(), [...SERIALIZABLE_SHAPES].sort(), '投影表必须覆盖全部可序列化 shape');
-    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.stat }, { header: '【{skill} · {key}】', body: 'metrics', tail: null, csvSections: ['metrics'] });
-    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.list }, { header: '【{skill} · {key}】', body: 'items', tail: 'total', csvSections: ['items', 'total'] });
-    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.detail }, { header: '【{skill} · {key}】', body: 'item', tail: null, csvSections: ['item'] });
-    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.receipt }, { header: '【{skill} · {key}】', body: 'ok', tail: 'message', csvSections: ['status', 'message'] });
-    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.analysis }, { header: '【{skill} · {key}】', body: 'summary', tail: null, csvSections: ['summary'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.stat }, { header: '【{skill} {key}】', body: 'metrics', tail: null, csvSections: ['metrics'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.list }, { header: '【{skill} {key}】', body: 'items', tail: 'total', csvSections: ['items', 'total'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.detail }, { header: '【{skill} {key}】', body: 'item', tail: null, csvSections: ['item'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.receipt }, { header: '【{skill} {key}】', body: 'ok', tail: 'message', csvSections: ['status', 'message'] });
+    assert.deepEqual({ ...DATA_TEXT_PROJECTIONS.analysis }, { header: '【{skill} {key}】', body: 'summary', tail: null, csvSections: ['summary'] });
   });
 
   it('6 段日志数据源（FX-1③）：scene 由 envelope 派生，其余 5 段取 CopyLogFields', () => {
@@ -610,7 +610,7 @@ describe('冻结口径逐值', () => {
     assert.equal(LOG_UNKNOWN_PLACEHOLDER, '(未知)');
     assert.equal(TEXT_EMPTY_PLACEHOLDER, '未填写');
     assert.equal(TEXT_SENSITIVE_MASK, '****');
-    assert.equal(TEXT_HEADER_TEMPLATE, '【{skill} · {key}】');
+    assert.equal(TEXT_HEADER_TEMPLATE, '【{skill} {key}】');
     assert.equal(TEXT_JSON_INDENT, 2);
     assert.equal(TEXT_JSON_LT_RULE, 'u003c');
     assert.deepEqual({ ...CSV_DIALECT }, {

@@ -816,13 +816,13 @@ describe('#77 未覆盖边界补测（FX-77-2／FX-77-8）', () => {
 
   it('输出头模板单趟展开：`skill` 值里的 `{key}` 不得被二次展开（FX-77-8-3）', () => {
     const out = buildDataText({ envelope: envelope('stat', { metrics: { a: 1 } }, { skill: '{key}', key: 'KK' }) });
-    assert.equal(out.split(LF)[0], '【{key} · KK】', '单趟展开：插入的值不再被扫描');
+    assert.equal(out.split(LF)[0], '【{key} KK】', '单趟展开：插入的值不再被扫描');
     assert.ok(!out.includes('KK · KK'), '不得出现二次展开结果');
   });
 
   it('`$` 系字符原样：无替换语义泄漏', () => {
     const out = buildDataText({ envelope: envelope('stat', { metrics: { a: 1 } }, { skill: '$&$`', key: "$'" }) });
-    assert.equal(out.split(LF)[0], '【$&$` · $\'】');
+    assert.equal(out.split(LF)[0], '【$&$` $\'】');
   });
 
   it('BigInt：text 按 String()、json 抛 structure-invalid，文案不得误称「循环引用」（FX-77-8-2）', () => {

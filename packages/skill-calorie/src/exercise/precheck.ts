@@ -92,7 +92,7 @@ function copyZone(v: ExerciseGoalPrecheckView, envelope: SerializableEnvelope): 
       copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: v.writeCommand },
     });
   return instruction + copyArea({
-    data: { envelope, title: '【calorie · 运动目标预检】' },
+    data: { envelope, title: '【calorie 运动目标预检】' },
     log: {
       envelope,
       copyLog: copyLog({

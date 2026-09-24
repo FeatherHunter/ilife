@@ -206,7 +206,7 @@ test('#565 ③ 三份复制载荷都非空，且各是各的（指令／数据�
       what + ' 复制指令载荷不是这一条词的 prompt 原文：' + prompt.slice(0, 120));
 
     // 数据＝本页那几张表的机器可读投影（三格式各自成形）
-    assert.ok(dataText.includes('【calorie · 目标预检】'), what + ' 纯文本载荷缺页名：' + dataText.slice(0, 120));
+    assert.ok(dataText.includes('【calorie 目标预检】'), what + ' 纯文本载荷缺页名：' + dataText.slice(0, 120));
     const parsed = JSON.parse(dataJson);
     assert.equal(parsed.key, KEY, what + ' JSON 载荷缺本页命令键：' + dataJson.slice(0, 120));
     assert.equal(parsed.skill, 'calorie', what + ' JSON 载荷的 skill 不对：' + dataJson.slice(0, 120));

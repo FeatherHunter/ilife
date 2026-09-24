@@ -164,7 +164,7 @@ test('#265 逐条按路由 cli 实跑是各自那一页、不是运动总览', (
     assert.ok(!r.file.includes('calorie.view.'), c.word + ' 产物里出现命令键 calorie.view.*');
     assert.ok(!r.file.includes('移植'), c.word + ' 产物里出现工序词「移植」');
     const fold = copyPayload(r.file, 'text');
-    assert.ok(fold.startsWith('【calorie · ' + c.page + '】\n'),
+    assert.ok(fold.startsWith('【calorie ' + c.page + '】\n'),
       c.word + ' 复制载荷头不是「技能 · 页名」：' + JSON.stringify(fold.slice(0, 40)));
     assert.ok(!r.file.includes('运动总览 '), c.word + ' 仍是运动总览页');
     assert.ok(r.file.includes('复制数据'), c.word + ' 缺复制区');

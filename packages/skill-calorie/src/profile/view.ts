@@ -18,7 +18,7 @@
  * #238 返修：英文枚举与库列名不再上页——性别／活动量走同目录 `labels.ts` 的中文说法，档案现值表
  * 的表题不再写 `user_profile#1 单例行`、表说也不再写 `weight_log.bmi` 这类库名；「没有值」这一页
  * 只有一个词（`未设置`；正在算而缺项的仍写「— ＋ 缺哪项」）；首卡不再与页标题同名；复制区不再出
- * 与按钮同名的大标题，粘贴出去的页名写中文（`【calorie · 查档案】`）。
+ * 与按钮同名的大标题，粘贴出去的页名写中文（`【calorie 查档案】`）。
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { renderKpiGrid, renderDisclosure, renderDataTable } from 'base-paint/blocks';
@@ -245,7 +245,7 @@ export function buildProfileViewDoc(v: ProfileView): string {
     }),
     copyArea({
       // 粘贴出去的页名写中文（#238 清单 13 条 / 票面裁定 3）：内部命令名对用户没有意义。
-      data: { envelope, title: '【calorie · 查档案】' },
+      data: { envelope, title: '【calorie 查档案】' },
       log: {
         envelope,
         copyLog: copyLog({

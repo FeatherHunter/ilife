@@ -47,7 +47,7 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
           }),
         },
       } satisfies SerializableEnvelope,
-      dataTitle: '【calorie · 定训练计划】',
+      dataTitle: '【calorie 定训练计划】',
       // #948 · 故障 9②：这一段**就是本页要交付的那条命令**（`calorie.workout.plan-set` ＋ 本次状态），
       // 出处与页内运行时同一份（`planEditorRuntime.ts` 的模板 ＋ 同一个状态转写）。
       // 页内运行时按当刻状态整段重写进 `data-t` 与预览块（状态在页上会变）；这里先给一份**开页那份状态**

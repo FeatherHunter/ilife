@@ -441,12 +441,12 @@ group(3, '分布／趋势／复盘 7 条读类词各拿自己那一页，不是�
     assert.equal(rec.eyebrow, expect.eyebrow,
       word + ' 的页眉不是它自己那一页：实得「' + rec.eyebrow + '」，期望「' + expect.eyebrow + '」');
     const copyHead = String(rec.copyHead ?? '').split('\n')[0];
-    assert.equal(copyHead, '【calorie · ' + expect.copyPage + '】', word + ' 载荷头不是它自己那一页：' + copyHead);
+    assert.equal(copyHead, '【calorie ' + expect.copyPage + '】', word + ' 载荷头不是它自己那一页：' + copyHead);
     assert.ok(String(rec.h1 ?? '').includes(expect.copyPage), word + ' 题面不含自己那一页的页名：' + rec.h1);
     // ③ 不是「运动总览」：眉标／题面／载荷头三处都不许是汇总页
     assert.notEqual(rec.eyebrow, EYEBROW_OF_KEY.get('calorie.view.exercise'), word + ' 落回运动总览页（眉标）');
     assert.ok(!String(rec.h1 ?? '').startsWith('运动汇总'), word + ' 落回运动总览页（题面）：' + rec.h1);
-    assert.notEqual(copyHead, '【calorie · calorie.view.exercise】', word + ' 落回运动总览页（载荷头）');
+    assert.notEqual(copyHead, '【calorie calorie.view.exercise】', word + ' 落回运动总览页（载荷头）');
     // ④ 产物零命令键（页身份一律人话面）
     assert.ok(!rec.html.includes('calorie.view.'), word + ' 产物里出现命令键 calorie.view.*');
     seen.set(TPL_OF_WORD.get(word), (seen.get(TPL_OF_WORD.get(word)) ?? 0) + 1);
@@ -472,7 +472,7 @@ group(3, '分布／趋势／复盘 7 条读类词各拿自己那一页，不是�
   const leak = [];
   for (const rec of full().recs) {
     const key = KEY_OF_WORD.get(rec.word);
-    const page = /^【calorie · (.*)】$/.exec(String(rec.copyHead ?? '').split('\n')[0])?.[1] ?? null;
+    const page = /^【calorie (.*)】$/.exec(String(rec.copyHead ?? '').split('\n')[0])?.[1] ?? null;
     assert.ok(page !== null, rec.word + ' 载荷头不是「技能 · 页名」形态：' + rec.copyHead);
     if (COPY_KEY_LEAK.has(key)) { leak.push(rec.word); continue; }
     assert.ok(!/[.]/.test(page), rec.word + ' 载荷页名里出现工程名（应是人话页名）：' + page);

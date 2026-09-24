@@ -125,7 +125,7 @@ test('#276 ③ 出口面：照该行 cli 实跑 exit 0，页题落在单榜上',
     assert.equal(envl.data?.metrics?.topCal, 500, '单榜读数没按高热量榜出数');
     assert.equal(envl.data?.metrics?.okCount, undefined, '读数是全榜那一套（okCount）');
     /* 裁定 1：命令键不上屏。**注意两处合法携带**（实测 ctx 已定位）：复制区双按钮的 `data-t` 载荷
-       （数据三格式菜单要带 `【calorie · calorie.view.ranking】`、日志按钮要带第 4 段命令原文）——
+       （数据三格式菜单要带 `【calorie calorie.view.ranking】`、日志按钮要带第 4 段命令原文）——
        它们住属性值，不是读者看到的字。故判据＝**只剩可见文字**（剥掉注释、script／style、全部标签）
        之后不许再出现标识符。 */
     const visible = html

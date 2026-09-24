@@ -410,7 +410,7 @@ test('#111 复制头与冻结 envelope 版本对齐（防漂移 · 载荷面）'
     // ── 载荷面（机器面）：复制菜单的 text 头＝「技能 · 页名」，json 载荷带 version/skill/key。
     //    #465 口径：**人不该看见命令键**，机器面也认人话页名（命令键落在哪一面由本件钉住）。
     const textFold = copyPayload(out.html, 'text');
-    assert.ok(textFold.startsWith('【calorie · 运动趋势】\n'),
+    assert.ok(textFold.startsWith('【calorie 运动趋势】\n'),
       '复制载荷头不是「技能 · 页名」形态：' + JSON.stringify(textFold.slice(0, 40)));
     const jsonFold = JSON.parse(copyPayload(out.html, 'json'));
     assert.equal(jsonFold.version, ENVELOPE_VERSION, 'json 载荷 version 与冻结 envelope 版本不一致');

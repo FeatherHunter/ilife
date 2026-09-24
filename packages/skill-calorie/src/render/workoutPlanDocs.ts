@@ -242,7 +242,7 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
         data: { items: weeks.map((w) => weekLine(w.week, w.sessions)), total: v.totalSessions },
       },
-      dataTitle: '【calorie · 训练计划查看】',
+      dataTitle: '【calorie 训练计划查看】',
       log: copyLog({
         command: opts.command,
         source: 'workout_plans（训练计划，只读）',
@@ -297,7 +297,7 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
           total: v.plannedCount,
         },
       },
-      dataTitle: '【calorie · 计划对比实际】',
+      dataTitle: '【calorie 计划对比实际】',
       log: copyLog({
         command: opts.command,
         source: 'workout_plans ＋ exercise_log（计划对比实际，只读）',
@@ -367,7 +367,7 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
     payloadBar(opts.confirmPayload ?? '', opts.modifyPayload ?? ''),
     dualCopy({
       key: opts.key, command: opts.command, source: 'workout_plans（写前预览，只读）',
-      dataTitle: '【calorie · 写前预览】',
+      dataTitle: '【calorie 写前预览】',
       metrics: { beforeLines: v.before.length, afterLines: v.after.length },
     }),
   ];

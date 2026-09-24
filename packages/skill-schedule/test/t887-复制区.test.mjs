@@ -244,7 +244,9 @@ describe('#887 复制区（三格式菜单 ＋ 六段日志，八域同口径）
     };
     const text = raw('text');
     const json = raw('json').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-    assert.ok(text.startsWith('【schedule · schedule.record.today】'), 'text 口径的输出头由 key 派生：' + text.split('\n')[0]);
+    // 头行形状＝公共层冻结模板 `TEXT_HEADER_TEMPLATE`（2026-09-24 去掉 `·` 分隔符，照用户
+    // 「内容要靠 `·` 分割＝UI 设计没做完」那条裁定）：`【skill key】`，技能名与 key 之间只留一个空格。
+    assert.ok(text.startsWith('【schedule schedule.record.today】'), 'text 口径的输出头由 key 派生：' + text.split('\n')[0]);
     const parsed = JSON.parse(json);
     assert.equal(parsed.skill, 'schedule');
     assert.equal(parsed.key, 'schedule.record.today');

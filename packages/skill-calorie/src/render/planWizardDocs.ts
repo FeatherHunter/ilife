@@ -163,7 +163,7 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
           }),
         },
       } satisfies SerializableEnvelope,
-      dataTitle: '【calorie · 构建向导】',
+      dataTitle: '【calorie 构建向导】',
       prompt: opts.prompt ?? '',
       log: copyLog({
         command: opts.command, source: 'planStore 校验（构建向导，纯校验）',

@@ -302,7 +302,7 @@ test('#108 复制头与冻结 envelope 版本对齐（防漂移）', () => {
   const { db } = mkDietDb();
   try {
     const out = dispatch('calorie.view.diet', { start: '2026-09-05', end: '2026-09-07' }, db);
-    assert.ok(out.html.includes('【calorie · calorie.view.diet】'), '复制头与 envelope key 不一致');
+    assert.ok(out.html.includes('【calorie calorie.view.diet】'), '复制头与 envelope key 不一致');
   } finally {
     db.close();
   }

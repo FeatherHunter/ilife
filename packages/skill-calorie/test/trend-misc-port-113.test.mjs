@@ -303,7 +303,7 @@ test('#113 复制头与冻结 envelope 版本对齐（防漂移）', () => {
   const { db } = mkPortDb();
   try {
     const out = dispatch('calorie.view.lint-health', {}, db);
-    assert.ok(out.html.includes('【calorie · calorie.view.lint-health】'), '复制头与 envelope key 不一致');
+    assert.ok(out.html.includes('【calorie calorie.view.lint-health】'), '复制头与 envelope key 不一致');
   } finally {
     db.close();
   }
