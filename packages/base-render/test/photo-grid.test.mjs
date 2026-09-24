@@ -16,8 +16,8 @@ import {
   PHOTO_GRID_MARK_ARM_PX,
   PHOTO_GRID_MIN_STACK,
   PHOTO_GRID_RATIOS,
-  PHOTO_GRID_THREE_COL_PX,
   PHOTO_GRID_TOUCH_PX,
+  PHOTO_GRID_TWO_COL_MAX_PX,
   photoGridCss,
   renderPhotoGrid,
 } from '../dist/components/photo-grid/index.js';
@@ -215,12 +215,17 @@ describe('photo-grid ② 样式与零 DOM 纪律', () => {
     }
   });
 
-  it('响应式只判容器：两列 ↦ 三列走 `@container`（阈值常量落两处对得上）', () => {
-    assert.ok(css.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'));
-    assert.ok(css.includes('@container (min-width: ' + PHOTO_GRID_THREE_COL_PX + 'px)'));
-    assert.ok(css.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'));
+  it('响应式只判容器：缺省三列 ↦ 窄档两列走 `@container`（阈值常量落两处对得上）', () => {
+    assert.ok(css.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'), '缺省＝宽档三列');
+    assert.ok(css.includes('@container (max-width: ' + PHOTO_GRID_TWO_COL_MAX_PX + 'px)'));
+    assert.ok(css.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), '窄档覆盖成两列');
     assert.equal(/@media[^{]*max-width/.test(css), false);
     assert.ok(css.includes('container-type: inline-size'));
+  });
+
+  it('样式段里没有过不了窄档的固定宽度（`width`／`min-width` 都 ≤ 390px）', () => {
+    const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+    assert.deepEqual(px(css).filter((v) => v > 390), [], '出现了按固定宽写的死宽度（换列阈值要写成窄档上界）');
   });
 
   it('题注条与空态各有专门规则；正文不截断（零 `text-overflow`）', () => {
@@ -234,6 +239,14 @@ describe('photo-grid ② 样式与零 DOM 纪律', () => {
 });
 
 describe('photo-grid ③ 加法式', () => {
+  it('每条选择器只要求一次 `.ilife-page-ui`（拼两遍就是永远匹配不到的死规则）', () => {
+    for (const group of selectorsOf(photoGridCss())) {
+      for (const one of group.split(',')) {
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1, '死规则（scope 拼了不止一次）：' + one.trim());
+      }
+    }
+  });
+
   it('只读自己的类名与自己的状态类（`is-*`），不碰公共选择器', () => {
     const own = new RegExp('^\\.ilife-page-ui$|^\\.ilife-block-' + NAME + '[-A-Za-z0-9_]*$|^\\.is-[a-z][a-z0-9-]*$');
     for (const sel of selectorsOf(photoGridCss())) {

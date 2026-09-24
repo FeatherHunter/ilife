@@ -12,6 +12,7 @@ import {
   INVOICE_LINES_FORMS,
   INVOICE_LINES_INDENT_PX,
   INVOICE_LINES_KIND_MARKS,
+  INVOICE_LINES_LEGEND_MAX_PX,
   INVOICE_LINES_RULE_PX,
   INVOICE_LINES_SEGMENT_MIN_PCT,
   INVOICE_LINES_TOTAL_SCALE,
@@ -217,14 +218,27 @@ describe('invoice-lines ② 样式与零 DOM 纪律', () => {
   });
 
   it('响应式只判容器；关键语义（金额）不截断', () => {
-    assert.ok(css.includes('@container (min-width:'));
+    assert.ok(css.includes('@container (max-width: ' + INVOICE_LINES_LEGEND_MAX_PX + 'px)'));
     assert.equal(/@media[^{]*max-width/.test(css), false);
     assert.equal(css.includes('text-overflow'), false);
     assert.ok(css.includes('overflow-wrap: anywhere'));
   });
+
+  it('样式段里没有过不了窄档的固定宽度（`width`／`min-width` 都 ≤ 390px）', () => {
+    const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+    assert.deepEqual(px(css).filter((v) => v > 390), [], '出现了按固定宽写的死宽度（换档阈值要写成窄档上界）');
+  });
 });
 
 describe('invoice-lines ③ 加法式', () => {
+  it('每条选择器只要求一次 `.ilife-page-ui`（拼两遍就是永远匹配不到的死规则）', () => {
+    for (const group of selectorsOf(invoiceLinesCss())) {
+      for (const one of group.split(',')) {
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1, '死规则（scope 拼了不止一次）：' + one.trim());
+      }
+    }
+  });
+
   it('只读自己的类名与自己的状态类（`is-*`），不碰公共选择器', () => {
     const own = new RegExp('^\\.ilife-page-ui$|^\\.ilife-block-' + NAME + '[-A-Za-z0-9_]*$|^\\.is-[a-z][a-z0-9-]*$');
     for (const sel of selectorsOf(invoiceLinesCss())) {

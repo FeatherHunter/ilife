@@ -205,9 +205,22 @@ describe('note-block ② 样式与零 DOM 纪律', () => {
     assert.equal(css.includes('text-overflow'), false);
     assert.ok(css.includes('overflow-wrap: anywhere'));
   });
+
+  it('样式段里没有过不了窄档的固定宽度（`width`／`min-width` 都 ≤ 390px）', () => {
+    const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+    assert.deepEqual(px(css).filter((v) => v > 390), [], '出现了按固定宽写的死宽度');
+  });
 });
 
 describe('note-block ③ 加法式', () => {
+  it('每条选择器只要求一次 `.ilife-page-ui`（拼两遍就是永远匹配不到的死规则）', () => {
+    for (const group of selectorsOf(noteBlockCss())) {
+      for (const one of group.split(',')) {
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1, '死规则（scope 拼了不止一次）：' + one.trim());
+      }
+    }
+  });
+
   it('只读自己的类名与自己的状态类（`is-*`），不碰公共选择器', () => {
     const own = new RegExp('^\\.ilife-page-ui$|^\\.ilife-block-' + NAME + '[-A-Za-z0-9_]*$|^\\.is-[a-z][a-z0-9-]*$');
     for (const sel of selectorsOf(noteBlockCss())) {

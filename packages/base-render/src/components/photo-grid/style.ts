@@ -24,8 +24,10 @@ export const PHOTO_GRID_MARK_THICK_PX = 2;
 export const PHOTO_GRID_MARK_INSET_PX = 6;
 /** 末尾「加一张」那格的命中下限（px）：**命中盒不得小于它**（视觉盒可以随比例更高）。 */
 export const PHOTO_GRID_TOUCH_PX = 44;
-/** 列数换档的容器阈值（px）：窄于它两列，宽于它三列——**判的是本件自己的宽度**。 */
-export const PHOTO_GRID_THREE_COL_PX = 520;
+/** 列数换档的容器阈值（px）：**容器宽 ≤ 它两列，> 它三列**。
+ *  判的是**本件自己的宽度**（`@container`），不是视口宽度。这一档写成**窄档的上界**（`max-width`）、
+ *  宽档当缺省：窄档才是要**覆盖**的那一档，而缺省态本身是站得住的（390 档不必再单列一条规则）。 */
+export const PHOTO_GRID_TWO_COL_MAX_PX = 520;
 
 /** 四角取景角标：8 层背景（每角一条横、一条竖），不新增元素、不吃伪元素、零阴影下也在。 */
 function marksCss(): string[] {
@@ -77,7 +79,8 @@ export function photoGridCss(input?: { readonly prefix?: string }): string {
     '/* 网格：窄档两列，宽档三列（判的是**本件自己的宽度**，不是视口宽度）。 */',
     s('grid') + ' {',
     '  display: grid;',
-    '  grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '/* 缺省（宽档）：三列 —— 判的是本件自己的宽度。窄档那一条在文末，把列数**覆盖**成两列。 */',
+    '  grid-template-columns: repeat(3, minmax(0, 1fr));',
     '  gap: 12px 10px;',
     '  min-width: 0;',
     '  align-items: start;',
@@ -314,10 +317,11 @@ export function photoGridCss(input?: { readonly prefix?: string }): string {
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 宽容器（≥' + String(PHOTO_GRID_THREE_COL_PX) + 'px）：两列改三列——判的是本件自己的宽度。 */',
-    '@container (min-width: ' + String(PHOTO_GRID_THREE_COL_PX) + 'px) {',
+    '/* 窄容器（≤' + String(PHOTO_GRID_TWO_COL_MAX_PX) + 'px）：三列**覆盖**成两列——',
+    '   判的是本件自己的宽度（本件会被嵌进侧栏／面板／卡片，视口宽 ≠ 组件宽，所以这里不写 `@media`）。 */',
+    '@container (max-width: ' + String(PHOTO_GRID_TWO_COL_MAX_PX) + 'px) {',
     '  ' + s('grid') + ' {',
-    '    grid-template-columns: repeat(3, minmax(0, 1fr));',
+    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
     '  }',
     '}',
   );

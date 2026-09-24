@@ -16,6 +16,7 @@ import {
   SYNC_STATUS_EVENT_DONE,
   SYNC_STATUS_EVENT_RUN,
   SYNC_STATUS_FORMS,
+  SYNC_STATUS_NARROW_PX,
   SYNC_STATUS_RESULTS,
   SYNC_STATUS_RESULT_WORDS,
   SYNC_STATUS_RUNNING_LABEL,
@@ -204,10 +205,15 @@ describe('sync-status ② 样式与零 DOM 纪律', () => {
       '按键命中盒不得小于 ' + TOUCH());
   });
 
-  it('响应式只判容器：窄档两行／宽档一行三列都走 `@container`', () => {
-    assert.ok(css.includes('@container (min-width:'));
+  it('响应式只判容器：缺省一行三列／窄档两行走 `@container`', () => {
+    assert.ok(css.includes('@container (max-width: ' + SYNC_STATUS_NARROW_PX + 'px)'));
     assert.equal(/@media[^{]*max-width/.test(css), false);
     assert.ok(css.includes('container-type: inline-size'));
+  });
+
+  it('样式段里没有过不了窄档的固定宽度（`width`／`min-width` 都 ≤ 390px）', () => {
+    const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+    assert.deepEqual(px(css).filter((v) => v > 390), [], '出现了按固定宽写的死宽度（换档阈值要写成窄档上界）');
   });
 
   function STATE_ERR_SEL() { return '.ilife-block-sync-status-error'; }
@@ -215,6 +221,14 @@ describe('sync-status ② 样式与零 DOM 纪律', () => {
 });
 
 describe('sync-status ③ 加法式', () => {
+  it('每条选择器只要求一次 `.ilife-page-ui`（拼两遍就是永远匹配不到的死规则）', () => {
+    for (const group of selectorsOf(syncStatusCss())) {
+      for (const one of group.split(',')) {
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1, '死规则（scope 拼了不止一次）：' + one.trim());
+      }
+    }
+  });
+
   it('只读自己的类名与自己的状态类（`is-*`），不碰公共选择器', () => {
     const own = new RegExp('^\\.ilife-page-ui$|^\\.ilife-block-' + NAME + '[-A-Za-z0-9_]*$|^\\.is-[a-z][a-z0-9-]*$');
     for (const sel of selectorsOf(syncStatusCss())) {

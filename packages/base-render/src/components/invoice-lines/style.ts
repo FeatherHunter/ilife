@@ -25,6 +25,10 @@ const LF = String.fromCharCode(10);
 export const INVOICE_LINES_INDENT_PX = 14;
 /** 收口那条重线的宽度（px）。 */
 export const INVOICE_LINES_RULE_PX = 2;
+/** 图例换列的容器阈值（px）：**容器宽 ≤ 它一列，> 它两列**。
+ *  判的是**本件自己的宽度**（`@container`），不是视口宽度；这一档写成**窄档的上界**（`max-width`）、
+ *  两列当缺省——窄档才是要**覆盖**的那一档。 */
+export const INVOICE_LINES_LEGEND_MAX_PX = 620;
 
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function invoiceLinesCss(input?: { readonly prefix?: string }): string {
@@ -166,8 +170,10 @@ export function invoiceLinesCss(input?: { readonly prefix?: string }): string {
     '  background: ' + skinVar('accent') + ';',
     '  color: ' + skinVar('accent-ink') + ';',
     '}',
+    '/* 减项段：底色从 token **算出来**（`ok` 掺进 `surface`）——`ok-soft` 在报刊／中性两套下接近白，',
+    '   段与条底分不开，「省了多少」在形状上就看不见了。 */',
     seg('cut') + ' {',
-    '  background: ' + skinVar('ok-soft') + ';',
+    '  background: color-mix(in srgb, ' + skinVar('ok') + ' 32%, ' + skinVar('surface') + ');',
     '  color: ' + skinVar('ok') + ';',
     '  border-left: 2px solid ' + skinVar('surface') + ';',
     '}',
@@ -185,10 +191,11 @@ export function invoiceLinesCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 图例：条上写不下的金额，在这里**逐行全出**（关键语义不许被段的宽度截掉）。 */',
+    '/* 图例：条上写不下的金额，在这里**逐行全出**（关键语义不许被段的宽度截掉）。',
+    '   缺省（宽档）两列；窄档那一条在文末把它**覆盖**成一列。 */',
     s('legend') + ' {',
     '  display: grid;',
-    '  grid-template-columns: minmax(0, 1fr);',
+    '  grid-template-columns: repeat(2, minmax(0, 1fr));',
     '  gap: 0 20px;',
     '  margin: 0;',
     '  padding: 0;',
@@ -214,7 +221,7 @@ export function invoiceLinesCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 2px;',
     '}',
     s('legend-swatch') + '.is-base { background: ' + skinVar('surface-2') + '; }',
-    s('legend-swatch') + '.is-cut { background: ' + skinVar('ok-soft') + '; }',
+    s('legend-swatch') + '.is-cut { background: color-mix(in srgb, ' + skinVar('ok') + ' 32%, ' + skinVar('surface') + '); }',
     s('legend-swatch') + '.is-add { background: ' + skinVar('warn-soft') + '; }',
     s('legend-swatch') + '.is-total { background: ' + skinVar('accent') + '; }',
     s('legend-label') + ' {',
@@ -260,10 +267,11 @@ export function invoiceLinesCss(input?: { readonly prefix?: string }): string {
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 宽容器（≥620px）：图例改两列，一行能对更多行（判的是本件自己的宽度）。 */',
-    '@container (min-width: 620px) {',
+    '/* 窄容器（≤' + String(INVOICE_LINES_LEGEND_MAX_PX) + 'px）：图例两列**覆盖**成一列',
+    '   （判的是本件自己的宽度，不是视口宽度）。 */',
+    '@container (max-width: ' + String(INVOICE_LINES_LEGEND_MAX_PX) + 'px) {',
     '  ' + s('legend') + ' {',
-    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '}',
     '/* 段宽下限常量（判据从源码读它）：窄于 ' + String(INVOICE_LINES_SEGMENT_MIN_PCT)

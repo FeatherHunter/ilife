@@ -24,4 +24,9 @@ export {
 export type { InvoiceLine, InvoiceLineKind, InvoiceLinesForm, InvoiceLinesInput, InvoiceShare } from './attrs.js';
 export { formatInvoiceAmount } from './model.js';
 export { renderInvoiceLines } from './render.js';
-export { INVOICE_LINES_INDENT_PX, INVOICE_LINES_RULE_PX, invoiceLinesCss } from './style.js';
+export {
+  INVOICE_LINES_INDENT_PX,
+  INVOICE_LINES_LEGEND_MAX_PX,
+  INVOICE_LINES_RULE_PX,
+  invoiceLinesCss,
+} from './style.js';
