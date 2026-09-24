@@ -17,6 +17,7 @@
  */
 import { esc } from '../shared/escape.js';
 import {
+  WIZARD_SHELL_ANSWER_ATTR,
   WIZARD_SHELL_BT_PRIMARY,
   WIZARD_SHELL_CLASS,
   WIZARD_SHELL_FIELD_ATTR,
@@ -71,10 +72,12 @@ function readingHtml(m: WizardShellModel, noteId: string): string {
     + '</p>';
 }
 
-/** 一条选项：整条是 `<label>`（命中区）里放原生 `<input type="radio">` ＋ 标记位 ＋ 标题／说明。 */
+/** 一条选项：整条是 `<label>`（命中区）里放原生 `<input type="radio">` ＋ 标记位 ＋ 标题／说明。
+ *  **组名按实例键拼**（不是 `name`）：单选组的组名在整篇文档里互斥，同页两份实例若同组，
+ *  在其中一份点一下会把另一份已选中的那条静默取消。 */
 function optionHtml(m: WizardShellModel, o: WizardOption): string {
   const checked = m.value !== null && m.value === o.value;
-  const input = ['<input type="radio"', ' name="' + esc('ilife-wizard-' + m.name) + '"',
+  const input = ['<input type="radio"', ' name="' + esc('ilife-wizard-' + m.instanceKey) + '"',
     ' value="' + esc(o.value) + '"'];
   if (checked) input.push(' checked');
   if (m.disabled || m.loading) input.push(' disabled');
@@ -92,7 +95,7 @@ function optionHtml(m: WizardShellModel, o: WizardOption): string {
 /** 一格填空：标签（`for`／`id` 关联）＋ 输入框 ＋ 提示。`data-ilife-wizard-field` 的值＝字段机器名
  *  （运行时段按它把这一屏已填的值收成一个对象报给页面）。 */
 function fieldHtml(m: WizardShellModel, f: WizardField): string {
-  const id = wizardShellId('field', m.name, f.name);
+  const id = wizardShellId('field', m.instanceKey, f.name);
   const input: string[] = ['<input class="' + wizardShellSlot('fld-input') + '"', ' id="' + esc(id) + '"',
     ' type="' + esc(f.kind) + '"'];
   if (f.kind === 'number') input.push(' inputmode="decimal"');
@@ -157,20 +160,27 @@ function buttonHtml(m: WizardShellModel, go: WizardShellGo, label: string,
 }
 
 /** 脚行：提示句（答完这一问会发生什么）＋ 三枚键。跳过只在能跳过的那一问上出现——
- *  「按不动但摆在那儿」是不许留的中间档，所以不能跳过的问**不摆**那一枚。 */
+ *  「按不动但摆在那儿」是不许留的中间档，所以不能跳过的问**不摆**那一枚。
+ *
+ *  「上一问」的 `aria-describedby` 收的是**一个 id 表**（空格分隔），不是一枚：
+ *  第 1 问按不动的原因**恒**在读数行（契约 #2），而错态／整壳禁用那句在错态行 —— 两件事都要给全，
+ *  别让后一句把前一句顶掉（顶掉了，第 1 问 ＋ 错态下"为什么按不动"就没人说了）。 */
 function footHtml(m: WizardShellModel, errorId: string): string {
   const busy = m.disabled || m.loading;
-  const described = m.error !== undefined || (m.disabled && m.disabledReason !== undefined) ? errorId : undefined;
+  const notes = m.error !== undefined || (m.disabled && m.disabledReason !== undefined) ? errorId : undefined;
+  const backNotes = m.index === 0
+    ? [wizardShellId('note', m.instanceKey), notes].filter((s) => s !== undefined).join(' ')
+    : notes;
   const buttons: string[] = [];
   buttons.push(buttonHtml(m, WIZARD_SHELL_GOES.back, WIZARD_SHELL_BACK_LABEL, {
     disabled: busy || m.index === 0,
-    described: described === undefined && m.index === 0 ? wizardShellId('note', m.name) : described,
+    described: backNotes,
   }));
   if (m.skippable) {
-    buttons.push(buttonHtml(m, WIZARD_SHELL_GOES.skip, WIZARD_SHELL_SKIP_LABEL, { disabled: busy, described }));
+    buttons.push(buttonHtml(m, WIZARD_SHELL_GOES.skip, WIZARD_SHELL_SKIP_LABEL, { disabled: busy, described: notes }));
   }
   buttons.push(buttonHtml(m, WIZARD_SHELL_GOES.next, m.nextLabel, {
-    primary: true, disabled: busy, described,
+    primary: true, disabled: busy, described: notes,
   }));
   return '<div class="' + wizardShellSlot('foot') + '">'
     + (m.hint === undefined ? '' : '<span class="' + wizardShellSlot('hint') + '">' + esc(m.hint) + '</span>')
@@ -180,9 +190,9 @@ function footHtml(m: WizardShellModel, errorId: string): string {
 
 /** 形态 B 的骨架。 */
 function renderOne(m: WizardShellModel): string {
-  const questionId = wizardShellId('q', m.name);
-  const noteId = wizardShellId('note', m.name);
-  const errorId = wizardShellId('error', m.name);
+  const questionId = wizardShellId('q', m.instanceKey);
+  const noteId = wizardShellId('note', m.instanceKey);
+  const errorId = wizardShellId('error', m.instanceKey);
   const described = m.error !== undefined || (m.disabled && m.disabledReason !== undefined) ? errorId : undefined;
   const parts: string[] = ['<div class="' + wizardShellSlot('now') + '">'];
   parts.push(progHtml(m));
@@ -211,6 +221,7 @@ export function renderWizardShell(input: unknown): string {
     'class="' + WIZARD_SHELL_CLASS + ' is-' + m.form + extra + '"',
     WIZARD_SHELL_ROOT_ATTR + '="1"',
     WIZARD_SHELL_NAME_ATTR + '="' + esc(m.name) + '"',
+    WIZARD_SHELL_ANSWER_ATTR + '="' + m.answer + '"',
     WIZARD_SHELL_STEP_ATTR + '="' + String(m.index) + '"',
     WIZARD_SHELL_TOTAL_ATTR + '="' + String(m.total) + '"',
   ];

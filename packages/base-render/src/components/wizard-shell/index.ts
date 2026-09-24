@@ -11,6 +11,7 @@
 export { renderWizardShell } from './render.js';
 export { buildWizardShellJs } from './runtime.js';
 export type {
+  WizardShellAnswer,
   WizardShellField,
   WizardShellFieldKind,
   WizardShellForm,
@@ -20,6 +21,7 @@ export type {
   WizardShellSlot,
 } from './attrs.js';
 export {
+  WIZARD_SHELL_ANSWER_ATTR,
   WIZARD_SHELL_BACK_LABEL,
   WIZARD_SHELL_BAR_PX,
   WIZARD_SHELL_CLASS,
@@ -31,6 +33,7 @@ export {
   WIZARD_SHELL_FIELD_KINDS,
   WIZARD_SHELL_FORMS,
   WIZARD_SHELL_GO_ATTR,
+  WIZARD_SHELL_LOADING_ATTR,
   WIZARD_SHELL_LOADING_TEXT,
   WIZARD_SHELL_MIN_TARGET_PX,
   WIZARD_SHELL_NAME_ATTR,

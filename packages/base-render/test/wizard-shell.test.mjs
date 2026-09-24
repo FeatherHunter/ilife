@@ -25,6 +25,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  WIZARD_SHELL_ANSWER_ATTR,
   WIZARD_SHELL_CLASS,
   WIZARD_SHELL_EVENT_GO,
   WIZARD_SHELL_EVENT_PICK,
@@ -32,6 +33,7 @@ import {
   WIZARD_SHELL_FIELD_KINDS,
   WIZARD_SHELL_FORMS,
   WIZARD_SHELL_GO_ATTR,
+  WIZARD_SHELL_LOADING_ATTR,
   WIZARD_SHELL_LOADING_TEXT,
   WIZARD_SHELL_MIN_TARGET_PX,
   WIZARD_SHELL_NAME_ATTR,
@@ -57,6 +59,7 @@ import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { SKINS, skinClass, skinCss } from '../dist/components/skin/index.js';
 import { SKIN_NAMES } from '../dist/components/skin/contract.js';
+import { derive } from '../scripts/gen-components.mjs';
 import { startShapesPage } from './shapes-probe.mjs';
 import { styleSource } from './_style-sources.mjs';
 
@@ -131,6 +134,76 @@ const countButtons = (html) => countOf(html, WIZARD_SHELL_GO_ATTR + '="[a-z]+"')
 /** 按不动的键的枚数（原生 `disabled` 落在键上；选项里的原生框另算，别混进来）。 */
 const countDisabledButtons = (html) => countOf(html, WIZARD_SHELL_GO_ATTR + '="[a-z]+"(?: [a-z-]+="[^"]*")* disabled');
 
+/** 从一段标记里按出现次序取出全部 `id="…"`（同页多实例的 id 重号读数）。 */
+const idsOf = (html) => [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+/** 进度那 N 格的状态序列（**按位置**取：类名断不出"哪一格"，这个断得出）。 */
+const segStates = (html) => [...html.matchAll(new RegExp('<i class="[^"]*' + wizardShellSlot('seg') + ' (is-[a-z]+)"', 'g'))]
+  .map((m) => m[1]);
+
+/* ── CSS 读数小件：样式段里那几条规则**写了什么**，以及颜色对之间的对比度 ─────────────
+ *  为什么要有这一段：判据只断"按不动的键有几枚"断不到"禁用态在屏上看得见吗"
+ *  （`cursor` 触屏没有；`line` 对脚行底只有 1.16…1.41:1，远低于图形地板 3:1）。 */
+
+/** CSS → `{ sel, body }`（逐字符配平花括号；`@media`／`@container` 里的规则也算，`@` 那一层只当括号）。 */
+function cssRules(css) {
+  const out = [];
+  const stack = [];
+  let buf = '';
+  for (const ch of css) {
+    if (ch === '{') { stack.push(buf.trim()); buf = ''; continue; }
+    if (ch === '}') {
+      const sel = stack.pop();
+      if (sel !== undefined && !sel.startsWith('@')) out.push({ sel, body: buf });
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  return out;
+}
+
+/** 某条选择器的声明表（选择器逐字比对；找不到＝判据自己写错了选择器，直接抛）。 */
+function declsOf(css, sel) {
+  const rule = cssRules(css).find((r) => r.sel === sel);
+  assert.ok(rule !== undefined, '样式段里找不到这条规则：' + sel);
+  const out = new Map();
+  for (const part of rule.body.split(';')) {
+    const s = part.trim();
+    if (s === '') continue;
+    const i = s.indexOf(':');
+    out.set(s.slice(0, i).trim(), s.slice(i + 1).trim());
+  }
+  return out;
+}
+
+/** 颜色串（`#rrggbb`／`rgb(…)`／`rgba(…)`）→ `[r,g,b]`；认不出返 `null`。 */
+function rgbOf(value) {
+  const s = String(value).trim();
+  const hex = /^#([0-9a-fA-F]{6})$/.exec(s);
+  if (hex !== null) {
+    const n = parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const m = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(s);
+  return m === null ? null : [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+/** 相对亮度（WCAG 2.x）。 */
+function relLum(rgb) {
+  const c = rgb.map((v) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+
+/** 对比度（认不出的颜色返 `null`，由调用方报红）。 */
+function contrastOf(fg, bg) {
+  const A = rgbOf(fg);
+  const B = rgbOf(bg);
+  if (A === null || B === null) return null;
+  const l1 = relLum(A);
+  const l2 = relLum(B);
+  return Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 100) / 100;
+}
+
 /* ── 四份样例：选择问（已答／未答／末问／推进中）／填空问／确认屏 ─────────── */
 
 const CHOICE = {
@@ -155,6 +228,9 @@ const ENTRY = {
   hint: '答完这一步就能算出预算',
 };
 const CONFIRM = { name: 'confirm', question: '上面这些就是你的建档。', index: 3, total: 4 };
+/** 整壳禁用那一份（`disabledReason` 是必填：说不出为什么不许动＝读者只能猜）。 */
+const OFF_REASON = '这一趟已经交过了';
+const OFF = { ...CHOICE, disabled: true, disabledReason: OFF_REASON };
 const LONG = {
   name: 'long',
   question: '这一句问题被写得非常非常长，用来看看窄容器下会不会压字、会不会横着溢出去，长到要换好几行才算完',
@@ -171,15 +247,45 @@ const LONG = {
 describe('wizard-shell ① 渲染契约 · 骨架与槽位', () => {
   const html = renderWizardShell(CHOICE);
 
-  it('根：类名根 ＋ 形态类 ＋ 四枚机器读数（第几问／一共几问／已答的机器值／机器键）', () => {
+  it('根：类名根 ＋ 形态类 ＋ 五枚机器读数（第几问／一共几问／已答的机器值／机器键／答法）', () => {
     assert.match(html, new RegExp('^<div class="' + WIZARD_SHELL_CLASS + ' is-one"'));
     assert.ok(html.includes(WIZARD_SHELL_ROOT_ATTR + '="1"'), '根锚（运行时的发现锚）');
     assert.ok(html.includes(WIZARD_SHELL_NAME_ATTR + '="cook"'));
+    assert.ok(html.includes(WIZARD_SHELL_ANSWER_ATTR + '="options"'), '这一屏出的是哪一种答法');
     assert.ok(html.includes(WIZARD_SHELL_STEP_ATTR + '="2"'), '当前是第几问落属性（页面拿它当草稿坐标）');
     assert.ok(html.includes(WIZARD_SHELL_TOTAL_ATTR + '="5"'));
     assert.ok(html.includes(WIZARD_SHELL_VALUE_ATTR + '="one_two"'), '已答的机器值落属性');
     assert.ok(!/<script/i.test(html), '不产脚本');
     assert.equal(/\son[a-z]+=/.test(html), false, '零内联事件处理器');
+  });
+
+  it('**同页多实例**：实例键（`id`）参与单选组名与件内 id ⇒ 两份拼在一页上单选组分得开、全页 id 不重号', () => {
+    const group = (h) => [...new Set([...h.matchAll(/<input type="radio" name="([^"]+)"/g)].map((m) => m[1]))];
+    const a = renderWizardShell({ ...CHOICE, id: 'wall-a' });
+    const b = renderWizardShell({ ...CHOICE, id: 'wall-b' });
+    assert.deepEqual(group(a), ['ilife-wizard-wall-a'], '一份实例里的三枚单选框是同一个组');
+    assert.deepEqual(group(b), ['ilife-wizard-wall-b']);
+    assert.notDeepEqual(group(a), group(b), '两份实例的组名必须分得开（组名相同＝点一份会踢掉另一份的选中）');
+    const pageIds = idsOf(a + b);
+    assert.deepEqual(pageIds.filter((x, i) => pageIds.indexOf(x) !== i), [], '同页两份实例的件内 id 重号：' + pageIds.join('、'));
+    assert.equal(countOf(a + b, 'id="ilife-wizard-q-'), 2, '两份各自的大字问题 id');
+    /* 不给 `id` 时退回 `name`（老行为逐字节不变）。 */
+    assert.ok(html.includes('name="ilife-wizard-cook"'), '不给 id 时单选组名仍按 name');
+    assert.ok(idsOf(html).includes('ilife-wizard-q-cook'));
+  });
+
+  it('答法诊断信号：根属性写出这一屏出的是哪一种答法（`options`／`fields`／`confirm`）', () => {
+    assert.ok(html.includes(WIZARD_SHELL_ANSWER_ATTR + '="options"'), '选择问');
+    assert.ok(renderWizardShell(ENTRY).includes(WIZARD_SHELL_ANSWER_ATTR + '="fields"'), '填空问');
+    assert.ok(renderWizardShell(CONFIRM).includes(WIZARD_SHELL_ANSWER_ATTR + '="confirm"'), '确认屏');
+    /* 误传整趟数据（`steps`）：本件不读它，**零报错**——但落点得是**读得出来**的，
+       不是一个"看不出传错了"的空态（口径见 README「整趟数据不由本件持」）。 */
+    const trip = renderWizardShell({ name: 'init', question: '先问这一句。', index: 0, total: 3, steps: [{ q: 'x' }] });
+    assert.ok(trip.includes(WIZARD_SHELL_ANSWER_ATTR + '="confirm"'), '误传整趟数据要能从根属性上读出来');
+    assert.ok(trip.includes(wizardShellSlot('confirm')), '落点是那**设计过的**确认屏（写清"这一问不用填"）');
+    const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+    assert.ok(readme.includes('整趟数据不由本件持'), '这条口径必须写在说明书上（调用方才有得查）');
+    assert.ok(readme.includes(WIZARD_SHELL_ANSWER_ATTR), '诊断信号的名字要在 README 里点名');
   });
 
   it('骨架：细进度 → 读数行 → 大字问题 → 为什么问 → 答法 → 脚行（顺序固定）', () => {
@@ -201,6 +307,26 @@ describe('wizard-shell ① 渲染契约 · 骨架与槽位', () => {
     assert.equal(countOf(html, 'is-todo'), CHOICE.total - CHOICE.index - 1);
     assert.equal(countOf(html, 'aria-current="step"'), 1, '当前那格靠这个给读屏');
     assert.match(html, new RegExp('aria-hidden="true"><i class="' + wizardShellSlot('seg')), '进度条是纯装饰');
+  });
+
+  it('进度三档**按位置**落：一格一格数出来，正走就在第 `index` 格上（换格＝红）', () => {
+    /* 上面那四条只数枚数 ⇒ 把两格的类互换也照样绿。这里按**出现次序**取状态。 */
+    assert.deepEqual(segStates(html), ['is-done', 'is-done', 'is-now', 'is-todo', 'is-todo'],
+      '走过／正走／没到要按次序落（第 ' + String(CHOICE.index) + ' 格正走）');
+    const tags = [...html.matchAll(new RegExp('<i class="[^"]*' + wizardShellSlot('seg') + ' [^"]*"([^>]*)>', 'g'))]
+      .map((m) => m[1]);
+    assert.equal(tags.length, CHOICE.total);
+    assert.equal(tags.filter((t) => t.includes('aria-current')).length, 1);
+    assert.ok(tags[CHOICE.index].includes('aria-current="step"'),
+      '`aria-current="step"` 要落在第 ' + String(CHOICE.index) + ' 格上（现在落在第 '
+      + String(tags.findIndex((t) => t.includes('aria-current'))) + ' 格）');
+    for (const [i, t] of tags.entries()) {
+      if (i !== CHOICE.index) assert.equal(t.includes('aria-current'), false, '第 ' + String(i) + ' 格不该有 aria-current');
+    }
+    /* 第 1 问与末问两档：三档的次序同样按位置落。 */
+    assert.deepEqual(segStates(renderWizardShell(FIRST)), ['is-now', 'is-todo', 'is-todo', 'is-todo', 'is-todo']);
+    assert.deepEqual(segStates(renderWizardShell({ ...CHOICE, index: 4, value: 'three_four' })),
+      ['is-done', 'is-done', 'is-done', 'is-done', 'is-now']);
   });
 
   it('读数行：「第 n / N 问」＋次段；段间不写分隔符（缝由列距承担）', () => {
@@ -242,6 +368,22 @@ describe('wizard-shell ① 渲染契约 · 骨架与槽位', () => {
     assert.match(html, new RegExp(WIZARD_SHELL_GO_ATTR + '="back"(?! disabled)'), '其余问上它是可按的');
     assert.equal(/data-ilife-wizard-go="back" disabled[^>]*aria-describedby/.test(html), false,
       '能按的那一枚不该挂"为什么按不动"');
+  });
+
+  it('第 1 问 ＋ 错态：按不动那句原因**不丢**（读数行 ＋ 错态行两张 id 都给）', () => {
+    /* 「为什么按不动」（读数行）与「这一屏为什么不对」（错态行）是两件事：
+       后一句上来就把前一句顶掉的话，契约 #2 在这个状态下就不成立了。 */
+    const bad = renderWizardShell({ ...FIRST, error: '这一问必须选一条' });
+    assert.match(bad, new RegExp(WIZARD_SHELL_GO_ATTR + '="back" disabled aria-describedby="ilife-wizard-note-cook ilife-wizard-error-cook"'));
+    const ids = idsOf(bad);
+    assert.ok(ids.includes('ilife-wizard-note-cook'), '读数行的 id 要真的在页上（不是挂个空名）');
+    assert.ok(ids.includes('ilife-wizard-error-cook'), '错态行的 id 要真的在页上');
+    /* 整壳禁用同理（第 1 问 ＋ 禁用：原因也落在错态行那一枚 id 上）。 */
+    const offFirst = renderWizardShell({ ...FIRST, disabled: true, disabledReason: OFF_REASON });
+    assert.match(offFirst, new RegExp('aria-describedby="ilife-wizard-note-cook ilife-wizard-error-cook"'));
+    /* 其余问上没有"为什么按不动"这回事，那张表就只有错态行一枚。 */
+    const badMid = renderWizardShell({ ...CHOICE, error: '这一问必须选一条' });
+    assert.match(badMid, new RegExp(WIZARD_SHELL_GO_ATTR + '="back"(?! disabled) aria-describedby="ilife-wizard-error-cook"'));
   });
 
   it('不能跳过的问**不摆**一枚按不动的「跳过」（中间档不许留）', () => {
@@ -390,6 +532,77 @@ describe('wizard-shell ① 渲染契约 · 非法入参一律拒（不静默降�
       '一行里两个"为什么"会互相盖住');
     assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, skippable: 'yes' })), true, '布尔只收真布尔');
   });
+
+  it('同页实例标识：只收 `[A-Za-z0-9_-]`（含糊的写法会与另一份撞名，撞了就是静默互踢）', () => {
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: 'wall a' })), true, '空格');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: 'wall.a' })), true, '点');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: '墙' })), true, '汉字（会上屏成 id，认不出是哪一份）');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: 1 })), true, '不是字符串');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: 'wall_1-x' })), false, '合法档要收');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, id: '' })), false, '空串按"未给"处理（与全仓口径一致）');
+  });
+});
+
+/* ── ①b 说明书与派生面（入参表是契约的一部分，不是散文） ──────────────── */
+
+/** README 第一张「类型 ＋ 缺省／必填」表里的**顶层**字段（`父[].子` 那种元素字段行不算）。 */
+function readmeTopFields(readme) {
+  const lines = readme.split('\n');
+  const cellsOf = (line) => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim());
+  const out = [];
+  for (let i = 0; i + 1 < lines.length; i += 1) {
+    if (!lines[i].trim().startsWith('|') || !/^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) continue;
+    const head = cellsOf(lines[i]);
+    const typeCol = head.findIndex((c) => c.includes('类型'));
+    const reqCol = head.findIndex((c) => c.includes('缺省') || c.includes('必填'));
+    if (typeCol < 0 || reqCol < 0) continue;
+    for (let j = i + 2; j < lines.length && lines[j].trim().startsWith('|'); j += 1) {
+      const c = cellsOf(lines[j]);
+      const field = c[0].replace(/`/g, '').trim();
+      if (!/^[A-Za-z_$][\w$]*$/.test(field)) continue;
+      out.push([field, c[reqCol].includes('必填')]);
+    }
+    break;
+  }
+  return out;
+}
+
+describe('wizard-shell ①b 说明书与派生面', () => {
+  it('README 入参表的「必填」栏与实现一致：写必填的不给就拒，写「—」的不给照渲染', () => {
+    const rows = readmeTopFields(readFileSync(join(DIR, 'README.md'), 'utf8'));
+    assert.ok(rows.length >= 15, '入参表抽出来的顶层字段太少（表头或行格式变了？）：' + rows.length);
+    for (const [field, required] of rows) {
+      /* 底样走**未答**那一档：`value` 给了却没选项是另一种违规（`value` 只在有选项的那一问上给），
+         拿它当底会把 `options` 那一行试成"删了也拒"，读不出这条判据要读的事。 */
+      const input = { ...CHOICE, value: null };
+      delete input[field];
+      const threw = throwsBlocks(() => renderWizardShell(input));
+      assert.equal(threw, required, (required ? '写了必填却不给也不拒：' : '写了非必填却不给就拒：') + field);
+    }
+    /* 反面读数：`options` 曾写成「必填」——那与契约 #6（两者都不给＝确认屏）直接冲突。 */
+    const optRow = rows.find(([f]) => f === 'options');
+    assert.deepEqual(optRow, ['options', false], '`options` 的缺省栏应当是「—」（不给＝这一屏没有答法 ⇒ 确认屏）');
+  });
+
+  it('清单派生的示例入参：元素字段是**裸名**（不是把 `options[].value` 当键写字面量）', () => {
+    const row = derive(PKG).pieces.find((p) => p.name === 'wizard-shell');
+    assert.ok(row !== undefined, '派生器扫不到本件');
+    assert.ok(row.sample !== null, 'README 入参表抽不出示例入参：' + JSON.stringify(row.sample));
+    for (const key of Object.keys(row.sample)) {
+      assert.equal(key.includes('['), false, '样例里出现了字面量数组键：' + JSON.stringify(key));
+    }
+    assert.deepEqual(Object.keys(row.sample.options[0]).sort(), ['title', 'value'],
+      '选项元素的键名被写坏了：' + JSON.stringify(row.sample.options[0]));
+    /* 采样值能喂进 render：**只**该剩「派生器把 number 一律给 1」那一条通病（22 件同病，不归本件）。 */
+    try {
+      renderWizardShell(row.sample);
+      console.log('READING wizard-shell：清单样例已能直接渲染（派生器的 number→1 通病不再影响本件）');
+    } catch (e) {
+      assert.match(String(e.message), /total 必须大于 input\.index/,
+        '样例仍抛错，但只该剩"派生器把 number 一律给 1"这一条通病；现在报的是：' + String(e.message));
+      console.log('READING wizard-shell：清单样例仍抛 ' + String(e.message).slice(0, 44) + '（派生器通病，非本件键名）');
+    }
+  });
 });
 
 /* ── ② 样式与零 DOM 纪律 ───────────────────────────────────────────── */
@@ -491,6 +704,83 @@ describe('wizard-shell ② 样式与零 DOM 纪律', () => {
   });
 });
 
+/* ── ②b 样式读数：禁用态与加载态的形写在取值上（只数枚数断不到这一层） ──── */
+
+/** 皮肤取值写成 CSS 时的样子：`skinVar()` 带兜底链（`var(--ilife-x, var(--fallback, #hex))`）——
+ *  判据比的是**取了哪个 token**，不是整串。 */
+const tokenIs = (value, token) => {
+  const m = new RegExp('^var\\(--ilife-' + token + '\\b').test(String(value));
+  assert.ok(m, '取值该取 `' + token + '`，实际是：' + String(value));
+  return true;
+};
+
+describe('wizard-shell ②b 样式读数：按不动与推进中到底画成了什么样', () => {
+  const clean = stripComments(wizardShellCss());
+  const scope = '.ilife-page-ui';
+  const opt = scope + ' .' + wizardShellSlot('opt');
+  const bt = scope + ' .' + wizardShellSlot('bt');
+  const busy = scope + ' .' + WIZARD_SHELL_CLASS + '[' + WIZARD_SHELL_LOADING_ATTR + '="1"]';
+  const btOff = bt + '[disabled]';
+  const primarySel = bt + '.is-primary';
+  const busyPrimarySel = busy + ' .' + wizardShellSlot('bt') + '.is-primary';
+
+  it('按不动的键：字（弱文字）＋ 形（虚线框）＋ 框色（够得着图形地板 3:1）三样都在取值上', () => {
+    const off = declsOf(clean, btOff);
+    assert.equal(off.get('border-style'), 'dashed', '按不动要有"形"那一重（触屏上没有 cursor）');
+    assert.equal(off.get('background'), 'transparent', '底露出脚行底色（"软底压软底"那套要躲开）');
+    tokenIs(off.get('color'), 'ink-3');
+    const border = String(off.get('border-color'));
+    const m = /^var\(--ilife-([a-z0-9-]+)\b/.exec(border);
+    assert.ok(m !== null, '框色要取皮肤 token（不写字面色）：' + border);
+    for (const skin of SKIN_NAMES) {
+      const v = SKINS[skin].values;
+      const r = contrastOf(v[m[1]], v['surface-2']);
+      assert.ok(r !== null && r >= 3,
+        skin + '：按不动的键框色（' + m[1] + '）对脚行底只有 ' + String(r) + ':1（图形地板 3:1）');
+      assert.ok(contrastOf(v['line'], v['surface-2']) < 3, skin + '：`line` 对脚行底居然够 3:1 —— README 与注释要跟着改');
+    }
+    console.log('READING wizard-shell 按不动框色 ' + m[1] + ' 对脚行底：'
+      + SKIN_NAMES.map((s) => s + '=' + String(contrastOf(SKINS[s].values[m[1]], SKINS[s].values['surface-2']))).join('／')
+      + '；同样位置上 `line` 只有 '
+      + SKIN_NAMES.map((s) => s + '=' + String(contrastOf(SKINS[s].values.line, SKINS[s].values['surface-2']))).join('／'));
+  });
+
+  it('答题区的禁用态：选项框改虚线、标记位虚线、标题走弱文字（`cursor` 触屏上没有，另要有看得见的形）', () => {
+    const o = declsOf(clean, opt + ':has(input[disabled])');
+    assert.equal(o.get('border-style'), 'dashed', '禁用态选项要有一处看得见的形');
+    assert.equal(o.get('cursor'), 'not-allowed', '鼠标那一档仍要保留');
+    assert.equal(declsOf(clean, opt + ':has(input[disabled]) > .' + wizardShellSlot('mk')).get('border-style'), 'dashed',
+      '标记位也要跟着改形（光染框是一条细线的差别）');
+    tokenIs(declsOf(clean, opt + ':has(input[disabled]) .' + wizardShellSlot('opt-title')).get('color'), 'ink-3');
+    /* 选中那一重不被禁用的虚线盖掉：选中的那一条**恒实线**（按不动 ≠ 没选）。 */
+    assert.equal(declsOf(clean, opt + ':has(input:checked)').get('border-style'), 'solid');
+    assert.equal(declsOf(clean, opt + ':has(input:checked) > .' + wizardShellSlot('mk')).get('border-style'), 'solid');
+    /* 选中标题的强调字色：**命中得着**（`>` 那条是死规则——`.opt-title` 住在 `.tx` 里）。 */
+    tokenIs(declsOf(clean, opt + ':has(input:checked) .' + wizardShellSlot('opt-title')).get('color'), 'accent-text');
+    for (const r of cssRules(clean)) {
+      if (!r.sel.includes('.' + wizardShellSlot('opt-title'))) continue;
+      assert.equal(new RegExp('>\\s*\\.' + wizardShellSlot('opt-title')).test(r.sel), false,
+        '`.opt-title` 住在 `.tx` 里，不是 `.opt` 的直接子节点 —— 带 `>` 的组合子永不命中：' + r.sel);
+    }
+  });
+
+  it('推进中的主键**保住实底**（字已换成"保存中"，就地告诉读者"它在干活"）', () => {
+    /* 这一条一旦被抵消，主键 computed 会变 `dashed` ＋ 透明底（红）：这条判据读的就是那几个取值。 */
+    const b = declsOf(clean, busyPrimarySel);
+    assert.equal(b.get('border-style'), 'solid', '推进中主键不许变虚框（读者会以为取消了）');
+    const rest = declsOf(clean, primarySel);
+    for (const prop of ['border-color', 'background', 'color']) {
+      assert.equal(b.get(prop), rest.get(prop), '推进中主键的 ' + prop + ' 要与常态同一份取值');
+    }
+    tokenIs(b.get('background'), 'accent-text');
+    tokenIs(b.get('color'), 'accent-ink');
+    /* 顺序：通用禁用规则先、推进中那条后（反了 ⇒ 一按下去红底变虚框）。 */
+    const order = cssRules(clean).map((r) => r.sel);
+    assert.ok(order.indexOf(busyPrimarySel) > order.indexOf(btOff),
+      '推进中主键那条规则必须压在 `[disabled]` 之后：' + order.indexOf(busyPrimarySel) + ' < ' + order.indexOf(btOff));
+  });
+});
+
 /* ── ③ 加法式 ──────────────────────────────────────────────────────── */
 
 describe('wizard-shell ③ 加法式（不启用即逐字节不变）', () => {
@@ -522,27 +812,37 @@ function assertStaticGeometry(css, html) {
   assert.deepEqual(wide, [], '出现过不了窄档（390）的固定宽度：' + wide.join('、'));
 }
 
-/** 夹具里的四份压力样例：选择问（已答）／第 1 问／填空／确认屏／长串。 */
+/** 夹具里压力样例：选择问（已答）／第 1 问／填空／确认屏／长串／推进中／整壳禁用。 */
 function cases() {
   return [
-    { name: 'choice', html: renderWizardShell(CHOICE) },
-    { name: 'first', html: renderWizardShell(FIRST) },
-    { name: 'entry', html: renderWizardShell(ENTRY) },
-    { name: 'confirm', html: renderWizardShell(CONFIRM) },
-    { name: 'long', html: renderWizardShell(LONG) },
-    { name: 'loading', html: renderWizardShell({ ...CHOICE, loading: true }) },
+    ['choice', CHOICE], ['first', FIRST], ['entry', ENTRY], ['confirm', CONFIRM],
+    ['long', LONG], ['loading', { ...CHOICE, loading: true }], ['off', OFF],
   ];
 }
+
+/** 一份实例的**同页实例键**：四套皮肤 × 七个样例＝28 份同名实例摆在一页上，每份都得有自己的键
+ *  （不给就是 S1：单选组同名 ⇒ 点一份把另一份的选中静默取消、件内 id 重号）。 */
+const fixtureId = (skin, caseName) => 'wz-' + skin + '-' + caseName;
+
+/** 一片皮肤下的整套样例。 */
+function skinCasesHtml(skin) {
+  return cases().map(([name, input]) => '<section data-case="' + name + '">'
+    + renderWizardShell({ ...input, id: fixtureId(skin, name) }) + '</section>').join('');
+}
+
+/** 比"换皮不换结构"之前，把**实例键**抹成同一个占位符：它是"每份实例必须不同"的那一处，
+ *  皮肤之间**只有它**允许不同；其余一个字节都要一样。 */
+const maskInstanceKey = (html, skin, caseName) => String(html).split(fixtureId(skin, caseName)).join('<KEY>');
 
 const WIDTHS = [390, 1280];
 
 describe('wizard-shell ④ 两档几何与交互（真机 headless Chrome ＋ CDP）', () => {
   it('容器 390／1280：零横向溢出 ＋ 触控 ≥44 ＋ 间距 ≥8 ＋ 零截断 ＋ 换皮不换结构 ＋ 真点交互', async (t) => {
     const css = wizardShellCss();
-    const casesHtml = cases().map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join('');
+    const casesHtml = SKIN_NAMES.map(skinCasesHtml).join('');
     const page = await startShapesPage({
       html: SKIN_NAMES.map((skin) => '<div class="ilife-page-ui ' + skinClass(skin) + '" data-skin="' + skin + '">'
-        + casesHtml + '</div>').join('\n'),
+        + skinCasesHtml(skin) + '</div>').join('\n'),
       css: skinCss() + '\n' + css,
       height: 1600,
     });
@@ -622,17 +922,20 @@ describe('wizard-shell ④ 两档几何与交互（真机 headless Chrome ＋ CD
       assert.equal(narrowFoot.every((h) => h > Math.max(...wideFoot)), true,
         '390 档脚行应比 1280 档高（提示句独占一行 ⇒ @container 命中）：390=' + JSON.stringify(narrowFoot)
         + ' 1280=' + JSON.stringify(wideFoot));
-      /* 换皮不换结构：四套皮肤容器里的标记逐字节相同。 */
+      /* 换皮不换结构：四套皮肤容器里的标记逐字节相同（**实例键那一处除外** —— 每份实例必须有自己的键，
+         比之前把它抹成同一个占位符；其余一个字节都不许差）。 */
       for (const width of WIDTHS) {
         await page.setWidth(width);
-        for (const c of cases()) {
+        for (const [caseName] of cases()) {
           const marks = await page.ev('(function(){var out={};var skins=' + JSON.stringify([...SKIN_NAMES]) + ';'
-            + 'for (var i=0;i<skins.length;i+=1){var el=document.querySelector(".ilife-skin-"+skins[i]+" [data-case=' + c.name + '] .'
+            + 'for (var i=0;i<skins.length;i+=1){var el=document.querySelector(".ilife-skin-"+skins[i]+" [data-case=' + caseName + '] .'
             + WIZARD_SHELL_CLASS + '");out[skins[i]]=el===null?"":el.innerHTML;}return out;}())');
           const base = marks[SKIN_NAMES[0]];
           assert.ok(typeof base === 'string' && base.length > 0, width + ' 档：真机上拿不到标记');
           for (const skin of SKIN_NAMES.slice(1)) {
-            assert.equal(marks[skin], base, width + ' 档 ' + c.name + '：' + skin + ' 下的标记与 ' + SKIN_NAMES[0] + ' 下不同');
+            assert.equal(maskInstanceKey(marks[skin], skin, caseName),
+              maskInstanceKey(base, SKIN_NAMES[0], caseName),
+              width + ' 档 ' + caseName + '：' + skin + ' 下的标记与 ' + SKIN_NAMES[0] + ' 下不同（实例键已抹平）');
           }
         }
       }
@@ -649,6 +952,93 @@ describe('wizard-shell ④ 两档几何与交互（真机 headless Chrome ＋ CD
       const attr = await page.ev('document.querySelector(".ilife-skin-paper [data-case=choice] .' + WIZARD_SHELL_CLASS
         + '").getAttribute(' + JSON.stringify(WIZARD_SHELL_VALUE_ATTR) + ')');
       assert.equal(attr, 'three_four', '机器值就地落到根属性上');
+      /* **同页多实例互不干扰**（这一页有 4 份同名实例）：点第 1 份的选项，其余各份的选中态一条不动。
+         不给实例键时这里会读到"其余各份 checked 从 1 变 0"（静默互踢），且全页 id 重号。 */
+      const iso = await page.ev('(function(){var out={per:{},dupIds:[],groupNames:{}};var skins='
+        + JSON.stringify([...SKIN_NAMES]) + ';'
+        + 'for (var i=0;i<skins.length;i+=1){var sec=document.querySelector(".ilife-skin-"+skins[i]+" [data-case=choice]");'
+        + 'var picked=sec.querySelectorAll("input[type=radio]:checked");'
+        + 'out.per[skins[i]]={checked:picked.length,value:picked.length>0?picked[0].value:null,'
+        + 'rows:sec.querySelectorAll(".' + WIZARD_SHELL_CLASS + '-opt:has(input:checked)").length};'
+        + 'out.groupNames[skins[i]]=sec.querySelector("input[type=radio]").getAttribute("name");}'
+        + 'var seen={};var all=document.querySelectorAll("[id^=ilife-wizard-]");'
+        + 'for (var k=0;k<all.length;k+=1){if(seen[all[k].id])out.dupIds.push(all[k].id);seen[all[k].id]=1;}'
+        + 'return out;}())');
+      assert.deepEqual(iso.dupIds, [], '全页件内 id 重号：' + JSON.stringify(iso.dupIds));
+      assert.equal(new Set(Object.values(iso.groupNames)).size, SKIN_NAMES.length,
+        '四份实例的单选组名必须互不相同：' + JSON.stringify(iso.groupNames));
+      for (const skin of SKIN_NAMES) {
+        const r = iso.per[skin];
+        assert.equal(r.checked, 1, skin + '：点了第 1 份之后这一份一条选中的都没有了（被同页另一份踢掉）');
+        assert.equal(r.rows, 1, skin + '：选中态那一行丢了');
+        assert.equal(r.value, skin === 'paper' ? 'three_four' : 'one_two',
+          skin + '：这一份的选中值被别人改了（点一份不许改另一份）');
+      }
+      console.log('READING wizard-shell 同页 ' + SKIN_NAMES.length + ' 份同名实例：点击后各份 checked ＝ '
+        + SKIN_NAMES.map((s) => s + ':' + String(iso.per[s].checked) + '/' + String(iso.per[s].value)).join('、')
+        + '；全页 id 重号 ' + String(iso.dupIds.length) + ' 处；组名互不相同 ' + String(new Set(Object.values(iso.groupNames)).size === SKIN_NAMES.length));
+      /* **禁用态在屏上看得见**：可用壳与禁用壳的答题区逐属性对照（9 个绘制属性里至少一处要不同），
+         以及按不动的键那条框线的对比度（`line` 对脚行底只有 1.16…1.41:1，读不出来）。 */
+      const paint = await page.ev('(function(){var KEYS=["backgroundColor","borderColor","borderStyle","boxShadow",'
+        + '"opacity","color","visibility","transform","outlineColor"];'
+        + 'function props(sel){var n=document.querySelector(sel);var cs=getComputedStyle(n);var o={};'
+        + 'for(var i=0;i<KEYS.length;i+=1)o[KEYS[i]]=cs[KEYS[i]];return o;}'
+        + 'var P=".ilife-skin-paper ";'
+        + 'return {keys:KEYS,'
+        + 'onOpt:props(P+"[data-case=choice] .' + wizardShellSlot('opt') + '"),'
+        + 'offOpt:props(P+"[data-case=off] .' + wizardShellSlot('opt') + '"),'
+        + 'onMk:props(P+"[data-case=choice] .' + wizardShellSlot('mk') + '"),'
+        + 'offMk:props(P+"[data-case=off] .' + wizardShellSlot('mk') + '"),'
+        + 'onTitle:props(P+"[data-case=choice] .' + wizardShellSlot('opt-title') + '"),'
+        + 'offTitle:props(P+"[data-case=off] .' + wizardShellSlot('opt-title') + '"),'
+        + 'offBtBorder:props(P+"[data-case=off] .' + wizardShellSlot('bt') + '[disabled]").borderColor,'
+        + 'footBg:props(P+"[data-case=off] .' + wizardShellSlot('foot') + '").backgroundColor,'
+        + 'cursorOn:getComputedStyle(document.querySelector(P+"[data-case=choice] .' + wizardShellSlot('opt') + '")).cursor,'
+        + 'cursorOff:getComputedStyle(document.querySelector(P+"[data-case=off] .' + wizardShellSlot('opt') + '")).cursor,'
+        + 'offCheckedRows:document.querySelectorAll(P+"[data-case=off] .' + WIZARD_SHELL_CLASS + '-opt:has(input:checked)").length};}())');
+      assert.equal(paint.onOpt.borderStyle, 'solid', '可用态的选项框该是实线');
+      assert.equal(paint.offOpt.borderStyle, 'dashed', '禁用态的选项框该是虚线（触屏上唯一看得见的形）');
+      assert.equal(paint.offMk.borderStyle, 'dashed', '禁用态的标记位也要改形');
+      assert.equal(paint.offTitle.color !== paint.onTitle.color, true,
+        '禁用态的标题要走弱文字档：' + paint.onTitle.color + ' → ' + paint.offTitle.color);
+      /* 选中标题的强调字色：逐皮肤量 computed，与皮肤表里的 `accent-text` 逐值对齐
+         （这条规则用 `>` 组合子时是**死规则**：`.opt-title` 住在 `.tx` 里，屏上字色一字不变）。 */
+      const titleColor = await page.ev('(function(){var out={};var skins=' + JSON.stringify([...SKIN_NAMES]) + ';'
+        + 'for (var i=0;i<skins.length;i+=1){var p=".ilife-skin-"+skins[i]+" ";'
+        + 'out[skins[i]]=getComputedStyle(document.querySelector(p+"[data-case=choice] .' + WIZARD_SHELL_CLASS
+        + '-opt:has(input:checked) .' + WIZARD_SHELL_CLASS + '-opt-title")).color;}return out;}())');
+      for (const skin of SKIN_NAMES) {
+        assert.deepEqual(rgbOf(titleColor[skin]), rgbOf(SKINS[skin].values['accent-text']),
+          skin + '：选中那一条的标题字色该是 `accent-text`（' + SKINS[skin].values['accent-text'] + '），实际是 ' + titleColor[skin]);
+      }
+      console.log('READING wizard-shell 选中标题 computed 字色：'
+        + SKIN_NAMES.map((s) => s + '=' + titleColor[s]).join('、')
+        + '（皮肤表 accent-text＝' + SKIN_NAMES.map((s) => SKINS[s].values['accent-text']).join('、') + '）');
+      const drew = paint.keys.filter((k) => paint.onOpt[k] !== paint.offOpt[k]);
+      assert.ok(drew.length >= 1, '禁用态答题区与可用态**逐像素相同**（9 个绘制属性一个都没变）：' + JSON.stringify(paint.onOpt));
+      assert.equal(paint.cursorOn, 'pointer');
+      assert.equal(paint.cursorOff, 'not-allowed', '鼠标那一档仍要保留（但它不是唯一的一档）');
+      assert.equal(paint.offCheckedRows, 1, '禁用壳里已选中的那一条仍要显示选中（按不动 ≠ 没选）');
+      const offRatio = contrastOf(paint.offBtBorder, paint.footBg);
+      assert.ok(offRatio !== null && offRatio >= 3,
+        '按不动的键框色对脚行底只有 ' + String(offRatio) + ':1（图形地板 3:1）：' + paint.offBtBorder + ' on ' + paint.footBg);
+      console.log('READING wizard-shell 禁用态 vs 可用态（选项）：差异属性 ' + JSON.stringify(drew)
+        + '；按不动键框色 ' + paint.offBtBorder + ' on 脚行底 ' + paint.footBg + ' ＝ ' + String(offRatio) + ':1'
+        + '；cursor ' + paint.cursorOn + ' → ' + paint.cursorOff);
+      /* **推进中主键保住实底**：真机 computed 与常态主键逐属性同值（抵消那条规则 ⇒ dashed／透明 ⇒ 红）。 */
+      const busyPaint = await page.ev('(function(){function props(sel){var cs=getComputedStyle(document.querySelector(sel));'
+        + 'return {borderStyle:cs.borderStyle,borderColor:cs.borderColor,backgroundColor:cs.backgroundColor,color:cs.color};}'
+        + 'var P=".ilife-skin-paper ";'
+        + 'return {rest:props(P+"[data-case=choice] .' + wizardShellSlot('bt') + '.is-primary"),'
+        + 'busy:props(P+"[data-case=loading] .' + wizardShellSlot('bt') + '.is-primary")};}())');
+      assert.equal(busyPaint.busy.borderStyle, 'solid', '推进中主键变虚框了：' + JSON.stringify(busyPaint.busy));
+      assert.equal(busyPaint.busy.backgroundColor, busyPaint.rest.backgroundColor, '推进中主键的实底丢了');
+      assert.equal(busyPaint.busy.borderColor, busyPaint.rest.borderColor);
+      assert.equal(busyPaint.busy.color, busyPaint.rest.color);
+      assert.equal(/^rgba\(0, 0, 0, 0\)$/.test(busyPaint.busy.backgroundColor), false, '推进中主键不许变透明底');
+      console.log('READING wizard-shell 推进中主键 computed（常态 → 推进中）：'
+        + paint.keys.length + ' 项里 borderStyle=' + busyPaint.rest.borderStyle + '→' + busyPaint.busy.borderStyle
+        + '，实底 ' + busyPaint.rest.backgroundColor + '→' + busyPaint.busy.backgroundColor);
       /* 三枚键：主键派发 `go=next`；第 1 问上「上一问」按不动（点了没反应）。 */
       await page.ev('document.querySelector(".ilife-skin-paper [data-case=choice] ['
         + WIZARD_SHELL_GO_ATTR + '=next]").click();true');

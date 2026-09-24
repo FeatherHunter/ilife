@@ -89,6 +89,10 @@ export type WizardShellForm = (typeof WIZARD_SHELL_FORMS)[number];
 export const WIZARD_SHELL_FIELD_KINDS = ['text', 'number'] as const;
 export type WizardShellFieldKind = (typeof WIZARD_SHELL_FIELD_KINDS)[number];
 
+/** 这一屏的**答法**（`data-ilife-wizard-answer` 的取值；闭集，三格恰好对应 `答案三种` 那三条分支）。
+ *  **这不是形态**（形态键住 `WIZARD_SHELL_FORMS`）：`options`／`fields` 是两种答法，`confirm` 是没有答法那一屏。 */
+export type WizardShellAnswer = 'options' | 'fields' | 'confirm';
+
 /** 进度一格的三个状态类（无文字的条在皮肤语汇里只有 `accent` 一档 ⇒ 当前那格靠**形**分辨：高一档）。 */
 export const WIZARD_SHELL_SEG_DONE = 'is-done';
 export const WIZARD_SHELL_SEG_NOW = 'is-now';
@@ -108,6 +112,10 @@ export const WIZARD_SHELL_STEP_ATTR = 'data-ilife-wizard-step';
 export const WIZARD_SHELL_TOTAL_ATTR = 'data-ilife-wizard-total';
 /** 当前问已答的机器值（未答＝这个属性不出现，不是空串）。 */
 export const WIZARD_SHELL_VALUE_ATTR = 'data-ilife-wizard-value';
+/** 这一屏出的是哪一种答法（值域 `WizardShellAnswer`）——根属性上的**诊断信号**：
+ *  页面读它就能分辨「这一屏没有答法」是设计过的确认屏（`confirmText`），还是这一屏的数据没落进来。
+ *  （整趟数据不由本件持：`steps`／`questions` 这类键本件既不读也不认，传进来只会让答题区落到 `confirm`。） */
+export const WIZARD_SHELL_ANSWER_ATTR = 'data-ilife-wizard-answer';
 /** 一个选项（`<label>`）的标记：值＝选项机器值。 */
 export const WIZARD_SHELL_OPTION_ATTR = 'data-ilife-wizard-option';
 /** 一格填空的标记：值＝字段机器名（运行时段按它收值）。 */
@@ -194,8 +202,14 @@ export interface WizardShellField {
 
 /** 分步录入壳入参。**这一件渲染的是「当前那一问」这一屏**——整趟有几问、走到第几问由页面给。 */
 export interface WizardShellInput {
-  /** 机器键（单选组名与件内 id 的前缀；同一页内应唯一）。**非空**。 */
+  /** 机器键（事件 `detail.name`）。**非空**。不给 `id` 时它同时是单选组名与件内 `id` 的前缀。 */
   readonly name: string;
+  /** **同页实例标识**：同一页里摆多份本件时，**每份给一个不同的值**（单选组名与件内 `id` 都由它派生）。
+   *  为什么需要它：单选组的组名在**整篇文档**里互斥 —— 两屏同名时，浏览器只认最后那一条 `checked`，
+   *  在另一屏点一下就会把这一屏已选中的那条**静默取消**（根属性说"已答"，屏上却没有一条是选中的）；
+   *  件内 `id` 也会重号（`aria-labelledby`／`aria-describedby` 指到别的屏上去）。同一页只摆一份时不必给。
+   *  只许 `[A-Za-z0-9_-]`（它直接进 `id=`／`name=`：含糊的写法会与另一份撞名，撞了就是上面那种静默互踢）。 */
+  readonly id?: string;
   /** 大字问题：这一问在问什么。**非空**（没有问题的"问"不存在）。 */
   readonly question: string;
   /** 当前是第几问（**0 起**）。 */

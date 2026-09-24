@@ -22,6 +22,7 @@ import {
   WIZARD_SHELL_NEXT_LABEL,
   WIZARD_SHELL_TOTAL_MAX,
   WIZARD_SHELL_TOTAL_MIN,
+  type WizardShellAnswer,
   type WizardShellField,
   type WizardShellFieldKind,
   type WizardShellForm,
@@ -51,11 +52,16 @@ export interface WizardField {
 export interface WizardShellModel {
   readonly form: WizardShellForm;
   readonly name: string;
+  /** **同页实例标识**（`input.id` 给了就用它，否则退成 `name`）：单选组名与件内 `id` 都由它派生。
+   *  它管的是"这一份与那一份分得开"；`name` 管的是"事件报的是哪一件"。 */
+  readonly instanceKey: string;
   readonly question: string;
   readonly index: number;
   readonly total: number;
   /** 进度那 N 格的状态（长度恒等于 `total`）。 */
   readonly segments: readonly WizardSegState[];
+  /** 这一屏出的答法（根属性 `data-ilife-wizard-answer` 的值）。 */
+  readonly answer: WizardShellAnswer;
   readonly options: readonly WizardOption[];
   readonly fields: readonly WizardField[];
   /** `null` ＝ 这一问还没答；串 ＝ 已答的机器值（必然命中一个选项）。 */
@@ -79,6 +85,18 @@ function optBool(value: unknown, field: string): boolean | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== 'boolean') badInput(field + ' 必须是布尔');
   return value;
+}
+
+/** 同页实例标识：只许 `[A-Za-z0-9_-]`。
+ *  它直接进 `id=`／`name=`，而这两处的**相等**就意味着"认成同一份"（单选组互踢、`aria-*` 指错屏）；
+ *  含糊的写法（空格／点／斜杠）在 `id=` 里会被浏览器当成别的形状，两处归一到同一个值的写法就更读不出区别了。 */
+function optInstanceId(value: unknown): string | undefined {
+  const s = optText(value, 'wizard-shell: input.id');
+  if (s === undefined) return undefined;
+  if (!/^[A-Za-z0-9_-]+$/.test(s)) {
+    badInput('wizard-shell: input.id 只许用字母／数字／`-`／`_`（它直接进件内 id 与单选组名：含糊的写法会与另一份撞名，撞了就是静默互踢）');
+  }
+  return s;
 }
 
 /** 0 起的整数（第几问／一共几问都走它：小数与负数说不出"第几问"）。 */
@@ -213,14 +231,17 @@ export function normalizeWizardShell(input: unknown): WizardShellModel {
   const givenAside = optText(raw.aside, 'wizard-shell: input.aside');
   const givenNext = optText(raw.nextLabel, 'wizard-shell: input.nextLabel');
   const confirmText = optText(raw.confirmText, 'wizard-shell: input.confirmText');
+  const givenId = optInstanceId(raw.id);
 
   return {
     form: form as WizardShellForm,
     name,
+    instanceKey: givenId === undefined ? name : givenId,
     question,
     index,
     total,
     segments: segmentsOf(index, total),
+    answer: options.length > 0 ? 'options' : (fields.length > 0 ? 'fields' : 'confirm') as WizardShellAnswer,
     options,
     fields,
     value,
@@ -244,6 +265,8 @@ export function normalizeWizardShell(input: unknown): WizardShellModel {
 }
 
 /** 件内 `id` 的唯一拼法（机器键里不合法 id 的字符一律换成 `-`）。
+ *  **传 `instanceKey`，不是 `name`**：同页摆两份同名实例时，`id` 必须按实例分开（否则重号，
+ *  `aria-labelledby`／`aria-describedby` 会指到另一份上去）。
  *  三个用处：大字问题的 id（选项组的 `aria-labelledby` 指它）、读数行的 id（按不动的"上一问"指它）、
  *  错态那一行的 id（答题区与三枚键的 `aria-describedby` 指它）。 */
 export function wizardShellId(part: string, name: string, sub?: string): string {
