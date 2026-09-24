@@ -1,4 +1,4 @@
-/** section-head · **样式段**（本件唯一的样式来源）。
+﻿/** section-head · **样式段**（本件唯一的样式来源）。
  *
  *  纪律（与本节其余件同一份）：
  *   · 只经 `skinVar()` 读皮肤 —— 组件里**不写** `var(--ilife-…)`（兜底链只许住在 `skin/contract.ts`）；
@@ -35,10 +35,14 @@ export function sectionHeadCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const box = root + ' .' + p + 'block-section-head';
-  /** 槽位的**类名**（不带 scope）——要拼组合选择器时用它，别拿已带 scope 的 `s()` 再拼（会拼出双前缀的假选择器）。 */
+  /** 槽位的**裸类名**（不带 scope）：**只用在组合器的右边**（`+`／`>`／后代那一段），
+   *  左边（选择器开头）一律走 `s()`——开头那次 scope 不能省，省了整条就裸着（与别件串味）。 */
   const slot = (name: SectionHeadSlot): string => '.' + sectionHeadSlot(name, p);
+  /** 带 scope 的完整选择器：**每条规则的左端**都用它（含伪元素那条，如 `s('more') + '::before'`）。 */
   const s = (name: SectionHeadSlot): string => root + ' ' + slot(name);
   const more = s('more');
+  /** 展开态的元素级前缀：`<scope> <box>[open] `（后半截的内容由调用处拼**裸类名**）。 */
+  const boxOpen = box + '[open] ';
 
   return [
     '/* section-head（小节头 · 形态 C「可折叠小节（原生 details，零脚本）」）：',
@@ -108,24 +112,29 @@ export function sectionHeadCss(input?: { readonly prefix?: string }): string {
     more + ' {',
     '  flex: none;',
     '  margin-left: auto;',
+    /* **给「展开／收起」留一格地板**：两枚字与箭头都由 `::before`／`::after` 出，而**伪元素的内容宽
+       不进入 flex 的自动下限**（实测：`min-width:max-content`／`width:max-content` 三档都压成 30px，
+       内容要 36px ⇒ 整件横向溢出 6px）。这一格里最长的一枚是「展开」（2 个 `fs-xs` 汉字 ≈ 24px）
+       加箭头那一段（≈ 8px）⇒ 右侧留出 2 个 `fs-xs` 的空。 */
+    '  padding-right: calc(2 * ' + skinVar('fs-xs') + ');',
     '  color: ' + skinVar('accent-text') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 700;',
     '  white-space: nowrap;',
     '}',
-    more + '::before {',
+    s('more') + '::before {',
     '  content: "' + SECTION_HEAD_MORE_TEXTS.folded + '";',
     '}',
-    more + '::after {',
+    s('more') + '::after {',
     '  content: "' + SECTION_HEAD_CARET_CODE + '";',
     '  display: inline-block;',
     '  margin-left: 2px;',
     '  transition: transform 120ms ease;',
     '}',
-    box + '[open] ' + more + '::before {',
+    boxOpen + slot('more') + '::before {',
     '  content: "' + SECTION_HEAD_MORE_TEXTS.open + '";',
     '}',
-    box + '[open] ' + more + '::after {',
+    boxOpen + slot('more') + '::after {',
     '  transform: rotate(90deg);',
     '}',
     '/* 正文：受信透传的标记落这里，只给分组间距与换行——本件不再给它加壳。 */',
@@ -156,7 +165,7 @@ export function sectionHeadCss(input?: { readonly prefix?: string }): string {
     '}',
     '@media (prefers-reduced-motion:reduce) {',
     '  ' + s('sum') + ',',
-    '  ' + more + '::after {',
+    '  ' + s('more') + '::after {',
     '    transition-duration: 0.01ms;',
     '  }',
     '}',
@@ -166,7 +175,7 @@ export function sectionHeadCss(input?: { readonly prefix?: string }): string {
     '  ' + s('sum') + ' {',
     '    align-items: baseline;',
     '  }',
-    '  ' + more + ' {',
+    '  ' + s('more') + ' {',
     '    margin-left: 0;',
     '  }',
     '}',

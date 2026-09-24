@@ -51,6 +51,39 @@ const throwsBlocks = (fn) => {
   return false;
 };
 
+/** 抽样式段里的**每一条 CSS 规则**：`sel` ＝ 选择器（逗号已拆开）、`depth` ＝ 它在几层 at-rule 里。
+ *
+ *  机读口径（不靠"行首"或"`}` 紧邻"这类位置假设——本仓的样式段里规则之间**夹着大量注释**，
+ *  那些位置假设会把注释吞进选择器、或把 `@media`／`@container` 块里的规则漏掉）：
+ *  · 逐字符扫一遍，维护花括号深度；每遇到 `{` 就把「上一个 `{`／`}` 之后的文本」当候选选择器；
+ *  · 候选里出现 `@`（at-rule 头）或注释标记 `*` ⇒ **不是规则，是包裹层**，跳过并进一层；
+ *  · 候选以 `while`／`if`／`function` 开头 ⇒ 是运行时里的花括号，跳过。 */
+function ruleSelectors(css) {
+  const out = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < css.length; i += 1) {
+    const ch = css[i];
+    if (ch === '{') {
+      const cand = css.slice(start, i).trim();
+      if (cand !== '' && !cand.startsWith('@') && !cand.includes('*')
+        && !/^(while|if|for|function|switch)\b/.test(cand)) {
+        for (const one of cand.split(',')) {
+          const s = one.trim();
+          if (s !== '') out.push({ sel: s, depth });
+        }
+      } else {
+        depth += 1;
+      }
+      start = i + 1;
+    } else if (ch === '}') {
+      depth = Math.max(0, depth - 1);
+      start = i + 1;
+    }
+  }
+  return out;
+}
+
 const row = SECTION_HEAD_CLASS + ' ' + SECTION_HEAD_CLASS.replace('ilife-block-', 'is-');
 
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
@@ -154,13 +187,29 @@ describe('section-head ① 渲染契约', () => {
 describe('section-head ② 样式与零 DOM 纪律', () => {
   const css = stripComments(sectionHeadCss());
 
-  it('样式段非空，且全部规则 scope 在 `.ilife-page-ui` 之下（不开本配方的页零命中）', () => {
+  it('样式段非空，且**每条**规则都 scope 在 `.ilife-page-ui` 之下（含 `@container`／`@media` 块里的）', () => {
     assert.ok(css.trim() !== '');
-    const selectors = (css.match(/^[^@\s][^{\n]*\{/gm) || []).filter((sel) => !sel.trim().startsWith('@'));
-    assert.ok(selectors.length > 0);
-    for (const sel of selectors) {
-      assert.ok(sel.includes('.ilife-page-ui'), '必须 scope 在 .ilife-page-ui：' + sel.trim());
+    const rules = ruleSelectors(css);
+    assert.ok(rules.length > 0, '一条规则都抽不到 ⇒ 判据空转');
+    for (const r of rules) {
+      assert.ok(/^\.ilife-page-ui\s/.test(r.sel),
+        '这条规则没从 scope 起头（裸着会与别件串味）：' + r.sel);
     }
+    /* 块里的规则也要数到（否则"夹生"漏检）：本件 `@container`／`@media` 里那几条必须在内。 */
+    assert.ok(rules.some((r) => r.depth > 0), '`@container`／`@media` 块里的规则没被抽到 ⇒ 抽取器漏了');
+  });
+
+  it('**产物层**：每条选择器里 `.ilife-page-ui` 恰一次（组合器右边不许再要求一次 scope）', () => {
+    /* 断的是**调用样式函数后的字符串**（不是源码拼法）：助手组合出来的双 scope
+       （`.page-ui .A[open] .page-ui .B::before`）在源码里看着像两个正确的助手，只有从产物里数才抓得到——
+       这正是「展开指示的 `::before`／`::after` 从来没生效」那一类死规则的读法。
+       `ruleSelectors` 逐字符配平花括号 ⇒ `@container`／`@media` **块里**的规则同样被判。 */
+    const bad = [];
+    for (const r of ruleSelectors(css)) {
+      const hits = (r.sel.match(/\.ilife-page-ui/g) || []).length;
+      if (hits !== 1) bad.push(r.sel + '（.ilife-page-ui 出现 ' + hits + ' 次）');
+    }
+    assert.deepEqual(bad, [], '作用域不是恰一次（0 次＝与别件串味，>1 次＝永不命中的死规则）：\n  ' + bad.join('\n  '));
   });
 
   it('零 :root／!important／禁入 token；不定义任何自定义属性名', () => {

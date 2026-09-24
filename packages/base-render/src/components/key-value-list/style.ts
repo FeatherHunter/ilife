@@ -30,8 +30,11 @@ export function keyValueListCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const box = root + ' .' + p + 'block-key-value-list';
-  const s = (slot: KeyValueSlot): string => root + ' .' + keyValueSlot(slot, p);
-  const row = s('row');
+  /** 槽位的**裸类名**（不带 scope）：**只用在组合器的右边**（`+`／`>`／后代那一段），
+   *  左边（选择器开头）一律走 `s()`——开头那次 scope 不能省，省了整条就裸着（与别件串味）。 */
+  const slot = (name: KeyValueSlot): string => '.' + keyValueSlot(name, p);
+  /** 带 scope 的完整选择器：**每条规则的左端**都用它。 */
+  const s = (name: KeyValueSlot): string => root + ' ' + slot(name);
 
   return [
     '/* key-value-list（档案行 · 形态 A「两列，值右对齐」）：一串「字段：值」的清单。',
@@ -57,7 +60,7 @@ export function keyValueListCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '}',
     '/* 一行两列：字段名定宽比例（36%）、值占其余；两列的 `minmax(0,…)` 让长串**换行而不撑破**。 */',
-    row + ' {',
+    s('row') + ' {',
     '  display: grid;',
     '  grid-template-columns: minmax(0, 36%) minmax(0, 1fr);',
     '  align-items: baseline;',
@@ -67,8 +70,9 @@ export function keyValueListCss(input?: { readonly prefix?: string }): string {
     '  min-height: ' + String(KEY_VALUE_MIN_ROW_PX) + 'px;',
     '  padding: 6px 0;',
     '}',
-    '/* 相邻行之间一条发丝线（**行的分隔**是线，字段与值之间**不是**：那一段由列距承担）。 */',
-    row + ' + ' + row + ' {',
+    '/* 相邻行之间一条发丝线（**行的分隔**是线，字段与值之间**不是**：那一段由列距承担）。',
+    '   `+` 右边用**裸槽类**：右边再要求一次 scope 就会变成「同一个件里再套一层 page-ui」，永不命中。 */',
+    s('row') + ' + ' + slot('row') + ' {',
     '  border-top: 1px solid ' + skinVar('line') + ';',
     '}',
     s('term') + ' {',
@@ -124,7 +128,7 @@ export function keyValueListCss(input?: { readonly prefix?: string }): string {
     '   窄档再右对齐会与左端的标签拉出一大段空档（读者要在两行之间来回找），故窄档一律左端对齐。',
     '   判的是**本件自己的宽度**：本件会被嵌进侧栏／面板／卡片，视口宽 ≠ 组件宽。 */',
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
-    '  ' + row + ' {',
+    '  ' + s('row') + ' {',
     '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '  ' + s('value') + ' {',

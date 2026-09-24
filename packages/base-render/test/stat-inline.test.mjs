@@ -41,6 +41,35 @@ const throwsBlocks = (fn) => {
   return false;
 };
 
+/** 抽样式段里的**每一条 CSS 规则**：`sel` ＝ 选择器（逗号已拆开）、`depth` ＝ 它在几层 at-rule 里。
+ *  逐字符配平花括号，不靠「行首」／「`}` 紧邻」这类位置假设（那样会把注释吞进选择器、
+ *  或把 `@media`／`@container` 块里的规则整条漏掉）。与另两件判据同一份读法。 */
+function ruleSelectors(css) {
+  const out = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < css.length; i += 1) {
+    const ch = css[i];
+    if (ch === '{') {
+      const cand = css.slice(start, i).trim();
+      if (cand !== '' && !cand.startsWith('@') && !cand.includes('*')
+        && !/^(while|if|for|function|switch)\b/.test(cand)) {
+        for (const one of cand.split(',')) {
+          const s = one.trim();
+          if (s !== '') out.push({ sel: s, depth });
+        }
+      } else {
+        depth += 1;
+      }
+      start = i + 1;
+    } else if (ch === '}') {
+      depth = Math.max(0, depth - 1);
+      start = i + 1;
+    }
+  }
+  return out;
+}
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('stat-inline ① 渲染契约', () => {
@@ -143,11 +172,25 @@ describe('stat-inline ① 渲染契约', () => {
 describe('stat-inline ② 样式与零 DOM 纪律', () => {
   const css = stripComments(statInlineCss());
 
-  it('样式段非空，且全部规则 scope 在 `.ilife-page-ui` 之下', () => {
+  it('样式段非空，且**每条**规则都 scope 在 `.ilife-page-ui` 之下', () => {
     assert.ok(css.trim() !== '');
-    const selectors = (css.match(/^[^@\s][^{\n]*\{/gm) || []).filter((sel) => !sel.trim().startsWith('@'));
-    assert.ok(selectors.length > 0);
-    for (const sel of selectors) assert.ok(sel.includes('.ilife-page-ui'), '必须 scope：' + sel.trim());
+    const rules = ruleSelectors(css);
+    assert.ok(rules.length > 0, '一条规则都抽不到 ⇒ 判据空转');
+    for (const r of rules) {
+      assert.ok(/^\.ilife-page-ui\s/.test(r.sel), '这条规则没从 scope 起头（裸着会与别件串味）：' + r.sel);
+    }
+  });
+
+  it('**产物层**：每条选择器里 `.ilife-page-ui` 恰一次（组合器右边不许再要求一次 scope）', () => {
+    /* 同 `test/组件样式纪律.test.mjs` ⑥ 组口径：断的是**调用样式函数后的字符串**——
+       助手组合出来的双 scope 在源码里看着像两个正确的助手，只有从产物里数才抓得到
+       （件内一旦出现 `.page-ui .A .page-ui .B`，那条规则永不命中＝死规则）。 */
+    const bad = [];
+    for (const r of ruleSelectors(css)) {
+      const hits = (r.sel.match(/\.ilife-page-ui/g) || []).length;
+      if (hits !== 1) bad.push(r.sel + '（.ilife-page-ui 出现 ' + hits + ' 次）');
+    }
+    assert.deepEqual(bad, [], '作用域不是恰一次（0 次＝与别件串味，>1 次＝永不命中的死规则）：\n  ' + bad.join('\n  '));
   });
 
   it('零 :root／!important／禁入 token；不定义任何自定义属性名', () => {
