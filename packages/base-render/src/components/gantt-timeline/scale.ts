@@ -33,8 +33,17 @@ export interface GanttTimelineCellSpan {
   readonly span: number;
 }
 
-/** 浮点容差：分钟数允许 0.5 这类小刻度，判"落在格线上"用得上。 */
-const EPS = 1e-6;
+/** 判「落在格线上」的容差：**相对格号**（绝对容差两头都不对，见下）。
+ *
+ *  为什么不能用绝对容差：判的是「格号是不是整数」，而绝对容差（原先取 1e-6）在**格号**上等于是
+ *  「小于 1e-6 格都当整格」——`minutes: 1e-9`（÷5 分钟 ＝ 2e-10 格）、`minutes: 1e-6`、`from: 1e-7`
+ *  全部当成整格收下，而按 `span` 画出来是整一格：**画的宽度与读数不符**（读数还照写 `占用 1e-9 分`）。
+ *  改成相对量级：容差 ＝ 格号 × 1e-12 ⇒ 上面三档都拒（差 2e-10／2e-7／2e-8 格），
+ *  而合法值的浮点噪声收得住（`0.3 ÷ 0.1` 差 4e-16 格；1e7 格那一档的噪声约 1.8e-9 格，
+ *  乘上量级后容差 1e-5 格）。 */
+const GRID_REL = 1e-12;
+/** 补满整格时的容差（时间跨度那一头，绝对口径）：18.0000000001 格不该被抬成 19 格。 */
+const SPAN_EPS = 1e-6;
 /** 百分比保留几位（行内样式里不许出现 0.30000000000000004）。 */
 const round4 = (v: number): number => Math.round(v * 1e4) / 1e4;
 
@@ -43,7 +52,7 @@ const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo : (v >
 /** 一个分钟数落不落在格线上。 */
 export function isOnGrid(minute: number, cellMinutes: number): boolean {
   const k = minute / cellMinutes;
-  return Math.abs(k - Math.round(k)) < EPS;
+  return Math.abs(k - Math.round(k)) <= GRID_REL * Math.max(1, Math.abs(k));
 }
 
 /** 一个时长是几格（**至少一格**：小于一格的段画不出来，调用方该把格调细）。 */
@@ -84,7 +93,7 @@ export function atRatio(at: number, scale: GanttTimelineScale): number {
 
 /** 格数 → 轴域（**跨度先补满整格**，再夹进上下限：少到 6 格以下刻度字比格还密）。 */
 export function scaleOf(spanMinutes: number, cellMinutes: number): GanttTimelineScale {
-  const spanCells = Math.max(1, Math.ceil(spanMinutes / cellMinutes - EPS));
+  const spanCells = Math.max(1, Math.ceil(spanMinutes / cellMinutes - SPAN_EPS));
   const cells = clamp(spanCells, GANTT_TIMELINE_MIN_CELLS, GANTT_TIMELINE_MAX_CELLS);
   return { cellMinutes, spanMinutes: round4(cells * cellMinutes), cells };
 }

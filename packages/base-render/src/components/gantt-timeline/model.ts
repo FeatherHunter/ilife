@@ -86,12 +86,14 @@ function parseSegments(raw: unknown, laneLabel: string, cellMinutes: number): re
     if (minutes <= 0) badInput(where + '.minutes 必须是正数');
     const to = from + minutes;
     onGrid(to, cellMinutes, where + '.from 与 minutes 之和');
-    if (state === 'idle' && minutes / cellMinutes < GANTT_TIMELINE_IDLE_MIN_CELLS - 1e-6) {
+    if (state === 'idle' && minutes / cellMinutes < GANTT_TIMELINE_IDLE_MIN_CELLS - 1e-9) {
       badInput(where + '.minutes 太短：空档段至少要占 ' + String(GANTT_TIMELINE_IDLE_MIN_CELLS)
         + ' 格（再短的块里那枚分钟数要拆成好几行才放得下）');
     }
+    /* 重叠判在分钟上：容差按**格宽**折（绝对值在细格下会把"首尾相接"误判成重叠）。 */
+    const touch = cellMinutes * 1e-9;
     for (const span of taken) {
-      if (from < span.to - 1e-6 && to > span.from + 1e-6) {
+      if (from < span.to - touch && to > span.from + touch) {
         badInput(where + ' 与同一条泳道里另一段压在了一起（' + String(span.from) + '–' + String(span.to)
           + ' 分钟）：一条资源同一时刻只做一件事');
       }
@@ -161,6 +163,10 @@ function parseMilestones(raw: unknown, cellMinutes: number): readonly GanttTimel
     assertPlainObject(item, where);
     const one = item as Record<string, unknown>;
     const at = onGrid(num(one.at, where + '.at'), cellMinutes, where + '.at');
+    /* 负数必须自己拦：`-10` 是 `cellMinutes` 的整数倍（格号 -2），"在格线上"这一步放它过去，
+       画出来却落在第 0 分那条格线上（`grid-column: 1`），读数还照写「-10 分 里程碑」。
+       与本件 `segments[].from`／`cursor.at` 同一口径：时间轴从 0 起，负数当场拒。 */
+    if (at < 0) badInput(where + '.at 不能是负数（时间轴从 0 起）');
     return {
       at,
       label: reqText(one.label, where + '.label'),

@@ -20,6 +20,7 @@ import {
   GANTT_TIMELINE_AT_VAR,
   GANTT_TIMELINE_CLASS,
   ganttTimelineSlot,
+  ganttTimelineStateClass,
   type GanttTimelineForm,
 } from './attrs.js';
 import { normalizeGanttTimeline, type GanttTimelineModel } from './model.js';
@@ -66,9 +67,11 @@ function axisHtml(m: GanttTimelineModel): string {
 
 /** 一条段（或空档块）：落位、宽度、字形、悬停读数都从 `mark` 来——**不在这里算坐标**。 */
 function markHtml(mark: GanttTimelineMarkView): string {
+  /* 带短字 ⇒ 这块面上有正文级的字：另加一枚修饰类，样式段据此改走「有文字的选中面」
+     （实底上放正文在 neutral 皮肤下过不了文本地板）。`is-` 那一段只有一个拼法。 */
+  const words = mark.text === undefined || mark.text === '' ? '' : ' is-labelled';
   const cls = mark.state === 'idle' ? ganttTimelineSlot('idle')
-    : (mark.state === 'crit' ? ganttTimelineSlot('bar') + ' is-crit'
-      : ganttTimelineSlot('bar') + ' is-' + mark.state);
+    : ganttTimelineSlot('bar') + ' ' + ganttTimelineStateClass(mark.state) + words;
   const parts: string[] = ['<span class="' + cls + '" style="grid-column:' + String(mark.column)
     + ' / span ' + String(mark.span) + '" title="' + esc(mark.title) + '">'];
   if (mark.mark !== '') parts.push('<i class="' + ganttTimelineSlot('mark') + '">' + esc(mark.mark) + '</i>');
@@ -102,12 +105,12 @@ function rowHtml(row: GanttTimelineRowView, cells: number): string {
   return parts.join('');
 }
 
-/** 泳道区：先给「现在」游标留一条带（**不让它压在第一条泳道上**——原型里它正压着关键路径那一条），
- *  再逐行排（关键路径 → 泳道 → 里程碑）。游标位置经 `GANTT_TIMELINE_AT_VAR` 传给样式。 */
+/** 泳道区：先排「现在」游标那枚字（**它自己占一行**——原型里它正压在关键路径那一条上，因为那版把它
+ *  绝对定位在一段固定高度的带里、字一换行就盖住下面那一行），再逐行排（关键路径 → 泳道 → 里程碑）。
+ *  游标位置经 `GANTT_TIMELINE_AT_VAR` 传给样式（竖线与那枚字读的是同一个数）。 */
 function bodyHtml(m: GanttTimelineModel): string {
   const parts: string[] = ['<div class="' + ganttTimelineSlot('body')
-    + (m.cursorView === undefined ? '' : ' is-now') + '" role="img" aria-label="'
-    + esc(m.ariaLabel) + '"'
+    + '" role="img" aria-label="' + esc(m.ariaLabel) + '"'
     + (m.cursorView === undefined ? '' : ' style="' + GANTT_TIMELINE_AT_VAR + ':'
       + String(m.cursorView.ratio) + '"') + '>'];
   if (m.cursorView !== undefined) {
@@ -125,7 +128,7 @@ function legendHtml(m: GanttTimelineModel): string {
   const parts: string[] = ['<div class="' + ganttTimelineSlot('legend') + '">'];
   for (const item of m.legend) {
     parts.push('<span class="' + ganttTimelineSlot('legend-item') + '"><i class="' + ganttTimelineSlot('swatch')
-      + ' is-' + item.state + '">' + esc(item.mark) + '</i>'
+      + ' ' + ganttTimelineStateClass(item.state) + '">' + esc(item.mark) + '</i>'
       + '<span class="' + ganttTimelineSlot('legend-word') + '">' + esc(item.word) + '</span></span>');
   }
   parts.push('</div>');

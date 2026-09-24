@@ -30,6 +30,7 @@ import {
   GANTT_TIMELINE_MAX_MILESTONES,
   GANTT_TIMELINE_MIN_CELLS,
   GANTT_TIMELINE_MIN_KEY_STEPS,
+  GANTT_TIMELINE_NOW_BAND_PX,
   GANTT_TIMELINE_SLOTS,
   GANTT_TIMELINE_STATES,
   GANTT_TIMELINE_WIDE_MIN_PX,
@@ -39,9 +40,9 @@ import {
 } from '../dist/components/gantt-timeline/index.js';
 import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
-import { SKIN_NAMES, skinClass, skinCss } from '../dist/components/skin/index.js';
+import { SKINS, SKIN_NAMES, skinClass, skinCss } from '../dist/components/skin/index.js';
 import { startShapesPage } from './shapes-probe.mjs';
-import { styleSource } from './_style-sources.mjs';
+import { styleSources } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -103,13 +104,40 @@ function stripVarFns(css) {
 }
 
 const countOf = (html, needle) => (html.match(new RegExp(needle, 'g')) || []).length;
-const attrOf = (html, slot) => {
-  const m = new RegExp('class="' + ganttTimelineSlot(slot) + '[^"]*"[^>]*style="([^"]*)"').exec(html);
-  return m === null ? null : m[1];
-};
 /** 一根条的 `grid-column: C / span S` → `[C, S]`。 */
 const spansIn = (html, slot) => [...html.matchAll(new RegExp('class="[^"]*' + ganttTimelineSlot(slot)
   + '[^"]*" style="grid-column:(\\d+) / span (\\d+)"', 'g'))].map((m) => [Number(m[1]), Number(m[2])]);
+/** 无障碍名那一句（`role="img"` 上那枚属性）。 */
+function ariaOf(html) {
+  const m = /role="img" aria-label="([^"]*)"/.exec(html);
+  assert.ok(m !== null, '标记里找不到无障碍名');
+  return m[1];
+}
+/** 产出 CSS 里某条规则的**声明文本**（选择器逐字找；`@container` 块里的也算）。 */
+function declsOf(css, selector) {
+  const at = css.indexOf(selector + ' {');
+  assert.ok(at >= 0, '样式段里找不到这条规则：' + selector);
+  return css.slice(at + selector.length + 1, css.indexOf('}', at));
+}
+/** 一条声明里读出来的皮肤 token 名（`var(--ilife-accent-soft, …)` → `accent-soft`）。 */
+function tokenIn(decl) {
+  const m = /var\(\s*--ilife-([a-z0-9-]+)/.exec(decl);
+  return m === null ? null : m[1];
+}
+/** WCAG 相对亮度（皮肤取值都是十六进制字面，直接算）。 */
+function lum(hex) {
+  const n = Number.parseInt(hex.replace('#', ''), 16);
+  const chan = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2];
+}
+/** 两色对比度（大比小，1…21）。 */
+function contrast(a, b) {
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+}
 
 /* ── 三份样例：与原型 C 逐格对得上的那一份／最小的一份／压力那一份 ───────── */
 
@@ -151,6 +179,15 @@ const KITCHEN = {
 
 /** 最小的一份（README 入参表里那些**必填**字段按声明类型各给一个确定值就是这个形状）。 */
 const SPARSE = { title: '示例', lanes: [{ label: '示例', segments: [] }] };
+
+/** 游标那枚字**换行**的那一份（审查席量到的正是它压住第一条行：字底 − 第一条 row 顶 ＝ +17px）。 */
+const CURSOR_WRAP = {
+  title: '游标那枚字换行',
+  cellMinutes: 5,
+  spanMinutes: 30,
+  lanes: [{ label: '灶 炒锅', segments: [{ from: 0, minutes: 30, state: 'doing' }] }],
+  cursor: { at: 15, label: '预计 21:25 出锅上桌' },
+};
 
 const LONG = '超长的资源名字'.repeat(4);
 /** 压力：24 格（上限）＋ 长名字长读数 ＋ 里程碑落在跨度末端 ＋ 游标靠右。 */
@@ -202,9 +239,27 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     const kinds = [...html.matchAll(/-row (is-[a-z]+)"/g)].map((m) => m[1]);
     assert.deepEqual(kinds, ['is-key', 'is-lane', 'is-lane', 'is-lane', 'is-lane', 'is-milestone'],
       '行序＝关键路径、泳道、里程碑：' + JSON.stringify(kinds));
-    /* 泳道区是一张图（读屏只有一句），无障碍名把关键路径总长写出来。 */
-    assert.match(html, /role="img" aria-label="[^"]*共 90 分/);
-    assert.match(html, /aria-label="[^"]*整段空着|aria-label="[^"]*灶|aria-label="[^"]*炒锅/);
+    /* 泳道区是一张图（读屏只有一句）：**逐句对账**，不是"含某个词就算过"——
+       原先那条把「整段空着」写进正则（那句话在 `layout.ts` 里根本不存在，真句是「整段空闲」），
+       靠同一条正则里的另一支（泳道名）恒真 ⇒ 无障碍名整段掉了也绿。 */
+    const aria = ariaOf(html);
+    for (const want of [
+      '红烧肉套餐 90 分钟。',
+      '关键路径：切配 15 分 → 腌 15 分 → 烧 45 分 → 收汁 15 分，共 90 分',
+      '炒锅：等待 15 到 25 分，进行中 30 到 75 分，未开始 75 到 85 分',
+      '电饭煲：进行中 5 到 50 分，等待 50 到 85 分',
+      '烤箱：未开始 20 到 30 分，进行中 30 到 60 分，空闲 60 到 90 分',
+      '备料台：已完成 0 到 15 分，已完成 15 到 30 分，空闲 30 到 75 分，未开始 75 到 85 分',
+      '上桌 是 85 分的里程碑',
+      '游标在 85 分：上桌',
+      '横轴 90 分',
+    ]) {
+      assert.ok(aria.includes(want), '无障碍名缺这一句：' + want + '｜实际：' + aria);
+    }
+    /* 「整段空闲」这句只长在"一条段都没有"的泳道那条读数上（真句，不是上面那种蒙过的写法）。 */
+    assert.ok(ariaOf(renderGanttTimeline(SPARSE)).includes('示例 整段空闲'),
+      '一条段都没有的泳道照实写「整段空闲」');
+    assert.equal(aria.includes('整段空闲'), false, '有段的泳道不该写「整段空闲」');
   });
 
   it('**刻度与落位同一份真值**：每根条反算回来的分钟数＝调用方给的那一段', () => {
@@ -240,10 +295,10 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     assert.match(html, /-idle[^>]*title="烤箱：60 分起空闲 30 分（到 90 分）"/, '悬停读数把起止分钟数写全');
   });
 
-  it('图例**只列这一段里出现过的档**，逐枚「形 ＋ 字」', () => {
+  it('图例**只列这一段里出现过的档**，逐枚「形 ＋ 字」（里程碑也在里面）', () => {
     const words = [...html.matchAll(/-legend-word">([^<]+)</g)].map((m) => m[1]);
     assert.deepEqual(words, ['关键路径（切配 15 分 → 腌 15 分 → 烧 45 分 → 收汁 15 分 ＝ 90 分）',
-      '已完成', '进行中', '等待', '未开始', '空闲（点线块里的数字是分钟）']);
+      '已完成', '进行中', '等待', '未开始', '空闲（点线块里的数字是分钟）', '里程碑']);
     assert.match(html, /-swatch is-crit">1-4</, '关键路径那枚形写顺序号的区间');
     assert.match(html, /-swatch is-doing">▶</);
     const only = renderGanttTimeline({ title: 'x', lanes: [{ label: 'a', segments: [{ from: 0, minutes: 10, state: 'done' }] }] });
@@ -252,6 +307,25 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     const empty = renderGanttTimeline(SPARSE);
     assert.equal(empty.includes(ganttTimelineSlot('legend')), false, '一条段都没有就不出图例');
     assert.match(empty, /-row-note">未占用</, '整段空着的泳道照实写"未占用"而不是 0');
+    /* 只给里程碑（不给关键路径）时图例也得出来——那枚 `◆` 在图上不带字面解释就是哑的
+       （README 把「◆ 里程碑」列进"形＋字＋色"三样）。 */
+    const ms = renderGanttTimeline({ title: 'x', lanes: [{ label: 'a', segments: [] }],
+      milestones: [{ at: 10, label: '出报告' }] });
+    assert.match(ms, /-swatch is-milestone">◆</, '里程碑那枚形要按 `is-milestone` 着色');
+    assert.deepEqual([...ms.matchAll(/-legend-word">([^<]+)</g)].map((m) => m[1]), ['里程碑'],
+      '有里程碑就得在图例里给 `◆` 一个解释');
+  });
+
+  it('格宽是小数时段的起止照样落在格线上（画出来的格数＝读数，浮点噪声不被误拒）', () => {
+    /* 0.1 分钟一格：`0.1 ＋ 0.2` 这种浮点噪声（差 4e-16 格）要收下，不然细格下没人能用；
+       而"看着像 0"的时长（1e-9 分）要拒——见下一条非法入参。 */
+    const fine = renderGanttTimeline({ title: 'x', cellMinutes: 0.1, spanMinutes: 2, lanes: [{ label: '灶', segments: [
+      { from: 0.1 + 0.2, minutes: 0.5, state: 'doing' },
+      { from: 1.2, minutes: 0.5, state: 'done' },
+    ] }] });
+    assert.deepEqual(spansIn(fine, 'bar'), [[4, 5], [13, 5]],
+      '0.30000000000000004 ÷ 0.1 ＋ 1 ＝ 第 4 格起、0.5 分占 5 格；1.2 ÷ 0.1 ＋ 1 ＝ 第 13 格起');
+    assert.match(fine, /-row-note">占用 1 分</);
   });
 
   it('里程碑：那枚 `◆` 压在格线上（右半区时从第 1 格铺到落点前、内容右对齐）', () => {
@@ -331,6 +405,16 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     assert.equal(throwsBlocks(() => seg({ from: 7 })), true, '起点不在格线上');
     assert.equal(throwsBlocks(() => seg({ minutes: 0 })), true, '时长不是正数');
     assert.equal(throwsBlocks(() => seg({ minutes: 7 })), true, '时长不是整数格');
+    /* 「看着像 0」的量：原先判的是**格号**上的绝对容差 1e-6 ⇒ 1e-9 分 ÷ 5 分 ＝ 2e-10 格 被当整格收下，
+       画出来是一整格、读数却写「占用 1e-9 分」（画的宽度与读数不符）；`from: 1e-7` 同理。 */
+    assert.equal(throwsBlocks(() => seg({ minutes: 1e-9 })), true, '时长短到 1e-9 分也不是整格');
+    assert.equal(throwsBlocks(() => seg({ minutes: 1e-6 })), true, '时长 1e-6 分不是整格');
+    assert.equal(throwsBlocks(() => seg({ minutes: 5.0000001 })), true, '比一整格多 1e-7 分也不算整格');
+    assert.equal(throwsBlocks(() => seg({ from: 1e-7 })), true, '起点 1e-7 分不是整格');
+    assert.equal(throwsBlocks(() => renderGanttTimeline({
+      title: 'x', lanes: [{ label: 'a', segments: [{ from: 0, minutes: 5, state: 'idle' },
+        { from: 1e-7, minutes: 10 }] }],
+    })), true, '细到 1e-7 分的起点也拒（不因它"接近格线"就收下）');
     assert.equal(throwsBlocks(() => seg({ state: 'doing2' })), true, '状态闭集外');
     assert.equal(throwsBlocks(() => seg({ minutes: 5, state: 'idle' })), true,
       '空档段太短（要 ' + String(GANTT_TIMELINE_IDLE_MIN_CELLS) + ' 格以上）');
@@ -355,12 +439,20 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     assert.equal(throwsBlocks(() => renderGanttTimeline({
       title: 'x', lanes: ok.lanes, keyPath: { steps: [{ name: 'a', minutes: 10 }, { name: 'b', minutes: 7 }] },
     })), true, '段长不在格线上');
+    /* 第一步"看着像 0"的时长：原先收下 ⇒ 第 1、2 段都从第 1 格起（两枚顺序号叠在同一格上）。 */
+    assert.equal(throwsBlocks(() => renderGanttTimeline({
+      title: 'x', lanes: ok.lanes, keyPath: { steps: [{ name: 'a', minutes: 1e-9 }, { name: 'b', minutes: 10 }] },
+    })), true, '关键路径第一步短到 1e-9 分：两段会叠在同一格上，读不出是两段');
     const ms = (over) => ({ title: 'x', lanes: ok.lanes, milestones: [{ at: 10, label: 'm', ...over }] });
     assert.equal(throwsBlocks(() => renderGanttTimeline({ ...ms(), milestones: 'x' })), true, 'milestones 不是数组');
     assert.equal(throwsBlocks(() => renderGanttTimeline({
       title: 'x', lanes: ok.lanes, milestones: new Array(GANTT_TIMELINE_MAX_MILESTONES + 1).fill({ at: 10, label: 'm' }),
     })), true, '里程碑太多');
     assert.equal(throwsBlocks(() => renderGanttTimeline(ms({ at: 7 }))), true, '里程碑不在格线上');
+    /* 负数：`-10` 是 5 的整数倍（格号 -2），"在格线上"这一步放它过去 ⇒ 画到第 0 分那条格线上、
+       读数还写「-10 分 里程碑」；`segments[].from`／`cursor.at` 都有负数检查，独独这里漏过。 */
+    assert.equal(throwsBlocks(() => renderGanttTimeline(ms({ at: -10 }))), true, '里程碑是负数');
+    assert.equal(throwsBlocks(() => renderGanttTimeline(ms({ at: -5 }))), true, '里程碑是负数（一格）');
     assert.equal(throwsBlocks(() => renderGanttTimeline(ms({ label: '' }))), true, '里程碑缺名字');
     /* 游标与尺 */
     assert.equal(throwsBlocks(() => renderGanttTimeline({ title: 'x', lanes: ok.lanes, cursor: 'x' })), true, 'cursor 不是对象');
@@ -379,8 +471,8 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     assert.equal(throwsBlocks(() => renderGanttTimeline({ ...ok, stamp: 1 })), true, 'stamp 不是串');
   });
 
-  it('纯函数：同样的入参恒产同样的字节（三份样例各一遍）', () => {
-    for (const input of [KITCHEN, SPARSE, STRESS]) {
+  it('纯函数：同样的入参恒产同样的字节（四份样例各一遍）', () => {
+    for (const input of [KITCHEN, SPARSE, STRESS, CURSOR_WRAP]) {
       assert.equal(renderGanttTimeline(input), renderGanttTimeline(input));
     }
   });
@@ -433,8 +525,10 @@ describe('gantt-timeline ② 样式与零 DOM 纪律', () => {
     }
     const bare = [...stripVarFns(clean).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
     assert.deepEqual([...new Set(bare)], [], '兜底链之外的颜色字面量：' + [...new Set(bare)].join('、'));
-    const src = stripComments(styleSource('gantt-timeline'));
-    assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], 'style.ts 里请改走 skinVar()');
+    for (const one of styleSources('gantt-timeline')) {
+      assert.deepEqual([...stripComments(one.src).matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [],
+        one.file + ' 里请改走 skinVar()');
+    }
     for (const m of clean.matchAll(/background(?:-color)?\s*:\s*([^;{}]+)/g)) {
       assert.equal(/^var\(\s*--ilife-ink(?:-[23])?\s*[,)]/.test(m[1].trim()), false, '拿文字墨色当了"面"：' + m[1]);
     }
@@ -461,9 +555,9 @@ describe('gantt-timeline ② 样式与零 DOM 纪律', () => {
 
   it('零键盘语汇、零可点元素（本件是纯静态图：条与游标都只是读数）', () => {
     const words = ['快捷键', '键位', '方向键', '键帽', '键盘', '按 Enter', 'Tab'];
-    const html = [KITCHEN, SPARSE, STRESS].map((i) => renderGanttTimeline(i)).join('') + css;
+    const html = [KITCHEN, SPARSE, STRESS, CURSOR_WRAP].map((i) => renderGanttTimeline(i)).join('') + css;
     for (const w of words) assert.equal(html.includes(w), false, '出现键盘语汇：' + w);
-    const marks = [KITCHEN, SPARSE, STRESS].map((i) => renderGanttTimeline(i)).join('');
+    const marks = [KITCHEN, SPARSE, STRESS, CURSOR_WRAP].map((i) => renderGanttTimeline(i)).join('');
     for (const needle of ['<button', '<a ', 'tabindex', 'onclick', '<input', '<select', '<script']) {
       assert.equal(marks.includes(needle), false, '本件不带可点元素：' + needle);
     }
@@ -493,6 +587,83 @@ describe('gantt-timeline ② 样式与零 DOM 纪律', () => {
     assert.equal(ganttTimelineSlot('bar', 'x-'), 'x-block-gantt-timeline-bar');
     for (const slot of GANTT_TIMELINE_SLOTS) assert.ok(ganttTimelineSlot(slot).startsWith(GANTT_TIMELINE_CLASS + '-'));
   });
+
+  it('手写 `var(--ilife-…)` 扫的是该件**全部** `style*.ts`（拆出去那半也在扫）', () => {
+    const files = styleSources('gantt-timeline').map((f) => f.file);
+    assert.deepEqual(files, ['style-marks.ts', 'style.ts'],
+      '本件的样式来源是这两份：按件只读 `style.ts` 的话，拆出去那半（段与图例那几档）逃过判据');
+    assert.ok(files.length > 1, '范围只许从 `_style-sources.mjs` 的 `styleSources()` 出');
+  });
+
+  it('「现在」那枚字住在流里（自己占一行、带高随字长）——不是压在第一条行上的绝对定位', () => {
+    const rule = declsOf(clean, '.' + ganttTimelineSlot('now-label'));
+    assert.equal(/position\s*:\s*absolute/.test(rule), false,
+      '那枚字不许绝对定位：原写法把它钉在一条固定高度的带里，字一换行就盖住下面第一条行');
+    assert.match(rule, new RegExp('min-height:\\s*' + String(GANTT_TIMELINE_NOW_BAND_PX) + 'px'),
+      '带高的下限取常量（字短时与原型那一档同高，字长时随字长）');
+    assert.match(rule, /width:\s*fit-content/, '贴着字长（不是铺满一行）');
+    assert.match(rule, /margin: 0 0 \d+px calc\(/, '在流里 ⇒ 靠外边距定位、下面的行跟着往下让');
+    /* 横坐标与那条竖线读**同一个**自定义属性（两处各算一套必然走散）。 */
+    const at = /left:\s*calc\((.*?)\);/.exec(declsOf(clean, '.' + ganttTimelineSlot('now')))[1];
+    assert.ok(rule.includes('calc(' + at + ' + 4px)'), '那枚字的横坐标＝竖线 ＋ 4px：' + at);
+  });
+
+  it('「进行中」的条**带了短字**就走有文字的选中面（面从产出 CSS 读，四套皮肤逐套算文本地板）', () => {
+    const html = renderGanttTimeline({ title: 'x', lanes: [{ label: '灶 炒锅', segments: [
+      { from: 0, minutes: 10, state: 'doing', label: '红烧肉' },
+      { from: 10, minutes: 10, state: 'doing' },
+    ] }] });
+    assert.match(html, /-bar is-doing is-labelled"[^>]*><i class="[^"]*-mark">▶<\/i><span class="[^"]*-text">红烧肉<\/span>/,
+      '带短字的那根条要带 `is-labelled`（它这块面上有正文级的字）');
+    assert.equal(countOf(html, ' is-labelled'), 1, '只有带短字的那根带这枚修饰类（不带的那根照旧是实底）');
+    /* 面不是"抄一遍法则表"，是拿件自己的那条规则 × 四套皮肤取值实算： */
+    const rule = declsOf(clean, '.' + ganttTimelineSlot('bar') + '.is-labelled');
+    const bg = tokenIn(/background:\s*([^;]+);/.exec(rule)[1]);
+    const fg = tokenIn(/color:\s*([^;]+);/.exec(rule)[1]);
+    for (const skin of SKIN_NAMES) {
+      const v = SKINS[skin].values;
+      const got = contrast(v[fg], v[bg]);
+      assert.ok(got >= 4.5, skin + '：' + fg + ' on ' + bg + ' ＝ ' + String(got) + ' < 4.5（正文地板）');
+    }
+    assert.equal(bg, 'accent-soft', '有文字的选中面走软底：' + String(bg));
+    assert.equal(fg, 'accent-text', '有文字的选中面的字走主色的文本档：' + String(fg));
+  });
+});
+
+/* ── ⑥ 代码形状：零死代码 ＋ 单一来源 ─────────────────────────────── */
+
+describe('gantt-timeline ⑥ 零死代码与单一来源', () => {
+  it('导出面没有死名字：件里每个 `export` 至少要被引用两处（只有定义那一处＝死代码）', () => {
+    /* 扫**件自己声明的全部导出**（不只是 `index.ts` 转出去的那些）：审查席读到的
+       `GANTT_TIMELINE_MISSING` 正是"`index.ts` 不转出、全仓零引用"那一种，只按出口名单扫会漏掉它。
+       语料＝件目录 ＋ 层出口 ＋ 名册（**不含本判据**：判据里出现一次不算有人用）。 */
+    const own = readdirSync(DIR).filter((n) => n.endsWith('.ts'))
+      .map((n) => ({ path: join(DIR, n), src: readFileSync(join(DIR, n), 'utf8') }));
+    const outside = ['index.ts', '清单.ts'].map((n) => join(PKG, 'src', 'components', n))
+      .map((p) => readFileSync(p, 'utf8'));
+    const hay = own.map((f) => f.src).join(String.fromCharCode(10)) + outside.join(String.fromCharCode(10));
+    const names = own.flatMap((f) => [...f.src
+      .matchAll(/^export\s+(?:declare\s+)?(?:const|function|interface|type|class)\s+([A-Za-z_$][\w$]*)/gm)]
+      .map((m) => m[1]));
+    assert.ok(names.length >= 20, '导出名字面太小，判据可能在空转：' + names.length);
+    for (const name of names) {
+      const hits = (hay.match(new RegExp('\\b' + name + '\\b', 'g')) || []).length;
+      assert.ok(hits >= 2,
+        '死导出：' + name + ' 在件里只有 ' + String(hits) + ' 处（定义一处、没有调用方也没转出 ⇒ 删掉或接上）');
+    }
+  });
+
+  it('状态类名只有一个来源：条与图例那枚形都调 `ganttTimelineStateClass()`', () => {
+    const render = readFileSync(join(DIR, 'render.ts'), 'utf8');
+    assert.ok((render.match(/ganttTimelineStateClass\(/g) || []).length >= 2,
+      '`is-` 那一段要走 `ganttTimelineStateClass()`（条一处、图例那枚形一处）');
+    /* 形态类 `is-C` 不在这条之内（那是形态键，不是状态档）；这里禁的是自己拼状态档。 */
+    for (const file of ['render.ts', 'layout.ts']) {
+      const src = readFileSync(join(DIR, file), 'utf8');
+      const bad = /' is-'\s*\+\s*[A-Za-z_.]*state/.exec(src);
+      assert.equal(bad, null, file + ' 里又自己拼状态类名了：' + String(bad));
+    }
+  });
 });
 
 /* ── ③ 加法式 ───────────────────────────────────────────────────────── */
@@ -519,12 +690,13 @@ describe('gantt-timeline ③ 加法式（不启用即逐字节不变）', () => 
 
 /* ── ④ 两档几何（真机）＋ ⑤ 皮肤纪律 ──────────────────────────────── */
 
-/** 三档压力：与原型对得上的一份／最小的一份／24 格 ＋ 长串那一份。 */
+/** 四档压力：与原型对得上的一份／最小的一份／24 格 ＋ 长串那一份／游标那枚字换行那一份。 */
 function cases() {
   return [
     { name: 'kitchen', html: renderGanttTimeline(KITCHEN) },
     { name: 'sparse', html: renderGanttTimeline(SPARSE) },
     { name: 'stress', html: renderGanttTimeline(STRESS) },
+    { name: 'nowwrap', html: renderGanttTimeline(CURSOR_WRAP) },
   ];
 }
 
@@ -599,6 +771,14 @@ describe('gantt-timeline ④⑤ 两档几何与皮肤纪律（真机 headless Ch
               + 'var tk=row.querySelector(trackSel);var lr=lab.getBoundingClientRect();var tr=tk.getBoundingClientRect();'
               + 'out.stacked=(Math.round(lr.bottom)<=Math.round(tr.top)+1);'
               + 'out.sideBySide=(Math.round(lr.right)<=Math.round(tr.left)+1);'
+              /* 游标那枚字：量它的底与第一条 row 的顶（原写法它绝对定位在 22px 的带里 ⇒ 换行就压住第一条）。 */
+              + 'var nl=root.querySelector(' + JSON.stringify('.' + ganttTimelineSlot('now-label')) + ');'
+              + 'var nlr=nl===null?null:nl.getBoundingClientRect();'
+              + 'out.labelBottom=nlr===null?null:Math.round(nlr.bottom);'
+              + 'out.labelLeft=nlr===null?null:Math.round(nlr.left);'
+              + 'out.labelRight=nlr===null?null:Math.round(nlr.right);'
+              + 'out.firstRowTop=Math.round(row.getBoundingClientRect().top);'
+              + 'var rr=root.getBoundingClientRect();out.rootLeft=Math.round(rr.left);out.rootRight=Math.round(rr.right);'
               + 'return out;}())');
             assert.ok(geo.tracks > 0, width + ' 档 ' + skin + ' ' + c.name + '：一条轨迹都没有');
             for (const m of geo.marks) {
@@ -611,10 +791,20 @@ describe('gantt-timeline ④⑤ 两档几何与皮肤纪律（真机 headless Ch
               assert.ok(geo.line.x >= geo.line.trackLeft - 1 && geo.line.x <= geo.line.trackRight + 1,
                 width + ' 档 ' + skin + ' ' + c.name + '：游标跑到轨迹外面：' + JSON.stringify(geo.line));
             }
+            /* **游标那枚字的底不越过第一条 row 的顶**（原型与落地第一版都在这里翻车：
+               字住在一条固定高度的带里，换行就盖住下面那条关键路径；实测 +17px／+18.5px）。 */
+            if (geo.labelBottom !== null) {
+              assert.ok(geo.labelBottom <= geo.firstRowTop + 1,
+                width + ' 档 ' + skin + ' ' + c.name + '：游标那枚字压住第一条行（字底 ' + geo.labelBottom
+                + ' > 第一条 row 顶 ' + geo.firstRowTop + '）');
+              assert.ok(geo.labelLeft >= geo.rootLeft - 1 && geo.labelRight <= geo.rootRight + 1,
+                width + ' 档 ' + skin + ' ' + c.name + '：那枚字横着跑出本件：' + geo.labelLeft + '…' + geo.labelRight);
+            }
             /* **窄宽两档换的是结构**（视口没变，只改了夹具容器宽度 ⇒ 这条只有 `@container` 才做得到）。 */
             if (width === 390) assert.equal(geo.stacked, true, '390 档：标签该折到轨迹之上');
             else assert.equal(geo.sideBySide, true, '1280 档：标签该回到左侧列');
-            readings.push({ width, skin, case: c.name, marks: geo.marks.length, tracks: geo.tracks });
+            readings.push({ width, skin, case: c.name, marks: geo.marks.length, tracks: geo.tracks,
+              label: geo.labelBottom === null ? null : geo.labelBottom - geo.firstRowTop });
           }
         }
       }
@@ -636,10 +826,13 @@ describe('gantt-timeline ④⑤ 两档几何与皮肤纪律（真机 headless Ch
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
       const at = (w) => readings.filter((r) => r.width === w);
+      const gap = (w) => at(w).map((r) => r.label).filter((v) => v !== null);
       console.log('READING gantt-timeline container=390 盒子数=' + at(390).reduce((n, r) => n + r.marks, 0)
         + ' 轨迹数=' + at(390).reduce((n, r) => n + r.tracks, 0) + ' 格均摊到 390 宽：标签折上'
         + '｜container=1280 盒子数=' + at(1280).reduce((n, r) => n + r.marks, 0)
-        + ' 轨迹数=' + at(1280).reduce((n, r) => n + r.tracks, 0) + ' 标签列在左侧');
+        + ' 轨迹数=' + at(1280).reduce((n, r) => n + r.tracks, 0) + ' 标签列在左侧'
+        + '｜游标那枚字「底 − 第一条 row 顶」390 档 ' + gap(390).join('／') + '、1280 档 ' + gap(1280).join('／')
+        + '（负＝在行的上方，全档不许为正）');
     } finally { page.close(); }
   });
 });

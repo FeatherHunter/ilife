@@ -9,7 +9,7 @@
  *   2. **占用分钟数与最晚一处由本件算**（空档段不算占用）——调用方不必先算一遍；
  *   3. 图例**只列真的出现过的档**（没出现的档写进图例就是噪音）。
  */
-import type { GanttTimelineForm, GanttTimelineState } from './attrs.js';
+import type { GanttTimelineForm, GanttTimelineState, GanttTimelineStateKey } from './attrs.js';
 import {
   atRatio,
   cellSpan,
@@ -101,7 +101,7 @@ export interface GanttTimelineRowView {
 
 /** 图例的一枚：形（`swatch` 里的字）＋ 字（这一档叫什么）。 */
 export interface GanttTimelineLegendItem {
-  readonly state: GanttTimelineState | 'crit';
+  readonly state: GanttTimelineStateKey;
   readonly mark: string;
   readonly word: string;
 }
@@ -119,13 +119,14 @@ export interface GanttTimelineLayout {
 const GLYPH: Readonly<Record<GanttTimelineState | 'crit', string>> = {
   done: '✓', doing: '▶', wait: '⋯', plan: '▷', idle: '', crit: '',
 };
-/** 各档的读法（图例里的字）。 */
-const WORD: Readonly<Record<GanttTimelineState | 'crit', string>> = {
+/** 各档的读法（图例里的字）。**里程碑也在里面**：只给 `milestones` 不给 `keyPath` 时，
+ *  没有这一档图例就整段不出，那枚 `◆` 在图上没有任何字面解释（README 把「◆ 里程碑」列入三样之义）。 */
+const WORD: Readonly<Record<GanttTimelineStateKey, string>> = {
   done: '已完成', doing: '进行中', wait: '等待', plan: '未开始',
-  idle: '空闲（点线块里的数字是分钟）', crit: '关键路径',
+  idle: '空闲（点线块里的数字是分钟）', crit: '关键路径', milestone: '里程碑',
 };
-/** 图例的次序：关键路径在最前，其余按"完成度"从后往前。 */
-const LEGEND_ORDER: readonly (GanttTimelineState | 'crit')[] = ['crit', 'done', 'doing', 'wait', 'plan', 'idle'];
+/** 图例的次序：关键路径在最前，其余按"完成度"从后往前，里程碑收尾。 */
+const LEGEND_ORDER: readonly GanttTimelineStateKey[] = ['crit', 'done', 'doing', 'wait', 'plan', 'idle', 'milestone'];
 
 /** 这一条泳道被占用的分钟数（空档段不算占用）。 */
 function busyMinutes(lane: GanttTimelineLaneView): number {
@@ -156,8 +157,10 @@ function ariaOf(r: GanttTimelineReadings, total: number): string {
   }
   for (const lane of r.lanes) {
     if (lane.segments.length === 0) { parts.push(lane.label + ' 整段空闲'); continue; }
+    /* 空档段那一段同样的写法：起点写 `from`（曾写成 `minutes`，读出来是「空闲 30 到 90 分」——
+       60 分起的那段空档被读成 30 分起）。 */
     const each = lane.segments.slice().sort((a, b) => a.from - b.from).map((m) => (m.state === 'idle'
-      ? '空闲 ' + String(m.minutes)
+      ? '空闲 ' + String(m.from)
       : WORD[m.state] + ' ' + String(m.from)) + ' 到 ' + String(m.from + m.minutes) + ' 分').join('，');
     parts.push(lane.label + '：' + each);
   }
@@ -230,6 +233,11 @@ export function layoutGanttTimeline(r: GanttTimelineReadings): GanttTimelineLayo
 
   const legend: GanttTimelineLegendItem[] = [];
   for (const state of LEGEND_ORDER) {
+    /* 里程碑那一档不看 `seen`（它数的是段的状态）：有没有那枚 `◆` 由 `milestones` 定。 */
+    if (state === 'milestone') {
+      if (r.milestones.length > 0) legend.push({ state, mark: '◆', word: WORD.milestone });
+      continue;
+    }
     if (!seen.has(state)) continue;
     legend.push({
       state,

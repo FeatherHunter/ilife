@@ -11,8 +11,9 @@
  *   · 本件不写 `overflow:hidden`、不写 `text-overflow`：长的名字与读数一律换行，**不许 `…` 截断**。
  *
  *  选中／填充四档照 `docs/base/base-render/选中态与皮肤语言.md` 的法则表：
- *   有文字的（关键路径段里那枚顺序号、游标上那枚时间、图例那几枚）走 **`accent-soft` 底 ＋ `accent-text` 字 ＋ `accent` 描边**；
- *   无文字的（进行中那根实底条）走 **`accent` 实底**（那条上只有 `▶` 这类图形，没有正文）。
+ *   有文字的（关键路径段里那枚顺序号、**带了短字的那根条 `is-labelled`**、游标上那枚时间、图例那几枚）
+ *   走 **`accent-soft` 底 ＋ `accent-text` 字 ＋ `accent` 描边**；
+ *   无文字的（进行中那根**不带短字**的实底条）走 **`accent` 实底**（那条上只有 `▶` 这类图形，没有正文）。
  */
 import { skinVar } from '../skin/contract.js';
 import { GANTT_TIMELINE_AT_VAR, ganttTimelineSlot, type GanttTimelineSlot } from './attrs.js';
@@ -171,13 +172,10 @@ export function ganttTimelineCss(input?: { readonly prefix?: string }): string {
     '  right: 0;',
     '  text-align: right;',
     '}',
-    '/* 泳道区：「现在」游标 ＋ 各行。有游标时顶端留一条带——**不让那枚字压在第一条泳道上**。 */',
+    '/* 泳道区：「现在」游标 ＋ 各行。游标那枚字**自己占一行**（见下），所以这里不再给它垫一条固定高度的带。 */',
     s('body') + ' {',
     '  position: relative;',
     '  min-width: 0;',
-    '}',
-    s('body') + '.is-now {',
-    '  padding-top: ' + String(GANTT_TIMELINE_NOW_BAND_PX) + 'px;',
     '}',
     s('now') + ' {',
     '  position: absolute;',
@@ -189,13 +187,19 @@ export function ganttTimelineCss(input?: { readonly prefix?: string }): string {
     '  z-index: 2;',
     '  pointer-events: none;',
     '}',
-    /* 游标上那枚字：**有文字 ⇒ 走软底那一档**（`accent-soft` ＋ `accent-text` ＋ `accent` 描边），
+    /* 游标上那枚字：**在流里自己占一行**（不是绝对定位在一条固定高度的带里）。
+       为什么：原先它住在 `.is-now` 那条 22px 的带里、字一换行就盖住下面第一条行
+       （实测「字底 − 第一条 row 顶」＝ +17px／+18.5px）。放进流里 ⇒ 带高**随字长**，
+       字换行只把行往下推，永远压不到第一条；`min-height` 保住原来的带高（`NOW_BAND_PX`）。
+       横坐标与那条竖线读**同一个**自定义属性（`wideAt`／`narrowAt` 各只写一遍）。
+       有文字 ⇒ 走软底那一档（`accent-soft` ＋ `accent-text` ＋ `accent` 描边），
        实底上放 12px 的正文在 neutral 皮肤下过不了 4.5 的文本地板（法则表第三节）。 */
     s('now-label') + ' {',
-    '  position: absolute;',
-    '  top: 1px;',
-    '  left: calc(' + wideAt + ' + 4px);',
-    '  max-width: 14ch;',
+    '  display: flex;',
+    '  align-items: center;',
+    '  width: fit-content;',
+    '  min-height: ' + String(GANTT_TIMELINE_NOW_BAND_PX) + 'px;',
+    '  margin: 0 0 4px calc(' + wideAt + ' + 4px);',
     '  padding: 0 6px;',
     '  border: 1px solid ' + skinVar('accent') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',
@@ -207,11 +211,10 @@ export function ganttTimelineCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.5;',
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
-    '  z-index: 3;',
     '}',
     s('now-label') + '.is-end {',
-    '  left: auto;',
-    '  right: calc(100% - (' + wideAt + ') + 4px);',
+    '  margin: 0 calc(100% - (' + wideAt + ') + 4px) 4px auto;',
+    '  justify-content: flex-end;',
     '  text-align: right;',
     '}',
     '/* 一行：缺省＝宽档（标签列 ＋ 轨迹列）；窄档（`@container` 那一段）＝标签折到轨迹之上（一列）。 */',
@@ -298,11 +301,10 @@ export function ganttTimelineCss(input?: { readonly prefix?: string }): string {
     '    left: calc(' + narrowAt + ');',
     '  }',
     '  ' + s('now-label') + ' {',
-    '    left: calc(' + narrowAt + ' + 4px);',
+    '    margin-left: calc(' + narrowAt + ' + 4px);',
     '  }',
     '  ' + s('now-label') + '.is-end {',
-    '    left: auto;',
-    '    right: calc(100% - ' + narrowAt + ' + 4px);',
+    '    margin: 0 calc(100% - ' + narrowAt + ' + 4px) 4px auto;',
     '  }',
     '}',
   ].join(LF);

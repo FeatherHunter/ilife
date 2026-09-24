@@ -62,7 +62,8 @@ export const GANTT_TIMELINE_SLOTS = [
   'row-note',
   /** 轨迹（格网；段／空档块／里程碑点都按 `grid-column` 落位）。 */
   'track',
-  /** 一条段（带状态类 `is-done`／`is-doing`／`is-wait`／`is-plan`／`is-crit`）。 */
+  /** 一条段（带状态类 `is-done`／`is-doing`／`is-wait`／`is-plan`／`is-crit`；
+   *  带短字时另带 `is-labelled`——这块面上有正文级的字，样式段据此改走软底那一档）。 */
   'bar',
   /** 段里那枚字形（`✓`／`▶`／`⋯`／`▷`／关键路径的顺序号）——**不是正文，是图形**。 */
   'mark',
@@ -103,13 +104,15 @@ export type GanttTimelineForm = (typeof GANTT_TIMELINE_FORMS)[number];
 export const GANTT_TIMELINE_STATES = ['done', 'doing', 'wait', 'plan', 'idle'] as const;
 export type GanttTimelineState = (typeof GANTT_TIMELINE_STATES)[number];
 
-/** 状态在标记里的类名（`is-` ＋ 状态名，与 `is-C` 同一套写法）。 */
-export function ganttTimelineStateClass(state: GanttTimelineState): string {
+/** 标记里那一档的键：段的状态四档 ＋ 关键路径段（`crit`）＋ 里程碑（`milestone`）。
+ *  这三样走**同一套** `is-*` 类名（条与图例那枚形都用），故类型也合成一支。 */
+export type GanttTimelineStateKey = GanttTimelineState | 'crit' | 'milestone';
+
+/** 那一档在标记里的类名（`is-` ＋ 档名，与 `is-C` 同一套写法）。**唯一拼法**：
+ *  条（`render.ts`）与图例那枚形都调它——自己再拼一次 `' is-' + state` 就是同一事实两处写。 */
+export function ganttTimelineStateClass(state: GanttTimelineStateKey): string {
   return 'is-' + state;
 }
-
-/** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
-export const GANTT_TIMELINE_MISSING = '—';
 
 /** 缺省每格分钟数（与原型的 90 分钟 ÷ 18 格同档）。 */
 export const GANTT_TIMELINE_DEFAULT_CELL_MINUTES = 5;
@@ -145,7 +148,9 @@ export interface GanttTimelineSegment {
   readonly minutes: number;
   /** 状态（闭集，缺省 `plan`）；`idle` ＝ 空档段（画点线块并写分钟数，不装作占用）。 */
   readonly state?: GanttTimelineState;
-  /** 段里的短字（可选）：条上除了状态字形还能写一枚短字（如菜名）；不给＝只有字形。 */
+  /** 段里的短字（可选）：条上除了状态字形还能写一枚短字（如菜名）；不给＝只有字形。
+   *  给了短字 ＝ 这块面上有正文级的字 ⇒ 与关键路径段同档（软底 ＋ 主色字 ＋ 主色描边）：
+   *  实底上的 `accent-ink` 在 neutral 皮肤下只有 4.02，过不了 4.5 的文本地板。 */
   readonly label?: string;
 }
 
