@@ -26,6 +26,7 @@ import { skinCss } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { CSS_VAR_TOKENS } from '../dist/index.js';
 import { openMeasurePage } from './time-group-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -216,7 +217,7 @@ describe('sub-list ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码级：`style.ts` 里不手写 `var(--ilife-…)`', () => {
-    const src = readFileSync(join(PKG, 'src', 'components', 'sub-list', 'style.ts'), 'utf8');
+    const src = styleSource('sub-list');
     assert.equal(/var\(\s*--ilife-/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), false);
   });
 

@@ -50,6 +50,7 @@ import { skinCss } from '../dist/blocks.js';
 // 冻结面那件 `renderToast` 走**根出口**（`blocks.ts` 不转出它）——加法式那一条要拿它做「一字没动」的对照。
 import { renderToast } from '../dist/index.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
+import { styleSource } from './_style-sources.mjs';
 
 const NAME = 'toast-card';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -263,7 +264,7 @@ describe('toast-card ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码里不出现手写的 `var(--ilife-…)`；样式只经 `skinVar()` 读皮肤', () => {
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', NAME, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource(NAME));
     assert.equal([...src.matchAll(/var\(\s*--ilife-/g)].length, 0);
     assert.ok(src.includes('skinVar('));
   });

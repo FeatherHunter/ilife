@@ -23,6 +23,7 @@ import {
 } from '../dist/components/status-row/index.js';
 import { SKIN_TOKEN_NAMES, skinTokenVar } from '../dist/components/skin/index.js';
 import { startFamilyPage } from './_f5-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -170,7 +171,7 @@ describe('status-row ② 样式与零 DOM 纪律', () => {
     assert.equal(css.includes('!important'), false, '不得用 !important');
     assert.deepEqual(css.match(/--[a-z0-9-]+\s*:/g) || [], [], '不得定义新 token');
     /* 源码面：`style.ts` 里不许出现手写的 `var(--ilife-…)`（兜底链只许住在 skin/contract.ts）。 */
-    const src = readFileSync(join(PKG, 'src', 'components', 'status-row', 'style.ts'), 'utf8')
+    const src = styleSource('status-row')
       .replace(/\/\*[\s\S]*?\*\//g, '');
     assert.deepEqual(src.match(/var\(\s*--ilife-/g) || [], [], '手写了 var(--ilife-…)：请走 skinVar()');
     /* 产物面：出现 `var(--ilife-…)` 的每一处都必须是 skinVar 产出的**带兜底链**的串。 */

@@ -38,6 +38,7 @@ import { renderDocShell } from '../dist/docShell.js';
 import { skinClass, skinCss, BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES } from '../dist/components/skin/index.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { startShapesPage } from './shapes-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -259,7 +260,7 @@ describe('heat-grid ② 样式与零 DOM 纪律', () => {
       const before = clean.slice(Math.max(0, m.index - 160), m.index);
       assert.ok(before.includes('var(--ilife-'), '硬编码颜色：' + m[0] + ' 不在皮肤兜底链里');
     }
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', 'heat-grid', 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource('heat-grid'));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], '源码里请改走 skinVar()');
     assert.equal(clean.includes('color-mix(in srgb,'), true, '五档深浅从 skinVar 算出来');
     assert.equal(clean.includes('var(--ilife-accent,'), true, '强调色经 skinVar 走兜底链');

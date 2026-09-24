@@ -26,6 +26,7 @@ import {
 } from '../dist/components/due-row/index.js';
 import { SKIN_TOKEN_NAMES, skinTokenVar } from '../dist/components/skin/index.js';
 import { startFamilyPage, sleep } from './_f5-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -206,7 +207,7 @@ describe('due-row ② 样式与零 DOM 纪律', () => {
     assert.equal(css.includes(':root'), false);
     assert.equal(css.includes('!important'), false);
     assert.deepEqual(css.match(/--[a-z0-9-]+\s*:/g) || [], [], '不得定义新 token');
-    const src = readFileSync(join(PKG, 'src', 'components', 'due-row', 'style.ts'), 'utf8')
+    const src = styleSource('due-row')
       .replace(/\/\*[\s\S]*?\*\//g, '');
     assert.deepEqual(src.match(/var\(\s*--ilife-/g) || [], [], '手写了 var(--ilife-…)：请走 skinVar()');
     const produced = [...css.matchAll(/var\(--ilife-[a-z0-9-]+([^)]*)/g)].map((m) => m[1]);

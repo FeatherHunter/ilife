@@ -31,6 +31,7 @@ import {
 import { skinCss } from '../dist/blocks.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { measureCells } from './_f11-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const NAME = 'sync-status';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -176,7 +177,7 @@ describe('sync-status ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码里不出现手写的 `var(--ilife-…)`', () => {
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', NAME, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource(NAME));
     assert.equal([...src.matchAll(/var\(\s*--ilife-/g)].length, 0);
     assert.ok(src.includes('skinVar('));
   });

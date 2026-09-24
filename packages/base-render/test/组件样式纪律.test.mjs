@@ -27,6 +27,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { styleSource, styleSources } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BR = join(HERE, '..');
@@ -82,22 +83,9 @@ const door = doorDirs();
 const components = door.filter((n) => existsSync(join(COMP, n, 'style.ts')));
 const notComponents = door.filter((n) => !existsSync(join(COMP, n, 'style.ts')));
 
-/** 一件的**样式来源文件**：`style.ts` ＋ 同目录 `style-*.ts`，按文件名排序。
- *
- *  **件的发现口径不变**（仍是 `existsSync(<件>/style.ts)`），但**扫的范围**必须是这一批文件：
- *  件超了行数告警线时，按先例把某一段拆到 `style-*.ts`（`scatter-fit/style-forms.ts`、
- *  `date-range/style-calendar.ts`），拆出去的那半**仍是本件的样式段**。
- *  只扫 `style.ts` 的写法会把「按规矩拆了文件、压了行数」的件**少扫一半**——
- *  判据越窄、拆得越合规越安全，纪律被「压线」反向削弱（2026-09-25 由 F 席读出）。
- */
-function styleSources(name) {
-  const dir = join(COMP, name);
-  return readdirSync(dir).filter((f) => /^style(?:-[^/]+)?\.ts$/.test(f)).sort()
-    .map((file) => ({ file, src: readFileSync(join(dir, file), 'utf8') }));
-}
-
-/** 一件全部样式来源的合文本（按文件名排序拼起来；只在「整份一起看」的判据上用）。 */
-const styleSource = (name) => styleSources(name).map((f) => f.src).join('\n');
+/* 样式源码的读法住在共用助手 `_style-sources.mjs`（上面那条口径的落点）：一件的样式来源 ＝
+   `style.ts` ＋ 同目录 `style-*.ts`。本判据 ①b 与文末的仓库级横切门守着这条口径：
+   **件的发现口径不变**（仍看 `<件>/style.ts` 在不在），变的只是扫的范围。 */
 
 describe('组件层样式纪律 ①：扫描面非空且对得上盘', () => {
   it('出口点名的、没有样式段的目录必须都是已知的非件目录', () => {
@@ -351,5 +339,240 @@ describe('组件层样式纪律 ⑤：豁免名单与范围不许过期', () => 
   it('每个件都至少有一条自己的规则选择器（防「空样式段」蒙混）', () => {
     const empty = components.filter((n) => !EXEMPT.has(n) && selectorsOf(styleSource(n)).length === 0);
     assert.deepEqual(empty, [], '这些件的样式段里抽不到任何规则选择器：' + empty.join('、'));
+  });
+});
+
+/** 判据侧「按件读样式源码」的写法：`readFileSync`／`join`／`resolve` 直接吃到字面量 `'style.ts'`。
+ *  **只认「读」不认「发现件」**：`existsSync(join(COMP, <件名>, 'style.ts'))` 是**件的发现口径**
+ *  （形状见 `src/components/清单.ts` §三），照旧允许——受管的是「拿它当**样式源码**读」。
+ *  只认字面量：路径若先落进一个变量再读（`const p = join(DIR,'style.ts'); readFileSync(p)`），
+ *  本正则抓不到——那种写法要**人**看得见，故 `skin.test.mjs` 那种「先建路径表再读」的写法也一并收口。 */
+const SINGLE_FILE_SCAN = /(?:readFileSync|join|resolve)\([^)\n]*'style\.ts'/;
+
+/** 收口期豁免：**只给在途席改动中的判据文件**，一条一行、必须带登记日期与去处，且**逐条打印警告**
+ *  （不许静默跳过）。表**缺省为空**——谁的改动落地了就把自己那条删掉。
+ *  格式：`['<文件名>', '<理由>（在途席：<谁>）｜登记 2026-09-25｜去处：<谁在何时清>']` */
+const STYLE_SCAN_EXEMPT = new Map([]);
+
+/** 判据目录下全部判据文件（`test/*.test.mjs`）。 */
+const judgeFiles = () => readdirSync(HERE).filter((f) => f.endsWith('.test.mjs')).sort();
+
+/** 一个判据文件里「按件只读 `<件>/style.ts`」的行（行号 ＋ 原文）；件的发现口径不算。 */
+function singleFileScans(name) {
+  const out = [];
+  readFileSync(join(HERE, name), 'utf8').split('\n').forEach((line, i) => {
+    if (!SINGLE_FILE_SCAN.test(line)) return;
+    if (/existsSync\([^)]*'style\.ts'/.test(line)) return;
+    out.push({ line: i + 1, text: line.trim() });
+  });
+  return out;
+}
+
+describe('组件层样式纪律 ⑧：判据侧的范围（仓库级横切门：不许按件只读一份 `style.ts`）', () => {
+  it('凡按件读样式源码的判据，都得经 `_style-sources.mjs` 取该件全部 `style*.ts`', () => {
+    const bad = [];
+    for (const f of judgeFiles()) {
+      if (f === '组件样式纪律.test.mjs') continue; // 本门自己只扫别人（本判据 ①b 的第二条自守）
+      if (STYLE_SCAN_EXEMPT.has(f)) continue;
+      for (const s of singleFileScans(f)) bad.push(f + ':' + s.line + '：' + s.text);
+    }
+    for (const [f, why] of STYLE_SCAN_EXEMPT) console.error('豁免（在途席改动中，收敛时删）：' + f + '——' + why);
+    assert.deepEqual(bad, [], '这些判据按件只读 `<件>/style.ts`：拆出去的那半（`style-*.ts`）它一无所知，'
+      + '「按规矩拆件压行数」反而让纪律变松（本层已 6 件拆分）。\n'
+      + '  修法：读取换成 `styleSource(<件名>)`／`styleSources(<件名>)`（`test/_style-sources.mjs`，'
+      + '按文件名排序给出该件全部 `style*.ts`）；确实要读一份**不是件**的 `style.ts`，'
+      + '照 `STYLE_SCAN_EXEMPT` 的格式记一条带日期的豁免并写明它不是件：\n  ' + bad.join('\n  '));
+  });
+
+  it('豁免表不许过期、不许不带日期（缺省为空表）', () => {
+    const stale = [...STYLE_SCAN_EXEMPT.keys()].filter((f) => !existsSync(join(HERE, f)) || singleFileScans(f).length === 0);
+    assert.deepEqual(stale, [], '豁免表里这些文件已不再按单文件读（或文件不存在）⇒ 把这一条删掉：' + stale.join('、'));
+    const undated = [...STYLE_SCAN_EXEMPT.entries()].filter(([, why]) => !/\d{4}-\d{2}-\d{2}/.test(why)).map(([f]) => f);
+    assert.deepEqual(undated, [], '豁免必须带登记日期（只有「在途席改动中」才准豁免）：' + undated.join('、'));
+    console.log('读数：判据件 ' + judgeFiles().length + ' 个过门；单文件扫的判据 0 个'
+      + (STYLE_SCAN_EXEMPT.size === 0 ? '（豁免表空）' : '；豁免 ' + STYLE_SCAN_EXEMPT.size + ' 条'));
+  });
+});
+
+/* ── ⑨ 零键盘语汇（用户第一条打分口径） ────────────────────────────── */
+
+/** **法条全表**（硬门）：键盘语汇里**只有一种意思**的那些——键帽字形／中文词／DOM 与事件名／键名。
+ *
+ *  **匹配口径**（写死这一处，谁调表先读这段；第一版不设这几道，实测扫出 80+ 条假阳性）：
+ *   · **中文词与纯符号**（`⌘ ⌥ ⇧ 键帽 快捷键 键位 方向键 键盘`）：串匹配（中文不分大小写）；
+ *   · **DOM／事件名**（`kbd` `keydown` `keyup` `onkey*`）：按词边界、大小写不敏感——它们只可能是键盘通路；
+ *     `onkey` 是**前缀**（`onkeydown`／`onkeyup`／`onkeypress` 全收），只卡前边界；
+ *   · **键名**（`Esc`／`Escape`／`Tab`／`Enter`）：**只在字符串字面量里**、且**按键盘写法（首字母大写）**匹配。
+ *     为什么加这两道：`esc()`（HTML 转义助手）与 `'../shared/escape.js'`（模块路径）都含这两个词，
+ *     大小写不敏感地全扫会把本层几十件一起判红（实测就是这么红的）；`Table`／`Enterprises` 由词边界挡掉。
+ *     代价：小写 `enter` 文案抓不到——那种写法请在评审里说清（口径写在这儿，不是漏）。
+ *   · **注释不算**：先把块注释整段挖掉（含**写在字符串里的 CSS 注释**——那类行以 `'` 开头、`codeLines()` 剥不掉），
+ *     再逐行扫——件头／段内写「本件不带键盘通路」是纪律句，不是缺陷；
+ *   · 扫三处：**产出 CSS**（`xCss()` 的产物）、**该件源码**（该件目录下的全部 `.ts`）、
+ *     **清单示例标记**（拿清单里的示例入参渲染出来的标记；渲染不出来的**照实记一行读数**，不静默跳过）。 */
+const KEYBOARD_WORDS = ['⌘', '⌥', '⇧', '键帽', '快捷键', '键位', '方向键', '键盘', 'kbd', 'keydown', 'keyup', 'onkey'];
+const KEYBOARD_NAMES = ['Esc', 'Escape', 'Tab', 'Enter'];
+
+/** **读数档**（不判红、逐条打印）：方向箭头另有「涨跌／流程箭头」的正当用法
+ *  （实测：`bulk-bar` 的 `→` 是"旧值 → 新值"，不是键帽），判红会误伤 ⇒ 列出来给人判。 */
+const ARROW_GLYPHS = ['↑', '↓', '←', '→'];
+
+/** 把**块注释**整段挖掉（多行也算），**保持行数与列位**（非换行字符一律换成空格）。 */
+function blankBlockComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
+/** 一行里的**字符串字面量**内容（键名只在这一面上认：代码标识符与模块路径不算 UI 文案）。 */
+function literalsIn(line) {
+  return [...line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)].map((m) => m[1] ?? m[2] ?? m[3] ?? '').join(' ');
+}
+
+/** 一个词在一行里的命中（返回**实际命中的那段原文**，如 `onkeydown`）；没有则 `null`。 */
+function keyboardHit(word, line) {
+  if (!/^[A-Za-z]+$/.test(word)) return line.includes(word) ? word : null;
+  const hit = (word === 'onkey' ? /\bonkey/i : new RegExp('\\b' + word + '\\b', 'i')).exec(line);
+  return hit === null ? null : hit[0];
+}
+
+/** 逐行扫一段文本：命中登记 `{ line, word, text }`（一个词一行只记一次）。 */
+function keyboardHitsIn(text) {
+  const out = [];
+  for (const { n, t } of codeLines(blankBlockComments(text))) {
+    for (const w of KEYBOARD_WORDS) {
+      const hit = keyboardHit(w, t);
+      if (hit !== null) out.push({ line: n, word: hit, text: t });
+    }
+    const lits = literalsIn(t);
+    for (const w of KEYBOARD_NAMES) {
+      const hit = new RegExp('\\b' + w + '\\b').exec(lits);
+      if (hit !== null) out.push({ line: n, word: hit[0], text: t });
+    }
+  }
+  return out;
+}
+
+/** 方向箭头那几枚字的命中（读数档：也可能只是流程图上的箭头）。 */
+function arrowGlyphsIn(text) {
+  const out = [];
+  for (const { n, t } of codeLines(blankBlockComments(text))) {
+    for (const w of ARROW_GLYPHS) if (t.includes(w)) out.push({ line: n, word: w, text: t });
+  }
+  return out;
+}
+
+/** 该件目录下的源码文件（`.ts`：`attrs`／`model`／`render`／`fields`／`style*`／`index`…；不含 README）。 */
+function componentSources(name) {
+  const dir = join(COMP, name);
+  return readdirSync(dir).filter((f) => f.endsWith('.ts')).sort()
+    .map((file) => ({ file, src: readFileSync(join(dir, file), 'utf8') }));
+}
+
+/** 命中处的一小段上下文（报错要说清"哪一条"）。 */
+function around(text, needle) {
+  const i = text.indexOf(needle);
+  return (i < 0 ? text.slice(0, 80) : text.slice(Math.max(0, i - 40), i + 50)).replace(/\s+/g, ' ').trim();
+}
+
+/** **收口期豁免**（键＝`<件名> ｜ <词>`）：只登记**已经存在的**命中，一条一行、必须带登记日期与去处，
+ *  且**逐条打印警告**（不许静默跳过）。命中修掉后把这一条删掉——本判据自会点名（豁免过期＝红）。
+ *  这些是 2026-09-25 首跑扫出来的既有账（用户口径：手机与电脑端同时在用，不存在方向键等键盘相关的东西）。 */
+const KEYBOARD_EXEMPT = new Map([
+  ['confirm-strip ｜ keydown', '`runtime.ts:58` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['confirm-strip ｜ Esc', '`runtime.ts:59` 的 `e.key!=="Esc"`｜登记 2026-09-25｜去处：待派活'],
+  ['confirm-strip ｜ Escape', '`runtime.ts:59` 的 `e.key!=="Escape"`｜登记 2026-09-25｜去处：待派活'],
+  ['date-range ｜ keydown', '`runtime.ts:245` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['editable-value ｜ keydown', '`runtime.ts:158` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['editable-value ｜ Enter', '`runtime.ts:161` 的 `e.key==="Enter"` 提交｜登记 2026-09-25｜去处：待派活'],
+  ['editable-value ｜ Escape', '`runtime.ts:162` 的 `e.key==="Escape"` 取消｜登记 2026-09-25｜去处：待派活'],
+  ['number-stepper ｜ keydown', '`runtime.ts:211` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['number-stepper ｜ Enter', '`runtime.ts:216` 的 `e.key==="Enter"` 提交｜登记 2026-09-25｜去处：待派活'],
+  ['number-stepper ｜ Escape', '`runtime.ts:217` 的 `e.key==="Escape"` 取消｜登记 2026-09-25｜去处：待派活'],
+  ['popover-menu ｜ keydown', '`runtime.ts:93` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['rating-row ｜ keydown', '`runtime.ts:89` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['search-field ｜ keydown', '`runtime.ts:288` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
+  ['search-field ｜ Enter', '`runtime.ts:293` 的 `e.key==="Enter"` 跳转｜登记 2026-09-25｜去处：待派活'],
+  ['search-field ｜ Escape', '`runtime.ts:294` 的 `e.key==="Escape"` 清空｜登记 2026-09-25｜去处：待派活'],
+  ['tooltip ｜ Esc', '`attrs.ts:90` 的**可见文案** `TOOLTIP_HINT = \'Esc 关掉\'`（用户看得见的一条）｜登记 2026-09-25｜去处：待派活'],
+]);
+
+/** 键名那一族也要认「字符串字面量面」：`keyboardHitsIn()` 已把键名限定在字面量里。 */
+const exemptKey = (name, word) => name + ' ｜ ' + word;
+
+describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时在用 ⇒ 不存在方向键那类东西）', () => {
+  it('逐件扫产出 CSS 与该件源码（剥注释）', async () => {
+    const bad = [];
+    const known = [];
+    const arrows = [];
+    const record = (name, where, h) => {
+      const key = exemptKey(name, h.word);
+      (KEYBOARD_EXEMPT.has(key) ? known : bad).push(name + ' ｜ ' + h.word + ' ｜ ' + where + '：' + h.text.slice(0, 80));
+    };
+    for (const name of components) {
+      if (EXEMPT.has(name)) continue;
+      const css = await producedCss(name);
+      for (const h of keyboardHitsIn(css)) record(name, '产出 CSS 第 ' + h.line + ' 行', h);
+      for (const h of arrowGlyphsIn(css)) arrows.push(name + ' ｜ 产出 CSS 第 ' + h.line + ' 行 ｜ ' + h.text.slice(0, 60));
+      for (const { file, src } of componentSources(name)) {
+        for (const h of keyboardHitsIn(src)) record(name, file + ':' + h.line, h);
+        for (const h of arrowGlyphsIn(src)) arrows.push(name + ' ｜ ' + file + ':' + h.line + ' ｜ ' + h.text.slice(0, 60));
+      }
+    }
+    for (const line of known) console.error('豁免（已登记的既有命中，待派人修）：' + line);
+    if (arrows.length > 0) {
+      console.log('读数：方向箭头那几枚字命中 ' + arrows.length + ' 处（**读数档，不判红**——也可能是涨跌／流程箭头，'
+        + '要人判）：' + arrows.join('；'));
+    }
+    assert.deepEqual(bad, [], '这些地方有键盘语汇（用户口径：手机与电脑端同时在用，不存在方向键等键盘相关的东西）：\n  '
+      + bad.join('\n  ') + '\n（注释不算；键名只在**字符串字面量**里、按键盘写法首字母大写认——口径见 `KEYBOARD_WORDS` 的件头）');
+  });
+
+  it('豁免表不许过期、不许不带日期', () => {
+    const undated = [...KEYBOARD_EXEMPT.entries()].filter(([, why]) => !/\d{4}-\d{2}-\d{2}/.test(why)).map(([k]) => k);
+    assert.deepEqual(undated, [], '豁免必须带登记日期：' + undated.join('、'));
+    const stale = [...KEYBOARD_EXEMPT.keys()].filter((k) => {
+      const [name, word] = k.split(' ｜ ');
+      if (!components.includes(name)) return true;
+      const texts = [...componentSources(name).map((f) => f.src)];
+      return !texts.some((t) => keyboardHitsIn(t).some((h) => h.word === word));
+    });
+    assert.deepEqual(stale, [], '豁免表里这些命中已经不在盘上（修掉了／拼错）⇒ 把这一条删掉：' + stale.join('、'));
+    console.log('读数：键盘语汇豁免 ' + KEYBOARD_EXEMPT.size + ' 条（件 × 词；收口期临时账，逐条已打印）');
+  });
+
+  it('清单示例标记那一面：拿清单里的示例入参渲染出来再扫一遍', async () => {
+    const { COMPONENTS } = await import(new URL('../dist/components/清单.js', import.meta.url).href);
+    const bad = [];
+    const notRendered = [];
+    for (const row of COMPONENTS) {
+      if (EXEMPT.has(row.name)) continue;
+      if (row.render === '' || row.sample === null) { notRendered.push(row.name + '（清单里没有渲染入口／示例入参）'); continue; }
+      let html = '';
+      try {
+        const mod = await import(new URL('../dist/components/' + row.name + '/index.js', import.meta.url).href);
+        if (typeof mod[row.render] !== 'function') { notRendered.push(row.name + '（产物里取不到 `' + row.render + '`）'); continue; }
+        html = mod[row.render](row.sample);
+      } catch (e) {
+        notRendered.push(row.name + '（示例入参渲染报错：' + String(e && e.message ? e.message : e).slice(0, 50) + '）');
+        continue;
+      }
+      for (const w of KEYBOARD_WORDS.concat(KEYBOARD_NAMES)) {
+        const hit = KEYBOARD_NAMES.includes(w) ? keyboardHit(w, literalsIn(String(html))) : keyboardHit(w, String(html));
+        if (hit === null) continue;
+        const seen = row.name + ' ｜ ' + hit + ' ｜ 示例标记：…' + around(String(html), hit) + '…';
+        if (KEYBOARD_EXEMPT.has(exemptKey(row.name, hit))) {
+          console.error('豁免（已登记的既有命中，待派人修）：' + seen);
+          continue;
+        }
+        bad.push(seen);
+      }
+      const arrows = ARROW_GLYPHS.filter((w) => String(html).includes(w)).map((w) => w + '（…' + around(String(html), w) + '…）');
+      if (arrows.length > 0) {
+        console.log('读数：' + row.name + ' 的示例标记里有方向箭头（读数档，不判红）：' + arrows.join('；'));
+      }
+    }
+    if (notRendered.length > 0) {
+      console.log('读数：' + notRendered.length + ' 件的示例标记渲染不出来（源码那一面照扫）：' + notRendered.join('；'));
+    }
+    assert.deepEqual(bad, [], '示例标记里有键盘语汇：\n  ' + bad.join('\n  '));
   });
 });

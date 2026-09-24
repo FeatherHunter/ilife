@@ -25,6 +25,7 @@ import {
 import { skinCss } from '../dist/blocks.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { measureCells } from './_f11-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const NAME = 'progress-list';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -192,7 +193,7 @@ describe('progress-list ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码里不出现手写的 `var(--ilife-…)`（兜底链只许住在 skin/contract.ts）', () => {
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', NAME, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource(NAME));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].length, 0);
     assert.ok(src.includes('skinVar('), '样式只许经 skinVar 读皮肤');
   });

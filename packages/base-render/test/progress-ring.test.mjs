@@ -36,6 +36,7 @@ import { renderDocShell } from '../dist/docShell.js';
 import { skinClass, skinCss, BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES } from '../dist/components/skin/index.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { startShapesPage } from './shapes-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -217,7 +218,7 @@ describe('progress-ring ② 样式与零 DOM 纪律', () => {
   });
 
   it('**源码级**：本件样式不手写 `var(--ilife-…)`（兜底链只许住在 skin/contract.ts）；产出的色值只来自那条链', () => {
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', 'progress-ring', 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource('progress-ring'));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], '源码里请改走 skinVar()');
     const clean = stripComments(css);
     assert.ok(clean.includes('var(--ilife-ink,'), '皮肤色必须经 skinVar 走兜底链');

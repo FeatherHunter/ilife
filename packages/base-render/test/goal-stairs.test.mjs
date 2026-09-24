@@ -45,6 +45,7 @@ import { renderProgressList } from '../dist/components/progress-list/index.js';
 import { SKINS, skinCss, skinClass } from '../dist/components/skin/index.js';
 import { SKIN_NAMES } from '../dist/components/skin/contract.js';
 import { startShapesPage } from './shapes-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -397,7 +398,7 @@ describe('goal-stairs ② 样式与零 DOM 纪律', () => {
     }
     const bare = [...stripVarFns(clean).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
     assert.deepEqual([...new Set(bare)], [], '兜底链之外的颜色字面量：' + [...new Set(bare)].join('、'));
-    const src = stripComments(readFileSync(join(DIR, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource('goal-stairs'));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], 'style.ts 里请改走 skinVar()');
     /* 选中／填充四档：**有文字的位走字色**（不是墨块），无文字的条走实底；
        任何一处的 `background` 都不许整个就是文字墨色。 */

@@ -31,6 +31,7 @@ import {
 } from '../dist/components/confirm-strip/index.js';
 import { BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, SKINS, skinCss } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -221,7 +222,7 @@ describe('confirm-strip ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码级：`style.ts` 里零硬编码颜色（配色一律从 token 读）', () => {
-    const src = readFileSync(join(PKG, 'src', 'components', 'confirm-strip', 'style.ts'), 'utf8');
+    const src = styleSource('confirm-strip');
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '');
     const hex = code.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
     assert.deepEqual(hex, [], '样式源码里不许硬编码颜色：' + hex.join(' '));

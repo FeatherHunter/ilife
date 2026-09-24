@@ -54,6 +54,7 @@ import { SKINS, SKIN_NAMES, skinClass, skinCss, skinVar } from '../dist/componen
 import { renderDocShell } from '../dist/docShell.js';
 import * as root from '../dist/index.js';
 import { selectorsOf, startBrowser, stripComments, throwsBlocks } from './overlay-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -366,7 +367,7 @@ describe('command-palette ② 样式与零 DOM 纪律', () => {
     }
     const bare = [...stripVarFns(clean).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
     assert.deepEqual([...new Set(bare)], [], '兜底链之外的颜色字面量：' + [...new Set(bare)].join('、'));
-    const src = stripComments(readFileSync(join(DIR, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource('command-palette'));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], 'style.ts 里请改走 skinVar()');
     for (const m of clean.matchAll(/background(?:-color)?\s*:\s*([^;{}]+)/g)) {
       const value = m[1].trim();

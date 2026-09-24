@@ -33,6 +33,7 @@ import { skinCss } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { CSS_VAR_TOKENS } from '../dist/index.js';
 import { openMeasurePage } from './time-group-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -253,7 +254,7 @@ describe('calendar-month ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码级：`style.ts` 里不手写 `var(--ilife-…)`（兜底链只许住在 `skin/contract.ts`）', () => {
-    const src = readFileSync(join(PKG, 'src', 'components', 'calendar-month', 'style.ts'), 'utf8');
+    const src = styleSource('calendar-month');
     assert.equal(/var\(\s*--ilife-/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')), false);
   });
 

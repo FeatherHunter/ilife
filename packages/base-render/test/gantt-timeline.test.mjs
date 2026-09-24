@@ -41,6 +41,7 @@ import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { SKIN_NAMES, skinClass, skinCss } from '../dist/components/skin/index.js';
 import { startShapesPage } from './shapes-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -432,7 +433,7 @@ describe('gantt-timeline ② 样式与零 DOM 纪律', () => {
     }
     const bare = [...stripVarFns(clean).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
     assert.deepEqual([...new Set(bare)], [], '兜底链之外的颜色字面量：' + [...new Set(bare)].join('、'));
-    const src = stripComments(readFileSync(join(DIR, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource('gantt-timeline'));
     assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], 'style.ts 里请改走 skinVar()');
     for (const m of clean.matchAll(/background(?:-color)?\s*:\s*([^;{}]+)/g)) {
       assert.equal(/^var\(\s*--ilife-ink(?:-[23])?\s*[,)]/.test(m[1].trim()), false, '拿文字墨色当了"面"：' + m[1]);

@@ -22,6 +22,7 @@ import {
 import { skinCss } from '../dist/blocks.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { measureCells } from './_f11-probe.mjs';
+import { styleSource } from './_style-sources.mjs';
 
 const NAME = 'photo-compare';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -173,7 +174,7 @@ describe('photo-compare ② 样式与零 DOM 纪律', () => {
   });
 
   it('源码里不出现手写的 `var(--ilife-…)`', () => {
-    const src = stripComments(readFileSync(join(PKG, 'src', 'components', NAME, 'style.ts'), 'utf8'));
+    const src = stripComments(styleSource(NAME));
     assert.equal([...src.matchAll(/var\(\s*--ilife-/g)].length, 0);
     assert.ok(src.includes('skinVar('));
   });
@@ -203,7 +204,7 @@ describe('photo-compare ② 样式与零 DOM 纪律', () => {
     assert.ok(new RegExp('-divider \\{[\\s\\S]*?left: var\\(' + PHOTO_COMPARE_SPLIT_VAR).test(css), '竖线从它算');
     assert.equal(PHOTO_COMPARE_SPLIT_VAR.startsWith('--ilife-'), false,
       '它是本件自己的几何量，不是皮肤 token（不许借用 --ilife- 名字空间）');
-    assert.equal(stripComments(readFileSync(join(PKG, 'src', 'components', NAME, 'style.ts'), 'utf8'))
+    assert.equal(stripComments(styleSource(NAME))
       .includes("'--ilife-"), false, '源码里不许出现 --ilife- 字面量');
   });
 
