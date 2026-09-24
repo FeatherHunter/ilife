@@ -1,0 +1,195 @@
+/** sortToggle · **运行时**（产出 JS 文本；DOM 只允许出现在这段文本里）。
+ *
+ *  行为契约（逐条对应判据）：
+ *   · **委派 ＋ 幂等**：`document` 上 `click` ＋ `ilife:sort-loading` 两枚委派；`<html>` 挂载标记防重复绑定。
+ *   · **真排序**：按当前视图的 `data-ilife-sort-<字段>` 把条目**真的重排**（同一父节点内按序 `appendChild`），
+ *     方向取视图键上的 `data-ilife-sort-dir` 与反向键的 `aria-pressed` 组合。数字键按数值比，
+ *     非数字键按字典序比（混着比时数字一律在前，免得「10」排在「9」前面）。
+ *   · **计数是数出来的**：每档的条数＝属于该档的真实条目数（按 `data-ilife-sort-tags` 对号）；
+ *     条目**没有** `data-ilife-sort-tags` 属性时视为属于每一档（页面上没有分档）。
+ *   · **错态**：条目区不在／一条都没有 → 「没接上条目区」；当前视图的字段在条目上**一条都读不到**
+ *     → 点名是哪个键（错句 ＋ `aria-describedby`）。两种都不静默当「排好了」。
+ *   · **空态**：当前视图里 0 条 → 设计过的空态句（不是一片空白）。
+ *   · **载入态**：`ilife:sort-loading`（`detail={name,on}`）→ 「几条」原地换字 ＋ 收起反向键；
+ *     `on:false` 重算真读数（载入期间不写假的数）。
+ *   · **无脚本降级**：这段不跑时，视图键与条数照常可读（渲染期初值），只是点了不换。
+ */
+import {
+  SORT_BOUND_ATTR, SORT_CALIBER_ATTR, SORT_CALIBER_LINE_ATTR, SORT_CALIBER_TEXT_ATTR,
+  SORT_DEFAULTS, SORT_DIR_ATTR, SORT_DISABLED_ATTR, SORT_EMPTY_ATTR, SORT_ERROR_ATTR,
+  SORT_EVENT_CHANGE, SORT_EVENT_LOADING, SORT_FIELD_ATTR, SORT_FLIP_ATTR, SORT_FLIP_LABEL_ATTR,
+  SORT_INK_ATTR, SORT_INVALID_ATTR, SORT_ITEM_ATTR, SORT_ITEM_TAGS_ATTR, SORT_LOADING_ATTR,
+  SORT_NAME_ATTR, SORT_N_ATTR, SORT_REGION_ATTR, SORT_ROOT_CLASS, SORT_RUNTIME_ATTR,
+  SORT_SHOWN_ATTR, SORT_TARGET_ATTR, SORT_VIEW_ATTR, SORT_VIEW_LABEL_ATTR,
+} from './attrs.js';
+
+/** 产出运行时的 JS 文本（经典 script 作用域可跑的 IIFE）。 */
+export function buildSortToggleJs(): string {
+  const q = (s: string): string => JSON.stringify(s);
+  return '(function(){' + '\n'
+    + '  var A_ROOT=' + q(SORT_NAME_ATTR) + ', A_TARGET=' + q(SORT_TARGET_ATTR) + ', A_REGION=' + q(SORT_REGION_ATTR) + ';' + '\n'
+    + '  var A_VIEW=' + q(SORT_VIEW_ATTR) + ', A_N=' + q(SORT_N_ATTR) + ', A_FIELD=' + q(SORT_FIELD_ATTR) + ', A_DIR=' + q(SORT_DIR_ATTR) + ';' + '\n'
+    + '  var A_FLIP=' + q(SORT_FLIP_ATTR) + ', A_FLIPLAB=' + q(SORT_FLIP_LABEL_ATTR) + ', A_SHOWN=' + q(SORT_SHOWN_ATTR) + ';' + '\n'
+    + '  var A_CALIBER=' + q(SORT_CALIBER_ATTR) + ', A_CALLINE=' + q(SORT_CALIBER_LINE_ATTR)
+    + ', A_CALTEXT=' + q(SORT_CALIBER_TEXT_ATTR) + ', A_INK=' + q(SORT_INK_ATTR) + ';' + '\n'
+    + '  var A_VLAB=' + q(SORT_VIEW_LABEL_ATTR) + ', A_EMPTY=' + q(SORT_EMPTY_ATTR) + ';' + '\n'
+    + '  var A_ERR=' + q(SORT_ERROR_ATTR) + ', A_INVALID=' + q(SORT_INVALID_ATTR) + ', A_LOADING=' + q(SORT_LOADING_ATTR) + ';' + '\n'
+    + '  var A_DISABLED=' + q(SORT_DISABLED_ATTR) + ', A_BOUND=' + q(SORT_BOUND_ATTR) + ', A_RUNTIME=' + q(SORT_RUNTIME_ATTR) + ';' + '\n'
+    + '  var A_ITEM=' + q(SORT_ITEM_ATTR) + ', A_TAGS=' + q(SORT_ITEM_TAGS_ATTR) + ';' + '\n'
+    + '  var EV_CHANGE=' + q(SORT_EVENT_CHANGE) + ', EV_LOADING=' + q(SORT_EVENT_LOADING) + ';' + '\n'
+    + '  var D={unset:' + q(SORT_DEFAULTS.unset) + ', flipLabel:' + q(SORT_DEFAULTS.flipLabel)
+    + ', toDesc:' + q(SORT_DEFAULTS.toDesc) + ', toAsc:' + q(SORT_DEFAULTS.toAsc)
+    + ', inkText:' + q(SORT_DEFAULTS.inkText) + ', caliberText:' + q(SORT_DEFAULTS.caliberText)
+    + ', noCaliberText:' + q(SORT_DEFAULTS.noCaliberText)
+    + ', noKeyText:' + q(SORT_DEFAULTS.noKeyText) + ', unwiredText:' + q(SORT_DEFAULTS.unwiredText) + '};' + '\n'
+    + '  var SEL_ROOT="["+A_ROOT+"]", doc=document;' + '\n'
+    + '  if (doc.documentElement.getAttribute(A_RUNTIME)==="1") return;' + '\n'
+    + '  doc.documentElement.setAttribute(A_RUNTIME,"1");' + '\n'
+    + '  function quoted(v){ return String(v).replace(/["\\\\]/g, "\\\\$&"); }' + '\n'
+    + '  function pick(attr,value){ return "["+attr+"=\\""+quoted(value)+"\\"]"; }' + '\n'
+    + '  function one(root,attr){ return root.querySelector("["+attr+"]"); }' + '\n'
+    + '  function rootOf(el){ return el && el.closest ? el.closest(SEL_ROOT) : null; }' + '\n'
+    + '  function itemsOf(root){' + '\n'
+    + '    var key=root.getAttribute(A_TARGET);' + '\n'
+    + '    var box=null;' + '\n'
+    + '    if (key){ box=doc.querySelector(pick(A_REGION,key)); if (!box) return null; }' + '\n'
+    + '    return (box||doc).querySelectorAll("["+A_ITEM+"]");' + '\n'
+    + '  }' + '\n'
+    /* 归属：没有 tags 属性＝属于每一档（页面上没有分档）；有 tags 就得列上这一档 */
+    + '  function inView(item,view){' + '\n'
+    + '    var raw=item.getAttribute(A_TAGS);' + '\n'
+    + '    if (raw===null) return true;' + '\n'
+    + '    var list=String(raw).split(/\\s+/);' + '\n'
+    + '    for (var i=0;i<list.length;i+=1) if (list[i]===view) return true;' + '\n'
+    + '    return false;' + '\n'
+    + '  }' + '\n'
+    + '  function viewBtn(root){ return root.querySelector("["+A_VIEW+"][aria-pressed=\\"true\\"]"); }' + '\n'
+    + '  function curView(root){ var b=viewBtn(root); return b ? b.getAttribute(A_VIEW)||"" : ""; }' + '\n'
+    + '  function dirOf(root){' + '\n'
+    + '    var b=viewBtn(root); if (!b) return "desc";' + '\n'
+    + '    var d=b.getAttribute(A_DIR)||"desc";' + '\n'
+    + '    var flip=one(root,A_FLIP);' + '\n'
+    + '    var on=flip && flip.getAttribute("aria-pressed")==="true";' + '\n'
+    + '    if (!on) return d;' + '\n'
+    + '    return d==="desc" ? "asc" : "desc";' + '\n'
+    + '  }' + '\n'
+    + '  function setError(root,msg){' + '\n'
+    + '    var el=one(root,A_ERR);' + '\n'
+    + '    if (msg){ if (el){ el.textContent=msg; el.removeAttribute("hidden"); } root.setAttribute(A_INVALID,"1"); }' + '\n'
+    + '    else { if (el){ el.textContent=""; el.setAttribute("hidden",""); } root.removeAttribute(A_INVALID); }' + '\n'
+    + '  }' + '\n'
+    + '  function write(root,attr,text){ var el=one(root,attr); if (el) el.textContent=text; }' + '\n'
+    + '  function fire(root,name,detail){ root.dispatchEvent(new CustomEvent(name,{bubbles:true,detail:detail})); }' + '\n'
+    + '  function flipText(root,dir){' + '\n'
+    + '    var b=one(root,A_FLIP);' + '\n'
+    + '    var label=root.getAttribute(A_FLIPLAB)||D.flipLabel;' + '\n'
+    + '    return label+"（"+(dir==="asc"?D.toDesc:D.toAsc)+"）";' + '\n'
+    + '  }' + '\n'
+    /* 排序：同一父节点内按序 appendChild（真重排） */
+    + '  function sortItems(root,items,field,dir){' + '\n'
+    + '    var hit=[], i;' + '\n'
+    + '    for (i=0;i<items.length;i+=1) if (items[i].getAttribute("data-ilife-sort-"+field)!==null) hit.push(items[i]);' + '\n'
+    + '    if (hit.length===0) return false;' + '\n'
+    + '    var groups=[], order=[];' + '\n'
+    + '    for (i=0;i<hit.length;i+=1){' + '\n'
+    + '      var p=hit[i].parentNode; if (!p) continue;' + '\n'
+    + '      var at=-1;' + '\n'
+    + '      for (var j=0;j<groups.length;j+=1) if (groups[j]===p) at=j;' + '\n'
+    + '      if (at<0){ groups.push(p); order.push([]); at=groups.length-1; }' + '\n'
+    + '      order[at].push(hit[i]);' + '\n'
+    + '    }' + '\n'
+    + '    for (i=0;i<order.length;i+=1){' + '\n'
+    + '      var list=order[i], host=groups[i];' + '\n'
+    + '      if (!list.length || !host) continue;' + '\n'
+    + '      /* 重排不挪窝：先在原位放一枚锚（注释节点），把排好的条目逐个插到锚前，最后撤锚。' + '\n'
+    + '         直接用 appendChild 会把这一组甩到容器末尾——不属于本档的兄弟会被挤到前面去。 */' + '\n'
+    + '      var anchor=doc.createComment("ilife-sort");' + '\n'
+    + '      host.insertBefore(anchor, list[0]);' + '\n'
+    + '      list.sort(function(a,b){' + '\n'
+    + '        var x=a.getAttribute("data-ilife-sort-"+field), y=b.getAttribute("data-ilife-sort-"+field);' + '\n'
+    + '        var nx=Number(x), ny=Number(y);' + '\n'
+    + '        var an=isFinite(nx)&&String(x).replace(/^\\s+|\\s+$/g,"")!=="", bn=isFinite(ny)&&String(y).replace(/^\\s+|\\s+$/g,"")!=="";' + '\n'
+    + '        if (an && bn) return dir==="asc" ? nx-ny : ny-nx;' + '\n'
+    + '        if (an) return -1;' + '\n'
+    + '        if (bn) return 1;' + '\n'
+    + '        var s=String(x), t=String(y);' + '\n'
+    + '        if (s===t) return 0;' + '\n'
+    + '        var lt=s<t?-1:1;' + '\n'
+    + '        return dir==="asc" ? lt : -lt;' + '\n'
+    + '      });' + '\n'
+    + '      for (var k=0;k<list.length;k+=1) host.insertBefore(list[k], anchor);' + '\n'
+    + '      if (anchor.parentNode) anchor.parentNode.removeChild(anchor);' + '\n'
+    + '    }' + '\n'
+    + '    return true;' + '\n'
+    + '  }' + '\n'
+    /* 重算（唯一入口） */
+    + '  function run(root){' + '\n'
+    + '    var items=itemsOf(root);' + '\n'
+    + '    if (!items || items.length===0){ setError(root, D.unwiredText); write(root,A_SHOWN,D.unset); return; }' + '\n'
+    + '    var btns=root.querySelectorAll("["+A_VIEW+"]"), i, j;' + '\n'
+    + '    var view=curView(root);' + '\n'
+    + '    var shown=[];' + '\n'
+    + '    for (i=0;i<items.length;i+=1) if (inView(items[i],view)) shown.push(items[i]);' + '\n'
+    + '    for (i=0;i<btns.length;i+=1){' + '\n'
+    + '      var v=btns[i].getAttribute(A_VIEW)||"", n=0;' + '\n'
+    + '      for (j=0;j<items.length;j+=1) if (inView(items[j],v)) n+=1;' + '\n'
+    + '      var slot=btns[i].querySelector("["+A_N+"]");' + '\n'
+    + '      if (slot) slot.textContent=String(n);' + '\n'
+    + '    }' + '\n'
+    + '    var b=viewBtn(root), field=b ? (b.getAttribute(A_FIELD)||"") : "";' + '\n'
+    + '    var dir=dirOf(root);' + '\n'
+    + '    var sorted=true;' + '\n'
+    + '    if (field!=="") sorted=sortItems(root,shown,field,dir);' + '\n'
+    + '    if (field!=="" && !sorted){' + '\n'
+    + '      setError(root, D.noKeyText.replace("{field}", field));' + '\n'
+    + '    } else setError(root,"");' + '\n'
+    + '    var flip=one(root,A_FLIP);' + '\n'
+    + '    if (flip) flip.textContent=flipText(root,dir);' + '\n'
+    + '    var ink=one(root,A_INK), calText=one(root,A_CALTEXT);' + '\n'
+    + '    if (b){' + '\n'
+    + '      var lab=b.querySelector("["+A_VLAB+"]");' + '\n'
+    + '      var name=lab ? lab.textContent : "";' + '\n'
+    + '      if (ink) ink.textContent=D.inkText.split("{label}").join(name);' + '\n'
+    + '      var cal=b.getAttribute(A_CALIBER)||"";' + '\n'
+    + '      if (calText) calText.textContent = cal==="" ? D.noCaliberText : D.caliberText.split("{caliber}").join(cal);' + '\n'
+    + '    }' + '\n'
+    + '    var emptyEl=one(root,A_EMPTY);' + '\n'
+    + '    if (emptyEl){ if (shown.length===0) emptyEl.removeAttribute("hidden"); else emptyEl.setAttribute("hidden",""); }' + '\n'
+    + '    if (root.getAttribute(A_LOADING)==="1"){' + '\n'
+    + '      fire(root,EV_CHANGE,{name:root.getAttribute(A_ROOT),view:view,field:field,dir:dir,shown:shown.length,loading:true});' + '\n'
+    + '      return;' + '\n'
+    + '    }' + '\n'
+    + '    write(root,A_SHOWN,String(shown.length));' + '\n'
+    + '    if (flip) flip.disabled=root.hasAttribute(A_DISABLED);' + '\n'
+    + '    fire(root,EV_CHANGE,{name:root.getAttribute(A_ROOT),view:view,field:field,dir:dir,shown:shown.length});' + '\n'
+    + '  }' + '\n'
+    + '  function setBusy(root,on){' + '\n'
+    + '    var flip=one(root,A_FLIP);' + '\n'
+    + '    if (on){ root.setAttribute(A_LOADING,"1"); if (flip) flip.disabled=true; }' + '\n'
+    + '    else { root.removeAttribute(A_LOADING); run(root); }' + '\n'
+    + '  }' + '\n'
+    + '  doc.addEventListener("click",function(e){' + '\n'
+    + '    var t=e.target; if (!t || !t.closest) return;' + '\n'
+    + '    var root=rootOf(t); if (!root) return;' + '\n'
+    + '    var b=t.closest("["+A_VIEW+"]");' + '\n'
+    + '    if (b){ if (b.disabled) return;' + '\n'
+    + '      var all=root.querySelectorAll("["+A_VIEW+"]");' + '\n'
+    + '      for (var i=0;i<all.length;i+=1) all[i].setAttribute("aria-pressed", all[i]===b?"true":"false");' + '\n'
+    + '      var flip0=one(root,A_FLIP); if (flip0) flip0.setAttribute("aria-pressed","false");' + '\n'
+    + '      run(root); return; }' + '\n'
+    + '    var f=t.closest("["+A_FLIP+"]");' + '\n'
+    + '    if (f){ if (f.disabled) return;' + '\n'
+    + '      f.setAttribute("aria-pressed", f.getAttribute("aria-pressed")==="true" ? "false" : "true");' + '\n'
+    + '      run(root); }' + '\n'
+    + '  });' + '\n'
+    + '  doc.addEventListener(EV_LOADING,function(e){' + '\n'
+    + '    var d=e.detail||{};' + '\n'
+    + '    var root=(e.target && e.target.closest) ? e.target.closest(SEL_ROOT) : null;' + '\n'
+    + '    if (!root && d.name) root=doc.querySelector(pick(A_ROOT,d.name));' + '\n'
+    + '    if (!root) return;' + '\n'
+    + '    setBusy(root, d.on!==false);' + '\n'
+    + '  });' + '\n'
+    + '  var roots=doc.querySelectorAll(SEL_ROOT);' + '\n'
+    + '  for (var k=0;k<roots.length;k+=1){ roots[k].setAttribute(A_BOUND,"1"); run(roots[k]); }' + '\n'
+    + '}());';
+}

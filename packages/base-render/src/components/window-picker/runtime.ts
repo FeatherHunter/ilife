@@ -1,0 +1,166 @@
+/** windowPicker · **运行时**（产出 JS 文本；DOM 只允许出现在这段文字里）。
+ *
+ *  行为契约（逐条对应判据）：
+ *   · **委派 ＋ 幂等**：`document` 上 `click`（换档）／`change` ＋ `input`（手改起止）
+ *     ＋ `ilife:window-loading`；`<html>` 挂载标记防重复绑定。
+ *   · **天数是真的算出来的**：按两个日期的**含头含尾**差算（今天到今天 ＝ 1 天），UTC 计算，
+ *     不受时区与夏令时影响。
+ *   · **首屏补窗口**：渲染期没给 `today`（起止留空）时，运行时按根上的 `data-ilife-window-today`
+ *     或浏览器当天把窗口补上，并派发一次 `ilife:window-change`——**不编日子**，也**不空着**。
+ *   · **手改起止 → 落到「自定义」档**：手改之后档位不再是「本周」了，页面上必须看得出来。
+ *   · **错态**：起止读不出来（半截／非 ISO）或结束日早于起始日 → 控件旁边写一句 ＋ `aria-invalid`，
+ *     **不派发** change（不静默改用户填的窗口）；恢复成好窗口即自动消错。
+ *   · **空态**：起止都没填 → 天数写 `—` ＋ 「窗口未定：先选一段」。
+ *   · **载入态**：`ilife:window-loading`（`detail={name,on}`）→ 天数一格原地换字 ＋ 收起档位键；
+ *     `on:false` 重算真天数（载入期间不写假的数）。
+ *   · **无脚本降级**：这段不跑时，起止与天数照常可读（渲染期算好的那一段），只是改不了。
+ */
+import {
+  WINDOW_BOUND_ATTR, WINDOW_CUSTOM, WINDOW_DAYS_ATTR, WINDOW_DEFAULTS, WINDOW_DISABLED_ATTR,
+  WINDOW_EMPTY_ATTR, WINDOW_ERROR_ATTR, WINDOW_EVENT_CHANGE, WINDOW_EVENT_LOADING, WINDOW_FROM_ATTR,
+  WINDOW_INVALID_ATTR, WINDOW_LAST_ATTR, WINDOW_LOADING_ATTR, WINDOW_NAME_ATTR, WINDOW_PRESET_ATTR,
+  WINDOW_PRESET_DAYS_ATTR, WINDOW_ROOT_CLASS, WINDOW_RUNTIME_ATTR, WINDOW_TODAY_ATTR, WINDOW_TO_ATTR,
+} from './attrs.js';
+
+/** 产出运行时的 JS 文本（经典 script 作用域可跑的 IIFE）。 */
+export function buildWindowPickerJs(): string {
+  const q = (s: string): string => JSON.stringify(s);
+  return '(function(){' + '\n'
+    + '  var A_ROOT=' + q(WINDOW_NAME_ATTR) + ', A_TODAY=' + q(WINDOW_TODAY_ATTR) + ', A_PRESET=' + q(WINDOW_PRESET_ATTR) + ';' + '\n'
+    + '  var A_PDAYS=' + q(WINDOW_PRESET_DAYS_ATTR) + ', A_FROM=' + q(WINDOW_FROM_ATTR) + ', A_TO=' + q(WINDOW_TO_ATTR) + ';' + '\n'
+    + '  var A_DAYS=' + q(WINDOW_DAYS_ATTR) + ', A_EMPTY=' + q(WINDOW_EMPTY_ATTR) + ', A_ERR=' + q(WINDOW_ERROR_ATTR) + ';' + '\n'
+    + '  var A_INVALID=' + q(WINDOW_INVALID_ATTR) + ', A_LOADING=' + q(WINDOW_LOADING_ATTR) + ', A_DISABLED=' + q(WINDOW_DISABLED_ATTR) + ';' + '\n'
+    + '  var A_BOUND=' + q(WINDOW_BOUND_ATTR) + ', A_RUNTIME=' + q(WINDOW_RUNTIME_ATTR) + ', A_LAST=' + q(WINDOW_LAST_ATTR) + ';' + '\n'
+    + '  var EV_CHANGE=' + q(WINDOW_EVENT_CHANGE) + ', EV_LOADING=' + q(WINDOW_EVENT_LOADING) + ';' + '\n'
+    + '  var CUSTOM=' + q(WINDOW_CUSTOM) + ', UNSET=' + q(WINDOW_DEFAULTS.unset)
+    + ', BAD=' + q(WINDOW_DEFAULTS.badRangeText) + ', BADDATE=' + q(WINDOW_DEFAULTS.badDateText) + ';' + '\n'
+    + '  var SEL_ROOT="["+A_ROOT+"]", doc=document;' + '\n'
+    + '  if (doc.documentElement.getAttribute(A_RUNTIME)==="1") return;' + '\n'
+    + '  doc.documentElement.setAttribute(A_RUNTIME,"1");' + '\n'
+    + '  function quoted(v){ return String(v).replace(/["\\\\]/g, "\\\\$&"); }' + '\n'
+    + '  function pick(attr,value){ return "["+attr+"=\\""+quoted(value)+"\\"]"; }' + '\n'
+    + '  function one(root,attr){ return root.querySelector("["+attr+"]"); }' + '\n'
+    + '  function rootOf(el){ return el && el.closest ? el.closest(SEL_ROOT) : null; }' + '\n'
+    + '  function iso(v){ return /^\\d{4}-\\d{2}-\\d{2}$/.test(String(v)); }' + '\n'
+    + '  function stamp(v){ var t=Date.parse(String(v)+"T00:00:00Z"); return isFinite(t)?t:NaN; }' + '\n'
+    + '  function real(v){ if (!iso(v)) return false;' + '\n'
+    + '    var d=new Date(String(v)+"T00:00:00Z");' + '\n'
+    + '    return !isNaN(d.getTime()) && d.toISOString().slice(0,10)===String(v); }' + '\n'
+    + '  function shift(v,n){ var d=new Date(String(v)+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+n);'
+    + ' return d.toISOString().slice(0,10); }' + '\n'
+    + '  function daysBetween(from,to){ return Math.round((stamp(to)-stamp(from))/86400000)+1; }' + '\n'
+    + '  function todayOf(root){' + '\n'
+    + '    var v=root.getAttribute(A_TODAY);' + '\n'
+    + '    if (real(v)) return String(v);' + '\n'
+    + '    return new Date().toISOString().slice(0,10);' + '\n'
+    + '  }' + '\n'
+    + '  function fire(root,detail){ root.dispatchEvent(new CustomEvent(EV_CHANGE,{bubbles:true,detail:detail})); }' + '\n'
+    + '  function setError(root,msg){' + '\n'
+    + '    var el=one(root,A_ERR);' + '\n'
+    + '    if (msg){ if (el){ el.textContent=msg; el.removeAttribute("hidden"); } root.setAttribute(A_INVALID,"1"); }' + '\n'
+    + '    else { if (el){ el.textContent=""; el.setAttribute("hidden",""); } root.removeAttribute(A_INVALID); }' + '\n'
+    + '  }' + '\n'
+    + '  function setEmpty(root,on){' + '\n'
+    + '    var el=one(root,A_EMPTY);' + '\n'
+    + '    if (!el) return;' + '\n'
+    + '    if (on) el.removeAttribute("hidden"); else el.setAttribute("hidden","");' + '\n'
+    + '  }' + '\n'
+    + '  function setPreset(root,value){' + '\n'
+    + '    var all=root.querySelectorAll("["+A_PRESET+"]");' + '\n'
+    + '    for (var i=0;i<all.length;i+=1) all[i].setAttribute("aria-pressed", (all[i].getAttribute(A_PRESET)||"")===value ? "true":"false");' + '\n'
+    + '  }' + '\n'
+    + '  function presetOf(root){' + '\n'
+    + '    var b=root.querySelector("["+A_PRESET+"][aria-pressed=\\"true\\"]");' + '\n'
+    + '    return b ? (b.getAttribute(A_PRESET)||"") : "";' + '\n'
+    + '  }' + '\n'
+    + '  function writeDays(root,text){ var el=one(root,A_DAYS); if (el) el.textContent=text; }' + '\n'
+    /* 读数：两个日期 → 天数；错就写错句且不派发 */
+    + '  function read(root,fire_){' + '\n'
+    + '    var fromEl=one(root,A_FROM), toEl=one(root,A_TO);' + '\n'
+    + '    var from=fromEl ? String(fromEl.value||"").replace(/^\\s+|\\s+$/g,"") : "";' + '\n'
+    + '    var to=toEl ? String(toEl.value||"").replace(/^\\s+|\\s+$/g,"") : "";' + '\n'
+    + '    var loading=root.getAttribute(A_LOADING)==="1";' + '\n'
+    + '    if (from==="" && to===""){ setError(root,""); setEmpty(root,true); writeDays(root,UNSET); return; }' + '\n'
+    + '    if (!real(from) || !real(to)){' + '\n'
+    + '      setEmpty(root,false);' + '\n'
+    + '      setError(root, BADDATE.split("{date}").join(from===""||!real(from) ? from||to : to));' + '\n'
+    + '      return;' + '\n'
+    + '    }' + '\n'
+    + '    if (from>to){ setEmpty(root,false); setError(root,BAD); return; }' + '\n'
+    + '    setError(root,""); setEmpty(root,false);' + '\n'
+    + '    var n=daysBetween(from,to);' + '\n'
+    + '    if (loading){ var elp=one(root,A_DAYS); if (elp) elp.textContent=UNSET; return; }' + '\n'
+    + '    writeDays(root,String(n));' + '\n'
+    + '    if (fire_){ var key=from+"|"+to;' + '\n'
+    + '      if (root.getAttribute(A_LAST)!==key){ root.setAttribute(A_LAST,key);' + '\n'
+    + '        fire(root,{name:root.getAttribute(A_ROOT),preset:presetOf(root),from:from,to:to,days:n}); } }' + '\n'
+    + '  }' + '\n'
+    /* 首屏补窗口：渲染期没算出来的（起止空着）在这里按 today ＋ 当前档补上 */
+    + '  function bootstrap(root){' + '\n'
+    + '    var fromEl=one(root,A_FROM), toEl=one(root,A_TO);' + '\n'
+    + '    if (!fromEl || !toEl) return;' + '\n'
+    + '    if (String(fromEl.value||"")!=="" || String(toEl.value||"")!==""){ read(root,false); return; }' + '\n'
+    + '    var btn=root.querySelector("["+A_PRESET+"][aria-pressed=\\"true\\"]");' + '\n'
+    + '    var daysAttr=btn ? btn.getAttribute(A_PDAYS) : null;' + '\n'
+    + '    if (daysAttr!==null){' + '\n'
+    + '      var n=parseInt(daysAttr,10); if (!isFinite(n) || n<1) n=1;' + '\n'
+    + '      toEl.value=todayOf(root);' + '\n'
+    + '      fromEl.value=shift(todayOf(root), -(n-1));' + '\n'
+    + '    }' + '\n'
+    + '    read(root,true);' + '\n'
+    + '  }' + '\n'
+    + '  function setBusy(root,on){' + '\n'
+    + '    var all=root.querySelectorAll("["+A_PRESET+"]"), i;' + '\n'
+    + '    var fromEl=one(root,A_FROM), toEl=one(root,A_TO);' + '\n'
+    + '    if (on){' + '\n'
+    + '      root.setAttribute(A_LOADING,"1");' + '\n'
+    + '      for (i=0;i<all.length;i+=1) all[i].disabled=true;' + '\n'
+    + '      if (fromEl) fromEl.disabled=true;' + '\n'
+    + '      if (toEl) toEl.disabled=true;' + '\n'
+    + '    } else {' + '\n'
+    + '      root.removeAttribute(A_LOADING);' + '\n'
+    + '      var dis=root.hasAttribute(A_DISABLED);' + '\n'
+    + '      for (i=0;i<all.length;i+=1) all[i].disabled=dis;' + '\n'
+    + '      if (fromEl) fromEl.disabled=dis;' + '\n'
+    + '      if (toEl) toEl.disabled=dis;' + '\n'
+    + '      read(root,false);' + '\n'
+    + '    }' + '\n'
+    + '  }' + '\n'
+    + '  doc.addEventListener("click",function(e){' + '\n'
+    + '    var t=e.target; if (!t || !t.closest) return;' + '\n'
+    + '    var root=rootOf(t); if (!root) return;' + '\n'
+    + '    var btn=t.closest("["+A_PRESET+"]");' + '\n'
+    + '    if (!btn || btn.disabled) return;' + '\n'
+    + '    var value=btn.getAttribute(A_PRESET)||"";' + '\n'
+    + '    setPreset(root,value);' + '\n'
+    + '    var daysAttr=btn.getAttribute(A_PDAYS);' + '\n'
+    + '    if (daysAttr!==null && value!==CUSTOM){' + '\n'
+    + '      var fromEl=one(root,A_FROM), toEl=one(root,A_TO), n=parseInt(daysAttr,10);' + '\n'
+    + '      if (!isFinite(n) || n<1) n=1;' + '\n'
+    + '      var today=todayOf(root);' + '\n'
+    + '      if (toEl) toEl.value=today;' + '\n'
+    + '      if (fromEl) fromEl.value=shift(today, -(n-1));' + '\n'
+    + '    }' + '\n'
+    + '    read(root,true);' + '\n'
+    + '  });' + '\n'
+    + '  function onEdited(e){' + '\n'
+    + '    var t=e.target;' + '\n'
+    + '    if (!t || !t.hasAttribute) return;' + '\n'
+    + '    if (!t.hasAttribute(A_FROM) && !t.hasAttribute(A_TO)) return;' + '\n'
+    + '    var root=rootOf(t); if (!root || t.disabled) return;' + '\n'
+    + '    setPreset(root,CUSTOM);' + '\n'
+    + '    read(root,true);' + '\n'
+    + '  }' + '\n'
+    + '  doc.addEventListener("change",function(e){ onEdited(e); });' + '\n'
+    + '  doc.addEventListener("input",function(e){ onEdited(e); });' + '\n'
+    + '  doc.addEventListener(EV_LOADING,function(e){' + '\n'
+    + '    var d=e.detail||{};' + '\n'
+    + '    var root=(e.target && e.target.closest) ? e.target.closest(SEL_ROOT) : null;' + '\n'
+    + '    if (!root && d.name) root=doc.querySelector(pick(A_ROOT,d.name));' + '\n'
+    + '    if (!root) return;' + '\n'
+    + '    setBusy(root, d.on!==false);' + '\n'
+    + '  });' + '\n'
+    + '  var roots=doc.querySelectorAll(SEL_ROOT);' + '\n'
+    + '  for (var k=0;k<roots.length;k+=1){ roots[k].setAttribute(A_BOUND,"1"); bootstrap(roots[k]); }' + '\n'
+    + '}());';
+}
