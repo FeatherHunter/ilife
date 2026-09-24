@@ -61,16 +61,22 @@ function intOf(n: number | null | undefined): number | null {
 const STRIP_MAX_DAYS = 14;
 
 /** 记录带：一格一天（日期 ＋ 状态点 ＋ 当日摄入），带下四件窗口事实。
- *  窗口比 `STRIP_MAX_DAYS` 长时只画**最近 14 天**，并在带下补一句截断明示。 */
+ *  窗口比 `STRIP_MAX_DAYS` 长时只画**最近 14 天**，并在带下补一句截断明示。
+ *  今天那格照原型在日期后带「今天」二字（公共层 `DayCellInput.label` 的注释写明「今天二字由调用方决定
+ *  要不要带」）：`d.date` 是**这一页的日期**（窗口末端），与按日汇总表那行「（今日）」同口径——
+ *  问的是哪一天，那一天就是这一页的「今天」。 */
 export function dayStripBlock(d: HomeData, day: (date: string) => string): string {
   const all = d.week.series;
   const truncated = all.length > STRIP_MAX_DAYS;
   const shown = truncated ? all.slice(-STRIP_MAX_DAYS) : all;
-  const days: DayCellInput[] = shown.map((s) => ({
-    label: day(s.date),
-    value: hasData(s) ? String(s.calories) : null,
-    today: s.date === d.date,
-  }));
+  const days: DayCellInput[] = shown.map((s) => {
+    const isToday = s.date === d.date;
+    return {
+      label: isToday ? day(s.date) + ' 今天' : day(s.date),
+      value: hasData(s) ? String(s.calories) : null,
+      today: isToday,
+    };
+  });
   const caption: DayStripCaptionInput[] = [
     { text: '本窗 ' + d.week.loggedDays + '/' + d.week.windowDays + ' 天有记录' },
     { text: '连续记录 ' + d.streakDays + ' 天', tone: 'ok' },
