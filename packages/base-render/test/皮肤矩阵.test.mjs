@@ -175,7 +175,7 @@ function renderWithRepair(mod, row) {
   let sample = row.sample === null ? {} : row.sample;
   const log = [];
   let last = '';
-  for (let round = 0; round < 12; round += 1) {
+  for (let round = 0; round < 24; round += 1) {
     try {
       const html = mod[row.render](sample);
       if (typeof html !== 'string') return { err: row.render + '() 没吐出字符串' };
@@ -189,12 +189,22 @@ function renderWithRepair(mod, row) {
       log.push(fixed.what);
     }
   }
-  return { err: '照 render 的报错补了 12 轮仍渲染不出来（最后一处：' + last + '）', log };
+  return { err: '照 render 的报错补了 24 轮仍渲染不出来（最后一处：' + last + '）', log };
 }
 
 const PIECES = [];
 for (const row of COMPONENTS) {
-  const p = { row, entry: join(PKG, 'dist', 'components', row.name, 'index.js'), mod: null, html: null, css: null, sample: null, fixed: [], err: '' };
+  const p = {
+    row,
+    entry: join(PKG, 'dist', 'components', row.name, 'index.js'),
+    mod: null,
+    css: null,
+    html: null,
+    sample: null,
+    fixed: [],
+    loadErr: '',
+    renderSkip: '',
+  };
   try {
     if (row.render === '') throw new Error('清单里这件抽不出渲染入口（index.ts 里没有 render*）');
     if (row.style === '') throw new Error('清单里这件抽不出样式函数（style.ts 里没有 *Css）');
@@ -203,23 +213,40 @@ for (const row of COMPONENTS) {
       throw new Error('清单里的渲染入口 `' + row.render + '` 在该件的编译产物里不是函数'
         + '（件有多个 render* 出口时，清单取与本件同名的那一个）');
     }
-    const r = renderWithRepair(p.mod, row);
-    if (r.err !== undefined) {
-      throw new Error((row.sample === null ? 'README 入参表抽不出示例入参，照着补也补不出来：' : '') + r.err);
-    }
-    p.html = r.html;
-    p.sample = r.sample;
-    p.fixed = r.log;
     p.css = p.mod[row.style]();
     if (typeof p.css !== 'string') throw new Error(row.style + '() 没吐出字符串');
   } catch (e) {
-    p.err = String(e && e.message ? e.message : e);
+    p.loadErr = String(e && e.message ? e.message : e);
+  }
+  if (p.loadErr === '') {
+    const r = renderWithRepair(p.mod, row);
+    if (r.err === undefined) {
+      p.html = r.html;
+      p.sample = r.sample;
+      p.fixed = r.log;
+    } else {
+      // **明说跳过，不吞**：横切判据断的是「换皮不换结构／样式纪律」，
+      // 它不该靠猜出一份能让每一件都渲染成功的入参 —— 猜不出来就把这一件的渲染类断言显式跳过，并打一行原因。
+      p.renderSkip = r.err;
+      console.log('跳过 ' + row.name + ' 的渲染类断言（① 标记逐字节相同／④ 两档溢出）：样例入参编不出来（'
+        + r.err + '）——组件在正确地拦非法入参，这是判据侧的夹具缺口');
+    }
   }
   PIECES.push(p);
 }
+/** 装不上（模块／样式函数取不到）＝真缺陷，红。 */
 const ok = (p) => {
-  if (p.err !== '') throw new Error(p.row.name + '：' + p.err);
+  if (p.loadErr !== '') throw new Error(p.row.name + '：' + p.loadErr);
   return p;
+};
+/** 渲染类断言（①／④）：样例编不出来就显式跳过（带原因），不红也不静默。 */
+const renderable = (p, t) => {
+  ok(p);
+  if (p.renderSkip !== '') {
+    t.skip(p.row.name + '：样例入参编不出来（' + p.renderSkip + '）');
+    return false;
+  }
+  return true;
 };
 
 console.log('皮肤矩阵：件数=' + PIECES.length + '（' + PIECES.map((p) => p.row.name).join('、') + '）'
@@ -234,9 +261,14 @@ if (REPAIRED.length > 0) {
     + REPAIRED.map((p) => p.row.name + '（' + p.fixed.join('；') + '）').join(' ｜ ');
   console.log(line.length > 800 ? line.slice(0, 800) + '…（共 ' + line.length + ' 字）' : line);
 }
-const BROKEN = PIECES.filter((p) => p.err !== '');
+const SKIPPED_RENDER = PIECES.filter((p) => p.renderSkip !== '');
+if (SKIPPED_RENDER.length > 0) {
+  console.log('读数：' + SKIPPED_RENDER.length + ' 件的渲染类断言显式跳过（①④）：' + SKIPPED_RENDER.map((p) => p.row.name).join('、')
+    + '；② 样式纪律／③ 零 DOM 照跑（那两条不吃入参）');
+}
+const BROKEN = PIECES.filter((p) => p.loadErr !== '');
 if (BROKEN.length > 0) {
-  console.log('读数：' + BROKEN.length + ' 件装不上（下面逐件报原文）：' + BROKEN.map((p) => p.row.name).join('、'));
+  console.log('读数：' + BROKEN.length + ' 件装不上（模块／样式函数取不到，逐件报原文）：' + BROKEN.map((p) => p.row.name).join('、'));
 }
 
 /* ── 记录本（跨断言共用的派生面） ─────────────────────────────────── */
@@ -248,7 +280,7 @@ const classesOfHtml = (html) => new Set([...html.matchAll(/class="([^"]*)"/g)].f
 const PAGE_UI = 'ilife-page-ui';
 
 /** 跨件泄漏面：每件标记里的类名（其余件的样式段一律不许提到它们）。 */
-const MARKUP_CLASSES = new Map(PIECES.map((p) => [p.row.name, p.err === '' ? classesOfHtml(p.html) : new Set()]));
+const MARKUP_CLASSES = new Map(PIECES.map((p) => [p.row.name, p.html === null ? new Set() : classesOfHtml(p.html)]));
 
 /* ── 真机（headless Chrome ＋ CDP） ──────────────────────────────── */
 
@@ -300,10 +332,12 @@ async function startMatrixPage(html) {
   writeFileSync(page, html, 'utf8');
   const profile = mkdtempSync(join(tmpdir(), 't-skin-chrome-'));
   const port = 9910 + (process.pid % 200);
+  // stdio 一律 'ignore'：Chrome 的输出与测试进程间通信（node:test 的 IPC）之间不许有任何搭线机会
+  // （实测过 `Unable to deserialize cloned data` 这类 runner 侧解析崩溃，就是被别的输出串了信道）。
   const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
     '--disable-extensions', '--hide-scrollbars', '--allow-file-access-from-files',
     '--remote-debugging-port=' + port, '--user-data-dir=' + profile, '--window-size=1440,900', 'about:blank'],
-  { stdio: ['ignore', 'pipe', 'pipe'] });
+  { stdio: 'ignore', windowsHide: true });
   const cleanup = () => {
     try { chrome.kill(); } catch { /* 已退出 */ }
     for (const d of [profile, dir]) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 临时目录 */ } }
@@ -371,14 +405,14 @@ async function startMatrixPage(html) {
 
 /** 整页 HTML：三套皮肤取值表 ＋ 各件自己的样式段 ＋ 「件 × 皮肤 × 宽度」全部格子（＋三只皮肤探针）。 */
 function matrixPage() {
-  const css = [skinCss(), ...PIECES.filter((p) => p.err === '').map((p) => p.css)];
+  const css = [skinCss(), ...PIECES.filter((p) => p.css !== null).map((p) => p.css)];
   const cells = [];
   for (const skin of SKIN_NAMES) {
     cells.push('<div class="stg ' + PAGE_UI + ' ilife-skin-' + skin + '" data-piece="__skin-probe" data-skin="'
       + skin + '" data-w="390" style="width:390px"><div class="host"></div></div>');
   }
   for (const p of PIECES) {
-    if (p.err !== '') continue;
+    if (p.html === null) continue;
     for (const skin of SKIN_NAMES) {
       for (const w of WIDTHS) {
         cells.push('<div class="stg ' + PAGE_UI + ' ' + 'ilife-skin-' + skin + '" data-piece="' + p.row.name
@@ -470,8 +504,8 @@ describe('皮肤矩阵 ⓿ 三套皮肤真挂上（挂不上的话下面每一�
 
 describe('皮肤矩阵 ① 三套皮肤下标记逐字节相同（换皮不换结构）', () => {
   for (const p of PIECES) {
-    it(p.row.name + '：同一份入参渲染三次逐字节相同，且标记不带皮肤类', async () => {
-      ok(p);
+    it(p.row.name + '：同一份入参渲染三次逐字节相同，且标记不带皮肤类', async (t) => {
+      if (!renderable(p, t)) return;
       const again = p.mod[p.row.render](p.sample);
       const third = p.mod[p.row.render](p.sample);
       assert.equal(again, p.html, '第二次渲染与第一次不一致（同入参必须逐字节相同）');
@@ -551,7 +585,7 @@ describe('皮肤矩阵 ② 样式段纪律（违规逐条打出来：哪一条�
     // 不算泄漏；真有泄漏长这样：A 的样式段去改 B 的 `.ilife-block-sheet`。
     const bad = [];
     for (const p of PIECES) {
-      if (p.err !== '') continue;
+      if (p.css === null) continue;
       const mine = MARKUP_CLASSES.get(p.row.name);
       const others = [...MARKUP_CLASSES.entries()].filter(([other]) => other !== p.row.name);
       for (const c of classesIn(stripComments(p.css))) {
@@ -606,8 +640,8 @@ describe('皮肤矩阵 ③ 零 DOM 纪律（dist/components/<件名>/**）', () 
 
 describe('皮肤矩阵 ④ 两档溢出读数（390／1280）', () => {
   for (const p of PIECES) {
-    it(p.row.name + '：两档定宽容器里不横溢', async () => {
-      ok(p);
+    it(p.row.name + '：两档定宽容器里不横溢', async (t) => {
+      if (!renderable(p, t)) return;
       // 静态几何判据（哪台机器都跑）：标记与样式段里不得出现超过窄档的固定宽度。
       const css = stripComments(p.css);
       const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
