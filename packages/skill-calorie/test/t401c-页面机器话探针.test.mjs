@@ -9,8 +9,10 @@
  *     与三格式数据里就带命令键——那是给复核的人照抄用的，452 同款口径）。
  *  2. **窗口区间串一页一次**（审计工单「窗口区间这类重复串，一页只留必要处」）。
  *  3. **长行 ≤ 2 条**（同工单「长行（≥50 字符的整行）条数」，口径同 `.scratch/audit-text/report.md` 的 B3 表）。
- *  4. **视觉升级四件在场**：KPI 档位徽章／区块标题带图标（且是**自产 `<h2>`**——公共层不给标题时
- *     不产元素）／页内导航走公共层胶囊排／结论条有专属浅色面。
+ *  4. **视觉升级四件在场**：读数卡的进度徽章（`gap` 的「还差 N」／`status` 的「完成 N%」与方向词）／
+ *     区块标题带图标（且是**自产 `<h2>`**——公共层不给标题时不产元素）／
+ *     页内导航走公共层**分段控件**（`#950` 起由胶囊排换成 `renderSegmentedNav`，导航是**动作**）／
+ *     结论条有专属浅色面。
  *
  * **变异自证**：把内部标识符塞回页源头 → 探针必红；拿掉 → 必绿。
  * 跑法：`node --test packages/skill-calorie/test/t401c-页面机器话探针.test.mjs`
@@ -93,13 +95,17 @@ test('#401c 长行（≥50 字符）不超过 2 条', () => {
   assert.ok(long.length <= 2, '长行 ' + long.length + ' 条：\n' + long.map((t) => '  [' + t.length + '] ' + t).join('\n'));
 });
 
-test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／结论条专属浅色面）', () => {
+test('#401c 视觉升级四件在场（徽章／标题图标／分段导航／结论条专属浅色面）', () => {
   const html = PAGE.html;
-  // ① KPI 档位徽章：`renderKpiCard` 的 `status` 位（`blocks.ts:533-539`），文案是业务说法不是控件缺省值。
-  for (const badge of ['ilife-status-badge-ok', 'ilife-status-badge-warn', 'ilife-status-badge-danger']) {
-    assert.ok(html.includes(badge), '缺档位徽章：' + badge);
-  }
-  for (const text of ['达标', '接近目标', '偏少']) assert.ok(html.includes(text), '徽章缺业务文案：' + text);
+  // ① 读数卡的徽章槽（**#950 主页照原型重做**后，徽章词汇换成原型那两句）：
+  //   · 有目标的卡走 `gap` 槽 ⇒「还差 N 单位」（原型那四枚小签）；
+  //   · 进度卡走 `status` 槽 ＋ **自定义文案**「完成 N%」；缺口卡同槽给方向词（`#401g` 的裁定）。
+  //   判据没变的是那一条本意：**形状住公共层、文案是本页给的业务说法**，不许落控件缺省值。
+  assert.ok(/<div class="ilife-block-kpi-card-badge"><span class="ilife-block-kpi-card-gap">还差 /.test(html),
+    '「还差 N」徽章槽（gap）不见了');
+  assert.ok(/<span class="ilife-status-badge ilife-status-badge-(ok|warn|danger)">完成 \d+%<\/span>/.test(html),
+    '「完成 N%」进度徽章不见了');
+  assert.ok(/<span class="ilife-status-badge ilife-status-badge-(ok|warn|danger)"/.test(html), '状态徽章槽没被用到');
   for (const dflt of ['成功', '警告', '失败']) {
     assert.ok(!visibleText(html).includes(dflt), '徽章文案落到控件缺省值了：' + dflt);
   }
@@ -125,12 +131,15 @@ test('#401c 视觉升级四件在场（徽章／标题图标／胶囊导航／�
   assert.ok(html.includes('<div class="ilife-block-kpi-card-detail">目标 1800</div>'),
     '「今日摄入」卡说明行没写目标（#401e：目标值只留卡这一处）');
   assert.ok(!html.includes('📊 按日汇总（单位：卡）'), '表格 caption 又夹回单位（#401e 已瘦身）');
-  // ③ 页内导航走公共层胶囊排：`<nav class="ilife-block-toc">` ＋ 每个锚点都有对应 `id`。
-  assert.ok(html.includes('<nav class="ilife-block-toc" aria-label="页内导航">'), '缺页内导航块');
-  const hrefs = [...html.matchAll(/<a href="#([^"]+)">/g)].map((m) => m[1]);
+  // ③ 页内导航走公共层**分段控件**（`#950`：导航是「动作」的形，与状态胶囊分得开）：等宽分格 ＋
+  //    选中实底 ＋ 图标位。判据的本意自 #401c 起没变——**每个锚点都要有对应的页内 `id`**，
+  //    且「当前这一块」要标出来；只是形状从胶囊排换成了分段控件，写法跟着换。
+  assert.ok(html.includes('<nav class="ilife-block-seg-nav is-sticky" aria-label="页内导航">'), '缺页内导航块');
+  const hrefs = [...html.matchAll(/<a href="#([^"]+)" class="ilife-block-seg-nav-item[^"]*"/g)].map((m) => m[1]);
   // 用户缺陷 6 起导航 3 项（`sec-copy` 无标题不进导航）；下限 3，上限随档变（`week` 档 3 项）。
   assert.ok(hrefs.length >= 3, '页内导航锚点只有 ' + hrefs.length + ' 个');
   for (const id of hrefs) assert.ok(html.includes('id="' + id + '"'), '锚点 ' + id + ' 没有对应的页内 id');
+  assert.ok(html.includes(' aria-current="page"'), '导航没有标出「当前这一块」');
   // ④ 结论条专属面：#507 起形状住公共层（`renderConclusionBar` 只出文本，样式在样式段）。
   // 本锁跟着裁定走：不断言旧的内联形（`ilife-block-page-shell-conclusion`＋`style="background:var(--soft)…"`，
   // 那是搬迁前的页内联写法），改锁已落定的公共层形——元素类 `ilife-block-conclusion`、无内联 `style`、

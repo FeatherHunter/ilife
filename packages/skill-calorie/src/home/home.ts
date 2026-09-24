@@ -12,6 +12,7 @@ import type { DaySeries } from '../analysis/series.js';
 import { buildDeficitData } from '../analysis/deficit.js';
 import { getNutritionGoal } from '../goal/nutritionGoal.js';
 import { listCompletedGoals } from '../goal/goalHistory.js';
+import { getPausedState } from '../goal/goalStore.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { round2 } from '../kcal.js';
 import { CalorieRenderError } from '../render/errors.js';
@@ -22,11 +23,20 @@ export interface HomeData {
   calorieGoal: number | null;
   /** 蛋白目标（#401）：KPI 卡说明行只留目标、完成率进徽章，故三张有目标的卡都要取得到自己的目标值。 */
   proteinGoal: number | null;
+  /** 碳水与脂肪目标（#950 主页照原型重做）：「今日速览」补成原型那六张卡后，这两张也要有自己的目标值，
+   *  才说得出「还差 N 克」。与上面三张同源（`daily_goal` 单例行），缺列时按缺值口径写 `—`。 */
+  carbsGoal: number | null;
+  fatGoal: number | null;
   waterGoal: number | null;
   caloriePct: number | null;
   proteinPct: number | null;
+  carbsPct: number | null;
+  fatPct: number | null;
   waterPct: number | null;
   deficitToday: number | null;
+  /** 目标是否已暂停（`daily_goal.goal_paused`）：态声明条「目标暂停中」的前提。
+   *  取数走目标能力的 `getPausedState`（同一个单例行，不在这里另写一份 SQL）。 */
+  goalsPaused: boolean;
   /** 今日消耗（`buildDeficitData` 的 `burn` ＝ TDEE ＋ 当日运动）：缺口卡的说明行要给参照物。
    *  #401i 起与 `deficitToday` 同一份结果里取，不另算第二份口径（缺口的定义就是「消耗减摄入」）。 */
   burnToday: number | null;
@@ -75,7 +85,11 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
   const nutrition = getNutritionGoal(db);
   const calorieGoal = nutrition?.calorie_goal ?? daily.goal?.calorie_goal ?? null;
   const proteinGoal = nutrition?.protein_goal ?? daily.goal?.protein_goal ?? null;
+  const carbsGoal = nutrition?.carbs_goal ?? daily.goal?.carbs_goal ?? null;
+  const fatGoal = nutrition?.fat_goal ?? daily.goal?.fat_goal ?? null;
   const waterGoal = nutrition?.water_goal ?? daily.goal?.water_goal ?? 2000;
+  /** 目标暂停位（#950）：态声明条读它——「目标暂停中」是**态**，与判语分住两件。 */
+  const goalsPaused = getPausedState(db).paused;
   // 连续记录优先用 T4 history 口径？history 按 food_log 聚合，与 series 同源；此处用 series 倒数，保证与周趋势同口径。
   const streakDays = streakFromSeries(series);
   // 引用 T4 history 仅作存在性校验（无记录时 streak 自然为 0，不额外抛）。
@@ -89,10 +103,15 @@ export function buildHomeData(db: DatabaseSync, date?: string, windowDays = 7): 
     daily,
     calorieGoal,
     proteinGoal,
+    carbsGoal,
+    fatGoal,
     waterGoal,
     streakDays,
+    goalsPaused,
     caloriePct: pct(daily.totals.cal, calorieGoal),
     proteinPct: pct(daily.totals.pro, proteinGoal),
+    carbsPct: pct(daily.totals.carbs, carbsGoal),
+    fatPct: pct(daily.totals.fat, fatGoal),
     waterPct: pct(daily.waterMl, waterGoal),
     deficitToday, burnToday,
     week: {

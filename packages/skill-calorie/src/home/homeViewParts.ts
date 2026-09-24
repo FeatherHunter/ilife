@@ -14,12 +14,20 @@
  * （同一能力目录内的姊妹件，不对外），由 `homeDocs.ts` 逐档拼页并把卡件 HTML 传进来。区块形状一律走公共层
  * 产出器（`renderKpiGrid` 一族由调用方调、`renderDataTable`／`renderChartBlock`／`renderListRows`），
  * 本件不写 `font-size`／`color`。
+ *
+ * **#950**（用户裁定：主页照已认可原型 `proto-final-A+C.html` 重做）：本件跟着改三处——
+ * ① 五档的区块身份各补一枚**导航图标**（`nav`，公共层 `SEG_NAV_ICONS` 闭集内的值），
+ *  页内导航由胶囊排换成**分段控件**（动作形 vs 状态形的区分见 `pageNav` 件头），锚点清单仍是这一份；
+ * ② `overview` 档的「今日速览」补一行**前提说明**（几项、目标取哪一版配置），与原型那张小字同义；
+ * ③ 缺口那条两段关系（摄入加缺口等于消耗）改由**等式条**承载，落在这一块末尾。
  */
 import { escapeHtml } from 'base-paint';
+import type { SegNavIcon } from 'base-paint';
 import { renderChartBlock, renderDataTable, renderDistributionRows, renderListRows } from 'base-paint/blocks';
-import type { KpiCardInput } from 'base-paint/blocks';
 import { seriesSum } from '../analysis/series.js';
 import type { DaySeries } from '../analysis/series.js';
+import { equationBlock, todayCards } from './homeCards.js';
+import type { HomeNavItem } from './homeFrame.js';
 import type { HomeData } from './home.js';
 
 /** 视图档名（`section` 参数的五个合法值；登记在 `src/home/routes.ts` 的 `cli` 里）。 */
@@ -43,33 +51,35 @@ export interface HomeViewInput {
 export interface HomeViewBody {
   readonly sections: readonly string[];
   readonly charts: boolean;
-  readonly toc: readonly { readonly id: string; readonly text: string }[];
+  readonly toc: readonly HomeNavItem[];
 }
 
 /* ── 区块身份（每档自己的一份清单）───────────────────────────────────────────
  * 锚点 id／图标／名三件同走一份，页内导航与段标题不抄第二遍（口径同 `homeDocs.ts` 的 `SEC_*`）。
- * #401g 立下的「emoji 只留段标题一处、每块一枚」在本件各档一并照办。 */
+ * #401g 立下的「emoji 只留段标题一处、每块一枚」在本件各档一并照办。
+ * #950：每个身份多一枚 `nav` ＝ 页内导航那枚**描边/实底图标**（公共层闭集），与段标题那枚 emoji 分住两处：
+ *  段标题的 emoji 是「这块是什么」，导航的图标是「点这个去哪」——两套图形共用一套清单就够。 */
 
 const OVERVIEW_SECTIONS = {
-  overview: { id: 'sec-overview', icon: '🔥', name: '今日速览' },
-  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入' },
-  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总' },
+  overview: { id: 'sec-overview', icon: '🔥', name: '今日速览', nav: 'grid' },
+  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入', nav: 'line' },
+  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总', nav: 'table' },
 } as const;
 
 const WEEK_SECTIONS = {
-  week: { id: 'sec-week', icon: '📅', name: '窗内概览' },
-  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入' },
-  days: { id: 'sec-days', icon: '📋', name: '逐日明细' },
+  week: { id: 'sec-week', icon: '📅', name: '窗内概览', nav: 'grid' },
+  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入', nav: 'line' },
+  days: { id: 'sec-days', icon: '📋', name: '逐日明细', nav: 'table' },
 } as const;
 
 const STREAK_SECTIONS = {
-  streak: { id: 'sec-streak', icon: '🏅', name: '连续记录' },
-  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总' },
+  streak: { id: 'sec-streak', icon: '🏅', name: '连续记录', nav: 'goal' },
+  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总', nav: 'table' },
 } as const;
 
 const BUDGET_SECTIONS = {
-  budget: { id: 'sec-budget', icon: '🎯', name: '今日预算' },
-  quota: { id: 'sec-quota', icon: '🧮', name: '今日账' },
+  budget: { id: 'sec-budget', icon: '🎯', name: '今日预算', nav: 'goal' },
+  quota: { id: 'sec-quota', icon: '🧮', name: '今日账', nav: 'table' },
 } as const;
 
 /** 段标题的**文本形状**（图标 ＋ 空格 ＋ 名）：与 `homeDocs.ts::secTitle` 同形；两件各有一份清单，
@@ -112,7 +122,10 @@ function quotaBlock(d: HomeData): string {
 }
 
 /** 折线块（`overview`／`week`／`month` 三档共用）：`connectNulls: true` 与全仓另外 4 处口径同
- *  —— 空白日留空、只连线，不补 0；虚线是周均摄入（只算有记录的天）。 */
+ *  —— 空白日留空、只连线，不补 0；虚线是周均摄入（只算有记录的天）。
+ *  **纵轴下界恒 0**（`yMin: 0`）：只记了一天时序列只剩一个值，公共层的自适应量程会把它夹成
+ *  「860～861」这样一根贴顶的空轴（原型那张图的量程是 0～900）；摄入量这类「没有负数、零点有意义」的
+ *  读数按下界 0 起画，同 #544 运动族 `valueAxisOf()` 的「下界恒 0＋上界＝步长×（条数−1）」那条口径。 */
 function chartSection(series: DaySeries[], avgIntake: number | null, day: (date: string) => string): string {
   return '<section id="' + WEEK_SECTIONS.trend.id + '">' + renderChartBlock({
     kind: 'line',
@@ -120,7 +133,7 @@ function chartSection(series: DaySeries[], avgIntake: number | null, day: (date:
     input: {
       items: series.map((s) => ({ label: day(s.date), value: s.calories })),
       options: {
-        connectNulls: true,
+        connectNulls: true, yMin: 0,
         yTicks: 3, labels: 'select', format: (v: number) => String(Math.round(v)),
         markLine: { value: avgIntake ?? undefined, label: '周均' },
       },
@@ -213,20 +226,27 @@ function openSection(sec: { readonly id: string; readonly icon: string; readonly
   return '<section id="' + sec.id + '"><h2 class="ilife-block-kpi-card-title">' + partTitle(sec) + '</h2>';
 }
 
-/** 页内导航项清单（逐档自己那三块／两块，锚点与段标题同源）。 */
-function tocOf(list: readonly { readonly id: string; readonly name: string }[]): HomeViewBody['toc'] {
-  return list.map((s) => ({ id: s.id, text: s.name }));
+/** 页内导航项清单（逐档自己那三块／两块，锚点与段标题同源）：id／名／图标三件一起转，
+ *  图标那枚从各档身份对象的 `nav` 位取（`#950` 起导航走分段控件，每格带一枚图标）。 */
+function tocOf(
+  list: readonly { readonly id: string; readonly name: string; readonly nav: SegNavIcon }[],
+): HomeViewBody['toc'] {
+  return list.map((s) => ({ id: s.id, text: s.name, icon: s.nav }));
 }
 
 /* ── 各档的正文（区块清单 ＋ 页内导航项，两份同源）────────────────────────── */
 
-/** `overview` 档：今日速览 ＋ 折线 ＋ 按日汇总（#401 样板那段装配，形状一字未改）。 */
+/** `overview` 档：今日速览 ＋ 折线 ＋ 按日汇总。`#950` 起「今日速览」是原型那六张卡，
+ *  卡下补一条等式条（摄入＋缺口＝消耗）——它在原型的缺口卡里，此处按「一行说不完的关系让它出自己的形」
+ *  落成独立块；先前那行「今日 N 项」的前提说明同原型（说的是这一块摆了几项、目标取哪一版配置）。 */
 function overviewBody(input: HomeViewInput): HomeViewBody {
   const { d } = input;
   const day = input.day ?? ((x: string) => x);
   const charts = d.week.series.some(hasData);
   const sections: string[] = [
-    openSection(OVERVIEW_SECTIONS.overview) + input.todayCards + '</section>',
+    openSection(OVERVIEW_SECTIONS.overview)
+      + factLine('今日 ' + todayCards(d).length + ' 项，目标取当前配置。')
+      + input.todayCards + equationBlock(d) + '</section>',
   ];
   if (charts) sections.push(chartSection(d.week.series, d.week.avgIntake, day));
   sections.push('<section id="' + OVERVIEW_SECTIONS.daily.id + '">' + dailyTable(input)
@@ -349,18 +369,4 @@ export function viewConclusion(section: HomeSection, d: HomeData): string {
   return left < 0
     ? '今日已超热量目标 ' + -left + ' 卡，明天把摄入压回目标内。'
     : '热量在目标内，距目标还差 ' + left + ' 卡。';
-}
-
-/** `week`／`month` 两档的「窗内概览」卡件（住本件：形状与 `overview` 那四张同走 `renderKpiGrid`，
- *  但**只有这两档**要这五张 ⇒ 不占 `homeDocs.ts` 的行数）。窗口是「到今日为止的 N 天」，故不写「本周」这种
- *  会与日历周打架的说法；「今日摄入」一卡沿用 #401i 的徽章口径（完成率进徽章，说明行只写目标）。 */
-export function weekCardInputs(d: HomeData, status: (pct: number | null | undefined) => object): readonly KpiCardInput[] {
-  const t = d.daily.totals;
-  return [
-    { label: '窗内摄入合计', value: fmt(seriesSum(d.week.series, 'calories')), unit: '卡', detail: '本窗共 ' + d.week.windowDays + ' 天' },
-    { label: '日均摄入', value: fmt(d.week.avgIntake), unit: '卡', detail: '只算有记录的天' },
-    { label: '日均缺口', value: fmt(d.week.avgDeficit), unit: '卡', detail: '消耗减摄入' },
-    { label: '有记录', value: String(d.week.loggedDays), unit: '天', detail: '连续记录 ' + d.streakDays + ' 天' },
-    { label: '今日摄入', value: fmt(t.cal), unit: '卡', ...status(d.caloriePct) },
-  ];
 }
