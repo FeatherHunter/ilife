@@ -396,7 +396,14 @@ describe('组件层样式纪律 ⑧：判据侧的范围（仓库级横切门：
 
 /* ── ⑨ 零键盘语汇（用户第一条打分口径） ────────────────────────────── */
 
-/** **法条全表**（硬门）：键盘语汇里**只有一种意思**的那些——键帽字形／中文词／DOM 与事件名／键名。
+/** **法条全表**：键盘语汇里**只有一种意思**的那些——键帽字形／中文词／DOM 与事件名／键名。
+ *
+ *  **判什么**（2026-09-25 父席裁决，第一性）：法条禁的是**依赖键盘**（手机上没有方向键、键盘不能是唯一通路），
+ *  **不是**禁「给键盘加增强」。故本门**键盘只作增强：判红看「用户看得见」，运行时分支只报不判**——
+ *   · **判红**（用户看得见的那一档）：产出标记／文案里的键名与 `键帽`／`快捷键`／`键位`／`方向键`、
+ *     CSS `content:` 里的、以及会被渲染出来的**文案常量**（如 `TOOLTIP_HINT = '…'`）；
+ *   · **读数档**（不判红、逐条打印）：**运行时**的 `keydown`／`keyup`／`onkey*`／`e.key==="Enter"|"Escape"` 分支
+ *     ——那些件照样可点可触（命中盒与可点元素另有判据），键盘只是白送的增强。
  *
  *  **匹配口径**（写死这一处，谁调表先读这段；第一版不设这几道，实测扫出 80+ 条假阳性）：
  *   · **中文词与纯符号**（`⌘ ⌥ ⇧ 键帽 快捷键 键位 方向键 键盘`）：串匹配（中文不分大小写）；
@@ -412,6 +419,12 @@ describe('组件层样式纪律 ⑧：判据侧的范围（仓库级横切门：
  *     **清单示例标记**（拿清单里的示例入参渲染出来的标记；渲染不出来的**照实记一行读数**，不静默跳过）。 */
 const KEYBOARD_WORDS = ['⌘', '⌥', '⇧', '键帽', '快捷键', '键位', '方向键', '键盘', 'kbd', 'keydown', 'keyup', 'onkey'];
 const KEYBOARD_NAMES = ['Esc', 'Escape', 'Tab', 'Enter'];
+
+/** **运行时分支**的识别（命中落到这一档就只报不判）：键盘事件接线／按键分支的写法。 */
+const RUNTIME_KEYBOARD = /addEventListener\(\s*['"]key|\.key\s*[!=]==|onkey|\bkeyup\b|\bkeydown\b/;
+
+/** 一行命中算不算「运行时分支」（是 ⇒ 读数档；否 ⇒ 用户看得见那一档，判红）。 */
+const isRuntimeBranch = (line) => RUNTIME_KEYBOARD.test(line);
 
 /** **读数档**（不判红、逐条打印）：方向箭头另有「涨跌／流程箭头」的正当用法
  *  （实测：`bulk-bar` 的 `→` 是"旧值 → 新值"，不是键帽），判红会误伤 ⇒ 列出来给人判。 */
@@ -473,39 +486,28 @@ function around(text, needle) {
   return (i < 0 ? text.slice(0, 80) : text.slice(Math.max(0, i - 40), i + 50)).replace(/\s+/g, ' ').trim();
 }
 
-/** **收口期豁免**（键＝`<件名> ｜ <词>`）：只登记**已经存在的**命中，一条一行、必须带登记日期与去处，
+/** **收口期豁免**（键＝`<件名> ｜ <词>`）：只登记**已经存在的可见命中**，一条一行、必须带登记日期与去处，
  *  且**逐条打印警告**（不许静默跳过）。命中修掉后把这一条删掉——本判据自会点名（豁免过期＝红）。
- *  这些是 2026-09-25 首跑扫出来的既有账（用户口径：手机与电脑端同时在用，不存在方向键等键盘相关的东西）。 */
-const KEYBOARD_EXEMPT = new Map([
-  ['confirm-strip ｜ keydown', '`runtime.ts:58` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['confirm-strip ｜ Esc', '`runtime.ts:59` 的 `e.key!=="Esc"`｜登记 2026-09-25｜去处：待派活'],
-  ['confirm-strip ｜ Escape', '`runtime.ts:59` 的 `e.key!=="Escape"`｜登记 2026-09-25｜去处：待派活'],
-  ['date-range ｜ keydown', '`runtime.ts:245` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['editable-value ｜ keydown', '`runtime.ts:158` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['editable-value ｜ Enter', '`runtime.ts:161` 的 `e.key==="Enter"` 提交｜登记 2026-09-25｜去处：待派活'],
-  ['editable-value ｜ Escape', '`runtime.ts:162` 的 `e.key==="Escape"` 取消｜登记 2026-09-25｜去处：待派活'],
-  ['number-stepper ｜ keydown', '`runtime.ts:211` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['number-stepper ｜ Enter', '`runtime.ts:216` 的 `e.key==="Enter"` 提交｜登记 2026-09-25｜去处：待派活'],
-  ['number-stepper ｜ Escape', '`runtime.ts:217` 的 `e.key==="Escape"` 取消｜登记 2026-09-25｜去处：待派活'],
-  ['popover-menu ｜ keydown', '`runtime.ts:93` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['rating-row ｜ keydown', '`runtime.ts:89` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['search-field ｜ keydown', '`runtime.ts:288` 的 `addEventListener("keydown")`｜登记 2026-09-25｜去处：待派活'],
-  ['search-field ｜ Enter', '`runtime.ts:293` 的 `e.key==="Enter"` 跳转｜登记 2026-09-25｜去处：待派活'],
-  ['search-field ｜ Escape', '`runtime.ts:294` 的 `e.key==="Escape"` 清空｜登记 2026-09-25｜去处：待派活'],
-  ['tooltip ｜ Esc', '`attrs.ts:90` 的**可见文案** `TOOLTIP_HINT = \'Esc 关掉\'`（用户看得见的一条）｜登记 2026-09-25｜去处：待派活'],
-]);
+ *  格式：`['<件名> ｜ <词>', '<哪一处>｜登记 2026-09-25｜去处：<谁在何时清>']`
+ *
+ *  **现况：空表**。2026-09-25 首跑扫出的 16 条里，15 条是**运行时分支**（按父席裁决改走读数档、不进这里），
+ *  第 16 条 `tooltip ｜ Esc`（`TOOLTIP_HINT` 的可见文案）已由父席改成「点别处关掉」——故本条一并删掉。
+ *  将来真出现「可见但一时修不动」的命中，照上面格式加一条**带日期**的条目即可。 */
+const KEYBOARD_EXEMPT = new Map([]);
 
-/** 键名那一族也要认「字符串字面量面」：`keyboardHitsIn()` 已把键名限定在字面量里。 */
+/** 豁免表的键：件名 ｜ 词（可见命中按「件 × 词」记，运行时分支不记）。 */
 const exemptKey = (name, word) => name + ' ｜ ' + word;
 
 describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时在用 ⇒ 不存在方向键那类东西）', () => {
-  it('逐件扫产出 CSS 与该件源码（剥注释）', async () => {
+  it('逐件扫产出 CSS 与该件源码（剥注释）：判红只看「用户看得见」那一档', async () => {
     const bad = [];
     const known = [];
+    const runtime = [];
     const arrows = [];
     const record = (name, where, h) => {
-      const key = exemptKey(name, h.word);
-      (KEYBOARD_EXEMPT.has(key) ? known : bad).push(name + ' ｜ ' + h.word + ' ｜ ' + where + '：' + h.text.slice(0, 80));
+      const seen = name + ' ｜ ' + h.word + ' ｜ ' + where + '：' + h.text.slice(0, 80);
+      if (isRuntimeBranch(h.text)) { runtime.push(seen); return; }
+      (KEYBOARD_EXEMPT.has(exemptKey(name, h.word)) ? known : bad).push(seen);
     };
     for (const name of components) {
       if (EXEMPT.has(name)) continue;
@@ -517,12 +519,16 @@ describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时
         for (const h of arrowGlyphsIn(src)) arrows.push(name + ' ｜ ' + file + ':' + h.line + ' ｜ ' + h.text.slice(0, 60));
       }
     }
-    for (const line of known) console.error('豁免（已登记的既有命中，待派人修）：' + line);
+    for (const line of known) console.error('豁免（已登记的既有可见命中，待派人修）：' + line);
+    console.log('读数：键盘语汇——**用户看得见**（判红档）' + bad.length + ' 条；**运行时分支**（读数档，键盘只作增强）'
+      + runtime.length + ' 条；方向箭头（读数档）' + arrows.length + ' 处；豁免表 ' + KEYBOARD_EXEMPT.size + ' 条');
+    if (runtime.length > 0) console.log('读数：运行时键盘分支命中（只报不判，件照样可点可触）：' + runtime.join('；'));
     if (arrows.length > 0) {
       console.log('读数：方向箭头那几枚字命中 ' + arrows.length + ' 处（**读数档，不判红**——也可能是涨跌／流程箭头，'
         + '要人判）：' + arrows.join('；'));
     }
-    assert.deepEqual(bad, [], '这些地方有键盘语汇（用户口径：手机与电脑端同时在用，不存在方向键等键盘相关的东西）：\n  '
+    assert.deepEqual(bad, [], '这些地方有**用户看得见**的键盘语汇（用户口径：手机与电脑端同时在用，'
+      + '不存在方向键等键盘相关的东西）：\n  '
       + bad.join('\n  ') + '\n（注释不算；键名只在**字符串字面量**里、按键盘写法首字母大写认——口径见 `KEYBOARD_WORDS` 的件头）');
   });
 
@@ -542,6 +548,7 @@ describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时
   it('清单示例标记那一面：拿清单里的示例入参渲染出来再扫一遍', async () => {
     const { COMPONENTS } = await import(new URL('../dist/components/清单.js', import.meta.url).href);
     const bad = [];
+    const runtime = [];
     const notRendered = [];
     for (const row of COMPONENTS) {
       if (EXEMPT.has(row.name)) continue;
@@ -559,8 +566,9 @@ describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时
         const hit = KEYBOARD_NAMES.includes(w) ? keyboardHit(w, literalsIn(String(html))) : keyboardHit(w, String(html));
         if (hit === null) continue;
         const seen = row.name + ' ｜ ' + hit + ' ｜ 示例标记：…' + around(String(html), hit) + '…';
+        if (isRuntimeBranch(around(String(html), hit))) { runtime.push(seen); continue; }
         if (KEYBOARD_EXEMPT.has(exemptKey(row.name, hit))) {
-          console.error('豁免（已登记的既有命中，待派人修）：' + seen);
+          console.error('豁免（已登记的既有可见命中，待派人修）：' + seen);
           continue;
         }
         bad.push(seen);
@@ -573,6 +581,8 @@ describe('组件层样式纪律 ⑨：零键盘语汇（手机与电脑端同时
     if (notRendered.length > 0) {
       console.log('读数：' + notRendered.length + ' 件的示例标记渲染不出来（源码那一面照扫）：' + notRendered.join('；'));
     }
+    console.log('读数：示例标记那一面——可见命中（判红档）' + bad.length + ' 条；运行时分支（读数档）' + runtime.length + ' 条');
+    if (runtime.length > 0) console.log('读数：示例标记里的运行时键盘分支（只报不判）：' + runtime.join('；'));
     assert.deepEqual(bad, [], '示例标记里有键盘语汇：\n  ' + bad.join('\n  '));
   });
 });
