@@ -13,6 +13,8 @@
  *     窄容器里只收紧间距与图高、并让期间名与读数换行；
  *   · **柱与均值线不靠颜色区分**：线的线型是虚线（`border-top: 2px dashed`）＋ 线上那枚标注写着「均值 …」，
  *     卡头那句再说一遍「虚线＝N 期均值」——两样非色信息同时在；
+ *   · **均值那枚标注也在柱阵框内**：标注贴线长，长错方向就会顶出框（线在刻度中线之上时顶进卡头）——
+ *     故线在上半区（标记里的 `is-under`）标注画到**线下**，朝柱阵里长；
  *   · **本期那一列有三样**：贯穿柱阵的竖标（形）＋ 轴上写着「本期」（字）＋ 强调色（色）。
  */
 import { skinVar } from '../skin/contract.js';
@@ -32,10 +34,6 @@ const NARROW_COL_GAP_PX = 4;
 /** 窄容器阈值（px）：**这是本件自己的宽度**（`@container` 判的），不是视口宽。 */
 const NARROW_PX = 460;
 
-/** 一个百分比档：强调色往纸面掺 `weight`%（淡洗＝合法的面；不是"拿墨色当面"）。 */
-const wash = (weight: number): string => 'color-mix(in srgb, ' + skinVar('accent') + ' ' + String(weight)
-  + '%, ' + skinVar('surface') + ')';
-
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function smallMultiplesCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
@@ -51,7 +49,7 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
   return [
     '/* small-multiples（小倍数面板 · 期间并排迷你柱阵 ＋ 均值线）：同一个读数的几期并排成柱，',
     '   共用一套归一化刻度横着比高低；虚线是这几期的均值。',
-    '   色一律从强调色系出（柱＝无文字的条走 accent 实底、本期竖标走 accent 的淡洗），',
+    '   色一律从强调色系出（柱与本期竖标＝无文字的点／格／条走 accent 实底，「本期」那枚字走 accent-text），',
     '   任何一处都不拿文字墨色当面；换皮只换取值、不换结构。 */',
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
@@ -87,22 +85,28 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  line-height: 1.35;',
     '  overflow-wrap: anywhere;',
     '}',
-    /* 期间范围与尾注：**都不许 `nowrap`**——长串会把卡撑出容器（零横向溢出是硬判据），
-       窄档没地方就换行（`flex: 0 1 auto` ＋ `min-width: 0` 允许缩到内容宽度以下）。
-       **`margin-left: auto` 只给尾注**：它把尾注顶到卡头右端，期间范围紧跟在标题后面
-       （两枚都写 auto 会把空白对半分，范围被甩到卡头正中——原型那一档不是那个样子）。 */
+    /* 期间范围：照原型那一档的**墙胶囊**（`.chip`：强调色的字 ＋ 发丝描边 ＋ 30px 高、胶囊圆角）——
+       它是卡头里那枚「这组数是哪一段的」的坐标，与标题同排、与尾注分居两端。
+       **都不许 `nowrap`**：长串会把卡撑出容器（零横向溢出是硬判据），窄档没地方就换行
+       （`flex: 0 1 auto` ＋ `min-width: 0` 允许缩到内容宽度以下）。 */
     s('stamp') + ' {',
+    '  display: inline-flex;',
+    '  align-items: center;',
     '  flex: 0 1 auto;',
     '  min-width: 0;',
-    '  padding: 1px 8px;',
+    '  min-height: 30px;',
+    '  padding: 0 12px;',
+    '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-pill') + ';',
     '  background: ' + skinVar('surface-2') + ';',
-    '  color: ' + skinVar('ink-2') + ';',
+    '  color: ' + skinVar('accent-text') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
+    /* 尾注（虚线是什么）：**`margin-left: auto` 只给它**——它把尾注顶到卡头右端，期间范围紧跟在标题后面
+       （两枚都写 auto 会把空白对半分，范围被甩到卡头正中——原型那一档不是那个样子）。 */
     s('tail') + ' {',
     '  flex: 0 1 auto;',
     '  margin-left: auto;',
@@ -129,8 +133,11 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  flex: 1 1 0;',
     '  min-width: 0;',
     '}',
-    /* 本期那一列的**竖标**（形）：贯穿柱阵的一条淡洗竖线，柱子画在它上面 ⇒ 柱顶以上那一段露出来。
-       淡洗从 `accent` 算出来（不新增 token、也不写死色值）。 */
+    /* 本期那一列的**竖标**（形）：贯穿柱阵的一条竖线，柱子画在它上面 ⇒ 柱顶以上那一段露出来。
+       取值走「**无文字的点／格／条**」那一档＝`accent` **实底**（对纸面 ≥3:1 的图形对比：
+       四套皮肤实测 accent vs surface ＝ paper 5.76／broadsheet 18.82／neutral 4.02／ink 5.15）。
+       为什么不用淡洗（返修点）：`accent` 掺 55% 纸面那一档四套只有 2.50／4.16／2.13／2.39——
+       三套低于 3:1 的图形地板，它既不是「实底」也不是 `accent-soft`（自算色对 `accent-soft` 也不等）。 */
     s('col') + '.is-now::before {',
     '  content: "";',
     '  position: absolute;',
@@ -139,7 +146,7 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  left: 50%;',
     '  width: 2px;',
     '  margin-left: -1px;',
-    '  background: ' + wash(55) + ';',
+    '  background: ' + skinVar('accent') + ';',
     '}',
     /* 一根柱：**无文字的条 ⇒ `accent` 实底**；高度是行内那一个算出来的百分比。 */
     s('bar') + ' {',
@@ -161,7 +168,9 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  z-index: 2;',
     '  border-top: 2px dashed ' + skinVar('ink-2') + ';',
     '}',
-    /* 均值那一枚标注（**有字**）：贴着线右端浮在上面，底下垫纸面 ⇒ 压住柱子也读得清。
+    /* 均值那一枚标注（**有字**）：贴着线长、底下垫纸面 ⇒ 压住柱子也读得清。
+       默认画在**线上**（线在柱阵下半区时，上方还有半个区高的空位）；
+       线在上半区时标记给 `.is-under`，画到**线下**——两档合起来 ⇒ 标注永远朝柱阵里长、四条边不出框。
        `max-width: 100%` ＋ `overflow-wrap: anywhere`：再长的读数也换行，不截断、不撑出容器。 */
     s('mean-label') + ' {',
     '  position: absolute;',
@@ -177,6 +186,11 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
+    '}',
+    /* 线在上半区（标记给 `is-under`）：标注改画在线**下**（`top` 从线的下沿起算，`bottom` 让位）。 */
+    s('mean') + '.is-under ' + c('mean-label') + ' {',
+    '  top: 4px;',
+    '  bottom: auto;',
     '}',
     /* 横轴标签行：**与柱阵同一份列划分**（同一个 gap ＋ 子项 `flex: 1 1 0`）。 */
     s('xax') + ' {',
@@ -195,21 +209,23 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  min-width: 0;',
     '  text-align: center;',
     '}',
-    /* 期间名与读数：**永不 `…` 截断**（长了换行），数字走等宽数字位。 */
+    /* 轴上两行（原型 `.mx-xax` 那一档）：**绝对读数是最重的一行**（`ink`／700），
+       期间名是这一列的坐标、退一档（`ink-2`／600）——口径句写着「每一期的读数写在它那根柱子下面」，
+       读数就得是那一列最显眼的一行。两行**永不 `…` 截断**（长了换行），数字走等宽数字位。 */
     s('xperiod') + ' {',
     '  min-width: 0;',
-    '  color: ' + skinVar('ink') + ';',
+    '  color: ' + skinVar('ink-2') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 700;',
+    '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
     s('xvalue') + ' {',
     '  min-width: 0;',
-    '  color: ' + skinVar('ink-2') + ';',
+    '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-style: normal;',
-    '  font-weight: 600;',
+    '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',

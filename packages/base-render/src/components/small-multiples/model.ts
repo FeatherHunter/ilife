@@ -2,7 +2,7 @@
  *
  *  三条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不"尽量猜"：
- *      期间数不够或太多、期间名给了空串、读数不是有限数、把两期都标成本期，这四种画出来都是"错位"，
+ *      期间数不够或太多、期间名给了空串、**两期同名**、读数不是有限数、把两期都标成本期，这五种画出来都是"错位"，
  *      而调用方会以为自己拿到的是一张对得上的柱阵。
  *   2. **校验与算数分家**：本件只做「形状与范围」，坐标映射与均值住同目录 `scale.ts`（唯一一处纯函数）。
  *   3. **能算的都算出来**：柱高百分比、均值、每根柱下面那枚读数、口径句与无障碍名都在这里定；
@@ -10,6 +10,8 @@
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
+  SMALL_MULTIPLES_BAR_CEIL_PCT,
+  SMALL_MULTIPLES_BAR_FLOOR_PCT,
   SMALL_MULTIPLES_FORMS,
   SMALL_MULTIPLES_MAX_PERIODS,
   SMALL_MULTIPLES_MIN_PERIODS,
@@ -17,7 +19,7 @@ import {
   type SmallMultiplesForm,
   type SmallMultiplesPeriod,
 } from './attrs.js';
-import { barPct, barRange, meanOf, numText } from './scale.js';
+import { barPct, barRange, meanOf, meanShown, numText } from './scale.js';
 
 /* ── 内部类型（`render.ts` 只吃这些：每个字段都已校验、已归一、已算好） ─────── */
 
@@ -41,8 +43,10 @@ export interface SmallMultiplesModel {
   readonly stamp?: string;
   /** 卡头右端那句**从数据算出来**的话（虚线是什么）。 */
   readonly tail: string;
-  /** 均值线的位置（用**同一个** `barPct()` 把均值当读数算出来的百分比）。 */
+  /** 均值线的位置（用**同一个** `barPct()` 把**未量化**的均值当读数算出来的百分比）。 */
   readonly meanPct: number;
+  /** 均值那一枚标注画在**线下**吗（线在刻度中线之上时为真：标注朝柱阵里长，保证不出框）。 */
+  readonly meanUnder: boolean;
   /** 均值那一枚标注上的字（`均值 1,810 卡`）。 */
   readonly meanText: string;
   readonly bars: readonly SmallMultiplesBarModel[];
@@ -54,7 +58,7 @@ export interface SmallMultiplesModel {
 
 /* ── 校验 ─────────────────────────────────────────────────────────── */
 
-/** 期间：2–8 期，期间名非空，读数是有限数，`now` 只许标一期。 */
+/** 期间：2–8 期，期间名非空**且两两不同**，读数是有限数，`now` 只许标一期。 */
 function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
   if (!Array.isArray(value) || value.length < SMALL_MULTIPLES_MIN_PERIODS) {
     badInput('small-multiples: input.periods 至少 ' + String(SMALL_MULTIPLES_MIN_PERIODS)
@@ -82,6 +86,22 @@ function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
     }
     return { label, value: v, now };
   });
+  /* 期间名是这一列的**坐标**（写在轴上、也进无障碍名）：两列同名，轴上与读屏里那两列就分不出谁是谁——
+     图还是画得出来的，只是它答不了「哪一列是谁」。**重复名一律拒**，让调用方自己改名。 */
+  const firstSeen = new Map<string, number>();
+  for (let i = 0; i < out.length; i += 1) {
+    const seenAt = firstSeen.get(out[i].label);
+    if (seenAt === undefined) {
+      firstSeen.set(out[i].label, i);
+      continue;
+    }
+    /* 文案两条约束：① 点名**两条路径**（`input.periods[i].label`）——调用方与读的人都照它对账；
+       ② 用「不许同名」这个说法：层的通用样例修补器（`皮肤矩阵.test.mjs` 的 `repairOnce`）
+       认「不许同／不得同／不许一样 ＋ 两条路径」，照它能把重复的那个名字改掉 ⇒ 本件在横切判据里不被跳过。 */
+    badInput('small-multiples: input.periods[' + String(seenAt) + '].label 与 input.periods[' + String(i)
+      + '].label 不许同名（期间名是这一列的坐标：两列同名，轴上与读屏里就分不出谁是谁；'
+      + '请给每一期不同的期间名，或先把这两期合成一期）');
+  }
   if (nowCount > 1) {
     badInput('small-multiples: input.periods 里最多标一期 now（本期只有一期，标两期说不出"这一列"是哪一列）');
   }
@@ -104,12 +124,16 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
   const values = periods.map((p) => p.value);
   /* 轴域取一次：柱高、均值线的位置、口径句里的上下界、无障碍名里的最低／最高**都从它出**。 */
   const range = barRange(values);
+  /* **两个均值**（返修点）：`mean` 未量化、只喂坐标映射（量化过的数可以落到轴域外，线就跑出柱阵）；
+     `shown` 是上屏那一枚（取整口径住 `scale.ts`），屏上的字与 aria 都从它出。 */
   const mean = meanOf(values);
+  const shown = meanShown(values);
+  const meanPct = barPct(mean, range);
   const n = periods.length;
   const unitPart = c.unit === undefined ? '' : ' ' + c.unit;
   const loText = numText(range.lo);
   const hiText = numText(range.hi);
-  const meanText = '均值 ' + numText(mean) + unitPart;
+  const meanText = '均值 ' + numText(shown) + unitPart;
   const hasNow = periods.some((p) => p.now === true);
   const labels = periods.map((p) => p.label).join('，');
 
@@ -126,7 +150,10 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
     stamp: c.stamp,
     /* 卡头那句是**从数据算出来**的（不是装饰）：它替读者把那条虚线认出来，不靠颜色。 */
     tail: '虚线＝' + String(n) + ' 期均值',
-    meanPct: barPct(mean, range),
+    meanPct,
+    /* 标注朝柱阵里那一侧长：线在**刻度中线**（下限与上限的中点，＝全平那一档的位置）之上时画到线下。
+       线上／线下各占半个柱阵区 ⇒ 只要标注不超过半个区高，它就一定在柱阵框内（判据在真机上量四条边）。 */
+    meanUnder: meanPct > (SMALL_MULTIPLES_BAR_FLOOR_PCT + SMALL_MULTIPLES_BAR_CEIL_PCT) / 2,
     meanText,
     bars: periods.map((p) => ({ heightPct: barPct(p.value, range), now: p.now === true })),
     ticks: periods.map((p) => ({ label: p.label, value: numText(p.value), now: p.now === true })),
@@ -135,7 +162,7 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
       + (range.flat
         ? '这几期的读数完全一样，都是 ' + loText + unitPart
         : '最低 ' + loText + unitPart + '，最高 ' + hiText + unitPart)
-      + '，均值 ' + numText(mean) + unitPart + '。虚线是均值线。'
+      + '，均值 ' + numText(shown) + unitPart + '。虚线是均值线。'
       + (hasNow ? '轴上写着「' + SMALL_MULTIPLES_NOW_LABEL + '」的那一列是本期。' : ''),
     extraClass: c.extraClass,
   };

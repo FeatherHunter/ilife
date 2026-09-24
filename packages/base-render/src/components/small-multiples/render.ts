@@ -35,9 +35,10 @@ function headHtml(m: SmallMultiplesModel): string {
 function colsHtml(m: SmallMultiplesModel): string {
   const parts: string[] = ['<div class="' + smallMultiplesSlot('cols') + '" role="img" aria-label="'
     + esc(m.ariaLabel) + '">'];
-  /* 均值线：`bottom` 是**算出来的**百分比（把均值当读数喂进同一个映射）；线型＝虚线、线上有字。 */
-  parts.push('<span class="' + smallMultiplesSlot('mean') + '" aria-hidden="true" style="bottom: '
-    + String(m.meanPct) + '%">');
+  /* 均值线：`bottom` 是**算出来的**百分比（把**未量化**的均值当读数喂进同一个映射）；线型＝虚线、线上有字。
+     `is-under` ＝「线在刻度中线之上 ⇒ 那枚标注画到**线下**」——标注朝柱阵里长，四条边才不出框。 */
+  parts.push('<span class="' + smallMultiplesSlot('mean') + (m.meanUnder ? ' is-under' : '')
+    + '" aria-hidden="true" style="bottom: ' + String(m.meanPct) + '%">');
   parts.push('<b class="' + smallMultiplesSlot('mean-label') + '">' + esc(m.meanText) + '</b>');
   parts.push('</span>');
   for (const bar of m.bars) {

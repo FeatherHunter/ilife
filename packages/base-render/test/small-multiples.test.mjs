@@ -1,18 +1,25 @@
 /** small-multiples（小倍数面板 · 形态 `columns`：期间并排迷你柱阵 ＋ 均值线）· 契约测试。
  *
- * 覆盖五组判据：
+ * 覆盖六组判据：
  *  ① **渲染契约**：槽位与枚数（一个期间一根柱 ＋ 一枚横轴标签）／**柱高与均值线是同一份真值**
  *     （逐柱按本件声明的映射公式验算；均值线的位置与它自己写出来的那个均值自洽）／
- *     本期那一列的**三样**（竖标 ＋ 字 ＋ 色）／转义面／**全部**非法入参分支（每个都断 `BlocksError`）；
+ *     **均值线永远在柱阵内**（读数极小／轴域极窄／和会溢出的那几档——2026-09 返修：量化过的均值
+ *     曾喂进坐标映射，线跑出柱阵）／**均值取整口径逐档钉住**／
+ *     本期那一列的**三样**（竖标 ＋ 字 ＋ 色）／转义面／**全部**非法入参分支（每个都断 `BlocksError`，
+ *     含**两期同名**）；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且**只出现一次**
  *     （含 `@container` 里的那几条）、零 `:root`／`!important`／零新 token／零 `@media` 宽度查询／
  *     零手写色值（只有 `skinVar()` 兜底链那一处）／零 `…` 截断写法／零键盘语汇／零可点元素；
+ *     本期竖标走 `accent` **实底**（不是淡洗：淡洗对纸面过不了 3:1 的图形地板）；
  *  ③ **加法式**：本件只读自己的类名；不启用它的页面零命中、逐字节不变；
- *  ④ **两档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 390 与 1280 下零横向溢出、
- *     柱与均值线都在柱阵里、标签零截断、窄档图区确实矮一档（＝容器查询真在生效）；
- *     **起不来就退确定性几何判据并打印原因**；
+ *  ④ **三档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 320／390／1280 下零横向溢出、
+ *     柱／均值线／**均值那枚标注**都在柱阵里、标签零截断、8 期横轴标签的列宽读数（触控那条建议的成立条件）、
+ *     窄档图区确实矮一档（＝容器查询真在生效）；**起不来就退确定性几何判据并打印原因**；
  *  ⑤ **皮肤纪律**：同一份入参渲染三次逐字节相同、标记不带皮肤类、真机上四套皮肤里的 `innerHTML`
- *     逐字节相同；柱与「本期」那枚字的取值来自**皮肤取值表**（不写死色）。
+ *     逐字节相同；柱／竖标／「本期」那枚字的取值来自**皮肤取值表**（不写死色），
+ *     且竖标的图形对比 ≥3:1 **逐套算出来**；轴上两行与卡头那枚胶囊照原型（`ink`／`ink-2`／`accent-text`）；
+ *  ⑥ **文档与偏离留档**：README 写着均值取整口径、同名拒绝、触控那条的成立条件（门槛数与真机读数相容），
+ *     且「与原型的有意偏离」逐条留档。
  *
  * 期望值一律从组件自己的常量派生（`SMALL_MULTIPLES_*`），不抄字面量：改了名字这里跟着红。
  */
@@ -114,6 +121,50 @@ function stripVarFns(css) {
 
 const countOf = (html, needle) => (html.match(new RegExp(needle, 'g')) || []).length;
 
+/** **触控地板**（法条：命中盒 ≥44×44；出处 `docs/base/base-render/触屏优先.md`）。
+ *  本件没有可点元素，所以它只在「调用方把某一列／某一枚标签包成入口」时才生效——
+ *  列宽要够 44px，就得**容器宽 ≥ 44×期数 ＋ 4×(期数−1)**（列间距 4px 是窄档那一档）。 */
+const TOUCH_FLOOR_PX = 44;
+
+/** 列间距（窄档／宽档）：与 `style.ts` 的 `NARROW_COL_GAP_PX`／`COL_GAP_PX` 同口径
+ *  （README 那条触控建议算门槛数用窄档那个：门槛 380px < 460px）。 */
+const NARROW_COL_GAP_PX = 4;
+const COL_GAP_PX = 6;
+const NARROW_PX = 460;
+
+/** 8 期时要多少容器宽，横轴标签那一列才够 44px 宽（README 里写着这个数，判据照同一条公式算）。 */
+const TOUCH_MIN_CONTAINER_PX = TOUCH_FLOOR_PX * 8 + NARROW_COL_GAP_PX * 7;
+
+/** 相对亮度（WCAG 2.x）：`#rrggbb`（或 `#rgb`）→ 0–1。图形对比的地板是 3:1，文本档是 4.5:1。 */
+function relLum(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const part = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const [r, g, b] = [0, 2, 4].map((i) => part(parseInt(full.slice(i, i + 2), 16) / 255));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** 两个 `#rrggbb` 的对比度（判据自己算：**读数写在判据里**，不抄别处的结论）。 */
+function contrast(a, b) {
+  const [x, y] = [relLum(a), relLum(b)];
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+/** 一条规则的声明块（按选择器里的一个片段找；找不到返回空串——判据会当场说"没找到这条规则"）。 */
+function ruleBody(css, needle) {
+  const at = css.indexOf(needle);
+  if (at < 0) return '';
+  const open = css.indexOf('{', at);
+  const close = css.indexOf('}', open);
+  return open < 0 || close < 0 ? '' : css.slice(open + 1, close);
+}
+
+/** 从均值那枚标注里读出上屏的那个数（`均值 1,810 卡` → `1810`）。 */
+function shownMean(html) {
+  const label = /-mean-label">([^<]+)</.exec(html)[1];
+  return Number(label.replace(/[^\d.-]/g, ''));
+}
+
 /** 本件声明的映射（**判据自己写一遍公式**，不调组件内部函数）：读数 → 柱高百分比。 */
 const expectPct = (value, lo, hi) => Number((SMALL_MULTIPLES_BAR_FLOOR_PCT
   + ((value - lo) / (hi - lo)) * (SMALL_MULTIPLES_BAR_CEIL_PCT - SMALL_MULTIPLES_BAR_FLOOR_PCT)).toFixed(2));
@@ -153,6 +204,25 @@ const EIGHT = {
 /** 退化一份：全部相等（不除零、也不画 NaN）。 */
 const FLAT = { title: '几条一样', periods: [{ label: 'A', value: 1800 }, { label: 'B', value: 1800 }], unit: '卡' };
 
+/** **均值最高那一档**（8 期里 1 根触底 ⇒ 均值落到本件能达到的最高位 76%）＋ 长到换行的单位：
+ *  均值标注会变两行——线在上半区时「只往上长」的那一版会顶出柱阵、压进卡头（返修点 G1）。 */
+const HIGH = {
+  title: '八周并排 · 一根触底', unit: '元'.repeat(30),
+  periods: [
+    { label: '第 1 周', value: 0 },
+    ...['第 2 周', '第 3 周', '第 4 周', '第 5 周', '第 6 周', '第 7 周', '第 8 周'].map((l) => ({ label: l, value: 1000 })),
+  ],
+};
+
+/** 轴域极窄／极大那几档：量化过的均值一旦喂进坐标映射，线就会跑出柱阵（返修点 S1）。 */
+const EDGE_PERIODS = [
+  { name: '两位小数以下', periods: [{ label: 'A', value: 0.001 }, { label: 'B', value: 0.002 }] },
+  { name: '两位小数量级', periods: [{ label: 'A', value: 0.006 }, { label: 'B', value: 0.008 }] },
+  { name: '微读数', periods: [{ label: 'A', value: 1e-7 }, { label: 'B', value: 2e-7 }] },
+  /* 这一档「先求和再除」会先溢出成 Infinity（旧写法在这里吐的就是 `bottom: Infinity%`）。 */
+  { name: '和会溢出', periods: [{ label: 'A', value: 1.7e308 }, { label: 'B', value: 1e308 }] },
+];
+
 /** 极端一份（对抗式审查会试的那几个）：200 字**不可断**的期间名 ＋ 15 位读数 ＋ 超长标题／范围／口径。
  *  这一份只有一个要求：**换行**，不截断、不横溢（`overflow-wrap: anywhere` 管的就是这一档）。 */
 const STRESS = {
@@ -181,7 +251,7 @@ describe('small-multiples ① 渲染契约 · 骨架与枚数', () => {
     assert.equal(countOf(html, 'class="[^"]*-xlabel[ "]'), SIX.periods.length, '一枚横轴标签');
     assert.equal(countOf(html, 'class="[^"]*-xperiod"'), SIX.periods.length);
     assert.equal(countOf(html, 'class="[^"]*-xvalue"'), SIX.periods.length);
-    assert.equal(countOf(html, 'class="[^"]*-mean"'), 1, '一条均值线');
+    assert.equal(countOf(html, 'class="[^"]*-mean( is-under)?"'), 1, '一条均值线');
     assert.equal(countOf(html, 'class="[^"]*-mean-label"'), 1, '一枚均值标注');
     assert.match(html, /role="img" aria-label="柱阵：6 期并排（第 35 周，第 36 周，第 37 周，第 38 周，第 39 周，第 40 周）/);
     assert.ok(!/<script/i.test(html), '不产脚本');
@@ -198,17 +268,84 @@ describe('small-multiples ① 渲染契约 · 骨架与枚数', () => {
     assert.deepEqual(heights, values.map((v) => expectPct(v, lo, hi)), '柱高与读数不是同一份真值');
     assert.equal(Math.min(...heights), SMALL_MULTIPLES_BAR_FLOOR_PCT, '最低那一根落在下限上');
     assert.equal(Math.max(...heights), SMALL_MULTIPLES_BAR_CEIL_PCT, '最高那一根落在上限上');
-    /* 均值：判据从**上屏那枚标注**里取数（不重写一遍取整口径），再按同一个公式验算线的位置。 */
+    /* 均值：判据从**上屏那枚标注**里取数（不重写一遍取整口径）；线的位置由**未量化**的均值定
+       （口径见 README 不变量 4：量化过的均值可能落到轴域外）——所以这里各断各的。 */
     const label = /-mean-label">([^<]+)</.exec(html)[1];
-    const shown = Number(label.replace(/[^\d.-]/g, ''));
-    const truth = values.reduce((a, b) => a + b, 0) / values.length;
+    const shown = shownMean(html);
+    const truth = values.reduce((a, v) => a + v / values.length, 0);
     assert.ok(Math.abs(shown - truth) <= 0.5, '上屏的均值与真值差太多：' + shown + ' vs ' + truth);
     assert.ok(label.includes('均值') && label.endsWith('卡'), '均值标注要写清是什么、带上单位：' + label);
     assert.match(html, /-mean" aria-hidden="true" style="bottom: ([-\d.]+)%"/);
     const bottom = Number(/-mean" aria-hidden="true" style="bottom: ([-\d.]+)%"/.exec(html)[1]);
-    assert.equal(bottom, expectPct(shown, lo, hi), '均值线的位置与它自己写出来的那个均值不是同一份真值');
+    assert.equal(bottom, expectPct(truth, lo, hi), '均值线的位置不是未量化均值算出来的那一位');
+    assert.ok(Math.abs(bottom - expectPct(shown, lo, hi)) <= 0.5,
+      '线（未量化均值）与上屏那枚（量化过）差得太远：' + bottom + ' vs ' + expectPct(shown, lo, hi));
     /* 卡头那句也是算出来的：期数与虚线一起说清，读者不靠颜色认线。 */
     assert.match(html, /-tail">虚线＝6 期均值</);
+  });
+
+  it('**均值线永远在柱阵内**：量化过的均值不许喂进坐标映射（读数极小／和会溢出那几档）', () => {
+    const readings = [];
+    for (const one of EDGE_PERIODS) {
+      const values = one.periods.map((p) => p.value);
+      const lo = Math.min(...values);
+      const hi = Math.max(...values);
+      const truth = values.reduce((a, v) => a + v / values.length, 0);
+      const edge = renderSmallMultiples({ title: 'x', unit: '元', periods: one.periods });
+      const at = /-mean" aria-hidden="true" style="bottom: ([-\d.]+)%"/.exec(edge);
+      assert.ok(at !== null, one.name + '：均值线的位置读不出来（不是有限数）：' + edge.slice(0, 160));
+      const bottom = Number(at[1]);
+      assert.ok(bottom >= SMALL_MULTIPLES_BAR_FLOOR_PCT && bottom <= SMALL_MULTIPLES_BAR_CEIL_PCT,
+        one.name + '：均值线跑出柱阵（' + bottom + '% 不在 '
+        + SMALL_MULTIPLES_BAR_FLOOR_PCT + '–' + SMALL_MULTIPLES_BAR_CEIL_PCT + '% 之间）');
+      /* 线压着「均值柱」该在的位置：同一个公式、**未量化**的均值算出来。 */
+      assert.equal(bottom, expectPct(truth, lo, hi),
+        one.name + '：线的位置不是未量化均值算出来的那一位（真值 ' + truth + '）');
+      const shown = shownMean(edge);
+      assert.ok(shown !== 0, one.name + '：上屏均值被量化成了 0（真值 ' + truth + '）');
+      assert.ok(Math.abs(shown - truth) <= Math.abs(truth) * 0.5 + Number.EPSILON,
+        one.name + '：上屏均值与真值不同量级：' + shown + ' vs ' + truth);
+      readings.push(one.name + ' 线 ' + bottom + '%／上屏 ' + shown + '（真值 ' + truth + '）');
+    }
+    console.log('READING small-multiples 均值线在柱阵内：' + readings.join('；'));
+  });
+
+  it('均值取整口径逐档钉住：整数读数取整；非整数至多两位小数、且至少两位有效数字', () => {
+    /* 口径住 `scale.ts` 的 `meanShown()`，写进 README 不变量 4——判据断言的是**上屏原文**。 */
+    const cases = [
+      { values: [1, 2], want: '均值 2' },
+      { values: [1, 2, 3, 4], want: '均值 3' },
+      { values: [1690, 1842, 1716, 1940, 1884, 1786], want: '均值 1,810' },
+      { values: [1, 2.5], want: '均值 1.75' },
+      { values: [0.1, 0.2], want: '均值 0.15' },
+      { values: [0.006, 0.008], want: '均值 0.007' },
+      { values: [0.001, 0.002], want: '均值 0.0015' },
+    ];
+    const readings = [];
+    for (const one of cases) {
+      const periods = one.values.map((v, i) => ({ label: 'P' + String(i), value: v }));
+      const edge = renderSmallMultiples({ title: 'x', periods });
+      const label = /-mean-label">([^<]+)</.exec(edge)[1];
+      assert.equal(label, one.want, '均值上屏口径变了：' + JSON.stringify(one.values) + ' 上屏 ' + label);
+      /* 无障碍名里那枚均值与标注同一档（两处不许各写一套）。 */
+      assert.ok(edge.includes('，' + one.want + '。'), '无障碍名里的均值与标注不是同一档：' + label);
+      readings.push(JSON.stringify(one.values) + ' → ' + label);
+    }
+    console.log('READING small-multiples 均值取整口径：' + readings.join('；'));
+  });
+
+  it('均值标注的落位：线在刻度中线之上时画到**线下**（标注朝柱阵里长）', () => {
+    /* 线上／线下各占半个柱阵区 ⇒ 只要标注不高过半个区，四条边就恒在框内（真机读数见 ④）。 */
+    const high = renderSmallMultiples(HIGH);
+    const highBottom = Number(/-mean(?: is-under)?" aria-hidden="true" style="bottom: ([-\d.]+)%"/.exec(high)[1]);
+    assert.ok(highBottom > flatPct, '这一档的线应当落在刻度中线之上：' + highBottom + '% ≤ ' + flatPct + '%');
+    assert.match(high, /-mean is-under" aria-hidden="true"/,
+      '线在刻度中线之上时标注要画到线下（否则两行的标注会顶出柱阵、压进卡头）');
+    const flat = renderSmallMultiples(FLAT);
+    assert.equal(/-mean is-under/.test(flat), false,
+      '线在中线之下（含全平那一档）时标注照原型画在线上：' + flat.slice(0, 80));
+    const six = renderSmallMultiples(SIX);
+    assert.equal(/-mean is-under/.test(six), false);
   });
 
   it('本期那一列**三样同时在**：竖标（形）＋「本期」那枚字（字）＋ 强调色（色，样式段里断）', () => {
@@ -254,7 +391,8 @@ describe('small-multiples ① 渲染契约 · 骨架与枚数', () => {
     const evil = '"><script>alert(1)</script>';
     const html = renderSmallMultiples({
       title: evil, unit: evil, stamp: evil, note: evil,
-      periods: [{ label: evil, value: 1 }, { label: evil, value: 2, now: true }],
+      /* 两期同名会被当场拒（见上面那条判据），故第二期的名字另给一个同样带刺的串。 */
+      periods: [{ label: evil, value: 1 }, { label: evil + 'B', value: 2, now: true }],
     });
     assert.equal(/<script/i.test(html), false, '不得出现可执行脚本标签');
     assert.ok(html.includes('&lt;script&gt;'), '原文以实体上屏');
@@ -293,9 +431,27 @@ describe('small-multiples ① 渲染契约 · 非法入参（每条都断 Blocks
     const many = new Array(SMALL_MULTIPLES_MAX_PERIODS + 1).fill({ label: 'A', value: 1 });
     assert.equal(throwsBlocks(() => renderSmallMultiples({ title: 'x', periods: many })), true,
       '超过 ' + SMALL_MULTIPLES_MAX_PERIODS + ' 期：窄容器里只能压字，请调用方先合并期间');
-    assert.equal(renderSmallMultiples({ title: 'x', periods: new Array(SMALL_MULTIPLES_MAX_PERIODS).fill({ label: 'A', value: 1 }) })
-      .includes('-col'), true, '上限那一档照收');
+    const top = renderSmallMultiples({
+      title: 'x',
+      periods: new Array(SMALL_MULTIPLES_MAX_PERIODS).fill(0).map((_, i) => ({ label: 'P' + String(i), value: 1 })),
+    });
+    assert.equal(countOf(top, 'class="[^"]*-col( is-now)?"'), SMALL_MULTIPLES_MAX_PERIODS,
+      '上限那一档照收，且**一根柱都不减**（有几期就画几根）');
     assert.equal(SMALL_MULTIPLES_MIN_PERIODS, 2);
+  });
+
+  it('**两期同名一律拒**：期间名是这一列的坐标（同名那两列在轴上与读屏里分不出谁是谁）', () => {
+    const on = (labels) => ({ title: 'x', periods: labels.map((l, i) => ({ label: l, value: i + 1 })) });
+    assert.equal(throwsBlocks(() => renderSmallMultiples(on(['W35', 'W35']))), true, '两期同名');
+    assert.equal(throwsBlocks(() => renderSmallMultiples(on(['W35', 'W36', 'W35']))), true, '三份里两份同名');
+    assert.equal(renderSmallMultiples(on(['W35', 'W36'])).includes('W36'), true, '不同名照收');
+    /* 报错文案点名**那两列**（`input.periods[i].label` 两条路径），且用「不许同名」这个说法：
+       层的通用样例修补器（`皮肤矩阵.test.mjs` 的 `repairOnce`）认「不许同 ＋ 两条路径」——
+       换一个说法它就在横切判据里把本件跳过（那正是这条判据要钉住的）。 */
+    let message = '';
+    try { renderSmallMultiples(on(['W35', 'W36', 'W35'])); } catch (e) { message = String(e.message); }
+    assert.match(message, /input\.periods\[0\]\.label 与 input\.periods\[2\]\.label 不许同名/,
+      '报错要点名是哪两列重名：' + message);
   });
 
   it('期间元素：不是对象／期间名空或不是串／读数不是有限数／now 不是布尔', () => {
@@ -372,7 +528,13 @@ describe('small-multiples ② 样式与零 DOM 纪律', () => {
       const value = m[1].trim();
       assert.equal(/^var\(\s*--ilife-ink(?:-[23])?\s*[,)]/.test(value), false, '拿文字墨色当了"面"：' + value);
     }
-    assert.ok(clean.includes('color-mix(in srgb,'), '本期那列／淡洗要从 token 算出来');
+    /* 本期竖标＝「**无文字的点／格／条**」那一档 ⇒ `accent` **实底**（不是淡洗：淡洗对纸面过不了 3:1；
+       四套实测见 ⑤ 那条判据打印的读数）。 */
+    const nowRule = ruleBody(clean, '.is-now::before');
+    assert.ok(nowRule !== '', '找不到本期竖标那条规则（`.is-now::before`）');
+    assert.match(nowRule, /background:\s*var\(--ilife-accent\b/, '本期竖标要走 accent 实底：' + nowRule.replace(/\s+/g, ' '));
+    assert.equal(/color-mix/.test(nowRule), false, '本期竖标不许是自算淡洗（既不是实底也不是 accent-soft）：'
+      + nowRule.replace(/\s+/g, ' '));
     assert.equal(clean.includes('var(--ilife-danger,'), false, '本件没有语义档，不许借 danger');
   });
 
@@ -443,15 +605,17 @@ describe('small-multiples ③ 加法式（不启用即逐字节不变）', () =>
   });
 });
 
-/* ── ④ 两档几何（真机）＋ ⑤ 皮肤纪律 ──────────────────────────────── */
+/* ── ④ 三档几何（真机）＋ ⑤ 皮肤纪律 ──────────────────────────────── */
 
-/** 压力样例：六周（原型那一档）／八期（上限＋长串）／全部相等（退化）／极端长串（对抗面）。 */
+/** 压力样例：六周（原型那一档）／八期（上限＋长串）／全部相等（退化）／极端长串（对抗面）／
+ *  均值最高那一位＋长到换行的单位（返修点 G1：标注会不会顶出柱阵）。 */
 function cases() {
   return [
     { name: 'six', html: renderSmallMultiples(SIX), bars: SIX.periods.length },
     { name: 'eight', html: renderSmallMultiples(EIGHT), bars: EIGHT.periods.length },
     { name: 'flat', html: renderSmallMultiples(FLAT), bars: FLAT.periods.length },
     { name: 'stress', html: renderSmallMultiples(STRESS), bars: STRESS.periods.length },
+    { name: 'high', html: renderSmallMultiples(HIGH), bars: HIGH.periods.length },
   ];
 }
 
@@ -460,13 +624,14 @@ function assertStaticGeometry(css, html) {
   const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
   const wide = [...px(html), ...px(css)].filter((v) => v > 390);
   assert.deepEqual(wide, [], '出现过不了窄档（390）的固定宽度：' + wide.join('、'));
-  const pct = [...html.matchAll(/(?:height|bottom): ([\d.]+)%/g)].map((m) => Number(m[1]));
+  /* 百分比一律夹在 `[0, 100]`：**负百分比也认**（`bottom: -44%` 那类越界线曾经漏过这根正则）。 */
+  const pct = [...html.matchAll(/(?:height|bottom): (-?[\d.]+)%/g)].map((m) => Number(m[1]));
   assert.ok(pct.length > 0, '柱高与均值线必须是百分比（判据会空转）');
   for (const v of pct) assert.ok(v >= 0 && v <= 100, '百分比越界：' + v);
 }
 
-describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
-  it('容器 390 与 1280：零横向溢出／柱与线都在柱阵里／标签零截断／四套皮肤标记逐字节相同', async (t) => {
+describe('small-multiples ④⑤ 三档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
+  it('容器 320／390／1280：零横向溢出／柱、线与标注都在柱阵里／标签零截断／四套皮肤标记逐字节相同', async (t) => {
     const css = smallMultiplesCss();
     const casesHtml = cases().map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join('');
     const page = await startShapesPage({
@@ -481,7 +646,9 @@ describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless C
     }
     try {
       const seen = [];
-      for (const width of [390, 1280]) {
+      const touchReads = [];
+      /* 三档：最窄（320）／窄档那一档（390）／宽档（1280）——**改的是夹具容器宽，不是视口**。 */
+      for (const width of [320, 390, 1280]) {
         await page.setWidth(width);
         const frame = await page.frame();
         assert.ok(frame.fxScrollW <= frame.fxClientW, width + ' 档：夹具容器不得横向溢出');
@@ -503,14 +670,17 @@ describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless C
               assert.equal(one.clipped, 0, width + ' 档 ' + skin + ' ' + c.name + '：' + one.sel
                 + ' 有 ' + one.clipped + ' 处被截断');
             }
-            /* **柱与均值线都在柱阵里**：柱顶不许冒出图区、柱底与线的两端不许跑出框。 */
+            /* **柱、均值线与均值那枚标注都在柱阵里**：柱顶不许冒出图区、柱底与线的两端不许跑出框、
+               标注的四条边也不许越界（返修点 G1：标注曾经顶出柱阵 16px、压进卡头 6px）。 */
             if (skin === SKIN_NAMES[0]) {
               const box = await page.ev('(function(){var root=document.querySelector('
                 + JSON.stringify(scope + '.' + SMALL_MULTIPLES_CLASS) + ');'
                 + 'var cols=root.querySelector(' + JSON.stringify('.' + smallMultiplesSlot('cols')) + ');'
                 + 'var bars=[].slice.call(root.querySelectorAll(' + JSON.stringify('.' + smallMultiplesSlot('bar')) + '));'
                 + 'var mean=root.querySelector(' + JSON.stringify('.' + smallMultiplesSlot('mean')) + ');'
+                + 'var lab=root.querySelector(' + JSON.stringify('.' + smallMultiplesSlot('mean-label')) + ');'
                 + 'var p=cols.getBoundingClientRect();var m=mean.getBoundingClientRect();'
+                + 'var l=lab===null?null:lab.getBoundingClientRect();'
                 + 'var o={n:bars.length,plotW:Math.round(p.width),plotH:Math.round(p.height),'
                 + 'maxRight:-1e9,minLeft:1e9,maxTop:-1e9,minBottom:1e9,'
                 + 'innerW:Math.round(document.querySelector(' + JSON.stringify(scope.slice(0, -1)) + ').clientWidth)};'
@@ -522,7 +692,10 @@ describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless C
                 + 'plotTop:Math.round(p.top),plotBottom:Math.round(p.bottom),'
                 + 'maxRight:Math.round(o.maxRight),minLeft:Math.round(o.minLeft),'
                 + 'maxBarBottom:Math.round(o.maxTop),minBarTop:Math.round(o.minBottom),'
-                + 'meanTop:Math.round(m.top),meanBottom:Math.round(m.bottom),meanLeft:Math.round(m.left),meanRight:Math.round(m.right)};}())');
+                + 'meanTop:Math.round(m.top),meanBottom:Math.round(m.bottom),meanLeft:Math.round(m.left),meanRight:Math.round(m.right),'
+                + 'labelTop:l===null?null:Math.round(l.top),labelBottom:l===null?null:Math.round(l.bottom),'
+                + 'labelLeft:l===null?null:Math.round(l.left),labelRight:l===null?null:Math.round(l.right),'
+                + 'labelH:l===null?null:Math.round(l.height)};}())');
               assert.equal(box.n, c.bars, width + ' 档 ' + skin + ' ' + c.name + '：柱数不对');
               assert.ok(box.maxRight <= box.plotRight + 1, width + ' 档 ' + skin + ' ' + c.name + '：有柱跑出柱阵右边');
               assert.ok(box.minLeft >= box.plotLeft - 1, width + ' 档 ' + skin + ' ' + c.name + '：有柱跑出柱阵左边');
@@ -532,19 +705,55 @@ describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless C
                 width + ' 档 ' + skin + ' ' + c.name + '：均值线跑出柱阵');
               assert.ok(box.meanLeft >= box.plotLeft - 1 && box.meanRight <= box.plotRight + 1,
                 width + ' 档 ' + skin + ' ' + c.name + '：均值线两端出框');
+              assert.ok(box.labelTop !== null, width + ' 档 ' + skin + ' ' + c.name + '：找不到均值那枚标注');
+              assert.ok(box.labelTop >= box.plotTop - 1 && box.labelBottom <= box.plotBottom + 1,
+                width + ' 档 ' + skin + ' ' + c.name + '：均值标注越出柱阵（上 ' + (box.plotTop - box.labelTop)
+                + 'px／下 ' + (box.labelBottom - box.plotBottom) + 'px，标注高 ' + box.labelH + 'px）');
+              assert.ok(box.labelLeft >= box.plotLeft - 1 && box.labelRight <= box.plotRight + 1,
+                width + ' 档 ' + skin + ' ' + c.name + '：均值标注横向出框');
               seen.push({ width, name: c.name, plotH: box.plotH, plotW: box.plotW, innerW: box.innerW,
-                rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW });
+                labelH: box.labelH, rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW });
+              /* 8 期那档的**列宽**（触控那条建议的成立条件）：横轴标签一枚＝一列。 */
+              if (c.name === 'eight') {
+                const touch = await page.ev('(function(){var els=[].slice.call(document.querySelectorAll('
+                  + JSON.stringify(scope + '.' + smallMultiplesSlot('xlabel')) + '));'
+                  + 'var w=1e9;var h=1e9;for(var i=0;i<els.length;i+=1){var r=els[i].getBoundingClientRect();'
+                  + 'if(r.width<w)w=r.width; if(r.height<h)h=r.height;}'
+                  + 'return {n:els.length,minW:Math.round(w*10)/10,minH:Math.round(h*10)/10};}())');
+                assert.equal(touch.n, EIGHT.periods.length, width + ' 档：横轴标签枚数不对');
+                touchReads.push({ width, minW: touch.minW, minH: touch.minH });
+              }
             }
           }
         }
       }
-      /* **窄档是容器驱动的**：同一份标记，390 档柱阵比 1280 档矮一档（视口没变，只改了夹具容器宽度）。 */
-      const narrow = seen.filter((s) => s.width === 390).map((s) => s.plotH);
+      /* **窄档是容器驱动的**：同一份标记，320／390 档柱阵都比 1280 档矮一档（视口没变，只改了夹具容器宽）。 */
+      const narrow = seen.filter((s) => s.width < 460).map((s) => s.plotH);
       const wide = seen.filter((s) => s.width === 1280).map((s) => s.plotH);
       assert.equal(wide.every((h) => h === SMALL_MULTIPLES_PLOT_PX), true,
         '1280 档柱阵高度应取常量 ' + SMALL_MULTIPLES_PLOT_PX + '：' + JSON.stringify(wide));
       assert.equal(narrow.every((h) => h < SMALL_MULTIPLES_PLOT_PX), true,
-        '390 档柱阵应收一档（@container 判的是本件自己的宽度）：' + JSON.stringify(narrow));
+        '320／390 档柱阵应收一档（@container 判的是本件自己的宽度）：' + JSON.stringify(narrow));
+      /* **触控那条建议的成立条件**（README 常见错法里写着）：8 期的列宽 ＝ (容器宽 − 间距) ÷ 期数，
+         320 档不到 44px、390 档才够 ⇒ 门槛数必须落在 (320, 390]。 */
+      const colW = (w) => (w - (w < NARROW_PX ? NARROW_COL_GAP_PX : COL_GAP_PX)
+        * (EIGHT.periods.length - 1)) / EIGHT.periods.length;
+      for (const t of touchReads) {
+        assert.ok(Math.abs(t.minW - colW(t.width)) <= 1,
+          t.width + ' 档：8 期列宽 ' + t.minW + 'px 与「(容器宽 − 间距) ÷ 期数」算出来的 ' + colW(t.width) + 'px 对不上');
+      }
+      const at320 = touchReads.find((t) => t.width === 320);
+      const at390 = touchReads.find((t) => t.width === 390);
+      assert.ok(at320 !== undefined && at390 !== undefined, '触控列宽读数缺档：' + JSON.stringify(touchReads));
+      assert.ok(at320.minW < TOUCH_FLOOR_PX && at320.minH >= TOUCH_FLOOR_PX,
+        '320 档 8 期的命中盒应当**宽不到 44px**（README 那条建议要写条件）：' + JSON.stringify(at320));
+      assert.ok(at390.minW >= TOUCH_FLOOR_PX && at390.minH >= TOUCH_FLOOR_PX,
+        '390 档 8 期的命中盒应当够 44×44：' + JSON.stringify(at390));
+      assert.ok(TOUCH_MIN_CONTAINER_PX > at320.width && TOUCH_MIN_CONTAINER_PX <= at390.width,
+        'README 里的门槛数 ' + TOUCH_MIN_CONTAINER_PX + 'px 与真机读数不相容（320 档不够、390 档够）');
+      console.log('READING small-multiples 8 期触控命中盒（横轴标签一枚）＝ '
+        + touchReads.map((t) => t.width + ' 档 ' + t.minW + '×' + t.minH).join('／')
+        + '；门槛数 ' + TOUCH_MIN_CONTAINER_PX + 'px（44×8 ＋ 4×7）');
       /* ⑤ 换皮不换结构：四套皮肤容器里的标记逐字节相同。 */
       for (const c of cases()) {
         for (const width of [390, 1280]) {
@@ -561,33 +770,88 @@ describe('small-multiples ④⑤ 两档几何与皮肤纪律（真机 headless C
           }
         }
       }
-      /* 取值来自皮肤表：柱＝`accent` 实底；「本期」那枚字＝`accent-text`；竖标＝accent 的淡洗（不是纯 accent）。 */
+      /* 取值来自皮肤表：柱与本期竖标＝`accent` **实底**（竖标的图形对比 ≥3:1 逐套算出来）；
+         「本期」那枚字＝`accent-text`；轴上两行与卡头那枚胶囊的层级照原型。 */
+      const contrastReads = [];
       for (const skin of SKIN_NAMES) {
         const vals = SKIN_VALUES[skin];
-        const colors = await page.ev('(function(){var bar=document.querySelector('
-          + JSON.stringify('.' + skinClass(skin) + ' [data-case=six] .' + smallMultiplesSlot('bar')) + ');'
-          + 'var note=document.querySelector('
-          + JSON.stringify('.' + skinClass(skin) + ' [data-case=six] .' + smallMultiplesSlot('nowmark')) + ');'
-          + 'var nowCol=document.querySelector('
-          + JSON.stringify('.' + skinClass(skin) + ' [data-case=six] .' + smallMultiplesSlot('col') + '.is-now') + ');'
+        /** 皮肤容器里 `[data-case=six]` 那件的某个槽（`JSON.stringify` 之后是**一个整体**的串）。 */
+        const sel = (slot, extra = '') => JSON.stringify('.' + skinClass(skin) + ' [data-case=six] .'
+          + smallMultiplesSlot(slot) + extra);
+        const colors = await page.ev('(function(){var bar=document.querySelector(' + sel('bar') + ');'
+          + 'var note=document.querySelector(' + sel('nowmark') + ');'
+          + 'var nowCol=document.querySelector(' + sel('col', '.is-now') + ');'
+          + 'var xp=document.querySelector(' + sel('xperiod') + ');'
+          + 'var xv=document.querySelector(' + sel('xvalue') + ');'
+          + 'var st=document.querySelector(' + sel('stamp') + ');'
           + 'var cs=nowCol===null?null:getComputedStyle(nowCol,"::before");'
-          + 'return {bar:bar===null?null:getComputedStyle(bar).backgroundColor,'
-          + 'note:note===null?null:getComputedStyle(note).color,'
-          + 'mark:cs===null?null:cs.width, markContent:cs===null?null:cs.content};}())');
+          + 'var g=function(el){return el===null?null:getComputedStyle(el);};'
+          + 'return {bar:g(bar)===null?null:g(bar).backgroundColor,'
+          + 'note:g(note)===null?null:g(note).color,'
+          + 'mark:cs===null?null:cs.width, markContent:cs===null?null:cs.content,'
+          + 'markBg:cs===null?null:cs.backgroundColor,'
+          + 'periodColor:g(xp)===null?null:g(xp).color, periodWeight:g(xp)===null?null:g(xp).fontWeight,'
+          + 'valueColor:g(xv)===null?null:g(xv).color, valueWeight:g(xv)===null?null:g(xv).fontWeight,'
+          + 'stampColor:g(st)===null?null:g(st).color, stampBorder:g(st)===null?null:g(st).borderTopWidth,'
+          + 'stampMinH:g(st)===null?null:g(st).minHeight};}())');
         assert.equal(colors.bar, toRgb(vals['accent']), skin + '：柱取 accent 实底');
         assert.equal(colors.note, toRgb(vals['accent-text']), skin + '：「本期」那枚字取 accent-text');
         assert.equal(colors.mark, '2px', skin + '：本期那一列的竖标要在（形，不只靠色）');
         assert.ok(colors.markContent !== 'none', skin + '：竖标得真的画出来（不是 content:none 的空壳）');
+        /* 竖标＝「无文字的点／格／条」那一档 ⇒ **accent 实底**；对比地板 3:1 逐套算（不抄别处的结论）。 */
+        assert.equal(colors.markBg, toRgb(vals['accent']), skin + '：本期竖标取 accent 实底（不是自算淡洗）');
+        const markContrast = contrast(vals['accent'], vals['surface']);
+        assert.ok(markContrast >= 3, skin + '：竖标（accent 实底）对纸面 ' + markContrast.toFixed(2)
+          + ':1 低于 3:1 的图形地板');
+        contrastReads.push(skin + ' ' + markContrast.toFixed(2) + ':1');
+        /* 原型那一档的层级（返修点 G6）：轴上**读数是最重的一行**、期间名退一档；卡头那枚是描边胶囊。 */
+        assert.equal(colors.periodColor, toRgb(vals['ink-2']), skin + '：轴上期间名取 ink-2');
+        assert.equal(colors.periodWeight, '600', skin + '：轴上期间名的字重 600');
+        assert.equal(colors.valueColor, toRgb(vals['ink']), skin + '：轴上读数取 ink（那一列最重的一行）');
+        assert.equal(colors.valueWeight, '700', skin + '：轴上读数的字重 700');
+        assert.equal(colors.stampColor, toRgb(vals['accent-text']), skin + '：卡头期间范围的字取 accent-text');
+        assert.equal(colors.stampBorder, '1px', skin + '：卡头期间范围要有描边（原型 `.chip` 那条发丝边）');
+        assert.equal(colors.stampMinH, '30px', skin + '：卡头期间范围是 30px 高的胶囊（原型 `.chip`）');
       }
+      console.log('READING small-multiples 本期竖标对纸面（accent 实底）：' + contrastReads.join('／'));
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
-      for (const w of [390, 1280]) {
+      for (const w of [320, 390, 1280]) {
         const rows = seen.filter((s) => s.width === w);
         console.log('READING small-multiples container=' + w
           + ' plotW=' + rows[0].plotW + ' plotH=' + rows[0].plotH
           + ' maxRootScrollW=' + Math.max(...rows.map((s) => s.rootScrollW))
           + ' maxRootClientW=' + Math.max(...rows.map((s) => s.rootClientW))
+          + ' 标注高=' + rows.map((s) => s.name + ':' + s.labelH).join(',')
           + ' cases=' + rows.length);
       }
     } finally { page.close(); }
+  });
+});
+
+/* ── ⑥ 文档与偏离留档 ─────────────────────────────────────────────── */
+
+describe('small-multiples ⑥ 文档与偏离留档（README 与代码不许各说一套）', () => {
+  const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+
+  it('README 写着均值取整的两条分支、同名拒绝，以及触控那条的成立条件（门槛数与真机读数相容）', () => {
+    for (const needle of ['取到整数', '两位小数', '两位有效数字', '0.0015', '0.007']) {
+      assert.ok(readme.includes(needle), 'README 的均值取整口径缺一句：' + needle);
+    }
+    assert.ok(readme.includes('不许与别的期间同名'), 'README 入参表要写明期间名不许重复');
+    assert.ok(readme.includes('两期同名'), 'README 常见错法要写同名那一档');
+    /* 触控那条：门槛数＝`TOUCH_FLOOR_PX×期数 ＋ 间距×(期数−1)`（判据自己算，README 里那个数要与它逐字对上）。 */
+    assert.ok(readme.includes(String(TOUCH_MIN_CONTAINER_PX)), 'README 要写清门槛容器宽 ' + TOUCH_MIN_CONTAINER_PX + 'px');
+    assert.ok(/≥\s*380px/.test(readme), 'README 那条建议要有可判的条件（`≥380px`）');
+    for (const w of ['320', '390', '1280']) {
+      assert.ok(readme.includes(w), 'README 里要写清判据量的那几档容器宽：' + w);
+    }
+  });
+
+  it('README 有「与原型的有意偏离」一节，逐条写清理由（改回原型的也点名）', () => {
+    assert.ok(readme.includes('与原型的有意偏离'), '偏离表要在 README 里留档');
+    for (const needle of ['left:-9px', 'nowrap', '颜色词']) {
+      assert.ok(readme.includes(needle), '偏离表缺一条：' + needle);
+    }
+    assert.ok(readme.includes('已按原型改回'), '改回原型的也点个名（轴上层级与卡头那枚胶囊）');
   });
 });
