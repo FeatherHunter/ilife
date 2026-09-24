@@ -333,19 +333,22 @@ describe('due-row ④ 真机（无头 Chrome）', () => {
       /* 三档的**形状与取值规则真的落地**（真机读法）：左竖条实线／点线／双线，倒计时三档不同色。 */
       const tones = await p.ev('(function(){'
         + 'var pick=function(sel){var el=document.querySelector(sel);'
-        + 'return {row:getComputedStyle(el),'
-        + ' value:getComputedStyle(el.querySelector(' + JSON.stringify('.' + dueRowSlot('count-value')) + ')),'
-        + ' tag:getComputedStyle(el.querySelector(' + JSON.stringify('.' + dueRowSlot('tag')) + '))};};'
+        + 'var row=getComputedStyle(el);'
+        + 'var value=getComputedStyle(el.querySelector(' + JSON.stringify('.' + dueRowSlot('count-value')) + '));'
+        + 'var tag=getComputedStyle(el.querySelector(' + JSON.stringify('.' + dueRowSlot('tag')) + '));'
+        /* 逐字取出来（活对象过不了 CDP 的 returnByValue：CSSStyleDeclaration 序列化成空壳）。 */
+        + 'return {left:row.borderLeftStyle, leftWidth:row.borderLeftWidth, value:value.color,'
+        + ' tagBottom:tag.borderBottomStyle, tagTop:tag.borderTopStyle, tagWidth:tag.borderTopWidth};};'
         + 'return {ok:pick(' + JSON.stringify(itemSel('ac')) + '),'
         + ' warn:pick(' + JSON.stringify(itemSel('warranty')) + '),'
         + ' danger:pick(' + JSON.stringify(itemSel('idcard')) + ')};}())');
-      assert.equal(tones.ok.row.borderLeftStyle, 'solid', '正常档：实线左竖条');
-      assert.equal(tones.warn.row.borderLeftStyle, 'dotted', '临近档：点线左竖条');
-      assert.equal(tones.danger.row.borderLeftStyle, 'double', '已过期档：双线左竖条');
-      assert.notEqual(tones.danger.value.color, tones.ok.value.color, '三档倒计时不同色（取值规则真的落地）');
-      assert.equal(tones.ok.tag.borderBottomStyle, 'solid', '正常档位字：只带底线');
-      assert.equal(tones.warn.tag.borderTopStyle, 'solid', '临近档位字：描边');
-      assert.equal(tones.danger.tag.borderTopStyle, 'double', '已过期档位字：双线框');
+      assert.equal(tones.ok.left, 'solid', '正常档：实线左竖条');
+      assert.equal(tones.warn.left, 'dotted', '临近档：点线左竖条');
+      assert.equal(tones.danger.left, 'double', '已过期档：双线左竖条');
+      assert.notEqual(tones.danger.value, tones.ok.value, '三档倒计时不同色（取值规则真的落地）');
+      assert.equal(tones.ok.tagBottom, 'solid', '正常档位字：只带底线');
+      assert.equal(tones.warn.tagTop, 'solid', '临近档位字：描边');
+      assert.equal(tones.danger.tagTop, 'double', '已过期档位字：双线框');
 
       /* error：错句挂在 aria-describedby 指到的节点上，且在按钮旁边（同一个动作块里）。 */
       const err = await p.ev('(function(){var b=document.querySelector(' + JSON.stringify(actSel('card'))

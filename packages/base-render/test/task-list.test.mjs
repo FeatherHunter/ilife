@@ -311,10 +311,18 @@ describe('task-list ④ 真机（无头 Chrome）', () => {
         + ' box:!!b && String(b.className)};}())');
       assert.notEqual(boxOutline.style, 'none', '焦点环必须在框形上可见：' + JSON.stringify(boxOutline));
       assert.ok(parseFloat(boxOutline.width) >= 2, '焦点环 ≥2px：' + boxOutline.width);
+      /* 空格切换的是**当前聚焦那一行**（Tab 的落点由浏览器的焦点导航起点定，判据不该赌它是哪一行）。 */
+      const focusedKey = await p.ev('document.activeElement.closest(' + JSON.stringify('[' + TASK_KEY_ATTR + ']')
+        + ').getAttribute(' + JSON.stringify(TASK_KEY_ATTR) + ')');
+      const beforeSpace = await read(focusedKey);
+      const evBefore = await p.ev('window.__ev.length');
       await p.pressSpace();
       await sleep(200);
-      assert.deepEqual(await read('a1'), { attr: null, done: false, checked: false }, '空格能取消勾选');
-      assert.equal(await p.ev('window.__ev.length'), 2, '空格也派发（走 change 这一条通路）');
+      const afterSpace = await read(focusedKey);
+      assert.equal(afterSpace.checked, !beforeSpace.checked, '空格能勾／取消勾（聚焦那一行：' + focusedKey + '）');
+      assert.equal(afterSpace.attr, beforeSpace.attr === '1' ? null : '1', '勾选态属性跟着翻');
+      assert.equal(afterSpace.done, !beforeSpace.done, '修饰类跟着翻');
+      assert.equal(await p.ev('window.__ev.length'), evBefore + 1, '空格也派发（走 change 这一条通路）');
 
       /* 悬停：包在设备能力查询里；关掉悬停后勾选照样落（不是唯一通路）。 */
       const geo = await p.ev('(function(){var b=document.querySelector(' + JSON.stringify(rowSel('b2') + ' ' + HIT_SEL)
@@ -325,9 +333,11 @@ describe('task-list ④ 真机（无头 Chrome）', () => {
       const hoverBg = await p.ev('getComputedStyle(document.querySelector(' + JSON.stringify(rowSel('b2') + ' ' + HIT_SEL) + ')).backgroundColor');
       assert.notEqual(hoverBg, restBg, '悬停要有可见变化：' + restBg + ' → ' + hoverBg);
       await p.emulate({ hover: false });
+      const b2Before = await read('b2');
       await p.ev('document.querySelector(' + JSON.stringify(rowSel('b2') + ' ' + HIT_SEL) + ').click();true');
       await sleep(220);
-      assert.equal((await read('b2')).attr, '1', '没有悬停的设备上照样能勾（悬停不是唯一通路）');
+      const b2After = await read('b2');
+      assert.equal(b2After.checked, !b2Before.checked, '没有悬停的设备上照样能勾（悬停不是唯一通路）');
 
       /* 按下：真按下时框形缩到 .9（只动 transform）。 */
       await p.emulate({ hover: true });
@@ -336,7 +346,7 @@ describe('task-list ④ 真机（无头 Chrome）', () => {
         + ' return {x:Math.round(b.left+b.width/2), y:Math.round(b.top+b.height/2)};}())');
       await p.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: geo2.x, y: geo2.y, button: 'left', clickCount: 1 });
       await sleep(90);
-      const pressed = await p.ev('getComputedStyle(document.querySelector(' + JSON.stringify(rowSel('b3') + ' ' + BOX_SEL) + '")).transform');
+      const pressed = await p.ev('getComputedStyle(document.querySelector(' + JSON.stringify(rowSel('b3') + ' ' + BOX_SEL) + ')).transform');
       await p.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: geo2.x, y: geo2.y, button: 'left', clickCount: 1 });
       assert.notEqual(pressed, 'none', '按下要有形状反馈（transform）：' + pressed);
       assert.ok(pressed.includes('0.9'), '按下缩到 .9：' + pressed);
@@ -352,11 +362,16 @@ describe('task-list ④ 真机（无头 Chrome）', () => {
       assert.equal((await read('b3')).attr, null, '禁用行点不动');
       assert.equal(await p.ev('window.__ev.length'), before, '禁用行不派发事件');
 
-      /* 再加量：把 a1 重新勾上（清单还在长），计数跟着长。 */
+      /* 再加量：再勾一条（清单还在长），事件里的数与界面上重数后的数一致。 */
+      const domDone = () => p.ev('document.querySelectorAll(' + JSON.stringify('[' + TASK_KEY_ATTR + '][' + TASK_DONE_ATTR + ']')
+        + ').length');
+      const doneBeforeAdd = await domDone();
       await p.ev('document.querySelector(' + JSON.stringify(rowSel('a1') + ' ' + HIT_SEL) + ').click();true');
       await sleep(200);
       assert.equal(await p.ev('window.__ev.length'), before + 1, '勾一条派发一条');
-      assert.equal((await p.ev('window.__ev[window.__ev.length-1]')).doneCount, 4, '事件里的数也是重数后的');
+      const lastEvent = await p.ev('window.__ev[window.__ev.length-1]');
+      assert.equal(Math.abs(lastEvent.doneCount - doneBeforeAdd), 1, '界面上正好翻了一条');
+      assert.equal(lastEvent.doneCount, await domDone(), '事件里的数＝重数后的数');
 
       /* 忙态：整单在写的时候勾选不落账、不回显、不派发（复选框回弹）。 */
       await p.ev('document.querySelector(' + JSON.stringify(ROOT_SEL) + ').setAttribute("data-ilife-task-busy","1");true');
@@ -380,9 +395,11 @@ describe('task-list ④ 真机（无头 Chrome）', () => {
       await p.emulate({ reducedMotion: true });
       assert.equal(await p.ev('getComputedStyle(document.querySelector(' + JSON.stringify(slot('bar-fill')) + ')).transitionDuration'),
         '0s', '减动效下进度条不许有过渡');
+      const b1Before = await read('b1');
       await p.ev('document.querySelector(' + JSON.stringify(rowSel('b1') + ' ' + HIT_SEL) + ').click();true');
       await sleep(120);
-      assert.equal((await read('b1')).attr, null, '减动效下状态照落');
+      const b1After = await read('b1');
+      assert.equal(b1After.checked, !b1Before.checked, '减动效下状态照落');
       assert.equal(await p.runningAnimations(), 0, '不许有东西卡在半路');
       assert.deepEqual(await p.errors(), [], '整场不得留下未捕获错误');
     } finally { p.close(); }

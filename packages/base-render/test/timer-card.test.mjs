@@ -334,6 +334,11 @@ describe('timer-card ④ 真机（无头 Chrome）', () => {
       const doneDetail = await p.ev('window.__dones[0]');
       assert.equal(doneDetail.key, 'boil');
       assert.equal(doneDetail.remainingMs, 0);
+      /* 到了终态**不许把按钮禁掉**（"成功回执不得禁用"）：到点了还能重新开始、还能重置。 */
+      assert.equal(await p.ev('document.querySelector(' + JSON.stringify(actSel('boil', 'toggle')) + ').disabled'), false,
+        '到点了主按钮仍可按（重新开始）');
+      assert.equal(await p.ev('document.querySelector(' + JSON.stringify(actSel('boil', 'reset')) + ').disabled'), false,
+        '到点了重置按钮仍可按');
 
       /* 重置：回到待开始、剩余＝总时长。 */
       await p.ev('document.querySelector(' + JSON.stringify(actSel('boil', 'reset')) + ').click();true');
