@@ -9,6 +9,9 @@ import { SKIN_NAMES, skinClass, skinTokenVar, type SkinName, type SkinTokenName 
 import { PAPER_NOTE, PAPER_VALUES } from './skins/paper.js';
 import { BROADSHEET_NOTE, BROADSHEET_VALUES } from './skins/broadsheet.js';
 import { NEUTRAL_NOTE, NEUTRAL_VALUES } from './skins/neutral.js';
+import { TERMINAL_NOTE, TERMINAL_VALUES } from './skins/terminal.js';
+import { INK_NOTE, INK_VALUES } from './skins/ink.js';
+import { BLUEPRINT_NOTE, BLUEPRINT_VALUES } from './skins/blueprint.js';
 
 export {
   SKIN_DEFAULT,
@@ -20,6 +23,9 @@ export {
   skinVar,
 } from './contract.js';
 export type { SkinName, SkinTokenName } from './contract.js';
+export { BLUEPRINT_NOTE, BLUEPRINT_VALUES } from './skins/blueprint.js';
+export { INK_NOTE, INK_VALUES } from './skins/ink.js';
+export { TERMINAL_NOTE, TERMINAL_VALUES } from './skins/terminal.js';
 export { BROADSHEET_NOTE, BROADSHEET_VALUES } from './skins/broadsheet.js';
 export { NEUTRAL_NOTE, NEUTRAL_VALUES } from './skins/neutral.js';
 export { PAPER_NOTE, PAPER_VALUES } from './skins/paper.js';
@@ -32,11 +38,14 @@ interface SkinEntry {
   readonly values: Readonly<Record<SkinTokenName, string>>;
 }
 
-/** 皮肤注册表：名字 → 说明 ＋ 取值表。**加第四套皮肤只在这里加一行。** */
+/** 皮肤注册表：名字 → 说明 ＋ 取值表。**加一套皮肤只在这里加一行**（顺序须与 `SKIN_NAMES` 一致）。 */
 export const SKINS: Readonly<Record<SkinName, SkinEntry>> = Object.freeze({
   paper: { note: PAPER_NOTE, values: PAPER_VALUES },
   broadsheet: { note: BROADSHEET_NOTE, values: BROADSHEET_VALUES },
   neutral: { note: NEUTRAL_NOTE, values: NEUTRAL_VALUES },
+  terminal: { note: TERMINAL_NOTE, values: TERMINAL_VALUES },
+  ink: { note: INK_NOTE, values: INK_VALUES },
+  blueprint: { note: BLUEPRINT_NOTE, values: BLUEPRINT_VALUES },
 });
 
 export interface SkinCssInput {

@@ -87,6 +87,7 @@ export * from './rating-row/index.js';
 /* 动作与反馈 */
 export * from './confirm-strip/index.js';
 export * from './skeleton/index.js';
+export * from './toast-card/index.js';
 /* 容器与浮层 */
 export * from './dialog/index.js';
 export * from './drawer-sheet/index.js';

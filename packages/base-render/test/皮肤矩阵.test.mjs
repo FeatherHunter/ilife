@@ -28,7 +28,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
-  BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, SKIN_TOKEN_NAMES, skinCss, skinTokenVar,
+  BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, SKINS, SKIN_TOKEN_NAMES, skinCss, skinTokenVar,
 } from '../dist/blocks.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { COMPONENTS } from '../dist/components/清单.js';
@@ -36,7 +36,9 @@ import { COMPONENTS } from '../dist/components/清单.js';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
 const WIDTHS = [390, 1280];
-const SKIN_VALUES = { paper: PAPER_VALUES, broadsheet: BROADSHEET_VALUES, neutral: NEUTRAL_VALUES };
+/** 取值表**从注册表读**（不写死名单）：`SkinName` 一涨就自动跟上——
+ *  早先这里是手写三套的映射，皮肤闭集一扩到六套就取到 `undefined` 当场抛（2026-09-24 实测踩过）。 */
+const SKIN_VALUES = Object.fromEntries(SKIN_NAMES.map((s) => [s, SKINS[s].values]));
 /** 剥 CSS 注释再断规则（注释会**提到**类名与 token 名，拿裸串断会把「解释」当「规则」）。 */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 /** 剥 JS 字面量与注释（层红线说的是「剥掉字面量后不得出现 DOM 名」——运行时是**产出的文本**）。 */

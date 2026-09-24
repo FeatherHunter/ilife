@@ -698,11 +698,16 @@ describe('#950 回灌 · 对照行（renderChangeRows delta）', () => {
         }
       }
     }
-    // 三套皮肤下标记逐字节相同 ＋ 标记不含皮肤类名。
-    assert.equal(SKIN_NAMES.length, 3, '前置：皮肤闭集仍是三套');
-    const [a, b, c] = SKIN_NAMES.map(() => geometryPiece());
-    assert.equal(b, a, '三套皮肤下标记须逐字节相同');
-    assert.equal(c, a, '三套皮肤下标记须逐字节相同');
+    // 皮肤下标记逐字节相同 ＋ 标记不含皮肤类名。
+    // 前置只断「本该在的那几套还在」（**不是**断"闭集恰是三套"——闭集是会随需要长的，
+    // 早先写死 `length === 3`，2026-09-24 皮肤扩到六套时它把六个回灌组一起判红）。
+    for (const s of ['paper', 'broadsheet', 'neutral']) {
+      assert.ok(SKIN_NAMES.includes(s), '前置：皮肤闭集少了 ' + s);
+    }
+    const a = geometryPiece();
+    for (const s of SKIN_NAMES) {
+      assert.equal(geometryPiece(), a, s + ' 皮肤下标记须逐字节相同');
+    }
     assert.ok(!a.includes('ilife-skin-'), '标记里不得出现皮肤类名：' + a);
   });
 });

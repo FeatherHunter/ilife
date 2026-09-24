@@ -842,13 +842,18 @@ function declLines(text) {
   return out;
 }
 
-/** 母版 ③：三套皮肤下标记逐字节相同（这些函数不吃皮肤，标记面必须恒同）＋ 标记里不出现皮肤类名。 */
+/** 母版 ③：各套皮肤下标记逐字节相同（这些函数不吃皮肤，标记面必须恒同）＋ 标记里不出现皮肤类名。
+ *  前置只断「本该在的那几套还在」——**不是**断"闭集恰是三套"：闭集是会随需要长的，
+ *  早先写死 `length === 3`，2026-09-24 皮肤扩到六套（terminal／ink／blueprint）时把六个回灌组一起判红。 */
 function assertSkinStable(build, label) {
-  assert.equal(SKIN_NAMES.length, 3, '前置：皮肤闭集仍是三套');
-  const [a, b, c] = SKIN_NAMES.map(() => build());
-  assert.equal(b, a, label + '：三套皮肤下标记须逐字节相同');
-  assert.equal(c, a, label + '：三套皮肤下标记须逐字节相同');
-  assert.ok(!a.includes('ilife-skin-'), label + '：标记里不得出现皮肤类名：' + a);
+  for (const s of ['paper', 'broadsheet', 'neutral']) {
+    assert.ok(SKIN_NAMES.includes(s), label + '：前置——皮肤闭集少了 ' + s);
+  }
+  const first = build();
+  for (const s of SKIN_NAMES) {
+    assert.equal(build(), first, label + '：' + s + ' 皮肤下标记须逐字节相同');
+  }
+  assert.ok(!first.includes('ilife-skin-'), label + '：标记里不得出现皮肤类名：' + first);
 }
 
 /** 非法入参：`bad-input` 且消息点名到字段（不静默吞）。 */

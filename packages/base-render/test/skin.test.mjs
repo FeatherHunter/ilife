@@ -17,6 +17,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 import {
   BROADSHEET_VALUES,
+  BLUEPRINT_VALUES,
+  INK_VALUES,
   NEUTRAL_VALUES,
   PAPER_VALUES,
   SKIN_DEFAULT,
@@ -24,6 +26,7 @@ import {
   SKINS,
   SKIN_TOKENS,
   SKIN_TOKEN_NAMES,
+  TERMINAL_VALUES,
   skinClass,
   skinCss,
   skinTokenVar,
@@ -49,7 +52,14 @@ const contrast = (a, b) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-const VALUES = { paper: PAPER_VALUES, broadsheet: BROADSHEET_VALUES, neutral: NEUTRAL_VALUES };
+const VALUES = {
+  paper: PAPER_VALUES,
+  broadsheet: BROADSHEET_VALUES,
+  neutral: NEUTRAL_VALUES,
+  terminal: TERMINAL_VALUES,
+  ink: INK_VALUES,
+  blueprint: BLUEPRINT_VALUES,
+};
 
 describe('皮肤 ① 契约对账', () => {
   it('三套皮肤都在注册表里，且与 SKIN_NAMES 逐名对上', () => {
