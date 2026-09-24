@@ -200,31 +200,22 @@ export function lightsOf(
   });
 }
 
-/** 一家的一句话读数：「红 1 黄 2」，全绿就是「绿」。面板侧要**上色**的那几处不用它（见 `countSegments`）。 */
-function countsText(counts: Readonly<Record<HealthStatus, number>>): string {
-  const parts: string[] = [];
-  if (counts.red > 0) parts.push('红 ' + String(counts.red));
-  if (counts.yellow > 0) parts.push('黄 ' + String(counts.yellow));
-  if (parts.length === 0) return '绿';
-  return parts.join(' · ');
-}
-
-/** 一截读数：`红 2`／`黄 3`／`绿`／`—`（缺席没报告）。`status` 为 null 的那些走淡色。 */
+/** 一截读数：数字本身（`2`／`3`），颜色即档位（`status` 决定色）；`—`（缺席没报告）。`status` 为 null 的那些走淡色。 */
 export interface HealthCountSeg {
   readonly status: HealthStatus | null;
   readonly text: string;
 }
 
 /** 把一份计数拆成**按档分色**的几截。红黄各自一截、各自上色，互不串色；
- *  「黄 3」这一截为什么不能被染成红——见 `countSegments` 的注释（出图复评逮到的真缺陷）。 */
+ *  数字本身不带档位字（#951）：颜色即档位，胶囊形状由调用方配 `COUNT_CAPSULE`／`TAB_NOTE_STYLE`。 */
 export function countSegsOf(light: HealthLightRow): readonly HealthCountSeg[] {
   if (light.status === null) return [{ status: null, text: '—' }];
   const segs: HealthCountSeg[] = [];
   for (const status of ['red', 'yellow'] as const) {
     const count = light.counts[status];
-    if (count > 0) segs.push({ status, text: STATUS_LABEL[status] + ' ' + String(count) });
+    if (count > 0) segs.push({ status, text: String(count) });
   }
-  return segs.length > 0 ? segs : [{ status: 'green', text: '绿' }];
+  return segs.length > 0 ? segs : [{ status: 'green', text: String(light.counts.green) }];
 }
 
 /** 几截读数之间那个分隔符：不许染档位色（它不属于任何一档）。 */
@@ -234,6 +225,17 @@ const SEG_SEP = ' · ';
 function countText(light: HealthLightRow): string {
   return countSegsOf(light).map((piece) => piece.text).join(SEG_SEP);
 }
+
+/** 数字胶囊的形状（#951）：页签那枚 `TAB_NOTE_STYLE` 的同形，汇总与表头共用。
+ *  颜色不进这一格，调用方按档配 `STATUS_TEXT[status]`——颜色即档位，字上不再写档位名。 */
+export const COUNT_CAPSULE_STYLE: React.CSSProperties = {
+  border: '1px solid ' + BORDER,
+  borderRadius: 999,
+  padding: '0 6px',
+  margin: '0 2px',
+  fontSize: 11,
+  fontWeight: 700,
+} as const;
 
 /** 汇总行那一句：绿要显眼（它是「正常」这件事本身），没通道的那几家不冒充绿。
  *
@@ -260,7 +262,11 @@ function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
     if (count === 0) continue;
     if (parts.length > 0) parts.push(React.createElement('span', { key: status + '-sep', style: { color: INK_DIM } }, SEG_SEP));
     parts.push(
-      React.createElement('span', { key: status, style: { color: STATUS_TEXT[status], fontWeight: 700 } }, STATUS_LABEL[status] + ' ' + String(count)),
+      React.createElement(
+        'span',
+        { key: status, style: { ...COUNT_CAPSULE_STYLE, color: STATUS_TEXT[status] } },
+        String(count),
+      ),
     );
   }
   if (parts.length === 0) {
@@ -349,6 +355,24 @@ function isAttentionItem(item: HealthItem): boolean {
   return isAttention(item.status);
 }
 
+/** 表头那组数字（#951）：与页签／汇总同口径——只印数字胶囊，颜色即档位，不印档位字。 */
+function headerCounts(report: HealthReport): React.ReactElement {
+  const counts = countByStatus(report.items);
+  const status = worstStatus(report.items);
+  const segs = countSegsOf({ id: 'header', title: '', status, counts, hasChannel: true });
+  return React.createElement(
+    'div',
+    { style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 } },
+    segs.map((seg, index) => seg.status === null
+      ? React.createElement('span', { key: index, style: { color: INK_DIM } }, seg.text)
+      : React.createElement(
+        'span',
+        { key: index, style: { ...COUNT_CAPSULE_STYLE, color: STATUS_TEXT[seg.status] } },
+        seg.text,
+      )),
+  );
+}
+
 /** 一家那张表：**要处理的**（红黄）一条一块、整行上底带一句话与「去哪修」；
  *  **正常的**（绿）收成一行并列的小字，点得到、扫得完（票面验收第一条：正常的收成一行，有问题的才展开）。 */
 export function HealthTable(props: {
@@ -366,7 +390,7 @@ export function HealthTable(props: {
       'div',
       { style: HEALTH_STYLE.headRow },
       React.createElement('div', { style: HEALTH_STYLE.head }, props.title + ' · 体检'),
-      report ? React.createElement('div', { style: { color: INK_DIM, fontSize: 12 } }, countsText(countByStatus(report.items))) : null,
+      report ? headerCounts(report) : null,
     ),
     props.phase === 'idle'
       ? React.createElement('div', { style: HEALTH_STYLE.meta }, '还没体检：点上面那个「体检一次」。')

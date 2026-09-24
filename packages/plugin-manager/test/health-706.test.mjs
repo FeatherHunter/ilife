@@ -264,9 +264,8 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.deepEqual(Object.keys(lights[1]).sort(), ['counts', 'hasChannel', 'id', 'status', 'title']);
     });
 
-    it('灯上那截计数按档上色：「黄 N」不许印成红字（本页自己定的语义，文字层也得守）', () => {
-      // 出图复评逮到的真缺陷：计数原先是**一个字符串**塞进一个 span、染顶档色，
-      // 六家都红时「黄 3」就跟着印成红字——页面自己说「黄＝还没配」，文字层却把它涂成红。
+    it('灯上那截计数按档上色：数字颜色即档位，不印档位字（#951）', () => {
+      // #951：汇总与页签只印数字胶囊，颜色即档位；出图复评的老缺陷（两档串色）仍要守住。
       const lights = [
         { id: 'dsh-bill-ilife', title: '记账', status: 'red', counts: { red: 2, yellow: 3, green: 0 }, hasChannel: true },
       ];
@@ -275,13 +274,15 @@ describe('#706 配置体检 · 面板侧', () => {
       );
       const red = STATUS_TEXT.red;
       const yellow = STATUS_TEXT.yellow;
-      assert.ok(html.includes('红 2'), '红那一截没印出来');
-      assert.ok(html.includes('黄 3'), '黄那一截没印出来');
-      // 两截必须带**各自**的颜色：黄那一截的 span 里不许出现红的色值。
-      const segs = [...html.matchAll(/<span style="([^"]*)">(红|黄) (\d+)<\/span>/g)].map((m) => ({ style: m[1], text: m[2] + ' ' + m[3] }));
+      assert.ok(!html.includes('红 ') && !html.includes('黄 '), '汇总数字里不许再带档位字 (#951)');
+      assert.ok(html.includes('>2<'), '红那一截的数字没印出来');
+      assert.ok(html.includes('>3<'), '黄那一截的数字没印出来');
+      // 两截必须带**各自**的颜色＋胶囊形状：黄那一截的 span 里不许出现红的色值。
+      const segs = [...html.matchAll(/<span style="([^"]*)">(\d+)<\/span>/g)].map((m) => ({ style: m[1], text: m[2] }));
       assert.equal(segs.length, 2, '计数应当拆成两截各自上色，现在是：' + JSON.stringify(segs));
       assert.ok(segs[0].style.includes(red) && !segs[0].style.includes(yellow), '红那一截的颜色不对：' + segs[0].style);
       assert.ok(segs[1].style.includes(yellow) && !segs[1].style.includes(red), '黄那一截印成了别的颜色（缺陷原样）: ' + segs[1].style);
+      for (const seg of segs) assert.ok(seg.style.includes('border-radius:999px'), '数字缺胶囊形状：' + seg.style);
     });
 
     it('绿档看得见：正常那一行前面有绿点（不是只剩一行灰字）', () => {
@@ -538,9 +539,13 @@ describe('#706 配置体检 · 面板侧', () => {
         '两家里只有先回来那一家该带读数（攒齐了一起画就是 0 家）');
       const mark = htmlMid.indexOf('aria-controls="g741-panel-dsh-calorie"');
       assert.ok(mark > 0, '没找到卡路里那颗页签');
-      assert.ok(htmlMid.slice(mark, htmlMid.indexOf('</button>', mark)).includes('红 1'),
-        '先回来那一家的读数没长在它自己那颗页签上：' + htmlMid.slice(mark, mark + 240));
-      assert.ok(!htmlMid.includes('黄 1'), '慢那家还在途，它的读数不该已经在屏上');
+      const calorieSlice = htmlMid.slice(mark, htmlMid.indexOf('</button>', mark));
+      assert.ok(calorieSlice.includes('>1<'), '先回来那一家的读数没长在它自己那颗页签上：' + htmlMid.slice(mark, mark + 240));
+      assert.ok(calorieSlice.includes(STATUS_TEXT.red), '先回来那家（红）的数字没带红档位色');
+      assert.ok(!calorieSlice.includes('红'), '页签数字里不许再带档位字 (#951)');
+      const chefMark = htmlMid.indexOf('aria-controls="g741-panel-dsh-chef"');
+      assert.ok(chefMark > 0, '没找到大厨那颗页签');
+      assert.ok(!htmlMid.slice(chefMark, htmlMid.indexOf('</button>', chefMark)).includes('tab-note'), '慢那家还在途，它的读数不该已经在屏上');
       assert.deepEqual(sandbox.__T706_RUN__.filter((line) => line.startsWith('row=')), ['row=dsh-calorie ok=true err=null'],
         '调试图也该是陆续写的：' + JSON.stringify(sandbox.__T706_RUN__));
 
@@ -550,7 +555,8 @@ describe('#706 配置体检 · 面板侧', () => {
       await tick();
       const htmlEnd = paint(Section(props));
       assert.equal((htmlEnd.match(/data-ilife-health="tab-note"/g) || []).length, 2, '慢那家落定后也该长出自己的读数');
-      assert.ok(htmlEnd.includes('黄 1'), '慢那家的读数没画出来');
+      assert.ok(!htmlEnd.includes('红 ') && !htmlEnd.includes('黄 '), '页签与汇总数字里不许再带档位字 (#951)');
+      assert.ok((htmlEnd.match(/>1</g) || []).length >= 2, '两家的数字读数没画出来');
       assert.ok(!htmlEnd.includes('体检中…'), '全部落定后不该还写着「体检中…」');
       assert.ok(sandbox.__T706_RUN__.includes('rows=2 err=null first=null'),
         '渲染台那条收尾调试图变了：' + JSON.stringify(sandbox.__T706_RUN__));
@@ -565,9 +571,9 @@ describe('#706 配置体检 · 面板侧', () => {
     const allGreen = { red: 0, yellow: 0, green: 3 };
 
     it('只有红黄那几家带数字：红优先于黄，全绿与没跑过都不带', () => {
-      assert.deepEqual(tabNote(light('red', { red: 2, yellow: 1, green: 0 })), { status: 'red', text: '红 2' },
+      assert.deepEqual(tabNote(light('red', { red: 2, yellow: 1, green: 0 })), { status: 'red', text: '2' },
         '红黄都有时该报红那一档（圆点已经按最严重的档上色了）');
-      assert.deepEqual(tabNote(light('yellow', { red: 0, yellow: 1, green: 2 })), { status: 'yellow', text: '黄 1' });
+      assert.deepEqual(tabNote(light('yellow', { red: 0, yellow: 1, green: 2 })), { status: 'yellow', text: '1' });
       assert.equal(tabNote(light('green', allGreen)), null, '全绿不该带数字');
       assert.equal(tabNote(light(null, allGreen)), null, '还没体检不该带数字');
       assert.equal(tabNote(light('red', { red: 1, yellow: 0, green: 0 }, false)), null, '没有体检出口的那家不该带数字');
@@ -575,10 +581,10 @@ describe('#706 配置体检 · 面板侧', () => {
 
     it('数字那份文案与色标同源：红黄各归各的档，绿与缺席才显 —', () => {
       assert.deepEqual(countSegsOf(light('red', { red: 2, yellow: 1, green: 0 })), [
-        { status: 'red', text: '红 2' },
-        { status: 'yellow', text: '黄 1' },
+        { status: 'red', text: '2' },
+        { status: 'yellow', text: '1' },
       ]);
-      assert.deepEqual(countSegsOf(light('green', allGreen)), [{ status: 'green', text: '绿' }]);
+      assert.deepEqual(countSegsOf(light('green', allGreen)), [{ status: 'green', text: '3' }]);
       assert.deepEqual(countSegsOf(light(null, allGreen)), [{ status: null, text: '—' }], '没跑过显 —（不冒充绿）');
     });
 
@@ -612,8 +618,9 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.match(line([normal, { ...normal, id: 'y' }]), /配置体检.*六家正常.*体检一次/, '全绿那一档没把话写对');
       assert.match(line([light(null, allGreen)]), /还没体检/, '没跑过那一档没把话写对');
       const text = line([light('red', { red: 2, yellow: 3, green: 0 })]);
-      assert.match(text, /红 2/, '总账里没有红计数');
-      assert.match(text, /黄 3/, '总账里没有黄计数');
+      assert.ok(!/红 |黄 |绿 /.test(text), '总账数字里不许再带档位字 (#951)');
+      assert.match(text, /2/, '总账里没有红计数');
+      assert.match(text, /3/, '总账里没有黄计数');
       assert.match(text, /要处理/, '红黄都在时没有「要处理」那句');
     });
 
