@@ -2,7 +2,9 @@
  *
  *  五个运行名：`renderBulkBar(input)`（产标记，零 DOM）／`bulkBarCss()`（样式段，含就地确认面那一段）／
  *  `buildBulkBarJs()`（运行时，产出 JS 文本）／形态闭集 `BULK_BAR_FORMS`（本件只落地形态 A）／
- *  类名根 `BULK_BAR_CLASS`。加入参面类型与三条几何事实（触控地板／行高／窄档阈值）。
+ *  类名根 `BULK_BAR_CLASS`。加入参面类型、三条几何事实（触控地板／行高／窄档阈值）、
+ *  三个上限常量（条目／逐条预演／最近用过——判据按它们派生，不抄字面量）
+ *  与四个行内 `id` 拼法（判据要按同一函数反查 `aria-controls`／`aria-describedby` 指到了谁）。
  *
  *  页面怎么接自己的逻辑（不引入任何全局；本件不写库）：
  *  ```js
@@ -39,5 +41,14 @@ export type {
   BulkBarTone,
 } from './attrs.js';
 export { renderBulkBar } from './render.js';
+export {
+  BULK_BAR_ITEM_MAX,
+  BULK_BAR_PREVIEW_MAX,
+  BULK_BAR_RECENT_MAX,
+  bulkBarConfirmId,
+  bulkBarCountId,
+  bulkBarErrorId,
+  bulkBarHintId,
+} from './model.js';
 export { BULK_BAR_MIN_TARGET_PX, BULK_BAR_NARROW_PX, BULK_BAR_ROW_MIN_HEIGHT_PX, bulkBarCss } from './style.js';
 export { buildBulkBarJs } from './runtime.js';

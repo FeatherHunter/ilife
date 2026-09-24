@@ -53,3 +53,20 @@ export function optExtraClass(value: unknown, field: string): string | undefined
   }
   return names.join(' ');
 }
+
+/** 数组**不许有洞**（稀疏数组一律拒）：`new Array(3)` 这种数组 `length` 照算，可
+ *  `Array.prototype.map`／`forEach` 会**跳过**空洞、`for…of` 又会把洞取成 `undefined`
+ *  ⇒ 校验遍历被跳过、渲染那一头在 `undefined` 上读字段，抛出来的是一枚 `TypeError`，
+ *  不是 `BlocksError`（「非法入参一律 `badInput`」当场破功，且报错点离真正的错处很远）。
+ *
+ *  逐下标查 `hasOwnProperty`：`[undefined]`（**显式**给了 `undefined` 的密数组）不算洞——
+ *  那种会在各件自己的逐项校验里被拒（元素不是对象），报错点照样点得准。
+ */
+export function assertDenseArray(value: readonly unknown[], field: string): void {
+  for (let i = 0; i < value.length; i += 1) {
+    if (!Object.prototype.hasOwnProperty.call(value, i)) {
+      badInput(field + '[' + String(i) + '] 是个空洞（稀疏数组）'
+        + '：每个下标上都要真有一项（`new Array(n)` 这种写法先填满再传）');
+    }
+  }
+}

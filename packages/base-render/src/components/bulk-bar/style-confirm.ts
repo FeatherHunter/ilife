@@ -8,14 +8,16 @@
  *   · **形 ＋ 字 ＋ 色**三样都在：「会改」＝`✓`（形）＋ 右端那两个字（字）＋ 底色；跳过的同理（`⊘`／`跳过`）；
  *   · **触控地板**：输入框与胶囊 ≥44px 高，相邻间距 8px，预演一行 ≥44px；
  *   · **不截断**：长值／长说明一律 `overflow-wrap:anywhere` 折行，任何一处都没有省略号。
+ *
+ *  窄档阈值**只读 `style-sizes.ts`**（铁律二：概念只有一处；本文件先前自己又写了一份 `560`，
+ *  两边各改一次必然走散）。
  */
 import { skinVar } from '../skin/contract.js';
 import { bulkBarSlot, type BulkBarSlot } from './attrs.js';
+import { BULK_BAR_NARROW_PX } from './style-sizes.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
-/** 窄容器阈值（px）：与 `style.ts` 同一档（**本件自己的宽度**，不是视口宽度）。 */
-const NARROW_PX = 560;
 /** 预演行左端那枚记号的列宽（px）。 */
 const MARK_COL_PX = 20;
 
@@ -217,7 +219,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
-    '@container (max-width: ' + String(NARROW_PX) + 'px) {',
+    '@container (max-width: ' + String(BULK_BAR_NARROW_PX) + 'px) {',
     '  /* 窄档：标题右端那句另起一行（挤在标题右边会把标题压成两三个字一列）。 */',
     '  ' + s('ccap') + ' {',
     '    margin-left: 0;',

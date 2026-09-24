@@ -80,7 +80,8 @@ function listHtml(m: BulkBarModel): string {
   return parts.join('');
 }
 
-/** 一枚动作按钮。两枚字（正常态／忙碌态）**叠在同一个格子里**：宽度锁住，换字不跳版。 */
+/** 一枚动作按钮。忙碌那枚字**住在正常那枚字里面**（不是并排的兄弟）：它绝对定位在标签这块上，
+ *  一个字都不参与按钮的固有宽 ⇒ 换字不跳版、也不改变动作排的换行。 */
 function actHtml(m: BulkBarModel, a: BulkBarActionModel, inConfirm: boolean): string {
   const parts: string[] = ['<button type="button" class="' + bulkBarSlot('act') + ' is-' + a.tone + '"'];
   if (!inConfirm) parts.push(' ' + BULK_BAR_ACTION_ATTR + '="' + esc(a.key) + '"');
@@ -94,8 +95,9 @@ function actHtml(m: BulkBarModel, a: BulkBarActionModel, inConfirm: boolean): st
   if (a.disabled || a.busy) parts.push(' disabled');
   if (a.busy) parts.push(' aria-busy="true" ' + BULK_BAR_BUSY_ATTR + '="1"');
   parts.push('>');
-  parts.push('<span class="' + bulkBarSlot('label') + '">' + esc(a.label) + '</span>');
+  parts.push('<span class="' + bulkBarSlot('label') + '">' + esc(a.label));
   parts.push('<span class="' + bulkBarSlot('busy') + '" aria-hidden="true">正在' + esc(a.label) + '</span>');
+  parts.push('</span>');
   parts.push('</button>');
   return parts.join('');
 }
@@ -159,10 +161,13 @@ function confirmHtml(m: BulkBarModel, a: BulkBarActionModel, p: BulkBarPreviewMo
   parts.push('</div>');
   parts.push('<div class="' + bulkBarSlot('cfoot') + '">');
   parts.push('<span class="' + bulkBarSlot('sum') + '">' + esc(p.summary) + '</span>');
-  parts.push('<button type="button" class="' + bulkBarSlot('act') + ' is-plain" ' + BULK_BAR_CANCEL_ATTR + '="1">'
-    + esc(p.cancelLabel) + '</button>');
-  parts.push('<button type="button" class="' + bulkBarSlot('act') + ' is-primary" ' + BULK_BAR_SUBMIT_ATTR + '="' + esc(a.key) + '"'
-    + (p.keepCount === 0 ? ' disabled' : '') + '>' + esc(p.submitLabel) + '</button>');
+  /* 页脚两枚按钮**同时挂自己的槽类名**（`-cancel`／`-submit`）与视觉档（`is-plain`／`is-primary`）：
+   *  槽名让调用方能按名字挂自己的钩子，视觉档仍归本件；闭集里不许有上不了屏的槽（判据断这一条）。 */
+  parts.push('<button type="button" class="' + bulkBarSlot('act') + ' is-plain ' + bulkBarSlot('cancel') + '" '
+    + BULK_BAR_CANCEL_ATTR + '="1">' + esc(p.cancelLabel) + '</button>');
+  parts.push('<button type="button" class="' + bulkBarSlot('act') + ' is-primary ' + bulkBarSlot('submit') + '" '
+    + BULK_BAR_SUBMIT_ATTR + '="' + esc(a.key) + '"' + (p.keepCount === 0 ? ' disabled' : '') + '>'
+    + esc(p.submitLabel) + '</button>');
   parts.push('</div>');
   parts.push('</div>');
   return parts.join('');
