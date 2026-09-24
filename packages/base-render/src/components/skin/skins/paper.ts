@@ -21,7 +21,10 @@ export const PAPER_VALUES = Object.freeze({
 
   ink: '#23201a',
   'ink-2': '#5b5347',
-  'ink-3': '#6f6559',
+  /* 弱文字（脚注／口径行）：`accent-soft` 现在是**全层选中面**的底（十几件在用），
+     弱字压上去也要过 4.5——旧 #6f6559 对它只有 4.48（差 0.02，2026-09-24 席位算出来报的）。
+     压深到 #6b6154：on soft 4.77／on ground 5.15／on surface 5.96／on surface-2 5.38。 */
+  'ink-3': '#6b6154',
 
   accent: '#b5392a',
   'accent-text': '#a3311f',

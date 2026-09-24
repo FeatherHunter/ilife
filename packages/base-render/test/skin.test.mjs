@@ -135,6 +135,13 @@ describe('皮肤 ②b：强调软底不许是"空转"（＝选中面在那套皮
       assert.ok(r >= 3, name + ' 的 accent-ink/accent 只有 ' + r.toFixed(2) + ':1');
     });
 
+    it(name + '：弱字 `ink-3` 压在 `accent-soft` 上也 ≥ 4.5:1（软底是选中面，弱字会压上去）', () => {
+      const r = contrast(VALUES[name]['ink-3'], VALUES[name]['accent-soft']);
+      assert.ok(r >= 4.5,
+        name + ' 的 ink-3/accent-soft 只有 ' + r.toFixed(2) + ':1 —— 软底现在是全层选中面的底，'
+        + '件里的脚注／口径行压上去就踩地板（修法：压深 `ink-3`，别改 `accent-soft`——它的地板更多）');
+    });
+
     it(name + '：`accent-text` on `accent-soft` ≥ 4.5:1 且 `accent` on `accent-soft` ≥ 3:1', () => {
       const soft = VALUES[name]['accent-soft'];
       const t = contrast(VALUES[name]['accent-text'], soft);

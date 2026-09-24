@@ -220,6 +220,76 @@ describe('组件层样式纪律 ⑥b：抽取器自证（守门人的守门人�
   });
 });
 
+/** 剥掉 `var(...)`（**含嵌套与带括号的兜底**）后的剩余 CSS：兜底链里的颜色字面量是允许的
+ *  （那是老页面零接线用的），剥掉它们之后还剩下的颜色字面量才是"不跟皮肤"的硬编码。
+ *
+ *  为什么不是一根正则：兜底尾巴里会出现带括号的东西——`skinVar('shadow')` 那条链就是
+ *  `var(--ilife-shadow, var(--shadow, 0 1px 2px rgba(0,0,0,.04), …))`，`var\([^()]*\)` 啃不动它，
+ *  于是链里的 `rgba(` 会被读成"件里的硬编码颜色"，把读投影的件（`skeleton`／`timer-card`）判成假红
+ *  （2026-09-24 实测踩过：有席位为了迁就这根正则去改**契约的字面量**，方向反了——该修的是这把剥壳器）。
+ *  故改成**配平括号的扫描**：见 `var(` 就一路吃到与它配对的 `)`，整条（连同嵌套）一起丢。 */
+function stripVarFns(css) {
+  let out = '';
+  let i = 0;
+  while (i < css.length) {
+    if (css.startsWith('var(', i)) {
+      let depth = 0;
+      let j = i + 3;
+      for (; j < css.length; j += 1) {
+        if (css[j] === '(') depth += 1;
+        else if (css[j] === ')') {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      i = j + 1;
+      continue;
+    }
+    out += css[i];
+    i += 1;
+  }
+  return out;
+}
+
+/** 取一件的产出 CSS（`<件>/style.js` 的 `xCss()`），注释先剥掉。 */
+async function producedCss(name) {
+  const camel = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const mod = await import(new URL('../dist/components/' + name + '/style.js', import.meta.url).href);
+  const fn = typeof mod[camel + 'Css'] === 'function' ? mod[camel + 'Css']
+    : Object.entries(mod).find(([k, v]) => /Css$/.test(k) && typeof v === 'function' && k !== 'sheetCss')?.[1];
+  assert.equal(typeof fn, 'function', name + ' 的产物里找不到样式函数');
+  return String(fn({})).replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+/** 一条声明的值是不是"**整个值就是正文墨色**"（＝拿字色当面）。
+ *  `var(--ilife-ink, var(--fg, #1d1d1f))` 这种整值算命中；
+ *  `color-mix(in srgb, var(--ilife-ink) 13%, var(--ilife-surface))` 这种淡底**不算**——
+ *  淡洗是合法的面，实测里也这么用（`skeleton` 的占位块）；这一条禁的是"**实心墨块**"。 */
+function isInkFace(value) {
+  const v = value.trim();
+  return /^var\(\s*--(?:ilife-ink(?:-[23])?|fg[23]?)\s*[,)]/.test(v);
+}
+
+describe('组件层样式纪律 ⑦：选中／强调不许拿正文墨色当面（"反白"写法＝红）', () => {
+  for (const name of components) {
+    if (EXEMPT.has(name)) continue;
+    it(name + '：背景不许是正文墨色；颜色字面量只许住在兜底链里', async () => {
+      const css = await producedCss(name);
+      const bad = [];
+      for (const m of css.matchAll(/(background(?:-color)?)\s*:\s*([^;{}]+)/g)) {
+        if (isInkFace(m[2])) bad.push(m[1] + ': ' + m[2].trim());
+      }
+      assert.deepEqual(bad, [], name + ' 拿正文墨色当了"面"（选中／填充＝实心墨块）：\n  ' + bad.join('\n  ')
+        + '\n（口径见 docs/base/base-render/选中态与皮肤语言.md 第三节法则表：'
+        + '有文字的选中面走 `accent-soft` 底＋`accent-text` 字＋`accent` 描边；无文字的点／格／条走 `accent` 实底；'
+        + '整行选中走 `surface-2`＋`accent` 侧标）');
+      const bare = [...stripVarFns(css).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
+      assert.deepEqual([...new Set(bare)], [], name + ' 的产出里有不跟皮肤的颜色字面量（' + [...new Set(bare)].join('、')
+        + '）——只有 `skinVar()` 兜底链里那一处允许手写字面量');
+    });
+  }
+});
+
 describe('组件层样式纪律 ⑤：豁免名单与范围不许过期', () => {
   it('豁免的目录必须真的存在，且不许把本层的件写进豁免', () => {
     const stale = [...EXEMPT.keys()].filter((n) => !existsSync(join(COMP, n)));
