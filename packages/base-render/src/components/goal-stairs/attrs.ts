@@ -92,6 +92,14 @@ export const GOAL_STAIRS_LATE_WORD = '来不及 ✕';
 export const GOAL_STAIRS_MIN_STEPS = 2;
 export const GOAL_STAIRS_MAX_STEPS = 8;
 
+/** **标签翻边的分界**（百分数）：最晚动手日那枚标签挂在标记上，标记落在这条线**右边**时
+ *  从标记往左长（`is-right`）。它是**标记契约的一部分**（决定根上加不加 `is-right` 那个类名），
+ *  故住在这里，与槽位闭集同源。
+ *
+ *  为什么要有这一刀：可用宽度只有一边——不翻边时是 `100 − 标记位`，标记靠近右端会被压成一列孤字；
+ *  翻边后是 `标记位`，两种情况下都够一整句「最晚 09-01」站在一行里。 */
+export const GOAL_STAIRS_DUE_FLIP_PCT = 50;
+
 /** 卡头那枚段数的后缀（`四段` 的那个「段」）。 */
 export const GOAL_STAIRS_COUNT_UNIT = '段';
 

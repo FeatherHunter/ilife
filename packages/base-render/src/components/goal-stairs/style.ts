@@ -10,10 +10,14 @@
  *  强制的四处口径（判据钉住）：
  *   · **状态靠形 ＋ 字 ＋ 色三样**：窗口带左侧 2px 侧标（形）＋ 带色（色）＋ 行头的状态字（字）；
  *     过期那一段另在行头写「来不及 ✕」（字）。**没有一处拿正文墨色当"面"**；
- *   · **标签永不出轨道**：最晚动手日那枚标签绝对定位在标记上，标记落在轴的右半边时改贴右缘长
- *     （`is-right`），长日期自己换行——**不截断、不外溢**；
+ *     说清三笔账：**带是无文字的条**（`aria-hidden`，`textContent` 是空的）、**字在行头**，
+ *     字底下没有本件画的底（`.state` 的背景是透明的 ⇒ 它压的是宿主页的底）——判据按「字真压的底」断，
+ *     带子那一层只断「形 ＋ 色」，不冒充文字底；
+ *   · **标签四向都不出轨道**：最晚动手日那枚标签**在流里**（网格项 ＋ 百分比外边距），
+ *     标记落在轴的右半边时改贴右缘长（`is-right`），长日期自己换行、轨道跟着长——
+ *     **不截断、不外溢、上下也不顶出**（绝对定位＋定高轨道时两行日期会上下各顶出 5.8px，实测过）；
  *   · **今天那根竖线不越界**：位置用 `clamp()` 夹在轨道内 2px（`left: 100%` 时那根 2px 的线
- *     会顶出轨道右缘，390 档实测过）；
+ *     会顶出轨道右缘，390 档实测过）；上下各让出 2px 是有意的（游标要在带子上看得见）；
  *   · **几何只用本件自己的自定义属性**（`--goal-stairs-start`／`-end`／`-now`，名字住 `attrs.ts`）——
  *     先例 `photo-compare` 的 `--photo-compare-split`，不占 `--ilife-*` 那个皮肤命名空间。
  */
@@ -29,7 +33,8 @@ import {
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
 
-/** 轨道高（px）：这一段占了多久靠它有一个看得见的盒。 */
+/** 轨道**最矮**多高（px）：这一段占了多久靠它有一个看得见的盒。
+ *  是地板不是定高——「最晚」那枚标签在流里，日期换行时轨道跟着长（定高会把两行的标签顶出轨道）。 */
 export const GOAL_STAIRS_TRACK_PX = 30;
 
 /** 今天的竖线与窗口带的侧标同宽（px）：两根竖线一样粗，读者不会把「当前」读成别的意思。 */
@@ -213,24 +218,32 @@ export function goalStairsCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('ink-2') + ';',
     '}',
     /* ── 轨道 ───────────────────────────────────────────────────────── */
+    '/* 轨道：`min-height` 不是 `height`——那枚「最晚」标签是**在流里**的（见下一条），',
+    '   日期一长它自己换行，轨道跟着长；写死高度就会把换行的标签顶出轨道上下两端。',
+    '   轨道本身是 grid ＋ `align-content: center`：标签单行时与缺省高一样居中。 */',
     s('track') + ' {',
     '  position: relative;',
-    '  height: ' + String(GOAL_STAIRS_TRACK_PX) + 'px;',
+    '  display: grid;',
+    '  align-content: center;',
+    '  min-height: ' + String(GOAL_STAIRS_TRACK_PX) + 'px;',
     '  min-width: 0;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '}',
-    '/* 窗口带（**无文字的条**：这一段在整段日程上占了哪一截）。左右两端都用百分比夹在轨道里，',
-    '   故任何入参下都不会比轨道宽。 */',
+    '/* 窗口带（**无文字的条**，且是 `aria-hidden`：这一段在整段日程上占了哪一截，字形全在行头）。',
+    '   左右两端都用百分比夹在轨道里，故任何入参下都不会比轨道宽。',
+    '   **侧标画成 `inset` 投影、不画成边框**：边框会把盒宽顶到「两边框之和」那 2px 的下限——',
+    '   窗口只有 0.01% 宽时那 2px 会把右端顶出轨道（320／390／620／1280 实测各 +0.59…0.95px，',
+    '   件根当场 `scrollWidth = clientWidth + 1`）。投影不占盒。 */',
     s('band') + ' {',
     '  position: absolute;',
     '  top: 0;',
     '  bottom: 0;',
     '  left: var(' + GOAL_STAIRS_START_VAR + ');',
     '  right: calc(100% - var(' + GOAL_STAIRS_END_VAR + '));',
-    '  border-left: ' + String(GOAL_STAIRS_MARK_PX) + 'px solid transparent;',
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: none;',
+    '  box-shadow: none;',
     '}',
     '/* 还没开始的段：次要面（`surface-2` 的定义就是软底块），不带侧标——它是缺省档，不是被点名的那一档。 */',
     s('band') + '.is-plan {',
@@ -239,20 +252,21 @@ export function goalStairsCss(input?: { readonly prefix?: string }): string {
     '/* 进行中：强调色的淡洗 ＋ 2px 强调侧标（形）。 */',
     s('band') + '.is-now {',
     '  background: color-mix(in srgb, ' + skinVar('accent') + ' 16%, ' + skinVar('surface') + ');',
-    '  border-left-color: ' + skinVar('accent') + ';',
+    '  box-shadow: inset ' + String(GOAL_STAIRS_MARK_PX) + 'px 0 0 ' + skinVar('accent') + ';',
     '}',
     '/* 已达成：语义档走 `ok`（达标），不借强调色。 */',
     s('band') + '.is-done {',
     '  background: color-mix(in srgb, ' + skinVar('ok') + ' 16%, ' + skinVar('surface') + ');',
-    '  border-left-color: ' + skinVar('ok') + ';',
+    '  box-shadow: inset ' + String(GOAL_STAIRS_MARK_PX) + 'px 0 0 ' + skinVar('ok') + ';',
     '}',
     '/* 过期且未达成：语义档走 `danger`（写在这一条最后，压过 `is-now`／`is-plan`）。 */',
     s('band') + '.is-late {',
     '  background: color-mix(in srgb, ' + skinVar('danger') + ' 16%, ' + skinVar('surface') + ');',
-    '  border-left-color: ' + skinVar('danger') + ';',
+    '  box-shadow: inset ' + String(GOAL_STAIRS_MARK_PX) + 'px 0 0 ' + skinVar('danger') + ';',
     '}',
     '/* 今天那根竖线（**纯装饰**：今天是哪天由卡头的字说）。位置夹在轨道内：标记落在 0% 或 100% 时',
-    '   也留得下这 ' + String(GOAL_STAIRS_MARK_PX) + 'px，不顶出轨道右缘。 */',
+    '   也留得下这 ' + String(GOAL_STAIRS_MARK_PX) + 'px，不顶出轨道右缘。',
+    '   上下各让出 2px 是**有意的**（游标要在带子与轨道边上都看得见；带子只与轨道同高）。 */',
     s('today') + ' {',
     '  position: absolute;',
     '  top: -2px;',
@@ -263,15 +277,17 @@ export function goalStairsCss(input?: { readonly prefix?: string }): string {
     '  background: ' + skinVar('accent') + ';',
     '  border-radius: ' + skinVar('radius-pill') + ';',
     '}',
-    '/* 最晚动手日那枚标签（**有字，真读**）：从标记往右长。可用宽度只有 `100 − 标记位`，',
-    '   所以标记过了轴的一半就翻到右缘、改往左长（下一条 `.is-right`）——两种情况下都够一整句站着。',
-    '   日期太长时它自己换行（`overflow-wrap: anywhere`）：**不截断、不外溢**。 */',
+    '/* 最晚动手日那枚标签（**有字，真读**）：**在流里**的网格项，位置靠百分比外边距（外边距的百分比',
+    '   按轨道宽算），不是绝对定位——绝对定位＋定高轨道，两行的日期就会上下顶出轨道各 5.8px；',
+    '   在流里则轨道跟着长（`min-height` 只是地板），上下左右四向都不越界。',
+    '   标记落在轴的左半边：从标记往右长（`margin-left`）；右半边（`.is-right`）：贴右缘往左长。',
+    '   日期太长时它自己换行（`overflow-wrap: anywhere`）：**不截断、不外溢**。',
+    '   `z-index` 是为了压在窗口带上面（带子是定位元素，在流里的内容默认被它盖住）。 */',
     s('due') + ' {',
-    '  position: absolute;',
-    '  top: 50%;',
-    '  left: var(' + GOAL_STAIRS_START_VAR + ');',
-    '  transform: translateY(-50%);',
-    '  margin-left: 4px;',
+    '  position: relative;',
+    '  z-index: 1;',
+    '  justify-self: start;',
+    '  margin-left: calc(var(' + GOAL_STAIRS_START_VAR + ') + 4px);',
     '  padding: 0 6px;',
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('surface') + ';',
@@ -284,10 +300,9 @@ export function goalStairsCss(input?: { readonly prefix?: string }): string {
     '  overflow-wrap: anywhere;',
     '}',
     s('track') + '.is-right > ' + c('due') + ' {',
-    '  left: auto;',
-    '  right: calc(100% - var(' + GOAL_STAIRS_START_VAR + '));',
+    '  justify-self: end;',
     '  margin-left: 0;',
-    '  margin-right: 4px;',
+    '  margin-right: calc(100% - var(' + GOAL_STAIRS_START_VAR + ') + 4px);',
     '}',
     /* ── 口径行 ─────────────────────────────────────────────────────── */
     s('note') + ' {',

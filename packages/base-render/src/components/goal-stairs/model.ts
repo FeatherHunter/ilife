@@ -12,6 +12,7 @@
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
   GOAL_STAIRS_COUNT_UNIT,
+  GOAL_STAIRS_DUE_FLIP_PCT,
   GOAL_STAIRS_DUE_LEAD,
   GOAL_STAIRS_FORMS,
   GOAL_STAIRS_MAX_STEPS,
@@ -28,15 +29,10 @@ import {
 /** 中文小数目字：卡头那枚段数写成「四段」（1–8 段都取得到；超出闭集由段数上下限先拦下）。 */
 const COUNT_WORDS = ['一', '二', '三', '四', '五', '六', '七', '八'];
 
-/** 标签改贴右缘的分界（百分数）：标记落在这条线**右边**时，标签从标记往左长。
- *
- *  为什么要有这一刀：标签是绝对定位的，`left: 标记位` 时它只能往右长——可用宽度只剩
- *  `100 − 标记位`，标记靠近右端（宽档下段数多时就是）会被压成一列孤字。翻到右缘之后，
- *  可用宽度变成 `标记位`，两种情况下都够一整句「最晚 09-01」站在一行里。 */
-export const GOAL_STAIRS_DUE_FLIP_PCT = 50;
-
 /** 本形态的缺省口径句。**从句里不出现 `·` 与 `；`，也不并列三段以上**——仓库的分隔符门
- *  对可见文本零豁免（口径见 `test/separator-probe.mjs`）。 */
+ *  对可见文本零豁免（口径见 `test/separator-probe.mjs`）。
+ *  注：**这不是原型那一句**。原型 C 档的 `.dv-cap` 里没有 `；`（唯一的 `；` 在那件 `dup` 分工说明里），
+ *  本句是按层规新写的：把「模型那句业务口径」换成件自己的读数纪律。 */
 export const GOAL_STAIRS_DEFAULT_NOTE =
   '口径：从目标日往回倒推每一段的最晚动手日（这一段要走的量除以还能用的天数）。'
   + '竖线是今天，整段落在竖线左边的窗口已经过期，会点名写「来不及」。'
@@ -120,7 +116,11 @@ function reqStep(value: unknown, index: number): GoalStairsStep {
   return { from, to, start, startPct, endPct, state: state as GoalStairsState };
 }
 
-/** 分段：2–8 段。**段数不是「尽量」，是形状的一部分**：一段没有先后，九段窄屏读不出窗口。 */
+/** 分段：2–8 段。**段数不是「尽量」，是形状的一部分**：一段没有先后，九段窄屏读不出窗口。
+ *
+ *  **逐下标走、不走 `map()`**：稀疏数组（`new Array(2)`／`a = new Array(2); a[1] = {…}`）的洞
+ *  会被 `map` 跳过，`length` 却照算——卡头写着「二段」而表里一行都没有（或只有一行），
+ *  是「表头与内容对不上」里最难看出来的一种。有洞一律当场拒。 */
 function reqSteps(value: unknown): readonly GoalStairsStep[] {
   if (!Array.isArray(value) || value.length < GOAL_STAIRS_MIN_STEPS) {
     badInput('goal-stairs: input.steps 至少 ' + String(GOAL_STAIRS_MIN_STEPS)
@@ -130,7 +130,15 @@ function reqSteps(value: unknown): readonly GoalStairsStep[] {
     badInput('goal-stairs: input.steps 最多 ' + String(GOAL_STAIRS_MAX_STEPS)
       + ' 个分段（再多窄容器里每一段的窗口读不出位置，请调用方先并段）');
   }
-  return value.map((item, i) => reqStep(item, i));
+  const out: GoalStairsStep[] = [];
+  for (let i = 0; i < value.length; i += 1) {
+    if (!Object.prototype.hasOwnProperty.call(value, i)) {
+      badInput('goal-stairs: input.steps[' + String(i) + '] 是个空洞（稀疏数组）'
+        + '：每个下标上都要真有一段，段数才与表里的行数对得上');
+    }
+    out.push(reqStep(value[i], i));
+  }
+  return out;
 }
 
 /** 一段 → 一行（算术都在这里：段名、窗口句、标签落轴的哪半边、过期点名）。 */

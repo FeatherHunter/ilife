@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   GOAL_STAIRS_CLASS,
+  GOAL_STAIRS_DUE_FLIP_PCT,
   GOAL_STAIRS_FORMS,
   GOAL_STAIRS_HEAD_COLUMN_PX,
   GOAL_STAIRS_LATE_WORD,
@@ -44,6 +45,7 @@ import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderProgressList } from '../dist/components/progress-list/index.js';
 import { SKINS, skinCss, skinClass } from '../dist/components/skin/index.js';
 import { SKIN_NAMES } from '../dist/components/skin/contract.js';
+import { auditHtml, exitCodeFor } from './separator-probe.mjs';
 import { startShapesPage } from './shapes-probe.mjs';
 import { styleSource } from './_style-sources.mjs';
 
@@ -161,6 +163,22 @@ const EDGE = {
   ],
 };
 
+/** **贴轴 × 长日期**（审查席抓出来的那一档）：
+ *   · `startPct` 50／50.01 分居翻边线两侧、92 在最右、99.99 贴轴顶、0／0.01 贴轴底；
+ *   · 三行用长日期串（`2026-12-07（星期一）`）——在 ≤620 的容器里它会**换两行**，
+ *     而标签是绝对定位＋定高轨道时，两行会上下各顶出 5.8px；
+ *   · 0.01% 宽的窗口曾把带子的右端顶出 0.59…0.95px（边框撑盒）。 */
+const TIGHT = {
+  title: '贴轴与长日期', today: '12-07', todayPct: 100,
+  steps: [
+    { from: '起点', to: '中点', start: '2026-12-07（星期一）', startPct: 50, endPct: 100, state: 'now' },
+    { from: '中点', to: '三点', start: '2026-12-07（星期一）', startPct: 50.01, endPct: 100, state: 'plan' },
+    { from: '三点', to: '四点', start: '2026-12-07（星期一）', startPct: 92, endPct: 100, state: 'plan' },
+    { from: '四点', to: '五点', start: '09-01', startPct: 99.99, endPct: 100, state: 'plan' },
+    { from: '五点', to: '终点', start: '09-01', startPct: 0, endPct: 0.01, state: 'done' },
+  ],
+};
+
 /** 一份「两段」的最小入参（段数下限那一条用）。 */
 const minimal = (extra) => ({
   title: 'T', today: 'D', todayPct: 50,
@@ -224,9 +242,22 @@ describe('goal-stairs ① 渲染契约 · 骨架与段', () => {
     assert.ok(css.includes('calc(var(--goal-stairs-now) - 1px)'), '今天那根竖线');
   });
 
-  it('**标签永不出轨道**：标记过了轴的一半就翻边（`is-right`），靠右缘往左长', () => {
+  it('**标签四向都不出轨道**：标记过了翻边线就翻边（`is-right`），靠右缘往左长', () => {
     const flags = [...html.matchAll(/-track( is-right)?" style/g)].map((m) => m[1] === ' is-right');
-    assert.deepEqual(flags, BASE.steps.map((s) => s.startPct > 50), '翻边只看标记落在轴的哪半边');
+    assert.deepEqual(flags, BASE.steps.map((s) => s.startPct > GOAL_STAIRS_DUE_FLIP_PCT),
+      '翻边只看标记落在轴的哪半边（分界＝`GOAL_STAIRS_DUE_FLIP_PCT`）');
+    /* 分界本身逐点断：正好落在线上不翻，过一线就翻。 */
+    const at = (startPct) => renderGoalStairs({
+      title: 'T', today: 'D', todayPct: 100,
+      steps: [
+        { from: 'a', to: 'b', start: 's1', startPct, endPct: 100, state: 'plan' },
+        { from: 'b', to: 'c', start: 's2', startPct: 0, endPct: 100, state: 'plan' },
+      ],
+    });
+    assert.equal(/-track is-right" style="--goal-stairs-start: 50\.00%/.test(at(GOAL_STAIRS_DUE_FLIP_PCT)), false,
+      '正好落在线上不翻边');
+    assert.match(at(GOAL_STAIRS_DUE_FLIP_PCT + 0.01), /-track is-right" style="--goal-stairs-start: 50\.01%/,
+      '过一线就翻边');
     const edge = renderGoalStairs(EDGE);
     assert.match(edge, /-track is-right" style="--goal-stairs-start: 92\.00%/, '92% 那一段要翻边');
     assert.match(edge, /-track" style="--goal-stairs-start: 0\.00%/, '0% 那一段不许翻边');
@@ -344,6 +375,68 @@ describe('goal-stairs ① 渲染契约 · 骨架与段', () => {
     })), false, '两段的窗口可以互相叠着（先后次序由数组给，不由位置推）');
   });
 
+  it('**稀疏数组一律拒**：`length` 算出来的段数必须与真有的行数对得上', () => {
+    /* `new Array(2)` 的洞会被 `map()` 跳过，`length` 却照算 ⇒ 卡头写着「二段」、表里一行都没有。
+       `a = new Array(2); a[1] = {…}` 同理：写着「二段」而只有一行。两条都要在归一化期拒。 */
+    const ok = minimal();
+    const holes = new Array(2);
+    assert.equal(holes.length, 2, '前提：稀疏数组的 length 是 2');
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, steps: holes })), true,
+      '全空洞的稀疏数组（卡头会说二段、表里 0 行）');
+    const tail = new Array(2);
+    tail[1] = ok.steps[1];
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, steps: tail })), true,
+      '只有第 2 格有值的稀疏数组（卡头会说二段、表里 1 行）');
+    const middle = new Array(GOAL_STAIRS_MAX_STEPS);
+    middle[0] = ok.steps[0];
+    middle[GOAL_STAIRS_MAX_STEPS - 1] = ok.steps[1];
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, steps: middle })), true, '中间挖空的稀疏数组');
+    /* 反面对照：**实心的**同样长度照常渲染（拒的是洞，不是长度）。 */
+    const solid = [ok.steps[0], ok.steps[1]];
+    assert.equal(countOf(renderGoalStairs({ ...ok, steps: solid }), '-row"'), solid.length);
+  });
+
+  it('README 的必填／缺省与件里的校验对得上（说明书不是另一份事实）', () => {
+    const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+    const lines = readme.split('\n');
+    const head = lines.findIndex((l) => /^\|\s*字段\s*\|\s*类型\s*\|\s*缺省\s*\|/.test(l));
+    assert.ok(head > 0, 'README 里找不到入参表');
+    const rows = [];
+    for (let i = head + 2; i < lines.length && lines[i].startsWith('|'); i += 1) {
+      const cells = lines[i].split('|').map((s) => s.trim());
+      rows.push({ field: cells[1].replace(/`/g, ''), req: cells[3] });
+    }
+    assert.ok(rows.length >= 5, '入参表抽空了：' + JSON.stringify(rows));
+    /* 表里写「必填」的：去掉就必红。写「—」或给了缺省值的：去掉照常渲染。 */
+    const required = rows.filter((r) => r.req.includes('必填')).map((r) => r.field);
+    const optional = rows.filter((r) => !r.req.includes('必填')).map((r) => r.field);
+    assert.deepEqual(required.sort(), ['steps', 'title', 'today', 'todayPct'], '必填那几格变了');
+    assert.deepEqual(optional.sort(), ['extraClass', 'form', 'note'], '有缺省的那几格变了');
+    const base = minimal();
+    for (const field of required) {
+      const gone = { ...base };
+      delete gone[field];
+      assert.equal(throwsBlocks(() => renderGoalStairs(gone)), true, 'README 说必填，去掉却没报错：' + field);
+    }
+    for (const field of optional) {
+      const gone = { ...base };
+      delete gone[field];
+      assert.equal(throwsBlocks(() => renderGoalStairs(gone)), false, 'README 说有缺省，去掉却报错：' + field);
+    }
+  });
+
+  it('口径行与卡头那句过**分隔符门**（`·`／`；`／并列三段以上一处都不许有）', () => {
+    /* 件生成的字全部过一遍仓库那把尺子（`test/separator-probe.mjs`，与门禁同口径）：
+       可见文本里出现 `·`／`；`／≥3 段并列 就是设计债。原型卡头那枚 `·` 正是在这里被抓掉的。 */
+    const html = [BASE, LATE, EDGE].map((i) => renderGoalStairs(i)).join('');
+    const r = auditHtml('<body>' + html + '</body>');
+    assert.deepEqual(r.node.hits.map((h) => h.tags.join('+') + ' @' + h.owner), [],
+      '件生成的可见文本踩了分隔符门：' + JSON.stringify(r.node.hits));
+    assert.equal(exitCodeFor(r), 0);
+    /* 反面自证：同一把尺子对一段带 `·` 的文本必须红（否则这条判据在空转）。 */
+    assert.equal(exitCodeFor(auditHtml('<p>目标 · 完成度</p>')), 1);
+  });
+
   it('纯函数：同样的入参恒产同样的字节（三份样例各一遍）', () => {
     for (const input of [BASE, LATE, EDGE]) {
       assert.equal(renderGoalStairs(input), renderGoalStairs(input));
@@ -436,15 +529,21 @@ describe('goal-stairs ② 样式与零 DOM 纪律', () => {
     }
   });
 
-  it('**语义色当字**的对比地板：达标那一档的字色 `ok` 对底与对它自己的软底 ≥4.5:1', () => {
-    /* 为什么这一条要单独钉：契约的对比地板表只列了 `ink`／`ink-2`／`ink-3`／`accent-text`／`danger`，
-       而《选中态与皮肤语言》的法则表**点名**「达标」走 `ok`／`ok-soft` 且明说「不许借 accent 或 ink」
-       ⇒ 状态字必须拿 `ok` 当字，那它就得自己过文本地板。
+  it('**语义色当字**的对比地板：`ok` 对 `surface`（卡面）与对 `ok-soft`（自家软底）≥4.5:1', () => {
+    /* 三笔账说清楚（审查席点名的那一笔）：
+       ① 那条带是**无文字的条**（`aria-hidden`、`textContent` 空）——它只提供「形 ＋ 色」，不冒充文字底；
+       ② 字在**行头**（`.state`），它自己不画底（背景透明）⇒ 真正压着的底是**宿主页的底**：
+          卡面走 `surface`、裸页走 `ground`；
+       ③ 所以这一条断的是 `ok` 对 `surface`（本件最常落的那张卡面）与对 `ok-soft`（自家语义软底，
+          与别件放一起时可能叠在它上面）。**页底（`ground`）那一档归皮肤层的地板判据**，件不背——
+          这里只**打读数**，不断言（编排者的口径：页底那笔账不在件里）。
        **期望值一律从皮肤取值表算**（`SKINS[skin].values`）：皮肤改值这里自动跟——写死色值会在皮肤席
        压深 `ok` 的那一刻变成假红。失败时点名到皮肤与 token：那是取值表的事，**件内不改**（改走 ink
        就是拿语义档借字色，法条禁止）。 */
     for (const skin of SKIN_NAMES) {
       const v = SKIN_VALUES[skin];
+      console.log('READING 状态字对比 ' + skin + '：ok on ground＝' + contrast(v.ok, v.ground).toFixed(2)
+        + ':1（读数，页底那档归皮肤层）');
       for (const ground of ['surface', 'ok-soft']) {
         const ratio = contrast(v.ok, v[ground]);
         console.log('READING 状态字对比 ' + skin + '：ok on ' + ground + '＝' + ratio.toFixed(2) + ':1');
@@ -524,31 +623,44 @@ describe('goal-stairs ③ 加法式（不启用即逐字节不变）', () => {
 
 /* ── ④ 两档几何（真机）＋ ⑤ 皮肤纪律 ──────────────────────────────── */
 
-/** 三份压力样例（每份都进两档 × 四套皮肤）。 */
+/** 四份压力样例（每份都进四档 × 四套皮肤）。 */
 function cases() {
   return [
-    { name: 'base', html: renderGoalStairs(BASE), steps: BASE.steps.length },
-    { name: 'late', html: renderGoalStairs(LATE), steps: LATE.steps.length },
-    { name: 'edge', html: renderGoalStairs(EDGE), steps: EDGE.steps.length },
+    { name: 'base', html: renderGoalStairs(BASE), steps: BASE.steps, todayPct: BASE.todayPct },
+    { name: 'late', html: renderGoalStairs(LATE), steps: LATE.steps, todayPct: LATE.todayPct },
+    { name: 'edge', html: renderGoalStairs(EDGE), steps: EDGE.steps, todayPct: EDGE.todayPct },
+    { name: 'tight', html: renderGoalStairs(TIGHT), steps: TIGHT.steps, todayPct: TIGHT.todayPct },
   ];
 }
 
-/** 静态几何判据（真机起不来时的退路）：标记与样式段里不得有超过窄档的固定宽度。 */
+/** 量哪几个**容器**宽度：320（更窄的手机）／390／带宽档阈值两侧各一档／1280。 */
+const WIDTHS = [320, 390, GOAL_STAIRS_NARROW_MAX_PX, GOAL_STAIRS_WIDE_PX, 1280];
+
+/** 静态几何判据（真机起不来时的退路）：标记与样式段里不得有超过最窄档的固定宽度。 */
 function assertStaticGeometry(css, html) {
   const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
-  const wide = [...px(html), ...px(css)].filter((v) => v > 390);
-  assert.deepEqual(wide, [], '出现过不了窄档（390）的固定宽度：' + wide.join('、'));
+  const wide = [...px(html), ...px(css)].filter((v) => v > 320);
+  assert.deepEqual(wide, [], '出现过不了最窄档（320）的固定宽度：' + wide.join('、'));
   const pcts = [...html.matchAll(/--goal-stairs-(?:start|end|now): ([\d.]+)%/g)].map((m) => Number(m[1]));
   assert.ok(pcts.length > 0, '位置必须是百分数（判据会空转）');
   for (const v of pcts) assert.ok(v >= 0 && v <= 100, '百分数越界：' + v);
 }
 
-/** 页内量一份逐轨道的几何读数：轨道盒、窗口带、今天那根竖线、「最晚」那枚标签。 */
-const ROW_FN = `(function (rootSel) {
+/** 页内量一份逐行几何读数：**每一行**都量（早先只在第 1 行算，第 2 行起从没被断过）。
+ *
+ *  量的四件事：
+ *   · 标签四向越界（正数＝伸出轨道；两行日期曾上下各顶出 5.8px）；
+ *   · 窗口带左右越界（贴轴的 0.01% 窗口曾把右端顶出 0.59…0.95px）；
+ *   · 今天那根竖线**逐行**在不在轨道里；
+ *   · **位置真落在百分数上**：带的两端与竖线中心对 `track.clientWidth` 的百分比 ±1px 内。 */
+const ROW_FN = `(function (rootSel, steps, todayPct) {
   var root = document.querySelector(rootSel);
   var rows = [].slice.call(root.querySelectorAll('.ilife-block-goal-stairs-row'));
+  var r2 = function (v) { return Math.round(v * 100) / 100; };
   var out = { rows: rows.length, rootW: Math.round(root.getBoundingClientRect().width),
-    maxBadgeOver: -1e9, maxBandOver: -1e9, maxRowOver: -1e9, headAbove: 0, headLeft: 0, trackH: 0 };
+    headAbove: 0, headLeft: 0, trackH: 0, dueH: 0,
+    maxDueOver: -1e9, maxBandOver: -1e9, maxRowOver: -1e9, markerOut: 0,
+    maxStartErr: 0, maxEndErr: 0, maxNowErr: 0 };
   for (var i = 0; i < rows.length; i += 1) {
     var row = rows[i];
     var head = row.querySelector('.ilife-block-goal-stairs-head');
@@ -559,23 +671,31 @@ const ROW_FN = `(function (rootSel) {
     var h = head.getBoundingClientRect(), t = track.getBoundingClientRect();
     var b = band.getBoundingClientRect(), g = badge.getBoundingClientRect();
     var m = marker.getBoundingClientRect();
-    if (h.bottom <= t.top + 0.6) out.headAbove += 1;          /* 窄档：行头在轨道上方 */
-    if (h.right <= t.left + 0.6) out.headLeft += 1;            /* 宽档：行头在轨道左边 */
+    if (h.bottom <= t.top + 0.6) out.headAbove += 1;
+    if (h.right <= t.left + 0.6) out.headLeft += 1;
     if (t.height > out.trackH) out.trackH = Math.round(t.height);
-    out.maxBadgeOver = Math.max(out.maxBadgeOver, Math.round((g.right - t.right) * 100) / 100,
-      Math.round((t.left - g.left) * 100) / 100, Math.round((t.top - g.top) * 100) / 100,
-      Math.round((g.bottom - t.bottom) * 100) / 100);
-    out.maxBandOver = Math.max(out.maxBandOver, Math.round((b.right - t.right) * 100) / 100,
-      Math.round((t.left - b.left) * 100) / 100);
-    out.maxRowOver = Math.max(out.maxRowOver, Math.round((t.right - row.getBoundingClientRect().right) * 100) / 100);
-    out.rootW = Math.round(root.getBoundingClientRect().width);
-    if (i === 0) { out.markerInTrack = m.left >= t.left - 0.6 && m.right <= t.right + 0.6; }
+    if (g.height > out.dueH) out.dueH = Math.round(g.height);
+    out.maxDueOver = Math.max(out.maxDueOver, r2(g.right - t.right), r2(t.left - g.left),
+      r2(t.top - g.top), r2(g.bottom - t.bottom));
+    out.maxBandOver = Math.max(out.maxBandOver, r2(b.right - t.right), r2(t.left - b.left));
+    var rr = row.getBoundingClientRect();
+    out.maxRowOver = Math.max(out.maxRowOver, r2(t.right - rr.right), r2(rr.left - t.left));
+    if (m.left < t.left - 0.6 || m.right > t.right + 0.6) out.markerOut += 1;
+    var inner = track.clientWidth, x0 = t.left + track.clientLeft;
+    if (steps[i] !== undefined) {
+      out.maxStartErr = Math.max(out.maxStartErr, Math.abs(b.left - (x0 + inner * steps[i].startPct / 100)));
+      out.maxEndErr = Math.max(out.maxEndErr, Math.abs(b.right - (x0 + inner * steps[i].endPct / 100)));
+    }
+    out.maxNowErr = Math.max(out.maxNowErr, Math.abs((m.left + m.right) / 2 - (x0 + inner * todayPct / 100)));
   }
+  out.maxStartErr = r2(out.maxStartErr);
+  out.maxEndErr = r2(out.maxEndErr);
+  out.maxNowErr = r2(out.maxNowErr);
   return out;
 })`;
 
-describe('goal-stairs ④⑤ 两档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
-  it('容器 390 与 1280：零横向溢出／标签整枚在轨道里／零截断／两档真的换了结构／四套皮肤标记逐字节相同', async (t) => {
+describe('goal-stairs ④⑤ 几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
+  it('容器 320／390／619／620／1280：零横向溢出／标签四向不出轨道／零截断／结构真的换了／四套皮肤标记逐字节相同', async (t) => {
     const css = goalStairsCss();
     const casesHtml = cases().map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join('');
     const page = await startShapesPage({
@@ -584,13 +704,13 @@ describe('goal-stairs ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
       height: 1600,
     });
     if (page === null) {
-      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性几何判据：标记与样式段里没有超过 390px 的固定宽度');
+      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性几何判据：样式段里没有超过 320px 的固定宽度');
       assertStaticGeometry(css, casesHtml);
-      return t.skip('本机无 Chrome／Chromium：两档几何判据需真浏览器');
+      return t.skip('本机无 Chrome／Chromium：几何判据需真浏览器');
     }
     try {
       const seen = [];
-      for (const width of [390, 1280]) {
+      for (const width of WIDTHS) {
         await page.setWidth(width);
         const frame = await page.frame();
         assert.ok(frame.fxScrollW <= frame.fxClientW, width + ' 档：夹具容器不得横向溢出');
@@ -598,54 +718,53 @@ describe('goal-stairs ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
           width + ' 档：整页不得横向溢出 ' + frame.docScrollW + ' > ' + frame.docClientW);
         for (const skin of SKIN_NAMES) {
           for (const c of cases()) {
+            const where = width + ' 档 ' + skin + ' ' + c.name + '：';
             const scope = '.' + skinClass(skin) + ' [data-case="' + c.name + '"] ';
             const root = await page.read([scope + '.' + GOAL_STAIRS_CLASS]);
-            assert.equal(root[0].count, 1, width + ' 档 ' + skin + '：找不到本件根');
+            assert.equal(root[0].count, 1, where + '找不到本件根');
             assert.ok(root[0].maxScrollW <= root[0].maxClientW + 1,
-              width + ' 档 ' + skin + ' ' + c.name + '：根横向溢出 ' + root[0].maxScrollW + ' > ' + root[0].maxClientW);
-            assert.equal(root[0].scrollsX, 0, width + ' 档 ' + skin + '：不许出现 overflow-x 滚动容器');
+              where + '根横向溢出 ' + root[0].maxScrollW + ' > ' + root[0].maxClientW);
+            assert.equal(root[0].scrollsX, 0, where + '不许出现 overflow-x 滚动容器');
             /* 关键语义**不被截断**：段名／窗口句／状态字／最晚动手日／卡头那句，一处都不许压字。 */
             const texts = await page.read([goalStairsSlot('name'), goalStairsSlot('window'), goalStairsSlot('state'),
               goalStairsSlot('due'), goalStairsSlot('tail'), goalStairsSlot('count')]
               .map((slot) => scope + '.' + slot));
             for (const one of texts) {
-              assert.equal(one.clipped, 0, width + ' 档 ' + skin + ' ' + c.name + '：' + one.sel
-                + ' 有 ' + one.clipped + ' 处被截断');
+              assert.equal(one.clipped, 0, where + one.sel + ' 有 ' + one.clipped + ' 处被截断');
             }
-            /* 几何：标签整枚落在轨道里、窗口带与今天那根竖线不越轨、行头与轨道的相对位置。 */
-            const geo = await page.ev(ROW_FN + '(' + JSON.stringify(scope + '.' + GOAL_STAIRS_CLASS) + ')');
-            assert.equal(geo.rows, c.steps, width + ' 档 ' + skin + ' ' + c.name + '：段数不对');
-            assert.ok(geo.maxBadgeOver <= 0.6, width + ' 档 ' + skin + ' ' + c.name
-              + '：「最晚」那枚标签伸出轨道右缘 ' + geo.maxBadgeOver + 'px');
-            assert.ok(geo.maxBandOver <= 0.6, width + ' 档 ' + skin + ' ' + c.name
-              + '：窗口带越出轨道 ' + geo.maxBandOver + 'px');
-            assert.ok(geo.maxRowOver <= 0.6, width + ' 档 ' + skin + ' ' + c.name
-              + '：轨道越出行 ' + geo.maxRowOver + 'px');
-            assert.equal(geo.markerInTrack, true, width + ' 档 ' + skin + ' ' + c.name + '：今天那根竖线跑出轨道');
-            assert.equal(geo.trackH, GOAL_STAIRS_TRACK_PX, width + ' 档 ' + skin + '：轨道高应取常量');
-            const above = geo.headAbove === c.steps;
-            const left = geo.headLeft === c.steps;
-            assert.equal(above || left, true,
-              width + ' 档 ' + skin + ' ' + c.name + '：行头与轨道既没上下也没左右（结构没成立）');
-            seen.push({ width, skin, name: c.name, above, left, trackH: geo.trackH, badgeOver: geo.maxBadgeOver,
-              rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW, rootW: geo.rootW });
+            const geo = await page.ev(ROW_FN + '(' + JSON.stringify(scope + '.' + GOAL_STAIRS_CLASS)
+              + ', ' + JSON.stringify(c.steps.map((s) => ({ startPct: s.startPct, endPct: s.endPct })))
+              + ', ' + String(c.todayPct) + ')');
+            assert.equal(geo.rows, c.steps.length, where + '段数不对');
+            /* 严重 2：标签**四向**都不出轨道，且竖向装得下（日期换行时轨道跟着长）。 */
+            assert.ok(geo.maxDueOver <= 0.6, where + '「最晚」那枚标签伸出轨道 ' + geo.maxDueOver + 'px');
+            assert.ok(geo.dueH <= geo.trackH, where + '标签高 ' + geo.dueH + ' > 轨道高 ' + geo.trackH);
+            assert.ok(geo.trackH >= GOAL_STAIRS_TRACK_PX, where + '轨道矮于常量 ' + GOAL_STAIRS_TRACK_PX);
+            /* 一般 1：窗口带两端都不出轨道（贴轴的 0.01% 窗口也不行）。 */
+            assert.ok(geo.maxBandOver <= 0.6, where + '窗口带越出轨道 ' + geo.maxBandOver + 'px');
+            assert.ok(geo.maxRowOver <= 0.6, where + '轨道越出行 ' + geo.maxRowOver + 'px');
+            /* 一般 2：今天那根竖线**每一行**都要在轨道里（不是只看第 1 行）。 */
+            assert.equal(geo.markerOut, 0, where + '有 ' + geo.markerOut + ' 行今天那根竖线跑出轨道');
+            /* 一般 3：位置真落在百分数上——带的两端与竖线中心各对一次账。 */
+            assert.ok(geo.maxStartErr <= 1, where + '窗口带左端没落在 startPct 上（差 ' + geo.maxStartErr + 'px）');
+            assert.ok(geo.maxEndErr <= 1, where + '窗口带右端没落在 endPct 上（差 ' + geo.maxEndErr + 'px）');
+            assert.ok(geo.maxNowErr <= 1.1, where + '今天那根竖线没落在 todayPct 上（差 ' + geo.maxNowErr + 'px）');
+            /* 结构：窄档行头在上、宽档行头在左（阈值两侧各断一次）。 */
+            const wantWide = width >= GOAL_STAIRS_WIDE_PX;
+            const above = geo.headAbove === c.steps.length;
+            const left = geo.headLeft === c.steps.length;
+            assert.equal(left, wantWide, where + '行头与轨道的并排与否不对（宽档阈值 ' + GOAL_STAIRS_WIDE_PX + 'px）');
+            assert.equal(above, !wantWide, where + '行头与轨道的上下与否不对');
+            seen.push({ width, skin, name: c.name, above, left, trackH: geo.trackH, dueH: geo.dueH,
+              dueOver: geo.maxDueOver, bandOver: geo.maxBandOver, markerOut: geo.markerOut,
+              startErr: geo.maxStartErr, nowErr: geo.maxNowErr, rootW: geo.rootW,
+              rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW });
           }
-        }
-      }
-      /* **窄档是容器驱动的，而且两档真的换了结构**：宽档每一行都是「行头在轨道左边」，
-         窄档每一行都是「行头在轨道上方」——视口没变，只改了夹具容器的宽度。 */
-      for (const c of cases()) {
-        for (const skin of SKIN_NAMES) {
-          const narrow = seen.find((s) => s.width === 390 && s.skin === skin && s.name === c.name);
-          const wide = seen.find((s) => s.width === 1280 && s.skin === skin && s.name === c.name);
-          assert.equal(narrow.above, true, '390 档 ' + skin + ' ' + c.name + '：行头该在轨道上方（' + JSON.stringify(narrow) + '）');
-          assert.equal(narrow.left, false, '390 档 ' + skin + ' ' + c.name + '：不该并排');
-          assert.equal(wide.left, true, '1280 档 ' + skin + ' ' + c.name + '：行头该在轨道左边（' + JSON.stringify(wide) + '）');
         }
       }
       /* ⑤ 换皮不换结构：四套皮肤容器里的标记逐字节相同。 */
       for (const c of cases()) {
-        for (const width of [390, 1280]) {
+        for (const width of WIDTHS) {
           const marks = await page.ev('(function(){var out={};var skins=' + JSON.stringify(SKIN_NAMES) + ';'
             + 'for (var i = 0; i < skins.length; i += 1) {'
             + '  var el = document.querySelector("." + "ilife-skin-" + skins[i]'
@@ -674,18 +793,27 @@ describe('goal-stairs ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
         }
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
-      for (const w of [390, 1280]) {
+      for (const w of WIDTHS) {
         const rows = seen.filter((s) => s.width === w);
         console.log('READING goal-stairs container=' + w
           + ' rootW=' + rows[0].rootW
           + ' maxRootScrollW=' + Math.max(...rows.map((s) => s.rootScrollW))
           + ' maxRootClientW=' + Math.max(...rows.map((s) => s.rootClientW))
-          + ' trackH=' + rows[0].trackH
-          + ' maxBadgeOver=' + Math.max(...rows.map((s) => s.badgeOver))
+          + ' trackH=' + Math.min(...rows.map((s) => s.trackH)) + '…' + Math.max(...rows.map((s) => s.trackH))
+          + ' maxDueOver=' + Math.max(...rows.map((s) => s.dueOver))
+          + ' maxBandOver=' + Math.max(...rows.map((s) => s.bandOver))
+          + ' markerOut=' + rows.reduce((a, s) => a + s.markerOut, 0)
+          + ' maxStartErr=' + Math.max(...rows.map((s) => s.startErr))
+          + ' maxNowErr=' + Math.max(...rows.map((s) => s.nowErr))
           + ' headAbove=' + rows.filter((s) => s.above).length + '/' + rows.length
           + ' headLeft=' + rows.filter((s) => s.left).length + '/' + rows.length
-          + ' cases=' + rows.length);
+          + ' cells=' + rows.length);
       }
+      /* 严重 2 的读数：最窄档下确实有行**因为日期太长而把轨道撑高**（不是靠压字或溢出混过去）。 */
+      const tight = seen.filter((s) => s.name === 'tight' && s.width === 320);
+      assert.equal(tight.every((s) => s.trackH > GOAL_STAIRS_TRACK_PX), true,
+        '320 档 tight 样例应当有轨道被两行日期撑高（否则这一档没在压）：' + JSON.stringify(tight.map((s) => s.trackH)));
+      console.log('READING tight@320 轨道高（标签两行撑高）＝' + tight.map((s) => s.skin + ':' + s.trackH).join(' '));
     } finally { page.close(); }
   });
 });
