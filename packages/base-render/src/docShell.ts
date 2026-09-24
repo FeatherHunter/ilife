@@ -17,6 +17,7 @@
  */
 import { blocksCss } from './blocks.js';
 import { buildChartsHelpersJs } from './charts.js';
+import { buildEditableValueJs, editableValueCss } from './components/index.js';
 import { buildSharedHelpersJs } from './controls.js';
 import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT } from './pageUi.js';
 import { buildStyleSheet } from './style.js';
@@ -47,6 +48,14 @@ export interface DocShellInput {
   readonly pageUi?: boolean;
   /** 文档版本声明的写法（缺省 `'lower'`，即 `<!doctype html>`）。 */
   readonly doctypeCase?: DocShellDoctypeCase;
+  /** **组件层随页挂载**：为真时把用到的那几件组件的样式段拼进共享样式槽、运行时拼进共享 helpers 槽。
+   *
+   *  当前挂的是就地可编辑值（`editableValue`：`editableValueCss()` ＋ `buildEditableValueJs()`）；
+   *  以后每加一件带样式的组件，在这里追加一段即可（**不加标记位、不改模板**——只往两个既有资产串尾巴上接）。
+   *
+   *  为什么是 opt-in 而不是默认带上：组件自带运行时（数 KB），只有用到它的页才该付这份字节；
+   *  不给／给假 ⇒ 产物与不启用时**逐字节相同**（照 `charts`／`pageUi` 同一条口径）。 */
+  readonly editableValue?: boolean;
 }
 
 /** 文档模板（裸标记 ＋ CONTENT 槽；标记不得预包裹，资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包）。
@@ -68,15 +77,18 @@ function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctype
 
 /** 整页装配：正文 HTML ＋ 技能补丁样式 → 完整文档。一页只调一次。
  *
- *  只认真真值：`charts`／`pageUi` 不给或给假，产物与不启用时**逐字节相同**（照两侧现状件口径）；
- *  `doctypeCase` 只认 `'upper'`，其余（不给／给别的值）一律按缺省的 `'lower'`。 */
+ *  只认真真值：`charts`／`pageUi`／`editableValue` 不给或给假，产物与不启用时**逐字节相同**
+ *  （照两侧现状件口径）；`doctypeCase` 只认 `'upper'`，其余（不给／给别的值）一律按缺省的 `'lower'`。 */
 export function renderDocShell(input: DocShellInput): string {
   const charts = input.charts === true;
   const pageUi = input.pageUi === true;
+  const editableValue = input.editableValue === true;
   const doctypeCase: DocShellDoctypeCase = input.doctypeCase === 'upper' ? 'upper' : 'lower';
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
-    sharedCssText: buildStyleSheet().css + '\n' + blocksCss() + (input.extraCss ? '\n' + input.extraCss : ''),
-    sharedHelpersJs: buildSharedHelpersJs(),
+    sharedCssText: buildStyleSheet().css + '\n' + blocksCss()
+      + (editableValue ? '\n' + editableValueCss() : '')
+      + (input.extraCss ? '\n' + input.extraCss : ''),
+    sharedHelpersJs: buildSharedHelpersJs() + (editableValue ? '\n' + buildEditableValueJs() : ''),
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
   return fillTemplate({

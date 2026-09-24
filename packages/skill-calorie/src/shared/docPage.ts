@@ -1,4 +1,4 @@
-/** #179 · 整页装配共用件：区块 HTML 拼成完整文档（最后一公里）。
+﻿/** #179 · 整页装配共用件：区块 HTML 拼成完整文档（最后一公里）。
  *
  * 谁在用（写得出哪两个在用）：**基础信息**（`src/profile/` 的预检确认页与回执页）与
  * **身体细节／身材照片**（身体那两页住 `src/body/wizardDocs.ts`、身材照那两页住 `src/photo/wizardPortDocs.ts`）；饮食／运动／分析各域页面
@@ -56,6 +56,10 @@ interface DocPageInput {
    *  （页级配方 ⑧ 默认让读数卡／表／图／折叠区／列表行横跨整壳 1240，比页头三级左右各宽 180px）。
    *  **不给／给假 → 产出物与旧版逐字节相同**（多出的只有这一段 CSS）。见下方 `ONE_COLUMN_CSS`。 */
   readonly lockColumn?: boolean;
+  /** **组件层随页挂载**（透传 `renderDocShell({ editableValue })`）：这一页用了公共层
+   *  「就地可编辑值」`renderEditableValue` 时给真——组件的样式段与运行时随之挂上。
+   *  **不给／给假 → 产出物与旧版逐字节相同**（组件那两段都不出现）。 */
+  readonly editableValue?: boolean;
 }
 
 /** B线老A壳补丁 CSS（照抄老 combined_analysis.html 实测值；只用冻结 token 名＋#ff9500 字面，不新增变量名）。
@@ -138,6 +142,8 @@ export function assembleDocPage(input: DocPageInput): string {
   /** 可打印位（#448）：只认真真值，不给／给假即老路（与 `renderPageShell` 的口径同）。 */
   const printable = input.printable === true;
   const pageUi = input.pageUi === true;
+  /** 组件层随页挂载（editableValue）：组件自带样式与运行时，只有用到它的页才挂。 */
+  const editableValue = input.editableValue === true;
   /** 宽屏单列锁（`lockColumn`）：只对开了页面级配方的页有意义——没那一套就没有 880 那一列。 */
   const lockColumn = pageUi && input.lockColumn === true;
   /** 补丁样式按段拼（骨架件负责段前那个换行）：B线老A壳一段、页面级配方两段、
@@ -159,7 +165,7 @@ export function assembleDocPage(input: DocPageInput): string {
       + (summary === undefined ? '' : '<p class="sub">' + blineEsc(summary) + '</p>')
       + '<div class="ilife-block-page-shell-body">' + input.content + '</div>'
       + '</section>';
-    return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi });
+    return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi, editableValue });
   }
   const eyebrow = typeof input.eyebrow === 'string' ? screenEyebrow(input.eyebrow) : null;
   const body = renderPageShell({
@@ -169,7 +175,7 @@ export function assembleDocPage(input: DocPageInput): string {
     content: input.content,
     printable,
   });
-  return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi });
+  return renderDocShell({ docTitle: input.docTitle, bodyHtml: body, extraCss, charts, pageUi, editableValue });
 }
 
 /** ② 度量投影：stat-metrics 只收确定数字（冻结口径：null／undefined 不进投影）。 */
