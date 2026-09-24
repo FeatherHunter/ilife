@@ -52,10 +52,21 @@ function intOf(n: number | null | undefined): number | null {
   return n === null || n === undefined ? null : Math.round(n);
 }
 
+/** 格带最多画几天（超了就**截断 ＋ 明示**，同族先例＝运动族那句「本窗共 N 天，显示最近 100 天，其余 M 天」）。
+ *
+ *  为什么必须有这个上限（#950 实拍抓到）：一格一天的形状在 7～14 天里读得出；窗口 30 天时 30 格挤在
+ *  880 那一列，每格只剩 29px，而桌面档的日期串是 `nowrap`（公共层为了圆角给了 `overflow:hidden`），
+ *  于是「08-0908-1008-11…」互相压字——实拍截图上是糊成一团。**截断不丢事实**：本月／本周那些档，
+ *  逐日事实另有 `逐日明细` 列表整列出来（30 天逐行），格带只担「最近这两周哪几天有记录」。 */
+const STRIP_MAX_DAYS = 14;
+
 /** 记录带：一格一天（日期 ＋ 状态点 ＋ 当日摄入），带下四件窗口事实。
- *  **窗口天数多时降一档密度**（>14 天用 `compact`）：30 天窗口那一档的格子更窄，值字号降一档才不挤。 */
+ *  窗口比 `STRIP_MAX_DAYS` 长时只画**最近 14 天**，并在带下补一句截断明示。 */
 export function dayStripBlock(d: HomeData, day: (date: string) => string): string {
-  const days: DayCellInput[] = d.week.series.map((s) => ({
+  const all = d.week.series;
+  const truncated = all.length > STRIP_MAX_DAYS;
+  const shown = truncated ? all.slice(-STRIP_MAX_DAYS) : all;
+  const days: DayCellInput[] = shown.map((s) => ({
     label: day(s.date),
     value: hasData(s) ? String(s.calories) : null,
     today: s.date === d.date,
@@ -65,10 +76,7 @@ export function dayStripBlock(d: HomeData, day: (date: string) => string): strin
     { text: '连续记录 ' + d.streakDays + ' 天', tone: 'ok' },
     { text: '周均摄入 ' + fmt(intOf(d.week.avgIntake)) + ' 卡' },
     { text: '周均缺口 ' + fmt(intOf(d.week.avgDeficit)) + ' 卡' },
+    ...(truncated ? [{ text: '带上是最近 ' + STRIP_MAX_DAYS + ' 天' }] : []),
   ];
-  return renderDayStrip({
-    days,
-    density: d.week.windowDays > 14 ? 'compact' : 'comfortable',
-    caption,
-  });
+  return renderDayStrip({ days, caption });
 }
