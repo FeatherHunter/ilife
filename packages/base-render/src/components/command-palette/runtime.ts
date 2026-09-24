@@ -66,9 +66,6 @@ export function buildCommandPaletteJs(): string {
     /* ── 定位小件 ─────────────────────────────────────────────────────────── */
     + '  function fire(el,name,detail){ el.dispatchEvent(new CustomEvent(name,{bubbles:true,detail:detail})); }\n'
     + '  function panelOf(el){ return (el && el.closest) ? el.closest("["+A_PANEL+"]") : null; }\n'
-    + '  function panelById(id){ var all=doc.querySelectorAll("["+A_PANEL+"]");\n'
-    + '    for (var i=0;i<all.length;i+=1) if (all[i].getAttribute(A_PANEL)===id) return all[i];\n'
-    + '    return null; }\n'
     + '  function openerOf(id){ var all=doc.querySelectorAll("["+A_OPEN+"]");\n'
     + '    for (var i=0;i<all.length;i+=1) if (all[i].getAttribute(A_OPEN)===id) return all[i];\n'
     + '    return null; }\n'
@@ -169,9 +166,10 @@ export function buildCommandPaletteJs(): string {
     + '  for (var k=0;k<roots.length;k+=1){\n'
     + '    var openers=roots[k].querySelectorAll("["+A_OPEN+"]");\n'
     + '    for (var m=0;m<openers.length;m+=1) openers[m].setAttribute(A_BOUND,"1");\n'
+    /* 面板恒在根里（`render.ts` 把它写在根内）⇒ 按**根**找就够；
+       先前那段「根里找不到就按 id 扫全文档」的兜底是**不可达分支**（2026-09-25 审查席量出、本席删掉）。 */
     + '    var panel=roots[k].querySelector("["+A_PANEL+"]");\n'
-    + '    var found=panel===null ? panelById(roots[k].getAttribute(A_ROOT)) : panel;\n'
-    + '    if (found) run(found);\n'
+    + '    if (panel) run(panel);\n'
     + '  }\n'
     + '}());';
 }

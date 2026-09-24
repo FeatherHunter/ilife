@@ -3,14 +3,17 @@
  * 覆盖四类判据（工艺书 §6）＋ 皮肤纪律：
  *  ① **渲染契约**：骨架（入口 ＋ 面板 ＋ 两组 ＋ 脚注）／组序（动作在前、页面在后）／
  *     初值筛与命中词与真读数三样同步／三档状态（载入／错态／停用）／转义面／
- *     **全部**非法入参分支（每个都断 `BlocksError`）／纯函数（同入参同字节）；
+ *     **全部**非法入参分支（每个都断 `BlocksError`；含**全空白串**九类与**入参表以外的键**）／纯函数（同入参同字节）；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且只出现一次、
  *     零 `:root`／`!important`／零新 token／零视口宽度查询／零手写 `var(--ilife-…)`／
- *     零把 `ink` 系当面／零键帽语汇／`dist/components/command-palette/**` 剥字面量后零 DOM；
+ *     零把 `ink` 系当面／零键帽语汇／行内两侧格封顶且窄档**不折列**／按压侧标 2px／
+ *     `dist/components/command-palette/**` 剥字面量后零 DOM；
  *  ③ **加法式**：不启用它的页面零命中、逐字节不变；渲染本件不改别件产物；前缀透传；
  *  ④ **两档几何（真机 headless Chrome ＋ CDP）**：视口 390 与 1280 下点开面板 → 零横向溢出、
  *     每一枚可点元素（入口／✕／输入框／**整行**）≥44×44、相邻两行之间 ≥8px、脚注真读数；
- *     另有一组**容器隔离读数**（视口恒 1440，把面板放进 390／1280 定宽舞台）证明窄档折行
+ *     另有三组真机读数：**不给来源技能片**的行排两列（主文字吃剩余宽、行右格贴右缘）、
+ *     **极端长 `skill`／`go`** 不许把主文字那一列挤到 0、**注入两遍**幂等（bound 读数 ＋ 事件不翻倍）；
+ *     一组**容器隔离读数**（视口恒 1440，把面板放进 390／1280 定宽舞台）证明窄档落位
  *     是 `@container` 判的、不是视口判的；**起不来就退确定性几何判据并打印原因**；
  *  ⑤ **皮肤纪律**：同一份入参渲染三次逐字节相同、标记不带皮肤类，真机上四套皮肤里的
  *     `panel.innerHTML` 逐字节相同（换皮不换结构）。
@@ -89,6 +92,26 @@ const REAL = {
   ],
 };
 
+/** 混排：**有片与不给片**两种行各两条（不给片的那一行几何上是最容易塌的，见契约第 13 条）。 */
+const MIXED = {
+  id: 'cmdk-main',
+  items: [
+    { id: 'with-sk', kind: 'action', label: '看体重曲线', note: '最近 30 天', skill: '卡路里' },
+    { id: 'no-sk', kind: 'action', label: '看体重曲线', note: '最近 30 天' },
+    { id: 'no-sk-long', kind: 'action', label: '把这一条很长的命令名整句读完再看下一行', note: '没有来源技能片的那一行' },
+    { id: 'no-sk-short', kind: 'action', label: '记一餐' },
+  ],
+};
+
+/** 极端长串：200 字的 `skill` 与 200 字的 `go`（两侧格封顶之前会把主文字那一列挤到 0）。 */
+const HUGE = {
+  id: 'cmdk-main',
+  items: [
+    { id: 'long-skill', kind: 'action', label: '看体重曲线', note: '最近 30 天', skill: '长'.repeat(200) },
+    { id: 'long-go', kind: 'action', label: '看体重曲线', note: '最近 30 天', skill: '卡路里', go: '打开'.repeat(100) },
+  ],
+};
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('command-palette ① 渲染契约 · 骨架与组序', () => {
@@ -160,6 +183,30 @@ describe('command-palette ① 渲染契约 · 骨架与组序', () => {
     assert.ok(html.includes(SLOT('empty')) && html.includes('hidden'), '没命中之前空态不上屏');
     assert.ok(!/等您按|按 ⌘|快捷键/.test(html), '零键帽语汇：不许出现「按某个键才怎样」这路话');
   });
+
+  it('单档输入只出一枚组标题（另一组一条都没有就整组不出，不留空标题）', () => {
+    const only = renderCommandPalette({ id: 'cmdk-one', items: [{ id: 'a-one', kind: 'action', label: '记体重' }] });
+    assert.equal(countOf(only, 'class="[^"]*' + SLOT('grp') + '"'), 1, '只有动作档 ⇒ 只出一枚「动作」标题');
+    assert.equal(countOf(only, COMMAND_PALETTE_GRP('action')), 1);
+    assert.equal(countOf(only, 'data-ilife-command-palette-group="page"'), 0, '页面那一组一条都没有，标题也不出');
+    const onlyPage = renderCommandPalette({ id: 'cmdk-two', items: [{ id: 'p-one', kind: 'page', label: '今日作息' }] });
+    assert.equal(countOf(onlyPage, COMMAND_PALETTE_GRP('page')), 1, '只有页面档 ⇒ 只出一枚「页面」标题');
+    assert.equal(countOf(onlyPage, 'data-ilife-command-palette-group="action"'), 0);
+    assert.ok(onlyPage.includes('>' + COMMAND_PALETTE_TEXT.actPage + '<'), '页面行缺省仍写「打开」');
+  });
+
+  it('缺省与附加类名逐条落进标记：`label` 缺省＝`entry`、`extraClass` 落根 class', () => {
+    const named = renderCommandPalette({
+      id: 'cmdk-entry-name', entry: '去哪儿', extraClass: 'ok-class other',
+      items: [{ id: 'a-one', kind: 'action', label: 'a' }],
+    });
+    assert.ok(named.includes('aria-label="去哪儿"'), '不给 label 就用入口键上的字（不是缺省那句）');
+    assert.ok(named.includes('>去哪儿<'), '入口键上是调用方给的那一句');
+    assert.match(named, new RegExp('^<div class="' + COMMAND_PALETTE_CLASS + ' is-A ok-class other"'),
+      '附加类名要落进根 class（过完类名正则之后再拼）');
+    assert.ok(named.includes('id="cmdk-entry-name"') && named.includes('popovertarget="cmdk-entry-name"'),
+      'id 三处同一份（面板 id／锚／popovertarget）');
+  });
 });
 
 /** 分组标题的「按档取」查找串（判据不另抄一份字面量）。 */
@@ -215,6 +262,32 @@ describe('command-palette ① 渲染契约 · 输入即筛的三样同步', () =
     assert.equal(countOf(upper, 'data-ilife-command-palette-hit="1"'), 1, '大小写不敏感：小写词标到大写文字上');
     assert.ok(upper.includes('>Log <mark class="' + SLOT('hit') + '" data-ilife-command-palette-hit="1">Weight</mark>'),
       '命中词逐处标出来（槽类名与锚两样都写）');
+  });
+
+  it('命中词**逐处**标出来：同一行里出现两次就标两个 `<mark>`（不是只标第一处）', () => {
+    const twice = renderCommandPalette({
+      id: 'cmdk-twice', query: '体重',
+      items: [{ id: 'a-one', kind: 'action', label: '体重记体重' }],
+    });
+    assert.deepEqual(visibleIds(twice), ['a-one']);
+    assert.equal(countOf(twice, 'data-ilife-command-palette-hit="1"'), 2, '两处都要标：' + twice);
+    assert.ok(twice.includes('<mark class="' + SLOT('hit') + '" data-ilife-command-palette-hit="1">体重</mark>记'
+      + '<mark class="' + SLOT('hit') + '" data-ilife-command-palette-hit="1">体重</mark>'),
+      '标记落在两处原文上，中间那截原样留着');
+    const none = renderCommandPalette({ id: 'cmdk-twice', query: '体重', items: [{ id: 'a-one', kind: 'action', label: '今日作息' }] });
+    assert.equal(countOf(none, 'data-ilife-command-palette-hit="1"'), 0, '不命中就不标词（不整行染色）');
+  });
+
+  it('`query` 的首尾空白（含全角空格 U+3000）两侧同口径：渲染期那次筛说同一件事', () => {
+    const bare = renderCommandPalette({ ...REAL, query: '体重' });
+    for (const padded of [' 体重', '体重 ', '  体重  ', '\u3000体重\u3000', '\u3000 体重 \u3000']) {
+      const one = renderCommandPalette({ ...REAL, query: padded });
+      assert.equal(one, bare, '首尾空白要 trim 掉（「' + padded + '」与前后的读数字节应当相同）');
+    }
+    assert.equal(renderCommandPalette({ ...REAL, query: '   ' }), renderCommandPalette(REAL),
+      '只有空白 ⇒ 按未给算（搜索词不是上屏的字，README「入参纪律」那条例外）');
+    assert.ok(renderCommandPalette({ ...REAL, query: '\u3000' }).includes(COMMAND_PALETTE_TEXT.footIdle),
+      '只有全角空格时脚注仍是「列的是常用去处」');
   });
 
   it('三档状态：载入（原地换字）／错态（写在控件旁边）／停用（说得清为什么）', () => {
@@ -297,6 +370,51 @@ describe('command-palette ① 渲染契约 · 输入即筛的三样同步', () =
     assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, extraClass: 'ok-class other' })), false, '合法附加类名照收');
   });
 
+  it('**全空白串＝拒**（九类上屏文本）：`\'   \'` 会在屏上留一块空白，一律 `BlocksError`', () => {
+    const ok = { id: 'cmdk-ok', items: [{ id: 'a-one', kind: 'action', label: '记体重' }] };
+    /** 一处一处点名：每一类都写出「收下会变成什么」，免得日后有人把它当「宽松一点也没事」。 */
+    const blanks = [
+      ['行主文字（收下 ⇒ 空壳行）', { items: [{ id: 'a-one', kind: 'action', label: '   ' }] }],
+      ['入口键上的字（收下 ⇒ 无字入口键）', { entry: '   ' }],
+      ['停用原因（收下 ⇒ 「不可用：   」，说不清为什么）', { items: [{ id: 'a-one', kind: 'action', label: '记体重', disabled: true, why: '   ' }] }],
+      ['错态那句（收下 ⇒ `aria-invalid` 指着一个空句子）', { error: '   ' }],
+      ['行右那格的字（收下 ⇒ 一格空白）', { items: [{ id: 'a-one', kind: 'action', label: '记体重', go: '   ' }] }],
+      ['副文字', { items: [{ id: 'a-one', kind: 'action', label: '记体重', note: '   ' }] }],
+      ['来源技能片', { items: [{ id: 'a-one', kind: 'action', label: '记体重', skill: '   ' }] }],
+      ['别名', { items: [{ id: 'a-one', kind: 'action', label: '记体重', keywords: '   ' }] }],
+      ['入口旁那行提示', { hint: '   ' }],
+    ];
+    for (const [what, patch] of blanks) {
+      for (const blank of ['   ', '\t', '\u3000', ' \u3000 ']) {
+        assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, ...patch })), true,
+          what + ' 收到全空白串（' + JSON.stringify(blank) + '）必须拒');
+      }
+    }
+    /* 空串＝未给：这一条与全层 `optText` 同口径，**不是**上面那条的例外。 */
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, entry: '' })), false, '空串＝未给（用缺省那句）');
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, hint: '' })), false);
+    const blankHint = renderCommandPalette({ ...ok, hint: '' });
+    assert.ok(blankHint.includes(COMMAND_PALETTE_TEXT.hint), '空串的 hint 用的是缺省那句');
+    /* 搜索词那一处**例外**：不上屏的字，只有空白＝未给（见 README「入参纪律」）。 */
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, query: '   ' })), false, 'query 只有空白＝未给');
+    assert.equal(renderCommandPalette({ ...ok, query: '   ' }), renderCommandPalette(ok), 'query 只有空白与「不给」同一份字节');
+  });
+
+  it('**入参表以外的键＝拒**（顶层与行内两处）：写错一个键名不许静默吞掉', () => {
+    const ok = { id: 'cmdk-ok', items: [{ id: 'a-one', kind: 'action', label: '记体重', note: '写进今天' }] };
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, bogus: 1 })), true, '顶层多给一个键');
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, notes: '打错名' })), true, '顶层写错键名（notes）');
+    assert.equal(throwsBlocks(() => renderCommandPalette({
+      ...ok, items: [{ ...ok.items[0], bogus: 1 }],
+    })), true, '行内多给一个键');
+    assert.equal(throwsBlocks(() => renderCommandPalette({
+      ...ok, items: [{ ...ok.items[0], notes: '打错名' }],
+    })), true, '行内写错键名（notes）');
+    /* 入参表里的键给了 `undefined` 不算「多给」（调用方拼对象时常见）。 */
+    assert.equal(throwsBlocks(() => renderCommandPalette({ ...ok, query: undefined, error: undefined, loading: undefined })), false,
+      '入参表里的键给 undefined 按未给算');
+  });
+
   it('纯函数：同样的入参恒产同样的字节；缺省那几档也对', () => {
     assert.equal(renderCommandPalette(REAL), renderCommandPalette(REAL));
     const bare = renderCommandPalette({ id: 'cmdk-bare', items: [{ id: 'a-one', kind: 'page', label: '今日作息' }] });
@@ -358,6 +476,26 @@ describe('command-palette ② 样式与零 DOM 纪律', () => {
     assert.equal(clean.includes('text-overflow'), false, '不许出现 `…` 截断手段');
     assert.equal(clean.includes('overflow-x'), false, '不许藏横滑');
     assert.equal(clean.includes('cursor: not-allowed'), true, '停用那一档要说得出点不动');
+  });
+
+  it('行内落位：两侧格各自封顶、不给来源技能片的那一行排两列、窄档**不折列**', () => {
+    /* 封顶：两侧格各自的 `max-width`（不封顶时那两条 `auto` 轨会把主文字挤到 0）。 */
+    assert.equal(countOf(clean, 'max-width: 8em'), 2, '来源技能片与行右那格各自封顶一处');
+    /* 不给片的那一行：`:not(:has(…-sk))` 收成两列。 */
+    assert.ok(new RegExp(SLOT('row') + ':not\\(:has\\(\\.' + SLOT('sk') + '\\)\\)\\s*\\{[^}]*grid-template-columns: minmax\\(0, 1fr\\) auto').test(clean),
+      '不给来源技能片的那一行必须收成两列（否则主文字落到那条只剩几十像素的 `auto` 轨上）');
+    /* 窄档：**列一道也不折**——原型 `:133-134` 明写窄档仍留三列，落地不许再出现折行那两行写法。 */
+    assert.equal(clean.includes('grid-column: 1 / -1'), false, '窄档折列那两行写法必须删掉（原型明确否掉）');
+    const narrow = clean.slice(clean.indexOf('@container ' + COMMAND_PALETTE_CONTAINER));
+    assert.equal(narrow.includes('grid-template-columns'), false, '窄档不许再改列数');
+    assert.ok(narrow.includes('column-gap: ' + String(COMMAND_PALETTE_GAP_PX) + 'px'),
+      '窄档只收行内那道缝（10px → 8px，与行间那道缝同一口径）');
+  });
+
+  it('按压那一档：整行换次要面 ＋ **2px** 主色侧标（法条第三节；原型写 4px，落地按法条收窄）', () => {
+    assert.ok(new RegExp(SLOT('row') + ':active\\s*\\{[^}]*background:[^;]*surface-2[^;]*;').test(clean), '整行换次要面');
+    assert.ok(clean.includes('box-shadow: inset 2px 0 0 '), '侧标 2px（整行选中那一档的法条口径）');
+    assert.equal(clean.includes('inset 4px 0 0'), false, '4px 是原型写法，落地按法条收成 2px（判据拦住回退）');
   });
 
   it('零手写色值（兜底链那一处除外）、源码级零手写 `var(--ilife-…)`、不拿 ink 系当面', () => {
@@ -423,6 +561,10 @@ describe('command-palette ② 样式与零 DOM 纪律', () => {
     assert.equal(js.includes('onclick'), false, '不用内联事件');
     assert.equal(/addEventListener\("keydown"/.test(js), false, '不许把键盘做成通路');
     assert.equal(js.includes('innerHTML'), false, '命中词重画不碰 innerHTML');
+    /* 面板恒在根里 ⇒ 按根找就够；先前那段「根里找不到就按 id 扫全文档」是不可达分支（死代码）。 */
+    assert.equal(js.includes('panelById'), false, '不可达的全文档兜底必须删掉（分支永不可达＝死代码）');
+    assert.ok(js.includes('roots[k].querySelector("["+A_PANEL+"]")'), '面板按**根**找（render 把它写在根内）');
+    assert.ok(js.includes('A_BOUND'), '入口键上要记一枚 bound 读数（幂等的可读痕迹）');
   });
 
   it('槽位闭集与类名一致（判据不另抄一份字面量）', () => {
@@ -494,10 +636,30 @@ describe('command-palette ③ 加法式（不启用即逐字节不变）', () =>
   });
 });
 
+/* ── ⑥ 说明书与实现同一口径 ─────────────────────────────────────────── */
+
+describe('command-palette ⑥ 说明书的偏离表与实现同一口径', () => {
+  const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+
+  it('住顶层那条偏离：**遮罩**由浏览器给、**焦点锁不给**（README 不许再声称焦点锁）', () => {
+    assert.equal(readme.includes('焦点锁与遮罩由浏览器给'), false,
+      '旧那句（声称焦点锁由浏览器给）必须删掉——真机实测不成立（背景没被 inert、Tab 跑得出面板）');
+    assert.ok(/焦点锁(不给|不做)/.test(readme), '要写清这一档没给，以及代价（背景没被 inert、Tab 跑得出面板）');
+    assert.ok(readme.includes('showModal'), '要写清原型点名的那条路（`<dialog>` ＋ `showModal()`）与不采纳的理由');
+    const html = renderCommandPalette(REAL);
+    assert.equal(/<dialog|showModal|inert/.test(html), false, '实现里没有 `<dialog>`／`showModal`／`inert`（面板是原生 popover）');
+    assert.ok(html.includes('popover="auto"'), '实现走的是原生 popover（零脚本开合那一档）');
+    assert.equal(buildCommandPaletteJs().includes('inert'), false, '运行时段也不动宿主的背景（那是宿主的活）');
+  });
+});
+
 /* ── ④⑤ 两档几何（真机）＋ 皮肤纪律 ─────────────────────────────────── */
 
-/** 一页：皮肤取值表 ＋ 本件样式段 ＋ 本件标记 ＋ 运行时段（可选）。 */
-function fixture(withRuntime, extraHead, skin, items, query, error) {
+/** 一页：皮肤取值表 ＋ 本件样式段 ＋ 本件标记 ＋ 运行时段（可选）。
+ *  `extraInput` 覆盖渲染入参的若干位；`runtimeTimes` 把那一段运行时段**注入几遍**（幂等那条要两遍）。 */
+function fixture(withRuntime, extraHead, skin, items, query, error, extraInput, runtimeTimes) {
+  const times = runtimeTimes === undefined ? 1 : runtimeTimes;
+  const script = withRuntime ? new Array(times).fill('<script>' + buildCommandPaletteJs() + '</script>').join('\n') : '';
   return '<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><title>command-palette</title>\n<style>\n'
     + 'html,body{margin:0;padding:0}\n' + skinCss() + '\n' + commandPaletteCss() + '\n'
     + (extraHead === undefined ? '' : extraHead + '\n')
@@ -505,12 +667,28 @@ function fixture(withRuntime, extraHead, skin, items, query, error) {
     + '<div class="ilife-page-ui ' + skinClass(skin === undefined ? 'paper' : skin) + '" style="padding:16px">'
     + '<p>页头上面的正文</p>'
     + renderCommandPalette({
-      id: 'cmdk-main', items: items === undefined ? REAL.items : items, query: query, error: error,
+      id: 'cmdk-main', items: items === undefined ? REAL.items : items, query: query, error: error, ...extraInput,
     })
     + '<p style="height:700px">页面正文</p></div>\n'
-    + (withRuntime ? '<script>' + buildCommandPaletteJs() + '</script>\n' : '')
+    + (script === '' ? '' : script + '\n')
     + '</body></html>';
 }
+
+/** 行内落位：每行的内容宽、三格盒子、算出来的轨数与轨宽、主文字几行（`getComputedStyle` 报的是**用出来的**轨）。 */
+const ROW_GEOM = '(function(){'
+  + 'function box(el){ var r=el.getBoundingClientRect();'
+  + 'return {l:Math.round(r.left),r:Math.round(r.right),w:Math.round(r.width),h:Math.round(r.height)}; }'
+  + 'var panel=document.getElementById("cmdk-main");'
+  + 'var rows=[].slice.call(panel.querySelectorAll(".' + SLOT('row') + '"));'
+  + 'return rows.map(function(row){'
+  + ' var cs=getComputedStyle(row), rb=row.getBoundingClientRect(), kids={};'
+  + ' [].slice.call(row.children).forEach(function(el){ kids[String(el.className).split("-").pop()]=box(el); });'
+  + ' return {id:row.getAttribute("' + COMMAND_PALETTE_ITEM_ATTR + '"), box:box(row),'
+  + '  contentW:Math.round(rb.width)-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),'
+  + '  padRight:parseFloat(cs.paddingRight), colGap:parseFloat(cs.columnGap),'
+  + '  tracks:cs.gridTemplateColumns.split(" ").filter(function(s){return s!=="";}).length, kids:kids,'
+  + '  lbLines:Math.round(row.querySelector(".' + SLOT('lb') + '").getBoundingClientRect().height/17)};'
+  + '});}())';
 
 /** 页内量测：面板与逐枚可点元素的盒子、行间缝、脚注真读数、计算色。 */
 const GEOM = '(function(){'
@@ -666,7 +844,7 @@ describe('command-palette ④ 两档几何（真机 headless Chrome ＋ CDP）',
       } finally { p.close(); }
     });
 
-  it('容器隔离读数：视口恒 1440，面板放进 390／1280 定宽舞台 → 窄档折行是**容器**判的', async (t) => {
+  it('容器隔离读数：视口恒 1440，面板放进 390／1280 定宽舞台 → 窄档落位是**容器**判的', async (t) => {
     const p = await startBrowser({ portOffset: 31 });
     if (p === null) return t.skip('本机无 Chrome／Chromium：容器隔离读数需真浏览器');
     /** 夹具把面板从顶层摘下来放进舞台（**判据夹具的覆盖**，不是组件的一部分）：
@@ -683,21 +861,145 @@ describe('command-palette ④ 两档几何（真机 headless Chrome ＋ CDP）',
       await p.at(html, { width: 1440, height: 1200 });
       const read = (id) => '(function(){var panel=document.getElementById("' + id + '");'
         + 'var row=panel.querySelector(".' + SLOT('row') + '");'
-        + 'var sk=row.querySelector(".' + SLOT('sk') + '"), act=row.querySelector(".' + SLOT('act') + '");'
-        + 'var a=sk.getBoundingClientRect(), b=act.getBoundingClientRect();'
-        + 'return {panelW:Math.round(panel.getBoundingClientRect().width), rowW:Math.round(row.getBoundingClientRect().width),'
+        + 'var sk=row.querySelector(".' + SLOT('sk') + '"), act=row.querySelector(".' + SLOT('act') + '"),'
+        + 'tx=row.querySelector(".' + SLOT('tx') + '");'
+        + 'var a=sk.getBoundingClientRect(), b=act.getBoundingClientRect(), c=tx.getBoundingClientRect();'
+        + 'var cs=getComputedStyle(row), rb=row.getBoundingClientRect();'
+        + 'return {panelW:Math.round(panel.getBoundingClientRect().width), rowW:Math.round(rb.width),'
+        + 'contentW:Math.round(rb.width)-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),'
+        + 'txW:Math.round(c.width), colGap:parseFloat(cs.columnGap),'
+        + 'tracks:cs.gridTemplateColumns.split(" ").filter(function(s){return s!=="";}).length,'
         + 'skTop:Math.round(a.top), actTop:Math.round(b.top),'
-        /* 同一行＝两枚格子的**中线**对齐（行内 `align-items: center`；窄档时片独占一行，中线差一整行）。 */
+        /* 同一行＝两枚格子的**中线**对齐（行内 `align-items: center`；折了列就会差一整行）。 */
         + 'sameLine:Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<2,'
         + 'scrollW:panel.scrollWidth, clientW:panel.clientWidth};}())';
       const narrow = await p.ev(read('cmdk-390'));
       const wide = await p.ev(read('cmdk-1280'));
       assert.equal(wide.sameLine, true, '1280 舞台：来源技能片与行右那格同一行');
-      assert.equal(narrow.sameLine, false, '390 舞台：来源技能片独占一行（窄档折行真的生效）');
+      assert.equal(narrow.sameLine, true, '390 舞台：**列一道也不折**（原型 :133-134 口径）——片与行右那格仍同一行');
+      assert.equal(narrow.tracks, 3, '390 舞台仍是三列（折成两列就是把原型明确否掉的写法做回来了）');
+      assert.ok(narrow.txW >= narrow.contentW * 0.4,
+        '390 舞台：主文字那一列仍吃剩余宽（实测 ' + narrow.txW + '/' + narrow.contentW + '）');
+      assert.ok(narrow.colGap < wide.colGap, '窄档那条容器查询真的生效：行内那道缝收到 '
+        + String(COMMAND_PALETTE_GAP_PX) + 'px（390 舞台 ' + narrow.colGap + ' vs 1280 舞台 ' + wide.colGap + '）');
+      assert.equal(wide.colGap, 10, '宽档舞台行内那道缝是 10px');
       assert.ok(narrow.scrollW <= narrow.clientW + 1, '窄舞台里也不许横溢');
       console.log('READING command-palette 容器隔离（视口恒 1440）：390 舞台 panelW=' + narrow.panelW
-        + ' rowW=' + narrow.rowW + ' sameLine=' + narrow.sameLine
-        + '；1280 舞台 panelW=' + wide.panelW + ' rowW=' + wide.rowW + ' sameLine=' + wide.sameLine);
+        + ' rowW=' + narrow.rowW + ' 主文字列=' + narrow.txW + '/' + narrow.contentW
+        + ' 轨数=' + narrow.tracks + ' 行内缝=' + narrow.colGap + ' sameLine=' + narrow.sameLine
+        + '；1280 舞台 panelW=' + wide.panelW + ' rowW=' + wide.rowW + ' 主文字列=' + wide.txW + '/' + wide.contentW
+        + ' 轨数=' + wide.tracks + ' 行内缝=' + wide.colGap + ' sameLine=' + wide.sameLine);
+      assert.deepEqual(await p.errs(), []);
+    } finally { p.close(); }
+  });
+
+  it('不给来源技能片的那一行：排**两列**、主文字吃剩余宽、行右那格贴右缘（1280 与 390）', async (t) => {
+    const p = await startBrowser({ portOffset: 43 });
+    if (p === null) return t.skip('本机无 Chrome／Chromium：行内落位那条要真浏览器');
+    try {
+      for (const [w, h] of [[1280, 900], [390, 780]]) {
+        await p.at(fixture(true, undefined, 'paper', MIXED.items), { width: w, height: h });
+        const [cx, cy] = await p.ev(OPEN_CENTER);
+        await p.mouse(cx, cy);
+        const rows = await p.ev(ROW_GEOM);
+        assert.equal(rows.length, MIXED.items.length, w + '：行的枚数');
+        for (const r of rows) {
+          const why = w + ' · ' + r.id + '：';
+          /* 行右那格**恒贴行右缘**（不是被拉成通栏，也不是缩在左边） */
+          assert.ok(Math.abs(r.kids.act.r - (r.box.r - r.padRight)) <= 1,
+            why + '行右那格右缘 ' + r.kids.act.r + ' 应贴行右缘 ' + (r.box.r - r.padRight));
+          /* 主文字那一格吃**剩下的一整段**（内容宽 − 左侧格与缝 − 行右格与缝） */
+          const left = r.kids.sk === undefined ? 0 : r.kids.sk.w + r.colGap;
+          assert.ok(r.kids.tx.w >= r.contentW - left - r.kids.act.w - r.colGap - 1,
+            why + '主文字格 ' + r.kids.tx.w + ' 没吃满剩余宽（内容 ' + r.contentW + ' − 左侧 ' + left
+            + ' − 行右 ' + r.kids.act.w + ' − 缝 ' + r.colGap + '）');
+          assert.ok(r.kids.tx.w >= r.contentW * 0.3, why + '主文字格只占内容宽的 '
+            + Math.round(100 * r.kids.tx.w / r.contentW) + '%');
+          assert.ok(r.kids.act.w <= COMMAND_PALETTE_TOUCH_PX * 1.5,
+            why + '行右那格被拉成了 ' + r.kids.act.w + 'px 通栏（正常 ' + COMMAND_PALETTE_TOUCH_PX + ' 上下）');
+          if (r.kids.sk === undefined) {
+            assert.equal(r.tracks, 2, why + '不给来源技能片 ⇒ 行是两列（三列里那一列空着会挤掉主文字）');
+            assert.ok(r.kids.tx.w >= r.contentW * 0.8, why + '两列时主文字几乎吃掉整行：' + r.kids.tx.w);
+          } else {
+            assert.equal(r.tracks, 3, why + '给了来源技能片 ⇒ 三列');
+          }
+        }
+        const scale = await p.ev('(function(){var p=document.getElementById("cmdk-main");'
+          + 'return {sw:p.scrollWidth,cw:p.clientWidth}}())');
+        assert.ok(scale.sw <= scale.cw + 1, w + '：面板内容横溢 ' + scale.sw + ' > ' + scale.cw);
+        console.log('READING command-palette 不给 skill @' + w + '：'
+          + rows.map((r) => r.id + ' 轨数=' + r.tracks + ' 主文字=' + r.kids.tx.w + '/' + r.contentW
+            + '（' + Math.round(100 * r.kids.tx.w / r.contentW) + '%） 行右=' + r.kids.act.w).join('；'));
+      }
+      assert.deepEqual(await p.errs(), []);
+    } finally { p.close(); }
+  });
+
+  it('极端长 `skill`／`go`（各 200 字）：主文字那一列不许被挤到 0（1280 与 390）', async (t) => {
+    const p = await startBrowser({ portOffset: 47 });
+    if (p === null) return t.skip('本机无 Chrome／Chromium：极端长串那条要真浏览器');
+    try {
+      for (const [w, h] of [[1280, 900], [390, 780]]) {
+        await p.at(fixture(true, undefined, 'paper', HUGE.items), { width: w, height: h });
+        const [cx, cy] = await p.ev(OPEN_CENTER);
+        await p.mouse(cx, cy);
+        const rows = await p.ev(ROW_GEOM);
+        for (const r of rows) {
+          const why = w + ' · ' + r.id + '：';
+          assert.ok(r.kids.tx.w > 0, why + '主文字那一列被挤到 0（两侧封顶之前就是这样：`518px 0px 50px`）');
+          assert.ok(r.kids.tx.w >= r.contentW * 0.3, why + '主文字那一列只剩 ' + r.kids.tx.w + '/'
+            + r.contentW + '（' + Math.round(100 * r.kids.tx.w / r.contentW) + '%）');
+          assert.ok(r.kids.tx.w >= r.contentW - r.kids.sk.w - r.kids.act.w - 2 * r.colGap - 1,
+            why + '两侧封顶之后主文字要吃满剩下的那一段');
+          assert.ok(r.kids.sk.w <= 8 * 16, why + '来源技能片封顶在八个字以内：' + r.kids.sk.w);
+        }
+        const scale = await p.ev('(function(){var p=document.getElementById("cmdk-main");'
+          + 'return {sw:p.scrollWidth,cw:p.clientWidth}}())');
+        assert.ok(scale.sw <= scale.cw + 1, w + '：面板内容横溢 ' + scale.sw + ' > ' + scale.cw);
+        console.log('READING command-palette 极端长串 @' + w + '：'
+          + rows.map((r) => r.id + ' 主文字=' + r.kids.tx.w + '/' + r.contentW
+            + '（' + Math.round(100 * r.kids.tx.w / r.contentW) + '%） skill 格=' + r.kids.sk.w
+            + ' 行右格=' + r.kids.act.w + ' 行高=' + r.box.h).join('；'));
+      }
+      assert.deepEqual(await p.errs(), []);
+    } finally { p.close(); }
+  });
+
+  it('运行时段注入**两遍**：幂等（bound 读数 ＋ 事件不翻倍），载入档脚注不被筛走', async (t) => {
+    const p = await startBrowser({ portOffset: 51 });
+    if (p === null) return t.skip('本机无 Chrome／Chromium：幂等那条要真浏览器');
+    try {
+      await p.at(fixture(true, undefined, 'paper', REAL.items, undefined, undefined, { loading: true }, 2),
+        { width: 1280, height: 900 });
+      await p.ev(PROBE_EVENTS);
+      const bound = await p.ev('document.querySelector(".' + SLOT('open') + '")'
+        + '.getAttribute("data-ilife-command-palette-bound")');
+      assert.equal(bound, '1', '入口键上要记一枚 bound 读数（幂等开关落在 <html> 上）');
+      const [cx, cy] = await p.ev(OPEN_CENTER);
+      await p.mouse(cx, cy);
+      assert.equal(await p.ev('document.getElementById("cmdk-main").matches(":popover-open")'), true, '两遍注入照样开得出来');
+      /* 载入档：筛行照旧（行与宽度都不动），但脚注**原地不动**（还是「正在找…」）。 */
+      const before = (await p.ev('window.__cp')).filter((e) => e.type === COMMAND_PALETTE_EVENT_QUERY).length;
+      await p.ev(SET_QUERY('体重'));
+      const m = await p.ev(GEOM);
+      assert.equal(m.visible, 3, '载入档照样筛行（「体重」命中三行）');
+      assert.ok(m.footText.includes(COMMAND_PALETTE_TEXT.footBusy),
+        '载入档脚注不许被筛走（应当是「' + COMMAND_PALETTE_TEXT.footBusy + '」，实际 ' + m.footText + '）');
+      const qs = (await p.ev('window.__cp')).filter((e) => e.type === COMMAND_PALETTE_EVENT_QUERY);
+      assert.equal(qs.length - before, 1, '一次 input 只该报一条真读数（注入两遍不准翻倍）：'
+        + before + ' → ' + qs.length);
+      assert.equal(qs[qs.length - 1].detail.hits, 3, 'hits 是露着的行数');
+      /* 全角空格也要 trim（运行时段那一处口径与渲染期同一份）。 */
+      await p.ev(SET_QUERY('\u3000体重\u3000'));
+      const wide = await p.ev(GEOM);
+      assert.equal(wide.visible, 3, '全角空格打头的词照样命中三行');
+      const [rx, ry] = await p.ev(ROW_CENTER);
+      await p.mouse(rx, ry);
+      const runs = (await p.ev('window.__cp')).filter((e) => e.type === COMMAND_PALETTE_EVENT_RUN);
+      assert.equal(runs.length, 1, '点一行只该报一条 run（注入两遍不准翻倍），实际 ' + runs.length);
+      assert.equal(runs[0].detail.value, 'see-weight');
+      console.log('READING command-palette 幂等：bound=' + bound + ' 一次 input 报 ' + (qs.length - before)
+        + ' 条 query、点一行报 ' + runs.length + ' 条 run；载入档脚注=' + m.footText);
       assert.deepEqual(await p.errs(), []);
     } finally { p.close(); }
   });
@@ -705,8 +1007,12 @@ describe('command-palette ④ 两档几何（真机 headless Chrome ＋ CDP）',
   it('每条选择器都命中**至少一个真节点**（死规则＝红）＋ 面板外那层遮罩是按皮肤算出来的', async (t) => {
     const p = await startBrowser({ portOffset: 39 });
     if (p === null) return t.skip('本机无 Chrome／Chromium：死规则那条要真浏览器');
-    /** 四档节点都要在场：有命中／被筛掉／整组被筛空／停用行／强调行。 */
-    const items = REAL.items.concat([{ id: 'log-off', kind: 'action', label: '记体重（今天已记）', skill: '卡路里', disabled: true, why: '这条今天记过了' }]);
+    /** 五档节点都要在场：有命中／被筛掉／整组被筛空／停用行／强调行／**不给来源技能片的那一行**
+     *  （最后这一条是 `…-row:not(:has(…-sk))` 那条规则唯一的命中面——夹具里没有它，那条规则就永远查不出死活了）。 */
+    const items = REAL.items.concat([
+      { id: 'log-off', kind: 'action', label: '记体重（今天已记）', skill: '卡路里', disabled: true, why: '这条今天记过了' },
+      { id: 'no-sk', kind: 'action', label: '记体重', note: '这一行不给来源技能片' },
+    ]);
     try {
       await p.at(fixture(true, undefined, 'paper', items, '买菜', '搜索服务连不上，先把下面几条当常用去处看。'),
         { width: 1280, height: 900 });

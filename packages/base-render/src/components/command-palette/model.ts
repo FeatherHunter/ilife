@@ -3,6 +3,12 @@
  *  三条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：
  *      猜出来的面板会让调用方以为自己拿到的是「能去哪儿、能做什么」的那块面。
+ *      这一条管到两处**看得见**的漏（2026-09-25 对抗式审查席量出来、本席返修）：
+ *      · **全空白串＝拒**（`'   '` 会在屏上留一块空白：空壳行、无字入口键、空的错态句、
+ *        「不可用：   」这种说不清为什么的停用行）——口径与 `scatter-fit/model.ts` 的
+ *        `reqRealText`／`optRealText` 同一条：空串＝未给（全层 `optText` 口径），**全空白＝拒**；
+ *      · **入参表以外的键＝拒**（`{...ok, bogus:1}` 静默吞掉：写错一个键名，调用方以为自己设上了，
+ *        屏上却没有——那正是「以为自己拿到了」的那种错）。
  *   2. **能算的都算出来**：可搜底串、屏上顺序（动作组在前、页面组在后）、脚注那句状态、
  *      空态那句、每一行的「这一行要干什么」——都在这里算好；`render.ts` 只拼标记，一个字都不算。
  *   3. **筛一次、只有一处改**：渲染期按 `query` 判一次「这一行露不露」，写进行的 `hidden`；
@@ -66,6 +72,33 @@ function reqIdentifier(value: unknown, field: string): string {
   return text;
 }
 
+/** 必填文本：非空串**且不是全空白**（全空白会在屏上留一块空白，那是看得到的错）。 */
+function reqRealText(value: unknown, field: string): string {
+  const text = reqText(value, field);
+  if (text.trim() === '') badInput(field + ' 必须是真正的文本（全空白不算）');
+  return text;
+}
+
+/** 可选文本：空串＝未给（与全层 `optText` 同口径）；**全空白＝拒**（那会在屏上留一块空白）。 */
+function optRealText(value: unknown, field: string): string | undefined {
+  const text = optText(value, field);
+  if (text !== undefined && text.trim() === '') badInput(field + ' 必须是真正的文本（全空白不算）');
+  return text;
+}
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。 */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(raw)) {
+    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让调用方以为自己设上了）');
+  }
+}
+
+/** `CommandPaletteInput` 的键（顶层入参表）。 */
+const INPUT_KEYS = ['id', 'items', 'entry', 'hint', 'label', 'query', 'error', 'loading', 'form', 'extraClass'] as const;
+
+/** `CommandPaletteItem` 的键（一行的入参表）。 */
+const ITEM_KEYS = ['id', 'kind', 'label', 'note', 'skill', 'go', 'primary', 'keywords', 'disabled', 'why'] as const;
+
 /** 行的可搜底串：上屏的字 ＋ 别名，一律小写。 */
 function haystackOf(label: string, note: string | undefined, skill: string | undefined, keywords: string | undefined): string {
   return [label, note, skill, keywords].filter((s) => s !== undefined).join(' ').toLowerCase();
@@ -88,6 +121,7 @@ export function commandPaletteEmpty(query: string): string {
 function reqItem(value: unknown, at: string, term: string, seen: Set<string>): CommandPaletteRow {
   assertPlainObject(value, at);
   const raw = value as Record<string, unknown>;
+  assertKeys(raw, ITEM_KEYS, at);
   const id = reqIdentifier(raw.id, at + '.id');
   if (seen.has(id)) badInput(at + '.id 与面板里前面某一项的 id 重了（每项的 id 面板内唯一）');
   seen.add(id);
@@ -96,18 +130,18 @@ function reqItem(value: unknown, at: string, term: string, seen: Set<string>): C
   if (!(COMMAND_PALETTE_KINDS as readonly unknown[]).includes(kind)) {
     badInput(at + '.kind 必须是 ' + COMMAND_PALETTE_KINDS.join('／') + ' 之一（action＝动作、page＝页面）');
   }
-  const label = reqText(raw.label, at + '.label');
-  const note = optText(raw.note, at + '.note');
-  const skill = optText(raw.skill, at + '.skill');
-  const keywords = optText(raw.keywords, at + '.keywords');
-  const go = optText(raw.go, at + '.go');
+  const label = reqRealText(raw.label, at + '.label');
+  const note = optRealText(raw.note, at + '.note');
+  const skill = optRealText(raw.skill, at + '.skill');
+  const keywords = optRealText(raw.keywords, at + '.keywords');
+  const go = optRealText(raw.go, at + '.go');
 
   const disabledRaw = raw.disabled;
   if (disabledRaw !== undefined && typeof disabledRaw !== 'boolean') {
     badInput(at + '.disabled 必须是布尔值');
   }
   const disabled = disabledRaw === true;
-  const why = optText(raw.why, at + '.why');
+  const why = optRealText(raw.why, at + '.why');
   if (disabled && why === undefined) {
     badInput(at + '.disabled 为真时 input.' + at.slice(at.indexOf('items')) + '.why 必填：停用那一行要说得清为什么');
   }
@@ -135,6 +169,7 @@ function reqItem(value: unknown, at: string, term: string, seen: Set<string>): C
 export function normalizeCommandPalette(input: unknown): CommandPaletteModel {
   assertPlainObject(input, 'renderCommandPalette: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderCommandPalette: input');
 
   const form = raw.form === undefined ? COMMAND_PALETTE_FORMS[0] : raw.form;
   if (!(COMMAND_PALETTE_FORMS as readonly unknown[]).includes(form)) {
@@ -148,6 +183,9 @@ export function normalizeCommandPalette(input: unknown): CommandPaletteModel {
   if (!Array.isArray(list) || list.length === 0) {
     badInput('command-palette: input.items 至少 1 条（面板里一条都没有，等于没有去处）');
   }
+  /* `query` 是**搜索词**（不上屏的字），不是上屏文本：空串＝未给（全层口径），
+     全空白＝**未给**（首尾空白一律 `trim` 掉——用户打的词带空格不算一条错）；
+     上屏的那几处（入口／提示／无障碍名／错态／主文字／副文字／来源技能／行右那格）全空白＝拒。 */
   const queryRaw = optText(raw.query, 'command-palette: input.query');
   const query = queryRaw === undefined ? '' : queryRaw.trim();
   const term = query.toLowerCase();
@@ -162,9 +200,9 @@ export function normalizeCommandPalette(input: unknown): CommandPaletteModel {
     badInput('command-palette: input.loading 必须是布尔值');
   }
   const loading = loadingRaw === true;
-  const entry = optText(raw.entry, 'command-palette: input.entry');
-  const label = optText(raw.label, 'command-palette: input.label');
-  const hint = optText(raw.hint, 'command-palette: input.hint');
+  const entry = optRealText(raw.entry, 'command-palette: input.entry');
+  const label = optRealText(raw.label, 'command-palette: input.label');
+  const hint = optRealText(raw.hint, 'command-palette: input.hint');
 
   return {
     form: form as CommandPaletteForm,
@@ -177,7 +215,7 @@ export function normalizeCommandPalette(input: unknown): CommandPaletteModel {
     hits,
     foot: loading ? COMMAND_PALETTE_TEXT.footBusy : commandPaletteFoot(query, hits),
     empty: commandPaletteEmpty(query),
-    error: optText(raw.error, 'command-palette: input.error'),
+    error: optRealText(raw.error, 'command-palette: input.error'),
     loading,
     extraClass: optExtraClass(raw.extraClass, 'command-palette: input.extraClass'),
   };

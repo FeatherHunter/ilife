@@ -35,6 +35,15 @@ const LF = String.fromCharCode(10);
 /** 面板高上限：屏幕的 78%（手机横屏也留得出关掉键与脚注）或宽档上限，取小的那个。 */
 const COMMAND_PALETTE_PANEL_MAX_H = 'min(78dvh, ' + String(COMMAND_PALETTE_PANEL_MAX_PX) + 'px)';
 
+/** 行的两侧格（来源技能片／行右那格）各自的宽度上限：**八个字**（`em` 随皮肤字号走）。
+ *  行内三条轨是 `auto minmax(0, 1fr) auto`——两侧那两条 `auto` 轨吃内容宽，内容一长就把主文字挤到 0
+ *  （实测 200 字 `skill` ⇒ `grid列=518px 0px 50px`、200 字 `go` ⇒ `54px 0px 514px`）。
+ *  两条侧轨封顶之后，主文字那一条恒吃剩下的那一段；侧格里的字照旧**换行、不 `…` 截断**。 */
+const COMMAND_PALETTE_SIDE_MAX = '8em';
+
+/** 窄档（面板 < `COMMAND_PALETTE_NARROW_PX`）行内左右内边距：宽档 12px，窄档各收 2px 给主文字。 */
+const COMMAND_PALETTE_NARROW_PAD_PX = 10;
+
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function commandPaletteCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
@@ -200,7 +209,9 @@ export function commandPaletteCss(input?: { readonly prefix?: string }): string 
     '  padding: 0 14px 10px;',
     '  min-width: 0;',
     '}',
-    '/* 一行＝一颗按钮（整行都是命中区）；`hidden` 是运行时段筛出来的「这一行现在不露」。 */',
+    '/* 一行＝一颗按钮（整行都是命中区）；`hidden` 是运行时段筛出来的「这一行现在不露」。',
+    '   三条轨：来源技能片 ＋ 主文字（吃剩余宽）＋ 行右那格。两侧各自封顶（`COMMAND_PALETTE_SIDE_MAX`）——',
+    '   不封顶时那两条 `auto` 轨会把主文字挤到 0（实测见常量那一处注释）。 */',
     s('row') + ' {',
     '  display: grid;',
     '  grid-template-columns: auto minmax(0, 1fr) auto;',
@@ -218,11 +229,16 @@ export function commandPaletteCss(input?: { readonly prefix?: string }): string 
     '  cursor: pointer;',
     '}',
     s('row') + '[hidden] { display: none; }',
+    '/* **不给来源技能片的那一行**（README 允许）：三列里最左那一列就空着 ⇒ 主文字落到那条 `auto` 轨上',
+    '   （只剩六十几像素）、行右那格被那条 `1fr` 轨拉成通栏。哪一行真没有这枚片，就按两列排：',
+    '   主文字照旧吃剩余宽，行右那格照旧贴右缘。 */',
+    s('row') + ':not(:has(' + sc('sk') + ')) { grid-template-columns: minmax(0, 1fr) auto; }',
     rowChild('sk') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
     '  justify-content: center;',
     '  min-height: 26px;',
+    '  max-width: ' + COMMAND_PALETTE_SIDE_MAX + ';',
     '  padding: 0 8px;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',
@@ -253,6 +269,7 @@ export function commandPaletteCss(input?: { readonly prefix?: string }): string 
     '  align-items: center;',
     '  justify-content: center;',
     '  min-height: ' + String(COMMAND_PALETTE_TOUCH_PX) + 'px;',
+    '  max-width: ' + COMMAND_PALETTE_SIDE_MAX + ';',
     '  padding: 0 12px;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-pill') + ';',
@@ -270,10 +287,11 @@ export function commandPaletteCss(input?: { readonly prefix?: string }): string 
     '  font-weight: 700;',
     '}',
     '/* 手指落下那一档：整行换次要面 ＋ 左侧一道主色标；行右那格抬到强调软底。',
-    '   强调实底上不写正文级小字（对比地板），所以那一格走的是软底那一档。 */',
+    '   侧标 **2px** 是「整行／整块选中」那一档的口径（`docs/base/base-render/选中态与皮肤语言.md` 第三节法则表；',
+    '   原型写的是 4px，落地按法条收成 2px）。强调实底上不写正文级小字（对比地板），所以那一格走的是软底那一档。 */',
     s('row') + ':active {',
     '  background: ' + skinVar('surface-2') + ';',
-    '  box-shadow: inset 4px 0 0 ' + skinVar('accent') + ';',
+    '  box-shadow: inset 2px 0 0 ' + skinVar('accent') + ';',
     '}',
     s('row') + ':active > ' + sc('act') + ', ' + s('row') + '.is-primary > ' + sc('act') + ' {',
     '  background: ' + skinVar('accent-soft') + ';',
@@ -329,14 +347,17 @@ export function commandPaletteCss(input?: { readonly prefix?: string }): string 
     '@media (prefers-reduced-motion: reduce) {',
     '  ' + s('open') + ', ' + s('x') + ' { transition: none; }',
     '}',
-    '/* 窄档（**面板自己的宽度** < ' + String(COMMAND_PALETTE_NARROW_PX) + 'px）：来源技能片独占一行，',
-    '   主文字与右边那格并到下一行——手机上名字短、片长，挤一行会把名字压成两三个字一列。 */',
+    '/* 窄档（**面板自己的宽度** < ' + String(COMMAND_PALETTE_NARROW_PX) + 'px）：**列一道也不折**。',
+    '   原型 `parts-交互与流程.mjs:133-134` 原文写着「窄档结果行仍留三列（来源技能片在最左）：把技能片顶成',
+    '   单独一行会让每行多占 22px，而这 22px 换来的只是『行首空一格』——三列在 390 下逐字算得下',
+    '   （片 22 ＋ 标题 236 ＋ 按钮 62）」；实测三列在 390 下每行 58 高（折成两列是 88）。',
+    '   窄档真正要收的是那两道缝与行内左右内边距：缝 10px→8px（与行间那道缝同一口径）、内边距各收 2px，',
+    '   把这 8px 让给主文字那一列。 */',
     '@container ' + COMMAND_PALETTE_CONTAINER + ' (max-width: ' + String(COMMAND_PALETTE_NARROW_PX) + 'px) {',
     '  ' + s('row') + ' {',
-    '    grid-template-columns: minmax(0, 1fr) auto;',
-    '    row-gap: 2px;',
+    '    column-gap: ' + String(COMMAND_PALETTE_GAP_PX) + 'px;',
+    '    padding: 6px ' + String(COMMAND_PALETTE_NARROW_PAD_PX) + 'px;',
     '  }',
-    '  ' + rowChild('sk') + ' { grid-column: 1 / -1; justify-self: start; }',
     '}',
   ].join(LF);
 }
