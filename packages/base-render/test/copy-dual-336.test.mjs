@@ -5,7 +5,13 @@
  *  2. `renderActionBar` **只渲染真存在的动作**（#654 起：有数据位不再补禁用态复制日志占位，
  *     单颗时挂 `action-row-ghost-single` 让它在整行轨道铺满）；同一 ghost 行；
  *  3. 复制逻辑：数据→数据位原文（三格式为菜单各带各的 `data-t`），日志→日志位，成功回执保留
- *     （`renderErrorReceipt` 双位都在场仍全使能、无 `disabled`）。
+ *     （`renderErrorReceipt` 双位都在场，**那两颗复制按钮**仍全使能）。
+ *
+ *  口径收窄（#733 起，本件不改 UI 只改判据）：原先第 3 条断的是**整块回执一个 `disabled` 都不许有**，
+ *  而 #733 起回执里那颗「修正重试」按设计就是**标记**而非可点控件——它不带 `data-action-id`，
+ *  点了零动作零反馈，维护者逐字要求它「看起来就不能点」，于是它必须带 `disabled`。两件并存 ⇒
+ *  整块断言会把 #733 的既定视觉判红。本件真正要守的是**复制那两颗**，故收窄到「这两颗不许禁用」，
+ *  并把 #733 那一侧的「重试键必须看得出不能点」一并钉住（免得有人拿掉它的 `disabled` 来消红）。
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,6 +36,14 @@ function ghostRows(html) {
 
 function buttons(html) {
   return (html.match(/<button /g) ?? []).length;
+}
+
+/** 取「文案＝label」那颗按钮的**开始标签**（从它前面最近的 `<button`，到该按钮自己的 `>`）。
+ *  用途：把「不许禁用」判到点名的那一颗上，而不是整块产物里有没有 `disabled` 这个子串。 */
+function buttonTag(html, label) {
+  const end = html.indexOf('>' + label + '</button>');
+  assert.ok(end >= 0, '找不到按钮：' + label);
+  return html.slice(html.lastIndexOf('<button', end), end + 1);
 }
 
 describe('#336 标题去重（base 侧兜底）', () => {
@@ -109,6 +123,8 @@ describe('#336／#654 ActionBar 双按钮一行（有数据位不再补日志位
     assert.ok(html.includes('>' + LOG_LABEL + '</button>'), '回执日志按钮');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="D"'), '回执数据位原文');
     assert.ok(html.includes(DEFAULT_DATA_ATTR + '="L"'), '回执日志位原文');
-    assert.equal(html.includes('disabled'), false, '成功回执不得禁用（保留）');
+    assert.equal(buttonTag(html, DATA_LABEL).includes('disabled'), false, '回执「复制数据」不得禁用（#336 保留）');
+    assert.equal(buttonTag(html, LOG_LABEL).includes('disabled'), false, '回执「复制日志」不得禁用（#336 保留）');
+    assert.ok(buttonTag(html, '修正重试').includes('disabled'), '#733：重试标记键必须看得出来不能点');
   });
 });
