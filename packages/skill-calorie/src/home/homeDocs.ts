@@ -172,6 +172,9 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
   });
   const copy = copyArea({
     // 用户缺陷 6：复制区不出标题（按钮自己会说话）；`title` 位空着，公共层即不出 `<h2>`。
+    // #950：原型在按钮排上方有一行说明（「复制后粘回对话…」）——公共层 `renderCopyBlock` 早有这一位
+    // （#870 的说明行），本包的门外壳此前没透出，这一票补上（`copyArea` 的 `hint` 位），文本照原型逐字。
+    hint: '复制后粘回对话，可继续追问或换窗口重算。',
     data: {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',

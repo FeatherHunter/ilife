@@ -71,6 +71,12 @@ interface CopyAreaInput {
   readonly log?: LogTextInput;
   /** 三样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
   readonly emptyText?: string;
+  /** **复制区说明行**（#950 主页原型改造补的位）：这一排按钮各自复制什么、拿去做什么——一行正文。
+   *
+   *  公共层 `renderCopyBlock` 早有这一位（#870 的「复制区说明行」，类名
+   *  `ilife-block-copy-block-hint`），本件此前没透出它，于是唯一想给这一行的页（主页）递不进去。
+   *  **不给 → 一行不出**（不传就不进 `renderCopyBlock` 的入参，既有调用方产物逐字节不变）。 */
+  readonly hint?: string;
 }
 
 /** 复制日志的入参：本次执行的过程证据（第 1 段「场景标识」由 envelope 派生，不在这里填）。 */
@@ -133,9 +139,12 @@ export function copyArea(input: CopyAreaInput): string {
   }
   // 口径：与按钮同名的标题只留按钮（`renderCopyBlock` 不见该标题，按钮与逻辑不变）。
   const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
+  const hint = input.hint;
   if (data !== undefined || log !== undefined) {
     parts.push(renderCopyBlock({
       ...(title === undefined ? {} : { title }),
+      // 复制区说明行（#950）：不给即不进这一位，既有调用方产物逐字节不变。
+      ...(hint === undefined ? {} : { hint }),
       ...(data === undefined ? {} : { dataFormats: formatsOf(data, input.dataFormats) }),
       // 日志位的信封先过 #550 归一：`key` 已带 `{skill}.` 前缀时剥一层，公共层的
       // `skill ＋ '.' ＋ key` 算式才不会拼成 `calorie.calorie.view.plan`（数据位不动）。
