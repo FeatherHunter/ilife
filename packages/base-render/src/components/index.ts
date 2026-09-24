@@ -57,6 +57,7 @@ export * from './rank-list/index.js';
 export * from './progress-ring/index.js';
 export * from './stacked-bar/index.js';
 export * from './heat-grid/index.js';
+export * from './scatter-fit/index.js';
 /* 时间与分组 */
 export * from './calendar-month/index.js';
 export * from './range-bar/index.js';
@@ -100,3 +101,9 @@ export * from './photo-grid/index.js';
 export * from './photo-compare/index.js';
 export * from './note-block/index.js';
 export * from './invoice-lines/index.js';
+/* 数据与仪表（原型墙 `.scratch/ui-组件墙/新件/parts-数据与仪表.mjs` 那一批）的第一件：`cash-waterline`
+   —— 64 现金水位，形态 A 逐日水位柱／B 每周子弹图／C 进出水三栏；用户在墙上给这三个形态逐格 4 分，
+   故一并落进同一件。**只加行、不重排**（并行席位的约定）。
+   注：这里**不写「族」字**——按本层的对账口径（`test/组件清单.test.mjs` 第 ④ 组），有族注记就得有族汇总
+   入口；同批第二件落地后，再由先成立的那件立 `*Css()` 汇总（照 `sheetCss()` 先例）。 */
+export * from './cash-waterline/index.js';
