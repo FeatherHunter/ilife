@@ -46,6 +46,7 @@ import {
   STYLE_FORBIDDEN_TOKENS,
   TOAST_DEFAULTS,
 } from './spec/index.js';
+import { skinVar } from './components/skin/contract.js';
 import { STYLE_PREFIX } from './style.js';
 import type {
   ActionBarInput,
@@ -115,6 +116,25 @@ function reqText(value: unknown, field: string): string {
 
 function optText(value: unknown): string | undefined {
   return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+/** 可选**闭环位**校验（#950 回灌六件共用）：`undefined` 透传（＝缺省形态，产物零变化）；
+ *  给了须是闭集里的一个值，闭集外一律点名拒（含 `null`／数字／数组这类非串值，不静默择一）。 */
+function optClosed<T extends string>(value: unknown, allowed: readonly T[], field: string): T | undefined {
+  if (value === undefined) return undefined;
+  if (!(allowed as readonly string[]).includes(value as string)) {
+    badInput(field + ' 必须是 ' + allowed.join('／') + ' 之一');
+  }
+  return value as T;
+}
+
+/** 可选**字符串槽**（#950 回灌）：`undefined` 透传；给了须是字符串（空串＝不给，与 `optText` 同口径）。
+ *  与 `reqText` 分工：这里管「给了才出、空串即不出」的槽（如 `helpText`），
+ *  空串也要拒的槽（如字段级 `unit`／`error`）一律走 `reqText`。 */
+function optSlot(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') badInput(field + ' 必须是字符串');
+  return value === '' ? undefined : value;
 }
 
 /** 可选数字约束（#397）：`undefined` 透传；数字收 `String(value)`，字串须非空非空白且 `Number()` 有限。 */
@@ -519,9 +539,19 @@ const MINI_BAR_NAME = 'mini-bar';
 const DIST_ROW_NAME = 'dist-row';
 const CHIP_NAME = 'chip';
 const CHANGE_ROW_NAME = 'change-row';
+/** #950 回灌（对照行）：`'delta'` 形态的**组容器**（只为口径脚注有落点而存在）。 */
+const CHANGE_ROWS_NAME = 'change-rows';
 
 /** 箭头字形（#421-4）：`arrow: false` 靠可见性占位，字形逐字保留（栏位不塌）。 */
 const CHANGE_ARROW_GLYPH = '\u2192';
+
+/** 变化量的方向字形（#950 回灌·对照行）**唯一**出处：方向由件出，色只是第二样。
+ *  `＝` 取全角等号（U+FF1D）——与 `▲`／`▼` 同宽，三档字形在等宽数字栈里对齐。 */
+const CHANGE_DIRECTION_GLYPHS: Readonly<Record<ChangeDirection, string>> = Object.freeze({
+  up: '\u25b2',
+  down: '\u25bc',
+  flat: '\uff1d',
+});
 
 export interface MiniBarInput {
   /** 占比：0–100 的有限数，越界夹取。 */
@@ -676,45 +706,137 @@ export function renderChipRow(input: ChipRowInput): string {
     + (role === 'list' ? ' role="list"' : '') + '>' + inner + tail + '</div>';
 }
 
+/** 行内对照的排面闭集（不给＝`'replace'`，即改前「改前 → 改后」一行）。 */
+export const CHANGE_ROWS_VARIANTS = ['replace', 'delta'] as const;
+export type ChangeRowsVariant = (typeof CHANGE_ROWS_VARIANTS)[number];
+
+/** 变化量的方向闭集（字形由件出：▲／▼／＝；色只是第二样，方向本身看得见）。 */
+export const CHANGE_DIRECTIONS = ['up', 'down', 'flat'] as const;
+export type ChangeDirection = (typeof CHANGE_DIRECTIONS)[number];
+
+/** 变化量的语气闭集（只改颜色；`flat` ＝ 与「不给」同色，类名在场便于页面再加工）。 */
+export const CHANGE_TONES = ['ok', 'danger', 'flat'] as const;
+export type ChangeTone = (typeof CHANGE_TONES)[number];
+
+/** 变化量槽（#950 回灌·对照行）：`'delta'` 形态的主语。 */
+export interface ChangeDeltaInput {
+  /** 变化量**已是给人看的样子**（取整、正负号归调用方；如 `＋32`／`−86`／`0.0`）。空串／非串 → `bad-input`。 */
+  readonly text: string;
+  /** 单位（小一号灰字跟在数字后；如 `分钟`／`卡`／`kg`）。不给／空串＝不出。 */
+  readonly unit?: string;
+  /** 方向（字形由件出，调用方只需说清是涨、是跌、还是持平）。必给。 */
+  readonly direction: ChangeDirection;
+  /** 语气（色）。不给＝中性色。方向与语气**是两件事**：涨在睡眠上是好事、在支出上是坏事。 */
+  readonly tone?: ChangeTone;
+}
+
 export interface ChangeRowInput {
   readonly label: string;
   /** 改前（不给／`null` ＝ 空槽；转义与 `renderDataTable` 的单元格同口径）。 */
   readonly before?: string | number | null;
   /** 改后（同上）。 */
   readonly after?: string | number | null;
-  /** 箭头位（缺省为真）。为假时**仍占箭位**（可见性占位），左右两栏与真行不塌。 */
+  /** 箭头位（缺省为真）。为假时**仍占箭位**（可见性占位），左右两栏与真行不塌。
+   *  `'delta'` 形态下给了 → `bad-input`（那种形态没有「改前｜箭｜改后」三槽）。 */
   readonly arrow?: boolean;
+  /** 变化量槽（`'delta'` 形态必给；`'replace'` 形态给了 → `bad-input`，防两种主位混在一行）。 */
+  readonly change?: ChangeDeltaInput;
+  /** 对照窗口那一句（如「对比上周」／「对比上月」）。`'delta'` 形态下可选；`'replace'` 形态下给了 → `bad-input`。 */
+  readonly basis?: string;
 }
 
 export interface ChangeRowsInput {
   readonly rows: readonly ChangeRowInput[];
+  /** **变化量为先**（#950 回灌·名册 A）：`'delta'` ＝ 第一行标签＋变化量、第二行旧值→新值·对照窗口；
+   *  `'replace'`／不给 ＝ 改前产物（逐字节相同）。闭集外的值 → `bad-input`。 */
+  readonly variant?: ChangeRowsVariant;
+  /** 口径脚注（`'delta'` 形态）：整组之下一行。给了就走 `renderCaliberLine`（口径行**唯一**产出器），
+   *  本件只加一层承载类。不给＝不出。空串／非串 → `bad-input`。 */
+  readonly footnote?: string;
 }
 
 /** #421-4 字段变更行（回执页「改前 → 改后」对照）：`字段名 ｜ 改前 ｜ 箭头 ｜ 改后`。
  *  `arrow: false` 只把字形藏起来、不删栏位（与老技能同一手法：左右栏靠箭位对齐）；
- *  `rows: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。 */
+ *  `rows: []` ＝ 空串；缺失（`undefined`）→ `bad-input`（非数组即拒）。
+ *
+ *  **#950 回灌（对照行 `delta-row` → 本件）**：只加可选形态 `'delta'`（**变化量为先**：第一行
+ *  标签＋变化量，第二行旧值 → 新值 ＋ 对照窗口）。`'replace'`／不给走改前那条路（逐字节相同），
+ *  且改前的四个槽（`-label`／`-old`／`-arrow`／`-new`）、`visibility:hidden` 手法、五字符转义一字不动。
+ *  `'delta'` 形态下组容器 `…-change-rows` 才出现（脚注要有落点）；`'replace'` 保持「行即件、不另加容器」的既有口径。 */
 export function renderChangeRows(input: ChangeRowsInput): string {
   assertPlainObject(input, 'renderChangeRows: input');
   assertNoInlineHandler(input, 'renderChangeRows: input');
   const block = input as ChangeRowsInput;
   if (!Array.isArray(block.rows)) badInput('renderChangeRows: input.rows 必须是数组');
+  const variant = optClosed(block.variant, CHANGE_ROWS_VARIANTS, 'renderChangeRows: input.variant');
+  const delta = variant === 'delta';
+  const footnote = block.footnote === undefined
+    ? undefined
+    : reqText(block.footnote, 'renderChangeRows: input.footnote');
   if (block.rows.length === 0) return '';
-  return block.rows.map((row, i) => {
+  const rows = block.rows.map((row, i) => {
     const field = 'renderChangeRows: input.rows[' + i + ']';
     assertPlainObject(row, field);
     assertNoInlineHandler(row as unknown as object, field);
     const item = row as ChangeRowInput;
     const label = reqText(item.label, field + '.label');
-    return '<div class="' + pageLevelBlock(CHANGE_ROW_NAME) + '">'
+    if (!delta) {
+      // `'replace'`：两种主位不许混在一行——变化量与对照窗口都是 `'delta'` 的槽，给了即点名拒
+      //（不做静默忽略：静默忽略会让「我给了变化量却没出来」变成一个查不出的现象）。
+      if (item.change !== undefined) badInput(field + '.change 只在 variant 为 delta 时给（replace 形态是「改前 → 改后」一行）');
+      if (item.basis !== undefined) badInput(field + '.basis 只在 variant 为 delta 时给');
+      return '<div class="' + pageLevelBlock(CHANGE_ROW_NAME) + '">'
+        + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'label') + '">' + esc(label) + '</span>'
+        + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'old') + '">'
+        + cellText(item.before, field + '.before') + '</span>'
+        + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'arrow') + '" aria-hidden="true"'
+        + (item.arrow === false ? ' style="visibility:hidden"' : '') + '>' + CHANGE_ARROW_GLYPH + '</span>'
+        + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'new') + '">'
+        + cellText(item.after, field + '.after') + '</span>'
+        + '</div>';
+    }
+    // `'delta'`：变化量是主语，故必给；`arrow` 是另一种主位的槽，给了即点名拒。
+    if (item.arrow !== undefined) badInput(field + '.arrow 只在 replace 形态给（delta 形态没有箭位）');
+    if (item.change === undefined) badInput(field + '.change 必给（delta 形态以变化量为主语）');
+    assertPlainObject(item.change, field + '.change');
+    assertNoInlineHandler(item.change as unknown as object, field + '.change');
+    const deltaInput = item.change as ChangeDeltaInput;
+    const changeText = reqText(deltaInput.text, field + '.change.text');
+    const direction = optClosed(deltaInput.direction, CHANGE_DIRECTIONS, field + '.change.direction');
+    if (direction === undefined) badInput(field + '.change.direction 必给（' + CHANGE_DIRECTIONS.join('／') + ' 之一）');
+    const tone = optClosed(deltaInput.tone, CHANGE_TONES, field + '.change.tone');
+    const changeUnit = optSlot(deltaInput.unit, field + '.change.unit');
+    const basis = optSlot(item.basis, field + '.basis');
+    // 变化量槽：字形（`aria-hidden`，读屏只读数字与单位）＋ 数字文本 ＋ 可选单位（`<u>` 去下划线，只是承载）。
+    const changeCls = pageLevelPart(CHANGE_ROW_NAME, 'change')
+      + (tone === undefined ? '' : ' ' + pageLevelPart(CHANGE_ROW_NAME, 'change-' + tone));
+    const changeHtml = '<span class="' + changeCls + '">'
+      + '<i class="' + pageLevelPart(CHANGE_ROW_NAME, 'change-mark') + '" aria-hidden="true">'
+      + CHANGE_DIRECTION_GLYPHS[direction] + '</i>'
+      + esc(changeText)
+      + (changeUnit === undefined ? '' : '<u class="' + pageLevelPart(CHANGE_ROW_NAME, 'change-unit') + '">'
+        + esc(changeUnit) + '</u>')
+      + '</span>';
+    // 备查行：旧值 → 新值（`→` 复用既有 `CHANGE_ARROW_GLYPH`；两值仍走既有 `cellText` 的缺值空槽），
+    // 对照窗口与前段之间那条分隔**不进产物文本**——原型里的 `·` 是字符分隔，本仓口径是「拿版式当分隔」，
+    // 故改由 `-trace-gap` 一枚空 `<i>` ＋ CSS 的间距／竖线承担。
+    const traceHtml = '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'trace') + '">'
+      + cellText(item.before, field + '.before') + ' ' + CHANGE_ARROW_GLYPH + ' '
+      + cellText(item.after, field + '.after')
+      + (basis === undefined ? ''
+        : '<i class="' + pageLevelPart(CHANGE_ROW_NAME, 'trace-gap') + '" aria-hidden="true"></i>' + esc(basis))
+      + '</span>';
+    return '<div class="' + pageLevelBlock(CHANGE_ROW_NAME) + ' '
+      + pageLevelPart(CHANGE_ROW_NAME, 'delta') + '">'
       + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'label') + '">' + esc(label) + '</span>'
-      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'old') + '">'
-      + cellText(item.before, field + '.before') + '</span>'
-      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'arrow') + '" aria-hidden="true"'
-      + (item.arrow === false ? ' style="visibility:hidden"' : '') + '>' + CHANGE_ARROW_GLYPH + '</span>'
-      + '<span class="' + pageLevelPart(CHANGE_ROW_NAME, 'new') + '">'
-      + cellText(item.after, field + '.after') + '</span>'
-      + '</div>';
+      + changeHtml + traceHtml + '</div>';
   }).join('');
+  if (!delta) return rows;
+  return '<div class="' + pageLevelBlock(CHANGE_ROWS_NAME) + '">' + rows
+    + (footnote === undefined ? ''
+      : '<div class="' + pageLevelPart(CHANGE_ROWS_NAME, 'footnote') + '">'
+        + renderCaliberLine(footnote) + '</div>')
+    + '</div>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -820,24 +942,40 @@ export function renderKpiCard(input: KpiCardInput): string {
   return parts.join('');
 }
 
+/** 网格形态闭集（与既有 `'cards'` 共存；不给＝`'cards'`）。 */
+export const KPI_GRID_VARIANTS = ['cards', 'flat'] as const;
+export type KpiGridVariant = (typeof KPI_GRID_VARIANTS)[number];
+
 /** B-02 伴生布局的标题选项（#513 段标题槽）：只 `title` 一位，与 `renderChartBlock`／`copyArea`
  *  的 `title` 位同形（非空字符串 ⇒ 段标题 h2；缺省／空串 ⇒ 零渲染）。 */
 export interface KpiGridOptions {
   readonly title?: string;
+  /** **无框栅格**（#950 回灌·名册 C）：`'flat'` ＝ 框从「每卡」搬到「整组」、格间出发丝线、主数字提一档；
+   *  `'cards'`／不给 ＝ 改前产物（逐字节相同）。闭集外的值 → `bad-input`。 */
+  readonly variant?: KpiGridVariant;
 }
 
-/** B-02 伴生布局：KPI 卡网格（不是第 13 个区块，无独立样式区，用 `kpiCard` 区）。 */
+/** B-02 伴生布局：KPI 卡网格（不是第 13 个区块，无独立样式区，用 `kpiCard` 区）。
+ *
+ *  **#950 回灌（读数格 `metric-grid` → 本件）**：只加可选形态 `'flat'`（整组共一个框），
+ *  缺省／`'cards'` 走改前那条路（逐字节相同）；`renderKpiCard` 的产物**一字不动**（去框全在 CSS）。
+ *  新形态多一层容器 `…-kpi-card-flat`（`@container` 需要祖先容器，元素不能当自己的容器）。 */
 export function renderKpiGrid(cards: readonly KpiCardInput[], opts?: KpiGridOptions): string {
   if (!Array.isArray(cards) || cards.length === 0) badInput('renderKpiGrid: cards 必须是非空数组');
   if (opts !== undefined) {
     assertPlainObject(opts, 'renderKpiGrid: opts');
     assertNoInlineHandler(opts, 'renderKpiGrid: opts');
   }
-  const grid = '<div class="' + blockPart('kpiCard', 'grid') + '">'
+  const variant = opts === undefined ? undefined : optClosed(opts.variant, KPI_GRID_VARIANTS, 'renderKpiGrid: opts.variant');
+  const inner = '<div class="' + blockPart('kpiCard', 'grid') + '">'
     + cards.map((card) => renderKpiCard(card)).join('') + '</div>';
+  const grid = variant === 'flat'
+    ? '<div class="' + blockPart('kpiCard', 'flat') + '">' + inner + '</div>'
+    : inner;
   // #513：不给 title 即返回原 grid 串（与改前逐字节同）；给了即标题 h2 ＋原 grid
   // （与页面当刻手写形一致，页面票后迁可逐字节对）。标题类复用 #507 已落盘的 `kpi-card-title`
   //（15px／700），不新增类名、不新增样式区。
+  // #950：标题**仍在最前**（`h2` ＋ 形态容器 ＋ 网格），与既有次序一致。
   const title = opts === undefined ? undefined : optText(opts.title);
   if (title === undefined) return grid;
   return '<h2 class="' + blockPart('kpiCard', 'title') + '">' + esc(title) + '</h2>' + grid;
@@ -853,6 +991,11 @@ export interface DataTableColumn {
   readonly key: string;
   readonly label: string;
   readonly align?: DataTableAlign;
+  /** **行内迷你条列**（#950 回灌·名册 A 的识别特征）：`true` ＝ 本列的值当占比使
+   *  （0–100 的有限数 ⇒ 迷你条 ＋ 百分数）；`false`／不给 ＝ 改前文本格（逐字节相同）。
+   *  非有限数（字串／对象／`NaN`／`Infinity`）→ `bad-input` 并点名到 `rows[i].<key>`；
+   *  `null`／`undefined` ⇒ 缺值，出 `—`（不画条）。给了 `cellHtml` 且它对这一格返回字符串 ⇒ 受信透传优先。 */
+  readonly bar?: boolean;
 }
 
 /** 表格行（#513 行标记槽）：单元格映射＋可选 `marker`（非空字符串 ⇒ 首格前插行徽标；
@@ -870,7 +1013,20 @@ export interface DataTableInput {
    *  `renderDisclosure` 的 `contentHtml` 同口径）——调用方须自行转义插值，
    *  不得把未转义的用户输入拼进去。返回非字符串非 undefined 即 `bad-input`。 */
   readonly cellHtml?: (columnKey: string, value: unknown) => string | undefined;
+  /** **容器锚点**（#950 回灌·名册 A）：`'carded'` ＝ 根多一枚修饰类并挂 `container-type: inline-size`
+   *  （为后续的容器档排面留锚点）；`'plain'`／不给 ＝ 改前产物与改前样式（逐字节相同）。
+   *  **未落的一半（交裁记录）**：设计 §5.4 指定的 `@container (max-width: 560px)` 卡化段与
+   *  `table-mobile-t541` ③／`table-caption-box-547`／`rowcard-caliber-t154r3` ③ 三条既有判据真冲突
+   *  （那三条按「切掉 ≤640 段后剩下的就是桌面档」扫全表文本），故窄档排面沿用既有视口媒体档。 */
+  readonly variant?: DataTableVariant;
+  /** 表下口径脚注：表之后出 `-footnote` 一层，内层走 `renderCaliberLine`（口径行唯一产出器）。
+   *  两形态都可给；不给＝不出（既有调用方逐字节不变）。空串／非串 → `bad-input`。 */
+  readonly footnote?: string;
 }
+
+/** 数据表排面闭集（不给＝`'plain'`，即改前：视口驱动的窄档卡片化 ＋ 根留横滑兜底）。 */
+export const DATA_TABLE_VARIANTS = ['plain', 'carded'] as const;
+export type DataTableVariant = (typeof DATA_TABLE_VARIANTS)[number];
 
 const TABLE_ALIGNS: readonly string[] = ['left', 'center', 'right'];
 
@@ -882,7 +1038,27 @@ function cellText(value: unknown, field: string): string {
   badInput(field + ' 只许 string／number／boolean／bigint／null／undefined');
 }
 
-/** B-03：语义表格（`table／thead／th／td`；零行 → `renderEmptyState`，不渲染空表）。 */
+/** `bar` 列的缺值占位（#950 回灌·数据表）：与仓内「缺数一律写 —」同字（取 `KPI_PENDING_MARK` 同一字面）。 */
+const DATA_TABLE_DASH = KPI_PENDING_MARK;
+
+/** `bar` 列的数据格（#950 回灌·数据表）：0–100 的有限数 ⇒ 一条迷你条 ＋ 百分数；
+ *  缺值 ⇒ `—`（不画条）；其余（字串／对象／`NaN`／`Infinity`）→ `bad-input`（点名到 `rows[i].<key>`）。
+ *  条**逐字复用** `renderMiniBar`（占比迷你条的唯一实现），本件只补这一列特有的读数文本。 */
+function dataTableBarHtml(value: unknown, field: string): string {
+  if (value === null || value === undefined) return DATA_TABLE_DASH;
+  const pct = reqPct(value, field);
+  return '<span class="' + blockPart('dataTable', 'bar') + '">'
+    + renderMiniBar({ pct })
+    + '<span class="' + blockPart('dataTable', 'bar-pct') + '">' + String(pct) + '%</span>'
+    + '</span>';
+}
+
+/** B-03：语义表格（`table／thead／th／td`；零行 → `renderEmptyState`，不渲染空表）。
+ *
+ *  **#950 回灌（数据表 `data-table` → 本件）**：形态键只管**窄档排面**（`'carded'` ＝ 根挂容器锚点，
+ *  窄档卡化沿用既有视口媒体档——容器档那半见 `variant` 的注释），另两个槽（`bar` 列／`footnote`）
+ *  **两形态都可给**、各自可选、各自零变化。
+ *  `'plain'`／不给走改前那条路（产物与改前逐字节相同，根上 `overflow-x: auto` 的横滑兜底一字不动）。 */
 export function renderDataTable(input: DataTableInput): string {
   assertPlainObject(input, 'renderDataTable: input');
   assertNoInlineHandler(input, 'renderDataTable: input');
@@ -894,6 +1070,10 @@ export function renderDataTable(input: DataTableInput): string {
   if (table.cellHtml !== undefined && typeof table.cellHtml !== 'function') {
     badInput('renderDataTable: input.cellHtml 必须是函数');
   }
+  const variant = optClosed(table.variant, DATA_TABLE_VARIANTS, 'renderDataTable: input.variant');
+  const footnote = table.footnote === undefined
+    ? undefined
+    : reqText(table.footnote, 'renderDataTable: input.footnote');
   const cellHtml = table.cellHtml;
   const columns = table.columns.map((column, i) => {
     const field = 'renderDataTable: input.columns[' + i + ']';
@@ -902,7 +1082,9 @@ export function renderDataTable(input: DataTableInput): string {
     const label = reqText((column as DataTableColumn).label, field + '.label');
     const align = (column as DataTableColumn).align ?? 'left';
     if (!TABLE_ALIGNS.includes(align)) badInput(field + '.align 必须是 left／center／right');
-    return { key, label, align: align as DataTableAlign };
+    const bar = (column as DataTableColumn).bar;
+    if (bar !== undefined && typeof bar !== 'boolean') badInput(field + '.bar 必须是布尔值');
+    return { key, label, align: align as DataTableAlign, bar: bar === true };
   });
   if (table.rows.length === 0) {
     const text = optText(table.emptyText) ?? '无数据';
@@ -937,9 +1119,10 @@ export function renderDataTable(input: DataTableInput): string {
       // 390px 里。**只加属性**：既有类名、既有结构、既有文本一字不动，桌面档（≥641）没有任何
       // 规则引用它 ⇒ 桌面渲染逐像素不变（自证读数见证据件）。列头文本与 `th` 同源（同一个
       // `column.label`），不存在两处文案漂移。`esc` 已含 `"`（五字符表）⇒ 标签含引号也安全。
-      const text = trusted === undefined
-        ? cellText(raw, 'renderDataTable: input.rows[' + ri + '].' + column.key)
-        : trusted;
+      const text = trusted !== undefined ? trusted
+        : column.bar
+          ? dataTableBarHtml(raw, 'renderDataTable: input.rows[' + ri + '].' + column.key)
+          : cellText(raw, 'renderDataTable: input.rows[' + ri + '].' + column.key);
       const open = '<td class="' + blockPart('dataTable', 'cell-' + column.align) + '" data-label="' + esc(column.label) + '">';
       // #513：行标记只进首格（转义后前插；`cellHtml` 受信透传不受影响）。
       const head = ci === 0 && marker !== undefined
@@ -949,9 +1132,16 @@ export function renderDataTable(input: DataTableInput): string {
     }).join('') + '</tr>';
   }).join('') + '</tbody>';
   const caption = optText(table.caption);
-  return '<div class="' + blockRoot('dataTable') + '"><table class="' + blockPart('dataTable', 'table') + '">'
+  // #950：`'carded'` 只在根上多一枚修饰类（零横滑与容器驱动全在 CSS 里，见 `dataTable` 区尾部）；
+  // `footnote` 两形态都可给，住 `</table>` 之后、根 `</div>` 之前，内层逐字走 `renderCaliberLine`。
+  const rootClass = blockRoot('dataTable')
+    + (variant === 'carded' ? ' ' + blockPart('dataTable', 'carded') : '');
+  return '<div class="' + rootClass + '"><table class="' + blockPart('dataTable', 'table') + '">'
     + (caption === undefined ? '' : '<caption class="' + blockPart('dataTable', 'caption') + '">' + esc(caption) + '</caption>')
-    + head + body + '</table></div>';
+    + head + body + '</table>'
+    + (footnote === undefined ? ''
+      : '<div class="' + blockPart('dataTable', 'footnote') + '">' + renderCaliberLine(footnote) + '</div>')
+    + '</div>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -962,13 +1152,30 @@ export type ChartBlockChartInput =
   | BarChartInput | LineChartInput | DonutChartInput | ProgressChartInput
   | ComboChartInput | SparklineChartInput | GaugeChartInput | ScatterChartInput;
 
+/** 图表区块排面闭集（不给＝`'plain'`，即改前「可选标题 ＋ 图」）。 */
+export const CHART_BLOCK_VARIANTS = ['plain', 'annotated'] as const;
+export type ChartBlockVariant = (typeof CHART_BLOCK_VARIANTS)[number];
+
 export interface ChartBlockInput {
   readonly kind: ChartKind;
   readonly input: ChartBlockChartInput;
   readonly title?: string;
+  /** **带注的图表框**（#950 回灌·名册 A）：`'annotated'` ＝ 头栏（标题＋单位）＋图＋脚注（口径）；
+   *  `'plain'`／不给 ＝ 改前产物（逐字节相同）。闭集外的值 → `bad-input`。
+   *  给了 `'annotated'` 但 `unit`／`caliber` 都没给 → `bad-input`（带了框却一个注都没有，是空形态）。 */
+  readonly variant?: ChartBlockVariant;
+  /** 单位串（如「单位：卡」）。只在 `'annotated'` 下生效；`'plain'` 下给了 → `bad-input`；空串 → `bad-input`。 */
+  readonly unit?: string;
+  /** 口径脚注（那条虚线是什么、缺的那天怎么算）。只在 `'annotated'` 下生效；
+   *  文本走 `renderCaliberLine`（口径行**唯一**产出器，`｜` 拆段也在它那里）。`'plain'` 下给了 → `bad-input`。 */
+  readonly caliber?: string;
 }
 
-/** B-04：图表区块（分发给冻结 `charts` 8 接口；空数组走空态／结构违规抛错恒为冻结语义）。 */
+/** B-04：图表区块（分发给冻结 `charts` 8 接口；空数组走空态／结构违规抛错恒为冻结语义）。
+ *
+ *  **#950 回灌（图表框 `chart-frame` → 本件）**：只加可选形态 `'annotated'`（头栏＝标题＋单位、
+ *  图下＝口径脚注，两处注都在框里）。`'plain'`／不给走改前那条路（逐字节相同，`<h2>` 仍是
+ *  `section` 的直接子元素）；脚注**不另造口径行**，逐字走既有 `renderCaliberLine`。 */
 export function renderChartBlock(input: ChartBlockInput): string {
   assertPlainObject(input, 'renderChartBlock: input');
   assertNoInlineHandler(input, 'renderChartBlock: input');
@@ -977,6 +1184,21 @@ export function renderChartBlock(input: ChartBlockInput): string {
     badInput('renderChartBlock: input.kind 必须是 ' + CHART_KINDS.join('／'));
   }
   if (block.input === null || typeof block.input !== 'object') badInput('renderChartBlock: input.input 必须是对象');
+  // #950：两处注只在 `'annotated'` 下生效。`'plain'` 下给了即点名拒（不做静默忽略——静默忽略会让
+  // 「我给了单位却没出来」变成一个查不出的现象）；校验排在 `charts.*` 分发**之前**，
+  // 保证这条拒绝与图表本身的取值无关（结构违规仍透传抛错，是另一条路）。
+  const variant = optClosed(block.variant, CHART_BLOCK_VARIANTS, 'renderChartBlock: input.variant');
+  const annotated = variant === 'annotated';
+  if (!annotated) {
+    if (block.unit !== undefined) badInput('renderChartBlock: input.unit 只在 variant 为 annotated 时给');
+    if (block.caliber !== undefined) badInput('renderChartBlock: input.caliber 只在 variant 为 annotated 时给');
+  }
+  const unit = !annotated || block.unit === undefined ? undefined
+    : reqText(block.unit, 'renderChartBlock: input.unit');
+  const caliber = annotated ? optSlot(block.caliber, 'renderChartBlock: input.caliber') : undefined;
+  if (annotated && unit === undefined && caliber === undefined) {
+    badInput('renderChartBlock: variant 为 annotated 时 input.unit 与 input.caliber 至少给一个（空形态）');
+  }
   const chartHtml = (() => {
     switch (block.kind) {
       case 'bar': return charts.bar(block.input as BarChartInput).html;
@@ -991,9 +1213,24 @@ export function renderChartBlock(input: ChartBlockInput): string {
     }
   })();
   const title = optText(block.title);
-  return '<section class="' + blockRoot('chartBlock') + '">'
-    + (title === undefined ? '' : '<h2 class="' + blockPart('chartBlock', 'title') + '">' + esc(title) + '</h2>')
-    + '<div class="' + blockPart('chartBlock', 'canvas') + '">' + chartHtml + '</div>'
+  const canvas = '<div class="' + blockPart('chartBlock', 'canvas') + '">' + chartHtml + '</div>';
+  if (!annotated) {
+    return '<section class="' + blockRoot('chartBlock') + '">'
+      + (title === undefined ? '' : '<h2 class="' + blockPart('chartBlock', 'title') + '">' + esc(title) + '</h2>')
+      + canvas
+      + '</section>';
+  }
+  // 头栏只在有 `title` 或 `unit` 时出（两者都没有时头栏是空的——只有 `caliber` 的框不出头栏）。
+  const head = title === undefined && unit === undefined ? ''
+    : '<div class="' + blockPart('chartBlock', 'head') + '">'
+      + (title === undefined ? '' : '<h2 class="' + blockPart('chartBlock', 'title') + '">' + esc(title) + '</h2>')
+      + (unit === undefined ? '' : '<span class="' + blockPart('chartBlock', 'unit') + '">' + esc(unit) + '</span>')
+      + '</div>';
+  return '<section class="' + blockRoot('chartBlock') + ' '
+    + blockPart('chartBlock', 'annotated') + '">'
+    + head + canvas
+    + (caliber === undefined ? ''
+      : '<div class="' + blockPart('chartBlock', 'caliber') + '">' + renderCaliberLine(caliber) + '</div>')
     + '</section>';
 }
 
@@ -1006,19 +1243,39 @@ export interface ListRowInput {
   readonly main: string;
   readonly right?: string;
   readonly done?: boolean;
+  /** 副语（主行下方那一行：`早餐 · 1 个 · 蛋白 12 g`）。只在 `'two-line'` 形态下生效；
+   *  `'one-line'` 下给了 → `bad-input`（一行里塞两行会撑破既有 `nowrap` 行高口径，属两种形态混用）。
+   *  空串／非串 → `bad-input`。 */
+  readonly note?: string;
+  /** 右侧读数的单位（小一号灰字；如 `卡`／`km`）。只在 `'two-line'` 形态下生效；
+   *  `'one-line'` 下给了 → `bad-input`。非串 → `bad-input`。 */
+  readonly unit?: string;
 }
+
+/** 条目行组排面闭集（不给＝`'one-line'`，即改前三槽一行）。 */
+export const LIST_ROWS_VARIANTS = ['one-line', 'two-line'] as const;
+export type ListRowsVariant = (typeof LIST_ROWS_VARIANTS)[number];
 
 export interface ListRowsInput {
   readonly items: readonly ListRowInput[];
   readonly emptyText?: string;
+  /** **两行式**（#950 回灌·名册 B）：`'two-line'` ＝ 中间槽恒出 `-main-line`（主行）＋ 有 `note` 才出
+   *  `-note`（副语）、行高提一档、主行不再 `…` 截断（改折行）；`'one-line'`／不给 ＝ 改前产物（逐字节相同）。 */
+  readonly variant?: ListRowsVariant;
 }
 
-/** B-05：行列表（首行无边框；`done` → 删除线＋成功色；零行 → 空态）。 */
+/** B-05：行列表（首行无边框；`done` → 删除线＋成功色；零行 → 空态）。
+ *
+ *  **#950 回灌（条目行组 `list-rows` → 本件）**：只加可选形态 `'two-line'`（主行＋副语）。
+ *  行级修饰类一字不动（仍是 `-row`〔`-row-done`〕〔`-row-no-left`〕）——两行式由**根**的 `-two-line`
+ *  类驱动，行只多出中间槽的子件与右槽的单位子件 ⇒ `-row` 的栅格轨道判据（#567 D2）一字不受影响。 */
 export function renderListRows(input: ListRowsInput): string {
   assertPlainObject(input, 'renderListRows: input');
   assertNoInlineHandler(input, 'renderListRows: input');
   const list = input as ListRowsInput;
   if (!Array.isArray(list.items)) badInput('renderListRows: input.items 必须是数组');
+  const variant = optClosed(list.variant, LIST_ROWS_VARIANTS, 'renderListRows: input.variant');
+  const twoLine = variant === 'two-line';
   if (list.items.length === 0) {
     const text = optText(list.emptyText) ?? '无数据';
     return '<div class="' + blockRoot('listRows') + '">' + renderEmptyState({ text }) + '</div>';
@@ -1031,19 +1288,39 @@ export function renderListRows(input: ListRowsInput): string {
     const done = row.done === true;
     const left = optText(row.left);
     const right = optText(row.right);
+    // #950：两个新槽只在 `'two-line'` 下生效；`'one-line'` 下给了即点名拒（不做静默忽略——
+    // 静默忽略会让「我给了副语却没出来」变成一个查不出的现象）。
+    if (!twoLine) {
+      if (row.note !== undefined) badInput(field + '.note 只在 variant 为 two-line 时给');
+      if (row.unit !== undefined) badInput(field + '.unit 只在 variant 为 two-line 时给');
+    }
+    // `note` 给空串即拒（副语是这一形态的内容，给了却写不出东西＝形态残缺）；`unit` 只拒非串，空串＝不给。
+    const note = twoLine && row.note !== undefined ? reqText(row.note, field + '.note') : undefined;
+    const unit = twoLine ? optSlot(row.unit, field + '.unit') : undefined;
     // 没给 `left` 时**不占那一列**：`44px` 那列是给 `▲`／`▼`／`—` 这类标记用的，而栅格是自动排布——
     // 若仍按三列排，`main` 会落进 44px 那列、被 `nowrap` ＋ `ellipsis` 截断（#154 实测：备注标签
     // 「晨起空腹」显示成「晨起…」）。修饰类只改列定义，不动任何既有行。
     const cls = blockPart('listRows', 'row')
       + (done ? ' ' + blockPart('listRows', 'row-done') : '')
       + (left === undefined ? ' ' + blockPart('listRows', 'row-no-left') : '');
+    // #950：两行式的中间槽恒出 `-main-line`（形态定骨架），`note` 缺则不出 `-note`（槽定内容）；
+    // `'one-line'` 里仍是裸文本（判据钉死：不许顺手把 `-main-line` 也加进既有形态）。
+    const mainHtml = twoLine
+      ? '<span class="' + blockPart('listRows', 'main-line') + '">' + esc(main) + '</span>'
+        + (note === undefined ? '' : '<span class="' + blockPart('listRows', 'note') + '">' + esc(note) + '</span>')
+      : esc(main);
+    const rightHtml = right === undefined ? '' : '<span class="' + blockPart('listRows', 'right') + '">'
+      + esc(right)
+      + (unit === undefined ? '' : '<span class="' + blockPart('listRows', 'unit') + '">' + esc(unit) + '</span>')
+      + '</span>';
     return '<div class="' + cls + '">'
       + (left === undefined ? '' : '<span class="' + blockPart('listRows', 'left') + '">' + esc(left) + '</span>')
-      + '<span class="' + blockPart('listRows', 'main') + '">' + esc(main) + '</span>'
-      + (right === undefined ? '' : '<span class="' + blockPart('listRows', 'right') + '">' + esc(right) + '</span>')
+      + '<span class="' + blockPart('listRows', 'main') + '">' + mainHtml + '</span>'
+      + rightHtml
       + '</div>';
   }).join('');
-  return '<div class="' + blockRoot('listRows') + '" role="list">' + rows + '</div>';
+  return '<div class="' + blockRoot('listRows')
+    + (twoLine ? ' ' + blockPart('listRows', 'two-line') : '') + '" role="list">' + rows + '</div>';
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1187,6 +1464,7 @@ export interface ParamFieldInput {
   readonly name: string;
   readonly label: string;
   readonly value?: string;
+  /** 占位符（**既有语义，不动**）：进 `placeholder`。要一行写在控件下面的说明，用 `helpText`。 */
   readonly hint?: string;
   readonly required?: boolean;
   /** 只读（#397）：`true` 时 `<input>` 落裸 `readonly`；`options` 下拉（`select` 无 `readonly`）落裸 `disabled`。 */
@@ -1200,14 +1478,38 @@ export interface ParamFieldInput {
   /** 候选项（#397；#474 追加对象项）：非空项数组；给了即渲染 `<select>` 代替 `<input>`，
    *  `value` 命中的一项落 `selected`（对象项按 `value` 比机器值），`hint` 化作首项占位（`value=""` 禁选）。 */
   readonly options?: readonly (string | ParamOption)[];
+  /** **单位后缀**（#950 回灌·字段行）：给了就在控件右侧出一枚不可编辑的后缀（`元`／`kg`／`次`），
+   *  控件同时被包进一层 `-control`（unit 要有个落点）；不给 ＝ 产物与改前逐字节相同。
+   *  空串／非串 → `bad-input`。 */
+  readonly unit?: string;
+  /** 控件下方那一行说明（如「填不出来的话先留空，保存时按最近 30 天猜一个」）。
+   *  与 `hint`（placeholder）**是两件事**：这一行要一直看得见。不给／空串 ＝ 不出这一行。 */
+  readonly helpText?: string;
+  /** **错误一行**（#950 回灌·字段行）：出 `-error` 行（件在前缀一枚 `要改：`），并同时落
+   *  `aria-invalid="true"` ＋ `aria-describedby`（只指向**实际存在**的那几行）。
+   *  拦截仍归宿主（与 `data-required` 同一条口径），本件只出形态。空串／非串 → `bad-input`。 */
+  readonly error?: string;
 }
+
+/** 表单排面闭集（不给＝`'stack'`，即改前单列）。 */
+export const PARAM_FORM_VARIANTS = ['stack', 'grid'] as const;
+export type ParamFormVariant = (typeof PARAM_FORM_VARIANTS)[number];
 
 export interface ParamFormInput {
   readonly fields: readonly ParamFieldInput[];
   readonly description?: string;
   /** 初始预览文本（受信透传；实时重算由宿主在 `input` 事件里做，DB-7）。 */
   readonly previewText?: string;
+  /** **字段组**（#950 回灌·名册 A）：`'grid'` ＝ 容器 ≥461px 两列、否则一列的字段组；
+   *  `'stack'`／不给 ＝ 改前单列（逐字节相同）。闭集外的值 → `bad-input`。 */
+  readonly variant?: ParamFormVariant;
 }
+
+/** 错误行的前缀词（#950 回灌·字段行）：与原型 `parts-08-表与输入.mjs:603` 同一句读法
+ *  （`要改：2,180.00 超过单笔上限 2,000`），件出前缀、调用方只说错在哪。 */
+const PARAM_ERROR_PREFIX = '要改：';
+/** 字段槽 id 的命名空间前缀（`ilife-param-form-<name>-help|error`）。 */
+const PARAM_FORM_ID_PREFIX = 'ilife-param-form-';
 
 /** B-09：参数表单（`placeholder = hint`；`required` 落 `data-required` 供宿主拦截；零 JS）。
  *  #397 可选约束：`readonly` 落裸 `readonly`；`step／min／max` 落同名属性（任一出现即
@@ -1215,7 +1517,9 @@ export interface ParamFormInput {
  *  `options` 给了即渲染 `<select>`（`value` 命中项 `selected`，`hint` 化作首项占位，
  *  `readonly` 化作 `disabled`，与 `step／min／max` 互斥）。
  *  #474 追加：`options` 收 `{ value, label }` 对象项——`value` 是机器值（`selected` 按它比）、
- *  `label` 是显示文本；字符串项走原路，全字符串调用方的产物**逐字节不变**。 */
+ *  `label` 是显示文本；字符串项走原路，全字符串调用方的产物**逐字节不变**。
+ *  #950 回灌（字段行 `field-row` → 本件）：只加可选形态 `'grid'`（宽屏两列／窄屏一列的字段组）
+ *  ＋三个字段槽（`unit`／`helpText`／`error`）；`'stack'`／不给 ＋ 三槽全不给 ⇒ 逐字节相同。 */
 export function renderParamForm(input: ParamFormInput): string {
   assertPlainObject(input, 'renderParamForm: input');
   assertNoInlineHandler(input, 'renderParamForm: input');
@@ -1223,11 +1527,17 @@ export function renderParamForm(input: ParamFormInput): string {
   if (!Array.isArray(form.fields) || form.fields.length === 0) {
     badInput('renderParamForm: input.fields 必须是非空数组');
   }
-  const parts: string[] = ['<div class="' + blockRoot('paramForm') + '">'];
+  const variant = optClosed(form.variant, PARAM_FORM_VARIANTS, 'renderParamForm: input.variant');
+  const rootClass = blockRoot('paramForm')
+    + (variant === 'grid' ? ' ' + blockPart('paramForm', 'grid') : '');
+  const parts: string[] = ['<div class="' + rootClass + '">'];
   const description = optText(form.description);
   if (description !== undefined) {
     parts.push('<p class="' + blockPart('paramForm', 'description') + '">' + esc(description) + '</p>');
   }
+  // #950：`'grid'` 才把逐字段收进 `-fields` 一格组；`-description` 与 `-preview` 留在它**外面**
+  //（那是整组的头尾，不是字段——收进去会把说明行也摆成栅格项）。
+  if (variant === 'grid') parts.push('<div class="' + blockPart('paramForm', 'fields') + '">');
   form.fields.forEach((field, i) => {
     const path = 'renderParamForm: input.fields[' + i + ']';
     assertPlainObject(field, path);
@@ -1250,42 +1560,68 @@ export function renderParamForm(input: ParamFormInput): string {
     if (options !== undefined && (step !== undefined || min !== undefined || max !== undefined)) {
       badInput(path + '.options 与 step／min／max 互斥');
     }
+    // #950 三个字段槽：`unit`／`error` 给空串即拒（给了却写不出东西＝形态残缺）；
+    // `helpText` 只拒非串（空串＝不给这一行，与 `optText` 同口径）。
+    const unit = item.unit === undefined ? undefined : reqText(item.unit, path + '.unit');
+    const helpText = optSlot(item.helpText, path + '.helpText');
+    const errorText = item.error === undefined ? undefined : reqText(item.error, path + '.error');
+    // aria 只描述**实际存在**的那几行（`-help` → `-error` 按产物次序拼）；`aria-invalid` 跟 `error` 走。
+    const helpId = PARAM_FORM_ID_PREFIX + esc(name) + '-help';
+    const errorId = PARAM_FORM_ID_PREFIX + esc(name) + '-error';
+    const described = (helpText === undefined ? '' : helpId)
+      + (helpText !== undefined && errorText !== undefined ? ' ' : '')
+      + (errorText === undefined ? '' : errorId);
+    const aria = (errorText === undefined ? '' : ' aria-invalid="true"')
+      + (described === '' ? '' : ' aria-describedby="' + described + '"');
+    const fieldOpen = '<label class="' + blockPart('paramForm', 'field') + '">'
+      + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
+      + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
+      + '</span>';
+    const helpHtml = helpText === undefined
+      ? ''
+      : '<span class="' + blockPart('paramForm', 'help') + '" id="' + helpId + '">' + esc(helpText) + '</span>';
+    const errorHtml = errorText === undefined
+      ? ''
+      : '<span class="' + blockPart('paramForm', 'error') + '" id="' + errorId + '">'
+        + PARAM_ERROR_PREFIX + esc(errorText) + '</span>';
+    /** 单位后缀：给了才包 `-control`（那一层就是后缀的落点），不给时控件原样落进 `label`。 */
+    const wrapControl = (html: string): string => (unit === undefined ? html
+      : '<span class="' + blockPart('paramForm', 'control') + '">' + html
+        + '<span class="' + blockPart('paramForm', 'unit') + '">' + esc(unit) + '</span></span>');
     if (options !== undefined) {
       // #474：对象项按**机器值**比 `selected`，显示文本取 `label`；字符串项与旧行为逐字节一致。
       const entries = options.map((opt) => (typeof opt === 'string' ? { value: opt, label: opt } : opt));
       const optionHtml = entries.map((opt) => '<option value="' + esc(opt.value) + '"'
         + (value === opt.value ? ' selected' : '') + '>' + esc(opt.label) + '</option>').join('');
-      parts.push('<label class="' + blockPart('paramForm', 'field') + '">'
-        + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
-        + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
-        + '</span>'
-        + '<select class="' + blockPart('paramForm', 'input') + '" name="' + esc(name) + '"'
-        + (required ? ' data-required="1" required' : '')
-        + (readonly ? ' disabled' : '')
-        + '>'
-        + (hint === undefined ? '' : '<option value="" disabled' + (entries.some((opt) => opt.value === value) ? '' : ' selected') + '>'
-          + esc(hint) + '</option>')
-        + optionHtml
-        + '</select>'
+      parts.push(fieldOpen
+        + wrapControl('<select class="' + blockPart('paramForm', 'input') + '"' + aria
+          + ' name="' + esc(name) + '"'
+          + (required ? ' data-required="1" required' : '')
+          + (readonly ? ' disabled' : '')
+          + '>'
+          + (hint === undefined ? '' : '<option value="" disabled' + (entries.some((opt) => opt.value === value) ? '' : ' selected') + '>'
+            + esc(hint) + '</option>')
+          + optionHtml
+          + '</select>')
+        + helpHtml + errorHtml
         + '</label>');
       return;
     }
-    parts.push('<label class="' + blockPart('paramForm', 'field') + '">'
-      + '<span class="' + blockPart('paramForm', 'label') + '">' + esc(label)
-      + (required ? '<span class="' + blockPart('paramForm', 'required') + '" aria-hidden="true"> *</span>' : '')
-      + '</span>'
-      + '<input class="' + blockPart('paramForm', 'input') + '"'
-      + (step === undefined && min === undefined && max === undefined ? '' : ' type="number"')
-      + ' name="' + esc(name) + '" value="' + esc(value) + '"'
-      + (hint === undefined ? '' : ' placeholder="' + esc(hint) + '"')
-      + (required ? ' data-required="1" required' : '')
-      + (readonly ? ' readonly' : '')
-      + (step === undefined ? '' : ' step="' + esc(step) + '"')
-      + (min === undefined ? '' : ' min="' + esc(min) + '"')
-      + (max === undefined ? '' : ' max="' + esc(max) + '"')
-      + ' />'
+    parts.push(fieldOpen
+      + wrapControl('<input class="' + blockPart('paramForm', 'input') + '"' + aria
+        + (step === undefined && min === undefined && max === undefined ? '' : ' type="number"')
+        + ' name="' + esc(name) + '" value="' + esc(value) + '"'
+        + (hint === undefined ? '' : ' placeholder="' + esc(hint) + '"')
+        + (required ? ' data-required="1" required' : '')
+        + (readonly ? ' readonly' : '')
+        + (step === undefined ? '' : ' step="' + esc(step) + '"')
+        + (min === undefined ? '' : ' min="' + esc(min) + '"')
+        + (max === undefined ? '' : ' max="' + esc(max) + '"')
+        + ' />')
+      + helpHtml + errorHtml
       + '</label>');
   });
+  if (variant === 'grid') parts.push('</div>');
   if (typeof form.previewText === 'string' && form.previewText !== '') {
     parts.push('<pre class="' + blockPart('preBlock', 'code') + ' ' + blockPart('paramForm', 'preview') + '">'
       + esc(form.previewText) + '</pre>');
@@ -2015,6 +2351,77 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '    margin: 12mm;',
     '  }',
     '}',
+    // #950 回灌（对照行 `delta-row` 形态 A「极简变化式」）：主语从「改前 → 改后」换成「变化量」。
+    // 本节十条规则排在 `pageShell` 区**尾部**（与既有五条 `change-row` 规则同区、源序在后），
+    // 一切覆盖既有槽位的写法都带祖先前缀（`.…-change-row-delta .…-change-row-label`）
+    // ⇒ `-change-row-label` 的基座规则仍恰 1 条；新槽位（`-change`／`-trace`／语气三档…）用新类名。
+    // 版式：两列栅格（标签可缩、变化量只吃内容宽），备查行横跨两列。
+    '.' + p + 'block-change-row-delta {',
+    '  display: grid;',
+    '  grid-template-columns: minmax(0, 1fr) auto;',
+    '  gap: 2px 12px;',
+    '  align-items: baseline;',
+    '}',
+    '.' + p + 'block-change-row-delta .' + p + 'block-change-row-label {',
+    '  grid-column: 1;',
+    '}',
+    // 变化量：主位，21px／700；`nowrap` 只吃内容宽（第二列 `auto`），第一列 `minmax(0, 1fr)` 可缩
+    // ⇒ 超长标签由 `-label` 折行承担，窄档不横向溢出。不设任何 `text-overflow`（关键语义不许被 `…` 截断）。
+    '.' + p + 'block-change-row-change {',
+    '  font-size: 21px;',
+    '  font-weight: 700;',
+    '  white-space: nowrap;',
+    '  text-align: right;',
+    '  font-variant-numeric: tabular-nums;',
+    '}',
+    '.' + p + 'block-change-row-change-mark {',
+    '  font-style: normal;',
+    '  font-size: 13px;',
+    '  margin-right: 2px;',
+    '}',
+    '.' + p + 'block-change-row-change-unit {',
+    '  font-size: 12px;',
+    '  font-weight: 600;',
+    '  margin-left: 3px;',
+    '  text-decoration: none;',
+    '  color: ' + skinVar('ink-2') + ';',
+    '}',
+    // 语气三档只改 `color`：方向本身由字形承担，色不是唯一信息（色盲可读）。
+    '.' + p + 'block-change-row-change-ok {',
+    '  color: ' + skinVar('ok') + ';',
+    '}',
+    '.' + p + 'block-change-row-change-danger {',
+    '  color: ' + skinVar('danger') + ';',
+    '}',
+    '.' + p + 'block-change-row-change-flat {',
+    '  color: ' + skinVar('ink-3') + ';',
+    '}',
+    '.' + p + 'block-change-row-trace {',
+    '  grid-column: 1 / -1;',
+    '  color: ' + skinVar('ink-3') + ';',
+    '  font-size: 12px;',
+    '  line-height: 1.5;',
+    '  overflow-wrap: anywhere;',
+    '  font-variant-numeric: tabular-nums;',
+    '}',
+    // 对照窗口与前段之间的那条分隔：一枚空 `<i>` 出竖线 ＋ 两侧留白（字符不进产物文本）。
+    '.' + p + 'block-change-row-trace-gap {',
+    '  display: inline-block;',
+    '  width: 1px;',
+    '  height: 1em;',
+    '  margin: 0 5px;',
+    '  border-left: 1px solid ' + skinVar('line') + ';',
+    '}',
+    // 口径脚注的承载层：只出上边线与上距；内层口径行（`renderCaliberLine` 的唯一产物）边距归零，
+    // 免得与页面里那些口径行撞版式。
+    '.' + p + 'block-change-rows-footnote {',
+    '  margin-top: 10px;',
+    '  padding-top: 8px;',
+    '  border-top: 1px solid ' + skinVar('line') + ';',
+    '}',
+    '.' + p + 'block-change-rows-footnote > .' + p + 'block-caliber {',
+    '  margin: 0;',
+    '}',
   ].join(LF),
 
   kpiCard: (p) => [
@@ -2165,6 +2572,49 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '@media (max-width: 640px) {',
     '  .' + p + 'block-page-shell .' + p + 'block-kpi-card-grid {',
     '    grid-template-columns: minmax(0, 1fr);',
+    '  }',
+    '}',
+    // #950 回灌（读数格 `metric-grid` 形态 C「无框栅格」）：框从「每卡」搬到「整组」——
+    // 卡自身的边框／圆角／底／投影全撤，卡间改出发丝线，主数字提一档（22px → 30px）。
+    // 三条纪律落点（照 `0.3`）：
+    //  ① **源序**：本节七条规则排在区内两条既有媒体规则**之后**——新形态与 `.…-page-shell .…-kpi-card-grid`
+    //     覆盖同一个类名，本仓没有层叠层（`@layer`），同特异性下先到者胜 ⇒ 必须靠源序取胜
+    //     （将来谁把这段挪到媒体段之前，`test/blocks.test.mjs` 的源序判据当场红）；
+    //  ② **基座规则恰 1 条**：覆盖既有槽位一律写祖先前缀（`.…-flat .…-kpi-card`），
+    //     不给 `.…-kpi-card` 再写一条同名基础规则（`test/ui-fix-154.test.mjs` 的 `declsOf` 会把同名数成 2 条）；
+    //  ③ **皮肤读法**：色值一律经 `skinVar()`（产出的兜底链落到同一个冻结 token ⇒ 未挂皮肤的页上无色差），
+    //     未挂皮肤的页上兜底链落在同一个冻结 token ⇒ 与既有规则并置无色差。
+    // `container-type: inline-size` 挂在新容器上：`@container` 要有一个祖先容器，元素不能当自己的容器。
+    '.' + p + 'block-kpi-card-flat {',
+    '  container-type: inline-size;',
+    '}',
+    '.' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card-grid {',
+    '  display: grid;',
+    '  grid-template-columns: minmax(0, 1fr);',
+    '  gap: 0;',
+    '}',
+    // 主数字提一档（识别特征：只有数字与发丝线，卡上不再有框）。
+    '.' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card-value {',
+    '  font-size: 30px;',
+    '}',
+    // 容器 ≥461px：两列成组。格间发丝线由卡的 `border-top` ＋ 偶数列的 `border-left` 出（首行无顶线）。
+    '@container (min-width: 461px) {',
+    '  .' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card-grid {',
+    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '  }',
+    '  .' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card {',
+    '    border: 0;',
+    '    border-radius: 0;',
+    '    background: none;',
+    '    box-shadow: none;',
+    '    padding: 12px 14px;',
+    '    border-top: 1px solid ' + skinVar('line') + ';',
+    '  }',
+    '  .' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card:nth-child(-n+2) {',
+    '    border-top: 0;',
+    '  }',
+    '  .' + p + 'block-kpi-card-flat .' + p + 'block-kpi-card:nth-child(even) {',
+    '    border-left: 1px solid ' + skinVar('line') + ';',
     '  }',
     '}',
   ].join(LF),
@@ -2415,6 +2865,45 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '    text-align: left;',
     '  }',
     '}',
+    // #950 回灌（数据表 `data-table` 形态 A）：以下规则排在 `dataTable` 区**尾部**（既有媒体段之后）。
+    // 覆盖既有槽位一律走新类名或祖先前缀 ⇒ `.…-data-table`／`.…-mini-bar` 的基座规则各仍恰 1 条
+    //（`test/ui-fix-154.test.mjs` 的 `declsOf` 口径）。**既有 ≤640 段一字不动**：本形态只挂修饰类，
+    // 窄档卡化仍由那条既有媒体段（视口驱动）承担；`overflow-x: auto` 的横滑兜底也不撤。
+    // **未落的一半（交裁记录）**：设计 §5.4 指定的 `@container (max-width: 560px)` 段（把既有 ≤640 段的
+    // 声明组复制到容器档、再把根上的横滑兜底换成 `overflow-x: visible`）**本轮不落**——它一旦落在媒体段
+    // 之外，就会让 `table-mobile-t541` ③／`table-caption-box-547`／`rowcard-caliber-t154r3` ③ 三条既有判据
+    // 变红（那三条按「切掉 ≤640 段后剩下的就是桌面档」扫全表文本，而卡化声明本就含 `data-label`／`attr(`／
+    // `thead`／`space-between` 这些断点）。故 `'carded'` 现只挂容器锚点：窄档排面沿用既有视口媒体档，
+    // 等设计席改判（改那三条判据，或接受把容器段嵌进既有媒体段而牺牲「容器比视口更早卡化」）。
+    '.' + p + 'block-data-table-carded {',
+    '  container-type: inline-size;',
+    '}',
+    // 行内迷你条列：条吃余宽、百分数贴右。只在本列命中（`.…-mini-bar` 的基座 `width: 72px` 不动）。
+    '.' + p + 'block-data-table-bar {',
+    '  display: flex;',
+    '  align-items: center;',
+    '  gap: 6px;',
+    '  min-width: 0;',
+    '}',
+    '.' + p + 'block-data-table-bar .' + p + 'block-mini-bar {',
+    '  width: auto;',
+    '  flex: 1 1 24px;',
+    '  min-width: 24px;',
+    '}',
+    '.' + p + 'block-data-table-bar-pct {',
+    '  flex: 0 0 auto;',
+    '  text-align: right;',
+    '  font-variant-numeric: tabular-nums;',
+    '}',
+    // 表下口径脚注的承载层：只出上边线与边距；内层口径行（`renderCaliberLine` 的唯一产物）边距归零。
+    '.' + p + 'block-data-table-footnote {',
+    '  margin: 0 14px 12px;',
+    '  padding-top: 8px;',
+    '  border-top: 1px solid ' + skinVar('line') + ';',
+    '}',
+    '.' + p + 'block-data-table-footnote > .' + p + 'block-caliber {',
+    '  margin: 0;',
+    '}',
   ].join(LF),
 
   chartBlock: (p) => [
@@ -2436,6 +2925,36 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-chart-block-canvas {',
     '  padding: 0;',
+    '}',
+    // #950 回灌（图表框 `chart-frame` 形态 A「带注的图表框」）：头栏（标题＋单位）＋图＋口径脚注。
+    // 本节五条规则排在 `chartBlock` 区**尾部**；`-head .-title { margin: 0 }` 是**覆盖既有声明**
+    // （既有 `-title` 有 `margin: 0 0 10px`，那是标题单独一行时的下边距），选择器带祖先前缀、
+    // 排在后面 ⇒ 基座规则不受影响（`declsOf` 仍恰 1 条），源序取胜。
+    // 图例与画布盒**不落**（`charts.*` 已出图例：`options.legend`；图的盒子归 `options.height/width`）——
+    // 同一概念不许开第二条路，见设计 §4.2。
+    '.' + p + 'block-chart-block-head {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  align-items: baseline;',
+    '  gap: 4px 10px;',
+    '}',
+    '.' + p + 'block-chart-block-head .' + p + 'block-chart-block-title {',
+    '  margin: 0;',
+    '}',
+    '.' + p + 'block-chart-block-unit {',
+    '  color: ' + skinVar('ink-3') + ';',
+    '  font-size: 12px;',
+    '  font-weight: 600;',
+    '}',
+    // 脚注承载层：只出上边线与上距；`overflow-wrap: anywhere` 让整行折行、关键语义不被 `…` 截断。
+    '.' + p + 'block-chart-block-caliber {',
+    '  margin-top: 10px;',
+    '  padding-top: 8px;',
+    '  border-top: 1px solid ' + skinVar('line') + ';',
+    '  overflow-wrap: anywhere;',
+    '}',
+    '.' + p + 'block-chart-block-caliber > .' + p + 'block-caliber {',
+    '  margin: 0;',
     '}',
   ].join(LF),
 
@@ -2486,6 +3005,49 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-list-rows-row-done .' + p + 'block-list-rows-main {',
     '  color: var(--ok);',
     '  text-decoration: line-through;',
+    '}',
+    // #950 回灌（条目行组 `list-rows` 形态 B「两行式」）：中间槽拆成主行＋副语，行高提一档、
+    // 交叉轴对齐改顶对齐（长副语折行时主行仍在首行）。本节七条规则排在 `listRows` 区**尾部**；
+    // 覆盖既有槽位一律带祖先前缀 `.…-two-line` ⇒ `-row`／`-row-no-left`／`-left`／`-main`／`-right`／
+    // `-row-done` 的基座规则各仍恰 1 条，`-row` 的两份轨定义一字不动（#567 D2 不受影响）。
+    // 两行式由**根**的类驱动（不在行上加类）：行级修饰类保持既有三件，`role="list"` 也不动。
+    '.' + p + 'block-list-rows-two-line .' + p + 'block-list-rows-row {',
+    '  min-height: 56px;',
+    '  align-items: start;',
+    '}',
+    // 取消中槽的 `ellipsis`／`nowrap`（改折行）——只在两行式里；既有 `'one-line'` 的截断一字不动
+    //（它是 40+ 处调用点的既有观感）。
+    '.' + p + 'block-list-rows-two-line .' + p + 'block-list-rows-main {',
+    '  overflow: visible;',
+    '  text-overflow: clip;',
+    '  white-space: normal;',
+    '}',
+    // 右读数恒单行（金额／时长不许截断，也不许拆行）：中槽可缩（`minmax(0, 1fr)`），故不顶破容器。
+    '.' + p + 'block-list-rows-two-line .' + p + 'block-list-rows-right {',
+    '  white-space: nowrap;',
+    '}',
+    '.' + p + 'block-list-rows-main-line {',
+    '  display: block;',
+    '  font-size: 15px;',
+    '  font-weight: 600;',
+    '}',
+    '.' + p + 'block-list-rows-note {',
+    '  display: block;',
+    '  color: ' + skinVar('ink-3') + ';',
+    '  font-size: 12px;',
+    '  line-height: 1.45;',
+    '  overflow-wrap: anywhere;',
+    '}',
+    '.' + p + 'block-list-rows-unit {',
+    '  margin-left: 1px;',
+    '  font-size: 12px;',
+    '  font-weight: 400;',
+    '  color: ' + skinVar('ink-3') + ';',
+    '}',
+    // 完成态的两个信号照旧（删除线 ＋ 成功色），只把落点从中槽移到主行（副语不划线更好读）。
+    '.' + p + 'block-list-rows-two-line .' + p + 'block-list-rows-row-done .' + p + 'block-list-rows-main-line {',
+    '  text-decoration: line-through;',
+    '  color: ' + skinVar('ok') + ';',
     '}',
   ].join(LF),
 
@@ -2672,6 +3234,60 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '}',
     '.' + p + 'block-param-form-preview {',
     '  margin-top: 10px;',
+    '}',
+    // #950 回灌（字段行 `field-row` 形态 A「宽屏两列／窄屏一列的字段组」）：本节九条规则排在
+    // `paramForm` 区**尾部**。列数由**容器**驱动（`@container`），与 `pageUi` 的视口配方各管各档。
+    // 除 `.…-grid`（新类名）外，一切覆盖既有槽位的写法都带祖先前缀 `.…-grid`／`.…-control`
+    // ⇒ `-input`／`-label`／`-field` 的基座规则各仍恰 1 条（`test/ui-fix-154.test.mjs` 的 `declsOf`）。
+    // 「两列栅格是排面、不是皮肤」：列数写死在容器查询里，不进任何皮肤取值表。
+    '.' + p + 'block-param-form-grid {',
+    '  container-type: inline-size;',
+    '}',
+    '.' + p + 'block-param-form-grid .' + p + 'block-param-form-fields {',
+    '  display: grid;',
+    '  grid-template-columns: minmax(0, 1fr);',
+    '  gap: 0 16px;',
+    '}',
+    // 两列的每一格不许溢出：栅格项缺省 `min-width: auto` 会被长内容（长标签／长值）顶破轨道。
+    '.' + p + 'block-param-form-grid .' + p + 'block-param-form-fields > * {',
+    '  min-width: 0;',
+    '}',
+    '@container (min-width: 461px) {',
+    '  .' + p + 'block-param-form-grid .' + p + 'block-param-form-fields {',
+    '    grid-template-columns: repeat(2, minmax(0, 1fr));',
+    '  }',
+    '}',
+    // 控件 ＋ 单位后缀。`gap: 8px` 与 `-input` 的 `min-height: 44px` 一起保证 44px 命中盒与
+    // 相邻项的间距 ≥8px（触控目标口径不动）；`flex-wrap: wrap` 让窄档下后缀换行、不顶破容器。
+    '.' + p + 'block-param-form-control {',
+    '  display: flex;',
+    '  align-items: center;',
+    '  gap: 8px;',
+    '  flex-wrap: wrap;',
+    '}',
+    '.' + p + 'block-param-form-control .' + p + 'block-param-form-input {',
+    '  flex: 1 1 8em;',
+    '  min-width: 0;',
+    '}',
+    '.' + p + 'block-param-form-unit {',
+    '  color: ' + skinVar('ink-2') + ';',
+    '  font-size: 13px;',
+    '  white-space: nowrap;',
+    '}',
+    '.' + p + 'block-param-form-help {',
+    '  display: block;',
+    '  margin-top: 4px;',
+    '  color: ' + skinVar('ink-3') + ';',
+    '  font-size: 12px;',
+    '  line-height: 1.5;',
+    '  overflow-wrap: anywhere;',
+    '}',
+    '.' + p + 'block-param-form-error {',
+    '  display: block;',
+    '  margin-top: 4px;',
+    '  color: ' + skinVar('danger') + ';',
+    '  font-size: 12px;',
+    '  line-height: 1.5;',
     '}',
   ].join(LF),
 
