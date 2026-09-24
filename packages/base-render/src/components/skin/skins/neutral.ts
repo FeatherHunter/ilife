@@ -34,11 +34,15 @@ export const NEUTRAL_VALUES = Object.freeze({
      `accent-text` 对它 4.90:1、`accent` 对它 3.46:1（文本地板与图形地板都过，通道差 16）。 */
   'accent-soft': '#e4efff',
 
-  ok: '#1f8c3d',
+  /* 语义色当字的地板（判据：`test/skin.test.mjs` ②c）。本套是四套里踩线最多的一套：
+     旧 `ok` #1f8c3d 压 surface 只有 4.31:1、压 ground 3.95:1、压 `ok-soft` 3.87:1 —— 三档底全在 4.5 之下；
+     旧 `warn`／`danger` 的亮度只差 1.13:1（地板 1.2）。三支重排亮度、色相饱和度全不动。 */
+  ok: '#1c7d37',          /* 压深：#1f8c3d → surface 5.20／ground 4.78／`ok-soft` 4.68（H136.5°/S63.7° 不动） */
   'ok-soft': '#e6f7ec',
-  warn: '#8a5a12',
+  warn: '#815411',        /* 压深：#8a5a12 → surface 6.54／ground 6.01／`warn-soft` 6.04 */
   'warn-soft': '#fff5e0',
-  danger: '#a83228',
+  danger: '#8f2b22',      /* 压深：#a83228 → surface 8.28／ground 7.60／`danger-soft` 7.47；
+                             vs accent（本套是蓝图蓝 #007aff）从 1.66 变 2.06 */
   'danger-soft': '#fff0ee',
 
   radius: '14px',

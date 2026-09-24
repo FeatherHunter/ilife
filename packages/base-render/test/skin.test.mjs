@@ -9,9 +9,10 @@
 //   ⑤ 加法式（不挂皮肤类时，皮肤段对产物零命中）
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { styleSources } from './_style-sources.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -152,6 +153,43 @@ describe('皮肤 ②b：强调软底不许是"空转"（＝选中面在那套皮
   }
 });
 
+describe('皮肤 ②c 语义色当字（WCAG，算出来不靠眼看）', () => {
+  /* 为什么单钉这一组：契约的对比地板表只列了 `ink`／`ink-2`／`ink-3`／`accent-text`，
+     **没有一条管「语义色自己当字」**；而法则表点名「达标」走 `ok`／`ok-soft`、「提醒」走 `warn`／`warn-soft`、
+     「超目标／危险」走 `danger`／`danger-soft`（`docs/base/base-render/选中态与皮肤语言.md` 第三节）
+     ⇒ 这三支就是语义档的字，它们得自己过文本地板：对卡面 `surface`、页底 `ground`、
+     以及它自己的软底（语义档的底）三档底都 ≥4.5:1。
+     另一条同口径的：三支语义色互相也要分得开（两两 ≥1.2:1），否则「达标／提醒／超目标」在纸上一个样
+     ——与既有的 `danger` vs `accent` ≥1.2:1 是同一条道理（语义档撞色＝那一档白设）。 */
+  const SEMANTIC = ['ok', 'warn', 'danger'];
+  const SEMANTIC_PAIRS = [['ok', 'danger'], ['warn', 'ok'], ['warn', 'danger']];
+
+  for (const name of SKIN_NAMES) {
+    for (const t of SEMANTIC) {
+      it(name + '：`' + t + '` 当字，对 surface／ground／`' + t + '-soft` 三档底都 ≥ 4.5:1', () => {
+        // 一次报**全部**不达标的底：逐条断言会在第一处停下，剩下几条要重跑才看得见。
+        const bad = [];
+        for (const g of ['surface', 'ground', t + '-soft']) {
+          const ratio = contrast(VALUES[name][t], VALUES[name][g]);
+          if (ratio < 4.5) bad.push(t + ' on ' + g + ' 只有 ' + ratio.toFixed(2) + ':1');
+        }
+        assert.deepEqual(bad, [], name + ' 的语义色当字过不了文本地板：' + bad.join('；')
+          + ' —— 语义色当字落在正文里，就得过 4.5（修法：压深／调亮 token 自己，色相不动）');
+      });
+    }
+
+    it(name + '：三支语义色互相分得开（`ok`／`warn`／`danger` 两两 ≥ 1.2:1）', () => {
+      const bad = [];
+      for (const [a, b] of SEMANTIC_PAIRS) {
+        const r = contrast(VALUES[name][a], VALUES[name][b]);
+        if (r < 1.2) bad.push(a + '/' + b + ' 只有 ' + r.toFixed(2) + ':1');
+      }
+      assert.deepEqual(bad, [], name + ' 的两支语义档在观感上撞在一起：' + bad.join('；')
+        + ' ⇒ "达标"与"超目标"分不出（与 `danger` vs `accent` 同一条地板）');
+    });
+  }
+});
+
 describe('皮肤 ③ 读法', () => {
   it('skinVar 产出「皮肤 → 冻结 token → 字面值」的兜底链', () => {
     const s = skinVar('surface');
@@ -255,13 +293,14 @@ describe('皮肤 ⑥ 源码级纪律（组件只经 skinVar 读，不许手写 v
   const COMPONENTS = join(HERE, '..', 'src', 'components');
   const SELF = new Set(['skin', 'shared']);
 
-  /** 组件层的每份样式段（排除皮肤层自己）。 */
+  /** 组件层的每份样式段（排除皮肤层自己）：一件的**全部** `style*.ts`——拆出去的那半也算本件的样式段
+   *  （拆件先例 `scatter-fit/style-forms.ts`、`date-range/style-calendar.ts`、`cash-waterline/style-forms.ts`；
+   *  只读 `<件>/style.ts` 会让按规矩拆件压行数的件少扫一半）。 */
   const styleFiles = () => {
     const out = [];
     for (const dir of readdirSync(COMPONENTS, { withFileTypes: true })) {
       if (!dir.isDirectory() || SELF.has(dir.name)) continue;
-      const p = join(COMPONENTS, dir.name, 'style.ts');
-      if (existsSync(p)) out.push({ name: dir.name, path: p });
+      for (const { file, src } of styleSources(dir.name)) out.push({ name: dir.name + '／' + file, src });
     }
     return out;
   };
@@ -273,7 +312,7 @@ describe('皮肤 ⑥ 源码级纪律（组件只经 skinVar 读，不许手写 v
   it('组件样式里不出现手写的 var(--ilife-…)（兜底链只许住在 skin/contract.ts）', () => {
     const bad = [];
     for (const f of styleFiles()) {
-      const src = stripComments(readFileSync(f.path, 'utf8'));
+      const src = stripComments(f.src);
       const hits = [...src.matchAll(/var\(\s*--ilife-/g)];
       if (hits.length > 0) bad.push(f.name + '（' + hits.length + ' 处）');
     }
@@ -284,7 +323,7 @@ describe('皮肤 ⑥ 源码级纪律（组件只经 skinVar 读，不许手写 v
     const known = new Set(SKIN_TOKEN_NAMES.map((k) => skinTokenVar(k)));
     const bad = [];
     for (const f of styleFiles()) {
-      const src = stripComments(readFileSync(f.path, 'utf8'));
+      const src = stripComments(f.src);
       const used = new Set([...src.matchAll(/'--ilife-([a-z0-9-]+)'/g)].map((m) => '--ilife-' + m[1]));
       const unknown = [...used].filter((n) => !known.has(n));
       if (unknown.length > 0) bad.push(f.name + '：' + unknown.join('、'));

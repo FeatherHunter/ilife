@@ -53,8 +53,13 @@ export const INK_VALUES = Object.freeze({
      以 `surface-2` 为底的容器里没有底（旧值 #f7e6df 只差 7 个通道）。 */
   'accent-soft': '#f6ddd3',
 
-  /* 语义色一律压暗、落在墨色调子里：纸面上放荧光色，整张纸就散了。 */
-  ok: '#2c6a46',
+  /* 语义色一律压暗、落在墨色调子里：纸面上放荧光色，整张纸就散了。
+     **当字的地板**（判据：`test/skin.test.mjs` ②c）本套只有 `ok` 需要动：本套页底 `ground`（#e9e0cf）
+     比另三套都深，四支语义色里 `warn`／`danger` 已经贴着它站住（warn on ground 4.66），
+     于是「`warn` 与 `ok` 要差 1.2:1」只能靠把 `ok` 压深：旧 #2c6a46 与 warn 只差 1.05:1。
+     压深到 #275d3d（色相 145.2°／饱和度 41.3% 不动，仍是那支墨绿）：vs warn 1.26／vs danger 1.27；
+     自身地板 surface 7.28／ground 5.89／`ok-soft` 6.58。 */
+  ok: '#275d3d',
   'ok-soft': '#e7efe6',
   warn: '#8b560f',
   'warn-soft': '#f8eed7',

@@ -27,11 +27,16 @@ export const BROADSHEET_VALUES = Object.freeze({
      分得开，旧值**逐字节同色** ⇒ 空转（2026-09-24 由席位报出）。新值：`accent-text`／`accent` 对它 14.71:1。 */
   'accent-soft': '#e8e3d8',
 
-  ok: '#1c6b3c',
+  /* 语义色当字的地板（判据：`test/skin.test.mjs` ②c）。本套三支**都动了**，因为三支的亮度
+     原本挤在一起：`ok`／`warn` 只差 1.10:1、`ok`／`danger` 只差 1.16:1（地板 1.2）。
+     只压一支解不开——把三支重新排开：`warn` 最亮、`ok` 居中、`danger` 最暗，两两 ≥1.26。
+     色相与饱和度一律不动（ok 144.3°／58.5%、warn 36.0°／76.9%、danger 5.0°／64.0%）。 */
+  ok: '#1b693b',          /* 微压深：#1c6b3c → 自身地板 surface 6.71／ground 6.32／`ok-soft` 5.83 */
   'ok-soft': '#e6f2ea',
-  warn: '#8a5a12',
+  warn: '#946113',        /* 调亮一档：#8a5a12 → surface 5.28／ground 4.98／`warn-soft` 4.70 */
   'warn-soft': '#fbf1dc',
-  danger: '#9b2c22',
+  danger: '#8c281f',      /* 压深一档：#9b2c22 → surface 8.61／ground 8.12／`danger-soft` 7.26；
+                             vs accent（本套 accent 是墨黑 #14110d）从 2.49 变 2.19，仍远超 1.2 */
   'danger-soft': '#f9e8e4',
 
   radius: '0',

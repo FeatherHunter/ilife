@@ -35,9 +35,17 @@ export const PAPER_VALUES = Object.freeze({
      新值＝砖红的暖淡洗：`accent-text` 对它 5.47:1、`accent` 对它 4.60:1（两条地板都过，通道差 18）。 */
   'accent-soft': '#f7dfd8',
 
-  ok: '#2f7d4f',
+  /* 语义色当字也要过文本地板（判据：`test/skin.test.mjs` ②c，四套皮肤逐套算）。
+     `ok` 最紧的一档底是**页底** `ground`（#f1ece1）——旧值 #2f7d4f 压上去只有 4.28:1、
+     压 `ok-soft` 只有 4.40:1，两处都在 4.5 之下。压深到 #2d764b（色相 144.6°／饱和度 45.3% 不动，
+     还是那支绿）：ground 4.69／`ok-soft` 4.82／surface 5.43／surface-2 4.90。 */
+  ok: '#2d764b',
   'ok-soft': '#e8f2ea',
-  warn: '#8a5a12',
+  /* 语义色互相也要分得开（与 `danger` vs `accent` ≥1.2:1 同一条地板）：`warn` 旧值 #8a5a12
+     与 `ok` 的亮度只差 **1.17:1** ⇒「提醒」与「达标」在纸上是一个样。压深到 #7b5010
+     （色相 36°／饱和度 76.9% 不动）：vs ok **1.27**／vs danger **1.27**，三支重新排成
+     ok 最亮／warn 居中／danger 最暗；自身地板：surface 6.89／ground 5.95／`warn-soft` 6.25。 */
+  warn: '#7b5010',
   'warn-soft': '#fbf1dc',
   /* 语义档的 `danger` 必须与 `accent` **分得开**：旧值 #a83228 与本套 accent（砖红 #b5392a）只差 1.14:1，
      于是"正常档（accent 实底）"与"超目标档（danger）"在纸上一个样——语义档白设（2026-09-24 由席位在
