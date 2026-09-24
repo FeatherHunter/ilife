@@ -139,6 +139,30 @@ describe('组件层样式纪律 ④：容器查询必须有容器（死规则＝
   }
 });
 
+/** 从产物 CSS 里抽出**每条规则的选择器**（`@media`／`@container` 里的也算）。
+ *
+ *  为什么不用正则：早先用 `/(^|\})\s*([^{}@]+)\{/g` 抽，**漏掉 at-rule 块里的规则**——
+ *  块里第一条选择器前面隔的是 `@media (…) {` 那一行（不是 `}`）⇒ 匹配不到；块里第二条起虽匹配到，
+ *  但它的选择器文本不带前导 scope ⇒ `>1` 的判据放行。净效果是「双 scope 的规则若住在 at-rule 里就抓不到」
+ *  （由 F1 席在 #950 返修时读出来）。故改成**逐字符配平花括号**的扫描：每遇到 `{`，
+ *  拿走它前面攒下的那一段当选择器（`@` 开头的是 at-rule 前奏，丢掉）；每遇到 `}` 清空缓冲。 */
+function ruleSelectors(css) {
+  const out = [];
+  let buf = '';
+  for (const ch of css) {
+    if (ch === '{') {
+      const sel = buf.trim();
+      buf = '';
+      if (sel !== '' && !sel.startsWith('@')) out.push(sel);
+    } else if (ch === '}') {
+      buf = '';
+    } else {
+      buf += ch;
+    }
+  }
+  return out;
+}
+
 describe('组件层样式纪律 ⑥：一条选择器里作用域只许出现一次（死规则＝红）', () => {
   /** 由目录名推样式函数名（`status-row` ⇒ `statusRowCss`）。 */
   const camel = (n) => n.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
@@ -155,9 +179,10 @@ describe('组件层样式纪律 ⑥：一条选择器里作用域只许出现一
       // 若不剥，判据会把「写着纪律的那一行」判红——2026-09 实测踩过。
       const css = String(fn({})).replace(/\/\*[\s\S]*?\*\//g, '');
       const bad = [];
-      // 规则头＝`… {` 之前那一段；按 `{`／`}` 切块后取每块的头部，连 @container／@media 里的也算。
-      for (const m of css.matchAll(/(^|\})\s*([^{}@]+)\{/g)) {
-        for (const sel of m[2].split(',')) {
+      // 选择器抽取走 `ruleSelectors()`（配平花括号的扫描）——`@media`／`@container` **块里**的规则也算，
+      // 正则式抽取会漏掉它们（这一段由来见 `ruleSelectors()` 的件头）。
+      for (const raw of ruleSelectors(css)) {
+        for (const sel of raw.split(',')) {
           const s = sel.trim();
           if (s === '') continue;
           const hits = (s.match(/\.ilife-page-ui/g) || []).length;
@@ -169,6 +194,30 @@ describe('组件层样式纪律 ⑥：一条选择器里作用域只许出现一
         + '修法：件内加一个**不带 scope 的裸槽选择器**助手，嵌套时只用裸的）');
     });
   }
+});
+
+describe('组件层样式纪律 ⑥b：抽取器自证（守门人的守门人）', () => {
+  it('`ruleSelectors()` 必须抓到住在 `@media`／`@container` 块里的规则', () => {
+    const sample = [
+      '.ilife-page-ui .a { color: red; }',
+      '@media (hover: hover) {',
+      '  .ilife-page-ui .b > .ilife-page-ui .c { color: red; }',
+      '}',
+      '@container ilife-x (max-width: 460px) {',
+      '  .ilife-page-ui .d + .ilife-page-ui .e { color: red; }',
+      '  .ilife-page-ui .f { color: red; }',
+      '}',
+    ].join('\n');
+    const got = ruleSelectors(sample);
+    assert.deepEqual(got, [
+      '.ilife-page-ui .a',
+      '.ilife-page-ui .b > .ilife-page-ui .c',
+      '.ilife-page-ui .d + .ilife-page-ui .e',
+      '.ilife-page-ui .f',
+    ], '抽取器漏了规则或把声明当成了选择器（漏了 at-rule 块的话，⑥ 会放过住在里面的双 scope 规则）');
+    const dup = got.filter((s) => (s.match(/\.ilife-page-ui/g) || []).length > 1);
+    assert.equal(dup.length, 2, 'at-rule 块里的两条双 scope 规则应当都被判出来，实际 ' + JSON.stringify(dup));
+  });
 });
 
 describe('组件层样式纪律 ⑤：豁免名单与范围不许过期', () => {
