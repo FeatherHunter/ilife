@@ -63,7 +63,7 @@ hourBandCss();                        // 样式段（页面自己按需注入；
 - **出界一律 `badInput`**：端点必须落在 `0..1440`，`from < to`；本件不裁剪、不做跨午夜推断。
 - **段内时长字只在段够宽时上屏**（`HOUR_BAND_TEXT_MIN_FRACTION`）；时长永远有**明细行**兜底，语义不丢。
 - **窄档不横滑、刻度不压字**：带与刻度尺都是 24 份（`repeat(24, minmax(0,1fr))`）；窄容器下刻度尺只留偶数点（每 2 小时一格）；明细行的起止与时长 `nowrap`（**关键读数永不写 `…`**）。
-- **深浅从 token 算**：四档＝`color-mix(in srgb, accent N%, surface-2)`，不写死颜色 ⇒ 三套皮肤（含强调＝墨黑）下都是同一条"浅 → 深"。
+- **深浅从 token 算**：四档＝`color-mix(in srgb, accent N%, surface-2)`，不写死颜色 ⇒ 各套皮肤（含强调＝墨黑）下都是同一条"浅 → 深"。
 - **本件是自己的容器**（`container-type: inline-size`）：给它一个**确定的宽度**；不要在 shrink-to-fit 的 flex 项里用 `auto` 宽度。
 
 ## 常见错法

@@ -1,11 +1,11 @@
 /** 组件层 · **皮肤矩阵判据**（契约 §五「唯一新增的那条缝」）：**一条文件跑完全部件**。
  *
  *  它吃机器派生的**件清单**（`dist/components/清单.js`，由 `src/components/清单.ts` 编译而来），
- *  对清单里**每一件** × 三套皮肤（`SKIN_NAMES`）× 两个宽度档（390／1280）跑四类断言：
- *   ⓿ **三套皮肤真挂上**（不是「每个 token 三值互异」——那不是契约：broadsheet 与 neutral 的纸面本来就都是白，
+ *  对清单里**每一件** × 各套皮肤（`SKIN_NAMES`）× 两个宽度档（390／1280）跑四类断言：
+ *   ⓿ **各套皮肤真挂上**（不是「每个 token 三值互异」——那不是契约：broadsheet 与 neutral 的纸面本来就都是白，
  *      它们的差别在圆角／阴影／字面／强调色／字号）：① 每套皮肤给全 token（键集合逐名对上 `SKIN_TOKEN_NAMES`）；
  *      ② 每套的取值与它自己的取值表逐 token 相同；③ 任意两套**不得逐 token 完全相同**（抓「复制一份皮肤没改」）。
- *   ① **三套皮肤下标记逐字节相同**：同一份入参渲染三次逐字节相同；真机上三只皮肤容器里的 `innerHTML`
+ *   ① **各套皮肤下标记逐字节相同**：同一份入参渲染三次逐字节相同；真机上三只皮肤容器里的 `innerHTML`
  *      也逐字节相同（**换皮不换结构**的机械保证）。
  *   ② **样式段纪律**：非空／scope／零 `:root`·`!important`／零 11 个冻结 token 名的**重定义**／
  *      出现的 `--ilife-*` 名**全在皮肤名单里**；本件类名与其余件的标记类名零交集（防跨件泄漏）。
@@ -252,7 +252,7 @@ const renderable = (p, t) => {
 };
 
 console.log('皮肤矩阵：件数=' + PIECES.length + '（' + PIECES.map((p) => p.row.name).join('、') + '）'
-  + '；三套皮肤 × 两档 = ' + (PIECES.length * SKIN_NAMES.length * WIDTHS.length) + ' 格');
+  + '；各套皮肤 × 两档 = ' + (PIECES.length * SKIN_NAMES.length * WIDTHS.length) + ' 格');
 
 /* ── 样例从哪来（照实读数：README 派生 ＋ 照 render 报错补的那几件） ───── */
 
@@ -325,7 +325,7 @@ function connectCdp(url) {
   };
 }
 
-/** 一页装下**全部件 × 三套皮肤 × 两档**（每格一只定宽容器），起 headless Chrome 读回来。 */
+/** 一页装下**全部件 × 各套皮肤 × 两档**（每格一只定宽容器），起 headless Chrome 读回来。 */
 async function startMatrixPage(html) {
   const browser = findBrowser();
   if (browser === undefined) throw new Error('本机没找到 Chrome（试过 DSH_BROWSER／Program Files／Applications）');
@@ -405,7 +405,7 @@ async function startMatrixPage(html) {
   }
 }
 
-/** 整页 HTML：三套皮肤取值表 ＋ 各件自己的样式段 ＋ 「件 × 皮肤 × 宽度」全部格子（＋三只皮肤探针）。 */
+/** 整页 HTML：各套皮肤取值表 ＋ 各件自己的样式段 ＋ 「件 × 皮肤 × 宽度」全部格子（＋三只皮肤探针）。 */
 function matrixPage() {
   const css = [skinCss(), ...PIECES.filter((p) => p.css !== null).map((p) => p.css)];
   const cells = [];
@@ -456,9 +456,9 @@ after(() => { if (machine !== null) machine.close(); });
 
 const readPiece = (name) => machine.ev('window.__readPiece(' + JSON.stringify(name) + ')');
 
-/* ── ⓿ 三套皮肤真挂上（读数表逐 token 对上；两两不得重样） ─────────── */
+/* ── ⓿ 各套皮肤真挂上（读数表逐 token 对上；两两不得重样） ─────────── */
 
-describe('皮肤矩阵 ⓿ 三套皮肤真挂上（挂不上的话下面每一格都在测空气）', () => {
+describe('皮肤矩阵 ⓿ 各套皮肤真挂上（挂不上的话下面每一格都在测空气）', () => {
   it('每套给全 token、取值与自己的取值表逐 token 相同、任意两套不得逐 token 完全相同', async () => {
     if (machine === null) {
       // 真机起不来时退到不依赖浏览器的那一半：取值表本身的完备性与两两可分辨（读 TS 里的取值表）。
@@ -502,9 +502,9 @@ describe('皮肤矩阵 ⓿ 三套皮肤真挂上（挂不上的话下面每一�
   });
 });
 
-/* ── ① 三套皮肤下标记逐字节相同 ──────────────────────────────────── */
+/* ── ① 各套皮肤下标记逐字节相同 ──────────────────────────────────── */
 
-describe('皮肤矩阵 ① 三套皮肤下标记逐字节相同（换皮不换结构）', () => {
+describe('皮肤矩阵 ① 各套皮肤下标记逐字节相同（换皮不换结构）', () => {
   for (const p of PIECES) {
     it(p.row.name + '：同一份入参渲染三次逐字节相同，且标记不带皮肤类', async (t) => {
       if (!renderable(p, t)) return;

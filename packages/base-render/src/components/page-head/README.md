@@ -45,11 +45,11 @@
 1. **尺度**：主读数字号**严格大于**页标题，且**不小于正文的 2 倍**。样式里只写一个数（`PAGE_HEAD_READING_SCALE = 2.2`，读数是页标题的 2.2 倍），皮肤只给 `fs-h1` 一档 ⇒ 三套皮肤下比值都成立（2.2×`fs-h1`÷`fs-body` ＝ 4.11／4.68／4.11）。
 2. **不截断**：长标题／眉标／副题**不许 `…`**（可以换行）；样式段里没有 `text-overflow`／`line-clamp`／`white-space: nowrap`／`overflow: hidden`。
 3. **窄宽两档**：容器宽 390 与 1280 下**零横向溢出**（`scrollWidth ≤ clientWidth`）、主读数不被裁、标题不掉字。
-4. **三套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
+4. **各套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
 5. **零 DOM／零内联脚本**：模块代码剥掉字面量后不出现 `document.`／`window.`／`navigator.`；产出的标记里没有 `<script>`，也没有 `on*=` 内联事件。
 6. **样式只经 `skinVar()` 读皮肤**：组件里不出现手写的 `var(--ilife-…)`；不写 `:root`／`!important`；不定义新 token 名；全部规则 scope 在 `.<prefix>page-ui` 之下。
 7. **响应式一律容器驱动**：本件设 `container-type: inline-size`（它自己就是容器），折行靠内在尺寸 ＋ `flex-wrap`，窄档调整走 `@container`；本件**一条 `@media` 都没有**（媒体查询只许判设备能力，不许判宽度）。
-8. **无障碍地板**：文字色只取 `ink`／`ink-2`／`accent-text` 三档（三套皮肤下对 `ground`／`surface` 都 ≥4.5:1；`accent` 是非文本档，只出现在那枚方点的底色上）；`:focus-visible` 给 2px 可见焦点；长串 `overflow-wrap: anywhere`；缺值写成 `—`。
+8. **无障碍地板**：文字色只取 `ink`／`ink-2`／`accent-text` 三档（各套皮肤下对 `ground`／`surface` 都 ≥4.5:1；`accent` 是非文本档，只出现在那枚方点的底色上）；`:focus-visible` 给 2px 可见焦点；长串 `overflow-wrap: anywhere`；缺值写成 `—`。
 
 ## 常见错法
 

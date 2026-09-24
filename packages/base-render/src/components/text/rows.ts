@@ -74,9 +74,9 @@ function fieldText(value: unknown): string {
 /** 输出头：`DataTextInput.title` 非空时覆盖，否则 `TEXT_HEADER_TEMPLATE` **单趟**展开。
  *
  *  - 替换位从模板本身派生（`{字段}` → `envelope[字段]`），**无第二份字段清单**（FX-77-8）。
- *  - **单趟**：插入的值不再被扫描（`skill: '{key}'` → `【{key} · KK】`，不二次展开，FX-77-8）。
+ *  - **单趟**：插入的值不再被扫描（`skill: '{key}'` → `【{key} KK】`，不二次展开，FX-77-8）。
  *  - 空串 `title` 视同缺省（FX-77-6）：输出头行恒存在、恒非空（模板含 `【】` 与 ` · `，
- *    `skill`／`key` 为空／非字符串时按空串替换，得 `【 · 】`）。
+ *    `skill`／`key` 为空／非字符串时按空串替换，得 `【 】`）。
  */
 export function headerLine(envelope: Record<string, unknown>, title: string | undefined): string {
   if (title !== undefined && title !== '') return title;

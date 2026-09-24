@@ -47,10 +47,10 @@
 5. **零横向溢出**：容器宽 390 与 1280 两档 `scrollWidth ≤ clientWidth`；名称／副语／口径行一律 `overflow-wrap: anywhere`；样式段里没有 `text-overflow`／`line-clamp`／`white-space: nowrap`（读数值那一格**故意不写** `nowrap`）。
 6. **窄档**：容器窄于 `RANK_LIST_NARROW_PX`（560px）时，领奖台三张卡改竖排一列、名次回到自然顺序；逐行区四列不动。
 7. **响应式一律容器驱动**：本件设 `container-type: inline-size`；窄档调整走 `@container`；本件**一条 `@media` 都没有**。
-8. **三套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
+8. **各套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
 9. **零 DOM／零内联脚本**：模块代码剥掉字面量后不出现 `document.`／`window.`／`navigator.`；产出的标记里没有 `<script>`，也没有 `on*=` 内联事件。
 10. **样式只经 `skinVar()` 读皮肤**：组件里不出现手写的 `var(--ilife-…)`；不写 `:root`／`!important`；不定义新 token 名；全部规则 scope 在 `.<prefix>page-ui` 之下，且只读本件自己的类名。
-11. **无障碍地板**：文字色取 `ink`／`ink-2`／`accent-text`（三套皮肤下都过对比地板）；条是装饰（值已以文本上屏）故 `aria-hidden`；`:focus-visible` 给 2px 可见焦点。
+11. **无障碍地板**：文字色取 `ink`／`ink-2`／`accent-text`（各套皮肤下都过对比地板）；条是装饰（值已以文本上屏）故 `aria-hidden`；`:focus-visible` 给 2px 可见焦点。
 
 ## 常见错法
 

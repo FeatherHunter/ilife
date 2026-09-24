@@ -54,10 +54,10 @@
 4. **零横向溢出**：容器宽 390 与 1280 两档 `scrollWidth ≤ clientWidth`；长项名、长读数、长口径行一律 `overflow-wrap: anywhere`；样式段里没有 `text-overflow`／`line-clamp`／`white-space: nowrap`（值那一格**故意不写** `nowrap`：长读数宁可换行也不许顶破容器）。
 5. **窄档不塌成三条竖线**：宽档（≥ `COMPARE_COLUMNS_NARROW_PX` ＝ 560px）三列并排；窄档每项改排**三行**（项名一行、左窗一行、右窗一行），表头行收起、两窗改由每行自己的窗口名领读。
 6. **响应式一律容器驱动**：本件设 `container-type: inline-size`（它自己就是容器），窄档调整走 `@container`；本件**一条 `@media` 都没有**。
-7. **三套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
+7. **各套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
 8. **零 DOM／零内联脚本**：模块代码剥掉字面量后不出现 `document.`／`window.`／`navigator.`；产出的标记里没有 `<script>`，也没有 `on*=` 内联事件。
 9. **样式只经 `skinVar()` 读皮肤**：组件里不出现手写的 `var(--ilife-…)`；不写 `:root`／`!important`；不定义新 token 名；全部规则 scope 在 `.<prefix>page-ui` 之下，且只读本件自己的类名。
-10. **无障碍地板**：文字色取 `ink`／`ink-2`／`accent-text`／`ok`／`danger`（三套皮肤下都过对比地板）；条是装饰（值已以文本上屏）故 `aria-hidden`；`:focus-visible` 给 2px 可见焦点；单位走 `<small>` 跟在数字后。
+10. **无障碍地板**：文字色取 `ink`／`ink-2`／`accent-text`／`ok`／`danger`（各套皮肤下都过对比地板）；条是装饰（值已以文本上屏）故 `aria-hidden`；`:focus-visible` 给 2px 可见焦点；单位走 `<small>` 跟在数字后。
 
 ## 常见错法
 

@@ -34,7 +34,7 @@
 2. **计数与关键语义不截断**：计数恒 `flex:none` ＋ `white-space:nowrap`（只换行、不掉字）；标题恒 `overflow-wrap:anywhere`（**永不 `…` 截断**）。
 3. **命中盒地板**：标题行（`<summary>`）`min-height` ＝ `SECTION_HEAD_SUM_MIN_PX`（44px）——视觉上是"一行标题"，可点的是整行。
 4. **窄宽两档**：容器宽 390 与 1280 下**零横向溢出**（`scrollWidth ≤ clientWidth`）；窄档（<420px）计数与展开指示整行掉到第二行，标题占满整行（不被挤成一列孤字）。
-5. **三套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
+5. **各套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动。
 6. **零 DOM**：模块代码剥掉字面量后不出现 `document.`／`window.`／`navigator.`。
 7. **样式只经 `skinVar()` 读皮肤**：组件里不出现手写的 `var(--ilife-…)`；不写 `:root`／`!important`；不定义新 token 名；全部规则 scope 在 `.<prefix>page-ui` 之下。
 8. **响应式一律容器驱动**：本件设 `container-type: inline-size`（它自己就是容器）；折行靠内在尺寸 ＋ `flex-wrap`，窄档调整走 `@container`；`@media` 只判设备能力（`hover:hover and pointer:fine`、`prefers-reduced-motion:reduce`），**不判宽度**。

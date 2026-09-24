@@ -111,7 +111,7 @@ document.addEventListener('ilife:dialog-close', (e) => {
 5. **零 DOM 的模块**：`dist/components/dialog/**` 的**代码**里没有 `document.`／`window.`／`navigator.`
    （DOM 只出现在产出的 JS 文本里）。
 6. **加法式**：不用它 ⇒ 页产物逐字节不变；样式段与运行时都由页面 opt-in 注入。
-7. **三套皮肤下标记逐字节相同**（皮肤只改取值）。
+7. **各套皮肤下标记逐字节相同**（皮肤只改取值）。
 
 ## 常见错法（别这么干）
 - ❌ 拿 `window.confirm` 顶事：字符串拼不出要点、样式不可控、窄屏按钮位置随浏览器跑。

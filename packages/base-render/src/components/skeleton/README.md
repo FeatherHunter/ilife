@@ -35,7 +35,7 @@
 4. **动效只走 `opacity`**：`@keyframes ilife-block-skeleton-pulse` 的每一帧只有 `opacity` 一条声明（没有 `transform`／`width`／`left`／`background-position`）；周期 `SKELETON_PULSE_DURATION_MS`；最暗一帧 `SKELETON_PULSE_MIN_OPACITY`（不许低到看不见）。
 5. **`prefers-reduced-motion: reduce` 下必须停**：`animation: none` 并换成静止可见度 `SKELETON_STILL_OPACITY`（**停住 ≠ 看不见**）。判据在真机上用 `Emulation.setEmulatedMedia` 量计算样式。
 6. **两档几何**：容器宽 390 与 1280 下**零横向溢出**（`scrollWidth ≤ clientWidth`）；三列在任何一档都不重叠。
-7. **三套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动；占位块底色是 `color-mix(in srgb, ink 13%, surface)`（**从 token 算出来**，不写死灰值）。
+7. **各套皮肤下标记逐字节相同**：皮肤只换样式段（取值表），标记一个字节不动；占位块底色是 `color-mix(in srgb, ink 13%, surface)`（**从 token 算出来**，不写死灰值）。
 8. **无障碍**：根 `aria-busy="true"`；排头 `role="status"`（只念这一句）；**全部占位块 `aria-hidden="true"`**（读屏不念十二个空盒子）。
 9. **零 DOM／零内联脚本**：模块代码剥掉字面量后不出现 `document.`／`window.`／`navigator.`；标记里没有 `<script>`、没有 `on*=`。**本件没有 `runtime.ts`**：骨架不接事件、不点不动。
 10. **样式只经 `skinVar()` 读皮肤**：不写手写的 `var(--ilife-…)`，不写 `:root`／`!important`，不定义新 token 名，全部 `.ilife-page-ui` 级规则 scope 在它之下；窄档只走 `@container`（判本件自己的宽度），媒体查询只判设备能力。

@@ -59,7 +59,7 @@ calendarMonthCss();                   // 样式段（页面自己按需注入；
 - **缺值不写 0**：`value: null` ⇒ 格内 `—`、档位压到 0。`0` 是"那天花了 0 元"，两者不是一回事。
 - **格盘必须排满**：长度非 7 的倍数、或超过 6 行 ⇒ `badInput`（错位一格会被读成另一天）。
 - **七列是份数**：`repeat(7, minmax(0,1fr))` ⇒ 总宽恒等于容器宽，390 档**不横滑**；读数**换行不截断**。
-- **深浅从 token 算**：五档＝`color-mix(in srgb, accent N%, surface-2)`，不写死颜色 ⇒ 三套皮肤（含强调＝墨黑）下都是同一条"浅 → 深"。
+- **深浅从 token 算**：五档＝`color-mix(in srgb, accent N%, surface-2)`，不写死颜色 ⇒ 各套皮肤（含强调＝墨黑）下都是同一条"浅 → 深"。
 - **本件是自己的容器**（`container-type: inline-size`）：给它一个**确定的宽度**（块级流、grid 轨道，或 flex 里带 `flex-basis`）；不要在 shrink-to-fit 的 flex 项里用 `auto` 宽度，那会被 inline-size containment 收成 0。
 - 值位只吃"已经是给人看的样子"的串（取整、千分位、单位口径归调用方），与全层同口径。**金额请给短形**（如 `¥1.2k`）——本件不替你缩略数字。
 

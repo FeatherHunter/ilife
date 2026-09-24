@@ -47,7 +47,7 @@ src/components/
 | 容器与浮层 | `dialog`／`drawer-sheet`／`popover-menu`／`tooltip` |
 | 加量池 | `progress-list`／`sync-status`／`photo-grid`／`photo-compare`／`note-block`／`invoice-lines` |
 
-**皮肤**：三套语言（`paper` 小票纸／`broadsheet` 大字报刊／`neutral` 中性）住 `components/skin/**`。
+**皮肤**：四套语言（`paper` 小票纸／`broadsheet` 大字报刊／`neutral` 中性／`ink` 水墨·宣纸）住 `components/skin/**`。
 件**只读 token 名**（经 `skinVar()`，带兜底链），换皮只换取值、不换结构；页面挂一次
 `skinCss()` ＋ 祖先上一个 `ilife-skin-<名>` 类即可。
 
@@ -77,5 +77,5 @@ src/components/
 | 判据 | 断什么 |
 |---|---|
 | `test/组件样式纪律.test.mjs` | 串味（纯字面量选择器）／`!important`／视口分档／死容器查询／**作用域拼两遍**（从**产物**数）；范围**从层出口读**，名册外既有件单列豁免并注明原因 |
-| `test/皮肤矩阵.test.mjs` | 全部件 × 三套皮肤 × 两档：换皮不换结构、样式段纪律、零 DOM、两档溢出真机读数 |
+| `test/皮肤矩阵.test.mjs` | 全部件 × 四套皮肤 × 两档：换皮不换结构、样式段纪律、零 DOM、两档溢出真机读数 |
 | `test/组件清单.test.mjs` | 清单快照与磁盘对账（件名／形态／导出名／缺目录／跨件公开名撞车） |
