@@ -9,6 +9,11 @@
 //   ⑤ 加法式（不挂皮肤类时，皮肤段对产物零命中）
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 import {
   BROADSHEET_VALUES,
@@ -169,5 +174,47 @@ describe('皮肤 ⑤ 加法式（不挂皮肤＝零命中）', () => {
       assert.equal(skinTokenVar(k), '--ilife-' + k);
       assert.equal(Object.keys(CSS_VAR_TOKENS).includes(skinTokenVar(k)), false);
     }
+  });
+});
+
+describe('皮肤 ⑥ 源码级纪律（组件只经 skinVar 读，不许手写 var(--ilife-…)）', () => {
+  const COMPONENTS = join(HERE, '..', 'src', 'components');
+  const SELF = new Set(['skin', 'shared']);
+
+  /** 组件层的每份样式段（排除皮肤层自己）。 */
+  const styleFiles = () => {
+    const out = [];
+    for (const dir of readdirSync(COMPONENTS, { withFileTypes: true })) {
+      if (!dir.isDirectory() || SELF.has(dir.name)) continue;
+      const p = join(COMPONENTS, dir.name, 'style.ts');
+      if (existsSync(p)) out.push({ name: dir.name, path: p });
+    }
+    return out;
+  };
+
+  it('至少扫到了一件（防判据空转）', () => {
+    assert.ok(styleFiles().length >= 1, '一件都没扫到，判据等于没跑');
+  });
+
+  it('组件样式里不出现手写的 var(--ilife-…)（兜底链只许住在 skin/contract.ts）', () => {
+    const bad = [];
+    for (const f of styleFiles()) {
+      const src = stripComments(readFileSync(f.path, 'utf8'));
+      const hits = [...src.matchAll(/var\(\s*--ilife-/g)];
+      if (hits.length > 0) bad.push(f.name + '（' + hits.length + ' 处）');
+    }
+    assert.deepEqual(bad, [], '这些件手写了 var(--ilife-…)，请改走 skinVar()：' + bad.join('、'));
+  });
+
+  it('组件样式里用到的 --ilife-* 名都在名单里（拼错的 token 会被静默兜底）', () => {
+    const known = new Set(SKIN_TOKEN_NAMES.map((k) => skinTokenVar(k)));
+    const bad = [];
+    for (const f of styleFiles()) {
+      const src = stripComments(readFileSync(f.path, 'utf8'));
+      const used = new Set([...src.matchAll(/'--ilife-([a-z0-9-]+)'/g)].map((m) => '--ilife-' + m[1]));
+      const unknown = [...used].filter((n) => !known.has(n));
+      if (unknown.length > 0) bad.push(f.name + '：' + unknown.join('、'));
+    }
+    assert.deepEqual(bad, [], '名单外的 token：' + bad.join('；'));
   });
 });
