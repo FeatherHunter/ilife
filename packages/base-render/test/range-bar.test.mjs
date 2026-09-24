@@ -117,9 +117,18 @@ describe('range-bar ① 渲染契约', () => {
     assert.equal(just.includes(S('iv-text')), false);
   });
 
-  it('刻度对齐的三条静态口径：同一张网格 ＋ 刻度落第二轨 ＋ 8px 列距', () => {
+  it('刻度对齐的三条静态口径：同一副列模板 ＋ 刻度落第二轨 ＋ 8px 列距', () => {
     const css = stripComments(rangeBarCss());
-    assert.match(css, new RegExp(S('ax') + ',\\s*\\n' + '\\.ilife-page-ui \\.' + S('lane') + ' \\{\\s*display: contents'));
+    const cols = String(RANGE_BAR_KEY_COLUMN_PX) + 'px minmax(0, 1fr) ' + String(RANGE_BAR_TOTAL_COLUMN_PX) + 'px';
+    /* 刻度行与泳道是**两张网格、同一副列模板**（刻度行不进泳道那张网格：
+       挤进去会把每条泳道的三个槽推错列 —— 判据量"左侧越界 11px"抓到过）。 */
+    const axRule = new RegExp(S('ax') + ' \\{([^}]*)\\}').exec(css);
+    const lanesRule = new RegExp(S('lanes') + ' \\{([^}]*)\\}').exec(css);
+    assert.ok(axRule !== null && lanesRule !== null, '刻度行与泳道都要有自己的列模板');
+    assert.match(axRule[1], new RegExp('grid-template-columns: ' + cols.replace(/[()]/g, '\\$&')));
+    assert.match(lanesRule[1], new RegExp('grid-template-columns: ' + cols.replace(/[()]/g, '\\$&')));
+    assert.match(css, new RegExp(S('lane') + ' \\{\\s*display: contents'), '泳道的三个槽直接落进泳道网格');
+    assert.equal(new RegExp(S('ax') + ' \\{\\s*display: contents').test(css), false, '刻度行不许 `display:contents` 挤进泳道网格');
     assert.match(css, new RegExp(S('ax-ticks') + ' \\{[^}]*grid-column: 2'));
     assert.ok(css.includes('gap: 4px ' + String(RANGE_BAR_TICK_GAP_PX) + 'px'), '刻度列距取常量');
   });
@@ -221,9 +230,12 @@ describe('range-bar ② 样式与零 DOM 纪律', () => {
     assert.ok(sels.length >= 20, '选择器条数太少：' + String(sels.length));
     for (const sel of sels) {
       assert.ok(sel.includes(ROOT), '选择器不在 scope 之下：' + sel);
-      assert.ok(sel.trimStart().startsWith(ROOT), 'scope 必须是第一个复合选择器：' + sel);
-      assert.equal((sel.match(/\.ilife-page-ui/g) || []).length, 1,
-        'scope 只许出现一次（拼两个槽时写出 `.ilife-page-ui … .ilife-page-ui …` 的规则永远命中不到）：' + sel);
+      /* 一条规则里的**每一段**（逗号分隔）都要以 scope 打头，且**恰好带一次** scope。 */
+      for (const one of sel.split(',')) {
+        assert.ok(one.trimStart().startsWith(ROOT), 'scope 必须是这一段选择器的第一个复合选择器：' + one);
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1,
+          'scope 在同一段里出现两次（`.ilife-page-ui … .ilife-page-ui …` 的规则永远命中不到）：' + one);
+      }
     }
   });
 
@@ -296,16 +308,24 @@ describe('range-bar ④a 几何契约（静态判据）', () => {
   const css = stripComments(rangeBarCss());
 
   it('轨道是**份数**（`minmax(0, 1fr)`），左右两栏是**定宽**（宽档／窄档各一套）', () => {
-    assert.match(css, new RegExp('grid-template-columns: ' + String(RANGE_BAR_KEY_COLUMN_PX) + 'px minmax\\(0, 1fr\\) minmax\\(' + String(RANGE_BAR_TOTAL_COLUMN_PX) + 'px, auto\\)'));
+    const wide = String(RANGE_BAR_KEY_COLUMN_PX) + 'px minmax(0, 1fr) ' + String(RANGE_BAR_TOTAL_COLUMN_PX) + 'px';
+    const narrow = String(RANGE_BAR_KEY_COLUMN_NARROW_PX) + 'px minmax(0, 1fr) ' + String(RANGE_BAR_TOTAL_COLUMN_NARROW_PX) + 'px';
+    /* 左右两栏**定宽**是"刻度两端对得上轨道两端"的前提：定宽的两张网格列宽才恒等（`auto` 会按各自内容算）。 */
+    const axRule = new RegExp(S('ax') + ' \\{([^}]*)\\}').exec(css);
+    assert.ok(axRule !== null);
+    assert.ok(axRule[1].includes(wide), '宽档那一副模板：' + wide);
     assert.ok(css.includes('@container (max-width: ' + String(RANGE_BAR_NARROW_PX) + 'px)'));
-    assert.ok(css.includes(String(RANGE_BAR_KEY_COLUMN_NARROW_PX) + 'px minmax(0, 1fr) minmax(' + String(RANGE_BAR_TOTAL_COLUMN_NARROW_PX) + 'px, auto)'), '窄档两栏收一档');
+    assert.ok(css.includes(narrow), '窄档两栏各收一档：' + narrow);
+    assert.equal(css.includes('minmax(' + String(RANGE_BAR_TOTAL_COLUMN_PX) + 'px, auto)'), false, '合计栏不许 auto（会跟刻度行错开）');
     assert.equal(css.includes('@media (max-width'), false, '不许用视口宽判宽度');
   });
 
-  it('关键读数不截断：时长的 `nowrap` 在、`…` 不在；刻度标签 `nowrap` ＋ 列距', () => {
+  it('关键读数不截断：合计**换行不截断**、刻度标签 `nowrap` ＋ 列距、全段零 `text-overflow`', () => {
     const totalRule = new RegExp(S('total') + ' \\{([^}]*)\\}').exec(css);
     assert.ok(totalRule !== null);
-    assert.match(totalRule[1], /white-space: nowrap/);
+    /* 合计栏**定宽**，所以这里要的是"装不下就折行"（`overflow-wrap`），而不是 nowrap（那会顶出栏外）。 */
+    assert.match(totalRule[1], /overflow-wrap: anywhere/);
+    assert.equal(totalRule[1].includes('white-space: nowrap'), false, '定宽栏里 nowrap 会把金额顶出去');
     assert.equal(css.includes('text-overflow'), false, '本件不用 `…` 截断任何读数');
     const tickRule = new RegExp(S('ax-ticks') + ' > i \\{([^}]*)\\}').exec(css);
     assert.ok(tickRule !== null);

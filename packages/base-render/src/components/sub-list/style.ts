@@ -48,6 +48,10 @@ export function subListCss(input?: { readonly prefix?: string }): string {
     '  display: grid;',
     '  gap: 8px;',
     '  min-width: 0;',
+    /* 本件是**自己的容器**：下面那条 `@container (max-width: SUB_LIST_NARROW_PX)` 判的是
+       **本件宽度**（件会被嵌进侧栏／面板，视口宽 ≠ 件宽）。少了这一行，那条查询会去找**祖先**里
+       最近的容器——件里没有、页上也可能没有，于是「窄档收内距」这条规则**永远不生效**（死规则）。 */
+    '  container-type: inline-size;',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font') + ';',
     '  font-size: ' + skinVar('fs-body') + ';',

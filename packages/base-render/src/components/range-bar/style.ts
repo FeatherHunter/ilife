@@ -251,9 +251,9 @@ export function rangeBarCss(input?: { readonly prefix?: string }): string {
     '/* 窄容器（<' + String(RANGE_BAR_NARROW_PX) + 'px）：左右两栏各收一档，宽度让给轨道',
     '   （判的是**本件自己的宽度**：本件会被嵌进侧栏／面板／卡片，视口宽 ≠ 组件宽）。 */',
     '@container (max-width: ' + String(RANGE_BAR_NARROW_PX) + 'px) {',
+    '  ' + s('ax') + ',',
     '  ' + s('lanes') + ' {',
-    '    grid-template-columns: ' + String(RANGE_BAR_KEY_COLUMN_NARROW_PX) + 'px minmax(0, 1fr) minmax('
-      + String(RANGE_BAR_TOTAL_COLUMN_NARROW_PX) + 'px, auto);',
+    '    grid-template-columns: ' + String(RANGE_BAR_KEY_COLUMN_NARROW_PX) + 'px minmax(0, 1fr) ' + String(RANGE_BAR_TOTAL_COLUMN_NARROW_PX) + 'px;',
     '  }',
     '}',
     '/* 极窄容器（<' + String(RANGE_BAR_TEXT_HIDE_BELOW_PX) + 'px）：轨道短到放不下时长字一牌',

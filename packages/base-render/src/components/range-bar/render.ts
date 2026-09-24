@@ -72,14 +72,14 @@ function laneHtml(lane: RangeBarLaneModel): string {
   return '<div class="' + rangeBarSlot('lane') + '">' + key + rail + total + '</div>';
 }
 
-/** 形态 A 的骨架。0 条泳道＝空串（与"没内容不留空块"同口径）。 */
+/** 形态 A 的骨架。0 条泳道＝空串（与"没内容不留空块"同口径）。
+ *  刻度行是**泳道网格的兄弟**（不是子元素）：它自带一副同样的列模板（见 `style.ts` 那段注释）——
+ *  挤进泳道那张网格里会把三个槽推错列（轨道被塞进第一栏 46px）。 */
 function renderLanes(m: RangeBarModel): string {
   if (m.lanes.length === 0) return '';
   const parts: string[] = [headHtml(m)];
-  parts.push('<div class="' + rangeBarSlot('lanes') + '">');
   if (m.axis.length > 0) parts.push(axisHtml(m.axis));
-  parts.push(m.lanes.map(laneHtml).join(''));
-  parts.push('</div>');
+  parts.push('<div class="' + rangeBarSlot('lanes') + '">' + m.lanes.map(laneHtml).join('') + '</div>');
   if (m.note !== undefined) parts.push('<p class="' + rangeBarSlot('note') + '">' + esc(m.note) + '</p>');
   return parts.join('');
 }

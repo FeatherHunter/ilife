@@ -12,8 +12,8 @@
  *   · `overflows`：内容比盒子宽的后代（`overflow:hidden` 里被裁掉的那种，静态查不出来）；
  *   · `keys`：关键读数位的 `scrollWidth/clientWidth` 与 `text-overflow`（有没有 `…` 截断）。
  */
-import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -106,20 +106,33 @@ export async function openMeasurePage(opts) {
   const page = join(dir, 'fixture.html');
   writeFileSync(page, html, 'utf8');
   const profileDir = mkdtempSync(join(tmpdir(), 't-timegroup-chrome-'));
-  const port = 9700 + (process.pid % 200);
+  /* **让浏览器自己挑端口**（`--remote-debugging-port=0`，端口写在 `DevToolsActivePort` 里）：
+     自己算端口（如 `9700+pid%200`）在全量套件里会撞——别席的夹具同时起着好几个 Chrome，
+     pid 差不到 200 就撞上了；撞了的表现是"等 30 秒然后 CDP 未就绪"，一路红一大片。 */
   const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
     '--disable-extensions', '--hide-scrollbars', '--allow-file-access-from-files',
-    '--remote-debugging-port=' + port, '--user-data-dir=' + profileDir, '--window-size=1400,1000', 'about:blank'],
+    '--remote-debugging-port=0', '--user-data-dir=' + profileDir, '--window-size=1400,1000', 'about:blank'],
   { stdio: ['ignore', 'pipe', 'pipe'] });
 
   const cleanup = () => {
+    /* Windows 上 `child.kill()` 只带走直接子进程，还原生留着渲染／GPU 子进程（实测残留 20+ 个），
+       所以再用 `taskkill /T` 收整棵树；收不掉也不算错（进程可能已经退了）。 */
     try { chrome.kill(); } catch { /* 已退出 */ }
+    if (process.platform === 'win32' && typeof chrome.pid === 'number') {
+      try { spawnSync('taskkill', ['/pid', String(chrome.pid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* 已退出 */ }
+    }
     for (const d of [profileDir, dir]) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 临时目录 */ } }
   };
   try {
     let devUrl = null;
-    for (let i = 0; i < 120 && devUrl === null; i += 1) {
-      try { const r = await fetch('http://127.0.0.1:' + port + '/json/version'); if (r.ok) devUrl = (await r.json()).webSocketDebuggerUrl; } catch { /* 等端口 */ }
+    for (let i = 0; i < 240 && devUrl === null; i += 1) {
+      try {
+        const portFile = readFileSync(join(profileDir, 'DevToolsActivePort'), 'utf8').split('\n')[0].trim();
+        if (portFile !== '') {
+          const r = await fetch('http://127.0.0.1:' + portFile + '/json/version');
+          if (r.ok) devUrl = (await r.json()).webSocketDebuggerUrl;
+        }
+      } catch { /* 还没写端口文件 */ }
       if (devUrl === null) await sleep(250);
     }
     if (devUrl === null) throw new Error('CDP 未就绪（headless Chrome 起不来）');

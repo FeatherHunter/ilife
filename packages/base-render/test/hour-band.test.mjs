@@ -240,9 +240,12 @@ describe('hour-band ② 样式与零 DOM 纪律', () => {
     assert.ok(sels.length >= 20, '选择器条数太少：' + String(sels.length));
     for (const sel of sels) {
       assert.ok(sel.includes(ROOT), '选择器不在 scope 之下：' + sel);
-      assert.ok(sel.trimStart().startsWith(ROOT), 'scope 必须是第一个复合选择器：' + sel);
-      assert.equal((sel.match(/\.ilife-page-ui/g) || []).length, 1,
-        'scope 只许出现一次（拼两个槽时写出 `.ilife-page-ui … .ilife-page-ui …` 的规则永远命中不到）：' + sel);
+      /* 一条规则里的**每一段**（逗号分隔）都要以 scope 打头，且**恰好带一次** scope。 */
+      for (const one of sel.split(',')) {
+        assert.ok(one.trimStart().startsWith(ROOT), 'scope 必须是这一段选择器的第一个复合选择器：' + one);
+        assert.equal((one.match(/\.ilife-page-ui/g) || []).length, 1,
+          'scope 在同一段里出现两次（`.ilife-page-ui … .ilife-page-ui …` 的规则永远命中不到）：' + one);
+      }
     }
   });
 
