@@ -57,7 +57,10 @@ export function buildMultiChecksJs(): string {
     + '  doc.documentElement.setAttribute(ATTR_RUNTIME,"1");' + LF
     + '  function rootOf(el){ return el && el.closest ? el.closest("["+ATTR_NAME+"]") : null; }' + LF
     + '  function rowsOf(root){ return root.querySelectorAll("input[type=checkbox]["+ATTR_ITEM+"]"); }' + LF
-    + '  function groupsOf(root){ return root.querySelectorAll("input[type=checkbox]["+ATTR_GROUP+"]"); }' + LF
+    /* **只挑组头**（`:not([ATTR_ITEM])`）：行上也带着组键（运行时按它把行归到组头）。
+       不排除的话，下面那趟"组头三态"会把**行的勾选**一起改写（2026-09 实拍：点第 4 行，
+       计数 +1 但那一行的勾马上没了、事件 ids 里也没有它）。 */
+    + '  function groupsOf(root){ return root.querySelectorAll("input[type=checkbox]["+ATTR_GROUP+"]:not(["+ATTR_ITEM+"])"); }' + LF
     + '  function centsOf(input){' + LF
     + '    var v=input.getAttribute(ATTR_AMOUNT); if (v===null) return null;' + LF
     + '    var n=Number(v); return isFinite(n) ? Math.round(n) : null;' + LF

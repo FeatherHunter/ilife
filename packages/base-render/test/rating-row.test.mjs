@@ -38,7 +38,6 @@ import {
   renderRatingRow,
 } from '../dist/components/rating-row/index.js';
 import { SKIN_NAMES, SKIN_TOKEN_NAMES, skinClass, skinCss, skinTokenVar, skinVar } from '../dist/components/skin/index.js';
-import * as root from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -341,7 +340,10 @@ describe('ratingRow ③ 加法式（opt-in：不挂这件＝零变化）', () =>
     assert.equal(a.includes('ilife-block-page-head'), false, '标记里不出现别件的类名');
     assert.equal(a.includes('ilife-block-multi-checks'), false, '标记里不出现别件的类名');
     assert.equal(typeof renderRatingRow, 'function');
-    assert.equal(root.renderRatingRow, undefined, '组件层不得从根出口出（冻结面签名不许动）');
+    /* 层红线按**产物的字面**断：本件不从根出口出（冻结面签名不许动）。
+       这里读文本而不 import 根出口：根出口会牵起整层别的件，别人一件写坏就红在别人身上。 */
+    assert.equal(readFileSync(join(PKG, 'dist', 'index.js'), 'utf8').includes('renderRatingRow'), false,
+      '组件层不得从根出口出：dist/index.js 里出现了 renderRatingRow');
   });
 
   it('样式段与运行时段都是**字符串**：页面不调它们就没有任何字节', () => {

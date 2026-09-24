@@ -35,7 +35,6 @@ import {
   renderRadioCards,
 } from '../dist/components/radio-cards/index.js';
 import { SKIN_NAMES, SKIN_TOKEN_NAMES, skinClass, skinCss, skinTokenVar, skinVar } from '../dist/components/skin/index.js';
-import * as root from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -344,7 +343,10 @@ describe('radioCards ③ 加法式（opt-in：不挂这件＝零变化）', () =
     assert.equal(a.includes('ilife-block-page-head'), false, '标记里不出现别件的类名');
     assert.equal(a.includes('ilife-block-sheet'), false, '标记里不出现别件的类名');
     assert.equal(typeof renderRadioCards, 'function');
-    assert.equal(root.renderRadioCards, undefined, '组件层不得从根出口出（冻结面签名不许动）');
+    /* 层红线按**产物的字面**断：本件不从根出口出（冻结面签名不许动）。
+       这里读文本而不 import 根出口：根出口会牵起整层别的件，别人一件写坏就红在别人身上。 */
+    assert.equal(readFileSync(join(PKG, 'dist', 'index.js'), 'utf8').includes('renderRadioCards'), false,
+      '组件层不得从根出口出：dist/index.js 里出现了 renderRadioCards');
   });
 
   it('样式段与运行时段都是**字符串**：页面不调它们就没有任何字节', () => {
@@ -529,11 +531,12 @@ async function startFixture() {
       await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: box.x, y: box.y, button: 'left', clickCount: 1 });
       await sleep(120);
     };
-    /** 键盘焦点（真按 Tab）：量卡片上的焦点描边。 */
+    /** 焦点地板（真机量）：焦点态判在**原生框**上（`card:has(input:focus-visible)`），
+     *  所以伪类也必须强制在原生的那一枚上——`CSS.forcePseudoState` 只对它自己那一个元素生效。 */
     const tabToCard = async () => {
       await ev('document.querySelectorAll(".ilife-block-radio-cards")[0].querySelector("input[type=radio]").focus();true');
       const { root: docRoot } = await s('DOM.getDocument', { depth: 1 });
-      const { nodeId } = await s('DOM.querySelector', { nodeId: docRoot.nodeId, selector: '.ilife-block-radio-cards .ilife-block-radio-cards-card' });
+      const { nodeId } = await s('DOM.querySelector', { nodeId: docRoot.nodeId, selector: '.ilife-block-radio-cards-card input[type=radio]' });
       await s('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['focus-visible'] });
       const out = await ev('(function(){var c=document.querySelector(".ilife-block-radio-cards .ilife-block-radio-cards-card");'
         + 'var cs=getComputedStyle(c);return {w:parseFloat(cs.outlineWidth),style:cs.outlineStyle};}())');

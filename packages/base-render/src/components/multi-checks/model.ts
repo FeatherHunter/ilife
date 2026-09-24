@@ -107,7 +107,9 @@ function normalizeRow(raw: unknown, index: number): MultiChecksRowModel {
     group: optText(r.group, 'multi-checks: input.rows[' + index + '].group'),
     note: optText(r.note, 'multi-checks: input.rows[' + index + '].note'),
     amountCents: centsOf(r.amount, 'multi-checks: input.rows[' + index + '].amount'),
-    amountText: optText(r.amountText, 'multi-checks: input.rows[' + index + '].amountText'),
+    /* 屏上金额缺省＝机器金额那份原始写法（`-12.00`）；要千分位就自己给 `amountText`。 */
+    amountText: optText(r.amountText, 'multi-checks: input.rows[' + index + '].amountText')
+      ?? (typeof r.amount === 'string' ? r.amount : undefined),
     disabled,
     disabledReason,
   };

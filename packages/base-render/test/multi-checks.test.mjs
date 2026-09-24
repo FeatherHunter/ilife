@@ -33,7 +33,6 @@ import {
   renderMultiChecks,
 } from '../dist/components/multi-checks/index.js';
 import { SKIN_NAMES, SKIN_TOKEN_NAMES, skinClass, skinCss, skinTokenVar, skinVar } from '../dist/components/skin/index.js';
-import * as root from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -135,7 +134,7 @@ describe('multiChecks ① 渲染契约', () => {
     assert.match(html, /-gh-note">3 条 · ¥56.00</, '组尾读数取组内第一份给了的');
     assert.match(html, /-nm">茶叶蛋 2 个<i class="ilife-block-multi-checks-note">早餐 · 未分类<\/i>/, '行主字 ＋ 副语');
     assert.match(html, /-amt">-12.00</, '行右端金额');
-    assert.match(html, /-bar"><span class="ilife-block-multi-checks-sum" id="ilife-checks-sum-batch" aria-live="polite">合计 ¥56.00<\/span>/, '底下那句合计在');
+    assert.match(html, /-bar"><span class="ilife-block-multi-checks-sum" id="ilife-checks-sum-batch" aria-live="polite">合计 -¥56.00<\/span>/, '底下那句合计在（金额的符号写在货币号前）');
     assert.match(html, /<button type="button" class="ilife-block-multi-checks-act" data-ilife-checks-action="apply" data-ilife-checks-primary="1" aria-describedby="ilife-checks-sum-batch">改分类<\/button>/, '主按钮用 `data-*` 标记，不用修饰类');
     assert.ok(html.indexOf('-bar') > html.indexOf('-row'), '按钮排在**行之后**（本形态的样子）');
     assert.equal(/<script/i.test(html), false, '不产脚本');
@@ -360,7 +359,10 @@ describe('multiChecks ③ 加法式（opt-in：不挂这件＝零变化）', () 
     assert.equal(a.includes('ilife-block-page-head'), false, '标记里不出现别件的类名');
     assert.equal(a.includes('ilife-block-radio-cards'), false, '标记里不出现别件的类名');
     assert.equal(typeof renderMultiChecks, 'function');
-    assert.equal(root.renderMultiChecks, undefined, '组件层不得从根出口出（冻结面签名不许动）');
+    /* 层红线按**产物的字面**断：本件不从根出口出（冻结面签名不许动）。
+       这里读文本而不 import 根出口：根出口会牵起整层别的件，别人一件写坏就红在别人身上。 */
+    assert.equal(readFileSync(join(PKG, 'dist', 'index.js'), 'utf8').includes('renderMultiChecks'), false,
+      '组件层不得从根出口出：dist/index.js 里出现了 renderMultiChecks');
   });
 
   it('样式段与运行时段都是**字符串**：页面不调它们就没有任何字节', () => {
@@ -468,11 +470,11 @@ const MEASURE = '(function(){'
   + 'var rows=[].slice.call(h.querySelectorAll(".ilife-block-multi-checks-row"));'
   + 'for(var j=0;j<rows.length;j++){var row=rows[j];var inp=row.querySelector("input[type=checkbox]");var cb=row.querySelector(".ilife-block-multi-checks-cb");'
   + 'var cs=getComputedStyle(row);'
-  + 'out.rows.push({idx:j,box:box(row),checked:!!inp&&inp.checked,disabled:!!inp&&inp.disabled,'
+  + 'out.rows.push({root:i,idx:j,box:box(row),checked:!!inp&&inp.checked,disabled:!!inp&&inp.disabled,'
   + 'focusable:!!inp&&typeof inp.focus==="function"&&getComputedStyle(inp).display!=="none",'
   + 'bar:cs.boxShadow.indexOf("inset")>=0,checkMark:getComputedStyle(cb,"::after").content.indexOf("\\u2713")>=0});}'
   + 'var acts=[].slice.call(h.querySelectorAll("[data-ilife-checks-action]"));'
-  + 'for(var k=0;k<acts.length;k++)out.acts.push({id:acts[k].getAttribute("data-ilife-checks-action"),box:box(acts[k]),disabled:acts[k].disabled,desc:acts[k].getAttribute("aria-describedby")});'
+  + 'for(var k=0;k<acts.length;k++)out.acts.push({root:i,id:acts[k].getAttribute("data-ilife-checks-action"),box:box(acts[k]),disabled:acts[k].disabled,desc:acts[k].getAttribute("aria-describedby")});'
   + '}'
   + 'return out;}())';
 
@@ -553,7 +555,9 @@ async function startFixture() {
         + 'var cs=getComputedStyle(a);return {align:cs.textAlign,col:cs.gridColumnStart};}())'),
       focusOutline: async () => {
         const { root: docRoot } = await s('DOM.getDocument', { depth: 1 });
-        const { nodeId } = await s('DOM.querySelector', { nodeId: docRoot.nodeId, selector: '.ilife-block-multi-checks-row' });
+        /* 焦点态判在**原生框**上（`row:has(input:focus-visible)`）⇒ 伪类也必须强制在原生的那一枚上：
+           `CSS.forcePseudoState` 只对它自己那一个元素生效，加在行上不算命中（这一条踩过一次）。 */
+        const { nodeId } = await s('DOM.querySelector', { nodeId: docRoot.nodeId, selector: '.ilife-block-multi-checks-row input' });
         await s('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['focus-visible'] });
         const out = await ev('(function(){var r=document.querySelector(".ilife-block-multi-checks-row");'
           + 'var cs=getComputedStyle(r);return {w:parseFloat(cs.outlineWidth),style:cs.outlineStyle};}())');
@@ -612,7 +616,7 @@ describe('multiChecks ④ 真机两档（390／1280 容器；视口恒 1440；�
       /* 三态与读数：夹具里预勾了三行 ⇒ 底下那句是合计；按钮可点 */
       const m0 = await p.open(1280);
       assert.match(m0.roots[0].sum, /合计/, '夹具里预勾了三行 ⇒ 底下那句是合计');
-      const acts0 = m0.acts.filter((a) => a.id === 'apply');
+      const acts0 = m0.acts.filter((a) => a.root === 0 && a.id === 'apply');
       assert.equal(acts0.length >= 1, true);
       assert.equal(acts0.every((a) => a.disabled === false), true, '勾着的时候主按钮可点');
 
@@ -627,7 +631,7 @@ describe('multiChecks ④ 真机两档（390／1280 容器；视口恒 1440；�
       const mNone = await p.measure();
       assert.match(mNone.roots[0].count, /已选 0 \/ 6 条/);
       assert.match(mNone.roots[0].sum, /一条都没勾/, '没勾时底下那句说明"为什么按不动"');
-      assert.equal(mNone.acts.filter((a) => a.id === 'apply').every((a) => a.disabled), true, '没勾 ⇒ 主按钮 disabled');
+      assert.equal(mNone.acts.filter((a) => a.root === 0 && a.id === 'apply').every((a) => a.disabled), true, '没勾 ⇒ 主按钮 disabled');
 
       /* 组头：点一下把整组勾上；单条勾选让组头停到半勾 */
       await p.clickAt('.ilife-block-multi-checks-gh', 0);
@@ -636,6 +640,8 @@ describe('multiChecks ④ 真机两档（390／1280 容器；视口恒 1440；�
       await p.clickAt('.ilife-block-multi-checks-row', 3);
       const mRow = await p.measure();
       assert.match(mRow.roots[0].count, /已选 4 \/ 6 条/, '单条勾选 ⇒ 计数 +1');
+      /* 计数的那个数必须与**屏上真的勾了哪几行**一致：单条勾选不许被"组头三态"那趟改写回去。 */
+      assert.equal(mRow.rows.filter((r) => r.root === 0 && r.checked).length, 4, '计数与屏上勾选数必须一致');
       assert.equal(mRow.rows[3].checked, true);
 
       /* 动作按钮：勾着的时候可点，点了派发 `ilife:checks-action` 并带上选中的机器键 */
