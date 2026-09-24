@@ -247,10 +247,18 @@ describe('radioCards ② 样式纪律', () => {
     assert.deepEqual(decls, [], '不得定义新 token：' + decls.join(' '));
   });
 
-  it('复合选择器的拼法：槽类接在组合器后面时**不许**再带作用域前缀（`> .ilife-page-ui …` 永远匹配不到）', () => {
+  it('复合选择器的拼法：**同一条选择器里 `.ilife-page-ui` 只许出现一次**（多一次＝要求"件里再套一层 page-ui"，永远是死规则）', () => {
     const bad = /(?:>|~|\+)\s*\.ilife-page-ui/.exec(css);
     assert.equal(bad, null, '拼错的复合选择器（规则会静默不生效）：'
       + (bad === null ? '' : css.slice(bad.index, bad.index + 60)));
+    const twice = [];
+    for (const sel of selectorsOf(radioCardsCss())) {
+      for (const part of sel.split(',')) {
+        const n = (part.match(/\.ilife-page-ui/g) || []).length;
+        if (n > 1) twice.push(n + '× ' + part.trim().slice(0, 90));
+      }
+    }
+    assert.deepEqual(twice, [], '这些选择器把作用域写了两遍（后半截必须是裸槽类）：' + twice.join('；'));
     /* 反面自证：本件确实有"接在组合器后面"的槽类（判据不是空转） */
     assert.match(css, /(?:>|~)\s*\.ilife-block-radio-cards-/);
   });
@@ -439,6 +447,7 @@ function buildFixture(width, skin) {
     + '</style></head>\n<body>\n'
     + '<div class="stage ilife-page-ui ' + skinClass(skin) + '" style="width:' + width + 'px">'
     + renderRadioCards(REAL) + renderRadioCards(HOSTILE)
+    + renderRadioCards({ ...REAL, name: 'acct-loading', loading: true })
     + '</div>\n</body></html>';
 }
 
@@ -450,7 +459,12 @@ const MEASURE = '(function(){'
   + 'var out={stageSw:stage.scrollWidth,stageCw:stage.clientWidth,docSw:document.documentElement.scrollWidth,'
   + 'docCw:document.documentElement.clientWidth,ellipsis:document.body.innerText.indexOf("\\u2026")>=0,roots:[],cards:[]};'
   + 'for(var i=0;i<roots.length;i++){var h=roots[i];'
-  + 'out.roots.push({sw:h.scrollWidth,cw:h.clientWidth,box:box(h),val:h.getAttribute("data-ilife-radio-value")});'
+  + 'out.roots.push({sw:h.scrollWidth,cw:h.clientWidth,box:box(h),val:h.getAttribute("data-ilife-radio-value"),'
+  + 'loading:h.getAttribute("data-ilife-radio-loading")==="1",'
+  /* 加载态那条规则的**活口**：读数的那一句在加载态下要换一档颜色（`ink-3`）——
+     只断文本换字不够：规则若被拼死（多写一遍 scope），屏上会静默不变。 */
+  + 'readingColor:(function(){var r=h.querySelector(".ilife-block-radio-cards-reading");return r?getComputedStyle(r).color:"";})(),'
+  + 'readingText:(h.querySelector(".ilife-block-radio-cards-reading")||{}).textContent});'
   + 'var cards=[].slice.call(h.querySelectorAll(".ilife-block-radio-cards-card"));'
   + 'for(var j=0;j<cards.length;j++){var c=cards[j];var inp=c.querySelector("input[type=radio]");'
   + 'var mk=c.querySelector(".ilife-block-radio-cards-mk");var cs=getComputedStyle(c);var ms=getComputedStyle(mk);'
@@ -569,7 +583,7 @@ describe('radioCards ④ 真机两档（390／1280 容器；视口恒 1440；皮
         assert.ok(m.docSw <= m.docCw, why + '页面横向溢出 doc ' + m.docSw + ' > ' + m.docCw);
         assert.ok(m.stageSw <= m.stageCw, why + '容器横向溢出 ' + m.stageSw + ' > ' + m.stageCw);
         assert.equal(m.ellipsis, false, why + '页面上出现了省略号');
-        assert.equal(m.roots.length, 2, why + '夹具应有两组');
+        assert.equal(m.roots.length, 3, why + '夹具应有三组（真实形状／敌意形状／加载态）');
         assert.ok(m.cards.length >= 4, why + '卡片数不对：' + m.cards.length);
         for (const c of m.cards) {
           assert.ok(c.box.w >= 44 && c.box.h >= 44, why + '触控目标 ' + c.box.w + '×' + c.box.h + ' 小于 44×44');
@@ -590,9 +604,16 @@ describe('radioCards ④ 真机两档（390／1280 容器；视口恒 1440；皮
         }
         const off = m.cards.filter((c) => !c.checked);
         assert.ok(off.length >= 1 && off.every((c) => c.bar === false), why + '未选中的卡不该有竖条');
+        /* 加载态：读数**原地换字**（文本换成那句）＋**换一档颜色**（证明那条规则真的活着，不是死规则） */
+        assert.equal(m.roots[2].loading, true);
+        assert.ok(m.roots[2].readingText.includes('正在读取'), '加载态读数换字：' + m.roots[2].readingText);
+        assert.ok(m.roots[0].readingText.includes('¥1,286.40'), '常态读数照旧：' + m.roots[0].readingText);
+        assert.notEqual(m.roots[2].readingColor, m.roots[0].readingColor,
+          why + '加载态读数的颜色与常态一样 ⇒ 那条规则没生效（死规则）：' + m.roots[2].readingColor);
         readings.push(width + 'px: scrollWidth ' + m.stageSw + ' ≤ clientWidth ' + m.stageCw
           + '｜卡 ' + m.cards.length + ' 张，最小命中盒 '
-          + Math.min(...m.cards.map((c) => c.box.h)) + 'px 高｜选中卡 ' + m.cards.filter((c) => c.checked).length + ' 张（竖条＋对钩齐）');
+          + Math.min(...m.cards.map((c) => c.box.h)) + 'px 高｜选中卡 ' + m.cards.filter((c) => c.checked).length + ' 张（竖条＋对钩齐）'
+          + '｜加载态读数色 ' + m.roots[2].readingColor + ' ≠ 常态 ' + m.roots[0].readingColor);
       }
       /* 窄档差异**只可能来自容器查询**：两档视口都是 1440 */
       await p.open(390);

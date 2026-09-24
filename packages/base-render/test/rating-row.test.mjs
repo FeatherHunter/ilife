@@ -245,10 +245,18 @@ describe('ratingRow ② 样式纪律', () => {
     assert.deepEqual(css.match(/--[a-z0-9-]+\s*:/g) || [], [], '不得定义新 token');
   });
 
-  it('复合选择器的拼法：槽类接在组合器后面时**不许**再带作用域前缀（`> .ilife-page-ui …` 永远匹配不到）', () => {
+  it('复合选择器的拼法：**同一条选择器里 `.ilife-page-ui` 只许出现一次**（多一次＝要求"件里再套一层 page-ui"，永远是死规则）', () => {
     const bad = /(?:>|~|\+)\s*\.ilife-page-ui/.exec(css);
     assert.equal(bad, null, '拼错的复合选择器（规则会静默不生效）：'
       + (bad === null ? '' : css.slice(bad.index, bad.index + 60)));
+    const twice = [];
+    for (const sel of selectorsOf(ratingRowCss())) {
+      for (const part of sel.split(',')) {
+        const n = (part.match(/\.ilife-page-ui/g) || []).length;
+        if (n > 1) twice.push(n + '× ' + part.trim().slice(0, 90));
+      }
+    }
+    assert.deepEqual(twice, [], '这些选择器把作用域写了两遍（后半截必须是裸槽类）：' + twice.join('；'));
     assert.match(css, /(?:>|~)\s*\.ilife-block-rating-row-/);
   });
 
