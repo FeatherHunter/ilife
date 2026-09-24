@@ -131,7 +131,13 @@ describe('皮肤 ④ 样式纪律', () => {
     for (const name of SKIN_NAMES) {
       assert.equal(css.includes('.ilife-skin-' + name + ' {'), true, '缺 ' + name + ' 段');
     }
-    assert.equal((css.match(/--ilife-/g) || []).length, SKIN_TOKEN_NAMES.length * SKIN_NAMES.length);
+    // 只数「定义行」（缩进两空格开头的 `--ilife-名:`），别把旧名映射里的 var(--ilife-*) 引用也数进去。
+    const defs = [...css.matchAll(/^ {2}--ilife-[a-z0-9-]+:/gm)];
+    assert.equal(defs.length, SKIN_TOKEN_NAMES.length * SKIN_NAMES.length,
+      'token 定义条数不对：' + defs.length);
+    for (const name of SKIN_NAMES) {
+      assert.equal((css.match(new RegExp('--ilife-', 'g')) || []).length > 0, true);
+    }
   });
 
   it('零 :root、零 !important、零禁入 token', () => {
@@ -140,10 +146,22 @@ describe('皮肤 ④ 样式纪律', () => {
     for (const bad of ['--r-xl', '--pink']) assert.equal(css.includes(bad), false, '禁入 token：' + bad);
   });
 
-  it('不重定义那 11 个冻结 token（本层只兜底到它，不改它）', () => {
+  it('11 个旧 token 名在皮肤类作用域内逐名给出映射（值走 var(--ilife-*)）', () => {
+    // 为什么必须给：老页面与既有件读旧名、新件读 `--ilife-*`；皮肤里不给旧名映射，挂上皮肤就会
+    // 「新件跟皮肤、老件不跟」——同一张卡里两种色（部分换皮）。给了映射，「挂皮肤＝整页一种语言」对两者同时成立。
     for (const frozen of Object.keys(CSS_VAR_TOKENS)) {
-      assert.equal(css.includes(frozen + ':'), false, '皮肤段重定义了冻结 token：' + frozen);
+      const mapped = css.includes(frozen + ': var(--ilife-');
+      assert.equal(mapped, true, '皮肤段缺旧名映射：' + frozen);
     }
+  });
+
+  it('旧名映射只出现在皮肤类作用域内，且绝不出现在 :root', () => {
+    // 页面级契约不动：没挂皮肤类的页照旧走默认 token 表。
+    assert.equal(css.includes(':root'), false);
+    const lines = css.split('\n').filter((l) => /^\s*--(fg|fg2|fg3|bg|card|line|blue|blue2|soft|ok|shadow):/.test(l));
+    assert.equal(lines.length, Object.keys(CSS_VAR_TOKENS).length * SKIN_NAMES.length,
+      '旧名映射条数不对：' + lines.length);
+    for (const l of lines) assert.equal(/var\(--ilife-/.test(l), true, '旧名映射的值必须走 var(--ilife-*)：' + l.trim());
   });
 
   it('只出点名的皮肤（skins 参数生效）', () => {

@@ -46,7 +46,29 @@ export interface SkinCssInput {
   readonly skins?: readonly SkinName[];
 }
 
-/** 皮肤样式段：一套皮肤一段 `.<prefix>skin-<名>{ --ilife-…: … }`。恒返回非空 CSS 文本。 */
+/** 旧 token 名 → 皮肤 token 名（**唯一一份映射**）。
+ *
+ *  为什么皮肤类里也要给出这 11 个旧名：老页面与既有件（`blocks.ts` 一族）读的是旧名，新件读的是 `--ilife-*`。
+ *  若皮肤只给新名，一块挂上皮肤的页面上就会出现「新件跟皮肤、老件不跟」的**部分换皮**——同一张卡里两种色。
+ *  把旧名在**皮肤类作用域内**映射过去，则「挂皮肤 = 整页一种语言」对老件新件同时成立；
+ *  页面级的 `:root` 契约一个字没动（没挂皮肤类的页照旧走默认 token 表）。
+ *
+ *  值写成 `var(--ilife-*)` 而不是字面值：同一份取值只住一处（铁律二），皮肤改值这里自动跟。 */
+const LEGACY_MAP = Object.freeze([
+  ['--fg', 'ink'],
+  ['--fg2', 'ink-2'],
+  ['--fg3', 'ink-3'],
+  ['--bg', 'ground'],
+  ['--card', 'surface'],
+  ['--line', 'line'],
+  ['--blue', 'accent'],
+  ['--blue2', 'accent-text'],
+  ['--soft', 'surface-2'],
+  ['--ok', 'ok'],
+  ['--shadow', 'shadow'],
+] as const satisfies readonly (readonly [string, SkinTokenName])[]);
+
+/** 皮肤样式段：一套皮肤一段 `.<prefix>skin-<名>{ --ilife-…: … ; 旧名映射 }`。恒返回非空 CSS 文本。 */
 export function skinCss(input?: SkinCssInput): string {
   const prefix = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
@@ -65,6 +87,10 @@ export function skinCss(input?: SkinCssInput): string {
     out.push('.' + skinClass(name, prefix) + ' {');
     for (const token of Object.keys(entry.values) as SkinTokenName[]) {
       out.push('  ' + skinTokenVar(token) + ': ' + entry.values[token] + ';');
+    }
+    out.push('  /* 旧 token 名映射（作用域内）：让既有件与老页面跟着这套语言走，避免"部分换皮"。 */');
+    for (const [legacy, token] of LEGACY_MAP) {
+      out.push('  ' + legacy + ': var(' + skinTokenVar(token) + ');');
     }
     out.push('}');
   }
