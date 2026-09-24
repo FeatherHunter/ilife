@@ -57,6 +57,61 @@ export function fmtPct(pct: number): string {
   return (Number.isInteger(r) ? String(r) : r.toFixed(1)) + '%';
 }
 
+/* ── 一条读数的形状与它的算术（三形态共用：桑基的节点、矩阵的行、轨下的名单行都是它）──
+ *  为什么住这一件：`FlowRibbonReadout` 的两半就是本文件那两支格式化函数——机器数（`amount`）
+ *  与屏上的字（`amountText`／`sharePct`／`shareText`）；**一处算、三处印**，不许各算各的。 */
+
+/** 一个读数：名字 ＋ 金额 ＋ 它占总额的比例。 */
+export interface FlowRibbonReadout {
+  /** 名字。 */
+  readonly name: string;
+  /** 金额（机器数）。 */
+  readonly amount: number;
+  /** 金额屏上写法（千分位；**永不 `…` 截断**）。 */
+  readonly amountText: string;
+  /** 占总额的百分比（0–100，一位小数）。 */
+  readonly sharePct: number;
+  /** 占比屏上写法（`27.4%`）。 */
+  readonly shareText: string;
+}
+
+/** 一位小数。 */
+export function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+/** 保留两位小数（几何用的百分比；**印在屏上的占比走 `fmtPct` 的一位小数**，两件事不混）。 */
+export function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** 夹进 0–100：带子两端的上下沿是**累加**出来的，四舍五入到两位小数后可能比 100 多出 0.01%
+ *  （最后一股的读数只影响 0.0003px，可不夹就得让「百分比恒在 0–100」这条不变量破功）。 */
+export function clampPct(n: number): number {
+  return Math.min(100, Math.max(0, round2(n)));
+}
+
+/** 一笔流量占总额的百分比（一位小数）。 */
+export function shareOf(amount: number, total: number): string {
+  return fmtPct(round1(amount / total * 100));
+}
+
+/** 一份名单 ＋ 流量 → 读数（金额由流量汇总；名字顺序＝调用方给的显示顺序）。 */
+export function readoutsOf(names: readonly FlowRibbonNode[], amounts: readonly number[],
+  total: number): readonly FlowRibbonReadout[] {
+  return names.map((node, i) => {
+    const amount = amounts[i];
+    const sharePct = round1(amount / total * 100);
+    return { name: node.name, amount, amountText: fmtAmount(amount), sharePct, shareText: fmtPct(sharePct) };
+  });
+}
+
+/** 一股／一类在某一列里的金额（由流量汇总；调用方不给金额，故不存在「名单与金额对不上」这种事）。 */
+export function sumBy(nodes: readonly FlowRibbonNode[], links: readonly FlowRibbonLink[],
+  side: 'from' | 'to'): readonly number[] {
+  return nodes.map((node) => links.reduce((acc, l) => (l[side] === node.name ? acc + l.amount : acc), 0));
+}
+
 /* ── 估宽（只在桑基那一个地方用：读数放不放得进节点框） ────────────────
  *  口径：按 `FLOW_RIBBON_FONT_PX` 估——中日韩字符算一个全角（＝字号），其余算 0.6 个字号。
  *  **估宽只用来决定「放框里还是搬到下面名单里」**，从不参与坐标计算：估错一个像素也不会画出错的图。 */

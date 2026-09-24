@@ -14,6 +14,7 @@
 import { skinVar } from '../skin/contract.js';
 import { FLOW_RIBBON_NARROW_PX, flowRibbonSlot, type FlowRibbonSlot } from './attrs.js';
 import { flowRibbonFormsCss } from './style-forms.js';
+import { flowRibbonRailsCss } from './style-rails.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -90,9 +91,10 @@ export function flowRibbonCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
-    /* 三个骨架各自的形状（`style-forms.ts`）：插在卡头之后、共用名单与脚注之前——
-       插在这一行的位置上，顺序即层叠顺序。 */
+    /* 三个骨架各自的形状：桑基与矩阵住 `style-forms.ts`、两条构成轨住 `style-rails.ts`——
+       在这一行的位置上依次汇总，顺序即层叠顺序，**产物逐字节不变**。 */
     flowRibbonFormsCss({ prefix: p }),
+    flowRibbonRailsCss({ prefix: p }),
     /* ── 读数名单（桑基装不下的读数、构成轨的两栏名单都用它）──────────────── */
     s('readout') + ' {',
     '  display: grid;',

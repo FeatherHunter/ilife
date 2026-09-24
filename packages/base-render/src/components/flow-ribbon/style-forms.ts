@@ -17,21 +17,17 @@ const LF = String.fromCharCode(10);
 /** 来源那一列的色阶（第 1 股最深 → 第 6 股最浅）：**从 `accent` 往卡面掺出来的淡洗**，不是色值。 */
 const SOURCE_WASH = [46, 36, 29, 23, 18, 14];
 
-/** 桑基画布高（px）：`--flow-ribbon-plot-h` 没给时用它兜底（正常情况下那个变量由 `model.ts` 算出来）。 */
+/** 桑基画布高（px）：`--flow-ribbon-plot-h` 没给时用它兜底（正常情况下那个变量由 `forms.ts` 算出来）。 */
 const PLOT_FALLBACK_PX = 240;
-
-/** 构成轨里两层的深浅（同一条 `accent`，只换掺进去的权重）：来源那一层比用途那一层深一档。 */
-const RAIL_WASH_SRC = 26;
-const RAIL_WASH_USE = 13;
-
-/** 九格那条轨的高度（px）：够放一个百分数，又不至于在窄档把版面顶长。 */
-const RAIL_PX = 34;
 
 /** 一个百分比档：强调色往卡面掺 `weight`%（淡洗＝合法的面；不是"拿墨色当面"）。 */
 const wash = (weight: number): string => 'color-mix(in srgb, ' + skinVar('accent') + ' ' + String(weight)
   + '%, ' + skinVar('surface') + ')';
 
-/** 三个骨架的样式（由 `flowRibbonCss()` 插在卡头与共用名单之间）。恒返回非空 CSS 文本。 */
+/** 桑基与矩阵两段的样式（由 `flowRibbonCss()` 插在卡头与共用名单之间）。恒返回非空 CSS 文本。
+ *
+ *  边界：这两段住本文件，**两条构成轨那一段住 `style-rails.ts`**（同一条前缀、同一份纪律，
+ *  由 `style.ts` 一次调用把三段按原顺序汇总——顺序即层叠顺序）。 */
 export function flowRibbonFormsCss(input?: { readonly prefix?: string }): string {
   const p = input !== undefined && input !== null
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
@@ -259,104 +255,6 @@ export function flowRibbonFormsCss(input?: { readonly prefix?: string }): string
     '  ' + s('cell-pct') + ' {',
     '    display: inline;',
     '    margin-left: 6px;',
-    '  }',
-    '}'].join(LF),
-
-    [`/* ── 两条构成轨 ＋ 中间汇合读数 ──────────────────────────────────
-   每格宽度＝这一格占总额的比例：**同一个总额、两条轨各自拉满 100%**，故上下两轨可以横着比。
-   宽度写在 width 上（不是靠内容撑），这正是原型阶段踩过的那个坑（flex: 0 0 auto 按文字宽度排）。 */`,
-    s('rails') + ' {',
-    '  display: grid;',
-    '  gap: 5px;',
-    '  min-width: 0;',
-    '}',
-    s('rails-hd') + ' {',
-    '  margin: 0;',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink-2') + ';',
-    '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 700;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    s('rail') + ' {',
-    '  display: flex;',
-    '  height: ' + String(RAIL_PX) + 'px;',
-    '  min-width: 0;',
-    '  border: 1px solid ' + skinVar('line') + ';',
-    '  border-radius: ' + skinVar('radius-sm') + ';',
-    '  overflow: hidden;',
-    '}',
-    /* 一格：宽＝占比；段与段之间留 1px 纸缝（`border-right` 走卡面色，**不占额外宽度**）。 */
-    s('seg') + ' {',
-    '  flex: 0 0 auto;',
-    '  display: flex;',
-    '  align-items: center;',
-    '  justify-content: center;',
-    '  min-width: 0;',
-    '  width: var(' + '--flow-ribbon-w, 0%);',
-    '  border-right: 1px solid ' + skinVar('surface') + ';',
-    '  overflow: hidden;',
-    '}',
-    s('rail') + '.is-src ' + c('seg') + ' {',
-    '  background: ' + wash(RAIL_WASH_SRC) + ';',
-    '}',
-    s('rail') + '.is-use ' + c('seg') + ' {',
-    '  background: ' + wash(RAIL_WASH_USE) + ';',
-    '}',
-    s('rail') + ' ' + c('seg') + ':last-child {',
-    '  border-right: 0;',
-    '}',
-    s('seg-pct') + ' {',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 700;',
-    '  font-variant-numeric: tabular-nums;',
-    '  white-space: nowrap;',
-    '}',
-    s('hub') + ' {',
-    '  display: flex;',
-    '  flex-wrap: wrap;',
-    '  align-items: baseline;',
-    '  gap: 2px 10px;',
-    '  min-width: 0;',
-    '  padding: 6px 0;',
-    '  border-top: 1px solid ' + skinVar('line') + ';',
-    '  border-bottom: 1px solid ' + skinVar('line') + ';',
-    '  color: ' + skinVar('ink-2') + ';',
-    '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 600;',
-    '}',
-    s('hub-eq') + ' {',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-num') + ';',
-    '  font-weight: 700;',
-    '  font-variant-numeric: tabular-nums;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    s('hub-net') + ' {',
-    '  margin-left: auto;',
-    '  min-width: 0;',
-    '  font-variant-numeric: tabular-nums;',
-    '  white-space: nowrap;',
-    '}',
-    s('rails-list') + ' {',
-    '  display: grid;',
-    '  grid-template-columns: repeat(2, minmax(0, 1fr));',
-    '  gap: 6px 18px;',
-    '  min-width: 0;',
-    '  padding-top: 8px;',
-    '  border-top: 1px solid ' + skinVar('line') + ';',
-    '}',
-    s('rails-col') + ' {',
-    '  display: grid;',
-    '  gap: 4px;',
-    '  min-width: 0;',
-    '}',
-    /* 窄容器：名单由两栏改一栏（一栏里名字与金额都放得下，两栏会挤到折行折得难看）。 */
-    '@container (max-width: ' + String(FLOW_RIBBON_NARROW_PX) + 'px) {',
-    '  ' + s('rails-list') + ' {',
-    '    grid-template-columns: minmax(0, 1fr);',
     '  }',
     '}'].join(LF),
   ].join(LF);
