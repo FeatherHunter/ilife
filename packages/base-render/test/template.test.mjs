@@ -548,17 +548,18 @@ describe('A8 零残留标记（真实 53 内容页，fixture 资产）', () => {
   });
 });
 
-describe('A9 calorie 6 模板 → marker-missing（契约外遗留资产，正确行为）', () => {
-  it('6 个 calorie 模板两载荷槽皆无 → 一律抛 marker-missing（早于其预包裹的 marker-conflict）', () => {
+describe('A9 calorie 老模板（契约外遗留资产）已删除 —— 那一格不许再长出 html', () => {
+  it('用户 2026-09-24 裁定「六件老网页模板扔掉」，且本技能只留一份 HELP 页（速查台下线）', () => {
+    // 旧断言读的是那 6 件「两载荷槽皆无」的日历页模板（`packages/skill-calorie/templates/*.html`），
+    // 它们已按上述裁定删除 ⇒ 这一格改为钉**新事实**：目录不存在或为空。谁把 html 放回来，这里就红。
     const dir = join(ROOT, 'packages', 'skill-calorie', 'templates');
-    const files = readdirSync(dir).filter((n) => n.endsWith('.html')).sort();
-    assert.equal(files.length, 6, 'calorie 模板必须是 6 个');
-    for (const file of files) {
-      const template = readFileSync(join(dir, file), 'utf8');
-      assert.equal(countOf(template, M.injectData), 0, file + ' 无 INJECT-DATA');
-      assert.equal(countOf(template, M.content), 0, file + ' 无 CONTENT');
-      expectCode({ template, assets: FIXTURE_ASSETS, data: ENVELOPE, content: '<p>x</p>' }, 'marker-missing');
+    let files = [];
+    try {
+      files = readdirSync(dir).filter((n) => n.endsWith('.html')).sort();
+    } catch {
+      files = [];
     }
+    assert.deepEqual(files, [], 'calorie 的老网页模板已下线，不许回潮：' + files.join('／'));
   });
 });
 
