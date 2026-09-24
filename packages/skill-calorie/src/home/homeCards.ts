@@ -162,8 +162,13 @@ export function streakCards(d: HomeData): readonly KpiCardInput[] {
   ];
 }
 
-/** `week`／`month` 两档的「窗内概览」五张卡：窗口是「到今日为止的 N 天」，故不写「本周」这种会与日历周
- *  打架的说法；「今日摄入」一卡沿用同一套徽章口径（完成率进徽章，说明行只写目标）。 */
+/** `week`／`month` 两档的「窗内概览」六张卡：窗口是「到今日为止的 N 天」，故不写「本周」这种会与日历周
+ *  打架的说法；「今日摄入」一卡沿用同一套徽章口径（完成率进徽章，说明行只写目标）。
+ *
+ *  **六张**（#950 第三轮补第六张）：原先五张在公共层网格里排成「4＋1」——第二行孤零零一张卡，
+ *  看着像没排完（实拍见 `.scratch/t950/page-month-30.html`）。补的那张是「今日消耗」
+ *  （`burnToday` ＝ 日常消耗＋当日运动）：它与末尾的「今日摄入」本是一对读数（进出两侧），
+ *  这一页原先只在折线口径行里间接提过，补齐后两张网格（1200 的 4＋2、390 的 2＋2＋2）两档都齐整。 */
 export function weekCards(d: HomeData): readonly KpiCardInput[] {
   const t = d.daily.totals;
   return [
@@ -172,5 +177,6 @@ export function weekCards(d: HomeData): readonly KpiCardInput[] {
     { label: '日均缺口', value: fmt(d.week.avgDeficit), unit: '卡', detail: '消耗减摄入' },
     { label: '有记录', value: String(d.week.loggedDays), unit: '天', detail: '连续记录 ' + d.streakDays + ' 天' },
     { label: '今日摄入', value: fmt(t.cal), unit: '卡', ...progressBadge(d.caloriePct) },
+    { label: '今日消耗', value: fmt(d.burnToday), unit: '卡', detail: '日常消耗加运动' },
   ];
 }
