@@ -2846,17 +2846,11 @@ export type {
   ToastInput,
 };
 
-/* ── 就地可编辑值（`editableValue`，与 12 区块并列的**可演进组合层**） ──
+/* ── 组件层薄转出（`src/components/**`：一个组件一个目录的**可演进组合层**） ──
  *
  * 为什么走本文件的出口而不是根出口：根出口（`src/index.ts`）与 `SPEC_FROZEN_SURFACE` 逐名绑死
- * （签名测试钉死「新增运行时出口恰好等于清单里 implemented 的项」）；本件属**防火墙层**
- * （不进 `SPEC_FROZEN_SURFACE`、不从根导出，见件头），组件在这里可以演进而不动冻结面。
- * 样式与运行时**随页 opt-in**（`renderDocShell({ editableValue: true })`）⇒ 不用它的页产物零变化。 */
-export {
-  buildEditableValueJs, editableValueCss, renderEditableValue,
-  EDIT_AFFORDANCE_ATTR, EDIT_AFFORDANCES, EDIT_BOUND_ATTR, EDIT_DISPLAY_ATTR, EDIT_EVENT_CANCEL,
-  EDIT_EVENT_COMMIT, EDIT_HIT_ATTR, EDIT_KINDS, EDIT_KIND_ATTR, EDIT_LABEL_ATTR, EDIT_MAX_ATTR,
-  EDIT_MIN_ATTR, EDIT_NAME_ATTR, EDIT_OPTIONS_ATTR, EDIT_PLACEHOLDER_ATTR, EDIT_REQUIRED_ATTR,
-  EDIT_STEP_ATTR, EDIT_UNIT_ATTR, EDIT_VALUE_ATTR, EDIT_VALUE_CLASS,
-};
-export type { EditableValueAffordance, EditableValueInput, EditableValueKind, EditableValueOption };
+ * （签名测试钉死「新增运行时出口恰好等于清单里 implemented 的项」）；组件层属**防火墙层**
+ * （不进 `SPEC_FROZEN_SURFACE`、不从根导出，见 `src/components/index.ts`），可以独立演进。
+ * 组件自带的样式／运行时**随页 opt-in**（`renderDocShell({ editableValue: true })`）⇒ 不用它的页产物零变化。
+ * **新增组件只改 `src/components/index.ts` 一行**，不必回来动本文件。 */
+export * from './components/index.js';
