@@ -26,13 +26,20 @@ export const PAPER_VALUES = Object.freeze({
   accent: '#b5392a',
   'accent-text': '#a3311f',
   'accent-ink': '#fffdf7',
-  'accent-soft': '#f6f1e6',
+  /* 强调软底＝**accent 的淡洗**（不是"次要面"的另一个名字）：必须与 `surface-2`（#f6f1e6）分得开，
+     否则选中片落在以 `surface-2` 为底的容器（档位段 `-seg`、表头）里等于没有底。
+     旧值与 surface-2 **逐字节同色** ⇒ 这套皮肤里"强调软底"是空转（2026-09-24 由席位报出）。
+     新值＝砖红的暖淡洗：`accent-text` 对它 5.47:1、`accent` 对它 4.60:1（两条地板都过，通道差 18）。 */
+  'accent-soft': '#f7dfd8',
 
   ok: '#2f7d4f',
   'ok-soft': '#e8f2ea',
   warn: '#8a5a12',
   'warn-soft': '#fbf1dc',
-  danger: '#a83228',
+  /* 语义档的 `danger` 必须与 `accent` **分得开**：旧值 #a83228 与本套 accent（砖红 #b5392a）只差 1.14:1，
+     于是"正常档（accent 实底）"与"超目标档（danger）"在纸上一个样——语义档白设（2026-09-24 由席位在
+     `scale-bar` 上报出）。新值压深一档：vs accent 1.52:1、对 ground 7.54:1（文字地板 4.5 过）。 */
+  danger: '#8d2118',
   'danger-soft': '#f9e8e4',
 
   radius: '6px',

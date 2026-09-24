@@ -23,7 +23,9 @@ export const BROADSHEET_VALUES = Object.freeze({
   accent: '#14110d',
   'accent-text': '#14110d',
   'accent-ink': '#ffffff',
-  'accent-soft': '#f4f1ea',
+  /* 强调软底＝**accent 的淡洗**（本套 accent 是墨黑 ⇒ 淡洗是一档浅暖灰）：必须与 `surface-2`（#f4f1ea）
+     分得开，旧值**逐字节同色** ⇒ 空转（2026-09-24 由席位报出）。新值：`accent-text`／`accent` 对它 14.71:1。 */
+  'accent-soft': '#e8e3d8',
 
   ok: '#1c6b3c',
   'ok-soft': '#e6f2ea',

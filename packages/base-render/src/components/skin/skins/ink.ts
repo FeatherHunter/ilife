@@ -48,7 +48,10 @@ export const INK_VALUES = Object.freeze({
   accent: '#bf3a22',
   'accent-text': '#a52d16',
   'accent-ink': '#fbf8f1',
-  'accent-soft': '#f7e6df',
+  /* 朱砂：`accent` 管**非文本**（条、边、底）与大字，`accent-text` 是它的文本档（对纸面 6.63:1）。
+     `accent-soft` 是朱砂的淡洗（钤印那点淡色）：与 `surface-2` 拉开一档，否则选中片落在
+     以 `surface-2` 为底的容器里没有底（旧值 #f7e6df 只差 7 个通道）。 */
+  'accent-soft': '#f6ddd3',
 
   /* 语义色一律压暗、落在墨色调子里：纸面上放荧光色，整张纸就散了。 */
   ok: '#2c6a46',

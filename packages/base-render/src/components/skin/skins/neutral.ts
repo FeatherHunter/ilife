@@ -29,7 +29,10 @@ export const NEUTRAL_VALUES = Object.freeze({
   accent: '#007aff',
   'accent-text': '#0a63ce',
   'accent-ink': '#ffffff',
-  'accent-soft': '#eef4ff',
+  /* 强调软底＝**accent 的淡洗**：旧值 #eef4ff 与 `surface-2`（#f4f4f6）的通道差只有 9，
+     在 `surface-2` 底的容器里几乎看不出"这一枚被选中"。加深一档：
+     `accent-text` 对它 4.90:1、`accent` 对它 3.46:1（文本地板与图形地板都过，通道差 16）。 */
+  'accent-soft': '#e4efff',
 
   ok: '#1f8c3d',
   'ok-soft': '#e6f7ec',

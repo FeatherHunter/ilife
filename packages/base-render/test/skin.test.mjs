@@ -102,6 +102,49 @@ describe('皮肤 ② 对比地板（WCAG，算出来不靠眼看）', () => {
   }
 });
 
+describe('皮肤 ②b：强调软底不许是"空转"（＝选中面在那套皮肤下没有底）', () => {
+  /** 两色的最大通道差（0..255）：判"是不是同一个面"用，比对比度更贴近"看得出区别"。 */
+  const chanDiff = (a, b) => {
+    const ch = (h) => {
+      const s = h.replace('#', '');
+      const f = s.length === 3 ? s.split('').map((c) => c + c).join('') : s;
+      return [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16));
+    };
+    return Math.max(...ch(a).map((v, i) => Math.abs(v - ch(b)[i])));
+  };
+
+  for (const name of SKIN_NAMES) {
+    it(name + '：`accent-soft` 与 `surface-2` 分得开（否则选中面落在软底容器里没有底）', () => {
+      const soft = VALUES[name]['accent-soft'];
+      const s2 = VALUES[name]['surface-2'];
+      assert.notEqual(soft, s2, name + ' 的 `accent-soft` 与 `surface-2` 逐字节同色 ⇒ 那个 token 在那套皮肤里是空转');
+      assert.ok(chanDiff(soft, s2) >= 12,
+        name + ' 的 `accent-soft` 与 `surface-2` 只差 ' + chanDiff(soft, s2) + ' 个通道 ⇒ 视觉上分不开'
+        + '（选中片落在 `-seg`／表头这类 `surface-2` 底的容器里等于没有底）');
+    });
+
+    it(name + '：`danger` 与 `accent` 分得开（否则"超目标／危险"与"正常强调"在纸上一个样）', () => {
+      const r = contrast(VALUES[name]['danger'], VALUES[name]['accent']);
+      assert.ok(r >= 1.2,
+        name + ' 的 danger/accent 只有 ' + r.toFixed(2) + ':1 ⇒ 语义档与强调档在观感上撞在一起'
+        + '（`scale-bar` 的"有数"与"超目标"就是这两支，撞了就分不出超没超）');
+    });
+
+    it(name + '：`accent-ink` on `accent` ≥ 3:1（图形地板；**这一档只许放图形与大字，不许放正文**）', () => {
+      const r = contrast(VALUES[name]['accent-ink'], VALUES[name]['accent']);
+      assert.ok(r >= 3, name + ' 的 accent-ink/accent 只有 ' + r.toFixed(2) + ':1');
+    });
+
+    it(name + '：`accent-text` on `accent-soft` ≥ 4.5:1 且 `accent` on `accent-soft` ≥ 3:1', () => {
+      const soft = VALUES[name]['accent-soft'];
+      const t = contrast(VALUES[name]['accent-text'], soft);
+      const g = contrast(VALUES[name]['accent'], soft);
+      assert.ok(t >= 4.5, name + ' 的 accent-text/accent-soft 只有 ' + t.toFixed(2) + ':1');
+      assert.ok(g >= 3, name + ' 的 accent/accent-soft 只有 ' + g.toFixed(2) + ':1（图形地板）');
+    });
+  }
+});
+
 describe('皮肤 ③ 读法', () => {
   it('skinVar 产出「皮肤 → 冻结 token → 字面值」的兜底链', () => {
     const s = skinVar('surface');
