@@ -5,6 +5,9 @@
  *  几何契约（钉在测试里）：三档字号只改 `-value` 的 `font-size` 与字距，**盒模型与槽位不动**——
  *  同一页把 `m` 换成 `xl`，脚行与印章仍在同一行位置（不重排）。
  *  数字一律 `tabular-nums`：换页／换值时不跳位（这一族的纸是"对齐"的）。
+ *
+ *  宽度只许听**容器**（`container-type: inline-size` ＋ `@container`，零 `@media (max-width: …)`）：
+ *  本件会被嵌进侧栏／面板／卡片，**视口宽 ≠ 件宽**——按视口分档会在「宽屏里的小面板」上判错。
  */
 import { PAPER_MONO_STACK } from '../shared/typography.js';
 import { SUMMARY_HEAD_SIZES } from './render.js';
@@ -18,6 +21,11 @@ const LF = String.fromCharCode(10);
 export const SUMMARY_HEAD_VALUE_PX: Readonly<Record<(typeof SUMMARY_HEAD_SIZES)[number], number>> = {
   m: 46, l: 56, xl: 92,
 };
+
+/** 本件的内容容器名（`@container` 按它命中，不会跟别件的容器串味）。 */
+export const SUMMARY_HEAD_CONTAINER = 'ilife-summary-head';
+/** 窄档断点（px）：**容器**窄于它就把 `xl` 主数字收一档（是容器断点，不是视口断点）。 */
+export const SUMMARY_HEAD_NARROW_MAX_PX = 640;
 
 /** 衬线字面（数字当"标题"用时的唯一字面；与原型同一串回退链：有 Georgia 用它，中文回退到宋体）。 */
 const SERIF_STACK = 'Georgia, "Times New Roman", "Songti SC", "SimSun", serif';
@@ -35,6 +43,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '  flex-direction: column;',
     '  gap: 4px;',
     '  min-width: 0;',
+    '  container: ' + SUMMARY_HEAD_CONTAINER + ' / inline-size;',
     '}',
     '/* eyebrow 与"账目/明细"两件的标题同一套字距语汇（同一族里只有一种小标题写法）。 */',
     s + '-eyebrow {',
@@ -125,7 +134,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
   lines.push('  font-weight: 400;');
   lines.push('  letter-spacing: -.045em;');
   lines.push('}');
-  lines.push('@media (max-width: 640px) {');
+  lines.push('@container ' + SUMMARY_HEAD_CONTAINER + ' (max-width: ' + SUMMARY_HEAD_NARROW_MAX_PX + 'px) {');
   lines.push('  ' + s + '.is-xl .' + p + 'block-summary-head-value { font-size: 64px; }');
   lines.push('  ' + s + '.is-xl .' + p + 'block-summary-head-value small,');
   lines.push('  ' + s + '.is-xl .' + p + 'block-summary-head-denom { font-size: 20px; }');

@@ -24,6 +24,9 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-entry-row';
+  /* 裸槽类（**不带** scope）：只用在"祖先已经由 `s` 给过"的嵌套／兄弟选择器里——
+     否则会拼成 `.+page-ui .a + .+page-ui .a`，那条规则要求"件里再套一层 page-ui"，**永远命中不到**。 */
+  const b = '.' + p + 'block-entry-row';
   return [
     '/* entry-rows（明细行）：时间 ・ 类别 ・ 名称 ・ 数量 ………… 值；备注另起一行。 */',
     root + ' .' + p + 'block-entry-rows {',
@@ -48,7 +51,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  font-size: 13.5px;',
     '}',
     '/* 记录之间用点线（账目行用的是 hairline）：同页两族同时出现时读得出"这是两种东西"。 */',
-    s + ' + ' + s + ' {',
+    s + ' + ' + b + ' {',
     '  border-top: 1px dashed var(--line);',
     '}',
     s + '-time {',

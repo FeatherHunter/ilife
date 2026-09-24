@@ -18,6 +18,9 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-ledger-row';
+  /* 裸槽类（**不带** scope）：只用在"祖先已经由 `s` 给过"的嵌套／兄弟选择器里——
+     否则会拼成 `.+page-ui .a + .+page-ui .a`，那条规则要求"件里再套一层 page-ui"，**永远命中不到**。 */
+  const b = '.' + p + 'block-ledger-row';
   return [
     '/* ledger-rows（账目行）：标签 →（点线）→ 值；值列右对齐、等宽数字。 */',
     root + ' .' + p + 'block-ledger-rows {',
@@ -41,7 +44,7 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  font-size: 13.5px;',
     '}',
     '/* 相邻行之间一条 hairline；首行不带（小标题已经把它和上文分开了）。 */',
-    s + ' + ' + s + ' {',
+    s + ' + ' + b + ' {',
     '  border-top: 1px solid var(--line);',
     '}',
     s + '-label {',
