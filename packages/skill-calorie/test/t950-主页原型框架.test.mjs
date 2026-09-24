@@ -32,13 +32,20 @@ const CLI = join(ROOT, 'packages', 'skill-calorie', 'dist', 'cli', 'cmd_read.js'
 const { openDb, DB_FILENAME } = await import(pathToFileURL(join(ROOT, 'packages', 'skill-calorie', 'dist', 'index.js')).href);
 const { seedFull, SEED_TODAY } = await import(pathToFileURL(join(ROOT, 'docs', 'research', 't81-seed.mjs')).href);
 
-/** 真出口跑一遍：固定种子库（`SEED_TODAY`）；`paused` 为真时先把单例行的 `goal_paused` 置 1。
+/** 真出口跑一遍：固定种子库（`SEED_TODAY`）；三个可选变异用来造边角态——
+ *  `paused` 把单例行的 `goal_paused` 置 1；`noGoal` 删掉 `daily_goal` 行（没设目标）；
+ *  `overTarget` 给当天灌一笔 3000 卡的记录（缺口转负）。
  *  取数口径：`db.dir` 指临时目录（`homeEnvOf`＋`calorieConfigDir`），时钟钉到种子日（`freezeClock`）。 */
 function render(params, opts = {}) {
   const workDir = mkdtempSync(join(tmpdir(), 't950-shape-'));
   const db = openDb(join(workDir, DB_FILENAME));
   seedFull(db);
   if (opts.paused === true) db.prepare('UPDATE daily_goal SET goal_paused = 1 WHERE id = 1').run();
+  if (opts.noGoal === true) db.prepare('DELETE FROM daily_goal').run();
+  if (opts.overTarget === true) {
+    db.prepare("INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat)"
+      + " VALUES (?, '20:00:00', '炸鸡', 500, 3000, 60, 200, 150)").run(SEED_TODAY);
+  }
   db.close();
   const r = spawnSync(process.execPath, [CLI, 'calorie.view.home', '--params', JSON.stringify(params)], {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
@@ -155,6 +162,33 @@ test('#950 五档都带导航与记录带；等式条只归 overview；budget �
   const budget = render({ date: '今日', section: 'budget' });
   assert.ok(budget.html.includes('剩余预算'), 'budget 档丢了「剩余预算」这个主角');
   assert.ok(!budget.html.includes('今日缺口（热量缺口）'), 'budget 档漏进了缺口卡');
+});
+
+/* ── ⑥ 边角态：没设目标／吃超了／窗口两端 ──────────────────────────────── */
+
+test('#950 没设目标：卡片写「未设目标」、不印完成度，结论条给「先设目标」', () => {
+  const { html } = render({ date: '今日' }, { noGoal: true });
+  assert.ok(html.includes('热量目标还没有'), '结论条没给出「先设目标」的指引');
+  assert.ok((html.match(/未设目标/g) ?? []).length >= 3, '有目标的卡都该写「未设目标」');
+  assert.ok(!/完成 \d+%/.test(html), '没目标还印了完成度（假精度）');
+  assert.ok(hasEquation(html), '等式条不依赖目标，该照出');
+});
+
+test('#950 吃超了：缺口转负、等式条不出、缺口卡给方向词', () => {
+  const { html } = render({ date: '今日' }, { overTarget: true });
+  assert.ok(!hasEquation(html), '缺口为负还出等式条（两段轨道铺不出来）');
+  assert.ok(html.includes('摄入比消耗多'), '缺口卡没给「吃超了」那个方向词');
+  assert.ok(html.includes('今日已超热量目标'), '结论条没说超了多少');
+  assert.ok(/完成 \d{3}%/.test(html), '超过 100% 的完成度该如实印三位数');
+});
+
+test('#950 窗口两端：1 天窗一格；90 天窗截到 14 格并明示', () => {
+  const one = render({ date: '今日', windowDays: 1 });
+  assert.equal(stripDates(one.html).length, 1, '1 天窗该只有 1 格');
+  const wide = render({ date: '今日', windowDays: 90 });
+  assert.equal(stripDates(wide.html).length, 14, '90 天窗该截到 14 格，实得 ' + stripDates(wide.html).length);
+  assert.ok(wide.html.includes('带上是最近 14 天'), '90 天窗没明示截断');
+  assert.ok(wide.html.includes('本窗 '), '窗口天数那句须在场');
 });
 
 /* ── 变异自证：判据不恒真 ───────────────────────────────────────────────── */
