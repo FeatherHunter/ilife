@@ -12,7 +12,9 @@
  *   · **坐标与算数都在 `model.ts`**：这一支只拼标记，`left`／`bottom`／`clip-path`／`width`
  *     那几行行内样式是**算出来的百分比**（一条记录一个数），静态规则一律住 `style.ts`；
  *   · **色不是唯一信息**：刻度文字给数字、图例给形与字、离群点与最强档都**再写一遍字**；
- *   · **不靠颜色表方向**：滞后档的条从中线往左或往右（形）＋ 数字带正负号（字）。
+ *   · **不靠颜色表方向**：滞后档的条从中线往左或往右（形）＋ 数字带正负号（字）；
+ *   · **算不出拟合就不出线与带**：`bandShape`／`fitShape` 为空串时**一个多边形都不出**
+ *     （留一个空 `clip-path` 会画出"一条常数线"，读者会当成趋势）。
  */
 import { esc } from '../shared/escape.js';
 import { SCATTER_FIT_CLASS, scatterFitSlot, type ScatterFitForm } from './attrs.js';
@@ -58,10 +60,16 @@ function renderScatter(m: ScatterFitModel): string {
   parts.push('<div class="' + scatterFitSlot('plotbox') + '">');
   parts.push(yTicksHtml(m));
   parts.push('<div class="' + scatterFitSlot('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
-  parts.push('<span class="' + scatterFitSlot('band') + '" aria-hidden="true" style="clip-path: '
-    + esc(m.bandShape) + '"></span>');
-  parts.push('<span class="' + scatterFitSlot('fitline') + '" aria-hidden="true" style="clip-path: '
-    + esc(m.fitShape) + '"></span>');
+  /* **算不出拟合就一个多边形都不出**（`bandShape`／`fitShape` 为空串＝不画）：留一个空 `clip-path`
+     会画出"一条常数线"，读者会当成趋势（判据断的是形，不只是字）。 */
+  if (m.bandShape !== '') {
+    parts.push('<span class="' + scatterFitSlot('band') + '" aria-hidden="true" style="clip-path: '
+      + esc(m.bandShape) + '"></span>');
+  }
+  if (m.fitShape !== '') {
+    parts.push('<span class="' + scatterFitSlot('fitline') + '" aria-hidden="true" style="clip-path: '
+      + esc(m.fitShape) + '"></span>');
+  }
   for (const dot of m.dots) {
     parts.push('<span class="' + scatterFitSlot('dot') + (dot.outlier ? ' is-outlier' : '')
       + '" style="left: ' + String(dot.leftPct) + '%; bottom: ' + String(dot.upPct) + '%" title="'

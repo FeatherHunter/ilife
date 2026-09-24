@@ -135,6 +135,7 @@ export function scatterFitFormsCss(input?: { readonly prefix?: string }): string
     '  right: 50%;',
     '}',
     s('lag-value') + ' {',
+    '  min-width: 0;',
     '  color: ' + skinVar('ink') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 700;',

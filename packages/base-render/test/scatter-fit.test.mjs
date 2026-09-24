@@ -1,15 +1,19 @@
 /** scatter-fit（相关性散点 · 三个形态：散点／分箱／滞后）· 契约测试。
  *
  * 覆盖五组判据：
- *  ① **渲染契约**：三个形态各自的槽位与枚数／**刻度与坐标同一份真值**（点的百分比与刻度由同一个轴域出）／
- *     图例与无障碍名里的数字／离群点与最强档**再写一遍字**／转义面／**全部**非法入参分支（每个都断 `BlocksError`）；
+ *  ① **渲染契约**：三个形态各自的槽位与枚数／**刻度与坐标同一份真值**（从**印出来的刻度**反推轴域，
+ *     再把每个点的坐标对回它自己的读数——轴域不整齐的样例也在里面）／r 算不出时**不出线与带**／
+ *     三形态的缺槽分支／转义面／**全部**非法入参分支（每个都断 `BlocksError`）；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且**只出现一次**
  *     （含 `@container` 里的那几条）、零 `:root`／`!important`／零新 token／零 `@media` 宽度查询／
- *     零手写色值（只有 `skinVar()` 兜底链那一处）／零把 `ink` 系当面／零键盘语汇／零可点元素；
+ *     零手写色值（只有 `skinVar()` 兜底链那一处）／零把 `ink` 系当面／零键盘语汇／零可点元素／
+ *     **窄档阈值只有一处来源**；
  *  ③ **加法式**：本件只读自己的类名；不启用它的页面零命中、逐字节不变；
- *  ④ **两档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 390 与 1280 下零横向溢出、
- *     点全在图区内（不跑出框）、刻度零截断、零 `overflow-x`；**起不来就退确定性几何判据并打印原因**；
- *  ⑤ **皮肤纪律**：同一份入参渲染三次逐字节相同、标记不带皮肤类、真机上四套皮肤里的 `innerHTML` 逐字节相同。
+ *  ④ **三档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 320／390／1280 下零横向溢出
+ *     （含长口径／长轴名／12 位金额三种压力样例）、点全在图区内、刻度零截断、零 `overflow-x`；
+ *     **起不来就退确定性几何判据并打印原因**；
+ *  ⑤ **皮肤纪律**：同一份入参渲染三次逐字节相同、标记不带皮肤类、真机上四套皮肤里的 `innerHTML`
+ *     逐字节相同、最强那一档真取到取值表里的软底与字色。
  *
  * 期望值一律从组件自己的常量派生（`SCATTER_FIT_*`），不抄字面量：改了名字这里跟着红。
  */
@@ -28,8 +32,12 @@ import {
   SCATTER_FIT_CLASS,
   SCATTER_FIT_FORMS,
   SCATTER_FIT_LAG_MAX,
+  SCATTER_FIT_LAG_MIN,
   SCATTER_FIT_MAX_LAG_DAYS,
+  SCATTER_FIT_MAX_POINTS,
+  SCATTER_FIT_MIN_POINTS,
   SCATTER_FIT_MISSING,
+  SCATTER_FIT_NARROW_PX,
   SCATTER_FIT_PLOT_PX,
   SCATTER_FIT_SLOTS,
   SCATTER_FIT_X_TICKS,
@@ -90,6 +98,14 @@ function ruleSelectors(css) {
   return out;
 }
 
+/** 一条规则（选择器 → 声明块），用于"某槽必须带某声明"这类判据。 */
+function ruleOf(css, selector) {
+  const at = css.indexOf(selector + ' {');
+  if (at < 0) return '';
+  const close = css.indexOf('}', at);
+  return css.slice(at, close < 0 ? css.length : close);
+}
+
 /** 剥掉 `var(...)`（含嵌套与带括号的兜底）后的剩余 CSS：兜底链里的颜色字面量是允许的。 */
 function stripVarFns(css) {
   let out = '';
@@ -116,7 +132,32 @@ function stripVarFns(css) {
 
 const countOf = (html, needle) => (html.match(new RegExp(needle, 'g')) || []).length;
 
-/* ── 三份样例（三形态各一份；数字都用得上：轴的上下界、离群点、最强档） ─── */
+/** 刻度文字 → 数（`1,200 卡` → 1200；`1e+21` 原样）。 */
+const tickNum = (text) => Number(text.replace(/[^0-9.eE+-]/g, ''));
+
+/** **从印出来的刻度反推轴域**：第一枚与最后一枚就是上下界（轴顶恒等于顶刻度）。 */
+function axisFromTicks(ticks) {
+  const nums = ticks.map(tickNum);
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  return { lo, hi, steps: nums.length - 1 };
+}
+
+/** 按（从刻度反推的）轴域算：某个读数该落在的百分比（与 `scale.ts` 的映射同一套口径）。 */
+function expectPct(value, axis) {
+  const t = (value - axis.lo) / (axis.hi - axis.lo);
+  return Number((SCATTER_FIT_AXIS_INSET + t * (100 - 2 * SCATTER_FIT_AXIS_INSET)).toFixed(2));
+}
+
+/** 点阵区里逐个点的行内坐标（顺序＝入参顺序）。 */
+const dotsOf = (html) => [...html.matchAll(
+  new RegExp('class="' + scatterFitSlot('dot') + '(?: is-outlier)?" style="left: ([\\d.-]+)%; bottom: ([\\d.-]+)%"', 'g'),
+)].map((m) => ({ left: Number(m[1]), bottom: Number(m[2]) }));
+
+const slotTexts = (html, slot) => [...html.matchAll(new RegExp('class="' + scatterFitSlot(slot) + '"[^>]*>([^<]*)<', 'g'))]
+  .map((m) => m[1]);
+
+/* ── 样例（三形态各一份；数字都用得上：轴的上下界、离群点、最强档） ─── */
 
 const SCATTER_INPUT = {
   title: '体重 vs 每日摄入', xName: '每日摄入', yName: '体重', xUnit: '卡', yUnit: '公斤', stamp: '近 30 天',
@@ -126,6 +167,11 @@ const SCATTER_INPUT = {
     { x: 2860, y: 68.2 }, { x: 1990, y: 68.6 },
     { x: 3000, y: 69.0, label: '08-30', outlier: '08-30 聚餐：一餐 1,400 卡' },
   ],
+};
+/** **轴域不整齐**的样例：区间不整除、上下界都不落在整数上（A1 的复现件）。 */
+const ODD_INPUT = {
+  title: '摄入 vs 体重', xName: '摄入', yName: '体重',
+  points: [{ x: 1234, y: 1.05 }, { x: 3800, y: 1.51 }, { x: 5678, y: 2.05 }],
 };
 const BIN_INPUT = {
   title: '睡眠 vs 次日摄入', xName: '睡眠', yName: '次日摄入', yUnit: '卡', stamp: '近 60 天', form: 'bin',
@@ -167,24 +213,35 @@ describe('scatter-fit ① 渲染契约 · 形态 A 散点', () => {
     }
   });
 
-  it('**刻度与坐标同一份真值**：每个点的百分比都落在刻度给的轴域上', () => {
-    const yTicks = [...html.matchAll(/-ytick">([^<]+)</g)].map((m) => m[1]);
-    assert.equal(yTicks.length, SCATTER_FIT_Y_TICKS);
-    const yHi = Number(yTicks[0].replace(/[^\d.-]/g, ''));
-    const yLo = Number(yTicks[yTicks.length - 1].replace(/[^\d.-]/g, ''));
-    assert.ok(yHi > yLo, '纵轴从上往小写：' + JSON.stringify(yTicks));
-    assert.equal(yTicks[0].endsWith('公斤'), true, '只有第一枚刻度带单位');
-    const dots = [...html.matchAll(/-dot[^"]*" style="left: ([\d.]+)%; bottom: ([\d.]+)%; top/g)];
-    assert.equal(dots.length, 0, '坐标只写在 left／bottom 两处（没有多余的 top）');
-    const bottoms = [...html.matchAll(/bottom: ([\d.]+)%/g)].map((m) => Number(m[1]));
-    assert.equal(bottoms.length, SCATTER_INPUT.points.length, '逐点一个 bottom');
-    SCATTER_INPUT.points.forEach((p, i) => {
-      const want = Number((SCATTER_FIT_AXIS_INSET + ((p.y - yLo) / (yHi - yLo))
-        * (100 - 2 * SCATTER_FIT_AXIS_INSET)).toFixed(2));
-      assert.equal(bottoms[i], want, '第 ' + (i + 1) + ' 个点的 bottom 与刻度不是同一份真值');
-      assert.ok(want >= SCATTER_FIT_AXIS_INSET && want <= 100 - SCATTER_FIT_AXIS_INSET,
-        '点的坐标必须在轴内距里（' + SCATTER_FIT_AXIS_INSET + '…' + (100 - SCATTER_FIT_AXIS_INSET) + '）：' + want);
-    });
+  it('**轴域与刻度同一份真值**：从印出来的刻度反推轴域，每个点的坐标都对回它自己的读数', () => {
+    for (const [name, input] of [['常规区间', SCATTER_INPUT], ['轴域不整齐', ODD_INPUT]]) {
+      const h = renderScatterFit(input);
+      const yTicks = slotTexts(h, 'ytick');
+      const xTicks = slotTexts(h, 'xtick');
+      assert.equal(yTicks.length, SCATTER_FIT_Y_TICKS, name + '：纵轴刻度枚数');
+      assert.equal(xTicks.length, SCATTER_FIT_X_TICKS, name + '：横轴刻度枚数');
+      const yAxis = axisFromTicks(yTicks);
+      const xAxis = axisFromTicks(xTicks);
+      /* 刻度等距（同一根轴上间隔一致）。 */
+      const yNums = yTicks.map(tickNum);
+      const yGap = (yNums[0] - yNums[yNums.length - 1]) / (SCATTER_FIT_Y_TICKS - 1);
+      yNums.slice(0, -1).forEach((v, i) => assert.ok(Math.abs((v - yNums[i + 1]) - yGap) < 1e-6,
+        name + '：纵轴刻度不等距 ' + JSON.stringify(yTicks)));
+      /* 轴域必须盖得住数据，且**顶刻度就是轴顶**（否则读者按刻度读出来的值系统性偏小）。 */
+      const ys = input.points.map((p) => p.y);
+      const xs = input.points.map((p) => p.x);
+      assert.ok(yAxis.lo <= Math.min(...ys) && yAxis.hi >= Math.max(...ys), name + '：纵轴域盖不住数据');
+      assert.ok(xAxis.lo <= Math.min(...xs) && xAxis.hi >= Math.max(...xs), name + '：横轴域盖不住数据');
+      assert.equal(expectPct(yAxis.hi, yAxis), 100 - SCATTER_FIT_AXIS_INSET, name + '：轴顶必须落在轴内距上');
+      assert.equal(expectPct(yAxis.lo, yAxis), SCATTER_FIT_AXIS_INSET, name + '：轴底必须落在轴内距上');
+      /* **逐点对账**：点的 `left`／`bottom` 必须等于「按刻度反推的轴域」算出来的位置。 */
+      const dots = dotsOf(h);
+      assert.equal(dots.length, input.points.length, name + '：点数');
+      input.points.forEach((p, i) => {
+        assert.equal(dots[i].bottom, expectPct(p.y, yAxis), name + '：第 ' + (i + 1) + ' 点的纵坐标与刻度对不上');
+        assert.equal(dots[i].left, expectPct(p.x, xAxis), name + '：第 ' + (i + 1) + ' 点的横坐标与刻度对不上');
+      });
+    }
   });
 
   it('形状：概率带与拟合线都是百分比多边形（不写死像素），带的端点贴着轴内距', () => {
@@ -199,18 +256,30 @@ describe('scatter-fit ① 渲染契约 · 形态 A 散点', () => {
   });
 
   it('离群点**点名**：画成圈（形）＋ 图例里写清原因（字），不静默丢掉', () => {
-    assert.equal(countOf(html, 'class="[^"]*-dot is-outlier"'), 1);
+    assert.equal(countOf(html, 'class="' + scatterFitSlot('dot') + ' is-outlier"'), 1);
     assert.equal(countOf(html, 'legend-mark is-ring'), 1, '图例里那枚圈');
     assert.match(html, /离群点（08-30 聚餐：一餐 1,400 卡）/);
     assert.match(html, /title="08-30：每日摄入 3,000 卡，体重 69 公斤（08-30 聚餐：一餐 1,400 卡）"/);
   });
 
-  it('算不出相关系数时写缺值符号并说明原因（不编一个 0 出来）', () => {
-    const flat = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 2 }, { x: 1, y: 3 }] });
-    assert.ok(flat.includes('相关系数 ' + SCATTER_FIT_MISSING + '，横轴读数的值全相同'), flat.slice(0, 300));
-    assert.equal(flat.includes('+0.00'), false, '不许把"算不出"写成 0');
-    const single = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 1 }] });
-    assert.ok(single.includes('纵轴读数的值全相同'));
+  it('**r 算不出就不画线与带**（形也断）：只画点 ＋ 脚注换成"只画点"的说明', () => {
+    for (const [name, input, why] of [
+      ['同一条竖线', { title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 2 }, { x: 1, y: 3 }] }, '横轴读数的值全相同'],
+      ['同一条横线', { title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 1 }] }, '纵轴读数的值全相同'],
+      ['只有一个点', { title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }] }, '只有一个点'],
+    ]) {
+      const h = renderScatterFit(input);
+      assert.ok(h.includes('相关系数 ' + SCATTER_FIT_MISSING + '，' + why), name + '：卡头要说清原因');
+      assert.equal(h.includes('+0.00'), false, name + '：不许把"算不出"写成 0');
+      assert.equal(h.includes(scatterFitSlot('band')), false, name + '：算不出就不许画概率带');
+      assert.equal(h.includes(scatterFitSlot('fitline')), false, name + '：算不出就不许画拟合线');
+      assert.equal(/polygon\(/.test(h), false, name + '：不许留一条常数线的多边形');
+      assert.ok(h.includes('所以只画点、不画线'), name + '：脚注口径要跟着换（不能一边不画线一边说线是最小二乘拟合）');
+      assert.equal(h.includes('线是最小二乘拟合'), false, name + '：旧口径不许留在这一支里');
+    }
+    /* 有一个点就必须画出那一个点。 */
+    assert.equal(countOf(renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }] }),
+      'class="' + scatterFitSlot('dot') + '"'), 1);
   });
 });
 
@@ -231,9 +300,13 @@ describe('scatter-fit ① 渲染契约 · 形态 B 分箱 / 形态 C 滞后', ()
     const heights = [...bin.matchAll(/height: ([\d.]+)%/g)].map((m) => Number(m[1]));
     assert.equal(heights.length, BIN_INPUT.bins.length);
     for (const h of heights) assert.ok(h > 0, '区间条必须有高度：' + heights.join('、'));
+    /* 分箱形态**没有**拟合线与概率带（那两段是散点形态的），图例两项、逐个有字。 */
+    assert.equal(bin.includes(scatterFitSlot('band')), false);
+    assert.equal(bin.includes(scatterFitSlot('fitline')), false);
+    assert.equal(countOf(bin, 'class="[^"]*-legend-item"'), 2);
   });
 
-  it('C：逐档一根条（宽 ＝ |r| × 50%），负号档往左，最强档**再写一遍字**', () => {
+  it('C：逐档一根条（宽 ＝ |r| × 50%），负号档往左，最强档**再写一遍字**；本形态不带图例', () => {
     assert.match(lag, new RegExp('^<div class="' + SCATTER_FIT_CLASS + ' is-lag">'));
     assert.equal(countOf(lag, 'class="[^"]*-lagrow[ "]'), LAG_INPUT.lags.length);
     const widths = [...lag.matchAll(/-lag-bar" aria-hidden="true" style="width: ([\d.]+)%"/g)].map((m) => Number(m[1]));
@@ -243,22 +316,30 @@ describe('scatter-fit ① 渲染契约 · 形态 B 分箱 / 形态 C 滞后', ()
     assert.match(lag, /<b class="[^"]*-lag-strong">−0\.71 最强<\/b>/, '最强档写着字，不靠颜色');
     assert.match(lag, /-tail">最强在错开 2 天</);
     assert.equal(lag.includes('-laghead'), true, '表头那一行给「中线往左右各半 ＝ ±1」的口径');
+    assert.equal(lag.includes(scatterFitSlot('legend')), false, '本形态不带图例（数字那一列就是读数）');
+    assert.equal(lag.includes(scatterFitSlot('plot')), false, '本形态没有点阵区');
+  });
+
+  it('缺槽就不出那一槽（三形态各一支）：不给 stamp 就不出 stamp；bin／lag 的 dot／legend 段为空', () => {
+    const bare = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }] });
+    assert.equal(bare.includes(scatterFitSlot('stamp')), false);
+    assert.match(bare, new RegExp('^<div class="' + SCATTER_FIT_CLASS + ' is-scatter">'));
+    assert.ok(bare.includes('口径：线是最小二乘拟合'), '不给 note 就用本形态的口径句');
+    const binBare = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', form: 'bin', bins: BIN_INPUT.bins });
+    assert.equal(binBare.includes(scatterFitSlot('stamp')), false);
+    assert.equal(countOf(binBare, 'class="[^"]*-dot"'), 0, '分箱形态一个点都没有');
+    const lagBare = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', form: 'lag', lags: LAG_INPUT.lags });
+    assert.equal(lagBare.includes(scatterFitSlot('stamp')), false);
+    assert.equal(countOf(lagBare, 'class="[^"]*-dot"'), 0);
+    const noted = renderScatterFit({
+      title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }], note: '自定义口径',
+    });
+    assert.ok(noted.includes('>自定义口径</p>'));
+    assert.equal(noted.includes('口径：线是最小二乘拟合'), false, '替换＝整句换掉');
   });
 });
 
 describe('scatter-fit ① 渲染契约 · 公共面与非法入参', () => {
-  it('缺槽就不出那一槽；缺省形态是散点；`note` 给了就整句替换', () => {
-    const bare = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }] });
-    assert.equal(bare.includes('-stamp'), false);
-    assert.match(bare, new RegExp('^<div class="' + SCATTER_FIT_CLASS + ' is-scatter">'));
-    assert.ok(bare.includes('口径：线是最小二乘拟合'), '不给 note 就用本形态的口径句');
-    const noted = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }], note: '自定义口径' });
-    assert.ok(noted.includes('>自定义口径</p>'));
-    assert.equal(noted.includes('口径：线是最小二乘拟合'), false, '替换＝整句换掉');
-    const extra = renderScatterFit({ title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }], extraClass: 'ok-class other' });
-    assert.ok(extra.includes('ok-class other'));
-  });
-
   it('转义面：标题／轴名／单位／点名／口径逐位转义，塞不进标签与属性', () => {
     const evil = '"><script>alert(1)</script>';
     const html = renderScatterFit({
@@ -276,7 +357,25 @@ describe('scatter-fit ① 渲染契约 · 公共面与非法入参', () => {
     assert.equal(/<span class="[^"]*"[^>]*>[^<]*<script/.test(binEvil), false);
   });
 
-  it('入参违规一律拒（不静默降级）：形态／点名／点数／轴名／箱／档 逐条', () => {
+  it('**大到只给指数写法的刻度不许被三位分组切开**（`1e,+21` 那种）', () => {
+    const huge = renderScatterFit({
+      title: 'x', xName: 'A', yName: 'B',
+      points: [{ x: 1e21, y: 1 }, { x: 2e21, y: 2 }],
+    });
+    assert.equal(/e,/.test(huge), false, '指数写法里不许插进逗号：' + (huge.match(/[^>]*e,[^<]*/) || [''])[0]);
+    assert.equal(/,\+/.test(huge), false);
+    assert.ok(huge.includes('e+21'), '量级大到只给指数时原样写：' + (huge.match(/class="[^"]*-xtick">[^<]*/) || [''])[0]);
+    /* 小数量级不受影响（同一支函数的另一头）：刻度照常是数，轴域照常盖住数据。 */
+    const tiny = renderScatterFit({
+      title: 'x', xName: 'A', yName: 'B', points: [{ x: 1.05, y: 1.05 }, { x: 2.05, y: 2.05 }],
+    });
+    const tinyTicks = slotTexts(tiny, 'xtick').map(tickNum);
+    assert.equal(tinyTicks.every((v) => Number.isFinite(v)), true, '小数刻度必须是可读的数：' + JSON.stringify(tinyTicks));
+    assert.ok(Math.min(...tinyTicks) <= 1.05 && Math.max(...tinyTicks) >= 2.05,
+      '小数轴域要盖住数据：' + JSON.stringify(tinyTicks));
+  });
+
+  it('入参违规一律拒（不静默降级）：形态／空白串／点数／轴名／箱／档 逐条', () => {
     assert.deepEqual([...SCATTER_FIT_FORMS], ['scatter', 'bin', 'lag']);
     const ok = { title: 'x', xName: 'A', yName: 'B', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }] };
     assert.equal(throwsBlocks(() => renderScatterFit(undefined)), true, '非对象');
@@ -285,39 +384,49 @@ describe('scatter-fit ① 渲染契约 · 公共面与非法入参', () => {
     assert.equal(throwsBlocks(() => renderScatterFit({ title: 'x', yName: 'B', points: ok.points })), true, '缺横轴名');
     assert.equal(throwsBlocks(() => renderScatterFit({ title: 'x', xName: 'A', points: ok.points })), true, '缺纵轴名');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, title: '' })), true);
+    /* **全空白串＝不是文本**（会在屏上留一块空白）：必填与可选两档都拒。 */
+    for (const field of ['title', 'xName', 'yName']) {
+      assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, [field]: '   ' })), true, field + ' 全空白应拒');
+      assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, [field]: '\u3000\t' })), true, field + ' 全角空白也应拒');
+    }
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, stamp: '   ' })), true, '可选文本全空白同样拒');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, note: ' \n ' })), true);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, xUnit: '  ' })), true);
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, form: 'cloud' })), true, '形态闭集外');
     assert.equal(throwsBlocks(() => renderScatterFit({ title: 'x', xName: 'A', yName: 'B' })), true, '散点缺 points');
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [{ x: 1, y: 1 }] })), true, '一个点连不成趋势');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [] })), true, '一条读数都没有');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: 'x' })), true, 'points 不是数组');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [null, { x: 1, y: 1 }] })), true, '元素不是对象');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [{ x: '1', y: 1 }, { x: 2, y: 2 }] })), true, 'x 不是数');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [{ x: 1, y: Number.NaN }, { x: 2, y: 2 }] })), true, 'y 是 NaN');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: [{ x: 1, y: 1, outlier: '  ' }, { x: 2, y: 2 }] })), true,
+      'outlier 全空白＝"点名了但没说原因"');
     /* 可选的文本字段：**空串＝未给**（与全层 `optText` 同口径），故空串的 `outlier` 不算点名。 */
     const blank = renderScatterFit({ ...ok, points: [{ x: 1, y: 1, outlier: '' }, { x: 2, y: 2 }] });
     assert.equal(blank.includes('is-outlier'), false, '空串＝未点名（不画成圈）');
     assert.equal(blank.includes('legend-mark is-ring'), false);
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, points: new Array(121).fill({ x: 1, y: 1 }) })), true, '点太多');
     /* 形态 B：缺 bins／箱数／次序／样本数。 */
     const binOk = { title: 'x', xName: 'A', yName: 'B', form: 'bin' };
-    const one = { label: 'a', low: 1, median: 2, high: 3, count: 5 };
+    const one = { label: 'a', low: 1, median: 2, high: 3, count: SCATTER_FIT_BIN_MIN_SAMPLE };
     assert.equal(throwsBlocks(() => renderScatterFit(binOk)), true, '分箱缺 bins');
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one] })), true, '只有一箱看不出趋势');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one] })), true, '箱数低于下限');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: new Array(SCATTER_FIT_BIN_MAX + 1).fill(one) })), true, '箱太多');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, null] })), true, '元素不是对象');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, label: '' }] })), true, '箱标签空');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, label: '\u3000' }] })), true, '箱标签全空白');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, low: 9, median: 2 }] })), true,
       '次序反了（low ≤ median ≤ high）');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, high: Number.POSITIVE_INFINITY }] })), true);
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, count: SCATTER_FIT_BIN_MIN_SAMPLE - 1 }] })), true,
-      '样本太薄（每箱至少 ' + SCATTER_FIT_BIN_MIN_SAMPLE + ' 个）');
+    assert.equal(throwsBlocks(() => renderScatterFit({
+      ...binOk, bins: [one, { ...one, count: SCATTER_FIT_BIN_MIN_SAMPLE - 1 }],
+    })), true, '样本太薄（每箱至少 ' + SCATTER_FIT_BIN_MIN_SAMPLE + ' 个）');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...binOk, bins: [one, { ...one, count: 5.5 }] })), true, '样本数不是整数');
-    assert.equal(SCATTER_FIT_BIN_MIN, 2);
     /* 形态 C：缺 lags／档数／天数／次序／r 越界。 */
     const lagOk = { title: 'x', xName: 'A', yName: 'B', form: 'lag' };
     const g0 = { step: 0, r: 0.2 };
     const g1 = { step: 1, r: -0.4 };
     assert.equal(throwsBlocks(() => renderScatterFit(lagOk)), true, '滞后缺 lags');
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0] })), true, '一档没有"最强"可比');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0] })), true, '档数低于下限');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: new Array(SCATTER_FIT_LAG_MAX + 1).fill(g0) })), true, '档太多');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0, { ...g1, step: SCATTER_FIT_MAX_LAG_DAYS + 1 }] })), true,
       '错开太多天');
@@ -325,14 +434,33 @@ describe('scatter-fit ① 渲染契约 · 公共面与非法入参', () => {
     assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0, { ...g1, step: 0.5 }] })), true, '天数不是整数');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0, { ...g1, r: 1.4 }] })), true, 'r 越界');
     assert.equal(throwsBlocks(() => renderScatterFit({ ...lagOk, lags: [g0, { ...g1, r: 'x' }] })), true, 'r 不是数');
-    /* 附加类名与 note／单位：类型不对一律拒。 */
+    /* 附加类名：类型不对一律拒。 */
     assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, extraClass: 'a"b' })), true);
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, note: 1 })), true);
-    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, xUnit: 1 })), true);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...ok, extraClass: '   ' })), true);
+  });
+
+  it('上限下限是**自证**的（边界值能过、越界一条就拒），不抄字面量', () => {
+    const base = { title: 'x', xName: 'A', yName: 'B' };
+    const p = (n) => new Array(n).fill({ x: 1, y: 1 });
+    assert.ok(renderScatterFit({ ...base, points: p(SCATTER_FIT_MIN_POINTS) }).length > 0, '下限能过');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, points: p(SCATTER_FIT_MIN_POINTS - 1) })), true, '下限 −1 应拒');
+    assert.ok(renderScatterFit({ ...base, points: p(SCATTER_FIT_MAX_POINTS) }).length > 0, '上限能过');
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, points: p(SCATTER_FIT_MAX_POINTS + 1) })), true, '上限 ＋1 应拒');
+    const bin = (n) => new Array(n).fill({ label: 'a', low: 1, median: 2, high: 3, count: SCATTER_FIT_BIN_MIN_SAMPLE });
+    assert.ok(renderScatterFit({ ...base, form: 'bin', bins: bin(SCATTER_FIT_BIN_MIN) }).length > 0);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, form: 'bin', bins: bin(SCATTER_FIT_BIN_MIN - 1) })), true);
+    assert.ok(renderScatterFit({ ...base, form: 'bin', bins: bin(SCATTER_FIT_BIN_MAX) }).length > 0);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, form: 'bin', bins: bin(SCATTER_FIT_BIN_MAX + 1) })), true);
+    const lag = (n) => new Array(n).fill(0).map((_, i) => ({ step: i, r: 0.1 }));
+    assert.ok(renderScatterFit({ ...base, form: 'lag', lags: lag(SCATTER_FIT_LAG_MIN) }).length > 0);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, form: 'lag', lags: lag(SCATTER_FIT_LAG_MIN - 1) })), true);
+    assert.ok(renderScatterFit({ ...base, form: 'lag', lags: lag(SCATTER_FIT_LAG_MAX) }).length > 0);
+    assert.equal(throwsBlocks(() => renderScatterFit({ ...base, form: 'lag', lags: lag(SCATTER_FIT_LAG_MAX + 1) })), true);
+    assert.ok(renderScatterFit({ ...base, form: 'lag', lags: [{ step: SCATTER_FIT_MAX_LAG_DAYS, r: 0.1 }, { step: 0, r: 0.2 }].reverse() }).length > 0);
   });
 
   it('纯函数：同样的入参恒产同样的字节（三个形态各一遍）', () => {
-    for (const input of [SCATTER_INPUT, BIN_INPUT, LAG_INPUT]) {
+    for (const input of [SCATTER_INPUT, ODD_INPUT, BIN_INPUT, LAG_INPUT]) {
       assert.equal(renderScatterFit(input), renderScatterFit(input));
     }
   });
@@ -369,6 +497,18 @@ describe('scatter-fit ② 样式与零 DOM 纪律', () => {
     assert.deepEqual(clean.match(/--[a-z0-9-]+\s*:/g) || [], [], '不得定义新 token');
   });
 
+  it('**窄档阈值只有一处来源**：两份样式源码里不出现那个数字的字面量，查询串由常量拼出', () => {
+    const query = '@container (max-width: ' + String(SCATTER_FIT_NARROW_PX) + 'px)';
+    assert.equal(countOf(css, query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 2,
+      '两份样式文件各一条窄档查询，且都取同一个常量');
+    for (const file of ['style.ts', 'style-forms.ts']) {
+      const src = readFileSync(join(DIR, file), 'utf8');
+      assert.equal(new RegExp('\\b' + String(SCATTER_FIT_NARROW_PX) + '\\b').test(src), false,
+        file + ' 里写了阈值字面量（写两处必然走散：改常量时查询不跟）');
+      assert.ok(src.includes('SCATTER_FIT_NARROW_PX'), file + ' 应当读 SCATTER_FIT_NARROW_PX 这个常量');
+    }
+  });
+
   it('零手写色值（兜底链那一处除外）、源码级零手写 `var(--ilife-…)`、**不拿 ink 系当面**', () => {
     for (const m of clean.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
       const before = clean.slice(Math.max(0, m.index - 160), m.index);
@@ -391,11 +531,28 @@ describe('scatter-fit ② 样式与零 DOM 纪律', () => {
     assert.equal(clean.includes('var(--ilife-danger,'), false, '本件没有语义档，不许借 danger');
   });
 
+  it('**内容撑不宽容器**：会随调用方文本变长的槽带 `min-width: 0`＋可收窄，刻度行可换行', () => {
+    /* A2 的根因是「内容拒绝收窄」：文本槽一律要给 `min-width: 0`，且不许用 `flex: none`
+       （`flex-shrink: 0` 让这一项顶宽父行——320 档实测 384 > 320）。 */
+    for (const slot of ['stamp', 'tail', 'title', 'xtick', 'ytick', 'bintick', 'legend-item', 'note', 'lag-label', 'lag-value']) {
+      const body = ruleOf(clean, '.' + scatterFitSlot(slot));
+      assert.ok(/min-width:\s*0/.test(body), slot + ' 少了 min-width: 0（长文本会顶宽容器）：' + body);
+      assert.equal(/flex:\s*(none|0\s+0\s+auto)/.test(body), false,
+        slot + ' 用了 flex: none（内容会顶宽父行，改 flex: 0 1 auto）：' + body);
+    }
+    for (const slot of ['stamp', 'tail']) {
+      assert.ok(/flex:\s*0\s+1\s+auto/.test(ruleOf(clean, '.' + scatterFitSlot(slot))),
+        slot + ' 必须可收窄（flex: 0 1 auto）');
+    }
+    assert.ok(/flex-wrap:\s*wrap/.test(ruleOf(clean, '.' + scatterFitSlot('xticks'))),
+      '刻度行塞不下要换行，不许把每一枚压成一列竖字');
+    assert.equal(clean.includes('overflow-x'), false, '不许出现 overflow-x（不藏横滑）');
+    assert.equal(clean.includes('scroll'), false, '不许出现滚动容器');
+  });
+
   it('尺寸事实写在一处：图区与分箱高度取常量', () => {
     assert.ok(clean.includes('height: ' + String(SCATTER_FIT_PLOT_PX) + 'px'));
     assert.ok(clean.includes('height: ' + String(SCATTER_FIT_BIN_PX) + 'px'));
-    assert.equal(clean.includes('overflow-x'), false, '不许出现 overflow-x（不藏横滑）');
-    assert.equal(clean.includes('scroll'), false, '不许出现滚动容器');
   });
 
   it('零键盘语汇、零可点元素（本件是纯静态图）', () => {
@@ -430,6 +587,15 @@ describe('scatter-fit ② 样式与零 DOM 纪律', () => {
     assert.equal(scatterFitSlot('plot', 'x-'), 'x-block-scatter-fit-plot');
     for (const slot of SCATTER_FIT_SLOTS) assert.ok(scatterFitSlot(slot).startsWith(SCATTER_FIT_CLASS + '-'));
   });
+
+  it('两份样式源码里不留没人用的槽位助手（声明了 `c()` 就得真用到）', () => {
+    for (const file of ['style.ts', 'style-forms.ts']) {
+      const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
+      if (!src.includes('const c = (slot: ScatterFitSlot)')) continue;
+      const uses = (src.match(/(?:^|[^\w.])c\(/g) || []).length;
+      assert.ok(uses > 0, file + ' 声明了裸槽助手 c() 却一次没用（死代码，删掉它）');
+    }
+  });
 });
 
 /* ── ③ 加法式 ───────────────────────────────────────────────────────── */
@@ -451,49 +617,74 @@ describe('scatter-fit ③ 加法式（不启用即逐字节不变）', () => {
 
   it('前缀透传：换前缀时 scope 与类名一起换（不写死 `ilife-`）', () => {
     const css = stripComments(scatterFitCss({ prefix: 'x-' }));
-    assert.ok(css.includes('.x-page-ui .x-block-scatter-fit'), '前缀必须作用到 scope 与类名两处');
+    assert.ok(css.includes('.x-page-ui .x-block-scatter-fit'), '前缀必须作用到类名两处');
     assert.equal(css.includes('.ilife-page-ui'), false);
   });
 });
 
-/* ── ④ 两档几何（真机）＋ ⑤ 皮肤纪律 ──────────────────────────────── */
+/* ── ④ 三档几何（真机）＋ ⑤ 皮肤纪律 ───────────────────────────────── */
 
-/** 三种压力样例：散点（含离群点）／六箱（箱数上限一档）／六档滞后（标签最长那一档）。 */
+/** 三档**容器**宽度：320 是触屏最窄那一档（手机分屏／小屏），也是内容撑宽最容易翻车的地方。 */
+const WIDTHS = [320, 390, 1280];
+
+/** 长口径（64 字）与长轴名（>40 字）：内容撑宽的两种压力。 */
+const LONG_STAMP = '近 30 天（含 3 天补录、2 天跨月结转、1 天跨时区，口径见页脚）：补录那三天是按当日最后一笔算的，不是记账时间';
+const LONG_XNAME = '睡眠时长（按入睡到起床算，含中途醒来，不含午睡）';
+
+/** 压力样例：常规三形态 ＋ 长口径 ＋ 长轴名 ＋ 12 位金额（刻度最长那一档）。 */
 function cases() {
   return [
     { name: 'scatter', html: renderScatterFit(SCATTER_INPUT) },
+    { name: 'odd', html: renderScatterFit(ODD_INPUT) },
     { name: 'bin', html: renderScatterFit(BIN_INPUT) },
     { name: 'lag', html: renderScatterFit(LAG_INPUT) },
+    { name: 'longstamp', html: renderScatterFit({ ...SCATTER_INPUT, stamp: LONG_STAMP }) },
+    { name: 'longname', html: renderScatterFit({ ...BIN_INPUT, xName: LONG_XNAME }) },
+    {
+      name: 'widenum',
+      html: renderScatterFit({
+        title: '大额分布', xName: '金额', yName: '笔数', xUnit: '元',
+        points: [{ x: 123456789012, y: 1 }, { x: 555555555555, y: 2 }, { x: 987654321098, y: 3 }],
+      }),
+    },
   ];
 }
 
-/** 静态几何判据（真机起不来时的退路）：标记与样式段里不得有超过窄档的固定宽度。 */
+/** 真机起不来时的确定性几何判据（量不到"内容撑宽"，就断**形状上的那几条**）。 */
 function assertStaticGeometry(css, html) {
   const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
-  const wide = [...px(html), ...px(css)].filter((v) => v > 390);
-  assert.deepEqual(wide, [], '出现过不了窄档（390）的固定宽度：' + wide.join('、'));
-  const bottoms = [...html.matchAll(/(?:left|bottom): ([\d.]+)%/g)].map((m) => Number(m[1]));
-  assert.ok(bottoms.length > 0, '点的坐标必须是百分比（判据会空转）');
-  for (const v of bottoms) assert.ok(v >= 0 && v <= 100, '百分比越界：' + v);
+  const narrowest = WIDTHS[0];
+  const wide = [...px(html), ...px(css)].filter((v) => v > narrowest);
+  assert.deepEqual(wide, [], '出现过不了最窄档（' + narrowest + '）的固定宽度：' + wide.join('、'));
+  const percents = [...html.matchAll(/(?:left|bottom): ([\d.]+)%/g)].map((m) => Number(m[1]));
+  assert.ok(percents.length > 0, '点的坐标必须是百分比（判据会空转）');
+  for (const v of percents) assert.ok(v >= 0 && v <= 100, '百分比越界：' + v);
+  /* 内容撑宽的两条形状事实：长文本槽可收窄、刻度行可换行。 */
+  const clean = stripComments(css);
+  for (const slot of ['stamp', 'tail', 'xtick']) {
+    assert.ok(/min-width:\s*0/.test(ruleOf(clean, '.' + scatterFitSlot(slot))), slot + ' 少了 min-width: 0');
+  }
+  assert.ok(/flex-wrap:\s*wrap/.test(ruleOf(clean, '.' + scatterFitSlot('xticks'))), '刻度行要能换行');
 }
 
-describe('scatter-fit ④⑤ 两档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
-  it('容器 390 与 1280：零横向溢出／点全在图区里／刻度零截断／四套皮肤标记逐字节相同', async (t) => {
+describe('scatter-fit ④⑤ 三档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
+  it('容器 320／390／1280：零横向溢出（含长口径／长轴名／12 位金额）／点全在图区里／刻度零截断', async (t) => {
     const css = scatterFitCss();
     const casesHtml = cases().map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join('');
     const page = await startShapesPage({
       html: SKIN_NAMES.map((skin) => '<div class="ilife-page-ui ' + skinClass(skin) + '">' + casesHtml + '</div>').join('\n'),
       css: skinCss() + '\n' + css,
-      height: 1600,
+      height: 2000,
     });
     if (page === null) {
-      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性几何判据：标记与样式段里没有超过 390px 的固定宽度');
+      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性几何判据：'
+        + '没有超过 ' + WIDTHS[0] + 'px 的固定宽度 ＋ 长文本槽可收窄（min-width: 0）＋ 刻度行可换行');
       assertStaticGeometry(css, casesHtml);
-      return t.skip('本机无 Chrome／Chromium：两档几何判据需真浏览器');
+      return t.skip('本机无 Chrome／Chromium：三档几何判据需真浏览器');
     }
     try {
       const seen = [];
-      for (const width of [390, 1280]) {
+      for (const width of WIDTHS) {
         await page.setWidth(width);
         const frame = await page.frame();
         assert.ok(frame.fxScrollW <= frame.fxClientW, width + ' 档：夹具容器不得横向溢出');
@@ -501,22 +692,26 @@ describe('scatter-fit ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
           width + ' 档：整页不得横向溢出 ' + frame.docScrollW + ' > ' + frame.docClientW);
         for (const skin of SKIN_NAMES) {
           for (const c of cases()) {
-            const scope = '.' + skinClass(skin) + ' [data-case="' + c.name + '"] ';
-            const root = await page.read([scope + '.' + SCATTER_FIT_CLASS]);
+            const scope = '.' + skinClass(skin) + ' [data-case=' + c.name + '] ';
+            const root = await page.read([scope + '.' + SCATTER_FIT_CLASS, scope + '.' + scatterFitSlot('hd')]);
             assert.equal(root[0].count, 1, width + ' 档 ' + skin + '：找不到本件根');
-            assert.ok(root[0].maxScrollW <= root[0].maxClientW + 1,
-              width + ' 档 ' + skin + ' ' + c.name + '：根横向溢出 ' + root[0].maxScrollW + ' > ' + root[0].maxClientW);
-            assert.equal(root[0].scrollsX, 0, width + ' 档 ' + skin + '：不许出现 overflow-x 滚动容器');
-            /* 刻度与图例**不被截断**（压字／省略号都不是本件的做法）。 */
-            const texts = await page.read([scatterFitSlot('ytick'), scatterFitSlot('xtick'),
-              scatterFitSlot('bintick'), scatterFitSlot('legend-item'), scatterFitSlot('lag-value')]
-              .map((slot) => scope + '.' + slot));
+            for (const one of root) {
+              assert.ok(one.maxScrollW <= one.maxClientW + 1,
+                width + ' 档 ' + skin + ' ' + c.name + '：' + one.sel + ' 横向溢出 '
+                + one.maxScrollW + ' > ' + one.maxClientW);
+              assert.equal(one.scrollsX, 0, width + ' 档 ' + skin + '：不许出现 overflow-x 滚动容器');
+            }
+            /* 刻度与读数**不被截断**（压字／省略号都不是本件的做法）；本形态没有的槽不要求出现。 */
+            const slots = ['ytick', 'xtick', 'bintick', 'legend-item', 'lag-value', 'stamp', 'tail']
+              .filter((slot) => new RegExp('class="' + scatterFitSlot(slot) + '[ "]').test(c.html));
+            const texts = await page.read(slots.map((slot) => scope + '.' + scatterFitSlot(slot)));
             for (const one of texts) {
               assert.equal(one.clipped, 0, width + ' 档 ' + skin + ' ' + c.name + '：' + one.sel
                 + ' 有 ' + one.clipped + ' 处被截断');
+              assert.ok(one.visible > 0, width + ' 档 ' + skin + ' ' + c.name + '：' + one.sel + ' 不见了');
             }
             if (c.name !== 'scatter') continue;
-            /* **点全在图区里**：最左／最右／最上／最下的点都不许跑出图区（不靠 overflow:hidden 盖）。 */
+            /* **点全在图区里**：最左／最右／最上／最下的点都不许跑出图区。 */
             const box = await page.ev('(function(){var root=document.querySelector('
               + JSON.stringify(scope + '.' + SCATTER_FIT_CLASS) + ');'
               + 'var plot=root.querySelector(' + JSON.stringify('.' + scatterFitSlot('plot')) + ');'
@@ -538,20 +733,23 @@ describe('scatter-fit ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
             assert.ok(box.minTop >= box.plotTop - 1, width + ' 档 ' + skin + '：有点跑出图区上边');
             assert.ok(box.maxBottom <= box.plotBottom + 1, width + ' 档 ' + skin + '：有点跑出图区下边');
             seen.push({ width, skin, name: c.name, plotH: box.plotH, plotW: box.plotW,
-              rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW, maxRight: box.maxRight, plotRight: box.plotRight });
+              rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW,
+              hdScrollW: root[1].maxScrollW, hdClientW: root[1].maxClientW });
           }
         }
       }
-      /* **窄档是容器驱动的**：390 档图区比 1280 档矮一档（视口没变，只改了夹具容器宽度）。 */
-      const narrow = seen.filter((s) => s.width === 390 && s.name === 'scatter').map((s) => s.plotH);
+      /* **窄档是容器驱动的**：320／390 档图区比 1280 档矮一档（视口没变，只改了夹具容器宽度）。 */
       const wide = seen.filter((s) => s.width === 1280 && s.name === 'scatter').map((s) => s.plotH);
       assert.equal(wide.every((h) => h === SCATTER_FIT_PLOT_PX), true,
         '1280 档图区高度应取常量 ' + SCATTER_FIT_PLOT_PX + '：' + JSON.stringify(wide));
-      assert.equal(narrow.every((h) => h < SCATTER_FIT_PLOT_PX), true,
-        '390 档图区应收一档（@container 判的是本件自己的宽度）：' + JSON.stringify(narrow));
+      for (const w of [320, 390]) {
+        const narrow = seen.filter((s) => s.width === w && s.name === 'scatter').map((s) => s.plotH);
+        assert.equal(narrow.every((h) => h < SCATTER_FIT_PLOT_PX), true,
+          w + ' 档图区应收一档（@container 判的是本件自己的宽度）：' + JSON.stringify(narrow));
+      }
       /* ⑤ 换皮不换结构：四套皮肤容器里的标记逐字节相同。 */
       for (const c of cases()) {
-        for (const width of [390, 1280]) {
+        for (const width of WIDTHS) {
           const marks = await page.ev('(function(){var out={};var skins=' + JSON.stringify(SKIN_NAMES) + ';'
             + 'for (var i = 0; i < skins.length; i += 1) {'
             + '  var el = document.querySelector("." + "ilife-skin-" + skins[i]'
@@ -578,14 +776,16 @@ describe('scatter-fit ④⑤ 两档几何与皮肤纪律（真机 headless Chrom
         assert.equal(colors.fg, toRgb(vals['accent-text']), skin + '：最强那一档的字取 accent-text');
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
-      for (const w of [390, 1280]) {
-        const rows = seen.filter((s) => s.width === w && s.name === 'scatter');
+      for (const w of WIDTHS) {
+        const rows = seen.filter((s) => s.width === w);
+        const scat = rows.filter((s) => s.name === 'scatter');
         console.log('READING scatter-fit container=' + w
-          + ' plotW=' + rows[0].plotW + ' plotH=' + rows[0].plotH
-          + ' maxRootScrollW=' + Math.max(...seen.filter((s) => s.width === w).map((s) => s.rootScrollW))
-          + ' maxRootClientW=' + Math.max(...seen.filter((s) => s.width === w).map((s) => s.rootClientW))
-          + ' maxDotRight=' + Math.max(...rows.map((s) => s.maxRight))
-          + ' plotRight=' + rows[0].plotRight + ' cases=' + seen.filter((s) => s.width === w).length);
+          + ' plotW=' + scat[0].plotW + ' plotH=' + scat[0].plotH
+          + ' maxRootScrollW=' + Math.max(...rows.map((s) => s.rootScrollW))
+          + ' maxRootClientW=' + Math.max(...rows.map((s) => s.rootClientW))
+          + ' maxHdScrollW=' + Math.max(...rows.map((s) => s.hdScrollW))
+          + ' maxHdClientW=' + Math.max(...rows.map((s) => s.hdClientW))
+          + ' cases=' + rows.length);
       }
     } finally { page.close(); }
   });

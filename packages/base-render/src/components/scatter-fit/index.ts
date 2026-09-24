@@ -2,7 +2,7 @@
  *
  *  五件出口：`renderScatterFit(input)`（产标记，零 DOM）／`scatterFitCss()`（样式段）／
  *  `SCATTER_FIT_FORMS`（形态闭集：散点／分箱／滞后）／`SCATTER_FIT_CLASS` 与 `scatterFitSlot()`（标记契约）／
- *  `SCATTER_FIT_PLOT_PX`／`SCATTER_FIT_BIN_PX`（图区高度：判据拿它对两档几何）。
+ *  `SCATTER_FIT_PLOT_PX`／`SCATTER_FIT_BIN_PX`／`SCATTER_FIT_NARROW_PX`（几何常量：判据拿它对两档／三档几何）。
  *
  *  用法与参数表见同目录 `README.md`。消费方走 `base-paint/blocks`（组件层出口），不走根出口。
  */
@@ -28,6 +28,7 @@ export {
   SCATTER_FIT_MAX_POINTS,
   SCATTER_FIT_MIN_POINTS,
   SCATTER_FIT_MISSING,
+  SCATTER_FIT_NARROW_PX,
   SCATTER_FIT_SLOTS,
   SCATTER_FIT_X_TICKS,
   SCATTER_FIT_Y_TICKS,
