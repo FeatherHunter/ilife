@@ -60,9 +60,15 @@ function goalDetail(goal: number | null | undefined, unit?: string): string {
   return unit === undefined ? '目标 ' + goal : '目标 ' + goal + ' ' + unit;
 }
 
-/** 缺口卡说明行：它相对的不是目标是**消耗** ⇒ 给消耗这个参照物，方向归徽章。 */
+/** 缺口那两件**读法**（不是读数）：卡与段尾口径行共用这一份文本，别在两处各写一遍。
+ *  卡上只留「消耗 N 卡」这个参照物，读法落到「今日速览」那块段尾的口径行（同一页同一块，事实一条不丢；
+ *  `396-gap-caliber` 的三条针——缺口等于消耗减摄入／日常消耗加运动／日常消耗取档案静态值——仍逐字在场）。
+ *  **为什么要搬**：这三句原先整个塞在缺口卡的说明行里，那张卡因此比同排高出一截、排面参差。 */
+export const DEFICIT_CALIBER = '缺口等于消耗减摄入，消耗为日常消耗加运动，日常消耗取档案静态值。';
+
+/** 缺口卡说明行：只写**参照物**（消耗那个数）；消耗取不到时按缺值口径。 */
 function burnDetail(burn: number | null | undefined): string {
-  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn + '（日常消耗加运动。日常消耗取档案静态值）';
+  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn + ' 卡';
 }
 
 /** 缺口卡的方向胶囊（#401g 审查必改 #4）：四卡里唯一**没有目标**的读数，套完成率档位是假信息
@@ -101,11 +107,11 @@ function macroCards(d: HomeData): readonly KpiCardInput[] {
   ];
 }
 
-/** 缺口卡（第六张）：值 ＋ 消耗参照 ＋ 方向徽章（**不给条**：条住下面的等式条）。 */
+/** 缺口卡（第六张）：值 ＋ 消耗参照 ＋ 方向徽章（**不给条**：条住下面的等式条；读法住段尾口径行）。 */
 function deficitCard(d: HomeData): KpiCardInput {
   return {
     label: '今日缺口（热量缺口）', value: fmt(d.deficitToday), unit: '卡',
-    detail: burnDetail(d.burnToday) + '。缺口等于消耗减摄入',
+    detail: burnDetail(d.burnToday),
     ...deficitDirection(d.deficitToday),
   };
 }

@@ -26,7 +26,7 @@ import type { SegNavIcon } from 'base-paint';
 import { renderChartBlock, renderDataTable, renderDistributionRows, renderListRows } from 'base-paint/blocks';
 import { seriesSum } from '../analysis/series.js';
 import type { DaySeries } from '../analysis/series.js';
-import { equationBlock, todayCards } from './homeCards.js';
+import { DEFICIT_CALIBER, equationBlock, todayCards } from './homeCards.js';
 import type { HomeNavItem } from './homeFrame.js';
 import type { HomeData } from './home.js';
 
@@ -246,7 +246,7 @@ function overviewBody(input: HomeViewInput): HomeViewBody {
   const sections: string[] = [
     openSection(OVERVIEW_SECTIONS.overview)
       + factLine('今日 ' + todayCards(d).length + ' 项，目标取当前配置。')
-      + input.todayCards + equationBlock(d) + '</section>',
+      + input.todayCards + equationBlock(d) + factLine(DEFICIT_CALIBER) + '</section>',
   ];
   if (charts) sections.push(chartSection(d.week.series, d.week.avgIntake, day));
   sections.push('<section id="' + OVERVIEW_SECTIONS.daily.id + '">' + dailyTable(input)
