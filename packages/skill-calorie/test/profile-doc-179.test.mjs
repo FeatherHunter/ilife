@@ -128,8 +128,8 @@ test('#179 查档案结果页是完整文档；空档案仍是缺失阻断（不
   assert.ok(v.file.includes('ilife-copy-log'), '结果页缺「复制日志」按钮（#239）');
   assert.equal(JSON.parse(v.stdout).data.metrics.hasGoal, 0);
   // #238 裁定 3：复制出去的文本里页名写中文（内部命令名对用户没有意义）。
-  assert.ok(v.file.includes('data-t="【calorie · 查档案】'), '结果页复制文本的页名不是中文');
-  assert.equal(v.file.includes('data-t="【calorie · calorie.view.profile】'), false, '结果页复制文本还在写内部命令名');
+  assert.ok(v.file.includes('data-t="【calorie 查档案】'), '结果页复制文本的页名不是中文');
+  assert.equal(v.file.includes('data-t="【calorie calorie.view.profile】'), false, '结果页复制文本还在写内部命令名');
 });
 
 /** 页面**可见文案**（去 script／style、去标签、还原实体）：断言「某个词没上页」时看这一层——
@@ -146,9 +146,15 @@ function visibleText(html) {
 test('#238 五张页的去技术词与中文页名：库列名／内部编号／英文枚举／同名复制标题一律不上页', () => {
   const wizard = runCli(mkDb(true), 'calorie.view.profile-wizard', {});
   assert.equal(wizard.status, 0, 'stderr=' + wizard.stderr.slice(-300));
-  assert.ok(wizard.file.includes('data-t="【calorie · 档案预检】'), '预检确认页复制文本的页名不是中文');
+  assert.ok(wizard.file.includes('data-t="【calorie 档案预检】'), '预检确认页复制文本的页名不是中文');
   // 眉标只写这一页属于哪个功能，流程说明与版本号不再挂眉标（#238 清单 12 条）。
-  assert.ok(wizard.file.includes('基础信息 · 预检确认<'), '预检确认页眉标不对');
+  // 2026-09-24 改版：预检页改成「一词一页」的档案变更单，眉标跟着词走；同日按用户裁定去掉 `·` 分隔符
+  // （「基础信息 改档案」）。故实跑一个词：词必须进眉标，且分隔符一个都不许回。
+  const wizardWord = runCli(mkDb(true), 'calorie.view.profile-wizard', { wakeWord: '改档案' });
+  assert.equal(wizardWord.status, 0, 'stderr=' + wizardWord.stderr.slice(-300));
+  assert.ok(wizardWord.file.includes('基础信息 改档案'), '预检确认页眉标不对（不跟词走）');
+  assert.ok(wizard.file.includes('基础信息 '), '预检确认页眉标不对');
+  assert.equal(/基础信息\s*·/.test(wizardWord.file), false, '预检确认页眉标还留着 `·` 分隔符');
   for (const gone of ['op=', 'sqlite:total_changes', 'singleton', 'user_profile#1', 'id 口径',
     'age,gender,heightCm,activityLevel', 'male/female', 'M5 契约', '入库值', 'TDEE 影响',
     'TDEE ＝ 基础代谢（Mifflin-St Jeor）']) {
@@ -157,7 +163,8 @@ test('#238 五张页的去技术词与中文页名：库列名／内部编号／
   // 复制区不再出与按钮同名的大标题（#238 清单 9 条）：预检确认页那两个复制区只由按钮表意。
   assert.equal(/<h2[^>]*ilife-block-copy-block-title/.test(wizard.file), false, '预检确认页还有复制区大标题');
   assert.equal(wizard.file.includes('复制 prompt（必走）'), false, '预检确认页指令块还挂着「复制 prompt（必走）」小标题');
-  for (const btn of ['复制指令', '复制数据', '复制日志']) {
+  // 2026-09-24 改版：指令那颗改名「签发并写入」（页脚主按钮），页脚另加次按钮「还原」。
+  for (const btn of ['签发并写入', '还原', '复制数据', '复制日志']) {
     assert.ok(wizard.file.includes('>' + btn + '<'), '预检确认页缺按钮：' + btn);
   }
 });
@@ -193,8 +200,8 @@ test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，�
   const w = runCli(mkDb(true), 'calorie.view.profile-wizard', {});
   assert.equal(w.status, 0, 'stderr=' + w.stderr.slice(-300));
   assertDocPage(w.file, 'calorie.view.profile-wizard');
-  assert.deepEqual([...w.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]),
-    ['ilife-help-copy-prompt', 'ilife-copy-log'], '预检确认页按钮不对');
+  assert.deepEqual([...new Set([...w.file.matchAll(/data-action-id="([^"]+)"/g)].map((m) => m[1]))].sort(),
+    ['calorie-profile-sheet-reset', 'ilife-copy-log', 'ilife-help-copy-prompt'].sort(), '预检确认页按钮不对');
   assert.ok(w.file.includes('calorie-cmd-read calorie.view.profile-wizard'), '预检确认页日志缺命令原文');
   assert.ok(w.file.includes('calorie_data.db ｜ user_profile'), '预检确认页日志第 3 段缺库表名');
 
@@ -207,10 +214,13 @@ test('#239 四张页接上「复制日志」：命令原文 ＋ M5 行都在，�
     + ' data-action-id="ilife-copy-log" disabled>复制日志</button>';
   const mut = w.file.replace(/(<button[^>]*data-action-id="ilife-help-copy-prompt"[^>]*>)/, '$1' + DUP);
   assert.notEqual(mut, w.file, '变异（加回重复按钮）没塞进去');
-  assert.throws(() => assert.deepEqual(copyIds(mut), ['ilife-help-copy-prompt', 'ilife-copy-log'],
-    '预检确认页按钮不对'), /预检确认页按钮不对/, '变异（加回重复按钮）未红');
-  assert.deepEqual(copyIds(w.file), ['ilife-help-copy-prompt', 'ilife-copy-log'],
-    '还原后应回绿（prompt ＋ 日志各一颗）');
+  /* 改版后的当刻口径（2026-09-24）：本页三颗 id——还原（页脚）／签发并写入（挂 prompt 位）／
+     真复制日志（复制区）。#494 要的那条判据**照旧**：`ilife-copy-log` 那颗**不许是禁用态**（#336 兜底）。 */
+  const noDisabledLog = (html) => !/data-action-id="ilife-copy-log"[^>]*disabled/.test(html);
+  assert.deepEqual([...new Set(copyIds(w.file))].sort(),
+    ['calorie-profile-sheet-reset', 'ilife-copy-log', 'ilife-help-copy-prompt'].sort(), '还原后按钮集合不对');
+  assert.equal(noDisabledLog(w.file), true, '预检确认页出现 #336 兜底的禁用态复制日志');
+  assert.equal(noDisabledLog(mut), false, '变异（加回禁用态复制日志）未红');
 });
 
 /** 取复制菜单三项的 `data-t`（键 → 文本）。页内只有一处菜单，故直接扫描 `data-fmt="键"` 后的属性。 */
@@ -257,8 +267,14 @@ test('#247 场景 07 五张页的复制数据是「三格式三选一」菜单�
     assert.ok(texts.csv.startsWith('section,row'), what + ' 的 CSV 缺表头：' + texts.csv.slice(0, 40));
 
     // ④ 用途提示逐字取老仓；按钮只开合菜单（不带 data-t，也不是 data-action-id）。
-    for (const hint of ['粘贴给 AI / 自己看', '结构化存档', '表格导入']) {
-      assert.ok(r.file.includes(hint), what + ' 菜单缺用途提示：' + hint);
+    // ④ 用途提示**已按作者 2026-09-14 裁定删掉**（`src/shared/copyArea.ts:44-53` 的 `MENU_HINTS` 三个空串：
+    //    「一行塞四个动作、读者看不懂『结构化存档』」⇒「删掉这类动作与用途说明」）——
+    //    菜单只留三个格式名，由选中的格式自己说明用途。这里两头都钉：格式名在、旧提示不许回。
+    for (const name of ['纯文本', 'JSON', 'CSV']) {
+      assert.ok(r.file.includes(name), what + ' 菜单缺格式名：' + name);
+    }
+    for (const gone of ['结构化存档', '表格导入']) {
+      assert.equal(r.file.includes(gone), false, what + ' 菜单回了已删的用途提示：' + gone);
     }
     assert.ok(r.file.includes('data-fmt-open="1"'), what + ' 缺菜单开合器');
     const opener = /<button type="button" class="ilife-copy-btn ilife-copy-btn-ghost" data-fmt-open="1"[^>]*>([^<]*)</.exec(r.file);
