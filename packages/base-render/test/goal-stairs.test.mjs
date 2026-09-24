@@ -435,6 +435,25 @@ describe('goal-stairs ② 样式与零 DOM 纪律', () => {
     }
   });
 
+  it('**语义色当字**的对比地板：达标那一档的字色 `ok` 对底与对它自己的软底 ≥4.5:1', () => {
+    /* 为什么这一条要单独钉：契约的对比地板表只列了 `ink`／`ink-2`／`ink-3`／`accent-text`／`danger`，
+       而《选中态与皮肤语言》的法则表**点名**「达标」走 `ok`／`ok-soft` 且明说「不许借 accent 或 ink」
+       ⇒ 状态字必须拿 `ok` 当字，那它就得自己过文本地板。
+       **期望值一律从皮肤取值表算**（`SKINS[skin].values`）：皮肤改值这里自动跟——写死色值会在皮肤席
+       压深 `ok` 的那一刻变成假红。失败时点名到皮肤与 token：那是取值表的事，**件内不改**（改走 ink
+       就是拿语义档借字色，法条禁止）。 */
+    for (const skin of SKIN_NAMES) {
+      const v = SKIN_VALUES[skin];
+      for (const ground of ['surface', 'ok-soft']) {
+        const ratio = contrast(v.ok, v[ground]);
+        console.log('READING 状态字对比 ' + skin + '：ok on ' + ground + '＝' + ratio.toFixed(2) + ':1');
+        assert.ok(ratio >= 4.5, skin + '：达标那一档的字色 `ok` 对 `' + ground + '` 只有 ' + ratio.toFixed(2)
+          + ':1（低于文本地板 4.5）——这是**皮肤取值表**那笔账（`skin.test.mjs` 的「语义色当字」地板同一条），'
+          + '件内保持 `ok` 不动');
+      }
+    }
+  });
+
   it('零键盘语汇、零可点元素（本件是纯静态图）', () => {
     const words = ['快捷键', '键位', '方向键', '键帽', '键盘', '按 Enter', 'Tab', '点击', '长按'];
     const all = [BASE, LATE, EDGE].map((i) => renderGoalStairs(i)).join('') + css;
