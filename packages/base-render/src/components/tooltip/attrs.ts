@@ -35,7 +35,8 @@ export const TOOLTIP_SLOTS = [
   'badge',
   /** 小标题（如「「均摊」是怎么算的」）。 */
   'title',
-  /** 关掉的提示（如「Esc 关掉」）。 */
+  /** 关掉的提示（如「点别处关掉」）。**不写键盘键名**：法条是"控件同时在手机与电脑用、不存在方向键一类键盘相关的东西"；
+   *  `Esc` 关掉浏览器仍白送，但那是增强，不摆到用户面前当通路。 */
   'hint',
   /** 解释那一段。 */
   'text',
@@ -86,8 +87,9 @@ export const TOOLTIP_ANCHOR_PREFIX = '--tooltip-';
 export const TOOLTIP_MARK = '?';
 /** 「为什么重要」那一段的行首标签（形态 B 的识别特征：**这一段必须有**）。 */
 export const TOOLTIP_WHY_LABEL = '为什么重要';
-/** 关掉的提示（写在气泡头右端）。 */
-export const TOOLTIP_HINT = 'Esc 关掉';
+/** 关掉的提示（写在气泡头右端）。**不写键盘键名**：法条是"控件同时在手机与电脑用、不存在方向键一类键盘相关的东西"——
+ *  `Esc` 关掉浏览器仍然白送，但那是**增强**，不许摆到用户面前当唯一通路。 */
+export const TOOLTIP_HINT = '点别处关掉';
 
 /** 几何口径：气泡宽上限／离容器边至少留多少／与词之间那道缝／词的最小命中边长。 */
 export const TOOLTIP_WIDTH_PX = 560;
@@ -113,7 +115,7 @@ export interface TooltipInput {
   readonly badge?: TooltipBadge;
   /** 眉标上的字（不给＝按 `badge` 档取现成话）。 */
   readonly badgeText?: string;
-  /** 关掉的提示（不给＝「Esc 关掉」；给了空串＝不出这一格）。 */
+  /** 关掉的提示（不给＝「点别处关掉」；给了空串＝不出这一格）。 */
   readonly hint?: string;
   /** 形态键（闭集，缺省 `wide`）。 */
   readonly form?: TooltipForm;
