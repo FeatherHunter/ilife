@@ -151,10 +151,17 @@ export function reqDays(value: unknown): readonly CashWaterlineDay[] {
     const label = reqText(day.label, at + '.label');
     if (label.length > CASH_WATERLINE_MAX_LABEL_CHARS) {
       badInput(at + '.label 至多 ' + String(CASH_WATERLINE_MAX_LABEL_CHARS)
-        + ' 个字符（那一格只有一根柱子那么宽，长了就在窄档压到隔壁——请调用方给短日期）');
+        + ' 个字符（点名那块只放得下短日期——请调用方给短日期）');
+    }
+    const axisLabel = day.axisLabel === undefined ? undefined
+      : reqText(day.axisLabel, at + '.axisLabel');
+    if (axisLabel !== undefined && axisLabel.length > CASH_WATERLINE_MAX_LABEL_CHARS) {
+      badInput(at + '.axisLabel 至多 ' + String(CASH_WATERLINE_MAX_LABEL_CHARS)
+        + ' 个字符（那一格只有一根柱子那么宽，长了会在窄档折成好几行）');
     }
     return {
       label,
+      axisLabel,
       pct: reqInRange(day.pct, at + '.pct', 0, 100),
       spend: day.spend === undefined ? undefined : reqNonNegative(day.spend, at + '.spend'),
     };

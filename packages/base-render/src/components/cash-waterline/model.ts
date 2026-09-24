@@ -14,6 +14,7 @@ import {
   CASH_WATERLINE_DEFAULT_THRESHOLD_PCT,
   CASH_WATERLINE_DEFAULT_UNIT,
   CASH_WATERLINE_FORMS,
+  CASH_WATERLINE_MAX_AXIS_COLUMNS,
   CASH_WATERLINE_MAX_AXIS_LABELS,
   CASH_WATERLINE_MISSING,
   type CashWaterlineFlowLine,
@@ -21,6 +22,11 @@ import {
 } from './attrs.js';
 /* 格式化与校验小件都住在 `fields.ts`（同一批三个形态共用，理由见那份的文件头）。 */
 import { forbid, fmtPct, fmtQty, optInRange, optInt, reqDays, reqFlowLines, reqInt, reqPositive, reqWeeks } from './fields.js';
+
+/** 横轴的两种出法：`columns`＝一格一天（逐格对齐）／`range`＝一行区间读数（天数多到格子站不下字）。 */
+export type CashWaterlineAxis =
+  | { readonly mode: 'columns' }
+  | { readonly mode: 'range'; readonly rangeText: string; readonly todayText?: string };
 
 /** 形态 `waterline` 的一天（归一化后：柱高、点名信息、横轴刻度都已定）。 */
 export interface CashWaterlineDayModel {
@@ -97,6 +103,8 @@ interface CashWaterlineCommon {
   readonly note: string;
   readonly thresholdPct: number;
   readonly thresholdText: string;
+  /** 总预算写成钱了（给了 `budget` 才有）：卡头第三格「底线 1 800 元」用它。 */
+  readonly budgetText?: string;
   readonly extraClass?: string;
 }
 
@@ -107,6 +115,10 @@ export interface CashWaterlineWaterlineModel extends CashWaterlineCommon {
   readonly lowCount: number;
   readonly legendLow: string;
   readonly todayIndex?: number;
+  /** 横轴怎么出（逐格刻度／一行区间读数）。 */
+  readonly axis: CashWaterlineAxis;
+  /** 卡头第三格：「底线 1 800 元（30%）」（给了 `budget`）／「底线 30%」。 */
+  readonly headExtra: string;
   readonly ariaLabel: string;
 }
 
@@ -115,12 +127,16 @@ export interface CashWaterlineBulletModel extends CashWaterlineCommon {
   readonly weeks: readonly CashWaterlineWeekModel[];
   readonly usedThresholdPct: number;
   readonly legendLow: string;
+  /** 卡头第三格：「竖线＝底线 30%」。 */
+  readonly headExtra: string;
   readonly ariaLabel: string;
 }
 
 export interface CashWaterlineFlowModel extends CashWaterlineCommon {
   readonly form: 'flow';
   readonly flow: CashWaterlineFlowReads;
+  /** 卡头第三格：「还剩 6 天」。 */
+  readonly headExtra: string;
   readonly ariaLabel: string;
 }
 
@@ -129,17 +145,41 @@ export type CashWaterlineModel =
   | CashWaterlineWaterlineModel | CashWaterlineBulletModel | CashWaterlineFlowModel;
 
 
+/** 横轴上要写字的那几列（**至多 `CASH_WATERLINE_MAX_AXIS_LABELS` 枚**）。
+ *
+ *  三条不变量（判据对所有 1–31 天的长度逐条断）：
+ *   ① **枚数 ≤ 上限**：步长按「首尾已占两枚」算 ⇒ `stride = ceil((n−1) / (上限−1))`，
+ *      中间再密也塞得下（旧算法 `ceil(n / 上限)` 在 n=12/17/18… 这些长度上会出 7 枚，2026-09-25 审查席抓到）；
+ *   ② **首尾必出**（第一列与最后一列是这段读数的两个端点）；
+ *   ③ **今天必占一枚**（月中标今天是常态：今天落在哪一列，哪一列就得写出「今天」——
+ *      旧算法在 todayIndex=5/10 这些不在刻度位上的列上会把「今天」整条吞掉）。 */
+function axisColumns(n: number, todayIndex: number | undefined): readonly number[] {
+  const stride = Math.max(1, Math.ceil((n - 1) / (CASH_WATERLINE_MAX_AXIS_LABELS - 1)));
+  const picked: number[] = [];
+  for (let i = 0; i < n; i += 1) {
+    if (i === 0 || i === n - 1 || i % stride === 0) picked.push(i);
+  }
+  if (todayIndex !== undefined && !picked.includes(todayIndex)) {
+    /* 换掉离今天最近的那一枚「中间位」（首尾不动、枚数不变）——今天一定写得出来，总数也不超上限。 */
+    const middle = picked.filter((i) => i !== 0 && i !== n - 1);
+    let drop = middle[0];
+    for (const i of middle) if (Math.abs(i - todayIndex) < Math.abs(drop - todayIndex)) drop = i;
+    picked.splice(picked.indexOf(drop), 1, todayIndex);
+  }
+  return picked.sort((a, b) => a - b);
+}
+
 /** 逐日水位柱：柱高就是余量，跌破底线的日子逐条点名。 */
 function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommon): CashWaterlineWaterlineModel {
-  forbid(raw, 'waterline', ['weeks', 'budget', 'inflow', 'outflow', 'elapsedDays', 'remainDays']);
+  forbid(raw, 'waterline', ['weeks', 'inflow', 'outflow', 'elapsedDays', 'remainDays']);
   const days = reqDays(raw.days);
   const todayIndex = optInt(raw.todayIndex, 'cash-waterline: input.todayIndex', 0, days.length - 1);
-  /* 横轴刻度：**算出来的**等间距（首尾必出），多了挤在一起就是压字。 */
   const n = days.length;
-  const stride = Math.ceil(n / CASH_WATERLINE_MAX_AXIS_LABELS);
+  /* 天数多于逐格刻度的上限 ⇒ 改出一行区间读数（见 `CASH_WATERLINE_MAX_AXIS_COLUMNS` 那句）。 */
+  const dense = n > CASH_WATERLINE_MAX_AXIS_COLUMNS;
+  const picked = dense ? [] : axisColumns(n, todayIndex);
   const built: CashWaterlineDayModel[] = days.map((day, i) => {
     const today = todayIndex === i;
-    const shown = i === 0 || i === n - 1 || i % stride === 0;
     return {
       label: day.label,
       pct: day.pct,
@@ -147,7 +187,9 @@ function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommo
       spendText: day.spend === undefined ? CASH_WATERLINE_MISSING : fmtQty(day.spend) + ' ' + common.unit,
       low: day.pct < common.thresholdPct,
       today,
-      axis: shown ? (today ? '今天' : day.label) : '',
+      /* 今天那一格写「今天」；其余刻度位写**轴上那枚字**（`axisLabel`，缺省＝日期；
+         两者都占着自己那一列，**逐格对齐**）。 */
+      axis: today && !dense ? '今天' : (picked.includes(i) ? (day.axisLabel ?? day.label) : ''),
     };
   });
   const lowRows: CashWaterlineLowRow[] = built.filter((d) => d.low)
@@ -169,7 +211,15 @@ function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommo
     lowCount,
     legendLow,
     todayIndex,
+    axis: dense
+      ? { mode: 'range', rangeText: first.label + ' – ' + last.label,
+        todayText: todayIndex === undefined ? undefined : '今天 ' + built[todayIndex].label }
+      : { mode: 'columns' },
+    headExtra: common.budgetText === undefined
+      ? '底线 ' + common.thresholdText
+      : '底线 ' + common.budgetText + '（' + common.thresholdText + '）',
     ariaLabel: '逐日水位柱：' + first.label + ' 余量 ' + first.pctText + '，' + last.label + ' 余量 ' + last.pctText
+      + (todayIndex === undefined ? '' : '，今天（' + built[todayIndex].label + '）余量 ' + built[todayIndex].pctText)
       + '；底线 ' + common.thresholdText + '；'
       + (lowCount === 0 ? '全程在底线之上' : legendLow + '跌破底线'),
   };
@@ -190,7 +240,8 @@ function buildBullet(raw: Record<string, unknown>, common: CashWaterlineCommon):
       label: week.label,
       inflowText: fmtQty(week.inflow),
       outflowText: fmtQty(week.outflow),
-      netText: (net < 0 ? '−' : '+') + fmtQty(Math.abs(net)),
+      /* 净额 0 写「0」（**不带正号**：`+0` 读起来像"有进账"，而它是不进不出）。 */
+      netText: net === 0 ? '0' : (net < 0 ? '−' : '+') + fmtQty(Math.abs(net)),
       usedPct,
       usedText: fmtPct(usedPct) + '%',
       over,
@@ -207,6 +258,7 @@ function buildBullet(raw: Record<string, unknown>, common: CashWaterlineCommon):
     weeks: built,
     usedThresholdPct: Math.round((100 - common.thresholdPct) * 10) / 10,
     legendLow,
+    headExtra: '竖线＝底线 ' + common.thresholdText,
     ariaLabel: '每周子弹图：' + built.map((w) => w.label + ' 已用 ' + w.usedText).join('、')
       + '；底线 ' + common.thresholdText + '（换算成已用是 ' + fmtPct(100 - common.thresholdPct) + '%）；' + legendLow,
   };
@@ -241,8 +293,14 @@ function buildFlow(raw: Record<string, unknown>, common: CashWaterlineCommon): C
   const flow: CashWaterlineFlowReads = {
     inflow: asLines(inflow, inTotal),
     outflow: asLines(outflow, outTotal),
-    inCountText: String(inflow.length) + ' 笔',
-    outCountText: String(outflow.length) + ' 笔',
+    /* 那一格写「笔」还是「项」：**给没给真笔数**由调用方说清——
+       屏上只列得出 N 行明细，把行数写成「N 笔」是拿明细行数冒名交易笔数（原型那格是「38 笔」）。 */
+    inCountText: raw.inflowCount === undefined
+      ? String(inflow.length) + ' 项'
+      : String(reqInt(raw.inflowCount, 'cash-waterline: input.inflowCount', 1, 1000000)) + ' 笔',
+    outCountText: raw.outflowCount === undefined
+      ? String(outflow.length) + ' 项'
+      : String(reqInt(raw.outflowCount, 'cash-waterline: input.outflowCount', 1, 1000000)) + ' 笔',
     inTotalText: money(inTotal),
     outTotalText: money(outTotal),
     leftText: money(left),
@@ -259,6 +317,7 @@ function buildFlow(raw: Record<string, unknown>, common: CashWaterlineCommon): C
     ...common,
     form: 'flow',
     flow,
+    headExtra: '还剩 ' + String(remainDays) + ' 天',
     ariaLabel: '进出水三栏：进 ' + flow.inTotalText + '、出 ' + flow.outTotalText + '、余 ' + flow.leftText
       + '（' + flow.leftPctText + '）；' + flow.verdictWord + '——' + verdictText,
   };
@@ -285,20 +344,27 @@ export function normalizeCashWaterline(input: unknown): CashWaterlineModel {
     ? CASH_WATERLINE_DEFAULT_THRESHOLD_PCT
     : optInRange(raw.thresholdPct, 'cash-waterline: input.thresholdPct', 0, 100) as number;
   const thresholdText = fmtPct(thresholdPct) + '%';
+  const unit = optText(raw.unit, 'cash-waterline: input.unit') ?? CASH_WATERLINE_DEFAULT_UNIT;
+  /* 预算：三者都收——`bullet`／`flow` 用它算占比（必填，由各自的 builder 校验「给了没有」），
+     `waterline` 可选（收下就把底线写成钱数，卡头第三格「底线 1 800 元（30%）」）。 */
+  const budget = raw.budget === undefined ? undefined : reqPositive(raw.budget, 'cash-waterline: input.budget');
   const common: CashWaterlineCommon = {
     title: reqText(raw.title, 'cash-waterline: input.title'),
     stamp: optText(raw.stamp, 'cash-waterline: input.stamp'),
-    unit: optText(raw.unit, 'cash-waterline: input.unit') ?? CASH_WATERLINE_DEFAULT_UNIT,
+    unit,
     /* 口径行：不给就由本件按形态写一句（口径是这一件的契约，不该让调用方每次抄一遍）。 */
     note: optText(raw.note, 'cash-waterline: input.note') ?? defaultNote(form as CashWaterlineForm, thresholdText),
     thresholdPct,
     thresholdText,
+    budgetText: budget === undefined ? undefined : fmtQty(budget) + ' ' + unit,
     extraClass: optExtraClass(raw.extraClass, 'cash-waterline: input.extraClass'),
   };
   return BUILDERS[form as CashWaterlineForm](raw, common);
 }
 
-/** 不给口径行时本件自己写的那一句（**口径是这一件的契约**，不该由调用方每次抄一遍）。 */
+/** 不给口径行时本件自己写的那一句（**口径是这一件的契约**，不该由调用方每次抄一遍）。
+ *  口径必须与算出来的东西**是同一件事**：三栏那句说的是"拿余去减要花的钱"，不是"相除"（2026-09-25 审查席抓到
+ *  旧文案写着「＝剩余额度 ÷ 近日均消耗」而实现算的是差额——文案照抄了原型的错）。 */
 function defaultNote(form: CashWaterlineForm, thresholdText: string): string {
   if (form === 'waterline') {
     return '口径：柱高＝当天结束时「预算 − 已花」占预算的百分比；虚线是底线 ' + thresholdText
@@ -308,6 +374,6 @@ function defaultNote(form: CashWaterlineForm, thresholdText: string): string {
     return '口径：横条＝本周结束时累计已用掉的比例（100% 是整段预算），竖线是余量跌破底线 ' + thresholdText
       + ' 的位置。超过 100% 的部分条形画到满格、读数里照实点名，不缩回 100%。';
   }
-  return '口径：进／出／余三栏同一口径（含退款冲抵）；「撑不撑得住」＝剩余额度 ÷ 近日均消耗，判定写成字'
-    + '（撑得住／撑不住 ＋ 差多少），不只靠颜色。';
+  return '口径：进／出／余三栏同一口径（含退款冲抵）；「撑不撑得住」＝拿余去减「按近日均消耗（日均）'
+    + '还要花的钱」：够就说还余多少，不够就说还差多少——判定写成字（撑得住／撑不住 ＋ 差多少），不只靠颜色。';
 }

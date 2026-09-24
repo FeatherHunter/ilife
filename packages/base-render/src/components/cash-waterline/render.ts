@@ -40,14 +40,16 @@ import {
   type CashWaterlineWeekModel,
 } from './model.js';
 
-/** 卡头：标题 ＋ 右端口径（三形态共用）。 */
+/** 卡头：标题 ＋ 右端那一组（本件算出来的**第三格** ＋ 调用方给的那句）。三形态共用。 */
 function headHtml(m: CashWaterlineModel): string {
   const parts: string[] = ['<div class="' + cashWaterlineSlot('hd') + '">',
-    '<h4 class="' + cashWaterlineSlot('title') + '">' + esc(m.title) + '</h4>'];
+    '<h4 class="' + cashWaterlineSlot('title') + '">' + esc(m.title) + '</h4>',
+    '<div class="' + cashWaterlineSlot('hd-tail') + '">',
+    '<span class="' + cashWaterlineSlot('head-extra') + '">' + esc(m.headExtra) + '</span>'];
   if (m.stamp !== undefined) {
     parts.push('<span class="' + cashWaterlineSlot('stamp') + '">' + esc(m.stamp) + '</span>');
   }
-  parts.push('</div>');
+  parts.push('</div></div>');
   return parts.join('');
 }
 
@@ -65,12 +67,23 @@ function legendItemHtml(kind: string, text: string): string {
 
 /* ── 形态 A：逐日水位柱 ─────────────────────────────────────────── */
 
-/** 横轴：只出算好的那几枚刻度字（首尾必出），今天那一格写「今天」。 */
+/** 横轴：**一格一天**（与画布同格数同间距 ⇒ 刻度逐格对齐），有字的格写字、没字的格留位置；
+ *  今天那一格永远写字（写「今天」）——它在哪一列都跑不掉。
+ *  天数多到一格站不下一个字时（`axis.mode === 'range'`）改出**一行区间读数**：
+ *  「09-01 – 09-31」＋（今天那一格）——照实说清这一段是哪几天，而不是把 5px 宽的字硬塞进格子。 */
 function axisHtml(m: CashWaterlineWaterlineModel): string {
-  const cells = m.days.filter((d) => d.axis !== '');
-  if (cells.length === 0) return '';
+  if (m.axis.mode === 'range') {
+    const parts: string[] = ['<div class="' + cashWaterlineSlot('xax') + ' is-range">',
+      '<span class="' + cashWaterlineSlot('xax-cell') + ' is-range">' + esc(m.axis.rangeText) + '</span>'];
+    if (m.axis.todayText !== undefined) {
+      parts.push('<span class="' + cashWaterlineSlot('xax-cell') + ' is-range is-today">'
+        + esc(m.axis.todayText) + '</span>');
+    }
+    parts.push('</div>');
+    return parts.join('');
+  }
   return '<div class="' + cashWaterlineSlot('xax') + '">'
-    + cells.map((d) => '<span class="' + cashWaterlineSlot('xax-cell') + (d.today ? ' is-today' : '') + '">'
+    + m.days.map((d) => '<span class="' + cashWaterlineSlot('xax-cell') + (d.today ? ' is-today' : '') + '">'
       + esc(d.axis) + '</span>').join('') + '</div>';
 }
 

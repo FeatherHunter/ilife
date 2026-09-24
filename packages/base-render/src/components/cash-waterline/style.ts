@@ -29,8 +29,9 @@ const LF = String.fromCharCode(10);
 /* 画布高度的取值随形态 A 住 `style-forms.ts`；本件对外的尺常量名不变，这里原样转出（照 `scatter-fit` 的先例）。 */
 export { CASH_WATERLINE_PLOT_HEIGHT_PX } from './style-forms.js';
 
-/** 窄容器一档的画布高度（px）：再高就把版面顶长了。 */
-const NARROW_PLOT_HEIGHT_PX = 150;
+/** 窄容器一档的画布高度（px）：再高就把版面顶长了。**出口给判据**（两档高度都得断到，
+ *  否则把这条规则删掉判据还是绿的——2026-09-25 审查席点名的判据缺口）。 */
+export const CASH_WATERLINE_NARROW_PLOT_HEIGHT_PX = 150;
 
 /** 窄容器阈值（px）：画布矮一档、进出水三栏由并排改成一列。**这是本件自己的宽度**（`@container` 判的）。 */
 const NARROW_PX = 620;
@@ -82,14 +83,36 @@ export function cashWaterlineCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.35;',
     '  overflow-wrap: anywhere;',
     '}',
-    s('stamp') + ' {',
-    '  flex: none;',
+    /* 卡头右端那一组：本件算出来的第三格 ＋ 调用方给的那句。整组靠右，窄档自己折行。 */
+    s('hd-tail') + ' {',
+    '  display: flex;',
+    '  flex-wrap: wrap;',
+    '  align-items: baseline;',
+    '  gap: 3px 10px;',
+    '  flex: 0 1 auto;',
     '  margin-left: auto;',
+    '  min-width: 0;',
+    '}',
+    s('head-extra') + ' {',
+    '  flex: 0 1 auto;',
+    '  min-width: 0;',
+    '  color: ' + skinVar('ink-2') + ';',
+    '  font-size: ' + skinVar('fs-xs') + ';',
+    '  font-weight: 600;',
+    '  font-variant-numeric: tabular-nums;',
+    '  overflow-wrap: anywhere;',
+    '}',
+    /* 印（如「预算 6 000 元」）：**上界在换行上**，不写 `nowrap`、不许把它撑出根——
+       长印（原型页上就是「09-01 – 09-24」这种，现实里还会有很长的区间说明）在窄容器里
+       必须折得下来；一根不折的 `nowrap` 会把根撑到 900px 宽（2026-09-25 审查席在 320 档实测到）。 */
+    s('stamp') + ' {',
+    '  flex: 0 1 auto;',
+    '  min-width: 0;',
     '  color: ' + skinVar('ink-3') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '  font-variant-numeric: tabular-nums;',
-    '  white-space: nowrap;',
+    '  overflow-wrap: anywhere;',
     '}',
     /* 三个形态各自的形状（`style-forms.ts`）：插在卡头之后、共用图例之前——
        插在这一行的位置上，顺序即层叠顺序，**产物逐字节不变**。 */
@@ -168,15 +191,16 @@ export function cashWaterlineCss(input?: { readonly prefix?: string }): string {
     '  white-space: nowrap;',
     '}',
     s('low-spend') + ' {',
+    '  min-width: 0;',
     '  color: ' + skinVar('ink') + ';',
     '  font-variant-numeric: tabular-nums;',
     '  font-weight: 700;',
-    '  white-space: nowrap;',
+    '  overflow-wrap: anywhere;',
     '}',
     s('low-pct') + ' {',
     '  margin-left: auto;',
     '  font-variant-numeric: tabular-nums;',
-    '  white-space: nowrap;',
+    '  overflow-wrap: anywhere;',
     '}',
     s('note') + ' {',
     '  margin: 0;',
@@ -196,7 +220,7 @@ export function cashWaterlineCss(input?: { readonly prefix?: string }): string {
     '   ——三栏并排会被压成三根窄柱，读数（钱数）就没地方站了。 */',
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
     '  ' + s('plot') + ' {',
-    '    height: ' + String(NARROW_PLOT_HEIGHT_PX) + 'px;',
+    '    height: ' + String(CASH_WATERLINE_NARROW_PLOT_HEIGHT_PX) + 'px;',
     '  }',
     '  ' + s('three') + ' {',
     '    grid-template-columns: minmax(0, 1fr);',
