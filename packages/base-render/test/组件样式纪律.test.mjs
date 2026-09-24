@@ -18,10 +18,13 @@
  *     子串匹配，**声明纪律的那一行本身**会把纪律判红 ⇒ 一律只扫**去注释后的代码行**；
  *   · **范围要从层出口读**：出口里除了件还有 `skin`（皮肤层，没有 `style.ts`），
  *     若把出口每一项都当件，判据会去问皮肤层要样式段 ⇒ 范围＝出口点名的**有 `style.ts` 的目录**。
+ *   · **一件的样式来源是一批文件**：`style.ts` ＋ 同目录 `style-*.ts`（拆件先例 `scatter-fit/style-forms.ts`、
+ *     `date-range/style-calendar.ts`）。只扫 `style.ts` 会让「按规矩拆了文件、压了行数」的件**少扫一半**——
+ *     纪律被「压线」反向削弱。故扫描面一律走 `styleSources()`（件怎么发现不变，看 `style.ts` 在不在）。
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -79,6 +82,23 @@ const door = doorDirs();
 const components = door.filter((n) => existsSync(join(COMP, n, 'style.ts')));
 const notComponents = door.filter((n) => !existsSync(join(COMP, n, 'style.ts')));
 
+/** 一件的**样式来源文件**：`style.ts` ＋ 同目录 `style-*.ts`，按文件名排序。
+ *
+ *  **件的发现口径不变**（仍是 `existsSync(<件>/style.ts)`），但**扫的范围**必须是这一批文件：
+ *  件超了行数告警线时，按先例把某一段拆到 `style-*.ts`（`scatter-fit/style-forms.ts`、
+ *  `date-range/style-calendar.ts`），拆出去的那半**仍是本件的样式段**。
+ *  只扫 `style.ts` 的写法会把「按规矩拆了文件、压了行数」的件**少扫一半**——
+ *  判据越窄、拆得越合规越安全，纪律被「压线」反向削弱（2026-09-25 由 F 席读出）。
+ */
+function styleSources(name) {
+  const dir = join(COMP, name);
+  return readdirSync(dir).filter((f) => /^style(?:-[^/]+)?\.ts$/.test(f)).sort()
+    .map((file) => ({ file, src: readFileSync(join(dir, file), 'utf8') }));
+}
+
+/** 一件全部样式来源的合文本（按文件名排序拼起来；只在「整份一起看」的判据上用）。 */
+const styleSource = (name) => styleSources(name).map((f) => f.src).join('\n');
+
 describe('组件层样式纪律 ①：扫描面非空且对得上盘', () => {
   it('出口点名的、没有样式段的目录必须都是已知的非件目录', () => {
     assert.deepEqual(notComponents.filter((n) => !NON_COMPONENT.has(n)), [],
@@ -91,21 +111,54 @@ describe('组件层样式纪律 ①：扫描面非空且对得上盘', () => {
   });
 });
 
+describe('组件层样式纪律 ①b：范围自检（件拆出的 `style-*.ts` 必须被扫到）', () => {
+  /** 盘上真拆了样式段的件：同目录另有 `style-*.ts`（先例 `scatter-fit/style-forms.ts`、`date-range/style-calendar.ts`）。 */
+  const splitPieces = components.filter((n) => readdirSync(join(COMP, n)).some((f) => /^style-[^/]+\.ts$/.test(f)));
+
+  it('拆了样式段的件，判据扫到的就是它目录下**全部** `style*.ts`（少扫一个＝红）', () => {
+    assert.ok(splitPieces.length >= 1, '盘上一个拆了样式段的件都找不到 ⇒ 这条自检在空转'
+      + '（先例 `scatter-fit/style-forms.ts`、`date-range/style-calendar.ts`）；'
+      + '若确实一个都不剩，把这条自检连同 `styleSources()` 的件头一起收掉');
+    const bad = [];
+    for (const name of splitPieces) {
+      const onDisk = readdirSync(join(COMP, name)).filter((f) => /^style(?:-[^/]+)?\.ts$/.test(f)).sort();
+      const scanned = styleSources(name).map((s) => s.file);
+      if (scanned.join() !== onDisk.join()) {
+        bad.push(name + '：盘上 ' + onDisk.join('／') + '，扫的却是 ' + (scanned.length > 0 ? scanned.join('／') : '（空）'));
+      }
+    }
+    assert.deepEqual(bad, [], '这些件拆出了 `style-*.ts`，判据却没扫到（按件只读 `style.ts` 单文件，'
+      + '会把拆出去的那半放进盲区——「按规矩拆件压行数」反而让纪律变松）：\n  ' + bad.join('\n  '));
+    console.log('读数：盘上拆了样式段的件 ' + splitPieces.length + ' 个，判据逐件扫到全部 `style*.ts`——'
+      + splitPieces.map((n) => n + '（' + styleSources(n).map((f) => f.file).join('＋') + '）').join('；'));
+  });
+
+  it('本判据里不许再出现「按件读 `style.ts` 单文件」的写法（范围只许从 `styleSources()` 出）', () => {
+    const self = readFileSync(fileURLToPath(import.meta.url), 'utf8');
+    const hits = [...self.matchAll(/readFileSync\([^)]*'style\.ts'/g)].map((m) => m[0]);
+    assert.deepEqual(hits, [], '本判据里还有直接读单份 `style.ts` 的地方（拆出去的那半就扫不到了）：\n  ' + hits.join('\n  ')
+      + '\n（修法：样式源码一律经 `styleSources(<件名>)` 取——它按文件名排序给出该件目录下全部 `style*.ts`）');
+  });
+});
+
 describe('组件层样式纪律 ②：串味与抢样式', () => {
   for (const name of components) {
     if (EXEMPT.has(name)) continue;
     it(name + '：规则选择器都带自己那份名字 ＋ 零 `!important`', () => {
-      const src = readFileSync(join(COMP, name, 'style.ts'), 'utf8');
+      const sources = styleSources(name);
       const bad = [];
-      for (const { n, sel, raw } of selectorsOf(src)) {
-        const code = sel.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
-        const hasIdentifier = /[A-Za-z_$][\w$]*/.test(code);
-        const literal = [...sel.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2] ?? '').join('');
-        if (!hasIdentifier && !/ilife-/.test(literal)) bad.push('line ' + n + '：' + raw);
+      for (const { file, src } of sources) {
+        for (const { n, sel, raw } of selectorsOf(src)) {
+          const code = sel.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
+          const hasIdentifier = /[A-Za-z_$][\w$]*/.test(code);
+          const literal = [...sel.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2] ?? '').join('');
+          if (!hasIdentifier && !/ilife-/.test(literal)) bad.push(file + ':' + n + '：' + raw);
+        }
       }
       assert.deepEqual(bad, [], name + ' 有纯字面量选择器（会与别件串味）：\n  ' + bad.join('\n  ')
         + '\n（修法：选择器一律经本件的槽位助手拼，如 `s(\'hd\')`／`sc(\'head\')`——名字只从 `attrs.ts` 的闭集取）');
-      const bangs = codeLines(src).filter(({ t }) => /!important/.test(t)).map(({ n, t }) => 'line ' + n + '：' + t);
+      const bangs = sources.flatMap(({ file, src }) => codeLines(src)
+        .filter(({ t }) => /!important/.test(t)).map(({ n, t }) => file + ':' + n + '：' + t));
       assert.deepEqual(bangs, [], name + ' 用了 `!important`（本层禁用）');
     });
   }
@@ -115,9 +168,8 @@ describe('组件层样式纪律 ③：宽度只许容器判（视口分档＝红
   for (const name of components) {
     if (EXEMPT.has(name)) continue;
     it(name + '：零 `@media (min|max)-width`', () => {
-      const src = readFileSync(join(COMP, name, 'style.ts'), 'utf8');
-      const hits = codeLines(src).filter(({ t }) => /'@media \((?:max|min)-width/.test(t))
-        .map(({ n, t }) => 'line ' + n + '：' + t);
+      const hits = styleSources(name).flatMap(({ file, src }) => codeLines(src)
+        .filter(({ t }) => /'@media \((?:max|min)-width/.test(t)).map(({ n, t }) => file + ':' + n + '：' + t));
       assert.deepEqual(hits, [], name + ' 按**视口**分档了（件宽 ≠ 视口宽）：\n  ' + hits.join('\n  ')
         + '\n（修法：`container-type: inline-size` ＋ `@container (max-width: …)`；媒体查询只判 hover／pointer／reduced-motion）');
     });
@@ -128,8 +180,7 @@ describe('组件层样式纪律 ④：容器查询必须有容器（死规则＝
   for (const name of components) {
     if (EXEMPT.has(name)) continue;
     it(name + '：用了 `@container` 就自己声明容器', () => {
-      const src = readFileSync(join(COMP, name, 'style.ts'), 'utf8');
-      const lines = codeLines(src);
+      const lines = codeLines(styleSource(name));
       const usesCq = lines.some(({ t }) => /'@container/.test(t));
       if (!usesCq) return;
       const declares = lines.some(({ t }) => /container(-type)?\s*:/.test(t));
@@ -298,7 +349,7 @@ describe('组件层样式纪律 ⑤：豁免名单与范围不许过期', () => 
     assert.deepEqual(sneaked, [], '本层的件不许出现在豁免名单里：' + sneaked.join('、'));
   });
   it('每个件都至少有一条自己的规则选择器（防「空样式段」蒙混）', () => {
-    const empty = components.filter((n) => !EXEMPT.has(n) && selectorsOf(readFileSync(join(COMP, n, 'style.ts'), 'utf8')).length === 0);
+    const empty = components.filter((n) => !EXEMPT.has(n) && selectorsOf(styleSource(n)).length === 0);
     assert.deepEqual(empty, [], '这些件的样式段里抽不到任何规则选择器：' + empty.join('、'));
   });
 });

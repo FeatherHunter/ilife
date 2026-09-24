@@ -640,14 +640,42 @@ describe('皮肤矩阵 ③ 零 DOM 纪律（dist/components/<件名>/**）', () 
 
 /* ── ④ 两档溢出读数（390／1280） ─────────────────────────────────── */
 
+/** 把 **at-rule 的查询前置**（`@container`／`@media` 到它那个 `{` 之前）整段挖掉，换成等长空白。
+ *
+ *  为什么要有这一步：查询前置里写的宽度是**条件**，不是元素宽度——
+ *  `@container (min-width: 620px) { … }` 里的 620 是「容器够宽才生效」的门槛，
+ *  拿它当「这件元素宽 620px」判会**冤枉按容器查询分档的件**（2026-09-25 实测：`gantt-timeline`
+ *  的宽档查询被 ④ 的静态判据误报成「过不了窄档的固定宽度」）。挖掉前置、留等长空白：
+ *  位置不错位，元素级的固定宽度一条都不放过。
+ */
+function stripAtRulePreludes(css) {
+  let out = '';
+  let i = 0;
+  while (i < css.length) {
+    if (!css.startsWith('@container', i) && !css.startsWith('@media', i)) { out += css[i]; i += 1; continue; }
+    const open = css.indexOf('{', i);
+    if (open === -1) { out += ' '.repeat(css.length - i); break; }
+    out += ' '.repeat(open - i + 1);
+    i = open + 1;
+  }
+  return out;
+}
+
+/** 一段文本里**过不了窄档的固定宽度**（px）：剥掉注释与 at-rule 查询前置之后，
+ *  「元素级」`width`／`min-width` 超过 `limit` 的那些值。标记与样式段都走这一把（静态几何判据的唯一口径）。 */
+function fixedWidthsOver(text, limit) {
+  const clean = stripAtRulePreludes(stripComments(text));
+  return [...clean.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)]
+    .map((m) => Number(m[1])).filter((v) => v > limit);
+}
+
 describe('皮肤矩阵 ④ 两档溢出读数（390／1280）', () => {
   for (const p of PIECES) {
     it(p.row.name + '：两档定宽容器里不横溢', async (t) => {
       if (!renderable(p, t)) return;
-      // 静态几何判据（哪台机器都跑）：标记与样式段里不得出现超过窄档的固定宽度。
-      const css = stripComments(p.css);
-      const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
-      const wide = [...px(p.html), ...px(css)].filter((v) => v > WIDTHS[0]);
+      // 静态几何判据（哪台机器都跑）：标记与样式段里不得出现超过窄档的**元素级**固定宽度
+      //（`@container`／`@media` 查询前置里的数值是条件、不是元素宽度——见 `stripAtRulePreludes()`）。
+      const wide = [...fixedWidthsOver(p.html, WIDTHS[0]), ...fixedWidthsOver(p.css, WIDTHS[0])];
       assert.deepEqual(wide, [], p.row.name + ' 里出现过不了窄档的固定宽度（>' + WIDTHS[0] + 'px）：' + wide.join('、'));
       if (machine === null) {
         assert.ok(machineWhy !== '', '真机没跑就得给出原因（不许静默退回）');
@@ -664,4 +692,23 @@ describe('皮肤矩阵 ④ 两档溢出读数（390／1280）', () => {
       console.log('读数 ' + p.row.name + '：' + reads.join('；'));
     });
   }
+});
+
+describe('皮肤矩阵 ④b：静态几何检查器自证（守门人的守门人）', () => {
+  it('查询前置里的宽度不算元素宽度；元素级固定宽度一个都不放过', () => {
+    /** `[输入, 期望]`：**条件**里的数值一律不报（那是「容器够宽才生效」的门槛），**元素级**的照报。 */
+    const cases = [
+      ['@container (min-width: 620px) {\n  .a { width: 10px; }\n}', []],
+      ['.x{min-width:620px}', [620]],
+      ['.x{width:620px}', [620]],
+      ['.x{max-width:620px}', []],
+      ['@media (min-width: 620px) { .y { min-width: 900px; } }', [900]],
+      ['/* 宽容器（≥620px） */\n.a { color: red; }', []],
+      ['.a { width: 390px; }', []],
+    ];
+    const got = cases.map(([css]) => fixedWidthsOver(css, 390));
+    assert.deepEqual(got, cases.map(([, want]) => want),
+      '静态几何检查器与预期不符（把条件当元素宽度＝假阳性；放过元素级＝漏报）：'
+      + JSON.stringify(cases.map(([css], i) => ({ css, got: got[i] }))));
+  });
 });
