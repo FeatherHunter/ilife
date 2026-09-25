@@ -20,6 +20,8 @@ export type {
   DataWhereGroup,
   DataQueryWhere,
   DataOrderBy,
+  DataJoinOn,
+  DataJoin,
   DataQuery,
   DataQueriesRequest,
   DataField,
