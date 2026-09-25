@@ -24,7 +24,7 @@ const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
 
 /** 让内核给一个当前空闲的端口。并行跑多个判据件时，按 `pid % N` 算端口会撞车——
  *  实测撞过一次「CDP 未就绪（headless Chrome 起不来）」，整条判据白等 30 秒。 */
-function freePort() {
+export function freePort() {
   return new Promise((resolve, reject) => {
     const srv = createServer();
     srv.on('error', reject);

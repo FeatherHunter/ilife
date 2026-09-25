@@ -27,6 +27,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { freePort } from './_f6-chrome-probe.mjs';
+
 import {
   BROADSHEET_VALUES, NEUTRAL_VALUES, PAPER_VALUES, SKIN_NAMES, SKINS, SKIN_TOKEN_NAMES, skinCss, skinTokenVar,
 } from '../dist/blocks.js';
@@ -333,7 +335,8 @@ async function startMatrixPage(html) {
   const page = join(dir, 'matrix.html');
   writeFileSync(page, html, 'utf8');
   const profile = mkdtempSync(join(tmpdir(), 't-skin-chrome-'));
-  const port = 9910 + (process.pid % 200);
+  /* 端口由内核给（`freePort()`）：按 `9910 + pid % N` 算会与别的判据件或系统服务撞车（本机 9996 常被占）。 */
+  const port = await freePort();
   // stdio 一律 'ignore'：Chrome 的输出与测试进程间通信（node:test 的 IPC）之间不许有任何搭线机会
   // （实测过 `Unable to deserialize cloned data` 这类 runner 侧解析崩溃，就是被别的输出串了信道）。
   const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',

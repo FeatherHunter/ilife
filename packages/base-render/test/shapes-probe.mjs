@@ -14,10 +14,15 @@
  *   · `maxRight`／`minLeft`：可见节点的左右边界（**有没有跑出容器**看它）；
  *   · `scrollsX`：`overflow-x` 是 `auto`／`scroll` 的节点个数（**藏横滑**的机器读数）。
  */
+/** CDP 调用看门狗：超过这个毫秒数没回应就报错（别静默挂住整条判据）。 */
+const CDP_TIMEOUT_MS = 15000;
+
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { freePort } from './_f6-chrome-probe.mjs';
 import { pathToFileURL } from 'node:url';
 
 const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
@@ -53,7 +58,15 @@ function connectCdp(url) {
     send(method, params, sessionId) {
       const id = nextId; nextId += 1;
       return new Promise((res, rej) => {
-        pending.set(id, { resolve: res, reject: rej });
+        /* 看门狗：CDP 不回就当**错**，别静默挂住整条判据（实测挂过：真机段等十几分钟没动静）。 */
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          rej(new Error('CDP 超时：' + method + ' 在 ' + CDP_TIMEOUT_MS + 'ms 内没有回应'));
+        }, CDP_TIMEOUT_MS);
+        pending.set(id, {
+          resolve: (v) => { clearTimeout(timer); res(v); },
+          reject: (e) => { clearTimeout(timer); rej(e); },
+        });
         ws.send(JSON.stringify(sessionId === undefined ? { id, method, params } : { id, method, params, sessionId }));
       });
     },
@@ -115,7 +128,8 @@ export async function startShapesPage(opts) {
   const page = join(dir, 'fixture.html');
   writeFileSync(page, html, 'utf8');
   const profileDir = mkdtempSync(join(tmpdir(), 't-shapes-chrome-'));
-  const port = 9910 + (process.pid % 200) + (opts.portOffset === undefined ? 0 : opts.portOffset);
+  /* 端口由内核给（`freePort()`）：按 `9910 + pid % N` 算会与别的判据件或系统服务撞车。 */
+  const port = await freePort();
   const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
     '--disable-extensions', '--hide-scrollbars', '--allow-file-access-from-files',
     '--remote-debugging-port=' + port, '--user-data-dir=' + profileDir,
