@@ -115,7 +115,7 @@ export function locateContainer(template: string, markerIndex: number): Containe
   return { id: attribute('id'), type: attribute('type') };
 }
 
-/** 零依赖信封校验（`strict: true` 时追加）：`data` 是对象且含五字段、`shape` ∈ 六形状。
+/** 零依赖信封校验（`strict: true` 时追加）：`data` 是对象且含五字段、`shape` ∈ 七形状。
  *  **不调用** base-link-core 的 `parseEnvelope`（AC-13）。 */
 export function isEnvelopeLike(data: unknown): boolean {
   if (data === null || typeof data !== 'object' || Array.isArray(data)) return false;

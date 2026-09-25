@@ -13,17 +13,28 @@ const goodData = {
   receipt: { ok: true, message: 'done' },
   analysis: { summary: 's' },
   fallback: { reason: 'timeout', degraded: true },
+  resultset: { results: [{ id: '近30天体重', ok: true, fields: [{ name: 'date', type: 'TEXT' }], rows: [{ date: '2026-09-25' }], total: 1, next: null }] },
 };
 
 describe('link-core envelope', () => {
-  it('6 形状全字段取数可用（create+parse 回环）', () => {
-    assert.equal(ENVELOPE_SHAPES.length, 6);
+  it('7 形状全字段取数可用（create+parse 回环）', () => {
+    assert.equal(ENVELOPE_SHAPES.length, 7);
     for (const shape of ENVELOPE_SHAPES) {
       const env = createEnvelope({ skill: 'calorie', shape, key: 'calorie.today', data: goodData[shape] });
       assert.equal(env.version, ENVELOPE_VERSION);
       assert.ok(isEnvelope(env));
       assert.deepEqual(parseEnvelope(JSON.parse(JSON.stringify(env))).data, goodData[shape]);
     }
+  });
+  it('resultset 形被接受；缺 results／results 非数组被拒（#952）', () => {
+    const env = createEnvelope({ skill: 'calorie', shape: 'resultset', key: 'calorie.data.query', data: goodData.resultset });
+    assert.equal(env.shape, 'resultset');
+    assert.ok(isEnvelope(env));
+    // 空集是合法结果（《数据族-规格.md》§十 第 3 条），不是错误
+    assert.doesNotThrow(() => createEnvelope({ skill: 'c', shape: 'resultset', key: 'c.data.query', data: { results: [] } }));
+    assert.throws(() => createEnvelope({ skill: 'c', shape: 'resultset', key: 'c.data.query', data: {} }), /results/);
+    assert.throws(() => createEnvelope({ skill: 'c', shape: 'resultset', key: 'c.data.query', data: { results: { 0: {} } } }), /results/);
+    assert.equal(isEnvelope({ version: ENVELOPE_VERSION, skill: 'c', shape: 'resultset', key: 'c.data.query', data: {} }), false);
   });
   it('坏输入 throw、不返空数组', () => {
     assert.throws(() => createEnvelope({ skill: '', shape: 'list', key: 'calorie.today', data: { items: [] } }), EnvelopeError);

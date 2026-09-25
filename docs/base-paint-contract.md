@@ -141,7 +141,7 @@
 | `DATA_SCRIPT_TYPE` | runtime | #74 | implemented | 3.1 | `'application/json'` |
 | `CONTAINER_CHECK_RULE` | runtime | #74 | implemented | 3.1 | `{ appliesWhenMarker: 'injectData'; openTag: '<script>'; closeTag: '</script>'; id: 'payload'; type: 'application/json'; code: 'container-missing' }` |
 | `STRICT_ENVELOPE_FIELDS` | runtime | #74 | implemented | 3.1 | `readonly ['version', 'skill', 'shape', 'key', 'data']` |
-| `STRICT_ENVELOPE_SHAPES` | runtime | #74 | implemented | 3.1 | `readonly ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']` |
+| `STRICT_ENVELOPE_SHAPES` | runtime | #74 | implemented | 3.1 | `readonly ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset']` |
 | `TEMPLATE_ERROR_CODES` | runtime | #74 | implemented | 3.1 | `readonly ['marker-missing', 'marker-duplicate', 'marker-conflict', 'data-missing', 'container-missing', 'asset-missing', 'strict-invalid', 'content-missing']` |
 | `TEMPLATE_CHECK_ORDER` | runtime | #74 | implemented | 3.1 | `readonly ['marker-duplicate', 'marker-missing', 'marker-conflict', 'container-missing', 'asset-missing', 'data-missing', 'content-missing', 'strict-invalid']` |
 | `TemplateAssets` | type | #74 | implemented | 3.1 | `{ sharedHelpersJs: string; sharedCssText: string; chartsHelpersJs?: string }` |
@@ -184,11 +184,11 @@
 
 #### 3.1.1 envelope 形状裁定与追溯（FX-4）
 
-- **事实**：`packages/base-link-core/src/envelope.ts:9-11` 定义 `ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback']`，共 **6** 个形状（`fallback` = 降级载荷），`EnvelopeShape` 直接由它推导。
+- **事实**：`packages/base-link-core/src/envelope.ts:9-11` 定义 `ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset']`，共 **7** 个形状（`fallback` = 降级载荷；`resultset` = 结果集，#952 追加、不参与渲染），`EnvelopeShape` 直接由它推导。
 - **分歧**：上位规格 `docs/calorie-architecture.md:53` 写 `shape ∈ stat/list/detail/analysis/receipt`（**5** 个），`docs/research/t92-architect-calls.md:35`（AC-5）照抄同 5 个。
-- **裁定**：以**六形状**为准——规格 `:53` 属**不完整列举**（漏 `fallback`），不是契约分叉。`STRICT_ENVELOPE_SHAPES` 逐字等于 link-core `ENVELOPE_SHAPES`，由 `test-d/contract-signatures.ts`（`_T05`）与 `test/contract-signatures.test.mjs`（形状表同步用例）双向钉死。
+- **裁定**：以 **7 形状**为准——规格 `:53` 属**不完整列举**（漏 `fallback`、写于 `resultset` 追加之前），不是契约分叉。`STRICT_ENVELOPE_SHAPES` 逐字等于 link-core `ENVELOPE_SHAPES`，由 `test-d/contract-signatures.ts`（`_T05`）与 `test/contract-signatures.test.mjs`（形状表同步用例）双向钉死。
 - **追溯**：写法对齐 AC-3 对 `type`／`types` 的裁定（§3.5.2）——先给事实、再给裁定、再给同步动作；`docs/calorie-architecture.md:54` 已补一行勘误注记（FX-25①：勘误落在 `:54`，不是 `:53`）。
-- **不冲突声明**：`SERIALIZABLE_SHAPES`（5 个，六形状去掉 `fallback`）有单独交代（§3.4），**不构成**对六形状的否定。
+- **不冲突声明**：`SERIALIZABLE_SHAPES`（5 个，七形状去掉 `fallback` 与 `resultset`）有单独交代（§3.4），**不构成**对七形状的否定。
 
 #### 3.1.2 正文槽位／载荷槽规则／包裹约定／模板分型／判定次序（#118 补遗）
 
@@ -584,7 +584,7 @@ export interface DataTextInput { envelope: SerializableEnvelope; format?: CopyFo
 export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFormat; copyLog?: CopyLogFields }
 ```
 
-- 输入是 **envelope**（`{ version, skill, shape, key, data }`），`shape ∈ SERIALIZABLE_SHAPES`（六形状去掉 `fallback`）。`shape: 'fallback'` → 抛 `TextError` code `shape-unsupported`（降级载荷不进复制文本）。`SERIALIZABLE_SHAPES` 的**成员顺序无语义**（不决定 CSV 行序／遍历序），只有成员集有效（V3 疑点②小瑕处置）。
+- 输入是 **envelope**（`{ version, skill, shape, key, data }`），`shape ∈ SERIALIZABLE_SHAPES`（七形状去掉 `fallback` 与 `resultset`）。`shape: 'fallback'` → 抛 `TextError` code `shape-unsupported`（降级载荷不进复制文本）。`SERIALIZABLE_SHAPES` 的**成员顺序无语义**（不决定 CSV 行序／遍历序），只有成员集有效（V3 疑点②小瑕处置）。
 - snapshot 结构接口**不移植**（B2）：旧 `snapshot = { title, summary[], sections[] }` 与 `data.scene.snapshot` 一律删除；展示结构由下方**逐 shape 投影表**给出。
 
 **逐 shape 投影表（FX-1①，定死）**——机读真相源 `DATA_TEXT_PROJECTIONS`（`spec/text.ts`），`data` 形态对齐 `packages/base-link-core/src/envelope.ts:13-20` 的 `EnvelopeDataByShape`：

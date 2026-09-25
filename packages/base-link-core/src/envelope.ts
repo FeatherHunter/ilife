@@ -1,14 +1,31 @@
 /**
- * envelope：唯一出口载荷。6 形状全字段，semver 版本化。
+ * envelope：唯一出口载荷。7 形状全字段，semver 版本化。
  * 零依赖：手写守卫（不用 Zod），保 P4 零依赖冻结；Zod 可后加于 combos/skill 层。
  */
 import { EnvelopeError } from './errors.js';
 
 export const ENVELOPE_VERSION = '0.1.0' as const;
 
-// 6 形状：list 今日列表 / detail 单条详情 / stat 聚合统计 / receipt 写入回执 / analysis 开放式分析(L6) / fallback 降级载荷
-export const ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'] as const;
+// 7 形状：list 今日列表 / detail 单条详情 / stat 聚合统计 / receipt 写入回执 / analysis 开放式分析(L6)
+//        / fallback 降级载荷 / resultset 结果集（数据族，一次或多次查询的产物；不参与渲染，#952）
+export const ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset'] as const;
 export type EnvelopeShape = (typeof ENVELOPE_SHAPES)[number];
+
+/** 结果集里的一项：一次查询的产物。字段形状见 `docs/agents/数据族-规格.md` §四。
+ *
+ *  **单项失败不毁整批**：坏项在本项里回 `{ ok: false, error: { code, message } }`，其余项照常跑完
+ *  ——故除 `ok` 外一律可选。`query` 是本次查询单原样回显；`next` 是不透明凭据（调用方当黑盒）。
+ */
+export interface ResultsetItem {
+  id?: string;
+  ok: boolean;
+  query?: Record<string, unknown>;
+  fields?: Array<{ name: string; type: string }>;
+  rows?: Array<Record<string, unknown>>;
+  total?: number;
+  next?: string | null;
+  error?: { code: string; message: string };
+}
 
 export interface EnvelopeDataByShape {
   list: { items: unknown[]; total?: number };
@@ -17,6 +34,7 @@ export interface EnvelopeDataByShape {
   receipt: { ok: boolean; message: string };
   analysis: { summary: string };
   fallback: { reason: string; degraded: true };
+  resultset: { results: ResultsetItem[] };
 }
 
 export interface Envelope<S extends EnvelopeShape = EnvelopeShape> {
@@ -85,6 +103,10 @@ export function assertShapeData(shape: EnvelopeShape, data: Record<string, unkno
       if (typeof data.reason !== 'string' || data.reason.length === 0 || data.degraded !== true) {
         throw new EnvelopeError('fallback 形缺 reason/degraded:true 全字段（须显式标记降级）');
       }
+      break;
+    case 'resultset':
+      // 只判容器（项内字段由数据族实现装配，单项失败在项里回 error，不改退出码）。
+      if (!Array.isArray(data.results)) throw new EnvelopeError('resultset 形缺 results 数组');
       break;
   }
 }

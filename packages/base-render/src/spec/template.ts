@@ -232,7 +232,7 @@ export const CONTAINER_CHECK_RULE = Object.freeze({
 /** `--strict` 时对 data 做零依赖信封校验的字段表（AC-13：base-paint 自持）。 */
 export const STRICT_ENVELOPE_FIELDS = ['version', 'skill', 'shape', 'key', 'data'] as const;
 /** 与 base-link-core `ENVELOPE_SHAPES` 逐字一致，漂移由签名测试钉死。 */
-export const STRICT_ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'] as const;
+export const STRICT_ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset'] as const;
 
 /** 填充器错误码（失败一律抛错，不返空页）。
  *

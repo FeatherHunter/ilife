@@ -19,7 +19,7 @@
 
 ## 成员
 
-- 信封（`src/envelope.ts`）：`ENVELOPE_VERSION` 版本常量；`ENVELOPE_SHAPES` 6 形状（`list`／`detail`／`stat`／`receipt`／`analysis`／`fallback`）；`Envelope`／`EnvelopeShape`／`EnvelopeDataByShape` 类型；`createEnvelope` 造封、`parseEnvelope` 验封、`isEnvelope` 判定。
+- 信封（`src/envelope.ts`）：`ENVELOPE_VERSION` 版本常量；`ENVELOPE_SHAPES` 7 形状（`list`／`detail`／`stat`／`receipt`／`analysis`／`fallback`／`resultset`）；`Envelope`／`EnvelopeShape`／`EnvelopeDataByShape` 类型；`createEnvelope` 造封、`parseEnvelope` 验封、`isEnvelope` 判定。
 - 注册（`src/registry.ts`）：`RegistryKey`／`ParsedKey`／`Registry` 类型；`parseRegistryKey` 拆命令三段；`createRegistry(knownKeys)` 建表。
 - 执行（`src/runner.ts`）：`RunRequest` 请求形（命令＋形状＋参数）、`Fetcher` 取数器类型、`runCombo(registry, req, fetchData)` 跑一次联动（key 先过注册表、载荷再过信封全字段）。
 - 错误（`src/errors.ts`）：`LinkCoreError` 基类下分 `EnvelopeError`／`RegistryError`／`RunnerError`／`ConfigError` 四域。

@@ -13,7 +13,7 @@ export const COPY_FORMATS = ['text', 'json', 'csv'] as const;
 
 export type CopyFormat = (typeof COPY_FORMATS)[number];
 
-/** 可序列化形状：envelope 六形状去掉 `fallback`（降级载荷不进复制文本）。
+/** 可序列化形状：envelope 七形状去掉 `fallback`（降级载荷不进复制文本）与 `resultset`（数据族，不参与渲染）。
  *  成员**顺序无语义**（不决定 CSV 行序／遍历序），只有成员集有效。 */
 export const SERIALIZABLE_SHAPES = ['stat', 'list', 'detail', 'analysis', 'receipt'] as const;
 

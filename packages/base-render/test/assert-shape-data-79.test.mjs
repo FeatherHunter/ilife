@@ -7,13 +7,15 @@ import assert from 'node:assert/strict';
 import { assertShapeData } from 'base-link-core';
 
 describe('#79 assertShapeData 直测（正例＋反例）', () => {
-  it('正例：6 形状合法 data 全不抛', () => {
+  it('正例：7 形状合法 data 全不抛', () => {
     assert.doesNotThrow(() => assertShapeData('list', { items: [], total: 0 }));
     assert.doesNotThrow(() => assertShapeData('detail', { item: { id: 'x' } }));
     assert.doesNotThrow(() => assertShapeData('stat', { metrics: { done: 3 } }));
     assert.doesNotThrow(() => assertShapeData('receipt', { ok: true, message: 'ok' }));
     assert.doesNotThrow(() => assertShapeData('analysis', { summary: 's' }));
     assert.doesNotThrow(() => assertShapeData('fallback', { reason: 'r', degraded: true }));
+    // #952：结果集空集合法（《数据族-规格.md》§十 第 3 条）
+    assert.doesNotThrow(() => assertShapeData('resultset', { results: [] }));
   });
 
   it('反例：缺字段／错类型即抛（不返空）', () => {
@@ -24,5 +26,7 @@ describe('#79 assertShapeData 直测（正例＋反例）', () => {
     assert.throws(() => assertShapeData('receipt', { ok: true }), /ok\/message/);
     assert.throws(() => assertShapeData('analysis', { summary: '' }), /summary/);
     assert.throws(() => assertShapeData('fallback', { reason: 'r', degraded: false }), /degraded/);
+    assert.throws(() => assertShapeData('resultset', {}), /results/);
+    assert.throws(() => assertShapeData('resultset', { results: 'rows' }), /results/);
   });
 });

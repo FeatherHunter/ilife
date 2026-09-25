@@ -469,7 +469,8 @@ describe('冻结口径逐值', () => {
     const serializable = new Set(SERIALIZABLE_SHAPES);
     assert.equal(serializable.size, SERIALIZABLE_SHAPES.length, 'SERIALIZABLE_SHAPES 不得重复');
     for (const s of serializable) assert.ok(ENVELOPE_SHAPES.includes(s), s + ' 不在 link-core 形状表内');
-    assert.deepEqual([...ENVELOPE_SHAPES].filter((s) => !serializable.has(s)), ['fallback'], '唯一排除项必须是 fallback');
+    assert.deepEqual([...ENVELOPE_SHAPES].filter((s) => !serializable.has(s)), ['fallback', 'resultset'],
+      '排除项只许 fallback（降级载荷不进复制文本）与 resultset（数据族不参与渲染）');
   });
 
   it('escapeHtml 五字符口径（AC-14）：归一已落地，五字符逐值（漂移哨兵已翻转）', () => {

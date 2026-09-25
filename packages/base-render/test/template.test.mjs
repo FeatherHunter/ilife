@@ -501,7 +501,7 @@ describe('A7 strict 两档（零依赖信封校验；禁调 parseEnvelope）', (
     }
   });
 
-  it('strict:true 合法信封 → 通过；六形状逐一放行；report.strict 记录档位', () => {
+  it('strict:true 合法信封 → 通过；七形状逐一放行；report.strict 记录档位', () => {
     for (const shape of STRICT_ENVELOPE_SHAPES) {
       const out = fillTemplate({ template: dataPageTemplate(), assets: FIXTURE_ASSETS, data: { ...ENVELOPE, shape }, strict: true });
       assert.equal(out.report.strict, true);
