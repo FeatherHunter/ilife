@@ -76,6 +76,33 @@ document.addEventListener('ilife:dialog-close', (e) => {
 **入参违规一律抛 `BlocksError`**（不静默降级）：`id` 非法字符、`title` 空、`body` 空段、
 `actions` 空／超过两枚／`value` 重、闭集外的 `tone`／`form`／`status.kind`——逐条都报。
 
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`id` 只许**标识符字符**（字母／数字／下划线／连字符／汉字——它同时喂 `id=`／`aria-labelledby=`）；
+`actions` 给 1～2 枚、`value` 面板内唯一、**最后一枚是主动作**。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "id": "dlg-overwrite-today",
+  "title": "覆盖今天的记录？",
+  "sub": "这一步做完不能撤销",
+  "body": [
+    "今天已经有 2 条记录。继续会先把它们删掉，再写入新的 3 条。",
+    "想留旧的，先按「先不写」，把今天那 2 条导出去。"
+  ],
+  "tone": "danger",
+  "note": "覆盖之后旧记录不进撤销栈",
+  "actions": [
+    { "label": "先不写", "value": "cancel" },
+    { "label": "覆盖", "value": "cover" }
+  ]
+}
+```
+
+配套的触发键是另一份入参：`renderDialogOpener({ dialogId: 'dlg-overwrite-today', text: '写入今天' })`。
+
 ## 标记契约（`data-*`；运行时与判据都只认这些名字）
 | 属性 | 含义 |
 |---|---|

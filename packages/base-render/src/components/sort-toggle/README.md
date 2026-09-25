@@ -40,6 +40,28 @@ renderSortToggle({
 })
 ```
 
+| 入参 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `name` | `string` | ✅ | 机器键（事件 `detail.name` 按它定位；同一页内应唯一）。非空字符串 |
+| `form` | `'C'` | — | 形态键（本件只有 `C`；闭集外一律 `bad-input`） |
+| `views` | `SortViewInput[]` | ✅ | 视图档（**非空数组**；顺序＝屏上顺序） |
+| `views[].value` | `string` | ✅ | 机器值（`aria-pressed` 的载荷）；**视图内唯一、不得为空串** |
+| `views[].label` | `string` | ✅ | 上屏字（「全部」「常做」「高分」） |
+| `views[].field` | `string` | ✅ | 排序字段：**只许小写字母开头**（`[a-z][a-z0-9-]*`）——它会被拼进 `data-ilife-sort-<字段>` |
+| `views[].dir` | `'desc' \| 'asc'` | ✅ | 方向：从大到小／从小到大 |
+| `views[].count` | `number \| string` | — | 这一档的条数（渲染期初值；运行时段按真实条目重算）。给了就得是**有限数字**或非空串 |
+| `views[].caliber` | `string` | — | 这一档的口径句（「用过几次从多到少，只看做过 ≥2 次的」），换档时口径行原地换字 |
+| `view` | `string` | 第一档 | 初始视图（必须是某一档的 `value`） |
+| `label` | `string` | — | 视图条的 `aria-label`（这一组在筛什么） |
+| `target` | `string` | — | 条目区键（对应 `data-ilife-sort-region`）；不给＝整页找 |
+| `unit` | `string` | — | 条数的单位（「46 道」） |
+| `flipLabel` | `string` | — | 反向键的字面根（键面＝「反过来（从少到多）」） |
+| `loadingText` | `string` | — | 载入态文案 |
+| `error` | `string` | — | 初始错态（写在控件旁边 ＋ `aria-describedby`） |
+| `loading` | `boolean` | `false` | 初始载入态 |
+| `disabled` | `boolean` | `false` | 禁用档 |
+| `extraClass` | `string` | — | 附加类名（空格分隔，逐个过类名正则） |
+
 条目区一侧：
 
 ```html
@@ -53,6 +75,30 @@ renderSortToggle({
   属性名会被折成小写，收大写等于埋一个「看着配上了、其实读不到」的坑。
 - 条目**没有** `data-ilife-sort-tags` 属性时视为属于**每一档**（页面上没有分档）；
   给了该属性（哪怕是空串）就得列上这一档才算属于它。
+
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`name` 与 `views` 必填（视图至少一档、机器值不许重）；每档的 `field` 只许**小写字母开头**、`dir` 只许 `desc`／`asc`。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "name": "dish",
+  "label": "视图",
+  "views": [
+    { "value": "all", "label": "全部", "count": 132, "caliber": "不筛", "field": "name", "dir": "asc" },
+    { "value": "used", "label": "常做", "count": 46, "caliber": "用过几次从多到少，只看做过 ≥2 次的", "field": "used", "dir": "desc" },
+    { "value": "score", "label": "高分", "count": 12, "caliber": "评分从高到低，未评分的排最后", "field": "score", "dir": "desc" }
+  ],
+  "view": "used",
+  "target": "dishes",
+  "unit": "道"
+}
+```
+
+三档的 `field` 分别对应条目上的 `data-ilife-sort-name`／`-used`／`-score`；`count` 是渲染期初值，
+挂上运行时段之后每档条数按真实条目重算。
 
 ## 契约
 

@@ -72,6 +72,32 @@ document.addEventListener('ilife:drawer-change', (e) => {
 
 `renderDrawerOpener({ sheetId, text, label?, extraClass? })`：产触发键（焦点归还回路的另一头）。
 
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`id` 只许**标识符字符**（字母／数字／下划线／连字符／汉字）；`options[].value` 面板内唯一；
+**禁用项必须同时给 `note`**（说不出为什么按不动＝拒）；`doneLabel` 必须含 `{n}` 记号。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "id": "dw-account",
+  "title": "这笔记到哪个账户",
+  "sub": "可多选",
+  "options": [
+    { "value": "cmb", "label": "招行储蓄卡", "note": "常用", "meta": "¥12,480.00", "checked": true },
+    { "value": "alipay", "label": "支付宝", "meta": "¥860.00" },
+    { "value": "cash", "label": "现金", "meta": null },
+    { "value": "old", "label": "已注销的卡", "note": "卡已注销，记上去也对不上账", "disabled": true }
+  ],
+  "hint": "勾几个都行；一条记录可以同时算两个账户。",
+  "summary": "覆盖 7 条记录",
+  "doneLabel": "完成 {n} 项"
+}
+```
+
+`meta: null` 是**缺值**（右端读数位写成 `—`）。
+
 ## 标记契约（`data-*`）
 | 属性 | 含义 |
 |---|---|

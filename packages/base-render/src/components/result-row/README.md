@@ -44,8 +44,53 @@ renderResultRow({
 })
 ```
 
+| 入参 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `items` | `ResultRowItemInput[]` | ✅ | 结果条目（**可以是空数组**＝设计过的空态句 `emptyText`） |
+| `items[].title` | `string` | ✅ | 条目标题（「辣椒炒肉」）。非空 |
+| `items[].highlights` | `string[]` | — | 命中词（渲染期在标题与副语里逐处标 `<mark>`）。每项非空串 |
+| `items[].subtitle` | `string` | — | 副文字（「25 分钟 · 中辣 · 做过 6 次」） |
+| `items[].tags` | `string[]` | — | 上屏小标签 ＋ `data-ilife-search-tags`（搜索框按范围分档用）。每项非空串 |
+| `items[].value` | `string` | — | 右端读数（「4.8」）。**不给＝缺值**（值位写 `—` 并弱化） |
+| `items[].valueLabel` | `string` | — | 读数的名字（「评分」／「未评分」）：缺值时照常上屏 |
+| `items[].thumb` | `string` | — | 缩略格里的字（「菜」「蔬」）。**整列的开关**：只要有一条给了，整批都留出那一列 |
+| `items[].extraClass` | `string` | — | 单个条目的附加类名 |
+| `name` | `string` | — | 机器键：给了就同时当**搜索框的结果区键**（结果区／条目／标签三段一次落好） |
+| `label` | `string` | — | 这一批结果的 `aria-label` |
+| `emptyText` | `string` | `没有结果` | `items: []` 时那句空态 |
+| `form` | `'A'` | `'A'` | 形态键（闭集；闭集外一律 `bad-input`） |
+| `extraClass` | `string` | — | 附加类名（空格分隔，逐个过类名正则） |
+
 `value` 不给 ＝ 缺值：值位写 `—` 并弱化（`-v-none`），`valueLabel` 照常上屏（如「未评分」）。
 **缩略格是整列的开关**：只要有一条给了 `thumb`，整批都会留出那一列（避免同行左缘参差）。
+
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`items` 必填（每条的 `title` 非空），`highlights`／`tags` 给了就得是**非空串**组成的数组。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "name": "dishes",
+  "label": "菜谱结果",
+  "items": [
+    {
+      "title": "辣椒炒肉", "highlights": ["辣椒"], "subtitle": "25 分钟 · 中辣 · 做过 6 次",
+      "tags": ["湘菜", "快手"], "value": "4.8", "valueLabel": "评分", "thumb": "菜"
+    },
+    {
+      "title": "虎皮青椒", "highlights": ["辣椒"], "subtitle": "18 分钟 · 微辣 · 做过 2 次",
+      "tags": ["家常"], "valueLabel": "未评分", "thumb": "蔬"
+    },
+    { "title": "口水鸡", "subtitle": "40 分钟 · 中辣", "tags": ["川菜"], "value": "4.5", "valueLabel": "评分", "thumb": "肉" }
+  ],
+  "emptyText": "没有结果，换个词或放宽范围"
+}
+```
+
+第二条**不给 `value`** ⇒ 值位写 `—` 并弱化，而 `valueLabel: "未评分"` 照常上屏；
+三条都给了 `thumb`，故整批留出缩略列。
 
 ## 契约
 

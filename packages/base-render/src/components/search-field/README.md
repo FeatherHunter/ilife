@@ -46,6 +46,27 @@ renderSearchField({
 })
 ```
 
+| 入参 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `name` | `string` | ✅ | 机器键（事件 `detail.name` 按它定位；同一页内应唯一）。非空字符串 |
+| `form` | `'B'` | — | 形态键（本件只有 `B`；给了闭集外的值就 `bad-input`，不静默换档） |
+| `label` | `string` | — | 人类可读字段名（`aria-label` 用它）；缺省 `搜索` |
+| `placeholder` | `string` | — | 输入框里的提示字 |
+| `query` | `string` | — | 初始查询串（可为空串＝没有查询） |
+| `scopes` | `SearchScopeInput[]` | — | 范围分段：不给／空数组＝不渲染分段；**给就至少两档**（一档不成分段） |
+| `scopes[].value` | `string` | ✅ | 机器值；`detail.scope` 与条目的 `data-ilife-search-tags` 按它对号。**不得为空串**、段内唯一 |
+| `scopes[].label` | `string` | ✅ | 上屏字 |
+| `scopes[].count` | `number \| string` | — | 计数位初值（渲染期给；运行时段按真实命中重写）。给了就得是**有限数字**或非空串 |
+| `scope` | `string` | `all` | 初始选中的范围（`scopes` 里某一档的 `value`；`all` 是**内置的不过滤档**，不必写进 `scopes`） |
+| `target` | `string` | — | 结果区键（对应结果区的 `data-ilife-search-region`）；不给＝整页找 |
+| `noun` | `string` | `处` | 量词（「N 处命中」的「处」；如「道」「条」） |
+| `emptyText` | `string` | — | 空态句（命中 0 处时上屏） |
+| `loadingText` | `string` | — | 载入态文案 |
+| `error` | `string` | — | 初始错态：给了就在控件旁边写这一句（`aria-describedby` 指过去） |
+| `loading` | `boolean` | `false` | 初始载入态 |
+| `disabled` | `boolean` | `false` | 输入框与三颗键一起禁用（"看着能用、用了没反应"是不许留的中间档） |
+| `extraClass` | `string` | — | 附加类名（空格分隔，逐个过类名正则） |
+
 结果区一侧（由页面或别的件产，本件只读属性）：
 
 ```html
@@ -53,6 +74,33 @@ renderSearchField({
   <article data-ilife-search-item data-ilife-search-tags="name 湘菜">…</article>
 </div>
 ```
+
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`name` 必填；`scopes` 要么不给，**要么至少两档**（一档不成分段）；给了 `scopes` 时 `scope` 必须命中其中一档
+（或取内置的 `all`）。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "name": "dish",
+  "label": "搜菜名、食材",
+  "placeholder": "搜菜名、食材…",
+  "query": "辣椒",
+  "scopes": [
+    { "value": "name", "label": "菜名", "count": 4 },
+    { "value": "note", "label": "备注" },
+    { "value": "step", "label": "步骤" }
+  ],
+  "scope": "name",
+  "target": "dishes",
+  "noun": "道",
+  "emptyText": "没有命中，换个词或放宽范围"
+}
+```
+
+`scope: "name"` 落在第一档上；不想限定范围就写 `"scope": "all"`（内置的不过滤档，`scopes` 里不必再给一遍）。
 
 ## 契约
 

@@ -65,6 +65,32 @@ document.addEventListener('ilife:menu-select', (e) => {
 | `form` | `hug` | `hug` | 形态键（闭集外 → `BlocksError`） |
 | `extraClass` | `string` | — | 附加类名 |
 
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`id` 只许**标识符字符**（字母／数字／下划线／连字符／汉字——它同时是面板 `id` 与触发键的 `popovertarget`）；
+每一项的 `value` 菜单内唯一，`checked` **只对 `kind: "check"` 有效**。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "id": "menu-copy",
+  "trigger": "复制为",
+  "align": "end",
+  "menuLabel": "复制成哪种格式",
+  "items": [
+    { "value": "text", "label": "纯文本", "group": "文字", "shortcut": "⌘⇧T" },
+    { "value": "markdown", "label": "Markdown", "note": "带标题与表格", "shortcut": "⌘⇧M" },
+    { "value": "csv", "label": "CSV", "group": "数据", "shortcut": "⌘⇧C" },
+    { "value": "md-view", "label": "按天", "kind": "check", "checked": true, "group": "排布" },
+    { "value": "week", "label": "按周", "kind": "check" },
+    { "value": "delete", "label": "删掉这一条", "kind": "danger", "sep": true }
+  ]
+}
+```
+
+记号 `▾` 由本件补，`trigger` 里不用写；分组头（`文字`／`数据`／`排布`）与发丝线（`sep`）都从项上的字段来。
+
 ## 标记契约（`data-*` ＋ 那两处 `style`）
 | 位置 | 含义 |
 |---|---|

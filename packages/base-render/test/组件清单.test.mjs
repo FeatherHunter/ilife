@@ -280,28 +280,9 @@ const SAMPLE_RENDER_EXEMPT = new Map([
   // 这 22 件的共同原因：**README 的入参表只说得出字段面**，说不出「一周恰好七格」「档数必须是奇数」
   // 「max 必须大于 min」这类约束，而按类型派生**数组恒只给一个元素、`string` 恒给 `示例`** ⇒ 直渲必抛。
   // 出路（都归各件自己的席）：在该件 README 里写一个「示例入参」显式块，把元素个数与取值按约束给够。
-  ['calendar-month', { since: '2026-09-25', why: '`cells` 的长度必须是 7 的倍数（一周七格），派生样例按数组恒只给 1 格', todo: '待派活' }],
-  ['command-palette', { since: '2026-09-25', why: '`id` 只许标识符字符（还要当 id 与 popovertarget），派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
-  ['dialog', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
-  ['drawer-sheet', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
-  ['filter-chips', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
-  ['goal-stairs', { since: '2026-09-25', why: '`steps` 至少 2 个分段，派生样例按数组恒只给 1 段', todo: '待派活' }],
-  ['heat-grid', { since: '2026-09-25', why: '`rows[].values` 必须恰好 7 个数（一周七天），派生样例按数组恒只给 1 个', todo: '待派活' }],
-  ['hour-band', { since: '2026-09-25', why: '`intervals[].from` 必须是有限数字，派生给的元素是空对象（元素字段表抽不出必填）', todo: '待派活' }],
-  ['invoice-lines', { since: '2026-09-25', why: '`lines` 至少要两行，派生样例按数组恒只给 1 行（照 render 报错补也补不出来）', todo: '待派活' }],
-  ['number-stepper', { since: '2026-09-25', why: '`max` 必须大于 `min`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
-  ['photo-compare', { since: '2026-09-25', why: '`before` 必须是对象，派生按声明类型给了串', todo: '待派活' }],
-  ['photo-grid', { since: '2026-09-25', why: '`photos` 与 `groups` 恰好给一个，派生样例两个都给了', todo: '待派活' }],
-  ['popover-menu', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
-  ['range-bar', { since: '2026-09-25', why: '`domain.min` 必须是有限数字，派生给的 `domain` 是空对象', todo: '待派活' }],
-  ['result-row', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
-  ['search-field', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
-  ['slider-row', { since: '2026-09-25', why: '`max` 必须大于 `min`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
-  ['small-multiples', { since: '2026-09-25', why: '`periods` 至少 2 条，派生样例按数组恒只给 1 条', todo: '待派活' }],
-  ['sort-toggle', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
+  // 2026-09-25 清账：22 条里 21 条已在本席补上显式块并逐条删表（`--check` 与第 ⑧ 组同批转绿）；
+  // 只剩 `tooltip` 一条——它正由另一席改着（同族 `id` 那一路），故照旧挂着。
   ['tooltip', { since: '2026-09-25', why: '`id` 只许标识符字符，派生按 `string` 给的 `示例` 不是标识符', todo: '待派活' }],
-  ['window-picker', { since: '2026-09-25', why: 'README 没有入参表（也没有显式块）⇒ 派生不出示例入参', todo: '待派活' }],
-  ['wizard-shell', { since: '2026-09-25', why: '`total` 必须大于 `index`，派生按 `number` 给的两个都是 1', todo: '待派活' }],
 ]);
 
 const msgOf = (e) => String(e && e.message ? e.message : e);

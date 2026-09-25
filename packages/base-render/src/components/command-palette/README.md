@@ -57,6 +57,31 @@
 2. **入参表以外的键一律拒**：`{ ...ok, bogus: 1 }` 这类多给的键（多半是打错名，如 `notes` 当 `note`）不许静默吞掉——
    吞掉之后调用方以为自己设上了，屏上却没有。
 
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`id` 与每一行的 `id` 都只许**标识符字符**（字母、数字、下划线、连字符——它们还要当 `id` 与
+`popovertarget` 的值使），面板内的 `id` 不许重；`disabled: true` 的那一行**必须同时给 `why`**。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "id": "palette-quickjump",
+  "entry": "找页面 / 动作",
+  "label": "找页面或动作",
+  "items": [
+    { "id": "act-log-weight", "kind": "action", "label": "记体重", "note": "上次 68.4 kg（09-24）", "skill": "卡路里", "primary": true, "keywords": "jtz 体重" },
+    { "id": "act-log-water", "kind": "action", "label": "记喝水", "note": "今天还差 600 ml", "skill": "卡路里" },
+    { "id": "act-add-dish", "kind": "action", "label": "加一道菜", "note": "记进菜谱库", "skill": "私家大厨" },
+    { "id": "pg-weight-trend", "kind": "page", "label": "体重曲线", "note": "最近 30 天", "skill": "卡路里" },
+    { "id": "pg-recipe-search", "kind": "page", "label": "搜菜", "skill": "私家大厨" },
+    { "id": "pg-bill-month", "kind": "page", "label": "月度账单", "skill": "饼干记账", "disabled": true, "why": "这个月还没有流水" }
+  ]
+}
+```
+
+屏上顺序**不按数组顺序**：`kind: "action"` 那一组在前、`kind: "page"` 那一组在后（组内保持入参次序）。
+
 ## 契约与不变量（判据逐条断）
 
 1. **开与关不靠脚本**：入口键带 `popovertarget`、面板是原生 `popover`（`popover="auto"`）、关掉键带 `popovertargetaction="hide"` ⇒ 运行时段一行都没跑到，面板照样开、照样关；**点面板外那一下**也是浏览器给的 light dismiss。`Esc` 是浏览器白送的**额外**一路，界面上从不提它。

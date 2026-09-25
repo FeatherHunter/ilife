@@ -53,6 +53,63 @@ calendarMonthCss();                   // 样式段（页面自己按需注入；
 | `form` | `'grid'` | — | 形态键（闭集，本件只有这一格） |
 | `extraClass` | `string` | — | 附加类名（空格分隔、逐个过类名正则） |
 
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`cells` 的长度必须是 7 的倍数（一周七格、最多 6 行），空位显式给 `null`——2026 年 5 月 1 日是周五，
+故月首排 4 格空位，`4 ＋ 31 ＝ 35` 格正好 5 行。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "title": "2026 年 5 月",
+  "use": "记账 · 每日支出",
+  "summary": { "label": "本月合计", "value": "¥8,546" },
+  "cells": [
+    null, null, null, null,
+    { "day": "1", "value": "¥128", "level": 2 },
+    { "day": "2", "value": "¥46", "level": 1 },
+    { "day": "3", "value": null },
+    { "day": "4", "value": "¥312", "level": 2 },
+    { "day": "5", "value": "¥88", "level": 1 },
+    { "day": "6", "value": "¥1,240", "level": 4 },
+    { "day": "7", "value": "¥205", "level": 2 },
+    { "day": "8", "value": "¥64", "level": 1 },
+    { "day": "9", "value": null },
+    { "day": "10", "value": "¥158", "level": 2 },
+    { "day": "11", "value": "¥620", "level": 3 },
+    { "day": "12", "value": "¥92", "level": 1 },
+    { "day": "13", "value": "¥76", "level": 1 },
+    { "day": "14", "value": "¥92", "level": 1, "today": true },
+    { "day": "15", "value": "¥430", "level": 2 },
+    { "day": "16", "value": "¥58", "level": 1 },
+    { "day": "17", "value": null },
+    { "day": "18", "value": "¥214", "level": 2 },
+    { "day": "19", "value": "¥1,860", "level": 4 },
+    { "day": "20", "value": "¥132", "level": 2 },
+    { "day": "21", "value": "¥88", "level": 1 },
+    { "day": "22", "value": "¥46", "level": 1 },
+    { "day": "23", "value": "¥305", "level": 2 },
+    { "day": "24", "value": "¥118", "level": 2 },
+    { "day": "25", "value": null },
+    { "day": "26", "value": "¥540", "level": 3 },
+    { "day": "27", "value": "¥96", "level": 1 },
+    { "day": "28", "value": "¥72", "level": 1 },
+    { "day": "29", "value": "¥260", "level": 2 },
+    { "day": "30", "value": "¥1,120", "level": 4 },
+    { "day": "31", "value": "¥86", "level": 1 }
+  ],
+  "legend": [{ "level": 1, "label": "≤¥100" }, { "level": 4, "label": ">¥900" }],
+  "note": "今天 14 日 · 3 笔 · ¥92"
+}
+```
+
+那 4 格 `null` 是**月首空位**（本件不替你推算星期）；3 日、9 日、17 日、25 日那四格 `value: null` 是**当天没记**
+（写成 `—`、档位压到 0——不是"那天花了 0 元"）。一个月里 `today: true` 至多一格。
+
+档位与图例是同一套口径：`≤¥100` → 1、`¥101–500` → 2、`¥501–900` → 3、`>¥900` → 4（图例只列头尾两档）；
+`summary.value` 是那 27 天的合计，与逐格读数对得上。
+
 ## 契约与不变量
 
 - **零 DOM**：只产标记，无脚本、无内联事件；样式只走 `calendarMonthCss()`。

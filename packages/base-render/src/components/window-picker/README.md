@@ -39,9 +39,51 @@ renderWindowPicker({
 })
 ```
 
+| 入参 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `name` | `string` | ✅ | 机器键（事件 `detail.name` 按它定位；同一页内应唯一）。非空字符串 |
+| `form` | `'A'` | — | 形态键（本件只有 `A`；闭集外一律 `bad-input`） |
+| `presets` | `WindowPresetInput[]` | — | 窗口档（**非空数组**，至少一档）；缺省＝今日／本周／近 30 天／自定义 |
+| `presets[].value` | `string` | ✅ | 机器值（`aria-pressed` 的载荷）；档内唯一。字符串档**只许内置的 `custom`** |
+| `presets[].label` | `string` | ✅ | 上屏字（「今日」「本周」「第三季度」） |
+| `presets[].days` | `number` | 与 `from`／`to` 二选一 | 「最近 N 天（到今天）」：**≥1 的整数** |
+| `presets[].from` / `.to` | `string` | 与 `days` 二选一 | 固定起止，**必须成对给**、`YYYY-MM-DD` 且真实存在、`from` 不得晚于 `to` |
+| `preset` | `string` | 第一档 | 初始档（必须是某一档的 `value`） |
+| `from` / `to` | `string` | — | 初始起止（`YYYY-MM-DD`，**成对给**）；给了就用它，此时没给 `preset` 会自动落到「自定义」 |
+| `today` | `string` | — | 今天（`YYYY-MM-DD`）。给了就完全确定；不给＝运行时按浏览器当天算 |
+| `label` | `string` | — | 档位那一组的 `aria-label`（这一组在换什么窗口） |
+| `loadingText` | `string` | — | 载入态文案 |
+| `error` | `string` | — | 初始错态（写在控件旁边 ＋ `aria-describedby`） |
+| `loading` | `boolean` | `false` | 初始载入态 |
+| `disabled` | `boolean` | `false` | 禁用档 |
+| `extraClass` | `string` | — | 附加类名（空格分隔，逐个过类名正则） |
+
 - 档位两条路：`days`（最近 N 天，到今天）**或** `from`＋`to`（固定起止）——二选一，给了别的就抛 `bad-input`。
 - `custom`（自定义）是**内置档**：起止被手改时窗口就落到它头上，调用方不必自己给。
 - `presets` 里若没有 `custom`，本件会补一档。
+
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`name` 必填；`presets` 至少一档，每档的 `days` 与 `from`／`to` **只能给一个**，`preset` 必须命中某一档。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "name": "main",
+  "label": "窗口",
+  "presets": [
+    { "value": "today", "label": "今日", "days": 1 },
+    { "value": "week", "label": "本周", "days": 7 },
+    { "value": "month", "label": "近 30 天", "days": 30 },
+    { "value": "q3", "label": "第三季度", "from": "2026-07-01", "to": "2026-09-30" }
+  ],
+  "preset": "week",
+  "today": "2026-09-25"
+}
+```
+
+前三档走 `days`（最近 N 天到今天）、第四档走固定起止；`custom`（自定义）是**内置档**，不必自己给。
 
 ## 契约
 

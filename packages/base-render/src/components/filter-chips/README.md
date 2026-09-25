@@ -44,6 +44,31 @@ renderFilterChips({
 })
 ```
 
+| 入参 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `name` | `string` | ✅ | 机器键（事件 `detail.name` 按它定位；同一页内应唯一） |
+| `options[]` | `FilterChipOption[]` | ✅ | 档位（**可以是空数组**＝没得筛，渲染成设计过的空态） |
+| `options[].value` | `string` | ✅ | 机器值；与记录区 `data-ilife-chip-tags` 按它对号，**组内唯一、不得为空串** |
+| `options[].label` | `string` | ✅ | 上屏字 |
+| `options[].count` | `number \| string` | — | 计数位初值（渲染期给；运行时段按真实记录重算并覆盖）。给了就得是**有限数字**或非空串 |
+| `options[].common` | `boolean` | `false` | 归到「常用」那一行；其余落进「更多」 |
+| `selected` | `string[]` | — | 初始选中；每一项**必须命中 `options` 里的机器值**、不许重复（空数组＝不筛＝全部） |
+| `label` | `string` | `筛选` | 这一组筛的是什么（`aria-label` 与「更多」那一句） |
+| `commonLabel` | `string` | `常用` | 「常用」那一行的标头 |
+| `moreLabel` | `string` | `更多` | 「更多」那一句的开头（如「更多分类」） |
+| `moreOpen` | `boolean` | `true` | 「更多」默认展开（集合默认**全在页上**，收起是用户主动） |
+| `target` | `string` | — | 记录区键（对应记录区的 `data-ilife-chips-region`）；不给＝整页找记录 |
+| `clearLabel` | `string` | `清除` | 清除键的字 |
+| `pickedUnit` | `string` | `类` | 状态行里档数的量词 |
+| `rowsUnit` | `string` | `笔` | 状态行里记录数的量词 |
+| `emptyText` | `string` | `这里还没有可筛的档` | 一档都没有时那句空态 |
+| `loadingText` | `string` | `正在筛…` | 载入态那句 |
+| `error` | `string` | — | 初始错态（写在控件旁边 ＋ `aria-describedby`） |
+| `loading` | `boolean` | `false` | 初始载入态 |
+| `disabled` | `boolean` | `false` | 禁用档 |
+| `form` | `'A'` | `'A'` | 形态键（闭集；闭集外一律 `BlocksError`） |
+| `extraClass` | `string` | — | 附加类名 |
+
 记录区一侧（本件只读属性）：
 
 ```html
@@ -54,6 +79,34 @@ renderFilterChips({
 ```
 
 **并集不是相加**：一条记录带两个选中档的标签时只算一次，合计也只加一次。
+
+## 示例入参
+
+本件**唯一一份**示例入参（皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
+`name` 与 `options` 必填；`selected` 里每一项都必须命中 `options` 里的机器值。
+
+<!-- 示例入参：皮肤矩阵判据拿它渲染本件，必须能直接渲染成功 -->
+```json 示例入参
+{
+  "name": "kind",
+  "label": "按分类筛",
+  "commonLabel": "常用",
+  "moreLabel": "更多分类",
+  "moreOpen": true,
+  "options": [
+    { "value": "meal", "label": "餐费", "count": 42, "common": true },
+    { "value": "traffic", "label": "交通", "count": 18, "common": true },
+    { "value": "daily", "label": "日用", "count": 26 },
+    { "value": "medical", "label": "医疗", "count": 3 }
+  ],
+  "selected": ["meal"],
+  "target": "bills",
+  "pickedUnit": "类",
+  "rowsUnit": "笔"
+}
+```
+
+`count` 只是**渲染期的初值**——挂上运行时段之后，每一档的计数与合计都按记录区里的真实记录重算。
 
 ## 契约
 
