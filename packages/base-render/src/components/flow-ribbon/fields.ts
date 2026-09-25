@@ -125,6 +125,14 @@ export function estimatePx(text: string): number {
 
 /* ── 数 ─────────────────────────────────────────────────────────── */
 
+/** 入参表以外的键一律拒（先例：`drag-sort`／`relation-picker`／`command-palette` 的同名小件）：
+ *  写错的键静默吞掉，调用方会以为自己设上了——那是"看不见的错"。 */
+export function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(raw)) {
+    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒）');
+  }
+}
+
 /** 必须是有限数。 */
 export function reqFinite(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -163,6 +171,7 @@ export function reqNodes(value: unknown, field: string, max: number): readonly F
   return value.map((item, i) => {
     const at = field + '[' + String(i) + ']';
     assertPlainObject(item, at);
+    assertKeys(item as Record<string, unknown>, ['name'], at);
     const name = reqName((item as Record<string, unknown>).name, at + '.name');
     if (seen.has(name)) badInput(at + '.name 与前面某一项重名（`' + name + '`）：一股只能出现一次，否则汇总会算两遍');
     seen.add(name);
@@ -186,6 +195,7 @@ export function reqLinks(value: unknown, sources: readonly FlowRibbonNode[],
     const at = 'flow-ribbon: input.links[' + String(i) + ']';
     assertPlainObject(item, at);
     const raw = item as Record<string, unknown>;
+    assertKeys(raw, ['from', 'to', 'amount'], at);
     const from = reqName(raw.from, at + '.from');
     const to = reqName(raw.to, at + '.to');
     if (!sourceNames.includes(from)) {

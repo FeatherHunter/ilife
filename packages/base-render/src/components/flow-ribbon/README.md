@@ -81,8 +81,9 @@ renderFlowRibbon({
 
 ## 契约
 
-- **一件一目录**：`attrs.ts`（标记契约）／`fields.ts`（格式化与校验小件）／`model.ts`（一把尺子的算数）／
-  `render.ts`（纯函数产标记）／`style.ts` ＋ `style-forms.ts`（唯一样式来源）／本文件。
+- **一件一目录**：`attrs.ts`（标记契约）／`fields.ts`（格式化与校验小件）／`model.ts`（读入参→选骨架→写口径句）／
+  `forms.ts` ＋ `forms-rails.ts`（三骨架的几何：桑基与矩阵住前者，构成轨住后者）／`render.ts`（纯函数产标记）／
+  `style.ts` ＋ `style-forms.ts` ＋ `style-rails.ts`（唯一样式来源：卡头名单脚注住前者，桑基矩阵住中者，构成轨住后者）／本文件。
 - **形态是骨架，不是地址**：形态由 `input.form` 给定，**不随容器宽窄换**（换的是排版，见下）。
 - **色只读皮肤**：一切颜色／圆角／字面／字号经 `skinVar()` 读 token；来源那一列的色阶是从 `accent`
   往 `surface` 掺出来的淡洗（权重 46／36／29／23／18／14），矩阵的深浅与构成轨的两层同理——**没有一处写死色值**。

@@ -1,4 +1,4 @@
-/** flow-ribbon · **三个骨架的模型类型与算数**（桑基带／交叉矩阵／两条构成轨各自的几何）。
+/** flow-ribbon · **两个骨架的模型类型与算数**（桑基带／交叉矩阵；两条构成轨住 `forms-rails.ts`）。
  *
  *  **这一件只有一把尺子**（头号口径的全文见 `model.ts` 的件头）：
  *  一个总额 `total`（＝所有流量之和，两侧都是它的两种数法）＋ 一个跨度
@@ -6,7 +6,8 @@
  *  桑基的节点高与带子两端高、矩阵的条长、两条构成轨的格宽**全从它算**，任何一处都不许自己归一。
  *
  *  为什么把这三种几何独立成一件：两件事挤在 `model.ts` 里会过本包的行数告警线（350 行／LF 口径）。
- *  本文件只依赖 `attrs.ts`（常量与入参类型）与 `fields.ts`（格式化小件与读数小件），**没有环**。
+ *  本文件只依赖 `attrs.ts`（常量与入参类型）与 `fields.ts`（格式化小件与读数小件），**没有环**
+ *  （构成轨那一段另住 `forms-rails.ts`，`import type` 回指本文件的基座类型，运行时无环）。
  */
 import {
   FLOW_RIBBON_GAP_PCT,
@@ -15,13 +16,15 @@ import {
   FLOW_RIBBON_NODE_INNER_PX,
   FLOW_RIBBON_PLOT_MAX_PX,
   FLOW_RIBBON_PLOT_MIN_PX,
-  FLOW_RIBBON_SEG_MIN_PCT,
   type FlowRibbonForm,
   type FlowRibbonLink,
 } from './attrs.js';
 import {
-  clampPct, estimatePx, fmtAmount, fmtPct, round1, round2, shareOf, type FlowRibbonReadout,
+  clampPct, estimatePx, fmtAmount, round1, round2, shareOf, type FlowRibbonReadout,
 } from './fields.js';
+/* 构成轨那一段住 `forms-rails.ts`（`style-rails.ts` 同款拆法）：本文件原样转出，`model.ts` 不用改。 */
+import type { FlowRibbonRailsModel } from './forms-rails.js';
+export { railsModel, type FlowRibbonRailsModel, type FlowRibbonSeg } from './forms-rails.js';
 
 /** 图例的一项（形 ＋ 字）。 */
 export interface FlowRibbonLegendItem {
@@ -114,28 +117,7 @@ export interface FlowRibbonMatrixModel extends FlowRibbonBase {
   readonly maxText: string;
 }
 
-/** 构成轨里的一格。 */
-export interface FlowRibbonSeg {
-  readonly name: string;
-  readonly amountText: string;
-  readonly shareText: string;
-  /** 格宽（占总额的百分比）：**同一总额、两条轨各自拉满 100%**，故上下两轨可以横着比。 */
-  readonly widthPct: number;
-  /** 这一段**放得下百分数**（格宽 ≥ `FLOW_RIBBON_SEG_MIN_PCT`）；放不下就不出字，读数在下面名单里。 */
-  readonly numbered: boolean;
-}
-
-export interface FlowRibbonRailsModel extends FlowRibbonBase {
-  readonly form: 'rails';
-  readonly sourceSegs: readonly FlowRibbonSeg[];
-  readonly useSegs: readonly FlowRibbonSeg[];
-  readonly sourceRows: readonly FlowRibbonReadout[];
-  readonly useRows: readonly FlowRibbonReadout[];
-  readonly hubEqText: string;
-  readonly hubNetText: string;
-  readonly sourceHead: string;
-  readonly useHead: string;
-}
+/** 构成轨的类型与算数住 `forms-rails.ts`（上头已转出，这里不重写第二遍）。 */
 
 export type FlowRibbonModel = FlowRibbonSankeyModel | FlowRibbonMatrixModel | FlowRibbonRailsModel;
 
@@ -291,8 +273,10 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
     empty: false,
     amountText: u.amountText,
     shareText: u.shareText,
-    barPct: 100,
-    mixPct: 26,
+    /* 合计行不出条（它是各列的和，与「某一格 ÷ 全表最大格」不是同一把尺子）——
+       故这里不算几何，零值明示"无条"（渲染侧本就不写 `style`，死数据不许留）。 */
+    barPct: 0,
+    mixPct: 0,
     title: u.name + ' 合计：' + u.amountText + ' ' + base.unit + '（占总额 ' + u.shareText + '）',
   }));
   return {
@@ -311,45 +295,4 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
   };
 }
 
-/** 一条构成轨：格宽＝这一格占总额的比例，**同一总额**故两条轨可以横着比。 */
-function segsOf(rows: readonly FlowRibbonReadout[], total: number): readonly FlowRibbonSeg[] {
-  /* 取整到千分位再分配余数（最大余数法）：几格加起来**恰好** 100.0%——
-     各格各自四舍五入会差出 0.1%，那 0.1% 正是「轨没拉满」的缺口（判据按读数反推格宽时会读到）。 */
-  const exact = rows.map((r) => r.amount / total * 1000);
-  const perMille = exact.map((v) => Math.floor(v));
-  let rest = 1000 - perMille.reduce((a, b) => a + b, 0);
-  const order = exact.map((v, i) => ({ i, frac: v - perMille[i] })).sort((a, b) => b.frac - a.frac || a.i - b.i);
-  for (let k = 0; k < order.length && rest > 0; k += 1) { perMille[order[k].i] += 1; rest -= 1; }
-  return rows.map((r, i) => {
-    const widthPct = perMille[i] / 10;
-    return {
-      name: r.name,
-      amountText: r.amountText,
-      shareText: fmtPct(widthPct),
-      widthPct,
-      numbered: widthPct >= FLOW_RIBBON_SEG_MIN_PCT,
-    };
-  });
-}
-
-/** 形态 `rails`：两条构成轨 ＋ 中间汇合读数（进 ＝ 出）。 */
-export function railsModel(base: FlowRibbonBase, sources: readonly FlowRibbonReadout[],
-  uses: readonly FlowRibbonReadout[]): FlowRibbonRailsModel {
-  return {
-    ...base,
-    form: 'rails',
-    sourceSegs: segsOf(sources, base.total),
-    useSegs: segsOf(uses, base.total),
-    sourceRows: sources,
-    useRows: uses,
-    /* 「进 ＝ 出」是结构事实（两边都是同一批流量的两种数法），所以这句是真算出来的，不是抄进来的。 */
-    hubEqText: '进 ' + fmtAmount(base.total) + ' ＝ 出 ' + fmtAmount(base.total) + ' ' + base.unit,
-    hubNetText: '净 +0 ' + base.unit,
-    sourceHead: '钱从哪来 · ' + String(sources.length) + ' 股',
-    useHead: '钱到哪去 · ' + String(uses.length) + ' 类',
-    legend: [],
-    ariaLabel: '两条构成轨：上面是来源构成（' + sources.map((s) => s.name + ' ' + s.shareText).join('、')
-      + '），下面是用途构成（' + uses.map((u) => u.name + ' ' + u.shareText).join('、')
-      + '）；两条轨同一总额 ' + fmtAmount(base.total) + ' ' + base.unit + '（进 ＝ 出），故上下两轨的宽度可以横着比',
-  };
-}
+/* ── 形态 `rails` 住 `forms-rails.ts`（上头已转出） ─────────────────────── */

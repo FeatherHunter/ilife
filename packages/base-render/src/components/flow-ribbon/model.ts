@@ -25,7 +25,7 @@ import {
   type FlowRibbonForm,
 } from './attrs.js';
 import {
-  fmtAmount, optClass, optRealText, readoutsOf, reqLinks, reqRealText, reqSources, reqUses, sumBy,
+  assertKeys, fmtAmount, optClass, optRealText, readoutsOf, reqLinks, reqRealText, reqSources, reqUses, sumBy,
 } from './fields.js';
 import { matrixModel, railsModel, sankeyModel, type FlowRibbonBase, type FlowRibbonModel } from './forms.js';
 
@@ -50,6 +50,8 @@ export type { FlowRibbonReadout } from './fields.js';
 export function normalizeFlowRibbon(input: unknown): FlowRibbonModel {
   assertPlainObject(input, 'renderFlowRibbon: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, ['title', 'sources', 'uses', 'links', 'stamp', 'form', 'unit', 'note', 'extraClass'],
+    'flow-ribbon: input');
   const form = raw.form === undefined ? FLOW_RIBBON_FORMS[0] : raw.form;
   if (!(FLOW_RIBBON_FORMS as readonly unknown[]).includes(form)) {
     badInput('flow-ribbon: input.form 必须是 ' + FLOW_RIBBON_FORMS.join('／') + ' 之一（桑基带／交叉矩阵／两条构成轨）');

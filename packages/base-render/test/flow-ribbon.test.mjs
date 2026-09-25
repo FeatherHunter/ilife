@@ -46,6 +46,7 @@ import {
   flowRibbonSlot,
   renderFlowRibbon,
 } from '../dist/components/flow-ribbon/index.js';
+import { matrixModel } from '../dist/components/flow-ribbon/forms.js';
 import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderHeatGrid } from '../dist/components/heat-grid/index.js';
 import { renderDocShell } from '../dist/docShell.js';
@@ -56,6 +57,8 @@ import { startShapesPage } from './shapes-probe.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
 const DIR = join(PKG, 'src', 'components', 'flow-ribbon');
+/** 本件全部样式源码（`style.ts` ＋ `style-*.ts`）：样式纪律按"全部"扫，不逐个点名（加第四份时这里不用改）。 */
+const STYLE_FILES = readdirSync(DIR).filter((n) => n.endsWith('.ts') && (n === 'style.ts' || n.startsWith('style-')));
 
 /** 四套皮肤的取值表（期望色**从表里读**，判据里不抄色字面量）。 */
 const SKIN_VALUES = Object.fromEntries(SKIN_NAMES.map((s) => [s, SKINS[s].values]));
@@ -79,6 +82,29 @@ const throwsBlocks = (fn) => {
   }
   return false;
 };
+
+/** `@container` 块逐个抽出（头 ＋ 体）：花括号配平抽，嵌套规则不漏。 */
+function containerBodies(cssText) {
+  const out = [];
+  let i = 0;
+  while (true) {
+    const at = cssText.indexOf('@container', i);
+    if (at < 0) break;
+    const open = cssText.indexOf('{', at);
+    let depth = 0;
+    let j = open;
+    for (; j < cssText.length; j += 1) {
+      if (cssText[j] === '{') depth += 1;
+      else if (cssText[j] === '}') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    out.push({ head: cssText.slice(at, open), body: cssText.slice(open + 1, j) });
+    i = j + 1;
+  }
+  return out;
+}
 
 /** 逐字符配平花括号抽选择器（`@container` 块里的规则也算；正则式抽取会漏掉它们）。 */
 function ruleSelectors(css) {
@@ -170,13 +196,19 @@ function readoutsOf(html) {
   return [...html.matchAll(re)].map((m) => ({ name: m[1], amountText: m[2], shareText: m[3] }));
 }
 
-/** 矩阵的格（行／合计行都算；`--flow-ribbon-w` 是这一格 ÷ 全表最大格）。 */
+/** 矩阵的一格（行里的格；`--flow-ribbon-w` 是这一格 ÷ 全表最大格）。 */
 function cellsOf(html) {
   const re = new RegExp('class="' + esc(flowRibbonSlot('mat-cell')) + '( is-empty)?" data-use="([^"]*)"[^>]*>'
     + '(?:<i class="[^"]*-cell-bar"[^>]*style="--flow-ribbon-w: ([\\d.]+)%; --flow-ribbon-mix: ([\\d.]+)%"><\\/i>)?'
     + '<b class="[^"]*-cell-num">([^<]*)</b>(?:<em class="[^"]*-cell-pct">([^<]*)</em>)?', 'g');
   return [...html.matchAll(re)].map((m) => ({ empty: m[1] === ' is-empty', use: m[2], barPct: m[3] === undefined ? 0 : Number(m[3]),
     mixPct: m[4] === undefined ? 0 : Number(m[4]), amountText: m[5], shareText: m[6] === undefined ? '' : m[6] }));
+}
+
+/** 合计行的格（`mat-total`）：只读开始标记——断的就是"有没有写 `style`"（合计行不出条）。 */
+function footOf(html) {
+  const re = new RegExp('<td class="' + esc(flowRibbonSlot('mat-total')) + '"[^>]*>', 'g');
+  return [...html.matchAll(re)].map((m) => m[0]);
 }
 
 /** 构成轨的格（按轨分两组：来源轨在前、用途轨在后）。 */
@@ -458,6 +490,13 @@ describe('flow-ribbon ① 转义面与非法入参（逐条断 BlocksError）', 
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, form: 'A' })), true, 'A／B／C 不是键');
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, extraClass: 'a"b' })), true);
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, extraClass: '   ' })), true);
+    /* 多余的键：顶层／名单项／流量项各一处——写错的键静默吞掉就是"看不见的错"，一律拒。 */
+    assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, foo: 1 })), true, '顶层多余键');
+    assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, unknown2: [] })), true, '顶层未知数组键');
+    assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, sources: [{ name: 'A', foo: 1 }] })), true, '来源项多余键');
+    assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, uses: [{ name: 'B', foo: 1 }] })), true, '用途项多余键');
+    assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, links: [{ from: 'A', to: 'B', amount: 1, foo: 1 }] })), true,
+      '流量项多余键');
     /* 名单。 */
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, sources: undefined })), true, '缺 sources');
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, sources: [] })), true, '空名单');
@@ -511,6 +550,58 @@ describe('flow-ribbon ① 转义面与非法入参（逐条断 BlocksError）', 
       '流量上限 ＋1 应拒');
   });
 
+  it('合计行不出条：渲染侧不写 `style`，模型侧就不算几何（零值明示"无条"，死数据不许留）', () => {
+    const feet = footOf(MATRIX);
+    assert.equal(feet.length, USES.length, '合计行逐列一格');
+    for (const td of feet) assert.equal(td.includes('style='), false, '合计格写了条宽：' + td);
+    /* 模型侧：合计格的条长与深浅恒为零（以前这里算出 100／26，渲染侧却不用——同一份数两个说法）。 */
+    const rd = (name, amount) => ({ name, amount, amountText: String(amount), sharePct: 0, shareText: '' });
+    const m = matrixModel(
+      { form: 'matrix', title: 'x', unit: '元', note: '', total: 3, totalText: '共 3 元', ariaLabel: '', legend: [] },
+      [rd('A', 2), rd('B', 1)], [rd('C', 3)],
+      [{ from: 'A', to: 'C', amount: 2 }, { from: 'B', to: 'C', amount: 1 }]);
+    assert.equal(m.foot.length, 1);
+    assert.equal(m.foot[0].barPct, 0, '合计格的条长不是零（死数据）');
+    assert.equal(m.foot[0].mixPct, 0, '合计格的深浅不是零（死数据）');
+    assert.equal(m.foot[0].amountText, '3', '合计格的金额仍是该列之和');
+  });
+
+  it('同一笔钱只许一个数：轨上格宽、轨下名单、无障碍名三处占比逐名一致（结余是边界）', () => {
+    const segs = segsOf(RAILS);
+    const rows = readoutsOf(RAILS);
+    const aria = /aria-label="([^"]*)"/.exec(RAILS)[1];
+    for (const seg of segs.src.concat(segs.use)) {
+      const parts = /^(.*) ([\d,.eE+-]+)（占总额 ([^）]+)）$/.exec(seg.title);
+      assert.ok(parts !== null, '格的 title 不是"名 金额（占总额 占比）"：' + seg.title);
+      const name = parts[1];
+      const row = rows.find((r) => r.name === name);
+      assert.ok(row !== undefined, name + ' 在轨下名单里找不到');
+      assert.equal(row.shareText, parts[3], name + '：轨上 ' + parts[3] + '，名单里 ' + row.shareText);
+      assert.ok(aria.includes(name + ' ' + parts[3]), name + '：无障碍名里的占比与轨上不同');
+    }
+  });
+
+  it('小数金额不断尾：0.5 元原样上屏（总额与读数都是它）', () => {
+    const html = renderFlowRibbon({ title: 'x', sources: [{ name: 'A' }], uses: [{ name: 'B' }],
+      links: [{ from: 'A', to: 'B', amount: 0.5 }] });
+    assert.ok(html.includes('共 0.5 元'), '总额没印出 0.5');
+    assert.ok(html.includes('>0.5<'), '读数没印出 0.5');
+  });
+
+  it('指数金额不分组：1e21 走干净形状（不插千分位逗号）', () => {
+    const html = renderFlowRibbon({ title: 'x', sources: [{ name: 'A' }], uses: [{ name: 'B' }],
+      links: [{ from: 'A', to: 'B', amount: 1e21 }] });
+    assert.ok(html.includes('共 1e+21 元'), '总额没印成干净形状');
+    assert.equal(html.includes('1,000,000,000,000,000,000,000'), false, '指数金额被当整数分组了');
+  });
+
+  it('200 字标题照样上屏：不拒、不断尾（窄档不断行溢出由真机那档断）', () => {
+    const title = '钱'.repeat(200);
+    const html = renderFlowRibbon({ title, sources: [{ name: 'A' }], uses: [{ name: 'B' }],
+      links: [{ from: 'A', to: 'B', amount: 1 }] });
+    assert.ok(html.includes(title), '200 字标题没原样上屏');
+  });
+
   it('纯函数：同样的入参恒产同样的字节（三形态各一遍）', () => {
     for (const input of [BASE, { ...BASE, form: 'matrix' }, { ...BASE, form: 'rails' }]) {
       assert.equal(renderFlowRibbon(input), renderFlowRibbon(input));
@@ -549,14 +640,27 @@ describe('flow-ribbon ② 样式与零 DOM 纪律', () => {
     assert.deepEqual(clean.match(/--ilife-[a-z0-9-]+\s*:/g) || [], [], '不得在组件里定义皮肤 token');
   });
 
-  it('**窄档阈值只有一处来源**：两份样式源码里都不写那个数字的字面量，查询串由常量拼出', () => {
+  it('窄档是语义行为：阈值与常量同源，矩阵改行、构成轨改栏，桑基一处几何都不改（不断条数）', () => {
     const query = '@container (max-width: ' + String(FLOW_RIBBON_NARROW_PX) + 'px)';
-    assert.equal(countOf(css, esc(query)), 3, '两份样式文件各一条窄档查询（矩阵与构成轨各一条），且都取同一个常量');
-    for (const file of ['style.ts', 'style-forms.ts']) {
+    assert.ok(css.includes(query), '窄档阈值必须取常量（改常量时查询得跟）');
+    const narrow = containerBodies(css).filter((b) => b.head.includes(String(FLOW_RIBBON_NARROW_PX)));
+    assert.ok(narrow.length >= 1, '窄档查询一条没有');
+    const body = narrow.map((b) => b.body).join('\n');
+    /* 矩阵改行（一行一格，列名顶在数字前），构成轨改栏（两栏改一栏）——骨架都不换。 */
+    assert.ok(body.includes(flowRibbonSlot('mat-row')) && /display:\s*block/.test(body), '窄档里矩阵没改成一行一格');
+    assert.ok(body.includes(flowRibbonSlot('rails-list')) && /minmax\(0,\s*1fr\)/.test(body), '窄档里构成轨名单没改成一栏');
+    /* 桑基一处几何都不改（窄档不好读就换形态，不换尺子）。 */
+    for (const v of ['--flow-ribbon-t', '--flow-ribbon-h', '--flow-ribbon-l1', '--flow-ribbon-r1']) {
+      assert.equal(body.includes(v), false, '窄档里动了桑基几何 ' + v + '（等于换了一把尺子）');
+    }
+    /* 阈值字面量不许散落在样式源码里（写两处必然走散），常量引用每份样式文件都要有。 */
+    for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       assert.equal(new RegExp('\\b' + String(FLOW_RIBBON_NARROW_PX) + '\\b').test(src), false,
         file + ' 里写了阈值字面量（写两处必然走散：改常量时查询不跟）');
-      assert.ok(src.includes('FLOW_RIBBON_NARROW_PX'), file + ' 应当读 FLOW_RIBBON_NARROW_PX 这个常量');
+      if (src.includes('@container')) {
+        assert.ok(src.includes('FLOW_RIBBON_NARROW_PX'), file + ' 的窄档查询应当读常量');
+      }
     }
   });
 
@@ -567,7 +671,7 @@ describe('flow-ribbon ② 样式与零 DOM 纪律', () => {
     }
     const bare = [...stripVarFns(clean).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
     assert.deepEqual([...new Set(bare)], [], '兜底链之外的颜色字面量：' + [...new Set(bare)].join('、'));
-    for (const file of ['style.ts', 'style-forms.ts']) {
+    for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       assert.deepEqual([...src.matchAll(/var\(\s*--ilife-/g)].map((m) => m[0]), [], file + ' 里请改走 skinVar()');
     }
@@ -618,8 +722,8 @@ describe('flow-ribbon ② 样式与零 DOM 纪律', () => {
     assert.ok(clean.includes('--flow-ribbon-plot-h, '), '画布高取算出来的那个变量');
     assert.ok(clean.includes('max(' + String(FLOW_RIBBON_NODE_COL_PX) + 'px, 28%)'),
       '两列节点宽度取常量（判据读的是出口那个常量，不是抄一份字面量）');
-    /* 节点内宽是「读数放不放得进框」那把尺子的分母（算数在 `model.ts`）：样式里不许再写一遍。 */
-    for (const file of ['style.ts', 'style-forms.ts']) {
+    /* 节点内宽是「读数放不放得进框」那把尺子的分母（算数在模型侧）：样式里不许再写一遍。 */
+    for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       assert.equal(new RegExp('\\b' + String(FLOW_RIBBON_NODE_INNER_PX) + '\\b').test(src), false,
         file + ' 里写了节点内宽的字面量（那是估宽用的常量，样式只许用列宽常量）');
@@ -639,7 +743,7 @@ describe('flow-ribbon ② 样式与零 DOM 纪律', () => {
   it('`dist/components/flow-ribbon/**` 零 DOM（剥字面量与注释后逐名扫）', () => {
     const dir = join(PKG, 'dist', 'components', 'flow-ribbon');
     const files = readdirSync(dir).filter((n) => n.endsWith('.js'));
-    assert.ok(files.length >= 6, '至少该有 index／attrs／fields／model／render／style／style-forms 的产物：' + files.join('、'));
+    assert.ok(files.length >= 7, '至少该有 index／attrs／fields／model／render／style／style-forms／style-rails／forms-rails 的产物：' + files.join('、'));
     const stripLiterals = (code) => code
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/`(?:[^`\\]|\\.)*`/g, '``')
@@ -653,14 +757,17 @@ describe('flow-ribbon ② 样式与零 DOM 纪律', () => {
     }
   });
 
-  it('槽位闭集与类名一致（判据不另抄一份字面量）', () => {
-    assert.equal(flowRibbonSlot('plot'), FLOW_RIBBON_CLASS + '-plot');
-    assert.equal(flowRibbonSlot('plot', 'x-'), 'x-block-flow-ribbon-plot');
-    for (const slot of FLOW_RIBBON_SLOTS) assert.ok(flowRibbonSlot(slot).startsWith(FLOW_RIBBON_CLASS + '-'));
+  it('槽位闭集与产物一致：闭集里每个槽都在样式或三形态标记里出现（闭集改名／漏槽这里变红）', () => {
+    const allHtml = [SANKEY, MATRIX, RAILS, THIN].join('');
+    for (const slot of FLOW_RIBBON_SLOTS) {
+      const cls = flowRibbonSlot(slot);
+      assert.ok(clean.includes(cls) || allHtml.includes(cls), '闭集槽 ' + slot + ' 在样式与标记里都找不到');
+    }
+    assert.ok(flowRibbonSlot('plot', 'x-').startsWith('x-'), '前缀透传不断（类名必须跟前缀走）');
   });
 
-  it('两份样式源码里不留没人用的槽位助手（声明了裸槽助手 `c()` 就得真用到）', () => {
-    for (const file of ['style.ts', 'style-forms.ts']) {
+  it('样式源码里不留没人用的槽位助手（声明了裸槽助手 `c()` 就得真用到）', () => {
+    for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       if (!src.includes('const c = (slot: FlowRibbonSlot)')) continue;
       const uses = (src.match(/(?:^|[^\w.])c\(/g) || []).length;
@@ -726,7 +833,7 @@ function assertStaticGeometry(css, html) {
   const narrowest = WIDTHS[0];
   const wide = [...px(html), ...px(css)].filter((v) => v > narrowest);
   assert.deepEqual(wide, [], '出现过不了最窄档（' + narrowest + '）的固定宽度：' + wide.join('、'));
-  const percents = [...html.matchAll(/--flow-ribbon-(?:l|r|t|h)[12]?: ([\d.]+)%/g)].map((m) => Number(m[1]));
+  const percents = [...html.matchAll(/--flow-ribbon-(?:l|r|t|h|w|mix)[12]?: ([\d.]+)%/g)].map((m) => Number(m[1]));
   assert.ok(percents.length > 0, '几何必须是百分比（判据会空转）');
   for (const v of percents) assert.ok(v >= 0 && v <= 100 + 0.05, '百分比越界：' + v);
   const clean = stripComments(css);
