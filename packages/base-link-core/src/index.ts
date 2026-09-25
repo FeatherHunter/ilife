@@ -10,6 +10,23 @@ export { LinkCoreError, EnvelopeError, RegistryError, RunnerError, ConfigError }
 // 取用方：各技能的数据族目录命令（卡路里先行 `skill-calorie/src/data/schema.ts`）。
 export { readDataSchema } from './data-schema.js';
 export type { DataColumn, DataTableSchema, DataSchemaDb } from './data-schema.js';
+// 引擎最小路径（#955）：单表查询单的解析、目录校验与结果集装配，见 src/data-query.ts。
+// 取用方：各技能的数据族引擎命令（卡路里先行 `skill-calorie/src/data/query.ts`）。
+export { executeDataQueries } from './data-query.js';
+export type {
+  DataQueryDb,
+  DataQueryParam,
+  DataCondition,
+  DataWhereGroup,
+  DataQueryWhere,
+  DataOrderBy,
+  DataQuery,
+  DataQueriesRequest,
+  DataField,
+  DataSuccessItem,
+  DataErrorItem,
+  DataResultItem,
+} from './data-query.js';
 // 配置件（#694）：定位／读写校验／重置为默认，见 src/config/。
 export { configPaths, loadConfig, saveConfig, resetConfig } from './config/index.js';
 export type { ConfigPaths, LoadedConfig, ConfigRecord, ConfigGroup, ConfigValue } from './config/index.js';

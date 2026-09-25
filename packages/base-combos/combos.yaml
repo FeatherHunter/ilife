@@ -274,6 +274,11 @@ combos:
     shape: receipt
     title: 同步到训记
     cmd: skill-calorie
+  - key: calorie.data.query
+    skill: calorie
+    shape: resultset
+    title: 数据查询
+    cmd: skill-calorie
   - key: calorie.data.schema
     skill: calorie
     shape: resultset

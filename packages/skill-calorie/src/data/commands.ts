@@ -11,7 +11,9 @@
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { runDataSchema } from './schema.js';
+import { runDataQuery } from './query.js';
 
 export const DATA_COMMANDS = [
   { kind: 'read', key: 'calorie.data.schema', shape: 'resultset', title: '数据目录', surface: 'program', run: runDataSchema, example: 'calorie-cmd-read calorie.data.schema' },
+  { kind: 'read', key: 'calorie.data.query', shape: 'resultset', title: '数据查询', surface: 'program', run: runDataQuery, example: 'calorie-cmd-read calorie.data.query --params \'{"queries":[{"from":"weight_log","select":["date","weight_kg"],"orderBy":[{"field":"date","dir":"asc"}]}]}\'' },
 ] satisfies readonly CommandSpec[];
