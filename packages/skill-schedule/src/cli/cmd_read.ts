@@ -3,12 +3,15 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行（**缺省即落盘**：给 `delivery{mode,path,bytes}`，#843）。
 import type { Envelope } from 'base-link-core';
+import { DatabaseSync } from 'node:sqlite';
 import { REGISTRY } from './registry.js';
 import type { CommandSpec, ViewOut, WriteOut } from '../shared/commandSpec.js';
 import {
   ScheduleFetchError, SchedulePolicyError,
   resolveDbPath, openScheduleDb, closeScheduleDb,
+  resolveDbDir, dbFilename, dbFileOf,
 } from '../fetch/index.js';
+import type { ScheduleDb } from '../fetch/db.js';
 import type { ScheduleKey } from '../policy/index.js';
 import {
   scheduleShapeFor, buildScheduleEnvelope, renderEnvelopeHtml, assertHtmlSize,
@@ -45,6 +48,34 @@ function runWithDb(spec: CommandSpec, params: Record<string, unknown>): ViewOut 
     return spec.run(params, handle);
   } finally {
     closeScheduleDb(handle);
+  }
+}
+
+/** #961 · 数据族只读开库：不建表、不迁移、不写库（只跑 `SELECT` 与 `PRAGMA`）。
+ *
+ * 现有读命令（视图族）走上面的 `runWithDb`（`openScheduleDb` 建表＋改名＋补列）；
+ * 数据族走这里：纯函数算出库文件路径（不 `mkdir`），只读打开，包成 `ScheduleDb`
+ * （`initialized: false`，不打初始化提示），跑完即关。库文件不存在即大声失败（exit 4）。
+ * 本族不许顺手改视图族：两条路各走各的，既有载荷形态一行不动。
+ */
+function isScheduleDataKey(key: string): boolean {
+  return key === 'schedule.data.schema' || key === 'schedule.data.query';
+}
+
+function runWithDbReadOnly(spec: CommandSpec, params: Record<string, unknown>): ViewOut | WriteOut {
+  const dbDir = resolveDbDir();
+  const dbFile = dbFileOf(dbDir, dbFilename());
+  let db: DatabaseSync;
+  try {
+    db = new DatabaseSync(dbFile, { readOnly: true });
+  } catch (e) {
+    throw new ScheduleFetchError('SCHEDULE_DB_UNREADABLE', '作息 DB 只读打开失败：' + dbFile, { cause: e });
+  }
+  const handle: ScheduleDb = { db, path: dbFile, initialized: false };
+  try {
+    return spec.run(params, handle);
+  } finally {
+    try { db.close(); } catch { /* 关闭失败不谎报 */ }
   }
 }
 
@@ -102,6 +133,20 @@ async function main() {
     if (!spec) fail(3, '未知 schedule key：' + key);
     // #203：`schedule.help.lookup` 在**开库之前**走（只读页不建库）；其余键走开库分支。
     // 开库与否是基础设施事实（同配置／体检拦截口），不是命令事实，故这一个分支住出口。
+    // #961 · 数据族走只读分支（不建表、不迁移、不落盘）：`--html` 显式落点也不吃（本族不产文件）。
+    if (isScheduleDataKey(key)) {
+      const r: ViewOut | WriteOut = runWithDbReadOnly(spec, params);
+      for (const n of ('notes' in r ? r.notes ?? [] : [])) note(n);
+      env = buildScheduleEnvelope(key, r.data);
+      exitCode = 'exitCode' in r ? r.exitCode ?? 0 : 0;
+      clearTimeout(timer);
+      process.stdout.write(JSON.stringify(env) + '\n');
+      if (exitCode !== 0) {
+        note('这一趟没达成（补偿路径见回执 remote 字段）：exit ' + exitCode);
+        process.exit(exitCode);
+      }
+      return;
+    }
     const r: ViewOut | WriteOut = key === 'schedule.help.lookup'
       ? (spec.run as (p: Record<string, unknown>) => ViewOut)(params)
       : runWithDb(spec, params);

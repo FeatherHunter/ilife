@@ -4,6 +4,8 @@ import type { EnvelopeShape } from 'base-link-core';
 export const SCHEDULE_KEYS = [
   'schedule.plan.write',
   'schedule.record.write',
+  'schedule.data.query',
+  'schedule.data.schema',
   'schedule.help.lookup',
   'schedule.plan.today',
   'schedule.record.compare',
@@ -15,6 +17,8 @@ export type ScheduleCommandKey = (typeof SCHEDULE_KEYS)[number];
 export const SCHEDULE_KEY_SHAPES: Record<ScheduleCommandKey, EnvelopeShape> = {
   'schedule.plan.write': 'receipt',
   'schedule.record.write': 'receipt',
+  'schedule.data.query': 'resultset',
+  'schedule.data.schema': 'resultset',
   'schedule.help.lookup': 'list',
   'schedule.plan.today': 'list',
   'schedule.record.compare': 'analysis',

@@ -5,12 +5,14 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpLookup } from '../dist/help/index.js';
 import { SCHEDULE_KEY_SHAPES } from '../dist/render/index.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
 
 export function buildHelpBlock() {
-  const keys = Object.keys(SCHEDULE_KEY_SHAPES).sort();
+  // #961 · 程序面键（数据族）不进说明面：只列模型可见键（注册表 surface 不是 program 的）。
+  const keys = Object.keys(SCHEDULE_KEY_SHAPES).filter((k) => REGISTRY[k]?.surface !== 'program').sort();
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');

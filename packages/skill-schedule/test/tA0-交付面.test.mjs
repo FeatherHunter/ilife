@@ -161,6 +161,7 @@ describe('#843 交付面', () => {
     for (const key of Object.keys(REGISTRY)) {
       const spec = REGISTRY[key];
       if (key === 'schedule.help.lookup') continue;   // HELP 不在页面命名族里（见 ①）
+      if (spec.surface === 'program') continue;   // #961 · 程序面键（数据族）不产文件，不进页面命名族
       const wakes = WAKE_TABLE.filter((e) => e.key === key).map((e) => e.phrase);
       // ① 标题里的每个字都要有出处：本键唤醒词的并集 ∪ HELP 正文里的词。（`作息对比` 用「作息」＋
       //    本键唤醒词里的「对比」拼成，两段都在 HELP 里有出处；本键恰没有一条唤醒词能当这一家族的名字。）

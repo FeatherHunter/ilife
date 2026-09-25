@@ -4,10 +4,11 @@
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { ADMIN_COMMANDS } from '../admin/index.js';
 import { ANALYZE_COMMANDS } from '../analyze/index.js';
+import { DATA_COMMANDS } from '../data/index.js';
 import { PLAN_COMMANDS } from '../plan/index.js';
 import { QUERY_COMMANDS } from '../query/index.js';
 import { WRITE_COMMANDS } from '../write/index.js';
-const SOURCES: readonly (readonly CommandSpec[])[] = [ADMIN_COMMANDS, ANALYZE_COMMANDS, PLAN_COMMANDS, QUERY_COMMANDS, WRITE_COMMANDS];
+const SOURCES: readonly (readonly CommandSpec[])[] = [ADMIN_COMMANDS, ANALYZE_COMMANDS, DATA_COMMANDS, PLAN_COMMANDS, QUERY_COMMANDS, WRITE_COMMANDS];
 export const REGISTRY: Record<string, CommandSpec> = {};
 for (const list of SOURCES) for (const s of list) REGISTRY[s.key] = s;
 export const REGISTRY_KEYS = Object.keys(REGISTRY).sort();

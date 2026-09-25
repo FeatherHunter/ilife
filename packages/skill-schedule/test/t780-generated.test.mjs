@@ -13,7 +13,8 @@ test('780e · 三件生成物字节 ＝ 生成器渲染', async () => {
   const gen = await import(pathToFileURL(GEN).href);
   const { capabilities, routes } = await gen.loadAll();
   const entries = gen.merge(capabilities);
-  assert.equal(entries.length, 8);
+  // #961 起 10＝8 唤醒词键＋2 程序面数据族键（`schedule.data.*`，只住键表／注册表，不进路由与 HELP）
+  assert.equal(entries.length, 10);
   const targets = [
     [join(PKG, 'src', 'cli', 'keys.ts'), gen.renderKeysTs(entries)],
     [join(PKG, 'src', 'cli', 'registry.ts'), gen.renderRegistryTs(capabilities)],

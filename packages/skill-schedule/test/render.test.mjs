@@ -8,12 +8,13 @@ import {
   buildRecordCompare, buildCategoryDeep, buildAnomaly, buildPlanToday, buildPlanReceipt, buildHelpItems,
   ScheduleRenderError,
 } from '../dist/index.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 
 const REC = { id: 1, date: '2026-09-06', time_start: '09:00', time_end: '10:00', duration_minutes: 60, activity: '调优', category: '工作.AI调优' };
 const PLAN = { id: 2, date: '2026-09-06', time_start: '09:00', time_end: '10:00', title: '晨会', category: null, completion: null, feishu_event_id: null };
 
-describe('作息渲染 render（8 键全票）', () => {
-  it('8 联动 shape 分配', () => {
+describe('作息渲染 render（8 键全票＋2 程序面数据族键）', () => {
+  it('8 联动 shape 分配＋2 程序面数据族键', () => {
     assert.deepEqual(SCHEDULE_KEY_SHAPES, {
       'schedule.record.today': 'list',
       'schedule.record.range': 'stat',
@@ -23,6 +24,9 @@ describe('作息渲染 render（8 键全票）', () => {
       'schedule.plan.today': 'list',
       'schedule.plan.write': 'receipt',
       'schedule.help.lookup': 'list',
+      // #961 · 数据族程序面键（只给程序用，不进 HELP 与路由，不渲染页面）
+      'schedule.data.schema': 'resultset',
+      'schedule.data.query': 'resultset',
     });
     assert.throws(() => scheduleShapeFor('schedule.nope'), ScheduleRenderError);
   });
@@ -62,9 +66,14 @@ describe('作息渲染 render（8 键全票）', () => {
     ]);
     assert.match(an.summary, /2026-09-06/);
   });
-  it('模板 8 件齐名 + 三标记 + 落盘快照', () => {
+  it('模板 8 件齐名 + 三标记 + 落盘快照（程序面键无模板）', () => {
     assert.equal(SCHEDULE_TEMPLATES.length, 8);
+    // #961 · 程序面数据族键不渲染页面（无模板映射）：只验 8 模型可见键，跳过 surface program。
     for (const key of Object.keys(SCHEDULE_KEY_SHAPES)) {
+      if (REGISTRY[key]?.surface === 'program') {
+        assert.throws(() => templateFor(key), ScheduleRenderError, key + ' 程序面键须无模板映射');
+        continue;
+      }
       const t = loadTemplate(templateFor(key));
       assert.match(t, /schedule-cmd-read/);
       for (const m of ['<!--SHARED-CSS-->', '<!--SHARED-HELPERS-->', '<!--CONTENT-->']) {
