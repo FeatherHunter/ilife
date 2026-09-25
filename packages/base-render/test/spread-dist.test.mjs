@@ -2,7 +2,7 @@
  *
  * 覆盖六组判据：
  *  ① **渲染契约**：两档各自的骨架与枚数／**刻度与轴域同一份真值**（从**印出来的刻度**反推轴域，
- *     再把每根柱的 `bottom`／`height`／每个中位块的 `bottom`／每枚刻度自己的 `top` 逐点对账；
+ *     再把每根柱的 `bottom`／`height`／每个中位块的 `bottom`／每枚刻度自己的 `bottom` 逐点对账；
  *     轴域不整齐、全等值、12 位金额三种压力样例都在里面）／缺中位数那一支／转义面／
  *     **全部**非法入参分支（每个都断 `BlocksError`）；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且**只出现一次**、
@@ -10,7 +10,7 @@
  *     零键盘语汇／零可点元素／**窄档阈值只有一处来源**；
  *  ③ **加法式**：本件只读自己的类名；不启用它的页面零命中、逐字节不变；
  *  ④ **四档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 320／390／620／1280 下零横向溢出
- *     （含长口径／长单位两种压力样例）、首末刻度**中心**对到轴顶与轴底（差 ≤1.5px）、
+ *     （含长口径／长单位两种压力样例）、**每一枚**刻度**中心**对到它那个值的位置（差 ≤1.5px）、
  *     窄档柱区确实矮一档（`@container` 真在生效）、日子与刻度零截断；
  *  ⑤ **皮肤纪律**：同一份入参渲染三次逐字节相同、标记不带皮肤类、真机上四套皮肤里的 `innerHTML`
  *     逐字节相同、分位尺正中那一档真取到取值表里的软底与字色；
@@ -40,6 +40,7 @@ import {
   spreadDistSlot,
 } from '../dist/components/spread-dist/index.js';
 import { SPREAD_DIST_CLASS, SPREAD_DIST_FORMS } from '../dist/components/spread-dist/attrs.js';
+import { niceAxis, tickValues } from '../dist/components/spread-dist/scale.js';
 import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { SKINS, skinCss, skinClass } from '../dist/components/skin/index.js';
@@ -149,10 +150,10 @@ function expectPct(value, axis) {
 const slotTexts = (html, slot) => [...html.matchAll(new RegExp('class="' + spreadDistSlot(slot) + '"[^>]*>([^<]*)<', 'g'))]
   .map((m) => m[1]);
 
-/** 纵轴刻度：文字 ＋ 它自己的 `top`（两样都从同一个轴域出）。 */
+/** 纵轴刻度：文字 ＋ 它自己的 `bottom`（两样都从同一个轴域出）。 */
 const yticksOf = (html) => [...html.matchAll(
-  new RegExp('class="' + spreadDistSlot('ytick') + '" style="top: ([\\d.-]+)%">([^<]*)<', 'g'),
-)].map((m) => ({ topPct: Number(m[1]), text: m[2] }));
+  new RegExp('class="' + spreadDistSlot('ytick') + '" style="bottom: ([\\d.-]+)%">([^<]*)<', 'g'),
+)].map((m) => ({ bottomPct: Number(m[1]), text: m[2] }));
 
 /** 逐日柱：`bottom` ＋ `height`（区间条）。 */
 const daysOf = (html) => [...html.matchAll(new RegExp(
@@ -258,10 +259,10 @@ describe('spread-dist ① 渲染契约 · 形态 range 逐日范围柱', () => {
       const lows = input.days.map((d) => d.low);
       const highs = input.days.map((d) => d.high);
       assert.ok(axis.lo <= Math.min(...lows) && axis.hi >= Math.max(...highs), name + '：轴域盖不住数据');
-      /* **每枚刻度自己的 `top` 必须等于它那个值在轴域里的位置**（文字与位置同一份真值）。 */
+      /* **每枚刻度自己的 `bottom` 必须等于它那个值在轴域里的位置**（文字与位置同一份真值）。 */
       for (const t of ticks) {
-        assert.equal(t.topPct, expectPct(tickNum(t.text), axis),
-          name + '：刻度「' + t.text + '」的位置与它自己的值对不上（' + t.topPct + '）');
+        assert.equal(t.bottomPct, expectPct(tickNum(t.text), axis),
+          name + '：刻度「' + t.text + '」的位置与它自己的值对不上（' + t.bottomPct + '）');
       }
       /* **逐日对账**：每根范围条的底／顶与每个中位块，都等于「按刻度反推的轴域」算出来的位置。 */
       const bars = daysOf(h);
@@ -284,6 +285,49 @@ describe('spread-dist ① 渲染契约 · 形态 range 逐日范围柱', () => {
       assert.ok(percents.length >= input.days.length * 2, '百分比读数太少（判据会空转）');
       for (const v of percents) assert.ok(v >= 0 && v <= 100, '百分比越界：' + v);
     }
+  });
+
+  it('**微小读数不画假图**：整批 `|读数|≲3e-6` 时刻度不印两个 `0`、柱不贴边、aria 不写 `最低 0，最高 0`', () => {
+    const tiny = renderSpreadDist({
+      title: '微量分布', unit: '克',
+      days: [
+        { label: 'a', low: 0.0000001, median: 0.0000002, high: 0.0000004 },
+        { label: 'b', low: 0.00000015, median: 0.00000025, high: 0.00000045 },
+        { label: 'c', low: 0.0000002, median: 0.0000003, high: 0.0000005 },
+      ],
+    });
+    const ticks = yticksOf(tiny);
+    assert.ok(ticks.length >= 3, '刻度枚数');
+    const nums = ticks.map((t) => tickNum(t.text));
+    assert.ok(nums.every((v) => Number.isFinite(v)), '刻度读回非有限数：' + JSON.stringify(ticks.map((t) => t.text)));
+    assert.ok(new Set(nums).size >= 2, '刻度印重了（两个 `0`）：' + JSON.stringify(ticks.map((t) => t.text)));
+    assert.ok(nums.some((v) => v !== 0), '刻度全是 `0`：' + JSON.stringify(ticks.map((t) => t.text)));
+    /* 可见文本与无障碍名必须写出真值（旧实现 `toFixed(2)` 把 1e-7 写成 `0`）。 */
+    assert.ok(tiny.includes('0.0000001'), 'title 里 1e-7 被写成 `0`：'
+      + (tiny.match(/title="[^"]*/) || [''])[0]);
+    assert.ok(tiny.includes('最高 0.0000006'), 'aria 把 6e-7 写成 `最高 0`：'
+      + (tiny.match(/纵轴最低 [^。]*/) || [''])[0]);
+    const bars = daysOf(tiny);
+    assert.ok(bars.every((b) => b.bottomPct > 0 && b.bottomPct + b.heightPct < 100),
+      '柱全夹到 0%／100%（真值被吞了）：' + JSON.stringify(bars));
+  });
+
+  it('**非零读数不写成 `0`**：`0.004` 不出 `最低 0 元`（同图刻度栏有三位小数时 title 必须跟上）', () => {
+    const small = renderSpreadDist({
+      title: '小额分布', unit: '元',
+      days: [
+        { label: 'a', low: 0.004, median: 0.006, high: 0.01 },
+        { label: 'b', low: 0.005, median: 0.007, high: 0.011 },
+        { label: 'c', low: 0.006, median: 0.008, high: 0.012 },
+      ],
+    });
+    assert.ok(small.includes('0.004'), 'title／aria 里 0.004 被写成 `0`：'
+      + (small.match(/title="[^"]*/) || [''])[0]);
+    assert.equal(/最低 0[，，,]/.test(small), false, 'title 把 0.004 写成 `最低 0`：'
+      + (small.match(/title="[^"]*/) || [''])[0]);
+    const ticks = yticksOf(small);
+    assert.ok(ticks.some((t) => /\.\d{3}/.test(t.text)), '刻度栏应有三位小数：'
+      + JSON.stringify(ticks.map((t) => t.text)));
   });
 
   it('**缺中位数就不出中位块**：那一格只画区间，`title` 里写 `—`，不拿最低或最高顶替', () => {
@@ -413,6 +457,29 @@ describe('spread-dist ① 渲染契约 · 公共面与非法入参', () => {
     assert.equal(/e,/.test(huge), false, '指数写法里不许插进逗号：' + (huge.match(/[^>]*e,[^<]*/) || [''])[0]);
     assert.equal(/,\+/.test(huge), false);
     assert.ok(huge.includes('e+21'), '量级大到只给指数时原样写：' + (huge.match(/class="[^"]*-ytick"[^>]*>[^<]*/) || [''])[0]);
+  });
+
+  it('**±1e308 级区间不渲染**：轴域算不出来一律 `badInput`（旧实现 `ticks=Infinity` 无限 push 到 OOM）', () => {
+    assert.equal(throwsBlocks(() => niceAxis(-1e308, 1e308)), true, 'niceAxis(±1e308) 应拒（旧实现回 ticks=Infinity）');
+    const extreme = {
+      title: 'x',
+      days: [
+        { label: 'a', low: -1e308, median: 0, high: 1e308 },
+        { label: 'b', low: -1e308, median: 0, high: 1e308 },
+        { label: 'c', low: -1e308, median: 0, high: 1e308 },
+      ],
+    };
+    assert.equal(throwsBlocks(() => renderSpreadDist(extreme)), true, '整图 ±1e308 应拒');
+    /* 枚数先夹常量再进循环：伪造超限轴域也只出 `MAX_TICKS` 枚（旧实现按数据出 100 枚）。 */
+    assert.ok(tickValues({ lo: 0, hi: 99, step: 1, decimals: 0, ticks: 100 }).length <= SPREAD_DIST_MAX_TICKS,
+      'tickValues 未夹到常量上限');
+    /* 边界自证：`1e21` 与 12 位金额是合法输入，不许误杀。 */
+    assert.ok(renderSpreadDist({
+      title: 'x',
+      days: [{ label: 'a', low: 1e21, median: 2e21, high: 3e21 },
+        { label: 'b', low: 1.1e21, median: 2.1e21, high: 3.1e21 },
+        { label: 'c', low: 1.2e21, median: 2.2e21, high: 3.2e21 }],
+    }).length > 0, '1e21 应正常渲染');
   });
 
   it('入参违规一律拒（不静默降级）：形态／空白串／天数／日子／区间／档数／档名 逐条', () => {
@@ -582,6 +649,31 @@ describe('spread-dist ② 样式与零 DOM 纪律', () => {
     }
   });
 
+  it('**刻度位置由值算出来**：父级 `relative` ＋ 每枚 `absolute ＋ bottom`（行内 `top` 恒零枚）', () => {
+    const ticksRule = ruleOf(clean, '.' + spreadDistSlot('yticks'));
+    assert.ok(/position:\s*relative/.test(ticksRule), '刻度列必须是定位锚点（position: relative）：' + ticksRule);
+    assert.equal(/space-between/.test(ticksRule), false,
+      '刻度列不许靠 space-between 就位（行内 top 会被 static 忽略）：' + ticksRule);
+    const tickRule = ruleOf(clean, '.' + spreadDistSlot('ytick'));
+    assert.ok(/position:\s*absolute/.test(tickRule), '每枚刻度必须绝对定位（position: absolute）：' + tickRule);
+    assert.ok(/transform:\s*translateY\(50%\)/.test(tickRule), '每枚刻度把中心对到值位置：' + tickRule);
+    /* 隐形撑子：各枚绝对定位后列里没有在流内容，列宽由它撑住（同字同限，不上屏）。 */
+    const sizerRule = ruleOf(clean, '.' + spreadDistSlot('yticks-sizer'));
+    assert.ok(/visibility:\s*hidden/.test(sizerRule), '撑子不上屏：' + sizerRule);
+    assert.ok(/max-width:\s*7em/.test(sizerRule), '撑子与刻度同限（7em）：' + sizerRule);
+    for (const input of [RANGE_INPUT, ODD_INPUT, FLAT_INPUT, HUGE_INPUT]) {
+      const h = renderSpreadDist(input);
+      assert.equal(countOf(h, 'style="top: '), 0, '刻度行内不许再写 top（static 下被浏览器忽略）：'
+        + (h.match(/style="top: [^"]*/) || [''])[0]);
+      const found = yticksOf(h);
+      assert.ok(found.length >= 3, '行内 bottom 解析不到（判据会空转）');
+      /* 撑子逐行一份：每一枚刻度的文字在撑子里都有一行（列宽与在流时一致）。 */
+      const sizer = h.match(new RegExp('class="' + spreadDistSlot('yticks-sizer') + '">(.*?)<\\/span>'));
+      assert.ok(sizer !== null, '缺隐形撑子（列宽会塌成 0）');
+      for (const t of found) assert.ok(sizer[1].includes(t.text), '撑子里缺刻度「' + t.text + '」那一行');
+    }
+  });
+
   it('尺寸事实写在一处：柱区两档高度取常量，宽窄由容器查询切换，刻度列**跟着柱区走**', () => {
     assert.ok(clean.includes('height: ' + String(SPREAD_DIST_DAYS_PX) + 'px'));
     assert.ok(clean.includes('height: ' + String(SPREAD_DIST_NARROW_DAYS_PX) + 'px'));
@@ -589,9 +681,16 @@ describe('spread-dist ② 样式与零 DOM 纪律', () => {
     const ticks = ruleOf(clean, '.' + spreadDistSlot('yticks'));
     assert.ok(ticks.includes('height: ' + String(SPREAD_DIST_DAYS_PX) + 'px'),
       '刻度列必须与柱区同高（不然刻度与柱子不是同一把尺）：' + ticks);
+    /* 窄档按**选择器逐条读**：`@container` 块里 `.days` 与 `.yticks` 各自一条（子串级断言会被另一条的同字样顶包）。 */
     const narrow = clean.slice(clean.indexOf('@container'));
-    assert.ok(narrow.includes('.' + spreadDistSlot('yticks')) && narrow.includes('height: '
-      + String(SPREAD_DIST_NARROW_DAYS_PX) + 'px'), '窄档里刻度列也要跟着柱区矮一档');
+    const daysNarrow = ruleOf(narrow, '.' + spreadDistSlot('days'));
+    assert.ok(daysNarrow.includes('height: ' + String(SPREAD_DIST_NARROW_DAYS_PX) + 'px'),
+      '窄档柱区高度：' + daysNarrow);
+    const ticksNarrow = ruleOf(narrow, '.' + spreadDistSlot('yticks'));
+    assert.ok(ticksNarrow.includes('height: ' + String(SPREAD_DIST_NARROW_DAYS_PX) + 'px'),
+      '窄档里刻度列也要跟着柱区矮一档：' + ticksNarrow);
+    assert.equal(ticksNarrow.includes('height: ' + String(SPREAD_DIST_DAYS_PX) + 'px'), false,
+      '窄档刻度列用了宽档高度（变异：128px 改回 150px 必须红）：' + ticksNarrow);
   });
 
   it('零键盘语汇、零可点元素（本件是纯静态图）', () => {
@@ -747,16 +846,21 @@ describe('spread-dist ④⑤ 四档几何与皮肤纪律（真机 headless Chrom
             }
             over.push({ width, skin, name: c.name, scrollW: root[0].maxScrollW, clientW: root[0].maxClientW });
             if (c.name !== 'range') continue;
-            /* **刻度与柱子同一把尺**（真机读数）：首末两枚刻度的**中心**必须落在柱区上沿与下沿。 */
+            /* **刻度与柱子同一把尺**（真机读数）：**每一枚**刻度的**中心**必须落在它那个值的位置上
+               （旧判据只量首末——首末被 space-between 结构性钉死恒 0px，位移最大的中间枚从没被量过）。 */
             const box = await page.ev('(function(){var root=document.querySelector('
               + JSON.stringify(scope + '.' + SPREAD_DIST_CLASS) + ');'
               + 'var box=root.querySelector(' + JSON.stringify('.' + spreadDistSlot('days')) + ');'
               + 'var ticks=[].slice.call(root.querySelectorAll(' + JSON.stringify('.' + spreadDistSlot('ytick')) + '));'
-              + 'var b=box.getBoundingClientRect();var first=ticks[0].getBoundingClientRect();'
-              + 'var last=ticks[ticks.length-1].getBoundingClientRect();'
-              + 'var cols=[].slice.call(box.querySelectorAll(' + JSON.stringify('.' + spreadDistSlot('day')) + '));'
+              + 'var b=box.getBoundingClientRect();var cols=[].slice.call(box.querySelectorAll('
+              + JSON.stringify('.' + spreadDistSlot('day')) + '));'
               + 'var cw=cols.length===0?0:Math.round(cols[0].getBoundingClientRect().width*10)/10;'
-              + 'return {n:ticks.length,daysH:Math.round(b.height),colW:cw,'
+              + 'var pos=ticks.map(function(el){var r=el.getBoundingClientRect();'
+              + 'var pct=parseFloat((el.style.bottom||"").replace("%",""));'
+              + 'var expect=b.bottom-pct/100*b.height-r.height/2;'
+              + 'return {pct:pct,delta:Math.round((r.top-expect)*10)/10,h:Math.round(r.height*10)/10};});'
+              + 'var first=ticks[0].getBoundingClientRect();var last=ticks[ticks.length-1].getBoundingClientRect();'
+              + 'return {n:ticks.length,daysH:Math.round(b.height),colW:cw,pos:pos,'
               + 'top:Math.round((first.top+first.height/2-b.top)*10)/10,'
               + 'bottom:Math.round((last.top+last.height/2-b.bottom)*10)/10};}())');
             assert.ok(box.n >= 3, width + ' 档 ' + skin + '：刻度枚数不对');
@@ -764,6 +868,12 @@ describe('spread-dist ④⑤ 四档几何与皮肤纪律（真机 headless Chrom
               + '：轴顶刻度没落在柱区上沿（差 ' + box.top + 'px）');
             assert.ok(Math.abs(box.bottom) <= 1.5, width + ' 档 ' + skin
               + '：轴底刻度没落在柱区下沿（差 ' + box.bottom + 'px）');
+            for (const p of box.pos) {
+              assert.ok(Number.isFinite(p.pct) && p.pct >= 0 && p.pct <= 100,
+                width + ' 档 ' + skin + '：刻度行内 bottom 不是百分比（' + JSON.stringify(p) + '）');
+              assert.ok(Math.abs(p.delta) <= 1.5, width + ' 档 ' + skin
+                + '：bottom=' + p.pct + '% 那枚刻度中心偏了 ' + p.delta + 'px（高 ' + p.h + 'px）');
+            }
             seen.push({ width, skin, name: c.name, daysH: box.daysH, colW: box.colW,
               tickTop: box.top, tickBottom: box.bottom });
           }

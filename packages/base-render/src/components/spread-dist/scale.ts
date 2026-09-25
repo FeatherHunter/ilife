@@ -8,7 +8,7 @@
  *
  *  三条口径：
  *   1. **坐标只有一处算**：`upPct()` 是本件唯一的坐标映射（数据 → 从下往上的百分比）。
- *      逐日柱区里**每根范围条的 `bottom`／`height`、每个中位块的 `bottom`、每一枚纵轴刻度的 `top`**
+ *      逐日柱区里**每根范围条的 `bottom`／`height`、每个中位块的 `bottom`、每一枚纵轴刻度的 `bottom`**
  *      全都从它出；刻度**文字**也从同一个轴域出 —— 两处各写一套必然走散
  *      （先例：轴域 0…6000 而刻度铺到 8,000，读者按刻度读出来的值系统性偏小）。
  *   2. **不做轴内距**：数据直接落在轴上（轴底刻度＝底轴、轴顶刻度＝轴顶）。
@@ -18,7 +18,8 @@
  *  兄弟件那边同一段轴域算法各有一份（本仓契约：件与件只经对方 `index.ts` 互相引用，本批工艺又只许
  *  **新建**文件、不许改 `scatter-fit`）——收口时若要合并，落点是共用位 `shared/axis.ts`。
  */
-import { SPREAD_DIST_AXIS_TICKS } from './attrs.js';
+import { SPREAD_DIST_AXIS_TICKS, SPREAD_DIST_MAX_TICKS } from './attrs.js';
+import { badInput } from '../shared/validate.js';
 
 /* ── 小工具（数字 → 字；本件不引格式化库） ─────────────────────────── */
 
@@ -49,12 +50,24 @@ function numText(v: number, decimals: number): string {
   return dot < 0 ? groupInt(s) : groupInt(s.slice(0, dot)) + s.slice(dot);
 }
 
-/** 读数里的数字（`title`／无障碍名用：最多两位小数，末尾的零去掉）。 */
+/** 读数里的数字（`title`／无障碍名用：12 位定点去零，保证非零读数不写成 `0`；
+ *  小到只给指数写法的读数展开成定点（与刻度同形，不与刻度写两样）。 */
 export function plainText(v: number): string {
-  const s = String(Number(v.toFixed(2)));
+  const s = v.toFixed(12);
   if (s.includes('e') || s.includes('E')) return s;
-  const dot = s.indexOf('.');
-  return dot < 0 ? groupInt(s) : groupInt(s.slice(0, dot)) + s.slice(dot);
+  let n = String(Number(s));
+  if (/e\+/.test(n)) return n;
+  if (/e-/.test(n)) {
+    /* 定点串直接去零（不经 `Number()` 回绕，否则又变回指数；`groupInt` 也不能碰指数串）。 */
+    const dec = Math.min(15, Math.max(0, -Math.floor(Math.log10(Math.abs(v))) + 2));
+    const f = v.toFixed(dec);
+    const at = f.indexOf('.');
+    const frac = at < 0 ? '' : f.slice(at + 1).replace(/0+$/, '');
+    const head = at < 0 ? f : f.slice(0, at);
+    return groupInt(head) + (frac === '' ? '' : '.' + frac);
+  }
+  const dot = n.indexOf('.');
+  return dot < 0 ? groupInt(n) : groupInt(n.slice(0, dot)) + n.slice(dot);
 }
 
 /** 单位那一段（进了可见文本，故与读数同一处拼）：**没有单位就什么都不加**。 */
@@ -80,13 +93,14 @@ function niceStep(raw: number): number {
   return 10 * mag;
 }
 
-/** 间隔要几位小数才写得准（2.5 → 1 位；0.25 → 2 位）。 */
+/** 间隔要几位小数才写得准（2.5 → 1 位；0.25 → 2 位；相对容差：微小步长不坍成 0 位）。 */
 function stepDecimals(step: number): number {
-  for (let d = 0; d <= 6; d += 1) {
+  for (let d = 0; d <= 12; d += 1) {
     const scaled = step * Math.pow(10, d);
-    if (Math.abs(scaled - Math.round(scaled)) < 1e-6) return d;
+    if (!Number.isFinite(scaled)) continue;
+    if (Math.abs(scaled - Math.round(scaled)) < 1e-9 * Math.max(1, Math.abs(scaled))) return d;
   }
-  return 6;
+  return 12;
 }
 
 /** 把数据区间撑成一段好看的轴域。
@@ -99,6 +113,7 @@ function stepDecimals(step: number): number {
  *   · **全部读数同一个值**（`min === max`）：撑开半档出来（不然除零；也不许静默画成一条贴轴的线）；
  *   · 步长小数位有限（至多 6 位）：撑开后若两头量化成同一个数，把上界抬一个步长。 */
 export function niceAxis(min: number, max: number, target: number = SPREAD_DIST_AXIS_TICKS): Axis {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) badInput('spread-dist: 轴域算不出来（读数非有限）');
   let lo = min;
   let hi = max;
   if (!(hi > lo)) {
@@ -106,19 +121,27 @@ export function niceAxis(min: number, max: number, target: number = SPREAD_DIST_
     lo -= pad;
     hi += pad;
   }
-  const step = niceStep((hi - lo) / (target - 1));
+  const span = hi - lo;
+  if (!Number.isFinite(span) || !(span > 0)) badInput('spread-dist: 轴域算不出来（区间非有限或无宽度）');
+  const step = niceStep(span / (target - 1));
+  if (!Number.isFinite(step) || !(step > 0)) badInput('spread-dist: 轴域算不出来（步长非有限）');
   const decimals = stepDecimals(step);
   const loNice = Number((Math.floor(lo / step + 1e-9) * step).toFixed(decimals));
   let hiNice = Number((Math.ceil(hi / step - 1e-9) * step).toFixed(decimals));
   if (!(hiNice > loNice)) hiNice = Number((loNice + step).toFixed(decimals));
-  const ticks = Math.max(2, Math.round((hiNice - loNice) / step) + 1);
+  if (!Number.isFinite(loNice) || !Number.isFinite(hiNice)) badInput('spread-dist: 轴域算不出来（取整后非有限）');
+  const rawTicks = Math.round((hiNice - loNice) / step) + 1;
+  if (!Number.isFinite(rawTicks)) badInput('spread-dist: 轴域算不出来（刻度数非有限）');
+  /* 枚数先夹到常量上限再出：调用方拿它进循环时迭代次数恒 ≤ 上限（不由数据决定）。 */
+  const ticks = Math.max(2, Math.min(SPREAD_DIST_MAX_TICKS, rawTicks));
   return { lo: loNice, hi: hiNice, step, decimals, ticks };
 }
 
-/** 一段轴域上的刻度值（从下往上：第 0 枚＝轴底）。 */
+/** 一段轴域上的刻度值（从下往上：第 0 枚＝轴底；枚数恒 ≤ 常量上限，进循环前已夹过）。 */
 export function tickValues(axis: Axis): number[] {
   const out: number[] = [];
-  for (let i = 0; i < axis.ticks; i += 1) out.push(Number((axis.lo + axis.step * i).toFixed(axis.decimals)));
+  const n = Math.min(axis.ticks, SPREAD_DIST_MAX_TICKS);
+  for (let i = 0; i < n; i += 1) out.push(Number((axis.lo + axis.step * i).toFixed(axis.decimals)));
   return out;
 }
 
@@ -132,7 +155,7 @@ export function tickTexts(axis: Axis, unit: string | undefined): string[] {
 
 /** **唯一的坐标映射**：数据 → 从下往上的百分比（0…100）。
  *
- *  逐日柱区里每根范围条的 `bottom`／`height`、每个中位块的 `bottom`、每枚纵轴刻度的 `top`
+ *  逐日柱区里每根范围条的 `bottom`／`height`、每个中位块的 `bottom`、每枚纵轴刻度的 `bottom`
  *  都只经这一支 —— 刻度与柱子是同一份真值，读者按刻度读出来的值就是柱子的位置。 */
 export function upPct(value: number, axis: Axis): number {
   const raw = (value - axis.lo) / (axis.hi - axis.lo);

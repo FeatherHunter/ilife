@@ -11,7 +11,7 @@
  *   · **算数不在这里**：轴域、刻度文字与刻度位置、每根条与每个中位块的百分比、卡头那句统计、
  *     口径句与无障碍名都在 `forms.ts` 算好；这一支只把**算出来的百分比**写进行内样式
  *     （一条记录一个数），静态规则一律住 `style.ts`；
- *   · **刻度与轴域是同一份真值**：每枚纵轴刻度的 `top` 与每根柱的 `bottom`／`height` 出自同一个
+ *   · **刻度与轴域是同一份真值**：每枚纵轴刻度的 `bottom` 与每根柱的 `bottom`／`height` 出自同一个
  *     `upPct()` —— 读者按刻度读一根柱，读到的是这根柱真正的数；
  *   · **色不是唯一信息**：范围条是淡洗的**面**、中位块是实底的**条**（深浅两档形）＋ 图例给字；
  *     分位尺那边正中那一档有**选中面**（软底＋主色字＋主色描边）＋ 它自己那枚档名；
@@ -53,11 +53,15 @@ function noteHtml(m: SpreadDistModel): string {
 function renderRange(m: SpreadDistModel): string {
   const parts: string[] = [headHtml(m)];
   parts.push('<div class="' + spreadDistSlot('plotbox') + '">');
-  /* 纵轴刻度列：每枚**绝对定位在它自己那个值的位置上**（`top` 是算出来的百分比，与柱子同一个映射），
+  /* 纵轴刻度列：每枚**绝对定位在它自己那个值的位置上**（`bottom` 是算出来的百分比，与柱子同一个映射），
      故刻度文字与柱子读数永远对得上；只有最高那一枚带单位。 */
   parts.push('<div class="' + spreadDistSlot('yticks') + '" aria-hidden="true">'
-    + m.yTicks.map((t) => '<span class="' + spreadDistSlot('ytick') + '" style="top: '
-      + String(t.topPct) + '%">' + esc(t.text) + '</span>').join('')
+    + m.yTicks.map((t) => '<span class="' + spreadDistSlot('ytick') + '" style="bottom: '
+      + String(t.bottomPct) + '%">' + esc(t.text) + '</span>').join('')
+    /* 隐形撑子：各枚刻度绝对定位后列里没有在流内容，列宽会塌成 0（刻度被 0 宽压成细条、悬到框外）。
+       它与刻度同字、逐行一份，只撑列宽（`visibility: hidden`，另见 `style.ts`）。 */
+    + '<span class="' + spreadDistSlot('yticks-sizer') + '">'
+    + m.yTicks.map((t) => esc(t.text)).join('<br>') + '</span>'
     + '</div>');
   parts.push('<div class="' + spreadDistSlot('days') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
   for (const day of m.days) {

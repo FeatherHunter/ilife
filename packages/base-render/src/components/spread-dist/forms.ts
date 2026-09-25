@@ -37,10 +37,10 @@ export interface SpreadDistDayModel {
   readonly title: string;
 }
 
-/** 一枚纵轴刻度：文字 ＋ **它自己那个值的位置**（两者出自同一份轴域）。 */
+/** 一枚纵轴刻度：文字 ＋ **它自己那个值的位置**（两者出自同一份轴域；`bottom` 由 `upPct` 给）。 */
 export interface SpreadDistTickModel {
   readonly text: string;
-  readonly topPct: number;
+  readonly bottomPct: number;
 }
 
 /** 一档（C 档用）。 */
@@ -152,8 +152,8 @@ export function rangeModel(c: SpreadDistCommon, days: readonly SpreadDistDay[]):
     yTicks: tickTexts(axis, c.unit).map((text, i) => ({
       text,
       /* 刻度的位置与柱子的位置**出自同一个 `upPct`**，取的那个数也与刻度文字同一支量化
-         —— 这是「刻度与轴域同一份真值」的落点。 */
-      topPct: upPct(Number((axis.hi - axis.step * i).toFixed(axis.decimals)), axis),
+         —— 这是「刻度与轴域同一份真值」的落点（`absolute ＋ bottom`，父级 `relative`）。 */
+      bottomPct: upPct(Number((axis.hi - axis.step * i).toFixed(axis.decimals)), axis),
     })),
     xLabels: days.map((d) => d.label),
     days: built,

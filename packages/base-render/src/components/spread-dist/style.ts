@@ -8,8 +8,8 @@
  *
  *  两处几何契约（判据钉住）：
  *   · **刻度与柱子同一把尺**：纵轴刻度列与逐日柱区**同高**（都取 `SPREAD_DIST_DAYS_PX`），
- *     刻度的位置是行内算出来的 `top`（`forms.ts` 里由 `upPct()` 给，与柱子的 `bottom` 同一支函数）；
- *     首末两枚刻度各用 `translateY(∓50%)` 把**中心**对到轴顶与轴底，故读者按刻度量一根柱量得准。
+ *     刻度的位置是行内算出来的 `bottom`（`forms.ts` 里由 `upPct()` 给，与柱子的 `bottom` 同一支函数）；
+ *     首末两枚刻度各用 `translateY(50%)` 把**中心**对到轴顶与轴底，故读者按刻度量一根柱量得准。
  *   · **色不是唯一信息**：范围条是强调色的**淡洗**（面），中位块是强调色**实底**（条）——
  *     一深一浅两种形 ＋ 图例给字；分位尺那边正中那一档是「有文字的面」⇒ 软底＋主色字＋主色描边，
  *     而**无文字的图形**（条）才走 `accent` 实底。**没有一处拿正文墨色当"面"**。
@@ -117,17 +117,17 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     s('yticks') + ' {',
     '  grid-column: 1;',
     '  grid-row: 1;',
+    '  position: relative;',
     /* 与柱区**同高**：刻度列的高度就是尺子本身（不是"看起来差不多"）。
        两档各自与 `.days` 取**同一个常量** —— 两处写死必然走散（窄档实测过：柱区 128px 而刻度列留 150px，
        轴底刻度整整低了 22px，读者按刻度读出来的值系统性偏小）。 */
     '  height: ' + String(SPREAD_DIST_DAYS_PX) + 'px;',
-    '  display: flex;',
-    '  flex-direction: column;',
-    '  justify-content: space-between;',
-    '  align-items: flex-end;',
     '  min-width: 0;',
     '}',
     s('ytick') + ' {',
+    '  position: absolute;',
+    '  right: 0;',
+    '  transform: translateY(50%);',
     '  min-width: 0;',
     /* 刻度列是 `max-content` 宽：**要给它一个上限**，否则一句很长的单位会把柱子挤没、把容器撑宽。
        到了上限就在词内断行（刻度是数字 ＋ 单位，断了照样读得出来），容器永不被撑宽。 */
@@ -139,12 +139,15 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.2;',
     '  overflow-wrap: anywhere;',
     '}',
-    /* 首末两枚把**中心**对到轴顶与轴底（平移不改布局，只改观感）：读者按刻度量的位置就是柱子的位置。 */
-    s('ytick') + ':first-child {',
-    '  transform: translateY(-50%);',
-    '}',
-    s('ytick') + ':last-child {',
-    '  transform: translateY(50%);',
+    /* 隐形撑子：与刻度同字同限（字号／字重／7em 上限／词内断行照抄，列宽与在流时一致），只撑列宽不上屏。 */
+    s('yticks-sizer') + ' {',
+    '  display: block;',
+    '  visibility: hidden;',
+    '  min-width: 0;',
+    '  max-width: 7em;',
+    '  font-size: ' + skinVar('fs-xs') + ';',
+    '  font-weight: 600;',
+    '  overflow-wrap: anywhere;',
     '}',
     s('days') + ' {',
     '  grid-column: 2;',
