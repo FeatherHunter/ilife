@@ -57,6 +57,7 @@ import {
   DRAG_SORT_EVENT_CANCEL,
   DRAG_SORT_EVENT_DROP,
   DRAG_SORT_EVENT_PICK,
+  DRAG_SORT_FORM_ATTR,
   DRAG_SORT_FORMS,
   DRAG_SORT_GAP_PX,
   DRAG_SORT_HANDLE_ATTR,
@@ -66,6 +67,10 @@ import {
   DRAG_SORT_LINE_ATTR,
   DRAG_SORT_MAX_ITEMS,
   DRAG_SORT_MIN_ITEMS,
+  DRAG_SORT_MOVE_ATTR,
+  DRAG_SORT_MOVE_DOWN,
+  DRAG_SORT_MOVE_MIN_PX,
+  DRAG_SORT_MOVE_UP,
   DRAG_SORT_NARROW_PX,
   DRAG_SORT_ROW_MIN_PX,
   DRAG_SORT_SLOTS,
@@ -88,6 +93,11 @@ import { auditHtml, exitCodeFor } from './separator-probe.mjs';
 import { styleSource } from './_style-sources.mjs';
 import { selectorsOf, startBrowser, stripComments, throwsBlocks } from './overlay-probe.mjs';
 import { startShapesPage } from './shapes-probe.mjs';
+import { DRAG_SORT_BUTTONS_DEPS, DRAG_SORT_BUTTONS_FNS } from '../dist/components/drag-sort/runtime-buttons.js';
+import { DRAG_SORT_LIFT_DEPS, DRAG_SORT_LIFT_FNS } from '../dist/components/drag-sort/runtime-lift.js';
+import { PRELUDE_FNS, PRELUDE_NAMES } from '../dist/components/drag-sort/runtime-prelude.js';
+import { DRAG_SORT_SHELL_DEPS, DRAG_SORT_SHELL_FNS } from '../dist/components/drag-sort/runtime.js';
+import { TEXT_FN_NAMES } from '../dist/components/drag-sort/runtime-text.js';
 import * as root from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -108,15 +118,65 @@ const ITEMS = [
 ];
 const PLAIN = { id: 'steps-dinner', title: '做菜步骤', items: ITEMS };
 const LIFTED = { ...PLAIN, liftedKey: 's3', dropAt: 2 };
+/** 形态 `buttons`（第二形态）的真实形状：选中第 3 步（行尾长出两半控件，虚线预告停在会落到的那一位）。 */
+const BUTTONS = { id: 'day-planner', title: '今天先做什么', form: 'buttons', items: ITEMS, liftedKey: 's3' };
 const countOf = (html, needle) => (html.match(new RegExp(needle, 'g')) || []).length;
+
+/* ── 变异自证的小件（每条新判据配一条**当场做的变异**：把该管的那一处在输入里拆掉，
+ *  看这条判据真的红——「能红的判据」不许只靠嘴说）。 ───────────────────────────── */
+
+/** 把一个元素（含它的子树）从标记里剥掉：用栈扫标签配对，返回剥掉后的文本。 */
+function stripElement(html, className) {
+  const at = html.indexOf('class="' + className + '"');
+  if (at < 0) return html;
+  const open = html.lastIndexOf('<', at);
+  const M = /^<([a-z]+)/.exec(html.slice(open));
+  if (M === null) return html;
+  const tag = M[1];
+  const openRe = new RegExp('<' + tag + '\\b', 'g');
+  const closeRe = new RegExp('</' + tag + '>', 'g');
+  let depth = 0;
+  let i = open;
+  while (i < html.length) {
+    openRe.lastIndex = i;
+    closeRe.lastIndex = i;
+    const a = openRe.exec(html);
+    const b = closeRe.exec(html);
+    if (b === null) return html;
+    if (a !== null && a.index < b.index) { depth += 1; i = a.index + 1; continue; }
+    depth -= 1;
+    if (depth === 0) return html.slice(0, open) + html.slice(b.index + b[0].length);
+    i = b.index + b[0].length;
+  }
+  return html;
+}
+
+/** 一处「形状」论断：`缺少时`＝那一处被剥掉后，`hit` 由真变假。 */
+const SHAPE = (what, hit, missing) => ({ what, hit, missing });
+
+/** 行表（标记原文顺序）：键 ＋ 行片段的起止（用来量两半控件／虚线预告挂在哪一行上）。 */
+function rowSpans(html) {
+  const marks = [...html.matchAll(new RegExp(DRAG_SORT_KEY_ATTR + '="([^"]+)"', 'g'))];
+  return marks.map((m, i) => {
+    const open = html.lastIndexOf('<div', m.index);
+    return {
+      key: m[1],
+      at: open,
+      end: i + 1 < marks.length ? html.lastIndexOf('<div', marks[i + 1].index) : html.length,
+      text: html.slice(open, i + 1 < marks.length ? html.lastIndexOf('<div', marks[i + 1].index) : html.length),
+    };
+  });
+}
 
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('drag-sort ① 渲染契约 · 骨架与顺序', () => {
   const html = renderDragSort(PLAIN);
 
-  it('卡头 ＋ 行区 ＋ 状态句 ＋ 取消键；形态键是英文骨架名（不是格号 A）', () => {
-    assert.deepEqual([...DRAG_SORT_FORMS], ['lift'], '形态闭集只落地拿起态，键名是骨架名');
+  it('卡头 ＋ 行区 ＋ 状态句 ＋ 取消键；形态键是英文骨架名（不是格号 A／B）', () => {
+    assert.deepEqual([...DRAG_SORT_FORMS], ['lift', 'buttons'],
+      '形态闭集两格：第一格是已落地那一档（键不许改），新档取骨架名');
+    assert.equal(DRAG_SORT_FORMS[0], 'lift', '闭集顺序是契约：旧档住第一格（加法式）');
     assert.match(html, new RegExp('^<div class="' + DRAG_SORT_CLASS + ' is-lift"'));
     assert.ok(html.includes(DRAG_SORT_ATTR + '="steps-dinner"'), '根上要有本件的发现锚');
     assert.ok(html.includes(SLOT('title')) && html.includes('>做菜步骤<'), '卡头标题上屏');
@@ -124,6 +184,7 @@ describe('drag-sort ① 渲染契约 · 骨架与顺序', () => {
     assert.ok(html.includes(SLOT('status')) && html.includes('role="status"'), '状态句是活的');
     assert.ok(html.includes('共 5 步'), 'plain 态的状态句是真读数');
     assert.ok(html.includes(DRAG_SORT_CANCEL_ATTR + '="steps-dinner"'), '取消键带本件的锚');
+    assert.equal(DRAG_SORT_FORMS.includes('A') || DRAG_SORT_FORMS.includes('B'), false, '格号不是接口名');
   });
 
   it('每行＝把手 ＋ 序号 ＋ 名称格 ＋ 右端读数 ＋ 位置读数；顺序＝入参顺序', () => {
@@ -208,6 +269,95 @@ describe('drag-sort ① 渲染契约 · 骨架与顺序', () => {
     assert.equal(/<script/i.test(html), false, '不得出现可执行脚本标签');
     assert.ok(html.includes('&lt;script&gt;'), '原文以实体上屏');
     assert.ok(html.includes('&quot;'), '引号转义');
+  });
+
+  it('**新档标记面**：形态读数／把手只有字形／选中行 ＋ 两半控件 ＋ 贯穿行宽的虚线预告／一屏只留一层话', () => {
+    const h = renderDragSort(BUTTONS);
+    const spans = rowSpans(h);
+    const lineAt = h.indexOf(DRAG_SORT_LINE_ATTR);
+    const previewText = dragSortText('previewText', { to: 2 });
+    assert.match(h, new RegExp('^<div class="' + DRAG_SORT_CLASS + ' is-buttons"'), '根上带 `is-buttons`');
+    assert.ok(h.includes(DRAG_SORT_FORM_ATTR + '="buttons"'), '新档在根上写形态读数');
+    assert.equal(renderDragSort(PLAIN).includes(DRAG_SORT_FORM_ATTR), false,
+      '旧档的标记一个字节都不多（形态读数只给新档）');
+    for (const [i, one] of ITEMS.entries()) {
+      assert.ok(h.includes('选中第 ' + (i + 1) + ' 步：' + one.label), '把手名走「选中」口径：' + one.key);
+      assert.equal(countOf(spans[i].text, DRAG_SORT_MOVE_ATTR + '='), one.key === 's3' ? 2 : 0,
+        '两半控件只挂被选中那一行（别处零命中）：' + one.key);
+    }
+    assert.equal(countOf(h, DRAG_SORT_MOVE_ATTR + '="' + DRAG_SORT_MOVE_UP + '"'), 1, '「上移」半边只有一枚');
+    assert.equal(countOf(h, DRAG_SORT_MOVE_ATTR + '="' + DRAG_SORT_MOVE_DOWN + '"'), 1, '「下移」半边只有一枚');
+    assert.equal(countOf(h, 'class="' + dragSortSlot('move') + '"'), 1,
+      '两半控件是一颗（一个外框两半），只挂选中那一行');
+    assert.ok(h.includes(SLOT('move-up')) && h.includes(SLOT('move-down')), '两半各是一个真按钮');
+    assert.ok(h.includes(DRAG_SORT_MOVE_ATTR + '="up"') && h.includes(DRAG_SORT_MOVE_ATTR + '="down"'),
+      '两半各带自己的机器值（运行时按它认点的是哪半边）');
+    const mv = spans.find((r) => r.key === 's3').text;
+    assert.ok(mv.includes(SLOT('move-up')), '两半控件挂在**被选中**那一行（s3）上');
+    for (const r of spans) {
+      if (r.key === 's3') continue;
+      assert.equal(r.text.includes(SLOT('move-up')), false, '别的行上不长两半控件：' + r.key);
+    }
+    assert.ok(spans.find((r) => r.key === 's3').text.includes('aria-pressed="true"'), '选中那一行的把手是按下态');
+    assert.ok(spans.find((r) => r.key === 's3').text.includes('is-picked'), '选中那一行挂 `is-picked`');
+    assert.equal(countOf(h, 'is-up'), 0, '新档不用拿起态那个类（那是旧档的形）');
+    /* 虚线预告：停在「下一挪会落到的那一位」（能上移＝第 2 位），贯穿行宽那条线 ＋ 写出会落到第几位。 */
+    assert.equal(countOf(h, DRAG_SORT_LINE_ATTR), 1, '虚线预告只有一条');
+    assert.ok(h.includes(DRAG_SORT_LINE_ATTR + '="2"'), '预告停在会落到的那一位（第 2 位）');
+    assert.ok(h.includes('<b>' + previewText + '</b>'), '预告自己写出会落到第几位');
+    assert.ok(h.includes('role="status"'), '那一枚就是这一档要念的活读数');
+    assert.ok(lineAt > spans[0].at && lineAt < spans[1].at, '向上挪的预告停在选中行（s3）**前面**那一行的位置上');
+    assert.equal(renderDragSort({ ...BUTTONS, liftedKey: 's5' }).includes(DRAG_SORT_LINE_ATTR + '="4"'), true,
+      '到头的那一行（末位）改预告下移的落点');
+    assert.equal(countOf(h, SLOT('index')), 0, '新档没有序号格：它与位置读数点的是同一个数');
+    assert.equal(countOf(h, '第 1 位') + countOf(h, '第 2 位') + countOf(h, '第 3 位')
+      + countOf(h, '第 4 位') + countOf(h, '第 5 位'), ITEMS.length + 1,
+      '同一个数每行只印一次（＋ 虚线预告那一处）');
+    assert.equal(countOf(h, SLOT('status')), 0, '新档不写状态句（一屏只留一层话）');
+    assert.equal(countOf(h, SLOT('slot')), 0, '新档不画空槽');
+    assert.equal(countOf(h, SLOT('cancel')), 0, '新档不摆取消键（再点选中那一行＝取消）');
+    assert.equal(countOf(h, '<button'), ITEMS.length + 2, '五枚把手 ＋ 两半控件半边两枚，不许再多');
+    assert.equal(countOf(h, '<button'), countOf(h, '</button>'), '按钮必须成对');
+    assert.equal(/<script|onclick=/i.test(h), false, '标记里不带脚本');
+    assert.ok(h.includes(DRAG_SORT_TEXT.buttonsHint.replace('{n}', '5')), '卡头那句里总数只说一次');
+    assert.ok(h.includes('>' + DRAG_SORT_TEXT.moveUp + '<') && h.includes('>' + DRAG_SORT_TEXT.moveDown + '<'),
+      '两半上就是「上移」「下移」两个字（不是 ↑／↓ 箭头）');
+    assert.equal(h.includes('↑') || h.includes('↓'), false, '箭头字形一个都不留');
+    /* 禁用那一档：第 1 位按不动上移、末位按不动下移。 */
+    const first = renderDragSort({ ...BUTTONS, liftedKey: 's1' });
+    assert.equal(countOf(first, 'aria-label="' + dragSortText('moveUpName', { label: ITEMS[0].label }) + '"'), 1);
+    assert.ok(/aria-label="上移：五花肉切 3 cm 方块"[^>]*disabled/.test(first)
+      || /disabled[^>]*aria-label="上移：五花肉切 3 cm 方块"/.test(first), '到头的那一半是 `disabled`');
+    const last = renderDragSort({ ...BUTTONS, liftedKey: 's5' });
+    assert.ok(/aria-label="下移：收汁装盘"[^>]*disabled/.test(last)
+      || /disabled[^>]*aria-label="下移：收汁装盘"/.test(last), '末位的下移半边是 `disabled`');
+  });
+
+  it('**新档标记面 · 变异自证**：把该管的那一处在输入里拆掉，上面那条真律当场红', () => {
+    const h = renderDragSort(BUTTONS);
+    const previewText = dragSortText('previewText', { to: 2 });
+    const spans = rowSpans(h);
+    const lineAt = h.indexOf(DRAG_SORT_LINE_ATTR);
+    assert.equal(typeof lineAt === 'number' && lineAt > 0, true, '虚线预告那一枚要在标记里找得到');
+    assert.equal(lineAt > spans[0].at && lineAt < spans[1].at, true,
+      '预告停在选中行（s3）前面那一行的位置上：line@' + String(lineAt) + ' s1=[' + String(spans[0].at)
+      + ',' + String(spans[0].end) + ') s2@' + String(spans[1].at));
+    const probes = [
+      SHAPE('选中那一行的两半控件', h.includes(SLOT('move-up')),
+        stripElement(h, SLOT('move-up')).includes(SLOT('move-up'))),
+      SHAPE('虚线预告那一枚带 role="status"', h.includes('role="status"'),
+        stripElement(h, SLOT('drop')).includes('role="status"')),
+      SHAPE('两半上那两个字', h.includes('>' + DRAG_SORT_TEXT.moveUp + '<'),
+        !h.includes('>' + DRAG_SORT_TEXT.moveUp + '<')),
+      SHAPE('预告停在选中行前面', lineAt > spans[0].at && lineAt < spans[1].at,
+        !(lineAt > spans[0].at && lineAt < spans[1].at)),
+      SHAPE('预告写出会落到第几位', h.includes(previewText), !h.includes(previewText)),
+    ];
+    for (const p of probes) assert.equal(p.hit, true, '判据该命中：' + p.what);
+    for (const p of probes) assert.equal(p.missing, false, '变异后判据没红：' + p.what);
+    assert.equal(countOf(renderDragSort({ ...BUTTONS, liftedKey: 's5' }), DRAG_SORT_LINE_ATTR + '="4"'), 1,
+      '末位那一行改预告下移的落点（换一行判据跟着变）');
+    assert.equal(countOf(renderDragSort({ ...BUTTONS, liftedKey: 's5' }), DRAG_SORT_LINE_ATTR + '="2"'), 0);
   });
 
   it('分隔符门：样例渲染的可见文本零命中（R1 ·／R2 ；／R3 并列顿号）', () => {
@@ -297,18 +447,30 @@ describe('drag-sort ① 渲染契约 · 骨架与顺序', () => {
       '入参表里的键给 undefined 按未给算');
   });
 
-  it('纯函数：同样的入参恒产同样的字节；README 示例入参直渲成功且三样齐', () => {
+  it('纯函数：同样的入参恒产同样的字节；README 两块样例直渲成功（派生动样例只认第一块）', () => {
     assert.equal(renderDragSort(PLAIN), renderDragSort(PLAIN));
     assert.equal(renderDragSort(LIFTED), renderDragSort(LIFTED));
+    assert.equal(renderDragSort(BUTTONS), renderDragSort(BUTTONS));
     const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
-    const blocks = [...readme.matchAll(/```json 示例入参\n([\s\S]*?)```/g)].map((m) => m[1]);
-    assert.equal(blocks.length, 1, 'README 里恰好一块显式示例入参（信息串带「示例入参」四字）');
-    const sample = JSON.parse(blocks[0]);
-    assert.equal(typeof sample === 'object' && sample !== null && !Array.isArray(sample), true,
-      '示例是合法 JSON 对象');
-    const html = renderDragSort(sample);
-    assert.ok(html.includes(dragSortSlot('row') + ' is-up') && html.includes(SLOT('slot')) && html.includes(SLOT('drop')),
-      '示例渲染出拿起态三样（直渲成功且是 A 一档的样子）');
+    /* 派生器（`gen-components.mjs`）与皮肤矩阵按信息串里的「示例入参」四字取件，**一件只许一块**：
+       两块 ⇒ 派生器当场红 ＋ `组件清单.test.mjs` 在 import 期就抛（整层判据一条都跑不了）。 */
+    const derived = [...readme.matchAll(/```json 示例入参\n([\s\S]*?)```/g)].map((m) => m[1]);
+    assert.equal(derived.length, 1, '带「示例入参」四字的块恰好一块（派生动样例只认它）');
+    const second = [...readme.matchAll(/```json 形态 buttons 的入参\n([\s\S]*?)```/g)].map((m) => m[1]);
+    assert.equal(second.length, 1, '第二块（`buttons` 档）的信息串不带「示例入参」四字，免得一件两块');
+    const samples = [...derived, ...second].map((t) => JSON.parse(t));
+    for (const sample of samples) {
+      assert.equal(typeof sample === 'object' && sample !== null && !Array.isArray(sample), true,
+        '示例是合法 JSON 对象');
+    }
+    const lift = renderDragSort(samples[0]);
+    assert.ok(lift.includes(dragSortSlot('row') + ' is-up') && lift.includes(SLOT('slot')) && lift.includes(SLOT('drop')),
+      '缺省那一档的示例渲染出拿起态三样（直渲成功）');
+    const buttons = renderDragSort(samples[1]);
+    assert.ok(buttons.includes(dragSortSlot('move-up')) && buttons.includes(dragSortSlot('move-down'))
+      && buttons.includes(dragSortSlot('drop')), '`buttons` 档的示例渲染出两半控件与虚线预告（直渲成功）');
+    assert.equal(samples[1].form, 'buttons', '第二块显式写着形态键');
+    assert.equal(samples[0].form, undefined, '第一块是缺省那一档（派生器与皮肤矩阵吃它）');
   });
 });
 
@@ -405,6 +567,50 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
     for (const w of words) assert.equal(html.includes(w), false, '出现键盘语汇：' + w);
   });
 
+  it('**新档样式面**：把手只有字形／选中行站起来（投影＋强调描边）／两半 58×44 且相邻 ≥8／虚线贯穿行宽', () => {
+    /* 第二形态那一段（`style-forms.ts`，整段排在旧档规则后面）：从 `.is-buttons` 那一处起截。 */
+    const binsAt = clean.indexOf('.is-buttons');
+    assert.ok(binsAt > 0, '第二形态那一段要在样式段里（`.is-buttons` 起头）');
+    const bins = clean.slice(binsAt);
+    const pick = (slot) => new RegExp('\\.' + dragSortSlot(slot) + '(?![a-z-])[^{]*\\{([^}]*)\\}').exec(bins);
+    const handle = pick('handle');
+    assert.ok(handle !== null, '新档给把手那一条要在');
+    assert.equal(/border\s*:\s*0/.test(handle[1]), true, '把手只有字形：没有边框');
+    assert.equal(/background\s*:\s*none/.test(handle[1]), true, '把手只有字形：没有软底');
+    const picked = new RegExp('\\.' + dragSortSlot('row') + '\\.is-picked[^{]*\\{([^}]*)\\}').exec(bins);
+    assert.ok(picked !== null, '选中那一行那一条要在');
+    assert.ok(picked[1].includes('box-shadow: ' + skinVar('shadow')),
+      '选中行站起来：投影走皮肤那枚 `shadow`（形，不许只靠颜色）');
+    assert.ok(picked[1].includes('border-color: ' + skinVar('accent')), '选中行站起来：强调描边');
+    const half = new RegExp('\\.' + dragSortSlot('move-up') + '(?![a-z-])[^{]*\\{([^}]*)\\}').exec(bins);
+    assert.ok(half !== null, '两半控件那半边那一条要在');
+    assert.ok(half[1].includes('min-width: ' + String(DRAG_SORT_MOVE_MIN_PX) + 'px'), '半边宽取常量 58');
+    assert.ok(half[1].includes('min-height: ' + String(DRAG_SORT_TOUCH_PX) + 'px'), '半边高取常量 44');
+    const box = pick('move');
+    assert.ok(box !== null, '两半控件那颗那一条要在');
+    assert.ok(box[1].includes('gap: ' + String(DRAG_SORT_GAP_PX) + 'px'), '两半之间那道缝取常量 8');
+    const dropTag = new RegExp('\\.' + dragSortSlot('drop') + '\\s*>\\s*b[^{]*\\{([^}]*)\\}').exec(bins);
+    assert.ok(dropTag !== null, '虚线预告那枚标签那一条要在');
+    assert.ok(dropTag[1].includes('background: ' + skinVar('surface')), '标签压在线上（底色盖住杆）');
+    assert.equal(clean.includes(String.fromCharCode(8593)) || clean.includes(String.fromCharCode(8595)), false,
+      '样式里不留箭头字形');
+    assert.equal(bins.includes('@container ' + DRAG_SORT_CONTAINER), true, '新档自己也按容器判宽（窄档零横溢）');
+  });
+
+  it('**新档样式面 · 变异自证**：投影那一条被换成「只染个色」，这条判据当场红', () => {
+    const shadowRule = 'box-shadow: ' + skinVar('shadow') + ';';
+    assert.equal(clean.includes(shadowRule), true, '前提：投影那一条真的在样式段里');
+    const mutated = clean.replace(shadowRule, 'color: ' + skinVar('accent') + ';');
+    assert.notEqual(mutated, clean, '变异要真的改到东西');
+    const pickedOf = (css) => new RegExp('\\.' + dragSortSlot('row') + '\\.is-picked[^{]*\\{([^}]*)\\}').exec(css);
+    const before = pickedOf(clean);
+    const after = pickedOf(mutated);
+    assert.equal(mutated.includes('box-shadow: ' + skinVar('shadow')), false, '变异后那一档没了');
+    assert.equal(after !== null && after[1].includes('box-shadow: ' + skinVar('shadow')), false,
+      '变异后判据必须红（原来它是真的）');
+    assert.ok(before[1].includes('border-color: ' + skinVar('accent')), '另一条（强调描边）不受影响：两条一起给才叫站起来');
+  });
+
   it('`dist/components/drag-sort/**` 零 DOM（剥字面量与注释后逐名扫）', () => {
     const dir = join(PKG, 'dist', 'components', 'drag-sort');
     const files = readdirSync(dir).filter((n) => n.endsWith('.js'));
@@ -446,14 +652,14 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
     for (const slot of DRAG_SORT_SLOTS) {
       assert.ok(dragSortSlot(slot).startsWith(DRAG_SORT_CLASS + '-'));
     }
-    for (const slot of ['hd', 'title', 'hint', 'list', 'row', 'handle', 'index', 'name', 'pos', 'slot', 'drop', 'status', 'cancel']) {
+    for (const slot of ['hd', 'title', 'hint', 'list', 'row', 'handle', 'index', 'name', 'pos', 'slot', 'drop', 'status', 'cancel', 'move', 'move-up', 'move-down']) {
       assert.ok(DRAG_SORT_SLOTS.includes(slot), '槽位闭集里少了 ' + slot);
     }
   });
 
   it('**同一句只有一个定义地**：写进源码的字面量各只一份，产出的 JS 烘出来与常量逐字相同', () => {
     /* 这条不用真机：它只读产出文本与源码（所以它住在 ② 段，不跟着真机段一起跳过）。
-       两面对账：① 源码四个文件里每一句只有一份字面量（住 `DRAG_SORT_TEXT`）；
+       两面对账：① 源码各文件里每一句只有一份字面量（住 `DRAG_SORT_TEXT`）；
        ② 运行时段烘出来的函数真跑起来，结果与 `dragSortText()` 的整句逐字相同。 */
     const built = buildDragSortJs();
     /** 把产出文本里那句函数抠出来真调一次（产出的 JS 必须自足：不依赖模块作用域）。 */
@@ -472,6 +678,15 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
       gripPick: callText('gripPick', [123, '标签·A']),
       gripLift: callText('gripLift', [123, '标签·A']),
       gripLock: callText('gripLock', [123, '原因·B']),
+      /* 第二形态那几句：同一处定义地（`DRAG_SORT_TEXT`）＋ 产出文本里烘成同名函数。 */
+      posOne: callText('posOne', [123]),
+      previewText: callText('previewText', [456]),
+      gripSelect: callText('gripSelect', [123, '标签·A']),
+      gripSelected: callText('gripSelected', [123, '标签·A']),
+      moveUp: callText('moveUp', []),
+      moveDown: callText('moveDown', []),
+      moveUpName: callText('moveUpName', ['标签·A']),
+      moveDownName: callText('moveDownName', ['标签·A']),
     };
     const want = {
       idleStatus: dragSortText('idleStatus', { n: 123 }),
@@ -481,24 +696,40 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
       gripPick: dragSortText('gripPick', { p: 123, label: '标签·A' }),
       gripLift: dragSortText('gripLift', { p: 123, label: '标签·A' }),
       gripLock: dragSortText('gripLock', { p: 123, why: '原因·B' }),
+      posOne: dragSortText('posOne', { p: 123 }),
+      previewText: dragSortText('previewText', { to: 456 }),
+      gripSelect: dragSortText('gripSelect', { p: 123, label: '标签·A' }),
+      gripSelected: dragSortText('gripSelected', { p: 123, label: '标签·A' }),
+      moveUp: DRAG_SORT_TEXT.moveUp,
+      moveDown: DRAG_SORT_TEXT.moveDown,
+      moveUpName: dragSortText('moveUpName', { label: '标签·A' }),
+      moveDownName: dragSortText('moveDownName', { label: '标签·A' }),
     };
     console.log('drag-sort 文案对账 ' + JSON.stringify(got));
     assert.deepEqual(got, want, '运行时段烘的句子与 DRAG_SORT_TEXT 走散（同一句话两个定义地）');
-    const files = {
-      attrs: readFileSync(join(DIR, 'attrs.ts'), 'utf8'),
-      model: readFileSync(join(DIR, 'model.ts'), 'utf8'),
-      render: readFileSync(join(DIR, 'render.ts'), 'utf8'),
-      runtime: readFileSync(join(DIR, 'runtime.ts'), 'utf8'),
-    };
-    const src = [files.attrs, files.model, files.render, files.runtime]
+    /** 本件全部源码件（拆件的每一支都在扫面里：只读 `runtime.ts` 的话，拆出去的那几支就成了盲区）。 */
+    const SRC_FILES = ['attrs.ts', 'model.ts', 'render.ts', 'runtime.ts', 'runtime-prelude.ts',
+      'runtime-lift.ts', 'runtime-buttons.ts', 'runtime-text.ts'];
+    const src = SRC_FILES.map((n) => readFileSync(join(DIR, n), 'utf8'))
       .map((t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')).join('\n');
-    /** 源码里那几处句子的**处数**（`hint` 与 `idleStatus` 共用那半句＝两处）与产出文本里该有几处
-     *  （`hint` 不在运行时段：文案由调用方给；其余五句各烘一份）。 */
+    /** 源码里那几处句子的**处数**（`hint` 与 `idleStatus` 共用那半句＝两处；`gripSelect` 那句是
+     *  `gripSelected` 的前缀＝两处）与产出文本里该有几处（`hint`／`buttonsHint` 不在运行时段：
+     *  文案由调用方给或只住渲染期；其余各烘一份）。 */
     const CASES = [
       ['点把手拿起一行。放下时点另一行。', 2, 1],
       ['将放到第', 1, 1],
       ['原位空着，被拿起的是', 1, 1],
       ['放这里（第', 1, 1],
+      ['共 {n} 步。点一行选中，再点「上移」或「下移」。', 1, 0],
+      ['落到第 ', 1, 1],
+      ['第 {p} 位', 1, 0],
+      ['上移', 4, 2],
+      ['下移', 3, 2],
+      ['上移：', 1, 1],
+      ['下移：', 1, 1],
+      /* `选中第 ` 在产出文本里两处：`buttonsHint` 那句 ＋ 烘出来的 `gripSelect`。 */
+      ['选中第 ', 2, 2],
+      ['已选中第 ', 1, 1],
     ];
     for (const [phrase, wantSrc, wantBuilt] of CASES) {
       const timesSrc = (src.match(new RegExp(phrase, 'g')) || []).length;
@@ -507,6 +738,25 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
         + ' 源码=' + String(timesSrc) + ' 该是=' + String(wantSrc));
       assert.equal(timesBuilt, wantBuilt, '产出文本里这一段的对不上：' + phrase
         + ' 产出=' + String(timesBuilt) + ' 该是=' + String(wantBuilt));
+    }
+  });
+
+  it('**产出的 JS 自足**：各支用到的名字都有人声明（漏一个＝注入页面后 `ReferenceError`）', () => {
+    const built = buildDragSortJs();
+    const declared = new Set([...PRELUDE_NAMES, ...TEXT_FN_NAMES, ...DRAG_SORT_BUTTONS_FNS,
+      ...DRAG_SORT_LIFT_FNS, ...DRAG_SORT_SHELL_FNS, 'pick', 'drop']);
+    for (const [who, deps] of [['旧档那一支', DRAG_SORT_LIFT_DEPS], ['新档那一支', DRAG_SORT_BUTTONS_DEPS],
+      ['外壳', DRAG_SORT_SHELL_DEPS]]) {
+      for (const name of deps) {
+        assert.equal(declared.has(name), true, who + '用到 ' + name + '，但没人声明它');
+      }
+      console.log('drag-sort 各支用到的名字 ' + who + '：' + deps.length + ' 个，全部有人声明');
+    }
+    /* 声明的名字在产出文本里真的要出现（表与文本不许走散）。 */
+    for (const name of [...PRELUDE_FNS, ...TEXT_FN_NAMES, ...DRAG_SORT_BUTTONS_FNS, ...DRAG_SORT_LIFT_FNS,
+      ...DRAG_SORT_SHELL_FNS]) {
+      assert.ok(built.includes('function ' + name + '(') || built.includes('var ' + name + '='),
+        '产出文本里找不到声明的名字：' + name);
     }
   });
 });
@@ -604,7 +854,8 @@ describe('drag-sort ④ 四档几何（真机 headless Chrome ＋ CDP · 容器 
   const page = await startShapesPage({
     css: skinCss() + '\n' + dragSortCss(),
     html: '<div class="ilife-page-ui" data-case="plain">' + renderDragSort(PLAIN) + '</div>'
-      + '<div class="ilife-page-ui" data-case="lifted">' + renderDragSort(LIFTED) + '</div>',
+      + '<div class="ilife-page-ui" data-case="lifted">' + renderDragSort(LIFTED) + '</div>'
+      + '<div class="ilife-page-ui" data-case="buttons">' + renderDragSort(BUTTONS) + '</div>',
     portOffset: 41,
   });
   if (page === null) {
@@ -668,6 +919,62 @@ describe('drag-sort ④ 四档几何（真机 headless Chrome ＋ CDP · 容器 
       assert.ok(boxes.dropBox.h >= 30, width + ' 档落点线可见：' + JSON.stringify(boxes.dropBox));
       assert.equal(boxes.metaWrap, width <= DRAG_SORT_NARROW_PX,
         width + ' 档右端读数折行不对（窄档 <=' + DRAG_SORT_NARROW_PX + ' 才折）：' + JSON.stringify(boxes.metaWrap));
+    }
+  });
+
+  /* 判据 B（④ 段）：新档（`buttons`）四档几何逐档量——零横溢、两半 ≥58×44、相邻 ≥8、虚线贯穿行宽。 */
+  it('**新档四档几何**：两半控件与相邻目标的缝 ≥8、半边 ≥58×44、虚线预告贯穿行沿（320／390／620／1280 逐档量）', async () => {
+    const moveSel = '.' + dragSortSlot('move');
+    const upSel = '.' + dragSortSlot('move-up');
+    const downSel = '.' + dragSortSlot('move-down');
+    for (const width of [320, 390, 620, 1280]) {
+      await page.setWidth(width);
+      const frame = await page.frame();
+      const g = await page.ev('(function(){'
+        + 'var scope=document.querySelector("[data-case=\\"buttons\\"]");'
+        + 'var box=function(el){ if(!el) return null; var r=el.getBoundingClientRect();'
+        + ' return {l:Math.round(r.left),t:Math.round(r.top),r:Math.round(r.right),b:Math.round(r.bottom),'
+        + ' w:Math.round(r.width),h:Math.round(r.height)}; };'
+        + 'var listEl=scope.querySelector(' + JSON.stringify('.' + dragSortSlot('list')) + ');'
+        + 'var list=box(listEl);'
+        + 'var rows=[].slice.call(scope.querySelectorAll(' + JSON.stringify(ROW_SEL) + '));'
+        + 'var gaps=[]; for (var i=1;i<rows.length;i+=1){ var a=rows[i-1].getBoundingClientRect(),'
+        + ' b=rows[i].getBoundingClientRect(); gaps.push(Math.round(b.top-a.bottom)); }'
+        + 'var up=box(listEl.querySelector(' + JSON.stringify(upSel) + '));'
+        + 'var down=box(listEl.querySelector(' + JSON.stringify(downSel) + '));'
+        + 'var move=box(listEl.querySelector(' + JSON.stringify(moveSel) + '));'
+        + 'var sep=0;'
+        + 'if (up && down){ var vert=!(Math.abs(up.t-down.t)<3 && Math.abs(up.b-down.b)<3);'
+        + ' sep=vert ? Math.min(Math.abs(down.t-up.b),Math.abs(up.t-down.b))'
+        + '  : Math.max(down.l-up.r,up.l-down.r); }'
+        + 'var bar=box(listEl.querySelector(' + JSON.stringify('.' + dragSortSlot('drop') + ' > i') + '));'
+        + 'var tag=box(listEl.querySelector(' + JSON.stringify('.' + dragSortSlot('drop') + ' > b') + '));'
+        + 'var over=0;'
+        + 'for (var j=0;j<rows.length;j+=1){ var r=rows[j];'
+        + ' if (r.scrollWidth>r.clientWidth+1) over+=1; }'
+        + 'return {rows:rows.length, gaps:gaps, up:up, down:down, move:move, sep:sep, bar:bar, tag:tag, over:over,'
+        + ' list:list, picked:!!listEl.querySelector(' + JSON.stringify(ROW_SEL + '.is-picked') + ')};}())');
+      console.log('drag-sort 新档几何读数 ' + JSON.stringify({ width, g, frame }));
+      assert.equal(g.rows, ITEMS.length, width + ' 档行数不对');
+      assert.ok(frame.fxScrollW <= frame.fxClientW + 1, width + ' 档夹具容器横溢：' + JSON.stringify(frame));
+      assert.ok(frame.docScrollW <= frame.innerW + 1, width + ' 档页面横溢：' + JSON.stringify(frame));
+      assert.equal(g.over, 0, width + ' 档行内溢出（窄档必须折行，不许横滑）：' + JSON.stringify(g));
+      for (const gp of g.gaps) {
+        assert.ok(gp >= DRAG_SORT_GAP_PX, width + ' 档行间缝不足 8：' + JSON.stringify(g.gaps));
+      }
+      assert.equal(g.picked, true, width + ' 档选中那一行要在（这一档的样板就是选中态）');
+      for (const [what, half] of [['上移', g.up], ['下移', g.down]]) {
+        assert.ok(half !== null, width + ' 档找不到「' + what + '」半边');
+        assert.ok(half.w >= DRAG_SORT_MOVE_MIN_PX, width + ' 档「' + what + '」半边宽不足 58：' + JSON.stringify(half));
+        assert.ok(half.h >= DRAG_SORT_TOUCH_PX, width + ' 档「' + what + '」半边高不足 44：' + JSON.stringify(half));
+      }
+      assert.ok(g.sep >= DRAG_SORT_GAP_PX, width + ' 档两半之间的缝不足 8：' + JSON.stringify(g));
+      assert.ok(g.bar.w >= g.move.w, width + ' 档虚线预告要贯穿行宽（比那颗控件还宽）：' + JSON.stringify(g));
+      assert.equal(g.bar.l, g.list.l, width + ' 档虚线杆左沿没对齐行区左沿：' + JSON.stringify(g));
+      assert.equal(g.bar.r, g.list.r, width + ' 档虚线杆右沿没到行区右沿（原型是 left:0;right:0 满宽）：' + JSON.stringify(g));
+      assert.equal(g.tag.t <= g.bar.t + 1 && g.tag.b >= g.bar.b - 1, true,
+        width + ' 档标签没压在虚线上：' + JSON.stringify(g));
+      assert.ok(g.tag.w <= g.list.w, width + ' 档标签比行还宽（会横溢）：' + JSON.stringify(g));
     }
   });
 
@@ -1086,6 +1393,181 @@ describe('drag-sort ⑤ 行为（真机 · 真指针：拿起／放下／取消�
       + JSON.stringify(dropEvents));
     assert.deepEqual(dropEvents[0],
       { id: 'steps-dup', keys: ['s1', 's2', 's4', 's3', 's5'], from: 3, to: 4 }, '放下读数');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
+  });
+
+  /* ── 新档（`buttons`）那几条：真指针点两半控件（**不是** `element.click()`） ─────────
+   *  两档同页装在一起（旧档一块 ＋ 新档一块）：先按块剥一遍标记（要按块比字节）。
+   *  新档自己的选择器都加 `[data-blk="b"] ` 前缀（旧档那块也有同名把手）。 */
+  const BUTTONS_BLOCK = '[data-blk="b"]';
+  const B_HANDLE = (key) => BUTTONS_BLOCK + ' ' + HANDLE_SEL(key);
+  const B_UP = BUTTONS_BLOCK + ' .' + dragSortSlot('move-up');
+  const B_DOWN = BUTTONS_BLOCK + ' .' + dragSortSlot('move-down');
+  const B_LINE = BUTTONS_BLOCK + ' ' + LINE_SEL;
+  const B_PICKED = BUTTONS_BLOCK + ' .' + dragSortSlot('row') + '.is-picked';
+  const B_NAMES = [1, 2, 3, 4, 5].map((i) => BUTTONS_BLOCK + ' [data-ilife-drag-key="s' + String(i) + '"] '
+    + '.' + dragSortSlot('name'));
+  /** 新档那一块要断的读数：顺序、选中行、虚线预告、两半的可用性、两半上那两个字、位置读数。 */
+  const BSTATE = '(function(){var r=document.querySelector(' + JSON.stringify(BUTTONS_BLOCK
+    + ' [' + DRAG_SORT_ATTR + ']') + ');'
+    + 'var rows=[].slice.call(r.querySelectorAll(' + JSON.stringify('[' + DRAG_SORT_KEY_ATTR + ']') + '));'
+    + 'var up=r.querySelector(' + JSON.stringify('.' + dragSortSlot('move-up')) + ');'
+    + 'var down=r.querySelector(' + JSON.stringify('.' + dragSortSlot('move-down')) + ');'
+    + 'var line=r.querySelector(' + JSON.stringify(LINE_SEL) + ');'
+    + 'var picked=r.querySelector(' + JSON.stringify(ROW_SEL + '.is-picked') + ');'
+    + 'return {keys:rows.map(function(x){return x.getAttribute(' + JSON.stringify(DRAG_SORT_KEY_ATTR) + ');}),'
+    + ' lift:r.getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + '),'
+    + ' at:r.getAttribute(' + JSON.stringify(DRAG_SORT_AT_ATTR) + '),'
+    + ' pickedKey:picked?picked.getAttribute(' + JSON.stringify(DRAG_SORT_KEY_ATTR) + '):null,'
+    + ' line:line?line.querySelector("b").textContent:null,'
+    + ' lineAt:line?line.getAttribute(' + JSON.stringify(DRAG_SORT_LINE_ATTR) + '):null,'
+    + ' upText:(up&&up.textContent)||null, downText:(down&&down.textContent)||null,'
+    + ' upDisabled:up?!!up.disabled:null, downDisabled:down?!!down.disabled:null,'
+    + ' pos:rows.map(function(x){var p=x.querySelector(' + JSON.stringify('.' + dragSortSlot('pos'))
+    + ');return p?p.textContent:null;}),'
+    + ' evts:window.__drag};}())';
+  const bstate = () => p.ev('JSON.parse(JSON.stringify(' + BSTATE + '))');
+  const gotoButtons = () => p.at(blocksPage('paper', '<div data-blk="a">' + renderDragSort(PLAIN) + '</div>'
+    + '<div data-blk="b">' + renderDragSort(BUTTONS) + '</div>'), { width: 600, height: 1400 })
+    .then(() => p.ev(WIRE_TIMELINE)).then(() => p.ev(BSTATE + '.keys.length'));
+
+  it('**新档 · 真指针点「上移」半边**：顺序真变（s3 挪到第 2 位）＋ 虚线预告跟着挪 ＋ 只有一条 drop', async () => {
+    await gotoButtons();
+    const before = await bstate();
+    console.log('drag-sort 新档点之前 ' + JSON.stringify(before));
+    assert.deepEqual(before.keys, ['s1', 's2', 's3', 's4', 's5'], '点之前是初始顺序');
+    assert.equal(before.pickedKey, 's3', '点之前选中 s3（样板里给的就是它）');
+    assert.equal(before.lineAt, '2', '点之前预告：会落到第 2 位');
+    assert.deepEqual(before.pos, ['第 1 位', '第 2 位', '第 3 位', '第 4 位', '第 5 位'], '每行只印自己那一位');
+    assert.equal(before.upText, DRAG_SORT_TEXT.moveUp, '「上移」半边上的字取自常量');
+    assert.equal(before.downText, DRAG_SORT_TEXT.moveDown, '「下移」半边上的字取自常量');
+    await tapSel(B_UP);
+    const after = await bstate();
+    console.log('drag-sort 新档点上移之后 ' + JSON.stringify(after));
+    assert.deepEqual(after.keys, ['s1', 's3', 's2', 's4', 's5'], '上移半边真的把 s3 挪到第 2 位');
+    assert.equal(after.pickedKey, 's3', '选中跟着走');
+    assert.equal(after.lineAt, '1', '预告跟着挪（下一挪会落到第 1 位）');
+    assert.equal(after.line, dragSortText('previewText', { to: 1 }), '预告那句跟着重写：' + String(after.line));
+    assert.deepEqual(after.pos, ['第 1 位', '第 2 位', '第 3 位', '第 4 位', '第 5 位'], '位置读数整列重写');
+    const evts = after.evts.filter((e) => e.type === DRAG_SORT_EVENT_DROP);
+    assert.equal(evts.length, 1, '挪一位只报一条 drop：' + JSON.stringify(after.evts));
+    assert.deepEqual(evts[0].detail,
+      { id: 'day-planner', keys: ['s1', 's3', 's2', 's4', 's5'], from: 3, to: 2, move: 'up' }, 'drop 的 detail');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
+  });
+
+  it('**新档 · 真指针点「下移」半边**：顺序真变（s3 挪到第 4 位）＋ 预告跟着挪', async () => {
+    await gotoButtons();
+    await tapSel(B_DOWN);
+    const after = await bstate();
+    console.log('drag-sort 新档点下移之后 ' + JSON.stringify(after));
+    assert.deepEqual(after.keys, ['s1', 's2', 's4', 's3', 's5'], '下移半边真的把 s3 挪到第 4 位');
+    assert.equal(after.pickedKey, 's3', '选中跟着走');
+    /* 预告只报「下一挪会落到的那一位」：挪到第 4 位之后，下一挪（上移）会落到第 3 位。 */
+    assert.equal(after.lineAt, '3', '预告跟着挪到第 3 位（下一挪会落到那里）');
+    assert.equal(after.upText, DRAG_SORT_TEXT.moveUp, '挪完之后两半上还是那两个字（不许变成函数源码）');
+    assert.equal(after.downText, DRAG_SORT_TEXT.moveDown, '「下移」半边同理');
+    const evts = after.evts.filter((e) => e.type === DRAG_SORT_EVENT_DROP);
+    assert.equal(evts.length, 1, '只报一条 drop');
+    assert.equal(evts[0].detail.move, 'down', '那一条带 move:"down"（调用方按同一事件写库）');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
+  });
+
+  it('**新档 · 变异自证**（真指针）：真指针与合成 click 两条都留读数，但真指针那条走完整事件序列', async () => {
+    await gotoButtons();
+    const step = async (fn) => {
+      const before = await bstate();
+      await fn();
+      const after = await bstate();
+      return { before, after, n: after.evts.filter((e) => e.type === DRAG_SORT_EVENT_DROP).length };
+    };
+    const real = await step(() => tapSel(B_UP));
+    const realTimeline = await p.ev('window.__tl.map(function(o){return o.name;})');
+    const synth = await step(async () => {
+      await p.ev('(function(){document.querySelector(' + JSON.stringify(B_UP) + ').click();return true;}())');
+    });
+    console.log('drag-sort 新档真指针／合成对照 ' + JSON.stringify({
+      real: [real.before.keys, real.after.keys],
+      synth: [synth.before.keys, synth.after.keys],
+      timeline: realTimeline.slice(0, 6),
+    }));
+    assert.equal(realTimeline.includes('pointerdown') && realTimeline.includes('pointerup'), true,
+      '真指针那一条走完整事件序列（`pointerdown` ＋ `pointerup` 都在账上）：' + JSON.stringify(realTimeline));
+    assert.deepEqual(real.after.keys, ['s1', 's3', 's2', 's4', 's5'], '真指针点一下「上移」：s3 到第 2 位');
+    assert.equal(real.n, 1, '真指针那一下恰好一条 drop（不多不少）');
+    assert.deepEqual(synth.after.keys, ['s3', 's1', 's2', 's4', 's5'], '合成 click 是**旁证**：它也挪（所以「点得动」不只靠它）');
+    assert.equal(synth.n, 2, '合成那一路又加一条 drop（两条都在账上）');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
+  });
+
+  const MOVE_UP_SEL = '.' + dragSortSlot('move-up');
+  const MOVE_DOWN_SEL = '.' + dragSortSlot('move-down');
+
+  it('**新档 · 两半的界与锁定**：首行「上移」按不动、末行「下移」按不动、锁定行整条挪不动', async () => {
+    const halvesOf = async () => p.ev('(function(){var up=document.querySelector(' + JSON.stringify(MOVE_UP_SEL)
+      + '), down=document.querySelector(' + JSON.stringify(MOVE_DOWN_SEL) + ');'
+      + 'return {up:up?!!up.disabled:null, down:down?!!down.disabled:null,'
+      + ' upText:up?up.textContent:null, downText:down?down.textContent:null};}())');
+    await p.at(fixture('paper', { ...BUTTONS, liftedKey: 's1' }, true), { width: 600, height: 1200 });
+    const first = await halvesOf();
+    console.log('drag-sort 新档首行两半读数 ' + JSON.stringify(first));
+    assert.equal(first.up, true, '第 1 位：上移按不动（`disabled`）');
+    assert.equal(first.down, false, '第 1 位：下移还能按');
+    assert.equal(first.upText, DRAG_SORT_TEXT.moveUp, '按不动的那半边上也写着那两个字');
+    await p.at(fixture('paper', { ...BUTTONS, liftedKey: 's5' }, true), { width: 600, height: 1200 });
+    const last = await halvesOf();
+    console.log('drag-sort 新档末行两半读数 ' + JSON.stringify(last));
+    assert.equal(last.down, true, '末位：下移按不动');
+    assert.equal(last.up, false, '末位：上移还能按');
+    /* 相邻那一行锁定＝那半边也按不动（`model.ts` 的 `canUp`／`canDown` 与运行时段同一口径）。 */
+    await p.at(fixture('paper', {
+      id: 'day-lock', title: '今天先做什么', form: 'buttons', liftedKey: 'b',
+      items: [
+        { key: 'a', label: '起床', locked: true, why: '闹钟定死了' },
+        { key: 'b', label: '早餐' },
+        { key: 'c', label: '通勤', locked: true, why: '班车时间定死' },
+      ],
+    }, true), { width: 600, height: 900 });
+    const stuck = await halvesOf();
+    console.log('drag-sort 新档夹在锁定行之间读数 ' + JSON.stringify(stuck));
+    assert.equal(stuck.up, true, '上面那一行锁定：上移按不动');
+    assert.equal(stuck.down, true, '下面那一行锁定：下移按不动');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
+  });
+
+  it('**新档 · 拖拽那条路也在**（拖拽**不是**唯一通路，两半控件也不是）：拖选中那一行到别的行松手＝按那里重排', async () => {
+    await gotoButtons();
+    await p.ev('window.__drag=[];true');
+    const down = await pointOf(B_HANDLE('s3'));
+    await p.ev(pointerSeq('pointerdown', down, 1));
+    /* 拖到第 1 位那一行的**裸区**上（`bandOf` 找的是行自己那一层：`pointerSeq` 落在该坐标最上层那枚节点上）。 */
+    const over = await bandOf(BUTTONS_BLOCK + ' ' + ROW_KEY('s1'));
+    const hit = await p.ev(pointerSeq('pointermove', over, 1));
+    await p.ev(pointerSeq('pointerup', over, 0));
+    const after = await bstate();
+    console.log('drag-sort 新档拖拽读数 '
+      + JSON.stringify({ hit, keys: after.keys, pickedKey: after.pickedKey, line: after.line }));
+    assert.equal(hit, 's1', '这一挪命中的是 s1 那一行：' + hit);
+    assert.deepEqual(after.keys, ['s3', 's1', 's2', 's4', 's5'], '拖着放到第 1 位：顺序按那里重排');
+    assert.equal(after.pickedKey, null, '拖拽放下之后收起选中');
+    assert.equal(after.line, null, '虚线预告一起撤掉');
+    assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误（拖拽那一路抛了错这里就是红）');
+  });
+
+  it('**新档 · 同页两块互不串**：旧档那块的标记与读数一个字节都不动', async () => {
+    await gotoButtons();
+    const before = await p.ev('(function(){var a=document.querySelector("[data-blk=\\"a\\"]");'
+      + 'return {html:a.innerHTML,' + 'lift:a.querySelector("[' + DRAG_SORT_ATTR + ']")'
+      + '.getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + ')};}())');
+    await tapSel(B_UP);
+    const after = await p.ev('(function(){var a=document.querySelector("[data-blk=\\"a\\"]");'
+      + 'return {html:a.innerHTML,' + 'lift:a.querySelector("[' + DRAG_SORT_ATTR + ']")'
+      + '.getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + ')};}())');
+    console.log('drag-sort 新档同页两块读数 ' + JSON.stringify({ same: before.html === after.html }));
+    assert.equal(before.lift, null, '旧档那块本来就没拿起');
+    assert.equal(after.html, before.html, '新档挪位不动旧档那块的标记（两块各管各的）');
+    const cross = await p.ev('window.__drag.filter(function(e){return e.detail.id==="steps-dinner";}).length');
+    assert.equal(cross, 0, '新档那一下一条事件都不该落在旧档的 id 上');
     assert.equal(await p.ev('window.__errs.length'), 0, '页内零未捕获错误');
   });
 

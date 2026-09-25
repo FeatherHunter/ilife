@@ -8,7 +8,11 @@
  *   2. **能算的都算出来**：序号、位置读数、把手的无障碍名、状态句、空槽句、落点句——
  *      都在这里从 `attrs.ts` 的 `DRAG_SORT_TEXT`（**整句的唯一定义地**）取；`render.ts` 只拼标记，
  *      一个字都不算；`runtime.ts` 烘的是同一个 `dragSortText()`（同源，不是另写一份）。
- *   3. **落点位是 1 起的位**：`dropAt` 缺省＝被拿起的那一位（拿起还没挪＝落回原位）。
+ *   3. **落点位是 1 起的位**：`lift` 档 `dropAt` 缺省＝被拿起的那一位（拿起还没挪＝落回原位）；
+ *      `buttons` 档的落点**不是入参**——它是算出来的（选中行还能不能上移：能就预告上移的落点，
+ *      到头了就预告下移的落点，相邻都是锁定的行就没有预告）。
+ *   4. **两档在屏上分家**（用户口径：一屏只留一层话、同一个数只印一次）：`buttons` 档每行的位置读数
+ *      只印自己那一位（总数住卡头那句），不写状态句、不画空槽；`lift` 档的读数与三样照旧。
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
@@ -30,10 +34,14 @@ export interface DragSortRow {
   readonly why?: string;
   /** 1 起的位（屏上第几行）。 */
   readonly pos: number;
-  /** 位置读数（第 n 位，共 m 步：`／` 会被分隔符门判成并列分隔符，这里只用 `，`）。 */
+  /** 位置读数（`lift` 档＝「第 n 位，共 m 步」；`buttons` 档＝「第 n 位」——总数在卡头那句里只印一次）。 */
   readonly posText: string;
-  /** 把手的无障碍名（拿起态与锁定的三档各一句）。 */
+  /** 把手的无障碍名（拿起态与锁定的三档各一句；`buttons` 档是「选中」那两句）。 */
   readonly grip: string;
+  /** `buttons` 档：这一行还能不能上移（不在第 1 位、自己没锁定、上面那一行也没锁定）。 */
+  readonly canUp: boolean;
+  /** `buttons` 档：这一行还能不能下移（不在最后一位、自己没锁定、下面那一行也没锁定）。 */
+  readonly canDown: boolean;
 }
 
 /** 内部类型：`render.ts` 只吃它，不再自己碰 `any`。 */
@@ -44,15 +52,15 @@ export interface DragSortModel {
   readonly hint: string;
   readonly rows: readonly DragSortRow[];
   readonly total: number;
-  /** 拿起态（没拿起＝`undefined`）。 */
+  /** 拿着的那一行（`lift` 档＝拿起、`buttons` 档＝选中；没拿着＝`undefined`）。 */
   readonly lifted?: { readonly key: string; readonly from: number };
-  /** 落点位（1 起；只有拿起态才有意义）。 */
+  /** 落点位（1 起；只有拿着态才有意义）。`buttons` 档＝算出来的**预告**落点（0＝挪不动，没有预告）。 */
   readonly dropAt: number;
-  /** 状态句（plain／lifted 的真读数）。 */
+  /** 状态句（`lift` 档 plain／lifted 的真读数；`buttons` 档不写状态句＝空串）。 */
   readonly status: string;
-  /** 空槽句（拿起态才有）。 */
+  /** 空槽句（`lift` 档拿起态才有；`buttons` 档不画空槽＝空串）。 */
   readonly slotText: string;
-  /** 落点句（拿起态才有：放这里第几位）。 */
+  /** 落点那句（`lift` 档＝「放这里（第 n 位）」；`buttons` 档＝「落到第 n 位」）。 */
   readonly lineText: string;
   readonly extraClass?: string;
 }
@@ -124,8 +132,10 @@ export function normalizeDragSort(input: unknown): DragSortModel {
   const form = raw.form === undefined ? DRAG_SORT_FORMS[0] : raw.form;
   if (!(DRAG_SORT_FORMS as readonly unknown[]).includes(form)) {
     badInput('drag-sort: input.form 必须是 ' + DRAG_SORT_FORMS.join('／')
-      + ' 之一（本件只落地 A 一档「拖拽中：拖起行＋原位空槽＋落点粗线」）');
+      + ' 之一（lift＝拖拽中：拖起行＋原位空槽＋落点粗线；buttons＝按钮排序：选中行＋两半控件＋虚线预告）');
   }
+  /** 第二形态（按钮排序）：它与旧档在**屏上写什么**上分家（每行只印自己那一位、没有状态句与空槽）。 */
+  const buttons = form === 'buttons';
 
   const id = reqIdentifier(raw.id, 'drag-sort: input.id');
   const title = reqRealText(raw.title, 'drag-sort: input.title');
@@ -167,6 +177,10 @@ export function normalizeDragSort(input: unknown): DragSortModel {
   if (dropRaw !== undefined && liftedKey === undefined) {
     badInput('drag-sort: input.dropAt 不能单独给（没有拿起就没有落点）');
   }
+  if (buttons && dropRaw !== undefined) {
+    badInput('drag-sort: input.dropAt 只给形态 lift（buttons 档的落点预告是算出来的：'
+      + '按选中行还能不能上移推，给了会被静默吞掉）');
+  }
   let dropAt = liftedIndex >= 0 ? liftedIndex + 1 : 0;
   if (dropRaw !== undefined) {
     if (typeof dropRaw !== 'number' || !Number.isInteger(dropRaw)) {
@@ -180,38 +194,62 @@ export function normalizeDragSort(input: unknown): DragSortModel {
 
   const rows: DragSortRow[] = parsed.map((r, i) => {
     const pos = i + 1;
-    /* 三档把手名（文案在 `DRAG_SORT_TEXT` 一处；运行时段烘的是同一份）。 */
+    /* 三档把手名（文案在 `DRAG_SORT_TEXT` 一处；运行时段烘的是同一份）。第二形态那两句是「选中」口径。 */
     const grip = r.locked
       ? dragSortText('gripLock', { p: pos, why: r.why === undefined ? '' : r.why })
-      : (liftedKey === r.key
-        ? dragSortText('gripLift', { p: pos, label: r.label })
-        : dragSortText('gripPick', { p: pos, label: r.label }));
+      : buttons
+        ? (liftedKey === r.key
+          ? dragSortText('gripSelected', { p: pos, label: r.label })
+          : dragSortText('gripSelect', { p: pos, label: r.label }))
+        : (liftedKey === r.key
+          ? dragSortText('gripLift', { p: pos, label: r.label })
+          : dragSortText('gripPick', { p: pos, label: r.label }));
+    /* 两半控件那两半的可用性：挪得动才可按（自己锁定、或要换过去的那一行锁定＝挪不动）。 */
+    const canUp = pos > 1 && !r.locked && !parsed[pos - 2].locked;
+    const canDown = pos < total && !r.locked && !parsed[pos].locked;
     return {
       key: r.key, label: r.label, note: r.note, meta: r.meta,
       locked: r.locked, why: r.why, pos,
-      posText: '第 ' + String(pos) + ' 位，共 ' + String(total) + ' 步',
+      posText: buttons
+        ? dragSortText('posOne', { p: pos })
+        : '第 ' + String(pos) + ' 位，共 ' + String(total) + ' 步',
       grip,
+      canUp,
+      canDown,
     };
   });
 
   const lifted = liftedKey === undefined ? undefined : { key: liftedKey, from: liftedIndex + 1 };
   const liftedLabel = lifted === undefined ? '' : parsed[liftedIndex].label;
+  /* 第二形态的落点预告**是算出来的**：停在「下一挪会落到的那一位」——还能上移就预告上移的落点
+     （第 n−1 位），已经到头了就预告下移的落点（第 2 位），两边都挪不动（相邻都是锁定的行）就没有预告。 */
+  const picked = buttons && liftedIndex >= 0 ? rows[liftedIndex] : undefined;
+  const previewAt = picked === undefined ? 0
+    : picked.canUp ? picked.pos - 1
+      : picked.canDown ? picked.pos + 1
+        : 0;
   return {
     form: form as DragSortForm,
     id,
     title,
-    hint: hintRaw === undefined ? DRAG_SORT_TEXT.hint : hintRaw,
+    hint: hintRaw === undefined
+      ? (buttons ? dragSortText('buttonsHint', { n: total }) : DRAG_SORT_TEXT.hint)
+      : hintRaw,
     rows,
     total,
     lifted,
-    dropAt,
-    status: lifted === undefined
-      ? dragSortText('idleStatus', { n: total })
-      : dragSortText('liftStatus', { from: lifted.from, label: liftedLabel, to: dropAt }),
-    slotText: lifted === undefined
+    dropAt: buttons ? previewAt : dropAt,
+    status: buttons
+      ? ''
+      : (lifted === undefined
+        ? dragSortText('idleStatus', { n: total })
+        : dragSortText('liftStatus', { from: lifted.from, label: liftedLabel, to: dropAt })),
+    slotText: buttons || lifted === undefined
       ? ''
       : dragSortText('slotText', { from: lifted.from, label: liftedLabel }),
-    lineText: lifted === undefined ? '' : dragSortText('lineText', { to: dropAt }),
+    lineText: buttons
+      ? (previewAt === 0 ? '' : dragSortText('previewText', { to: previewAt }))
+      : (lifted === undefined ? '' : dragSortText('lineText', { to: dropAt })),
     extraClass: optExtraClass(raw.extraClass, 'drag-sort: input.extraClass'),
   };
 }

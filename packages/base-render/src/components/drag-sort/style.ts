@@ -1,4 +1,4 @@
-/** drag-sort · **样式段**（本件唯一的样式来源）。
+/** drag-sort · **样式段**（本件唯一的样式来源；第二形态 `buttons` 那一段在 `style-forms.ts`，由这里汇总）。
  *
  *  纪律（与本层其余件同一份）：
  *   · 只经 `skinVar()` 读皮肤 —— 组件里**不写** `var(--ilife-…)`（兜底链只许住在 `skin/contract.ts`）；
@@ -13,6 +13,10 @@
  *   · 原位空槽：虚线框 ＋ 强调软底 ＋ 强调字（淡洗底上的字走文本档，对比地板 4.5 那一档）；
  *   · 落点线：3px 实线**通栏**（左沿＝行左沿、右沿＝行右沿；杆不从右端短一截）＋ 右端一枚胶囊
  *     **压在线上**写出放第几位（与原型 `.c-drag-line` 同形）。
+ *
+ *  **第二形态 `buttons`（按钮排序）那一段住 `style-forms.ts`**（同一份纪律、同一个前缀；搬走的是行数，
+ *  不是取值）：把手只有字形／选中行站起来／两半控件（上移｜下移）／贯穿行宽的虚线落点预告；
+ *  它整段排在这份文件的规则后面——**旧档那一段的字节与顺序一个都不动**。
  */
 import { skinVar } from '../skin/contract.js';
 import {
@@ -25,6 +29,7 @@ import {
   dragSortSlot,
   type DragSortSlot,
 } from './attrs.js';
+import { dragSortFormsCss } from './style-forms.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -293,6 +298,10 @@ export function dragSortCss(input?: { readonly prefix?: string }): string {
     '  ' + s('row') + '.is-up { transform: none; }',
     '  ' + s('handle') + ', ' + s('cancel') + ' { transition: none; }',
     '}',
+    '/* 第二形态（`buttons` 按钮排序，`style-forms.ts`）：把手只有字形／选中行站起来／两半控件／',
+    '   贯穿行宽的虚线落点预告。**整段排在旧档规则后面**——同一份纪律、同一个前缀，',
+    '   顺序即层叠顺序：旧档那一段的字节与先后一个都不动。 */',
+    dragSortFormsCss({ prefix: p }),
     '/* 窄档（**本件自己** < ' + String(DRAG_SORT_NARROW_PX) + 'px）：右端读数折到下一行，序号与名称不动。 */',
     '@container ' + DRAG_SORT_CONTAINER + ' (max-width: ' + String(DRAG_SORT_NARROW_PX) + 'px) {',
     '  ' + s('meta') + ' {',
