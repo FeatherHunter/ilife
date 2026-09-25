@@ -9,6 +9,7 @@
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { ANALYSIS_COMMANDS } from '../analysis/index.js';
 import { BODY_COMMANDS } from '../body/index.js';
+import { DATA_COMMANDS } from '../data/index.js';
 import { DIET_COMMANDS } from '../diet/index.js';
 import { EXERCISE_COMMANDS } from '../exercise/index.js';
 import { GOAL_COMMANDS } from '../goal/index.js';
@@ -21,6 +22,7 @@ import { WORKOUT_COMMANDS } from '../workout/index.js';
 const SOURCES: readonly (readonly CommandSpec[])[] = [
   ANALYSIS_COMMANDS,
   BODY_COMMANDS,
+  DATA_COMMANDS,
   DIET_COMMANDS,
   EXERCISE_COMMANDS,
   GOAL_COMMANDS,

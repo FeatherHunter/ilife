@@ -1,6 +1,6 @@
 /** 本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。
  *
- * registry 合法键表：写 54 ＋ 读 83 ＝ 137 条。
+ * registry 合法键表：写 54 ＋ 读 84 ＝ 138 条。
  * 一条命令的**事实**住它自己的能力目录（`src/<能力>/commands.ts`）；本文件只是那处的派生，不手改。
  *
  * 键序＝写键（键名升序）在前、读键（键名升序）在后（确定性排序，见生成器）。
@@ -83,6 +83,7 @@ export function isCalorieWriteKey(key: string): key is CalorieWriteKey {
 
 export const CALORIE_COMBOS = {
   ...(CALORIE_WRITE_COMBOS as unknown as Record<string, { shape: EnvelopeShape; title: string }>),
+  'calorie.data.schema': { shape: 'resultset' as EnvelopeShape, title: '数据目录' },
   'calorie.help.center': { shape: 'list' as EnvelopeShape, title: '身材照HELP' },
   'calorie.help.lookup': { shape: 'list' as EnvelopeShape, title: '唤醒词HELP' },
   'calorie.history': { shape: 'list' as EnvelopeShape, title: '热量历史' },

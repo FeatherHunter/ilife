@@ -55,6 +55,11 @@ function assertEnvelopeData(shape: EnvelopeShape, data: Record<string, unknown>)
         throw new CalorieRenderError('bad-input', 'fallback 形缺 reason/degraded:true 全字段');
       }
       break;
+    case 'resultset':
+      // #954 · 数据族结果集：只判容器（`results` 必须是数组；空集是事实，不是错误），
+      // 与公共层 `assertShapeData` 同口径；项内字段由数据族实现装配。
+      if (!Array.isArray(data['results'])) throw new CalorieRenderError('bad-input', 'resultset 形缺 results 数组');
+      break;
     default:
       throw new CalorieRenderError('bad-input', '未知 shape：' + String(shape));
   }

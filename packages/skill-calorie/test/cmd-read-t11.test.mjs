@@ -119,7 +119,7 @@ test('键表：全量组合（读／写合计 == 权威声明）registry 合法 
   assert.deepEqual(Object.keys(CALORIE_COMBOS).sort(), DECLARED_KEYS, '组合键表 == 权威声明（未搬迁清单 ＋ 各能力），不再手写数字');
   for (const [k, v] of Object.entries(CALORIE_COMBOS)) {
     assert.match(k, /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9-.]*$/);
-    assert.ok(['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'].includes(v.shape));
+    assert.ok(['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset'].includes(v.shape));
     assert.ok(v.title.length > 0);
   }
   assert.equal(CALORIE_COMBOS['calorie.view.home'].shape, 'stat');
