@@ -329,7 +329,11 @@ export function buildDragSortJs(): string {
     + '    if (!root || !root.getAttribute(A_LIFT)) return;\n'
     + '    press.cursor={x:e.clientX,y:e.clientY};\n'
     + '    var row=rowAt(root,press.cursor,root.getAttribute(A_LIFT));\n'
-    + '    if (!row || !t.closest("["+A_HANDLE+"]")) return;\n'
+    /* 只认「指针下是这一张里的某一行」；`rowAt` 已经把别的实例、锁定的行、被拿起那一行自己滤掉了。
+       原来这里还有一枚 `t.closest("["+A_HANDLE+"]")`（`t` 是**没声明的标识符**——它只在 click 那一支里
+       `var t=e.target`）→ 真机上一落到行自己的裸区就抛 `ReferenceError: t is not defined`，
+       落点线再也不跟手（2026-09 实测读数：`Uncaught ReferenceError: t is not defined`）。 */
+    + '    if (!row) return;\n'
     /* 落在被拿起那一行自己／空槽上（`rowAt` 把空槽折成它上一行）＝原位，不画线。 */
     + '    if (row.getAttribute(A_KEY)===root.getAttribute(A_LIFT)) return;\n'
     + '    var rows=rowsOf(root), lifted=root.getAttribute(A_LIFT);\n'
