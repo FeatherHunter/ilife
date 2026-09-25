@@ -9,8 +9,9 @@
  *
  *  三条硬口径（判据断的就是它们）：
  *   · 词是**真 `<button type=button>`**：`aria-describedby` 指着气泡（屏读器读得到），
- *     气泡是 `popover` ＋ `role=tooltip`（`Esc`／点外面关是浏览器给的）；
- *   · **三条通路都出得来**：点击（`popovertarget`，零脚本也成）／聚焦（键盘）／悬停（细指针设备）；
+ *     气泡是 `popover` ＋ `role=tooltip`（点外面关是浏览器给的）；
+ *   · **三条通路都出得来**：点击（`popovertarget`；运行时在场时由它接管开合，见 `runtime.ts`）／
+ *     聚焦（键盘增强）／悬停（细指针设备）——三条通路都**只开不关**；
  *   · 词在行里，**视觉盒不撑行**：≥44×44 的命中盒靠看不见的一圈 `::after` 往外撑。
  */
 import { esc } from '../shared/escape.js';

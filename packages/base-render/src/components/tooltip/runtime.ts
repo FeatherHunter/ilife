@@ -3,10 +3,15 @@
  *  分工与同族其余件一致：模块代码零 DOM，DOM 只在产出的字符串里。
  *
  *  行为契约（逐条对应判据）：
- *   · **开／关不靠脚本**：词带 `popovertarget` ⇒ 点击、`Esc`、点外面关都是浏览器的默认行为
- *     （脚本坏了，这条气泡照样点得开）。本段只**加**两条通路与一次定位。
- *   · **三条通路都出得来**：点击（原生）／**聚焦**（键盘走过去）／**悬停**（细指针设备）。
- *   · **悬停不留残留**：`pointerout` 之后延一小会儿再收，指针落到气泡上就撤掉这次收
+ *   · **点那个词＝恒开，不参与开合**：带 `popovertarget` 的触发键，浏览器会在 `click` **之后**再开合一次
+ *     （实测时序 `pointerover → toggle(开) → pointerdown → focusin → pointerup → mouseup → click → toggle(关)`）
+ *     ⇒ 悬停刚开好的气泡被紧接的那一点**关掉**。本段在 `click` 上 `preventDefault()` 拦掉那次原生开合，
+ *     再自己 `show()`：**点一下只会开，永不会关**。
+ *     （`popovertarget` 属性留着：**运行时不在场时**它仍是白送的点击通路——脚本坏了也点得开。）
+ *   · **三条通路都只开不关**：点击／**聚焦**（键盘增强）／**悬停**（细指针设备）——触摸没有悬停那一口，
+ *     照样由 `click` 那一步打开。
+ *   · **关只有两条**：**点别处**（`popover=auto` 的浏览器点外关，本段不拦）与**指针／焦点离开**后的延时收。
+ *   · **悬停不留残留**：`pointerout` 之后延一小会儿再收，指针落回词上或气泡上就撤掉这次收
  *     （气泡本身也可以正常读、可以滚）；`focusout` 同理。
  *   · **降级定位**：引擎不支持锚定 API 时（与 CSS 的 `@supports` 读**同一份能力查询串**），
  *     打开时按词的位置算 `top`（贴不下就翻到词上方）；横轴与宽度归 CSS（宽气泡夹在容器里）。
@@ -40,9 +45,14 @@ export function buildTooltipJs(): string {
     + '    if (top+h > vh-8) top=Math.max(8, r.top-h-8);' + '\n'
     + '    bubble.style.top=top+"px"; bubble.style.bottom="auto";' + '\n'
     + '  }' + '\n'
+    + '  function cancelHide(bubble){' + '\n'
+    + '    var i=pending.indexOf(bubble); if (i<0) return;' + '\n'
+    + '    clearTimeout(timers[i]); pending.splice(i,1); timers.splice(i,1);' + '\n'
+    + '  }' + '\n'
     + '  function show(bubble){' + '\n'
-    + '    if (!bubble || isOpen(bubble)) return;' + '\n'
-    + '    var i=pending.indexOf(bubble); if (i>=0){ clearTimeout(timers[i]); pending.splice(i,1); timers.splice(i,1); }' + '\n'
+    + '    if (!bubble) return;' + '\n'
+    + '    cancelHide(bubble);' + '\n'
+    + '    if (isOpen(bubble)) return;' + '\n'
     + '    if (typeof bubble.showPopover!=="function") return;' + '\n'
     + '    try{ bubble.showPopover(); }catch(e){ return; }' + '\n'
     + '    if (!canAnchor) place(bubble);' + '\n'
@@ -78,6 +88,17 @@ export function buildTooltipJs(): string {
     + '    var w=boxOf(e.target); if (!w) return;' + '\n'
     + '    if (e.relatedTarget && w.contains(e.relatedTarget)) return;' + '\n'
     + '    hideLater(w.querySelector("["+BUBBLE+"]"));' + '\n'
+    + '  });' + '\n'
+    /* 点那个词：**恒开，不参与开合**。`preventDefault()` 拦掉浏览器对 `popovertarget` 触发键的那次开合
+       （它在 `click` 之后跑，正是「悬停开好了、一按又关掉」的成因），随后自己 `show()`——
+       关只留给「点别处」（浏览器点外关）与指针／焦点离开后的延时收。 */
+    + '  doc.addEventListener("click", function(e){' + '\n'
+    + '    var t=e.target; if (!t || !t.closest) return;' + '\n'
+    + '    var word=t.closest("["+WORD+"]"); if (!word) return;' + '\n'
+    + '    var w=boxOf(word); if (!w) return;' + '\n'
+    + '    var b=w.querySelector("["+BUBBLE+"]"); if (!b) return;' + '\n'
+    + '    if (e.cancelable) e.preventDefault();' + '\n'
+    + '    show(b);' + '\n'
     + '  });' + '\n'
     + '  var all=doc.querySelectorAll("["+WORD+"]");' + '\n'
     + '  for (var i=0;i<all.length;i+=1) all[i].setAttribute(BOUND,"1");' + '\n'

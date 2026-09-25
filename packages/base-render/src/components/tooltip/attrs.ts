@@ -6,11 +6,14 @@
  *  **「为什么重要」那一段**。用在哪：六个技能的口径解释、字段说明。
  *
  *  落地路线（票面钉死）：**`popover` 属性**——
- *   · 开／关／`Esc`／点外面关，浏览器白送（触发键带 `popovertarget`，**一行脚本都没有也开得出来**）；
+ *   · 开／关／点外面关都由浏览器给（触发键带 `popovertarget`，**一行脚本都没有也开得出来**）；
+ *     运行时在场时**由它接管「点那个词」这一步**：浏览器对触发键的开合在 `click` 之后跑，会把悬停刚开好的
+ *     气泡**关掉**（实测时序 `pointerover → toggle(开) → … → click → toggle(关)`）⇒ 运行时在场时
+ *     `preventDefault()` 拦掉那次开合，改成**恒开**（点那个词永不会关，关＝点别处）——见 `runtime.ts`；
  *   · 定位：`@supports (anchor-name: --a)` **之内**才用 CSS 锚定定位——**竖轴贴着那个词**
  *     （`anchor(bottom)`），**横轴夹在容器里**（宽气泡不跟词对齐，否则窄屏上必然越界）；
  *     贴不下就 `position-try-fallbacks` 翻到词的上方。之外按普通定位元素排，运行时算 `top`。
- *   · 三条通路都要能出：**悬停**（`hover:hover` 的设备）／**聚焦**（键盘）／**点击**（原生 `popovertarget`）。
+ *   · 三条通路都要能出：**悬停**（`hover:hover` 的设备）／**聚焦**（键盘增强）／**点击**（`popovertarget`）。
  */
 
 /** 本件的类名根（挂在包住「词 ＋ 气泡」的那层容器上）。 */
@@ -95,9 +98,13 @@ export const TOOLTIP_HINT = '点别处关掉';
 export const TOOLTIP_WIDTH_PX = 560;
 export const TOOLTIP_EDGE_PX = 12;
 export const TOOLTIP_OFFSET_PX = 8;
+/** 命中盒边长地板（44）：**样式段里也写着这个数**——`::after` 的纵向高度写成
+ *  `max(词盒高 ＋ 2×外扩, 44px)`，词盒再矮也破不了这条地板。 */
 export const TOOLTIP_HIT_PX = 44;
-/** 词周围那圈**看不见的命中扩展**（词本身在行里，命中盒靠 `::after` 往外撑到 44）。 */
-export const TOOLTIP_HIT_INSET_Y_PX = 12;
+/** 词周围那圈**看不见的命中扩展**（纵向；横向那 8px 写在样式段里）：词本身在行里，命中盒靠 `::after` 往外撑。
+ *  取 14 而不是 12：词盒高度由页面行高决定（`line-height: normal` 时只有 19px）——19＋24＝43，
+ *  **差 1px 不到 44 地板**（真指针普查实测有效命中 42）；14 撑到 47，加上样式里的 44 地板双重兜住。 */
+export const TOOLTIP_HIT_INSET_Y_PX = 14;
 
 /** 宽气泡入参（形态 B）。`id`／`word`／`title`／`text`／`why` 必填。 */
 export interface TooltipInput {

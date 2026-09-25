@@ -12,12 +12,16 @@
  *   · **之外**：同一套横轴 + `position: fixed; inset: auto`（普通定位元素），打开时运行时算 `top`。
  *
  *  命中盒：词在行里不能撑行，视觉盒就是那两个字的宽度 ⇒ ≥44×44 的命中盒由一圈**看不见的**
- *  `::after`（`inset: -12px -8px`）往外撑；判据用 `elementFromPoint` 在词中心上下各 21px 处量到它。
+ *  `::after` 往外撑：横向左右各 8px，纵向**居中**撑到 `max(词盒高 + 28px, 44px)`。
+ *  纵向为什么写成 `max()` 而不是固定内距：词盒高度＝页面行高说了算（`line-height: normal` 时只有 19px，
+ *  紧行高的页面更矮）——只写内距时 19＋24＝43 会**差 1px 不到 44 地板**（命中区普查实测有效命中 42）。
+ *  写 `max(…, 44px)` 后最低就是 44，`TOOLTIP_HIT_PX` 那条地板在样式里也成了同一件事。
+ *  判据用格点取样（基准盒 ±26px、步长 2px、逐点 `elementFromPoint` 归属回这个词，取包围盒）量**有效命中区**。
  */
 import { skinVar } from '../skin/index.js';
 import {
-  TOOLTIP_ANCHOR_QUERY, TOOLTIP_EDGE_PX, TOOLTIP_OFFSET_PX, TOOLTIP_WIDTH_PX,
-  tooltipClass, tooltipSlot,
+  TOOLTIP_ANCHOR_QUERY, TOOLTIP_EDGE_PX, TOOLTIP_HIT_INSET_Y_PX, TOOLTIP_HIT_PX, TOOLTIP_OFFSET_PX,
+  TOOLTIP_WIDTH_PX, tooltipClass, tooltipSlot,
 } from './attrs.js';
 
 /** 本件样式段的入参。 */
@@ -50,8 +54,10 @@ export function tooltipCss(input?: TooltipCssInput): string {
     '  font:600 inherit;font-family:inherit;line-height:inherit;cursor:help;',
     '  text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;',
     '  text-decoration-color:color-mix(in srgb, ' + skinVar('ink') + ' 45%, transparent)}',
-    /* 看不见的命中扩展：把命中盒撑到 ≥44px（判据在词中心上下各 21px 处量 elementFromPoint）。 */
-    word + '::after{content:"";position:absolute;inset:-12px -8px}',
+    /* 看不见的命中扩展：横向左右各 8px ＋ 纵向居中撑到至少 44px（词盒再矮也不破地板）。 */
+    word + '::after{content:"";position:absolute;top:50%;left:-8px;right:-8px;'
+    + 'height:max(calc(100% + ' + String(TOOLTIP_HIT_INSET_Y_PX * 2) + 'px),' + String(TOOLTIP_HIT_PX) + 'px);'
+    + 'transform:translateY(-50%)}',
     word + ':active{transform:scale(.98);transition:transform 60ms linear}',
     word + ':focus-visible{outline:2px solid ' + skinVar('accent') + ';outline-offset:2px}',
     root + ' ' + slot('mark') + '{color:' + skinVar('ink-2') + ';font-size:' + skinVar('fs-xs') + '}',
