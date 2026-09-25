@@ -591,8 +591,15 @@ describe('wizard-shell ①b 说明书与派生面', () => {
     for (const key of Object.keys(row.sample)) {
       assert.equal(key.includes('['), false, '样例里出现了字面量数组键：' + JSON.stringify(key));
     }
-    assert.deepEqual(Object.keys(row.sample.options[0]).sort(), ['title', 'value'],
-      '选项元素的键名被写坏了：' + JSON.stringify(row.sample.options[0]));
+    /* 选项元素的键：**与 `model.ts` 的 `WizardOption` 同面**——`value`／`title` 必填、`desc` 选填。
+       原来这里写死 `['title','value']`，README 的示例块多给一个 `desc`（模型明确收这个字段）就红，
+       红的是判据自己过窄，不是样例写坏。口径：**不许出现模型不认的键**，且必填那两个必须在。 */
+    const OPTION_KEYS = ['desc', 'title', 'value'];
+    const optKeys = Object.keys(row.sample.options[0]).sort();
+    assert.ok(optKeys.every((k) => OPTION_KEYS.includes(k)),
+      '选项元素出现模型不认的键：' + JSON.stringify(row.sample.options[0]));
+    assert.ok(optKeys.includes('title') && optKeys.includes('value'),
+      '选项元素必须带 `title` 与 `value`：' + JSON.stringify(row.sample.options[0]));
     /* 采样值能喂进 render：**只**该剩「派生器把 number 一律给 1」那一条通病（22 件同病，不归本件）。 */
     try {
       renderWizardShell(row.sample);
