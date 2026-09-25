@@ -12,6 +12,7 @@
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { ACCOUNT_COMMANDS } from '../account/index.js';
 import { ANALYSIS_COMMANDS } from '../analysis/index.js';
+import { DATA_COMMANDS } from '../data/index.js';
 import { GOAL_COMMANDS } from '../goal/index.js';
 import { QUERY_COMMANDS } from '../query/index.js';
 import { SETUP_COMMANDS } from '../setup/index.js';
@@ -20,6 +21,7 @@ import { RECORD_COMMANDS } from '../write/index.js';
 const SOURCES: readonly (readonly CommandSpec[])[] = [
   ACCOUNT_COMMANDS,
   ANALYSIS_COMMANDS,
+  DATA_COMMANDS,
   GOAL_COMMANDS,
   QUERY_COMMANDS,
   SETUP_COMMANDS,

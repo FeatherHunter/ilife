@@ -7,8 +7,8 @@ import { buildOverview, buildTrend } from '../dist/analysis/views.js';
 import { parseRegistryKey, ENVELOPE_SHAPES } from '../../base-link-core/dist/index.js';
 
 describe('饼干渲染 render', () => {
-  it('16 key×shape 全合法（命名空间+6 形状）', () => {
-    assert.equal(Object.keys(BILL_KEY_SHAPES).length, 16);
+  it('18 key×shape 全合法（命名空间+7 形状，含数据族 resultset）', () => {
+    assert.equal(Object.keys(BILL_KEY_SHAPES).length, 18);
     for (const [k, s] of Object.entries(BILL_KEY_SHAPES)) {
       assert.equal(parseRegistryKey(k).key, k);
       assert.ok(ENVELOPE_SHAPES.includes(s));

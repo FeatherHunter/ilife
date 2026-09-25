@@ -46,12 +46,15 @@ test('#686 棘轮：未搬迁的键恰住两处——过渡表形状行与分派
     '过渡表有形状行而分派层没有 case（搬迁删了 case 却没删过渡表？）：' + table.filter((k) => !dispatch.includes(k)).join('、'));
 });
 
-test('#686 守恒：注册表（已搬）∪ 未搬迁 ＝ 全量 16 键，两处不相交', () => {
+test('#686 守恒：注册表非程序面 ∪ 未搬迁 ＝ 全量 16 键，两处不相交', () => {
   const registry = sorted(Object.keys(REGISTRY));
   const table = actualTransitionKeys();
   assert.deepEqual(registry.filter((k) => table.includes(k)), [], '一个键恰住一处：注册表与过渡表都有的键：' + registry.filter((k) => table.includes(k)).join('、'));
-  assert.deepEqual(sorted([...registry, ...table]), wakeKeys(),
-    '注册表 ∪ 过渡表 ≠ 口径层全量声明');
+  // #960 · 程序面命令不进词表：守恒式先剔除它们。
+  const program = new Set(FROZEN.programKeys ?? []);
+  const registryUser = registry.filter((k) => !program.has(k));
+  assert.deepEqual(sorted([...registryUser, ...table]), wakeKeys(),
+    '注册表非程序面 ∪ 过渡表 ≠ 口径层全量声明');
   assert.equal(wakeKeys().length, FROZEN.totalKeyCount, '全量声明条数 ≠ 冻结的键总数');
   assert.equal(registry.length, FROZEN.registryKeyCount,
     '已搬进注册表的键数 ' + registry.length + ' ≠ 冻结值 ' + FROZEN.registryKeyCount

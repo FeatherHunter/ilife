@@ -38,9 +38,15 @@ export const FROZEN = {
     'bill.link.submit',
   ],
   /** 已搬进能力目录、进生成物注册表的键数：搬一条 ⇒ +1，同窗上调这里。 */
-  registryKeyCount: 14,
-  /** 7 域 16 联动的键总数（搬迁不改这个数）：注册表 ∪ 未搬迁 ＝ 全集。 */
+  registryKeyCount: 16,
+  /** 7 域 16 联动的键总数（搬迁不改这个数）：非程序面注册表 ∪ 未搬迁 ＝ 全集。
+   *  数据族两条是程序面（`surface: 'program'`），只给程序用、不进唤醒词表，故不计入本数。 */
   totalKeyCount: 16,
+  /** 程序面命令（只给程序用，不进唤醒词路由）：注册表里有、词表里无，守恒式须先剔除它们。 */
+  programKeys: [
+    'bill.data.query',
+    'bill.data.schema',
+  ],
   /** 分派层两件的行数上限（**等于当刻实况**：改一行就同窗改这里，否则收紧守卫红）。 */
   lineCaps: {
     'src/cli/cmd_read.ts': 280,
@@ -223,7 +229,10 @@ export function ratchetProblems(m, frozen = FROZEN) {
   out.push(countCheck('registryKeyCount（生成物注册表键数）', m.registryKeys.length, frozen.registryKeyCount));
   out.push(countCheck('totalKeyCount（口径层 WAKE_TABLE 的键总数）', m.wakeKeys.length, frozen.totalKeyCount,
     '16 联动 key 是票面冻结的契约（键字符串后续票落表时冻结）：要加新命令得同窗改本冻结值并在票面说明，不是在这里悄悄长出来'));
-  const both = [...new Set([...m.registryKeys, ...m.legacyKeys])].sort();
+  // #960 · 程序面命令不进词表：守恒式先剔除它们（注册表非程序面 ∪ 未搬迁 ＝ 全量声明）。
+  const program = new Set(frozen.programKeys ?? []);
+  const registryUser = m.registryKeys.filter((k) => !program.has(k));
+  const both = [...new Set([...registryUser, ...m.legacyKeys])].sort();
   out.push({
     name: 'unionIsTotal（注册表 ∪ 未搬迁 ＝ 全量声明）',
     ok: JSON.stringify(both) === JSON.stringify(m.wakeKeys),

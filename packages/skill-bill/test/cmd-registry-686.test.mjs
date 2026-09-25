@@ -123,6 +123,8 @@ test('#686 对账：每条声明的代表唤醒词（按 key 派生）是真唤�
   const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
   for (const key of REGISTRY_KEYS) {
     const spec = REGISTRY[key];
+    // #953 · 程序面命令（`surface: 'program'`）只给程序用，不进唤醒词路由：跳过本条对账。
+    if (spec.surface === 'program') continue;
     // #721 起代表唤醒词不再写在声明里，按 key 从域声明算（`projectWakeWord`）。
     const word = projectWakeWord({ key });
     assert.ok(phrases.has(word), '代表唤醒词不在 `WAKE_TABLE` 里：' + word + '（' + key + '）');

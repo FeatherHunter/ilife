@@ -129,17 +129,19 @@ describe('#721 · 路由（从包门读）', () => {
 });
 
 describe('#721 · 命令注册表（撤掉代表唤醒词之后仍自洽）', () => {
-  it('条数不缩水：注册表 14 键（已迁移的那些），16 键契约由词表整体守', () => {
-    assert.equal(REGISTRY_KEYS.length, 14, '注册表＝已迁移的十四条（其余 2 条仍住过渡表：help／link，合起来仍是 16 键）');
+  it('条数不缩水：注册表 16 键（已迁移的十四条＋数据族两条），18 键契约由词表整体守', () => {
+    assert.equal(REGISTRY_KEYS.length, 16, '注册表＝已迁移的十四条＋数据族两条（其余 2 条仍住过渡表：help／link，合起来是 18 键）');
     for (const key of REGISTRY_KEYS) {
       assert.ok(String(BILL_KEY_SHAPES[key] || '').length > 0, key + ' 在形状表里没有形状');
     }
-    // 16 键契约不缩水：词表里出现的命令名恰好就是那 16 个。
+    // 16 键契约不缩水：词表里出现的命令名恰好就是既有那 16 个（数据族两条是程序面，不进词表）。
     assert.equal(new Set(WAKE_TABLE.map((e) => e.key)).size, 16);
   });
 
   it('每条命令都算得出代表唤醒词，且它路由回同一条命令', () => {
     for (const key of REGISTRY_KEYS) {
+      // #960 · 程序面命令（`surface: 'program'`）只给程序用，不进唤醒词路由：跳过本条对账。
+      if (REGISTRY[key].surface === 'program') continue;
       const word = projectWakeWord({ key });
       assert.ok(word.length > 0, key + ' 一条词都算不出来');
       // 有的词带必需槽位（「查区间」要 start／end）：缺槽位即抛属**词的槽位口径**，不是路由错；
