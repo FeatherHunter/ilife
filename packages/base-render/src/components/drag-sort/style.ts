@@ -11,7 +11,8 @@
  *   · 拿起的行：往上挪 2px ＋ 1px 强调描边 ＋ 左侧 2px 主色侧标（「整行选中」那一档的法条口径）＋
  *     次要面底；行内主字仍是墨色；
  *   · 原位空槽：虚线框 ＋ 强调软底 ＋ 强调字（淡洗底上的字走文本档，对比地板 4.5 那一档）；
- *   · 落点线：3px 实线通栏 ＋ 右端一枚胶囊写出放第几位。
+ *   · 落点线：3px 实线**通栏**（左沿＝行左沿、右沿＝行右沿；杆不从右端短一截）＋ 右端一枚胶囊
+ *     **压在线上**写出放第几位（与原型 `.c-drag-line` 同形）。
  */
 import { skinVar } from '../skin/contract.js';
 import {
@@ -208,25 +209,30 @@ export function dragSortCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.5;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 落点粗线：3px 实线通栏（形）＋ 右端胶囊写出放第几位（字）。 */',
+    '/* 落点粗线：3px 实线**通栏**（`i` 撑满行宽，左沿＝右沿＝行沿；形）＋ 右端胶囊压在线上（字）。',
+    '   标签自带不透底的软底，压在线上：杆从标签两边露出来，右沿不短半截（原型 `.c-drag-line` 同形）。 */',
     s('drop') + ' {',
+    '  position: relative;',
     '  display: flex;',
     '  align-items: center;',
     '  min-height: 36px;',
     '  padding: 2px 0;',
     '}',
     s('drop') + ' > i {',
-    '  flex: 1 1 auto;',
+    '  position: absolute;',
+    '  top: 50%;',
+    '  left: 0;',
+    '  width: 100%;',
     '  height: 3px;',
-    '  min-width: 0;',
+    '  margin-top: -2px;',
     '  border-radius: ' + skinVar('radius-pill') + ';',
     '  background: ' + skinVar('accent') + ';',
     '}',
     s('drop') + ' > b {',
-    '  flex: none;',
+    '  position: relative;',
     '  display: inline-flex;',
     '  align-items: center;',
-    '  margin-left: 8px;',
+    '  margin-left: auto;',
     '  padding: 2px 10px;',
     '  border: 1px solid ' + skinVar('accent') + ';',
     '  border-radius: ' + skinVar('radius-pill') + ';',

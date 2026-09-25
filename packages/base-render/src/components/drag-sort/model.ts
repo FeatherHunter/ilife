@@ -6,7 +6,8 @@
  *      全空白串＝拒（屏上留一块空白：空壳行、无字标题、「不可移：   」）；
  *      入参表以外的键＝拒（写错一个键名静默吞掉，调用方以为自己设上了）。
  *   2. **能算的都算出来**：序号、位置读数、把手的无障碍名、状态句、空槽句、落点句——
- *      都在这里算好；`render.ts` 只拼标记，一个字都不算；运行时段按同一口径现算。
+ *      都在这里从 `attrs.ts` 的 `DRAG_SORT_TEXT`（**整句的唯一定义地**）取；`render.ts` 只拼标记，
+ *      一个字都不算；`runtime.ts` 烘的是同一个 `dragSortText()`（同源，不是另写一份）。
  *   3. **落点位是 1 起的位**：`dropAt` 缺省＝被拿起的那一位（拿起还没挪＝落回原位）。
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
@@ -14,6 +15,8 @@ import {
   DRAG_SORT_FORMS,
   DRAG_SORT_MAX_ITEMS,
   DRAG_SORT_MIN_ITEMS,
+  DRAG_SORT_TEXT,
+  dragSortText,
   type DragSortForm,
 } from './attrs.js';
 
@@ -89,27 +92,6 @@ const INPUT_KEYS = ['id', 'title', 'hint', 'items', 'liftedKey', 'dropAt', 'form
 
 /** `DragSortItem` 的键（一行的入参表）。 */
 const ITEM_KEYS = ['key', 'label', 'note', 'meta', 'locked', 'why'] as const;
-
-/** plain 态的状态句（共几步 ＋ 只说看得见的通路）。 */
-export function dragSortIdleStatus(total: number): string {
-  return '共 ' + String(total) + ' 步。点把手拿起一行。放下时点另一行。';
-}
-
-/** lifted 态的状态句（拿起第几步、将放到第几位、取消在哪）。 */
-export function dragSortLiftedStatus(from: number, label: string, to: number): string {
-  return '已拿起第 ' + String(from) + ' 步「' + label + '」，将放到第 ' + String(to)
-    + ' 位。点另一行放下，或点取消放回原位。';
-}
-
-/** 空槽句（写出哪一步空着、被拿起的是谁）。 */
-export function dragSortSlotText(from: number, label: string): string {
-  return '第 ' + String(from) + ' 步原位空着，被拿起的是' + label;
-}
-
-/** 落点句（写出放第几位）。 */
-export function dragSortLineText(to: number): string {
-  return '放这里（第 ' + String(to) + ' 位）';
-}
 
 /** 一枚条目 → 一行（逐字段校验；`locked` 必带 `why`）。 */
 function reqItem(value: unknown, at: string, seen: Set<string>): {
@@ -198,11 +180,12 @@ export function normalizeDragSort(input: unknown): DragSortModel {
 
   const rows: DragSortRow[] = parsed.map((r, i) => {
     const pos = i + 1;
+    /* 三档把手名（文案在 `DRAG_SORT_TEXT` 一处；运行时段烘的是同一份）。 */
     const grip = r.locked
-      ? '第 ' + String(pos) + ' 步不可移，' + String(r.why)
+      ? dragSortText('gripLock', { p: pos, why: r.why === undefined ? '' : r.why })
       : (liftedKey === r.key
-        ? '已拿起第 ' + String(pos) + ' 步：' + r.label + '，再点放回原位'
-        : '拿起第 ' + String(pos) + ' 步：' + r.label);
+        ? dragSortText('gripLift', { p: pos, label: r.label })
+        : dragSortText('gripPick', { p: pos, label: r.label }));
     return {
       key: r.key, label: r.label, note: r.note, meta: r.meta,
       locked: r.locked, why: r.why, pos,
@@ -217,16 +200,18 @@ export function normalizeDragSort(input: unknown): DragSortModel {
     form: form as DragSortForm,
     id,
     title,
-    hint: hintRaw === undefined ? '点把手拿起一行。放下时点另一行。' : hintRaw,
+    hint: hintRaw === undefined ? DRAG_SORT_TEXT.hint : hintRaw,
     rows,
     total,
     lifted,
     dropAt,
     status: lifted === undefined
-      ? dragSortIdleStatus(total)
-      : dragSortLiftedStatus(lifted.from, liftedLabel, dropAt),
-    slotText: lifted === undefined ? '' : dragSortSlotText(lifted.from, liftedLabel),
-    lineText: lifted === undefined ? '' : dragSortLineText(dropAt),
+      ? dragSortText('idleStatus', { n: total })
+      : dragSortText('liftStatus', { from: lifted.from, label: liftedLabel, to: dropAt }),
+    slotText: lifted === undefined
+      ? ''
+      : dragSortText('slotText', { from: lifted.from, label: liftedLabel }),
+    lineText: lifted === undefined ? '' : dragSortText('lineText', { to: dropAt }),
     extraClass: optExtraClass(raw.extraClass, 'drag-sort: input.extraClass'),
   };
 }

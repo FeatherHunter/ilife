@@ -11,15 +11,29 @@
  *     几何事实取常量（44／56／8／480）／三样的形（位移／虚线／3px 线）／
  *     零手写色值、源码级零手写 `var(--ilife-…)`、不拿 `ink` 系当面／
  *     零键盘语汇（长按／双击／方向键那一路）／`dist/components/drag-sort/**` 剥字面量后零 DOM／
- *     运行时段是产出的文本（IIFE、幂等、无 `innerHTML`、无 `keydown`、点选＋拖拽两条路）；
+ *     运行时段是产出的文本（IIFE、幂等、无 `innerHTML`、无 `keydown`、点选＋拖拽两条路）／
+ *     **文案只许一处定义**（源码里每一句只有一份字面量，运行时段烘出来的那份与 `DRAG_SORT_TEXT`
+ *     逐字相同——这条不用真机，所以住这一段）；
  *  ③ **加法式**：不启用它的页面零命中、逐字节不变；渲染本件不改别件产物；前缀透传；
  *     同一份入参渲染四次逐字节相同，且标记不带皮肤类；
  *  ④ **四档几何（真机 headless Chrome ＋ CDP，容器宽 320／390／620／1280）**：
  *     零横向溢出、序号与名称零截断、每枚把手 ≥44×44、行间缝 ≥8px、拿起态三样可见；
+ *     **落点粗线通栏**（杆左沿／右沿＝行沿，右端不短一截；标签压在线上；四档逐档量）；
  *     **起不来就退确定性几何判据并打印原因**；
- *  ⑤ **行为（真机）**：拿起（点把手 → 三样出来 ＋ 状态句 ＋ `pick` 事件）／
- *     放下（点另一行 → 全序真动 ＋ 位置读数整列重写 ＋ `drop` 事件带新 `keys`）／
- *     取消（点取消键／再点同一行 → 顺序不动 ＋ `cancel` 事件）；四套皮肤下标记逐字节相同。
+ *  ⑤ **行为（真机 · 真指针）**：拿起（**CDP 真指针点一下把手**：`mousePressed`／`mouseReleased`
+ *     加浏览器自己合成的 `click`，完整事件序列逐条落账）／放下（**真指针点另一行的名称格**：
+ *     整行可放，不必点把手）／取消（真指针点被拿起那一行自己）；**同页两块只许一块挂拿起态**、
+ *     **同 `id` 两张互不串**；四套皮肤下标记逐字节相同。
+ *
+ *  **真指针铁律（本判据自己踩过的坑）**：拿起／放下／取消那几条**必须**走
+ *  `Input.dispatchMouseEvent` 的 `mousePressed`／`mouseReleased`（CDP 输入通道，浏览器自己合成
+ *  `click`），或走完整的 `dispatchEvent(new PointerEvent(…))` 序列——**不许**只用 `element.click()`。
+ *  合成 `click` 只派一个事件、不经指针，于是「`pointerdown` 先拿起 → 同一手势的 `click` 立刻取消」
+ *  这条**真机必坏**的错法在它眼皮底下全绿（2026-09 审查席读数：
+ *  `pointerdown@2 → pick@3 → pointerup@48 → click@48 → cancel@48`，终态 `lift=null`，永远拿不起来）。
+ *  `element.click()` 那几条（合成的点击）留着，但它们只当旁证，替不了真指针这几条。
+ *
+ *  **会过屏的句子只许有一处定义**（`DRAG_SORT_TEXT`；判据住 ② 段：它不碰真机）。
  *
  * 期望值一律从组件自己的常量派生（`DRAG_SORT_*`），不抄字面量：改了名字这里跟着红。
  */
@@ -57,6 +71,7 @@ import {
   buildDragSortJs,
   dragSortCss,
   dragSortSlot,
+  dragSortText,
   renderDragSort,
 } from '../dist/components/drag-sort/index.js';
 import { renderPageHead } from '../dist/components/page-head/index.js';
@@ -430,6 +445,65 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
       assert.ok(DRAG_SORT_SLOTS.includes(slot), '槽位闭集里少了 ' + slot);
     }
   });
+
+  it('**同一句只有一个定义地**：写进源码的字面量各只一份，产出的 JS 烘出来与常量逐字相同', () => {
+    /* 这条不用真机：它只读产出文本与源码（所以它住在 ② 段，不跟着真机段一起跳过）。
+       两面对账：① 源码四个文件里每一句只有一份字面量（住 `DRAG_SORT_TEXT`）；
+       ② 运行时段烘出来的函数真跑起来，结果与 `dragSortText()` 的整句逐字相同。 */
+    const built = buildDragSortJs();
+    /** 把产出文本里那句函数抠出来真调一次（产出的 JS 必须自足：不依赖模块作用域）。 */
+    const callText = (name, args) => {
+      const m = built.match(new RegExp('var ' + name + '=(function\\(([^)]*)\\)\\{ return ([^;]*); \\});'));
+      assert.ok(m !== null, '产出文本里没有 ' + name + ' 的烘法（函数没烘？）');
+      const body = m[3].replace(/p(\d)/g, (w, i) => JSON.stringify(args[Number(i)]));
+      // eslint-disable-next-line no-new-func
+      return String(new Function('return ' + body)());
+    };
+    const got = {
+      idleStatus: callText('idleStatus', [123]),
+      liftStatus: callText('liftStatus', [123, '标签·A', 456]),
+      slotText: callText('slotText', [123, '标签·A']),
+      lineText: callText('lineText', [456]),
+      gripPick: callText('gripPick', [123, '标签·A']),
+      gripLift: callText('gripLift', [123, '标签·A']),
+      gripLock: callText('gripLock', [123, '原因·B']),
+    };
+    const want = {
+      idleStatus: dragSortText('idleStatus', { n: 123 }),
+      liftStatus: dragSortText('liftStatus', { from: 123, label: '标签·A', to: 456 }),
+      slotText: dragSortText('slotText', { from: 123, label: '标签·A' }),
+      lineText: dragSortText('lineText', { to: 456 }),
+      gripPick: dragSortText('gripPick', { p: 123, label: '标签·A' }),
+      gripLift: dragSortText('gripLift', { p: 123, label: '标签·A' }),
+      gripLock: dragSortText('gripLock', { p: 123, why: '原因·B' }),
+    };
+    console.log('drag-sort 文案对账 ' + JSON.stringify(got));
+    assert.deepEqual(got, want, '运行时段烘的句子与 DRAG_SORT_TEXT 走散（同一句话两个定义地）');
+    const files = {
+      attrs: readFileSync(join(DIR, 'attrs.ts'), 'utf8'),
+      model: readFileSync(join(DIR, 'model.ts'), 'utf8'),
+      render: readFileSync(join(DIR, 'render.ts'), 'utf8'),
+      runtime: readFileSync(join(DIR, 'runtime.ts'), 'utf8'),
+    };
+    const src = [files.attrs, files.model, files.render, files.runtime]
+      .map((t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')).join('\n');
+    /** 源码里那几处句子的**处数**（`hint` 与 `idleStatus` 共用那半句＝两处）与产出文本里该有几处
+     *  （`hint` 不在运行时段：文案由调用方给；其余五句各烘一份）。 */
+    const CASES = [
+      ['点把手拿起一行。放下时点另一行。', 2, 1],
+      ['将放到第', 1, 1],
+      ['原位空着，被拿起的是', 1, 1],
+      ['放这里（第', 1, 1],
+    ];
+    for (const [phrase, wantSrc, wantBuilt] of CASES) {
+      const timesSrc = (src.match(new RegExp(phrase, 'g')) || []).length;
+      const timesBuilt = (built.match(new RegExp(phrase, 'g')) || []).length;
+      assert.equal(timesSrc, wantSrc, '源码里这一段字面量的处数变了（同一句话两个定义地）：' + phrase
+        + ' 源码=' + String(timesSrc) + ' 该是=' + String(wantSrc));
+      assert.equal(timesBuilt, wantBuilt, '产出文本里这一段的对不上：' + phrase
+        + ' 产出=' + String(timesBuilt) + ' 该是=' + String(wantBuilt));
+    }
+  });
 });
 
 /** 剥掉 `var(...)`（含嵌套与带括号的兜底）后的剩余 CSS：兜底链里的颜色字面量是允许的。 */
@@ -578,9 +652,38 @@ describe('drag-sort ④ 四档几何（真机 headless Chrome ＋ CDP · 容器 
   });
 
   it('关页', () => { page.close(); });
+
+  /* 判据 A（④ 段）：落点粗线通栏 ＋ 标签压在线上（四档逐档量）。 */
+  it('**落点粗线通栏**：杆左沿／右沿＝行沿（右端不短一截）且标签压在线上（四档逐档量）', async () => {
+    const listSel = '.' + dragSortSlot('list');
+    const dropSel = '.' + dragSortSlot('drop');
+    for (const width of [320, 390, 620, 1280]) {
+      await page.setWidth(width);
+      const g = await page.ev('(function(){'
+        + 'var list=document.querySelector(' + JSON.stringify(listSel) + ');'
+        + 'var bar=document.querySelector(' + JSON.stringify(dropSel + ' > i') + ');'
+        + 'var tag=document.querySelector(' + JSON.stringify(dropSel + ' > b') + ');'
+        + 'var box=function(el){ var r=el.getBoundingClientRect();'
+        + ' return {l:Math.round(r.left),r:Math.round(r.right),w:Math.round(r.width),t:Math.round(r.top),b:Math.round(r.bottom)}; };'
+        + 'var inTag=function(x){ var r=tag.getBoundingClientRect(); return x>=r.left && x<=r.right; };'
+        + 'var a=0, free=0, n=Math.round(bar.getBoundingClientRect().width);'
+        + 'for (var x=5; x<n-5; x+=5){ if (x<=n){ a+=1; if(!inTag(x)) free+=1; } }'
+        + 'return {list:box(list), bar:box(bar), tag:box(tag),'
+        + ' inTagTop:(tag.getBoundingClientRect().top<=bar.getBoundingClientRect().top'
+        + ' && tag.getBoundingClientRect().bottom>=bar.getBoundingClientRect().bottom),'
+        + ' tagCoverage:(tag.getBoundingClientRect().width/Math.max(1,list.getBoundingClientRect().width)),'
+        + ' freeRatio:(free/Math.max(1,a))};}())');
+      console.log('drag-sort 落点线读数 ' + JSON.stringify({ width, g }));
+      assert.equal(g.bar.l, g.list.l, width + ' 档落点杆左沿没对齐行左沿：' + JSON.stringify(g));
+      assert.equal(g.bar.r, g.list.r, width + ' 档落点杆右沿没到行右沿（原型是 left:0;right:0 满宽）：' + JSON.stringify(g));
+      assert.ok(g.freeRatio >= 0.6, width + ' 档落点杆被标签挡住太多（标签只许压在线上）：' + JSON.stringify(g));
+      assert.equal(g.inTagTop, true, width + ' 档标签没压在线上（原型：标签骑在杆上）：' + JSON.stringify(g));
+      assert.ok(g.tagCoverage <= 0.9, width + ' 档标签几乎盖满整条杆：' + JSON.stringify(g));
+    }
+  });
 });
 
-describe('drag-sort ⑤ 行为（真机：拿起／放下／取消）＋ 四套皮肤同构', async () => {
+describe('drag-sort ⑤ 行为（真机 · 真指针：拿起／放下／取消）＋ 四套皮肤同构', async () => {
   const p = await startBrowser({ portOffset: 42 });
   if (p === null) {
     it('真机未跑（本机没有 Chrome）：行为判据跳过', (t) => {
@@ -692,6 +795,181 @@ describe('drag-sort ⑤ 行为（真机：拿起／放下／取消）＋ 四套�
       assert.equal(marks[i], marks[0], '皮肤 ' + SKIN_NAMES[i] + ' 的标记与 ' + SKIN_NAMES[0] + ' 逐字节相同');
     }
     console.log('drag-sort 皮肤同构：' + SKIN_NAMES.join('／') + ' 四套标记逐字节相同');
+  });
+
+  /* ── 真指针小件 ──────────────────────────────────────────────────────────
+   *  坐标读的是**页面坐标**（`p.at` 把视口设成 390×1000，夹具首屏放得下，`clientY` ≡ 页坐标）。
+   *  拿起／放下／取消这几条一律走 CDP 的 `Input.dispatchMouseEvent`（真指针）：
+   *  浏览器自己合成那枚 `click`，`pointerdown → pointerup → 合成 click` 的时序才是真机的样子。
+   *  `element.click()` 只当旁证——它不经指针，上面那个错法它照不出来。
+   */
+  const POINT_AT = (sel) => '(function(){var el=document.querySelector(' + JSON.stringify(sel) + ');'
+    + 'var b=el.getBoundingClientRect();return {x:Math.round(b.left+b.width/2),y:Math.round(b.top+b.height/2)};}())';
+  const HANDLE_SEL = (key) => '[' + DRAG_SORT_HANDLE_ATTR + '="' + key + '"]';
+  const NAMES_CELL = (key) => '[' + DRAG_SORT_KEY_ATTR + '="' + key + '"] .' + dragSortSlot('name');
+  const SLOT_SEL = '.' + dragSortSlot('slot');
+  const LINE_SEL = '.' + dragSortSlot('drop');
+  const pointOf = (sel) => p.ev(POINT_AT(sel));
+
+  /** 真指针拖：按下 → 挪（`buttons:1`）→ 松手。CDP 输入通道，浏览器自己派发 pointer 事件。 */
+  const realDrag = async (from, to, hops = 6) => {
+    await p.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from.x, y: from.y, button: 'left', buttons: 1, clickCount: 1 });
+    for (let i = 1; i <= hops; i += 1) {
+      const x = Math.round(from.x + ((to.x - from.x) * i) / hops);
+      const y = Math.round(from.y + ((to.y - from.y) * i) / hops);
+      await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'left', buttons: 1 });
+    }
+    await p.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: to.x, y: to.y, button: 'left', buttons: 0, clickCount: 1 });
+  };
+
+  /** 真指针点一下（按下 ＋ 松手；浏览器随后自己合成 `click`）。 */
+  const tapAt = async (pt, hops = 3) => { await realDrag(pt, pt, hops); };
+
+  /** 事件序列落账：raw 指针／点击事件 ＋ 本件三条事件，各带「那一刻的真实拿起态」。 */
+  const WIRE_TIMELINE = (function () {
+    const state = '(function(){var out={};var rs=document.querySelectorAll('
+      + JSON.stringify('[' + DRAG_SORT_ATTR + ']') + ');'
+      + 'for(var i=0;i<rs.length;i+=1){out[rs[i].getAttribute(' + JSON.stringify(DRAG_SORT_ATTR) + ')]='
+      + 'rs[i].getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + ');}return out;})()';
+    const raw = ['pointerdown', 'pointerup', 'click'].map((n) => 'document.addEventListener(' + JSON.stringify(n)
+      + ',function(e){window.__tl.push({name:' + JSON.stringify(n) + ',at:Math.round(e.timeStamp),state:' + state + '});},true);').join('');
+    const own = [DRAG_SORT_EVENT_PICK, DRAG_SORT_EVENT_DROP, DRAG_SORT_EVENT_CANCEL].map((n) =>
+      'document.addEventListener(' + JSON.stringify(n) + ',function(e){window.__tl.push({name:' + JSON.stringify(n)
+      + ',state:' + state + ',detail:e.detail,root:e.target.getAttribute(' + JSON.stringify(DRAG_SORT_ATTR) + ')});});').join('');
+    return 'window.__tl=[];' + raw + own + 'true';
+  }());
+
+  /** 合成指针序列（**完整序列**，不是 `element.click()`）：真指针那几条的反证就靠它。 */
+  const synthSeq = (from) => '(function(){var el=document.querySelector('
+    + JSON.stringify(HANDLE_SEL('s3')) + ');'
+    + 'var o={bubbles:true,cancelable:true,composed:true,pointerId:1,pointerType:"mouse",isPrimary:true,'
+    + 'button:0,buttons:1,clientX:' + from.x + ',clientY:' + from.y + '};'
+    + 'el.dispatchEvent(new PointerEvent("pointerdown",o));'
+    + 'el.dispatchEvent(new PointerEvent("pointerup",o));'
+    + 'el.dispatchEvent(new MouseEvent("click",o));return true;}())';
+
+  it('**真指针点一下＝拿起**（CDP 输入通道：完整事件序列落账，终态必须挂着拿起态）', async () => {
+    await p.at(fixture('paper', PLAIN, true));
+    await p.ev(WIRE_TIMELINE);
+    await tapAt(await pointOf(HANDLE_SEL('s3')));
+    const tl = await p.ev('window.__tl.map(function(o){return o.name;})');
+    const st = await p.ev(STATE);
+    console.log('drag-sort 真指针拿起时序 ' + JSON.stringify({ tl, state: st }));
+    assert.deepEqual(tl, ['pointerdown', 'pointerup', DRAG_SORT_EVENT_PICK, 'click'],
+      '真指针点一下的事件序列（浏览器自己合成 click）：' + JSON.stringify(tl));
+    assert.equal(st.lift, 's3', '点一下就要拿起（真指针通路坏了这里就是 null）');
+    assert.equal(st.slot, true, '空槽要在屏上');
+    assert.equal(st.line, true, '落点线要在屏上');
+    assert.equal(st.cancelHidden, false, '取消键要露着');
+    assert.equal(tl.includes(DRAG_SORT_EVENT_CANCEL), false, '同一手势里不许冒出取消');
+  });
+
+  it('**合成指针序列**（dispatchEvent 完整序列）：一样拿得起来——`element.click()` 替不了这一条', async () => {
+    await p.at(fixture('paper', PLAIN, true));
+    await p.ev(WIRE_TIMELINE);
+    const before = await p.ev('(function(){return document.querySelector(' + JSON.stringify('.' + DRAG_SORT_CLASS)
+      + ').getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + ');})()');
+    assert.equal(before, null, '点之前没有拿起态');
+    await p.ev(synthSeq({ x: 10, y: 10 }));
+    const tl = await p.ev('window.__tl.map(function(o){return o.name;})');
+    const st = await p.ev(STATE);
+    console.log('drag-sort 合成指针时序 ' + JSON.stringify({ tl, state: st }));
+    assert.deepEqual(tl, ['pointerdown', 'pointerup', DRAG_SORT_EVENT_PICK, 'click'],
+      '完整序列的落账：' + JSON.stringify(tl));
+    assert.equal(st.lift, 's3', '完整指针序列也要拿得起来');
+  });
+
+  it('**放下＝整行**：拿起后真指针点另一行的名称格（256×20）就落，不必点把手', async () => {
+    await p.at(fixture('paper', PLAIN, true));
+    await p.ev(WIRE_TIMELINE);
+    await tapAt(await pointOf(HANDLE_SEL('s3')));
+    assert.equal((await p.ev(STATE)).lift, 's3', '先拿起 s3');
+    await tapAt(await pointOf(NAMES_CELL('s5')));
+    const st = await p.ev(STATE);
+    const cell = await p.ev('(function(){var b=document.querySelector(' + JSON.stringify(NAMES_CELL('s5'))
+      + ').getBoundingClientRect();return {w:Math.round(b.width),h:Math.round(b.height)};})()');
+    console.log('drag-sort 真指针放下读数 ' + JSON.stringify({ state: st, evts: st.evts, cell }));
+    assert.deepEqual(st.keys, ['s1', 's2', 's4', 's3', 's5'], '点名称格就放下：' + JSON.stringify(st.keys));
+    assert.equal(st.lift, null, '拿起态收掉');
+    assert.equal(st.slot, false, '空槽撤掉');
+    assert.equal(st.line, false, '落点线撤掉');
+    assert.equal(st.evts[st.evts.length - 1].type, DRAG_SORT_EVENT_DROP, '最后一条是放下');
+    assert.deepEqual(st.evts[st.evts.length - 1].detail,
+      { id: 'steps-dinner', keys: ['s1', 's2', 's4', 's3', 's5'], from: 3, to: 4 },
+      '放下读数与既有的合成点击那条一致');
+  });
+
+  it('**真指针点原位空槽也落**（空槽就是原位：点它＝放回原位）', async () => {
+    await p.at(fixture('paper', PLAIN, true));
+    await tapAt(await pointOf(HANDLE_SEL('s3')));
+    assert.equal((await p.ev(STATE)).lift, 's3', '先拿起 s3');
+    await tapAt(await pointOf(SLOT_SEL));
+    const st = await p.ev(STATE);
+    console.log('drag-sort 点空槽读数 ' + JSON.stringify({ keys: st.keys, lift: st.lift, evts: st.evts }));
+    assert.equal(st.lift, null, '点空槽也要落账（不许什么都没发生）');
+    assert.equal(st.slot, false, '空槽撤掉');
+    assert.equal(st.line, false, '落点线撤掉');
+    assert.ok(st.evts.length >= 2, '至少派发 pick 与「放下／取消」各一条：' + JSON.stringify(st.evts));
+    assert.ok([DRAG_SORT_EVENT_DROP, DRAG_SORT_EVENT_CANCEL].includes(st.evts[st.evts.length - 1].type),
+      '最后一条是放下或取消：' + JSON.stringify(st.evts));
+    assert.deepEqual(st.keys, ['s1', 's2', 's3', 's4', 's5'], '空槽＝原位：顺序原样不动');
+  });
+
+  it('**同页两块只许一块挂拿起态**：A 拿起后点 B 的把手，B 拿起、A 那块被收掉', async () => {
+    const two = (key) => '<div style="width:100%"><div class="ilife-page-ui" data-blk="' + key + '">'
+      + renderDragSort({ id: 'list-' + key, title: '清单 ' + key, items: ITEMS }) + '</div></div>';
+    await p.at(fixture('paper', two('a') + two('b'), true));
+    await p.ev(WIRE_TIMELINE);
+    const stateTxt = '(function(){return [].slice.call(document.querySelectorAll('
+      + JSON.stringify('[' + DRAG_SORT_ATTR + ']') + ')).map(function(r){return {'
+      + 'id:r.getAttribute(' + JSON.stringify(DRAG_SORT_ATTR) + '),'
+      + 'lift:r.getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + '),'
+      + 'slot:!!r.querySelector(' + JSON.stringify(SLOT_SEL) + '),'
+      + 'line:!!r.querySelector(' + JSON.stringify(LINE_SEL) + '),'
+      + 'cancelShown:!r.querySelector(' + JSON.stringify('.' + dragSortSlot('cancel'))
+      + ').hasAttribute("hidden")};});})()';
+    await tapAt(await pointOf('[data-blk="a"] ' + HANDLE_SEL('s2')));
+    const one = await p.ev(stateTxt);
+    console.log('drag-sort 跨实例读数（A 拿起） ' + JSON.stringify(one));
+    assert.deepEqual(one, [{ id: 'list-a', lift: 's2', slot: true, line: true, cancelShown: true },
+      { id: 'list-b', lift: null, slot: false, line: false, cancelShown: false }], 'A 拿起后只有 A 挂拿起态');
+    await tapAt(await pointOf('[data-blk="b"] ' + HANDLE_SEL('s4')));
+    const both = await p.ev(stateTxt);
+    console.log('drag-sort 跨实例读数（B 再拿起） ' + JSON.stringify(both));
+    assert.equal(both.filter((r) => r.lift !== null).length, 1, '全页只许一块挂拿起态：' + JSON.stringify(both));
+    assert.deepEqual(both, [{ id: 'list-a', lift: null, slot: false, line: false, cancelShown: false },
+      { id: 'list-b', lift: 's4', slot: true, line: true, cancelShown: true }], 'B 拿起、A 那块被收掉');
+  });
+
+  it('**同 id 两张互不串**：从第一张拿起、拖到第二张上面松手，第一张落账、两块都收干净', async () => {
+    const once = renderDragSort({ id: 'steps-dup', title: '第一张', items: ITEMS });
+    const twice = renderDragSort({ id: 'steps-dup', title: '第二张', items: ITEMS });
+    await p.at(fixture('paper', once + twice, true));
+    await p.ev('window.__drop=[];document.addEventListener(' + JSON.stringify(DRAG_SORT_EVENT_DROP)
+      + ',function(e){window.__drop.push(e.detail.keys);});true');
+    const h3 = await p.ev('(function(){var rs=document.querySelectorAll('
+      + JSON.stringify('[' + DRAG_SORT_ATTR + ']') + ');'
+      + 'var b=rs[0].querySelector(' + JSON.stringify(HANDLE_SEL('s3')) + ').getBoundingClientRect();'
+      + 'return {x:Math.round(b.left+b.width/2),y:Math.round(b.top+b.height/2)};})()');
+    const other = await p.ev('(function(){var rs=document.querySelectorAll('
+      + JSON.stringify('[' + DRAG_SORT_ATTR + ']') + ');'
+      + 'var b=rs[1].querySelector(' + JSON.stringify('[' + DRAG_SORT_KEY_ATTR + '="s4"]') + ').getBoundingClientRect();'
+      + 'return {x:Math.round(b.left+b.width/2),y:Math.round(b.top+b.height/2)};})()');
+    await realDrag(h3, other);
+    const st = await p.ev('(function(){var rs=document.querySelectorAll('
+      + JSON.stringify('[' + DRAG_SORT_ATTR + ']') + ');return [].slice.call(rs).map(function(r){return {'
+      + 'lift:r.getAttribute(' + JSON.stringify(DRAG_SORT_LIFT_ATTR) + '),'
+      + 'slot:!!r.querySelector(' + JSON.stringify(SLOT_SEL) + '),'
+      + 'keys:[].slice.call(r.querySelectorAll(' + JSON.stringify('[' + DRAG_SORT_KEY_ATTR + ']') + ')).map(function(x){'
+      + 'return x.getAttribute(' + JSON.stringify(DRAG_SORT_KEY_ATTR) + ');})};});})()');
+    const droppedKeys = await p.ev('window.__drop');
+    console.log('drag-sort 同 id 两实例读数 ' + JSON.stringify({ st, droppedKeys }));
+    assert.equal(st[0].lift, null, '第一张的拿起态必须收掉（不许挂死在屏上）');
+    assert.equal(st[0].slot, false, '第一张的空槽撤掉');
+    assert.equal(st[1].lift, null, '第二张不许被拿起');
+    assert.deepEqual(st[1].keys, ['s1', 's2', 's3', 's4', 's5'], '第二张的顺序不许动');
+    assert.deepEqual(st[0].keys, ['s3', 's1', 's2', 's4', 's5'], '第一张按「拖到那一行前面」落账（拖到 s4 前）');
+    assert.equal(droppedKeys.length, 1, '放下这一次只报一条：' + JSON.stringify(droppedKeys));
   });
 
   it('关页', () => { p.close(); });

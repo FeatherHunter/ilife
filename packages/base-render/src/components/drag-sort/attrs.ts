@@ -120,9 +120,14 @@ export const DRAG_SORT_MIN_ITEMS = 2;
 /** 行数上限（条）：再多请调用方先分组（那是调用方的活，不是本件的活）。 */
 export const DRAG_SORT_MAX_ITEMS = 30;
 
-/* ── 文案（缺省的那几句；调用方换标题与副语，状态句的语义别换） ───────── */
+/* ── 文案（全部整句／整段；调用方换标题与副语，状态句的语义别换） ─────
+ *
+ *  **本件的每一句会过屏的字都在这一处定义**（铁律二）：`model.ts` 渲染期读它算出状态句／空槽句／
+ *  落点句／把手名，`runtime.ts` 把它烘成产出 JS 里同名同形的函数（不是另写一份——两处各写一句，
+ *  改一句漏一句，屏上同一件事就有了两个说法）。
+ */
 
-/** 缺省文案与状态句（渲染期与运行时段**读同一份**，免得两处各写一句）。 */
+/** 文案段（**整句定义地**：渲染期与运行时段读的就是这一份）。 */
 export const DRAG_SORT_TEXT = Object.freeze({
   /** 卡头右端那句拿法：只说看得见的通路（不提长按／双击／方向键那一路）。 */
   hint: '点把手拿起一行。放下时点另一行。',
@@ -130,7 +135,42 @@ export const DRAG_SORT_TEXT = Object.freeze({
   cancel: '取消放回',
   /** 锁定前缀（原因写在名称格那一位）。 */
   lockedPrefix: '不可移：',
+  /** plain 态的状态句：`{n}`＝共几步。 */
+  idleStatus: '共 {n} 步。点把手拿起一行。放下时点另一行。',
+  /** lifted 态的状态句：`{from}`／`{to}`＝第几位（1 起），`{label}`＝被拿起那一行的名称。 */
+  liftStatus: '已拿起第 {from} 步「{label}」，将放到第 {to} 位。点另一行放下，或点取消放回原位。',
+  /** 空槽句：写出哪一步空着、被拿起的是谁。 */
+  slotText: '第 {from} 步原位空着，被拿起的是{label}',
+  /** 落点句：写出放第几位。 */
+  lineText: '放这里（第 {to} 位）',
+  /** 可拿起那两行的把手名：`{p}`＝第几位，`{label}`＝名称。 */
+  gripPick: '拿起第 {p} 步：{label}',
+  /** 已拿起那一行的把手名（再点＝放回原位）。 */
+  gripLift: '已拿起第 {p} 步：{label}，再点放回原位',
+  /** 锁定那一行的把手名：`{p}`＝第几位，`{why}`＝锁定原因。 */
+  gripLock: '第 {p} 步不可移，{why}',
 } as const);
+
+/** 文案段里占位符的值：字符串原样、数走十进制（渲染期与产出的 JS 用同一个口径）。 */
+export type DragSortTextValue = string | number;
+
+/** 占位符（`{名}`，名字只许小写字母）。**带 `g` 的正则是有状态的**（`lastIndex` 跨调用留着），
+ *  所以每次取句子前先把它拨回 0——不拨的话第二次调用会从上次停的地方接着找，模板原样漏出去。 */
+const PLACEHOLDER = /\{([a-z]+)\}/g;
+
+/** 取那一句整句文本（占位符 `{名}` 会被 `values` 里的值替换）。
+ *
+ *  **`runtime.ts` 读的也是这一个函数**：它把「函数怎么写」烘成产出的 JS（逐段来自同一句模板），
+ *  渲染期与运行时段于是**同源同形**——不是两处各写一句。 */
+export function dragSortText(key: keyof typeof DRAG_SORT_TEXT,
+  values?: Readonly<Record<string, DragSortTextValue>>): string {
+  const tpl: string = DRAG_SORT_TEXT[key];
+  PLACEHOLDER.lastIndex = 0;
+  return tpl.replace(PLACEHOLDER, (whole, name: string) => {
+    const v = values === undefined ? undefined : values[name];
+    return typeof v === 'string' || typeof v === 'number' ? String(v) : whole;
+  });
+}
 
 /* ── 入参类型 ───────────────────────────────────────────────────── */
 

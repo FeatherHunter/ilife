@@ -6,6 +6,8 @@
  *  `dragSortSlot()`／`DRAG_SORT_ATTR`／`DRAG_SORT_KEY_ATTR`／`DRAG_SORT_HANDLE_ATTR`。
  *  闭集与几何：`DRAG_SORT_FORMS`（本件只落地 A 一档「拖拽中」，键名 `lift`）／
  *  `DRAG_SORT_TOUCH_PX`／`DRAG_SORT_ROW_MIN_PX`／`DRAG_SORT_GAP_PX`。
+ *  文案：`DRAG_SORT_TEXT`（**会过屏的每一句的唯一定义地**）＋ `dragSortText(名, 值)`（取整句；
+ *  渲染期与运行时段读的是同一个它——运行时段把它烘成产出 JS 里的同名函数）。
  *  三条事件：`DRAG_SORT_EVENT_PICK`（拿起）／`DRAG_SORT_EVENT_DROP`（放下）／
  *  `DRAG_SORT_EVENT_CANCEL`（取消）。
  *
@@ -40,6 +42,7 @@ export {
   DRAG_SORT_TEXT,
   DRAG_SORT_TOUCH_PX,
   dragSortSlot,
+  dragSortText,
 } from './attrs.js';
 export type {
   DragSortForm,
