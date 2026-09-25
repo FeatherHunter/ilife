@@ -26,19 +26,23 @@ import { niceAxis, plainText, round2, signedText, tickTexts, topPct, unitPart, t
 
 /* ── 内部类型（`render.ts` 只吃它们；`model.ts` 只把类型名再报一次给出口） ── */
 
-/** 一枚纵轴刻度：文字 ＋ 它那个值（位置由等距刻度 ＋ 首末对齐保证，见 README 不变量 1）。 */
+/** 一枚纵轴刻度：文字 ＋ 它那个值 ＋ **它自己那个值的纵向位置**（位置从 `scale.ts` 的唯一映射出，
+ *  不是靠"首末对齐 ＋ 等距"推出来的 —— 后者让中间那枚随行高漂走，判据也量不到）。 */
 export interface GapBandTickModel {
   readonly text: string;
   readonly value: number;
+  /** 从下往上的百分比（＝`upPct(value)`，与计划线、折线顶点、带子多边形同一支映射）。 */
+  readonly bottomPct: number;
 }
 
-/** 图内锚点：哪天 ＋ 差多少 ＋ 画在哪（`leftPct` 是精确的列心；窄档下半枚标签不出框靠样式的 `clamp`）。 */
+/** 图内锚点：哪天 ＋ 差多少 ＋ 画在哪（`leftPct` 是精确的列心；收边由样式按列心做，
+ *  见 `style.ts` 锚点那一段）。 */
 export interface GapBandAnchorModel {
   readonly day: string;
   readonly diff: string;
   readonly leftPct: number;
-  /** `hi` 锚点画在点的**下方**（`top` 出）、`lo` 与 `flat` 画在点的**上方**（`bottom` 出）——
-   *  两枚都朝图里长，四条边不出框。 */
+  /** `hi` 锚点画在点的**下方**（行内 `--at` → 样式里 `top`）、`lo` 与 `flat` 画在点的**上方**
+   *  （行内 `bottom`）—— 两枚都朝图里长，四条边收在图区内。 */
   readonly kind: 'hi' | 'lo' | 'flat';
   readonly topPct: number;
   readonly bottomPct: number;
@@ -198,11 +202,12 @@ export function bandModel(c: GapBandCommon, plan: number, days: readonly GapBand
       + '带子两端连成一片，不按天切开。最深和最高两处读数挂在图上，计划线穿通整块，刻度值贴在刻度上。',
     ariaLabel: '差值带：计划 ' + reading(plan, c.unit) + '，' + dayVals
       + '，带子是实际线和计划线之间的面积，' + extreme + '。',
-    ticks: tickTexts(axis, c.unit).map((text, i) => ({
-      text,
-      /* 刻度的值（从大往小，与文字同一支量化）：判据从印出来的文字反推轴域，逐枚对账。 */
-      value: Number((axis.hi - axis.step * i).toFixed(axis.decimals)),
-    })),
+    ticks: tickTexts(axis, c.unit).map((text, i) => {
+      /* 刻度的值与位置（从大往小，与文字同一支量化）：位置＝`upPct(值)`，
+         于是"刻度文字说 7"与"7 画在哪"是同一份真值。判据从印出来的文字反推轴域、逐枚对账。 */
+      const value = Number((axis.hi - axis.step * i).toFixed(axis.decimals));
+      return { text, value, bottomPct: round2(100 - topPct(value, axis)) };
+    }),
     linePoints,
     bandPoints,
     planTopPct: planY,

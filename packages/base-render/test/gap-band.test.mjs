@@ -33,12 +33,14 @@ import {
   GAP_BAND_DEV_MAX_PCT,
   GAP_BAND_FORMS,
   GAP_BAND_MAX_DAYS,
+  GAP_BAND_MAX_TICKS,
   GAP_BAND_MIN_DAYS,
   GAP_BAND_NARROW_PX,
   GAP_BAND_SLOTS,
   gapBandSlot,
   renderGapBand,
 } from '../dist/components/gap-band/index.js';
+import { plainText, signedText, tickValues } from '../dist/components/gap-band/scale.js';
 import {
   GAP_BAND_COLS_PX,
   GAP_BAND_NARROW_COLS_PX,
@@ -154,15 +156,37 @@ function expectTop(value, axis) {
   return Number((100 - Math.min(1, Math.max(0, t)) * 100).toFixed(2));
 }
 
+/** 按（从刻度反推的）轴域算：某个读数该落在的从下往上的百分比（与 `scale.ts` 的 `upPct` 同一套口径）。 */
+function expectBottom(value, axis) {
+  return Number((100 - expectTop(value, axis)).toFixed(2));
+}
+
+/** 印出来的刻度文字（从大往小；`expect` 只判读得出数的那几枚）。 */
+function tickTexts(html) {
+  return ticksOf(html);
+}
+
 /** 第 i 列（共 n 列）的中心横坐标（与 `forms.ts` 的 `xPct` 同一套口径，判据自己写一遍）。 */
 const expectX = (i, n) => Number((((i + 0.5) / n) * 100).toFixed(2));
 
 const slotCls = (slot) => gapBandSlot(slot);
 
-/** 纵轴刻度文字（从大往小）。 */
+/** 纵轴刻度文字（从大往小）。`…-ytick` 与 `…-yticks`／`…-yticks-sizer` 是三个类名，
+ *  正则用 `"` 收口 ⇒ 只命中刻度那一档。 */
 const ticksOf = (html) => [...html.matchAll(
-  new RegExp('class="' + slotCls('ytick') + '">([^<]*)<', 'g'),
+  new RegExp('class="' + slotCls('ytick') + '"[^>]*>([^<]*)<', 'g'),
 )].map((m) => m[1]);
+
+/** 纵轴刻度：文字 ＋ 它自己那个值的 `bottom` 百分比（位置与文字同一份真值）。 */
+const yticksOf = (html) => [...html.matchAll(
+  new RegExp('class="' + slotCls('ytick') + '" style="bottom: ([\\d.-]+)%">([^<]*)<', 'g'),
+)].map((m) => ({ bottomPct: Number(m[1]), text: m[2] }));
+
+/** 刻度的隐形撑子（逐行一份：各枚绝对定位后列宽由它撑住）。 */
+const sizerOf = (html) => {
+  const m = new RegExp('class="' + slotCls('yticks-sizer') + '">(.*?)</span>').exec(html);
+  return m === null ? null : m[1];
+};
 
 /** 计划线行内 `top`（真实绝对定位，浏览器照它画）。 */
 const planOf = (html) => Number(/-plan" aria-hidden="true" style="top: ([\d.-]+)%"/.exec(html)[1]);
@@ -172,10 +196,17 @@ const ptsOf = (html, tag) => [...html.matchAll(
   new RegExp('<' + tag + ' class="[^"]*" points="([^"]*)"', 'g'),
 )].map((m) => m[1].split(' ').map((p) => p.split(',').map(Number)))[0];
 
-/** 图内锚点：`--ax`（精确列心）＋ `top`／`bottom` ＋ 两级字。 */
+/** 图内锚点：`--ax`（精确列心）＋纵向（高处那枚给 `--at`、低处两枚给 `bottom`）＋两级字。 */
 const anchorsOf = (html) => [...html.matchAll(
-  new RegExp('class="' + slotCls('anchor') + ' is-(hi|lo|flat)" aria-hidden="true" style="--ax: ([\\d.-]+)%; (top|bottom): ([\\d.-]+)%"><b>([^<]*)<\\/b><em>([^<]*)<\\/em>', 'g'),
-)].map((m) => ({ kind: m[1], ax: Number(m[2]), edge: m[3], at: Number(m[4]), day: m[5], diff: m[6] }));
+  new RegExp('class="' + slotCls('anchor') + ' is-(hi|lo|flat)" aria-hidden="true" style="--ax: ([\\d.-]+)%; (?:--at: ([\\d.-]+)|bottom: ([\\d.-]+))%"><b>([^<]*)<\\/b><em>([^<]*)<\\/em>', 'g'),
+)].map((m) => ({
+  kind: m[1],
+  ax: Number(m[2]),
+  edge: m[3] === undefined ? 'bottom' : 'top',
+  at: m[3] === undefined ? Number(m[4]) : Number(m[3]),
+  day: m[5],
+  diff: m[6],
+}));
 
 /** 横轴日子（A 档日子名 ＋ 绝对读数两行）。 */
 const xdaysOf = (html) => [...html.matchAll(
@@ -250,6 +281,21 @@ const DEV_12 = {
 /** 长口径与长单位：内容撑宽的两种压力（B 档日子只有名字，A 档日子名 ＋ 读数两行）。 */
 const LONG_STAMP = '近 30 天（含 3 天补录、2 天跨月结转、1 天跨时区，口径见页脚）：补录那三天按当日最后一笔算';
 const LONG_UNIT = '千卡路里（折算含油）';
+/** **不可断长串**：200 字无空格 ASCII 日子名（`overflow-wrap: normal` 下断不了，会把容器拉横）。 */
+const LONG_ASCII = {
+  title: '长串压力', unit: 'h', plan: 1,
+  days: new Array(7).fill(0).map((_, i) => ({ label: 'B'.repeat(200), value: i })),
+};
+/** **不可断长串**（中文那一路）：断点少、一个字也算一个"词"，锚点照样不许把容器拉横。 */
+const LONG_CJK = {
+  title: '长串压力', unit: 'h', plan: 1,
+  days: new Array(7).fill(0).map((_, i) => ({ label: '长日子名字'.repeat(20), value: i })),
+};
+/** **12 天 × 12 位金额**：柱上那个数比一列还宽（旧实现相邻两列的数字互相压字 ＋ 根横溢）。 */
+const MONEY_12 = {
+  title: '十二天金额偏差', form: 'deviation', target: 0, unit: '元',
+  days: new Array(12).fill(0).map((_, i) => ({ label: 'd' + String(i + 1), value: (i + 1) * 123456789012 })),
+};
 
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
@@ -290,6 +336,25 @@ describe('gap-band ① 渲染契约 · 形态 band 连续差值带', () => {
       /* 轴域必须盖得住计划与每天的读数（读者按刻度读出来的值不许落在轴外）。 */
       const cover = [plan, ...input.days.map((d) => d.value)];
       assert.ok(axis.lo <= Math.min(...cover) && axis.hi >= Math.max(...cover), name + '：轴域盖不住数据');
+      /* **每一枚刻度**行内都写了它自己那个值的百分比（不是只有首末有、中间靠 `space-between` 分）。 */
+      const yticks = yticksOf(h);
+      assert.equal(yticks.length, ticks.length, name + '：行内 `bottom` 解析不到（判据会空转）');
+      assert.deepEqual(yticks.map((t) => t.text), ticks, name + '：行内与文字不是同一批刻度');
+      for (const t of yticks) {
+        assert.equal(t.bottomPct, expectBottom(tickNum(t.text), axis),
+          name + '：刻度「' + t.text + '」的位置与它自己的值对不上（' + t.bottomPct + '）');
+      }
+      /* **只有最高那一枚带单位**（单位写在轴顶，别处不重复；判据不抄单位的字面量）。 */
+      if (input.unit !== undefined) {
+        assert.equal(tickTexts(h)[0].endsWith(input.unit), true, name + '：最高那枚没带单位');
+        for (const t of tickTexts(h).slice(1)) {
+          assert.equal(t.includes(input.unit), false, name + '：单位只写在最高那一枚，这枚也写了：' + t);
+        }
+      }
+      /* 隐形撑子：各枚刻度的字在撑子里都有一行（列宽与在流时一致，不然列会塌成 0 宽）。 */
+      const sizer = sizerOf(h);
+      assert.ok(sizer !== null, name + '：缺刻度列的隐形撑子（列宽会塌）');
+      for (const t of yticks) assert.ok(sizer.includes(t.text), name + '：撑子里缺刻度「' + t.text + '」那一行');
       /* **计划线的 `top` 必须等于它那个值在轴域里的位置**（文字与位置同一份真值）。 */
       assert.equal(planOf(h), expectTop(plan, axis),
         name + '：计划线的位置与它自己的值对不上（' + planOf(h) + '）');
@@ -326,15 +391,15 @@ describe('gap-band ① 渲染契约 · 形态 band 连续差值带', () => {
     assert.equal(anchors.length, 2, '两枚锚点');
     const axis = axisFromTicks(ticksOf(html));
     const byKind = Object.fromEntries(anchors.map((a) => [a.kind, a]));
-    /* 最高＝周五多 0.9 h（锚点画在点的下方，`top` 出）；最深＝周四少 1.0 h（画在点的上方，`bottom` 出）。 */
+    /* 最高＝周五多 0.9 h（锚点画在点的下方，`--at` 出）；最深＝周四少 1 h（画在点的上方，`bottom` 出）。 */
     assert.deepEqual([byKind.hi.day, byKind.hi.diff], ['周五', '多 0.9 h']);
     assert.deepEqual([byKind.lo.day, byKind.lo.diff], ['周四', '少 1 h']);
-    assert.equal(byKind.hi.edge, 'top');
+    assert.equal(byKind.hi.edge, 'top', '高处那枚的纵向由 `--at` 给（样式里落成 `top`）');
     assert.equal(byKind.lo.edge, 'bottom');
     assert.equal(byKind.hi.ax, expectX(4, 7), '高处锚点的横坐标是它那一列的中心');
     assert.equal(byKind.lo.ax, expectX(3, 7), '低处锚点的横坐标是它那一列的中心');
-    assert.equal(byKind.hi.at, expectTop(8.4, axis), '高处锚点的纵坐标是最高那个读数的位置');
-    assert.equal(byKind.lo.at, 100 - expectTop(6.5, axis), '低处锚点的 `bottom` 是最低那个读数从下往上的位置');
+    assert.equal(byKind.hi.at, expectTop(8.4, axis), '高处锚点的 `--at` 是最高那个读数的位置');
+    assert.equal(byKind.lo.at, expectBottom(6.5, axis), '低处锚点的 `bottom` 是最低那个读数从下往上的位置');
   });
 
   it('**全等值只出一枚锚点**：三天都和计划一样，不叠在一起', () => {
@@ -458,6 +523,44 @@ describe('gap-band ① 渲染契约 · 公共面与非法入参', () => {
     });
     assert.equal(/e,/.test(huge), false, '指数写法里不许插进逗号');
     assert.equal(/,\+/.test(huge), false);
+  });
+
+  it('**±1e308 级跨度不渲染**：轴域算不出来一律 `badInput`（旧实现枚数成了 2e308、帧内 310 枚就 OOM）', () => {
+    /* 先断边界自证：`1e21` 与 12 位金额是合法输入，不许误杀（与下一句是同一条的两个方向）。 */
+    assert.ok(renderGapBand({
+      title: 'x', plan: 2e21,
+      days: [{ label: 'a', value: 1e21 }, { label: 'b', value: 2e21 }, { label: 'c', value: 3e21 }],
+    }).length > 0, '1e21 应正常渲染');
+    /* 跨度溢出：`hi − lo` 成 `Infinity` ⇒ 步长退回 1、枚数成 `Infinity`，
+       旧实现 `tickValues()` 里那个 `for (i = 0; i < ticks; i++)` 永不到头——实测 exit 134（Reached heap limit）。 */
+    assert.equal(throwsBlocks(() => renderGapBand({
+      title: '极限跨度', plan: 0,
+      days: [{ label: '周一', value: -1e308 }, { label: '周二', value: 0 }, { label: '周三', value: 1e308 }],
+    })), true, '整图 ±1e308 应拒（不静默降级、更不许把宿主进程打爆）');
+    /* 单边量级大不构成溢出（跨度仍有限）：照常渲染。 */
+    assert.ok(renderGapBand({
+      title: 'x', unit: '元', plan: 0,
+      days: [{ label: 'a', value: -1e308 }, { label: 'b', value: -1e303 }, { label: 'c', value: -1e302 }],
+    }).length > 0, '负向同号的大读数跨度有限，应正常渲染');
+    /* 枚数先夹常量再进循环：伪造一个超限轴域，出的仍是有限且 ≤ 上限的那几枚。 */
+    assert.ok(tickValues({ lo: 0, hi: 99, step: 1, decimals: 0, ticks: 1e9 }).length <= GAP_BAND_MAX_TICKS,
+      'tickValues 未夹到常量上限');
+    assert.equal(Number.isFinite(tickValues({ lo: 0, hi: 1, step: 1, decimals: 0, ticks: Number.POSITIVE_INFINITY }).length),
+      true, '枚数为 Infinity 时仍须给出有限个刻度');
+  });
+
+  it('**非有限读数不写成"假数"**：`In,fin,ity` 那种三位分组啃出来的字形一个都不许有', () => {
+    /* 分组只许作用在**有限数的整数部分**：喂 `Infinity` 会写出 `In,fin,ity`（把"非数"印成"数"）。 */
+    assert.equal(plainText(Number.POSITIVE_INFINITY), 'Infinity', 'plainText 直接给非有限数时应原样返回');
+    assert.equal(plainText(Number.NaN), 'NaN');
+    assert.equal(signedText(Number.POSITIVE_INFINITY), '+Infinity');
+    assert.equal(gapBandCss().includes('In,'), false, '样式段里不该有三位分组的痕迹');
+    /* 旧实现把 `−1e308` 印成 `−1e+308`、把 Infinity 印成 `−In,fin,ity`、还写出非法的 `height: NaN%`。 */
+    for (const [name, input] of [['band', BAND_INPUT], ['dev', DEV_INPUT], ['dev12', DEV_12], ['money', MONEY_12]]) {
+      const h = renderGapBand(input);
+      assert.equal(/In,|NaN|Infinity/.test(h), false, name + '：出现 NaN／Infinity／被分组啃过的字形');
+      assert.equal(/height: NaN%|height: Infinity%/.test(h), false, name + '：柱高写出非法百分比');
+    }
   });
 
   it('入参违规一律拒（不静默降级）：形态／空白串／天数／日子／计划／目标逐条', () => {
@@ -626,6 +729,106 @@ describe('gap-band ② 样式与零 DOM 纪律', () => {
     }
   });
 
+  it('**刻度位置由值算出来**：刻度列 `relative` ＋ 每枚 `absolute ＋ bottom`，且列里有隐形撑子', () => {
+    const ticksRule = ruleOf(clean, '.' + slotCls('yticks'));
+    assert.ok(/position:\s*relative/.test(ticksRule), '刻度列必须是定位锚点：' + ticksRule);
+    assert.equal(/space-between/.test(ticksRule), false,
+      '刻度列不许靠 `space-between` 就位（那样中间那枚随行高漂走，实测偏 2.74／12.33px）' + ticksRule);
+    const tickRule = ruleOf(clean, '.' + slotCls('ytick'));
+    assert.ok(/position:\s*absolute/.test(tickRule), '每枚刻度必须绝对定位：' + tickRule);
+    assert.ok(/transform:\s*translateY\(50%\)/.test(tickRule), '每枚刻度把中心对到值位置：' + tickRule);
+    /* 撑子：各枚绝对定位后列里没有在流内容，列宽由它撑住（与刻度同字同限，不上屏）。 */
+    const sizerRule = ruleOf(clean, '.' + slotCls('yticks-sizer'));
+    assert.ok(/visibility:\s*hidden/.test(sizerRule), '撑子不上屏：' + sizerRule);
+    assert.ok(/max-width:\s*7em/.test(sizerRule), '撑子与刻度同限（7em）：' + sizerRule);
+    for (const input of [BAND_INPUT, BAND_FLAT, LONG_ASCII, LONG_CJK]) {
+      const h = renderGapBand(input);
+      const found = yticksOf(h);
+      assert.ok(found.length >= 2, '行内 `bottom` 解析不到（判据会空转）');
+      const sizer = sizerOf(h);
+      assert.ok(sizer !== null, '缺隐形撑子（列宽会塌成 0）');
+      for (const t of found) assert.ok(sizer.includes(t.text), '撑子里缺刻度「' + t.text + '」那一行');
+    }
+  });
+
+  it('**锚点收边按列心**：行内给 `--ax`，样式里按列心取宽并允许收缩到内容宽', () => {
+    const anchorRule = ruleOf(clean, '.' + slotCls('anchor'));
+    assert.ok(/left:\s*var\(--ax\)/.test(anchorRule), '锚点横坐标直接吃行内 `--ax`：' + anchorRule);
+    assert.equal(/clamp\(70px/.test(anchorRule), false,
+      '不许再按固定的 70px 粗暴夹（12 天档首列列心才 11.7px，收到 70px ⇒ 偏 58.3px）：' + anchorRule);
+    assert.ok(/width:\s*fit-content/.test(anchorRule),
+      '盒子按内容取宽（两三字的名字不摊成一整行）：' + anchorRule);
+    assert.ok(/max-width:\s*calc\(min\(var\(--ax\)/.test(anchorRule),
+      '宽的上限取「列心到近的那条边界的距离 × 2」（关于列心对称，左右都收得住）：' + anchorRule);
+    /* 长串与两级字同办：`b` 可断（`overflow-wrap: anywhere`）、可收窄（`min-width: 0`）。 */
+    const bRule = ruleOf(clean, '.' + slotCls('anchor') + ' b');
+    assert.ok(/overflow-wrap:\s*anywhere/.test(bRule), '锚点里的日子名必须可断：' + bRule);
+    assert.ok(/min-width:\s*0/.test(bRule), '锚点里的日子名必须可收窄：' + bRule);
+    /* 纵向收边：盒高夹在图区里、内容超了在盒内被切（不写 `text-overflow` 那几样）。 */
+    assert.ok(/max-height:/.test(anchorRule), '锚点纵向必须夹住：' + anchorRule);
+    assert.ok(/overflow:\s*hidden/.test(anchorRule), '锚点的盒子要能裁掉超出的行：' + anchorRule);
+    /* 高处那枚：行内 `--at` 落成 `top`（它往下长），收边那 8px 由 `max-height` 给。 */
+    const hiRule = ruleOf(clean, '.' + slotCls('anchor') + '.is-hi');
+    assert.ok(/top:\s*var\(--at\)/.test(hiRule), '高处那枚按 `top: var(--at)` 定位：' + hiRule);
+    assert.equal(/margin-bottom/.test(hiRule), false,
+      '高处那枚的收边不许靠 `margin-bottom`（与 `top` 同时给时盒子会被推下去，实测出上沿 56px）：' + hiRule);
+    /* 低处两枚：按行内 `bottom` 定位（往上长）；盒高上限 40% ＋ 柱顶离列底 ≥ 50% ⇒ 上沿留 10% 以上。 */
+    const loRule = ruleOf(clean, '.' + slotCls('anchor') + '.is-lo');
+    assert.ok(/max-height:\s*40%/.test(loRule), '低处两枚的盒高上限：' + loRule);
+    for (const input of [BAND_INPUT, LONG_ASCII, LONG_CJK, DEV_12]) {
+      const h = renderGapBand(input);
+      const isBand = typeof input.form !== 'string';
+      const segs = h.match(/<span class="[^"]*-anchor[^>]*style="[^"]*"/g) || [];
+      if (!isBand) {
+        assert.equal(segs.length, 0, 'B 档没有图内锚点（那两枚是 A 档的骨架）');
+        continue;
+      }
+      assert.equal(anchorsOf(h).length, segs.length,
+        '有 ' + String(segs.length) + ' 枚锚点的行内样式解析不出来（判据会空转）：' + JSON.stringify(segs));
+      assert.ok(segs.length >= 1);
+    }
+  });
+
+  it('**柱上数字夹在列里**：首末两列贴边（`first-of-type`），长串按字符折行', () => {
+    const barvalue = ruleOf(clean, '.' + slotCls('barvalue'));
+    assert.ok(/max-width:\s*\d+%/.test(barvalue),
+      '柱上数字的盒子必须夹在一列里（不夹就是相邻两列互相压字）：' + barvalue);
+    assert.ok(/overflow-wrap:\s*anywhere/.test(barvalue), '数字串没有词边界，只能按字符折：' + barvalue);
+    assert.ok(/max-height:\s*\d+%/.test(barvalue), '纵向也要夹住（不然折成的行会把这一枚顶出柱区）：' + barvalue);
+    assert.ok(/overflow:\s*hidden/.test(barvalue), '窄到放不下一个字形时由盒子收口：' + barvalue);
+    for (const edge of ['first-of-type', 'last-of-type']) {
+      const rule = ruleOf(clean, '.' + slotCls('col') + ':' + edge + ' .' + slotCls('barvalue'));
+      assert.ok(rule !== '', '缺贴边规则 `.col:' + edge + ' .barvalue`');
+    }
+    assert.equal(ruleOf(clean, '.' + slotCls('col') + ':first-child').includes('barvalue'), false,
+      '不许再写 `.col:first-child`（零位线占着第 1 个孩子位，那条规则命中 0 个）');
+    /* 静态双证：`render.ts` 里零位线排在**最后一列之后**，`:first-of-type` 才数得到第 1 列。 */
+    for (const input of [DEV_INPUT, DEV_12, MONEY_12]) {
+      const h = renderGapBand(input);
+      const cols = h.slice(h.indexOf(slotCls('cols')));
+      const firstCol = cols.indexOf(slotCls('col') + '"');
+      const zeroAt = cols.indexOf(slotCls('zero'));
+      assert.ok(firstCol >= 0 && zeroAt >= 0, '列或零位线不见了');
+      assert.ok(zeroAt > firstCol, '零位线必须排在最后一列之后（否则 `.col:first-of-type` 数不到第 1 列）');
+      assert.equal(countOf(h, 'class="[^"]*-col"'), input.days.length, '列数＝天数');
+    }
+  });
+
+  it('**无 Chrome 兜底自身能过**：剥掉 at-rule 前导后再断尺寸（不许把 `@container (min-width: 620px)` 当固定宽度）', () => {
+    /* 这条是守门人的守门人：兜底分支里那个 320px 尺寸闸原先读到了 `@container (min-width: 620px)`
+       里的 `620px` ⇒ `assert.deepEqual(wide, [])` 恒红、等于没有兜底。 */
+    const css = gapBandCss();
+    assert.ok(/@container \(min-width: 620px\)/.test(css), '本条自证的输入必须含宽档容器查询');
+    assertStaticGeometry(css, cases().map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join(''));
+    /* 剥前导这条剥器自己也要自证：剥掉之后那两条查询串还在（块里的规则不算被剥走）。 */
+    const ruled = stripAtRulePreludes(css);
+    const query = '@container (max-width: ' + String(GAP_BAND_NARROW_PX) + 'px)';
+    assert.equal(countOf(ruled, query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 0,
+      'at-rule 前导行应当被剥掉（只剩块里的规则）');
+    assert.ok(ruled.includes(slotCls('yticks')) && ruled.includes(slotCls('cols')),
+      'at-rule 块里的规则不许被一起剥掉（窄档那两条正是本件要守的）');
+  });
+
   it('尺寸事实写在常量里：图区与柱区三档高度取常量，宽窄由容器查询切换，刻度列**跟着图区走**', () => {
     assert.ok(clean.includes('height: ' + String(GAP_BAND_PLOT_PX) + 'px'));
     assert.ok(clean.includes('height: ' + String(GAP_BAND_NARROW_PLOT_PX) + 'px'));
@@ -635,9 +838,17 @@ describe('gap-band ② 样式与零 DOM 纪律', () => {
     const ticks = ruleOf(clean, '.' + slotCls('yticks'));
     assert.ok(ticks.includes('height: ' + String(GAP_BAND_PLOT_PX) + 'px'),
       '刻度列必须与图区同高（不然刻度与线不是同一把尺）：' + ticks);
+    /* 窄档按**选择器逐条读**：`@container` 块里 `.plot` 与 `.yticks` 各自一条
+       （子串级断言会被另一条的同字样顶包，先例 `spread-dist` 的返修）。 */
     const narrow = clean.slice(clean.indexOf('@container'));
-    assert.ok(narrow.includes('.' + slotCls('yticks')) && narrow.includes('height: '
-      + String(GAP_BAND_NARROW_PLOT_PX) + 'px'), '窄档里刻度列也要跟着图区矮一档');
+    const plotNarrow = ruleOf(narrow, '.' + slotCls('plot'));
+    assert.ok(plotNarrow.includes('height: ' + String(GAP_BAND_NARROW_PLOT_PX) + 'px'),
+      '窄档图区高度：' + plotNarrow);
+    const ticksNarrow = ruleOf(narrow, '.' + slotCls('yticks'));
+    assert.ok(ticksNarrow.includes('height: ' + String(GAP_BAND_NARROW_PLOT_PX) + 'px'),
+      '窄档里刻度列也要跟着图区矮一档：' + ticksNarrow);
+    assert.equal(ticksNarrow.includes('height: ' + String(GAP_BAND_PLOT_PX) + 'px'), false,
+      '窄档刻度列用了宽档高度（变异：140px 改回 160px 必须红）：' + ticksNarrow);
   });
 
   it('零键盘语汇、零可点元素（本件是纯静态图，没有运行时段）', () => {
@@ -714,7 +925,9 @@ describe('gap-band ③ 加法式（不启用即逐字节不变）', () => {
 /** 四档**容器**宽度：320 是触屏最窄那一档，620 起过窄档阈值（`GAP_BAND_NARROW_PX`）。 */
 const WIDTHS = [320, 390, 620, 1280];
 
-/** 压力样例：两档常规 ＋ 两档退化 ＋ 12 天 ＋ 长口径 ＋ 长单位。 */
+/** 压力样例：两档常规 ＋ 两档退化 ＋ 12 天 ＋ 长口径 ＋ 长单位 ＋ **不可断长串** ＋ **12 位金额**。
+ *  后两类是 2026-09 对抗审查读出来的两格：旧判据的样例集里没有它们，于是
+ *  「根零横溢」与「锚点不出图区」那两条一直在绿色里漏着（见各条判据的注释）。 */
 function cases() {
   return [
     { name: 'band', form: 'band', html: renderGapBand(BAND_INPUT) },
@@ -724,18 +937,33 @@ function cases() {
     { name: 'dev12', form: 'deviation', html: renderGapBand(DEV_12) },
     { name: 'longstamp', form: 'band', html: renderGapBand({ ...BAND_INPUT, stamp: LONG_STAMP }) },
     { name: 'longunit', form: 'band', html: renderGapBand({ ...BAND_INPUT, unit: LONG_UNIT }) },
+    { name: 'ascii200', form: 'band', html: renderGapBand(LONG_ASCII) },
+    { name: 'cjk200', form: 'band', html: renderGapBand(LONG_CJK) },
+    { name: 'money12', form: 'deviation', html: renderGapBand(MONEY_12) },
   ];
+}
+
+/** 剥掉 at-rule 的前导（`@container (min-width: 620px) {` 那种）再断尺寸。
+ *
+ *  为什么必须剥：`@container (min-width: 620px)` 里的 `620px` 会被"不许有超过最窄档的固定宽度"
+ *  那根正则读成一条 620px 的固定宽度 ⇒ **兜底分支自身必红**（等于没有兜底）。
+ *  口径同 `组件样式纪律.test.mjs` 的 `ruleSelectors()`：`@` 开头的是 at-rule 前奏，不是规则。
+ *  注意**不能整条规则一起剥**：`@container` 块里住的才是窄档那几条规则，剥规则本身等于把
+ *  「窄档里刻度列跟着图区矮一档」也剥掉了。 */
+function stripAtRulePreludes(css) {
+  return css.split('\n').map((line) => (/^\s*@(?:container|media|supports)\b/.test(line) ? '' : line)).join('\n');
 }
 
 /** 真机起不来时的确定性几何判据（量不到"内容撑宽"，就断**形状上的那几条**）。 */
 function assertStaticGeometry(css, html) {
+  const ruled = stripAtRulePreludes(css);
   const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
-  const wide = [...px(html), ...px(css)].filter((v) => v > WIDTHS[0]);
+  const wide = [...px(html), ...px(ruled)].filter((v) => v > WIDTHS[0]);
   assert.deepEqual(wide, [], '出现过不了最窄档（' + WIDTHS[0] + '）的固定宽度：' + wide.join('、'));
   const percents = [...html.matchAll(/style="(?:bottom|top): ([\d.]+)%/g)].map((m) => Number(m[1]));
   assert.ok(percents.length > 0, '计划线与锚点的坐标必须是百分比（判据会空转）');
   for (const v of percents) assert.ok(v >= 0 && v <= 100, '百分比越界：' + v);
-  const clean = stripComments(css);
+  const clean = stripComments(ruled);
   for (const slot of ['stamp', 'tail', 'xlabel', 'sumvalue']) {
     assert.ok(/min-width:\s*0/.test(ruleOf(clean, '.' + slotCls(slot))), slot + ' 少了 min-width: 0');
   }
@@ -789,7 +1017,8 @@ describe('gap-band ④⑤ 四档几何与皮肤纪律（真机 headless Chrome �
             }
             over.push({ width, skin, name: c.name, scrollW: root[0].maxScrollW, clientW: root[0].maxClientW });
             if (c.form === 'band') {
-              /* **计划线落在算出来的位置**：行内 `top` 是真值，真机量的偏移必须就是它。 */
+              /* **刻度与线同一把尺**（真机读数）：**每一枚**刻度的**中心**必须落在它那个值的位置上
+                 （旧判据只量首末——首末被 `space-between` 结构性钉死恒 0px，位移最大的中间枚从没被量过）。 */
               const planPct = planOf(c.html);
               const geo = await page.ev('(function(){var root=document.querySelector('
                 + JSON.stringify(scope + '.' + GAP_BAND_CLASS) + ');'
@@ -797,17 +1026,24 @@ describe('gap-band ④⑤ 四档几何与皮肤纪律（真机 headless Chrome �
                 + 'var plan=root.querySelector(' + JSON.stringify('.' + slotCls('plan')) + ');'
                 + 'var ticks=[].slice.call(root.querySelectorAll(' + JSON.stringify('.' + slotCls('ytick')) + '));'
                 + 'var b=plot.getBoundingClientRect();var p=plan.getBoundingClientRect();'
+                + 'var plotW=Math.round(b.width*10)/10;'
+                /* 刻度的坐标面＝图区的**内容盒**（行内 `bottom` 的百分比按内容盒高解） */
+                + 'var cbH=plot.clientHeight;var cbT=b.bottom-cbH;'
+                + 'var pos=ticks.map(function(el){var r=el.getBoundingClientRect();'
+                + 'var pct=parseFloat((el.style.bottom||"").replace("%",""));'
+                + 'var expect=b.bottom-pct/100*cbH-r.height/2;'
+                + 'return {pct:pct,delta:Math.round((r.top-expect)*10)/10,h:Math.round(r.height*10)/10,text:el.textContent.slice(0,8)};});'
                 + 'var first=ticks[0].getBoundingClientRect();'
                 + 'var last=ticks[ticks.length-1].getBoundingClientRect();'
                 + 'var ancs=[].slice.call(root.querySelectorAll(' + JSON.stringify('.' + slotCls('anchor')) + '));'
-                + 'var plotW=Math.round(b.width*10)/10;'
-                + 'return {n:ticks.length,plotH:Math.round(b.height),plotW:plotW,'
+                + 'var width=root.clientWidth;'
+                + 'return {n:ticks.length,plotH:Math.round(b.height),plotW:plotW,cbH:cbH,height:width,pos:pos,'
                 + 'planDelta:Math.round((p.top-b.top-b.height*' + String(planPct) + '/100)*10)/10,'
-                + 'top:Math.round((first.top+first.height/2-b.top)*10)/10,'
+                + 'top:Math.round((first.top+first.height/2-cbT)*10)/10,'
                 + 'bottom:Math.round((last.top+last.height/2-b.bottom)*10)/10,'
                 + 'ancs:ancs.map(function(a){var r=a.getBoundingClientRect();'
                 + 'return {l:Math.round(r.left-b.left),r:Math.round(b.right-r.right),'
-                + 't:Math.round(r.top-b.top),b:Math.round(b.bottom-r.bottom)}})};}())');
+                + 't:Math.round(r.top-b.top),b:Math.round(b.bottom-r.bottom)};})};}())');
               assert.ok(geo.n >= 2, width + ' 档 ' + skin + '：刻度枚数不对');
               assert.ok(Math.abs(geo.planDelta) <= 1.5, width + ' 档 ' + skin + ' ' + c.name
                 + '：计划线没落在算出来的位置（差 ' + geo.planDelta + 'px，行内 top ' + planPct + '%）');
@@ -815,6 +1051,15 @@ describe('gap-band ④⑤ 四档几何与皮肤纪律（真机 headless Chrome �
                 + '：轴顶刻度没落在图区上沿（差 ' + geo.top + 'px）');
               assert.ok(Math.abs(geo.bottom) <= 1.5, width + ' 档 ' + skin
                 + '：轴底刻度没落在图区下沿（差 ' + geo.bottom + 'px）');
+              /* **逐枚**：行内 `bottom` 必须是百分比，且那一枚的中心就在它自己的值上（≤1.5px）。 */
+              for (const one of geo.pos) {
+                assert.ok(Number.isFinite(one.pct) && one.pct >= 0 && one.pct <= 100,
+                  width + ' 档 ' + skin + '：刻度行内 bottom 不是百分比（' + JSON.stringify(one) + '）');
+                assert.ok(Math.abs(one.delta) <= 1.5, width + ' 档 ' + skin + ' ' + c.name
+                  + '：bottom=' + one.pct + '% 那枚刻度（' + one.text + '）中心偏了 ' + one.delta + 'px（高 ' + one.h + 'px）');
+              }
+              /* **锚点必须在图区里**（上下左右四条边一起断；旧判据没量纵向，
+                 200 字日子名那一格就这样漏过去：盒高 979px、下沿出图区 900px）。 */
               for (const [ai, a] of geo.ancs.entries()) {
                 assert.ok(a.l >= -1 && a.r >= -1, width + ' 档 ' + skin + ' ' + c.name
                   + '：第 ' + (ai + 1) + ' 枚锚点横向出框（左 ' + a.l + 'px／右 ' + a.r + 'px）');
@@ -822,7 +1067,8 @@ describe('gap-band ④⑤ 四档几何与皮肤纪律（真机 headless Chrome �
                   + '：第 ' + (ai + 1) + ' 枚锚点纵向出框（上 ' + a.t + 'px／下 ' + a.b + 'px）');
               }
               seen.push({ width, skin, name: c.name, plotH: geo.plotH, plotW: geo.plotW,
-                planDelta: geo.planDelta, tickTop: geo.top, tickBottom: geo.bottom });
+                planDelta: geo.planDelta, tickTop: geo.top, tickBottom: geo.bottom,
+                tickWorst: Math.max(...geo.pos.map((p) => Math.abs(p.delta))) });
             } else {
               /* **柱与标注都在柱区里**：柱顶不冒出图区、柱底不沉到基线下面、柱上那个数也在图区里。 */
               const box = await page.ev('(function(){var root=document.querySelector('
@@ -897,7 +1143,8 @@ describe('gap-band ④⑤ 四档几何与皮肤纪律（真机 headless Chrome �
         console.log('READING gap-band container=' + w
           + ' plotH=' + band[0].plotH + ' plotW=' + band[0].plotW
           + ' planDelta=' + band[0].planDelta + ' tickTopDelta=' + band[0].tickTop
-          + ' tickBottomDelta=' + band[0].tickBottom + ' colsH=' + dev[0].colsH + ' colsW=' + dev[0].colsW
+          + ' tickBottomDelta=' + band[0].tickBottom + ' tickWorstDelta=' + band[0].tickWorst
+          + ' colsH=' + dev[0].colsH + ' colsW=' + dev[0].colsW
           + ' maxRootScrollW=' + Math.max(...cells.map((s) => s.scrollW))
           + ' maxRootClientW=' + Math.max(...cells.map((s) => s.clientW))
           + ' cells=' + cells.length);

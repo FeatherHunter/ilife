@@ -69,10 +69,15 @@ function noteHtml(m: GapBandBandModel | GapBandDevModel): string {
 function renderBand(m: GapBandBandModel): string {
   const parts: string[] = [headHtml(m)];
   parts.push('<div class="' + gapBandSlot('plotbox') + '">');
-  /* 纵轴刻度列：枚数与文字由同一份轴域出；刻度等距 ⇒ 纵向均分就是值的位置，
-     首末两枚各平移半个字高把**中心**对到轴顶与轴底。 */
+  /* 纵轴刻度列：枚数与文字由同一份轴域出；**每枚绝对定位在它自己那个值的位置上**
+     （`bottom` 是算出来的百分比，与计划线、折线顶点、带子多边形同一支映射）。
+     末一枚隐形撑子：各枚绝对定位后列里没有在流内容，列宽会塌成 0（刻度被 0 宽压扁、悬到框外）,
+     它与刻度同字逐行一份，只撑列宽（`visibility: hidden`，见 `style.ts`）。 */
   parts.push('<div class="' + gapBandSlot('yticks') + '" aria-hidden="true">'
-    + m.ticks.map((t) => '<span class="' + gapBandSlot('ytick') + '">' + esc(t.text) + '</span>').join('')
+    + m.ticks.map((t) => '<span class="' + gapBandSlot('ytick') + '" style="bottom: '
+      + String(t.bottomPct) + '%">' + esc(t.text) + '</span>').join('')
+    + '<span class="' + gapBandSlot('yticks-sizer') + '">'
+    + m.ticks.map((t) => esc(t.text)).join('<br>') + '</span>'
     + '</div>');
   /* 差值图区：一张 SVG（面积 ＋ 折线，不按天切）＋ 穿通整块的计划线 ＋ 两枚图内锚点。 */
   parts.push('<div class="' + gapBandSlot('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
@@ -84,10 +89,11 @@ function renderBand(m: GapBandBandModel): string {
     + String(m.planTopPct) + '%"><b class="' + gapBandSlot('planlabel') + '">' + esc(m.planText)
     + '</b></span>');
   for (const a of m.anchors) {
-    /* 横坐标走 `--ax`（样式里 `clamp(70px, …, 100% − 70px)` 收边，窄档下半枚标签不出框）；
-       高处那枚朝图里往下长（`top` 出），低处那枚朝图里往上长（`bottom` 出）。 */
+    /* 横坐标走 `--ax`（样式里按**列心**收边）；纵向按锚点**朝哪边长**给不同的那一支：
+       高处那枚从点的位置往下长，给 `--at`（样式里落成 `top`）；低处两枚往上长，直接给 `bottom`。
+       两支的盒子都由样式的 `max-height` 与 `overflow` 收在图区内（见 `style.ts` 的锚点那一段）。 */
     const pos = a.kind === 'hi'
-      ? '--ax: ' + String(a.leftPct) + '%; top: ' + String(a.topPct) + '%'
+      ? '--ax: ' + String(a.leftPct) + '%; --at: ' + String(a.topPct) + '%'
       : '--ax: ' + String(a.leftPct) + '%; bottom: ' + String(a.bottomPct) + '%';
     parts.push('<span class="' + gapBandSlot('anchor') + ' is-' + a.kind + '" aria-hidden="true" style="'
       + pos + '"><b>' + esc(a.day) + '</b><em>' + esc(a.diff) + '</em></span>');
@@ -110,7 +116,6 @@ function renderBand(m: GapBandBandModel): string {
 function renderDeviation(m: GapBandDevModel): string {
   const parts: string[] = [headHtml(m)];
   parts.push('<div class="' + gapBandSlot('cols') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
-  parts.push('<span class="' + gapBandSlot('zero') + '" aria-hidden="true"></span>');
   for (const bar of m.bars) {
     /* 柱从零位线起画：朝上＝`bottom: 50%`，朝下＝`top: 50%`；柱上那个数贴着柱顶（底）长。 */
     const geom = bar.up
@@ -122,6 +127,9 @@ function renderDeviation(m: GapBandDevModel): string {
       + esc(bar.devText) + '</b></i>');
     parts.push('</span>');
   }
+  /* 零位线画在列**之后**：它是绝对定位的 `<i>`、不占 flex 轨道，而列是 `<span>` —— 于是
+     `.col:first-of-type`／`:last-of-type` 数到的就是第 1 列与末列（贴边规则那条选择器）。 */
+  parts.push('<i class="' + gapBandSlot('zero') + '" aria-hidden="true"></i>');
   parts.push('</div>');
   parts.push('<div class="' + gapBandSlot('xax') + '" aria-hidden="true">'
     + m.bars.map((bar) => '<span class="' + gapBandSlot('xlabel') + '">' + esc(bar.label) + '</span>').join('')

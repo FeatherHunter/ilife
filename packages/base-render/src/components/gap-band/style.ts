@@ -14,10 +14,13 @@
  *
  *  几何契约（判据钉住）：
  *   · **刻度与线同一把尺**：纵轴刻度列与差值图区**同高**（都取 `GAP_BAND_PLOT_PX`），
- *     刻度等距 ⇒ 纵向均分就是值的位置；首末两枚刻度各用 `translateY(∓50%)` 把**中心**
- *     对到轴顶与轴底，故读者按刻度读线量得准；
+ *     **每一枚**刻度绝对定位在它自己那个值的百分比上（行内 `bottom`，与计划线、折线顶点、
+ *     带子多边形同一支映射），`translateY(50%)` 把**中心**对到那个位置
+ *     —— 读者按刻度读线量得准，量的是任何一枚，不只是首末两枚；
  *   · **带子不断裂**：面积与折线是整块一张 SVG（`preserveAspectRatio="none"`），顶点横坐标
  *     与横轴日子是同一支等分 —— 窄档下不断、不错位；
+ *   · **锚点不出图区**：横向按**列心**收边（`clamp(50%, --ax, …)`）、纵向 `max-height` 夹住；
+ *     长日子名在锚点里换行（`overflow-wrap: anywhere` ＋ 子项 `min-width: 0`），不把容器拉横；
  *   · **色不是唯一信息**：实际线是实线、计划线是虚线 ＋ 右端写着计划值；偏差柱朝上还是朝下
  *     （方向）＋ 柱上数字的正负号（字）＋ 图例给字 —— 三样同时在。
  */
@@ -132,16 +135,20 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
     s('yticks') + ' {',
     '  grid-column: 1;',
     '  grid-row: 1;',
+    '  position: relative;',
     /* 与差值图区**同高**：刻度列的高度就是尺子本身（不是"看起来差不多"）。
        两档各自与图区取**同一个常量** —— 两处写死必然走散。 */
     '  height: ' + String(GAP_BAND_PLOT_PX) + 'px;',
-    '  display: flex;',
-    '  flex-direction: column;',
-    '  justify-content: space-between;',
-    '  align-items: flex-end;',
     '  min-width: 0;',
     '}',
     s('ytick') + ' {',
+    /* **每枚绝对定位在它自己那个值的位置上**（行内 `bottom` 是算出来的百分比，与计划线、
+       折线顶点、带子多边形同一支映射）⇒ 读者按刻度读到的就是线真正的数。
+       旧实现是 `justify-content: space-between`（按盒子 ＋ 空隙分）：首末两枚被
+       `translateY(∓50%)` 钉死，中间那枚随行高漂走（实测偏 2.74／12.33px）。 */
+    '  position: absolute;',
+    '  right: 0;',
+    '  transform: translateY(50%);',
     '  min-width: 0;',
     /* 刻度列是 `max-content` 宽：**要给它一个上限**，否则一句很长的单位会把图区挤没。
        到了上限就在词内断行（刻度是数字 ＋ 单位，断了照样读得出来），容器永不被撑宽。 */
@@ -155,12 +162,15 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
     '  text-align: right;',
     '  overflow-wrap: anywhere;',
     '}',
-    /* 首末两枚把**中心**对到轴顶与轴底（平移不改布局，只改观感）：读者按刻度量的位置就是线的位置。 */
-    s('ytick') + ':first-child {',
-    '  transform: translateY(-50%);',
-    '}',
-    s('ytick') + ':last-child {',
-    '  transform: translateY(50%);',
+    /* 隐形撑子：与刻度同字同限（字号／字重／7em 上限／词内断行照抄，列宽与在流时一致），只撑列宽不上屏。 */
+    s('yticks-sizer') + ' {',
+    '  display: block;',
+    '  visibility: hidden;',
+    '  min-width: 0;',
+    '  max-width: 7em;',
+    '  font-size: ' + skinVar('fs-xs') + ';',
+    '  font-weight: 600;',
+    '  overflow-wrap: anywhere;',
     '}',
     s('plot') + ' {',
     '  grid-column: 2;',
@@ -218,37 +228,70 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
     s('anchor') + ' {',
     '  position: absolute;',
     '  z-index: 3;',
-    /* 横坐标是行内 `--ax` 给的精确列心；`clamp` 把中心收进 70px…(全宽 − 70px) ——
-       首末两列的锚点半枚标签会出框，收进来仍压在它那一列附近。 */
-    '  left: clamp(70px, var(--ax), calc(100% - 70px));',
-    '  display: inline-flex;',
-    '  align-items: baseline;',
-    '  gap: 5px;',
-    '  max-width: calc(100% - 8px);',
+    /* 横坐标是行内 `--ax` 给的**精确列心**；盒子的横向**按列心收边**：
+       `width: fit-content` 让盒子按内容取宽（两三字的名字不摊成一整行），
+       `max-width` 取「列心到近的那条边界的距离 × 2」—— 盒子恒关于列心对称、左右两侧同宽，
+       于是左沿不越过图区左沿、右沿不越过右沿；窄档下盒子被夹窄、内容在盒内换行。
+       旧写法 `clamp(70px, --ax, 100% − 70px)` 是**按列宽粗暴夹**：12 天档首列列心才 11.7px，
+       收边却收到 70px ⇒ 锚点整整偏 58.3px（离它那一列远了）。 */
+    '  left: var(--ax);',
+    '  width: fit-content;',
+    '  max-width: calc(min(var(--ax), 100% - var(--ax)) * 2);',
+    /* 纵向**夹在图区内**（四条边一起）：
+       · 高处那枚按 `top` 定位（它从点的位置**往下**长）、低处两枚按 `bottom` 定位（往上长）——
+         这正是行内那两个百分比的意思；
+       · 两级字**钉在靠点的那一头**（`is-hi` 靠上沿、低处两枚靠下沿）—— 这是收得住的主因：
+         200 字日子名折成十几行时，盒子按内容长高仍只向**自由那一侧**长（`is-hi` 往下、低处两枚往上），
+         从点出发的那几行留在框内（实测：三档容器下 200 字无空格／中文日子名的两枚锚点四条边都在图区内，
+         最紧的一枚下沿差 1px）；
+       · `max-height` 与 `overflow: hidden` 是**兜底的保险**：内容若比图区还高，
+         盒子照上限走、多出来的行切在盒内（`is-hi` 给 `calc(100% − var(--at))`：＝点到下沿的距离；
+         低处两枚给 40%：柱顶离列底 ≥50% ⇒ 上沿恒留 10% 以上）。 */
+    '  max-height: calc(100% - 8px);',
+    '  overflow: hidden;',
+    '  display: flex;',
+    '  flex-direction: column;',
+    '  align-items: stretch;',
     '  padding: 1px 6px;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('surface') + ';',
     '  transform: translateX(-50%);',
     '}',
+    /* 日子名与差值同办（README §10「长串走 `overflow-wrap: anywhere`」对锚点也成立）：
+       旧实现里它是 `overflow-wrap: normal` ＋ `min-width: auto` 的 flex 子项 ——
+       200 字无空格 ASCII 日子名把它撑到 1777px，根 `scrollWidth` 1916 对 `clientWidth` 320。
+       竖排里它还得能收窄（`min-width: 0`）：flex 子项的下限默认是内容宽，不点住就仍把盒子拉横。 */
     s('anchor') + ' b {',
+    '  min-width: 0;',
+    '  overflow-wrap: anywhere;',
     '  color: ' + skinVar('ink') + ';',
     '  font-size: ' + skinVar('fs-sm') + ';',
     '  font-weight: 700;',
     '}',
+    /* 差值那枚：跟着日子名走（同级字），两级字号不同、不叠。 */
     s('anchor') + ' em {',
+    '  min-width: 0;',
+    '  overflow-wrap: anywhere;',
     '  color: ' + skinVar('accent-text') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-style: normal;',
     '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    /* 高处那枚朝图里往下长一截，低处那枚朝图里往上长一截 —— 两枚都不出图区。 */
+    /* 高处那枚：往下长 ⇒ 按 `top` 定位；盒高上限＝点到下沿的距离（收边那 8px 由它让出）；
+       内容靠盒子上沿（点那一头）。 */
     s('anchor') + '.is-hi {',
-    '  margin-top: 5px;',
+    '  top: var(--at);',
+    '  bottom: auto;',
+    '  max-height: calc(100% - var(--at));',
+    '  justify-content: flex-start;',
     '}',
+    /* 低处两枚：往上长 ⇒ 按行内 `bottom` 定位；盒高上限 40% ＋ 柱顶离列底 ≥ 50% ⇒ 上沿留 10% 以上；
+       内容靠盒子下沿（点那一头）。 */
     s('anchor') + '.is-lo, ' + s('anchor') + '.is-flat {',
-    '  margin-bottom: 5px;',
+    '  max-height: 40%;',
+    '  justify-content: flex-end;',
     '}',
     /* 横轴日子行：与差值图区**同一份等分**（`flex: 1 1 0` ＋ 零间距）⇒ 每枚日子对着折线上它那个点。 */
     box + '.is-band ' + c('xax') + ' {',

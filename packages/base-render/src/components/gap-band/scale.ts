@@ -18,7 +18,8 @@
  *  兄弟件那边同一段轴域算法各有一份（本仓契约：件与件只经对方 `index.ts` 互相引用，本批工艺又只许
  *  **新建**文件、不许改 `spread-dist`）——收口时若要合并，落点是共用位 `shared/axis.ts`。
  */
-import { GAP_BAND_AXIS_TICKS } from './attrs.js';
+import { GAP_BAND_AXIS_TICKS, GAP_BAND_MAX_TICKS } from './attrs.js';
+import { badInput } from '../shared/validate.js';
 
 /* ── 小工具（数字 → 字；本件不引格式化库） ─────────────────────────── */
 
@@ -28,7 +29,9 @@ export const round2 = (v: number): number => Number(v.toFixed(2));
 /** 夹到 `[0, 100]`（坐标永远不越轴域：喂进来的数在轴域外时也只是贴边，不画到框外）。 */
 const clampPct = (v: number): number => (v < 0 ? 0 : (v > 100 ? 100 : v));
 
-/** 三位分组（`1800` → `1,800`；负号留在最前）。 */
+/** 三位分组（`1800` → `1,800`；负号留在最前）。
+ *  **只许喂有限数的整数部分**：喂进 `Infinity` 会写出 `In,fin,ity`（把"非数"印成"数"），
+ *  喂进指数串会写出 `1e,+21` —— 两种都是"看着像数、其实不是它"。 */
 function groupInt(s: string): string {
   const neg = s.startsWith('-');
   const body = neg ? s.slice(1) : s;
@@ -49,8 +52,11 @@ function numText(v: number, decimals: number): string {
   return dot < 0 ? groupInt(s) : groupInt(s.slice(0, dot)) + s.slice(dot);
 }
 
-/** 读数里的数字（锚点／净差／无障碍名用：最多两位小数，末尾的零去掉）。 */
+/** 读数里的数字（锚点／净差／无障碍名用：最多两位小数，末尾的零去掉）。
+ *  **非有限值不写成数**（`In,fin,ity` 那种是三位分组啃了 `Infinity` 造出来的假数）：
+ *  回 `NaN`／`Infinity` 原样 —— 一眼是假，好过一个编出来的数。 */
 export function plainText(v: number): string {
+  if (!Number.isFinite(v)) return String(v);
   const s = String(Number(v.toFixed(2)));
   if (s.includes('e') || s.includes('E')) return s;
   const dot = s.indexOf('.');
@@ -105,8 +111,15 @@ function stepDecimals(step: number): number {
  *
  *  两个边界：
  *   · **全部读数同一个值**（`min === max`）：撑开半档出来（不然除零；也不许静默画成一条贴轴的线）；
- *   · 步长小数位有限（至多 6 位）：撑开后若两头量化成同一个数，把上界抬一个步长。 */
+ *   · 步长小数位有限（至多 6 位）：撑开后若两头量化成同一个数，把上界抬一个步长。
+ *
+ *  **轴域这步挡住跨度溢出**：`hi − lo` 溢出成 `Infinity` 时（一天 `−1e308`、另一天 `1e308`）
+ *  步长会退回 1、枚数跟着变成 `Infinity`，调用方那个 `for (i = 0; i < ticks; i++)` 就永不到头
+ *  —— 旧实现实测把宿主进程打到 `Reached heap limit … out of memory`（exit 134）。
+ *  先例 `spread-dist/scale.ts` 同此口径：**算不出来一律 `badInput()`，不静默降级**；
+ *  枚数再夹一道常量上限，迭代次数恒由常量定。 */
 export function niceAxis(min: number, max: number, target: number = GAP_BAND_AXIS_TICKS): Axis {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) badInput('gap-band: 轴域算不出来（读数非有限）');
   let lo = min;
   let hi = max;
   if (!(hi > lo)) {
@@ -114,19 +127,27 @@ export function niceAxis(min: number, max: number, target: number = GAP_BAND_AXI
     lo -= pad;
     hi += pad;
   }
-  const step = niceStep((hi - lo) / (target - 1));
+  const span = hi - lo;
+  if (!Number.isFinite(span) || !(span > 0)) badInput('gap-band: 轴域算不出来（区间非有限或无宽度）');
+  const step = niceStep(span / (target - 1));
+  if (!Number.isFinite(step) || !(step > 0)) badInput('gap-band: 轴域算不出来（步长非有限）');
   const decimals = stepDecimals(step);
   const loNice = Number((Math.floor(lo / step + 1e-9) * step).toFixed(decimals));
   let hiNice = Number((Math.ceil(hi / step - 1e-9) * step).toFixed(decimals));
   if (!(hiNice > loNice)) hiNice = Number((loNice + step).toFixed(decimals));
-  const ticks = Math.max(2, Math.round((hiNice - loNice) / step) + 1);
+  if (!Number.isFinite(loNice) || !Number.isFinite(hiNice)) badInput('gap-band: 轴域算不出来（取整后非有限）');
+  const rawTicks = Math.round((hiNice - loNice) / step) + 1;
+  if (!Number.isFinite(rawTicks)) badInput('gap-band: 轴域算不出来（刻度数非有限）');
+  /* 枚数先夹到常量上限再出：调用方拿它进循环时迭代次数恒 ≤ 上限（**不由数据决定**）。 */
+  const ticks = Math.max(2, Math.min(GAP_BAND_MAX_TICKS, rawTicks));
   return { lo: loNice, hi: hiNice, step, decimals, ticks };
 }
 
-/** 一段轴域上的刻度值（从下往上：第 0 枚＝轴底）。 */
+/** 一段轴域上的刻度值（从下往上：第 0 枚＝轴底；枚数恒 ≤ 常量上限，进循环前已夹过）。 */
 export function tickValues(axis: Axis): number[] {
   const out: number[] = [];
-  for (let i = 0; i < axis.ticks; i += 1) out.push(Number((axis.lo + axis.step * i).toFixed(axis.decimals)));
+  const n = Math.min(axis.ticks, GAP_BAND_MAX_TICKS);
+  for (let i = 0; i < n; i += 1) out.push(Number((axis.lo + axis.step * i).toFixed(axis.decimals)));
   return out;
 }
 

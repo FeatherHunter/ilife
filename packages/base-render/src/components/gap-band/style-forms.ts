@@ -54,14 +54,6 @@ export function gapBandDeviationCss(input?: { readonly prefix?: string }): strin
     '  flex: 1 1 0;',
     '  min-width: 0;',
     '}',
-    /* 零位线就是目标（1px 实线，横贯整块；图例与脚注各说一遍，不靠颜色认线）。 */
-    s('zero') + ' {',
-    '  position: absolute;',
-    '  left: 0;',
-    '  right: 0;',
-    '  top: 50%;',
-    '  border-top: 1px solid ' + skinVar('line') + ';',
-    '}',
     /* 偏差柱：朝上从零位往上长，朝下从零位往下长；超了是强调色实底，还差是淡洗面
        （深浅两档形 ＋ 方向 ＋ 柱上数字的符号，三样同时在）。 */
     s('bar') + ' {',
@@ -74,19 +66,42 @@ export function gapBandDeviationCss(input?: { readonly prefix?: string }): strin
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('accent') + ';',
     '}',
+    /* 零位线就是目标（1px 实线，横贯整块；图例与脚注各说一遍，不靠颜色认线）。
+       住**列区之外**：`.cols` 的直接子元素只剩列本身（零位线绝对定位、不占 flex 轨道）。 */
+    s('zero') + ' {',
+    '  position: absolute;',
+    '  left: 0;',
+    '  right: 0;',
+    '  top: 50%;',
+    '  border-top: 1px solid ' + skinVar('line') + ';',
+    '}',
     s('bar') + '.is-down {',
     '  background: ' + wash(26) + ';',
     '}',
-    /* 柱上那个数：贴着柱顶（底）长，一律带正负号；首末两列的数分别贴边，半个字不出图区。 */
+    /* 柱上那个数：贴着柱顶（底）长，一律带正负号。
+       盒子**夹在一列里**（`left: 50%` ＋ `max-width: 100%` ＋ `transform: translateX(-50%)`）——
+       12 位金额那种串比一列还宽：不夹就是相邻两列的数字互相压字（实测 12 天 × 12 位金额：
+       320 档相邻柱上数字真相交 11 对、根 `scrollWidth` 342 > 320）。
+       夹住之后串**在盒内按字符折行**（`overflow-wrap: anywhere`：数字串没有词边界）；
+       窄到一列放不下一个字形时由 `overflow: hidden` 收口 —— 盒子恒等于一列宽，
+       既不把自己的溢出算进祖先的可滚动区，也不压到邻列上。**全量读数在 `title` 里**（那枚栏的 `title` 是
+       `label：超／差 多少`），故这一档丢的只是"柱上那一枚字形"，不是那条记录。 */
     s('barvalue') + ' {',
     '  position: absolute;',
     '  left: 50%;',
+    '  max-width: 100%;',
+    /* 纵向也夹住：一列放不下时串折成几行，行数不设上限会把这一枚顶出柱区（图区上沿之外）。
+       夹到柱区的四成（一列 132px ⇒ 52px，三行），多出来的行切在盒内。 */
+    '  max-height: 40%;',
+    '  transform: translateX(-50%);',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font-num') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
-    '  transform: translateX(-50%);',
+    '  text-align: center;',
+    '  overflow-wrap: anywhere;',
+    '  overflow: hidden;',
     '}',
     s('bar') + '.is-up ' + c('barvalue') + ' {',
     '  bottom: 100%;',
@@ -96,14 +111,17 @@ export function gapBandDeviationCss(input?: { readonly prefix?: string }): strin
     '  top: 100%;',
     '  margin-top: 2px;',
     '}',
-    s('col') + ':first-child ' + c('barvalue') + ' {',
-    '  left: 0;',
-    '  transform: none;',
+    /* **首末两列的贴边规则**：贴边是防"半枚数字出卡"。
+       选择器点名的是**列**，不是"第几个孩子"：`.cols` 的第 1 个孩子是零位线（`s('zero')`），
+       `.col` 是第 2 个 ⇒ 旧写法 `.col:first-child` 在真机上命中 **0** 个（末列反命中 1 个），
+       首列那枚数字整枚左出容器（实测 320 档出 30px、12 天档出 43px）。
+       零位线在 `render.ts` 里用 `<i>`（列是 `<span>`），故 `:first-of-type` 数到的第 1 个
+       `<span>` 就是第 1 列、`:last-of-type` 数到的就是末列 —— 枚数＝天数、一个不多一个不少。 */
+    s('col') + ':first-of-type ' + c('barvalue') + ' {',
+    '  text-align: left;',
     '}',
-    s('col') + ':last-child ' + c('barvalue') + ' {',
-    '  left: auto;',
-    '  right: 0;',
-    '  transform: none;',
+    s('col') + ':last-of-type ' + c('barvalue') + ' {',
+    '  text-align: right;',
     '}',
     box + '.is-deviation ' + c('xax') + ' {',
     '  display: flex;',
