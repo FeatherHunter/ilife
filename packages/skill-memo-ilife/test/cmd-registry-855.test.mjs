@@ -31,14 +31,15 @@ const PKG = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRCDIR = join(PKG, 'src');
 const lf = (p) => (readFileSync(p, 'utf8').match(/\n/g) || []).length;
 
-/** `src/` 第一层的闭集：8 个能力域 ＋ 6 个共用位（票面 §三 的目标树；`health.ts` 是跨包兼容口，见 #706）。 */
-const TOP_DIRS = ['checkin', 'cli', 'db', 'help', 'init', 'memo', 'mood', 'remind', 'render', 'search', 'shared', 'sync', 'triggers', 'wish'];
+/** `src/` 第一层的闭集：9 个能力域 ＋ 6 个共用位（票面 §三 的目标树；`health.ts` 是跨包兼容口，见 #706）。 */
+const TOP_DIRS = ['checkin', 'cli', 'data', 'db', 'help', 'init', 'memo', 'mood', 'remind', 'render', 'search', 'shared', 'sync', 'triggers', 'wish'];
 const TOP_FILES = ['config.ts', 'health.ts', 'index.ts'];
-/** 8 个能力域（引用它们时只许写 `<域>/index.js`）。 */
-const DOMAINS = ['checkin', 'init', 'memo', 'mood', 'remind', 'search', 'sync', 'wish'];
+/** 9 个能力域（引用它们时只许写 `<域>/index.js`）。 */
+const DOMAINS = ['checkin', 'data', 'init', 'memo', 'mood', 'remind', 'search', 'sync', 'wish'];
 /** 域外件里允许出现命令键字面量的地方（逐条写清是什么、为什么在册）。生成物不扫（它们本来就是键的派生面）。 */
 const KEY_LITERAL_HOMES = {
   'checkin/routes.ts': '词面域的词面（这些词指向备忘域的键）',
+  'data/commands.ts': '数据族域的声明（键的事实就住这儿，#964）',
   'mood/routes.ts': '词面域的词面（同上）',
   'init/commands.ts': 'init 域的声明（键的事实就住这儿）',
   'init/routes.ts': 'init 域的词面',
@@ -152,7 +153,7 @@ describe('#855 · 命令登记棘轮（新鲜度／声明面／域门形状／�
     }
   });
 
-  it('② src 第一层是闭集：8 个能力域 ＋ 6 个共用位 ＋ 三个根散件', () => {
+  it('② src 第一层是闭集：9 个能力域 ＋ 6 个共用位 ＋ 三个根散件', () => {
     // 对抗式复核的变异⑦c：新建 `src/utils/index.ts`（铁律四的违反样子）＋ 同步编译 ＋ 台账补行，
     // 当时五道门全绿——就是这条缺了闭集。「src 下只有这些」本来就该是机器判据，不是人看。
     const dirs = readdirSync(SRCDIR, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();

@@ -230,12 +230,15 @@ describe('#850 命令面四问（唯一出口端到端）', () => {
     assert.ok(Object.keys(MEMO_KEY_SHAPES).includes('memo.reminder'));
     // #858：命令面 14 → 13（`memo.stats` 整条退役，见 `render/envelope.ts` 表头注）——
     // 本票加的两条仍在，净增那句的历史读数是「12 → 14 → 13」。
-    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 13, '命令面条数变了（#850 净增两条，其后 #858 退役一条）');
+    // #964：命令面 13 → 15（数据族两键 `memo.data.schema`／`memo.data.query`，程序面）。
+    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 15, '命令面条数变了（#850 净增两条，其后 #858 退役一条，#964 数据族加两条）');
   });
   it('读列表／写回执各归各（一个命令一种形状）', () => {
     assert.equal(MEMO_KEY_SHAPES['memo.search'], 'list');
     assert.equal(MEMO_KEY_SHAPES['memo.reminder'], 'receipt');
     assert.equal(MEMO_KEY_SHAPES['memo.init'], 'receipt');
     assert.equal(MEMO_KEY_SHAPES['memo.remind'], 'list');
+    assert.equal(MEMO_KEY_SHAPES['memo.data.schema'], 'resultset');
+    assert.equal(MEMO_KEY_SHAPES['memo.data.query'], 'resultset');
   });
 });

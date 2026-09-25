@@ -20,17 +20,24 @@ const GOOD = {
   // #858：命令表 14 → 13（`memo.stats` 整条退役，见 `render/envelope.ts` 表头注）。
   'memo.init': { ok: true, message: '初始化报告已生成' },
   'memo.reminder': { ok: true, message: '提醒已设置' },
+  // #964：命令表 13 → 15（数据族两键，`resultset` 形＝目录／查询结果集；不渲染，见规格 §四）。
+  'memo.data.schema': { results: [{ ok: true, tables: [] }] },
+  'memo.data.query': { results: [{ ok: true, query: {}, fields: [], rows: [], total: 0 }] },
 };
 
 describe('memo 渲染层', () => {
-  it('13 key 建 envelope 全字段可用', () => {
-    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 13);
+  it('15 key 建 envelope 全字段可用（数据族两键不渲染）', () => {
+    assert.equal(Object.keys(MEMO_KEY_SHAPES).length, 15);
     for (const [key, shape] of Object.entries(MEMO_KEY_SHAPES)) {
       assert.equal(memoShapeFor(key), shape);
       const env = buildMemoEnvelope(key, GOOD[key]);
       assert.equal(env.skill, 'memo');
       assert.equal(env.shape, shape);
       assert.ok(parseMemoEnvelope(JSON.parse(JSON.stringify(env))));
+      if (shape === 'resultset') {
+        assert.throws(() => renderEnvelopeHtml(env), (e) => e.code === 'MEMO_SHAPE_MISMATCH');
+        continue;
+      }
       assert.match(renderEnvelopeHtml(env), /<section/);
     }
   });

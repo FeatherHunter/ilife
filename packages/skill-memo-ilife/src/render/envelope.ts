@@ -1,5 +1,5 @@
-// 渲染层·envelope（M4）：13 联动 key×shape 映射（各域声明 12 条 ＋ 框架位 memo.help.lookup 一条；
-// 沿革：M1 拆分表 → #229 help.lookup → #665 auth → #850 init／reminder → #858 删掉退役的 memo.stats）；
+// 渲染层·envelope（M4）：15 联动 key×shape 映射（各域声明 14 条 ＋ 框架位 memo.help.lookup 一条；
+// 沿革：M1 拆分表 → #229 help.lookup → #665 auth → #850 init／reminder → #858 删掉退役的 memo.stats → #964 数据族两键）；
 // key 字符串 P8 落表时冻结，此处只做形状分配与全字段校验。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
@@ -23,6 +23,10 @@ export const MEMO_KEY_SHAPES: Record<string, EnvelopeShape> = {
   // `memo.reminder` 只做 INSERT 提醒行（读提醒仍走 `memo.remind`）。两条都是回执形（一个命令一种形状）。
   'memo.init': 'receipt',
   'memo.reminder': 'receipt',
+  // #964 · 数据族两键（程序面，只给程序用）：目录键回允许表＋现读列，引擎键跑结构化查询单；
+  // `resultset` 形状已在公共层落地（#952），本表只做形状分配，不另校验载荷细节。
+  'memo.data.schema': 'resultset',
+  'memo.data.query': 'resultset',
 };
 
 export function memoShapeFor(key: string): EnvelopeShape {
