@@ -23,7 +23,7 @@ const SRC_DIR = join(PKG_DIR, 'src');
 const CHECK = process.argv.includes('--check');
 
 const BANNER = '本文件由 `scripts/gen-cli.mjs` 生成，勿手改（`pnpm gen` 重生成，`pnpm gen:check` 验真）。';
-const READ_SHAPES = new Set(['list', 'detail', 'receipt', 'stat']);
+const READ_SHAPES = new Set(['list', 'detail', 'receipt', 'stat', 'resultset']);
 // 技能级入口登记行（不进能力目录，权威＝SKILL 的 help_wake_word＋lookup 口径）：照旧表头三行。
 const HELP_ROWS = [
   { phrase: '居家管家 帮助', key: 'home.help.lookup' },
@@ -176,7 +176,7 @@ function loadCapability(name) {
     if (!example) fail(cFile, o.line, '缺 example（必填非空，照抄即能跑）');
     if (!/\brun\s*:/.test(o.text)) fail(cFile, o.line, '缺 run（处理函数，住同一能力目录）');
     if (kind === 'read') {
-      if (!shape || !READ_SHAPES.has(shape)) fail(cFile, o.line, '读声明的 shape 只认 list／detail／receipt／stat');
+      if (!shape || !READ_SHAPES.has(shape)) fail(cFile, o.line, '读声明的 shape 只认 list／detail／receipt／stat／resultset');
     } else if (shape !== undefined) {
       fail(cFile, o.line, '写声明不写 shape（写命令一律 receipt，由生成器合成）');
     }
@@ -194,7 +194,7 @@ function loadCapability(name) {
 
 function scanCapabilities() {
   return readdirSync(SRC_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && ['items', 'space', 'outfit', 'stats', 'express', 'receipt', 'family', 'setup'].includes(d.name))
+    .filter((d) => d.isDirectory() && ['items', 'space', 'outfit', 'stats', 'express', 'receipt', 'family', 'setup', 'data'].includes(d.name))
     .map((d) => d.name)
     .sort();
 }
@@ -214,7 +214,7 @@ function main() {
       seen.set(d.key, c.name);
     }
   }
-  if (seen.size !== 20) fail('commands', '?', '业务键应 20 条（含 setup 空声明），实得 ' + seen.size);
+  if (seen.size !== 22) fail('commands', '?', '业务键应 22 条（含 setup 空声明与 data 数据族 2 键），实得 ' + seen.size);
   // #953 · 程序面键不许进路由记录面（fail-closed）。
   const programKeys = new Set(caps.flatMap((c) => c.commands).filter((d) => d.surface === 'program').map((d) => d.key));
   const seenPhrase = new Map();

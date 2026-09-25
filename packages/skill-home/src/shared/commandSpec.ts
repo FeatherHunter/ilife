@@ -1,8 +1,8 @@
 // 共用位·命令与路由声明形状（#800 新立）。
 //
 // 形状照抄 `packages/skill-calorie/src/shared/commandSpec.ts`（命令登记纪律：其他件照抄
-// 形状即可），只收居家用到的子集：居家 20 条业务命令的出参形状只有 list／detail／
-// receipt／stat 四形（见 `src/render/envelope.ts` 的出参分配），写命令一律 receipt。
+// 形状即可），只收居家用到的子集：业务命令的出参形状只有 list／detail／
+// receipt／stat 四形＋数据族 resultset 一形（见 `src/render/envelope.ts` 的出参分配），写命令一律 receipt。
 // 本文件只定形状、不定事实；事实住各能力目录的 `commands.ts`／`routes.ts`。
 
 import type { HomeDb } from '../fetch/db.js';

@@ -2,6 +2,7 @@
 // 命令索引（一能力一行）：分派层只认这张表。新增能力建它的 `commands.ts`
 //（恰好导出一个声明数组，生成器扫到即自动进来）；新增命令改它的声明，本文件不动。
 import type { HomeCommandSpec } from '../shared/commandSpec.js';
+import { DATA_COMMANDS } from '../data/index.js';
 import { EXPRESS_COMMANDS } from '../express/index.js';
 import { FAMILY_COMMANDS } from '../family/index.js';
 import { ITEM_COMMANDS } from '../items/index.js';
@@ -11,6 +12,7 @@ import { SPACE_COMMANDS } from '../space/index.js';
 import { STATS_COMMANDS } from '../stats/index.js';
 
 const SOURCES: readonly (readonly HomeCommandSpec[])[] = [
+  DATA_COMMANDS,
   EXPRESS_COMMANDS,
   FAMILY_COMMANDS,
   ITEM_COMMANDS,

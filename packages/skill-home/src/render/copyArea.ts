@@ -29,8 +29,8 @@ const MENU_HINTS: readonly string[] = ['', '', ''];
 /** `homeCopyArea` 的可填位：给了什么出什么；`data`＋`log` 都不给＝一句空态、不出按钮。
  *
  * `envelope` 取本仓 `base-link-core` 的 `Envelope`（页模块手里就是这一只）：`base-paint` 的
- * `SerializableEnvelope` 无 `fallback` 形，而页族 envelope 永不取该形（21 键仅 list／detail／
- * receipt／stat）；收口在本件内转一次，调用方不替公共层做类型体操。运行时 `buildDataText`／
+ * `SerializableEnvelope` 无 `fallback` 形，而页族 envelope 永不取该形（视图键仅 list／detail／
+ * receipt／stat；数据族 resultset 不进页族）；收口在本件内转一次，调用方不替公共层做类型体操。运行时 `buildDataText`／
  * `buildLogText` 逐 shape 校验，错形 fail-closed（不返空串）。 */
 export interface HomeCopyAreaInput {
   /** 区块标题；不给＝不出标题；与复制按钮同名（「复制数据」）＝不出标题（只留动作）。 */

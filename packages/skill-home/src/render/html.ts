@@ -52,7 +52,8 @@ function receiptFields(d: Record<string, unknown>): string {
 }
 
 // 按形状渲染 envelope 为 section 页；未知形状 throw 不返空页。
-// #43 H2：analysis/fallback 经 HOME_KEY_SHAPES 不可达（21 键仅 list/detail/receipt/stat），保留作显式降级与未来扩展直调分支，单测直构 envelope 覆盖。
+// #43 H2：analysis/fallback/resultset 经 HOME_KEY_SHAPES 不可达本函数（视图键仅 list/detail/receipt/stat；
+// 数据族 resultset 走出口层短路直回 envelope，不进 HTML 交付链），保留作显式降级与未来扩展直调分支，单测直构 envelope 覆盖。
 export function renderEnvelopeHtml(env: Envelope): string {
   const head = '<section data-skill="home" data-shape="' + env.shape + '" data-key="' + escapeHtml(env.key) + '">';
   const d = env.data as Record<string, unknown>;

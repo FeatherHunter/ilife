@@ -1,4 +1,4 @@
-// 渲染层·envelope：21 联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
+// 渲染层·envelope：联动 key×shape 映射（拆分表）；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { HomeRenderError } from './errors.js';
 // #800 起形状分配表住派生件 `src/cli/keys.ts`（各能力 `commands.ts` 声明合成），

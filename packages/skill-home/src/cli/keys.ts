@@ -5,6 +5,8 @@
 export const HOME_KEYS = [
   'home.care.query',
   'home.care.write',
+  'home.data.query',
+  'home.data.schema',
   'home.inventory.records',
   'home.inventory.round',
   'home.item.add',
@@ -30,6 +32,8 @@ export type HomeKeyString = (typeof HOME_KEYS)[number];
 export const HOME_KEY_SHAPES: Record<string, string> = {
   'home.care.query': 'list',
   'home.care.write': 'receipt',
+  'home.data.query': 'resultset',
+  'home.data.schema': 'resultset',
   'home.inventory.records': 'list',
   'home.inventory.round': 'receipt',
   'home.item.add': 'receipt',

@@ -2,10 +2,12 @@
 // 居家管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通 create/update/remove 即真相）。
-// #800 · 通用分派口：21 个 case 已换成 `REGISTRY[key]` 查表分派（能力目录那道门）；
+// #800 · 通用分派口：`REGISTRY[key]` 查表分派（能力目录那道门）；
 // 新增能力／新增命令都不必碰这个文件，只改它那个能力的 `commands.ts`＋子功能文件。
-import { writeFileSync } from 'node:fs';
+// #962 例外一处：数据族两键走本文件内的 `dispatchData` 短路（只读＋不落盘），不进通用 `dispatch`。
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import {
   HomeFetchError, HomePolicyError,
   resolveDbDir, resolveDbPath, resolveHtmlDir, dbFilename, openHomeDb, closeHomeDb,
@@ -153,6 +155,32 @@ function dispatchBackup(key: string, params: Record<string, unknown>): unknown |
  * 命中即走能力目录那道门（`REGISTRY[key].run`），未命中即未知键。开库／关库仍归这里管；
  * 取数逻辑全在各能力目录的子功能文件里，本函数一行不增。
  */
+/* ── #962 · 数据族分派口（只读＋不落盘） ─────────────────────────────────────────
+ *
+ * 为什么不进 `dispatch`：`dispatch` 一进来就 `openHomeDb` 并跑 DDL 自愈（建表＋种子），
+ * 即**会写库**；数据族规格要求库只读、不产文件。故数据键走独立短路：
+ * 只读打开（`new DatabaseSync(path, { readOnly: true })`，不建表、不迁移；
+ * 文件不在即 `fail(4)`，只读路径不隐式建库）＋ `REGISTRY[key].run` ＋
+ * `buildHomeEnvelope` 直回（`html: ''` 走文本态，不进下面那条 HTML 交付链）。
+ * 主密钥文件不动、不读（`accounts` 表本就不暴露，见 `src/data/tables.ts`）。
+ */
+function isDataKey(key: string): boolean {
+  return key === 'home.data.schema' || key === 'home.data.query';
+}
+
+function dispatchData(key: string, params: Record<string, unknown>): unknown {
+  const dbPath = resolveDbPath();
+  if (!existsSync(dbPath)) fail(4, '居家 DB 不存在：' + dbPath + '（只读路径不建库）');
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  try {
+    const spec = REGISTRY[key];
+    if (!spec) fail(3, '未知 home key：' + key);
+    return spec.run(params, { db } as unknown as Parameters<typeof spec.run>[1]);
+  } finally {
+    try { db.close(); } catch { /* 关闭失败不谎报 */ }
+  }
+}
+
 function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const handle = openHomeDb(dbPath);
@@ -213,6 +241,13 @@ async function main() {
     // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；#707：备份四支同理（恢复要覆盖库文件）。
     const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
     const offline = help ? null : dispatchBackup(key, params);
+    // #962：数据键短路——只读＋不落盘（`html: ''` 文本态，不进下面那条 HTML 交付链）。
+    if (help === null && offline === null && isDataKey(key)) {
+      const env = buildHomeEnvelope(key, dispatchData(key, params));
+      process.stdout.write(JSON.stringify(env) + '\n');
+      clearTimeout(timer);
+      return;
+    }
     const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
     // 分节页（模板填充后）：**降级路径**用（#872 起族页优先），`--html` 支与速查支共用这一处，不抄第二份。
     const sectionHtml = (): string => {

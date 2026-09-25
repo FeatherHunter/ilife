@@ -6,16 +6,22 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpLookup } from '../dist/help/index.js';
 import { HOME_KEY_SHAPES } from '../dist/render/index.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
 
 export function buildHelpBlock() {
-  const keys = Object.keys(HOME_KEY_SHAPES).sort();
+  // #962 · 程序面键（`surface: program`，数据族两键）不进技能说明面：
+  // 速查表行来自 `WAKE_TABLE`（本就没有程序面记录），这里再把“相关场景”那一行里的
+  // 程序面键滤掉（否则 `HOME_KEY_SHAPES` 一含数据键，SKILL.md 即泄漏 `home.data.*`）。
+  // 兜底：键前缀 `home.data.` 同样过滤（规格 §七兜底②），双保险。
+  const isProgram = (k) => REGISTRY?.[k]?.surface === 'program' || k.startsWith('home.data.');
+  const keys = Object.keys(HOME_KEY_SHAPES).filter((k) => !isProgram(k)).sort();
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');
-  lines.push('相关场景：' + keys.join('、') + '（21 联动，key 字符串后续票落表时冻结）。');
+  lines.push('相关场景：' + keys.join('、') + '（' + keys.length + ' 联动，key 字符串后续票落表时冻结）。');
   return lines.join('\n');
 }
 
