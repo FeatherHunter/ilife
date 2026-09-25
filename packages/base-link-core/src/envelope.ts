@@ -11,22 +11,14 @@ export const ENVELOPE_VERSION = '0.1.0' as const;
 export const ENVELOPE_SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback', 'resultset'] as const;
 export type EnvelopeShape = (typeof ENVELOPE_SHAPES)[number];
 
-/** 结果集里的一项：一次查询的产物。字段形状见 `docs/agents/数据族-规格.md` §四。
+/** 结果集里的**项形状不在本层承诺**：本层只做容器级校验（`results` 必须是数组；空集是事实，不是错误），
+ *  类型即写 `unknown[]`——与既有 `list.items: unknown[]` 同一口径（校到哪一层，类型就承诺到哪一层）。
  *
- *  **单项失败不毁整批**：坏项在本项里回 `{ ok: false, error: { code, message } }`，其余项照常跑完
- *  ——故除 `ok` 外一律可选。`query` 是本次查询单原样回显；`next` 是不透明凭据（调用方当黑盒）。
+ *  项内五格与两种项形态（成功项 `{ id?, ok, query?, fields?, rows?, total?, next? }`；失败项
+ *  `{ ok: false, error: { code, message } }`，单坏项不毁整批）由数据族在**装配处**定形，正本见
+ *  `docs/agents/数据族-规格.md` §四。行表示法（「列名→值」的对象）是规格留给数据族的遗留出口：
+ *  将来若改为「数组＋列名表」，改的是数据族那一族，**本形状名与形状集合都不动**。
  */
-export interface ResultsetItem {
-  id?: string;
-  ok: boolean;
-  query?: Record<string, unknown>;
-  fields?: Array<{ name: string; type: string }>;
-  rows?: Array<Record<string, unknown>>;
-  total?: number;
-  next?: string | null;
-  error?: { code: string; message: string };
-}
-
 export interface EnvelopeDataByShape {
   list: { items: unknown[]; total?: number };
   detail: { item: Record<string, unknown> };
@@ -34,7 +26,7 @@ export interface EnvelopeDataByShape {
   receipt: { ok: boolean; message: string };
   analysis: { summary: string };
   fallback: { reason: string; degraded: true };
-  resultset: { results: ResultsetItem[] };
+  resultset: { results: unknown[] };
 }
 
 export interface Envelope<S extends EnvelopeShape = EnvelopeShape> {
