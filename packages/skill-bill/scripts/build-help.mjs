@@ -5,14 +5,24 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpLookup } from '../dist/help/index.js';
 import { BILL_KEY_SHAPES } from '../dist/render/index.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
 
 export function buildHelpBlock() {
-  const keys = Object.keys(BILL_KEY_SHAPES).sort();
+  // #953 · 程序面键（surface: 'program'，事实在注册表声明上）不进技能说明面：
+  // 散文键表按过滤后的键集算；唤醒词行本来就没有程序面键（无词条），这里再拦一道。
+  // 无标记键一字不变。
+  const programKeys = new Set(
+    Object.entries(REGISTRY).filter(([, s]) => s?.surface === 'program').map(([k]) => k),
+  );
+  const keys = Object.keys(BILL_KEY_SHAPES).sort().filter((k) => !programKeys.has(k));
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
-  for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
+  for (const h of buildHelpLookup()) {
+    if (programKeys.has(h.key)) continue; // #953 · 第二道闸
+    lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
+  }
   lines.push('');
   lines.push('相关场景：' + keys.join('、') + '（16 联动，key 字符串后续票落表时冻结）。');
   return lines.join('\n');

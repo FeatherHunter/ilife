@@ -19,6 +19,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CALORIE_COMBOS, isCalorieWriteKey } from '../dist/cli/keys.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 import { ALL_ROUTES, NEW_KEY_ROUTES, COVERAGE_REPAIR_ROUTES } from '../dist/triggers/routing.js';
 import { SCENE_02_DIET } from '../dist/triggers/scene-02-diet.js';
 import { SCENE_06_GOAL } from '../dist/triggers/scene-06-goal.js';
@@ -685,7 +686,13 @@ function flowFor(key) {
 }
 
 export function buildHelpBlock() {
-  const keys = Object.keys(CALORIE_COMBOS).sort();
+  // #953 · 程序面键（surface: 'program'，事实在注册表声明上——键表只带形状与标题，没有标记位）
+  // 不进技能说明面：整表（行／`相关场景`散文／计数自述）按过滤后的键集算；无标记键一字不变。
+  // `exampleFor`／`flowFor` 的缺 case 即抛保留为第二道闸（程序面键若漏网到此，当场红而非静默进表）。
+  const programKeys = new Set(
+    Object.entries(REGISTRY).filter(([, s]) => s?.surface === 'program').map(([k]) => k),
+  );
+  const keys = Object.keys(CALORIE_COMBOS).sort().filter((k) => !programKeys.has(k));
   const diet = dietRepresentatives();
   const goal = goalRepresentatives();
   checkGoalCoverage();
