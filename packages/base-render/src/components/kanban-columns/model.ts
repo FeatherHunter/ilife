@@ -3,8 +3,10 @@
  *  三条口径（与 `command-palette/model.ts`／`drag-sort/model.ts` 同一条）：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：
  *      猜出来的看板会让调用方以为自己拿到的是「卡在哪一列、选中了谁」的那块面。
- *      · **全空白串＝拒**（`'   '` 会在屏上留一块空白：无字列名、无字卡、无字计数单位）；
- *      · **入参表以外的键＝拒**（写错一个键名，调用方以为自己设上了，屏上却没有）。
+ *      · **全空白串＝拒**（`'   '` 会在屏上留一块空白：无字列名、无字卡、无字计数单位；
+ *        **零宽字符那类不可见字符同样算空白**——`trim()` 剥不掉它们，得先剥再判）；
+ *      · **入参表以外的键＝拒**（写错一个键名，调用方以为自己设上了，屏上却没有；
+ *        自有的不可枚举键与原型链上继承来的键**同样算**——只走 `Object.keys` 会漏掉这两类）。
  *   2. **能算的都算出来**：每列的计数那一句、卡上那枚状态、状态句、收纳键的字——都在这里算好；
  *      `render.ts` 只拼标记，一个字都不算。
  *   3. **空列是合法态**：`cards: []` ＝ 设计过的空槽（列头与计数一直在，不消失）。
@@ -60,6 +62,16 @@ export interface KanbanColumnsModel {
   readonly extraClass?: string;
 }
 
+/** 不可见字符：零宽与格式那一类（`\u200b` 零宽空格、`\u200c/\u200d` 连接符、`\u200e/\u200f` 方向标记、
+ *  `\u2060` 词连接符、`\ufeff` 零宽不换行空格、`\u00ad` 软连字符）。**`String.prototype.trim()` 不管它们**
+ *  ——它按 Unicode WhiteSpace 剥，这几个是格式类（Cf）——所以「全空白」的判定得先把它们剥掉。 */
+const INVISIBLE_RE = /[\u00ad\u200b-\u200f\u2060\ufeff]/g;
+
+/** 「在屏上就是一块空白」：剥掉不可见字符再 `trim()`，剩下的还是空。 */
+function isBlank(text: string): boolean {
+  return text.replace(INVISIBLE_RE, '').trim() === '';
+}
+
 /** 机器值：非空、**只许标识符字符**（它要当 `data-*` 的值使）。 */
 function reqIdentifier(value: unknown, field: string): string {
   const text = reqText(value, field);
@@ -69,24 +81,38 @@ function reqIdentifier(value: unknown, field: string): string {
   return text;
 }
 
-/** 必填文本：非空串**且不是全空白**（全空白会在屏上留一块空白，那是看得到的错）。 */
+/** 必填文本：非空串**且不是全空白**（全空白——含零宽那类不可见字符——会在屏上留一块空白，那是看得到的错）。 */
 function reqRealText(value: unknown, field: string): string {
   const text = reqText(value, field);
-  if (text.trim() === '') badInput(field + ' 必须是真正的文本（全空白不算）');
+  if (isBlank(text)) badInput(field + ' 必须是真正的文本（全空白不算，零宽字符这类不可见字符也不算）');
   return text;
 }
 
 /** 可选文本：空串＝未给（与全层 `optText` 同口径）；**全空白＝拒**（那会在屏上留一块空白）。 */
 function optRealText(value: unknown, field: string): string | undefined {
   const text = optText(value, field);
-  if (text !== undefined && text.trim() === '') badInput(field + ' 必须是真正的文本（全空白不算）');
+  if (text !== undefined && isBlank(text)) {
+    badInput(field + ' 必须是真正的文本（全空白不算，零宽字符这类不可见字符也不算）');
+  }
   return text;
 }
 
-/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。 */
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus:1})` 那种继承来的键就是这一路）。
+ */
 function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
-  for (const key of Object.keys(raw)) {
-    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让调用方以为自己设上了）');
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
 

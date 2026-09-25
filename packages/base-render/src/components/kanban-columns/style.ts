@@ -9,7 +9,9 @@
  *
  *  几何事实（判据钉住，数只写在这里一处）：
  *   · 卡／收纳键／加键／分段 ≥`KANBAN_COLUMNS_TOUCH_PX`（44）高；卡与卡之间留
- *     `KANBAN_COLUMNS_GAP_PX`（8）px 缝；空列与有卡列同高（列区 `stretch` ＋ 列身 `flex:1`）。
+ *     `KANBAN_COLUMNS_GAP_PX`（8）px 缝；空列与有卡列同高（列区 `stretch` ＋ 列身 `flex:1`）；
+ *   · **窄容器那一段在 `style-narrow.ts`**（同一份纪律、同一个前缀，搬家只为行数）；
+ *     拿起的卡「站起来」往上挪的位移＝`KANBAN_COLUMNS_LIFT_PX`（地板口径写在 `attrs.ts` 那两枚常量上）。
  */
 import { skinVar } from '../skin/contract.js';
 import {
@@ -17,12 +19,12 @@ import {
   KANBAN_COLUMNS_CONTAINER,
   KANBAN_COLUMNS_GAP_PX,
   KANBAN_COLUMNS_HOVER_QUERY,
-  KANBAN_COLUMNS_NARROW_PX,
-  KANBAN_COLUMNS_SHOW_ATTR,
+  KANBAN_COLUMNS_LIFT_PX,
   KANBAN_COLUMNS_TOUCH_PX,
   kanbanColumnsSlot,
   type KanbanColumnsSlot,
 } from './attrs.js';
+import { kanbanColumnsNarrowCss } from './style-narrow.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -39,11 +41,6 @@ export function kanbanColumnsCss(input?: { readonly prefix?: string }): string {
   /** **带 scope 的完整选择器**（一条规则打头用）。 */
   const s = (slot: KanbanColumnsSlot): string => root + ' ' + sc(slot);
   const hover = '@media ' + KANBAN_COLUMNS_HOVER_QUERY;
-  const narrow = '@container ' + KANBAN_COLUMNS_CONTAINER
-    + ' (max-width: ' + String(KANBAN_COLUMNS_NARROW_PX) + 'px)';
-  /** 窄档当前列的命中器（`show="2"` ⇒ 第二列留下来；值由分段切换与入参 `activeCol` 给）。 */
-  const shown = (at: number): string => s('host') + '[' + KANBAN_COLUMNS_SHOW_ATTR + '="' + String(at) + '"]'
-    + ' ' + sc('cols') + ' > ' + sc('col') + ':nth-child(' + String(at) + ')';
 
   return [
     '/* kanban-columns（看板列 · 形态 status「按状态分列」）：列＝状态，卡在列之间挪就是改状态。',
@@ -220,11 +217,12 @@ export function kanbanColumnsCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('accent') + ';',
     '  font-style: normal;',
     '}',
-    '/* 被选中的卡站起来：软底 ＋ 主色字 ＋ 主色描边（「有文字的选中面」那一档）。 */',
+    '/* 被选中的卡站起来（往上挪 `KANBAN_COLUMNS_LIFT_PX`）：软底 ＋ 主色字 ＋ 主色描边',
+    '   （「有文字的选中面」那一档）。位移是这道形占的卡间缝，地板口径见 `attrs.ts` 那两枚常量。 */',
     s('card') + '.is-picked {',
     '  background: ' + skinVar('accent-soft') + ';',
     '  border-color: ' + skinVar('accent') + ';',
-    '  transform: translateY(-2px);',
+    '  transform: translateY(-' + String(KANBAN_COLUMNS_LIFT_PX) + 'px);',
     '}',
     s('card') + '.is-picked > ' + sc('title') + ' { color: ' + skinVar('accent-text') + '; }',
     s('card') + '.is-picked > ' + sc('badge') + ' { color: ' + skinVar('accent-text') + '; }',
@@ -329,24 +327,8 @@ export function kanbanColumnsCss(input?: { readonly prefix?: string }): string {
     '@media (prefers-reduced-motion: reduce) {',
     '  ' + s('card') + ', ' + s('receive') + ', ' + s('cancel') + ' { transition: none; transform: none; }',
     '}',
-    '/* 窄容器（<' + String(KANBAN_COLUMNS_NARROW_PX) + 'px）：**一列一屏**——分段切换出来，',
-    '   一次只留当前那一列（三列同时立着会把内容挤成三根细柱）。',
-    '   判的是**本件自己的宽度**：嵌进侧栏／面板／卡片时照样按自己的宽度折（所以这里不用 `@media`）。 */',
-    narrow + ' {',
-    '  ' + s('switch') + ' {',
-    '    display: grid;',
-    '    grid-auto-flow: column;',
-    '    grid-auto-columns: minmax(0, 1fr);',
-    '    gap: 8px;',
-    '  }',
-    '  ' + s('cols') + '.is-n2, ' + s('cols') + '.is-n3, ' + s('cols') + '.is-n4 {',
-    '    grid-template-columns: minmax(0, 1fr);',
-    '  }',
-    '  ' + s('cols') + ' > ' + sc('col') + ' { display: none; }',
-    '  ' + shown(1) + ' { display: flex; }',
-    '  ' + shown(2) + ' { display: flex; }',
-    '  ' + shown(3) + ' { display: flex; }',
-    '  ' + shown(4) + ' { display: flex; }',
-    '}',
+    '/* 窄容器段（`style-narrow.ts`）：同一份纪律、同一个前缀，插在这里——',
+    '   搬走的是行数，不是取值；本函数的产物逐字节不变。 */',
+    kanbanColumnsNarrowCss({ prefix: p }),
   ].join(LF);
 }

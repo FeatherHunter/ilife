@@ -122,8 +122,18 @@ export const KANBAN_COLUMNS_EVENT_ADD = 'ilife:kanban-add';
 export const KANBAN_COLUMNS_TOUCH_PX = 44;
 /** 卡高下限（px）：卡里三行字，比地板再宽裕一档。 */
 export const KANBAN_COLUMNS_CARD_MIN_PX = 56;
-/** 相邻触控目标的缝（px）：卡与卡之间、卡与收纳键之间。 */
+/** 相邻触控目标的缝（px）：卡与卡之间、卡与收纳键之间。**地板口径**见后一枚常量。 */
 export const KANBAN_COLUMNS_GAP_PX = 8;
+/** 拿起的卡「站起来」往上挪多少（px）。**这是全件唯一允许压掉卡间缝的量**。
+ *
+ *  **地板口径（三条，判据按这两枚常量算，不写死数字）**：
+ *   1. 拿起的卡与它上一张之间那道缝＝`KANBAN_COLUMNS_GAP_PX − KANBAN_COLUMNS_LIFT_PX`（8−2＝6）——
+ *      那是这道形自己占的，**全件只此一处**；
+ *   2. 其余每一道缝（含拿起的卡与它下一张之间）一律 ≥ `KANBAN_COLUMNS_GAP_PX`；
+ *   3. `KANBAN_COLUMNS_LIFT_PX` 只许大于 0 且小于 `KANBAN_COLUMNS_GAP_PX`（否则两道缝会叠在一起）。
+ *
+ *  样式段只读这里，不另写 2。 */
+export const KANBAN_COLUMNS_LIFT_PX = 2;
 /** 本件自己的**容器**名（`@container` 按它命中，不会跟别件的容器串味）。 */
 export const KANBAN_COLUMNS_CONTAINER = 'ilife-kanban-columns';
 /** 窄档断点（px）：**本件自己**窄于它就一列一屏 ＋ 分段切换。这是容器断点，不是视口断点。 */
@@ -214,7 +224,7 @@ export interface KanbanColumn {
   readonly key: string;
   /** 列名（如「想做」）。**非空；永不截断**。 */
   readonly name: string;
-  /** 这一列是干什么的（如「待做的菜」；列头的第二级字）。不给＝列头只有一行。 */
+  /** 这一列是干什么的（如「待做的菜」；列头的第二级字）。不给＝列头只剩「列名 ＋ 计数」**两行**。 */
   readonly purpose?: string;
   /** 计数单位（如「道」；缺省 `件`）。屏上写「2 道」。 */
   readonly unit?: string;

@@ -5,7 +5,9 @@
  *  行为契约（逐条对应判据）：
  *   · **点选是主通路**（触屏上走得通）：点一张卡拿起 → 点目标列那枚看得见的收纳键 → 卡落进那一列；
  *     再点同一张卡＝取消；点另一张卡＝改选。**全程零拖拽手势、零键盘依赖**。
- *   · **同一次只拿起一张卡**：拿起态挂在根的 `data-ilife-kanban-pick` 上（值＝那一张卡的机器键）。
+ *   · **同一次只拿起一张卡**：拿起态挂在根的 `data-ilife-kanban-pick` 上（值＝那一张卡的机器键）；
+ *     被拿起的那张卡同时挂上 `is-picked`（渲染期与运行时段共用的那个修饰类，名字只在
+ *     `render.ts`／`style.ts`／此处三处出现，指的是同一档形）——**只在渲染期写它 ＝ 真机上永远没有那一档形**。
  *   · **收纳键只在拿起态可点**：拿起卡所在列的那一枚按不动（卡本来就在这一列），其余各列可点。
  *   · **挪动落地后四处读数一起重写**：卡上 `data-ilife-kanban-state`／卡上那枚状态（形 ＋ 字）／
  *     两端列的计数／状态句——由 `paint()` 整块重画（幂等：同一份状态画几次都一样）。
@@ -138,6 +140,7 @@ export function buildKanbanColumnsJs(): string {
     '        var card=cards[j], on=(card===picked);',
     '        card.setAttribute(A_STATE,key);',
     '        card.setAttribute("aria-pressed",on?"true":"false");',
+    '        if (on) card.classList.add("is-picked"); else card.classList.remove("is-picked");',
     '        if (on) card.setAttribute("aria-current","true"); else card.removeAttribute("aria-current");',
     '        var badge=card.querySelector("."+C_BADGE);',
     '        if (badge&&(badge.textContent||"")!==mark+name) badge.parentNode.replaceChild(buildBadge(doc,mark,name),badge);',

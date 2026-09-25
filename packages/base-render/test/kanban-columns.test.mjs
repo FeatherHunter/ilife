@@ -4,7 +4,8 @@
  *  ① **渲染契约**：骨架（分段切换 ＋ 列区 ＋ 状态句 ＋ 脚注）／每列的列头（名 ＋ 计数 ＋ 用途 ＋ 加键）
  *    与列身（卡或空槽 ＋ 收纳键）／卡上那枚状态（记号 ＋ 列名）／空列是合法态／
  *    选中态（卡站起来 ＋ 其余各列的落点线与可点的收纳键 ＋ 取消键）／转义面／**全部**非法入参分支
- *    （每个都断 `BlocksError`；含**全空白串**、**入参表以外的键**、稀疏数组）／纯函数／分隔符门；
+ *    （每个都断 `BlocksError`；含**全空白串**（空格类 ＋ **零宽字符类**）、**入参表以外的键**
+ *    （含**继承来的**与**不可枚举的**）、稀疏数组）／纯函数／分隔符门；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且只出现一次、
  *    零 `:root`／`!important`／零新 token／零视口宽度查询／容器查询自己声明了容器／
  *    零省略手段（`text-overflow`／`line-clamp`／`nowrap`：列名与计数永不截断）／
@@ -15,13 +16,17 @@
  *  ③ **加法式**：不启用它的页面零命中、逐字节不变；渲染本件不改别件产物；前缀透传；
  *    同一份入参渲染四次逐字节相同，且标记不带皮肤类；
  *  ④ **四档几何（真机 headless Chrome ＋ CDP，容器宽 320／390／620／1280）**：
- *    零横向溢出、列名与计数零截断、每枚可点件 ≥44×44、卡 ≥56 高、卡间缝 ≥8px、
+ *    零横向溢出、列名与计数零截断、每枚可点件 ≥44×44、卡 ≥56 高、
+ *    卡间缝按常量算的地板（没拿起的 ≥8；拿起的往上挪 `LIFT` ⇒ 它上面那道缝 8−2＝6，只此一处）、
  *    窄档一列一屏（分段切换出来）、宽档几列并排（切换整条不出）、空列的空槽一直在；
  *    **起不来就退确定性几何判据并打印原因**；
- *  ⑤ **行为（真机）**：拿起（点卡 → 选中态 ＋ 收纳键启用 ＋ `pick` 事件）／
- *    挪动（点目标列的收纳键 → 卡真挪过去 ＋ 两端计数与卡上那枚状态重写 ＋ `move` 事件）／
- *    挪空一列（源列当场补出空槽）／取消（点取消键／再点同一张卡 → 卡原样不动 ＋ `cancel` 事件）；
- *    四套皮肤下标记逐字节相同。
+ *  ⑤ **行为（真机 · 真指针）**：全走 CDP 的 `Input.dispatchMouseEvent`（`p.mouse()`）——
+ *    拿起（真指针点卡：完整事件序列 ＋ **类名序列**落账，选中那一档的底／描边／位移当场算出来）／
+ *    挪动（**窄档真路径**：点卡 → 点分段 → 点该列的收纳键；点之前先断那一列到不了）／
+ *    挪空一列／取消与改选（取消之后一张都不许还挂着 `is-picked`；改选之后只许一张）／
+ *    加键与分段切换／列头恒两行；四套皮肤下标记逐字节相同。
+ *    **`element.click()` 替不了这一条**：它不经指针、也不看元素到不到得了——390 档是窄档，
+ *    藏起来那两列的收纳键量出来零宽零高，合成点击照样点得动（2026-09 审查席读数）。
  *
  * 期望值一律从组件自己的常量派生（`KANBAN_COLUMNS_*`），不抄字面量：改了名字这里跟着红。
  */
@@ -48,6 +53,7 @@ import {
   KANBAN_COLUMNS_FORMS,
   KANBAN_COLUMNS_GAP_PX,
   KANBAN_COLUMNS_HOVER_QUERY,
+  KANBAN_COLUMNS_LIFT_PX,
   KANBAN_COLUMNS_MARKS,
   KANBAN_COLUMNS_MAX_CARDS,
   KANBAN_COLUMNS_MAX_COLS,
@@ -309,7 +315,7 @@ describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
     assert.equal(B({ ...OK, columns: [{ key: 'a', name: '甲', cards: sparseCards }, OK.columns[1]] }), true, '卡数组有空洞');
   });
 
-  it('**全空白串＝拒**（上屏文本五类）：收下会在屏上留一块空白', () => {
+  it('**全空白串＝拒**（上屏文本五类：空格类 ＋ **零宽字符类**）：收下会在屏上留一块空白', () => {
     const blanks = [
       ['列名（收下 ⇒ 无字列头）', (b) => [{ key: 'a', name: b, cards: [] }, OK.columns[1]]],
       ['用途（收下 ⇒ 空白第二级字）', (b) => [{ key: 'a', name: '甲', purpose: b, cards: [] }, OK.columns[1]]],
@@ -317,8 +323,12 @@ describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
       ['卡标题（收下 ⇒ 空壳卡）', (b) => [{ key: 'a', name: '甲', cards: [{ key: 'k1', title: b }] }, OK.columns[1]]],
       ['卡副语', (b) => [{ key: 'a', name: '甲', cards: [{ key: 'k1', title: 'T', meta: b }] }, OK.columns[1]]],
     ];
+    /** 空格类：`String.prototype.trim()` 剥得掉的（Unicode WhiteSpace）。 */
+    const SPACES = ['   ', '\t', '　', ' 　 '];
+    /** **零宽／不可见类**：`trim()` 剥不掉它们（格式类 Cf）——不先剥掉，「全空白」这条守卫就漏了这半边。 */
+    const INVISIBLE = ['\u200b', '\u200b\u200b', '\ufeff', '\u00ad', '\u200e\u200f', '\u2060', '\u200b\u200d'];
     for (const [what, patch] of blanks) {
-      for (const blank of ['   ', '\t', '　', ' 　 ']) {
+      for (const blank of SPACES.concat(INVISIBLE)) {
         assert.equal(throwsBlocks(() => renderKanbanColumns({ ...OK, columns: patch(blank) })), true,
           what + ' 收到全空白串（' + JSON.stringify(blank) + '）必须拒');
       }
@@ -332,7 +342,7 @@ describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
     assert.equal(one.includes(CLS('purpose')), false, '用途空串时不画那一格（不留空白）');
   });
 
-  it('**入参表以外的键＝拒**（顶层与列内、卡内三处）', () => {
+  it('**入参表以外的键＝拒**（顶层与列内、卡内三处 ＋ **继承来的与不可枚举的**键）', () => {
     const B = (input) => throwsBlocks(() => renderKanbanColumns(input));
     assert.equal(B({ ...OK, bogus: 1 }), true, '顶层多给一个键');
     assert.equal(B({ ...OK, title: '打错名' }), true, '顶层写错键名');
@@ -340,6 +350,21 @@ describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
     assert.equal(B({ ...OK, columns: [{ ...OK.columns[0], cards: [{ ...OK.columns[0].cards[0], bogus: 1 }] }, OK.columns[1]] }), true,
       '卡内多给一个键');
     assert.equal(B({ ...OK, columns: [{ ...OK.columns[0], count: '2 件' }, OK.columns[1]] }), true, '计数是算出来的，入参不许给');
+    /* **只走 `Object.keys` 会漏掉的两类**（2026-09 审查席读数：`Object.create({bogus:1})` 被收下）：
+       继承来的（`for…in` 走整条原型链）与不可枚举的自有键（`Object.getOwnPropertyNames` 才看得见）。 */
+    assert.equal(B(Object.create({ ...OK, bogus: 1 })), true, '顶层：原型链上继承来的未知键');
+    assert.equal(B({ ...OK, columns: [Object.create({ ...OK.columns[0], bogus: 1 }), OK.columns[1]] }), true,
+      '列内：原型链上继承来的未知键');
+    assert.equal(B({
+      ...OK,
+      columns: [{ ...OK.columns[0], cards: [Object.create({ ...OK.columns[0].cards[0], bogus: 1 })] }, OK.columns[1]],
+    }), true, '卡内：原型链上继承来的未知键');
+    const hidden = { ...OK };
+    Object.defineProperty(hidden, 'bogus', { value: 1, enumerable: false });
+    assert.equal(B(hidden), true, '顶层：不可枚举的自有键（`Object.keys` 看不见它）');
+    const hiddenCol = { ...OK.columns[0] };
+    Object.defineProperty(hiddenCol, 'bogus', { value: 1, enumerable: false });
+    assert.equal(B({ ...OK, columns: [hiddenCol, OK.columns[1]] }), true, '列内：不可枚举的自有键');
   });
 
   it('纯函数：同样的入参恒产同样的字节；README 示例入参直渲成功', () => {
@@ -410,7 +435,10 @@ describe('kanban-columns ② 样式与零 DOM 纪律', () => {
 
   it('状态不只靠颜色：形（位移／虚线／实线／记号）＋ 字（状态句／计数／列名）＋ 色（软底）', () => {
     assert.ok(clean.includes('is-picked'), '选中的卡有一档自己的形');
-    assert.ok(clean.includes('translateY(-2px)'), '选中的卡自己站起来（往上挪 2px）');
+    assert.ok(clean.includes('transform: translateY(-' + String(KANBAN_COLUMNS_LIFT_PX) + 'px)'),
+      '选中的卡自己站起来（往上挪 ' + String(KANBAN_COLUMNS_LIFT_PX) + 'px，取常量，不写死数字）');
+    assert.ok(KANBAN_COLUMNS_LIFT_PX > 0 && KANBAN_COLUMNS_LIFT_PX < KANBAN_COLUMNS_GAP_PX,
+      '站起来那一段位移必须落在 (0, 卡间缝) 里：为 0 ＝ 没有这道形，≥ 卡间缝 ＝ 拿起的卡压到下一张身上');
     assert.ok(new RegExp(SLOT('slot') + '\\s*\\{[^}]*dashed').test(clean), '空槽是虚线框（形）');
     assert.ok(new RegExp(SLOT('drop') + '\\s*\\{[^}]*border-left: 3px solid').test(clean), '落点线 3px 实线（形）');
     assert.ok(clean.includes('accent-soft'), '强调那一档走软底（实底上不写正文级小字）');
@@ -508,11 +536,28 @@ describe('kanban-columns ② 样式与零 DOM 纪律', () => {
       assert.ok(js.includes(ev), '运行时要派发 ' + ev);
     }
     assert.ok(js.includes('A_BOUND'), '根上要记一枚 bound 读数（幂等的可读痕迹）');
+    assert.ok(js.includes('is-picked'), '运行时段要自己写选中类：只在渲染期写它 ⇒ 真机上点出来永远没有那一档形');
+    assert.ok(js.includes('classList.add("is-picked")') && js.includes('classList.remove("is-picked")'),
+      '`paint()` 里按当刻状态**加／撤** `is-picked`（选中／取消／改选／挪动四条路都走它）');
     assert.ok(js.includes(kanbanStatusText(null)), '状态句（没选中那一句）取自渲染期那个函数');
     assert.ok(js.includes(kanbanDropText('\u0001').split('\u0001')[0]), '落点线那句的前半取自渲染期那个函数');
     assert.ok(js.includes(kanbanDropText('\u0001').split('\u0001')[1]), '落点线那句的后半取自渲染期那个函数');
     assert.ok(js.includes(kanbanReceiveText('\u0001').split('\u0001')[0]) === false,
       '收纳键的字不重写（列名不变）：运行时段不必另抄一份');
+  });
+
+  it('「不给 `purpose` 时列头几行」全件只有一处口径：attrs 与 README 都写两行，样式段也恒留两行', () => {
+    const attrs = readFileSync(join(DIR, 'attrs.ts'), 'utf8');
+    const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+    for (const [what, text] of [['attrs.ts', attrs], ['README.md', readme]]) {
+      assert.equal(text.includes('列头只有一行'), false,
+        what + ' 里写着「列头只有一行」——列头的网格恒有**列名行 ＋ 计数行**两行，`purpose` 只管第三条');
+      assert.equal(text.includes('列头只有两行') || text.includes('列头只剩「列名 ＋ 计数」**两行**'), true,
+        what + ' 要照实写「不给 purpose ＝ 列头只有两行」');
+    }
+    /* 样式段的口径与上面两句对得上：三条 areas ⇒ 不给 purpose 只是少画一格，两行恒在。 */
+    assert.ok(clean.includes('grid-template-areas: "name add" "count add" "purpose purpose"'),
+      '列头网格要照实写出三条 areas（列名行 ＋ 计数行 ＋ 用途行）');
   });
 
   it('槽位闭集与类名一致（判据不另抄一份字面量）', () => {
@@ -675,16 +720,44 @@ describe('kanban-columns ④ 四档几何（真机 headless Chrome ＋ CDP · �
             width + ' 档可点件命中盒不足 44：' + JSON.stringify(b));
         }
       }
-      /* 卡间缝 ≥8px：拿起的卡自己往上挪 2px（形），它上面那道缝按 8−2 量（与样式段同一口径）。 */
-      for (const c of [cases[0], cases[2]]) {
+      /* 卡间缝（**地板口径写在 `KANBAN_COLUMNS_GAP_PX`／`KANBAN_COLUMNS_LIFT_PX` 两枚常量上**）：
+         拿起的卡自己往上挪 `LIFT`（形）⇒ 它与上一张之间那一道缝是 `GAP−LIFT`——**全件只此一处**允许
+         压掉地板；其余每一道 ≥ `GAP`。判据按这两枚常量算，故把某处位移写死成别的数当场红。 */
+      assert.ok(KANBAN_COLUMNS_LIFT_PX > 0 && KANBAN_COLUMNS_LIFT_PX < KANBAN_COLUMNS_GAP_PX,
+        '站起来那一段位移必须落在 (0, 卡间缝) 里：' + JSON.stringify({ lift: KANBAN_COLUMNS_LIFT_PX, gap: KANBAN_COLUMNS_GAP_PX }));
+      for (const c of cases) {
         for (const g of c.gaps) {
-          assert.ok(g >= KANBAN_COLUMNS_GAP_PX, width + ' 档卡间缝不足 8px：' + JSON.stringify(c.gaps));
+          assert.ok(g >= KANBAN_COLUMNS_GAP_PX - KANBAN_COLUMNS_LIFT_PX,
+            width + ' 档卡间缝低于地板（' + String(KANBAN_COLUMNS_GAP_PX) + '−' + String(KANBAN_COLUMNS_LIFT_PX) + '）：'
+            + JSON.stringify(c.gaps));
         }
       }
-      assert.equal(cases[1].gaps[0], KANBAN_COLUMNS_GAP_PX - 2,
-        width + ' 档拿起的卡没站起来（往上挪 2px ⇒ 它上面那道缝 8−2＝6）：' + JSON.stringify(cases[1].gaps));
+      for (const c of [cases[0], cases[2]]) {
+        for (const g of c.gaps) {
+          assert.ok(g >= KANBAN_COLUMNS_GAP_PX, width + ' 档没拿起的卡之间缝不足 ' + String(KANBAN_COLUMNS_GAP_PX)
+            + 'px：' + JSON.stringify(c.gaps));
+        }
+      }
+      assert.equal(cases[1].gaps[0], KANBAN_COLUMNS_GAP_PX - KANBAN_COLUMNS_LIFT_PX,
+        width + ' 档拿起的卡没站起来／位移与常量对不上（往上挪 LIFT ⇒ 它上面那道缝 GAP−LIFT）：'
+        + JSON.stringify({ gaps: cases[1].gaps, lift: KANBAN_COLUMNS_LIFT_PX }));
       for (const g of cases[1].gaps.slice(1)) {
-        assert.ok(g >= KANBAN_COLUMNS_GAP_PX, width + ' 档卡间缝不足 8px：' + JSON.stringify(cases[1].gaps));
+        assert.ok(g >= KANBAN_COLUMNS_GAP_PX, width + ' 档卡间缝不足 ' + String(KANBAN_COLUMNS_GAP_PX) + 'px：'
+          + JSON.stringify(cases[1].gaps));
+      }
+      /* 选中那一档的形是**算得出来**的：拿起的卡 `transform` 恰好等于往上挪 `LIFT`，没拿起的卡没有位移。
+         （渲染期就挂着选中态的这一格，量的是 CSS 那一头的形；真指针点出来的那一份在 ⑤ 里量。） */
+      const lifts = await page.ev('(function(){'
+        + 'var root=document.querySelector("[data-case=\\"picked\\"]").querySelector(' + ROOT_S + ');'
+        + 'return [].slice.call(root.querySelectorAll(' + CARD_S + ')).map(function(c){'
+        + 'return {key:c.getAttribute(' + q(KANBAN_COLUMNS_CARD_ATTR) + '),'
+        + 'picked:c.classList.contains("is-picked"),tf:getComputedStyle(c).transform};});}())');
+      const wantMatrix = 'matrix(1, 0, 0, 1, 0, -' + String(KANBAN_COLUMNS_LIFT_PX) + ')';
+      assert.deepEqual(lifts.filter((c) => c.picked).map((c) => c.key), ['c-soup'],
+        width + ' 档恰好一张卡挂选中类：' + JSON.stringify(lifts));
+      for (const c of lifts) {
+        assert.equal(c.tf, c.picked ? wantMatrix : 'none',
+          width + ' 档选中形不对（' + c.key + '）：' + JSON.stringify(c));
       }
       /* 三档各自的状：空列的空槽一直都在（窄档只随当前列露出来）；选中态其余各列的落点线在（宽档才三列并排）。 */
       assert.equal(cases[0].slots, narrow ? 0 : 1, width + ' 档空列的空槽不见了：' + JSON.stringify(cases[0]));
@@ -717,7 +790,18 @@ describe('kanban-columns ④ 四档几何（真机 headless Chrome ＋ CDP · �
   it('关页', () => { page.close(); });
 });
 
-describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ 四套皮肤同构', async () => {
+/* ── ⑤ 行为（真机 · **真指针**）＋ 四套皮肤同构 ───────────────────── */
+
+/** **真指针铁律（本判据自己踩过的坑）**：点卡／点分段／点收纳键／点取消键／点加键这几条**一律**走
+ *  CDP 的 `Input.dispatchMouseEvent`（`p.mouse()`：`mousePressed` ＋ `mouseReleased`，浏览器自己
+ *  合成那枚 `click`）——**不许**用 `element.click()`。
+ *  合成 `click` 不经指针、也不看元素到不到得了：390 档是**窄档**（列区一次只留当前那一列），
+ *  藏起来那两列的收纳键量出来是零宽零高，`.click()` 照样点得动 ⇒ 它能在一份「真用户走不通」的
+ *  通路上全绿（2026-09 审查席读数：`[data-ilife-kanban-receive="done"]` 的矩形是
+ *  `{x:0,y:0,w:0,h:0}`，而那条判据一路绿）。故每条真指针动作之前先量**可达性**：
+ *  宽高非零 ＋ 那一点上命中的就是它自己；窄档按「先点分段、再点该列的收纳键」走真路径。
+ */
+describe('kanban-columns ⑤ 行为（真机 · 真指针 CDP Input）＋ 四套皮肤同构', async () => {
   const p = await startBrowser({ portOffset: 46 });
   if (p === null) {
     it('真机未跑（本机没有 Chrome）：行为判据跳过', (t) => {
@@ -732,8 +816,26 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
     + [KANBAN_COLUMNS_EVENT_PICK, KANBAN_COLUMNS_EVENT_MOVE, KANBAN_COLUMNS_EVENT_CANCEL, KANBAN_COLUMNS_EVENT_ADD]
       .map((n) => 'document.addEventListener(' + q(n) + ',function(e){window.__kb.push({type:e.type,detail:e.detail});});').join('')
     + 'return true;}())';
+  /** 一次页内快照：选中那一档的**类名与算出来的样式**（底／描边／位移）都在这里读。 */
+  const SNAP = '(function(){'
+    + 'var root=document.querySelector(' + ROOT_S + ');'
+    + 'var all=[].slice.call(root.querySelectorAll(' + CARD_S + '));'
+    + 'var picked=all.filter(function(c){return c.classList.contains("is-picked");});'
+    + 'var plain=all.filter(function(c){return !c.classList.contains("is-picked");})[0];'
+    + 'var box=function(c){if(!c)return null;var cs=getComputedStyle(c);'
+    + 'return {bg:cs.backgroundColor,border:cs.borderTopColor,transform:cs.transform};};'
+    + 'return {pick:root.getAttribute(' + q(KANBAN_COLUMNS_PICK_ATTR) + '),'
+    + 'picked:picked.map(function(c){return c.getAttribute(' + q(KANBAN_COLUMNS_CARD_ATTR) + ');}),'
+    + 'pickedBox:box(picked[0]),plainBox:box(plain)};})()';
   const STATE = '(function(){'
     + 'var root=document.querySelector(' + ROOT_S + ');'
+    /* `accent-soft` 的**实际取值**：在同一个皮肤作用域里放一枚探针读出来（判据不抄色值字面量）。 */
+    + 'var probe=document.createElement("div");'
+    + 'probe.style.background=' + q(skinVar('accent-soft')) + ';'
+    + 'probe.style.borderColor=' + q(skinVar('accent')) + ';'
+    + 'root.parentNode.insertBefore(probe,root);'
+    + 'var probeStyle=getComputedStyle(probe), soft=probeStyle.backgroundColor, edge=probeStyle.borderTopColor;'
+    + 'probe.parentNode.removeChild(probe);'
     + 'var cols=[].slice.call(root.querySelectorAll(' + COL_S + ')).map(function(col){'
     + 'var recv=col.querySelector(' + RECV_S + ');'
     + 'var empty=col.querySelector(' + SLOT_S + ');'
@@ -744,28 +846,79 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
     + 'badge:[].slice.call(col.querySelectorAll(' + BADGE_S + ')).map(function(b){return b.textContent;}),'
     + 'drop:col.querySelectorAll(' + DROP_S + ').length,slot:empty?empty.textContent:null,'
     + 'recvOff:recv?recv.disabled:null,recvText:recv?recv.textContent:null};});'
-    + 'return {pick:root.getAttribute(' + q(KANBAN_COLUMNS_PICK_ATTR) + '),'
-    + 'show:root.getAttribute(' + q(KANBAN_COLUMNS_SHOW_ATTR) + '),'
+    + 'var snap=' + SNAP + ';'
+    + 'return {pick:snap.pick,show:root.getAttribute(' + q(KANBAN_COLUMNS_SHOW_ATTR) + '),'
     + 'bound:root.getAttribute(' + q(KANBAN_COLUMNS_BOUND_ATTR) + '),'
     + 'status:(root.querySelector(' + STATUS_S + ')||{}).textContent,'
     + 'cancel:root.querySelector(' + CANCEL_S + ')!==null,'
     + 'cancelText:(root.querySelector(' + CANCEL_S + ')||{}).textContent,'
     + 'pressed:[].slice.call(root.querySelectorAll(' + CARD_S + ')).map(function(c){return c.getAttribute("aria-pressed");}),'
+    + 'clsPicked:snap.picked,pickedBox:snap.pickedBox,plainBox:snap.plainBox,soft:soft,edge:edge,'
     + 'cols:cols,evts:window.__kb};}())';
-  const CLICK_CARD = (key) => '(function(){document.querySelector(' + q(ATTR(KANBAN_COLUMNS_CARD_ATTR + '="' + key + '"')) + ').click();return true;}())';
-  const CLICK_RECV = (key) => '(function(){document.querySelector(' + q(ATTR(KANBAN_COLUMNS_RECEIVE_ATTR + '="' + key + '"')) + ').click();return true;}())';
-  const CLICK_ADD = (key) => '(function(){document.querySelector(' + q(ATTR(KANBAN_COLUMNS_ADD_ATTR + '="' + key + '"')) + ').click();return true;}())';
-  const CLICK_CANCEL = '(function(){document.querySelector(' + q(ATTR(KANBAN_COLUMNS_CANCEL_ATTR)) + ').click();return true;}())';
-  const CLICK_SEG = (at) => '(function(){document.querySelector(' + q(ATTR(KANBAN_COLUMNS_SEG_ATTR + '="' + at + '"')) + ').click();return true;}())';
-  const colOf = (st, key) => st.cols.find((c) => c.key === key);
+  /** 事件序列落账：三条浏览器原生事件（捕获期，先于委派）＋ 本件四条事件，每条各带**当刻的类名快照**。
+   *  `snap` 是**函数**（每个事件那一刻现算）——存成值的话四条事件会共用同一个开机快照。 */
+  const WIRE_TIMELINE = '(function(){window.__tl=[];'
+    + 'var snap=function(){return ' + SNAP + ';};'
+    + '["pointerdown","pointerup","click"].forEach(function(n){'
+    + 'document.addEventListener(n,function(e){window.__tl.push({name:n,state:snap()});},true);});'
+    + [KANBAN_COLUMNS_EVENT_PICK, KANBAN_COLUMNS_EVENT_MOVE, KANBAN_COLUMNS_EVENT_CANCEL, KANBAN_COLUMNS_EVENT_ADD]
+      .map((n) => 'document.addEventListener(' + q(n) + ',function(e){'
+        + 'window.__tl.push({name:' + q(n) + ',detail:e.detail,state:snap()});});').join('')
+    + 'return true;}())';
+  const seqOf = () => p.ev('window.__tl.map(function(o){return o.name+"|"+(o.state.picked||[]).join("+")+"|"+o.state.pick;})');
 
-  it('拿起：点卡 → 选中态（其余各列出落点线与可点的收纳键 ＋ 取消键）＋ pick 事件', async () => {
+  /* ── 真指针小件：坐标 ＋ **可达性**（宽高非零、那一点上命中的就是它自己） ────────── */
+  const POINT_AT = (sel) => '(function(){'
+    + 'var el=document.querySelector(' + q(sel) + ');'
+    + 'if (!el) return {miss:true};'
+    + 'var b=el.getBoundingClientRect();'
+    + 'var x=Math.round(b.left+b.width/2), y=Math.round(b.top+b.height/2);'
+    + 'var cs=getComputedStyle(el), hit=document.elementFromPoint(x,y);'
+    + 'var col=el.closest(' + JSON.stringify('[' + KANBAN_COLUMNS_COL_ATTR + ']') + ');'
+    + 'return {x:x,y:y,w:Math.round(b.width),h:Math.round(b.height),disp:cs.display,'
+    + 'colDisp:col?getComputedStyle(col).display:null,'
+    + 'ok:!!hit && (hit===el || el.contains(hit))};}())';
+  /** 真指针点一下：先量可达性（量不过就是**判据红**，不是静默跳过），再走 CDP 的鼠标通道。 */
+  const tapAt = async (sel) => {
+    const g = await p.ev(POINT_AT(sel));
+    assert.ok(g.miss !== true, '真指针要点的元素不在页上：' + sel);
+    assert.ok(g.w > 0 && g.h > 0,
+      '真指针要点的元素量出来是零宽／零高（屏上到不了它——窄档得先点分段把它那一列换出来）：' + sel + ' ' + JSON.stringify(g));
+    assert.equal(g.ok, true, '真指针那一点上命中的不是它（被盖住／不在当前那一列）：' + sel + ' ' + JSON.stringify(g));
+    await p.mouse(g.x, g.y);
+    return g;
+  };
+  const CARD_SEL = (key) => ATTR(KANBAN_COLUMNS_CARD_ATTR + '="' + key + '"');
+  const RECV_SEL = (key) => ATTR(KANBAN_COLUMNS_RECEIVE_ATTR + '="' + key + '"');
+  const ADD_SEL = (key) => ATTR(KANBAN_COLUMNS_ADD_ATTR + '="' + key + '"');
+  const SEG_SEL = (at) => ATTR(KANBAN_COLUMNS_SEG_ATTR + '="' + at + '"');
+  const CANCEL_SEL = ATTR(KANBAN_COLUMNS_CANCEL_ATTR);
+  const colOf = (st, key) => st.cols.find((c) => c.key === key);
+  /** 选中的卡「站起来」之后 `transform` 的算出来的样子（判据不写死数字）。 */
+  const LIFT_MATRIX = 'matrix(1, 0, 0, 1, 0, -' + String(KANBAN_COLUMNS_LIFT_PX) + ')';
+
+  it('拿起：**真指针点卡**（完整事件序列 ＋ 类名序列）→ 选中形（`is-picked` ＋ 算出来的底与位移）＋ 收纳键／落点线／取消键 ＋ pick 事件', async () => {
     await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
     await p.ev(WIRE);
-    await p.ev(CLICK_CARD('c-soup'));
+    await p.ev(WIRE_TIMELINE);
+    await tapAt(CARD_SEL('c-soup'));
     const st = await p.ev(STATE);
-    console.log('kanban-columns 拿起读数 ' + JSON.stringify(st));
+    const seq = await seqOf();
+    console.log('kanban-columns 真指针拿起时序 ' + JSON.stringify({ seq, pick: st.pick, cls: st.clsPicked,
+      box: st.pickedBox, soft: st.soft, edge: st.edge }));
+    assert.deepEqual(seq, ['pointerdown||null', 'pointerup||null', 'click||null',
+      KANBAN_COLUMNS_EVENT_PICK + '|c-soup|c-soup'],
+    '真指针点一下的完整事件序列与类名序列（选发生在 `click` 的委派里，故它在 `click` 之后）：' + JSON.stringify(seq));
     assert.equal(st.pick, 'c-soup', '根上写清选中了谁');
+    /* 严重 1 的读数：**运行时段真写了 `is-picked`**，而且那一档形算得出来。 */
+    assert.deepEqual(st.clsPicked, ['c-soup'], '全页恰好一张卡挂 `is-picked`（只在渲染期写 ＝ 真机上没有这一档）');
+    assert.equal(st.pickedBox.bg, st.soft, '选中的卡换成强调软底（`accent-soft` 的实际取值）：' + JSON.stringify(st.pickedBox));
+    assert.equal(st.pickedBox.border, st.edge, '选中那一档的描边走主色：' + JSON.stringify(st.pickedBox));
+    assert.equal(st.pickedBox.transform, LIFT_MATRIX,
+      '选中的卡自己站起来（位移＝`KANBAN_COLUMNS_LIFT_PX`）：' + JSON.stringify(st.pickedBox));
+    assert.equal(st.plainBox.transform, 'none', '没选中的卡没有位移');
+    assert.notEqual(st.plainBox.bg, st.soft, '没选中的卡还是原来的面');
+    /* 既有的选中态读数（挪动通路与收尾）： */
     assert.equal(colOf(st, 'todo').drop, 0, '选中卡所在列没有落点线');
     assert.equal(colOf(st, 'doing').drop, 1, '其余各列出落点线（写出放这里＝标记为哪一列）');
     assert.equal(colOf(st, 'done').drop, 1);
@@ -782,11 +935,23 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
     assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
   });
 
-  it('挪动：点目标列的收纳键 → 卡真挪过去 ＋ 两端计数与卡上那枚状态重写 ＋ move 事件', async () => {
-    await p.ev(CLICK_RECV('done'));
+  it('挪动：**窄档真路径**（点卡 → 点第 3 段 → 点该列收纳键）→ 卡真挪过去 ＋ 两端计数与卡上那枚状态重写 ＋ move 事件', async () => {
+    await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await p.ev(WIRE_TIMELINE);
+    /* 窄档的事实：列区一次只留当前那一列 ⇒ 第 3 列此刻**到不了**（这就是「真用户必须先点分段」）。 */
+    const off = await p.ev(POINT_AT(RECV_SEL('done')));
+    assert.equal(off.colDisp, 'none', '第 3 列此刻整列 `display:none`（`.click()` 会在这条走不通的通路上照样全绿）');
+    assert.equal(off.w * off.h, 0, '窄档没点分段之前，第 3 列的收纳键量出来是零宽零高：' + JSON.stringify(off));
+    await tapAt(CARD_SEL('c-soup'));
+    await tapAt(SEG_SEL('3'));
+    assert.equal((await p.ev(STATE)).show, '3', '点第 3 段 ⇒ 当前列换成第 3 列');
+    await tapAt(RECV_SEL('done'));
     const st = await p.ev(STATE);
-    console.log('kanban-columns 挪动读数 ' + JSON.stringify(st));
+    console.log('kanban-columns 真指针挪动读数 ' + JSON.stringify({ pick: st.pick, done: colOf(st, 'done').cards,
+      counts: st.cols.map((c) => c.count), cls: st.clsPicked }));
     assert.equal(st.pick, null, '挪完选中态收掉');
+    assert.deepEqual(st.clsPicked, [], '挪完选中形也收掉（卡身上不留 `is-picked`）');
     assert.equal(st.cancel, false, '取消键收起来');
     assert.deepEqual(colOf(st, 'done').cards, ['c-soup'], '卡落进目标列');
     assert.deepEqual(colOf(st, 'todo').cards, ['c-dumpling'], '源列少了一张');
@@ -798,66 +963,96 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
     assert.deepEqual(st.cols.map((c) => c.recvOff), [true, true, true], '没选中时整排收纳键按不动');
     assert.equal(colOf(st, 'todo').drop + colOf(st, 'doing').drop + colOf(st, 'done').drop, 0, '落点线全撤');
     assert.equal(st.status, kanbanStatusText(null), '状态句回到「还没选中卡片」');
+    /* **这一挪是真手势打出来的**：三次动作各来一条 `pointerdown`，而挪动那一下紧跟在 `click` 之后。
+       `element.click()` 只出一条 `click`——它能在这条通路上全绿，真指针这条替不了。 */
+    const names = (await seqOf()).map((s) => s.split('|')[0]);
+    console.log('kanban-columns 真指针挪动时序 ' + JSON.stringify(names));
+    assert.equal(names.filter((n) => n === 'pointerdown').length, 3,
+      '三次真指针动作（点卡／点分段／点收纳键）各来一条 `pointerdown`：' + JSON.stringify(names));
+    assert.deepEqual(names.slice(-4), ['pointerdown', 'pointerup', 'click', KANBAN_COLUMNS_EVENT_MOVE],
+      '挪动那一下是**真手势**打出来的（合成 `click()` 只出一条 `click`）：' + JSON.stringify(names));
     const move = st.evts[st.evts.length - 1];
     assert.equal(move.type, KANBAN_COLUMNS_EVENT_MOVE);
     assert.deepEqual(move.detail, { id: 'kanban-dinner', key: 'c-soup', from: 'todo', to: 'done' });
   });
 
-  it('挪空一列：源列最后一张被收走 → 运行时段当场补出空槽（空列不许消失）', async () => {
-    await p.ev(CLICK_CARD('c-braise'));
-    await p.ev(CLICK_RECV('todo'));
+  it('挪空一列：真指针走「点第 2 段 → 点 doing 那张 → 点第 1 段 → 点 todo 的收纳键」→ 源列当场补出空槽', async () => {
+    await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(SEG_SEL('2'));
+    await tapAt(CARD_SEL('c-braise'));
+    await tapAt(SEG_SEL('1'));
+    await tapAt(RECV_SEL('todo'));
     const st = await p.ev(STATE);
-    console.log('kanban-columns 挪空读数 ' + JSON.stringify(st));
+    console.log('kanban-columns 真指针挪空读数 ' + JSON.stringify({ doing: colOf(st, 'doing').cards,
+      todo: colOf(st, 'todo').cards, slot: colOf(st, 'doing').slot }));
     assert.deepEqual(colOf(st, 'doing').cards, [], '源列空了');
     assert.equal(colOf(st, 'doing').slot, KANBAN_COLUMNS_TEXT.emptyTitle + KANBAN_COLUMNS_TEXT.emptyNote,
       '空槽当场补出来（两句话）');
     assert.equal(colOf(st, 'doing').count, kanbanCountText(0, '道'), '空列计数照实写 0');
-    assert.deepEqual(colOf(st, 'todo').cards, ['c-dumpling', 'c-braise'], '收到的卡排在那一列最后');
-    assert.equal(st.evts.filter((e) => e.type === KANBAN_COLUMNS_EVENT_MOVE).length, 2, '两条 move 事件（每条一次挪动）');
+    assert.deepEqual(colOf(st, 'todo').cards, ['c-dumpling', 'c-soup', 'c-braise'], '收到的卡排在那一列最后');
+    assert.equal(st.evts.filter((e) => e.type === KANBAN_COLUMNS_EVENT_MOVE).length, 1, '一条 move 事件（真指针挪了一次）');
   });
 
-  it('取消：点取消键／再点同一张卡 → 卡原样不动 ＋ cancel 事件；点另一张＝改选', async () => {
+  it('取消与改选：**真指针点取消键** → 选中形撤干净（类名空、位移回 `none`、面回原样）；再点另一张＝改选', async () => {
     await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
     await p.ev(WIRE);
-    await p.ev(CLICK_CARD('c-dumpling'));
-    await p.ev(CLICK_CANCEL);
+    await p.ev(WIRE_TIMELINE);
+    await tapAt(CARD_SEL('c-dumpling'));
+    assert.deepEqual((await p.ev(STATE)).clsPicked, ['c-dumpling'], '先拿起 c-dumpling');
+    await tapAt(CANCEL_SEL);
     const st = await p.ev(STATE);
-    console.log('kanban-columns 取消读数 ' + JSON.stringify(st));
+    console.log('kanban-columns 真指针取消读数 ' + JSON.stringify({ cls: st.clsPicked, pick: st.pick,
+      plain: st.plainBox, soft: st.soft }));
     assert.deepEqual(colOf(st, 'todo').cards, ['c-dumpling', 'c-soup'], '卡原样不动');
     assert.equal(st.pick, null);
+    assert.deepEqual(st.clsPicked, [], '**取消之后一张都不许还挂着 `is-picked`**（屏上不许留一张高亮卡）');
+    assert.equal(st.pickedBox, null, '没有卡挂选中形');
+    assert.equal(st.plainBox.transform, 'none', '取消之后位移回 `none`（不许留那 2px）');
+    assert.notEqual(st.plainBox.bg, st.soft, '取消之后面回原样（不许留软底）');
     assert.equal(st.cancel, false, '取消键收起来');
     assert.equal(colOf(st, 'doing').drop, 0, '落点线撤掉');
     assert.deepEqual(st.cols.map((c) => c.recvOff), [true, true, true], '收纳键回到按不动');
     assert.deepEqual(st.pressed, ['false', 'false', 'false'], '按下态也收掉');
+    assert.equal(st.status, kanbanStatusText(null), '状态句回到「还没选中卡片」');
     const last = st.evts[st.evts.length - 1];
     assert.equal(last.type, KANBAN_COLUMNS_EVENT_CANCEL);
     assert.deepEqual(last.detail, { id: 'kanban-dinner', key: 'c-dumpling' });
-    await p.ev(CLICK_CARD('c-soup'));
-    await p.ev(CLICK_CARD('c-soup'));
-    const st2 = await p.ev(STATE);
-    assert.equal(st2.pick, null, '再点同一张＝取消');
-    assert.equal(st2.evts[st2.evts.length - 1].type, KANBAN_COLUMNS_EVENT_CANCEL);
-    await p.ev(CLICK_CARD('c-soup'));
-    await p.ev(CLICK_CARD('c-dumpling'));
+    /* 再点同一张＝取消；点另一张＝改选（**任何时刻恰好一张挂选中类**：旧那张必须先撤）。 */
+    await tapAt(CARD_SEL('c-soup'));
+    assert.deepEqual((await p.ev(STATE)).clsPicked, ['c-soup'], '再点同一张＝取消之后又拿起一张');
+    await tapAt(CARD_SEL('c-dumpling'));
     const st3 = await p.ev(STATE);
     assert.equal(st3.pick, 'c-dumpling', '点另一张＝改选（同一时刻只有一张被选中）');
+    assert.deepEqual(st3.clsPicked, ['c-dumpling'], '**改选之后旧那张的高亮要撤掉**（两张都亮＝两张都像选中）');
     assert.equal(st3.evts[st3.evts.length - 1].type, KANBAN_COLUMNS_EVENT_PICK);
     assert.deepEqual(st3.evts[st3.evts.length - 1].detail, { id: 'kanban-dinner', key: 'c-dumpling', from: 'todo' });
     assert.equal(colOf(st3, 'todo').drop, 0, '改选到同一列：那一列本来就没有落点线');
     assert.equal(colOf(st3, 'doing').drop, 1);
+    const seq = await seqOf();
+    console.log('kanban-columns 真指针类名序列 ' + JSON.stringify(seq));
+    assert.deepEqual(seq.filter((s) => s.startsWith(KANBAN_COLUMNS_EVENT_PICK)),
+      [KANBAN_COLUMNS_EVENT_PICK + '|c-dumpling|c-dumpling', KANBAN_COLUMNS_EVENT_PICK + '|c-soup|c-soup',
+        KANBAN_COLUMNS_EVENT_PICK + '|c-dumpling|c-dumpling'],
+    '`pick` 那一刻的类名快照：每次都只有新那一张挂 `is-picked`：' + JSON.stringify(seq));
+    await tapAt(CARD_SEL('c-dumpling'));
+    assert.equal((await p.ev(STATE)).pick, null, '再点同一张＝取消');
+    assert.equal((await p.ev(STATE)).evts.slice(-1)[0].type, KANBAN_COLUMNS_EVENT_CANCEL);
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
   });
 
-  it('加键与分段切换：加键只报「往哪一列加」，分段只换当前列（都不写库、都不派发额外事件）', async () => {
+  it('加键与分段切换：真指针点第 2 段 → 点该列加键 → `add` 事件（都不写库、都不派发额外事件）', async () => {
     await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
     await p.ev(WIRE);
-    await p.ev(CLICK_ADD('doing'));
+    await tapAt(SEG_SEL('2'));
+    await tapAt(ADD_SEL('doing'));
     const st = await p.ev(STATE);
     const addEvt = st.evts[st.evts.length - 1];
     console.log('kanban-columns 加键读数 ' + JSON.stringify(addEvt));
     assert.equal(addEvt.type, KANBAN_COLUMNS_EVENT_ADD);
     assert.deepEqual(addEvt.detail, { id: 'kanban-dinner', column: 'doing' });
     assert.equal(st.pick, null, '加键不改选中态（本件不写库）');
-    await p.ev(CLICK_SEG('2'));
+    await tapAt(SEG_SEL('2'));
     const after = await p.ev('(function(){var root=document.querySelector(' + ROOT_S + ');'
       + 'return {show:root.getAttribute(' + q(KANBAN_COLUMNS_SHOW_ATTR) + '),'
       + 'disp:[].slice.call(root.querySelectorAll(' + COL_S + ')).map(function(c){return getComputedStyle(c).display;}),'
@@ -872,6 +1067,33 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
     assert.equal(st2.evts.length, 1, '到这一步为止只有加键那一条事件');
   });
 
+  it('列头恒两行：不给 `purpose` 的列，列名与计数**各占一行**（同上口径的那条机器读数）', async () => {
+    const noPurpose = {
+      id: 'kanban-nopurpose',
+      columns: [
+        { key: 'todo', name: '想做', cards: [{ key: 'c1', title: '葱油饼' }] },
+        { key: 'done', name: '做过了', cards: [] },
+      ],
+    };
+    await p.at(fixture('paper', noPurpose, false), { width: 1440, height: 900 });
+    const rows = await p.ev('(function(){return [].slice.call(document.querySelectorAll(' + q(SEL('head')) + ')).map(function(h){'
+      + 'var r=function(sel){var n=h.querySelector(sel);'
+      + 'return n?{t:Math.round(n.getBoundingClientRect().top),text:n.textContent}:null;};'
+      + 'return {col:h.parentNode.getAttribute(' + q(KANBAN_COLUMNS_COL_ATTR) + '),'
+      + 'purpose:!!h.querySelector(' + q(SEL('purpose')) + '),'
+      + 'tracks:getComputedStyle(h).gridTemplateRows.split(" ").filter(function(x){return x!=="";}).length,'
+      + 'name:r(' + q(SEL('name')) + '),count:r(' + q(SEL('count')) + ')};});}())');
+    console.log('kanban-columns 列头行数读数 ' + JSON.stringify(rows));
+    assert.equal(rows.length, noPurpose.columns.length, '两列都要量到（宽档几列并排）');
+    for (const r of rows) {
+      assert.equal(r.purpose, false, '这一档的列头本来就没有用途那一行：' + JSON.stringify(r));
+      assert.ok(r.name !== null && r.count !== null, '列名格与计数格都要在：' + JSON.stringify(r));
+      assert.ok(r.name.text.length > 0 && r.count.text.length > 0, '两行里都要有字（不然就是屏上一块空白）：' + JSON.stringify(r));
+      assert.notEqual(r.name.t, r.count.t,
+        '不给 `purpose` ＝ 列头**两行**（列名行 ＋ 计数行），不是挤成一行：' + JSON.stringify(r));
+    }
+  });
+
   it('幂等：同一段运行时段注两次也只绑一次（第二次直接返回）', async () => {
     await p.at(fixture('paper', PLAIN, true), { width: 390, height: 900 });
     await p.ev(WIRE);
@@ -879,10 +1101,11 @@ describe('kanban-columns ⑤ 行为（真机：拿起／挪动／取消）＋ �
       + 's.textContent=' + JSON.stringify(buildKanbanColumnsJs()) + ';'
       + 'document.body.appendChild(s);return true;}())');
     assert.equal(again, true);
-    await p.ev(CLICK_CARD('c-soup'));
+    await tapAt(CARD_SEL('c-soup'));
     const st = await p.ev(STATE);
     console.log('kanban-columns 幂等读数 ' + JSON.stringify({ pick: st.pick, evts: st.evts.length }));
     assert.equal(st.pick, 'c-soup', '重复注入后照样能拿起');
+    assert.deepEqual(st.clsPicked, ['c-soup'], '重复注入后选中形照样挂得上');
     assert.equal(st.evts.filter((e) => e.type === KANBAN_COLUMNS_EVENT_PICK).length, 1, '注两次也只派发一条 pick 事件');
     assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
   });
