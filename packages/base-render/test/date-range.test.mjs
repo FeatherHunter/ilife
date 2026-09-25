@@ -10,8 +10,11 @@
  *   ② **样式与零 DOM 纪律**：只经 `skinVar()` 读皮肤／scope 在 `.ilife-page-ui` 之下／零 `:root`／
  *      零 `!important`／零自定义属性／宽度只由 `@container` 判／**触控 44 与间距 8 是样式段常量**；
  *   ③ **加法式**：不挂本件时同页产物逐字节不变；
- *   ④ **真机两档**（headless Chrome ＋ CDP）：容器宽 **390 与 1280** 下零横向溢出、每格天与每枚控件
- *      ≥44×44、独立控件间距 ≥8px、口径句不被截，且「点档／点天／翻月／改起止」逐条真跑；
+ *   ④ **真机四档**（headless Chrome ＋ CDP）：容器宽 **320／390／620／1280** 下零横向溢出、每格天与每枚控件
+ *      ≥44×44（元素盒）、独立控件间距 ≥8px、口径句不被截，且「点档／点天／翻月／改起止」逐条真跑；
+ *   ④b **有效命中区四档**（同四档 · prod 形夹具）：每格天与每枚可点控件的**有效命中区**（基准盒四周各扩
+ *      26px、2px 步长逐点 `elementFromPoint`、归属回**同一控件**的格点包围盒）≥44×44——**不是元素盒**：
+ *      34.8px 的元素盒只给得出 34–36px 的命中区，而 44.8px 的也只给 44–46px；
  *   ⑤ **皮肤矩阵**：三套皮肤下**标记逐字节相同**（换的只有样式段）。
  */
 import { describe, it } from 'node:test';
@@ -93,6 +96,32 @@ const cutSpans = (text, spans) => {
 };
 
 const countOf = (html, needle) => (html.match(new RegExp(needle, 'g')) || []).length;
+
+/* ── 样式段的两条结构读数（窄档几何那一条用）────────────────────────── */
+
+/** 起止两格竖排的容器阈值（px）：`style.ts` 的内部常量（不进件门，见下）。 */
+const NARROW_AT_PX = 420;
+
+/** 窄档满幅的容器阈值（px）：`attrs.ts` 的 `DATE_RANGE_FULL_BLEED_MAX_PX` 的值。
+ *  **这里写死、不 import 它**：件门 `index.ts` 一加名字，`src/components/清单.ts` 那一行就得重派生，
+ *  而那份清单不归本票（改它＝动别人的路径）。写死在这里，顺带把"阈值是多少"钉成判据。 */
+const FULL_BLEED_AT_PX = 340;
+
+/** 把 CSS 切成 `[{ sel, body }]`（只切最外层规则；`@container`／`@media` 里的那条内层规则照样切得到）。 */
+const rulesOf = (text) => [...text.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+  .map((m) => ({ sel: m[1].trim(), body: m[2] }));
+
+/** 取出某条 `@container (max-width: Npx) { … }` 整块（按大括号配平切）。 */
+const containerBlockOf = (text, maxPx) => {
+  const at = text.indexOf('@container (max-width: ' + String(maxPx) + 'px) {');
+  assert.ok(at >= 0, '找不到那条容器查询：max-width: ' + maxPx + 'px');
+  let depth = 0;
+  for (let i = text.indexOf('{', at); i < text.length; i += 1) {
+    if (text[i] === '{') depth += 1;
+    else if (text[i] === '}') { depth -= 1; if (depth === 0) return text.slice(at, i + 1); }
+  }
+  throw new Error('容器查询没配平：max-width: ' + maxPx + 'px');
+};
 
 /* ── 夹具入参 ───────────────────────────────────────────────────────── */
 
@@ -326,14 +355,42 @@ describe('dateRange ② 样式纪律', () => {
   it('**宽度只许容器判**：本件自己是容器，`@media` 只判设备能力（没有一处判宽度）', () => {
     assert.match(css, /container-type: inline-size;/, '本件必须自己是容器');
     const at = [...dateRangeCss().matchAll(/@container \(([^)]*)\)/g)].map((m) => m[1]);
-    assert.equal(at.length, 1, '容器查询数不对：' + at.join('｜'));
-    assert.match(at[0], /^max-width: \d+px$/, '容器查询只许判宽度：' + at[0]);
+    /* 两条：起止两格竖排（420）＋ 窄档满幅（340）。两条都只判宽度，不带任何别的条件。 */
+    assert.equal(at.length, 2, '容器查询数不对：' + at.join('｜'));
+    for (const q of at) assert.match(q, /^max-width: \d+px$/, '容器查询只许判宽度：' + q);
+    assert.ok(at.includes('max-width: ' + String(NARROW_AT_PX) + 'px'), '起止两格那条应是 ' + NARROW_AT_PX + 'px：' + at.join('｜'));
+    assert.ok(at.includes('max-width: ' + String(FULL_BLEED_AT_PX) + 'px'), '窄档满幅那条应是 ' + FULL_BLEED_AT_PX + 'px：' + at.join('｜'));
+    assert.equal(new Set(at).size, at.length, '两条容器查询不许同一个阈值：' + at.join('｜'));
     const medias = [...dateRangeCss().matchAll(/@media ([^{]*)\{/g)].map((m) => m[1].trim());
     assert.ok(medias.length >= 2, '两条设备能力查询应在：' + medias.join('｜'));
     for (const m of medias) {
       assert.equal(/max-width|min-width/.test(m), false, '媒体查询只许判设备能力：' + m);
       assert.ok(/hover|pointer|prefers-reduced-motion/.test(m), '媒体查询判的不是设备能力：' + m);
     }
+  });
+
+  it('窄档几何：**矩阵缝并进格子（0）** ＋ 满幅外扩量**逐值等于块体左右内距**（写两份必走散）', () => {
+    const rules = rulesOf(css);
+    for (const slot of ['week', 'days']) {
+      const hit = rules.filter((r) => r.sel.split(',').some((s) => s.trim().endsWith('-block-date-range-' + slot)));
+      assert.equal(hit.length, 1, slot + ' 那条规则应当只有一条，现在是 ' + hit.length + ' 条');
+      assert.match(hit[0].body, /gap: 0px;/, slot + ' 那一排的矩阵缝必须是 0px（缝并进格子，见 README §6）：'
+        + hit[0].body.trim());
+      assert.match(hit[0].body, /grid-template-columns: repeat\(7, minmax\(0, 1fr\)\);/,
+        slot + ' 那一排必须是七列（表头与日格同一个模板）');
+    }
+    /* 块体左右内距：从产物里读，不抄常量（件门不许再加名字：`组件清单` 按 `index.ts` 的出口名派生）。 */
+    const pad = /\.ilife-page-ui \.ilife-block-date-range \{[^}]*\n  padding: 12px (\d+)px 14px;/.exec(css);
+    assert.ok(pad !== null, '块体的内距写法变了，这条判据认不出左右内距：见 `style.ts`');
+    const bleed = containerBlockOf(css, FULL_BLEED_AT_PX);
+    assert.ok(bleed.includes('.ilife-block-date-range-calendar {'),
+      '窄档满幅必须挂在日历那一块上（不是挂在块体或日格上）：' + bleed);
+    assert.ok(bleed.includes('margin-left: -' + pad[1] + 'px;') && bleed.includes('margin-right: -' + pad[1] + 'px;'),
+      '满幅外扩量必须逐值等于块体左右内距（' + pad[1] + 'px）：' + bleed);
+    assert.ok(bleed.includes('padding-left: 0;') && bleed.includes('padding-right: 0;'),
+      '满幅档日历自己的左右内距必须归零：' + bleed);
+    assert.equal(bleed.includes('margin-top') || bleed.includes('margin-bottom'), false,
+      '满幅只许吃左右内距（上下内距不许动）：' + bleed);
   });
 
   it('**不许 `…` 截断**：样式段里没有截断手段', () => {
@@ -485,9 +542,9 @@ describe('dateRange ⑤ 皮肤矩阵（三套皮肤下标记逐字节相同）',
   });
 });
 
-/* ── ④ 真机两档（headless Chrome ＋ CDP）───────────────────────────── */
+/* ── ④ 真机四档（headless Chrome ＋ CDP）────────────────────────────── */
 
-const WIDTHS = [390, 1280];
+const WIDTHS = [320, 390, 620, 1280];
 
 function fixture() {
   return renderDateRange(WEEK)
@@ -525,11 +582,11 @@ const MEASURE = '(function(){'
   + 'tab0:root.querySelectorAll(' + JSON.stringify('[tabindex="0"]') + ').length});}'
   + 'return out;}())';
 
-describe('dateRange ④ 真机两档（390／1280 容器；视口恒 1440）', () => {
-  it('零横向溢出 ＋ 每格天与每枚控件 ≥44×44 ＋ 独立控件间距 ≥8px ＋ 口径句不被截', async (t) => {
+describe('dateRange ④ 真机四档（320／390／620／1280 容器；视口恒 1440）', () => {
+  it('零横向溢出 ＋ 每格天与每枚控件 ≥44×44（元素盒）＋ 独立控件间距 ≥8px ＋ 口径句不被截', async (t) => {
     const p = await startControlsPage({
       css: skinCss() + '\n' + dateRangeCss(), runtime: buildDateRangeJs(),
-      body: fixture(), events: [DATE_RANGE_EVENT_CHANGE],
+      body: fixture(), events: [DATE_RANGE_EVENT_CHANGE], widths: WIDTHS,
     });
     if (p === null) return t.skip('本机无 Chrome／Chromium：真机两条退化为 ② 的确定性几何判据');
     try {
@@ -559,7 +616,7 @@ describe('dateRange ④ 真机两档（390／1280 容器；视口恒 1440）', (
               why + r.name + ' 的 ' + h.kind + ' 只有 ' + h.box.w + '×' + h.box.h + '（小于 44×44）');
           }
           /* 独立相邻控件（翻月键之间、快捷档之间、起止两格之间）间距 ≥8px。
-             （日历格之间只留 4px：7 列 × 44px 是硬约束，格间的缝是矩阵缝——见 README。） */
+             （日历格之间 0 缝：缝并进格子——见 README §6。） */
           const navs = r.others.filter((h) => h.kind === 'nav');
           const presets = r.others.filter((h) => h.kind === 'preset');
           const inputs = r.others.filter((h) => h.kind === 'from' || h.kind === 'to');
@@ -591,7 +648,7 @@ describe('dateRange ④ 真机两档（390／1280 容器；视口恒 1440）', (
   it('点档／点天／翻月／改起止逐条真跑（含错误拦截与键盘 roving）', async (t) => {
     const p = await startControlsPage({
       css: skinCss() + '\n' + dateRangeCss(), runtime: buildDateRangeJs(),
-      body: fixture(), events: [DATE_RANGE_EVENT_CHANGE],
+      body: fixture(), events: [DATE_RANGE_EVENT_CHANGE], widths: WIDTHS,
     });
     if (p === null) return t.skip('本机无 Chrome／Chromium');
     try {
@@ -699,6 +756,85 @@ describe('dateRange ④ 真机两档（390／1280 容器；视口恒 1440）', (
       assert.ok(outline.w >= 2 && outline.style !== 'none', '日格焦点描边不可见：' + JSON.stringify(outline));
 
       assert.deepEqual(await p.errs(), [], '整场不得留下未捕获错误');
+    } finally { p.close(); }
+  });
+});
+
+/* ── ④b 有效命中区（口径＝`.scratch/ui-组件墙/新件/_核-命中盒.html` 第一节）────── */
+
+/** 页内量法：基准盒四周各扩 `R`px、步长 `STEP`px 取格点，逐点 `document.elementFromPoint` 后
+ *  `closest()` 归属回**同一控件**（`label[for]`／包裹 label／`-hit` 同属），宽高＝命中格点的包围盒（跨度 ＋ 步长）。
+ *  **不许拿元素盒顶替它**：34.8px 的元素盒只给得出 34–36px 的命中区（2026-09-25 只读核查席在 320 档实测），
+ *  44.8px 的元素盒给 44–46px —— 本件本次返修就是照这条口径发现并关闭缺陷的。 */
+const HIT_MEASURE = '(function(){'
+  + 'var STEP=2,R=26,hitSel=' + JSON.stringify('[' + DATE_RANGE_HIT_ATTR + ']') + ';'
+  + 'function ownerOf(e){return e.closest("label")||e.closest(hitSel)||e;}'
+  + 'window.__hit=function(el){var r=el.getBoundingClientRect(),xs=[],ys=[];'
+  + 'var x0=Math.round(r.left-R),x1=Math.round(r.right+R),y0=Math.round(r.top-R),y1=Math.round(r.bottom+R);'
+  + 'for(var x=x0;x<=x1;x+=STEP){for(var y=y0;y<=y1;y+=STEP){'
+  + 'var e=document.elementFromPoint(x,y);if(e&&ownerOf(e)===el){xs.push(x);ys.push(y);}}}'
+  + 'if(xs.length===0)return{n:0,w:0,h:0,bw:r.width,bh:r.height};'
+  + 'return{n:xs.length,w:Math.max.apply(null,xs)-Math.min.apply(null,xs)+STEP,'
+  + 'h:Math.max.apply(null,ys)-Math.min.apply(null,ys)+STEP,bw:r.width,bh:r.height};};'
+  /* `elementFromPoint` 只认**视口内**的点：量之前先把这一枚滚进视口（视口高 900，夹具五件叠着放，
+     不滚的话第二件起全在折线以下 ⇒ 量出 0×0 的假红）。滚完立刻量它自己，坐标才是对的。 */
+  + 'function inView(el){var r=el.getBoundingClientRect();'
+  + 'if(r.top>30&&r.bottom<window.innerHeight-30)return;'
+  + 'el.scrollIntoView({block:"center"});}'
+  + 'var out={roots:[],docSw:document.documentElement.scrollWidth,docCw:document.documentElement.clientWidth};'
+  + 'var roots=[].slice.call(document.querySelectorAll(' + JSON.stringify('.' + CLS) + '));'
+  + 'for(var i=0;i<roots.length;i++){var root=roots[i];'
+  + 'var dayEls=[].slice.call(root.querySelectorAll(' + JSON.stringify('[data-ilife-range-hit="day"]') + '));'
+  + 'var days=dayEls.map(function(d){inView(d);return window.__hit(d);});'
+  + 'var others=[].slice.call(root.querySelectorAll('
+  + JSON.stringify('[data-ilife-range-hit]:not([data-ilife-range-hit="day"])') + ')).map(function(o){'
+  + 'var el=o.tagName==="INPUT"?o.closest("label"):o;inView(el);'
+  + 'return{kind:o.getAttribute(' + JSON.stringify(DATE_RANGE_HIT_ATTR) + '),box:window.__hit(el),el:o};});'
+  + 'out.roots.push({name:root.getAttribute(' + JSON.stringify(DATE_RANGE_NAME_ATTR) + '),days:days,others:others});}'
+  + 'return out;})()';
+
+/** 一组命中读数里的最小宽高（"最差那一格"就是判据要看的读数）。 */
+const minHit = (hits) => hits.reduce((a, h) => ({ w: Math.min(a.w, h.w), h: Math.min(a.h, h.h) }), { w: 1e9, h: 1e9 });
+const boxText = (h) => h.bw.toFixed(1) + '×' + h.bh.toFixed(1);
+
+describe('dateRange ④b 有效命中区四档（320／390／620／1280 · prod 形夹具）', () => {
+  it('每格天与每枚可点控件的**有效命中区** ≥44×44（不是元素盒）', async (t) => {
+    const p = await startControlsPage({
+      css: skinCss() + '\n' + root.pageUiCss() + '\n' + dateRangeCss(),
+      runtime: buildDateRangeJs(), body: fixture(), events: [DATE_RANGE_EVENT_CHANGE], widths: WIDTHS,
+    });
+    if (p === null) return t.skip('本机无 Chrome／Chromium：有效命中区这条跑不了（元素盒那条见 ② 与 ④）');
+    try {
+      const readings = [];
+      for (const width of WIDTHS) {
+        const m = await p.at(width, HIT_MEASURE);
+        const why = width + 'px 容器：';
+        assert.ok(m.docSw <= m.docCw, why + '页面横向溢出 doc ' + m.docSw + ' > ' + m.docCw);
+        assert.equal(m.roots.length, 5, why + '夹具应有五件');
+        for (const r of m.roots) {
+          if (r.days.length === 0) continue;            // 未选那一件按设计不出日历（空态）
+          assert.equal(r.days.length, 42, why + r.name + ' 的日格不是 42 格');
+          for (const [i, h] of r.days.entries()) {
+            assert.ok(h.w >= 44 && h.h >= 44, why + r.name + ' 第 ' + String(i + 1) + ' 格的有效命中区只有 '
+              + h.w + '×' + h.h + '（元素盒 ' + boxText(h) + '，命中格点 ' + h.n + '）——有效命中区必须 ≥44×44');
+          }
+          for (const o of r.others) {
+            assert.ok(o.box.w >= 44 && o.box.h >= 44, why + r.name + ' 的 ' + o.kind + ' 有效命中区只有 '
+              + o.box.w + '×' + o.box.h + '（元素盒 ' + boxText(o.box) + '）');
+          }
+        }
+        const base = m.roots[0];
+        const days = minHit(base.days);
+        const kinds = new Map();
+        for (const o of base.others) {
+          const cur = kinds.get(o.kind);
+          kinds.set(o.kind, cur === undefined ? { w: o.box.w, h: o.box.h } : { w: Math.min(cur.w, o.box.w), h: Math.min(cur.h, o.box.h) });
+        }
+        readings.push(width + 'px: 日格元素盒 ' + boxText(base.days[0]) + ' → 有效命中最小 '
+          + days.w + '×' + days.h + '（42 格；最大格点 ' + Math.max(...base.days.map((h) => h.n)) + '）｜其余 '
+          + [...kinds.entries()].map(([k, v]) => k + ' ' + v.w + '×' + v.h).join('｜'));
+      }
+      console.log('  [有效命中区读数] ' + readings.join('\n  [有效命中区读数] '));
     } finally { p.close(); }
   });
 });

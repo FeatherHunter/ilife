@@ -3,18 +3,26 @@
  *  纪律（与本层其余件同一份）：只经 `skinVar()` 读皮肤／全部规则 scope 在 `.<prefix>page-ui` 之下／
  *  零 `:root`／零 `!important`／零自定义属性／宽度只由 `@container` 判（`@media` 只判设备能力）。
  *
- *  几何契约（判据钉住）：翻月键、快捷档、起止两格、**每一格天**都不小于 `DATE_RANGE_TOUCH_PX`（44）。
+ *  几何契约（判据钉住）：翻月键、快捷档、起止两格、**每一格天**都不小于 `DATE_RANGE_TOUCH_PX`（44）——
+ *  判据量的是**有效命中区**（基准盒 ±26px、2px 步长扫描、逐点归属回同一控件的包围盒），不是元素盒。
  *  两条**有意偏离原型**的间距口径，写在这里备查：
  *   · 独立的相邻控件（翻月键之间、快捷档之间、起止两格之间）一律留 `DATE_RANGE_GAP_PX`（8px）；
- *   · **日历格之间只留 4px**：7 列 × 44px 是硬约束（44×7 ＋ 6×8 ＋ 内距 ＝ 356px > 390 容器装得下的
- *     日历宽），格与格之间的缝是**矩阵缝**、不是两个独立动作之间的间隔——44 的命中盒优先。
+ *   · **日历格之间 0 缝**（**矩阵缝并进格子**）：7 列 × 44px ＝ 308px 已是硬约束，缝留在格子之间会把
+ *     每格的有效命中区再削一份（2026-09-25 实测：320 档每格只剩 34.8px、有效命中 34–36px）。
+ *     缝并进格子之后，窄档再由**满幅**兜底（见 `style-calendar.ts` 那条 `@container`）。
  *
  *  零阴影下立层次：日历块走软底（`surface-2`），区间内的格走纸面（`surface`），两端走**强调面**
  *  （软底 `accent-soft` ＋ 主色字 `accent-text` ＋ 主色描边 `accent`：那一格里有数字＝有文字），
  *  「今天」靠一圈发丝线（`border-color`，盒内 1px，不推版）。
  */
 import { skinVar } from '../skin/contract.js';
-import { DATE_RANGE_GAP_PX, DATE_RANGE_TOUCH_PX, dateRangeSlot, type DateRangeSlot } from './attrs.js';
+import {
+  DATE_RANGE_BOX_PAD_X_PX,
+  DATE_RANGE_GAP_PX,
+  DATE_RANGE_TOUCH_PX,
+  dateRangeSlot,
+  type DateRangeSlot,
+} from './attrs.js';
 import { dateRangeCalendarCss } from './style-calendar.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
@@ -45,7 +53,7 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     '  display: grid;',
     '  gap: 10px;',
     '  min-width: 0;',
-    '  padding: 12px 14px 14px;',
+    '  padding: 12px ' + String(DATE_RANGE_BOX_PAD_X_PX) + 'px 14px;',
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius') + ';',
     '  background: ' + skinVar('surface') + ';',

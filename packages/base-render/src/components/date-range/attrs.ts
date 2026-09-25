@@ -122,10 +122,19 @@ export type DateRangeAction = (typeof DATE_RANGE_ACTIONS)[number];
  *  **翻月不派发**（换的只是"看哪个月"，没有换窗口）；`preset` 是当前命中的快捷档 key，自定义时为 `custom`。 */
 export const DATE_RANGE_EVENT_CHANGE = 'ilife:range-change';
 
-/** 触控目标（px）：翻月键、快捷档、每一格天、起止两格都不小于它。 */
+/** 触控目标（px）：翻月键、快捷档、每一格天、起止两格都不小于它。
+ *  判据量的是**有效命中区**（±26px 格点扫描、逐点归属回同一控件的包围盒），不是元素盒。 */
 export const DATE_RANGE_TOUCH_PX = 44;
-/** 相邻触控目标的最小间距（px）。 */
+/** 相邻**独立控件**之间的最小间距（px）：翻月键之间、快捷档之间、起止两格之间。
+ *  日历格之间不走它——那一条是 `0`（**矩阵缝并进格子**）：7 列 × 44px 已是硬约束，缝留在格子之间
+ *  会把每格的有效命中区再削一份（320 档实测只剩 34–36px）。见 `style-calendar.ts`。 */
 export const DATE_RANGE_GAP_PX = 8;
+/** 块体左右内距（px）：**唯一出处**。块体的内距（`style.ts`）与窄档满幅的外扩量（`style-calendar.ts`）
+ *  取同一个值——写两份就会走散，走散后日历吃不满内距，窄档的格子又掉回 44 以下。 */
+export const DATE_RANGE_BOX_PAD_X_PX = 14;
+/** 窄档满幅（full-bleed）阈值（px，**本件自己的内宽**）：容器内宽到这一档以下时，日历一栏吃满块体的
+ *  左右内距、自己左右内距归零，好让 7 列 × 44px 在 320 档成立。 */
+export const DATE_RANGE_FULL_BLEED_MAX_PX = 340;
 
 /** 未选时的写法：**缺值写成 `—`**（与「今天」区分）。 */
 export const DATE_RANGE_MISSING = '—';
