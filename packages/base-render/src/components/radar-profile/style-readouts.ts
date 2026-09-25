@@ -4,7 +4,7 @@
  *  （`packages/base-render/AGENTS.md`，先例 `scatter-fit/style-forms.ts`、`cash-walerine` 的 `style-forms.ts`）。
  *  边界按「图」与「读数」切：
  *   · `style.ts`：卡壳（卡头／标题／时间窗／尾句）＋ 图（图框／网格／辐条／两条轮廓／顶点／轴名）＋ 两处容器查询；
- *   · 本件：**图外面的那些读数件**（刻度条／读数表／圆心平均分／图例／未达标点名／脚注）；
+ *   · 本件：**图外面的那些读数件**（刻度条／读数表／平均分／图例／未达标点名／脚注）；
  *   · `style-forms.ts`：两形态自己的形状（扇区／外沿弧／达标环／轴表的行与轨道）。
  *  **取值一个字节都不许改**——搬的只是「住哪个文件」，顺序即层叠顺序（各段选择器互不相交，顺序不影响结果）。
  *
@@ -117,14 +117,16 @@ export function radarProfileReadoutsCss(input?: { readonly prefix?: string }): s
     '  color: ' + skinVar('ink') + ';',
     '  font-weight: 700;',
     '}',
-    /* 圆心那块：平均分（是平均，不是总分——几根轴加起来没有意义）。 */
+    /* 平均分那一块（是平均，不是总分——几根轴加起来没有意义）：排在图下面一行居中。
+       **不压在图心上**：图心是 0 分那一段刻度，小分数扇区的外沿弧就落在那里（外沿弧是"这一根有多长"
+       的唯一图形证据），一个实底的盒子压上去就读不出来了——先例 `cash-waterline` 的读数也不进图框。 */
     s('hub') + ' {',
-    '  position: absolute;',
-    '  left: 50%;',
-    '  top: 50%;',
-    '  transform: translate(-50%, -50%);',
+    '  justify-self: center;',
     '  display: grid;',
     '  justify-items: center;',
+    '  width: max-content;',
+    '  max-width: 100%;',
+    '  min-width: 0;',
     '  padding: 3px 9px;',
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  border: 1px solid ' + skinVar('line') + ';',

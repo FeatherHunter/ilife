@@ -44,11 +44,21 @@ import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { SKINS, skinCss, skinClass } from '../dist/components/skin/index.js';
 import { SKIN_NAMES } from '../dist/components/skin/contract.js';
+import { styleSources } from './_style-sources.mjs';
+import { auditHtml } from './separator-probe.mjs';
 import { startShapesPage } from './shapes-probe.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
 const DIR = join(PKG, 'src', 'components', 'radar-profile');
+
+/** 本件的样式源码：**经 `test/_style-sources.mjs` 取该件目录下全部 `style*.ts`**（不手抄名单——
+ *  漏一份，那半段样式就不受任何源级判据管；先例 `drag-sort`／`portion-gauge`）。 */
+const STYLE_FILES = styleSources('radar-profile').map((f) => f.file);
+
+/** 印出来的粒度：`plainNum()` 印的就是 `Number(v.toFixed(2))`（两位小数，整数不带小数点）。
+ *  判定、差值、读数三者必须**同源**，判据拿它算期望值。 */
+const printed = (v) => Number(v.toFixed(2));
 
 /** 四套皮肤的取值表（期望色**从表里读**，判据里不抄色字面量）。 */
 const SKIN_VALUES = Object.fromEntries(SKIN_NAMES.map((s) => [s, SKINS[s].values]));
@@ -161,6 +171,61 @@ const dotsOf = (html, extra = '') => [...html.matchAll(
 const arcRadiiOf = (html, slot) => [...html.matchAll(
   new RegExp('class="' + radarProfileSlot(slot) + '[^"]*" d="[^"]*A([\\d.]+),([\\d.]+) ', 'g'))]
   .map((m) => [Number(m[1]), Number(m[2])]);
+
+/** 逐片扇区的达标标记（`is-ok`／`is-warn`，按标记顺序）。 */
+const okFlagsOf = (html) => [...html.matchAll(
+  new RegExp('class="' + radarProfileSlot('wedge') + ' (is-ok|is-warn)"', 'g'))].map((m) => m[1] === 'is-ok');
+
+/** 未达标点名清单逐行的「轴名 ｜ 得分 ｜ 差」三列——三列必须**同源**（同一行的轴名与分数对得上）。 */
+function gapRows(html) {
+  const names = slotTexts(html, 'gap-name');
+  const nums = slotTexts(html, 'gap-num');
+  const diffs = slotTexts(html, 'gap-diff');
+  assert.equal(nums.length, names.length, '点名的行数与得分格数必须一一对应：' + JSON.stringify(names));
+  assert.equal(diffs.length, names.length, '点名的行数与差格数必须一一对应：' + JSON.stringify(names));
+  return names.map((name, i) => [name, nums[i], diffs[i]]);
+}
+
+/** 点名清单的期望值：**从入参算**（印出来的读数与印出来的达标线之差，先给差得最多的那根）。
+ *  `printed()` 就是组件印数的粒度——判据不另立一套四舍五入口径。 */
+function gapExpect(axes, goal) {
+  return axes
+    .filter((a) => a.score !== null && printed(goal) > printed(a.score))
+    .map((a) => ({ label: a.label, score: a.score, diff: printed(printed(goal) - printed(a.score)) }))
+    .sort((a, b) => b.diff - a.diff)
+    .map((g) => [g.label, String(printed(g.score)) + ' 分', '差 ' + String(g.diff) + ' 分']);
+}
+
+/** 无障碍名（`aria-label` 的原文）。 */
+const ariaOf = (html) => (/aria-label="([^"]*)"/.exec(html) || ['', ''])[1];
+
+/** 「差」那一格该写什么：**只拿同一行印出来的两个数**算（`持平`／`▲ +n`／`▼ −n`；缺测写 `—`）。
+ *  期望值从"读者看到的那两个数"出发——这样一断就知道差那一格有没有拿原始浮点另算一套。 */
+function expectDeltaText(nowText, pastText) {
+  if (nowText === RADAR_PROFILE_MISSING || pastText === RADAR_PROFILE_MISSING) return RADAR_PROFILE_MISSING;
+  const d = printed(printed(Number(nowText)) - printed(Number(pastText)));
+  if (d === 0) return '持平';
+  return (d > 0 ? '▲ +' : '▼ −') + String(Math.abs(d));
+}
+
+/** 某个槽位元素在标记里的字符范围（`{ start, end }`）：按标签配对找它的开闭边界。
+ *  用来断「某某不在某某里面」这类**结构**事实（本件的槽位类名都是唯一的，取第一处即可）。 */
+function elementRange(html, slot) {
+  const open = new RegExp('<([a-z]+)\\s+class="' + radarProfileSlot(slot) + '[^"]*"[^>]*>').exec(html);
+  if (open === null) return null;
+  const tag = open[1];
+  const start = open.index;
+  const re = new RegExp('<' + tag + '\\b[^>]*>|</' + tag + '\\s*>', 'g');
+  re.lastIndex = start;
+  let depth = 0;
+  for (let m = re.exec(html); m !== null; m = re.exec(html)) {
+    if (m[0].startsWith('</')) {
+      depth -= 1;
+      if (depth === 0) return { start, end: m.index + m[0].length };
+    } else if (!m[0].endsWith('/>')) depth += 1;
+  }
+  return null;
+}
 
 /* ── 样例 ─────────────────────────────────────────────────────────── */
 
@@ -326,6 +391,31 @@ describe('radar-profile ① 渲染契约 · 形态 polygon（多边形雷达）'
     assert.deepEqual(slotTexts(renderRadarProfile(POLYGON), 'scale-item').map((t) => t.replace(/[\d.]+/, '#')),
       ['里圈 # 分', '中圈 # 分', '外圈 # 分']);
   });
+
+  it('**差那一格与印出来的两个数自洽**：两格印同一个数时差写「持平」（不许写「▲ +0.01」）', () => {
+    const axes = [
+      { label: '甲', score: 80.004, past: 79.996 },
+      { label: '乙', score: 79.996, past: 80.004 },
+      { label: '丙', score: 33.335, past: 33.33 },
+      { label: '丁', score: 40, past: null },
+    ];
+    const h = renderRadarProfile({ title: 'x', axes });
+    const rows = [...h.matchAll(new RegExp('<div class="' + radarProfileSlot('trow') + '">([\\s\\S]*?)</div>', 'g'))]
+      .map((m) => m[1]);
+    assert.equal(rows.length, axes.length, '表体只有每根轴那一行（表头是 `is-head`，不算）');
+    const deltas = slotTexts(h, 'tdelta');
+    const pairs = rows.map((row, i) => {
+      const nums = [...row.matchAll(new RegExp('<span class="' + radarProfileSlot('tnum') + '">([^<]*)</span>', 'g'))]
+        .map((m) => m[1]);
+      assert.equal(nums.length, 2, '一行两格数（本期／上期）：' + row);
+      assert.equal(deltas[i], expectDeltaText(nums[0], nums[1]),
+        '差那一格与同一行印出来的两个数分家：' + JSON.stringify([nums, deltas[i]]));
+      return nums;
+    });
+    /* 前两根：两格都印「80」⇒ 差必须写「持平」。 */
+    assert.deepEqual(pairs.slice(0, 2), [['80', '80'], ['80', '80']]);
+    assert.deepEqual(deltas.slice(0, 2), ['持平', '持平']);
+  });
 });
 
 /* ── ① 渲染契约 · 形态 `wedge` ──────────────────────────────────────── */
@@ -383,6 +473,84 @@ describe('radar-profile ① 渲染契约 · 形态 wedge（极区扇图）', () 
     assert.deepEqual(slotTexts(html, 'gap-name'), ['训练频次', '体脂', '体重达标', '肌肉量', '饮食打卡']);
     assert.deepEqual(slotTexts(html, 'gap-diff'), ['差 25 分', '差 22 分', '差 18 分', '差 6 分', '差 2 分']);
     assert.deepEqual(slotTexts(html, 'gap-num'), ['55 分', '58 分', '62 分', '74 分', '78 分']);
+  });
+
+  it('**缺测轴下的点名清单「轴名 ↔ 分数」同源**（缺一根／缺两根／首尾缺各一遍，并与 aria-label 对账）', () => {
+    const cases = [
+      { goal: 80, axes: [{ label: '甲', score: null }, { label: '乙', score: 50 }, { label: '丙', score: 10 }] },
+      { goal: 80, axes: [{ label: '甲', score: null }, { label: '乙', score: null }, { label: '丙', score: 10 }] },
+      { goal: 80, axes: [{ label: '甲', score: null }, { label: '乙', score: 30 }, { label: '丙', score: 55 }, { label: '丁', score: null }] },
+      { goal: 60, axes: [{ label: '甲', score: 10 }, { label: '乙', score: null }, { label: '丙', score: 20 }, { label: '丁', score: 90 }] },
+      { goal: 80, axes: [{ label: '甲', score: null }, { label: '乙', score: 81 }, { label: '丙', score: 20 }, { label: '丁', score: null }] },
+    ];
+    for (const one of cases) {
+      const h = renderRadarProfile({ title: 'x', form: 'wedge', goal: one.goal, axes: one.axes });
+      const rows = gapRows(h);
+      assert.deepEqual(rows, gapExpect(one.axes, one.goal),
+        '点名清单的轴名必须取自**全部轴**里那一根（拿"有读数扇区的序号"去索引全集，缺一根就整体错位）：'
+        + JSON.stringify(one.axes));
+      assert.ok(rows.length > 0, '这几份样例都该有未达标的那几根：' + JSON.stringify(one.axes));
+      /* 同页的无障碍名说同一份数：可见清单与它不许互相矛盾。 */
+      const aria = ariaOf(h);
+      for (const [name, num] of rows.map((r) => [r[0], r[1]])) {
+        assert.ok(aria.includes(name + ' 本期 ' + num.replace(' 分', '') + ' 分'),
+          '无障碍名里没有「' + name + ' 本期 ' + num + '」这一句：' + aria);
+      }
+    }
+  });
+
+  it('**判定与印出来的数是同一个数**：印「80」的那一片就算达标，差值不低于可印粒度', () => {
+    /* 79.999 印出来是「80」⇒ 与印着「80」的达标线同高，必须是达标那一片（不能判未达标＋「差 0 分」）。 */
+    const h = renderRadarProfile({
+      title: 'x', form: 'wedge', goal: 80,
+      axes: [{ label: '甲', score: 79.999 }, { label: '乙', score: 10 }, { label: '丙', score: 20 }],
+    });
+    assert.equal(slotTexts(h, 'goal-num')[0], '80', '达标线印出来的数是 80');
+    assert.deepEqual(okFlagsOf(h), [true, false, false], '读数印「80」却被判未达标');
+    /* 达标线自己印出来是「80」（80.005）时，80.004（也印「80」）同样达标。 */
+    const same = renderRadarProfile({
+      title: 'x', form: 'wedge', goal: 80.005,
+      axes: [{ label: '甲', score: 80.004 }, { label: '乙', score: 10 }, { label: '丙', score: 20 }],
+    });
+    assert.equal(slotTexts(same, 'goal-num')[0], '80');
+    assert.deepEqual(okFlagsOf(same), [true, false, false], '两个数印出来都是「80」却判未达标');
+    /* 一串浮点压力样例：达标标记与点名差值逐例从入参算。 */
+    const battery = [
+      { goal: 80, scores: [79.999, 80.004, 79.995, 80.005] },
+      { goal: 33.333, scores: [33.33, 33.335, 33.34, 0.005] },
+      { goal: 66.665, scores: [66.66, 66.67, 66.669, 99.999] },
+    ];
+    for (const one of battery) {
+      const axes = one.scores.map((score, i) => ({ label: '轴' + String(i), score }));
+      const got = renderRadarProfile({ title: 'x', form: 'wedge', goal: one.goal, axes });
+      assert.deepEqual(okFlagsOf(got), axes.map((a) => printed(a.score) >= printed(one.goal)),
+        '达标判定与印出来的数分家：goal=' + String(one.goal) + ' 读数=' + JSON.stringify(one.scores));
+      assert.deepEqual(gapRows(got), gapExpect(axes, one.goal),
+        '点名差值不是按印出来的粒度算的：goal=' + String(one.goal) + ' 读数=' + JSON.stringify(one.scores));
+    }
+    /* 「差 0 分」这类自相矛盾的读数一个都不许出（印出来的两个数一样，就不许说"差"）。 */
+    for (const out of [h, same]) assert.equal(out.includes('差 0 分'), false, '出现「差 0 分」：印出来的数与判定分家');
+  });
+
+  it('**扇区角度**：每片的中心角＝那根轴的角度、张角＝360÷根数（三／五／六／八根各一遍）', () => {
+    for (const axes of [AXES_3, AXES_5, AXES, AXES_8]) {
+      const h = renderRadarProfile({ title: 'x', form: 'wedge', axes: axes.map((a) => ({ label: a.label, score: 100 })) });
+      const arcs = [...h.matchAll(new RegExp('class="' + radarProfileSlot('warc')
+        + '[^"]*" d="M(-?[\\d.]+),(-?[\\d.]+) A([\\d.]+),([\\d.]+) 0 0 1 (-?[\\d.]+),(-?[\\d.]+)"', 'g'))];
+      assert.equal(arcs.length, axes.length, '外沿弧的枚数');
+      const half = 180 / axes.length;
+      arcs.forEach((m, i) => {
+        const a1 = (Math.atan2(Number(m[2]) - 100, Number(m[1]) - 100) * 180) / Math.PI;
+        const a2 = (Math.atan2(Number(m[6]) - 100, Number(m[5]) - 100) * 180) / Math.PI;
+        const want = -90 + (i * 360) / axes.length;
+        /* 相对那根轴的角度（归一化到 ±180）：两条边应当各在 −半宽 与 ＋半宽。 */
+        const rel = (deg) => ((deg - want + 540) % 360) - 180;
+        assert.ok(Math.abs(rel(a1) + half) < 0.2 && Math.abs(rel(a2) - half) < 0.2,
+          String(axes.length) + ' 根轴第 ' + String(i + 1) + ' 片的中心角不是那根轴的角度：'
+          + JSON.stringify([rel(a1).toFixed(2), rel(a2).toFixed(2), (-half).toFixed(2), half.toFixed(2)]));
+        assert.ok(Math.abs((rel(a2) - rel(a1)) - 360 / axes.length) < 0.2, '张角不是 360÷根数');
+      });
+    }
   });
 
   it('全都达标就不出点名清单（不是出一张空表）；达标线可以给别的数', () => {
@@ -452,6 +620,31 @@ describe('radar-profile ① 渲染契约 · 形态 rail（展平成轴表）', (
     assert.equal(slotTexts(h, 'verdict').filter((t) => t === '未给基准带').length, 2);
     assert.equal(slotCount(h, 'rband'), 1);
     assert.match(h, /-tail">在带内 0 根轴，出带 1 根轴，未给带 2 根轴</);
+  });
+
+  it('**判定与印出来的数是同一个数**：印「80」的那一行就算在带内，不出「低于带 0 分」', () => {
+    const h = renderRadarProfile({
+      title: 'x', form: 'rail',
+      axes: [
+        /* 读数印「80」而带的下界也是「80」⇒ 在带内（不是「▼ 低于带 0 分」）。 */
+        { label: '甲', score: 79.999, band: { low: 80, high: 100 } },
+        { label: '乙', score: 39.999, band: { low: 40, high: 90 } },
+        { label: '丙', score: 90.001, band: { low: 10, high: 90 } },
+        { label: '丁', score: 0.004, band: { low: 0.004, high: 10 } },
+      ],
+    });
+    assert.deepEqual(slotTexts(h, 'rval'), ['80', '40', '90', '0'], '读数按可印粒度印');
+    assert.deepEqual(slotTexts(h, 'verdict'), ['✓ 在带内', '✓ 在带内', '✓ 在带内', '✓ 在带内']);
+    assert.equal(h.includes('低于带 0 分'), false, '出现「低于带 0 分」：印出来的数与判定分家');
+    assert.equal(h.includes('高于带 0 分'), false, '出现「高于带 0 分」：印出来的数与判定分家');
+    assert.match(h, /-tail">在带内 4 根轴，出带 0 根轴</);
+    /* 差得再小、只要**印得出来**就照样点名（差值不许被四舍五入抹成 0）。 */
+    const off = renderRadarProfile({
+      title: 'x', form: 'rail',
+      axes: [{ label: '甲', score: 39.994, band: { low: 40, high: 90 } }, { label: '乙', score: 40.006, band: { low: 40, high: 90 } },
+        { label: '丙', score: 90.006, band: { low: 10, high: 90 } }],
+    });
+    assert.deepEqual(slotTexts(off, 'verdict'), ['▼ 低于带 0.01 分', '✓ 在带内', '▲ 高于带 0.01 分']);
   });
 });
 
@@ -551,6 +744,44 @@ describe('radar-profile ① 渲染契约 · 公共面与非法入参', () => {
     assert.ok(renderRadarProfile({ ...ok, axes: [{ label: '甲', score: 0 }, { label: '乙', score: 100 }, { label: '丙', score: 0 }] }).length > 0);
   });
 
+  it('**入参表以外的键一律拒**（顶层／一根轴／band 三层各一条：写错的键不许被静默吞掉）', () => {
+    const ok = { title: 'x', axes: AXES_3 };
+    assert.equal(throwsBlocks(() => renderRadarProfile({ ...ok, foo: 1 })), true, '顶层写错的键');
+    assert.equal(throwsBlocks(() => renderRadarProfile({ ...ok, axes: [{ label: '甲', score: 1, color: 'red' }, ...AXES_3] })), true,
+      '轴上写错的键');
+    assert.equal(throwsBlocks(() => renderRadarProfile({
+      title: 'x', form: 'rail', axes: [{ label: '甲', score: 1, band: { low: 10, high: 90, mid: 50 } }, ...AXES_3],
+    })), true, 'band 里写错的键');
+    /* 入参表**里**的键照收（别把闭集收窄成"只认必填的那几个"）。 */
+    assert.ok(renderRadarProfile({
+      title: 'x', form: 'rail', stamp: '09-24', note: '口径', extraClass: 'my-class',
+      axes: [{ label: '甲', score: 1, note: '说明', band: { low: 10, high: 90 } }, ...AXES_3],
+    }).length > 0, '入参表里的可选键照收');
+    assert.ok(renderRadarProfile({ ...POLYGON }).length > 0, 'polygon 的 pastStamp 照收');
+  });
+
+  it('本件**生成**的字过仓库的分隔符门：三形态（默认口径句 ＋ 样例）节点级 R1–R3 零命中', () => {
+    /* 调用方自己传的文本（标题／时间窗／说明）不归本件管 ⇒ 这几份样例的调用方文本一律用干净的，
+       这样探针量到的就是**本件生成的那几句**（默认口径句／尾句／判定／点名／无障碍名）。 */
+    const samples = [
+      ['polygon 默认口径句', { title: '画像', axes: AXES_3 }],
+      ['polygon 样例（含上期）', { ...POLYGON, title: '体测画像' }],
+      ['wedge 默认口径句', { title: '画像', form: 'wedge', axes: AXES_3 }],
+      ['wedge 样例', { ...WEDGE, title: '本周作息画像' }],
+      ['rail 默认口径句', { title: '画像', form: 'rail', axes: AXES_3 }],
+      ['rail 样例', { ...RAIL, title: '体测画像（展平）' }],
+    ];
+    for (const [what, input] of samples) {
+      const r = auditHtml(renderRadarProfile(input));
+      assert.deepEqual([r.node.R1, r.node.R2, r.node.R3], [0, 0, 0],
+        what + '：`·`／`；`／并列连排（≥3 段）一个都不许出现在可见文本里（`test/separator-probe.mjs` 零豁免）'
+        + '——命中的是：' + JSON.stringify(r.node.hits));
+    }
+    /* 探针自证：把 `·` 塞进**调用方**给的标题里，这一门必须照样判红（否则上面那三条是空跑）。 */
+    const dirty = auditHtml(renderRadarProfile({ ...POLYGON, title: '体测画像 · 展平' }));
+    assert.ok(dirty.node.hits.some((h) => h.tags.includes('R1')), '分隔符探针没抓到塞进标题的 `·`（这一门空跑了）');
+  });
+
   it('缺槽就不出那一槽：不给 stamp／pastStamp／note 都各自不出；给了 note 就整句替换', () => {
     const bare = renderRadarProfile({ title: 'x', axes: AXES_3 });
     assert.equal(bare.includes(radarProfileSlot('stamp')), false);
@@ -584,7 +815,6 @@ describe('radar-profile ① 渲染契约 · 公共面与非法入参', () => {
 describe('radar-profile ② 样式与零 DOM 纪律', () => {
   const css = radarProfileCss();
   const clean = stripComments(css);
-  const STYLE_FILES = ['style.ts', 'style-forms.ts'];
 
   it('样式段非空，每条选择器都 scope 在 `.ilife-page-ui` 之下且**只出现一次**', () => {
     assert.ok(clean.trim() !== '', '样式段必须非空');
@@ -612,20 +842,27 @@ describe('radar-profile ② 样式与零 DOM 纪律', () => {
     assert.deepEqual(clean.match(/--ilife-[a-z0-9-]+\s*:/g) || [], [], '不得定义新 token');
   });
 
-  it('**两处容器阈值只有一处来源**：两份样式源码里不出现那两个数字的字面量', () => {
+  it('**两处容器阈值只有一处来源**：任何一份样式源码里都不出现那两个数字的字面量', () => {
+    assert.ok(STYLE_FILES.length >= 3, '样式源要逐份扫（`style.ts`／`style-readouts.ts`／`style-forms.ts`）：'
+      + JSON.stringify(STYLE_FILES));
     for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       for (const [name, value] of [['RADAR_PROFILE_NARROW_PX', RADAR_PROFILE_NARROW_PX], ['RADAR_PROFILE_WIDE_PX', RADAR_PROFILE_WIDE_PX]]) {
         assert.equal(new RegExp('\\b' + String(value) + '\\b').test(src), false,
           file + ' 里写了阈值字面量 ' + String(value) + '（写两处必然走散：改常量时查询不跟）');
-        assert.ok(src.includes(name) || file === 'style-forms.ts' && name === 'RADAR_PROFILE_WIDE_PX',
-          file + ' 应当读 ' + name + ' 这个常量');
+      }
+      /* 出了 `@container` 的那一份必须**读常量**（数字只许从 `attrs.ts` 来）。 */
+      if (src.includes('@container')) {
+        assert.ok(src.includes('RADAR_PROFILE_NARROW_PX') || src.includes('RADAR_PROFILE_WIDE_PX'),
+          file + ' 出了 `@container` 却不读阈值常量（阈值只有一个出处：`attrs.ts`）');
       }
     }
     /* 窄档查询两份样式文件各一条、宽档一条——都取同一个常量。 */
     assert.equal(countText(clean, '@container (max-width: ' + String(RADAR_PROFILE_NARROW_PX) + 'px)'), 2);
     assert.equal(countText(clean, '@container (min-width: ' + String(RADAR_PROFILE_WIDE_PX) + 'px)'), 1);
-    for (const file of STYLE_FILES) assert.ok(readFileSync(join(DIR, file), 'utf8').includes('RADAR_PROFILE_NARROW_PX'), file);
+    for (const file of ['style.ts', 'style-forms.ts']) {
+      assert.ok(readFileSync(join(DIR, file), 'utf8').includes('RADAR_PROFILE_NARROW_PX'), file);
+    }
     assert.ok(readFileSync(join(DIR, 'attrs.ts'), 'utf8').includes('RADAR_PROFILE_NARROW_PX'));
   });
 
@@ -716,13 +953,62 @@ describe('radar-profile ② 样式与零 DOM 纪律', () => {
     }
   });
 
-  it('两份样式源码里不留没人用的槽位助手（声明了 `c()` 就得真用到）', () => {
+  it('样式源码里不留没人用的槽位助手（声明了 `c()` 就得真用到）', () => {
     for (const file of STYLE_FILES) {
       const src = stripComments(readFileSync(join(DIR, file), 'utf8'));
       if (!src.includes('const c = (slot: RadarProfileSlot)')) continue;
       const uses = (src.match(/(?:^|[^\w.])c\(/g) || []).length;
       assert.ok(uses > 0, file + ' 声明了裸槽助手 c() 却一次没用（死代码，删掉它）');
     }
+  });
+
+  it('`:focus-visible` 的地板**真在产出里**（本件不带可点元素，但调用方把某一行包成入口时焦点要看得见）', () => {
+    assert.ok(clean.includes(':focus-visible'), '注释与 README 都写着"焦点地板照留"，产出 CSS 里却一条都没有');
+    assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*2px solid/,
+      '焦点环要看得见（≥2px 描边）：`focus-visible` 只留给真实键盘用户，不是主通路');
+  });
+
+  it('平均分那一块**不压在图心上**（图心＝0 分那一段刻度，盒子压上去就读不出小分数那一根有多长）', () => {
+    const hub = ruleOf(clean, '.' + radarProfileSlot('hub'));
+    assert.ok(hub !== '', '找不到 .hub 那条规则');
+    assert.equal(/position:\s*absolute/.test(hub), false, '平均分那块被钉回了绝对定位（那就会压在图心上）：' + hub);
+    assert.equal(/translate\(-50%,\s*-50%\)/.test(hub), false, '平均分那块又被摆回图心了：' + hub);
+    /* 标记再对一遍：那块必须排在 `.plot`（图框）之外。 */
+    const h = renderRadarProfile({ title: 'x', form: 'wedge', axes: AXES_3 });
+    const plot = elementRange(h, 'plot');
+    assert.ok(plot !== null, '找不到图框');
+    const at = h.indexOf(radarProfileSlot('hub'));
+    assert.ok(at > plot.end, '平均分那块在图框里（' + String(at) + ' ≤ ' + String(plot.end)
+      + '）：图心正是小分数扇区的外沿弧所在');
+  });
+
+  it('README 与实现对账：样式源**逐份点名**，README 写了 `:focus-visible` 就得真有一条', () => {
+    const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
+    assert.ok(STYLE_FILES.length >= 3, '本件样式源至少三份：' + JSON.stringify(STYLE_FILES));
+    for (const file of STYLE_FILES) {
+      assert.ok(readme.includes(file), 'README 漏了样式源 ' + file + '（写了别的件名、或者只写"两份"都对不上）');
+    }
+    assert.ok(!readme.includes('两份源码件'), 'README 还写着"两份源码件"（样式源是三份）');
+    assert.equal(readme.includes(':focus-visible'), clean.includes(':focus-visible'),
+      'README 与产出 CSS 对 `:focus-visible` 的说法必须一致');
+  });
+
+  it('本件源码不留没人用的导出（死代码：导出后全仓无人取，就该删）', () => {
+    const names = readdirSync(DIR).filter((n) => n.endsWith('.ts'));
+    const sources = new Map(names.map((n) => [n, readFileSync(join(DIR, n), 'utf8')]));
+    const testSrc = readFileSync(join(HERE, 'radar-profile.test.mjs'), 'utf8');
+    const all = [...sources.values()].join('\n') + '\n' + testSrc;
+    const dead = [];
+    for (const [file, src] of sources) {
+      if (file === 'index.ts') continue; /* 出口面：它就是给外面取的。 */
+      for (const m of src.matchAll(/^export (?:async )?(?:function|const) ([A-Za-z_$][\w$]*)/gm)) {
+        const symbol = m[1];
+        const elsewhere = countText(all, symbol) - countText(src, symbol);
+        const inFile = countText(src, symbol) > 1;
+        if (elsewhere === 0 && !inFile) dead.push(file + ' 的 ' + symbol);
+      }
+    }
+    assert.deepEqual(dead, [], '这些导出没人取（声明之外一处都不出现）：' + dead.join('、'));
   });
 });
 
@@ -761,22 +1047,39 @@ describe('radar-profile ③ 加法式（不启用即逐字节不变）', () => {
 /** 四档**容器**宽度：320 是触屏最窄那一档（手机分屏／小屏），也是内容撑宽最容易翻车的地方。 */
 const WIDTHS = [320, 390, 620, 1280];
 
-/** 压力样例：长标题与长时间窗（内容撑宽）／六字轴名全开（轴名顶宽）／八根轴（最密）／三根轴（最疏）。 */
+/** 压力样例：长标题与长时间窗（内容撑宽）／六字轴名全开（轴名顶宽）／八根轴（最密）／三根轴（最疏）／
+ *  小分数扇区（沿半径最短的那几片——圆心那一带的图形证据最容易被别的盒子压掉）。 */
 const LONG = '体测画像（含 3 天补录、2 天跨月结转、1 天跨时区，口径见页脚）：补录那三天按当日最后一笔算';
 const SIX = '膳食纤维摄入';
-const caseOf = (name, html) => ({ name, html });
+const caseOf = (name, html, form) => ({ name, html, form });
 
 function cases() {
   const sixLabels = ['甲甲甲甲甲甲', '乙乙乙乙乙乙', '丙丙丙丙丙丙', '丁丁丁丁丁丁', '戊戊戊戊戊戊', '己己己己己己', '庚庚庚庚庚庚', '辛辛辛辛辛辛'];
   return [
-    caseOf('polygon', renderRadarProfile(POLYGON)),
-    caseOf('wedge', renderRadarProfile(WEDGE)),
-    caseOf('rail', renderRadarProfile(RAIL)),
-    caseOf('longtitle', renderRadarProfile({ ...POLYGON, title: LONG, stamp: LONG })),
-    caseOf('sixchars', renderRadarProfile({ title: '六字轴名', axes: sixLabels.map((label) => ({ label, score: 100, past: 100 })) })),
-    caseOf('three', renderRadarProfile({ title: '三根轴', axes: AXES_3 })),
-    caseOf('missing', renderRadarProfile({ ...RAIL, title: '缺测', axes: RAIL.axes.map((a, i) => (i === 0 ? { ...a, score: null } : a)) })),
-    caseOf('sixchars-rail', renderRadarProfile({ title: '六字轴名', form: 'rail', axes: sixLabels.map((label) => ({ label, score: 100, band: { low: 0, high: 100 } })) })),
+    caseOf('polygon', renderRadarProfile(POLYGON), 'polygon'),
+    caseOf('wedge', renderRadarProfile(WEDGE), 'wedge'),
+    caseOf('rail', renderRadarProfile(RAIL), 'rail'),
+    caseOf('longtitle', renderRadarProfile({ ...POLYGON, title: LONG, stamp: LONG }), 'polygon'),
+    caseOf('sixchars', renderRadarProfile({ title: '六字轴名', axes: sixLabels.map((label) => ({ label, score: 100, past: 100 })) }), 'polygon'),
+    caseOf('three', renderRadarProfile({ title: '三根轴', axes: AXES_3 }), 'polygon'),
+    caseOf('missing', renderRadarProfile({ ...RAIL, title: '缺测', axes: RAIL.axes.map((a, i) => (i === 0 ? { ...a, score: null } : a)) }), 'rail'),
+    caseOf('sixchars-rail', renderRadarProfile({ title: '六字轴名', form: 'rail', axes: sixLabels.map((label) => ({ label, score: 100, band: { low: 0, high: 100 } })) }), 'rail'),
+    /* 两端都到边：竖线的 `clamp()` 两头都得真的生效（0% 夹左、100% 夹右）。 */
+    caseOf('rail-ends', renderRadarProfile({
+      title: '两端', form: 'rail',
+      axes: [{ label: '甲', score: 0, band: { low: 10, high: 90 } }, { label: '乙', score: 100, band: { low: 10, high: 90 } },
+        { label: '丙', score: 100 }],
+    }), 'rail'),
+    /* 小分数扇区：4 轴 [5,25,50,100] 与 6 轴 [3,8,15,22,40,90]——沿半径最短的那几片。 */
+    caseOf('wedge-tiny', renderRadarProfile({
+      title: '小分数扇区', form: 'wedge', goal: 80,
+      axes: [{ label: '甲', score: 5 }, { label: '乙', score: 25 }, { label: '丙', score: 50 }, { label: '丁', score: 100 }],
+    }), 'wedge'),
+    caseOf('wedge-small', renderRadarProfile({
+      title: '小分数扇区', form: 'wedge', goal: 80,
+      axes: [{ label: '甲', score: 3 }, { label: '乙', score: 8 }, { label: '丙', score: 15 }, { label: '丁', score: 22 },
+        { label: '戊', score: 40 }, { label: '己', score: 90 }],
+    }), 'wedge'),
   ];
 }
 
@@ -791,6 +1094,9 @@ function assertStaticGeometry(css, html) {
     assert.ok(/min-width:\s*0/.test(ruleOf(clean, '.' + radarProfileSlot(slot))), slot + ' 少了 min-width: 0');
   }
   assert.ok(/width: max-content/.test(ruleOf(clean, '.' + radarProfileSlot('axlabel'))), '轴名要 max-content');
+  /* 平均分那块不许压在图心上（静态那一条；真机那一条在 `ARC_TOP_FN` 那一组）。 */
+  const hub = ruleOf(clean, '.' + radarProfileSlot('hub'));
+  assert.ok(hub !== '' && !/position:\s*absolute/.test(hub), '平均分那块不许绝对定位在图心上（图心是小分数扇区的弧所在）');
 }
 
 /** 页内一次性量好：横向溢出的最坏值 ＋ 轴名与读数的截断／折行 ＋ 顶点是否全在图框里。 */
@@ -839,6 +1145,56 @@ const MEASURE_FN = `(function (scopeSel, slots, plotCls, dotCls) {
 const PLOT_W_FN = '(function (sel) { var n = document.querySelector(sel);'
   + 'if (n === null) return -1; return Math.round(n.getBoundingClientRect().width); }())';
 
+/** 页内：每根 `.warc`（外沿弧）的**中点**上头压着谁。
+ *  中点＝拿 `getPointAtLength(全长 ÷ 2)` 取的那一点（就是"这一根的半径"落在图上的那一点）。
+ *  允许压在上面的只有同一根扇区的顶点（`.dot` 就画在这点上）；别的元素压上来就是**盖住**。
+ *  `elementFromPoint` 只认视口内的点 ⇒ 先把它滚进视口。 */
+const ARC_TOP_FN = `(function (rootSel, warcCls, dotCls) {
+  var root = document.querySelector(rootSel);
+  if (root === null) return { n: 0, blocked: [], missing: 1 };
+  if (root.scrollIntoView) root.scrollIntoView({ block: 'center' });
+  var arcs = [].slice.call(root.querySelectorAll('.' + warcCls));
+  var blocked = [];
+  for (var i = 0; i < arcs.length; i += 1) {
+    var path = arcs[i];
+    var pt = path.getPointAtLength(path.getTotalLength() / 2);
+    var m = path.getScreenCTM();
+    if (m === null) { blocked.push({ i: i, top: 'no-ctm' }); continue; }
+    var x = m.a * pt.x + m.c * pt.y + m.e;
+    var y = m.b * pt.x + m.d * pt.y + m.f;
+    var top = document.elementFromPoint(x, y);
+    if (top === null) { blocked.push({ i: i, top: 'null(视口外)', x: Math.round(x), y: Math.round(y) }); continue; }
+    if (!top.classList.contains(warcCls) && !top.classList.contains(dotCls)) {
+      blocked.push({ i: i, top: String(top.getAttribute('class') || top.tagName),
+        x: Math.round(x), y: Math.round(y) });
+    }
+  }
+  return { n: arcs.length, blocked: blocked, missing: 0 };
+})`;
+
+/** 页内：轴表每一行里那根竖线的**渲染位置**（相对轨道左缘的像素）与行内变量给的位置对账。
+ *  `--radar-profile-at` 是"读数该落在哪儿"，`clamp()` 是"压在轨道里别横溢"——两个都得真的落到像素上。 */
+const MARK_POS_FN = `(function (sel, trackCls, markCls, atVar) {
+  var rows = [].slice.call(document.querySelectorAll(sel));
+  var out = { n: 0, marks: [] };
+  for (var i = 0; i < rows.length; i += 1) {
+    var row = rows[i];
+    var track = row.querySelector('.' + trackCls);
+    if (track === null) continue;
+    var mark = row.querySelector('.' + markCls);
+    if (mark === null) continue;
+    var tr = track.getBoundingClientRect();
+    var mr = mark.getBoundingClientRect();
+    var raw = track.style.getPropertyValue(atVar).trim();
+    out.n += 1;
+    out.marks.push({ raw: raw, at: parseFloat(raw), trackW: Math.round(tr.width * 100) / 100,
+      left: Math.round((mr.left - tr.left) * 100) / 100, width: Math.round(mr.width * 100) / 100,
+      overRight: Math.round((mr.right - tr.right) * 100) / 100,
+      overLeft: Math.round((tr.left - mr.left) * 100) / 100 });
+  }
+  return out;
+})`;
+
 describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chrome ＋ CDP）', () => {
   it('容器 320／390／620／1280：零横向溢出／轴名与读数零截断零折行／顶点全在图框里', async (t) => {
     const css = radarProfileCss();
@@ -856,6 +1212,7 @@ describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chr
     }
     try {
       const seen = [];
+      const markSeen = [];
       for (const width of WIDTHS) {
         await page.setWidth(width);
         const frame = await page.frame();
@@ -902,6 +1259,34 @@ describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chr
               seen.push({ width, skin, name: c.name, plotW: b.plotW, n: b.n,
                 rootScrollW: root[0].maxScrollW, rootClientW: root[0].maxClientW });
             }
+            /* 形态 `wedge`：**每根外沿弧的中点都得露着**——那一点就是"这一根有多长"的图形证据，
+               被别的盒子压住就等于这一根读不出长度（小分数那几根最先遭殃）。 */
+            if (c.form === 'wedge') {
+              const arcs = await page.ev(ARC_TOP_FN + '(' + JSON.stringify(scope + '.' + RADAR_PROFILE_CLASS) + ','
+                + JSON.stringify(radarProfileSlot('warc')) + ',' + JSON.stringify(radarProfileSlot('dot')) + ')');
+              assert.equal(arcs.missing, 0, width + ' 档 ' + skin + ' ' + c.name + '：找不到本件根');
+              assert.ok(arcs.n >= 3, width + ' 档 ' + skin + ' ' + c.name + '：外沿弧的枚数不对 ' + String(arcs.n));
+              assert.deepEqual(arcs.blocked, [],
+                width + ' 档 ' + skin + ' ' + c.name + '：有外沿弧中点被压住（压住它的元素见下）：'
+                + JSON.stringify(arcs.blocked));
+            }
+            /* 形态 `rail`：**竖线的渲染位置＝印出来的读数**（`clamp()` 两头都真的生效、不探出轨道）。 */
+            if (c.form === 'rail') {
+              const marks = await page.ev(MARK_POS_FN + '(' + JSON.stringify(scope + '.' + radarProfileSlot('row')) + ','
+                + JSON.stringify(radarProfileSlot('track')) + ',' + JSON.stringify(radarProfileSlot('mark')) + ','
+                + JSON.stringify('--radar-profile-at') + ')');
+              assert.ok(marks.n >= 3, width + ' 档 ' + skin + ' ' + c.name + '：量到的竖线太少 ' + String(marks.n));
+              for (const one of marks.marks) {
+                const want = Math.min((one.trackW * one.at) / 100, one.trackW - 2);
+                assert.ok(Math.abs(one.left - want) <= 1,
+                  width + ' 档 ' + skin + ' ' + c.name + '：竖线没落在读数那个位置上 '
+                  + JSON.stringify([one.raw, one.left, want, one.trackW]));
+                assert.ok(one.overRight <= 0.5 && one.overLeft <= 0.5,
+                  width + ' 档 ' + skin + ' ' + c.name + '：竖线探出轨道 ' + JSON.stringify(one));
+              }
+              markSeen.push({ width, skin, name: c.name, n: marks.n,
+                ends: marks.marks.filter((m) => m.at === 0 || m.at === 100).map((m) => [m.at, m.left, m.trackW]) });
+            }
           }
         }
       }
@@ -941,6 +1326,22 @@ describe('radar-profile ④⑤ 四档几何与皮肤纪律（真机 headless Chr
         assert.equal(colors.mark, toRgb(vals.accent), skin + '：轨道上那根竖线取 accent');
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
+      /* 两个**新缝**的收尾读数（回执抄这两行）：最窄档 320 下小分数扇区那几根弧露不露、竖线压没压住。 */
+      await page.setWidth(WIDTHS[0]);
+      const tiny = await page.ev(ARC_TOP_FN + '('
+        + JSON.stringify('.' + skinClass(SKIN_NAMES[0]) + ' [data-case=wedge-tiny] .' + RADAR_PROFILE_CLASS) + ','
+        + JSON.stringify(radarProfileSlot('warc')) + ',' + JSON.stringify(radarProfileSlot('dot')) + ')');
+      assert.equal(tiny.blocked.length, 0, WIDTHS[0] + ' 档小分数扇区（4 轴 5／25／50／100）有弧被盖：'
+        + JSON.stringify(tiny.blocked));
+      const ends = await page.ev(MARK_POS_FN + '('
+        + JSON.stringify('.' + skinClass(SKIN_NAMES[0]) + ' [data-case=rail-ends] .' + radarProfileSlot('row')) + ','
+        + JSON.stringify(radarProfileSlot('track')) + ',' + JSON.stringify(radarProfileSlot('mark')) + ','
+        + JSON.stringify('--radar-profile-at') + ')');
+      console.log('READING radar-profile ' + WIDTHS[0] + ' 档 wedge-tiny：外沿弧 ' + String(tiny.n)
+        + ' 根，中点被盖 ' + String(tiny.blocked.length) + ' 根（压在上面的只许是同根顶点）'
+        + ' ｜ rail-ends：竖线 [位置%, 距轨道左缘px, 轨道宽px]＝'
+        + JSON.stringify(ends.marks.map((m) => [m.at, m.left, m.trackW])));
+      assert.ok(markSeen.some((s) => s.ends.some((e) => e[0] === 100)), '两端样例里没有 100% 那一根（clamp 右端没被守住）');
       /* 四档读数原文（回执抄的就是这几行）：根的 scroll／client、图宽、顶点数。 */
       for (const w of WIDTHS) {
         const rows = seen.filter((s) => s.width === w);

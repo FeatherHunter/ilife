@@ -65,7 +65,7 @@ export const RADAR_PROFILE_SLOTS = [
   'axname',
   /** 轴上的读数（缺测写 `—`）。 */
   'axvalue',
-  /** 形态 `wedge`：圆心的平均分那一块。 */
+  /** 形态 `wedge`：平均分那一块（排在图下面一行，**不压在图心上**——图心那是小分数扇区的外沿弧所在）。 */
   'hub',
   /** 平均分那个数（大字）。 */
   'hub-value',

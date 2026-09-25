@@ -96,12 +96,14 @@ function labelsHtml(m: RadarProfileModel): string {
     + '</span>').join('');
 }
 
-/** 图那一格：内联 SVG（网格 ＋ 数据）＋ 浮在四周的轴名。 */
+/** 图那一格：内联 SVG（网格 ＋ 数据）＋ 浮在四周的轴名。
+ *  **平均分那一块不进这一格**：图心是 0 分那一段刻度，小分数扇区的外沿弧就落在那儿——实底的盒子
+ *  压上去，那一根的半径就没法读（真机量过：320／390 档连「25 分」那根的弧中点都被盖住）。
+ *  它由 `renderWedge()` 摆在图下面一行，见 `hubHtml()`。 */
 function plotHtml(m: RadarProfileModel, inner: string): string {
   return '<div class="' + sc('stage') + '"><div class="' + sc('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">'
     + '<svg class="' + sc('svg') + '" viewBox="' + VIEW_BOX + '" aria-hidden="true" focusable="false">' + inner + '</svg>'
     + labelsHtml(m)
-    + (m.form === 'wedge' ? hubHtml(m) : '')
     + '</div></div>';
 }
 
@@ -130,7 +132,8 @@ function tableHtml(m: RadarProfileModel): string {
 
 /* ── 形态 `wedge` 的两块 ─────────────────────────────────────────── */
 
-/** 圆心那块：平均分（**是平均，不是总分**——把几根轴加起来没有意义）。 */
+/** 平均分那一块：**是平均，不是总分**（把几根轴加起来没有意义）。它排在图下面一行，不压在图心上
+ *  ——图心那一片正是小分数扇区的外沿弧所在（见 `plotHtml()`）。 */
 function hubHtml(m: RadarProfileModel): string {
   return '<div class="' + sc('hub') + '"><b class="' + sc('hub-value') + '">' + esc(m.hubText) + '</b>'
     + '<em class="' + sc('hub-label') + '">平均分</em></div>';
@@ -187,7 +190,7 @@ function renderPolygon(m: RadarProfileModel): string {
     + scaleHtml(m) + legendHtml(m) + noteHtml(m);
 }
 
-/** 形态 `wedge`：图（辐条 ＋ 逐根扇区 ＋ 外沿弧 ＋ 达标环 ＋ 顶点 ＋ 圆心平均分）＋ 图例 ＋ 未达标点名。 */
+/** 形态 `wedge`：图（辐条 ＋ 逐根扇区 ＋ 外沿弧 ＋ 达标环 ＋ 顶点）＋ 平均分 ＋ 图例 ＋ 未达标点名。 */
 function renderWedge(m: RadarProfileModel): string {
   const inner = spokesHtml(m)
     + '<circle class="' + sc('goal') + '" cx="' + String(RADAR_PROFILE_CENTER) + '" cy="' + String(RADAR_PROFILE_CENTER)
@@ -195,7 +198,7 @@ function renderWedge(m: RadarProfileModel): string {
     + m.wedges.map((w) => '<path class="' + sc('wedge') + (w.ok ? ' is-ok' : ' is-warn') + '" d="' + esc(w.path) + '"/>'
       + '<path class="' + sc('warc') + (w.ok ? ' is-ok' : ' is-warn') + '" d="' + esc(w.arc) + '"/>').join('')
     + dotsHtml(m);
-  return headHtml(m) + plotHtml(m, inner) + legendHtml(m) + gapsHtml(m) + noteHtml(m);
+  return headHtml(m) + plotHtml(m, inner) + hubHtml(m) + legendHtml(m) + gapsHtml(m) + noteHtml(m);
 }
 
 /** 形态 `rail`：几根轴摊平成一叠行 ＋ 脚注。 */

@@ -149,9 +149,3 @@ export function polarOfRaw(angleDeg: number, radius: number): { readonly x: numb
     y: round2(RADAR_PROFILE_CENTER + radius * Math.sin(rad)),
   };
 }
-
-/* ── 判据与调用方都能读回来的那几个数（形状就是这些） ─────────────── */
-
-/** 一串读数里**有值**的那些（缺测不算 0）。 */
-export const presentOf = (values: readonly (number | null)[]): number[] =>
-  values.filter((v): v is number => v !== null);

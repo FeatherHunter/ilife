@@ -15,8 +15,9 @@
  *     这是"轴名顶宽容器"的唯一防线，且它与轴名上限读**同一个常量**（改上限这里跟着走）。
  *   · **图上的字一律是 HTML**：`.plot` 里的轴名是绝对定位的 HTML（`left`／`top` 由同一份映射给百分比），
  *     内联 SVG 只画网格与数据 —— SVG 里的字会随画布缩放，窄容器里读数先糊（先例 `progress-ring`）。
- *   · **触控地板**：本件不带可点元素（纯静态图），但 `:focus-visible` 的地板照留——
- *     调用方把某一行或某根轴包成入口时，焦点必须看得见。
+ *   · **触控地板**：本件不带可点元素（纯静态图），但 `:focus-visible` 的地板照留（见下面那条
+ *     `box + ' :focus-visible'`，先例 `cash-waterline`）——调用方把某一行或某根轴包成入口时，
+ *     焦点必须看得见。
  */
 import { skinVar } from '../skin/contract.js';
 import {
@@ -236,7 +237,13 @@ export function radarProfileCss(input?: { readonly prefix?: string }): string {
     s('axlabel') + '.is-missing ' + c('axvalue') + ' {',
     '  color: ' + skinVar('ink-3') + ';',
     '}',
-    '/* 图外面的读数件（刻度条／读数表／圆心平均分／图例／未达标点名／脚注）在 `style-readouts.ts`：',
+    /* 可见焦点：本件自身不带可点元素，这一条是**地板**——调用方把某一行或某根轴包成入口时，
+       焦点必须看得见（`focus-visible` 只留给真实键盘用户，不是主通路）。 */
+    box + ' :focus-visible {',
+    '  outline: 2px solid ' + skinVar('accent') + ';',
+    '  outline-offset: 2px;',
+    '}',
+    '/* 图外面的读数件（刻度条／读数表／平均分／图例／未达标点名／脚注）在 `style-readouts.ts`：',
     '   同一份纪律、同一个前缀，插在这里——顺序即层叠顺序（各段选择器互不相交）。 */',
     radarProfileReadoutsCss({ prefix: p }),
     '/* 两形态自己的形状（扇区／外沿弧／达标环／轴表的行与轨道）在 `style-forms.ts`：',

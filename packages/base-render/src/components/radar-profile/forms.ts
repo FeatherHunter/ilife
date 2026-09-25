@@ -31,7 +31,7 @@ import {
   type RadarProfileVertexModel,
   type RadarProfileWedgeModel,
 } from './fields.js';
-import { meanOk, plainNum, polygonPoints, polarOf, sectorArcPath, sectorPath } from './scale.js';
+import { meanOk, plainNum, polygonPoints, polarOf, round2, sectorArcPath, sectorPath } from './scale.js';
 
 /** 0…100 的占比 → 轨道上的百分数串（形态 `rail` 用）。 */
 const pct = (v: number): string => plainNum(v) + '%';
@@ -79,8 +79,10 @@ export function polygonModel(c: RadarProfileCommon, axes: readonly RadarProfileA
     title: c.title,
     stamp: c.stamp,
     tail,
+    /* 三个圈数用「，」分段，不用并排顿号：`、` 连排三段会被仓库的分隔符门（`test/separator-probe.mjs`
+       的 R3）判红——它是"该做版式"的信号，不是一句人话该有的写法。 */
     note: c.noteIn ?? '口径：每根轴各自 0 到 100 分，轴与轴不是同一个单位，所以只能比形状、不能比面积。'
-      + '网格三级是里圈 33 分、中圈 66 分、外圈 100 分。实线是本期，虚线是上期，两条叠在一起的地方更深。'
+      + '网格三级是里圈 33 分，中圈 66 分，外圈 100 分。实线是本期，虚线是上期，两条叠在一起的地方更深。'
       + '缺测的轴整根不画，读数写 ' + RADAR_PROFILE_MISSING + '，不当 0 分算。',
     ariaLabel: count + ' 根轴的雷达图：' + axisSentences(axes, hasPast) + '。'
       + (hasPast ? '上期那条轮廓更小或更大都要按轴逐根看，形状差得多就是偏科。' : '实线轮廓就是本期形状。'),
@@ -106,24 +108,29 @@ export function polygonModel(c: RadarProfileCommon, axes: readonly RadarProfileA
 
 /* ── 形态 `wedge`：极区扇图（半径＝得分，达标环） ─────────────────────── */
 
-/** 形态 `wedge`：逐根扇区（半径＝得分）＋ 外沿弧 ＋ 达标环 ＋ 圆心平均分 ＋ 未达标点名。 */
+/** 形态 `wedge`：逐根扇区（半径＝得分）＋ 外沿弧 ＋ 达标环 ＋ 平均分 ＋ 未达标点名。 */
 export function wedgeModel(c: RadarProfileCommon, axes: readonly RadarProfileAxisModel[], goal: number): RadarProfileModel {
   const count = axes.length;
+  /* **判定与印出来的数是同一个数**：`plainNum()` 印的是 `round2()` 之后的值，比较前先取整到这一位
+     ——否则 79.999 印成「80 分」却被判未达标、点名写出「差 0 分」（读数与判定自相矛盾）。 */
+  const goalNum = round2(goal);
   const wedges: RadarProfileWedgeModel[] = [];
   const dots: RadarProfileVertexModel[] = [];
+  const shortfalls: { readonly label: string; readonly score: number; readonly diff: number }[] = [];
   axes.forEach((a, index) => {
     if (a.score === null) return;
-    const r = radiusOf(a.score);
-    wedges.push({
-      path: sectorPath(index, count, r), arc: sectorArcPath(index, count, r), ok: a.score >= goal, score: a.score,
-    });
+    const score = round2(a.score);
+    const r = radiusOf(score);
+    wedges.push({ path: sectorPath(index, count, r), arc: sectorArcPath(index, count, r), ok: score >= goalNum, score });
     dots.push(polar(index, count, r));
+    /* 点名那一行的轴名**与扇区同一趟装配**（轴名与得分必须同源：早先版本拿"有读数扇区的序号"
+       去索引全部轴，缺一根就读成「A 50 分」而真值是「B 50 分」——清单与无障碍名互相矛盾）。 */
+    shortfalls.push({ label: a.label, score, diff: round2(goalNum - score) });
   });
   const okCount = wedges.filter((w) => w.ok).length;
   const warnCount = wedges.length - okCount;
   /* 未达标逐根点名：**先给差得最多的那根**（差多少分写成字，不靠颜色）。 */
-  const gaps: RadarProfileGapModel[] = wedges
-    .map((w) => ({ label: axes[wedges.indexOf(w)].label, score: w.score, diff: goal - w.score }))
+  const gaps: RadarProfileGapModel[] = shortfalls
     .filter((g) => g.diff > 0)
     .sort((a, b) => b.diff - a.diff)
     .map((g) => ({ label: g.label, scoreText: plainNum(g.score) + ' 分', diffText: '差 ' + plainNum(g.diff) + ' 分' }));
@@ -165,16 +172,20 @@ export function wedgeModel(c: RadarProfileCommon, axes: readonly RadarProfileAxi
 
 /* ── 形态 `rail`：展平成轴表（基准带＋我的位置） ─────────────────────── */
 
-/** 一行的判定：在带内走灰字（状态做减法），出带才点名，未给带与未测各写各的字。 */
+/** 一行的判定：在带内走灰字（状态做减法），出带才点名，未给带与未测各写各的字。
+ *  **比较与差值都用印出来的那个数**（`plainNum()` 的粒度＝两位小数）：读数印「80」而判定写
+ *  「▼ 低于带 0 分」是自相矛盾的读数，读者没法照它决定要不要管这一根。 */
 function verdictOf(axis: RadarProfileAxisModel): {
   readonly kind: RadarProfileRailRowModel['verdictKind'];
   readonly text: string;
 } {
   if (axis.score === null) return { kind: 'missing', text: RADAR_PROFILE_MISSING + ' 未测' };
   if (axis.band === undefined) return { kind: 'none', text: '未给基准带' };
-  const { low, high } = axis.band;
-  if (axis.score < low) return { kind: 'low', text: '▼ 低于带 ' + plainNum(low - axis.score) + ' 分' };
-  if (axis.score > high) return { kind: 'high', text: '▲ 高于带 ' + plainNum(axis.score - high) + ' 分' };
+  const score = round2(axis.score);
+  const low = round2(axis.band.low);
+  const high = round2(axis.band.high);
+  if (score < low) return { kind: 'low', text: '▼ 低于带 ' + plainNum(round2(low - score)) + ' 分' };
+  if (score > high) return { kind: 'high', text: '▲ 高于带 ' + plainNum(round2(score - high)) + ' 分' };
   return { kind: 'in', text: '✓ 在带内' };
 }
 

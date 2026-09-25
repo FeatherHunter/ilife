@@ -100,7 +100,7 @@ export interface RadarProfileLegendItemModel {
   readonly goalNum?: string;
 }
 
-/** 一根扇区（半径＝得分）。 */
+/** 一根扇区（半径＝得分；`score` 存的是**印出来的那个数**——达标判定与点名差值都从它算）。 */
 export interface RadarProfileWedgeModel {
   readonly path: string;
   readonly arc: string;
@@ -170,12 +170,16 @@ function axisModel(
     readonly band?: { readonly low: number; readonly high: number };
   },
 ): RadarProfileAxisModel {
-  const delta = raw.score === null || raw.past === null ? null : round2(raw.score - raw.past);
+  /* **三种写法与那一个差都从印出来的数算**（`plainNum()` 的粒度＝两位小数）：否则 80.004 与 79.996
+     两格都印「80」，而差那一格写出「▲ +0.01」——同一行自相矛盾，读者不知道该信谁。 */
+  const now = raw.score === null ? null : round2(raw.score);
+  const past = raw.past === null ? null : round2(raw.past);
+  const delta = now === null || past === null ? null : round2(now - past);
   return {
     ...raw,
-    at: raw.score === null ? null : percentOfScore(raw.score),
-    valueText: raw.score === null ? '—' : plainNum(raw.score),
-    pastText: raw.past === null ? '—' : plainNum(raw.past),
+    at: now === null ? null : percentOfScore(now),
+    valueText: now === null ? '—' : plainNum(now),
+    pastText: past === null ? '—' : plainNum(past),
     delta,
     deltaText: deltaText(delta),
     dir: delta === null ? 'none' : (delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat')),

@@ -3,7 +3,8 @@
  *  四条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不"尽量猜"：
  *      轴根数不对、轴名太长、得分越界、基准带上下界反了，画出来是"错位的形状"，
- *      而调用方以为自己给的是一张完整的画像。
+ *      而调用方以为自己给的是一张完整的画像。**入参表以外的键同办**（先例 `relation-picker`／
+ *      `drag-sort`／`flow-ribbon` 的 `assertKeys`）：写错的键静默吞掉，调用方会以为自己设上了。
  *   2. **缺值与空串是两件事**：`score: null` ＝ **缺测**（整根不落图、读数写 `—`，**不当 0 分算**）；
  *      字段缺席 ＝ 调用方没给（真必填的那几个当场报错）；空串／全空白串一律拒（会在屏上留一块空白）。
  *   3. **形态决定认哪些读数**：给别的形态才认的字段（`polygon` 的 `prior`／`wedge` 的 `goal`／
@@ -43,7 +44,24 @@ export type {
   RadarProfileWedgeModel,
 } from './fields.js';
 
+/* ── 入参表的键闭集（三层：顶层／一根轴／基准带；与 `attrs.ts` 那两个 interface 逐字对应） ── */
+
+/** 顶层入参的键闭集（`RadarProfileInput`）。 */
+const INPUT_KEYS = ['title', 'axes', 'form', 'stamp', 'pastStamp', 'goal', 'note', 'extraClass'] as const;
+/** 一根轴的键闭集（`RadarProfileAxis`）。 */
+const AXIS_KEYS = ['label', 'score', 'past', 'note', 'band'] as const;
+/** 基准带的键闭集（`RadarProfileBand`）。 */
+const BAND_KEYS = ['low', 'high'] as const;
+
 /* ── 校验小件 ─────────────────────────────────────────────────────── */
+
+/** 入参表以外的键一律拒（先例：`relation-picker`／`drag-sort`／`flow-ribbon` 的同名小件）：
+ *  写错的键（`color`／`mid`／顶层拼错的字段）静默吞掉，调用方会以为自己设上了——那是"看不见的错"。 */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(raw)) {
+    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒）');
+  }
+}
 
 /** 必填文本：非空串**且不是全空白**（全空白的标题会在屏上留一块空白，那是"看得到的错"）。 */
 function reqRealText(value: unknown, field: string): string {
@@ -88,6 +106,7 @@ function reqScore(value: unknown, field: string): number | null {
 function reqBand(value: unknown, field: string): RadarProfileBand {
   assertPlainObject(value, field);
   const raw = value as Record<string, unknown>;
+  assertKeys(raw, BAND_KEYS, field);
   const low = raw.low;
   const high = raw.high;
   if (typeof low !== 'number' || !Number.isFinite(low) || low < 0 || low > RADAR_PROFILE_MAX_SCORE) {
@@ -122,6 +141,7 @@ function reqAxes(value: unknown, form: RadarProfileForm): RadarProfileAxis[] {
     const at = 'radar-profile: input.axes[' + String(i) + ']';
     assertPlainObject(item, at);
     const raw = item as Record<string, unknown>;
+    assertKeys(raw, AXIS_KEYS, at);
     const label = reqLabel(raw.label, at + '.label');
     if (raw.score === undefined) {
       badInput(at + '.score 必填（给一个 0…' + String(RADAR_PROFILE_MAX_SCORE) + ' 的数，或者显式给缺测）');
@@ -153,6 +173,7 @@ function reqAxes(value: unknown, form: RadarProfileForm): RadarProfileAxis[] {
 export function normalizeRadarProfile(input: unknown): RadarProfileModel {
   assertPlainObject(input, 'renderRadarProfile: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'radar-profile: input');
 
   const form = raw.form === undefined ? RADAR_PROFILE_FORMS[0] : raw.form;
   if (!(RADAR_PROFILE_FORMS as readonly unknown[]).includes(form)) {
