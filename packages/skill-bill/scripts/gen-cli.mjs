@@ -7,6 +7,9 @@
 // 账户域 `bill.account.write`／`query`，开始使用域 `bill.setup.run`，分析域三条，目标域两条）；
 // 其余 2 条（`bill.help.lookup`／`bill.link.submit`）仍住 `src/render/envelope.ts` 的过渡表，行为与产物一律不动，本生成器不读不写它们。
 // 输出（唯一生成物）：`src/cli/registry.ts`（一能力一行，由扫描得出，人不手改）。
+// #953 · 程序面标记（`surface: 'program'`）：本生成器认得它（非法值即抛）；注册表原样保留该键
+// （插件程序照样能调）。本包**无生成的速查表／路由产物**，故无过滤项——速查 HELP-AUTO 块与
+// 唤醒词表（`src/triggers/wakeTable.ts`）是手写件，不属生成链，不在本票动它。
 // 不派生的落点（本次不动，不上报）：`packages/base-combos/combos.yaml` 属跨技能登记禁区（地图 OutofScope），
 // `src/render/envelope.ts` 过渡表、`scripts/build-help.mjs` 的 HELP-AUTO 块一律不碰。
 // #721 起 `src/triggers/wake-assets.ts` 不再是生成物（它变成手写的薄合并件），`scripts/gen-wake-assets.mjs` 已退役。
@@ -61,6 +64,10 @@ async function loadCapability(name) {
   for (const spec of list) {
     for (const f of ['kind', 'key', 'shape', 'title', 'example']) {
       if (typeof spec?.[f] !== 'string' || spec[f] === '') throw new Error(name + ' 的声明缺 ' + f + '：' + spec?.key);
+    }
+    // #953 · 程序面标记只认 program（未标记＝既有行为；注册表经 SOURCES 原样保留该键）。
+    if (spec.surface !== undefined && spec.surface !== 'program') {
+      throw new Error(name + ' 的声明 surface 只认 program：' + spec.key);
     }
     if (spec.kind === 'write') {
       if (spec.shape !== 'receipt') throw new Error(name + ' 的写命令形状恒为 receipt：' + spec.key);

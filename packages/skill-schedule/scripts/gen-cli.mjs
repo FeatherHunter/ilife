@@ -11,6 +11,8 @@
 //   ③ `src/triggers/routes.generated.ts`（路由归并，Layer2 由 `routeWakeword`／速查／HELP 构建消费）。
 // 不派生的落点（本次不动）：`packages/base-combos/combos.yaml`（跨技能登记禁区，照 bill；
 //   作息命令无 combos 消费者）与 `scripts/build-help.mjs`（作息走 HELP-AUTO 块，无 REPR 表要写）。
+// #953 · 程序面标记（`surface: 'program'`）：声明可选；生成器校验它、键表／注册表保留该键
+// （插件程序照样能调）；路由侧豁免程序面键（不要路由）并守卫（不许有指向它的路由）。
 //
 // 新鲜度（照卡路里同构，内容判据，不看时间戳）：生成器读的是**编译后**的声明模块，故先查
 //   `dist/.gen-inputs.json` 内容印记 v2（每条声明源记一对哈希 `{src, dist}`＝源文本 sha256 ＋
@@ -77,6 +79,10 @@ export async function loadCapability(name) {
       }
     }
     if (typeof spec?.run !== 'function') throw new Error(name + ' 的声明缺 run（须为函数）：' + spec?.key);
+    // #953 · 程序面标记只认 program（wakeWord／example 仍必填但不渲染，见 wakeWordGate 豁免）。
+    if (spec.surface !== undefined && spec.surface !== 'program') {
+      throw new Error(name + ' 的声明 surface 只认 program：' + spec.key);
+    }
     if (spec.kind === 'read') {
       if (typeof spec.shape !== 'string' || spec.shape === '') throw new Error(name + ' 的读声明缺 shape：' + spec.key);
     } else if (spec.kind !== 'write') {
@@ -192,6 +198,7 @@ export function wakeWordGate(capabilities, routes) {
     byKey.get(e.key).add(e.phrase);
   }
   for (const c of capabilities) for (const s of c.list) {
+    if (s.surface === 'program') continue; // #953 · 程序面键不要代表词、不要路由
     if (!byKey.get(s.key)?.has(s.wakeWord)) {
       throw new Error(c.name + ' 的代表唤醒词不是本键路由里的真词：' + s.key + ' ← ' + s.wakeWord);
     }
@@ -212,8 +219,12 @@ export function checkRouteSelf(capabilities, routes) {
     if (seen.has(e.phrase)) throw new Error('GEN-ROUTE FAIL：短语重复登记：' + e.phrase);
     seen.add(e.phrase);
   }
-  const declKeys = new Set(capabilities.flatMap((c) => c.list.map((s) => s.key)));
+  const declKeys = new Set(capabilities.flatMap((c) => c.list).filter((s) => s.surface !== 'program').map((s) => s.key));
   const routeKeys = new Set(merged.map((e) => e.key));
+  // #953 · 程序面键不许出现在路由侧（fail-closed）；比对只看非程序面键。
+  const programKeys = new Set(capabilities.flatMap((c) => c.list).filter((s) => s.surface === 'program').map((s) => s.key));
+  const leaked = merged.filter((e) => programKeys.has(e.key));
+  if (leaked.length > 0) throw new Error('GEN-ROUTE FAIL：程序面键不许进唤醒词路由（#953）：' + leaked.map((e) => e.key).join('、'));
   const diff = [...declKeys].filter((k) => !routeKeys.has(k)).concat([...routeKeys].filter((k) => !declKeys.has(k)));
   if (diff.length > 0) throw new Error('GEN-ROUTE FAIL：路由键集 ≠ 声明键集：' + diff.join('、'));
 }
@@ -230,6 +241,8 @@ export function merge(capabilities) {
         kind: decl.kind, key: decl.key,
         shape: decl.kind === 'write' ? WRITE_SHAPE : decl.shape,
         title: decl.title, from: cap.name,
+        // #953 · 程序面标记随身带（路由豁免与守卫据此判；键表／注册表保留该键）。
+        surface: decl.surface === 'program' ? 'program' : undefined,
       });
     }
   }
@@ -305,6 +318,7 @@ export async function runCheck() {
     else if (keyCap.get(e.key) !== r.name) throw new Error('路由键跨能力：' + e.key);
   }
   for (const e of entries) {
+    if (e.surface === 'program') continue; // #953 · 程序面键不要路由
     if (!keyCap.has(e.key)) throw new Error('命令无路由：' + e.key);
   }
   const fails = [];

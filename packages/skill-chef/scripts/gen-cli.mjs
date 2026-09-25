@@ -7,6 +7,10 @@
 // 输出：`src/cli/keys.ts`（键表＋标题＋形状＋来源域名单＋按域键表，头一句生成横幅，勿手改）。
 // 本票试点范围：只校验六字段在场（`kind`／`key`／`shape`／`title`／`wakeWord`／`example`），
 // 只派生键、标题、形状、来源域、按域键表；代表唤醒词与示例的派生（速查表那几块）由后续票接走。
+// #953 · 程序面标记（`surface: 'program'`，可选）：本生成器认得并校验它（非法值即抛），
+// 键表保留该键（插件程序照样能调）。本包唯一的生成物是键表（程序可调面）；速查表与唤醒词路由
+// （`src/policy/wakewords.ts` 等）是手写件，不属生成链——程序面键不许出现在那几处由作者保证，
+// 数据族落地时另票认领，此处只做生成侧的识别与保留。
 // 会改数据库的命令不写 `shape`（一律回执形，唯一定义地就是这里合成的那一行）。
 // 用法：`pnpm gen` 写盘；`pnpm gen:check` 只比对，不等即 exit 1（根 `package.json` 接后者）。
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -68,6 +72,10 @@ function parseDecl(block, from) {
   const title = field(block, 'title');
   const wakeWord = field(block, 'wakeWord');
   const example = field(block, 'example');
+  const surface = field(block, 'surface');
+  if (surface !== undefined && surface !== 'program') {
+    throw new Error(from + ' 的声明 surface 只认 program：' + key);
+  }
   if (kind !== 'read' && kind !== 'write') throw new Error(from + ' 的声明缺 kind（read/write）：' + block.slice(0, 80));
   if (typeof key !== 'string' || key === '' || !KEY_RE.test(key)) {
     throw new Error(from + ' 的声明缺合法 key：' + block.slice(0, 80));
@@ -80,7 +88,7 @@ function parseDecl(block, from) {
   }
   if (typeof title !== 'string' || title === '') throw new Error(from + ' 的声明缺 title：' + key);
   if (typeof example !== 'string' || example === '') throw new Error(from + ' 的声明缺 example：' + key);
-  return { kind, key, shape, title, wakeWord, from };
+  return { kind, key, shape, title, wakeWord, surface, from };
 }
 
 /** 两处声明合并：同命令两处声明即抛；写命令在前、查询命令在后，各按命令名升序。 */

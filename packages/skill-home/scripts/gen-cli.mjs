@@ -8,6 +8,8 @@
 //   ① `src/cli/keys.ts`（键表＋出参形状；写命令的 receipt 由本生成器合成）；
 //   ② `src/cli/registry.ts`（一能力一行，查表分派的唯一上游）；
 //   ③ `src/policy/routes.generated.ts`（路由记录面；运行期路由读它）。
+// #953 · 程序面标记（`surface: 'program'`，可选）：本生成器认得并校验它（非法值即抛），
+// 键表与注册表保留该键（插件程序照样能调）；路由记录面不许出现指向它的记录（见主流程守卫）。
 // 用法：`pnpm gen`（写盘）／`pnpm gen:check`（只比对，不等即 exit 1）。
 // 本文件是 fail-closed 的：声明写法只认规范子集，认不出带文件名与行号抛错，
 // 绝不静默跳过（同 `scripts/lib/yaml-subset.mjs` 的规矩）。
@@ -166,6 +168,8 @@ function loadCapability(name) {
     const title = fieldStr(o.text, cFile, o.line, 'title');
     const wakeWord = fieldStr(o.text, cFile, o.line, 'wakeWord');
     const example = fieldStr(o.text, cFile, o.line, 'example');
+    const surface = fieldStr(o.text, cFile, o.line, 'surface');
+    if (surface !== undefined && surface !== 'program') fail(cFile, o.line, 'surface 只认 program（程序面标记 #953）：' + key);
     if (kind !== 'read' && kind !== 'write') fail(cFile, o.line, 'kind 只认 read／write');
     if (!key) fail(cFile, o.line, '缺 key');
     if (!title) fail(cFile, o.line, '缺 title');
@@ -176,7 +180,7 @@ function loadCapability(name) {
     } else if (shape !== undefined) {
       fail(cFile, o.line, '写声明不写 shape（写命令一律 receipt，由生成器合成）');
     }
-    return { kind, key, shape, title, wakeWord, example };
+    return { kind, key, shape, title, wakeWord, surface, example };
   });
   const routes = splitObjects(rBody, rFile).map((o) => {
     const phrase = fieldStr(o.text, rFile, o.line, 'phrase');
@@ -211,12 +215,15 @@ function main() {
     }
   }
   if (seen.size !== 20) fail('commands', '?', '业务键应 20 条（含 setup 空声明），实得 ' + seen.size);
+  // #953 · 程序面键不许进路由记录面（fail-closed）。
+  const programKeys = new Set(caps.flatMap((c) => c.commands).filter((d) => d.surface === 'program').map((d) => d.key));
   const seenPhrase = new Map();
   for (const c of caps) {
     for (const r of c.routes) {
       if (seenPhrase.has(r.phrase)) fail('routes', '?', '同词两处声明：' + r.phrase);
       seenPhrase.set(r.phrase, c.name);
       if (!seen.has(r.key)) fail('routes', '?', '路由指向未知键：' + r.phrase + ' → ' + r.key);
+      if (programKeys.has(r.key)) fail('routes', '?', '程序面键不许进唤醒词路由（#953）：' + r.phrase + ' → ' + r.key);
     }
   }
 

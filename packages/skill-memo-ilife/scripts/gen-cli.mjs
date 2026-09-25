@@ -18,6 +18,8 @@
  * **守卫（一律在写盘之前抛，绝不产出半成品）**：声明件恰好一个数组；每行六字段在场且类型对；
  * 写命令不写 `shape`；键过 `KEY_RE`；同键两处声明即抛；路由的 `key` 必须真在键表里；
  * `order` 全表唯一；同 `wakeWord` 跨件重复即抛；有 `commands.ts` 的域必须有 `index.ts`（门要转出那个数组）。
+  * #953 · 程序面标记（`surface: 'program'`，可选）：认得并校验（非法值即抛）；键表与注册表保留该键
+  * （插件程序照样能调）；路由侧豁免程序面键（不要路由）并守卫（不许有指向它的路由）。
  *
  * 用法：`pnpm gen`（写盘）／`pnpm gen:check`（只比对，不等即 exit 1 并逐件点名）。
  *
@@ -172,9 +174,11 @@ function readCommands(name) {
     if (!KEY_RE.test(key)) die(file, 'key 不合 ' + String(KEY_RE) + '：' + JSON.stringify(key));
     const shape = strField(o, 'shape', file, kind !== 'write');
     if (kind === 'write' && shape !== undefined) die(file, '写命令不许写 shape（一律回执形）：' + key);
+    const surface = strField(o, 'surface', file, false);
+    if (surface !== undefined && surface !== 'program') die(file, 'surface 只认 program（程序面标记 #953）：' + key);
     return {
       kind, key, shape, title: strField(o, 'title', file, true), wakeWord: strField(o, 'wakeWord', file, false),
-      example: strField(o, 'example', file, true), from: name, exportName: arr.name + '_COMMANDS',
+      surface, example: strField(o, 'example', file, true), from: name, exportName: arr.name + '_COMMANDS',
     };
   });
   return { name, list };
@@ -222,6 +226,7 @@ function checkRoutes(all, byKey) {
   for (const r of all) {
     const where = 'src/' + r.from + '/routes.ts · ' + JSON.stringify(r.wakeWord) + '（order=' + r.order + '）';
     if (!byKey.has(r.key)) die(where, '路由指向未知键：' + r.key);
+    if (byKey.get(r.key).surface === 'program') die(where, '程序面键不许进唤醒词路由（#953）：' + r.key);
     if (seenOrder.has(r.order)) die(where, 'order 全表唯一：' + r.order + ' 已被 ' + seenOrder.get(r.order) + ' 占');
     seenOrder.set(r.order, where);
     // 同一词的多条记录必须**整组同迁**（留同一件）：冻结 SoT 的既成事实（如「备忘改分类」单条与批量两格同词）；
@@ -240,6 +245,7 @@ function checkRoutes(all, byKey) {
     }
   }
   for (const spec of byKey.values()) {
+    if (spec.surface === 'program') continue; // #953 · 程序面键不要代表词、不要路由
     if (spec.wakeWord !== undefined && !seenWord.has(spec.wakeWord)) {
       die('src/' + spec.from + '/commands.ts', '代表唤醒词不在任何路由声明里：' + spec.wakeWord + '（键 ' + spec.key + '）');
     }

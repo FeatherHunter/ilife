@@ -22,6 +22,10 @@ export type CommandSpec =
       readonly shape: EnvelopeShape;
       readonly title: string;
       readonly wakeWord?: string;
+      /** #953 · 程序面标记：`'program'`＝这条命令只给程序用——生成器把它从**速查表**与
+       *  **唤醒词路由**里跳过（模型看不见）；键表与注册表保留，插件程序照样能调。
+       *  缺省＝既有行为，生成结果一字不变。出处：`docs/agents/数据族-规格.md` §七主做法①。 */
+      readonly surface?: 'program';
       readonly example: string;
     }
   | {
@@ -29,6 +33,8 @@ export type CommandSpec =
       readonly key: string;
       readonly title: string;
       readonly wakeWord?: string;
+      /** #953 · 程序面标记（口径见上一支）：只给程序用的键不进速查表与路由。 */
+      readonly surface?: 'program';
       readonly example: string;
     };
 

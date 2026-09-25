@@ -45,6 +45,10 @@ export interface WriteCommandSpec {
   readonly key: string;
   readonly shape: 'receipt';
   readonly title: string;
+  /** #953 · 程序面标记：`'program'`＝这条命令只给程序用——生成器把它从**速查表**与
+   *  **唤醒词路由**里跳过（模型看不见）；键表与注册表保留，插件程序照样能调。
+   *  缺省＝既有行为，生成结果一字不变。出处：`docs/agents/数据族-规格.md` §七主做法①。 */
+  readonly surface?: 'program';
   /** 照抄即能跑的一行（本票两条都在空库上真跑过，退出码 0）。 */
   readonly example: string;
   readonly run: WriteHandler;
@@ -71,6 +75,8 @@ export interface ReadCommandSpec {
   /** 本次 envelope 的形状（`list`＝列表页、`detail`＝单条详情页）。 */
   readonly shape: EnvelopeShape;
   readonly title: string;
+  /** #953 · 程序面标记（口径见 `WriteCommandSpec.surface`）：只给程序用的键不进速查表与路由。 */
+  readonly surface?: 'program';
   /** 照抄即能跑的一行（四条都在本机临时库上真跑过，退出码 0）。 */
   readonly example: string;
   readonly run: ViewHandler;

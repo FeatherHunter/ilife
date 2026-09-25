@@ -120,6 +120,9 @@ function merge(capabilities) {
     if (typeof decl.example !== 'string' || decl.example === '') {
       throw new Error(from + ' 的声明缺 example（SKILL.md 的「例」列要照抄能跑）：' + decl.key);
     }
+    if (decl.surface !== undefined && decl.surface !== 'program') {
+      throw new Error(from + ' 的声明 surface 只认 program（程序面标记，#953）：' + decl.key);
+    }
     out.set(decl.key, {
       kind: decl.kind,
       key: decl.key,
@@ -127,6 +130,9 @@ function merge(capabilities) {
       title: decl.title,
       wakeWord: typeof decl.wakeWord === 'string' ? decl.wakeWord : undefined,
       flows: Array.isArray(decl.flows) ? decl.flows : undefined,
+      // #953 · 程序面标记随身带：速查表三块（REPR／EXAMPLES／FLOW）与代表词门据此跳过；
+      // 键表／注册表／combos 镜像保留（插件程序照样能调），故这里不丢。
+      surface: decl.surface === 'program' ? 'program' : undefined,
       example: decl.example,
       from,
     });
@@ -259,6 +265,7 @@ function renderReprBlock(entries, flows) {
   L.push('// 每组合键一行代表唤醒词（优先真实 TRIGGERS 短语，照片 HELP 10 键原样，通用 HELP 走 lookup）。');
   L.push('const REPR = {');
   for (const e of entries) {
+    if (e.surface === 'program') continue; // #953 · 程序面键不进技能说明面
     if (e.wakeWord === undefined) continue;
     L.push('  ' + q(e.key) + ': ' + q(e.wakeWord) + ',');
   }
@@ -273,6 +280,7 @@ function renderFlowBlock(entries) {
   L.push('// #338 · 命令 → 工作流程名（读声明上的可选 `flows`；缺的键此处没有行，不补默认值）。');
   L.push('const FLOW = {');
   for (const e of entries) {
+    if (e.surface === 'program') continue; // #953 · 程序面键不进技能说明面
     if (!Array.isArray(e.flows) || e.flows.length === 0) continue;
     L.push('  ' + q(e.key) + ': [' + e.flows.map((f) => q(f)).join(', ') + '],');
   }
@@ -288,7 +296,10 @@ function renderExampleBlock(entries) {
   L.push('// 每键一行「照抄即能跑」的示例：住声明的 `example` 字段（各能力 `commands.ts`）。');
   L.push('// 无 `--params` 的写法照抄即 exit 2／4——所以新键必须自带可执行示例（#99 生成期结构断言的来意）。');
   L.push('const EXAMPLES = {');
-  for (const e of entries) L.push('  ' + q(e.key) + ': ' + q(e.example) + ',');
+  for (const e of entries) {
+    if (e.surface === 'program') continue; // #953 · 程序面键不进技能说明面
+    L.push('  ' + q(e.key) + ': ' + q(e.example) + ',');
+  }
   L.push('};');
   L.push(EXAMPLE_END);
   return L.join('\n');
@@ -630,6 +641,7 @@ export function checkWakeWords({ entries, decls, registered = WAKE_GATE_REGISTER
   const registeredHit = [];
   const used = new Set();
   for (const e of entries) {
+    if (e.surface === 'program') continue; // #953 · 程序面键不要代表词、不要路由：门跳过
     if (typeof e.wakeWord !== 'string' || e.wakeWord === '') {
       blank.push(e);
       continue;
@@ -662,6 +674,15 @@ export function checkWakeWords({ entries, decls, registered = WAKE_GATE_REGISTER
 /** 门本体：读路由声明 → 判 → 逐条打印读数 → 返回是否放行（`main()` 里排在新鲜度门／配对门之后）。 */
 async function wakeWordGate(entries, fileOf) {
   const decls = await loadDecls();
+  // #953 · 程序面键不许有唤醒词路由（fail-closed：路由声明里出现程序面键即红，不静默跳过）。
+  const programKeys = new Set(entries.filter((e) => e.surface === 'program').map((e) => e.key));
+  const leaked = decls.filter((d) => d.kind === 'exec' && programKeys.has(d.key));
+  if (leaked.length) {
+    console.error('WAKE-WORD GATE FAIL：程序面键（surface: program）不许进唤醒词路由（#953）：');
+    for (const d of leaked) console.error('  ← ' + d.__src + ' :: ' + d.key + ' :: 「' + d.wakeWord + '」（删掉这条路由，程序面键只走程序调用）');
+    process.exitCode = 1;
+    return false;
+  }
   const r = checkWakeWords({ entries, decls });
   const fileOfKey = (e) => fileOf.get(e.key) ?? 'src/' + e.from + '/commands.ts';
   const withWord = entries.filter((e) => typeof e.wakeWord === 'string' && e.wakeWord !== '').length;

@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc -b && node packages/skill-calorie/scripts/gen-cli.mjs --stamp && node packages/skill-bill/scripts/gen-cli.mjs --stamp && node packages/skill-schedule/scripts/gen-cli.mjs --stamp && pnpm -r --if-present run build:client",
     "gen": "node packages/skill-calorie/scripts/gen-cli.mjs && node packages/skill-bill/scripts/gen-cli.mjs && node packages/skill-chef/scripts/gen-cli.mjs && node packages/skill-schedule/scripts/gen-cli.mjs && node packages/skill-home/scripts/gen-cli.mjs && node packages/skill-memo-ilife/scripts/gen-cli.mjs && node tooling/skill-call-form.mjs",
-    "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-cli.mjs --check && node packages/skill-chef/scripts/gen-cli.mjs --check && node packages/skill-schedule/scripts/gen-cli.mjs --check && node packages/skill-home/scripts/gen-cli.mjs --check && node packages/skill-memo-ilife/scripts/gen-cli.mjs --check && node tooling/skill-call-form.mjs --check",
+    "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-cli.mjs --check && node packages/skill-chef/scripts/gen-cli.mjs --check && node packages/skill-schedule/scripts/gen-cli.mjs --check && node packages/skill-home/scripts/gen-cli.mjs --check && node packages/skill-memo-ilife/scripts/gen-cli.mjs --check && node tooling/skill-call-form.mjs --check && node tooling/check-data-absence.mjs --check",
     "test:types": "tsc -b",
     "test": "node tooling/check-real-home-untouched.mjs --run",
     "doctor": "node tooling/skilllink.mjs doctor",

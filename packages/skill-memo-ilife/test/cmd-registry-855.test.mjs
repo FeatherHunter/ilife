@@ -255,8 +255,9 @@ describe('#855 · 命令登记棘轮（新鲜度／声明面／域门形状／�
   it('④ 旧形状只许变短：分派件与生成器的挂号值', () => {
     // 两个数都取「本批收工时的实测」，只许降不许升（升了就得改本件，改本件在 diff 里现形）：
     //   cmd_read 854（#855 开工前）→ 367（收尾批）→ 318（本批：删 switch 与一摞「已搬走」注记）；
-    //   gen-cli  380 →（本批：渲染段切到 gen-cli.render.mjs，件从超线回到线内）→ 现在这个数。
-    const ceilings = [['src/cli/cmd_read.ts', 318], ['scripts/gen-cli.mjs', 293]];
+    //   gen-cli  380 →（本批：渲染段切到 gen-cli.render.mjs，件从超线回到线内）→ 293
+    //     → 299（#953：程序面标记 surface＋路由守卫，框架级变更，挂号值 380 留档、只许变短）。
+    const ceilings = [['src/cli/cmd_read.ts', 318], ['scripts/gen-cli.mjs', 299]];
     for (const [rel, ceiling] of ceilings) {
       const n = lf(join(PKG, rel));
       assert.ok(n <= ceiling, rel + ' 涨到 ' + n + ' LF（挂号值 ' + ceiling + '，只许降）：加东西要加到它自己域的能力目录去');

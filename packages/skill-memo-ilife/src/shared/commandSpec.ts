@@ -46,6 +46,10 @@ export interface ReadCommandSpec {
   /** 代表唤醒词（生成 SKILL.md 速查表那一列用）；**可缺**（如 `memo.auth` 只有诊断两档、没有唤醒词）；
    *  给定时必须是路由声明里真有的词（生成期拦，见 `scripts/gen-cli.mjs`）。 */
   readonly wakeWord?: string;
+  /** #953 · 程序面标记：`'program'`＝这条命令只给程序用——生成器把它从**速查表**与
+   *  **唤醒词路由**里跳过（模型看不见）；键表与注册表保留，插件程序照样能调。
+   *  缺省＝既有行为，生成结果一字不变。出处：`docs/agents/数据族-规格.md` §七主做法①。 */
+  readonly surface?: 'program';
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列用）；缺它或为空即生成期抛。 */
   readonly example: string;
   readonly run: CommandHandler;
@@ -57,6 +61,8 @@ export interface WriteCommandSpec {
   readonly key: string;
   readonly title: string;
   readonly wakeWord?: string;
+  /** #953 · 程序面标记（口径见 `ReadCommandSpec.surface`）：只给程序用的键不进速查表与路由。 */
+  readonly surface?: 'program';
   readonly example: string;
   readonly run: CommandHandler;
 }
@@ -68,6 +74,8 @@ export interface PreOpenCommandSpec {
   readonly shape: EnvelopeShape;
   readonly title: string;
   readonly wakeWord?: string;
+  /** #953 · 程序面标记（口径见 `ReadCommandSpec.surface`）：只给程序用的键不进速查表与路由。 */
+  readonly surface?: 'program';
   readonly example: string;
   readonly run: PreOpenHandler;
 }

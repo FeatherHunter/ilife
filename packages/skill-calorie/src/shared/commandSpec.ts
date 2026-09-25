@@ -52,6 +52,10 @@ export interface ReadCommandSpec {
    *  名字的事实住这里（能力目录），SKILL.md 的「场景 03 体重工作流程」各写一次步骤、不另存清单；
    *  名字不在名单里时 `pnpm gen` 与 `pnpm help:build` 当场抛，不静默漏一列。 */
   readonly flows?: readonly string[];
+  /** #953 · 程序面标记：`'program'`＝这条命令只给程序用——生成器把它从**速查表**与
+   *  **唤醒词路由**里跳过（模型看不见）；键表与注册表保留，插件程序照样能调。
+   *  缺省＝既有行为，生成结果一字不变。出处：`docs/agents/数据族-规格.md` §七主做法①。 */
+  readonly surface?: 'program';
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: ViewHandler;
@@ -71,6 +75,8 @@ export interface WriteCommandSpec {
   readonly wakeWord?: string;
   /** #338 · 这条命令服务的工作流程名（口径、取值与「为什么是表」见 `ReadCommandSpec.flows`）。 */
   readonly flows?: readonly string[];
+  /** #953 · 程序面标记（口径见 `ReadCommandSpec.surface`）：只给程序用的键不进速查表与路由。 */
+  readonly surface?: 'program';
   /** 照抄即能跑的一行（生成 SKILL.md 速查表「例」列的 `EXAMPLES` 用）；缺它 SKILL.md 生成即抛。 */
   readonly example: string;
   readonly run: WriteHandler;
