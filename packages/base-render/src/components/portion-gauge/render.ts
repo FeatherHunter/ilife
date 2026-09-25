@@ -69,7 +69,9 @@ function rowHtml(r: PortionGaugeRowModel): string {
 function footHtml(m: PortionGaugeModel): string {
   const parts: string[] = ['<p class="' + portionGaugeSlot('note') + '">' + esc(m.note) + '</p>'];
   if (m.missingCount > 0) {
-    parts.push('<p class="' + portionGaugeSlot('missing') + '">还差 ' + String(m.missingCount)
+    /* 那个数在 `model.ts` 就定好形（与克数同一把分组）：这里只贴，不再自己 `String()` 一遍
+       ——两处各拼一遍必然走散（同 `gramsText`／`shareText` 的口径）。 */
+    parts.push('<p class="' + portionGaugeSlot('missing') + '">还差 ' + m.missingText
       + ' 样没有换算</p>');
   }
   return parts.join('');

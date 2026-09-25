@@ -74,9 +74,6 @@ export function portionGaugeSlot(slot: PortionGaugeSlot, prefix = 'ilife-'): str
 export const PORTION_GAUGE_FORMS = ['convert'] as const;
 export type PortionGaugeForm = (typeof PORTION_GAUGE_FORMS)[number];
 
-/** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
-export const PORTION_GAUGE_MISSING = '—';
-
 /** 窄容器阈值（px）：换算框与占比行改走单列。**只有一个来源** —— `style.ts` 读它。 */
 export const PORTION_GAUGE_NARROW_PX = 480;
 

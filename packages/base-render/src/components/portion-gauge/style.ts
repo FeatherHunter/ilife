@@ -9,6 +9,8 @@
  *  两处几何契约（判据钉住）：
  *   · **位置由值算出**：占比填充的宽度是行内算出来的百分比（`model.ts` 里由同一个占比出，
  *     与占比那句的字是同一个数）——读者按条读到的占比就是那句说的占比；
+ *     **条那一轨有最小宽**（`PORTION_GAUGE_BAR_MIN_PX`）：长占比句让位换行，不许把条挤成 0 宽
+ *     （条是 0 长而那句写着 70% ＝ 两处读数走散）；
  *   · **色不是唯一信息**：占比条是强调色**实底**（无文字的图形那一档）＋ 那句占比给字；
  *     缺换算那一行是提醒软底 ＋ 提醒字（两样同时在）。**没有一处拿正文墨色当“面”**。
  */
@@ -17,6 +19,12 @@ import { PORTION_GAUGE_NARROW_PX, portionGaugeSlot, type PortionGaugeSlot } from
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
+
+/** 占比条那一轨的**最小宽**（px）：容器宽全被占比句吃掉时，条仍要留得下一条读得出比例的实底
+ *  （同族口径先例 `compare-columns` 的 `COMPARE_COLUMNS_BAR_MIN_PX`）。
+ *  **只有一个来源** —— `style.ts` 读它拼轨宽；判据拿它对真机读数（条宽 ≥ 它）。
+ *  窄档（`≤ PORTION_GAUGE_NARROW_PX`）走单列、条占满整行，不靠这条最小宽。 */
+export const PORTION_GAUGE_BAR_MIN_PX = 72;
 
 /** 本组件的样式段。恒返回非空 CSS 文本。 */
 export function portionGaugeCss(input?: { readonly prefix?: string }): string {
@@ -195,7 +203,11 @@ export function portionGaugeCss(input?: { readonly prefix?: string }): string {
     /* 实物占比：占比条 ‖ 那句占比（三栏里的第三栏）。 */
     s('obj') + ' {',
     '  display: grid;',
-    '  grid-template-columns: minmax(0, 1fr) auto;',
+    /* 第一轨（占比条）**有最小宽**：第二轨是 `auto`——按 max-content 吃宽，长占比句（32／64／128 字）
+       在宽档会把第一轨压成 0：条还在、长度却是 0，读者按条读到的占比是 0，而那句照写 70%
+       （2026-09 真机读数 `gridTemplateColumns = "0px 473px"`、`bar = 0px`）。故第一轨给最小宽，
+       长占比句改成**换行让位**；第二轨写 `minmax(0, auto)`，不留内容撑宽的下限。 */
+    '  grid-template-columns: minmax(' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px, 1fr) minmax(0, auto);',
     '  gap: 8px;',
     '  align-items: center;',
     '  min-width: 0;',

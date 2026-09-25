@@ -3,7 +3,8 @@
  * 覆盖六组判据：
  *  ① **渲染契约**：骨架与行数／**换算链三栏同一份真值**（从**印出来的占比句**反推百分比，
  *     再把每一条的宽度逐点对账；克数串与菜谱串两处同引；小数占比与 0／100 两档边界也在里面）／
- *     缺换算那一支／转义面／**全部**非法入参分支（每个都断 `BlocksError`）；
+ *     缺换算那一支／指数写法的数不被打散（`1e+21`／`1e-7` 与缺换算计数同走一把分组）／
+ *     转义面／**全部**非法入参分支（每个都断 `BlocksError`）；
  *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且**只出现一次**、
  *     零 `:root`／`!important`／零新 token／零 `@media` 宽度查询／零手写色值／零把 `ink` 系当面／
  *     零可点元素／**窄档阈值只有一处来源**；
@@ -11,6 +12,8 @@
  *  ④ **四档几何（真机 headless Chrome ＋ CDP）**：**容器**宽度 320／390／620／1280 下零横向溢出
  *     （含长口径／长单位／满 8 行三种压力样例）、**每一条**的宽度与占比句的百分比逐点对上
  *     （差 ≤2 个百分点）、窄档换算框改走单列（`@container` 真在生效）、数值零截断；
+ *  ④b **宽档长占比句（真机）**：容器 481／620／1280 × 占比项名 32／64／128 字——占比条恒有宽
+ *     （≥ `PORTION_GAUGE_BAR_MIN_PX`）且填充与那句占比同源（旧写法下真机读数 `"0px 473px"`、条 0 宽）；
  *  ⑤ **皮肤纪律**：同一份入参渲染四次逐字节相同、标记不带皮肤类、真机上四套皮肤里的 `innerHTML`
  *     逐字节相同、缺换算那一行真取到取值表里的提醒底与提醒字；
  *  ⑥ **分隔符门**（`test/separator-probe.mjs` 的 R1–R3）：本件生成的字里不出现 `·`／`；`／并列顿号。
@@ -24,6 +27,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  PORTION_GAUGE_BAR_MIN_PX,
   PORTION_GAUGE_CLASS,
   PORTION_GAUGE_FORMS,
   PORTION_GAUGE_MAX_ROWS,
@@ -275,6 +279,39 @@ describe('portion-gauge ① 渲染契约 · 形态 convert 换算三栏', () => 
       /-missing">还差 2 样没有换算</);
   });
 
+  it('**指数写法的数不许被三位分组切开**（`1e,+21` 那种），缺换算的计数同走一把分组', () => {
+    const huge = renderPortionGauge({
+      title: '份量换算',
+      rows: [
+        { name: '年夜饭', recipe: '10 份', grams: 1e21, shareOf: '蛋白', sharePct: 100 },
+        { name: '味精', recipe: '一撮', grams: 1e-7, shareOf: '钠', sharePct: 0 },
+      ],
+      missingCount: 1234567,
+    });
+    assert.equal(/e,/.test(huge), false, '指数写法里不许插进逗号：'
+      + (huge.match(/[^>]*e,[^<]*/) || [''])[0]);
+    assert.equal(/,\+/.test(huge), false);
+    assert.ok(huge.includes('e+21 g'), '量级大到只给指数时原样写：' + (huge.match(/[^>]*e[+-]?\d+[^<]*/) || [''])[0]);
+    assert.ok(huge.includes('e-7 g'), '量级小到只给指数时原样写');
+    assert.match(huge, /-missing">还差 1,234,567 样没有换算</, '缺换算的计数与克数走同一把分组');
+    /* 非有限值一律 `badInput`（写不出数的东西不上屏；缺换算计数同办）。 */
+    for (const [what, row] of [['grams=Infinity', { ...SINGLE_INPUT.rows[0], grams: Infinity }],
+      ['grams=-Infinity', { ...SINGLE_INPUT.rows[0], grams: -Infinity }],
+      ['grams=NaN', { ...SINGLE_INPUT.rows[0], grams: NaN }],
+      ['sharePct=Infinity', { ...SINGLE_INPUT.rows[0], sharePct: Infinity }]]) {
+      assert.equal(throwsBlocks(() => renderPortionGauge({ ...SINGLE_INPUT, rows: [row] })), true,
+        '非有限值必须拒：' + what);
+    }
+    for (const bad of [Infinity, -Infinity, NaN]) {
+      assert.equal(throwsBlocks(() => renderPortionGauge({ ...SINGLE_INPUT, missingCount: bad })), true,
+        '缺换算计数非有限值必须拒：' + String(bad));
+    }
+    /* 边界自证：`1e21`／`1e-7` 是合法输入，不许误杀（值一样就一样大，不按量级分档）。 */
+    assert.ok(renderPortionGauge({
+      title: '份量换算', rows: [{ name: 'x', recipe: '1 份', grams: 1e21, shareOf: '蛋白', sharePct: 30 }],
+    }).length > 0, '1e21 应正常渲染');
+  });
+
   it('缺槽就不出那一槽（不留空位、不拿占位符顶替）', () => {
     const bare = renderPortionGauge(SINGLE_INPUT);
     assert.equal(bare.includes(portionGaugeSlot('stamp')), false, '不给口径＝不出那一枚');
@@ -472,6 +509,18 @@ describe('portion-gauge ② 样式纪律', () => {
     assert.match(css, /:focus-visible \{/, '必须有 :focus-visible 规则');
     assert.match(css, /outline: 2px solid /, '焦点描边 ≥2px 且可见');
     assert.equal(/outline:\s*(none|0)/.test(css), false, '不许只写 outline:none 而不给替代');
+  });
+
+  it('**占比条那一轨有最小宽**：宽档里那条 `auto` 轨吃不动它（条不许被长占比句挤成 0 宽）', () => {
+    const clean = stripComments(portionGaugeCss());
+    const obj = ruleOf(clean, '.' + portionGaugeSlot('obj'));
+    assert.ok(obj.includes('minmax(' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px, 1fr)'),
+      '占比条那一轨没有最小宽（长占比句会把条压成 0：条 0 宽、那句还写着 70%）：' + obj);
+    assert.ok(/grid-template-columns:\s*minmax\(\d+px, 1fr\) minmax\(0, auto\)/.test(obj),
+      '占比条那一轨的最小宽写法不对（第二轨要 `minmax(0, auto)`：不留内容撑宽的下限）：' + obj);
+    /* 那条最小宽**只有一个来源**：常量 → 样式段。 */
+    assert.equal((stripComments(portionGaugeCss()).match(new RegExp(String(PORTION_GAUGE_BAR_MIN_PX) + 'px', 'g')) || []).length,
+      1, '条的最小宽在样式段里只许出现一次（两处各写一个数必然走散）');
   });
 
   it('缺省前缀 `ilife-`；换前缀时 scope 与槽类**一起**换', () => {
@@ -743,6 +792,107 @@ describe('portion-gauge ④⑤ 四档几何与皮肤纪律（真机 headless Chr
           + ' maxRootClientW=' + Math.max(...cells.map((s) => s.clientW))
           + ' cells=' + cells.length);
       }
+    } finally { page.close(); }
+  });
+});
+
+/* ── ④b 宽档长占比句（真机）：占比条不许被长句挤成 0 宽 ──────────────── */
+
+/** 宽档三档**容器**宽（481 是过窄档阈值 `PORTION_GAUGE_NARROW_PX` 的第一档；窄档走单列，不发生这条病）。 */
+const WIDE_WIDTHS = [481, 620, 1280];
+/** 占比项名的三种长度（字）：32／64／128。 */
+const SHARE_LENGTHS = [32, 64, 128];
+/** 长占比项名的料（中文长句在真机上按 max-content 吃宽——正是把条挤成 0 宽的那一类）。 */
+const SHARE_FILLER = '一天需要的膳食纤维蛋白质维生素矿物质与微量元素合计摄入量'.repeat(8);
+/** 长占比句压力样例：两行，占比 70／46（一行一个非零占比，逐点对账）。 */
+const longShareInput = (len) => ({
+  title: '份量换算', stamp: '菜谱 → 营养库', tail: '1 份 ＝ 350 g',
+  rows: [
+    { name: '红烧肉', kind: '主料', recipe: '2 份', grams: 700, shareOf: SHARE_FILLER.slice(0, len), sharePct: 70 },
+    { name: '米饭', kind: '主食', recipe: '2 碗', grams: 300, basis: '1 碗 ＝ 150 g',
+      toLabel: '生重', shareOf: SHARE_FILLER.slice(0, len), sharePct: 46 },
+  ],
+});
+
+describe('portion-gauge ④b 宽档长占比句（真机 headless Chrome ＋ CDP）', () => {
+  const list = SHARE_LENGTHS.map((len) => ({ name: 'len' + String(len), len, pcts: [70, 46] }));
+  const casesHtml = list.map((c) => '<section data-case="' + c.name + '">'
+    + renderPortionGauge(longShareInput(c.len)) + '</section>').join('');
+
+  /** 一格的真机读数：本件根 ＋ 每一行的轨宽／条宽／填充宽／那句占比。 */
+  const MEASURE = '(function(){var root=document.querySelector(SEL);'
+    + 'if(root===null)return null;'
+    + 'var rows=[].slice.call(root.querySelectorAll(ROW));'
+    + 'return{scrollW:root.scrollWidth,clientW:root.clientWidth,rows:rows.map(function(row){'
+    + 'var obj=row.querySelector(OBJ),bar=row.querySelector(BAR),fill=row.querySelector(FILL);'
+    + 'var share=row.querySelector(SHARE);'
+    + 'var bw=bar.getBoundingClientRect().width,fw=fill.getBoundingClientRect().width;'
+    + 'return{cols:getComputedStyle(obj).gridTemplateColumns,'
+    + 'barW:Math.round(bw*10)/10,fillW:Math.round(fw*10)/10,'
+    + 'ratio:bw===0?null:Math.round(fw/bw*1000)/10,'
+    + 'pct:parseFloat(fill.style.width),'
+    + 'said:parseFloat((share.textContent.match(/([\\d.]+)%/)||[])[1]),'
+    + 'shareLen:share.textContent.length};})};}())';
+
+  it('容器 481／620／1280 × 占比句 32／64／128 字：条恒有宽（≥ 最小宽）且填充与那句同源', async (t) => {
+    const page = await startShapesPage({
+      html: SKIN_NAMES.map((skin) => '<div class="ilife-page-ui ' + skinClass(skin) + '">'
+        + casesHtml + '</div>').join('\n'),
+      css: skinCss() + '\n' + portionGaugeCss(),
+      height: 1600,
+    });
+    if (page === null) {
+      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性判据：占比条那一轨带最小宽 '
+        + String(PORTION_GAUGE_BAR_MIN_PX) + 'px（旧写法 `minmax(0, 1fr) auto` 会被长占比句压成 0 宽）');
+      const obj = ruleOf(stripComments(portionGaugeCss()), '.' + portionGaugeSlot('obj'));
+      assert.ok(obj.includes('minmax(' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px, 1fr)'),
+        '占比条那一轨没有最小宽（长占比句会把条压成 0：条 0 宽、那句还写着 70%）：' + obj);
+      return t.skip('本机无 Chrome／Chromium：宽档长占比句判据需真浏览器');
+    }
+    try {
+      for (const width of WIDE_WIDTHS) {
+        await page.setWidth(width);
+        for (const skin of SKIN_NAMES) {
+          for (const c of list) {
+            const scope = '.' + skinClass(skin) + ' [data-case=' + c.name + '] ';
+            const expr = MEASURE
+              .replace('SEL', JSON.stringify(scope + '.' + PORTION_GAUGE_CLASS))
+              .replace('ROW', JSON.stringify('.' + portionGaugeSlot('row')))
+              .replace('OBJ', JSON.stringify('.' + portionGaugeSlot('obj')))
+              .replace('BAR', JSON.stringify('.' + portionGaugeSlot('bar')))
+              .replace('FILL', JSON.stringify('.' + portionGaugeSlot('fill')))
+              .replace('SHARE', JSON.stringify('.' + portionGaugeSlot('share')));
+            const m = await page.ev(expr);
+            const at = width + ' 档 ' + skin + ' ' + c.name + '（占比句 ' + String(c.len) + ' 字）';
+            assert.ok(m !== null, at + '：找不到本件根');
+            assert.ok(m.scrollW <= m.clientW + 1, at + '：横向溢出 ' + m.scrollW + ' > ' + m.clientW);
+            assert.equal(m.rows.length, c.pcts.length, at + '：行数不对');
+            m.rows.forEach((r, i) => {
+              const line = at + ' 第 ' + String(i + 1) + ' 行';
+              /* 夹具自证：占比句真有那么长（不然这条判据在空转——短句挤不动条）。 */
+              assert.ok(r.shareLen >= c.len, line + '：占比句只读到 ' + r.shareLen
+                + ' 字（应 ≥ ' + c.len + '）⇒ 这条判据在空转');
+              /* **头号读数**：条非 0 宽（旧写法在这里读到 0，那句照写着占比）。 */
+              assert.ok(r.barW > 0, line + '：占比条被挤成 ' + r.barW + ' 宽（那句还写着 '
+                + String(c.pcts[i]) + '%）｜gridTemplateColumns = ' + r.cols);
+              assert.ok(r.barW >= PORTION_GAUGE_BAR_MIN_PX - 0.5, line + '：条只有 ' + r.barW
+                + ' 宽，比最小宽 ' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px 还窄｜gridTemplateColumns = ' + r.cols);
+              /* **同源**：条宽由占比算出——行内宽度、印出来的那句、真机量到的比值三处对得上。 */
+              assert.equal(r.pct, c.pcts[i], line + '：行内宽度不是占比本身');
+              assert.equal(r.said, c.pcts[i], line + '：占比句与条宽走散');
+              assert.ok(Math.abs(r.ratio - c.pcts[i]) <= 2, line + '：条宽占轨道 ' + r.ratio
+                + '%，占比却是 ' + String(c.pcts[i]) + '%');
+            });
+            if (skin === SKIN_NAMES[0]) {
+              console.log('READING portion-gauge 宽档 w=' + String(width) + ' ' + c.name
+                + ' cols=' + JSON.stringify(m.rows[0].cols) + ' barW=' + String(m.rows[0].barW)
+                + ' fillW=' + String(m.rows[0].fillW) + ' ratio=' + String(m.rows[0].ratio)
+                + ' pct=' + String(m.rows[0].pct) + ' 各行barW=[' + m.rows.map((r) => r.barW).join('、') + ']');
+            }
+          }
+        }
+      }
+      assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
     } finally { page.close(); }
   });
 });

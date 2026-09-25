@@ -42,7 +42,11 @@ export interface PortionGaugeModel {
   readonly tail?: string;
   readonly rows: readonly PortionGaugeRowModel[];
   readonly note: string;
+  /** 缺换算的食材有几样（0＝没有缺的，那一行整行不出）。 */
   readonly missingCount: number;
+  /** 缺换算那一行里的数（`还差 12 样没有换算` 里的 `12`）：**与克数走同一把分组**（同一处出，
+   *  指数写法同样不被打散）；`missingCount` 是 0 时是空串（那一行整行不出）。 */
+  readonly missingText: string;
   readonly extraClass?: string;
 }
 
@@ -66,9 +70,15 @@ function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
-/** 三位分组（`1200` → `1,200`；负号留在最前；小数部分原样）。 */
+/** 三位分组（`1200` → `1,200`；负号留在最前；小数部分原样）。
+ *
+ *  **指数写法原样返回**：量级大到（或小到）`String()` 只给指数写法时（`1e+21`／`1e-7`），
+ *  按三位插逗号会把它切成 `1e,+21`／`1,e-7`——那是**读不出来的数**（同族先例
+ *  `spread-dist/scale.ts` 的 `numText()`）。**非有限值一律 `badInput`**：写不出数的东西不上屏。 */
 function groupNum(value: number): string {
+  if (!Number.isFinite(value)) badInput('portion-gauge: 要写的数必须是有限数（读不到 ' + String(value) + '）');
   const s = String(value);
+  if (s.includes('e') || s.includes('E')) return s;
   const dot = s.indexOf('.');
   const head = dot < 0 ? s : s.slice(0, dot);
   const frac = dot < 0 ? '' : s.slice(dot);
@@ -130,7 +140,7 @@ function reqRows(value: unknown): readonly PortionGaugeRow[] {
   });
 }
 
-/** 缺换算有几样（非负整数；0＝没有缺的）。 */
+/** 缺换算有几样（非负整数；0＝没有缺的）。**写法与克数同一处出**：屏上那个数经 `groupNum()`。 */
 function reqMissingCount(value: unknown): number {
   if (value === undefined) return 0;
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
@@ -168,6 +178,9 @@ export function normalizePortionGauge(input: unknown): PortionGaugeModel {
     return model;
   });
 
+  /* 缺换算那个数也在这一处定形（写法与克数同一把分组）：`render.ts` 只贴它，不再自己 `String()`。 */
+  const missingCount = reqMissingCount(raw.missingCount);
+
   return {
     form: form as PortionGaugeForm,
     title: reqRealText(raw.title, 'portion-gauge: input.title'),
@@ -175,7 +188,8 @@ export function normalizePortionGauge(input: unknown): PortionGaugeModel {
     tail: optRealText(raw.tail, 'portion-gauge: input.tail'),
     rows,
     note: optRealText(raw.note, 'portion-gauge: input.note') ?? PORTION_GAUGE_NOTE,
-    missingCount: reqMissingCount(raw.missingCount),
+    missingCount,
+    missingText: missingCount > 0 ? groupNum(missingCount) : '',
     extraClass: optExtraClass(raw.extraClass, 'portion-gauge: input.extraClass'),
   };
 }
