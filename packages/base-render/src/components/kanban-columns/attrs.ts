@@ -1,18 +1,26 @@
 /** kanban-columns · **标记契约**（渲染与运行时共用的唯一事实：类名／槽位／`data-*`／事件名／闭集／入参类型）。
  *
  *  这一件落地的是原型墙（`.scratch/ui-组件墙/新件/parts-交互与流程.mjs` 第 88 件，2026-09 用户裁定）
- *  里的 **A 一档「按状态分列（含一次挪动与一个空列）」**——多列并排、列头带计数与「＋」，
- *  卡片能在列之间移动；同一件里的 B 档「按位置分列 ＋ 列内二级组」打分未过、**不落**
- *  （它的类与规则一个都不搬）。
+ *  里的**两档骨架**：
+ *   · **`status`「按状态分列」**（原型 A 档）——列＝状态（想做／在做／做过了），多列并排、列头带计数与「＋」，
+ *     卡片能在列之间移动（4/4/4）；
+ *   · **`grouped`「按位置分列 ＋ 列内二级组」**（原型 B 档，优化后 4/4/4 补落）——列＝位置
+ *     （玄关／厨房／卧室），列里再挂一层二级组（出门要带／调料柜），最小单位是一行物件
+ *     （`雨伞` ／ `1 把`）。
  *
- *  形态键写在 `KANBAN_COLUMNS_FORMS` 闭集里：档键取**骨架的名字**（`status`＝按状态分列），
- *  原型墙上的格号（A）不是接口名（同批 `drag-sort` 的 `lift` 同此口径）。
+ *  形态键写在 `KANBAN_COLUMNS_FORMS` 闭集里：档键取**骨架的名字**（`status`＝按状态分列／
+ *  `grouped`＝列内二级组），原型墙上的格号（A／B）不是接口名（同批 `drag-sort` 的 `lift` 同此口径）。
  *  闭集外的值一律 `badInput`（不静默降级：降级会让调用方以为自己拿到了另一种骨架）。
  *
- *  **触屏地板**（触屏优先法条）：整张卡就是那颗按钮（点卡＝选中）；挪动**不走拖拽**——
- *  选中一张卡、再点目标列那枚看得见的收纳按钮，手机上同一套标记走得通；
+ *  **触屏地板**（触屏优先法条）：整张卡／整个物件行就是那颗按钮（点它＝选中）；挪动**不走拖拽**——
+ *  选中一行、再点目标列那枚看得见的收纳按钮，手机上同一套标记走得通；
  *  取消也在状态句旁边（看得见、点得到）；`:focus-visible` 留给真实键盘用户。
  *  列名与计数**永不截断**（样式段里没有省略手段），状态靠「形 ＋ 字 ＋ 色」三样。
+ *
+ *  **一屏只留一层话**（用户 2026-09-26 的硬口径：原型里那些旁白／口径句一句都别上屏）：
+ *  两档骨架上屏的都只有读数——列名＋列计数、组名＋组计数、行名＋行值、状态句、脚注。
+ *  原型 B 档那一段 `c-kan-cap` 长口径、以及列头第二级字（「进门这一块」那类旁白）**一个字节都不搬**：
+ *  `grouped` 档的列头根本没有 `purpose` 那一格（给了就 `badInput`，不静默吞掉）。
  */
 
 /** 本件的类名根：全部槽位类名都是 `KANBAN_COLUMNS_CLASS + '-' + 槽名`。 */
@@ -42,6 +50,21 @@ export const KANBAN_COLUMNS_SLOTS = [
   'add',
   /** 列身（卡 ＋ 收纳键 ＋ 空槽住这里；空列撑到同高）。 */
   'body',
+  /* ── `grouped` 档的**二级组**与**物件行**（只有这一档画它们；`status` 档一个字节都不出） ── */
+  /** 二级组（组名行 ＋ 组里的物件行；这一列里的一「格」）。 */
+  'group',
+  /** 组名行（组名 ＋ 组计数；组名底下压一道发丝线，把这一层与物件行分开）。 */
+  'ghead',
+  /** 组名（如「出门要带」；**永不截断**）。 */
+  'gname',
+  /** 组计数（如「2 件」；**永不截断**，同一列里几个组各报各的数）。 */
+  'gcount',
+  /** 一行物件（**整行就是那颗按钮**：点它＝选中／再点＝取消；行上**没有**自己的竖边）。 */
+  'row',
+  /** 物件的名字（如「雨伞」；**永不截断**）。 */
+  'label',
+  /** 物件的量（如「1 把」「30 g」；不给就不出这一格）。 */
+  'value',
   /** 一张卡（**整卡就是那颗按钮**：点它＝选中／再点＝取消）。 */
   'card',
   /** 卡标题（如「葱油饼」；**永不截断**）。 */
@@ -72,9 +95,19 @@ export function kanbanColumnsSlot(slot: KanbanColumnsSlot, prefix = 'ilife-'): s
   return prefix + 'block-kanban-columns-' + slot;
 }
 
-/** 形态闭集：本件只落地 A 一档「按状态分列」（键名 `status`：列＝状态，卡在列之间挪就是改状态）。 */
-export const KANBAN_COLUMNS_FORMS = ['status'] as const;
+/** 形态闭集：本件落地**两档骨架**——
+ *   `status`＝列按状态分列（列里的最小单位是一张卡）；
+ *   `grouped`＝列按位置分列 ＋ **列里再挂一层二级组**（列里的最小单位是一行物件）。
+ *  两档共用同一套交互（点一行拿起 ＋ 点目标列的收纳键挪过去）与同一段运行时段。 */
+export const KANBAN_COLUMNS_FORMS = ['status', 'grouped'] as const;
 export type KanbanColumnsForm = (typeof KANBAN_COLUMNS_FORMS)[number];
+
+/** 形态类名（挂在本件类名根上）：`status` → `is-status`、`grouped` → `is-grouped`。
+ *  **渲染期与运行时段读同一个助手**：运行时段靠它认「这一块是哪一档」（落点线／空槽／组计数／
+ *  状态句四处都按形态走）；两处各写一个字面量就会走散——`style-grouped.ts` 里每一条也钉在它上面。 */
+export function kanbanColumnsFormClass(form: KanbanColumnsForm): string {
+  return 'is-' + form;
+}
 
 /* ── `data-*` 名（渲染与运行时共用的发现锚） ───────────────────────── */
 
@@ -134,6 +167,10 @@ export const KANBAN_COLUMNS_GAP_PX = 8;
  *
  *  样式段只读这里，不另写 2。 */
 export const KANBAN_COLUMNS_LIFT_PX = 2;
+/** `grouped` 档**二级组**那道竖边的宽度（px）。**全档唯一一道层次边**：物件行自己不带竖边
+ *  （原型那里一根组边里再嵌五根行边，左沿六条边在读，层次反而糊）。
+ *  组名行底下那一道发丝线（1px）是这一层的另一半——「边准」＝一道 3px 的组边 ＋ 一道 1px 的发丝线。 */
+export const KANBAN_COLUMNS_GROUP_EDGE_PX = 3;
 /** 本件自己的**容器**名（`@container` 按它命中，不会跟别件的容器串味）。 */
 export const KANBAN_COLUMNS_CONTAINER = 'ilife-kanban-columns';
 /** 窄档断点（px）：**本件自己**窄于它就一列一屏 ＋ 分段切换。这是容器断点，不是视口断点。 */
@@ -144,7 +181,7 @@ export const KANBAN_COLUMNS_HOVER_QUERY = '(hover: hover) and (pointer: fine)';
 export const KANBAN_COLUMNS_MIN_COLS = 2;
 /** 列数上限（列）：再多请调用方先分组（那是调用方的活，不是本件的活）。 */
 export const KANBAN_COLUMNS_MAX_COLS = 4;
-/** 一列的卡数上限（张）：再多请调用方先分组。 */
+/** 一列的卡数上限（张）：`status` 档按卡数、`grouped` 档按**全列行数**算（再多请调用方先分组）。 */
 export const KANBAN_COLUMNS_MAX_CARDS = 20;
 /** 每列的记号（形：列名之外的另一重状态——色 ＋ 字 ＋ 形至少两样才算数）。 */
 export const KANBAN_COLUMNS_MARKS = ['●', '▸', '✓', '◆'] as const;
@@ -152,8 +189,11 @@ export const KANBAN_COLUMNS_MARKS = ['●', '▸', '✓', '◆'] as const;
 /* ── 文案（缺省的那几句；调用方换列名与卡名，状态句的语义别换） ───────── */
 
 export const KANBAN_COLUMNS_TEXT = Object.freeze({
-  /** 脚注：这一件的拿法（只说看得见的通路，不提拖拽那一路）。 */
+  /** 脚注：这一件的拿法（只说看得见的通路，不提拖拽那一路）。`status` 档：最小单位是一张卡。 */
   hint: '点一张卡选中，再点目标列的收纳按钮挪过去。',
+  /** `grouped` 档的脚注：那一档的最小单位是**一行物件**，字面照实写「一行物件」——
+   *  同一句话在两档里指的不是同一样东西，术语不许含糊。 */
+  rowHint: '点一行物件选中，再点目标列的收纳按钮挪过去。',
   /** 取消键上的字。 */
   cancel: '取消选中',
   /** 空槽两句：空着也保留列头与计数（空列不许消失）。 */
@@ -163,6 +203,8 @@ export const KANBAN_COLUMNS_TEXT = Object.freeze({
   emptyNote: '卡片挪过来就有内容。空着也保留列头与计数',
   /** 没选中时状态句写的那一句（真读数，不是占位）。 */
   idle: '还没选中卡片。',
+  /** `grouped` 档没选中那一句（同样是读数：那一档的最小单位是行）。 */
+  rowIdle: '还没选中物件。',
   /** 收纳键的字（中间夹列名）：`放到「做过了」`。 */
   receivePre: '放到「',
   receivePost: '」',
@@ -198,12 +240,24 @@ export function kanbanCountText(count: number, unit: string): string {
   return String(count) + ' ' + unit;
 }
 
+/** 选中那一句的**模板**（两档同一句语义，只住这一处）：`已选中「X」，点目标列的收纳按钮挪过去。` */
+function pickedText(name: string): string {
+  return '已选中「' + name + '」，点目标列的收纳按钮挪过去。';
+}
+
 /** 状态句（真读数：没选中写一句，选中了写清选的是谁、下一步点哪儿）。
  *  **没选中那一句不再接脚注**：脚注（`hint`）本来就写在同一块看板底下，
  *  两句一模一样的话连着出现两遍是看得到的重复（2026-09-25 看图读出来的）。 */
 export function kanbanStatusText(pickedTitle: string | null): string {
   if (pickedTitle === null) return KANBAN_COLUMNS_TEXT.idle;
-  return '已选中「' + pickedTitle + '」，点目标列的收纳按钮挪过去。';
+  return pickedText(pickedTitle);
+}
+
+/** 形态 `grouped` 的状态句：选中那一句与 `status` 档**逐字节同一句**（模板只住上面一处）；
+ *  差别只在没拿起的那一句与脚注——那一档的最小单位是**一行物件**，字面照实写。 */
+export function kanbanRowStatusText(pickedLabel: string | null): string {
+  if (pickedLabel === null) return KANBAN_COLUMNS_TEXT.rowIdle;
+  return pickedText(pickedLabel);
 }
 
 /* ── 入参类型 ───────────────────────────────────────────────────── */
@@ -218,18 +272,41 @@ export interface KanbanCard {
   readonly meta?: string;
 }
 
-/** 看板里的一列：一个状态，列里住着卡。 */
+/** 看板里的一列：一个状态。`status` 档的列用 `cards` 装东西（列头带计数与「＋」）。 */
 export interface KanbanColumn {
   /** 机器键（事件 `detail.from`／`to` 就是它）。**非空、看板内唯一**。 */
   readonly key: string;
-  /** 列名（如「想做」）。**非空；永不截断**。 */
+  /** 列名（如「想做」／`grouped` 档如「玄关」）。**非空；永不截断**。 */
   readonly name: string;
-  /** 这一列是干什么的（如「待做的菜」；列头的第二级字）。不给＝列头只剩「列名 ＋ 计数」**两行**。 */
+  /** `status` 档专用：这一列是干什么的（如「待做的菜」；列头的第二级字）。不给＝列头只剩「列名 ＋ 计数」**两行**。
+   *  **`grouped` 档不许给**（那一档列头只留读数：列名＋计数；旁白不上屏）。 */
   readonly purpose?: string;
-  /** 计数单位（如「道」；缺省 `件`）。屏上写「2 道」。 */
+  /** 计数单位（如「道」；缺省 `件`）。屏上写「2 道」。**两档共用一个单位**（组计数也用它）。 */
   readonly unit?: string;
-  /** 这一列的卡（顺序就是列身里的顺序；**给空数组 ＝ 设计过的空槽**，不是空白）。 */
-  readonly cards: readonly KanbanCard[];
+  /** `status` 档专用：这一列的卡（顺序就是列身里的顺序；**给空数组 ＝ 设计过的空槽**，不是空白）。
+   *  **`grouped` 档不许给**（那一档拿 `groups` 装东西）。 */
+  readonly cards?: readonly KanbanCard[];
+  /** `grouped` 档专用：这一列的二级组（**至少一组**，顺序就是屏上的顺序）。`status` 档不许给。 */
+  readonly groups?: readonly KanbanGroup[];
+}
+
+/** `grouped` 档的一行物件：一件东西 ＋ 它的量（如「雨伞 ／ 1 把」）。**整行就是那颗按钮**。 */
+export interface KanbanGroupItem {
+  /** 机器键（事件 `detail.key` 原样送出，卡落过去之后靠它认人）。**非空、整份看板内唯一**（与列键也不许撞）。 */
+  readonly key: string;
+  /** 物件的名字（如「雨伞」）。**非空；永不截断**。 */
+  readonly label: string;
+  /** 物件的量（如「1 把」「30 g」；不给＝这一行只有名字）。给了就不能只有空白。 */
+  readonly value?: string;
+}
+
+/** `grouped` 档的一个二级组：这一列里的一「格」（如「出门要带」「调料柜」）。
+ *  组名自己一行并压一道发丝线，组里的行挂在它下面（缩进）；组**没有机器键**——本件不拿它当数据（落点由结构定）。 */
+export interface KanbanGroup {
+  /** 组名（如「出门要带」）。**非空；永不截断**。 */
+  readonly name: string;
+  /** 组里的物件行（**给空数组 ＝ 设计过的空格**：组名与计数照常在，屏上不写旁白）。 */
+  readonly items: readonly KanbanGroupItem[];
 }
 
 /** 看板列入参。`id`／`columns` 两样必填。 */
@@ -238,7 +315,8 @@ export interface KanbanColumnsInput {
   readonly id: string;
   /** 各列（**2–4 列**，顺序就是屏上的顺序）。 */
   readonly columns: readonly KanbanColumn[];
-  /** 选中态：被选中那一张卡的机器键（须命中一张卡）。不给＝谁也没选中。 */
+  /** 选中态：被拿起那一行的机器键（`status` 档＝一张卡的键、`grouped` 档＝一行物件的键；
+   *  须命中看板里真有的那一行）。不给＝谁也没拿起。 */
   readonly pickedKey?: string;
   /** 窄档当前列（1 起，≤列数；缺省 1）。**宽档下它不画出来**（三列本来就并排）。 */
   readonly activeCol?: number;

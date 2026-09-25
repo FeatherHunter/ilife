@@ -13,6 +13,9 @@
  *     两端列的计数／状态句——由 `paint()` 整块重画（幂等：同一份状态画几次都一样）。
  *   · **空列不消失**：列里最后一张被收走时，运行时段补出那一块空槽；卡收进来时撤掉。
  *   · **只动三样节点**：落点线（每列一条）、空槽、取消键——都由本段建出与撤掉，别处不碰。
+ *   · **按形态走**（`is-grouped` 读自根的父节点，形态类名取自渲染期同一个助手）：
+ *     `grouped` 档**不插**落点线与空槽那两句旁白（一屏只留一层话），改为在 `paint()` 里重写**组计数**
+ *     （行挪进／挪出之后那一组的数也要对），收进来的行落进**最后一组**的末尾（组是那一档的格子）。
  *   · **幂等**：`<html>` 上一枚 `data-ilife-kanban-runtime` 拦住重复注入；根上记一枚 bound 读数。
  */
 import {
@@ -35,9 +38,11 @@ import {
   KANBAN_COLUMNS_STATE_ATTR,
   KANBAN_COLUMNS_STATUS_ATTR,
   KANBAN_COLUMNS_TEXT,
+  kanbanColumnsFormClass,
   kanbanColumnsSlot,
   kanbanCountText,
   kanbanDropText,
+  kanbanRowStatusText,
   kanbanStatusText,
 } from './attrs.js';
 
@@ -49,9 +54,12 @@ const LF = String.fromCharCode(10);
 const COUNT_GAP = kanbanCountText(0, 'U').replace('0', '').replace('U', '');
 
 /** 状态句两半：没选中那一句（渲染期给的就是它），与选中那一句的「前引 ＋ 后语」
- *  （拿一枚小标记切开，两半都取自 `kanbanStatusText()` 自己产的那一句）。 */
+ *  （拿一枚小标记切开，两半都取自 `kanbanStatusText()` 自己产的那一句）。
+ *  `grouped` 档同理取自己那一对（`kanbanRowStatusText()`）——两档的读数字面不同，不许混用。 */
 const STATUS_IDLE = kanbanStatusText(null);
 const STATUS_PICKED = kanbanStatusText('\u0001').split('\u0001');
+const STATUS_ROW_IDLE = kanbanRowStatusText(null);
+const STATUS_ROW_PICKED = kanbanRowStatusText('\u0001').split('\u0001');
 
 /** 落点线那句的前后半（`放这里＝标记为「` ＋ 列名 ＋ `」`）：同样从渲染期的那个函数上切出来。 */
 const DROP_TEXT = kanbanDropText('\u0001').split('\u0001');
@@ -76,10 +84,15 @@ export function buildKanbanColumnsJs(): string {
       + ', C_TITLE=' + q(slot('title')) + ';',
     '  var C_BADGE=' + q(slot('badge')) + ', C_MARK=' + q(slot('mark')) + ', C_DROP=' + q(slot('drop'))
       + ', C_SLOT=' + q(slot('slot')) + ', C_CANCEL=' + q(slot('cancel')) + ', C_HINT=' + q(slot('hint')) + ';',
+    /* `grouped` 档才用得到的三样：二级组、组计数、物件行的名字（形态类名取自渲染期同一个助手）。 */
+    '  var C_GROUP=' + q(slot('group')) + ', C_GCOUNT=' + q(slot('gcount')) + ', C_LABEL=' + q(slot('label'))
+      + ', C_FORM=' + q(kanbanColumnsFormClass('grouped')) + ';',
     '  var T_CANCEL=' + q(T.cancel) + ', T_EMPTY_TITLE=' + q(T.emptyTitle) + ', T_EMPTY_NOTE=' + q(T.emptyNote) + ';',
+    '  var T_ROW_IDLE=' + q(STATUS_ROW_IDLE) + ';',
     '  var T_DROP_PRE=' + q(DROP_TEXT[0]) + ', T_DROP_POST=' + q(DROP_TEXT[1]) + ';',
     '  var GAP=' + q(COUNT_GAP) + ', ST_IDLE=' + q(STATUS_IDLE) + ';',
     '  var ST_PICK_PRE=' + q(STATUS_PICKED[0]) + ', ST_PICK_POST=' + q(STATUS_PICKED[1]) + ';',
+    '  var ST_ROW_PRE=' + q(STATUS_ROW_PICKED[0]) + ', ST_ROW_POST=' + q(STATUS_ROW_PICKED[1]) + ';',
     '  var MARKS=' + JSON.stringify([...KANBAN_COLUMNS_MARKS]) + ';',
     '  var doc=document;',
     '  if (doc.documentElement.getAttribute(A_RT)==="1") return;',
@@ -91,6 +104,16 @@ export function buildKanbanColumnsJs(): string {
     '  function colOf(root,key){ var list=colsOf(root);',
     '    for (var i=0;i<list.length;i+=1){ if (list[i].getAttribute(A_COL)===key) return list[i]; } return null; }',
     '  function bodyOf(col){ return col.querySelector("."+C_BODY); }',
+    /* 这一块是哪一档：形态类名挂在根的**父节点**上（渲染期由 `kanbanColumnsFormClass()` 写）。
+       两档的落点线与空槽读法不同——`grouped` 档一屏只留一层话，不插那两句旁白。 */
+    '  function groupedOf(root){ var up=root.parentNode;',
+    '    return !!(up&&up.classList&&up.classList.contains(C_FORM)); }',
+    /* 收进来的行落在哪儿：`status` 档落在列身末尾；`grouped` 档落进**最后一组**的末尾
+       （组是那一档的格子：落在列身上就成了没有组头的孤儿行）。 */
+    '  function placeOf(col,grouped){ var body=bodyOf(col);',
+    '    if (!body||!grouped) return body;',
+    '    var groups=body.querySelectorAll("."+C_GROUP);',
+    '    return groups.length?groups[groups.length-1]:body; }',
     '  function cardsOf(col){ var body=bodyOf(col);',
     '    return body?[].slice.call(body.querySelectorAll("["+A_CARD+"]")):[]; }',
     '  function cardOf(root,key){ var list=root.querySelectorAll("["+A_CARD+"]");',
@@ -119,6 +142,7 @@ export function buildKanbanColumnsJs(): string {
     '    el.textContent=T_CANCEL; return el; }',
     /* ── 整块重画（幂等：拿起／挪动／取消三处动作之后都只调它一次） ────────────── */
     '  function paint(root){',
+    '    var grouped=groupedOf(root);',
     '    var raw=root.getAttribute(A_PICK), picked=raw?cardOf(root,raw):null;',
     '    if (picked===null&&raw!==null) root.removeAttribute(A_PICK);',
     '    var pickedCol=picked?picked.closest("["+A_COL+"]"):null;',
@@ -127,13 +151,17 @@ export function buildKanbanColumnsJs(): string {
     '      var col=cols[i], key=col.getAttribute(A_COL)||"", name=textIn(col,C_NAME);',
     '      var mark=MARKS[i%MARKS.length], body=bodyOf(col);',
     '      var recv=col.querySelector("["+A_RECEIVE+"]"), cards=cardsOf(col);',
-    '      var count=col.querySelector("."+C_COUNT);',
-    '      if (count) count.textContent=countText(cards.length,unitOf(col));',
+    '      var count=col.querySelector("."+C_COUNT), unit=unitOf(col);',
+    '      if (count) count.textContent=countText(cards.length,unit);',
+    /* `grouped` 档的组计数是**另一处读数**：行挪进／挪出之后那一组的数也得跟着改，不然屏上说谎。 */
+    '      if (grouped&&body){ var gs=body.querySelectorAll("."+C_GROUP);',
+    '        for (var n=0;n<gs.length;n+=1){ var gc=gs[n].querySelector("."+C_GCOUNT);',
+    '          if (gc) gc.textContent=countText(gs[n].querySelectorAll("["+A_CARD+"]").length,unit); } }',
     '      var empty=body?body.querySelector("."+C_SLOT):null;',
-    '      if (cards.length===0){ if (body&&!empty) body.insertBefore(buildSlot(doc),recv); }',
+    '      if (cards.length===0){ if (body&&!empty&&!grouped) body.insertBefore(buildSlot(doc),recv); }',
     '      else if (empty&&empty.parentNode) empty.parentNode.removeChild(empty);',
     '      var want=(picked!==null&&col!==pickedCol), drop=body?body.querySelector("."+C_DROP):null;',
-    '      if (want){ if (body&&!drop) body.insertBefore(buildDrop(doc,name),body.firstChild); }',
+    '      if (want&&!grouped){ if (body&&!drop) body.insertBefore(buildDrop(doc,name),body.firstChild); }',
     '      else if (drop&&drop.parentNode) drop.parentNode.removeChild(drop);',
     '      if (recv) recv.disabled=!want;',
     '      for (var j=0;j<cards.length;j+=1){',
@@ -152,7 +180,9 @@ export function buildKanbanColumnsJs(): string {
     '      if (hint&&hint.parentNode===root) root.insertBefore(made,hint); else root.appendChild(made);',
     '    } else if (picked===null&&cancelBtn&&cancelBtn.parentNode) cancelBtn.parentNode.removeChild(cancelBtn);',
     '    var status=root.querySelector("["+A_STATUS+"]");',
-    '    if (status) status.textContent=(picked===null)?ST_IDLE:(ST_PICK_PRE+textIn(picked,C_TITLE)+ST_PICK_POST);',
+    /* 状态句按形态取：`status` 档念卡标题、`grouped` 档念物件行的名字（各自取自己那一对常量）。 */
+    '    if (status) status.textContent=(picked===null)?(grouped?T_ROW_IDLE:ST_IDLE)',
+    '      :(grouped?(ST_ROW_PRE+textIn(picked,C_LABEL)+ST_ROW_POST):(ST_PICK_PRE+textIn(picked,C_TITLE)+ST_PICK_POST));',
     '    return picked!==null;',
     '  }',
     '  function cancelOf(root){ return root.querySelector("["+A_CANCEL+"]"); }',
@@ -169,11 +199,13 @@ export function buildKanbanColumnsJs(): string {
     '  function receive(root,to){',
     '    var key=root.getAttribute(A_PICK);',
     '    if (!key) return false;',
+    '    var grouped=groupedOf(root);',
     '    var card=cardOf(root,key), col=colOf(root,to), body=col?bodyOf(col):null;',
     '    if (!card||!body) return false;',
     '    var from=card.getAttribute(A_STATE);',
     '    if (from===to) return false;',
-    '    body.insertBefore(card,col.querySelector("["+A_RECEIVE+"]"));',
+    '    var place=placeOf(col,grouped), recv=col.querySelector("["+A_RECEIVE+"]");',
+    '    if (place===body) body.insertBefore(card,recv); else place.appendChild(card);',
     '    card.setAttribute(A_STATE,to);',
     '    root.removeAttribute(A_PICK);',
     '    paint(root);',

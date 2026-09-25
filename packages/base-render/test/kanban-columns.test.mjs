@@ -1,32 +1,37 @@
-/** kanban-columns（看板列 · 形态 status「按状态分列」）· 契约测试。
+/** kanban-columns（看板列）· 契约测试。**两档骨架**：`status`「按状态分列」（原型 A 档，4/4/4 已落地）
+ *  与 `grouped`「按位置分列 ＋ 列内二级组」（原型 B 档，优化后 4/4/4 补落）。判据分两段写：
+ *  `①②③` 的既有那几段钉的是 `status` 档（**一格不动**），`①B／②B／④B／⑤B` 钉的是新补的 `grouped` 档。
  *
  * 覆盖四类判据（工艺书 §6）＋ 皮肤与分隔符纪律：
- *  ① **渲染契约**：骨架（分段切换 ＋ 列区 ＋ 状态句 ＋ 脚注）／每列的列头（名 ＋ 计数 ＋ 用途 ＋ 加键）
+ *  ① **渲染契约**（`status`）：骨架（分段切换 ＋ 列区 ＋ 状态句 ＋ 脚注）／每列的列头（名 ＋ 计数 ＋ 用途 ＋ 加键）
  *    与列身（卡或空槽 ＋ 收纳键）／卡上那枚状态（记号 ＋ 列名）／空列是合法态／
  *    选中态（卡站起来 ＋ 其余各列的落点线与可点的收纳键 ＋ 取消键）／转义面／**全部**非法入参分支
  *    （每个都断 `BlocksError`；含**全空白串**（空格类 ＋ **零宽字符类**）、**入参表以外的键**
  *    （含**继承来的**与**不可枚举的**）、稀疏数组）／纯函数／分隔符门；
- *  ② **样式与零 DOM 纪律**：样式段非空、每条选择器 scope 在 `.ilife-page-ui` 之下且只出现一次、
- *    零 `:root`／`!important`／零新 token／零视口宽度查询／容器查询自己声明了容器／
- *    零省略手段（`text-overflow`／`line-clamp`／`nowrap`：列名与计数永不截断）／
- *    几何事实取常量（44／56／8／600）／状态不只靠颜色（形 ＋ 字 ＋ 色）／
- *    零手写色值、源码级零手写 `var(--ilife-…)`、不拿 `ink` 系当面／
- *    零键盘语汇（方向键那一路）／`dist/components/kanban-columns/**` 剥字面量后零 DOM／
- *    运行时段是产出的文本（IIFE、幂等、无 `innerHTML`、点选是唯一通路）；
+ *  ①B **新档渲染契约**（`grouped`）：形态闭集两档且**原有那一格在前、逐字节不动**／列头**一行读数**
+ *    （没有 `purpose` 那一格）／二级组（组名行 ＋ 组计数）／物件行（名字 ＋ 量，整行一颗按钮）／
+ *    拿起那一行（整行选中）／**一屏只留一层话**（原型旁白一句不上屏、行里不重复列名与组名）／
+ *    `groups`／`items`／键表按形态分的全部非法分支；
+ *  ② **样式与零 DOM 纪律**（`status` 那一段）＋ **②B 新档样式面**：组竖边一道 `KANBAN_COLUMNS_GROUP_EDGE_PX`／
+ *    组名行底下一道 1px 发丝线／**物件行不再各有竖边**（那道边是透明槽位）／列壳走 `--shadow`／
+ *    新档每一条规则都钉在 `.is-grouped` 上（`status` 档零命中）＋ 新档那一段**真的进了产物**（不是死引用）；
  *  ③ **加法式**：不启用它的页面零命中、逐字节不变；渲染本件不改别件产物；前缀透传；
  *    同一份入参渲染四次逐字节相同，且标记不带皮肤类；
- *  ④ **四档几何（真机 headless Chrome ＋ CDP，容器宽 320／390／620／1280）**：
+ *  ④ **四档几何（真机 headless Chrome ＋ CDP，容器宽 320／390／620／1280）**（`status`）：
  *    零横向溢出、列名与计数零截断、每枚可点件 ≥44×44、卡 ≥56 高、
  *    卡间缝按常量算的地板（没拿起的 ≥8；拿起的往上挪 `LIFT` ⇒ 它上面那道缝 8−2＝6，只此一处）、
  *    窄档一列一屏（分段切换出来）、宽档几列并排（切换整条不出）、空列的空槽一直在；
- *    **起不来就退确定性几何判据并打印原因**；
- *  ⑤ **行为（真机 · 真指针）**：全走 CDP 的 `Input.dispatchMouseEvent`（`p.mouse()`）——
- *    拿起（真指针点卡：完整事件序列 ＋ **类名序列**落账，选中那一档的底／描边／位移当场算出来）／
+ *  ④B **新档真机四档几何**（同一套探针）：零横溢、组竖边量出来＝常量、组名行发丝线 1px、
+ *    物件行**量出来没有竖边**（左沿透明、层次不靠边多）、列壳浮起（中性皮肤下 `--shadow` 算得出）、
+ *    列名与计数**同一行**（读数一行说完）、行 ≥44 高、行间缝 ≥8、窄档一列一屏 ＋ 分段是真按钮；
+ *  ⑤ **行为（真机 · 真指针）**（`status`）＋ **⑤B 新档行为（真机 · 真指针 CDP `Input`）**：
+ *    全走 `Input.dispatchMouseEvent`（`p= p.mouse()`：`mousePressed`／`mouseReleased`，浏览器自己合成那枚 `click`）——
+ *    拿起（真指针点卡／点行：完整事件序列 ＋ **类名序列**落账，选中那一档的底／描边／位移当场算出来）／
  *    挪动（**窄档真路径**：点卡 → 点分段 → 点该列的收纳键；点之前先断那一列到不了）／
- *    挪空一列／取消与改选（取消之后一张都不许还挂着 `is-picked`；改选之后只许一张）／
- *    加键与分段切换／列头恒两行；四套皮肤下标记逐字节相同。
+ *    挪空一列／取消与改选／加键与分段切换／列头恒两行；四套皮肤下标记逐字节相同。
  *    **`element.click()` 替不了这一条**：它不经指针、也不看元素到不到得了——390 档是窄档，
  *    藏起来那两列的收纳键量出来零宽零高，合成点击照样点得动（2026-09 审查席读数）。
+ *    `⑤B` 那一档还多两条：**卡落进目标列的最后一组**（组是那一档的格子）与**两端组计数一起重写**。
  *
  * 期望值一律从组件自己的常量派生（`KANBAN_COLUMNS_*`），不抄字面量：改了名字这里跟着红。
  */
@@ -52,6 +57,7 @@ import {
   KANBAN_COLUMNS_EVENT_PICK,
   KANBAN_COLUMNS_FORMS,
   KANBAN_COLUMNS_GAP_PX,
+  KANBAN_COLUMNS_GROUP_EDGE_PX,
   KANBAN_COLUMNS_HOVER_QUERY,
   KANBAN_COLUMNS_LIFT_PX,
   KANBAN_COLUMNS_MARKS,
@@ -71,14 +77,19 @@ import {
   buildKanbanColumnsJs,
   kanbanAddLabel,
   kanbanColumnsCss,
+  kanbanColumnsFormClass,
   kanbanColumnsSlot,
   kanbanCountText,
   kanbanDropText,
   kanbanReceiveText,
+  kanbanRowStatusText,
   kanbanStatusText,
   renderKanbanColumns,
 } from '../dist/components/kanban-columns/index.js';
 import { renderPageHead } from '../dist/components/page-head/index.js';
+/** 新档那一段样式（`style-grouped.ts` 的产物）：拆件与 `style-narrow.ts` 同法，
+ *  判据要能单独拿到它——「新档真的进了产物」与「新档只碰 `.is-grouped`」两条都按它扫。 */
+import { kanbanColumnsGroupedCss } from '../dist/components/kanban-columns/style-grouped.js';
 import { renderScaleBar } from '../dist/components/scale-bar/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { skinClass, skinCss, skinVar } from '../dist/components/skin/index.js';
@@ -135,13 +146,44 @@ const OK = {
   ],
 };
 
+/* ── B 档（形态 `grouped`「按位置分列 ＋ 列内二级组」）的入参：列＝位置，列里再挂一层组 ── */
+
+const GROUPED_COLUMNS = [
+  { key: 'hall', name: '玄关', unit: '件', groups: [
+    { name: '出门要带', items: [
+      { key: 'i-umbrella', label: '雨伞', value: '1 把' },
+      { key: 'i-card', label: '门卡', value: '2 张' },
+    ] },
+    { name: '常备', items: [{ key: 'i-knife', label: '快递刀', value: '1 把' }] },
+  ] },
+  { key: 'kitchen', name: '厨房', unit: '件', groups: [
+    { name: '调料柜', items: [
+      { key: 'i-salt', label: '盐', value: '30 g' },
+      { key: 'i-pepper', label: '花椒', value: '1 罐' },
+    ] },
+    { name: '水槽下', items: [{ key: 'i-soap', label: '洗洁精', value: '半瓶' }] },
+  ] },
+  { key: 'bedroom', name: '卧室', unit: '件', groups: [
+    { name: '床头柜', items: [{ key: 'i-cell', label: '电池', value: '4 节' }] },
+    { name: '衣柜', items: [] },
+  ] },
+];
+const GPLAIN = { id: 'kanban-home', form: 'grouped', columns: GROUPED_COLUMNS };
+const GPICKED = { ...GPLAIN, pickedKey: 'i-salt' };
+/** B 档那一档自己的六个槽位（`status` 档一个都不许碰）。 */
+const GROUPED_SLOTS = ['group', 'ghead', 'gname', 'gcount', 'row', 'label', 'value'];
+/** 每个组的行数／每一列的行数（屏上那些读数就是它们算出来的）。 */
+const rowsOf = (col) => col.groups.reduce((n, g) => n + g.items.length, 0);
+const itemKeys = (col) => col.groups.flatMap((g) => g.items.map((i) => i.key));
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
   const html = renderKanbanColumns(PLAIN);
 
   it('根 ＋ 分段切换 ＋ 列区 ＋ 状态句 ＋ 脚注；形态键是英文骨架名（不是格号 A）', () => {
-    assert.deepEqual([...KANBAN_COLUMNS_FORMS], ['status'], '形态闭集只落地按状态分列，键名是骨架名');
+    assert.deepEqual([...KANBAN_COLUMNS_FORMS], ['status', 'grouped'],
+      '形态闭集＝两档英文骨架名；**原有那一格 `status` 仍在第 0 格、逐字节不动**（新档是加法，见 ①B）');
     assert.match(html, new RegExp('^<div class="' + KANBAN_COLUMNS_CLASS + ' is-status"'));
     assert.ok(html.includes(KANBAN_COLUMNS_ATTR + '="kanban-dinner"'), '根上要有本件的发现锚');
     assert.ok(html.includes(CLS('switch')) && html.includes('role="group"'), '窄档的分段切换要在标记里');
@@ -379,6 +421,242 @@ describe('kanban-columns ① 渲染契约 · 骨架与列', () => {
     assert.ok(one.includes(KANBAN_COLUMNS_ATTR + '="kanban-dinner"'), '示例的 id 上屏');
     assert.ok(one.includes(CLS('drop')) && one.includes(KANBAN_COLUMNS_CANCEL_ATTR), '示例渲染出选中态（落点线与取消键都在）');
     assert.ok(one.includes(CLS('slot')), '示例里那一列空的照常出空槽');
+    /* B 档那一份：信息串**不带**那四个字（全仓只许一块带「示例入参」的块），故它不进派生器——
+       但「必须直渲成功」这条对两份一视同仁，判据自己把它取出来渲染一遍。 */
+    const groupedBlocks = [...readme.matchAll(/```json 形态 grouped 的入参\n([\s\S]*?)```/g)].map((m) => m[1]);
+    assert.equal(groupedBlocks.length, 1, 'README 里要有一块 B 档的入参样例（信息串不带「示例入参」四字）');
+    const groupedSample = JSON.parse(groupedBlocks[0]);
+    const two = renderKanbanColumns(groupedSample);
+    assert.equal(groupedSample.form, 'grouped', 'B 档样例自己写着形态键');
+    assert.ok(two.includes(KANBAN_COLUMNS_ATTR + '="kanban-home"'), 'B 档样例的 id 上屏');
+    assert.ok(two.includes(CLS('group')) && two.includes(CLS('ghead')) && two.includes(CLS('row')), 'B 档样例渲染出二级组与物件行');
+    assert.equal(two.includes(CLS('drop')) || two.includes(CLS('slot')), false, 'B 档样例里没有落点线、没有空槽旁白');
+  });
+});
+
+/* ── ①B B 档（形态 grouped「按位置分列 ＋ 列内二级组」）渲染契约与入参 ─────── */
+
+describe('kanban-columns ①B B 档（形态 grouped）· 渲染契约与入参', () => {
+  const html = renderKanbanColumns(GPLAIN);
+  const picked = renderKanbanColumns(GPICKED);
+  /** 按文档顺序切出某一列的标记（列是兄弟节点：切到下一列为止）。 */
+  const colSlice = (text, key) => {
+    const at = text.indexOf(KANBAN_COLUMNS_COL_ATTR + '="' + key + '"');
+    const next = text.indexOf(KANBAN_COLUMNS_COL_ATTR + '="', at + 1);
+    return text.slice(at, next < 0 ? text.length : next);
+  };
+  /** 切出某一个组的标记（组也是兄弟节点：切到下一个组／本列收纳键为止）。 */
+  const groupSlice = (colText, name) => {
+    const at = colText.indexOf('>' + name + '<');
+    const open = colText.lastIndexOf('class="' + SLOT('group') + '"', at);
+    const next = colText.indexOf('class="' + SLOT('group') + '"', at);
+    return colText.slice(open, next < 0 ? colText.indexOf(SLOT('receive')) : next);
+  };
+  /** 切出一行的标记（整行就是那颗按钮）。 */
+  const rowSlice = (text, key) => {
+    const at = text.indexOf(KANBAN_COLUMNS_CARD_ATTR + '="' + key + '"');
+    const open = text.lastIndexOf('<button', at);
+    return text.slice(open, text.indexOf('</button>', at) + 9);
+  };
+  const ROWS = GROUPED_COLUMNS.reduce((n, c) => n + rowsOf(c), 0);
+
+  it('形态闭集两档，**原有那一格不动**：键名是英文骨架名、`status` 仍在第 0 格、缺省仍走它（加法式）', () => {
+    assert.deepEqual([...KANBAN_COLUMNS_FORMS], ['status', 'grouped'],
+      '闭集＝两档英文骨架名（`status` 在那、新档加在它后面；格号 A／B 不是接口名）');
+    assert.equal(KANBAN_COLUMNS_FORMS[0], 'status', '原有那一格仍在第 0 格（旧档的键名与位置都不动）');
+    assert.equal(kanbanColumnsFormClass('status'), 'is-status', '形态类名两处共用一个助手：渲染期与运行时段');
+    assert.equal(kanbanColumnsFormClass('grouped'), 'is-grouped');
+    const status = renderKanbanColumns(OK);
+    assert.equal(status, renderKanbanColumns({ ...OK, form: 'status' }), '不给 form 与显式给 `status` 逐字节相同');
+    assert.ok(status.startsWith('<div class="' + KANBAN_COLUMNS_CLASS + ' is-status"'), '旧档那一档的类名不动');
+    for (const slot of GROUPED_SLOTS) {
+      assert.equal(status.includes(SLOT(slot)), false, '旧档的产物里不许出现新档的槽位：' + slot);
+    }
+  });
+
+  it('B 档骨架：列头一行读数（没有 `purpose` 那一格）＋ 二级组（组名行 ＋ 组计数）＋ 物件行（整行一颗按钮）', () => {
+    assert.ok(html.startsWith('<div class="' + KANBAN_COLUMNS_CLASS + ' is-grouped"'), '根上写着这是哪一档');
+    assert.ok(html.includes(KANBAN_COLUMNS_ATTR + '="kanban-home"'), '根上要有本件的发现锚');
+    assert.ok(html.includes(KANBAN_COLUMNS_SHOW_ATTR + '="1"'), '窄档当前列有读数');
+    assert.ok(html.includes(CLS('cols') + ' is-n3'), '列区照实写出列数');
+    assert.ok(html.includes(CLS('switch')) && html.includes('role="group"'), '窄档的分段切换照旧在');
+    assert.ok(html.includes(CLS('status')) && html.includes('role="status"'), '状态句照旧是活的');
+    assert.ok(html.includes(CLS('hint')), '脚注照旧在');
+    for (const col of GROUPED_COLUMNS) {
+      const one = colSlice(html, col.key);
+      const total = rowsOf(col);
+      assert.ok(one.includes('>' + col.name + '<'), '列名上屏：' + col.name);
+      assert.ok(one.includes('>' + kanbanCountText(total, col.unit) + '<'), '列计数＝全列行数：' + col.name);
+      assert.equal(one.includes(SLOT('purpose')), false, 'B 档列头**没有** purpose 那一格（旁白不上屏）：' + col.name);
+      assert.ok(one.includes(KANBAN_COLUMNS_ADD_ATTR + '="' + col.key + '"'), '每列一枚加键：' + col.key);
+      assert.ok(one.includes(kanbanReceiveText(col.name)), '每列一枚收纳键：' + col.name);
+      assert.ok(one.includes('aria-label="' + col.name + ' ' + kanbanCountText(total, col.unit) + '"'),
+        '列要报出「叫什么 ＋ 几件」：' + col.name);
+      assert.equal(countOf(one, 'class="' + SLOT('ghead') + '"'), col.groups.length,
+        '几个组就几行组名行：' + col.name);
+      assert.deepEqual([...one.matchAll(new RegExp(KANBAN_COLUMNS_CARD_ATTR + '="([^"]+)"', 'g'))].map((m) => m[1]),
+        itemKeys(col), '行按列序 ＋ 组序 ＋ 组内序上屏：' + col.name);
+      for (const g of col.groups) {
+        const gs = groupSlice(one, g.name);
+        assert.ok(gs.includes('>' + g.name + '<'), '组名上屏：' + g.name);
+        assert.equal(countOf(gs, '>' + kanbanCountText(g.items.length, col.unit) + '<'), 1,
+          '组计数＝这一组的行数，且**只印这一处**：' + g.name);
+        assert.equal(countOf(gs, KANBAN_COLUMNS_CARD_ATTR + '="'), g.items.length, '组里的行数＝这一组的 items：' + g.name);
+        for (const item of g.items) {
+          const row = rowSlice(html, item.key);
+          assert.ok(row.includes('>' + item.label + '<'), '物件名上屏：' + item.label);
+          assert.ok(row.includes('>' + item.value + '<'), '物件的量上屏：' + item.value);
+          assert.equal(countOf(row, '<button'), 1, '一行物件就是一颗按钮（里面没有第二颗）：' + item.key);
+          assert.ok(row.includes('aria-pressed="false"'), '没拿起的行是未按下态：' + item.key);
+          assert.ok(row.includes(KANBAN_COLUMNS_STATE_ATTR + '="' + col.key + '"'),
+            '行上写着它在哪一列（机器读数，不靠列位置猜）：' + item.key);
+          assert.equal(row.includes(SLOT('badge')), false,
+            '行上不再挂「它在哪一列」那枚字（列头与组头就写着，重复即噪音）：' + item.key);
+        }
+      }
+    }
+    assert.equal(countOf(html, '<button'), ROWS + GROUPED_COLUMNS.length * 3,
+      '七行物件 ＋ 三枚加键 ＋ 三段切换 ＋ 三枚收纳键，不许再多');
+    assert.equal(countOf(html, '<button'), countOf(html, '</button>'), '按钮必须成对');
+    assert.equal(/<script|onclick=/i.test(html), false, '标记里不带脚本');
+    assert.equal(html.includes(CLS('drop')), false, 'B 档**不画落点线**（plain 态本来就没有）');
+    assert.equal(html.includes(CLS('slot')), false, 'B 档**不写空槽那两句旁白**（`items: []` 只留组名与计数）');
+    assert.equal(countOf(html, ' disabled>'), GROUPED_COLUMNS.length, '没拿起时三枚收纳键都按不动（还在，别藏）');
+  });
+
+  it('B 档拿起那一行：整行选中（`is-picked` ＋ 软底 ＋ 主色侧标 ＋ 站起来）＋ 状态句念物件名 ＋ 其余各列收纳键可点', () => {
+    assert.ok(picked.includes(KANBAN_COLUMNS_PICK_ATTR + '="i-salt"'), '根上写清拿起了谁');
+    const row = rowSlice(picked, 'i-salt');
+    assert.ok(row.includes('is-picked'), '拿起的那一行整行选中');
+    assert.ok(row.includes('aria-pressed="true"'), '拿起的那一行是按下态');
+    assert.equal(countOf(picked, 'is-picked'), 1, '同一时刻只许一行挂选中形（两份高亮＝两份都像拿起的）');
+    assert.ok(picked.includes(kanbanRowStatusText('盐')), '状态句念的是**物件名**（那一档的最小单位）');
+    assert.equal(kanbanRowStatusText('盐'), kanbanStatusText('盐'), '选中那一句两档**逐字节同一句**（模板只住一处）');
+    assert.notEqual(kanbanRowStatusText(null), kanbanStatusText(null),
+      '没拿起那一句照各自的最小单位写（卡片／物件），不许照抄');
+    assert.ok(picked.includes(kanbanRowStatusText(null)) === false, '拿起时当然不是没拿起那一句');
+    assert.ok(picked.includes(KANBAN_COLUMNS_CANCEL_ATTR + '="kanban-home"'), '取消键带本件的锚');
+    assert.ok(picked.includes('>' + KANBAN_COLUMNS_TEXT.cancel + '<'), '取消键写的是那几个字');
+    assert.equal(countOf(picked, CLS('drop')), 0,
+      'B 档一条落点线都不画：一屏只留一层话（各列那枚收纳键的字就写着收到哪儿）');
+    assert.equal(countOf(picked, CLS('slot')), 0, 'B 档不写空槽那两句旁白');
+    const receives = [...picked.matchAll(new RegExp('<button type="button" class="' + SLOT('receive')
+      + '" ' + KANBAN_COLUMNS_RECEIVE_ATTR + '="([^"]+)"( disabled)?>', 'g'))]
+      .map((m) => ({ key: m[1], off: m[2] !== undefined }));
+    assert.deepEqual(receives, [
+      { key: 'hall', off: false }, { key: 'kitchen', off: true }, { key: 'bedroom', off: false },
+    ], '拿起那一行所在列那枚按不动，其余各列可点（看得见、点得到的通路）');
+    assert.equal(countOf(picked, 'aria-pressed="false"'), (GROUPED_COLUMNS.length - 1) + (ROWS - 1),
+      '没拿起的段切换 ＋ 没拿起的行都是未按下（当前那一段与拿起那一行是 `true`）');
+  });
+
+  it('B 档**一屏只留一层话**：原型旁白一句都不上屏，行里不重复列名与组名', () => {
+    const NARRATION = ['进门这一块', '做饭这一块', '睡觉这一块', '块地方是干什么的', '列＝位置', '不横滑', '数量写在右边', '缺值写'];
+    for (const line of NARRATION) {
+      assert.equal(html.includes(line), false, '原型旁白不许搬进屏面：' + line);
+      assert.equal(picked.includes(line), false, '原型旁白不许搬进屏面（拿起态也是）：' + line);
+    }
+    assert.equal(html.includes(KANBAN_COLUMNS_TEXT.hint), false, 'B 档的脚注不许照抄 `status` 那一句（那一句说的是卡）');
+    assert.ok(html.includes(KANBAN_COLUMNS_TEXT.rowHint), 'B 档脚注照实写「一行物件」');
+    assert.ok(html.includes(kanbanRowStatusText(null)), '没拿起时状态句是这一档自己的读数');
+    assert.equal(html.includes(kanbanStatusText(null)), false, '不许串用 `status` 档那一句');
+    for (const col of GROUPED_COLUMNS) {
+      for (const g of col.groups) {
+        for (const item of g.items) {
+          const row = rowSlice(html, item.key);
+          assert.equal(countOf(row, '<span'), item.value === undefined ? 1 : 2,
+            '一行就两格字（名字 ＋ 量），不多印：' + item.key);
+          assert.equal(row.includes('>' + col.name + '<'), false, '行里不重复列名：' + item.key);
+          assert.equal(row.includes('>' + g.name + '<'), false, '行里不重复组名：' + item.key);
+          assert.equal(row.includes(col.count), false, '行里不重复列计数：' + item.key);
+        }
+      }
+    }
+  });
+
+  it('B 档入参违规一律拒（不静默降级）：`groups`／`items`／键表按形态分，逐条断 `BlocksError`', () => {
+    const B = (input) => throwsBlocks(() => renderKanbanColumns(input));
+    const pair = (one) => [one, GROUPED_COLUMNS[1]];
+    const withCol = (one) => ({ ...GPLAIN, columns: pair(one) });
+    const col = (patch) => ({ ...GROUPED_COLUMNS[0], ...patch });
+    const items = (list) => col({ groups: [{ name: '组', items: list }] });
+    assert.equal(B({ ...GPLAIN, form: 'lanes' }), true, '形态闭集外（自己起的名字不是键）');
+    assert.equal(B({ ...GPLAIN, form: 'B' }), true, '格号不是键');
+    assert.equal(B(withCol({ key: 'hall', name: '玄关', groups: [] })), true, '一组都没有的列');
+    assert.equal(B(withCol({ key: 'hall', name: '玄关' })), true, '缺 groups');
+    assert.equal(B(withCol(col({ groups: 'x' }))), true, 'groups 不是数组');
+    assert.equal(B(withCol(col({ groups: [null] }))), true, '组不是对象');
+    assert.equal(B(withCol(col({ groups: [{ name: '组' }] }))), true, '缺 items');
+    assert.equal(B(withCol(col({ groups: [{ name: '组', items: 'x' }] }))), true, 'items 不是数组');
+    assert.equal(B(withCol(col({ groups: [{ name: '组', items: [null] }] }))), true, '物件不是对象');
+    assert.equal(B(withCol(col({ groups: [{ items: [] }] }))), true, '缺组名');
+    assert.equal(B(withCol(col({ groups: [{ name: '组', items: [], bogus: 1 }] }))), true, '组内多给一个键');
+    assert.equal(B(withCol(items([{ key: 'i', label: 'L', bogus: 1 }]))), true, '物件多给一个键');
+    assert.equal(B(withCol(col({ purpose: '进门这一块' }))), true, 'B 档列不许给 purpose（旁白不上屏）');
+    assert.equal(B(withCol(col({ cards: [] }))), true, 'B 档列不许给 cards');
+    assert.equal(B({ ...OK, columns: [{ key: 'a', name: '甲', cards: [], groups: [] }, OK.columns[1]] }), true,
+      'status 档列不许给 groups');
+    assert.equal(B(withCol(items([{ key: 'i', label: 'L' }, { key: 'i', label: 'M' }]))), true, '物件 key 看板内唯一');
+    assert.equal(B(withCol(items([{ key: 'hall', label: 'L' }]))), true, '物件 key 与列 key 也不许撞');
+    assert.equal(B({ ...GPLAIN, pickedKey: 'nope' }), true, '拿起态指着没有的那一行');
+    assert.equal(B({ ...GPLAIN, pickedKey: 1 }), true, 'pickedKey 不是字符串');
+    assert.equal(B({ ...GPLAIN, activeCol: 9 }), true, '窄档当前列不许超出列数');
+    assert.equal(B(withCol(items(Array.from({ length: KANBAN_COLUMNS_MAX_CARDS + 1 }, (_, i) => ({ key: 'c' + i, label: 'L' }))))), true,
+      '一组超过 ' + KANBAN_COLUMNS_MAX_CARDS + ' 行');
+    assert.equal(B(withCol(col({ groups: Array.from({ length: 3 }, (_, i) => ({
+      name: '组' + i,
+      items: Array.from({ length: KANBAN_COLUMNS_MAX_CARDS / 2 + 1 }, (_, j) => ({ key: 'k' + i + '-' + j, label: 'L' })),
+    })) }))), true, '一列合计超过 ' + KANBAN_COLUMNS_MAX_CARDS + ' 行');
+    const sparse = [{ name: '组', items: [{ key: 'i', label: 'L' }] }];
+    sparse.length = 2;
+    assert.equal(B(withCol(col({ groups: sparse }))), true, '组数组有空洞');
+    assert.equal(B(withCol(col({ groups: [{ name: '组', items: [] }] }))), false, '`items: []` ＝设计过的空格，照收');
+    assert.equal(B({ ...GPLAIN, pickedKey: 'i-salt', activeCol: 2 }), false, '合法的 B 档入参照收');
+  });
+
+  it('B 档**全空白串＝拒**（组名／物件名／物件的量：空格类 ＋ 零宽字符类）', () => {
+    const patches = [
+      ['组名（收下 ⇒ 无字组名行）', (b) => ({ ...GROUPED_COLUMNS[0], groups: [{ name: b, items: [] }] })],
+      ['物件名（收下 ⇒ 空壳行）', (b) => ({ ...GROUPED_COLUMNS[0], groups: [{ name: '组', items: [{ key: 'i', label: b }] }] })],
+      ['物件的量', (b) => ({ ...GROUPED_COLUMNS[0], groups: [{ name: '组', items: [{ key: 'i', label: 'L', value: b }] }] })],
+      ['单位（收下 ⇒ 计数只剩一个数）', (b) => ({ ...GROUPED_COLUMNS[0], unit: b })],
+    ];
+    const SPACES = ['   ', '\t', '　', ' 　 '];
+    const INVISIBLE = ['\u200b', '\u200b\u200b', '\ufeff', '\u00ad', '\u200e\u200f', '\u2060', '\u200b\u200d'];
+    for (const [what, patch] of patches) {
+      for (const blank of SPACES.concat(INVISIBLE)) {
+        assert.equal(throwsBlocks(() => renderKanbanColumns({ ...GPLAIN, columns: [patch(blank), GROUPED_COLUMNS[1]] })), true,
+          what + ' 收到全空白串（' + JSON.stringify(blank) + '）必须拒');
+      }
+    }
+    const one = renderKanbanColumns({ id: 'g-blank', form: 'grouped', columns: [
+      { key: 'a', name: '甲', unit: '', groups: [{ name: '组', items: [{ key: 'i', label: 'L', value: '' }] }] },
+      { key: 'b', name: '乙', groups: [{ name: '组', items: [] }] },
+    ] });
+    assert.ok(one.includes(kanbanCountText(1, KANBAN_COLUMNS_TEXT.unit)), '单位空串＝未给，走缺省那一枚');
+    assert.equal(one.includes(SLOT('value')), false, '量空串＝未给：那一格不画（不留空白）');
+  });
+
+  it('B 档转义面：组名／物件名／物件的量／列名逐位转义', () => {
+    const evil = '"><script>alert(1)</script>';
+    const one = renderKanbanColumns({
+      id: 'evil-grouped',
+      form: 'grouped',
+      columns: [
+        { key: 'a', name: evil, groups: [{ name: evil, items: [{ key: 'k', label: evil, value: evil }] }] },
+        { key: 'b', name: 'B', groups: [{ name: '组', items: [] }] },
+      ],
+    });
+    assert.equal(/<script/i.test(one), false, '不得出现可执行脚本标签');
+    assert.ok(one.includes('&lt;script&gt;'), '原文以实体上屏');
+    assert.ok(one.includes('&quot;'), '引号转义');
+  });
+
+  it('B 档分隔符门：样例渲染的可见文本零命中（R1 ·／R2 ；／R3 并列顿号）', () => {
+    for (const sample of [GPLAIN, GPICKED]) {
+      const r = auditHtml('<html><body>' + renderKanbanColumns(sample) + '</body></html>');
+      assert.equal(exitCodeFor(r), 0, '分隔符命中：' + JSON.stringify(r.node.hits.slice(0, 2)));
+    }
   });
 });
 
@@ -572,6 +850,116 @@ describe('kanban-columns ② 样式与零 DOM 纪律', () => {
   });
 });
 
+/* ── ②B B 档的样式面（二级组减层：层次由「边多」变「边准」） ─────────────── */
+
+describe('kanban-columns ②B B 档样式面（组竖边一道 3px／组名行发丝线／物件行零自带竖边／列壳浮起）', () => {
+  const css = kanbanColumnsCss();
+  const clean = stripComments(css);
+  /** 新档那一段自己的文本（`style-grouped.ts` 的产物）——形态隔离与皮肤纪律都按它扫。 */
+  const grouped = stripComments(kanbanColumnsGroupedCss());
+  const ROOT = '.ilife-page-ui .' + KANBAN_COLUMNS_CLASS + '.' + kanbanColumnsFormClass('grouped');
+  const RULE = (slot) => ROOT + ' ' + SEL(slot);
+  /** 取「以这条选择器打头的那条规则」的正文（够用就停：一条规则一个 `}`）。 */
+  const ruleOf = (text, selector) => {
+    const at = text.indexOf(selector + ' {');
+    assert.ok(at >= 0, '样式段里找不到这条规则：' + selector);
+    return text.slice(at, text.indexOf('}', at));
+  };
+
+  it('**组竖边一道**（`KANBAN_COLUMNS_GROUP_EDGE_PX`）：收成 3px，与列那道 1px 拉开一档（原型是 4px）', () => {
+    assert.equal(KANBAN_COLUMNS_GROUP_EDGE_PX, 3, '组竖边收到 3px（原型 4px；判据按常量算，不抄数字）');
+    const group = ruleOf(grouped, RULE('group'));
+    assert.ok(group.includes('border-left: ' + String(KANBAN_COLUMNS_GROUP_EDGE_PX) + 'px solid ' + skinVar('line')),
+      '组的那道 3px 竖边取常量、色走皮肤：' + group.slice(0, 200));
+    assert.ok(group.includes('display: grid'), '组自己是一格（组名行 ＋ 行挂在它下面）');
+  });
+
+  it('**组名行底下一道发丝线**（1px）把「组名」那一层与「物件行」那一层分开', () => {
+    const ghead = ruleOf(grouped, RULE('ghead'));
+    assert.ok(ghead.includes('border-bottom: 1px solid ' + skinVar('line')), '组名行底下那道 1px 发丝线：' + ghead);
+    assert.ok(ghead.includes('min-height: 32px'), '组名行自己也有高度（不是贴着上面那道线）');
+    assert.ok(ruleOf(grouped, RULE('gname')).includes('font-weight: 700'), '组名是这一层的重字');
+    assert.ok(ruleOf(grouped, RULE('gcount')).includes('font-variant-numeric: tabular-nums'), '组计数走等宽数字');
+  });
+
+  it('**物件行不再各有竖边**：行上那道 2px 是**透明槽位**（拿起时才换主色侧标），行里零实线', () => {
+    const row = ruleOf(grouped, RULE('row'));
+    assert.ok(row.includes('border: 0'), '行上先清掉四边的边：' + row.slice(0, 160));
+    assert.ok(/border-left: 2px solid transparent/.test(row), '左侧那道 2px 是透明槽位（拿起时不横跳）：' + row.slice(0, 200));
+    assert.equal(row.includes(skinVar('line')), false, '行上不许有看得见的边（原型那儿一根组边里再嵌五根行边，左沿六条边在读）');
+    assert.ok(row.includes('min-height: ' + String(KANBAN_COLUMNS_TOUCH_PX) + 'px'), '整行就是那颗按钮：命中盒 ≥ 触控地板');
+    const pickedRow = ruleOf(grouped, RULE('row') + '.is-picked');
+    assert.ok(pickedRow.includes('border-left-color: ' + skinVar('accent')), '拿起那一行换成主色侧标（形）：' + pickedRow);
+    assert.ok(pickedRow.includes('background: ' + skinVar('surface-2')), '拿起那一行铺一层次要面（色）：' + pickedRow);
+    assert.ok(pickedRow.includes('transform: translateY(-' + String(KANBAN_COLUMNS_LIFT_PX) + 'px)'),
+      '拿起那一行站起来（与 `status` 档同一道形、同一枚常量）：' + pickedRow);
+    assert.ok(ruleOf(grouped, RULE('row') + ' > ' + SEL('value')).includes(skinVar('font-num')), '物件的量走等宽数字');
+    assert.ok(ruleOf(grouped, RULE('row') + ' > ' + SEL('label')).includes('font-weight: 600'), '物件的名字是行里的主字');
+  });
+
+  it('**列壳浮起走 `--shadow`**（纸族本就是 `none`，这一条只读皮肤）', () => {
+    const col = ruleOf(grouped, RULE('col'));
+    assert.ok(col.includes('box-shadow: ' + skinVar('shadow')), 'B 档的列是一张立起来的板：' + col);
+  });
+
+  it('列头**读数一行说完**：名字与计数同占一行（`status` 档那三条 areas 在这一档收成一条）', () => {
+    const head = ruleOf(grouped, RULE('head'));
+    assert.ok(head.includes('grid-template-areas: "name count add"'), '列头就一行：列名 ＋ 计数 ＋ 加键：' + head);
+    assert.ok(ruleOf(grouped, RULE('count')).includes('justify-self: end'), '计数靠右（读数一行说完）');
+    assert.equal(grouped.includes('purpose'), false, '这一档的列头根本没有 purpose 那一格（旁白不上屏）');
+  });
+
+  it('组与组之间先靠留白（≥ 卡间缝地板 8px），再靠那两道线', () => {
+    const body = ruleOf(grouped, RULE('body'));
+    const gap = Number((body.match(/gap: (\d+)px/) || [])[1]);
+    assert.ok(Number.isFinite(gap) && gap >= KANBAN_COLUMNS_GAP_PX,
+      '组与组之间那道留白 ≥ ' + String(KANBAN_COLUMNS_GAP_PX) + 'px：' + body);
+  });
+
+  it('**新档那一段真的进了产物**，且每一条规则都钉在 `.is-grouped` 上（`status` 档零命中）', () => {
+    assert.ok(clean.includes(grouped), '`style.ts` 得把这一段落进产物（引用了却没插进去 ＝ 现场是死的）');
+    const selectors = selectorsOf(grouped);
+    assert.ok(selectors.length >= 10, '新档的选择器数量不对：' + selectors.length);
+    for (const sel of selectors) {
+      for (const part of sel.split(',')) {
+        const one = part.trim();
+        if (one === '') continue;
+        assert.ok(one.includes('.ilife-page-ui'), '新档选择器必须 scope 在 .ilife-page-ui：' + one);
+        assert.ok(one.includes(KANBAN_COLUMNS_CLASS), '新档选择器必须只碰本件类名根：' + one);
+        assert.ok(one.includes(kanbanColumnsFormClass('grouped')), '新档每一条都要钉在形态类名上（否则会漏进旧档）：' + one);
+      }
+    }
+    const rest = clean.split(grouped).join('');
+    assert.equal(rest.includes(kanbanColumnsFormClass('grouped')), false, '摘掉新档那一段后，产物里 `.is-grouped` 零命中');
+    assert.ok(selectorsOf(rest).length >= 25, '摘掉之后 `status` 档那一段一条都没少：' + selectorsOf(rest).length);
+  });
+
+  it('新档那一段的皮肤与文字纪律：只走 `skinVar()`、零手写色值、零截断、零新 token、零生成内容', () => {
+    let n = 0;
+    for (const m of grouped.matchAll(/var\(\s*--ilife-([a-z0-9-]+)/g)) {
+      assert.ok(grouped.startsWith(skinVar(m[1]), m.index), '`' + m[1] + '` 处的 var() 串与 skinVar() 走散');
+      n += 1;
+    }
+    assert.ok(n >= 8, '新档读皮肤的处数不对：' + n);
+    /* 色值只许出现在 `skinVar()` 自己的**兜底链**里（同一条声明里就得写着 `var(--ilife-…)`）：
+       兜底链之外的字面量 ＝ 绕开皮肤写死颜色。 */
+    const raw = kanbanColumnsGroupedCss();
+    for (const m of raw.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\(/g)) {
+      const head = raw.slice(0, m.index);
+      const decl = head.slice(Math.max(head.lastIndexOf(';'), head.lastIndexOf('{')) + 1);
+      assert.ok(decl.includes('var(--ilife-'), '兜底链之外的颜色字面量：' + m[0] + ' ｜ ' + decl.trim());
+    }
+    for (const no of ['nowrap', 'text-overflow', 'line-clamp', '!important', ':root', 'overflow-x']) {
+      assert.equal(grouped.includes(no), false, '新档那一段不许出现：' + no);
+    }
+    assert.deepEqual(grouped.match(/--[a-z0-9-]+\s*:/g) || [], [], '新档不得定义新 token');
+    assert.equal(/'@media \((?:max|min)-width/.test(kanbanColumnsGroupedCss()), false, '新档不判视口宽度（宽度只走 @container）');
+    assert.equal(/content\s*:/.test(grouped), false, '新档不靠生成内容补字（一屏只留一层话：字都要在标记里）');
+    assert.ok(grouped.includes('@media ' + KANBAN_COLUMNS_HOVER_QUERY), '悬停只许是增强，且读的是常量里的能力查询串');
+    assert.ok(grouped.includes('@media (prefers-reduced-motion: reduce)'), '减动效那一档要在');
+  });
+});
+
 /* ── ③ 加法式 ───────────────────────────────────────────────────────── */
 
 describe('kanban-columns ③ 加法式（不启用即逐字节不变）', () => {
@@ -603,6 +991,28 @@ describe('kanban-columns ③ 加法式（不启用即逐字节不变）', () => 
     assert.equal(renderKanbanColumns(PICKED), one);
     assert.equal(renderKanbanColumns(PICKED), one);
     assert.equal(/ilife-skin-/.test(one), false, '皮肤由页面挂，换皮要机械地不换结构');
+  });
+
+  it('加法式（新档）：B 档的入参渲染四次逐字节相同，也不带皮肤类', () => {
+    const one = renderKanbanColumns(GPICKED);
+    assert.equal(renderKanbanColumns(GPICKED), one);
+    assert.equal(renderKanbanColumns(GPICKED), one);
+    assert.equal(renderKanbanColumns(GPICKED), one);
+    assert.equal(/ilife-skin-/.test(one), false, '换皮不换结构（两档同一口径）');
+  });
+
+  it('加法式（形态）：新档只在 `.is-grouped` 之下加规则——旧档的选择器一条不少、`is-grouped` 零命中', () => {
+    const all = stripComments(kanbanColumnsCss());
+    const grouped = stripComments(kanbanColumnsGroupedCss());
+    assert.ok(all.includes(grouped), '新档那一段整体进了产物（顺序在窄容器段之前）');
+    const rest = all.split(grouped).join('');
+    assert.equal(rest.includes(kanbanColumnsFormClass('grouped')), false, '摘掉新档那一段之后，旧档的产物里 `.is-grouped` 零命中');
+    assert.ok(selectorsOf(rest).length >= 25, '摘掉之后旧档那一段还在（选择器数量）：' + selectorsOf(rest).length);
+    assert.ok(selectorsOf(rest).length < selectorsOf(all).length, '新档是**加法**：整份产物比旧档那一份多规则');
+    for (const slot of GROUPED_SLOTS) {
+      assert.equal(renderKanbanColumns(PLAIN).includes(SLOT(slot)), false, '旧档的标记里零命中新档槽位：' + slot);
+      assert.equal(rest.includes(SEL(slot)), false, '旧档的样式里零命中新档槽位：' + slot);
+    }
   });
 });
 
@@ -785,6 +1195,184 @@ describe('kanban-columns ④ 四档几何（真机 headless Chrome ＋ CDP · �
     assert.equal(before.show, '3', '入参 activeCol=3 ⇒ 窄档当前列是第 3 列');
     assert.deepEqual(before.display, ['none', 'none', 'flex'], '窄档只留当前那一列');
     assert.deepEqual(before.segs, ['false', 'false', 'true+on'], '当前那一段按下态 ＋ `is-on`');
+  });
+
+  it('关页', () => { page.close(); });
+});
+
+/* ── ④B B 档真机四档几何（容器 320／390／620／1280） ─────────────────── */
+
+/** B 档那几个槽位与 `data-*` 的选择器（判据侧一律经这些助手，不另抄字面量）。 */
+const ROW_S = q(SEL('row'));
+const GROUP_S = q(SEL('group'));
+const GHEAD_S = q(SEL('ghead'));
+const GNAME_S = q(SEL('gname'));
+const GCOUNT_S = q(SEL('gcount'));
+const LABEL_S = q(SEL('label'));
+const VALUE_S = q(SEL('value'));
+
+describe('kanban-columns ④B B 档真机四档几何（headless Chrome ＋ CDP · 容器 320／390／620／1280）', async () => {
+  const page = await startShapesPage({
+    css: skinCss() + '\n' + kanbanColumnsCss(),
+    html: '<div class="ilife-page-ui" data-case="plain">' + renderKanbanColumns(GPLAIN) + '</div>'
+      + '<div class="ilife-page-ui" data-case="picked">' + renderKanbanColumns(GPICKED) + '</div>'
+      + '<div class="ilife-page-ui" data-case="empty">' + renderKanbanColumns({ ...GPLAIN, activeCol: 3 }) + '</div>',
+    portOffset: 47,
+  });
+  if (page === null) {
+    it('真机未跑（本机没有 Chrome）：退确定性几何判据', (t) => {
+      console.log('kanban-columns B 档几何：真机未跑（本机没有 Chrome），原因=startShapesPage 返回 null');
+      t.skip('本机没有 Chrome');
+    });
+    return;
+  }
+
+  /** 三个 case 在窄档各自露第几列（0 起）：plain 与 picked 是第 1 列、`empty` 是第 3 列。 */
+  const NARROW_CASE_COL = [0, 0, 2];
+
+  /** 页内：逐 case 量 B 档的几何（列／组／组名行／物件行／可点件 ＋ 那两道线的**算出来的样子**）。 */
+  const BOX_FN = '(function(){'    + 'function box(el){var r=el.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),'
+    + 'l:Math.round(r.left),t:Math.round(r.top)};}'
+    + 'function shown(el){var cs=getComputedStyle(el),r=el.getBoundingClientRect();'
+    + 'return cs.display!=="none"&&cs.visibility!=="hidden"&&r.width>0&&r.height>0;}'
+    + 'function all(sel,scope){return [].slice.call((scope||document).querySelectorAll(sel)).filter(shown);}'
+    + 'function alpha0(color){return /rgba\\(\\s*0,\\s*0,\\s*0,\\s*0\\s*\\)|transparent/.test(color);}'
+    + 'var cases=[].slice.call(document.querySelectorAll("[data-case]"));'
+    + 'var out=[];'
+    + 'for(var i=0;i<cases.length;i+=1){'
+    + ' var root=cases[i].querySelector(' + ROOT_S + ');'
+    + ' var cols=all(' + COL_S + ',root), groups=all(' + GROUP_S + ',root), rows=all(' + ROW_S + ',root);'
+    + ' var gaps=[];'
+    + ' for(var c=0;c<cols.length;c+=1){var list=all(' + ROW_S + ',cols[c]);'
+    + '  for(var j=1;j<list.length;j+=1){var a=list[j-1].getBoundingClientRect(),b=list[j].getBoundingClientRect();'
+    + '   if(Math.abs(a.left-b.left)<3) gaps.push(Math.round(b.top-a.bottom));}}'
+    + ' var sw=root.querySelector(' + SWITCH_S + ');'
+    /* 主色的**实际取值**：在同一条皮肤作用域里放一枚探针读出来（判据不抄色值字面量）。 */
+    + ' var probe=document.createElement("div");probe.style.borderColor=' + q(skinVar('accent')) + ';'
+    + ' cases[i].appendChild(probe);var edgeColor=getComputedStyle(probe).borderTopColor;'
+    + ' cases[i].removeChild(probe);'
+    + ' out.push({cols:cols.length,segs:all(' + SEG_S + ',root).length,swShown:sw?shown(sw):false,edgeColor:edgeColor,'
+    + '  groups:groups.length,groupRows:groups.map(function(g){return all(' + ROW_S + ',g).length;}),'
+    + '  groupNames:all(' + GNAME_S + ',root).map(function(n){return n.textContent;}),'
+    + '  groupEdge:groups.map(function(g){return getComputedStyle(g).borderLeftWidth;}),'
+    + '  groupLine:groups.map(function(g){var cs=getComputedStyle(g.querySelector(' + GHEAD_S + '));'
+    + '   return cs.borderBottomWidth+" "+cs.borderBottomStyle;}),'
+    + '  rows:rows.map(box),rowBorder:rows.map(function(r){var cs=getComputedStyle(r);'
+    + '   return {w:cs.borderLeftWidth,c:cs.borderLeftColor,transparent:alpha0(cs.borderLeftColor),'
+    + '   picked:r.classList.contains("is-picked")};}),'
+    + '  colShadow:cols.map(function(c){return getComputedStyle(c).boxShadow;}),'
+    + '  headSameLine:cols.map(function(c){var n=c.querySelector(' + NAME_S + '),k=c.querySelector(' + COUNT_S + ');'
+    + '   if(!n||!k) return null;'
+    + '   return Math.abs(Math.round(n.getBoundingClientRect().top)-Math.round(k.getBoundingClientRect().top))<=1;}),'
+    + '  add:all(' + ADD_S + ',root).map(box),recv:all(' + RECV_S + ',root).map(box),gaps:gaps,'
+    + '  drops:all(' + DROP_S + ',root).length,slots:all(' + SLOT_S + ',root).length,'
+    + '  names:all(' + NAME_S + ',root).length,counts:all(' + COUNT_S + ',root).length,'
+    + '  gcounts:all(' + GCOUNT_S + ',root).length});'
+    + '}return out;}())';
+
+  it('四档零横溢、零截断、行 ≥44 高（整行就是按钮）、行间缝 ≥8、零落点线零旁白', async () => {
+    const selectors = [COL_S, ROW_S, GROUP_S, GHEAD_S, GNAME_S, GCOUNT_S, LABEL_S, VALUE_S, NAME_S, COUNT_S, RECV_S, ADD_S, SEG_S, SLOT_S, DROP_S]
+      .map((s) => JSON.parse(s));
+    for (const width of [320, 390, 620, 1280]) {
+      await page.setWidth(width);
+      const rows = await page.read(selectors);
+      const frame = await page.frame();
+      const cases = await page.ev(BOX_FN);
+      const narrow = width <= KANBAN_COLUMNS_NARROW_PX;
+      console.log('kanban-columns B 档几何读数 ' + JSON.stringify({
+        width, frame,
+        rows: rows.map((r) => ({ sel: r.sel, visible: r.visible, clipped: r.clipped, scrollsX: r.scrollsX })),
+        cases: cases.map((c) => ({ cols: c.cols, segs: c.segs, swShown: c.swShown, groups: c.groups,
+          groupRows: c.groupRows, groupNames: c.groupNames,
+          groupEdge: c.groupEdge, groupLine: c.groupLine, headSameLine: c.headSameLine, gaps: c.gaps,
+          transparent: c.rowBorder.map((b) => b.transparent), drops: c.drops, slots: c.slots })),
+      }));
+      assert.ok(frame.fxScrollW <= width + 1, width + ' 档夹具容器横溢：' + JSON.stringify(frame));
+      assert.ok(frame.docScrollW <= frame.innerW + 1, width + ' 档页面横溢：' + JSON.stringify(frame));
+      for (const r of rows) {
+        assert.ok(r.maxScrollW <= r.maxClientW + 1, width + ' 档 ' + r.sel + ' 溢出：' + JSON.stringify(r));
+        assert.equal(r.clipped, 0, width + ' 档 ' + r.sel + ' 有节点被压字／截断（组名与行永不 `…`）：' + JSON.stringify(r));
+        assert.equal(r.scrollsX, 0, width + ' 档 ' + r.sel + ' 藏了横滑：' + JSON.stringify(r));
+      }
+      for (const [ci, c] of cases.entries()) {
+        assert.equal(c.cols, narrow ? 1 : GROUPED_COLUMNS.length, width + ' 档可见列数不对：' + JSON.stringify(c));
+        assert.equal(c.names, narrow ? 1 : GROUPED_COLUMNS.length, width + ' 档可见列名数不对（列头一直在）');
+        assert.equal(c.counts, narrow ? 1 : GROUPED_COLUMNS.length, width + ' 档可见计数数不对（列计数一行）');
+        assert.equal(c.segs, narrow ? GROUPED_COLUMNS.length : 0, width + ' 档分段切换该出／该收不对（判的是本件自己的宽度）');
+        assert.equal(c.swShown, narrow, width + ' 档分段切换整条该出／该收不对');
+        /* **一节一节都是可见的**：窄档只露当前那一列的那几组（三个 case 各自露第 1／1／3 列），宽档三列六组。 */
+        const wantRows = narrow
+          ? GROUPED_COLUMNS[NARROW_CASE_COL[ci]].groups.map((g) => g.items.length)
+          : GROUPED_COLUMNS.flatMap((col) => col.groups.map((g) => g.items.length));
+        assert.equal(c.groupRows.length, wantRows.length, width + ' 档可见组数不对：' + JSON.stringify(c.groupRows));
+        assert.deepEqual(c.groupRows, wantRows, width + ' 档各组行数不对：' + JSON.stringify(c.groupRows));
+        assert.equal(c.gcounts, wantRows.length, width + ' 档可见组计数数不对（每组一个数）');
+        assert.equal(c.drops, 0, width + ' 档 B 档不该有落点线');
+        assert.equal(c.slots, 0, width + ' 档 B 档不该有空槽旁白');
+        /* 命中盒：整行 ≥44 高；加键／收纳键 ≥44 见方。 */
+        for (const b of c.rows) {
+          assert.ok(b.w >= KANBAN_COLUMNS_TOUCH_PX, width + ' 档行太窄：' + JSON.stringify(b));
+          assert.ok(b.h >= KANBAN_COLUMNS_TOUCH_PX, width + ' 档行太矮（整行就是那颗按钮）：' + JSON.stringify(b));
+        }
+        for (const b of c.add.concat(c.recv)) {
+          assert.ok(b.w >= KANBAN_COLUMNS_TOUCH_PX && b.h >= KANBAN_COLUMNS_TOUCH_PX,
+            width + ' 档可点件命中盒不足 44：' + JSON.stringify(b));
+        }
+        /* 行间缝（地板口径与 `status` 档同一处：拿起的行往上挪 `LIFT` ⇒ 上面那道缝 GAP−LIFT）。 */
+        for (const g of c.gaps) {
+          assert.ok(g >= KANBAN_COLUMNS_GAP_PX - KANBAN_COLUMNS_LIFT_PX,
+            width + ' 档行间缝低于地板：' + JSON.stringify(c.gaps));
+        }
+        /* **减层的机器读数**：组竖边＝常量、组名行底下一道 1px 发丝线、物件行量出来没有竖边。 */
+        for (const w of c.groupEdge) {
+          assert.equal(w, String(KANBAN_COLUMNS_GROUP_EDGE_PX) + 'px',
+            width + ' 档组竖边不是常量那一道：' + JSON.stringify(c.groupEdge));
+        }
+        for (const line of c.groupLine) {
+          assert.equal(line, '1px solid', width + ' 档组名行底下那道发丝线不对：' + JSON.stringify(c.groupLine));
+        }
+        /* **减层的机器读数**：物件行平时量出来**没有**看得见的竖边，只有拿起的那一行换成主色侧标
+           （而且那道槽位的宽度拿起前后一样 ⇒ 拿起时不横跳）。 */
+        const shownEdge = c.rowBorder.filter((b) => !b.transparent);
+        const wantEdge = c.rowBorder.filter((b) => b.picked);
+        assert.equal(shownEdge.length, wantEdge.length,
+          width + ' 档只有拿起的那一行才许有看得见的竖边（层次由「边准」给，不是「边多」）：'
+          + JSON.stringify(c.rowBorder));
+        for (const b of shownEdge) {
+          assert.equal(b.c, c.edgeColor, width + ' 档拿起那一行的侧标要走主色：' + JSON.stringify(c.rowBorder));
+        }
+        assert.equal(new Set(c.rowBorder.map((b) => b.w)).size, 1,
+          width + ' 档拿起前后左侧那道槽位宽度不一致（拿起时会横跳）：' + JSON.stringify(c.rowBorder.map((b) => b.w)));
+        /* 列壳浮起：中性皮肤下 `--shadow` 是真投影（纸族本就是 none，那由皮肤取值表管）。 */
+        for (const s of c.colShadow) {
+          assert.notEqual(s, 'none', width + ' 档列壳没有浮起：' + JSON.stringify(c.colShadow));
+        }
+        /* 列头**读数一行说完**：列名与计数落在同一行（不是上下两行）。 */
+        for (const same of c.headSameLine) {
+          assert.equal(same, true, width + ' 档列名与计数不在同一行（原型第二级字那一行不该上屏）：' + JSON.stringify(c.headSameLine));
+        }
+      }
+      assert.equal((await page.errs()).length, 0, '页内零未捕获错误');
+    }
+  });
+
+  it('窄档的分段切换是真的：当前那一段按下态，列区只留那一列', async () => {
+    await page.setWidth(320);
+    const before = await page.ev('(function(){'
+      + 'var root=document.querySelector("[data-case=\\"empty\\"]").querySelector(' + ROOT_S + ');'
+      + 'var cols=[].slice.call(root.querySelectorAll(' + COL_S + '));'
+      + 'var groups=[].slice.call(root.querySelectorAll(' + GROUP_S + '));'
+      + 'return {show:root.getAttribute(' + q(KANBAN_COLUMNS_SHOW_ATTR) + '),'
+      + 'display:cols.map(function(c){return getComputedStyle(c).display;}),'
+      + 'groups:[].slice.call(root.querySelectorAll(' + GROUP_S + ')).filter(function(g){'
+      + 'return getComputedStyle(g).display!=="none"&&g.getBoundingClientRect().width>0;}).length,'
+      + 'segs:[].slice.call(root.querySelectorAll(' + SEG_S + ')).map(function(s){'
+      + 'return s.getAttribute("aria-pressed")+(s.className.indexOf("is-on")>=0?"+on":"");})};}())');
+    console.log('kanban-columns B 档分段读数 ' + JSON.stringify(before));
+    assert.equal(before.show, '3', '入参 activeCol=3 ⇒ 窄档当前列是第 3 列');
+    assert.deepEqual(before.display, ['none', 'none', 'flex'], '窄档只留当前那一列');
+    assert.deepEqual(before.segs, ['false', 'false', 'true+on'], '当前那一段按下态 ＋ `is-on`');
+    assert.equal(before.groups, GROUPED_COLUMNS[2].groups.length, '窄档只量得到当前那一列的那两组');
   });
 
   it('关页', () => { page.close(); });
@@ -1120,6 +1708,245 @@ describe('kanban-columns ⑤ 行为（真机 · 真指针 CDP Input）＋ 四套
       assert.equal(marks[i], marks[0], '皮肤 ' + SKIN_NAMES[i] + ' 的标记与 ' + SKIN_NAMES[0] + ' 逐字节相同');
     }
     console.log('kanban-columns 皮肤同构：' + SKIN_NAMES.join('／') + ' 四套标记逐字节相同');
+  });
+
+  it('关页', () => { p.close(); });
+});
+
+/* ── ⑤B B 档行为（真机 · **真指针** CDP `Input`）────────────────────── */
+
+/** **真指针铁律**（与 ⑤ 同一条，这一档原样复用）：
+ *  点行／点分段／点收纳键**一律**走 CDP 的 `Input.dispatchMouseEvent`（`p.mouse()`：`mousePressed` ＋
+ *  `mouseReleased`，浏览器自己合成那枚 `click`）——**不许**用 `element.click()`。
+ *  合成 `click` 不经指针、也不看元素到不到得了：390 档是**窄档**（列区一次只留当前那一列），
+ *  藏起来那两列的收纳键量出来是零宽零高，`.click()` 照样点得动 ⇒ 它能在一份「真用户走不通」的
+ *  通路上全绿（2026-09 审查席读数）。故每条真指针动作之前先量**可达性**：
+ *  宽高非零 ＋ 那一点上命中的就是它自己；窄档按「先点分段、再点该列的收纳键」走真路径。
+ */
+describe('kanban-columns ⑤B B 档行为（真机 · 真指针 CDP Input）', async () => {
+  const p = await startBrowser({ portOffset: 48 });
+  if (p === null) {
+    it('真机未跑（本机没有 Chrome）：行为判据跳过', (t) => {
+      console.log('kanban-columns B 档行为：真机未跑（本机没有 Chrome），原因=startBrowser 返回 null');
+      t.skip('本机没有 Chrome');
+    });
+    return;
+  }
+
+  /** 页里装四条事件的落账 ＋ **每一步真指针**落在哪个元素上的落账（`pointerdown`，捕获期）。 */
+  const WIRE = '(function(){window.__kb=[];window.__pd=[];'
+    + 'document.addEventListener("pointerdown",function(e){var t=e.target;'
+    + 'function of(attr){var el=t&&t.closest?t.closest("["+attr+"]"):null;return el?el.getAttribute(attr):null;}'
+    + 'window.__pd.push({card:of(' + q(KANBAN_COLUMNS_CARD_ATTR) + '),seg:of(' + q(KANBAN_COLUMNS_SEG_ATTR) + '),'
+    + 'recv:of(' + q(KANBAN_COLUMNS_RECEIVE_ATTR) + ')});},true);'
+    + [KANBAN_COLUMNS_EVENT_PICK, KANBAN_COLUMNS_EVENT_MOVE, KANBAN_COLUMNS_EVENT_CANCEL, KANBAN_COLUMNS_EVENT_ADD]
+      .map((n) => 'document.addEventListener(' + q(n) + ',function(e){window.__kb.push({type:e.type,detail:e.detail});});').join('')
+    + 'return true;}())';
+  /** 一次页内快照（B 档）：拿起的形 ＋ 各列的读数（列计数、**组计数**、行、落点线、空槽、收纳键）。 */
+  const STATE = '(function(){'
+    + 'var root=document.querySelector(' + ROOT_S + ');'
+    + 'var probe=document.createElement("div");'
+    + 'probe.style.background=' + q(skinVar('surface-2')) + ';'
+    + 'probe.style.borderColor=' + q(skinVar('accent')) + ';'
+    + 'root.parentNode.insertBefore(probe,root);'
+    + 'var ps=getComputedStyle(probe),soft=ps.backgroundColor,edge=ps.borderTopColor;'
+    + 'probe.parentNode.removeChild(probe);'
+    + 'var rows=[].slice.call(root.querySelectorAll(' + ROW_S + '));'
+    + 'var picked=rows.filter(function(r){return r.classList.contains("is-picked");})[0];'
+    + 'var plain=rows.filter(function(r){return !r.classList.contains("is-picked");})[0];'
+    + 'function box(el){if(!el)return null;var cs=getComputedStyle(el);'
+    + 'return {bg:cs.backgroundColor,sideW:cs.borderLeftWidth,sideColor:cs.borderLeftColor,transform:cs.transform};}'
+    + 'var cols=[].slice.call(root.querySelectorAll(' + COL_S + ')).map(function(col){'
+    + 'var recv=col.querySelector(' + RECV_S + '), slot=col.querySelector(' + SLOT_S + ');'
+    + 'return {key:col.getAttribute(' + q(KANBAN_COLUMNS_COL_ATTR) + '),'
+    + 'count:(col.querySelector(' + COUNT_S + ')||{}).textContent,'
+    + 'rows:[].slice.call(col.querySelectorAll(' + ROW_S + ')).map(function(r){return r.getAttribute(' + q(KANBAN_COLUMNS_CARD_ATTR) + ');}),'
+    + 'state:[].slice.call(col.querySelectorAll(' + ROW_S + ')).map(function(r){return r.getAttribute(' + q(KANBAN_COLUMNS_STATE_ATTR) + ');}),'
+    + 'groups:[].slice.call(col.querySelectorAll(' + GROUP_S + ')).map(function(g){'
+    + 'var name=g.querySelector(' + GNAME_S + ');'
+    + 'return {name:name?name.textContent:null,count:(g.querySelector(' + GCOUNT_S + ')||{}).textContent,'
+    + 'rows:[].slice.call(g.querySelectorAll(' + ROW_S + ')).map(function(r){return r.getAttribute(' + q(KANBAN_COLUMNS_CARD_ATTR) + ');})};}),'
+    + 'drop:col.querySelectorAll(' + DROP_S + ').length,slot:slot?slot.textContent:null,'
+    + 'recvOff:recv?recv.disabled:null};});'
+    + 'return {pick:root.getAttribute(' + q(KANBAN_COLUMNS_PICK_ATTR) + '),'
+    + 'show:root.getAttribute(' + q(KANBAN_COLUMNS_SHOW_ATTR) + '),'
+    + 'bound:root.getAttribute(' + q(KANBAN_COLUMNS_BOUND_ATTR) + '),'
+    + 'status:(root.querySelector(' + STATUS_S + ')||{}).textContent,'
+    + 'cancel:root.querySelector(' + CANCEL_S + ')!==null,'
+    + 'cancelText:(root.querySelector(' + CANCEL_S + ')||{}).textContent,'
+    + 'clsPicked:rows.filter(function(r){return r.classList.contains("is-picked");})'
+    + '.map(function(r){return r.getAttribute(' + q(KANBAN_COLUMNS_CARD_ATTR) + ');}),'
+    + 'pressed:rows.map(function(r){return r.getAttribute("aria-pressed");}),'
+    + 'pickedBox:box(picked),plainBox:box(plain),soft:soft,edge:edge,cols:cols,evts:window.__kb};}())';
+  /** 坐标 ＋ **可达性**：宽高非零、那一点上命中的就是它自己（窄档没点分段之前量出来是零宽零高）。 */
+  const POINT_AT = (sel) => '(function(){'
+    + 'var el=document.querySelector(' + q(sel) + ');'
+    + 'if (!el) return {miss:true};'
+    + 'var b=el.getBoundingClientRect();'
+    + 'var x=Math.round(b.left+b.width/2), y=Math.round(b.top+b.height/2);'
+    + 'var cs=getComputedStyle(el), hit=document.elementFromPoint(x,y);'
+    + 'var col=el.closest(' + JSON.stringify('[' + KANBAN_COLUMNS_COL_ATTR + ']') + ');'
+    + 'return {x:x,y:y,w:Math.round(b.width),h:Math.round(b.height),disp:cs.display,'
+    + 'colDisp:col?getComputedStyle(col).display:null,'
+    + 'ok:!!hit && (hit===el || el.contains(hit))};}())';
+  /** 真指针点一下：先量可达性（量不过就是**判据红**，不是静默跳过），再走 CDP 的鼠标通道。 */
+  const tapAt = async (sel) => {
+    const g = await p.ev(POINT_AT(sel));
+    assert.ok(g.miss !== true, '真指针要点的元素不在页上：' + sel);
+    assert.ok(g.w > 0 && g.h > 0,
+      '真指针要点的元素量出来是零宽／零高（屏上到不了它——窄档得先点分段把它那一列换出来）：' + sel + ' ' + JSON.stringify(g));
+    assert.equal(g.ok, true, '真指针那一点上命中的不是它（被盖住／不在当前那一列）：' + sel + ' ' + JSON.stringify(g));
+    await p.mouse(g.x, g.y);
+    return g;
+  };
+  const ROW_SEL = (key) => ATTR(KANBAN_COLUMNS_CARD_ATTR + '="' + key + '"');
+  const RECV_SEL = (key) => ATTR(KANBAN_COLUMNS_RECEIVE_ATTR + '="' + key + '"');
+  const SEG_SEL = (at) => ATTR(KANBAN_COLUMNS_SEG_ATTR + '="' + at + '"');
+  const colOf = (st, key) => st.cols.find((c) => c.key === key);
+  const groupOf = (st, colKey, groupName) => colOf(st, colKey).groups.find((g) => g.name === groupName);
+  /** 选中的行「站起来」之后 `transform` 的算出来的样子（判据不写死数字）。 */
+  const LIFT_MATRIX = 'matrix(1, 0, 0, 1, 0, -' + String(KANBAN_COLUMNS_LIFT_PX) + ')';
+  /** 这一档的读数一共这些人：没拿起时状态句写那一档自己的话。 */
+  const ROW_IDLE = kanbanRowStatusText(null);
+
+  it('拿起：**真指针点一行物件**（完整事件序列 ＋ 类名序列）→ 整行选中（次要面 ＋ 主色侧标 ＋ 站起来，不横跳）', async () => {
+    await p.at(fixture('paper', GPLAIN, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(ROW_SEL('i-umbrella'));
+    const st = await p.ev(STATE);
+    console.log('kanban-columns B 档真指针拿起读数 ' + JSON.stringify({ pick: st.pick, cls: st.clsPicked,
+      box: st.pickedBox, soft: st.soft, edge: st.edge, status: st.status }));
+    assert.equal(st.pick, 'i-umbrella', '根上写清拿起了哪一行');
+    assert.deepEqual(st.clsPicked, ['i-umbrella'], '全页恰好一行挂 `is-picked`');
+    assert.equal(st.pickedBox.bg, st.soft,
+      '拿起的那一行铺**次要面**（「整行选中」那一档的底，`surface-2` 的实际取值）：' + JSON.stringify(st.pickedBox));
+    assert.equal(st.pickedBox.sideColor, st.edge, '拿起那一行换成主色侧标（形）：' + JSON.stringify(st.pickedBox));
+    assert.equal(st.pickedBox.sideW, st.plainBox.sideW,
+      '拿起前后左侧那道槽位宽度一样（拿起时不横跳）：' + JSON.stringify([st.pickedBox, st.plainBox]));
+    assert.equal(st.pickedBox.transform, LIFT_MATRIX, '拿起那一行站起来（位移＝`KANBAN_COLUMNS_LIFT_PX`）');
+    assert.equal(st.plainBox.transform, 'none', '没拿起的行没有位移');
+    assert.notEqual(st.plainBox.bg, st.soft, '没拿起的行还是原来的面');
+    assert.equal(st.status, kanbanRowStatusText('雨伞'), '状态句念的是**物件名**');
+    assert.equal(st.cancel, true, '取消键露出来');
+    assert.equal(st.cancelText, KANBAN_COLUMNS_TEXT.cancel);
+    /* **一屏只留一层话的实时读数**：拿起之后也不许冒出落点线与空槽那两句旁白。 */
+    for (const c of st.cols) {
+      assert.equal(c.drop, 0, 'B 档拿起之后也不许冒出落点线：' + c.key);
+      assert.equal(c.slot, null, 'B 档不许补空槽旁白：' + c.key);
+    }
+    assert.deepEqual(st.cols.map((c) => c.recvOff), [true, false, false], '拿起那行所在列那枚按不动，其余各列可点');
+    assert.equal(st.pressed.filter((x) => x === 'true').length, 1, '整行就是那颗按钮：只有拿起的那一行是按下态');
+    assert.equal(st.evts.length, 1, '只派发一条事件');
+    assert.equal(st.evts[0].type, KANBAN_COLUMNS_EVENT_PICK);
+    assert.deepEqual(st.evts[0].detail, { id: 'kanban-home', key: 'i-umbrella', from: 'hall' });
+    assert.equal(st.bound, '1', '根上记一枚 bound 读数');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('挪动（**窄档真路径**）：点行 → 点第 3 段 → 点卧室的收纳键 → 落进那一列**最后一组** ＋ 两端计数与组计数一起重写', async () => {
+    await p.at(fixture('paper', GPLAIN, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    /* 窄档的事实：列区一次只留当前那一列 ⇒ 第 3 列此刻**到不了**（真用户必须先点分段）。 */
+    const off = await p.ev(POINT_AT(RECV_SEL('bedroom')));
+    assert.equal(off.colDisp, 'none', '第 3 列此刻整列 `display:none`（`.click()` 会在这条走不通的通路上照样全绿）');
+    assert.equal(off.w * off.h, 0, '窄档没点分段之前，第 3 列的收纳键量出来是零宽零高：' + JSON.stringify(off));
+    await tapAt(ROW_SEL('i-umbrella'));
+    assert.equal((await p.ev(STATE)).pick, 'i-umbrella', '先拿起玄关那一行');
+    await tapAt(SEG_SEL('3'));
+    assert.equal((await p.ev(STATE)).show, '3', '点第 3 段 ⇒ 当前列换成第 3 列');
+    await tapAt(RECV_SEL('bedroom'));
+    const st = await p.ev(STATE);
+    console.log('kanban-columns B 档真指针挪动读数 ' + JSON.stringify({
+      pick: st.pick, hall: colOf(st, 'hall').rows, bedroom: colOf(st, 'bedroom').rows,
+      counts: st.cols.map((c) => c.count), groups: colOf(st, 'bedroom').groups.map((g) => g.name + '／' + g.count),
+    }));
+    assert.equal(st.pick, null, '挪完拿起态收掉');
+    assert.deepEqual(st.clsPicked, [], '挪完选中形也收掉');
+    assert.equal(st.cancel, false, '取消键收起来');
+    /* **卡落过去、两端计数对**：行落进目标列**最后一组**的末尾（组是这一档的格子）。 */
+    assert.deepEqual(colOf(st, 'hall').rows, ['i-card', 'i-knife'], '源列少了一行');
+    assert.deepEqual(colOf(st, 'bedroom').rows, ['i-cell', 'i-umbrella'], '目标列多了一行');
+    assert.deepEqual(groupOf(st, 'bedroom', '衣柜').rows, ['i-umbrella'], '收进来的行落在**最后一组**里（不是列身上的孤儿行）');
+    assert.equal(colOf(st, 'hall').count, kanbanCountText(2, '件'), '源列计数重写');
+    assert.equal(colOf(st, 'bedroom').count, kanbanCountText(2, '件'), '目标列计数重写');
+    assert.equal(groupOf(st, 'hall', '出门要带').count, kanbanCountText(1, '件'), '源那一组的组计数重写');
+    assert.equal(groupOf(st, 'bedroom', '衣柜').count, kanbanCountText(1, '件'), '目标那一组的组计数重写');
+    assert.equal(groupOf(st, 'bedroom', '床头柜').count, kanbanCountText(1, '件'), '没动过的组计数照旧');
+    assert.deepEqual(colOf(st, 'bedroom').state, ['bedroom', 'bedroom'], '行上写出它现在在哪一列');
+    assert.equal(colOf(st, 'bedroom').slot, null, 'B 档不补空槽旁白');
+    assert.equal(colOf(st, 'bedroom').drop + colOf(st, 'hall').drop + colOf(st, 'kitchen').drop, 0, '落点线一条都不许冒出来');
+    assert.equal(st.status, ROW_IDLE, '状态句回到「还没选中物件」');
+    assert.deepEqual(st.cols.map((c) => c.recvOff), [true, true, true], '没拿起时整排收纳键按不动');
+    const move = st.evts[st.evts.length - 1];
+    assert.equal(move.type, KANBAN_COLUMNS_EVENT_MOVE);
+    assert.deepEqual(move.detail, { id: 'kanban-home', key: 'i-umbrella', from: 'hall', to: 'bedroom' });
+    /* **这一挪是真手势打出来的**：三次动作各来一条 `pointerdown`，而且每一步**落在谁身上**都记着。
+       `element.click()` 只出一条 `click`（一条 `pointerdown` 都没有）——它能在这条通路上全绿，真指针这条替不了。 */
+    const pd = await p.ev('window.__pd');
+    console.log('kanban-columns B 档真指针时序 ' + JSON.stringify(pd));
+    assert.deepEqual(pd, [
+      { card: 'i-umbrella', seg: null, recv: null },
+      { card: null, seg: '3', recv: null },
+      { card: null, seg: null, recv: 'bedroom' },
+    ], '三次真指针动作（点行／点分段／点收纳键）各落在自己那件东西上：' + JSON.stringify(pd));
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('挪动（**宽档**）：几列并排时不点分段——点行 → 点目标列收纳键，两步走完', async () => {
+    await p.at(fixture('paper', GPLAIN, true), { width: 1280, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(ROW_SEL('i-card'));
+    await tapAt(RECV_SEL('kitchen'));
+    const st = await p.ev(STATE);
+    console.log('kanban-columns B 档宽档挪动读数 ' + JSON.stringify({
+      hall: colOf(st, 'hall').rows, kitchen: colOf(st, 'kitchen').rows,
+      groups: colOf(st, 'kitchen').groups.map((g) => g.name + '／' + g.count),
+    }));
+    assert.deepEqual(colOf(st, 'hall').rows, ['i-umbrella', 'i-knife'], '源列少了一行');
+    assert.deepEqual(groupOf(st, 'kitchen', '水槽下').rows, ['i-soap', 'i-card'], '宽档也落进最后一组');
+    assert.equal(colOf(st, 'kitchen').count, kanbanCountText(4, '件'), '目标列计数重写（两端都对）');
+    assert.equal(colOf(st, 'hall').count, kanbanCountText(2, '件'), '源列计数重写');
+    assert.equal(groupOf(st, 'kitchen', '水槽下').count, kanbanCountText(2, '件'), '目标那一组的组计数重写');
+    assert.deepEqual((await p.ev('window.__kb')).map((e) => e.type),
+      [KANBAN_COLUMNS_EVENT_PICK, KANBAN_COLUMNS_EVENT_MOVE], '两步各派发一条事件');
+    assert.deepEqual(await p.ev('window.__pd'), [
+      { card: 'i-card', seg: null, recv: null }, { card: null, seg: null, recv: 'kitchen' },
+    ], '宽档两步都是真指针（不点分段）');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('挪空一组：源组计数变 0 **但组名行还在**（不写一句旁白，也不补空槽）', async () => {
+    await p.at(fixture('paper', GPLAIN, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(SEG_SEL('2'));
+    await tapAt(ROW_SEL('i-soap'));
+    await tapAt(SEG_SEL('1'));
+    await tapAt(RECV_SEL('hall'));
+    const st = await p.ev(STATE);
+    console.log('kanban-columns B 档挪空一组读数 ' + JSON.stringify({
+      kitchen: colOf(st, 'kitchen').groups.map((g) => g.name + '／' + g.count),
+      hall: colOf(st, 'hall').rows, slot: colOf(st, 'kitchen').slot,
+    }));
+    assert.deepEqual(groupOf(st, 'kitchen', '水槽下').rows, [], '那一组空了');
+    assert.equal(groupOf(st, 'kitchen', '水槽下').count, kanbanCountText(0, '件'), '空组的计数照实写 0');
+    assert.equal(groupOf(st, 'kitchen', '水槽下').name, '水槽下', '**组名行还在**（人得知道这一格是什么）');
+    assert.equal(colOf(st, 'kitchen').slot, null, '空组不补空槽那两句旁白');
+    assert.equal(colOf(st, 'kitchen').count, kanbanCountText(2, '件'), '厨房整列＝调料柜那两行');
+    assert.deepEqual(groupOf(st, 'hall', '常备').rows, ['i-knife', 'i-soap'], '收到的行排在最后一组末尾');
+    assert.equal(colOf(st, 'hall').count, kanbanCountText(4, '件'), '目标列计数重写');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('四套皮肤下 B 档标记逐字节相同（换皮不换结构）', async () => {
+    const marks = [];
+    for (const skin of SKIN_NAMES) {
+      await p.at(fixture(skin, GPICKED, false), { width: 390, height: 900 });
+      marks.push(await p.ev('(function(){return document.querySelector(' + ROOT_S + ').outerHTML;}())'));
+    }
+    for (let i = 1; i < marks.length; i += 1) {
+      assert.equal(marks[i], marks[0], '皮肤 ' + SKIN_NAMES[i] + ' 的 B 档标记与 ' + SKIN_NAMES[0] + ' 逐字节相同');
+    }
+    console.log('kanban-columns B 档皮肤同构：' + SKIN_NAMES.join('／') + ' 四套标记逐字节相同');
   });
 
   it('关页', () => { p.close(); });

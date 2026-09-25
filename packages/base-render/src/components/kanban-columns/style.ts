@@ -10,7 +10,8 @@
  *  几何事实（判据钉住，数只写在这里一处）：
  *   · 卡／收纳键／加键／分段 ≥`KANBAN_COLUMNS_TOUCH_PX`（44）高；卡与卡之间留
  *     `KANBAN_COLUMNS_GAP_PX`（8）px 缝；空列与有卡列同高（列区 `stretch` ＋ 列身 `flex:1`）；
- *   · **窄容器那一段在 `style-narrow.ts`**（同一份纪律、同一个前缀，搬家只为行数）；
+ *   · **形态 `grouped` 那一段在 `style-grouped.ts`**（同一份纪律、同一个前缀；每一条都钉在
+ *     `.is-grouped` 上，`status` 档零命中）；**窄容器那一段在 `style-narrow.ts`**（搬家只为行数）；
  *     拿起的卡「站起来」往上挪的位移＝`KANBAN_COLUMNS_LIFT_PX`（地板口径写在 `attrs.ts` 那两枚常量上）。
  */
 import { skinVar } from '../skin/contract.js';
@@ -24,6 +25,7 @@ import {
   kanbanColumnsSlot,
   type KanbanColumnsSlot,
 } from './attrs.js';
+import { kanbanColumnsGroupedCss } from './style-grouped.js';
 import { kanbanColumnsNarrowCss } from './style-narrow.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
@@ -327,6 +329,9 @@ export function kanbanColumnsCss(input?: { readonly prefix?: string }): string {
     '@media (prefers-reduced-motion: reduce) {',
     '  ' + s('card') + ', ' + s('receive') + ', ' + s('cancel') + ' { transition: none; transform: none; }',
     '}',
+    '/* 形态 `grouped` 那一段（`style-grouped.ts`）：每一条都钉在 `.is-grouped` 上，`status` 档零命中；',
+    '   插在窄容器段**之前**（搬走的是行数，不是取值）。 */',
+    kanbanColumnsGroupedCss({ prefix: p }),
     '/* 窄容器段（`style-narrow.ts`）：同一份纪律、同一个前缀，插在这里——',
     '   搬走的是行数，不是取值；本函数的产物逐字节不变。 */',
     kanbanColumnsNarrowCss({ prefix: p }),

@@ -6,10 +6,13 @@
  *      · **全空白串＝拒**（`'   '` 会在屏上留一块空白：无字列名、无字卡、无字计数单位；
  *        **零宽字符那类不可见字符同样算空白**——`trim()` 剥不掉它们，得先剥再判）；
  *      · **入参表以外的键＝拒**（写错一个键名，调用方以为自己设上了，屏上却没有；
- *        自有的不可枚举键与原型链上继承来的键**同样算**——只走 `Object.keys` 会漏掉这两类）。
- *   2. **能算的都算出来**：每列的计数那一句、卡上那枚状态、状态句、收纳键的字——都在这里算好；
+ *        自有的不可枚举键与原型链上继承来的键**同样算**——只走 `Object.keys` 会漏掉这两类）；
+ *      · **键表按形态分**：`status` 档的列拿 `cards` 装东西、`grouped` 档拿 `groups` 装东西，
+ *        给错那一档的键＝拒（静默吞掉的话，调用方会把「一个组都没画出来」当成件坏了）。
+ *   2. **能算的都算出来**：每列的计数那一句、每组自己的计数那一句、状态句、收纳键的字——都在这里算好；
  *      `render.ts` 只拼标记，一个字都不算。
- *   3. **空列是合法态**：`cards: []` ＝ 设计过的空槽（列头与计数一直在，不消失）。
+ *   3. **空是合法态**：`cards: []`（`status` 档）＝设计过的空槽；
+ *      `items: []`（`grouped` 档）＝设计过的空格（组名与计数照常在，**屏上不写一句旁白**——读数自己说清）。
  */
 import { assertDenseArray, assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
@@ -20,6 +23,7 @@ import {
   KANBAN_COLUMNS_MIN_COLS,
   KANBAN_COLUMNS_TEXT,
   kanbanCountText,
+  kanbanRowStatusText,
   kanbanStatusText,
   type KanbanColumnsForm,
 } from './attrs.js';
@@ -35,17 +39,44 @@ export interface KanbanCardRow {
   readonly badge: string;
 }
 
-/** 归一化后的一列（`count` 是屏上那一句「2 道」；`mark` 是这一列的形）。 */
+/** 归一化后的一行物件（`grouped` 档的最小单位：整行就是那颗按钮）。 */
+export interface KanbanItemRow {
+  readonly key: string;
+  readonly label: string;
+  readonly value?: string;
+  /** 住在哪一列（列的机器键）——它就是事件 `detail.from`。 */
+  readonly colKey: string;
+}
+
+/** 归一化后的一个二级组（`count` 是屏上那一句「2 件」，与列计数同一个单位）。 */
+export interface KanbanGroupRow {
+  readonly name: string;
+  readonly items: readonly KanbanItemRow[];
+  /** 屏上那一句组计数（`2 件`）。 */
+  readonly count: string;
+}
+
+/** 归一化后的一列（`count` 是屏上那一句「2 道」；`mark` 是这一列的形）。
+ *  两档各自用 `cards`／`groups`——另一支照实留空（`status` 档的 `groups` 恒为 `[]`）。 */
 export interface KanbanColumnRow {
   readonly key: string;
   readonly name: string;
   readonly purpose?: string;
   readonly unit: string;
   readonly cards: readonly KanbanCardRow[];
+  readonly groups: readonly KanbanGroupRow[];
   /** 屏上那一句计数（`2 道`）。 */
   readonly count: string;
   /** 这一列的记号（●／▸／✓／◆，按列序取）。 */
   readonly mark: string;
+}
+
+/** 被拿起的那一行（两档共用的最小读数：机器键 ＋ 它在哪一列 ＋ **屏上那个名字**）。
+ *  `status` 档取卡的标题、`grouped` 档取物件的名字——状态句念的就是它。 */
+export interface KanbanPickedRow {
+  readonly key: string;
+  readonly colKey: string;
+  readonly name: string;
 }
 
 /** 内部类型：`render.ts` 只吃它，不再自己碰 `any`。 */
@@ -53,8 +84,8 @@ export interface KanbanColumnsModel {
   readonly form: KanbanColumnsForm;
   readonly id: string;
   readonly columns: readonly KanbanColumnRow[];
-  /** 被选中那一张卡（没选中＝`undefined`）。 */
-  readonly picked?: KanbanCardRow;
+  /** 被拿起的那一行（没拿起＝`undefined`）。 */
+  readonly picked?: KanbanPickedRow;
   /** 窄档当前列（1 起）。 */
   readonly activeCol: number;
   /** 状态句（真读数）。 */
@@ -103,7 +134,7 @@ function optRealText(value: unknown, field: string): string | undefined {
  *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
  *   · `for…in` —— 走**整条原型链**（`Object.create({bogus:1})` 那种继承来的键就是这一路）。
  */
-function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string, hint?: string): void {
   const bad: string[] = [];
   const note = (key: string): void => {
     if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
@@ -112,18 +143,32 @@ function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], fi
   for (const key in raw) note(key);
   if (bad.length > 0) {
     badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
-      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）'
+      + (hint === undefined ? '' : hint));
   }
 }
 
 /** `KanbanColumnsInput` 的键（顶层入参表）。 */
 const INPUT_KEYS = ['id', 'columns', 'pickedKey', 'activeCol', 'form', 'extraClass'] as const;
 
-/** `KanbanColumn` 的键（一列的入参表）。 */
-const COLUMN_KEYS = ['key', 'name', 'purpose', 'unit', 'cards'] as const;
+/** `status` 档的列的键（一列的入参表）。 */
+const STATUS_COLUMN_KEYS = ['key', 'name', 'purpose', 'unit', 'cards'] as const;
+
+/** `grouped` 档的列的键（一列的入参表）：这一档拿 `groups` 装东西，`cards`／`purpose` 不在表里。 */
+const GROUPED_COLUMN_KEYS = ['key', 'name', 'unit', 'groups'] as const;
 
 /** `KanbanCard` 的键（一张卡的入参表）。 */
 const CARD_KEYS = ['key', 'title', 'meta'] as const;
+
+/** `KanbanGroup` 的键（一个二级组的入参表）。 */
+const GROUP_KEYS = ['name', 'items'] as const;
+
+/** `KanbanGroupItem` 的键（一行物件的入参表）。 */
+const ITEM_KEYS = ['key', 'label', 'value'] as const;
+
+/** 给错形态的键时补的那半句：说清本档拿哪个键装东西。 */
+const STATUS_KEY_HINT = '｜本形态 `status` 的列拿 `cards` 装东西（`groups` 是 `grouped` 那一档的键）';
+const GROUPED_KEY_HINT = '｜本形态 `grouped` 的列拿 `groups` 装东西（`cards`／`purpose` 是 `status` 那一档的键）';
 
 /** 一张卡 → 一行（逐字段校验；机器键整份看板内唯一）。 */
 function reqCard(value: unknown, at: string, colKey: string, colName: string, seen: Set<string>): KanbanCardRow {
@@ -143,32 +188,83 @@ function reqCard(value: unknown, at: string, colKey: string, colName: string, se
   };
 }
 
-/** 一列 → 一行（逐字段校验；空数组＝设计过的空槽，不是错）。 */
-function reqColumn(value: unknown, at: string, index: number, seen: Set<string>): KanbanColumnRow {
+/** 一行物件 → 一行（逐字段校验；机器键整份看板内唯一，与列键也不许撞）。 */
+function reqItem(value: unknown, at: string, colKey: string, seen: Set<string>): KanbanItemRow {
   assertPlainObject(value, at);
   const raw = value as Record<string, unknown>;
-  assertKeys(raw, COLUMN_KEYS, at);
+  assertKeys(raw, ITEM_KEYS, at);
+  const key = reqIdentifier(raw.key, at + '.key');
+  if (seen.has(key)) badInput(at + '.key 与看板里前面某一行／某一列的 key 重了（每个 key 整份看板内唯一）');
+  seen.add(key);
+  return {
+    key,
+    label: reqRealText(raw.label, at + '.label'),
+    value: optRealText(raw.value, at + '.value'),
+    colKey,
+  };
+}
+
+/** 一个二级组 → 一行（组名 ＋ 组计数；组里的行数上限与一列的卡数同一个数）。
+ *  组**没有机器键**：本件不拿它当数据（落点由结构定：收进来的行走这一列最后一组的末尾），
+ *  所以「组名重名的两个组」不是错——它们的区别是位置。 */
+function reqGroup(value: unknown, at: string, colKey: string, unit: string, seen: Set<string>): KanbanGroupRow {
+  assertPlainObject(value, at);
+  const raw = value as Record<string, unknown>;
+  assertKeys(raw, GROUP_KEYS, at);
+  const name = reqRealText(raw.name, at + '.name');
+  const items = raw.items;
+  if (!Array.isArray(items)) badInput(at + '.items 必须是数组（空格请显式给 []：空格是合法态，不是缺席）');
+  assertDenseArray(items, at + '.items');
+  if (items.length > KANBAN_COLUMNS_MAX_CARDS) {
+    badInput(at + '.items 至多 ' + String(KANBAN_COLUMNS_MAX_CARDS) + ' 行（再多请调用方先分组）');
+  }
+  const rows = items.map((one, i) => reqItem(one, at + '.items[' + String(i) + ']', colKey, seen));
+  return { name, items: rows, count: kanbanCountText(rows.length, unit) };
+}
+
+/** 一列 → 一行（**键表按形态分**：`status` 档读 `cards`、`grouped` 档读 `groups`；空数组＝设计过的空态）。 */
+function reqColumn(value: unknown, at: string, index: number, seen: Set<string>, form: KanbanColumnsForm): KanbanColumnRow {
+  assertPlainObject(value, at);
+  const raw = value as Record<string, unknown>;
+  const grouped = form === 'grouped';
+  assertKeys(raw, grouped ? GROUPED_COLUMN_KEYS : STATUS_COLUMN_KEYS, at, grouped ? GROUPED_KEY_HINT : STATUS_KEY_HINT);
   const key = reqIdentifier(raw.key, at + '.key');
   if (seen.has(key)) badInput(at + '.key 与看板里前面某一列的 key 重了（每列的 key 看板内唯一）');
   seen.add(key);
   const name = reqRealText(raw.name, at + '.name');
+  const unitRaw = optRealText(raw.unit, at + '.unit');
+  const unit = unitRaw === undefined ? KANBAN_COLUMNS_TEXT.unit : unitRaw;
+  const mark = KANBAN_COLUMNS_MARKS[index % KANBAN_COLUMNS_MARKS.length];
+  if (grouped) {
+    const groups = raw.groups;
+    if (!Array.isArray(groups)) {
+      badInput(at + '.groups 必须是数组（`grouped` 档的列至少要有一组：那是这一列的格子）');
+    }
+    assertDenseArray(groups, at + '.groups');
+    if (groups.length === 0) badInput(at + '.groups 至少一组（一组都没有的列请用 `status` 那一档）');
+    const rows = groups.map((one, i) => reqGroup(one, at + '.groups[' + String(i) + ']', key, unit, seen));
+    const total = rows.reduce((n, g) => n + g.items.length, 0);
+    if (total > KANBAN_COLUMNS_MAX_CARDS) {
+      badInput(at + '.groups 这一列合计至多 ' + String(KANBAN_COLUMNS_MAX_CARDS) + ' 行（再多请调用方先分列）');
+    }
+    return { key, name, unit, mark, cards: [], groups: rows, count: kanbanCountText(total, unit) };
+  }
   const cards = raw.cards;
   if (!Array.isArray(cards)) badInput(at + '.cards 必须是数组（空列请显式给 []：空列是合法态，不是缺席）');
   assertDenseArray(cards, at + '.cards');
   if (cards.length > KANBAN_COLUMNS_MAX_CARDS) {
     badInput(at + '.cards 至多 ' + String(KANBAN_COLUMNS_MAX_CARDS) + ' 张（再多请调用方先分组）');
   }
-  const unitRaw = optRealText(raw.unit, at + '.unit');
-  const unit = unitRaw === undefined ? KANBAN_COLUMNS_TEXT.unit : unitRaw;
   const rows = cards.map((one, i) => reqCard(one, at + '.cards[' + String(i) + ']', key, name, seen));
   return {
     key,
     name,
     purpose: optRealText(raw.purpose, at + '.purpose'),
     unit,
+    mark,
     cards: rows,
+    groups: [],
     count: kanbanCountText(rows.length, unit),
-    mark: KANBAN_COLUMNS_MARKS[index % KANBAN_COLUMNS_MARKS.length],
   };
 }
 
@@ -181,7 +277,7 @@ export function normalizeKanbanColumns(input: unknown): KanbanColumnsModel {
   const form = raw.form === undefined ? KANBAN_COLUMNS_FORMS[0] : raw.form;
   if (!(KANBAN_COLUMNS_FORMS as readonly unknown[]).includes(form)) {
     badInput('kanban-columns: input.form 必须是 ' + KANBAN_COLUMNS_FORMS.join('／')
-      + ' 之一（本件只落地形态 A「按状态分列」）');
+      + ' 之一（本件落地两档骨架：`status` 按状态分列／`grouped` 按位置分列 ＋ 列内二级组）');
   }
 
   const id = reqIdentifier(raw.id, 'kanban-columns: input.id');
@@ -193,8 +289,9 @@ export function normalizeKanbanColumns(input: unknown): KanbanColumnsModel {
     badInput('kanban-columns: input.columns 要 ' + String(KANBAN_COLUMNS_MIN_COLS)
       + '–' + String(KANBAN_COLUMNS_MAX_COLS) + ' 列（再多请调用方先分组）');
   }
+  const one = form as KanbanColumnsForm;
   const seen = new Set<string>();
-  const columns = list.map((one, i) => reqColumn(one, 'kanban-columns: input.columns[' + String(i) + ']', i, seen));
+  const columns = list.map((value, i) => reqColumn(value, 'kanban-columns: input.columns[' + String(i) + ']', i, seen, one));
 
   const activeRaw = raw.activeCol;
   let activeCol = 1;
@@ -208,26 +305,32 @@ export function normalizeKanbanColumns(input: unknown): KanbanColumnsModel {
     activeCol = activeRaw;
   }
 
-  let picked: KanbanCardRow | undefined;
+  let picked: KanbanPickedRow | undefined;
   const pickedRaw = raw.pickedKey;
   if (pickedRaw !== undefined) {
     if (typeof pickedRaw !== 'string' || pickedRaw === '') {
-      badInput('kanban-columns: input.pickedKey 必须是非空字符串（被选中那一张卡的机器键）');
+      badInput('kanban-columns: input.pickedKey 必须是非空字符串（被拿起那一行的机器键）');
     }
     for (const col of columns) {
       const hit = col.cards.find((c) => c.key === pickedRaw);
-      if (hit !== undefined) picked = hit;
+      if (hit !== undefined) picked = { key: hit.key, colKey: hit.colKey, name: hit.title };
+      for (const g of col.groups) {
+        const item = g.items.find((it) => it.key === pickedRaw);
+        if (item !== undefined) picked = { key: item.key, colKey: item.colKey, name: item.label };
+      }
     }
-    if (picked === undefined) badInput('kanban-columns: input.pickedKey 没有命中任何一张卡（选中的卡必须真的在看板里）');
+    if (picked === undefined) badInput('kanban-columns: input.pickedKey 没有命中任何一张卡／一行物件（拿起的那一行必须真的在看板里）');
   }
 
   return {
-    form: form as KanbanColumnsForm,
+    form: one,
     id,
     columns,
     picked,
     activeCol,
-    status: kanbanStatusText(picked === undefined ? null : picked.title),
+    /* 状态句按形态取：两档同一句语义，只有「拿起了什么」那一样东西的名字照实写
+       （`status` 档＝卡、`grouped` 档＝一行物件）。运行时段读的是同一对函数。 */
+    status: (one === 'grouped' ? kanbanRowStatusText : kanbanStatusText)(picked === undefined ? null : picked.name),
     extraClass: optExtraClass(raw.extraClass, 'kanban-columns: input.extraClass'),
   };
 }
