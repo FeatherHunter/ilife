@@ -10,7 +10,7 @@ export { LinkCoreError, EnvelopeError, RegistryError, RunnerError, ConfigError }
 // 取用方：各技能的数据族目录命令（卡路里先行 `skill-calorie/src/data/schema.ts`）。
 export { readDataSchema } from './data-schema.js';
 export type { DataColumn, DataTableSchema, DataSchemaDb } from './data-schema.js';
-// 引擎最小路径（#955）：单表查询单的解析、目录校验与结果集装配，见 src/data-query.ts。
+// 引擎最小路径（#955）＋连接（#956）＋分组聚合（#957）＋分页续取（#958）：单表／连接／聚合三支的解析、目录校验与结果集装配，见 src/data-query.ts。
 // 取用方：各技能的数据族引擎命令（卡路里先行 `skill-calorie/src/data/query.ts`）。
 export { executeDataQueries } from './data-query.js';
 export type {
@@ -22,6 +22,8 @@ export type {
   DataOrderBy,
   DataJoinOn,
   DataJoin,
+  DataAgg,
+  DataPage,
   DataQuery,
   DataQueriesRequest,
   DataField,
@@ -29,6 +31,20 @@ export type {
   DataErrorItem,
   DataResultItem,
 } from './data-query.js';
+// 分页续取件（#958）：页大小校验、不透明凭据编解码、游标／偏移条件装配，见 src/data-page.ts。
+// 取用方：引擎件 `data-query.ts`（三支接线）；聚合端到端待 #957 落地后由引擎件直接复用本件的偏移载荷。
+export {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  readPage,
+  fingerprintQuery,
+  encodeRowToken,
+  decodeRowToken,
+  encodeAggToken,
+  decodeAggToken,
+  buildCursorCondition,
+} from './data-page.js';
+export type { CursorOrderSpec, CursorRowidSpec } from './data-page.js';
 // 配置件（#694）：定位／读写校验／重置为默认，见 src/config/。
 export { configPaths, loadConfig, saveConfig, resetConfig } from './config/index.js';
 export type { ConfigPaths, LoadedConfig, ConfigRecord, ConfigGroup, ConfigValue } from './config/index.js';
