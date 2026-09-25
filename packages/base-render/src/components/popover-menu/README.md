@@ -79,15 +79,17 @@ document.addEventListener('ilife:menu-select', (e) => {
   "align": "end",
   "menuLabel": "复制成哪种格式",
   "items": [
-    { "value": "text", "label": "纯文本", "group": "文字", "shortcut": "⌘⇧T" },
-    { "value": "markdown", "label": "Markdown", "note": "带标题与表格", "shortcut": "⌘⇧M" },
-    { "value": "csv", "label": "CSV", "group": "数据", "shortcut": "⌘⇧C" },
+    { "value": "text", "label": "纯文本", "group": "文字" },
+    { "value": "markdown", "label": "Markdown", "note": "带标题与表格" },
+    { "value": "csv", "label": "CSV", "group": "数据" },
     { "value": "md-view", "label": "按天", "kind": "check", "checked": true, "group": "排布" },
     { "value": "week", "label": "按周", "kind": "check" },
     { "value": "delete", "label": "删掉这一条", "kind": "danger", "sep": true }
   ]
 }
 ```
+
+**示例里不给 `shortcut`**：本件支持这个字段，但手机上它没有意义，而仓库那条「零键盘语汇」门只扫**用户看得见**的字——示例入参是要被渲染出来扫一遍的，所以示例里一律不写键盘记号（`⌘`／`⇧`／`Esc` 这类）。
 
 记号 `▾` 由本件补，`trigger` 里不用写；分组头（`文字`／`数据`／`排布`）与发丝线（`sep`）都从项上的字段来。
 
