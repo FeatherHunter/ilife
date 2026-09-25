@@ -5,12 +5,19 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpLookup } from '../dist/help/index.js';
 import { CHEF_KEY_SHAPES } from '../dist/render/index.js';
+import { DATA_COMMANDS } from '../dist/data/commands.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
 
 export function buildHelpBlock() {
-  const keys = Object.keys(CHEF_KEY_SHAPES).sort();
+  // #963 · 程序面键（`surface: 'program'`）不进说明面：`CHEF_KEY_SHAPES` 是全量键表（含程序可调面），
+  // 说明面的相关场景行只列模型可见键。程序面声明的唯一定义地是各域 `commands.ts`（本家当前只有
+  // 数据族两条在 `src/data/commands.ts`），这里以它为准过滤（与卡路里／饼干 `buildHelpBlock` 同口径，见 #953）。
+  const program = new Set(
+    DATA_COMMANDS.filter((d) => d.surface === 'program').map((d) => d.key),
+  );
+  const keys = Object.keys(CHEF_KEY_SHAPES).filter((k) => !program.has(k)).sort();
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');

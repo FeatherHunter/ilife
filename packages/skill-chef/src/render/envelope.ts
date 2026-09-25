@@ -1,4 +1,6 @@
 // 渲染层·envelope：8 联动 key×shape 映射；key 字符串后续票落表时冻结，此处只做形状分配与全字段校验。
+// #963 · 数据族两条程序面键（`chef.data.schema`／`chef.data.query`）形状均为 `resultset`
+// （公共层正本的新增形状，见 #952；本族不渲染，`render/html.ts` 的形状 switch 不受影响）。
 import { createEnvelope, parseEnvelope, parseRegistryKey, type Envelope, type EnvelopeShape } from 'base-link-core';
 import { ChefRenderError } from './errors.js';
 
@@ -15,6 +17,8 @@ export const CHEF_KEY_SHAPES: Record<string, EnvelopeShape> = {
   'chef.relation.query': 'list',
   'chef.setup.init': 'receipt',
   'chef.data.batch': 'receipt',
+  'chef.data.schema': 'resultset',
+  'chef.data.query': 'resultset',
 };
 
 export function chefShapeFor(key: string): EnvelopeShape {

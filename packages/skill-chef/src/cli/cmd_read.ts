@@ -29,6 +29,7 @@ import {
 import type { ChefHtmlDelivery, HtmlLanding } from '../help/index.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 // #839 · 各域处理经能力门进入（入口走公开接口，不直引域内部件）。
+// #963 · 数据族两条程序面键同走本域能力门（`runDataSchema`／`runChefDataQuery`，只读、不产文件）。
 import { runRecipeView } from '../view/index.js';
 import { runRecipeSearch } from '../search/index.js';
 import { runRecipeWriteAdd } from '../add/index.js';
@@ -36,7 +37,7 @@ import { runRecipeWriteUpdate } from '../update/index.js';
 import { runCookingRun } from '../cook/index.js';
 import { runShoppingQuery } from '../shopping/index.js';
 import { runHistoryRecord, runHistoryQuery } from '../history/index.js';
-import { runDataBatch, runDataQuery } from '../data/index.js';
+import { runChefDataQuery, runDataBatch, runDataQuery, runDataSchema } from '../data/index.js';
 import { parseRelationOp, runRelationQuery, runRelationWrite } from '../relation/index.js';
 import { runSetupInit } from '../setup/index.js';
 
@@ -154,6 +155,12 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
       }
       case 'chef.data.batch': {
         return runDataBatch(handle, params);
+      }
+      case 'chef.data.schema': {
+        return runDataSchema(handle, params);
+      }
+      case 'chef.data.query': {
+        return runChefDataQuery(handle, params);
       }
       case 'chef.help.lookup':
         // #215：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
