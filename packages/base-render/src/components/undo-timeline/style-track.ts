@@ -99,6 +99,11 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  bottom: auto;',
     '  height: ' + String(DOT_CENTER_PX) + 'px;',
     '}',
+    /* 只有一行时它同时是首行与末行：上面两条叠加会在圆点下多出一段线头
+       ⇒ 这一格直接不出线（首行从圆点起、末行到圆点止，落在同一个点上就是没有线）。 */
+    s('row') + ':first-child:last-child ' + c('rail') + '::before {',
+    '  display: none;',
+    '}',
     /* 圆点三态三形：能撤＝实心强调圆（无文字的点走强调实底）／已撤＝空心细描边／不可撤＝空心＋一道斜杠。 */
     s('dot') + ' {',
     '  position: absolute;',

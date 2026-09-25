@@ -14,15 +14,13 @@ import {
   UNDO_TIMELINE_CONTAINER,
   UNDO_TIMELINE_GAP_PX,
   UNDO_TIMELINE_NARROW_PX,
+  UNDO_TIMELINE_ROW_MIN_PX,
   undoTimelineSlot,
   type UndoTimelineSlot,
 } from './attrs.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
-
-/** 一行的高度下限（px）：整行是命中区，手指不必去戳那枚 24px 的小方块。 */
-const ITEM_MIN_HEIGHT_PX = 56;
 
 /** 形态 `impact`／`track` 共用的回滚单样式段。恒返回非空 CSS 文本。 */
 export function undoTimelineImpactCss(input?: { readonly prefix?: string }): string {
@@ -73,7 +71,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  grid-template-columns: auto minmax(0, 1fr) auto;',
     '  gap: 2px 10px;',
     '  align-items: center;',
-    '  min-height: ' + String(ITEM_MIN_HEIGHT_PX) + 'px;',
+    '  min-height: ' + String(UNDO_TIMELINE_ROW_MIN_PX) + 'px;',
     '  padding: 8px 14px;',
     '  border-top: 1px solid ' + skinVar('line') + ';',
     '  cursor: pointer;',

@@ -8,8 +8,6 @@
  */
 import type { UndoTimelineState } from './attrs.js';
 
-/** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
-export const UNDO_TIMELINE_MISSING = '—';
 /** 缺省卡头标题。 */
 export const UNDO_TIMELINE_TITLE = '改动记录';
 /** 空态：这一段时间里一条改动都没有。 */

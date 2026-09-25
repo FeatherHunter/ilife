@@ -36,7 +36,7 @@
 | `title` | `string` | `改动记录` | 卡头标题 |
 | `cap` | `string` | — | 卡头右端那句（`只留 30 天，共 12 条`）。**永不 `…` 截断** |
 | `rollback` | `UndoTimelineRollback` | — | 页脚那枚整段回滚（不给＝页脚只有那句结论） |
-| `openKey` | `string` | — | 渲染时就摊开哪一条的回滚单（**必须命中一条带 `impact` 的改动**） |
+| `openKey` | `string` | — | 渲染时就摊开哪一条的回滚单（**必须命中一条带 `impact` 的改动，且那条须是 `state: 'undoable'`、非 `busy`**：锁着／已撤／正在跑的摊开也没法按，命中即报 `BlocksError`） |
 | `emptyText` | `string` | `这一段时间里没有改动` | 空态那句字 |
 | `hint` | `string` | — | 卡底那句提示（也是「按不动」的说明） |
 | `changeKey` | `string` | `change` | `impact` 形态下给这一块用的机器键（事件 `detail.key`） |
@@ -64,7 +64,7 @@
 
 `rollback`（整段回滚）：`label`（**必填**，那枚按钮上的字）／`note`（旁边那句）。
 
-**入参违规一律抛 `BlocksError`（`bad-input`）**，不静默兜底：形态闭集外、重键、空标题、三态闭集外、`state: 'locked'` 不写原因、没标 `locked` 却给了原因、勾不动那一行标成 `checked: true`、读数缺一半、影响面一项都没有、`openKey` 未命中带影响面的那一条、**数组里有洞**（`new Array(n)` 这种稀疏数组：`map` 会跳过洞、渲染那一头才抛 `TypeError`）——逐条当场报错，并点名到 `input.<路径>`。
+**入参违规一律抛 `BlocksError`（`bad-input`）**，不静默兜底：形态闭集外、重键、空标题、三态闭集外、`state: 'locked'` 不写原因、没标 `locked` 却给了原因、勾不动那一行标成 `checked: true`、读数缺一半、影响面一项都没有、`openKey` 未命中带影响面的那一条、`openKey` 命中 `locked`／`undone`／`busy` 的那一条、**数组里有洞**（`new Array(n)` 这种稀疏数组：`map` 会跳过洞、渲染那一头才抛 `TypeError`）——逐条当场报错，并点名到 `input.<路径>`。
 
 **示例入参**（本件唯一一份，皮肤矩阵判据拿它渲染本件、必须能**直接**渲染成功）：
 按类型派生的样例把 `change` 当成一份必填的串、`entries` 只给一条（数组恒只给一个元素），
@@ -136,7 +136,7 @@
 |---|---|
 | 点能撤那枚（带影响面） | 就地摊开**这一条**的回滚单（一次只开一块；再点同一枚＝收起），按钮上 `aria-expanded` 跟着改 |
 | 点能撤那枚（不带影响面） | 直接派发 `ilife:undo-timeline-undo`（`detail = { name, key, items: [] }`） |
-| 点那一块之外的任何地方 | 摊开着的回滚单**全部收起**（点块里面不算外面） |
+| 点那一块之外的任何地方 | 摊开着的回滚单**全部收起**（点块里面不算外面；含点别的按钮、含跨实例） |
 | 勾／取消一项 | 页脚那句结论与主按钮的字**原地重算**（按勾了几项），并派发 `ilife:undo-timeline-pick`（`detail = { name, key, items, count }`）；勾到 0 项时主按钮按不动 |
 | 点「撤销这 N 项」 | 派发 `ilife:undo-timeline-undo`（`detail = { name, key, items }`，`items`＝勾上的那几项）——**不写库、不自动收起** |
 | 点就地那一块的「取消」 | 收起 ＋ 焦点还给按它的那一枚按钮（焦点不掉在 `hidden` 的元素上） |

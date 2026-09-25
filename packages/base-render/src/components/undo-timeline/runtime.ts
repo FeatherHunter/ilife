@@ -9,7 +9,8 @@
  *   · **撤销能用手点做完**：开合、勾选、撤销、恢复、取消、整段回滚**各有看得见的那一枚**；
  *     这一段一行都没跑到时，清单与按钮照旧在屏上（原生复选照常勾）。
  *   · **一次只开一块／再点收起／点外面关**：`track` 的行里最多摊开一块回滚单；
- *     点同一枚＝收起（焦点还给那一枚）；点那块之外的任何地方＝全部收起。
+ *     点同一枚＝收起（焦点还给那一枚）；点那块之外的任何地方＝全部收起
+ *     （含点别的按钮、含跨实例：五个分支先关后办，`togglePick` 关的是全场）。
  *   · **勾选一变，两处读数一起重算**：页脚那句结论与主按钮那枚字都按"勾了几项"现算
  *     （**一处刷新**：两处各算各的必然走散），并派发 `ilife:undo-timeline-pick` 报一次真读数。
  *   · **一项都没勾 ⇒ 主按钮按不动**（`disabled`）＋ 结论句换成"得先勾一项"。
@@ -107,11 +108,12 @@ export function buildUndoTimelineJs(): string {
     + '    var btn=doc.querySelector("["+A_GO+"][aria-controls=\\""+panel.id+"\\"]");' + LF
     + '    if (btn) btn.setAttribute("aria-expanded", panel.hasAttribute("hidden") ? "false" : "true");' + LF
     + '  }' + LF
-    /* 一处刷新：勾了几项 → 页脚那句结论 ＋ 主按钮那枚字 ＋ 主按钮按不按得动（三处同源）。 */
+    /* 一处刷新：勾了几项 → 页脚那句结论 ＋ 主按钮那枚字 ＋ 主按钮按不按得动（三处同源）。
+       勾不动的不算：`disabled` 的框即使被运行期标上 `checked` 也不进计数与事件（它撤不了）。 */
     + '  function refresh(card){' + LF
     + '    var boxes=card.querySelectorAll("input["+A_ITEM+"]"), items=[], count=0, i;' + LF
     + '    for (i=0;i<boxes.length;i+=1){' + LF
-    + '      if (boxes[i].checked){ count+=1; items.push(boxes[i].getAttribute(A_ITEM)); }' + LF
+    + '      if (boxes[i].checked && !boxes[i].disabled){ count+=1; items.push(boxes[i].getAttribute(A_ITEM)); }' + LF
     + '    }' + LF
     + '    var sum=card.querySelector("["+A_SUM+"]");' + LF
     + '    if (sum){' + LF
@@ -127,11 +129,8 @@ export function buildUndoTimelineJs(): string {
     + '    return {count:count, items:items};' + LF
     + '  }' + LF
     + '  function hide(panel){ panel.setAttribute("hidden",""); syncArrow(panel); }\n'
-    + '  function closePicks(scope,except){' + LF
-    + '    var ps=picksOf(scope), i;' + LF
-    + '    for (i=0;i<ps.length;i+=1) if (ps[i]!==except) hide(ps[i]);' + LF
-    + '  }' + LF
-    /* 点外面关：全场每一块摊开着的回滚单，只要点的那一下不在它里面，就收起来。 */
+    /* 点外面关：全场每一块摊开着的回滚单，只要点的那一下不在它里面，就收起来
+       （`target` 传 `null`＝全关：就地那枚「取消」自己就在块里，不传 `null` 关不掉自己）。 */
     + '  function closeOutside(target){' + LF
     + '    var ps=doc.querySelectorAll("["+A_PICK+"]"), i;' + LF
     + '    for (i=0;i<ps.length;i+=1){' + LF
@@ -139,29 +138,34 @@ export function buildUndoTimelineJs(): string {
     + '      if (!ps[i].hasAttribute("hidden")) hide(ps[i]);' + LF
     + '    }' + LF
     + '  }' + LF
+    /* 开合：先记住自己开没开，再把**全场**（含别的实例）不含这一下的块全收，
+       开着＝保持收起（`closeOutside` 已经收了，`hide` 再压一次是幂等），关着＝摊开。 */
     + '  function togglePick(btn){' + LF
     + '    var panel=panelOf(btn); if (!panel) return;' + LF
     + '    var wasOpen = !panel.hasAttribute("hidden");' + LF
-    + '    closePicks(rootOf(btn), panel);' + LF
+    + '    closeOutside(btn);' + LF
     + '    if (wasOpen){ hide(panel); return; }' + LF
     + '    panel.removeAttribute("hidden");' + LF
     + '    syncArrow(panel);' + LF
     + '  }' + LF
-    /* ── 两枚委派：点（开合／撤销／恢复／整段回滚／取消）与勾选 ─────────────── */
+    /* ── 两枚委派：点（开合／撤销／恢复／整段回滚／取消）与勾选 ───────────────
+       点五个分支一律**先关后办**：先把点的这一下之外的块全收，再办自己的事
+       （自己那块含这一下 ⇒ 原地保留：主按钮不自动收起；`close` 那枚自己就在块里 ⇒ 传 `null` 全关）。 */
     + '  doc.addEventListener("click", function(e){' + LF
     + '    var t=e.target; if (!t || !t.closest) return;' + LF
     + '    var close=t.closest("["+A_CLOSE+"]");' + LF
     + '    if (close){' + LF
     + '      var panel=close.closest("["+A_PICK+"]"); var root=rootOf(close);' + LF
-    + '      closePicks(root, null);' + LF
+    + '      closeOutside(null);' + LF
     + '      if (panel){ var back=goOf(root, panel.getAttribute(A_PICK)); if (back) back.focus(); }' + LF
     + '      return;' + LF
     + '    }' + LF
     + '    var cancel=t.closest("["+A_CANCEL+"]");' + LF
-    + '    if (cancel){ var r1=rootOf(cancel); if (r1) fire(r1, EV_CANCEL, {name:nameOf(r1)}); return; }' + LF
+    + '    if (cancel){ var r1=rootOf(cancel); closeOutside(t); if (r1) fire(r1, EV_CANCEL, {name:nameOf(r1)}); return; }' + LF
     + '    var sub=t.closest("["+A_SUBMIT+"]");' + LF
     + '    if (sub){' + LF
     + '      if (sub.disabled) return;' + LF
+    + '      closeOutside(sub);' + LF
     + '      var card=cardOf(sub), r2=rootOf(sub); if (!r2) return;' + LF
     + '      var info=card===null ? {items:[]} : refresh(card);' + LF
     + '      fire(r2, EV_UNDO, {name:nameOf(r2), key:String(sub.getAttribute(A_SUBMIT)), items:info.items});' + LF
@@ -170,12 +174,14 @@ export function buildUndoTimelineJs(): string {
     + '    var res=t.closest("["+A_RESTORE+"]");' + LF
     + '    if (res){' + LF
     + '      if (res.disabled) return;' + LF
+    + '      closeOutside(res);' + LF
     + '      var r3=rootOf(res); if (!r3) return;' + LF
     + '      fire(r3, EV_RESTORE, {name:nameOf(r3), key:String(res.getAttribute(A_RESTORE))});' + LF
     + '      return;' + LF
     + '    }' + LF
     + '    var roll=t.closest("["+A_ROLL+"]");' + LF
     + '    if (roll){' + LF
+    + '      closeOutside(roll);' + LF
     + '      var r4=rootOf(roll); if (!r4) return;' + LF
     + '      fire(r4, EV_ROLL, {name:nameOf(r4), label:String(roll.getAttribute(A_ROLL))});' + LF
     + '      return;' + LF
@@ -185,6 +191,7 @@ export function buildUndoTimelineJs(): string {
     + '      if (go.disabled) return;' + LF
     + '      var p=panelOf(go), root5=rootOf(go); if (!root5) return;' + LF
     + '      if (p){ togglePick(go); return; }' + LF
+    + '      closeOutside(go);' + LF
     + '      fire(root5, EV_UNDO, {name:nameOf(root5), key:String(go.getAttribute(A_GO)), items:[]});' + LF
     + '      return;' + LF
     + '    }' + LF

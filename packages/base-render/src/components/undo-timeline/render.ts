@@ -181,9 +181,14 @@ function rowHtml(m: UndoTimelineModel, e: UndoTimelineEntryModel): string {
   parts.push('</span>');
   parts.push('<span class="' + undoTimelineSlot('act') + '">');
   if (e.state === 'undone') {
+    /* 已撤那枚「恢复」同样是动作 ⇒ 错态句与卡底提示同样指过去（`locked` 支不断，`undone` 支也不能断）。 */
+    const whyUndone: string[] = [];
+    if (e.error !== undefined) whyUndone.push(undoTimelineErrorId(m.name, e.key));
+    else if (m.hint !== undefined) whyUndone.push(undoTimelineHintId(m.name));
     parts.push('<button type="button" class="' + undoTimelineSlot('bt') + ' ' + undoTimelineSlot('go') + '"'
-      + ' ' + UNDO_TIMELINE_RESTORE_ATTR + '="' + esc(e.key) + '"'
-      + (e.busy ? ' disabled aria-busy="true" ' + UNDO_TIMELINE_BUSY_ATTR + '="1"' : '') + '>'
+      + ' ' + UNDO_TIMELINE_RESTORE_ATTR + '="' + esc(e.key) + '"');
+    if (whyUndone.length > 0) parts.push(' aria-describedby="' + esc(whyUndone.join(' ')) + '"');
+    parts.push((e.busy ? ' disabled aria-busy="true" ' + UNDO_TIMELINE_BUSY_ATTR + '="1"' : '') + '>'
       + buttonHtml('go', e.go, e.busy) + '</button>');
   } else {
     const open = m.openKey === e.key;

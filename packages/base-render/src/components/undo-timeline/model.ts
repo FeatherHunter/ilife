@@ -11,7 +11,8 @@
  *  三处要点（判据逐条断）：
  *   · `lockedReason` 只在 `state: 'locked'` 时给，且那时**必填**——一枚按不动的按钮没处可说理由，
  *     屏上就会是一枚"看着按不动、不知道为什么"的灰按钮；
- *   · `openKey` 必须命中一条**带 `impact`** 的改动——否则渲染出来是一块永远摊不开的空壳；
+ *   · `openKey` 必须命中一条**带 `impact`、能撤、没在跑**的改动——摊开的那张单里
+ *     「撤销这 N 项」是能按的，命中锁着／已撤／忙碌的那一条等于留后门。
  *   · 影响面一行的 `lockedReason` 同办（勾不动必须写得清为什么）。
  */
 import { assertDenseArray, assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
@@ -303,6 +304,15 @@ export function normalizeUndoTimeline(input: unknown): UndoTimelineModel {
     if (hit.impact === undefined) {
       badInput('undo-timeline: input.openKey 命中的那条改动没有 input.entries[].impact'
         + '（没有影响面的改动按下去直接派发事件，没有回滚单可摊开）');
+    }
+    /* 摊开的那张单里「撤销这 N 项」是能按的 ⇒ 只许摊开**能撤、没在跑**的那一条：
+       `locked`／`undone` 的行按下去不该有动作，`busy` 的行等跑完再说（渲染出一块能派发的单等于留后门）。 */
+    if (hit.state !== 'undoable') {
+      badInput('undo-timeline: input.openKey 命中的那条改动 state 是 ' + hit.state
+        + '（只有 state: \'undoable\' 的改动才有回滚单可摊开）');
+    }
+    if (hit.busy) {
+      badInput('undo-timeline: input.openKey 命中的那条改动正在 busy（跑完再摊开：忙碌时那一块按不动）');
     }
   }
 

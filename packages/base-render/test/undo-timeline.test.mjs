@@ -48,6 +48,7 @@ import {
   UNDO_TIMELINE_IMPACT_MAX,
   UNDO_TIMELINE_NARROW_PX,
   UNDO_TIMELINE_READING_MAX,
+  UNDO_TIMELINE_ROW_MIN_PX,
   UNDO_TIMELINE_SLOTS,
   UNDO_TIMELINE_STATES,
   UNDO_TIMELINE_STATE_TAG,
@@ -208,6 +209,22 @@ const rowOf = (html, key) => {
   return html.slice(start, next === -1 ? html.length : next);
 };
 
+/** 按机器键找出那一枚按钮的开标签：断属性**有没有**，不断属性谁先谁后（换序是同一屏）。 */
+const buttonTag = (html, attr, key) => {
+  const at = html.indexOf(attr + '="' + key + '"');
+  assert.ok(at > 0, '找不到按钮 ' + attr + '=' + key);
+  const start = html.lastIndexOf('<button', at);
+  return html.slice(start, html.indexOf('>', at) + 1);
+};
+
+/** 按行机器键找出回滚单里那一个原生勾选框的标签：同上，只断有无。 */
+const inputTag = (pickHtml, key) => {
+  const at = pickHtml.indexOf('data-ilife-undo-item="' + key + '"');
+  assert.ok(at > 0, '找不到影响面行 ' + key);
+  const start = pickHtml.lastIndexOf('<input', at);
+  return pickHtml.slice(start, pickHtml.indexOf('>', at) + 1);
+};
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => {
@@ -249,7 +266,8 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
       '不能撤那行要把「为什么」写出来');
     assert.ok(locked.includes('aria-describedby="' + undoTimelineErrorId(SAMPLE.name, 'k4') + ' '
       + undoTimelineTagId(SAMPLE.name, 'k4') + '"'), '那一枚按不动 ⇒ 错态句与原因片都指到');
-    assert.match(locked, /data-ilife-undo-go="k4"[^>]* disabled>/, '不能撤那枚按不动');
+    const lockedBtn = buttonTag(locked, 'data-ilife-undo-go', 'k4');
+    assert.ok(lockedBtn.includes(' disabled'), '不能撤那枚按不动（只断有没有 disabled，不断它排第几）');
     assert.ok(locked.includes('>' + UNDO_TIMELINE_GO_TEXT.locked), '不能撤那枚的字');
     /* 能撤：片的语气是警告档（`is-warn`），按钮是主动作那一档。 */
     const undoable = rowOf(html, 'k2');
@@ -290,11 +308,25 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
     assert.ok(pick.includes(' data-ilife-undo-close="k2"'), '就地那一块上的「取消」是**收起**');
   });
 
+  it('回滚单勾的是哪几行：逐行按键点名，不只数个数（r3 的勾挪到 r4 就红）', () => {
+    const pick = html.slice(html.indexOf('id="' + undoTimelinePickId(SAMPLE.name, 'k2') + '"'));
+    for (const k of ['r1', 'r2', 'r3']) {
+      assert.ok(inputTag(pick, k).includes(' checked'), k + ' 出发就勾上');
+      assert.ok(inputTag(pick, k).includes('value="' + k + '"'), k + ' 原生框的值与机器键一致');
+    }
+    assert.ok(!inputTag(pick, 'r4').includes(' checked'), 'r4 显式给了 false ⇒ 出发不勾');
+    assert.ok(inputTag(pick, 'r5').includes(' disabled'), 'r5 勾不动落在原生框上');
+    assert.ok(!inputTag(pick, 'r5').includes(' checked'), 'r5 再怎么都不勾');
+  });
+
   it('繁忙与错态：忙碌那枚字住在正常那枚字里面（两枚都在）；错态写在按钮旁边并由它指过去', () => {
     const busy = renderUndoTimeline({
       ...SAMPLE, openKey: undefined, entries: [{ key: 'b', time: '10:00', say: '改了一笔', busy: true }],
     });
-    assert.ok(busy.includes(' disabled aria-busy="true" data-ilife-undo-busy="1">'), '忙碌 ⇒ 语义面与标记面一起给');
+    const busyBtn = buttonTag(busy, 'data-ilife-undo-go', 'b');
+    assert.ok(busyBtn.includes(' disabled'), '忙碌 ⇒ 按不动（只断有没有，不断序列化顺序）');
+    assert.ok(busyBtn.includes('aria-busy="true"'), '忙碌 ⇒ 语义面一起给');
+    assert.ok(busyBtn.includes('data-ilife-undo-busy="1"'), '忙碌 ⇒ 标记面一起给');
     assert.ok(busy.includes('<span class="' + undoTimelineSlot('label') + '">撤销这次改动'
       + '<span class="' + undoTimelineSlot('busy') + '" aria-hidden="true">正在撤销这次改动</span></span>'),
     '正常那枚字占着按钮的尺寸，忙碌那枚字住在它里面（出流 ⇒ 不参与固有宽）');
@@ -303,6 +335,19 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
       '错态那句写在按钮旁边');
     assert.match(err, new RegExp('aria-describedby="' + undoTimelineErrorId(SAMPLE.name, 'k4').replace(/[-]/g, '\\-') + ''),
       '按钮指到那句错');
+  });
+
+  it('undone 支的按钮同样指到错态句（错误句出现就要被指，不能只 locked 不 undone）', () => {
+    const errId = undoTimelineErrorId('u', 'k');
+    const html3 = renderUndoTimeline({ name: 'u', hint: '卡底那句提示',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', state: 'undone', error: '网络断了' }] });
+    assert.ok(html3.includes('id="' + errId + '"'), '错态句在屏上');
+    const btn = buttonTag(html3, 'data-ilife-undo-restore', 'k');
+    assert.ok(btn.includes('aria-describedby="' + errId + '"'), '「恢复这笔」指到那句错（旧版此处 0 次被指）');
+    const html4 = renderUndoTimeline({ name: 'u', hint: '卡底那句提示',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', state: 'undone' }] });
+    assert.ok(buttonTag(html4, 'data-ilife-undo-restore', 'k').includes('aria-describedby="' + undoTimelineHintId('u') + '"'),
+      '没错时指回卡底那句提示（与能撤支同口径）');
   });
 
   it('空态：改动给空数组 ⇒ 出设计过的那句（不是留白），且一条行都没有', () => {
@@ -328,8 +373,10 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
       name: evil, title: evil, cap: evil, hint: evil, emptyText: evil,
       rollback: { label: evil, note: evil }, openKey: evil,
       entries: [{
-        key: evil, time: evil, say: evil, note: evil, tag: evil, state: 'locked', lockedReason: evil, error: evil,
+        key: evil, time: evil, say: evil, note: evil, tag: evil, error: evil,
         readings: [{ label: evil, from: evil, to: evil }], impact: { title: evil, note: evil, sumNote: evil, cancelLabel: evil, rows: [{ key: evil, title: evil, note: evil, count: evil }] },
+      }, {
+        key: evil + '-locked', time: evil, say: evil, state: 'locked', lockedReason: evil,
       }],
     });
     assert.equal(/<script/i.test(html2), false, '不得出现可执行脚本标签');
@@ -404,6 +451,22 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
     assert.equal(throwsBlocks(() => renderUndoTimeline({ ...ok, entries: many })), true, '改动条数超上限');
   });
 
+  it('openKey 命中 locked／undone／busy 一律拒（摊开的单按得动 ⇒ 这三种不能摊）', () => {
+    const impact = { title: '面', rows: [{ key: 'r', title: 't' }] };
+    const ok = { name: 'n', openKey: 'k',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', impact }] };
+    assert.equal(throwsBlocks(() => renderUndoTimeline(ok)), false, '能撤＋带影响面 ⇒ 照常摊开');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ name: 'n', openKey: 'k',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', state: 'locked', lockedReason: '超窗', impact }] })),
+    true, '命中 locked ⇒ 拒（否则摊开的单里「撤销这 1 项」按得动）');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ name: 'n', openKey: 'k',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', state: 'undone', impact }] })),
+    true, '命中 undone ⇒ 拒（同理）');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ name: 'n', openKey: 'k',
+      entries: [{ key: 'k', time: '10:00', say: '改了一笔', busy: true, impact }] })),
+    true, '命中 busy ⇒ 拒（跑完再摊开）');
+  });
+
   it('稀疏数组（`new Array(n)` 的洞）一律拒：三处都在门外，一处都不许漏成 `TypeError`', () => {
     const ok = { name: 'n', entries: [{ key: 'k', time: '10:00', say: 'x' }] };
     const bare = (n) => new Array(n);
@@ -455,7 +518,7 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
       renderUndoTimeline({ name: 'n-empty', entries: [], hint: 'hint' }),
       renderUndoTimeline({
         ...SAMPLE,
-        openKey: 'b',
+        openKey: undefined,
         entries: [{ key: 'b', time: '10:00', say: '改了一笔', busy: true, error: '网络断了',
           impact: { title: '这面', rows: [{ key: 'r', title: 't', note: 'n', count: '1 条', locked: true, lockedReason: '只读' }] } }],
       }),
@@ -593,7 +656,7 @@ describe('undo-timeline ② 样式与零 DOM 纪律', () => {
   it('触控地板与几何事实都写在样式里（数字只有一处出处）', () => {
     assert.ok(clean.includes('min-height: ' + String(UNDO_TIMELINE_TOUCH_PX) + 'px'), '命中盒地板');
     assert.ok(clean.includes('min-width: ' + String(UNDO_TIMELINE_TOUCH_PX) + 'px'));
-    assert.ok(clean.includes('min-height: 56px'), '整行命中区的高度（回滚单那一行）');
+    assert.ok(clean.includes('min-height: ' + String(UNDO_TIMELINE_ROW_MIN_PX) + 'px'), '整行命中区的高度（回滚单那一行，按常量派生，不抄 56）');
     assert.ok(clean.includes('width: ' + String(UNDO_TIMELINE_TOUCH_PX) + 'px'), '勾选框命中盒的宽');
     assert.ok(clean.includes('gap: ' + String(UNDO_TIMELINE_GAP_PX) + 'px'), '相邻触控目标间距');
     assert.ok(clean.includes('grid-column: 1 / -1'), '就地那块回滚单跨满整行');
@@ -630,6 +693,32 @@ describe('undo-timeline ② 样式与零 DOM 纪律', () => {
     assert.ok(limits.length >= 3, '@container 窄档段落数不对：' + limits.length);
     assert.deepEqual([...new Set(limits)], [UNDO_TIMELINE_NARROW_PX],
       '产出 CSS 里的窄档阈值必须都取 UNDO_TIMELINE_NARROW_PX（' + String(UNDO_TIMELINE_NARROW_PX) + '）：' + limits.join('、'));
+  });
+
+  it('先关后办：五个分支都先过 closeOutside，toggle 关的是全场（含跨实例）', () => {
+    const js = buildUndoTimelineJs();
+    assert.equal(js.includes('closePicks'), false, '只关本根的旧 helper 不许再出现');
+    const toggleAt = js.indexOf('function togglePick');
+    assert.ok(toggleAt > 0 && js.indexOf('closeOutside(btn)', toggleAt) > toggleAt, 'togglePick 关的是全场');
+    assert.ok(js.indexOf('closeOutside(null)') > 0, '就地「取消」自己在块里 ⇒ 全关');
+    const hits = (js.match(/closeOutside\(/g) || []).length;
+    assert.ok(hits >= 6, '五个分支＋开合＋兜底都要经过它，实有 ' + hits + ' 处（旧版只有定义＋兜底 2 处）');
+  });
+
+  it('单行不留线头：同时是首行与末行那一格的竖轨直接不出线', () => {
+    assert.ok(clean.includes(':first-child:last-child'), '单行那一格要有自己的收口规则');
+    const body = ruleBody(clean, scoped('row') + ':first-child:last-child .' + undoTimelineSlot('rail') + '::before');
+    assert.match(body, /display:\s*none/, '首行从圆点起、末行到圆点止落在同一个点上 ⇒ 没有线');
+  });
+
+  it('单一来源：行高下限只住 attrs.ts；死名字 UNDO_TIMELINE_MISSING 不再出口', async () => {
+    const declared = [];
+    for (const file of readdirSync(DIR).filter((f) => f.endsWith('.ts')).sort()) {
+      if (/\b(?:UNDO_TIMELINE_ROW_MIN_PX|ITEM_MIN_HEIGHT_PX)\s*=\s*\d/.test(stripComments(readFileSync(join(DIR, file), 'utf8')))) declared.push(file);
+    }
+    assert.deepEqual(declared, ['attrs.ts'], '行高下限只许在 attrs.ts 里声明一次，实有：' + declared.join('、'));
+    const mod = await import('../dist/components/undo-timeline/index.js');
+    assert.equal('UNDO_TIMELINE_MISSING' in mod, false, '全仓无人读的死导出不许再挂在出口上');
   });
 
   it('`hidden` 被显式重写（`display:grid` 会压过 UA 那条 `[hidden]{display:none}`）', () => {
@@ -866,8 +955,8 @@ describe('undo-timeline ④⑤ 两档几何 · 皮肤纪律 · 行为（真机 h
               + 'return o;}())');
             if (box.btMin !== 1e9) assert.ok(box.btMin >= UNDO_TIMELINE_TOUCH_PX,
               width + ' 档 ' + skin + ' ' + c.name + '：按钮命中盒不足 ' + String(UNDO_TIMELINE_TOUCH_PX) + '（' + box.btMin + '）');
-            if (box.itemMin !== 1e9) assert.ok(box.itemMin >= 56,
-              width + ' 档 ' + skin + ' ' + c.name + '：整行命中区不足 56（' + box.itemMin + '）');
+            if (box.itemMin !== 1e9) assert.ok(box.itemMin >= UNDO_TIMELINE_ROW_MIN_PX,
+              width + ' 档 ' + skin + ' ' + c.name + '：整行命中区不足 ' + String(UNDO_TIMELINE_ROW_MIN_PX) + '（' + box.itemMin + '）');
             if (box.checkMin !== 1e9) assert.ok(box.checkMin >= UNDO_TIMELINE_TOUCH_PX,
               width + ' 档 ' + skin + ' ' + c.name + '：勾选框命中盒不足（' + box.checkMin + '）');
             if (box.btMin !== 1e9 && box.minGap !== 1e9) {
@@ -1044,6 +1133,51 @@ describe('undo-timeline ④⑤ 两档几何 · 皮肤纪律 · 行为（真机 h
             + ' clipped=' + r.clipped + ' visible=' + r.visible).join(' ｜ '));
       }
       await page.ev('window.__ev=[]; true');
+    } finally { page.close(); }
+  });
+
+  it('跨实例与运行期：点别的按钮（含别的实例）都收；disabled 的框不进计数', async (t) => {
+    const css = undoTimelineCss();
+    const js = buildUndoTimelineJs();
+    const aHtml = renderUndoTimeline({ name: 'a-undo', openKey: 'a1', entries: [
+      { key: 'a1', time: '10:00', say: '甲改了一笔', impact: { title: '甲的影响面', rows: [{ key: 'r1', title: '一行' }] } },
+      { key: 'a2', time: '09:00', say: '甲又改一笔', impact: { title: '甲的另一面', rows: [
+        { key: 'r1', title: '能撤的一行' },
+        { key: 'r2', title: '撤不了的一行', locked: true, lockedReason: '归档只读' },
+      ] } },
+    ] });
+    const bHtml = renderUndoTimeline({ name: 'b-undo', openKey: 'b1', entries: [
+      { key: 'b1', time: '10:00', say: '乙改了一笔', impact: { title: '乙的影响面', rows: [{ key: 'r1', title: '一行' }] } },
+    ] });
+    const page = await startShapesPage({
+      html: '<div class="ilife-page-ui ' + skinClass(SKIN_NAMES[0]) + '">' + aHtml + '</div>'
+        + '<div class="ilife-page-ui ' + skinClass(SKIN_NAMES[0]) + '">' + bHtml + '</div>'
+        + '<script>' + js + '</script>',
+      css: skinCss() + '\n' + css,
+      height: 1600,
+    });
+    if (page === null) return t.skip('本机无 Chrome／Chromium：跨实例行为需真浏览器（静态面由先关后办那条守）');
+    try {
+      await page.setWidth(390);
+      const hidden = () => page.ev('(function(){return [].slice.call(document.querySelectorAll("[data-ilife-undo-pick]"))'
+        + '.map(function(p){return p.hasAttribute("hidden");});}())');
+      assert.deepEqual(await hidden(), [false, true, false], '出发：a1 与 b1 摊开（openKey），a2 收起');
+      await page.ev('document.querySelector("[data-ilife-undo-go=a2]").click(); true');
+      assert.deepEqual(await hidden(), [true, false, true], '点 a2 ⇒ a1 收、a2 开、b1（别的实例）也收');
+      await page.ev('document.querySelector("[data-ilife-undo-go=b1]").click(); true');
+      assert.deepEqual(await hidden(), [true, true, false], '点 b1 ⇒ a2 收、b1 开（跨实例一次只开一块）');
+      /* 运行期把勾不动的那一行标上 checked：结论句不许把它算进去。 */
+      await page.ev('document.querySelector("[data-ilife-undo-go=a2]").click(); true');
+      assert.deepEqual(await hidden(), [true, false, true], '再点 a2 ⇒ 又摊开');
+      const sumText = () => page.ev('(function(){var ps=[].slice.call(document.querySelectorAll("[data-ilife-undo-pick]"));'
+        + 'return ps[1].querySelector(".' + undoTimelineSlot('sum') + '").textContent;}())');
+      const before = await sumText();
+      assert.ok(before.indexOf('勾了 1 项') === 0, '出发：a2 那块只勾着能撤的一行（' + before + '）');
+      await page.ev('(function(){var ps=[].slice.call(document.querySelectorAll("[data-ilife-undo-pick]"));'
+        + 'var box=ps[1].querySelector("input[data-ilife-undo-item=r2]");'
+        + 'box.checked=true; box.dispatchEvent(new Event("change",{bubbles:true})); return true;}())');
+      assert.equal(await sumText(), before, 'disabled 的框运行期被标 checked ⇒ 结论句不许变（旧版会变成勾了 2 项）');
+      assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
     } finally { page.close(); }
   });
 });
