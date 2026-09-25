@@ -189,6 +189,7 @@
 - **裁定**：以 **7 形状**为准——规格 `:53` 属**不完整列举**（漏 `fallback`、写于 `resultset` 追加之前），不是契约分叉。`STRICT_ENVELOPE_SHAPES` 逐字等于 link-core `ENVELOPE_SHAPES`，由 `test-d/contract-signatures.ts`（`_T05`）与 `test/contract-signatures.test.mjs`（形状表同步用例）双向钉死。
 - **追溯**：写法对齐 AC-3 对 `type`／`types` 的裁定（§3.5.2）——先给事实、再给裁定、再给同步动作；`docs/calorie-architecture.md:54` 已补一行勘误注记（FX-25①：勘误落在 `:54`，不是 `:53`）。
 - **不冲突声明**：`SERIALIZABLE_SHAPES`（5 个，七形状去掉 `fallback` 与 `resultset`）有单独交代（§3.4），**不构成**对七形状的否定。
+- **同步的后果（#952 补记，实测）**：`strict: true` 只判「`data` 含五字段 ＋ `shape` ∈ `STRICT_ENVELOPE_SHAPES`」，该集合随 link-core 正本逐字同步 ⇒ **`resultset` 载荷在 `strict` 下放行**（改前它不在集合内，会被判 `strict-invalid`）。放行 ≠ 有渲染分支：渲染面无 `resultset` 的 switch 分支、`DATA_TEXT_PROJECTIONS` 无该形状、`SERIALIZABLE_SHAPES` 亦不含它（三者各有判据）。要「渲染面整体拒绝结果集」是**另一条口径**，得改本契约的校验语义，不在 #952 内。
 
 #### 3.1.2 正文槽位／载荷槽规则／包裹约定／模板分型／判定次序（#118 补遗）
 

@@ -1,0 +1,36 @@
+P1 老形状逐字节不变（改前 0be75be3^ vs 当刻 dist）
+  SAME list/createEnvelope
+  SAME list/parseEnvelope 回环
+  SAME detail/createEnvelope
+  SAME detail/parseEnvelope 回环
+  SAME stat/createEnvelope
+  SAME stat/parseEnvelope 回环
+  SAME receipt/createEnvelope
+  SAME receipt/parseEnvelope 回环
+  SAME analysis/createEnvelope
+  SAME analysis/parseEnvelope 回环
+  SAME fallback/createEnvelope
+  SAME fallback/parseEnvelope 回环
+P1 坏输入报文逐条比对
+  SAME list {}
+  SAME list {"items":[],"total":"x"}
+  SAME detail {"item":null}
+  SAME detail {"item":[]}
+  SAME stat {"metrics":{"n":"x"}}
+  SAME stat {"metrics":null}
+  SAME receipt {"ok":true}
+  SAME receipt {"ok":1,"message":"x"}
+  SAME analysis {"summary":""}
+  SAME fallback {"reason":"r"}
+  SAME fallback {"reason":"","degraded":true}
+  SAME list []
+P1 RESULT: same=24 diff=0
+P1 形状表：改前=["list","detail","stat","receipt","analysis","fallback"]
+P1 形状表：当刻=["list","detail","stat","receipt","analysis","fallback","resultset"]
+P2 STRICT_ENVELOPE_SHAPES=["list","detail","stat","receipt","analysis","fallback","resultset"]
+P2 strict:true shape=list → 放行（未抛）
+P2 strict:true shape=resultset → 放行（未抛）
+(node:11016) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/%E8%BE%B0%E8%BE%B0%E6%B4%8B%E6%B4%8B/AppData/Local/Temp/t952-old/envelope.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\辰辰洋洋\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
