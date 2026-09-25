@@ -6,14 +6,14 @@
 
 | 你要做的事 | 走哪条路 | 里面有什么 |
 |---|---|---|
-| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **59 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
+| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **68 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
 | 调既有页面的老函数 | **冻结面** → `base-paint` 根出口 | 12 区块 ＋ 控件 ＋ 图表 ＋ 页面级那批函数，签名逐名锁死（本 README 第二节速查） |
 
 ---
 
 # 一、组件层：该用哪一件
 
-## 1.1 按你要展示的东西找（59 件路由）
+## 1.1 按你要展示的东西找（68 件路由）
 
 粗体是件名，照抄进 import 即可；括号里是中文名。**没有一件是"另一种皮肤下的同一件"**——
 换皮只换取值，见 §1.3。
@@ -46,6 +46,12 @@
 - `gantt-timeline`（甘特时间线）：**并行的时候哪条资源被占住、哪条还空着**——资源泳道 × 关键路径带（当前只有 `C` 一档）。
 - `goal-stairs`（目标阶梯）：**分几段走、每段最晚哪天动手**——目标日往回倒推成一段一行的日程（当前只有 `C` 一档）。
 
+**分布与流向**
+- `spread-dist`（分布与分位）：**一堆读数散成什么样**——逐日范围柱／分位尺（`range`／`quantile` 两档都在；箱线那一档只拿到 3 分，没落）。
+- `gap-band`（差值带）：**实际与计划差多少、差在哪儿**——连续差值带／每日偏差柱（`band`／`deviation` 两档都在），刻度、折线、锚点同一份真值。
+- `flow-ribbon`（流向带）：**钱从哪儿来、花到哪儿去**——桑基带／交叉矩阵／两条构成轨（三档都在），两侧一把尺子。
+- `radar-profile`（多维画像雷达）：**几项各是多少、哪项拖后腿**——多边形雷达／极区扇图／展平成轴表（三档都在）。
+
 **对照与榜单**
 - `compare-columns`（双列对照）：同一指标两栏并排（新旧、你我、两期）。· `rank-list`（榜单）：单期名次。
 - `scatter-fit`（相关性散点）：**两个读数之间是什么关系**——散点 ＋ 拟合线／分箱趋势带／滞后相关（三形态都在）。
@@ -76,6 +82,13 @@
 - `editable-value`（就地可编辑值）：**值即入口**——值旁边一枚铅笔，同格变编辑器，进出不变形。
 - `wizard-shell`（分步录入壳）：**一趟多问的录入，一问一屏**——一条细进度 ＋ 大字问题 ＋ 这一问的答法（当前只有 `one` 一档）。
 
+**改与挪（改一条、挪一张、撤回来）**
+- `undo-timeline`（改动时间线）：**谁改了什么、还能不能撤**——一条轨／一次改动的回滚单（`track`／`impact` 两档都在），
+  三态 `undoable`／`undone`／`locked` 各有形与字（不只靠色）。
+- `drag-sort`（拖拽排序清单）：**换个先后**——拿起一行、原位空槽、落点粗线（一档）；点一下拿起、点另一行放下，拖不是唯一通路。
+- `kanban-columns`（看板列）：**按状态分列摆放、挪一张到下一列**（一档）；窄档一列一屏，点卡拿起 ＋ 点目标列收纳键挪。
+- `relation-picker`（关系选择器）：**这条记录挂到哪个人／账户／分类上**——浮层选一个／行内展开选一个（两档都在）。
+
 **反馈与确认**
 - `confirm-strip`（二次确认条）：危险动作的二次确认（删记录）。· `skeleton`（加载骨架）：等数据那一两秒。
 - `toast-card`（提示卡片）：纸面卡式提示（图标＋标题＋细节＋至多一动作＋关闭），与冻结面 `renderToast` **并存**——
@@ -102,7 +115,7 @@ import { pageUiCss } from 'base-paint';
 import { blocksCss, skinCss, skinClass } from 'base-paint/blocks';
 const sharedCss = pageUiCss() + blocksCss() + skinCss() + statusRowCss();
 
-// ③ 运行时段：只有交互件才有（59 件里 26 件有；其余是零脚本件，跳到 ④）
+// ③ 运行时段：只有交互件才有（68 件里 30 件有；其余是零脚本件，跳到 ④）
 import { buildSwitchRowJs, renderSwitchRow, switchRowCss } from 'base-paint/blocks';
 const sharedHelpersJs = buildSharedHelpersJs() + buildSwitchRowJs();
 const withSwitch = renderSwitchRow({ name: 'feishuSync', checked: true, label: '记完自动同步飞书' });
@@ -118,7 +131,7 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
 - **入参错了会抛**：件对非法入参一律抛 `badInput`（`err.code === 'bad-input'`，消息点名到字段），
   静默降级不会发生——把它当断言用。
 - **名字从清单里摸**：`dist/components/清单.js` 每一行有 `render`／`style`／`runtime` 三列——那就是该件的三个出口名
-  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。59 件的名字面全部经 `base-paint/blocks` 转出；
+  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。68 件的名字面全部经 `base-paint/blocks` 转出；
   包没有 `./components` 子路径，别去引 `dist/` 深处。
 
 ## 1.3 皮肤：四套取值，一件控件
@@ -143,7 +156,7 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
 | 你要知道 | 上哪儿看 |
 |---|---|
 | 有哪些件、中文名、导出名、**示例入参** | `base-paint/dist/components/清单.js`（机器清单，随包发布；`COMPONENTS[].sample` 可直接喂渲染函数） |
-| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（59 份，唯一权威） |
+| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（68 份，唯一权威） |
 | 件的实现与样式函数 | `base-paint/dist/components/<件名>/index.js`（`renderX`／`xStyle`／`buildXJs` 三件出口） |
 | 改这个层（写新件／改样式）的规矩 | `packages/base-render/src/components/README.md`（本层红线与横切判据） |
 | 冻结面的逐名签名 | `packages/base-render/src/spec/` ↔ `docs/base-paint-contract.md`（由 `test/contract-signatures.test.mjs` 逐字锁死） |
