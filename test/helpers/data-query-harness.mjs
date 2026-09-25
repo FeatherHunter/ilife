@@ -108,3 +108,35 @@ export function assertItemErrorNames(item, name, label) {
     label + '：报文须点名「' + name + '」（实际：' + item.error.message + '）',
   );
 }
+
+/** #958 · 分页：单页行数不超过页大小（`rows.length <= size`），`total` 为全量命中数（与页大小无关）。 */
+export function assertPageSize(item, size, label) {
+  assert.equal(item.ok, true, label + '：分页项须 ok:true（实际 ' + JSON.stringify(item.error ?? null) + '）');
+  assert.ok(
+    item.rows.length <= size,
+    label + '：单页行数须不超过页大小（实际 ' + item.rows.length + '，页大小 ' + size + '）',
+  );
+}
+
+/** #958 · 还有后页：须回不透明凭据（非空字符串，调用方当黑盒）。 */
+export function assertHasNext(item, label) {
+  assert.equal(item.ok, true, label + '：须 ok:true 才谈后页');
+  assert.equal(typeof item.next, 'string', label + '：还有后页时须回 next 凭据（实际：' + JSON.stringify(item.next ?? null) + '）');
+  assert.ok(item.next.length > 0, label + '：next 凭据须为非空字符串');
+}
+
+/** #958 · 末页：不再回凭据（`next` 缺席；`null` 与空串同样视为“回了”，一律判红）。 */
+export function assertNoNext(item, label) {
+  assert.equal(item.ok, true, label + '：须 ok:true 才谈末页');
+  assert.equal(
+    item.next,
+    undefined,
+    label + '：末页不得再回凭据（实际 next=' + JSON.stringify(item.next ?? null) + '）',
+  );
+}
+
+/** #958 · 全量命中数：分页项的 `total` 须等于预期全量（一次性取完的行数，不随页大小变）。 */
+export function assertTotalEquals(item, expectedTotal, label) {
+  assert.equal(item.ok, true, label + '：须 ok:true 才谈 total');
+  assert.equal(item.total, expectedTotal, label + '：total 须为全量命中数（实际 ' + item.total + '，预期 ' + expectedTotal + '）');
+}
