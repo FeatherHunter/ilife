@@ -53,6 +53,8 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
     '  min-width: 0;',
     '}',
     s('quick') + ':empty { display: none; }',
+    /* 一枚都不露时，运行时与渲染期都把这条带子收起来（同组头那条口径）。 */
+    s('quick') + '[hidden] { display: none; }',
     s('chip') + '[hidden] { display: none; }',
     s('chip') + ' {',
     '  display: inline-flex;',

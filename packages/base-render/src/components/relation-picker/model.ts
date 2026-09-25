@@ -131,12 +131,50 @@ function reqOption(value: unknown, at: string, term: string, seen: Set<string>):
   };
 }
 
-/** 脚注那句状态（渲染期与运行时段**同一个口径**：按 `query` 与露着的行数挑一句）。 */
-export function relationPickerFoot(query: string, hits: number): string {
-  const T = RELATION_PICKER_TEXT;
-  if (query === '') return T.footIdle;
-  if (hits === 0) return T.footNone;
-  return T.footHitPre + String(hits) + T.footHitPost;
+/** 脚注那几句的字面表：`RELATION_PICKER_TEXT` 满足它，运行时段自建的那份小表也满足它——
+ *  **同一个函数两处跑**（渲染期与运行时段），靠的就是这份形状。 */
+export interface RelationPickerFootText {
+  readonly footIdle: string;
+  readonly footIdlePlain: string;
+  readonly footHitPre: string;
+  readonly footHitPost: string;
+  readonly footNone: string;
+}
+
+/** **命中读数的唯一口径**：按机器键去重后数「露着的项」。
+ *
+ *  为什么必须去重：`overlay` 下「最近用过」与「全部」是**同一批选项的两处摆法**，同一个键在屏上出现两次
+ *  （`inline` 下还多一枚 chip）；不去重就会把同一个选项数两遍——2026-09 对抗审查读出的正是这个：
+ *  渲染期 hits 数「选项」（ov-a 2／in-a 1），运行时段 hits 数「DOM 节点」（4／2），同一个数两处走散。
+ *
+ *  **这一段是运行时段跑的那一段**：`buildRelationPickerJs()` 把它的 `toString()` 原样嵌进产出的 JS，
+ *  两处不是「抄得像」，是同一份源码。故函数体只许读**自己的入参**（不许碰模块作用域里的任何名字）。
+ */
+export function relationPickerHits(items: readonly RelationPickerHitItem[]): number {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.hidden && item.key !== null) seen.add(item.key);
+  }
+  return seen.size;
+}
+
+/** `relationPickerHits()` 吃的一项：只要「机器键 ＋ 露不露」两件事（模型里的行与屏上的元素都满足）。 */
+export interface RelationPickerHitItem {
+  readonly key: string | null;
+  readonly hidden: boolean;
+}
+
+/** **脚注那句的唯一口径**（空输入列哪儿／命中几条／一条没中）：渲染期与运行时段**跑同一个函数**
+ *  （`buildRelationPickerJs()` 嵌的就是它的 `toString()`）。
+ *
+ *  `hasRecent`＝这一份实例有没有「最近用过」这一组：**脚注跟着实际分区走**——没有这一组时还写「排最前」，
+ *  就是一句屏上兑不出来的空许诺。函数体只读自己的入参（理由同上）。
+ */
+export function relationPickerFoot(query: string, hits: number, hasRecent: boolean,
+  text: RelationPickerFootText): string {
+  if (query === '') return hasRecent ? text.footIdle : text.footIdlePlain;
+  if (hits === 0) return text.footNone;
+  return text.footHitPre + String(hits) + text.footHitPost;
 }
 
 /** 入参归一化。**唯一入口**：`render.ts` 只吃它产出的 `RelationPickerModel`。 */
@@ -199,7 +237,7 @@ export function normalizeRelationPicker(input: unknown): RelationPickerModel {
   }));
   const recents = recentKeys.map((k) => rows.find((r) => r.key === k) as RelationPickerRow);
   const selected = selKey === undefined ? undefined : rows.find((r) => r.key === selKey);
-  const hits = rows.filter((r) => !r.hidden).length;
+  const hits = relationPickerHits(rows);
 
   const allLabelRaw = optRealText(raw.allLabel, 'relation-picker: input.allLabel');
   const readingLabel = optRealText(raw.readingLabel, 'relation-picker: input.readingLabel');
@@ -223,7 +261,7 @@ export function normalizeRelationPicker(input: unknown): RelationPickerModel {
     selected,
     query,
     hits,
-    foot: relationPickerFoot(query, hits),
+    foot: relationPickerFoot(query, hits, recents.length > 0, T),
     empty: optRealText(raw.emptyText, 'relation-picker: input.emptyText')
       === undefined ? T.emptyPre + query + T.emptyPost
       : (raw.emptyText as string).trim(),

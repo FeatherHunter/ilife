@@ -24,9 +24,11 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   RELATION_PICKER_ATTR,
@@ -69,9 +71,11 @@ import {
   renderRelationPicker,
 } from '../dist/components/relation-picker/index.js';
 import { renderPageHead } from '../dist/components/page-head/index.js';
+import { relationPickerFoot, relationPickerHits } from '../dist/components/relation-picker/model.js';
 import { SKINS, SKIN_NAMES, skinClass, skinCss, skinVar } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { selectorsOf, skinVarSpans, cutSpans, stripComments, throwsBlocks } from './overlay-probe.mjs';
+import { auditHtml, exitCodeFor } from './separator-probe.mjs';
 import { styleSource } from './_style-sources.mjs';
 import { startShapesPage } from './shapes-probe.mjs';
 
@@ -687,6 +691,442 @@ describe('relation-picker ④⑤ 两档几何 · 皮肤纪律 · 行为（真机
             + ' clipped=' + r.clipped + ' visible=' + r.visible).join(' ｜ '));
       }
       await page.ev('window.__ev=[]; true');
+    } finally { page.close(); }
+  });
+});
+
+/* ── ⑥ 分隔符门（仓库唯一那把尺子） ─────────────────────────────────── */
+
+describe('relation-picker ⑥ 分隔符门（`test/separator-probe.mjs` 的 R1–R3，零豁免）', () => {
+  it('本件上屏的可见文本零命中（`·`／`；`／并列顿号一个都不许有）', () => {
+    const list = [
+      ['overlay', renderRelationPicker(OVERLAY)],
+      ['overlay 没选', renderRelationPicker({ ...OVERLAY, selectedKey: undefined })],
+      ['overlay 初值筛', renderRelationPicker({ ...OVERLAY, query: '招', selectedKey: undefined })],
+      ['overlay 一条不中', renderRelationPicker({ ...OVERLAY, query: '没有这一项', selectedKey: undefined })],
+      ['overlay 错态与提示', renderRelationPicker({ ...OVERLAY, error: '搜不到时去末行新建一个', hint: '选完记得点存' })],
+      ['inline', renderRelationPicker(INLINE)],
+      ['inline 没选', renderRelationPicker({ ...INLINE, selectedKey: undefined })],
+      ['inline 初值筛', renderRelationPicker({ ...INLINE, query: '镜', selectedKey: undefined })],
+    ];
+    for (const [name, html] of list) {
+      const r = auditHtml(html, name);
+      assert.equal(exitCodeFor(r), 0, name + '：可见文本踩了分隔符门——'
+        + JSON.stringify(r.node.hits.slice(0, 3))
+        + '（修法：记号与文案里不许拿 `·`／`；`／并列顿号当排布手段；调用方自己给的 `note` 不在本门内）');
+    }
+  });
+
+  it('自证：未选态那枚记号改回 `·` 必红（这一门不是空跑）', () => {
+    const dirty = renderRelationPicker(OVERLAY).replace('>' + RELATION_PICKER_TEXT.dot + '<', '>·<');
+    const r = auditHtml(dirty, 'dirty');
+    assert.ok(r.node.hits.some((h) => h.tags.includes('R1')), '分隔符探针没抓到塞回去的 `·`（这一门空跑了）');
+    assert.equal(exitCodeFor(r), 1, '塞回 `·` 却没判红');
+  });
+});
+
+/* ── ⑧ 命中读数与脚注：一处定义 · 两处同跑（静态那一半） ───────────────── */
+
+describe('relation-picker ⑧ 命中读数与脚注只有一处定义', () => {
+  it('产出 JS 里嵌的就是渲染期跑的那两个函数（`toString()` 同一份源码，不是又写一遍）', () => {
+    const js = buildRelationPickerJs();
+    for (const [name, fn] of [['relationPickerHits', relationPickerHits], ['relationPickerFoot', relationPickerFoot]]) {
+      const src = fn.toString();
+      assert.ok(src.includes('function'), name + ' 不是函数（判据读错了东西）');
+      assert.equal(js.split(src).length - 1, 1,
+        name + ' 那段源码在产出 JS 里出现 ' + (js.split(src).length - 1) + ' 次（应为 1 次：两处跑的是同一份）');
+    }
+  });
+
+  it('浮面贴触发键的两条能力查询：样式段与运行时段读同一个串', () => {
+    const css = stripComments(relationPickerCss());
+    const js = buildRelationPickerJs();
+    const queries = [...css.matchAll(/@supports \(([^)]*)\)/g)].map((m) => m[1]);
+    assert.ok(queries.length >= 2, '样式段里没有锚定定位那两道能力查询（实际 ' + queries.length + ' 条）');
+    for (const one of queries) {
+      assert.ok(js.includes(JSON.stringify(one)), '运行时没读同一条能力查询串：' + one);
+    }
+  });
+});
+
+/* ── ⑫ 脚注跟着实际分区走（静态那一半） ─────────────────────────────── */
+
+/** 渲染期脚注里那句话（判据不抄字面量：走本件自己的文案表）。 */
+function footTextOf(html) {
+  const m = html.match(new RegExp(RELATION_PICKER_FOOT_ATTR + '="[^"]*"[^>]*>([^<]*)<'));
+  return m === null ? '' : m[1];
+}
+
+/** 渲染期脚注里那个**数**（只有「命中 N 条」那一档有）。 */
+function footHitsOf(html) {
+  const text = footTextOf(html);
+  const pre = RELATION_PICKER_TEXT.footHitPre;
+  const post = RELATION_PICKER_TEXT.footHitPost;
+  assert.ok(text.startsWith(pre) && text.endsWith(post), '渲染期脚注不是「命中 N 条」那一档：' + text);
+  return Number(text.slice(pre.length, text.length - post.length));
+}
+
+describe('relation-picker ⑫ 脚注跟着实际分区走', () => {
+  it('没有 `recentKeys` 时不说「「最近用过」排最前」（屏上没有那一组）', () => {
+    const { recentKeys, ...noRecent } = INLINE;
+    const withRecent = footTextOf(renderRelationPicker(INLINE));
+    const without = footTextOf(renderRelationPicker(noRecent));
+    assert.ok(withRecent.includes(RELATION_PICKER_TEXT.recentGroup), '有这一组时脚注说的才是「最近用过」排最前');
+    assert.ok(without.length > 0, '脚注不许空着');
+    assert.ok(!without.includes(RELATION_PICKER_TEXT.recentGroup),
+      '没有这一组还写「「最近用过」排最前」＝一句屏上兑不出来的空许诺：' + without);
+    assert.equal(without, RELATION_PICKER_TEXT.footIdlePlain, '空输入那一档的两句各管一种分区');
+  });
+});
+
+/* ── 真指针夹具（本件自持：浮面住顶层，必须真改**视口**才量得到） ─────── */
+
+/** 本机浏览器候选（与 `shapes-probe.mjs` 同一套；找不到＝null）。 */
+function findBrowser() {
+  return [process.env.DSH_BROWSER,
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/usr/bin/google-chrome', '/usr/bin/chromium',
+  ].filter((p) => typeof p === 'string' && p !== '' && existsSync(p))[0];
+}
+
+/**
+ * 起一页**真指针**夹具。为什么不用现成的 `startShapesPage()`：
+ *  · 它只把**夹具容器**改宽（视口写死 `宽＋80`），而浮面住顶层、`position: fixed` —— 量浮面的贴边必须真改**视口**；
+ *  · 它没有输入通道，测试件里那些 `el.click()` 是**合成事件**：绕过命中测试（浮面盖住触发键照样绿）。
+ *  这一段一律走 CDP 的 `Input.dispatchMouseEvent`（moved／pressed／released）与 `Input.insertText`。
+ */
+async function startPointerPage(opts) {
+  const browser = findBrowser();
+  if (browser === undefined) return null;
+  const width = opts.width === undefined ? 390 : opts.width;
+  const height = opts.height === undefined ? 900 : opts.height;
+  const events = [RELATION_PICKER_EVENT_SELECT, RELATION_PICKER_EVENT_CREATE, RELATION_PICKER_EVENT_QUERY];
+  const html = '<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><style>'
+    + opts.css + '\nhtml,body{margin:0;padding:0}#ptr{padding:10px 12px}#ptr section{display:block;padding:8px 0}\n'
+    + '</style></head>\n<body>\n<div id="ptr" class="ilife-page-ui ' + skinClass(SKIN_NAMES[0]) + '">' + opts.html + '</div>\n'
+    + '<script>window.__errs=[];window.addEventListener("error",function(e){window.__errs.push(String(e.message));});'
+    + 'window.addEventListener("unhandledrejection",function(e){window.__errs.push("rejection:"+String(e.reason));});</script>\n'
+    + '<script>window.__ev=[];' + JSON.stringify(events) + '.forEach(function(n){document.addEventListener(n,function(e){'
+    + 'var d=e.detail||{};window.__ev.push({name:n,id:d.id,key:d.key,title:d.title,query:d.query,hits:d.hits,value:d.value});});});</script>\n'
+    + '<script>' + buildRelationPickerJs() + '</script>\n</body></html>';
+  const dir = mkdtempSync(join(tmpdir(), 't-rp-pointer-'));
+  const page = join(dir, 'fixture.html');
+  writeFileSync(page, html, 'utf8');
+  const profileDir = mkdtempSync(join(tmpdir(), 't-rp-pointer-chrome-'));
+  const port = 9720 + (process.pid % 150) + (opts.portOffset === undefined ? 0 : opts.portOffset);
+  const chrome = spawn(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run',
+    '--disable-extensions', '--hide-scrollbars', '--allow-file-access-from-files',
+    '--remote-debugging-port=' + port, '--user-data-dir=' + profileDir,
+    '--window-size=' + String(width + 40) + ',' + String(height), 'about:blank'],
+  { stdio: ['ignore', 'pipe', 'pipe'] });
+  const cleanup = () => {
+    try { chrome.kill(); } catch { /* 已退出 */ }
+    for (const d of [profileDir, dir]) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 临时目录 */ } }
+  };
+  try {
+    let devUrl = null;
+    for (let i = 0; i < 120 && devUrl === null; i += 1) {
+      try {
+        const r = await fetch('http://127.0.0.1:' + port + '/json/version');
+        if (r.ok) devUrl = (await r.json()).webSocketDebuggerUrl;
+      } catch { /* 等端口 */ }
+      if (devUrl === null) await new Promise((r) => { setTimeout(r, 250); });
+    }
+    if (devUrl === null) throw new Error('CDP 未就绪（headless Chrome 起不来）');
+    const ws = new WebSocket(devUrl);
+    let nextId = 1;
+    const pending = new Map();
+    ws.addEventListener('message', (e) => {
+      const m = JSON.parse(e.data);
+      if (m.id !== undefined && pending.has(m.id)) {
+        const p = pending.get(m.id); pending.delete(m.id);
+        if (m.error) p.reject(new Error(m.error.message)); else p.resolve(m.result);
+      }
+    });
+    await new Promise((res, rej) => {
+      ws.addEventListener('open', () => res());
+      ws.addEventListener('error', () => rej(new Error('CDP 连接失败')));
+    });
+    const send = (method, params, sessionId) => new Promise((res, rej) => {
+      const id = nextId; nextId += 1;
+      pending.set(id, { resolve: res, reject: rej });
+      ws.send(JSON.stringify(sessionId === undefined ? { id, method, params } : { id, method, params, sessionId }));
+    });
+    const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+    const s = (m, p) => send(m, p, sessionId);
+    const ev = async (expr) => {
+      const r = await s('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });
+      if (r.exceptionDetails) {
+        const d = r.exceptionDetails;
+        throw new Error('页内抛错：' + (d.exception && d.exception.description ? d.exception.description : d.text));
+      }
+      return r.result === undefined ? undefined : r.result.value;
+    };
+    const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
+    await s('Page.enable'); await s('Runtime.enable');
+    await s('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+    await s('Page.navigate', { url: pathToFileURL(page).href });
+    for (let i = 0; i < 100; i += 1) { if (await ev('document.readyState === "complete"') === true) break; await sleep(40); }
+    await sleep(300);
+    return {
+      ev,
+      sleep,
+      /** 真改**视口**（浮面 `position: fixed`：容器宽那种量法量不到它贴不贴触发键）。 */
+      async setViewport(w, h) {
+        await s('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
+        await sleep(140);
+      },
+      /** 真指针序列：moved → pressed → released（**不是** `element.click()`，那会绕过命中测试）。 */
+      async pointerClick(sel) {
+        const at = await ev('(function(){var el=document.querySelector(' + JSON.stringify(sel) + ');'
+          + 'if(!el)return null;el.scrollIntoView({block:"center"});var r=el.getBoundingClientRect();'
+          + 'return {x:r.left+r.width/2,y:r.top+r.height/2,cls:el.className};}())');
+        assert.ok(at !== null, '真指针点不到：' + sel);
+        await s('Input.dispatchMouseEvent', { type: 'mouseMoved', x: at.x, y: at.y, button: 'none', buttons: 0 });
+        await sleep(16);
+        await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: at.x, y: at.y, button: 'left', buttons: 1, clickCount: 1 });
+        await sleep(24);
+        await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: at.x, y: at.y, button: 'left', buttons: 0, clickCount: 1 });
+        await sleep(240);
+        return at;
+      },
+      /** 真键入：先真点进那一格（拿真焦点），再 `Input.insertText`。 */
+      async pointerType(sel, text) {
+        await this.pointerClick(sel);
+        await s('Input.insertText', { text });
+        await sleep(300);
+      },
+      /** 关掉页上所有浮面（换档位之间要回到同一个出发状态）。 */
+      closePopovers() {
+        return ev('[].forEach.call(document.querySelectorAll("[data-ilife-relation-panel]"),'
+          + 'function(p){ try{ p.hidePopover(); }catch(e){} });true');
+      },
+      events: () => ev('window.__ev.slice()'),
+      clearEvents: () => ev('window.__ev=[];true'),
+      errs: () => ev('window.__errs'),
+      close: () => { try { ws.close(); } catch { /* 已关 */ } cleanup(); },
+    };
+  } catch (e) {
+    cleanup();
+    throw e;
+  }
+}
+
+/* ── ⑦⑧⑨⑩⑪ 真指针：chip 通路 · hits 三处对账 · 贴边四档 · 打字筛最近一排 · 跨实例 ── */
+
+describe('relation-picker ⑦⑧⑨⑩⑪ 真指针 · 真窄视口（headless Chrome ＋ CDP）', () => {
+  /** 夹具里的每一份实例（`[data-case]`）。 */
+  const CASES = [
+    ['ov', renderRelationPicker({ ...OVERLAY, id: 'q-ov' })],
+    ['ovq', renderRelationPicker({ ...OVERLAY, id: 'q-ovq', query: '招', selectedKey: undefined })],
+    ['inq', renderRelationPicker({ ...INLINE, id: 'q-in', query: '镜', selectedKey: undefined })],
+    /* 要真点得到行内那一块：**不能带选中值**（带选中值＝行内那块渲染时就收起）。 */
+    ['typ', renderRelationPicker({ ...INLINE, id: 'q-typ', selectedKey: undefined })],
+    ['chip', renderRelationPicker({ ...INLINE, id: 'q-chip', selectedKey: undefined })],
+    ['norec', renderRelationPicker((() => {
+      const { recentKeys, ...rest } = INLINE; return { ...rest, id: 'q-norec', selectedKey: undefined };
+    })())],
+    ['a', renderRelationPicker({ ...OVERLAY, id: 'q-a' })],
+    ['b', renderRelationPicker({ ...OVERLAY, id: 'q-b' })],
+  ];
+  const AT = (name) => '#ptr [data-case="' + name + '"] ';
+  /** 槽类的**选择器**（`relationPickerSlot()` 给的是裸类名：拼选择器要自己带那个点）。 */
+  const SEL = (slot) => '.' + SLOT(slot);
+  const ROOT = (id) => '[data-ilife-relation-picker="' + id + '"]';
+  /** 屏上真露着的项（按机器键去重：同一个选项在屏上有多处摆法）。 */
+  const shownKeys = (page, id) => page.ev('(function(){var r=document.querySelector('
+    + JSON.stringify(ROOT(id)) + ');var set={};'
+    + '[].forEach.call(r.querySelectorAll("[' + RELATION_PICKER_ITEM_ATTR + ']"),function(el){'
+    + 'if(!el.hasAttribute("hidden"))set[el.getAttribute("' + RELATION_PICKER_ITEM_ATTR + '")]=1;});'
+    + 'return Object.keys(set).sort();}())');
+  const snapOf = (page, id) => page.ev('(function(){var r=document.querySelector(' + JSON.stringify(ROOT(id)) + ');'
+    + 'var q=function(s){var e=r.querySelector(s);return e===null?null:e.textContent;};'
+    + 'var keys=function(s){return [].map.call(r.querySelectorAll(s),function(e){'
+    + 'return e.getAttribute("' + RELATION_PICKER_ITEM_ATTR + '");});};'
+    + 'var quick=r.querySelector(".' + SLOT('quick') + '");'
+    + 'return {value:q(".' + SLOT('value') + '"),state:q(".' + SLOT('state') + '"),result:q(".' + SLOT('result') + '"),'
+    + 'foot:q(".' + SLOT('foot') + '"),'
+    + 'chosenHidden:r.querySelector(".' + SLOT('chosen') + '")===null?null:'
+    + 'r.querySelector(".' + SLOT('chosen') + '").hasAttribute("hidden"),'
+    + 'inlineHidden:r.querySelector(".' + SLOT('inline') + '")===null?null:'
+    + 'r.querySelector(".' + SLOT('inline') + '").hasAttribute("hidden"),'
+    + 'onChips:keys(".' + SLOT('chip') + '.is-on"),onRows:keys(".' + SLOT('row') + '.is-on"),'
+    + 'curRows:keys(".' + SLOT('row') + '[aria-current]"),'
+    + 'chips:[].map.call(r.querySelectorAll(".' + SLOT('chip') + '"),function(c){return ['
+    + 'c.getAttribute("' + RELATION_PICKER_ITEM_ATTR + '"),c.hasAttribute("hidden")];}),'
+    + 'quickH:quick===null?null:Math.round(quick.getBoundingClientRect().height),'
+    + 'quickHidden:quick===null?null:quick.hasAttribute("hidden"),'
+    + 'visRows:r.querySelectorAll(".' + SLOT('row') + ':not([hidden])").length};}())');
+
+  it('真指针走完七条：chip 通路／hits 三处同值／贴边四档不盖触发键／打字筛最近一排／跨实例／脚注跟分区', async (t) => {
+    const page = await startPointerPage({
+      html: CASES.map(([n, h]) => '<section data-case="' + n + '">' + h + '</section>').join('\n'),
+      css: skinCss() + '\n' + relationPickerCss(),
+      width: 390, height: 900,
+    });
+    if (page === null) {
+      console.log('READING 真指针判据未跑（本机无 Chrome／Chromium）⇒ 这三条读数需真浏览器：'
+        + 'chip 通路／hits 三处对账／贴边四档');
+      return t.skip('本机无 Chrome／Chromium：真指针与真窄视口读数需真浏览器');
+    }
+    try {
+      const initEvents = await page.events();
+      const initHits = (id) => {
+        const one = initEvents.filter((e) => e.name === RELATION_PICKER_EVENT_QUERY && e.id === id)[0];
+        return one === undefined ? null : one.hits;
+      };
+
+      /* ⑧ 三处同值对账：渲染期脚注里那个数 ／ 载入期事件派发的 hits ／ 屏上真露着的项数。 */
+      for (const [name, id, html] of [['overlay 初值筛', 'q-ovq', CASES[1][1]], ['inline 初值筛', 'q-in', CASES[2][1]]]) {
+        const render = footHitsOf(html);
+        const runtime = initHits(id);
+        const shown = (await shownKeys(page, id)).length;
+        console.log('READING ⑧ ' + name + ' hits：渲染期=' + render + ' 运行时段=' + runtime + ' 屏上=' + shown);
+        assert.equal(runtime, render, name + '：运行时段派发的 `hits` 与渲染期脚注里那个数不同值'
+          + '（同一个数只许有一处定义，两处读同一份源码）');
+        assert.equal(shown, render, name + '：屏上真露着的项数与那个数不同值（数了两遍／漏数）');
+      }
+
+      /* ⑫ 脚注跟着实际分区走（运行时段那一半：载入期它会重写这一句）。 */
+      const norec = await snapOf(page, 'q-norec');
+      assert.ok(!norec.foot.includes(RELATION_PICKER_TEXT.recentGroup),
+        '没有「最近用过」这一组，脚注却还写「「最近用过」排最前」：' + norec.foot);
+      assert.equal(norec.chips.length, 0, '没有 `recentKeys` 就不出最近一排');
+
+      /* ⑩ 贴边四档：真指针点触发键，量浮面（不盖触发键／缝在合理区间／不越出视口）。 */
+      for (const width of [320, 390, 620, 1280]) {
+        await page.setViewport(width, 900);
+        await page.closePopovers();
+        await page.sleep(90);
+        await page.pointerClick(AT('ov') + SEL('box'));
+        const g = await page.ev('(function(){var b=document.querySelector(' + JSON.stringify(AT('ov') + SEL('box'))
+          + ').getBoundingClientRect();var p=document.querySelector("[data-ilife-relation-panel=\'q-ov\']");'
+          + 'var q=p.getBoundingClientRect();return {btn:[b.left,b.top,b.right,b.bottom],'
+          + 'panel:[q.left,q.top,q.right,q.bottom],open:p.matches(":popover-open"),'
+          + 'view:[document.documentElement.clientWidth,document.documentElement.clientHeight]};}())');
+        const below = Math.round(g.panel[1] - g.btn[3]);
+        const above = Math.round(g.btn[1] - g.panel[3]);
+        const gap = below >= 0 ? below : above;
+        console.log('READING ⑩ 贴边 ' + width + ' 档：btn=[' + g.btn.map(Math.round).join(',') + '] panel=['
+          + g.panel.map(Math.round).join(',') + '] gapTop=' + below + ' coverTrigger='
+          + !(g.panel[3] <= g.btn[1] || g.panel[1] >= g.btn[3]));
+        assert.equal(g.open, true, width + ' 档：真指针点触发键 ⇒ 浮面打开');
+        assert.ok(g.panel[3] <= g.btn[1] || g.panel[1] >= g.btn[3],
+          width + ' 档：浮面盖住了触发键本身（' + JSON.stringify([g.btn, g.panel]) + '）');
+        assert.ok(gap >= 0 && gap <= 32, width + ' 档：浮面与触发键那道缝不在合理区间（gap=' + gap + '）');
+        assert.ok(g.panel[0] >= -0.5 && g.panel[2] <= g.view[0] + 0.5,
+          width + ' 档：浮面越出视口左右（panel=' + JSON.stringify(g.panel) + ' view=' + JSON.stringify(g.view) + '）');
+        assert.ok(g.panel[1] >= -0.5 && g.panel[3] <= g.view[1] + 0.5,
+          width + ' 档：浮面越出视口上下（panel=' + JSON.stringify(g.panel) + ' view=' + JSON.stringify(g.view) + '）');
+        assert.ok(Math.abs(g.panel[0] - g.btn[0]) <= 40,
+          width + ' 档：浮面横向没贴着触发键（panel.left=' + Math.round(g.panel[0]) + ' btn.left=' + Math.round(g.btn[0]) + '）');
+      }
+
+      /* ⑩b 触发键顶到视口下沿：翻到它上方，照样不盖住它、照样在视口里。 */
+      await page.setViewport(390, 700);
+      await page.closePopovers();
+      await page.ev('document.querySelector(' + JSON.stringify(AT('b') + SEL('box'))
+        + ').scrollIntoView({block:"end"});true');
+      await page.sleep(140);
+      await page.pointerClick(AT('b') + SEL('box'));
+      const gb = await page.ev('(function(){var b=document.querySelector(' + JSON.stringify(AT('b') + SEL('box'))
+        + ').getBoundingClientRect();var q=document.querySelector("[data-ilife-relation-panel=\'q-b\']").getBoundingClientRect();'
+        + 'return {btn:[b.left,b.top,b.right,b.bottom],panel:[q.left,q.top,q.right,q.bottom],'
+        + 'view:[document.documentElement.clientWidth,document.documentElement.clientHeight]};}())');
+      console.log('READING ⑩b 贴下沿：btn=[' + gb.btn.map(Math.round).join(',') + '] panel=['
+        + gb.panel.map(Math.round).join(',') + '] gapAbove=' + Math.round(gb.btn[1] - gb.panel[3]));
+      assert.ok(gb.panel[3] <= gb.btn[1] || gb.panel[1] >= gb.btn[3], '贴下沿那一档也盖住了触发键');
+      assert.ok(gb.panel[1] >= -0.5 && gb.panel[3] <= gb.view[1] + 0.5, '翻上去之后越出视口上下');
+      await page.closePopovers();
+
+      /* ⑪ 打字筛最近一排（B1）：命中一枚 chip ／ 一枚都不中（那条带子要收干净）／清空后回来。 */
+      await page.setViewport(390, 900);
+      const inq0 = await snapOf(page, 'q-in');
+      assert.deepEqual(inq0.chips, [['tiaoliao', true], ['jinggui', false]],
+        '渲染期那枚没命中的 chip 要**常渲＋藏着**（不是从标记里删掉：删了清空搜索词就回不来）；'
+        + '命中的那一枚不许被筛掉（一打字整排消失＝「最近用过」这条通路白设）');
+      await page.clearEvents();
+      await page.pointerType(AT('typ') + SEL('q'), '玄关');
+      const typed = await snapOf(page, 'q-typ');
+      const typedHits = (await page.events()).filter((e) => e.name === RELATION_PICKER_EVENT_QUERY).pop();
+      console.log('READING ⑪ 真键入「玄关」：chips=' + JSON.stringify(typed.chips)
+        + ' quickH=' + typed.quickH + ' visRows=' + typed.visRows + ' foot=' + typed.foot
+        + ' hits=' + (typedHits === undefined ? null : typedHits.hits));
+      assert.equal(typed.chips.filter((c) => !c[1]).length, 0, '一枚 chip 都不命中时，两枚都该藏着');
+      assert.equal(typed.quickH, 0, '最近一排一枚都不露时，那条带子自己要收干净（不留空带）');
+      assert.equal(typed.quickHidden, true, '最近一排一枚都不露时，那条带子挂 hidden');
+      assert.equal(typed.visRows, 1, '「玄关」只命中玄关鞋柜一行');
+      assert.ok(typed.foot.includes('1'), '脚注跟着真读数走：' + typed.foot);
+      assert.equal(typedHits === undefined ? null : typedHits.hits, 1, '派发的 hits 跟着真读数走');
+      await page.pointerClick(AT('typ') + SEL('clear'));
+      const cleared = await snapOf(page, 'q-typ');
+      assert.deepEqual(cleared.chips, [['tiaoliao', false], ['jinggui', false]], '清空搜索词 ⇒ 最近一排两枚都回来');
+      assert.ok(cleared.quickH >= RELATION_PICKER_TOUCH_PX, '最近一排回来了，那条带子要有高度（' + cleared.quickH + '）');
+      assert.equal(cleared.visRows, 3, '清空搜索词 ⇒ 三行都回来');
+      /* 只中一枚 chip 的词：「镜」命中「卫生间镜柜」那一枚 ⇒ 那一枚必须留着（不是整排一起消失）。 */
+      await page.clearEvents();
+      await page.pointerType(AT('typ') + SEL('q'), '镜');
+      const half = await snapOf(page, 'q-typ');
+      const halfHits = (await page.events()).filter((e) => e.name === RELATION_PICKER_EVENT_QUERY).pop();
+      console.log('READING ⑪ 真键入「镜」（只中一枚 chip）：chips=' + JSON.stringify(half.chips)
+        + ' quickH=' + half.quickH + ' visRows=' + half.visRows + ' hits='
+        + (halfHits === undefined ? null : halfHits.hits));
+      assert.deepEqual(half.chips, [['tiaoliao', true], ['jinggui', false]],
+        '命中的那一枚 chip 要留着（整排一起消失＝最近用过这条通路白设）');
+      assert.ok(half.quickH >= RELATION_PICKER_TOUCH_PX, '还有一枚露着，那条带子要有高度（' + half.quickH + '）');
+      assert.equal(half.visRows, 1, '「镜」只命中卫生间镜柜一行');
+      assert.equal(halfHits === undefined ? null : halfHits.hits, 1,
+        'chip 与整行是同一个选项的两处摆法：命中数只算一次');
+      await page.pointerClick(AT('typ') + SEL('clear'));
+      await page.sleep(120);
+
+      /* ⑦ 真指针点「最近用过」那枚 chip：字段行／结果行／状态／选中态／事件读的是同一份事实。 */
+      await page.clearEvents();
+      const chipAt = await page.pointerClick(AT('chip') + SEL('chip')
+        + '[' + RELATION_PICKER_ITEM_ATTR + '="tiaoliao"]');
+      const after = await snapOf(page, 'q-chip');
+      const selEv = (await page.events()).filter((e) => e.name === RELATION_PICKER_EVENT_SELECT).pop();
+      console.log('READING ⑦ chip 通路：click=' + chipAt.cls + ' value=' + JSON.stringify(after.value)
+        + ' state=' + JSON.stringify(after.state) + ' result=' + JSON.stringify(after.result)
+        + ' onChips=' + JSON.stringify(after.onChips) + ' onRows=' + JSON.stringify(after.onRows)
+        + ' ev=' + JSON.stringify(selEv === undefined ? null : [selEv.id, selEv.key, selEv.title]));
+      assert.equal(after.value, '厨房调料柜', 'chip 与整行读同一份事实：字段行那一格读到的是这一项的名字（不是空串）');
+      assert.equal(after.state, RELATION_PICKER_TEXT.stateLead + RELATION_PICKER_TEXT.picked,
+        '字段行的状态跟着换成「已选」（不然「已选的项」旁边还写着「正在选」）');
+      assert.ok(after.result.startsWith(RELATION_PICKER_TEXT.chosenPre + ' 厨房调料柜'),
+        '结果行写的是同一项：' + after.result);
+      assert.deepEqual(after.onChips, ['tiaoliao'], 'chip 自己挂选中态');
+      assert.deepEqual(after.onRows, ['tiaoliao'], '**整行同时挂选中态**（不是把 is-on 从行上摘到 chip）');
+      assert.deepEqual(after.curRows, ['tiaoliao'], '整行带 aria-current');
+      assert.equal(after.chosenHidden, false, '选完收成结果行');
+      assert.equal(after.inlineHidden, true, '选完行内那块收起');
+      assert.ok(selEv !== undefined, '点 chip 派发选中事件');
+      assert.equal(selEv.key, 'tiaoliao', '事件里带着选了哪一项');
+      assert.equal(selEv.title, '厨房调料柜', '事件 `detail.title` 不是空串');
+
+      /* ⑨ 跨实例：在 b 里打字／选行，a 一动不动；事件带的是 b 的 id。 */
+      await page.clearEvents();
+      const before = await snapOf(page, 'q-a');
+      await page.pointerClick(AT('b') + SEL('box'));
+      await page.pointerType(AT('b') + SEL('q'), '微信');
+      const bTyped = await snapOf(page, 'q-b');
+      await page.pointerClick(AT('b') + SEL('row') + '[' + RELATION_PICKER_ITEM_ATTR + '="wechat"]');
+      const bAfter = await snapOf(page, 'q-b');
+      const aAfter = await snapOf(page, 'q-a');
+      const bEv = (await page.events()).filter((e) => e.name === RELATION_PICKER_EVENT_QUERY && e.id === 'q-b').pop();
+      console.log('READING ⑨ 跨实例：b 打字后 hits=' + (bEv === undefined ? null : bEv.hits)
+        + ' b 选中「' + bAfter.value + '」／a 仍是「' + aAfter.value + '」');
+      assert.ok(bTyped.foot.includes('1'), 'b 自己的脚注跟着自己的词走：' + bTyped.foot);
+      assert.equal(bAfter.value, '微信', 'b 里选完，b 的字段行重写');
+      assert.equal(aAfter.value, before.value, 'a 的字段行一动不动（跨实例不许串味）');
+      assert.equal(aAfter.foot, before.foot, 'a 的脚注一动不动');
+      assert.deepEqual(aAfter.onRows.sort(), before.onRows.sort(), 'a 的选中态一动不动');
+      assert.equal(bEv === undefined ? null : bEv.id, 'q-b', '真读数事件带的是 b 的 id');
+      assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
     } finally { page.close(); }
   });
 });

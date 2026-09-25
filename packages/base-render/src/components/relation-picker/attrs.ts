@@ -57,7 +57,7 @@ export const RELATION_PICKER_SLOTS = [
   'rows',
   /** 一行选项（**整行就是那颗按钮**）。 */
   'row',
-  /** 行左那枚记号（✓ 选中／· 没选；纯装饰，`aria-hidden`）。 */
+  /** 行左那枚记号（✓ 选中／○ 没选；纯装饰，`aria-hidden`）。 */
   'mk',
   /** 行的文字格（名字 ＋ 副语）。 */
   'tx',
@@ -191,6 +191,14 @@ export const RELATION_PICKER_CONTAINER = 'ilife-relation-picker';
 export const RELATION_PICKER_NARROW_PX = 560;
 /** 悬停只许是增强：这一段能力查询**样式段与运行时读同一个串**（两边必须说同一件事）。 */
 export const RELATION_PICKER_HOVER_QUERY = '(hover: hover) and (pointer: fine)';
+/** 浮面贴触发键的两条能力查询：**样式段与运行时段读同一个串**（两边对「这个引擎支不支持」必须说同一件事）。
+ *  支持 ⇒ CSS 锚定定位（`position-area` 贴触发键下沿，贴不下翻上去）；不支持 ⇒ 打开时运行时按触发键
+ *  的矩形算 `left`／`top`。口径同 `popover-menu`（`MENU_ANCHOR_QUERY`／`MENU_AREA_QUERY`）。 */
+export const RELATION_PICKER_ANCHOR_QUERY = 'anchor-name: --a';
+export const RELATION_PICKER_AREA_QUERY = 'position-area: bottom';
+/** 逐实例锚名的前缀（完整名＝前缀 ＋ 入参 `id`）：触发键写 `anchor-name`、浮面写 `position-anchor`，
+ *  两处写**同一个**名字——静态 CSS 认不出逐实例的名字（同 `popover-menu` 的 `--ilife-menu-<id>`）。 */
+export const RELATION_PICKER_ANCHOR_PREFIX = '--ilife-relation-picker-';
 
 /* ── 文案（缺省的那几句；调用方可以换，但语义别换） ─────────────────── */
 
@@ -198,7 +206,9 @@ export const RELATION_PICKER_HOVER_QUERY = '(hover: hover) and (pointer: fine)';
 export const RELATION_PICKER_TEXT = Object.freeze({
   /** 还没选中时触发键里读的那一句。 */
   unpicked: '还没选',
-  /** 字段标签后面那句状态：正在选／已选。 */
+  /** 字段标签后面那句状态：正在选／已选。**选中一变这一句也要跟着换**——字段行读的是同一份事实
+   *  （运行时段里它跟值那一格一起重写；不然「已选的那一项」旁边还写着「正在选」）。 */
+  stateLead: '— ',
   picking: '正在选',
   picked: '已选',
   /** 分组标题两枚。 */
@@ -209,9 +219,13 @@ export const RELATION_PICKER_TEXT = Object.freeze({
   pickTag: '选它',
   /** 触发键右端那枚记号。 */
   caret: '▾',
-  /** 选中记号：✓ 选中／· 没选。 */
+  /** 选中记号：✓ 选中／○ 没选。
+   *  未选态原来写中点 `·`（U+00B7）——那正是仓库分隔符门的 R1 命中（可见文本零豁免），
+   *  与 README 契约 13 自己写的「不出现 `·`」矛盾（2026-09 对抗审查读出：overlay 节点级 4 处／
+   *  inline 2 处，`separator-probe` exit=1）。改成空圆环 `○`：与 `radio-cards`／`wizard-shell` 的
+   *  「空圆环（未选）」、`goal-stairs` 的「还没开始 ○」同一套形语汇，且不是分隔符。 */
   tick: '✓',
-  dot: '·',
+  dot: '○',
   /** 清空搜索那枚键的无障碍名（键上写的是 ✕）。 */
   clear: '清空搜索',
   /** 末行新建排前面那句。 */
@@ -229,6 +243,10 @@ export const RELATION_PICKER_TEXT = Object.freeze({
   emptyPost: '」相关的，去末行新建一个。',
   /** 脚注三档：空输入列常用去处／命中几条／一条没中。 */
   footIdle: '「最近用过」排最前，点任意一行就选好。',
+  /** 没有 `recentKeys`（屏上没有「最近用过」这一组）时，空输入那一档的脚注。
+   *  **脚注跟着实际分区走**：缺了这一组还写「排最前」，就是一句屏上兑不出来的空许诺
+   *  （2026-09 对抗审查读出：无 `recentKeys` 的实例脚注仍写「「最近用过」排最前」，而分组只有 `all`）。 */
+  footIdlePlain: '全部都在下面，点任意一行就选好。',
   footHitPre: '命中 ',
   footHitPost: ' 条，点任意一行就选好。',
   footNone: '换个短一点的词试试，搜不到就去末行新建。',
@@ -242,7 +260,8 @@ export interface RelationPickerOption {
   readonly key: string;
   /** 名字（如「招行储蓄卡」）。**非空**；命中词在这里标出来；许换行、不许 `…` 截断。 */
   readonly title: string;
-  /** 副语（一行一句人话，如「上次 09-24 · 记了 3 笔」）。 */
+  /** 副语（一行一句人话，如「上次 09-24，记了 3 笔」）。**这一串由调用方给**：本件自己的记号与文案
+   *  一律过仓库分隔符门（README 契约 13），调用方塞进来的 `·`／`；` 由调用方负责。 */
   readonly note?: string;
   /** 行右端读数（余额／件数，**已经是给人看的样子**：取整与千分位归调用方）。**永不 `…` 截断**。 */
   readonly reading?: string;
