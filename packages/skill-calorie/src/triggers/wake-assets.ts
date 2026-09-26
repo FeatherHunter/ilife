@@ -1521,7 +1521,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重总览",
             "wake_word": "看体重总览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重总览」。\n\n我想看体重综合总览。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重总览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1531,7 +1531,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "体重复盘（本周）",
             "wake_word": "体重复盘（本周）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（本周）」。\n\n我想看本周的体重复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（本周）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1541,7 +1541,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "体重复盘（本月）",
             "wake_word": "体重复盘（本月）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（本月）」。\n\n我想看本月的体重复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（本月）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1551,7 +1551,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "体重复盘（最近 90 天）",
             "wake_word": "体重复盘（最近 90 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（最近 90 天）」。\n\n我想看最近 90 天的体重复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（最近 90 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1561,7 +1561,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "体重复盘（今年）",
             "wake_word": "体重复盘（今年）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（今年）」。\n\n我想看今年的体重复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（今年）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1571,9 +1571,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "体重复盘（自定义时间）",
             "wake_word": "体重复盘（自定义时间）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（自定义时间）」。\n\n我想看某段时间的体重复盘(自定义起止日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n起止日期(YYYY-MM-DD):____ ~ ____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「体重复盘（自定义时间）」。\n\n我想看某段时间的体重复盘(自定义起止日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1581,7 +1599,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看里程碑回溯",
             "wake_word": "看里程碑回溯",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看里程碑回溯」。\n\n我想看所有达成过的体重里程碑。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看里程碑回溯」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1597,7 +1615,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：最近 30 天 vs 之前 30 天",
             "wake_word": "对比体重：最近 30 天 vs 之前 30 天",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：最近 30 天 vs 之前 30 天」。\n\n我想对比最近 30 天和之前 30 天两段体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：最近 30 天 vs 之前 30 天」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1607,9 +1625,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：自定义两段时间",
             "wake_word": "对比体重：自定义两段时间",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：自定义两段时间」。\n\n我想自定义两段日期对比体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一段起止(YYYY-MM-DD):____ ~ ____\n第二段起止(YYYY-MM-DD):____ ~ ____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：自定义两段时间」。\n\n我想自定义两段日期对比体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一段开始日期:{{period1_start}}\n第一段结束日期:{{period1_end}}\n第二段开始日期:{{period2_start}}\n第二段结束日期:{{period2_end}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "period1_start",
+                "label": "第一段开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "period1_end",
+                "label": "第一段结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "period2_start",
+                "label": "第二段开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "period2_end",
+                "label": "第二段结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1637,9 +1689,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：近 N 天 vs 上一个 N 天",
             "wake_word": "对比体重：近 N 天 vs 上一个 N 天",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：近 N 天 vs 上一个 N 天」。\n\n我想对比最近 N 天和之前同样 N 天(滚动窗口)的体重,N 由我指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\nN(天数):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：近 N 天 vs 上一个 N 天」。\n\n我想对比最近 N 天和之前同样 N 天(滚动窗口)的体重,N 由我指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\nN:{{n_days}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "n_days",
+                "label": "N",
+                "value": "",
+                "hint": "单位 天，只收纯数字，如 30",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1647,7 +1709,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：今天 vs 一年前今天",
             "wake_word": "对比体重：今天 vs 一年前今天",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 一年前今天」。\n\n我想对比今天的体重和一年前同一天的体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 一年前今天」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1657,7 +1719,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：今天 vs 半年前今天",
             "wake_word": "对比体重：今天 vs 半年前今天",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 半年前今天」。\n\n我想对比今天的体重和半年前同一天的体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 半年前今天」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1667,7 +1729,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：今天 vs 三月前今天",
             "wake_word": "对比体重：今天 vs 三月前今天",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 三月前今天」。\n\n我想对比今天的体重和三个月前同一天的体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：今天 vs 三月前今天」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1677,7 +1739,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体重：当前 vs 目标体重",
             "wake_word": "对比体重：当前 vs 目标体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：当前 vs 目标体重」。\n\n我想对比当前体重和目标体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体重：当前 vs 目标体重」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1783,9 +1845,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改体重记录",
             "wake_word": "改体重记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改体重记录」。\n\n我要改某条体重记录(体重值或备注)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(最近一条/日期/编号):____\n新体重(kg):____\n新备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改体重记录」。\n\n我要改某条体重记录(体重值或备注)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录:{{target_record}}\n新体重:{{new_weight_kg}}\n新备注:{{new_note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_record",
+                "label": "要改的记录",
+                "value": "",
+                "hint": "如 最近一条或 YYYY-MM-DD；用于定位记录",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_weight_kg",
+                "label": "新体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 68.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "new_note",
+                "label": "新备注",
+                "value": "",
+                "hint": "如 晨起空腹",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1793,9 +1881,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改某日体重",
             "wake_word": "改某日体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日体重」。\n\n我要按日期改某天的体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD):____\n新体重(kg):____\n新备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日体重」。\n\n我要按日期改某天的体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}\n新体重:{{new_weight_kg}}\n新备注:{{new_note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "new_weight_kg",
+                "label": "新体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 68.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "new_note",
+                "label": "新备注",
+                "value": "",
+                "hint": "如 晨起空腹",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1803,9 +1917,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删体重记录",
             "wake_word": "删体重记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删体重记录」。\n\n我要删一条体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(最近一条/日期/编号):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删体重记录」。\n\n我要删一条体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录:{{target_record}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_record",
+                "label": "要删的记录",
+                "value": "",
+                "hint": "如 最近一条或 YYYY-MM-DD；用于定位记录",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1813,9 +1937,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删某日体重",
             "wake_word": "删某日体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日体重」。\n\n我要删某一天的全部体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日体重」。\n\n我要删某一天的全部体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1823,9 +1957,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量删体重",
             "wake_word": "批量删体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删体重」。\n\n我要按日期范围批量删除体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n起止日期(YYYY-MM-DD):____ ~ ____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删体重」。\n\n我要按日期范围批量删除体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -1839,7 +1991,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看「有备注」的体重记录",
             "wake_word": "看「有备注」的体重记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看「有备注」的体重记录」。\n\n我想看所有带备注的体重记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看「有备注」的体重记录」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1905,7 +2057,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看最近 90 天体重",
             "wake_word": "看最近 90 天体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 90 天体重」。\n\n我想看最近 90 天的体重明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 90 天体重」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1915,9 +2067,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某段时间体重",
             "wake_word": "看某段时间体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间体重」。\n\n我想看某段时间(自定义起止日期)的体重明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n起止日期(YYYY-MM-DD):____ ~ ____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间体重」。\n\n我想看某段时间(自定义起止日期)的体重明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -2021,9 +2191,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某段时间体重曲线",
             "wake_word": "看某段时间体重曲线",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间体重曲线」。\n\n我想看某段时间(自定义起止日期)的体重曲线,跨度大时自动降采样。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n起止日期(YYYY-MM-DD):____ ~ ____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间体重曲线」。\n\n我想看某段时间(自定义起止日期)的体重曲线,跨度大时自动降采样。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -2093,9 +2281,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记体重",
             "wake_word": "记体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体重」。\n\n我刚称了体重,帮我记录今天的体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重(kg):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体重」。\n\n我刚称了体重,帮我记录今天的体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重:{{weight_kg}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "weight_kg",
+                "label": "体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 68.5",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -2103,9 +2301,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记体重（含备注）",
             "wake_word": "记体重（含备注）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体重（含备注）」。\n\n我刚称了体重,记录今天的体重并带上备注(如 晨起空腹/运动后/睡前)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重(kg):____\n备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体重（含备注）」。\n\n我刚称了体重,记录今天的体重并带上备注(如 晨起空腹/运动后/睡前)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重:{{weight_kg}}\n备注:{{note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "weight_kg",
+                "label": "体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 68.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "note",
+                "label": "备注",
+                "value": "",
+                "hint": "如 晨起空腹",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -2113,7 +2329,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补录体重",
             "wake_word": "补录体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补录体重」。\n\n我要补录体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重:{{weight_kg}}\n日期:{{log_date}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补录体重」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重:{{weight_kg}}\n日期:{{log_date}}",
             "types": [
               "回执"
             ],
@@ -2141,9 +2357,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量补录体重",
             "wake_word": "批量补录体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补录体重」。\n\n我要一次补录多天的体重。我会给你 日期+体重 的列表(每行一条),也可能只说连续天数加起始体重让你帮我生成。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n多天体重(每行一条: 日期 体重):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补录体重」。\n\n我要一次补录多天的体重。我会给你 日期+体重 的列表(每行一条),也可能只说连续天数加起始体重让你帮我生成。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n多天体重:\n{{batch_data}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "batch_data",
+                "label": "多天体重",
+                "value": "",
+                "hint": "每行一条：日期 体重，如 2026-09-20 68.5",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -2151,7 +2377,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日体重",
             "wake_word": "看今日体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日体重」。\n\n我想看今天的体重数据。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日体重」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -3628,9 +3854,84 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记体脂（皮褶钳）",
             "wake_word": "记体脂（皮褶钳）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体脂（皮褶钳）」。\n\n我用皮褶钳测了 7 点(胸/腹/大腿/三头/肩胛下/髂上/腋中 mm),请按 Jackson-Pollock 7 点法帮我算体脂率并记录。如果我没说性别/年龄,请先问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n7 点皮褶厚度(mm):\n胸:____\n腹:____\n大腿:____\n三头:____\n肩胛下:____\n髂上:____\n腋中:____\n性别(男/女):____\n年龄:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体脂（皮褶钳）」。\n\n我用皮褶钳测了 7 点(胸/腹/大腿/三头/肩胛下/髂上/腋中 mm),请按 Jackson-Pollock 7 点法帮我算体脂率并记录。如果我没说性别/年龄,请先问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n7 点皮褶厚度:\n胸:{{chest_mm}}\n腹:{{abdomen_mm}}\n大腿:{{thigh_mm}}\n三头:{{triceps_mm}}\n肩胛下:{{subscapular_mm}}\n髂上:{{suprailiac_mm}}\n腋中:{{axilla_mm}}\n性别:{{gender}}\n年龄:{{age}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "chest_mm",
+                "label": "胸",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 12.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "abdomen_mm",
+                "label": "腹",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 12.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "thigh_mm",
+                "label": "大腿",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 15.0",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "triceps_mm",
+                "label": "三头",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 12.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "subscapular_mm",
+                "label": "肩胛下",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 12.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "suprailiac_mm",
+                "label": "髂上",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 12.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "axilla_mm",
+                "label": "腋中",
+                "value": "",
+                "hint": "单位 mm，只收纯数字，如 10.0",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "gender",
+                "label": "性别",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["男","女"]
+              },
+              {
+                "name": "age",
+                "label": "年龄",
+                "value": "",
+                "hint": "整数，如 30",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3638,9 +3939,36 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记体脂（外部测量）",
             "wake_word": "记体脂（外部测量）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体脂（外部测量）」。\n\n我用外部设备(健身房 InBody/医院/其他)测了体脂率,请帮我记录体脂率和来源、日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体脂率(%):____\n来源(健身房/医院/其他):____\n日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记体脂（外部测量）」。\n\n我用外部设备(健身房 InBody/医院/其他)测了体脂率。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体脂率:{{body_fat_pct}}\n来源:{{source}}\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "body_fat_pct",
+                "label": "体脂率",
+                "value": "",
+                "hint": "单位 %，只收纯数字，如 22.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "source",
+                "label": "来源",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["健身房","医院","其他"]
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3648,9 +3976,115 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记围度",
             "wake_word": "记围度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记围度」。\n\n我量了身体围度,请帮我记录 13 项围度(胸/腰/腹/臀/肩/大腿/小腿/手臂/前臂,左+右),量了哪项填哪项,没量的留空。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n胸围(cm):____\n腰围(cm):____\n腹围(cm):____\n臀围(cm):____\n肩围(cm):____\n左大腿(cm):____\n右大腿(cm):____\n左小腿(cm):____\n右小腿(cm):____\n左上臂(cm):____\n右上臂(cm):____\n左前臂(cm):____\n右前臂(cm):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记围度」。\n\n我量了身体围度,量了哪项填哪项,没量的留空,至少填 1 项。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n胸围(选填):{{chest_cm}}\n腰围(选填):{{waist_cm}}\n腹围(选填):{{abdomen_cm}}\n臀围(选填):{{hip_cm}}\n肩围(选填):{{shoulder_cm}}\n左大腿(选填):{{thigh_left_cm}}\n右大腿(选填):{{thigh_right_cm}}\n左小腿(选填):{{calf_left_cm}}\n右小腿(选填):{{calf_right_cm}}\n左上臂(选填):{{upper_arm_left_cm}}\n右上臂(选填):{{upper_arm_right_cm}}\n左前臂(选填):{{forearm_left_cm}}\n右前臂(选填):{{forearm_right_cm}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "chest_cm",
+                "label": "胸围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "waist_cm",
+                "label": "腰围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "abdomen_cm",
+                "label": "腹围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "hip_cm",
+                "label": "臀围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "shoulder_cm",
+                "label": "肩围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "thigh_left_cm",
+                "label": "左大腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "thigh_right_cm",
+                "label": "右大腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "calf_left_cm",
+                "label": "左小腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "calf_right_cm",
+                "label": "右小腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "upper_arm_left_cm",
+                "label": "左上臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "upper_arm_right_cm",
+                "label": "右上臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "forearm_left_cm",
+                "label": "左前臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "forearm_right_cm",
+                "label": "右前臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3658,9 +4092,36 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记体脂",
             "wake_word": "补记体脂",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记体脂」。\n\n我要补录之前某天的体脂测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。补完后可以问我还要不要补其他日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体脂率(%):____\n来源(皮褶钳/健身房/医院/其他):____\n日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记体脂」。\n\n我要补录之前某天的体脂测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体脂率:{{body_fat_pct}}\n来源:{{source}}\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "body_fat_pct",
+                "label": "体脂率",
+                "value": "",
+                "hint": "单位 %，只收纯数字，如 22.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "source",
+                "label": "来源",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["皮褶钳","健身房","医院","其他"]
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3668,9 +4129,123 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记围度",
             "wake_word": "补记围度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记围度」。\n\n我要补录之前某天的围度测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。补完后可以问我还要不要补其他日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n各围度(cm,量了哪项填哪项):\n胸围:____\n腰围:____\n腹围:____\n臀围:____\n肩围:____\n左大腿:____\n右大腿:____\n左小腿:____\n右小腿:____\n左上臂:____\n右上臂:____\n左前臂:____\n右前臂:____\n日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记围度」。\n\n我要补录之前某天的围度测量(不是今天的)。如果那天已有记录,请先告诉我冲突再确认。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n各围度(量了哪项填哪项,没量的留空,至少填 1 项):\n胸围(选填):{{chest_cm}}\n腰围(选填):{{waist_cm}}\n腹围(选填):{{abdomen_cm}}\n臀围(选填):{{hip_cm}}\n肩围(选填):{{shoulder_cm}}\n左大腿(选填):{{thigh_left_cm}}\n右大腿(选填):{{thigh_right_cm}}\n左小腿(选填):{{calf_left_cm}}\n右小腿(选填):{{calf_right_cm}}\n左上臂(选填):{{upper_arm_left_cm}}\n右上臂(选填):{{upper_arm_right_cm}}\n左前臂(选填):{{forearm_left_cm}}\n右前臂(选填):{{forearm_right_cm}}\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "chest_cm",
+                "label": "胸围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "waist_cm",
+                "label": "腰围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "abdomen_cm",
+                "label": "腹围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "hip_cm",
+                "label": "臀围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "shoulder_cm",
+                "label": "肩围(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "thigh_left_cm",
+                "label": "左大腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "thigh_right_cm",
+                "label": "右大腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "calf_left_cm",
+                "label": "左小腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "calf_right_cm",
+                "label": "右小腿(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "upper_arm_left_cm",
+                "label": "左上臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "upper_arm_right_cm",
+                "label": "右上臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "forearm_left_cm",
+                "label": "左前臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "forearm_right_cm",
+                "label": "右前臂(选填)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -3730,9 +4305,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比体脂",
             "wake_word": "对比体脂",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体脂」。\n\n我想对比两次体脂测量,第一次和第二次都可以给具体日期或一段时间。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一次(日期或时间段):____\n第二次(日期或时间段):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比体脂」。\n\n我想对比两次体脂测量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一次:{{period1}}\n第二次:{{period2}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "period1",
+                "label": "第一次",
+                "value": "",
+                "hint": "可填具体日期或一段时间，如 最近 30 天",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "period2",
+                "label": "第二次",
+                "value": "",
+                "hint": "可填具体日期或一段时间，如 最近 30 天",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3740,9 +4333,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比围度",
             "wake_word": "对比围度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比围度」。\n\n我想对比两次围度测量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一次日期:____\n第二次日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比围度」。\n\n我想对比两次围度测量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第一次日期:{{first_date}}\n第二次日期:{{second_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "first_date",
+                "label": "第一次日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "second_date",
+                "label": "第二次日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -3756,9 +4367,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删体脂",
             "wake_word": "删体脂",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删体脂」。\n\n我要删一条体脂记录。如果我没说清是哪条,请先列出最近的几条记录(日期/体脂率/来源)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填,如「最近一条」或日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删体脂」。\n\n我要删一条体脂记录。如果我没说清是哪条,请先列出最近的几条记录(日期/体脂率/来源)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{record_ref}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "record_ref",
+                "label": "要删的记录(选填)",
+                "value": "",
+                "hint": "如 最近一条或具体日期",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3766,9 +4387,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删围度",
             "wake_word": "删围度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删围度」。\n\n我要删一条围度记录。如果我没说清是哪条,请先列出最近的几条记录(日期/各围度)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填,如「最近一条」或日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删围度」。\n\n我要删一条围度记录。如果我没说清是哪条,请先列出最近的几条记录(日期/各围度)让我选。确认后,删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{record_ref}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "record_ref",
+                "label": "要删的记录(选填)",
+                "value": "",
+                "hint": "如 最近一条或具体日期",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3789,9 +4420,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "存一张照片",
             "wake_word": "记身材照",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n我要存一张身材照。你可以直接发照片给我(手机/飞书),也可以告诉我照片文件路径(电脑)。如果标签没说,请问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签(如 正面/侧面/背部):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n你可以直接发照片给我(手机/飞书),也可以告诉我照片文件路径(电脑)。如果标签没说,请问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签:{{tag}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "tag",
+                "label": "标签",
+                "value": "",
+                "hint": "如 正面、侧面、背部；没说会追问",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3799,9 +4440,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "存照片（含备注）",
             "wake_word": "记身材照",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n我要存一张身材照并附备注(比如当时的状态/饮食阶段)。你可以直接发照片给我(手机/飞书),也可以告诉我照片文件路径(电脑)。如果标签没说,请问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签(如 正面/侧面/背部):____\n备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n我要存一张身材照并附备注(比如当时的状态/饮食阶段)。你可以直接发照片给我(手机/飞书),也可以告诉我照片文件路径(电脑)。如果标签没说,请问我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签:{{tag}}\n备注:{{note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "tag",
+                "label": "标签",
+                "value": "",
+                "hint": "如 正面、侧面、背部；没说会追问",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "note",
+                "label": "备注",
+                "value": "",
+                "hint": "如 当时的状态、饮食阶段",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3809,9 +4468,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量存照片",
             "wake_word": "记身材照",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n我要一次性存多张身材照(可连发多张照片,或给多个路径)。每张照片可以单独指定标签(如\"这张是侧面\"),没指定的用我给的默认标签。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n默认标签(如 正面):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记身材照」。\n\n我要一次性存多张身材照(可连发多张照片,或给多个路径)。每张照片可以单独指定标签(如\"这张是侧面\"),没指定的用我给的默认标签。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n默认标签:{{default_tag}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "default_tag",
+                "label": "默认标签",
+                "value": "",
+                "hint": "如 正面；没单独指定的照片用它",
+                "required": true,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3825,9 +4494,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看身材照",
             "wake_word": "查身材照",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查身材照」。\n\n我想浏览身材照。时间可以用天数(如最近 30 天)、某个日期(如 7月1日)、或一段范围(如 6月1日~7月1日);没填默认最近 90 天。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间(最近 N 天 / 某日期 / 某范围,选填):____\n标签(选填,如 正面):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查身材照」。\n\n时间可以用天数(如最近 30 天)、某个日期(如 7月1日)、或一段范围(如 6月1日~7月1日);没填默认最近 90 天。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间(选填):{{time_range}}\n标签(选填):{{tag}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间(选填)",
+                "value": "",
+                "hint": "如 最近30天、7月1日、6月1日~7月1日；空＝最近90天",
+                "required": false,
+                "kind": "text"
+              },
+              {
+                "name": "tag",
+                "label": "标签(选填)",
+                "value": "",
+                "hint": "如 正面；空＝全部标签",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3841,9 +4528,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "生成身材照 GIF",
             "wake_word": "生成身材照GIF",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「生成身材照GIF」。\n\n我要把一段时间的多张身材照合成变化 GIF。请先确认照片范围(标签/时间)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签(如 正面):____\n时间范围(如 最近3个月 / 起始日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「生成身材照GIF」。\n\n请先确认照片范围(标签/时间)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n标签:{{tag}}\n时间范围:{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "tag",
+                "label": "标签",
+                "value": "",
+                "hint": "如 正面",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "time_range",
+                "label": "时间范围",
+                "value": "",
+                "hint": "如 最近3个月、起始日期",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3851,9 +4556,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "对比两张照片",
             "wake_word": "对比两张照片",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比两张照片」。\n\n我想把两张身材照并排对比。可以说日期(如\"月初 vs 月底\")、编号,或让我从最近的照片里选。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片 1(日期/编号/留空):____\n照片 2(日期/编号/留空):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「对比两张照片」。\n\n可以说日期(如\"月初 vs 月底\")、编号,或让我从最近的照片里选。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片1:{{photo1}}\n照片2:{{photo2}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "photo1",
+                "label": "照片1",
+                "value": "",
+                "hint": "日期、编号，或留空从最近照片里选",
+                "required": false,
+                "kind": "text"
+              },
+              {
+                "name": "photo2",
+                "label": "照片2",
+                "value": "",
+                "hint": "日期、编号，或留空从最近照片里选",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3867,9 +4590,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删身材照",
             "wake_word": "删身材照",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删身材照」。\n\n我要删一张身材照(删除后无法恢复)。如果我没说清是哪张,请先列出最近的几张照片(缩略图+日期+标签)让我选。确认后,删除前先给我看这张照片的内容(快照),确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的照片(选填,如「最近一张」或日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删身材照」。\n\n我要删一张身材照(删除后无法恢复)。如果我没说清是哪张,请先列出最近的几张照片(缩略图+日期+标签)让我选。确认后,删除前先给我看这张照片的内容(快照),确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的照片(选填):{{photo}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "photo",
+                "label": "要删的照片(选填)",
+                "value": "",
+                "hint": "如 最近一张或日期；空＝列出最近照片让我选",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3877,9 +4610,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改照片标签",
             "wake_word": "改照片标签",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改照片标签」。\n\n我要把某张照片的标签换成整套新标签(覆盖旧的,可多个)。请先确认这张照片原来的完整标签列表。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片(日期或编号):____\n新标签(可多个,如 正面,侧面):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改照片标签」。\n\n我要把某张照片的标签换成整套新标签(覆盖旧的,可多个)。请先确认这张照片原来的完整标签列表。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片:{{photo}}\n新标签:{{new_tags}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "photo",
+                "label": "照片",
+                "value": "",
+                "hint": "日期或编号，如 7月1日",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_tags",
+                "label": "新标签",
+                "value": "",
+                "hint": "可多个，逗号分隔，如 正面,侧面；覆盖旧标签",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3887,9 +4638,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "加照片标签",
             "wake_word": "加照片标签",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「加照片标签」。\n\n我要给某张照片追加标签(不覆盖已有,可一次加多个)。如果某个标签已经存在,请提示我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片(日期或编号):____\n要加的标签(可多个,逗号分隔):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「加照片标签」。\n\n我要给某张照片追加标签(不覆盖已有,可一次加多个)。如果某个标签已经存在,请提示我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片:{{photo}}\n要加的标签:{{tags_to_add}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "photo",
+                "label": "照片",
+                "value": "",
+                "hint": "日期或编号，如 7月1日",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "tags_to_add",
+                "label": "要加的标签",
+                "value": "",
+                "hint": "可多个，逗号分隔；已存在的会提示",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3897,9 +4666,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删照片标签",
             "wake_word": "删照片标签",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删照片标签」。\n\n我要从某张照片上移除标签(其余保留,可一次删多个)。请先告诉我这张照片当前有哪些标签,每张照片至少保留 1 个标签,删空会提示我;想清空全部标签请用「改照片标签」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片(日期或编号):____\n要删的标签(可多个,逗号分隔):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删照片标签」。\n\n我要从某张照片上移除标签(其余保留,可一次删多个)。请先告诉我这张照片当前有哪些标签,每张照片至少保留 1 个标签,删空会提示我;想清空全部标签请用「改照片标签」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n照片:{{photo}}\n要删的标签:{{tags_to_remove}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "photo",
+                "label": "照片",
+                "value": "",
+                "hint": "日期或编号，如 7月1日",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "tags_to_remove",
+                "label": "要删的标签",
+                "value": "",
+                "hint": "可多个，逗号分隔；至少保留1个，清空全部请用「改照片标签」",
+                "required": true,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3920,9 +4707,44 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "设置档案",
             "wake_word": "设置档案",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「设置档案」。\n\n我想设置基础档案(身高/年龄/性别/活动量)。如果我没说全,请一项一项问我,并根据我的日常情况推荐合适的活动量。请先出预检确认页给我看(改前值/待写四项/活动量五档),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的身高(cm):____\n年龄:____\n性别(男/女):____\n日常活动情况(选填,用于推荐活动量):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「设置档案」。\n\n我想设置基础档案(身高/年龄/性别/活动量)。如果我没说全,请一项一项问我,并根据我的日常情况推荐合适的活动量。请先出预检确认页给我看(改前值/待写四项/活动量五档),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的身高:{{height_cm}}\n年龄:{{age}}\n性别:{{gender}}\n日常活动情况(选填):{{activity_desc}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "height_cm",
+                "label": "我的身高",
+                "value": "",
+                "hint": "单位 cm，只收纯数字，如 175",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "age",
+                "label": "年龄",
+                "value": "",
+                "hint": "整数，如 30",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "gender",
+                "label": "性别",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["男","女"]
+              },
+              {
+                "name": "activity_desc",
+                "label": "日常活动情况(选填)",
+                "value": "",
+                "hint": "如 久坐办公、每天走路30分钟；用于推荐活动量",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3930,9 +4752,20 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "设活动量",
             "wake_word": "设活动量",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「设活动量」。\n\n我要单独设置活动量(久坐/轻度/中度/活跃/高度活跃)。请先出预检确认页给我看(活动量五档与 TDEE 影响/改前值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的活动量(久坐/轻度/中度/活跃/高度活跃):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「设活动量」。\n\n我要单独设置活动量(久坐/轻度/中度/活跃/高度活跃)。请先出预检确认页给我看(活动量五档与 TDEE 影响/改前值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的活动量:{{activity_level}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "activity_level",
+                "label": "我的活动量",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["久坐","轻度","中度","活跃","高度活跃"]
+              }
             ]
           }
         ]
@@ -3962,9 +4795,53 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改档案",
             "wake_word": "改档案",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改档案」。\n\n我要改档案里的字段(身高/年龄/性别/活动量/备注)。改之前请先确认我原来的值。请先出预检确认页给我看(改前值/改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的字段(允许一行一条,可改多个):\n身高(新值):____\n年龄(新值):____\n性别(新值):____\n活动量(新值):____\n备注(新值):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改档案」。\n\n我要改档案里的字段(身高/年龄/性别/活动量/备注)。改之前请先确认我原来的值。请先出预检确认页给我看(改前值/改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的字段(允许一行一条,可改多个):\n身高(新值):{{height_cm}}\n年龄(新值):{{age}}\n性别(新值):{{gender}}\n活动量(新值):{{activity_level}}\n备注(新值):{{note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "height_cm",
+                "label": "身高(新值)",
+                "value": "",
+                "hint": "单位 cm，只收纯数字，如 175",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "age",
+                "label": "年龄(新值)",
+                "value": "",
+                "hint": "整数，如 30",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "gender",
+                "label": "性别(新值)",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["男","女"]
+              },
+              {
+                "name": "activity_level",
+                "label": "活动量(新值)",
+                "value": "",
+                "hint": "",
+                "required": true,
+                "kind": "select",
+                "options": ["久坐","轻度","中度","活跃","高度活跃"]
+              },
+              {
+                "name": "note",
+                "label": "备注(新值)",
+                "value": "",
+                "hint": "备注说明文字",
+                "required": true,
+                "kind": "text"
+              }
             ]
           }
         ]
