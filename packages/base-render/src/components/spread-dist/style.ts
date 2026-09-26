@@ -1,4 +1,5 @@
-/** spread-dist · **样式段**（本件唯一的样式来源）。
+/** spread-dist · **样式段**（本件唯一的样式来源；三个形态各一段，另两段住同目录
+ *  `style-quantile.ts`（C 分位尺）与 `style-box.ts`（A 箱线），由这里按行序汇总）。
  *
  *  纪律（与本节其余件同一份）：
  *   · 只经 `skinVar()` 读皮肤 —— 组件里**不写** `var(--ilife-…)`（兜底链只许住在 `skin/contract.ts`）；
@@ -16,6 +17,8 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { SPREAD_DIST_NARROW_PX, spreadDistSlot, type SpreadDistSlot } from './attrs.js';
+import { spreadDistBoxCss } from './style-box.js';
+import { spreadDistQuantileCss } from './style-quantile.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -41,8 +44,8 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
   const c = (slot: SpreadDistSlot): string => '.' + spreadDistSlot(slot, p);
 
   return [
-    '/* spread-dist（分布与分位 · 两个形态：逐日范围柱／分位尺）：一批读数摊开成形状。',
-    '   色一律从强调色系出（淡洗给区间面、实底给中位条、软底给有文字的中位档）：换皮只换取值、',
+    '/* spread-dist（分布与分位 · 三个形态：箱线／逐日范围柱／分位尺）：一批读数摊开成形状。',
+    '   色一律从强调色系出（淡洗给区间面与箱体、实底给中位条、软底给有文字的中位档）：换皮只换取值、',
     '   不换结构；任何一档都不拿文字墨色当面。 */',
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
@@ -206,78 +209,9 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     '  text-align: center;',
     '  overflow-wrap: anywhere;',
     '}',
-    /* ── C 档：结论一句话在上、读数在下 ── */
-    s('lead') + ' {',
-    '  margin: 0;',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-display') + ';',
-    '  font-size: ' + skinVar('fs-body') + ';',
-    '  font-weight: 700;',
-    '  line-height: 1.5;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    /* 一档一格：`auto-fit` ＋ `minmax` ⇒ 宽档并排、窄档自动折行（**一档不减**，减档＝删读数）。
-       档间距走皮肤自己的 `space`（大字报刊那套更大 ⇒ 那一档下留白自动多一层，不用写皮肤名分支）。 */
-    s('stops') + ' {',
-    '  display: grid;',
-    '  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));',
-    '  gap: ' + skinVar('space') + ';',
-    '  min-width: 0;',
-    '}',
-    s('stop') + ' {',
-    '  display: flex;',
-    '  flex-wrap: wrap;',
-    '  align-items: baseline;',
-    '  gap: 2px 6px;',
-    '  min-width: 0;',
-    '  padding: 10px 12px;',
-    '  border: 1px solid ' + skinVar('line') + ';',
-    '  border-radius: ' + skinVar('radius-sm') + ';',
-    '  background: ' + skinVar('surface-2') + ';',
-    '}',
-    s('stop-name') + ' {',
-    '  flex: 0 1 auto;',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-num') + ';',
-    '  font-size: ' + skinVar('fs-sm') + ';',
-    '  font-weight: 700;',
-    '  font-variant-numeric: tabular-nums;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    s('stop-label') + ' {',
-    '  flex: 0 1 auto;',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink-2') + ';',
-    '  font-size: ' + skinVar('fs-xs') + ';',
-    '  font-weight: 600;',
-    '  line-height: 1.45;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    /* 那个数另起一行（`flex-basis: 100%`）：一格里两层——上面一行说这是哪一档，下面一行是数。 */
-    s('stop-value') + ' {',
-    '  flex-basis: 100%;',
-    '  min-width: 0;',
-    '  color: ' + skinVar('ink') + ';',
-    '  font-family: ' + skinVar('font-num') + ';',
-    '  font-size: ' + skinVar('fs-h3') + ';',
-    '  font-weight: 700;',
-    '  font-variant-numeric: tabular-nums;',
-    '  overflow-wrap: anywhere;',
-    '}',
-    /* 正中那一档（中位）：**有文字的选中面** ⇒ 软底 ＋ 主色字 ＋ 主色描边（三样同时在）。 */
-    s('stop') + '.is-median {',
-    '  border-color: ' + skinVar('accent') + ';',
-    '  background: ' + skinVar('accent-soft') + ';',
-    '}',
-    /* 三处字一起换成主色文本档（档名／说明句／那个数），**一条选择器写全**——
-       拆成三行会让「一行即一条选择器」的源码级判据读不到另外两行。 */
-    s('stop') + '.is-median ' + c('stop-name') + ', ' + s('stop') + '.is-median ' + c('stop-label')
-      + ', ' + s('stop') + '.is-median ' + c('stop-value') + ' {',
-    '  color: ' + skinVar('accent-text') + ';',
-    '}',
-    /* ── 两档共用 ── */
+    /* ── C 档：结论一句话在上、读数在下（`style-quantile.ts`） ── */
+    spreadDistQuantileCss({ prefix: p }),
+    /* ── 各档共用 ── */
     s('legend') + ' {',
     '  list-style: none;',
     '  display: flex;',
@@ -345,5 +279,8 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     '    width: min(88%, 96px);',
     '  }',
     '}',
+    /* ── A 档（`box` 箱线）：一行一组、同一把尺子横着量（`style-box.ts`） ──
+       接在最后：前两档那两段一个字节不动，加的这一段只在开 A 档时命中。 */
+    spreadDistBoxCss({ prefix: p }),
   ].join(LF);
 }

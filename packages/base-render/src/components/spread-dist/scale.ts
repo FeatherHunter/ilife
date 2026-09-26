@@ -151,6 +151,21 @@ export function tickTexts(axis: Axis, unit: string | undefined): string[] {
   return values.map((v, i) => numText(v, axis.decimals) + (i === 0 ? unitPart(unit) : ''));
 }
 
+/** 一把横轴尺子上的一枚刻度：**文字 ＋ 它自己那个值的百分比位置**（**从小到大**：横轴口径）。
+ *
+ *  与 `tickTexts()` 出自同一支 `tickValues()`（竖轴从大往小、横轴从小到大，两处不可能走散）；
+ *  文字不带单位——A 档的单位只印一次（卡头右端），刻度值不再逐枚带。 */
+export interface RulerTick {
+  readonly text: string;
+  /** 从左边起的百分比位置（与柱／箱／点的 `leftPct` 是**同一个** `upPct()`）。 */
+  readonly leftPct: number;
+}
+
+/** 一段轴域上的横轴刻度（位置与文字同一份轴域）。 */
+export function rulerTicks(axis: Axis): RulerTick[] {
+  return tickValues(axis).map((v) => ({ text: numText(v, axis.decimals), leftPct: upPct(v, axis) }));
+}
+
 /* ── 坐标映射（本件唯一的映射） ───────────────────────────────────── */
 
 /** **唯一的坐标映射**：数据 → 从下往上的百分比（0…100）。
