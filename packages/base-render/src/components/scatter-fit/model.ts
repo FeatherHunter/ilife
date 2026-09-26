@@ -53,6 +53,24 @@ function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
+/** 读数量级上限：**判据是「两笔同量级的读数相加会不会溢出」**，不是"好不好读"——
+ *  `|a| + |b| > Number.MAX_VALUE` 时图上会写出 `1e+308` 这种读不出来的数。
+ *  `1e21` 那档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
+const SCATTER_FIT_MAGNITUDE_MAX = Number.MAX_VALUE;
+
+/** 一个读数：**两条闸**——① 非有限（`NaN`／`±Infinity`）拒；② 量级大到相加就溢出（`±1e308`）拒。
+ *
+ *  第 ② 条与「轴域算不出来即拒」那条（住 `scale.ts` 的 `niceAxis()`，管的是**跨度**）**不是一档**：
+ *  那一档管的是「一头 `−1e308`、另一头 `1e308`」这种跨度溢出；这一档管的是**单笔读数本身**。 */
+function reqReading(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) badInput(field + ' 必须是有限数');
+  if (Math.abs(value) + Math.abs(value) > SCATTER_FIT_MAGNITUDE_MAX) {
+    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+      + '（轴上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
+  }
+  return value;
+}
+
 /** 散点：1–120 条，x／y 都是有限数；`outlier` 给了就得写清原因（点名是给人看的，不是一枚空标记）。 */
 function reqPoints(value: unknown): readonly ScatterFitPoint[] {
   if (!Array.isArray(value) || value.length < SCATTER_FIT_MIN_POINTS) {
@@ -63,21 +81,16 @@ function reqPoints(value: unknown): readonly ScatterFitPoint[] {
     badInput('scatter-fit: input.points 最多 ' + String(SCATTER_FIT_MAX_POINTS) + ' 条（再多请调用方先聚合）');
   }
   return value.map((item, i) => {
-    assertPlainObject(item, 'scatter-fit: input.points[' + String(i) + ']');
+    const at = 'scatter-fit: input.points[' + String(i) + ']';
+    assertPlainObject(item, at);
     const p = item as Record<string, unknown>;
-    const x = p.x;
-    const y = p.y;
-    if (typeof x !== 'number' || !Number.isFinite(x)) {
-      badInput('scatter-fit: input.points[' + String(i) + '].x 必须是有限数');
-    }
-    if (typeof y !== 'number' || !Number.isFinite(y)) {
-      badInput('scatter-fit: input.points[' + String(i) + '].y 必须是有限数');
-    }
+    const x = reqReading(p.x, at + '.x');
+    const y = reqReading(p.y, at + '.y');
     return {
       x,
       y,
-      label: optRealText(p.label, 'scatter-fit: input.points[' + String(i) + '].label'),
-      outlier: optRealText(p.outlier, 'scatter-fit: input.points[' + String(i) + '].outlier'),
+      label: optRealText(p.label, at + '.label'),
+      outlier: optRealText(p.outlier, at + '.outlier'),
     };
   });
 }
@@ -97,9 +110,7 @@ function reqBins(value: unknown): readonly ScatterFitBin[] {
     const label = reqRealText(b.label, at + '.label');
     const nums: number[] = [];
     for (const key of ['low', 'median', 'high'] as const) {
-      const v = b[key];
-      if (typeof v !== 'number' || !Number.isFinite(v)) badInput(at + '.' + key + ' 必须是有限数');
-      nums.push(v);
+      nums.push(reqReading(b[key], at + '.' + key));
     }
     const low = nums[0];
     const median = nums[1];
@@ -111,6 +122,9 @@ function reqBins(value: unknown): readonly ScatterFitBin[] {
     if (typeof count !== 'number' || !Number.isInteger(count) || count < SCATTER_FIT_BIN_MIN_SAMPLE) {
       badInput(at + '.count 至少 ' + String(SCATTER_FIT_BIN_MIN_SAMPLE)
         + ' 个样本（样本太薄的箱画出来说明不了任何事，请调用方先合箱）');
+    }
+    if (Math.abs(count) + Math.abs(count) > SCATTER_FIT_MAGNITUDE_MAX) {
+      badInput(at + '.count 的量级太大（样本数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
     }
     return { label, low, median, high, count };
   });
@@ -136,10 +150,8 @@ function reqLags(value: unknown): readonly ScatterFitLag[] {
     }
     if (step <= prev) badInput(at + '.step 必须严格递增（第 ' + String(i) + ' 档不大于上一档）');
     prev = step;
-    const r = g.r;
-    if (typeof r !== 'number' || !Number.isFinite(r) || r < -1 || r > 1) {
-      badInput(at + '.r 必须是 −1…1 之间的有限数');
-    }
+    const r = reqReading(g.r, at + '.r');
+    if (r < -1 || r > 1) badInput(at + '.r 必须是 −1…1 之间的有限数');
     return { step, r };
   });
 }

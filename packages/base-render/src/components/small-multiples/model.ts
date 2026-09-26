@@ -58,6 +58,11 @@ export interface SmallMultiplesModel {
 
 /* ── 校验 ─────────────────────────────────────────────────────────── */
 
+/** 读数量级上限：**判据是「两笔同量级的读数相加会不会溢出」**，不是"好不好读"——
+ *  `|a| + |b| > Number.MAX_VALUE` 时柱高与读数会写出 `1e+308` 这种读不出来的数。
+ *  `1e21`／`1e-7` 那两档照旧合法（十进制写法与指数写法的分界、微小读数都在本层照收）。 */
+const SMALL_MULTIPLES_MAGNITUDE_MAX = Number.MAX_VALUE;
+
 /** 期间：2–8 期，期间名非空**且两两不同**，读数是有限数，`now` 只许标一期。 */
 function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
   if (!Array.isArray(value) || value.length < SMALL_MULTIPLES_MIN_PERIODS) {
@@ -77,6 +82,13 @@ function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
     const v = p.value;
     if (typeof v !== 'number' || !Number.isFinite(v)) {
       badInput(at + '.value 必须是有限数（这一期的读数；某一期没数就别给这一期，不要传 0 顶替）');
+    }
+    /* 量级这一档管的是**单笔读数本身**（与 `scale.ts` 里「轴域没有宽度」那条不是一档）：
+       `1e308` 是有限数，可两笔同量级的读数相加就溢出成 `Infinity`，柱高与底下那枚读数会写成
+       `1e+308` 那种读不出来的数。`1e21` 那一档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
+    if (Math.abs(v) + Math.abs(v) > SMALL_MULTIPLES_MAGNITUDE_MAX) {
+      badInput(at + '.value 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+        + '（柱阵与读数会写成 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
     }
     let now = false;
     if (p.now !== undefined) {

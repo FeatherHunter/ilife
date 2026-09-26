@@ -77,6 +77,38 @@ const throwsBlocks = (fn) => {
   return false;
 };
 
+/** 入参里**每个 `number` 叶子**的路径（`periods[0].value` 这种；数组元素与嵌套对象都进去）。 */
+function numberPaths(root) {
+  const out = [];
+  const walk = (v, at) => {
+    if (typeof v === 'number') { out.push(at); return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, at + '[' + i + ']')); return; }
+    if (v !== null && typeof v === 'object') for (const k of Object.keys(v)) walk(v[k], at + '.' + k);
+  };
+  walk(root, '');
+  return [...new Set(out)];
+}
+
+/** 把某个路径上的数换成坏数（原入参不改：克隆一份，坏数在克隆之后写进去）。 */
+function withBadAt(root, path, value) {
+  const clone = JSON.parse(JSON.stringify(root));
+  const tokens = [...path.matchAll(/([A-Za-z_$][\w$]*)|\[(\d+)\]/g)]
+    .map((m) => (m[1] === undefined ? Number(m[2]) : m[1]));
+  let at = clone;
+  for (let i = 0; i < tokens.length - 1; i += 1) at = at[tokens[i]];
+  at[tokens[tokens.length - 1]] = value;
+  return clone;
+}
+
+/** 五个坏数（口径与跨件不变量门 ① 同：`NaN`／`±Infinity`／`±1e308`）。 */
+const BAD_READINGS = [
+  ['Infinity', Number.POSITIVE_INFINITY],
+  ['-Infinity', Number.NEGATIVE_INFINITY],
+  ['NaN', Number.NaN],
+  ['1e308', 1e308],
+  ['-1e308', -1e308],
+];
+
 /** 逐字符配平花括号抽选择器（`@container` 块里的规则也算；正则式抽取会漏掉它们）。 */
 function ruleSelectors(css) {
   const out = [];
@@ -219,8 +251,10 @@ const EDGE_PERIODS = [
   { name: '两位小数以下', periods: [{ label: 'A', value: 0.001 }, { label: 'B', value: 0.002 }] },
   { name: '两位小数量级', periods: [{ label: 'A', value: 0.006 }, { label: 'B', value: 0.008 }] },
   { name: '微读数', periods: [{ label: 'A', value: 1e-7 }, { label: 'B', value: 2e-7 }] },
-  /* 这一档「先求和再除」会先溢出成 Infinity（旧写法在这里吐的就是 `bottom: Infinity%`）。 */
-  { name: '和会溢出', periods: [{ label: 'A', value: 1.7e308 }, { label: 'B', value: 1e308 }] },
+  /* 这一档「先求和再除」会先溢出成 Infinity（旧写法在这里吐的就是 `bottom: Infinity%`）。
+     读数取 `Number.MAX_VALUE ÷ 2` 以下那一档（返修 2026-09：单笔读数超过它就一律 `badInput`，
+     见 `model.ts` 的量级闸）——三笔加起来仍会溢出，所以这一档管的那件事照旧被测到。 */
+  { name: '和会溢出', periods: [{ label: 'A', value: 8.9e307 }, { label: 'B', value: 4.6e307 }, { label: 'C', value: 4.6e307 }] },
 ];
 
 /** 极端一份（对抗式审查会试的那几个）：200 字**不可断**的期间名 ＋ 15 位读数 ＋ 超长标题／范围／口径。
@@ -481,6 +515,28 @@ describe('small-multiples ① 渲染契约 · 非法入参（每条都断 Blocks
     assert.equal(throwsBlocks(() => renderSmallMultiples({ ...ok, stamp: 1 })), true);
     assert.equal(throwsBlocks(() => renderSmallMultiples({ ...ok, extraClass: 'a"b' })), true);
     assert.equal(throwsBlocks(() => renderSmallMultiples({ ...ok, extraClass: '' })), true);
+  });
+
+  /* 返修 2026-09（跨件不变量门 ① · 非有限数一律拒）：样例里**每个** number 字段逐个换成五个坏数，
+     渲染入口必须抛 `BlocksError`——收下就会在柱下写出 `1e+308` 那种读不出来的数。
+     `1e21` 那一档**不是**坏数（十进制写法与指数写法的分界，本层当读数写）。 */
+  it('**非有限数与超量级读数一律拒**：五个坏数逐个打进每个 number 字段', () => {
+    const inputs = [SIX, EIGHT, FLAT, HIGH];
+    let cases = 0;
+    const got = [];
+    for (const input of inputs) {
+      assert.equal(typeof renderSmallMultiples(input), 'string', '样例入参必须直渲成功');
+      for (const path of numberPaths(input)) {
+        for (const [text, value] of BAD_READINGS) {
+          cases += 1;
+          if (!throwsBlocks(() => renderSmallMultiples(withBadAt(input, path, value)))) {
+            got.push(path + ' ← ' + text);
+          }
+        }
+      }
+    }
+    assert.ok(cases >= 20, '扫到的 number 字段太少（判据会空转）：只有 ' + String(cases) + ' 例');
+    assert.deepEqual(got, [], '这些坏数被收下了（入参违规一律拒，必须抛 BlocksError）：' + got.join('；'));
   });
 });
 

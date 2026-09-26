@@ -89,6 +89,38 @@ const throwsBlocks = (fn) => {
   return false;
 };
 
+/** 入参里**每个 `number` 叶子**的路径（`days[0].low` 这种；数组元素与嵌套对象都进去）。 */
+function numberPaths(root) {
+  const out = [];
+  const walk = (v, at) => {
+    if (typeof v === 'number') { out.push(at); return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, at + '[' + i + ']')); return; }
+    if (v !== null && typeof v === 'object') for (const k of Object.keys(v)) walk(v[k], at + '.' + k);
+  };
+  walk(root, '');
+  return [...new Set(out)];
+}
+
+/** 把某个路径上的数换成坏数（原入参不改：克隆一份，坏数在克隆之后写进去）。 */
+function withBadAt(root, path, value) {
+  const clone = JSON.parse(JSON.stringify(root));
+  const tokens = [...path.matchAll(/([A-Za-z_$][\w$]*)|\[(\d+)\]/g)]
+    .map((m) => (m[1] === undefined ? Number(m[2]) : m[1]));
+  let at = clone;
+  for (let i = 0; i < tokens.length - 1; i += 1) at = at[tokens[i]];
+  at[tokens[tokens.length - 1]] = value;
+  return clone;
+}
+
+/** 五个坏数（口径与跨件不变量门 ① 同：`NaN`／`±Infinity`／`±1e308`）。 */
+const BAD_READINGS = [
+  ['Infinity', Number.POSITIVE_INFINITY],
+  ['-Infinity', Number.NEGATIVE_INFINITY],
+  ['NaN', Number.NaN],
+  ['1e308', 1e308],
+  ['-1e308', -1e308],
+];
+
 /** 逐字符配平花括号抽选择器（`@container` 块里的规则也算；正则式抽取会漏掉它们）。 */
 function ruleSelectors(css) {
   const out = [];
@@ -785,6 +817,28 @@ describe('spread-dist ① 渲染契约 · 公共面与非法入参', () => {
         { label: 'b', low: 1.1e21, median: 2.1e21, high: 3.1e21 },
         { label: 'c', low: 1.2e21, median: 2.2e21, high: 3.2e21 }],
     }).length > 0, '1e21 应正常渲染');
+  });
+
+  /* 返修 2026-09（跨件不变量门 ① · 非有限数一律拒）：三档样例里**每个** number 字段逐个换成五个坏数，
+     渲染入口必须抛 `BlocksError`——收下就会在刻度与尾巴句里写出 `1e+308` 那种读不出来的数。
+     上一条管的是**跨度**（`hi − lo` 溢出）；这一条管的是**单笔读数本身**，两档不是一档。 */
+  it('**非有限数与超量级读数一律拒**：五个坏数逐个打进每个 number 字段', () => {
+    const inputs = [RANGE_INPUT, ODD_INPUT, FLAT_INPUT, HUGE_INPUT, QUANTILE_INPUT, BOX_INPUT, BOX_ODD, BOX_FLAT];
+    let cases = 0;
+    const got = [];
+    for (const input of inputs) {
+      assert.equal(typeof renderSpreadDist(input), 'string', '样例入参必须直渲成功');
+      for (const path of numberPaths(input)) {
+        for (const [text, value] of BAD_READINGS) {
+          cases += 1;
+          if (!throwsBlocks(() => renderSpreadDist(withBadAt(input, path, value)))) {
+            got.push(path + ' ← ' + text);
+          }
+        }
+      }
+    }
+    assert.ok(cases >= 40, '扫到的 number 字段太少（判据会空转）：只有 ' + String(cases) + ' 例');
+    assert.deepEqual(got, [], '这些坏数被收下了（入参违规一律拒，必须抛 BlocksError）：' + got.join('；'));
   });
 
   it('入参违规一律拒（不静默降级）：形态／空白串／天数／日子／区间／档数／档名 逐条', () => {

@@ -53,9 +53,21 @@ function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
-/** 一个读数：有限数（`NaN`／`Infinity`／数字串一律拒）。 */
+/** 读数量级上限：**判据是「两笔同量级的读数相加会不会溢出」**，不是"好不好读"——
+ *  `|a| + |b| > Number.MAX_VALUE` 时刻度与尾巴句会写出 `1e+308` 这种读不出来的数。
+ *  `1e21` 那档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
+const SPREAD_DIST_MAGNITUDE_MAX = Number.MAX_VALUE;
+
+/** 一个读数：**两条闸**——① 非有限（`NaN`／`Infinity`／数字串）拒；② 量级大到相加就溢出（`±1e308`）拒。
+ *
+ *  第 ② 条与「轴域算不出来即拒」那条（住 `scale.ts` 的 `niceAxis()`，管的是**跨度**）**不是一档**：
+ *  那一档管的是「一头 `−1e308`、另一头 `1e308`」这种跨度溢出；这一档管的是**单笔读数本身**。 */
 function reqNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) badInput(field + ' 必须是有限数');
+  if (Math.abs(value) + Math.abs(value) > SPREAD_DIST_MAGNITUDE_MAX) {
+    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+      + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
+  }
   return value;
 }
 
@@ -63,6 +75,9 @@ function reqNumber(value: unknown, field: string): number {
 function reqCount(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
     badInput(field + ' 必须是正整数（这一组有几笔）');
+  }
+  if (Math.abs(value) + Math.abs(value) > SPREAD_DIST_MAGNITUDE_MAX) {
+    badInput(field + ' 的量级太大：图上的笔数与长度都由它算（读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
   }
   return value;
 }
