@@ -101,7 +101,10 @@ export function chartsCss(prefix: string): string {
        *  三种 viewBox 一律等比缩放；字号补偿见 `LINE_TEXT_MOBILE`。 */
       + '.' + p + 'charts-line .' + p + 'charts-svg{height:auto}'
       + '.' + p + 'charts-bar .' + p + 'charts-xlabel{font-size:9.5px}'
-      + '.' + p + 'charts-legend{font-size:11.5px}'
+      /* #897：窄屏图例不得低于正文类下限 12px（`PAGE_LIMITS.textMinPx`）。
+       *  原 11.5px 使含图例页 `minFontPxNoSvg = 11.5`、判分 D5 字号项扣 5 分；
+       *  改为 12px＝桌面基规则值，修一处全域跟走。 */
+      + '.' + p + 'charts-legend{font-size:12px}'
       /* #424 返工（移动端折线文字不可读）：上面那条把折线 svg 盒高钉成 150px，580×260 的 viewBox
        *  在 390px 手机上被压到 scale≈0.58（`preserveAspectRatio="none"`）——图内 9.5/10 单位实测
        *  只有 5.4/5.7px。这里只对**折线族**按 1/0.58≈1.75 倍提字号，把实渲拉回 ~10px；字号常量与
