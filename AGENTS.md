@@ -50,7 +50,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 发版（npm 发布）
 
-要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才登录并发布**」逐个处理现场发现的包（公共层 ＋ 全部技能 ＋ 全部插件），顺序依赖先行。**由 AI 驱动、人只负责浏览器里批准 2FA**：AI 在**侧边栏终端**里起它（`pwsh -NoProfile -File tooling\wizard-publish.ps1 -Auto`；Windows 上 `powershell` 5.1 按 GBK 读中文会解析失败），用终端工具读回执；npm 问 “Press ENTER to open in the browser” 时**由 AI 送回车**，授权链接**由 AI 转给人**（人只在浏览器批准，不敲键）；**别用自己的 pwsh 工具直接跑**（脚本会拒绝非 TTY 的跑法）。失败或中断后**直接重跑即可**，已发布的会被跳过。里程碑同时追加到 `.scratch\publish-log.txt`（`-LogPath` 可换），回执里的关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`。发完装到本机走 `tooling/wizard-install.ps1 -Auto`（按精确版本装进 `-Profile` 指定的 profile，读回版本与 LinkType）。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。
+要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才登录并发布**」逐个处理现场发现的包（公共层 ＋ 全部技能 ＋ 全部插件），顺序依赖先行。**由 AI 驱动、人只负责浏览器里批准 2FA**：AI 在**原生终端**里起它（`pwsh -NoProfile -File tooling\wizard-publish.ps1 -Auto`；Windows 上 `powershell` 5.1 按 GBK 读中文会解析失败），在原生终端里读回执；npm 问 “Press ENTER to open in the browser” 时**由 AI 送回车**，授权链接**由 AI 转给人**（人只在浏览器批准，不敲键）；**别用自己的 pwsh 工具直接跑**（脚本会拒绝非 TTY 的跑法）。失败或中断后**直接重跑即可**，已发布的会被跳过。里程碑同时追加到 `.scratch\publish-log.txt`（`-LogPath` 可换），回执里的关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`。发完装到本机走 `tooling/wizard-install.ps1 -Auto`（按精确版本装进 `-Profile` 指定的 profile，读回版本与 LinkType）。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。
 
 ### awesome 插件市场投稿
 
@@ -58,7 +58,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 终端纪律
 
-一切终端命令一律在 better-sidebar 的终端里执行（终端工具起的 sidebar 终端，标题 `<票号>-<用途>`）；不用 `pwsh` 工具直接跑。长命令落盘＋等标记＋只读尾，编译／测试／git 写操作经 `node tooling/run-locked.mjs` 排队，结束前关闭终端。细则见 `docs/subagent-concurrency-protocol.md` §2–§4。
+一切终端命令一律在原生终端里执行；不用 `pwsh` 工具直接跑。长命令落盘＋等标记＋只读尾，编译／测试／git 写操作经 `node tooling/run-locked.mjs` 排队。细则见 `docs/subagent-concurrency-protocol.md` §2–§4。
 
 ### 编排纪律
 

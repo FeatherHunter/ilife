@@ -143,7 +143,10 @@ const WORDS = [
     /* 小票版（2026-09-24）：这条词当刻落的 ② 条目列表页，它的「按日汇总」从六列表换成**账目行** ⇒
        `cols` 撤（表头没了）；块名与窗口信息仍逐条在。 */
     blocks: ['按日汇总', '餐别分布', '每日明细'],
-    footnote: '数据来源 · 饮食记录 · ' + WEEK_ARROW + ' · 共 10 条',
+    /* `null`＝这一页按用户裁定 #560（「所有 HTML 页面底部的『数据来源：xxx』都删掉」，2026-09-15）
+       不出屏上来源脚注——产出它的 `render/dietDocs.ts` 里只有那条裁定的注释与 `copyLog.source`，
+       屏上那行已撤。原来这一格钉的是 `'数据来源 · 饮食记录 · ' + WEEK_ARROW + ' · 共 10 条'`。 */
+    footnote: null,
   },
 ];
 
@@ -275,7 +278,15 @@ for (const { w, html, text } of ALL_RUNS) {
     for (const b of w.blocks) assert.ok(html.includes(b), w.id + ' 缺老实物那一块：「' + b + '」');
     if (w.cols) assertColumnRun(html, w.cols, w.id);
     for (const a of w.anchors ?? []) assert.ok(html.includes('<section id="' + a + '">'), w.id + ' 区块缺锚点 ' + a);
-    assert.ok(text.includes(w.footnote), w.id + ' 缺来源脚注：' + w.footnote);
+    /* 来源脚注（裁定 3：七类页面恒出）——**例外一档**：用户在 2026-09-15 点名「所有 HTML 页面底部的
+       『数据来源：xxx』都删掉」（#560，落点在产出该页的 `render/dietDocs.ts`）。那一档的条目把
+       `footnote` 写成 `null`＝「按该裁定不出屏上脚注」，本条反过来钉住**它确实没有**。
+       改前这一档钉的是一句早已不产出的脚注 ⇒ 长期假红（与本次文案重写无关，本次一并收口）。 */
+    if (w.footnote === null) {
+      assert.ok(!text.includes('数据来源'), w.id + ' 按 #560 裁定不该有屏上来源脚注，实测还有');
+    } else {
+      assert.ok(text.includes(w.footnote), w.id + ' 缺来源脚注：' + w.footnote);
+    }
   });
 }
 
@@ -329,8 +340,10 @@ test('#275 ② 窗口为空：出完整页 ＋ 空态句 ＋ 引导句（库里�
     const text = visibleText(stripCopyPayload(r.html));
     /* 空态句：说清「哪一段、一条都没有」。 */
     assert.ok(/没有|也没有/.test(text), c.id + ' 空窗没有空态句：' + text.slice(0, 200));
-    /* 引导句：一句「怎么记第一条」（裁定 4）。 */
-    assert.ok(/要让它有内容，先用「/.test(text), c.id + ' 空窗缺引导句（裁定 4）：' + text.slice(0, 300));
+    /* 引导句的意图（裁定 4）：空态后要递一句「下一句该说什么」——这一句里得出现一条**带引号的唤醒词**
+       （「记一餐」／「记喝水」／「补记饮食」…）。钉引号里的唤醒词、不钉整句措辞：2026-09-25 用户把
+       空态那两句从第一性原理重写过一次（垫字全删），本循环五条命令的措辞因此不再逐字相同。 */
+    assert.ok(/「[^」]*(记|补)[^」]*」/.test(text), c.id + ' 空窗缺引导句（裁定 4）：' + text.slice(0, 300));
     assert.equal(deepSections(r.html), 0, c.id + ' 空窗页面上出现了深底提示块');
     console.log('READING #275 空窗 ' + c.id + ' exit=0 ' + r.bytes + ' B  ' + r.out);
   }

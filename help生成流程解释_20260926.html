@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HELP 是怎么生出来的？四步＋契约在哪</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f2f2f7;color:#1d1d1f;line-height:1.75;font-size:15px;padding:20px 14px 70px}
+.wrap{max-width:660px;margin:0 auto}
+.card{background:#fff;border:1px solid #d1d1d6;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+h1{font-size:20px;margin-bottom:6px}
+h2{font-size:16px;margin:12px 0 6px}
+p{margin-bottom:8px}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+.flow{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.step{flex:1;min-width:120px;background:#f0f6ff;border:1px solid #cfe3ff;border-radius:10px;padding:8px;text-align:center;font-size:13px}
+.step b{display:block;font-size:14px}
+.arrow{align-self:center;color:#0a63ce;font-weight:800}
+.demo{background:#1d1d1d;color:#f5f5f7;border-radius:10px;padding:10px 12px;font-size:12.5px;white-space:pre-wrap;margin:8px 0}
+.warn{background:#fff4ec;border:1px solid #ffd8b5;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px}
+.small{font-size:12.5px;color:#6e6e73}
+ul{margin:6px 0 6px 20px}
+li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+<h1>HELP 是怎么生出来的？四步</h1>
+<p>一句话：<strong>自家备菜 → 门卫验货 → 套壳＋塞说明书 → 落盘给地址</strong>。6 个技能同一条线，只是备的菜不同。</p>
+<div class="flow">
+<div class="step"><b>① 备菜</b>各技能攒 85/436 条</div><span class="arrow">→</span>
+<div class="step"><b>② 验货</b>契约检查格子</div><span class="arrow">→</span>
+<div class="step"><b>③ 套壳</b>套共用壳＋功能</div><span class="arrow">→</span>
+<div class="step"><b>④ 落盘</b>存文件回地址</div>
+</div>
+</div>
+<div class="card">
+<h2>① 备菜：各技能攒自己的 5 键 JSON</h2>
+<p>不管作息还是卡路里，最后都要拼成同一张单子：<code>技能名 / 标题 / 副标题 / 联系人 / 分组</code>，分组下是 <code>子功能 → 场景</code>，每个场景 5 件套：<code>标题 / 唤醒词 / 提示词 / 可填栏 / 待开发标记</code>。</p>
+<ul>
+<li>作息：老例子文件 → 生成器 → <code>HELP_GROUPS</code>（85 条，提示词短、可填栏英文）</li>
+<li>卡路里：436 条触发器 → 投影成同一形状（提示词自带 <code>____</code>，可填栏只放命令三行）</li>
+</ul>
+<p class="small">备菜只管内容，不管长什么样。长相全归壳管。</p>
+</div>
+<div class="card">
+<h2>② 验货：冻住的契约（门卫）</h2>
+<p>就在这个文件，一字不差：</p>
+<p><code>C:\Users\辰辰洋洋\.dsh\profiles\web\node_modules\base-paint\dist\spec\help.js</code></p>
+<p>第 50-100 行：场景必须有 <code>id/title/wake_word/status/prompt_template</code>，可填栏每条必须有 <code>name/label/value</code>，<strong>多一个键即拒收，不返空页</strong>。源码头写的是 <code>packages/base-render/src/spec/help.ts</code>，你机器上冻住的就是上面这个编译后的。</p>
+<div class="warn">为什么卡路里加不了“命令”一栏？门卫不让加，只能借用现成的“可填栏”来贴命令。这就是上一页说的借槽。</div>
+</div>
+<div class="card">
+<h2>③ 套壳：共用壳＋功能一次性注入</h2>
+<p>文件：<code>base-paint/dist/helpShell.js</code>（<code>renderHelpShellHtml</code>）</p>
+<p>干三件事：① 把 5 键 JSON 转成文字塞进 <code>&lt;script id="help-data"&gt;</code>；② 前面套标题＋样式，后面接功能 JS（搜索 / 切页 / 弹层表单 / 复制）；③ 小于号转义防破壳。6 家壳一模一样，换的只是那坨 JSON。</p>
+<p>弹层公式（你填完复制到的就是它）：</p>
+<div class="demo">复制物 = 提示词
+＋ 空行
+＋ 你填的每行「中文名：值」</div>
+<p class="small">卡片上的“复制”是只复提示词；弹层里填完复制的才是全量。这就是死日期打架的根子：提示词里写死一个，填的又追加一个。</p>
+</div>
+<div class="card">
+<h2>④ 落盘：存文件、回地址</h2>
+<p>文件：<code>base-paint/dist/output/saveHtml.js</code>（各技能的 <code>help/output.js</code> 只是传目录＋文件名主体）</p>
+<ul>
+<li>独占创建，同秒撞名自动 <code>_2/_3</code>，不覆盖</li>
+<li>24 小时内同主体只留一份（复用窗口）</li>
+<li>回执 <code>delivery.path</code> 恒为绝对路径，字节对上才算成功</li>
+</ul>
+<p>拿作息走一遍：备 85 条 → 门卫验 5 键 → 套壳成 <code>作息管家_HELP_20260925_002745.html</code> → 落 <code>schedule_html/help/</code> → 回路径给你。</p>
+</div>
+</div>
+</body>
+</html>

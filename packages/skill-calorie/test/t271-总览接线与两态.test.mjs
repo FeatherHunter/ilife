@@ -237,7 +237,9 @@ test('#271 ③ 库非空、窗口内零记录：出完整页 ＋ 空态句 ＋ �
       && r.html.includes('<style>'), what + ' 空窗的产物不是完整文档');
     assert.ok(r.html.includes('ilife-block-toc'), what + ' 空窗缺页内导航');
     assert.ok(/没有|也没有/.test(r.html), what + ' 空窗没有空态句');
-    assert.ok(/要让它有内容，先用「/.test(r.html), what + ' 空窗缺引导句（裁定 4）');
+    /* 引导句的**意图**（裁定 4：空态后必接一句「怎么记第一条」）＝这一句里得出现「记一餐」这条唤醒词；
+       措辞本身归页面（2026-09-25 用户把这句话从第一性原理重写过一次，垫字全删）。 */
+    assert.ok(/「记一餐」/.test(r.html), what + ' 空窗缺引导句（裁定 4）：下一句该说哪条词都没给');
     assert.ok(r.html.includes('📊 数据来源 · 饮食记录 · 2020-01-01 → 2020-01-07'),
       what + ' 空窗缺来源脚注（裁定 3：七类页面恒出）');
     assert.equal(copySections(r.html), 1, what + ' 空窗的复制区不是恰好一个：' + copySections(r.html));

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作息管家 HELP · 85 场景名 + prompt 总览（评审用）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f2f2f7;color:#1d1d1f;line-height:1.6;font-size:14px;padding:24px 16px 80px}
+.wrap{max-width:1000px;margin:0 auto}
+.hero{background:#fff;border:1px solid #d1d1d6;border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.hero h1{font-size:20px;margin-bottom:6px}
+.hero .meta{color:#6e6e73;font-size:12.5px;line-height:1.7}
+.hero .meta code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:11.5px;word-break:break-all}
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(242,242,247,.94);backdrop-filter:blur(12px);padding:10px 0;margin-bottom:10px}
+.toolbar input{width:100%;border:1px solid #d1d1d6;border-radius:10px;padding:10px 14px;font-size:14px;background:#fff;outline:none}
+.toolbar input:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,.13)}
+.hit{font-size:12px;color:#6e6e73;text-align:center;margin-bottom:8px}
+.group{background:#fff;border:1px solid #d1d1d6;border-radius:14px;margin-bottom:14px;overflow:hidden}
+.group>h2{padding:12px 16px;font-size:16px;border-bottom:1px solid #e5e5ea;background:#fafafa}
+.group>h2 .cnt{font-size:11px;color:#8e8e93;font-weight:600;margin-left:8px}
+.sub{border-top:1px dashed #e5e5ea;padding:12px 16px 6px}
+.sub:first-of-type{border-top:0}
+.sub>h3{font-size:14px;margin-bottom:8px}
+.sub>h3 .wake{display:inline-block;background:#e8f2ff;color:#0a63ce;border-radius:999px;padding:1px 10px;font-size:12px;margin-left:8px}
+.card{border:1px solid #e5e5ea;background:#fbfbfd;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card .row1{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card .no{font-size:11px;color:#fff;background:#8e8e93;border-radius:999px;padding:1px 8px;flex-shrink:0}
+.card .title{font-weight:800;font-size:14px}
+.card .id{font-size:11px;color:#8e8e93;font-family:ui-monospace,Menlo,Consolas,monospace}
+.badge-todo{display:inline-block;background:#fff1e2;color:#b25b00;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
+.prompt{margin-top:8px;background:#1d1d1d;color:#f5f5f7;border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.fields{margin-top:6px;font-size:12px;color:#6e6e73}
+.fields code{background:#f0f6ff;color:#0a63ce;border-radius:6px;padding:0 6px;font-size:11.5px}
+.note{margin-top:8px}
+.note textarea{width:100%;border:1px dashed #d1d1d6;border-radius:8px;padding:8px 10px;font-size:12.5px;min-height:38px;font-family:inherit;resize:vertical;background:#fff}
+.note textarea:focus{outline:none;border-color:#007aff}
+.toc{background:#fff;border:1px solid #d1d1d6;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13px}
+.toc a{color:#007aff;text-decoration:none;margin-right:10px}
+.copybtn{float:right;border:1px solid #007aff;color:#007aff;background:#fff;border-radius:8px;padding:2px 10px;font-size:12px;cursor:pointer}
+.copybtn:active{background:#007aff;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<h1>作息管家 HELP · 场景名 + prompt 总览（评审用）</h1>
+<div class="meta">
+<div>5 类别 · 34 唤醒词 · 85 场景 · 来源 HELP：<code>C:\Users\辰辰洋洋\.ilife\data\schedule_html\help\作息管家_HELP_20260925_002745.html</code></div>
+<div>资产源：<code>skill-schedule/dist/help/scenes/help-assets.js</code>（HELP_GROUPS 原样 trích）· 生成时间：2026-09-25 · 用途：逐条评审 prompt 是否合理，备注栏可直接写意见</div>
+<div>用法：在顶部搜索框输入关键字过滤（比如“飞书”“复盘”“待开发”），点每条右上角“复制 prompt”即可引用讨论。</div>
+</div>
+</div>
+
+<div class="toc">
+<strong>目录：</strong>
+<a href="#g-write">📝 写入与同步（14）</a>
+<a href="#g-query">🔍 查询与浏览（28）</a>
+<a href="#g-plan">📅 日程与计划（28）</a>
+<a href="#g-analyze">🔬 分析与洞察（12）</a>
+<a href="#g-admin">⚙️ 辅助与管理（3）</a>
+</div>
+
+<div class="toolbar"><input id="q" placeholder="搜索：场景名 / prompt / id / 唤醒词，例如：健身、复盘、待开发、id=544"><div class="hit" id="hit"></div></div>
+<div id="list">
+
+<!-- ===== 写入与同步 ===== -->
+<div class="group" id="g-write"><h2>📝 写入与同步 <span class="cnt">4 个子功能 · 14 场景</span></h2>
+
+<div class="sub"><h3>#0 记作息 <span class="wake">#0 记作息 · write_1 · 6 场景</span></h3>
+
+<div class="card" data-s="1 添加单条作息记录 record_add_single #0 记作息 请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码">
+<div class="row1"><span class="no">1</span><span class="title">添加单条作息记录</span><span class="id">record_add_single</span><button class="copybtn" data-p="请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码">复制 prompt</button></div>
+<div class="prompt">请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码</div>
+<div class="fields">可编辑位：<code>activity=任意活动</code> <code>duration_minutes=1-1440</code> <code>category=白名单二级</code></div>
+<div class="note"><textarea placeholder="评审备注（这条 prompt 合理吗？怎么改？）"></textarea></div>
+</div>
+
+<div class="card" data-s="2 通过 JSON 文件批量添加 record_add_json #0 记作息 请帮我批量导入这些作息数据(从 JSON 文件)">
+<div class="row1"><span class="no">2</span><span class="title">通过 JSON 文件批量添加</span><span class="id">record_add_json</span><button class="copybtn" data-p="请帮我批量导入这些作息数据(从 JSON 文件)">复制 prompt</button></div>
+<div class="prompt">请帮我批量导入这些作息数据(从 JSON 文件)</div>
+<div class="fields">可编辑位：<code>input=JSON 文件路径</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="3 category 不在白名单 record_add_illegal_category #0 记作息 记一笔:14:00 写了代码 待开发">
+<div class="row1"><span class="no">3</span><span class="title">category 不在白名单</span><span class="id">record_add_illegal_category</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="记一笔:14:00 写了代码">复制 prompt</button></div>
+<div class="prompt">记一笔:14:00 写了代码</div>
+<div class="fields">可编辑位：<code>category=未在白名单的二级</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="4 只传一级 category record_add_l1_only #0 记作息 请帮我记一条创作类作息">
+<div class="row1"><span class="no">4</span><span class="title">只传一级 category</span><span class="id">record_add_l1_only</span><button class="copybtn" data-p="请帮我记一条创作类作息">复制 prompt</button></div>
+<div class="prompt">请帮我记一条创作类作息</div>
+<div class="fields">可编辑位：<code>category=仅一级(如'创作')</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="5 必填字段缺失 record_add_missing_field #0 记作息 请帮我记一条作息(用户漏说活动名)">
+<div class="row1"><span class="no">5</span><span class="title">必填字段缺失</span><span class="id">record_add_missing_field</span><button class="copybtn" data-p="请帮我记一条作息(用户漏说活动名)">复制 prompt</button></div>
+<div class="prompt">请帮我记一条作息(用户漏说活动名)</div>
+<div class="fields">可编辑位：<code>missing=任一必填</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="6 批量导入作息（JSON 批量写入） batch_add #0 记作息 请帮我批量导入这些作息数据（从 JSON 文件）">
+<div class="row1"><span class="no">6</span><span class="title">批量导入作息（JSON 批量写入）</span><span class="id">batch_add</span><button class="copybtn" data-p="请帮我批量导入这些作息数据（从 JSON 文件）">复制 prompt</button></div>
+<div class="prompt">请帮我批量导入这些作息数据（从 JSON 文件）</div>
+<div class="fields">可编辑位：<code>input=JSON 文件路径</code> <code>date=目标日期（缺省取当日）</code> <code>mode=一次性批量写入（无唯一键，不幂等）</code> · 注意：与第 2 条仅全半角括号差异</div>
+<div class="note"><textarea placeholder="评审备注：与第2条是否重复？"></textarea></div>
+</div>
+</div>
+
+<div class="sub"><h3>#1 准备消息 <span class="wake">#1 准备消息 · write_2 · 4 场景</span></h3>
+
+<div class="card" data-s="7 默认游标到当前时间拉取 prep_default #1 准备消息 请帮我准备今天的消息 待开发">
+<div class="row1"><span class="no">7</span><span class="title">默认游标到当前时间拉取</span><span class="id">prep_default</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我准备今天的消息">复制 prompt</button></div>
+<div class="prompt">请帮我准备今天的消息</div>
+<div class="fields">可编辑位：<code>range=默认(游标到当前)</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="8 指定时间区间拉取 prep_with_range #1 准备消息 请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息 待开发">
+<div class="row1"><span class="no">8</span><span class="title">指定时间区间拉取</span><span class="id">prep_with_range</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息">复制 prompt</button></div>
+<div class="prompt">请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息</div>
+<div class="fields">可编辑位：<code>range=YYYY-MM-DD HH:MM ~ YYYY-MM-DD HH:MM</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="9 翻页获取下一页 prep_pagination #1 准备消息 请帮我翻第 3 页 待开发">
+<div class="row1"><span class="no">9</span><span class="title">翻页获取下一页</span><span class="id">prep_pagination</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我翻第 3 页">复制 prompt</button></div>
+<div class="prompt">请帮我翻第 3 页</div>
+<div class="fields">可编辑位：<code>page=N</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="10 区间内无消息 prep_no_messages #1 准备消息 请帮我准备 2026-07-23 的消息 待开发">
+<div class="row1"><span class="no">10</span><span class="title">区间内无消息</span><span class="id">prep_no_messages</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我准备 2026-07-23 的消息">复制 prompt</button></div>
+<div class="prompt">请帮我准备 2026-07-23 的消息</div>
+<div class="fields">可编辑位：<code>range=无消息区间</code></div>
+<div class="note"><textarea placeholder="评审备注：与第7条 prompt 几乎同形，靠参数区分是否合理？"></textarea></div>
+</div>
+</div>
+
+<div class="sub"><h3>#2 同步作息 <span class="wake">#2 同步作息 · write_3 · 2 场景</span></h3>
+
+<div class="card" data-s="11 完整同步流程(准备+分析+写入) sync_full #2 同步作息 请帮我同步今天的消息成作息记录 待开发">
+<div class="row1"><span class="no">11</span><span class="title">完整同步流程(准备+分析+写入)</span><span class="id">sync_full</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我同步今天的消息成作息记录">复制 prompt</button></div>
+<div class="prompt">请帮我同步今天的消息成作息记录</div>
+<div class="fields">可编辑位：<code>range=默认</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="12 同步指定日期 sync_partial_day #2 同步作息 请帮我同步 2026-07-22 的消息 待开发">
+<div class="row1"><span class="no">12</span><span class="title">同步指定日期</span><span class="id">sync_partial_day</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我同步 2026-07-22 的消息">复制 prompt</button></div>
+<div class="prompt">请帮我同步 2026-07-22 的消息</div>
+<div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+</div>
+
+<div class="sub"><h3>#3 增量同步 <span class="wake">#3 增量同步 · write_4 · 2 场景</span></h3>
+
+<div class="card" data-s="13 从游标继续 sync_incremental #3 增量同步 请帮我增量同步(接着上次) 待开发">
+<div class="row1"><span class="no">13</span><span class="title">从游标继续</span><span class="id">sync_incremental</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我增量同步(接着上次)">复制 prompt</button></div>
+<div class="prompt">请帮我增量同步(接着上次)</div>
+<div class="fields">可编辑位：<code>cursor=上次结束位置</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+
+<div class="card" data-s="14 首次同步无游标 sync_no_cursor #3 增量同步 请帮我同步(从未同步过) 待开发">
+<div class="row1"><span class="no">14</span><span class="title">首次同步无游标</span><span class="id">sync_no_cursor</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我同步(从未同步过)">复制 prompt</button></div>
+<div class="prompt">请帮我同步(从未同步过)</div>
+<div class="fields">可编辑位：<code>first_time=true</code></div>
+<div class="note"><textarea placeholder="评审备注"></textarea></div>
+</div>
+</div>
+</div>
+
+<!-- ===== 查询与浏览 ===== -->
+<div class="group" id="g-query"><h2>🔍 查询与浏览 <span class="cnt">12 个子功能 · 28 场景</span></h2>
+
+<div class="sub"><h3>#4 今天总结 <span class="wake">#4 今天总结 · query_1 · 4 场景</span></h3>
+<div class="card" data-s="15 当日满 24h 出综合报告 summary_full_24h #4 今天总结 请给我今天总结"><div class="row1"><span class="no">15</span><span class="title">当日满 24h 出综合报告</span><span class="id">summary_full_24h</span><button class="copybtn" data-p="请给我今天总结">复制 prompt</button></div><div class="prompt">请给我今天总结</div><div class="fields">可编辑位：<code>date=今天</code> <code>complete=true</code></div><div class="note"><textarea placeholder="评审备注：与16条同 prompt，靠 complete 区分？"></textarea></div></div>
+<div class="card" data-s="16 当日未满 24h 出摘要 summary_partial #4 今天总结 请给我今天总结(还没记完)"><div class="row1"><span class="no">16</span><span class="title">当日未满 24h 出摘要</span><span class="id">summary_partial</span><button class="copybtn" data-p="请给我今天总结(还没记完)">复制 prompt</button></div><div class="prompt">请给我今天总结(还没记完)</div><div class="fields">可编辑位：<code>date=今天</code> <code>complete=false</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="17 指定日期总结 summary_specific_date #4 今天总结 请给我 2026-07-22 的总结"><div class="row1"><span class="no">17</span><span class="title">指定日期总结</span><span class="id">summary_specific_date</span><button class="copybtn" data-p="请给我 2026-07-22 的总结">复制 prompt</button></div><div class="prompt">请给我 2026-07-22 的总结</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="18 指定日期无记录 summary_no_records #4 今天总结 请给我 2026-01-01 的总结"><div class="row1"><span class="no">18</span><span class="title">指定日期无记录</span><span class="id">summary_no_records</span><button class="copybtn" data-p="请给我 2026-01-01 的总结">复制 prompt</button></div><div class="prompt">请给我 2026-01-01 的总结</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>records=0</code></div><div class="note"><textarea placeholder="评审备注：与17条仅日期不同，是否值得单列场景？"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#5 汇总作息 <span class="wake">#5 汇总作息 · query_2 · 2 场景</span></h3>
+<div class="card" data-s="19 日期范围汇总 summary_range_default #5 汇总作息 请给我 7/13~7/19 这一周的汇总"><div class="row1"><span class="no">19</span><span class="title">日期范围汇总</span><span class="id">summary_range_default</span><button class="copybtn" data-p="请给我 7/13~7/19 这一周的汇总">复制 prompt</button></div><div class="prompt">请给我 7/13~7/19 这一周的汇总</div><div class="fields">可编辑位：<code>range=YYYY-MM-DD ~ YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="20 日期范围文本汇总 summary_range_full #5 汇总作息 请给我 7/13~7/19 的文本汇总"><div class="row1"><span class="no">20</span><span class="title">日期范围文本汇总</span><span class="id">summary_range_full</span><button class="copybtn" data-p="请给我 7/13~7/19 的文本汇总">复制 prompt</button></div><div class="prompt">请给我 7/13~7/19 的文本汇总</div><div class="fields">可编辑位：<code>range=任意范围</code> <code>format=text</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#6 查作息 <span class="wake">#6 查作息 · query_3 · 4 场景</span></h3>
+<div class="card" data-s="21 今日作息列表 record_list_today #6 查作息 请帮我看看今天我做了什么"><div class="row1"><span class="no">21</span><span class="title">今日作息列表</span><span class="id">record_list_today</span><button class="copybtn" data-p="请帮我看看今天我做了什么">复制 prompt</button></div><div class="prompt">请帮我看看今天我做了什么</div><div class="fields">可编辑位：<code>date=今天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="22 昨日作息 record_list_yesterday #6 查作息 昨天我做了什么"><div class="row1"><span class="no">22</span><span class="title">昨日作息</span><span class="id">record_list_yesterday</span><button class="copybtn" data-p="昨天我做了什么">复制 prompt</button></div><div class="prompt">昨天我做了什么</div><div class="fields">可编辑位：<code>date=昨天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="23 指定日期作息 record_list_specific #6 查作息 请帮我看看 2026-07-15 我做了什么"><div class="row1"><span class="no">23</span><span class="title">指定日期作息</span><span class="id">record_list_specific</span><button class="copybtn" data-p="请帮我看看 2026-07-15 我做了什么">复制 prompt</button></div><div class="prompt">请帮我看看 2026-07-15 我做了什么</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="24 指定日期无记录 record_list_empty #6 查作息 请帮我看看 2026-07-01 我做了什么"><div class="row1"><span class="no">24</span><span class="title">指定日期无记录</span><span class="id">record_list_empty</span><button class="copybtn" data-p="请帮我看看 2026-07-01 我做了什么">复制 prompt</button></div><div class="prompt">请帮我看看 2026-07-01 我做了什么</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>records=0</code></div><div class="note"><textarea placeholder="评审备注：与23条仅日期不同"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#7 查作息详情 <span class="wake">#7 查作息详情 · query_4 · 3 场景</span></h3>
+<div class="card" data-s="25 查看某日所有详情 detail_day #7 查作息详情 请帮我看 7/15 作息详情(含 AI 推理链)"><div class="row1"><span class="no">25</span><span class="title">查看某日所有详情</span><span class="id">detail_day</span><button class="copybtn" data-p="请帮我看 7/15 作息详情(含 AI 推理链)">复制 prompt</button></div><div class="prompt">请帮我看 7/15 作息详情(含 AI 推理链)</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="26 查看单条详情 detail_record #7 查作息详情 请帮我看 id=123 这条记录详情"><div class="row1"><span class="no">26</span><span class="title">查看单条详情</span><span class="id">detail_record</span><button class="copybtn" data-p="请帮我看 id=123 这条记录详情">复制 prompt</button></div><div class="prompt">请帮我看 id=123 这条记录详情</div><div class="fields">可编辑位：<code>record_id=N</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="27 查看 AI 推理链 detail_with_reasoning #7 查作息详情 请帮我看 7/15 的 AI 是怎么分类的"><div class="row1"><span class="no">27</span><span class="title">查看 AI 推理链</span><span class="id">detail_with_reasoning</span><button class="copybtn" data-p="请帮我看 7/15 的 AI 是怎么分类的">复制 prompt</button></div><div class="prompt">请帮我看 7/15 的 AI 是怎么分类的</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>include_reasoning=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#8 查作息时间轴 <span class="wake">#8 查作息时间轴 · query_5 · 2 场景</span></h3>
+<div class="card" data-s="28 今日时间轴 timeline_today #8 查作息时间轴 今天时间轴看一下"><div class="row1"><span class="no">28</span><span class="title">今日时间轴</span><span class="id">timeline_today</span><button class="copybtn" data-p="今天时间轴看一下">复制 prompt</button></div><div class="prompt">今天时间轴看一下</div><div class="fields">可编辑位：<code>date=今天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="29 指定日期时间轴 timeline_specific #8 查作息时间轴 请帮我看 7/15 的 24h 时间轴"><div class="row1"><span class="no">29</span><span class="title">指定日期时间轴</span><span class="id">timeline_specific</span><button class="copybtn" data-p="请帮我看 7/15 的 24h 时间轴">复制 prompt</button></div><div class="prompt">请帮我看 7/15 的 24h 时间轴</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#9 查作息范围 <span class="wake">#9 查作息范围 · query_6 · 3 场景</span></h3>
+<div class="card" data-s="30 日期范围统计 range_default #9 查作息范围 请帮我看 7/13~7/19 这一周"><div class="row1"><span class="no">30</span><span class="title">日期范围统计</span><span class="id">range_default</span><button class="copybtn" data-p="请帮我看 7/13~7/19 这一周">复制 prompt</button></div><div class="prompt">请帮我看 7/13~7/19 这一周</div><div class="fields">可编辑位：<code>range=YYYY-MM-DD ~ YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注：与19条是否撞车？"></textarea></div></div>
+<div class="card" data-s="31 本周范围 range_this_week #9 查作息范围 请帮我看本周"><div class="row1"><span class="no">31</span><span class="title">本周范围</span><span class="id">range_this_week</span><button class="copybtn" data-p="请帮我看本周">复制 prompt</button></div><div class="prompt">请帮我看本周</div><div class="fields">可编辑位：<code>range=本周(自动计算)</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="32 范围文本降级 range_text #9 查作息范围 请帮我看本周(直接给文本)"><div class="row1"><span class="no">32</span><span class="title">范围文本降级</span><span class="id">range_text</span><button class="copybtn" data-p="请帮我看本周(直接给文本)">复制 prompt</button></div><div class="prompt">请帮我看本周(直接给文本)</div><div class="fields">可编辑位：<code>range=任意</code> <code>format=text</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#11 查作息状态 <span class="wake">#11 查作息状态 · query_7 · 1 场景</span></h3>
+<div class="card" data-s="33 查整体状态 status_default #11 查作息状态 作息状态怎么样"><div class="row1"><span class="no">33</span><span class="title">查整体状态</span><span class="id">status_default</span><button class="copybtn" data-p="作息状态怎么样">复制 prompt</button></div><div class="prompt">作息状态怎么样</div><div class="fields">可编辑位：<code>scope=all</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#12 查日程 <span class="wake">#12 查日程 · query_8 · 5 场景</span></h3>
+<div class="card" data-s="34 今日日程 list_events_today #12 查日程 请帮我看今天的日程"><div class="row1"><span class="no">34</span><span class="title">今日日程</span><span class="id">list_events_today</span><button class="copybtn" data-p="请帮我看今天的日程">复制 prompt</button></div><div class="prompt">请帮我看今天的日程</div><div class="fields">可编辑位：<code>date=今天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="35 指定日期日程 list_events_specific #12 查日程 请帮我看 7/15 的日程"><div class="row1"><span class="no">35</span><span class="title">指定日期日程</span><span class="id">list_events_specific</span><button class="copybtn" data-p="请帮我看 7/15 的日程">复制 prompt</button></div><div class="prompt">请帮我看 7/15 的日程</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="36 按标题搜索日程 search_event_title #12 查日程 今天有健身吗"><div class="row1"><span class="no">36</span><span class="title">按标题搜索日程</span><span class="id">search_event_title</span><button class="copybtn" data-p="今天有健身吗">复制 prompt</button></div><div class="prompt">今天有健身吗</div><div class="fields">可编辑位：<code>date=今天</code> <code>title=健身</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="37 按时间三元组查重 search_event_triplet #12 查日程 今天 17:00-18:00 有什么安排"><div class="row1"><span class="no">37</span><span class="title">按时间三元组查重</span><span class="id">search_event_triplet</span><button class="copybtn" data-p="今天 17:00-18:00 有什么安排">复制 prompt</button></div><div class="prompt">今天 17:00-18:00 有什么安排</div><div class="fields">可编辑位：<code>date=今天</code> <code>time_start=HH:MM</code> <code>time_end=HH:MM</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="38 查已软删事件 list_events_inactive #12 查日程 今天被删的日程有哪些"><div class="row1"><span class="no">38</span><span class="title">查已软删事件</span><span class="id">list_events_inactive</span><button class="copybtn" data-p="今天被删的日程有哪些">复制 prompt</button></div><div class="prompt">今天被删的日程有哪些</div><div class="fields">可编辑位：<code>date=今天</code> <code>include_inactive=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#15 24h 概览 <span class="wake">#15 24h 概览 · query_9 · 1 场景</span></h3>
+<div class="card" data-s="39 今日 24h 概览 query_plans_today #15 24h 概览 今天 24h 安排概览"><div class="row1"><span class="no">39</span><span class="title">今日 24h 概览</span><span class="id">query_plans_today</span><button class="copybtn" data-p="今天 24h 安排概览">复制 prompt</button></div><div class="prompt">今天 24h 安排概览</div><div class="fields">可编辑位：<code>date=今天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#16 查多日计划 <span class="wake">#16 查多日计划 · query_10 · 1 场景</span></h3>
+<div class="card" data-s="40 多日简版 query_plans_multi #16 查多日计划 请帮我看 7/13、7/14、7/15 三天计划"><div class="row1"><span class="no">40</span><span class="title">多日简版</span><span class="id">query_plans_multi</span><button class="copybtn" data-p="请帮我看 7/13、7/14、7/15 三天计划">复制 prompt</button></div><div class="prompt">请帮我看 7/13、7/14、7/15 三天计划</div><div class="fields">可编辑位：<code>dates=YYYY-MM-DD,YYYY-MM-DD,...</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#23 按 ID 查记录 <span class="wake">#23 按 ID 查记录 · query_11 · 1 场景</span></h3>
+<div class="card" data-s="41 按 ID 查单条 get_record_basic #23 按 ID 查记录 帮我查 id=123 这条记录"><div class="row1"><span class="no">41</span><span class="title">按 ID 查单条</span><span class="id">get_record_basic</span><button class="copybtn" data-p="帮我查 id=123 这条记录">复制 prompt</button></div><div class="prompt">帮我查 id=123 这条记录</div><div class="fields">可编辑位：<code>record_id=N</code> · 注意：与26条是否重复？</div><div class="note"><textarea placeholder="评审备注：与26条撞车？"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>周视图 <span class="wake">周视图 · query_12 · 1 场景</span></h3>
+<div class="card" data-s="42 周视图(7×24 全分类总览) week_view 周视图 请帮我看看这一周的作息总览(唤醒词:周视图) 待开发"><div class="row1"><span class="no">42</span><span class="title">周视图(7×24 全分类总览)</span><span class="id">week_view</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我看看这一周的作息总览(唤醒词:周视图)">复制 prompt</button></div><div class="prompt">请帮我看看这一周的作息总览(唤醒词:周视图)</div><div class="fields">可编辑位：<code>week=目标周(默认本周;锚点日期 YYYY-MM-DD)</code></div><div class="note"><textarea placeholder="评审备注：prompt 里夹带“唤醒词:”是否合理？"></textarea></div></div>
+</div>
+</div>
+
+<!-- ===== 日程与计划 ===== -->
+<div class="group" id="g-plan"><h2>📅 日程与计划 <span class="cnt">10 个子功能 · 28 场景</span></h2>
+
+<div class="sub"><h3>#13 补计划 <span class="wake">#13 补计划 · plan_1 · 3 场景</span></h3>
+<div class="card" data-s="43 补一条计划(基础) ensure_event_basic #13 补计划 帮我补一条计划到后天 17:00-18:00 健身"><div class="row1"><span class="no">43</span><span class="title">补一条计划(基础)</span><span class="id">ensure_event_basic</span><button class="copybtn" data-p="帮我补一条计划到后天 17:00-18:00 健身">复制 prompt</button></div><div class="prompt">帮我补一条计划到后天 17:00-18:00 健身</div><div class="fields">可编辑位：<code>date=后天</code> <code>time_start=HH:MM</code> <code>time_end=HH:MM</code> <code>title=X</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="44 同时间重复(幂等) ensure_event_idempotent #13 补计划 再补一条 17:00-18:00 的健身(已有)"><div class="row1"><span class="no">44</span><span class="title">同时间重复(幂等)</span><span class="id">ensure_event_idempotent</span><button class="copybtn" data-p="再补一条 17:00-18:00 的健身(已有)">复制 prompt</button></div><div class="prompt">再补一条 17:00-18:00 的健身(已有)</div><div class="fields">可编辑位：<code>date=今天</code> <code>time_start=HH:MM</code> <code>time_end=HH:MM</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="45 补计划含备注 ensure_event_with_notes #13 补计划 帮我补明天 17:00-18:00 健身(练背+有氧)"><div class="row1"><span class="no">45</span><span class="title">补计划含备注</span><span class="id">ensure_event_with_notes</span><button class="copybtn" data-p="帮我补明天 17:00-18:00 健身(练背+有氧)">复制 prompt</button></div><div class="prompt">帮我补明天 17:00-18:00 健身(练背+有氧)</div><div class="fields">可编辑位：<code>date=明天</code> <code>notes=细节</code> <code>category=健康.健身</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#14 复盘 <span class="wake">#14 复盘 · plan_2 · 4 场景</span></h3>
+<div class="card" data-s="46 今日复盘(标准流程) review_today_normal #14 复盘 请帮我复盘今天"><div class="row1"><span class="no">46</span><span class="title">今日复盘(标准流程)</span><span class="id">review_today_normal</span><button class="copybtn" data-p="请帮我复盘今天">复制 prompt</button></div><div class="prompt">请帮我复盘今天</div><div class="fields">可编辑位：<code>date=今天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="47 今日已全部复盘 review_today_all_done #14 复盘 再帮我复盘一下今天"><div class="row1"><span class="no">47</span><span class="title">今日已全部复盘</span><span class="id">review_today_all_done</span><button class="copybtn" data-p="再帮我复盘一下今天">复制 prompt</button></div><div class="prompt">再帮我复盘一下今天</div><div class="fields">可编辑位：<code>date=今天</code> <code>completion_all=true</code></div><div class="note"><textarea placeholder="评审备注：与46条仅差“再”“一下”"></textarea></div></div>
+<div class="card" data-s="48 该日无活跃事件 review_no_events #14 复盘 请帮我复盘 2026-07-01"><div class="row1"><span class="no">48</span><span class="title">该日无活跃事件</span><span class="id">review_no_events</span><button class="copybtn" data-p="请帮我复盘 2026-07-01">复制 prompt</button></div><div class="prompt">请帮我复盘 2026-07-01</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>events_count=0</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="49 复盘前先同步备忘录 review_with_memo_sync #14 复盘 复盘前先对一下今天的打卡数据"><div class="row1"><span class="no">49</span><span class="title">复盘前先同步备忘录</span><span class="id">review_with_memo_sync</span><button class="copybtn" data-p="复盘前先对一下今天的打卡数据">复制 prompt</button></div><div class="prompt">复盘前先对一下今天的打卡数据</div><div class="fields">可编辑位：<code>date=今天</code> <code>memo_cli=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#17 商量计划 <span class="wake">#17 商量计划 · plan_3 · 10 场景</span></h3>
+<div class="card" data-s="50 商量明天计划 plan_discuss_tomorrow #17 商量计划 商量一下明天的计划"><div class="row1"><span class="no">50</span><span class="title">商量明天计划</span><span class="id">plan_discuss_tomorrow</span><button class="copybtn" data-p="商量一下明天的计划">复制 prompt</button></div><div class="prompt">商量一下明天的计划</div><div class="fields">可编辑位：<code>date=明天</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="51 商量时已有部分事件 plan_with_locked #17 商量计划 帮我重新商量明天的计划(已有 4 条)"><div class="row1"><span class="no">51</span><span class="title">商量时已有部分事件</span><span class="id">plan_with_locked</span><button class="copybtn" data-p="帮我重新商量明天的计划(已有 4 条)">复制 prompt</button></div><div class="prompt">帮我重新商量明天的计划(已有 4 条)</div><div class="fields">可编辑位：<code>date=明天</code> <code>existing_events=4</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="52 商量时拉心愿清单 plan_with_wish #17 商量计划 商量明天(把心愿 X 安排进去)"><div class="row1"><span class="no">52</span><span class="title">商量时拉心愿清单</span><span class="id">plan_with_wish</span><button class="copybtn" data-p="商量明天(把心愿 X 安排进去)">复制 prompt</button></div><div class="prompt">商量明天(把心愿 X 安排进去)</div><div class="fields">可编辑位：<code>date=明天</code> <code>memo_cli=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="53 覆盖校验失败 plan_24h_coverage_fail #17 商量计划 商量明天计划(生成的事件有空隙)"><div class="row1"><span class="no">53</span><span class="title">覆盖校验失败</span><span class="id">plan_24h_coverage_fail</span><button class="copybtn" data-p="商量明天计划(生成的事件有空隙)">复制 prompt</button></div><div class="prompt">商量明天计划(生成的事件有空隙)</div><div class="fields">可编辑位：<code>date=明天</code> <code>gap_or_overlap=true</code></div><div class="note"><textarea placeholder="评审备注：用户会这么说话吗？"></textarea></div></div>
+<div class="card" data-s="54 商量后飞书同步 plan_feishu_sync #17 商量计划 商量后顺便同步到飞书"><div class="row1"><span class="no">54</span><span class="title">商量后飞书同步</span><span class="id">plan_feishu_sync</span><button class="copybtn" data-p="商量后顺便同步到飞书">复制 prompt</button></div><div class="prompt">商量后顺便同步到飞书</div><div class="fields">可编辑位：<code>date=明天</code> <code>feishu=full</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="55 制定次日计划(结果强化) plan_result_tomorrow #17 商量计划 帮我制定明天的计划,生成计划结果 HTML"><div class="row1"><span class="no">55</span><span class="title">制定次日计划(结果强化)</span><span class="id">plan_result_tomorrow</span><button class="copybtn" data-p="帮我制定明天的计划,生成计划结果 HTML">复制 prompt</button></div><div class="prompt">帮我制定明天的计划,生成计划结果 HTML</div><div class="fields">可编辑位：<code>date=明天</code> <code>history_days=7</code> <code>candidates=6-10 段</code></div><div class="note"><textarea placeholder="评审备注：用户会说“生成计划结果 HTML”吗？"></textarea></div></div>
+<div class="card" data-s="56 制定计划后调整再生成 plan_result_adjust #17 商量计划 把第 2 段改成 19:00 开始,再生成一次"><div class="row1"><span class="no">56</span><span class="title">制定计划后调整再生成</span><span class="id">plan_result_adjust</span><button class="copybtn" data-p="把第 2 段改成 19:00 开始,再生成一次">复制 prompt</button></div><div class="prompt">把第 2 段改成 19:00 开始,再生成一次</div><div class="fields">可编辑位：<code>date=明天</code> <code>round=2-N</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="57 无历史作息参考 plan_result_history_none #17 商量计划 帮我制定明天的计划(新环境,没有历史记录)"><div class="row1"><span class="no">57</span><span class="title">无历史作息参考</span><span class="id">plan_result_history_none</span><button class="copybtn" data-p="帮我制定明天的计划(新环境,没有历史记录)">复制 prompt</button></div><div class="prompt">帮我制定明天的计划(新环境,没有历史记录)</div><div class="fields">可编辑位：<code>date=明天</code> <code>history_days=7</code> <code>no_history=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="58 候选与已锁定事件冲突 plan_result_conflict #17 商量计划 商量明天的计划(已有 2 条已锁定)"><div class="row1"><span class="no">58</span><span class="title">候选与已锁定事件冲突</span><span class="id">plan_result_conflict</span><button class="copybtn" data-p="商量明天的计划(已有 2 条已锁定)">复制 prompt</button></div><div class="prompt">商量明天的计划(已有 2 条已锁定)</div><div class="fields">可编辑位：<code>date=明天</code> <code>locked_events=2</code> <code>conflict=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="59 与历史习惯偏离 plan_result_drift #17 商量计划 明天把下午改成运动(历史下午都是工作)"><div class="row1"><span class="no">59</span><span class="title">与历史习惯偏离</span><span class="id">plan_result_drift</span><button class="copybtn" data-p="明天把下午改成运动(历史下午都是工作)">复制 prompt</button></div><div class="prompt">明天把下午改成运动(历史下午都是工作)</div><div class="fields">可编辑位：<code>date=明天</code> <code>drift=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#18 改计划 <span class="wake">#18 改计划 · plan_4 · 4 场景</span></h3>
+<div class="card" data-s="60 改单个事件字段 update_event_basic #18 改计划 改 id=544 这条的 title 为健身(上午)"><div class="row1"><span class="no">60</span><span class="title">改单个事件字段</span><span class="id">update_event_basic</span><button class="copybtn" data-p="改 id=544 这条的 title 为健身(上午)">复制 prompt</button></div><div class="prompt">改 id=544 这条的 title 为健身(上午)</div><div class="fields">可编辑位：<code>event_id=N</code> <code>fields=["title","notes"]</code></div><div class="note"><textarea placeholder="评审备注：用户会说英文 title 吗？"></textarea></div></div>
+<div class="card" data-s="61 改时段(飞书删旧建新) update_event_time #18 改计划 把 id=544 改成 17:30-18:30"><div class="row1"><span class="no">61</span><span class="title">改时段(飞书删旧建新)</span><span class="id">update_event_time</span><button class="copybtn" data-p="把 id=544 改成 17:30-18:30">复制 prompt</button></div><div class="prompt">把 id=544 改成 17:30-18:30</div><div class="fields">可编辑位：<code>event_id=N</code> <code>time_start=HH:MM</code> <code>time_end=HH:MM</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="62 改 completion update_event_completion #18 改计划 把 id=544 标已完成"><div class="row1"><span class="no">62</span><span class="title">改 completion</span><span class="id">update_event_completion</span><button class="copybtn" data-p="把 id=544 标已完成">复制 prompt</button></div><div class="prompt">把 id=544 标已完成</div><div class="fields">可编辑位：<code>event_id=N</code> <code>completion=已完成</code></div><div class="note"><textarea placeholder="评审备注：completion 英文是否对用户黑话？"></textarea></div></div>
+<div class="card" data-s="63 改后飞书询问 update_event_feishu_ask #18 改计划 改 id=544 的 title(已同步飞书)"><div class="row1"><span class="no">63</span><span class="title">改后飞书询问</span><span class="id">update_event_feishu_ask</span><button class="copybtn" data-p="改 id=544 的 title(已同步飞书)">复制 prompt</button></div><div class="prompt">改 id=544 的 title(已同步飞书)</div><div class="fields">可编辑位：<code>event_id=N</code> <code>feishu_synced=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#19 删计划 <span class="wake">#19 删计划 · plan_5 · 2 场景</span></h3>
+<div class="card" data-s="64 软删事件 deactivate_event #19 删计划 删 id=544 这条计划"><div class="row1"><span class="no">64</span><span class="title">软删事件</span><span class="id">deactivate_event</span><button class="copybtn" data-p="删 id=544 这条计划">复制 prompt</button></div><div class="prompt">删 id=544 这条计划</div><div class="fields">可编辑位：<code>event_id=N</code></div><div class="note"><textarea placeholder="评审备注：用户会说“软删”吗？场景名是否黑话？"></textarea></div></div>
+<div class="card" data-s="65 软删 + 飞书删 deactivate_with_feishu #19 删计划 删 id=544(已同步飞书)"><div class="row1"><span class="no">65</span><span class="title">软删 + 飞书删</span><span class="id">deactivate_with_feishu</span><button class="copybtn" data-p="删 id=544(已同步飞书)">复制 prompt</button></div><div class="prompt">删 id=544(已同步飞书)</div><div class="fields">可编辑位：<code>event_id=N</code> <code>feishu_synced=true</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#20 日程管家同步 <span class="wake">#20 日程管家同步 · plan_6 · 1 场景</span></h3>
+<div class="card" data-s="66 反向对账+diff 询问 feishu_resync_basic #20 日程管家同步 请帮我同步今天的日程到飞书"><div class="row1"><span class="no">66</span><span class="title">反向对账+diff 询问</span><span class="id">feishu_resync_basic</span><button class="copybtn" data-p="请帮我同步今天的日程到飞书">复制 prompt</button></div><div class="prompt">请帮我同步今天的日程到飞书</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注：场景名“反向对账+diff”是否用户语言？"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>复盘今日 <span class="wake">复盘今日 · plan_7 · 1 场景</span></h3>
+<div class="card" data-s="67 复盘今日(计划 vs 实际对照 + 叙事 + 单日健康分) replay_day 复盘今日 请帮我复盘今天(唤醒词:复盘今日)"><div class="row1"><span class="no">67</span><span class="title">复盘今日(计划 vs 实际对照 + 叙事 + 单日健康分)</span><span class="id">replay_day</span><button class="copybtn" data-p="请帮我复盘今天(唤醒词:复盘今日)">复制 prompt</button></div><div class="prompt">请帮我复盘今天(唤醒词:复盘今日)</div><div class="fields">可编辑位：<code>date=单日 YYYY-MM-DD(默认今天)</code></div><div class="note"><textarea placeholder="评审备注：prompt 夹带“唤醒词:”“vs”是否合理？与46条是否重复？"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>复盘本周 <span class="wake">复盘本周 · plan_8 · 1 场景</span></h3>
+<div class="card" data-s="68 复盘本周(7 维趋势 + 热力图 + 健康分均值) replay_week 复盘本周 请帮我复盘本周(唤醒词:复盘本周)"><div class="row1"><span class="no">68</span><span class="title">复盘本周(7 维趋势 + 热力图 + 健康分均值)</span><span class="id">replay_week</span><button class="copybtn" data-p="请帮我复盘本周(唤醒词:复盘本周)">复制 prompt</button></div><div class="prompt">请帮我复盘本周(唤醒词:复盘本周)</div><div class="fields">可编辑位：<code>range=本周一~周日(自动换算)</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>复盘本月 <span class="wake">复盘本月 · plan_9 · 1 场景</span></h3>
+<div class="card" data-s="69 复盘本月(月度聚合 + 环比对比 + 目标达成) replay_month 复盘本月 请帮我复盘本月(唤醒词:复盘本月)"><div class="row1"><span class="no">69</span><span class="title">复盘本月(月度聚合 + 环比对比 + 目标达成)</span><span class="id">replay_month</span><button class="copybtn" data-p="请帮我复盘本月(唤醒词:复盘本月)">复制 prompt</button></div><div class="prompt">请帮我复盘本月(唤醒词:复盘本月)</div><div class="fields">可编辑位：<code>range=本月 1 日~月末(自动换算)</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>复盘区间 <span class="wake">复盘区间 · plan_10 · 1 场景</span></h3>
+<div class="card" data-s="70 复盘区间(任意区间跨域复盘 · 原 start-end) replay_range 复盘区间 请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)"><div class="row1"><span class="no">70</span><span class="title">复盘区间(任意区间跨域复盘 · 原 start-end)</span><span class="id">replay_range</span><button class="copybtn" data-p="请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)">复制 prompt</button></div><div class="prompt">请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)</div><div class="fields">可编辑位：<code>range=任意 start-end(预置 上周/上月/今年/上年 + 自由区间语法)</code> · 场景名夹带英文 start-end 是否黑话？</div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+</div>
+
+<!-- ===== 分析与洞察 ===== -->
+<div class="group" id="g-analyze"><h2>🔬 分析与洞察 <span class="cnt">5 个子功能 · 12 场景</span></h2>
+
+<div class="sub"><h3>#24 写作息摘要 <span class="wake">#24 写作息摘要 · analyze_1 · 2 场景</span></h3>
+<div class="card" data-s="71 写摘要 add_summary_basic #24 写作息摘要 帮我写摘要:2026-07-22 工作.AI调优 60 分钟"><div class="row1"><span class="no">71</span><span class="title">写摘要</span><span class="id">add_summary_basic</span><button class="copybtn" data-p="帮我写摘要:2026-07-22 工作.AI调优 60 分钟">复制 prompt</button></div><div class="prompt">帮我写摘要:2026-07-22 工作.AI调优 60 分钟</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>category=X</code> <code>total_minutes=N</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="72 同 date+category upsert add_summary_idempotent #24 写作息摘要 再写一次(已有)"><div class="row1"><span class="no">72</span><span class="title">同 date+category upsert</span><span class="id">add_summary_idempotent</span><button class="copybtn" data-p="再写一次(已有)">复制 prompt</button></div><div class="prompt">再写一次(已有)</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>category=X</code> · 场景名 upsert 是否黑话？</div><div class="note"><textarea placeholder="评审备注：prompt 过短，用户能懂吗？"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#25 对比两个月 <span class="wake">#25 对比两个月 · analyze_2 · 3 场景</span></h3>
+<div class="card" data-s="73 整月对比 compare_months #25 对比两个月 6 月和 7 月对比"><div class="row1"><span class="no">73</span><span class="title">整月对比</span><span class="id">compare_months</span><button class="copybtn" data-p="6 月和 7 月对比">复制 prompt</button></div><div class="prompt">6 月和 7 月对比</div><div class="fields">可编辑位：<code>month_a=YYYY-MM</code> <code>month_b=YYYY-MM</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="74 任意范围对比 compare_range #25 对比两个月 上周和这周对比"><div class="row1"><span class="no">74</span><span class="title">任意范围对比</span><span class="id">compare_range</span><button class="copybtn" data-p="上周和这周对比">复制 prompt</button></div><div class="prompt">上周和这周对比</div><div class="fields">可编辑位：<code>label_a=X</code> <code>range_a=YYYY-MM-DD ~ YYYY-MM-DD</code> <code>label_b=Y</code> <code>range_b=YYYY-MM-DD ~ YYYY-MM-DD</code></div><div class="note"><textarea placeholder="评审备注：与75条是否重复？"></textarea></div></div>
+<div class="card" data-s="75 周对比 compare_week_vs_week #25 对比两个月 上周和这周差多少"><div class="row1"><span class="no">75</span><span class="title">周对比</span><span class="id">compare_week_vs_week</span><button class="copybtn" data-p="上周和这周差多少">复制 prompt</button></div><div class="prompt">上周和这周差多少</div><div class="fields">可编辑位：<code>label_a=上周</code> <code>range_a=周一~周日</code> <code>label_b=本周</code> <code>range_b=周一~周日</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>#26 修正作息 <span class="wake">#26 修正作息 · analyze_3 · 3 场景</span></h3>
+<div class="card" data-s="76 改 1 条记录多字段 amend_basic #26 修正作息 这条记错了,改成工作.AI调优,活动是写代码"><div class="row1"><span class="no">76</span><span class="title">改 1 条记录多字段</span><span class="id">amend_basic</span><button class="copybtn" data-p="这条记错了,改成工作.AI调优,活动是写代码">复制 prompt</button></div><div class="prompt">这条记错了,改成工作.AI调优,活动是写代码</div><div class="fields">可编辑位：<code>record_id=N</code> <code>fields=["category","activity"]</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="77 JSON 内联修改 amend_json_inline #26 修正作息 用 JSON 改 id=123 的多字段"><div class="row1"><span class="no">77</span><span class="title">JSON 内联修改</span><span class="id">amend_json_inline</span><button class="copybtn" data-p="用 JSON 改 id=123 的多字段">复制 prompt</button></div><div class="prompt">用 JSON 改 id=123 的多字段</div><div class="fields">可编辑位：<code>record_id=N</code> <code>json=...</code> · 用户会说 JSON 内联吗？</div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+<div class="card" data-s="78 超过 24h 修改警告 amend_24h_warn #26 修正作息 改 3 天前那条记录(超 24h)"><div class="row1"><span class="no">78</span><span class="title">超过 24h 修改警告</span><span class="id">amend_24h_warn</span><button class="copybtn" data-p="改 3 天前那条记录(超 24h)">复制 prompt</button></div><div class="prompt">改 3 天前那条记录(超 24h)</div><div class="fields">可编辑位：<code>record_id=N</code> <code>record_date=24h 前</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>T4 类别深挖 <span class="wake">T4 类别深挖 · analyze_4 · 2 场景</span></h3>
+<div class="card" data-s="79 区间内某分类深挖 category_range T4 类别深挖 这周健身什么时候做的"><div class="row1"><span class="no">79</span><span class="title">区间内某分类深挖</span><span class="id">category_range</span><button class="copybtn" data-p="这周健身什么时候做的">复制 prompt</button></div><div class="prompt">这周健身什么时候做的</div><div class="fields">可编辑位：<code>range=YYYY-MM-DD ~ YYYY-MM-DD</code> <code>category=X</code></div><div class="note"><textarea placeholder="评审备注：T4 是否黑话？"></textarea></div></div>
+<div class="card" data-s="80 单日某分类 category_day T4 类别深挖 7/15 健身什么时候做的"><div class="row1"><span class="no">80</span><span class="title">单日某分类</span><span class="id">category_day</span><button class="copybtn" data-p="7/15 健身什么时候做的">复制 prompt</button></div><div class="prompt">7/15 健身什么时候做的</div><div class="fields">可编辑位：<code>date=YYYY-MM-DD</code> <code>category=X</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+
+<div class="sub"><h3>T5 异常检测 <span class="wake">T5 异常检测 · analyze_5 · 2 场景</span></h3>
+<div class="card" data-s="81 默认 7 天窗口检测 anomaly_default T5 异常检测 最近状态怎么样/有没有异常"><div class="row1"><span class="no">81</span><span class="title">默认 7 天窗口检测</span><span class="id">anomaly_default</span><button class="copybtn" data-p="最近状态怎么样/有没有异常">复制 prompt</button></div><div class="prompt">最近状态怎么样/有没有异常</div><div class="fields">可编辑位：<code>window=7</code></div><div class="note"><textarea placeholder="评审备注：prompt 用“/”并列两种问法是否合理？T5 是否黑话？"></textarea></div></div>
+<div class="card" data-s="82 30 天窗口 anomaly_window_30 T5 异常检测 最近 30 天有没有异常"><div class="row1"><span class="no">82</span><span class="title">30 天窗口</span><span class="id">anomaly_window_30</span><button class="copybtn" data-p="最近 30 天有没有异常">复制 prompt</button></div><div class="prompt">最近 30 天有没有异常</div><div class="fields">可编辑位：<code>window=30</code></div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+</div>
+
+<!-- ===== 辅助与管理 ===== -->
+<div class="group" id="g-admin"><h2>⚙️ 辅助与管理 <span class="cnt">3 个子功能 · 3 场景</span></h2>
+<div class="sub"><h3>#21 飞书探测 <span class="wake">#21 飞书探测 · admin_1 · 1 场景</span></h3>
+<div class="card" data-s="83 三档探测 feishu_probe #21 飞书探测 飞书能力怎么样"><div class="row1"><span class="no">83</span><span class="title">三档探测</span><span class="id">feishu_probe</span><button class="copybtn" data-p="飞书能力怎么样">复制 prompt</button></div><div class="prompt">飞书能力怎么样</div><div class="fields">可编辑位：<code>scope=cli/auth/calendar</code> · “三档”用户能懂吗？</div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+<div class="sub"><h3>#22 初始化数据库 <span class="wake">#22 初始化数据库 · admin_2 · 1 场景</span></h3>
+<div class="card" data-s="84 建三表 init_default #22 初始化数据库 帮我初始化数据库"><div class="row1"><span class="no">84</span><span class="title">建三表</span><span class="id">init_default</span><button class="copybtn" data-p="帮我初始化数据库">复制 prompt</button></div><div class="prompt">帮我初始化数据库</div><div class="fields">可编辑位：<code>scope=all</code> · “建三表”是否技术黑话？</div><div class="note"><textarea placeholder="评审备注"></textarea></div></div>
+</div>
+<div class="sub"><h3>首次使用 <span class="wake">首次使用 · admin_3 · 1 场景</span></h3>
+<div class="card" data-s="85 首次使用(初始化工作流) first_use 首次使用 请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用) 待开发"><div class="row1"><span class="no">85</span><span class="title">首次使用(初始化工作流)</span><span class="id">first_use</span><span class="badge-todo">【待开发】</span><button class="copybtn" data-p="请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用)">复制 prompt</button></div><div class="prompt">请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用)</div><div class="fields">可编辑位：（无）</div><div class="note"><textarea placeholder="评审备注：同样夹带“唤醒词:”"></textarea></div></div>
+</div>
+</div>
+
+</div>
+</div>
+<script>
+const q=document.getElementById('q'),hit=document.getElementById('hit');
+const cards=[...document.querySelectorAll('.card')];
+function apply(){
+const v=(q.value||'').trim().toLowerCase();
+let n=0;
+cards.forEach(c=>{
+const s=(c.getAttribute('data-s')||'').toLowerCase();
+const show=!v||s.includes(v);
+c.style.display=show?'':'none';
+if(show)n++;
+});
+document.querySelectorAll('.sub').forEach(sub=>{
+const vis=[...sub.querySelectorAll('.card')].some(c=>c.style.display!=='none');
+sub.style.display=vis?'':'none';
+});
+document.querySelectorAll('.group').forEach(g=>{
+const vis=[...g.querySelectorAll('.card')].some(c=>c.style.display!=='none');
+g.style.display=vis?'':'none';
+});
+hit.textContent=v?`命中 ${n} / 85`:`共 85 个场景 · 11 个标【待开发】`;
+}
+q.addEventListener('input',apply);apply();
+document.querySelectorAll('.copybtn').forEach(b=>{
+b.addEventListener('click',e=>{
+e.stopPropagation();
+const t=b.getAttribute('data-p')||'';
+navigator.clipboard.writeText(t).then(()=>{const o=b.textContent;b.textContent='已复制';setTimeout(()=>b.textContent=o,1200);});
+});
+});
+</script>
+</body>
+</html>

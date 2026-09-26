@@ -9,7 +9,7 @@ import {
   renderSheetFrame, renderSummaryHead, renderTocBlock,
 } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
-import { dietUiCss, windowStrip } from './dietUi.js';
+import { dietUiCss, receiptStub, windowStrip } from './dietUi.js';
 import { copyArea, copyLog, dataCopyArea } from '../shared/copyArea.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { nowStamp } from '../render/receipt.js';
@@ -174,7 +174,7 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
   sheetParts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
   sheetParts.push(sourceLine({ source: '饮食记录', start: o.start, end: o.start, count: meals.length }));
   /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。
-     **落点在纸外**（裁切线之后）：纸是"这张单子"，复制区是"这张单子的出口"，两者不同层。 */
+     **落点在纸里**（2026-09-24 用户裁定「纸内，但要有小票的巧思」）：成小票下缘那一联「存根」。 */
   const copy = anchored('td-copy', listPageCopy({
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.today',
     data: {
@@ -205,8 +205,8 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
         { id: 'td-copy', text: '复制区' },
       ],
     }) + renderSheetFrame({
-      variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join(''),
-    }) + copy,
+      variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join('') + receiptStub(copy),
+    }),
     charts: false,
   });
 }

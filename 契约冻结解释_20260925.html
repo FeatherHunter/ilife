@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>契约冻住了是什么意思？</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f2f2f7;color:#1d1d1f;line-height:1.7;font-size:15px;padding:20px 14px 60px}
+.wrap{max-width:640px;margin:0 auto}
+.card{background:#fff;border:1px solid #d1d1d6;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+h1{font-size:20px;margin-bottom:8px}
+h2{font-size:16px;margin-bottom:8px}
+p{margin-bottom:8px}
+.box{background:#f0f6ff;border:1px solid #cfe3ff;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.bad{background:#fff4ec;border:1px solid #ffd8b5;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:13px}
+.demo{background:#1d1d1d;color:#f5f5f7;border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;white-space:pre-wrap;margin:8px 0}
+.small{font-size:12.5px;color:#6e6e73}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+<h1>契约冻住了，是什么意思？</h1>
+<p>想象一张<strong>快递单</strong>：格子是印好的（姓名 / 电话 / 地址），你不能自己在边上再加一栏“飞书号”。一加，机器就认不出来，直接拒收。</p>
+<p>HELP 的“契约”就是这张单：每个场景只能有 <code>标题 / 唤醒词 / 提示词 / 可填栏</code> 这几格，多一格就报错。想加“命令”一栏？不行，单子锁死了。</p>
+</div>
+<div class="card">
+<h2>1. 可填栏本来是干什么的？</h2>
+<p>就是给你填空的。HELP 上看到的 <code>日期：___</code> 输入框，填完会自动贴在提示词末尾：</p>
+<div class="demo">提示词：帮我看看那天做了什么
+
+日期：2026-07-15</div>
+<p>你填什么，新会话就看到什么。就这一个用途。</p>
+</div>
+<div class="card">
+<h2>2. 卡路里为什么贴了命令？</h2>
+<p>它也想显示“能跑的命令”，但单子不让加新栏，就把命令硬塞进了可填栏：</p>
+<div class="bad">可填栏里本该是空，等你填的。<br>卡路里放的是：可执行命令：calorie-cmd-read …（出厂就是满的）</div>
+<p>所以你一点开，输入框里躺着一条长命令，复制出来就变成 <code>自然语言 + 命令</code> 混在一起。</p>
+<p class="small">不是你记错：可填栏当初就是给用户填的，不是给命令住的。卡路里是没地方放，才借了这个格子。</p>
+</div>
+<div class="card">
+<h2>3. 记住一句话</h2>
+<div class="box"><strong>契约＝格子锁死；可填栏＝填空；卡路里＝拿填空栏贴了命令。</strong><br>作息以后只拿它填空，不贴命令，就不打架了。</div>
+</div>
+</div>
+</body>
+</html>

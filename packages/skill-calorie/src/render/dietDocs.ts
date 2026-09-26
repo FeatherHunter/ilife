@@ -32,7 +32,7 @@ import {
 } from 'base-paint/blocks';
 import { assembleDocPage } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
-import { dietHead, sheetStyleCss } from '../diet/dietUi.js';
+import { dietHead, receiptStub, sheetStyleCss } from '../diet/dietUi.js';
 import { emptyGuide } from '../shared/emptyGuide.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { DIET_LIST_COLUMNS, buildDietOverviewPage, buildMealDistributionPage, listPageCopy, minuteOf, noteOf } from '../diet/todayDocs.js';
@@ -298,7 +298,8 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   /* §五 第 13 行：缺值口径一条（餐别口径已在纸里那一条说过一次，不重复；#591 门禁 R2 的口径行做法照旧）。 */
   sheetParts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
   /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。
-     **落点在纸外**（与今日页同一落点：纸是这张单子，复制区是它的出口）。 */
+     **落点在纸里**（2026-09-24 用户裁定「纸内，但要有小票的巧思」）：它成小票下缘那一联「存根」
+     ——撕线（`receiptStub`）在它上面，组件自己那条裁切线留在纸底，两线夹着一联就是存根。 */
   const copy = anchored(LIST_ANCHOR.copy, listPageCopy({
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.diet',
     data: {
@@ -325,8 +326,9 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       ? '日均只按有记录的 ' + o.loggedDays + ' 天算，其余日子算缺数。'
       : '本窗还没有饮食记录。',
     content: '<style>' + sheetStyleCss() + '</style>' + toc + head
-      + renderSheetFrame({ variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join('') })
-      + copy,
+      + renderSheetFrame({
+        variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join('') + receiptStub(copy),
+      }),
     charts: false, pageUi: true,
   });
 }

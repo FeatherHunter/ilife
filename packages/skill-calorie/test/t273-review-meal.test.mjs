@@ -327,8 +327,8 @@ test('#273 ⑤ 空窗（库非空、这一段零记录）⇒ 仍出完整页 ＋
   const r = renderOk(DIR, 'calorie.view.diet', { start: '2026-10-01', end: '2026-10-07' }, '空窗无 meal');
   assert.ok(r.html.startsWith('<!doctype html>') && r.html.includes('<meta charset="utf-8">'), '空窗页不是完整文档');
   const text = visible(r.html);
-  assert.ok(text.includes('没有饮食记录，汇总算不出来'), '空窗页缺空态句');
-  assert.ok(text.includes('用「记一餐」'), '空窗页缺「怎么记第一条」的引导句');
+  assert.ok(text.includes('没有饮食记录'), '空窗页缺空态句');
+  assert.ok(text.includes('「记一餐」'), '空窗页缺「怎么记第一条」的引导句');
   assert.ok(text.includes('📊 数据来源 · 饮食记录 · 2026-10-01 → 2026-10-07'), '空窗页缺来源脚注');
   assert.ok(r.bytes > 4000, '空窗页过小（' + r.bytes + ' B）');
 });
@@ -348,7 +348,10 @@ test('#273 ⑤ 反例②：空窗（库非空、这一段零记录）＋ 带 `me
   assert.ok(r.html.includes('<div class="ilife-block-kpi-card-label">日均热量</div>'
     + '<div class="ilife-block-kpi-card-value-row"><span class="ilife-block-kpi-card-value">—</span></div>'),
     '空窗餐别页的日均那一格没写 `—`：' + text.slice(0, 300));
-  assert.ok(!text.includes('没有饮食记录，汇总算不出来'), '空窗 ＋ meal 还是落回了总览那一张空态页');
+  /* 反例②的钉点换到**总览空态页独有的那一句**（`guide` 里的「记下吃的」）：原来拿「没有饮食记录，
+     汇总算不出来」当标记，2026-09-25 用户把那句从第一性原理重写后它不再存在（垫字全删），
+     而餐别页自己的副题恰好也写「…没有饮食记录。」⇒ 拿「没有饮食记录」当标记会误判。 */
+  assert.ok(!text.includes('记下吃的'), '空窗 ＋ meal 还是落回了总览那一张空态页');
   assert.ok(!r.html.includes('<section id="md-dist">'), '零记录不该出四桶占比块');
   assert.ok(r.bytes > 4000, '空窗餐别页过小（' + r.bytes + ' B）');
   /* 单餐别那一支也走同一页（不许只有 `all` 走对）：餐数 0、日均 `—`、空态句按餐别名逐字换。 */

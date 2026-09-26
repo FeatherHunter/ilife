@@ -59,7 +59,7 @@ import {
 } from 'base-paint/blocks';
 import { renderEquationBar } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
-import { dietUiCss, sheetStyleCss, windowStrip } from './dietUi.js';
+import { dietUiCss, receiptStub, sheetStyleCss, windowStrip } from './dietUi.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
@@ -170,9 +170,15 @@ export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
     '<style>' + sheetStyleCss() + '</style>',
     renderTocBlock({ items: [{ id: 'sec-empty', text: input.blockTitle }] }),
     /* 小票版（2026-09-24 用户裁定）：**空态也进纸**——一张空单子也是单子；复制区仍在纸外。 */
+    /* 两句分槽（用户 2026-09-25 图报「一大段话扎堆」）：空态句走 `text`、引导句走 `hint`
+       ——公共层 `renderEmptyState` 把两槽渲染成两块（`empty-text` ／ `empty-hint`），
+       此前两句拼成一串塞进 `text`，在纸上是一坨三行的粗体。同族先例＝`render/dietDocs.ts:259`
+       的 `emptyGuide({ text, hint })`，那边一直是分槽的。 */
     renderSheetFrame({
       variant: 'receipt', notch: true, cutLine: true,
-      content: anchored('sec-empty', renderEmptyBlock({ title: input.blockTitle, text: input.emptyText + input.guide })),
+      content: anchored('sec-empty', renderEmptyBlock({
+        title: input.blockTitle, text: input.emptyText, hint: input.guide,
+      })),
     }),
     sourceFootnote(input.footnote),
     docCopy(envelope, input.command, DB_FILENAME + ' ｜ ' + input.blockTitle),
@@ -185,7 +191,12 @@ export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
     subtitle: input.emptyText,
     metaLeft: input.metaLeft,
     badge: BADGE,
-    summary: input.emptyText,
+    /* 结论小字行（B 线第 3 行）**这一页不出**（用户 2026-09-25 图报同一句话说了两遍）：
+       它此前拿的就是 `emptyText`，与纸里那张空态块的 `text` 逐字同一句 ⇒ 一页之内同一件事说两次，
+       而且那句带窗口区间与「（不编数）」，压在标题下又是一整行。空态的信息全在纸里那一次给足
+       （空态句 ＋ 引导句两行），页头因此只剩「眉标 ＋ 页题」两行。
+       `subtitle` 位保留不动：它只在 B 线失效（页头回落 A 线时——`metaLeft` 被机器话筛挡掉那一种）
+       才上屏，留着是那条回落的兜底。 */
     content: body,
   });
 }
@@ -705,11 +716,13 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
       { id: 'sec-week', text: '本周 7 天' },
       { id: 'sec-cups', text: '今日每杯' },
     ] }),
-    /* 小票版：正文进纸，复制区在纸外（与今日页／窗口页同一落点）。 */
+    /* 小票版：正文进纸，复制区也在纸里（2026-09-24 用户裁定「纸内，但要有小票的巧思」）——
+       它成小票下缘那一联「存根」，与今日页／窗口页同一处标记（`receiptStub`）。 */
     renderSheetFrame({
-      variant: 'receipt', notch: true, cutLine: true, content: buildTodayWaterBlock(v, name),
+      variant: 'receipt', notch: true, cutLine: true,
+      content: buildTodayWaterBlock(v, name)
+        + receiptStub(docCopy(envelope, command, DB_FILENAME + ' ｜ 饮水记录')),
     }),
-    docCopy(envelope, command, DB_FILENAME + ' ｜ 饮水记录'),
   ].join('');
   return assembleDocPage({
     docTitle: DOC_TITLE,

@@ -1,4 +1,4 @@
-﻿/** #179 · 整页装配共用件：区块 HTML 拼成完整文档（最后一公里）。
+/** #179 · 整页装配共用件：区块 HTML 拼成完整文档（最后一公里）。
  *
  * 谁在用（写得出哪两个在用）：**基础信息**（`src/profile/` 的预检确认页与回执页）与
  * **身体细节／身材照片**（身体那两页住 `src/body/wizardDocs.ts`、身材照那两页住 `src/photo/wizardPortDocs.ts`）；饮食／运动／分析各域页面
@@ -72,7 +72,17 @@ const BLINE_CSS = '.meta-bar{display:flex;justify-content:space-between;align-it
   + '.legend{font-size:12px;color:var(--fg2);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap}\n'
   + '.legend span{display:inline-flex;align-items:center;gap:6px}\n'
   + '.legend i{display:inline-block;width:16px;height:2px}\n'
-  + '.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}\n';
+  + '.legend .b{border-top:2px dashed #ff9500;background:transparent;height:0}\n'
+  /* B线页头也跟正文列走（用户 2026-09-25 图报：正文那 880 一列才是内容该在的地方，页头两件却顶到整壳两边）。
+   *  病根是**收了三个、漏了两个**：页级配方 ⑧／#728 只收 `.ilife-block-page-shell-{eyebrow,title,subtitle}`
+   *  ——那是 A 线三级的类名；B 线页头住的 `meta-bar`（左参数行＋右类型徽章）与 `sub`（结论小字行）
+   *  两个类名不在这条清单一里 ⇒ 宽屏档上标题进了 880 那一列、这两件仍顶到 1280 壳的两边。
+   *  实测（1440×900，`calorie.view.diet` 空窗页）：标题 x=297、正文列 280~1158，而 meta-bar 左行 x=96、
+   *  徽章右缘 x=1351——页头左右各比正文列宽 180px，用户图上画的红框正是这一列。
+   *  值与断点照 #728 那一组（880／居中／`min-width:1001px`），不新造数；选择器挂 `.ilife-page-ui`
+   *  （那一列本来就只对挂了配方的页存在）＋ B 线自己的两个直系子件，A 线页与窄屏档一律不命中。 */
+  + '@media (min-width:1001px){.ilife-page-ui .ilife-block-page-shell>.meta-bar,'
+  + '.ilife-page-ui .ilife-block-page-shell>.sub{max-width:880px;margin-left:auto;margin-right:auto}}\n';
 
 /** 窄屏读数卡两列（`≤640` 恒启用）：公共层同断点是单列（`blocks.ts`），`pageUi` 配方
  *  同断点已是两列（`pageUi.ts`，值逐字同）——未启用配方的页此前仍是单列，在此统一收成两列

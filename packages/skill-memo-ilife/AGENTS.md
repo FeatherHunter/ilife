@@ -41,7 +41,7 @@
 | `scripts/build-help.mjs` | 38 | 38 | 未越线，在册备查 |
 | `scripts/check-listpage-empty-span.mjs` | 203 | 231 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
-| `scripts/gen-cli.mjs` | 380 | 293 | 已回线内（挂号值 380 留档，只许变短） |
+| `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
 | `scripts/gen-help-assets.mjs` | 304 | 304 | 未越线，在册备查 |
 | `scripts/help-assets.data.mjs` | 125 | 127 | 未越线，在册备查 |
@@ -111,7 +111,7 @@
 | `src/search/index.ts` | 9 | 9 | 未越线，在册备查 |
 | `src/search/routes.ts` | 66 | 66 | 未越线，在册备查 |
 | `src/search/run.ts` | 72 | 207 | 未越线，在册备查 |
-| `src/shared/commandSpec.ts` | 75 | 75 | 未越线，在册备查 |
+| `src/shared/commandSpec.ts` | 75 | 83 | 未越线，在册备查 |
 | `src/shared/errors.ts` | 25 | 25 | 未越线，在册备查 |
 | `src/shared/exit.ts` | 12 | 12 | 未越线，在册备查 |
 | `src/shared/paths.ts` | 100 | 100 | 未越线，在册备查 |

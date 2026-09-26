@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作息管家 prompt 改写 v1 草稿 · 新旧对照 85 条</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f2f2f7;color:#1d1d1f;line-height:1.65;font-size:13.5px;padding:20px 14px 80px}
+.wrap{max-width:1080px;margin:0 auto}
+.hero{background:#fff;border:1px solid #d1d1d6;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.hero h1{font-size:19px;margin-bottom:6px}
+.hero .meta{font-size:12.5px;color:#555}
+.hero code{background:#f2f2f7;padding:0 6px;border-radius:6px;font-size:11.5px}
+.spec{background:#fff;border:1px solid #007aff;border-radius:14px;padding:12px 16px;margin-bottom:12px}
+.spec h2{font-size:14px;color:#0a63ce;margin-bottom:6px}
+.spec ol{margin-left:18px;font-size:12.5px}
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(242,242,247,.95);padding:8px 0}
+.toolbar input{width:100%;border:1px solid #d1d1d6;border-radius:10px;padding:9px 13px;font-size:14px}
+.hit{text-align:center;font-size:12px;color:#888;margin:6px 0}
+.group{background:#fff;border:1px solid #d1d1d6;border-radius:14px;margin-bottom:12px;overflow:hidden}
+.group h2{padding:11px 15px;background:#fafafa;border-bottom:1px solid #eee;font-size:15px}
+.card{border-top:1px dashed #e5e5ea;padding:10px 14px}
+.card .hd{font-weight:800;font-size:13.5px}
+.card .hd .no{background:#888;color:#fff;border-radius:999px;font-size:11px;padding:0 7px;margin-right:6px}
+.card .hd .id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#999;font-weight:400;margin-left:6px}
+.badge{background:#fff1e2;color:#b25b00;border-radius:999px;font-size:11px;padding:0 8px;margin-left:6px;font-weight:700}
+.old{background:#f7f7f8;border:1px solid #e5e5ea;border-radius:8px;padding:7px 10px;margin-top:6px;font-size:12.5px;color:#555}
+.new{background:#1d1d1d;color:#f5f5f7;border-radius:10px;padding:9px 11px;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;line-height:1.7}
+.diff{margin-top:6px;font-size:12px;color:#0a63ce;background:#f0f6ff;border-radius:8px;padding:6px 10px}
+.copy{float:right;font-size:11px;border:1px solid #007aff;color:#007aff;background:#fff;border-radius:7px;padding:1px 9px;cursor:pointer}
+.note-ta{width:100%;margin-top:6px;border:1px dashed #ccc;border-radius:8px;padding:6px 9px;font-size:12px;min-height:30px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<h1>作息管家 prompt 改写 v1 草稿 · 新旧对照（85 条）</h1>
+<div class="meta">第一性原理：复制出来 → 贴进全新 Agent 会话 → 能高质量走完。五段式：<code>装载 / 目标 / 槽位 / 铁则 / 交付</code>。对标卡路里三段＋饼干“请办两件”，我们多两条铁则：<code>先查后写、不编造</code>＋<code>无记录阻断、破坏性确认</code>。旧 prompt 原样 trích <code>help-assets.js</code>，新 prompt 是本版草稿，可直接复制讨论。<br>来源 HELP：<code>作息管家_HELP_20260925_002745.html</code> · 待开发 11 条照样改了，方便你决定下架还是留着。</div>
+</div>
+<div class="spec">
+<h2>v1 规范（冻住讨论）</h2>
+<ol>
+<li><b>装载</b>：第一句必须是“请你加载技能 作息管家，执行唤醒词「xxx」”。新会话靠它路由，不许省略。</li>
+<li><b>目标</b>：一句话用户话，不许出现 唤醒词:/HTML/vs/id/title/completion/upsert/diff/start-end/T4/T5/三档/建三表/软删/反向对账。</li>
+<li><b>槽位</b>：已知写出来，待填用 ____，带格式和缺省（今天/昨天/周一起始/YYYY-MM-DD/HH:MM）。</li>
+<li><b>铁则</b>：缺参追问不编；改删先列候选让我认准；分类走白名单二级；0 条直说无记录；24h 计划必须 00:00-24:00 接满，预览确认再落库。</li>
+<li><b>交付</b>：落盘 HTML 并回绝对路径，文字只概括结论 ≤三句话。</li>
+</ol>
+</div>
+<div class="toolbar"><input id="q" placeholder="搜索：场景名 / id / 新旧 prompt，例如：健身、复盘、待开发、id=544、唤醒词"><div class="hit" id="hit"></div></div>
+<div id="list">
+
+<div class="group"><h2>📝 写入与同步 · 14 条</h2>
+
+<div class="card" data-s="1 添加单条作息记录 record_add_single 请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码"><div class="hd"><span class="no">1</span>添加单条作息记录<span class="id">record_add_single · #0 记作息</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条刚才的作息。
+时间:今天 14:00-15:00
+在做什么:写 AI 调优代码
+分类:____（白名单二级如工作.AI调优，不确定就空着让你归）
+铁则:缺时间/活动追问一句，不编；分类不在白名单就按申请流程问我，不硬写。
+交付:落盘回执 HTML 并回绝对路径，文字只说记了几条、是什么，不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条刚才的作息。
+时间:今天 14:00-15:00
+在做什么:写 AI 调优代码
+分类:____（白名单二级如工作.AI调优，不确定就空着让你归）
+铁则:缺时间/活动追问一句，不编；分类不在白名单就按申请流程问我，不硬写。
+交付:落盘回执 HTML 并回绝对路径，文字只说记了几条、是什么，不超过三句话。</div><div class="diff">变化：补装载＋槽位＋铁则＋交付；旧的缺分类策略，新手不知道白名单。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="2 通过 JSON 文件批量添加 record_add_json 请帮我批量导入这些作息数据(从 JSON 文件)"><div class="hd"><span class="no">2</span>通过 JSON 文件批量添加<span class="id">record_add_json · #0 记作息</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我有一个 JSON 文件要批量导入作息。
+文件路径:____
+铁则:逐条校验，单条失败不挡别的；重复执行会重复插入，写前先告诉我文件里有几条。
+交付:落盘回执 HTML 并回绝对路径，文字只说成功几条、失败几条和原因，不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我批量导入这些作息数据(从 JSON 文件)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我有一个 JSON 文件要批量导入作息。
+文件路径:____
+铁则:逐条校验，单条失败不挡别的；重复执行会重复插入，写前先告诉我文件里有几条。
+交付:落盘回执 HTML 并回绝对路径，文字只说成功几条、失败几条和原因，不超过三句话。</div><div class="diff">变化：补文件槽位＋条数预告；与第6条待合并（仅全半角差异）。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="3 category 不在白名单 record_add_illegal_category 记一笔:14:00 写了代码 待开发"><div class="hd"><span class="no">3</span>category 不在白名单<span class="id">record_add_illegal_category · #0 记作息</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条 14:00 写代码，但不知道算哪个分类。
+时间:今天 14:00-____
+在做什么:写代码
+你觉得算哪类:____（按白名单二级归，不在就走申请流程问我）
+铁则:不硬写、不编分类。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：记一笔:14:00 写了代码</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条 14:00 写代码，但不知道算哪个分类。
+时间:今天 14:00-____
+在做什么:写代码
+你觉得算哪类:____（按白名单二级归，不在就走申请流程问我）
+铁则:不硬写、不编分类。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：把“系统报错分支”改成用户可说的话；去英文 category。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="4 只传一级 category record_add_l1_only 请帮我记一条创作类作息"><div class="hd"><span class="no">4</span>只传一级 category<span class="id">record_add_l1_only</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条创作类的事，具体二级你帮我细化。
+大类:创作
+具体做了什么:____
+时间:____
+铁则:写成功也要在页顶提示建议细化到二级。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我记一条创作类作息</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条创作类的事，具体二级你帮我细化。
+大类:创作
+具体做了什么:____
+时间:____
+铁则:写成功也要在页顶提示建议细化到二级。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补时间和活动槽；去英文 category。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="5 必填字段缺失 record_add_missing_field 请帮我记一条作息(用户漏说活动名)"><div class="hd"><span class="no">5</span>必填字段缺失<span class="id">record_add_missing_field</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条作息，但刚才漏说了，你问我补齐再记。
+我记得的:____
+缺的部分:你追问（时间/活动/分类三问，最多问一次）
+铁则:不编，问齐再写。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我记一条作息(用户漏说活动名)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我想记一条作息，但刚才漏说了，你问我补齐再记。
+我记得的:____
+缺的部分:你追问（时间/活动/分类三问，最多问一次）
+铁则:不编，问齐再写。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：把“漏说”从括号说明变成可执行的追问策略。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="6 批量导入作息 batch_add 请帮我批量导入这些作息数据（从 JSON 文件）"><div class="hd"><span class="no">6</span>批量导入作息<span class="id">batch_add</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我要一次导入多条作息（JSON 文件）。
+文件路径:____
+目标日期:____（缺省今天）
+铁则:单条不过不挡别的；有1条没过就明确说哪条没过；重复跑会重复插，写前提醒我。
+交付:落盘批量回执整页并回绝对路径，文字只说总数/成功/失败，不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我批量导入这些作息数据（从 JSON 文件）</div><div class="new">请你加载技能 作息管家，执行唤醒词「#0 记作息」。
+
+我要一次导入多条作息（JSON 文件）。
+文件路径:____
+目标日期:____（缺省今天）
+铁则:单条不过不挡别的；有1条没过就明确说哪条没过；重复跑会重复插，写前提醒我。
+交付:落盘批量回执整页并回绝对路径，文字只说总数/成功/失败，不超过三句话。</div><div class="diff">变化：补总数/成功/失败回执口径；建议与第2条合并。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="7 默认游标到当前时间拉取 prep_default 请帮我准备今天的消息 待开发"><div class="hd"><span class="no">7</span>默认游标到当前时间拉取<span class="id">prep_default · #1 准备消息</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我把今天到现在的聊天消息整理好，我要同步成作息。
+范围:缺省从上次游标到现在
+铁则:分页给，默认200条一页；没有就直说没有。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我准备今天的消息</div><div class="new">请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我把今天到现在的聊天消息整理好，我要同步成作息。
+范围:缺省从上次游标到现在
+铁则:分页给，默认200条一页；没有就直说没有。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补游标缺省＋分页＋空处理。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="8 指定时间区间拉取 prep_with_range 请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息 待开发"><div class="hd"><span class="no">8</span>指定时间区间拉取<span class="id">prep_with_range</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我拉一段时间的消息。
+开始:2026-07-20 00:00
+结束:2026-07-24 23:59（格式 YYYY-MM-DD HH:MM）
+铁则:分页给，告诉我有没有下一页。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息</div><div class="new">请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我拉一段时间的消息。
+开始:2026-07-20 00:00
+结束:2026-07-24 23:59（格式 YYYY-MM-DD HH:MM）
+铁则:分页给，告诉我有没有下一页。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补格式＋翻页预告。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="9 翻页获取下一页 prep_pagination 请帮我翻第 3 页 待开发"><div class="hd"><span class="no">9</span>翻页获取下一页<span class="id">prep_pagination</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我翻消息的第 3 页。
+页码:3
+铁则:给这页的消息＋有没有下一页。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我翻第 3 页</div><div class="new">请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我翻消息的第 3 页。
+页码:3
+铁则:给这页的消息＋有没有下一页。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载，旧的没主语新会话接不住。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="10 区间内无消息 prep_no_messages 请帮我准备 2026-07-23 的消息 待开发"><div class="hd"><span class="no">10</span>区间内无消息<span class="id">prep_no_messages</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我准备 2026-07-23 的消息。
+日期:2026-07-23
+铁则:那天没消息就直说没消息，不编名单。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我准备 2026-07-23 的消息</div><div class="new">请你加载技能 作息管家，执行唤醒词「#1 准备消息」。
+
+帮我准备 2026-07-23 的消息。
+日期:2026-07-23
+铁则:那天没消息就直说没消息，不编名单。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：与第7条同形问题显性化——用户说不出“无消息”，这是系统分支，建议下架本条。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="11 完整同步流程 sync_full 请帮我同步今天的消息成作息记录 待开发"><div class="hd"><span class="no">11</span>完整同步流程<span class="id">sync_full · #2 同步作息</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#2 同步作息」。
+
+把今天的消息变成作息记进去（拉消息→分析→写入一条龙）。
+范围:今天
+铁则:每条怎么定的告诉我，写完逐条给回执。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我同步今天的消息成作息记录</div><div class="new">请你加载技能 作息管家，执行唤醒词「#2 同步作息」。
+
+把今天的消息变成作息记进去（拉消息→分析→写入一条龙）。
+范围:今天
+铁则:每条怎么定的告诉我，写完逐条给回执。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：把“完整流程”翻译成人话，去掉准备+分析+写入黑话。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="12 同步指定日期 sync_partial_day 请帮我同步 2026-07-22 的消息 待开发"><div class="hd"><span class="no">12</span>同步指定日期<span class="id">sync_partial_day</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#2 同步作息」。
+
+把 2026-07-22 那天的消息变成作息记进去。
+日期:2026-07-22
+铁则:写完逐条给回执。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我同步 2026-07-22 的消息</div><div class="new">请你加载技能 作息管家，执行唤醒词「#2 同步作息」。
+
+把 2026-07-22 那天的消息变成作息记进去。
+日期:2026-07-22
+铁则:写完逐条给回执。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补逐条回执。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="13 从游标继续 sync_incremental 请帮我增量同步(接着上次) 待开发"><div class="hd"><span class="no">13</span>从游标继续<span class="id">sync_incremental · #3 增量同步</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#3 增量同步」。
+
+接着上次没同步完的地方继续同步。
+起点:上次结束位置（你帮我查游标）
+铁则:告诉我从哪儿续上的。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我增量同步(接着上次)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#3 增量同步」。
+
+接着上次没同步完的地方继续同步。
+起点:上次结束位置（你帮我查游标）
+铁则:告诉我从哪儿续上的。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去游标黑话，改成“上次结束位置你帮我查”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="14 首次同步无游标 sync_no_cursor 请帮我同步(从未同步过) 待开发"><div class="hd"><span class="no">14</span>首次同步无游标<span class="id">sync_no_cursor</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#3 增量同步」。
+
+我从没同步过，从头开始同步。
+起点:最早的消息
+铁则:告诉我从哪天开始的。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我同步(从未同步过)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#3 增量同步」。
+
+我从没同步过，从头开始同步。
+起点:最早的消息
+铁则:告诉我从哪天开始的。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去游标，补起点说明。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+</div>
+
+<div class="group"><h2>🔍 查询与浏览 · 28 条</h2>
+
+<div class="card" data-s="15 当日满 24h 出综合报告 summary_full_24h 请给我今天总结"><div class="hd"><span class="no">15</span>当日满 24h 出综合报告<span class="id">summary_full_24h · #4 今天总结</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看今天的总结，要全天综合报告（分类/时长/时间轴/睡眠）。
+日期:今天
+铁则:记满 24h 出全报告；没满先出摘要并告诉我还缺什么。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我今天总结</div><div class="new">请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看今天的总结，要全天综合报告（分类/时长/时间轴/睡眠）。
+日期:今天
+铁则:记满 24h 出全报告；没满先出摘要并告诉我还缺什么。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补报告里有什么；把16条的分叉收进铁则。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="16 当日未满 24h 出摘要 summary_partial 请给我今天总结(还没记完)"><div class="hd"><span class="no">16</span>当日未满 24h 出摘要<span class="id">summary_partial</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+今天还没记完，先给我个摘要看看。
+日期:今天
+铁则:出简短摘要＋明确说补全后再看完整报告。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我今天总结(还没记完)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+今天还没记完，先给我个摘要看看。
+日期:今天
+铁则:出简短摘要＋明确说补全后再看完整报告。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：用户明确知道没记完才用这条，否则走15。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="17 指定日期总结 summary_specific_date 请给我 2026-07-22 的总结"><div class="hd"><span class="no">17</span>指定日期总结<span class="id">summary_specific_date</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看 2026-07-22 那天的总结。
+日期:2026-07-22
+铁则:那天没记就直说没记，不编报告。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我 2026-07-22 的总结</div><div class="new">请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看 2026-07-22 那天的总结。
+日期:2026-07-22
+铁则:那天没记就直说没记，不编报告。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补空态阻断。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="18 指定日期无记录 summary_no_records 请给我 2026-01-01 的总结"><div class="hd"><span class="no">18</span>指定日期无记录<span class="id">summary_no_records</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看 2026-01-01 那天的总结。
+日期:2026-01-01
+铁则:0 条就出空态页，直说那天没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我 2026-01-01 的总结</div><div class="new">请你加载技能 作息管家，执行唤醒词「#4 今天总结」。
+
+我想看 2026-01-01 那天的总结。
+日期:2026-01-01
+铁则:0 条就出空态页，直说那天没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：与17仅日期不同，用户说不出“无记录”，建议下架本条，留17一条即可。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="19 日期范围汇总 summary_range_default 请给我 7/13~7/19 这一周的汇总"><div class="hd"><span class="no">19</span>日期范围汇总<span class="id">summary_range_default · #5 汇总作息</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#5 汇总作息」。
+
+我想看 7/13~7/19 这一周各分类花了多久，睡眠怎么样。
+范围:2026-07-13~2026-07-19
+铁则:分类聚合＋7维趋势＋睡眠统计一次给全。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我 7/13~7/19 这一周的汇总</div><div class="new">请你加载技能 作息管家，执行唤醒词「#5 汇总作息」。
+
+我想看 7/13~7/19 这一周各分类花了多久，睡眠怎么样。
+范围:2026-07-13~2026-07-19
+铁则:分类聚合＋7维趋势＋睡眠统计一次给全。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：说清汇总里有什么；与30条撞车待议。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="20 日期范围文本汇总 summary_range_full 请给我 7/13~7/19 的文本汇总"><div class="hd"><span class="no">20</span>日期范围文本汇总<span class="id">summary_range_full</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#5 汇总作息」。
+
+给我 7/13~7/19 的纯文字汇总，不要图。
+范围:2026-07-13~2026-07-19
+格式:纯文字
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请给我 7/13~7/19 的文本汇总</div><div class="new">请你加载技能 作息管家，执行唤醒词「#5 汇总作息」。
+
+给我 7/13~7/19 的纯文字汇总，不要图。
+范围:2026-07-13~2026-07-19
+格式:纯文字
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：用户明确要文字版才用这条。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="21 今日作息列表 record_list_today 请帮我看看今天我做了什么"><div class="hd"><span class="no">21</span>今日作息列表<span class="id">record_list_today · #6 查作息</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看今天做了什么，按时间顺序。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看看今天我做了什么</div><div class="new">请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看今天做了什么，按时间顺序。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载＋交付，意图不变。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="22 昨日作息 record_list_yesterday 昨天我做了什么"><div class="hd"><span class="no">22</span>昨日作息<span class="id">record_list_yesterday</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看昨天做了什么。
+日期:昨天（按今天换算）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：昨天我做了什么</div><div class="new">请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看昨天做了什么。
+日期:昨天（按今天换算）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补换算＋交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="23 指定日期作息 record_list_specific 请帮我看看 2026-07-15 我做了什么"><div class="hd"><span class="no">23</span>指定日期作息<span class="id">record_list_specific</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看 2026-07-15 那天做了什么。
+日期:2026-07-15
+铁则:没记就直说没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看看 2026-07-15 我做了什么</div><div class="new">请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看 2026-07-15 那天做了什么。
+日期:2026-07-15
+铁则:没记就直说没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补空态。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="24 指定日期无记录 record_list_empty 请帮我看看 2026-07-01 我做了什么"><div class="hd"><span class="no">24</span>指定日期无记录<span class="id">record_list_empty</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看 2026-07-01 那天做了什么。
+日期:2026-07-01
+铁则:0 条出空态页，直说没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看看 2026-07-01 我做了什么</div><div class="new">请你加载技能 作息管家，执行唤醒词「#6 查作息」。
+
+我想看 2026-07-01 那天做了什么。
+日期:2026-07-01
+铁则:0 条出空态页，直说没记。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：与23同形，系统分支，建议下架。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="25 查看某日所有详情 detail_day 请帮我看 7/15 作息详情(含 AI 推理链)"><div class="hd"><span class="no">25</span>查看某日所有详情<span class="id">detail_day · #7 查作息详情</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+我想看 7/15 那天每条的完整内容，AI 为什么这么分类也告诉我。
+日期:2026-07-15
+铁则:11 个字段全展开，分类依据单列一段。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/15 作息详情(含 AI 推理链)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+我想看 7/15 那天每条的完整内容，AI 为什么这么分类也告诉我。
+日期:2026-07-15
+铁则:11 个字段全展开，分类依据单列一段。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：把“推理链”翻译成人话：为什么这么分。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="26 查看单条详情 detail_record 请帮我看 id=123 这条记录详情"><div class="hd"><span class="no">26</span>查看单条详情<span class="id">detail_record</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+帮我找到那条记录再展开给我看。
+要找的是:____（如“7/15 下午写代码那条”；说不清先列最近的让我选）
+铁则:先认准再展开，不猜编号。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 id=123 这条记录详情</div><div class="new">请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+帮我找到那条记录再展开给我看。
+要找的是:____（如“7/15 下午写代码那条”；说不清先列最近的让我选）
+铁则:先认准再展开，不猜编号。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id=123，用描述定位＋先查后看；与41条待合并。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="27 查看 AI 推理链 detail_with_reasoning 请帮我看 7/15 的 AI 是怎么分类的"><div class="hd"><span class="no">27</span>查看 AI 推理链<span class="id">detail_with_reasoning</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+我想知道 7/15 那天 AI 是怎么做分类的，把依据列出来。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/15 的 AI 是怎么分类的</div><div class="new">请你加载技能 作息管家，执行唤醒词「#7 查作息详情」。
+
+我想知道 7/15 那天 AI 是怎么做分类的，把依据列出来。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：基本可用，补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="28 今日时间轴 timeline_today 今天时间轴看一下"><div class="hd"><span class="no">28</span>今日时间轴<span class="id">timeline_today · #8 查作息时间轴</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#8 查作息时间轴」。
+
+帮我看今天的时间轴，现在走到哪儿了。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：今天时间轴看一下</div><div class="new">请你加载技能 作息管家，执行唤醒词「#8 查作息时间轴」。
+
+帮我看今天的时间轴，现在走到哪儿了。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="29 指定日期时间轴 timeline_specific 请帮我看 7/15 的 24h 时间轴"><div class="hd"><span class="no">29</span>指定日期时间轴<span class="id">timeline_specific</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#8 查作息时间轴」。
+
+帮我看 7/15 那天的 24h 时间轴。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/15 的 24h 时间轴</div><div class="new">请你加载技能 作息管家，执行唤醒词「#8 查作息时间轴」。
+
+帮我看 7/15 那天的 24h 时间轴。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="30 日期范围统计 range_default 请帮我看 7/13~7/19 这一周"><div class="hd"><span class="no">30</span>日期范围统计<span class="id">range_default · #9 查作息范围</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+我想看 7/13~7/19 这一周整体怎么过的。
+范围:2026-07-13~2026-07-19
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/13~7/19 这一周</div><div class="new">请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+我想看 7/13~7/19 这一周整体怎么过的。
+范围:2026-07-13~2026-07-19
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：与19条撞车（同模板），建议二选一：19留分类汇总，30留整体浏览，或合并。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="31 本周范围 range_this_week 请帮我看本周"><div class="hd"><span class="no">31</span>本周范围<span class="id">range_this_week</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+帮我看本周（周一到今天）。
+范围:本周（你按周一起始自动换算）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看本周</div><div class="new">请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+帮我看本周（周一到今天）。
+范围:本周（你按周一起始自动换算）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补周一起始。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="32 范围文本降级 range_text 请帮我看本周(直接给文本)"><div class="hd"><span class="no">32</span>范围文本降级<span class="id">range_text</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+看本周，直接给我纯文字版，不要图。
+范围:本周
+格式:纯文字
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看本周(直接给文本)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#9 查作息范围」。
+
+看本周，直接给我纯文字版，不要图。
+范围:本周
+格式:纯文字
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“降级”黑话，用户只说要文字版。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="33 查整体状态 status_default 作息状态怎么样"><div class="hd"><span class="no">33</span>查整体状态<span class="id">status_default · #11 查作息状态</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#11 查作息状态」。
+
+我的作息库现在什么情况？
+范围:全部（记了多少天、最早最近、同步状态，5 行说清）
+交付:文字直接回，不落盘也行；要落盘就回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：作息状态怎么样</div><div class="new">请你加载技能 作息管家，执行唤醒词「#11 查作息状态」。
+
+我的作息库现在什么情况？
+范围:全部（记了多少天、最早最近、同步状态，5 行说清）
+交付:文字直接回，不落盘也行；要落盘就回绝对路径，文字不超过三句话。</div><div class="diff">变化：说清5行里有什么。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="34 今日日程 list_events_today 请帮我看今天的日程"><div class="hd"><span class="no">34</span>今日日程<span class="id">list_events_today · #12 查日程</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+我想看今天的日程，按时间排。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看今天的日程</div><div class="new">请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+我想看今天的日程，按时间排。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="35 指定日期日程 list_events_specific 请帮我看 7/15 的日程"><div class="hd"><span class="no">35</span>指定日期日程<span class="id">list_events_specific</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+我想看 7/15 的日程。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/15 的日程</div><div class="new">请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+我想看 7/15 的日程。
+日期:2026-07-15
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="36 按标题搜索日程 search_event_title 今天有健身吗"><div class="hd"><span class="no">36</span>按标题搜索日程<span class="id">search_event_title</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天有没有健身，有就列出来。
+日期:今天
+找:健身
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：今天有健身吗</div><div class="new">请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天有没有健身，有就列出来。
+日期:今天
+找:健身
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：可用，补槽位显性化。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="37 按时间三元组查重 search_event_triplet 今天 17:00-18:00 有什么安排"><div class="hd"><span class="no">37</span>按时间三元组查重<span class="id">search_event_triplet</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天 17:00-18:00 有什么安排。
+日期:今天
+开始:17:00
+结束:18:00
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：今天 17:00-18:00 有什么安排</div><div class="new">请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天 17:00-18:00 有什么安排。
+日期:今天
+开始:17:00
+结束:18:00
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“三元组查重”黑话，用户只说时间。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="38 查已软删事件 list_events_inactive 今天被删的日程有哪些"><div class="hd"><span class="no">38</span>查已软删事件<span class="id">list_events_inactive</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天被删掉的日程有哪些，标清楚已删。
+日期:今天
+范围:含已删
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：今天被删的日程有哪些</div><div class="new">请你加载技能 作息管家，执行唤醒词「#12 查日程」。
+
+帮我看看今天被删掉的日程有哪些，标清楚已删。
+日期:今天
+范围:含已删
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“软删”，改“被删掉”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="39 今日 24h 概览 query_plans_today 今天 24h 安排概览"><div class="hd"><span class="no">39</span>今日 24h 概览<span class="id">query_plans_today · #15 24h 概览</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#15 24h 概览」。
+
+帮我看今天 24h 是怎么安排的。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：今天 24h 安排概览</div><div class="new">请你加载技能 作息管家，执行唤醒词「#15 24h 概览」。
+
+帮我看今天 24h 是怎么安排的。
+日期:今天
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补装载交付。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="40 多日简版 query_plans_multi 请帮我看 7/13、7/14、7/15 三天计划"><div class="hd"><span class="no">40</span>多日简版<span class="id">query_plans_multi · #16 查多日计划</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#16 查多日计划」。
+
+帮我看 7/13、7/14、7/15 这三天每天怎么排的，简版就行。
+日期:2026-07-13、2026-07-14、2026-07-15
+交付:落盘多日聚合 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看 7/13、7/14、7/15 三天计划</div><div class="new">请你加载技能 作息管家，执行唤醒词「#16 查多日计划」。
+
+帮我看 7/13、7/14、7/15 这三天每天怎么排的，简版就行。
+日期:2026-07-13、2026-07-14、2026-07-15
+交付:落盘多日聚合 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补简版含义。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="41 按 ID 查单条 get_record_basic 帮我查 id=123 这条记录"><div class="hd"><span class="no">41</span>按 ID 查单条<span class="id">get_record_basic · #23 按 ID 查记录</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#23 按 ID 查记录」。
+
+帮我找那条作息记录再给我看。
+要找的是:____（如“7/15 下午写代码那条”；说不清先列最近的让我选）
+铁则:不猜编号，先认准。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我查 id=123 这条记录</div><div class="new">请你加载技能 作息管家，执行唤醒词「#23 按 ID 查记录」。
+
+帮我找那条作息记录再给我看。
+要找的是:____（如“7/15 下午写代码那条”；说不清先列最近的让我选）
+铁则:不猜编号，先认准。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id=123；与26条重复，建议合并，只留一条。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="42 周视图 week_view 请帮我看看这一周的作息总览(唤醒词:周视图) 待开发"><div class="hd"><span class="no">42</span>周视图(7×24 全分类总览)<span class="id">week_view · 周视图</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「周视图」。
+
+我想看这周七天每天怎么过的，一眼看出哪天忙、哪天闲。
+范围:默认本周（周一起始）；要看别的周就给锚点日期 ____
+铁则:7×24 热力＋分类总览＋每日小结＋健康分一次给全。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我看看这一周的作息总览(唤醒词:周视图)</div><div class="new">请你加载技能 作息管家，执行唤醒词「周视图」。
+
+我想看这周七天每天怎么过的，一眼看出哪天忙、哪天闲。
+范围:默认本周（周一起始）；要看别的周就给锚点日期 ____
+铁则:7×24 热力＋分类总览＋每日小结＋健康分一次给全。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“(唤醒词:)”泄漏；说清图里有什么。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+</div>
+
+<div class="group"><h2>📅 日程与计划 · 28 条</h2>
+
+<div class="card" data-s="43 补一条计划 ensure_event_basic 帮我补一条计划到后天 17:00-18:00 健身"><div class="hd"><span class="no">43</span>补一条计划(基础)<span class="id">ensure_event_basic · #13 补计划</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+帮我补一条计划。
+日期:后天（换算 YYYY-MM-DD）
+开始:17:00
+结束:18:00
+内容:健身
+铁则:同天同时段已有就别重复建，把原那条还给我。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我补一条计划到后天 17:00-18:00 健身</div><div class="new">请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+帮我补一条计划。
+日期:后天（换算 YYYY-MM-DD）
+开始:17:00
+结束:18:00
+内容:健身
+铁则:同天同时段已有就别重复建，把原那条还给我。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：槽位拆开＋幂等写进铁则。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="44 同时间重复 ensure_event_idempotent 再补一条 17:00-18:00 的健身(已有)"><div class="hd"><span class="no">44</span>同时间重复(幂等)<span class="id">ensure_event_idempotent</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+我刚说的 17:00-18:00 健身如果已经有了就别重复建。
+日期:今天
+开始:17:00
+结束:18:00
+内容:健身
+铁则:命中就返回原那条，不新建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：再补一条 17:00-18:00 的健身(已有)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+我刚说的 17:00-18:00 健身如果已经有了就别重复建。
+日期:今天
+开始:17:00
+结束:18:00
+内容:健身
+铁则:命中就返回原那条，不新建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“幂等”黑话，改成人话；这是系统分支，建议与43合并说明。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="45 补计划含备注 ensure_event_with_notes 帮我补明天 17:00-18:00 健身(练背+有氧)"><div class="hd"><span class="no">45</span>补计划含备注<span class="id">ensure_event_with_notes</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+帮我补一条计划，带备注。
+日期:明天
+开始:17:00
+结束:18:00
+内容:健身
+备注:练背+有氧
+分类:健康.健身
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我补明天 17:00-18:00 健身(练背+有氧)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#13 补计划」。
+
+帮我补一条计划，带备注。
+日期:明天
+开始:17:00
+结束:18:00
+内容:健身
+备注:练背+有氧
+分类:健康.健身
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：槽位显性化。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="46 今日复盘 review_today_normal 请帮我复盘今天"><div class="hd"><span class="no">46</span>今日复盘(标准流程)<span class="id">review_today_normal · #14 复盘</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+帮我复盘今天的计划完成得怎么样。
+日期:今天
+铁则:逐条过完成情况，再给结论；没计划就直说没法复盘。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘今天</div><div class="new">请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+帮我复盘今天的计划完成得怎么样。
+日期:今天
+铁则:逐条过完成情况，再给结论；没计划就直说没法复盘。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：点明这是只看计划的复盘，与67条计划vs实际对照区分。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="47 今日已全部复盘 review_today_all_done 再帮我复盘一下今天"><div class="hd"><span class="no">47</span>今日已全部复盘<span class="id">review_today_all_done</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+今天刚复盘过，再帮我过一遍，直接聊就行。
+日期:今天
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：再帮我复盘一下今天</div><div class="new">请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+今天刚复盘过，再帮我过一遍，直接聊就行。
+日期:今天
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：与46仅差“再”，系统分支，建议下架，或在铁则里写“已复盘就进讨论模式”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="48 该日无活跃事件 review_no_events 请帮我复盘 2026-07-01"><div class="hd"><span class="no">48</span>该日无活跃事件<span class="id">review_no_events</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+帮我复盘 2026-07-01。
+日期:2026-07-01
+铁则:那天没计划就直说没法复盘，不编。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘 2026-07-01</div><div class="new">请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+帮我复盘 2026-07-01。
+日期:2026-07-01
+铁则:那天没计划就直说没法复盘，不编。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：系统分支，建议下架，留46一条。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="49 复盘前先同步备忘录 review_with_memo_sync 复盘前先对一下今天的打卡数据"><div class="hd"><span class="no">49</span>复盘前先同步备忘录<span class="id">review_with_memo_sync</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+复盘前先帮我对一下今天备忘里的打卡，再复盘。
+日期:今天
+铁则:先问我一句是否对过，再往下走。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：复盘前先对一下今天的打卡数据</div><div class="new">请你加载技能 作息管家，执行唤醒词「#14 复盘」。
+
+复盘前先帮我对一下今天备忘里的打卡，再复盘。
+日期:今天
+铁则:先问我一句是否对过，再往下走。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：点名备忘来源。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="50 商量明天计划 plan_discuss_tomorrow 商量一下明天的计划"><div class="hd"><span class="no">50</span>商量明天计划<span class="id">plan_discuss_tomorrow · #17 商量计划</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+我想排一下明天的 24h，从 00:00 到 24:00 排满。
+日期:明天（换算 YYYY-MM-DD）
+铁则:逐段接满无断档无重叠；落库前先给我预览，我说确认再写。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：商量一下明天的计划</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+我想排一下明天的 24h，从 00:00 到 24:00 排满。
+日期:明天（换算 YYYY-MM-DD）
+铁则:逐段接满无断档无重叠；落库前先给我预览，我说确认再写。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补24h覆盖＋确认再写，这是超卡路里的关键。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="51 商量时已有部分事件 plan_with_locked 帮我重新商量明天的计划(已有 4 条)"><div class="hd"><span class="no">51</span>商量时已有部分事件<span class="id">plan_with_locked</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天已经有 4 条定好的别动，剩下的空档帮我排满。
+日期:明天
+定好的:4 条（你先列出来，问我保留还是重排）
+铁则:定好的不动，只填空隙，仍要 24h 接满。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我重新商量明天的计划(已有 4 条)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天已经有 4 条定好的别动，剩下的空档帮我排满。
+日期:明天
+定好的:4 条（你先列出来，问我保留还是重排）
+铁则:定好的不动，只填空隙，仍要 24h 接满。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“锁定”，改“定好的别动”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="52 商量时拉心愿清单 plan_with_wish 商量明天(把心愿 X 安排进去)"><div class="hd"><span class="no">52</span>商量时拉心愿清单<span class="id">plan_with_wish</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+排明天时把心愿 X 安排进去。
+日期:明天
+心愿:____（先去备忘拉心愿，问我哪个做完了、这次推哪个）
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：商量明天(把心愿 X 安排进去)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+排明天时把心愿 X 安排进去。
+日期:明天
+心愿:____（先去备忘拉心愿，问我哪个做完了、这次推哪个）
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补备忘来源＋两问。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="53 覆盖校验失败 plan_24h_coverage_fail 商量明天计划(生成的事件有空隙)"><div class="hd"><span class="no">53</span>覆盖校验失败<span class="id">plan_24h_coverage_fail</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+帮我排明天，排完帮我检查有没有断档或重叠。
+日期:明天
+铁则:有断档/重叠就打回，明确告诉我哪两段有问题，不将就落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：商量明天计划(生成的事件有空隙)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+帮我排明天，排完帮我检查有没有断档或重叠。
+日期:明天
+铁则:有断档/重叠就打回，明确告诉我哪两段有问题，不将就落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：用户说不出“有空隙”，改成期望（帮我检查），系统分支建议下架。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="54 商量后飞书同步 plan_feishu_sync 商量后顺便同步到飞书"><div class="hd"><span class="no">54</span>商量后飞书同步<span class="id">plan_feishu_sync</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天排完顺便同步到飞书。
+日期:明天
+铁则:先探测飞书能不能写，问我一句是否同步，确认再批量建。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：商量后顺便同步到飞书</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天排完顺便同步到飞书。
+日期:明天
+铁则:先探测飞书能不能写，问我一句是否同步，确认再批量建。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补探测＋确认。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="55 制定次日计划 plan_result_tomorrow 帮我制定明天的计划,生成计划结果 HTML"><div class="hd"><span class="no">55</span>制定次日计划(结果强化)<span class="id">plan_result_tomorrow</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+帮我排明天的计划，排完先给我时间轴看看。
+日期:明天
+参考:过去 7 天（有就贴合，没有就直说没有参考）
+铁则:给 6-10 段候选＋时间轴，满意了我再让你落库。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我制定明天的计划,生成计划结果 HTML</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+帮我排明天的计划，排完先给我时间轴看看。
+日期:明天
+参考:过去 7 天（有就贴合，没有就直说没有参考）
+铁则:给 6-10 段候选＋时间轴，满意了我再让你落库。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“生成计划结果 HTML”，改“给我时间轴看看”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="56 制定计划后调整再生成 plan_result_adjust 把第 2 段改成 19:00 开始,再生成一次"><div class="hd"><span class="no">56</span>制定计划后调整再生成<span class="id">plan_result_adjust</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+刚才那版第 2 段改到 19:00 开始，再排一版给我看。
+日期:明天
+改:第 2 段 19:00 开始
+轮次:第 2 版（多版按 _2/_3 留，不覆盖）
+铁则:改完重查 24h 接满，满意再落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：把第 2 段改成 19:00 开始,再生成一次</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+刚才那版第 2 段改到 19:00 开始，再排一版给我看。
+日期:明天
+改:第 2 段 19:00 开始
+轮次:第 2 版（多版按 _2/_3 留，不覆盖）
+铁则:改完重查 24h 接满，满意再落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补多版不覆盖。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="57 无历史作息参考 plan_result_history_none 帮我制定明天的计划(新环境,没有历史记录)"><div class="hd"><span class="no">57</span>无历史作息参考<span class="id">plan_result_history_none</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+我是新来的没历史，直接帮我排明天。
+日期:明天
+铁则:没有参考就直说没有参考、不降级，照样可落库。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我制定明天的计划(新环境,没有历史记录)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+我是新来的没历史，直接帮我排明天。
+日期:明天
+铁则:没有参考就直说没有参考、不降级，照样可落库。
+交付:预览和回执都落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去括号说明，改用户自述。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="58 候选与已锁定事件冲突 plan_result_conflict 商量明天的计划(已有 2 条已锁定)"><div class="hd"><span class="no">58</span>候选与已锁定事件冲突<span class="id">plan_result_conflict</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天已经有 2 条定死了别动，剩下的排，碰到撞车标出来告诉我怎么调。
+日期:明天
+定死的:2 条
+铁则:冲突段标红＋清单，调完重排。
+交付:预览落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：商量明天的计划(已有 2 条已锁定)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天已经有 2 条定死了别动，剩下的排，碰到撞车标出来告诉我怎么调。
+日期:明天
+定死的:2 条
+铁则:冲突段标红＋清单，调完重排。
+交付:预览落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“锁定/冲突”，改“定死/撞车”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="59 与历史习惯偏离 plan_result_drift 明天把下午改成运动(历史下午都是工作)"><div class="hd"><span class="no">59</span>与历史习惯偏离<span class="id">plan_result_drift</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天下午我想运动，虽然我平时下午都工作。
+日期:明天
+改:下午改运动
+铁则:跟习惯不一样就标出来，我确认是故意的再落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：明天把下午改成运动(历史下午都是工作)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#17 商量计划」。
+
+明天下午我想运动，虽然我平时下午都工作。
+日期:明天
+改:下午改运动
+铁则:跟习惯不一样就标出来，我确认是故意的再落库。
+交付:预览落盘并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“偏离”，改“我确认是故意的”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="60 改单个事件字段 update_event_basic 改 id=544 这条的 title 为健身(上午)"><div class="hd"><span class="no">60</span>改单个事件字段<span class="id">update_event_basic · #18 改计划</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我找到那条计划再改标题。
+要找的是:____（如“后天 17:00 健身那条”，说不清先列最近的让我选）
+改成:标题改成“健身(上午)”
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：改 id=544 这条的 title 为健身(上午)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我找到那条计划再改标题。
+要找的是:____（如“后天 17:00 健身那条”，说不清先列最近的让我选）
+改成:标题改成“健身(上午)”
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id=544/title 英文，改描述定位＋中文标题。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="61 改时段 update_event_time 把 id=544 改成 17:30-18:30"><div class="hd"><span class="no">61</span>改时段(飞书删旧建新)<span class="id">update_event_time</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我把那条改到 17:30-18:30。
+要找的是:____
+改成:17:30-18:30
+铁则:已同步飞书的，飞书那边删旧建新并回写新编号。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：把 id=544 改成 17:30-18:30</div><div class="new">请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我把那条改到 17:30-18:30。
+要找的是:____
+改成:17:30-18:30
+铁则:已同步飞书的，飞书那边删旧建新并回写新编号。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id，补飞书回写。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="62 改 completion update_event_completion 把 id=544 标已完成"><div class="hd"><span class="no">62</span>改 completion<span class="id">update_event_completion</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我把那条标成已完成。
+要找的是:____
+改成:完成情况=已完成
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：把 id=544 标已完成</div><div class="new">请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我把那条标成已完成。
+要找的是:____
+改成:完成情况=已完成
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 completion/id，改中文完成情况。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="63 改后飞书询问 update_event_feishu_ask 改 id=544 的 title(已同步飞书)"><div class="hd"><span class="no">63</span>改后飞书询问<span class="id">update_event_feishu_ask</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我改那条标题，它已同步飞书。
+要找的是:____
+改成:____
+铁则:改完问我一句飞书那边要不要一起改，要就一起改。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：改 id=544 的 title(已同步飞书)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#18 改计划」。
+
+帮我改那条标题，它已同步飞书。
+要找的是:____
+改成:____
+铁则:改完问我一句飞书那边要不要一起改，要就一起改。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id/title，补一问。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="64 软删事件 deactivate_event 删 id=544 这条计划"><div class="hd"><span class="no">64</span>软删事件<span class="id">deactivate_event · #19 删计划</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#19 删计划」。
+
+帮我删掉那条计划。
+要删的是:____（说不清先列最近的让我选）
+铁则:删前给我看内容让我确认；只做标记删除，可恢复。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：删 id=544 这条计划</div><div class="new">请你加载技能 作息管家，执行唤醒词「#19 删计划」。
+
+帮我删掉那条计划。
+要删的是:____（说不清先列最近的让我选）
+铁则:删前给我看内容让我确认；只做标记删除，可恢复。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id/软删，改删掉＋可恢复。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="65 软删 + 飞书删 deactivate_with_feishu 删 id=544(已同步飞书)"><div class="hd"><span class="no">65</span>软删 + 飞书删<span class="id">deactivate_with_feishu</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#19 删计划」。
+
+帮我删掉那条，它已同步飞书。
+要删的是:____
+铁则:本地删完问我飞书那边要不要一起删，要就删并清空编号。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：删 id=544(已同步飞书)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#19 删计划」。
+
+帮我删掉那条，它已同步飞书。
+要删的是:____
+铁则:本地删完问我飞书那边要不要一起删，要就删并清空编号。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id/软删。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="66 反向对账+diff 询问 feishu_resync_basic 请帮我同步今天的日程到飞书"><div class="hd"><span class="no">66</span>反向对账+diff 询问<span class="id">feishu_resync_basic · #20 日程管家同步</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#20 日程管家同步」。
+
+帮我对一下今天本地和飞书的日程。
+日期:今天
+铁则:先两边都拉一遍，不一样的逐条问我留哪个，确认再动。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我同步今天的日程到飞书</div><div class="new">请你加载技能 作息管家，执行唤醒词「#20 日程管家同步」。
+
+帮我对一下今天本地和飞书的日程。
+日期:今天
+铁则:先两边都拉一遍，不一样的逐条问我留哪个，确认再动。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去反向对账+diff，改两边拉一遍逐条问。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="67 复盘今日 replay_day 请帮我复盘今天(唤醒词:复盘今日)"><div class="hd"><span class="no">67</span>复盘今日(计划 vs 实际对照 + 叙事 + 单日健康分)<span class="id">replay_day · 复盘今日</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「复盘今日」。
+
+帮我复盘今天：计划和实际对照着看，再讲讲今天，最后给个单日健康分。
+日期:今天
+铁则:缺计划就带我补上，不降级；最后问我要不要顺手排明天。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘今天(唤醒词:复盘今日)</div><div class="new">请你加载技能 作息管家，执行唤醒词「复盘今日」。
+
+帮我复盘今天：计划和实际对照着看，再讲讲今天，最后给个单日健康分。
+日期:今天
+铁则:缺计划就带我补上，不降级；最后问我要不要顺手排明天。
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去唤醒词:/vs；点明与46的区别（46只看计划，67看对照+健康分）。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="68 复盘本周 replay_week 请帮我复盘本周(唤醒词:复盘本周)"><div class="hd"><span class="no">68</span>复盘本周(7 维趋势 + 热力图 + 健康分均值)<span class="id">replay_week · 复盘本周</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「复盘本周」。
+
+帮我复盘本周：7 维趋势＋每天忙闲＋健康分均值＋亮点和问题。
+范围:本周一~周日（自动换算）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘本周(唤醒词:复盘本周)</div><div class="new">请你加载技能 作息管家，执行唤醒词「复盘本周」。
+
+帮我复盘本周：7 维趋势＋每天忙闲＋健康分均值＋亮点和问题。
+范围:本周一~周日（自动换算）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去唤醒词泄漏，说清图里有什么。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="69 复盘本月 replay_month 请帮我复盘本月(唤醒词:复盘本月)"><div class="hd"><span class="no">69</span>复盘本月(月度聚合 + 环比对比 + 目标达成)<span class="id">replay_month · 复盘本月</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「复盘本月」。
+
+帮我复盘本月：分类汇总＋跟上月比＋目标达成＋健康分趋势。
+范围:本月 1 日~月末（自动换算）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘本月(唤醒词:复盘本月)</div><div class="new">请你加载技能 作息管家，执行唤醒词「复盘本月」。
+
+帮我复盘本月：分类汇总＋跟上月比＋目标达成＋健康分趋势。
+范围:本月 1 日~月末（自动换算）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：同上。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="70 复盘区间 replay_range 请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)"><div class="hd"><span class="no">70</span>复盘区间(任意区间跨域复盘 · 原 start-end)<span class="id">replay_range · 复盘区间</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「复盘区间」。
+
+帮我复盘 2026-07-13~2026-07-19 这段。
+范围:2026-07-13~2026-07-19（1天按天看、7天按周看、30天按月看，更长按通用叙事）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)</div><div class="new">请你加载技能 作息管家，执行唤醒词「复盘区间」。
+
+帮我复盘 2026-07-13~2026-07-19 这段。
+范围:2026-07-13~2026-07-19（1天按天看、7天按周看、30天按月看，更长按通用叙事）
+交付:落盘复盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去唤醒词/start-end英文，改按跨度自动路由人话。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+</div>
+
+<div class="group"><h2>🔬 分析与洞察 · 12 条</h2>
+
+<div class="card" data-s="71 写摘要 add_summary_basic 帮我写摘要:2026-07-22 工作.AI调优 60 分钟"><div class="hd"><span class="no">71</span>写摘要<span class="id">add_summary_basic · #24 写作息摘要</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#24 写作息摘要」。
+
+帮我写条摘要。
+日期:2026-07-22
+分类:工作.AI调优
+时长:60 分钟
+铁则:同天同分类已有就覆盖，不多建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我写摘要:2026-07-22 工作.AI调优 60 分钟</div><div class="new">请你加载技能 作息管家，执行唤醒词「#24 写作息摘要」。
+
+帮我写条摘要。
+日期:2026-07-22
+分类:工作.AI调优
+时长:60 分钟
+铁则:同天同分类已有就覆盖，不多建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：槽位拆开＋覆盖写进铁则。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="72 同 date+category upsert add_summary_idempotent 再写一次(已有)"><div class="hd"><span class="no">72</span>同 date+category upsert<span class="id">add_summary_idempotent</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#24 写作息摘要」。
+
+刚才那条摘要写错了，同天同分类重写一条盖掉。
+日期:____
+分类:____
+铁则:覆盖旧的，不多建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：再写一次(已有)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#24 写作息摘要」。
+
+刚才那条摘要写错了，同天同分类重写一条盖掉。
+日期:____
+分类:____
+铁则:覆盖旧的，不多建。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 upsert/date+category 英文；旧的5个字新会话接不住，系统分支建议下架。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="73 整月对比 compare_months 6 月和 7 月对比"><div class="hd"><span class="no">73</span>整月对比<span class="id">compare_months · #25 对比两个月</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+帮我对比 6 月和 7 月整月。
+甲:2026-06
+乙:2026-07（格式 YYYY-MM）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：6 月和 7 月对比</div><div class="new">请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+帮我对比 6 月和 7 月整月。
+甲:2026-06
+乙:2026-07（格式 YYYY-MM）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补格式。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="74 任意范围对比 compare_range 上周和这周对比"><div class="hd"><span class="no">74</span>任意范围对比<span class="id">compare_range</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+帮我对比上周和这周。
+甲:上周 ____~____
+乙:这周 ____~____（格式 YYYY-MM-DD）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：上周和这周对比</div><div class="new">请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+帮我对比上周和这周。
+甲:上周 ____~____
+乙:这周 ____~____（格式 YYYY-MM-DD）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补起止；与75相近（74重过程，75重差值），可二选一。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="75 周对比 compare_week_vs_week 上周和这周差多少"><div class="hd"><span class="no">75</span>周对比<span class="id">compare_week_vs_week</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+上周和这周差多少，差距列出来。
+甲:上周（周一~周日）
+乙:本周（周一~周日）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：上周和这周差多少</div><div class="new">请你加载技能 作息管家，执行唤醒词「#25 对比两个月」。
+
+上周和这周差多少，差距列出来。
+甲:上周（周一~周日）
+乙:本周（周一~周日）
+交付:落盘对比 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：点明要差值。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="76 改 1 条记录多字段 amend_basic 这条记错了,改成工作.AI调优,活动是写代码"><div class="hd"><span class="no">76</span>改 1 条记录多字段<span class="id">amend_basic · #26 修正作息</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+这条记错了，帮我找到它再改。
+要找的是:____（说不清先列最近的让我选）
+改成:分类改成工作.AI调优，活动改成写代码
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：这条记错了,改成工作.AI调优,活动是写代码</div><div class="new">请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+这条记错了，帮我找到它再改。
+要找的是:____（说不清先列最近的让我选）
+改成:分类改成工作.AI调优，活动改成写代码
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：补先找后改。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="77 JSON 内联修改 amend_json_inline 用 JSON 改 id=123 的多字段"><div class="hd"><span class="no">77</span>JSON 内联修改<span class="id">amend_json_inline</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+帮我改那条的多字段，我贴一段 JSON 给你按 JSON 来。
+要改的是:____
+JSON:____
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：用 JSON 改 id=123 的多字段</div><div class="new">请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+帮我改那条的多字段，我贴一段 JSON 给你按 JSON 来。
+要改的是:____
+JSON:____
+铁则:改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去 id=123；“JSON内联”改“我贴一段 JSON 给你”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="78 超过 24h 修改警告 amend_24h_warn 改 3 天前那条记录(超 24h)"><div class="hd"><span class="no">78</span>超过 24h 修改警告<span class="id">amend_24h_warn</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+帮我改 3 天前那条。
+要改的是:____（3 天前）
+铁则:超 24h 提醒我一句但照改，改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：改 3 天前那条记录(超 24h)</div><div class="new">请你加载技能 作息管家，执行唤醒词「#26 修正作息」。
+
+帮我改 3 天前那条。
+要改的是:____（3 天前）
+铁则:超 24h 提醒我一句但照改，改前给我看原值。
+交付:落盘回执 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：把警告收进铁则，用户不用说“超24h”。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="79 区间内某分类深挖 category_range 这周健身什么时候做的"><div class="hd"><span class="no">79</span>区间内某分类深挖<span class="id">category_range · T4 类别深挖</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「T4 类别深挖」。
+
+帮我看看这周健身都是什么时候做的。
+范围:这周 ____~____
+分类:健身（白名单二级，如健康.健身）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：这周健身什么时候做的</div><div class="new">请你加载技能 作息管家，执行唤醒词「T4 类别深挖」。
+
+帮我看看这周健身都是什么时候做的。
+范围:这周 ____~____
+分类:健身（白名单二级，如健康.健身）
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去T4（唤醒词本身待改名）；补分类格式。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="80 单日某分类 category_day 7/15 健身什么时候做的"><div class="hd"><span class="no">80</span>单日某分类<span class="id">category_day</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「T4 类别深挖」。
+
+帮我看看 7/15 那天健身什么时候做的。
+日期:2026-07-15
+分类:健身
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：7/15 健身什么时候做的</div><div class="new">请你加载技能 作息管家，执行唤醒词「T4 类别深挖」。
+
+帮我看看 7/15 那天健身什么时候做的。
+日期:2026-07-15
+分类:健身
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：同上。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="81 默认 7 天窗口检测 anomaly_default 最近状态怎么样/有没有异常"><div class="hd"><span class="no">81</span>默认 7 天窗口检测<span class="id">anomaly_default · T5 异常检测</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「T5 异常检测」。
+
+帮我看看最近怎么样，有没有不对劲的地方。
+范围:默认最近 7 天
+铁则:环比±20%标红、±10%标黄，列出来。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：最近状态怎么样/有没有异常</div><div class="new">请你加载技能 作息管家，执行唤醒词「T5 异常检测」。
+
+帮我看看最近怎么样，有没有不对劲的地方。
+范围:默认最近 7 天
+铁则:环比±20%标红、±10%标黄，列出来。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“/”并列两种问法、去窗口/T5；红黄阈值写进铁则。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="82 30 天窗口 anomaly_window_30 最近 30 天有没有异常"><div class="hd"><span class="no">82</span>30 天窗口<span class="id">anomaly_window_30</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「T5 异常检测」。
+
+帮我看看最近 30 天有没有异常。
+范围:最近 30 天
+铁则:红黄阈值同上。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：最近 30 天有没有异常</div><div class="new">请你加载技能 作息管家，执行唤醒词「T5 异常检测」。
+
+帮我看看最近 30 天有没有异常。
+范围:最近 30 天
+铁则:红黄阈值同上。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去窗口/T5。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+</div>
+
+<div class="group"><h2>⚙️ 辅助与管理 · 3 条</h2>
+
+<div class="card" data-s="83 三档探测 feishu_probe 飞书能力怎么样"><div class="hd"><span class="no">83</span>三档探测<span class="id">feishu_probe · #21 飞书探测</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#21 飞书探测」。
+
+帮我看看飞书现在能不能用。
+查:软件在不在、登没登录、日历能不能写（3 项逐项说）
+交付:文字直接回，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：飞书能力怎么样</div><div class="new">请你加载技能 作息管家，执行唤醒词「#21 飞书探测」。
+
+帮我看看飞书现在能不能用。
+查:软件在不在、登没登录、日历能不能写（3 项逐项说）
+交付:文字直接回，文字不超过三句话。</div><div class="diff">变化：去“三档”，改3项逐项说。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="84 建三表 init_default 帮我初始化数据库"><div class="hd"><span class="no">84</span>建三表<span class="id">init_default · #22 初始化数据库</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「#22 初始化数据库」。
+
+帮我初始化数据库。
+范围:3 张表（作息/摘要/计划）都建好
+铁则:已有库不重置，幂等可重试。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：帮我初始化数据库</div><div class="new">请你加载技能 作息管家，执行唤醒词「#22 初始化数据库」。
+
+帮我初始化数据库。
+范围:3 张表（作息/摘要/计划）都建好
+铁则:已有库不重置，幂等可重试。
+交付:落盘 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“建三表”，改3张表都建好。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+
+<div class="card" data-s="85 首次使用 first_use 请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用) 待开发"><div class="hd"><span class="no">85</span>首次使用(初始化工作流)<span class="id">first_use · 首次使用</span><span class="badge">【待开发】</span><button class="copy" data-p="请你加载技能 作息管家，执行唤醒词「首次使用」。
+
+我是第一次用，带我走一遍初始化。
+步骤:环境看看、路径定一下、库建好、给我个初始化报告
+铁则:已有库不重置；飞书强引导，拒绝才跳过。
+交付:落盘初始化报告 HTML 并回绝对路径，文字不超过三句话。">复制新prompt</button></div><div class="old">旧：请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用)</div><div class="new">请你加载技能 作息管家，执行唤醒词「首次使用」。
+
+我是第一次用，带我走一遍初始化。
+步骤:环境看看、路径定一下、库建好、给我个初始化报告
+铁则:已有库不重置；飞书强引导，拒绝才跳过。
+交付:落盘初始化报告 HTML 并回绝对路径，文字不超过三句话。</div><div class="diff">变化：去“(唤醒词:)”泄漏；6步收成4句人话。</div><textarea class="note-ta" placeholder="你的批注…"></textarea></div>
+</div>
+
+</div>
+</div>
+<script>
+const q=document.getElementById('q'),hit=document.getElementById('hit');
+const cards=[...document.querySelectorAll('.card')];
+function apply(){const v=(q.value||'').trim().toLowerCase();let n=0;cards.forEach(c=>{const s=(c.getAttribute('data-s')||'').toLowerCase();const show=!v||s.includes(v);c.style.display=show?'':'none';if(show)n++;});document.querySelectorAll('.group').forEach(g=>{const vis=[...g.querySelectorAll('.card')].some(c=>c.style.display!=='none');g.style.display=vis?'':'none';});hit.textContent=v?`命中 ${n} / 85`:`共 85 条 · v1 草稿，可搜索、可复制、可写批注`;}
+q.addEventListener('input',apply);apply();
+document.querySelectorAll('.copy').forEach(b=>{b.addEventListener('click',e=>{e.stopPropagation();const t=b.getAttribute('data-p')||'';navigator.clipboard.writeText(t).then(()=>{const o=b.textContent;b.textContent='已复制';setTimeout(()=>b.textContent=o,1200);});});});
+</script>
+</body>
+</html>
