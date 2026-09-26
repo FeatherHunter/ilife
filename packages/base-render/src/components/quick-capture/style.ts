@@ -1,7 +1,8 @@
-/** quick-capture · **样式段**（本件唯一样式来源：卡与写的那一行 ＋ 汇总另两族 ＋ 三条共用交互态 ＋ 窄档）。
+/** quick-capture · **样式段**（本件唯一样式来源：卡与写的那一行 ＋ 汇总另三族 ＋ 三条共用交互态 ＋ 窄档）。
  *
- *  另两族住在同目录的 `style-cells.ts`（解析预览那一格族）与 `style-choices.ts`（候选带与「记过的」）——
- *  那一份**仍是本件样式段的一部分**（判据侧经 `test/_style-sources.mjs` 的 `styleSources()` 扫全件）；
+ *  另三族住在同目录的 `style-cells.ts`（解析预览那一格族）、`style-choices.ts`（候选带与「记过的」）与
+ *  `style-drawer.ts`（形态 `drawer` 的抽屉那一族）——
+ *  那三份**仍是本件样式段的一部分**（判据侧经 `test/_style-sources.mjs` 的 `styleSources()` 扫全件）；
  *  拆的理由是这一份超了本包的行数告警线（350 行），按先例 `relation-picker/style.ts` 的汇总写法收口。
  *
  *  纪律（与本节其余件同一份）：
@@ -29,6 +30,7 @@ import {
 } from './attrs.js';
 import { quickCaptureCellsCss } from './style-cells.js';
 import { quickCaptureChoicesCss } from './style-choices.js';
+import { quickCaptureDrawerCss } from './style-drawer.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -143,6 +145,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '}',
     quickCaptureCellsCss({ prefix: p }),
     quickCaptureChoicesCss({ prefix: p }),
+    quickCaptureDrawerCss({ prefix: p }),
     '/* 真按下：缩一格（≤80ms 内回弹；只动 transform，不触发布局）。 */',
     pressed + ' {',
     '  transform: scale(.98);',

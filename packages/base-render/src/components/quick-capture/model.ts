@@ -204,7 +204,7 @@ export function normalizeQuickCapture(input: unknown): QuickCaptureModel {
   const form = raw.form === undefined ? QUICK_CAPTURE_FORMS[0] : raw.form;
   if (!(QUICK_CAPTURE_FORMS as readonly unknown[]).includes(form)) {
     badInput('quick-capture: input.form 必须是 ' + QUICK_CAPTURE_FORMS.join('／')
-      + ' 之一（本件只落地形态 A「一行式录入 ＋ 解析预览」）');
+      + ' 之一（本件落地两档：`oneline`＝一行式录入 ＋ 解析预览，`drawer`＝常驻条 ＋ 推开的 6 格）');
   }
 
   const id = reqIdentifier(raw.id, 'quick-capture: input.id');

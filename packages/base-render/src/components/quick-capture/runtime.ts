@@ -12,7 +12,9 @@
  *     「哪一枚是现在这一枚」与渲染期跑的是**同一份源码**（`quickCaptureChoiceOn()` 的 `toString()`）。
  *   · **点「不改」＝取消**：只收起那一格的带，**值一动不动、一条事件都不派**（没变化就不报数）。
  *   · **点「存」**：派发 `ilife:quick-capture-save`（`detail={id,text,cells}`，`cells` 顺序＝屏上顺序）；
- *     本件**不写库**，写库归页面。**点「分开填」**：派发 `ilife:quick-capture-split`（开表单归页面）。
+ *     本件**不写库**，写库归页面。**点「分开填」**：形态 `oneline` 派发 `ilife:quick-capture-split`
+ *     （`detail={id,text}`，开表单归页面）；形态 `drawer` 它就是**抽屉开关**——摊开／收起抽屉，
+ *     再派发同一条事件（`detail` 多一枚 `open`＝现在摊开着没有），收起抽屉时先把摊开的候选带收掉。
  *   · **点记过的一条**：把那一句填回输入框（机器读数一起写）＋ 派发同一条 `change`（不用打字也能换一句话）。
  *   · **幂等**：`<html>` 上一枚 `data-ilife-quick-capture-runtime` 拦住重复注入；每张卡上记一枚 bound 读数。
  *   · **零键盘通路**：这一段不接任何键盘事件（`:focus-visible` 只是真实键盘用户的地板）。
@@ -22,6 +24,7 @@ import {
   QUICK_CAPTURE_BOUND_ATTR,
   QUICK_CAPTURE_BOX_ATTR,
   QUICK_CAPTURE_CELL_ATTR,
+  QUICK_CAPTURE_DRAWER_ATTR,
   QUICK_CAPTURE_EVENT_CHANGE,
   QUICK_CAPTURE_EVENT_PICK,
   QUICK_CAPTURE_EVENT_SAVE,
@@ -51,7 +54,8 @@ export function buildQuickCaptureJs(): string {
     + ', A_KEEP=' + q(QUICK_CAPTURE_KEEP_ATTR) + ';' + '\n'
     + '  var A_SAVE=' + q(QUICK_CAPTURE_SAVE_ATTR) + ', A_SPLIT=' + q(QUICK_CAPTURE_SPLIT_ATTR)
     + ', A_RECALL=' + q(QUICK_CAPTURE_RECALL_ATTR) + ';' + '\n'
-    + '  var A_BOUND=' + q(QUICK_CAPTURE_BOUND_ATTR) + ', A_RT=' + q(QUICK_CAPTURE_RUNTIME_ATTR) + ';' + '\n'
+    + '  var A_BOUND=' + q(QUICK_CAPTURE_BOUND_ATTR) + ', A_RT=' + q(QUICK_CAPTURE_RUNTIME_ATTR)
+    + ', A_DRAWER=' + q(QUICK_CAPTURE_DRAWER_ATTR) + ';' + '\n'
     + '  var EV_TEXT=' + q(QUICK_CAPTURE_EVENT_CHANGE) + ', EV_PICK=' + q(QUICK_CAPTURE_EVENT_PICK)
     + ', EV_SAVE=' + q(QUICK_CAPTURE_EVENT_SAVE) + ', EV_SPLIT=' + q(QUICK_CAPTURE_EVENT_SPLIT) + ';' + '\n'
     + '  var ON="is-on", OPEN="is-open", HID="hidden", TRUE="true", FALSE="false";' + '\n'
@@ -150,6 +154,20 @@ export function buildQuickCaptureJs(): string {
     + '    var split=t.closest("["+A_SPLIT+"]");\n'
     + '    if (split){\n'
     + '      var rp=rootOf(split); if (!rp) return;\n'
+    /* 形态 `drawer`：这一枚就是**抽屉开关**——摊开／收起抽屉、aria-expanded 与 is-open 一起翻，
+       再派发同一条 split 事件（`detail` 多一枚 `open`＝现在摊开着没有）。形态 `oneline` 不带抽屉，
+       照旧只报一件事（那一路的 `detail` 逐字不变）。 */
+    + '      var drawer=rp.querySelector("["+A_DRAWER+"]");\n'
+    + '      if (drawer){\n'
+    + '        var now=drawer.hasAttribute(HID);\n'
+    + '        if (now) drawer.removeAttribute(HID); else drawer.setAttribute(HID,"");\n'
+    + '        split.setAttribute("aria-expanded", now ? TRUE : FALSE);\n'
+    + '        if (now) split.classList.add(OPEN); else split.classList.remove(OPEN);\n'
+    /* 摊开也好收起也好，先把摊开的候选带收掉（一屏只留一层话：抽屉一动，带子不留在半空）。 */
+    + '        shut(rp);\n'
+    + '        fire(rp,EV_SPLIT,{id:idOf(rp),text:textOf(rp),open:now});\n'
+    + '        return;\n'
+    + '      }\n'
     + '      fire(rp,EV_SPLIT,{id:idOf(rp),text:textOf(rp)});\n'
     + '      return;\n'
     + '    }\n'

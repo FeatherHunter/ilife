@@ -1,8 +1,9 @@
 /** quick-capture · **标记契约**（渲染与运行时共用的唯一事实：类名／槽位／`data-*`／事件名／闭集／入参类型）。
  *
  *  这一件落地的是原型墙（`.scratch/ui-组件墙/新件/parts-交互与流程.mjs` 第 86 件，2026-09 起用户逐格打分）
- *  里 **A 一档「一行式录入 ＋ 解析预览（哪格认错了点哪格改）」**——三套皮肤都打 4 分的那一版。
- *  同件 B 档「常驻速记条 ↔ 完整表单」打分未过、**不落**（它的类与规则一个都不搬）。
+ *  里 **A 一档「一行式录入 ＋ 解析预览（哪格认错了点哪格改）」**——三套皮肤都打 4 分的那一版；
+ *  2026-09-26 用户给 **B 档「常驻条（一行）↔ 推开的 6 格」** 补分（中性／小票纸／大字报刊三套皮各 4 分），
+ *  照**砍过字的那一版原型**补落为第二档 `drawer`（同一份入参契约，只换骨架：解析预览住进推开的抽屉）。
  *
  *  它替掉的两种错法（原型墙那一格的原文）：①「随手记一笔也要开浮层、填 6 格、再点保存」；
  *  ②「一句话里说了三件事（吃了什么／多少钱／哪张卡），人得自己拆成三格」。
@@ -40,12 +41,21 @@ export const QUICK_CAPTURE_SLOTS = [
   'lead',
   /** 输入框（那一句话本身）。 */
   'input',
-  /** 「分开填」那枚（第二颗按钮：去字段表单里一格格填；本件只报一件事，不开表单）。 */
+  /** 「分开填」那枚（形态 `oneline`：去字段表单里一格格填，本件只报一件事；
+   *  **形态 `drawer`：它是抽屉开关**——点它把下面那 6 格推开／收起）。 */
   'more',
   /** 「存」那枚（这一件的主按钮，看得见的第一动作）。 */
   'save',
-  /** 解析预览那一条带（每一格住在这里）。 */
+  /** 解析预览那一条带（**形态 `oneline` 专属**：每一格就在这一行上）。 */
   'parse',
+  /** 推开的抽屉（**形态 `drawer` 专属**：常驻收起时 `hidden`，一格都不上屏）。 */
+  'drawer',
+  /** 抽屉的标题（「分开填 · 6 格」：这一屉是什么、里面几格）。 */
+  'hd',
+  /** 抽屉里那 6 格的网格（两列；本件窄于常量那个宽度时走一列）。 */
+  'grid',
+  /** 抽屉里的一格 ＋ 它自己的候选带（**网格的一项**：带子摊开时留在这一项里，不横跨整行）。 */
+  'unit',
   /** 一格里的一枚（**整枚就是那颗按钮**：命中盒就是它）。 */
   'chip',
   /** 原文那一截（「午饭」；这一格是从这句话里认出来的）。 */
@@ -76,8 +86,10 @@ export function quickCaptureSlot(slot: QuickCaptureSlot, prefix = 'ilife-'): str
   return prefix + 'block-quick-capture-' + slot;
 }
 
-/** 形态闭集：本件只落地 A 一档「一行式录入 ＋ 解析预览」（键名 `oneline`：录入与预览都在这一行上）。 */
-export const QUICK_CAPTURE_FORMS = ['oneline'] as const;
+/** 形态闭集（**两档英文键**，同一份入参契约）：
+ *   · `oneline`＝A 档「一行式录入 ＋ 解析预览」（录入与预览都在这一行上，哪格认错了点哪格改）；
+ *   · `drawer` ＝B 档「常驻条（一行）↔ 推开的 6 格」（解析预览住进抽屉；「分开填」那枚是抽屉开关）。 */
+export const QUICK_CAPTURE_FORMS = ['oneline', 'drawer'] as const;
 export type QuickCaptureForm = (typeof QUICK_CAPTURE_FORMS)[number];
 
 /* ── `data-*` 名（渲染与运行时共用的发现锚） ───────────────────────── */
@@ -104,8 +116,10 @@ export const QUICK_CAPTURE_PICK_ATTR = 'data-ilife-quick-capture-pick';
 export const QUICK_CAPTURE_KEEP_ATTR = 'data-ilife-quick-capture-keep';
 /** 「存」那枚（值＝`id`）。 */
 export const QUICK_CAPTURE_SAVE_ATTR = 'data-ilife-quick-capture-save';
-/** 「分开填」那枚（值＝`id`）。 */
+/** 「分开填」那枚（值＝`id`）。**形态 `drawer` 下它是抽屉开关**：`aria-expanded` 说得出摊开没收起。 */
 export const QUICK_CAPTURE_SPLIT_ATTR = 'data-ilife-quick-capture-split';
+/** 推开的抽屉（值＝`id`；**形态 `drawer` 专属**，常驻收起时 `hidden`）。 */
+export const QUICK_CAPTURE_DRAWER_ATTR = 'data-ilife-quick-capture-drawer';
 /** 记过的一条（值＝`id`；那句话就是这一枚自己的字）。 */
 export const QUICK_CAPTURE_RECALL_ATTR = 'data-ilife-quick-capture-recall';
 /** 记账：这张卡已被运行时段接管（幂等读数，不是开关）。 */
@@ -136,6 +150,9 @@ export const QUICK_CAPTURE_CONTAINER = 'ilife-quick-capture';
 /** 窄档断点（px）：**本件自己**窄于它就把那一行摊开（输入框占满一行，两颗按钮跟着走）。
  *  这是容器断点，不是视口断点。 */
 export const QUICK_CAPTURE_NARROW_PX = 560;
+/** 抽屉那 6 格走单列的容器宽（px）：本件窄于它就一格一列（两列在一格里放不下读数时，宁可往下排）。
+ *  同样是容器断点。 */
+export const QUICK_CAPTURE_DRAWER_NARROW_PX = 480;
 /** 悬停只许是增强：这一段能力查询**样式段读它**（运行时不抢焦点，不读它）。 */
 export const QUICK_CAPTURE_HOVER_QUERY = '(hover: hover) and (pointer: fine)';
 /** 输入框在窄档下的最小可用宽（px）：比它再窄就整行占满（不让输入框被两颗按钮挤成一道缝）。 */
@@ -178,6 +195,10 @@ export const QUICK_CAPTURE_TEXT = Object.freeze({
   split: '分开填',
   /** 「记过的」那三个字。 */
   recentLead: '记过的',
+  /** 抽屉标题里那一段连接（「分开填 · 6 格」）：标题＝`split ＋ 这一截 ＋ 格数 ＋ 单位`。 */
+  drawerJoin: ' · ',
+  /** 抽屉标题里的单位（「分开填 · 6 格」）。 */
+  drawerUnit: ' 格',
   /** 输入框的无障碍名（不上屏）。 */
   boxLabel: '一句话记一笔',
   /** 候选带的无障碍名尾巴（不上屏）：`<这一格叫什么>能改成`。 */

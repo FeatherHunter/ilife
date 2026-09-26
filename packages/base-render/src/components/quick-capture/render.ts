@@ -1,4 +1,4 @@
-/** quick-capture · **渲染**（纯函数产 HTML；形态 `oneline` 一支）。
+/** quick-capture · **渲染**（纯函数产 HTML；形态两支：`oneline`／`drawer`）。
  *
  *  —— 形态 `oneline`「一行式录入 ＋ 解析预览」——
  *
@@ -11,6 +11,13 @@
  *
  *  点某一格摊开的是**那一格的候选带**（`hidden` 着常渲：一次只摊开一格，其余先收起）——
  *  候选由调用方给（技能自己的词表），运行时段只做「把这一格原地重写、把选中那一枚挪过去」。
+ *
+ *  —— 形态 `drawer`「常驻条（一行）↔ 推开的 6 格」——
+ *
+ *  与 `oneline` **同一份入参、同一枚格标记**，只换骨架：常驻时只有那一行（输入 ＋ 分开填 ＋ 存；
+ *  解析预览**一格都不上屏**），点「分开填」把抽屉推开——标题 ＋ 那几格的两列网格，
+ *  每一格仍是「哪格认错了点哪格改」的整枚按钮，点它摊开它自己的候选带。
+ *  收起时抽屉整屉 `hidden`（**同一个数只印一次**：抽屉摊开时，格子里那一处是它的唯一去处）。
  *
  *  原型里的旁白与口径句一句都不上屏（2026-09-25 用户口径：原型里写了好多文字、看起来很混乱）。
  *
@@ -29,6 +36,7 @@ import {
   QUICK_CAPTURE_BOX_ATTR,
   QUICK_CAPTURE_CELL_ATTR,
   QUICK_CAPTURE_CLASS,
+  QUICK_CAPTURE_DRAWER_ATTR,
   QUICK_CAPTURE_FORM_ATTR,
   QUICK_CAPTURE_KEEP_ATTR,
   QUICK_CAPTURE_PICK_ATTR,
@@ -50,16 +58,22 @@ import {
   type QuickCaptureModel,
 } from './model.js';
 
-/** 写的那一行（签 ＋ 输入框 ＋ 分开填 ＋ 存）。`enterkeyhint="done"`：软键盘右下角那枚写「完成」。 */
+/** 写的那一行（签 ＋ 输入框 ＋ 分开填 ＋ 存）。`enterkeyhint="done"`：软键盘右下角那枚写「完成」。
+ *  **形态 `drawer`** 下「分开填」是抽屉开关 ⇒ 多挂 `aria-expanded="false"` ＋ `aria-controls`（指到抽屉）；
+ *  形态 `oneline` 那一支**逐字节不变**（不带这两个属性）。 */
 function lineHtml(m: QuickCaptureModel): string {
   const T = QUICK_CAPTURE_TEXT;
+  const drawerId = m.id + '-drawer';
+  const open = m.form === 'drawer'
+    ? ' aria-expanded="false" aria-controls="' + esc(drawerId) + '"'
+    : '';
   return '<div class="' + quickCaptureSlot('line') + '">'
     + '<span class="' + quickCaptureSlot('lead') + '" aria-hidden="true">' + esc(T.lead) + '</span>'
     + '<input class="' + quickCaptureSlot('input') + '" id="' + esc(m.id + '-box') + '" type="text"'
     + ' value="' + esc(m.text) + '" aria-label="' + esc(T.boxLabel) + '"'
     + ' ' + QUICK_CAPTURE_BOX_ATTR + '="' + esc(m.id) + '" autocomplete="off" enterkeyhint="done">'
     + '<button type="button" class="' + quickCaptureSlot('more') + '"'
-    + ' ' + QUICK_CAPTURE_SPLIT_ATTR + '="' + esc(m.id) + '">' + esc(T.split) + '</button>'
+    + ' ' + QUICK_CAPTURE_SPLIT_ATTR + '="' + esc(m.id) + '"' + open + '>' + esc(T.split) + '</button>'
     + '<button type="button" class="' + quickCaptureSlot('save') + '"'
     + ' ' + QUICK_CAPTURE_SAVE_ATTR + '="' + esc(m.id) + '">' + esc(T.save) + '</button>'
     + '</div>';
@@ -121,9 +135,28 @@ function recentHtml(m: QuickCaptureModel): string {
     + '</div>';
 }
 
+/** 形态 `drawer` 的抽屉：**标题 ＋ 那几格的网格**（常驻收起时整屉 `hidden`——一屏只留一层话：
+ *  同一个数只印一次，收起时一格都不上屏，摊开时格子里那一处是它唯一的去处）。
+ *
+ *  一格里的一枚与 `oneline` 走**同一条 `cellHtml`**（「哪格认错了点哪格改」是同一件事）：整格是按钮、
+ *  点它摊开**它自己的**候选带；带子留在这一项（`unit`）里，不横跨整行。 */
+function drawerHtml(m: QuickCaptureModel): string {
+  const T = QUICK_CAPTURE_TEXT;
+  return '<div class="' + quickCaptureSlot('drawer') + '" id="' + esc(m.id + '-drawer') + '"'
+    + ' ' + QUICK_CAPTURE_DRAWER_ATTR + '="' + esc(m.id) + '" hidden>'
+    + '<div class="' + quickCaptureSlot('hd') + '">'
+    + esc(T.split + T.drawerJoin + String(m.cells.length) + T.drawerUnit) + '</div>'
+    + '<div class="' + quickCaptureSlot('grid') + '">'
+    + m.cells.map((cell) => '<div class="' + quickCaptureSlot('unit') + '">'
+      + cellHtml(m, cell) + '</div>').join('')
+    + '</div>'
+    + '</div>';
+}
+
 /** 形态 → 骨架（加第二形态就是加一支）。 */
 const SKELETONS: Readonly<Record<QuickCaptureForm, (m: QuickCaptureModel) => string>> = {
   oneline: (m) => lineHtml(m) + parseHtml(m) + recentHtml(m),
+  drawer: (m) => lineHtml(m) + drawerHtml(m) + recentHtml(m),
 };
 
 /** 渲染快速录入条（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */

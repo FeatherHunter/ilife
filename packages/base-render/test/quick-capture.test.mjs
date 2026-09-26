@@ -43,6 +43,8 @@ import {
   QUICK_CAPTURE_CELL_ATTR,
   QUICK_CAPTURE_CLASS,
   QUICK_CAPTURE_CONTAINER,
+  QUICK_CAPTURE_DRAWER_ATTR,
+  QUICK_CAPTURE_DRAWER_NARROW_PX,
   QUICK_CAPTURE_EVENT_CHANGE,
   QUICK_CAPTURE_EVENT_PICK,
   QUICK_CAPTURE_EVENT_SAVE,
@@ -143,6 +145,8 @@ const CELLS = [
 ];
 const RECENT = ['早饭 12 元 微信', '打车 28.5 现金', '超市 241.5 招行'];
 const PLAIN = { id: 'qcap-lunch', text: '午饭 32 元 现金', cells: CELLS, recent: RECENT };
+/** 形态 `drawer`（B 档）那一份：**同一份格与候选**，只换骨架（解析预览住进推开的抽屉）。 */
+const DRAWER = { id: 'qcap-drawer', text: '午饭 32 元 现金', cells: CELLS, recent: RECENT, form: 'drawer' };
 /** 不带「记过的」那一条带（那一条整条不出）。 */
 const BARE = { id: 'qcap-bare', text: '昨天买书 68 微信', cells: [CELLS[0], CELLS[3]] };
 /** 一份最小的合法入参（非法入参分支都从它改一处）。 */
@@ -168,7 +172,7 @@ describe('quick-capture ① 渲染契约 · 骨架与三层话', () => {
   const html = renderQuickCapture(PLAIN);
 
   it('根 ＋ 写的那一行 ＋ 解析预览 ＋「记过的」；形态键是英文骨架名（不是格号 A）', () => {
-    assert.deepEqual([...QUICK_CAPTURE_FORMS], ['oneline'], '形态闭集只落地「一行式录入」，键名是骨架名');
+    assert.deepEqual([...QUICK_CAPTURE_FORMS], ['oneline', 'drawer'], '形态闭集两档英文键（骨架名，不是格号）');
     assert.match(html, new RegExp('^<div class="' + QUICK_CAPTURE_CLASS + ' ' + SLOT('host') + ' is-oneline"'));
     assert.ok(html.includes(QUICK_CAPTURE_ATTR + '="qcap-lunch"'), '根上要有本件的发现锚');
     assert.ok(html.includes(QUICK_CAPTURE_FORM_ATTR + '="oneline"'), '形态照实写进标记');
@@ -410,7 +414,7 @@ describe('quick-capture ① 渲染契约 · 骨架与三层话', () => {
     const seen = derive(PKG).pieces.find((p) => p.name === 'quick-capture');
     assert.ok(seen !== undefined, '派生器不认得本件（形状：index.ts／render.ts／style.ts）');
     assert.equal(seen.cn, '快速录入条', 'README 首行是「# quick-capture · 快速录入条」');
-    assert.deepEqual(seen.variants, ["QUICK_CAPTURE_FORMS=('oneline')"], '形态闭集抽得出来且只有一格');
+    assert.deepEqual(seen.variants, ["QUICK_CAPTURE_FORMS=('oneline','drawer')"], '形态闭集抽得出来且只有这一处');
     assert.equal(seen.render, 'renderQuickCapture');
     assert.equal(seen.style, 'quickCaptureCss');
     assert.equal(JSON.stringify(seen.sample), JSON.stringify(README_SAMPLE), '清单里的示例入参就是 README 显式块那一份');
@@ -637,16 +641,18 @@ describe('quick-capture ② 样式与零 DOM 纪律', () => {
     assert.equal(quickCaptureSlot('chip'), QUICK_CAPTURE_CLASS + '-chip');
     assert.equal(quickCaptureSlot('chip', 'x-'), 'x-block-quick-capture-chip');
     for (const slot of QUICK_CAPTURE_SLOTS) assert.ok(quickCaptureSlot(slot).startsWith(QUICK_CAPTURE_CLASS + '-'));
-    const want = ['host', 'line', 'lead', 'input', 'more', 'save', 'parse', 'chip', 'src', 'field', 'to',
-      'pen', 'tray', 'pick', 'keep', 'recent', 'lb', 'recall'];
+    const want = ['host', 'line', 'lead', 'input', 'more', 'save', 'parse', 'drawer', 'hd', 'grid', 'unit',
+      'chip', 'src', 'field', 'to', 'pen', 'tray', 'pick', 'keep', 'recent', 'lb', 'recall'];
     for (const slot of want) assert.ok(QUICK_CAPTURE_SLOTS.includes(slot), '槽位闭集里少了 ' + slot);
     assert.equal(QUICK_CAPTURE_SLOTS.length, want.length, '槽位闭集多出了没对上的槽：'
       + QUICK_CAPTURE_SLOTS.filter((s) => !want.includes(s)).join('、'));
     /* 变异自证：把根上的 `quickCaptureSlot('host')` 摘掉 ⇒ 本条红在 `槽位闭集里的 host`。 */
-    const html = renderQuickCapture(PLAIN);
+    /* **两档合起来**扫：`parse` 只住 `oneline`、`drawer`／`hd`／`grid`／`unit` 只住 `drawer`——
+     *  只渲一档会让另一档那几枚槽类无处安放（那才是真死声明）。 */
+    const html = renderQuickCapture(PLAIN) + renderQuickCapture(DRAWER);
     for (const slot of QUICK_CAPTURE_SLOTS) {
       assert.ok(html.includes(quickCaptureSlot(slot)),
-        '槽位闭集里的 `' + slot + '` 在标记里没有这个类（死声明）：' + quickCaptureSlot(slot));
+        '槽位闭集里的 `' + slot + '` 在两档标记里都没有这个类（死声明）：' + quickCaptureSlot(slot));
     }
     /* 容器名与槽名不许互为前缀（判据在标记串上找槽位时才不会把容器当项）。 */
     for (const slot of QUICK_CAPTURE_SLOTS) {
@@ -1213,3 +1219,361 @@ describe('quick-capture ⑤ 行为（真机 · 真指针 CDP Input）', async ()
 
   it('关页', () => { p.close(); });
 });
+
+/* ── ⑥ 形态 drawer（B 档：常驻条 ＋ 推开的 6 格） ─────────────────── */
+
+/** 一格在某一档标记里的那一整段（chip ＋ 它自己的候选带）：两档共用同一份格契约时逐字节相同。 */
+function cellFragment(html, key) {
+  const at = html.indexOf(' ' + QUICK_CAPTURE_CELL_ATTR + '="' + key + '"');
+  assert.ok(at > 0, '找不到那一格：' + key);
+  const from = html.lastIndexOf('<button', at);
+  const keep = html.indexOf(' ' + QUICK_CAPTURE_KEEP_ATTR + '="' + key + '"', from);
+  return html.slice(from, html.indexOf('</div>', keep) + 6);
+}
+/** 一段标记里**看得见的字**（收起的那一整屉不算上屏）。 */
+function withoutDrawer(html) {
+  const at = html.lastIndexOf('<div', html.indexOf(SLOT('drawer')));
+  assert.ok(at > 0, '形态 drawer 里没有抽屉那一块');
+  const tags = /<\/?div\b[^>]*>/g;
+  tags.lastIndex = at;
+  let depth = 0;
+  let m = tags.exec(html);
+  while (m !== null) {
+    depth += m[0].startsWith('</') ? -1 : 1;
+    if (depth === 0) return html.slice(0, at) + html.slice(tags.lastIndex);
+    m = tags.exec(html);
+  }
+  throw new Error('抽屉那一块配不平（判据自己认不出它的边界）');
+}
+/** 抽屉摊开的那一份（把整屉那枚 `hidden` 摘掉；收起的候选带先按原样剥掉，读数才数得准）。 */
+const expandDrawer = (html) => html.replace(' hidden>', '>');
+
+describe('quick-capture ⑥ 形态 drawer（常驻条 ＋ 推开的 6 格 · B 档补落）', () => {
+  const html = renderQuickCapture(DRAWER);
+
+  it('常驻条 ＋ 抽屉：抽屉常驻 `hidden`、标题只说「分开填 · 6 格」、「分开填」那枚是抽屉开关', () => {
+    assert.match(html, new RegExp(' is-drawer"'), '根上是这一档的骨架类');
+    assert.ok(html.includes(QUICK_CAPTURE_FORM_ATTR + '="drawer"'), '形态照实写进标记');
+    assert.ok(html.includes(QUICK_CAPTURE_DRAWER_ATTR + '="' + DRAWER.id + '"'), '抽屉带发现锚（运行时段按它开关）');
+    assert.equal(html.includes(SLOT('parse')), false, '形态 drawer 不出解析预览那一条带');
+    const drawerTag = html.slice(html.lastIndexOf('<div', html.indexOf(SLOT('drawer'))));
+    assert.ok(drawerTag.slice(0, drawerTag.indexOf('>')).includes('hidden'), '收起时抽屉整屉 `hidden`');
+    assert.ok(html.includes('>' + QUICK_CAPTURE_TEXT.split + QUICK_CAPTURE_TEXT.drawerJoin
+      + String(CELLS.length) + QUICK_CAPTURE_TEXT.drawerUnit + '<'),
+      '抽屉标题只写「分开填 · 6 格」（这一屉是什么、里面几格）');
+    const more = /<button[^>]*data-ilife-quick-capture-split="[^"]*"[^>]*>/.exec(html);
+    assert.ok(more !== null, '「分开填」那枚在');
+    assert.ok(more[0].includes('aria-expanded="false"'), '开关报得出「收起」');
+    assert.ok(more[0].includes('aria-controls="' + DRAWER.id + '-drawer"'), '开关指到它开的那一屉');
+    assert.ok(html.includes('>' + QUICK_CAPTURE_TEXT.save + '<'), '「存」在（主按钮在常驻条上）');
+    assert.ok(html.includes('>' + QUICK_CAPTURE_TEXT.recentLead + '<'), '记过的那一条带还在（不打字也能换一句话）');
+  });
+
+  it('一屏只留一层话：收起时抽屉里一个字不上屏；摊开后每格读数**恰好印一次**', () => {
+    const shownClosed = visibleText(withoutDrawer(html));
+    for (const cell of CELLS) {
+      const read = cell.choices.filter((c) => c.key === cell.value)[0].label;
+      assert.equal(shownClosed.includes(read), false, '收起时抽屉里的读数不许上屏：' + read);
+    }
+    const shownOpen = visibleText(expandDrawer(dropTrays(html)));
+    for (const cell of CELLS) {
+      const read = cell.choices.filter((c) => c.key === cell.value)[0].label;
+      assert.equal(countOf(shownOpen, re(read)), 1, '同一个数只印一次（按钮与标题里不许复述）：' + read);
+    }
+    console.log('quick-capture 抽屉摊开后上屏的字 ' + JSON.stringify(shownOpen));
+  });
+
+  it('抽屉里每一格都是**真按钮**（aria-expanded ＋ aria-controls 指到它自己的带），带子常驻 hidden', () => {
+    const chips = [...html.matchAll(/<button[^>]*data-ilife-quick-capture-cell="([^"]+)"[^>]*>/g)];
+    assert.equal(chips.length, CELLS.length, '几格就是几枚按钮');
+    for (const m of chips) {
+      assert.ok(m[0].includes('aria-expanded="false"'), '每一格报得出「没收起」');
+      assert.ok(m[0].includes('aria-controls="' + DRAWER.id + '-tray-' + m[1] + '"'),
+        '每一格指到**它自己的**候选带：' + m[1]);
+    }
+    assert.equal(countOf(html, ' hidden>'), CELLS.length + 1,
+      '一条带 ＋ 整屉都常驻 `hidden`（渲染期一条候选带、一屉都不摊开）');
+  });
+
+  it('两档共用同一份入参契约：换 `form` 只换骨架，格与候选那一整段逐字节相同', () => {
+    const one = renderQuickCapture(PLAIN);
+    /* 机器键那一串在两档里必须是同一份（只有实例 id 派生的那几个 `id`／`aria-controls` 随实例走）。 */
+    const sameId = (frag) => frag.split(DRAWER.id).join(PLAIN.id);
+    for (const cell of CELLS) {
+      assert.equal(sameId(cellFragment(html, cell.key)), cellFragment(one, cell.key),
+        '这一格在两档里必须逐字节相同：' + cell.key);
+    }
+    assert.equal(html.includes(SLOT('unit')), true, '抽屉里的一格住在网格的一项里');
+    assert.equal(countOf(html, SLOT('unit')), CELLS.length, '几格就是几项');
+  });
+
+  it('非法 `form` 一律拒，报错点名两档（格号 A／B 不是形态键）', () => {
+    const why = (form) => {
+      try { renderQuickCapture({ ...DRAWER, form }); return '（没抛）'; } catch (e) { return e.message; }
+    };
+    for (const bad of ['zzz', 'A', 'B', '', 1, null]) {
+      const said = why(bad);
+      assert.ok(said.includes('oneline') && said.includes('drawer'), '拒了但没点名两档：' + said);
+    }
+    assert.equal(throwsBlocks(() => renderQuickCapture({ ...DRAWER, form: 'zzz' })), true);
+  });
+
+  it('样式段：抽屉那几格是两列网格、`[hidden]` 真的收起、窄档走 `@container`、零省略手段', () => {
+    const css = stripComments(quickCaptureCss());
+    assert.ok(css.includes(SLOT('drawer') + '[hidden]') && css.includes('display: none'), '收起必须真的收起');
+    assert.ok(css.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), '宽档两列');
+    assert.ok(css.includes('@container ' + QUICK_CAPTURE_CONTAINER
+      + ' (max-width: ' + String(QUICK_CAPTURE_DRAWER_NARROW_PX) + 'px)'), '窄档走本件自己的容器查询');
+    assert.ok(css.includes('grid-template-columns: minmax(0, 1fr)'), '窄档一格一列');
+    assert.equal(/text-overflow|line-clamp|white-space:\s*nowrap/.test(css), false, '读数与候选名永不截断');
+    assert.equal(new RegExp('@media[^{]*max-width:\\s*' + String(QUICK_CAPTURE_NARROW_PX)).test(css), false,
+      '宽度判据不许走视口');
+  });
+});
+
+/* ── ⑦ 形态 drawer 的行为（真机 · **真指针** CDP Input） ─────────────── */
+
+describe('quick-capture ⑦ 形态 drawer 行为（真机 · 真指针 CDP Input）', () => {
+  /* 这一页**按需起**（第一条判据开跑时才起，关页那条收）：真机同一时刻只留一张页，
+     不跟 ④／⑤ 那两张同时在收集期抢浏览器。 */
+  let p = null;
+  const pageOf = async () => {
+    if (p === null) {
+      p = await startPointerPage({
+        css: skinCss() + '\n' + quickCaptureCss(),
+        html: renderQuickCapture(DRAWER),
+        portOffset: 57,
+      });
+    }
+    return p;
+  };
+  const noChrome = (t) => {
+    console.log('quick-capture 抽屉行为：真机未跑（本机没有 Chrome），原因=startPointerPage 返回 null');
+    t.skip('本机没有 Chrome');
+  };
+  /** 每一条判据开头：要页（第一次调用时起），起不来就跳过这一条。 */
+  const need = async (t) => {
+    await pageOf();
+    if (p === null) { noChrome(t); return false; }
+    return true;
+  };
+
+  const CHIP_SEL = (key) => SEL('chip') + ATTR(QUICK_CAPTURE_CELL_ATTR + '="' + key + '"');
+  const MORE_SEL = SEL('more');
+  const SAVE_SEL = SEL('save');
+  const DRAWER_SEL = SEL('drawer');
+  const PICK_SEL = (key) => SEL('pick') + ATTR(QUICK_CAPTURE_PICK_ATTR + '="' + key + '"');
+  const KEEP_SEL = (key) => SEL('keep') + ATTR(QUICK_CAPTURE_KEEP_ATTR + '="' + key + '"');
+  const TRAY_SEL = (key) => SEL('tray') + ATTR(QUICK_CAPTURE_TRAY_ATTR + '="' + key + '"');
+  /** 页内快照：抽屉摊开没收起、开关的 aria、每一格的两处读数、每条带摊开没收起。 */
+  const SNAP = '(function(){var root=document.querySelector(' + ROOT_S + ');'
+    + 'function list(sel){return [].slice.call(root.querySelectorAll(sel));}'
+    + 'var d=root.querySelector(' + q(SEL('drawer')) + ');'
+    + 'var more=root.querySelector(' + q(SEL('more')) + ');'
+    + 'return {drawerHidden:d?d.hasAttribute("hidden"):null,'
+    + 'drawerShown:d?getComputedStyle(d).display!=="none":null,'
+    + 'expanded:more?more.getAttribute("aria-expanded"):null,open:more?more.classList.contains("is-open"):null,'
+    + 'cells:list(' + CHIP_S + ').map(function(c){var r=c.querySelector(' + q(ATTR(QUICK_CAPTURE_READ_ATTR)) + ');'
+    + 'return {key:c.getAttribute(' + q(QUICK_CAPTURE_CELL_ATTR) + '),'
+    + 'value:c.getAttribute(' + q(QUICK_CAPTURE_VALUE_ATTR) + '),read:r?r.textContent:"",'
+    + 'expanded:c.getAttribute("aria-expanded")};}),'
+    + 'trays:list(' + TRAY_S + ').map(function(t){return {key:t.getAttribute('
+    + q(QUICK_CAPTURE_TRAY_ATTR) + '),hidden:t.hasAttribute("hidden")};}),'
+    + 'picks:list(' + PICK_S + ').map(function(o){return {key:o.getAttribute('
+    + q(QUICK_CAPTURE_PICK_ATTR) + '),on:o.classList.contains("is-on")};})};}())';
+  const tap = (sel, i) => p.pointerClick(sel, i);
+  const openTrays = (snap) => snap.trays.filter((t) => !t.hidden).map((t) => t.key);
+
+  it('点「分开填」（真指针）：摊开抽屉＋开关报到「摊开」，并派一条 split（`open:true`）', async (t) => {
+    if (!(await need(t))) return;
+    await p.reset();
+    await p.clearEvents();
+    await p.ev('window.__split=[];document.addEventListener(' + q(QUICK_CAPTURE_EVENT_SPLIT)
+      + ',function(e){window.__split.push(e.detail);});true');
+    const before = await p.ev(SNAP);
+    assert.equal(before.drawerHidden, true, '常驻时抽屉收起');
+    await tap(MORE_SEL);
+    const snap = await p.ev(SNAP);
+    const evts = await p.events();
+    assert.equal(snap.drawerHidden, false, '点一下真的摊开了');
+    assert.equal(snap.drawerShown, true, '摊开后它在屏上（`hidden` 没被作者层的 display 盖掉）');
+    assert.equal(snap.expanded, 'true', '开关报得出「摊开」');
+    assert.deepEqual(evts.map((e) => e.name + '|' + String(e.text)), [QUICK_CAPTURE_EVENT_SPLIT + '|' + DRAWER.text],
+      '派一条「分开填」（这一档它就是抽屉开关）');
+    const detail = (await p.ev('window.__split'))[0];
+    assert.equal(detail.id, DRAWER.id, '事件带的是这一张卡的机器键');
+    assert.equal(detail.open, true, '这一档多说一枚 `open`＝现在摊开着没有');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('再点一下收起；收起时把摊开的候选带一起收掉（一屏只留一层话）', async (t) => {
+    if (!(await need(t))) return;
+    await p.reset();
+    await tap(MORE_SEL);
+    await tap(CHIP_SEL('category'));
+    const opened = await p.ev(SNAP);
+    assert.equal(opened.drawerHidden, false, '先摊开抽屉');
+    assert.deepEqual(openTrays(opened), ['category'], '再点某一格摊开它自己的候选');
+    await p.clearEvents();
+    await p.ev('window.__split=[];document.addEventListener(' + q(QUICK_CAPTURE_EVENT_SPLIT)
+      + ',function(e){window.__split.push(e.detail);});true');
+    await tap(MORE_SEL);
+    const shut = await p.ev(SNAP);
+    assert.equal(shut.drawerHidden, true, '再点一下收起');
+    assert.equal(shut.expanded, 'false', '开关报得出「收起」');
+    assert.deepEqual(openTrays(shut), [], '收起时那条候选带也收掉（不留一层悬着的）');
+    assert.deepEqual((await p.events()).map((e) => e.name), [QUICK_CAPTURE_EVENT_SPLIT], '收起也报同一条');
+    assert.equal((await p.ev('window.__split'))[0].open, false, '收起时报的是「现在关着」');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('点某一格（真指针）：摊开**它自己的**候选，其余格的先收（一次只摊开一格）', async (t) => {
+    if (!(await need(t))) return;
+    await p.reset();
+    await tap(MORE_SEL);
+    await p.clearEvents();
+    await tap(CHIP_SEL('amount'));
+    const one = await p.ev(SNAP);
+    assert.deepEqual(openTrays(one), ['amount'], '摊开的只有这一格');
+    assert.equal(one.cells.filter((c) => c.key === 'amount')[0].expanded, 'true', '这一格报得出「摊开」');
+    await tap(CHIP_SEL('account'));
+    const two = await p.ev(SNAP);
+    assert.deepEqual(openTrays(two), ['account'], '换一格，前一格先收');
+    assert.deepEqual((await p.events()).map((e) => e.name), [], '摊开本身不派事件');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('改一格后点「存」：报出**每一格现在的读数**（含刚改的那一格）', async (t) => {
+    if (!(await need(t))) return;
+    await p.reset();
+    await tap(MORE_SEL);
+    await tap(CHIP_SEL('category'));
+    await tap(PICK_SEL('jiaotong'));
+    const picked = await p.ev(SNAP);
+    assert.equal(picked.cells.filter((c) => c.key === 'category')[0].value, 'jiaotong', '那一格改掉了');
+    await p.clearEvents();
+    await tap(SAVE_SEL);
+    const saves = (await p.events()).filter((e) => e.name === QUICK_CAPTURE_EVENT_SAVE);
+    assert.equal(saves.length, 1, '存只报一条');
+    assert.equal(saves[0].text, DRAWER.text);
+    assert.deepEqual(saves[0].cells.map((c) => c.key + '=' + c.value), ['category=jiaotong', 'amount=y32',
+      'account=cash', 'date=today'], '每一格现在的机器读数（顺序＝屏上顺序）');
+    assert.deepEqual(saves[0].cells.map((c) => c.to), ['交通', '32.00', '现金账户', '今天'], '每格现在屏上读的那一串');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('点「不改」＝取消（真指针）：值一动不动、一条事件都不派', async (t) => {
+    if (!(await need(t))) return;
+    await p.reset();
+    await tap(MORE_SEL);
+    await tap(CHIP_SEL('category'));
+    const before = await p.ev(SNAP);
+    await p.clearEvents();
+    await tap(KEEP_SEL('category'));
+    const after = await p.ev(SNAP);
+    assert.deepEqual(openTrays(after), [], '「不改」把带收起来');
+    const told = (s) => s.cells.map((c) => c.key + '=' + c.value + '|' + c.read);
+    assert.deepEqual(told(after), told(before), '每一格的机器读数与屏上读数一动不动');
+    assert.deepEqual(after.picks, before.picks, '候选带里那一枚的选中态也不动');
+    assert.deepEqual(await p.events(), [], '没变化就不报数（一条事件都不派）');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('关页', () => { if (p !== null) p.close(); });
+});
+
+/* ── ⑧ 形态 drawer 的四档几何（真机 headless Chrome ＋ CDP） ────────── */
+
+/** 页内：抽屉那一族的几何（整屉、每一格、网格里的缝、收起时它在不在屏上）。 */
+const DRAWER_BOX_FN = '(function(){'
+  + 'function box(el){var r=el.getBoundingClientRect();return {w:r.width,h:r.height,l:r.left,t:r.top};}'
+  + 'function shown(el){var cs=getComputedStyle(el),r=el.getBoundingClientRect();'
+  + 'return cs.display!=="none"&&cs.visibility!=="hidden"&&r.width>0&&r.height>0;}'
+  + 'function all(sel){return [].slice.call(document.querySelectorAll(sel)).filter(shown);}'
+  + 'var d=document.querySelector(' + ROOT_S + ');'
+  + 'var drawer=d.querySelector(' + q(SEL('drawer')) + ');'
+  + 'var grid=d.querySelector(' + q(SEL('grid')) + ');'
+  + 'var chips=all(' + q(SEL('chip')) + ').map(box);'
+  + 'var units=all(' + q(SEL('unit')) + ');'
+  + 'return {drawerHidden:drawer.hasAttribute("hidden"),drawerShown:shown(drawer),'
+  + 'cols:grid?getComputedStyle(grid).gridTemplateColumns:null,'
+  + 'gridBox:grid?box(grid):null,chips:chips,'
+  + 'units:units.map(function(u){return {cols:getComputedStyle(u).display};}),'
+  + 'picks:all(' + q(SEL('pick')) + ').map(box),keeps:all(' + q(SEL('keep')) + ').map(box),'
+  + 'acts:all(' + q(SEL('more') + ',' + SEL('save')) + ').map(box),'
+  + 'ties:all(' + TO_S + ').map(function(n){var b=box(n);b.text=n.textContent;'
+  + 'b.scrollW=n.scrollWidth;b.clientW=n.clientWidth;return b;})};}())';
+
+describe('quick-capture ⑧ 形态 drawer 四档几何（容器 320／390／620／1280）', () => {
+  it('收起时抽屉整屉不上屏；摊开后四档零横溢、每格 ≥44 见方、相邻 ≥8px、读数零截断', async (t) => {
+    const page = await startShapesPage({
+      css: skinCss() + '\n' + quickCaptureCss(),
+      html: '<div class="ilife-page-ui" data-case="drawer">' + renderQuickCapture(DRAWER) + '</div>',
+      portOffset: 58,
+    });
+    if (page === null) {
+      console.log('quick-capture 抽屉几何：真机未跑（本机没有 Chrome），原因=startShapesPage 返回 null');
+      return t.skip('本机没有 Chrome');
+    }
+    for (const width of [320, 390, 620, 1280]) {
+      await page.setWidth(width);
+      const closed = await page.ev(DRAWER_BOX_FN);
+      const closedRows = await page.read(FLOW_SELECTORS);
+      assert.equal(closed.drawerHidden, true, width + ' 档常驻时抽屉 `hidden`');
+      assert.equal(closed.drawerShown, false, width + ' 档常驻时抽屉真的不在屏上');
+      assert.equal(closed.chips.length, 0, width + ' 档常驻时一格都不上屏（一屏只留一层话）');
+      /* 摊开：摘掉整屉那枚 `hidden`（判据自己摆出这一态；运行时段那一支另有真指针判据）。 */
+      await page.ev('document.querySelector(' + q(SEL('drawer')) + ').removeAttribute("hidden");'
+        + 'document.querySelector(' + q(SEL('more')) + ').setAttribute("aria-expanded","true");true');
+      const rows = await page.read(FLOW_SELECTORS);
+      const frame = await page.frame();
+      const c = await page.ev(DRAWER_BOX_FN);
+      console.log('quick-capture 抽屉几何读数 ' + JSON.stringify({ width, frame,
+        cols: c.cols, chips: c.chips.length, chipsBox: c.chips.map((b) => [Math.round(b.w), Math.round(b.h)]),
+        rows: rows.map((r) => ({ sel: r.sel, clipped: r.clipped, overflow: Math.max(0, r.maxScrollW - r.maxClientW) })) }));
+      assert.equal(c.drawerShown, true, width + ' 档摊开后抽屉在屏上');
+      assert.equal(c.chips.length, CELLS.length, width + ' 档摊开后每一格都在（两档同一份格数）');
+      assert.ok(frame.fxScrollW <= width + 1, width + ' 档夹具容器横溢：' + JSON.stringify(frame));
+      assert.ok(frame.docScrollW <= frame.innerW + 1, width + ' 档页面横溢：' + JSON.stringify(frame));
+      for (const r of rows) {
+        assert.ok(r.maxScrollW <= r.maxClientW + 1, width + ' 档 ' + r.sel + ' 溢出：' + JSON.stringify(r));
+        assert.equal(r.clipped, 0, width + ' 档 ' + r.sel + ' 有节点被压字／截断（读数永不 `…`）');
+      }
+      for (const b of c.chips.concat(c.acts)) {
+        assert.ok(b.w >= QUICK_CAPTURE_TOUCH_PX && b.h >= QUICK_CAPTURE_TOUCH_PX,
+          width + ' 档可点件命中盒不足 44：' + JSON.stringify(b));
+      }
+      /* 同一排里相邻两格的缝 ≥8px（两列时是横向、一列时是纵向；网格的 `gap` 就是它）。 */
+      for (const g of gapsOf(c.chips)) {
+        assert.ok(g >= QUICK_CAPTURE_GAP_PX - 0.5, width + ' 档抽屉里相邻两格那道缝不足 '
+          + String(QUICK_CAPTURE_GAP_PX) + 'px（量到 ' + g.toFixed(2) + '）：' + JSON.stringify(c.chips));
+      }
+      for (const t of c.ties) {
+        assert.ok(t.scrollW <= t.clientW + 1, width + ' 档读数被压：' + JSON.stringify(t));
+        assert.ok(t.text.length > 0, width + ' 档有一格读数是空的');
+      }
+      /* 两列／一列：宽档两列、窄档一列（**判的是计算出来的列数**，不是写了哪条规则）。 */
+      const cols = String(c.cols).split(' ').filter((x) => x.trim() !== '').length;
+      assert.equal(cols, width >= 620 ? 2 : 1, width + ' 档列数不对：' + String(c.cols));
+      /* 摊开一格：候选与「不改」也要 ≥44 见方、相邻 ≥8px。 */
+      await page.ev('document.querySelector(' + q(SEL('tray')) + ').removeAttribute("hidden");true');
+      const open = await page.ev(DRAWER_BOX_FN);
+      for (const b of open.picks.concat(open.keeps)) {
+        assert.ok(b.w >= QUICK_CAPTURE_TOUCH_PX && b.h >= QUICK_CAPTURE_TOUCH_PX,
+          width + ' 档候选／「不改」命中盒不足 44：' + JSON.stringify(b));
+      }
+      const openRows = await page.read(FLOW_SELECTORS);
+      for (const r of openRows) {
+        assert.ok(r.maxScrollW <= r.maxClientW + 1, width + ' 档（带摊开）' + r.sel + ' 溢出：' + JSON.stringify(r));
+        assert.equal(r.clipped, 0, width + ' 档（带摊开）' + r.sel + ' 有节点被压字');
+      }
+      assert.equal((await page.errs()).length, 0, width + ' 档页内零未捕获错误');
+      /* 回到出发状态：整屉与那条带都收起来（`it` 之间是同一张页）。 */
+      await page.ev('document.querySelector(' + q(SEL('drawer')) + ').setAttribute("hidden","");'
+        + 'document.querySelector(' + q(SEL('more')) + ').setAttribute("aria-expanded","false");'
+        + 'document.querySelector(' + q(SEL('tray')) + ').setAttribute("hidden","");true');
+    }
+    page.close();
+  });
+});
+
