@@ -109,7 +109,7 @@ renderFlowRibbon({
 
 **两条数值闸**（每一处收数字的字段都过）：
 1. **非有限**（`NaN`／`Infinity`／`-Infinity`）⇒ `badInput()` 抛 `BlocksError`；
-2. **可加性溢出**：`|a| + |b| > Number.MAX_VALUE`（两笔同量级读数相加就成 `Infinity`，图上会写出 `1e+308`／`NaN`）⇒ `badInput()`。闸在 `fields.ts 的 reqMagnitude()`。
+2. **可加性溢出**：`|a| + |b| > Number.MAX_VALUE`（两笔同量级读数相加就成 `Infinity`，图上会写出 `1e+308`／`NaN`）⇒ `badInput()`。闸在 `fields.ts 的 reqMagnitude()`，上界常量 `FLOW_RIBBON_MAGNITUDE_MAX`（＝`Number.MAX_VALUE ÷ 2`）。
    - 判据是**相加会不会溢出**，不是"好不好读"——`1e21`／`1e-7` 这类**照旧合法**（本件有边界自证守着，别误杀）。
 
 **表外的键一律拒**：顶层与**每个嵌套对象层**都查键（`flow-ribbon` 的 `assertKeys`：**自有属性 ＋ 原型链双查**）。

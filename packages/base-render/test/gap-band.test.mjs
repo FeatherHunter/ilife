@@ -542,7 +542,9 @@ describe('gap-band ① 渲染契约 · 公共面与非法入参', () => {
       title: 'x', unit: '元', plan: 0,
       days: [{ label: 'a', value: -1e303 }, { label: 'b', value: -1e302 }, { label: 'c', value: -1e301 }],
     }).length > 0, '负向同号的大读数跨度有限，应正常渲染');
-    /* 可读数本身有量级闸（与轴域那一档**分开**）：`±1e308` 那一笔两两相加就溢出成 `Infinity`，一律拒。 */
+    /* 读数本身另有一条量级闸，与上一档（轴域／跨度）**分开**：**`±1e308` 单笔也不收**——
+       它与任何同量级的读数相加就溢出成 `Infinity`（`|a| + |b| > Number.MAX_VALUE`），
+       图上会写出 `1e+308`／`NaN` 这种读不出来的东西；而上面那几个 `-1e303`／`-1e302` 在界内，照常渲染。 */
     assert.equal(throwsBlocks(() => renderGapBand({
       title: 'x', unit: '元', plan: 0,
       days: [{ label: 'a', value: -1e308 }, { label: 'b', value: -1e303 }, { label: 'c', value: -1e302 }],

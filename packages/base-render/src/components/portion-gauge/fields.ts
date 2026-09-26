@@ -28,12 +28,14 @@ export function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
-/** 读数的量级闸：**两笔同量级的读数相加不许溢出**（`1e308 + 1e308` 在双精度里就是 `Infinity`）。
- *  为什么单独立这一档：那一档的数是**有限的**（`Number.isFinite(1e308)` 为真），可它一算就成 `Infinity`，
- *  屏上写出的是 `1e+308` 这种读不出来的东西（本件实测：`grams = 1e308` 原样渲成 `1e+308 g`）。
- *  **`1e21`／`1e-7` 那一档照旧合法**（十进制写法与指数写法的分界，本层当读数写）。 */
+/** 可加性的量级上界（`Number.MAX_VALUE ÷ 2`）。**判据是「相加会不会溢出」，不是「好不好读」**：
+ *  `|a| + |b| > Number.MAX_VALUE` 那一刻就是双精度的 `Infinity`，屏上写出 `1e+308` 这种读不出来的东西
+ *  （本件实测：`grams = 1e308` 原样渲成 `1e+308 g`）。故 `1e21`／`1e-7`（十进制写法与指数写法的分界那一档）**照旧合法**。 */
+const PORTION_GAUGE_MAGNITUDE_MAX = Number.MAX_VALUE / 2;
+
+/** 读数的量级闸（上界住 `PORTION_GAUGE_MAGNITUDE_MAX`，那一档的数是**有限的**：`Number.isFinite(1e308)` 为真）。 */
 function reqMagnitude(n: number, field: string): number {
-  if (Math.abs(n) + Math.abs(n) > Number.MAX_VALUE) {
+  if (Math.abs(n) > PORTION_GAUGE_MAGNITUDE_MAX) {
     badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
       + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
   }

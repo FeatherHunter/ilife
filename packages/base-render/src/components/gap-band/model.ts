@@ -46,17 +46,22 @@ function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
-/** 一个读数：有限数（`NaN`／`Infinity`／数字串一律拒）**且量级可读**。
+/** 可加性的量级上界（`Number.MAX_VALUE ÷ 2`）。**判据是「相加会不会溢出」，不是「好不好读」**：
+ *  `|a| + |b| > Number.MAX_VALUE` 那一刻就是双精度的 `Infinity`——柱高／刻度位置会写出 `1e+308`／`NaN`。
+ *  故 `1e21`／`1e-7`（十进制写法与指数写法的分界那一档）**照旧合法**。 */
+const GAP_BAND_MAGNITUDE_MAX = Number.MAX_VALUE / 2;
+
+/** 一个读数：有限数（`NaN`／`Infinity`／数字串一律拒）**且在可加性上界之内**（上界住 `GAP_BAND_MAGNITUDE_MAX`）。
  *
  *  量级这一档是本件自己的读数闸，与「轴域非有限即拒」那条（住 `scale.ts`，管的是**跨度**）**不是一档**：
  *  那一档管的是「一头 `−1e308`、另一头 `1e308`」这种跨度溢出；这一档管的是**单笔读数本身**——
- *  `1e308` 是有限数，可两笔同量级的读数相加就成 `Infinity`，柱高／刻度位置会写出 `1e+308` 那种读不出来的数。
- *  `1e21` 那一档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
+ *  `1e308` 是有限数，可它与任何同量级的读数相加就成 `Infinity`，柱高／刻度位置会写出 `1e+308` 那种
+ *  读不出来的数。 */
 function reqNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     badInput(field + ' 必须是有限数（`NaN`／`Infinity` 这类"写不成数的东西"一律拒）');
   }
-  if (Math.abs(value) + Math.abs(value) > Number.MAX_VALUE) {
+  if (Math.abs(value) > GAP_BAND_MAGNITUDE_MAX) {
     badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
       + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
   }
