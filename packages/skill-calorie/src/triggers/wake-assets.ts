@@ -17,6 +17,8 @@
  * 本文件由实物 JSON 机器生成（逐字 `JSON.stringify`），禁止手工改词；改词即改 SoT。
  */
 
+import type { SceneEditableField } from 'base-paint';
+
 export type WakeSceneType = '结果' | '回执' | '过程';
 
 export interface WakeSceneAsset {
@@ -27,6 +29,8 @@ export interface WakeSceneAsset {
   readonly prompt_template: string;
   /** 实物 legacy 22 条本无此键（保持缺席）；其余 414 条恰含一个类型。 */
   readonly types?: readonly WakeSceneType[];
+  /** 可填参（#970 按 PROMPT-REWRITE＋#966 kind 闭集全量标注；306 零参场景保持缺席，不发空数组）。 */
+  readonly editable_fields?: readonly SceneEditableField[];
 }
 
 export interface WakeSubgroupAsset {
@@ -1565,9 +1569,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记运动",
             "wake_word": "记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动」。\n\n我做了运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:____\n时长(分钟):____\n热量(卡,选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动」。\n\n我做了运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "exercise_type",
+                "label": "运动类型",
+                "value": "",
+                "hint": "如 慢跑、力量训练",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "duration_min",
+                "label": "时长",
+                "value": "",
+                "hint": "单位 分钟，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "calories",
+                "label": "热量(选填)",
+                "value": "",
+                "hint": "单位 卡，只收纯数字",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1575,9 +1605,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记运动（含备注）",
             "wake_word": "记运动（含备注）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动（含备注）」。\n\n我做了运动,请连同备注一起记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:____\n时长(分钟):____\n热量(卡,选填):____\n备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动（含备注）」。\n\n我做了运动,请连同备注一起记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}\n备注:{{note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "exercise_type",
+                "label": "运动类型",
+                "value": "",
+                "hint": "如 慢跑、力量训练",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "duration_min",
+                "label": "时长",
+                "value": "",
+                "hint": "单位 分钟，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "calories",
+                "label": "热量(选填)",
+                "value": "",
+                "hint": "单位 卡，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "note",
+                "label": "备注",
+                "value": "",
+                "hint": "如 跑后拉伸10分钟",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1585,9 +1649,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记力量训练",
             "wake_word": "记力量训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记力量训练」。\n\n我练了力量训练,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:____\n组数:____\n单组重量(kg):____\n每组次数:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记力量训练」。\n\n我练了力量训练,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:{{movement_name}}\n组数:{{sets}}\n单组重量:{{weight_kg}}\n每组次数:{{reps}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "movement_name",
+                "label": "动作名",
+                "value": "",
+                "hint": "如 深蹲、卧推",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "sets",
+                "label": "组数",
+                "value": "",
+                "hint": "整数，如 4",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "weight_kg",
+                "label": "单组重量",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 20",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "reps",
+                "label": "每组次数",
+                "value": "",
+                "hint": "整数，如 12",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1595,9 +1693,51 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记有氧运动",
             "wake_word": "记有氧运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记有氧运动」。\n\n我做了有氧运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:____\n时长(分钟):____\n距离(km,选填):____\n平均心率(选填):____\n最高心率(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记有氧运动」。\n\n我做了有氧运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n距离(选填):{{distance_km}}\n平均心率(选填):{{avg_hr}}\n最高心率(选填):{{max_hr}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "exercise_type",
+                "label": "运动类型",
+                "value": "",
+                "hint": "如 慢跑、骑行",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "duration_min",
+                "label": "时长",
+                "value": "",
+                "hint": "单位 分钟，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "distance_km",
+                "label": "距离(选填)",
+                "value": "",
+                "hint": "单位 km，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "avg_hr",
+                "label": "平均心率(选填)",
+                "value": "",
+                "hint": "单位 次/分，只收纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "max_hr",
+                "label": "最高心率(选填)",
+                "value": "",
+                "hint": "单位 次/分，只收纯数字",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1605,9 +1745,48 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记日常活动",
             "wake_word": "记日常活动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记日常活动」。\n\n我做了日常活动(家务/通勤/走路等),请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n活动类型:____\n步数(选填):____\n时段(上午/下午/晚上,选填):____\n时长(分钟):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记日常活动」。\n\n我做了日常活动(家务/通勤/走路等),请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n活动类型:{{activity_type}}\n步数(选填):{{steps}}\n时段(选填):{{period}}\n时长:{{duration_min}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "activity_type",
+                "label": "活动类型",
+                "value": "",
+                "hint": "如 步行、家务、通勤",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "steps",
+                "label": "步数(选填)",
+                "value": "",
+                "hint": "纯数字，如 3000",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "period",
+                "label": "时段(选填)",
+                "value": "",
+                "hint": "空＝不区分",
+                "required": false,
+                "kind": "select",
+                "options": [
+                  "上午",
+                  "下午",
+                  "晚上"
+                ]
+              },
+              {
+                "name": "duration_min",
+                "label": "时长",
+                "value": "",
+                "hint": "单位 分钟，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1615,9 +1794,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记运动",
             "wake_word": "补记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n我忘了记某天的运动,请补录到指定日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:____\n日期:____\n时长(分钟):____\n热量(卡,选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n我忘了记某天的运动,请补录到指定日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n日期:{{log_date}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "exercise_type",
+                "label": "运动类型",
+                "value": "",
+                "hint": "如 慢跑、力量训练",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "duration_min",
+                "label": "时长",
+                "value": "",
+                "hint": "单位 分钟，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "calories",
+                "label": "热量(选填)",
+                "value": "",
+                "hint": "单位 卡，只收纯数字",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -1625,9 +1838,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量补记运动",
             "wake_word": "批量补记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补记运动」。\n\n我要一次性补录多天的运动,每条含日期/类型/时长/热量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n批量数据(每行一条:日期 类型 时长(分钟) 热量(卡)):\n____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补记运动」。\n\n我要一次性补录多天的运动,每条含日期/类型/时长/热量。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n批量数据:\n{{batch_data}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "batch_data",
+                "label": "批量数据",
+                "value": "",
+                "hint": "每行一条：日期 类型 时长(分钟) 热量(卡)",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1635,9 +1858,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "复制昨日运动",
             "wake_word": "复制昨日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制昨日运动」。\n\n我想把昨天的运动记录复制到今天(或指定日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n复制到哪一天(选填,默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制昨日运动」。\n\n我想把昨天的运动记录复制到今天(或指定日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n复制到哪一天(选填):{{target_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_date",
+                "label": "复制到哪一天(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -1651,9 +1884,42 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改运动记录",
             "wake_word": "改运动记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改运动记录」。\n\n我要改一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(选填,如「最近一条」或日期):____\n要改的字段(类型/时长/热量/日期/备注):____\n新值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改运动记录」。\n\n我要改一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(选填):{{target_record}}\n要改的字段:{{field}}\n新值:{{new_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_record",
+                "label": "要改的记录(选填)",
+                "value": "",
+                "hint": "如 最近一条或 YYYY-MM-DD；用于定位记录",
+                "required": false,
+                "kind": "text"
+              },
+              {
+                "name": "field",
+                "label": "要改的字段",
+                "value": "",
+                "hint": "机器值必须命中一项",
+                "required": true,
+                "kind": "select",
+                "options": [
+                  "类型",
+                  "时长",
+                  "热量",
+                  "日期",
+                  "备注"
+                ]
+              },
+              {
+                "name": "new_value",
+                "label": "新值",
+                "value": "",
+                "hint": "按字段填值；日期填 YYYY-MM-DD，数字只收纯数字",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1661,9 +1927,42 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改某日运动",
             "wake_word": "改某日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日运动」。\n\n我要改某一天的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:____\n要改的字段:____\n新值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日运动」。\n\n我要改某一天的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}\n要改的字段:{{field}}\n新值:{{new_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "field",
+                "label": "要改的字段",
+                "value": "",
+                "hint": "机器值必须命中一项",
+                "required": true,
+                "kind": "select",
+                "options": [
+                  "类型",
+                  "时长",
+                  "热量",
+                  "日期",
+                  "备注"
+                ]
+              },
+              {
+                "name": "new_value",
+                "label": "新值",
+                "value": "",
+                "hint": "按字段填值；日期填 YYYY-MM-DD，数字只收纯数字",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1671,9 +1970,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删运动记录",
             "wake_word": "删运动记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删运动记录」。\n\n我要删一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填,如「最近一条」或日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删运动记录」。\n\n我要删一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{target_record}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_record",
+                "label": "要删的记录(选填)",
+                "value": "",
+                "hint": "如 最近一条或 YYYY-MM-DD；用于定位记录",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -1681,9 +1990,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删某日运动",
             "wake_word": "删某日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日运动」。\n\n我要删某一天的全部运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日运动」。\n\n我要删某一天的全部运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1691,9 +2010,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量删运动",
             "wake_word": "批量删运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删运动」。\n\n我要删除一个时间范围内的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删运动」。\n\n我要删除一个时间范围内的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -1787,9 +2124,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某段时间运动",
             "wake_word": "看某段时间运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间运动」。\n\n我想看一段自定义时间的运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间运动」。\n\n我想看一段自定义时间的运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1913,9 +2268,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动趋势",
             "wake_word": "看运动趋势",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动趋势」。\n\n我想看运动趋势。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(天,选填,默认 30):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动趋势」。\n\n我想看运动趋势。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(选填):{{window_days}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "window_days",
+                "label": "时间窗口(选填)",
+                "value": "",
+                "hint": "空＝30；单位 天，只收纯数字",
+                "required": false,
+                "kind": "number"
+              }
             ]
           }
         ]
@@ -1969,9 +2334,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（自定义时间）",
             "wake_word": "运动复盘（自定义时间）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（自定义时间）」。\n\n我想看一段自定义时间的运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（自定义时间）」。\n\n我想看一段自定义时间的运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
