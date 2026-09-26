@@ -1800,7 +1800,12 @@ function buildPrompt(s, v){
   var paramLines = [];
   (s.params || []).forEach(function(p){
     var val = (v[p.key] != null ? String(v[p.key]) : '').trim();
-    if (val) paramLines.push(p.label + ': ' + val);
+    if (!val) return;
+    /* 去重（#970 用户验收：正文已含同行时不再追加，避免黑盒里同一组字段出现两遍） */
+    var esc = function(t){ return String(t == null ? '' : t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+    var re = new RegExp('^' + esc(p.label) + '\\s*[:：]\\s*' + esc(val) + '\\s*$', 'm');
+    if (re.test(base)) return;
+    paramLines.push(p.label + ': ' + val);
   });
   if (paramLines.length) lines.push(''); /* 空行分隔 */
   lines = lines.concat(paramLines);

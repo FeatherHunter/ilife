@@ -1526,9 +1526,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补录体重",
             "wake_word": "补录体重",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补录体重」。\n\n我要补录过去某天的体重(不是今天)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重(kg):____\n日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补录体重」。\n\n我要补录体重。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n体重:{{weight_kg}}\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "weight_kg",
+                "label": "体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 68.5",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -1794,7 +1812,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记运动",
             "wake_word": "补记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n我忘了记某天的运动,请补录到指定日期。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n日期:{{log_date}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n请补记运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n日期:{{log_date}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
             "types": [
               "回执"
             ],
