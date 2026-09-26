@@ -6,12 +6,20 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildHelpLookup } from '../dist/help/index.js';
 import { MEMO_KEY_SHAPES } from '../dist/render/index.js';
+import { REGISTRY } from '../dist/cli/registry.js';
 
 export const START = '<!-- HELP-AUTO-START -->';
 export const END = '<!-- HELP-AUTO-END -->';
 
 export function buildHelpBlock() {
-  const keys = Object.keys(MEMO_KEY_SHAPES).sort();
+  /* #974 收口（#964 遗留）：程序面键（`surface:'program'`，如数据族 `memo.data.schema`／`memo.data.query`）
+     **不进技能说明面**——#964 把它们登进了 `MEMO_KEY_SHAPES`（envelope 认全表，必须登），
+     但本件当初直接抄全表 ⇒ 说明面泄漏程序面键：`test/data-964.test.mjs` ⑨ 判红，
+     而 `test/skill.test.mjs` 的「互联区新鲜」又要求本件输出与 SKILL.md 逐字相等，两条互相矛盾。
+     事实源＝生成物 `dist/cli/registry.js` 的 `CommandSpec.surface`（各域声明派下来，不另抄一份名单）。 */
+  const keys = Object.keys(MEMO_KEY_SHAPES)
+    .filter((k) => REGISTRY[k]?.surface !== 'program')
+    .sort();
   const lines = ['| 唤醒词 | key | shape | 例 |', '|---|---|---|---|'];
   for (const h of buildHelpLookup()) lines.push('| ' + h.phrase + ' | ' + h.key + ' | ' + h.shape + ' | `' + h.cli + '` |');
   lines.push('');
