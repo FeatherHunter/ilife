@@ -153,13 +153,13 @@
   .sheet .pfield input:placeholder-shown:focus{background:#fff;border-color:var(--blue)}
   .sheet .pprev{margin-top:9px;background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.65;word-break:break-all;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .sheet .pprev .pv-label{font-size:9px;color:#8e8e93;display:block;letter-spacing:.05em;margin-bottom:4px}
-  /* 预览默认收起（无参页默认展开）：折叠钮零文案，箭头指向与开合一致（#970 用户验收） */
+  /* 预览折叠钮：SF 式细线雪佛龙＋旋转过渡，零文案（#970 用户验收：顶级苹果质感） */
   .sheet .pprev-fold{margin-top:9px}
-  .sheet .pprev-fold summary.fold{cursor:pointer;list-style:none;display:flex;justify-content:center;padding:5px;-webkit-tap-highlight-color:transparent}
+  .sheet .pprev-fold summary.fold{cursor:pointer;list-style:none;display:flex;justify-content:center;padding:8px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .sheet .pprev-fold summary.fold::-webkit-details-marker{display:none}
-  .sheet .pprev-fold summary.fold::after{content:"︿";display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--line);color:var(--fg2);font-size:12px;transition:background .2s,transform .25s}
-  .sheet .pprev-fold summary.fold:active::after{background:var(--line)}
-  .sheet .pprev-fold[open] summary.fold::after{content:"﹀"}
+  .sheet .pprev-fold summary.fold .chev{display:block;width:30px;height:30px;border-radius:50%;background:var(--bg);border:1px solid var(--line);color:var(--fg2);box-shadow:0 1px 3px rgba(0,0,0,.06);transition:transform .32s cubic-bezier(.32,.72,.24,1),background .2s,color .2s}
+  .sheet .pprev-fold summary.fold:active .chev{background:var(--line);color:var(--fg)}
+  .sheet .pprev-fold[open] summary.fold .chev{transform:rotate(180deg)}
   .sheet .pprev-fold .pprev{margin-top:8px}
   .sheet .s-actions{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0));display:flex;gap:8px;flex-shrink:0}
   .sheet .s-actions .copy-btn{flex:1;min-height:48px;font-size:13px;font-weight:600;border-radius:12px;background:var(--blue);color:#fff;border:0;box-shadow:none}
@@ -2020,7 +2020,7 @@ function openSheet(s){
   /* 预览：代值后 prompt 全文 + 末尾 label:value（有参数时实时重组，#969）*/
   var initVals = {};
   (s.params || []).forEach(function(p){ initVals[p.key] = p.value || ''; });
-  var prev = '<details class="pprev-fold"' + (hasParams ? '' : ' open') + '><summary class="fold" aria-label="展开"></summary><div class="pprev"><span data-prev>' + esc(buildPrompt(s, initVals)) + '</span></div></details>';
+  var prev = '<details class="pprev-fold"' + (hasParams ? '' : ' open') + '><summary class="fold" aria-label="展开"><svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 6.5 6 2l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="pprev"><span data-prev>' + esc(buildPrompt(s, initVals)) + '</span></div></details>';
   shBody.innerHTML = form + prev;
   shCopy.dataset.pid = s.id;
   shCopy.dataset.c = buildPrompt(s, initVals);
