@@ -32,26 +32,35 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  REMINDER_SETTER_AT_ATTR,
   REMINDER_SETTER_ATTR,
   REMINDER_SETTER_BOUND_ATTR,
   REMINDER_SETTER_BOX_PX,
+  REMINDER_SETTER_CHOSEN_ATTR,
   REMINDER_SETTER_CLASS,
   REMINDER_SETTER_CONTAINER,
   REMINDER_SETTER_DATE_STEP_DAYS,
+  REMINDER_SETTER_DAY_MIN,
   REMINDER_SETTER_DELTA_ATTR,
   REMINDER_SETTER_EVENT_CHANGE,
   REMINDER_SETTER_FORM_ATTR,
   REMINDER_SETTER_FORMS,
   REMINDER_SETTER_GAP_PX,
+  REMINDER_SETTER_HOURS,
   REMINDER_SETTER_HOVER_QUERY,
   REMINDER_SETTER_LABEL_PX,
+  REMINDER_SETTER_LEAD_ATTR,
   REMINDER_SETTER_MAX_CHOICES,
+  REMINDER_SETTER_MAX_ITEMS,
   REMINDER_SETTER_MAX_ROUTES,
   REMINDER_SETTER_MIN_CHOICES,
+  REMINDER_SETTER_MIN_ITEMS,
   REMINDER_SETTER_NARROW_PX,
   REMINDER_SETTER_PART_ATTR,
   REMINDER_SETTER_PARTS,
+  REMINDER_SETTER_PICKED_ATTR,
   REMINDER_SETTER_READ_ATTR,
+  REMINDER_SETTER_REPEAT_ATTR,
   REMINDER_SETTER_ROW_ATTR,
   REMINDER_SETTER_RUNTIME_ATTR,
   REMINDER_SETTER_SLOTS,
@@ -66,12 +75,16 @@ import {
   REMINDER_SETTER_TOUCH_PX,
   REMINDER_SETTER_VALUE_ATTR,
   buildReminderSetterJs,
+  reminderSetterClock,
   reminderSetterCss,
   reminderSetterHead,
+  reminderSetterPlace,
   reminderSetterRecap,
   reminderSetterSlot,
+  reminderSetterStepAt,
   reminderSetterStepDate,
   reminderSetterStepTime,
+  reminderSetterTrackTail,
   renderReminderSetter,
 } from '../dist/components/reminder-setter/index.js';
 import { renderPageHead } from '../dist/components/page-head/index.js';
@@ -157,13 +170,37 @@ const OK = {
   chosen: ['a'],
 };
 
+/* ── 形态 `track` 的两份真实形状（一天里好几条提醒；一份含「一条通知都不勾」的那条） ── */
+
+/** 07:00 吃药 ／ 13:00 记一餐 ／ 20:00 记体重（选中它）。三条摆开：窄容器下命中盒也不相撞。 */
+const TRACK = {
+  form: 'track',
+  id: 'rem-day',
+  items: [
+    { id: 'med', label: '吃药', at: 7 * 60, repeat: 'daily', lead: 'ontime', chosen: ['push'] },
+    { id: 'meal', label: '记一餐', at: 13 * 60, repeat: 'weekly', lead: 'm10', chosen: ['push'] },
+    { id: 'weight', label: '记体重', at: 20 * 60, repeat: 'daily', lead: 'ontime', chosen: ['push', 'feishu'] },
+  ],
+  picked: 'weight',
+  repeats: REPEATS, leads: LEADS, routes: ROUTES,
+};
+/** 同一天，但入参**倒着给**：屏上顺序＝刻度上的先后（件自己排，调用方不用先排）。 */
+const TRACK_SHUFFLED = { ...TRACK, id: 'rem-day-shuffled', items: [...TRACK.items].reverse() };
+/** 选中那条**一条通知都没勾**：图例那一行的尾一截照实读成那句状态。 */
+const TRACK_SILENT = {
+  ...TRACK, id: 'rem-day-silent',
+  items: TRACK.items.map((o) => (o.id === 'weight' ? { ...o, chosen: [] } : o)),
+};
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('reminder-setter ① 渲染契约 · 骨架与三行', () => {
   const html = renderReminderSetter(PLAIN);
 
   it('根 ＋ 抬头 ＋ 三行 ＋ 唯一那行复述；形态键是英文骨架名（不是格号 A）', () => {
-    assert.deepEqual([...REMINDER_SETTER_FORMS], ['decisions'], '形态闭集只落地「一行一个决定」，键名是骨架名');
+    assert.deepEqual([...REMINDER_SETTER_FORMS], ['decisions', 'track'],
+      '形态闭集两档都是英文骨架名（老档那个键一个字都不许改）');
+    assert.equal(REMINDER_SETTER_FORMS[0], 'decisions', '老档的键必须还是第一个（缺省形态）');
     assert.match(html, new RegExp('^<div class="' + REMINDER_SETTER_CLASS + ' ' + SLOT('host') + ' is-decisions"'));
     assert.ok(html.includes(REMINDER_SETTER_ATTR + '="rem-weight"'), '根上要有本件的发现锚');
     assert.ok(html.includes(REMINDER_SETTER_FORM_ATTR + '="decisions"'), '形态照实写进标记');
@@ -323,7 +360,7 @@ describe('reminder-setter ① 渲染契约 · 骨架与三行', () => {
     assert.equal(B({ ...OK, repeats: [NaN, OK.repeats[1]] }), true, '重复档整个是 NaN');
     assert.equal(B({ ...OK, routes: [{ key: NaN, label: '通' }] }), true, '通知档的机器键是 NaN');
     assert.equal(B({ ...OK, form: 'A' }), true, '形态闭集外（格号不是键）');
-    assert.equal(B({ ...OK, form: 'byDay' }), true, '形态闭集外（B 档不落）');
+    assert.equal(B({ ...OK, form: 'byDay' }), true, '形态闭集外（闭集里只有 decisions／track 两个键）');
     assert.equal(B({ ...OK, extraClass: 'a"b' }), true, '附加类名过不了类名正则');
     assert.equal(B({ ...OK, extraClass: 'ok-class other' }), false, '合法附加类名照收');
     assert.equal(B({ ...OK, form: undefined, extraClass: undefined }), false, '入参表里的键给 undefined 按未给算');
@@ -631,13 +668,18 @@ describe('reminder-setter ② 样式与零 DOM 纪律', () => {
       'stepper', 'dec', 'num', 'inc', 'rack', 'check', 'read'];
     for (const slot of want) assert.ok(REMINDER_SETTER_SLOTS.includes(slot), '槽位闭集里少了 ' + slot);
     const html = renderReminderSetter(PLAIN);
-    /* **死声明门**：闭集里**每一枚**槽类都必须在标记里真的出现（不另抄一份名单来查）。
+    /* **死声明门**：闭集里**每一枚**槽类都必须在某个形态的标记里真的出现（不另抄一份名单来查）。
        漏一枚（例如根上没挂 `-host`）⇒ 样式段里挂在它名下的规则永不命中：
        卡没有边／没有投影，`container-type` 也不生效 ⇒ `@container` 找不到容器、窄档折行整段失效。
        变异自证：把根上的 `reminderSetterSlot('host')` 摘掉 ⇒ 本条红在 `槽位闭集里的 'host' …（死声明）`。 */
+    const htmlTrack = renderReminderSetter(TRACK);
     for (const slot of REMINDER_SETTER_SLOTS) {
-      assert.ok(html.includes(reminderSetterSlot(slot)),
-        '槽位闭集里的 `' + slot + '` 在标记里没有这个类（死声明）：' + reminderSetterSlot(slot));
+      assert.ok(html.includes(reminderSetterSlot(slot)) || htmlTrack.includes(reminderSetterSlot(slot)),
+        '槽位闭集里的 `' + slot + '` 在两个形态的标记里都没有这个类（死声明）：' + reminderSetterSlot(slot));
+    }
+    /* 老档那 17 枚**逐枚都要还在 `decisions` 的标记里**（新形态不许把老档的槽位搬走）。 */
+    for (const slot of want) {
+      assert.ok(html.includes(reminderSetterSlot(slot)), '老档标记里少了 ' + slot + '（新档不许动它）');
     }
     /* 容器名不许是项名的前缀（判据在标记串上找槽位时才不会把容器当项）。 */
     assert.equal(CLS('chip').startsWith(CLS('chips')), false);
@@ -706,6 +748,9 @@ const STEPPER_S = q(SEL('stepper'));
 const NUM_S = q(SEL('num'));
 const READ_S = q(SEL('read'));
 const RECAP_S = q(ATTR(REMINDER_SETTER_READ_ATTR + '="recap"'));
+/** 形态 `track` 的两枚槽位（刻度上那枚点／图例那一行）。 */
+const DOT_S = q(SEL('dot'));
+const LG_S = q(SEL('lg'));
 
 /** 页内：逐 case 量几何（三排可点项／两枚步进位／读数／一排里的缝／窄宽两档的折行）。 */
 const BOX_FN = '(function(){'
@@ -723,7 +768,7 @@ const BOX_FN = '(function(){'
   + ' var root=cases[i].querySelector(' + ROOT_S + ');'
   + ' var row=root.querySelector(' + ROW_S + ');'
   + ' var lb=row.querySelector(' + LABEL_S + '), ct=row.querySelector(' + CTL_S + ');'
-  + ' out.push({rows:all(' + ROW_S + ',root).length,heads:all(' + HEAD_S + ',root).length,'
+  + ' out.push({name:cases[i].getAttribute("data-case"),rows:all(' + ROW_S + ',root).length,heads:all(' + HEAD_S + ',root).length,'
   + '  chips:all(' + CHIP_S + ',root).map(box),checks:all(' + CHECK_S + ',root).map(box),'
   + '  steps:all(' + q(SEL('dec') + ',' + SEL('inc')) + ',root).map(box),'
   + '  trays:kids(' + TRAY_S + ',root),racks:kids(' + RACK_S + ',root),steppers:kids(' + STEPPER_S + ',root),'
@@ -731,6 +776,8 @@ const BOX_FN = '(function(){'
   + 'b.scrollW=n.scrollWidth;b.clientW=n.clientWidth;return b;}),'
   + '  reads:all(' + READ_S + ',root).map(function(n){var b=box(n);b.text=n.textContent;'
   + 'b.scrollW=n.scrollWidth;b.clientW=n.clientWidth;return b;}),'
+  + '  dots:all(' + DOT_S + ',root).map(box),legends:all(' + LG_S + ',root).map(box),'
+  + '  shown:all(' + q(SEL('dot') + ',' + SEL('lg')) + ',root).length,'
   + '  labelBox:box(lb),ctlBox:box(ct),'
   + '  stacked:Math.round(ct.getBoundingClientRect().top)-Math.round(lb.getBoundingClientRect().bottom)>=0});'
   + '}return out;}())';
@@ -750,7 +797,8 @@ describe('reminder-setter ④ 四档几何（真机 headless Chrome ＋ CDP · �
   const page = await startShapesPage({
     css: skinCss() + '\n' + reminderSetterCss(),
     html: '<div class="ilife-page-ui" data-case="plain">' + renderReminderSetter(PLAIN) + '</div>'
-      + '<div class="ilife-page-ui" data-case="silent">' + renderReminderSetter(SILENT) + '</div>',
+      + '<div class="ilife-page-ui" data-case="silent">' + renderReminderSetter(SILENT) + '</div>'
+      + '<div class="ilife-page-ui" data-case="track">' + renderReminderSetter(TRACK) + '</div>',
     portOffset: 47,
   });
   if (page === null) {
@@ -769,6 +817,8 @@ describe('reminder-setter ④ 四档几何（真机 headless Chrome ＋ CDP · �
       const rows = await page.read(selectors);
       const frame = await page.frame();
       const cases = await page.ev(BOX_FN);
+      /* 形态 `track` 那一档另有一条自己的几何判据（它的可点件数目与骨架都不同）——这里只看老档两份。 */
+      const oldCases = cases.filter((c) => c.name !== 'track');
       const narrow = width <= REMINDER_SETTER_NARROW_PX;
       console.log('reminder-setter 几何读数 ' + JSON.stringify({
         width, frame,
@@ -787,7 +837,7 @@ describe('reminder-setter ④ 四档几何（真机 headless Chrome ＋ CDP · �
           + JSON.stringify(r));
         assert.equal(r.scrollsX, 0, width + ' 档 ' + r.sel + ' 藏了横滑：' + JSON.stringify(r));
       }
-      for (const c of cases) {
+      for (const c of oldCases) {
         assert.equal(c.rows, REMINDER_SETTER_PARTS.length, width + ' 档三行都要在');
         assert.equal(c.heads, 1, width + ' 档抬头只有一个');
         assert.equal(c.chips.length, REPEATS.length + LEADS.length, width + ' 档胶囊数不对');
@@ -822,6 +872,53 @@ describe('reminder-setter ④ 四档几何（真机 headless Chrome ＋ CDP · �
           + JSON.stringify({ label: c.labelBox, ctl: c.ctlBox, narrow }));
       }
       assert.equal((await page.errs()).length, 0, '页内零未捕获错误');
+    }
+  });
+
+  it('形态 track（一天刻度上摆点）四档几何：零横溢、每枚点／图例行 ≥44 见方、刻度上相邻 ≥8px、时刻不截断', async () => {
+    for (const width of [320, 390, 620, 1280]) {
+      await page.setWidth(width);
+      const all = await page.ev(BOX_FN);
+      const track = all.filter((c) => c.name === 'track');
+      assert.equal(track.length, 1, width + ' 档量不到 track 那一份');
+      const c = track[0];
+      const frame = await page.frame();
+      console.log('reminder-setter track 几何读数 ' + JSON.stringify({
+        width, frame, dots: c.dots, legends: c.legends.length, shown: c.shown,
+        rows: c.rows, heads: c.heads, reads: c.reads.length,
+        nums: c.nums.map((n) => n.text), stacked: c.stacked,
+      }));
+      assert.ok(frame.fxScrollW <= width + 1, width + ' 档夹具容器横溢：' + JSON.stringify(frame));
+      assert.ok(frame.docScrollW <= frame.innerW + 1, width + ' 档页面横溢：' + JSON.stringify(frame));
+      /* 这一档的骨架：**没有抬头、没有复述那一行**（图例那一行就是「现在设的是多少」）；
+         决定面板＝三行决定 ＋ 「时间」那一行（4 行）。 */
+      assert.equal(c.heads, 0, width + ' 档这一档不该有抬头');
+      assert.equal(c.reads.length, 0, width + ' 档这一档不该有复述那一行');
+      assert.equal(c.rows, REMINDER_SETTER_PARTS.length + 1, width + ' 档＝三行决定 ＋ 时间那一行');
+      assert.equal(c.chips.length, REPEATS.length + LEADS.length, width + ' 档胶囊数不对');
+      assert.equal(c.checks.length, ROUTES.length, width + ' 档方框数不对');
+      assert.equal(c.steps.length, 2, width + ' 档步进键两枚');
+      assert.equal(c.dots.length, TRACK.items.length, width + ' 档刻度上的点数不对');
+      assert.equal(c.legends.length, TRACK.items.length, width + ' 档图例行数不对');
+      /* 命中盒：刻度上的点、图例每一行、三排可点项、两枚步进键，全都 ≥44 见方。 */
+      for (const b of c.dots.concat(c.legends, c.chips, c.checks, c.steps)) {
+        assert.ok(b.w >= REMINDER_SETTER_TOUCH_PX && b.h >= REMINDER_SETTER_TOUCH_PX,
+          width + ' 档可点件命中盒不足 ' + String(REMINDER_SETTER_TOUCH_PX) + '：' + JSON.stringify(b));
+      }
+      /* 刻度上相邻两枚点的缝 ≥8px（按屏上先后逐对量）。 */
+      const dots = c.dots.slice().sort((a, b) => a.l - b.l);
+      for (let i = 1; i < dots.length; i += 1) {
+        const g = dots[i].l - (dots[i - 1].l + dots[i - 1].w);
+        assert.ok(g >= REMINDER_SETTER_GAP_PX - 0.5, width + ' 档刻度上相邻两枚点的缝不足 '
+          + String(REMINDER_SETTER_GAP_PX) + 'px（量到 ' + g.toFixed(2) + '）：' + JSON.stringify(dots));
+      }
+      /* 时刻永不截断（图例那几枚 ＋ 面板里那一枚）。 */
+      for (const n of c.nums) {
+        assert.ok(n.scrollW <= n.clientW + 1, width + ' 档时刻被压：' + JSON.stringify(n));
+      }
+      /* 图例每行都完整看得见（宽档 3 列 → 窄档 1 列都不许被裁）。 */
+      assert.equal(c.shown, TRACK.items.length * 2, width + ' 档点数 ＋ 图例行数不对：' + String(c.shown));
+      assert.equal((await page.errs()).length, 0, width + ' 档页内零未捕获错误');
     }
   });
 
@@ -881,7 +978,12 @@ describe('reminder-setter ⑤ 行为（真机 · 真指针 CDP Input）＋ 四�
     + 'document.addEventListener(' + q(REMINDER_SETTER_EVENT_CHANGE)
     + ',function(e){window.__rs.push({type:e.type,detail:e.detail});});'
     + '["pointerdown","pointerup","click"].forEach(function(n){document.addEventListener(n,function(e){'
-    + 'var t=e.target, v=t&&t.getAttribute?t.getAttribute(' + q(REMINDER_SETTER_VALUE_ATTR) + '):null;'
+    + 'var t=e.target;'
+    /* 一按落到的可能是按钮里那枚记号（刻度上的一枚点里有 `<b>` 与 `<i>`）：按**最近的机器键**认这一枚，
+       认不出才按原始 target 认（老档那些胶囊里只有文字，两种认法读到的是同一枚）。 */
+    + 'var box=(t&&t.closest)?t.closest("[' + REMINDER_SETTER_VALUE_ATTR + '],[' + REMINDER_SETTER_STEP_ATTR + ']"):null;'
+    + 'if (box) t=box;'
+    + 'var v=t&&t.getAttribute?t.getAttribute(' + q(REMINDER_SETTER_VALUE_ATTR) + '):null;'
     + 'var st=t&&t.getAttribute?t.getAttribute(' + q(REMINDER_SETTER_STEP_ATTR) + '):null;'
     + 'window.__tl.push({name:n,target:v||st});},true);});return true;}())';
   const seqOf = () => p.ev('window.__tl.map(function(o){return o.name+"|"+o.target;})');
@@ -1094,5 +1196,334 @@ describe('reminder-setter ⑤ 行为（真机 · 真指针 CDP Input）＋ 四�
     console.log('reminder-setter 皮肤同构：' + SKIN_NAMES.join('／') + ' 四套标记逐字节相同');
   });
 
+  /* ── 形态 `track`（一天刻度上摆点）的四条：真指针点刻度上的点／改时间／改档位与取消勾／真手势 ── */
+
+  const PICK_S = q(ATTR(REMINDER_SETTER_PART_ATTR + '="pick"'));
+  const AT_S = q(ATTR(REMINDER_SETTER_READ_ATTR + '="at"'));
+  const TAIL_S = q(ATTR(REMINDER_SETTER_READ_ATTR + '="tail"'));
+  const SEL_READ_S = q(ATTR(REMINDER_SETTER_READ_ATTR + '="sel"'));
+
+  /** 一份页内快照（形态 `track`）：根上两个机器读数 ＋ 每一枚点／图例那一行的状态与屏上文字。 */
+  const SNAP_TRACK = '(function(){'
+    + 'var root=document.querySelector(' + ROOT_S + ');'
+    + 'function list(sel){return [].slice.call(root.querySelectorAll(sel));}'
+    + 'var one=function(el){return {key:el.getAttribute(' + q(REMINDER_SETTER_VALUE_ATTR) + '),'
+    + 'on:el.getAttribute("aria-pressed"),cls:(el.className||"").toString(),'
+    + 'at:el.getAttribute(' + q(REMINDER_SETTER_AT_ATTR) + '),'
+    + 'repeat:el.getAttribute(' + q(REMINDER_SETTER_REPEAT_ATTR) + '),'
+    + 'lead:el.getAttribute(' + q(REMINDER_SETTER_LEAD_ATTR) + '),'
+    + 'chosen:el.getAttribute(' + q(REMINDER_SETTER_CHOSEN_ATTR) + '),'
+    + 'left:el.style.left,'
+    + 'time:(el.querySelector(' + AT_S + ')||{}).textContent,'
+    + 'tail:(el.querySelector(' + TAIL_S + ')||{}).textContent};};'
+    + 'return {picked:root.getAttribute(' + q(REMINDER_SETTER_PICKED_ATTR) + '),'
+    + 'at:root.getAttribute(' + q(REMINDER_SETTER_AT_ATTR) + '),'
+    + 'bound:root.getAttribute(' + q(REMINDER_SETTER_BOUND_ATTR) + '),'
+    + 'sel:(root.querySelector(' + SEL_READ_S + ')||{}).textContent,'
+    + 'dots:list(' + DOT_S + ').map(one),legends:list(' + LG_S + ').map(one),'
+    + 'pressed:list(' + q(ATTR(REMINDER_SETTER_PART_ATTR)) + ').map(function(el){'
+    + 'return el.getAttribute(' + q(REMINDER_SETTER_PART_ATTR) + ')+":"'
+    + '+el.getAttribute(' + q(REMINDER_SETTER_VALUE_ATTR) + ')+"="+el.getAttribute("aria-pressed")'
+    + '+(el.classList.contains("is-on")?"+on":"");}),'
+    + 'evts:window.__rs};}())';
+  /** 按机器键取一条（点与图例那一行都挂着同一份读数：取第一枚）。 */
+  const itemOf = (st, list, key) => list.filter((x) => x.key === key)[0];
+
+  it('形态 track：**真指针点刻度上的一枚提醒点** → 选中挪过去 ＋ 面板换成它的三个决定 ＋ 一条事件', async () => {
+    await p.at(fixture('paper', TRACK, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    const before = await p.ev(SNAP_TRACK);
+    assert.equal(before.picked, 'weight', '开页时选中的是入参 picked 那一条');
+    assert.equal(before.at, String(20 * 60), '根上的机器读数＝选中那条落在一天里的第几分钟');
+    assert.equal(before.bound, '1', '根上记一枚 bound 读数');
+    assert.equal((await p.ev('window.__rs.length')), 0, '开页一条事件都不派发');
+    const g = await tapAt(ITEM('pick', 'meal'));
+    const st = await p.ev(SNAP_TRACK);
+    console.log('reminder-setter track 点选读数 ' + JSON.stringify({
+      seq: await seqOf(), picked: st.picked, at: st.at, sel: st.sel, grade: { w: g.w, h: g.h },
+    }));
+    assert.deepEqual(await seqOf(), ['pointerdown|meal', 'pointerup|meal', 'click|meal'],
+      '真指针三条都落在被点的那一枚上');
+    assert.equal(st.picked, 'meal', '选中挪到被点的那一条');
+    assert.equal(st.at, String(13 * 60), '根上的机器读数换成它那一分钟');
+    assert.equal(st.sel, reminderSetterClock(13 * 60), '面板里那枚读数跟着换（改的就是这一条）');
+    assert.deepEqual(st.dots.filter((d) => d.on === 'true').map((d) => d.key), ['meal'],
+      '刻度上只有一枚是选中的（旧的那一枚先撤）');
+    assert.deepEqual(st.legends.filter((d) => d.on === 'true').map((d) => d.key), ['meal'],
+      '图例那一行也挪过去（点与行是一件事的两处摆法）');
+    assert.deepEqual(st.pressed.filter((x) => x.endsWith('+on') && !x.startsWith('pick:')),
+      ['repeat:weekly=true+on', 'lead:m10=true+on', 'route:push=true+on'],
+      '面板换成了新选中那条自己的三个决定');
+    assert.deepEqual(await evtsOf(), [REMINDER_SETTER_EVENT_CHANGE + '|pick|meal'], '只派发一条事件');
+    const d = await lastDetail();
+    assert.equal(d.id, 'rem-day');
+    assert.equal(d.value, 'meal');
+    assert.equal(d.state.items.length, TRACK.items.length, '事件带的是这一天**全部**几条的读数');
+    assert.deepEqual(d.state.items.filter((o) => o.id === 'weight')[0],
+      { id: 'weight', at: 1200, time: '20:00', repeat: 'daily', lead: 'ontime', routes: ['push', 'feishu'] },
+      '没被碰的那几条照旧念得出来');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('形态 track：**真指针点时间步进键** → 这一条的 at 走一步、刻度上那枚点跟着挪、图例与面板读数一起改', async () => {
+    await p.at(fixture('paper', TRACK, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    const before = await p.ev(SNAP_TRACK);
+    await tapAt(STEP('time', '1'));
+    const st = await p.ev(SNAP_TRACK);
+    const want = reminderSetterStepAt(20 * 60, 1, REMINDER_SETTER_TIME_STEP_MIN);
+    console.log('reminder-setter track 步进读数 ' + JSON.stringify({
+      at: st.at, sel: st.sel, time: itemOf(st, st.legends, 'weight').time,
+      left: itemOf(st, st.dots, 'weight').left,
+    }));
+    assert.equal(st.at, String(want), '机器读数走一步（0–1439 那一圈里）');
+    assert.equal(st.sel, reminderSetterClock(want), '面板里那枚读数＝机器读数的另一种摆法');
+    assert.equal(itemOf(st, st.legends, 'weight').time, reminderSetterClock(want), '图例那一行的时刻跟着改');
+    assert.notEqual(itemOf(st, st.dots, 'weight').left, itemOf(before, before.dots, 'weight').left,
+      '刻度上那枚点跟着挪（位置由 at 算出来的）');
+    for (const key of ['med', 'meal']) {
+      assert.equal(itemOf(st, st.dots, key).left, itemOf(before, before.dots, key).left,
+        '没被改的那几条点不动：' + key);
+      assert.equal(itemOf(st, st.dots, key).at, itemOf(before, before.dots, key).at);
+    }
+    const d = await lastDetail();
+    assert.equal(d.part, 'time');
+    assert.equal(d.value, reminderSetterClock(want));
+    assert.equal(d.state.picked, 'weight');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('形态 track：**真指针改档位与取消勾** → 写回这一条自己身上（切走再切回还在）；勾到一条不剩照实读出不会响', async () => {
+    await p.at(fixture('paper', TRACK, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(ITEM('repeat', 'weekly'));
+    let st = await p.ev(SNAP_TRACK);
+    assert.deepEqual(st.pressed.filter((x) => x.endsWith('+on') && !x.startsWith('pick:')).slice(0, 1),
+      ['repeat:weekly=true+on'], '同一排里只有被点的那一枚是选中的');
+    assert.equal(itemOf(st, st.dots, 'weight').repeat, 'weekly', '改的是**这一条自己**的读数');
+    assert.equal(itemOf(st, st.legends, 'weight').tail, '每周日', '图例那一行的尾一截跟着改');
+    /* 切走再切回：这一条刚才改的还在（写回它自己身上，不是只改屏面）。 */
+    await tapAt(ITEM('pick', 'med'));
+    await tapAt(ITEM('pick', 'weight'));
+    st = await p.ev(SNAP_TRACK);
+    assert.equal(st.picked, 'weight');
+    assert.deepEqual(st.pressed.filter((x) => x.endsWith('+on') && !x.startsWith('pick:')).slice(0, 1),
+      ['repeat:weekly=true+on'], '切走再切回，刚改的那一档还在');
+    /* 取消勾：把选中的这一条勾到一条不剩 ⇒ 图例那一行照实读成「没有通知，不会响」。 */
+    await tapAt(ITEM('route', 'push'));
+    await tapAt(ITEM('route', 'feishu'));
+    st = await p.ev(SNAP_TRACK);
+    assert.equal(itemOf(st, st.dots, 'weight').chosen, '', '两条通知都取消了（写回成空串）');
+    assert.equal(itemOf(st, st.legends, 'weight').tail, REMINDER_SETTER_TEXT.silent,
+      '勾到一条不剩 ⇒ 照实读成不会响（不是旁白，它就是现在设的是多少）');
+    assert.equal(await p.ev('document.querySelectorAll('
+      + q(SEL('check') + '[disabled], ' + SEL('chip') + '[disabled]') + ').length'), 0,
+      '一枚按不动的控件都没有');
+    /* 勾回来：尾一截回到那一档的档名。 */
+    await tapAt(ITEM('route', 'app'));
+    st = await p.ev(SNAP_TRACK);
+    assert.equal(itemOf(st, st.legends, 'weight').tail, '每周日', '勾回来尾一截就回来');
+    assert.equal(itemOf(st, st.dots, 'weight').chosen, 'app');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
+  it('形态 track：**图例那一行也是通路**（真指针点它＝改这一条）＋ 三次动作各来一条 `pointerdown`', async () => {
+    await p.at(fixture('paper', TRACK, true), { width: 390, height: 900 });
+    await p.ev(WIRE);
+    await tapAt(SEL('lg') + ATTR(REMINDER_SETTER_VALUE_ATTR + '="med"'));
+    let st = await p.ev(SNAP_TRACK);
+    assert.equal(st.picked, 'med', '点图例那一行同样能选中这一条');
+    await tapAt(ITEM('lead', 'm10'));
+    await tapAt(STEP('time', '-1'));
+    st = await p.ev(SNAP_TRACK);
+    const seq = await seqOf();
+    console.log('reminder-setter track 真指针时序 ' + JSON.stringify(seq));
+    assert.equal(seq.filter((s) => s.startsWith('pointerdown')).length, 3, '三次真指针动作各来一条 `pointerdown`');
+    assert.equal((await evtsOf()).length, 3, '三次改动各派发一条事件');
+    assert.equal(st.at, String(7 * 60 - REMINDER_SETTER_TIME_STEP_MIN), '减键让这一条往回走一步');
+    assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
+  });
+
   it('关页', () => { p.close(); });
+});
+
+/* ── ⑥ 形态 `track`：骨架／位置由数算出／一层话／拒收／纯函数／样式形 ─────────── */
+
+describe('reminder-setter ⑥ 形态 track（一天刻度上摆点）', () => {
+  const html = renderReminderSetter(TRACK);
+
+  it('骨架：一天那条刻度（点 ＋ 小时数 ＋ 图例）＋ 选中那条的三个决定；**没有抬头、没有复述那一行**', () => {
+    assert.match(html, new RegExp('^<div class="' + REMINDER_SETTER_CLASS + ' ' + SLOT('host') + ' is-track"'),
+      '根上那个形态键是老档键之外新加的那个（一个字都不许改老档的）');
+    assert.ok(html.includes(REMINDER_SETTER_FORM_ATTR + '="track"'), '形态照实写进标记');
+    assert.ok(html.includes(REMINDER_SETTER_PICKED_ATTR + '="weight"'), '根上写清现在改的是哪一条');
+    assert.ok(html.includes(REMINDER_SETTER_AT_ATTR + '="' + String(20 * 60) + '"'),
+      '根上那枚机器读数＝选中那条落在一天里的第几分钟');
+    assert.equal(html.includes(CLS('head')), false, '这一档没有抬头（用户砍过字那一版）');
+    assert.equal(html.includes(CLS('read')), false, '这一档没有复述那一行（图例那一行就是「现在设的是多少」）');
+    for (const slot of ['day', 'ruler', 'dot', 'hours', 'legend', 'lg', 'pick']) {
+      assert.ok(html.includes(SLOT(slot)), '这一档缺了槽位：' + slot);
+    }
+    for (const h of REMINDER_SETTER_HOURS) assert.ok(html.includes('<span>' + String(h) + '</span>'),
+      '刻度下面缺了小时数：' + String(h));
+    /* 三行决定（重复／提前多久／通知）＋ 「时间」那一行＝4 行；可点件＝点×n ＋ 图例×n ＋ 三排 ＋ 两枚步进键。 */
+    assert.equal(countOf(html, REMINDER_SETTER_ROW_ATTR), REMINDER_SETTER_PARTS.length + 1);
+    assert.equal(countOf(html, '<button'), TRACK.items.length * 2 + REPEATS.length + LEADS.length + ROUTES.length + 2,
+      '按钮总数＝刻度上的点 ＋ 图例 ＋ 三排可点项 ＋ 两枚步进键，不许再多');
+    assert.equal(countOf(html, '<button'), countOf(html, '</button>'), '按钮必须成对');
+    assert.equal(html.includes('<input'), false, '本件没有输入框：打字不是通路');
+    assert.equal(/<script|onclick=/i.test(html), false, '标记里不带脚本');
+    /* 屏上顺序＝刻度上的先后：入参倒着给也排成 07:00 → 13:00 → 20:00。 */
+    const keysOf = (h) => [...h.matchAll(new RegExp(REMINDER_SETTER_PART_ATTR + '="pick"[^>]*'
+      + REMINDER_SETTER_VALUE_ATTR + '="([a-z]+)"', 'g'))].map((m) => m[1]);
+    assert.deepEqual([...new Set(keysOf(html))], ['med', 'meal', 'weight']);
+    assert.deepEqual([...new Set(keysOf(renderReminderSetter(TRACK_SHUFFLED)))], ['med', 'meal', 'weight'],
+      '件自己按 at 升序排（调用方不用先排）');
+    /* 序号：刻度上那枚徽章与图例那一行印的是同一个号（两处对得起来）。 */
+    for (let i = 0; i < TRACK.items.length; i += 1) {
+      assert.ok(html.includes('<b>' + String(i + 1) + '</b>'), '第 ' + String(i + 1) + ' 条的序号没上屏');
+    }
+  });
+
+  it('位置由 `at` 算出来：刻度上那枚点的 `left`／图例那一刻／根上那一分钟，三处同一个数', () => {
+    for (const item of TRACK.items) {
+      assert.ok(html.includes('* ' + String(reminderSetterPlace(item.at)) + ' + '),
+        '这一条的点没按 place 摆：' + String(item.at));
+      assert.ok(html.includes('>' + reminderSetterClock(item.at) + '<'),
+        '这一条的时刻没上屏：' + reminderSetterClock(item.at));
+      assert.ok(html.includes(REMINDER_SETTER_AT_ATTR + '="' + String(item.at) + '"'), '这一条的机器读数不在');
+    }
+    /* 两端各让出半个命中盒：落点写成 `calc((100% - 44px) * place + 22px)`（窄档最左／最右不顶出刻度条）。 */
+    assert.ok(html.includes('left: calc((100% - ' + String(REMINDER_SETTER_TOUCH_PX) + 'px) * '),
+      '点没按「两端各让半个命中盒」摆');
+    assert.equal(reminderSetterPlace(0), 0, '0 点摆在刻度最左端');
+    assert.equal(reminderSetterPlace(REMINDER_SETTER_DAY_MIN), 1, '一天到头摆在刻度最右端');
+    /* 位置只印一处：**没被选中的那两条**的时刻在屏上只出现一次（图例那一行）。 */
+    assert.equal(countOf(html, '>' + reminderSetterClock(7 * 60) + '<'), 1);
+    assert.equal(countOf(html, '>' + reminderSetterClock(13 * 60) + '<'), 1);
+  });
+
+  it('**一屏只留一层话**：原型里的旁白与口径句一句都不上屏；同一个数只印一次', () => {
+    const seen = visibleText(renderReminderSetter(TRACK)) + visibleText(renderReminderSetter(TRACK_SILENT));
+    for (const narration of ['选中：', '先认点', '再改这个点', '落在哪儿', '一天里', '可多选', '至少留一条',
+      '全关掉这条提醒就不存在', '免打扰', '会顺延', '设完是这样', '个决定']) {
+      assert.equal(seen.includes(narration), false, '屏上出现了原型的旁白／口径句：' + narration);
+    }
+    /* 选中那条的时刻在屏上两处：图例那一行（读数）＋ 步进键中间那枚（控件自身的读数）。
+       根上那枚是机器读数（不上屏）。再写一行复述就是第三处——用户砍掉的正是那一句。 */
+    assert.equal(countOf(html, '>' + reminderSetterClock(20 * 60) + '<'), 2,
+      '选中那条的时刻印了两处（读数 ＋ 控件读数）');
+    assert.equal(renderReminderSetter(TRACK_SILENT).includes('>' + REMINDER_SETTER_TEXT.silent + '<'), true,
+      '一条通知都没勾那一条：图例那一行照实读成那句状态');
+  });
+
+  it('入参违规一律拒（`track` 那一支：items／picked／at／档位键，逐条断 `BlocksError`）', () => {
+    const B = (input) => throwsBlocks(() => renderReminderSetter(input));
+    const T = () => ({ ...TRACK, items: TRACK.items.map((o) => ({ ...o })) });
+    assert.equal(B({ ...T(), items: undefined }), true, '缺 items');
+    assert.equal(B({ ...T(), items: 'x' }), true, 'items 不是数组');
+    assert.equal(B({ ...T(), items: TRACK.items.slice(0, 1) }), true, '不到 '
+      + String(REMINDER_SETTER_MIN_ITEMS) + ' 条');
+    assert.equal(B({
+      ...T(),
+      items: Array.from({ length: REMINDER_SETTER_MAX_ITEMS + 1 }, (_, i) => ({
+        id: 'k' + String(i), label: '提' + String(i), at: i * 300, repeat: 'daily', lead: 'ontime', chosen: ['push'],
+      })),
+    }), true, '超过 ' + String(REMINDER_SETTER_MAX_ITEMS) + ' 条');
+    assert.equal(B({ ...T(), items: [null, TRACK.items[1]] }), true, '条目不是对象');
+    assert.equal(B({ ...T(), items: [{ ...TRACK.items[0], bogus: 1 }, TRACK.items[1], TRACK.items[2]] }), true,
+      '条目里多给一个键');
+    assert.equal(B({ ...T(), items: [{ ...TRACK.items[0], id: 'a b' }, TRACK.items[1], TRACK.items[2]] }), true,
+      'id 有非标识符字符');
+    assert.equal(B({ ...T(), items: [{ ...TRACK.items[0], id: NaN }, TRACK.items[1], TRACK.items[2]] }), true,
+      'id 是 NaN');
+    assert.equal(B({ ...T(), items: [{ ...TRACK.items[0], label: '   ' }, TRACK.items[1], TRACK.items[2]] }), true,
+      '提醒名全空白');
+    assert.equal(B({ ...T(), items: [{ ...TRACK.items[0], label: '\u200b' }, TRACK.items[1], TRACK.items[2]] }), true,
+      '提醒名全是零宽字符（那在屏上就是一块空白）');
+    /* `at`：两道闸（非有限即拒／可加性上界）＋ 「改得到」那一闸（整数、在一天之内、踩在步进键那一档上）。 */
+    for (const bad of [NaN, Infinity, -Infinity, 1e308, -1e308, '420', undefined]) {
+      assert.equal(B({
+        ...T(), items: [{ ...TRACK.items[0], at: bad }, TRACK.items[1], TRACK.items[2]],
+      }), true, 'at 是 ' + String(bad));
+    }
+    for (const bad of [-1, REMINDER_SETTER_DAY_MIN, 24 * 60 + 5, 421, 7.5]) {
+      assert.equal(B({
+        ...T(), items: [{ ...TRACK.items[0], at: bad }, TRACK.items[1], TRACK.items[2]],
+      }), true, 'at 落到改不到的那一档上：' + String(bad));
+    }
+    assert.equal(B({
+      ...T(), items: [TRACK.items[0], { ...TRACK.items[1], at: TRACK.items[0].at }, TRACK.items[2]],
+    }), true, '两条落在同一分钟（两枚点的命中盒会叠）');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], id: 'meal' }, TRACK.items[1], TRACK.items[2]],
+    }), true, 'id 重了');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], repeat: 'nope' }, TRACK.items[1], TRACK.items[2]],
+    }), true, '这一条选的重复档不在 repeats 里');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], lead: 'nope' }, TRACK.items[1], TRACK.items[2]],
+    }), true, '这一条选的提前档不在 leads 里');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], chosen: 'push' }, TRACK.items[1], TRACK.items[2]],
+    }), true, 'chosen 不是数组');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], chosen: ['nope'] }, TRACK.items[1], TRACK.items[2]],
+    }), true, '勾上的键不在 routes 里');
+    assert.equal(B({
+      ...T(), items: [{ ...TRACK.items[0], chosen: ['push', 'push'] }, TRACK.items[1], TRACK.items[2]],
+    }), true, '同一条通知勾两次');
+    assert.equal(B({ ...T(), picked: undefined }), true, '缺 picked');
+    assert.equal(B({ ...T(), picked: 'nope' }), true, 'picked 不在 items 里');
+    assert.equal(B({ ...T(), picked: 1 }), true, 'picked 不是字符串');
+    assert.equal(B({ ...T(), item: [] }), true, '顶层写错键名（items 写成了 item）');
+    assert.equal(B({ ...T(), pick: 'med' }), true, '顶层写错键名（picked 写成了 pick）');
+    const sparse = TRACK.items.map((o) => ({ ...o }));
+    sparse.length = REMINDER_SETTER_MAX_ITEMS;
+    assert.equal(B({ ...T(), items: sparse }), true, 'items 有空洞');
+    /* 入参表是**两档的并集**：老档那几个键给在 `track` 形态下不拒（只是这一档不读它们）。 */
+    assert.equal(B({ ...T(), time: '22:30' }), false, '老档的 time 给在这儿不拒');
+    assert.equal(B({ ...T(), title: '记体重' }), false, '老档的 title 给在这儿不拒');
+  });
+
+  it('四个纯函数的口径：分钟 ↔ 时刻、位置比例、跨零点绕回、一条通知都没勾时换那一句', () => {
+    assert.equal(reminderSetterClock(0), '00:00');
+    assert.equal(reminderSetterClock(7 * 60), '07:00');
+    assert.equal(reminderSetterClock(23 * 60 + 55), '23:55');
+    assert.equal(reminderSetterClock(REMINDER_SETTER_DAY_MIN), '00:00', '一天到头绕回 0 点');
+    assert.equal(reminderSetterPlace(0), 0);
+    assert.equal(reminderSetterPlace(12 * 60), 0.5);
+    assert.equal(reminderSetterPlace(REMINDER_SETTER_DAY_MIN), 1);
+    assert.equal(reminderSetterStepAt(23 * 60 + 55, 1, REMINDER_SETTER_TIME_STEP_MIN), 0, '跨零点绕回');
+    assert.equal(reminderSetterStepAt(0, -1, REMINDER_SETTER_TIME_STEP_MIN), 23 * 60 + 55);
+    assert.equal(reminderSetterTrackTail('每天', 1, REMINDER_SETTER_TEXT), '每天');
+    assert.equal(reminderSetterTrackTail('每天', 0, REMINDER_SETTER_TEXT), REMINDER_SETTER_TEXT.silent,
+      '一条通知都没勾那一支只有这一处口径');
+  });
+
+  it('样式：选中那一条三样一起变（形／字／色）；零省略手段；容器判宽；运行时段认得同一套词', () => {
+    const clean = stripComments(reminderSetterCss());
+    assert.ok(new RegExp(re(SLOT('dot')) + '\\.is-on\\s*>\\s*i\\s*\\{[^}]*outline: 2px solid ' + re(skinVar('accent')))
+      .test(clean), '选中那枚点没有那一圈描边（形那一半）');
+    assert.ok(new RegExp(re(SLOT('dot')) + '\\.is-on\\s*>\\s*i\\s*\\{[^}]*background: ' + re(skinVar('accent')))
+      .test(clean), '选中那枚点不是主色实底');
+    assert.ok(new RegExp(re(SLOT('lg')) + '\\.is-on\\s*\\{[^}]*font-weight: 700').test(clean),
+      '选中那一条的图例没有加粗（字那一半）');
+    assert.ok(new RegExp(re(SLOT('lg')) + '\\.is-on\\s*\\{[^}]*border-bottom-color: ' + re(skinVar('accent')))
+      .test(clean), '选中那一条的图例那道线没换主色');
+    assert.ok(clean.includes('background-size: calc(100% / ' + String(REMINDER_SETTER_DAY_MIN / 60) + ')'),
+      '刻度线不是按格宽铺的（摆 24 个元素是另一条路，本件不摆）');
+    for (const bad of ['text-overflow', 'line-clamp', 'nowrap', 'overflow-x']) {
+      assert.equal(clean.includes(bad), false, '这一档出现了 ' + bad);
+    }
+    const js = buildReminderSetterJs();
+    assert.ok(js.includes('is-on'), '运行时段不认识渲染期用的状态词');
+    assert.ok(js.includes(reminderSetterClock.toString()), '时刻那条口径取自渲染期那个函数');
+    assert.ok(js.includes(reminderSetterPlace.toString()), '位置那条口径取自渲染期那个函数');
+    assert.ok(js.includes(reminderSetterStepAt.toString()), 'at 步进那条口径取自渲染期那个函数');
+    assert.ok(js.includes(reminderSetterTrackTail.toString()), '图例尾一截那条口径取自渲染期那个函数');
+    assert.equal(/addEventListener\("key/.test(js), false, '这一档也不许把键盘做成通路');
+    assert.ok(clean.includes('@container ' + REMINDER_SETTER_CONTAINER + ' (max-width:'), '这一档也走容器判宽');
+    assert.equal(/'@media \((?:max|min)-width/.test(reminderSetterCss()), false, '一条视口宽度查询都不许有');
+  });
 });

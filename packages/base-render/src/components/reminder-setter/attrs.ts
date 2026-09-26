@@ -1,8 +1,12 @@
 /** reminder-setter · **标记契约**（渲染与运行时共用的唯一事实：类名／槽位／`data-*`／事件名／闭集／入参类型）。
  *
  *  这一件落地的是原型墙（`.scratch/ui-组件墙/新件/parts-交互与流程.mjs` 第 89 件，2026-09 起用户逐格打分）
- *  里的 **A 一档「一行一个决定」**：三行——什么时候响 ／ 提前多久 ／ 走哪条通知，一行只做一个决定。
- *  同件 B 档「一天刻度上摆点，再改这个点的三个决定」打分未过、**不落**（它的类与规则一个都不搬）。
+ *  里的**两档**（用户 2026-09-26 给 B 档 4／4／4）：
+ *   · **A 档 `decisions`「一行一个决定」**：三行——什么时候响 ／ 提前多久 ／ 走哪条通知，一行只做一个决定；
+ *   · **B 档 `track`「一天刻度上摆点」**：一天那条刻度上摆着好几条提醒，看得见它们落在哪儿；
+ *     点其中一枚点，就改**它自己**的三个决定（重复 ／ 提前多久 ／ 走哪条通知）。
+ *  B 档照用户砍过字的那一版落地（原型 398 字 → 172 字：删掉三句口径旁白、删掉编辑面板那行
+ *  「选中：22:30 记体重」——图例那行已经印着同一件事），旁白一句都不上屏。
  *
  *  形态键写在 `REMINDER_SETTER_FORMS` 闭集里：键取**骨架的名字**（`decisions`＝一行一个决定），
  *  原型墙上的格号（A）不是接口名（同批 `kanban-columns` 的 `status` 同此口径）。
@@ -13,6 +17,8 @@
  *  ＋「能按什么」（三排可点项）。原型里的旁白与口径句（「挑一次或重复，别混着猜」「可选，给容易忘的事留一道」
  *  「可多选，至少留一条；全关掉这条提醒就不存在」「免打扰时段…」）**一句都不进屏面**：那些话住在 README 里。
  *  同一个数只印一次（读数口在根上的 `data-*`，屏上只有时间读数与复述各一处），读数一行说完（`recap`）。
+ *  形态 `track` 更省一层：**没有抬头、没有复述那一行**——「现在设的是多少」由图例那一行自己读出来
+ *  （序号 ＋ 时间 ＋ 提醒名 ＋ 重复档）。
  *
  *  **触屏可达是底线**（触屏优先法条）：三排可点项每枚 ≥44 高、相邻 8px 缝；**日期与时间不走精确拖点、
  *  也不靠打字**——走两枚 44×44 的步进键（`−`／`＋`）夹一枚读数，一根手指就改得动。
@@ -62,6 +68,25 @@ export const REMINDER_SETTER_SLOTS = [
   'check',
   /** 复述那一行（**全件唯一的读数行**：一行说完现在设的是多少；`role="status"`）。 */
   'read',
+  /* ── 形态 `track`（一天刻度上摆着好几条提醒）多出来的槽位 ──────────────
+   *
+   *  **一屏只留一层话**：这一档**没有抬头、没有复述那一行**——「现在设的是多少」由图例那一行
+   *  （`lg`）自己读出来：序号 ＋ 时间 ＋ 提醒名 ＋ 重复档（一条通知都没勾时那一截换成那句状态）。
+   *  再写一行复述就是把同一个数印第二遍（用户 2026-09-25 砍掉的正是这一句）。 */
+  /** 一天那一整块（刻度 ＋ 小时数 ＋ 图例）。 */
+  'day',
+  /** 刻度条（**位置的参照**：一枚点落在哪一格由 `at` 算出来）。 */
+  'ruler',
+  /** 刻度上的一枚提醒点（可点：命中盒不小于触控地板）。 */
+  'dot',
+  /** 刻度下面那几个小时数（0／6／12／18／24）。 */
+  'hours',
+  /** 图例那一列（一行一条提醒）。 */
+  'legend',
+  /** 图例里的一行（可点；选中那行有那一档形——它是这一档的「现在设的是多少」）。 */
+  'lg',
+  /** 选中那一条的三个决定（这块面板**只画选中的那一条**）。 */
+  'pick',
 ] as const;
 export type ReminderSetterSlot = (typeof REMINDER_SETTER_SLOTS)[number];
 
@@ -70,8 +95,12 @@ export function reminderSetterSlot(slot: ReminderSetterSlot, prefix = 'ilife-'):
   return prefix + 'block-reminder-setter-' + slot;
 }
 
-/** 形态闭集：本件只落地 A 一档「一行一个决定」（键名 `decisions`：一行只做一个决定）。 */
-export const REMINDER_SETTER_FORMS = ['decisions'] as const;
+/** 形态闭集：两档英文键（**键取骨架的名字**，不是原型墙上的格号）。
+ *
+ *   · `decisions`——**一行一个决定**：什么时候响 ／ 提前多久 ／ 走哪条通知（一件提醒，三行摊开）；
+ *   · `track`——**一天刻度上摆着好几条提醒**：一圈点上认「它们落在哪儿」，点其中一条就改它自己的三个决定。
+ *  两个键都取骨架名（同批 `kanban-columns` 的 `status` 同此口径）；闭集外的值一律 `badInput`。 */
+export const REMINDER_SETTER_FORMS = ['decisions', 'track'] as const;
 export type ReminderSetterForm = (typeof REMINDER_SETTER_FORMS)[number];
 
 /* ── `data-*` 名（渲染与运行时共用的发现锚） ───────────────────────── */
@@ -100,6 +129,16 @@ export const REMINDER_SETTER_START_ATTR = 'data-ilife-reminder-start';
 export const REMINDER_SETTER_BOUND_ATTR = 'data-ilife-reminder-bound';
 /** 幂等开关：挂在 `<html>` 上（重复注入只绑一次）。 */
 export const REMINDER_SETTER_RUNTIME_ATTR = 'data-ilife-reminder-runtime';
+/** 根上（形态 `track`）：现在选中的是哪一条（机器键，`items[].id`）。 */
+export const REMINDER_SETTER_PICKED_ATTR = 'data-ilife-reminder-picked';
+/** 一天里的第几分钟（`0`–`1439`）：**根上＝选中那一条的，每一枚点上＝这一条自己的**。 */
+export const REMINDER_SETTER_AT_ATTR = 'data-ilife-reminder-at';
+/** 形态 `track`：这一条现在选的重复档键（住在它自己那几枚可点件上）。 */
+export const REMINDER_SETTER_REPEAT_ATTR = 'data-ilife-reminder-repeat';
+/** 形态 `track`：这一条现在选的提前档键。 */
+export const REMINDER_SETTER_LEAD_ATTR = 'data-ilife-reminder-lead';
+/** 形态 `track`：这一条勾上的通知档键（**空格分隔**，顺序＝ `routes` 里的顺序）。 */
+export const REMINDER_SETTER_CHOSEN_ATTR = 'data-ilife-reminder-chosen';
 
 /* ── 事件（冒泡 `CustomEvent`；`detail` 见 README 的「交互契约」） ────── */
 
@@ -143,6 +182,13 @@ export const REMINDER_SETTER_MAX_CHOICES = 4;
 /** 通知通道档的上下限（档）：至少给一条（否则这条提醒设了也不会响），至多 4 条。 */
 export const REMINDER_SETTER_MIN_ROUTES = 1;
 export const REMINDER_SETTER_MAX_ROUTES = 4;
+/** 形态 `track` 一天的分钟数（刻度那一圈就是它：`at` 是它里面的第几分钟）。 */
+export const REMINDER_SETTER_DAY_MIN = 24 * 60;
+/** 形态 `track` 刻度上能摆几条：1 条谈不上「好几条落在哪儿」，5 条以上窄容器里两枚点的命中盒会叠。 */
+export const REMINDER_SETTER_MIN_ITEMS = 2;
+export const REMINDER_SETTER_MAX_ITEMS = 4;
+/** 刻度下面那几个小时数（0 点起，每 6 小时一格，末枚就是一天到头那一格）。 */
+export const REMINDER_SETTER_HOURS = [0, 6, 12, 18, 24] as const;
 
 /* ── 形（选中态的「形」那一半：不只靠颜色） ────────────────────────── */
 
@@ -221,6 +267,35 @@ export function reminderSetterRecap(repeatLabel: string, startDate: string, time
   return repeatLabel + ' ' + startDate + ' ' + time;
 }
 
+/* ── 形态 `track` 的三个纯函数（渲染期与运行时段**同一份源码**：同上，运行时嵌的就是它们） ── */
+
+/** 一天里的第几分钟 → 屏上那个时刻（`420` ⇒ `07:00`）。机器读数与它印出来的样子只差这一处换算。 */
+export function reminderSetterClock(at: number): string {
+  const rest = ((at % (24 * 60)) + 24 * 60) % (24 * 60);
+  return pad2(Math.floor(rest / 60)) + ':' + pad2(rest % 60);
+}
+
+/** 一天里的第几分钟 → 落在刻度上的比例（`0`–`1`，刻度从左端 0 点到右端一天到头）。
+ *
+ *  这个数就是**位置**：标记里那一枚点的 `left` 由它算出来（`render.ts` 只把它摆进样式串）。 */
+export function reminderSetterPlace(at: number): number {
+  return at / (24 * 60);
+}
+
+/** `at` 步进（一步 `stepMinutes` 分钟，跨零点绕回）：读数恒落在 `0`–`1439` 那一圈里。 */
+export function reminderSetterStepAt(at: number, steps: number, stepMinutes: number): number {
+  const day = 24 * 60;
+  return ((at + steps * stepMinutes) % day + day) % day;
+}
+
+/** 图例那一行的**尾一截**：一条通知都没勾时读成那句状态（与 `reminderSetterRecap` 同一处口径：
+ *  这一支只写一遍——「没有通知，不会响」不是旁白，它就是现在设的是多少）。 */
+export function reminderSetterTrackTail(repeatLabel: string, chosen: number,
+  text: { readonly silent: string }): string {
+  if (chosen === 0) return text.silent;
+  return repeatLabel;
+}
+
 /* ── 入参类型 ───────────────────────────────────────────────────── */
 
 /** 一档可选值（重复档／提前档／通知档共用同一个形状：机器键 ＋ 屏上那两个字）。 */
@@ -262,4 +337,28 @@ export interface ReminderSetterInput {
   readonly form?: ReminderSetterForm;
   /** 附加类名（空格分隔；逐个过类名正则）。 */
   readonly extraClass?: string;
+  /** **形态 `track`**：这一天刻度上摆着的那几条提醒（**2–4 条**，顺序＝刻度上的先后由 `at` 定）。 */
+  readonly items?: readonly ReminderSetterTrackItem[];
+  /** **形态 `track`**：现在选中的是哪一条（须命中 `items` 里的一枚 `id`）；下面那块面板改的就是它。 */
+  readonly picked?: string;
+}
+
+/** 形态 `track` 里的一条提醒＝一天刻度上的一枚点（它自己的三个决定住在它自己身上）。
+ *
+ *  「一天里好几条提醒、要看它们落在哪儿」：位置由 `at` 算出来，三个决定（重复／提前多久／通知）
+ *  是**这一条自己的**——点它一下，下面那块面板换成它的。 */
+export interface ReminderSetterTrackItem {
+  /** 机器键（事件 `detail.value`／`state.items[].id` 就是它）。**只许标识符字符**，一整天里唯一。 */
+  readonly id: string;
+  /** 提醒名（如「吃药」）。**非空、且不能只有空白**；图例那一行印它。 */
+  readonly label: string;
+  /** 一天里的第几分钟（`0`–`1439`，**落在 `REMINDER_SETTER_TIME_STEP_MIN` 那一档上**）：
+   *  刻度上的位置与屏上那个时刻都由它算出来——改它只有一条路：两枚 44 的步进键。 */
+  readonly at: number;
+  /** 这一条选的重复档（须命中 `repeats` 里的一枚）。 */
+  readonly repeat: string;
+  /** 这一条选的提前档（须命中 `leads` 里的一枚）。 */
+  readonly lead: string;
+  /** 这一条勾上的通知档（`routes` 里的机器键，**0–4 个**；给空数组＝照实读成「没有通知，不会响」）。 */
+  readonly chosen: readonly string[];
 }

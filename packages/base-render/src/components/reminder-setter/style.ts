@@ -29,6 +29,7 @@ import {
   reminderSetterSlot,
   type ReminderSetterSlot,
 } from './attrs.js';
+import { reminderSetterTrackCss } from './style-track.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -312,5 +313,8 @@ export function reminderSetterCss(input?: { readonly prefix?: string }): string 
     '    justify-content: center;',
     '  }',
     '}',
+    /* 第二档（`track`）那一段住同目录 `style-track.ts`：两档加起来超告警线，按先例拆出去，
+       拼在这里返回——页面只认 `reminderSetterCss()` 这一个样式入口。 */
+    reminderSetterTrackCss(p),
   ].join(LF);
 }
