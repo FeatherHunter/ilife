@@ -69,6 +69,55 @@ function reqState(value: unknown, field: string): GanttTimelineState {
   return value as GanttTimelineState;
 }
 
+/* ── 键表与「未知键一律拒」 ─────────────────────────────────────────────────────
+ *  **键在不在表里**由这一节管（写错键名＝拒）；**值合不合法**仍归上面那一批小件。
+ *  只列**入参面**（`attrs.ts` 的 `GanttTimelineInput`／`GanttTimelineLane`／`GanttTimelineSegment`／
+ *  `GanttTimelineKeyPath`／`GanttTimelineStep`／`GanttTimelineMilestone`／`GanttTimelineCursor`）——
+ *  **必填与可选一起列**（只列必填会把可选键误拒）。 */
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉——写错的键被吞掉时，
+ *  屏上只是静静地少一段（这一段本来就短，少一格读不出来），调用方却以为自己设上了。
+ *
+ *  **两条路都要走**（只走 `Object.keys` 会漏掉一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus:1})` 那种继承来的键就是这一路）。
+ *  先例：`kanban-columns/model.ts` 与 `relation-picker/model.ts` 的同名小件。
+ */
+function assertKeys(raw: object, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `GanttTimelineInput` 的键（顶层入参表）。 */
+const INPUT_KEYS = ['title', 'lanes', 'keyPath', 'milestones', 'cursor', 'cellMinutes',
+  'spanMinutes', 'tickText', 'axisName', 'stamp', 'tail', 'note', 'form', 'extraClass'] as const;
+
+/** `GanttTimelineLane` 的键（一条泳道）。 */
+const LANE_KEYS = ['label', 'note', 'segments'] as const;
+
+/** `GanttTimelineSegment` 的键（一条段）。 */
+const SEGMENT_KEYS = ['from', 'minutes', 'state', 'label'] as const;
+
+/** `GanttTimelineKeyPath` 的键（关键路径那条带）。 */
+const KEY_PATH_KEYS = ['label', 'note', 'steps'] as const;
+
+/** `GanttTimelineStep` 的键（关键路径里的一段）。 */
+const STEP_KEYS = ['name', 'minutes'] as const;
+
+/** `GanttTimelineMilestone` 的键（一个里程碑）。 */
+const MILESTONE_KEYS = ['at', 'label', 'note'] as const;
+
+/** `GanttTimelineCursor` 的键（「现在」游标）。 */
+const CURSOR_KEYS = ['at', 'label'] as const;
+
 /* ── 泳道 ─────────────────────────────────────────────────────────── */
 
 function parseSegments(raw: unknown, laneLabel: string, cellMinutes: number): readonly GanttTimelineSegmentView[] {
@@ -79,6 +128,7 @@ function parseSegments(raw: unknown, laneLabel: string, cellMinutes: number): re
     const where = 'gantt-timeline: input.lanes(' + laneLabel + ').segments[' + String(i) + ']';
     assertPlainObject(item, where);
     const one = item as Record<string, unknown>;
+    assertKeys(one, SEGMENT_KEYS, where);
     const state = reqState(one.state, where + '.state');
     const from = onGrid(num(one.from, where + '.from'), cellMinutes, where + '.from');
     if (from < 0) badInput(where + '.from 不能是负数（时间轴从 0 起）');
@@ -116,6 +166,7 @@ function parseLanes(raw: unknown, cellMinutes: number): readonly GanttTimelineLa
     const where = 'gantt-timeline: input.lanes[' + String(i) + ']';
     assertPlainObject(item, where);
     const one = item as Record<string, unknown>;
+    assertKeys(one, LANE_KEYS, where);
     const label = reqText(one.label, where + '.label');
     return {
       label,
@@ -130,6 +181,7 @@ function parseLanes(raw: unknown, cellMinutes: number): readonly GanttTimelineLa
 function parseKeyPath(raw: unknown, cellMinutes: number): GanttTimelineKeyView {
   assertPlainObject(raw, 'gantt-timeline: input.keyPath');
   const one = raw as Record<string, unknown>;
+  assertKeys(one, KEY_PATH_KEYS, 'gantt-timeline: input.keyPath');
   if (!Array.isArray(one.steps)) badInput('gantt-timeline: input.keyPath.steps 必须是数组');
   const n = one.steps.length;
   if (n < GANTT_TIMELINE_MIN_KEY_STEPS || n > GANTT_TIMELINE_MAX_KEY_STEPS) {
@@ -141,6 +193,7 @@ function parseKeyPath(raw: unknown, cellMinutes: number): GanttTimelineKeyView {
     const where = 'gantt-timeline: input.keyPath.steps[' + String(i) + ']';
     assertPlainObject(item, where);
     const step = item as Record<string, unknown>;
+    assertKeys(step, STEP_KEYS, where);
     const minutes = num(step.minutes, where + '.minutes');
     if (minutes <= 0) badInput(where + '.minutes 必须是正数');
     onGrid(minutes, cellMinutes, where + '.minutes');
@@ -162,6 +215,7 @@ function parseMilestones(raw: unknown, cellMinutes: number): readonly GanttTimel
     const where = 'gantt-timeline: input.milestones[' + String(i) + ']';
     assertPlainObject(item, where);
     const one = item as Record<string, unknown>;
+    assertKeys(one, MILESTONE_KEYS, where);
     const at = onGrid(num(one.at, where + '.at'), cellMinutes, where + '.at');
     /* 负数必须自己拦：`-10` 是 `cellMinutes` 的整数倍（格号 -2），"在格线上"这一步放它过去，
        画出来却落在第 0 分那条格线上（`grid-column: 1`），读数还照写「-10 分 里程碑」。
@@ -178,6 +232,7 @@ function parseMilestones(raw: unknown, cellMinutes: number): readonly GanttTimel
 function parseCursor(raw: unknown): GanttTimelineCursorView {
   assertPlainObject(raw, 'gantt-timeline: input.cursor');
   const one = raw as Record<string, unknown>;
+  assertKeys(one, CURSOR_KEYS, 'gantt-timeline: input.cursor');
   const at = num(one.at, 'gantt-timeline: input.cursor.at');
   if (at < 0) badInput('gantt-timeline: input.cursor.at 不能是负数');
   return { at, label: reqText(one.label, 'gantt-timeline: input.cursor.label') };
@@ -189,6 +244,7 @@ function parseCursor(raw: unknown): GanttTimelineCursorView {
 export function normalizeGanttTimeline(input: unknown): GanttTimelineModel {
   assertPlainObject(input, 'renderGanttTimeline: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderGanttTimeline: input');
 
   const form = raw.form === undefined ? GANTT_TIMELINE_FORMS[0] : raw.form;
   if (!(GANTT_TIMELINE_FORMS as readonly unknown[]).includes(form)) {

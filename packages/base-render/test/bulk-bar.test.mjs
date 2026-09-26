@@ -424,6 +424,57 @@ describe('bulk-bar ① 渲染契约 · 形态 A 骨架', () => {
       '填满之后照常渲染（稀疏才拒，不是「用过 new Array 就拒」）');
   });
 
+  it('**入参表以外的键一律拒**：顶层／条目／动作／预演／预演行**五层**各加一个未知键都抛 `BlocksError`', () => {
+    /* 写错的键名（`titel`／`reding`／`ovewAction`）被静默吞掉时，屏上只是**静静地少一块**——
+       少一行字、少一枚动作、少一条预演行，而调用方以为自己设上了。五层逐层加一个未知键，每层都得拒。
+       **继承来的与不可枚举的**键同样算（只走 `Object.keys` 会把这两类漏掉）。 */
+    const deep = {
+      name: 'n', items: [{ key: 'k', title: 't' }],
+      actions: [{ key: 'a', label: '改', preview: { title: '改', rows: [{ keep: true, to: 'x' }] } }],
+    };
+    const withKey = (path, key) => {
+      const c = JSON.parse(JSON.stringify(deep));
+      let at = c;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return c;
+    };
+    const layers = [
+      ['顶层', []],
+      ['条目', ['items', 0]],
+      ['动作', ['actions', 0]],
+      ['预演', ['actions', 0, 'preview']],
+      ['预演行', ['actions', 0, 'preview', 'rows', 0]],
+    ];
+    for (const [label, path] of layers) {
+      assert.equal(throwsBlocks(() => renderBulkBar(withKey(path, 'zzUnknown'))), true,
+        label + ' 这一层多给一个键（多半是打错名）必须拒，不许静默吞掉');
+      /* 去掉那个未知键、其余一字不动 ⇒ 必须照常渲出来（拒的是未知键，不是这些形状）。 */
+      const clean = withKey(path, 'zzUnknown');
+      let at = clean;
+      for (const t of path) at = at[t];
+      delete at.zzUnknown;
+      assert.equal(throwsBlocks(() => renderBulkBar(clean)), false,
+        label + ' 这一层：把未知键去掉之后就得照常渲染（拒的是未知键，不是这一层本身）');
+    }
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = () => Object.assign(Object.create({ zzUnknown: 1 }), {
+      name: 'n', items: [{ key: 'k', title: 't' }], actions: [{ key: 'a', label: '改' }],
+    });
+    assert.equal(throwsBlocks(() => renderBulkBar(inherited())), true, '顶层继承来的未知键');
+    const hidden = { name: 'n', items: [{ key: 'k', title: 't' }], actions: [{ key: 'a', label: '改' }] };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderBulkBar(hidden)), true, '顶层不可枚举的未知键');
+    /* 可选键一个都不许被误拒：表里列全了的可选字段照旧收下（误拒合法调用方比吞键更坏）。 */
+    assert.equal(throwsBlocks(() => renderBulkBar({
+      ...deep, countUnit: '条', tail: '合计 32.00', hint: '共 1 条', emptyText: '空的',
+      extraClass: 'a b', form: 'A',
+      items: [{ key: 'k', title: 't', note: 'n', reading: '32.00', selected: true }],
+      actions: [{ key: 'a', label: '改', tone: 'danger', disabled: false, busy: false, error: '' }],
+    })), false, '入参表里的可选键一个都不许误拒');
+  });
+
   it('非 ASCII 件名／动作键：行内 `id` 同页唯一，`aria-controls` 指着**自己那块**确认面', () => {
     const cn = {
       name: '记账条',

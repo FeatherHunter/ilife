@@ -86,6 +86,35 @@
 
 同页 `id` 由 `name` 与动作键拼出来（`bulkBarConfirmId`／`ErrorId`／`HintId`／`CountId`）：**逐字符编码**（`[A-Za-z0-9]` 照抄，其余写成 `_` ＋ 码点十六进制 ＋ `_`），所以中文件名／动作键不会撞成同一个 `id`——`aria-controls` 反查（运行时按 `id` 找确认面）点哪一枚就开哪一块。`name` 仍须**同页唯一**（同名的两块条拼出同名 `id`，那是调用方违约）。
 
+## 示例入参
+
+<!-- 示例入参：件清单（`src/components/清单.ts`）派生本件的样例，皮肤矩阵与跨件判据拿它渲染本件。
+     必须能**直接渲染成功**：这里给显式块，是因为本文件有两张入参表（顶层 ＋ `items[]` 一格里面），
+     派生器会把「下表」的必填字段并进**每一个**数组元素，于是 `actions[0]` 多出一个它不认识的 `title`。 -->
+
+```json 示例入参
+{
+  "name": "批量改这几条",
+  "items": [
+    { "key": "i1", "title": "餐饮 · 午餐", "note": "09-25 · 现金", "reading": "32.00", "selected": true },
+    { "key": "i2", "title": "日用 · 抽纸", "disabled": true, "disabledReason": "已报销，改不了" }
+  ],
+  "actions": [
+    { "key": "cat", "label": "改分类", "tone": "primary", "preview": {
+      "title": "批量改分类", "value": "外卖", "recent": ["外卖", "家用"],
+      "rows": [
+        { "keep": true, "to": "外卖", "from": "餐饮", "note": "午餐 32.00（09-25）" },
+        { "keep": false, "to": "日用", "note": "已报销，跳过" }
+      ]
+    } },
+    { "key": "del", "label": "删除", "tone": "danger" }
+  ],
+  "countUnit": "条",
+  "hint": "共 2 条",
+  "openAction": "cat"
+}
+```
+
 ## 契约与不变量（判据逐条断）
 
 1. **真复选语义**：原生 `<input type="checkbox">` ＋ **整行是 `<label>`**（命中区 ≥52px 高）；勾选框的命中盒 44×44，视觉盒 24×24，原生框铺满命中盒（视觉隐藏走 `opacity:0`，**不是** `display:none`——那会把键盘可达性一起干掉）。

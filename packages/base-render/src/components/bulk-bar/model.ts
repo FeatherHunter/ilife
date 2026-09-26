@@ -3,6 +3,8 @@
  *  三条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：猜出来的条子
  *      会在页面上长成另一种东西（少一枚动作、换个形态），而调用方以为拿到了本件。
+ *      **入参表以外的键同样拒**（每一层都查，见 `keys.ts` 的 `assertKeys`）：写错的键名静默吞掉时
+ *      屏上只是静静地少一块，调用方却以为自己设上了。
  *   2. **缺值与空串是两件事**：可选字段给空串＝未给（与全层 `optText` 同口径）；必填字段给空串＝错。
  *   3. **归一化只做「形状」**：取整、千分位、金额怎么算**归调用方**——本件只收「已经是给人看的样子」的串
  *      与**结构化的预演**（哪条会改、改前改后），不替调用方算钱、不替它查库。
@@ -28,6 +30,15 @@ import {
   type BulkBarPreviewRow,
   type BulkBarTone,
 } from './attrs.js';
+/* 键表与「未知键一律拒」住 `keys.ts`（同一批入参小件；理由见那份的文件头）。 */
+import {
+  assertKeys,
+  BULK_BAR_ACTION_KEYS,
+  BULK_BAR_INPUT_KEYS,
+  BULK_BAR_ITEM_KEYS,
+  BULK_BAR_PREVIEW_KEYS,
+  BULK_BAR_PREVIEW_ROW_KEYS,
+} from './keys.js';
 
 /** 条目的上限（再多就不该用「批量」了，该用筛选或全选）。 */
 export const BULK_BAR_ITEM_MAX = 200;
@@ -128,6 +139,7 @@ function optTextList(value: unknown, field: string, max: number): readonly strin
 function itemOf(value: unknown, at: number, seen: Set<string>): BulkBarItemModel {
   const field = 'bulk-bar: input.items[' + String(at) + ']';
   assertPlainObject(value, field);
+  assertKeys(value as object, BULK_BAR_ITEM_KEYS, field);
   const raw = value as BulkBarItem;
   const key = reqText(raw.key, field + '.key');
   if (seen.has(key)) badInput(field + '.key 在清单里重复了：' + key + '（机器键必须唯一）');
@@ -153,6 +165,7 @@ function previewRowOf(value: unknown, at: number, field: string): BulkBarPreview
   assertPlainObject(value, field + '[' + String(at) + ']');
   const raw = value as BulkBarPreviewRow;
   const at0 = field + '[' + String(at) + ']';
+  assertKeys(value as object, BULK_BAR_PREVIEW_ROW_KEYS, at0);
   const keep = optBool(raw.keep, at0 + '.keep');
   if (keep === undefined) badInput(at0 + '.keep 必填（`true`＝这条会改；`false`＝跳过）');
   const note = optText(raw.note, at0 + '.note');
@@ -165,6 +178,7 @@ function previewRowOf(value: unknown, at: number, field: string): BulkBarPreview
 /** 一枚动作的预演。 */
 function previewOf(value: unknown, field: string, unit: string): BulkBarPreviewModel {
   assertPlainObject(value, field);
+  assertKeys(value as object, BULK_BAR_PREVIEW_KEYS, field);
   const raw = value as BulkBarPreview;
   const rowsRaw = reqList(raw.rows, field + '.rows');
   if (rowsRaw.length === 0) badInput(field + '.rows 至少要有一项（没有逐条预演的预演没有意义）');
@@ -199,6 +213,7 @@ function previewOf(value: unknown, field: string, unit: string): BulkBarPreviewM
 function actionOf(value: unknown, at: number, seen: Set<string>, unit: string, hint: string | undefined): BulkBarActionModel {
   const field = 'bulk-bar: input.actions[' + String(at) + ']';
   assertPlainObject(value, field);
+  assertKeys(value as object, BULK_BAR_ACTION_KEYS, field);
   const raw = value as BulkBarAction;
   const key = reqText(raw.key, field + '.key');
   if (seen.has(key)) badInput(field + '.key 在一排里重复了：' + key + '（动作键必须唯一）');
@@ -229,6 +244,7 @@ function actionOf(value: unknown, at: number, seen: Set<string>, unit: string, h
 export function normalizeBulkBar(input: unknown): BulkBarModel {
   assertPlainObject(input, 'renderBulkBar: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, BULK_BAR_INPUT_KEYS, 'renderBulkBar: input');
 
   const form = raw.form === undefined ? BULK_BAR_FORMS[0] : raw.form;
   if (!(BULK_BAR_FORMS as readonly unknown[]).includes(form)) {

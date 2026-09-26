@@ -21,7 +21,8 @@ import {
   type CashWaterlineForm,
 } from './attrs.js';
 /* 格式化与校验小件都住在 `fields.ts`（同一批三个形态共用，理由见那份的文件头）。 */
-import { forbid, fmtPct, fmtQty, optInRange, optInt, reqDays, reqFlowLines, reqInt, reqPositive, reqWeeks } from './fields.js';
+import { forbid, fmtPct, fmtQty, optInRange, optInt, reqDays, reqFlowLines, reqInt, reqPositive, reqWeeks,
+  assertKeys, CASH_WATERLINE_INPUT_KEYS } from './fields.js';
 
 /** 横轴的两种出法：`columns`＝一格一天（逐格对齐）／`range`＝一行区间读数（天数多到格子站不下字）。 */
 export type CashWaterlineAxis =
@@ -335,6 +336,7 @@ const BUILDERS: Readonly<Record<CashWaterlineForm, (raw: Record<string, unknown>
 export function normalizeCashWaterline(input: unknown): CashWaterlineModel {
   assertPlainObject(input, 'renderCashWaterline: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, CASH_WATERLINE_INPUT_KEYS, 'renderCashWaterline: input');
   const form = raw.form === undefined ? CASH_WATERLINE_FORMS[0] : raw.form;
   if (!(CASH_WATERLINE_FORMS as readonly unknown[]).includes(form)) {
     badInput('cash-waterline: input.form 必须是 ' + CASH_WATERLINE_FORMS.join('／')

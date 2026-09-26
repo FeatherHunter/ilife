@@ -526,6 +526,78 @@ describe('cash-waterline ① 入参违规一律拒（不静默降级）', () => 
     assert.equal(throwsBlocks(() => renderCashWaterline({ ...WATERLINE, budget: 0 })), true, '预算得是正数');
   });
 
+  it('**入参表以外的键一律拒**：顶层／一天／一周／一行明细**四层**各加一个未知键都抛 `BlocksError`', () => {
+    /* 写错的键名（`pctt`／`infloww`／`axisLable`）被静默吞掉时，屏上只是**静静地少一块**——
+       少一根柱子、少一周的读数、少一行明细，而调用方以为自己设上了。四层逐层加一个未知键，每层都得拒。
+       **继承来的与不可枚举的**键同样算（只走 `Object.keys` 会把这两类漏掉）。 */
+    const one = {
+      title: 'T',
+      days: [{ label: '09-01', axisLabel: '1', pct: 50, spend: 1 }],
+      weeks: [{ label: 'W1', inflow: 1, outflow: 1 }],
+      inflow: [{ name: '工资', amount: 1 }],
+    };
+    /* 每个形态各起一份**只有自己那份读数**的入参（混着给会被 `forbid` 拦下——那是另一条口径，
+       本条判的只是「表以外的键」）。 */
+    const shapes = {
+      waterline: () => ({ title: 'T', form: 'waterline', days: JSON.parse(JSON.stringify(one.days)) }),
+      bullet: () => ({ title: 'T', form: 'bullet', budget: 100, weeks: JSON.parse(JSON.stringify(one.weeks)) }),
+      flow: () => ({
+        title: 'T', form: 'flow', budget: 100, elapsedDays: 1, remainDays: 1,
+        inflow: JSON.parse(JSON.stringify(one.inflow)), outflow: [{ name: '餐饮', amount: 2 }],
+      }),
+    };
+    const withKey = (build, path, key) => {
+      const c = build();
+      let at = c;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return c;
+    };
+    const layers = [
+      ['顶层（水位柱）', shapes.waterline, []],
+      ['顶层（子弹图）', shapes.bullet, []],
+      ['顶层（三栏）', shapes.flow, []],
+      ['一天（水位柱的 `days[0]`）', shapes.waterline, ['days', 0]],
+      ['一周（子弹图的 `weeks[0]`）', shapes.bullet, ['weeks', 0]],
+      ['进项一行（三栏的 `inflow[0]`）', shapes.flow, ['inflow', 0]],
+      ['出项一行（三栏的 `outflow[0]`）', shapes.flow, ['outflow', 0]],
+    ];
+    for (const [label, build, path] of layers) {
+      assert.equal(throwsBlocks(() => renderCashWaterline(build())), false, label + '：原样能渲出来');
+      assert.equal(throwsBlocks(() => renderCashWaterline(withKey(build, path, 'zzUnknown'))), true,
+        label + ' 多给一个键（多半是打错名）必须拒，不许静默吞掉');
+      /* 去掉那个未知键、其余一字不动 ⇒ 必须照常渲出来（拒的是未知键，不是这一层本身）。 */
+      const clean = withKey(build, path, 'zzUnknown');
+      let at = clean;
+      for (const t of path) at = at[t];
+      delete at.zzUnknown;
+      assert.equal(throwsBlocks(() => renderCashWaterline(clean)), false,
+        label + '：把未知键去掉之后就得照常渲染（拒的是未知键，不是这一层本身）');
+    }
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), { title: 'T', days: [{ label: 'd', pct: 50 }] });
+    assert.equal(throwsBlocks(() => renderCashWaterline(inherited)), true, '顶层继承来的未知键');
+    const hidden = { title: 'T', days: [{ label: 'd', pct: 50 }] };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderCashWaterline(hidden)), true, '顶层不可枚举的未知键');
+    /* 可选键一个都不许被误拒（表按 `attrs.ts` 的入参面逐字段列全，必填与可选都在）：三形态各一遍。 */
+    assert.equal(throwsBlocks(() => renderCashWaterline({
+      title: 'T', stamp: '预算 6 000 元', form: 'waterline', thresholdPct: 30, budget: 6000, unit: '元',
+      note: '口径', extraClass: 'a b', todayIndex: 0,
+      days: [{ label: '09-01', axisLabel: '1', pct: 50, spend: 1 }],
+    })), false, '水位柱：入参表里的可选键一个都不许误拒');
+    assert.equal(throwsBlocks(() => renderCashWaterline({
+      title: 'T', stamp: '4 周', form: 'bullet', thresholdPct: 30, budget: 6000, unit: '元',
+      note: '口径', extraClass: 'a b', weeks: [{ label: 'W1', inflow: 1, outflow: 1 }],
+    })), false, '子弹图：入参表里的可选键一个都不许误拒');
+    assert.equal(throwsBlocks(() => renderCashWaterline({
+      title: 'T', stamp: '本月', form: 'flow', thresholdPct: 30, budget: 6000, unit: '元', note: '口径',
+      extraClass: 'a b', elapsedDays: 24, remainDays: 6, inflowCount: 3, outflowCount: 38,
+      inflow: [{ name: '工资', amount: 1 }], outflow: [{ name: '餐饮', amount: 2 }],
+    })), false, '三栏：入参表里的可选键一个都不许误拒');
+  });
+
   it('转义面：标题／口径／日期／名字逐位转义，塞不进标签与属性', () => {
     const evil = '"><script>alert(1)</script>';
     const html = renderCashWaterline({

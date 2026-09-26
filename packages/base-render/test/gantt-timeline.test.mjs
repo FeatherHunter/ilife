@@ -471,6 +471,58 @@ describe('gantt-timeline ① 渲染契约 · 形态 C 的骨架', () => {
     assert.equal(throwsBlocks(() => renderGanttTimeline({ ...ok, stamp: 1 })), true, 'stamp 不是串');
   });
 
+  it('**入参表以外的键一律拒**：顶层／泳道／段／关键路径／关键路径段／里程碑／游标**七层**都抛 `BlocksError`', () => {
+    /* 写错的键名（`lable`／`minuets`／`milestones` 写成 `milestone`）被静默吞掉时，屏上只是
+       **静静地少一段**（这一段本来就短，少一格根本读不出来），而调用方以为自己设上了。
+       七层逐层加一个未知键，每层都得拒；**继承来的与不可枚举的**键同样算。 */
+    const deep = () => ({
+      title: 'x', cellMinutes: 5, spanMinutes: 30,
+      lanes: [{ label: '灶', note: '占用', segments: [{ from: 0, minutes: 10, state: 'done', label: '煸' }] }],
+      keyPath: { label: '关键路径', note: '2 段', steps: [{ name: 'a', minutes: 10 }, { name: 'b', minutes: 10 }] },
+      milestones: [{ at: 10, label: 'm', note: '10 分 里程碑' }],
+      cursor: { at: 10, label: '现在' },
+    });
+    const withKey = (path, key) => {
+      const c = deep();
+      let at = c;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return c;
+    };
+    const layers = [
+      ['顶层', []],
+      ['泳道', ['lanes', 0]],
+      ['段', ['lanes', 0, 'segments', 0]],
+      ['关键路径', ['keyPath']],
+      ['关键路径段', ['keyPath', 'steps', 0]],
+      ['里程碑', ['milestones', 0]],
+      ['游标', ['cursor']],
+    ];
+    for (const [label, path] of layers) {
+      assert.equal(throwsBlocks(() => renderGanttTimeline(withKey(path, 'zzUnknown'))), true,
+        label + ' 这一层多给一个键（多半是打错名）必须拒，不许静默吞掉');
+      /* 去掉那个未知键、其余一字不动 ⇒ 必须照常渲出来（拒的是未知键，不是这一层本身）。 */
+      const clean = withKey(path, 'zzUnknown');
+      let at = clean;
+      for (const t of path) at = at[t];
+      delete at.zzUnknown;
+      assert.equal(throwsBlocks(() => renderGanttTimeline(clean)), false,
+        label + ' 这一层：把未知键去掉之后就得照常渲染（拒的是未知键，不是这一层本身）');
+    }
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), deep());
+    assert.equal(throwsBlocks(() => renderGanttTimeline(inherited)), true, '顶层继承来的未知键');
+    const hidden = deep();
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderGanttTimeline(hidden)), true, '顶层不可枚举的未知键');
+    /* 可选键一个都不许被误拒：表按 `attrs.ts` 的入参面逐字段列全（必填与可选都在）。 */
+    assert.equal(throwsBlocks(() => renderGanttTimeline({
+      ...deep(), form: 'C', tickText: ['0', '5', '10', '15', '20', '25'], axisName: '分钟',
+      stamp: '2 条泳道', tail: '上桌', note: '口径', extraClass: 'a b',
+    })), false, '入参表里的可选键一个都不许误拒');
+  });
+
   it('纯函数：同样的入参恒产同样的字节（四份样例各一遍）', () => {
     for (const input of [KITCHEN, SPARSE, STRESS, CURSOR_WRAP]) {
       assert.equal(renderGanttTimeline(input), renderGanttTimeline(input));

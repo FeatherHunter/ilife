@@ -140,6 +140,46 @@ export function forbid(raw: Record<string, unknown>, form: string, keys: readonl
   }
 }
 
+/* ── 键表与「未知键一律拒」 ───────────────────────────────────────
+ *  **键在不在表里**由这一节管（写错键名＝拒）；**形态对不对**仍归上面的 `forbid`（报错句更具体：
+ *  它说得清"那是别的形态的读数"）。两者分工：本节的顶层表收**全部形态的入参面**（`attrs.ts` 的
+ *  `CashWaterlineInput` 逐字段），故形态专属键由 `forbid` 拦、真正的未知键由本节拦。 */
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉——写错的键被吞掉时，
+ *  屏上只是静静地少一块，调用方却以为自己设上了。
+ *
+ *  **两条路都要走**（只走 `Object.keys` 会漏掉一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus:1})` 那种继承来的键就是这一路）。
+ *  先例：`kanban-columns/model.ts` 与 `relation-picker/model.ts` 的同名小件。
+ */
+export function assertKeys(raw: object, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `CashWaterlineInput` 的键（顶层入参表：三形态的入参面合起来，逐字段照 `attrs.ts` 列全）。 */
+export const CASH_WATERLINE_INPUT_KEYS = ['title', 'stamp', 'form', 'thresholdPct', 'days',
+  'todayIndex', 'weeks', 'budget', 'inflow', 'outflow', 'inflowCount', 'outflowCount',
+  'elapsedDays', 'remainDays', 'unit', 'note', 'extraClass'] as const;
+
+/** `CashWaterlineDay` 的键（一天：`label`／`axisLabel`／`pct`／`spend`）。 */
+export const CASH_WATERLINE_DAY_KEYS = ['label', 'axisLabel', 'pct', 'spend'] as const;
+
+/** `CashWaterlineWeek` 的键（一周：`label`／`inflow`／`outflow`——**净与累计已用是本件算的**）。 */
+export const CASH_WATERLINE_WEEK_KEYS = ['label', 'inflow', 'outflow'] as const;
+
+/** `CashWaterlineFlowLine` 的键（进出水的一行：`name`／`amount`）。 */
+export const CASH_WATERLINE_FLOW_LINE_KEYS = ['name', 'amount'] as const;
+
 /* ── 各形态的读数（形状） ───────────────────────────────────────── */
 
 /** 一天：逐字段校验（**日期非空且够短、余量 0–100、花费 ≥ 0**）。 */
@@ -148,6 +188,7 @@ export function reqDays(value: unknown): readonly CashWaterlineDay[] {
     assertPlainObject(one, 'cash-waterline: input.days[' + String(i) + ']');
     const day = one as Record<string, unknown>;
     const at = 'cash-waterline: input.days[' + String(i) + ']';
+    assertKeys(day, CASH_WATERLINE_DAY_KEYS, at);
     const label = reqText(day.label, at + '.label');
     if (label.length > CASH_WATERLINE_MAX_LABEL_CHARS) {
       badInput(at + '.label 至多 ' + String(CASH_WATERLINE_MAX_LABEL_CHARS)
@@ -174,6 +215,7 @@ export function reqWeeks(value: unknown): readonly CashWaterlineWeek[] {
     assertPlainObject(one, 'cash-waterline: input.weeks[' + String(i) + ']');
     const w = one as Record<string, unknown>;
     const at = 'cash-waterline: input.weeks[' + String(i) + ']';
+    assertKeys(w, CASH_WATERLINE_WEEK_KEYS, at);
     return {
       label: reqText(w.label, at + '.label'),
       inflow: reqNonNegative(w.inflow, at + '.inflow'),
@@ -187,6 +229,7 @@ export function reqFlowLines(value: unknown, field: string): readonly CashWaterl
   return reqList(value, field, CASH_WATERLINE_MAX_LINES, '明细行，一行一条').map((one, i) => {
     assertPlainObject(one, field + '[' + String(i) + ']');
     const line = one as Record<string, unknown>;
+    assertKeys(line, CASH_WATERLINE_FLOW_LINE_KEYS, field + '[' + String(i) + ']');
     return {
       name: reqText(line.name, field + '[' + String(i) + '].name'),
       amount: reqPositive(line.amount, field + '[' + String(i) + '].amount'),
