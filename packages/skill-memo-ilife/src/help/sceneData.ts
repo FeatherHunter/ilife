@@ -1,22 +1,26 @@
 /** #227 · 备忘录 HELP 内容资产 · 组装件：8 个域文件 → 全量 `groups` ＋ 域级索引
  *
  * ⚠️ 机器生成，**禁手改**：由 `packages/skill-memo-ilife/scripts/gen-help-assets.mjs` 产出。
- *    改内容＝改生成器里的声明表（prompt 清洗／字段清洗／别名），再跑
+ *    改内容＝改 `scripts/help-assets.rewrite.mjs`（30 场景重写表），再跑
  *    `node packages/skill-memo-ilife/scripts/gen-help-assets.mjs`（`--check` 只比对不落盘）。
  *
- * 事实源（仓外，全程只读）：
- *   ① 老实物契约载荷 `备忘录_HELP_20260820_162453.html`（老 `script/memo_render.py:527-599` 的产出，逐字零改写）；
- *   ② 老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0，不写死第四份副本，裁决 9）。
+ * 事实源（仓外，全程只读）：老实物契约载荷 `备忘录_HELP_20260820_162453.html`（老 `script/memo_render.py:527-599` 的产出）
+ *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
+ *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           清洗后 30 条 sha256＝bdac11bc62cb603c7f135a25e092b5b7342f084f5a1eb753991098e0f6d0c0a1
+ *           资产 30 条 sha256＝27745af5504a724cad59ec699ebe802f15fe2002e0b69c2fbfcafe7c7701cd55
  *
- * 与老骨架的**有意偏离**（逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`）：
- *   1. 二级组 id 老 0 起 → 新 1 起（票 6 V8=A）；
- *   2. `prompt_template` 去命令化（用户 U6）＋ 去 DB／实现细节（老 yaml `:9`）；
- *      `title`／`label`／`hint` 同一条规则换说法（裁决 21 D5／D7 ＋ 复审 M1，逐条见对账表）；
- *   3. `editable_fields` 清洗（裁决 6）：剔 12 条 `html` 开关 ＋ 补 10 条中文名；
- *   4. 新增 `aliases`（住技能侧资产、渲染时剥离，裁决 5；老 yaml `:30` 的禁令管不到本仓）；
- *   5. `status` 全空串（用户 U1／U2／U3：HELP 是完整体，不是现状快照）。
+ * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
+ * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
+ *   1. 首行＝`请你加载技能 备忘录,执行唤醒词「<唤醒词>」。`——唤醒词本体逐字取自冻结词表，路由一行不动；
+ *   2. 正文只留「唤醒词与参数行没说到的信息」那一句人话；老骨架的 `请按以下格式填写你的参数:`／
+ *      `期望效果:` 标签／`无需参数,直接发送。` 一律不写（页面用控件有无表达「没有要填的」）；
+ *   3. 参数行＝`<标签>:{{<name>}}`，一行一参，标签＝字段 `label`（`required:false` 的带 `(选填)`）；
+ *      `editable_fields` 按 kind 闭集标注：本家 60 条落在 `text`／`select`／`date`，
+ *      `number`／`week` 零实例（缺省 kind＝`text`）；
+ *   4. `aliases` 12 条随场景挂载、渲染时剥离（裁决 5）；`status` 全空串（U1／U2／U3：HELP 是完整体）。
+ * 与老骨架的逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`（#227 那一代）与
+ * `docs/skills/skill-memo-ilife/t974-实施-证据.md`（#974 这一代）。
  *
  * 本文件给 **2 个导出**：`MEMO_HELP_GROUPS`（全量 `groups`，给渲染件 `helpFile.ts` 直接吃）与
  * `buildHelpSceneIndex()`（域级索引载荷，计数全派生、不写死）。`version` **随索引载荷出去**

@@ -38,14 +38,15 @@
 <!-- warning-line-ledger:begin -->
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
-| `scripts/build-help.mjs` | 38 | 38 | 未越线，在册备查 |
+| `scripts/build-help.mjs` | 38 | 46 | 未越线，在册备查 |
 | `scripts/check-listpage-empty-span.mjs` | 203 | 231 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
-| `scripts/gen-help-assets.mjs` | 304 | 304 | 未越线，在册备查 |
-| `scripts/help-assets.data.mjs` | 125 | 127 | 未越线，在册备查 |
-| `scripts/help-assets.render.mjs` | 99 | 99 | 未越线，在册备查 |
+| `scripts/gen-help-assets.mjs` | 304 | 306 | 未越线，在册备查 |
+| `scripts/help-assets.data.mjs` | 125 | 57 | 未越线，在册备查 |
+| `scripts/help-assets.render.mjs` | 99 | 104 | 未越线，在册备查 |
+| `scripts/help-assets.rewrite.mjs` | 298 | 298 | 未越线，在册备查 |
 | `scripts/t659-parity-probe.mjs` | 110 | 110 | 未越线，在册备查 |
 | `src/checkin/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |
@@ -58,6 +59,11 @@
 | `src/cli/health/items.ts` | 240 | 227 | 未越线，在册备查 |
 | `src/cli/health/probe.ts` | 185 | 185 | 未越线，在册备查 |
 | `src/config.ts` | 154 | 154 | 未越线，在册备查 |
+| `src/data/commands.ts` | 35 | 35 | 未越线，在册备查 |
+| `src/data/index.ts` | 7 | 7 | 未越线，在册备查 |
+| `src/data/query.ts` | 34 | 34 | 未越线，在册备查 |
+| `src/data/schema.ts` | 31 | 31 | 未越线，在册备查 |
+| `src/data/tables.ts` | 19 | 19 | 未越线，在册备查 |
 | `src/db/readonly.ts` | 333 | 333 | 未越线，在册备查 |
 | `src/health.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
@@ -65,15 +71,15 @@
 | `src/help/index.ts` | 4 | 4 | 未越线，在册备查 |
 | `src/help/lookup.ts` | 56 | 85 | 未越线，在册备查 |
 | `src/help/manifest.ts` | 50 | 50 | 未越线，在册备查 |
-| `src/help/sceneData.ts` | 64 | 64 | 未越线，在册备查 |
-| `src/help/scenes/checkin.ts` | 71 | 71 | 未越线，在册备查 |
-| `src/help/scenes/init.ts` | 44 | 44 | 未越线，在册备查 |
-| `src/help/scenes/memo.ts` | 123 | 123 | 未越线，在册备查 |
-| `src/help/scenes/mood.ts` | 73 | 73 | 未越线，在册备查 |
-| `src/help/scenes/remind.ts` | 90 | 90 | 未越线，在册备查 |
-| `src/help/scenes/search.ts` | 131 | 131 | 未越线，在册备查 |
-| `src/help/scenes/sync.ts` | 43 | 43 | 未越线，在册备查 |
-| `src/help/scenes/wish.ts` | 103 | 103 | 未越线，在册备查 |
+| `src/help/sceneData.ts` | 64 | 68 | 未越线，在册备查 |
+| `src/help/scenes/checkin.ts` | 71 | 74 | 未越线，在册备查 |
+| `src/help/scenes/init.ts` | 44 | 48 | 未越线，在册备查 |
+| `src/help/scenes/memo.ts` | 123 | 124 | 未越线，在册备查 |
+| `src/help/scenes/mood.ts` | 73 | 77 | 未越线，在册备查 |
+| `src/help/scenes/remind.ts` | 90 | 94 | 未越线，在册备查 |
+| `src/help/scenes/search.ts` | 131 | 135 | 未越线，在册备查 |
+| `src/help/scenes/sync.ts` | 43 | 47 | 未越线，在册备查 |
+| `src/help/scenes/wish.ts` | 103 | 107 | 未越线，在册备查 |
 | `src/index.ts` | 11 | 11 | 未越线，在册备查 |
 | `src/init/commands.ts` | 20 | 20 | 未越线，在册备查 |
 | `src/init/diagnosis.ts` | 133 | 134 | 未越线，在册备查 |
@@ -98,7 +104,7 @@
 | `src/remind/routes.ts` | 57 | 61 | 未越线，在册备查 |
 | `src/remind/run.ts` | 100 | 204 | 未越线，在册备查 |
 | `src/remind/store.ts` | 302 | 302 | 未越线，在册备查 |
-| `src/render/envelope.ts` | 52 | 53 | 未越线，在册备查 |
+| `src/render/envelope.ts` | 52 | 57 | 未越线，在册备查 |
 | `src/render/errors.ts` | 11 | 11 | 未越线，在册备查 |
 | `src/render/html.ts` | 50 | 50 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |

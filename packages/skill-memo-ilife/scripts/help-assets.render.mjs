@@ -2,9 +2,9 @@
 /** 备忘录 HELP 内容资产 · **渲染件**（票 #855 从 `gen-help-assets.mjs` 抽出来）。
  *
  * 只管「把域／场景数据渲成文件文本」：文件头注释（`header`）／域文件（`renderDomain`）／
- * 组装件（`renderSceneData`）。**不含任何规则**——规则住 `help-assets.data.mjs`，
- * 读事实源与断言住生成器；渲染需要的一切（事实源文件名、版本、两枚摘要、两个落点）由 `ctx` 传进来。
- * 这样切只为「一个件一件事」：产物逐字节不变由生成器 `--check` 判。
+ * 组装件（`renderSceneData`）。**不含任何规则**——规则住 `help-assets.data.mjs` 与
+ * `help-assets.rewrite.mjs`，读事实源与断言住生成器；渲染需要的一切（事实源文件名、版本、两枚摘要、
+ * 两个落点）由 `ctx` 传进来。这样切只为「一个件一件事」：产物逐字节不变由生成器 `--check` 判。
  */
 import { join } from 'node:path';
 
@@ -15,22 +15,26 @@ function header(ctx, what, extra) {
   return ['/** #227 · 备忘录 HELP 内容资产 · ' + what,
     ' *',
     ' * ⚠️ 机器生成，**禁手改**：由 `packages/skill-memo-ilife/scripts/gen-help-assets.mjs` 产出。',
-    ' *    改内容＝改生成器里的声明表（prompt 清洗／字段清洗／别名），再跑',
+    ' *    改内容＝改 `scripts/help-assets.rewrite.mjs`（30 场景重写表），再跑',
     ' *    `node packages/skill-memo-ilife/scripts/gen-help-assets.mjs`（`--check` 只比对不落盘）。',
     ' *',
-    ' * 事实源（仓外，全程只读）：',
-    ' *   ① 老实物契约载荷 `' + ctx.srcBase + '`（老 `script/memo_render.py:527-599` 的产出，逐字零改写）；',
-    ' *   ② 老 `references/scenarios.yaml` 顶层 `version`（＝' + ctx.version + '，不写死第四份副本，裁决 9）。',
+    ' * 事实源（仓外，全程只读）：老实物契约载荷 `' + ctx.srcBase + '`（老 `script/memo_render.py:527-599` 的产出）',
+    ' *   与老 `references/scenarios.yaml` 顶层 `version`（＝' + ctx.version + '）。老侧**只出身份与路由**',
+    ' *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。',
     ' * 摘要锁：老 30 条 sha256＝' + ctx.legacyDigest,
-    ' *           清洗后 30 条 sha256＝' + ctx.assetDigest,
+    ' *           资产 30 条 sha256＝' + ctx.assetDigest,
     ' *',
-    ' * 与老骨架的**有意偏离**（逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`）：',
-    ' *   1. 二级组 id 老 0 起 → 新 1 起（票 6 V8=A）；',
-    ' *   2. `prompt_template` 去命令化（用户 U6）＋ 去 DB／实现细节（老 yaml `:9`）；',
-    ' *      `title`／`label`／`hint` 同一条规则换说法（裁决 21 D5／D7 ＋ 复审 M1，逐条见对账表）；',
-    ' *   3. `editable_fields` 清洗（裁决 6）：剔 12 条 `html` 开关 ＋ 补 10 条中文名；',
-    ' *   4. 新增 `aliases`（住技能侧资产、渲染时剥离，裁决 5；老 yaml `:30` 的禁令管不到本仓）；',
-    ' *   5. `status` 全空串（用户 U1／U2／U3：HELP 是完整体，不是现状快照）。',
+    ' * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆',
+    ' * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：',
+    ' *   1. 首行＝`请你加载技能 备忘录,执行唤醒词「<唤醒词>」。`——唤醒词本体逐字取自冻结词表，路由一行不动；',
+    ' *   2. 正文只留「唤醒词与参数行没说到的信息」那一句人话；老骨架的 `请按以下格式填写你的参数:`／',
+    ' *      `期望效果:` 标签／`无需参数,直接发送。` 一律不写（页面用控件有无表达「没有要填的」）；',
+    ' *   3. 参数行＝`<标签>:{{<name>}}`，一行一参，标签＝字段 `label`（`required:false` 的带 `(选填)`）；',
+    ' *      `editable_fields` 按 kind 闭集标注：本家 60 条落在 `text`／`select`／`date`，',
+    ' *      `number`／`week` 零实例（缺省 kind＝`text`）；',
+    ' *   4. `aliases` 12 条随场景挂载、渲染时剥离（裁决 5）；`status` 全空串（U1／U2／U3：HELP 是完整体）。',
+    ' * 与老骨架的逐条对账见 `docs/skills/skill-memo-ilife/t227-assets-report.md`（#227 那一代）与',
+    ' * `docs/skills/skill-memo-ilife/t974-实施-证据.md`（#974 这一代）。',
     ...(extra || []),
     ' */'].join('\n');
 }
@@ -52,7 +56,8 @@ function renderDomain(ctx, g) {
         L.push('          editable_fields: [');
         for (const f of sc.editable_fields) {
           L.push('            { name: ' + q(f.name) + ', label: ' + q(f.label) + ', value: ' + q(f.value) +
-            ', hint: ' + q(f.hint) + ', required: ' + f.required + ' },');
+            ', hint: ' + q(f.hint) + ', required: ' + f.required + ', kind: ' + q(f.kind) +
+            (f.options ? ', options: [' + f.options.map(q).join(', ') + ']' : '') + ' },');
         }
         L.push('          ],');
       }

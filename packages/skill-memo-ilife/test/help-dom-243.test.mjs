@@ -563,35 +563,37 @@ test('#243 ③ 可见正文 7 类词全 0（memo.／--html／memo-cmd-read／脚
   assert.equal(/备忘录\s*help/i.test(seen), false, '可见正文不得出现 HELP 自身唤醒词（备忘录 HELP）');
 });
 
-test('#243 ④ 带 editable_fields 的卡点开出现对应数量 input（以 memo_add_basic 4 个为锚）', () => {
+test('#243 ④ 带 editable_fields 的卡点开出现对应数量控件（以 memo_add_basic 5 个为锚；#974 起含 select）', () => {
   const { screen, doc } = runPage();
   const click = (el) => dispatchBubbling(el, 'click');
   const sheet = doc.getElementById('sheet');
   assert.ok(sheet, '须有 sheet 弹层容器');
   const cards = screen.querySelectorAll('.mini');
   assert.equal(cards.length, DERIVED.scenes);
-  // 锚点卡：memo_add_basic 真出 4 个 input[data-p]（复审员 J 真浏览器结论的桩复刻）
+  // 锚点卡：memo_add_basic 真出 5 个 [data-p] 控件（复审员 J 真浏览器结论的桩复刻）
+  // #974：字段按 kind 分控件——select 渲染 `<select data-p>`，故尺子由 `input[data-p]` 改 `[data-p]`
+  //（与共享模板 `readParams` 的 `querySelectorAll('[data-p]')` 同口径，卡路里侧同款）。
   const anchor = SCENES.find((s) => s.id === 'memo_add_basic');
   assert.ok(anchor && anchor.editable_fields, '资产须有 memo_add_basic 且带 editable_fields');
-  assert.equal(anchor.editable_fields.length, 4, '锚点卡载荷 4 字段（前置）');
+  assert.equal(anchor.editable_fields.length, 5, '锚点卡载荷 5 字段（前置）');
   const anchorCard = cards.find((c) => c.dataset.key === 'memo_add_basic');
   assert.ok(anchorCard, 'DOM 须有 memo_add_basic 卡');
   click(anchorCard);
-  assert.equal(sheet.querySelectorAll('input[data-p]').length, 4, '点开 memo_add_basic 真出 4 个 input[data-p]');
-  // 全量：每张带 editable_fields 的卡，弹层 input 数＝字段数且 data-p 键集对齐；不带的卡无表单
+  assert.equal(sheet.querySelectorAll('[data-p]').length, 5, '点开 memo_add_basic 真出 5 个 [data-p] 控件');
+  // 全量：每张带 editable_fields 的卡，弹层控件数＝字段数且 data-p 键集对齐；不带的卡无表单
   const withFields = SCENES.filter((s) => Array.isArray(s.editable_fields) && s.editable_fields.length > 0);
   assert.ok(withFields.length > 0, '须有带 editable_fields 的卡');
   for (const scene of withFields) {
     const card = cards.find((c) => c.dataset.key === scene.id);
     assert.ok(card, '缺卡：' + scene.id);
     click(card);
-    const inputs = sheet.querySelectorAll('input[data-p]');
+    const inputs = sheet.querySelectorAll('[data-p]');
     assert.equal(inputs.length, scene.editable_fields.length,
-      '卡 ' + scene.id + ' input 数应＝editable_fields 数（实际 ' + inputs.length + '，期望 ' + scene.editable_fields.length + '）');
+      '卡 ' + scene.id + ' 控件数应＝editable_fields 数（实际 ' + inputs.length + '，期望 ' + scene.editable_fields.length + '）');
     assert.deepEqual(
       inputs.map((n) => n.getAttribute('data-p')).sort(),
       scene.editable_fields.map((f) => f.name).sort(),
-      '卡 ' + scene.id + ' input 键集不对齐',
+      '卡 ' + scene.id + ' 控件键集不对齐',
     );
   }
 });

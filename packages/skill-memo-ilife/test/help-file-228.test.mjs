@@ -154,7 +154,7 @@ test('#228 用户 V7：editable_fields 进了载荷，且 name/label 全是字�
   const withFields = SCENES.filter((s) => s.editable_fields);
   assert.ok(withFields.length > 0, 'editable_fields 必须真的有');
   const total = withFields.reduce((n, s) => n + s.editable_fields.length, 0);
-  assert.equal(total, 64, '清洗后 64 条（76 − 12 条 html CLI 开关）');
+  assert.equal(total, 60, '#974 重写后 60 条（老侧 76 − 12 条 html − 4 条命令行开关／内部值）');
   for (const s of SCENES) {
     for (const f of s.editable_fields || []) {
       assert.equal(typeof f.name, 'string');
