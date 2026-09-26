@@ -61,7 +61,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日主页",
             "wake_word": "看今日主页",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日主页」。\n\n我想看今天的主页 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日主页」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -71,7 +71,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日饮食概览",
             "wake_word": "看今日饮食概览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日饮食概览」。\n\n我想看今天饮食 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日饮食概览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -81,7 +81,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日运动概览",
             "wake_word": "看今日运动概览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动概览」。\n\n我想看今天运动 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动概览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -91,7 +91,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日体重概览",
             "wake_word": "看今日体重概览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日体重概览」。\n\n我想看今天体重 widget。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日体重概览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -111,7 +111,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日热量预算",
             "wake_word": "看今日热量预算",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日热量预算」。\n\n我想看今天还能吃多少。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日热量预算」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -127,7 +127,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看连续记录天数",
             "wake_word": "看连续记录天数",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看连续记录天数」。\n\n我想看我的连续记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看连续记录天数」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -143,7 +143,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看本周主页",
             "wake_word": "看本周主页",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本周主页」。\n\n我想看本周 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本周主页」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -153,7 +153,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看本月主页",
             "wake_word": "看本月主页",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本月主页」。\n\n我想看本月 dashboard。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本月主页」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -1587,7 +1587,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记运动",
             "wake_word": "记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动」。\n\n我做了运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
             "types": [
               "回执"
             ],
@@ -1623,7 +1623,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记运动（含备注）",
             "wake_word": "记运动（含备注）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动（含备注）」。\n\n我做了运动,请连同备注一起记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}\n备注:{{note}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记运动（含备注）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n热量(选填):{{calories}}\n备注:{{note}}",
             "types": [
               "回执"
             ],
@@ -1667,7 +1667,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记力量训练",
             "wake_word": "记力量训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记力量训练」。\n\n我练了力量训练,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:{{movement_name}}\n组数:{{sets}}\n单组重量:{{weight_kg}}\n每组次数:{{reps}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记力量训练」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:{{movement_name}}\n组数:{{sets}}\n单组重量:{{weight_kg}}\n每组次数:{{reps}}",
             "types": [
               "回执"
             ],
@@ -1711,7 +1711,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记有氧运动",
             "wake_word": "记有氧运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记有氧运动」。\n\n我做了有氧运动,请记下来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n距离(选填):{{distance_km}}\n平均心率(选填):{{avg_hr}}\n最高心率(选填):{{max_hr}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记有氧运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n时长:{{duration_min}}\n距离(选填):{{distance_km}}\n平均心率(选填):{{avg_hr}}\n最高心率(选填):{{max_hr}}",
             "types": [
               "回执"
             ],
@@ -1812,7 +1812,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记运动",
             "wake_word": "补记运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n请补记运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n日期:{{log_date}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n运动类型:{{exercise_type}}\n日期:{{log_date}}\n时长:{{duration_min}}\n热量(选填):{{calories}}",
             "types": [
               "回执"
             ],
@@ -1902,7 +1902,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改运动记录",
             "wake_word": "改运动记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改运动记录」。\n\n我要改一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(选填):{{target_record}}\n要改的字段:{{field}}\n新值:{{new_value}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改运动记录」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(选填):{{target_record}}\n要改的字段:{{field}}\n新值:{{new_value}}",
             "types": [
               "回执"
             ],
@@ -1945,7 +1945,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改某日运动",
             "wake_word": "改某日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日运动」。\n\n我要改某一天的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}\n要改的字段:{{field}}\n新值:{{new_value}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}\n要改的字段:{{field}}\n新值:{{new_value}}",
             "types": [
               "回执"
             ],
@@ -1988,7 +1988,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删运动记录",
             "wake_word": "删运动记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删运动记录」。\n\n我要删一条运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{target_record}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删运动记录」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{target_record}}",
             "types": [
               "回执"
             ],
@@ -2008,7 +2008,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删某日运动",
             "wake_word": "删某日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日运动」。\n\n我要删某一天的全部运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
             "types": [
               "回执"
             ],
@@ -2028,7 +2028,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量删运动",
             "wake_word": "批量删运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删运动」。\n\n我要删除一个时间范围内的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "回执"
             ],
@@ -2062,7 +2062,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日运动",
             "wake_word": "看今日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动」。\n\n我想看今天运动明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2072,7 +2072,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看昨日运动",
             "wake_word": "看昨日运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看昨日运动」。\n\n我想看昨天运动明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看昨日运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2112,7 +2112,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看上月运动",
             "wake_word": "看上月运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看上月运动」。\n\n我想看上月运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看上月运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2122,7 +2122,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看最近 7 天运动",
             "wake_word": "看最近 7 天运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 7 天运动」。\n\n我想看最近 7 天运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 7 天运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2132,7 +2132,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看最近 30 天运动",
             "wake_word": "看最近 30 天运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 30 天运动」。\n\n我想看最近 30 天运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看最近 30 天运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2142,7 +2142,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某段时间运动",
             "wake_word": "看某段时间运动",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间运动」。\n\n我想看一段自定义时间的运动。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间运动」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
             ],
@@ -2170,7 +2170,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日运动（vs 目标）",
             "wake_word": "看今日运动（vs 目标）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动（vs 目标）」。\n\n我想看今天的运动目标达成情况。如果还没设过每日运动消耗目标,先问我目标值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日运动（vs 目标）」。\n\n如果还没设过每日运动消耗目标,先问我目标值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2180,7 +2180,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看本周运动（vs 目标）",
             "wake_word": "看本周运动（vs 目标）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本周运动（vs 目标）」。\n\n我想看本周的运动目标达成情况。如果还没设过每日运动消耗目标,先问我目标值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看本周运动（vs 目标）」。\n\n如果还没设过每日运动消耗目标,先问我目标值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2190,7 +2190,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动记录（有备注）",
             "wake_word": "看运动记录（有备注）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（有备注）」。\n\n我想看带备注的运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（有备注）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2200,7 +2200,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动记录（按力量筛选）",
             "wake_word": "看运动记录（按力量筛选）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（按力量筛选）」。\n\n我想看力量训练记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（按力量筛选）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2210,7 +2210,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动记录（按有氧筛选）",
             "wake_word": "看运动记录（按有氧筛选）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（按有氧筛选）」。\n\n我想看有氧运动记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动记录（按有氧筛选）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2256,7 +2256,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动类型分布",
             "wake_word": "看运动类型分布",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动类型分布」。\n\n我想看运动类型分布。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动类型分布」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2266,7 +2266,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看力量训练总览",
             "wake_word": "看力量训练总览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看力量训练总览」。\n\n我想看力量训练总览。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看力量训练总览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2276,7 +2276,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看有氧训练总览",
             "wake_word": "看有氧训练总览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看有氧训练总览」。\n\n我想看有氧训练总览。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看有氧训练总览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2286,7 +2286,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看运动趋势",
             "wake_word": "看运动趋势",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动趋势」。\n\n我想看运动趋势。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(选填):{{window_days}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看运动趋势」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(选填):{{window_days}}",
             "types": [
               "结果"
             ],
@@ -2312,7 +2312,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（本周）",
             "wake_word": "运动复盘（本周）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（本周）」。\n\n我想看本周运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（本周）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2322,7 +2322,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（本月）",
             "wake_word": "运动复盘（本月）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（本月）」。\n\n我想看本月运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（本月）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2332,7 +2332,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（最近 90 天）",
             "wake_word": "运动复盘（最近 90 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（最近 90 天）」。\n\n我想看最近 90 天运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（最近 90 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2342,7 +2342,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（今年）",
             "wake_word": "运动复盘（今年）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（今年）」。\n\n我想看今年运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（今年）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -2352,7 +2352,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "运动复盘（自定义时间）",
             "wake_word": "运动复盘（自定义时间）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（自定义时间）」。\n\n我想看一段自定义时间的运动复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「运动复盘（自定义时间）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
             ],
