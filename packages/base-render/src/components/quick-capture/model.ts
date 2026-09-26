@@ -150,8 +150,8 @@ function reqCell(value: unknown, at: string, seen: Set<string>): QuickCaptureCel
   seen.add(key);
   const choices = reqChoices(raw.choices, at + '.choices');
   const picked = reqIdentifier(raw.value, at + '.value');
-  const onKey = quickCaptureChoiceOn(choices.map((c) => c.key), picked);
-  if (onKey === '') {
+  const onChoice = quickCaptureChoiceOn(choices.map((c) => c.key), picked);
+  if (onChoice === '') {
     badInput(at + '.value 在 choices 里没有这一枚: ' + picked
       + '（这一格屏上读的那一串就是它的名字——不在候选里就印不出读数）');
   }
@@ -167,14 +167,14 @@ function reqCell(value: unknown, at: string, seen: Set<string>): QuickCaptureCel
   }
   const added = fromRaw === undefined;
   const name = reqRealText(added ? labelRaw : fromRaw, at + (added ? '.label' : '.from'));
-  const on = choices.filter((c) => c.key === onKey)[0];
+  const on = choices.filter((c) => c.key === onChoice)[0];
   return {
     key,
     name,
     added,
     value: picked,
     to: on.label,
-    choices: choices.map((c) => ({ key: c.key, label: c.label, on: c.key === onKey })),
+    choices: choices.map((c) => ({ key: c.key, label: c.label, on: c.key === onChoice })),
   };
 }
 

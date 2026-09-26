@@ -216,11 +216,11 @@ describe('quick-capture ① 渲染契约 · 骨架与三层话', () => {
 
   it('「现在这一枚」照法条：软底 ＋ 主色字 ＋ 主色描边 ＋ 勾 ＋ 槽位固定；其余落回', () => {
     for (const cell of CELLS) {
-      const onKey = quickCaptureChoiceOn(cell.choices.map((c) => c.key), cell.value);
-      const on = cell.choices.filter((c) => c.key === onKey);
+      const onChoice = quickCaptureChoiceOn(cell.choices.map((c) => c.key), cell.value);
+      const on = cell.choices.filter((c) => c.key === onChoice);
       assert.equal(on.length, 1, '每一格恰好一枚是现在这一枚：' + cell.key);
-      assert.ok(new RegExp(re(SLOT('pick')) + ' is-on" ' + re(QUICK_CAPTURE_PICK_ATTR) + '="' + re(onKey) + '"').test(html),
-        '现在这一枚挂 is-on：' + onKey);
+      assert.ok(new RegExp(re(SLOT('pick')) + ' is-on" ' + re(QUICK_CAPTURE_PICK_ATTR) + '="' + re(onChoice) + '"').test(html),
+        '现在这一枚挂 is-on：' + onChoice);
     }
     assert.equal(countOf(html, 'aria-current="true"'), CELLS.length, '四格各一枚带 aria-current');
   });
@@ -423,8 +423,8 @@ describe('quick-capture ① 渲染契约 · 骨架与三层话', () => {
     assert.equal(quickCaptureChoiceOn(['a', 'b'], 'nope'), '', '一枚都不命中＝空串（不兜底猜谜）');
     assert.equal(quickCaptureChoiceOn([], 'a'), '');
     for (const cell of CELLS) {
-      const onKey = quickCaptureChoiceOn(cell.choices.map((c) => c.key), cell.value);
-      assert.equal(onKey, cell.value, '这一份入参里每一格的值都命中候选：' + cell.key);
+      const onChoice = quickCaptureChoiceOn(cell.choices.map((c) => c.key), cell.value);
+      assert.equal(onChoice, cell.value, '这一份入参里每一格的值都命中候选：' + cell.key);
     }
   });
 
@@ -1049,7 +1049,7 @@ describe('quick-capture ⑤ 行为（真机 · 真指针 CDP Input）', async ()
     + q(QUICK_CAPTURE_PICK_ATTR) + '),on:o.classList.contains("is-on"),'
     + 'current:o.getAttribute("aria-current")};})};}())';
   const openKeys = (snap) => snap.trays.filter((t) => !t.hidden).map((t) => t.key);
-  const onKeys = (snap) => snap.picks.filter((o) => o.on).map((o) => o.key);
+  const onChoices = (snap) => snap.picks.filter((o) => o.on).map((o) => o.key);
   const cellOf = (snap, key) => snap.cells.find((c) => c.key === key);
 
   /** 真指针点一下 ＋ **可达性**：宽高非零且不小于触控地板，那一点上命中的就是它自己（或它的孩子）。 */
@@ -1096,7 +1096,7 @@ describe('quick-capture ⑤ 行为（真机 · 真指针 CDP Input）', async ()
     const evts = await p.events();
     const was = seq.slice(-3);
     console.log('quick-capture 真指针改一格 ' + JSON.stringify({ was, cell: cellOf(snap, 'category'),
-      on: onKeys(snap), evt: evts[evts.length - 1] }));
+      on: onChoices(snap), evt: evts[evts.length - 1] }));
     /* 完整事件序列：三条都落在那一枚候选上（浏览器自己合成的那枚 `click` 也在）。 */
     assert.deepEqual(was, ['pointerdown|jiaotong', 'pointerup|jiaotong', 'click|jiaotong'],
       '真指针点一下的完整事件序列（三条都落在那一枚候选上）：' + JSON.stringify(seq));
@@ -1104,7 +1104,7 @@ describe('quick-capture ⑤ 行为（真机 · 真指针 CDP Input）', async ()
     assert.equal(cellOf(snap, 'category').value, 'jiaotong', '机器读数改成新的那一枚');
     assert.equal(cellOf(snap, 'category').read, '交通', '屏上读数跟着换成同一枚的名字');
     assert.equal(cellOf(snap, 'category').open, false, '「正在改」的形落回');
-    assert.deepEqual(onKeys(snap), ['jiaotong', 'y32', 'cash', 'today'], '**每一格恰好一枚候选是现在这一枚**（换的那一枚挪过去了）');
+    assert.deepEqual(onChoices(snap), ['jiaotong', 'y32', 'cash', 'today'], '**每一格恰好一枚候选是现在这一枚**（换的那一枚挪过去了）');
     assert.deepEqual(evts.map((e) => e.name + '|' + e.key + '|' + e.value + '|' + e.to),
       [QUICK_CAPTURE_EVENT_PICK + '|category|jiaotong|交通'], '只派发一条事件，带的是改完之后那一格的读数');
     const one = await p.ev('(function(){var o=document.querySelector(' + JSON.stringify(PICK_SEL('jiaotong')) + ');'
@@ -1127,7 +1127,7 @@ describe('quick-capture ⑤ 行为（真机 · 真指针 CDP Input）', async ()
     assert.deepEqual(openKeys(snap), [], '带子收起');
     assert.equal(cellOf(snap, 'account').value, antes.cells.find((c) => c.key === 'account').value, '值一动不动');
     assert.equal(cellOf(snap, 'account').read, '现金账户', '屏上读数一动不动');
-    assert.deepEqual(onKeys(snap), ['canyin', 'y32', 'cash', 'today'], '候选带里的选中一枚没挪窝');
+    assert.deepEqual(onChoices(snap), ['canyin', 'y32', 'cash', 'today'], '候选带里的选中一枚没挪窝');
     assert.equal((await p.events()).length, 0, '没变化就不报数：一条事件都不派');
     assert.equal((await p.errs()).length, 0, '页内零未捕获错误');
   });
