@@ -128,6 +128,18 @@ const HIT_TARGETS = [
   ['.s-clear::after', '搜索清空键（视觉 20×20）'],
   ['.sheet .s-close::after', '弹层关闭键（视觉 30×30）'],
 ];
+/** 第一段里**不是命中区**的装饰性伪元素（逐条点名：多一条少一条都红）。
+ *
+ *  来历＝`#970` 的折叠钮（提交 `082b26fa`）：`.sheet .pprev-fold summary.fold::before,::after` 是
+ *  `content:"";flex:1;height:1px;background:var(--line)` 的**分隔线**——画在 `<summary>` 里当发丝线，
+ *  不接收点击、不是命中层。`#642` 那条判据原先断的是「第一段 `::after` 集合**恰为**六条命中目标」，
+ *  分隔线一出现就恒红（2026-09-27 实测：`actual` 8 条 vs `expected` 6 条）。
+ *  处置＝**收窄判据，产物一字不动**（与 `#336`×`#733` 那次同一条口径）：命中目标仍恰六条，
+ *  装饰线逐条点名，并逐条断言它**没有**命中层声明——不是放行，是把它钉死在「不是命中区」这一档。 */
+const DECORATIVE_PSEUDO = [
+  ['.sheet .pprev-fold summary.fold::after', '折叠钮分隔线（#970；发丝线，不是命中层）'],
+  ['.sheet .pprev-fold summary.fold::before', '折叠钮分隔线（#970；发丝线，不是命中层）'],
+];
 /** 第一段 min-height 超线白名单＝三条真控件（另三条命中目标走 width/height，不在 min-height 扫描面内）。 */
 const SHELL_SMALL_WHITELIST = ['.init-banner .copy-btn', '.about-row .a-copy', '.mini .copy-btn'];
 /** 第一段两条钉住的非命中超线项（值一并钉死：多一条、改一值即红）。 */
@@ -197,16 +209,30 @@ describe('#642 HELP 小触摸目标：命中区 ≥44×44', () => {
     }
   });
 
-  it('② 命中区 ::after 恰六条，宽高双向 ≥44px（绝对定位覆盖层，不改本体尺寸）', () => {
+  it('② 命中区 ::after 恰六条（装饰线另点名），宽高双向 ≥44px（绝对定位覆盖层，不改本体尺寸）', () => {
     const afterSels = cssRules(SHELL_CSS)
       .filter((r) => r.selector.includes('::after'))
       .flatMap((r) => r.selector.split(',').map((s) => s.trim()));
+    /** 取法说明：上面先按**规则**筛（规则的选择器表里含 `::after`），再摊平**该规则的全部选择器**——
+     *  故折叠钮那条 `::before,::after` 合并规则会**两条一起**进集合（`::before` 也在内）。期望集合同样两条一起算。 */
+    const decorativeAfter = DECORATIVE_PSEUDO.map(([sel]) => sel);
     assert.deepEqual(
       [...afterSels].sort(),
-      HIT_TARGETS.map(([sel]) => sel).sort(),
-      '第一段 ::after 选择器集合须恰为六条命中目标',
+      [...HIT_TARGETS.map(([sel]) => sel), ...decorativeAfter].sort(),
+      '第一段 ::after 集合须恰为六条命中目标 ＋ 已点名的装饰线（新增一条即红，须回本表判定）',
     );
-    for (const sel of afterSels) {
+    for (const [sel, why] of DECORATIVE_PSEUDO) {
+      const body = ruleBody(SHELL_CSS, sel);
+      assert.ok(
+        !/max\(\s*100%\s*,\s*44px\s*\)/.test(body),
+        sel + ' 是装饰线（' + why + '），不得声明 ≥44px 命中区',
+      );
+      assert.ok(
+        !/(?:^|;)\s*position\s*:\s*absolute/.test(body),
+        sel + ' 是装饰线（' + why + '），不得绝对定位成覆盖层',
+      );
+    }
+    for (const [sel] of HIT_TARGETS) {
       const body = ruleBody(SHELL_CSS, sel);
       const w = /(?:^|;)\s*width\s*:\s*max\(\s*100%\s*,\s*([0-9.]+)px\s*\)/.exec(body);
       const h = /(?:^|;)\s*height\s*:\s*max\(\s*100%\s*,\s*([0-9.]+)px\s*\)/.exec(body);
