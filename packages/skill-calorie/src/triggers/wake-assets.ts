@@ -176,7 +176,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记一餐",
             "wake_word": "记一餐",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐」。\n\n我刚吃了一顿,帮我记录。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}\n克数(选填):{{grams}}\n\n⚠️ 同餐多食物(用「和/、/同时/一起」连接)必须合并为 1 个回执:全部食物确认后一次调用 --live-diet-batch-meal(issue #158),禁止逐个 --live-diet-add。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐」。\n\n我刚吃了一顿,帮我记录。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}\n克数(选填):{{grams}}\n\n⚠️ 同餐多食物(用「和/、/同时/一起」连接)必须合并为 1 个回执:全部食物确认后一次记完,不要逐个记。",
             "types": [
               "回执"
             ],

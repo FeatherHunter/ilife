@@ -50,14 +50,12 @@ function paramsText(scene: Scene, cli: string): string {
   return lines.length > 0 ? lines.join(LF) : cli;
 }
 
-/** 代值后 prompt 全文（#969）：`prompt_template` 里的 `{{name}}` 按同场景 `editable_fields`
- *  缺省值代换；值为空（选填缺失）即留 `{{name}}` 原样，不吞句。无 `{{}}` 的老卡逐字不变。 */
+/** 代值后 prompt 全文（#969 修于 #970）：`prompt_template` 里的 `{{name}}` 按同场景 `editable_fields`
+ *  缺省值代换；值为空（选填缺失）即落空位 `___`，预览与复制都不许见 `{{}}`。无 `{{}}` 的老卡逐字不变。 */
 function substitutedPrompt(scene: Scene): string {
   let out = scene.prompt_template;
   for (const field of scene.editable_fields ?? []) {
-    if (field.value.trim() !== '') {
-      out = out.split('{{' + field.name + '}}').join(field.value);
-    }
+    out = out.split('{{' + field.name + '}}').join(field.value.trim() !== '' ? field.value : '___');
   }
   return out;
 }

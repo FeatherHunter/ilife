@@ -1793,7 +1793,8 @@ function substitutePrompt(tpl, fields, v){
   (fields || []).forEach(function(f){
     var key = f.key != null ? f.key : f.name;
     var val = (v[key] != null ? String(v[key]) : '').trim();
-    if (val) out = out.split('{{' + key + '}}').join(val);
+    /* 未填不留代码形占位：统一落空位 ___（#970 用户验收，预览与复制都不许见 {{}}） */
+    out = out.split('{{' + key + '}}').join(val || '___');
   });
   return out;
 }

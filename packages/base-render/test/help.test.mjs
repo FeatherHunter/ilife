@@ -938,7 +938,7 @@ describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板�
     assert.ok(output.html.includes(CLS + '-prompt'), '老卡仍渲染 prompt 区');
   });
 
-  it('代值后 prompt：{{name}} 按缺省值代换，选填缺失留原样', () => {
+  it('代值后 prompt：{{name}} 按缺省值代换，选填缺失落空位 ___', () => {
     const data = fixtureData();
     const scene = data.groups[0].subgroups[0].scenes[0];
     scene.prompt_template = '记一餐：{{food}} {{grams}}克，日期{{date}}。' + LF + '备注{{note}}。';
@@ -950,9 +950,9 @@ describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板�
     ];
     const out = renderHelpShell({ sceneData: data, assets: ASSETS });
     const card = cardFragment(out.html, 'home_today_overview');
-    const expectedPrompt = '记一餐：鸡胸肉 150克，日期2026-09-25。' + LF + '备注{{note}}。';
+    const expectedPrompt = '记一餐：鸡胸肉 150克，日期2026-09-25。' + LF + '备注___。';
     assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml(expectedPrompt) + '"'), true,
-      'prompt 复制文本必须是代值后全文，选填缺失留 {{name}} 原样');
+      'prompt 复制文本必须是代值后全文，选填缺失落空位 ___（不许见 {{}}）');
     assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml('食物: 鸡胸肉' + LF + '克数: 150' + LF + '日期: 2026-09-25') + '"'), true,
       'params 复制行必须是 label:value，一行一行追加，空值省略');
   });
