@@ -1,4 +1,4 @@
-/** portion-gauge · **样式段**（本件唯一的样式来源）。
+/** portion-gauge · **样式段**（本件唯一的样式来源；A 档量感条那半在 `style-gauge.ts`，由这里汇总）。
  *
  *  纪律（与本节其余件同一份）：
  *   · 只经 `skinVar()` 读皮肤 —— 组件里**不写** `var(--ilife-…)`（兜底链只许住在 `skin/contract.ts`）；
@@ -10,12 +10,14 @@
  *   · **位置由值算出**：占比填充的宽度是行内算出来的百分比（`model.ts` 里由同一个占比出，
  *     与占比那句的字是同一个数）——读者按条读到的占比就是那句说的占比；
  *     **条那一轨有最小宽**（`PORTION_GAUGE_BAR_MIN_PX`）：长占比句让位换行，不许把条挤成 0 宽
- *     （条是 0 长而那句写着 70% ＝ 两处读数走散）；
+ *     （条是 0 长而那句写着 70% ＝ 两处读数走散）。A 档量感条的已用那一段同此（它压在余量底上，
+ *     宽度也是行内算出来的百分比）——那一半的规则见 `style-gauge.ts`；
  *   · **色不是唯一信息**：占比条是强调色**实底**（无文字的图形那一档）＋ 那句占比给字；
  *     缺换算那一行是提醒软底 ＋ 提醒字（两样同时在）。**没有一处拿正文墨色当“面”**。
  */
 import { skinVar } from '../skin/contract.js';
 import { PORTION_GAUGE_NARROW_PX, portionGaugeSlot, type PortionGaugeSlot } from './attrs.js';
+import { portionGaugeGaugeCss } from './style-gauge.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -262,6 +264,8 @@ export function portionGaugeCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
+    /* ── A 档量感条那半（同一份纪律、同一份样式段；搬走的是行数，不是取值）── */
+    ...portionGaugeGaugeCss(input),
     '/* 本件自身不带可点元素。这一条是**地板**：调用方把某一行包成入口时焦点必须看得见。 */',
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',

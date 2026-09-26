@@ -33,6 +33,7 @@ import {
   PORTION_GAUGE_MAX_ROWS,
   PORTION_GAUGE_MIN_ROWS,
   PORTION_GAUGE_NARROW_PX,
+  PORTION_GAUGE_RAIL_PX,
   PORTION_GAUGE_SLOTS,
   portionGaugeCss,
   portionGaugeSlot,
@@ -210,6 +211,89 @@ const fillsOf = (html) => [...html.matchAll(
   new RegExp('class="' + portionGaugeSlot('fill') + '" style="width: ([\\d.]+)%"', 'g'))]
   .map((m) => Number(m[1]));
 
+/* ── A 档（形态 `gauge` 量感条）的样例：数字都用得上 ──────────────────
+   大字那个数、已用那一段的行内宽、无障碍名里那个数 —— 三处读的是**同一个** `usedPct`。 */
+
+/** 原型的 A 档那一份（砍过字的那一版）：可见字 72 个的量级。 */
+const GAUGE_INPUT = {
+  title: '这一餐的量', form: 'gauge', tail: '≈ 350 g',
+  gauge: {
+    name: '红烧肉', usedPct: 58, capText: '2 份', refText: '1.2 份', refPct: 60,
+    equiv: '≈ 1 个拳头 ＋ 2 汤勺',
+  },
+};
+/** 只有上限那一枚（建议与它落的位置都不给＝那两处整块不出）。 */
+const GAUGE_CAP_ONLY = {
+  title: '这一餐的量', form: 'gauge', tail: '≈ 350 g',
+  gauge: { name: '红烧肉', usedPct: 58, capText: '2 份' },
+};
+/** 长串压力：名字、上限、建议、换算句都写到最长（内容撑宽那一类）。 */
+const GAUGE_LONG = {
+  title: '这一餐的量这一餐的量这一餐的量', form: 'gauge',
+  tail: '≈ 350 g（按可食部折算，含烹调用油）',
+  gauge: {
+    name: '红烧肉红烧肉红烧肉红烧肉红烧肉红烧肉',
+    usedPct: 88.5,
+    capText: '2 份家庭装（一天上限按营养库口径折算）',
+    refText: '1.2 份（一餐建议按三顿均分折算）',
+    refPct: 12.5,
+    equiv: '≈ 1 个拳头 ＋ 2 汤勺（按家常器物折算，误差约一成）',
+  },
+};
+/** 两档边界：已用 0（一条空尺子）／建议顶在尺子右端（与上限那枚重合的位置也要排得下）。 */
+const GAUGE_EDGE = {
+  title: '这一餐的量', form: 'gauge',
+  gauge: { name: '红烧肉', usedPct: 0, capText: '1 份', refText: '0.5 份', refPct: 100 },
+};
+/** 满档：已用 100 且建议落在正中那一档（内距为空串——居中到正中不需要偏移）。 */
+const GAUGE_FULL = {
+  title: '这一餐的量', form: 'gauge',
+  gauge: { name: '红烧肉', usedPct: 100, capText: '2 份', refText: '1 份', refPct: 50 },
+};
+/** A 档样例一览（名字 → 入参）：判据与真机几何共用一份。 */
+const GAUGE_SAMPLES = [
+  ['常规', GAUGE_INPUT], ['只有上限', GAUGE_CAP_ONLY], ['长串', GAUGE_LONG],
+  ['边界 0', GAUGE_EDGE], ['满档 100', GAUGE_FULL],
+];
+
+/** **可见文本**：剥标签 ＋ 解实体 ＋ 去掉空白（「可见字几个」那条读它；无障碍名与行内样式天然不在里面）。 */
+function visibleText(html) {
+  return html.replace(/<[^>]*>/g, '\u0000')
+    .replace(/\u0000+/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\s+/g, '');
+}
+
+/** 一个串在可见文本里出现几次（「同一个数只印一次」那条读它）。 */
+const timesInText = (html, needle) => visibleText(html).split(needle).length - 1;
+
+/** 「条宽恒由占比算出」的**读数**：大字那句／已用那一段的行内宽／无障碍名里那个数。 */
+function gaugeBarReadings(html) {
+  const said = new RegExp('class="' + portionGaugeSlot('lead-value') + '">([^<]*)<').exec(html);
+  const used = new RegExp('class="' + portionGaugeSlot('used')
+    + '" aria-hidden="true" style="width: ([\\d.]+)%"').exec(html);
+  const aria = new RegExp('class="' + portionGaugeSlot('rail')
+    + '" role="img" aria-label="([^"]*)"').exec(html);
+  if (said === null || used === null || aria === null) return null;
+  return {
+    said: parseFloat(said[1]),
+    width: Number(used[1]),
+    inAria: parseFloat((aria[1].match(/的([\d.]+)%/) || [])[1]),
+  };
+}
+
+/** A 档那条头号几何契约：**三处同一个数**（大字、条宽、无障碍名）——判据与变异自证共用这一条。 */
+function gaugeBarOk(html) {
+  const r = gaugeBarReadings(html);
+  return r !== null && r.said === r.width && r.width === r.inAria;
+}
+
+/** 砍字那一条的读数：可见字 ≤ 72 ＋ 不含「占一天上限」那句 ＋ 那个数只印一次。 */
+function gaugeLeanOk(html, pctText) {
+  const text = visibleText(html);
+  return text.length <= 72 && !text.includes('占一天上限') && timesInText(html, pctText) === 1;
+}
+
 /* ── ① 渲染契约 ─────────────────────────────────────────────────────── */
 
 describe('portion-gauge ① 渲染契约 · 形态 convert 换算三栏', () => {
@@ -342,10 +426,10 @@ describe('portion-gauge ① 渲染契约 · 形态 convert 换算三栏', () => 
   });
 
   it('形态键是闭集：闭集外一律 BlocksError（格号 `B` 不是键，不静默降级）', () => {
-    assert.deepEqual([...PORTION_GAUGE_FORMS], ['convert']);
+    assert.deepEqual([...PORTION_GAUGE_FORMS], ['convert', 'gauge'], '两档英文键；`convert` 在最前＝缺省');
     assert.match(renderPortionGauge({ ...SINGLE_INPUT, form: 'convert' }), /is-convert/);
     assert.match(renderPortionGauge(SINGLE_INPUT), /is-convert/, '缺省就是换算三栏');
-    for (const bad of ['B', 'A', 'gauge', 'convert2', '']) {
+    for (const bad of ['B', 'A', 'convert2', 'bar', '']) {
       assert.equal(throwsBlocks(() => renderPortionGauge({ ...SINGLE_INPUT, form: bad })), true,
         '拒：' + bad);
     }
@@ -414,6 +498,262 @@ describe('portion-gauge ① 渲染契约 · 形态 convert 换算三栏', () => 
   it('纯函数：同入参两次逐字节相同（页面产物可缓存、可对账）', () => {
     assert.equal(renderPortionGauge(STANDARD_INPUT), renderPortionGauge(STANDARD_INPUT));
     assert.notEqual(renderPortionGauge(STANDARD_INPUT), renderPortionGauge(LONG_INPUT));
+  });
+});
+
+/* ── ①旧档：`convert` 逐字节不变（A 档是加法，一个字都不许动） ───────────── */
+
+/** **补 A 档之前的 `convert` 原产物**（2026-09-26 从当时的 `dist` 抄下来，逐字节）。
+ *  这条判据的用途：本件这一轮是**加一档**，先落地那一档的产物必须一个字节都不动
+ *  （动了一个字节 ⇒ 六个技能既有页面产物跟着变）。变异自证：改 `model.ts` 里任何一句拼串，
+ *  或者让 `render.ts` 的 `headHtml` 在 `convert` 形态下多吐一个节点，这条当场红。 */
+const CONVERT_GOLDEN = [
+  '<div class="ilife-block-portion-gauge is-convert">',
+  '<div class="ilife-block-portion-gauge-hd"><h4 class="ilife-block-portion-gauge-title">份量换算</h4>',
+  '<span class="ilife-block-portion-gauge-stamp">菜谱 → 营养库</span>',
+  '<span class="ilife-block-portion-gauge-tail">1 份 ＝ 350 g</span></div>',
+  '<div class="ilife-block-portion-gauge-conv">',
+  '<div class="ilife-block-portion-gauge-row"><span class="ilife-block-portion-gauge-head">',
+  '<b class="ilife-block-portion-gauge-name">红烧肉</b>',
+  '<span class="ilife-block-portion-gauge-sub">主料，菜谱写「2 份」</span>',
+  '<span class="ilife-block-portion-gauge-same">700 g</span></span>',
+  '<span class="ilife-block-portion-gauge-eq"><span class="ilife-block-portion-gauge-side">',
+  '<b class="ilife-block-portion-gauge-side-value">2 份</b>',
+  '<em class="ilife-block-portion-gauge-side-label">菜谱单位</em></span>',
+  '<span class="ilife-block-portion-gauge-arrow" aria-hidden="true">→</span>',
+  '<span class="ilife-block-portion-gauge-side is-to">',
+  '<b class="ilife-block-portion-gauge-side-value">700 g</b>',
+  '<em class="ilife-block-portion-gauge-side-label">营养库口径</em></span></span>',
+  '<span class="ilife-block-portion-gauge-obj"><span class="ilife-block-portion-gauge-bar" aria-hidden="true">',
+  '<i class="ilife-block-portion-gauge-fill" style="width: 70%"></i></span>',
+  '<span class="ilife-block-portion-gauge-share">占一天蛋白 70%</span></span></div>',
+  '<div class="ilife-block-portion-gauge-row"><span class="ilife-block-portion-gauge-head">',
+  '<b class="ilife-block-portion-gauge-name">米饭</b>',
+  '<span class="ilife-block-portion-gauge-sub">主食，菜谱写「2 碗」</span>',
+  '<span class="ilife-block-portion-gauge-same">300 g</span></span>',
+  '<span class="ilife-block-portion-gauge-eq"><span class="ilife-block-portion-gauge-side">',
+  '<b class="ilife-block-portion-gauge-side-value">2 碗</b>',
+  '<em class="ilife-block-portion-gauge-side-label">菜谱单位</em></span>',
+  '<span class="ilife-block-portion-gauge-arrow" aria-hidden="true">→</span>',
+  '<span class="ilife-block-portion-gauge-side is-to">',
+  '<b class="ilife-block-portion-gauge-side-value">300 g</b>',
+  '<em class="ilife-block-portion-gauge-side-label">生重（1 碗 ＝ 150 g）</em></span></span>',
+  '<span class="ilife-block-portion-gauge-obj"><span class="ilife-block-portion-gauge-bar" aria-hidden="true">',
+  '<i class="ilife-block-portion-gauge-fill" style="width: 46%"></i></span>',
+  '<span class="ilife-block-portion-gauge-share">占一天碳水 46%</span></span></div>',
+  '</div>',
+  '<p class="ilife-block-portion-gauge-note">',
+  '口径：左边永远是菜谱写的单位（份，碗，把），右边永远是营养库认的单位（g）。',
+  '中间是这一份菜的换算系数，系数变了要写明是哪一版菜谱改的，不悄悄改数。',
+  '缺换算系数的食材整行不画，只在下面写还差几样没有换算。</p>',
+  '<p class="ilife-block-portion-gauge-missing">还差 2 样没有换算</p>',
+  '</div>',
+].join('');
+
+describe('portion-gauge ①旧档 convert 逐字节不变（A 档是加法）', () => {
+  it('先落地那一档的产物与补 A 档之前逐字节相同', () => {
+    const html = renderPortionGauge({
+      title: '份量换算', stamp: '菜谱 → 营养库', tail: '1 份 ＝ 350 g',
+      rows: [
+        { name: '红烧肉', kind: '主料', recipe: '2 份', grams: 700, shareOf: '蛋白', sharePct: 70 },
+        { name: '米饭', kind: '主食', recipe: '2 碗', grams: 300, basis: '1 碗 ＝ 150 g',
+          toLabel: '生重', shareOf: '碳水', sharePct: 46 },
+      ],
+      missingCount: 2,
+    });
+    assert.equal(html, CONVERT_GOLDEN, '`convert` 的产物动了一个字节（A 档是加法，旧档不许改）');
+    /* 变异自证：任何一个字节变了，上面那条就得红。 */
+    assert.notEqual(html.replace('is-convert', 'is-convert '), CONVERT_GOLDEN);
+    assert.notEqual(html + ' ', CONVERT_GOLDEN);
+    assert.equal(renderPortionGauge(GAUGE_INPUT).includes('is-convert'), false,
+      'A 档的产物里不许混进 `convert` 的骨架');
+  });
+});
+
+/* ── ①A 渲染契约 · 形态 `gauge` 量感条 ───────────────────────────────── */
+
+describe('portion-gauge ①A 渲染契约 · 形态 gauge 量感条', () => {
+  const html = renderPortionGauge(GAUGE_INPUT);
+
+  it('骨架：卡头（标题＋这一份＋克数）→ 占比大字 → 尺子（两枚参照刻度值 ＋ 轨道）→ 实物参照', () => {
+    assert.match(html, new RegExp('^<div class="' + PORTION_GAUGE_CLASS + ' is-gauge">'));
+    assert.match(html, /<h4 class="ilife-block-portion-gauge-title">这一餐的量<\/h4>/, '卡头标题');
+    assert.match(html, /-subject">红烧肉</, '这一份叫什么');
+    assert.match(html, /-tail">≈ 350 g</, '克数在卡头右端');
+    assert.match(html, /-lead-value">58%<\/b>/, '占比一档大字');
+    assert.equal(countOf(html, 'class="[^"]*-mark-label'), 2, '两枚参照刻度值');
+    assert.match(html, /-mark-label is-cap" aria-hidden="true">一天上限 2 份<\/span>/, '上限那枚在右端');
+    assert.match(html, /-mark-label is-ref" aria-hidden="true" style="padding-left: 20%">一餐建议 1.2 份<\/span>/,
+      '建议那枚居中到自己那枚刻度上（内距由 model 算）');
+    assert.match(html, /-rail" role="img" aria-label="量感条：红烧肉用掉一天上限 2 份的58%/, '轨道是无障碍名的落点');
+    assert.equal(countOf(html, 'class="[^"]*-tick'), 4, '四等分刻度竖线（右端那枚由上限收口）');
+    assert.match(html, /-tick is-major" aria-hidden="true" style="left: 0%"/, '整份那一档画长');
+    assert.equal(countOf(html, 'class="[^"]*-mark '), 2, '两枚参照刻度竖线');
+    assert.match(html, /-mark is-ref" aria-hidden="true" style="left: 60%"/);
+    assert.match(html, /-mark is-cap" aria-hidden="true" style="right: 0"/, '右端那枚靠 right 收口（left: 100% 会把描边推到轨道外）');
+    assert.match(html, /-used" aria-hidden="true" style="width: 58%"/, '已用那一段');
+    assert.match(html, /-equiv"><b>≈ 1 个拳头 ＋ 2 汤勺<\/b>/, '实物参照那一行');
+    assert.equal(html.includes(portionGaugeSlot('note')), false, 'A 档缺省不出脚注（两条参照在图上自己报了名）');
+    assert.equal(html.includes(portionGaugeSlot('conv')), false, 'A 档不带换算行区');
+    assert.ok(!/<script/i.test(html), '不产脚本');
+    for (const slot of ['hd', 'title', 'subject', 'lead', 'lead-value', 'gauge', 'mark-label',
+      'rail', 'rest', 'used', 'tick', 'mark', 'equiv']) {
+      assert.ok(html.includes(portionGaugeSlot(slot)), '缺槽：' + slot);
+    }
+  });
+
+  it('**条宽恒由占比算出**：大字、已用那一段的行内宽、无障碍名三处同一个数', () => {
+    for (const [name, input] of GAUGE_SAMPLES) {
+      const h = renderPortionGauge(input);
+      const r = gaugeBarReadings(h);
+      assert.ok(r !== null, name + '：三处读数缺一处（判据会空转）');
+      assert.equal(r.said, input.gauge.usedPct, name + '：大字不是 `usedPct`');
+      assert.equal(r.width, input.gauge.usedPct, name + '：条宽不是 `usedPct`');
+      assert.equal(r.inAria, input.gauge.usedPct, name + '：无障碍名里的数不是 `usedPct`');
+      assert.equal(gaugeBarOk(h), true, name + '：三处没对上');
+    }
+  });
+
+  it('**条宽恒由占比算出** · 变异自证（写死条宽／换一个数／压成 0 宽／无障碍名走散，都要红）', () => {
+    const base = renderPortionGauge(GAUGE_INPUT);
+    assert.equal(gaugeBarOk(base), true, '常规样例必须先过（不然变异自证在空转）');
+    const muts = [
+      ['条宽写死 100%', base.replace('style="width: 58%"', 'style="width: 100%"')],
+      ['大字换成另一个数', base.replace('>58%<', '>70%<')],
+      ['条被压成 0 宽（上一轮栽过的那一类）', base.replace('style="width: 58%"', 'style="width: 0%"')],
+      ['无障碍名里的数走散', base.replace('的58%', '的70%')],
+      ['已用那一段整块掉了', base.replace(/<span class="[^"]*-used"[^>]*><\/span>/, '')],
+    ];
+    for (const [why, bad] of muts) {
+      assert.notEqual(bad, base, '变异没生效（判据自己有问题）：' + why);
+      assert.equal(gaugeBarOk(bad), false, '变异没被抓住：' + why);
+    }
+  });
+
+  it('**可见字不过 72、同一个数只印一次**：一屏只留一层话（砍字那一条的落点）', () => {
+    const base = renderPortionGauge(GAUGE_INPUT);
+    const text = visibleText(base);
+    assert.ok(text.length <= 72, '标准样例可见字 ' + String(text.length) + ' 个（上限 72）：' + text);
+    assert.equal(text.includes('占一天上限'), false, '「占一天上限」那句不写（轨道右端已经标着「一天上限 2 份」）');
+    assert.equal(timesInText(base, '58%'), 1, '那个数在可见文本里只许出现一次：' + text);
+    assert.equal(timesInText(base, '一天上限2份'), 1, '上限那枚刻度值的字只许出现一次：' + text);
+    assert.equal(timesInText(base, '一餐建议1.2份'), 1, '建议那枚刻度值的字只许出现一次：' + text);
+    assert.equal(gaugeLeanOk(base, '58%'), true);
+    /* 变异自证：①塞回「占一天上限」那句 ②再印一遍那个数 —— 两条都得红。 */
+    const muts = [
+      ['塞回「占一天上限」那句', base.replace('</p>', '</p><p>占一天上限 2 份，比一餐建议的 1.2 份还差一点</p>')],
+      ['那个数再印一遍', base.replace('</p>', '</p><p>58%</p>')],
+      ['可见字撑到 72 个以上', base.replace('</p>', '</p><p>这一份已经用掉今天能吃的量的将近六成，'
+        + '再吃两口就到一餐建议线了，晚上那顿要留点余地</p>')],
+    ];
+    for (const [why, bad] of muts) {
+      assert.notEqual(bad, base, '变异没生效：' + why);
+      assert.equal(gaugeLeanOk(bad, '58%'), false, '变异没被抓住：' + why);
+    }
+    /* 长串那一份：可见字上限是**标准样例**的纪律；长串只断「不截断、不横溢」（真机那一组），
+       但「同一个数只印一次」对它一样成立。 */
+    assert.equal(timesInText(renderPortionGauge(GAUGE_LONG), '88.5%'), 1, '长串样例同一个数也只印一次');
+  });
+
+  it('缺一块就不出那一块：不给建议＝那两处整块不出；脚注给了才出', () => {
+    const cap = renderPortionGauge(GAUGE_CAP_ONLY);
+    assert.equal(countOf(cap, 'class="[^"]*-mark-label'), 1, '只有上限那一枚');
+    assert.match(cap, /-mark-label is-cap" aria-hidden="true">一天上限 2 份</);
+    assert.equal(countOf(cap, 'class="[^"]*-mark '), 1, '只剩上限那枚刻度竖线');
+    assert.equal(cap.includes('is-ref'), false, '没给建议＝不带 is-ref');
+    assert.equal(cap.includes('一餐建议'), false);
+    assert.equal(cap.includes('padding-'), false, '没给建议＝不写内距');
+    assert.match(renderPortionGauge({ ...GAUGE_INPUT, note: '实线是一餐建议，虚线是一天上限' }),
+      /-note">实线是一餐建议/, '给了脚注就出那一行');
+    /* 正中那一档：居中到 50% 不需要偏移 ⇒ 不写 style（空内距不留一笔死声明）。 */
+    const full = renderPortionGauge(GAUGE_FULL);
+    assert.match(full, /-mark-label is-ref" aria-hidden="true">一餐建议 1 份</);
+    assert.match(full, /-mark is-ref" aria-hidden="true" style="left: 50%"/);
+  });
+
+  it('参照刻度值的位置：过半压左边内距、不过半压右边内距（两侧都推不出轨道）', () => {
+    const padAt = (pct) => {
+      const m = new RegExp('class="' + portionGaugeSlot('mark-label')
+        + ' is-ref" aria-hidden="true"(?: style="([^"]*)")?').exec(renderPortionGauge({
+        ...GAUGE_INPUT, gauge: { ...GAUGE_INPUT.gauge, refPct: pct },
+      }));
+      return m === null ? null : (m[1] === undefined ? '' : m[1]);
+    };
+    assert.equal(padAt(60), 'padding-left: 20%', '60% 处：左边内距 20% ⇒ 话居中在 60%');
+    assert.equal(padAt(12.5), 'padding-right: 75%', '12.5% 处：右边内距 75% ⇒ 话居中在 12.5%');
+    assert.equal(padAt(50), '', '正中那一档不写内距');
+    /* 尺子两端：内距压到 75% 那一档（再往两端去，可用宽会被压成 0，一个字居中在 0 宽里 ⇒ 半个字推出轨道）。 */
+    assert.equal(padAt(0), 'padding-right: 75%', '0% 处：内距压到上限，话贴着左端');
+    assert.equal(padAt(100), 'padding-left: 75%', '100% 处：内距压到上限，话贴着右端');
+    assert.equal(padAt(75), 'padding-left: 50%', '75% 处不触上限');
+  });
+
+  it('尺子右端那一枚（上限／建议顶到 100%）用 `right: 0` 收口，不许把自己推到轨道外面', () => {
+    assert.match(renderPortionGauge(GAUGE_INPUT), /-mark is-cap" aria-hidden="true" style="right: 0"/,
+      '上限那枚在轨道右端');
+    assert.match(renderPortionGauge(GAUGE_EDGE), /-mark is-ref" aria-hidden="true" style="right: 0"/,
+      '建议顶到 100% 时同样 `right: 0`（`left: 100%` 会多出 1px 横溢）');
+    assert.match(renderPortionGauge(GAUGE_INPUT), /-mark is-ref" aria-hidden="true" style="left: 60%"/,
+      '内圈那枚照旧按 `left: p%` 摆');
+  });
+
+  it('转义：五个字符进实体，不进标记（名字／上限／建议／换算句逐位转义）', () => {
+    const evil = '"><script>alert(1)</script>';
+    const out = renderPortionGauge({
+      title: evil, form: 'gauge', tail: evil, note: evil,
+      gauge: { name: evil, usedPct: 58, capText: evil, refText: evil, refPct: 60, equiv: evil },
+    });
+    assert.equal(/<script/i.test(out), false, '不得出现可执行脚本标签');
+    assert.equal(/\son[a-z]+=/i.test(out), false, '不得出现内联事件处理器');
+    assert.ok(out.includes('&lt;script&gt;'), '原文以实体上屏');
+    assert.ok(out.includes('&quot;'), '引号转义');
+  });
+
+  it('非法入参**逐条**走 BlocksError（含建议那两句只给一样）', () => {
+    const ok = GAUGE_INPUT;
+    const g = ok.gauge;
+    assert.equal(throwsBlocks(() => renderPortionGauge({ title: 't', form: 'gauge' })), true, 'gauge 必填');
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: null })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: [] })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, name: '' } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, name: '  ' } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, capText: '' } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, usedPct: -1 } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, usedPct: 101 } })), true,
+      '越界的占比会顶出轨道');
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, usedPct: '58' } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, usedPct: NaN } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, refPct: 101 } })), true);
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, gauge: { ...g, equiv: '  ' } })), true,
+      '全空白不算文本');
+    /* 建议那两句**成对给**：只给一样当场报错（一个没地方挂、一个挂在编出来的位置上）。 */
+    assert.equal(throwsBlocks(() => renderPortionGauge({
+      ...ok, gauge: { ...g, refPct: undefined },
+    })), true, '只给 refText 不给 refPct');
+    assert.equal(throwsBlocks(() => renderPortionGauge({
+      ...ok, gauge: { name: '红烧肉', usedPct: 58, capText: '2 份', refPct: 60 },
+    })), true, '只给 refPct 不给 refText');
+    /* 空串按「未给」处理：与 `refPct` 一起缺 ⇒ 两个字面上都算没给，照常出（那一块整块不出）。 */
+    assert.equal(renderPortionGauge({ ...ok, gauge: { ...g, refText: '', refPct: undefined } })
+      .includes('is-ref'), false, '空串＝未给');
+    /* 小数占比取一位（与 B 档同一把尺）：`88.55` → `88.6%`。 */
+    assert.match(renderPortionGauge({ ...ok, gauge: { ...g, usedPct: 88.55 } }), /-lead-value">88.6%</);
+  });
+
+  it('纯函数：同入参两次逐字节相同；两档产物互不混入', () => {
+    assert.equal(renderPortionGauge(GAUGE_INPUT), renderPortionGauge(GAUGE_INPUT));
+    assert.notEqual(renderPortionGauge(GAUGE_INPUT), renderPortionGauge(GAUGE_LONG));
+    /* 槽类名按**边界**找：`-eq` 不许被 `-equiv` 顶替（前缀吃掉后半段＝判据空转）。 */
+    const hasSlot = (html, slot) => html.includes(portionGaugeSlot(slot) + '"')
+      || html.includes(portionGaugeSlot(slot) + ' ');
+    const a = renderPortionGauge(GAUGE_INPUT);
+    for (const slot of ['conv', 'row', 'eq', 'obj', 'bar', 'fill', 'share']) {
+      assert.equal(hasSlot(a, slot), false, 'A 档产物里不许有 B 档的槽：' + slot);
+    }
+    const b = renderPortionGauge(STANDARD_INPUT);
+    for (const slot of ['lead', 'gauge', 'rail', 'used', 'tick', 'equiv', 'subject']) {
+      assert.equal(hasSlot(b, slot), false, 'B 档产物里不许有 A 档的槽：' + slot);
+    }
   });
 });
 
@@ -559,9 +899,47 @@ describe('portion-gauge ② 样式纪律', () => {
     }
   });
 
-  it('⑥ 分隔符门：本件生成的字里不出现分隔符（R1–R3 零命中）', () => {
+  it('**死声明门**：闭集里每个槽位都在标记里真出现、且样式段里有规则（两档都算进去）', () => {
+    /* 标记面：两档的样例合起来 —— 一个槽在两档里的**任一档**上过屏，就不算死声明。 */
+    const marked = [STANDARD_INPUT, SINGLE_INPUT, FULL_INPUT, LONG_INPUT, GAUGE_INPUT,
+      GAUGE_CAP_ONLY, GAUGE_LONG, GAUGE_EDGE, GAUGE_FULL].map(renderPortionGauge).join('');
+    const clean = stripComments(portionGaugeCss());
+    const dead = [];
+    for (const slot of PORTION_GAUGE_SLOTS) {
+      const cls = portionGaugeSlot(slot);
+      /* 类名要按**边界**匹配：`-mark` 不许被 `-mark-label` 顶替（前缀吃掉后半段＝判据空转）。 */
+      if (!marked.includes(cls + '"') && !marked.includes(cls + ' ')) {
+        dead.push(slot + '（标记里没有这个类）');
+      } else if (!new RegExp('\\.' + cls + '(?=[\\s.,{])').test(clean)) {
+        dead.push(slot + '（样式段里没有规则）');
+      }
+    }
+    assert.deepEqual(dead, [], '这些槽位在闭集里，却上不了屏或没有规则（死声明）：\n  ' + dead.join('\n  '));
+    /* 变异自证：闭集里加一个从没用过的名字 ⇒ 这条当场红。 */
+    const fake = [...PORTION_GAUGE_SLOTS, 'never-used'];
+    const stillDead = fake.filter((slot) => {
+      const cls = portionGaugeSlot(slot);
+      return !marked.includes(cls + '"') && !marked.includes(cls + ' ');
+    });
+    assert.deepEqual(stillDead, ['never-used'], '变异自证没生效：闭集里塞一个没上过屏的槽名必须被这条抓住');
+  });
+
+  it('A 档的样式段也在这一份出口里（拆到 `style-gauge.ts` 的那半不许漏扫）', () => {
+    const clean = stripComments(portionGaugeCss());
+    for (const slot of ['subject', 'lead', 'lead-value', 'gauge', 'mark-label', 'rail', 'rest', 'used', 'tick', 'mark', 'equiv']) {
+      assert.ok(new RegExp('\\.' + portionGaugeSlot(slot) + '(?=[\\s.,{])').test(clean),
+        'A 档槽位在样式段里没有规则：' + slot);
+    }
+    assert.ok(STYLE_SRC.includes(PORTION_GAUGE_RAIL_PX + 'px'), '轨道高只有一个来源（常量 → 样式段）');
+    assert.ok(clean.includes('height: ' + String(PORTION_GAUGE_RAIL_PX) + 'px'),
+      '轨道高就是命中盒那一档（' + String(PORTION_GAUGE_RAIL_PX) + 'px）');
+  });
+
+  it('⑥ 分隔符门：本件生成的字里不出现分隔符（R1–R3 零命中，两档的样例都过）', () => {
     for (const [name, input] of [['standard', STANDARD_INPUT], ['single', SINGLE_INPUT],
-      ['full', FULL_INPUT], ['edge', EDGE_INPUT], ['long', LONG_INPUT]]) {
+      ['full', FULL_INPUT], ['edge', EDGE_INPUT], ['long', LONG_INPUT],
+      ['gauge', GAUGE_INPUT], ['gauge-cap-only', GAUGE_CAP_ONLY], ['gauge-long', GAUGE_LONG],
+      ['gauge-zero', GAUGE_EDGE], ['gauge-full', GAUGE_FULL]]) {
       const r = auditHtml(renderPortionGauge(input), name);
       assert.deepEqual(r.node.hits.map((h) => h.text), [], name + '：可见文本踩了分隔符门');
       assert.deepEqual(r.line.hits.map((h) => h.text), [], name + '：行级也踩了');
@@ -796,6 +1174,166 @@ describe('portion-gauge ④⑤ 四档几何与皮肤纪律（真机 headless Chr
   });
 });
 
+/* ── ④A A 档量感条的几何（真机）：四档零横溢、零截断、条宽与大字逐点对上 ──── */
+
+/** A 档的几何样例（名字 → 产物 ＋ 要断的那个数）。 */
+function gaugeCases() {
+  return [
+    { name: 'gauge-std', html: renderPortionGauge(GAUGE_INPUT), pct: 58 },
+    { name: 'gauge-cap', html: renderPortionGauge(GAUGE_CAP_ONLY), pct: 58 },
+    { name: 'gauge-long', html: renderPortionGauge(GAUGE_LONG), pct: 88.5 },
+    { name: 'gauge-zero', html: renderPortionGauge(GAUGE_EDGE), pct: 0 },
+    { name: 'gauge-full', html: renderPortionGauge(GAUGE_FULL), pct: 100 },
+  ];
+}
+
+/** 一格的 A 档真机读数：轨道（宽／高）／已用那一段（宽／占比）／大字那个数／两枚参照刻度值的**文字**边界。
+ *  参照刻度值那两行是**满宽**的（话靠内距摆到自己那枚刻度上），所以量的必须是**文字**的框
+ *  （`Range` 取内容），不是元素的框——元素框永远贴着轨道两边，量它等于没量。 */
+const GAUGE_MEASURE = '(function(){var root=document.querySelector(SEL);if(root===null)return null;'
+  + 'var rail=root.querySelector(RAIL),used=root.querySelector(USED),lead=root.querySelector(LEAD);'
+  + 'var labels=[].slice.call(root.querySelectorAll(LABEL));'
+  + 'var rr=root.getBoundingClientRect(),rw=rail.getBoundingClientRect(),uw=used.getBoundingClientRect();'
+  + 'return{scrollW:root.scrollWidth,clientW:root.clientWidth,'
+  + 'railW:Math.round(rw.width*10)/10,railH:Math.round(rw.height*10)/10,'
+  + 'usedW:Math.round(uw.width*10)/10,ratio:rw.width===0?null:Math.round(uw.width/rw.width*1000)/10,'
+  + 'pct:parseFloat(used.style.width),said:parseFloat(lead.textContent),'
+  + 'gapPx:labels.length===0?null:Math.round((rw.top-Math.max.apply(null,labels.map(function(n){'
+  + 'return n.getBoundingClientRect().bottom;})))*10)/10,'
+  + 'labels:labels.map(function(n){var rg=document.createRange();rg.selectNodeContents(n);'
+  + 'var b=rg.getBoundingClientRect();'
+  + 'return{left:Math.round((b.left-rr.left)*10)/10,right:Math.round((b.right-rr.right)*10)/10,'
+  + 'w:Math.round(b.width*10)/10,text:n.textContent.length};})};}())';
+
+/** 一格的选择器绑定（与上面那条表达式配对；两处各写一遍必然走散）。 */
+function gaugeMeasureExpr(scope) {
+  return GAUGE_MEASURE
+    .replace('SEL', JSON.stringify(scope + '.' + PORTION_GAUGE_CLASS))
+    .replace('RAIL', JSON.stringify('.' + portionGaugeSlot('rail')))
+    .replace('USED', JSON.stringify('.' + portionGaugeSlot('used')))
+    .replace('LEAD', JSON.stringify('.' + portionGaugeSlot('lead-value')))
+    .replace('LABEL', JSON.stringify('.' + portionGaugeSlot('mark-label')));
+}
+
+/** 真机起不来时的确定性几何判据：三处同一个数 ＋ 参照刻度值的内距只往轨道里推。 */
+function assertStaticGaugeGeometry(list) {
+  for (const c of list) {
+    assert.equal(gaugeBarOk(c.html), true, c.name + '：三处不是同一个数（真机未跑时的地板判据）');
+    const pads = [...c.html.matchAll(/class="[^"]*-mark-label is-ref" aria-hidden="true" style="([^"]*)"/g)]
+      .map((m) => m[1]);
+    for (const pad of pads) {
+      const m = /padding-(left|right): ([\d.]+)%/.exec(pad);
+      if (m === null) continue;
+      const v = Number(m[2]);
+      assert.ok(v >= 0 && v < 100, c.name + '：内距越大越把话推出轨道：' + pad);
+      /* 内距压在左边 ⇒ 那条话最远到 (100−v)%；压在右边 ⇒ 最远从 v% 起。两头都在轨道里。 */
+      if (m[1] === 'left') assert.ok(100 - v <= 100, c.name + '：左边内距 ' + String(v) + '% 会推出右缘');
+    }
+  }
+  const px = (s) => [...s.matchAll(/(?:^|[;\s"'({])(?:min-)?width\s*:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+  const wide = px(portionGaugeCss()).filter((v) => v > WIDTHS[0]);
+  assert.deepEqual(wide, [], '样式段里出现过不了最窄档（' + WIDTHS[0] + '）的固定宽度：' + wide.join('、'));
+}
+
+describe('portion-gauge ④A A 档量感条四档几何（真机 headless Chrome ＋ CDP）', () => {
+  it('容器 320／390／620／1280：零横溢／大字与条宽逐点对上／参照刻度值都在轨道里／零截断', async (t) => {
+    const list = gaugeCases();
+    const casesHtml = list.map((c) => '<section data-case="' + c.name + '">' + c.html + '</section>').join('');
+    const page = await startShapesPage({
+      html: SKIN_NAMES.map((skin) => '<div class="ilife-page-ui ' + skinClass(skin) + '">' + casesHtml + '</div>').join('\n'),
+      css: skinCss() + '\n' + portionGaugeCss(),
+      height: 1400,
+    });
+    if (page === null) {
+      console.log('READING 真机未跑（本机无 Chrome／Chromium）⇒ 退回确定性几何判据：A 档三处同一个数 '
+        + '＋ 参照刻度值的内距只往轨道里推 ＋ 没有超过 ' + WIDTHS[0] + 'px 的固定宽度');
+      assertStaticGaugeGeometry(list);
+      return t.skip('本机无 Chrome／Chromium：A 档四档几何判据需真浏览器');
+    }
+    try {
+      const over = [];
+      for (const width of WIDTHS) {
+        await page.setWidth(width);
+        const frame = await page.frame();
+        assert.ok(frame.fxScrollW <= frame.fxClientW, width + ' 档：夹具容器不得横向溢出');
+        assert.ok(frame.docScrollW <= frame.docClientW + 1,
+          width + ' 档：整页不得横向溢出 ' + frame.docScrollW + ' > ' + frame.docClientW);
+        for (const skin of SKIN_NAMES) {
+          for (const c of list) {
+            const scope = '.' + skinClass(skin) + ' [data-case=' + c.name + '] ';
+            const at = width + ' 档 ' + skin + ' ' + c.name;
+            const root = await page.read([scope + '.' + PORTION_GAUGE_CLASS, scope + '.' + portionGaugeSlot('rail')]);
+            assert.equal(root[0].count, 1, at + '：找不到本件根');
+            for (const one of root) {
+              assert.ok(one.maxScrollW <= one.maxClientW + 1,
+                at + '：' + one.sel + ' 横向溢出 ' + one.maxScrollW + ' > ' + one.maxClientW);
+              assert.equal(one.scrollsX, 0, at + '：不许出现 overflow-x 滚动容器');
+            }
+            /* 每一个文本槽都看得见、都不被截断（数值与参照刻度值**永不** `…`）。 */
+            const slots = ['subject', 'title', 'tail', 'lead-value', 'mark-label', 'equiv']
+              .filter((slot) => new RegExp('class="' + portionGaugeSlot(slot) + '[ "]').test(c.html));
+            const texts = await page.read(slots.map((slot) => scope + '.' + portionGaugeSlot(slot)));
+            for (const one of texts) {
+              assert.equal(one.clipped, 0, at + '：' + one.sel + ' 有 ' + String(one.clipped) + ' 处被截断');
+              assert.ok(one.visible > 0, at + '：' + one.sel + ' 不见了');
+            }
+            /* **位置由值算出**（真机读数）＋ 命中盒：轨道高就是 `PORTION_GAUGE_RAIL_PX`。 */
+            const m = await page.ev(gaugeMeasureExpr(scope));
+            assert.ok(m !== null, at + '：找不到本件根');
+            assert.ok(m.scrollW <= m.clientW + 1, at + '：横向溢出 ' + m.scrollW + ' > ' + m.clientW);
+            assert.ok(m.railW >= PORTION_GAUGE_BAR_MIN_PX - 0.5,
+              at + '：轨道只有 ' + String(m.railW) + ' 宽，比最小宽 ' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px 还窄');
+            assert.ok(m.railH >= PORTION_GAUGE_RAIL_PX - 1,
+              at + '：轨道只有 ' + String(m.railH) + ' 高（命中盒那一档是 ' + String(PORTION_GAUGE_RAIL_PX) + 'px）');
+            /* 命中盒的邻居：参照刻度值那一行与轨道之间是 8px 那一档（相邻 ≥8px）。 */
+            assert.ok(m.gapPx !== null && m.gapPx >= 8 - 0.5,
+              at + '：参照刻度值那一行与轨道只隔 ' + String(m.gapPx) + 'px（相邻要 ≥8px）');
+            assert.equal(m.pct, c.pct, at + '：行内宽度不是占比本身');
+            assert.equal(m.said, c.pct, at + '：大字与条宽走散');
+            if (c.pct === 0) {
+              assert.equal(m.ratio, 0, at + '：0 占比的条就该是空的');
+            } else {
+              assert.ok(Math.abs(m.ratio - c.pct) <= 2, at + '：条宽占轨道 ' + String(m.ratio)
+                + '%，大字却写着 ' + String(c.pct) + '%');
+            }
+            /* 两枚参照刻度值：**话**（`Range` 量到的文字框）都落在轨道里，不压字、不推出边缘。 */
+            assert.ok(m.labels.length >= 1, at + '：一枚参照刻度值都没读到');
+            for (const b of m.labels) {
+              assert.ok(b.text > 0, at + '：参照刻度值那一行是空的');
+              assert.ok(b.left >= -1, at + '：参照刻度值左边跑出轨道 ' + String(b.left) + 'px');
+              assert.ok(b.right <= 1, at + '：参照刻度值右边跑出轨道 ' + String(b.right) + 'px');
+              assert.ok(b.w > 0, at + '：参照刻度值被压成 0 宽');
+            }
+            over.push({ width, skin, name: c.name, railW: m.railW, railH: m.railH, ratio: m.ratio });
+          }
+        }
+      }
+      /* ⑤ 换皮不换结构：四套皮肤里的标记逐字节相同。 */
+      for (const c of list) {
+        const marks = await page.ev('(function(){var out={};var skins=' + JSON.stringify(SKIN_NAMES) + ';'
+          + 'for (var i = 0; i < skins.length; i += 1) {'
+          + '  var el = document.querySelector("." + "ilife-skin-" + skins[i]'
+          + ' + " [data-case=' + c.name + '] .' + PORTION_GAUGE_CLASS + '");'
+          + '  out[skins[i]] = el === null ? "" : el.innerHTML;'
+          + '} return out;}())');
+        const base = marks[SKIN_NAMES[0]];
+        assert.ok(typeof base === 'string' && base.length > 0, c.name + '：真机上拿不到标记');
+        for (const skin of SKIN_NAMES.slice(1)) {
+          assert.equal(marks[skin], base, c.name + '：' + skin + ' 下的标记与 ' + SKIN_NAMES[0] + ' 下不同');
+        }
+      }
+      assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
+      for (const w of WIDTHS) {
+        const cells = over.filter((s) => s.width === w);
+        console.log('READING portion-gauge A 档 container=' + w
+          + ' 轨道=' + cells.map((s) => s.railW + '×' + s.railH).join('／')
+          + ' 条宽占比=' + cells.map((s) => s.ratio).join('／')
+          + ' cells=' + cells.length);
+      }
+    } finally { page.close(); }
+  });
+});
+
 /* ── ④b 宽档长占比句（真机）：占比条不许被长句挤成 0 宽 ──────────────── */
 
 /** 宽档三档**容器**宽（481 是过窄档阈值 `PORTION_GAUGE_NARROW_PX` 的第一档；窄档走单列，不发生这条病）。 */
@@ -813,11 +1351,23 @@ const longShareInput = (len) => ({
       toLabel: '生重', shareOf: SHARE_FILLER.slice(0, len), sharePct: 46 },
   ],
 });
+/** A 档那一侧的长串压力：两枚参照刻度值长到 32／64／128 字（占一行的长文本就是「位置由值算出」的对手）。 */
+const longRefInput = (len) => ({
+  title: '这一餐的量', form: 'gauge', tail: '≈ 350 g',
+  gauge: {
+    name: '红烧肉', usedPct: 58,
+    capText: SHARE_FILLER.slice(0, len), refText: SHARE_FILLER.slice(0, len), refPct: 60,
+  },
+});
+const LONG_REF_LENGTHS = [32, 64, 128];
 
 describe('portion-gauge ④b 宽档长占比句（真机 headless Chrome ＋ CDP）', () => {
   const list = SHARE_LENGTHS.map((len) => ({ name: 'len' + String(len), len, pcts: [70, 46] }));
+  const gaugeList = LONG_REF_LENGTHS.map((len) => ({ name: 'glen' + String(len), len }));
   const casesHtml = list.map((c) => '<section data-case="' + c.name + '">'
-    + renderPortionGauge(longShareInput(c.len)) + '</section>').join('');
+    + renderPortionGauge(longShareInput(c.len)) + '</section>').join('')
+    + gaugeList.map((c) => '<section data-case="' + c.name + '">'
+      + renderPortionGauge(longRefInput(c.len)) + '</section>').join('');
 
   /** 一格的真机读数：本件根 ＋ 每一行的轨宽／条宽／填充宽／那句占比。 */
   const MEASURE = '(function(){var root=document.querySelector(SEL);'
@@ -893,6 +1443,83 @@ describe('portion-gauge ④b 宽档长占比句（真机 headless Chrome ＋ CDP
         }
       }
       assert.deepEqual(await page.errs(), [], '整场不得留下未捕获错误');
+      /* ── A 档那一侧：**同一个病同一条判据**（长参照刻度值不许把轨道与已用那一段挤没）──
+         真机读数：A 档的参照刻度值走**在流的两行**（长了自己换行），推不出轨道也压不扁轨道。 */
+      const gaugeCells = [];
+      for (const width of WIDE_WIDTHS) {
+        await page.setWidth(width);
+        for (const skin of SKIN_NAMES) {
+          for (const c of gaugeList) {
+            const scope = '.' + skinClass(skin) + ' [data-case=' + c.name + '] ';
+            const m = await page.ev(gaugeMeasureExpr(scope));
+            const at = width + ' 档 ' + skin + ' ' + c.name
+              + '（A 档参照刻度值 ' + String(c.len) + ' 字）';
+            assert.ok(m !== null, at + '：找不到本件根');
+            assert.ok(m.scrollW <= m.clientW + 1, at + '：横向溢出 ' + m.scrollW + ' > ' + m.clientW);
+            /* **头号读数**：轨道与已用那一段都没被长参照刻度值挤没。 */
+            assert.ok(m.railW >= PORTION_GAUGE_BAR_MIN_PX - 0.5, at + '：轨道只有 ' + String(m.railW)
+              + ' 宽，比最小宽 ' + String(PORTION_GAUGE_BAR_MIN_PX) + 'px 还窄');
+            assert.ok(m.usedW > 0, at + '：已用那一段被挤成 ' + String(m.usedW) + ' 宽（大字还写着 58%）');
+            /* **同源**：行内宽度、印出来的大字、真机量到的比值三处对得上。 */
+            assert.equal(m.pct, 58, at + '：行内宽度不是占比本身');
+            assert.equal(m.said, 58, at + '：大字与条宽走散');
+            assert.ok(Math.abs(m.ratio - 58) <= 2, at + '：条宽占轨道 ' + String(m.ratio) + '%，大字却写着 58%');
+            /* 两枚参照刻度值：长了自己换行，右边不许跑出轨道（左边同一把尺）。 */
+            assert.equal(m.labels.length, 2, at + '：两枚参照刻度值都要在');
+            for (const b of m.labels) {
+              /* 夹具自证：那两行话真有那么长（不然这条判据在空转——短话挤不扁轨道）。 */
+              assert.ok(b.text >= c.len, at + '：参照刻度值只读到 ' + String(b.text)
+                + ' 字（应 ≥ ' + String(c.len) + '）⇒ 这条判据在空转');
+              assert.ok(b.left >= -1, at + '：参照刻度值左边跑出轨道 ' + String(b.left) + 'px');
+              assert.ok(b.right <= 1, at + '：参照刻度值右边跑出轨道 ' + String(b.right) + 'px');
+              assert.ok(b.w > 0, at + '：参照刻度值被压成 0 宽');
+            }
+            gaugeCells.push({ width, railW: m.railW, ratio: m.ratio });
+            if (skin === SKIN_NAMES[0]) {
+              console.log('READING portion-gauge A 档宽档 w=' + String(width) + ' ' + c.name
+                + ' 轨道宽=' + String(m.railW) + ' 已用宽=' + String(m.usedW)
+                + ' ratio=' + String(m.ratio) + ' 参照刻度值边界=['
+                + m.labels.map((b) => b.left + '…' + b.right).join('、') + ']');
+            }
+          }
+        }
+      }
+      assert.ok(gaugeCells.length === WIDE_WIDTHS.length * SKIN_NAMES.length * gaugeList.length,
+        'A 档宽档那一组没跑满（判据可能空转）');
     } finally { page.close(); }
+  });
+});
+
+/* ── ⑦ 说明书自证：两块样例（带那四个字的那块给派生器，A 档那块的信息串不带那四个字） ── */
+
+describe('portion-gauge ⑦ 说明书自证（两块样例都要直渲成功）', () => {
+  const README = readFileSync(join(PKG, 'src', 'components', 'portion-gauge', 'README.md'), 'utf8');
+  const blocks = (info) => [...README.matchAll(
+    new RegExp('```json ' + info + '\\n([\\s\\S]*?)```', 'g'))].map((m) => m[1]);
+
+  it('带「示例入参」四字的块恰好一块（派生器只认它），是合法 JSON 且直渲成功', () => {
+    const derived = blocks('示例入参');
+    assert.equal(derived.length, 1, '全仓一件只许一块带「示例入参」的块（两块就不知道拿哪一份渲染）');
+    const sample = JSON.parse(derived[0]);
+    assert.equal(typeof sample === 'object' && sample !== null && !Array.isArray(sample), true, '示例是一份 JSON 对象');
+    const html = renderPortionGauge(sample);
+    assert.match(html, new RegExp('^<div class="' + PORTION_GAUGE_CLASS + ' is-convert">'),
+      '派生器那份样例是 B 档（先落地那一档不动）');
+    assert.ok(html.includes(portionGaugeSlot('conv')), '示例渲染出换算行区');
+  });
+
+  it('A 档那块的信息串**不带**那四个字，是合法 JSON 且直渲成功', () => {
+    const shown = blocks('形态 gauge 的入参');
+    assert.equal(shown.length, 1, 'README 里要有一块 A 档的入参样例（信息串不带「示例入参」四字）');
+    assert.equal(shown[0].includes('示例入参'), false);
+    const sample = JSON.parse(shown[0]);
+    assert.equal(sample.form, 'gauge', 'A 档样例自己写着形态键');
+    const html = renderPortionGauge(sample);
+    assert.match(html, new RegExp('^<div class="' + PORTION_GAUGE_CLASS + ' is-gauge">'));
+    assert.ok(html.includes(portionGaugeSlot('rail')) && html.includes(portionGaugeSlot('used')),
+      '样例渲染出尺度：轨道与已用那一段都在');
+    assert.equal(gaugeBarOk(html), true, '样例自己也要过「条宽恒由占比算出」');
+    assert.equal(gaugeLeanOk(html, String(sample.gauge.usedPct) + '%'), true,
+      'README 上这一份样例就是砍过字的那一版（可见字 ≤ 72、那个数只印一次）');
   });
 });
