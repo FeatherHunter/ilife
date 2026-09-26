@@ -6,14 +6,14 @@
 
 | 你要做的事 | 走哪条路 | 里面有什么 |
 |---|---|---|
-| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **68 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
+| **画页面**（六个技能的新页、新读数、新交互） | **组件层** → `base-paint/blocks` | **70 件组件**：一件一目录、目录内自足、可独立演进（本 README 第一节，也是你 90% 的时候要看的） |
 | 调既有页面的老函数 | **冻结面** → `base-paint` 根出口 | 12 区块 ＋ 控件 ＋ 图表 ＋ 页面级那批函数，签名逐名锁死（本 README 第二节速查） |
 
 ---
 
 # 一、组件层：该用哪一件
 
-## 1.1 按你要展示的东西找（68 件路由）
+## 1.1 按你要展示的东西找（70 件路由）
 
 粗体是件名，照抄进 import 即可；括号里是中文名。**没有一件是"另一种皮肤下的同一件"**——
 换皮只换取值，见 §1.3。
@@ -115,7 +115,7 @@ import { pageUiCss } from 'base-paint';
 import { blocksCss, skinCss, skinClass } from 'base-paint/blocks';
 const sharedCss = pageUiCss() + blocksCss() + skinCss() + statusRowCss();
 
-// ③ 运行时段：只有交互件才有（68 件里 30 件有；其余是零脚本件，跳到 ④）
+// ③ 运行时段：只有交互件才有（70 件里 32 件有；其余是零脚本件，跳到 ④）
 import { buildSwitchRowJs, renderSwitchRow, switchRowCss } from 'base-paint/blocks';
 const sharedHelpersJs = buildSharedHelpersJs() + buildSwitchRowJs();
 const withSwitch = renderSwitchRow({ name: 'feishuSync', checked: true, label: '记完自动同步飞书' });
@@ -133,7 +133,7 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
   会让屏上静静少一块，所以顶层与每个嵌套对象层都要查键；先例 `relation-picker`／`kanban-columns` 的 `model.ts`）。
   这条门由 `test/跨件不变量.test.mjs` 第 ③ 组守着（老件逐件留名在日期豁免表里，本批之后落的件一律硬过）。
 - **名字从清单里摸**：`dist/components/清单.js` 每一行有 `render`／`style`／`runtime` 三列——那就是该件的三个出口名
-  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。68 件的名字面全部经 `base-paint/blocks` 转出；
+  （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。70 件的名字面全部经 `base-paint/blocks` 转出；
   包没有 `./components` 子路径，别去引 `dist/` 深处。
 
 ## 1.3 皮肤：四套取值，一件控件
@@ -158,7 +158,7 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
 | 你要知道 | 上哪儿看 |
 |---|---|
 | 有哪些件、中文名、导出名、**示例入参** | `base-paint/dist/components/清单.js`（机器清单，随包发布；`COMPONENTS[].sample` 可直接喂渲染函数） |
-| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（68 份，唯一权威） |
+| 这件怎么用、什么时候用、常见错法、入参逐字段 | 仓库里 `packages/base-render/src/components/<件名>/README.md`（70 份，唯一权威） |
 | 件的实现与样式函数 | `base-paint/dist/components/<件名>/index.js`（`renderX`／`xStyle`／`buildXJs` 三件出口） |
 | 改这个层（写新件／改样式）的规矩 | `packages/base-render/src/components/README.md`（本层红线与横切判据） |
 | 冻结面的逐名签名 | `packages/base-render/src/spec/` ↔ `docs/base-paint-contract.md`（由 `test/contract-signatures.test.mjs` 逐字锁死） |
