@@ -3216,9 +3216,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "复制训练计划",
             "wake_word": "复制训练计划",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制训练计划」。\n\n我想把现有训练计划复制一份作为模板(可以复制整个计划或某一周)。请告诉我复制了哪些内容、新计划/新周的标题或周次。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要复制的周次(选填,空=整个计划):____\n新标题(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制训练计划」。\n\n我想把现有训练计划复制一份作为模板(可以复制整个计划或某一周)。请告诉我复制了哪些内容、新计划/新周的标题或周次。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要复制的周次(选填):{{copy_week}}\n新标题(选填):{{new_title}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "copy_week",
+                "label": "要复制的周次(选填)",
+                "value": "",
+                "hint": "空＝整个计划；填了填周次纯数字，如第3周填3",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_title",
+                "label": "新标题(选填)",
+                "value": "",
+                "hint": "如 新计划标题；空＝沿用原标题",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3226,9 +3244,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定休息日",
             "wake_word": "定休息日",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定休息日」。\n\n我想把某一天的训练标记为休息日(或取消休息)。完成后给我设置回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期或周次+星期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定休息日」。\n\n我想把某一天的训练标记为休息日(或取消休息)。完成后给我设置回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期或周次+星期:{{rest_target}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "rest_target",
+                "label": "日期或周次+星期",
+                "value": "",
+                "hint": "如 某日期，或第2周周三；日期填 YYYY-MM-DD",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3236,9 +3264,59 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "加训练动作",
             "wake_word": "加训练动作",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「加训练动作」。\n\n我想给计划里的某一天或某个训练时段加训练动作,包括动作名、组数和重量。如果计划是每周循环的,告诉我加在哪一周,不说就所有周都加。完成后给我回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n加到哪天(如 周三):____\n加到第几周(选填,空=所有周):____\n时段(选填):____\n动作名:____\n组数:____\n重量(kg,选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「加训练动作」。\n\n我想给计划里的某一天或某个训练时段加训练动作,包括动作名、组数和重量。如果计划是每周循环的,告诉我加在哪一周,不说就所有周都加。完成后给我回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n加到哪天:{{target_day}}\n加到第几周(选填):{{target_week}}\n时段(选填):{{session}}\n动作名:{{movement_name}}\n组数:{{sets}}\n重量(选填):{{weight}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_day",
+                "label": "加到哪天",
+                "value": "",
+                "hint": "如 周三；填星期",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "target_week",
+                "label": "加到第几周(选填)",
+                "value": "",
+                "hint": "空＝所有周；填周次纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "session",
+                "label": "时段(选填)",
+                "value": "",
+                "hint": "开放文本，如 早上、上肢时段；空＝不区分",
+                "required": false,
+                "kind": "text"
+              },
+              {
+                "name": "movement_name",
+                "label": "动作名",
+                "value": "",
+                "hint": "如 深蹲、俯卧撑",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "sets",
+                "label": "组数",
+                "value": "",
+                "hint": "纯数字，不带单位，如 4",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "weight",
+                "label": "重量(选填)",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 20",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3246,9 +3324,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定一周计划",
             "wake_word": "定一周计划",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定一周计划」。\n\n我想快速设置某一周的训练安排,告诉我这周每天(周一至周日)练什么或休息,只想练其中几天也没关系,空着的天按休息处理。完成后给我设置回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第几周(默认本周):____\n一周安排(如:周一胸、周三腿,没说的天按休息):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定一周计划」。\n\n我想快速设置某一周的训练安排,告诉我这周每天(周一至周日)练什么或休息,只想练其中几天也没关系,空着的天按休息处理。完成后给我设置回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n第几周(选填):{{target_week}}\n一周安排:{{week_plan}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_week",
+                "label": "第几周(选填)",
+                "value": "",
+                "hint": "空＝本周；填周次纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "week_plan",
+                "label": "一周安排",
+                "value": "",
+                "hint": "如 周一胸、周三腿；没说的天按休息",
+                "required": true,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3292,9 +3388,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看指定周计划",
             "wake_word": "看指定周计划",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看指定周计划」。\n\n我想看某一周的训练日历。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n周次(如第 3 周):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看指定周计划」。\n\n我想看某一周的训练日历。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n周次:{{week_number}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "week_number",
+                "label": "周次",
+                "value": "",
+                "hint": "第几周纯数字，如第3周填3",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3312,9 +3418,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某天练什么",
             "wake_word": "看某天练什么",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某天练什么」。\n\n我想看指定日期的训练内容(动作/组数/重量)。如果那天休息或计划还没开始,请明确告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD,默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某天练什么」。\n\n我想看指定日期的训练内容(动作/组数/重量)。如果那天休息或计划还没开始,请明确告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{train_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3342,9 +3458,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某动作安排",
             "wake_word": "看某动作安排",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某动作安排」。\n\n我想查一个动作在训练计划里的安排(哪天练/几组/重量/下次练习日)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某动作安排」。\n\n我想查一个动作在训练计划里的安排(哪天练/几组/重量/下次练习日)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n动作名:{{movement_name}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "movement_name",
+                "label": "动作名",
+                "value": "",
+                "hint": "如 硬拉、深蹲",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3352,9 +3478,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看计划 vs 实际",
             "wake_word": "看计划 vs 实际",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看计划 vs 实际」。\n\n我想对比一段时间里计划和实际完成。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(默认本周,可给日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看计划 vs 实际」。\n\n我想对比一段时间里计划和实际完成。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝本周；可填日期，格式 YYYY-MM-DD",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3368,9 +3504,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改训练计划",
             "wake_word": "改训练计划",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改训练计划」。\n\n我想改训练计划的某个字段(如标题、总周数、开始日期、描述)。改完并提示影响(如改开始日期会影响周次计算)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的字段(标题/总周数/开始日期/描述,可改多个):____\n新值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改训练计划」。\n\n我想改训练计划的某个字段(如标题、总周数、开始日期、描述)。改完并提示影响(如改开始日期会影响周次计算)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的字段:{{update_fields}}\n新值:{{new_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "update_fields",
+                "label": "要改的字段",
+                "value": "",
+                "hint": "如 标题、总周数、开始日期、描述；可改多个，用、分隔",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_value",
+                "label": "新值",
+                "value": "",
+                "hint": "填目标字段的新值；改多个时用、对应",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3378,9 +3532,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改某天训练",
             "wake_word": "改某天训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某天训练」。\n\n我想改某一天的训练安排(时段、动作、组数等)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:____\n要改的内容:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某天训练」。\n\n我想改某一天的训练安排(时段、动作、组数等)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{train_date}}\n要改的内容:{{update_content}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "update_content",
+                "label": "要改的内容",
+                "value": "",
+                "hint": "如 时段、动作、组数等具体改法",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3388,9 +3560,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删某天训练",
             "wake_word": "删某天训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某天训练」。\n\n我想删掉某一天的训练安排(或某天的某个训练时段)。删除前先让我确认,确认后删除,给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:____\n要删的时段(选填,空=删整天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某天训练」。\n\n我想删掉某一天的训练安排(或某天的某个训练时段)。删除前先让我确认,确认后删除,给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{train_date}}\n要删的时段(选填):{{session}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "session",
+                "label": "要删的时段(选填)",
+                "value": "",
+                "hint": "空＝删整天；开放文本",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3398,9 +3588,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改动作",
             "wake_word": "改动作",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改动作」。\n\n我想把计划里的某个动作换成另一个动作(或改它的组数)。如果计划是每周循环的,告诉我要改哪一周,不说就所有周都改。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的周(选填,空=所有周):____\n原动作:____\n新动作:____\n组数(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改动作」。\n\n我想把计划里的某个动作换成另一个动作(或改它的组数)。如果计划是每周循环的,告诉我要改哪一周,不说就所有周都改。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的周(选填):{{target_week}}\n原动作:{{old_movement}}\n新动作:{{new_movement}}\n组数(选填):{{sets}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_week",
+                "label": "要改的周(选填)",
+                "value": "",
+                "hint": "空＝所有周；填周次纯数字",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "old_movement",
+                "label": "原动作",
+                "value": "",
+                "hint": "如 硬拉",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_movement",
+                "label": "新动作",
+                "value": "",
+                "hint": "如 杠铃划船",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "sets",
+                "label": "组数(选填)",
+                "value": "",
+                "hint": "纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3424,9 +3648,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "落地训练",
             "wake_word": "落地训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「落地训练」。\n\n我想把某天的训练计划真正落地执行:补计划到日历、记心愿、推送到训记、拉取训记实绩 4 步全流程,逐动作确认实际做的重量和组数。给我看 4 步进度和每步结果(已补计划/已记心愿/已推送/已回写),以及完成度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「落地训练」。\n\n我想把某天的训练计划真正落地执行:补计划到日历、记心愿、推送到训记、拉取训记实绩 4 步全流程,逐动作确认实际做的重量和组数。给我看 4 步进度和每步结果(已补计划/已记心愿/已推送/已回写),以及完成度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{train_date}}",
             "types": [
               "过程"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3454,9 +3688,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "同步到训记",
             "wake_word": "同步到训记",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「同步到训记」。\n\n我想把某天的训练计划推送到训记 App(落地流程里的训记推送这一步单独做)。推送前先检查计划里的动作名训记能否识别,有识别不了的先告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「同步到训记」。\n\n我想把某天的训练计划推送到训记 App(落地流程里的训记推送这一步单独做)。推送前先检查计划里的动作名训记能否识别,有识别不了的先告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{train_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3464,9 +3708,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "拉训记实绩",
             "wake_word": "拉训记实绩",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拉训记实绩」。\n\n我想把训记 App 里的实际训练数据拉回来,写进卡路里的运动记录(落地流程里的回写这一步单独做)。如有冲突请提示我处理。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拉训记实绩」。\n\n我想把训记 App 里的实际训练数据拉回来,写进卡路里的运动记录(落地流程里的回写这一步单独做)。如有冲突请提示我处理。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{train_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "train_date",
+                "label": "日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -3520,9 +3774,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看未完成训练",
             "wake_word": "看未完成训练",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看未完成训练」。\n\n我想看哪些天的训练没完成(漏练)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(默认最近 4 周):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看未完成训练」。\n\n我想看哪些天的训练没完成(漏练)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近4周；如 最近4周",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -3530,9 +3794,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看动作完成率",
             "wake_word": "看动作完成率",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看动作完成率」。\n\n我想看每个动作的完成率排名。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(默认最近 4 周):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看动作完成率」。\n\n我想看每个动作的完成率排名。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近4周；如 最近4周",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -3546,9 +3820,20 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "扫禁忌",
             "wake_word": "扫禁忌",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「扫禁忌」。\n\n我想检查训练计划里有没有伤腰/膝/肩的禁忌动作(默认全身位,也可以指定部位)。请列出有风险的动作、原因,以及推荐的替代动作。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n部位(腰/膝/肩,选填,默认全部):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「扫禁忌」。\n\n我想检查训练计划里有没有伤腰/膝/肩的禁忌动作(默认全身位,也可以指定部位)。请列出有风险的动作、原因,以及推荐的替代动作。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n部位(选填):{{body_part}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "body_part",
+                "label": "部位(选填)",
+                "value": "",
+                "hint": "空＝全部；只能填其中一项",
+                "required": false,
+                "kind": "select",
+                "options": ["腰","膝","肩"]
+              }
             ]
           }
         ]
@@ -3569,9 +3854,51 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定营养目标",
             "wake_word": "定营养目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定营养目标」。\n\n我想设每日 4 大宏量营养目标(热量/蛋白/碳水/脂肪)+ 饮水目标。若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标数值(请按实际替换,不知道的可以空着):\n热量(卡):____\n蛋白(g):____\n碳水(g):____\n脂肪(g):____\n饮水(ml):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定营养目标」。\n\n若热量明显低于我的基础代谢(BMR),请提示我注意。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标数值(请按实际替换,不知道的可以空着):\n热量:{{calories}}\n蛋白:{{protein}}\n碳水:{{carbs}}\n脂肪:{{fat}}\n饮水:{{water}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "calories",
+                "label": "热量",
+                "value": "",
+                "hint": "单位 卡，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "protein",
+                "label": "蛋白",
+                "value": "",
+                "hint": "单位 g，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "carbs",
+                "label": "碳水",
+                "value": "",
+                "hint": "单位 g，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "fat",
+                "label": "脂肪",
+                "value": "",
+                "hint": "单位 g，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "water",
+                "label": "饮水",
+                "value": "",
+                "hint": "单位 ml，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3579,9 +3906,20 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定营养目标(自动算)",
             "wake_word": "定营养目标(自动算)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定营养目标(自动算)」。\n\n想根据我的档案(身高/体重/年龄/活动量)+ 目标方向自动算出 4 项营养目标。若我未提供方向或档案信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向(减脂 / 维持 / 增肌):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定营养目标(自动算)」。\n\n想根据我的档案(身高/体重/年龄/活动量)+ 目标方向自动算出 4 项营养目标。若我未提供方向或档案信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向:{{goal_direction}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "goal_direction",
+                "label": "我的目标方向",
+                "value": "",
+                "hint": "三选一",
+                "required": true,
+                "kind": "select",
+                "options": ["减脂","维持","增肌"]
+              }
             ]
           },
           {
@@ -3589,9 +3927,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定体重目标",
             "wake_word": "定体重目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标」。\n\n我想设定体重目标(目标 kg + 可选截止日期)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n截止日期(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标」。\n\n请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标:{{target_weight}}\n截止日期(选填):{{deadline}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_weight",
+                "label": "我的体重目标",
+                "value": "",
+                "hint": "单位 kg，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "deadline",
+                "label": "截止日期(选填)",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD；空＝暂不设截止",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3599,9 +3955,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定体重目标(自动算截止)",
             "wake_word": "定体重目标(自动算截止)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。\n\n我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n期望每周减重速率(kg/周):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标(自动算截止)」。\n\n我想设定体重目标(目标 kg + 期望每周减重速率),由你自动推算合理截止日期,并校验速率是否合理(不超安全范围)。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标:{{target_weight}}\n期望每周减重速率:{{weekly_rate}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_weight",
+                "label": "我的体重目标",
+                "value": "",
+                "hint": "单位 kg，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "weekly_rate",
+                "label": "期望每周减重速率",
+                "value": "",
+                "hint": "单位 kg/周，只收纯数字；须在安全范围",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3609,9 +3983,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定体重目标(含起始日)",
             "wake_word": "定体重目标(含起始日)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。\n\n我想完整设定体重目标:目标 kg + 起始日 + 截止日 + 起点体重。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标(kg):____\n起始日:____\n截止日期:____\n起点体重(kg):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定体重目标(含起始日)」。\n\n请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重目标:{{target_weight}}\n起始日:{{start_date}}\n截止日期:{{deadline}}\n起点体重:{{start_weight}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_weight",
+                "label": "我的体重目标",
+                "value": "",
+                "hint": "单位 kg，只收纯数字",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "start_date",
+                "label": "起始日",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "deadline",
+                "label": "截止日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "start_weight",
+                "label": "起点体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3619,9 +4027,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定饮水目标",
             "wake_word": "定饮水目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定饮水目标」。\n\n我想设定每天饮水目标(ml)。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的饮水目标(ml):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定饮水目标」。\n\n请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的饮水目标:{{target_water}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_water",
+                "label": "我的饮水目标",
+                "value": "",
+                "hint": "单位 ml，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3629,9 +4047,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定饮水目标(自动算)",
             "wake_word": "定饮水目标(自动算)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定饮水目标(自动算)」。\n\n想按我的体重(ml/kg)自动推算饮水目标推荐值,并和旧目标对比。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重(kg,选填,默认取最新记录):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定饮水目标(自动算)」。\n\n想按我的体重(ml/kg)自动推算饮水目标推荐值,并和旧目标对比。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的体重(选填):{{weight}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "weight",
+                "label": "我的体重(选填)",
+                "value": "",
+                "hint": "单位 kg，只收纯数字；空＝取最新记录",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3639,9 +4067,36 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "一键定全套目标",
             "wake_word": "一键定全套目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「一键定全套目标」。\n\n想一键设定 3 类目标(营养 + 体重 + 饮水),基于我的档案自动计算,先给我看结果,等我确认后再采纳。若我的档案(身高/年龄/活动量)未设置、无体重记录或信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(营养／体重／饮水三类目标的推荐值与依据),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向(减脂 / 维持 / 增肌):____\n我的体重目标(kg,选填):____\n截止日期(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「一键定全套目标」。\n\n想一键设定 3 类目标(营养 + 体重 + 饮水),基于我的档案自动计算,先给我看结果,等我确认后再采纳。若我的档案(身高/年龄/活动量)未设置、无体重记录或信息缺失,请先询问补齐;若我已明确表达,直接计算,必要时做几句信息确认即可。请先出预检确认页给我看(营养／体重／饮水三类目标的推荐值与依据),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的目标方向:{{goal_direction}}\n我的体重目标(选填):{{target_weight}}\n截止日期(选填):{{deadline}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "goal_direction",
+                "label": "我的目标方向",
+                "value": "",
+                "hint": "三选一",
+                "required": true,
+                "kind": "select",
+                "options": ["减脂","维持","增肌"]
+              },
+              {
+                "name": "target_weight",
+                "label": "我的体重目标(选填)",
+                "value": "",
+                "hint": "单位 kg，只收纯数字；空＝不设定体重目标",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "deadline",
+                "label": "截止日期(选填)",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD；空＝暂不设截止",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3649,9 +4104,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "定运动目标",
             "wake_word": "定运动目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定运动目标」。\n\n我想设定每天运动消耗目标(卡)。请先出预检确认页给我看(运动目标现值、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的运动目标(卡):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「定运动目标」。\n\n请先出预检确认页给我看(运动目标现值、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我的运动目标:{{exercise_target}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "exercise_target",
+                "label": "我的运动目标",
+                "value": "",
+                "hint": "单位 卡，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           }
         ]
@@ -3695,7 +4160,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重目标进度",
             "wake_word": "看体重目标进度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重目标进度」。\n\n我想看体重目标进度。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重目标进度」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -3715,9 +4180,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看目标对比实际",
             "wake_word": "看目标对比实际",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看目标对比实际」。\n\n我想看热量目标线 vs 实际摄入线的对比与偏差分析,默认最近 30 天(可自定义时间窗口)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(天,选填,默认 30):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看目标对比实际」。\n\n我想看热量目标线 vs 实际摄入线的对比与偏差分析,默认最近 30 天(可自定义时间窗口)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间窗口(选填):{{window_days}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "window_days",
+                "label": "时间窗口(选填)",
+                "value": "",
+                "hint": "单位 天，只收纯数字；空＝最近30天",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3735,9 +4210,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看即将到期的目标",
             "wake_word": "看即将到期的目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看即将到期的目标」。\n\n我想看即将到期的体重目标(默认 14 天内到期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n到期窗口(天,选填,默认 14):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看即将到期的目标」。\n\n我想看即将到期的体重目标(默认 14 天内到期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n到期窗口(选填):{{expiry_window}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "expiry_window",
+                "label": "到期窗口(选填)",
+                "value": "",
+                "hint": "单位 天，只收纯数字；空＝14天内到期",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3765,9 +4250,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看目标历史完成",
             "wake_word": "看目标历史完成",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看目标历史完成」。\n\n我想看历史目标达成情况,含每日达成列表与完成/未完成天数统计(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n回看天数(选填,默认 30):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看目标历史完成」。\n\n我想看历史目标达成情况,含每日达成列表与完成/未完成天数统计(达标带 80%-120%)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n回看天数(选填):{{lookback_days}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "lookback_days",
+                "label": "回看天数(选填)",
+                "value": "",
+                "hint": "单位 天，只收纯数字；空＝最近30天",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3791,9 +4286,51 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改营养目标",
             "wake_word": "改营养目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改营养目标」。\n\n我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n热量(卡)新目标值:____\n蛋白(g)新目标值:____\n碳水(g)新目标值:____\n脂肪(g)新目标值:____\n饮水(ml)新目标值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改营养目标」。\n\n我想修改营养目标(热量/蛋白/碳水/脂肪/饮水),可同时改多项,并预估修改后的影响(热量缺口/预算变化)。请先出预检确认页给我看(4 项目标现值、按档案算的推荐值与依据、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n热量新目标值:{{new_calories}}\n蛋白新目标值:{{new_protein}}\n碳水新目标值:{{new_carbs}}\n脂肪新目标值:{{new_fat}}\n饮水新目标值:{{new_water}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "new_calories",
+                "label": "热量新目标值",
+                "value": "",
+                "hint": "单位 卡，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_protein",
+                "label": "蛋白新目标值",
+                "value": "",
+                "hint": "单位 g，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_carbs",
+                "label": "碳水新目标值",
+                "value": "",
+                "hint": "单位 g，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_fat",
+                "label": "脂肪新目标值",
+                "value": "",
+                "hint": "单位 g，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_water",
+                "label": "饮水新目标值",
+                "value": "",
+                "hint": "单位 ml，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -3801,9 +4338,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改体重目标",
             "wake_word": "改体重目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改体重目标」。\n\n我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n体重目标(kg):____\n截止日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改体重目标」。\n\n我想修改体重目标值或截止日期,并给出新的建议减重速率。请先出预检确认页给我看(体重目标现值、建议速率与安全校验、改前→改后对照),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n我要改的项(每行一项,不改的留空):\n体重目标:{{new_target_weight}}\n截止日期:{{new_deadline}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "new_target_weight",
+                "label": "体重目标",
+                "value": "",
+                "hint": "单位 kg，只收纯数字；空＝不改",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "new_deadline",
+                "label": "截止日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD；空＝不改",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -3811,9 +4366,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改饮水目标",
             "wake_word": "改饮水目标",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改饮水目标」。\n\n我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n饮水目标(ml):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改饮水目标」。\n\n我想单独修改饮水目标,其他营养目标保持不变。请先出预检确认页给我看(饮水目标现值、按体重算的推荐值),我确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n饮水目标:{{target_water}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_water",
+                "label": "饮水目标",
+                "value": "",
+                "hint": "单位 ml，只收纯数字",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
