@@ -538,6 +538,49 @@ describe('small-multiples ① 渲染契约 · 非法入参（每条都断 Blocks
     assert.ok(cases >= 20, '扫到的 number 字段太少（判据会空转）：只有 ' + String(cases) + ' 例');
     assert.deepEqual(got, [], '这些坏数被收下了（入参违规一律拒，必须抛 BlocksError）：' + got.join('；'));
   });
+
+  /* 返修 2026-09（跨件不变量门 ③ · 未知键一律拒）：顶层与**每一期**各加一个 `zzUnknown: 1`，
+     渲染入口必须抛 `BlocksError`——写错的键静默吞掉时，柱阵上只是**静静地少一点东西**，而调用方
+     以为自己设上了。**继承来的与不可枚举的**键同样算（只走 `Object.keys` 会把这两类漏掉）。 */
+  it('**入参表以外的键一律拒**：顶层与每一期都查（含继承来的与不可枚举的键）', () => {
+    const withKey = (input, path, key) => {
+      const clone = JSON.parse(JSON.stringify(input));
+      let at = clone;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return clone;
+    };
+    const layers = [
+      ['顶层', SIX, []],
+      ['第一期（`periods[0]`）', SIX, ['periods', 0]],
+      ['本期那一期（`periods[5]`，带 `now`）', SIX, ['periods', 5]],
+    ];
+    for (const [label, input, path] of layers) {
+      assert.equal(typeof renderSmallMultiples(JSON.parse(JSON.stringify(input))), 'string', label + '：原样能渲出来');
+      assert.equal(throwsBlocks(() => renderSmallMultiples(withKey(input, path, 'zzUnknown'))), true,
+        label + ' 多给一个键（多半是打错名）必须拒，不许静默吞掉');
+      /* 去掉那个未知键、其余一字不动 ⇒ 必须照常渲出来（拒的是未知键，不是这一层本身）。 */
+      const clean = withKey(input, path, 'zzUnknown');
+      let at = clean;
+      for (const t of path) at = at[t];
+      delete at.zzUnknown;
+      assert.equal(throwsBlocks(() => renderSmallMultiples(clean)), false,
+        label + '：把未知键去掉之后就得照常渲染（拒的是未知键，不是这一层本身）');
+    }
+    /* 可选键一个都不许被误拒（键表照 `attrs.ts` 的入参面逐字段列全：必填与可选都在表里）。 */
+    assert.equal(throwsBlocks(() => renderSmallMultiples({
+      title: 'T', form: 'columns', unit: '卡', stamp: 'W1 – W2', note: '口径', extraClass: 'a b',
+      periods: [{ label: 'W1', value: 1, now: false }, { label: 'W2', value: 2, now: true }],
+    })), false, '入参表里的可选键一个都不许误拒');
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }),
+      { title: 'T', periods: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] });
+    assert.equal(throwsBlocks(() => renderSmallMultiples(inherited)), true, '顶层继承来的未知键');
+    const hidden = { title: 'T', periods: [{ label: 'A', value: 1 }, { label: 'B', value: 2 }] };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderSmallMultiples(hidden)), true, '顶层不可枚举的未知键');
+  });
 });
 
 /* ── ② 样式与零 DOM 纪律 ───────────────────────────────────────────── */

@@ -7,6 +7,8 @@
  *   2. **校验与算数分家**：本件只做「形状与范围」，坐标映射与均值住同目录 `scale.ts`（唯一一处纯函数）。
  *   3. **能算的都算出来**：柱高百分比、均值、每根柱下面那枚读数、口径句与无障碍名都在这里定；
  *      `render.ts` 只负责拼标记，算术一个字都不写。
+ *   4. **入参表以外的键一律拒**（每个对象层都查：顶层与 `periods` 的每一期；写错的键静默吞掉最坑人——
+ *      调用方以为自己设上了）。
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
@@ -58,6 +60,33 @@ export interface SmallMultiplesModel {
 
 /* ── 校验 ─────────────────────────────────────────────────────────── */
 
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus: 1})` 那种继承来的键就是这一路）。
+ *
+ *  先例：`goal-stairs/model.ts`／`relation-picker/model.ts` 的同名小件（同一个规矩不在两处各写一套口径）。
+ */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `SmallMultiplesInput` 的键（顶层入参表；必填与可选都列全）。 */
+const INPUT_KEYS = ['title', 'periods', 'unit', 'stamp', 'form', 'note', 'extraClass'] as const;
+
+/** `SmallMultiplesPeriod` 的键（`periods` 的每一期）。 */
+const PERIOD_KEYS = ['label', 'value', 'now'] as const;
+
 /** 读数量级上限：**判据是「两笔同量级的读数相加会不会溢出」**，不是"好不好读"——
  *  `|a| + |b| > Number.MAX_VALUE` 时柱高与读数会写出 `1e+308` 这种读不出来的数。
  *  `1e21`／`1e-7` 那两档照旧合法（十进制写法与指数写法的分界、微小读数都在本层照收）。 */
@@ -78,6 +107,7 @@ function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
     const at = 'small-multiples: input.periods[' + String(i) + ']';
     assertPlainObject(item, at);
     const p = item as Record<string, unknown>;
+    assertKeys(p, PERIOD_KEYS, at);
     const label = reqText(p.label, at + '.label');
     const v = p.value;
     if (typeof v !== 'number' || !Number.isFinite(v)) {
@@ -184,6 +214,7 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
 export function normalizeSmallMultiples(input: unknown): SmallMultiplesModel {
   assertPlainObject(input, 'renderSmallMultiples: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderSmallMultiples: input');
 
   const form = raw.form === undefined ? SMALL_MULTIPLES_FORMS[0] : raw.form;
   if (!(SMALL_MULTIPLES_FORMS as readonly unknown[]).includes(form)) {

@@ -841,6 +841,61 @@ describe('spread-dist ① 渲染契约 · 公共面与非法入参', () => {
     assert.deepEqual(got, [], '这些坏数被收下了（入参违规一律拒，必须抛 BlocksError）：' + got.join('；'));
   });
 
+  /* 返修 2026-09（跨件不变量门 ③ · 未知键一律拒）：顶层（三档各一张）与**每一项**（一天／一档／一组）
+     各加一个 `zzUnknown: 1`，渲染入口必须抛 `BlocksError`——写错的键静默吞掉时，图上只是**静静地少一块**，
+     而调用方以为自己设上了。**继承来的与不可枚举的**键同样算（只走 `Object.keys` 会把这两类漏掉）。 */
+  it('**入参表以外的键一律拒**：顶层（三档）与每一层都查（含继承来的与不可枚举的键）', () => {
+    const withKey = (input, path, key) => {
+      const clone = JSON.parse(JSON.stringify(input));
+      let at = clone;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return clone;
+    };
+    const layers = [
+      ['顶层（`range`）', RANGE_INPUT, []],
+      ['顶层（`quantile`）', QUANTILE_INPUT, []],
+      ['顶层（`box`）', BOX_INPUT, []],
+      ['一天（`days[0]`）', RANGE_INPUT, ['days', 0]],
+      ['一档（`stops[0]`）', QUANTILE_INPUT, ['stops', 0]],
+      ['一组（`boxes[0]`，画箱那一支）', BOX_INPUT, ['boxes', 0]],
+      ['一组（`boxes[3]`，样本不足只点那一支）', BOX_INPUT, ['boxes', 3]],
+    ];
+    for (const [label, input, path] of layers) {
+      assert.equal(typeof renderSpreadDist(JSON.parse(JSON.stringify(input))), 'string', label + '：原样能渲出来');
+      assert.equal(throwsBlocks(() => renderSpreadDist(withKey(input, path, 'zzUnknown'))), true,
+        label + ' 多给一个键（多半是打错名）必须拒，不许静默吞掉');
+      /* 去掉那个未知键、其余一字不动 ⇒ 必须照常渲出来（拒的是未知键，不是这一层本身）。 */
+      const clean = withKey(input, path, 'zzUnknown');
+      let at = clean;
+      for (const t of path) at = at[t];
+      delete at.zzUnknown;
+      assert.equal(throwsBlocks(() => renderSpreadDist(clean)), false,
+        label + '：把未知键去掉之后就得照常渲染（拒的是未知键，不是这一层本身）');
+    }
+    /* 可选键一个都不许被误拒：三档的键表按 `attrs.ts` 的入参面逐字段列全（`days` 的 `median`、
+       `boxes` 的 `outliers`／`points` 都在表里——漏一档就是把合法档判红）。 */
+    assert.equal(throwsBlocks(() => renderSpreadDist({
+      title: 'T', form: 'range', unit: '元', stamp: '近 3 天', note: '口径', extraClass: 'a b',
+      days: [{ label: 'd1', low: 1, high: 2 }, { label: 'd2', low: 2, median: 3, high: 4 }, { label: 'd3', low: 3, high: 5 }],
+    })), false, '`range`：入参表里的可选键一个都不许误拒');
+    assert.equal(throwsBlocks(() => renderSpreadDist({
+      title: 'T', form: 'quantile', unit: '元', stamp: '38 笔', note: '口径', extraClass: 'a b',
+      stops: [{ name: 'P10', value: 1 }, { name: '中位', value: 2 }, { name: 'P90', value: 3 }],
+    })), false, '`quantile`：入参表里的可选键一个都不许误拒');
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), {
+      title: 'T', days: [{ label: 'a', low: 1, high: 2 }, { label: 'b', low: 1, high: 3 }, { label: 'c', low: 2, high: 4 }],
+    });
+    assert.equal(throwsBlocks(() => renderSpreadDist(inherited)), true, '顶层继承来的未知键');
+    const hidden = {
+      title: 'T', days: [{ label: 'a', low: 1, high: 2 }, { label: 'b', low: 1, high: 3 }, { label: 'c', low: 2, high: 4 }],
+    };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderSpreadDist(hidden)), true, '顶层不可枚举的未知键');
+  });
+
   it('入参违规一律拒（不静默降级）：形态／空白串／天数／日子／区间／档数／档名 逐条', () => {
     assert.deepEqual([...SPREAD_DIST_FORMS], ['range', 'quantile', 'box'],
       '形态闭集三格；**旧两档的键一个字都不许改**（新档追加在后面）');

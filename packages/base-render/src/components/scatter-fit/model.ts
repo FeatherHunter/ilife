@@ -9,6 +9,8 @@
  *      `render.ts` 只负责拼标记，算术一个字都不写。
  *   4. **空白串不是文本**：全空白的 `title`／`xName`／`yName` 会在屏上留一块空白，**一律拒**
  *      （与同层 `optExtraClass` 对空白串的口径一致；可选文本字段同办——空串仍按"未给"处理）。
+ *   5. **入参表以外的键一律拒**（每个对象层都查：顶层与 `points`／`bins`／`lags` 的每一枚；
+ *      写错的键静默吞掉最坑人——调用方以为自己设上了）。
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
@@ -38,6 +40,40 @@ export type {
 } from './forms.js';
 
 /* ── 校验 ─────────────────────────────────────────────────────────── */
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus: 1})` 那种继承来的键就是这一路）。
+ *
+ *  先例：`goal-stairs/model.ts`／`relation-picker/model.ts` 的同名小件（同一个规矩不在两处各写一套口径）。
+ */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `ScatterFitInput` 的键（顶层入参表；必填与可选都列全）。 */
+const INPUT_KEYS = ['title', 'xName', 'yName', 'xUnit', 'yUnit', 'stamp', 'form',
+  'points', 'bins', 'lags', 'note', 'extraClass'] as const;
+
+/** `ScatterFitPoint` 的键（`points` 的每一枚）。 */
+const POINT_KEYS = ['x', 'y', 'label', 'outlier'] as const;
+
+/** `ScatterFitBin` 的键（`bins` 的每一箱）。 */
+const BIN_KEYS = ['label', 'low', 'median', 'high', 'count'] as const;
+
+/** `ScatterFitLag` 的键（`lags` 的每一档）。 */
+const LAG_KEYS = ['step', 'r'] as const;
 
 /** 必填文本：非空串**且不是全空白**（全空白的标题会在屏上留一块空白，那是"看得到的错"）。 */
 function reqRealText(value: unknown, field: string): string {
@@ -84,6 +120,7 @@ function reqPoints(value: unknown): readonly ScatterFitPoint[] {
     const at = 'scatter-fit: input.points[' + String(i) + ']';
     assertPlainObject(item, at);
     const p = item as Record<string, unknown>;
+    assertKeys(p, POINT_KEYS, at);
     const x = reqReading(p.x, at + '.x');
     const y = reqReading(p.y, at + '.y');
     return {
@@ -107,6 +144,7 @@ function reqBins(value: unknown): readonly ScatterFitBin[] {
     const at = 'scatter-fit: input.bins[' + String(i) + ']';
     assertPlainObject(item, at);
     const b = item as Record<string, unknown>;
+    assertKeys(b, BIN_KEYS, at);
     const label = reqRealText(b.label, at + '.label');
     const nums: number[] = [];
     for (const key of ['low', 'median', 'high'] as const) {
@@ -143,6 +181,7 @@ function reqLags(value: unknown): readonly ScatterFitLag[] {
     const at = 'scatter-fit: input.lags[' + String(i) + ']';
     assertPlainObject(item, at);
     const g = item as Record<string, unknown>;
+    assertKeys(g, LAG_KEYS, at);
     const step = g.step;
     if (typeof step !== 'number' || !Number.isInteger(step) || step < 0 || step > SCATTER_FIT_MAX_LAG_DAYS) {
       badInput(at + '.step 必须是 0…' + String(SCATTER_FIT_MAX_LAG_DAYS)
@@ -160,6 +199,7 @@ function reqLags(value: unknown): readonly ScatterFitLag[] {
 export function normalizeScatterFit(input: unknown): ScatterFitModel {
   assertPlainObject(input, 'renderScatterFit: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderScatterFit: input');
 
   const form = raw.form === undefined ? SCATTER_FIT_FORMS[0] : raw.form;
   if (!(SCATTER_FIT_FORMS as readonly unknown[]).includes(form)) {

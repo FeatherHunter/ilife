@@ -8,6 +8,9 @@
  *      `scale.ts`，两个骨架的装配住 `forms.ts` —— 一次落两档，三件事挤在一件里会超本包告警线 350。
  *   3. **空白串不是文本**：全空白的 `title`／日子／档名会在屏上留一块空白，**一律拒**
  *      （与同层 `optExtraClass` 对空白串的口径一致；可选文本字段同办：空串仍按"未给"处理）。
+ *   4. **入参表以外的键一律拒**（每个对象层都查：顶层与 `days`／`stops`／`boxes` 的每一项；
+ *      三档形态的键**一张表列全**——`days` 的中位数、`stops` 的档名、`boxes` 那两种读法的字段都在表里，
+ *      漏一档就是把合法档判红）。
  */
 import { assertDenseArray, assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import {
@@ -38,6 +41,40 @@ export type {
 } from './forms.js';
 
 /* ── 校验 ─────────────────────────────────────────────────────────── */
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus: 1})` 那种继承来的键就是这一路）。
+ *
+ *  先例：`goal-stairs/model.ts`／`relation-picker/model.ts` 的同名小件（同一个规矩不在两处各写一套口径）。
+ */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `SpreadDistInput` 的键（顶层入参表；必填与可选都列全，三档形态的数组都在表里）。 */
+const INPUT_KEYS = ['title', 'form', 'days', 'stops', 'boxes', 'unit', 'stamp', 'note', 'extraClass'] as const;
+
+/** `SpreadDistDay` 的键（`days` 的每一天；`median` 不给＝那一天只画区间）。 */
+const DAY_KEYS = ['label', 'low', 'high', 'median'] as const;
+
+/** `SpreadDistStop` 的键（`stops` 的每一档）。 */
+const STOP_KEYS = ['name', 'value'] as const;
+
+/** `SpreadDistBox` 的键（`boxes` 的每一组；**两种读法**的字段都列全：
+ *  五数概括（`low`／`q1`／`q3`／`high`）＋ 离群点 ＋ 样本不足那一支的单笔读数）。 */
+const BOX_KEYS = ['label', 'count', 'median', 'low', 'q1', 'q3', 'high', 'outliers', 'points'] as const;
 
 /** 必填文本：非空串**且不是全空白**（全空白的标题会在屏上留一块空白，那是"看得到的错"）。 */
 function reqRealText(value: unknown, field: string): string {
@@ -97,6 +134,7 @@ function reqDays(value: unknown): readonly SpreadDistDay[] {
     const at = 'spread-dist: input.days[' + String(i) + ']';
     assertPlainObject(item, at);
     const d = item as Record<string, unknown>;
+    assertKeys(d, DAY_KEYS, at);
     const label = reqRealText(d.label, at + '.label');
     const low = reqNumber(d.low, at + '.low');
     const high = reqNumber(d.high, at + '.high');
@@ -130,6 +168,7 @@ function reqStops(value: unknown): readonly SpreadDistStop[] {
     const at = 'spread-dist: input.stops[' + String(i) + ']';
     assertPlainObject(item, at);
     const s = item as Record<string, unknown>;
+    assertKeys(s, STOP_KEYS, at);
     const name = reqRealText(s.name, at + '.name');
     if (seen.has(name)) badInput(at + '.name 与前面某一档同名（档名是这一格的坐标，两格同名就指代不了）');
     seen.add(name);
@@ -150,6 +189,7 @@ function reqBox(item: unknown, i: number): SpreadDistBox {
   const at = 'spread-dist: input.boxes[' + String(i) + ']';
   assertPlainObject(item, at);
   const b = item as Record<string, unknown>;
+  assertKeys(b, BOX_KEYS, at);
   const label = reqRealText(b.label, at + '.label');
   const count = reqCount(b.count, at + '.count');
   const median = reqNumber(b.median, at + '.median');
@@ -231,6 +271,7 @@ function reqBoxes(value: unknown): readonly SpreadDistBox[] {
 export function normalizeSpreadDist(input: unknown): SpreadDistModel {
   assertPlainObject(input, 'renderSpreadDist: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderSpreadDist: input');
 
   const form = raw.form === undefined ? SPREAD_DIST_FORMS[0] : raw.form;
   if (!(SPREAD_DIST_FORMS as readonly unknown[]).includes(form)) {

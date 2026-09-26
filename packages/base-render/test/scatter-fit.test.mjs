@@ -494,6 +494,43 @@ describe('scatter-fit ① 渲染契约 · 公共面与非法入参', () => {
     assert.deepEqual(got, [], '这些坏数被收下了（入参违规一律拒，必须抛 BlocksError）：' + got.join('；'));
   });
 
+  /* 返修 2026-09（跨件不变量门 ③ · 未知键一律拒）：顶层与**每个嵌套对象层**（三形态的每一枚）各加一个
+     `zzUnknown: 1`，渲染入口必须抛 `BlocksError`——写错的键静默吞掉时，屏上只是**静静地少一块**，而调用方
+     以为自己设上了。**继承来的与不可枚举的**键同样算（只走 `Object.keys` 会把这两类漏掉）。 */
+  it('**入参表以外的键一律拒**：顶层与每一枚点／箱／档都查（含继承来的与不可枚举的键）', () => {
+    const withKey = (input, path, key) => {
+      const clone = JSON.parse(JSON.stringify(input));
+      let at = clone;
+      for (const t of path) at = at[t];
+      at[key] = 1;
+      return clone;
+    };
+    const layers = [
+      ['顶层', SCATTER_INPUT, []],
+      ['点（`points[0]`）', SCATTER_INPUT, ['points', 0]],
+      ['箱（`bins[0]`）', BIN_INPUT, ['bins', 0]],
+      ['档（`lags[0]`）', LAG_INPUT, ['lags', 0]],
+    ];
+    for (const [label, input, path] of layers) {
+      assert.equal(typeof renderScatterFit(JSON.parse(JSON.stringify(input))), 'string', label + '：原样能渲出来');
+      assert.equal(throwsBlocks(() => renderScatterFit(withKey(input, path, 'zzUnknown'))), true,
+        label + ' 多给一个键（多半是打错名）必须拒，不许静默吞掉');
+    }
+    /* 可选键一个都不许被误拒（键表照 `attrs.ts` 的入参面逐字段列全：必填与可选都在表里）。 */
+    assert.equal(throwsBlocks(() => renderScatterFit({
+      title: 'T', xName: 'X', yName: 'Y', xUnit: '卡', yUnit: '公斤', stamp: '近 30 天', form: 'scatter',
+      note: '口径', extraClass: 'a b', points: [{ x: 1, y: 2, label: 'L', outlier: '点名' }],
+    })), false, '入参表里的可选键一个都不许误拒');
+    /* 先例口径的两条路都要走：`Object.create({zzUnknown:1})`（**继承来的**）与
+       `Object.defineProperty(…, {enumerable:false})`（**不可枚举的**）——`Object.keys` 两条都看不见。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }),
+      { title: 'T', xName: 'X', yName: 'Y', points: [{ x: 1, y: 2 }] });
+    assert.equal(throwsBlocks(() => renderScatterFit(inherited)), true, '顶层继承来的未知键');
+    const hidden = { title: 'T', xName: 'X', yName: 'Y', points: [{ x: 1, y: 2 }] };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderScatterFit(hidden)), true, '顶层不可枚举的未知键');
+  });
+
   it('上限下限是**自证**的（边界值能过、越界一条就拒），不抄字面量', () => {
     const base = { title: 'x', xName: 'A', yName: 'B' };
     const p = (n) => new Array(n).fill({ x: 1, y: 1 });
