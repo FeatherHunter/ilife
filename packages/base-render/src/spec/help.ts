@@ -27,12 +27,21 @@ export interface SceneTypeBadge {
   readonly fg?: string;
 }
 
+/** 场景可编辑字段输入类型闭集（#966 定案；#969 落契约）。缺 `kind` 视为 `text`。 */
+export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week';
+
 export interface SceneEditableField {
   readonly name: string;
   readonly label: string;
   readonly value: string;
   readonly hint?: string;
   readonly required?: boolean;
+  readonly kind?: SceneFieldKind;
+  readonly options?: readonly (string | { readonly value: string; readonly label: string })[];
+  readonly min?: string | number;
+  readonly max?: string | number;
+  readonly step?: string | number;
+  readonly placeholder?: string;
 }
 
 export interface Scene {
@@ -191,6 +200,25 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             value: { type: 'string' },
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
+                            kind: { enum: ['text', 'number', 'select', 'date', 'week'] },
+                            options: {
+                              type: 'array',
+                              items: {
+                                oneOf: [
+                                  { type: 'string' },
+                                  {
+                                    type: 'object',
+                                    additionalProperties: false,
+                                    required: ['value'],
+                                    properties: { value: { type: 'string' }, label: { type: 'string' } },
+                                  },
+                                ],
+                              },
+                            },
+                            min: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+                            max: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+                            step: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+                            placeholder: { type: 'string' },
                           },
                         },
                       },

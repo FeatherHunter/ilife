@@ -128,10 +128,10 @@
   .tab.active .t-ico{transform:scale(1.05)}
 
   /* ===== Sheet 弹层（高度自适应内容 · 不满屏不滚动）===== */
-  .sheet-mask{position:fixed;left:8px;right:8px;top:8px;bottom:8px;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:900;border-radius:36px}
+  .sheet-mask{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:900}
   .sheet-mask.show{opacity:1;pointer-events:auto}
-  .sheet{position:fixed;left:8px;right:8px;bottom:8px;background:var(--card);border-radius:22px 22px 36px 36px;padding:10px 16px calc(8px + env(safe-area-inset-bottom,0));transform:translateY(105%);transition:transform .32s cubic-bezier(.32,.72,.24,1);z-index:901;max-height:82%;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.25)}
-  .sheet.show{transform:translateY(0)}
+  .sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(105%);bottom:12px;width:min(560px,calc(100% - 16px));background:var(--card);border-radius:22px;padding:10px 16px calc(8px + env(safe-area-inset-bottom,0));transition:transform .32s cubic-bezier(.32,.72,.24,1);z-index:901;max-height:84%;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.25)}
+  .sheet.show{transform:translateX(-50%) translateY(0)}
   .sheet .grip{width:38px;height:4.5px;border-radius:999px;background:var(--line);margin:0 auto 12px;flex-shrink:0}
   .sheet .s-scroll{overflow-y:auto;flex:1;min-height:0;scrollbar-width:none;padding-bottom:66px}
   .sheet .s-scroll::-webkit-scrollbar{display:none}
@@ -146,6 +146,8 @@
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
   .sheet .pfield input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
   .sheet .pfield input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
+  .sheet .pfield select{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
+  .sheet .pfield select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
   /* 未填时：灰淡背景 + 提示文字（placeholder 由技能方提供）*/
   .sheet .pfield input:placeholder-shown{background:#f2f2f4;border-color:#e0e0e4;color:#8e8e93}
   .sheet .pfield input:placeholder-shown:focus{background:#fff;border-color:var(--blue)}
@@ -161,7 +163,8 @@
     .screen{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);overscroll-behavior-y:contain}
     .notch{display:none}
     .sheet-mask{left:0;right:0;top:0;bottom:0;border-radius:0}
-    .sheet{left:0;right:0;bottom:0;border-radius:22px 22px 0 0}
+    .sheet{left:0;right:0;transform:none;bottom:0;width:auto;max-height:94%;border-radius:22px 22px 0 0}
+    .sheet.show{transform:none}
   }
   /* ===== #642 小触摸目标：命中区扩到 ≥44×44（视觉尺寸一字不动）=====
      覆盖层挂在按钮自己的 ::after 上（绝对定位不参与布局，不吃独立点击事件）——命中的仍是按钮本体，
@@ -1690,7 +1693,9 @@ function normalizeScenes(scenes){
       dev: (s.status === '【待开发】'),
       prompt: s.prompt_template,
       params: (s.editable_fields || []).map(function(f){
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '' };
+        var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week') ? f.kind : 'text';
+        if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
       })
     };
   });
@@ -1766,24 +1771,70 @@ function tabIconHTML(g){
   return '<span class="t-ico"><span class="t-emoji">' + esc(g.icon) + '</span></span>';
 }
 
-/* ===== 参数机制：prompt + 末尾每行「key: value」===== */
+/* ===== 参数机制：代值后 prompt 全文 + 末尾每行「label: value」（#969）===== */
+function fieldKindOf(f){
+  var k = f && f.kind;
+  if (k === 'number' || k === 'select' || k === 'date' || k === 'week') return k;
+  if (k !== undefined && k !== null && k !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + k);}catch(e){} }
+  return 'text';
+}
+function substitutePrompt(tpl, fields, v){
+  var out = String(tpl || '');
+  (fields || []).forEach(function(f){
+    var key = f.key != null ? f.key : f.name;
+    var val = (v[key] != null ? String(v[key]) : '').trim();
+    if (val) out = out.split('{{' + key + '}}').join(val);
+  });
+  return out;
+}
 function readParams(id){
   var fm = document.querySelector('.pform[data-pid="' + id + '"]');
   var v = {};
-  if (fm) fm.querySelectorAll('input[data-p]').forEach(function(inp){ v[inp.dataset.p] = inp.value; });
+  if (fm) fm.querySelectorAll('[data-p]').forEach(function(inp){ v[inp.dataset.p] = inp.value; });
   return v;
 }
 function buildPrompt(s, v){
   v = v || {};
-  var lines = [s.prompt];
+  var base = substitutePrompt(s.prompt, s.params, v);
+  var lines = [base];
   var paramLines = [];
   (s.params || []).forEach(function(p){
-    var val = (v[p.key] != null ? v[p.key] : '').trim();
+    var val = (v[p.key] != null ? String(v[p.key]) : '').trim();
     if (val) paramLines.push(p.label + ': ' + val);
   });
   if (paramLines.length) lines.push(''); /* 空行分隔 */
   lines = lines.concat(paramLines);
   return lines.join('\n');
+}
+function fieldControlHTML(p){
+  var kind = fieldKindOf(p);
+  var ph = String(p.placeholder || p.hint || '');
+  if (kind === 'select') {
+    var opts = Array.isArray(p.options) ? p.options : [];
+    var emptyLabel = p.req ? '请选择' : '（选填，未选）';
+    var h = '<select data-p="' + esc(p.key) + '"><option value="">' + esc(emptyLabel) + '</option>';
+    opts.forEach(function(o){
+      var ov = (o && typeof o === 'object') ? String(o.value != null ? o.value : o.label) : String(o);
+      var ol = (o && typeof o === 'object') ? String(o.label != null ? o.label : o.value) : String(o);
+      var sel = (ov === String(p.value || '')) ? ' selected' : '';
+      h += '<option value="' + esc(ov) + '"' + sel + '>' + esc(ol) + '</option>';
+    });
+    return h + '</select>';
+  }
+  if (kind === 'number') {
+    var extra = '';
+    if (p.min !== undefined && p.min !== null && p.min !== '') extra += ' min="' + esc(String(p.min)) + '"';
+    if (p.max !== undefined && p.max !== null && p.max !== '') extra += ' max="' + esc(String(p.max)) + '"';
+    if (p.step !== undefined && p.step !== null && p.step !== '') extra += ' step="' + esc(String(p.step)) + '"';
+    return '<input data-p="' + esc(p.key) + '" type="number" inputmode="decimal" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '"' + extra + '>';
+  }
+  if (kind === 'date') {
+    return '<input data-p="' + esc(p.key) + '" type="date" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
+  }
+  if (kind === 'week') {
+    return '<input data-p="' + esc(p.key) + '" type="week" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
+  }
+  return '<input data-p="' + esc(p.key) + '" type="text" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
 }
 function getMissing(s, v){
   return (s.params || []).filter(function(p){ return p.req && !(v[p.key] || '').trim(); }).map(function(p){ return p.label; });
@@ -1949,21 +2000,27 @@ function openSheet(s){
     form = '<div class="pform" data-pid="' + s.id + '">';
     s.params.forEach(function(p){
       form += '<div class="pfield"><label>' + esc(p.label) + (p.req ? '' : '<em>选填</em>') + '</label>' +
-        '<input data-p="' + esc(p.key) + '" value="' + esc(p.value || '') + '" placeholder="' + esc(p.hint || '') + '"></div>';
+        fieldControlHTML(p) + '</div>';
     });
     form += '</div>';
   }
-  /* 预览：prompt + 末尾 key:value（有参数时实时重组）*/
-  var prev = '<div class="pprev"><span class="pv-label">Prompt 预览</span><span data-prev>' + esc(buildPrompt(s, {})) + '</span></div>';
+  /* 预览：代值后 prompt 全文 + 末尾 label:value（有参数时实时重组，#969）*/
+  var initVals = {};
+  (s.params || []).forEach(function(p){ initVals[p.key] = p.value || ''; });
+  var prev = '<div class="pprev"><span class="pv-label">Prompt 预览</span><span data-prev>' + esc(buildPrompt(s, initVals)) + '</span></div>';
   shBody.innerHTML = form + prev;
   shCopy.dataset.pid = s.id;
-  shCopy.dataset.c = buildPrompt(s, {});
+  shCopy.dataset.c = buildPrompt(s, initVals);
   /* 参数化实时预览 */
   var fm = sheet.querySelector('.pform');
-  if (fm) fm.addEventListener('input', function(){
-    var pv = sheet.querySelector('[data-prev]');
-    if (pv) pv.textContent = buildPrompt(s, readParams(s.id));
-  });
+  if (fm) {
+    var refreshPrev = function(){
+      var pv = sheet.querySelector('[data-prev]');
+      if (pv) pv.textContent = buildPrompt(s, readParams(s.id));
+    };
+    fm.addEventListener('input', refreshPrev);
+    fm.addEventListener('change', refreshPrev);
+  }
   mask.classList.add('show');
   sheet.classList.add('show');
   sheet.querySelector('.s-scroll').scrollTop = 0;
@@ -1989,7 +2046,7 @@ function showToast(){
   toast('已复制', '粘贴给 AI,技能会自动执行,完成后你会拿到结果 HTML。', {icon:'copy'});
 }
 function toastMsg(msg){
-  toast('请先填写: ' + msg, '填写完整后再复制指令', {icon:'warn', badge:{text:'未完成', type:'warn'}});
+  toast('请先填写：' + msg, '填写完整后再复制指令', {icon:'warn', badge:{text:'未完成', type:'warn'}});
 }
 function doCopy(text){
   var ta = document.createElement('textarea');

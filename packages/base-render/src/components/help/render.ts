@@ -50,6 +50,18 @@ function paramsText(scene: Scene, cli: string): string {
   return lines.length > 0 ? lines.join(LF) : cli;
 }
 
+/** 代值后 prompt 全文（#969）：`prompt_template` 里的 `{{name}}` 按同场景 `editable_fields`
+ *  缺省值代换；值为空（选填缺失）即留 `{{name}}` 原样，不吞句。无 `{{}}` 的老卡逐字不变。 */
+function substitutedPrompt(scene: Scene): string {
+  let out = scene.prompt_template;
+  for (const field of scene.editable_fields ?? []) {
+    if (field.value.trim() !== '') {
+      out = out.split('{{' + field.name + '}}').join(field.value);
+    }
+  }
+  return out;
+}
+
 /** 标题区（`skill_name`／`title`／`subtitle`；`subtitle` 必须渲染，F3 读而不渲染属缺陷）。 */
 export function renderHero(data: SceneData, sceneCount: number): string {
   const parts: string[] = ['<header class="' + cls('hero') + '">'];
@@ -155,10 +167,10 @@ function renderSceneCard(data: SceneData, group: SceneGroup, scene: Scene): stri
   const sheet: string[] = ['<details class="' + cls('sheet') + '">'];
   sheet.push('<summary class="' + cls('sheet-summary') + '">' + text('查看指令') + '</summary>');
   sheet.push('<div class="' + cls('sheet-body') + '">');
-  sheet.push('<pre class="' + cls('prompt') + '">' + text(scene.prompt_template) + '</pre>');
+  sheet.push('<pre class="' + cls('prompt') + '">' + text(substitutedPrompt(scene)) + '</pre>');
   if (fields.length > 0) sheet.push(renderFields(fields));
   sheet.push('<div class="' + cls('actions') + '">'
-    + renderCopyButton('prompt', scene.prompt_template)
+    + renderCopyButton('prompt', substitutedPrompt(scene))
     + renderCopyButton('wakeWord', scene.wake_word)
     + renderCopyButton('params', paramsText(scene, cli))
     + '</div>');

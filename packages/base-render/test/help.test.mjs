@@ -905,3 +905,81 @@ describe('renderHelpShell：模块纯度与单一真相（R8／R13）', () => {
     assert.deepEqual(Object.keys(module).sort(), ['HelpSchemaError', 'renderHelpShell']);
   });
 });
+
+/* ── ⑦ #969 详情页重构：kind 契约＋代值复制＋C 案模板 ─────────────────── */
+
+describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板一次到位）', () => {
+  it('schema 允许 kind/options/min/max/step/placeholder（只加可选，不收窄旧字段）', () => {
+    const props = SCENE_DATA_SCHEMA.properties.groups.items.properties.subgroups.items.properties.scenes.items.properties.editable_fields.items.properties;
+    assert.deepEqual(props.kind.enum, ['text', 'number', 'select', 'date', 'week']);
+    assert.equal(props.options.type, 'array');
+    assert.equal(props.placeholder.type, 'string');
+    assert.deepEqual(
+      SCENE_DATA_SCHEMA.properties.groups.items.properties.subgroups.items.properties.scenes.items.properties.editable_fields.items.required,
+      ['name', 'label', 'value'],
+    );
+    const { error } = attempt((data) => {
+      firstScene(data).editable_fields[0].kind = 'date';
+      firstScene(data).editable_fields[0].placeholder = 'YYYY-MM-DD';
+      firstScene(data).editable_fields[1].kind = 'select';
+      firstScene(data).editable_fields[1].options = [{ value: 'a', label: '甲' }, 'b'];
+    });
+    assert.equal(error, null, '合法 kind 扩展必须通过');
+  });
+
+  it('非法 kind 串 → schema-invalid（创作态 fail-closed）', () => {
+    expectCode((data) => { firstScene(data).editable_fields[0].kind = 'any'; }, 'schema-invalid',
+      /^\/groups\/0\/subgroups\/0\/scenes\/0\/editable_fields\/0\/kind$/);
+  });
+
+  it('无 kind 老卡照旧通过（缺省 text 向后兼容）', () => {
+    const { error, output } = attempt(() => {});
+    assert.equal(error, null, '存量无 kind 字段必须通过');
+    assert.ok(output.html.includes(CLS + '-prompt'), '老卡仍渲染 prompt 区');
+  });
+
+  it('代值后 prompt：{{name}} 按缺省值代换，选填缺失留原样', () => {
+    const data = fixtureData();
+    const scene = data.groups[0].subgroups[0].scenes[0];
+    scene.prompt_template = '记一餐：{{food}} {{grams}}克，日期{{date}}。' + LF + '备注{{note}}。';
+    scene.editable_fields = [
+      { name: 'food', label: '食物', value: '鸡胸肉', kind: 'text', required: true },
+      { name: 'grams', label: '克数', value: '150', kind: 'number', required: true },
+      { name: 'date', label: '日期', value: '2026-09-25', kind: 'date', required: true },
+      { name: 'note', label: '备注', value: '', required: false },
+    ];
+    const out = renderHelpShell({ sceneData: data, assets: ASSETS });
+    const card = cardFragment(out.html, 'home_today_overview');
+    const expectedPrompt = '记一餐：鸡胸肉 150克，日期2026-09-25。' + LF + '备注{{note}}。';
+    assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml(expectedPrompt) + '"'), true,
+      'prompt 复制文本必须是代值后全文，选填缺失留 {{name}} 原样');
+    assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml('食物: 鸡胸肉' + LF + '克数: 150' + LF + '日期: 2026-09-25') + '"'), true,
+      'params 复制行必须是 label:value，一行一行追加，空值省略');
+  });
+
+  it('复制载荷＝代值全文＋空行＋label:value 行（与模板 buildPrompt 同律）', () => {
+    const data = fixtureData();
+    const scene = data.groups[0].subgroups[0].scenes[0];
+    scene.prompt_template = '执行{{food}}。';
+    scene.editable_fields = [{ name: 'food', label: '食物', value: '米饭', kind: 'text' }];
+    const out = renderHelpShell({ sceneData: data, assets: ASSETS });
+    const card = cardFragment(out.html, 'home_today_overview');
+    const promptPayload = '执行米饭。';
+    const paramsPayload = '食物: 米饭';
+    assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml(promptPayload) + '"'), true);
+    assert.equal(card.includes(DEFAULT_DATA_ATTR + '="' + escapeHtml(paramsPayload) + '"'), true);
+    assert.equal(promptPayload + LF + LF + paramsPayload, '执行米饭。' + LF + LF + '食物: 米饭',
+      '交互模板 buildPrompt 同律：全文＋空行＋行行追加');
+  });
+
+  it('交互模板按 kind 分控件＋C 案收边＋全角 toast（读源断言，不执行浏览器）', () => {
+    const tpl = readFileSync(new URL('../assets/help-template.html', import.meta.url), 'utf8');
+    for (const needle of ['fieldControlHTML', 'substitutePrompt', "type=\"number\"", "type=\"date\"", "type=\"week\"", '<select data-p=']) {
+      assert.equal(tpl.includes(needle), true, '模板缺 kind 分支：' + needle);
+    }
+    assert.equal(tpl.includes('width:min(560px'), true, '桌面必须是 560px 收边，不再横跨全宽');
+    assert.equal(tpl.includes('.sheet.show{transform:none}'), true, '手机全屏 sheet 须覆盖居中位移');
+    assert.equal(tpl.includes('请先填写：'), true, '必填缺失 toast 文案沿原型票（全角冒号）');
+    assert.equal(tpl.includes("querySelectorAll('[data-p]')"), true, 'readParams 必须同时读 input 与 select');
+  });
+});
