@@ -1,0 +1,67 @@
+/** quick-capture · **组件出口**（本组件对外的唯一名字面）。
+ *
+ *  三件运行名：`renderQuickCapture(input)`（产标记，零 DOM）／`quickCaptureCss()`（样式段）／
+ *  `buildQuickCaptureJs()`（运行时段：点一格摊开它的候选 ＋ 点一枚候选改掉那一格 ＋ 存／分开填／记过的）。
+ *  标记契约（别的件／页面要按名字找元素时读它）：`QUICK_CAPTURE_CLASS`／`QUICK_CAPTURE_SLOTS`／
+ *  `quickCaptureSlot()`／`QUICK_CAPTURE_ATTR`／`QUICK_CAPTURE_BOX_ATTR`／`QUICK_CAPTURE_CELL_ATTR`／
+ *  `QUICK_CAPTURE_VALUE_ATTR`／`QUICK_CAPTURE_READ_ATTR`／`QUICK_CAPTURE_TRAY_ATTR`。
+ *  闭集与几何：`QUICK_CAPTURE_FORMS`（本件只落地 A 一档「一行式录入」，键名 `oneline`）／
+ *  `QUICK_CAPTURE_TOUCH_PX`／`QUICK_CAPTURE_GAP_PX`／`QUICK_CAPTURE_NARROW_PX`／
+ *  `QUICK_CAPTURE_MIN_CELLS`／`QUICK_CAPTURE_MAX_CELLS`／`QUICK_CAPTURE_MAX_CHOICES`。
+ *  四条事件：`QUICK_CAPTURE_EVENT_CHANGE`（那一句话变了）／`QUICK_CAPTURE_EVENT_PICK`（某一格改了）／
+ *  `QUICK_CAPTURE_EVENT_SAVE`（存）／`QUICK_CAPTURE_EVENT_SPLIT`（分开填）。
+ *  一个纯函数：`quickCaptureChoiceOn()`（**哪一枚是现在这一枚**——渲染期与运行时段同一份源码）。
+ *
+ *  用法与参数表见同目录 `README.md`。消费方走 `base-paint/blocks`（组件层出口），不走根出口。
+ */
+export {
+  QUICK_CAPTURE_ATTR,
+  QUICK_CAPTURE_BOUND_ATTR,
+  QUICK_CAPTURE_BOX_ATTR,
+  QUICK_CAPTURE_BOX_MIN_PX,
+  QUICK_CAPTURE_CELL_ATTR,
+  QUICK_CAPTURE_CLASS,
+  QUICK_CAPTURE_CONTAINER,
+  QUICK_CAPTURE_EVENT_CHANGE,
+  QUICK_CAPTURE_EVENT_PICK,
+  QUICK_CAPTURE_EVENT_SAVE,
+  QUICK_CAPTURE_EVENT_SPLIT,
+  QUICK_CAPTURE_FORMS,
+  QUICK_CAPTURE_FORM_ATTR,
+  QUICK_CAPTURE_GAP_PX,
+  QUICK_CAPTURE_HOVER_QUERY,
+  QUICK_CAPTURE_KEEP_ATTR,
+  QUICK_CAPTURE_MAX_CELLS,
+  QUICK_CAPTURE_MAX_CHOICES,
+  QUICK_CAPTURE_MAX_RECENT,
+  QUICK_CAPTURE_MIN_CELLS,
+  QUICK_CAPTURE_MIN_CHOICES,
+  QUICK_CAPTURE_NARROW_PX,
+  QUICK_CAPTURE_PEN_PX,
+  QUICK_CAPTURE_PICK_ATTR,
+  QUICK_CAPTURE_READ_ATTR,
+  QUICK_CAPTURE_RECALL_ATTR,
+  QUICK_CAPTURE_RUNTIME_ATTR,
+  QUICK_CAPTURE_SAVE_ATTR,
+  QUICK_CAPTURE_SLOTS,
+  QUICK_CAPTURE_SPLIT_ATTR,
+  QUICK_CAPTURE_TEXT,
+  QUICK_CAPTURE_TEXT_ATTR,
+  QUICK_CAPTURE_TICK,
+  QUICK_CAPTURE_TICK_PX,
+  QUICK_CAPTURE_TOUCH_PX,
+  QUICK_CAPTURE_TRAY_ATTR,
+  QUICK_CAPTURE_VALUE_ATTR,
+  quickCaptureChoiceOn,
+  quickCaptureSlot,
+} from './attrs.js';
+export type {
+  QuickCaptureCell,
+  QuickCaptureChoice,
+  QuickCaptureForm,
+  QuickCaptureInput,
+  QuickCaptureSlot,
+} from './attrs.js';
+export { renderQuickCapture } from './render.js';
+export { quickCaptureCss } from './style.js';
+export { buildQuickCaptureJs } from './runtime.js';
