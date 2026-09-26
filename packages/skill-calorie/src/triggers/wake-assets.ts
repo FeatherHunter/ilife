@@ -176,9 +176,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记一餐",
             "wake_word": "记一餐",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐」。\n\n我刚吃了一顿,帮我记录。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:____\n克数(选填,默认按食品库每 100g):____\n\n⚠️ 同餐多食物(用「和/、/同时/一起」连接)必须合并为 1 个回执:全部食物确认后一次调用 --live-diet-batch-meal(issue #158),禁止逐个 --live-diet-add。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐」。\n\n我刚吃了一顿,帮我记录。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}\n克数(选填):{{grams}}\n\n⚠️ 同餐多食物(用「和/、/同时/一起」连接)必须合并为 1 个回执:全部食物确认后一次调用 --live-diet-batch-meal(issue #158),禁止逐个 --live-diet-add。",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_name",
+                "label": "食物名称",
+                "value": "",
+                "hint": "如 鸡胸肉",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "grams",
+                "label": "克数(选填)",
+                "value": "",
+                "hint": "默认按食品库每100g；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -186,9 +204,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记一餐（含备注）",
             "wake_word": "记一餐（含备注）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐（含备注）」。\n\n我刚吃了一顿,要连同备注一起记录(如「加了辣酱」「食堂打的」)。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:____\n克数(选填,默认按食品库每 100g):____\n备注:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记一餐（含备注）」。\n\n我刚吃了一顿,要连同备注一起记录(如「加了辣酱」「食堂打的」)。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}\n克数(选填):{{grams}}\n备注:{{note}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_name",
+                "label": "食物名称",
+                "value": "",
+                "hint": "如 鸡胸肉",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "grams",
+                "label": "克数(选填)",
+                "value": "",
+                "hint": "默认按食品库每100g；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "note",
+                "label": "备注",
+                "value": "",
+                "hint": "如 加了辣酱、食堂打的",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -196,9 +240,43 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "补记饮食",
             "wake_word": "补记饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记饮食」。\n\n我要补录之前某天的饮食(不是现在吃的)。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:____\n日期(YYYY-MM-DD):____\n时间(选填):____\n克数(选填,默认按食品库每 100g):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「补记饮食」。\n\n我要补录之前某天的饮食(不是现在吃的)。如果我没说全克数或营养,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}\n日期:{{log_date}}\n时间(选填):{{log_time}}\n克数(选填):{{grams}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_name",
+                "label": "食物名称",
+                "value": "",
+                "hint": "如 鸡胸肉",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "log_time",
+                "label": "时间(选填)",
+                "value": "",
+                "hint": "如 12:30，也可写 早上；不校验 HH:MM",
+                "required": false,
+                "kind": "text"
+              },
+              {
+                "name": "grams",
+                "label": "克数(选填)",
+                "value": "",
+                "hint": "默认按食品库每100g；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -206,9 +284,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量补记饮食",
             "wake_word": "批量补记饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补记饮食」。\n\n我要一次补录多餐(不同日期/不同餐别),一行一餐地说。写之前先给我看整理好的清单,确认无误再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n每行一餐(日期/时间/食物/克数/营养,换行分隔):\n____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量补记饮食」。\n\n我要一次补录多餐(不同日期/不同餐别),一行一餐地说。写之前先给我看整理好的清单,确认无误再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n每行一餐:\n{{meals_text}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "meals_text",
+                "label": "每行一餐",
+                "value": "",
+                "hint": "每行一餐，含日期/时间/食物/克数/营养，换行分隔；写前先看清单确认",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -216,9 +304,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "拍营养表记一餐",
             "wake_word": "拍营养表记一餐",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拍营养表记一餐」。\n\n我刚吃了这个食物,手边有包装。我拍下包装上的营养成分表给你,请你识别出热量/蛋白/碳水/脂肪等字段,给我看识别结果(照片 + 识别出的营养),我确认后记入今天的饮食。识别不确定的地方标注一下。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n营养表图片路径:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拍营养表记一餐」。\n\n我刚吃了这个食物,手边有包装。我拍下包装上的营养成分表给你,请你识别出热量/蛋白/碳水/脂肪等字段,给我看识别结果(照片 + 识别出的营养),我确认后记入今天的饮食。识别不确定的地方标注一下。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n营养表图片路径:{{image_path}}",
             "types": [
               "过程"
+            ],
+            "editable_fields": [
+              {
+                "name": "image_path",
+                "label": "营养表图片路径",
+                "value": "",
+                "hint": "营养表图片路径；识别不确定处标注，确认后记入今天",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -226,9 +324,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "拍营养表补记一餐",
             "wake_word": "拍营养表补记一餐",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拍营养表补记一餐」。\n\n我某天吃了这个食物但忘了记,现在手边有包装,拍给你识别。请你识别出热量/蛋白/碳水/脂肪等字段,给我看识别结果(照片 + 识别出的营养 + 补录日期),我确认后按那天记入饮食。识别不确定的地方标注一下。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n营养表图片路径:____\n日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「拍营养表补记一餐」。\n\n我某天吃了这个食物但忘了记,现在手边有包装,拍给你识别。请你识别出热量/蛋白/碳水/脂肪等字段,给我看识别结果(照片 + 识别出的营养 + 补录日期),我确认后按那天记入饮食。识别不确定的地方标注一下。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n营养表图片路径:{{image_path}}\n日期:{{log_date}}",
             "types": [
               "过程"
+            ],
+            "editable_fields": [
+              {
+                "name": "image_path",
+                "label": "营养表图片路径",
+                "value": "",
+                "hint": "营养表图片路径；识别不确定处标注，确认后按那天记入",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -236,9 +352,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "记喝水",
             "wake_word": "记喝水",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记喝水」。\n\n我喝了水,帮我记录。如果我说「喝了几杯」,请按一杯约 250ml 折算成总量;如果我只说了杯子大小,先问我确认。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n喝水量(ml,或「几杯」):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「记喝水」。\n\n我喝了水,帮我记录。如果我说「喝了几杯」,请按一杯约 250ml 折算成总量;如果我只说了杯子大小,先问我确认。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n喝水量:{{water_ml}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "water_ml",
+                "label": "喝水量",
+                "value": "",
+                "hint": "单位 ml，只收纯数字；如说几杯按一杯≈250ml折算，只说杯子大小先确认",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -246,9 +372,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "复制昨日饮食",
             "wake_word": "复制昨日饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制昨日饮食」。\n\n我要把昨天(或指定某天)吃的东西原样复制到今天(或指定某天),省得重新记。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n来源日期(选填,默认昨天):____\n目标日期(选填,默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「复制昨日饮食」。\n\n我要把昨天(或指定某天)吃的东西原样复制到今天(或指定某天),省得重新记。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n来源日期(选填):{{source_date}}\n目标日期(选填):{{target_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "source_date",
+                "label": "来源日期(选填)",
+                "value": "",
+                "hint": "空＝昨天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              },
+              {
+                "name": "target_date",
+                "label": "目标日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -262,9 +406,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改饮食记录",
             "wake_word": "改饮食记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改饮食记录」。\n\n我要改某条饮食记录。如果我没说清是哪条,请先列出最近的记录让我选。改之前先给我看这条记录的当前内容。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录(如「最近一条」或日期+食物):____\n要改的字段(食物/克数/热量/蛋白/碳水/脂肪/日期/时间/备注):____\n新值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改饮食记录」。\n\n我要改某条饮食记录。如果我没说清是哪条,请先列出最近的记录让我选。改之前先给我看这条记录的当前内容。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要改的记录:{{record_ref}}\n要改的字段:{{field_name}}\n新值:{{new_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "record_ref",
+                "label": "要改的记录",
+                "value": "",
+                "hint": "如 最近一条，或日期+食物；没说清先列最近记录选",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "field_name",
+                "label": "要改的字段",
+                "value": "",
+                "hint": "如 食物、克数、热量、蛋白、碳水、脂肪、日期、时间、备注",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_value",
+                "label": "新值",
+                "value": "",
+                "hint": "要写入的新值；改前先看当前内容",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -272,9 +442,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改某日饮食",
             "wake_word": "改某日饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日饮食」。\n\n我要改某一天的全部饮食记录(如那天的时间/克数/备注都记错了)。改之前先告诉我那天有几条记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD):____\n要改的字段与新值(如 备注=修正):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改某日饮食」。\n\n我要改某一天的全部饮食记录(如那天的时间/克数/备注都记错了)。改之前先告诉我那天有几条记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}\n要改的字段与新值:{{field_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "field_value",
+                "label": "要改的字段与新值",
+                "value": "",
+                "hint": "如 备注=修正；改前先告诉那天有几条",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -282,9 +470,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删饮食记录",
             "wake_word": "删饮食记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删饮食记录」。\n\n我要删一条饮食记录。如果我没说清是哪条,请先列出最近的几条让我选。删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填,如「最近一条」或日期):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删饮食记录」。\n\n我要删一条饮食记录。如果我没说清是哪条,请先列出最近的几条让我选。删除前先给我看这条记录的内容,确认无误再删,最后给我确认回执。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n要删的记录(选填):{{record_ref}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "record_ref",
+                "label": "要删的记录(选填)",
+                "value": "",
+                "hint": "如 最近一条或日期；没说清先列最近几条选，删除前先看内容确认",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -292,9 +490,28 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删一餐",
             "wake_word": "删一餐",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删一餐」。\n\n我要删某天某一餐的全部记录(如删掉今天的早餐)。如果我没说日期默认今天。删除前告诉我这一餐有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n餐别(早餐/午餐/下午茶/晚餐/夜宵/加餐):____\n日期(选填,默认今天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删一餐」。\n\n我要删某天某一餐的全部记录(如删掉今天的早餐)。如果我没说日期默认今天。删除前告诉我这一餐有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n餐别:{{meal_type}}\n日期(选填):{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "meal_type",
+                "label": "餐别",
+                "value": "",
+                "hint": "从6项中选一项，机器值必须命中一项",
+                "required": true,
+                "kind": "select",
+                "options": ["早餐","午餐","下午茶","晚餐","夜宵","加餐"]
+              },
+              {
+                "name": "log_date",
+                "label": "日期(选填)",
+                "value": "",
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD",
+                "required": false,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -302,9 +519,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "删某日饮食",
             "wake_word": "删某日饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日饮食」。\n\n我要清空某一天的整日饮食记录。删除前告诉我那天有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「删某日饮食」。\n\n我要清空某一天的整日饮食记录。删除前告诉我那天有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -312,9 +539,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量删饮食",
             "wake_word": "批量删饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删饮食」。\n\n我要按日期范围批量删除饮食记录。删除前告诉我这个范围有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量删饮食」。\n\n我要按日期范围批量删除饮食记录。删除前告诉我这个范围有几条,确认后删除。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -328,7 +573,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日饮食",
             "wake_word": "看今日饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日饮食」。\n\n我想看今天的饮食。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日饮食」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -338,7 +583,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看昨日饮食",
             "wake_word": "看昨日饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看昨日饮食」。\n\n我想看昨天的饮食。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看昨日饮食」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -408,9 +653,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看某段时间饮食",
             "wake_word": "看某段时间饮食",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间饮食」。\n\n我想看自定义日期区间的饮食明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看某段时间饮食」。\n\n我想看自定义日期区间的饮食明细。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -418,7 +681,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看今日喝水",
             "wake_word": "看今日喝水",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日喝水」。\n\n我想看今天的饮水。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看今日喝水」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -428,9 +691,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看「有备注」的饮食记录",
             "wake_word": "看有备注的饮食记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看有备注的饮食记录」。\n\n我想看带备注的饮食记录(如「加了辣酱」「食堂打的」)。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填,默认最近 7 天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看有备注的饮食记录」。\n\n我想看带备注的饮食记录(如「加了辣酱」「食堂打的」)。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近 7 天；也可指定时间范围",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -444,9 +717,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "查食品",
             "wake_word": "查食品",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查食品」。\n\n我想查某食物的营养数据。如果没查到精确的,给我相近的几条。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查食品」。\n\n我想查某食物的营养数据。如果没查到精确的,给我相近的几条。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食物名称:{{food_name}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_name",
+                "label": "食物名称",
+                "value": "",
+                "hint": "如 鸡胸肉；没查到精确的给相近几条",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -454,9 +737,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "查食品（按分类）",
             "wake_word": "查食品（按分类）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查食品（按分类）」。\n\n我想按分类查食品库(如 饮料/主食/蛋白类/水果/零食):列出该分类全部食品 + 营养数据,按分类分组。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n分类名称:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「查食品（按分类）」。\n\n我想按分类查食品库(如 饮料/主食/蛋白类/水果/零食):列出该分类全部食品 + 营养数据,按分类分组。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n分类名称:{{category_name}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "category_name",
+                "label": "分类名称",
+                "value": "",
+                "hint": "如 饮料、主食、蛋白类、水果、零食；列出该分类全部食品按分类分组",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -464,9 +757,99 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "存食品",
             "wake_word": "存食品",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「存食品」。\n\n我要把新食品的营养数据存进食品库(每 100g 为基准)。告诉我必填字段:名称/品牌/热量/蛋白/脂肪/饱和脂肪/碳水/糖/纤维/钠/来源。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称:____\n品牌:____\n热量(每 100g):____\n蛋白:____\n脂肪:____\n饱和脂肪(选填):____\n碳水:____\n糖(选填):____\n纤维(选填):____\n钠:____\n来源(选填):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「存食品」。\n\n我要把新食品的营养数据存进食品库(每 100g 为基准)。告诉我必填字段:名称/品牌/热量/蛋白/脂肪/饱和脂肪/碳水/糖/纤维/钠/来源。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称:{{food_name}}\n品牌:{{brand}}\n热量:{{calories}}\n蛋白:{{protein}}\n脂肪:{{fat}}\n饱和脂肪(选填):{{saturated_fat}}\n碳水:{{carbs}}\n糖(选填):{{sugar}}\n纤维(选填):{{fiber}}\n钠:{{sodium}}\n来源(选填):{{source}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_name",
+                "label": "食品名称",
+                "value": "",
+                "hint": "如 鸡胸肉",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "brand",
+                "label": "品牌",
+                "value": "",
+                "hint": "如 某品牌",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "calories",
+                "label": "热量",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "protein",
+                "label": "蛋白",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "fat",
+                "label": "脂肪",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "saturated_fat",
+                "label": "饱和脂肪(选填)",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "carbs",
+                "label": "碳水",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "sugar",
+                "label": "糖(选填)",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "fiber",
+                "label": "纤维(选填)",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": false,
+                "kind": "number"
+              },
+              {
+                "name": "sodium",
+                "label": "钠",
+                "value": "",
+                "hint": "每100g为基准；纯数字，不带单位",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "source",
+                "label": "来源(选填)",
+                "value": "",
+                "hint": "如 包装标签",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -474,9 +857,35 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "改食品",
             "wake_word": "改食品",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改食品」。\n\n我要改食品库里某条食品的营养数据。如果我没说清是哪条,先列出相近的几条让我选。改前给我看原值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称或编号:____\n要改的字段(热量/蛋白/脂肪/碳水/糖/钠/品牌等):____\n新值:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「改食品」。\n\n我要改食品库里某条食品的营养数据。如果我没说清是哪条,先列出相近的几条让我选。改前给我看原值。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称或编号:{{food_ref}}\n要改的字段:{{field_name}}\n新值:{{new_value}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_ref",
+                "label": "食品名称或编号",
+                "value": "",
+                "hint": "食品名称或编号；没说清先列相近几条选，改前看原值",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "field_name",
+                "label": "要改的字段",
+                "value": "",
+                "hint": "如 热量、蛋白、脂肪、碳水、糖、钠、品牌等",
+                "required": true,
+                "kind": "text"
+              },
+              {
+                "name": "new_value",
+                "label": "新值",
+                "value": "",
+                "hint": "要写入的新值",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -484,9 +893,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "下架食品",
             "wake_word": "下架食品",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「下架食品」。\n\n我要把食品库里的某条食品下架(标废弃,以后查询/搜索/导入去重都不再出现)。先确认是哪条,下架后给我回执并提示「已下架」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称或编号:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「下架食品」。\n\n我要把食品库里的某条食品下架(标废弃,以后查询/搜索/导入去重都不再出现)。先确认是哪条,下架后给我回执并提示「已下架」。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n食品名称或编号:{{food_ref}}",
             "types": [
               "回执"
+            ],
+            "editable_fields": [
+              {
+                "name": "food_ref",
+                "label": "食品名称或编号",
+                "value": "",
+                "hint": "确认是哪条；下架后回执并提示已下架",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -504,9 +923,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "批量导入食品",
             "wake_word": "批量导入食品",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量导入食品」。\n\n我有一个食品数据文件(每行一条:名称/热量/蛋白/脂肪/碳水/钠/来源等)要批量导入食品库。先给我看导入预览(导入条数/跳过条数/失败明细),我确认后再真正写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「批量导入食品」。\n\n我有一个食品数据文件(每行一条:名称/热量/蛋白/脂肪/碳水/钠/来源等)要批量导入食品库。先给我看导入预览(导入条数/跳过条数/失败明细),我确认后再真正写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:{{file_path}}",
             "types": [
               "过程"
+            ],
+            "editable_fields": [
+              {
+                "name": "file_path",
+                "label": "文件路径",
+                "value": "",
+                "hint": "食品数据文件路径，每行一条；先看导入预览确认后再写入",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -514,9 +943,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "校验批量导入",
             "wake_word": "校验批量导入",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「校验批量导入」。\n\n我有一个食品数据文件(每行一条),只想先校验能不能导入,不真正写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「校验批量导入」。\n\n我有一个食品数据文件(每行一条),只想先校验能不能导入,不真正写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:{{file_path}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "file_path",
+                "label": "文件路径",
+                "value": "",
+                "hint": "食品数据文件路径，每行一条；只校验不写入",
+                "required": true,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -540,9 +979,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看营养结构",
             "wake_word": "看营养结构",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看营养结构」。\n\n我想看最近一段时间(默认 7 天)的蛋白/碳水/脂肪占比。如果我要看别的窗口会告诉你。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填,默认最近 7 天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看营养结构」。\n\n我想看最近一段时间(默认 7 天)的蛋白/碳水/脂肪占比。如果我要看别的窗口会告诉你。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近 7 天；也可指定别的窗口，看蛋白/碳水/脂肪占比",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -560,7 +1009,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看饮食总览",
             "wake_word": "看饮食总览",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看饮食总览」。\n\n我想看周期累计的饮食总览。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看饮食总览」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -570,9 +1019,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看营养素深度",
             "wake_word": "看营养素深度",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看营养素深度」。\n\n我想看微量营养素摄入。食品库没有的按缺数据标注。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填,默认最近 7 天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看营养素深度」。\n\n我想看微量营养素摄入。食品库没有的按缺数据标注。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近 7 天；也可指定；缺库按缺数据标注",
+                "required": false,
+                "kind": "text"
+              }
             ]
           }
         ]
@@ -636,9 +1095,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看全部排行榜",
             "wake_word": "看全部排行榜",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看全部排行榜」。\n\n我想同时看所有食物榜单。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填,默认最近 7 天):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看全部排行榜」。\n\n我想同时看所有食物榜单。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近 7 天；也可指定",
+                "required": false,
+                "kind": "text"
+              }
             ]
           },
           {
@@ -666,9 +1135,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看高热量榜（自定义）",
             "wake_word": "看高热量榜（自定义）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高热量榜（自定义）」。\n\n我想看自定义日期区间热量最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高热量榜（自定义）」。\n\n我想看自定义日期区间热量最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -696,9 +1183,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看低热量榜（自定义）",
             "wake_word": "看低热量榜（自定义）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看低热量榜（自定义）」。\n\n我想看自定义日期区间热量最低的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看低热量榜（自定义）」。\n\n我想看自定义日期区间热量最低的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -726,9 +1231,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看频繁吃榜（自定义）",
             "wake_word": "看频繁吃榜（自定义）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看频繁吃榜（自定义）」。\n\n我想看自定义日期区间吃得最多的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看频繁吃榜（自定义）」。\n\n我想看自定义日期区间吃得最多的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -756,9 +1279,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看高碳水榜（自定义）",
             "wake_word": "看高碳水榜（自定义）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高碳水榜（自定义）」。\n\n我想看自定义日期区间碳水最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高碳水榜（自定义）」。\n\n我想看自定义日期区间碳水最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -786,9 +1327,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看高蛋白榜（自定义）",
             "wake_word": "看高蛋白榜（自定义）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高蛋白榜（自定义）」。\n\n我想看自定义日期区间蛋白最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看高蛋白榜（自定义）」。\n\n我想看自定义日期区间蛋白最高的食物 TOP 10。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -802,7 +1361,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "饮食复盘（本周）",
             "wake_word": "饮食复盘（本周）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（本周）」。\n\n我想看本周饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（本周）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -812,7 +1371,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "饮食复盘（本月）",
             "wake_word": "饮食复盘（本月）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（本月）」。\n\n我想看本月饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（本月）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -822,7 +1381,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "饮食复盘（最近 90 天）",
             "wake_word": "饮食复盘（最近 90 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（最近 90 天）」。\n\n我想看最近 90 天饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（最近 90 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -832,7 +1391,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "饮食复盘（今年）",
             "wake_word": "饮食复盘（今年）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（今年）」。\n\n我想看今年饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（今年）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -842,9 +1401,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "饮食复盘（自定义时间）",
             "wake_word": "饮食复盘（自定义时间）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（自定义时间）」。\n\n我想看自定义日期区间的饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(YYYY-MM-DD):____\n结束日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「饮食复盘（自定义时间）」。\n\n我想看自定义日期区间的饮食复盘。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -858,7 +1435,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看早餐（最近 7 天）",
             "wake_word": "看早餐（最近 7 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看早餐（最近 7 天）」。\n\n我想看最近 7 天早餐的饮食。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看早餐（最近 7 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -868,7 +1445,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看午餐（最近 7 天）",
             "wake_word": "看午餐（最近 7 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看午餐（最近 7 天）」。\n\n我想看最近 7 天午餐的饮食。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看午餐（最近 7 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -878,7 +1455,7 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看晚餐（最近 7 天）",
             "wake_word": "看晚餐（最近 7 天）",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看晚餐（最近 7 天）」。\n\n我想看最近 7 天晚餐的饮食。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看晚餐（最近 7 天）」。\n\n交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "types": [
               "结果"
             ]
@@ -914,7 +1491,17 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看「有备注」的饮食记录",
             "wake_word": "看「有备注」的饮食记录",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看「有备注」的饮食记录」。\n\n我想看带备注的饮食记录(如「加了辣酱」「食堂打的」)。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填,默认最近 7 天):____"
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看「有备注」的饮食记录」。\n\n我想看带备注的饮食记录(如「加了辣酱」「食堂打的」)。时间范围默认最近 7 天,也可指定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围(选填):{{time_range}}",
+            "editable_fields": [
+              {
+                "name": "time_range",
+                "label": "时间范围(选填)",
+                "value": "",
+                "hint": "空＝最近 7 天；也可指定时间范围",
+                "required": false,
+                "kind": "text"
+              }
+            ]
           }
         ]
       }
