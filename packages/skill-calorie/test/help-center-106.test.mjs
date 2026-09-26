@@ -184,7 +184,7 @@ test('② 数据层：exec 场景的 `editable_fields` 形状固定（命令＋�
 });
 
 test('③ 冻结面恒 130 条／`Scene` 属性集不变（红点：往 Scene 上加 cli 字段）', () => {
-  assert.equal(SPEC_FROZEN_SURFACE.length, 148);
+  assert.equal(SPEC_FROZEN_SURFACE.length, 178);
   assert.equal(SPEC_FROZEN_SURFACE.filter((e) => e.status === 'pending').length, 0);
   const sceneProps = SCENE_DATA_SCHEMA.properties.groups.items.properties.subgroups
     .items.properties.scenes.items.properties;

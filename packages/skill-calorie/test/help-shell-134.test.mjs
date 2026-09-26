@@ -85,8 +85,8 @@ test('#134 ③ 手机端≤500px 沉浸：stage 归零＋screen 滚动容器＋s
   assert.ok(html.includes('.stage{padding:0;background:var(--bg)}'), '沉浸须把 stage 内边距归零');
   assert.ok(html.includes('.screen{height:100%;overflow-y:auto'), 'screen 须变滚动容器');
   assert.ok(
-    html.includes('.sheet{left:0;right:0;bottom:0;border-radius:22px 22px 0 0}'),
-    'sheet 须变 iOS 抽屉',
+    html.includes('.sheet{left:0;right:0;transform:none;bottom:0;width:auto;max-height:94%;border-radius:22px 22px 0 0}'),
+    'sheet 须变 iOS 抽屉（C 案定案：复位居中位移＋宽高收束）',
   );
 });
 

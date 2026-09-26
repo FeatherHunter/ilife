@@ -153,6 +153,13 @@
   .sheet .pfield input:placeholder-shown:focus{background:#fff;border-color:var(--blue)}
   .sheet .pprev{margin-top:9px;background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.65;word-break:break-all;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .sheet .pprev .pv-label{font-size:9px;color:#8e8e93;display:block;letter-spacing:.05em;margin-bottom:4px}
+  /* 预览默认收起：折叠入口零文案（小箭头），展开里是黑盒原文（#970 用户拍板） */
+  .sheet .pprev-fold{margin-top:9px}
+  .sheet .pprev-fold summary.fold{cursor:pointer;list-style:none;text-align:center;color:var(--fg3)}
+  .sheet .pprev-fold summary.fold::-webkit-details-marker{display:none}
+  .sheet .pprev-fold summary.fold::after{content:"﹀";display:inline-block;border:1px solid var(--line);border-radius:50%;width:22px;height:22px;line-height:22px;font-size:11px}
+  .sheet .pprev-fold[open] summary.fold::after{content:"︿"}
+  .sheet .pprev-fold .pprev{margin-top:8px}
   .sheet .s-actions{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0));display:flex;gap:8px;flex-shrink:0}
   .sheet .s-actions .copy-btn{flex:1;min-height:48px;font-size:13px;font-weight:600;border-radius:12px;background:var(--blue);color:#fff;border:0;box-shadow:none}
   @media(max-width:500px){
@@ -2012,7 +2019,7 @@ function openSheet(s){
   /* 预览：代值后 prompt 全文 + 末尾 label:value（有参数时实时重组，#969）*/
   var initVals = {};
   (s.params || []).forEach(function(p){ initVals[p.key] = p.value || ''; });
-  var prev = '<div class="pprev"><span class="pv-label">Prompt 预览</span><span data-prev>' + esc(buildPrompt(s, initVals)) + '</span></div>';
+  var prev = '<details class="pprev-fold"><summary class="fold" aria-label="展开"></summary><div class="pprev"><span data-prev>' + esc(buildPrompt(s, initVals)) + '</span></div></details>';
   shBody.innerHTML = form + prev;
   shCopy.dataset.pid = s.id;
   shCopy.dataset.c = buildPrompt(s, initVals);
