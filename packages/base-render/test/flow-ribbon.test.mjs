@@ -523,6 +523,37 @@ describe('flow-ribbon ① 转义面与非法入参（逐条断 BlocksError）', 
     assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, links: [null] })), true, '流量元素不是对象');
   });
 
+  it('**坏数一律拒**：每个 number 字段 × `Infinity`／`-Infinity`／`NaN`／`1e308`／`-1e308`（跨件不变量 ① 的落点）', () => {
+    const ok = { title: 'x', sources: [{ name: 'A' }], uses: [{ name: 'B' }], links: [{ from: 'A', to: 'B', amount: 1 }] };
+    const BAD = [['Infinity', Infinity], ['-Infinity', -Infinity], ['NaN', Number.NaN], ['1e308', 1e308], ['-1e308', -1e308]];
+    for (const [what, v] of BAD) {
+      assert.equal(throwsBlocks(() => renderFlowRibbon({ ...ok, links: [{ from: 'A', to: 'B', amount: v }] })), true,
+        '入参里的流量金额收下了 ' + what + '（非法入参一律 `BlocksError`，不许静默降级）');
+    }
+    /* 边界自证：闸是"两笔同量级的读数相加不溢出"，不是"看着大就拒"——`MAX_VALUE ÷ 4`（两笔相加仍有限）照收。 */
+    assert.ok(renderFlowRibbon({ ...ok, links: [{ from: 'A', to: 'B', amount: Number.MAX_VALUE / 4 }] }).length > 0,
+      'MAX_VALUE ÷ 4 应正常渲染（量级闸不许误杀界内的大读数）');
+  });
+
+  it('**未知键一律拒**：顶层与每个嵌套对象层；继承来的与不可枚举的键同样算（跨件不变量 ③ 的落点）', () => {
+    const ok = { title: 'x', sources: [{ name: 'A' }], uses: [{ name: 'B' }], links: [{ from: 'A', to: 'B', amount: 1 }] };
+    const cases = [
+      ['顶层', { ...ok, zzUnknown: 1 }],
+      ['sources[0]', { ...ok, sources: [{ name: 'A', zzUnknown: 1 }] }],
+      ['uses[0]', { ...ok, uses: [{ name: 'B', zzUnknown: 1 }] }],
+      ['links[0]', { ...ok, links: [{ from: 'A', to: 'B', amount: 1, zzUnknown: 1 }] }],
+    ];
+    for (const [where, input] of cases) {
+      assert.equal(throwsBlocks(() => renderFlowRibbon(input)), true, where + ' 的未知键被静默吞掉了');
+    }
+    /* 只走 `Object.keys` 会漏的两路：原型链上继承来的（`for…in`）与不可枚举的（`getOwnPropertyNames`）。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), ok);
+    assert.equal(throwsBlocks(() => renderFlowRibbon(inherited)), true, '原型链上继承来的未知键');
+    const hidden = { ...ok };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderFlowRibbon(hidden)), true, '不可枚举的未知键');
+  });
+
   it('上限下限是**自证**的（边界值能过、越界一条就拒），不抄字面量', () => {
     const many = (n, side) => new Array(n).fill(0).map((_, i) => ({ name: side + String(i) }));
     /* 每一股、每一类都要有流量（本件的硬口径）：第一股流给每一类，其余各股流给第一类。 */

@@ -46,11 +46,44 @@ function optRealText(value: unknown, field: string): string | undefined {
   return text;
 }
 
-/** 一个读数：有限数（`NaN`／`Infinity`／数字串一律拒）。 */
+/** 一个读数：有限数（`NaN`／`Infinity`／数字串一律拒）**且量级可读**。
+ *
+ *  量级这一档是本件自己的读数闸，与「轴域非有限即拒」那条（住 `scale.ts`，管的是**跨度**）**不是一档**：
+ *  那一档管的是「一头 `−1e308`、另一头 `1e308`」这种跨度溢出；这一档管的是**单笔读数本身**——
+ *  `1e308` 是有限数，可两笔同量级的读数相加就成 `Infinity`，柱高／刻度位置会写出 `1e+308` 那种读不出来的数。
+ *  `1e21` 那一档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
 function reqNumber(value: unknown, field: string): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) badInput(field + ' 必须是有限数');
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    badInput(field + ' 必须是有限数（`NaN`／`Infinity` 这类"写不成数的东西"一律拒）');
+  }
+  if (Math.abs(value) + Math.abs(value) > Number.MAX_VALUE) {
+    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+      + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
+  }
   return value;
 }
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉（先例：`relation-picker`／
+ *  `kanban-columns` 的同名小件）。**两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({ zzUnknown: 1 })` 那种继承来的键就是这一路）。 */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让'
+      + '调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** 顶层入参表的键（照 `attrs.ts` 的 `GapBandInput` 列全——可选键也在表里，别把合法入参误拒）。 */
+const INPUT_KEYS = ['title', 'form', 'plan', 'target', 'days', 'unit', 'stamp', 'note', 'extraClass'] as const;
+/** 逐日读数的键（照 `attrs.ts` 的 `GapBandDay`）。 */
+const DAY_KEYS = ['label', 'value'] as const;
 
 /** 逐日读数：3–12 天，日子非空，读数是有限数（B 档的偏差是拿它减目标算出来的，这里只收绝对读数）。 */
 function reqDays(value: unknown): readonly GapBandDay[] {
@@ -67,6 +100,7 @@ function reqDays(value: unknown): readonly GapBandDay[] {
     const at = 'gap-band: input.days[' + String(i) + ']';
     assertPlainObject(item, at);
     const d = item as Record<string, unknown>;
+    assertKeys(d, DAY_KEYS, at);
     return { label: reqRealText(d.label, at + '.label'), value: reqNumber(d.value, at + '.value') };
   });
 }
@@ -75,6 +109,7 @@ function reqDays(value: unknown): readonly GapBandDay[] {
 export function normalizeGapBand(input: unknown): GapBandModel {
   assertPlainObject(input, 'renderGapBand: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'gap-band: input');
 
   const form = raw.form === undefined ? GAP_BAND_FORMS[0] : raw.form;
   if (!(GAP_BAND_FORMS as readonly unknown[]).includes(form)) {

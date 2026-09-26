@@ -537,11 +537,16 @@ describe('gap-band ① 渲染契约 · 公共面与非法入参', () => {
       title: '极限跨度', plan: 0,
       days: [{ label: '周一', value: -1e308 }, { label: '周二', value: 0 }, { label: '周三', value: 1e308 }],
     })), true, '整图 ±1e308 应拒（不静默降级、更不许把宿主进程打爆）');
-    /* 单边量级大不构成溢出（跨度仍有限）：照常渲染。 */
+    /* 单边量级大不构成跨度溢出（跨度仍有限）：只要每笔读数本身在可读档内，照常渲染。 */
     assert.ok(renderGapBand({
       title: 'x', unit: '元', plan: 0,
-      days: [{ label: 'a', value: -1e308 }, { label: 'b', value: -1e303 }, { label: 'c', value: -1e302 }],
+      days: [{ label: 'a', value: -1e303 }, { label: 'b', value: -1e302 }, { label: 'c', value: -1e301 }],
     }).length > 0, '负向同号的大读数跨度有限，应正常渲染');
+    /* 可读数本身有量级闸（与轴域那一档**分开**）：`±1e308` 那一笔两两相加就溢出成 `Infinity`，一律拒。 */
+    assert.equal(throwsBlocks(() => renderGapBand({
+      title: 'x', unit: '元', plan: 0,
+      days: [{ label: 'a', value: -1e308 }, { label: 'b', value: -1e303 }, { label: 'c', value: -1e302 }],
+    })), true, '单笔 ±1e308 应拒（量级闸）');
     /* 枚数先夹常量再进循环：伪造一个超限轴域，出的仍是有限且 ≤ 上限的那几枚。 */
     assert.ok(tickValues({ lo: 0, hi: 99, step: 1, decimals: 0, ticks: 1e9 }).length <= GAP_BAND_MAX_TICKS,
       'tickValues 未夹到常量上限');
@@ -614,6 +619,40 @@ describe('gap-band ① 渲染契约 · 公共面与非法入参', () => {
     /* 附加类名：类型不对一律拒。 */
     assert.equal(throwsBlocks(() => renderGapBand({ ...ok, extraClass: 'a"b' })), true);
     assert.equal(throwsBlocks(() => renderGapBand({ ...ok, extraClass: '   ' })), true);
+  });
+
+  it('**坏数一律拒**：每个 number 字段 × `Infinity`／`-Infinity`／`NaN`／`1e308`／`-1e308`（跨件不变量 ① 的落点）', () => {
+    const ok = { title: 'x', plan: 1, days: [{ label: 'a', value: 1 }, { label: 'b', value: 2 }, { label: 'c', value: 3 }] };
+    const BAD = [['Infinity', Infinity], ['-Infinity', -Infinity], ['NaN', Number.NaN], ['1e308', 1e308], ['-1e308', -1e308]];
+    for (const [what, v] of BAD) {
+      assert.equal(throwsBlocks(() => renderGapBand({ ...ok, plan: v })), true, 'plan 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderGapBand({
+        ...ok, days: [{ label: 'a', value: v }, { label: 'b', value: 2 }, { label: 'c', value: 3 }],
+      })), true, 'days[0].value 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderGapBand({
+        title: 'x', form: 'deviation', target: v, days: ok.days,
+      })), true, 'target 收下了 ' + what);
+    }
+    /* 边界自证：闸是"两笔同量级的读数相加不溢出"，不是"看着大就拒"——`MAX_VALUE ÷ 4`（相加仍有限）照收。 */
+    assert.ok(renderGapBand({ ...ok, days: [{ label: 'a', value: Number.MAX_VALUE / 4 },
+      { label: 'b', value: 2 }, { label: 'c', value: 3 }] }).length > 0,
+    'MAX_VALUE ÷ 4 应正常渲染（量级闸不许误杀界内的大读数）');
+  });
+
+  it('**未知键一律拒**：顶层与逐日的每一项；继承来的与不可枚举的键同样算（跨件不变量 ③ 的落点）', () => {
+    const ok = { title: 'x', plan: 1, days: [{ label: 'a', value: 1 }, { label: 'b', value: 2 }, { label: 'c', value: 3 }] };
+    const withUnknownDay = (i) => ({ ...ok, days: ok.days.map((d, j) => (j === i ? { ...d, zzUnknown: 1 } : d)) });
+    assert.equal(throwsBlocks(() => renderGapBand({ ...ok, zzUnknown: 1 })), true, '顶层的未知键被静默吞掉了');
+    for (const i of [0, 1, 2]) {
+      assert.equal(throwsBlocks(() => renderGapBand(withUnknownDay(i))), true,
+        'days[' + String(i) + '] 的未知键被静默吞掉了');
+    }
+    /* 只走 `Object.keys` 会漏的两路：原型链上继承来的（`for…in`）与不可枚举的（`getOwnPropertyNames`）。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), ok);
+    assert.equal(throwsBlocks(() => renderGapBand(inherited)), true, '原型链上继承来的未知键');
+    const hidden = { ...ok };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderGapBand(hidden)), true, '不可枚举的未知键');
   });
 
   it('上限下限是**自证**的（边界值能过、越界一条就拒），不抄字面量', () => {

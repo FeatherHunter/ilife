@@ -495,6 +495,40 @@ describe('portion-gauge ① 渲染契约 · 形态 convert 换算三栏', () => 
       '空口径＝用本件的口径句');
   });
 
+  it('**坏数一律拒**：每个 number 字段 × `Infinity`／`-Infinity`／`NaN`／`1e308`／`-1e308`（跨件不变量 ① 的落点）', () => {
+    const ok = { title: '份量换算', rows: [{ name: '红烧肉', recipe: '2 份', grams: 700, shareOf: '蛋白', sharePct: 70 }] };
+    const row = (patch) => ({ ...ok, rows: [{ ...ok.rows[0], ...patch }] });
+    const gauge = (patch) => ({ title: 'x', form: 'gauge', gauge: { name: '红烧肉', usedPct: 58, capText: '2 份', ...patch } });
+    const BAD = [['Infinity', Infinity], ['-Infinity', -Infinity], ['NaN', Number.NaN], ['1e308', 1e308], ['-1e308', -1e308]];
+    for (const [what, v] of BAD) {
+      assert.equal(throwsBlocks(() => renderPortionGauge(row({ grams: v }))), true, 'rows[0].grams 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderPortionGauge(row({ sharePct: v }))), true, 'rows[0].sharePct 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, missingCount: v })), true, 'missingCount 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderPortionGauge(gauge({ usedPct: v }))), true, 'gauge.usedPct 收下了 ' + what);
+      assert.equal(throwsBlocks(() => renderPortionGauge(gauge({ refPct: v, refText: '1 份' }))), true,
+        'gauge.refPct 收下了 ' + what);
+    }
+    /* 边界自证：闸是"两笔同量级的读数相加不溢出"，不是"看着大就拒"——`MAX_VALUE ÷ 4` 照收（小量级 `1e-7` 同理）。 */
+    assert.ok(renderPortionGauge(row({ grams: Number.MAX_VALUE / 4 })).length > 0,
+      'MAX_VALUE ÷ 4 应正常渲染（量级闸不许误杀界内的大读数）');
+  });
+
+  it('**未知键一律拒**：顶层／每一行／A 档那一份；继承来的与不可枚举的键同样算（跨件不变量 ③ 的落点）', () => {
+    const ok = { title: '份量换算', rows: [{ name: '红烧肉', recipe: '2 份', grams: 700, shareOf: '蛋白', sharePct: 70 }] };
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, zzUnknown: 1 })), true, '顶层的未知键被静默吞掉了');
+    assert.equal(throwsBlocks(() => renderPortionGauge({ ...ok, rows: [{ ...ok.rows[0], zzUnknown: 1 }] })), true,
+      'rows[0] 的未知键被静默吞掉了');
+    assert.equal(throwsBlocks(() => renderPortionGauge({ title: 'x', form: 'gauge',
+      gauge: { name: '红烧肉', usedPct: 58, capText: '2 份', zzUnknown: 1 } })), true,
+    'gauge 的未知键被静默吞掉了');
+    /* 只走 `Object.keys` 会漏的两路：原型链上继承来的（`for…in`）与不可枚举的（`getOwnPropertyNames`）。 */
+    const inherited = Object.assign(Object.create({ zzUnknown: 1 }), ok);
+    assert.equal(throwsBlocks(() => renderPortionGauge(inherited)), true, '原型链上继承来的未知键');
+    const hidden = { ...ok };
+    Object.defineProperty(hidden, 'zzUnknown', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderPortionGauge(hidden)), true, '不可枚举的未知键');
+  });
+
   it('纯函数：同入参两次逐字节相同（页面产物可缓存、可对账）', () => {
     assert.equal(renderPortionGauge(STANDARD_INPUT), renderPortionGauge(STANDARD_INPUT));
     assert.notEqual(renderPortionGauge(STANDARD_INPUT), renderPortionGauge(LONG_INPUT));

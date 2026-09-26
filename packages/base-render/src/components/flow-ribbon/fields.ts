@@ -125,21 +125,45 @@ export function estimatePx(text: string): number {
 
 /* ── 数 ─────────────────────────────────────────────────────────── */
 
-/** 入参表以外的键一律拒（先例：`drag-sort`／`relation-picker`／`command-palette` 的同名小件）：
- *  写错的键静默吞掉，调用方会以为自己设上了——那是"看不见的错"。 */
+/** 入参表以外的键一律拒（先例：`relation-picker`／`kanban-columns` 的同名小件）：
+ *  写错的键静默吞掉，调用方会以为自己设上了——那是"看不见的错"。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({ zzUnknown: 1 })` 那种继承来的键就是这一路）。 */
 export function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
-  for (const key of Object.keys(raw)) {
-    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒）');
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让'
+      + '调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
 
-/** 必须是有限数。 */
+/** 读数的量级闸：**两笔同量级的读数相加不许溢出**（`1e308 + 1e308` 在双精度里就是 `Infinity`）。
+ *  为什么单独立这一档：那一档的数**是有限的**（`Number.isFinite(1e308)` 为真），可它的总额、占比、
+ *  带子两端一算就成 `Infinity`／`NaN`，屏上写出的是 `1e+308` 这种读不出来的东西——调用方以为给的
+ *  是一笔真读数，拿到的是张坏图。**`1e21` 那一档照旧合法**（十进制写法与指数写法的分界，本层当读数写）。 */
+function reqMagnitude(n: number, field: string): number {
+  if (Math.abs(n) + Math.abs(n) > Number.MAX_VALUE) {
+    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+      + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
+  }
+  return n;
+}
+
+/** 必须是有限数（`NaN`／`±Infinity` 一律拒）**且量级可读**（见 `reqMagnitude()`）。 */
 export function reqFinite(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
-    badInput(field + ' 必须是有限数');
+    badInput(field + ' 必须是有限数（`NaN`／`Infinity` 这类"写不成数的东西"一律拒）');
   }
-  return value;
+  return reqMagnitude(value, field);
 }
+
 
 /** 有限数且 `> 0`（一笔流量、一股来源的金额都得是正的：零或负数画出来是一根看不见的带子）。 */
 function reqPositive(value: unknown, field: string): number {
