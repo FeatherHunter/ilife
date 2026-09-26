@@ -129,7 +129,9 @@ const page = `<main class="ilife-page-ui ${skinClass('paper')}">${html}${withSwi
 - **加法式**：不调 `②`／`③` 的页面产物**逐字节不变**——所以老页面可以零风险地逐件接。
 - **样式只挂一次**：同页挂两遍同一件的样式段不会更"生效"，只会更大。
 - **入参错了会抛**：件对非法入参一律抛 `badInput`（`err.code === 'bad-input'`，消息点名到字段），
-  静默降级不会发生——把它当断言用。
+  静默降级不会发生——把它当断言用。**表外的键也一律拒**（未知键不报错＝把 `steps` 写成 `step` 那种笔误
+  会让屏上静静少一块，所以顶层与每个嵌套对象层都要查键；先例 `relation-picker`／`kanban-columns` 的 `model.ts`）。
+  这条门由 `test/跨件不变量.test.mjs` 第 ③ 组守着（老件逐件留名在日期豁免表里，本批之后落的件一律硬过）。
 - **名字从清单里摸**：`dist/components/清单.js` 每一行有 `render`／`style`／`runtime` 三列——那就是该件的三个出口名
   （`runtime: '无'` 的件是零脚本件，跳过第 ③ 步）。68 件的名字面全部经 `base-paint/blocks` 转出；
   包没有 `./components` 子路径，别去引 `dist/` 深处。
