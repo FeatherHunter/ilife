@@ -278,11 +278,11 @@ describe('wizard-shell ① 渲染契约 · 骨架与槽位', () => {
     assert.ok(html.includes(WIZARD_SHELL_ANSWER_ATTR + '="options"'), '选择问');
     assert.ok(renderWizardShell(ENTRY).includes(WIZARD_SHELL_ANSWER_ATTR + '="fields"'), '填空问');
     assert.ok(renderWizardShell(CONFIRM).includes(WIZARD_SHELL_ANSWER_ATTR + '="confirm"'), '确认屏');
-    /* 误传整趟数据（`steps`）：本件不读它，**零报错**——但落点得是**读得出来**的，
-       不是一个"看不出传错了"的空态（口径见 README「整趟数据不由本件持」）。 */
-    const trip = renderWizardShell({ name: 'init', question: '先问这一句。', index: 0, total: 3, steps: [{ q: 'x' }] });
-    assert.ok(trip.includes(WIZARD_SHELL_ANSWER_ATTR + '="confirm"'), '误传整趟数据要能从根属性上读出来');
-    assert.ok(trip.includes(wizardShellSlot('confirm')), '落点是那**设计过的**确认屏（写清"这一问不用填"）');
+    /* 误传整趟数据（`steps`）：**入参表以外的键一律拒**（写错的键静默吞掉，调用方会以为自己设上了）。
+       这一条与「答法读得出来」是一体两面：读不出来就得当场拒，不留一条"看不出传错了"的路。 */
+    assert.equal(throwsBlocks(() => renderWizardShell({
+      name: 'init', question: '先问这一句。', index: 0, total: 3, steps: [{ q: 'x' }],
+    })), true, '误传整趟数据当场拒（`steps` 不在本件入参面里）');
     const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
     assert.ok(readme.includes('整趟数据不由本件持'), '这条口径必须写在说明书上（调用方才有得查）');
     assert.ok(readme.includes(WIZARD_SHELL_ANSWER_ATTR), '诊断信号的名字要在 README 里点名');
@@ -492,6 +492,24 @@ describe('wizard-shell ① 渲染契约 · 非法入参一律拒（不静默降�
     assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, aside: 1 })), true);
     assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, hint: 1 })), true);
     assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, nextLabel: 1 })), true);
+  });
+
+  it('**未知键一律拒**：每个对象层各加一个 `zzUnknown: 1` ⇒ `BlocksError`（含不可枚举的自有键与原型链上继承来的键）', () => {
+    assert.equal(throwsBlocks(() => renderWizardShell(CHOICE)), false, '正面：入参表里的可选键给全照收');
+    assert.equal(throwsBlocks(() => renderWizardShell({ ...CHOICE, zzUnknown: 1 })), true, '顶层多一个键');
+    assert.equal(throwsBlocks(() => renderWizardShell({
+      ...CHOICE, options: [{ ...CHOICE.options[0], zzUnknown: 1 }, ...CHOICE.options.slice(1)],
+    })), true, '一条选项（`options[i]`）里多一个键');
+    assert.equal(throwsBlocks(() => renderWizardShell({
+      ...ENTRY, fields: [{ ...ENTRY.fields[0], zzUnknown: 1 }, ...ENTRY.fields.slice(1)],
+    })), true, '一格填空（`fields[i]`）里多一个键');
+    /* 双查：只走 `Object.keys` 会漏掉这两类（先例 `relation-picker/model.ts`／`kanban-columns/model.ts`）。 */
+    const hidden = { ...CHOICE };
+    Object.defineProperty(hidden, 'zzHidden', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderWizardShell(hidden)), true, '不可枚举的自有键');
+    const inherited = { ...CHOICE, options: [{ ...CHOICE.options[0] }] };
+    Object.setPrototypeOf(inherited.options[0], { zzProto: 1 });
+    assert.equal(throwsBlocks(() => renderWizardShell(inherited)), true, '原型链上继承来的键');
   });
 
   it('答题面：两种答法恰好给一种；选项／填空逐字段校验', () => {

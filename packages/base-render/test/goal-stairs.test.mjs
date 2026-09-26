@@ -375,6 +375,23 @@ describe('goal-stairs ① 渲染契约 · 骨架与段', () => {
     })), false, '两段的窗口可以互相叠着（先后次序由数组给，不由位置推）');
   });
 
+  it('**未知键一律拒**：每个对象层各加一个 `zzUnknown: 1` ⇒ `BlocksError`（含不可枚举的自有键与原型链上继承来的键）', () => {
+    const ok = minimal();
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, form: 'C', note: '口径', extraClass: 'x y' })), false,
+      '正面：入参表里的可选键给全照收（拒的是表外的键，不是可选键）');
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, zzUnknown: 1 })), true, '顶层多一个键');
+    assert.equal(throwsBlocks(() => renderGoalStairs({
+      ...ok, steps: [{ ...ok.steps[0], zzUnknown: 1 }, ok.steps[1]],
+    })), true, '一段（`steps[i]`）里多一个键');
+    /* 双查：只走 `Object.keys` 会漏掉这两类（先例 `relation-picker/model.ts`／`kanban-columns/model.ts`）。 */
+    const hidden = { ...ok.steps[0] };
+    Object.defineProperty(hidden, 'zzHidden', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, steps: [hidden, ok.steps[1]] })), true, '不可枚举的自有键');
+    const inherited = { ...ok.steps[0] };
+    Object.setPrototypeOf(inherited, { zzProto: 1 });
+    assert.equal(throwsBlocks(() => renderGoalStairs({ ...ok, steps: [inherited, ok.steps[1]] })), true, '原型链上继承来的键');
+  });
+
   it('**稀疏数组一律拒**：`length` 算出来的段数必须与真有的行数对得上', () => {
     /* `new Array(2)` 的洞会被 `map()` 跳过，`length` 却照算 ⇒ 卡头写着「二段」、表里一行都没有。
        `a = new Array(2); a[1] = {…}` 同理：写着「二段」而只有一行。两条都要在归一化期拒。 */

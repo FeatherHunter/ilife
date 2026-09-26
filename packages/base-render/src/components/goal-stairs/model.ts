@@ -3,6 +3,7 @@
  *  三条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：
  *      段数不对、位置越界、窗口两端一样宽，画出来都是一幅**看着像样、其实说错话**的图。
+ *      **入参表以外的键一律拒**（每个对象层都查：顶层与 `steps` 的每一段；写错的键静默吞掉最坑人）。
  *   2. **件里不猜业务口径**：哪一段算进行中、今天算哪天、轴从哪天到哪天，都由调用方给
  *      （`state` 与百分数）。件里只做两件能机械判的事：算段数的字（`四段`）与判**过期**
  *      （窗口整段落在今天左边、这一段又没达成 ⇒ 点名「来不及」）。
@@ -25,6 +26,33 @@ import {
   type GoalStairsState,
   type GoalStairsStep,
 } from './attrs.js';
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus: 1})` 那种继承来的键就是这一路）。
+ *
+ *  先例：`relation-picker/model.ts`／`kanban-columns/model.ts` 的同名小件（同一个规矩不在两处各写一套口径）。
+ */
+function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `GoalStairsInput` 的键（顶层入参表；必填与可选都列全）。 */
+const INPUT_KEYS = ['title', 'today', 'todayPct', 'steps', 'form', 'note', 'extraClass'] as const;
+
+/** `GoalStairsStep` 的键（一段的入参表；`steps` 的每个元素）。 */
+const STEP_KEYS = ['from', 'to', 'start', 'startPct', 'endPct', 'state'] as const;
 
 /** 中文小数目字：卡头那枚段数写成「四段」（1–8 段都取得到；超出闭集由段数上下限先拦下）。 */
 const COUNT_WORDS = ['一', '二', '三', '四', '五', '六', '七', '八'];
@@ -99,6 +127,7 @@ function reqStep(value: unknown, index: number): GoalStairsStep {
   const at = 'goal-stairs: input.steps[' + String(index) + ']';
   assertPlainObject(value, at);
   const raw = value as Record<string, unknown>;
+  assertKeys(raw, STEP_KEYS, at);
   const from = reqText(raw.from, at + '.from');
   const to = reqText(raw.to, at + '.to');
   const start = reqText(raw.start, at + '.start');
@@ -164,6 +193,7 @@ function rowOf(step: GoalStairsStep, index: number, todayPct: number): GoalStair
 export function normalizeGoalStairs(input: unknown): GoalStairsModel {
   assertPlainObject(input, 'renderGoalStairs: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderGoalStairs: input');
 
   const form = raw.form === undefined ? GOAL_STAIRS_FORMS[0] : raw.form;
   if (!(GOAL_STAIRS_FORMS as readonly unknown[]).includes(form)) {

@@ -3,6 +3,7 @@
  *  三条口径（与本节其余件同一份）：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：
  *      猜出来的骨架会在页面上长成另一种东西，而调用方以为拿到了本件；
+ *      **入参表以外的键一律拒**（每个对象层都查：顶层、`options` 的每一条、`fields` 的每一格）。
  *   2. **缺值与空串是两件事**：`value: null`／不给 ＝ 这一问还没答；`value: ''` ＝ 错
  *      （说不出「答的是哪一个」）；
  *   3. 归一化只做「形状」：走到第几问、整趟几问由页面给；本件**不自己推进**（推进是页面的事，
@@ -28,6 +29,38 @@ import {
   type WizardShellForm,
   type WizardShellOption,
 } from './attrs.js';
+
+/** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
+ *
+ *  **两条都会被查到**（只走 `Object.keys` 会漏一半）：
+ *   · `Object.getOwnPropertyNames` —— 自有的**全部**键，含**不可枚举**的（`Object.keys` 看不见它）；
+ *   · `for…in` —— 走**整条原型链**（`Object.create({bogus: 1})` 那种继承来的键就是这一路）。
+ *
+ *  先例：`relation-picker/model.ts`／`kanban-columns/model.ts` 的同名小件（同一个规矩不在两处各写一套口径）。
+ */
+function assertKeys(raw: object, allowed: readonly string[], field: string): void {
+  const bad: string[] = [];
+  const note = (key: string): void => {
+    if (!allowed.includes(key) && !bad.includes(key)) bad.push(key);
+  };
+  for (const key of Object.getOwnPropertyNames(raw)) note(key);
+  for (const key in raw) note(key);
+  if (bad.length > 0) {
+    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+      + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
+  }
+}
+
+/** `WizardShellInput` 的键（顶层入参表；必填与可选都列全）。 */
+const INPUT_KEYS = ['name', 'id', 'question', 'index', 'total', 'options', 'fields', 'value', 'why', 'aside',
+  'hint', 'nextLabel', 'skippable', 'loading', 'loadingText', 'disabled', 'disabledReason', 'error',
+  'confirmText', 'form', 'extraClass'] as const;
+
+/** `WizardShellOption` 的键（一条选项的入参表；`options` 的每个元素）。 */
+const OPTION_KEYS = ['value', 'title', 'desc'] as const;
+
+/** `WizardShellField` 的键（一格填空的入参表；`fields` 的每个元素）。 */
+const FIELD_KEYS = ['name', 'label', 'value', 'hint', 'kind'] as const;
 
 /** 进度一格的状态：走过／正走／没到。 */
 export type WizardSegState = 'done' | 'now' | 'todo';
@@ -111,6 +144,7 @@ function reqIndex(value: unknown, field: string): number {
 function normalizeOption(raw: unknown, index: number): WizardOption {
   assertPlainObject(raw, 'wizard-shell: input.options[' + index + ']');
   const o = raw as WizardShellOption;
+  assertKeys(o, OPTION_KEYS, 'wizard-shell: input.options[' + index + ']');
   return {
     value: reqText(o.value, 'wizard-shell: input.options[' + index + '].value'),
     title: reqText(o.title, 'wizard-shell: input.options[' + index + '].title'),
@@ -122,6 +156,7 @@ function normalizeOption(raw: unknown, index: number): WizardOption {
 function normalizeField(raw: unknown, index: number): WizardField {
   assertPlainObject(raw, 'wizard-shell: input.fields[' + index + ']');
   const f = raw as WizardShellField;
+  assertKeys(f, FIELD_KEYS, 'wizard-shell: input.fields[' + index + ']');
   const kind = f.kind === undefined ? WIZARD_SHELL_FIELD_KINDS[0] : f.kind;
   if (!(WIZARD_SHELL_FIELD_KINDS as readonly unknown[]).includes(kind)) {
     badInput('wizard-shell: input.fields[' + index + '].kind 必须是 ' + WIZARD_SHELL_FIELD_KINDS.join('／') + ' 之一');
@@ -153,6 +188,7 @@ function segmentsOf(index: number, total: number): readonly WizardSegState[] {
 export function normalizeWizardShell(input: unknown): WizardShellModel {
   assertPlainObject(input, 'renderWizardShell: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderWizardShell: input');
 
   const form = raw.form === undefined ? WIZARD_SHELL_FORMS[0] : raw.form;
   if (!(WIZARD_SHELL_FORMS as readonly unknown[]).includes(form)) {

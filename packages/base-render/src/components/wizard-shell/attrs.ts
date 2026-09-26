@@ -114,7 +114,8 @@ export const WIZARD_SHELL_TOTAL_ATTR = 'data-ilife-wizard-total';
 export const WIZARD_SHELL_VALUE_ATTR = 'data-ilife-wizard-value';
 /** 这一屏出的是哪一种答法（值域 `WizardShellAnswer`）——根属性上的**诊断信号**：
  *  页面读它就能分辨「这一屏没有答法」是设计过的确认屏（`confirmText`），还是这一屏的数据没落进来。
- *  （整趟数据不由本件持：`steps`／`questions` 这类键本件既不读也不认，传进来只会让答题区落到 `confirm`。） */
+ *  （整趟数据不由本件持：`steps`／`questions` 这类键**不在入参面里**，传进来一律 `badInput`——
+ *  写错的键静默吞掉，调用方会以为自己设上了。） */
 export const WIZARD_SHELL_ANSWER_ATTR = 'data-ilife-wizard-answer';
 /** 一个选项（`<label>`）的标记：值＝选项机器值。 */
 export const WIZARD_SHELL_OPTION_ATTR = 'data-ilife-wizard-option';

@@ -3,6 +3,8 @@
  *  三条口径：
  *   1. **非法入参一律 `badInput()`**（抛 `BlocksError`）——不静默降级、不「尽量猜」：
  *      猜出来的骨架会在屏上长成另一种东西（少一项影响面、三态写错），而调用方以为拿到了本件。
+ *      **入参表以外的键一律拒**（每个对象层都查：顶层、一条改动、一条读数、一张回滚单、
+ *      影响面里的一行、整段回滚那枚——键表住同目录 `keys.ts`）。
  *   2. **形态决定读哪个数组**（`track` 读 `entries`，`impact` 读 `change`）：缺了就是缺了，
  *      不拿另一个形态的字段顶上——那是静默降级。
  *   3. **归一化只做「形状」**：取整、千分位、金额怎么算、撤销要写哪些表**归调用方**；
@@ -33,6 +35,15 @@ import {
   type UndoTimelineRollback,
   type UndoTimelineState,
 } from './attrs.js';
+import {
+  ENTRY_KEYS,
+  IMPACT_KEYS,
+  IMPACT_ROW_KEYS,
+  INPUT_KEYS,
+  READING_KEYS,
+  ROLLBACK_KEYS,
+  assertKeys,
+} from './keys.js';
 
 /** 改动条数的上限（再多就不该用"一条轨"了，该按时间窗筛）。 */
 export const UNDO_TIMELINE_ENTRY_MAX = 200;
@@ -141,6 +152,7 @@ function readingOf(value: unknown, at: number, field: string): UndoTimelineReadi
   const path = field + '[' + String(at) + ']';
   assertPlainObject(value, path);
   const raw = value as UndoTimelineReading;
+  assertKeys(raw, READING_KEYS, path);
   return {
     label: optRealText(raw.label, path + '.label'),
     from: reqRealText(raw.from, path + '.from'),
@@ -153,6 +165,7 @@ function impactRowOf(value: unknown, at: number, field: string, seen: Set<string
   const path = field + '[' + String(at) + ']';
   assertPlainObject(value, path);
   const raw = value as UndoTimelineImpactRow;
+  assertKeys(raw, IMPACT_ROW_KEYS, path);
   const key = reqRealText(raw.key, path + '.key');
   if (seen.has(key)) badInput(path + '.key 在清单里重复了：' + key + '（机器键必须唯一）');
   seen.add(key);
@@ -186,6 +199,7 @@ function impactRowOf(value: unknown, at: number, field: string, seen: Set<string
 function impactOf(value: unknown, field: string): UndoTimelineImpactModel {
   assertPlainObject(value, field);
   const raw = value as UndoTimelineImpact;
+  assertKeys(raw, IMPACT_KEYS, field);
   const rowsRaw = reqList(raw.rows, field + '.rows');
   if (rowsRaw.length === 0) badInput(field + '.rows 至少要有一项（没有影响面的回滚单没有意义）');
   if (rowsRaw.length > UNDO_TIMELINE_IMPACT_MAX) {
@@ -210,6 +224,7 @@ function entryOf(value: unknown, at: number, seen: Set<string>): UndoTimelineEnt
   const path = 'undo-timeline: input.entries[' + String(at) + ']';
   assertPlainObject(value, path);
   const raw = value as UndoTimelineEntry;
+  assertKeys(raw, ENTRY_KEYS, path);
   const key = reqRealText(raw.key, path + '.key');
   if (seen.has(key)) badInput(path + '.key 在改动记录里重复了：' + key + '（机器键必须唯一）');
   seen.add(key);
@@ -254,6 +269,7 @@ function entryOf(value: unknown, at: number, seen: Set<string>): UndoTimelineEnt
 export function normalizeUndoTimeline(input: unknown): UndoTimelineModel {
   assertPlainObject(input, 'renderUndoTimeline: input');
   const raw = input as Record<string, unknown>;
+  assertKeys(raw, INPUT_KEYS, 'renderUndoTimeline: input');
 
   const form = raw.form === undefined ? UNDO_TIMELINE_FORMS[0] : raw.form;
   if (!(UNDO_TIMELINE_FORMS as readonly unknown[]).includes(form)) {
@@ -320,6 +336,7 @@ export function normalizeUndoTimeline(input: unknown): UndoTimelineModel {
   if (raw.rollback !== undefined) {
     assertPlainObject(raw.rollback, 'undo-timeline: input.rollback');
     const r = raw.rollback as UndoTimelineRollback;
+    assertKeys(r, ROLLBACK_KEYS, 'undo-timeline: input.rollback');
     rollback = {
       label: reqRealText(r.label, 'undo-timeline: input.rollback.label'),
       note: optRealText(r.note, 'undo-timeline: input.rollback.note'),

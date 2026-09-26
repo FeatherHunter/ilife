@@ -451,6 +451,37 @@ describe('undo-timeline ① 渲染契约 · 形态 track（一条轨）', () => 
     assert.equal(throwsBlocks(() => renderUndoTimeline({ ...ok, entries: many })), true, '改动条数超上限');
   });
 
+  it('**未知键一律拒**：每个对象层各加一个 `zzUnknown: 1` ⇒ `BlocksError`（两形态的六层各一张键表）', () => {
+    const IMP = { title: '面', rows: [{ key: 'r', title: 't' }] };
+    const base = { name: 'n', entries: [{ key: 'k', time: '10:00', say: 'x', readings: [{ from: '1', to: '2' }], impact: IMP }] };
+    assert.equal(throwsBlocks(() => renderUndoTimeline(base)), false, '正面：逐层都给全了照收');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ ...base, zzUnknown: 1 })), true, '顶层');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ ...base, entries: [{ ...base.entries[0], zzUnknown: 1 }] })), true, '一条改动');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({
+      ...base, entries: [{ ...base.entries[0], readings: [{ from: '1', to: '2', zzUnknown: 1 }] }],
+    })), true, '一条读数');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({
+      ...base, entries: [{ ...base.entries[0], impact: { ...IMP, zzUnknown: 1 } }],
+    })), true, '一张回滚单（`entries[].impact`）');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({
+      ...base, entries: [{ ...base.entries[0], impact: { title: '面', rows: [{ key: 'r', title: 't', zzUnknown: 1 }] } }],
+    })), true, '影响面里的一行');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ ...base, rollback: { label: '回到 09-22 18:00', zzUnknown: 1 } })), true,
+      '整段回滚那枚');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ name: 'n', form: 'impact', change: { ...IMP, zzUnknown: 1 } })), true,
+      '形态 impact 那一形态自己的面（`change`）');
+    assert.equal(throwsBlocks(() => renderUndoTimeline({
+      name: 'n', form: 'impact', change: { title: '面', rows: [{ key: 'r', title: 't', zzUnknown: 1 }] },
+    })), true, '形态 impact 的 `change.rows` 一行');
+    /* 双查：只走 `Object.keys` 会漏掉这两类（先例 `relation-picker/model.ts`／`kanban-columns/model.ts`）。 */
+    const hidden = { ...base.entries[0] };
+    Object.defineProperty(hidden, 'zzHidden', { value: 1, enumerable: false });
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ ...base, entries: [hidden] })), true, '不可枚举的自有键');
+    const inherited = { ...base.entries[0] };
+    Object.setPrototypeOf(inherited, { zzProto: 1 });
+    assert.equal(throwsBlocks(() => renderUndoTimeline({ ...base, entries: [inherited] })), true, '原型链上继承来的键');
+  });
+
   it('openKey 命中 locked／undone／busy 一律拒（摊开的单按得动 ⇒ 这三种不能摊）', () => {
     const impact = { title: '面', rows: [{ key: 'r', title: 't' }] };
     const ok = { name: 'n', openKey: 'k',
