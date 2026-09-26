@@ -5527,9 +5527,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看健康报告(自定义)",
             "wake_word": "看健康报告(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看健康报告(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的跨 8 维综合健康报告(饮食/运动/体重/饮水/体脂/围度/缺口/目标)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看健康报告(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的跨 8 维综合健康报告(饮食/运动/体重/饮水/体脂/围度/缺口/目标)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -5623,9 +5641,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看每日 6 因素综合",
             "wake_word": "看每日 6 因素综合",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看每日 6 因素综合」。\n\n我想看某一天的全维度健康快照(体重/饮食/运动/饮水/体脂/围度)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(YYYY-MM-DD):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看每日 6 因素综合」。\n\n我想看某一天的全维度健康快照(体重/饮食/运动/饮水/体脂/围度)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{log_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "log_date",
+                "label": "日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -5885,9 +5913,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 摄入(自定义)",
             "wake_word": "看体重 vs 摄入(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 摄入(自定义)」。\n\n我想看体重走势 vs 每日摄入热量的关系(吃多少影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 摄入(自定义)」。\n\n我想看体重走势 vs 每日摄入热量的关系(吃多少影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -5985,9 +6031,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 运动(自定义)",
             "wake_word": "看体重 vs 运动(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 运动(自定义)」。\n\n我想看体重走势 vs 每日运动消耗的关系(运动影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 运动(自定义)」。\n\n我想看体重走势 vs 每日运动消耗的关系(运动影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6085,9 +6149,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 蛋白(自定义)",
             "wake_word": "看体重 vs 蛋白(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 蛋白(自定义)」。\n\n我想看体重走势 vs 每日蛋白摄入的关系(蛋白够不够影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 蛋白(自定义)」。\n\n我想看体重走势 vs 每日蛋白摄入的关系(蛋白够不够影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6185,9 +6267,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 缺口(自定义)",
             "wake_word": "看体重 vs 缺口(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 缺口(自定义)」。\n\n我想看体重走势 vs 每日热量缺口的关系(缺口大小影响减重速度吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 缺口(自定义)」。\n\n我想看体重走势 vs 每日热量缺口的关系(缺口大小影响减重速度吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6245,9 +6345,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看摄入 vs 运动(自定义)",
             "wake_word": "看摄入 vs 运动(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看摄入 vs 运动(自定义)」。\n\n我想看每日摄入 vs 每日运动消耗的关系(吃得和动得匹配吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看摄入 vs 运动(自定义)」。\n\n我想看每日摄入 vs 每日运动消耗的关系(吃得和动得匹配吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6305,9 +6423,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 体脂(自定义)",
             "wake_word": "看体重 vs 体脂(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 体脂(自定义)」。\n\n我想看体重走势 vs 体脂率走势的关系(减的是脂肪还是水分)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 体脂(自定义)」。\n\n我想看体重走势 vs 体脂率走势的关系(减的是脂肪还是水分)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6365,9 +6501,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看体重 vs 围度(自定义)",
             "wake_word": "看体重 vs 围度(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 围度(自定义)」。\n\n我想看体重走势 vs 各部位围度走势的关系(腰围真的在变小吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看体重 vs 围度(自定义)」。\n\n我想看体重走势 vs 各部位围度走势的关系(腰围真的在变小吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6385,9 +6539,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看饮水 vs 体重(自定义)",
             "wake_word": "看饮水 vs 体重(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看饮水 vs 体重(自定义)」。\n\n我想看饮水量 vs 体重的关系(喝水多少影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看饮水 vs 体重(自定义)」。\n\n我想看饮水量 vs 体重的关系(喝水多少影响体重吗)。请帮我分析自定义时间段(开始日期到结束日期)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -6683,9 +6855,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看蛋白 vs 碳水(自定义)",
             "wake_word": "看蛋白 vs 碳水(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看蛋白 vs 碳水(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白与碳水摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看蛋白 vs 碳水(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白与碳水摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6713,9 +6903,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看蛋白 vs 脂肪(自定义)",
             "wake_word": "看蛋白 vs 脂肪(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看蛋白 vs 脂肪(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白与脂肪摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看蛋白 vs 脂肪(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白与脂肪摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6743,9 +6951,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看碳水 vs 脂肪(自定义)",
             "wake_word": "看碳水 vs 脂肪(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看碳水 vs 脂肪(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的碳水与脂肪摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看碳水 vs 脂肪(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的碳水与脂肪摄入量的关系。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           },
           {
@@ -6803,9 +7029,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "看三大营养交叉(自定义)",
             "wake_word": "看三大营养交叉(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看三大营养交叉(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白/碳水/脂肪三者交叉。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:____\n结束日期:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「看三大营养交叉(自定义)」。\n\n我想看自定义时间段(开始日期到结束日期)的蛋白/碳水/脂肪三者交叉。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "start_date",
+                "label": "开始日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "hint": "格式 YYYY-MM-DD",
+                "required": true,
+                "kind": "date"
+              }
             ]
           }
         ]
@@ -6859,9 +7103,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "预测体重(自定义时间)",
             "wake_word": "预测体重(自定义时间)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「预测体重(自定义时间)」。\n\n我想预测自定义时间后的体重。若数据不足 14 天请明确提示不预测。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n预测多少天后:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「预测体重(自定义时间)」。\n\n我想预测自定义时间后的体重。若数据不足 14 天请明确提示不预测。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n预测多少天后:{{days_ahead}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "days_ahead",
+                "label": "预测多少天后",
+                "value": "",
+                "hint": "纯数字，单位 天，只收数字，如 30",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6869,9 +7123,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "预测体重(自定义目标)",
             "wake_word": "预测体重(自定义目标)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「预测体重(自定义目标)」。\n\n我想按当前趋势预测达成目标体重的日期:预计达成日 + 所需天数 + 假设说明 + 可行性提示;若数据不足 14 天请明确提示不预测。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n目标体重(kg):____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「预测体重(自定义目标)」。\n\n我想按当前趋势预测达成目标体重的日期:预计达成日 + 所需天数 + 假设说明 + 可行性提示;若数据不足 14 天请明确提示不预测。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n目标体重:{{target_weight}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "target_weight",
+                "label": "目标体重",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 60",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6909,9 +7173,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "模拟减重(30天减Xkg)",
             "wake_word": "模拟减重(30天减Xkg)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(30天减Xkg)」。\n\n我想模拟 30 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n30 天想减多少 kg:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(30天减Xkg)」。\n\n我想模拟 30 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n30天想减多少:{{loss_kg}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "loss_kg",
+                "label": "30天想减多少",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 5",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6919,9 +7193,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "模拟减重(60天减Xkg)",
             "wake_word": "模拟减重(60天减Xkg)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(60天减Xkg)」。\n\n我想模拟 60 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n60 天想减多少 kg:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(60天减Xkg)」。\n\n我想模拟 60 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n60天想减多少:{{loss_kg}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "loss_kg",
+                "label": "60天想减多少",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 5",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6929,9 +7213,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "模拟减重(90天减Xkg)",
             "wake_word": "模拟减重(90天减Xkg)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(90天减Xkg)」。\n\n我想模拟 90 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n90 天想减多少 kg:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(90天减Xkg)」。\n\n我想模拟 90 天减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n90天想减多少:{{loss_kg}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "loss_kg",
+                "label": "90天想减多少",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 5",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6939,9 +7233,27 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "模拟减重(自定义天数减Xkg)",
             "wake_word": "模拟减重(自定义天数减Xkg)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(自定义天数减Xkg)」。\n\n我想模拟自定义天数内减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n天数:____\n想减多少 kg:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「模拟减重(自定义天数减Xkg)」。\n\n我想模拟自定义天数内减 X 公斤。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n天数:{{duration_days}}\n想减多少:{{loss_kg}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "duration_days",
+                "label": "天数",
+                "value": "",
+                "hint": "纯数字，单位 天，如 45",
+                "required": true,
+                "kind": "number"
+              },
+              {
+                "name": "loss_kg",
+                "label": "想减多少",
+                "value": "",
+                "hint": "单位 kg，只收纯数字，如 5",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
@@ -6979,9 +7291,19 @@ export const WAKE_GROUPS: readonly WakeGroupAsset[] = [
             "title": "摄入预测(自定义)",
             "wake_word": "摄入预测(自定义)",
             "status": "",
-            "prompt_template": "请你加载技能 卡路里,执行唤醒词「摄入预测(自定义)」。\n\n我想预测自定义时间后的日均摄入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n预测多少天后:____",
+            "prompt_template": "请你加载技能 卡路里,执行唤醒词「摄入预测(自定义)」。\n\n我想预测自定义时间后的日均摄入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n预测多少天后:{{days_ahead}}",
             "types": [
               "结果"
+            ],
+            "editable_fields": [
+              {
+                "name": "days_ahead",
+                "label": "预测多少天后",
+                "value": "",
+                "hint": "纯数字，单位 天，只收数字，如 30",
+                "required": true,
+                "kind": "number"
+              }
             ]
           },
           {
