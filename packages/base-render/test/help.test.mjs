@@ -979,6 +979,7 @@ describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板�
     }
     assert.equal(tpl.includes('width:min(560px'), true, '桌面必须是 560px 收边，不再横跨全宽');
     assert.equal(tpl.includes('.sheet.show{transform:none}'), true, '手机全屏 sheet 须覆盖居中位移');
+    assert.equal(tpl.includes('.sheet{left:0;right:0;transform:translateY(105%)'), true, '手机未展开时弹层须藏屏外，否则常驻空弹窗');
     assert.equal(tpl.includes('请先填写：'), true, '必填缺失 toast 文案沿原型票（全角冒号）');
     assert.equal(tpl.includes("querySelectorAll('[data-p]')"), true, 'readParams 必须同时读 input 与 select');
   });
