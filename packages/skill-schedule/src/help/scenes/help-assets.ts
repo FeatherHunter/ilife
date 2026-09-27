@@ -1,18 +1,19 @@
 /** #201 · 作息管家 HELP 内容资产（机器生成，禁手改词）。
  *
- * 唯一内容源：`.scratch/t198/old-scenarios.json`——旧作息管家 HELP 实物里原样取出的场景数据
- * （世代判定与内容骨架见 `docs/skills/skill-schedule/t198-old-help-truth.md`）。
- * 本文件由 `scripts/gen-help-assets.mjs` 生成：5 个一级分组／34 条唤醒词／85 条场景，
- * 分组、唤醒词、场景的先后次序与源数据一致。
+ * 两个源（分工写死在生成器里，可复核）：
+ *  1. **结构**取自受跟踪 fixture `test/fixtures/t198-old-scenarios.json`（老实物取证，一个字不改）：
+ *     分组／唤醒词／场景的条数与先后次序、场景 id、待开发状态；
+ *  2. **内容**取自 `scripts/help-rewrite-table.mjs`（#975 逐句重写表）：标题／唤醒词／prompt 正文／字段表。
+ * 本文件由 `scripts/gen-help-assets.mjs` 生成：5 个一级分组／34 条唤醒词／85 条场景。
  *
  * 载荷契约：`packages/base-render/src/spec/help.ts` 的 `SCENE_DATA_SCHEMA`——`HELP_GROUPS` 就是
- * 共享 help 模板要的 `groups` 参数，分三层：一级分组 → 子功能（＝旧唤醒词）→ 场景卡片。
+ * 共享 help 模板要的 `groups` 参数，分三层：一级分组 → 子功能（＝一条唤醒词）→ 场景卡片。
  * 该 schema 各层都是 `additionalProperties:false`，多一个键即校验失败，故本文件里的对象字段是闭集。
  *
- * 三处形状转换（生成器里写死、可复核）：
- *  1. 源 `dimensions`（参数名 → 说明的自由对象）→ 契约 `editable_fields`：`name`／`label` 取维度键
- *     原名；`hint` 取维度说明原文（逐字；布尔与数字按其 JSON 字面量文本）；`value` 一律空串、
- *     `required` 一律 false——理由见生成器的 `toField`。
+ * 两处派生（生成器里写死、可复核）：
+ *  1. 唤醒词去序号：老 HELP 的 `#0 记作息`／`T4 类别深挖` → 裸词 `记作息`／`类别深挖`
+ *     （与路由表 `src/triggers/routes.generated.ts` 的 `phrase` 同形）。重写表里写的就是裸词，
+ *     生成器另有「表里的唤醒词必须等于源去序号后的裸词」一条断言把两边钉在一起。
  *  2. 源 `status` 为空、但唤醒词属「今天没有命令可执行」的 5 条者，标 `【待开发】`：
  *     源自标待开发 1 条，加上这几条下辖的场景，本文件标 `【待开发】` 的共 11 条。
  *  3. 三层对齐：源「分组 → 唤醒词 → 场景」直接对到契约「groups → subgroups → scenes」，
@@ -24,32 +25,45 @@
  * 里面没有类型位，旧实物 HELP 也没有类型徽章——凭空补一个空 `types` 等于自造内容，故不落该字段；
  * 将来源数据真出现类型位，生成器会因字段闭集断言失败而报错（不会静默丢掉）。要变体徽章另开票。
  *
- * 页面外的两张源数据镜像（**留档，页面不渲染**）：契约没有对应位、故不进 `HELP_GROUPS` 的两处源信息，
- * 仍按原样镜像在本文件里——源场景的 `result` → `HELP_SCENE_RESULTS`（逐场景一条）；
- * 源一级分组的 `desc` → `HELP_GROUP_NOTES`（逐分组一条）。保留数据本身的理由：这两张表的源头在
- * **未入库**的 `.scratch/t198/old-scenarios.json`，删掉即从仓库里彻底灭失，故留档备查。
- * **当前 HELP 页不展示它们**（用户 2026-09-13 裁定：作息 HELP 与其它技能 HELP 同构，不多自带功能模块）：
- * 页面上的「预期 ·」与一级分组说明一律不出现，两个渲染出口与 `#help-data` 载荷里都取不到这两个键。
- * 为什么不塞进载荷：校验器按 `additionalProperties:false` 直接拒收多余键
- * （`packages/base-render/src/help.ts` 的字段闭集判定）；并进 `editable_fields[].hint` 会让
- * 「可编辑参数」这个位变浑浊，且没有维度的场景（`first_use`）无处可放。
+ * **不立字段的两种东西**（#975 重写时从老 `dimensions` 里摘掉的，逐条在重写表里具名声明）：
+ *  · 场景条件开关：`true`／`false`／`已有 4 条` 这类**描述当前局面**的值——它们不是用户要填的参数，
+ *    进意图句（让 AI 自己看局面），立成字段＝逼用户去描述 AI 自己能看出来的事；
+ *  · 口径层**自算**的值：`duration_minutes` 由起止时刻算，`src/policy/record.ts:99-104` 还会核对
+ *    用户给的值——立成字段只会让用户填错就报错。
+ *  硬门：老维度名既不在新字段、又没写进重写表的 `drops` ⇒ 生成器 fail-closed（信息不丢失台账）；
+ *  老维度表本身不全（多数场景缺 date／time_start 这类必填位），故只查「不丢」一个方向，新增不拦。
+ *
+ * 本文件**不再带**老的两张伴随表（`HELP_SCENE_RESULTS`＝场景 `result` 镜像／`HELP_GROUP_NOTES`＝
+ * 一级分组 `desc` 镜像）：用户 2026-09-27 裁定「以后不再有预期这种 UI 显示和装填的内容，和预期相关的
+ * 直接删掉」。老文本仍完整躺在 fixture 里，留档由那份取证承担，不在产物里再镜像一遍。
  *
  * 计数全部由数据算出（见 `HELP_TOTALS`），本文件不写第二个数；改资产即跟变。
  * 改词走生成器：`node packages/skill-schedule/scripts/gen-help-assets.mjs`（`--check` 只比对不落盘）。
  */
 
-/** 参数化表单字段（契约 `editable_fields` 的一条）。 */
+/** 参数化表单字段（契约 `editable_fields` 的一条；#975 起带 kind 与控件附属）。 */
 export interface HelpSceneField {
-  /** 参数名（＝源 `dimensions` 的维度键原名）。 */
+  /** 机器键：正文里的 `{{name}}` 与复制载荷末尾 `label: value` 行的 key 都用它（ASCII snake_case）。 */
   readonly name: string;
-  /** 显示标签（源里没有更友好的显示名，同 `name`）。 */
+  /** 人类可读标签（进复制载荷的 `label: value` 行；不列枚举／单位／格式）。 */
   readonly label: string;
-  /** 推荐值（源里没有独立的推荐值字段，一律空串）。 */
+  /** 缺省机器值——一律空串。相对默认词（今天／明天）写在 `hint` 里，由执行侧解成 ISO。 */
   readonly value: string;
-  /** 源维度说明原文（逐字）。 */
-  readonly hint: string;
-  /** 必填（源里没有针对该维度自身的必填标记，一律 false）。 */
+  /** 输入类型（`packages/base-render/src/spec/help.ts` 的 `SceneFieldKind`）：
+   *  text／number／select／date／week／month／year／time。 */
+  readonly kind: string;
+  /** 必填：空的必填项挡住「复制指令」并提示补齐（模板 `getMissing`）。 */
   readonly required: boolean;
+  /** 格式／例／默认值说明（一句话；单位与枚举不进标签，进这里）。 */
+  readonly hint?: string;
+  /** 仅 `select`：候选项（必填非空）。 */
+  readonly options?: readonly string[];
+  /** 仅 `number`：值域与步长。 */
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  /** 控件占位提示。 */
+  readonly placeholder?: string;
 }
 
 /** 两态状态（契约 `SCENE_STATUS`：空串＝可用，【待开发】＝禁用）。写成联合型，
@@ -91,129 +105,162 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
     "subgroups": [
       {
         "id": "write_1",
-        "label": "#0 记作息",
+        "label": "记作息",
         "scenes": [
           {
             "id": "record_add_single",
-            "title": "添加单条作息记录",
-            "wake_word": "#0 记作息",
+            "title": "记一条作息",
+            "wake_word": "记作息",
             "status": "",
-            "prompt_template": "请帮我记一条作息:今天 14:00-15:00 写了 AI 调优代码",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我刚做完一件事,帮我记一条作息。如果我没说全日期或起止时刻,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}\n做了什么:{{activity}}\n分类:{{category}}",
             "editable_fields": [
               {
-                "name": "activity",
-                "label": "activity",
+                "name": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "任意活动",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               },
               {
-                "name": "duration_minutes",
-                "label": "duration_minutes",
+                "name": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "1-1440",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 14:00"
+              },
+              {
+                "name": "time_end",
+                "label": "结束时刻",
+                "value": "",
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 15:00；须晚于开始时刻"
+              },
+              {
+                "name": "activity",
+                "label": "做了什么",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "如 写 AI 调优代码"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "白名单二级",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的二级分类，如 工作.AI调优；只写一级会提示细化"
               }
             ]
           },
           {
             "id": "record_add_json",
-            "title": "通过 JSON 文件批量添加",
-            "wake_word": "#0 记作息",
+            "title": "从 JSON 文件导入",
+            "wake_word": "记作息",
             "status": "",
-            "prompt_template": "请帮我批量导入这些作息数据(从 JSON 文件)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我要从这个 JSON 文件批量导入作息数据。如果字段没对上,告诉我哪一条差什么。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:{{input}}",
             "editable_fields": [
               {
                 "name": "input",
-                "label": "input",
+                "label": "文件路径",
                 "value": "",
-                "hint": "JSON 文件路径",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "JSON 文件路径,如 D:\\\\data\\\\records.json"
               }
             ]
           },
           {
             "id": "record_add_illegal_category",
-            "title": "category 不在白名单",
-            "wake_word": "#0 记作息",
+            "title": "分类不在白名单里",
+            "wake_word": "记作息",
             "status": "【待开发】",
-            "prompt_template": "记一笔:14:00 写了代码",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我要记一条分类不在白名单里的作息,看看会怎么提示我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始时刻:{{time_start}}\n做了什么:{{activity}}\n分类:{{category}}",
             "editable_fields": [
               {
-                "name": "category",
-                "label": "category",
+                "name": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "未在白名单的二级",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 14:00"
+              },
+              {
+                "name": "activity",
+                "label": "做了什么",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "如 写代码"
+              },
+              {
+                "name": "category",
+                "label": "分类",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "写一个不在白名单里的二级分类,如 娱乐.游戏"
               }
             ]
           },
           {
             "id": "record_add_l1_only",
-            "title": "只传一级 category",
-            "wake_word": "#0 记作息",
+            "title": "只写到一级分类",
+            "wake_word": "记作息",
             "status": "",
-            "prompt_template": "请帮我记一条创作类作息",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我只写一级分类,看看会不会提示我细化。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n做了什么:{{activity}}\n分类:{{category}}",
             "editable_fields": [
               {
-                "name": "category",
-                "label": "category",
+                "name": "activity",
+                "label": "做了什么",
                 "value": "",
-                "hint": "仅一级(如'创作')",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "如 写代码"
+              },
+              {
+                "name": "category",
+                "label": "分类",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "只写一级,如 创作"
               }
             ]
           },
           {
             "id": "record_add_missing_field",
-            "title": "必填字段缺失",
-            "wake_word": "#0 记作息",
+            "title": "漏说了一样必填的",
+            "wake_word": "记作息",
             "status": "",
-            "prompt_template": "请帮我记一条作息(用户漏说活动名)",
-            "editable_fields": [
-              {
-                "name": "missing",
-                "label": "missing",
-                "value": "",
-                "hint": "任一必填",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我记一条作息,但漏说了一样必填的,看看会不会问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           },
           {
             "id": "batch_add",
-            "title": "批量导入作息（JSON 批量写入）",
-            "wake_word": "#0 记作息",
+            "title": "一次导入一批",
+            "wake_word": "记作息",
             "status": "",
-            "prompt_template": "请帮我批量导入这些作息数据（从 JSON 文件）",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「记作息」。\n\n我要一次导入一批作息数据(没有唯一键,重复执行会重复插入)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n文件路径:{{input}}\n目标日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "input",
-                "label": "input",
+                "label": "文件路径",
                 "value": "",
-                "hint": "JSON 文件路径",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "JSON 文件路径,如 D:\\\\data\\\\batch.json"
               },
               {
                 "name": "date",
-                "label": "date",
+                "label": "目标日期(选填)",
                 "value": "",
-                "hint": "目标日期（缺省取当日）",
-                "required": false
-              },
-              {
-                "name": "mode",
-                "label": "mode",
-                "value": "",
-                "hint": "一次性批量写入（无唯一键，不幂等）",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD"
               }
             ]
           }
@@ -221,69 +268,73 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "write_2",
-        "label": "#1 准备消息",
+        "label": "准备消息",
         "scenes": [
           {
             "id": "prep_default",
-            "title": "默认游标到当前时间拉取",
-            "wake_word": "#1 准备消息",
+            "title": "从上次游标拉到当前",
+            "wake_word": "准备消息",
             "status": "【待开发】",
-            "prompt_template": "请帮我准备今天的消息",
-            "editable_fields": [
-              {
-                "name": "range",
-                "label": "range",
-                "value": "",
-                "hint": "默认(游标到当前)",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「准备消息」。\n\n帮我把消息准备到当前时间(接着上次的位置)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           },
           {
             "id": "prep_with_range",
-            "title": "指定时间区间拉取",
-            "wake_word": "#1 准备消息",
+            "title": "按区间拉取消息",
+            "wake_word": "准备消息",
             "status": "【待开发】",
-            "prompt_template": "请帮我拉 2026-07-20 00:00 到 2026-07-24 23:59 的消息",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「准备消息」。\n\n我要把某一段时间的聊天消息拉出来备用。起止都按整天算。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "start_date",
+                "label": "开始日期",
                 "value": "",
-                "hint": "YYYY-MM-DD HH:MM ~ YYYY-MM-DD HH:MM",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-20；含当天 00:00"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-24；含当天 23:59"
               }
             ]
           },
           {
             "id": "prep_pagination",
-            "title": "翻页获取下一页",
-            "wake_word": "#1 准备消息",
+            "title": "往后翻一页",
+            "wake_word": "准备消息",
             "status": "【待开发】",
-            "prompt_template": "请帮我翻第 3 页",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「准备消息」。\n\n帮我往后翻页看更早的消息。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n页码:{{page}}",
             "editable_fields": [
               {
                 "name": "page",
-                "label": "page",
+                "label": "页码",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "第几页,从 1 开始,如 3",
+                "min": 1
               }
             ]
           },
           {
             "id": "prep_no_messages",
-            "title": "区间内无消息",
-            "wake_word": "#1 准备消息",
+            "title": "这一天没有消息",
+            "wake_word": "准备消息",
             "status": "【待开发】",
-            "prompt_template": "请帮我准备 2026-07-23 的消息",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「准备消息」。\n\n我要拉某一天的消息(那天没有消息,看看会怎么回我)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "无消息区间",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-23"
               }
             ]
           }
@@ -291,37 +342,39 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "write_3",
-        "label": "#2 同步作息",
+        "label": "同步作息",
         "scenes": [
           {
             "id": "sync_full",
-            "title": "完整同步流程(准备+分析+写入)",
-            "wake_word": "#2 同步作息",
+            "title": "把消息同步成作息记录",
+            "wake_word": "同步作息",
             "status": "【待开发】",
-            "prompt_template": "请帮我同步今天的消息成作息记录",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「同步作息」。\n\n把我今天的消息同步成作息记录(准备、分析、写入一条龙)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "默认",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "sync_partial_day",
-            "title": "同步指定日期",
-            "wake_word": "#2 同步作息",
+            "title": "同步指定那一天",
+            "wake_word": "同步作息",
             "status": "【待开发】",
-            "prompt_template": "请帮我同步 2026-07-22 的消息",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「同步作息」。\n\n把指定那天的消息同步成作息记录。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-22"
               }
             ]
           }
@@ -329,39 +382,23 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "write_4",
-        "label": "#3 增量同步",
+        "label": "增量同步",
         "scenes": [
           {
             "id": "sync_incremental",
-            "title": "从游标继续",
-            "wake_word": "#3 增量同步",
+            "title": "接着上次继续同步",
+            "wake_word": "增量同步",
             "status": "【待开发】",
-            "prompt_template": "请帮我增量同步(接着上次)",
-            "editable_fields": [
-              {
-                "name": "cursor",
-                "label": "cursor",
-                "value": "",
-                "hint": "上次结束位置",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「增量同步」。\n\n接着上次结束的位置继续增量同步。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           },
           {
             "id": "sync_no_cursor",
-            "title": "首次同步无游标",
-            "wake_word": "#3 增量同步",
+            "title": "第一次同步没有游标",
+            "wake_word": "增量同步",
             "status": "【待开发】",
-            "prompt_template": "请帮我同步(从未同步过)",
-            "editable_fields": [
-              {
-                "name": "first_time",
-                "label": "first_time",
-                "value": "",
-                "hint": "true",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「增量同步」。\n\n我从来没同步过,从最早的消息开始同步。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           }
         ]
       }
@@ -374,90 +411,73 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
     "subgroups": [
       {
         "id": "query_1",
-        "label": "#4 今天总结",
+        "label": "今天总结",
         "scenes": [
           {
             "id": "summary_full_24h",
-            "title": "当日满 24h 出综合报告",
-            "wake_word": "#4 今天总结",
+            "title": "一整天记满的回顾",
+            "wake_word": "今天总结",
             "status": "",
-            "prompt_template": "请给我今天总结",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「今天总结」。\n\n我要今天一整天的作息综合报告,这一天已经记满 24 小时。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
-              },
-              {
-                "name": "complete",
-                "label": "complete",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "summary_partial",
-            "title": "当日未满 24h 出摘要",
-            "wake_word": "#4 今天总结",
+            "title": "还没记完的当天小结",
+            "wake_word": "今天总结",
             "status": "",
-            "prompt_template": "请给我今天总结(还没记完)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「今天总结」。\n\n我要今天的作息小结,这一天还没记完,先按已有的记录给。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
-              },
-              {
-                "name": "complete",
-                "label": "complete",
-                "value": "",
-                "hint": "false",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "summary_specific_date",
-            "title": "指定日期总结",
-            "wake_word": "#4 今天总结",
+            "title": "指定某天的总结",
+            "wake_word": "今天总结",
             "status": "",
-            "prompt_template": "请给我 2026-07-22 的总结",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「今天总结」。\n\n我要某一天的作息总结。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-22"
               }
             ]
           },
           {
             "id": "summary_no_records",
-            "title": "指定日期无记录",
-            "wake_word": "#4 今天总结",
+            "title": "那天一条记录都没有",
+            "wake_word": "今天总结",
             "status": "",
-            "prompt_template": "请给我 2026-01-01 的总结",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「今天总结」。\n\n我要某一天的作息总结,那天一条记录都没有,如实告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
-              },
-              {
-                "name": "records",
-                "label": "records",
-                "value": "",
-                "hint": "0",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-22"
               }
             ]
           }
@@ -465,44 +485,47 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_2",
-        "label": "#5 汇总作息",
+        "label": "汇总作息",
         "scenes": [
           {
             "id": "summary_range_default",
-            "title": "日期范围汇总",
-            "wake_word": "#5 汇总作息",
+            "title": "一段日期的作息汇总",
+            "wake_word": "汇总作息",
             "status": "",
-            "prompt_template": "请给我 7/13~7/19 这一周的汇总",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「汇总作息」。\n\n我要一段日期的作息汇总。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "start_date",
+                "label": "开始日期",
                 "value": "",
-                "hint": "YYYY-MM-DD ~ YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-13；含当天"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-19；不早于开始日期"
               }
             ]
           },
           {
             "id": "summary_range_full",
-            "title": "日期范围文本汇总",
-            "wake_word": "#5 汇总作息",
+            "title": "一段时间的文本汇总",
+            "wake_word": "汇总作息",
             "status": "",
-            "prompt_template": "请给我 7/13~7/19 的文本汇总",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「汇总作息」。\n\n我要一段时间的作息汇总,直接回文本,不用出页面。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围:{{range}}",
             "editable_fields": [
               {
                 "name": "range",
-                "label": "range",
+                "label": "时间范围",
                 "value": "",
-                "hint": "任意范围",
-                "required": false
-              },
-              {
-                "name": "format",
-                "label": "format",
-                "value": "",
-                "hint": "text",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "接受 本周、上周、上月 这类相对词，也可写起止日期"
               }
             ]
           }
@@ -510,76 +533,73 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_3",
-        "label": "#6 查作息",
+        "label": "查作息",
         "scenes": [
           {
             "id": "record_list_today",
-            "title": "今日作息列表",
-            "wake_word": "#6 查作息",
+            "title": "今天做过什么",
+            "wake_word": "查作息",
             "status": "",
-            "prompt_template": "请帮我看看今天我做了什么",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息」。\n\n我想看看今天我做了什么。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "record_list_yesterday",
-            "title": "昨日作息",
-            "wake_word": "#6 查作息",
+            "title": "昨天做过什么",
+            "wake_word": "查作息",
             "status": "",
-            "prompt_template": "昨天我做了什么",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息」。\n\n我想看看昨天我做了什么。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "昨天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝昨天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "record_list_specific",
-            "title": "指定日期作息",
-            "wake_word": "#6 查作息",
+            "title": "某一天做过什么",
+            "wake_word": "查作息",
             "status": "",
-            "prompt_template": "请帮我看看 2026-07-15 我做了什么",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息」。\n\n我想看看某一天我做了什么。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               }
             ]
           },
           {
             "id": "record_list_empty",
-            "title": "指定日期无记录",
-            "wake_word": "#6 查作息",
+            "title": "那天没有任何记录",
+            "wake_word": "查作息",
             "status": "",
-            "prompt_template": "请帮我看看 2026-07-01 我做了什么",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息」。\n\n我想看看某一天我做了什么,那天一条记录都没有,如实告诉我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
-              },
-              {
-                "name": "records",
-                "label": "records",
-                "value": "",
-                "hint": "0",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-01"
               }
             ]
           }
@@ -587,60 +607,57 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_4",
-        "label": "#7 查作息详情",
+        "label": "查作息详情",
         "scenes": [
           {
             "id": "detail_day",
-            "title": "查看某日所有详情",
-            "wake_word": "#7 查作息详情",
+            "title": "某一天的全部详情",
+            "wake_word": "查作息详情",
             "status": "",
-            "prompt_template": "请帮我看 7/15 作息详情(含 AI 推理链)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息详情」。\n\n我要看某一天的全部作息详情,每条记录都展开。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               }
             ]
           },
           {
             "id": "detail_record",
-            "title": "查看单条详情",
-            "wake_word": "#7 查作息详情",
+            "title": "这条记录的完整详情",
+            "wake_word": "查作息详情",
             "status": "",
-            "prompt_template": "请帮我看 id=123 这条记录详情",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息详情」。\n\n我要看某一条记录的完整详情。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{record_id}}",
             "editable_fields": [
               {
                 "name": "record_id",
-                "label": "record_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 123；从查作息或时间轴里取",
+                "min": 1
               }
             ]
           },
           {
             "id": "detail_with_reasoning",
-            "title": "查看 AI 推理链",
-            "wake_word": "#7 查作息详情",
+            "title": "某一天的分类依据",
+            "wake_word": "查作息详情",
             "status": "",
-            "prompt_template": "请帮我看 7/15 的 AI 是怎么分类的",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息详情」。\n\n我要看某一天的作息是怎么被归类的,把 AI 的判断依据一起给我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
-              },
-              {
-                "name": "include_reasoning",
-                "label": "include_reasoning",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               }
             ]
           }
@@ -648,37 +665,39 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_5",
-        "label": "#8 查作息时间轴",
+        "label": "查作息时间轴",
         "scenes": [
           {
             "id": "timeline_today",
-            "title": "今日时间轴",
-            "wake_word": "#8 查作息时间轴",
+            "title": "今天的时间轴",
+            "wake_word": "查作息时间轴",
             "status": "",
-            "prompt_template": "今天时间轴看一下",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息时间轴」。\n\n我要看今天的 24 小时时间轴。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "timeline_specific",
-            "title": "指定日期时间轴",
-            "wake_word": "#8 查作息时间轴",
+            "title": "某一天的时间轴",
+            "wake_word": "查作息时间轴",
             "status": "",
-            "prompt_template": "请帮我看 7/15 的 24h 时间轴",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息时间轴」。\n\n我要看某一天的 24 小时时间轴。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               }
             ]
           }
@@ -686,60 +705,55 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_6",
-        "label": "#9 查作息范围",
+        "label": "查作息范围",
         "scenes": [
           {
             "id": "range_default",
-            "title": "日期范围统计",
-            "wake_word": "#9 查作息范围",
+            "title": "一段日期的统计",
+            "wake_word": "查作息范围",
             "status": "",
-            "prompt_template": "请帮我看 7/13~7/19 这一周",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息范围」。\n\n我要看一段日期的作息统计。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "start_date",
+                "label": "开始日期",
                 "value": "",
-                "hint": "YYYY-MM-DD ~ YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-13；含当天"
+              },
+              {
+                "name": "end_date",
+                "label": "结束日期",
+                "value": "",
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-19；不早于开始日期"
               }
             ]
           },
           {
             "id": "range_this_week",
-            "title": "本周范围",
-            "wake_word": "#9 查作息范围",
+            "title": "本周的统计",
+            "wake_word": "查作息范围",
             "status": "",
-            "prompt_template": "请帮我看本周",
-            "editable_fields": [
-              {
-                "name": "range",
-                "label": "range",
-                "value": "",
-                "hint": "本周(自动计算)",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息范围」。\n\n我要看本周的作息统计,就按周一到周日这一整周。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           },
           {
             "id": "range_text",
-            "title": "范围文本降级",
-            "wake_word": "#9 查作息范围",
+            "title": "统计直接给文本",
+            "wake_word": "查作息范围",
             "status": "",
-            "prompt_template": "请帮我看本周(直接给文本)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息范围」。\n\n我要看某一段时间的作息统计,直接回文本,不用出页面。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n时间范围:{{range}}",
             "editable_fields": [
               {
                 "name": "range",
-                "label": "range",
+                "label": "时间范围",
                 "value": "",
-                "hint": "任意",
-                "required": false
-              },
-              {
-                "name": "format",
-                "label": "format",
-                "value": "",
-                "hint": "text",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "接受 本周、上周、上月 这类相对词，也可写起止日期"
               }
             ]
           }
@@ -747,135 +761,128 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_7",
-        "label": "#11 查作息状态",
+        "label": "查作息状态",
         "scenes": [
           {
             "id": "status_default",
-            "title": "查整体状态",
-            "wake_word": "#11 查作息状态",
+            "title": "作息库整体怎么样",
+            "wake_word": "查作息状态",
             "status": "",
-            "prompt_template": "作息状态怎么样",
-            "editable_fields": [
-              {
-                "name": "scope",
-                "label": "scope",
-                "value": "",
-                "hint": "all",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查作息状态」。\n\n我要看作息库整体的状态,一共记了多少、最近记到哪一天。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           }
         ]
       },
       {
         "id": "query_8",
-        "label": "#12 查日程",
+        "label": "查日程",
         "scenes": [
           {
             "id": "list_events_today",
-            "title": "今日日程",
-            "wake_word": "#12 查日程",
+            "title": "今天的日程",
+            "wake_word": "查日程",
             "status": "",
-            "prompt_template": "请帮我看今天的日程",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查日程」。\n\n我要看今天的日程安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           },
           {
             "id": "list_events_specific",
-            "title": "指定日期日程",
-            "wake_word": "#12 查日程",
+            "title": "某一天的日程",
+            "wake_word": "查日程",
             "status": "",
-            "prompt_template": "请帮我看 7/15 的日程",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查日程」。\n\n我要看某一天的日程安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               }
             ]
           },
           {
             "id": "search_event_title",
-            "title": "按标题搜索日程",
-            "wake_word": "#12 查日程",
+            "title": "按标题找一条日程",
+            "wake_word": "查日程",
             "status": "",
-            "prompt_template": "今天有健身吗",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查日程」。\n\n我想在今天里找找有没有某件事的安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}\n标题关键词:{{title}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               },
               {
                 "name": "title",
-                "label": "title",
+                "label": "标题关键词",
                 "value": "",
-                "hint": "健身",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "如 健身"
               }
             ]
           },
           {
             "id": "search_event_triplet",
-            "title": "按时间三元组查重",
-            "wake_word": "#12 查日程",
+            "title": "某个时段有没有安排",
+            "wake_word": "查日程",
             "status": "",
-            "prompt_template": "今天 17:00-18:00 有什么安排",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查日程」。\n\n我想看看今天某个时段里有没有安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               },
               {
                 "name": "time_start",
-                "label": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 17:00"
               },
               {
                 "name": "time_end",
-                "label": "time_end",
+                "label": "结束时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 18:00；须晚于开始时刻"
               }
             ]
           },
           {
             "id": "list_events_inactive",
-            "title": "查已软删事件",
-            "wake_word": "#12 查日程",
+            "title": "今天删掉了哪些日程",
+            "wake_word": "查日程",
             "status": "",
-            "prompt_template": "今天被删的日程有哪些",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查日程」。\n\n我要看今天有哪些日程被删掉了,删掉的那些也要一并列出来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
-              },
-              {
-                "name": "include_inactive",
-                "label": "include_inactive",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           }
@@ -883,21 +890,22 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_9",
-        "label": "#15 24h 概览",
+        "label": "24h 概览",
         "scenes": [
           {
             "id": "query_plans_today",
-            "title": "今日 24h 概览",
-            "wake_word": "#15 24h 概览",
+            "title": "今天一整天的安排",
+            "wake_word": "24h 概览",
             "status": "",
-            "prompt_template": "今天 24h 安排概览",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「24h 概览」。\n\n我要看今天 24 小时的整体安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；填了必须是 YYYY-MM-DD"
               }
             ]
           }
@@ -905,21 +913,22 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_10",
-        "label": "#16 查多日计划",
+        "label": "查多日计划",
         "scenes": [
           {
             "id": "query_plans_multi",
-            "title": "多日简版",
-            "wake_word": "#16 查多日计划",
+            "title": "连着几天的计划",
+            "wake_word": "查多日计划",
             "status": "",
-            "prompt_template": "请帮我看 7/13、7/14、7/15 三天计划",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「查多日计划」。\n\n我要看连着几天的计划安排。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(可多天):{{dates}}",
             "editable_fields": [
               {
                 "name": "dates",
-                "label": "dates",
+                "label": "日期(可多天)",
                 "value": "",
-                "hint": "YYYY-MM-DD,YYYY-MM-DD,...",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，多天用逗号分隔，如 2026-07-13,2026-07-14,2026-07-15"
               }
             ]
           }
@@ -927,21 +936,23 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "query_11",
-        "label": "#23 按 ID 查记录",
+        "label": "按 ID 查记录",
         "scenes": [
           {
             "id": "get_record_basic",
-            "title": "按 ID 查单条",
-            "wake_word": "#23 按 ID 查记录",
+            "title": "按记录 ID 定位一条",
+            "wake_word": "按 ID 查记录",
             "status": "",
-            "prompt_template": "帮我查 id=123 这条记录",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「按 ID 查记录」。\n\n我要看某一条记录的详情,靠记录 ID 定位。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{record_id}}",
             "editable_fields": [
               {
                 "name": "record_id",
-                "label": "record_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 123；从查作息或时间轴里取",
+                "min": 1
               }
             ]
           }
@@ -953,17 +964,18 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "week_view",
-            "title": "周视图(7×24 全分类总览)",
+            "title": "一周七天的作息总览",
             "wake_word": "周视图",
             "status": "【待开发】",
-            "prompt_template": "请帮我看看这一周的作息总览(唤醒词:周视图)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「周视图」。\n\n我要看这一周从周一到周日的作息总览。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n锚点日期(选填):{{date}}",
             "editable_fields": [
               {
-                "name": "week",
-                "label": "week",
+                "name": "date",
+                "label": "锚点日期(选填)",
                 "value": "",
-                "hint": "目标周(默认本周;锚点日期 YYYY-MM-DD)",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝本周；填这一周里的任意一天，格式 YYYY-MM-DD"
               }
             ]
           }
@@ -978,102 +990,144 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
     "subgroups": [
       {
         "id": "plan_1",
-        "label": "#13 补计划",
+        "label": "补计划",
         "scenes": [
           {
             "id": "ensure_event_basic",
-            "title": "补一条计划(基础)",
-            "wake_word": "#13 补计划",
+            "title": "给某一天补一条安排",
+            "wake_word": "补计划",
             "status": "",
-            "prompt_template": "帮我补一条计划到后天 17:00-18:00 健身",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「补计划」。\n\n我要往某一天的计划里补一条安排。如果我没说全日期、起止时刻或做什么,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}\n做什么:{{title}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "后天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天／后天"
               },
               {
                 "name": "time_start",
-                "label": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 17:00"
               },
               {
                 "name": "time_end",
-                "label": "time_end",
+                "label": "结束时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 18:00；须晚于开始时刻"
               },
               {
                 "name": "title",
-                "label": "title",
+                "label": "做什么",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "如 健身"
               }
             ]
           },
           {
             "id": "ensure_event_idempotent",
-            "title": "同时间重复(幂等)",
-            "wake_word": "#13 补计划",
+            "title": "同一时段重复补也不新建",
+            "wake_word": "补计划",
             "status": "",
-            "prompt_template": "再补一条 17:00-18:00 的健身(已有)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「补计划」。\n\n我要在同一天的同一时段再补一遍,这个时段之前已经排过了;已经有了就照原来的留着,别再建一条。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}\n做什么:{{title}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-27；也可写 今天"
               },
               {
                 "name": "time_start",
-                "label": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 17:00"
               },
               {
                 "name": "time_end",
-                "label": "time_end",
+                "label": "结束时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 18:00；须晚于开始时刻"
+              },
+              {
+                "name": "title",
+                "label": "做什么",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "如 健身"
               }
             ]
           },
           {
             "id": "ensure_event_with_notes",
-            "title": "补计划含备注",
-            "wake_word": "#13 补计划",
+            "title": "带细节与分类的一条安排",
+            "wake_word": "补计划",
             "status": "",
-            "prompt_template": "帮我补明天 17:00-18:00 健身(练背+有氧)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「补计划」。\n\n我要补一条带细节的安排,顺便把它归到某个分类里。如果我没说全日期、起止时刻或做什么,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}\n做什么:{{title}}\n细节(选填):{{notes}}\n分类:{{category}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
+              },
+              {
+                "name": "time_start",
+                "label": "开始时刻",
+                "value": "",
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 17:00"
+              },
+              {
+                "name": "time_end",
+                "label": "结束时刻",
+                "value": "",
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 18:00；须晚于开始时刻"
+              },
+              {
+                "name": "title",
+                "label": "做什么",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "如 健身"
               },
               {
                 "name": "notes",
-                "label": "notes",
+                "label": "细节(选填)",
                 "value": "",
-                "hint": "细节",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "这条安排的补充说明，如 练背+有氧"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "健康.健身",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的二级分类，如 健康.健身；只写一级会提示细化"
               }
             ]
           }
@@ -1081,90 +1135,73 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "plan_2",
-        "label": "#14 复盘",
+        "label": "复盘",
         "scenes": [
           {
             "id": "review_today_normal",
-            "title": "今日复盘(标准流程)",
-            "wake_word": "#14 复盘",
+            "title": "把这一天的执行情况逐条对一遍",
+            "wake_word": "复盘",
             "status": "",
-            "prompt_template": "请帮我复盘今天",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘」。\n\n我要把这一天的计划逐条对一下执行情况,一条条标出完成状态。先给我看这一天的排布,确认后再写入。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           },
           {
             "id": "review_today_all_done",
-            "title": "今日已全部复盘",
-            "wake_word": "#14 复盘",
+            "title": "都标过完成之后再看一遍",
+            "wake_word": "复盘",
             "status": "",
-            "prompt_template": "再帮我复盘一下今天",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘」。\n\n这一天的计划我全都标过完成了,别再让我逐条重标,直接说这一天的结论。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
-              },
-              {
-                "name": "completion_all",
-                "label": "completion_all",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           },
           {
             "id": "review_no_events",
-            "title": "该日无活跃事件",
-            "wake_word": "#14 复盘",
+            "title": "这一天没有计划时怎么看",
+            "wake_word": "复盘",
             "status": "",
-            "prompt_template": "请帮我复盘 2026-07-01",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘」。\n\n我要看的那一天没有任何计划,别报成故障,告诉我这一天没得对就行。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
-              },
-              {
-                "name": "events_count",
-                "label": "events_count",
-                "value": "",
-                "hint": "0",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-01"
               }
             ]
           },
           {
             "id": "review_with_memo_sync",
-            "title": "复盘前先同步备忘录",
-            "wake_word": "#14 复盘",
+            "title": "先对备忘录打卡数据再逐条对",
+            "wake_word": "复盘",
             "status": "",
-            "prompt_template": "复盘前先对一下今天的打卡数据",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘」。\n\n我要先把备忘录里这一天的打卡数据对一遍,再逐条对计划的执行情况。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "今天",
-                "required": false
-              },
-              {
-                "name": "memo_cli",
-                "label": "memo_cli",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           }
@@ -1172,249 +1209,191 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "plan_3",
-        "label": "#17 商量计划",
+        "label": "商量计划",
         "scenes": [
           {
             "id": "plan_discuss_tomorrow",
-            "title": "商量明天计划",
-            "wake_word": "#17 商量计划",
+            "title": "商量某一天怎么安排",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "商量一下明天的计划",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n我想商量某一天怎么安排,先跟我把候选排出来,我看过再落库。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天／后天"
               }
             ]
           },
           {
             "id": "plan_with_locked",
-            "title": "商量时已有部分事件",
-            "wake_word": "#17 商量计划",
+            "title": "已有几条锁定时把空档填起来",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "帮我重新商量明天的计划(已有 4 条)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n这一天我已经排了几条,就在这几条之外把空档填起来,先跟我把候选排出来,我看过再落库。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "existing_events",
-                "label": "existing_events",
-                "value": "",
-                "hint": "4",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_with_wish",
-            "title": "商量时拉心愿清单",
-            "wake_word": "#17 商量计划",
+            "title": "把心愿排进这一天",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "商量明天(把心愿 X 安排进去)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n我想把心愿清单里的事排进这一天,先把心愿列出来跟我一起挑,看过候选再定。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n要排的心愿(选填):{{wish}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               },
               {
-                "name": "memo_cli",
-                "label": "memo_cli",
+                "name": "wish",
+                "label": "要排的心愿(选填)",
                 "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "要推进的那件事，如 体检预约；空＝我自己从心愿清单里挑"
               }
             ]
           },
           {
             "id": "plan_24h_coverage_fail",
-            "title": "覆盖校验失败",
-            "wake_word": "#17 商量计划",
+            "title": "候选有空隙或撞车时重新排",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "商量明天计划(生成的事件有空隙)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n我这次排出来的安排有空隙或者撞车,请把不连续的地方点出来,重新排到一天首尾相接。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "gap_or_overlap",
-                "label": "gap_or_overlap",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_feishu_sync",
-            "title": "商量后飞书同步",
-            "wake_word": "#17 商量计划",
+            "title": "商量完顺手同步到飞书",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "商量后顺便同步到飞书",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n商量完这一天的安排之后,顺便整份同步到飞书日历,同步前先问我一句。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "feishu",
-                "label": "feishu",
-                "value": "",
-                "hint": "full",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_result_tomorrow",
-            "title": "制定次日计划(结果强化)",
-            "wake_word": "#17 商量计划",
+            "title": "出一张计划结果页",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "帮我制定明天的计划,生成计划结果 HTML",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n帮我按这一天的空档把计划排出来,出一张能看的计划结果,标出跟平时习惯贴不贴。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "history_days",
-                "label": "history_days",
-                "value": "",
-                "hint": "7",
-                "required": false
-              },
-              {
-                "name": "candidates",
-                "label": "candidates",
-                "value": "",
-                "hint": "6-10 段",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_result_adjust",
-            "title": "制定计划后调整再生成",
-            "wake_word": "#17 商量计划",
+            "title": "改一处再出一版候选",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "把第 2 段改成 19:00 开始,再生成一次",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n候选那一版我看过了,想改一处再出一版,新版跟上一版都留着,别把上一版盖掉。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n要怎么改:{{change}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               },
               {
-                "name": "round",
-                "label": "round",
+                "name": "change",
+                "label": "要怎么改",
                 "value": "",
-                "hint": "2-N",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "如 第 2 段改成 19:00 开始"
               }
             ]
           },
           {
             "id": "plan_result_history_none",
-            "title": "无历史作息参考",
-            "wake_word": "#17 商量计划",
+            "title": "还没有历史作息可参考时怎么排",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "帮我制定明天的计划(新环境,没有历史记录)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n这是个新环境,还没有历史作息可参考,照样把这一天的计划排出来,贴合那一栏空着就行。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "history_days",
-                "label": "history_days",
-                "value": "",
-                "hint": "7",
-                "required": false
-              },
-              {
-                "name": "no_history",
-                "label": "no_history",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_result_conflict",
-            "title": "候选与已锁定事件冲突",
-            "wake_word": "#17 商量计划",
+            "title": "候选跟已锁定的安排撞上了",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "商量明天的计划(已有 2 条已锁定)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n这一天已经锁定了不能动的安排,候选里有跟它们撞上的,请把冲突点标出来让我改。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "locked_events",
-                "label": "locked_events",
-                "value": "",
-                "hint": "2",
-                "required": false
-              },
-              {
-                "name": "conflict",
-                "label": "conflict",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           },
           {
             "id": "plan_result_drift",
-            "title": "与历史习惯偏离",
-            "wake_word": "#17 商量计划",
+            "title": "排得跟平时习惯不一样",
+            "wake_word": "商量计划",
             "status": "",
-            "prompt_template": "明天把下午改成运动(历史下午都是工作)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「商量计划」。\n\n我想把下午换成运动,跟平时下午都在工作的习惯不一样,是我有意这么排的;请把偏离的地方标出来,我看过仍然可以落库。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "明天",
-                "required": false
-              },
-              {
-                "name": "drift",
-                "label": "drift",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-28；也可写 明天"
               }
             ]
           }
@@ -1422,104 +1401,137 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "plan_4",
-        "label": "#18 改计划",
+        "label": "改计划",
         "scenes": [
           {
             "id": "update_event_basic",
-            "title": "改单个事件字段",
-            "wake_word": "#18 改计划",
+            "title": "换掉某一条的标题或备注",
+            "wake_word": "改计划",
             "status": "",
-            "prompt_template": "改 id=544 这条的 title 为健身(上午)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「改计划」。\n\n我要把一条已经排好的安排调一调,换成别的说法或者补上备注。如果我没说清是哪一条或改成什么,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}\n标题:{{title}}\n备注(选填):{{notes}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               },
               {
-                "name": "fields",
-                "label": "fields",
+                "name": "title",
+                "label": "标题",
                 "value": "",
-                "hint": "[\"title\",\"notes\"]",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "要改成什么，如 健身(上午)"
+              },
+              {
+                "name": "notes",
+                "label": "备注(选填)",
+                "value": "",
+                "kind": "text",
+                "required": false,
+                "hint": "要改成什么；空＝这一项不动"
               }
             ]
           },
           {
             "id": "update_event_time",
-            "title": "改时段(飞书删旧建新)",
-            "wake_word": "#18 改计划",
+            "title": "把某一条挪到别的时段",
+            "wake_word": "改计划",
             "status": "",
-            "prompt_template": "把 id=544 改成 17:30-18:30",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「改计划」。\n\n我要把一条已经排好的安排挪到别的时段。如果我没说清是哪一条或新的起止时刻,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}\n开始时刻:{{time_start}}\n结束时刻:{{time_end}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               },
               {
                 "name": "time_start",
-                "label": "time_start",
+                "label": "开始时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 17:30"
               },
               {
                 "name": "time_end",
-                "label": "time_end",
+                "label": "结束时刻",
                 "value": "",
-                "hint": "HH:MM",
-                "required": false
+                "kind": "time",
+                "required": true,
+                "hint": "格式 HH:MM，如 18:30；须晚于开始时刻"
               }
             ]
           },
           {
             "id": "update_event_completion",
-            "title": "改 completion",
-            "wake_word": "#18 改计划",
+            "title": "标某一条的完成状态",
+            "wake_word": "改计划",
             "status": "",
-            "prompt_template": "把 id=544 标已完成",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「改计划」。\n\n我要给一条已经排好的安排标上完成状态,就标这一条,别动别的。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}\n完成状态:{{completion}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               },
               {
                 "name": "completion",
-                "label": "completion",
+                "label": "完成状态",
                 "value": "",
-                "hint": "已完成",
-                "required": false
+                "kind": "select",
+                "required": true,
+                "hint": "按这条实际做到什么程度选",
+                "options": [
+                  "已完成",
+                  "已完成(超时)",
+                  "部分完成",
+                  "未完成",
+                  "未完成(不可抗力)",
+                  "未复盘"
+                ]
               }
             ]
           },
           {
             "id": "update_event_feishu_ask",
-            "title": "改后飞书询问",
-            "wake_word": "#18 改计划",
+            "title": "改完先问要不要同步飞书",
+            "wake_word": "改计划",
             "status": "",
-            "prompt_template": "改 id=544 的 title(已同步飞书)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「改计划」。\n\n我要改一条已经同步到飞书的安排,改完先问我飞书那边要不要一起改。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}\n标题:{{title}}\n备注(选填):{{notes}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               },
               {
-                "name": "feishu_synced",
-                "label": "feishu_synced",
+                "name": "title",
+                "label": "标题",
                 "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "要改成什么，如 健身(上午)"
+              },
+              {
+                "name": "notes",
+                "label": "备注(选填)",
+                "value": "",
+                "kind": "text",
+                "required": false,
+                "hint": "要改成什么；空＝这一项不动"
               }
             ]
           }
@@ -1527,44 +1539,39 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "plan_5",
-        "label": "#19 删计划",
+        "label": "删计划",
         "scenes": [
           {
             "id": "deactivate_event",
-            "title": "软删事件",
-            "wake_word": "#19 删计划",
+            "title": "撤掉某一条安排",
+            "wake_word": "删计划",
             "status": "",
-            "prompt_template": "删 id=544 这条计划",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「删计划」。\n\n我要把一条已经排好的安排撤掉。删之前先告诉我这条是什么,确认后再删。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               }
             ]
           },
           {
             "id": "deactivate_with_feishu",
-            "title": "软删 + 飞书删",
-            "wake_word": "#19 删计划",
+            "title": "撤掉已同步飞书的那一条",
+            "wake_word": "删计划",
             "status": "",
-            "prompt_template": "删 id=544(已同步飞书)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「删计划」。\n\n我要撤掉一条已经同步到飞书的安排,删之前先问我飞书那边要不要一起删,确认后再删。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{event_id}}",
             "editable_fields": [
               {
                 "name": "event_id",
-                "label": "event_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
-              },
-              {
-                "name": "feishu_synced",
-                "label": "feishu_synced",
-                "value": "",
-                "hint": "true",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "纯数字，如 544；先在日程里查到这条记录的编号"
               }
             ]
           }
@@ -1572,21 +1579,22 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "plan_6",
-        "label": "#20 日程管家同步",
+        "label": "日程管家同步",
         "scenes": [
           {
             "id": "feishu_resync_basic",
-            "title": "反向对账+diff 询问",
-            "wake_word": "#20 日程管家同步",
+            "title": "跟飞书对账之后同步某一天",
+            "wake_word": "日程管家同步",
             "status": "",
-            "prompt_template": "请帮我同步今天的日程到飞书",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「日程管家同步」。\n\n我要把某一天的日程跟飞书那边对一遍,差在哪就一条条问我,我确认了再同步。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           }
@@ -1598,17 +1606,18 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "replay_day",
-            "title": "复盘今日(计划 vs 实际对照 + 叙事 + 单日健康分)",
+            "title": "一整天的计划与实际对照",
             "wake_word": "复盘今日",
             "status": "",
-            "prompt_template": "请帮我复盘今天(唤醒词:复盘今日)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘今日」。\n\n我要把计划跟实际对一遍,看看这一天过得怎么样。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期(选填):{{date}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期(选填)",
                 "value": "",
-                "hint": "单日 YYYY-MM-DD(默认今天)",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝今天；格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           }
@@ -1620,19 +1629,11 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "replay_week",
-            "title": "复盘本周(7 维趋势 + 热力图 + 健康分均值)",
+            "title": "一周的趋势与规律",
             "wake_word": "复盘本周",
             "status": "",
-            "prompt_template": "请帮我复盘本周(唤醒词:复盘本周)",
-            "editable_fields": [
-              {
-                "name": "range",
-                "label": "range",
-                "value": "",
-                "hint": "本周一~周日(自动换算)",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘本周」。\n\n我要把这一周整个过一遍,看趋势和规律,起止不用我报。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           }
         ]
       },
@@ -1642,19 +1643,11 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "replay_month",
-            "title": "复盘本月(月度聚合 + 环比对比 + 目标达成)",
+            "title": "一个月的聚合与环比",
             "wake_word": "复盘本月",
             "status": "",
-            "prompt_template": "请帮我复盘本月(唤醒词:复盘本月)",
-            "editable_fields": [
-              {
-                "name": "range",
-                "label": "range",
-                "value": "",
-                "hint": "本月 1 日~月末(自动换算)",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘本月」。\n\n我要把这一个月整个过一遍,跟上一段比一比,看看目标达成得怎么样。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           }
         ]
       },
@@ -1664,17 +1657,18 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "replay_range",
-            "title": "复盘区间(任意区间跨域复盘 · 原 start-end)",
+            "title": "任意一段区间的跨域回看",
             "wake_word": "复盘区间",
             "status": "",
-            "prompt_template": "请帮我复盘 2026-07-13~2026-07-19(唤醒词:复盘区间)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「复盘区间」。\n\n我要跨一段区间整体回看一遍,起止我自己给。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n区间:{{range}}",
             "editable_fields": [
               {
                 "name": "range",
-                "label": "range",
+                "label": "区间",
                 "value": "",
-                "hint": "任意 start-end(预置 上周/上月/今年/上年 + 自由区间语法)",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "写 本周／上周／本月／上月，或自己给起止，如 2026-07-13~2026-07-19"
               }
             ]
           }
@@ -1689,58 +1683,66 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
     "subgroups": [
       {
         "id": "analyze_1",
-        "label": "#24 写作息摘要",
+        "label": "写作息摘要",
         "scenes": [
           {
             "id": "add_summary_basic",
             "title": "写摘要",
-            "wake_word": "#24 写作息摘要",
+            "wake_word": "写作息摘要",
             "status": "",
-            "prompt_template": "帮我写摘要:2026-07-22 工作.AI调优 60 分钟",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「写作息摘要」。\n\n我要给某天的某个分类补一条时长摘要。如果我没说全日期、分类或时长,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n分类:{{category}}\n总时长:{{total_minutes}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-22"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的一级分类(八类之一)，如 工作"
               },
               {
                 "name": "total_minutes",
-                "label": "total_minutes",
+                "label": "总时长",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "单位分钟，纯数字，如 60",
+                "min": 0,
+                "max": 1440,
+                "step": 1
               }
             ]
           },
           {
             "id": "add_summary_idempotent",
-            "title": "同 date+category upsert",
-            "wake_word": "#24 写作息摘要",
+            "title": "重写已有摘要",
+            "wake_word": "写作息摘要",
             "status": "",
-            "prompt_template": "再写一次(已有)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「写作息摘要」。\n\n同一天同一个分类我已经写过一条了,再写一次要把原来那条的时长盖掉。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n分类:{{category}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-22"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的一级分类(八类之一)，如 工作"
               }
             ]
           }
@@ -1748,102 +1750,112 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "analyze_2",
-        "label": "#25 对比两个月",
+        "label": "对比两个月",
         "scenes": [
           {
             "id": "compare_months",
             "title": "整月对比",
-            "wake_word": "#25 对比两个月",
+            "wake_word": "对比两个月",
             "status": "",
-            "prompt_template": "6 月和 7 月对比",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「对比两个月」。\n\n我要对比两个月的作息。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n前一个月:{{month_a}}\n后一个月:{{month_b}}",
             "editable_fields": [
               {
                 "name": "month_a",
-                "label": "month_a",
+                "label": "前一个月",
                 "value": "",
-                "hint": "YYYY-MM",
-                "required": false
+                "kind": "month",
+                "required": true,
+                "hint": "格式 YYYY-MM，如 2026-06"
               },
               {
                 "name": "month_b",
-                "label": "month_b",
+                "label": "后一个月",
                 "value": "",
-                "hint": "YYYY-MM",
-                "required": false
+                "kind": "month",
+                "required": true,
+                "hint": "格式 YYYY-MM，如 2026-07"
               }
             ]
           },
           {
             "id": "compare_range",
             "title": "任意范围对比",
-            "wake_word": "#25 对比两个月",
+            "wake_word": "对比两个月",
             "status": "",
-            "prompt_template": "上周和这周对比",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「对比两个月」。\n\n我要对比前后两段自定义日期区间的作息(这次不是整月对整月)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n前一段名称(选填):{{label_a}}\n前一段开始日期:{{range_a_start}}\n前一段结束日期:{{range_a_end}}\n后一段名称(选填):{{label_b}}\n后一段开始日期:{{range_b_start}}\n后一段结束日期:{{range_b_end}}",
             "editable_fields": [
               {
                 "name": "label_a",
-                "label": "label_a",
+                "label": "前一段名称(选填)",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "如 上周；空＝用起止日期当名字"
               },
               {
-                "name": "range_a",
-                "label": "range_a",
+                "name": "range_a_start",
+                "label": "前一段开始日期",
                 "value": "",
-                "hint": "YYYY-MM-DD ~ YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-14"
+              },
+              {
+                "name": "range_a_end",
+                "label": "前一段结束日期",
+                "value": "",
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-20"
               },
               {
                 "name": "label_b",
-                "label": "label_b",
+                "label": "后一段名称(选填)",
                 "value": "",
-                "hint": "Y",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "如 本周；空＝用起止日期当名字"
               },
               {
-                "name": "range_b",
-                "label": "range_b",
+                "name": "range_b_start",
+                "label": "后一段开始日期",
                 "value": "",
-                "hint": "YYYY-MM-DD ~ YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-21"
+              },
+              {
+                "name": "range_b_end",
+                "label": "后一段结束日期",
+                "value": "",
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-09-27"
               }
             ]
           },
           {
             "id": "compare_week_vs_week",
             "title": "周对比",
-            "wake_word": "#25 对比两个月",
+            "wake_word": "对比两个月",
             "status": "",
-            "prompt_template": "上周和这周差多少",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「对比两个月」。\n\n我要比上周和这周这两段(这次不是整月对整月)。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n前一段名称(选填):{{label_a}}\n后一段名称(选填):{{label_b}}",
             "editable_fields": [
               {
                 "name": "label_a",
-                "label": "label_a",
+                "label": "前一段名称(选填)",
                 "value": "",
-                "hint": "上周",
-                "required": false
-              },
-              {
-                "name": "range_a",
-                "label": "range_a",
-                "value": "",
-                "hint": "周一~周日",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "空＝上周"
               },
               {
                 "name": "label_b",
-                "label": "label_b",
+                "label": "后一段名称(选填)",
                 "value": "",
-                "hint": "本周",
-                "required": false
-              },
-              {
-                "name": "range_b",
-                "label": "range_b",
-                "value": "",
-                "hint": "周一~周日",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "空＝本周"
               }
             ]
           }
@@ -1851,74 +1863,102 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "analyze_3",
-        "label": "#26 修正作息",
+        "label": "修正作息",
         "scenes": [
           {
             "id": "amend_basic",
             "title": "改 1 条记录多字段",
-            "wake_word": "#26 修正作息",
+            "wake_word": "修正作息",
             "status": "",
-            "prompt_template": "这条记错了,改成工作.AI调优,活动是写代码",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「修正作息」。\n\n我这条作息记错了,要改它的分类和活动。如果我没说清改成什么,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{record_id}}\n改成哪个分类:{{category}}\n改成做了什么:{{activity}}",
             "editable_fields": [
               {
                 "name": "record_id",
-                "label": "record_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "正整数，纯数字，如 123",
+                "min": 1,
+                "step": 1
               },
               {
-                "name": "fields",
-                "label": "fields",
+                "name": "category",
+                "label": "改成哪个分类",
                 "value": "",
-                "hint": "[\"category\",\"activity\"]",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的二级分类，如 工作.AI调优；只写一级会提示细化"
+              },
+              {
+                "name": "activity",
+                "label": "改成做了什么",
+                "value": "",
+                "kind": "text",
+                "required": true,
+                "hint": "如 写代码"
               }
             ]
           },
           {
             "id": "amend_json_inline",
             "title": "JSON 内联修改",
-            "wake_word": "#26 修正作息",
+            "wake_word": "修正作息",
             "status": "",
-            "prompt_template": "用 JSON 改 id=123 的多字段",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「修正作息」。\n\n我要用一段 JSON 一次改掉一条记录的多个字段。如果我没说全改哪条或改成什么,问我补齐。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{record_id}}\nJSON 内容:{{json}}",
             "editable_fields": [
               {
                 "name": "record_id",
-                "label": "record_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "正整数，纯数字，如 123",
+                "min": 1,
+                "step": 1
               },
               {
                 "name": "json",
-                "label": "json",
+                "label": "JSON 内容",
                 "value": "",
-                "hint": "...",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "一段 JSON 对象，键＝字段名；如 {\"category\":\"工作.AI调优\",\"activity\":\"写代码\"}"
               }
             ]
           },
           {
             "id": "amend_24h_warn",
             "title": "超过 24h 修改警告",
-            "wake_word": "#26 修正作息",
+            "wake_word": "修正作息",
             "status": "",
-            "prompt_template": "改 3 天前那条记录(超 24h)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「修正作息」。\n\n我要改一条几天前记的作息(已经超过 24 小时了),看看会怎么提醒我。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n记录 ID:{{record_id}}\n改成哪个分类(选填):{{category}}\n改成做了什么(选填):{{activity}}",
             "editable_fields": [
               {
                 "name": "record_id",
-                "label": "record_id",
+                "label": "记录 ID",
                 "value": "",
-                "hint": "N",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "正整数，纯数字，如 123",
+                "min": 1,
+                "step": 1
               },
               {
-                "name": "record_date",
-                "label": "record_date",
+                "name": "category",
+                "label": "改成哪个分类(选填)",
                 "value": "",
-                "hint": "24h 前",
-                "required": false
+                "kind": "text",
+                "required": false,
+                "hint": "白名单里的二级分类，如 工作.AI调优"
+              },
+              {
+                "name": "activity",
+                "label": "改成做了什么(选填)",
+                "value": "",
+                "kind": "text",
+                "required": false,
+                "hint": "如 写代码；和分类至少填一样"
               }
             ]
           }
@@ -1926,51 +1966,63 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "analyze_4",
-        "label": "T4 类别深挖",
+        "label": "类别深挖",
         "scenes": [
           {
             "id": "category_range",
             "title": "区间内某分类深挖",
-            "wake_word": "T4 类别深挖",
+            "wake_word": "类别深挖",
             "status": "",
-            "prompt_template": "这周健身什么时候做的",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「类别深挖」。\n\n我要看某个分类在这段时间里都是什么时候做的。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n开始日期(选填):{{range_start}}\n结束日期(选填):{{range_end}}\n分类:{{category}}",
             "editable_fields": [
               {
-                "name": "range",
-                "label": "range",
+                "name": "range_start",
+                "label": "开始日期(选填)",
                 "value": "",
-                "hint": "YYYY-MM-DD ~ YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": false,
+                "hint": "空＝本周一；格式 YYYY-MM-DD，如 2026-09-21"
+              },
+              {
+                "name": "range_end",
+                "label": "结束日期(选填)",
+                "value": "",
+                "kind": "date",
+                "required": false,
+                "hint": "空＝本周日；格式 YYYY-MM-DD，如 2026-09-27"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的分类，如 健身；写二级会按它的一级分类算"
               }
             ]
           },
           {
             "id": "category_day",
             "title": "单日某分类",
-            "wake_word": "T4 类别深挖",
+            "wake_word": "类别深挖",
             "status": "",
-            "prompt_template": "7/15 健身什么时候做的",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「类别深挖」。\n\n我要看某个分类在这一天都是什么时候做的。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n日期:{{date}}\n分类:{{category}}",
             "editable_fields": [
               {
                 "name": "date",
-                "label": "date",
+                "label": "日期",
                 "value": "",
-                "hint": "YYYY-MM-DD",
-                "required": false
+                "kind": "date",
+                "required": true,
+                "hint": "格式 YYYY-MM-DD，如 2026-07-15"
               },
               {
                 "name": "category",
-                "label": "category",
+                "label": "分类",
                 "value": "",
-                "hint": "X",
-                "required": false
+                "kind": "text",
+                "required": true,
+                "hint": "白名单里的分类，如 健身；写二级会按它的一级分类算"
               }
             ]
           }
@@ -1978,37 +2030,45 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "analyze_5",
-        "label": "T5 异常检测",
+        "label": "异常检测",
         "scenes": [
           {
             "id": "anomaly_default",
             "title": "默认 7 天窗口检测",
-            "wake_word": "T5 异常检测",
+            "wake_word": "异常检测",
             "status": "",
-            "prompt_template": "最近状态怎么样/有没有异常",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「异常检测」。\n\n帮我看看最近的状态正不正常,有没有异常。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n回看天数(选填):{{window}}",
             "editable_fields": [
               {
                 "name": "window",
-                "label": "window",
+                "label": "回看天数(选填)",
                 "value": "",
-                "hint": "7",
-                "required": false
+                "kind": "number",
+                "required": false,
+                "hint": "空＝最近 7 天；单位天，纯数字，如 7",
+                "min": 2,
+                "max": 90,
+                "step": 1
               }
             ]
           },
           {
             "id": "anomaly_window_30",
             "title": "30 天窗口",
-            "wake_word": "T5 异常检测",
+            "wake_word": "异常检测",
             "status": "",
-            "prompt_template": "最近 30 天有没有异常",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「异常检测」。\n\n帮我回看更长一段时间里有没有异常。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n回看天数:{{window}}",
             "editable_fields": [
               {
                 "name": "window",
-                "label": "window",
+                "label": "回看天数",
                 "value": "",
-                "hint": "30",
-                "required": false
+                "kind": "number",
+                "required": true,
+                "hint": "单位天，纯数字，如 30",
+                "min": 2,
+                "max": 90,
+                "step": 1
               }
             ]
           }
@@ -2023,21 +2083,27 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
     "subgroups": [
       {
         "id": "admin_1",
-        "label": "#21 飞书探测",
+        "label": "飞书探测",
         "scenes": [
           {
             "id": "feishu_probe",
-            "title": "三档探测",
-            "wake_word": "#21 飞书探测",
+            "title": "看看飞书能不能用",
+            "wake_word": "飞书探测",
             "status": "",
-            "prompt_template": "飞书能力怎么样",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「飞书探测」。\n\n我想知道飞书这条路通不通。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。\n\n探测到哪一层(选填):{{scope}}",
             "editable_fields": [
               {
                 "name": "scope",
-                "label": "scope",
+                "label": "探测到哪一层(选填)",
                 "value": "",
-                "hint": "cli/auth/calendar",
-                "required": false
+                "kind": "select",
+                "required": false,
+                "hint": "空＝三层全探；只关心某一层就选它",
+                "options": [
+                  "cli",
+                  "auth",
+                  "calendar"
+                ]
               }
             ]
           }
@@ -2045,23 +2111,15 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
       },
       {
         "id": "admin_2",
-        "label": "#22 初始化数据库",
+        "label": "初始化数据库",
         "scenes": [
           {
             "id": "init_default",
-            "title": "建三表",
-            "wake_word": "#22 初始化数据库",
+            "title": "建好作息的三张表",
+            "wake_word": "初始化数据库",
             "status": "",
-            "prompt_template": "帮我初始化数据库",
-            "editable_fields": [
-              {
-                "name": "scope",
-                "label": "scope",
-                "value": "",
-                "hint": "all",
-                "required": false
-              }
-            ]
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「初始化数据库」。\n\n帮我把作息要用的数据库建起来。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
+            "editable_fields": []
           }
         ]
       },
@@ -2071,10 +2129,10 @@ export const HELP_GROUPS: readonly HelpGroupAsset[] = [
         "scenes": [
           {
             "id": "first_use",
-            "title": "首次使用(初始化工作流)",
+            "title": "第一次用的上手流程",
             "wake_word": "首次使用",
             "status": "【待开发】",
-            "prompt_template": "请帮我初始化作息管家,我是第一次使用(唤醒词:首次使用)",
+            "prompt_template": "请你加载技能 作息管家,执行唤醒词「首次使用」。\n\n我是第一次用它,带我走一遍上手流程。交付 HTML 时,文字只回复精简而全面概括的信息,文字不允许超过三句话。",
             "editable_fields": []
           }
         ]
@@ -2088,111 +2146,11 @@ export const HELP_ASSETS: readonly HelpSceneAsset[] = HELP_GROUPS.flatMap((g) =>
   g.subgroups.flatMap((s) => s.scenes),
 );
 
-/** 源场景 `result` 原文（85/85，键＝场景 id）。契约里没有这个位，故不进
- *  `HELP_GROUPS`（`HELP_GROUPS` 只装纯场景数据）；本表是源数据镜像，**当前 HELP 页不渲染**
- *  —— 页面上的「预期 ·」一律不出现（见文件头「页面外的两张源数据镜像」）。 */
-export const HELP_SCENE_RESULTS: Readonly<Record<string, string>> = {
-  "record_add_single": "写入 1 条作息记录,自动生成三件套结果 HTML(全天时间轴 + 过去几小时推断高亮 + 状态总览)",
-  "record_add_json": "逐条校验后写入,自动生成三件套结果 HTML(多条记录;批量场景由「批量导入」强化)",
-  "record_add_illegal_category": "校验会报错,提示'提议新增 X'等心法 #5 申请流程,不生成结果 HTML",
-  "record_add_l1_only": "写入成功但附加 warning:建议细化到二级,三件套结果 HTML 顶部显示警示条",
-  "record_add_missing_field": "校验报错,提示缺哪个字段 + 当前值 + 期望值,不生成结果 HTML",
-  "batch_add": "逐条校验复用 add 链路（batch-add 命令）后写入，单条失败不打断，返回 ok/partial JSON 回执；重复执行会重复插入",
-  "prep_default": "返回分页消息(默认 200 条/页)",
-  "prep_with_range": "返回该区间分页消息",
-  "prep_pagination": "返回第 3 页消息 + pagination.has_next 提示",
-  "prep_no_messages": "返回空列表,AI 应告知无消息",
-  "sync_full": "AI 拉消息→分析→批量写入,每条生成回执 HTML",
-  "sync_partial_day": "同步该日全量消息",
-  "sync_incremental": "从 get_last_record_full 拿游标继续",
-  "sync_no_cursor": "从最早消息开始同步",
-  "summary_full_24h": "生成 record_day.html 综合报告(分类/时长/24h 时间轴/睡眠/AI 钩子)",
-  "summary_partial": "生成简短摘要 + 提示'补全后再看完整报告'",
-  "summary_specific_date": "生成该日 report",
-  "summary_no_records": "报告空态,提示该日无记录",
-  "summary_range_default": "生成 record_range.html(分类聚合+7维趋势+睡眠统计)",
-  "summary_range_full": "生成纯文本分类聚合",
-  "record_list_today": "生成 record_day.html(4 卡摘要+分类进度+时间轴+睡眠)",
-  "record_list_yesterday": "生成昨日 report_day.html",
-  "record_list_specific": "生成该日 record_day.html",
-  "record_list_empty": "生成空态 HTML,提示该日无记录",
-  "detail_day": "生成 record_detail.html(每条记录 11 字段全展开)",
-  "detail_record": "生成 record_detail.html(单条)",
-  "detail_with_reasoning": "详情页 analysis_reasoning 字段完整展示",
-  "timeline_today": "生成 record_day.html(24h 时间轴高亮)",
-  "timeline_specific": "生成该日 report 含时间轴",
-  "range_default": "生成 record_range.html",
-  "range_this_week": "本周一~周日 record_range.html",
-  "range_text": "纯文本分类聚合",
-  "status_default": "5 行文本(记录数/天数/最早/最近/同步状态)",
-  "list_events_today": "生成 plan_list_events.html(24h 时间轴+事件卡+筛选)",
-  "list_events_specific": "生成该日 plan_list_events.html",
-  "search_event_title": "返回 search 结果(命中/未命中 JSON)",
-  "search_event_triplet": "返回该时间槽事件(JSON)",
-  "list_events_inactive": "返回含 ✗ 前缀的事件",
-  "query_plans_today": "生成 plan_list_events.html(query-plans 模式,同小时 + 合并)",
-  "query_plans_multi": "生成多日聚合 plan_list_events.html(不含 notes/completion/飞书状态)",
-  "get_record_basic": "render-records-detail --record-id 123 → record_detail.html",
-  "week_view": "render-record-week [日期] → 7×24 全分类热力图(复用 record_category 组件)+ 分类总览 + 每日汇总 + 健康分 + 复制 prompt 按钮",
-  "ensure_event_basic": "ensure-plan-event → 生成 plan_receipt_add.html",
-  "ensure_event_idempotent": "幂等命中,返回原 event_id,不重复创建",
-  "ensure_event_with_notes": "ensure-plan-event with notes → receipt HTML",
-  "review_today_normal": "list-events → 逐条 update-event --completion → render-plans-review.html",
-  "review_today_all_done": "跳过 Step 0-5,直接进 Step 6 讨论模式",
-  "review_no_events": "提示'该日没有计划,无法复盘',退出",
-  "review_with_memo_sync": "询问用户是否已执行 /备忘录 备忘录同步",
-  "plan_discuss_tomorrow": "多轮对话 → render-plans-preview.html → 用户确认 → upsert-plan-events → plan_receipt_write.html",
-  "plan_with_locked": "Step 2 列出已有事件,询问保留策略,锁定后填空隙",
-  "plan_with_wish": "Step 3 拉备忘·心愿,询问已完成的 + 本次推进的",
-  "plan_24h_coverage_fail": "24h 联合校验失败,提示具体哪条不连续/越界,重新生成",
-  "plan_feishu_sync": "CLI 探测后询问[Y/n],yes 则 diff_and_sync 批量 create + 回写 event_id",
-  "plan_result_tomorrow": "多轮对话 → plan-result 渲染(时间轴+分类色带+历史贴合提示)→ 复制 prompt → upsert-plan-events → plan_receipt_write.html",
-  "plan_result_adjust": "调整候选 → 再调 plan-result(同秒多版 _2/_3 不覆盖)→ 循环直至满意 → 写库",
-  "plan_result_history_none": "历史窗口无记录 → 贴合率显示\"—\",逐段\"无参考\"提示,不降级仍可写库",
-  "plan_result_conflict": "冲突段红色徽章 + §3 冲突清单,提示调整时段或更新已锁定后重新生成",
-  "plan_result_drift": "偏离段显示「⚠️ 偏离」+ 历史主要分类提示,用户确认是刻意安排后仍可写库",
-  "update_event_basic": "update-event → render-plan-receipt.html",
-  "update_event_time": "飞书删旧 event_id + 建新 event_id + 回写新 feishu_event_id",
-  "update_event_completion": "update-event --completion,生成 receipt HTML",
-  "update_event_feishu_ask": "询问'飞书那边也要改吗?',yes 则飞书 +update",
-  "deactivate_event": "deactivate-event → is_active=0 → render-plan-receipt.html",
-  "deactivate_with_feishu": "软删 + 询问飞书删,yes 则 feishu_delete_event + 清空 feishu_event_id",
-  "feishu_resync_basic": "Phase 0 反向对账 → diff create/update/delete → 逐条询问 [Y/n] → 执行",
-  "replay_day": "render-replay <今日> <今日> --granularity day → 一体模板今日区块:计划 vs 实际对照表 + 实际作息 + 健康分;缺计划 → 补齐引导(不降级);底部复盘→制定明日计划衔接",
-  "replay_week": "render-replay <周一> <周日> --granularity week → 一体模板周区块:7 维趋势折线 + 24h×N 热力图 + 健康分均值趋势 + 亮点/问题",
-  "replay_month": "render-replay <月初> <月末> --granularity month → 一体模板月区块:分类聚合 + 环比对比(vs 上月同期) + 目标达成(完成率 + 维持占比) + 健康分趋势",
-  "replay_range": "render-replay <start> <end>(默认粒度 range)→ 一体模板按区间跨度自动路由区块(≤1天→今日 / ≤7天→周 / ≤31天→月 / 其他→通用 4 段叙事)",
-  "add_summary_basic": "add-summary 写入 daily_summary(解决孤儿表问题)",
-  "add_summary_idempotent": "upsert,total_minutes 覆盖",
-  "compare_months": "render-record-compare-months → record_compare.html(4 卡+7维差异柱+AI 钩子)",
-  "compare_range": "render-record-compare → record_compare.html",
-  "compare_week_vs_week": "render-record-compare 自动计算 + record_compare.html",
-  "amend_basic": "amend-record → render-record-receipt-edit.html(蓝调 diff)",
-  "amend_json_inline": "amend-record --json '{...}' → 蓝调 diff",
-  "amend_24h_warn": "写入成功但附加 warning:操作规范建议 24h 内",
-  "category_range": "render-record-category-range → record_category.html(24h × N 天热力图)",
-  "category_day": "render-record-category → record_category.html",
-  "anomaly_default": "render-record-anomaly → record_anomaly.html(7 维雷达 + 红/黄框异常)",
-  "anomaly_window_30": "render-record-anomaly --window 30 → record_anomaly.html",
-  "feishu_probe": "返回 FeishuStatus( cli_installed/authenticated/calendar_writable/tier=full/partial/missing )",
-  "init_default": "创建 schedule_records / daily_summary / schedule_plans 三表",
-  "first_use": "6 步向导(环境检测→路径确认→建库→状态确认→初始化报告→完成),幂等可重试,已有库不重置;飞书强引导(配合飞书效果最好,拒绝才跳过);初始化报告 HTML + 复制数据/复制日志"
-};
-
-/** 源一级分组 `desc` 原文（5/5，键＝分组 id）。同上：契约里没有这个位，
- *  不进 `HELP_GROUPS`；本表是源数据镜像，**当前 HELP 页不渲染**（见文件头「页面外的两张源数据镜像」）。 */
-export const HELP_GROUP_NOTES: Readonly<Record<string, string>> = {
-  "write": "记录作息 / 同步消息 / 增量同步",
-  "query": "查作息 / 查日程 / 查状态 / 时间轴 / 范围",
-  "plan": "计划 CRUD / 商量 / 复盘 / 飞书同步",
-  "analyze": "对比 / 修正 / 类别深挖 / 异常检测 / 摘要",
-  "admin": "飞书探测 / 初始化数据库"
-};
-
 /** 计数（全部由数据算出；改资产即跟变，内容另由测试里的摘要锁钉住）。 */
 export const HELP_TOTALS = Object.freeze({
   groups: HELP_GROUPS.length,
   subgroups: HELP_GROUPS.reduce((n, g) => n + g.subgroups.length, 0),
   scenes: HELP_ASSETS.length,
   pending: HELP_ASSETS.filter((s) => s.status !== '').length,
+  fields: HELP_ASSETS.reduce((n, s) => n + s.editable_fields.length, 0),
 });

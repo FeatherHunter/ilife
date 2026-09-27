@@ -29,6 +29,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { REWRITE } from './help-rewrite-table.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
@@ -52,16 +53,29 @@ const SOURCE_WAKE_WORD_KEYS = ['wake_word', 'pending_count', 'scenarios'];
 const CONTRACT_GROUP_KEYS = ['id', 'icon', 'label', 'subgroups'];
 const CONTRACT_SUBGROUP_KEYS = ['id', 'label', 'scenes'];
 const CONTRACT_SCENE_KEYS = ['id', 'title', 'wake_word', 'status', 'prompt_template', 'editable_fields'];
-const CONTRACT_FIELD_KEYS = ['name', 'label', 'value', 'hint', 'required'];
+/** 字段：四个必有的 ＋ 一组可选附属（#975 起字段带 kind 与控件附属；多一个键即被模板校验器拒收）。 */
+const CONTRACT_FIELD_REQUIRED = ['name', 'label', 'value', 'kind'];
+const CONTRACT_FIELD_OPTIONAL = ['hint', 'required', 'options', 'min', 'max', 'step', 'placeholder'];
+/** kind 闭集（＝`SceneFieldKind`；缺省 `text`，但本表一律显式给，好在产物上一眼数得清）。 */
+const FIELD_KINDS = ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'];
+/** 字段名：ASCII snake_case（复制载荷按它做 `key:value` 行，故不许中文与空格）。 */
+const FIELD_NAME_RE = /^[a-z][a-z0-9_]*$/;
 
 /** `status` 只许两值（契约 `SCENE_STATUS`）。 */
 const PENDING = '【待开发】';
 
 /** 今天没有命令可执行的唤醒词（`docs/skills/skill-schedule/t198-old-help-truth.md` §三 实测缺口：
- *  `#1 准备消息`／`#2 同步作息`／`#3 增量同步`／`周视图`／`首次使用`）。这几条下辖的场景一律标【待开发】。
+ *  `准备消息`／`同步作息`／`增量同步`／`周视图`／`首次使用`）。这几条下辖的场景一律标【待开发】。
+ *  写法＝**裸词**（与路由表 `phrase` 同形，也无 `#1`／`T4` 这类序号——#975 去掉序号后两边同名）。
  *  这是一份内容判断清单（不是计数），生成时逐条核对在源里存在，缺一条即 fail-closed。
  *  导出给测试引用（`test/help-assets.test.mjs`）；测试另有对源数据的独立存在性断言，故改词两处会同时暴露。 */
-export const NO_COMMAND_WAKE_WORDS = ['#1 准备消息', '#2 同步作息', '#3 增量同步', '周视图', '首次使用'];
+export const NO_COMMAND_WAKE_WORDS = ['准备消息', '同步作息', '增量同步', '周视图', '首次使用'];
+
+/** 老 HELP 唤醒词带序号前缀（`#0 记作息`／`T4 类别深挖`）：路由表用的是**裸词**，故产物也去前缀。
+ *  这条只作用于「老文本 → 裸词」的归一；新文本一律由重写表给（生成器断言两者逐字相同）。 */
+export function bareWake(word) {
+  return String(word).replace(/^(?:#\d+|T\d+)\s*/, '');
+}
 
 /* ── 一 · 读事实源 ───────────────────────────────────────────── */
 
@@ -155,7 +169,7 @@ function assertSource(payload) {
       throw new Error('待开发条数与「' + level + '」对不上：实测 ' + JSON.stringify(levels));
     }
   }
-  const words = new Set(wakeWords.map((w) => w.wake_word));
+  const words = new Set(wakeWords.map((w) => bareWake(w.wake_word)));
   for (const word of NO_COMMAND_WAKE_WORDS) {
     if (!words.has(word)) throw new Error('没有命令可执行的唤醒词清单里的「' + word + '」不在源里');
   }
@@ -167,52 +181,135 @@ function assertSource(payload) {
   };
 }
 
-/* ── 三 · 形状转换 ───────────────────────────────────────────── */
+/* ── 三 · 内容装配（结构取自源、内容取自重写表） ───────────────── */
 
-/** 维度值 → 文本：字符串原样；布尔与数字按其 JSON 字面量文本（`true`／`0`／`7`），免得丢字。 */
+/** 维度值 → 文本：字符串原样；布尔与数字按其 JSON 字面量文本（`true`／`0`／`7`），免得丢字。
+ *  **只在信息不丢失台账里用**（比对老维度名），不再进产物。 */
 function dimensionText(raw) {
   return typeof raw === 'string' ? raw : JSON.stringify(raw);
 }
 
-/** 源（参数名 → 说明）→ 契约 `editable_fields` 的一条。
- *  - `name`／`label`＝维度键原名（源里没有更友好的显示名）；
- *  - `hint`＝维度说明原文（逐字，一个字不摘）；
- *  - `value`＝空串：源里没有独立的「推荐值」字段，那串说明可能是取值区间（`1-1440`）或提示语
- *    （`JSON 文件路径`），填进 `value` 会变成用户可能误提交的默认值；
- *  - `required`＝false：源里没有针对该维度自身的必填标记（唯一出现「必填」二字的是
- *    `record_add_missing_field` 的 `missing → 任一必填`，说的是「哪个必填字段缺失」＝取值说明）。 */
-function toField(name, raw) {
-  return { name, label: name, value: '', hint: dimensionText(raw), required: false };
+/** 重写表的字段 → 契约字段：补 `value`（一律空串，表里不重复写 142 遍），键序固定，
+ *  附属按存在与否带上（`undefined` 的键不落，免得被 `additionalProperties:false` 当多余键）。 */
+function toContractField(f) {
+  const out = { name: f.name, label: f.label, value: '', kind: f.kind, required: f.required === true };
+  if (f.hint !== undefined) out.hint = f.hint;
+  if (f.options !== undefined) out.options = [...f.options];
+  if (f.min !== undefined) out.min = f.min;
+  if (f.max !== undefined) out.max = f.max;
+  if (f.step !== undefined) out.step = f.step;
+  if (f.placeholder !== undefined) out.placeholder = f.placeholder;
+  return out;
 }
 
-/** 源场景 → 契约场景。`status` 派生：源自标待开发照旧；属无命令唤醒词者补标。 */
+/** 源场景 → 契约场景：结构位（id／status）取自源，内容位（标题／唤醒词／prompt／字段）取自重写表。
+ *
+ *  **信息不丢失台账（硬门）**：老 `dimensions` 里的每一个名，要么出现在新字段里，要么在重写表的
+ *  `drops` 里具名声明丢弃；没声明就红。老维度表本身不全（多数场景缺 date／time_start 这类必填位），
+ *  故只查「不丢」一个方向，新增字段不拦——新增由各条注释说明理由。 */
 function toScene(s) {
-  const status = s.status !== '' ? s.status : NO_COMMAND_WAKE_WORDS.includes(s.wake_word) ? PENDING : '';
+  const bare = bareWake(s.wake_word);
+  const status = s.status !== '' ? s.status : NO_COMMAND_WAKE_WORDS.includes(bare) ? PENDING : '';
+  const r = REWRITE.get(s.scenario_id);
+  if (!r) throw new Error('重写表缺场景：' + s.scenario_id + '（fixture 里有而表里没写＝漏改）');
+  if (r.wake_word !== bare) {
+    throw new Error('重写表的唤醒词与源不一致：' + s.scenario_id + ' 表里「' + r.wake_word + '」源里「' + bare + '」');
+  }
+  const names = r.editable_fields.map((f) => f.name);
+  const drops = r.drops || [];
+  for (const gone of Object.keys(s.dimensions)) {
+    if (!names.includes(gone) && !drops.includes(gone)) {
+      throw new Error('信息丢失未声明：' + s.scenario_id + ' 的老维度「' + gone + '」（老说明：'
+        + dimensionText(s.dimensions[gone]) + '）既不在新字段里，也没写进 drops（要丢就具名声明，别静默丢）');
+    }
+  }
+  for (const gone of drops) {
+    if (names.includes(gone)) throw new Error('drops 与字段重复：' + s.scenario_id + ' 的「' + gone + '」');
+  }
   return {
     id: s.scenario_id,
-    title: s.scenario_title,
-    wake_word: s.wake_word,
+    title: r.title,
+    wake_word: r.wake_word,
     status,
-    prompt_template: s.prompt,
-    editable_fields: Object.entries(s.dimensions).map(([name, raw]) => toField(name, raw)),
+    prompt_template: r.prompt_template,
+    editable_fields: r.editable_fields.map(toContractField),
   };
 }
 
 /** 源三层（分组 → 唤醒词 → 场景）→ 契约三层（groups → subgroups → scenes）。
  *  子功能取**唤醒词**那一层：旧技能 HELP 页上用户看到的就是「分组 Tab → 唤醒词折叠组 → 场景卡」，
  *  与源数据的层级一一对应，既不合并也不新造分组。
- *  二级组 id 由一级组 id 加序号派生（源里没有二级组 id；序号即源里的先后次序）。 */
+ *  二级组 id 由一级组 id 加序号派生（源里没有二级组 id；序号即源里的先后次序）；
+ *  组标签＝该组下辖场景的重写唤醒词（同组各场景必须一致，不一致即红）。 */
 function toGroups(payload) {
   return payload.categories.map((c) => ({
     id: c.key,
     icon: c.icon,
     label: c.name,
-    subgroups: c.wake_words.map((w, i) => ({
-      id: c.key + '_' + (i + 1),
-      label: w.wake_word,
-      scenes: w.scenarios.map(toScene),
-    })),
+    subgroups: c.wake_words.map((w, i) => {
+      const scenes = w.scenarios.map(toScene);
+      const label = scenes[0] ? scenes[0].wake_word : bareWake(w.wake_word);
+      for (const s of scenes) {
+        if (s.wake_word !== label) {
+          throw new Error('同一唤醒词组内重写结果不一致：' + s.id + ' 的是「' + s.wake_word + '」');
+        }
+      }
+      return { id: c.key + '_' + (i + 1), label, scenes };
+    }),
   }));
+}
+
+/** 一条字段的形状门：必有键都在、不许出现闭集外的键、kind 在闭集内、附属只给该 kind 用得上的、
+ *  `select` 必须给非空 `options`、`value` 一律空串。任一处不符即抛——产物要被共享模板按
+ *  `additionalProperties:false` 校验，与其等它拒收，不如在这里点名。 */
+function assertFieldShape(scene, f) {
+  const where = '产物字段 ' + scene.id + '.' + f.name;
+  const keys = Object.keys(f);
+  for (const k of CONTRACT_FIELD_REQUIRED) {
+    if (!keys.includes(k)) throw new Error(where + ' 缺必有键：' + k);
+  }
+  for (const k of keys) {
+    if (!CONTRACT_FIELD_REQUIRED.includes(k) && !CONTRACT_FIELD_OPTIONAL.includes(k)) {
+      throw new Error(where + ' 出现闭集外的键：' + k);
+    }
+  }
+  if (!FIELD_NAME_RE.test(f.name)) throw new Error(where + ' 的名字不合 snake_case：' + f.name);
+  if (f.value !== '') throw new Error(where + ' 的 value 必须空串（无预置值；相对默认词进 hint）');
+  if (!FIELD_KINDS.includes(f.kind)) throw new Error(where + ' 的 kind 越出闭集：' + f.kind);
+  if (typeof f.label !== 'string' || f.label === '') throw new Error(where + ' 的 label 为空');
+  if (f.required !== true && f.required !== false) throw new Error(where + ' 的 required 不是布尔');
+  const textKeys = ['hint', 'placeholder'];
+  for (const k of textKeys) {
+    if (f[k] !== undefined && (typeof f[k] !== 'string' || f[k] === '')) {
+      throw new Error(where + ' 的 ' + k + ' 给了空串（要么别给，要么写清）');
+    }
+  }
+  if (f.kind === 'select') {
+    if (!Array.isArray(f.options) || f.options.length === 0) throw new Error(where + ' 是 select 却没给非空 options');
+  } else if (f.options !== undefined) {
+    throw new Error(where + ' 不是 select 却给了 options');
+  }
+  for (const k of ['min', 'max', 'step']) {
+    if (f[k] !== undefined && f.kind !== 'number') throw new Error(where + ' 不是 number 却给了 ' + k);
+  }
+}
+
+/** 正文与字段表的对应门（#975 复制载荷成立的前提）：
+ *  1. `{{name}}` 序列与字段表**一一对应且同序**；
+ *  2. 正文无 `____` 残留、无裸 ISO 日期（预置值一律剥离）；
+ *  3. 首行就是唤醒词行，且唤醒词逐字等于 `wake_word`。 */
+function assertPromptFields(scene) {
+  const found = [...scene.prompt_template.matchAll(/\{\{([a-z][a-z0-9_]*)\}\}/g)].map((m) => m[1]);
+  const names = scene.editable_fields.map((f) => f.name);
+  if (found.length !== names.length || found.some((n, i) => n !== names[i])) {
+    throw new Error('正文占位与字段表不一致：' + scene.id
+      + ' 正文 [' + found.join(',') + '] 字段 [' + names.join(',') + ']');
+  }
+  if (scene.prompt_template.includes('____')) throw new Error('正文残留 ____：' + scene.id);
+  if (/\d{4}-\d{2}-\d{2}/.test(scene.prompt_template)) throw new Error('正文残留裸 ISO 日期：' + scene.id);
+  if (scene.prompt_template.split('\n')[0] !== '请你加载技能 作息管家,执行唤醒词「' + scene.wake_word + '」。') {
+    throw new Error('首行不是唤醒词行：' + scene.id);
+  }
 }
 
 /** 产物字段闭集断言：多一个键即被共享 help 模板的校验器拒收（`additionalProperties:false`）。 */
@@ -226,7 +323,8 @@ function assertContractShapes(groups) {
         assertKeySet('产物场景 ' + s.id, s, CONTRACT_SCENE_KEYS);
         if (s.status !== '' && s.status !== PENDING) throw new Error('产物场景 ' + s.id + ' 的 status 越出两值');
         if (s.prompt_template === '') throw new Error('产物场景 ' + s.id + ' 的 prompt_template 为空');
-        for (const f of s.editable_fields) assertKeySet('产物字段 ' + s.id + '.' + f.name, f, CONTRACT_FIELD_KEYS);
+        for (const f of s.editable_fields) assertFieldShape(s, f);
+        assertPromptFields(s);
       }
     }
   }
@@ -234,11 +332,25 @@ function assertContractShapes(groups) {
 
 /* ── 四 · 生成文件全文（LF、无 BOM；跑两次字节一致） ─────────── */
 
+/** 逐条对账用的规范形（测试另有独立一份实现，互为复核）。
+ *  字段取**全量键**（含 kind 与各 kind 附属），键名固定书写顺序，免两边靠对象键序对齐。 */
+function canonicalField(f) {
+  return [
+    f.name, f.label, f.value, f.kind || 'text', f.required === true,
+    f.hint === undefined ? null : f.hint,
+    f.options === undefined ? null : f.options,
+    f.min === undefined ? null : f.min,
+    f.max === undefined ? null : f.max,
+    f.step === undefined ? null : f.step,
+    f.placeholder === undefined ? null : f.placeholder,
+  ];
+}
+
 /** 逐条对账用的规范形（测试另有独立一份实现，互为复核）。 */
 function canonicalScenes(scenes) {
   return JSON.stringify(scenes.map((s) => [
     s.id, s.title, s.wake_word, s.status, s.prompt_template,
-    s.editable_fields.map((f) => [f.name, f.label, f.value, f.hint, f.required]),
+    s.editable_fields.map(canonicalField),
   ]));
 }
 
@@ -254,30 +366,25 @@ function indentedLines(value) {
 function renderFile(groups, source) {
   const scenes = groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
   const subgroups = groups.reduce((n, g) => n + g.subgroups.length, 0);
-  /** 契约无位、只好留在伴随表里的两处源信息：场景 `result` 与一级分组 `desc`（照源里的先后次序）。 */
-  const results = {};
-  const notes = {};
-  for (const c of source.categories) {
-    notes[c.key] = c.desc;
-    for (const w of c.wake_words) for (const s of w.scenarios) results[s.scenario_id] = s.result;
-  }
+  /** 契约无位、只好留在伴随表里的两处源信息已随 #975 删掉（见文件头）；这里只算待开发条数。 */
   const pendingTotal = scenes.filter((s) => s.status !== '').length;
 
   const header = `/** #201 · 作息管家 HELP 内容资产（机器生成，禁手改词）。
  *
- * 唯一内容源：\`.scratch/t198/old-scenarios.json\`——旧作息管家 HELP 实物里原样取出的场景数据
- * （世代判定与内容骨架见 \`docs/skills/skill-schedule/t198-old-help-truth.md\`）。
- * 本文件由 \`scripts/gen-help-assets.mjs\` 生成：${groups.length} 个一级分组／${subgroups} 条唤醒词／${scenes.length} 条场景，
- * 分组、唤醒词、场景的先后次序与源数据一致。
+ * 两个源（分工写死在生成器里，可复核）：
+ *  1. **结构**取自受跟踪 fixture \`test/fixtures/t198-old-scenarios.json\`（老实物取证，一个字不改）：
+ *     分组／唤醒词／场景的条数与先后次序、场景 id、待开发状态；
+ *  2. **内容**取自 \`scripts/help-rewrite-table.mjs\`（#975 逐句重写表）：标题／唤醒词／prompt 正文／字段表。
+ * 本文件由 \`scripts/gen-help-assets.mjs\` 生成：${groups.length} 个一级分组／${subgroups} 条唤醒词／${scenes.length} 条场景。
  *
  * 载荷契约：\`packages/base-render/src/spec/help.ts\` 的 \`SCENE_DATA_SCHEMA\`——\`HELP_GROUPS\` 就是
- * 共享 help 模板要的 \`groups\` 参数，分三层：一级分组 → 子功能（＝旧唤醒词）→ 场景卡片。
+ * 共享 help 模板要的 \`groups\` 参数，分三层：一级分组 → 子功能（＝一条唤醒词）→ 场景卡片。
  * 该 schema 各层都是 \`additionalProperties:false\`，多一个键即校验失败，故本文件里的对象字段是闭集。
  *
- * 三处形状转换（生成器里写死、可复核）：
- *  1. 源 \`dimensions\`（参数名 → 说明的自由对象）→ 契约 \`editable_fields\`：\`name\`／\`label\` 取维度键
- *     原名；\`hint\` 取维度说明原文（逐字；布尔与数字按其 JSON 字面量文本）；\`value\` 一律空串、
- *     \`required\` 一律 false——理由见生成器的 \`toField\`。
+ * 两处派生（生成器里写死、可复核）：
+ *  1. 唤醒词去序号：老 HELP 的 \`#0 记作息\`／\`T4 类别深挖\` → 裸词 \`记作息\`／\`类别深挖\`
+ *     （与路由表 \`src/triggers/routes.generated.ts\` 的 \`phrase\` 同形）。重写表里写的就是裸词，
+ *     生成器另有「表里的唤醒词必须等于源去序号后的裸词」一条断言把两边钉在一起。
  *  2. 源 \`status\` 为空、但唤醒词属「今天没有命令可执行」的 ${NO_COMMAND_WAKE_WORDS.length} 条者，标 \`【待开发】\`：
  *     源自标待开发 ${source.pending_count} 条，加上这几条下辖的场景，本文件标 \`【待开发】\` 的共 ${pendingTotal} 条。
  *  3. 三层对齐：源「分组 → 唤醒词 → 场景」直接对到契约「groups → subgroups → scenes」，
@@ -289,32 +396,45 @@ function renderFile(groups, source) {
  * 里面没有类型位，旧实物 HELP 也没有类型徽章——凭空补一个空 \`types\` 等于自造内容，故不落该字段；
  * 将来源数据真出现类型位，生成器会因字段闭集断言失败而报错（不会静默丢掉）。要变体徽章另开票。
  *
- * 页面外的两张源数据镜像（**留档，页面不渲染**）：契约没有对应位、故不进 \`HELP_GROUPS\` 的两处源信息，
- * 仍按原样镜像在本文件里——源场景的 \`result\` → \`HELP_SCENE_RESULTS\`（逐场景一条）；
- * 源一级分组的 \`desc\` → \`HELP_GROUP_NOTES\`（逐分组一条）。保留数据本身的理由：这两张表的源头在
- * **未入库**的 \`.scratch/t198/old-scenarios.json\`，删掉即从仓库里彻底灭失，故留档备查。
- * **当前 HELP 页不展示它们**（用户 2026-09-13 裁定：作息 HELP 与其它技能 HELP 同构，不多自带功能模块）：
- * 页面上的「预期 ·」与一级分组说明一律不出现，两个渲染出口与 \`#help-data\` 载荷里都取不到这两个键。
- * 为什么不塞进载荷：校验器按 \`additionalProperties:false\` 直接拒收多余键
- * （\`packages/base-render/src/help.ts\` 的字段闭集判定）；并进 \`editable_fields[].hint\` 会让
- * 「可编辑参数」这个位变浑浊，且没有维度的场景（\`first_use\`）无处可放。
+ * **不立字段的两种东西**（#975 重写时从老 \`dimensions\` 里摘掉的，逐条在重写表里具名声明）：
+ *  · 场景条件开关：\`true\`／\`false\`／\`已有 4 条\` 这类**描述当前局面**的值——它们不是用户要填的参数，
+ *    进意图句（让 AI 自己看局面），立成字段＝逼用户去描述 AI 自己能看出来的事；
+ *  · 口径层**自算**的值：\`duration_minutes\` 由起止时刻算，\`src/policy/record.ts:99-104\` 还会核对
+ *    用户给的值——立成字段只会让用户填错就报错。
+ *  硬门：老维度名既不在新字段、又没写进重写表的 \`drops\` ⇒ 生成器 fail-closed（信息不丢失台账）；
+ *  老维度表本身不全（多数场景缺 date／time_start 这类必填位），故只查「不丢」一个方向，新增不拦。
+ *
+ * 本文件**不再带**老的两张伴随表（\`HELP_SCENE_RESULTS\`＝场景 \`result\` 镜像／\`HELP_GROUP_NOTES\`＝
+ * 一级分组 \`desc\` 镜像）：用户 2026-09-27 裁定「以后不再有预期这种 UI 显示和装填的内容，和预期相关的
+ * 直接删掉」。老文本仍完整躺在 fixture 里，留档由那份取证承担，不在产物里再镜像一遍。
  *
  * 计数全部由数据算出（见 \`HELP_TOTALS\`），本文件不写第二个数；改资产即跟变。
  * 改词走生成器：\`node packages/skill-schedule/scripts/gen-help-assets.mjs\`（\`--check\` 只比对不落盘）。
  */
 
-/** 参数化表单字段（契约 \`editable_fields\` 的一条）。 */
+/** 参数化表单字段（契约 \`editable_fields\` 的一条；#975 起带 kind 与控件附属）。 */
 export interface HelpSceneField {
-  /** 参数名（＝源 \`dimensions\` 的维度键原名）。 */
+  /** 机器键：正文里的 \`{{name}}\` 与复制载荷末尾 \`label: value\` 行的 key 都用它（ASCII snake_case）。 */
   readonly name: string;
-  /** 显示标签（源里没有更友好的显示名，同 \`name\`）。 */
+  /** 人类可读标签（进复制载荷的 \`label: value\` 行；不列枚举／单位／格式）。 */
   readonly label: string;
-  /** 推荐值（源里没有独立的推荐值字段，一律空串）。 */
+  /** 缺省机器值——一律空串。相对默认词（今天／明天）写在 \`hint\` 里，由执行侧解成 ISO。 */
   readonly value: string;
-  /** 源维度说明原文（逐字）。 */
-  readonly hint: string;
-  /** 必填（源里没有针对该维度自身的必填标记，一律 false）。 */
+  /** 输入类型（\`packages/base-render/src/spec/help.ts\` 的 \`SceneFieldKind\`）：
+   *  text／number／select／date／week／month／year／time。 */
+  readonly kind: string;
+  /** 必填：空的必填项挡住「复制指令」并提示补齐（模板 \`getMissing\`）。 */
   readonly required: boolean;
+  /** 格式／例／默认值说明（一句话；单位与枚举不进标签，进这里）。 */
+  readonly hint?: string;
+  /** 仅 \`select\`：候选项（必填非空）。 */
+  readonly options?: readonly string[];
+  /** 仅 \`number\`：值域与步长。 */
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  /** 控件占位提示。 */
+  readonly placeholder?: string;
 }
 
 /** 两态状态（契约 \`SCENE_STATUS\`：空串＝可用，【待开发】＝禁用）。写成联合型，
@@ -357,21 +477,13 @@ export const HELP_ASSETS: readonly HelpSceneAsset[] = HELP_GROUPS.flatMap((g) =>
   g.subgroups.flatMap((s) => s.scenes),
 );
 
-/** 源场景 \`result\` 原文（${scenes.length}/${scenes.length}，键＝场景 id）。契约里没有这个位，故不进
- *  \`HELP_GROUPS\`（\`HELP_GROUPS\` 只装纯场景数据）；本表是源数据镜像，**当前 HELP 页不渲染**
- *  —— 页面上的「预期 ·」一律不出现（见文件头「页面外的两张源数据镜像」）。 */
-export const HELP_SCENE_RESULTS: Readonly<Record<string, string>> = ${JSON.stringify(results, null, 2)};
-
-/** 源一级分组 \`desc\` 原文（${source.categories.length}/${source.categories.length}，键＝分组 id）。同上：契约里没有这个位，
- *  不进 \`HELP_GROUPS\`；本表是源数据镜像，**当前 HELP 页不渲染**（见文件头「页面外的两张源数据镜像」）。 */
-export const HELP_GROUP_NOTES: Readonly<Record<string, string>> = ${JSON.stringify(notes, null, 2)};
-
 /** 计数（全部由数据算出；改资产即跟变，内容另由测试里的摘要锁钉住）。 */
 export const HELP_TOTALS = Object.freeze({
   groups: HELP_GROUPS.length,
   subgroups: HELP_GROUPS.reduce((n, g) => n + g.subgroups.length, 0),
   scenes: HELP_ASSETS.length,
   pending: HELP_ASSETS.filter((s) => s.status !== '').length,
+  fields: HELP_ASSETS.reduce((n, s) => n + s.editable_fields.length, 0),
 });
 `;
 

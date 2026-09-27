@@ -48,7 +48,7 @@ import {
   HELP_CONTACT, helpFileStem, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID,
   assertGroupsUsable, buildHelpFileData, renderHelpFileHtml,
 } from '../dist/help/helpFile.js';
-import { HELP_ASSETS, HELP_GROUPS, HELP_GROUP_NOTES, HELP_SCENE_RESULTS } from '../dist/help/scenes/help-assets.js';
+import { HELP_ASSETS, HELP_GROUPS } from '../dist/help/scenes/help-assets.js';
 
 /* #695：文件名主体等落点类取值改从配置文件取 —— 本件读默认值那一条要有一个测试隔离口子
    （#763 起＝**家目录注入**：基座把当刻家目录指到临时目录，配置落 `<它>/.ilife/schedule.yaml`；
@@ -71,11 +71,7 @@ const DERIVED = {
   subgroups: SUBGROUPS.length,
   scenes: HELP_ASSETS.length,
   pending: PENDING_SCENES.length,
-  results: Object.keys(HELP_SCENE_RESULTS).length,
-  notes: Object.keys(HELP_GROUP_NOTES).length,
 };
-/** 90 条伴生信息＝85 条「预期结果说明」＋5 条一级分组说明（两张表之和，不写死 90）。 */
-const COMPANIONS = DERIVED.results + DERIVED.notes;
 /** 待开发徽章的选择器（`.type-badge.t-dev`）。 */
 const DEV_BADGE_SEL = '.' + DEV_BADGE_CLASS.split(' ').join('.');
 /** 徽章**文案**：共享模板 `chipHTML` 写死的「待开发」（资产里的状态串是「【待开发】」，只差书括号；
@@ -681,24 +677,18 @@ describe('#202 作息管家 HELP 渲染接线', () => {
         (e) => e.name === 'ScheduleRenderError' && e.code === 'SCHEDULE_BAD_PAYLOAD');
     });
 
-    it('反向锁（静态段）：载荷**不带**那 ' + COMPANIONS + ' 条伴生信息（' + DERIVED.results
-      + ' 条「预期结果说明」＋ ' + DERIVED.notes + ' 条一级分组说明，逐条计数）', () => {
+    it('载荷里没有任何「说明区」的落点（那两张伴生表 #975 已删，页与载荷都不该再有它们的痕迹）', () => {
       const html = renderHelpFileHtml(buildHelpFileData(NOW));
       const payload = payloadOf(html);
       const hay = payloadStrings(payload);
-      /* 「没上页」的第一层证据是「载荷根本没带」：模板那边已无该键的落点，载荷再挂回去就是死载荷。 */
-      const hitResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => containsAnywhere(hay, r));
-      assert.deepEqual(hitResults.map(([id]) => id), [],
-        '载荷里混进了「预期结果说明」' + hitResults.length + ' 条（命中 '
-        + hitResults.length + '/' + DERIVED.results + '）');
-      const hitNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => containsAnywhere(hay, n));
-      assert.deepEqual(hitNotes.map(([id]) => id), [],
-        '载荷里混进了一级分组说明' + hitNotes.length + ' 条（命中 '
-        + hitNotes.length + '/' + DERIVED.notes + '）');
-      /* 条数口径也在这一条锁里对齐（全派生）：预期逐场景一条、分组说明逐分组一条。 */
-      assert.equal(DERIVED.results, DERIVED.scenes, '「预期结果说明」应逐场景一条');
-      assert.equal(DERIVED.notes, DERIVED.groups, '一级分组说明应逐分组一条');
-      assert.equal(COMPANIONS, DERIVED.scenes + DERIVED.groups, '伴生信息条数＝场景数 ＋ 分组数');
+      /* 反向锁的对象从「那 90 条伴生文本」改成「说明区这个功能模块」：#975 删掉两张镜像表之后，
+         再拿它们的原文去比对就是自说自话（表都没了，命中恒为空）。这里改锁**模块面**：
+         模板侧已无该键的落点，载荷与标记里也不许出现说明区的类名与字样。 */
+      for (const needle of ['meta-sec', 'ms-hint', '预期 ·', 'HELP_SCENE_RESULTS', 'HELP_GROUP_NOTES']) {
+        assert.equal(hay.includes(needle), false, '载荷里出现了说明区痕迹：' + needle);
+      }
+      assert.equal(html.includes('meta-sec'), false, '产物标记里出现 meta-sec');
+      assert.equal(html.includes('id="help-data"'), true, '产物的 help-data 容器必须还在（反向锁不能把容器一起锁没）');
     });
 
     it('坏载荷不降级：空分组／空子功能／空场景／空 prompt 逐条即抛', () => {
@@ -794,7 +784,7 @@ describe('#202 作息管家 HELP 渲染接线', () => {
         '徽章文案应是 ' + DEV_BADGE_TEXT + '（页上真有的写法；资产状态串 ' + PENDING + ' 只多一对书括号）');
     });
 
-    it('85 条 prompt 逐字在页内：逐张场景卡点开，弹层里逐字比', () => {
+    it('85 条 prompt 逐字在页内：逐张场景卡点开，弹层里比**代值后**的全文', () => {
       const { screen, doc } = runPage(renderHelpFileHtml(buildHelpFileData(NOW)));
       const click = (el) => dispatchBubbling(el, 'click');
       const sheet = doc.getElementById('sheet');
@@ -803,23 +793,87 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       const shCopy = doc.getElementById('shCopy');
       const cards = screen.querySelectorAll('.mini');
       assert.equal(cards.length, DERIVED.scenes);
+      /** 弹层与复制载荷显示的是**代值后**的正文：未填的 `{{name}}` 落空位 `___`（#969／#970 用户验收：
+       *  预览与复制都不许见 `{{}}`）。故这里按同一条换算比对，不比原始 `{{name}}` 文本。 */
+      const substituted = (scene) => {
+        let out = scene.prompt_template;
+        for (const f of scene.editable_fields) out = out.split('{{' + f.name + '}}').join('___');
+        return out;
+      };
       const seen = new Set();
       cards.forEach((card) => {
         const scene = HELP_ASSETS.find((s) => s.id === card.dataset.key);
         assert.ok(scene, '卡片 data-key 不在资产里：' + card.dataset.key);
         click(card);
+        const want = substituted(scene);
         const bodyText = String(shBody.innerHTML);
-        assert.ok(bodyText.includes(escHtml(scene.prompt_template)),
-          '弹层里没有该场景的 prompt 全文：' + scene.id);
+        assert.ok(bodyText.includes(escHtml(want)),
+          '弹层里没有该场景代值后的指令全文：' + scene.id);
+        assert.ok(bodyText.includes('{{') === false || scene.prompt_template.includes('{{') === false,
+          '弹层里不该留代码形占位：' + scene.id);
         assert.ok(String(shHead.innerHTML).includes(escHtml(scene.title)), '弹层缺场景标题：' + scene.id);
-        assert.equal(shCopy.dataset.c, scene.prompt_template, '复制按钮载体应带 prompt 原文：' + scene.id);
+        assert.equal(shCopy.dataset.c, want, '复制按钮载体应带代值后的指令全文：' + scene.id);
         seen.add(scene.id);
       });
       assert.equal(seen.size, DERIVED.scenes, '逐张点过的场景数应＝资产场景数');
     });
 
-    it('反向锁（运行时段）：页上**没有**说明区——那 ' + COMPANIONS + ' 条伴生信息一条也不上页'
-      + '（边界四项照旧）', () => {
+    it('带字段卡：弹层控件数＝字段数，且控件按 kind 分（select／number／date／week／month／year／time／text）', () => {
+      /* 票面验收原话：「带字段卡 input 数＝字段数」。这里是它在共享模板运行时的落点——
+         `openSheet` 按 `normalizeScenes` 的 `params`（＝资产的 `editable_fields`）逐条 `fieldControlHTML`，
+         故「弹层里的 `[data-p]` 控件数」必须逐字等于该场景的字段数；控件形状也必须与该字段的 kind 对上
+         （#975 新增 `time`，`month`／`year` 由 #978 加）。 */
+      const { screen, doc } = runPage(renderHelpFileHtml(buildHelpFileData(NOW)));
+      const click = (el) => dispatchBubbling(el, 'click');
+      const sheet = doc.getElementById('sheet');
+      /** kind → 该 kind 在弹层里该长的样子（tag ＋ 可选 type／inputmode）。 */
+      const SHAPE = {
+        select: { tag: 'select' },
+        number: { tag: 'input', type: 'number' },
+        date: { tag: 'input', type: 'date' },
+        week: { tag: 'input', type: 'week' },
+        month: { tag: 'input', type: 'month' },
+        year: { tag: 'input', type: 'number', inputmode: 'numeric' },
+        time: { tag: 'input', type: 'time' },
+        text: { tag: 'input', type: 'text' },
+      };
+      let withFields = 0;
+      let checked = 0;
+      for (const card of screen.querySelectorAll('.mini')) {
+        const scene = HELP_ASSETS.find((s) => s.id === card.dataset.key);
+        click(card);
+        const form = sheet.querySelector('.pform[data-pid="' + scene.id + '"]');
+        const controls = form ? form.querySelectorAll('[data-p]') : [];
+        assert.equal(controls.length, scene.editable_fields.length,
+          '带字段卡的控件数≠字段数：' + scene.id + '（字段 ' + scene.editable_fields.length
+          + '，控件 ' + controls.length + '）');
+        if (scene.editable_fields.length) withFields += 1;
+        for (const f of scene.editable_fields) {
+          const ctl = controls.find((c) => c.getAttribute('data-p') === f.name);
+          assert.ok(ctl, '弹层缺字段控件：' + scene.id + '／' + f.name);
+          const want = SHAPE[f.kind];
+          assert.ok(want, '未知 kind（闭集外）：' + f.kind);
+          assert.equal(ctl.tag, want.tag, '控件种类与 kind 不符：' + scene.id + '／' + f.name + '（kind=' + f.kind + '）');
+          if (want.type) {
+            assert.equal(ctl.getAttribute('type'), want.type,
+              '控件 type 与 kind 不符：' + scene.id + '／' + f.name + '（kind=' + f.kind + '）');
+          }
+          if (want.inputmode) assert.equal(ctl.getAttribute('inputmode'), want.inputmode, 'inputmode 不符：' + scene.id + '／' + f.name);
+          if (f.kind === 'select') {
+            const opts = ctl.children.filter((k) => k.tag === 'option');
+            /* 选项数＝空档（`请选择`／`（选填，未选）`）＋候选项数。 */
+            assert.equal(opts.length, f.options.length + 1,
+              'select 的候选项数与字段不符：' + scene.id + '／' + f.name);
+          }
+          checked += 1;
+        }
+      }
+      assert.ok(withFields > 0, '一条带字段的场景都没有？资产形状不对');
+      assert.equal(checked, HELP_ASSETS.reduce((n, s) => n + s.editable_fields.length, 0),
+        '逐条核对过的字段数应＝全资产字段数');
+    });
+
+    it('反向锁（运行时段）：页上**没有**说明区（那两张伴生表 #975 已删）＋边界四项照旧', () => {
       const { screen } = runPage(renderHelpFileHtml(buildHelpFileData(NOW)));
       const seen = visibleText(screen);   /* 用户打开页面后**真看到的**文本（实体已还原） */
       const markup = screen.innerHTML;    /* 页上的标记（说明区标记只可能在标记里） */
@@ -831,18 +885,9 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.equal(markup.includes('meta-sec'), false, '页面标记里不得出现 meta-sec');
       assert.equal(markup.includes('ms-hint'), false, '页面标记里不得出现说明摘要的提示药丸');
 
-      /* ② 逐条计数：85 条「预期结果说明」一条也不在用户可见文本里（命中几条就报几条 id）。 */
-      const hitResults = Object.entries(HELP_SCENE_RESULTS).filter(([, r]) => seen.includes(r));
-      assert.deepEqual(hitResults.map(([id]) => id), [],
-        '页上混进「预期结果说明」' + hitResults.length + ' 条（命中 '
-        + hitResults.length + '/' + DERIVED.results + '）');
+      /* ② 用户可见文本里也不许出现说明区的字样（#975：连「预期」这个概念一起撤）。 */
       assert.equal(seen.includes('预期 ·'), false, '「预期 ·」这个字样不该出现在页上');
-
-      /* ③ 逐条计数：5 条一级分组说明同样一条也不许有。 */
-      const hitNotes = Object.entries(HELP_GROUP_NOTES).filter(([, n]) => seen.includes(n));
-      assert.deepEqual(hitNotes.map(([id]) => id), [],
-        '页上混进一级分组说明' + hitNotes.length + ' 条（命中 '
-        + hitNotes.length + '/' + DERIVED.notes + '）');
+      assert.equal(seen.includes('meta-sec'), false, '可见文本里出现 meta-sec');
 
       /* ④ 五张分组页照旧存在、页首第一个元素是首个子功能组（撤掉说明区后页首不再被别的块占位）。 */
       const pages = screen.querySelectorAll('.page[data-page]');

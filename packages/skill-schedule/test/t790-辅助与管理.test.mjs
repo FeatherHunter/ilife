@@ -163,8 +163,12 @@ describe('#790 辅助与管理', () => {
       assertWholePage(r.html);
       const scene = HELP_ASSETS.find((s) => s.id === 'first_use');
       assert.ok(scene && textOf(r.html).includes('六步向导'));
-      // 复制文本落在按钮的 `data-t` 属性里（可见文本天然不含）：判标记面。
-      assert.ok(markupOf(r.html).includes(String(scene.prompt_template)), '复制 prompt 须与 HELP 单源');
+      // 复制文本落在按钮的 **JSON 载荷属性**里（页上是 JSON 转义形态：换行是 `\n` 两个字符）。
+      // 单源判据＝载荷里那段值与 HELP 资产的 prompt **逐字相同**，故按同一种转义形态比——
+      // #975 起 HELP 正文是多行（首行唤醒词 ＋ 意图句），拿带真换行的原文去 `includes` 必然比不中。
+      const payloadValue = JSON.stringify(String(scene.prompt_template)).slice(1, -1);
+      assert.ok(markupOf(r.html).includes(payloadValue), '复制 prompt 须与 HELP 单源');
+      assert.ok(markupOf(r.html).includes('初始化 prompt'), '复制项的名字应还在（载荷条目没被改名）');
       assert.equal(r.data.pending, r.data.items.filter((it) => it.结论 !== '通过').length);
     });
     const scene = HELP_ASSETS.find((s) => s.id === 'first_use');
