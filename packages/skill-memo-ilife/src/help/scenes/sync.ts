@@ -8,7 +8,7 @@
  *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
  *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           资产 30 条 sha256＝27745af5504a724cad59ec699ebe802f15fe2002e0b69c2fbfcafe7c7701cd55
+ *           资产 30 条 sha256＝5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660
  *
  * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
  * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
@@ -38,7 +38,7 @@ export const MEMO_HELP_SYNC = {
           title: "备忘录同步",
           wake_word: "备忘录同步",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「备忘录同步」。\n\n三步对账:本地缺飞书任务的心愿自动补建;飞书那边完成的,拉回本地标记完成;飞书那边改了日期的,本地跟着改。最后回执统计。",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「备忘录同步」。\n\n三步对账:本地缺飞书任务的心愿自动补建;飞书那边完成的,拉回本地标记完成;飞书那边改了日期的,本地跟着改。最后回执 11 项统计。",
           types: ["查看", "回执"],
         },
       ],

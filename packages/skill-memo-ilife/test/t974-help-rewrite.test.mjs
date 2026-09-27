@@ -17,6 +17,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MEMO_HELP_GROUPS } from '../dist/help/sceneData.js';
+import { assertAtoms, assertFieldCoverage } from '../scripts/help-assets.assert.mjs';
 
 const SCENES = MEMO_HELP_GROUPS.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
 const KINDS = ['text', 'number', 'select', 'date', 'week'];
@@ -108,4 +109,18 @@ test('#974 ⑥ 路由面一行未动：唤醒词与别名仍是老骨架那一�
       'memo_complete_wish', 'memo_delete_mood', 'memo_init_setup', 'memo_reminders_active',
       'memo_search_mood', 'memo_update_mood'].sort(), '别名仍挂在原来那 10 个场景上（共 12 条）');
   for (const s of SCENES) assert.equal(s.status, '', s.id + ' 的 status 只许空串（不标缺失）');
+});
+
+test('#974 ⑦ 信息不丢失台账：老正文每个原子有去处、老字段逐个有去处（不丢失任何信息）', () => {
+  // 老侧快照＝`scripts/help-assets.before.mjs`（重写前那一刻的正文与字段，机器自 git 抽取）；
+  // 台账＝`scripts/help-assets.atoms.mjs`。断言本体住 `scripts/help-assets.assert.mjs`，生成器与测试共用同一份。
+  const atoms = assertAtoms(SCENES);
+  assert.equal(atoms.atomsSeen, 150, '老正文切出 150 个信息原子');
+  assert.ok(atoms.entriesSeen >= atoms.atomsSeen, '台账条数不少于原子数（一个原子可以有几处承载）');
+  const fields = assertFieldCoverage(SCENES);
+  assert.deepEqual(
+    { old: fields.oldCount, kept: fields.keptCount, dropped: fields.droppedCount, dropNames: fields.dropNames },
+    { old: 64, kept: 59, dropped: 5, dropNames: 4 },
+    '老字段 64 个：留下 59，有意删 5 处（4 个名字：true／bulk_indicator×2／reminder_id／with_reminders）',
+  );
 });

@@ -8,7 +8,7 @@
  *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
  *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           资产 30 条 sha256＝27745af5504a724cad59ec699ebe802f15fe2002e0b69c2fbfcafe7c7701cd55
+ *           资产 30 条 sha256＝5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660
  *
  * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
  * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
@@ -38,7 +38,7 @@ export const MEMO_HELP_REMIND = {
           title: "记提醒",
           wake_word: "记提醒",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「记提醒」。\n\n先建好笔记,再挂上提醒,到点自动推送。\n\n笔记内容:{{content}}\n提醒时间:{{remind_at}}\n重复类型(选填):{{repeat_type}}\n重复规则(选填):{{repeat_rule}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「记提醒」。\n\n先建好笔记,再挂上关联提醒,到点自动推送。\n\n笔记内容:{{content}}\n提醒时间:{{remind_at}}\n重复类型(选填):{{repeat_type}}\n重复规则(选填):{{repeat_rule}}",
           types: ["采集", "回执"],
           editable_fields: [
             { name: "content", label: "笔记内容", value: "", hint: "要提醒的事,如 取牛奶", required: true, kind: "text" },
@@ -52,7 +52,7 @@ export const MEMO_HELP_REMIND = {
           title: "设提醒",
           wake_word: "设提醒",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「设提醒」。\n\n挂在已有的笔记上;不填笔记 ID 也可以,那就单独建一条提醒。\n\n笔记 ID(选填):{{note_id}}\n提醒时间:{{remind_at}}\n提醒内容(选填):{{content}}\n重复类型(选填):{{repeat_type}}\n重复规则(选填):{{repeat_rule}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「设提醒」。\n\n不填笔记 ID 也可以,那就单独建一条提醒。\n\n笔记 ID(选填):{{note_id}}\n提醒时间:{{remind_at}}\n提醒内容(选填):{{content}}\n重复类型(选填):{{repeat_type}}\n重复规则(选填):{{repeat_rule}}",
           types: ["采集", "回执"],
           editable_fields: [
             { name: "note_id", label: "笔记 ID(选填)", value: "", hint: "数字,如 15", required: false, kind: "text" },
@@ -73,7 +73,7 @@ export const MEMO_HELP_REMIND = {
           title: "看提醒",
           wake_word: "看提醒",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「看提醒」。\n\n按时间排序列出提醒,并出一份可筛选的提醒页。\n\n提醒状态(选填):{{status}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「看提醒」。\n\n按时间排序列出提醒,并出一份可筛选的可视化页。\n\n提醒状态(选填):{{status}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "status", label: "提醒状态(选填)", value: "", hint: "空＝只看有效提醒", required: false, kind: "select", options: ["有效", "已废弃"] },
@@ -85,7 +85,7 @@ export const MEMO_HELP_REMIND = {
           title: "查已提醒备忘",
           wake_word: "查已提醒备忘",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「查已提醒备忘」。\n\n列出已经触发过的提醒、关联的打卡笔记和触发时间。",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「查已提醒备忘」。\n\n列出已触发的提醒、关联的打卡笔记和触发时间。",
           types: ["查看", "回执"],
         },
       ],

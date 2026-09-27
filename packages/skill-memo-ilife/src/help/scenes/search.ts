@@ -8,7 +8,7 @@
  *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
  *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           资产 30 条 sha256＝27745af5504a724cad59ec699ebe802f15fe2002e0b69c2fbfcafe7c7701cd55
+ *           资产 30 条 sha256＝5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660
  *
  * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
  * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
@@ -38,7 +38,7 @@ export const MEMO_HELP_SEARCH = {
           title: "搜备忘",
           wake_word: "搜备忘",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「搜备忘」。\n\n列出含关键词的笔记,并出一份搜索结果页。\n\n关键词:{{keyword}}\n分类(选填):{{category}}\n子分类(选填):{{sub_category}}\n排期日期(选填):{{due}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「搜备忘」。\n\n列出含关键词的所有笔记,并出一份可视化搜索结果页。\n\n关键词:{{keyword}}\n分类(选填):{{category}}\n子分类(选填):{{sub_category}}\n排期日期(选填):{{due}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "keyword", label: "关键词", value: "", hint: "如 咖啡", required: true, kind: "text" },
@@ -52,7 +52,7 @@ export const MEMO_HELP_SEARCH = {
           title: "查备忘",
           wake_word: "查备忘",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「查备忘」。\n\n列出含关键词的笔记,并出一份搜索结果页。\n\n关键词:{{keyword}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「查备忘」。\n\n搜含关键词的笔记,并出一份可视化结果页。\n\n关键词:{{keyword}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "keyword", label: "关键词", value: "", hint: "如 咖啡", required: true, kind: "text" },
@@ -99,7 +99,7 @@ export const MEMO_HELP_SEARCH = {
           title: "查心愿",
           wake_word: "查心愿",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「查心愿」。\n\n只看心愿,自动带上分类过滤。\n\n关键词(选填):{{keyword}}\n排期日期(选填):{{due}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「查心愿」。\n\n自动按「心愿」分类过滤,列出结果。\n\n关键词(选填):{{keyword}}\n排期日期(选填):{{due}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "keyword", label: "关键词(选填)", value: "", hint: "如 游泳", required: false, kind: "text" },
@@ -111,7 +111,7 @@ export const MEMO_HELP_SEARCH = {
           title: "查打卡",
           wake_word: "查打卡",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「查打卡」。\n\n只看打卡记录,自动带上分类过滤。\n\n关键词(选填):{{keyword}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「查打卡」。\n\n自动按「打卡」分类过滤,列出结果。\n\n关键词(选填):{{keyword}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "keyword", label: "关键词(选填)", value: "", hint: "如 跑步", required: false, kind: "text" },
@@ -122,7 +122,7 @@ export const MEMO_HELP_SEARCH = {
           title: "查情绪",
           wake_word: "查情绪",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「查情绪」。\n\n只看情绪日记,自动带上分类过滤。\n\n关键词(选填):{{keyword}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「查情绪」。\n\n自动按「情绪日记」分类过滤,列出结果。\n\n关键词(选填):{{keyword}}",
           types: ["查看", "回执"],
           editable_fields: [
             { name: "keyword", label: "关键词(选填)", value: "", hint: "如 加班", required: false, kind: "text" },

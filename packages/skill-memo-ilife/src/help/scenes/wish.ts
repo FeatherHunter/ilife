@@ -8,7 +8,7 @@
  *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
  *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           资产 30 条 sha256＝27745af5504a724cad59ec699ebe802f15fe2002e0b69c2fbfcafe7c7701cd55
+ *           资产 30 条 sha256＝5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660
  *
  * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
  * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
@@ -38,7 +38,7 @@ export const MEMO_HELP_WISH = {
           title: "完成心愿",
           wake_word: "完成心愿",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「完成心愿」。\n\n把一个心愿转成打卡记录。多个心愿时,先出一份完成向导页,你在页面上勾选并填打卡内容。\n\n心愿 ID:{{ids}}\n打卡内容(选填):{{content}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「完成心愿」。\n\n把一个心愿转成打卡记录:原心愿删除,新打卡记下内容。多个心愿时,先出一份完成向导页,你在页面上勾选并填打卡内容。\n\n心愿 ID:{{ids}}\n打卡内容(选填):{{content}}",
           types: ["向导", "采集", "回执"],
           editable_fields: [
             { name: "ids", label: "心愿 ID", value: "", hint: "数字,可多个,空格分隔,如 15 18 22", required: true, kind: "text" },
@@ -51,7 +51,7 @@ export const MEMO_HELP_WISH = {
           title: "心愿排期",
           wake_word: "心愿排期",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「心愿排期」。\n\n给心愿设排期日期,并同步到飞书。多个心愿时,先出一份排期向导页,你在页面上微调。\n\n心愿 ID:{{ids}}\n排期日期:{{due}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「心愿排期」。\n\n排期日期会同步到飞书任务;多个心愿时,先出一份排期向导页(可带建议日期),你在页面上微调。\n\n心愿 ID:{{ids}}\n排期日期:{{due}}",
           types: ["向导", "采集", "回执"],
           editable_fields: [
             { name: "ids", label: "心愿 ID", value: "", hint: "数字,可多个,空格分隔,如 15 18 22", required: true, kind: "text" },
@@ -69,7 +69,7 @@ export const MEMO_HELP_WISH = {
           title: "记心愿",
           wake_word: "记心愿",
           status: "",
-          prompt_template: "请你加载技能 备忘录,执行唤醒词「记心愿」。\n\n自动建好对应的飞书任务并关联起来。\n\n内容:{{content}}\n子分类(选填):{{sub_category}}\n排期日期(选填):{{due}}\n飞书任务清单(选填):{{tasklist_guid}}",
+          prompt_template: "请你加载技能 备忘录,执行唤醒词「记心愿」。\n\n自动建好对应的飞书任务并建立关联。\n\n内容:{{content}}\n子分类(选填):{{sub_category}}\n排期日期(选填):{{due}}\n飞书任务清单(选填):{{tasklist_guid}}",
           types: ["采集", "回执"],
           editable_fields: [
             { name: "content", label: "内容", value: "", hint: "如 想学游泳", required: true, kind: "text" },
