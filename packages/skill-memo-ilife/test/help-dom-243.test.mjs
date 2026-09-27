@@ -597,3 +597,13 @@ test('#243 ④ 带 editable_fields 的卡点开出现对应数量控件（以 me
     );
   }
 });
+
+test('#974 关于页的联系地址指向本仓 ilife（数渲染后的 DOM 文本，不是数载荷）', () => {
+  const { screen } = runPage();
+  const seen = visibleText(screen);
+  assert.ok(seen.includes('https://github.com/FeatherHunter/ilife'), '关于页缺 GitHub 地址（本仓）');
+  assert.ok(seen.includes('https://github.com/FeatherHunter/ilife/issues'), '关于页缺 Issues 地址（本仓）');
+  assert.equal(seen.includes('FeatherHunter/SKILLS'), false, '关于页仍指向搬家前的仓：FeatherHunter/SKILLS');
+  // 两个标签照老样（U 口径：标签与个数不动，只换地址）
+  assert.ok(seen.includes('GitHub') && seen.includes('Issues'), '关于页两项标签照老样');
+});

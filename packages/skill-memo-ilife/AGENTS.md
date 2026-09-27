@@ -71,7 +71,7 @@
 | `src/db/readonly.ts` | 333 | 333 | 未越线，在册备查 |
 | `src/health.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
-| `src/help/helpFile.ts` | 220 | 220 | 未越线，在册备查 |
+| `src/help/helpFile.ts` | 220 | 222 | 未越线，在册备查 |
 | `src/help/index.ts` | 4 | 4 | 未越线，在册备查 |
 | `src/help/lookup.ts` | 56 | 85 | 未越线，在册备查 |
 | `src/help/manifest.ts` | 50 | 50 | 未越线，在册备查 |

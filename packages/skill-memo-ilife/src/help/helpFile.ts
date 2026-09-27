@@ -55,12 +55,14 @@ const HELP_INIT_STEPS: readonly { readonly title: string; readonly desc: string 
   Object.freeze({ title: '初始化数据库', desc: '建表 + 提醒调度' }),
   Object.freeze({ title: '生成报告', desc: '初始化报告页' }),
 ]);
-/** 老两项（`memo_render.py` 的 `contact.items`）；**不带 `url`**（共享 schema 的 `contact.items[]` 是闭集）。 */
+/** 老两项（`memo_render.py` 的 `contact.items`，标签与个数照老样）；**不带 `url`**（共享 schema 的
+ *  `contact.items[]` 是闭集，带了会判 `schema-invalid`，见件头裁决 20 那张表）——链接以明文 `value` 呈现。
+ *  #974 用户裁定（2026-09-27）：地址指向本仓 `FeatherHunter/ilife`（老地址 `FeatherHunter/SKILLS` 是搬家前的仓）。 */
 const HELP_CONTACT: { readonly items: readonly { readonly label: string; readonly value: string }[] } =
   Object.freeze({
     items: Object.freeze([
-      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/SKILLS' }),
-      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/SKILLS/issues' }),
+      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife' }),
+      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues' }),
     ]),
   });
 

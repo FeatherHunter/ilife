@@ -76,11 +76,11 @@ test('#228 用户 U6／U1：页面上不出现命令名，也不标缺失', () =
   assert.equal((blob.match(/HELP/g) || []).length, 0, 'HELP 自身唤醒词不上页面');
 });
 
-test('#228 contact 照老两项、不带 url（共享 schema 的 contact.items[] 是闭集）', () => {
+test('#228 contact 照老两项、不带 url（共享 schema 的 contact.items[] 是闭集）；#974 起地址指向本仓 ilife', () => {
   assert.deepEqual(P.contact, {
     items: [
-      { label: 'GitHub', value: 'https://github.com/FeatherHunter/SKILLS' },
-      { label: 'Issues', value: 'https://github.com/FeatherHunter/SKILLS/issues' },
+      { label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife' },
+      { label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues' },
     ],
   });
   for (const it of P.contact.items) assert.equal('url' in it, false);
