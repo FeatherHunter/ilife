@@ -777,7 +777,7 @@ describe('#980 全部更新可关闭与重取不闪', () => {
     }
   });
 
-  it('合并保旧：非空表乱序照换，批量中失踪的旧目标缀回表尾', () => {
+  it('合并保旧：非空表乱序照换，批量中缺失的旧目标追加到表尾', () => {
     const t = (key) => ({ key });
     const installing = { calorie: { phase: 'installing', outcome: null, failure: null } };
     const idleRow = { calorie: { phase: 'idle', outcome: null, failure: null } };
@@ -787,17 +787,17 @@ describe('#980 全部更新可关闭与重取不闪', () => {
       ['calorie'],
       '空表＋有安装中则保旧',
     );
-    // 非空表＋批量中＋旧键失踪 → 缀回表尾，新表顺序不动。
+    // 非空表＋批量中＋旧键缺失 → 追加到表尾，新表顺序不动。
     assert.deepEqual(
       mergeTargetsOnReload([t('calorie'), t('chef')], [t('chef')], installing, true).map((x) => x.key),
       ['chef', 'calorie'],
-      '失踪的旧目标缀回表尾',
+      '缺失的旧目标追加到表尾',
     );
-    // 空闲时不缀回：正常下架由新表说了算。
+    // 空闲时不追加：正常下架由新表说了算。
     assert.deepEqual(
       mergeTargetsOnReload([t('calorie'), t('chef')], [t('chef')], idleRow, false).map((x) => x.key),
       ['chef'],
-      '空闲时失踪即下架，不缀回',
+      '空闲时缺失即下架，不追加',
     );
     // 键齐时原样换，不多事。
     assert.deepEqual(

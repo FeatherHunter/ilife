@@ -74,9 +74,9 @@ export function shouldKeepTargetsOnReload(
 }
 
 /** 重取目标表后的下一张表：空表保旧（见 `shouldKeepTargetsOnReload`）；非空表照常换，
- * 但批量进行中（串行中或有安装中）时刻在新表里失踪、屏上又有进度的旧目标会被缀回表尾——
+ * 但批量进行中（串行中或有安装中）时在新表里缺失、屏上又有进度的旧目标会被追加到表尾——
  * 键乱序或短暂缺键时不断进度、不闪掉整块（#980 验收“顺序变化时不把整块置空”）。
- * 空闲时不缀回：正常下架由新表说了算。 */
+ * 空闲时不追加：正常下架由新表说了算。 */
 export function mergeTargetsOnReload(
   previous: readonly TargetInfo[],
   loaded: readonly TargetInfo[],
@@ -92,6 +92,7 @@ export function mergeTargetsOnReload(
   });
   return kept.length > 0 ? [...loaded, ...kept] : loaded;
 }
+
 /** 对话框开关事件：开→开，关→关。签名里没有忙参数——重开只读进度，
  * 天生不受忙守卫阻挡（#980：关闭后可随时点「查看进度」重新打开）。 */
 export type DialogOpenEvent = 'show' | 'hide';

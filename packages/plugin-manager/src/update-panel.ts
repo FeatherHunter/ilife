@@ -277,7 +277,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const updatingAllRef = React.useRef(false);
   /** 重取七个目标的表（装机读数变了就重取：缺席卡的态是拿这张表算的，缓存住它会继续说旧话）。
    *
-   * 进度在屏上时不断进度（#980）：空表保旧表，非空表把批量中失踪的旧目标缀回表尾——
+   * 进度在屏上时不断进度（#980）：空表保旧表，非空表把批量中缺失的旧目标追加到表尾——
    * 否则可见行计算短暂为空或缺键，整块闪掉如重载。 */
   const reload = React.useCallback(async () => {
     const loaded = await loadTargets(getCall());
@@ -589,10 +589,12 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
           ),
         )
       : null;
-  // 浮层底部署记：锁定时「再点检查更新」够不着（忙守卫会拒），安装进行时指去「查看进度」（#980 R1）。
-  const dialogNote =
-    installingNow
-      ? '安装在后台继续：关掉这块不会中断它。点「查看进度」可随时重新打开。'
+  // 浮层底部署记：检查中／安装进行时「再点检查更新」都够不着（忙守卫会拒），这时指去「查看进度」（#980 R1）。
+  // 空闲时保持原句。三种状态各说各的，不误报。
+  const dialogNote = installingNow
+    ? '安装在后台继续：关掉这块不会中断它。点「查看进度」可随时重新打开。'
+    : checking
+      ? '正在检查更新：关掉这块不会中断它，查完点「查看进度」看结果。'
       : '安装在宿主后台继续：关掉这块不会中断它。再点「检查更新」看最新进度。';
   return React.createElement(
     'div',
