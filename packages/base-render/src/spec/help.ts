@@ -27,8 +27,8 @@ export interface SceneTypeBadge {
   readonly fg?: string;
 }
 
-/** 场景可编辑字段输入类型闭集（#966 定案；#969 落契约）。缺 `kind` 视为 `text`。 */
-export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week';
+/** 场景可编辑字段输入类型闭集（#966 定案；#969 落契约；#978 T2 扩 month／year）。缺 `kind` 视为 `text`。 */
+export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year';
 
 export interface SceneEditableField {
   readonly name: string;
@@ -200,7 +200,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             value: { type: 'string' },
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
-                            kind: { enum: ['text', 'number', 'select', 'date', 'week'] },
+                            kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year'] },
                             options: {
                               type: 'array',
                               items: {

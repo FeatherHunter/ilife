@@ -48,6 +48,30 @@ function isIsoDate(v: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
 }
 
+/** ISO 月份（`YYYY-MM`）：12 个月恒真实，无需回读比对。 */
+function isIsoMonth(v: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
+}
+
+/** 年份（`YYYY`）：4 位数字即合法形状，业务范围由调用方收窄，不在本层拦。 */
+function isYear(v: string): boolean {
+  return /^\d{4}$/.test(v);
+}
+
+/** ISO 周（`YYYY-Www`）：正则＋该年实有该周（53 周年才许 W53）。 */
+function isIsoWeek(v: string): boolean {
+  const m = /^(\d{4})-W(0[1-9]|[1-4][0-9]|5[0-3])$/.exec(v);
+  if (!m) return false;
+  const year = Number(m[1]);
+  const week = Number(m[2]);
+  if (week <= 52) return true;
+  // 53 周年判定：1 月 1 日是周四，或闰年且 1 月 1 日是周三（ISO 周历规则）。
+  const jan1 = new Date(Date.UTC(year, 0, 1)).getUTCDay();
+  const isoJan1 = jan1 === 0 ? 7 : jan1;
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return isoJan1 === 4 || (leap && isoJan1 === 3);
+}
+
 /** 渲染一个就地可编辑值。入参不合规一律 `bad-input`（不静默降级：静默降级会让调用方以为已经生效）。 */
 export function renderEditableValue(input: EditableValueInput): string {
   if (input === null || typeof input !== 'object' || Array.isArray(input)) badInput('renderEditableValue: input 必须是对象');
@@ -99,6 +123,15 @@ export function renderEditableValue(input: EditableValueInput): string {
   }
   if (kind === 'date' && value !== '' && !isIsoDate(value)) {
     badInput('renderEditableValue: kind=date 的 value 必须是空串或 YYYY-MM-DD（真实存在的日期）：' + value);
+  }
+  if (kind === 'month' && value !== '' && !isIsoMonth(value)) {
+    badInput('renderEditableValue: kind=month 的 value 必须是空串或 YYYY-MM（01-12）：' + value);
+  }
+  if (kind === 'year' && value !== '' && !isYear(value)) {
+    badInput('renderEditableValue: kind=year 的 value 必须是空串或 YYYY（4 位数字）：' + value);
+  }
+  if (kind === 'week' && value !== '' && !isIsoWeek(value)) {
+    badInput('renderEditableValue: kind=week 的 value 必须是空串或 YYYY-Www（该年实有该周）：' + value);
   }
 
   const unit = optText(input.unit, 'renderEditableValue: input.unit');
