@@ -524,6 +524,16 @@ describe('#920 样式表：取值照 v3.1 那一件，逐项锚住（不许自�
     assert.doesNotMatch(VIEW_SRC, /ready \? null : React\.createElement\('div', \{ style: S\.muted \}, '配置读取中'\)/, '「配置读取中」不许再独占头部那一行');
   });
 
+  it('#981 骨架改短：两行不等宽且不再通栏，状态位恢复 180px', () => {
+    // 底座唯一定义地：高度／圆角／底色仍在 `skeleton`，宽度只在调用点覆盖（铁律二：不抄第二份）。
+    assert.doesNotMatch(entryBody(VIEW_SRC, 'skeleton'), /width/, '底座 `S.skeleton` 不许写宽度（宽度只在调用点分档）');
+    assert.match(VIEW_SRC, /\.\.\.S\.skeleton,\s*width:\s*'68%'/, '配置文件行覆盖 68%');
+    assert.match(VIEW_SRC, /maxWidth:\s*420/, '配置文件行宽屏上限 420px');
+    assert.match(VIEW_SRC, /\.\.\.S\.skeleton,\s*width:\s*'46%'/, '数据目录行覆盖 46%（与上一行不等即错位）');
+    assert.match(VIEW_SRC, /maxWidth:\s*300/, '数据目录行宽屏上限 300px');
+    assert.match(VIEW_SRC, /\.\.\.S\.skeleton,\s*width:\s*180\s*\}/, '状态行路径位恢复真源 180px');
+  });
+
   it('值列与标签列的字号是相对单位（宿主没有界面字号 token，绝对 px 会失真）', () => {
     assert.match(entryBody(VIEW_SRC, 'rowKey'), /fontSize:\s*'0\.92em'/, '标签列 11.5px ⇒ 0.92em');
     assert.match(entryBody(VIEW_SRC, 'rowValue'), /fontSize:\s*'0\.88em'/, '值列 11px ⇒ 0.88em');

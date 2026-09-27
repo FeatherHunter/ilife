@@ -783,14 +783,21 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
    *
    *  判断式按 `state.kind`：**不许**照 `surface === null` 写——它同时覆盖失败态，照写会让失败屏长出两行假骨架。 */
   const loading = state.kind === 'loading';
-  const fileValue = (text: string | null): React.ReactNode =>
-    text === null ? React.createElement('span', { style: S.skeleton, 'data-ilife-skeleton': 'value' }) : text;
-  const fileRow = (label: string, text: string | null, tail?: React.ReactNode): React.ReactElement =>
+  /** #981：骨架宽度分档——底座仍是 `S.skeleton`（高度／圆角／底色唯一定义地），这里只覆盖宽度。
+   *  配置文件行 68%（宽屏上限 420px）、数据目录行 46%（上限 300px），两行不等即错位感。 */
+  const fileValue = (text: string | null, skeletonStyle: React.CSSProperties = S.skeleton): React.ReactNode =>
+    text === null ? React.createElement('span', { style: skeletonStyle, 'data-ilife-skeleton': 'value' }) : text;
+  const fileRow = (
+    label: string,
+    text: string | null,
+    skeletonStyle: React.CSSProperties,
+    tail?: React.ReactNode,
+  ): React.ReactElement =>
     React.createElement(
       'div',
       { style: S.info },
       React.createElement('b', { style: S.fileLabel }, label),
-      fileValue(text),
+      fileValue(text, skeletonStyle),
       tail === undefined ? null : tail,
     );
   const fileLines =
@@ -802,12 +809,13 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
           fileRow(
             '配置文件',
             surface === null ? null : surface.path,
+            { ...S.skeleton, width: '68%', maxWidth: 420 },
             // #939：这一句原先独占第三行、首次运行时会多 17px ⇒ 挂到同一行的行尾，两行高度恒定。
             surface !== null && surface.created
               ? React.createElement('span', { style: S.muted }, '（配置文件刚按默认值生成）')
               : null,
           ),
-          fileRow('数据目录', surface === null ? null : headDataDir),
+          fileRow('数据目录', surface === null ? null : headDataDir, { ...S.skeleton, width: '46%', maxWidth: 300 }),
         );
 
   const parts: PanelParts = { styles: S, reply: surface };
@@ -986,7 +994,8 @@ export function StatusBlock(props: StatusBlockProps): React.ReactElement {
       'div',
       { style: S.statusFind },
       props.path === null
-        ? React.createElement('span', { style: S.skeleton, 'data-ilife-skeleton': 'statusPath' })
+        // #981：状态行路径位恢复真源定宽 180px（v3.1 `:422`），不跟面板走。
+        ? React.createElement('span', { style: { ...S.skeleton, width: 180 }, 'data-ilife-skeleton': 'statusPath' })
         : React.createElement('span', { style: S.statusPath }, props.path),
       props.version === undefined || props.version === null || props.version === ''
         ? null
