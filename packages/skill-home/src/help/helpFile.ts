@@ -73,8 +73,8 @@ interface HomeHelpContact {
 const HOME_HELP_CONTACT: HomeHelpContact = Object.freeze({
   items: Object.freeze([
     Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/SKILLS', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/SKILLS/issues', url: true as const }),
+    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
   ]),
   copy_all: true as const,
 });
