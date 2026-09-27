@@ -179,8 +179,8 @@ export const HELP_TYPE_BADGES: Readonly<Record<string, SceneTypeBadge>> = Object
  *  不是本包能替它们改的，差异已如实记在交付说明里。 */
 export const HELP_CONTACT: SceneData['contact'] = Object.freeze({
   items: Object.freeze([
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/SKILLS' }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/SKILLS/issues' }),
+    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife' }),
+    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues' }),
   ]),
   copy_all: '一键复制',
 });
