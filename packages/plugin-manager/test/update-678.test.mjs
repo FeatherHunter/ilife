@@ -12,7 +12,7 @@ import { MANAGER_TARGET_KEY, UPDATE_TARGETS, targetFor } from '../dist/update-ta
 import { BLOCKED_REASONS, CONFIG_TAB_SLOT, MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from '../dist/update-contract.js';
 import { isAbsent, cardActionOf, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from '../dist/update-view.js';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from '../dist/update-client.js';
-import { hasInstallingRow, runSerialUpdateAll, updateBusyFailure } from '../dist/update-queue.js';
+import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart, shouldKeepTargetsOnReload, updateBusyFailure } from '../dist/update-queue.js';
 import { readPanelRegistered, readTargetEnvironment } from '../dist/update-env.js';
 
 const PROFILE = 'dsh-profile-web';
@@ -721,5 +721,89 @@ describe('#926 一键串行与并发门禁', () => {
     for (const label of ['装上', '装上更新', '重试安装', '重新检查', '全部更新']) {
       assert.ok(bundle.includes(label), '产物里缺按钮名：' + label);
     }
+  });
+});
+
+// 票 #980（一键可关闭＋重取不闪）：只验纯判据与产物字面，不碰真机。
+// 判据：守卫缺 checking 必红、空表换旧表必红、重开被忙拦必红、产物缺“查看进度”必红。
+describe('#980 全部更新可关闭与重取不闪', () => {
+  it('批量守卫：串行中／有安装中／检查中三者任一即拦，空闲才放行', () => {
+    assert.equal(
+      shouldBlockBatchStart({ hasInstallingRow: false, updatingAll: false, checking: false }),
+      false,
+      '三者皆无必须放行',
+    );
+    assert.equal(
+      shouldBlockBatchStart({ hasInstallingRow: true, updatingAll: false, checking: false }),
+      true,
+      '有安装中必须拦（沿 #926 旧判据）',
+    );
+    assert.equal(
+      shouldBlockBatchStart({ hasInstallingRow: false, updatingAll: true, checking: false }),
+      true,
+      '一键串行中必须拦（沿 #926 旧判据）',
+    );
+    assert.equal(
+      shouldBlockBatchStart({ hasInstallingRow: false, updatingAll: false, checking: true }),
+      true,
+      '检查轮未收尾必须拦：否则检查与一键双写同一行',
+    );
+  });
+
+  it('重取保旧：新表为空且屏上有进度则保留旧表，其余照常替换', () => {
+    const installing = { calorie: { phase: 'installing', outcome: null, failure: null } };
+    const ready = { calorie: { phase: 'ready', outcome: null, failure: null } };
+    const idle = { calorie: { phase: 'idle', outcome: null, failure: null } };
+    assert.equal(shouldKeepTargetsOnReload(0, installing, false), true, '空表＋有安装中则保留');
+    assert.equal(shouldKeepTargetsOnReload(0, ready, true), true, '空表＋一键串行中则保留');
+    assert.equal(shouldKeepTargetsOnReload(0, idle, false), false, '空表＋全空闲（首挂）则替换');
+    assert.equal(shouldKeepTargetsOnReload(0, {}, false), false, '空表＋无行则替换');
+    assert.equal(shouldKeepTargetsOnReload(7, installing, true), false, '非空表照常替换');
+  });
+
+  it('重开解耦：忙守卫拦批量入口，但拦不住只读重开', () => {
+    assert.equal(resolveDialogOpen('show'), true, '重开永远开');
+    assert.equal(resolveDialogOpen('hide'), false, '关闭永远关');
+    // 同一忙态下：批量入口被拦，重开不受影响。
+    const busy = { hasInstallingRow: true, updatingAll: true, checking: true };
+    assert.equal(shouldBlockBatchStart(busy), true, '忙时批量入口被拦');
+    assert.equal(resolveDialogOpen('show'), true, '忙时重开照样开（签名无忙参数即解耦）');
+  });
+
+  it('产物含查看进度入口（#980 产物门禁）', () => {
+    const bundle = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
+    for (const label of ['查看进度', '全部更新']) {
+      assert.ok(bundle.includes(label), '产物里缺入口名：' + label);
+    }
+  });
+
+  it('合并保旧：非空表乱序照换，批量中失踪的旧目标缀回表尾', () => {
+    const t = (key) => ({ key });
+    const installing = { calorie: { phase: 'installing', outcome: null, failure: null } };
+    const idleRow = { calorie: { phase: 'idle', outcome: null, failure: null } };
+    // 空表＋进度 → 保旧整张。
+    assert.deepEqual(
+      mergeTargetsOnReload([t('calorie')], [], installing, false).map((x) => x.key),
+      ['calorie'],
+      '空表＋有安装中则保旧',
+    );
+    // 非空表＋批量中＋旧键失踪 → 缀回表尾，新表顺序不动。
+    assert.deepEqual(
+      mergeTargetsOnReload([t('calorie'), t('chef')], [t('chef')], installing, true).map((x) => x.key),
+      ['chef', 'calorie'],
+      '失踪的旧目标缀回表尾',
+    );
+    // 空闲时不缀回：正常下架由新表说了算。
+    assert.deepEqual(
+      mergeTargetsOnReload([t('calorie'), t('chef')], [t('chef')], idleRow, false).map((x) => x.key),
+      ['chef'],
+      '空闲时失踪即下架，不缀回',
+    );
+    // 键齐时原样换，不多事。
+    assert.deepEqual(
+      mergeTargetsOnReload([t('calorie')], [t('calorie')], installing, true).map((x) => x.key),
+      ['calorie'],
+      '键齐时照换',
+    );
   });
 });

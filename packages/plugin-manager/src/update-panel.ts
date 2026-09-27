@@ -12,7 +12,7 @@ import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
 import { reasonText } from './update-contract.js';
-import { hasInstallingRow, runSerialUpdateAll } from './update-queue.js';
+import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
 import { cardActionOf, isAbsent, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
@@ -222,6 +222,8 @@ export interface UpdateRowsFace {
   /** 结果浮层是否打开（点「检查更新」开，关法三种：×、点遮罩、Esc）。 */
   readonly open: boolean;
   close(): void;
+  /** 只读重开结果浮层（只开不干活）：串行中关闭后点「查看进度」回来，不受忙守卫阻挡（#980）。 */
+  showProgress(): void;
   checkAll(): void;
   /** 一键全部更新：按目标顺序串行收尾，失败一家记 failed 继续下一家。 */
   updateAll(): void;
@@ -262,12 +264,28 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     },
     [],
   );
-  /** 重取七个目标的表（装机读数变了就重取：缺席卡的态是拿这张表算的，缓存住它会继续说旧话）。 */
+  // 回调闭包里读到的 rows/targets 可能是旧的：忙守卫必须看最新值，故用 ref 镜像。
+  // ref 集中声明在 reload 之前：reload 的保旧分支同样要读最新行表与串行旗。
+  const rowsRef = React.useRef(rows);
+  rowsRef.current = rows;
+  const targetsRef = React.useRef(targets);
+  targetsRef.current = targets;
+  const pollMsRef = React.useRef(pollMs);
+  pollMsRef.current = pollMs;
+  const checkingRef = React.useRef(false);
+  checkingRef.current = checking;
+  const updatingAllRef = React.useRef(false);
+  /** 重取七个目标的表（装机读数变了就重取：缺席卡的态是拿这张表算的，缓存住它会继续说旧话）。
+   *
+   * 进度在屏上时不断进度（#980）：空表保旧表，非空表把批量中失踪的旧目标缀回表尾——
+   * 否则可见行计算短暂为空或缺键，整块闪掉如重载。 */
   const reload = React.useCallback(async () => {
     const loaded = await loadTargets(getCall());
     if (!alive.current) return;
     if (loaded.ok) {
-      setTargets(loaded.value.targets);
+      setTargets(
+        mergeTargetsOnReload(targetsRef.current, loaded.value.targets, rowsRef.current, updatingAllRef.current),
+      );
       setPollMs(loaded.value.pollMs);
       setLoadError(null);
     } else {
@@ -280,19 +298,22 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
     setRows((previous) => ({ ...previous, [key]: next }));
   }, []);
-  // 回调闭包里读到的 rows/targets 可能是旧的：忙守卫必须看最新值，故用 ref 镜像。
-  const rowsRef = React.useRef(rows);
-  rowsRef.current = rows;
-  const targetsRef = React.useRef(targets);
-  targetsRef.current = targets;
-  const pollMsRef = React.useRef(pollMs);
-  pollMsRef.current = pollMs;
-  const updatingAllRef = React.useRef(false);
+  // 批量入口共用同一忙判据（#980）：串行中、有安装中、检查轮未收尾，三者任一即拦，不进队列。
+  // 只读 ref（引用恒定），故依赖为空，闭包永不读旧值。
+  const batchBlocked = React.useCallback(
+    (): boolean =>
+      shouldBlockBatchStart({
+        hasInstallingRow: hasInstallingRow(rowsRef.current),
+        updatingAll: updatingAllRef.current,
+        checking: checkingRef.current,
+      }),
+    [],
+  );
   const checkAll = React.useCallback(() => {
-    // 安装中题头点不得：任一行 installing 直接返回，不改任何行。
-    if (hasInstallingRow(rowsRef.current) || updatingAllRef.current) return;
+    // 安装中／串行中／检查中，题头点不得：直接返回，不改任何行。
+    if (batchBlocked()) return;
     setChecking(true);
-    setOpen(true);
+    setOpen(resolveDialogOpen('show'));
     const list = targetsRef.current;
     const snapshot = rowsRef.current;
     for (const target of list) patch(target.key, { phase: 'checking', outcome: snapshot[target.key]?.outcome ?? null, failure: null });
@@ -304,15 +325,15 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     ).finally(() => {
       if (alive.current) setChecking(false);
     });
-  }, [getCall, patch]);
+  }, [getCall, patch, batchBlocked]);
   const updateAll = React.useCallback(() => {
-    // 一键串行期间不重入；任一行 installing 也不重入（不进队列）。
-    if (hasInstallingRow(rowsRef.current) || updatingAllRef.current) return;
+    // 一键串行期间不重入；任一行 installing、检查轮未收尾同样不重入（不进队列）。
+    if (batchBlocked()) return;
     const list = targetsRef.current;
     if (list.length === 0) return;
     updatingAllRef.current = true;
     setUpdatingAll(true);
-    setOpen(true);
+    setOpen(resolveDialogOpen('show'));
     void (async () => {
       try {
         await runSerialUpdateAll(list, {
@@ -330,11 +351,11 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
         if (alive.current) setUpdatingAll(false);
       }
     })();
-  }, [getCall, patch, reload]);
+  }, [getCall, patch, reload, batchBlocked]);
   const act = React.useCallback(
     (target: TargetInfo, action: VerdictAction) => {
-      // 行按钮全局互斥：有忙拒 update-busy 且不改 rows（含同家第二点，不进队列）。
-      if (hasInstallingRow(rowsRef.current) || updatingAllRef.current) return;
+      // 行按钮全局互斥：有忙拒 update-busy 且不改 rows（含同家第二点，不进队列；检查中同样不进）。
+      if (batchBlocked()) return;
       const current = rowsRef.current[target.key] ?? IDLE;
       // 「重新检查」：只重读这一家（重新绑一次安装态指纹）。
       if (action === 'recheck') {
@@ -381,22 +402,39 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
         });
       })();
     },
-    [getCall, patch, reload],
+    [getCall, patch, reload, batchBlocked],
   );
-  return { targets, rows, pollMs, loadError, checking, updatingAll, open, close: () => setOpen(false), checkAll, updateAll, act };
+  return {
+    targets,
+    rows,
+    pollMs,
+    loadError,
+    checking,
+    updatingAll,
+    open,
+    close: () => setOpen(resolveDialogOpen('hide')),
+    // 只读重开：只开浮层、不启动任何轮次，故不受忙守卫阻挡（#980）。
+    showProgress: () => setOpen(resolveDialogOpen('show')),
+    checkAll,
+    updateAll,
+    act,
+  };
 }
 
 /** 标题右侧两件：「检查更新」一次查七家 ＋ 「全部更新」按顺序串行装（吃 `useUpdateRows` 的表）。
  *
- * 禁用形状（#925 第 2 条）：任一行 installing 时两件都点不得；人话沿用 `update-busy` 原句
+ * 禁用形状（#925 第 2 条 ＋ #980 检查中）：任一行 installing、一键串行中或检查轮未收尾时两件都点不得；人话沿用 `update-busy` 原句
  * （挂在 title 上，按钮文本仍是动作名）。题头不汇总排队数：串行进度只在各行自己显示。
  */
 export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): React.ReactElement {
   const { checking, updatingAll, checkAll, updateAll, targets, rows } = props.face;
-  const busy = hasInstallingRow(rows) || updatingAll;
-  const checkDisabled = checking || updatingAll || busy || targets.length === 0;
-  const allDisabled = checking || updatingAll || busy || targets.length === 0;
+  // 视觉与入口守卫同判据（#980）：禁用的才点不得，点得动的必有回响。
+  const blocked = shouldBlockBatchStart({ hasInstallingRow: hasInstallingRow(rows), updatingAll, checking });
+  const checkDisabled = blocked || targets.length === 0;
+  const allDisabled = blocked || targets.length === 0;
   const busyText = reasonText('update-busy');
+  // 题头状态字（#980 Q1）：检查中／安装中直接写在按钮上，不计数（#925）。
+  const installingNow = hasInstallingRow(rows) || updatingAll;
   return React.createElement(
     'span',
     { style: PANEL_STYLE.actions },
@@ -407,7 +445,7 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
         style: checkDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
         disabled: checkDisabled,
         onClick: checkAll,
-        title: busy ? busyText : '检查总管与六家插件的版本',
+        title: blocked ? busyText : '检查总管与六家插件的版本',
       },
       checking ? '检查中…' : '检查更新',
     ),
@@ -418,9 +456,9 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
         style: allDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
         disabled: allDisabled,
         onClick: updateAll,
-        title: busy ? busyText : '按顺序逐家装上更新（一家收尾才起下一家）',
+        title: blocked ? busyText : '按顺序逐家装上更新（一家收尾才起下一家）',
       },
-      updatingAll ? '更新中…' : '全部更新',
+      installingNow ? '更新中…' : '全部更新',
     ),
   );
 }
@@ -447,7 +485,7 @@ function RestartBanners(props: { readonly face: UpdateRowsFace }): React.ReactEl
  * 手工命令只在「装不了」或「装失败」的行显示：正常用户用不到，摊在每行上既吵又误导。
  */
 export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.ReactElement | null {
-  const { targets, rows, loadError, checking, updatingAll, open, close } = props.face;
+  const { targets, rows, loadError, checking, updatingAll, open, close, showProgress } = props.face;
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
     if (open) dialogRef.current?.focus();
@@ -456,9 +494,12 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
   if (loadError) return React.createElement('div', { style: PANEL_STYLE.reason }, '更新能力没接上：' + loadError);
   if (targets.length === 0) return null;
   if (shown.length === 0 && !open) return null;
-  // 行按钮全局互斥（#925 第 3 条）：任一行 installing 或一键串行中，其余行禁用、不进队列；
-  // installing 行自己同样自锁。各行进度自显：他行保持各自 phase，这里只读不改。
-  const locked = hasInstallingRow(rows) || updatingAll;
+  // 行按钮全局互斥（#925 第 3 条 ＋ #980 检查中）：视觉与入口守卫同判据——
+  // 禁用的才点不得，点得动的必有回响（守卫拒收时不改行，故启用的按钮点了不会静默吞掉）。
+  // 各行进度自显：他行保持各自 phase，这里只读不改。
+  const locked = shouldBlockBatchStart({ hasInstallingRow: hasInstallingRow(rows), updatingAll, checking });
+  // 安装态与检查态分开说（#980）：检查中不是安装中，文案不许误报。
+  const installingNow = hasInstallingRow(rows) || updatingAll;
   const body = shown.map((target) => {
     const row = rows[target.key];
     const snapshot = row.outcome?.snapshot ?? null;
@@ -529,10 +570,35 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
       showManual ? React.createElement('code', { style: PANEL_STYLE.cmd }, manual) : null,
     );
   });
+  // 对话框外的进度条（#980 Q1）：浮层关了但进度还在时，给一颗够得着的「查看进度」。
+  // 只读重开，不启动任何轮次，故锁定时同样点得动。文案不计数（#925：题头不汇总排队数）。
+  const progressStrip =
+    !open && (locked || shown.length > 0)
+      ? React.createElement(
+          'div',
+          { style: PANEL_STYLE.banner },
+          installingNow
+            ? '有更新正在安装：关掉对话框不会中断。'
+            : checking
+              ? '正在检查更新，稍候。'
+              : '上次检查的结果还在，直接打开看。',
+          React.createElement(
+            'button',
+            { type: 'button', style: { ...PANEL_STYLE.btn, marginLeft: 8 }, onClick: () => showProgress() },
+            '查看进度',
+          ),
+        )
+      : null;
+  // 浮层底部署记：锁定时「再点检查更新」够不着（忙守卫会拒），安装进行时指去「查看进度」（#980 R1）。
+  const dialogNote =
+    installingNow
+      ? '安装在后台继续：关掉这块不会中断它。点「查看进度」可随时重新打开。'
+      : '安装在宿主后台继续：关掉这块不会中断它。再点「检查更新」看最新进度。';
   return React.createElement(
     'div',
     null,
     React.createElement(RestartBanners, { face: props.face }),
+    progressStrip,
     open
       ? React.createElement(
           'div',
@@ -572,7 +638,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
               React.createElement(
                 'div',
                 { style: PANEL_STYLE.dialogNote },
-                '安装在宿主后台继续：关掉这块不会中断它。再点「检查更新」看最新进度。',
+                dialogNote,
               ),
             ),
           ),
@@ -602,8 +668,13 @@ export function AbsentCard(props: {
   const target = props.target;
   const row = target ? props.face.rows[target.key] : null;
   const busy = row?.phase === 'installing';
-  // 缺席卡同理全局互斥（#925 第 3 条）：别家 installing 或一键串行中，这张卡的装上／重新检查都不进队列。
-  const locked = busy || hasInstallingRow(props.face.rows) || props.face.updatingAll;
+  // 缺席卡同理全局互斥（#925 第 3 条 ＋ #980 检查中）：视觉与入口守卫同判据，
+  // 别家 installing、一键串行中或检查轮未收尾，这张卡的装上／重新检查都不进队列。
+  const locked = shouldBlockBatchStart({
+    hasInstallingRow: hasInstallingRow(props.face.rows),
+    updatingAll: props.face.updatingAll,
+    checking: props.face.checking,
+  });
   const manual = (target ? manualForDisplay(target, row?.failure?.manual ?? row?.outcome?.manual ?? null) : null) ?? props.fallbackCommand;
   const installed = target ? (target.installedVersion ?? target.runningVersion) : null;
   const state = slotStateOf(target, props.inLedger);
