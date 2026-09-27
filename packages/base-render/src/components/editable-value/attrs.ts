@@ -9,7 +9,7 @@ export const EDIT_VALUE_CLASS = 'ilife-edit-value';
 
 /** 机器键属性：值＝`EditableValueInput.name`。**运行时的发现锚**（`[data-ilife-edit]`）。 */
 export const EDIT_NAME_ATTR = 'data-ilife-edit';
-/** 输入类型：`text`｜`number`｜`select`｜`date`｜`week`｜`month`｜`year`。 */
+/** 输入类型：`text`｜`number`｜`select`｜`date`｜`week`｜`month`｜`year`｜`time`。 */
 export const EDIT_KIND_ATTR = 'data-ilife-edit-kind';
 /** 机器值（提交时原样送出的串）。 */
 export const EDIT_VALUE_ATTR = 'data-ilife-edit-value';
@@ -43,7 +43,7 @@ export const EDIT_EVENT_COMMIT = 'ilife:edit-commit';
 export const EDIT_EVENT_CANCEL = 'ilife:edit-cancel';
 
 /** 输入类型闭集（闭集外的值 → `bad-input`；不静默降级——降级会让调用方以为自己拿到了下拉）。 */
-export const EDIT_KINDS = ['text', 'number', 'select', 'date', 'week', 'month', 'year'] as const;
+export const EDIT_KINDS = ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] as const;
 export type EditableValueKind = (typeof EDIT_KINDS)[number];
 
 /** 铅笔形态闭集。 */

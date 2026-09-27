@@ -911,7 +911,7 @@ describe('renderHelpShell：模块纯度与单一真相（R8／R13）', () => {
 describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板一次到位）', () => {
   it('schema 允许 kind/options/min/max/step/placeholder（只加可选，不收窄旧字段）', () => {
     const props = SCENE_DATA_SCHEMA.properties.groups.items.properties.subgroups.items.properties.scenes.items.properties.editable_fields.items.properties;
-    assert.deepEqual(props.kind.enum, ['text', 'number', 'select', 'date', 'week', 'month', 'year']);
+    assert.deepEqual(props.kind.enum, ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time']);
     assert.equal(props.options.type, 'array');
     assert.equal(props.placeholder.type, 'string');
     assert.deepEqual(
@@ -974,7 +974,7 @@ describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板�
 
   it('交互模板按 kind 分控件＋C 案收边＋全角 toast（读源断言，不执行浏览器）', () => {
     const tpl = readFileSync(new URL('../assets/help-template.html', import.meta.url), 'utf8');
-    for (const needle of ['fieldControlHTML', 'substitutePrompt', "type=\"number\"", "type=\"date\"", "type=\"week\"", "type=\"month\"", "inputmode=\"numeric\"", '<select data-p=']) {
+    for (const needle of ['fieldControlHTML', 'substitutePrompt', "type=\"number\"", "type=\"date\"", "type=\"week\"", "type=\"month\"", "type=\"time\"", "inputmode=\"numeric\"", '<select data-p=']) {
       assert.equal(tpl.includes(needle), true, '模板缺 kind 分支：' + needle);
     }
     assert.equal(tpl.includes('width:min(560px'), true, '桌面必须是 560px 收边，不再横跨全宽');

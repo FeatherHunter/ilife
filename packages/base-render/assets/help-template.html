@@ -1703,7 +1703,7 @@ function normalizeScenes(scenes){
       dev: (s.status === '【待开发】'),
       prompt: s.prompt_template,
       params: (s.editable_fields || []).map(function(f){
-        var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year') ? f.kind : 'text';
+        var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
         return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
       })
@@ -1784,7 +1784,7 @@ function tabIconHTML(g){
 /* ===== 参数机制：代值后 prompt 全文 + 末尾每行「label: value」（#969）===== */
 function fieldKindOf(f){
   var k = f && f.kind;
-  if (k === 'number' || k === 'select' || k === 'date' || k === 'week' || k === 'month' || k === 'year') return k;
+  if (k === 'number' || k === 'select' || k === 'date' || k === 'week' || k === 'month' || k === 'year' || k === 'time') return k;
   if (k !== undefined && k !== null && k !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + k);}catch(e){} }
   return 'text';
 }
@@ -1855,6 +1855,9 @@ function fieldControlHTML(p){
   }
   if (kind === 'year') {
     return '<input data-p="' + esc(p.key) + '" type="number" inputmode="numeric" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
+  }
+  if (kind === 'time') {
+    return '<input data-p="' + esc(p.key) + '" type="time" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
   }
   return '<input data-p="' + esc(p.key) + '" type="text" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
 }

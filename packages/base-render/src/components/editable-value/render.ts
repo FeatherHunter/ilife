@@ -58,6 +58,11 @@ function isYear(v: string): boolean {
   return /^\d{4}$/.test(v);
 }
 
+/** 时刻（`HH:MM`，00:00–23:59）：原生时刻控件能承载的形状；`24:00` 由调用方先归一到 `23:59`（作息老家即如此）。 */
+function isIsoTime(v: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+}
+
 /** ISO 周（`YYYY-Www`）：正则＋该年实有该周（53 周年才许 W53）。 */
 function isIsoWeek(v: string): boolean {
   const m = /^(\d{4})-W(0[1-9]|[1-4][0-9]|5[0-3])$/.exec(v);
@@ -132,6 +137,9 @@ export function renderEditableValue(input: EditableValueInput): string {
   }
   if (kind === 'week' && value !== '' && !isIsoWeek(value)) {
     badInput('renderEditableValue: kind=week 的 value 必须是空串或 YYYY-Www（该年实有该周）：' + value);
+  }
+  if (kind === 'time' && value !== '' && !isIsoTime(value)) {
+    badInput('renderEditableValue: kind=time 的 value 必须是空串或 HH:MM（00:00–23:59）：' + value);
   }
 
   const unit = optText(input.unit, 'renderEditableValue: input.unit');

@@ -27,7 +27,7 @@ const html = renderEditableValue({
   display: '177',          // 显示字（缺省＝value；可与机器值不同，如 男/male、1,800/1800）
   unit: 'cm',              // 单位（小号；不参与机器值）
   label: '身高',            // 人类可读字段名（aria-label ＋ 事件 detail.label）
-  kind: 'text',            // text | number | select | date
+  kind: 'text',            // text | number | select | date | week | month | year | time
 });
 // → <span class="ilife-edit-value ilife-edit-value--text" data-ilife-edit="heightCm" …><button …>177<span>cm</span><svg …/></button></span>
 ```
@@ -59,7 +59,7 @@ document.addEventListener('ilife:edit-cancel', (e) => { /* 可选：Esc 取消�
 | `display` | string | `value` | 显示字；机器值与显示字**两码事**（`男`/`male`、`1,800`/`1800`） |
 | `unit` | string | — | 单位（小号，不参与机器值） |
 | `label` | string | — | 人类可读名（`aria-label="改身高"` ＋ 事件 `detail.label`） |
-| `kind` | `text`｜`number`｜`select`｜`date` | `text` | 闭集外的值 → `bad-input`（**不静默降级**） |
+| `kind` | `text`｜`number`｜`select`｜`date`｜`week`｜`month`｜`year`｜`time` | `text` | 闭集外的值 → `bad-input`（**不静默降级**）；`time` 值形态 `HH:MM`（00:00–23:59） |
 | `options` | `(string｜{value,label})[]` | — | 仅 `select`；字符串项＝机器值与显示字同值。`value` 必须命中一项 |
 | `placeholder` | string | — | 编辑器占位 |
 | `required` | boolean | `false` | 空值提交被拦（留在编辑态，不派发事件） |
@@ -77,7 +77,7 @@ document.addEventListener('ilife:edit-cancel', (e) => { /* 可选：Esc 取消�
 | 属性 | 含义 |
 |---|---|
 | `data-ilife-edit` | 机器键（**运行时的发现锚**；`[data-ilife-edit]`） |
-| `data-ilife-edit-kind` | `text`｜`number`｜`select`｜`date` |
+| `data-ilife-edit-kind` | `text`｜`number`｜`select`｜`date`｜`week`｜`month`｜`year`｜`time` |
 | `data-ilife-edit-value` | 机器值（提交后就地改写它） |
 | `data-ilife-edit-display` | 显示字 |
 | `data-ilife-edit-unit` | 单位 |
