@@ -46,12 +46,14 @@ export interface HelpContact {
   readonly copy_all: true;
 }
 
-/** 联系作者三项（老 `render_help.py:59-63` 的 CONTACT ＋ `:206-213` 的 items 组法逐字）。 */
+/** 联系作者三项（老 `render_help.py:59-63` 的 CONTACT ＋ `:206-213` 的 items 组法逐字；
+ *  唯二例外是两个仓库地址：维护者 2026-09-27 定仓库已搬到 `ilife`，故 GitHub／Issues 两项的值改指
+ *  `https://github.com/FeatherHunter/ilife`（＋`/issues`），标签与个数仍照老实样，邮箱不动）。 */
 export const HELP_CONTACT: HelpContact = Object.freeze({
   items: Object.freeze([
     Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/SKILLS', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/SKILLS/issues', url: true as const }),
+    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
   ]),
   copy_all: true as const,
 });
