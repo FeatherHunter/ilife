@@ -38,10 +38,12 @@ const DECLARATION_FILES = [
   'setup/declaration.ts',
 ];
 
-/** 老实物 71 条（id/title/wake_word/status/prompt_template/types）的 SHA-256——「与老技能同款」的机器锁。 */
+/** 老实物 71 条摘要（历史值，已退役；#977 文字全改后现内容不再与之逐字一致）。
+ *  历史值：'93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0'（搬运 0 差异的机器证据，见 docs/skills/skill-bill/t721-证据.md）。 */
 const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0';
-/** 74 条（老 71 ＋ 新仓多出的 3 条）的 SHA-256——今天的内容事实。 */
-const PRODUCT_DIGEST = '305303b99e508b8011081374e7083d71e91f4db69ccf40b23aaad597c21b69a2';
+/** 74 条重写后（#977：卡路里式首行＋{{}}＋editable_fields）的 SHA-256——今天的内容事实。
+ *  口径＝canonical（id/title/wake_word/status/prompt_template/types）；editable_fields 另由 #977 专项断言覆盖。 */
+const PRODUCT_DIGEST = 'cc2baf072536ebd4b8e74d80afad6a1b6553d1f0e999647dd62e07390a5c4582';
 /** 词 → 命令 表（77 条，按词排序）的 SHA-256——取自**改前**那份手写词表（#721 搬运前当刻）。
  *  它钉的是「一条词还路由到与今天相同的命令」，属搬运 0 差异的机器证据。 */
 const ROUTE_DIGEST = 'd51353d5fda05cb39de7aad5909ae533d7d6408868f0ff3d7098b4b88c7bc9b9';
@@ -137,11 +139,34 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
     assert.equal(digest, PRODUCT_DIGEST, '内容摘要变了：改的是域声明里的字就不是白改，摘要锁要跟着重钉（并在证据件里记一行）');
   });
 
-  it('老 71 条逐字锁（＝与老权威 0 差异的机器证据）', () => {
+  it('老 71 条逐字锁已退役（#977 文字全改；历史值见常量注释，現内容不再逐字一致）', () => {
     const rows = productPayload().groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes))
       .filter((s) => !ADDED_IDS.has(s.id));
     assert.equal(rows.length, 71);
-    assert.equal(createHash('sha256').update(canonical(rows), 'utf8').digest('hex'), LEGACY_DIGEST);
+    assert.notEqual(createHash('sha256').update(canonical(rows), 'utf8').digest('hex'), LEGACY_DIGEST, '老锁应已变红（重写生效的证据）；若此断言失败说明重写被回滚');
+  });
+
+  it('#977 字段锁：60 有参带 editable_fields（kind 闭集＋{{}}一一对应），14 零参缺席', async () => {
+    const { WAKE_ASSETS } = await import('../dist/triggers/wake-assets.js');
+    const KINDS = new Set(['text', 'number', 'select', 'date', 'week']);
+    const withFields = WAKE_ASSETS.filter((s) => s.editable_fields !== undefined);
+    assert.equal(withFields.length, 60);
+    assert.equal(WAKE_ASSETS.filter((s) => s.editable_fields === undefined).length, 14);
+    for (const s of withFields) {
+      assert.ok(s.editable_fields.length > 0, s.id + ' 空数组（零参须缺席，不发空数组）');
+      const names = new Set();
+      for (const f of s.editable_fields) {
+        assert.ok(f.name && f.label, s.id + ' 字段缺 name/label');
+        assert.ok(!names.has(f.name), s.id + ' 字段名重复：' + f.name);
+        names.add(f.name);
+        assert.ok(KINDS.has(f.kind ?? 'text'), s.id + ' 非法 kind：' + f.kind);
+        assert.ok(s.prompt_template.includes('{{' + f.name + '}}'), s.id + ' 字段无对应占位：' + f.name);
+        if (f.kind === 'select') assert.ok(Array.isArray(f.options) && f.options.length > 0, s.id + ' select 无 options');
+      }
+      for (const m of s.prompt_template.matchAll(/\{\{(\w+)\}\}/g)) {
+        assert.ok(names.has(m[1]), s.id + ' 占位无字段定义：' + m[1]);
+      }
+    }
   });
 
   it('词 → 命令 表逐条与改前相同（77 条，按词排序后摘要锁）', async () => {

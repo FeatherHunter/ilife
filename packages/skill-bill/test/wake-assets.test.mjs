@@ -1,5 +1,7 @@
 // #146 · 内容资产锁：老 71 条逐字 ＋ 3 条新增 ＋ 与口径层 WAKE_TABLE 双向对账。
 // 事实源在仓外（老技能实物），故「逐字」用摘要钉死——重跑生成器只会复现同一摘要，改一个字即变红。
+// #977 · 老逐字锁已退役（文字全改）：LEGACY_DIGEST 的历史值见 t721 证据，当前内容不再与老权威逐字一致；
+// 本件保留结构／对账／新增落点（改判为卡路里式首行），逐字锁由 PRODUCT_DIGEST（t721 件）重钉。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -10,8 +12,8 @@ import { WAKE_TABLE } from '../dist/triggers/wakeTable.js';
 
 /** 本票新增的 3 条（老实物无；= 现表比老 HELP 多出的 3 条）。 */
 const ADDED_IDS = new Set(['write_record', 'query_bills', 'query_bill_detail']);
-/** 老实物 71 条（id/title/wake_word/status/prompt_template/types）的 SHA-256——「与老技能同款」的机器锁。 */
-const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0';
+/** #977 前的老实物 71 条摘要（历史值，已退役；现内容不再与之逐字一致，见件头）。
+ *  历史值：'93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0'。 */
 /** 老实物的域顺序（照搬，不许重排）。 */
 const GROUP_IDS = ['write', 'query', 'analysis', 'goal', 'account', 'link', 'setup'];
 /** 老词表（共享 help 模板 TYPE_DEFAULT 认得的 5 个）。 */
@@ -47,11 +49,17 @@ describe('#146 饼干记账 HELP 内容资产', () => {
     assert.equal(SCENE_BY_ID.write_record.wake_word, '记一笔');
   });
 
-  it('老 71 条逐字锁（摘要）＋ 二次生成可复现', () => {
-    assert.equal(legacy.length, 71);
-    assert.equal(createHash('sha256').update(canonical(legacy), 'utf8').digest('hex'), LEGACY_DIGEST);
-    // 摘要只覆盖老条目：新增 3 条不在其中（改新增条不隐瞒老条目漂移）。
-    assert.deepEqual(legacy.filter((s) => ADDED_IDS.has(s.id)), []);
+  it('#977 重写锁：____ 零命中，首行卡路里式，60 有参带 {{}}（老逐字锁退役）', () => {
+    for (const s of WAKE_ASSETS) {
+      assert.ok(!s.prompt_template.includes('____'), s.id + ' 还有 ____ 未洗');
+      assert.ok(!/\d{4}-\d{2}-\d{2}/.test(s.prompt_template.split('\n').filter((l) => l.includes('{{')).join('\n')), s.id + ' 参数行含裸 ISO 日期');
+    }
+    for (const s of WAKE_ASSETS) {
+      assert.ok(s.prompt_template.startsWith('请你加载技能 饼干记账,执行唤醒词「' + s.wake_word + '」。'), s.id + ' 首行不是卡路里式');
+    }
+    const withParam = WAKE_ASSETS.filter((s) => s.prompt_template.includes('{{'));
+    assert.equal(withParam.length, 60);
+    assert.equal(WAKE_ASSETS.filter((s) => !s.prompt_template.includes('{{')).length, 14);
   });
 
   it('新增 3 条落在对应域/组（补进既有二级组末尾，不新开组）', () => {
@@ -62,7 +70,7 @@ describe('#146 饼干记账 HELP 内容资产', () => {
     assert.equal(where('write_record'), 'write/write_1');
     assert.equal(where('query_bills'), 'query/query_1');
     assert.equal(where('query_bill_detail'), 'query/query_1');
-    for (const s of added) assert.ok(s.prompt_template.includes('唤醒词:' + s.wake_word), s.id + ' 新增条目照老实样带唤醒词尾注');
+    for (const s of added) assert.ok(s.prompt_template.includes('执行唤醒词「' + s.wake_word + '」'), s.id + ' 新增条目照卡路里式带首行');
   });
 
   it('与口径层 WAKE_TABLE 双向对账（77 = 4 HELP + 73，条条有落）', () => {

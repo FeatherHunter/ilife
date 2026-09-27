@@ -35,6 +35,7 @@ function toGroup(decl: DomainDeclaration): WakeGroupAsset | null {
       if (scenes.has(s.id)) throw new Error('[wake-assets] 场景被两条词条同时拥有：' + s.id);
       scenes.set(s.id, {
         id: s.id, title: s.title, wake_word: e.phrase, status: s.status, prompt_template: s.prompt_template, types: s.types,
+        ...(s.editable_fields !== undefined ? { editable_fields: s.editable_fields } : {}),
       });
     }
   }

@@ -16,6 +16,8 @@
  * 「外壳与机器面」里的触发与路由机器面。
  */
 
+import type { SceneEditableField } from 'base-paint';
+
 /** 记账的 16 个命令名（跨技能契约，冻结不动；`bill.record.*` 六条属写入域与查询域两域共用同一前缀）。 */
 export type BillKey =
   | 'bill.record.add' | 'bill.record.update'
@@ -43,7 +45,8 @@ export interface WakeEntry {
 /** 徽章类型词（老实物用到的全集；共享 help 模板 `TYPE_DEFAULT` 认得这些词，缺席即配色表要改）。 */
 export type WakeSceneType = '采集' | '查看' | '选择' | '向导' | '回执';
 
-/** 一条场景（老 HELP 卡的内容面）。**不写 `wake_word`**——那是拥有它的词条的**投影**。 */
+/** 一条场景（老 HELP 卡的内容面）。**不写 `wake_word`**——那是拥有它的词条的**投影**。
+ *  `editable_fields` 缺席＝零参场景（非空数组）；有参场景与正文 `{{name}}` 一一对应（#977 按卡路里标杆全量标注）。 */
 export interface WakeSceneDecl {
   readonly id: string;
   readonly title: string;
@@ -52,6 +55,7 @@ export interface WakeSceneDecl {
   /** 「复制指令」按钮按出来的正文，逐字保留。 */
   readonly prompt_template: string;
   readonly types: readonly WakeSceneType[];
+  readonly editable_fields?: readonly SceneEditableField[];
 }
 
 /** 一条词条：这个词怎么说、路由到哪条命令、说完看到哪几张卡（`scenes` ×0..n）。 */
@@ -86,7 +90,8 @@ export interface DomainDeclaration {
   readonly subgroups: readonly WakeSubgroupDecl[];
 }
 
-/** 投影面：一条场景卡（HELP 页读的那一层；`wake_word` 由拥有它的词条算出）。 */
+/** 投影面：一条场景卡（HELP 页读的那一层；`wake_word` 由拥有它的词条算出）。
+ *  `editable_fields` 缺席＝零参（模板走无参数分支）；有参时与 `prompt_template` 的 `{{name}}` 一一对应。 */
 export interface WakeSceneAsset {
   readonly id: string;
   readonly title: string;
@@ -94,6 +99,7 @@ export interface WakeSceneAsset {
   readonly status: string;
   readonly prompt_template: string;
   readonly types: readonly WakeSceneType[];
+  readonly editable_fields?: readonly SceneEditableField[];
 }
 
 /** 投影面：一个二级组（`scenes` 已是场景卡）。 */
