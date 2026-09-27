@@ -48,13 +48,16 @@ const SCENE_DATA = join(PKG_DIR, 'src', 'help', 'sceneData.ts');
 const WAKE_SRC = join(PKG_DIR, 'src', 'policy', 'wakewords.ts');
 const DRAFT_DOC = join(PKG_DIR, '..', '..', 'docs', 'skills', 'skill-chef', 't2-content-reconcile.md');
 const DEFAULT_SRC = 'D:\\ilife\\.scratch\\chef-help\\legacy-chef-help-payload.json';
+/** #976 · 48 卡重写表（纯数据）：`after` 改后全文＋`editable_fields`（kind 标注）。
+ *  生成器读它逐卡覆盖标题／正文／字段；老载荷仍做结构与摘要锁事实源。 */
+const REWRITE_SRC = join(HERE, 'help-rewrite-976.json');
 
 /** 摘要锁：① 载荷文件字节；② 老 48 条 canonical；③ 映射后 48 条 canonical。
  *  ③ 的值随 `status` 变：#841 把 14 张 `'【待开发】'` 翻成空串后重算（老件两条锁一字未动，
  *  证明这次改的只是新仓自己的 status，没碰任何老家事实源）。 */
 const SOURCE_SHA256 = 'c09f11d9ffa49e6b14c2ade094b5ab428f22fd440b2608442166e470db47d2ab';
 const LEGACY_DIGEST = '620653ed98c85acbeaf0ab646adf0ef48345f4d65d218a8d756f59f86757ae55';
-const ASSET_DIGEST = 'ea4d05fb2e3cfe63823de89d46b482d8f513f2478f42c6e2db703cf02abc225d';
+const ASSET_DIGEST = '0c5a63dcfe59e4a1ca0729b2f064358b379e0dcf82091e7888edb2c6b2f2899a';
 
 /** 页面级三项（裁决 6「逐项照记账」），三个值各自钉在自己的事实上：
  *  - `skill_name` 取老 `meta.skill`（下方 `:185` 逐字断言）；
@@ -130,10 +133,11 @@ const NEW_TABLE_ONLY = ['看菜谱', '看菜', '搜菜', '查食材', '加菜', 
   '排除可选', '查清单', '清空清单', '补录做菜', '改评分'];
 
 /** 形状断言全表（每个数都在这里钉死，改资产即红）。
- *  #841 之后：`WAKE_TABLE` 50 条 ⇒ 资产有表中无 0 个组名、待开发卡 0 张、可用卡 48 张。 */
+ *  #841 之后：`WAKE_TABLE` 50 条 ⇒ 资产有表中无 0 个组名、待开发卡 0 张、可用卡 48 张。
+ *  #976 之后：正文／标题／字段走重写表（39 带字段卡／65 条／33 键／39 占位卡），老载荷只留结构与两枚老锁。 */
 const EXPECT = {
-  bytes: 74581, domains: 10, subgroups: 33, scenes: 48, cardsWithFields: 46, dimPairs: 79, dimKeys: 41,
-  legacyDimPairs: 80, legacyDimKeys: 42, droppedPairs: 1, typeStrings: 11, placeholders: 16,
+  bytes: 74581, domains: 10, subgroups: 33, scenes: 48, cardsWithFields: 39, dimPairs: 65, dimKeys: 33,
+  legacyDimPairs: 80, legacyDimKeys: 42, droppedPairs: 1, typeStrings: 11, placeholders: 39,
   wakePhrases: 50, helpWakeWords: 4, newTableOnlyWords: 13, tableOnlyWords: 17,
   pendingGroups: 0, pendingCards: 0, availableCards: 48,
 };
@@ -168,7 +172,45 @@ function readDraft() {
   return JSON.parse(lines.slice(open + 1, close).join('\n'));
 }
 
-/** 老件 `type`（单数）→ 契约 `types`（复数）：按 `+` 拆、去括号注（t2 §七 映射口径）。 */
+/** #976 · 重写表读入（纯数据）：按 id 覆盖标题／正文／字段；缺 id 即 fail-closed。 */
+function readRewrite() {
+  if (!existsSync(REWRITE_SRC)) bad('重写表不在盘上：' + REWRITE_SRC);
+  const j = JSON.parse(readFileSync(REWRITE_SRC, 'utf8'));
+  const cards = j.cards;
+  if (!Array.isArray(cards)) bad('重写表无 cards 数组：' + REWRITE_SRC);
+  eq('重写表卡数', cards.length, EXPECT.scenes);
+  const byId = new Map();
+  for (const c of cards) {
+    if (!c.id || typeof c.after !== 'string' || !Array.isArray(c.editable_fields)) bad('重写表卡形状不对：' + JSON.stringify(c.id));
+    if (byId.has(c.id)) bad('重写表 id 重复：' + c.id);
+    byId.set(c.id, c);
+  }
+  return byId;
+}
+
+/** #976 · 字段校验（kind 闭集＋占位一一对应）：与 PROMPT-REWRITE §1／§6 同口径。 */
+const FIELD_KINDS_976 = ['text', 'number', 'select', 'date', 'week'];
+function checkRewriteFields(id, after, fields) {
+  const names = [...after.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map((m) => m[1]);
+  const fns = fields.map((f) => f.name);
+  if (names.length !== fns.length || !names.every((n) => fns.includes(n)) || !fns.every((n) => names.includes(n))) {
+    bad(id + ' 的占位与字段错位：after[' + names.join(',') + '] vs fields[' + fns.join(',') + ']');
+  }
+  if (after.includes('____') || after.includes('___')) bad(id + ' 的正文含老式下划线');
+  if (/\d{4}-\d{2}-\d{2}/.test(after)) bad(id + ' 的正文含裸 ISO 日期');
+  for (const f of fields) {
+    if (typeof f.name !== 'string' || typeof f.label !== 'string' || typeof f.value !== 'string') bad(id + ' 字段非 string');
+    if (!/^[a-z0-9_]+$/.test(f.name)) bad(id + ' 字段名非 snake_case：' + f.name);
+    if (f.label.includes('/')) bad(id + ' 标签含枚举字面：' + f.label);
+    const k = f.kind === undefined ? 'text' : f.kind;
+    if (!FIELD_KINDS_976.includes(k)) bad(id + ' 的 kind 出闭集：' + f.name + '=' + k);
+    if (k === 'select' && (!Array.isArray(f.options) || f.options.length === 0)) bad(id + ' 的 select 无 options：' + f.name);
+    if (k !== 'select' && f.options !== undefined) bad(id + ' 非 select 给了 options：' + f.name);
+    if ((f.min !== undefined || f.max !== undefined || f.step !== undefined) && k !== 'number') bad(id + ' 非 number 给了 min/max/step：' + f.name);
+    if (typeof f.hint !== 'string' || !f.hint) bad(id + ' 字段缺 hint：' + f.name);
+    if (typeof f.required !== 'boolean') bad(id + ' 字段缺 required：' + f.name);
+  }
+}
 function splitTypes(raw, id) {
   const atoms = raw.replace(/\([^)]*\)/g, '').split('+').map((t) => t.trim());
   if (atoms.some((a) => a === '' || a.includes('(') || a.includes(')'))) bad(id + ' 的 type 拆不干净：' + raw);
@@ -226,20 +268,25 @@ function build(payload, wakeTable) {
 
   const dropped = [];
   const typeStrings = new Set();
+  const rewrite = readRewrite();
   const asset = DOMAINS.map((d) => ({
     id: d.id, icon: d.icon, label: d.label,
     subgroups: raw.filter((g) => g.domain === d.id).map((g) => ({
       id: g.name, label: g.name,
       scenes: g.scenes.map((s) => {
         typeStrings.add(s.type);
-        const fields = toFields(s, dropped);
+        // 老 dimensions 只留计数与畸形键账（legacyDimPairs／dropped），字段本体走 #976 重写表。
+        toFields(s, dropped);
+        const rw = rewrite.get(s.scenario_id);
+        if (!rw) bad(s.scenario_id + ' 在重写表里没有');
+        checkRewriteFields(s.scenario_id, rw.after, rw.editable_fields);
         const scene = {
-          id: s.scenario_id, title: s.scenario_title, wake_word: s.wake_word,
+          id: s.scenario_id, title: rw.title || s.scenario_title, wake_word: s.wake_word,
           types: splitTypes(s.type, s.scenario_id),
           status: pending.has(s.wake_word) ? '【待开发】' : '',
-          prompt_template: s.prompt,
+          prompt_template: rw.after,
         };
-        if (fields.length) scene.editable_fields = fields;
+        if (rw.editable_fields.length) scene.editable_fields = rw.editable_fields;
         return scene;
       }),
     })),
@@ -283,7 +330,8 @@ function build(payload, wakeTable) {
 
 /** 与 t2 §七 草案交叉复核：三层结构 ＋ 每卡逐字（草案不搬 `dimensions`，字段账另算）。
  *  **唯一豁免 `status`**：草案照抄老件（48/48 空串），本件 #213 首版按裁决 3-4 改了 14 张、
- *  #841 又把那 14 张翻回空串 ⇒ 今天的差异条数必须是 0（即与草案完全一致）。 */
+ *  #841 又把那 14 张翻回空串 ⇒ 今天的差异条数必须是 0（即与草案完全一致）。
+ *  #976 起标题／正文走重写表，不再与草案逐字比对（结构 id／wake_word／types 仍钉死）。 */
 function crossCheckDraft(asset, draft) {
   let statusDiffs = 0;
   eq('草案域数', draft.groups.length, EXPECT.domains);
@@ -304,9 +352,10 @@ function crossCheckDraft(asset, draft) {
       eq('组 ' + ds.id + ' 卡数', ds.scenes.length, ms.scenes.length);
       for (let k = 0; k < ms.scenes.length; k += 1) {
         const a = ds.scenes[k]; const b = ms.scenes[k];
-        for (const key of ['id', 'title', 'wake_word', 'prompt_template']) {
+        for (const key of ['id', 'wake_word']) {
           if (a[key] !== b[key]) bad(b.id + ' 的 ' + key + '：草案 ' + JSON.stringify(a[key]) + ' ≠ 生成 ' + JSON.stringify(b[key]));
         }
+        // #976：title／prompt_template 走重写表，有意与草案不一致，不逐字比对。
         if (a.status !== '') bad(b.id + ' 的草案 status 不是空串（草案照抄老件，应 48/48 空串）：' + JSON.stringify(a.status));
         if (JSON.stringify(a.types) !== JSON.stringify(b.types)) bad(b.id + ' 的 types：草案 ' + JSON.stringify(a.types) + ' ≠ 生成 ' + JSON.stringify(b.types));
         if (b.status !== a.status) statusDiffs += 1;
@@ -371,9 +420,18 @@ function render(stat, digests) {
           'types: [' + s.types.map(q).join(', ') + ']', 'status: ' + q(s.status),
           'prompt_template: ' + q(s.prompt_template)];
         if (s.editable_fields) {
-          keys.push('editable_fields: [' + s.editable_fields.map((f) =>
-            '{ name: ' + q(f.name) + ', label: ' + q(f.label) + ', value: ' + q(f.value) +
-            (f.hint ? ', hint: ' + q(f.hint) : '') + ' }').join(', ') + ']');
+          keys.push('editable_fields: [' + s.editable_fields.map((f) => {
+            let s = '{ name: ' + q(f.name) + ', label: ' + q(f.label) + ', value: ' + q(f.value);
+            if (f.hint) s += ', hint: ' + q(f.hint);
+            if (f.required !== undefined) s += ', required: ' + (f.required ? 'true' : 'false');
+            if (f.kind) s += ', kind: ' + q(f.kind);
+            if (f.options !== undefined) s += ', options: [' + f.options.map((o) => typeof o === 'string' ? q(o) : '{ value: ' + q(o.value) + ', label: ' + q(o.label) + ' }').join(', ') + ']';
+            if (f.min !== undefined) s += ', min: ' + (typeof f.min === 'number' ? String(f.min) : q(String(f.min)));
+            if (f.max !== undefined) s += ', max: ' + (typeof f.max === 'number' ? String(f.max) : q(String(f.max)));
+            if (f.step !== undefined) s += ', step: ' + (typeof f.step === 'number' ? String(f.step) : q(String(f.step)));
+            if (f.placeholder) s += ', placeholder: ' + q(f.placeholder);
+            return s + ' }';
+          }).join(', ') + ']');
         }
         L.push('      { ' + keys.join(', ') + ' },');
       }

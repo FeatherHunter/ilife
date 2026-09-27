@@ -92,10 +92,10 @@ test('#213 三层计数：10 域／33 组／48 卡（分别钉死，防以后改
   assert.equal(new Set(GROUPS.map((g) => g.id)).size, 10, '域 id 唯一');
   assert.equal(new Set(SUBS.map((s) => s.id)).size, 33, '组 id 唯一');
   assert.equal(new Set(SCENES.map((s) => s.id)).size, 48, '卡 id 唯一');
-  // 字段账：42 键／80 条 − 丁类畸形键 1 条（值 null，过不了 `value: string`）＝ 41 键／79 条
-  assert.equal(SCENES.filter((s) => s.editable_fields).length, 46, '带参数卡的卡数');
-  assert.equal(FIELDS.length, 79, '参数条数');
-  assert.equal(new Set(FIELDS.map((f) => f.name)).size, 41, '参数键唯一数');
+  // 字段账（#976 重写后）：39 带字段卡／65 条／33 键；老载荷 42 键／80 条仅留计数与畸形键账，字段本体走重写表。
+  assert.equal(SCENES.filter((s) => s.editable_fields).length, 39, '带参数卡的卡数');
+  assert.equal(FIELDS.length, 65, '参数条数');
+  assert.equal(new Set(FIELDS.map((f) => f.name)).size, 33, '参数键唯一数');
 });
 
 test('#213 十域 id／label／icon 逐字 ∈ 定案表（顺序也钉）', () => {
@@ -130,16 +130,26 @@ test('#213 卡面 chip（`wake_word`）＝ 所属组名，且 33 个组名逐字
   ], '二级组＝老 33 组，逐字且按域收组（`从已有派生新菜` 随域归位到「派生」）');
 });
 
-test('#213 逐字保真：48 段 prompt 原文在、双花括号填写位没被吃掉', () => {
+test('#976 重写保真：39 卡占位与字段一一对应，老式写法清零', () => {
   const holes = SCENES.filter((s) => s.prompt_template.includes('{{'));
-  assert.equal(holes.length, 16, '含填写位的卡数（老件 `{{菜名}}` 15 处 ＋ `{{N}}` 1 处）');
-  assert.equal(SCENES.reduce((n, s) => n + s.prompt_template.split('{{菜名}}').length - 1, 0), 15, '`{{菜名}}` 出现次数');
+  assert.equal(holes.length, 39, '含填写位的卡数（带字段卡＝占位卡）');
+  assert.equal(SCENES.filter((s) => s.prompt_template.includes('{{菜名}}')).length, 0, '老式中文占位清零');
+  assert.equal(SCENES.filter((s) => s.prompt_template.includes('{{N}}')).length, 0, '老式 N 占位清零');
   for (const s of SCENES) {
     assert.ok(s.prompt_template.length > 0, s.id + ' 的 prompt 空');
     assert.ok(s.title.length > 0 && s.wake_word.length > 0, s.id + ' 的 title／wake_word 空');
     assert.equal('type' in s, false, s.id + ' 不许留单数 `type`（契约唯一字段名是 `types`）');
-    assert.equal(s.prompt_template.includes('过程型'), false, s.id + ' 的 prompt 混进了括号注');
+    assert.equal(s.prompt_template.includes('____') || s.prompt_template.includes('___'), false, s.id + ' 含老式下划线');
+    assert.equal(/\d{4}-\d{2}-\d{2}/.test(s.prompt_template), false, s.id + ' 含裸 ISO 日期');
+    assert.ok(s.prompt_template.startsWith('请你加载技能 私家大厨,执行唤醒词「'), s.id + ' 缺卡路里式唤醒词行');
+    const names = [...s.prompt_template.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map((m) => m[1]);
+    const fns = (s.editable_fields || []).map((f) => f.name);
+    assert.deepEqual(names.sort(), fns.sort(), s.id + ' 占位与字段错位');
   }
+  assert.deepEqual(SCENES.filter((s) => !s.editable_fields).map((s) => s.id).sort(), [
+    'add_from_conversation', 'add_from_image', 'add_from_markdown', 'add_from_template',
+    'first_use', 'import_from_json', 'import_validation_failed', 'list_all_recipes', 'view_stats_global',
+  ], '零参 9 卡');
 });
 
 test('#213 `types`：全是老 11 种取值的拆分原子，括号注已去', () => {
@@ -151,18 +161,23 @@ test('#213 `types`：全是老 11 种取值的拆分原子，括号注已去', (
   assert.deepEqual([...used].sort(), [...TYPE_ATOMS].sort(), '9 个原子全用到');
 });
 
-test('#213 `editable_fields`：name／label／value 全是非空 string，唯一那条 hint 逐字', () => {
+test('#976 `editable_fields`：占位一一对应＋kind 闭集＋select/number 约束', () => {
+  const KINDS = ['text', 'number', 'select', 'date', 'week'];
+  const kindCount = {};
   for (const f of FIELDS) {
-    for (const k of ['name', 'label', 'value']) assert.equal(typeof f[k], 'string', '字段 ' + k);
-    assert.ok(f.name && f.label && f.value, '字段三键非空');
-    assert.equal(f.label, f.name, 'label 取键名逐字（不自造中文名）');
+    for (const k of ['name', 'label', 'value', 'hint']) assert.equal(typeof f[k], 'string', '字段 ' + k);
+    assert.ok(f.name && f.label, '字段名与标签非空');
+    assert.ok(/^[a-z0-9_]+$/.test(f.name), '字段名 snake_case：' + f.name);
+    assert.equal(f.label.includes('/'), false, '标签含枚举字面：' + f.label);
+    assert.equal(typeof f.required, 'boolean', '字段缺 required：' + f.name);
+    const k = f.kind === undefined ? 'text' : f.kind;
+    assert.ok(KINDS.includes(k), 'kind 出闭集：' + f.name);
+    kindCount[k] = (kindCount[k] || 0) + 1;
+    if (k === 'select') assert.ok(Array.isArray(f.options) && f.options.length > 0, 'select 无 options：' + f.name);
+    else assert.equal(f.options, undefined, '非 select 给了 options：' + f.name);
+    if (f.min !== undefined || f.max !== undefined || f.step !== undefined) assert.equal(k, 'number', '非 number 给了 min/max/step：' + f.name);
   }
-  const fixed = FIELDS.filter((f) => f.hint);
-  assert.equal(fixed.length, 1, '全图唯一一条 hint（t2 丁类定案）');
-  assert.deepEqual(fixed[0], {
-    name: 'include_archived', label: 'include_archived', value: '是否含已废弃(选填',
-    hint: '是否含已废弃(选填，默认不含)',
-  });
+  assert.deepEqual(kindCount, { text: 49, number: 6, select: 9, date: 1 }, 'kind 分布');
 });
 
 test('#213 `SceneData` 顶层：键集是 4 个，`title` 含技能名（标签页不重复）', () => {

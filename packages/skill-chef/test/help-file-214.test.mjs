@@ -72,7 +72,7 @@ test('#214 初始化横幅：键常在、显隐只走 hidden（载荷形状不�
   assert.equal(uninit.init_banner.hidden, false, '缺省＝照显（误显的代价小于误藏）');
   assert.equal(init.init_banner.hidden, true);
   assert.equal(uninit.init_banner.prompt,
-    '请加载「私家大厨」技能,帮我完成首次使用初始化(唤醒词:首次使用):', 'prompt 取自 first_use 场景的 prompt_template');
+    '请你加载技能 私家大厨,执行唤醒词「首次使用」。\n\n我是第一次用,请带我完成初始化。', 'prompt 取自 first_use 场景的 prompt_template（#976 重写后）');
   assert.equal(uninit.init_banner.closable, true);
 });
 
