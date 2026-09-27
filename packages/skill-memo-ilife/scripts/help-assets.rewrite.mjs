@@ -41,8 +41,8 @@ export const REWRITE = {
     fields: [
       F('content', '内容', 'text', true, '如 买牛奶'),
       F('category', '分类(选填)', 'select', false, '空＝备忘', ['备忘', '心愿', '打卡', '情绪日记']),
-      F('sub_category', '子分类(选填)', 'text', false, '2 字,如 工作'),
-      F('media', '附件(选填)', 'text', false, '文件名,如 receipt.jpg'),
+      F('sub_category', '子分类(选填)', 'text', false, '2 字,如 工作;没给就由我推断'),
+      F('media', '附件(选填)', 'text', false, '图片/音频/视频的文件名,如 receipt.jpg'),
       F('due', '排期日期(选填)', 'date', false, '仅心愿生效;格式 YYYY-MM-DD'),
     ],
   },
@@ -95,7 +95,7 @@ export const REWRITE = {
     fields: [
       F('keyword', '关键词', 'text', true, '如 咖啡'),
       F('category', '分类(选填)', 'select', false, '空＝不限', ['备忘', '心愿', '打卡', '情绪日记']),
-      F('sub_category', '子分类(选填)', 'text', false, '2 字'),
+      F('sub_category', '子分类(选填)', 'text', false, '按子分类过滤;2 字'),
       F('due', '排期日期(选填)', 'date', false, '只看排在这一天的;格式 YYYY-MM-DD'),
     ],
   },
@@ -120,7 +120,7 @@ export const REWRITE = {
     fields: [
       F('start', '开始日期', 'date', true, '格式 YYYY-MM-DD,如 2026-07-01'),
       F('end', '结束日期', 'date', true, '格式 YYYY-MM-DD,如 2026-07-07'),
-      F('category', '分类(选填)', 'select', false, '空＝不限', ['备忘', '心愿', '打卡', '情绪日记']),
+      F('category', '分类(选填)', 'select', false, '只看这个分类;空＝不限', ['备忘', '心愿', '打卡', '情绪日记']),
     ],
   },
   /* ── 查找类：分类查找 ─────────────────────────────────────────────── */
@@ -154,7 +154,7 @@ export const REWRITE = {
       F('content', '笔记内容', 'text', true, '要提醒的事,如 取牛奶'),
       F('remind_at', '提醒时间', 'text', true, '格式 YYYY-MM-DD HH:MM,如 2026-07-25 09:00'),
       F('repeat_type', '重复类型(选填)', 'select', false, '空＝一次性', ['一次性', '每天', '每周', '每月', '每年']),
-      F('repeat_rule', '重复规则(选填)', 'text', false, '随重复类型给,如 每天 09:00 / 每周 5 17:00'),
+      F('repeat_rule', '重复规则(选填)', 'text', false, '每天 HH:MM;每周 周几 HH:MM;每月 几号 HH:MM;每年 MM-DD HH:MM'),
     ],
   },
   memo_remind_existing: {
@@ -165,14 +165,15 @@ export const REWRITE = {
       F('remind_at', '提醒时间', 'text', true, '格式 YYYY-MM-DD HH:MM,如 2026-07-25 09:00'),
       F('content', '提醒内容(选填)', 'text', false, '如 该跑步了'),
       F('repeat_type', '重复类型(选填)', 'select', false, '空＝一次性', ['一次性', '每天', '每周', '每月', '每年']),
-      F('repeat_rule', '重复规则(选填)', 'text', false, '随重复类型给,如 每天 09:00 / 每周 5 17:00'),
+      F('repeat_rule', '重复规则(选填)', 'text', false, '每天 HH:MM;每周 周几 HH:MM;每月 几号 HH:MM;每年 MM-DD HH:MM'),
     ],
   },
   memo_reminders_active: {
     title: '看提醒',
     say: '按时间排序列出提醒,并出一份可筛选的可视化页。',
     fields: [
-      F('status', '提醒状态(选填)', 'select', false, '空＝只看有效提醒', ['有效', '已废弃']),
+      F('status', '提醒状态(选填)', 'select', false, '空＝只看有效提醒',
+        ['有效', { value: '已废弃', label: '已废弃(撤下提醒,笔记保留)' }]),
     ],
   },
   memo_completed_reminders: {

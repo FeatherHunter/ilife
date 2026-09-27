@@ -8,7 +8,7 @@
  *   与老 `references/scenarios.yaml` 顶层 `version`（＝1.3.0）。老侧**只出身份与路由**
  *   （`id`／`wake_word`／`types`／`status`／域序／组序／别名挂载），两地逐条交叉复核 30/30。
  * 摘要锁：老 30 条 sha256＝0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c
- *           资产 30 条 sha256＝5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660
+ *           资产 30 条 sha256＝908589834f579476ab35dac16116fe2d57753f0bcd894c6efcd4b2465144d112
  *
  * **#974 起三件内容**（`title`／`prompt_template`／`editable_fields`）**逐句重写**，规范＝卡路里标杆
  * `.scratch/help-prompt-rewrite/PROMPT-REWRITE.md`（口径取其关闭后终态）：
@@ -43,7 +43,7 @@ export const MEMO_HELP_SEARCH = {
           editable_fields: [
             { name: "keyword", label: "关键词", value: "", hint: "如 咖啡", required: true, kind: "text" },
             { name: "category", label: "分类(选填)", value: "", hint: "空＝不限", required: false, kind: "select", options: ["备忘", "心愿", "打卡", "情绪日记"] },
-            { name: "sub_category", label: "子分类(选填)", value: "", hint: "2 字", required: false, kind: "text" },
+            { name: "sub_category", label: "子分类(选填)", value: "", hint: "按子分类过滤;2 字", required: false, kind: "text" },
             { name: "due", label: "排期日期(选填)", value: "", hint: "只看排在这一天的;格式 YYYY-MM-DD", required: false, kind: "date" },
           ],
         },
@@ -85,7 +85,7 @@ export const MEMO_HELP_SEARCH = {
           editable_fields: [
             { name: "start", label: "开始日期", value: "", hint: "格式 YYYY-MM-DD,如 2026-07-01", required: true, kind: "date" },
             { name: "end", label: "结束日期", value: "", hint: "格式 YYYY-MM-DD,如 2026-07-07", required: true, kind: "date" },
-            { name: "category", label: "分类(选填)", value: "", hint: "空＝不限", required: false, kind: "select", options: ["备忘", "心愿", "打卡", "情绪日记"] },
+            { name: "category", label: "分类(选填)", value: "", hint: "只看这个分类;空＝不限", required: false, kind: "select", options: ["备忘", "心愿", "打卡", "情绪日记"] },
           ],
         },
       ],

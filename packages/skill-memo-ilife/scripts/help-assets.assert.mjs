@@ -14,6 +14,7 @@ import { REWRITE, REWRITE_FORBIDDEN } from './help-assets.rewrite.mjs';
 import { PROMPT_FORBIDDEN, SCENE_FORBIDDEN, VISIBLE_FORBIDDEN } from './help-assets.data.mjs';
 import { BEFORE } from './help-assets.before.mjs';
 import { PROMPT_ATOMS, FIELD_DROPS } from './help-assets.atoms.mjs';
+import { FIELD_ATOMS } from './help-assets.field-atoms.mjs';
 
 export const KINDS = ['text', 'number', 'select', 'date', 'week'];
 export const FIRST_LINE = (w) => '请你加载技能 备忘录,执行唤醒词「' + w + '」。';
@@ -191,8 +192,11 @@ export function assertAtoms(scenes) {
         else if (typeof e.as !== 'string' || !String(f.hint).includes(e.as)) bad(id + '/' + f.name + ' 的 hint 里没有：' + JSON.stringify(e.as));
       } else if (e.to.startsWith('options:')) {
         const f = (s.editable_fields || []).find((x) => x.name === e.to.slice('options:'.length));
+        /* 正文台账对的是**机器值集**（老参数行括号里列的就是可选值）；选项的显示名解释由字段面台账（FO）管。 */
+        const values = (f ? (f.options || []) : [])
+          .map((o) => (o && typeof o === 'object' ? String(o.value ?? o.label) : String(o))).join('/');
         if (!f) bad(id + ' 标了 ' + e.to + ' 但字段不在：' + e.from);
-        else if ((f.options || []).join('/') !== e.as) bad(id + '/' + f.name + ' 的 options 与台账不符：' + JSON.stringify((f.options || []).join('/')) + ' ≠ ' + JSON.stringify(e.as));
+        else if (values !== e.as) bad(id + '/' + f.name + ' 的 options 与台账不符：' + JSON.stringify(values) + ' ≠ ' + JSON.stringify(e.as));
       } else if (e.to === 'drop' || e.to === 'wake' || e.to === 'params') {
         if (typeof e.why !== 'string' || e.why.length === 0) bad(id + ' 标了 ' + e.to + ' 但没写理由：' + e.from);
       } else {
@@ -206,7 +210,7 @@ export function assertAtoms(scenes) {
 
 /** #974 字段面断言：老字段逐个有去处（在改后字段表里，或在 `FIELD_DROPS` 里带理由）；留下的字段必须带提示或选项。 */
 export function assertFieldCoverage(scenes) {
-  const bad = (msg) => { throw new Error('字段台账不过：' + msg); };
+  const bad = (msg) => { throw new Error('字段覆盖不过：' + msg); };
   const byId = new Map(scenes.map((s) => [s.id, s]));
   const drops = new Map(FIELD_DROPS.map((d) => [d.name, d]));
   for (const d of FIELD_DROPS) if (typeof d.why !== 'string' || d.why.length === 0) bad('FIELD_DROPS 缺理由：' + d.name);
@@ -235,4 +239,50 @@ export function assertFieldCoverage(scenes) {
     if (![...Object.values(BEFORE)].some((b) => b.fields.some((f) => f.name === d.name))) bad('FIELD_DROPS 里的字段在老快照里不存在：' + d.name);
   }
   return { oldCount, keptCount, droppedCount, dropNames: FIELD_DROPS.length };
+}
+
+/** #974 字段面台账断言：老提示里的信息逐条有去处（hint／options／正文／控件形态／有意删）。
+ *  与 `assertFieldCoverage` 分工：那条管「字段还在不在」，这条管「提示里那句话的信息还在不在」。 */
+export function assertFieldAtoms(scenes) {
+  const bad = (msg) => { throw new Error('字段面台账不过：' + msg); };
+  const byId = new Map(scenes.map((s) => [s.id, s]));
+  const optionText = (f) => (f.options || [])
+    .map((o) => (o && typeof o === 'object' ? String(o.label ?? o.value) : String(o))).join('/');
+  let instances = 0;
+  let entries = 0;
+  for (const [id, before] of Object.entries(BEFORE)) {
+    const s = byId.get(id);
+    if (!s) bad('快照里有、资产里没有的场景：' + id);
+    const table = FIELD_ATOMS[id] || {};
+    for (const of of before.fields) {
+      instances += 1;
+      const list = table[of.name];
+      if (!Array.isArray(list) || list.length === 0) {
+        bad(id + '/' + of.name + ' 没有台账条目（老提示：' + JSON.stringify(of.hint) + '）');
+      }
+      const now = (s.editable_fields || []).find((x) => x.name === of.name);
+      for (const e of list) {
+        entries += 1;
+        const where = id + '/' + of.name + '（老提示：' + JSON.stringify(of.hint) + '）';
+        if (e.to === 'hint') {
+          if (!now) bad(where + ' 标了 hint 但字段不在改后字段表里');
+          else if (!String(now.hint).includes(e.as)) bad(where + ' 的 hint 里没有 ' + JSON.stringify(e.as) + '；实测 hint＝' + JSON.stringify(now.hint));
+        } else if (e.to === 'options') {
+          if (!now) bad(where + ' 标了 options 但字段不在改后字段表里');
+          else if (!optionText(now).includes(e.as)) bad(where + ' 的 options 标签里没有 ' + JSON.stringify(e.as) + '；实测＝' + JSON.stringify(optionText(now)));
+        } else if (e.to === 'say') {
+          if (!String(s.prompt_template).includes(e.as)) bad(where + ' 标了 say 但正文里没有 ' + JSON.stringify(e.as));
+        } else if (e.to === 'params' || e.to === 'drop') {
+          if (typeof e.why !== 'string' || e.why.length === 0) bad(where + ' 标了 ' + e.to + ' 但没写理由');
+        } else {
+          bad(where + ' 台账的 to 不认识：' + String(e.to));
+        }
+      }
+    }
+    for (const name of Object.keys(table)) {
+      if (!before.fields.some((f) => f.name === name)) bad(id + ' 字段台账里有、老快照里没有的字段：' + name);
+    }
+  }
+  for (const id of Object.keys(FIELD_ATOMS)) if (!BEFORE[id]) bad('字段台账里有、快照里没有的场景：' + id);
+  return { instances, entries };
 }

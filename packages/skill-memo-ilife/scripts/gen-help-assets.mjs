@@ -27,7 +27,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { SOURCE_SHA256, LEGACY_DIGEST, ASSET_DIGEST, ALIASES } from './help-assets.data.mjs';
 import { REWRITE, applyRewrite } from './help-assets.rewrite.mjs';
-import { assertShape, assertRewrite, assertAtoms, assertFieldCoverage } from './help-assets.assert.mjs';
+import { assertShape, assertRewrite, assertAtoms, assertFieldCoverage, assertFieldAtoms } from './help-assets.assert.mjs';
 import { renderDomain, renderSceneData } from './help-assets.render.mjs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -161,6 +161,7 @@ const stat = assertShape(groups, legacy);
 assertRewrite(stat.scenes);
 const atomStat = assertAtoms(stat.scenes);
 const fieldStat = assertFieldCoverage(stat.scenes);
+const fieldAtomStat = assertFieldAtoms(stat.scenes);
 /** 渲染上下文：渲染件要什么给什么（事实源文件名、版本、两枚摘要、两个落点）。 */
 const ctx = { srcBase: basename(SRC), version: VERSION, legacyDigest: LEGACY_DIGEST, assetDigest: ASSET_DIGEST,
   scenesDir: SCENES_DIR, sceneDataPath: SCENE_DATA };
@@ -188,6 +189,8 @@ console.log('#974 重写：30/30 条；kind 分布 ' + JSON.stringify(stat.kindC
 console.log('#974 信息台账：老正文原子 ' + atomStat.atomsSeen + ' 个 → 台账 ' + atomStat.entriesSeen + ' 条（每个原子都有去处）'
   + '；老字段 ' + fieldStat.oldCount + ' 个 → 留下 ' + fieldStat.keptCount + '／有意删 ' + fieldStat.droppedCount
   + '（' + fieldStat.dropNames + ' 个名字，都带理由）');
+console.log('#974 字段面台账：老提示 ' + fieldAtomStat.instances + ' 条 → 台账 ' + fieldAtomStat.entries + ' 条'
+  + '（每条提示里的信息都有去处：hint／options／正文／控件形态／有意删）');
 console.log('摘要锁：老 30 条 ' + legacyDigest + '；资产 30 条 ' + assetDigest);
 if (check) {
   let drift = 0;

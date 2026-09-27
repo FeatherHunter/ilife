@@ -17,7 +17,7 @@
  *  #858 起 ③ 由 `444f6451…` 变为 `bdac11bc…`；**#974 起 ③ 随 30 场景逐句重写再变一次**（老侧两枚锁不动）。 */
 const SOURCE_SHA256 = '8a25dd587d6b96ae2b56a16a17812def84d819dafefa4daa134e1c01b68efd8a';
 const LEGACY_DIGEST = '0aa8c228b1f277cf1053586887566cd5f2a33b6002ce4172a54657cc5f7d141c';
-const ASSET_DIGEST = '5d0d0ab256e942366293c6c17dada82f391a855be48dff488c41cd266defa660';
+const ASSET_DIGEST = '908589834f579476ab35dac16116fe2d57753f0bcd894c6efcd4b2465144d112';
 
 /** 重写后 `prompt_template` 里不许出现的实现记号（页面只出现唤醒词与参数）。
  *  与 `help-assets.rewrite.mjs` 的 `REWRITE_FORBIDDEN`（骨架残留：`请按以下格式` / `期望效果` / `____`）各管一半。 */

@@ -43,13 +43,14 @@
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |
-| `scripts/gen-help-assets.mjs` | 304 | 205 | 未越线，在册备查 |
-| `scripts/help-assets.assert.mjs` | 238 | 238 | 未越线，在册备查 |
+| `scripts/gen-help-assets.mjs` | 304 | 208 | 未越线，在册备查 |
+| `scripts/help-assets.assert.mjs` | 238 | 288 | 未越线，在册备查 |
 | `scripts/help-assets.atoms.mjs` | 259 | 259 | 未越线，在册备查 |
 | `scripts/help-assets.before.mjs` | 136 | 136 | 未越线，在册备查 |
 | `scripts/help-assets.data.mjs` | 125 | 57 | 未越线，在册备查 |
+| `scripts/help-assets.field-atoms.mjs` | 151 | 151 | 未越线，在册备查 |
 | `scripts/help-assets.render.mjs` | 99 | 104 | 未越线，在册备查 |
-| `scripts/help-assets.rewrite.mjs` | 298 | 298 | 未越线，在册备查 |
+| `scripts/help-assets.rewrite.mjs` | 298 | 299 | 未越线，在册备查 |
 | `scripts/t659-parity-probe.mjs` | 110 | 110 | 未越线，在册备查 |
 | `src/checkin/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |

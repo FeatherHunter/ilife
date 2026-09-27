@@ -17,7 +17,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MEMO_HELP_GROUPS } from '../dist/help/sceneData.js';
-import { assertAtoms, assertFieldCoverage } from '../scripts/help-assets.assert.mjs';
+import { assertAtoms, assertFieldCoverage, assertFieldAtoms } from '../scripts/help-assets.assert.mjs';
 
 const SCENES = MEMO_HELP_GROUPS.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
 const KINDS = ['text', 'number', 'select', 'date', 'week'];
@@ -123,4 +123,8 @@ test('#974 ⑦ 信息不丢失台账：老正文每个原子有去处、老字�
     { old: 64, kept: 59, dropped: 5, dropNames: 4 },
     '老字段 64 个：留下 59，有意删 5 处（4 个名字：true／bulk_indicator×2／reminder_id／with_reminders）',
   );
+  // 字段面台账：老**提示**里的信息（默认值／格式／单位／适用范围／选项解释）同样逐条有去处。
+  const hints = assertFieldAtoms(SCENES);
+  assert.equal(hints.instances, 64, '老提示 64 条');
+  assert.ok(hints.entries >= hints.instances, '字段面台账条数不少于老提示条数（一条提示可以有几处承载）');
 });
