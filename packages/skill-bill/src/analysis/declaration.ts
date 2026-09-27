@@ -77,7 +77,7 @@ export const ANALYSIS_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'week_brief',
-          title: '本周简报(对比上周)',
+          title: '本周简报',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「看周报」。\n\n我想看本周简报，对比上周。\n\n周(选填):{{week}}',
           types: ['查看'],

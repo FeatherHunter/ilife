@@ -58,7 +58,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查某天」。\n\n我想查某一天的账。\n\n日期:{{query_date}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'query_date', label: '日期', value: '', hint: '如 5月1号、上周五；填了由执行侧解成 YYYY-MM-DD', required: true, kind: 'date' },
+            { name: 'query_date', label: '日期', value: '', hint: '格式 YYYY-MM-DD，如 2026-05-01', required: true, kind: 'date' },
           ],
         },
       ],
@@ -93,7 +93,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账单」。\n\n我想查账单。\n\n日期(选填):{{query_date}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'query_date', label: '日期(选填)', value: '', hint: '空＝今天；可写昨天，填了由执行侧解成 YYYY-MM-DD', required: false, kind: 'date' },
+            { name: 'query_date', label: '日期(选填)', value: '', hint: '空＝今天；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
           ],
         },
       ],
@@ -144,8 +144,8 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查区间」。\n\n我想查某段时间的账。\n\n开始日期:{{start_date}}\n结束日期:{{end_date}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'start_date', label: '开始日期', value: '', hint: '如 5月1号；填了由执行侧解成 YYYY-MM-DD', required: true, kind: 'date' },
-            { name: 'end_date', label: '结束日期', value: '', hint: '如 5月10号；查全年填12月31日；填了由执行侧解成 YYYY-MM-DD', required: true, kind: 'date' },
+            { name: 'start_date', label: '开始日期', value: '', hint: '格式 YYYY-MM-DD，如 2026-05-01', required: true, kind: 'date' },
+            { name: 'end_date', label: '结束日期', value: '', hint: '格式 YYYY-MM-DD，如 2026-05-10；查全年结束填当年12-31', required: true, kind: 'date' },
           ],
         },
       ],
@@ -232,7 +232,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'query_tag',
-          title: '查标签(#tag 聚合)',
+          title: '查标签',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查标签」。\n\n我想按标签聚合查账。\n\n标签:{{tag}}',
           types: ['查看'],
@@ -249,7 +249,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'query_debt',
-          title: '查未还欠款(借贷状态)',
+          title: '查未还欠款',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查欠款」。\n\n我想查未还欠款。不填对象查全部。\n\n对象(选填):{{person}}',
           types: ['查看'],

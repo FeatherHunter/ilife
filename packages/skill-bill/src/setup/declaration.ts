@@ -23,7 +23,7 @@ export const SETUP_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'setup_init_wizard',
-          title: '首次使用向导(4 步零决策)',
+          title: '首次使用向导',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「初始化」。\n\n我要开始使用饼干记账，请带我走完初始化。',
           types: ['向导'],
@@ -37,7 +37,7 @@ export const SETUP_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'setup_init_status',
-          title: '初始化状态(是否已就绪)',
+          title: '初始化状态',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「初始化状态」。\n\n我想看看饼干记账初始化了没有。',
           types: ['查看'],
@@ -90,7 +90,7 @@ export const SETUP_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'setup_import',
-          title: '导入 CSV 账单(列映射向导)',
+          title: '导入 CSV 账单',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「导入」。\n\n我要导入 CSV 账单。列映射自动识别，对不上再问我。\n\n文件路径:{{file_path}}\n列映射(选填):{{column_map}}',
           types: ['向导'],

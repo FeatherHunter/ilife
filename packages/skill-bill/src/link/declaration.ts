@@ -23,7 +23,7 @@ export const LINK_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'link_purchase',
-          title: '买东西联动(记账 + 录物品)',
+          title: '买东西联动',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「买东西」。\n\n我买了东西，要记一笔支出并联动录入物品。\n\n金额:{{amount}}\n物品:{{item}}\n分类(选填):{{category}}',
           types: ['采集'],
@@ -42,7 +42,7 @@ export const LINK_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'link_meal',
-          title: '吃饭联动(记账 + 记卡路里)',
+          title: '吃饭联动',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「吃饭」。\n\n我吃了一顿，要记一笔餐饮支出并联动卡路里。\n\n金额:{{amount}}\n吃了:{{meal}}\n分类(选填):{{category}}',
           types: ['采集'],

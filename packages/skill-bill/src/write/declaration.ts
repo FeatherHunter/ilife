@@ -36,7 +36,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
             { name: 'category', label: '分类/名目', value: '', hint: '如 房租、午饭、打车', required: true, kind: 'text' },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
-            { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；补记昨天填昨天，填了由执行侧解成 YYYY-MM-DD', required: false, kind: 'date' },
+            { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
             { name: 'ledger', label: '账本(选填)', value: '', hint: '如 旅行、生活', required: false, kind: 'text' },
             { name: 'currency', label: '币种(选填)', value: '', hint: '空＝人民币；外币如 USD', required: false, kind: 'text' },
@@ -73,7 +73,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_bill_photo',
-          title: '拍账单记账(图片识别)',
+          title: '拍账单记账',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「拍账单」。\n\n我要拍账单照片记账，请识别图片中的金额和项目。',
           types: ['采集'],
@@ -105,7 +105,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_refund',
-          title: '记一笔退款(冲销原支出)',
+          title: '记一笔退款',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「记退款」。\n\n我要记一笔退款，冲销原支出。\n\n金额:{{amount}}\n原支出:{{original}}\n退款原因(选填):{{reason}}',
           types: ['采集'],
@@ -124,7 +124,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_reimburse',
-          title: '记一笔报销支出(#待报销)',
+          title: '记一笔报销支出',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「记报销」。\n\n我要记一笔报销支出，自动加 #待报销标签。\n\n金额:{{amount}}\n分类(选填):{{category}}\n备注(选填):{{note}}\n时间(选填):{{record_time}}',
           types: ['采集'],
@@ -144,7 +144,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_reimburse_done',
-          title: '报销到账(记收入 + 流转标签)',
+          title: '报销到账',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「报销到账」。\n\n我的报销到账了，记一笔收入并流转标签。\n\n金额:{{amount}}\n关联(选填):{{related}}',
           types: ['采集'],
@@ -234,7 +234,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_installment',
-          title: '记一笔分期(平摊预写)',
+          title: '记一笔分期',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「记分期」。\n\n我要记一笔分期，按月平摊预写。\n\n名目:{{item_name}}\n总价:{{total}}\n期数:{{periods}}\n首期日(选填):{{first_date}}\n账户(选填):{{account}}\n账本(选填):{{ledger}}',
           types: ['向导'],
@@ -263,7 +263,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位；支出填负数，收入填正数', required: true, kind: 'number' },
             { name: 'category', label: '分类/名目', value: '', hint: '如 餐饮、工资、打车', required: true, kind: 'text' },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
-            { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；补记昨天填昨天，填了由执行侧解成 YYYY-MM-DD', required: false, kind: 'date' },
+            { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
           ],
         },
@@ -295,7 +295,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'write_undo',
-          title: '撤销一条记录(软删)',
+          title: '撤销一条记录',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「撤销」。\n\n我要撤销一条记录（软删）。执行前请告诉我目标是哪条，确认后再撤销。\n\n目标:{{target}}',
           types: ['选择'],
