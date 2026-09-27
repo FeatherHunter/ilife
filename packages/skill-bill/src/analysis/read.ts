@@ -51,26 +51,27 @@ function pageOf(
   const base = {
     key: scene.key, params: frame.params, wakeWord: frame.wakeWord, actionAt: frame.actionAt,
   };
+  const page = { wakeWord: frame.wakeWord, kind: 'single' } as const;
   switch (scene.family) {
     case 'bars': {
       const result = scene.values(input);
-      return { data: result.payload, html: barsDoc(docInput(base, result)) };
+      return { data: result.payload, page, html: barsDoc(docInput(base, result)) };
     }
     case 'charts': {
       const result = scene.values(input);
-      return { data: result.payload, html: chartsDoc(docInput(base, result)) };
+      return { data: result.payload, page, html: chartsDoc(docInput(base, result)) };
     }
     case 'tables': {
       const result = scene.values(input);
-      return { data: result.payload, html: tablesDoc(docInput(base, result)) };
+      return { data: result.payload, page, html: tablesDoc(docInput(base, result)) };
     }
     case 'compare': {
       const result = scene.values(input);
-      return { data: result.payload, html: compareDoc(docInput(base, result)) };
+      return { data: result.payload, page, html: compareDoc(docInput(base, result)) };
     }
     case 'insight': {
       const result = scene.values(input);
-      return { data: result.payload, html: insightDoc(docInput(base, result)) };
+      return { data: result.payload, page, html: insightDoc(docInput(base, result)) };
     }
     default: return scene satisfies never;
   }

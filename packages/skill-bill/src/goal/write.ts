@@ -26,6 +26,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { MONTH_RE } from '../shared/dateRange.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { appendBudget, appendSaving, budgetsOf, findBudget, savingsOf } from './goalData.js';
 import type { GoalBudgetRow } from './goalData.js';
 import { SOURCE_COLLECT, SOURCE_WRITE, money } from './pageParts.js';
@@ -88,6 +89,7 @@ function finish(input: {
   };
   return {
     data: { ok: true, message: input.summary, receipt },
+    page: { wakeWord: projectWakeWord({ key: input.key as BillKey, op: input.op }), kind: 'receipt' },
     html: input.scene.receipt({ key: input.key, params: input.params, receipt, detail: input.detail }),
   };
 }
@@ -107,6 +109,7 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
     const word = projectWakeWord({ key, op });
     return {
       data: { ok: false, message: blockedMessageOf(word, blocked) },
+      page: { wakeWord: word, kind: 'collect' },
       html: scene.collect({
         key, op, params, blocked, budgets, savings: savingsOf(goals),
         source: SOURCE_COLLECT, actionAt: actionStamp(),

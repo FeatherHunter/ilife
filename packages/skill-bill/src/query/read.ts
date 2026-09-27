@@ -96,6 +96,7 @@ function listOut(input: {
   const data: QueryListData = { items: records.map(toBillItem), total: records.length, ...input.extra, kpi };
   return {
     data,
+    page: { wakeWord: input.wakeWord, kind: 'single' },
     html: queryListDoc({
       key: input.key,
       params: input.params,
@@ -331,12 +332,14 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
   if (!row) throw new BillFetchError('BILL_RECORD_NOT_FOUND', '无此账单：' + id);
   const data: QueryDetailData = { item: { ...toBillItem(row), created_at: row.created_at, deleted_at: row.deleted_at } };
   const deleted = row.deleted_at !== null && row.deleted_at !== '';
+  const wakeWord = projectWakeWord({ key, preset: params });
   return {
     data,
+    page: { wakeWord, kind: 'single' },
     html: queryDetailDoc({
       key,
       params,
-      wakeWord: projectWakeWord({ key, preset: params }),
+      wakeWord,
       window: row.time,
       chips: deleted ? ['记录编号 ' + row.id, '已撤销'] : ['记录编号 ' + row.id],
       row,

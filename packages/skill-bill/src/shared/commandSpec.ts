@@ -22,16 +22,20 @@
  */
 import type { EnvelopeShape } from 'base-link-core';
 import type { BillDb } from '../fetch/db.js';
+import type { BillPage } from '../delivery/naming.js';
 
-/** 写命令的产物：回执三件（`ok`／`message`／`receipt`）＋ 整页 HTML（`html`）。
+/** 写命令的产物：回执三件（`ok`／`message`／`receipt`）＋ 整页 HTML（`html`）＋ 本页是谁（`page`）。
  *  `receipt` **可缺**：必需槽位缺失时出的是过程型采集页，那一次没有写库事实可报。
  *  `receipt` 那一格**形状由各域自己定**（写域＝`./writeParts.js` 的 `BillReceipt`，账户域＝
  *  `../account/scene.js` 的 `AccountReceipt`）：出口把 `data` 原样交给 envelope 形状守卫，而 `receipt` 形
  *  只校验 `ok`／`message` 两格，故共用位不收窄成某一家——收窄就要让共用位认识每一个域的界内形状
- *  （#691 是这一格上的第一个跨域消费者，故按实测把口径写在这里）。域内读它的人照自己那份类型读。 */
+ *  （#691 是这一格上的第一个跨域消费者，故按实测把口径写在这里）。域内读它的人照自己那份类型读。
+ *  `page` **可选**：有页的命令由出页处填（唤醒词 ＋ 页型，口径件 t903 §三）；无页的命令
+ *  （数据族两条程序面 `html:''`、HELP 现找那支）缺席即不落——缺席是真话，不造假词（#953 程序面无唤醒词）。 */
 export interface WriteOut {
   data: { ok: boolean; message: string; receipt?: unknown };
   html: string;
+  page?: BillPage;
 }
 
 /** 写命令的处理函数。第二参是饼干的库句柄 `BillDb`（库 ＋ 路径 ＋ 是否新建）——
@@ -59,10 +63,13 @@ export type CommandSpec = WriteCommandSpec | ReadCommandSpec;
 
 /** 读（查询）命令的产物：`data` 过 envelope 形状守卫，`html` 为整页产物（列表页／详情页）。
  *  与卡路里同件的 `ViewOut` 同一件事的两种形状：饼干这一期不需要 `deliveryKind` 与 `target`
- *  （查询产物只有一种形态、落点由 `--html` 逐字给），故不提前占位。 */
+ *  （查询产物只有一种形态、落点由 `--html` 逐字给），故不提前占位。
+ *  `page` **可选**：有页的命令由出页处填（唤醒词 ＋ 页型，单页的域给 `single`）；
+ *  无页的命令（数据族两条程序面 `html:''`）缺席即不落（#953）。 */
 export interface ViewOut {
   data: Record<string, unknown>;
   html: string;
+  page?: BillPage;
 }
 
 /** 读命令的处理函数。第二参同 `WriteHandler` 收饼干的库句柄 `BillDb`（取数层只认这一种句柄）。 */

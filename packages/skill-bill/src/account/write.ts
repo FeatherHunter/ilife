@@ -22,6 +22,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { totalChanges } from '../shared/writeParts.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { accountsOf, appendAccount, applyAccountUpdate, findAccount, writeTransfer } from './accounts.js';
 import type { AccountRow } from './accounts.js';
 import { SOURCE_COLLECT, SOURCE_WRITE, promptOf } from './pageParts.js';
@@ -84,6 +85,7 @@ function finish(input: {
   };
   return {
     data: { ok: true, message: input.summary, receipt },
+    page: { wakeWord: projectWakeWord({ key: input.key as BillKey, op: input.op }), kind: 'receipt' },
     html: input.scene.receipt({
       key: input.key, params: input.params, receipt, detail: input.detail, accounts: input.goalsAccounts,
     }),
@@ -123,6 +125,7 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
   if (blocked.length > 0) {
     return {
       data: { ok: false, message: blockedMessageOf(op, blocked) },
+      page: { wakeWord: projectWakeWord({ key: key as BillKey, op }), kind: 'collect' },
       html: scene.collect({
         key, op, params, blocked, accounts, source: SOURCE_COLLECT, actionAt: nowStamp(),
       }),

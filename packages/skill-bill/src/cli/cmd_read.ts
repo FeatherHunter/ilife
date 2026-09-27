@@ -30,6 +30,9 @@ import { HELP_FILE_STEM } from '../help/helpFile.js';
 import { LOOKUP_FILE_STEM } from '../help/helpPaths.js';
 import { resolveHtmlDir } from '../fetch/paths.js';
 import { deliverHtml, type HtmlDelivery, type HtmlLanding } from '../output.js';
+import { pageStemFor } from '../delivery/naming.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { buildHelpLookup, buildHelpItems } from '../help/index.js';
 import { REGISTRY } from './registry.js';
@@ -258,6 +261,32 @@ async function main() {
       // 本命令的产物：缺省＝HELP 整页（共享 help 模板自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
       const html = gatedHtml(help.deliver.html ?? sectionHtml());
       delivery = deliverHtml({ explicit: o.html, target: help.deliver.target, html, reuseMs: help.deliver.reuseMs });
+    } else if (abilityOut !== null && abilityOut.page !== undefined && abilityOut.html !== '') {
+      // #905 · 非 HELP 命令缺省落整页：有页（`page` 缺席即无页，如数据族两条程序面）且有整页即落；
+      // `--html` 退化成「同文换落点」的显式口（同一份 `html` 变量，两路正文相同，只差落点）。
+      // 程序面（`surface:'program'`）不进缺省落（#953 无唤醒词），给了 `--html` 才走显式覆盖写（既有语义）。
+      const spec = REGISTRY[key];
+      if (spec?.surface !== 'program') {
+        const html = gatedHtml(abilityOut.html);
+        delivery = deliverHtml({
+          explicit: o.html,
+          target: { dir: resolveHtmlDir(), stem: pageStemFor(abilityOut.page) },
+          html,
+        });
+      } else if (o.html) {
+        delivery = deliverHtml({ explicit: o.html, html: gatedHtml(abilityOut.html) });
+      }
+    } else if (key === 'bill.link.submit') {
+      // #905 · 联动采单（一场景一页，不带后缀）：老模板页也进缺省落（与 `--html` 同文）。
+      // 页名按本次参数算（`scene`→买东西／吃饭），交付层不复算口径，只取词条现算的值。
+      const linkScene = params.scene === undefined ? 'purchase' : String(params.scene);
+      const linkPage = { wakeWord: projectWakeWord({ key: key as BillKey, preset: { scene: linkScene } }), kind: 'single' } as const;
+      const html = gatedHtml(sectionHtml());
+      delivery = deliverHtml({
+        explicit: o.html,
+        target: { dir: resolveHtmlDir(), stem: pageStemFor(linkPage) },
+        html,
+      });
     } else if (o.html) {
       delivery = deliverHtml({ explicit: o.html, html: gatedHtml(sectionHtml()) });
     }

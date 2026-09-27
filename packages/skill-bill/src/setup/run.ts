@@ -23,6 +23,7 @@ import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
 import { actionStamp } from '../shared/copyArea.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { backupStampOf, createBackup, humanBytes, listBackups } from './backups.js';
 import type { BackupEntry } from './backups.js';
 import { blockedWizardDoc } from './blocked.js';
@@ -107,7 +108,7 @@ function runInit(db: BillDb, key: string, params: Record<string, unknown>): Writ
     promptLabel: ready ? '复制给助手：直接开始记第一笔' : '复制给助手：照这句先把初始化走完',
     envChecks, ready, dbPath: db.path, records: status.rows, created: db.initialized,
   });
-  return { data: { ok: ready, message, receipt }, html };
+  return { data: { ok: ready, message, receipt }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'init' }), kind: 'single' }, html };
 }
 
 /** 初始化状态（`op=init-status`）：只读三重判定 ＋ 独立的迁移块。 */
@@ -124,7 +125,7 @@ function runStatus(db: BillDb, key: string, params: Record<string, unknown>): Wr
   };
   const envelope = receiptEnvelopeOf(key, { ok: status.ready, message, ...receipt });
   const html = listDoc({ op: 'init-status', scene, key, params, actionAt: actionStamp(), status, envelope });
-  return { data: { ok: status.ready, message, receipt }, html };
+  return { data: { ok: status.ready, message, receipt }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'init-status' }), kind: 'single' }, html };
 }
 
 /** 一键备份（`op=backup-create`）：无条件造一份，出结果回执。 */
@@ -141,7 +142,7 @@ function runBackupCreate(db: BillDb, key: string, params: Record<string, unknown
   };
   const envelope = receiptEnvelopeOf(key, { ok: true, message, ...receipt });
   const html = backupReceiptDoc({ scene, key, params, actionAt: actionStamp(), entry, total: entries.length, envelope });
-  return { data: { ok: true, message, receipt }, html };
+  return { data: { ok: true, message, receipt }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'backup-create' }), kind: 'single' }, html };
 }
 
 /** 查看备份（`op=backup-list`）：只读列一遍目录，空目录出空态与引导。 */
@@ -160,7 +161,7 @@ function runBackupList(key: string, params: Record<string, unknown>): WriteOut {
   };
   const envelope = receiptEnvelopeOf(key, { ok, message, ...receipt });
   const html = listDoc({ op: 'backup-list', scene, key, params, actionAt: actionStamp(), entries, envelope });
-  return { data: { ok, message, receipt }, html };
+  return { data: { ok, message, receipt }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'backup-list' }), kind: 'single' }, html };
 }
 
 /** `bill.setup.run`：六种 op 一处分流（`op` 缺省＝初始化状态，照老出口那一支的缺省）。 */
@@ -174,7 +175,7 @@ export function setupRun(params: Record<string, unknown>, db: BillDb): WriteOut 
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked: missing, actionAt: actionStamp() });
     const message = projectWakeWord({ key: 'bill.setup.run', op: 'import' }) + '还差 ' + String(missing.length)
       + ' 项：' + missing.map((b) => b.label).join('、') + '（已出向导页，补齐之后跟助手说一遍）';
-    return { data: { ok: false, message, receipt: { op: 'import', blocked: missing } }, html };
+    return { data: { ok: false, message, receipt: { op: 'import', blocked: missing } }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'import' }), kind: 'single' }, html };
   }
   if (op === 'init') return runInit(db, key, params);
   if (op === 'init-status') return runStatus(db, key, params);

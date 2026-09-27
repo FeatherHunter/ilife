@@ -59,7 +59,7 @@ export function viewGoal(params: Record<string, unknown>, db: BillDb): ViewOut {
       records: execution.records,
     };
     const { start, end } = monthRange(month);
-    return { data, html: scene.view({ key, params, wakeWord, budget: execution, saving: null, data, windowStart: start, windowEnd: end, actionAt }) };
+    return { data, page: { wakeWord, kind: 'single' }, html: scene.view({ key, params, wakeWord, budget: execution, saving: null, data, windowStart: start, windowEnd: end, actionAt }) };
   }
   const progress = savingProgress(db, goals, textOf(params['name']));
   const data: GoalProgressData = {
@@ -74,6 +74,7 @@ export function viewGoal(params: Record<string, unknown>, db: BillDb): ViewOut {
   const first = progress.savings.reduce<string>((min, s) => (min === '' || s.start_month < min ? s.start_month : min), '');
   return {
     data,
+    page: { wakeWord, kind: 'single' },
     html: scene.view({
       key, params, wakeWord, budget: null, saving: progress, data,
       windowStart: first === '' ? NO_WINDOW : monthRange(first).start,

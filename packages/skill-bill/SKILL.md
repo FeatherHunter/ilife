@@ -126,18 +126,18 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 
 ## HELP 交付（说「饼干记账help」或「查帮助」走这里）
 
-- **缺省就是交付物**：`bill-cmd-read bill.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<库目录>/<产物目录>/<HELP 主体名>_<YYYYMMDD_HHMMSS>[_N].html`——`<库目录>`＝配置文件 `~/.ilife/bill.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `biscuit_accountant_html`）；`<HELP 主体名>`＝同文件的 `html.helpStem`（默认 `饼干记账_HELP`）；7 域／74 场景，与卡路里同一套共享 help 模板。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
+- **缺省就是交付物**：`bill-cmd-read bill.help.lookup` **原样调用**即落一份能打开的 HELP 文件——`<库目录>/<产物目录>/<HELP 主体名>_<YYYYMMDD_HHMMSS>[_N].html`——`<库目录>`＝配置文件 `~/.ilife/bill.yaml` 的 `db.dir`，空串＝数据目录 `~/.ilife/data/`；`<产物目录>`＝同文件的 `html.dir`（默认 `biscuit_accountant_html`）；`<HELP 主体名>`＝代码常量 `饼干记账_HELP`（配置项 `html.helpStem` 已退休，无可改处）；7 域／74 场景，与卡路里同一套共享 help 模板。stdout 的 `delivery.path` 是**绝对路径**，`delivery.bytes` 是文件字节数；回话就把这个路径给用户（回执即真相）。
   **完成标准**：`delivery.path` 指向的文件真的存在，且大小＝`delivery.bytes`。
 - **要全量速查表才加参数**：`--params '{"mode":"lookup"}'` 出 77 条唤醒词速查表，落同目录 `饼干记账_速查表_<时间戳>.html`（与 HELP 文件分名，两份产物不撞车）；这一支同样吃下面的复用窗口。
 - **反复读不再涨目录（#245）**：同一主体**一天内只留一份**——24 小时内再读就**复用已有那份**（不新建、不改写；回执给的就是它）。要别的窗口给 `--params '{"reuseHours":3}'`（小时）；要**每次都要一份最新的**给 `{"reuseHours":0}`。窗口内若已有一份、而你刚改过 HELP 内容，那份旧产物**不会被自动刷新**（窗口语义如此）——真要新的就带 `reuseHours:0`。
 - **要现找才加参数**：`--params '{"q":"查今天"}'` 回命中条目（只出 JSON，不落盘；要落盘就给 `--html`）。`q` 与 `mode` 互斥、`mode` 只认 `lookup`，违反即 exit 2。
-- **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）；其它 15 条命令的 `--html` 语义不变（仍写收据页）。
+- **`--html <路径>`＝显式落点**：逐字使用、覆盖写、缺父目录自动建（不参与同秒 `_N` 递补）；其它 15 条非 HELP 命令原样调用即落整页（落点见下“环境与出 scope”那条），`--html` 只是同文换落点的显式口。
 - **边界**：面板／侧栏的 HELP 入口不在本技能范围（属插件的桥／面板那条线）；不写固定名镜像（用户 Q10=A）。
 - 触发词总表见上「联动速查」构建期注入块（`<!-- HELP-AUTO-START/END -->`，由 `scripts/build-help.mjs` 重写，勿手改）。
 
 ## 环境与出 scope
 
-- 路径类取值一律读配置文件 `~/.ilife/bill.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `biscuit_accountant.db`）、第二份库＝`db.goals`（默认 `goals.json`）、产物目录＝`html.dir`（默认 `biscuit_accountant_html`）、HELP 与速查表的主体名＝`html.helpStem`／`html.quickRefStem`、备份目录＝`backup.dir`（空串＝库目录下 `backups`）、备份文件名主体＝`backup.stem`（默认 `biscuit_`）。取值面与环境项见 docs/env.md。
+- 路径类取值一律读配置文件 `~/.ilife/bill.yaml`（**配置文件是唯一真相，环境变量不参与配置**）：库目录＝`db.dir`（空串＝数据目录 `~/.ilife/data/`，首次读时自动建）、库文件名＝`db.name`（默认 `biscuit_accountant.db`）、第二份库＝`db.goals`（默认 `goals.json`）、产物目录＝`html.dir`（默认 `biscuit_accountant_html`）、HELP 与速查表的主体名＝代码常量 `饼干记账_HELP`／`饼干记账_速查表`（配置项 `html.helpStem`／`html.quickRefStem` 已退休）、备份目录＝`backup.dir`（空串＝库目录下 `backups`）、备份文件名主体＝`backup.stem`（默认 `biscuit_`）。取值面与环境项见 docs/env.md。
 - 预检只留 node 版本一道门（`engines>=22.13`）：**没有一个环境变量是必设的**——库目录与产物落点全在配置文件里定（见上行），缺项一律按默认落点走；测试要隔离就把家目录指到临时目录（Windows 设 `USERPROFILE`／POSIX 设 `HOME`）。
-- --html 套模板输出完整收据页（section 片段经 CONTENT 注入对应模板，非片段直写；超体积阻断）；`bill.help.lookup` 的 `--html` 改写到该键的产物（HELP 全页／速查页），语义见上「HELP 交付」节。
+- 非 HELP 命令原样调用即落一份能打开的整页（`--html` 不给也落；给了是同文换落点，不是第二种页面）：落点 `<库目录>/<产物目录>/饼干记账_<页名>[_采集页|_回执页]_<YYYYMMDD_HHMMSS>[_N].html`（页名＝本次这一页的唤醒词；写入／账户／目标三域的两页再加后缀；超体积阻断）；`bill.help.lookup` 的 `--html` 改写到该键的产物（HELP 全页／速查页），语义见上「HELP 交付」节。
 - 出 scope：定时任务（老家零定时代码）、面板（二期单 MAP）、本技能外联动登记（combos.yaml 一律不碰，走后续票；link 跨技能仅复制 prompt）；真实数据禁迁，测试 tmp 隔离；Python 老家只读对照。

@@ -44,7 +44,7 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
     }];
     const html = blockedWizardDoc({ op: 'restore', scene, key, params, blocked, actionAt: actionStamp() });
     const message = word + '还差 1 项：要恢复的那一份（备份目录里没有这一份）';
-    return { data: { ok: false, message, receipt: { op: 'restore', blocked } }, html };
+    return { data: { ok: false, message, receipt: { op: 'restore', blocked } }, page: { wakeWord: word, kind: 'single' }, html };
   }
   if (!confirmOf(params) || selected === null) {
     const ok = selected !== null;
@@ -65,7 +65,7 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
       promptLabel: '复制给助手：照这句确认，恢复前会自动备份现状',
       entries, selected, confirmed: false, safety: '', verified: false, result: '',
     });
-    return { data: { ok, message, receipt }, html };
+    return { data: { ok, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
   }
   const target: BackupEntry = selected;
   // ① 先验那一份备份读得动（老侧是覆盖之后才验，见差异表）。
@@ -86,7 +86,7 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
       promptLabel: '复制给助手：换一份再试',
       entries, selected: target, confirmed: true, safety: '', verified: false, result: '那一份读不动',
     });
-    return { data: { ok: false, message, receipt }, html };
+    return { data: { ok: false, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
   }
   // ② 无条件给现状造一份备份（D1 的第一件，不依赖用户记不记得）。
   const safety = createBackup({ db, dir, stamp: backupStampOf(new Date()), goalsPath: resolveGoalsPath() });
@@ -108,7 +108,7 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
       promptLabel: '复制给助手：拿现状备份回去',
       entries, selected: target, confirmed: true, safety: safety.file, verified: false, result: '覆盖时出错',
     });
-    return { data: { ok: false, message, receipt }, html };
+    return { data: { ok: false, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
   }
   const verified = verifyRestored(dbPath);
   const message = verified.ok
@@ -130,5 +130,5 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
     entries: listBackups(dir), selected: target, confirmed: true, safety: safety.file,
     verified: verified.ok, result: verified.ok ? target.file : '恢复回来的库读不动',
   });
-  return { data: { ok: verified.ok, message, receipt }, html };
+  return { data: { ok: verified.ok, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
 }

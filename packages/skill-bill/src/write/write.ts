@@ -28,6 +28,8 @@ import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { fieldLabelOf, statusNoteOf, wakeWordOf } from './userWording.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import { actionStamp } from '../shared/copyArea.js';
@@ -92,6 +94,17 @@ function rowFacts(r: BillRow): SummaryFacts {
   return { amount: r.amount, category: r.category, account: r.account, ledger: r.ledger, time: r.time };
 }
 
+/** 本次这一页的唤醒词（出页处交出，交付层不复算）：记一笔按 `kind` 认词（`expense`→记支出），
+ *  改记录按 `op` 认词（`undo`→撤销），与场景件那一侧的 `WORD/WAKE` 同源（同一份域声明算）。 */
+function pageWordOf(key: string, params: Record<string, unknown>, op: RecordOp): string {
+  if (key === 'bill.record.add') {
+    const kind = typeof params['kind'] === 'string' ? params['kind'] : '';
+    return wakeWordOf(kind);
+  }
+  const rawOp = typeof params['op'] === 'string' ? String(params['op']) : op;
+  return projectWakeWord({ key: key as BillKey, op: rawOp });
+}
+
 /** 有阻断项时的那一支：出过程型采集页（不写库、`ok:false`）。
  *  取数只此一处：`listRecent` 取回的近期记录，预填标注／重复检测／三枚选择器的候选三处共用。 */
 function collectOut(input: {
@@ -107,6 +120,7 @@ function collectOut(input: {
   const anchor = typeof input.params['time'] === 'string' ? String(input.params['time']) : today;
   return {
     data: { ok: false, message },
+    page: { wakeWord: pageWordOf(input.key, input.params, 'update'), kind: 'collect' },
     html: recordCollectDoc({
       key: input.key,
       params: input.params,
@@ -146,6 +160,7 @@ function finish(input: {
   };
   return {
     data: { ...buildRecordReceipt(input.summary), receipt },
+    page: { wakeWord: pageWordOf(input.key, input.params, input.op), kind: 'receipt' },
     html: recordReceiptDoc({
       key: input.key, params: input.params, receipt,
       writtenDetail: input.writtenDetail, detail: input.detail,

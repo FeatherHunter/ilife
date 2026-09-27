@@ -43,6 +43,7 @@ export function viewAccountSummary(params: Record<string, unknown>, db: BillDb):
   const window = String(summary.accounts.length) + ' 个账户 · 最近 ' + String(summary.flow_count) + ' 笔流水';
   return {
     data,
+    page: { wakeWord, kind: 'single' },
     html: accountSummaryDoc({
       key,
       params,

@@ -14,6 +14,8 @@ import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
 import { actionStamp } from '../shared/copyArea.js';
 import type { WriteOut } from '../shared/commandSpec.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
+import type { BillKey } from '../triggers/routeSpec.js';
 import { backupStampOf, createBackup } from './backups.js';
 import {
   FIELD_LABEL, applyImport, existingRows, guessMap, missingRequired, parseMapping, planImport, readCsv,
@@ -41,6 +43,8 @@ export function mappingTextOf(map: ColumnMap): string {
 /** 导入 CSV（`op=import`）：不确认只出映射向导页；确认则「自动备份 → 整批一个事务写 → 结果卡」。 */
 export function runImport(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
   const scene = setupSceneFor('import');
+  const word = projectWakeWord({ key: key as BillKey, op: 'import' });
+  const page = { wakeWord: word, kind: 'single' } as const;
   const file = importFileOf(params);
   const blocked: SetupBlocked[] = [];
   if (file === '') blocked.push({ name: 'file', label: 'CSV 文件路径', why: '没给' });
@@ -48,7 +52,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
   if (blocked.length > 0) {
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked, actionAt: actionStamp() });
     const message = '导入还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label + '（' + b.why + '）').join('、');
-    return { data: { ok: false, message, receipt: { op: 'import', blocked } }, html };
+    return { data: { ok: false, message, receipt: { op: 'import', blocked } }, page, html };
   }
 
   const csv = readCsv(file);
@@ -62,7 +66,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
     }];
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked: blocked2, actionAt: actionStamp() });
     const message = '导入还差 1 项：列映射（还是缺 ' + missing.map((f) => FIELD_LABEL[f]).join('、') + '）';
-    return { data: { ok: false, message, receipt: { op: 'import', blocked: blocked2 } }, html };
+    return { data: { ok: false, message, receipt: { op: 'import', blocked: blocked2 } }, page, html };
   }
   const plan: ImportPlan = planImport(csv, map, existingRows(db));
   const filled: Record<string, unknown> = { ...params, mapping: mappingTextOf(map) };
@@ -86,7 +90,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
       prompt: scene.promptOf(filled), promptLabel: '复制给助手：照这句确认，导入前会自动备份一次',
       csv, map, plan, confirmed: false, backup: '', inserted: 0, failed: [],
     });
-    return { data: { ok, message, receipt }, html };
+    return { data: { ok, message, receipt }, page, html };
   }
   // ② 导入前自动备份一次（D2 的第二件；与恢复同一支、同一口径）。
   const backup = createBackup({
@@ -112,5 +116,5 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
     prompt: scene.promptOf(filled), promptLabel: '复制给助手：同一份文件再导一次会怎样',
     csv, map, plan, confirmed: true, backup: backup.file, inserted: written.inserted, failed: written.failed,
   });
-  return { data: { ok, message, receipt }, html };
+  return { data: { ok, message, receipt }, page, html };
 }
