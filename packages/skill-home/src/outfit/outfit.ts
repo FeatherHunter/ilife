@@ -24,14 +24,19 @@ const OCCASIONS = ['上班', '约会', '运动', '家居', '正式', '自定义'
 const SEASONS = ['夏季', '冬季', '春秋'];
 
 function isClothing(it: HomeItem): boolean {
+  // #927：老库无 items.category 列时 it.category 为空，分类名以 category_id 为准的调用方已在 clothingRows 里回填；
+  // 这里仍只做内存判断（名里带衣/鞋等即算），不碰 SQL。
   const s = (it.category ?? '') + ' ' + it.name;
   return s.includes('衣') || s.includes('鞋') || s.includes('穿') || s.includes('帽');
 }
 
 function clothingRows(handle: HomeDb, limit: number): HomeItem[] {
-  return handle.db.prepare(
-    "SELECT i.* FROM items i WHERE (i.category LIKE '%衣%' OR i.category LIKE '%穿%' OR i.name LIKE '%衣%' OR i.name LIKE '%鞋%') ORDER BY i.access_count DESC LIMIT ?",
-  ).all(limit) as unknown as HomeItem[];
+  // #927：衣物筛选走 categories JOIN（老库无 i.category 列）；返回行把 JOIN 到的分类名回填到 category，
+  // 保证下游 isClothing/slot 在新老库上口径一致。
+  const rows = handle.db.prepare(
+    "SELECT i.*, c.name AS _joined_category FROM items i LEFT JOIN categories c ON c.id=i.category_id WHERE (c.name LIKE '%衣%' OR c.name LIKE '%穿%' OR i.name LIKE '%衣%' OR i.name LIKE '%鞋%') ORDER BY i.access_count DESC LIMIT ?",
+  ).all(limit) as unknown as (HomeItem & { _joined_category?: string | null })[];
+  return rows.map((r) => ({ ...r, category: (r._joined_category ?? r.category ?? null) as string | null }));
 }
 
 function slotOf(name: string, tags: string[]): SlotKey | null {

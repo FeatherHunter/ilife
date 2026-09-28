@@ -295,9 +295,10 @@ export function exportData(opts: { format?: string; output?: string } = {}): Exp
       text = JSON.stringify(data, null, 1) + '\n';
     } else {
       const rs = handle.db.prepare(
-        'SELECT i.id, i.name, i.category, i.owner, i.purchase_price, i.remark, ' +
+        // #927：CSV 的分类列走 categories JOIN（老库无 items.category 列）。
+        'SELECT i.id, i.name, c.name AS category, i.owner, i.purchase_price, i.remark, ' +
         'l.location, l.quantity, l.location_status, l.purchase_date, l.expiration_date ' +
-        'FROM items i LEFT JOIN item_locations l ON l.item_id = i.id ORDER BY i.id',
+        'FROM items i LEFT JOIN categories c ON c.id=i.category_id LEFT JOIN item_locations l ON l.item_id = i.id ORDER BY i.id',
       ).all() as Record<string, unknown>[];
       rows = rs.length;
       text = [CSV_COLS.join(','), ...rs.map((r) => CSV_COLS.map((c) => csvCell(r[c])).join(','))].join('\n') + '\n';

@@ -15,8 +15,9 @@ export function runShoppingQuery(params: Record<string, unknown>, handle: HomeDb
   const kind = (params.kind as string | undefined) ?? 'list';
   if (kind === 'missing') {
     // 缺货：有阈值且（在家＋备用）合计＜阈值；只计在家／备用，快递中不算在库（沿老 ops 口径）。
+    // #927：分类名走 categories JOIN（老库无 items.category 列）。
     const rows = handle.db.prepare(
-      "SELECT i.id, i.name, i.category AS category_name, ifnull(sum(CASE WHEN l.location_status IN ('在家','备用') THEN l.quantity ELSE 0 END),0) AS qty, s.threshold FROM items i JOIN stock_thresholds s ON s.item_id=i.id LEFT JOIN item_locations l ON l.item_id=i.id GROUP BY i.id HAVING qty < s.threshold ORDER BY i.name",
+      "SELECT i.id, i.name, c.name AS category_name, ifnull(sum(CASE WHEN l.location_status IN ('在家','备用') THEN l.quantity ELSE 0 END),0) AS qty, s.threshold FROM items i JOIN stock_thresholds s ON s.item_id=i.id LEFT JOIN item_locations l ON l.item_id=i.id LEFT JOIN categories c ON c.id=i.category_id GROUP BY i.id HAVING qty < s.threshold ORDER BY i.name",
     ).all() as { id: number; name: string; category_name: string | null; qty: number; threshold: number }[];
     const items = rows.map((r) => {
       const qty = Number(r.qty ?? 0);
@@ -39,8 +40,9 @@ export function runShoppingQuery(params: Record<string, unknown>, handle: HomeDb
   }
   if (kind === 'stock') {
     // 囤货：有阈值物品给当前量／阈值／库存状态；无阈值常用品给提示（按使用次数前 10）。
+    // #927：分类名走 categories JOIN。
     const rows = handle.db.prepare(
-      "SELECT i.id, i.name, i.category AS category_name, ifnull(sum(CASE WHEN l.location_status IN ('在家','备用') THEN l.quantity ELSE 0 END),0) AS qty, s.threshold FROM items i LEFT JOIN item_locations l ON l.item_id=i.id LEFT JOIN stock_thresholds s ON s.item_id=i.id GROUP BY i.id ORDER BY i.name",
+      "SELECT i.id, i.name, c.name AS category_name, ifnull(sum(CASE WHEN l.location_status IN ('在家','备用') THEN l.quantity ELSE 0 END),0) AS qty, s.threshold FROM items i LEFT JOIN item_locations l ON l.item_id=i.id LEFT JOIN stock_thresholds s ON s.item_id=i.id LEFT JOIN categories c ON c.id=i.category_id GROUP BY i.id ORDER BY i.name",
     ).all() as { id: number; name: string; category_name: string | null; qty: number; threshold: number | null }[];
     const stockOf = (qty: number, th: number): string => (qty <= 0 ? '空' : qty < th ? '低' : '充足');
     const items = rows
@@ -58,7 +60,7 @@ export function runShoppingQuery(params: Record<string, unknown>, handle: HomeDb
         };
       });
     const hints = (handle.db.prepare(
-      "SELECT i.id, i.name, i.category AS category_name FROM items i WHERE NOT EXISTS (SELECT 1 FROM stock_thresholds s WHERE s.item_id=i.id) ORDER BY i.access_count DESC, i.name LIMIT 10",
+      "SELECT i.id, i.name, c.name AS category_name FROM items i LEFT JOIN categories c ON c.id=i.category_id WHERE NOT EXISTS (SELECT 1 FROM stock_thresholds s WHERE s.item_id=i.id) ORDER BY i.access_count DESC, i.name LIMIT 10",
     ).all() as { id: number; name: string; category_name: string | null }[]).map((r) => ({
       name: String(r.name),
       id: r.id,
@@ -71,7 +73,7 @@ export function runShoppingQuery(params: Record<string, unknown>, handle: HomeDb
     const days = params.timeout_days !== undefined ? Number(params.timeout_days) : 7;
     if (!Number.isInteger(days) || days <= 0) fail(2, 'timeout-days 须为正整数');
     const rows = handle.db.prepare(
-      "SELECT i.id, i.name, i.category AS category_name, i.photo AS photo, l.location AS location, l.quantity AS quantity, l.purchase_date AS purchase_date FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.location_status='快递中' ORDER BY l.purchase_date LIMIT 50",
+      "SELECT i.id, i.name, c.name AS category_name, i.photo AS photo, l.location AS location, l.quantity AS quantity, l.purchase_date AS purchase_date FROM items i JOIN item_locations l ON l.item_id=i.id LEFT JOIN categories c ON c.id=i.category_id WHERE l.location_status='快递中' ORDER BY l.purchase_date LIMIT 50",
     ).all() as { id: number; name: string; category_name: string | null; photo: string | null; location: string; quantity: number; purchase_date: string | null }[];
     const today = Date.now();
     const items = rows.map((r) => {

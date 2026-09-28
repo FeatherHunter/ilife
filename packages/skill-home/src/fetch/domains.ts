@@ -84,7 +84,9 @@ export function setThreshold(handle: HomeDb, itemId: number, threshold: number):
  *  `purchase_records` 只挂 `item_id`，名称与分类在 `items` 上，故这里 LEFT JOIN 带出（键名与页面读的
  *  `item_name` 对齐）；物品被删时 `item_id` 被置空，JOIN 不到即留空，页面照全批口径写「—」。 */
 export function listPurchases(handle: HomeDb, f: { itemId?: number; year?: string; month?: string }): Record<string, unknown>[] {
-  let sql = 'SELECT p.*, i.name AS item_name, i.category AS item_category FROM purchase_records p LEFT JOIN items i ON i.id = p.item_id WHERE 1=1';
+  // #927：老库 items 表没有 category 列，只有 category_id；分类名一律走 categories 表 JOIN 拿，
+  // 不直接读 i.category（新库的 category 文本列只当写时冗余，不当读口径）。
+  let sql = 'SELECT p.*, i.name AS item_name, c.name AS item_category FROM purchase_records p LEFT JOIN items i ON i.id = p.item_id LEFT JOIN categories c ON c.id = i.category_id WHERE 1=1';
   const args: (string | number | null)[] = [];
   if (f.itemId !== undefined) { sql += ' AND p.item_id=?'; args.push(f.itemId); }
   if (f.year !== undefined) { sql += ' AND substr(p.date,1,4)=?'; args.push(f.year); }
@@ -179,7 +181,8 @@ export function addMember(handle: HomeDb, name: string, relation: string | null)
 }
 export function listBorrows(handle: HomeDb): Record<string, unknown>[] {
   // 带上物品名（#817 收口：借用页要显示「借的什么」，不给就得印占位符）
-  return q(handle, 'SELECT b.*, i.name AS item_name, i.category AS item_category FROM borrow_records b LEFT JOIN items i ON i.id = b.item_id ORDER BY b.id DESC LIMIT 50');
+  // #927：分类名走 categories JOIN（老库无 items.category 列）。
+  return q(handle, 'SELECT b.*, i.name AS item_name, c.name AS item_category FROM borrow_records b LEFT JOIN items i ON i.id = b.item_id LEFT JOIN categories c ON c.id = i.category_id ORDER BY b.id DESC LIMIT 50');
 }
 export function addBorrow(handle: HomeDb, itemId: number | null, member: string, action: string, date: string): number {
   run(handle, 'INSERT INTO borrow_records (item_id, member, action, date) VALUES (?,?,?,?)', itemId, member, action, date);
@@ -285,13 +288,13 @@ export function idleItems(handle: HomeDb, days: number): {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   const cut = cutoff.toISOString();
-  const rows = q(handle, `SELECT i.id, i.name, ifnull(i.category,'') AS category,
+  const rows = q(handle, `SELECT i.id, i.name, ifnull(c.name,'') AS category,
       CAST(julianday(date('now','localtime')) - julianday(date(coalesce(i.last_accessed_at, i.created_at))) AS INTEGER) AS days_idle,
       CASE WHEN i.last_accessed_at IS NULL THEN '估算' ELSE '访问记录' END AS source,
       ifnull((SELECT l.location FROM item_locations l WHERE l.item_id=i.id ORDER BY l.id LIMIT 1),'') AS location,
       ifnull((SELECT sum(l.quantity) FROM item_locations l WHERE l.item_id=i.id),0) AS quantity,
       ifnull((SELECT l.location_status FROM item_locations l WHERE l.item_id=i.id ORDER BY l.id LIMIT 1),'在家') AS status
-    FROM items i WHERE (i.last_accessed_at IS NULL OR i.last_accessed_at < ?)
+    FROM items i LEFT JOIN categories c ON c.id = i.category_id WHERE (i.last_accessed_at IS NULL OR i.last_accessed_at < ?)
     ORDER BY i.last_accessed_at LIMIT 50`, cut);
   return rows.map((r) => ({
     id: Number(r.id), name: String(r.name), category: String(r.category), days_idle: Number(r.days_idle) || 0,
@@ -308,10 +311,10 @@ export function expiringItems(handle: HomeDb, days: number, expiredOnly: boolean
     const where = expiredOnly
       ? 'l.expiration_date IS NOT NULL AND l.expiration_date < ?'
       : 'l.expiration_date IS NOT NULL AND l.expiration_date <= ?';
-    return q(handle, `SELECT l.item_id, l.location, l.expiration_date, ifnull(i.name,'') AS item_name, ifnull(i.category,'') AS category,
+    return q(handle, `SELECT l.item_id, l.location, l.expiration_date, ifnull(i.name,'') AS item_name, ifnull(c.name,'') AS category,
         l.quantity AS quantity, ifnull(l.location_status,'在家') AS location_status,
         CAST(julianday(date(l.expiration_date)) - julianday(date('now','localtime')) AS INTEGER) AS days_left
-      FROM item_locations l LEFT JOIN items i ON i.id=l.item_id
+      FROM item_locations l LEFT JOIN items i ON i.id=l.item_id LEFT JOIN categories c ON c.id = i.category_id
       WHERE ${where} ORDER BY l.expiration_date, l.id LIMIT 50`, expiredOnly ? localToday() : endS) as unknown as {
       item_id: number; location: string; expiration_date: string; item_name: string; category: string;
       days_left: number | null; quantity: number; location_status: string;
