@@ -465,8 +465,9 @@ const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本
 
 /** `start_date` 的日期体检（写路径这一侧，与同件三处日期位 `date` 同源）：
  *  ① **形状**走共用位 `shared/params.ts` 的 `assertISO`（唯一定义地，报 `start_date 非法（须 YYYY-MM-DD）`）；
- *  ② **这个串是不是一个日期**走 `planStore.ts` 的 `startDateInvalid`（本仓唯一一处）——形状那一半
- *     放行 `2026-13-45` 这种「形状对、数值不存在」的串，而它正是坏锚点本身。
+ *  ② **这个串是不是一个日期**走 `planStore.ts` 的 `startDateInvalid`（本仓唯一一处，形状＋真日历）——
+ *  形状那一半放行 `2026-13-45` 这种串，而它正是坏锚点本身；`2026-02-30` 同样非法（`#944` 边角一次收口，
+ *  `Date.parse` 会进位，改用月天表＋闰年判）。
  *  两条都不过就 exit 2；既有那条「不得为空」在上面、一个字没动（本票只加严）。 */
 function assertStartDate(v: string): void {
   assertISO(v, 'start_date');
@@ -512,9 +513,12 @@ export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSyn
   const after = (Object.keys(fields) as Array<keyof typeof fields>)
     .map((k) => String(CONFIG_LABEL[k]) + '：' + String(fields[k])).join('、');
   const summary = '已改训练计划（' + after + '）';
+  // `#944` 边角一次收口：回执带上与预检页同源的影响话术（`CONFIG_IMPACT`，同一处定义），免得对账回头翻预检页。
+  const impact = (Object.keys(fields) as Array<keyof typeof CONFIG_IMPACT>)
+    .map((k) => CONFIG_IMPACT[k] ?? '').filter((s) => s !== '').join('；');
   return out(R('改训练计划', 'update', summary, '改训练计划', 'workout_plan_config（配置字段）', {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['title', 'version', 'description', 'start_date']),
-    items: [{ status: '成功', reason: '', detail: '改前 ' + before + ' → 改后 ' + after }],
+    items: [{ status: '成功', reason: impact, detail: '改前 ' + before + ' → 改后 ' + after }],
   }));
 }
 

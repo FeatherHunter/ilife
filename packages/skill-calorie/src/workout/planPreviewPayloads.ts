@@ -49,10 +49,17 @@ function commandOf(op: string): string {
  *
  *  `delete` 那一条另带 `confirm:true`：那是 `writePlanDelete` 自己的入参硬止（不带即 exit 2，
  *  防一次裸调清空整份计划），不是再一次确认。
- *  参数键序＝进来那一份（`JSON.stringify` 保序），故同一次调用两次产出逐字相同。 */
+ *  参数键序＝进来那一份（`JSON.stringify` 保序），故同一次调用两次产出逐字相同。
+ *
+ *  `#944` 边角一次收口（D1）：`set-week` 缺 `days`（非空数组）时没有改后值，确认串给出来
+ *  原样跑必 exit 2——这种页只出修改指令，不出确认指令（页面装配件遇空串不出那一枚）。 */
 export function planConfirmCommand(op: string, params: Record<string, unknown>): string {
   const key = commandOf(op);
   if (key === '') return '';
+  if (op === 'set-week') {
+    const days = (params as Record<string, unknown>)['days'];
+    if (!Array.isArray(days) || days.length === 0) return '';
+  }
   const body: Record<string, unknown> = {};
   for (const [field, value] of Object.entries(params)) {
     if (field !== 'op' && value !== undefined) body[field] = value;

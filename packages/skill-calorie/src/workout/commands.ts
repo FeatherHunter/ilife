@@ -52,16 +52,12 @@ export const WORKOUT_COMMANDS = [
      才有的窄口径（`--params '{"date":"今日"}'`），经 `gen-cli.mjs` → `build-help.mjs` 印进 SKILL.md 速查表
      「例」列，读者照抄即得一张 0 场 0 动作的窄页、误判「库里是空的」。示例与冻结表同形，**冻结表一行不改**。 */
   { kind: 'read', key: 'calorie.view.plan', shape: 'stat', title: '训练计划看', wakeWord: '看计划概览', run: viewPlan, example: 'calorie-cmd-read calorie.view.plan' },
-  /* #948 · 故障 9①：这一键有**两种调用形态**，两种都得写在 AI 读得到的面上（本行的「例」列与
-     `SKILL.md` 的 Wizard Verify 节）——① 不给 `plan`＝空模板（`metrics.weeks` 为 0，页上那颗「定一份计划」
-     把空态变成母版周）；② 给**部分** `plan`（如只给标题）＝部分预填，给了的字段按它填、没给的留空。
-     两种都是 exit 0，都不写库（可写页只出页，落库靠用户复制页内命令后调 `calorie.workout.plan-set`）。
-     要把两例塞进**同一格**这件事试过三条路、三条都被机器判红（读数见下），故本行的 `example` **本波未改**——它仍是原来那条「整份 `plan` ＋ `<开始日期>` 占位符」的样例，既不是空模板那一条、也不是「只给标题」那一条：
-     ① `<br>`／`<br />` 换行 ⇒ 示例门的「未登记替换值的占位符」检查（`/<[^<>]+>/`）把它当占位符判红；
-     ② 真换行（`\n`） ⇒ 生成器写 `EXAMPLES` 表时那一段是单引号串，真换行会把产物切成两行（`node` 当场
-     语法错）；③ 只留第 2 例 ⇒ 「例」列就不再是照抄即跑的那一条。另一条形态写在 `SKILL.md` 的
-     Wizard Verify 节（「计划编辑器两种调用形态」那条），那里是说明面，不受「一行一条命令」的格式约束。 */
-  { kind: 'read', key: 'calorie.view.plan-wizard', shape: 'stat', title: '定训练计划', run: viewPlanEditor, example: 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'' },
+  /* #948 · 故障 9①（`#944` 边角一次收口）：这一键有**两种调用形态**，两种都得写在 AI 读得到的面上——
+     ① 不给 `plan`＝空模板（`metrics.weeks` 为 0）；② 给**部分** `plan`（如只给标题）＝部分预填。
+     两种都是 exit 0，都不写库。`example` 取第 ① 种（空模板，照抄即跑、无占位符，示例门可执行）；
+     第 ② 种与整份 `plan` 形态住 `SKILL.md` 的 Wizard Verify 节「计划编辑器两种调用形态」那条（说明面，
+     不受「一行一条命令」的格式约束）。冻结表与路由一行不改。 */
+  { kind: 'read', key: 'calorie.view.plan-wizard', shape: 'stat', title: '定训练计划', run: viewPlanEditor, example: 'calorie-cmd-read calorie.view.plan-wizard' },
   { kind: 'read', key: 'calorie.view.exercise-review', shape: 'stat', title: '计划复盘', wakeWord: '计划复盘（本周）', run: viewExerciseReview, example: 'calorie-cmd-read calorie.view.exercise-review --params \'{"window":"本周"}\'' },
   { kind: 'read', key: 'calorie.view.contraindication', shape: 'stat', title: '禁忌扫描', run: viewContraindication, example: 'calorie-cmd-read calorie.view.contraindication --params \'{"part":"all"}\'' },
   { kind: 'read', key: 'calorie.view.process-progress', shape: 'stat', title: '落地训练进度', wakeWord: '看落地训练进度', run: viewProcessProgress, example: 'calorie-cmd-read calorie.view.process-progress' },

@@ -14,8 +14,9 @@
  * 口径照 `test/566-result-title.test.mjs:51` 那条真跑（exit 码 ＋ envelope ＋ 落盘页四件一起断言）：
  *   ① 非法日期挡在写前：`plan-update --params '{"start_date":"2026-13-45"}'` ⇒ exit 2、
  *      stderr 含「start_date 非法（须 YYYY-MM-DD）」、**库里那一列一个字节没动**（没写库）；
- *      反面参照＝同一命令给合法日期必须写得进去（判据不恒真）＋ 票面遗留出口那一档
- *      （`2026-02-30`：形状对、日也在 01–31 内、但那个月没有这一天）**仍放行**（没顺手扩范围的正向证据）；
+ *      反面参照＝同一命令给合法日期必须写得进去（判据不恒真）＋ 真日历那一档
+ *      （`2026-02-30`：形状对、日也在 01–31 内、但那个月没有这一天）**同样挡住**（`#944` 边角一次收口，
+ *      `Date.parse` 会进位，改用月天表＋闰年判）；
  *      既有那条「不得为空」也不许放宽。
  *   ② 影响随字段变：`plan-write-preview` 分别带 `{"op":"update","title":…}` 与
  *      `{"op":"update","start_date":…}` 各交付一次，读两次落盘页「确认说明」块「影响」那一格
@@ -165,9 +166,8 @@ const TPL = mkTemplate();
 const RUNS = {
   badUpdate: runCli('bad-update', 'calorie.workout.plan-update', { start_date: BAD_DATE }),
   goodUpdate: runCli('good-update', 'calorie.workout.plan-update', { start_date: GOOD_DATE }),
-  /** 票面遗留出口那一档：`2026-02-30` 是「形状对、日也在 01–31 内、但那个月没有这一天」，
-   *  **本票不碰它**（`Date.parse` 把它滚到 2026-03-02 ⇒ 不算 NaN ⇒ 照旧放行）。这一条是
-   *  「没顺手扩范围」的正向证据：坏了的那一档被挡住、留的那一档仍然通。 */
+  /** 真日历那一档：`2026-02-30` 是「形状对、日也在 01–31 内、但那个月没有这一天」，
+   *  **同样挡住**（`#944` 边角一次收口：`Date.parse` 把它滚到 2026-03-02 ⇒ 悄悄歪一天，改用月天表＋闰年判）。 */
   leapDay: runCli('leap-day', 'calorie.workout.plan-update', { start_date: '2026-02-30' }),
   emptyDate: runCli('empty-date', 'calorie.workout.plan-update', { start_date: '' }),
   emptyTitle: runCli('empty-title', 'calorie.workout.plan-update', { title: '' }),
@@ -197,12 +197,8 @@ test('#949 ① 坏 start_date 挡在写前：exit 2 ＋ 报字段名 ＋ 库里�
   assert.ok(RUNS.emptyTitle.stderr.includes('title 不得为空'),
     '空串那条的报错变了：' + JSON.stringify(RUNS.emptyTitle.stderr));
   assert.equal(RUNS.emptyTitle.startDate, SEED_START, '空串那次也不许写库');
-  /* 遗留出口那一档照旧放行（没顺手扩范围）：`2026-02-30` 仍 exit 0 并原样落库 —— 收它另票。 */
-  assert.equal(RUNS.leapDay.exit, 0,
-    '`2026-02-30` 应照旧放行（票面遗留出口那一档不在本票），实测 ' + RUNS.leapDay.exit
-    + '（stderr：' + RUNS.leapDay.stderr + '）');
-  assert.equal(RUNS.leapDay.startDate, '2026-02-30',
-    '放行那一档应原样落库，实测库里 start_date=' + JSON.stringify(RUNS.leapDay.startDate));
+  /* 真日历那一档同样挡住（边角一次收口）：`2026-02-30` exit 2 且库里不动。 */
+  assertBadDateRejected(RUNS.leapDay, '`2026-02-30` 真日历同样挡住');
 });
 
 /* ── ② 影响随字段变，且话术逐字是票面给的那几句 ── */
@@ -278,7 +274,7 @@ test('#949 判据摘要', () => {
     impactOf(RUNS.prevTitle.file) === IMPACT_TITLE ? '改标题话术对' : '改标题话术不对',
     impactOf(RUNS.prevDate.file) === IMPACT_DATE ? '改日期话术对' : '改日期话术不对',
     RUNS.badSet.stderr.includes('计划校验未通过') ? 'plan-set 收口' : 'plan-set 没收口',
-    RUNS.leapDay.exit === 0 ? '02-30 仍放行' : '02-30 被顺手收了',
+    RUNS.leapDay.exit === 2 ? '02-30 同样挡住' : '02-30 没挡住',
     RUNS.goodUpdate.exit === 0 ? '合法日期仍写得进' : '合法日期被挡（判据把路走断了）',
   ];
   console.log('T949-RESULT 四条读数：' + cells.join('／') + '（坏日期 exit=' + RUNS.badUpdate.exit

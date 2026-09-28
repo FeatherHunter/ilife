@@ -283,7 +283,7 @@ const EXAMPLES = {
   'calorie.view.photo-picker': 'calorie-cmd-read calorie.view.photo-picker',
   'calorie.view.plan': 'calorie-cmd-read calorie.view.plan',
   'calorie.view.plan-vs-actual': 'calorie-cmd-read calorie.view.plan-vs-actual --params \'{"window":"本周"}\'',
-  'calorie.view.plan-wizard': 'calorie-cmd-read calorie.view.plan-wizard --params \'{"plan":{"config":{"title":"减脂4周","start_date":"<开始日期>","user_level":"中手","available_equipment":["瑜伽垫"]},"weeks":[{"week_number":1,"days":[{"day_of_week":1,"sessions":[{"session_label":"上肢","movements":[{"name":"俯卧撑","part":"胸","type":"力量","sets":[]}]}]}]}]}}\'',
+  'calorie.view.plan-wizard': 'calorie-cmd-read calorie.view.plan-wizard',
   'calorie.view.plan-write-preview': 'calorie-cmd-read calorie.view.plan-write-preview --params \'{"op":"copy"}\'',
   'calorie.view.predict': 'calorie-cmd-read calorie.view.predict --params \'{"horizonDays":7,"window":"14d"}\'',
   'calorie.view.process-progress': 'calorie-cmd-read calorie.view.process-progress',

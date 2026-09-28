@@ -69,6 +69,23 @@ export function assertISO(v: string, field: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(2, field + ' 非法（须 YYYY-MM-DD）：' + v);
 }
 
+/** 真日历检查（形状＋该月真有这一天；`#944` 边角一次收口）。
+ *
+ *  为什么 `assertISO` 不够、`Date.parse` 也 stored 不够：`assertISO` 只查形状；
+ *  `Date.parse('2026-02-30T12:00:00Z')` 不报 NaN 而是进位成 03-02——坏锚点悄悄歪一天，
+ *  比 `2026-13-45` 更难查。`start_date` 是周次锚点，坏一天全部门歪，故写与校验都走这一处。
+ *  唯一定义地：别处不另写一份月天表。 */
+export function isStrictCalendarDate(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const y = Number(v.slice(0, 4));
+  const m = Number(v.slice(5, 7));
+  const d = Number(v.slice(8, 10));
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  return d <= dim;
+}
+
 /** 非空数挑拣：null/undefined/NaN/Infinity 一律丢弃（stat.metrics 须全有限 number）。 */
 export function nums(input: Record<string, number | null | undefined>): Record<string, number> {
   const out: Record<string, number> = {};

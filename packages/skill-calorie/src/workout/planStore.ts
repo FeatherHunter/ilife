@@ -9,6 +9,7 @@ import { FetchError } from '../fetch/errors.js';
 import { dayPhrase } from './dayPhrase.js';
 import { typeZh } from './movementType.js';
 import { todayISO } from '../shared/time.js';
+import { isStrictCalendarDate } from '../shared/params.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },
@@ -81,12 +82,11 @@ export interface PlanValidation {
  *  `2026-13-45` 这种「形状对、数值不存在」的串它照放行；而锚点一旦是它，`weekOfDate` 得 NaN
  *  ⇒ 按日期过滤恒空 ⇒ 页上落成「这一周没有训练安排」那句空态：**一个静默的坏锚点冒充「计划没有内容」**。
  *
- *  口径与同族先例逐字同形（`render/planPlate.ts:17` 的 `assertDate` 一族，本包同名写法另有 7 处）：
- *  `Date.parse(v + 'T12:00:00Z')` 得 NaN 即不算日期（`2026-13-45` 的月 13 即 NaN）。
- *  **`2026-02-30` 这类「形状对、日也在 01–31 内、但那个月没有这一天」的串仍放行**：
- *  按票面遗留出口，那一档要不要一起收另票定，本票只到「这个串是不是一个日期」。 */
+ *  口径：形状＋真日历（`shared/params.ts` 的 `isStrictCalendarDate`，唯一定义地）：
+ *  `2026-13-45` 的月 13 即非法；**`2026-02-30` 这类「形状对、日也在 01–31 内、但那个月没有这一天」
+ *  的串同样非法**（`#944` 边角一次收口：`Date.parse` 会把它进位成 03-02，悄悄歪一天，故不用它判）。 */
 export function startDateInvalid(v: string): boolean {
-  return !/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v + 'T12:00:00Z'));
+  return !isStrictCalendarDate(v);
 }
 
 export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string> } = {}): PlanValidation {
