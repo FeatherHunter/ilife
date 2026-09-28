@@ -8,7 +8,11 @@ import {
 } from '../fetch/index.js';
 import { normalizeLocation, needId } from '../policy/index.js';
 import { fail } from '../shared/fail.js';
+import { asLimit, asQueryString } from '../shared/params.js';
 import { buildLocationList, buildReceipt } from '../render/index.js';
+
+// #928 分页上限：缺省 60（实测 50 节点族页约 192KB，80 节点约 236KB，均 <256KB；
+// 100 节点约 265KB 必超）。最大 80（再大复制区＋行按钮必超）。只住本能力，标签分页另住 items。
 
 // ---- 富数据类型（每型字段不超八个；只经 envelope 流动，不另开接口） ----
 
@@ -284,9 +288,20 @@ export function runLocationQuery(params: Record<string, unknown>, handle: HomeDb
     return buildLocationList(hits.map((h) => h.item.name + ' #' + h.item.id + ' ' + h.locations.map((l) => l.location).join('；')));
   }
   // manage/storage：位置总览（节点＋相似组；页按 kind 分区 render）。
-  const nodes = locNodes(handle);
-  const sims = similarGroups(handle);
-  return { items: [...nodes, ...sims], total: nodes.length };
+  // #928 分页：q 筛路径子串，limit 截节点（相似组量小全留）；total 恒为筛后全量节点数（旧语义），
+  // items 为本页节点＋筛后相似组（total 允许大于本页行数，信封校验只要求 total 为 number）。
+  const allNodes = locNodes(handle);
+  const allSims = similarGroups(handle);
+  const q = asQueryString(params.q, 'q');
+  const limit = asLimit(params.limit, 'limit', 60, 1, 80);
+  const filteredNodes = q === undefined
+    ? allNodes
+    : allNodes.filter((n) => n.path.includes(q) || n.path.toLowerCase().includes(q.toLowerCase()));
+  const filteredSims = q === undefined
+    ? allSims
+    : allSims.filter((g) => g.target.includes(q) || g.paths.some((p) => p.includes(q)));
+  const slicedNodes = filteredNodes.slice(0, limit);
+  return { items: [...slicedNodes, ...filteredSims], total: filteredNodes.length };
 }
 
 export function runLocationWrite(params: Record<string, unknown>, handle: HomeDb): unknown {

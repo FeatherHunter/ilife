@@ -179,13 +179,20 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       else if (r.kind === 'similar_group') groups.push(it as SimilarGroup);
     }
   }
-  const total = nodes.length;
+  const dataTotal = (data as { total?: unknown }).total;
+  const fullTotal = typeof dataTotal === 'number' ? dataTotal : nodes.length;
+  const shown = nodes.length;
   const receiptHtml = receipt === '' ? ''
     : '<div class="receipt">' + escapeHtml(receipt) + '</div>';
+  // #928 分页说明：total 允许大于本页行数（信封 total 为筛后全量）。截断必须显式写出，不静默丢。
+  const pagingHtml = fullTotal > shown
+    ? '<div class="paging">共' + fullTotal + '个位置，本页只看前' + shown + '个（按路径排序）。还有'
+      + (fullTotal - shown) + '个没显示：用空间视图逐层下钻，或加 q 筛关键词。</div>'
+    : '';
   // 空态索引（有数据时空态区不 render，机审仍读原文；空态真 render 由测试空库断言覆盖）。
   const emptyIndex = nodes.length === 0 ? '' : '<div hidden data-block="empty">'
     + '<span data-need="空态：还没有位置＋建第一个位置引导"></span></div>';
-  const content = PAGE_CSS + hero(total) + receiptHtml
+  const content = PAGE_CSS + hero(fullTotal) + pagingHtml + receiptHtml
     + '<div data-block="status" hidden></div>' + emptyIndex
     + treeCard(nodes) + similarCard(groups) + formPanel() + actionsBar(env, ctx);
   return fillTemplate(template, content);

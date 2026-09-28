@@ -5,16 +5,32 @@
 import type { HomeDb } from '../fetch/db.js';
 import { getItemById, listAllTags, mergeTags, listCategories } from '../fetch/index.js';
 import { fail } from '../shared/fail.js';
-import { asInt } from '../shared/params.js';
+import { asInt, asLimit, asQueryString } from '../shared/params.js';
 import { buildTagList, buildReceipt } from '../render/index.js';
+
+// #928 分页上限：缺省 100（实测 100 标签族页约 141KB，300 标签约 194KB，均 <256KB）；
+// 最大 300（再大复制区三拷贝必超）。只住本能力，位置分页另住 space。
+const TAG_QUERY_DEFAULT_LIMIT = 100;
+const TAG_QUERY_MAX_LIMIT = 300;
 
 export function runTagQuery(params: Record<string, unknown>, handle: HomeDb): unknown {
   const kind = (params.kind as string | undefined) ?? 'tags';
+  const limit = asLimit(params.limit, 'limit', TAG_QUERY_DEFAULT_LIMIT, 1, TAG_QUERY_MAX_LIMIT);
+  const q = asQueryString(params.q, 'q');
   if (kind === 'categories' || kind === 'category') {
     const cats = listCategories(handle);
-    return buildTagList([], cats);
+    const filtered = q === undefined
+      ? cats
+      : cats.filter((c) => c.name.includes(q) || c.name.toLowerCase().includes(q.toLowerCase()));
+    const sliced = filtered.slice(0, limit);
+    return buildTagList([], sliced, filtered.length);
   }
-  return buildTagList(listAllTags(handle));
+  const all = listAllTags(handle);
+  const filtered = q === undefined
+    ? all
+    : all.filter((t) => t.tag.includes(q) || t.tag.toLowerCase().includes(q.toLowerCase()));
+  const sliced = filtered.slice(0, limit);
+  return buildTagList(sliced, undefined, filtered.length);
 }
 
 export interface TagStat {

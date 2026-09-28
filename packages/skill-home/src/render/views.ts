@@ -51,10 +51,11 @@ export function buildReceipt(message: string, fields?: readonly { readonly k: st
     : { ok: true, message, detail: { fields } };
 }
 
-export function buildTagList(tags: { tag: string; count: number }[], categories?: { id: number; name: string }[]): { items: unknown[]; total: number } {
+export function buildTagList(tags: { tag: string; count: number }[], categories?: { id: number; name: string }[], total?: number): { items: unknown[]; total: number } {
   const items: unknown[] = tags.map((t) => ({ name: t.tag, count: t.count }));
   if (categories) for (const c of categories) items.push({ name: '分类:' + c.name, count: c.id });
-  return { items, total: items.length };
+  // #928 分页：total 允许大于本页行数（全量总数），缺省仍为本页行数（旧调用方同形）。
+  return { items, total: total ?? items.length };
 }
 
 export function buildInventoryRecords(rows: { id: number; scope: string; total: number }[]): { items: unknown[]; total: number } {

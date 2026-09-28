@@ -122,20 +122,39 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     : [];
   // #864 加厚：逐标签明细、未使用清单、相似度数值（无 detail 回退旧破折号）。
   const det = detailOf(env);
-  const tagRows: { name: string; items: string; uses: string }[] = Array.isArray(det.tags)
+  // #928 查询态（home.tag.query list 形：无 message，有 items/total）：此前回退破折号占位，
+  // 本页明明拿着 5738 行却一个不印，还背着 1.56MB 复制区。本分支把本页行写真（用过次数查询不算，如实写“—”）。
+  const rawList = env.data as { message?: unknown; items?: unknown; total?: unknown };
+  const isListQuery = !Array.isArray((det as { tags?: unknown }).tags)
+    && Array.isArray(rawList.items) && typeof rawList.message !== 'string';
+  const listItems = isListQuery
+    ? (rawList.items as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r))
+    : [];
+  const listTotal = typeof rawList.total === 'number' ? (rawList.total as number) : listItems.length;
+  let tagRows: { name: string; items: string; uses: string }[] = Array.isArray(det.tags)
     ? (det.tags as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => ({
       name: String(r.name ?? ''), items: String(r.items ?? ''), uses: String(r.uses ?? ''),
     }))
     : [];
-  const hasTagDetail = Array.isArray(det.tags);
+  let hasTagDetail = Array.isArray(det.tags);
+  if (isListQuery) {
+    tagRows = listItems.map((r) => ({
+      name: String(r.name ?? ''), items: String((r as { count?: unknown }).count ?? ''), uses: '—',
+    }));
+    hasTagDetail = true;
+  }
   const unusedNames: string[] = Array.isArray(det.unused)
     ? (det.unused as unknown[]).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r)).map((r) => String(r.name ?? '')).filter((s) => s !== '')
     : [];
   const hasUnusedDetail = Array.isArray(det.unused);
   // #817（⑤文案不冗余）：导语只说本页总数（没有明细才回退回执原文），「详情走 查标签」那类内部词退场；
   // 与同族的 category_manage 同款。
-  const leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签'
+  // #928 查询态截断必须显式：total 为筛后全量，tagRows 为本页行，全量>本页即写清“本页前 Y 个＋还有 N 个＋怎么捞剩下”。
+  let leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签'
     : (hasTagDetail ? '共 ' + tagRows.length + ' 个标签' : visibleMsg(msg));
+  if (isListQuery && listTotal > tagRows.length) {
+    leadText = '共' + listTotal + '个标签，本页前' + tagRows.length + '个（按件数排序）';
+  }
   const pairSims: (number | null)[] = pairs.map((_, i) => {
     const pd = Array.isArray(det.pairs) ? (det.pairs as unknown[])[i] : null;
     if (pd && typeof pd === 'object' && !Array.isArray(pd) && typeof (pd as Record<string, unknown>).similarity === 'number') {
@@ -156,12 +175,17 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
     const unusedBlock = !hasUnusedDetail
       ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
+        + (isListQuery ? '<p class="fp-note">用过次数与闲置统计走管标签总览看全量。</p>' : '')
       : (unusedNames.length
         // #817（⑤文案不冗余）：闲置标签折成一行名单，不再逐行重复「闲置」这个左列词。
         ? '<p class="fp-v">闲置：' + unusedNames.map((n) => esc(n)).join('、') + '</p>'
         : '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>');
+    // #928 查询态分页说明（截断显式，不静默丢；查询不算 uses，如实写“—”已在行里）。
+    const pagingNote = isListQuery && listTotal > tagRows.length
+      ? '<p class="fp-note">还有' + (listTotal - tagRows.length) + '个没显示：加 q 筛关键词、limit 翻页（最大300）。</p>'
+      : '';
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
-      + overviewRows + '</section>'
+      + overviewRows + pagingNote + '</section>'
       + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
       + unusedBlock + '</section>';
   } else if (msg === '无相近标签') {
