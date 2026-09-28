@@ -197,3 +197,16 @@ export function versionLines(target: TargetInfo, snapshot: UpdateSnapshot | null
   else lines.push('技能包随插件（不单独查更新）');
   return lines;
 }
+
+/** 取数失败的日志细节（票 #982）：传输层返回的原文优先，否则返回原因码——短文本，不带用户数据。
+ *
+ * 住这里（不是取数钩子旁边）：本文件是面板纯函数与单测共用的那一份，判据可单测；
+ * 参数只取失败体的形状（`code`＋`details`），不 import 取数模块。 */
+export function loadFailureDetail(failure: {
+  readonly code: string;
+  readonly details: Record<string, unknown>;
+}): string {
+  const raw = (failure.details as { detail?: unknown } | null | undefined)?.detail;
+  if (typeof raw === 'string' && raw.length > 0) return failure.code + ' detail=' + raw.slice(0, 300);
+  return failure.code;
+}

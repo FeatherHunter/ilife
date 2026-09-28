@@ -13,7 +13,7 @@ import { checkTarget, installAbsent, loadTargets, updateInstalled } from './upda
 import type { CallFace, CallFailure } from './update-client.js';
 import { LOAD_RETRY_MS, reasonText } from './update-contract.js';
 import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
-import { cardActionOf, isAbsent, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
+import { cardActionOf, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -249,14 +249,6 @@ const IDLE: UpdateRowState = { phase: 'idle', outcome: null, failure: null };
  * - act 入口有忙直接返回（有忙拒 update-busy 且不改 rows，含同家第二点）；
  * - 每行各自显示（patch 只写本家 key），题头不汇总排队数。
  */
-/** 取数失败的日志细节（票 #982）：传输层抛错的原文优先，否则回原因码——短文本，不带用户数据。 */
-function loadFailureDetail(failure: CallFailure): string {
-  const details = failure.details as { detail?: unknown } | null | undefined;
-  const raw = details?.detail;
-  if (typeof raw === 'string' && raw.length > 0) return failure.code + ' detail=' + raw.slice(0, 300);
-  return failure.code;
-}
-
 export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [targets, setTargets] = React.useState<readonly TargetInfo[]>([]);
   const [rows, setRows] = React.useState<Record<string, UpdateRowState>>({});
@@ -297,17 +289,22 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
    * 进度在屏上时不断进度（#980）：空表保旧表，非空表把批量中缺失的旧目标追加到表尾——
    * 否则可见行计算短暂为空或缺键，整块闪掉如重载。
    *
-   * 首帧失败要退（票 #982）：进面板那一次抛错（宿主路由还没就绪）不再直接粘住红字，
-   * 按退避表重试；次次失败才印红，并把传输层细节打到 `[dsh-life-pack]` 前缀的日志里——
-   * 面板教人去日志里找的那一行，之前在这里根本不存在。 */
-  const reload = React.useCallback(async () => {
-    // 有界重试（票 #982）：等待次数以退避表长度为上限——挂载那一次取数失败的重试，
-    // 成功即停、次次失败收尾，不是数据轮询；卸载清理见下面的 effect。
+   * 首帧失败重试（票 #982）：挂载时首次传输失败（宿主路由尚未就绪）不再直接进入错误态，
+   * 只在挂载那一次按退避表重试；装后重取走单次（此前刚成功调用过宿主，不必等）。
+   * 重试用尽仍失败才显示红色错误行，并把传输层细节打到 `[dsh-life-pack]` 前缀的日志里——
+   * 面板指引用户去日志里找的那一行，此前在这里从未输出过（浏览器侧只能打到控制台）。
+   *
+   * 已超线，需要根据规则进行重构：本文件改前约 747 行（本包告警线 350 行），本次 #982 增加约 60 行
+   * （重试等待、卸载清理、失败日志）。暂不拆分——拆分面板文件（取数、行渲染、浮层、缺席卡）是独立重构，
+   * 与本次修复无关；下轮单独立项。 */
+  const reload = React.useCallback(async (withRetry: boolean) => {
+    // 有界重试（票 #982）：等待次数以退避表长度为上限——挂载时首次取数失败后的重试，
+    // 首次成功即停止、全部失败即返回，不是数据轮询；卸载清理见下面的 effect。
     let tries = 0;
     const sleep = (ms: number): Promise<void> =>
       new Promise((resolve) => {
         tries += 1;
-        // 退避表之外的等待不排（正常走不到：取数循环本就以同一张表为界）——双保险，不断轮询。
+        // 退避表之外的等待直接跳过（正常走不到：取数循环本就以同一张表为界），不形成轮询。
         if (tries >= LOAD_RETRY_MS.length + 1) {
           resolve();
           return;
@@ -319,7 +316,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
         retryTimers.current.push(timer);
       });
     const loaded = await loadTargets(getCall(), {
-      delays: LOAD_RETRY_MS,
+      delays: withRetry ? LOAD_RETRY_MS : [],
       sleep,
       isAlive: () => alive.current,
     });
@@ -338,7 +335,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     }
   }, [getCall]);
   React.useEffect(() => {
-    void reload();
+    void reload(true);
   }, [reload]);
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
     setRows((previous) => ({ ...previous, [key]: next }));
@@ -390,7 +387,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           getRow: (key) => rowsRef.current[key],
         });
         // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变。
-        await reload();
+        await reload(false);
       } finally {
         updatingAllRef.current = false;
         if (alive.current) setUpdatingAll(false);
@@ -437,7 +434,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
           // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
           // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
-          await reload();
+          await reload(false);
           return;
         }
         patch(target.key, {

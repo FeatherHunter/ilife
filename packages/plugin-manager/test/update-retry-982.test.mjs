@@ -1,10 +1,11 @@
 // 票 #982 自证回路：更新目标表挂载加载的有限重试（全用假传输口，不碰真机）。
-// 缺陷：进面板那一次取数抛错（宿主路由还没就绪），红字粘住整个会话；
-// 本件钉：瞬时失败重试后转绿、持续失败保留最后一次失败、卸载即停、退避有界，且默认仍是单次（旧行为不变）。
+// 缺陷：进面板那一次取数失败（宿主路由尚未就绪），错误态常驻整个会话；
+// 本件钉：瞬时失败重试后恢复正常、持续失败保留最后一次失败、卸载即停、退避有界，且默认仍是单次（旧行为不变）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { LOAD_RETRY_MS } from '../dist/update-contract.js';
 import { loadTargets } from '../dist/update-client.js';
+import { loadFailureDetail } from '../dist/update-view.js';
 
 /** 按剧本走的假传输口：Error 即抛（模拟路由未就绪），否则回包。 */
 const scriptCall = (seen, steps) => async () => {
@@ -37,14 +38,14 @@ describe('#982 首帧加载重试', () => {
     assert.equal(out.ok, false);
     assert.equal(seen.calls, 1);
   });
-  it('首次成功不重试、不睡觉', async () => {
+  it('首次成功不重试、不等待', async () => {
     const seen = { calls: 0, sleeps: [] };
     const out = await loadTargets(scriptCall(seen, [okEnvelope()]), { delays: [5, 10], sleep: fakeSleep(seen) });
     assert.equal(out.ok, true);
     assert.equal(seen.calls, 1);
     assert.deepEqual(seen.sleeps, []);
   });
-  it('抛一次再成功：转绿，只睡第一档', async () => {
+  it('抛一次再成功：恢复正常，只等待第一档', async () => {
     const seen = { calls: 0, sleeps: [] };
     const out = await loadTargets(scriptCall(seen, [notRegistered(), okEnvelope()]), {
       delays: [5, 10],
@@ -54,7 +55,7 @@ describe('#982 首帧加载重试', () => {
     assert.equal(seen.calls, 2);
     assert.deepEqual(seen.sleeps, [5]);
   });
-  it('一直抛：保留最后一次失败，睡满每一档', async () => {
+  it('一直抛：保留最后一次失败，等待完每一档', async () => {
     const seen = { calls: 0, sleeps: [] };
     const out = await loadTargets(scriptCall(seen, [notRegistered()]), {
       delays: [5, 10],
@@ -65,7 +66,7 @@ describe('#982 首帧加载重试', () => {
     assert.equal(seen.calls, 3);
     assert.deepEqual(seen.sleeps, [5, 10]);
   });
-  it('中途卸载即停：不再打下一通电话', async () => {
+  it('中途卸载即停：不再发起下一次调用', async () => {
     const seen = { calls: 0, sleeps: [] };
     const out = await loadTargets(scriptCall(seen, [notRegistered(), okEnvelope()]), {
       delays: [5, 10],
@@ -76,7 +77,7 @@ describe('#982 首帧加载重试', () => {
     assert.equal(seen.calls, 1);
     assert.deepEqual(seen.sleeps, []);
   });
-  it('第一次失败后卸载：睡过也不再试', async () => {
+  it('第一次失败后卸载：等待后也不再试', async () => {
     const seen = { calls: 0, sleeps: [] };
     let alive = true;
     const sleepAndDie = (ms) => {
@@ -92,5 +93,23 @@ describe('#982 首帧加载重试', () => {
     assert.equal(out.ok, false);
     assert.equal(seen.calls, 1);
     assert.deepEqual(seen.sleeps, [5]);
+  });
+});
+
+describe('#982 失败日志细节', () => {
+  it('传输层原文优先：带原因码前缀', () => {
+    assert.equal(
+      loadFailureDetail({ ok: false, code: 'manager-unreachable', message: 'x', details: { detail: 'route gone' }, manual: null }),
+      'manager-unreachable detail=route gone',
+    );
+  });
+  it('无原文回退原因码；超长截断', () => {
+    assert.equal(
+      loadFailureDetail({ ok: false, code: 'internal', message: 'x', details: {}, manual: null }),
+      'internal',
+    );
+    const long = 'e'.repeat(500);
+    const text = loadFailureDetail({ ok: false, code: 'manager-unreachable', message: 'x', details: { detail: long }, manual: null });
+    assert.ok(text.length <= 'manager-unreachable detail='.length + 300, '日志细节必须截断');
   });
 });

@@ -79,9 +79,9 @@ async function callManager<T>(call: CallFace | null, method: string, payload: Re
 
 /** 取七个更新目标的表（宿主转交更新包的三个电话名与版本行，面板不写死任何电话名）。
  *
- * 重试口（票 #982）：不给即单次（与旧行为一致）；给 `delays` 即按退避重试——
- * 进面板那一次抛错不再直接粘住红字。`sleep`／`isAlive` 可注入（测试与卸载清理用），
- * 缺省走本模块同形的等待与恒真。首个成功即回，否则回最后一次失败。 */
+ * 重试参数（票 #982）：缺省单次（与旧行为一致）；给 `delays` 即按退避重试——
+ * 挂载时首次传输失败不再直接进入错误态。`sleep`／`isAlive` 可注入（测试与卸载清理用），
+ * 缺省走本模块同形的等待与恒真。首次成功即返回，否则返回最后一次失败。 */
 export async function loadTargets(
   call: CallFace | null,
   retry?: {
