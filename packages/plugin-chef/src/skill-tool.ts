@@ -22,7 +22,8 @@ export const SKILL_TOOL_NAME = 'run_chef_command' as const;
 const TOOL_DESCRIPTION =
   '运行私家大厨技能的唯一出口（argv+JSON+exit），返回 envelope JSON。'
   + '写完／看完私家大厨数据的唯一途径；不经 shell、不依赖 PATH。'
-  + 'key 例：chef.help.lookup（私家大厨HELP）、chef.recipe.view（看菜谱）。';
+  + 'key 例：chef.help.lookup（私家大厨HELP）、chef.recipe.view（看菜谱）。'
+  + '如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。';
 
 /** 技能包 `package.json` 的 `bin` 声明里，唯一出口那一条的名字后缀。 */
 const EXIT_BIN_SUFFIX = '-cmd-read';

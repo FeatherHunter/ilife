@@ -22,7 +22,8 @@ export const SKILL_TOOL_NAME = 'run_memo_command' as const;
 const TOOL_DESCRIPTION =
   '运行备忘录技能的唯一出口（argv+JSON+exit），返回 envelope JSON。'
   + '写完／看完备忘录数据的唯一途径；不经 shell、不依赖 PATH。'
-  + 'key 例：memo.help.lookup（备忘录HELP）、memo.search（搜笔记）。';
+  + 'key 例：memo.help.lookup（备忘录HELP）、memo.search（搜笔记）。'
+  + '如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。';
 
 /** 技能包 `package.json` 的 `bin` 声明里，唯一出口那一条的名字后缀。 */
 const EXIT_BIN_SUFFIX = '-cmd-read';

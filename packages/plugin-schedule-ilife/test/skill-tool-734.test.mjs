@@ -111,4 +111,12 @@ describe('#734 agent 工具：技能唯一出口的宿主调用通道', () => {
     await assert.rejects(() => tool.execute({}), /缺 key/);
     await assert.rejects(() => tool.execute({ key: 'fixture.fail' }), /exit=4.*缺失阻断/s);
   });
+
+  it('#983 工具描述含交付口径：有文件地址就交+贴地址，无就不编', () => {
+    const tool = createSkillTool({ entry: () => fixtureEntry, execPath: () => process.execPath });
+    assert.ok(tool.description.includes('如果这次带了个文件地址'), '描述须含交付口径前半');
+    assert.ok(tool.description.includes('就把文件交给用户，同时贴出地址'), '描述须写交文件+贴地址');
+    assert.ok(tool.description.includes('如果没带文件'), '描述须含无文件分支');
+    assert.ok(tool.description.includes('不要编造文件'), '描述须禁编造文件');
+  });
 });
