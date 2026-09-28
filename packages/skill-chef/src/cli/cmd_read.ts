@@ -5,13 +5,13 @@
 // 取数（#839 起按域落位，以各域签名为准）：开闭库与多域查询住 `fetch/db.ts`；
 // 单域独占的取数住各域 run（search／history／shopping／data 内；旧址由 `fetch/index.ts` 转出）。
 // 口径：policy WriteOp（add/update/deprecate）+ RecipeOp（add/update/discard/add-ingredient/add-step，CLI 兼容 discard=deprecate）；queryHistory 无参返全量；buildShoppingList 合并行含 optional/category 标记（住 shopping）。
-import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import {
   ChefFetchError, ChefPolicyError,
   openChefDb, closeChefDb,
 } from '../fetch/index.js';
-import { resolveDbPath, resolveDbDir, dbFilename } from '../fetch/paths.js';
+import { resolveDbPath, resolveDbDir, resolveSceneDir, dbFilename } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
@@ -27,6 +27,7 @@ import {
   buildHelpLookup, buildChefHelpDelivery, buildChefLookupLanding, deliverChefHelp,
 } from '../help/index.js';
 import type { ChefHtmlDelivery, HtmlLanding } from '../help/index.js';
+import { chefPageFor, pageStemFor } from '../delivery/naming.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 // #839 · 各域处理经能力门进入（入口走公开接口，不直引域内部件）。
 // #963 · 数据族两条程序面键同走本域能力门（`runDataSchema`／`runChefDataQuery`，只读、不产文件）。
@@ -229,11 +230,35 @@ async function main() {
         html,
         ...(help.deliver.reuseMs === undefined ? {} : { reuseMs: help.deliver.reuseMs }),
       });
-    } else if (o.html) {
-      const html = renderEnvelopeHtml(env);
+    } else if (o.key === 'chef.help.lookup') {
+      // HELP 现找（q）：只回命中，不缺省落页（既有语义）；给了 --html 才逐字覆盖写 section，不回 delivery。
+      if (o.html) {
+        const html = renderEnvelopeHtml(env);
+        assertHtmlSize(html);
+        try { writeFileSync(o.html, html, 'utf8'); }
+        catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
+      }
+    } else if ((env as { shape?: string }).shape === 'resultset') {
+      // 程序面（`chef.data.schema`／`chef.data.query`，无唤醒词）：不缺省落页、不回 delivery（照饼干 #953）。
+      // 显式 --html 也不接（resultset 无整页形态，落了也是错页）。
+    } else {
+      // #985 · 非 HELP 缺省落整页（照饼干 #905 形状）：同一份 html，两路只差落点；
+      // `--html` 退化成显式覆盖写。有专壳走专壳（`templates/<key>.html`），无专壳的键
+      // （relation/setup/data 系）走最小整页壳过渡，落点 root＝sceneDir＋域中文名。
+      const section = renderEnvelopeHtml(env);
+      let html: string;
+      try {
+        html = fillTemplate(loadTemplate(templateFor(o.key as string)), section);
+      } catch {
+        html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>私家大厨</title></head><body><div class="page"><p class="cmd">chef-cmd-read ' + o.key + '</p>' + section + '</div></body></html>';
+      }
       assertHtmlSize(html);
-      try { writeFileSync(o.html, html, 'utf8'); }
-      catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
+      const page = chefPageFor(o.key as string, params);
+      delivery = deliverChefHelp({
+        explicit: o.html,
+        target: { dir: join(resolveSceneDir(), page.domain), stem: pageStemFor(page) },
+        html,
+      });
     }
   } catch (e) {
     if (e instanceof ChefFetchError) fail(4, '取数失败：' + e.message);
