@@ -40,11 +40,27 @@ export function runStatsOverview(params: Record<string, unknown>, handle: HomeDb
   const inv = inventoryDetail(handle, 20);
   const latest = listInventoryRecords(handle, 1)[0] as Record<string, unknown> | undefined;
   metrics.records = inv.total;
+  // #916 连带：老形状无 location/total/missing/extra 列，按列名自适应（口径不动，只换列名；页面不读本对象，见 inventory_stat.ts）。
   const inventory = latest ? {
-    scope: String(latest.scope ?? ''), location: String(latest.location ?? ''), date: String(latest.created_at ?? ''),
-    total: Number(latest.total ?? 0), missing: Number(latest.missing ?? 0), extra: Number(latest.extra ?? 0),
+    scope: String(latest.scope ?? ''), location: String((latest.location ?? '') as unknown),
+    date: String((latest.occurred_at ?? latest.created_at ?? '') as unknown),
+    total: (() => {
+      try {
+        const raw = latest.detail_json;
+        if (typeof raw === 'string' && raw.trim() !== '' && raw.trim() !== '[]') {
+          const d = JSON.parse(raw) as { total?: unknown };
+          if (typeof d.total === 'number' && Number.isInteger(d.total)) return d.total;
+        }
+      } catch { /* 按合计 */ }
+      if (typeof latest.total === 'number') return latest.total;
+      return (Number(latest.missing_cnt ?? latest.missing ?? 0) || 0)
+        + (Number(latest.extra_cnt ?? latest.extra ?? 0) || 0)
+        + (Number(latest.diff_cnt ?? 0) || 0) + (Number(latest.pending_cnt ?? 0) || 0);
+    })(),
+    missing: Number(latest.missing_cnt ?? latest.missing ?? 0) || 0,
+    extra: Number(latest.extra_cnt ?? latest.extra ?? 0) || 0,
   } : null;
-  // 完成率：状态列在库时才给（新库无 status 列 → null，页面照实标待补，不编数）。
+  // 完成率：状态列在库时才给（无 status 列 → null，页面照实标待补，不编数；#916 起新造库即老形状，恒有 status）。
   const done = inv.rows.filter((r) => r.status === '已完成').length;
   const completion = inv.rows.some((r) => r.status !== null)
     ? { done, total: inv.total, pct: inv.total ? Math.round((done * 100) / inv.total) : 0 }

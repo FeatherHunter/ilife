@@ -134,9 +134,11 @@ export function openHomeDb(dbPath: string): HomeDb {
       event TEXT NOT NULL, detail TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS inventory_records (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, scope TEXT NOT NULL DEFAULT 'all', location TEXT,
-      total INTEGER NOT NULL DEFAULT 0, missing INTEGER NOT NULL DEFAULT 0, extra INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      id INTEGER PRIMARY KEY AUTOINCREMENT, scope TEXT NOT NULL,
+      occurred_at TIMESTAMP NOT NULL, missing_cnt INTEGER DEFAULT 0, extra_cnt INTEGER DEFAULT 0,
+      diff_cnt INTEGER DEFAULT 0, pending_cnt INTEGER DEFAULT 0,
+      detail_json TEXT NOT NULL DEFAULT '[]', status TEXT DEFAULT '进行中',
+      created_at TIMESTAMP NOT NULL
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS location_nodes (
       id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL UNIQUE,

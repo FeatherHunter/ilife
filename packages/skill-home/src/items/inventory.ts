@@ -11,13 +11,15 @@ import { buildReceipt, buildInventoryRecords } from '../render/index.js';
 export function runInventoryRound(params: Record<string, unknown>, handle: HomeDb): unknown {
   const op = (params.op as string | undefined) ?? 'round';
   if (op === 'round') {
-    const scope = String(params.scope ?? 'all');
+    const scopeRaw = String(params.scope ?? 'all');
     const loc = params.location !== undefined ? normalizeLocation(params.location) : null;
+    // #916：scope 存范围名（老库语义）。location 最具体时优先；all→全屋；location 无具体位置→按位置；其余原样（已是中文范围名）。
+    const scopeName = loc ? loc : scopeRaw === 'all' ? '全屋' : scopeRaw === 'location' ? '按位置' : scopeRaw.trim() === '' ? '全屋' : scopeRaw;
     let total = 0;
     if (loc) total = (handle.db.prepare('SELECT count(*) AS c FROM item_locations WHERE location LIKE ?').get(loc + '%') as { c: number }).c;
     else total = (handle.db.prepare('SELECT count(*) AS c FROM item_locations').get() as { c: number }).c;
-    const id = addInventoryRecord(handle, scope, loc, total);
-    return buildReceipt('已盘点：#' + id + ' ' + scope + ' 共 ' + total + ' 条位置记录');
+    const id = addInventoryRecord(handle, scopeName, { total });
+    return buildReceipt('已盘点：#' + id + ' ' + scopeName + ' 共 ' + total + ' 条位置记录');
   }
   if (op === 'resolve') {
     const rid = asInt(params.record_id ?? params.recordId ?? params.id, 'record_id');
@@ -35,5 +37,22 @@ export function runInventoryRound(params: Record<string, unknown>, handle: HomeD
 export function runInventoryRecords(params: Record<string, unknown>, handle: HomeDb): unknown {
   void params;
   const rows = listInventoryRecords(handle);
-  return buildInventoryRecords(rows.map((r) => ({ id: Number(r.id), scope: String(r.scope), total: Number(r.total) })));
+  // #916：老形状无 total 列。规模优先读 detail_json.total（round 落盘时带），否则按缺+多+异+待确认合计，兼容新形状遗留库的 total/missing/extra。
+  const totalOf = (r: Record<string, unknown>): number => {
+    try {
+      const raw = r.detail_json;
+      if (typeof raw === 'string' && raw.trim() !== '' && raw.trim() !== '[]') {
+        const d = JSON.parse(raw) as { total?: unknown };
+        if (typeof d.total === 'number' && Number.isInteger(d.total) && d.total >= 0) return d.total;
+      }
+    } catch { /* 非 JSON 即按合计 */ }
+    const legacy = r.total;
+    if (typeof legacy === 'number' && Number.isInteger(legacy)) return legacy;
+    const m = Number((r.missing_cnt ?? r.missing ?? 0) as unknown) || 0;
+    const e = Number((r.extra_cnt ?? r.extra ?? 0) as unknown) || 0;
+    const df = Number((r.diff_cnt ?? 0) as unknown) || 0;
+    const p = Number((r.pending_cnt ?? 0) as unknown) || 0;
+    return m + e + df + p;
+  };
+  return buildInventoryRecords(rows.map((r) => ({ id: Number(r.id), scope: String(r.scope), total: totalOf(r) })));
 }

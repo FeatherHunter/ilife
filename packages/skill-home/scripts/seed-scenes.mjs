@@ -275,16 +275,16 @@ async function seedAll(api) {
         db.prepare('INSERT INTO accounts (platform, username, encrypted_password, type) VALUES (?,?,?,?)').run(a.platform, a.user, enc, a.type);
       }
     }
-    // 盘点 3 条（all／客厅／卧室；第一条 Cohen missing/extra 模拟差异供 6-2）
+    // 盘点 3 条（#916 起照权威 DDL：scope 存范围名；第一条 missing_cnt/extra_cnt 模拟差异供 6-2）
     const invCount = Number(db.prepare('SELECT count(*) AS c FROM inventory_records').get().c);
     if (invCount < 3) {
       const totalAll = Number(db.prepare('SELECT count(*) AS c FROM item_locations').get().c);
       const totalLiving = Number(db.prepare("SELECT count(*) AS c FROM item_locations WHERE location LIKE '客厅/%'").get().c);
       const totalBed = Number(db.prepare("SELECT count(*) AS c FROM item_locations WHERE location LIKE '卧室/%'").get().c);
-      const id1 = api.addInventoryRecord(handle, 'all', null, totalAll);
-      api.addInventoryRecord(handle, 'location', '客厅', totalLiving);
-      api.addInventoryRecord(handle, 'location', '卧室', totalBed);
-      db.prepare('UPDATE inventory_records SET missing=2, extra=1 WHERE id=?').run(id1);
+      const id1 = api.addInventoryRecord(handle, '全屋', { total: totalAll });
+      api.addInventoryRecord(handle, '客厅', { total: totalLiving });
+      api.addInventoryRecord(handle, '卧室', { total: totalBed });
+      db.prepare('UPDATE inventory_records SET missing_cnt=2, extra_cnt=1 WHERE id=?').run(id1);
     }
     // 关联事件 3 条（3-7 落 `item_events.event='relate'`，detail 带关系类型；不断言之外的迁移）
     const relatePairs = [['手机充电器', '充电线', '配件'], ['电视遥控器', '电池5号', '配套'], ['白色运动鞋-鞋', '速干T恤-衣', '常用搭配']];

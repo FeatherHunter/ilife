@@ -15,9 +15,22 @@ function one(handle: HomeDb, sql: string, ...args: (string | number | null)[]): 
   catch (e) { throw new HomeFetchError('HOME_DB_UNREADABLE', '域表读取失败', { cause: e }); }
 }
 
-// ---- 盘点 ----
-export function addInventoryRecord(handle: HomeDb, scope: string, location: string | null, total: number): number {
-  run(handle, 'INSERT INTO inventory_records (scope, location, total) VALUES (?,?,?)', scope, location, total);
+// ---- 盘点（#916 起照老库权威 DDL：scope 存范围名，异/状态/完成率落库） ----
+export function addInventoryRecord(handle: HomeDb, scopeName: string, opts?: {
+  missingCnt?: number; extraCnt?: number; diffCnt?: number; pendingCnt?: number;
+  detailJson?: string; status?: string; total?: number;
+}): number {
+  const scope = scopeName.trim() === '' ? '全屋' : scopeName;
+  const missing = opts?.missingCnt ?? 0;
+  const extra = opts?.extraCnt ?? 0;
+  const diff = opts?.diffCnt ?? 0;
+  const pending = opts?.pendingCnt ?? 0;
+  const detail = opts?.detailJson ?? (opts?.total !== undefined ? JSON.stringify({ total: opts.total }) : '[]');
+  const status = opts?.status ?? '已完成';
+  run(handle, `INSERT INTO inventory_records
+    (scope, occurred_at, missing_cnt, extra_cnt, diff_cnt, pending_cnt, detail_json, status, created_at)
+    VALUES (?, datetime('now','localtime'), ?, ?, ?, ?, ?, ?, datetime('now','localtime'))`,
+    scope, missing, extra, diff, pending, detail, status);
   const r = one(handle, 'SELECT last_insert_rowid() AS id') as unknown as { id: number };
   return r.id;
 }

@@ -81,7 +81,7 @@ export function checkSpecs(seedDir) {
     },
     { commandCn: '照片墙', title: '浏览物品照片墙', want: 5, run: (h) => ({ n: count(h.db, "SELECT count(*) AS c FROM items WHERE photo IS NOT NULL AND photo<>''") }) },
     { commandCn: '盘点', title: '盘点核对', want: 3, run: (h, api) => ({ n: api.listInventoryRecords(h, 20).length }) },
-    { commandCn: '差异处理', title: '处理盘点差异', want: 1, run: (h) => ({ n: count(h.db, 'SELECT count(*) AS c FROM inventory_records WHERE missing+extra>0') }) },
+    { commandCn: '差异处理', title: '处理盘点差异', want: 1, run: (h) => ({ n: count(h.db, 'SELECT count(*) AS c FROM inventory_records WHERE missing_cnt+extra_cnt>0') }) },
     { commandCn: '盘点记录', title: '查看盘点记录', want: 3, run: (h, api) => ({ n: api.listInventoryRecords(h, 20).length }) },
     { commandCn: '搬家盘点', title: '搬家打包盘点', want: 10, run: (h) => ({ n: count(h.db, 'SELECT count(*) AS c FROM items') }) },
     { commandCn: '历史', title: '查看物品历史', want: 10, run: (h) => ({ n: count(h.db, 'SELECT count(*) AS c FROM item_events') }) },
