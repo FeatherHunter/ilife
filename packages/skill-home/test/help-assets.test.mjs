@@ -18,10 +18,10 @@ const pkgDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
 /** 仓内事实源摘要（重算：`node -e "…createHash('sha256').update(readFileSync('packages/skill-home/src/help/scenarios.yaml')).digest('hex')"`）。 */
-const YAML_SHA256 = '9b32b3a9592daadd0f646de80e9fab944e50b132b419e76cf21c201693a1cf61';
-const YAML_BYTES = 46849;
+const YAML_SHA256 = 'c84d9cfc93e7d76c2bbcbda797b1cd9daee9d4b78398ff858a8acdaa476df088';
+const YAML_BYTES = 62527;
 /** 生成物摘要（重算命令见 `src/help/helpAssets.ts` 头注释）——手改生成物即变红。 */
-const ASSET_SHA256 = '7c4d039002b68e9b6e001c0f8808389d93f68a9abfd4b8fb694d8d9a08387cfc';
+const ASSET_SHA256 = 'b1c7c50dcc824627590f787d2f4e122742df30f6d4358c36cb6182bfa4643a85';
 
 /** 期望形状（老骨架 9 域／30 二级组／73 场景，含联动 3 条登记位）：夹具自持，生成器改数不替它作证。 */
 const EXPECT_SHAPE = { domains: 9, subgroups: 30, scenes: 73, linkScenes: 3 };
@@ -428,5 +428,43 @@ describe('#188 居家管家内容资产', () => {
     }
     assert.equal(SRC_YAML.startsWith(PKG_DIR), true);
     assert.equal(OUT_TS.startsWith(PKG_DIR), true);
+  });
+
+  it('#978 新式锁：73 首行卡路里式＋无下划线＋124 字段 kind 全标注＋{{}}一一对应', () => {
+    const inPos = SCENES.filter((s) => s.prompt_template !== '');
+    assert.equal(inPos.length, 70, '在位 70 条');
+    for (const s of inPos) {
+      assert.ok(s.prompt_template.startsWith('请你加载技能 居家管家,执行唤醒词「' + s.wake_word + '」。'), s.id + ' 首行非卡路里式');
+      assert.equal(s.prompt_template.includes('____'), false, s.id + ' 含老占位 ____');
+      assert.equal(s.prompt_template.includes('(唤醒词:'), false, s.id + ' 含老首行');
+    }
+    const withFields = SCENES.filter((s) => s.editable_fields !== undefined);
+    assert.equal(withFields.length, 55, '带字段 55 场景');
+    let total = 0;
+    const kinds = {};
+    for (const s of withFields) {
+      assert.ok(s.editable_fields.length > 0, s.id + ' 字段空');
+      total += s.editable_fields.length;
+      const names = s.editable_fields.map((f) => f.name);
+      assert.equal(new Set(names).size, names.length, s.id + ' 字段名重复');
+      const holders = [...s.prompt_template.matchAll(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g)].map((m) => m[1]);
+      assert.deepEqual([...names].sort(), [...new Set(holders)].sort(), s.id + ' {{}} 与字段不一一对应');
+      for (const f of s.editable_fields) {
+        assert.equal(f.value, '', s.id + '.' + f.name + ' value 非空');
+        const kind = f.kind === undefined ? 'text' : f.kind;
+        kinds[kind] = (kinds[kind] || 0) + 1;
+        assert.ok(['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'].includes(kind), s.id + ' kind 非法');
+        if (kind === 'select') assert.ok(Array.isArray(f.options) && f.options.length > 0, s.id + '.' + f.name + ' select 缺 options');
+        else assert.equal(f.options, undefined, s.id + '.' + f.name + ' 非 select 带 options');
+        if (typeof f.required === 'boolean' && f.required === false) assert.ok(f.label.includes('选填'), s.id + '.' + f.name + ' 选填标签缺字样');
+      }
+    }
+    assert.equal(total, 124, '在位字段 124');
+    assert.equal(SCENES.filter((s) => s.prompt_template !== '' && s.editable_fields === undefined).length, 15, '零参 15 场景字段缺席');
+    // month/year 新 kind 在位（T2）
+    const allFields = withFields.flatMap((s) => s.editable_fields);
+    assert.ok(allFields.some((f) => f.kind === 'month' && f.name === 'month_ym'), '缺 month_ym');
+    assert.ok(allFields.some((f) => f.kind === 'year' && f.name === 'year_y'), '缺 year_y');
+    assert.deepEqual(kinds, { text: 82, number: 11, select: 19, date: 10, month: 1, year: 1 }, 'kind 分布与 kind-table 在位换算不符（text82/number11/select19/date10/month1/year1）');
   });
 });

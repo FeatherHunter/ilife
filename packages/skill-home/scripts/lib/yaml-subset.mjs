@@ -133,6 +133,10 @@ const DOMAIN_FIELDS = new Set(['key', 'name', 'icon', 'sm']);
 const SCENE_FIELDS = new Set([
   'id', 'domain', 'sub', 'wake_word', 'scenario_id', 'scenario_title',
   'dimensions', 'type', 'status', 'prompt', 'result', 'html', 'variants',
+  // #978 起：`editable_fields` 为行内 JSON 字符串（单引号包裹，内为 JSON 数组）。
+  // 单源仍是 `scenarios.yaml`；不引入嵌套块解析（`html:`／`variants:` 之外仍 fail-closed）。
+  // 跨行单引号标量由既有 `scanQuoted` 吃掉，生成器侧 `JSON.parse` 后按 kind 闭集校验。
+  'editable_fields',
 ]);
 
 /** 读老骨架 yaml → { version, domains, scenes }；认不出的写法一律抛错（fail-closed）。 */

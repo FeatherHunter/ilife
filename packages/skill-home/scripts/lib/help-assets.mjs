@@ -33,6 +33,13 @@ const EXPECT = { domains: 9, subgroups: 30, scenes: 73, linkScenes: 3 };
  *  `packages/base-render/assets/help-template.html:1698-1709`（`var TYPE_DEFAULT = {...}` 的 10 个键）。 */
 const TYPE_WORDS = ['采集', '查看', '结果', '向导', '批量', '校验', '选择', '过程', '回执', '录入'];
 
+/** #978 起：可编辑字段 kind 闭集＝共享契约 `packages/base-render/src/spec/help.ts:32`
+ *  的 8 项（text/number/select/date/week/month/year/time）；缺 kind 视为 text（向后兼容）。
+ *  `min/max/step` 仍仅 number（T2 定案）；`select` 的 `options` 必填非空；非 select 不许带 options。 */
+const KIND_SET = new Set(['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time']);
+const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const PLACEHOLDER_RE = /\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g;
+
 /** 分组 id ↔ 命令前缀（决策 2 细则：两套词的差异收在这一处）。
  *  取值口径＝`src/policy/wakewords.ts` 的 21 个 `HomeKey` 去掉末段后的命名空间；`home.help` 不入表（防自指）。 */
 const GROUP_COMMAND_PREFIXES = [
@@ -60,6 +67,9 @@ function buildGroups(doc) {
   const NEED = ['domain', 'sub', 'wake_word', 'scenario_id', 'scenario_title', 'type', 'status', 'prompt'];
   for (const s of doc.scenes) {
     for (const k of NEED) if (typeof s[k] !== 'string') throw new Error('场景记录缺字段 ' + k + '：' + JSON.stringify(s.scenario_id));
+    if (s.editable_fields !== undefined && typeof s.editable_fields !== 'string') {
+      throw new Error('场景 ' + s.scenario_id + ' 的 editable_fields 非行内 JSON 字符串');
+    }
     const g = byKey.get(s.domain);
     if (!g) throw new Error('场景 ' + s.scenario_id + ' 的域 ' + s.domain + ' 不在 domains 里');
     const labels = byLabel.get(g.id);
@@ -72,14 +82,20 @@ function buildGroups(doc) {
       throw new Error('域 ' + g.id + ' 的二级组 ' + s.sub + ' 出现两次且不相邻（老成组规则只认相邻）');
     }
     lastLabel.set(g.id, s.sub);
+    const isLink = g.id === 'link';
+    if (isLink && s.editable_fields !== undefined) {
+      throw new Error('场景 ' + s.scenario_id + ' 登记位不许带 editable_fields');
+    }
+    const fields = isLink ? undefined : parseEditableFields(s.scenario_id, s.editable_fields);
     sub.scenes.push({
       id: s.scenario_id,
       title: s.scenario_title,
       wake_word: s.wake_word,
       status: s.status,
       // 登记位：联动 3 条 prompt 不迁（HELP 不列、不建目录），故留空串。
-      prompt_template: g.id === 'link' ? '' : s.prompt,
+      prompt_template: isLink ? '' : s.prompt,
       types: sceneTypes(s.type),
+      ...(fields === undefined ? {} : { editable_fields: fields }),
     });
   }
   for (const g of groups) if (g.id === 'link') g.deprecated = true;
@@ -89,6 +105,87 @@ function buildGroups(doc) {
 /** `采集+回执` → `['采集', '回执']`（顺序照原文、去重保留首次出现）。 */
 function sceneTypes(raw) {
   return [...new Set(String(raw).split('+').map((x) => x.trim()).filter(Boolean))];
+}
+
+/** #978 起：`editable_fields` 行内 JSON 字符串 → 字段数组（fail-closed）。
+ *  - 缺席（undefined）→ undefined（零参场景：字段缺席非空数组，模板走无参数分支）；
+ *  - 在位 → 必为 JSON 数组，每项必含 name/label/value（串），hint/required/kind/options/min/max/step/placeholder 按契约校验；
+ *  - `value` 全 `""`（T1：默认值进 hint，不进复制文本）；`required` 与标签 `（选填）` 一致；
+ *  - `kind` 缺席视为 text；在位非法即抛（创作态拦，不降级——降级是模板运行态的事）。
+ */
+function parseEditableFields(scenarioId, raw) {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== 'string' || raw.trim() === '') throw new Error('场景 ' + scenarioId + ' 的 editable_fields 非行内 JSON 字符串');
+  let arr;
+  try {
+    arr = JSON.parse(raw);
+  } catch (e) {
+    throw new Error('场景 ' + scenarioId + ' 的 editable_fields 不是合法 JSON：' + String(e && e.message || e));
+  }
+  if (!Array.isArray(arr)) throw new Error('场景 ' + scenarioId + ' 的 editable_fields 不是数组');
+  const names = new Set();
+  for (const [i, f] of arr.entries()) {
+    const where = scenarioId + ' editable_fields[' + i + ']';
+    if (typeof f !== 'object' || f === null || Array.isArray(f)) throw new Error(where + ' 不是对象');
+    for (const k of ['name', 'label', 'value']) {
+      if (typeof f[k] !== 'string' || (k !== 'value' && f[k] === '')) throw new Error(where + ' 缺字段 ' + k);
+    }
+    if (!NAME_RE.test(f.name)) throw new Error(where + ' name 非 snake_case：' + f.name);
+    if (names.has(f.name)) throw new Error(where + ' name 重复：' + f.name);
+    names.add(f.name);
+    if (f.value !== '') throw new Error(where + ' value 非空（T1：默认值进 hint）：' + f.name);
+    if (f.hint !== undefined && typeof f.hint !== 'string') throw new Error(where + ' hint 非串');
+    if (f.required !== undefined && typeof f.required !== 'boolean') throw new Error(where + ' required 非布尔');
+    const kind = f.kind === undefined ? 'text' : f.kind;
+    if (!KIND_SET.has(kind)) throw new Error(where + ' kind 非法：' + String(f.kind));
+    if (kind === 'select') {
+      if (!Array.isArray(f.options) || f.options.length === 0) throw new Error(where + ' select 缺非空 options');
+      for (const o of f.options) {
+        if (typeof o !== 'string' || o === '') throw new Error(where + ' options 含空项');
+      }
+    } else if (f.options !== undefined) {
+      throw new Error(where + ' 非 select 不许带 options');
+    }
+    for (const k of ['min', 'max', 'step']) {
+      if (f[k] !== undefined && typeof f[k] !== 'string' && typeof f[k] !== 'number') {
+        throw new Error(where + ' ' + k + ' 非串/数');
+      }
+      if (f[k] !== undefined && kind !== 'number') throw new Error(where + ' ' + k + ' 仅 number 可带');
+    }
+    if (f.placeholder !== undefined && typeof f.placeholder !== 'string') throw new Error(where + ' placeholder 非串');
+    for (const k of Object.keys(f)) {
+      if (!['name', 'label', 'value', 'hint', 'required', 'kind', 'options', 'min', 'max', 'step', 'placeholder'].includes(k)) {
+        throw new Error(where + ' 未知键 ' + k);
+      }
+    }
+  }
+  return arr.map((f) => ({
+    name: f.name,
+    label: f.label,
+    value: '',
+    ...(f.hint === undefined ? {} : { hint: f.hint }),
+    ...(f.required === undefined ? {} : { required: f.required }),
+    ...(f.kind === undefined ? {} : { kind: f.kind }),
+    ...(f.options === undefined ? {} : { options: [...f.options] }),
+    ...(f.min === undefined ? {} : { min: f.min }),
+    ...(f.max === undefined ? {} : { max: f.max }),
+    ...(f.step === undefined ? {} : { step: f.step }),
+    ...(f.placeholder === undefined ? {} : { placeholder: f.placeholder }),
+  }));
+}
+
+/** 抽改后正文里的 `{{name}}`（去重保序）。 */
+function placeholderNames(tpl) {
+  const out = [];
+  const seen = new Set();
+  PLACEHOLDER_RE.lastIndex = 0;
+  for (const m of String(tpl).matchAll(PLACEHOLDER_RE)) {
+    if (!seen.has(m[1])) {
+      seen.add(m[1]);
+      out.push(m[1]);
+    }
+  }
+  return out;
 }
 
 /** 形状断言（fail-closed）：数量、三层 id 唯一、types 非空且在模板词表内、status 全场同值。 */
@@ -112,6 +209,22 @@ function assertShape(groups) {
     if (typeof s.prompt_template !== 'string') bad(s.id + ' 缺字段 prompt_template');
     if (!Array.isArray(s.types) || s.types.length === 0) bad(s.id + ' types 为空');
     for (const t of s.types) if (!words.has(t)) bad(s.id + ' 出现模板词表外的 types：' + t);
+    // #978：有字段时 `{{name}}` 与 `editable_fields[].name` 双向一一对应；登记位不许带字段。
+    if (s.prompt_template === '') {
+      if (s.editable_fields !== undefined) bad(s.id + ' 登记位不许带 editable_fields');
+    } else if (s.editable_fields !== undefined) {
+      if (!Array.isArray(s.editable_fields)) bad(s.id + ' editable_fields 非数组');
+      const names = s.editable_fields.map((f) => f.name);
+      if (new Set(names).size !== names.length) bad(s.id + ' editable_fields name 重复');
+      const holders = placeholderNames(s.prompt_template);
+      const a = [...names].sort().join(',');
+      const b = [...new Set(holders)].sort().join(',');
+      if (a !== b) bad(s.id + ' {{name}} 与字段名不一一对应：正文{' + holders.join(',') + '}≠字段{' + names.join(',') + '}');
+      for (const f of s.editable_fields) {
+        const kind = f.kind === undefined ? 'text' : f.kind;
+        if (!KIND_SET.has(kind)) bad(s.id + ' kind 非法：' + String(f.kind));
+      }
+    }
   }
   const st = new Set(scenes.map((s) => s.status));
   if (st.size !== 1) bad('status 不是全场同值：' + [...st].join('/'));
@@ -147,6 +260,19 @@ function renderAsset(groups, yamlText) {
   L.push(TYPE_WORDS.map((w) => "  | '" + w + "'").join('\n') + ';');
   L.push('');
   L.push('/** 场景：id 取老骨架 scenario_id；types 由老骨架 type 按 `+` 切开（顺序照原文、去重保留首次出现）。 */');
+  L.push('export interface HelpSceneEditableField {');
+  L.push('  name: string;');
+  L.push('  label: string;');
+  L.push('  value: string;');
+  L.push('  hint?: string;');
+  L.push('  required?: boolean;');
+  L.push("  kind?: 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time';");
+  L.push('  options?: readonly string[];');
+  L.push('  min?: string | number;');
+  L.push('  max?: string | number;');
+  L.push('  step?: string | number;');
+  L.push('  placeholder?: string;');
+  L.push('}');
   L.push('export interface HelpSceneAsset {');
   L.push('  id: string;');
   L.push('  title: string;');
@@ -154,6 +280,7 @@ function renderAsset(groups, yamlText) {
   L.push('  status: string;');
   L.push('  prompt_template: string;');
   L.push('  types: readonly HelpSceneType[];');
+  L.push('  editable_fields?: readonly HelpSceneEditableField[];');
   L.push('}');
   L.push('');
   L.push('/** 二级组：id ＝ `<域id>_<序数>`，label 取老骨架 sub。 */');
