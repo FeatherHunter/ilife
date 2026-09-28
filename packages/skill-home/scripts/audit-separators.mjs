@@ -250,7 +250,11 @@ function auditFile(path) {
   const ASCII_OK = /20\d\d-\d\d-\d\d|\d\d:\d\d|L1|L2|L3|HTML|\d+\.\d{2}/g;
   const FIXTURE_DATA = /本域无豁免夹具名/g;
   const copyLines = visibleLines(html.replace(/<pre[\s\S]*?<\/pre>/gi, '')
-    .replace(/<button[^>]*data-t="[^"]*"[\s\S]*?<\/button>/gi, ''));
+    .replace(/<button[^>]*data-t="[^"]*"[\s\S]*?<\/button>/gi, '')
+    // 紧凑复制区（#928）：菜单项无 data-t（载荷在同区 application/json 里，点取），
+    // 与标准项同为复制控件而非页面文案——上一条按 data-t 剥，本条按三格式键剥（仅 text/json/csv，
+    // 标准项早已被上一条剥走，本条只多吃紧凑项，不放宽其他英文）。
+    .replace(/<button[^>]*data-fmt="(?:text|json|csv)"[^>]*>[\s\S]*?<\/button>/gi, ''));
   const asciiBad = copyLines
     .filter((s) => !cellText.has(s))
     .map((s) => ({ line: s, rest: s.replace(ASCII_OK, '').replace(FIXTURE_DATA, '') }))

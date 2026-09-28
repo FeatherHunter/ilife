@@ -7,7 +7,7 @@
 // ② 复制文本 → `base-paint` 的 `buildDataText`／`buildLogText`；
 // ③ 复制运行时 → 页面模板 `<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs` 产出（见 `html.ts`）。
 //
-// 对外 3 个名字（铁律五≤5）：`homeCopyArea`／`homeCopyLog`／`homeNowStamp`。入参类型不导出，调用方传字面量即可。
+// 对外 4 个名字（铁律五≤5）：`homeCopyArea`／`homeCompactCopyArea`／`homeCopyLog`／`homeNowStamp`。入参类型不导出，调用方传字面量即可。
 // 数据位恒出三格式菜单（卡路里 `copyArea.ts:119-122` 定案口径）：`data` 在场即出「复制数据 ＋
 // 纯文本／JSON／CSV 三选一」，调用方不用声明开关；无 command 时只出单按钮，不留死按钮。
 import { renderCopyBlock, renderEmptyBlock } from 'base-paint/blocks';
@@ -15,6 +15,7 @@ import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, SerializableEnvelope } from 'base-paint';
 import type { Envelope } from 'base-link-core';
 import { DEFAULT_DB_FILENAME } from '../fetch/index.js';
+import { escapeHtml } from './html.js';
 
 /** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落占位。 */
 const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
@@ -104,6 +105,135 @@ export function homeCopyArea(input: HomeCopyAreaInput): string {
     ...(title === undefined ? {} : { title }),
     text: input.emptyText ?? COPY_EMPTY_TEXT,
   });
+}
+
+/** 紧凑复制区（#928，不开新票直接做）：与 `homeCopyArea` 同输入、同三格式、同日志。
+ *
+ *  唯一差别是**嵌入方式**：标准块把三份文本逐字塞进三个 `data-t` 属性（`"`→`&quot;` 6 倍罚分，
+ *  5738 标签页复制区 1.56MB）；紧凑块只把三份拼成一份 JSON 进 `<script type="application/json">`
+ *  （仅 `<`→`\u003c`，引号原样，约 1.0 倍），菜单项只带 `data-fmt` 键，点中才从 JSON 取数复制。
+ *  三份文本仍走 `formatsOf` 同一产出者（不重造口径），日志仍走 `buildLogText`。
+ *
+ *  外观与标准块同类名（对照 single source：`base-render/src/components/controls/action-bar.ts`
+ *  的 `copyMenuHtml`／`copyButtonHtml`／`renderActionBar`＋`spec/controls.ts` 的标签表；
+ *  漂移由测试锁：同信封渲染两块，类名与菜单键逐项对账）：开合沿用共用运行时（开合器原样带
+ *  `data-fmt-open`，本件不拦）；项点击由本件内联脚本捕获先行——shared 侧读不到 `data-t`
+ *  会拷空串，必须 `stopPropagation`。
+ *
+ *  一页只许一处（载荷 id 恒 `hmcp-data`）：id 写死才能跨进程逐字节确定
+ * （`family-delivery` 落盘对账才成立）。在用两处：`items/pages/tag_manage.ts`（列表态）、
+ *  `space/pages/location_manage.ts`（查询＋回执共用这一处装配）。 */
+export const HMCP_PAYLOAD_ID = 'hmcp-data';
+
+/** 标准块类名镜像（single source 见上；测试逐项对账，公共层改名即红）。 */
+const HMCP_CLASSES = {
+  section: 'ilife-block ilife-block-copy-block',
+  bar: 'ilife-action-bar',
+  row: 'ilife-action-row',
+  ghost: 'ilife-action-row-ghost',
+  ghostSingle: 'ilife-action-row-ghost-single',
+  menuWrap: 'ilife-copy-menu-wrap',
+  copyBtn: 'ilife-copy-btn',
+  copyBtnGhost: 'ilife-copy-btn-ghost',
+  menu: 'ilife-copy-menu',
+  menuOpen: 'ilife-copy-menu-open',
+  menuItem: 'ilife-copy-menu-item',
+  menuLabel: 'ilife-copy-menu-label',
+} as const;
+const HMCP_MENU_OPEN_ATTR = 'data-fmt-open';
+const HMCP_MENU_FMT_ATTR = 'data-fmt';
+const HMCP_ACTION_ID_ATTR = 'data-action-id';
+const HMCP_LOG_ACTION_ID = 'ilife-copy-log';
+const HMCP_FORMATS = [
+  { key: 'text', label: '纯文本' },
+  { key: 'json', label: 'JSON' },
+  { key: 'csv', label: 'CSV' },
+] as const;
+
+/** 载荷进 `<script>` 的唯一转义：`<`→`\u003c`（`</script` 与 `<!--` 即死；引号不过属性，原样）。 */
+function hmcpScriptJson(v: unknown): string {
+  return JSON.stringify(v).replace(/</g, '\\u003c');
+}
+
+function hmcpAttr(s: string): string {
+  return escapeHtml(s).replace(/"/g, '&quot;');
+}
+
+/** 项点击运行时（内联进页，无外部依赖）：捕获先行＋`stopPropagation`（见上），
+ *  剪贴板 API 不可用回落 textarea＋`execCommand`（与共用运行时同fallback），浮签反馈。 */
+function hmcpBinderJs(): string {
+  return '(function(){var s=document.getElementById(' + JSON.stringify(HMCP_PAYLOAD_ID)
+    + ');if(!s)return;var d=null;try{d=JSON.parse(s.textContent||s.innerText||"{}")}catch(e){return}'
+    + ';var sec=s.parentNode;if(!sec||!sec.addEventListener)return'
+    + ';sec.addEventListener("click",function(e){var t=e.target;var it=(t&&t.closest)?t.closest("["+'
+    + JSON.stringify(HMCP_MENU_FMT_ATTR) + ']"):null;if(!it||!sec.contains(it))return'
+    + ';if(it.getAttribute("data-t")!==null)return'
+    + ';e.stopPropagation();if(e.preventDefault)e.preventDefault()'
+    + ';var v=d[it.getAttribute(' + JSON.stringify(HMCP_MENU_FMT_ATTR) + ')];if(typeof v!=="string")return'
+    + ';var wrap=it.closest(".' + HMCP_CLASSES.menuWrap + '")'
+    + ';function done(){if(wrap){var m=wrap.querySelector(".' + HMCP_CLASSES.menu + '");'
+    + 'if(m)m.classList.remove("' + HMCP_CLASSES.menuOpen + '");'
+    + 'var o=wrap.querySelector("[' + HMCP_MENU_OPEN_ATTR + '=\\"1\\"]");'
+    + 'if(o)o.setAttribute("aria-expanded","false")}tip("已复制"+(it.textContent||"").trim())}'
+    + ';function tip(msg){try{var n=document.createElement("div");n.textContent=msg;'
+    + 'n.setAttribute("style","position:fixed;left:50%;bottom:24px;transform:translateX(-50%)'
+    + ';background:#1d1d1f;color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;z-index:9999");'
+    + 'document.body.appendChild(n);setTimeout(function(){if(n.parentNode)n.parentNode.removeChild(n)},1400)}catch(x){}}'
+    + ';try{var c=navigator.clipboard;if(c&&typeof c.writeText==="function"){var p=c.writeText(v);'
+    + 'if(p&&typeof p.then==="function"){p.then(done,function(){fb()});return}done();return}}catch(x){}fb()'
+    + ';function fb(){try{var ta=document.createElement("textarea");ta.value=v;'
+    + 'ta.style.cssText="position:fixed;left:-9999px;top:0;opacity:0";document.body.appendChild(ta);'
+    + 'ta.focus();ta.select();try{document.execCommand("copy")}catch(y){}document.body.removeChild(ta)}catch(z){}done()}'
+    + ';},true)})();';
+}
+
+/** 紧凑复制区：入参与 `homeCopyArea` 同形（`HomeCopyAreaInput`），产出见上。 */
+export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
+  const data = input.data;
+  const log = input.log;
+  const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
+  if (data === undefined && log === undefined) {
+    return renderEmptyBlock({
+      ...(title === undefined ? {} : { title }),
+      text: input.emptyText ?? COPY_EMPTY_TEXT,
+    });
+  }
+  const ghostCount = (data === undefined ? 0 : 1) + (log === undefined ? 0 : 1);
+  const ghostRowClass = HMCP_CLASSES.row + ' ' + HMCP_CLASSES.ghost
+    + (ghostCount === 1 ? ' ' + HMCP_CLASSES.ghostSingle : '');
+  const titleHtml = title === undefined ? '' : '<h2>' + escapeHtml(title) + '</h2>';
+  let ghostHtml = '';
+  if (data !== undefined) {
+    const f = formatsOf(data);
+    const payload = hmcpScriptJson({ text: f.text, json: f.json, csv: f.csv });
+    const items = HMCP_FORMATS.map((m) =>
+      '<button type="button" class="' + HMCP_CLASSES.menuItem + '" '
+      + HMCP_MENU_FMT_ATTR + '="' + m.key + '">'
+      + '<span class="' + HMCP_CLASSES.menuLabel + '">' + escapeHtml(m.label) + '</span></button>',
+    ).join('');
+    // 开合器与标准块逐字同形（开合沿用共用运行时）：标签＋aria＋类名一致，无 data-t。
+    ghostHtml += '<div class="' + HMCP_CLASSES.menuWrap + '">'
+      + '<button type="button" class="' + HMCP_CLASSES.copyBtn + ' ' + HMCP_CLASSES.copyBtnGhost + '" '
+      + HMCP_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false" '
+      + 'aria-label="' + hmcpAttr(COPY_TITLE_DUP_OF_BUTTON + '（点开选格式）') + '">'
+      + escapeHtml(COPY_TITLE_DUP_OF_BUTTON) + '</button>'
+      + '<div class="' + HMCP_CLASSES.menu + '" role="menu">' + items + '</div></div>'
+      + '<script type="application/json" id="' + HMCP_PAYLOAD_ID + '">' + payload + '</script>'
+      + '<script>' + hmcpBinderJs() + '</script>';
+  }
+  if (log !== undefined) {
+    // 日志位量小（约 1KB），沿用标准单按钮形态（`data-t`＋共用运行时复制），不另起机制。
+    const logText = buildLogText({
+      envelope: log.envelope as unknown as SerializableEnvelope,
+      ...(log.copyLog === undefined ? {} : { copyLog: log.copyLog }),
+    });
+    ghostHtml += '<button type="button" class="' + HMCP_CLASSES.copyBtn + ' ' + HMCP_CLASSES.copyBtnGhost + '" '
+      + HMCP_ACTION_ID_ATTR + '="' + HMCP_LOG_ACTION_ID + '" data-t="' + hmcpAttr(logText) + '">'
+      + escapeHtml('复制日志') + '</button>';
+  }
+  return '<section class="' + HMCP_CLASSES.section + '">' + titleHtml
+    + '<div class="' + HMCP_CLASSES.bar + '"><div class="' + ghostRowClass + '">'
+    + ghostHtml + '</div></div></section>';
 }
 
 /** 复制日志 2–6 段：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */

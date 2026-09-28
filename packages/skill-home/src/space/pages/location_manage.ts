@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'location_manage' as const;
 
@@ -149,10 +149,10 @@ function formPanel(): string {
 }
 
 function actionsBar(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
-  // 底部复制区走共用件（envelope 投影，三格式恒开）；表单面板的 fpCopy（复制提示词）是场景按钮，原样保留。
+  // 底部复制区走紧凑件（#928：本族节点量大，标准块三份 data-t 必超；紧凑块同三格式＋同日志，一份 JSON 点取）。
   return '<div class="actions" data-block="operations">'
     + '<span data-need="复制数据" hidden></span><span data-need="复制日志" hidden></span>'
-    + homeCopyArea({
+    + homeCompactCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
