@@ -166,7 +166,7 @@ function hmcpBinderJs(): string {
     + ');if(!s)return;var d=null;try{d=JSON.parse(s.textContent||s.innerText||"{}")}catch(e){return}'
     + ';var sec=s.parentNode;if(!sec||!sec.addEventListener)return'
     + ';sec.addEventListener("click",function(e){var t=e.target;var it=(t&&t.closest)?t.closest("["+'
-    + JSON.stringify(HMCP_MENU_FMT_ATTR) + ']"):null;if(!it||!sec.contains(it))return'
+    + JSON.stringify(HMCP_MENU_FMT_ATTR) + '+"]"):null;if(!it||!sec.contains(it))return'
     + ';if(it.getAttribute("data-t")!==null)return'
     + ';e.stopPropagation();if(e.preventDefault)e.preventDefault()'
     + ';var v=d[it.getAttribute(' + JSON.stringify(HMCP_MENU_FMT_ATTR) + ')];if(typeof v!=="string")return'

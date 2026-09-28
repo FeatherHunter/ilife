@@ -174,4 +174,16 @@ describe('#928 紧凑复制区（一份 JSON 点取，不走三份 data-t）', (
     assert.ok(html.includes('id="' + C.HMCP_PAYLOAD_ID + '"'), '位置页复制区未换紧凑');
     assert.ok(loc.delivery.bytes < MAX_BYTES, 'bytes=' + loc.delivery.bytes);
   });
+  it('内联脚本可编译（hmcp 系＋hmpp 系，字符串拼 JS 必须锁语法）', async () => {
+    const vm = await import('node:vm');
+    const env = bigEnv();
+    for (const html of [
+      R.homeCompactCopyArea({ data: { envelope: env } }),
+      R.paginateBlocks(['<p>a</p>', '<p>b</p>'], 1),
+    ]) {
+      const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+      assert.ok(scripts.length > 0, '内联脚本不在位');
+      for (const s of scripts) new vm.Script(s);
+    }
+  });
 });
