@@ -98,4 +98,21 @@ describe('#146 饼干记账 HELP 内容资产', () => {
     const sceneWords = new Set(WAKE_ASSETS.map((s) => s.wake_word));
     assert.deepEqual(HELP_WAKE_WORDS.filter((w) => sceneWords.has(w)), []);
   });
+
+  it('运行时复制零 {{}}：空值代入全落 ___（help-template.html:1796-1797 口径，#977 笔误回归）', () => {
+    const namesOf = (tpl) => [...tpl.matchAll(/\{\{([A-Za-z0-9_]+)\}\}/g)].map((m) => m[1]);
+    for (const s of WAKE_ASSETS) {
+      const names = namesOf(s.prompt_template);
+      const fields = s.editable_fields || [];
+      if (names.length === 0) {
+        assert.ok(fields.length === 0, s.id + ' 零参场景 editable_fields 应缺席非空数组');
+        continue;
+      }
+      assert.deepEqual(new Set(names), new Set(fields.map((f) => f.name)), s.id + ' 占位与字段双向一一对应');
+      let out = s.prompt_template;
+      for (const f of fields) out = out.split('{{' + f.name + '}}').join('___');
+      assert.ok(!out.includes('{{') && !out.includes('}}'), s.id + ' 空值复制串仍见 {{}}');
+      assert.ok(out.includes('___'), s.id + ' 空值复制串未落 ___');
+    }
+  });
 });
