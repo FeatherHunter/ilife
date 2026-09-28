@@ -77,8 +77,35 @@ async function callManager<T>(call: CallFace | null, method: string, payload: Re
   return failure(code, details);
 }
 
-/** 取七个更新目标的表（宿主转交更新包的三个电话名与版本行，面板不写死任何电话名）。 */
-export async function loadTargets(call: CallFace | null): Promise<CallOutcome<{ targets: TargetInfo[]; pollMs: number }>> {
+/** 取七个更新目标的表（宿主转交更新包的三个电话名与版本行，面板不写死任何电话名）。
+ *
+ * 重试口（票 #982）：不给即单次（与旧行为一致）；给 `delays` 即按退避重试——
+ * 进面板那一次抛错不再直接粘住红字。`sleep`／`isAlive` 可注入（测试与卸载清理用），
+ * 缺省走本模块同形的等待与恒真。首个成功即回，否则回最后一次失败。 */
+export async function loadTargets(
+  call: CallFace | null,
+  retry?: {
+    readonly delays?: readonly number[];
+    readonly sleep?: (ms: number) => Promise<void>;
+    readonly isAlive?: () => boolean;
+  },
+): Promise<CallOutcome<{ targets: TargetInfo[]; pollMs: number }>> {
+  const delays = retry?.delays ?? [];
+  const sleepFn = retry?.sleep ?? sleep;
+  const alive = retry?.isAlive ?? (() => true);
+  let last = await loadTargetsOnce(call);
+  for (let i = 0; i < delays.length && !last.ok; i += 1) {
+    if (!alive()) return last;
+    const wait = delays[i];
+    if (wait > 0) await sleepFn(wait);
+    if (!alive()) return last;
+    last = await loadTargetsOnce(call);
+  }
+  return last;
+}
+
+/** 取七个更新目标的表：单次（重试循环的每一步都是它）。 */
+async function loadTargetsOnce(call: CallFace | null): Promise<CallOutcome<{ targets: TargetInfo[]; pollMs: number }>> {
   const out = await callManager<{ targets?: TargetInfo[]; pollMs?: number }>(call, MANAGER_ACTIONS.targets, {});
   if (!out.ok) return out;
   const targets = Array.isArray(out.value?.targets) ? out.value.targets : [];

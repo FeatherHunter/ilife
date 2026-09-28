@@ -71,6 +71,13 @@ export const MANAGER_ACTIONS = {
  * 归一化时也认它——面板侧不许 import 宿主半（会把 node 内建带进浏览器束）。 */
 export const VERSION_UNKNOWN = 'unknown' as const;
 
+/** 挂载取数失败的退避重试表（票 #982，更新目标表用）。
+ *
+ * 一处定义：与版本胶囊的重试同形（`client.ts` 的退避三次）——进面板那一次取数抛错
+ * （宿主路由还没就绪），红字会粘住整个会话；单次直返是当时的缺口。
+ * 次数有界、调用方负责卸载清理（见 `update-panel.ts` 的取数），不是无界轮询。 */
+export const LOAD_RETRY_MS: readonly number[] = [1000, 3000, 8000];
+
 /** 更新包默认官方源（`config.ts:20`，总管侧拼手工命令时用同一个值）。 */
 export const DEFAULT_REGISTRY = 'https://registry.npmjs.org/' as const;
 

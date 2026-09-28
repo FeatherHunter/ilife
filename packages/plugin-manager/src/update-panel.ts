@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
-import { reasonText } from './update-contract.js';
+import { LOAD_RETRY_MS, reasonText } from './update-contract.js';
 import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
 import { cardActionOf, isAbsent, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
@@ -249,6 +249,14 @@ const IDLE: UpdateRowState = { phase: 'idle', outcome: null, failure: null };
  * - act 入口有忙直接返回（有忙拒 update-busy 且不改 rows，含同家第二点）；
  * - 每行各自显示（patch 只写本家 key），题头不汇总排队数。
  */
+/** 取数失败的日志细节（票 #982）：传输层抛错的原文优先，否则回原因码——短文本，不带用户数据。 */
+function loadFailureDetail(failure: CallFailure): string {
+  const details = failure.details as { detail?: unknown } | null | undefined;
+  const raw = details?.detail;
+  if (typeof raw === 'string' && raw.length > 0) return failure.code + ' detail=' + raw.slice(0, 300);
+  return failure.code;
+}
+
 export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [targets, setTargets] = React.useState<readonly TargetInfo[]>([]);
   const [rows, setRows] = React.useState<Record<string, UpdateRowState>>({});
@@ -275,12 +283,48 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const checkingRef = React.useRef(false);
   checkingRef.current = checking;
   const updatingAllRef = React.useRef(false);
+  // 取数退避的计时器登记（票 #982）：卸载即清，不留挂起的等待；次数本身有界（退避表定长）。
+  const retryTimers = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  React.useEffect(
+    () => () => {
+      for (const id of retryTimers.current) clearTimeout(id);
+      retryTimers.current = [];
+    },
+    [],
+  );
   /** 重取七个目标的表（装机读数变了就重取：缺席卡的态是拿这张表算的，缓存住它会继续说旧话）。
    *
    * 进度在屏上时不断进度（#980）：空表保旧表，非空表把批量中缺失的旧目标追加到表尾——
-   * 否则可见行计算短暂为空或缺键，整块闪掉如重载。 */
+   * 否则可见行计算短暂为空或缺键，整块闪掉如重载。
+   *
+   * 首帧失败要退（票 #982）：进面板那一次抛错（宿主路由还没就绪）不再直接粘住红字，
+   * 按退避表重试；次次失败才印红，并把传输层细节打到 `[dsh-life-pack]` 前缀的日志里——
+   * 面板教人去日志里找的那一行，之前在这里根本不存在。 */
   const reload = React.useCallback(async () => {
-    const loaded = await loadTargets(getCall());
+    // 有界重试（票 #982）：等待次数以退避表长度为上限——挂载那一次取数失败的重试，
+    // 成功即停、次次失败收尾，不是数据轮询；卸载清理见下面的 effect。
+    let tries = 0;
+    const sleep = (ms: number): Promise<void> =>
+      new Promise((resolve) => {
+        tries += 1;
+        // 退避表之外的等待不排（正常走不到：取数循环本就以同一张表为界）——双保险，不断轮询。
+        if (tries >= LOAD_RETRY_MS.length + 1) {
+          resolve();
+          return;
+        }
+        const timer = setTimeout(() => {
+          clearTimeout(timer);
+          resolve();
+        }, ms);
+        retryTimers.current.push(timer);
+      });
+    const loaded = await loadTargets(getCall(), {
+      delays: LOAD_RETRY_MS,
+      sleep,
+      isAlive: () => alive.current,
+    });
+    for (const id of retryTimers.current) clearTimeout(id);
+    retryTimers.current = [];
     if (!alive.current) return;
     if (loaded.ok) {
       setTargets(
@@ -290,6 +334,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
       setLoadError(null);
     } else {
       setLoadError(loaded.message);
+      console.warn('[dsh-life-pack] update targets load failed: ' + loadFailureDetail(loaded));
     }
   }, [getCall]);
   React.useEffect(() => {
