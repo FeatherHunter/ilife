@@ -98,6 +98,24 @@ describe('#928 查位置分页', () => {
   });
 });
 
+describe('#928 页内翻页（一令一文件，翻已装载行）', () => {
+  it('位置 60 行分 3 视：行全在 DOM，首视外 hidden', () => {
+    const env = runOk('home.location.query', {}, 'pager loc');
+    const html = readFileSync(env.delivery.path, 'utf8');
+    assert.ok(html.includes('第1页／共3页'), '缺翻页尺');
+    assert.ok(html.includes('上一页') && html.includes('下一页'), '缺翻页钮');
+    assert.equal(html.split('<div class="trow"').length - 1, 60, '行必须全在 DOM（一令一文件）');
+    assert.ok(env.delivery.bytes < MAX_BYTES, 'bytes=' + env.delivery.bytes);
+  });
+  it('标签 100 行分 5 视；9 行小结果无翻页件', () => {
+    const env = runOk('home.tag.query', {}, 'pager tag');
+    const html = readFileSync(env.delivery.path, 'utf8');
+    assert.ok(html.includes('第1页／共5页'), '缺翻页尺');
+    assert.equal(html.split('<p class="fp-v">').length - 1, 100, '行必须全在 DOM');
+    const small = runOk('home.tag.query', { q: '压测标00' }, 'pager small');
+    assert.ok(!readFileSync(small.delivery.path, 'utf8').includes('data-hmpp-bar'), '小结果不该挂翻页件');
+  });
+});
 describe('#928 紧凑复制区（一份 JSON 点取，不走三份 data-t）', () => {
   let R = null;
   let C = null;

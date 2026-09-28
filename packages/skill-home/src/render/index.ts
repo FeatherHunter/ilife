@@ -11,6 +11,7 @@ export {
   SHARED_CSS_MARKER, SHARED_HELPERS_MARKER, CONTENT_MARKER, SHARED_CSS, SHARED_HELPERS, fillTemplate,
 } from './html.js';
 export { homeCopyArea, homeCompactCopyArea, homeCopyLog, homeNowStamp } from './copyArea.js';
+export { paginateBlocks, PAGER_PER_PAGE } from './pager.js';
 export type { HomeCopyAreaInput, HomeCopyLogInput } from './copyArea.js';
 export { HOME_TEMPLATES, templateFor, loadTemplate } from './templates.js';
 export type { HomeTemplate } from './templates.js';

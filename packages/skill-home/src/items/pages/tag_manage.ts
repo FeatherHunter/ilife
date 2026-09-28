@@ -6,7 +6,7 @@
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp, paginateBlocks } from '../../render/index.js';
 
 export const FAMILY = 'tag_manage' as const;
 
@@ -171,7 +171,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div>'
       : (tagRows.length
         // #817（⑤文案不冗余）：名字与计数并成一行（名字不再在左列重复一遍），与 category_manage 同款。
-        ? tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>').join('')
+        // #928 页内翻页：行全在 DOM 里（体积不变），20 行一视只治眼睛；不够一视原样。
+        ? paginateBlocks(tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>'))
         : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
     const unusedBlock = !hasUnusedDetail
       ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'

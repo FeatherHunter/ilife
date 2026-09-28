@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp, paginateBlocks } from '../../render/index.js';
 
 export const FAMILY = 'location_manage' as const;
 
@@ -92,7 +92,7 @@ function treeCard(nodes: LocNode[]): string {
     return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">'
       + '<h2>还没有位置</h2>先建第一个位置，如客厅电视柜<br>录物品时也能顺手建</div>';
   }
-  const rows = nodes.map((n) => {
+  const rowList = nodes.map((n) => {
     const indent = (n.depth - 1) * 22;
     // 次行用面包屑式呈现（› 连接）；单段路径的主名与路径同串，只在多级（depth>1）时才印这一截。
     const crumb = n.path.split('/').join(' › ');
@@ -108,10 +108,11 @@ function treeCard(nodes: LocNode[]): string {
       + '<button class="opb" data-copy="' + attr(renamePrompt) + '" data-need="改名">改名</button>'
       + '<button class="opb" data-copy="' + attr(delPrompt) + '" data-need="删除">删除</button>'
       + '</span></div>';
-  }).join('');
+  });
+  // #928 页内翻页：行全在 DOM 里（体积不变），20 行一视只治眼睛；不够一视原样。
   return '<section class="card" data-block="fields" data-need="位置树">'
     + '<h2>位置树 <span class="hint">点行内按钮改名或删除</span></h2>'
-    + '<div class="tree" data-need="位置路径多级">' + rows + '</div></section>';
+    + '<div class="tree" data-need="位置路径多级">' + paginateBlocks(rowList) + '</div></section>';
 }
 
 function similarCard(groups: SimilarGroup[]): string {
