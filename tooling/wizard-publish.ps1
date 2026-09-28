@@ -1,4 +1,4 @@
-﻿# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「AI 驱动、人只批准 2FA」设计。
+# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「AI 驱动、人只批准 2FA」设计。
 #
 # 跑法：**侧边栏终端**里（AI 用终端工具送键／读回执；本机的 powershell.exe 5.1 会按 GBK 读中文而解析失败，一律用 pwsh）：
 #     pwsh -NoProfile -File D:\ilife\tooling\wizard-publish.ps1 -Auto
@@ -93,16 +93,23 @@ foreach ($p in $todo) {
   Log ('PKG-BEGIN ' + $p.name + '@' + $p.version)
   Log '  AI-ACTION：npm 若打 “Press ENTER to open in the browser”，送一个回车；把 “Authenticate your account at: [url]” 原文转给人（人只在浏览器批准，不用敲键）'
   Push-Location $p.dir
-  npm publish --access public --registry=$Registry
+  $pubOut = npm publish --access public --registry=$Registry 2>&1 | Tee-Object -Variable pubOutRaw | Out-String
   $code = $LASTEXITCODE
   Pop-Location
+  $pubText = if ($pubOut) { [string]$pubOut } else { '' }
+  if ($code -ne 0 -and ($pubText -match 'previously staged version' -or $pubText -match 'E409' -or $pubText -match '409 Conflict')) {
+    Log ('PKG-SKIP-staged ' + $p.name + '@' + $p.version + '（registry 已暂存该版本，视为已发；刚发完立刻重跑会命中这一行，等同步后只跑 --post）')
+    $done += ($p.name + '@' + $p.version)
+    continue
+  }
   if ($code -ne 0) { Log ('PKG-FAIL ' + $p.name + ' exit=' + $code + ' 已发：' + ($done -join ', ')); exit 1 }
   Log ('PKG-OK ' + $p.name + '@' + $p.version)
   $done += ($p.name + '@' + $p.version)
 }
 
-# ── 阶段 4／4：registry 读回复核 ───────────────────────────────────────────────
-Log 'STAGE 4/4 registry 读回复核'
+# ── 阶段 4／4：registry 读回复核（带轮询；红即 FAIL，不冒充 DONE）──────────────
+Log 'STAGE 4/4 registry 读回复核（npm 生效有分钟级延迟，--post 会轮询约 10min；不等请 Ctrl+C 后稍后只跑 --post）'
 node (Join-Path $RepoRoot 'tooling\check-publish.mjs') --post --only (($todo | ForEach-Object { $_.name }) -join ',')
+if ($LASTEXITCODE -ne 0) { Log 'FAIL STAGE 4/4 回读未全绿（多为复制延迟）：稍后只跑 node tooling\check-publish.mjs --post --only <包名,逗号隔开> 复核，不重跑整向导'; exit 1 }
 Log ('DONE 已发 ' + $done.Count + ' 个：' + ($done -join ', '))
 Write-Host '下一步：pwsh -NoProfile -File tooling\wizard-install.ps1'

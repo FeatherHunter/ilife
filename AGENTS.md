@@ -32,6 +32,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 提问一律写在对话正文里：**禁止**用弹窗／问卷工具（含 `ask_user_question`）把问题甩给用户点选。
 
+### 执行纪律
+
+终端命令一律由 agent 自己执行：**禁止**要求用户替跑命令（贴命令让人粘、让人开终端敲键都算）。用户只做 AI 做不了的事（浏览器里批准 2FA／扫码这类）；通道不顺就换通道，不把执行动作推给用户。
+
 ### 文档归属
 
 写工作文档时落在归属件自己的目录：技能 `docs/skills/<件名>/`、插件 `docs/plugins/<件名>/`、公共层包 `docs/base/<件名>/`、跨件共用 `docs/agents/`；件名＝`packages/` 下的目录名逐字。见 `docs/agents/doc-homes.md`。

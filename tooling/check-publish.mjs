@@ -294,16 +294,25 @@ function gateFreshTmp() {
   }
 }
 
+function sleepMs(ms) { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch { /* 非共享内存环境直接跳过等待 */ } }
+
 function gatePost() {
+  // registry 生效有分钟级延迟（npm 明示 processing / may take a few minutes）：
+  // 原地 3 连击必红。改轮询：POST_TRIES×POST_WAIT_MS（缺省 20×30s≈10min），每次打印 WAIT。
+  const tries = Math.max(1, Number(process.env.POST_TRIES || 20));
+  const waitMs = Math.max(0, Number(process.env.POST_WAIT_MS || 30000));
   for (const name of [...ALL13, ...PINNED].filter(inScope)) {
     const local = pkgJson(name);
     let shown = null;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < tries; i++) {
       try {
         const out = execFileSync(NPM, ['view', name + '@' + local.version, 'dependencies', '--json'], { encoding: 'utf8', shell: NPSH });
         shown = out.trim() ? JSON.parse(out) : {};
         break;
-      } catch (e) { if (i === 2) fail(name + '@' + local.version + ' npm view 失败（未发布或复制延迟）'); }
+      } catch (e) {
+        if (i === tries - 1) fail(name + '@' + local.version + ' npm view 失败（未发布或复制延迟，已等 ' + tries + ' 轮）');
+        else { console.log('WAIT: ' + name + '@' + local.version + ' 暂不可见（' + (i + 1) + '/' + tries + '），' + (waitMs / 1000) + 's 后重试'); sleepMs(waitMs); }
+      }
     }
     if (!shown) continue;
     if (JSON.stringify(shown).includes('workspace:')) fail(name + '@' + local.version + ' registry 仍含 workspace:');
