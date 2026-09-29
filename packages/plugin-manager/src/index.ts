@@ -4,7 +4,7 @@
  * 本包无单品依赖、无单品 import。对外只保留纯数据口径（nav）与安装口径（install）。
  *
  * 本文件做两件事：
- * 1. 建电话表（`buildUpdatePhoneTable`：七组更新电话 ＋ 两个总管自有电话）；
+ * 1. 建电话表（`buildUpdatePhoneTable`：七组更新电话 ＋ 三个总管自有电话——装缺席包、更新目标表、本机根清单）；
  * 2. 把电话表挂到 DSH 公开的 `/api` 载体上（`connection.fetch.register`，样板：
  *    `packages/plugin-calorie/src/index.ts:51-88`，即 #80 的迁移写法）。
  *

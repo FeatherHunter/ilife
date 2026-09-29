@@ -11,7 +11,6 @@
 import { createHostUpdate, createUpdateExecutor, detectEnvironmentKind, resolveUpdateConfig } from 'dsh-plugin-update';
 import type { EnvironmentKind } from 'dsh-plugin-update';
 import { DEFAULT_REGISTRY, MANAGER_ACTIONS, reasonText } from './update-contract.js';
-import { readManagerVersion } from './manager-version.js';
 import { rootsReply } from './roots.js';
 import { UPDATE_TARGETS, targetFor } from './update-targets.js';
 import type { UpdateTarget } from './update-targets.js';
@@ -154,9 +153,6 @@ async function buildTable(ctx: unknown): Promise<(method: string, args: Record<s
       },
     ],
     [MANAGER_ACTIONS.targets, () => readTargets(facts, phonesByTarget, pollMs)],
-    // 总管自述版本（#737）：读自己这份包的描述文件，永不抛（读不到回 unknown）。恒成功，
-    // 故不走下面的 `internal` 兜底——「读不到」也是一种要给面板看的事实，不是错误码。
-    [MANAGER_ACTIONS.version, () => Promise.resolve<ManagerReply>({ ok: true, value: { version: readManagerVersion() } })],
     // 本机「根」清单（#744）：一次系统调用换全部盘符，超时即空。同样恒成功——
     // 列不出来只是「图上不画那一行」，不该给面板弹一条失败。
     [MANAGER_ACTIONS.roots, () => rootsReply()],

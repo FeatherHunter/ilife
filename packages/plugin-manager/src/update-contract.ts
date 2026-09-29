@@ -4,7 +4,7 @@
  * 电话名分两类：
  * - 七个**更新电话组**（每组三个 `updateStatus` / `updateCheck` / `updateInstall`）由更新包
  *   自己拼（`update.phoneNames`），面板侧取值见构建期派生的 `update-phones.ts`；
- * - 两个**总管自有电话**（装上缺席包、取版本行数据）是本包定义的，见 `MANAGER_ACTIONS`。
+ * - 三个**总管自有电话**（装上缺席包、七个更新目标的表、本机根清单）是本包定义的，见 `MANAGER_ACTIONS`。
  *
  * 原因码的人话文案逐条抄更新包 README 第 8 节「用户该做什么」列与第 12 节排错表；
  * 手工命令形状抄第 9 节（`commands.ts:104-122` 的 `manualCommand`）。
@@ -50,12 +50,6 @@ export const MANAGER_ACTIONS = {
    * 也不该把名字再写一份（写两份必然走散）。宿主把名字表连同版本行一起交出去，
    * 面板一行字面量都不留。 */
   targets: 'ilife-manager.targets',
-  /** 总管自述版本（票 #737）：入参 `{}`，回包 `{version}`。
-   *
-   * 宿主读**自己这份已安装包**的 `package.json`（`manager-version.ts`），面板只渲染读到的值。
-   * 为什么走电话：面板是浏览器产物，禁 node 内建（`test/client-bundle-48.test.mjs` 看门），
-   * 读盘只许在宿主半；与卡路里 #130 同一条路（host 读 → RPC → client 纯渲染）。 */
-  version: 'ilife-manager.version',
   /** 本机「根」清单（票 #744）：入参 `{}`，回包 `{roots: [{path, kind}]}`。
    *
    * 为什么这条能力住在总管：浏览器里没有卷清单接口，而宿主那条目录选择接缝只有
@@ -65,16 +59,14 @@ export const MANAGER_ACTIONS = {
   roots: 'ilife-manager.roots',
 } as const;
 
-/** 版本读不到时两侧共用的降级字面量（面板照原样显示，不假装知道版本）。
+/** 版本读不到时的降级字面量（读的人照原样看到 `unknown`，不假装知道版本；票 #918 的 `installedVersionOf` 用它）。
  *
- * 一处定义、两侧引用：宿主半 `manager-version.ts` 读失败时回它，面板半 `update-client.ts`
- * 归一化时也认它——面板侧不许 import 宿主半（会把 node 内建带进浏览器束）。 */
+ * 面板那行版本号**不再用它**（票 #986：构建期注入，没有「读不到」这一态）；本字面量现在只服务宿主半。 */
 export const VERSION_UNKNOWN = 'unknown' as const;
 
 /** 挂载取数失败的退避重试表（票 #982，更新目标表用）。
  *
- * 一处定义：与版本读取重试同形（`client.ts` 的退避三次）——挂载时首次传输失败
- * （宿主路由尚未就绪）会使错误态常驻整个会话；单次直返是当时的缺口。
+ * 挂载时首次传输失败（宿主路由尚未就绪）会使错误态常驻整个会话；单次直返是当时的缺口。
  * 次数有界、调用方负责卸载清理（见 `update-panel.ts` 的取数），不是无界轮询。 */
 export const LOAD_RETRY_MS: readonly number[] = [1000, 3000, 8000];
 

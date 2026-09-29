@@ -42,7 +42,8 @@ const FAMILIES = [
 const PRODUCT_NAMES = FAMILIES.map((f) => f.name);
 /** 那行静态文本的冻结原文（本回路要它**哪儿都没有**，所以在这里逐字写一份）。 */
 const FROZEN_LINE = '总开关 · 开关（缺省启用，只读）';
-const SENTINEL = '0.0.0-渲染替身';
+/** 版本胶囊那行版本号的真值（票 #986：构建期由本包 `package.json` 注入产物，不再问宿主）。 */
+const PACKAGE_VERSION = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8')).version;
 
 /** 账本那一行（形状见源码侧 `ConfigTabRow`）：label 取各家真产物交出去的那份，通道那格恒空串（#735）。 */
 async function ledgerRows() {
@@ -99,12 +100,12 @@ describe('票 #738 ① 六家交出去的页签名与设置页标题（真产物
 
 describe('票 #738 ② 屏上页签条印产品名（真产物渲两次）', () => {
   it('账本里一家都没有 → 页签字取总管导航表那格镜像，仍是六个产品名', async () => {
-    const { tabLabels } = await renderManagerPanel({ reply: { version: SENTINEL } });
+    const { tabLabels } = await renderManagerPanel();
     assert.deepEqual(tabLabels, PRODUCT_NAMES, '缺席时页签字从镜像表出，短名残留就是这里露出来');
   });
 
   it('账本里有行 → 页签字取自各家注册交的 label，仍是六个产品名', async () => {
-    const { tabLabels } = await renderManagerPanel({ reply: { version: SENTINEL }, tabs: await ledgerRows() });
+    const { tabLabels } = await renderManagerPanel({ tabs: await ledgerRows() });
     assert.deepEqual(tabLabels, PRODUCT_NAMES, '有账本时页签字从各家 label 出');
   });
 });
@@ -119,16 +120,16 @@ describe('票 #738 ③ 更新列表行首与页签名同值', () => {
 
 describe('票 #738 ④ 那行静态文本', () => {
   it('屏上不再出现（真产物渲一次，整页文本里搜不到）', async () => {
-    const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
+    const { text } = await renderManagerPanel();
     assert.ok(!text.includes(FROZEN_LINE), '屏上还有那行静态文本');
     assert.ok(!text.includes('总开关'), '屏上还有「总开关」这四个字');
   });
 
-  it('那段没被误伤：「爱生活」标题与版本胶囊都还在屏上（#937 起同一行）', async () => {
-    const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
+  it('那段没被误伤：「爱生活」标题与版本胶囊都还在屏上（#937 起同一行，版本 #986 改注入）', async () => {
+    const { text } = await renderManagerPanel();
     assert.ok(text.includes('爱生活'), '总设置区那段被整段删掉了');
     // #937 维护者裁定：版本不再单独起一行，改成胶囊与「爱生活」标题同行；「总管」两个字从胶囊里去掉。
-    assert.ok(text.includes('dsh-life-pack · ' + SENTINEL), '版本胶囊没了');
+    assert.ok(text.includes('dsh-life-pack · ' + PACKAGE_VERSION), '版本胶囊没了');
     assert.ok(!text.includes('总管 dsh-life-pack'), '「总管」又回到版本胶囊里了');
   });
 

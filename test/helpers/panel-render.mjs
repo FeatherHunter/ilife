@@ -9,7 +9,7 @@
  *   · classic script loader 语义在**宿主 realm** 里求值（client 取数期要用宿主全局）；
  *   · react 给最小替身（顺序 hook store，与 `docs/plugins/plugin-manager/t679-面板渲染台.mjs` 页内那份同形）
  *     —— 其余未声明外部一律抛，client 束只许要 react*；
- *   · 传输口给桩值（宿主半在测试里不跑）：总管面板回版本行与空的目标表，别的端点一律 `bad-request`
+ *   · 传输口给桩值（宿主半在测试里不跑）：总管面板回空的目标表，别的端点一律 `bad-request`
  *     —— 拿不到数时面板照「降级态」画（各家设置页那一支照样把页头与说明画出来）。
  */
 import assert from 'node:assert/strict';
@@ -134,22 +134,20 @@ function collectTabLabels(tree) {
 
 /**
  * 渲一次爱生活面板（总管那一卡）。
- * @param {{ reply?: { version?: string, fail?: boolean }, tabs?: ReadonlyArray<{id: string, order: number, label: string, channel: string}> }} [options]
+ *
+ * 版本胶囊**不再问宿主**（票 #986：构建期注入产物），故这里没有版本回包可替；
+ * 桩传输口只答更新目标表。
+ * @param {{ tabs?: ReadonlyArray<{id: string, order: number, label: string, channel: string}> }} [options]
  * @returns {Promise<{ tree: unknown, text: string, tabLabels: string[] }>}
  */
 export async function renderManagerPanel(options = {}) {
-  const { reply = {}, tabs = [] } = options;
+  const { tabs = [] } = options;
   const react = makeReact();
   /** 桩传输口：方法名从 `payload.method` 读（面板取数口形状见 `update-client.ts`）。 */
   const call = async (_channel, _endpoint, payload) => {
     const method = payload?.method;
-    if (method === MANAGER_ACTIONS.version) {
-      return reply.fail
-        ? { ok: false, error: { code: 'internal', message: '宿主读不到', details: {} } }
-        : { ok: true, value: { version: reply.version } };
-    }
     if (method === MANAGER_ACTIONS.targets) return { ok: true, value: { targets: [], pollMs: 1000 } };
-    return { ok: false, error: { code: 'bad-request', message: '渲染替身只答这两条', details: {} } };
+    return { ok: false, error: { code: 'bad-request', message: '渲染替身只答更新目标表这一条', details: {} } };
   };
 
   const exports = materialize(MANAGER_DIR, react);

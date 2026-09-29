@@ -68,12 +68,13 @@ describe('#931／#933／#937：三条票面判据（静态面，改坏必红）'
     assert.doesNotMatch(CLIENT_SRC, /hidden:\s*!selected/, '又用回 hidden 属性了（六个预热页签会全露出来）');
   });
 
-  it('#937 版本改成标题行胶囊；读中／读不到两态与失败重试都在', () => {
+  it('#937 版本胶囊在标题行；#986 起版本号改由构建期注入（读中／读不到两态与退避表已删）', () => {
     assert.match(CLIENT_SRC, /S\.versionCapsule/, '标题行里要有版本胶囊（形状照真源 .ic-ver）');
-    assert.match(CLIENT_SRC, /VERSION_PENDING_TEXT = '…'/, '读中的占位符是 …');
-    assert.match(CLIENT_SRC, /VERSION_MISSING_TEXT = '版本未知'/, '读不到给人话，不把 unknown 印给人看');
-    assert.match(CLIENT_SRC, /VERSION_RETRY_MS[^=]*=\s*\[1000, 3000, 8000\]/, '失败要退避重试三次');
-    assert.match(CLIENT_SRC, /setTimeout\(\(\) => attempt\(index \+ 1\)/, '重试要真的接上下一次');
+    assert.match(CLIENT_SRC, /__LIFE_PACK_VERSION__/, '版本号要读构建期注入的标记，不许手写值');
+    // 反向：问宿主要版本的那整套机制（三态 ＋ 退避表）不许回来（票 #986 已删，慢的根因就在这条路上）。
+    assert.doesNotMatch(CLIENT_SRC, /VERSION_RETRY_MS/, '版本退避重试表又回来了（#986 已删）');
+    assert.doesNotMatch(CLIENT_SRC, /VERSION_MISSING_TEXT/, '「版本未知」那一态又回来了（#986 已删）');
+    assert.doesNotMatch(CLIENT_SRC, /useManagerVersion/, '问宿主要版本的那条路又回来了（#986 已删）');
     // 反向：原先"独占一行"的版本行（`总管 …` 那行）不许回来。
     assert.doesNotMatch(CLIENT_SRC, /'总管 ' \+ MANAGER_PLUGIN/, '独占一行的版本行又回来了');
   });

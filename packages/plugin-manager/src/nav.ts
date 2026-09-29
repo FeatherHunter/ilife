@@ -44,10 +44,10 @@ export interface RecoTab extends ManagerTab {
 
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 
-/** 版本号**不在本文件**（票 #737）：面板那行「总管 dsh-life-pack · x.y.z」的版本号由宿主半
- *  `manager-version.ts` 运行时读自己这份已安装包的 `package.json`，面板经电话
- *  `ilife-manager.version` 取来只做渲染——手写常量会与包版本无声漂开一整版（#737 实测过），
- *  读完盘这条路把「屏上那行 ≡ 装机包版本」变成构造性事实，定版只剩改 `package.json` 一处。 */
+/** 版本号**不在本文件**：它由构建期从本包 `package.json` 注入面板产物（票 #986，见
+ *  `tsdown.config.ts` 与 `client.ts` 的 `__LIFE_PACK_VERSION__`）——手写常量会与包版本
+ *  无声漂开一整版（#737 实测过），而注入值由构造派生、并有一条构建门咬住
+ *  「产物里的注入值 ≡ 包版本」；定版仍只剩改 `package.json` 一处。 */
 
 export const DUAL_ADD_PREFIX = 'dsh plugin add dsh-life-pack' as const;
 

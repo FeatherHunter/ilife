@@ -21,9 +21,8 @@ import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
-import { loadManagerVersion } from './update-client.js';
 import type { CallFace } from './update-client.js';
-import { CONFIG_TAB_SLOT, VERSION_UNKNOWN } from './update-contract.js';
+import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
@@ -276,41 +275,15 @@ function MorePluginsCard(): React.ReactElement {
  * **失败要重试**：原先只取一次、一失败就永远停在未知（#937 查出来的真缺陷）；这里按 1s／3s／8s 退避重试三次。
  * 与卡路里 #130 同一条路：面板是浏览器产物、禁 node 内建，读盘只许在宿主半。 */
 /** 读中 / 读不到 两种胶囊文案（#937：占位符用 `…`，读不到给人话，不把 `unknown` 印给人看）。 */
-const VERSION_PENDING_TEXT = '…';
-const VERSION_MISSING_TEXT = '版本未知';
-type ManagerVersionState =
-  | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly version: string }
-  | { readonly kind: 'missing' };
+/** 构建期注入的版本号（tsdown `define`，值取自本包 `package.json` 的 `version`；票 #986）。
+ *
+ * 为什么烙进产物而不是问宿主：这行字是**标签**，延迟不该依赖宿主可用性——此前走
+ * `ilife-manager.version` 电话，面板要先过一次往返，接不上还要按退避表等，首帧只能显示占位。
+ * 漂移（改了包描述文件却忘了重建产物）由构建门咬住：产物里的注入值必须等于包版本。 */
+declare const __LIFE_PACK_VERSION__: string;
 
-/** 重试间隔（#937）：三次退避，之后不再打扰宿主。 */
-const VERSION_RETRY_MS: readonly number[] = [1000, 3000, 8000];
-
-function useManagerVersion(getCall: () => CallFace | null): ManagerVersionState {
-  const [state, setState] = React.useState<ManagerVersionState>({ kind: 'loading' });
-  React.useEffect(() => {
-    let alive = true;
-    const timers: Array<ReturnType<typeof setTimeout>> = [];
-    const attempt = (index: number): void => {
-      void loadManagerVersion(getCall()).then((next) => {
-        if (!alive) return;
-        if (next !== VERSION_UNKNOWN) {
-          setState({ kind: 'ready', version: next });
-          return;
-        }
-        setState({ kind: 'missing' });
-        const wait = VERSION_RETRY_MS[index];
-        if (wait !== undefined) timers.push(setTimeout(() => attempt(index + 1), wait));
-      });
-    };
-    attempt(0);
-    return () => {
-      alive = false;
-      for (const id of timers) clearTimeout(id);
-    };
-  }, [getCall]);
-  return state;
-}
+/** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
+const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace | null }): React.ReactElement {
@@ -319,7 +292,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
   const face = useUpdateRows(props.getCall);
-  const managerVersion = useManagerVersion(props.getCall);
   // 配置体检（#706）：一张表六份报告，顶部那行汇总与各家那张表都从它读（同一份数据）。
   // 通道名的来源见 CHANNEL_BY_PLUGIN（#735：账本那一格读不到，改取导航表那份镜像）。
   const healthTabs = React.useMemo(
@@ -398,15 +370,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
       'div',
       { style: S.headRow },
       React.createElement('div', { style: S.head }, '爱生活'),
-      // #937：版本改成**同一行的胶囊**（原先独占一行）。占位、读不到、读到三种文案都在这里出。
+      // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
       React.createElement(
         'span',
         { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
-        managerVersion.kind === 'ready'
-          ? MANAGER_PLUGIN + ' · ' + managerVersion.version
-          : managerVersion.kind === 'missing'
-            ? VERSION_MISSING_TEXT
-            : VERSION_PENDING_TEXT,
+        MANAGER_VERSION_TEXT,
       ),
       // 三件并排：本票的「检查更新」在左，隔壁票（#679）的星与气泡在右，整组靠右（窄窗口折行）。
       React.createElement(

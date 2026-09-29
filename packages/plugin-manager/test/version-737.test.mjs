@@ -1,24 +1,23 @@
-// 票 #737 自证回路：面板那行的版本号**不手写**，由宿主读自己这份已安装包的 `package.json`。
+// 面板版本胶囊那行字的自证回路。**本文件的判据对象在票 #986 改了指向**（文件名保留：它一直是
+// 「版本号真值」这道门的家，改的是真值从哪儿来）。
 //
-// 现象（2026-09-20 实测）：包已是 0.2.7，面板印 0.2.6 —— 手写常量 `MANAGER_VERSION` 漏了跟定版走，
-// 而它是「屏上那行」的唯一来源。第一版修法把常量改对 ＋ 立一条「常量 ≡ 包版本」的门；
-// 维护者 2026-09-20 裁定改走**自动读取**（常量这条源就不要了）：读完盘，「屏上那行 ≡ 装机包版本」
-// 由构造保证，定版也只剩改 `package.json` 一处。
+// 沿革：#737 实测过手写常量与包版本无声漂开一整版（包 0.2.7、常量停在 0.2.6，面板照错值印），
+// 当时的修法是「宿主读自己那份已装包的 `package.json`，经电话 `ilife-manager.version` 交给面板」。
+// #986 现场（2026-09-28 用户报障）：打开面板要等很久那行才出版本 —— 那条电话排在宿主电话表的
+// 懒建（`buildUpdatePhoneTable` 的 `table ??= buildTable(ctx)`）之后，面板侧还要按退避表重试；
+// **标签的延迟不该依赖宿主可用性**。维护者裁定改走**构建期注入**：打包时把本包 `package.json`
+// 的 `version` 烙进产物，面板首帧即显示；「不许手写」这条目的由构建门继续守着。
 //
 // 本回路咬三条，都不咬写法：
-//   ① 宿主读值：`readManagerVersion()` 读的就是本包 `package.json`；给哨兵件就读哨兵的 version；
-//      读不到（缺文件／非 JSON／字段缺失／空串）一律回 `unknown` 且**不抛**。
-//   ② 不手写回潮：产物 `dist/client.js` 里不许再出现带版本号的屏幕字面量（`总管 dsh-life-pack · <数字>`），
-//      且必须带着那条电话名（版本是问宿主要的）。
-//   ③ 屏幕那行真跟着宿主跑：拿真产物渲一次组件 —— 宿主回哨兵版本，屏上就是哨兵；
-//      宿主回 unknown，屏上就是 unknown（写死常量、或面板自己编一个值，都过不了这两条）。
-//
-// 渲染替身（③用）原先写在本文件里，票 #738 也要在同一条路上读页签条的字，
-// 故提到仓根共用：`test/helpers/panel-render.mjs`（两份拷贝就是两处腐化）。
+//   ① 构建门：产物里带着包版本那一串；源码只许引用注入标记，不许出现版本号字面量。
+//   ② 屏上真值：拿真产物渲一次组件 —— 胶囊里就是包版本那一串。
+//   ③ 删掉的机制不许回来：客户端三态／退避表、宿主那条版本电话、面板侧取版本函数、
+//      宿主读自己版本那函数（它们正是「慢」的来源与它的配套）。
+// 另：#918「按包名读装机版本」的判据仍在本文件（同一处的唯一定义，别处不许再写一份）。
 //
 // 前提：①②③ 都读产物，所以要先出产物（CI 的顺序正是先 `pnpm build` 再 `pnpm test`）：
 //   node node_modules/typescript/bin/tsc -b packages/plugin-manager
-//   cmd /c "cd /d <仓根>\packages\plugin-manager && node node_modules\tsdown\dist\run.mjs"
+//   pnpm --filter dsh-life-pack run build:client
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -26,88 +25,85 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderManagerPanel } from '../../../test/helpers/panel-render.mjs';
-import { installedVersionOf, managerPackageJsonPath, readManagerVersion } from '../dist/manager-version.js';
+import { installedVersionOf } from '../dist/manager-version.js';
 import { MANAGER_ACTIONS, VERSION_UNKNOWN } from '../dist/update-contract.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(HERE, '..');
 const PKG = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf8'));
 const CLIENT = readFileSync(join(PKG_DIR, 'dist', 'client.js'), 'utf8');
-/** 哨兵：一个绝不可能出现在真包里的版本号（面板要是自己编值，就对不上它）。 */
+const CLIENT_SRC = readFileSync(join(PKG_DIR, 'src', 'client.ts'), 'utf8');
+const BUILDCONF_SRC = readFileSync(join(PKG_DIR, 'tsdown.config.ts'), 'utf8');
+const CONTRACT_SRC = readFileSync(join(PKG_DIR, 'src', 'update-contract.ts'), 'utf8');
+const UPDATE_CLIENT_SRC = readFileSync(join(PKG_DIR, 'src', 'update-client.ts'), 'utf8');
+const HOST_SRC = readFileSync(join(PKG_DIR, 'src', 'update-host.ts'), 'utf8');
+const HOST_VERSION_SRC = readFileSync(join(PKG_DIR, 'src', 'manager-version.ts'), 'utf8');
+/** 宿主产物（电话名的定义地）：删掉的那条电话不许在产物里留下名字。 */
+const CONTRACT_DIST = readFileSync(join(PKG_DIR, 'dist', 'update-contract.js'), 'utf8');
+/** 哨兵：一个绝不可能出现在真包里的版本号（拿它验按包名读的那条路真读文件）。 */
 const SENTINEL = '9.9.9-哨兵';
 
 /** 临时目录只为本回路造哨兵件；用完即删（路径守卫：只删自己这个前缀的临时根）。 */
 function withTmpDir(fn) {
-  const dir = mkdtempSync(join(tmpdir(), 't737-reader-'));
+  const dir = mkdtempSync(join(tmpdir(), 't986-reader-'));
   try {
     return fn(dir);
   } finally {
-    if (!dir.split(/[\\/]/).pop().startsWith('t737-reader-')) throw new Error('清理守卫拒绝：' + dir);
+    if (!dir.split(/[\\/]/).pop().startsWith('t986-reader-')) throw new Error('清理守卫拒绝：' + dir);
     rmSync(dir, { recursive: true, force: true });
   }
 }
 
-describe('票 #737 ① 宿主读值：读的是自己这份包描述文件', () => {
-  it('默认路径就是本包 package.json（dist/manager-version.js → ../package.json）', () => {
-    assert.equal(managerPackageJsonPath(), join(PKG_DIR, 'package.json'));
+describe('票 #986 ① 构建门：注入值 ≡ 包版本，源码不许写死版本号', () => {
+  it('产物里带着本包 package.json 的 version', () => {
+    assert.ok(CLIENT.includes(PKG.version), 'client 产物里没有包版本那一串：' + PKG.version);
   });
 
-  it('读出来的就是那份文件的 version（装机态读装机包，开发单仓读本包，同一段代码）', () => {
-    assert.equal(readManagerVersion(), PKG.version);
+  it('构建配置从 package.json 取 version 并注入标记', () => {
+    assert.match(BUILDCONF_SRC, /__LIFE_PACK_VERSION__/, '构建配置里没有注入标记');
+    assert.match(BUILDCONF_SRC, /package\.json/, '注入值不是从包描述文件读的');
   });
 
-  it('哨兵件：给哪份就读哪份的 version（证明它是真读文件，不是源码里抄来的值）', () => {
-    withTmpDir((dir) => {
-      const file = join(dir, 'package.json');
-      writeFileSync(file, JSON.stringify({ name: 'dsh-life-pack', version: SENTINEL }), 'utf8');
-      assert.equal(readManagerVersion(file), SENTINEL);
-    });
-  });
-
-  it('读不到一律 unknown 且不抛：缺文件／非 JSON／没这个字段／空串', () => {
-    withTmpDir((dir) => {
-      assert.equal(readManagerVersion(join(dir, 'nope.json')), VERSION_UNKNOWN, '缺文件该回 unknown');
-      const bad = join(dir, 'bad.json');
-      writeFileSync(bad, '{ 这不是 JSON', 'utf8');
-      assert.equal(readManagerVersion(bad), VERSION_UNKNOWN, '非 JSON 该回 unknown');
-      const none = join(dir, 'none.json');
-      writeFileSync(none, JSON.stringify({ name: 'dsh-life-pack' }), 'utf8');
-      assert.equal(readManagerVersion(none), VERSION_UNKNOWN, '没有 version 字段该回 unknown');
-      const blank = join(dir, 'blank.json');
-      writeFileSync(blank, JSON.stringify({ version: '   ' }), 'utf8');
-      assert.equal(readManagerVersion(blank), VERSION_UNKNOWN, '空串该回 unknown');
-    });
+  it('面板源码只引用注入标记，不出现版本号字面量（手写回潮即红）', () => {
+    assert.match(CLIENT_SRC, /__LIFE_PACK_VERSION__/, '面板源码没引用注入标记');
+    const handwritten = /['"]\d+\.\d+\.\d+['"]/.exec(CLIENT_SRC);
+    assert.equal(handwritten, null, '面板源码里又写死了版本号：' + (handwritten ? handwritten[0] : ''));
   });
 });
 
-describe('票 #737 ② 不手写回潮：版本号不是面板写死的', () => {
-  it('产物里不许再出现带版本号的屏幕字面量（写死即红）', () => {
-    const frozen = /总管 dsh-life-pack · \d/.exec(CLIENT);
-    assert.equal(frozen, null, '产物里又写死了版本号：' + (frozen ? frozen[0] : ''));
-  });
-
-  it('产物里带着那条电话名（版本是问宿主要的）', () => {
-    assert.ok(CLIENT.includes(MANAGER_ACTIONS.version), 'client 束里没有电话名 ' + MANAGER_ACTIONS.version);
-  });
-});
-
-describe('票 #737 ③ 屏幕那行跟着宿主跑（真产物渲一次）', () => {
-  // #937 维护者裁定：版本不再单独起一行，改成胶囊与「爱生活」标题同行（「总管」两个字去掉）。
-  // 判据不变——**屏上那串字只能是宿主读回来的值**：哨兵件就要印出哨兵，读不到就不许编一个版本号出来。
-  it('宿主回哨兵版本 → 胶囊里就是哨兵（写死常量、面板自己编值，都过不了）', async () => {
-    const { text } = await renderManagerPanel({ reply: { version: SENTINEL } });
-    assert.ok(text.includes('dsh-life-pack · ' + SENTINEL), '胶囊里不是哨兵，取到的是：' + text.slice(0, 160));
+describe('票 #986 ② 屏上真值：胶囊里就是包版本那一串（真产物渲一次）', () => {
+  it('渲出来的文本带着 `dsh-life-pack · <包版本>`', async () => {
+    const { text } = await renderManagerPanel();
+    assert.ok(text.includes('dsh-life-pack · ' + PKG.version), '胶囊里不是包版本，取到的是：' + text.slice(0, 160));
     assert.ok(!text.includes('总管 dsh-life-pack'), '「总管」又回到版本胶囊里了');
   });
 
-  it('宿主回 unknown（读不到）→ 胶囊只说读不到，不抛也不编版本号', async () => {
-    const { text } = await renderManagerPanel({ reply: { fail: true } });
-    assert.ok(text.includes('版本未知'), '读不到时胶囊该说读不到，取到的是：' + text.slice(0, 160));
-    assert.equal(/dsh-life-pack · \d/.test(text), false, '读不到却编了一个版本号出来：' + text.slice(0, 160));
+  it('没有「读中」「读不到」两态：屏上不许再出现「版本未知」', async () => {
+    const { text } = await renderManagerPanel();
+    assert.equal(text.includes('版本未知'), false, '读不到那一态又回来了：' + text.slice(0, 160));
   });
 });
 
-describe('票 #918 ② 按包名读装机版本（六家与技能侧共用的那一处）', () => {
+describe('票 #986 ③ 删掉的机制不许回来（它们是「慢」的来源与配套）', () => {
+  it('面板半：三态状态机、退避表、取版本函数都不在', () => {
+    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-client.ts', UPDATE_CLIENT_SRC]]) {
+      assert.doesNotMatch(src, /useManagerVersion|VERSION_RETRY_MS|VERSION_MISSING_TEXT|VERSION_PENDING_TEXT|loadManagerVersion/, name + ' 里又出现了问宿主要版本的那套机制');
+    }
+  });
+
+  it('契约半：MANAGER_ACTIONS 里没有 version 键，电话名也没留在源码与产物里', () => {
+    assert.equal(Object.hasOwn(MANAGER_ACTIONS, 'version'), false, 'MANAGER_ACTIONS.version 又回来了');
+    assert.doesNotMatch(CONTRACT_SRC, /ilife-manager\.version/, '契约源码里还有那条电话名');
+    assert.doesNotMatch(CONTRACT_DIST, /ilife-manager\.version/, '契约产物里还有那条电话名');
+  });
+
+  it('宿主半：派发处不再挂这条电话，读自己版本那函数也删了', () => {
+    assert.doesNotMatch(HOST_SRC, /readManagerVersion|MANAGER_ACTIONS\.version/, '宿主派发处还挂着版本电话');
+    assert.doesNotMatch(HOST_VERSION_SRC, /readManagerVersion|managerPackageJsonPath/, '读自己版本那函数又回来了');
+  });
+});
+
+describe('票 #918 ② 按包名读装机版本（六家与技能侧共用的那一处，本票不动它）', () => {
   it('读自己这个包：值＝本包 package.json 的 version', () => {
     assert.equal(installedVersionOf('dsh-life-pack'), PKG.version);
   });
