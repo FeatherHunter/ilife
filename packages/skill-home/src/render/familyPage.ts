@@ -78,7 +78,7 @@ export function withSceneIdentity(html: string, commandCn: string): string {
  * 装配页族整页 HTML：
  *  - 命中并装得上 → 返回整页 HTML（含模板壳，标记已填充）；
  *  - 族名未知／模块不在／装入抛错／装配抛错 → 返回 `null`（调用方降级＋记 note）。
- * 体积门不在这里：超限与解析失败不是同一档（超限是内容缺陷，须响亮失败，见 `assertHtmlSize` 的调用方）。
+ * 体积门（#928 收口起不存在）：交付链不再按字节数拦，故本函数只管装配成败，不看页面大小。
  */
 export async function renderFamilyHtml(
   key: string, params: Record<string, unknown>, env: Envelope,

@@ -10,10 +10,10 @@ export function asInt(v: unknown, field: string): number | undefined {
   return v as number;
 }
 
-// 列表分页上限（#928）：缺省给安全值，超界大声失败，不静默钳制。
-// 住共用位因 items（标签）与 space（位置）两能力共用同一口径。
-export function asLimit(v: unknown, field: string, def: number, min: number, max: number): number {
-  if (v === undefined) return def;
+// 列表取行上限（#928 收口：**不给即全量**）。页面不再按体积截断，`limit` 只是调用方主动要小页时的手段；
+// 给了就校验范围、超界大声失败（不静默钳制）。住共用位因 items（标签）与 space（位置）两能力共用同一口径。
+export function asLimit(v: unknown, field: string, min: number, max: number): number | undefined {
+  if (v === undefined) return undefined;
   const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
   if (!Number.isInteger(n) || (n as number) < min || (n as number) > max) fail(2, field + ' 须为 ' + min + '~' + max + ' 正整数');
   return n as number;

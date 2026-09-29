@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   HOME_KEY_SHAPES, homeShapeFor, buildHomeEnvelope, parseHomeEnvelope,
-  renderEnvelopeHtml, assertHtmlSize, estimateBytes,
+  renderEnvelopeHtml, estimateBytes,
   templateFor, loadTemplate, fillTemplate, HOME_TEMPLATES,
   toItemCard, buildSearchList, buildDetail, buildReceipt, buildTagList,
   buildStatsOverview, buildHelpItems, HomeRenderError,
@@ -57,10 +57,11 @@ describe('居家渲染 render（21 键全票）', () => {
     assert.throws(() => buildHomeEnvelope('home.item.search', { nope: 1 }), HomeRenderError);
     assert.throws(() => buildHomeEnvelope('home.nope', { items: [] }), HomeRenderError);
   });
-  it('看密码 HTML 脱敏 + 体积门 + 转义', () => {
+  it('看密码 HTML 脱敏 + 不设体积上限 + 转义', () => {
     const env = buildHomeEnvelope('home.ticket.write', { ok: true, message: '密码：abc123' });
     assert.match(renderEnvelopeHtml(env), /已脱敏/);
-    assert.throws(() => assertHtmlSize('x'.repeat(300 * 1024)), HomeRenderError);
+    // #928 收口：体积门撤除，大页照渲不误（不再有 assertHtmlSize 可抛）。
+    assert.equal(estimateBytes('x'.repeat(300 * 1024)), 300 * 1024);
     const env2 = buildHomeEnvelope('home.item.add', { ok: true, message: '<b>&"' });
     assert.match(renderEnvelopeHtml(env2), /&lt;b&gt;&amp;&quot;/);
   });

@@ -1,4 +1,4 @@
-// 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
+// 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；#928 起不设体积上限（见 `estimateBytes` 处）。
 // 看密码 HTML 脱敏：ticket.write kind=account op=show 的 message 含明文时，HTML 快照仅占位（JSON 真相不受影响）。
 import type { Envelope } from 'base-link-core';
 import {
@@ -6,10 +6,7 @@ import {
   buildSharedHelpersJs, buildStyleSheet, pageShapeCss, pageUiCss,
 } from 'base-paint';
 import { blocksCss } from 'base-paint/blocks';
-import { PAGER_CSS } from './pager.js';
 import { HomeRenderError } from './errors.js';
-
-export const HOME_HTML_MAX_BYTES = 256 * 1024;
 
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -84,12 +81,9 @@ export function renderEnvelopeHtml(env: Envelope): string {
 
 export function estimateBytes(html: string): number { return Buffer.byteLength(html, 'utf8'); }
 
-// 体积门：超限 throw（调用方走 fallback 形状显式降级，不静默截断）。
-export function assertHtmlSize(html: string, max = HOME_HTML_MAX_BYTES): void {
-  if (estimateBytes(html) > max) {
-    throw new HomeRenderError('HOME_HTML_TOO_LARGE', 'HTML 超体积：' + estimateBytes(html) + ' > ' + max);
-  }
-}
+// #928 收口：**体积门撤除**（用户裁定「不限制 html 文件大小」）。
+// 此前 `HOME_HTML_MAX_BYTES` 256KB ＋ `assertHtmlSize` 超限大声失败，代价是位置／标签两页拿不到页面；
+// 现改为不截断、不设上限——库多大就出多大页，分页只留调用方显式 `limit` 与 `q` 两个手段。
 
 // 共享标记填充：CSS/HELPERS/CONTENT 三标记各恰出现 1 次，否则 throw。
 export const SHARED_CSS_MARKER = '<!--SHARED-CSS-->';
@@ -130,9 +124,7 @@ export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720p
   // 渲染成「项／值 逐格重印列名」。两件都从 `base-paint` 顶层取，本件只负责拼进共享样式槽。
   // 规则全套挂在根类 `.ilife-page-ui` 之下（`pageUi.ts` 的口径），根类由下面的 `fillTemplate`
   // 投影加到版面根上——两处必须成对出现，缺一处即整套规则一条不命中。
-  + '\n' + pageUiCss() + '\n' + pageShapeCss()
-  // #928 页内翻页条样式：随共享槽下发（两处在用：标签列表态、位置树）；样式住 `pager.ts`，与标记同家。
-  + '\n' + PAGER_CSS;
+  + '\n' + pageUiCss() + '\n' + pageShapeCss();
 export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
   // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
   // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。

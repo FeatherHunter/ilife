@@ -16,7 +16,7 @@ import {
 import type { RestoreOutcome } from '../fetch/backup.js';
 import type { HomeKey } from '../policy/index.js';
 import {
-  homeShapeFor, buildHomeEnvelope, renderEnvelopeHtml, assertHtmlSize,
+  homeShapeFor, buildHomeEnvelope, renderEnvelopeHtml,
   loadTemplate, templateFor, fillTemplate, resolveSceneStem,
   buildCareList, buildReceipt, buildHelpItems,
   HomeRenderError, renderFamilyHtml,
@@ -250,17 +250,12 @@ async function main() {
     }
     const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
     // 分节页（模板填充后）：**降级路径**用（#872 起族页优先），`--html` 支与速查支共用这一处，不抄第二份。
-    const sectionHtml = (): string => {
-      const html = fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
-      assertHtmlSize(html);
-      return html;
-    };
+    const sectionHtml = (): string => fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
     // #872 · 页族装配（交付链缺的那一段）：数据与过程命令先按 `(命令，场景预设)` 解析页族，
     // 装得上就用族页（`dist/<域>/pages/<族>.js` 的 `renderFamilyPage`）；族名未知／模块不在／
     // 装配抛错 → 降级上面那份分节页，并在 stderr 记一条 note（不静默、退出码不变）。
-    // 体积门对两条路一视同仁：都走 `assertHtmlSize` —— 超限是内容缺陷，须响亮失败，不靠降级掩盖。
+    // #928 收口：体积门撤除（用户裁定「不限制 html 文件大小」）——两条路都不再按字节数拦。
     const familyHtml = help === null ? await renderFamilyHtml(key, params, env) : null;
-    assertHtmlSize(familyHtml ?? '');
     if (help === null && familyHtml === null) note('未命中页族，落 21 模板分节页：' + key);
     const pageHtml = (): string => familyHtml ?? sectionHtml();
     // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
@@ -288,7 +283,6 @@ async function main() {
       // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
       if (help?.deliver !== undefined) {
         const html = help.deliver.html ?? sectionHtml();
-        if (help.deliver.html !== undefined) assertHtmlSize(html);
         delivery = deliverHomeHelp({
           targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
         });

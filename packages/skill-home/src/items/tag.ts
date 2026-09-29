@@ -8,28 +8,27 @@ import { fail } from '../shared/fail.js';
 import { asInt, asLimit, asQueryString } from '../shared/params.js';
 import { buildTagList, buildReceipt } from '../render/index.js';
 
-// #928 分页上限：缺省 100（实测 100 标签族页约 141KB，300 标签约 194KB，均 <256KB）；
-// 最大 300（再大复制区三拷贝必超）。只住本能力，位置分页另住 space。
-const TAG_QUERY_DEFAULT_LIMIT = 100;
-const TAG_QUERY_MAX_LIMIT = 300;
+// #928 收口：**不给 limit 即全量**（页面不再按体积截断；用户裁定「不限制 html 文件大小」）。
+// 给了 limit 才截，超界大声失败。只住本能力，位置取行另住 space。
+const TAG_QUERY_LIMIT_MAX = 100000;
 
 export function runTagQuery(params: Record<string, unknown>, handle: HomeDb): unknown {
   const kind = (params.kind as string | undefined) ?? 'tags';
-  const limit = asLimit(params.limit, 'limit', TAG_QUERY_DEFAULT_LIMIT, 1, TAG_QUERY_MAX_LIMIT);
+  const limit = asLimit(params.limit, 'limit', 1, TAG_QUERY_LIMIT_MAX);
   const q = asQueryString(params.q, 'q');
   if (kind === 'categories' || kind === 'category') {
     const cats = listCategories(handle);
     const filtered = q === undefined
       ? cats
       : cats.filter((c) => c.name.includes(q) || c.name.toLowerCase().includes(q.toLowerCase()));
-    const sliced = filtered.slice(0, limit);
+    const sliced = limit === undefined ? filtered : filtered.slice(0, limit);
     return buildTagList([], sliced, filtered.length);
   }
   const all = listAllTags(handle);
   const filtered = q === undefined
     ? all
     : all.filter((t) => t.tag.includes(q) || t.tag.toLowerCase().includes(q.toLowerCase()));
-  const sliced = filtered.slice(0, limit);
+  const sliced = limit === undefined ? filtered : filtered.slice(0, limit);
   return buildTagList(sliced, undefined, filtered.length);
 }
 

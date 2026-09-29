@@ -6,7 +6,7 @@
 // 必需块原文进 `data-need` 追溯属性，可见文案为打磨中文。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp, paginateBlocks } from '../../render/index.js';
+import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'tag_manage' as const;
 
@@ -149,11 +149,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const hasUnusedDetail = Array.isArray(det.unused);
   // #817（⑤文案不冗余）：导语只说本页总数（没有明细才回退回执原文），「详情走 查标签」那类内部词退场；
   // 与同族的 category_manage 同款。
-  // #928 查询态截断必须显式：total 为筛后全量，tagRows 为本页行，全量>本页即写清“本页前 Y 个＋还有 N 个＋怎么捞剩下”。
+  // #928 收口：不给 limit 即全量（不截断）；只有调用方显式给 limit 时才会 total > 行数，那时写明。
   let leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签'
     : (hasTagDetail ? '共 ' + tagRows.length + ' 个标签' : visibleMsg(msg));
   if (isListQuery && listTotal > tagRows.length) {
-    leadText = '共' + listTotal + '个标签，本页前' + tagRows.length + '个（按件数排序）';
+    leadText = '共' + listTotal + '个标签，按 limit 只印前' + tagRows.length + '个（按件数排序）';
   }
   const pairSims: (number | null)[] = pairs.map((_, i) => {
     const pd = Array.isArray(det.pairs) ? (det.pairs as unknown[])[i] : null;
@@ -171,8 +171,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div>'
       : (tagRows.length
         // #817（⑤文案不冗余）：名字与计数并成一行（名字不再在左列重复一遍），与 category_manage 同款。
-        // #928 页内翻页：行全在 DOM 里（体积不变），20 行一视只治眼睛；不够一视原样。
-        ? paginateBlocks(tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>'))
+        // #928 收口：不截行、不翻页，库有多少标签印多少行。
+        ? tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>').join('')
         : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
     const unusedBlock = !hasUnusedDetail
       ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
@@ -181,9 +181,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         // #817（⑤文案不冗余）：闲置标签折成一行名单，不再逐行重复「闲置」这个左列词。
         ? '<p class="fp-v">闲置：' + unusedNames.map((n) => esc(n)).join('、') + '</p>'
         : '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>');
-    // #928 查询态分页说明（截断显式，不静默丢；查询不算 uses，如实写“—”已在行里）。
+    // #928 收口：只有显式 limit 才截，那时写明还有多少、怎么拿全（默认不给 limit 即全量）。
     const pagingNote = isListQuery && listTotal > tagRows.length
-      ? '<p class="fp-note">还有' + (listTotal - tagRows.length) + '个没显示：加 q 筛关键词、limit 翻页（最大300）。</p>'
+      ? '<p class="fp-note">还有' + (listTotal - tagRows.length) + '个没显示：去掉 limit 即全量，或加 q 筛关键词。</p>'
       : '';
     mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
       + overviewRows + pagingNote + '</section>'

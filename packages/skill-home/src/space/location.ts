@@ -11,10 +11,9 @@ import { fail } from '../shared/fail.js';
 import { asLimit, asQueryString } from '../shared/params.js';
 import { buildLocationList, buildReceipt } from '../render/index.js';
 
-// #928 分页上限：缺省 200（144 节点全量装得下；真装不下由族页按字节预算自截并写明「还有 N 个」）。
-// 最大 500（给信封一道护栏：再大复制载荷与页面都要重算）。只住本能力，标签分页另住 items。
-const LOC_QUERY_DEFAULT_LIMIT = 200;
-const LOC_QUERY_MAX_LIMIT = 500;
+// #928 收口：**不给 limit 即全量**（页面不再按体积截断，用户裁定「不限制 html 文件大小」）；
+// 给了 limit 才截，超界大声失败。只住本能力，标签取行另住 items。
+const LOC_QUERY_LIMIT_MAX = 100000;
 
 // ---- 富数据类型（每型字段不超八个；只经 envelope 流动，不另开接口） ----
 
@@ -290,19 +289,18 @@ export function runLocationQuery(params: Record<string, unknown>, handle: HomeDb
     return buildLocationList(hits.map((h) => h.item.name + ' #' + h.item.id + ' ' + h.locations.map((l) => l.location).join('；')));
   }
   // manage/storage：位置总览（节点＋相似组；页按 kind 分区 render）。
-  // #928 分页：q 筛路径子串，limit 截节点（相似组量小全留）；total 恒为筛后全量节点数（旧语义），
-  // items 为本页节点＋筛后相似组（total 允许大于本页行数，信封校验只要求 total 为 number）。
+  // #928 收口：不给 limit 即全量（页面不再按体积截断）；q 筛路径子串；total 恒为筛后全量节点数。
   const allNodes = locNodes(handle);
   const allSims = similarGroups(handle);
   const q = asQueryString(params.q, 'q');
-  const limit = asLimit(params.limit, 'limit', LOC_QUERY_DEFAULT_LIMIT, 1, LOC_QUERY_MAX_LIMIT);
+  const limit = asLimit(params.limit, 'limit', 1, LOC_QUERY_LIMIT_MAX);
   const filteredNodes = q === undefined
     ? allNodes
     : allNodes.filter((n) => n.path.includes(q) || n.path.toLowerCase().includes(q.toLowerCase()));
   const filteredSims = q === undefined
     ? allSims
     : allSims.filter((g) => g.target.includes(q) || g.paths.some((p) => p.includes(q)));
-  const slicedNodes = filteredNodes.slice(0, limit);
+  const slicedNodes = limit === undefined ? filteredNodes : filteredNodes.slice(0, limit);
   return { items: [...slicedNodes, ...filteredSims], total: filteredNodes.length };
 }
 
