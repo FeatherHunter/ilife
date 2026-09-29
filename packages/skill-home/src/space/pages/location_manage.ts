@@ -7,7 +7,7 @@
 // 数据形状声明：PAGE_META（主命令／形状／场景预设示例／服务场景清单）。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
-import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp, paginateBlocks } from '../../render/index.js';
+import { fillTemplate, escapeHtml, estimateBytes, HOME_HTML_MAX_BYTES, buildHomeEnvelope, homeCompactCopyArea, homeCopyLog, homeNowStamp, paginateBlocks } from '../../render/index.js';
 
 export const FAMILY = 'location_manage' as const;
 
@@ -86,13 +86,12 @@ function hero(total: number): string {
     + '<p class="lead">名字越规整，找东西越快</p></div>';
 }
 
-function treeCard(nodes: LocNode[]): string {
-  if (nodes.length === 0) {
-    // ③（#817 seq 30）：空态这句原是一长句，390 档折行后末字孤在第二行；断成两句短句，落行不再挂单字。
-    return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">'
-      + '<h2>还没有位置</h2>先建第一个位置，如客厅电视柜<br>录物品时也能顺手建</div>';
-  }
-  const rowList = nodes.map((n) => {
+/** 位置树逐行产（#928 行级瘦身）：**路径一行只写一次**（`data-t`），两条提示词（「帮我改名位置／
+ *  删除位置」）改由页内脚本在点击时用 `data-copy-kind` ＋ 本行路径现拼——同一句提示词一字不差，
+ *  但不再逐行把整段中文印两遍（144 行省约 28KB，正是「全部 144 个装不下」的那部分）。
+ *  `data-need="已有路径/改名/删除"` 是必需块追溯原文，逐行保留不动。 */
+function treeRows(nodes: LocNode[]): string[] {
+  return nodes.map((n) => {
     const indent = (n.depth - 1) * 22;
     // 次行用面包屑式呈现（› 连接）；单段路径的主名与路径同串，只在多级（depth>1）时才印这一截。
     const crumb = n.path.split('/').join(' › ');
@@ -100,19 +99,25 @@ function treeCard(nodes: LocNode[]): string {
     const cell = '<span class="infc"><span class="nm' + (n.empty ? ' isempty' : '') + '">'
       + escapeHtml(n.name) + '</span>' + sub + '</span>';
     const ct = '<span class="ct">' + (n.empty ? '空位置' : n.count + '件') + '</span>';
-    const renamePrompt = '请加载「居家管家」技能，帮我改名位置：\n源位置：「' + n.path + '」\n新名称：待填写';
-    const delPrompt = '请加载「居家管家」技能，帮我删除位置：\n位置：「' + n.path + '」';
     return '<div class="trow" data-need="已有路径" data-t="' + attr(n.path) + '">'
       + '<span style="width:' + indent + 'px;flex:none"></span>'
       + cell + ct + '<span class="ops">'
-      + '<button class="opb" data-copy="' + attr(renamePrompt) + '" data-need="改名">改名</button>'
-      + '<button class="opb" data-copy="' + attr(delPrompt) + '" data-need="删除">删除</button>'
+      + '<button class="opb" data-copy-kind="rename" data-need="改名">改名</button>'
+      + '<button class="opb" data-copy-kind="delete" data-need="删除">删除</button>'
       + '</span></div>';
   });
-  // #928 页内翻页：行全在 DOM 里（体积不变），20 行一视只治眼睛；不够一视原样。
+}
+
+/** 位置树卡（#928 页内翻页：行全在 DOM 里，20 行一视只治眼睛；不够一视原样）。 */
+function treeCard(rows: string[]): string {
+  if (rows.length === 0) {
+    // ③（#817 seq 30）：空态这句原是一长句，390 档折行后末字孤在第二行；断成两句短句，落行不再挂单字。
+    return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">'
+      + '<h2>还没有位置</h2>先建第一个位置，如客厅电视柜<br>录物品时也能顺手建</div>';
+  }
   return '<section class="card" data-block="fields" data-need="位置树">'
     + '<h2>位置树 <span class="hint">点行内按钮改名或删除</span></h2>'
-    + '<div class="tree" data-need="位置路径多级">' + paginateBlocks(rowList) + '</div></section>';
+    + '<div class="tree" data-need="位置路径多级">' + paginateBlocks(rows) + '</div></section>';
 }
 
 function similarCard(groups: SimilarGroup[]): string {
@@ -182,19 +187,45 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   }
   const dataTotal = (data as { total?: unknown }).total;
   const fullTotal = typeof dataTotal === 'number' ? dataTotal : nodes.length;
-  const shown = nodes.length;
   const receiptHtml = receipt === '' ? ''
     : '<div class="receipt">' + escapeHtml(receipt) + '</div>';
-  // #928 分页说明：total 允许大于本页行数（信封 total 为筛后全量）。截断必须显式写出，不静默丢。
-  const pagingHtml = fullTotal > shown
-    ? '<div class="paging">共' + fullTotal + '个位置，本页只看前' + shown + '个（按路径排序）。还有'
-      + (fullTotal - shown) + '个没显示：用空间视图逐层下钻，或加 q 筛关键词。</div>'
-    : '';
-  // 空态索引（有数据时空态区不 render，机审仍读原文；空态真 render 由测试空库断言覆盖）。
   const emptyIndex = nodes.length === 0 ? '' : '<div hidden data-block="empty">'
     + '<span data-need="空态：还没有位置＋建第一个位置引导"></span></div>';
-  const content = PAGE_CSS + hero(fullTotal) + pagingHtml + receiptHtml
-    + '<div data-block="status" hidden></div>' + emptyIndex
-    + treeCard(nodes) + similarCard(groups) + formPanel() + actionsBar(env, ctx);
-  return fillTemplate(template, content);
+  const allRows = treeRows(nodes);
+
+  /** 复制区用的信封（#928）：**装什么就复制什么**——`items`／`detail.nodes` 换成真印出来的行，
+   *  `total`／`total_nodes` 仍是库中全量。这样体积回退时复制载荷跟着缩，回退才收敛（否则行砍到 0、
+   *  载荷仍背着全量，页永远装不下）。 */
+  const copyEnvelope = (shown: LocNode[]): Envelope => {
+    if (receipt === '') return buildHomeEnvelope('home.location.query', { items: [...shown, ...groups], total: fullTotal });
+    const det = (data.detail ?? {}) as Record<string, unknown>;
+    return buildHomeEnvelope(env.key, {
+      ok: true, message: receipt,
+      detail: { ...det, nodes: shown, similar_groups: groups, total_nodes: fullTotal },
+    });
+  };
+
+  /** 按「印前几行」装一版整页（#928）：库中总数 > 本页行数时写明还有多少、怎么捞，不静默丢。 */
+  const assemble = (rowCount: number): string => {
+    const rows = treeRows(nodes.slice(0, rowCount));
+    const pagingHtml = fullTotal > rows.length
+      ? '<div class="paging">共' + fullTotal + '个位置，本页装下前' + rows.length + '个（按路径排序）。还有'
+        + (fullTotal - rows.length) + '个没显示：加 q 筛关键词，或用空间视图逐层下钻。</div>'
+      : '';
+    const content = PAGE_CSS + hero(fullTotal) + pagingHtml + receiptHtml
+      + '<div data-block="status" hidden></div>' + emptyIndex
+      + treeCard(rows) + similarCard(groups) + formPanel() + actionsBar(copyEnvelope(nodes.slice(0, rowCount)), ctx);
+    return fillTemplate(template, content);
+  };
+
+  // 体积门回退（#928）：位置多、路径长时全量行会顶穿 256KB。宁可少印末尾几行并写明「还有 N 个」，
+  // 也不让整页响亮失败（页内翻页只治眼睛，这里治的是真装不下）。
+  let count = nodes.length;
+  let html = assemble(count);
+  while (count > 0 && estimateBytes(html) > HOME_HTML_MAX_BYTES) {
+    const over = estimateBytes(html) - HOME_HTML_MAX_BYTES;
+    count = Math.max(0, count - Math.max(1, Math.ceil(over / 900)));
+    html = assemble(count);
+  }
+  return html;
 }

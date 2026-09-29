@@ -6,6 +6,7 @@ import {
   buildSharedHelpersJs, buildStyleSheet, pageShapeCss, pageUiCss,
 } from 'base-paint';
 import { blocksCss } from 'base-paint/blocks';
+import { PAGER_CSS } from './pager.js';
 import { HomeRenderError } from './errors.js';
 
 export const HOME_HTML_MAX_BYTES = 256 * 1024;
@@ -129,7 +130,9 @@ export const SHARED_CSS = '.page{font-family:system-ui,sans-serif;max-width:720p
   // 渲染成「项／值 逐格重印列名」。两件都从 `base-paint` 顶层取，本件只负责拼进共享样式槽。
   // 规则全套挂在根类 `.ilife-page-ui` 之下（`pageUi.ts` 的口径），根类由下面的 `fillTemplate`
   // 投影加到版面根上——两处必须成对出现，缺一处即整套规则一条不命中。
-  + '\n' + pageUiCss() + '\n' + pageShapeCss();
+  + '\n' + pageUiCss() + '\n' + pageShapeCss()
+  // #928 页内翻页条样式：随共享槽下发（两处在用：标签列表态、位置树）；样式住 `pager.ts`，与标记同家。
+  + '\n' + PAGER_CSS;
 export const SHARED_HELPERS = '<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>'
   // 卡路里同款复制运行时：双通道复制 ＋ toast 反馈 ＋ `[data-action-id]` 委派（含三格式菜单开合）。
   // 老 `copyItem` 保留作迁移期兼容（旧页内联 `onclick="copyItem(...)"` 仍能点），46 页收完后再撤。

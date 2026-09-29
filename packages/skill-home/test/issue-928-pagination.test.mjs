@@ -77,14 +77,22 @@ describe('#928 查标签分页', () => {
 });
 
 describe('#928 查位置分页', () => {
-  it('缺省截断：60/120，落盘 <256KB，页写清未尽', () => {
+  it('缺省全量：120 个位置全在页内，不挂「没显示」', () => {
     const env = runOk('home.location.query', {}, 'loc default');
     assert.equal(env.data.total, 120);
-    assert.equal(env.data.items.length, 60);
+    assert.equal(env.data.items.length, 120);
     assert.ok(env.delivery.bytes < MAX_BYTES, 'bytes=' + env.delivery.bytes);
     const html = readFileSync(env.delivery.path, 'utf8');
-    assert.ok(html.includes('共120个位置，本页只看前60个'), '缺分页导语');
-    assert.ok(html.includes('还有60个没显示'), '缺未尽数');
+    assert.equal(html.split('class="trow"').length - 1, 120, '缺省应印全量行');
+    assert.ok(!html.includes('没显示'), '全量装得下就不该挂未尽');
+  });
+  it('limit=50：只印 50 行并写明还有 70 个', () => {
+    const env = runOk('home.location.query', { limit: 50 }, 'loc limit50');
+    assert.equal(env.data.items.length, 50);
+    assert.equal(env.data.total, 120);
+    const html = readFileSync(env.delivery.path, 'utf8');
+    assert.ok(html.includes('共120个位置，本页装下前50个'), '缺分页导语');
+    assert.ok(html.includes('还有70个没显示'), '缺未尽数');
   });
   it('q 过滤：命中即全量，不挂未尽', () => {
     const env = runOk('home.location.query', { q: '压测位/点00' }, 'loc q');
@@ -94,17 +102,49 @@ describe('#928 查位置分页', () => {
   });
   it('非法 limit exit 2', () => {
     const err = runFail('home.location.query', { limit: 9999 }, 2, 'loc limit9999');
-    assert.match(err, /limit 须为 1~80/);
+    assert.match(err, /limit 须为 1~500/);
+  });
+  it('改名/删除按钮走 data-copy-kind：路径一行只写一次，提示词点击时现拼', () => {
+    const env = runOk('home.location.query', { limit: 3 }, 'loc kind');
+    const html = readFileSync(env.delivery.path, 'utf8');
+    assert.ok(html.includes('data-copy-kind="rename"') && html.includes('data-copy-kind="delete"'), '缺 kind 标记');
+    // 提示词只在页内脚本里现拼（表单预览那处是既有脚本），行属性里一个都不许有。
+    assert.equal(html.split('data-copy="请加载「居家管家」技能，帮我改名位置').length - 1, 0, '行属性不该印改名提示词');
+    assert.equal(html.split('data-copy="请加载「居家管家」技能，帮我删除位置').length - 1, 0, '行属性不该印删除提示词');
+    assert.ok(html.includes("k.getAttribute('data-copy-kind')==='rename'"), '页内脚本未接 kind 分支');
+  });
+  it('体积门回退：400 个位置也装得下（少印末尾行＋写明还有多少）', async () => {
+    const R = await import(pathToFileURL(join(pkgDir, 'dist', 'render', 'index.js')).href);
+    const mod = await import(pathToFileURL(join(pkgDir, 'dist', 'space', 'pages', 'location_manage.js')).href);
+    const nodes = Array.from({ length: 400 }, (_, i) => ({
+      kind: 'location_node', path: '压测长路径层/子层' + String(i).padStart(3, '0') + '/再一层/最末层',
+      name: '最末层' + String(i).padStart(3, '0'), depth: 4, count: 3, empty: false,
+    }));
+    const env = R.buildHomeEnvelope('home.location.query', { items: nodes, total: 400 });
+    const html = mod.renderFamilyPage(env);
+    const bytes = R.estimateBytes(html);
+    assert.ok(bytes <= R.HOME_HTML_MAX_BYTES, 'bytes=' + bytes + ' 应不超门');
+    const m = html.match(/共400个位置，本页装下前(\d+)个/);
+    assert.ok(m, '缺回退说明');
+    const shown = Number(m[1]);
+    assert.ok(shown > 0 && shown < 400, 'shown=' + shown);
+    assert.equal(html.split('class="trow"').length - 1, shown, '印出的行数应与说明一致');
+    // 复制载荷跟着缩（装什么复制什么）：载荷里的节点数 = 印出的行数。
+    const payload = JSON.parse(html.match(/<script type="application\/json" id="hmcp-data">([\s\S]*?)<\/script>/)[1]);
+    const copied = JSON.parse(payload.json.replace(/\\u003c/g, '<')).data.items.length;
+    assert.equal(copied, shown, '复制载荷应只带印出的行');
   });
 });
 
 describe('#928 页内翻页（一令一文件，翻已装载行）', () => {
-  it('位置 60 行分 3 视：行全在 DOM，首视外 hidden', () => {
+  it('位置 120 行分 6 视：行全在 DOM，首视外 hidden；翻页条有样式', () => {
     const env = runOk('home.location.query', {}, 'pager loc');
     const html = readFileSync(env.delivery.path, 'utf8');
-    assert.ok(html.includes('第1页／共3页'), '缺翻页尺');
+    assert.ok(html.includes('第1页／共6页'), '缺翻页尺');
     assert.ok(html.includes('上一页') && html.includes('下一页'), '缺翻页钮');
-    assert.equal(html.split('<div class="trow"').length - 1, 60, '行必须全在 DOM（一令一文件）');
+    assert.equal(html.split('<div class="trow"').length - 1, 120, '行必须全在 DOM（一令一文件）');
+    assert.ok(html.includes('[data-hmpp-bar] [data-hmpp]{'), '翻页条样式未随共享槽下发');
+    assert.ok(html.includes('div[data-hmpp-page]:last-child>.trow:last-child{border-bottom:none}'), '分组末行去边框规则缺位');
     assert.ok(env.delivery.bytes < MAX_BYTES, 'bytes=' + env.delivery.bytes);
   });
   it('标签 100 行分 5 视；9 行小结果无翻页件', () => {
@@ -113,7 +153,7 @@ describe('#928 页内翻页（一令一文件，翻已装载行）', () => {
     assert.ok(html.includes('第1页／共5页'), '缺翻页尺');
     assert.equal(html.split('<p class="fp-v">').length - 1, 100, '行必须全在 DOM');
     const small = runOk('home.tag.query', { q: '压测标00' }, 'pager small');
-    assert.ok(!readFileSync(small.delivery.path, 'utf8').includes('data-hmpp-bar'), '小结果不该挂翻页件');
+    assert.ok(!readFileSync(small.delivery.path, 'utf8').includes('<div data-hmpp-bar>'), '小结果不该挂翻页件');
   });
 });
 describe('#928 紧凑复制区（一份 JSON 点取，不走三份 data-t）', () => {
