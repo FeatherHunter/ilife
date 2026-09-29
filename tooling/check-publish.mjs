@@ -55,10 +55,10 @@ const PLUGINS = ['dsh-calorie', 'dsh-chef', 'dsh-bill-ilife', 'dsh-home-ilife', 
 const COMBOS = ['base-combos'];
 const PINNED = ['dsh-life-pack', 'base-link-core', 'base-paint'];
 const ALL13 = [...COMBOS, ...SKILLS, ...PLUGINS];
-const WITH_TEMPLATES = ['skill-calorie', 'skill-chef', 'skill-bill', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
+const WITH_TEMPLATES = ['skill-chef', 'skill-bill', 'skill-home', 'skill-memo-ilife', 'skill-schedule'];
 // #95：有模板装载器的包，其 templates/ 逐件点名（G2 只断言目录存在会漏「少发几件」）。
+// 2026-09-24 skill-calorie 6 件模板随速查台下线（407dca66，用户裁定只留一份 HELP HTML），故不再列入。
 const TEMPLATE_NAMES = {
-  'skill-calorie': ['diet', 'exercise', 'goal', 'help', 'home', 'photo-gallery'],
 };
 // #858：备忘录的契约键由 `memo.stats` 改指 `memo.help.lookup`——统计命令整条退役（零唤醒词／HELP 无场景／
 // 老技能无 stats），而这几家兄弟技能的契约键本来就是各自的 help 键；G3 那一跑只要求「装出来的技能真能跑通一条键」。
