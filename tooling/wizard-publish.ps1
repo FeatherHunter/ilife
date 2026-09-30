@@ -1,4 +1,4 @@
-# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「弹窗交互、用户按回车＋浏览器批准 2FA」设计。
+﻿# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「弹窗交互、用户按回车＋浏览器批准 2FA」设计。
 #
 # 跑法：由 AI 经 schtasks /IT 弹交互窗口（真 TTY＋用户本人；Agent 后台 Start-Process 起的是不可见会话必用此法）：
 #     schtasks /create /tn "ILIFEPublish" /tr "<pwsh完整路径> -NoProfile -File D:\ilife\tooling\wizard-publish.ps1 -Auto" /sc once /st 23:59 /it /f
@@ -29,12 +29,14 @@ param(
 $ErrorActionPreference = 'Continue'
 try { $Host.UI.RawUI.WindowTitle = 'ilife npm 发布窗口' } catch { }
 if ([Console]::IsOutputRedirected) {
-  Write-Host 'FAIL 本向导必须在【侧边栏终端】（真 TTY）里跑：npm 的登录与 2FA 都发生在交互窗口里，在普通命令/工具调用里跑会挂住。'
-  Write-Host '正确跑法：在侧边栏终端里执行  pwsh -NoProfile -File D:\ilife\tooling\wizard-publish.ps1 -Auto'
+  Write-Host 'FAIL 本向导必须在真 TTY 交互窗口里跑（经 schtasks /IT 弹窗）：npm 的登录与 2FA 都发生在该窗口里，在普通命令/工具调用里跑会挂住。'
   exit 2
 }
 if ($LogPath -eq '') { $LogPath = Join-Path $RepoRoot '.scratch\publish-log.txt' }
 New-Item -ItemType Directory -Force -Path (Split-Path $LogPath -Parent) | Out-Null
+# 整窗转录（交接 pattern）：npm publish 必须贴着控制台跑（不可管道），转录件才是红条原文的权威出处。
+$TranscriptPath = Join-Path (Split-Path $LogPath -Parent) ('publish-window-' + (Get-Date).ToString('yyyyMMdd-HHmmss') + '.log')
+try { Start-Transcript -Path $TranscriptPath -Append | Out-Null } catch { }
 
 function Log([string]$line) {
   $text = '[' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + '] ' + $line
@@ -78,7 +80,7 @@ foreach ($p in $all) {
   if (Test-Published $p.name $p.version) { Log ('SKIP ' + $p.name + '@' + $p.version + ' 云端已有') }
   else { Log ('TODO ' + $p.name + '@' + $p.version + ' 云端没有'); $todo += $p }
 }
-if ($todo.Count -eq 0) { Log 'DONE 本次没有要发的包'; Read-Host '结束：按回车关窗' | Out-Null; exit 0 }
+if ($todo.Count -eq 0) { Log 'DONE 本次没有要发的包'; try { Stop-Transcript | Out-Null } catch { }; Read-Host '结束：按回车关窗' | Out-Null; exit 0 }
 Log ('PLAN 待发 ' + $todo.Count + ' 个：' + (($todo | ForEach-Object { $_.name + '@' + $_.version }) -join ', '))
 Write-Host '=== 人在窗口三步：看到 Auth URL 按回车 → 浏览器完成登录＋2FA → 回窗口按回车等 PKG-OK → 最后回车关窗 ==='
 if (-not $Auto) { Read-Host '按回车开始发布（Ctrl+C 取消）' }
@@ -94,29 +96,38 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ── 阶段 3／4：按依赖顺序发布 ──────────────────────────────────────────────────
+# npm publish 必须贴控制台直跑（严禁管道：stdout 一进管道 npm 即判非 TTY，不弹浏览器 2FA、直接 EOTP 死）。
+# 2FA 全在浏览器走：每包都可能弹自己的授权 URL（回车开页 → 第二步扫码/批准 → 回窗等结果）。
+# 判据只认 registry 读回（云端有该版本＝已发），不解析输出文字。
 $done = @()
 foreach ($p in $todo) {
   Log ('PKG-BEGIN ' + $p.name + '@' + $p.version)
-  Log '  看到 “Press ENTER to open in the browser” 按回车；浏览器批准后回窗口按回车继续（人只在浏览器批准，不敲别的键）'
+  Log '  本包如弹 “Press ENTER to open in the browser” 就按回车 → 浏览器第二步扫码/批准 → 回窗口等 PKG-OK（全程浏览器，不输码）'
   Push-Location $p.dir
-  $pubOut = npm publish --access public --registry=$Registry 2>&1 | Tee-Object -Variable pubOutRaw | Out-String
+  npm publish --access public --registry=$Registry
   $code = $LASTEXITCODE
   Pop-Location
-  $pubText = if ($pubOut) { [string]$pubOut } else { '' }
-  if ($code -ne 0 -and ($pubText -match 'previously staged version' -or $pubText -match 'E409' -or $pubText -match '409 Conflict')) {
-    Log ('PKG-SKIP-staged ' + $p.name + '@' + $p.version + '（registry 已暂存该版本，视为已发；刚发完立刻重跑会命中这一行，等同步后只跑 --post）')
+  if ($code -eq 0) {
+    Log ('PKG-OK ' + $p.name + '@' + $p.version)
     $done += ($p.name + '@' + $p.version)
     continue
   }
-  if ($code -ne 0) { Log ('PKG-FAIL ' + $p.name + ' exit=' + $code + ' 已发：' + ($done -join ', ')); Read-Host '失败：把上面红条完整转告 Agent，按回车关窗' | Out-Null; exit 1 }
-  Log ('PKG-OK ' + $p.name + '@' + $p.version)
-  $done += ($p.name + '@' + $p.version)
+  if (Test-Published $p.name $p.version) {
+    Log ('PKG-SKIP-staged ' + $p.name + '@' + $p.version + '（registry 已有该版本，视为已发；刚发完立刻重跑会命中这一行，等同步后只跑 --post）')
+    $done += ($p.name + '@' + $p.version)
+    continue
+  }
+  Log ('PKG-FAIL ' + $p.name + ' exit=' + $code + ' 已发：' + ($done -join ', ') + '（红条原文见本窗上屏＋转录件，registry 亦无该版本）')
+  Read-Host '失败：把本窗红条完整转告 Agent，按回车关窗' | Out-Null
+  try { Stop-Transcript | Out-Null } catch { }
+  exit 1
 }
 
 # ── 阶段 4／4：registry 读回复核（带轮询；红即 FAIL，不冒充 DONE）──────────────
 Log 'STAGE 4/4 registry 读回复核（npm 生效有分钟级延迟，--post 会轮询约 10min；不等请 Ctrl+C 后稍后只跑 --post）'
-node (Join-Path $RepoRoot 'tooling\check-publish.mjs') --post --only (($todo | ForEach-Object { $_.name }) -join ',')
-if ($LASTEXITCODE -ne 0) { Log 'FAIL STAGE 4/4 回读未全绿（多为复制延迟）：稍后只跑 node tooling\check-publish.mjs --post --only <包名,逗号隔开> 复核，不重跑整向导'; Read-Host '失败：把上面红条完整转告 Agent，按回车关窗' | Out-Null; exit 1 }
+node (Join-Path $RepoRoot 'tooling\check-publish.mjs') --post --registry $Registry --only (($todo | ForEach-Object { $_.name }) -join ',')
+if ($LASTEXITCODE -ne 0) { Log 'FAIL STAGE 4/4 回读未全绿（多为复制延迟）：稍后只跑 node tooling\check-publish.mjs --post --only <包名,逗号隔开> 复核，不重跑整向导'; try { Stop-Transcript | Out-Null } catch { }; Read-Host '失败：把上面红条完整转告 Agent，按回车关窗' | Out-Null; exit 1 }
 Log ('DONE 已发 ' + $done.Count + ' 个：' + ($done -join ', '))
 Write-Host '下一步：装到本机走 tooling\wizard-install.ps1（Agent 会另起；本窗不用再操作）'
+try { Stop-Transcript | Out-Null } catch { }
 Read-Host '结束：按回车关窗' | Out-Null
