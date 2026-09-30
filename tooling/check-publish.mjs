@@ -29,6 +29,11 @@ const NPSH = process.platform === 'win32'; // .cmd 须经 shell 起（Node 直 s
 const onlyIdx = process.argv.indexOf('--only');
 const SCOPE = onlyIdx >= 0 ? new Set(process.argv[onlyIdx + 1].split(',').map((s) => s.trim()).filter(Boolean)) : null;
 const inScope = (n) => !SCOPE || SCOPE.has(n);
+// 2026-09-29 真凶：本机 ambient registry 是 npmmirror 镜像，--post 查版本必须直查
+// registry.npmjs.org（发往那边）。此前 gatePost 的 npm view 没带 --registry，
+// 命中镜像同步差，误报 404（如 skill-schedule@0.3.19）。现透传 --registry，缺省官方源。
+const regIdx = process.argv.indexOf('--registry');
+const REGISTRY = regIdx >= 0 && process.argv[regIdx + 1] ? process.argv[regIdx + 1] : (process.env.NPM_REGISTRY || 'https://registry.npmjs.org/');
 
 // #95 返修 F1：临时根**必须在仓库之外**（`.scratch/t75/concurrency-protocol.md` §2.1）。
 // 归因实测（`.scratch/t95-fix/probe-f1.txt`，2×2）：`npm install <tgz>` 空跑的**决定性变量是安装目录
@@ -115,6 +120,26 @@ function gatePre() {
     const skill = PLUGIN_OF[plug];
     assertSameVersionLine(plug, 'dsh-life-pack', dep['dsh-life-pack']);
     assertSameVersionLine(plug, skill, dep[skill]);
+  }
+  // #988：更新系统包版本门——总管必须依赖 dsh-plugin-update ^0.2.0（caret：用户装／更新
+  // dsh-life-pack 时自动拿到 0.2.x 最新版），锁文件必须已解析到 0.2.0（否则打包出去的仍是旧版）。
+  if (inScope('dsh-life-pack')) {
+    const range = (pkgJson('dsh-life-pack').dependencies || {})['dsh-plugin-update'];
+    if (range === '^0.2.0') ok('dsh-life-pack 依赖 dsh-plugin-update ^0.2.0（随装自动取 0.2.x 最新）');
+    else fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^0.2.0（用户装／更新才自动拿到 0.2.0），现为「' + range + '」');
+    const lock = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
+    if (/^\s*dsh-plugin-update@0\.2\.0:/m.test(lock)) ok('pnpm-lock 已解析 dsh-plugin-update@0.2.0（打包带最新更新包）');
+    else fail('pnpm-lock 未见 dsh-plugin-update@0.2.0（锁仍钉旧版：先跑 pnpm install 刷新再打包）');
+    // 线上最新比对（#988：0.2.1 出来后锁仍钉 0.2.0 即红——"每次打包用最新"落在这条，不靠人记）。
+    const locked = (lock.match(/  packages\/plugin-manager:\n(?:.*\n)*?      dsh-plugin-update:\n        specifier: (\S+)\n        version: ([^\s(]+)/) || [])[2] || '';
+    let latest = '';
+    try {
+      latest = execFileSync(NPM, ['view', 'dsh-plugin-update', 'version', '--registry=' + REGISTRY], { encoding: 'utf8', shell: NPSH }).trim();
+    } catch { latest = ''; }
+    if (!latest) console.log('WARN: 更新包线上最新查不到（离线？），跳过最新比对');
+    else if (!locked) fail('pnpm-lock 里找不到总管的 dsh-plugin-update 落版本（解析失败）');
+    else if (locked === latest) ok('更新包锁版本与线上最新一致：' + locked);
+    else fail('更新包锁版本 ' + locked + ' 落后于线上最新 ' + latest + '：跑 pnpm up dsh-plugin-update@latest 刷新再打包');
   }
 }
 
@@ -306,7 +331,7 @@ function gatePost() {
     let shown = null;
     for (let i = 0; i < tries; i++) {
       try {
-        const out = execFileSync(NPM, ['view', name + '@' + local.version, 'dependencies', '--json'], { encoding: 'utf8', shell: NPSH });
+        const out = execFileSync(NPM, ['view', name + '@' + local.version, 'dependencies', '--json', '--registry=' + REGISTRY], { encoding: 'utf8', shell: NPSH });
         shown = out.trim() ? JSON.parse(out) : {};
         break;
       } catch (e) {
@@ -317,6 +342,13 @@ function gatePost() {
     if (!shown) continue;
     if (JSON.stringify(shown).includes('workspace:')) fail(name + '@' + local.version + ' registry 仍含 workspace:');
     else ok(name + '@' + local.version + ' registry 无 workspace:');
+    // #988：线上复核——发出去的 dsh-life-pack 必须带 dsh-plugin-update ^0.2.0，
+    // 用户装／更新最新版时才自动用上最新的 0.2.0 更新系统。
+    if (name === 'dsh-life-pack') {
+      const dep = (shown || {})['dsh-plugin-update'];
+      if (dep === '^0.2.0') ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ^0.2.0');
+      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ^0.2.0，现为「' + dep + '」');
+    }
   }
 }
 

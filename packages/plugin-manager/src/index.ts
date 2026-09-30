@@ -33,7 +33,15 @@ function loggerOf(ctx: HostCtx): HostLogger {
 
 export function apply(ctx: HostCtx): void {
   const logger = loggerOf(ctx);
-  const table = buildUpdatePhoneTable(ctx);
+  // 安装留痕（票 #988）：装的动作走哪条落点、失败原文是什么，都要落到宿主日志里——
+  // 此前失败只剩面板上一句「安装没有完成」，真因无处可查（本票的现象正是这么来的）。
+  const log = (level: string, event: string, fields: Record<string, unknown>): void => {
+    const line = '[dsh-life-pack] ' + event + ' ' + JSON.stringify(fields);
+    if (level === 'error') logger.error?.(line);
+    else if (level === 'warn') logger.warn?.(line);
+    else logger.info?.(line);
+  };
+  const table = buildUpdatePhoneTable(ctx, { log });
   const reply = (rpcId: string, result: ManagerReply): Response => Response.json({ type: 'server-response', rpcId, result });
   const fail = (rpcId: string, code: string, details: Record<string, unknown> = {}): Response =>
     reply(rpcId, { ok: false, error: { code, message: reasonText(code), details } });

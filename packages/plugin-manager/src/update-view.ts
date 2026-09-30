@@ -211,6 +211,18 @@ export function loadFailureDetail(failure: {
   return failure.code;
 }
 
+/** 失败原文那一行（票 #988）：宿主回包 `details.detail` 里那句人话，面板把它摊在原因句下面。
+ *
+ * 为什么要摊：`install-failed` 这句人话对每一种装不上都长一个样，光看它分不出「这个宿主没有安装出口」
+ * 与「pnpm 退出码非零」。原文由宿主半取好并回传（`update-host.ts` 的 `installErrorDetail`），
+ * 这里只取值与截断（长文本会撑爆那一行）。没有原文回 null——面板不自己编原因。 */
+export function failureDetailOf(failure: { readonly details?: Record<string, unknown> } | null | undefined): string | null {
+  const raw = failure?.details?.detail;
+  if (typeof raw !== 'string') return null;
+  const text = raw.trim();
+  return text.length === 0 ? null : text.slice(0, 300);
+}
+
 /** 题头两颗按钮的悬停标题（票 #986 第二半：目标表未就绪时说真因）。
  *
  * 住这里（不是面板组件旁边）：标题口径只有一个定义地，面板与单测共用同一份；

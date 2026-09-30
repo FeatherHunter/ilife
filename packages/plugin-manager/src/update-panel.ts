@@ -13,7 +13,7 @@ import { checkTarget, installAbsent, loadTargets, updateInstalled } from './upda
 import type { CallFace, CallFailure } from './update-client.js';
 import { LOAD_RETRY_MS, reasonText } from './update-contract.js';
 import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
-import { cardActionOf, headerButtonTitle, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
+import { cardActionOf, failureDetailOf, headerButtonTitle, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -178,6 +178,14 @@ export const PANEL_STYLE = {
   } as React.CSSProperties,
   dialogNote: { color: 'var(--dsw-alias-label-tertiary, #8a8a8a)', fontSize: 12, marginTop: 4 } as React.CSSProperties,
 };
+
+/** 失败原文那一块（票 #988）：宿主回来的细节单放一个可复制块（`cmd` 样式带 `userSelect: all`，
+ * 点一下全选即拷走），不与可执行的手工命令拼在同一块里——拼一起用户会整块拷去终端敲。
+ * 两处失败行（结果行与缺席卡）共用这一块，口径一处。 */
+function failureDetailCode(detail: string | null): React.ReactElement | null {
+  if (!detail) return null;
+  return React.createElement('code', { style: PANEL_STYLE.cmd }, '宿主原话：' + detail);
+}
 
 /** 一行的分档：**要动的那几档才上色**（`ok`／`idle` 保持素色，不跟红黄抢注意力 —— 照 `health-view.ts` 的三档口径）。
  *  每档同时给**形状**（`↑ ! ✕ ✓`）：颜色之外的第二条读数，灰度截图与色弱视角下同样分得开。 */
@@ -628,6 +636,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
           )
         : null,
       row.failure ? React.createElement('div', { style: PANEL_STYLE.reason }, '装不上：' + row.failure.message) : null,
+      failureDetailCode(failureDetailOf(row.failure)),
       versionLines(target, snapshot).map((line, index) =>
         React.createElement('div', { key: String(index), style: PANEL_STYLE.skill }, line),
       ),
@@ -808,6 +817,7 @@ export function AbsentCard(props: {
         )
       : null,
     reason ? React.createElement('div', { style: PANEL_STYLE.reason }, reason) : null,
+    failureDetailCode(failureDetailOf(row?.failure)),
     React.createElement('code', { style: PANEL_STYLE.cmd }, manual),
   );
 }

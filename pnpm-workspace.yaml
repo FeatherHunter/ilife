@@ -5,4 +5,6 @@ packages:
 # prefer-workspace-packages 已被移除，link-workspace-packages 亦只认 CLI flag），
 # 唯 pnpm-workspace.yaml 内 linkWorkspacePackages 才全局生效（含 CI），锁文件永保 link:。
 linkWorkspacePackages: true
+minimumReleaseAgeExclude:
+  - dsh-plugin-update@0.2.0
 preferWorkspacePackages: true

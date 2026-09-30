@@ -1,17 +1,25 @@
 /** dsh-plugin-update 的最小类型声明（type-only 镜像，构建期擦除，零运行时）。
  *
- * 为什么要手写：更新包 `dsh-plugin-update@0.1.1` 的 `files` 只带 9 个 JS（`package.json`
- * 的 `exports` 也只有包根与 `./package.json`，见 `dist/` 实读），**不带任何 `.d.ts`**，
- * 所以 `import { createHostUpdate } from 'dsh-plugin-update'` 在 strict 下报
- * 「找不到声明文件」。本文件只声明总管真正用到的那几个出口，形状逐条抄自更新包源码。
+ * 为什么要手写：更新包 `dsh-plugin-update@0.2.0` 的 `files` 只带 14 个文件（`dist/*.js`、
+ * `derive-client-values.mjs`、`event-list.template.json`、`README.md`、`LICENSE`，
+ * 2026-09-30 对 `npm pack --dry-run` 的实读），`exports` 也只有包根与 `./package.json`，
+ * **不带任何 `.d.ts`**，所以 `import { createHostUpdate } from 'dsh-plugin-update'` 在
+ * strict 下报「找不到声明文件」。本文件只声明总管真正用到的那几个出口，形状逐条抄自更新包源码。
  *
- * 出处（只读消费，均为 `D:\dsh-plugin\dsh-mattpocock-skills-deck\packages\dsh-plugin-update\src\`）：
+ * 出处（只读消费，均为 `dsh-plugin-update` 仓 `src/`）：
  * - `createHostUpdate(deps, config)` → `{ phoneNames, handlers }`：`host.ts:326-367`、`:317-320`。
  * - `createUpdateExecutor(parts)` → `runInstall(args)`：`store.ts:357-372`、`:456-465`。
  * - `containingPackage` / `defaultHomeDir` / `profileNameValid` / `registrySpec`：`reader.ts:42-58`、`:112-117`、`:61-70`、`:73-81`。
+ * - `resolveTargetPackage(name, overrides)` → 按包名解析目标包：`0.2.0` 新增（README §8），
+ *   总管暂不调用、先声明形状，后续收敛 `update-env.ts` 自备读数时用它。
  * - `EnvironmentView`（环境读数 11 字段）：`ports.ts:123-134`；`UpdateSnapshot`（快照六字段）：`ports.ts:44-57`；
  *   `BlockedReason`（八种原因码）：`ports.ts:16-24`；`UpdateJob`：`ports.ts:60-67`；
  *   `ReaderOverrides`：`host.ts:123-155`；`UpdateConfigInput`：`config.ts:42-61`。
+ *
+ * `0.2.0` 相对 `0.1.x` 的关键变化（README §2 升级节）：目标包**按包名解析**
+ * （清单直解 → 入口反查 → `node_modules` 步行 → 自锚定兜底），以依赖形态安装时不再恒报
+ * `installation-changed`。总管的 `readerOverrides.readInstalled` 自备读数仍走公开接缝，
+ * 行为不变；`targetPackageName` 照旧取自家包名。
  *
  * 纪律：本文件只放总管实际用到的成员；更新包升版后按上面出处逐条核对再加。
  */
@@ -27,8 +35,10 @@ declare module 'dsh-plugin-update' {
     | 'incompatible-node'
     | 'recovery-required';
 
-  /** 宿主种类：桌面宿主或普通 DSH 宿主（`ports.ts:13`）。 */
-  export type EnvironmentKind = 'desktop' | 'cli';
+  /** 宿主种类：桌面宿主或普通 DSH 宿主（`ports.ts:13`），另加执行器配方的
+   * `'desktop-manager'`（0.2.0 `commands.js:38-65` 的 `installRecipe` 按 kind 定路由；
+   * `detectEnvironmentKind` 只回前两种，第三种由调用方在认出进程内管理器后显式定）。 */
+  export type EnvironmentKind = 'desktop' | 'desktop-manager' | 'cli';
 
   /** 适配器看到的真实环境（`ports.ts:123-134`）。 */
   export interface EnvironmentView {
@@ -113,7 +123,9 @@ declare module 'dsh-plugin-update' {
     readerOverrides?: ReaderOverrides;
   }
 
-  /** 真执行器的零件（`store.ts:357-372`，总管只用到其中几项）。 */
+  /** 真执行器的零件（`store.ts:357-372`，总管只用到其中几项）。
+   * `pluginManager`（0.2.0 `store.js:375-416` 的 `runDesktopManager` 从零件里取，
+   * `host.js:130` 同口径）：官方桌面客户端的安装出口，走 desktop-manager 路由时给。 */
   export interface ExecutorParts {
     profileName?: string | null | (() => string | null);
     environmentKind?: EnvironmentKind | (() => EnvironmentKind);
@@ -121,6 +133,7 @@ declare module 'dsh-plugin-update' {
     subprocess?: unknown | (() => unknown);
     desktopPnpm?: unknown | (() => unknown);
     desktopProfiles?: unknown | (() => unknown);
+    pluginManager?: unknown | (() => unknown);
     runtimeExecutable?: string | (() => string | undefined);
     runtimeExecArgs?: string[] | (() => string[] | undefined);
     cliEntry?: string | (() => string | undefined);
