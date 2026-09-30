@@ -13,7 +13,7 @@ import { checkTarget, installAbsent, loadTargets, updateInstalled } from './upda
 import type { CallFace, CallFailure } from './update-client.js';
 import { LOAD_RETRY_MS, reasonText } from './update-contract.js';
 import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
-import { cardActionOf, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
+import { cardActionOf, headerButtonTitle, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
 /** 面板视觉（沿用总管既有语言：内联 style，主题别名带回退）。 */
@@ -227,6 +227,8 @@ export interface UpdateRowsFace {
   checkAll(): void;
   /** 一键全部更新：按目标顺序串行收尾，失败一家记 failed 继续下一家。 */
   updateAll(): void;
+  /** 取数失败后的重试入口（票 #986 第二半）：不依赖目标表，点它重走一遍取数（含退避）。 */
+  retry(): void;
   /** 执行这一行按钮对应的动作（装上／装上更新／重试安装／重新检查）。 */
   act(target: TargetInfo, action: VerdictAction): void;
 }
@@ -335,6 +337,10 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     }
   }, [getCall]);
   React.useEffect(() => {
+    void reload(true);
+  }, [reload]);
+  /** 取数失败后的手动重试（票 #986 第二半）：不依赖目标表，挂载那次的退避表复用。 */
+  const retry = React.useCallback(() => {
     void reload(true);
   }, [reload]);
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
@@ -454,6 +460,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     checking,
     updatingAll,
     open,
+    retry,
     close: () => setOpen(resolveDialogOpen('hide')),
     // 只读重开：只开浮层、不启动任何轮次，故不受忙守卫阻挡（#980）。
     showProgress: () => setOpen(resolveDialogOpen('show')),
@@ -461,6 +468,24 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     updateAll,
     act,
   };
+}
+
+/** 取数失败的出口卡（票 #986 第二半：失败必须有出口）。
+ *
+ * 纯组件（无钩子）：错误原文＋一颗可点的「重试」。重试不依赖目标表——
+ * 目标表为空时两题头按钮仍禁用，但这颗可点；点它重走取数，成功后按钮与行恢复。
+ */
+export function TargetsLoadError(props: { readonly message: string; readonly onRetry: () => void }): React.ReactElement {
+  return React.createElement(
+    'div',
+    { style: PANEL_STYLE.reason },
+    '更新能力没接上：' + props.message,
+    React.createElement(
+      'button',
+      { type: 'button', style: { ...PANEL_STYLE.btn, marginLeft: 8 }, onClick: props.onRetry },
+      '重试',
+    ),
+  );
 }
 
 /** 标题右侧两件：「检查更新」一次查七家 ＋ 「全部更新」按顺序串行装（吃 `useUpdateRows` 的表）。
@@ -472,9 +497,8 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
   const { checking, updatingAll, checkAll, updateAll, targets, rows } = props.face;
   // 视觉与入口守卫同判据（#980）：禁用的才点不得，点得动的必有回响。
   const blocked = shouldBlockBatchStart({ hasInstallingRow: hasInstallingRow(rows), updatingAll, checking });
-  const checkDisabled = blocked || targets.length === 0;
-  const allDisabled = blocked || targets.length === 0;
-  const busyText = reasonText('update-busy');
+  const targetsEmpty = targets.length === 0;
+  const headerDisabled = blocked || targetsEmpty;
   // 题头状态字（#980 Q1）：检查中／安装中直接写在按钮上，不计数（#925）。
   const installingNow = hasInstallingRow(rows) || updatingAll;
   return React.createElement(
@@ -484,10 +508,10 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
       'button',
       {
         type: 'button',
-        style: checkDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
-        disabled: checkDisabled,
+        style: headerDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
+        disabled: headerDisabled,
         onClick: checkAll,
-        title: blocked ? busyText : '检查总管与六家插件的版本',
+        title: headerButtonTitle({ blocked, empty: targetsEmpty, readyText: '检查总管与六家插件的版本' }),
       },
       checking ? '检查中…' : '检查更新',
     ),
@@ -495,10 +519,10 @@ export function CheckUpdateButton(props: { readonly face: UpdateRowsFace }): Rea
       'button',
       {
         type: 'button',
-        style: allDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
-        disabled: allDisabled,
+        style: headerDisabled ? { ...PANEL_STYLE.btn, opacity: 0.55, cursor: 'default' } : PANEL_STYLE.btn,
+        disabled: headerDisabled,
         onClick: updateAll,
-        title: blocked ? busyText : '按顺序逐家装上更新（一家收尾才起下一家）',
+        title: headerButtonTitle({ blocked, empty: targetsEmpty, readyText: '按顺序逐家装上更新（一家收尾才起下一家）' }),
       },
       installingNow ? '更新中…' : '全部更新',
     ),
@@ -527,13 +551,13 @@ function RestartBanners(props: { readonly face: UpdateRowsFace }): React.ReactEl
  * 手工命令只在「装不了」或「装失败」的行显示：正常用户用不到，摊在每行上既吵又误导。
  */
 export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.ReactElement | null {
-  const { targets, rows, loadError, checking, updatingAll, open, close, showProgress } = props.face;
+  const { targets, rows, loadError, checking, updatingAll, open, close, showProgress, retry } = props.face;
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
     if (open) dialogRef.current?.focus();
   }, [open]);
   const shown = targets.filter((target) => rows[target.key] && rows[target.key].phase !== 'idle');
-  if (loadError) return React.createElement('div', { style: PANEL_STYLE.reason }, '更新能力没接上：' + loadError);
+  if (loadError) return React.createElement(TargetsLoadError, { message: loadError, onRetry: retry });
   if (targets.length === 0) return null;
   if (shown.length === 0 && !open) return null;
   // 行按钮全局互斥（#925 第 3 条 ＋ #980 检查中）：视觉与入口守卫同判据——

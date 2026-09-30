@@ -210,3 +210,20 @@ export function loadFailureDetail(failure: {
   if (typeof raw === 'string' && raw.length > 0) return failure.code + ' detail=' + raw.slice(0, 300);
   return failure.code;
 }
+
+/** 题头两颗按钮的悬停标题（票 #986 第二半：目标表未就绪时说真因）。
+ *
+ * 住这里（不是面板组件旁边）：标题口径只有一个定义地，面板与单测共用同一份；
+ * 忙时沿用 update-busy 原句（与禁用判据同源），未就绪且空闲时说「还在读更新目标」，
+ * 就绪后回到调用方给的动作说明（本函数不写死那两句动作说明，由调用方传入）。
+ *
+ * 入参只取判据形状（blocked 与 empty），不 import 面板钩子。 */
+ export function headerButtonTitle(input: {
+   readonly blocked: boolean;
+   readonly empty: boolean;
+   readonly readyText?: string;
+ }): string {
+   if (input.blocked) return reasonText('update-busy');
+   if (input.empty) return '还在读更新目标，稍候再试';
+   return input.readyText ?? '';
+ }

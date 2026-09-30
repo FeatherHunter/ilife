@@ -74,37 +74,89 @@ async function installMissing(facts: HostFacts, target: UpdateTarget, args: Reco
   return { ok: true, value: { packageName: target.packageName, version } };
 }
 
+/** 七个目标 version 行的组装（票 #986 第二半：独立 I/O 并行化）。
+ *
+ * 住这里（不是调用方各自写一份并发）：七目标之间、单目标三次读之间都并发——
+ * 墙上时间取最慢那一次读，不随目标数与读次数线性累加。读不到的按原语义回 null／false，不抛。
+ * 读替身可注入（单测给每次耗时 T 的假读数验并发），缺省走真读数。
+ */
+export interface TargetRowReaders {
+  readonly capture: (packageName: string, profileDir: string) => Promise<string | null>;
+  readonly panel: (packageName: string, profileDir: string) => Promise<boolean>;
+  readonly skill: (packageName: string, profileDir: string) => Promise<{ packageName: string; version: string } | null>;
+}
+
+export interface AssembledTargetRow {
+  readonly key: string;
+  readonly title: string;
+  readonly packageName: string;
+  readonly installedVersion: string | null;
+  readonly panelRegistered: boolean;
+  readonly skill: { packageName: string; version: string } | null;
+}
+
+const defaultRowReaders: TargetRowReaders = {
+  capture: (packageName, profileDir) => captureRunningVersion(packageName, profileDir),
+  panel: (packageName, profileDir) => readPanelRegistered(packageName, profileDir),
+  skill: (packageName, profileDir) => readSkillRide(packageName, profileDir),
+};
+
+export async function assembleTargetRows(
+  targets: readonly UpdateTarget[],
+  profileDir: string,
+  readers: TargetRowReaders = defaultRowReaders,
+): Promise<AssembledTargetRow[]> {
+  return Promise.all(
+    targets.map(async (target) => {
+      const [installedVersion, panelRegistered, skill] = await Promise.all([
+        readers.capture(target.packageName, profileDir),
+        readers.panel(target.packageName, profileDir),
+        readers.skill(target.packageName, profileDir),
+      ]);
+      return {
+        key: target.key,
+        title: target.title,
+        packageName: target.packageName,
+        installedVersion,
+        panelRegistered,
+        skill,
+      };
+    }),
+  );
+}
+
 /** 总管自有电话二：七个更新目标的表 —— 每家的三个电话名 ＋ 版本行事实 ＋ 轮询间隔。 */
 async function readTargets(
   facts: HostFacts,
   phones: ReadonlyMap<string, Record<string, string>>,
   pollMs: number,
 ): Promise<ManagerReply> {
-  const targets: unknown[] = [];
-  for (const target of UPDATE_TARGETS) {
-    targets.push({
-      key: target.key,
-      title: target.title,
-      packageName: target.packageName,
-      phones: phones.get(target.key) ?? null,
-      runningVersion: facts.runningVersions.get(target.key) ?? null,
-      installedVersion: await captureRunningVersion(target.packageName, facts.profileDir),
+  const rows = await assembleTargetRows(UPDATE_TARGETS, facts.profileDir);
+  const targets: unknown[] = rows.map((row) => ({
+      key: row.key,
+      title: row.title,
+      packageName: row.packageName,
+      phones: phones.get(row.key) ?? null,
+      runningVersion: facts.runningVersions.get(row.key) ?? null,
+      installedVersion: row.installedVersion,
       // 面板缺席卡三态要的第三个事实：已装产物里有没有爱生活页签槽的注册代码。
       // 它答的是「重装／重启有没有用」，版本号答不出来（票 #723，见 `readPanelRegistered` 头注）。
-      panelRegistered: await readPanelRegistered(target.packageName, facts.profileDir),
-      skill: await readSkillRide(target.packageName, facts.profileDir),
-    });
-  }
+      panelRegistered: row.panelRegistered,
+      skill: row.skill,
+    }));
   return { ok: true, value: { targets, pollMs } };
 }
 
 async function buildTable(ctx: unknown): Promise<(method: string, args: Record<string, unknown>) => Promise<ManagerReply>> {
   const { dir: profileDir, name: profileName } = await resolveProfileDir();
   const environmentKind = detectEnvironmentKind(ctx);
-  const runningVersions = new Map<string, string | null>();
-  for (const target of UPDATE_TARGETS) {
-    runningVersions.set(target.key, await captureRunningVersion(target.packageName, profileDir));
-  }
+  const runningPairs = await Promise.all(
+    UPDATE_TARGETS.map(async (target) => ({
+      key: target.key,
+      version: await captureRunningVersion(target.packageName, profileDir),
+    })),
+  );
+  const runningVersions = new Map<string, string | null>(runningPairs.map((pair) => [pair.key, pair.version]));
   const facts: HostFacts = { ctx, profileDir, profileName, environmentKind, runningVersions };
   const updatePhones = new Map<string, UpdateHandler>();
   const phonesByTarget = new Map<string, Record<string, string>>();
@@ -182,12 +234,24 @@ async function buildTable(ctx: unknown): Promise<(method: string, args: Record<s
   };
 }
 
-/** 建电话表（懒建：首次调用时才读磁盘）。 */
-export function buildUpdatePhoneTable(ctx: unknown): UpdatePhoneTable {
+/** 建电话表（懒建：首次调用时才读磁盘）。
+ *
+ * 自足动作不排队（票 #986 第二半）：本机根清单不经表构建——入口先分流，
+ * 只有需要表的方法才懒建表。overrides 只在单测里给（慢建表验分流），线上走缺省。 */
+export function buildUpdatePhoneTable(
+  ctx: unknown,
+  overrides?: {
+    readonly buildTable?: (ctx: unknown) => Promise<(method: string, args: Record<string, unknown>) => Promise<ManagerReply>>;
+    readonly rootsReply?: () => Promise<ManagerReply>;
+  },
+): UpdatePhoneTable {
+  const build = overrides?.buildTable ?? buildTable;
+  const roots = overrides?.rootsReply ?? rootsReply;
   let table: Promise<(method: string, args: Record<string, unknown>) => Promise<ManagerReply>> | null = null;
   return {
     async call(method: string, args: Record<string, unknown>): Promise<ManagerReply> {
-      table ??= buildTable(ctx);
+      if (method === MANAGER_ACTIONS.roots) return roots();
+      table ??= build(ctx);
       return (await table)(method, args ?? {});
     },
   };
