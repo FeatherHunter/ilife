@@ -86,5 +86,28 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  color: var(--fg);',
     '  font-weight: 700;',
     '}',
+    /* 票据纸版式（#993 原型 v5／v7）：行间**不画分隔线**（原型那条 `border-top: 1px dotted transparent`
+       就是"不画"），行距 6px → 9px，值列可折行。DOM 一字不差，差别全在这几条里。 */
+    root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row {',
+    '  align-items: flex-end;',
+    '  padding: 9px 0;',
+    '  font-size: 14px;',
+    '}',
+    root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row + .' + p + 'block-ledger-row {',
+    '  border-top: 0;',
+    '}',
+    root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row-label {',
+    '  color: var(--fg2);',
+    '}',
+    root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row-leader {',
+    '  margin-bottom: 0;',
+    '  border-bottom: 2px dotted var(--line);',
+    '  transform: translateY(-5px);',
+    '}',
+    root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row-value {',
+    '  max-width: 62%;',
+    '  line-height: 1.55;',
+    '  overflow-wrap: anywhere;',
+    '}',
   ].join(LF);
 }

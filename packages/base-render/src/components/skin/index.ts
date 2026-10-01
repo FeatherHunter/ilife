@@ -10,6 +10,7 @@ import { PAPER_NOTE, PAPER_VALUES } from './skins/paper.js';
 import { BROADSHEET_NOTE, BROADSHEET_VALUES } from './skins/broadsheet.js';
 import { NEUTRAL_NOTE, NEUTRAL_VALUES } from './skins/neutral.js';
 import { INK_NOTE, INK_VALUES } from './skins/ink.js';
+import { TICKET_NOTE, TICKET_VALUES } from './skins/ticket.js';
 
 export {
   SKIN_DEFAULT,
@@ -25,6 +26,7 @@ export { INK_NOTE, INK_VALUES } from './skins/ink.js';
 export { BROADSHEET_NOTE, BROADSHEET_VALUES } from './skins/broadsheet.js';
 export { NEUTRAL_NOTE, NEUTRAL_VALUES } from './skins/neutral.js';
 export { PAPER_NOTE, PAPER_VALUES } from './skins/paper.js';
+export { TICKET_NOTE, TICKET_VALUES } from './skins/ticket.js';
 
 /** 换行（仓库口径：不写字面换行转义，与本层其余件同）。 */
 const LF = String.fromCharCode(10);
@@ -40,6 +42,7 @@ export const SKINS: Readonly<Record<SkinName, SkinEntry>> = Object.freeze({
   broadsheet: { note: BROADSHEET_NOTE, values: BROADSHEET_VALUES },
   neutral: { note: NEUTRAL_NOTE, values: NEUTRAL_VALUES },
   ink: { note: INK_NOTE, values: INK_VALUES },
+  ticket: { note: TICKET_NOTE, values: TICKET_VALUES },
 });
 
 export interface SkinCssInput {

@@ -139,6 +139,30 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '  color: ' + accent + ';',
     '}',
   ];
+  /* 票据纸版式（#993 原型 v5／v7）：上面那一版是"左对齐成栈"，这一版**整块居中**——
+     眉标成药丸（底＋描边＋圆点）、主数字居中、脚行居中、印章**钉在整块的右上角**并微斜。
+     DOM 一字不差（还是那五个槽），差别全在这几条规则里 ⇒ 调用方只多传一个 `layout: 'ticket'`。 */
+  lines.push('/* summary-head 票据纸版式：整块居中、眉标成药丸、印章钉右上角。 */');
+  lines.push(s + '.is-ticket { position: relative; align-items: center; text-align: center; gap: 0; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-eyebrow {'
+    + ' display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;'
+    + ' border: 1px solid var(--line); border-radius: 999px; background: var(--soft);'
+    + ' color: var(--fg2); font-size: 12px; font-weight: 700; letter-spacing: .12em; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-eyebrow::before {'
+    + ' content: ""; width: 7px; height: 7px; border-radius: 50%; background: ' + ok + ';'
+    + ' box-shadow: 0 0 0 4px ' + mix(ok, 15) + '; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-line { justify-content: center; margin-top: 12px; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value { font-weight: 900; letter-spacing: -.03em; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value small { margin-left: 6px; font-size: 18px; font-weight: 800; color: var(--fg2); }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-foot { display: block; margin-top: 10px; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-note { font-size: 13.5px; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-stamp {'
+    + ' position: absolute; right: 2px; top: 2px; padding: 5px 10px 4px 12px;'
+    + ' border-width: 2.5px; border-radius: 8px; font-size: 13px; letter-spacing: 2px;'
+    + ' transform: rotate(10deg); }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-stamp::after {'
+    + ' content: ""; position: absolute; inset: 2px; border: 1px dashed currentColor;'
+    + ' border-radius: 5px; opacity: .5; }');
   for (const size of SUMMARY_HEAD_SIZES) {
     lines.push(s + '.is-' + size + ' .' + p + 'block-summary-head-value { font-size: '
       + SUMMARY_HEAD_VALUE_PX[size] + 'px; }');

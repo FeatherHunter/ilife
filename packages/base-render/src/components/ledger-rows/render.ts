@@ -26,6 +26,12 @@ export type LedgerRowKind = (typeof LEDGER_ROW_KINDS)[number];
 export const LEDGER_LEADERS = ['dots', 'none'] as const;
 export type LedgerLeader = (typeof LEDGER_LEADERS)[number];
 
+/** 账目行的两种版式（**形态**差异，不是配色差异）：
+ *  `stack`＝缺省，行间一条发丝线、紧凑（6px）；`ticket`＝#993 原型那一版，
+ *  **行间不画分隔线**、行距放宽到 9px、值列可折行且文字走皮肤的字面（票据纸下不是等宽）。 */
+export const LEDGER_LAYOUTS = ['stack', 'ticket'] as const;
+export type LedgerLayout = (typeof LEDGER_LAYOUTS)[number];
+
 export interface LedgerRowInput {
   /** 这一行说的是什么（人话短标签，如「目标」「餐别覆盖」）。 */
   readonly label: string;
@@ -43,6 +49,8 @@ export interface LedgerRowsInput {
   readonly heading?: string;
   /** 引导线；缺省 `dots`。 */
   readonly leader?: LedgerLeader;
+  /** 版式；缺省 `stack`（＝本件原有的那一版，产物逐字节不变）。 */
+  readonly layout?: LedgerLayout;
   readonly extraClass?: string;
 }
 
@@ -56,6 +64,10 @@ export function renderLedgerRows(input: LedgerRowsInput): string {
     badInput('ledger-rows: input.leader 必须是 ' + LEDGER_LEADERS.join('／') + ' 之一');
   }
   const heading = optText(input.heading, 'ledger-rows: input.heading');
+  const layout = input.layout ?? 'stack';
+  if (!(LEDGER_LAYOUTS as readonly string[]).includes(layout)) {
+    badInput('ledger-rows: input.layout 必须是 ' + LEDGER_LAYOUTS.join('／') + ' 之一');
+  }
   const extra = optExtraClass(input.extraClass, 'ledger-rows: input.extraClass');
   const p = 'ilife-block-ledger-row';
   const rows = input.rows.map((raw, i) => {
@@ -75,7 +87,8 @@ export function renderLedgerRows(input: LedgerRowsInput): string {
       + (unit === undefined ? '' : '<small>' + esc(unit) + '</small>') + '</span>'
       + '</div>';
   }).join('');
-  return '<div class="ilife-block-ledger-rows' + (extra === undefined ? '' : ' ' + extra) + '">'
+  return '<div class="ilife-block-ledger-rows' + (layout === 'stack' ? '' : ' is-' + layout)
+    + (extra === undefined ? '' : ' ' + extra) + '">'
     + (heading === undefined ? '' : '<div class="ilife-block-ledger-rows-heading">' + esc(heading) + '</div>')
     + rows + '</div>';
 }

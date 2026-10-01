@@ -16,8 +16,12 @@ import type { CssVarName } from '../../spec/style.js';
  *  同日被整体否掉的两套（`terminal` 终端暗色／`blueprint` 蓝图工程）**已删**——理由见
  *  `docs/base/base-render/选中态与皮肤语言.md` 第六节：留在注册表里的每一套皮肤都是一份承诺
  *  （对比地板、判据、清单、维护），**不能被选中的皮肤只剩负债**，且会诱人误用。
+ *  **第五套 `ticket`（#993 补）是本条纪律下的例外，不是破例**：它同样"被选中过"——用户 2026-10-01
+ *  逐版验收并认可了 #993 的两份原型（v5／v7），那套材料（暖奶油桌＋圆角卡片纸＋柔和投影＋无衬线数字）
+ *  与 `paper`（方角、零投影、等宽数字）是**两种材料**，不是同一套的配色变体；两条腿各占一套，
+ *  故它进闭集。判据与对比地板照四套那套逐条过（见表尾注释与 `test/skin.test.mjs`）。
  *  **顺序必须与 `SKINS` 的键顺序一致**（判据 `assert.deepEqual(Object.keys(SKINS), [...SKIN_NAMES])`）。 */
-export const SKIN_NAMES = ['paper', 'broadsheet', 'neutral', 'ink'] as const;
+export const SKIN_NAMES = ['paper', 'broadsheet', 'neutral', 'ink', 'ticket'] as const;
 export type SkinName = (typeof SKIN_NAMES)[number];
 
 /** 缺省皮肤：原型墙打分胜出者（3.83 分，≥4 占 76.6%）。 */

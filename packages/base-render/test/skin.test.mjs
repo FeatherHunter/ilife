@@ -21,6 +21,7 @@ import {
   INK_VALUES,
   NEUTRAL_VALUES,
   PAPER_VALUES,
+  TICKET_VALUES,
   SKIN_DEFAULT,
   SKIN_NAMES,
   SKINS,
@@ -56,6 +57,8 @@ const VALUES = {
   broadsheet: BROADSHEET_VALUES,
   neutral: NEUTRAL_VALUES,
   ink: INK_VALUES,
+  // #993 第五套（票据纸）：取值表给全，下面各条地板判据按 `SKIN_NAMES` 自动把它带上。
+  ticket: TICKET_VALUES,
 };
 
 describe('皮肤 ① 契约对账', () => {

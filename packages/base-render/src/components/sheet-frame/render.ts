@@ -18,8 +18,10 @@
 import { esc } from '../shared/escape.js';
 import { assertPlainObject, badInput, optExtraClass, optText } from '../shared/validate.js';
 
-/** 纸的两种性格：`plain`＝素纸（中性卡片纸，缺省）／`receipt`＝小票纸（暖白、纸边、配撕口与裁切线）。 */
-export const SHEET_VARIANTS = ['plain', 'receipt'] as const;
+/** 纸的三种性格：`plain`＝素纸（中性卡片纸，缺省）／`receipt`＝小票纸（暖白、纸边、配撕口与裁切线）／
+ *  `ticket`＝**票据纸**（#993 原型 v5／v7 那一套：圆角卡片纸＋柔和投影＋左右贯穿撕口＋页尾锯齿与裁切线）。
+ *  后两者的差别是**结构**（角方／角圆、撕口是两枚打孔还是一整条齿边），颜色与圆角值仍走皮肤。 */
+export const SHEET_VARIANTS = ['plain', 'receipt', 'ticket'] as const;
 export type SheetVariant = (typeof SHEET_VARIANTS)[number];
 
 /** 纸面页框的入参。 */
@@ -28,10 +30,13 @@ export interface SheetFrameInput {
   readonly content: string;
   /** 纸的性格；缺省 `plain`。 */
   readonly variant?: SheetVariant;
-  /** 左右两枚撕口（打孔）；缺省 `false`（素纸不出这两枚）。 */
+  /** 左右两枚撕口（打孔）；缺省 `false`（素纸不出这两枚）。`ticket` 不看这个开关——它的左右齿边是纸本身。 */
   readonly notch?: boolean;
   /** 页尾裁切线；缺省 `false`。 */
   readonly cutLine?: boolean;
+  /** 裁切线中间那句话（**受信文本、会转义**）；给了才出中间那一格——`ticket` 的 "✂ 裁切线" 走这里。
+   *  不给＝只出一条虚线（`plain`／`receipt` 的旧样子）。 */
+  readonly cutLineText?: string;
   /** 版面锚点（页内导航指过来用）；不给＝不带 id。 */
   readonly id?: string;
   /** 版面根附加类名（空格分隔）。 */
@@ -48,15 +53,26 @@ export function renderSheetFrame(input: SheetFrameInput): string {
   if (typeof input.content !== 'string') badInput('sheet-frame: input.content 必须是字符串');
   const id = optText(input.id, 'sheet-frame: input.id');
   const extra = optExtraClass(input.extraClass, 'sheet-frame: input.extraClass');
+  const isTicket = variant === 'ticket';
+  const cutText = input.cutLineText === undefined || input.cutLineText === null
+    ? undefined : optText(input.cutLineText, 'sheet-frame: input.cutLineText');
   const parts: string[] = ['<section class="ilife-block-sheet is-' + variant
     + (extra === undefined ? '' : ' ' + extra) + '"'
     + (id === undefined ? '' : ' id="' + esc(id) + '"') + '>'];
-  if (input.notch === true) {
+  if (isTicket) {
+    parts.push('<span class="ilife-block-sheet-edge is-left" aria-hidden="true"></span>');
+    parts.push('<span class="ilife-block-sheet-edge is-right" aria-hidden="true"></span>');
+  } else if (input.notch === true) {
     parts.push('<span class="ilife-block-sheet-notch is-left" aria-hidden="true"></span>');
     parts.push('<span class="ilife-block-sheet-notch is-right" aria-hidden="true"></span>');
   }
   parts.push('<div class="ilife-block-sheet-body">' + input.content + '</div>');
-  if (input.cutLine === true) parts.push('<div class="ilife-block-sheet-cut" aria-hidden="true"></div>');
+  if (input.cutLine === true) {
+    parts.push('<div class="ilife-block-sheet-cut" aria-hidden="true">'
+      + (cutText === undefined ? '' : '<span class="ilife-block-sheet-cut-text">' + esc(cutText) + '</span>')
+      + '</div>');
+  }
+  if (isTicket) parts.push('<span class="ilife-block-sheet-zigzag" aria-hidden="true"></span>');
   parts.push('</section>');
   return parts.join('');
 }

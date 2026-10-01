@@ -81,7 +81,8 @@ describe('单据族 ① 形状（纸面页框）', () => {
   });
 
   it('闭集与边界：非法 variant／非对象入参／content 非串 ⇒ BlocksError；空 content 可出空纸', () => {
-    assert.deepEqual([...SHEET_VARIANTS], ['plain', 'receipt']);
+    // #993 起闭集加第三档 `ticket`（票据纸：圆角卡片纸＋贯穿齿边＋页尾锯齿），旧两档一字不动。
+    assert.deepEqual([...SHEET_VARIANTS], ['plain', 'receipt', 'ticket']);
     assert.equal(throwsBlocks(() => renderSheetFrame({ content: 'x', variant: 'paper' })), true);
     assert.equal(throwsBlocks(() => renderSheetFrame(undefined)), true);
     assert.equal(throwsBlocks(() => renderSheetFrame({ content: 1 })), true);

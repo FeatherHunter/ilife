@@ -29,6 +29,12 @@ export type SummaryHeadFace = (typeof SUMMARY_HEAD_FACES)[number];
 export const SUMMARY_HEAD_STAMP_TONES = ['ok', 'warn', 'danger'] as const;
 export type SummaryHeadStampTone = (typeof SUMMARY_HEAD_STAMP_TONES)[number];
 
+/** 主数字头的两种版式（**形态**差异，不是配色差异）：
+ *  `stack`＝缺省，左对齐成栈（眉标／数字／脚行）；`ticket`＝#993 原型那一版，
+ *  **整块居中**、眉标成药丸、脚行居中、印章钉在右上角微斜。两者 DOM 一字不差，差别只在本件样式段。 */
+export const SUMMARY_HEAD_LAYOUTS = ['stack', 'ticket'] as const;
+export type SummaryHeadLayout = (typeof SUMMARY_HEAD_LAYOUTS)[number];
+
 export interface SummaryHeadInput {
   /** 这一行数字说的是什么（人话短标签，如「当日摄入」）。不给＝不出这一行。 */
   readonly eyebrow?: string;
@@ -44,6 +50,8 @@ export interface SummaryHeadInput {
   readonly stamp?: { readonly text: string; readonly tone?: SummaryHeadStampTone };
   readonly size?: SummaryHeadSize;
   readonly face?: SummaryHeadFace;
+  /** 版式；缺省 `stack`（＝本件原有的那一版，产物逐字节不变）。 */
+  readonly layout?: SummaryHeadLayout;
   readonly extraClass?: string;
 }
 
@@ -59,6 +67,10 @@ export function renderSummaryHead(input: SummaryHeadInput): string {
   if (!(SUMMARY_HEAD_FACES as readonly string[]).includes(face)) {
     badInput('summary-head: input.face 必须是 ' + SUMMARY_HEAD_FACES.join('／') + ' 之一');
   }
+  const layout = input.layout ?? 'stack';
+  if (!(SUMMARY_HEAD_LAYOUTS as readonly string[]).includes(layout)) {
+    badInput('summary-head: input.layout 必须是 ' + SUMMARY_HEAD_LAYOUTS.join('／') + ' 之一');
+  }
   const eyebrow = optText(input.eyebrow, 'summary-head: input.eyebrow');
   const unit = optText(input.unit, 'summary-head: input.unit');
   const denominator = optText(input.denominator, 'summary-head: input.denominator');
@@ -66,6 +78,7 @@ export function renderSummaryHead(input: SummaryHeadInput): string {
   const extra = optExtraClass(input.extraClass, 'summary-head: input.extraClass');
 
   const parts: string[] = ['<div class="ilife-block-summary-head is-' + size + ' is-' + face
+    + (layout === 'stack' ? '' : ' is-' + layout)
     + (extra === undefined ? '' : ' ' + extra) + '">'];
   if (eyebrow !== undefined) {
     parts.push('<span class="ilife-block-summary-head-eyebrow">' + esc(eyebrow) + '</span>');
