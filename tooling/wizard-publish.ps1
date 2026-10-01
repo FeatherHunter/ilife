@@ -99,7 +99,10 @@ if ($LASTEXITCODE -ne 0) {
 # npm publish 必须贴控制台直跑（严禁管道：stdout 一进管道 npm 即判非 TTY，不弹浏览器 2FA、直接 EOTP 死）。
 # 2FA 全在浏览器走：每包都可能弹自己的授权 URL（回车开页 → 第二步扫码/批准 → 回窗等结果）。
 # 判据只认 registry 读回（云端有该版本＝已发），不解析输出文字。
+# 失败不停（#988 发版收口）：已暂存（E409 previously-staged，npm view 尚读不到）与真失败都记下继续，
+# 收尾统一算账——中途停下会把依赖顺序打断，后面的包更发不出去。
 $done = @()
+$failed = @()
 foreach ($p in $todo) {
   Log ('PKG-BEGIN ' + $p.name + '@' + $p.version)
   Log '  本包如弹 “Press ENTER to open in the browser” 就按回车 → 浏览器第二步扫码/批准 → 回窗口等 PKG-OK（全程浏览器，不输码）'
@@ -117,16 +120,37 @@ foreach ($p in $todo) {
     $done += ($p.name + '@' + $p.version)
     continue
   }
-  Log ('PKG-FAIL ' + $p.name + ' exit=' + $code + ' 已发：' + ($done -join ', ') + '（红条原文见本窗上屏＋转录件，registry 亦无该版本）')
-  Read-Host '失败：把本窗红条完整转告 Agent，按回车关窗' | Out-Null
-  try { Stop-Transcript | Out-Null } catch { }
-  exit 1
+  # E409 已暂存：npm view 读不到暂存版（复制延迟），但转录件里有红条原文——读回转录尾断言，不误判为失败。
+  $staged = $false
+  try {
+    $tail = Get-Content -Path $TranscriptPath -Tail 30 -ErrorAction Stop | Out-String
+    if ($tail -match 'previously staged version' -or $tail -match 'E409' -or $tail -match '409 Conflict') { $staged = $true }
+  } catch { }
+  if ($staged) {
+    Log ('PKG-SKIP-staged ' + $p.name + '@' + $p.version + '（registry 已暂存该版本，转录有 E409/previously-staged，视为已发，继续下一包）')
+    $done += ($p.name + '@' + $p.version)
+    continue
+  }
+  Log ('PKG-FAIL ' + $p.name + ' exit=' + $code + '（红条原文见本窗上屏＋转录件；记下继续下一包，收尾统一复核）')
+  $failed += ($p.name + '@' + $p.version)
 }
 
 # ── 阶段 4／4：registry 读回复核（带轮询；红即 FAIL，不冒充 DONE）──────────────
-Log 'STAGE 4/4 registry 读回复核（npm 生效有分钟级延迟，--post 会轮询约 10min；不等请 Ctrl+C 后稍后只跑 --post）'
-node (Join-Path $RepoRoot 'tooling\check-publish.mjs') --post --registry $Registry --only (($todo | ForEach-Object { $_.name }) -join ',')
-if ($LASTEXITCODE -ne 0) { Log 'FAIL STAGE 4/4 回读未全绿（多为复制延迟）：稍后只跑 node tooling\check-publish.mjs --post --only <包名,逗号隔开> 复核，不重跑整向导'; try { Stop-Transcript | Out-Null } catch { }; Read-Host '失败：把上面红条完整转告 Agent，按回车关窗' | Out-Null; exit 1 }
+# 只复核走完的包（$done 含 PKG-OK 与两种 staged）；真失败的 $failed 不进复核，收尾单列。
+$recheck = @($todo | Where-Object { ($done -contains ($_.name + '@' + $_.version)) } | ForEach-Object { $_.name })
+if ($recheck.Count -gt 0) {
+  Log 'STAGE 4/4 registry 读回复核（npm 生效有分钟级延迟，--post 会轮询约 10min；不等请 Ctrl+C 后稍后只跑 --post）'
+  node (Join-Path $RepoRoot 'tooling\check-publish.mjs') --post --registry $Registry --only ($recheck -join ',')
+  if ($LASTEXITCODE -ne 0) { Log 'FAIL STAGE 4/4 回读未全绿（多为复制延迟）：稍后只跑 node tooling\check-publish.mjs --post --only <包名,逗号隔开> 复核，不重跑整向导' }
+} else {
+  Log 'STAGE 4/4 跳过（本轮无走完的包）'
+}
+if ($failed.Count -gt 0) {
+  Log ('FAIL 本轮失败 ' + $failed.Count + ' 个：' + ($failed -join ', ') + '（红条原文见转录件；修好后重跑本向导，未发的会自动继续，已发的 SKIP）')
+  try { Stop-Transcript | Out-Null } catch { }
+  Read-Host '失败：把上面这行连同转录件名转告 Agent，按回车关窗' | Out-Null
+  exit 1
+}
 Log ('DONE 已发 ' + $done.Count + ' 个：' + ($done -join ', '))
 Write-Host '下一步：装到本机走 tooling\wizard-install.ps1（Agent 会另起；本窗不用再操作）'
 try { Stop-Transcript | Out-Null } catch { }
