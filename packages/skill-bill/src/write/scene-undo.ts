@@ -48,9 +48,6 @@ export const SCENE: Scene = {
       return '这一条就是这次要撤销的目标。撤销只打标记、不删记录，撤完还能恢复。照这条说：\n'
         + commandLine(KEY, page.params);
     },
-    receiptStatus: 'warn',
-    receiptNext: '这一笔已标记撤销，记录还在。恢复见下方按钮。',
-    receiptCaliber: SOFT_DELETE_NOTE,
     receiptResult: 'undo',
     receiptExit: 'restore',
   }),

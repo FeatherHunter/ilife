@@ -6,35 +6,36 @@
  * 盖住的场景（老侧一张 `update_confirm.html` 扛三条词，本仓按「一命令一页」拆开、装配体共用一份）：
  *  改记录 `update` · 撤销 `undo` · 恢复 `restore`——三条都是 `bill.record.update` 的一支，靠 `op` 分。
  *
- * **块位序列**（照 #688 §五 5.2 的 ① 采集／④ 回执 两类；● 恒出、○ 有内容才出）：
+ * **块位序列**（#993 起小票化；● 恒出、○ 有内容才出）：
  *   采集页：类型徽章 ● → 第 1 段标题 ○（缺项才出）→ 缺项标签 ● → 摘要行 ● → 口径行 ○（改记录不出）→
  *     第 2 段标题 ● → 缺项阻断条（折叠）● → 中段 ●（缺编号＝候选单选；选定＝只读回显 ＋ 一岔：
  *     diff 表／说明块／一行口径／不出）→ 复制 prompt 区 ● → 复制区 ● → 来源脚注 ●（#688 §五 第 26 行）
- *   回执页：类型徽章 ● → 页内导航 ●（表序第 4 行；回执页＝结果型 ④，采集页＝过程型 ① 故不出）→ 读数行 ● →
- *     口径行 ○ → 结果表 ○（撤销＝撤销标记对照、恢复＝标记现值）→ 明细表 ● → 对账折叠区 ● →
- *     退出口 ○ → 复制区 ● → 来源脚注 ●（第 26 行）
+ *   回执页（一纸）：店头（品牌行＋改动结论标题）● → 主数字头 ●（金额唯一＋印章）→ 改后落点账目 ● →
+ *     结果表 ○（撤销＝撤销标记对照、恢复＝标记现值；改记录不出）→ 退出口真按钮 ○ →
+ *     复制区 ● → 来源脚注＋编号 ●
  * 谁在用（三个调用点，指名）：`src/write/scene-{update,undo,restore}.ts`——各件的 `Scene.collect`／`Scene.receipt`
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
-import { renderCaliberLine, renderCopyBlock, renderDataTable, renderDisclosure, renderKpiGrid } from 'base-paint/blocks';
-import { renderStatusBadge } from 'base-paint';
+import { renderCaliberLine, renderDataTable, renderDisclosure, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderActionBar } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { diffOf, diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell } from './pageParts.js';
+import { EYEBROW, writePageShell as pageShell } from './pageParts.js';
 import { diffRowsFor, pickerBlock, readRowById, snapshotTable } from './recordPicker.js';
-import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
-import { summaryCards, summaryRow } from './summaryRow.js';
+import { directionWord, money2, summaryRow } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
-import { commandLine } from '../shared/writeParts.js';
-import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
+import { commandLine, writeSection } from '../shared/writeParts.js';
+import { pageBody, pageNav } from '../shared/pageSections.js';
+import { assembleSheetPage } from '../shared/docPage.js';
+import { exitCopyOf, landedRows, receiptStamp, receiptTitle, sheetHead } from './receiptSheet.js';
 import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
@@ -93,13 +94,7 @@ export interface UpdateSpec {
   readonly middle: MiddleSpec;
   /** 采集页：复制 prompt 区那段话（按页上认到的编号与那一行的值算）。 */
   readonly prompt: (page: UpdatePage) => string;
-  /** 回执页：类型徽章那枚状态（`ok`＝绿档、`warn`＝黄档）。 */
-  readonly receiptStatus: 'ok' | 'warn';
-  /** 回执页：类型徽章那句下一步。 */
-  readonly receiptNext: string;
-  /** 回执页：读数行之后那一行口径（空串＝本场景不出这一行）。 */
-  readonly receiptCaliber: string;
-  /** 回执页：明细表之前那块结果表取哪一种（`none`＝改记录不出／`undo`＝撤销标记对照／`restore`＝标记现值）。 */
+  /** 回执页：结果表取哪一种（`none`＝改记录不出／`undo`＝撤销标记对照／`restore`＝标记现值）。 */
   readonly receiptResult: 'none' | 'undo' | 'restore';
   /** 回执页：退出口那枚给哪件事（`undo`＝「撤销这一笔」；`restore`＝「恢复这一笔」）。 */
   readonly receiptExit: 'undo' | 'restore';
@@ -279,50 +274,29 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
   });
 }
 
-/** 回执页的退出口：`undo`＝「撤销这一笔」（走共用件 `../shared/copyArea.js`）；`restore`＝撤销那一张页专用的
- *  「恢复这一笔」。
- *
- *  **#733 改**：改前这里是一颗 `kind: 'red'` 的 `<button>`（`data-action-id="ilife-exit-restore"`，
- *  **故意不带 `data-t`**）——它与共用件那颗 `ilife-exit-undo` 是同一个病：委派第二道
- *  `getAttribute('data-t') === null → return` 早退 ⇒ **点了零动作、零反馈**（复现：撤销-回执页 1 处）。
- *  改法照 `copyArea.undoExit` 的同一口径：**标记不走按钮形态**，渲染成一枚 `danger` 胶囊 ＋ 那句指路口径。
- *  桌面端那颗 878px 满列实心红块一并消失（它是全页唯一一块满列高饱和色，却点不动）。 */
-function exitBlock(kind: UpdateSpec['receiptExit'], recordId: number): string {
-  if (kind === 'undo') return undoExit(recordId);
-  return renderStatusBadge({ status: 'danger', text: '想反悔（把这一笔找回来）' })
-    + renderCaliberLine('想反悔就用下面那颗「复制数据」，里面带着一句恢复的话。（记录编号 ' + recordId + '）');
-}
+/** 小票纸取值小件住 `./receiptSheet.js`（块序仍在本件，值加工在那一件）。 */
 
-/** 回执页的结果表那一块：**有内容才进导航**（改记录不出这一块，进导航就会留一枚指向空区块的条目）。 */
-function resultBlockOf(spec: UpdateSpec, receipt: BillReceipt): readonly PageBlock[] {
-  const html = resultBlock(spec, receipt);
-  return html === '' ? [] : [navBlock(html, 'sec-result', '结果')];
-}
+/** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
-/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。
- *  块清单既拼正文也派生页内导航（共用位 `../shared/pageSections.js`）；块序见件头。 */
+/** 结果型回执页（一纸 #993）：店头＋主数字＋落点账目＋结果表＋退出口真按钮＋复制区＋来源脚注。
+ *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住页脚）。 */
 function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
-  const blocks: readonly PageBlock[] = [
-    navBlock(renderKpiGrid([
-      ...summaryCards(input.facts),
-      receiptStatusCard(receipt, input.writtenDetail),
-      { label: '这次记了几笔', value: receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      {
-        label: '写进去的项', value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.length === 0 ? '没改到任何一项' : '逐项见下面的明细表',
-      },
-    ]), 'sec-kpi', '读数'),
-    { html: spec.receiptCaliber === '' ? '' : renderCaliberLine(spec.receiptCaliber) },
-    ...resultBlockOf(spec, receipt),
-    navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
-      rows: input.detail, caption: '写进去的项与值',
-    }), 'sec-detail', '明细'),
-    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
-    { html: receipt.recordId === null ? '' : exitBlock(spec.receiptExit, receipt.recordId) },
-    navBlock(copyArea({
+  const paper = sheetHead(EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
+    + renderSummaryHead({
+      eyebrow: '改后金额·' + directionWord(input.facts.amount),
+      value: money2(input.facts.amount),
+      unit: '元',
+      stamp: receiptStamp(spec.receiptResult, receipt),
+    })
+    + renderLedgerRows({ heading: '改后落点', rows: landedRows(input.facts) })
+    + resultBlock(spec, receipt)
+    + (() => {
+      const exit = exitCopyOf(spec.receiptExit, spec.key, receipt.recordId);
+      return exit === null ? '' : renderActionBar({ buttons: [], copyData: exit });
+    })()
+    + copyArea({
       data: { envelope },
       log: {
         envelope,
@@ -333,14 +307,12 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
           actionAt: receipt.actionAt, version: DOC_VERSION,
         }),
       },
-    }), 'sec-copy', '复制'),
-    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
-  ];
-  const content = typeBadge({ kind: '', status: spec.receiptStatus, state: '写库成功', pageKind: '回执', next: spec.receiptNext })
-    + pageNav(blocks) + pageBody(blocks);
-  return pageShell({
-    docTitle: docTitleOf(spec.wake + ' 回执'),
-    title: spec.wake,
-    subtitle: receipt.summary, slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key, content,
+    })
+    + receiptSourceNote(input.facts.time, receipt.affectedRows)
+    + (receipt.recordId === null ? '' : renderCaliberLine('记录编号 ' + receipt.recordId));
+  const content = writeSection({
+    slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
+    content: renderSheetFrame({ variant: 'receipt', notch: true, cutLine: true, content: paper }),
   });
+  return assembleSheetPage({ docTitle: docTitleOf(spec.wake + ' 回执'), bodyHtml: content });
 }

@@ -92,6 +92,13 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
   ];
 }
 
+/** 方向词裸字（**唯一定义地**的 DIRECTION 表派生，不另立第二张表）：
+ *  小票纸主数字头的 eyebrow（`改后金额·支出`）要裸字，`moneyDirection` 带括号说明不适合拼进眉标。 */
+export function directionWord(amount: number | null): string {
+  if (amount === null || !Number.isFinite(amount) || amount === 0) return '未判';
+  return (amount < 0 ? DIRECTION.expense : DIRECTION.income).word;
+}
+
 /** 结论摘要行：那张网格 ＋ 方向两枚胶囊 ＋ 分类一行口径。
  *  R3 改形状：原先一句 `支出的金额记成负数、收入记成正数；分类要选到最细那一级。`
  *  拿顿号分方向、用分号缀分类，三件事挤一句（采集 10 页同句）。现拆三枚独立形状：

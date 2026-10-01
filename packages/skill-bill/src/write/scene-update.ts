@@ -47,9 +47,6 @@ export const SCENE: Scene = {
       return '原记录与改动对照都在下面：核一眼「原值／新值」，没问题就照这条说。\n'
         + commandLine(KEY, page.params);
     },
-    receiptStatus: 'ok',
-    receiptNext: '这一笔已记下，撤销见下方按钮。',
-    receiptCaliber: '这一页只报写后的真值，改前改后对照落在写库前那一面。',
     receiptResult: 'none',
     receiptExit: 'undo',
   }),

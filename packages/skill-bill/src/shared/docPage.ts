@@ -22,7 +22,7 @@
  *   ③ 桌面端不再由本件给「一条宽度补丁」——版心与分栏归 `pageUi` 的 ⑧ 段，本件只留一条表格宽度收口。
  */
 import { pageUiCss } from 'base-paint';
-import { renderPageShell } from 'base-paint/blocks';
+import { renderPageShell, sheetCss } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
 
 /** 整页装配的入参。 */
@@ -119,6 +119,18 @@ const KV_CSS = [
  *  留着的代价不是零：它会被 grep 进「页上还有没有这个动作号」这类判据，读的人会以为按钮还在。
  *  一并删掉——**删的是失效的补丁，不是那条版面意图**（那颗钮已经不存在了）。 */
 
+/** 小票纸店头样式（#993：改记录回执小票化）。
+ *
+ *  只收本包自己产出的选择器（`.ilife-sheet-head` 由新模板件产出，公共层不认它，故住本件）。
+ *  重点色沿旧层做法（`base-paint/blocks` 的 statusBadge 区 danger `#a83228`，不新增 token 名）。
+ *  本段只进小票页（`assembleSheetPage`），其余 29 页的产物逐字节不动。 */
+const SHEET_RECEIPT_CSS = [
+  '.ilife-sheet-head { text-align: center; padding: 2px 0 0; }',
+  '.ilife-sheet-eyebrow { font-size: 11.5px; letter-spacing: 2px; color: var(--fg3); font-weight: 700; }',
+  '.ilife-sheet-title { margin: 8px 0 0; font-size: 19px; line-height: 1.4; font-weight: 800; }',
+  '.ilife-sheet-title .hl { color: #a83228; }',
+].join('\n');
+
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（文档壳交公共层骨架件）。
  *
  *  `pageUi: true` —— 本包 32 页走公共层页面级配方（#525）；配套的样式段由本件拼进 `extraCss`
@@ -135,6 +147,20 @@ export function assembleDocPage(input: DocPageInput): string {
     docTitle: input.docTitle,
     bodyHtml: body,
     extraCss: [DESKTOP_CSS, TOAST_CSS, KV_CSS, pageUiCss()].join('\n'),
+    doctypeCase: 'upper',
+    pageUi: true,
+  });
+}
+
+/** 小票页装配（#993）：正文已是单据族装配（含 `renderSheetFrame` 的纸），不再套页面壳。
+ *
+ *  样式走族汇总 `sheetCss()`（与卡路里小票页同一条路：族汇总进 `extraCss`，`blocksCss()` 仍由骨架件拼）。
+ *  店头样式只进这一路（见 `SHEET_RECEIPT_CSS`），`assembleDocPage` 的 29 页产物逐字节不动。 */
+export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string }): string {
+  return renderDocShell({
+    docTitle: input.docTitle,
+    bodyHtml: input.bodyHtml,
+    extraCss: [SHEET_RECEIPT_CSS, sheetCss(), pageUiCss()].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });

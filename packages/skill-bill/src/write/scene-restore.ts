@@ -50,9 +50,6 @@ export const SCENE: Scene = {
       return '这一条就是这次要恢复的目标。恢复只把撤销标记清掉，别的项一概不动。照这条说：\n'
         + commandLine(KEY, page.params);
     },
-    receiptStatus: 'ok',
-    receiptNext: '这一笔已恢复正常，撤销见下方按钮。',
-    receiptCaliber: '',
     receiptResult: 'restore',
     receiptExit: 'undo',
   }),
