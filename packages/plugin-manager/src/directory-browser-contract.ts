@@ -100,6 +100,25 @@ export function hasPickFn(raw: unknown): boolean {
   return typeof (raw as { pick?: unknown }).pick === 'function';
 }
 
+/** 这次列举失败算不算「宿主没给这条路」（调用方据此换另一条路走）。
+ *
+ * 为什么码不够：旧宿主被拒回固定回执码（调用方经 `refusalCode` 传进来），新宿主
+ * （`dsh 0.2.0-rc.2` 实测 #990）拒 `list` 时没带那个码——`code` 落到兜底值，
+ * 只有人话里那句能力说明还在。所以码命中算被拒，人话命中能力句式也算被拒；
+ * 人话对不上＝这一层真读不出来，不换路。
+ *
+ * 人话只认两句能力句式（大小写不敏感）：`needs the browse/native capability`
+ * 与 `cannot serve pick/list/createDirectory`（含组合服务说明变体）。
+ * 本件仍不认识宿主名：这里只出现能力词，不出现任何接缝名。 */
+export function isCapabilityRefusal(code: unknown, message: unknown, refusalCode: string): boolean {
+  if (typeof code === 'string' && code !== '' && code === refusalCode) return true;
+  if (typeof message !== 'string' || message.trim() === '') return false;
+  return (
+    /needs the (browse|native) capability/i.test(message) ||
+    /cannot serve (pick|list|createDirectory)/i.test(message)
+  );
+}
+
 /** 三态判定：**先看两格浏览原语**（都在＝应用内浏览器这条路在），再看单独的 `pick`，都没有＝`none`。
  *
  * 为什么浏览优先：客户端命名空间上三条动词一定都在（由 `TYPERT_REMOTE.descriptors` 生成，

@@ -17,6 +17,7 @@ import type {
 import {
   browseFaceOf,
   filterEntries,
+  isCapabilityRefusal,
   joinPath,
   parentOf,
   splitDraft,
@@ -390,7 +391,10 @@ export function openRowBrowser(input: {
   });
   input.onRow(row);
   return row.open().then((settled) => {
-    if (settled.phase === 'failed' && settled.failure?.code === input.refusalCode) {
+    if (
+      settled.phase === 'failed' &&
+      isCapabilityRefusal(settled.failure?.code, settled.failure?.message, input.refusalCode)
+    ) {
       input.onRow(null);
       return 'refused' as const;
     }
