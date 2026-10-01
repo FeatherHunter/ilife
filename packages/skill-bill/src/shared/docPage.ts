@@ -22,7 +22,7 @@
  *   ③ 桌面端不再由本件给「一条宽度补丁」——版心与分栏归 `pageUi` 的 ⑧ 段，本件只留一条表格宽度收口。
  */
 import { pageUiCss } from 'base-paint';
-import { renderPageShell, sheetCss } from 'base-paint/blocks';
+import { renderPageShell, sheetCss, skinClass, skinCss } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
 
 /** 整页装配的入参。 */
@@ -155,12 +155,14 @@ export function assembleDocPage(input: DocPageInput): string {
 /** 小票页装配（#993）：正文已是单据族装配（含 `renderSheetFrame` 的纸），不再套页面壳。
  *
  *  样式走族汇总 `sheetCss()`（与卡路里小票页同一条路：族汇总进 `extraCss`，`blocksCss()` 仍由骨架件拼）。
- *  店头样式只进这一路（见 `SHEET_RECEIPT_CSS`），`assembleDocPage` 的 29 页产物逐字节不动。 */
+ *  店头样式只进这一路（见 `SHEET_RECEIPT_CSS`），`assembleDocPage` 的 29 页产物逐字节不动。
+ *  皮肤（#993 像素对齐原型）：挂 `skinCss()` ＋ 祖先 `ilife-skin-paper` 类，纸面材料色跟皮肤走；
+ *  不挂皮肤类的老页零命中（加法式），故只包在这一路里。 */
 export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string }): string {
   return renderDocShell({
     docTitle: input.docTitle,
-    bodyHtml: input.bodyHtml,
-    extraCss: [SHEET_RECEIPT_CSS, sheetCss(), pageUiCss()].join('\n'),
+    bodyHtml: '<div class="' + skinClass('paper') + '">' + input.bodyHtml + '</div>',
+    extraCss: [SHEET_RECEIPT_CSS, sheetCss(), skinCss(), pageUiCss()].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });
