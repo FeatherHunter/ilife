@@ -276,7 +276,10 @@ async function buildTable(
   ports: InstallPorts = {},
 ): Promise<(method: string, args: Record<string, unknown>) => Promise<ManagerReply>> {
   const { dir: profileDir, name: profileName } = await resolveProfileDir();
-  const environmentKind = detectEnvironmentKind(ctx);
+  // 宿主种类与更新包用同一套探测（0.2.0 `host.ts:32-40`，范围名参与判定）：本地事实与
+  // 更新包自判一致，后面才敢**不**向 `readerOverrides` 里显式传 kind（票 #991：显式传
+  // 会把更新包的自动探测挡死，官方桌面的升级将永远走错路由；README 明令禁传）。
+  const environmentKind = detectEnvironmentKind(ctx, profileName);
   const runningPairs = await Promise.all(
     UPDATE_TARGETS.map(async (target) => ({
       key: target.key,
@@ -298,7 +301,10 @@ async function buildTable(
           profileDir,
           profileName,
           runningVersion,
-          environmentKind,
+          // 注意：这里**不许**再传 `environmentKind`（票 #991）：更新包按"有没有显式传"
+          // 决定走自判还是照单——传了（哪怕值碰巧对）也会把它的自动探测挡死，官方桌面的
+          // 升级配方将被冻成 `cli-process` 而永远装不上；自家读数（`readInstalled` 下
+          // 的 `readTargetEnvironment`）照旧用本地同套探测值，不受影响。
           readInstalled: () =>
             readTargetEnvironment(target.packageName, {
               profileDir,

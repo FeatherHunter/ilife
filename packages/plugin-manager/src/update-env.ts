@@ -15,6 +15,11 @@
  * 事实（谁装了、装到哪、版本多少、是不是按版本号装的）逐条照读，原因码阶梯照更新包的语义
  * 写，只把「找得到自己包」这一步换成本包已知的安装位置。
  *
+ * 宿主种类（`environmentKind`）只在本文件**消费**（翻进 `EnvironmentView`），不许经
+ * `readerOverrides` 回传给更新包（票 #991）：传了会把它的自动探测挡死，
+ * 官方桌面的升级配方将被冻成 `cli-process`；本地值与更新包自判同源
+ * （`detectEnvironmentKind(ctx, profileName)`，0.2.0 `host.ts:32-40`）。
+ *
  * 纪律：本文件的每一步都只做「读事实」，不决定能不能装（能不能装是更新核心的事）。
  */
 import { createHash } from 'node:crypto';

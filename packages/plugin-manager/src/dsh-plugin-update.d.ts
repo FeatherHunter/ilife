@@ -151,8 +151,10 @@ declare module 'dsh-plugin-update' {
     homeDir: string | null;
   };
 
-  /** 宿主种类探测：`ctx.get('desktopProfiles')` 取到即 desktop（`host.ts:70-73`）。 */
-  export function detectEnvironmentKind(ctx: unknown): EnvironmentKind;
+  /** 宿主种类探测（0.2.0 `host.ts:32-40`）：有 `desktopProfiles` 即 desktop；
+   * 无但有 `pluginManager.installBundle` 且范围名是 desktop 即 `'desktop-manager'`；否则 `'cli'`。
+   * 范围名不传即按无范围名判（官方桌面分支要求范围名，见 `cliRefusesProfile`）。 */
+  export function detectEnvironmentKind(ctx: unknown, profileName?: string | null): EnvironmentKind;
 
   export function createUpdateExecutor(
     parts?: ExecutorParts,
