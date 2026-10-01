@@ -331,7 +331,6 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
   const row = fetchAll(db, { includeDeleted: true }).find((r) => r.id === id);
   if (!row) throw new BillFetchError('BILL_RECORD_NOT_FOUND', '无此账单：' + id);
   const data: QueryDetailData = { item: { ...toBillItem(row), created_at: row.created_at, deleted_at: row.deleted_at } };
-  const deleted = row.deleted_at !== null && row.deleted_at !== '';
   const wakeWord = projectWakeWord({ key, preset: params });
   return {
     data,
@@ -340,8 +339,6 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
       key,
       params,
       wakeWord,
-      window: row.time,
-      chips: deleted ? ['记录编号 ' + row.id, '已撤销'] : ['记录编号 ' + row.id],
       row,
       envelope: detailEnvelope(key, data),
       source: SOURCE_QUERY,

@@ -21,7 +21,7 @@
  *      （口径行的字面色值、越出圆角闭集的 10px），本件只留**本包自己产出**的那几条；
  *   ③ 桌面端不再由本件给「一条宽度补丁」——版心与分栏归 `pageUi` 的 ⑧ 段，本件只留一条表格宽度收口。
  */
-import { pageUiCss } from 'base-paint';
+import { escapeHtml, pageUiCss } from 'base-paint';
 import { renderPageShell, sheetCss, skinClass, skinCss } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
 
@@ -131,6 +131,25 @@ const SHEET_RECEIPT_CSS = [
   '.ilife-sheet-title .hl { color: #a83228; }',
 ].join('\n');
 
+/** 小票纸店头（#993）：品牌行＋结论标题。改动值那一段走重点色（见下 `SHEET_RECEIPT_CSS`）。
+ *
+ * 住共用位：写入域回执与查询域详情两页共用（第二个用法长出来之后收成这一处）。 */
+export function sheetHead(brand: string, titleHtml: string): string {
+  return '<header class="ilife-sheet-head"><p class="ilife-sheet-eyebrow">' + escapeHtml(brand)
+    + '</p><h1 class="ilife-sheet-title">' + titleHtml + '</h1></header>';
+}
+
+/** 详情备注表样式（#993 v7）：语义 `ol`＋计数器编号，实付行加粗（`entry-rows` 的槽位装不下“多行同级”）。
+ *  只进详情小票页（`assembleSheetPage` 的 `pageCss` 位），回执页产物逐字节不动。 */
+const SHEET_DETAIL_CSS = [
+  '.ilife-remark-title { font-size: 12px; font-weight: 700; color: var(--fg3); letter-spacing: 2px; margin: 14px 0 4px; }',
+  '.ilife-remark-list { list-style: none; margin: 6px 0 0; padding: 0; counter-reset: remark; }',
+  '.ilife-remark-list > li { display: flex; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px dotted var(--line); font-size: 14px; }',
+  '.ilife-remark-list > li:last-child { border-bottom: none; }',
+  '.ilife-remark-list > li::before { counter-increment: remark; content: counter(remark); flex: none; color: var(--fg3); font-size: 12px; font-weight: 700; }',
+  '.ilife-remark-list > li.pay { font-weight: 800; background: var(--soft); border-radius: 8px; padding-left: 10px; padding-right: 10px; }',
+].join('\n');
+
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（文档壳交公共层骨架件）。
  *
  *  `pageUi: true` —— 本包 32 页走公共层页面级配方（#525）；配套的样式段由本件拼进 `extraCss`
@@ -155,14 +174,15 @@ export function assembleDocPage(input: DocPageInput): string {
 /** 小票页装配（#993）：正文已是单据族装配（含 `renderSheetFrame` 的纸），不再套页面壳。
  *
  *  样式走族汇总 `sheetCss()`（与卡路里小票页同一条路：族汇总进 `extraCss`，`blocksCss()` 仍由骨架件拼）。
- *  店头样式只进这一路（见 `SHEET_RECEIPT_CSS`），`assembleDocPage` 的 29 页产物逐字节不动。
+ *  店头与备注表样式只进这一路（见上两段），`assembleDocPage` 的 29 页产物逐字节不动。
  *  皮肤（#993 像素对齐原型）：挂 `skinCss()` ＋ 祖先 `ilife-skin-paper` 类，纸面材料色跟皮肤走；
  *  不挂皮肤类的老页零命中（加法式），故只包在这一路里。 */
-export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string }): string {
+export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string; readonly paper: 'receipt' | 'detail' }): string {
+  const pageCss = input.paper === 'detail' ? [SHEET_RECEIPT_CSS, SHEET_DETAIL_CSS] : [SHEET_RECEIPT_CSS];
   return renderDocShell({
     docTitle: input.docTitle,
     bodyHtml: '<div class="' + skinClass('paper') + '">' + input.bodyHtml + '</div>',
-    extraCss: [SHEET_RECEIPT_CSS, sheetCss(), skinCss(), pageUiCss()].join('\n'),
+    extraCss: [...pageCss, sheetCss(), skinCss(), pageUiCss()].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });

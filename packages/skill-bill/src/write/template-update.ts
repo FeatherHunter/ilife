@@ -34,8 +34,8 @@ import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
-import { assembleSheetPage } from '../shared/docPage.js';
-import { exitCopyOf, landedRows, receiptStamp, receiptTitle, sheetHead } from './receiptSheet.js';
+import { assembleSheetPage, sheetHead } from '../shared/docPage.js';
+import { exitCopyOf, landedRows, receiptStamp, receiptTitle } from './receiptSheet.js';
 import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
@@ -274,7 +274,7 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
   });
 }
 
-/** 小票纸取值小件住 `./receiptSheet.js`（块序仍在本件，值加工在那一件）。 */
+/** 小票纸取值小件住 `./receiptSheet.js`（块序与店头仍在本件，值加工在那一件）。 */
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
@@ -314,5 +314,5 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
     content: renderSheetFrame({ variant: 'receipt', notch: true, cutLine: true, content: paper }),
   });
-  return assembleSheetPage({ docTitle: docTitleOf(spec.wake + ' 回执'), bodyHtml: content });
+  return assembleSheetPage({ docTitle: docTitleOf(spec.wake + ' 回执'), bodyHtml: content, paper: 'receipt' });
 }
