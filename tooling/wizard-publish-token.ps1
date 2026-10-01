@@ -247,7 +247,7 @@ try {
     exit 1
   }
   Log ('DONE 已发 ' + $done.Count + ' 个：' + ($done -join ', '))
-  Write-Host '下一步：装到本机走 tooling\wizard-install.ps1（Agent 会另起）'
+  Write-Host '发布侧到此结束（registry 全绿即交付）：安装一律用户侧做——插件市场升级、软件内升级、或自己命令安装；我们不做装机。'
 } finally {
   try { if (Test-Path $tempNpmrc) { Remove-Item $tempNpmrc -Force -ErrorAction SilentlyContinue } } catch { }
   if ($addedNodeToken) { try { Remove-Item Env:\NODE_AUTH_TOKEN -ErrorAction SilentlyContinue } catch { } }

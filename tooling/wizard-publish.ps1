@@ -1,4 +1,4 @@
-﻿# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「弹窗交互、用户按回车＋浏览器批准 2FA」设计。
+# 发版向导（Windows；公共层 ＋ 全部技能 ＋ 全部插件）。为「弹窗交互、用户按回车＋浏览器批准 2FA」设计。
 #
 # 跑法：由 AI 经 schtasks /IT 弹交互窗口（真 TTY＋用户本人；Agent 后台 Start-Process 起的是不可见会话必用此法）：
 #     schtasks /create /tn "ILIFEPublish" /tr "<pwsh完整路径> -NoProfile -File D:\ilife\tooling\wizard-publish.ps1 -Auto" /sc once /st 23:59 /it /f
@@ -152,6 +152,6 @@ if ($failed.Count -gt 0) {
   exit 1
 }
 Log ('DONE 已发 ' + $done.Count + ' 个：' + ($done -join ', '))
-Write-Host '下一步：装到本机走 tooling\wizard-install.ps1（Agent 会另起；本窗不用再操作）'
+Write-Host '发布侧到此结束（registry 全绿即交付）：安装一律用户侧做——插件市场升级、软件内升级、或自己命令安装；我们不做装机。'
 try { Stop-Transcript | Out-Null } catch { }
 Read-Host '结束：按回车关窗' | Out-Null
