@@ -9,10 +9,12 @@ import assert from 'node:assert/strict';
 const contract = await import('../dist/directory-browser-contract.js');
 const state = await import('../dist/directory-browser-state.js');
 
-const { isCapabilityRefusal, browseFaceOf } = contract;
+const { isCapabilityRefusal, isArgCountRejection, browseFaceOf } = contract;
 const { openRowBrowser } = state;
 
 const REFUSAL = 'directory-picker/unavailable';
+const ARG_COUNT_MESSAGE =
+  'client api: directoryPicker/list expected 1 business argument(s) plus an optional AbortSignal, got 0';
 const NEW_MESSAGE = 'directoryPicker.list needs the browse capability; the composed picker serves "native"';
 const OLD_MESSAGE = 'directoryPicker.pick needs the native capability; the composed picker serves "browse"';
 
@@ -113,5 +115,100 @@ describe('#990 openRowBrowser 新组合下换路', () => {
     const face = browseFaceOf(wireNewNativeOnly());
     // 有两格原语即有取数面（能不能用要真调一次才知道，见 openRowBrowser）
     assert.ok(face !== null);
+  });
+});
+
+const HOME_LISTING = {
+  path: 'C:\\Users\\me',
+  home: 'C:\\Users\\me',
+  crumbs: [{ name: 'C:\\', path: 'C:\\', hidden: false }],
+  entries: [{ name: 'b', path: 'C:\\Users\\me\\b', hidden: false }],
+  truncated: false,
+};
+
+/** 新宿主形态：零参按个数直接拦（抛错），显式 undefined 即回家。 */
+function wireArgCountHost() {
+  const calls = [];
+  return {
+    calls,
+    async list(...args) {
+      calls.push(args);
+      if (args.length === 0) throw new Error(ARG_COUNT_MESSAGE);
+      return { ok: true, value: HOME_LISTING };
+    },
+    async createDirectory(path, name) {
+      return { ok: true, value: `${path}\\${name}` };
+    },
+    async pick() {
+      return { ok: true, value: null };
+    },
+  };
+}
+
+/** 旧宿主形态：零参即回家；多传一个 undefined 会被当成 signal 而炸，这里照旧实现断言它没发生。 */
+function wireLegacyHost() {
+  const calls = [];
+  return {
+    calls,
+    async list(...args) {
+      calls.push(args);
+      if (args.length === 0) return { ok: true, value: HOME_LISTING };
+      throw new Error('legacy host: explicit undefined must never arrive here');
+    },
+    async createDirectory(path, name) {
+      return { ok: true, value: `${path}\\${name}` };
+    },
+    async pick() {
+      return { ok: true, value: null };
+    },
+  };
+}
+
+describe('#990 跟进：家目录参数个数兼容新旧宿主', () => {
+  it('isArgCountRejection 只认个数句式', () => {
+    assert.equal(isArgCountRejection(new Error(ARG_COUNT_MESSAGE)), true);
+    assert.equal(isArgCountRejection(ARG_COUNT_MESSAGE), true);
+    assert.equal(isArgCountRejection(new Error(NEW_MESSAGE)), false);
+    assert.equal(isArgCountRejection(new Error('这一层读不出来')), false);
+    assert.equal(isArgCountRejection(undefined), false);
+  });
+
+  it('新宿主：零参被拦 ⇒ 显式 undefined 重试回家', async () => {
+    const ns = wireArgCountHost();
+    const face = browseFaceOf(ns);
+    assert.deepEqual(await face.list(), HOME_LISTING);
+    assert.equal(ns.calls.length, 2);
+    assert.equal(ns.calls[0].length, 0);
+    assert.equal(ns.calls[1].length, 1);
+    assert.equal(ns.calls[1][0], undefined);
+  });
+
+  it('旧宿主：零参一次即回家，不多传', async () => {
+    const ns = wireLegacyHost();
+    const face = browseFaceOf(ns);
+    assert.deepEqual(await face.list(), HOME_LISTING);
+    assert.equal(ns.calls.length, 1);
+    assert.equal(ns.calls[0].length, 0);
+  });
+
+  it('有参调用透传不受影响', async () => {
+    const ns = wireArgCountHost();
+    const face = browseFaceOf(ns);
+    assert.deepEqual(await face.list('C:\\a'), HOME_LISTING);
+    assert.deepEqual(ns.calls[0], ['C:\\a']);
+  });
+
+  it('新宿主上开图：家目录一次重试后落定 open', async () => {
+    const rows = [];
+    const opened = openRowBrowser({
+      picker: wireArgCountHost(),
+      initialPath: '',
+      onChange: () => {},
+      onRow: (next) => rows.push(next),
+      refusalCode: REFUSAL,
+    });
+    assert.equal(await opened, 'open');
+    assert.equal(rows[0].state().phase, 'ready');
+    assert.equal(rows[0].state().listing.path, HOME_LISTING.path);
   });
 });

@@ -185,18 +185,44 @@ export function readBrowseAnswer<T>(raw: unknown, what: string): T {
   );
 }
 
+/** 这次失败算不算「客户端按参数个数拦的」（与能力被拒、读不出来都不是一回事）。
+ *
+ * 出处：新宿主客户端按 `values.length` 对描述符的业务参数个数（`signal` 另算，
+ * `values.length === 业务参数个数 + 1` 才算带了 signal），对不上就地抛
+ * `expected N …argument(s)…, got M`，还没走到服务端。家目录重试只认这一句，
+ * 能力句式与读失败一律不碰（它们各有各的去处）。 */
+export function isArgCountRejection(cause: unknown): boolean {
+  const message =
+    cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : '';
+  return /expected \d+ .*argument/i.test(message);
+}
+
 /** 宿主命名空间 → 本件的取数面：把两条原语的信封拆开，成功给值、失败按码抛。
  *
  * 命名空间上两格原语不在就回 null（调用方据此不画入口）。**透传参数个数照宿主的规矩**：
  * 描述符声明了可选 `AbortSignal`（`cancellation: {parameter:'signal'}`），而客户端按
- * `values.length === 业务参数个数 + 1` 判有没有 signal——显式传一个 `undefined` 会被当成 signal
- * 去 `AbortSignal.any([…, undefined])` 而炸。本件的界面不做取消，故**从不传 signal**。 */
+ * `values.length === 业务参数个数 + 1` 判有没有 signal——旧宿主的家目录要零参直调，
+ * 多传一个 `undefined` 会被当成 signal 去 `AbortSignal.any([…, undefined])` 而炸。
+ * 本件的界面不做取消，故**从不传 signal**。
+ *
+ * 家目录多一档兼容：新宿主的 `list` 描述符带一个业务参数（接受 `undefined`，
+ * 服务端 `undefined` 即回家），零参会被客户端按个数直接拦下。于是家目录先零参试一次，
+ * 是个数问题再补一个显式 `undefined` 重试；有参调用与旧语义逐字相同，不多试。 */
 export function browseFaceOf(raw: unknown): DirectoryBrowseFace | null {
   if (!isBrowseFace(raw)) return null;
   const namespace = raw as DirectoryBrowseFace;
   return {
-    list: async (path) =>
-      readBrowseAnswer<DirectoryListing>(path === undefined ? await namespace.list() : await namespace.list(path), '列举目录'),
+    list: async (path) => {
+      if (path !== undefined) {
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(path), '列举目录');
+      }
+      try {
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(), '列举目录');
+      } catch (first) {
+        if (!isArgCountRejection(first)) throw first;
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(undefined), '列举目录');
+      }
+    },
     createDirectory: async (path, name) => readBrowseAnswer<string>(await namespace.createDirectory(path, name), '新建文件夹'),
   };
 }
