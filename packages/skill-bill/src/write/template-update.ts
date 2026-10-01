@@ -17,7 +17,6 @@
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { renderCaliberLine, renderDataTable, renderDisclosure, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
-import { renderActionBar } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
@@ -28,14 +27,15 @@ import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { EYEBROW, writePageShell as pageShell } from './pageParts.js';
 import { diffRowsFor, pickerBlock, readRowById, snapshotTable } from './recordPicker.js';
-import { directionWord, money2, summaryRow } from './summaryRow.js';
+import { money2, summaryRow } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
-import { assembleSheetPage, sheetHead } from '../shared/docPage.js';
-import { exitCopyOf, landedRows, receiptStamp, receiptTitle } from './receiptSheet.js';
+import { assembleSheetPage, sheetHead, ticketActions, ticketFoot, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
+import { directionWord } from '../shared/direction.js';
+import { exitCopyOf, landedRows, receiptStamp, receiptTitle, UNDO_CALIBER } from './receiptSheet.js';
 import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
@@ -278,41 +278,51 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
-/** 结果型回执页（一纸 #993）：店头＋主数字＋落点账目＋结果表＋退出口真按钮＋复制区＋来源脚注。
- *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住页脚）。 */
+/** 结果型回执页（一纸 #993 v5）：店头＋主数字＋落点账目＋结果表＋退出口真按钮＋复制区。
+ *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住页脚）；
+ *  来源脚注与记录编号按 v5 原型落在**纸外**那一行居中页脚（`.ilife-ticket-foot`）。 */
 function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
+  const exit = exitCopyOf(spec.receiptExit, spec.key, receipt.recordId);
+  const result = resultBlock(spec, receipt);
   const paper = sheetHead(EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
-    + renderSummaryHead({
-      eyebrow: '改后金额·' + directionWord(input.facts.amount),
+    + ticketRule()
+    + ticketSummary(renderSummaryHead({
+      eyebrow: '改后金额 · ' + directionWord(input.facts.amount),
       value: money2(input.facts.amount),
       unit: '元',
       stamp: receiptStamp(spec.receiptResult, receipt),
-    })
-    + renderLedgerRows({ heading: '改后落点', rows: landedRows(input.facts) })
-    + resultBlock(spec, receipt)
-    + (() => {
-      const exit = exitCopyOf(spec.receiptExit, spec.key, receipt.recordId);
-      return exit === null ? '' : renderActionBar({ buttons: [], copyData: exit });
-    })()
-    + copyArea({
-      data: { envelope },
-      log: {
-        envelope,
-        copyLog: copyLog({
-          command: commandLine(spec.key, input.params), source: receipt.source,
-          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
-            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
-          actionAt: receipt.actionAt, version: DOC_VERSION,
-        }),
-      },
-    })
-    + receiptSourceNote(input.facts.time, receipt.affectedRows)
-    + (receipt.recordId === null ? '' : renderCaliberLine('记录编号 ' + receipt.recordId));
+      layout: 'ticket',
+    }), '')
+    + ticketRule()
+    + ticketSection({ title: '改后落点', tag: 'LEDGER', content: renderLedgerRows({ rows: landedRows(input.facts), layout: 'ticket' }) })
+    + (result === '' ? '' : ticketRule() + result)
+    + ticketRule()
+    + ticketActions((exit === null ? '' : ticketPrimaryButton(exit))
+      + copyArea({
+        data: { envelope },
+        log: {
+          envelope,
+          copyLog: copyLog({
+            command: commandLine(spec.key, input.params), source: receipt.source,
+            detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
+              + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
+            actionAt: receipt.actionAt, version: DOC_VERSION,
+          }),
+        },
+      })
+      + (spec.receiptExit === 'undo' ? renderCaliberLine(UNDO_CALIBER) : ''));
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
-    content: renderSheetFrame({ variant: 'receipt', notch: true, cutLine: true, content: paper }),
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }),
   });
-  return assembleSheetPage({ docTitle: docTitleOf(spec.wake + ' 回执'), bodyHtml: content, paper: 'receipt' });
+  return assembleSheetPage({
+    docTitle: docTitleOf(spec.wake + ' 回执'),
+    bodyHtml: content + ticketFoot([
+      receiptSourceNote(input.facts.time, receipt.affectedRows),
+      receipt.recordId === null ? '' : renderCaliberLine('记录编号 ' + receipt.recordId),
+    ]),
+    paper: 'receipt',
+  });
 }

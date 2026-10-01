@@ -26,6 +26,22 @@ export function l1Of(category: string): string {
   return category.split('/')[0].trim();
 }
 
+/** 三级分类的**纸面显示写法**（#993 票据纸两页）：`餐饮/咖啡奶茶` → `餐饮 ／ 咖啡奶茶`。
+ *
+ *  库里的值一个字不改（仍是 `一级/二级[/三级]` 那串半角斜线），只把层级在**纸面上**摊成
+ *  全角斜线分隔的层级值——两张冻结原型（`bill-993-proto-receipt-7222-v5.html` 的「分类」行与
+ *  `…-detail-7222-v7.html` 的结论小字）都是这么印的。
+ *
+ *  与 `src/write/recentPicks.ts` 的 `optionLabelOf`（`›`）分工：那一件管**选择器选项**的标签
+ *  （表单里点选的那一列，`借贷 › 偿还` 是面包屑语汇）；本件管**纸面读数**上那一个值怎么印。
+ *  两个上下文各一种写法，值本身仍是同一个。 */
+export function categoryLabelOf(value: string): string {
+  const raw = value.trim();
+  if (raw === '') return '';
+  const segs = raw.split('/').map((s) => s.trim()).filter((s) => s !== '');
+  return segs.length < 2 ? raw : segs.join(' ／ ');
+}
+
 // 分类校验：须含 L1（允许 L1/L2/L3 三级 / 分隔）；旧数据无 / 视为 L1；未知 L1 阻断。
 export function validateCategory(raw: unknown): string {
   if (typeof raw !== 'string' || raw.trim().length === 0) {

@@ -10,8 +10,8 @@
 import { escapeHtml } from 'base-paint';
 import type { BillReceipt } from '../shared/writeParts.js';
 import { commandLine } from '../shared/writeParts.js';
+import { categoryLabelOf } from '../shared/category.js';
 import type { SummaryFacts } from './summaryRow.js';
-import { optionLabelOf } from './recentPicks.js';
 import { fieldLabelOf } from './userWording.js';
 
 /** 回执分支（与 `UpdateSpec.receiptResult` 同一闭集，不另立第二份）。 */
@@ -50,16 +50,22 @@ export function receiptStamp(result: ReceiptResult, receipt: BillReceipt): { rea
   return receipt.noChange ? { text: '无改动', tone: 'warn' } : { text: '已改动', tone: 'ok' };
 }
 
-/** 改后落点账目行：分类／账户／账本／时间各一处（空值写「未给」，与摘要行同一口径）。 */
+/** 改后落点账目行：分类／账户／账本／时间各一处（空值写「未给」，与摘要行同一口径）。
+ *  分类走纸面显示写法（`../shared/category.js` 的 `categoryLabelOf`，原型 v5 印的是全角斜线那串）。 */
 export function landedRows(facts: SummaryFacts): readonly { readonly label: string; readonly value: string }[] {
   const pick = (v: string): string => (v.trim() === '' ? '未给' : v);
   return [
-    { label: '分类', value: facts.category.trim() === '' ? '未给' : optionLabelOf(facts.category) },
+    { label: '分类', value: facts.category.trim() === '' ? '未给' : categoryLabelOf(facts.category) },
     { label: '账户', value: pick(facts.account) },
     { label: '账本', value: pick(facts.ledger) },
     { label: '时间', value: pick(facts.time) },
   ];
 }
+
+/** 退出口那一行口径（#993 v5 原型的 `.caliber`）：撤销是**打标**不是物理删除。
+ *  逐字取原型那一句，只去掉它前面那截设计注记「口径小字：」（注记不上屏）。
+ *  只给带撤销出口的两支（改记录／撤销）；恢复那一支不印这一句。 */
+export const UNDO_CALIBER = '撤销只打标、可恢复，原记录保留痕迹，不会物理删除。';
 
 /** 退出口真按钮的复制位（#993）：#733 杀的是无载荷死按钮，本位带撤销／恢复命令载荷。
  *  返回给模板件的是 `renderActionBar` 的 `copyData` 那一格，由模板件拼进行动条（按钮形态归公共层）。 */

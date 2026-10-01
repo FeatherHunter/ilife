@@ -56,7 +56,7 @@ const DESKTOP_CSS = [
   '  .ilife-block-page-shell .ilife-block-data-table { max-width: none; }',
   '}',
   '/* t728 逐页审计实测：公共层配方 ⑧ 的「宽件满铺」那条写的是',
-  '   `.ilife-block-page-shell-body > :where(读数卡网格／表／图／…){ grid-column: 1 / -1 }`，',
+  '   `.ilife-block-page-shell-body > :where(读数卡网格／表／图／…) { grid-column: 1 / -1 }`，',
   '   而本包的 DOM 是 `page-shell-body > section.ilife-write > section#sec-kpi > div.读数卡网格`',
   '   ——宽件隔着 `section.ilife-write` 这一层，成了**孙级**，`>` 一个都匹配不到 ⇒',
   '   全部落回「中间 880 列」，1280 档两翼逐点扫描非背景像素 0 行（内容墨迹最外沿 x174–1105）。',
@@ -119,19 +119,133 @@ const KV_CSS = [
  *  留着的代价不是零：它会被 grep 进「页上还有没有这个动作号」这类判据，读的人会以为按钮还在。
  *  一并删掉——**删的是失效的补丁，不是那条版面意图**（那颗钮已经不存在了）。 */
 
-/** 小票纸店头样式（#993：改记录回执小票化）。
+/** #993 票据纸两页（原型 `bill-993-proto-receipt-7222-v5.html` 与 `…-detail-7222-v7.html`）
+ *  的**页面家具样式**：桌、店头、虚线分隔、段标题、主数字块、明细卡、按钮、页脚。
  *
- *  只收本包自己产出的选择器（`.ilife-sheet-head` 由新模板件产出，公共层不认它，故住本件）。
- *  重点色沿旧层做法（`base-paint/blocks` 的 statusBadge 区 danger `#a83228`，不新增 token 名）。
- *  本段只进小票页（`assembleSheetPage`），其余 29 页的产物逐字节不动。 */
-const SHEET_RECEIPT_CSS = [
+ *  为什么住本件：这些选择器全部由本包产出（`assembleSheetPage` 的族根类 ＋ `sheetHead`／
+ *  `ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions`／`ticketFoot` 这几个产出器），
+ *  按「样式随它的选择器」的仓规，样式与产出器同住一件。
+ *
+ *  取值口径（三条，逐条可查原型）：
+ *    ① 颜色／圆角／投影一律读皮肤 token（`--ilife-*`）——原型里那些字面色值不抄第二份；
+ *       皮肤 `ticket` 对原型的三处偏离（次要文字压深、danger 压深、`accent-soft` 重取）见
+ *       `packages/base-render/src/components/skin/skins/ticket.ts` 件头，本件照皮肤走。
+ *    ② 少数公共层**组件选择器**的覆盖（`.ilife-block-summary-head.is-ticket` 的内距、
+ *       `.ilife-block-ledger-row` 的 44px 行高、`.ilife-copy-btn` 那一族的按钮形状）是
+ *       **页面级几何**：原型把这几处的盒模型钉死，公共层的票据纸版式只管到"形态"这一层。
+ *       它们只在本族根类之下生效，别的页零命中。
+ *    ③ 断点只用仓内既有值（400）；原型里那个 390 档照 400 档落。 */
+const TICKET_CSS = [
+  '/* #993 桌：暖奶油底＋居中一列（原型 `body` 那一层；底色的两处浅深用 token 混出，不抄字面色）。 */',
+  '.ilife-bill-sheet-page {',
+  '  box-sizing: border-box;',
+  '  width: 100%;',
+  '  min-height: 100vh;',
+  '  padding: 28px 14px 48px;',
+  '  display: flex;',
+  '  flex-direction: column;',
+  '  align-items: center;',
+  '  background: radial-gradient(1200px 600px at 50% -10%,',
+  '    color-mix(in srgb, var(--ilife-surface) 70%, var(--ilife-ground)) 0%,',
+  '    var(--ilife-ground) 55%,',
+  '    color-mix(in srgb, var(--ilife-ground) 96%, var(--ilife-accent)) 100%);',
+  '  color: var(--ilife-ink);',
+  '  font-family: var(--ilife-font);',
+  '  line-height: normal;',
+  '  -webkit-font-smoothing: antialiased;',
+  '}',
+  '/* 纸与页脚同宽（原型 `.page` 的 440px 版心；桌的内距由上面那条给）。 */',
+  '.ilife-bill-sheet-page > section,',
+  '.ilife-ticket-foot { width: 100%; max-width: 440px; }',
+  '/* 原型 `*{box-sizing:border-box}` 的作用域版：只在本族根类之下（其余 29 页零命中）。 */',
+  '.ilife-bill-sheet-page *,',
+  '.ilife-bill-sheet-page *::before,',
+  '.ilife-bill-sheet-page *::after { box-sizing: border-box; }',
+  '/* 店头（原型 `.shop-head`）：品牌行＋结论标题，居中；改动值那一段走危险档（原型 `.hl`）。 */',
   '.ilife-sheet-head { text-align: center; padding: 2px 0 0; }',
-  '.ilife-sheet-eyebrow { font-size: 11.5px; letter-spacing: 2px; color: var(--fg3); font-weight: 700; }',
-  '.ilife-sheet-title { margin: 8px 0 0; font-size: 19px; line-height: 1.4; font-weight: 800; }',
-  '.ilife-sheet-title .hl { color: #a83228; }',
+  '.ilife-sheet-eyebrow { margin: 0; font-size: 11.5px; letter-spacing: 2px; color: var(--ilife-ink-2); font-weight: 700; }',
+  '.ilife-sheet-title { margin: 8px 0 0; font-size: 19px; line-height: 1.4; letter-spacing: .2px; font-weight: 800; color: var(--ilife-ink); }',
+  '.ilife-sheet-title .hl { color: var(--ilife-danger); }',
+  '/* 虚线分隔（原型 `hr.dashed`）：2px 虚线、左右各探出 8px。 */',
+  '.ilife-ticket-rule { border: 0; border-top: 2px dashed var(--ilife-line); margin: 14px -8px; }',
+  '/* 段（原型 `.sec`）＋ 段标题（4px 主色条 ＋ 右对齐英文标）。 */',
+  '.ilife-ticket-sec { padding: 2px 0 6px; }',
+  '.ilife-ticket-sec-heading { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--ilife-ink-2); }',
+  '.ilife-ticket-sec-heading::before { content: ""; width: 4px; height: 14px; border-radius: 4px; background: var(--ilife-accent); }',
+  '.ilife-ticket-sec-no { margin-left: auto; font-weight: 700; color: var(--ilife-ink-3); letter-spacing: 0; }',
+  '/* 主数字块（原型 `.summary-head`）：整块居中，下留 16px；印章钉右上角并微斜（公共层票据纸版式给形，',
+  '   这里补齐原型的三处几何：内距 6px、脚行不占位（印章是绝对定位的，脚行只剩一枚空槽）、',
+  '   下面那两行小字居中）。 */',
+  '.ilife-ticket-summary { padding: 0 0 16px; text-align: center; }',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket { padding: 6px 0 0; }',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot { margin-top: 0; }',
+  '/* 没有脚行小字时，那一枚空槽不占版面（印章是绝对定位的，仍钉在右上角）。 */',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot > span:empty { display: none; }',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-stamp { font-weight: 900; opacity: .92; }',
+  '/* 眉标药丸：字距照原型 2px（公共层票据纸版式取的是 .12em，12px 下 1.44px）。 */',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-eyebrow { letter-spacing: 2px; }',
+  '.ilife-ticket-summary-note { margin: 10px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--ilife-ink-2); }',
+  '.ilife-ticket-summary-note b { color: var(--ilife-ink); }',
+  '.ilife-ticket-summary-time { margin: 6px 0 0; font-size: 13.5px; line-height: 15px; color: var(--ilife-ink-2); }',
+  '/* 账目行：详情页那 7 行照原型抬到 44px 触摸档（回执页 4 行是 9px 行距、不抬）；',
+  '   两页的值列行高在原型里也不同：详情 1.55（可折行）、回执 1.4（单行紧排）。 */',
+  '.ilife-ticket-detail .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row { min-height: 44px; }',
+  '.ilife-ticket-receipt .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row-value { line-height: 1.4; font-variant-numeric: normal; }',
+  '/* 回执行间那条**看不见的** 1px 上边线：原型写的就是 `1px dotted transparent`（不画线，只占 1px 行高），',
+  '   不补它整块矮 3px、下面的段落跟着上移。 */',
+  '.ilife-ticket-receipt .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row + .ilife-block-ledger-row { border-top: 1px dotted transparent; }',
+  '/* 状态那枚胶囊（原型 `.status`）：账目行的值位只收纯文本，故这一行由页面自己出（同一套行类）。',
+  '   行下那 1px：原型这一行的行盒是 45.6（胶囊按基线落位多出 1px），本页算出 44.6 ⇒ 补 1px 下内距，',
+  '   让状态行下面的段落与原型逐像素对齐（不补的话整块从这一行起上移 1px）。 */',
+  '.ilife-ticket-detail .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row.is-status { padding-bottom: 10px; }',
+  '.ilife-ticket-status { display: inline-block; padding: 3px 10px; border: 1px solid color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft)); border-radius: var(--ilife-radius-pill); background: var(--ilife-ok-soft); color: var(--ilife-ok); font-size: 12px; font-weight: 700; line-height: 1.55; }',
+  '.ilife-ticket-status.is-danger { border-color: color-mix(in srgb, var(--ilife-danger) 30%, var(--ilife-danger-soft)); background: var(--ilife-danger-soft); color: var(--ilife-danger); }',
+  '/* 明细卡（原型 `.entry-card`／`.entry-rows`）：米黄卡 ＋ 编号胶囊 ＋ 实付行高亮。 */',
+  '.ilife-ticket-card { background: var(--ilife-surface-2); border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-sm); padding: 12px 13px 11px; }',
+  '.ilife-ticket-entries { list-style: none; margin: 0; padding: 0; counter-reset: ilife-ticket-row; }',
+  '.ilife-ticket-entries > li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dotted var(--ilife-line); font-size: 14px; min-height: 44px; line-height: 1.55; }',
+  '.ilife-ticket-entries > li:last-child { border-bottom: 0; }',
+  '.ilife-ticket-entries > li::before { counter-increment: ilife-ticket-row; content: counter(ilife-ticket-row); flex: 0 0 22px; height: 22px; margin-top: 1px; border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface-2); color: var(--ilife-ink-3); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }',
+  '.ilife-ticket-entry-text { flex: 1 1 auto; overflow-wrap: anywhere; word-break: break-all; }',
+  '.ilife-ticket-entries > li.is-pay { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface); }',
+  '.ilife-ticket-entries > li.is-pay .ilife-ticket-entry-text { font-size: 15px; font-weight: 800; }',
+  '.ilife-ticket-entries > li.is-pay::before { background: var(--ilife-ink); border-color: var(--ilife-ink); color: var(--ilife-surface); }',
+  '/* 次按钮那一族是公共层复制区的产物（`.ilife-copy-btn`），这里按原型 `.btn-secondary` 改形状：',
+  '   整行宽、13px 圆角、白底暖边。高度钉 47px＝原型那一颗的**实测盒高**（它的标签里带着一个 `▾` 字符，',
+  '   那一枚字形把行盒抬到 23px ⇒ 12+23+12）；本仓的三角由 CSS 画、行盒只有 21px ⇒ 不钉就矮 2px，',
+  '   连带下面的裁切线与页脚各上移 2px。只在本族根类之下生效。 */',
+  '.ilife-ticket-actions { padding: 14px 0 4px; }',
+  '/* 退出口那一行口径（原型 `.caliber`：12px、行高 1.7、居中、左右各 2px）。 */',
+  '.ilife-ticket-actions .ilife-block-caliber { margin: 10px 2px 0; line-height: 1.7; text-align: center; color: var(--ilife-ink-2); }',
+  '.ilife-ticket-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; padding: 12px 14px; border: 0; border-radius: var(--ilife-radius-sm); font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: .5px; line-height: normal; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }',
+  '.ilife-ticket-btn.is-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--ilife-danger) 82%, var(--ilife-surface)) 0%, var(--ilife-danger) 100%); color: var(--ilife-surface); box-shadow: 0 8px 20px color-mix(in srgb, var(--ilife-danger) 28%, transparent), inset 0 1px 0 color-mix(in srgb, var(--ilife-surface) 25%, transparent); }',
+  '.ilife-bill-sheet-page .ilife-block-copy-block { margin: 0; }',
+  '.ilife-bill-sheet-page .ilife-action-bar { margin: 0; max-width: none; gap: 0; }',
+  '.ilife-bill-sheet-page .ilife-action-row-ghost { display: flex; flex-direction: column; gap: 0; }',
+  '.ilife-bill-sheet-page .ilife-copy-menu-wrap { width: 100%; margin-top: 10px; }',
+  '.ilife-bill-sheet-page .ilife-copy-menu-wrap + .ilife-copy-btn { margin-top: 10px; }',
+  '.ilife-bill-sheet-page .ilife-copy-btn { width: 100%; min-height: 47px; padding: 12px 14px; border: 1.5px solid var(--ilife-edge); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface); color: var(--ilife-ink); font-size: 14.5px; font-weight: 800; letter-spacing: .5px; line-height: normal; }',
+  '.ilife-bill-sheet-page .ilife-copy-btn.copied { border-color: var(--ilife-ok); background: var(--ilife-ok); color: var(--ilife-surface); }',
+  '.ilife-bill-sheet-page .ilife-copy-menu { left: 0; right: 0; min-width: 0; max-width: none; padding: 6px; border: 1.5px solid var(--ilife-edge); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface); box-shadow: var(--ilife-shadow-pop); }',
+  '.ilife-bill-sheet-page .ilife-copy-menu-item { min-height: 44px; padding: 10px 12px; border-radius: var(--ilife-radius-sm); font-size: 13.5px; font-weight: 700; color: var(--ilife-ink); }',
+  '.ilife-bill-sheet-page .ilife-copy-menu-item > .ilife-copy-menu-label { font-size: 13.5px; font-weight: 700; color: var(--ilife-ink); }',
+  '.ilife-bill-sheet-page .ilife-copy-menu-item > .ilife-copy-menu-hint { font-size: 11.5px; font-weight: 600; color: var(--ilife-ink-2); }',
+  '/* 页脚（原型 `.foot-note`）：纸外居中一行小字——来源脚注与记录编号落在这里。',
+  '   行高两页不同（原型如此）：详情 1.7（那一段是三行长文）、回执不写行高（单行）。 */',
+  '.ilife-ticket-foot { padding: 10px 0 2px; text-align: center; }',
+  '.ilife-ticket-foot .ilife-block-caliber { margin: 0; justify-content: center; color: var(--ilife-ink-3); font-size: 11.5px; line-height: 1.7; letter-spacing: .4px; }',
+  '.ilife-ticket-receipt .ilife-ticket-foot .ilife-block-caliber { line-height: normal; }',
+  '/* 窄档（原型 390 档；仓内既有断点取 400）：桌内距与纸内距收一档、主数字收一档。 */',
+  '@media (max-width: 400px) {',
+  '  .ilife-bill-sheet-page { padding: 18px 10px 36px; }',
+  '  .ilife-bill-sheet-page .ilife-block-sheet.is-ticket { padding: 18px 22px 8px; }',
+  '  .ilife-ticket-summary .ilife-block-summary-head-value { font-size: 50px; }',
+  '  .ilife-sheet-title { font-size: 18px; }',
+  '  .ilife-bill-sheet-page .ilife-block-ledger-row-value { max-width: 58%; }',
+  '}',
 ].join('\n');
 
-/** 小票纸店头（#993）：品牌行＋结论标题。改动值那一段走重点色（见下 `SHEET_RECEIPT_CSS`）。
+/** 小票纸店头（#993）：品牌行＋结论标题。改动值那一段走重点色（见上 `TICKET_CSS` 的 `.hl`）。
  *
  * 住共用位：写入域回执与查询域详情两页共用（第二个用法长出来之后收成这一处）。 */
 export function sheetHead(brand: string, titleHtml: string): string {
@@ -139,16 +253,43 @@ export function sheetHead(brand: string, titleHtml: string): string {
     + '</p><h1 class="ilife-sheet-title">' + titleHtml + '</h1></header>';
 }
 
-/** 详情备注表样式（#993 v7）：语义 `ol`＋计数器编号，实付行加粗（`entry-rows` 的槽位装不下“多行同级”）。
- *  只进详情小票页（`assembleSheetPage` 的 `pageCss` 位），回执页产物逐字节不动。 */
-const SHEET_DETAIL_CSS = [
-  '.ilife-remark-title { font-size: 12px; font-weight: 700; color: var(--fg3); letter-spacing: 2px; margin: 14px 0 4px; }',
-  '.ilife-remark-list { list-style: none; margin: 6px 0 0; padding: 0; counter-reset: remark; }',
-  '.ilife-remark-list > li { display: flex; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px dotted var(--line); font-size: 14px; }',
-  '.ilife-remark-list > li:last-child { border-bottom: none; }',
-  '.ilife-remark-list > li::before { counter-increment: remark; content: counter(remark); flex: none; color: var(--fg3); font-size: 12px; font-weight: 700; }',
-  '.ilife-remark-list > li.pay { font-weight: 800; background: var(--soft); border-radius: 8px; padding-left: 10px; padding-right: 10px; }',
-].join('\n');
+/** 段落之间的虚线分隔（原型 `hr.dashed`）。 */
+export function ticketRule(): string {
+  return '<hr class="ilife-ticket-rule">';
+}
+
+/** 一段（原型 `.sec`）：段标题（主色条 ＋ 右对齐英文标）＋ 段内容。 */
+export function ticketSection(input: { readonly title: string; readonly tag: string; readonly content: string }): string {
+  return '<section class="ilife-ticket-sec"><div class="ilife-ticket-sec-heading">' + escapeHtml(input.title)
+    + '<span class="ilife-ticket-sec-no">' + escapeHtml(input.tag) + '</span></div>'
+    + input.content + '</section>';
+}
+
+/** 主数字块（原型 `.summary-head`）：公共层主数字头（票据纸版式）＋ 它下面那几行小字。 */
+export function ticketSummary(summaryHtml: string, extraHtml: string): string {
+  return '<section class="ilife-ticket-summary" aria-label="这一笔的金额">' + summaryHtml + extraHtml + '</section>';
+}
+
+/** 按钮区（原型 `.actions`）：主按钮／复制区整行堆叠。 */
+export function ticketActions(content: string): string {
+  return '<div class="ilife-ticket-actions">' + content + '</div>';
+}
+
+/** 纸外的页脚（原型 `.foot-note`）：来源脚注与记录编号居中落在纸上（不占纸面）。 */
+export function ticketFoot(lines: readonly string[]): string {
+  return '<div class="ilife-ticket-foot">' + lines.join('') + '</div>';
+}
+
+/** 主按钮（原型 `.btn-primary`）：**带复制载荷的整行实心按钮**。
+ *
+ *  为什么不走公共层的动作条：`renderActionBar` 的实心红钮（`kind: 'red'`）**没有载荷位**
+ *  （不带 `data-t`），点了不复制也不写库——#733 已经把「看着能点、点了没反应」判成缺陷；
+ *  退出口要的是"这一颗真能把撤销指令复制走"。故这里按原型的按钮形状产出标记，
+ *  复制仍走公共层 helpers 的委派（`[data-action-id]` ＋ `data-t` 两条属性与它逐字对齐）。 */
+export function ticketPrimaryButton(input: { readonly label: string; readonly actionId: string; readonly text: string }): string {
+  return '<button type="button" class="ilife-ticket-btn is-primary" data-action-id="' + escapeHtml(input.actionId)
+    + '" data-t="' + escapeHtml(input.text) + '">' + escapeHtml(input.label) + '</button>';
+}
 
 /** 整页装配：区块 HTML ＋ 标题三件套 → 完整文档（文档壳交公共层骨架件）。
  *
@@ -174,15 +315,19 @@ export function assembleDocPage(input: DocPageInput): string {
 /** 小票页装配（#993）：正文已是单据族装配（含 `renderSheetFrame` 的纸），不再套页面壳。
  *
  *  样式走族汇总 `sheetCss()`（与卡路里小票页同一条路：族汇总进 `extraCss`，`blocksCss()` 仍由骨架件拼）。
- *  店头与备注表样式只进这一路（见上两段），`assembleDocPage` 的 29 页产物逐字节不动。
- *  皮肤（#993 像素对齐原型）：挂 `skinCss()` ＋ 祖先 `ilife-skin-paper` 类，纸面材料色跟皮肤走；
- *  不挂皮肤类的老页零命中（加法式），故只包在这一路里。 */
+ *  店头、段落、明细卡、按钮、页脚那几段样式只进这一路（见上 `TICKET_CSS`），
+ *  `assembleDocPage` 的 29 页产物逐字节不动。
+ *  **顺序**：族样式与皮肤在前、本页家具在后——家具里那几条是**页面级几何覆盖**
+ *  （主数字块内距、账目行 44px、复制按钮形状），与族样式同权重，靠"后出现"取胜。
+ *  皮肤（#993 像素对齐原型）：挂 `skinCss()` ＋ 祖先 `ilife-skin-ticket` 类，纸面材料色跟皮肤走；
+ *  不挂皮肤类的老页零命中（加法式），故只包在这一路里。页型另挂一枚 `ilife-ticket-<页型>` 类，
+ *  供"只详情页生效"的那两条几何用（44px 账目行）。 */
 export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string; readonly paper: 'receipt' | 'detail' }): string {
-  const pageCss = input.paper === 'detail' ? [SHEET_RECEIPT_CSS, SHEET_DETAIL_CSS] : [SHEET_RECEIPT_CSS];
   return renderDocShell({
     docTitle: input.docTitle,
-    bodyHtml: '<div class="' + skinClass('paper') + '">' + input.bodyHtml + '</div>',
-    extraCss: [...pageCss, sheetCss(), skinCss(), pageUiCss()].join('\n'),
+    bodyHtml: '<div class="ilife-bill-sheet-page ilife-ticket-' + input.paper + ' ' + skinClass('ticket') + '">'
+      + input.bodyHtml + '</div>',
+    extraCss: [sheetCss(), skinCss(), pageUiCss(), TICKET_CSS].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });

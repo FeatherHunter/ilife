@@ -20,6 +20,7 @@
  */
 import { renderCaliberLine, renderChips, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
+import { DIRECTION_WORDS } from '../shared/direction.js';
 import { l1Of } from '../shared/category.js';
 import { DEFAULT_TIME_SUFFIX } from '../shared/dateRange.js';
 import { optionLabelOf } from './recentPicks.js';
@@ -34,8 +35,8 @@ export interface DirectionRule {
 }
 
 const DIRECTION: Record<string, DirectionRule> = {
-  expense: { word: '支出', sign: -1, require: '记支出要负数' },
-  income: { word: '收入', sign: 1, require: '记收入要正数' },
+  expense: { word: DIRECTION_WORDS.expense, sign: -1, require: '记支出要负数' },
+  income: { word: DIRECTION_WORDS.income, sign: 1, require: '记收入要正数' },
 };
 
 /** 一型的方向口径（没有这一型＝返回 `undefined`，调用方照实当「本型不管方向」）。 */
@@ -92,12 +93,9 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
   ];
 }
 
-/** 方向词裸字（**唯一定义地**的 DIRECTION 表派生，不另立第二张表）：
- *  小票纸主数字头的 eyebrow（`改后金额·支出`）要裸字，`moneyDirection` 带括号说明不适合拼进眉标。 */
-export function directionWord(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount) || amount === 0) return '未判';
-  return (amount < 0 ? DIRECTION.expense : DIRECTION.income).word;
-}
+/** 方向词裸字（**已搬共用位**）：`directionWord` 与那两个词现在住 `src/shared/direction.ts`——
+ *  查询域详情页的眉标也要用同一份（跨域引用会让本包出现第一条 query→write 的依赖）。
+ *  本件的 `DIRECTION` 表读它的 `DIRECTION_WORDS`，两域仍是同一处定义。 */
 
 /** 结论摘要行：那张网格 ＋ 方向两枚胶囊 ＋ 分类一行口径。
  *  R3 改形状：原先一句 `支出的金额记成负数、收入记成正数；分类要选到最细那一级。`
