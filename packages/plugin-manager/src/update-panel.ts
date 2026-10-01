@@ -12,7 +12,7 @@ import * as React from 'react';
 import { checkTarget, installAbsent, loadTargets, updateInstalled } from './update-client.js';
 import type { CallFace, CallFailure } from './update-client.js';
 import { LOAD_RETRY_MS, reasonText } from './update-contract.js';
-import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart } from './update-queue.js';
+import { hasInstallingRow, mergeTargetsOnReload, resolveDialogOpen, runSerialUpdateAll, shouldBlockBatchStart, updateBusyFailure } from './update-queue.js';
 import { cardActionOf, failureDetailOf, headerButtonTitle, isAbsent, loadFailureDetail, manualForDisplay, restartBannerText, restartPendingOf, showManualOf, slotStateOf, verdictOf, versionLines } from './update-view.js';
 import type { CheckOutcome, TargetInfo, Verdict, VerdictAction } from './update-view.js';
 
@@ -187,6 +187,12 @@ function failureDetailCode(detail: string | null): React.ReactElement | null {
   return React.createElement('code', { style: PANEL_STYLE.cmd }, '宿主原话：' + detail);
 }
 
+/** 忙注那一行（票 #989）：守卫拦下点击时的可视回响。题头与缺席卡共用这一块，口径一处。 */
+function busyNoteLine(note: string | null): React.ReactElement | null {
+  if (!note) return null;
+  return React.createElement('div', { style: PANEL_STYLE.dialogNote }, note);
+}
+
 /** 一行的分档：**要动的那几档才上色**（`ok`／`idle` 保持素色，不跟红黄抢注意力 —— 照 `health-view.ts` 的三档口径）。
  *  每档同时给**形状**（`↑ ! ✕ ✓`）：颜色之外的第二条读数，灰度截图与色弱视角下同样分得开。 */
 type RowTone = 'ok' | 'update' | 'blocked' | 'failed' | 'idle';
@@ -227,6 +233,9 @@ export interface UpdateRowsFace {
   readonly checking: boolean;
   /** 一键全部更新是否在串行中（逐家查→装→收尾，一家收尾才起下一家）。 */
   readonly updatingAll: boolean;
+  /** 忙时拒收的可视回响（票 #989）：守卫拦下点击时写一句 update-busy 人话，
+   * 任何行状态一动即清——点得动的按钮不再有"点了没反应"。 */
+  readonly busyNote: string | null;
   /** 结果浮层是否打开（点「检查更新」开，关法三种：×、点遮罩、Esc）。 */
   readonly open: boolean;
   close(): void;
@@ -258,6 +267,9 @@ const IDLE: UpdateRowState = { phase: 'idle', outcome: null, failure: null };
  * - 任一行 installing 时 checkAll 入口直接返回、题头禁用；
  * - act 入口有忙直接返回（有忙拒 update-busy 且不改 rows，含同家第二点）；
  * - 每行各自显示（patch 只写本家 key），题头不汇总排队数。
+ *
+ * 票 #989 补一条：上面三处"直接返回"必须留可视回响（忙注或行级失败），
+ * 与"禁用的才点不得，点得动的必有回响"对齐——静默吞点击即红。
  */
 export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [targets, setTargets] = React.useState<readonly TargetInfo[]>([]);
@@ -266,6 +278,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [checking, setChecking] = React.useState(false);
   const [updatingAll, setUpdatingAll] = React.useState(false);
+  const [busyNote, setBusyNote] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState(false);
   const alive = React.useRef(true);
   React.useEffect(
@@ -352,6 +365,8 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     void reload(true);
   }, [reload]);
   const patch = React.useCallback((key: string, next: UpdateRowState) => {
+    // 行一动，忙注即过期（票 #989）：界面有回响了，旧的"忙"字样不许再留。
+    setBusyNote(null);
     setRows((previous) => ({ ...previous, [key]: next }));
   }, []);
   // 批量入口共用同一忙判据（#980）：串行中、有安装中、检查轮未收尾，三者任一即拦，不进队列。
@@ -366,8 +381,12 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     [],
   );
   const checkAll = React.useCallback(() => {
-    // 安装中／串行中／检查中，题头点不得：直接返回，不改任何行。
-    if (batchBlocked()) return;
+    // 安装中／串行中／检查中，题头点不得：留一句忙注再返回，不静默（票 #989）。
+    if (batchBlocked()) {
+      setBusyNote(reasonText('update-busy'));
+      return;
+    }
+    setBusyNote(null);
     setChecking(true);
     setOpen(resolveDialogOpen('show'));
     const list = targetsRef.current;
@@ -383,10 +402,17 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     });
   }, [getCall, patch, batchBlocked]);
   const updateAll = React.useCallback(() => {
-    // 一键串行期间不重入；任一行 installing、检查轮未收尾同样不重入（不进队列）。
-    if (batchBlocked()) return;
+    // 一键串行期间不重入；任一行 installing、检查轮未收尾同样不重入——留忙注，不静默（票 #989）。
+    if (batchBlocked()) {
+      setBusyNote(reasonText('update-busy'));
+      return;
+    }
     const list = targetsRef.current;
-    if (list.length === 0) return;
+    if (list.length === 0) {
+      setBusyNote(reasonText('update-busy'));
+      return;
+    }
+    setBusyNote(null);
     updatingAllRef.current = true;
     setUpdatingAll(true);
     setOpen(resolveDialogOpen('show'));
@@ -410,8 +436,13 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
   }, [getCall, patch, reload, batchBlocked]);
   const act = React.useCallback(
     (target: TargetInfo, action: VerdictAction) => {
-      // 行按钮全局互斥：有忙拒 update-busy 且不改 rows（含同家第二点，不进队列；检查中同样不进）。
-      if (batchBlocked()) return;
+      // 行按钮全局互斥：有忙则行级留一句 busy 失败（outcome 不动，只写 failure），
+      // 不静默（票 #989）；含同家第二点，检查中同样不进。
+      if (batchBlocked()) {
+        const current = rowsRef.current[target.key] ?? IDLE;
+        patch(target.key, { ...current, failure: updateBusyFailure(target.key) });
+        return;
+      }
       const current = rowsRef.current[target.key] ?? IDLE;
       // 「重新检查」：只重读这一家（重新绑一次安装态指纹）。
       if (action === 'recheck') {
@@ -426,27 +457,28 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
       }
       patch(target.key, { ...current, phase: 'installing', failure: null });
       void (async () => {
-        const absent = isAbsent(target);
-        let version = current.outcome?.snapshot.latestVersion ?? null;
-        if (absent && version === null) {
-          const checked = await checkTarget(getCall(), target);
-          if (!checked.ok) {
-            patch(target.key, { phase: 'failed', outcome: null, failure: checked });
-            return;
+        try {
+          const absent = isAbsent(target);
+          let version = current.outcome?.snapshot.latestVersion ?? null;
+          if (absent && version === null) {
+            const checked = await checkTarget(getCall(), target);
+            if (!checked.ok) {
+              patch(target.key, { phase: 'failed', outcome: null, failure: checked });
+              return;
+            }
+            patch(target.key, { phase: 'installing', outcome: checked.value, failure: null });
+            version = checked.value.snapshot.latestVersion;
           }
-          patch(target.key, { phase: 'installing', outcome: checked.value, failure: null });
-          version = checked.value.snapshot.latestVersion;
-        }
-        // 已装的那条路，`updateInstalled` **自己会先查一次**再提交（凭证是那一查现签的）——
-        // 这就是「装了别家之后，这一家的「装上更新」照样点得动」的原因：面板从不拿旧凭证去提交。
-        const result = absent
-          ? await installAbsent(getCall(), target, version ?? '')
-          : await updateInstalled(getCall(), target, pollMsRef.current);
-        if (result.ok) {
-          // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
-          const refreshed = await checkTarget(getCall(), target, target.phones?.status);
-          patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
-          // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
+          // 已装的那条路，`updateInstalled` **自己会先查一次**再提交（凭证是那一查现签的）——
+          // 这就是「装了别家之后，这一家的「装上更新」照样点得动」的原因：面板从不拿旧凭证去提交。
+          const result = absent
+            ? await installAbsent(getCall(), target, version ?? '')
+            : await updateInstalled(getCall(), target, pollMsRef.current);
+          if (result.ok) {
+            // 装完不自己编快照：向宿主问一次真实状态（装到磁盘但宿主还跑着旧版 ⇒ 待重启）。
+            const refreshed = await checkTarget(getCall(), target, target.phones?.status);
+            patch(target.key, refreshed.ok ? { phase: 'ready', outcome: refreshed.value, failure: null } : { phase: 'failed', outcome: null, failure: refreshed });
+            // 装机读数变了（磁盘上多／换了一个包）：重取目标表，缺席卡的态跟着变，
           // 否则它会拿着挂载时那份读数继续说「未安装」，直到用户刷新页面。
           await reload(false);
           return;
@@ -456,6 +488,21 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
           outcome: current.outcome,
           failure: { ...result, manual: result.manual ?? current.outcome?.manual ?? null },
         });
+        } catch (error) {
+          // 裸奔 promise 不许再卡死行（票 #989）：上面任何一步抛异常（而非回失败），
+          // 行都会永远停在 installing 并锁死之后所有点击——落 failed，屏上有话。
+          patch(target.key, {
+            phase: 'failed',
+            outcome: current.outcome,
+            failure: {
+              ok: false,
+              code: 'internal',
+              message: reasonText('internal'),
+              details: { detail: String((error as Error)?.message ?? error) },
+              manual: current.outcome?.manual ?? null,
+            },
+          });
+        }
       })();
     },
     [getCall, patch, reload, batchBlocked],
@@ -467,6 +514,7 @@ export function useUpdateRows(getCall: () => CallFace | null): UpdateRowsFace {
     loadError,
     checking,
     updatingAll,
+    busyNote,
     open,
     retry,
     close: () => setOpen(resolveDialogOpen('hide')),
@@ -675,6 +723,7 @@ export function UpdateResults(props: { readonly face: UpdateRowsFace }): React.R
     'div',
     null,
     React.createElement(RestartBanners, { face: props.face }),
+    busyNoteLine(props.face.busyNote),
     progressStrip,
     open
       ? React.createElement(
@@ -786,6 +835,7 @@ export function AbsentCard(props: {
   return React.createElement(
     'div',
     { style: PANEL_STYLE.reco },
+    busyNoteLine(props.face.busyNote),
     React.createElement('div', null, headline),
     state === 'absent'
       ? React.createElement(
