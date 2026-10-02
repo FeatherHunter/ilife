@@ -11,14 +11,62 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts`——`family === 'compare'` 那 4 个场景出页时调它。
  */
 import { barGroupHtml, cardBlock, compareSidesHtml, emptyHtml, factCardHtml, kpiGridHtml, mergedChips } from './cards.js';
-import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf, money } from './pageParts.js';
 import { renderCaliberLine, renderConclusionBar } from 'base-paint/blocks';
+import { ticketCompareDoc } from './ticket.js';
 import type { ComparePage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
+
+/** compare 标题到场景 id（本族 4 页全在 A 组 1057，无残留分支）。 */
+function sceneIdOfCompare(title: string): string {
+  switch (title) {
+    case '看对比': return 'period_compare';
+    case '看双区间': return 'range_compare';
+    case '看同比': return 'yoy';
+    case '看分类对比': return 'cat_compare';
+    default: return '';
+  }
+}
+
+/** 两侧支出值（sides kpis 里标签“支出”那格，已是两位小数文本）。 */
+function sideExpense(side: ComparePage['sides'][number] | undefined): string {
+  if (side === undefined) return '0.00';
+  for (const kpi of side.kpis) {
+    if (kpi.label === '支出') return String(kpi.value);
+  }
+  return '0.00';
+}
+
+/** compare 落点三行（原型 PAGES 表式，数字只搬家）：两段支出＋支出差／差最大＋合计差。 */
+function ledgerRowsOfCompare(title: string, p: ComparePage, conclusion: string): readonly { k: string; v: string }[] {
+  if (title === '看分类对比') {
+    const head = p.barGroups.length === 0 || p.barGroups[0].rows.length === 0 ? undefined : p.barGroups[0].rows[0];
+    const maxText = head === undefined ? '暂无' : head.label + ' ' + head.text.split('（')[0].trim();
+    const m = conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
+    return [
+      { k: '差最大', v: maxText },
+      { k: '支出合计差', v: m === null ? '—' : m[1] },
+    ];
+  }
+  const a = p.sides[0];
+  const b = p.sides[1];
+  const aLabel = a === undefined ? '前段' : a.title;
+  const bLabel = b === undefined ? '后段' : b.title;
+  const changeText = p.change.text.replace(/^支出\s*/, '').split('·')[0].trim();
+  return [
+    { k: aLabel + ' 支出', v: sideExpense(a) + ' 元' },
+    { k: bLabel + ' 支出', v: sideExpense(b) + ' 元' },
+    { k: '支出差', v: changeText === '' ? '—' : changeText },
+  ];
+}
 
 export function compareDoc(input: DocInput<ComparePage>): string {
   const r = input.result;
   const p = r.page;
+  const sceneId = sceneIdOfCompare(r.title);
+  if (sceneId !== '') {
+    return ticketCompareDoc(input, sceneId, ledgerRowsOfCompare(r.title, p, r.conclusion));
+  }
   const nothing = p.sides.length === 0 && p.barGroups.every((g) => g.rows.length === 0)
     && p.factCards.every((c) => c.rows.length === 0);
   const blocks: readonly PageBlock[] = [

@@ -24,11 +24,55 @@
  */
 import { barGroupHtml, cardBlock, chartCardHtml, emptyHtml, factCardHtml, kpiGridHtml, listCardHtml, mergedChips } from './cards.js';
 import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { isATicket, ticketBarsDoc } from './ticket.js';
 import type { BarsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
+/** A 组 bars 标题到场景 id（分支唯一定义地，其余 9 页走老路）。 */
+function sceneIdOfBars(title: string): string {
+  switch (title) {
+    case '看月度': return 'monthly';
+    case '看年度': return 'yearly';
+    case '看总览': return 'overview';
+    case '做统计': return 'stats';
+    default: return '';
+  }
+}
+
+/** A 组 bars 落点余数行（数字取自本次结果，只搬家）：总览加日均，统计加记账日／日均／首笔／最近。 */
+function extraLedgerOfBars(title: string, input: DocInput<BarsPage>): readonly { k: string; v: string }[] {
+  const p = input.result.page;
+  if (title === '看总览') {
+    for (const c of p.factCards) {
+      for (const row of c.rows) {
+        if (row.k === '日均支出') return [{ k: '日均支出', v: row.v }];
+      }
+    }
+    return [];
+  }
+  if (title === '做统计') {
+    const out: { k: string; v: string }[] = [];
+    for (const kpi of p.kpis) {
+      if (kpi.label === '记账天数') out.push({ k: '记账日', v: kpi.value + ' ' + (kpi.unit ?? '天') });
+      if (kpi.label === '日均笔数') out.push({ k: '日均', v: kpi.value + ' ' + (kpi.unit ?? '笔') });
+    }
+    for (const c of p.factCards) {
+      for (const row of c.rows) {
+        if (row.k === '首笔时间') out.push({ k: '首笔', v: row.v });
+        if (row.k === '最近记录') out.push({ k: '最近', v: row.v });
+      }
+    }
+    return out;
+  }
+  return [];
+}
+
 export function barsDoc(input: DocInput<BarsPage>): string {
   const r = input.result;
+  const sceneId = sceneIdOfBars(r.title);
+  if (sceneId !== '' && isATicket(sceneId)) {
+    return ticketBarsDoc(input, sceneId, extraLedgerOfBars(r.title, input));
+  }
   const p = r.page;
   const nothing = p.kpis.length === 0 && p.charts.length === 0
     && p.barGroups.every((g) => g.rows.length === 0) && p.listCards.every((c) => c.rows.length === 0);
