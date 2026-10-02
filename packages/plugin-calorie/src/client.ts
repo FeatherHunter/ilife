@@ -304,6 +304,8 @@ export function apply(ctx: ClientCtx): void {
         channel: RPC_CHANNEL,
         items: CONFIG_ITEMS,
         title: SLOT_TITLE,
+        // #997：印文由标题推导（显示形带空格大写 HELP，纯展示不可点；不另立常量）。
+        sealText: SLOT_TITLE + ' HELP',
         followKeysOf,
         // #934：原先这里挂了一行版本行（`CalorieVersionLine`）——维护者裁定整条撤掉；
         // 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到。

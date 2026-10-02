@@ -307,6 +307,8 @@ export function apply(ctx: ClientCtx): void {
         channel: RPC_CHANNEL,
         items: CONFIG_ITEMS,
         title: SLOT_TITLE,
+        // #997：印文由标题推导（显示形带空格大写 HELP，纯展示不可点；不另立常量）。
+        sealText: SLOT_TITLE + ' HELP',
         followKeysOf,
         // 状态行只在读到整面之后画（照改版前的形状：读取中／读取失败那两屏不占这一行）。
         extra: (parts) => (parts.reply === null ? null : React.createElement(LarkLine, { getCall, styles: parts.styles })),
