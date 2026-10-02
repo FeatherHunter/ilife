@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>只走公开接口是什么意思</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759;--bad:#a83228}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.good{border-left:4px solid var(--ok);background:#f4fbf5;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.bad{border-left:4px solid var(--bad);background:#fdf3f2;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+pre{background:#f2f2f7;padding:12px;border-radius:10px;overflow:auto;font-size:12px}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · base 只走公开接口</p>
+<h1>一句话：用 base 对外开的那扇门，不翻窗、不抄作业</h1>
+<p class="sub">门在哪：包 <code>base-paint</code> 的 <code>src/index.ts</code> 转出的名字 + <code>package.json</code> 的 exports 五把钥匙。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">门长这样</h2>
+<ul>
+<li>根门（<code>base-paint</code>）：<code>renderPage</code>、<code>escapeHtml</code>、<code>buildSharedHelpersJs</code>、<code>renderStatusBadge</code>、<code>pageUiCss</code>、<code>renderChipRow</code>、<code>fillTemplate</code> 等。</li>
+<li>子门（<code>base-paint/blocks</code> 等）：块件如表格、读数卡、键值行，只能走 <code>/blocks</code> 这把钥匙，根没有就不硬闯。</li>
+</ul>
+<div class="good"><b>走门（对）</b>：<code>import { renderPage, escapeHtml } from 'base-paint'</code>；徽章行 <code>import { renderChipRow } from 'base-paint'</code>。</div>
+<div class="bad"><b>翻窗（错）</b>：直引深路径 <code>src/components/xxx/inner.ts</code>；或把人家的转义、样式抄一份放自己目录（比如自写 <code>esc</code>、手写整套 CSS）。抄的那份迟早和原份走散，同一件事算出两个结果。</div>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">落到我们两页</h2>
+<ul>
+<li>纸、头、账行、明细、复制：全部从门里拿（<code>sheet-frame</code> 纸、<code>summary-head</code> 头、账行明细行、复制运行时），不自写第二套。</li>
+<li>7222 的口径（符号即方向、转账双笔、分类三级）是记账自己的事，留在 skill-bill，不搬进 base。</li>
+<li>所以“只走公开接口” = 新两页的漂亮全靠门里的零件拼出来，拼法是我们的，零件是公用的。</li>
+</ul>
+</div>
+
+<p class="foot">违反的样子叫抄，铁律一能力自治。有缺的零件就先说缺什么，不自己造第二套。</p>
+</div>
+</body>
+</html>

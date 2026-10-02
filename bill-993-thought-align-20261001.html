@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>想法对齐：改造 vs 重做</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759;--warn:#a25b00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.verdict{border-left:4px solid var(--ok);background:#f4fbf5;padding:12px 14px;border-radius:0 12px 12px 0;margin:10px 0;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 想法对齐</p>
+<h1>是，不一致：我刚才走的是改造，你要的是重做</h1>
+<p class="sub">结论先行，下面是差异和对齐后的新做法。</p>
+
+<div class="card">
+<div class="verdict"><b>你的核心思想我复述一遍</b>：不基于现有样式改，而是先看功能（两页各展示什么数据），再看 base 库 README 知道提供哪些组件，然后用新组件把两页重新开发和设计一遍，目标是漂亮好看。</div>
+<table>
+<tr><th></th><th>我刚才的想法（改造派）</th><th>你现在的想法（重做派）</th></tr>
+<tr><th>起点</th><td>现有两份产物 + 现有 CSS/DOM</td><td>功能数据 + base README 组件目录</td></tr>
+<tr><th>约束</th><td>保留现有版式节奏，只收敛重复</td><td>不受现有样式约束，重新组合</td></tr>
+<tr><th>样式态度</th><td>旧样式收口到公共装配</td><td>直接用新组件自带的样式（纸、头、行）</td></tr>
+<tr><th>工程路径</th><td>P0→P1→P2 渐进提取、旧链退役</td><td>按功能选件、重新装配两页</td></tr>
+<tr><th>好看标准</th><td>舒服一点（减卡、减导航）</td><td>漂亮（像单据/纸面，有主数字、有账行）</td></tr>
+</table>
+<p>所以确实不一样：一个是旧房翻新，一个是按新零件重搭。我按你的重搭对齐。</p>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">对齐后的新做法（三步）</h2>
+<ul>
+<li><b>第一步看功能</b>：回执要回答“7222 改了什么 + 改后全貌”，详情要回答“7222 全部字段原文”。数据就是 7222：金额 -40.80、分类、账户、账本、时间、备注、币种、创建/删除时间。</li>
+<li><b>第二步看 base README</b>：我刚翻完五份，全部可直接用——
+<code>sheet-frame</code> 纸面页框（receipt 小票纸 + 撕口 + 裁切线）、
+<code>summary-head</code> 主数字头（一页唯一主读数 + 印章）、
+<code>ledger-rows</code> 账目行（标签…值，纵向比数）、
+<code>entry-rows</code> 明细行（一条记录一行 + 备注另起一行）、
+<code>scale-bar</code> 刻度条。另有区块层表格/变更行/复制/状态、页面级 shapes，装配走 <code>renderPage</code>。</li>
+<li><b>第三步重新组合</b>：回执用小票纸 + 主数字头（-40.80）+ 账目行（改了账户1行）+ 撤销常显按钮；详情用同一纸 + 同一头 + 账目行（全部字段印一遍）+ 明细行（备注分行）。不再谈旧 8 卡怎么并，不再补旧 CSS 补丁。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">下一步</h2>
+<ul>
+<li>我按“功能 × 组件”出两页的新组合稿，不再走 P0 旧链。</li>
+<li>#993 的方向我随后改成重做口径，历史产物依然不动。</li>
+</ul>
+</div>
+
+<p class="foot">依据：五份 README 原文 + 7222 数据 + 你的重做口径。旧 P0→P2 作废。</p>
+</div>
+</body>
+</html>

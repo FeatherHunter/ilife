@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>已把 7222 改成支出 40.80 元·咖啡奶茶</title>
+<style>
+  :root{
+    --bg:#efe9dd;
+    --paper:#fffdf7;
+    --paper-edge:#f7f1e3;
+    --ink:#2b2620;
+    --muted:#8a8175;
+    --faint:#b8ae9f;
+    --line:#e9dfcd;
+    --accent:#b4552d;
+    --accent-soft:#fdf0e6;
+    --green:#1f7a4d;
+    --red:#c0392b;
+    --pill:#f3ecdc;
+    --shadow:0 18px 50px rgba(80,60,30,.18),0 2px 0 rgba(120,90,40,.08);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #f7f2e6 0%, var(--bg) 55%, #e6dcc8 100%);
+    color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 14px 48px;
+  }
+  .page{width:100%;max-width:440px}
+  .sheet-wrap{
+    position:relative;
+    filter:drop-shadow(var(--shadow));
+  }
+  .sheet-frame{
+    position:relative;
+    background:var(--paper);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  /* 左右撕口 */
+  .sheet-frame::before,.sheet-frame::after{
+    content:"";
+    position:absolute;
+    top:0;bottom:0;
+    width:14px;
+    background-image:radial-gradient(circle at 7px 10px, var(--bg) 5.5px, transparent 6px);
+    background-size:14px 20px;
+    background-repeat:repeat-y;
+    opacity:1;
+    pointer-events:none;
+  }
+  .sheet-frame::before{left:0}
+  .sheet-frame::after{right:0;transform:scaleX(-1)}
+  .sheet-inner{
+    padding:22px 28px 10px;
+    position:relative;
+  }
+  /* 纸内店头：品牌行+结论标题+副题小字+虚线分隔，墨色+印章红 */
+  .shop-head{
+    text-align:center;
+    padding:2px 0 0;
+  }
+  .shop-brand{
+    font-size:11.5px;
+    letter-spacing:2px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .shop-head h2{
+    margin:8px 0 0;
+    font-size:19px;
+    line-height:1.4;
+    letter-spacing:.2px;
+    font-weight:800;
+    color:var(--ink);
+  }
+  .shop-head h2 .hl{
+    color:var(--red);
+  }
+  .shop-sub{
+    margin:8px 0 0;
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--muted);
+  }
+  .shop-sub b{color:#6d6455;font-weight:700}
+  /* summary-head 一页唯一大数字 */
+  .summary-head{
+    position:relative;
+    text-align:center;
+    padding:6px 0 16px;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    letter-spacing:2px;
+    color:#7a6f5e;
+    background:var(--pill);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    border-radius:999px;
+    font-weight:700;
+  }
+  .eyebrow i{
+    width:7px;height:7px;border-radius:50%;
+    background:#2f9e5f;
+    box-shadow:0 0 0 4px rgba(47,158,95,.15);
+    display:inline-block;
+  }
+  .amount{
+    margin:12px 0 0;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:6px;
+    line-height:1;
+  }
+  .amount .value{
+    font-size:56px;
+    font-weight:900;
+    letter-spacing:-1.5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .amount .unit{
+    font-size:18px;
+    font-weight:800;
+    color:var(--muted);
+  }
+  .summary-note{
+    margin:10px 0 0;
+    font-size:13.5px;
+    line-height:1.6;
+    color:#5f574a;
+  }
+  .summary-note b{color:var(--ink)}
+  .stamp{
+    position:absolute;
+    right:2px;
+    top:2px;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:2px;
+    color:var(--green);
+    border:2.5px solid var(--green);
+    border-radius:8px;
+    padding:5px 10px 4px 12px;
+    transform:rotate(10deg);
+    background:rgba(31,122,77,.06);
+    mask:linear-gradient(#000,#000);
+    opacity:.92;
+  }
+  .stamp::after{
+    content:"";
+    position:absolute;inset:2px;
+    border:1px dashed rgba(31,122,77,.5);
+    border-radius:5px;
+  }
+  .dashed{
+    border:0;
+    border-top:2px dashed var(--line);
+    margin:14px -8px;
+  }
+  /* ledger-rows 标签左值右点线相连 */
+  .sec{padding:2px 0 6px}
+  .sec-heading{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:4px 0 10px;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    color:#6b6152;
+  }
+  .sec-heading::before{
+    content:"";
+    width:4px;height:14px;border-radius:4px;
+    background:var(--accent);
+    display:inline-block;
+  }
+  .sec-heading .no{margin-left:auto;font-weight:700;color:var(--faint);letter-spacing:0}
+  .ledger-rows{list-style:none;margin:0;padding:0}
+  .ledger-rows li{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    padding:9px 0;
+    font-size:14px;
+    line-height:1.4;
+  }
+  .ledger-rows li + li{border-top:1px dotted transparent}
+  .ledger-rows .k{
+    flex:none;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .ledger-rows .dots{
+    flex:1 1 auto;
+    min-width:14px;
+    border-bottom:2px dotted #d9cdb4;
+    transform:translateY(-5px);
+  }
+  .ledger-rows .v{
+    flex:none;
+    max-width:62%;
+    text-align:right;
+    font-weight:700;
+    overflow-wrap:anywhere;
+  }
+  .ledger-rows .v.mono{font-variant-numeric:tabular-nums}
+  .ledger-rows .v .tag{
+    font-size:12px;font-weight:800;color:var(--accent);
+    background:var(--accent-soft);
+    border:1px solid #f0d7c2;
+    padding:1px 7px;border-radius:999px;
+    margin-left:6px;white-space:nowrap;
+  }
+  /* entry-rows */
+  .entry-card{
+    background:#fbf7ec;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 13px 11px;
+  }
+  .entry-line{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .entry-line .t{flex:none;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:700}
+  .entry-line .c{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-weight:700}
+  .entry-line .amt{flex:none;font-weight:900;font-variant-numeric:tabular-nums}
+  .entry-remark{
+    margin:8px 0 0;
+    padding-top:8px;
+    border-top:1px dashed #e2d5ba;
+    font-size:12.8px;
+    line-height:1.6;
+    color:#6f6452;
+    overflow-wrap:anywhere;
+  }
+  .entry-remark::before{content:"备注 · ";color:var(--faint);font-weight:800}
+  /* 对账 */
+  .check-mini{
+    display:flex;gap:8px;align-items:flex-start;
+    background:#f4fbf6;
+    border:1px solid #cfe6d6;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:12.8px;line-height:1.6;color:#3e5a4a;
+    margin-top:10px;
+  }
+  .check-mini .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2f9e5f;margin-top:6px}
+  /* 按钮区 */
+  .actions{padding:14px 0 4px}
+  .btn{
+    display:flex;align-items:center;justify-content:center;
+    width:100%;
+    min-height:48px;
+    border-radius:13px;
+    font-size:16px;font-weight:800;letter-spacing:.5px;
+    border:0;cursor:pointer;
+    text-decoration:none;
+    padding:12px 14px;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,#d34a35,#b93222);
+    color:#fff;
+    box-shadow:0 8px 20px rgba(185,50,34,.28), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-secondary{
+    margin-top:10px;
+    background:#fff;
+    color:#4a4236;
+    border:1.5px solid #ddd0b6;
+    min-height:44px;
+    font-size:14.5px;
+  }
+  /* 复制区：复制数据（三选一菜单）+ 复制日志，逻辑与原产物一致，仅样式换新 */
+  .copy-wrap{position:relative;margin-top:10px}
+  .copy-menu{
+    position:absolute;left:0;right:0;bottom:calc(100% + 8px);
+    background:#fff;border:1.5px solid #ddd0b6;border-radius:12px;
+    box-shadow:0 12px 28px rgba(80,60,30,.18);
+    padding:6px;display:none;z-index:5;
+  }
+  .copy-wrap.open .copy-menu{display:block}
+  .copy-item{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;
+    background:none;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer;
+  }
+  .copy-item small{font-weight:600;color:var(--muted);font-size:11.5px}
+  .copy-item:hover{background:#faf5e9}
+  .copy-log{margin-top:10px}
+  .caliber{
+    margin:10px 2px 0;
+    font-size:12px;
+    line-height:1.7;
+    color:var(--muted);
+    text-align:center;
+  }
+  .caliber b{color:#6d6455}
+  /* 页尾裁切线 */
+  .cut-line{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 0 8px;
+    color:var(--faint);
+    font-size:12px;
+  }
+  .cut-line::before,.cut-line::after{
+    content:"";
+    flex:1;
+    border-top:2px dashed #d9cdb4;
+  }
+  .zigzag{
+    height:12px;
+    background:
+      linear-gradient(-45deg, transparent 8px, var(--paper) 0) 0 0/16px 16px repeat-x,
+      linear-gradient(45deg, transparent 8px, var(--paper) 0) 8px 0/16px 16px repeat-x;
+    transform:rotate(180deg);
+    margin:0 6px;
+    opacity:1;
+  }
+  .foot-note{text-align:center;color:var(--faint);font-size:11.5px;padding:10px 0 2px;letter-spacing:.4px}
+  @media (max-width:390px){
+    body{padding:18px 10px 36px}
+    .sheet-inner{padding:18px 22px 8px}
+    .amount .value{font-size:50px}
+    .shop-head h2{font-size:18px}
+    .ledger-rows .v{max-width:58%}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="sheet-wrap">
+    <div class="sheet-frame">
+      <div class="sheet-inner">
+
+        <div class="shop-head">
+          <div class="shop-brand">饼干记账 · record.update</div>
+          <h2>账户已改为建设银行储蓄卡(0709)</h2>
+          <p class="shop-sub">记录 7222</p>
+        </div>
+
+        <hr class="dashed">
+
+        <!-- summary-head：一页唯一大数字 -->
+        <section class="summary-head" aria-label="改后金额">
+          <span class="eyebrow"><i></i>改后金额 · 支出</span>
+          <div class="amount"><span class="value">-40.80</span><span class="unit">元</span></div>
+          <div class="stamp">已改动</div>
+        </section>
+
+        <hr class="dashed">
+
+        <!-- 改后落点 -->
+        <section class="sec">
+          <div class="sec-heading">改后落点 <span class="no">LEDGER</span></div>
+          <ul class="ledger-rows">
+            <li><span class="k">分类</span><span class="dots"></span><span class="v">餐饮／咖啡奶茶</span></li>
+            <li><span class="k">账户</span><span class="dots"></span><span class="v">建设银行储蓄卡(0709)</span></li>
+            <li><span class="k">账本</span><span class="dots"></span><span class="v">生活</span></li>
+            <li><span class="k">时间</span><span class="dots"></span><span class="v mono">2026-10-01 15:30:00</span></li>
+          </ul>
+        </section>
+
+        <hr class="dashed">
+
+        <!-- 按钮 -->
+        <div class="actions">
+          <button class="btn btn-primary" type="button">撤销这一笔</button>
+          <div class="copy-wrap" id="copyWrap">
+            <button class="btn btn-secondary" type="button" id="copyDataBtn" aria-expanded="false">复制数据 ▾</button>
+            <div class="copy-menu" role="menu">
+              <button class="copy-item" type="button" data-fmt="text">纯文本 <small>粘贴给助手或自己看</small></button>
+              <button class="copy-item" type="button" data-fmt="json">JSON <small>结构化存档</small></button>
+              <button class="copy-item" type="button" data-fmt="csv">CSV <small>表格导入</small></button>
+            </div>
+          </div>
+          <button class="btn btn-secondary copy-log" type="button" id="copyLogBtn">复制日志</button>
+          <p class="caliber">口径小字：<b>撤销只打标、可恢复</b>，原记录保留痕迹，不会物理删除。</p>
+        </div>
+
+        <div class="cut-line">✂ 裁切线</div>
+      </div>
+      <div class="zigzag"></div>
+    </div>
+  </div>
+
+  <div class="foot-note">饼干记账 · record.update 回执 · 静态原型</div>
+</div>
+
+<script>
+(function(){
+  /* 逻辑与原产物一致：复制数据三选一（纯文本/JSON/CSV 各自带自己的 data-t），复制日志独立一颗 */
+  var TEXT = '已把 7222 改成支出 40.80 元·咖啡奶茶\n账户已改为建设银行储蓄卡(0709) · 账本生活 · 2026-10-01 15:30:00\n改后金额(支出): -40.80 元\n分类: 餐饮／咖啡奶茶\n账户: 建设银行储蓄卡(0709)\n账本: 生活\n时间: 2026-10-01 15:30:00\n编号: 7222\n明细: 15:30 餐饮 咖啡奶茶 -40.80 元(备注: 账户已改为建设银行储蓄卡(0709))\n对账: 编号7222 / 写入时间2026-10-01 15:30:00\n口径: 撤销只打标、可恢复';
+  var JSON_T = '{\n  "id": 7222,\n  "category": "餐饮/咖啡奶茶",\n  "time": "2026-10-01 15:30:00",\n  "amount": -40.8,\n  "account": "建设银行储蓄卡(0709)",\n  "ledger": "生活"\n}';
+  var CSV_T = 'section,row\nstatus,ok: true\nmessage,message: 已修改：7222（改了 账户）';
+  var LOG_T = '场景标识\nbill.record.update（receipt）\n调用链\nbill-cmd-read bill.record.update --params \'{"account":"建设银行储蓄卡(0709)","id":7222}\' ｜ 改了 1 笔，写进去 账户\n时间戳版本\n2026-10-01 15:30:00 · 版本 0.1.0\n异常\n无';
+  var FORMATS = { text: TEXT, json: JSON_T, csv: CSV_T };
+  var wrap = document.getElementById('copyWrap');
+  var dataBtn = document.getElementById('copyDataBtn');
+  var logBtn = document.getElementById('copyLogBtn');
+  function copyText(t, btn, label){
+    var done = function(){ var o = btn.textContent; btn.textContent = '已复制 ✓'; setTimeout(function(){ btn.textContent = o; },1600); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, function(){ fallback(); });
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta); done();
+    }
+  }
+  dataBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = wrap.classList.contains('open');
+    wrap.classList.toggle('open', !open);
+    dataBtn.setAttribute('aria-expanded', String(!open));
+  });
+  document.addEventListener('click', function(){ wrap.classList.remove('open'); dataBtn.setAttribute('aria-expanded','false'); });
+  var items = wrap.querySelectorAll('.copy-item');
+  for(var i = 0; i < items.length; i++){
+    items[i].addEventListener('click', function(e){
+      e.stopPropagation();
+      copyText(FORMATS[this.getAttribute('data-fmt')], dataBtn);
+      wrap.classList.remove('open');
+    });
+  }
+  logBtn.addEventListener('click', function(){ copyText(LOG_T, logBtn); });
+})();
+</script>
+</body>
+</html>

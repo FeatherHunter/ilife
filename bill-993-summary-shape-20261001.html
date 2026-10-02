@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>摘要形状是什么</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.demo{border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;background:#fbfbfd}
+.demo .t{font-size:17px;font-weight:800;margin:0}
+.demo .amt{font-size:34px;font-weight:800;margin:6px 0 2px;letter-spacing:-.5px}
+.demo .meta{color:var(--fg2);font-size:13px;margin:0}
+.demo .tail{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--fg2)}
+.tag{display:inline-block;font-size:12px;font-weight:700;background:#eef6ff;color:#0a63ce;border-radius:999px;padding:2px 10px;margin-right:6px}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}.demo .amt{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 摘要形状</p>
+<h1>摘要形状 = 两页共用同一张“答案卡”</h1>
+<p class="sub">一句话：回执和详情的首屏长一个样，差异只在尾巴。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">拿 7222 举例，摘要长这样</h2>
+<div class="demo">
+<p class="t">已改为建设银行储蓄卡 (0709)，-40.80</p>
+<p class="amt">-40.80 <span style="font-size:13px;font-weight:600;color:var(--fg2)">支出</span></p>
+<p class="meta">餐饮 / 咖啡奶茶 · 生活 · 2026-10-01 15:30:00 · 编号 7222</p>
+<div class="tail"><span class="tag">回执尾巴</span>这次改了：账户 → 建设银行储蓄卡 (0709)。<br><span class="tag">详情尾巴</span>全部字段：币种人民币 · 备注分行（套餐 / 加购 / 实付加粗 / 自提）· 创建时间 · 删除时间 —。</div>
+</div>
+<ul>
+<li><b>标题即结论</b>，不再是“改记录”这种动词。</li>
+<li><b>金额全页唯一大字</b>，账户分类只用正文字号。</li>
+<li>副题只留编号与时间，徽章口径收到页脚。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">为什么是这个形状</h2>
+<ul>
+<li>现在回执 8 卡、详情 2 卡加长表印两遍，用户要学两套排版。</li>
+<li>改成同一摘要，用户只学一次：<code>摘要 + 尾巴</code>。</li>
+<li>回执尾巴只讲“改了什么”1 行；详情尾巴讲“全部字段”且只印一遍。</li>
+<li>撤销不在菜单里藏，在摘要下独立一颗按钮常显。</li>
+</ul>
+</div>
+
+<p class="foot">对应 #993 设计方向第 1 条。你若点头，下一步我就按这个摘要出线框。</p>
+</div>
+</body>
+</html>

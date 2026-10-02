@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>#993 进展 · 想法 · 建议</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:28px;letter-spacing:-.4px}
+.sub{color:var(--fg2);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.card h2{margin:0 0 8px;font-size:18px}
+.card h3{margin:16px 0 6px;font-size:15px}
+p{margin:8px 0}
+ul,ol{margin:8px 0 8px 20px;padding:0}
+li{margin:5px 0}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#eef6ff;color:#0a63ce;font-size:12px;font-weight:700;margin-right:6px}
+.badge.ok{background:#e6f7ec;color:#1a7f4b}
+.badge.warn{background:#fff5e0;color:#a25b00}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+.foot{color:var(--fg2);font-size:12px;margin-top:18px}
+.answer{border-left:4px solid var(--ok);background:#f4fbf5;padding:12px 14px;border-radius:0 12px 12px 0;margin:10px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+@media(max-width:640px){h1{font-size:22px}.wrap{padding:20px 14px 52px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">饼干记账 · #993</p>
+<h1>进展 · 我的想法 · 我的建议</h1>
+<p class="sub">同一条 7222：改记录回执 vs 查账单详情。只谈方向，不动历史产物。</p>
+
+<div class="card">
+<h2>1 · 进展到哪了</h2>
+<p><span class="badge ok">单票已建</span><span class="badge">两路调查已回写</span></p>
+<ul>
+<li><b>#993</b> 已建：目标、验收命令、不许动的东西、交付物路径、遗留出口五段齐，真值来源写进票面。</li>
+<li><b>公共组件一路</b>：8 组重复可提取，7 组领域口径必须留，P0→P1→P2 顺序已定。焦点文件都在 350 行线内，<code>query/list.ts 349</code> 已逼近线。</li>
+<li><b>用户视角一路</b>：回执 8 卡、详情 2 卡加字段印两遍，形状不一；5 处不舒服、5 个设计方向已定。</li>
+<li>历史产物一律不动，只动生成链。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>2 · 两页现在长什么样</h2>
+<p>同一笔 7222：金额 <b>-40.80</b>，分类餐饮 / 咖啡奶茶，账户建设银行储蓄卡 (0709)，账本生活，时间 2026-10-01 15:30:00。</p>
+<ul>
+<li>回执：8 张读数卡 + 2 行明细 + 2 行对账，增量其实只有“账户”1 项。</li>
+<li>详情：2 张卡 + 10 行字段印了两遍，长备注 80 字挤在一行。</li>
+<li>底座相同：两份样式约 66312 字、脚本约 21935 字逐字相同，连看即约 176k 重复载入。</li>
+</ul>
+<div class="answer">用户真正要的只有一句：<b>7222 现在长什么样，账户改对了没有。</b></div>
+</div>
+
+<div class="card">
+<h2>3 · 我的想法（第一性原理）</h2>
+<h3>必要 vs 偶然</h3>
+<ul>
+<li><b>必要</b>：金额、账户是否改对、分类账本时间、备注原文、是否有效。3 秒内看到金额与账户。</li>
+<li><b>偶然</b>：每份自带的整套样式脚本、8 卡墙、4~5 颗导航胶囊、三格式复制菜单，都是实现习惯。</li>
+</ul>
+<h3>对抗后的三个定论</h3>
+<ol>
+<li>自包含容灾成立，但连看就该复用缓存 —— 用户只关心点开快、字先出。</li>
+<li>回执与详情不该是两种形状 —— 应是<b>同一摘要 + 不同尾巴</b>：回执 = 摘要 + 改了什么，详情 = 摘要 + 全部字段。</li>
+<li>卡、导航、复制菜单都该降级 —— 8 卡里 7 张是重印，导航多为实现语言，日常复制只用纯文本。</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>4 · 我的建议</h2>
+<h3>设计 5 条（舒服的关键）</h3>
+<ol>
+<li><b>答案先行</b>：首屏一张摘要（-40.80 + 已改为建行卡 + 分类账本时间小字），标题即结论。</li>
+<li><b>金额唯一大字</b>：全页只允许一个大号；备注按套餐 / 加购 / 实付 / 自提分行，实付加粗。</li>
+<li><b>卡墙合并</b>：回执 8 卡并成一张摘要 + 1 行改动；详情字段只印一遍，段数减半。</li>
+<li><b>390 宽</b>：单列摘要，导航至多 2~3 项用户语言，其余收进页脚。</li>
+<li><b>复制与撤销</b>：复制默认纯文本单个按钮；撤销独立常显，不藏菜单。</li>
+</ol>
+<h3>工程顺序（P0→P1→P2）</h3>
+<ul>
+<li><b>P0 无分歧</b>：转义收口 → 徽章统一 → 填充器改调。</li>
+<li><b>P1 形状先验</b>：键值改公共件 → 旧分支退役。</li>
+<li><b>P2 有分歧</b>：样式脚本收口 → 体积口径收口 → 删旧链。每步带指纹重录声明。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>5 · 要你拍的（三选一）</h2>
+<div class="q"><b>A.</b> 先定摘要形状 —— 我出一版摘要线框，你看一眼再开工。<br><b>B.</b> 直接 P0 开干 —— 无分歧的三处先改，摘要边改边对。<br><b>C.</b> 先要原型 —— 拿 7222 做一页静态样子，舒服了再动生成链。</div>
+<p>我倾向 <b>A</b>：形状定了，后面 P0~P2 不会返工。你回 A / B / C 就行。</p>
+</div>
+
+<p class="foot">数据来源：回执 3233 行产物 + 详情 105334 字节产物 + bill.record.detail id 7222 + #993 及两条回写评论。历史产物未动。</p>
+</div>
+</body>
+</html>

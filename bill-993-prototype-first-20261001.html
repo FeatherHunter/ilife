@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>原型先行 vs 直接改动</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+.verdict{border-left:4px solid var(--ok);background:#f4fbf5;padding:12px 14px;border-radius:0 12px 12px 0;margin:10px 0}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 怎么做最划算</p>
+<h1>原型先行好，直接改动不好</h1>
+<p class="sub">你的想法是对的，我的建议也是 A。</p>
+<div class="card">
+<table>
+<tr><th></th><th>A · 原型先行（推荐）</th><th>B · 直接改动</th></tr>
+<tr><th>动什么</th><td>两份静态页，只拼样子，不动生成链，不碰指纹</td><td>直接改生成代码，每改一次重落产物、重录指纹</td></tr>
+<tr><th>看什么</th><td>7222 同一条数据两副样子，纸、头、账行一次看够</td><td>边改边看，形状没定就先生效</td></tr>
+<tr><th>返工</th><td>形状不满意只改原型，便宜</td><td>形状不满意推倒重来，指纹全红，贵</td></tr>
+<tr><th>风险</th><td>零：旧链、历史产物、测试全不动</td><td>高：阈值、转义、选页一动就全页变</td></tr>
+</table>
+<div class="verdict">所以先 A 后落码：你点头原型，我才动 <code>shared / write / query/detail</code>。这也叫先验形状。</div>
+</div>
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">我接下来出的两份原型</h2>
+<ul>
+<li>回执原型：小票纸 + 主数字 -40.80 + 改了账户 1 行 + 撤销常显。</li>
+<li>详情原型：同纸同头 + 全字段一遍 + 备注 5 行实付加粗。</li>
+<li>两份都是静态的，只为定形状，不接数据。</li>
+</ul>
+</div>
+<p class="foot">已记到 #993。原型出来你只看漂不漂亮，不用管代码。</p>
+</div>
+</body>
+</html>

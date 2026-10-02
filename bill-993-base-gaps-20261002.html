@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>5% 对应 base 改什么：文件清单</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul,ol{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 5% = base 四处（文件级）</p>
+<h1>改完这四处，原型即 base 的亲儿子</h1>
+<p class="sub">先说不用改的：纸皮、头形、账点线、明细行、印章语气、复制载荷与脚本——已是同族，无需动。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">B1 · 红主钮（最大，占肉眼一半）</h2>
+<p>现状：复制钮写死 ghost；场景钮有 red 档但无载荷（死钮）。原型要的是“红色且能点”。</p>
+<ul>
+<li><code>spec/controls.ts</code>：<code>CopyButtonInput</code> 加 <code>kind</code> 位 ＋ <code>spec/index.ts</code> 冻结面条目（冻结面动＝走契约三处同步，另开票）。</li>
+<li><code>components/controls/action-bar.ts</code>：复制钮透出 kind 类。</li>
+<li><code>components/style/copy-button.ts</code>：红色样式读皮肤 danger（圆角走闭集）。</li>
+<li>测试：控件测试＋样式纪律＋皮肤矩阵。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">B2 · 印章度量（小，形态本就同族）</h2>
+<p>两边都是旋转描边章，只差度量：角度（原型约 10°／组件 -1.2°）、边距、字号。</p>
+<ul><li><code>components/summary-head/style.ts</code>：只改数值，不加 API。定一版两边认。</li></ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">B3 · 撕口手法（小）</h2>
+<ul><li><code>components/sheet-frame/style.ts</code>：notch/裁切线做法向原型对齐，样式-only。</li></ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">B4 · 复制菜单数值（小，有一条红线）</h2>
+<ul><li><code>components/style/copy-button.ts</code> 菜单区：圆角/内距/投影对齐；注意圆角闭集 <code>{8,14,20,999,50%}</code>——原型 13px 只能落 14px，这是 base 的硬规矩，1:1 在此让一步。</li></ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">不碰 base（bill 自己调）</h2>
+<ul><li>标题字距行高、店头间距：<code>skill-bill/src/shared/docPage.ts</code> 自有店头样式直接调。</li></ul>
+<div class="q">开工顺序建议：B1（立项最大）→ B2/B3/B4（数值对齐）→ bill 侧跟进 → 指纹收口。你回 <b>开 B1</b> 我就起 base 票。</div>
+</div>
+
+<p class="foot">量级：B1 跨冻结面必须另开票；B2–B4 可同票。已记 #993。</p>
+</div>
+</body>
+</html>

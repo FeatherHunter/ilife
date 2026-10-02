@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>#993 两稿齐了 · 动手前请你点头</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul,ol{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 重做组合稿齐了</p>
+<h1>回执 + 详情：同一张纸，同一颗头</h1>
+<p class="sub">两稿都已回写票评论。这份只拼结论，源码还没动，等你点头。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">回执（record.update · 7222）</h2>
+<ul>
+<li>标题即结论：已把 7222 改成支出 40.80 元咖啡奶茶；副题只补账户已改为建行 (0709) + 账本生活 + 时间。</li>
+<li>纸 <code>sheet-frame receipt + notch + cutLine</code>；头 <code>summary-head</code> 唯一主读数 -40.80 + 印章已改动。</li>
+<li>账目 <code>ledger-rows</code>：分类 / 账户 / 账本 / 时间 / 编号，金额不重印。</li>
+<li>改了什么 <code>entry-rows</code> 1 行：15:30 / 餐饮 / 咖啡奶茶 / -40.80 / 备注账户已改。</li>
+<li>撤销独立常显走场景行，复制缺省纯文本，JSON/CSV 收菜单。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">详情（record.detail · 7222）</h2>
+<ul>
+<li>同纸同头：同一 receipt 纸，同一主读数形状，金额分类时间只在头里出现一次。</li>
+<li>账目 <code>ledger-rows</code>：编号 / 账户 / 账本 / 币种 / 创建时间 / 删除时间 / 有效，全字段只印一遍。</li>
+<li>备注 <code>entry-rows</code> 分 5 行：悠享店 / 双杯套餐 34.9 / 加购 5.9 / <b>实付 40.8</b> / 自提。</li>
+<li>删除时间 — 整行置灰，行位固定；操作只有返回 / 改记录 / 删记录。</li>
+<li>装配 <code>renderPage</code>：纸 &gt; 头 &gt; 账 &gt; 明细 &gt; 操作。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">影响清单（动手前）</h2>
+<ul>
+<li><code>skill-bill/src/shared/</code> 新增装配，不碰旧样式补丁。</li>
+<li><code>write/</code> 出回执新组合，<code>query/detail.ts</code> 出详情新组合。</li>
+<li><code>base-render</code> 只走公开接口，不改签名。</li>
+</ul>
+<div class="q">点头我就动源码；要改形状现在说。你回 <b>开工</b> 或 <b>改形状 + 哪一块</b>。</div>
+</div>
+
+<p class="foot">旧 8 卡模板停用不做兼容分支。历史产物不动。</p>
+</div>
+</body>
+</html>

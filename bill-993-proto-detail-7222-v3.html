@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>账单详情 · record.detail 7222 · 静态原型</title>
+<style>
+  * { box-sizing: border-box; }
+  :root{
+    --paper:#ffffff; --bg:#ece8df; --ink:#1e1c18; --muted:#8a857a;
+    --line:#e7e1d3; --dash:#d8d1bd;
+    --accent:#b3541e; --accent-bg:#fdf1e7;
+    --green:#1a7f4b; --green-bg:#e7f5ec;
+    --btn:#1e1c18;
+  }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:24px 16px 48px;
+    display:flex; justify-content:center;
+  }
+  .page{ width:100%; max-width:430px; }
+  .proto-bar{
+    max-width:390px; margin:0 auto 12px;
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:#6b6558;
+  }
+  .proto-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:0 0 8px; }
+  /* 纸：与回执同宽小票纸 */
+  .sheet-frame{
+    width:100%; max-width:390px; margin:0 auto;
+    background:var(--paper);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(60,50,30,.14), 0 1px 0 rgba(0,0,0,.06);
+    overflow:hidden;
+    position:relative;
+  }
+  .sheet-frame::after{
+    content:""; display:block; height:14px;
+    background:linear-gradient(-45deg, transparent 10px, var(--paper) 0) 0 0/20px 20px repeat-x,
+               linear-gradient(45deg, transparent 10px, var(--paper) 0) 10px 0/20px 20px repeat-x;
+    transform:rotate(180deg);
+    background-color:transparent;
+    margin-top:-1px;
+  }
+  .sheet-pad{ padding:20px 20px 8px; }
+  /* 头：与回执同头 */
+  .receipt-head{ text-align:center; padding:4px 0 14px; }
+  .brand-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:.06em; }
+  .brand-mark{
+    width:28px; height:28px; border-radius:9px; background:#1e1c18; color:#fff;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .api-pill{
+    font-size:11px; color:#6b6558; border:1px solid var(--line); border-radius:999px;
+    padding:4px 10px; background:#faf8f2; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .receipt-head h1{ margin:2px 0 6px; font-size:22px; letter-spacing:.28em; text-indent:.28em; }
+  .receipt-head .sub{ font-size:12px; color:var(--muted); letter-spacing:.08em; }
+  .rule{ border-top:1px dashed var(--dash); margin:14px 0 0; }
+  /* 头下金额区：只放金额/分类/时间 */
+  .summary-head{ text-align:center; padding:16px 0 14px; }
+  .summary-head .cat{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; color:#6b4a2a; background:var(--accent-bg);
+    border:1px solid #f0d9bd; border-radius:999px; padding:5px 12px; margin-bottom:10px;
+  }
+  .summary-head .amount{
+    font-size:42px; font-weight:800; letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  .summary-head .amount small{ font-size:20px; font-weight:700; margin-right:2px; }
+  .summary-head .time{
+    margin-top:8px; font-size:14px; color:#4a463d;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .summary-head .time-label{ font-family:inherit; color:var(--muted); font-size:12px; margin-right:6px; }
+  /* 账：全字段只印一遍（金额分类时间不重印） */
+  .block-title{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:700; color:#6b6558; letter-spacing:.14em;
+    margin:14px 0 4px;
+  }
+  .block-title::after{ content:""; flex:1; border-top:1px dashed var(--dash); }
+  .ledger-rows{ list-style:none; margin:6px 0 0; padding:0; }
+  .ledger-rows li{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:10px 0; border-bottom:1px dotted #eee6d2;
+    font-size:14px; min-height:44px;
+  }
+  .ledger-rows li:last-child{ border-bottom:none; }
+  .k{ flex:0 0 76px; color:var(--muted); font-size:13px; padding-top:2px; }
+  .v{
+    flex:1 1 auto; text-align:right;
+    overflow-wrap:anywhere; word-break:break-all; line-height:1.55;
+    font-variant-numeric:tabular-nums;
+  }
+  .v.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .v.dim{ color:#b3aca0; }
+  .status{
+    display:inline-block; font-size:12px; font-weight:700; color:var(--green);
+    background:var(--green-bg); border:1px solid #bfe3cc; border-radius:999px; padding:3px 10px;
+  }
+  /* 明细：备注5行，实付加粗 */
+  .entry-rows{ list-style:none; margin:6px 0 0; padding:0 0 4px; counter-reset:row; }
+  .entry-rows li{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:10px 0; border-bottom:1px dotted #eee6d2;
+    font-size:14px; min-height:44px; line-height:1.55;
+  }
+  .entry-rows li:last-child{ border-bottom:none; }
+  .idx{
+    flex:0 0 22px; height:22px; margin-top:1px;
+    border-radius:7px; background:#f4efe2; border:1px solid var(--line);
+    color:#8a857a; font-size:12px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .entry-text{ flex:1 1 auto; overflow-wrap:anywhere; word-break:break-all; }
+  .entry-rows li.pay{
+    background:#fff8ee; border:1px solid #f0d9bd; border-radius:10px;
+    padding:10px 12px; margin:8px 0;
+  }
+  .entry-rows li.pay .entry-text{ font-weight:800; font-size:15px; }
+  .entry-rows li.pay .idx{ background:#1e1c18; color:#fff; border-color:#1e1c18; }
+  .entry-rows li.pay .amt{ font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+  /* 操作：只有三入口 */
+  .actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 0 18px; }
+  .actions a, .actions button{
+    appearance:none; border-radius:12px; text-decoration:none;
+    min-height:44px; display:inline-flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; cursor:default;
+    padding:10px 6px; line-height:1.2; text-align:center;
+  }
+  .btn-ghost{ background:#f6f2e8; color:#1e1c18; border:1px solid var(--line); }
+  .btn-primary{ background:#1e1c18; color:#fff; border:1px solid #1e1c18; }
+  .btn-danger{ background:#fff; color:#b3261e; border:1px solid #e8b4ae; }
+  /* 复制区：复制数据（三选一菜单）+ 复制日志，逻辑与原产物一致，仅样式换新 */
+  .copy-sec{ padding:2px 0 18px; }
+  .copy-wrap{ position:relative; }
+  .copy-btn{
+    width:100%; min-height:44px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; cursor:pointer;
+    background:#f6f2e8; color:#1e1c18; border:1px solid var(--line);
+  }
+  .copy-menu{
+    position:absolute; left:0; right:0; bottom:calc(100% + 8px);
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    box-shadow:0 12px 28px rgba(60,50,30,.16);
+    padding:6px; display:none; z-index:5;
+  }
+  .copy-wrap.open .copy-menu{ display:block; }
+  .copy-item{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:8px;
+    background:none; font-size:13.5px; font-weight:700; color:#1e1c18; cursor:pointer;
+  }
+  .copy-item small{ font-weight:600; color:var(--muted); font-size:11.5px; }
+  .copy-item:hover{ background:#faf8f2; }
+  .copy-log{ margin-top:10px; }
+  .foot{
+    max-width:390px; margin:12px auto 0; text-align:center;
+    font-size:11px; color:#8a857a; line-height:1.7;
+  }
+  .foot code{ font-family:ui-monospace,Menlo,Consolas,monospace; background:#e2dccb; border-radius:6px; padding:1px 6px; }
+  @media (max-width:390px){
+    body{ padding:16px 12px 40px; }
+    .sheet-pad{ padding:18px 16px 6px; }
+    .summary-head .amount{ font-size:38px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="proto-bar"><span class="proto-dot"></span>静态原型 · 不可点击 · 与回执同纸同头</div>
+
+    <!-- 纸 -->
+    <div class="sheet-frame">
+      <div class="sheet-pad">
+
+        <!-- 头 -->
+        <div class="receipt-head">
+          <div class="brand-row">
+            <span class="brand"><span class="brand-mark">🍪</span>饼干记账</span>
+            <span class="api-pill">record.detail</span>
+          </div>
+          <h1>账单详情</h1>
+          <div class="sub">静态展示 · 与回执同纸同头</div>
+          <div class="rule"></div>
+        </div>
+
+        <!-- 头下：只放金额 / 分类 / 时间 -->
+        <div class="summary-head">
+          <div class="cat">餐饮 ／ 咖啡奶茶</div>
+          <div class="amount"><small>¥</small>-40.80</div>
+          <div class="time"><span class="time-label">时间</span>2026-10-01 15:30:00</div>
+          <div class="rule"></div>
+        </div>
+
+        <!-- 账：全字段只印一遍（金额/分类/时间不重印） -->
+        <div class="block-title">账本信息</div>
+        <ul class="ledger-rows">
+          <li><span class="k">编号</span><span class="v mono">7222</span></li>
+          <li><span class="k">账户</span><span class="v">建设银行储蓄卡(0709)</span></li>
+          <li><span class="k">账本</span><span class="v">生活</span></li>
+          <li><span class="k">币种</span><span class="v">人民币</span></li>
+          <li><span class="k">创建时间</span><span class="v mono">2026-10-01 07:32:02</span></li>
+          <li><span class="k">删除时间</span><span class="v dim mono">—</span></li>
+          <li><span class="k">状态</span><span class="v"><span class="status">有效</span></span></li>
+        </ul>
+
+        <div class="rule"></div>
+
+        <!-- 明细：备注5行，实付加粗 -->
+        <div class="block-title">备注明细</div>
+        <ol class="entry-rows">
+          <li><span class="idx">1</span><span class="entry-text">悠享店</span></li>
+          <li><span class="idx">2</span><span class="entry-text">双杯套餐 34.9</span></li>
+          <li><span class="idx">3</span><span class="entry-text">加购 5.9</span></li>
+          <li class="pay"><span class="idx">4</span><span class="entry-text">实付 <span class="amt">40.8</span></span></li>
+          <li><span class="idx">5</span><span class="entry-text">自提</span></li>
+        </ol>
+
+        <div class="rule"></div>
+
+        <!-- 复制区：复制数据（三选一）+ 复制日志，逻辑与原产物一致 -->
+        <div class="copy-sec">
+          <div class="copy-wrap" id="copyWrap">
+            <button class="copy-btn" type="button" id="copyDataBtn" aria-expanded="false">复制数据 ▾</button>
+            <div class="copy-menu" role="menu">
+              <button class="copy-item" type="button" data-fmt="text">纯文本 <small>粘贴给助手或自己看</small></button>
+              <button class="copy-item" type="button" data-fmt="json">JSON <small>结构化存档</small></button>
+              <button class="copy-item" type="button" data-fmt="csv">CSV <small>表格导入</small></button>
+            </div>
+          </div>
+          <button class="copy-btn copy-log" type="button" id="copyLogBtn">复制日志</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="foot">数据快照 <code>record.detail · 7222</code> ／ 装配顺序：纸 &gt; 头 &gt; 账 &gt; 明细 &gt; 操作<br>单文件自包含 · 390px 左标签右值可换行 · 触摸目标 ≥44px<br>v3 · 操作区已拿掉，仅展示加复制</div>
+  </div>
+<script>
+(function(){
+  /* 逻辑与原产物一致：复制数据三选一（纯文本/JSON/CSV 各自带自己的载荷），复制日志独立一颗 */
+  var TEXT = '账单详情 · 7222\n金额: -40.80（支出）\n分类: 餐饮／咖啡奶茶\n时间: 2026-10-01 15:30:00\n编号: 7222\n账户: 建设银行储蓄卡(0709)\n账本: 生活\n币种: 人民币\n备注: 悠享店 / 双杯套餐34.9 / 加购5.9 / 实付40.8 / 自提\n创建时间: 2026-10-01 07:32:02\n删除时间: —\n状态: 有效';
+  var JSON_T = '{\n  "id": 7222,\n  "category": "餐饮/咖啡奶茶",\n  "time": "2026-10-01 15:30:00",\n  "amount": -40.8,\n  "account": "建设银行储蓄卡(0709)",\n  "ledger": "生活",\n  "currency": "人民币"\n}';
+  var CSV_T = 'field,value\nid,7222\ncategory,餐饮/咖啡奶茶\ntime,2026-10-01 15:30:00\namount,-40.80\naccount,建设银行储蓄卡(0709)\nledger,生活';
+  var LOG_T = '场景标识\nbill.record.detail（detail）\n调用链\nbill-cmd-read bill.record.detail --params \'{"id":7222}\'\n时间戳版本\n2026-10-01 15:30:00 · 版本 0.1.0\n异常\n无';
+  var FORMATS = { text: TEXT, json: JSON_T, csv: CSV_T };
+  var wrap = document.getElementById('copyWrap');
+  var dataBtn = document.getElementById('copyDataBtn');
+  var logBtn = document.getElementById('copyLogBtn');
+  function copyText(t, btn){
+    var done = function(){ var o = btn.textContent; btn.textContent = '已复制 ✓'; setTimeout(function(){ btn.textContent = o; },1600); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, function(){ fallback(); });
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta); done();
+    }
+  }
+  dataBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = wrap.classList.contains('open');
+    wrap.classList.toggle('open', !open);
+    dataBtn.setAttribute('aria-expanded', String(!open));
+  });
+  document.addEventListener('click', function(){ wrap.classList.remove('open'); dataBtn.setAttribute('aria-expanded','false'); });
+  var items = wrap.querySelectorAll('.copy-item');
+  for(var i = 0; i < items.length; i++){
+    items[i].addEventListener('click', function(e){
+      e.stopPropagation();
+      copyText(FORMATS[this.getAttribute('data-fmt')], dataBtn);
+      wrap.classList.remove('open');
+    });
+  }
+  logBtn.addEventListener('click', function(){ copyText(LOG_T, logBtn); });
+})();
+</script>
+</body>
+</html>

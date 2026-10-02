@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>1:1 还原两份原型的打算</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759;--bad:#a83228}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul,ol{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.good{border-left:4px solid var(--ok);background:#f4fbf5;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.bad{border-left:4px solid var(--bad);background:#fdf3f2;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 1:1 还原的打算（第一性原理 + 对抗式审查）</p>
+<h1>先说实话：公开组件只能到 95%，100% 得另走一条路</h1>
+<p class="sub">1:1 指每个视觉原子都一样：纸色、撕口、店头、标题红、大数字、印章、点线、明细卡、按钮、复制菜单、裁切线、锯齿、间距、字、390/1280 两档、复制载荷、脚本。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">差距清单（原型 vs 产物，逐项量的）</h2>
+<table>
+<tr><th>原子</th><th>原型</th><th>产物现状</th><th>差</th></tr>
+<tr><td>纸面</td><td>手写暖白 + 径向撕口 + 阴影</td><td>paper 皮肤纸（组件读 token）</td><td>色值接近，撕口手法不同</td></tr>
+<tr><td>店头/标题红</td><td>19px + 印章红账户名</td><td>自有店头 + 沿旧层红（已注出处）</td><td>接近，字距行高待对</td></tr>
+<tr><td>大数字/印章</td><td>56px + 旋转描边章</td><td>summary-head + tone 章</td><td>章形不同（描边斜章 vs 胶囊）</td></tr>
+<tr><td>账目点线</td><td>定制点线 + 右对齐</td><td>ledger-rows 点线</td><td>接近</td></tr>
+<tr><td>按钮</td><td>红渐变主钮 + 白 ghost 钮</td><td>全 ghost 钮（冻结层，不跟肤）</td><td><b>最大差：红主钮不存在</b></td></tr>
+<tr><td>复制菜单/锯齿/间距</td><td>定制</td><td>组件自带</td><td>细节值不同</td></tr>
+</table>
+<p>结构（纸头→大数→账→按钮→复制→页脚）已 100% 一致，差的全在皮。</p>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">三条路的对抗式 verdict</h2>
+<div class="bad"><b>A. 把原型 CSS 整份 fork 进技能</b>：明天就 100%。代价是同一套样式住两份，迟早走散（本仓 DESKTOP/TOAST/KV 三块补丁就是这么欠下的）；base 修一次对比度/触摸区，技能要修第二次。短期满分，长期负债。</div>
+<div class="bad"><b>B. 硬说现在就是 1:1</b>： closed 眼睛验收，债留给以后。按钮一眼不同，瞒不过去。不选。</div>
+<div class="good"><b>C. 缺口进 base 立项（推荐）</b>：原型定稿即 base 的新规格——红主钮形态、印章形态、撕口/锯齿归属。100% 且无债，代价是跨包排期（base 矩阵测试 60 件 × 4 皮 × 2 档）。技能侧零 fork。</div>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">我的打算（四步）</h2>
+<ol>
+<li>差距逐项量完出 diff 表（本文件即 v1，390/1280 各一遍）。</li>
+<li>技能侧先按 C 落 95%（已做完：纸皮 + 结构 + 载荷）。</li>
+<li>base 缺口单列一票（红主钮第一优先级），验收标准就是这两份原型。</li>
+<li>base 落地后技能侧只换组件版本，产物自然 100%，指纹重录一次收口。</li>
+</ol>
+<div class="q">要你拍：<b>走 C</b>（95% 先用着，base 排期补 100%），还是 <b>走 A</b>（你要至急的 100%，我 fork，但债记在票里）？</div>
+</div>
+
+<p class="foot">第一性原理：像素的唯一定义地只能有一处，要么在 base，要么是债。已记 #993。</p>
+</div>
+</body>
+</html>

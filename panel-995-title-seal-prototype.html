@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>995 原型：标题分层 + 印章书签（A/B/C · 深/浅 · 390）</title>
+<!-- PROTOTYPE — 抛弃式原型，不进 main。定形后删，只留 throwaway 分支 + 995 票 verdict。
+     One-liner: Three variants of TitleBlock+Seal, switchable via ?variant=A|B|C&theme=dark|light&w=390|800, static single file simulating route (UI-B, #995定形验证型，非发散)。
+     为何是 UI-B 而非同路由 A：config-panel/health 面板是 DSH 宿主内面板，无 URL 路由可挂，故静态单文件模拟路由，?variant 真参 + history.replaceState，可分享可 reload-stable。生产隐藏 N/A（本文件永不合入 main）。 -->
+<style>
+/* #739：零字族（全文件无 font-family、无 font: 简写）、字号一律 em。布局 px 允许。 */
+:root{color-scheme:dark}
+html[data-theme="dark"]{--dsw-alias-label-primary:#f9fafb;--dsw-alias-label-secondary:#9a9a9a;--dsw-alias-bg-layer-1:#232324;--edge:rgba(249,250,251,.19);--sunken:rgba(249,250,251,.09);--page:#1b1b1c;--chrome:#000;--chrome-fg:#fff;color-scheme:dark}
+html[data-theme="light"]{--dsw-alias-label-primary:#111113;--dsw-alias-label-secondary:#5f6062;--dsw-alias-bg-layer-1:#ffffff;--edge:rgba(17,17,19,.19);--sunken:rgba(17,17,19,.07);--page:#f5f5f7;--chrome:#111113;--chrome-fg:#fff;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--dsw-alias-label-primary,#f9fafb);line-height:1.7}
+.wrap{max-width:56em;margin:0 auto;padding:1.4em 1.2em 7em}
+.banner{border:0.14em dashed var(--dsw-alias-label-secondary,#9a9a9a);border-radius:0.9em;padding:0.8em 1em;margin:0 0 1em}
+.banner b{font-size:0.95em}
+h1{margin:0.2em 0 0.2em;font-size:1.6em}
+.question{margin:0 0 0.6em;font-size:1em}
+.plan{margin:0 0 1em;font-size:0.9em;color:var(--dsw-alias-label-secondary,#9a9a9a)}
+.state{border:1px solid var(--edge);border-radius:0.9em;padding:0.9em 1em;margin:1em 0;background:var(--dsw-alias-bg-layer-1,#232324)}
+.state h2{margin:0 0 0.4em;font-size:1em}
+.state table{width:100%;border-collapse:collapse;font-size:0.85em}
+.state th,.state td{text-align:left;padding:0.3em 0.5em;border-bottom:1px solid var(--edge);vertical-align:top}
+.state th{color:var(--dsw-alias-label-secondary,#9a9a9a);white-space:nowrap}
+.state code{font-size:0.95em}
+.stage-label{margin:1.2em 0 0.5em;font-size:0.9em;color:var(--dsw-alias-label-secondary,#9a9a9a)}
+.demo-frame{margin:0 auto;background:var(--dsw-alias-bg-layer-1,#232324);border:1px solid var(--edge);border-radius:0.9em;padding:1em;overflow:visible}
+.demo-frame.w390{max-width:390px}
+.demo-frame.w800{max-width:800px}
+.case{border:1px solid var(--edge);border-radius:0.75em;padding:0.9em 1em;margin:0 0 0.9em;background:transparent;overflow:visible}
+.case:last-child{margin-bottom:0}
+.case-tag{margin:0 0 0.6em;font-size:0.8em;color:var(--dsw-alias-label-secondary,#9a9a9a)}
+/* TitleBlock：同行双样式，无 ·，整块 h2 */
+.titleblock{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 0.5em;margin:0;font-size:1em;line-height:1.5}
+.titleblock .product{font-size:1.15em;font-weight:700;color:var(--dsw-alias-label-primary,#f9fafb)}
+.titleblock .purpose{font-size:0.85em;font-weight:400;color:var(--dsw-alias-label-secondary,#9a9a9a)}
+/* Seal：横向书签，固定色 #a5281b 白字，clip-path 右端 V 尾切角 + 微旋 -3°，纯展示 */
+.seal{display:inline-block;flex-shrink:0;font-size:0.78em;line-height:1.6;color:#fff;background:#a5281b;padding:0.15em 0.9em 0.15em 0.8em;white-space:pre;transform:rotate(-3deg);clip-path:polygon(0 0,calc(100% - 0.65em) 0,100% 50%,calc(100% - 0.65em) 100%,0 100%)}
+/* 变体 A：行尾悬签（996 锚定版）— 标题左、签贴同行行尾向右探出 */
+.variant-A .line{display:flex;flex-wrap:wrap;align-items:center;gap:0.6em}
+.variant-A .line .titleblock{flex:1 1 auto;min-width:9em}
+/* 变体 B：顶腰封 — 签独占标题上一行全宽横幅，标题在下 */
+.variant-B .seal-row{margin:0 0 0.55em}
+.variant-B .seal{font-size:0.8em}
+.variant-B .line .titleblock{flex:1 1 auto}
+/* 变体 C：行首压印 — 签在标题左、标题右让 */
+.variant-C .line{display:flex;flex-wrap:wrap;align-items:center;gap:0.6em}
+.variant-C .line .titleblock{flex:1 1 auto;min-width:9em}
+.spec{border:1px solid var(--edge);border-radius:0.9em;padding:0.9em 1em;margin:1em 0;font-size:0.85em}
+.spec h2{margin:0 0 0.4em;font-size:1em}
+.spec li{margin:0.25em 0}
+.switcher{position:fixed;left:50%;bottom:1em;transform:translateX(-50%);display:flex;align-items:center;gap:0.7em;background:var(--chrome);color:var(--chrome-fg);border-radius:999px;padding:0.5em 0.7em;box-shadow:0 0.4em 1.4em rgba(0,0,0,.35);z-index:50;font-size:0.9em}
+.switcher button{background:transparent;color:inherit;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:0.2em 0.7em;cursor:pointer;font-size:1em}
+.switcher button[aria-pressed="true"]{background:#fff;color:#111113;border-color:#fff}
+.switcher .vlabel{min-width:11em;text-align:center}
+.hint{font-size:0.8em;color:var(--dsw-alias-label-secondary,#9a9a9a);margin:1em 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="banner"><b>PROTOTYPE — 抛弃式原型（#995），定稿后删，不进 main。</b><br>只答一问：标题分层（同行双样式，无 ·）+ 横向朱红油封印章书签是否定形？双主题深/浅 + 390 宽不挤，h2 语义，签只印 HELP 唤醒词（空格=U+0020），纯展示不可点。</div>
+<h1>标题分层 + 印章书签：A/B/C 三变体</h1>
+<p class="question">问题：静态 shape 是否定形？验收 = 双主题截图 + 人裁形状（选 A/B/C），定稿后 996 才进 React（`packages/plugin-manager/src/`）。</p>
+<p class="plan">Plan：`?variant=A|B|C &amp; theme=dark|light &amp; w=390|800` 真参切换，底部悬浮条 ←/→（input 聚焦不拦截），reload-stable 可分享。A=996 锚定版（行尾悬签），B=顶腰封，C=行首压印；色/字/切角/旋转全锁，只变签相对标题的位置。</p>
+
+<div class="state" aria-live="polite">
+<h2>当前状态（每次切换重 render）</h2>
+<table id="stateTable"></table>
+</div>
+
+<p class="stage-label" id="stageLabel"></p>
+<div class="demo-frame w390" id="frame">
+<div id="stage"></div>
+</div>
+
+<div class="spec">
+<h2>锁死规格（人裁对照，不可再猜）</h2>
+<ul>
+<li>标题：`product` 700/1.15em 主色 + `purpose` 400/0.85em 次色，同行基线，`gap .5em`，无 `·`，整块 `h2 aria-label="product purpose"`。</li>
+<li>签：固定 `#a5281b` 白字，`clip-path: polygon(右端 V 尾)` + `rotate(-3deg)`，`white-space:pre` 保空格，`role="note"`，无点击、无 tabindex。</li>
+<li>字：全文件零 `font-family`、零 `font:` 简写，字号一律 em（#739）；色走 DSH 别名，签固定色沿 health 红黄先例（#996 约束）。</li>
+<li>宽：390 为验收档（标题可换行、签 `flex-shrink:0` 不被挤扁，旋转溢出由 frame `overflow:visible` + padding 兜住）；800 仅手动对照，不进验收。</li>
+</ul>
+</div>
+<p class="hint">验收截图：深/浅 × 390 × A/B/C 共 6 张 + 一句人裁结论（赢的是谁、赢在哪）。本文件双击即开，无 server、无存储（状态只在内存 + URL）。</p>
+</div>
+
+<div class="switcher" role="toolbar" aria-label="原型切换条（非设计本身）">
+<button id="prevBtn" type="button" aria-label="上一个变体">←</button>
+<span class="vlabel" id="vlabel"></span>
+<button id="nextBtn" type="button" aria-label="下一个变体">→</button>
+<button id="themeBtn" type="button">深/浅</button>
+<button id="wBtn" type="button">390/800</button>
+</div>
+
+<script>
+(function(){
+var VARIANTS=["A","B","C"];
+var VNAMES={A:"A — 行尾悬签（996 锚）",B:"B — 顶腰封",C:"C — 行首压印"};
+function readParams(){
+  var q={};
+  try{q=new URLSearchParams(location.search);}catch(e){q={get:function(){return null;}};}
+  var v=(q.get("variant")||"A").toUpperCase();
+  if(VARIANTS.indexOf(v)<0)v="A";
+  var t=(q.get("theme")||"dark").toLowerCase();
+  if(t!=="dark"&&t!=="light")t="dark";
+  var w=q.get("w")||"390";
+  if(w!=="390"&&w!=="800")w="390";
+  return {variant:v,theme:t,w:w};
+}
+var state=readParams();
+var CASES=[
+  {tag:"长应力：饼干记账 / 配置 × 饼干记账 HELP",product:"饼干记账",purpose:"配置",seal:"饼干记账 HELP"},
+  {tag:"短对照：卡路里 / 体检 × 卡路里 HELP",product:"卡路里",purpose:"体检",seal:"卡路里 HELP"}
+];
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function sealVisible(s){return s.replace(/ /g,"·");}
+function renderCase(c){
+  var h2='<h2 class="titleblock" aria-label="'+esc(c.product+" "+c.purpose)+'"><span class="product">'+esc(c.product)+'</span><span class="purpose">'+esc(c.purpose)+'</span></h2>';
+  var seal='<span class="seal" role="note" aria-label="'+esc(c.seal)+'">'+esc(c.seal)+'</span>';
+  if(state.variant==="A")return '<div class="variant-A"><div class="line">'+h2+seal+'</div></div>';
+  if(state.variant==="B")return '<div class="variant-B"><div class="seal-row">'+seal+'</div><div class="line">'+h2+'</div></div>';
+  return '<div class="variant-C"><div class="line">'+seal+h2+'</div></div>';
+}
+function render(){
+  document.documentElement.setAttribute("data-theme",state.theme);
+  var frame=document.getElementById("frame");
+  frame.className="demo-frame "+(state.w==="390"?"w390":"w800");
+  var html="";
+  for(var i=0;i<CASES.length;i++){
+    html+='<div class="case"><p class="case-tag">'+esc(CASES[i].tag)+' · 空格=U+0020 ×'+(CASES[i].seal.split(" ").length-1)+' · 可见形 '+esc(sealVisible(CASES[i].seal))+'</p>'+renderCase(CASES[i])+'</div>';
+  }
+  document.getElementById("stage").innerHTML=html;
+  document.getElementById("stageLabel").textContent="变体 "+state.variant+" · 主题 "+state.theme+" · 宽度 "+state.w+"（验收档=390）";
+  document.getElementById("vlabel").textContent=VNAMES[state.variant]+" · "+state.theme+" · "+state.w;
+  var rows=[
+    ["variant","<code>"+state.variant+"</code>（"+esc(VNAMES[state.variant])+"）"],
+    ["theme","<code>"+state.theme+"</code>（别名自适应，签固定 <code>#a5281b</code> 不跟主题）"],
+    ["width","<code>"+state.w+"</code>（验收只收 390；800 仅手动对照）"],
+    ["h2","两处 TitleBlock 均为 <code>&lt;h2&gt;</code>，<code>aria-label=product+space+purpose</code>"],
+    ["无 ·","标题内无 <code>·</code>（product/purpose 间仅 <code>gap .5em</code>）"],
+    ["sealText","<code>"+esc(CASES[0].seal)+"</code> / <code>"+esc(CASES[1].seal)+"</code>（空格=U+0020，<code>white-space:pre</code>，<code>role=note</code> 不可点）"],
+    ["seal 形","<code>clip-path: polygon(右端 V 尾)</code> + <code>rotate(-3deg)</code>，白字 <code>#fff</code> 压 <code>#a5281b</code>"],
+    ["字/色纪律","零 <code>font-family</code>、零 <code>font:</code> 简写，字号一律 em；色走 <code>--dsw-alias-*</code>（签固定色沿 health 先例）"],
+    ["URL","<code>?variant="+state.variant+"&amp;theme="+state.theme+"&amp;w="+state.w+"</code>（分享即复现）"]
+  ];
+  var th="";
+  for(var j=0;j<rows.length;j++){th+="<tr><th>"+rows[j][0]+"</th><td>"+rows[j][1]+"</td></tr>";}
+  document.getElementById("stateTable").innerHTML=th;
+  document.getElementById("themeBtn").setAttribute("aria-pressed",state.theme==="light"?"true":"false");
+  document.getElementById("wBtn").setAttribute("aria-pressed",state.w==="800"?"true":"false");
+}
+function push(){try{history.replaceState(null,"","?variant="+state.variant+"&theme="+state.theme+"&w="+state.w);}catch(e){}render();}
+function step(d){var i=VARIANTS.indexOf(state.variant);i=(i+d+VARIANTS.length)%VARIANTS.length;state.variant=VARIANTS[i];push();}
+document.getElementById("prevBtn").onclick=function(){step(-1);};
+document.getElementById("nextBtn").onclick=function(){step(1);};
+document.getElementById("themeBtn").onclick=function(){state.theme=(state.theme==="dark"?"light":"dark");push();};
+document.getElementById("wBtn").onclick=function(){state.w=(state.w==="390"?"800":"390");push();};
+document.addEventListener("keydown",function(e){
+  var t=e.target;var tag=t&&t.tagName?String(t.tagName).toLowerCase():"";
+  if(tag==="input"||tag==="textarea"||t.isContentEditable)return;
+  if(e.key==="ArrowLeft"){step(-1);}else if(e.key==="ArrowRight"){step(1);}
+});
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>#993 已转重做 · 下一步</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 重做已确认</p>
+<h1>认可收到：旧 P0 作废，按重做开工</h1>
+<p class="sub">票方向已改成重做口径，历史产物依然不动。</p>
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">影响清单（初版，动手前请你点头）</h2>
+<ul>
+<li><code>packages/skill-bill/src/shared/</code>：新增装配（页框 + 头 + 账行），旧手写样式脚本不再加补丁。</li>
+<li><code>packages/skill-bill/src/write/</code>：回执按新组合出（摘要 + 改了什么 + 撤销常显）。</li>
+<li><code>packages/skill-bill/src/query/detail.ts</code>：详情按新组合出（同摘要 + 全字段一遍 + 备注分行）。</li>
+<li><code>packages/base-render</code>：只走公开接口，不新增接口；确有缺口再另议。</li>
+</ul>
+</div>
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">两路新组合稿调查中</h2>
+<ul>
+<li>回执：小票纸 + 主数字头 -40.80 + 账目行 1 行改动 + 撤销独立按钮。</li>
+<li>详情：同纸同头 + 账目行全字段一遍 + 备注按套餐/加购/实付/自提分行。</li>
+<li>结论回来即拼成线框给你看，再动源码。</li>
+</ul>
+</div>
+<p class="foot">结构纪律第一步的影响清单在此，第二步结构设计随组合稿一起报。</p>
+</div>
+</body>
+</html>

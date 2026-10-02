@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>三按钮价值 + 撤销 prompt</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+pre{background:#f2f2f7;padding:12px;border-radius:10px;overflow:auto;font-size:12px;line-height:1.6}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.rec{border-left:4px solid var(--blue);background:#f5f8ff;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 详情三钮 + 撤销 prompt</p>
+<h1>改记录最值钱，返回最鸡肋，撤销要配 prompt</h1>
+<p class="sub">结论先行，细节在下面。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">详情三按钮的价值</h2>
+<table>
+<tr><th>按钮</th><th>价值</th><th>理由</th></tr>
+<tr><td><b>改记录</b></td><td>最高 ★★★</td><td>详情页主任务就是“看见错→立刻改”。7222 本来就是账户记错了才改的，详情看到账户不对，下一步一定是改。删了它等于断了主流程。</td></tr>
+<tr><td>返回</td><td>低 ★</td><td>浏览器自带返回；只有从列表点进来时才顺手。静态原型里它根本没地方可回，属于占位。建议缩成幽灵小字，不占主位。</td></tr>
+<tr><td>删记录</td><td>低频危险 ★</td><td>一个月用不了一次，且不可逆手感（虽是软删可恢复，用户仍怕）。不应与改记录并列三等分，建议收进次级确认或折叠。</td></tr>
+</table>
+<div class="rec">建议排布：<b>改记录主按钮</b> + 返回小字 + 删记录收进“更多/危险区”。原型里三等分只是占位，不是定稿。</div>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">撤销这一笔的 prompt 设计</h2>
+<p>按钮负责点，prompt 负责让 AI 一次跑对。形状固定三行：<b>人话一行 + 可执行命令一行 + 口径一行</b>。</p>
+<pre>撤销这一笔（7222：餐饮／咖啡奶茶 -40.80 元）
+bill-cmd-read bill.record.update --params '{"op":"undo","id":7222}'
+口径：撤销只打标、可恢复，原记录保留痕迹</pre>
+<ul>
+<li>通用模板把 <code>7222</code> 换成记录编号即可，命令名取自 HELP，不自造。</li>
+<li>按钮本身不带复制载荷冒充复制（之前的同病不再犯），真正的载荷走复制数据。</li>
+<li>恢复的 prompt 对称：<code>{"op":"restore","id":7222}</code>，文案“恢复这一笔”。</li>
+</ul>
+</div>
+
+<p class="foot">已记到 #993。原型按钮不动，只定文案与排布；落码时按此接。</p>
+</div>
+</body>
+</html>

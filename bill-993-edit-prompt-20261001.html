@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>改记录：点一下怎么改最快</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+pre{background:#f2f2f7;padding:12px;border-radius:10px;overflow:auto;font-size:12px;line-height:1.6}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ol,ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.rec{border-left:4px solid var(--blue);background:#f5f8ff;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 改记录复制 prompt 出去</p>
+<h1>点改记录 = 复制一段 prompt，你只说改动项</h1>
+<p class="sub">流程三步：点 → 粘给 AI → 说“账户改成支付宝”，剩下的 AI 填。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">为什么这样最快</h2>
+<ul>
+<li>prompt 里自带 <b>编号 + 现状快照</b>，AI 不用再查一遍详情，省一轮。</li>
+<li>你只说差量（改哪一项改成什么），不动的不用说，命令里只传改动项。</li>
+<li>命令模板直接可跑，AI 补上你的差量就执行，回来一张新回执。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">7222 的 prompt 长这样</h2>
+<pre>改记录（7222：餐饮／咖啡奶茶 -40.80 元）
+当前：账户建设银行储蓄卡(0709)，账本生活，时间 2026-10-01 15:30:00
+你要改：（只说改动项，如“账户改成支付宝”）
+bill-cmd-read bill.record.update --params '{"id":7222,"account":"支付宝"}'
+口径：只传改动项，不动的不传；金额符号即方向</pre>
+<div class="rec">通用模板：把 <code>7222</code> 和现状五项换成当条记录即可，字段名固定 <code>category / amount / account / ledger / time / note</code>。</div>
+</div>
+
+<p class="foot">已记到 #993。按钮只负责复制这段，执行永远是 AI 跑命令。</p>
+</div>
+</body>
+</html>

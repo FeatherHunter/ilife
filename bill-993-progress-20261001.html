@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>#993 进展汇报</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759;--warn:#a25b00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.done{color:var(--ok);font-weight:800}.doing{color:var(--warn);font-weight:800}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ol,ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 2026-10-01 22:12</p>
+<h1>回执已落地，详情接着做</h1>
+<p class="sub">原型全部冻结：回执 v5、详情 v7。历史产物未动。</p>
+<div class="card">
+<ol>
+<li><span class="done">done</span> 原型：回执 v5（纸头结论+重点色+主数字+落点4行+撤销常显+复制区），详情 v7（纸头只剩身份+编号进页脚）。</li>
+<li><span class="done">done</span> 回执落地已提交 <code>494d476f</code>：模板块序换小票组合，只走 <code>base-paint/blocks</code> 公开接口；撤销是带命令载荷的真按钮（#733 的死按钮不再犯）。</li>
+<li><span class="done">done</span> 门禁全绿：tsc、场景乙 54/54、告警线 15/15、指纹甲 32/32；隔离库真跑改记录/撤销双分支对数。</li>
+<li><span class="doing">doing</span> 详情落地：query/detail 改小票组合（同纸同头+全字段一遍+备注分行）。</li>
+</ol>
+</div>
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">两处如实相告</h2>
+<ul>
+<li>指纹 32 张里 29 张是之前的既有漂移（905/960 后没重录），已在重录声明里归因，不是我的改动。</li>
+<li>模板曾超 350 线（375），已拆取值小件落回 318，无新增对外接口。</li>
+</ul>
+</div>
+<p class="foot">票 #993 持续更新。下一站：详情落地提交。</p>
+</div>
+</body>
+</html>

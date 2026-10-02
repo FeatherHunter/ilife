@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>改 base 影响谁＋我能不能 100%</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759;--bad:#a83228}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ul,ol{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.good{border-left:4px solid var(--ok);background:#f4fbf5;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.bad{border-left:4px solid var(--bad);background:#fdf3f2;padding:10px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 影响面实话 + 100% 能不能</p>
+<h1>你担心的对：B2–B4 会动到别人，B1 不会</h1>
+<p class="sub">逐项说影响谁、拿什么兜底；再说我能保证到哪。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">改 base 影响谁</h2>
+<table>
+<tr><th></th><th>性质</th><th>影响谁</th><th>兜底</th></tr>
+<tr><td><b>B1 红主钮</b></td><td>加法：不传 kind 走老路逐字节不变</td><td>没人。他页不传新位，产物不动</td><td>加法式测试 + 现有门禁</td></tr>
+<tr><td><b>B2 印章度量</b></td><td>共享值：所有单据页的章一起变</td><td>卡路里小票页等同族消费者</td><td>跨包认口（原型墙打分）或收窄到变体</td></tr>
+<tr><td><b>B3 撕口手法</b></td><td>共享值：同上</td><td>同上</td><td>同上</td></tr>
+<tr><td><b>B4 菜单数值</b></td><td>共享值：所有复制菜单</td><td>全仓带复制区的页</td><td>同上；圆角还受闭集约束</td></tr>
+</table>
+<div class="bad">所以 B2–B4 不是“改完只有我们变好”，是“把共用的审美换掉”。要么让大家认（原型墙那套流程），要么收窄到 receipt 变体（多一条分叉，base 维护者点头才行）。</div>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">我能不能 100%：如实说</h2>
+<div class="good">能保证的：结构 100%（已是）、载荷逻辑 100%（已是）、每个像素差有主（diff 表）、 verification 不靠肉眼——base 有真机两档测试（390/1280，headless 量几何），红就是红。</div>
+<div class="bad">保证不了的：一是我的眼睛——这个环境里我看的是代码不是渲染像素，细微差只能靠 base 真机测试代看；二是共享值要不要换，得跨包认口，不是我一个人能批的。你说“你并不能完全 100% 复刻”是对的，后半截 5% 的 <b>批准权</b>不在我手里，在各包维护者和原型墙手里。</div>
+</div>
+
+<div class="card">
+<div class="q">建议走法：<b>B1 我直接干</b>（零影响）；<b>B2–B4 你选</b>：A. 发起跨包认口（慢、全好）；B. 收窄变体（快、有分叉债）；C. 就停在 95%（结构载荷全对，皮差留表）。你回 A / B / C。</div>
+</div>
+
+<p class="foot">已记 #993。这份里没有一句是拍胸脯。</p>
+</div>
+</body>
+</html>

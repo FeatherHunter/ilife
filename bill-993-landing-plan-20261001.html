@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>#993 落地影响清单与结构设计</title>
+<style>
+:root{--fg:#1d1d1f;--fg2:#6e6e73;--bg:#f5f5f7;--card:#fff;--line:#e5e5ea;--blue:#007aff;--ok:#34c759}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.08em}
+h1{margin:6px 0 4px;font-size:26px}
+.sub{color:var(--fg2);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-size:12px;white-space:nowrap}
+code{background:#f2f2f7;padding:1px 6px;border-radius:6px;font-size:12px}
+ol,ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.q{border:1px dashed var(--blue);border-radius:12px;padding:12px 14px;margin:10px 0;background:#f7faff}
+.foot{color:var(--fg2);font-size:12px}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">#993 · 回执 v5 落地（第一步影响清单 + 第二步结构设计）</p>
+<h1>动之前先对账：只动改记录回执这一路</h1>
+<p class="sub">每行一个能力目录；偏差为零才算完。先验已过（原型 v5），下面是铺开。</p>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">第一步 · 影响清单</h2>
+<table>
+<tr><th>文件</th><th>动什么（一句）</th><th>理由</th></tr>
+<tr><td><code>write/template-update.ts</code></td><td>回执块序换小票组合（纸+头+账+撤销+复制）</td><td>块位序列唯一住所，判据乙守住</td></tr>
+<tr><td><code>write/scene-update.ts</code></td><td>标题改结论句、副题置空、口径一句</td><td>场景件只声明差异值</td></tr>
+<tr><td><code>shared/copyArea.ts</code></td><td>撤销做成真按钮（带撤销命令载荷）</td><td>#733 死按钮不再犯，见下 Q1</td></tr>
+<tr><td><code>write/sourceNote.ts</code></td><td>页脚加编号（记录 7222 的家）</td><td>纸头副题删了，编号另立住所</td></tr>
+<tr><td><code>test/t689-页面指纹.json</code></td><td>重录改记录/撤销/恢复三页指纹</td><td>判据甲：声明改版式 <code>--declare-layout-change 993</code></td></tr>
+<tr><td><code>docs/skills/skill-bill/</code></td><td>补一页说明</td><td>归属件自己的目录</td></tr>
+</table>
+<p>不碰：<code>base-render</code>（只走 <code>base-paint/blocks</code> 的 <code>renderSheetFrame/renderSummaryHead/renderLedgerRows/sheetCss</code>，卡路里已验证的门）、采集页、查询域、历史产物。</p>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">第二步 · 结构设计</h2>
+<ul>
+<li>新块序（回执）：纸 <code>renderSheetFrame receipt+notch+cutLine</code> → 头 <code>renderSummaryHead</code>（金额唯一+印章已改动）→ 账 <code>renderLedgerRows</code>（分类/账户/账本/时间）→ 撤销真按钮 → 复制区（三选一+日志，原样）→ 页脚（来源+编号）。</li>
+<li>样式：<code>sheetCss()</code> 一行挂全，走 <code>sharedCssText</code>，不走 extraCss（硬口径）。</li>
+<li>转义：<code>escapeHtml</code> 公共层那一份；账户名重点色由组件 tone 出，不自拼 span。</li>
+<li>文件对外：模板件只出块序，场景件只出差异值；新增导出零个（接口不增）。</li>
+</ul>
+</div>
+
+<div class="card">
+<h2 style="margin:0 0 8px;font-size:18px">要你拍的三件事</h2>
+<div class="q"><b>Q1.</b> 撤销做成真按钮（点即复制撤销命令），等于把 #733 那枚“非交互标记”改回去——守的是 spirit（无死按钮）不是 letter。可以吗？<br><b>Q2.</b> 撤销/恢复两支同住一个模板，改完三页指纹一起变（内容各守各的结果表，只换纸和头）。一起跟吗？<br><b>Q3.</b> 详情页（v6/v7满意那份）这次不动，只落回执。对吗？</div>
+</div>
+
+<p class="foot">验证：指纹重录声明 993 + 乙门 + 告警线 sync + 真跑 bill.record.detail 7222 对数。编译测试走 run-locked 排队。</p>
+</div>
+</body>
+</html>
