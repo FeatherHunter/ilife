@@ -39,7 +39,7 @@ import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { installmentPreview, installmentShares } from './installmentPreview.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell } from './pageParts.js';
+import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
@@ -117,6 +117,8 @@ export interface InstallmentSpec {
   readonly receiptNoSharesChip: string;
   /** 回执页：写入明细表的小标题。 */
   readonly receiptCaption: string;
+  /** 回执页：眉标场景名（1065 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
+  readonly receiptEyebrow?: string;
 }
 
 /** 场景件拿到手的两张页（`Scene` 的 `collect`／`receipt` 两格）。 */
@@ -339,7 +341,7 @@ function receiptPage(spec: InstallmentSpec, input: ReceiptInput): string {
     state: spec.receiptState,
     next: spec.receiptNext,
   }) + pageNav(blocks) + pageBody(blocks);
-  return pageShell({
+  return writeReceiptShell(spec.receiptEyebrow, {
     docTitle: docTitleOf(spec.word + ' 回执'), title: spec.word, subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,
   });

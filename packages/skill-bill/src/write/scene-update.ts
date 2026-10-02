@@ -49,5 +49,6 @@ export const SCENE: Scene = {
     },
     receiptResult: 'none',
     receiptExit: 'undo',
+    receiptBrand: '饼干记账 · ' + WAKE,
   }),
 };

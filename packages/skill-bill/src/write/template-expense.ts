@@ -112,7 +112,7 @@ export interface ExpenseSpec {
   readonly cards: CardsStyle;
   /** 回执页：明细表的小标题。 */
   readonly receiptCaption: string;
-  /** 回执页：眉标场景名（1059 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
+  /** 回执页：眉标场景名（1059+1065 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
   readonly receiptEyebrow?: string;
 }
 

@@ -98,7 +98,7 @@ export interface UpdateSpec {
   readonly receiptResult: 'none' | 'undo' | 'restore';
   /** 回执页：退出口那枚给哪件事（`undo`＝「撤销这一笔」；`restore`＝「恢复这一笔」）。 */
   readonly receiptExit: 'undo' | 'restore';
-  /** 回执页：店头品牌行（1059 落地页才给＝`饼干记账 · <场景>`；不给＝通用域品牌行，老页指纹不动）。 */
+  /** 回执页：店头品牌行（1059+1065 落地页才给＝`饼干记账 · <场景>`；不给＝通用域品牌行，老页指纹不动）。 */
   readonly receiptBrand?: string;
 }
 

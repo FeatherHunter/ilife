@@ -153,5 +153,6 @@ export const SCENE: Scene = {
         icon: 'ok',
       };
     },
+    receiptEyebrow: WORD,
   }),
 };

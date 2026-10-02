@@ -50,5 +50,6 @@ export const SCENE: Scene = {
     receiptFeedbackDetail: '每期日期＝每月同日，该月没有那一天就回退月末。改期数走「改记录」。',
     receiptNoSharesChip: '缺分期参数，未分摊，这一笔仍已记下',
     receiptCaption: '写进去的项与值',
+    receiptEyebrow: WORD,
   }),
 };

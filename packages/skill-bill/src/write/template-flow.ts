@@ -137,7 +137,7 @@ export interface FlowSpec {
   readonly receiptTail: (input: ReceiptInput) => readonly KpiCardInput[];
   /** 回执页：#tag 流转条那一块。 */
   readonly receiptNote: (input: ReceiptInput) => FlowNote;
-  /** 回执页：眉标场景名（1059 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
+  /** 回执页：眉标场景名（1059+1065 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
   readonly receiptEyebrow?: string;
 }
 
