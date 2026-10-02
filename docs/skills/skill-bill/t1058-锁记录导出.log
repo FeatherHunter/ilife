@@ -1,0 +1,12 @@
+START ticket=1058 runId=4287fcf2-709e-471e-a6b1-1e67ba42f73a cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=11636 at=2026-10-02T15:10:06.799Z
+RUN ticket=1058 runId=4287fcf2-709e-471e-a6b1-1e67ba42f73a cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=11636 at=2026-10-02T15:10:06.901Z
+START ticket=1058 runId=3d5441e5-7dc5-46b5-b9d1-1bc4913de0dd cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 pid=59468 at=2026-10-02T15:10:10.822Z
+RUN ticket=1058 runId=3d5441e5-7dc5-46b5-b9d1-1bc4913de0dd cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 exit=1 pid=59468 at=2026-10-02T15:10:14.140Z
+START ticket=1058 runId=0c7b382d-90e3-43c0-b14f-739a1cd1a00d cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=5536 at=2026-10-02T15:10:19.506Z
+RUN ticket=1058 runId=0c7b382d-90e3-43c0-b14f-739a1cd1a00d cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=5536 at=2026-10-02T15:10:19.606Z
+START ticket=1058 runId=22bf9321-e347-4cd1-87d1-834dfea9f6b3 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=40388 at=2026-10-02T15:10:19.695Z
+RUN ticket=1058 runId=22bf9321-e347-4cd1-87d1-834dfea9f6b3 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=40388 at=2026-10-02T15:10:19.824Z
+START ticket=1058 runId=7b84da38-577c-46c9-9e40-bc1457c3da5e cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=31492 at=2026-10-02T15:10:25.593Z
+RUN ticket=1058 runId=7b84da38-577c-46c9-9e40-bc1457c3da5e cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=31492 at=2026-10-02T15:10:39.419Z
+START ticket=1058 runId=d944d74e-bc66-4633-bbc3-72a4fd47ee87 cmd="node .scratch/t1058/b-truerun.mjs" waitedMs=10002 pid=62052 at=2026-10-02T15:11:07.058Z
+RUN ticket=1058 runId=d944d74e-bc66-4633-bbc3-72a4fd47ee87 cmd="node .scratch/t1058/b-truerun.mjs" waitedMs=10002 exit=0 pid=62052 at=2026-10-02T15:11:12.030Z
