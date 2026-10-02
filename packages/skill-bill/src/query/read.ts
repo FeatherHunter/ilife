@@ -342,7 +342,6 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
       row,
       envelope: detailEnvelope(key, data),
       source: SOURCE_QUERY,
-      sourceText: SOURCE_TEXT_QUERY,
       actionAt: actionStamp(),
     }),
   };

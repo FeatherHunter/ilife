@@ -120,10 +120,11 @@ const KV_CSS = [
  *  一并删掉——**删的是失效的补丁，不是那条版面意图**（那颗钮已经不存在了）。 */
 
 /** #993 票据纸两页（原型 `bill-993-proto-receipt-7222-v5.html` 与 `…-detail-7222-v7.html`）
- *  的**页面家具样式**：桌、店头、虚线分隔、段标题、主数字块、明细卡、按钮、页脚。
+ *  的**页面家具样式**：桌、店头、虚线分隔、段标题、主数字块、明细卡、按钮。
+ *  （纸外页脚已按用户要求撤掉，`ticketFoot` 及其样式一并删除，不留死代码。）
  *
  *  为什么住本件：这些选择器全部由本包产出（`assembleSheetPage` 的族根类 ＋ `sheetHead`／
- *  `ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions`／`ticketFoot` 这几个产出器），
+ *  `ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions` 这几个产出器），
  *  按「样式随它的选择器」的仓规，样式与产出器同住一件。
  *
  *  取值口径（三条，逐条可查原型）：
@@ -154,9 +155,8 @@ const TICKET_CSS = [
   '  line-height: normal;',
   '  -webkit-font-smoothing: antialiased;',
   '}',
-  '/* 纸与页脚同宽（原型 `.page` 的 440px 版心；桌的内距由上面那条给）。 */',
-  '.ilife-bill-sheet-page > section,',
-  '.ilife-ticket-foot { width: 100%; max-width: 440px; }',
+  '/* 纸宽（原型 `.page` 的 440px 版心；桌的内距由上面那条给）。 */',
+  '.ilife-bill-sheet-page > section { width: 100%; max-width: 440px; }',
   '/* 原型 `*{box-sizing:border-box}` 的作用域版：只在本族根类之下（其余 29 页零命中）。 */',
   '.ilife-bill-sheet-page *,',
   '.ilife-bill-sheet-page *::before,',
@@ -230,11 +230,6 @@ const TICKET_CSS = [
   '.ilife-bill-sheet-page .ilife-copy-menu-item { min-height: 44px; padding: 10px 12px; border-radius: var(--ilife-radius-sm); font-size: 13.5px; font-weight: 700; color: var(--ilife-ink); }',
   '.ilife-bill-sheet-page .ilife-copy-menu-item > .ilife-copy-menu-label { font-size: 13.5px; font-weight: 700; color: var(--ilife-ink); }',
   '.ilife-bill-sheet-page .ilife-copy-menu-item > .ilife-copy-menu-hint { font-size: 11.5px; font-weight: 600; color: var(--ilife-ink-2); }',
-  '/* 页脚（原型 `.foot-note`）：纸外居中一行小字——来源脚注与记录编号落在这里。',
-  '   行高两页不同（原型如此）：详情 1.7（那一段是三行长文）、回执不写行高（单行）。 */',
-  '.ilife-ticket-foot { padding: 10px 0 2px; text-align: center; }',
-  '.ilife-ticket-foot .ilife-block-caliber { margin: 0; justify-content: center; color: var(--ilife-ink-3); font-size: 11.5px; line-height: 1.7; letter-spacing: .4px; }',
-  '.ilife-ticket-receipt .ilife-ticket-foot .ilife-block-caliber { line-height: normal; }',
   '/* 窄档（原型 390 档；仓内既有断点取 400）：桌内距与纸内距收一档、主数字收一档。 */',
   '@media (max-width: 400px) {',
   '  .ilife-bill-sheet-page { padding: 18px 10px 36px; }',
@@ -273,11 +268,6 @@ export function ticketSummary(summaryHtml: string, extraHtml: string): string {
 /** 按钮区（原型 `.actions`）：主按钮／复制区整行堆叠。 */
 export function ticketActions(content: string): string {
   return '<div class="ilife-ticket-actions">' + content + '</div>';
-}
-
-/** 纸外的页脚（原型 `.foot-note`）：来源脚注与记录编号居中落在纸上（不占纸面）。 */
-export function ticketFoot(lines: readonly string[]): string {
-  return '<div class="ilife-ticket-foot">' + lines.join('') + '</div>';
 }
 
 /** 主按钮（原型 `.btn-primary`）：**带复制载荷的整行实心按钮**。

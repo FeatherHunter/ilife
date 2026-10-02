@@ -12,7 +12,7 @@
  *     diff 表／说明块／一行口径／不出）→ 复制 prompt 区 ● → 复制区 ● → 来源脚注 ●（#688 §五 第 26 行）
  *   回执页（一纸）：店头（品牌行＋改动结论标题）● → 主数字头 ●（金额唯一＋印章）→ 改后落点账目 ● →
  *     结果表 ○（撤销＝撤销标记对照、恢复＝标记现值；改记录不出）→ 退出口真按钮 ○ →
- *     复制区 ● → 来源脚注＋编号 ●
+ *     复制区 ●（纸外页脚已按用户要求撤掉）。
  * 谁在用（三个调用点，指名）：`src/write/scene-{update,undo,restore}.ts`——各件的 `Scene.collect`／`Scene.receipt`
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
@@ -33,10 +33,10 @@ import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
-import { assembleSheetPage, sheetHead, ticketActions, ticketFoot, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
+import { assembleSheetPage, sheetHead, ticketActions, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
 import { exitCopyOf, landedRows, receiptStamp, receiptTitle, UNDO_CALIBER } from './receiptSheet.js';
-import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
+import { collectSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
@@ -279,8 +279,8 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
 /** 结果型回执页（一纸 #993 v5）：店头＋主数字＋落点账目＋结果表＋退出口真按钮＋复制区。
- *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住页脚）；
- *  来源脚注与记录编号按 v5 原型落在**纸外**那一行居中页脚（`.ilife-ticket-foot`）。 */
+ *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住落点账目行内）；
+ *  纸外页脚（来源脚注＋编号）已按用户要求撤掉（用户 2026-10-02 点名删除）。 */
 function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
@@ -319,10 +319,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   });
   return assembleSheetPage({
     docTitle: docTitleOf(spec.wake + ' 回执'),
-    bodyHtml: content + ticketFoot([
-      receiptSourceNote(input.facts.time, receipt.affectedRows),
-      receipt.recordId === null ? '' : renderCaliberLine('记录编号 ' + receipt.recordId),
-    ]),
+    bodyHtml: content,
     paper: 'receipt',
   });
 }
