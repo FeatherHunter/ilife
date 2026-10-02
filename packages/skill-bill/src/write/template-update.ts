@@ -284,7 +284,7 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
 function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
-  const exit = exitCopyOf(spec.receiptExit, spec.key, receipt.recordId);
+  const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
   const result = resultBlock(spec, receipt);
   const paper = sheetHead(EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
     + ticketRule()

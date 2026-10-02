@@ -9,7 +9,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import type { BillReceipt } from '../shared/writeParts.js';
-import { commandLine } from '../shared/writeParts.js';
+import { WRITE_DECLARATION } from './declaration.js';
 import { categoryLabelOf } from '../shared/category.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { fieldLabelOf } from './userWording.js';
@@ -67,18 +67,29 @@ export function landedRows(facts: SummaryFacts): readonly { readonly label: stri
  *  只给带撤销出口的两支（改记录／撤销）；恢复那一支不印这一句。 */
 export const UNDO_CALIBER = '撤销只打标、可恢复，原记录保留痕迹，不会物理删除。';
 
-/** 退出口真按钮的复制位（#993）：#733 杀的是无载荷死按钮，本位带撤销／恢复命令载荷。
- *  返回给模板件的是 `renderActionBar` 的 `copyData` 那一格，由模板件拼进行动条（按钮形态归公共层）。 */
+/** 退出口真按钮的复制位（#993）：#733 杀的是无载荷死按钮，本位带撤销／恢复的人话 prompt。
+ *  文案不另写第二份——逐字取写入域声明（`./declaration.js`，HELP 页上同一份）里
+ *  `write_undo`／`write_restore` 的 `prompt_template`，只把 `{{target}}` 填成这一笔的编号；
+ *  机器命令原文仍在复制日志第 4 段，人话与机器各走各的（#688 裁定）。
+ *  返回给模板件的是 `ticketPrimaryButton` 那一格，由模板件拼进行动条（按钮形态归公共层）。 */
+const EXIT_SCENE_OF = { undo: 'write_undo', restore: 'write_restore' } as const;
+
 export function exitCopyOf(
   exit: 'undo' | 'restore',
-  key: string,
   recordId: number | null,
 ): { readonly label: string; readonly actionId: string; readonly text: string } | null {
   if (recordId === null) return null;
   const isUndo = exit === 'undo';
+  const want = EXIT_SCENE_OF[exit];
+  let template: string | null = null;
+  for (const entry of WRITE_DECLARATION.entries) {
+    const scene = entry.scenes.find((s) => s.id === want);
+    if (scene !== undefined) { template = scene.prompt_template; break; }
+  }
+  if (template === null) throw new Error('receiptSheet: 写入域声明里找不到场景 `' + want + '`（退出口复制位无模板可用）');
   return {
     label: isUndo ? '撤销这一笔' : '恢复这一笔',
     actionId: isUndo ? 'ilife-undo-copy' : 'ilife-restore-copy',
-    text: commandLine(key, isUndo ? { op: 'undo', id: recordId } : { op: 'restore', id: recordId }),
+    text: template.replace('{{target}}', '记录编号 ' + recordId),
   };
 }
