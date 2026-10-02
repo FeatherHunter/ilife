@@ -38,8 +38,9 @@ export function actionStamp(): string {
   return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
 /** 复制数据三格式菜单里三项的用途提示（纯文本／JSON／CSV，顺序＝`COPY_FORMATS`）。
- *  格式名保留（那是数据格式本来的样子，不是内部标识），只说清它拿去做什么。 */
-const MENU_HINTS: readonly string[] = ['纯文本 粘贴给助手或自己看', 'JSON 结构化存档', 'CSV 表格导入'];
+ *  格式名保留（那是数据格式本来的样子，不是内部标识），只说清它拿去做什么。
+ *  1056 查询 v2.1 短句（`.scratch/1019-p-query` 菜单 small 三句逐字）：查询与写入同走本件，故写入页指纹随之变，随后重录归因。 */
+const MENU_HINTS: readonly string[] = ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'];
 
 /** `copyArea` 的可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {

@@ -1,23 +1,25 @@
 /** 查询域详情页装配件（#993 v7 小票化，也是本域页型表里「详情页」那一份的地址）：
- *  店头身份 → 主数字（金额／分类／时间）→ 账目全字段（编号／账户／账本／币种／创建时间／删除时间／状态，
- *  只印一遍）→ 备注明细（分行，实付行加粗）→ 复制区（纸外页脚已按用户要求撤掉）。
+ *  店头身份 → 主数字（金额／分类／时间）→ 结论逐字 → 账目全字段（编号／账户／账本／币种／创建时间／删除时间／状态，
+ *  只印一遍）→ 备注明细（分行，实付行加粗）→ 单条 100% 占比条 → 复制区（纸外页脚已按用户要求撤掉）。
  *
  * 谁在用（一个调用点，指名）：`src/query/read.ts` 的 `viewRecordDetail`（查账单详情）——
  *   today／range／search 三支仍走 `./list.js` 的 `queryListDoc`，本件不动它们。
  *
- * 一数一处（#993）：金额分类时间住头里，编号只住账目行内；已撤销态的状态事实住印章与状态行，
- *  结论条与口径行不再另起（v7 原型冻结）。
+ * 一数一处（#993）：金额分类时间住头里，编号只住账目行内；已撤销态的状态事实住印章与状态行。
+ *  1056 查询 v2.1 落地：结论 `已入账，可复制三格式存档` 逐字（manifest w17）＋ 单条 100% 占比条
+ *  （`renderDistributionRows`，与列表页同一组件）＋ scale-note `单笔支出，占本笔 100%。`；
+ *  载荷 `item` 键不动。
  *
  * 备注分行 v1（#993 v7）：按空白拆行、原文顺序不动；含“实付”行标 pay 加粗。
  *  承认启发式：无分隔符的长备注退化成一行，不断错、不编造分段。
  */
-import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderConclusionBar, renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { categoryLabelOf } from '../shared/category.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { QUERY_EYEBROW } from './pageParts.js';
+import { QUERY_EYEBROW, queryStyleTag } from './pageParts.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
@@ -98,10 +100,22 @@ function remarkCard(note: string): string {
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
 }
 
-/** 查询详情页（一纸 #993 v7）。 */
+/** 详情结论逐字（1056 v2.1 manifest w17）：单笔已入账态，不随金额方向改。 */
+const DETAIL_CONCLUSION = '已入账，可复制三格式存档';
+/** 详情占比条注记逐字（1056 v2.1 w17 scale-note）：单笔 100%。 */
+const DETAIL_SCALE_NOTE = '单笔支出，占本笔 100%。';
+
+/** 详情单条 100% 占比条（与列表页同一组件 `renderDistributionRows`，载荷不动）。 */
+function detailScale(row: BillRow): string {
+  return renderDistributionRows({
+    rows: [{ label: row.category, value: row.amount.toFixed(2) + ' 元', pct: 100 }],
+  }) + '<p class="ilife-ticket-scale-note">' + DETAIL_SCALE_NOTE + '</p>';
+}
+
+/** 查询详情页（一纸 #993 v7 ＋ 1056 v2.1 结论与占比）。 */
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
-  const paper = sheetHead(QUERY_EYEBROW + ' · ' + input.wakeWord, '账单详情')
+  const paper = queryStyleTag() + sheetHead(QUERY_EYEBROW + ' · ' + input.wakeWord, '账单详情')
     + ticketRule()
     + ticketSummary(renderSummaryHead({
       eyebrow: '账单详情 · ' + directionWord(input.row.amount),
@@ -110,8 +124,11 @@ export function queryDetailDoc(input: QueryDetailInput): string {
       stamp: deleted ? { text: '已撤销', tone: 'danger' } : { text: '有效', tone: 'ok' },
       layout: 'ticket',
     }), summaryNote(input.row))
+    + renderConclusionBar(DETAIL_CONCLUSION)
     + ticketRule()
     + ticketSection({ title: '账本信息', tag: 'LEDGER', content: ledgerBlock(input.row, deleted) })
+    + ticketRule()
+    + ticketSection({ title: '分类占比', tag: 'SCALE', content: detailScale(input.row) })
     + ticketRule()
     + ticketSection({ title: '备注明细', tag: 'REMARK', content: remarkCard(input.row.note) })
     + ticketRule()

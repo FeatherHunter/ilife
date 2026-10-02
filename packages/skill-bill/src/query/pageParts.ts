@@ -14,6 +14,29 @@ import type { PageShellInput } from '../shared/pageShell.js';
 /** 查询域各页的眉标。 */
 export const QUERY_EYEBROW = '记账｜查询域';
 
+/** 1056 查询 v2.1 复制区新口径（块居中＋左缘对齐＋▾补位，查询域自家样式，不进共用位）。
+ *
+ *  基座标签写死故字面 ▾ 走 CSS `::after`（数据可见、日志隐藏补位）；三禁：零 `flex-start`、日志补位、
+ *  禁 border 三角且 open 不旋转、copied 藏 ▾。作用域限 `.ilife-list` 与 `.ilife-ticket-detail`，
+ *  写入域零命中（写入页指纹只随菜单文案变，CSS 文本不进写入产物）。
+ *  详情 scale-note 同值收在此（原型 `.scale-note`）。 */
+export const QUERY_COPY_CSS = [
+  '.ilife-list .ilife-block-copy-block, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
+  '.ilife-list .ilife-action-row-ghost, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  '.ilife-list .ilife-copy-menu-wrap, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
+  '.ilife-list .ilife-copy-btn, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
+  '.ilife-list .ilife-copy-menu-wrap > .ilife-copy-btn::after, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " ▾"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
+  '.ilife-list .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, .ilife-bill-sheet-page.ilife-ticket-detail .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
+  '.ilife-list [data-action-id="ilife-copy-log"]::after, .ilife-bill-sheet-page.ilife-ticket-detail [data-action-id="ilife-copy-log"]::after { content: " ▾"; visibility: hidden; margin-left: 6px; }',
+  '.ilife-list .ilife-copy-btn.copied::after, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-btn.copied::after { content: none !important; }',
+  '.ilife-ticket-scale-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ilife-ink-2); line-height: 1.6; }',
+].join('\n');
+
+/** 查询页内嵌样式：把本域 CSS 以 `<style>` 随正文走（不进共用 `extraCss`，写入产物逐字节不动）。 */
+export function queryStyleTag(): string {
+  return '<style>' + QUERY_COPY_CSS + '</style>';
+}
+
 /** 本域两张页型统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function queryPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
   return pageShell({ ...input, eyebrow: QUERY_EYEBROW });

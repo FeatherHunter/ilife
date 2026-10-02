@@ -34,7 +34,7 @@ import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
-import { queryPageShell as pageShell } from './pageParts.js';
+import { queryPageShell as pageShell, queryStyleTag } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { estimateBytes } from '../render/html.js';
@@ -183,9 +183,10 @@ function kpiCards(kpi: QueryKpi): readonly KpiCardInput[] {
 }
 
 /** 结论句一行（裁定 2／§五 第 3 行「结论句一行」，⑤ 类恒出）。说的**不是**读数卡那四个数
- *  （那是同一件事说两遍），而是「这批账主要是什么」这一句人话判定；没有支出时说清只有收入。 */
+ *  （那是同一件事说两遍），而是「这批账主要是什么」这一句人话判定；没有支出时说清只有收入。
+ *  1056 查询 v2.1 逐字（`.scratch/1019-p-query` manifest w00 结论）：空窗含下一步句。 */
 function conclusionOf(input: QueryListInput): string {
-  if (input.rows.length === 0) return '本窗没有记录。';
+  if (input.rows.length === 0) return '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。';
   const top = input.categories[0];
   if (top === undefined) return '本页只有收入，没有支出。';
   return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
@@ -244,13 +245,6 @@ function pageEnvelopeOf(input: QueryListInput, shownCount: number): Serializable
   };
 }
 
-/** 列表页的口径说明行（裁定 2）。用全角竖线分段：公共层按它拆段、段间分隔交给版式（t154-r3）。 */
-function listCaliber(): string {
-  return renderCaliberLine('笔数与收支合计按本窗全部记录算，转账不计进收支'
-    + '｜分类聚合的条长＝该分类支出占本页支出合计的比例'
-    + '｜均额＝该分类支出合计 ÷ 该分类笔数');
-}
-
 /** 通用查询列表页：一整页。块序在本件只写一份（`blocks` 既拼正文也派生导航）。
  *  **画多少条由体积算，不由死数定**（见 `PAGE_BYTE_BUDGET`）：判的是**真交付的那一串**，
  *  先试上限，放不下就二分找「放得下的最大条数」。 */
@@ -291,7 +285,7 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
       emptyText: input.emptyText,
     }) + '</div>';
   const blocks = blocksOf(input, table, hidden, shownCount);
-  const content = renderConclusionBar(conclusionOf(input)) + pageNav(blocks) + pageBody(blocks);
+  const content = queryStyleTag() + renderConclusionBar(conclusionOf(input)) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
     docTitle: DOC_TITLE + '·查询',
     title: input.wakeWord,
@@ -304,7 +298,7 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
   });
 }
 
-/** 正文块清单（**块序唯一定义地**）：结论句与页内导航之外的八块。导航由本清单派生（见 `../shared/pageSections.js`）。 */
+/** 正文块清单（**块序唯一定义地**）：结论句与页内导航之外的七块（1056 删 sec-caliber 口径块）。导航由本清单派生（见 `../shared/pageSections.js`）。 */
 function blocksOf(input: QueryListInput, table: string, hidden: number, shownCount: number): readonly PageBlock[] {
   const pageEnvelope = pageEnvelopeOf(input, shownCount);
   return [
@@ -316,7 +310,6 @@ function blocksOf(input: QueryListInput, table: string, hidden: number, shownCou
     { html: table, nav: { anchor: 'sec-records', navText: '记录' }, heading: '记录' },
     ...categoryRows(input),
     ...truncatedBlocks(hidden, input.rows.length, shownCount),
-    { html: listCaliber(), nav: { anchor: 'sec-caliber', navText: '读数口径' } },
     {
       html: copyArea({
         data: { envelope: pageEnvelope, title: input.wakeWord },
