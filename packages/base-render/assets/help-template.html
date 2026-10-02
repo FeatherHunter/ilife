@@ -2067,33 +2067,48 @@ document.getElementById('sheetClose').addEventListener('click', closeSheet);
    手法：弹层 bottom 上移（主）＋ .s-scroll 补滚（辅），被盖多少补多少；零差值即 no-op（方案 A 已生效
    时不重复下手）；关弹层清内联样式。
    落定判据＝帧稳定（连续 N 帧可视区高度不变），不用时间防抖——防抖与键盘动画赛跑，会在恰好要修的
-   设备上静默失效。scale !== 1（iOS 聚焦自动缩放）时两个坐标系不一致，直接跳过。 */
+   设备上静默失效。scale !== 1（iOS 聚焦自动缩放）时两个坐标系不一致，直接跳过。
+   锚点＝焦点输入框与 .s-actions 复制按钮两者中较低的那个：只量输入框的话，按钮恒比输入框底边还低
+   14px（输入框底边最多到弹层底往上 74px，按钮顶边在往上 60px），补完输入框按钮必留键盘下。
+   抬升同时限高：max-height 原按未收缩的 layout viewport 解析，不跟着收就会把弹层顶边顶出屏，
+   标题与 ✕ 够不着；限高后弹层内部才真可能出现切边，.s-scroll 补滚才不再是死代码。 */
 var kbFix = (function(){
   var vv = window.visualViewport;
   if (!vv) return null;                       /* 能力缺失＝整段 no-op */
-  var STABLE = 3, MAX_WAIT = 600;            /* 落定所需连续帧数／最大等待兜底 */
+  var STABLE = 3, MAX_WAIT = 600, MARGIN = 8;   /* 落定帧数／最大等待兜底／底边余量 */
   var base = 0, lift = 0, raf = 0, lastH = -1, same = 0, t0 = 0;
   function reset(){
     lift = 0; same = 0; t0 = 0; lastH = -1;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
     sheet.style.bottom = '';
+    sheet.style.maxHeight = '';
   }
   function apply(px){
     if (px === lift) return;                  /* 同值不动手 */
     if (!lift) base = parseFloat(getComputedStyle(sheet).bottom) || 0;   /* 抬升前记一次基线 */
     lift = px;
-    sheet.style.bottom = px > 0 ? (base + px) + 'px' : '';
+    if (px > 0){
+      sheet.style.bottom = (base + px) + 'px';
+      sheet.style.maxHeight = vv.height + 'px';   /* 顶边不出可视区 */
+    } else {
+      sheet.style.bottom = '';
+      sheet.style.maxHeight = '';
+    }
   }
   function correct(){
-    if (vv.scale && vv.scale !== 1) return;   /* 页面被放大：坐标系不一致，跳过 */
+    if (!sheet.classList.contains('show')) return;   /* 关闭态 translateY(105%) 不影响 :focus 命中，别量到假几何 */
+    if (vv.scale && vv.scale !== 1) return;          /* 页面被放大：坐标系不一致，跳过 */
     var el = sheet.querySelector('.pfield input:focus,.pfield select:focus');
-    if (!el) { apply(0); return; }
-    var edge = vv.offsetTop + vv.height;      /* 可视区下沿（layout 坐标） */
-    var over = el.getBoundingClientRect().bottom - edge;
-    if (!(over > 0)) { apply(0); return; }    /* 没被遮挡＝no-op */
+    if (!el) { apply(0); return; }                   /* 弹层内无焦点＝键盘不是为此弹层弹的 */
+    var bottom = el.getBoundingClientRect().bottom;
+    var row = sheet.querySelector('.s-actions');
+    if (row) bottom = Math.max(bottom, row.getBoundingClientRect().bottom);   /* 复制按钮更低，须一并够着 */
+    var edge = vv.offsetTop + vv.height;             /* 可视区下沿（layout 坐标） */
+    var over = bottom - edge + MARGIN;
+    if (!(over > 0)) { apply(0); return; }           /* 没被遮挡＝no-op */
     apply(Math.ceil(over));
     var sc = sheet.querySelector('.s-scroll');
-    if (sc) {                                 /* 辅：抬升后仍切到则补滚 */
+    if (sc) {                                        /* 辅：限高后弹层内部才可能真出现切边 */
       var r = el.getBoundingClientRect();
       var sr = sc.getBoundingClientRect();
       if (r.bottom > sr.bottom) sc.scrollTop += (r.bottom - sr.bottom);
