@@ -11,11 +11,28 @@
  */
 import { cardBlock, emptyHtml, factCardHtml, kpiGridHtml, mergedChips, tableCardHtml } from './cards.js';
 import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { isBTicket } from './ticket-b.js';
+import { ticketTablesBDoc } from './ticket-b-tables.js';
 import type { DocInput, TablesPage } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
+/** tables kind 到场景 id（本族 3 页全在 B 组 1066，无残留分支；按 params.kind，不写唤醒词字面）。 */
+function sceneIdOfTables(kind: unknown): string {
+  switch (typeof kind === 'string' ? kind : '') {
+    case 'debt': return 'debt';
+    case 'reimburse': return 'reimburse';
+    case 'installment': return 'installment';
+    default: return '';
+  }
+}
+
 export function tablesDoc(input: DocInput<TablesPage>): string {
   const r = input.result;
+  const kind = (input.params as Record<string, unknown>)['kind'];
+  const sceneId = sceneIdOfTables(kind);
+  if (sceneId !== '' && isBTicket(sceneId)) {
+    return ticketTablesBDoc(input, sceneId);
+  }
   const p = r.page;
   const nothing = p.kpis.length === 0
     && p.tables.every((t) => t.rows.length === 0) && p.factCards.every((c) => c.rows.length === 0);

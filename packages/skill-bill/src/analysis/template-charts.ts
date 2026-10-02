@@ -16,11 +16,29 @@
  */
 import { cardBlock, chartCardHtml, emptyHtml, factCardHtml, kpiGridHtml, listCardHtml, mergedChips } from './cards.js';
 import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { isBTicket } from './ticket-b.js';
+import { ticketChartsBDoc } from './ticket-b-charts.js';
 import type { ChartsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
+/** charts kind 到场景 id（本族 4 页全在 B 组 1066，无残留分支；按 params.kind，不写唤醒词字面）。 */
+function sceneIdOfCharts(kind: unknown): string {
+  switch (typeof kind === 'string' ? kind : '') {
+    case 'trend': return 'trend';
+    case 'category': return 'cat_trend';
+    case 'distribution': return 'distribution';
+    case 'anomaly': return 'anomaly';
+    default: return '';
+  }
+}
+
 export function chartsDoc(input: DocInput<ChartsPage>): string {
   const r = input.result;
+  const kind = (input.params as Record<string, unknown>)['kind'];
+  const sceneId = sceneIdOfCharts(kind);
+  if (sceneId !== '' && isBTicket(sceneId)) {
+    return ticketChartsBDoc(input, sceneId);
+  }
   const p = r.page;
   const nothing = p.kpis.length === 0 && p.charts.length === 0
     && p.listCards.every((c) => c.rows.length === 0) && p.factCards.every((c) => c.rows.length === 0);

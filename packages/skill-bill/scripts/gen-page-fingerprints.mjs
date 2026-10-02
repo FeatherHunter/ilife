@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /** t689 · 页面指纹账本（**判据甲的机器形态**，规格＝`packages/skill-bill/docs/t685-接口与判据.md` §2.1）。
  *
- * 它守的是什么：**改一次版式只动一处**——写域 16 条词的 32 张页（采集／回执）各留一枚指纹；
+ * 它守的是什么：**改一次版式只动一处**——写域 16 条词的 32 张页（采集／回执）＋
+ *   1066 起分析 B 组 12 张页（整页）各留一枚指纹；44 张共账本；
  *   此后任何一次改动，跑 `--check` 就能读出「哪几张页的产物变了」。判读三件（人工按读数核）：
  *     甲-1 改版式只动一个文件（`git diff --name-only` 只出现该版式所属那一份模板件）；
  *     甲-2/3 未受影响的页指纹不变、受影响的页恰好等于该模板盖住的那一族（本脚本的 `--check` 给差异集）。
@@ -29,7 +30,9 @@ const LEDGER = join(PKG_ROOT, 'test', 't689-页面指纹.json');
 const BIN = join(PKG_ROOT, 'dist', 'cli', 'cmd_read.js');
 
 /** 32 张页的夹具：16 条词 × 采集／回执两页，**与 t410 验收墙清单 `.scratch/t410-wall/manifest.json` 逐条同参**
- *  （`[唤醒词, 采集｜回执, 命令, 参数, 铺底词?]`；铺底词那三页先把一笔记录写进库再取它的编号）。 */
+ *  （`[唤醒词, 采集｜回执, 命令, 参数, 铺底词?]`；铺底词那三页先把一笔记录写进库再取它的编号）。
+ * 1066 起扩面 12 张分析页（B 组 a14-a25，`[唤醒词, 整页, 命令, 参数]`；同一库上接着写域 32 张之后跑，
+ *  参数固定、窗口固定，空态也稳定；分析页单整页，无采集／回执之分）。 */
 const FIXTURE_TIME = '2026-09-14 12:00:00';
 const PAGES = [
   ['记支出', '采集', 'bill.record.add', { kind: 'expense' }],
@@ -64,6 +67,19 @@ const PAGES = [
   ['撤销', '回执', 'bill.record.update', { op: 'undo' }, '撤销'],
   ['恢复', '采集', 'bill.record.update', { op: 'restore' }],
   ['恢复', '回执', 'bill.record.update', { op: 'restore' }, '恢复'],
+  // 1066 扩面：B 组 12 页（a14-a25；同一库、固定参数；空态稳定 exit 0）。
+  ['看趋势', '整页', 'bill.analysis.trend', { kind: 'trend', months: 6 }],
+  ['看分类趋势', '整页', 'bill.analysis.trend', { kind: 'category', category: '餐饮', months: 6 }],
+  ['看大额', '整页', 'bill.analysis.trend', { kind: 'top', limit: 5 }],
+  ['看高频', '整页', 'bill.analysis.trend', { kind: 'frequent', limit: 5 }],
+  ['看分布', '整页', 'bill.analysis.trend', { kind: 'distribution', month: '2026-09' }],
+  ['看活跃', '整页', 'bill.analysis.trend', { kind: 'activity' }],
+  ['看洞察', '整页', 'bill.analysis.trend', { kind: 'insight', months: 6 }],
+  ['看异常', '整页', 'bill.analysis.trend', { kind: 'anomaly', months: 6 }],
+  ['看借贷', '整页', 'bill.analysis.trend', { kind: 'debt' }],
+  ['看报销', '整页', 'bill.analysis.trend', { kind: 'reimburse' }],
+  ['看分期', '整页', 'bill.analysis.trend', { kind: 'installment' }],
+  ['看退款', '整页', 'bill.analysis.trend', { kind: 'refund' }],
 ];
 
 const argv = process.argv.slice(2);
@@ -157,7 +173,7 @@ if (!MODE_WRITE) {
       + '并把上面的差异集与「改动只动一个模板件」的读数一起写进证据。');
     process.exit(1);
   }
-  console.log('PASS: 32 张页指纹与账本一致');
+  console.log('PASS: ' + total + ' 张页指纹与账本一致');
   process.exit(0);
 }
 

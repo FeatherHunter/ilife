@@ -1,0 +1,68 @@
+START ticket=1066 runId=95c74df4-1f13-4d02-b032-b0f87b752722 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=55716 at=2026-10-02T16:46:08.862Z
+RUN ticket=1066 runId=95c74df4-1f13-4d02-b032-b0f87b752722 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=55716 at=2026-10-02T16:46:08.960Z
+START ticket=1066 runId=cabb4e1e-68a7-4e49-b49b-992228463ed9 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 pid=29944 at=2026-10-02T16:46:12.185Z
+RUN ticket=1066 runId=cabb4e1e-68a7-4e49-b49b-992228463ed9 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 exit=1 pid=29944 at=2026-10-02T16:46:15.577Z
+START ticket=1066 runId=373ebec3-0db0-4148-b249-155fc10deaaa cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=52548 at=2026-10-02T16:46:22.721Z
+RUN ticket=1066 runId=373ebec3-0db0-4148-b249-155fc10deaaa cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=52548 at=2026-10-02T16:46:22.814Z
+START ticket=1066 runId=dfcb36b4-70c6-4086-b3d5-31ed01b2f623 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=28264 at=2026-10-02T16:46:22.900Z
+RUN ticket=1066 runId=dfcb36b4-70c6-4086-b3d5-31ed01b2f623 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=28264 at=2026-10-02T16:46:23.022Z
+START ticket=1066 runId=b4dce988-8ee7-4c5c-b7e4-a40d3579c89b cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=67108 at=2026-10-02T16:46:23.071Z
+RUN ticket=1066 runId=b4dce988-8ee7-4c5c-b7e4-a40d3579c89b cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=67108 at=2026-10-02T16:46:36.337Z
+START ticket=1066 runId=f9bad97b-ee2b-4d30-8768-164e0012d196 cmd="node -e console.log(\\ lock-ok\\)" waitedMs=0 pid=21644 at=2026-10-02T16:47:15.160Z
+RUN ticket=1066 runId=f9bad97b-ee2b-4d30-8768-164e0012d196 cmd="node -e console.log(\\ lock-ok\\)" waitedMs=0 exit=1 pid=21644 at=2026-10-02T16:47:15.237Z
+START ticket=1066 runId=dc58437e-1777-4160-a789-8870d2f37710 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=67116 at=2026-10-02T16:48:38.872Z
+RUN ticket=1066 runId=dc58437e-1777-4160-a789-8870d2f37710 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=67116 at=2026-10-02T16:48:38.991Z
+START ticket=1066 runId=72666fe5-2bdb-48fd-a417-f4700887c462 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 pid=43032 at=2026-10-02T16:48:42.879Z
+RUN ticket=1066 runId=72666fe5-2bdb-48fd-a417-f4700887c462 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 exit=1 pid=43032 at=2026-10-02T16:48:46.359Z
+START ticket=1066 runId=9b056265-262d-4a1f-9386-fc83a9bf06b2 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=53572 at=2026-10-02T16:48:49.450Z
+RUN ticket=1066 runId=9b056265-262d-4a1f-9386-fc83a9bf06b2 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=53572 at=2026-10-02T16:48:49.533Z
+START ticket=1066 runId=5161c409-480b-45b6-9108-66254f69e56c cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=50032 at=2026-10-02T16:48:52.355Z
+RUN ticket=1066 runId=5161c409-480b-45b6-9108-66254f69e56c cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=50032 at=2026-10-02T16:48:52.480Z
+START ticket=1066 runId=d822e764-01d4-4fed-980e-e020fab20752 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=60952 at=2026-10-02T16:48:57.740Z
+RUN ticket=1066 runId=d822e764-01d4-4fed-980e-e020fab20752 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=60952 at=2026-10-02T16:49:12.215Z
+START ticket=1066 runId=26a4e674-0348-48fe-9f41-d1449dec5e4f cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=40856 at=2026-10-02T17:03:29.945Z
+RUN ticket=1066 runId=26a4e674-0348-48fe-9f41-d1449dec5e4f cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=1 pid=40856 at=2026-10-02T17:03:30.862Z
+START ticket=1066 runId=1a5094fc-635a-491b-ad73-4ba4547376ca cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=34984 at=2026-10-02T17:03:43.367Z
+RUN ticket=1066 runId=1a5094fc-635a-491b-ad73-4ba4547376ca cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=34984 at=2026-10-02T17:03:44.245Z
+START ticket=1066 runId=940b6760-5f62-494c-ba31-0d15b39a7bb4 cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=0 pid=19804 at=2026-10-02T17:04:27.405Z
+RUN ticket=1066 runId=940b6760-5f62-494c-ba31-0d15b39a7bb4 cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=0 exit=1 pid=19804 at=2026-10-02T17:04:32.449Z
+START ticket=1066 runId=4180f585-18a3-429e-ba2c-25664d3b5514 cmd="node packages/skill-bill/dist/cli/cmd_read.js bill.analysis.overview --params \"{\\\\\"kind\\\\\":\\\\\"monthly\\\\\",\\\\\"month\\\\\":\\\\\"2026-05\\\\\"}\" --html D:\\Temp/t1066-monthly.html" waitedMs=0 pid=42884 at=2026-10-02T17:06:10.263Z
+RUN ticket=1066 runId=4180f585-18a3-429e-ba2c-25664d3b5514 cmd="node packages/skill-bill/dist/cli/cmd_read.js bill.analysis.overview --params \"{\\\\\"kind\\\\\":\\\\\"monthly\\\\\",\\\\\"month\\\\\":\\\\\"2026-05\\\\\"}\" --html D:\\Temp/t1066-monthly.html" waitedMs=0 exit=2 pid=42884 at=2026-10-02T17:06:10.567Z
+START ticket=1066 runId=6e6a404f-7594-4859-a747-109ce17a9728 cmd="node .scratch/t1066/mark.mjs" waitedMs=0 pid=55232 at=2026-10-02T17:06:22.989Z
+RUN ticket=1066 runId=6e6a404f-7594-4859-a747-109ce17a9728 cmd="node .scratch/t1066/mark.mjs" waitedMs=0 exit=0 pid=55232 at=2026-10-02T17:06:23.998Z
+START ticket=1066 runId=7e4daf23-e6b7-4cb2-9154-505825b5ad48 cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=1 pid=55004 at=2026-10-02T17:06:36.064Z
+RUN ticket=1066 runId=7e4daf23-e6b7-4cb2-9154-505825b5ad48 cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=1 exit=1 pid=55004 at=2026-10-02T17:06:41.177Z
+START ticket=1066 runId=755c1019-5d50-4b9a-abf1-65e8ca6bcf3d cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=1 pid=54336 at=2026-10-02T17:07:03.376Z
+RUN ticket=1066 runId=755c1019-5d50-4b9a-abf1-65e8ca6bcf3d cmd="node .scratch/t1066/b-truerun.mjs" waitedMs=1 exit=0 pid=54336 at=2026-10-02T17:07:08.474Z
+START ticket=1066 runId=82ebb1ac-b7cb-4519-bb8d-6b39b599dcb1 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 pid=9512 at=2026-10-02T17:07:24.501Z
+RUN ticket=1066 runId=82ebb1ac-b7cb-4519-bb8d-6b39b599dcb1 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 exit=0 pid=9512 at=2026-10-02T17:07:27.886Z
+START ticket=1066 runId=67be5492-6e61-466f-83db-dd8d0ad6c633 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --write --declare-layout-change 1066" waitedMs=0 pid=67812 at=2026-10-02T17:08:27.260Z
+RUN ticket=1066 runId=67be5492-6e61-466f-83db-dd8d0ad6c633 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --write --declare-layout-change 1066" waitedMs=0 exit=0 pid=67812 at=2026-10-02T17:08:45.300Z
+START ticket=1066 runId=4fff4469-3162-4191-baf6-75e02e9ed84a cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=27280 at=2026-10-02T17:08:53.095Z
+RUN ticket=1066 runId=4fff4469-3162-4191-baf6-75e02e9ed84a cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=27280 at=2026-10-02T17:09:11.227Z
+START ticket=1066 runId=b0e3a0a4-8acd-4660-b29f-51dcb6c0cbb8 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=53264 at=2026-10-02T17:09:49.856Z
+RUN ticket=1066 runId=b0e3a0a4-8acd-4660-b29f-51dcb6c0cbb8 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=53264 at=2026-10-02T17:09:49.962Z
+START ticket=1066 runId=c5be5ca2-0f15-470b-9915-3aebc4566f74 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=40672 at=2026-10-02T17:09:56.027Z
+RUN ticket=1066 runId=c5be5ca2-0f15-470b-9915-3aebc4566f74 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=40672 at=2026-10-02T17:09:56.132Z
+START ticket=1066 runId=965b4dfa-3c15-4963-aa22-e8755f5417ec cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=8160 at=2026-10-02T17:10:01.739Z
+RUN ticket=1066 runId=965b4dfa-3c15-4963-aa22-e8755f5417ec cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=8160 at=2026-10-02T17:10:01.857Z
+START ticket=1066 runId=d21a6f00-b099-4904-b177-05c546ed1335 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 pid=27288 at=2026-10-02T17:10:05.325Z
+RUN ticket=1066 runId=d21a6f00-b099-4904-b177-05c546ed1335 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=27288 at=2026-10-02T17:10:05.626Z
+START ticket=1066 runId=667e33dc-8a20-428c-aff4-ac02fdfa4343 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t721-域声明.test.mjs packages/skill-bill/test/cmd-registry-686.test.mjs packages/skill-bill/test/legacy-ratchet-686.test.mjs" waitedMs=0 pid=15296 at=2026-10-02T17:10:14.086Z
+RUN ticket=1066 runId=667e33dc-8a20-428c-aff4-ac02fdfa4343 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t721-域声明.test.mjs packages/skill-bill/test/cmd-registry-686.test.mjs packages/skill-bill/test/legacy-ratchet-686.test.mjs" waitedMs=0 exit=1 pid=15296 at=2026-10-02T17:10:50.435Z
+START ticket=1066 runId=f4525b48-d4c0-440c-be7f-83c637d962a1 cmd="node --test packages/skill-bill/test/cli.test.mjs packages/skill-bill/test/t905-delivery.test.mjs packages/skill-bill/test/render.test.mjs packages/skill-bill/test/t686-收紧守卫.test.mjs packages/skill-bill/test/t686-告警线门.test.mjs packages/skill-bill/test/policy.test.mjs packages/skill-bill/test/record-write.test.mjs" waitedMs=0 pid=27284 at=2026-10-02T17:11:50.844Z
+RUN ticket=1066 runId=f4525b48-d4c0-440c-be7f-83c637d962a1 cmd="node --test packages/skill-bill/test/cli.test.mjs packages/skill-bill/test/t905-delivery.test.mjs packages/skill-bill/test/render.test.mjs packages/skill-bill/test/t686-收紧守卫.test.mjs packages/skill-bill/test/t686-告警线门.test.mjs packages/skill-bill/test/policy.test.mjs packages/skill-bill/test/record-write.test.mjs" waitedMs=0 exit=1 pid=27284 at=2026-10-02T17:12:04.810Z
+START ticket=1066 runId=6c8d3918-422d-4469-9cff-fa6451ef17a2 cmd="node --test packages/skill-bill/test/record-write.test.mjs" waitedMs=1 pid=45204 at=2026-10-02T17:13:00.126Z
+RUN ticket=1066 runId=6c8d3918-422d-4469-9cff-fa6451ef17a2 cmd="node --test packages/skill-bill/test/record-write.test.mjs" waitedMs=1 exit=1 pid=45204 at=2026-10-02T17:13:10.652Z
+START ticket=1066 runId=9e610aa2-4c27-4381-b11d-29f044f8d1a1 cmd="node --test packages/skill-bill/test/t686-收紧守卫.test.mjs" waitedMs=0 pid=48624 at=2026-10-02T17:14:16.597Z
+RUN ticket=1066 runId=9e610aa2-4c27-4381-b11d-29f044f8d1a1 cmd="node --test packages/skill-bill/test/t686-收紧守卫.test.mjs" waitedMs=0 exit=1 pid=48624 at=2026-10-02T17:14:17.372Z
+START ticket=1066 runId=020db574-797d-4d3b-8ddf-df4a23d93d3b cmd="node --test packages/skill-bill/test/t686-收紧守卫.test.mjs" waitedMs=0 pid=67092 at=2026-10-02T17:15:58.789Z
+RUN ticket=1066 runId=020db574-797d-4d3b-8ddf-df4a23d93d3b cmd="node --test packages/skill-bill/test/t686-收紧守卫.test.mjs" waitedMs=0 exit=1 pid=67092 at=2026-10-02T17:15:59.621Z
+START ticket=1066 runId=da528a50-6f59-4b88-93e8-0489ed81dd44 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=28568 at=2026-10-02T17:16:42.407Z
+RUN ticket=1066 runId=da528a50-6f59-4b88-93e8-0489ed81dd44 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=28568 at=2026-10-02T17:16:42.509Z
+START ticket=1066 runId=a30c7156-f532-42f1-922a-1d7261d761c1 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 pid=42888 at=2026-10-02T17:16:42.571Z
+RUN ticket=1066 runId=a30c7156-f532-42f1-922a-1d7261d761c1 cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=42888 at=2026-10-02T17:16:42.869Z
+START ticket=1066 runId=74f6e429-d765-45d1-bdf2-a5b34c345ab1 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=67908 at=2026-10-02T17:16:42.917Z
+RUN ticket=1066 runId=74f6e429-d765-45d1-bdf2-a5b34c345ab1 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=67908 at=2026-10-02T17:16:43.037Z
+START ticket=1066 runId=1b690aef-33b7-4912-81fb-12e4290f872a cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t721-域声明.test.mjs packages/skill-bill/test/legacy-ratchet-686.test.mjs packages/skill-bill/test/cmd-registry-686.test.mjs" waitedMs=0 pid=30180 at=2026-10-02T17:16:46.898Z
+RUN ticket=1066 runId=1b690aef-33b7-4912-81fb-12e4290f872a cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t721-域声明.test.mjs packages/skill-bill/test/legacy-ratchet-686.test.mjs packages/skill-bill/test/cmd-registry-686.test.mjs" waitedMs=0 exit=1 pid=30180 at=2026-10-02T17:17:25.230Z

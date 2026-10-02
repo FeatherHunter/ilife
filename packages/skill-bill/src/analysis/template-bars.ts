@@ -25,10 +25,12 @@
 import { barGroupHtml, cardBlock, chartCardHtml, emptyHtml, factCardHtml, kpiGridHtml, listCardHtml, mergedChips } from './cards.js';
 import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf, money, pctText } from './pageParts.js';
 import { isATicket, ticketBarsDoc } from './ticket.js';
+import { isBTicket } from './ticket-b.js';
+import { ticketBarsBDoc } from './ticket-b-bars.js';
 import type { BarsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
-/** A 组＋C 组 bars kind 到场景 id（分支唯一定义地，其余 4 页走老路；按 params.kind，不写唤醒词字面）。 */
+/** A 组＋C 组＋B 组 bars kind 到场景 id（分支唯一定义地；按 params.kind，不写唤醒词字面）。 */
 function sceneIdOfBars(kind: unknown): string {
   switch (typeof kind === 'string' ? kind : '') {
     case 'monthly': return 'monthly';
@@ -40,6 +42,10 @@ function sceneIdOfBars(kind: unknown): string {
     case 'account': return 'account';
     case 'ledger': return 'ledger';
     case 'structure': return 'structure';
+    case 'top': return 'top';
+    case 'frequent': return 'top_freq';
+    case 'activity': return 'activity';
+    case 'refund': return 'refund';
     default: return '';
   }
 }
@@ -151,6 +157,9 @@ export function barsDoc(input: DocInput<BarsPage>): string {
   const sceneId = sceneIdOfBars(kind);
   if (sceneId !== '' && isATicket(sceneId)) {
     return ticketBarsDoc(input, sceneId, extraLedgerOfBars(kind, input));
+  }
+  if (sceneId !== '' && isBTicket(sceneId)) {
+    return ticketBarsBDoc(input, sceneId);
   }
   const p = r.page;
   const nothing = p.kpis.length === 0 && p.charts.length === 0

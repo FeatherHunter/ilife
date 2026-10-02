@@ -65,7 +65,7 @@ describe('#729 · analysis 域：命令面与 25 条词', () => {
     assert.equal(REGISTRY['bill.analysis.overview'].shape, 'stat');
     assert.equal(REGISTRY['bill.analysis.compare'].shape, 'analysis');
     assert.equal(REGISTRY['bill.analysis.trend'].shape, 'analysis');
-    assert.equal(Object.keys(REGISTRY).length, 14, '注册表＝已迁移的十四条');
+    assert.equal(Object.keys(REGISTRY).length, 16, '注册表＝已迁移的十六条（1066 起：十四条＋数据族两条）');
   });
 
   it('25 条唤醒词逐条路由到本域三条命令', async () => {

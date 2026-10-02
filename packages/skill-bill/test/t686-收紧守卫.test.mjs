@@ -22,9 +22,9 @@ import { join, resolve } from 'node:path';
 import { FROZEN, PKG_DIR } from '../scripts/ratchet-frozen-686.mjs';
 
 const GUARD = join(PKG_DIR, 'scripts', 'check-ratchet-tight.mjs');
-/** 夹具用的注册表键集（**当刻已迁移的十四条**：写入 2／查询 4／账户 2／开始使用 1／目标 2／分析 3）。
- *  #729 同窗更新：本轮三条分析键搬进能力目录，夹具的注册表读数跟着涨到 14（与 `FROZEN.registryKeyCount` 同值）。 */
-const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend', 'bill.goal.query', 'bill.goal.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update', 'bill.setup.run'];
+/** 夹具用的注册表键集（**当刻已迁移的十六条**：写入 2／查询 4／账户 2／开始使用 1／目标 2／分析 3／数据 2）。
+ *  #960 数据族两条入注册表后夹具跟着涨到 16（与 `FROZEN.registryKeyCount` 同值；1066 起同步）。 */
+const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend', 'bill.data.query', 'bill.data.schema', 'bill.goal.query', 'bill.goal.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update', 'bill.setup.run'];
 
 /** 把一段正文补到恰好 `target` 个 LF（补的是注释行，不影响任何判据）。 */
 function padTo(body, target) {
@@ -38,7 +38,10 @@ function makeFixture(root, opt = {}) {
   const dispatchKeys = opt.dispatchKeys ?? FROZEN.dispatchKeys;
   const legacyKeys = opt.legacyKeys ?? FROZEN.legacyKeys;
   const registryKeys = opt.registryKeys ?? REGISTRY_KEYS;
-  const wakeKeys = opt.wakeKeys ?? [...new Set([...FROZEN.legacyKeys, ...REGISTRY_KEYS])].sort();
+  // #960 · 程序面不进词表：夹具的 WAKE_TABLE 与真包同口径（注册表非程序面 ∪ 未搬迁），程序面名单只认 `FROZEN.programKeys`。
+  // 注：此处故意用全局 `REGISTRY_KEYS` 而非本轮 `registryKeys`——换键变体（下文“计数不变但键被换了”）依赖 WAKE  stub 锚定全局名单。
+  const program = new Set(FROZEN.programKeys ?? []);
+  const wakeKeys = opt.wakeKeys ?? [...new Set([...FROZEN.legacyKeys, ...REGISTRY_KEYS.filter((k) => !program.has(k))])].sort();
   mkdirSync(join(root, 'src', 'cli'), { recursive: true });
   mkdirSync(join(root, 'src', 'render'), { recursive: true });
   mkdirSync(join(root, 'dist', 'cli'), { recursive: true });

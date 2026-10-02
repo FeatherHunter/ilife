@@ -16,17 +16,17 @@ function run(args) {
 }
 
 describe('t689 · 判据甲门：页面指纹账本', () => {
-  it('账本在仓（test/t689-页面指纹.json）且 32 页齐', () => {
+  it('账本在仓（test/t689-页面指纹.json）且 44 页齐（写域 32＋分析 B12）', () => {
     assert.ok(existsSync(LEDGER), '账本须入仓：' + LEDGER);
     const ledger = JSON.parse(readFileSync(LEDGER, 'utf8'));
-    assert.equal(Object.keys(ledger.pages).length, 32, '账本须记 32 张页');
+    assert.equal(Object.keys(ledger.pages).length, 44, '账本须记 44 张页');
   });
 
-  it('--check：当刻产物与账本逐页一致（RESULT 32/32、exit 0）', () => {
+  it('--check：当刻产物与账本逐页一致（RESULT 44/44、exit 0）', () => {
     const r = run(['--check']);
     assert.equal(r.status, 0, '门须绿：' + r.stdout + r.stderr);
-    assert.match(r.stdout, /RESULT: 32\/32/);
-    assert.match(r.stdout, /PASS: 32 张页指纹与账本一致/);
+    assert.match(r.stdout, /RESULT: 44\/44/);
+    assert.match(r.stdout, /PASS: 44 张页指纹与账本一致/);
   });
 
   it('重录必须声明票号：--write 不带 --declare-layout-change 即红，且不落盘', () => {

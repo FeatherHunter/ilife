@@ -1,4 +1,5 @@
-/** 分析域·A 组票据纸呈现（1057 落地：总览／对比组 8 页切票据纸 v2）。
+/** 分析域·A 组票据纸呈现（1057 落地：总览／对比组 8 页切票据纸 v2；1061 续 C 组 5 页；
+ *  1066 起 `ticketDoc` 复用给 B 组（见 `./ticket-b.ts`），本件其余只盖 A／C。
  *
  * 范围（票面 1057 名单，w09 留给 1056 查询域，本件不碰查询）：
  *   看月度／看年度／看总览／做统计（bars 族 4 页）＋ 看对比／看双区间／看同比／看分类对比（compare 族 4 页）。
@@ -15,8 +16,9 @@
  *   余数进落点（收入／净额／日均／两段支出／差最大，数字取自 kpi／sides／change）；明细 ol 文字与条宽
  *   取自既有 barGroups（pct 已按最大折算，与原型逐字节一致）；落点 S1／S3 保留（a01-a03 S1，a09-a13 S3）。
  *
- * 谁在用（两个调用点，指名）：`./template-bars.ts`（A 组 4 页分支）与 `./template-compare.ts`
- *   （本族 4 页全在 A 组，整族切）。本件不含块位序列（序列仍在各族模板件），只产票据纸段落。
+ * 谁在用（调用点，指名）：`./template-bars.ts`（A 组 4 页分支）与 `./template-compare.ts`
+ *   （本族 4 页全在 A 组，整族切）；`./ticket-b.ts`（B 组 12 页，复用下文 `ticketDoc` 装配）。
+ *   本件不含块位序列（序列仍在各族模板件），只产票据纸段落。
  */
 import { renderLedgerRows, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
@@ -154,12 +156,12 @@ function ledgerCompare(rows: readonly { k: string; v: string }[], id: string): s
   return renderLedgerRows({ rows: full, layout: 'ticket' });
 }
 
-/** 票据纸装配（A 组共用收口）：店头＋主数字＋落点＋明细＋口径＋复制＋来源＋导航，包进小票纸。
+/** 票据纸装配（A 组共用收口；1066 起导出给 `./ticket-b.ts` 复用，B 组同壳）：店头＋主数字＋落点＋明细＋口径＋复制＋来源＋导航，包进小票纸。
  *
  * 为保 t729 骨架判据（恰好一个导航＋一行来源脚注＋复制区），复制／来源／导航沿用老口径组件，
  * 只是包进 `assembleSheetPage`（ticket 纸）而不是 `analysisDocOf` 的页面壳。
  */
-function ticketDoc(input: {
+export function ticketDoc(input: {
   readonly docTitle: string;
   readonly wakeWord: string;
   readonly h2: string;

@@ -17,11 +17,18 @@
  */
 import { barGroupHtml, cardBlock, chartCardHtml, emptyHtml, factCardHtml, kpiGridHtml, listCardHtml } from './cards.js';
 import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { isBTicket } from './ticket-b.js';
+import { ticketInsightBDoc } from './ticket-b-insight.js';
 import type { DocInput, InsightPage } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
 export function insightDoc(input: DocInput<InsightPage>): string {
   const r = input.result;
+  const kind = (input.params as Record<string, unknown>)['kind'];
+  const sceneId = kind === 'insight' ? 'insight' : '';
+  if (sceneId !== '' && isBTicket(sceneId)) {
+    return ticketInsightBDoc(input, sceneId);
+  }
   const p = r.page;
   const nothing = p.kpis.length === 0 && p.charts.length === 0
     && p.barGroups.every((g) => g.rows.length === 0) && p.listCards.every((c) => c.rows.length === 0);
