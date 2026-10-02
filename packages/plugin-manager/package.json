@@ -1,6 +1,6 @@
 {
   "name": "dsh-life-pack",
-  "version": "0.3.27",
+  "version": "0.3.28",
   "description": "爱生活总管插件：单 DSH设置面板槽（爱生活卡）+ 爱生活页签槽 children，技能设置页动态聚合，不依赖单品、不 import 单品页",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,6 +47,7 @@
     "build": "npm run build:host && npm run build:client",
     "build:host": "tsc -b",
     "build:client": "tsdown",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc -p tsconfig.client.json",
     "test": "node --test test/*.test.mjs"
   },

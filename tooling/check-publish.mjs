@@ -151,6 +151,18 @@ function packDryRun(name) {
 }
 
 function gateTarball() {
+  // #986补：总管版本胶囊是构建期注入（tsdown define __LIFE_PACK_VERSION__），忘重建就发出旧串
+  // （实测 0.3.27 包里印 0.3.26）。G2 在这里多咬一条“产物新鲜度”：dist/client.js 必须含本包现版本号。
+  if (inScope('dsh-life-pack')) {
+    const want = pkgJson('dsh-life-pack').version;
+    const clientPath = join(pkgDir('dsh-life-pack'), 'dist', 'client.js');
+    if (!existsSync(clientPath)) fail('dsh-life-pack dist/client.js 缺席（先跑 npm run build 再打包）');
+    else {
+      const client = readFileSync(clientPath, 'utf8');
+      if (client.includes(want)) ok('dsh-life-pack dist/client.js 含现版本号 ' + want + '（注入新鲜）');
+      else fail('dsh-life-pack dist/client.js 不含现版本号 ' + want + '（构建产物过期：先跑 npm run build 再打包）');
+    }
+  }
   for (const s of SKILLS.filter(inScope)) {
     const out = packDryRun(s);
     if (!out) continue;
