@@ -28,7 +28,7 @@ import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { docTitleOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell } from './pageParts.js';
+import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
 import { blockedPromptOf, fieldCardOf, valuesOf } from './photoEscape.js';
 import { prefillNote, prefillOf } from './prefillNote.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
@@ -112,6 +112,8 @@ export interface ExpenseSpec {
   readonly cards: CardsStyle;
   /** 回执页：明细表的小标题。 */
   readonly receiptCaption: string;
+  /** 回执页：眉标场景名（1059 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
+  readonly receiptEyebrow?: string;
 }
 
 /** 场景件拿到手的两张页（`Scene` 的 `collect`／`receipt` 两格）。 */
@@ -288,7 +290,7 @@ function receiptPage(spec: ExpenseSpec, input: ReceiptInput): string {
   ];
   const content = typeBadge({ kind: spec.kind, status: 'ok', state: spec.receiptState, pageKind: '回执', next: spec.receiptNext(input) })
     + pageNav(blocks) + pageBody(blocks);
-  return pageShell({
+  return writeReceiptShell(spec.receiptEyebrow, {
     docTitle: docTitleOf(spec.word + ' 回执'),
     title: spec.word,
     subtitle: input.receipt.summary,

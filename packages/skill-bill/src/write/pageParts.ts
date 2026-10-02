@@ -140,7 +140,21 @@ export function probeOfReceipt(input: ReceiptInput): {
 /** 写入域各页的眉标：**只在本域写一次**（共用位 `shared/pageShell.ts` 不持「域名→取值」表，照守卫③b）。 */
 export const EYEBROW = '记账｜写入域';
 
+/** 写入域回执页的眉标（1059 落地 6 页）：中文场景名——`饼干记账｜<场景>`（冻结 ok 版品牌行逐字；禁 bill.* 码，照 1046②）。
+ *
+ * 取值只在本域写一次（同 `EYEBROW` 的守卫③b）；采集页仍走通用 `EYEBROW`。
+ * 未落地的老回执页不传这一件（模板里缺省回通用眉标），6 页之外零指纹波动。 */
+export function receiptEyebrowOf(word: string): string {
+  return '饼干记账｜' + word;
+}
+
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function writePageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
   return pageShell({ ...input, eyebrow: EYEBROW });
+}
+
+/** 回执页统一走它：给了场景词＝新口径眉标（`receiptEyebrowOf`），不给（`undefined`）＝通用域眉标。
+ *  1059 只给 6 页落地场景传词，老页一字不动。 */
+export function writeReceiptShell(word: string | undefined, input: Omit<PageShellInput, 'eyebrow'>): string {
+  return pageShell({ ...input, eyebrow: word === undefined || word.trim() === '' ? EYEBROW : receiptEyebrowOf(word) });
 }

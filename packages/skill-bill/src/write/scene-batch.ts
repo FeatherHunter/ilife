@@ -35,5 +35,6 @@ export const SCENE: Scene = {
     receiptCaliber: '本批一次只落一笔，回执里的编号就是它。',
     receiptRowsLabel: '这次记了几笔',
     receiptCaption: '本次写入',
+    receiptEyebrow: WORD,
   }),
 };

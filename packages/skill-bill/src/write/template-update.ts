@@ -98,6 +98,8 @@ export interface UpdateSpec {
   readonly receiptResult: 'none' | 'undo' | 'restore';
   /** 回执页：退出口那枚给哪件事（`undo`＝「撤销这一笔」；`restore`＝「恢复这一笔」）。 */
   readonly receiptExit: 'undo' | 'restore';
+  /** 回执页：店头品牌行（1059 落地页才给＝`饼干记账 · <场景>`；不给＝通用域品牌行，老页指纹不动）。 */
+  readonly receiptBrand?: string;
 }
 
 /** 场景件拿到手的两张页（`Scene` 的 `collect`／`receipt` 两格）。 */
@@ -286,7 +288,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const envelope = envelopeOf(spec.key, true, receipt.summary);
   const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
   const result = resultBlock(spec, receipt);
-  const paper = sheetHead(EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
+  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
     + ticketRule()
     + ticketSummary(renderSummaryHead({
       eyebrow: '改后金额 · ' + directionWord(input.facts.amount),

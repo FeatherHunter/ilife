@@ -27,7 +27,7 @@ import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell } from './pageParts.js';
+import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { money2, summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
@@ -137,6 +137,8 @@ export interface FlowSpec {
   readonly receiptTail: (input: ReceiptInput) => readonly KpiCardInput[];
   /** 回执页：#tag 流转条那一块。 */
   readonly receiptNote: (input: ReceiptInput) => FlowNote;
+  /** 回执页：眉标场景名（1059 落地页才给＝中文场景词；不给＝通用域眉标，老页指纹不动）。 */
+  readonly receiptEyebrow?: string;
 }
 
 /** 场景件拿到手的两张页（`Scene` 的 `collect`／`receipt` 两格）。 */
@@ -342,7 +344,7 @@ function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
   ];
   const content = typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', pageKind: '回执', next: '这一笔已记下，撤销见下方按钮。' })
     + pageNav(blocks) + pageBody(blocks);
-  return pageShell({
+  return writeReceiptShell(spec.receiptEyebrow, {
     docTitle: docTitleOf(spec.word + ' 回执'), title: spec.word, subtitle: receipt.summary,
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,
   });

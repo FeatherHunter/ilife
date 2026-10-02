@@ -48,5 +48,6 @@ export const SCENE: Scene = {
     dropDefaultHints: false,
     cards: 'generic-expense',
     receiptCaption: '写进去的项与值',
+    receiptEyebrow: WORD,
   }),
 };

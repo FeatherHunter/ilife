@@ -52,5 +52,6 @@ export const SCENE: Scene = {
     },
     receiptResult: 'restore',
     receiptExit: 'undo',
+    receiptBrand: '饼干记账 · ' + WAKE,
   }),
 };

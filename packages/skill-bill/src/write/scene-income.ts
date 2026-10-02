@@ -49,5 +49,6 @@ export const SCENE: Scene = {
     dropDefaultHints: true,
     cards: 'scene',
     receiptCaption: '本次写入',
+    receiptEyebrow: WORD,
   }),
 };

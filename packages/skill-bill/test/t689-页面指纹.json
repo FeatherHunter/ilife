@@ -2,15 +2,15 @@
   "note": "t689 页面指纹账本（归一化见 scripts/gen-page-fingerprints.mjs 件头）",
   "pages": {
     "记支出-采集": "369109f77ace874b7d106852f20eb0bf75ff7bcb441805c75d7fa2985ab4babd",
-    "记支出-回执": "66b1bb2e5b6a511ee5a8d34b32b61475aba843280ba9a0370d63cf539e8406cc",
+    "记支出-回执": "f4dd64d10d825a6ea0d666168d1b8e9c251948ad4ffa3be93be591c27b883e95",
     "记收入-采集": "ebdb1cd97fba61cf83f19028c42ea64ed5c6a51d0c7e625c473b6577173fd8bb",
-    "记收入-回执": "3e334ae7aa10073016bce46e6f0e0953189993a64002dfca092683298d46c61a",
+    "记收入-回执": "4112506afa4a582ff9cb9eab3eaf1709844d51c797af65f8435fa7de69ef4e2b",
     "拍账单-采集": "c5bd4aaa33b84f68a8fd5755fbc8424e8f25955b43f029aa5a93e1dcbcd2e139",
-    "拍账单-回执": "af5b37d1a2f15cb07dacb6c2274fa6c872b991ad6c5c1da4a6685bdd2fb12010",
+    "拍账单-回执": "b38bfdfc3a8999926e2d76c3c30ce5b995aedd5b6e93c071b3ffde550138b863",
     "批量录入-采集": "3fb28dbdb388d85af254f1a3c15a8284f5157f76b36291524c22c66ce64a9ebc",
-    "批量录入-回执": "d0bd5426819a85f4635d7f6baf429f22756008fff44835da106f5fb2b11dd9d0",
+    "批量录入-回执": "2228352682b5a3fafff097819d709a9400031e610f08bcbe12bbd50ac2ea897f",
     "记退款-采集": "ca8727a061d5d8e731e4c4cd4c93e54cb7835a6a394799f6357dddaa679037d6",
-    "记退款-回执": "16cfed7804713a0b82c87a569966e5368f2c67646328072a3d41ca833e521bcf",
+    "记退款-回执": "9af6dc225558ec372989d2d9f049ee71abfd1a960c78ebaf2d6972c8fd689212",
     "记报销-采集": "ea07cd05fb977620513af2a7c9c734a40c3b85b1d80b98b6c304d83a88c2037f",
     "记报销-回执": "c4a9ffb7d645e33fde9da519f7ed35406d786e73149eac992f03d19f53ec3013",
     "报销到账-采集": "64089262d0f7bae77733057b588b24b3912a8b1399bfb07bbec4ed1d4d36c6f2",
@@ -32,6 +32,6 @@
     "撤销-采集": "8e8057a596a940694a15ce6c7b43c9deb0785e8c69cfbaed20cef0c34ce2c27e",
     "撤销-回执": "7db4c608ef7ca8ab0581c6dcb2efe10c34c64084ffeafa6aa7c44cfb51736b23",
     "恢复-采集": "f2457171f4a2281c19c88a4a38ba123fdf95677d0ccc400b4a82351aa5bfc3b9",
-    "恢复-回执": "3e01a6fac354f904c15c6ac05e15d7af67efeb647e87ba5edca6c1471515a265"
+    "恢复-回执": "50b72e603331059231c4ad03ff42d11b9aeacce4fbeedef140933d72362c3b22"
   }
 }
