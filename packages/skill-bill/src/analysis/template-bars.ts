@@ -23,26 +23,103 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts`——`family === 'bars'` 那 13 个场景出页时调它。
  */
 import { barGroupHtml, cardBlock, chartCardHtml, emptyHtml, factCardHtml, kpiGridHtml, listCardHtml, mergedChips } from './cards.js';
-import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf } from './pageParts.js';
+import { NO_WINDOW, SOURCE_READ, analysisDocOf, docTitleOf, money, pctText } from './pageParts.js';
 import { isATicket, ticketBarsDoc } from './ticket.js';
 import type { BarsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
-/** A 组 bars kind 到场景 id（分支唯一定义地，其余 9 页走老路；按 params.kind，不写唤醒词字面）。 */
+/** A 组＋C 组 bars kind 到场景 id（分支唯一定义地，其余 4 页走老路；按 params.kind，不写唤醒词字面）。 */
 function sceneIdOfBars(kind: unknown): string {
   switch (typeof kind === 'string' ? kind : '') {
     case 'monthly': return 'monthly';
     case 'yearly': return 'yearly';
     case 'overview': return 'overview';
     case 'stats': return 'stats';
+    case 'week': return 'week';
+    case 'category': return 'category';
+    case 'account': return 'account';
+    case 'ledger': return 'ledger';
+    case 'structure': return 'structure';
     default: return '';
   }
 }
 
-/** A 组 bars 落点余数行（数字取自本次结果，只搬家）：总览加日均，统计加记账日／日均／首笔／最近。 */
+/** 首个条卡首行（C 组落点“支出最多／去得最多”只搬家：标签＋数值段＋占比段取自既有条卡文本，不重算）。 */
+function headBarOf(input: DocInput<BarsPage>): { label: string; amount: string; pct: string } | null {
+  const g = input.result.page.barGroups[0];
+  const row = g?.rows[0];
+  if (row === undefined) return null;
+  const segs = row.text.split(' · ');
+  return { label: row.label, amount: segs[0] ?? '', pct: segs[2] ?? '' };
+}
+
+/** “55.00 元”→55（落点比上周的差值只搬家：从事实卡上周支出解析，不重查库）。 */
+function parseAmount(v: string): number {
+  const n = Number(v.split(' ')[0]?.replace(/,/g, '') ?? '');
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** 环形图明细项（只搬家：从既有图卡 input 取 items，不重算；非环形或无 items 即空）。 */
+function donutItemsOf(card: { readonly kind: string; readonly input: unknown } | undefined): readonly { readonly label: string; readonly value: number }[] {
+  if (card === undefined || card.kind !== 'donut') return [];
+  const inp = card.input;
+  if (typeof inp !== 'object' || inp === null || !('items' in inp)) return [];
+  const items = (inp as { readonly items: unknown }).items;
+  if (!Array.isArray(items)) return [];
+  const out: { label: string; value: number }[] = [];
+  for (const it of items) {
+    if (typeof it !== 'object' || it === null) continue;
+    const rec = it as Record<string, unknown>;
+    if (typeof rec.label !== 'string' || typeof rec.value !== 'number' || !Number.isFinite(rec.value)) continue;
+    out.push({ label: rec.label, value: rec.value });
+  }
+  return out;
+}
+
+
+/** A 组余数行＋C 组整行式落点（数字取自本次结果，只搬家）：总览加日均，统计加记账日／日均／首笔／最近；C 组见分支。 */
 function extraLedgerOfBars(kind: unknown, input: DocInput<BarsPage>): readonly { k: string; v: string }[] {
   const p = input.result.page;
+  const kpi = input.result.kpi;
   const k = typeof kind === 'string' ? kind : '';
+  if (k === 'week') {
+    let last = 0;
+    for (const c of p.factCards) for (const row of c.rows) if (row.k === '上周支出') last = parseAmount(row.v);
+    const diff = Math.round((kpi.expense - last) * 100) / 100;
+    const pct = last === 0 ? 0 : Math.round((diff / last) * 1000) / 10;
+    const diffText = diff === 0 ? money(0) + ' 元（' + pctText(0) + '）'
+      : diff > 0 ? '+' + money(diff) + ' 元（' + pctText(Math.abs(pct)) + '）' : money(diff) + ' 元（' + pctText(Math.abs(pct)) + '）';
+    return [
+      { k: '收入', v: money(kpi.income) + ' 元' },
+      { k: '净额', v: money(kpi.net) + ' 元' },
+      { k: '比上周', v: diffText },
+    ];
+  }
+  if (k === 'category') {
+    const head = headBarOf(input);
+    if (head === null) return [];
+    return [{ k: '支出最多', v: head.label + ' ' + head.amount + ' · 占 ' + head.pct }];
+  }
+  if (k === 'account' || k === 'ledger') {
+    const head = headBarOf(input);
+    const out = [
+      { k: '支出', v: money(kpi.expense) + ' 元' },
+      { k: '收入', v: money(kpi.income) + ' 元' },
+    ];
+    if (head !== null) out.push({ k: '支出最多', v: head.label + ' ' + head.amount });
+    return out;
+  }
+  if (k === 'structure') {
+    const incItems = donutItemsOf(p.charts.find((c) => c.title === '收入来源结构'));
+    const expItems = donutItemsOf(p.charts.find((c) => c.title === '支出去向结构'));
+    const out = [
+      { k: '收入', v: money(kpi.income) + ' 元（' + String(incItems.length) + ' 个一级分类）' },
+      { k: '支出', v: money(kpi.expense) + ' 元（' + String(expItems.length) + ' 个一级分类）' },
+    ];
+    const top = expItems[0];
+    if (top !== undefined) out.push({ k: '去得最多', v: top.label + ' ' + money(top.value) + ' 元' });
+    return out;
+  }
   if (k === 'overview') {
     for (const c of p.factCards) {
       for (const row of c.rows) {

@@ -1,0 +1,16 @@
+START ticket=1061 runId=afd3772c-f304-47ec-a926-bebc9984d4a7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=63516 at=2026-10-02T15:37:48.096Z
+RUN ticket=1061 runId=afd3772c-f304-47ec-a926-bebc9984d4a7 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=1 pid=63516 at=2026-10-02T15:37:49.012Z
+START ticket=1061 runId=d4b4cd80-7181-4172-ab6e-17330ba9d763 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=6800 at=2026-10-02T15:39:03.450Z
+RUN ticket=1061 runId=d4b4cd80-7181-4172-ab6e-17330ba9d763 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=6800 at=2026-10-02T15:39:04.337Z
+START ticket=1061 runId=f6edcc65-766e-4950-b5b0-3840ec81e462 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 pid=46684 at=2026-10-02T15:39:09.826Z
+RUN ticket=1061 runId=f6edcc65-766e-4950-b5b0-3840ec81e462 cmd="node --test packages/skill-bill/test/t729-分析域.test.mjs" waitedMs=0 exit=1 pid=46684 at=2026-10-02T15:39:13.503Z
+START ticket=1061 runId=682c9a6a-5ab1-489a-ae4b-a44a3724570e cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=35400 at=2026-10-02T15:39:28.428Z
+RUN ticket=1061 runId=682c9a6a-5ab1-489a-ae4b-a44a3724570e cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=35400 at=2026-10-02T15:39:28.522Z
+START ticket=1061 runId=95ff468b-75ed-41f2-b543-b5b1ee2c4734 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=13496 at=2026-10-02T15:39:28.603Z
+RUN ticket=1061 runId=95ff468b-75ed-41f2-b543-b5b1ee2c4734 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=13496 at=2026-10-02T15:39:28.730Z
+START ticket=1061 runId=544bb00a-0b11-490e-9102-4c1289dca43d cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=45428 at=2026-10-02T15:39:35.937Z
+RUN ticket=1061 runId=544bb00a-0b11-490e-9102-4c1289dca43d cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=45428 at=2026-10-02T15:39:49.707Z
+START ticket=1061 runId=753cdf37-dc5e-4ccc-b313-c4d458a0c694 cmd="node .scratch/t1061/c-reconcile.mjs" waitedMs=0 pid=60460 at=2026-10-02T15:39:49.794Z
+RUN ticket=1061 runId=753cdf37-dc5e-4ccc-b313-c4d458a0c694 cmd="node .scratch/t1061/c-reconcile.mjs" waitedMs=0 exit=0 pid=60460 at=2026-10-02T15:39:49.866Z
+START ticket=1061 runId=a06d17da-ba62-46e7-8e7c-0fa3fd227af6 cmd="node .scratch/t1061/c-truerun.mjs" waitedMs=0 pid=52616 at=2026-10-02T15:39:55.286Z
+RUN ticket=1061 runId=a06d17da-ba62-46e7-8e7c-0fa3fd227af6 cmd="node .scratch/t1061/c-truerun.mjs" waitedMs=0 exit=0 pid=52616 at=2026-10-02T15:39:57.404Z

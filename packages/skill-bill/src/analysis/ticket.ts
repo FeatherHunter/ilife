@@ -25,7 +25,7 @@ import { badgeOf, copyZoneOf, docTitleOf, money, NO_WINDOW, SOURCE_READ, SOURCE_
 import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { renderCaliberLine, renderConclusionBar } from 'base-paint/blocks';
-import { barGroupHtml, factCardHtml } from './cards.js';
+import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
 
 /** A 组 8 个场景 id（唯一定义地）：bars 4 ＋ compare 4。w09 不在此（查询域，1056）。 */
@@ -40,9 +40,24 @@ export const A_TICKET_IDS = [
   'cat_compare',
 ] as const;
 
+/** C 组 5 个场景 id（1061 落地：a04-a08 bars 族剩余 5 页；与 A 组同走票据纸，w09 不在此）。 */
+export const C_TICKET_IDS = [
+  'week',
+  'category',
+  'account',
+  'ledger',
+  'structure',
+] as const;
+
 /** 是否走票据纸（按场景 id 分支，bars 族其余页走老路）。 */
 export function isATicket(id: string): boolean {
-  return (A_TICKET_IDS as readonly string[]).includes(id);
+  return (A_TICKET_IDS as readonly string[]).includes(id)
+    || (C_TICKET_IDS as readonly string[]).includes(id);
+}
+
+/** 是否 C 组票据纸（1061：a04-a08；落点余数行为整行式，与 A 组收入／净额＋余数不同）。 */
+export function isCTicket(id: string): boolean {
+  return (C_TICKET_IDS as readonly string[]).includes(id);
 }
 
 /** 店头品牌行（原型 `.shop-brand`）：饼干记账 · 唤醒词。 */
@@ -61,6 +76,11 @@ export function h2For(id: string, count: number, barRows: number): string {
     case 'range_compare': return '双区间共记 2 段';
     case 'yoy': return '同比共记 2 月';
     case 'cat_compare': return '分类对比共记 ' + String(barRows) + ' 类';
+    case 'week': return '周报共记 ' + String(count) + ' 笔';
+    case 'category': return '分类共记 ' + String(barRows) + ' 类';
+    case 'account': return '账户共记 ' + String(barRows) + ' 个';
+    case 'ledger': return '账本共记 ' + String(barRows) + ' 个';
+    case 'structure': return '结构共记 ' + String(count) + ' 笔';
     default: return '共记 ' + String(count) + ' 笔';
   }
 }
@@ -76,6 +96,11 @@ function baselineOf(id: string): string {
     case 'range_compare': return 'a11-看双区间-proto.html';
     case 'yoy': return 'a12-看同比-proto.html';
     case 'cat_compare': return 'a13-看分类对比-proto.html';
+    case 'week': return 'a04-看周报-proto.html';
+    case 'category': return 'a05-看分类-proto.html';
+    case 'account': return 'a06-看账户-proto.html';
+    case 'ledger': return 'a07-看账本-proto.html';
+    case 'structure': return 'a08-看结构-proto.html';
     default: return '';
   }
 }
@@ -90,10 +115,19 @@ function caliberTagOf(id: string): string {
   }
 }
 
-/** 主数字（原型 summary-head：支出唯一，a09 笔数，a13 见明细）。 */
+/** 主数字（原型 summary-head：支出唯一，a09 笔数，a13 见明细；C 组 a04 本周支出／a05 总支出／a06-a08 见明细）。 */
 function summaryForBars(id: string, expense: number, count: number): { eyebrow: string; value: string; unit: string; note: string } {
   if (id === 'stats') {
     return { eyebrow: '分析域 · 总览', value: String(count), unit: '笔', note: '总笔数 · 明细与复制区与基线一致' };
+  }
+  if (id === 'week') {
+    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '本周支出 · 明细与复制区与基线一致' };
+  }
+  if (id === 'category') {
+    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '总支出 · 明细与复制区与基线一致' };
+  }
+  if (id === 'account' || id === 'ledger' || id === 'structure') {
+    return { eyebrow: '分析域 · 总览', value: '见明细', unit: '', note: '结论 · 明细与复制区与基线一致' };
   }
   return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '支出 · 明细与复制区与基线一致' };
 }
@@ -191,7 +225,7 @@ function ticketDoc(input: {
   return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: body, paper: 'receipt' });
 }
 
-/** bars 族 A 组 4 页的票据纸正文（明细沿用既有 barGroups，条宽逐字节不动）。 */
+/** bars 族 A 组 4 页＋C 组 5 页的票据纸正文（明细沿用既有 barGroups，条宽逐字节不动；C 组另带 listCards／charts，A 组为空故无影响）。 */
 export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraLedger: readonly { k: string; v: string }[]): string {
   const r = input.result;
   const p = r.page;
@@ -204,10 +238,19 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     layout: 'ticket',
     size: 'l',
   });
-  const ledgerHtml = ledgerBars(sceneId, r.kpi.income, r.kpi.net, extraLedger);
+  const ledgerHtml = isCTicket(sceneId)
+    ? ledgerCompare(extraLedger, sceneId)
+    : ledgerBars(sceneId, r.kpi.income, r.kpi.net, extraLedger);
   const parts: string[] = [];
   for (const g of p.barGroups) {
     parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g));
+  }
+  for (const c of p.listCards) {
+    const html = listCardHtml(c);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+  }
+  for (const c of p.charts) {
+    parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
   }
   for (const c of p.factCards) {
     const html = factCardHtml(c);
