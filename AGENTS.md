@@ -34,7 +34,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 执行纪律
 
-终端命令一律由 agent 自己执行：**禁止**要求用户替跑命令（贴命令让人粘、让人开终端敲键都算）。用户只做 AI 做不了的事（浏览器里批准 2FA／扫码这类）；通道不顺就换通道，不把执行动作推给用户。
+终端命令一律由 agent 自己执行：**禁止**要求用户替跑命令（贴命令让人粘、让人开终端敲键都算）。用户只做 AI 做不了的事（扫码这类 AI 触不到的事）；通道不顺就换通道，不把执行动作推给用户。
 
 ### 文档归属
 
@@ -54,7 +54,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 发版（npm 发布）
 
-要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才登录并发布**」逐个处理现场发现的包（公共层 ＋ 全部技能 ＋ 全部插件），顺序依赖先行。**由 AI 经 `schtasks /IT` 弹交互窗口驱动、人只在窗口里按回车＋浏览器里批准 2FA**：AI 建交互任务并运行（`powershell.exe` 用完整路径，`/tr` 内不含空格就不加内层引号，含空格先用单包试出写法），窗口标题为「ilife npm 发布窗口」；人看到 Auth URL 按回车 → 浏览器完成登录＋2FA → 回窗口按回车 → 等到 `PKG-OK` → 回车关窗（脚本须 UTF-8(BOM) 保存、路径避中文；`npm whoami` 不过才 `login --auth-type=web`，因 npm10 未登录 `publish` 不弹 URL 直接 `ENEEDAUTH`）；Agent 只轮询 `.scratch\publish-log.txt` ＋ registry 复查为准，不靠口述。失败或中断后**直接重跑即可**，已发布的会被跳过。回执关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`；收尾 `schtasks /delete` 删任务。发完装到本机走 `tooling/wizard-install.ps1 -Auto`（按精确版本装进 `-Profile` 指定的 profile，读回版本与 LinkType）。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。
+要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才发布**」逐个处理现场发现的包（公共层 ＋ 全部技能 ＋ 全部插件），顺序依赖先行。认证一律用预置 token 做非交互发布（正式版本只用 token 发；不走 web 登录、不弹浏览器 2FA——交互式 2FA 发布形式已废弃）；Agent 只轮询 `.scratch\publish-log.txt` ＋ registry 复查为准，不靠口述。失败或中断后**直接重跑即可**，已发布的会被跳过。回执关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。**Agent 不帮用户安装**：装机（装哪个版本、装进哪个 profile）由用户自己做。
 
 ### awesome 插件市场投稿
 
