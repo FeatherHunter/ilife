@@ -17,13 +17,13 @@ import { ticketCompareDoc } from './ticket.js';
 import type { ComparePage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
 
-/** compare 标题到场景 id（本族 4 页全在 A 组 1057，无残留分支）。 */
-function sceneIdOfCompare(title: string): string {
-  switch (title) {
-    case '看对比': return 'period_compare';
-    case '看双区间': return 'range_compare';
-    case '看同比': return 'yoy';
-    case '看分类对比': return 'cat_compare';
+/** compare kind 到场景 id（本族 4 页全在 A 组 1057，无残留分支；按 params.kind，不写唤醒词字面）。 */
+function sceneIdOfCompare(kind: unknown): string {
+  switch (typeof kind === 'string' ? kind : '') {
+    case 'period': return 'period_compare';
+    case 'range': return 'range_compare';
+    case 'yoy': return 'yoy';
+    case 'category': return 'cat_compare';
     default: return '';
   }
 }
@@ -38,8 +38,8 @@ function sideExpense(side: ComparePage['sides'][number] | undefined): string {
 }
 
 /** compare 落点三行（原型 PAGES 表式，数字只搬家）：两段支出＋支出差／差最大＋合计差。 */
-function ledgerRowsOfCompare(title: string, p: ComparePage, conclusion: string): readonly { k: string; v: string }[] {
-  if (title === '看分类对比') {
+function ledgerRowsOfCompare(kind: unknown, p: ComparePage, conclusion: string): readonly { k: string; v: string }[] {
+  if ((typeof kind === 'string' ? kind : '') === 'category') {
     const head = p.barGroups.length === 0 || p.barGroups[0].rows.length === 0 ? undefined : p.barGroups[0].rows[0];
     const maxText = head === undefined ? '暂无' : head.label + ' ' + head.text.split('（')[0].trim();
     const m = conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
@@ -63,9 +63,10 @@ function ledgerRowsOfCompare(title: string, p: ComparePage, conclusion: string):
 export function compareDoc(input: DocInput<ComparePage>): string {
   const r = input.result;
   const p = r.page;
-  const sceneId = sceneIdOfCompare(r.title);
+  const kind = (input.params as Record<string, unknown>)['kind'];
+  const sceneId = sceneIdOfCompare(kind);
   if (sceneId !== '') {
-    return ticketCompareDoc(input, sceneId, ledgerRowsOfCompare(r.title, p, r.conclusion));
+    return ticketCompareDoc(input, sceneId, ledgerRowsOfCompare(kind, p, r.conclusion));
   }
   const nothing = p.sides.length === 0 && p.barGroups.every((g) => g.rows.length === 0)
     && p.factCards.every((c) => c.rows.length === 0);
