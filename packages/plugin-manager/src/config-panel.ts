@@ -92,6 +92,8 @@ export interface ConfigPanelProps {
   readonly items: readonly ConfigItem[];
   /** 卡片标题（钩子之一，各家的产品名）；不给就只写「配置」。 */
   readonly title?: string | undefined;
+  /** 印章书签印文（#996：六家经 `title` 同路交 `sealText`，997 接线；本件只透传，不拼串）。 */
+  readonly sealText?: string | undefined;
   /** 跟随映射（钩子之一）：脏键 → 要显示「将跟随更新」的只读行；不给＝一行都不跟随。 */
   readonly followKeysOf?: ((dirtyKeys: readonly string[]) => readonly string[]) | undefined;
   /** 自家附加块（钩子之一：版本行／状态行）：画在面板主体之后、动作条之前。 */
@@ -287,6 +289,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
 
   return React.createElement(PanelBody, {
     title: props.title,
+    sealText: props.sealText,
     items: props.items,
     state,
     draft,

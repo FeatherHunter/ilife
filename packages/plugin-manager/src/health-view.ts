@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { countByStatus, worstStatus } from './health-contract.js';
 import type { HealthItem, HealthReport, HealthStatus } from './health-contract.js';
+import { Seal, TitleBlock } from './title-seal.js';
 
 /** 三档的配色（绿走主题别名；红黄用实色，理由见下）。
  *
@@ -380,16 +381,20 @@ export function HealthTable(props: {
   readonly phase: 'idle' | 'running' | 'ready' | 'failed';
   readonly report: HealthReport | null;
   readonly error: string | null;
+  /** 印章书签印文（#996：显示形一律带空格大写 HELP；总管侧由调用方按 `title + ' HELP'` 交，不另立常量）。 */
+  readonly sealText?: string | undefined;
 }): React.ReactElement {
   const { report } = props;
   const prefixes: readonly string[] = report ? dirPrefixesOf(report) : [];
+  const seal = props.sealText === undefined || props.sealText === '' ? null : React.createElement(Seal, { sealText: props.sealText });
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.box, 'data-ilife-health': 'table' },
     React.createElement(
       'div',
       { style: HEALTH_STYLE.headRow },
-      React.createElement('div', { style: HEALTH_STYLE.head }, props.title + ' · 体检'),
+      React.createElement(TitleBlock, { product: props.title, purpose: '体检' }),
+      seal,
       report ? headerCounts(report) : null,
     ),
     props.phase === 'idle'

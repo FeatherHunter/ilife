@@ -434,7 +434,8 @@ describe('#920 ⑤ 状态徽标那七档（就绪／有改动／写入中／已�
   it('徽标画在卡片标题行右端（`.ic-head` 里靠 `margin-left:auto`）', () => {
     const head = kidsOf(PanelBody(bodyProps({ dirtyKeys: ['db.dir'] })))[0];
     assert.equal(head.props.style.display, 'flex');
-    assert.equal(textOf(head), '探针产品名 · 配置1 项未保存');
+    // #996：标题去 `·`（TitleBlock 同行双样式），文本连起来是 `产品名配置` ＋ 徽标。
+    assert.equal(textOf(head), '探针产品名配置1 项未保存');
   });
 });
 

@@ -73,12 +73,15 @@ function pluginCodeFiles() {
 }
 
 describe('票 #738 ① 六家交出去的页签名与设置页标题（真产物跑 apply ＋ 渲一次配置页）', () => {
-  it('逐家：页签名 ＝ 产品名，页头那行 ＝「<产品名> · 配置」', async () => {
+  // #996：标题去 `·`（TitleBlock 同行双样式无标点），故这里只认「产品名＋配置都在、不再连写 `·`」。
+  it('逐家：页签名 ＝ 产品名，页头那行去 `·`（产品名＋配置分层）', async () => {
     for (const family of FAMILIES) {
       const { label, text } = await renderConfigTab(join(PACKAGES, family.dir));
       assert.equal(label, family.name, family.dir + ' 交出去的页签名不是产品名');
-      assert.ok(text.includes(family.name + ' · 配置'),
+      assert.ok(text.includes(family.name) && text.includes('配置'),
         family.dir + ' 的设置页标题没跟着那一个常量走，屏上是：' + JSON.stringify(text.slice(0, 80)));
+      assert.ok(!text.includes(family.name + ' · 配置'),
+        family.dir + ' 的设置页标题还带着 `·`（#996 已去）：' + JSON.stringify(text.slice(0, 80)));
     }
   });
 

@@ -38,6 +38,7 @@ import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js'
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
 import type { DirectoryRowEntry } from './directory-browser-api.js';
+import { Seal, TitleBlock } from './title-seal.js';
 
 /** 面板的样式表：取值逐项照 v3.1（颜色走 DSH 主题别名，写死值只做回退；字号一律相对单位 em）。
  *
@@ -78,9 +79,13 @@ const S = {
     color: 'var(--dsw-alias-label-primary, #f9fafb)',
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,.06)',
   } as React.CSSProperties,
-  /** `.ic-head{display:flex;align-items:center;gap:10px;min-height:22px}`（徽标靠 `margin-left:auto` 右贴）。 */
-  head: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 22 } as React.CSSProperties,
-  /** `.ic-title{font-size:13.5px;font-weight:640}`——字号按 60 行那条锚点换算成 `1.08em`。 */
+  /** `.ic-head{display:flex;align-items:center;gap:10px;min-height:22px}`（徽标靠 `margin-left:auto` 右贴）。
+   *  #996：加 `flexWrap:wrap`——标题（`TitleBlock`，`flex:1 1 auto`＋`minWidth:9em`）与签
+   *  （`flex-shrink:0`）在 390 宽下换行不挤（原型 A 行尾悬签）；`gap`／`minHeight` 照 v3.1 不动。 */
+  head: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, minHeight: 22 } as React.CSSProperties,
+  /** `.ic-title{font-size:13.5px;font-weight:640}`——字号按 60 行那条锚点换算成 `1.08em`。
+   *  #996：卡片标题行改用 `TitleBlock`（见 `title-seal.ts`，原型 A 锁 1.15em／700＋0.85em／400），
+   *  这一格保留供附加块（`ConfigStyles` 键名不许改），头部本身不再用它。 */
   title: { fontSize: '1.08em', fontWeight: 640 } as React.CSSProperties,
   /** `.ic-file{margin-top:4px}` 的那 4px 挂在两行的公共容器上：`info` 自己一格 margin 都不写
    *  （#743 ①：头部两行间距不一家一个数，故这一项一律不写 margin）。 */
@@ -705,6 +710,8 @@ export type PanelState =
 export interface PanelBodyProps {
   /** 卡片标题（各家自己的产品名）。 */
   readonly title: string | undefined;
+  /** 印章书签印文（#996：显示形一律带空格大写 HELP（产品名＋空格＋HELP）；不给＝只印标题，997 接线六家）。 */
+  readonly sealText?: string | undefined;
   readonly items: readonly ConfigItem[];
   readonly state: PanelState;
   readonly draft: Readonly<Record<string, string>>;
@@ -759,7 +766,8 @@ const BROWSER_LABELS = {
 export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const { state, title } = props;
   const surface = state.kind === 'ready' ? state.surface : null;
-  const headText = title === undefined ? '配置' : `${title} · 配置`;
+  const product = title ?? '';
+  const seal = props.sealText === undefined || props.sealText === '' ? null : React.createElement(Seal, { sealText: props.sealText });
   const headDataDir = surface === null ? '' : surface.resolved?.['dbDir'] ?? surface.dataDir;
   const ready = state.kind === 'ready';
   const dirtyCount = ready ? props.dirtyKeys.length : 0;
@@ -774,7 +782,8 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const head = React.createElement(
     'div',
     { style: S.head },
-    React.createElement('div', { style: S.title }, headText),
+    React.createElement(TitleBlock, { product, purpose: '配置' }),
+    seal,
     React.createElement(PanelBadgeView, { kind: badge, dirtyCount }),
   );
   /** #939：这一块的高度由**客户端常量**决定、不由回执时序决定——加载期就把两行连标签一起画出来，
