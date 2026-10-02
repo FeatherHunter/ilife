@@ -27,7 +27,7 @@ import type { DistributionRowInput, KpiCardInput } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
-import { badgeOf, copyZoneOf, emptyOf, goalPageShell, listEnvelopeOf, reconcileOf, sourceNoteOf } from './pageParts.js';
+import { badgeOf, copyZoneOf, emptyOf, goalPageShell, goalStyleTag, listEnvelopeOf, reconcileOf, sourceNoteOf } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。 */
@@ -96,7 +96,7 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
     }), 'sec-copy', '复制'),
   ];
-  const content = badgeOf({
+  const content = goalStyleTag() + badgeOf({
     word: input.wakeWord,
     caliber: spec.caliber(input),
     status: hasItems ? 'ok' : 'empty',

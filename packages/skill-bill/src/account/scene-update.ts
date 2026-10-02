@@ -9,7 +9,7 @@
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { textOf } from './params.js';
-import { promptOf, textOrDash } from './pageParts.js';
+import { accountHelpPrompt, textOrDash } from './pageParts.js';
 import type { AccountCollectInput, AccountWriteScene } from './scene.js';
 import { afterCardOf, bindAccountUpdatePages, renamedCardOf } from './template-update.js';
 
@@ -42,11 +42,7 @@ export const SCENE: AccountWriteScene = {
     caliber: '改已有的账户',
     note: '改名会同步更新这个账户的历史流水；停用之后历史记录保留，只是不再算进总余额。',
     fieldDescription: '账户名写要改的那一个；下面那一行写改成什么（改名／停用／启用，任选一个）。',
-    prompt: (input) => promptOf(
-      WORD,
-      [{ name: 'name', label: '账户', required: true }, { name: 'new-name', label: '改成什么', required: true }],
-      { ...input.params, 'new-name': changeTextOf(input.params) },
-    ),
+    prompt: (input) => accountHelpPrompt('account_update', input.params, changeTextOf(input.params)),
     subtitle: subtitleOf,
     receiptCards: (input) => [
       ...(input.receipt.after === null ? [] : [afterCardOf(input.receipt.after)]),

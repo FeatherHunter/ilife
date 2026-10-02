@@ -25,7 +25,7 @@ import type { PageBlock } from '../shared/pageSections.js';
 import type { AccountFlow, AccountSummary, AccountTotals } from './accounts.js';
 import { FLOW_LIMIT } from './accounts.js';
 import {
-  SOURCE_READ, SOURCE_READ_TEXT, accountPageShell, badgeOf, copyZoneOf, emptyOf, listEnvelopeOf, money, reconcileOf,
+  SOURCE_READ, SOURCE_READ_TEXT, accountPageShell, accountStyleTag, badgeOf, copyZoneOf, emptyOf, listEnvelopeOf, money, reconcileOf,
   signedMoney, sourceNoteOf, textOrDash,
 } from './pageParts.js';
 
@@ -201,7 +201,7 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
       source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
     }), 'sec-copy', '复制'),
   ];
-  const content = badgeOf({
+  const content = accountStyleTag() + badgeOf({
     word: input.wakeWord,
     caliber: hasAccounts ? chipsOf(s) : '还没有账户',
     status: hasAccounts ? 'ok' : 'empty',

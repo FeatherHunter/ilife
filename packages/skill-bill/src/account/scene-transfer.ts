@@ -9,8 +9,8 @@
  *   ③ **正数与不同账户**：老侧页上零校验（负数、同账户都复制得出去，只在 CLI 才报错），新侧进缺项阻断表。
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
-import { ACCOUNT_SLOTS, numberOf } from './params.js';
-import { promptOf, textOrDash } from './pageParts.js';
+import { numberOf } from './params.js';
+import { accountHelpPrompt, textOrDash } from './pageParts.js';
 import type { AccountCollectInput, AccountWriteScene, AccountReceiptInput } from './scene.js';
 import { bindAccountFormPages } from './template-form.js';
 
@@ -50,7 +50,7 @@ export const SCENE: AccountWriteScene = {
     fieldDescription: '金额写正数；从账户与到账户要不一样（下拉里是账户表里现有的账户，也可以直接手打）。',
     preview: (input) => transferRows(input.params),
     previewCaption: '按下就落这两笔',
-    prompt: (input) => promptOf(WORD, ACCOUNT_SLOTS.transfer, input.params),
+    prompt: (input) => accountHelpPrompt('account_transfer', input.params),
     subtitle: subtitleOf,
     registerCaption: '账户表里现在有这些',
     emptyAccounts: {

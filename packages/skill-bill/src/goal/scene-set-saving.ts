@@ -8,8 +8,8 @@
  *      `budget_form.html` 有、`saving_form.html` 没有，**同族两套**，新侧取齐全的那一套。
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
-import { money, promptOf, textOrDash } from './pageParts.js';
-import { GOAL_WRITE_SLOTS, textOf } from './params.js';
+import { goalHelpPrompt, money, textOrDash } from './pageParts.js';
+import { textOf } from './params.js';
 import type { GoalCollectInput, GoalReceiptInput, GoalWriteScene } from './scene.js';
 import { bindGoalFormPages } from './template-form.js';
 
@@ -50,7 +50,7 @@ export const SCENE: GoalWriteScene = {
         next: '把想买的东西与金额填在下面，说一遍「' + WORD + '」就行。',
       },
     }),
-    prompt: (input) => promptOf(WORD, GOAL_WRITE_SLOTS['set-saving'], input.params),
+    prompt: (input) => goalHelpPrompt('goal_set_saving', input.params),
     receiptCards: (input) => [
       { label: '目标', value: textOrDash(input.params['name']), detail: '刚登记进来的' },
       { label: '目标金额', value: money(Number(input.params['amount'])), unit: '元', detail: '存够这么多就算达成' },

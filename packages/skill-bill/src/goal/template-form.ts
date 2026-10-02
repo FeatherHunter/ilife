@@ -30,7 +30,7 @@ import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import {
   DETAIL_COLUMNS, SOURCE_COLLECT, SOURCE_COLLECT_TEXT, SOURCE_WRITE, SOURCE_WRITE_TEXT, badgeOf, blockedCommandOf,
-  blockedFoldOf, copyZoneOf, detailRows, emptyOf, envelopeOf, goalPageShell, promptBlockOf, receiptStatusCard,
+  blockedFoldOf, copyZoneOf, detailRows, emptyOf, envelopeOf, goalPageShell, goalStyleTag, promptBlockOf, receiptStatusCard,
   reconcileOf, slotFieldsOf, sourceNoteOf,
 } from './pageParts.js';
 import type { GoalBlocked } from './params.js';
@@ -95,6 +95,7 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
   const table = spec.existing(input);
   const envelope = envelopeOf(input.key, false, blockedMessageOf(spec.word, blocked));
   const content = [
+    goalStyleTag(),
     badgeOf({
       word: spec.word,
       caliber: spec.caliber,
@@ -158,7 +159,7 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
       sourceText: SOURCE_WRITE_TEXT, start: receipt.actionAt, end: receipt.actionAt, count: receipt.affectedRows,
     }) },
   ];
-  const content = badgeOf({
+  const content = goalStyleTag() + badgeOf({
     word: spec.word, caliber: spec.caliber, status: 'ok', statusText: '已经写进去了',
     next: '这一件事办完了，不用再做什么。',
   }) + pageNav(blocks) + pageBody(blocks);

@@ -9,8 +9,8 @@
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { MONTH_RE } from '../shared/dateRange.js';
-import { money, promptOf, textOrDash } from './pageParts.js';
-import { GOAL_WRITE_SLOTS, localMonth, textOf } from './params.js';
+import { goalHelpPrompt, money, textOrDash } from './pageParts.js';
+import { localMonth, textOf } from './params.js';
 import type { GoalCollectInput, GoalReceiptInput, GoalWriteScene } from './scene.js';
 import { bindGoalFormPages } from './template-form.js';
 
@@ -61,7 +61,7 @@ export const SCENE: GoalWriteScene = {
         },
       };
     },
-    prompt: (input) => promptOf(WORD, GOAL_WRITE_SLOTS['set-budget'], input.params),
+    prompt: (input) => goalHelpPrompt('goal_set_budget', input.params),
     receiptCards: (input) => [
       { label: '这份预算的金额', value: money(Number(input.params['amount'])), unit: '元', detail: '每月的上限' },
       {

@@ -26,9 +26,63 @@ import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
+import { ACCOUNT_DECLARATION } from './declaration.js';
+import { textOf } from './params.js';
 
 /** 账户域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
 export const EYEBROW = '记账｜账户域';
+
+/** 1064 acct v2.2 新口径复制区＋填写 guards（1036-v2.1 两钮块居中文本居中左缘对齐▾补位＋1053-③不溢出）。
+ * 作用域限 `section[data-key="account.write"]` 与 `section[data-key="account.query"]`，写入域零命中
+ *（写入页指纹只随菜单文案变，CSS 文本不进写入产物；样式以 `<style>` 随正文走，不进共用 extraCss）。 */
+export const ACCOUNT_COPY_CSS = [
+  'section[data-key="account.write"] .ilife-block-copy-block, section[data-key="account.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
+  'section[data-key="account.write"] .ilife-action-row-ghost, section[data-key="account.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  'section[data-key="account.write"] .ilife-copy-menu-wrap, section[data-key="account.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
+  'section[data-key="account.write"] .ilife-copy-btn, section[data-key="account.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
+  'section[data-key="account.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
+  'section[data-key="account.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
+  'section[data-key="account.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="account.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
+  'section[data-key="account.write"] .ilife-copy-btn.copied::after, section[data-key="account.query"] .ilife-copy-btn.copied::after { content: none !important; }',
+  'section[data-key="account.write"] .ilife-block-param-form-input, section[data-key="account.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }',
+  'section[data-key="account.write"] .ilife-block-param-form-field, section[data-key="account.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',
+  'section[data-key="account.write"] select.ilife-block-param-form-input, section[data-key="account.query"] select.ilife-block-param-form-input { min-height: 44px; }',
+].join('\n');
+
+/** 账户页内嵌样式：把本域 CSS 以 `<style>` 随正文走（不进共用 `extraCss`，写入产物逐字节不动）。 */
+export function accountStyleTag(): string {
+  return '<style>' + ACCOUNT_COPY_CSS + '</style>';
+}
+
+/** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份（沿 993 退出口径）。
+ * 占位 `{{name}}` 填本次参数值，空填 `____`；`account_update` 的 `{{change}}` 取调用方给的合成句。 */
+export function accountHelpPrompt(
+  sceneId: 'account_add' | 'account_update' | 'account_transfer',
+  params: Record<string, unknown>,
+  change?: string,
+): string {
+  let template = '';
+  for (const entry of ACCOUNT_DECLARATION.entries) {
+    const hit = entry.scenes.find((s) => s.id === sceneId);
+    if (hit !== undefined) { template = hit.prompt_template; break; }
+  }
+  if (template === '') throw new Error('accountHelpPrompt 找不到场景 `' + sceneId + '`');
+  const fill = (s: string): string => (s === '' ? '____' : s);
+  const table: Record<string, string> = {};
+  if (sceneId === 'account_add') {
+    table['account_name'] = fill(textOf(params['name']));
+    table['account_type'] = fill(textOf(params['type']));
+  } else if (sceneId === 'account_update') {
+    table['account'] = fill(textOf(params['name']));
+    table['change'] = fill(change ?? textOf(params['new-name']));
+  } else {
+    table['amount'] = fill(textOf(params['amount']));
+    table['from_account'] = fill(textOf(params['from']));
+    table['to_account'] = fill(textOf(params['to']));
+    table['transfer_time'] = fill(textOf(params['time']));
+  }
+  return template.replace(/\{\{(\w+)\}\}/g, (m: string, n: string): string => table[n] ?? '____');
+}
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function accountPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {

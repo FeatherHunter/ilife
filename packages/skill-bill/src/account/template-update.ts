@@ -30,7 +30,7 @@ import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS, CHANGE_SLOT, textOf } from './params.js';
 import {
-  SOURCE_COLLECT, SOURCE_COLLECT_TEXT, SOURCE_WRITE, SOURCE_WRITE_TEXT, MISSING, accountPageShell, accountsTableOf,
+  SOURCE_COLLECT, SOURCE_COLLECT_TEXT, SOURCE_WRITE, SOURCE_WRITE_TEXT, MISSING, accountPageShell, accountStyleTag, accountsTableOf,
   badgeOf, blockedCommandOf, blockedFoldOf, copyZoneOf, emptyOf, envelopeOf, promptBlockOf, reconcileOf,
   receiptStatusCard, slotFieldsOf, sourceNoteOf, textOrDash, timeOf,
 } from './pageParts.js';
@@ -115,6 +115,7 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, messageOf(spec.word, blocked));
   const content = [
+    accountStyleTag(),
     badgeOf({
       word: spec.word,
       caliber: spec.caliber,
@@ -200,7 +201,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     }), 'sec-copy', '复制'),
     { html: sourceNoteOf({ sourceText: SOURCE_WRITE_TEXT, start: at, end: at, count: receipt.affectedRows }) },
   ];
-  const content = badgeOf({
+  const content = accountStyleTag() + badgeOf({
     word: spec.word, caliber: spec.caliber, status: 'ok', statusText: '已经写进去了',
     next: '这一件事办完了，不用再做什么。',
   }) + pageNav(blocks) + pageBody(blocks);

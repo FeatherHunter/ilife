@@ -7,8 +7,7 @@
  *   ③ 没有操作预览（新增只动账户表一处，没有「将执行以下操作」那几段）。
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
-import { ACCOUNT_SLOTS } from './params.js';
-import { promptOf, textOrDash } from './pageParts.js';
+import { accountHelpPrompt, textOrDash } from './pageParts.js';
 import type { AccountCollectInput, AccountWriteScene } from './scene.js';
 import { bindAccountFormPages } from './template-form.js';
 
@@ -32,7 +31,7 @@ export const SCENE: AccountWriteScene = {
     fieldDescription: '账户名必填；类型选填，银行卡／支付／信用这类说法都行。',
     preview: () => [],
     previewCaption: '',
-    prompt: (input) => promptOf(WORD, ACCOUNT_SLOTS.add, input.params),
+    prompt: (input) => accountHelpPrompt('account_add', input.params),
     subtitle: subtitleOf,
     registerCaption: '账户表里现在有这些',
     emptyAccounts: {
