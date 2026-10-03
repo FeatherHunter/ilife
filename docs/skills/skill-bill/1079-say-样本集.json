@@ -1,0 +1,243 @@
+{
+ "ticket": 1079,
+ "note": "SAY 采集 16 页的样本集：逐页给出「跑哪条命令、给什么参数」才能得到与判地同一态的产物。采集页只在必需槽位没给齐时出，故参数一律一件不给——这就是判地原型画的那一态。protoSha256 与 1078 verdict 的 proto_sha 同源（都由冻结件实测）。",
+ "count": 16,
+ "items": [
+  {
+   "seq": "x01",
+   "wake": "记支出",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "expense"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x01-记支出-采集-v2.3.html",
+   "protoSha256": "29ae80bd46b5656b7f2ac0204d98e7c00d44eeac27efec1e54ee1940888bdd3e",
+   "protoBytes": 27595,
+   "verdictSeq": 1,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记支出.html"
+  },
+  {
+   "seq": "x03",
+   "wake": "记收入",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "income"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x03-记收入-采集-v2.3.html",
+   "protoSha256": "c4c833d2996477423bd182b2bda17c135c7172f2081a4b638affa361beda0d1b",
+   "protoBytes": 27277,
+   "verdictSeq": 2,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记收入.html"
+  },
+  {
+   "seq": "x05",
+   "wake": "拍账单",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "photo"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x05-拍账单-采集-v2.3.html",
+   "protoSha256": "21e18d2e79eb5f615dcde4a4604308c307f62191c771c80b1ff3aab88f195e31",
+   "protoBytes": 24635,
+   "verdictSeq": 3,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/拍账单.html"
+  },
+  {
+   "seq": "x07",
+   "wake": "批量录入",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "batch"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x07-批量录入-采集-v2.3.html",
+   "protoSha256": "a24328febf248a0c35136bb3ac914d21abb0cb34fd1b3d7a317ac108307d5146",
+   "protoBytes": 26489,
+   "verdictSeq": 4,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/批量录入.html"
+  },
+  {
+   "seq": "x09",
+   "wake": "记退款",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "refund"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x09-记退款-采集-v2.3.html",
+   "protoSha256": "93263af566743029925a00307f88fca3252caafd3cfd3da5ce335dc033e9a8ee",
+   "protoBytes": 26793,
+   "verdictSeq": 5,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记退款.html"
+  },
+  {
+   "seq": "x11",
+   "wake": "记报销",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "reimburse"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x11-记报销-采集-v2.3.html",
+   "protoSha256": "660198cc1965603b5b4cd97ef2fdfa837f15a07936a31348dba8c5ef53e48f2d",
+   "protoBytes": 26597,
+   "verdictSeq": 6,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记报销.html"
+  },
+  {
+   "seq": "x13",
+   "wake": "报销到账",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "reimburse-done"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x13-报销到账-采集-v2.3.html",
+   "protoSha256": "42e572cf63eedddddd8a48630699169f125a57ac1d6fff59aed73ad6f9f97bda",
+   "protoBytes": 25022,
+   "verdictSeq": 7,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/报销到账.html"
+  },
+  {
+   "seq": "x15",
+   "wake": "记借出",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "lend"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x15-记借出-采集-v2.3.html",
+   "protoSha256": "4c5dbcdeed5bb2beb340b618781f4d5387314c8da3a42c34d8acd3dc31bb8fd2",
+   "protoBytes": 26669,
+   "verdictSeq": 8,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记借出.html"
+  },
+  {
+   "seq": "x17",
+   "wake": "记借入",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "borrow"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x17-记借入-采集-v2.3.html",
+   "protoSha256": "ab407dd38a492cbd4d39b2dabc4aedc197939cb4fa243abdf8c06ad0ee9c8f7c",
+   "protoBytes": 26667,
+   "verdictSeq": 9,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记借入.html"
+  },
+  {
+   "seq": "x19",
+   "wake": "记收回",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "collect"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x19-记收回-采集-v2.3.html",
+   "protoSha256": "d7a6b11dbf250266efa65dae37b65270eaea3438401f8cf091197d7ebcd08ce1",
+   "protoBytes": 24942,
+   "verdictSeq": 10,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记收回.html"
+  },
+  {
+   "seq": "x21",
+   "wake": "记偿还",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "repay"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x21-记偿还-采集-v2.3.html",
+   "protoSha256": "5d41c64a2bce57a131e3457b1223966c28278ea464a320db2f8e5605e9001cac",
+   "protoBytes": 24928,
+   "verdictSeq": 11,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记偿还.html"
+  },
+  {
+   "seq": "x23",
+   "wake": "记分期",
+   "key": "bill.record.add",
+   "params": {
+    "kind": "installment"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x23-记分期-采集-v2.3.html",
+   "protoSha256": "a197c644221cc2c5dcce334714787bc6cdbff18ed2a1266e7a27be4c9d343754",
+   "protoBytes": 27729,
+   "verdictSeq": 12,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记分期.html"
+  },
+  {
+   "seq": "x25",
+   "wake": "记一笔",
+   "key": "bill.record.add",
+   "params": {},
+   "proto": "docs/skills/skill-bill/proto/say-collect/x25-记一笔-采集-v2.3.html",
+   "protoSha256": "26aef04303fb4635b1c37442c9b11481fa31dd320e38c043e4b580ecae544591",
+   "protoBytes": 26853,
+   "verdictSeq": 13,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/记一笔.html"
+  },
+  {
+   "seq": "x27",
+   "wake": "改记录",
+   "key": "bill.record.update",
+   "params": {},
+   "proto": "docs/skills/skill-bill/proto/say-collect/x27-改记录-采集-v2.3.html",
+   "protoSha256": "9bcf4916693c0dc7d0a5bd2129af7f27f0d4a471cba4e8b019e935d874dfa991",
+   "protoBytes": 24738,
+   "verdictSeq": 14,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/改记录.html"
+  },
+  {
+   "seq": "x29",
+   "wake": "撤销",
+   "key": "bill.record.update",
+   "params": {
+    "op": "undo"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x29-撤销-采集-v2.3.html",
+   "protoSha256": "d743f9bb7735e7dc239d34593fdb035e6ec6d9ce1171c2cc2ce2aeb4cea31710",
+   "protoBytes": 23866,
+   "verdictSeq": 15,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/撤销.html"
+  },
+  {
+   "seq": "x31",
+   "wake": "恢复",
+   "key": "bill.record.update",
+   "params": {
+    "op": "restore"
+   },
+   "proto": "docs/skills/skill-bill/proto/say-collect/x31-恢复-采集-v2.3.html",
+   "protoSha256": "7525345d928372be6f1f962a2b1a346a5b332824f5d6e795ae8e0d457a735548",
+   "protoBytes": 23872,
+   "verdictSeq": 16,
+   "verdict": "satisfied",
+   "state": "全缺（与判地同一态）",
+   "product": ".scratch/1079-say/out/恢复.html"
+  }
+ ]
+}

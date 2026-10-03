@@ -40,6 +40,7 @@ import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
 import { installmentPreview, installmentShares } from './installmentPreview.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
+import { sayCollectOut } from './saySheet.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
@@ -194,6 +195,19 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   /** 副标题只报计数（进度形状）；缺项明细在标签组与阻断表明细两处形状里。 */
   const subtitle = spec.word + '还差 ' + blocked.length + ' 项';
   const envelope = envelopeOf(key, false, message);
+  const sayOut = sayCollectOut({
+    sayKey: spec.kind,
+    key: key,
+    shape: envelope.shape,
+    word: spec.word,
+    params: params,
+    data: { envelope },
+    log: { envelope, copyLog: copyLog({
+      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      actionAt: input.actionAt, version: DOC_VERSION,
+    }) },
+  });
+  if (sayOut !== null) return sayOut;
   const facts: SummaryFacts = {
     amount,
     category: textOf(params.category),

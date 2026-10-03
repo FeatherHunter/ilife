@@ -28,6 +28,7 @@ import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
+import { sayCollectOut } from './saySheet.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { money2, summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
@@ -285,6 +286,19 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     + (extra.length === 0 ? '' : '。本型另需 ' + extra.length + ' 项，见下面的缺项徽章');
   const ctx: FlowCtx = { ...values, blocked, candidates: spec.candidates(values) };
   const envelope = envelopeOf(key, false, message);
+  const sayOut = sayCollectOut({
+    sayKey: spec.kind,
+    key: key,
+    shape: envelope.shape,
+    word: spec.word,
+    params: params,
+    data: { envelope },
+    log: { envelope, copyLog: copyLog({
+      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      actionAt: input.actionAt, version: DOC_VERSION,
+    }) },
+  });
+  if (sayOut !== null) return sayOut;
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
   const prompt = spec.prompt(ctx);

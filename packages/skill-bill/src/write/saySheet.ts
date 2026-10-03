@@ -1,23 +1,39 @@
-/** 采集页（SAY）唯一实现（#1079）——一份版式 ＋ 16 份数据（数据住 ./sayWords.ts）。
+/** 采集页（SAY）唯一实现（#1079）——一份版式（本件）＋ 16 份数据（./sayWords.ts）。
  *
  * 判地（只读不抄）：docs/skills/skill-bill/proto/say-collect/x{01,03,…,31}-*-采集-v2.3.html 十六件。
- * 判的是渲染出来的效果：同一视口宽度下与判地逐像素相同。本件自己拼标记、自己写这一页的家具样式，
- * 不把原型读进来、也不把原型当模板。
  *
- * 三摊活：
- *   ① 纸与裁切线走公共层 base-paint/blocks 的 renderSheetFrame({variant:"ticket"})；
- *   ② 复制载荷走共用位 ../shared/copyArea.js（buildDataText／buildLogText 那条路）；
- *   ③ 这一页自己的形状（缺项徽章列／已填行／表单／选填组／提示行／按钮区）住本件的 SAY_COLLECT_CSS。
+ * 第一性原理：屏上是 DOM ＋ 命中它的那批 CSS 的确定性函数。要「同一视口下逐像素相同」，就得让这两个输入等价——
+ * 故本件按判地的结构出标记（同一层数、同一类名），按判地的取值出样式（逐条照抄它的声明；皮肤 token 只在取值与判地
+ * 逐字相等处用：ground／surface／line／ink／ink-2／ink-3／accent／accent-soft／ok／ok-soft／danger／radius／shadow／font）。
+ * 判地那几处公共层没有的档（12px／13px 圆角、按钮字面投影、点线色 #d9cdb4 等）按真值写。
  *
- * 原型那几处公共层没有的档（12px／13px 圆角、字面投影、点线色 #d9cdb4）按判地的真值写——
- * 「像素相同」是硬判据，拿近似 token 顶替会在比对里成红。
+ * 谁在用（五个调用点，指名）：src/write/template-{expense,flow,batch,installment,update}.ts 的采集页，各在算出信封后调
+ * `sayCollectOut`（本词有数据出这一页，没有返 null 走老的通用页面壳）。复制载荷仍走 base-paint 的 buildDataText／buildLogText，
+ * 整页外壳走 shared/docPage 的 assembleSheetPage。
  */
 import { buildDataText, buildLogText, escapeHtml } from "base-paint";
 import type { DataTextInput, LogTextInput } from "base-paint";
-import { renderSheetFrame } from "base-paint/blocks";
 import { assembleSheetPage } from "../shared/docPage.js";
+import { WRITE_DECLARATION } from "./declaration.js";
+import { writeSection } from "../shared/writeParts.js";
+import { SAY_WORDS } from "./sayWords.js";
 
-/** 一个表单字段（原型 .say-field 一格）。 */
+/** 这一页的 SAY prompt 模板：**逐字取域声明的 `prompt_template`**，本件不抄第二份。 */
+function sayTemplateOf(word: string): string {
+  for (const entry of WRITE_DECLARATION.entries) {
+    if (entry.phrase !== word) continue;
+    const scene = entry.scenes[0];
+    if (scene !== undefined && typeof scene.prompt_template === "string") return scene.prompt_template;
+  }
+  return "";
+}
+
+/** 把表里的 {word} 占位符换成投影出来的唤醒词（表里只有占位符，没有词面）。 */
+function withWord(text: string, word: string): string {
+  return text.split("{word}").join(word);
+}
+
+/** 一个表单字段（判地 .say-field 一格）。 */
 export interface SayFieldSpec {
   readonly slot: string;
   readonly label: string;
@@ -27,24 +43,28 @@ export interface SayFieldSpec {
   readonly placeholder?: string;
 }
 
-/** 一条缺项徽章（原型 .slot）。 */
+/** 一条缺项徽章（判地 .slot）。 */
 export interface SayChipSpec { readonly key: string; readonly label: string; readonly small: string; }
 
-/** 一条「已替你填好的」行（原型 .fill-line）。 */
+/** 一条「已替你填好的」行（判地 .fill-line）。 */
 export interface SayFillSpec { readonly label: string; readonly value: string; }
 
-/** SAY 槽位配置（原型 window.__SAYCFG.slots 那一条）。 */
+/** SAY 槽位配置（判地 window.__SAYCFG.slots 那一条）。 */
 export interface SaySlotCfg {
   readonly key: string;
   readonly label: string;
   readonly ftype: string;
   readonly opt?: boolean;
   readonly ph?: string;
+  /** 依赖位：这一格的启用与否看另一格有没有值（判地脚本的 `needs`）；空依赖时这一格置灰、不参与缺项。 */
+  readonly needs?: string;
+  /** 不出缺项徽章（判地脚本的 `nochip`）。 */
+  readonly nochip?: boolean;
 }
 
 /** 一个唤醒词这一页的全部差异值（版式一行都不在这里）。 */
 export interface SayWordSpec {
-  readonly brand: string;
+  /** 标题两态；串里可带 {word} 占位符，渲染时填投影出来的唤醒词（本表一个字面唤醒词都不写）。 */
   readonly titleWait: string;
   readonly titleReady: string;
   readonly subWait: string;
@@ -58,13 +78,17 @@ export interface SayWordSpec {
   readonly optSummary?: string;
   readonly optNote?: string;
   readonly hint: string;
-  readonly foot: string;
-  readonly sayTemplate: string;
   readonly cfg: readonly SaySlotCfg[];
 }
 
 /** 这一页要的载荷（信封由调用方给，与写入域既有采集页同一条路）。 */
 export interface SayCollectInput {
+  /** 投影出来的唤醒词（`wakeWordOfKind`／域声明的 `phrase`）；本件只读它，不写字面量。 */
+  readonly word: string;
+  /** 命令全名（页面标记 `data-key` 用，过 `sceneKeyOf` 收短）。 */
+  readonly key: string;
+  /** 本次信封的形状（契约枚，与老采集页同一枚）。 */
+  readonly shape: string;
   readonly spec: SayWordSpec;
   /** 已经给了值的槽位（键＝槽位 key，值＝已给的原文）；不给＝一件没给（判地里那一态）。 */
   readonly values?: Readonly<Record<string, string>>;
@@ -72,30 +96,49 @@ export interface SayCollectInput {
   readonly log: LogTextInput;
 }
 
-/** 两态里固定那两位（原型脚本里的常量，16 页同）。 */
+/** 两态里固定那两位（判地脚本里的常量，16 页同）。 */
 const TODO_READY_TEXT = "这几项都齐了";
 const TODO_READY_TAG = "READY";
 
+/** 已给的槽位取值（键＝槽位 key）。 */
+function valueOf(values: Readonly<Record<string, string>>, key: string): string {
+  const v = values[key];
+  return v === undefined ? "" : String(v).trim();
+}
+
+/** 还缺哪几项（按槽位配置的必填位算；与运行时的判据同一条）。 */
+/** 这一格是不是被依赖位关掉了（判地脚本同一口径）：给了 needs 且那一格没值 ⇒ 置灰。 */
+function disabledOf(spec: SayWordSpec, values: Readonly<Record<string, string>>, slot: string): boolean {
+  const hit = spec.cfg.find((s) => s.key === slot);
+  return hit !== undefined && hit.needs !== undefined && valueOf(values, hit.needs) === "";
+}
+
+function missingLabels(spec: SayWordSpec, values: Readonly<Record<string, string>>): string[] {
+  return spec.cfg
+    .filter((s) => s.opt !== true && !disabledOf(spec, values, s.key) && valueOf(values, s.key) === "")
+    .map((s) => s.label);
+}
+
 /** 一个表单字段的标记（标签 ＋ 输入件）。 */
-function fieldHtml(f: SayFieldSpec, value: string): string {
+function fieldHtml(f: SayFieldSpec, value: string, disabled = false): string {
   const star = f.req ? '<i class="req">*</i>' : "";
   const aria = escapeHtml(f.label);
   let control: string;
   if (f.kind === "select") {
     const opts = (f.options ?? []).map((o) => '<option value="' + escapeHtml(o.value) + '"'
       + (value !== "" && o.value === value ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>").join("");
-    control = '<select data-slot="' + escapeHtml(f.slot) + '" aria-label="' + aria + '">' + opts + "</select>";
+    control = '<select data-slot="' + escapeHtml(f.slot) + '"' + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">' + opts + "</select>";
   } else {
     const type = f.kind === "date" ? "date" : "text";
     const mode = f.slot === "amt" ? ' inputmode="decimal"' : "";
     const ph = f.placeholder === undefined ? "" : ' placeholder="' + escapeHtml(f.placeholder) + '"';
     const v = value === "" ? "" : ' value="' + escapeHtml(value) + '"';
-    control = '<input type="' + type + '"' + mode + ' data-slot="' + escapeHtml(f.slot) + '"' + ph + v + ' aria-label="' + aria + '">';
+    control = '<input type="' + type + '"' + mode + ' data-slot="' + escapeHtml(f.slot) + '"' + ph + v + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">';
   }
   return '<label class="say-field"><span>' + escapeHtml(f.label) + " " + star + "</span>" + control + "</label>";
 }
 
-/** 选填组（原型 details.say-opt）。 */
+/** 选填组（判地 details.say-opt）。 */
 function optGroupHtml(spec: SayWordSpec, values: Readonly<Record<string, string>>): string {
   const fields = spec.optFields;
   if (fields === undefined || fields.length === 0) return "";
@@ -103,12 +146,12 @@ function optGroupHtml(spec: SayWordSpec, values: Readonly<Record<string, string>
     + '<summary><span class="plus">＋</span><span class="lbl">补充选填项</span>'
     + '<span class="sub">' + escapeHtml(spec.optSummary ?? "") + "</span>"
     + '<span class="cnt" id="say-opt-n"></span></summary>'
-    + '<div class="say-form">' + fields.map((f) => fieldHtml(f, valueOf(values, f.slot))).join("") + "</div>"
+    + '<div class="say-form">' + fields.map((f) => fieldHtml(f, valueOf(values, f.slot), disabledOf(spec, values, f.slot))).join("") + "</div>"
     + '<p class="say-opt-note">' + escapeHtml(spec.optNote ?? "") + "</p>"
     + "</details>";
 }
 
-/** 一段（原型 .sec：段标题 ＋ 内容）。 */
+/** 一段（判地 .sec：段标题 ＋ 内容）。 */
 function sectionHtml(input: { readonly id?: string; readonly noId?: string; readonly tagId?: string;
   readonly title: string; readonly tag: string; readonly content: string }): string {
   const idAttr = input.id === undefined ? "" : ' id="' + input.id + '"';
@@ -120,18 +163,7 @@ function sectionHtml(input: { readonly id?: string; readonly noId?: string; read
     + input.content + "</section>";
 }
 
-/** 已给的槽位取值（键＝槽位 key）。 */
-function valueOf(values: Readonly<Record<string, string>>, key: string): string {
-  const v = values[key];
-  return v === undefined ? "" : String(v).trim();
-}
-
-/** 还缺哪几项（按槽位配置的必填位算；与运行时的判据同一条）。 */
-function missingLabels(spec: SayWordSpec, values: Readonly<Record<string, string>>): string[] {
-  return spec.cfg.filter((s) => s.opt !== true && valueOf(values, s.key) === "").map((s) => s.label);
-}
-
-/** 缺项徽章列（原型 .slot-row：缺的走 .miss、给了的走 .ok，状态字跟着翻）。 */
+/** 缺项徽章列（判地 .slot-row：缺的走 .miss、给了的走 .ok，状态字跟着翻）。 */
 function chipsHtml(spec: SayWordSpec, values: Readonly<Record<string, string>>): string {
   return '<div class="slot-row">' + spec.chips.map((c) => {
     const done = valueOf(values, c.key) !== "";
@@ -140,13 +172,13 @@ function chipsHtml(spec: SayWordSpec, values: Readonly<Record<string, string>>):
   }).join("") + "</div>";
 }
 
-/** 已替你填好的那几行（原型 .fill-line）。 */
+/** 已替你填好的那几行（判地 .fill-line：标签 ／ 点线 ／ 值）。 */
 function fillsHtml(spec: SayWordSpec): string {
   return spec.fills.map((f) => '<div class="fill-line"><span class="k">' + escapeHtml(f.label)
     + '</span><span class="dots"></span><span class="v">' + escapeHtml(f.value) + "</span></div>").join("");
 }
 
-/** 按钮区（原型 .actions：主话术钮 ＋ 复制数据 ＋ 复制日志）。 */
+/** 按钮区（判地 .actions：主话术钮 ＋ 复制数据 ＋ 复制日志）。 */
 function actionsHtml(ready: boolean): string {
   return '<div class="actions">'
     + '<button class="btn btn-primary" type="button" id="say-btn"' + (ready ? "" : " disabled") + ">复制这句话去跟助手说</button>"
@@ -161,13 +193,13 @@ function actionsHtml(ready: boolean): string {
     + "</div>";
 }
 
-/** 这一页要用的浏览器侧数据（原型两个 window 全局的等价物）。 */
+/** 这一页要用的浏览器侧数据（判地两个 window 全局的等价物）。 */
 function sayConfigJson(input: SayCollectInput): string {
   const json = JSON.stringify({
     title: { wait: input.spec.titleWait, ready: input.spec.titleReady },
     sub: { wait: input.spec.subWait, ready: input.spec.subReady },
     todo: { wait: input.spec.todoWait, ready: TODO_READY_TEXT, tagWait: input.spec.todoTagWait, tagReady: TODO_READY_TAG },
-    template: input.spec.sayTemplate,
+    template: sayTemplateOf(input.word),
     slots: input.spec.cfg,
     payloads: {
       text: buildDataText({ ...input.data, format: "text" }),
@@ -179,51 +211,97 @@ function sayConfigJson(input: SayCollectInput): string {
   return json.replace(/</g, "\\u003c");
 }
 
-/** 这一页的家具样式（选择器全部由本件产出；只在本页根类之下，或 :has(本页根类) 之下命中）。 */
+/** 采集页接线共用位（五个模板件共用这一处）：本词有 SAY 数据就出这一页，没有返 null（调用方走老的通用页面壳）。
+ *  已给的参数按槽位配置的 ph 回填，缺项／两态／提示行／按钮禁用都按实际缺项算。 */
+export function sayCollectOut(input: {
+  /** 表键：写入域＝kind（记一笔是 plain）；改记录族＝update:none／update:undo／update:restore。 */
+  readonly sayKey: string;
+  readonly word: string;
+  readonly key: string;
+  readonly shape: string;
+  readonly params: Record<string, unknown>;
+  readonly data: DataTextInput;
+  readonly log: LogTextInput;
+}): string | null {
+  const raw = SAY_WORDS[input.sayKey];
+  if (raw === undefined) return null;
+  const w = input.word;
+  const spec: SayWordSpec = {
+    ...raw,
+    titleWait: withWord(raw.titleWait, w),
+    titleReady: withWord(raw.titleReady, w),
+    subWait: withWord(raw.subWait, w),
+    subReady: withWord(raw.subReady, w),
+    chips: raw.chips.map((c) => ({ ...c, label: withWord(c.label, w) })),
+    fills: raw.fills.map((f) => ({ label: withWord(f.label, w), value: withWord(f.value, w) })),
+    fields: raw.fields.map((f) => ({
+      ...f,
+      label: withWord(f.label, w),
+      ...(f.placeholder === undefined ? {} : { placeholder: withWord(f.placeholder, w) }),
+    })),
+    ...(raw.optFields === undefined ? {} : {
+      optFields: raw.optFields.map((f) => ({
+        ...f,
+        label: withWord(f.label, w),
+        ...(f.placeholder === undefined ? {} : { placeholder: withWord(f.placeholder, w) }),
+      })),
+    }),
+    hint: withWord(raw.hint, w),
+  };
+  const values: Record<string, string> = {};
+  for (const slot of spec.cfg) {
+    if (slot.ph === undefined) continue;
+    const raw = input.params[slot.ph];
+    values[slot.key] = typeof raw === "string" ? raw : (typeof raw === "number" ? String(raw) : "");
+  }
+  return sayCollectDoc({ word: w, key: input.key, shape: input.shape, spec, values, data: input.data, log: input.log });
+}
+
+/** 这一页的家具样式：判地那套声明的逐条转写（token 只在取值逐字相等处用）。 */
 export const SAY_COLLECT_CSS = [
-  "/* 纸与纸外页脚：把公共层纸件的锯齿／裁切线与页脚拉回原型几何（只在本页命中） */",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-block-sheet.is-ticket .ilife-block-sheet-zigzag { margin: 0 -22px -10px; }",
-  "@media (max-width: 400px) { .ilife-bill-sheet-page:has(.say-page) .ilife-block-sheet.is-ticket .ilife-block-sheet-zigzag { margin: 0 -16px -8px; } }",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-block-sheet.is-ticket .ilife-block-sheet-cut::before,",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-block-sheet.is-ticket .ilife-block-sheet-cut::after { border-top-color: #d9cdb4; }",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-ticket-foot { margin: 0; padding: 10px 0 2px; font-size: 11.5px; line-height: 1.7; letter-spacing: .4px; color: var(--ilife-ink-3); text-align: center; }",
-  "/* 店头与段标题：公共层那两条与原型有两处取值差（标题字距、段标题色），按原型改回 */",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-sheet-title { letter-spacing: normal; }",
-  ".ilife-bill-sheet-page:has(.say-page) .ilife-ticket-sec-heading { color: #6b6152; }",
-  ".say-page { display: block; }",
-  "/* 店头（原型 .shop-head） */",
+  "/* 桌（判地 body）：底色两处浅深是字面值，皮肤 token 只是同值代名 */",
+  ".ilife-bill-sheet-page:has(.say-page) { background: radial-gradient(1200px 600px at 50% -10%, #f7f2e6 0%, var(--ilife-ground) 55%, #e6dcc8 100%); color: var(--ilife-ink); font-family: var(--ilife-font); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 28px 14px 48px; }",
+  "/* 纸宽（判地 .page） */",
+  ".say-page { width: 100%; max-width: 440px; }",
+  "/* 纸（判地 .sheet-wrap／.sheet-frame／.sheet-inner）：投影走 drop-shadow，两列齿边挖的是桌面色 */",
+  ".say-page .sheet-wrap { position: relative; filter: drop-shadow(var(--ilife-shadow)); }",
+  ".say-page .sheet-frame { position: relative; background: var(--ilife-surface); border-radius: var(--ilife-radius); overflow: hidden; }",
+  ".say-page .sheet-frame::before, .say-page .sheet-frame::after { content: \"\"; position: absolute; top: 0; bottom: 0; width: 14px; background-image: radial-gradient(circle at 7px 10px, var(--ilife-ground) 5.5px, transparent 6px); background-size: 14px 20px; background-repeat: repeat-y; pointer-events: none; }",
+  ".say-page .sheet-frame::before { left: 0; }",
+  ".say-page .sheet-frame::after { right: 0; transform: scaleX(-1); }",
+  ".say-page .sheet-inner { padding: 22px 28px 10px; position: relative; }",
+  ".say-page .zigzag { height: 12px; margin: 0 6px; transform: rotate(180deg); background: linear-gradient(-45deg, transparent 8px, var(--ilife-surface) 0) 0 0/16px 16px repeat-x, linear-gradient(45deg, transparent 8px, var(--ilife-surface) 0) 8px 0/16px 16px repeat-x; }",
+  "/* 店头（判地 .shop-head） */",
   ".say-page .shop-head { text-align: center; padding: 2px 0 0; }",
   ".say-page .shop-brand { font-size: 11.5px; letter-spacing: 2px; color: var(--ilife-ink-2); font-weight: 700; }",
   ".say-page .shop-head h2 { margin: 8px 0 0; font-size: 19px; line-height: 1.4; font-weight: 800; }",
-  ".say-page .shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }",
-  "/* 虚线分隔与段（原型 hr.dashed／.sec／.sec-heading） */",
+  ".say-page .shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); }",
+  "/* 虚线分隔与段（判地 hr.dashed／.sec／.sec-heading） */",
   ".say-page .dashed { border: 0; border-top: 2px dashed var(--ilife-line); margin: 14px -8px; }",
   ".say-page .sec { padding: 2px 0 6px; }",
   ".say-page .sec-heading { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: #6b6152; }",
   ".say-page .sec-heading::before { content: \"\"; width: 4px; height: 14px; border-radius: 4px; background: var(--ilife-accent); }",
   ".say-page .sec-heading .no { margin-left: auto; font-weight: 700; color: var(--ilife-ink-3); letter-spacing: 0; }",
-  ".say-page .tri.ghost { visibility: hidden; }",
-  "/* 窄档（原型 390 档；仓内既有断点取 400） */",
-  "@media (max-width: 400px) { .say-page .shop-head h2 { font-size: 18px; } }",
-  "/* 缺项徽章列（原型 .slot-row／.slot） */",
+  "/* 缺项徽章列（判地 .slot-row／.slot） */",
   ".say-page .slot-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }",
   ".say-page .slot { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 800; background: var(--ilife-accent-soft); border: 1px solid #f0d7c2; color: var(--ilife-accent); }",
   ".say-page .slot.miss { background: #f9e8e4; border-color: #e5b8b0; color: var(--ilife-danger); }",
   ".say-page .slot.ok { background: var(--ilife-ok-soft); border-color: #bfe3cc; color: var(--ilife-ok); }",
   ".say-page .slot small { font-weight: 600; font-size: 11.5px; opacity: .85; }",
-  "/* 已替你填好的行（原型 .fill-line） */",
+  "/* 已替你填好的行（判地 .fill-line） */",
   ".say-page .fill-line { display: flex; align-items: flex-end; gap: 8px; padding: 9px 0; font-size: 14px; line-height: 1.4; min-height: 44px; }",
   ".say-page .fill-line .k { flex: none; color: var(--ilife-ink-2); white-space: nowrap; }",
   ".say-page .fill-line .dots { flex: 1 1 auto; min-width: 14px; border-bottom: 2px dotted #d9cdb4; transform: translateY(-5px); }",
-  ".say-page .fill-line .v { flex: none; max-width: 62%; text-align: right; font-weight: 700; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }",
-  "/* 表单（原型 .say-form／.say-field） */",
+  ".say-page .fill-line .v { flex: none; max-width: 62%; text-align: right; font-weight: 700; overflow-wrap: anywhere; }",
+  "/* 表单（判地 .say-form／.say-field） */",
   ".say-page .say-form { display: flex; flex-direction: column; gap: 10px; margin: 0 0 10px; }",
   ".say-page .say-field { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px; background: #fbf7ec; border: 1px solid var(--ilife-line); border-radius: 12px; padding: 8px 12px; font-size: 14px; }",
   ".say-page .say-field > span:first-child { flex: none; min-width: 76px; color: var(--ilife-ink-2); font-weight: 700; white-space: nowrap; }",
   ".say-page .say-field .req { color: var(--ilife-danger); font-style: normal; font-weight: 900; }",
   ".say-page .say-field input, .say-page .say-field select { flex: 1 1 0; min-width: 0; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-size: 15px; font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }",
   ".say-page .say-field input:focus, .say-page .say-field select:focus { outline: 2px solid var(--ilife-accent); outline-offset: 1px; border-color: var(--ilife-accent); }",
-  "/* 选填组（原型 .say-opt） */",
+  ".say-page .say-field input:disabled { background: #f4efe2; color: #a39c8e; }",
+  "/* 选填组（判地 .say-opt） */",
   ".say-page .say-opt { margin: 10px 0 0; border: 1px dashed #ddd0b6; border-radius: 12px; background: #fdfaf3; overflow: hidden; }",
   ".say-page .say-opt > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 13px; font-size: 13px; font-weight: 700; color: var(--ilife-ink-2); }",
   ".say-page .say-opt > summary::-webkit-details-marker { display: none; }",
@@ -234,22 +312,35 @@ export const SAY_COLLECT_CSS = [
   ".say-page .say-opt[open] > summary { border-bottom: 1px dashed #ddd0b6; background: #fbf7ec; }",
   ".say-page .say-opt .say-form { margin: 10px 13px 0; }",
   ".say-page .say-opt-note { margin: 6px 13px 12px; font-size: 12px; line-height: 1.6; color: var(--ilife-ink-3); }",
-  "/* 提示行（原型 .say-hint） */",
+  "/* 提示行（判地 .say-hint） */",
   ".say-page .say-hint { margin: 8px 2px 0; font-size: 12.5px; line-height: 1.7; color: var(--ilife-danger); font-weight: 700; }",
   ".say-page .say-hint.ready { color: var(--ilife-ok); }",
-  "/* 按钮区（原型 .actions／.btn） */",
+  "/* 按钮区（判地 .actions／.btn） */",
   ".say-page .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 14px 0 4px; text-align: center; }",
+  ".say-page .actions .btn-primary { flex: 1 1 100%; width: 100%; }",
   ".say-page .btn { display: flex; align-items: center; justify-content: center; text-align: center; min-height: 48px; border-radius: 13px; font-size: 16px; font-weight: 800; letter-spacing: .5px; border: 0; padding: 12px 14px; }",
-  ".say-page .btn-primary { flex: 1 1 100%; width: 100%; background: linear-gradient(180deg, #d34a35, #b93222); color: #fff; box-shadow: 0 8px 20px rgba(185,50,34,.28), inset 0 1px 0 rgba(255,255,255,.25); }",
+  ".say-page .btn-primary { background: linear-gradient(180deg, #d34a35, #b93222); color: #fff; box-shadow: 0 8px 20px rgba(185,50,34,.28), inset 0 1px 0 rgba(255,255,255,.25); }",
+  ".say-page .btn-secondary { background: #fff; color: #4a4236; border: 1.5px solid #ddd0b6; min-height: 44px; font-size: 14.5px; }",
+  ".say-page .actions .btn-secondary { flex: 1 1 100%; width: 100%; margin-top: 0; }",
+  ".say-page .copy-wrap { position: relative; flex: 1 1 100%; width: 100%; margin-top: 0; display: flex; justify-content: center; text-align: center; }",
+  ".say-page .actions #say-btn { flex: 1 1 100%; width: 100%; margin: 2px auto 0; }",
+  ".say-page .actions #say-data-btn { flex: 1 1 100%; width: 100%; margin: 2px auto 0; }",
+  ".say-page .actions #say-log-btn { flex: 1 1 100%; width: 100%; margin: 2px auto 0; }",
+  ".say-page .actions #say-data-btn .btn-in, .say-page .actions #say-log-btn .btn-in { display: inline-block; min-width: 0; text-align: left; font: inherit; letter-spacing: inherit; }",
+  ".say-page .actions .tri { font: inherit; }",
+  ".say-page .actions .tri.ghost { visibility: hidden; }",
   ".say-page .btn-primary:disabled { background: #c9c2b4; color: #fff; box-shadow: none; opacity: .9; cursor: not-allowed; }",
-  ".say-page .btn-secondary { flex: 1 1 100%; width: 100%; background: #fff; color: #4a4236; border: 1.5px solid #ddd0b6; min-height: 44px; font-size: 14.5px; }",
-  ".say-page #say-data-btn, .say-page #say-log-btn { margin: 2px auto 0; }",
-  ".say-page .btn-in { display: inline-block; min-width: 0; text-align: left; font: inherit; letter-spacing: inherit; }",
-  ".say-page .copy-wrap { position: relative; flex: 1 1 100%; width: 100%; display: flex; justify-content: center; text-align: center; }",
   ".say-page .copy-menu { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); min-width: 200px; text-align: center; background: #fff; border: 1.5px solid #ddd0b6; border-radius: 12px; box-shadow: var(--ilife-shadow-pop); padding: 6px; display: none; z-index: 5; }",
   ".say-page .copy-wrap.open .copy-menu { display: block; }",
   ".say-page .copy-item { display: flex; justify-content: center; text-align: center; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 8px; background: none; font-size: 13.5px; font-weight: 700; color: var(--ilife-ink); }",
   ".say-page .copy-item small { font-weight: 600; color: var(--ilife-ink-2); font-size: 11.5px; }",
+  "/* 裁切线（判地 .cut-line） */",
+  ".say-page .cut-line { display: flex; align-items: center; gap: 10px; padding: 14px 0 8px; color: var(--ilife-ink-3); font-size: 12px; }",
+  ".say-page .cut-line::before, .say-page .cut-line::after { content: \"\"; flex: 1; border-top: 2px dashed #d9cdb4; }",
+  "/* 纸外脚注（判地 .foot-note） */",
+  ".say-page .foot-note { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }",
+  "/* 窄档（判地 390 档；同值照抄，含桌、纸内距与标题字号三处） */",
+  "@media (max-width: 390px) { .ilife-bill-sheet-page:has(.say-page) { padding: 18px 10px 36px; } .say-page .sheet-inner { padding: 18px 22px 8px; } .say-page .shop-head h2 { font-size: 18px; } }",
 ].join("\n");
 
 /** 这一页的运行时（表单 → prompt、两枚复制钮、选填计数）。零依赖，随页内联。 */
@@ -271,7 +362,10 @@ export function sayCollectRuntimeJs(): string {
     'function build(V){ var out = C.template; (C.slots || []).forEach(function(s){ if(!s.ph) return; var v = (V[s.key] || "").trim();',
     '  out = out.split("{{" + s.ph + "}}").join(v === "" ? "___" : v); }); return out.replace(/\\{\\w+\\}/g, "___"); }',
     'function render(){ var V = {}, bad = {}, miss = [];',
-    '  (C.slots || []).forEach(function(s){ var r = check(s, eff(s)); V[s.key] = r.val; if(r.bad) bad[s.key] = 1;',
+    '  (C.slots || []).forEach(function(s){ var el = form ? form.querySelector("[data-slot=" + s.key + "]") : null;',
+    '    if(s.needs && el) el.disabled = !String(V[s.needs] || "").trim();',
+    '    var r = (s.needs && el && el.disabled) ? { val: "", bad: false } : check(s, eff(s));',
+    '    V[s.key] = r.val; if(r.bad) bad[s.key] = 1;',
     '    if(!s.opt && !r.val) miss.push(s.label); });',
     '  var on = 0; (C.slots || []).forEach(function(s){ if(s.opt && String(V[s.key] || "").trim()) on++; });',
     '  var oc = document.getElementById("say-opt-n"); if(oc) oc.textContent = on ? ("已补 " + on + " 项") : "";',
@@ -300,19 +394,20 @@ export function sayCollectRuntimeJs(): string {
     'if(form){ form.addEventListener("input", render); form.addEventListener("change", render); }',
     'render();',
     '})();',
-  ].join("\n");
+  ].join("\\n");
 }
 
-/** 采集页整页：店头 ＋ 三段 ＋ 按钮区，套进票据纸（纸与裁切线走公共层）。 */
+/** 采集页整页：纸 ＋ 店头 ＋ 三段 ＋ 按钮区 ＋ 裁切线（结构照判地，逐层层数一致）。 */
 export function sayCollectDoc(input: SayCollectInput): string {
   const s = input.spec;
+  const brand = "饼干记账 · " + input.word;
   const values = input.values ?? {};
   const miss = missingLabels(s, values);
   const ready = miss.length === 0;
   const hintText = ready ? "已填齐，可以复制去说了。" : "还差 " + String(miss.length) + " 项：" + miss.join("、") + "。";
-  const paper = "<style>" + SAY_COLLECT_CSS + "</style>"
-    + '<div class="say-page">'
-    + '<div class="shop-head"><div class="shop-brand">' + escapeHtml(s.brand) + "</div>"
+  const page = '<div class="say-page">'
+    + '<div class="sheet-wrap"><div class="sheet-frame"><div class="sheet-inner">'
+    + '<div class="shop-head"><div class="shop-brand">' + escapeHtml(brand) + "</div>"
     + '<h2 id="say-h2" data-wait="' + escapeHtml(s.titleWait) + '" data-ready="' + escapeHtml(s.titleReady) + '">'
     + escapeHtml(ready ? s.titleReady : s.titleWait) + "</h2>"
     + '<p class="shop-sub" id="say-sub" data-wait="' + escapeHtml(s.subWait) + '" data-ready="' + escapeHtml(s.subReady) + '">'
@@ -325,14 +420,17 @@ export function sayCollectDoc(input: SayCollectInput): string {
     + '<hr class="dashed">'
     + sectionHtml({ title: "下一步怎么说", tag: "SAY",
       content: '<div class="say-form" id="say-form">'
-        + s.fields.map((f) => fieldHtml(f, valueOf(values, f.slot))).join("") + optGroupHtml(s, values) + "</div>"
+        + s.fields.map((f) => fieldHtml(f, valueOf(values, f.slot), disabledOf(s, values, f.slot))).join("") + optGroupHtml(s, values) + "</div>"
         + '<p class="say-hint' + (ready ? " ready" : "") + '" id="say-hint">' + escapeHtml(hintText) + "</p>" })
     + '<hr class="dashed">'
     + actionsHtml(ready)
-    + "</div>"
+    + '<div class="cut-line">✂ 裁切线</div>'
+    + "</div><div class=\"zigzag\"></div></div></div>"
+    + '<div class="foot-note">' + escapeHtml(brand) + "</div>"
+    + '</div>'
     + '<script type="application/json" id="say-cfg">' + sayConfigJson(input) + "</script>";
-  const body = renderSheetFrame({ variant: "ticket", cutLine: true, cutLineText: "✂ 裁切线", content: paper })
-    + '<div class="ilife-ticket-foot">' + escapeHtml(s.foot) + "</div>";
+  const section = writeSection({ slot: "collect", page: "collect", shape: input.shape, key: input.key, content: page });
+  const body = "<style>" + SAY_COLLECT_CSS + "</style>" + section;
   return assembleSheetPage({ docTitle: s.titleWait, bodyHtml: body, paper: "detail" })
     + "<script>" + sayCollectRuntimeJs() + "</script>";
 }

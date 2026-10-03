@@ -26,6 +26,7 @@ import { diffOf, diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { EYEBROW, writePageShell as pageShell } from './pageParts.js';
+import { sayCollectOut } from './saySheet.js';
 import { diffRowsFor, pickerBlock, readRowById, snapshotTable } from './recordPicker.js';
 import { money2, summaryRow } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
@@ -211,6 +212,19 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
   const { page, row } = pageOf(input);
   const facts = factsOf(row, input.params);
   const envelope = envelopeOf(spec.key, false, blockedMessage(input.missing, page.blocked));
+  const sayOut = sayCollectOut({
+    sayKey: 'update:' + spec.receiptResult,
+    key: spec.key,
+    shape: envelope.shape,
+    word: spec.wake,
+    params: input.params,
+    data: { envelope },
+    log: { envelope, copyLog: copyLog({
+      command: commandLine(spec.key, input.params), source: input.source, detail: '没写库（采集页）',
+      actionAt: input.actionAt, version: DOC_VERSION,
+    }) },
+  });
+  if (sayOut !== null) return sayOut;
   /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
   const subtitle = page.blocked.length === 0 ? '' : '还差 ' + page.blocked.length + ' 项必需项';
   const content = [

@@ -38,6 +38,7 @@ import { collectMissingTags, collectProgress, collectSectionTitle } from './coll
 import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
+import { sayCollectOut } from './saySheet.js';
 import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { rowEditorTable } from './rowEditorTable.js';
 import type { RowEditorField } from './rowEditorTable.js';
@@ -170,6 +171,19 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
   const { key, params, slots, missing } = input;
   const blocked = blockedItems({ params, missing, kind: spec.kind });
   const envelope = envelopeOf(key, false, blockedMessage(missing, blocked));
+  const sayOut = sayCollectOut({
+    sayKey: spec.kind,
+    key: key,
+    shape: envelope.shape,
+    word: spec.word,
+    params: params,
+    data: { envelope },
+    log: { envelope, copyLog: copyLog({
+      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      actionAt: input.actionAt, version: DOC_VERSION,
+    }) },
+  });
+  if (sayOut !== null) return sayOut;
   const names = slots.map((s) => s.name);
   const rows = rowsOf(params, names);
   const content = [

@@ -37,8 +37,7 @@ import { typeBadge } from './typeBadge.js';
 import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import { collectBlockedFold } from './blockedFold.js';
-import { sayCollectDoc } from './saySheet.js';
-import { SAY_WORDS } from './sayWords.js';
+import { sayCollectOut } from './saySheet.js';
 import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
 import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
 import type { BlockedLine, CardsStyle, FieldSlot, NoticeIcon } from './pageParts.js';
@@ -158,30 +157,19 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: spec.replaces });
   const envelope = envelopeOf(input.key, false, message);
   // #1079：本词若有 SAY 采集页数据（16 页那一批），采集页走票据纸那一路；没有就照旧走通用页面壳。
-  const saySpec = SAY_WORDS[spec.word];
-  if (saySpec !== undefined) {
-    const values: Record<string, string> = {};
-    for (const slot of saySpec.cfg) {
-      if (slot.ph === undefined) continue;
-      const raw = params[slot.ph];
-      values[slot.key] = typeof raw === 'string' ? raw : (typeof raw === 'number' ? String(raw) : '');
-    }
-    return sayCollectDoc({
-      spec: saySpec,
-      values,
-      data: { envelope },
-      log: {
-        envelope,
-        copyLog: copyLog({
-          command: commandLine(input.key, params),
-          source: input.source,
-          detail: spec.logDetail(input),
-          actionAt: input.actionAt,
-          version: envelope.version,
-        }),
-      },
-    });
-  }
+  const sayOut = sayCollectOut({
+    sayKey: spec.kind === '' ? 'plain' : spec.kind,
+    key: input.key,
+    shape: envelope.shape,
+    word: spec.word,
+    params: params,
+    data: { envelope },
+    log: { envelope, copyLog: copyLog({
+      command: commandLine(input.key, params), source: input.source, detail: '没写库（采集页）',
+      actionAt: input.actionAt, version: envelope.version,
+    }) },
+  });
+  if (sayOut !== null) return sayOut;
   const table = spec.table?.(input) ?? null;
   const empties: string[] = [];
   if (spec.emptyAccount !== undefined && pick.account.length === 0) {
