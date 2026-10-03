@@ -477,10 +477,9 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
               { style: S.tabStack },
               props.renderSlot(CONFIG_TAB_SLOT, {}, { only: tab.plugin }) as React.ReactNode,
               // 那家的体检表：与总览那行读同一份快照（`health.rows`），不是各算一遍。
-              // #996：印文由标题推导（`title + ' HELP'`，显示形带空格，与 997 六家值逐字同；不另立常量，纯展示）。
+              // #1069：体检头只留去 `·` 的分层标题，**不带签**（签只留配置头；负责人 2026-10-03 定）。
               React.createElement(HealthTable, {
                 title: labelFor(tab),
-                sealText: labelFor(tab) + ' HELP',
                 phase: health.rows[tab.plugin]?.phase ?? 'idle',
                 report: health.rows[tab.plugin]?.report ?? null,
                 error: health.rows[tab.plugin]?.error ?? null,
