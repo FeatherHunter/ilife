@@ -23,6 +23,6 @@ export const SCENE: SetupScene = {
   page: 'receipt',
   title: '一键备份',
   caliber: '备份完成',
-  subtitle: '数据库 + 目标(goals.json)已归档',
+  subtitle: '记账库 ＋ 目标（goals.json）已存好',
   promptOf: () => '请加载「饼干记账」技能,帮我备份饼干记账的数据(唤醒词:' + WORD + '):\n',
 };

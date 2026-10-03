@@ -192,12 +192,12 @@ describe('t413 ④ 查分类：三级（无 / 视为 L1）', () => {
     assert.equal(env.data.end, '', '单条件支 end 回填空串');
     assert.ok(text.includes('饼干记账 · 查分类'), '店头品牌行应为查分类');
     assert.ok(text.includes('分类＝餐饮（全部时间）'), '窗口说清条件＋全部时间');
-    // 结论句：笔数取 total（无转账混进来时两者一致），金额取 kpi；占比句不给死百分比（随样本变）。
-    assert.ok(text.includes('餐饮共 ' + env.data.total + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '结论句（笔数与支出）');
-    assert.ok(text.includes('其中餐饮类共 ' + env.data.kpi.expense.toFixed(2) + ' 元，占全部支出约'), '占比结论句');
+    // v2.2 判地（#1080 落地）：结论句只报笔数（金额进主数字），占比句搬进落点那一行的「占比」。
+    assert.ok(text.includes('查分类共记 ' + env.data.total + ' 笔'), '结论句（笔数）');
+    assert.ok(text.includes('占本页支出 '), '落点里的占比那一行');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
-    assert.ok(text.includes(SEC('SCALE')), '占比段');
-    assert.ok(text.includes(SEC('DETAIL')), '明细段');
+    assert.ok(text.includes(SEC('SHARE')), '占比段');
+    assert.ok(text.includes(SEC('NOTES')), '备注段');
     assert.ok(text.includes('✂ 裁切线'), '裁切线');
     assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });

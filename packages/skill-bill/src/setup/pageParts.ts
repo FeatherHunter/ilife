@@ -18,7 +18,7 @@
  *   那一处（老侧 restore 把 `2`／`3` 写死在 HTML 里，就是从这里漏出去的）。
  *   若将来第二个域也要出步骤条，再照这一枚立公共层增量票（本域不提前上浮）。
  */
-import { renderStatusBadge } from 'base-paint';
+import { escapeHtml, renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope, StatusKind } from 'base-paint';
 import { renderCaliberLine, renderChips, renderDataTable, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
 import type { DataTableColumn, DataTableRow, ParamFieldInput } from 'base-paint/blocks';
@@ -247,3 +247,45 @@ export const SOURCE_WRITE = '记账库与备份目录（写库回执）';
 export const SOURCE_WRITE_TEXT = '记账库与备份目录（写入）';
 export const SOURCE_FILE = 'CSV 文件与记账库（读文件 · 写库回执）';
 export const SOURCE_FILE_TEXT = 'CSV 文件与记账库';
+
+/** 四步／明细行的一条（原型 `li > .idx + .entry-text + small`）。 */
+export interface SetupRowInput {
+  /** 编号胶囊里的字（原型是步号；查看备份那一页是 `★`）。 */
+  readonly no: string;
+  /** 主行文本。 */
+  readonly text: string;
+  /** 次行小字（缺省不出）。 */
+  readonly sub?: string;
+  /** 胶囊状态（缺省＝原型无色档 `.idx`）。 */
+  readonly tone?: 'done' | 'now' | 'todo' | 'ok' | 'bad';
+  /** 整行走实付高亮档（原型 `li.pay`，查看备份那一页用）。 */
+  readonly pay?: boolean;
+  /** 胶囊里画星不画序号（原型 `.idx` 里那颗 `★`）。 */
+  readonly star?: boolean;
+}
+
+/** 一张明细卡（原型 `.entry-card > ol.entry-rows`）：编号胶囊 ＋ 主行 ＋ 可选次行。 */
+export function setupEntryCard(rows: readonly SetupRowInput[]): string {
+  if (rows.length === 0) return '';
+  const items = rows.map((r) => {
+    const cls = r.pay === true ? 'is-pay' : r.tone === undefined ? '' : 'is-' + r.tone;
+    const withStar = r.star === true ? (cls === '' ? 'is-star' : cls + ' is-star') : cls;
+    return '<li' + (withStar === '' ? '' : ' class="' + withStar + '"') + '>'
+    + '<span class="ilife-ticket-entry-text">' + escapeHtml(r.text)
+    + (r.sub === undefined ? '' : '<span class="ilife-ticket-entry-sub">' + escapeHtml(r.sub) + '</span>')
+    + '</span></li>';
+  }).join('');
+  return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
+}
+
+/** 对账小结行（原型 `.check-mini`）：常档绿、`is-warn` 黄、`is-danger` 红。 */
+export function setupCheck(text: string, tone?: 'warn' | 'danger'): string {
+  return '<div class="ilife-ticket-check' + (tone === undefined ? '' : ' is-' + tone) + '">'
+    + '<span class="ilife-ticket-check-dot" aria-hidden="true"></span><span>' + escapeHtml(text) + '</span></div>';
+}
+
+/** 口令框（原型 `.prompt-box`）：一句引导 ＋ 一行等宽口令。 */
+export function setupPromptBox(lead: string, mono: string): string {
+  return '<div class="ilife-ticket-prompt">' + escapeHtml(lead) + '<br>'
+    + '<span class="ilife-ticket-prompt-mono">' + escapeHtml(mono) + '</span></div>';
+}

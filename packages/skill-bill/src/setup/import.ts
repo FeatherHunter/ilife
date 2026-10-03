@@ -20,7 +20,7 @@ import { backupStampOf, createBackup } from './backups.js';
 import {
   FIELD_LABEL, applyImport, existingRows, guessMap, missingRequired, parseMapping, planImport, readCsv,
 } from './importer.js';
-import type { ColumnMap, ImportPlan } from './importer.js';
+import type { ColumnMap, CsvFile, ImportField, ImportPlan } from './importer.js';
 import { confirmOf, importFileOf, mappingOf } from './params.js';
 import type { SetupBlocked } from './params.js';
 import { receiptEnvelopeOf } from './pageParts.js';
@@ -28,6 +28,23 @@ import { setupSceneFor } from './scene.js';
 import { importSteps } from './steps.js';
 import { blockedWizardDoc } from './blocked.js';
 import { wizardDoc } from './template-wizard.js';
+
+/** 映射的人话（原型 s06 口令那一格逐字：`时间=交易时间,分类=交易分类,金额=金额(元),备注=商品说明,账户=付款方式`）。
+ *  取的是 **CSV 表头原文**（不是列号）——用户要照这句重说一遍，列号对他没有意义。 */
+function mappingHeaderText(csv: CsvFile, map: ColumnMap): string {
+  const order: readonly { readonly f: ImportField; readonly label: string }[] = [
+    { f: 'time', label: '时间' },
+    { f: 'category', label: '分类' },
+    { f: 'amount', label: '金额' },
+    { f: 'note', label: '备注' },
+    { f: 'account', label: '账户' },
+    { f: 'ledger', label: '账本' },
+  ];
+  return order
+    .filter((o) => map[o.f] !== undefined)
+    .map((o) => o.label + '=' + (csv.header[map[o.f] as number] ?? '第' + String((map[o.f] as number) + 1) + '列'))
+    .join(',');
+}
 
 /** 把映射写回人话（复制口令里那一格；`日期=第1列,金额=第3列`）。 */
 export function mappingTextOf(map: ColumnMap): string {
@@ -87,7 +104,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
         fileName: csv.name, totalRows: csv.rows.length, mapped: true, newRows: plan.newRows,
         duplicateRows: plan.duplicates.length, badRows: plan.bad.length, confirmed: false, inserted: 0, failed: 0,
       }),
-      prompt: scene.promptOf(filled), promptLabel: '复制给助手：照这句确认，导入前会自动备份一次',
+      prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: '复制给助手：照这句确认，导入前会自动备份一次',
       csv, map, plan, confirmed: false, backup: '', inserted: 0, failed: [],
     });
     return { data: { ok, message, receipt }, page, html };
@@ -113,7 +130,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
       duplicateRows: plan.duplicates.length, badRows: plan.bad.length, confirmed: true,
       inserted: written.inserted, failed: written.failed.length,
     }),
-    prompt: scene.promptOf(filled), promptLabel: '复制给助手：同一份文件再导一次会怎样',
+    prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: '复制给助手：同一份文件再导一次会怎样',
     csv, map, plan, confirmed: true, backup: backup.file, inserted: written.inserted, failed: written.failed,
   });
   return { data: { ok, message, receipt }, page, html };

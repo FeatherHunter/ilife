@@ -25,6 +25,6 @@ export const SCENE: SetupScene = {
   page: 'list',
   title: '初始化状态',
   caliber: '三重判定',
-  subtitle: '数据存在 · 结构版本 · 就绪',
+  subtitle: '三项检查 · 数据在 · 结构对 · 记录能数',
   promptOf: () => INIT_PROMPT,
 };

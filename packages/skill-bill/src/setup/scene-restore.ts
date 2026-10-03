@@ -26,10 +26,10 @@ export const SCENE: SetupScene = {
   title: '从备份恢复',
   caliber: '详情预览',
   subtitle: '预览详情 → 确认 → 恢复 → 验证（恢复前自动备份现状）',
-  /** 口令里那一格照老侧写「备  份」（中间两个空格，`scenes/setup.yaml:72` 逐字同形）；
+  /** 口令照判地原型 s05 v2.4 逐字：`请从备份 <名> 恢复，我已确认覆盖（恢复前请先备份现状）。`
    *  给了 `name` 就填选中的那一份，没给写占位（与老侧 `restore.html:174` 的 `'____'` 同义）。 */
   promptOf: (params) => {
     const name = typeof params['name'] === 'string' && params['name'].trim() !== '' ? params['name'].trim() : '____';
-    return '请加载「饼干记账」技能,帮我从备份恢复数据(唤醒词:' + WORD + '):\n\n  备  份: ' + name + ' (默认最新备份)\n';
+    return '请从备份 ' + name + ' 恢复，我已确认覆盖（恢复前请先备份现状）。';
   },
 };

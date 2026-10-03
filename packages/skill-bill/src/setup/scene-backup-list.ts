@@ -21,6 +21,6 @@ export const SCENE: SetupScene = {
   page: 'list',
   title: '查看备份',
   caliber: '备份列表',
-  subtitle: '备份目录里的这些份',
+  subtitle: '备份目录里的这些份 · 每次备份都会新存一份',
   promptOf: () => '请加载「饼干记账」技能,帮我看看有哪些备份(唤醒词:' + WORD + '):\n',
 };

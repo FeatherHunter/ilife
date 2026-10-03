@@ -22,6 +22,6 @@ export const SCENE: SetupScene = {
   page: 'wizard',
   title: '首次使用向导',
   caliber: '4 步零决策',
-  subtitle: '4 步零决策 · 自动检测 · 一次成功',
+  subtitle: '首次使用向导 · 不用选 · 自动检测 · 一次成功',
   promptOf: () => '请加载「饼干记账」技能,帮我开始使用饼干记账(唤醒词:' + WORD + '):\n',
 };

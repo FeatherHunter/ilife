@@ -1,16 +1,19 @@
 /** 查询域·查分类票据纸（w09 专属，`bill.record.range` 的 `category` 单条件分支）。
  *
- * 原型（唯一判地）：`.scratch/1019-p-query/w09-查分类-v2.1.html`（`*-v2*.html` 取版本号最高者）。
+ * 原型（唯一判地）：`docs/skills/skill-bill/proto/w09/w09-查分类-v2.2.html`
+ * （16369 字节，sha256 `3605dbcefd89d3290dc11780847db4968b3906ea2ef8133955de41c2e9548788`；
+ * 1021 代 v2.1 加「双钮补位左缘对齐」即此版，两版只差复制区那枚隐藏三角）。
  * 八部位（逐像素对照）：
- * 纸头 `饼干记账 · 查分类` ＋ H2 `餐饮共 4 笔，支出 333.00 元` ＋ 副题 `分类＝餐饮（全部时间）` ＋
- * 主数字（`分类支出 · 餐饮`＋支出唯一＋结论句进小字
- * `主要花在「餐饮/外卖/午餐」，275.00 元，占本页支出 83%。`）＋
- * 落点 LEDGER（收入／净额／落点账本／币种）＋
- * 分类占比 SCALE（83/17，条宽整数和 100，下见 `intPcts`；另跟一句占比注记
- * `其中餐饮类共 333.00 元，占全部支出约 26%。`——基线芯片并入占比区，原型 `P11` 断言）＋
- * 明细 DETAIL（备注 · ／分类·账户·时刻·#编号／金额，原型 `entryRowsHTML` 同式）＋
- * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无，全角斜线 ／、顿号 ，原型 `checkHTML` 同式）＋
- * 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`；菜单 small 三句走共用位）＋
+ * 纸头 `饼干记账 · 查分类` ＋ H2 `查分类共记 4 笔`（＝唤醒词＋`共记 N 笔`）＋
+ * 副题 `分类＝餐饮（全部时间）` ＋
+ * 主数字（`分类支出 · 餐饮`＋支出唯一＋小字 `四笔分类均餐饮开头`）＋
+ * 落点 LEDGER 六行（收入／净额／落点账本／币种／花得最多／占比）＋
+ * 占比 SHARE（entry-card 内逐类一行：`类 · 金额 元 · N 笔 · 均 X`＋该类占本页支出的条）＋
+ * 备注 NOTES（entry-card 内逐笔一行：`备注 · 备注 分类 · 账户 · 时刻`，**无金额**；
+ * 编号接占比行续排，故第二张卡的计数器起值＝占比行数）＋
+ * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无，全角斜线 ／、顿号）＋
+ * 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`；▾ 的补位口径住 `./pageParts.js` 的
+ * `QUERY_COPY_CSS`——v2.2 相对 v2.1 的全部差别即那一处，本件零命中）＋
  * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查分类`。口径段无（1045 全删，与 v2.1 同）。
  *
  * 谁在用（一个调用点，指名）：`./read.js` 的 `viewRecordRange` 的条件分支里
@@ -20,16 +23,17 @@
  *
  * 载荷键一字不动：`data` 键＝`items／total／start('')／end('')／kpi`（与条件分支搬迁前同形，
  * 经 `./list.js` 的 `listEnvelope` 出）。KPI 与分类聚合与 `./list.js` 的 `listOut` 同源
- * （`calcKpi` 算一次，`calcCategories` 经分析域门取，占比＝分类支出÷本页支出）；条宽整数化
- * 只动呈现（`intPcts` 最大余数法，manifest 83/17 即此算出），口径不动。
- * 占比注记的 `sharePct`（占全部支出比）由调用方按 `./read.js` 的 `shareChip` 同口径算好传入
- * （本域页面侧第二次取数仍只在 `read.js` 一处，本件不再取第二次数）。
+ * （`calcKpi` 算一次，`calcCategories` 经分析域门取）。占比条宽用**原值**（不取整：原型 v2.2 的
+ * `width:82.58258258258259%` 就是 `275÷333` 的浮点原样）；LEDGER 的「占比」行与「花得最多」行
+ * 同取分类首名，取整只在**那一行的文本**里做（`占本页支出 83%`）。
+ * 占比注记的 `sharePct`（占全部支出比）已不在这张纸上（v2.2 删了那句），保留入参只为超体积
+ * 回落老列表路时那枚胶囊（`占全部支出的 X%`）仍读得到，`read.js` 那一处第二次取数因此不动。
  * 呈现映射沿 `./ticketAccount.js`（w10）与 `./ticketMonth.js`（w07）：店头／主数字／段落／
- * 复制区走共用位与公共层组件，明细与对账是本页自有标记（类名 `ilife-category-*`，作用域限
+ * 复制区走共用位与公共层组件，占比条与对账是本页自有标记（类名 `ilife-category-*`，作用域限
  * `.ilife-ticket-detail`，他页零命中）；颜色与圆角一律读皮肤 token，不抄字面色。
  */
 import { escapeHtml } from 'base-paint';
-import { renderCaliberLine, renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderCaliberLine, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { calcCategories } from '../analysis/index.js';
 import type { BillRow } from '../fetch/index.js';
 import { DB_FILENAME } from '../fetch/index.js';
@@ -54,18 +58,19 @@ const SOURCE_TEXT_QUERY = '记账库（只读）';
 /** 一整页的体积预算（字节，与 `./list.js` 的 `PAGE_BYTE_BUDGET` 同值：超了回落老列表路，不静默丢页）。 */
 const PAGE_BYTE_BUDGET = 240_000;
 
-/** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
+/** 占比段的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
 
 /** 空值占位（落点行永不缺席，无值即此符）。 */
 const EMPTY_CELL = '—';
 
+/** 主数字小字的计数词（原型逐字 `四笔分类均餐饮开头` 的 `四`）：1–10 取中文数字，更大的数照数写。 */
+const COUNT_WORDS: readonly string[] = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
 /** w09 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，他页零命中）。 */
 const CATEGORY_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-category-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-category-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-category-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-category-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
+  '.ilife-ticket-detail .ilife-category-bar { display: block; height: 6px; margin-top: 6px; border-radius: var(--ilife-radius-pill); background: var(--ilife-line); overflow: hidden; }',
+  '.ilife-ticket-detail .ilife-category-bar > i { display: block; height: 100%; border-radius: var(--ilife-radius-pill); background: var(--blue); }',
   '.ilife-ticket-detail .ilife-category-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-category-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-category-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
@@ -94,18 +99,9 @@ function distinct(values: readonly string[]): string[] {
   return out;
 }
 
-/** 占比整数（和 100 的最大余数法；原型 manifest 的 83/17 即此算出）。 */
-function intPcts(weights: readonly number[]): number[] {
-  const floors = weights.map((w) => Math.max(0, Math.floor(w)));
-  let rest = 100 - floors.reduce((a, b) => a + b, 0);
-  const order = weights.map((_, i) => i).sort((a, b) => (weights[b] - floors[b]) - (weights[a] - floors[a]));
-  const out = [...floors];
-  for (const i of order) {
-    if (rest <= 0) break;
-    out[i] += 1;
-    rest -= 1;
-  }
-  return out;
+/** 计数词（原型 `四笔分类均餐饮开头`）：1–10 取中文数字，更大的数照数写。 */
+function countWord(n: number): string {
+  return n >= 1 && n <= COUNT_WORDS.length ? COUNT_WORDS[n - 1] : String(n);
 }
 
 /** 载荷行自带的币种（`./items.ts` 的 `toBillItem` 形状；读不到即空，由落点兜 `CNY`）。 */
@@ -113,7 +109,7 @@ function currenciesOf(records: readonly BillRow[]): string[] {
   return distinct(records.map((r) => r.currency));
 }
 
-/** 本窗模型（与 `./list.js` 的 `listOut` 条件分支同源：KPI 算一次，分类经分析域门取）。 */
+/** 本窗模型（与 `./list.js` 的 `listOut` 同源：KPI 算一次，分类经分析域门取）。 */
 function modelOf(records: readonly BillRow[]): {
   readonly kpi: { readonly count: number; readonly expense: number; readonly income: number; readonly net: number };
   readonly categories: readonly QueryCategoryRow[];
@@ -130,18 +126,17 @@ function modelOf(records: readonly BillRow[]): {
   return { kpi, categories, data: { items: rows.map(toBillItem), total: rows.length, start: '', end: '', kpi } };
 }
 
-/** 结论标准句（与 `./list.js` 的 `conclusionOf` 同字：有支出取首类，无支出说清只有收入）。 */
-function conclusionOf(categories: readonly QueryCategoryRow[]): string {
-  const top = categories[0];
-  if (top === undefined) return '本页只有收入，没有支出。';
-  return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
-    + String(Math.round(top.pct)) + '%。';
+/** 主数字下面那句小字（原型逐字：`四笔分类均餐饮开头`——本窗的行都是这个分类开头，这是取数条件的必然）。 */
+function noteOf(count: number, category: string): string {
+  if (count === 0) return '这一窗没有记录。';
+  return countWord(count) + '笔分类均' + category + '开头';
 }
 
-/** 落点 LEDGER 四行（原型逐字：收入／净额／落点账本／币种；金额裸数不带单位）。 */
+/** 落点 LEDGER 六行（原型逐字：收入／净额／落点账本／币种／花得最多／占比；金额裸数不带单位）。 */
 function ledgerHtml(
   kpi: { readonly income: number; readonly net: number },
   records: readonly BillRow[],
+  top: QueryCategoryRow | undefined,
 ): string {
   const ledgers = distinct(records.map((r) => r.ledger));
   const currencies = currenciesOf(records);
@@ -151,40 +146,43 @@ function ledgerHtml(
       { label: '净额', value: sumText(kpi.net) },
       { label: '落点账本', value: ledgers.length === 0 ? EMPTY_CELL : ledgers.join(' · ') },
       { label: '币种', value: currencies.length === 0 ? 'CNY' : currencies.join(' · ') },
+      { label: '花得最多', value: top === undefined ? EMPTY_CELL : top.label + ' ' + sumText(top.amount) + ' 元' },
+      { label: '占比', value: top === undefined ? EMPTY_CELL : '占本页支出 ' + String(Math.round(top.pct)) + '%' },
     ],
     layout: 'ticket',
   }) + '</div>';
 }
 
-/** 分类占比 SCALE（原型 P11：占比条＋注记 `其中X类共 Y 元，占全部支出约 Z%。`；类超 8 时跟一行口径）。 */
-function scaleHtml(
-  categories: readonly QueryCategoryRow[],
-  input: { readonly category: string; readonly expense: number; readonly sharePct: number },
-): string {
-  if (categories.length === 0) return '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>';
+/** 占比条（原型 `.entry-text .bar`）：轨＋按原值撑宽的填充；条宽不取整（原型即 `275÷333` 的浮点原样）。 */
+function barHtml(pct: number): string {
+  const width = Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : 0;
+  return '<span class="ilife-category-bar" role="img" aria-label="占本页支出 ' + String(Math.round(width)) + '%">'
+    + '<i style="width:' + String(width) + '%"></i></span>';
+}
+
+/** 占比 SHARE（原型：entry-card 内逐类一行 `类 · 金额 元 · N 笔 · 均 X`＋条；类超 8 时跟一行口径）。 */
+function shareHtml(categories: readonly QueryCategoryRow[]): string {
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const hidden = categories.length - shown.length;
-  const pcts = intPcts(shown.map((c) => c.pct));
-  const rows = renderDistributionRows({
-    rows: shown.map((c, i) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: pcts[i] })),
-  });
-  const note = '<p class="ilife-ticket-scale-note">其中' + escapeHtml(input.category) + '类共 '
-    + sumText(input.expense) + ' 元，占全部支出约 ' + String(input.sharePct) + '%。</p>';
-  return rows + note + (hidden > 0
+  const items = shown.map((c) => '<li><span class="ilife-ticket-entry-text">' + escapeHtml(c.label)
+    + ' · ' + sumText(c.amount) + ' 元 · ' + String(c.count) + ' 笔 · 均 '
+    + sumText(c.count === 0 ? 0 : c.amount / c.count) + barHtml(c.pct) + '</span></li>').join('');
+  const card = '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">'
+    + (items === '' ? '<li><span class="ilife-ticket-entry-text">本窗无支出，无占比。</span></li>' : items)
+    + '</ol></div>';
+  return card + (hidden > 0
     ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
     : '');
 }
 
-/** 明细 DETAIL（原型 `entryRowsHTML` 同式：`备注 · ` 首行／次行分类·账户·时刻·#编号／金额右对齐）。 */
-function entriesHtml(records: readonly BillRow[]): string {
-  const items = records.map((r) => {
-    const sub = textOrDash(r.category) + ' · ' + textOrDash(r.account) + ' · '
-      + '<span class="ilife-category-mono">' + escapeHtml(r.time) + '</span> · #' + String(r.id);
-    return '<li><span class="ilife-ticket-entry-text">备注 · ' + escapeHtml(textOrDash(r.note))
-      + '<span class="ilife-category-sub">' + sub + '</span></span>'
-      + '<span class="ilife-category-amt">' + escapeHtml(r.amount.toFixed(2)) + '</span></li>';
-  }).join('');
-  return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
+/** 备注 NOTES（原型：逐笔一行、**无金额**；编号接占比行续排，故第二张卡的计数器起值＝占比行数）。 */
+function notesHtml(records: readonly BillRow[], start: number): string {
+  const items = records.map((r) => '<li><span class="ilife-ticket-entry-text">备注 · ' + escapeHtml(textOrDash(r.note))
+    + ' ' + escapeHtml(textOrDash(r.category)) + ' · ' + escapeHtml(textOrDash(r.account))
+    + ' · ' + escapeHtml(r.time) + '</span></li>').join('');
+  return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries"'
+    + (start > 0 ? ' style="counter-reset: ilife-ticket-row ' + String(start) + '"' : '')
+    + '>' + items + '</ol></div>';
 }
 
 /** 对账 CHECK（原型 `checkHTML` 同式：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
@@ -205,27 +203,30 @@ export interface CategoryTicketInput {
   readonly sharePct: number;
 }
 
-/** 查分类票据纸：一整页（载荷与 `./list.js` 条件分支同形，呈现照 w09 v2.1 原型）。 */
+/** 查分类票据纸：一整页（载荷与 `./list.js` 条件分支同形，呈现照 w09 v2.2 原型）。 */
 export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
   const { kpi, categories, data } = modelOf(input.records);
-  const conclusion = conclusionOf(categories);
+  const shown = categories.slice(0, CATEGORY_LIMIT);
   const envelope = listEnvelope(input.key, data);
   const paper = queryStyleTag() + '<style>' + CATEGORY_TICKET_CSS + '</style>'
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.category + '共 ' + String(kpi.count) + ' 笔，支出 ' + sumText(kpi.expense) + ' 元'))
-    + '<p class="ilife-category-shop-sub">' + escapeHtml(input.window) + '</p>'
+    + sheetHead(
+      DOC_TITLE + ' · ' + input.wakeWord,
+      escapeHtml(input.wakeWord + '共记 ' + String(kpi.count) + ' 笔'),
+      input.window,
+    )
     + ticketRule()
     + ticketSummary(renderSummaryHead({
       eyebrow: '分类支出 · ' + input.category,
       value: sumText(kpi.expense),
       unit: '元',
       layout: 'ticket',
-    }), '<p class="ilife-ticket-summary-note">' + escapeHtml(conclusion) + '</p>')
+    }), '<p class="ilife-ticket-summary-note">' + escapeHtml(noteOf(kpi.count, input.category)) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, input.records) })
+    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, input.records, categories[0]) })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(categories, { category: input.category, expense: kpi.expense, sharePct: input.sharePct }) })
+    + ticketSection({ title: '占比', tag: 'SHARE', content: shareHtml(categories) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(input.records) })
+    + ticketSection({ title: '备注', tag: 'NOTES', content: notesHtml(input.records, shown.length) })
     + ticketRule()
     + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records) })
     + ticketRule()

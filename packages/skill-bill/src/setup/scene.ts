@@ -43,8 +43,10 @@ export interface SetupScene {
   readonly caliber: string;
   /** 副标题（老侧六张模板的 `data.subtitle` 同句）。 */
   readonly subtitle: string;
-  /** 给助手那句口令（复制按钮拷走的那一段；**纯文本**，不带任何渲染调用）。 */
-  readonly promptOf: (params: Record<string, unknown>) => string;
+  /** 给助手那句口令（复制按钮拷走的那一段；**纯文本**，不带任何渲染调用）。
+   *  第二个参数是**口令里要用、但不在参数面上**的当刻事实（如导入的新增行数、映射人话），
+   *  由处理体传进来；缺省时各场景按参数面自足。 */
+  readonly promptOf: (params: Record<string, unknown>, extra?: Record<string, unknown>) => string;
 }
 
 /** 6 行的落点表（**唯一定义地**）：顺序＝域声明里那五条词的书写顺序（初始化／初始化状态／备份／恢复备份／导入）。 */

@@ -34,7 +34,7 @@ import { pageStemFor } from '../delivery/naming.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
-import { buildHelpLookup, buildHelpItems } from '../help/index.js';
+import { buildHelpLookup, buildHelpItems, renderLookupPageHtml } from '../help/index.js';
 import { REGISTRY } from './registry.js';
 // #677 · 设置页的三个配置 key 由本文件在**预检与分派层之前**拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
@@ -123,6 +123,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
     return {
       data: { ...hits, mode: 'lookup' },
       deliver: {
+        html: renderLookupPageHtml(),
         target: { dir: resolveHtmlDir(), stem },
         reuseMs: windowForHelpDelivery(stem, params),
       },

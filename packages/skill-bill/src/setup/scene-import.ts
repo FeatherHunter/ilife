@@ -26,13 +26,14 @@ export const SCENE: SetupScene = {
   page: 'wizard',
   title: '导入 CSV 账单',
   caliber: '列映射向导',
-  subtitle: '列映射向导 · 前几行预览，映射可修改',
-  promptOf: (params) => {
+  subtitle: '列映射向导 · 前几行预览 · 映射可修改',
+  promptOf: (params, extra) => {
     const file = typeof params['file'] === 'string' && params['file'].trim() !== '' ? params['file'].trim() : '____';
-    const mapping = typeof params['mapping'] === 'string' && params['mapping'].trim() !== ''
-      ? params['mapping'].trim()
-      : '____(自动识别)';
-    return '请加载「饼干记账」技能,帮我导入 CSV 账单(唤醒词:' + WORD + '):\n\n'
-      + '  文件路径: ' + file + '\n  列映射: ' + mapping + '\n';
+    const mapping = typeof extra?.['mappingText'] === 'string' && extra['mappingText'] !== ''
+      ? String(extra['mappingText'])
+      : (typeof params['mapping'] === 'string' && params['mapping'].trim() !== '' ? params['mapping'].trim() : '____(自动识别)');
+    const rows = typeof extra?.['newRows'] === 'number' ? String(extra['newRows']) : '____';
+    return '请帮我导入 CSV 账单（唤醒词：' + WORD + '）：\n'
+      + '文件：' + file + '\n列映射：' + mapping + '\n确认导入这 ' + rows + ' 行';
   },
 };
