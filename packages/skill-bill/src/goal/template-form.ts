@@ -16,9 +16,8 @@
  *  都是 `bindGoalFormPages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm } from 'base-paint/blocks';
+import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
-import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
@@ -45,7 +44,7 @@ export interface GoalFormSpec {
   readonly subtitle: (input: GoalCollectInput) => string;
   /** 采集页「已有条目」那张只读表（**本件已不读**）。 */
   readonly existing: (input: GoalCollectInput) => GoalExistingTable;
-  /** 采集页的复制口令（**本件已不读**：口令块只在回执页主按钮上）。 */
+  /** 采集页主按钮的复制载荷（缺项未齐时按钮走 disabled 档）。 */
   readonly prompt: (input: GoalCollectInput) => string;
   /** 回执页读数卡（**本件已不读**：回执行由覆盖对照或页型固定行出）。 */
   readonly receiptCards: (input: GoalReceiptInput) => readonly unknown[];
@@ -164,12 +163,17 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
     entryTag: 'ENTRY',
     entryHtml: entry,
     check: '还没记 ／ 共 0 条 ／ 没有异常',
-    actions: copyZoneOf({
+    actions: renderTicketButton({
+      label: '填好后复制这句话去跟助手说',
+      actionId: 'ilife-collect-prompt',
+      copyText: spec.prompt(input),
+      disabled: missing > 0,
+    }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_COLLECT, detail: '没写库（采集页）', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '采集',
-    styleHtml: goalStyleTag(),
+    styleHtml: goalStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
@@ -198,16 +202,16 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
     detailTag: 'DETAIL',
     detailHtml: renderEntryCard({ entries: detailRowsOf(input, result) }),
     check: '已经记好 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
-    actions: ticketPrimaryButton({
+    actions: renderTicketButton({
       label: '撤销这次设定（可恢复）',
       actionId: 'ilife-undo-' + receipt.op,
-      text: buildDataText({ envelope, title: spec.word, format: 'text' }),
+      copyText: buildDataText({ envelope, title: spec.word, format: 'text' }),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: goalStyleTag(),
+    styleHtml: goalStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }

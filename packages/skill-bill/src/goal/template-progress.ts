@@ -16,9 +16,8 @@
  *  `bindGoalProgressPage(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard } from 'base-paint/blocks';
+import { renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
-import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
@@ -162,16 +161,16 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
     detailTag: 'DETAIL',
     detailHtml,
     check: checkOf(input, counts),
-    actions: ticketPrimaryButton({
+    actions: renderTicketButton({
       label: e !== null ? '复制这份执行进度去对账' : '复制这份目标进度去对账',
       actionId: 'ilife-copy-progress',
-      text: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
+      copyText: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
     }) + copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: goalStyleTag(),
+    styleHtml: goalStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

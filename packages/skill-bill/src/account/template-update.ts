@@ -16,9 +16,8 @@
  *  都是 `bindAccountUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm } from 'base-paint/blocks';
+import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { ChangeRowInput, EntryCardEntry } from 'base-paint/blocks';
-import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
@@ -42,7 +41,7 @@ export interface AccountUpdateSpec {
   readonly note: string;
   /** 确认页字段卡的操作说明。 */
   readonly fieldDescription: string;
-  /** 确认页的复制口令（**本件已不读**：口令块只在回执页主按钮上）。 */
+  /** 确认页主按钮的复制载荷（缺项未齐时按钮走 disabled 档）。 */
   readonly prompt: (input: AccountCollectInput, target: AccountRow | null) => string;
   /** 确认页副标题（空串＝不出）。 */
   readonly subtitle: (input: AccountCollectInput, target: AccountRow | null) => string;
@@ -135,12 +134,17 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
     entryTag: 'ENTRY',
     entryHtml: entry,
     check: '还没记 ／ 共 0 条 ／ 没有异常',
-    actions: copyZoneOf({
+    actions: renderTicketButton({
+      label: '填好后复制这句话去跟助手说',
+      actionId: 'ilife-confirm-prompt',
+      copyText: spec.prompt(input, target),
+      disabled: missing > 0,
+    }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_COLLECT, detail: '没写库（确认页）', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '确认',
-    styleHtml: accountStyleTag(),
+    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
@@ -196,16 +200,16 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     detailTag: 'DETAIL',
     detailHtml: renderEntryCard({ entries: detailRows }),
     check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
-    actions: ticketPrimaryButton({
+    actions: renderTicketButton({
       label: '撤销这次改名（可恢复）',
       actionId: 'ilife-undo-update',
-      text: buildDataText({ envelope, title: spec.word, format: 'text' }),
+      copyText: buildDataText({ envelope, title: spec.word, format: 'text' }),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: accountStyleTag(),
+    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }

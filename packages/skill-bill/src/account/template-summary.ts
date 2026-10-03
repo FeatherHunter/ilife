@@ -15,9 +15,8 @@
  * 谁在用（一个调用点，指名）：`src/account/read.ts`——`viewAccountSummary` 装配入参后调 `accountSummaryDoc`。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard } from 'base-paint/blocks';
+import { renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
-import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
@@ -128,16 +127,16 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
     detailTag: 'DETAIL',
     detailHtml,
     check: checkOf(s),
-    actions: ticketPrimaryButton({
+    actions: renderTicketButton({
       label: '复制这份汇总去对账',
       actionId: 'ilife-copy-summary',
-      text: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
+      copyText: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
     }) + copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: accountStyleTag(),
+    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

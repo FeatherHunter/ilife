@@ -57,7 +57,7 @@ const TICKET_MARKERS = [
 ];
 /** 13 页共有块位（票据纸页型的三份块位序列都出这几块）。 */
 const COMMON_BLOCKS = [
-  'ilife-page-ui', 'ilife-block-copy-block',
+  'ilife-page-ui', 'ilife-block-copy-block', 'ilife-block-ticket-button',
   'ilife-block-ledger-rows', 'ilife-block-summary-head', 'ilife-ticket-check', 'ilife-ticket-rule', 'ilife-ticket-foot',
 ];
 /** 页型各自加挂的块位（判地那一套：采集页＝字段卡 ＋ 那行提示；回执／列表＝明细卡）。 */
@@ -157,8 +157,16 @@ for (const p of PAGES) {
   const cutLine = exists ? countOf(html, '✂ 裁切线') : 0;
   const ruleCount = exists ? countClass(html, 'ilife-ticket-rule') : 0;
   const ticketHits = exists ? TICKET_MARKERS.filter((m) => cls.has(m)) : [];
+  // 主按钮（公共件 ticket-button）：十三页判地各一颗；采集页缺项未齐走 disabled 档，回执／列表可点
+  const btnCount = exists ? countClass(html, 'ilife-block-ticket-button') : 0;
+  const btnDisabled = exists ? /class="ilife-block-ticket-button[^"]*"[^>]*\sdisabled(\s|>)/.test(domOnly(html)) : false;
 
   if (missingBlocks.length) problems.push('缺块位：' + missingBlocks.join('、'));
+  if (btnCount !== 1) problems.push('主按钮 ' + String(btnCount) + ' 颗（判地每页恰 1 颗）');
+  const btnExpectDisabled = p.kind === 'collect';
+  if (btnCount === 1 && btnDisabled !== btnExpectDisabled) {
+    problems.push('主按钮档位不对：实得 ' + (btnDisabled ? '禁用' : '可用') + '，' + p.kind + ' 页应为 ' + (btnExpectDisabled ? '禁用（缺项未齐）' : '可用'));
+  }
   if (shellCount > 0) problems.push('旧文档壳 ' + OLD_SHELL + ' 还命中 ' + String(shellCount) + ' 处（切票据纸未完成）');
   if (sheetDiv !== 1) problems.push('ilife-bill-sheet-page 根 div 应恰 1 个，实得 ' + String(sheetDiv));
   if (cutLine < 1) problems.push('✂ 裁切线 不在');
@@ -180,7 +188,7 @@ for (const p of PAGES) {
     blocksIn: [...cls].filter((c) => c.startsWith('ilife-')).sort(),
     blocksExpected: expectBlocks, blocksMissing: missingBlocks,
     navCount, srcCount, lazyCount, undefCount, nanCount, externalRefs: ext,
-    shellCount, sheetDiv, cutLine, ruleCount,
+    shellCount, sheetDiv, cutLine, ruleCount, btnCount, btnDisabled,
     emptyBlock: cls.has('ilife-block-empty-block'),
     distRow: cls.has('ilife-block-dist-row'),
     changeRow: cls.has('ilife-block-change-row'),
@@ -191,6 +199,7 @@ for (const p of PAGES) {
     + ' bytes=' + String(bytes) + ' proto=' + reg.rel + ' protoSha=' + reg.sha256.slice(0, 12)
     + ' nav=' + String(navCount) + ' src=' + String(srcCount) + ' 块位缺=' + String(missingBlocks.length)
     + ' 票据纸根div=' + String(sheetDiv) + ' 裁切线=' + String(cutLine) + ' 虚线=' + String(ruleCount)
+    + ' 主按钮=' + String(btnCount) + (btnDisabled ? '(禁用)' : '(可用)')
     + ' 旧壳=' + String(shellCount) + ' 票据纸族在=' + String(ticketHits.length) + '/' + String(TICKET_MARKERS.length)
     + ' extRefs=' + String(ext.length) + (problems.length ? ' PROBLEMS=' + problems.join(' | ') : ''));
 }

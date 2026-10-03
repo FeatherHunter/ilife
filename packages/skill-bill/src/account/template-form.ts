@@ -17,9 +17,8 @@
  *  都是 `bindAccountFormPages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm } from 'base-paint/blocks';
+import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
-import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
@@ -45,7 +44,7 @@ export interface AccountFormSpec {
   /** 采集页的操作预览（**本件已不读**：判地没有预览表）。 */
   readonly preview: (input: AccountCollectInput) => readonly { readonly k: string; readonly v: string }[];
   readonly previewCaption: string;
-  /** 采集页的复制口令（**本件已不读**：口令块只在回执页主按钮上，采集页那一颗待 base 侧给 disabled 位）。 */
+  /** 采集页主按钮的复制载荷（**判地那颗主按钮点一下复制的就是它**；缺项未齐时按钮走 disabled 档）。 */
   readonly prompt: (input: AccountCollectInput) => string;
   /** 采集页副标题（空串＝不出）。 */
   readonly subtitle: (input: AccountCollectInput) => string;
@@ -184,12 +183,17 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
     entryTag: 'ENTRY',
     entryHtml: entry,
     check: '还没记 ／ 共 0 条 ／ 没有异常',
-    actions: copyZoneOf({
+    actions: renderTicketButton({
+      label: '填好后复制这句话去跟助手说',
+      actionId: 'ilife-collect-prompt',
+      copyText: spec.prompt(input),
+      disabled: missing > 0,
+    }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_COLLECT, detail: '没写库（采集页）', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '采集',
-    styleHtml: accountStyleTag(),
+    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
@@ -218,16 +222,16 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
     detailTag: 'DETAIL',
     detailHtml: renderEntryCard({ entries: receiptRowsOf(input) }),
     check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
-    actions: ticketPrimaryButton({
+    actions: renderTicketButton({
       label: isTransfer ? '撤销这次转账（可恢复）' : '撤销这次新增（可恢复）',
       actionId: 'ilife-undo-' + receipt.op,
-      text: buildDataText({ envelope, title: spec.word, format: 'text' }),
+      copyText: buildDataText({ envelope, title: spec.word, format: 'text' }),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: accountStyleTag(),
+    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
