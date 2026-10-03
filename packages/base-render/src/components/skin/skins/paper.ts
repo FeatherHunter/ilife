@@ -34,6 +34,8 @@ export const PAPER_VALUES = Object.freeze({
      旧值与 surface-2 **逐字节同色** ⇒ 这套皮肤里"强调软底"是空转（2026-09-24 由席位报出）。
      新值＝砖红的暖淡洗：`accent-text` 对它 5.47:1、`accent` 对它 4.60:1（两条地板都过，通道差 18）。 */
   'accent-soft': '#f7dfd8',
+  /* #1113：本套比例条走本套强调色（＝页面原先经 `--blue` 读到的值），逐字节不变。 */
+  'bar-fill': '#b5392a',
 
   /* 语义色当字也要过文本地板（判据：`test/skin.test.mjs` ②c，四套皮肤逐套算）。
      `ok` 最紧的一档底是**页底** `ground`（#f1ece1）——旧值 #2f7d4f 压上去只有 4.28:1、
@@ -56,6 +58,10 @@ export const PAPER_VALUES = Object.freeze({
   radius: '6px',
   'radius-sm': '4px',
   'radius-pill': '4px',
+  /* #1113：判地只对票据纸给了明细卡 12px／编号胶囊 7px；本套沿用本套的主圆角与小圆角
+     （卡面＝`radius`、标签＝`radius-sm`），非票据纸页因此逐字节不变。 */
+  'radius-card': '6px',
+  'radius-tag': '4px',
   shadow: 'none',
   'shadow-pop': '0 8px 24px rgba(70,58,40,.18)',
 

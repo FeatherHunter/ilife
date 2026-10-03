@@ -45,6 +45,10 @@ export const SKIN_TOKENS = Object.freeze({
   'accent-text': { fallback: ['--blue2', '#0a63ce'], note: '强调色的**文本**档（对底 ≥4.5:1）' },
   'accent-ink': { fallback: ['--card', '#ffffff'], note: '强调底上的字色' },
   'accent-soft': { fallback: ['--soft', '#f5f8ff'], note: '强调的软底' },
+  /* #1113：比例条（占比条）的填充——它不是强调色。票据纸判地 `.entry-text .bar i{background:#3f7fbf}`
+     用一支中性蓝，而 `--blue` 在皮肤作用域里被映射成 accent 砖红 ⇒ 页面侧读它必然错色。
+     兜底链首站给 `--blue`：没挂皮肤的页读到的值与改动前逐字节相同（加法式）。 */
+  'bar-fill': { fallback: ['--blue', '#007aff'], note: '比例条／占比条的填充（非强调档；票据纸按判地中性蓝 #3f7fbf）' },
   /* 语义 */
   ok: { fallback: ['--ok', '#34c759'], note: '正常／达标' },
   'ok-soft': { fallback: ['#e6f7ec'], note: '正常档的软底' },
@@ -56,6 +60,11 @@ export const SKIN_TOKENS = Object.freeze({
   radius: { fallback: ['14px'], note: '件的主圆角（皮肤的结构开关之一）' },
   'radius-sm': { fallback: ['8px'], note: '小圆角（输入框、格）' },
   'radius-pill': { fallback: ['999px'], note: '胶囊圆角（chip、进度条）' },
+  /* #1113：票据纸族级取值——判地 `.entry-card{border-radius:12px}` 与 `.idx{border-radius:7px}`
+     在皮肤三档里没有对应号（原先只能由组件侧写「授权照抄」字面）。落成 token 后，页面侧与组件侧
+     都能只读 token 名（颜色／圆角一律读皮肤是仓规），判地取值由票据纸那一套给。 */
+  'radius-card': { fallback: ['12px'], note: '卡面圆角（纸内明细卡这类内嵌卡；票据纸按判地 12px）' },
+  'radius-tag': { fallback: ['7px'], note: '标签圆角（编号胶囊、徽标这类小方圆；票据纸按判地 7px）' },
   shadow: { fallback: ['--shadow', '0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06)'], note: '常驻投影' },
   'shadow-pop': { fallback: ['0 8px 24px rgba(0,0,0,.14)'], note: '浮层投影' },
   /* 字面 */

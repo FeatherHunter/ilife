@@ -33,6 +33,8 @@ export const NEUTRAL_VALUES = Object.freeze({
      在 `surface-2` 底的容器里几乎看不出"这一枚被选中"。加深一档：
      `accent-text` 对它 4.90:1、`accent` 对它 3.46:1（文本地板与图形地板都过，通道差 16）。 */
   'accent-soft': '#e4efff',
+  /* #1113：本套比例条走本套强调色（＝页面原先经 `--blue` 读到的值），逐字节不变。 */
+  'bar-fill': '#007aff',
 
   /* 语义色当字的地板（判据：`test/skin.test.mjs` ②c）。本套是四套里踩线最多的一套：
      旧 `ok` #1f8c3d 压 surface 只有 4.31:1、压 ground 3.95:1、压 `ok-soft` 3.87:1 —— 三档底全在 4.5 之下；
@@ -48,6 +50,9 @@ export const NEUTRAL_VALUES = Object.freeze({
   radius: '14px',
   'radius-sm': '8px',
   'radius-pill': '999px',
+  /* #1113：卡面＝本套主圆角、标签＝本套小圆角（判地只对票据纸给了 12px／7px）。 */
+  'radius-card': '14px',
+  'radius-tag': '8px',
   shadow: '0 1px 2px rgba(0,0,0,.04), 0 12px 36px rgba(0,0,0,.06)',
   'shadow-pop': '0 8px 24px rgba(0,0,0,.14)',
 

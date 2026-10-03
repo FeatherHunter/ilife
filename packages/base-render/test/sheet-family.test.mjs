@@ -400,3 +400,36 @@ describe('单据族 ⑥ 样式纪律与层红线', () => {
     assert.equal(root.renderLedgerRows, undefined);
   });
 });
+
+/* ── ⑩ 票据纸页尾锯齿几何（#1113） ──────────────────────────────────── */
+
+describe('票据纸 ⑩ 页尾锯齿几何（#1113：判地 `.zigzag` 不吃纸身内距）', () => {
+  const css = stripComments(sheetFrameCss());
+  const RULE = new Map();
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) RULE.set(m[1].trim(), m[2]);
+  const PLACEHOLDER = '.ilife-page-ui .ilife-block-sheet.is-ticket .ilife-block-sheet-zigzag';
+  const PAINT = PLACEHOLDER + '::before';
+
+  it('占位件是 12px 的透明块：横向内缩落进纸身内距 ⇒ 判地几何对不上，已移走', () => {
+    const body = RULE.get(PLACEHOLDER);
+    assert.ok(body !== undefined, '找不到锯齿占位件那条规则');
+    const decls = body.split(';').map((s) => s.trim()).filter(Boolean).sort();
+    assert.deepEqual(decls, ['background: none', 'display: block', 'height: 12px', 'margin: 0'],
+      '占位件只许是"12px 高的透明块"（高度决定页高，页高必须逐字节不变）；'
+      + '旧的 `margin:0 6px` 落在纸身内距里 ⇒ 实测 x 差 22px／w 差 44px');
+  });
+
+  it('作画层贴纸身下缘、左右各 6px：判地 `.zigzag{margin:0 6px}` 在纸幅整宽上的等价位置', () => {
+    const body = RULE.get(PAINT);
+    assert.ok(body !== undefined, '找不到锯齿作画层那条规则');
+    for (const want of ['content: ""', 'position: absolute', 'left: 6px', 'right: 6px', 'bottom: 0',
+      'height: 12px', 'transform: rotate(180deg)']) {
+      assert.ok(body.includes(want), '作画层缺声明：' + want);
+    }
+    assert.equal((body.match(/linear-gradient\(/g) || []).length, 2, '两列 45° 斜切（判地逐条）');
+    assert.ok(/linear-gradient\(-45deg, transparent 8px,/.test(body), '第一列斜切的字面与判地不同');
+    assert.ok(/linear-gradient\(45deg, transparent 8px,/.test(body), '第二列斜切的字面与判地不同');
+    assert.equal((body.match(/16px 16px/g) || []).length, 2, '16px 瓦片两层');
+    console.log('读数：锯齿作画层 —— 绝对定位 left/right 6px、bottom 0、12px 高、两列 45° 斜切 16px 瓦片');
+  });
+});

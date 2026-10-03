@@ -46,6 +46,10 @@ export const TICKET_VALUES = Object.freeze({
      而那枚标签在两页里都不出），故按 accent 的暖淡洗重取一档 `#fbe4d4`（对 `surface-2` 差 15 个通道、
      对 `ink-3` 4.51:1、对 `accent-text` 4.97:1），观感仍是同一支砖红的淡洗。 */
   'accent-soft': '#fbe4d4',
+  /* 判地字面 · 授权照抄：#3f7fbf（判地 `.entry-text .bar i{background:…}` 占比条填充）。
+     它不是 accent（砖红）——比例条不是强调；`--blue` 在本皮肤作用域里映射成 accent，
+     页面侧读它必然错色。#1113 裁定落成皮肤号 `bar-fill`。 */
+  'bar-fill': '#3f7fbf',
 
   ok: '#1e784c',
   'ok-soft': '#e7f5ec',
@@ -58,6 +62,12 @@ export const TICKET_VALUES = Object.freeze({
   radius: '16px',
   'radius-sm': '10px',
   'radius-pill': '999px',
+  /* 规格 §2 授权照抄：明细卡外框 `border-radius:12px`（规格 §2 圆角表原话「仅 entry-card 外框保留
+     12px 原型字面」）。#1113 把它落成皮肤号 `radius-card`——取值与判地逐字节同，页面侧从此读 token。 */
+  'radius-card': '12px',
+  /* 判地字面 · 授权照抄：7px（判地 `.idx{border-radius:7px}` 编号胶囊）。规格 §2 的圆角表只列到
+     `radius-sm`，这一档由 #1113 裁定进皮肤（组件侧原先写「授权照抄」字面，现改读本号）。 */
+  'radius-tag': '7px',
   shadow: '0 18px 50px rgba(80,60,30,.18), 0 2px 0 rgba(120,90,40,.08)',
   'shadow-pop': '0 12px 28px rgba(80,60,30,.18)',
 

@@ -24,9 +24,11 @@ const LF = String.fromCharCode(10);
 export const ENTRY_CARD_TOUCH_PX = 44;
 /** 编号胶囊的见方（px）：判地 `.idx{flex:0 0 22px;height:22px}`。 */
 export const ENTRY_CARD_IDX_BOX_PX = 22;
-/** 编号胶囊圆角（px）：判地 `.idx{border-radius:7px}`。 */
+/** 编号胶囊圆角（px）：判地 `.idx{border-radius:7px}`。**#1113 起**这枚值住皮肤号 `radius-tag`
+ *  （票据纸取它），本常量只剩「判地取值锚」这一个用途（判据拿它钉皮肤兜底与票据纸取值）。 */
 export const ENTRY_CARD_IDX_RADIUS_PX = 7;
-/** 卡底圆角（px）：判地 `.entry-card{border-radius:12px}`（皮肤三档里没有 12 ⇒ 本票逐字照抄）。 */
+/** 卡底圆角（px）：判地 `.entry-card{border-radius:12px}`（规格 §2 授权照抄）。**#1113 起**这枚值
+ *  住皮肤号 `radius-card`（票据纸取它），本常量只剩「判地取值锚」这一个用途。 */
 export const ENTRY_CARD_RADIUS_PX = 12;
 /** 实付行圆角（px）：判地 `.entry-rows li.pay{border-radius:10px}`（同理，逐字照抄）。 */
 export const ENTRY_CARD_PAY_RADIUS_PX = 10;
@@ -52,8 +54,8 @@ export function entryCardCss(input?: { readonly prefix?: string }): string {
     '  /* 判地字面 · 授权照抄：#fbf7ec（卡底） */',
     '  background: #fbf7ec;',
     '  border: 1px solid ' + skinVar('line') + ';',
-    '  /* 判地字面 · 授权照抄：' + String(ENTRY_CARD_RADIUS_PX) + 'px（卡底圆角；皮肤三档里没有这一档） */',
-    '  border-radius: ' + String(ENTRY_CARD_RADIUS_PX) + 'px;',
+    '  /* 卡底圆角：读皮肤号 `radius-card`（#1113 起这一档住皮肤：票据纸取 12px＝判地 `.entry-card{border-radius:12px}`，规格 §2 原话「仅 entry-card 外框保留 12px 原型字面」；兜底那枚 12px 与原「授权照抄」字面逐字节同 ⇒ 不挂皮肤的页零变化）。 */',
+    '  border-radius: ' + skinVar('radius-card') + ';',
     '  padding: 12px 13px 11px;',
     '}',
     s('rows') + ' {',
@@ -90,8 +92,8 @@ export function entryCardCss(input?: { readonly prefix?: string }): string {
     '  flex: 0 0 ' + String(ENTRY_CARD_IDX_BOX_PX) + 'px;',
     '  height: ' + String(ENTRY_CARD_IDX_BOX_PX) + 'px;',
     '  margin-top: 1px;',
-    '  /* 判地字面 · 授权照抄：' + String(ENTRY_CARD_IDX_RADIUS_PX) + 'px（编号胶囊的圆角） */',
-    '  border-radius: ' + String(ENTRY_CARD_IDX_RADIUS_PX) + 'px;',
+    '  /* 编号胶囊圆角：读皮肤号 `radius-tag`（票据纸 7px＝判地 `.idx{border-radius:7px}`；兜底 7px）。 */',
+    '  border-radius: ' + skinVar('radius-tag') + ';',
     '  /* 判地字面 · 授权照抄：#f4efe2（编号胶囊的底） */',
     '  background: #f4efe2;',
     '  border: 1px solid ' + skinVar('line') + ';',

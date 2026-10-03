@@ -22,7 +22,7 @@ import {
   normalizeEntryCard,
   renderEntryCard,
 } from '../dist/components/entry-card/index.js';
-import { SKIN_TOKEN_NAMES, skinCss, skinVar } from '../dist/components/skin/index.js';
+import { SKIN_TOKEN_NAMES, TICKET_VALUES, skinCss, skinVar } from '../dist/components/skin/index.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
 import { styleSources } from './_style-sources.mjs';
 
@@ -108,7 +108,7 @@ const MONO_FROM_JUDGE = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
 
 const CARD_RULES = new Map([
   [PAGE + ENTRY_CARD_CLASS, ['background: #fbf7ec', 'border: 1px solid ' + skinVar('line'),
-    'border-radius: ' + ENTRY_CARD_RADIUS_PX + 'px', 'padding: 12px 13px 11px']],
+    'border-radius: ' + skinVar('radius-card'), 'padding: 12px 13px 11px']],
   [S('rows'), ['list-style: none', 'margin: 0', 'padding: 0']],
   [ROW, ['display: flex', 'gap: 12px', 'align-items: flex-start', 'padding: 10px 0',
     'border-bottom: 1px dotted #eee6d2', 'font-size: 14px', 'min-height: ' + ENTRY_CARD_TOUCH_PX + 'px',
@@ -117,7 +117,7 @@ const CARD_RULES = new Map([
   [ROW + B('pay'), ['background: #fff8ee', 'border: 1px solid #f0d9bd',
     'border-radius: ' + ENTRY_CARD_PAY_RADIUS_PX + 'px', 'padding: 10px 12px', 'margin: 8px 0']],
   [S('idx'), ['flex: 0 0 ' + ENTRY_CARD_IDX_BOX_PX + 'px', 'height: ' + ENTRY_CARD_IDX_BOX_PX + 'px',
-    'margin-top: 1px', 'border-radius: ' + ENTRY_CARD_IDX_RADIUS_PX + 'px', 'background: #f4efe2',
+    'margin-top: 1px', 'border-radius: ' + skinVar('radius-tag'), 'background: #f4efe2',
     'border: 1px solid ' + skinVar('line'), 'color: #8a857a', 'font-size: 12px', 'font-weight: 700',
     'display: inline-flex', 'align-items: center', 'justify-content: center']],
   [S('text'), ['flex: 1 1 auto', 'min-width: 0', 'overflow-wrap: anywhere']],
@@ -284,7 +284,8 @@ describe('entry-card ② 样式与零 DOM 纪律', () => {
   it('皮肤只经 `skinVar()` 读：产物里每处 `var(--ilife-…)` 都在名单里、且都带兜底链', () => {
     const code = stripComments(entryCardCss());
     const names = [...new Set([...code.matchAll(/var\(--ilife-([a-z0-9-]+)/g)].map((m) => m[1]))].sort();
-    assert.deepEqual(names, ['ink-2', 'line'], '本件读的就是这两支（边线 ＋ 次行字色）');
+    assert.deepEqual(names, ['ink-2', 'line', 'radius-card', 'radius-tag'],
+      '本件读的就是这四支（边线 ＋ 次行字色 ＋ 卡底圆角 ＋ 编号胶囊圆角；后两支 #1113 起从\n       「授权照抄」字面改成皮肤读法）');
     for (const n of names) {
       assert.ok(SKIN_TOKEN_NAMES.includes(n), '名单外的 token：' + n);
       assert.equal(code.includes('var(--ilife-' + n + ')'), false, '没兜底链（老页面里读不出来）：' + n);
@@ -386,9 +387,25 @@ describe('entry-card ④ 判地几何', () => {
   it('圆角只有判地那三档（12 ／ 10 ／ 7），没有第四个数', () => {
     const css = stripComments(entryCardCss());
     const radii = [...css.matchAll(/border-radius:\s*([^;]+);/g)].map((m) => m[1].trim());
-    assert.deepEqual(radii, [ENTRY_CARD_RADIUS_PX + 'px', ENTRY_CARD_PAY_RADIUS_PX + 'px',
-      ENTRY_CARD_IDX_RADIUS_PX + 'px'], '圆角三处：卡底 ／ 实付行 ／ 编号胶囊');
+    /* #1113：卡底与编号胶囊两档改读皮肤号（`radius-card`／`radius-tag`），实付行仍是"授权照抄"字面；
+       三处的**判定值**仍是判地那三档——判地值由下面那条向皮肤取值表对账。 */
+    assert.deepEqual(radii, [skinVar('radius-card'), ENTRY_CARD_PAY_RADIUS_PX + 'px', skinVar('radius-tag')],
+      '圆角三处：卡底 ／ 实付行 ／ 编号胶囊');
     console.log('读数：圆角三处 —— ' + radii.join(' ／ '));
+  });
+
+  it('#1113：`radius-card`／`radius-tag` 的票据纸取值与判地逐字节同（12px／7px），兜底尾巴也是它们', () => {
+    assert.equal(TICKET_VALUES['radius-card'], ENTRY_CARD_RADIUS_PX + 'px',
+      '票据纸的 radius-card 必须＝判地 `.entry-card{border-radius:12px}`');
+    assert.equal(TICKET_VALUES['radius-tag'], ENTRY_CARD_IDX_RADIUS_PX + 'px',
+      '票据纸的 radius-tag 必须＝判地 `.idx{border-radius:7px}`');
+    /* 不挂皮肤的页读的是兜底尾巴：它必须与原「授权照抄」字面同值（加法式）。 */
+    assert.equal(skinVar('radius-card'), 'var(--ilife-radius-card, ' + ENTRY_CARD_RADIUS_PX + 'px)',
+      'radius-card 的兜底尾巴走样：不挂皮肤的页会跟着变');
+    assert.equal(skinVar('radius-tag'), 'var(--ilife-radius-tag, ' + ENTRY_CARD_IDX_RADIUS_PX + 'px)',
+      'radius-tag 的兜底尾巴走样');
+    console.log('读数：radius-card＝' + TICKET_VALUES['radius-card'] + '、radius-tag＝' + TICKET_VALUES['radius-tag']
+      + '（两号的兜底尾巴分别是 ' + ENTRY_CARD_RADIUS_PX + 'px／' + ENTRY_CARD_IDX_RADIUS_PX + 'px）');
   });
 
   it('等宽那一支按判地照抄：`.amt` 与次行的时间戳走同一支栈', () => {

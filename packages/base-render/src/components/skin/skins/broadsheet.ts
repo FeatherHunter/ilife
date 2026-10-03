@@ -26,6 +26,8 @@ export const BROADSHEET_VALUES = Object.freeze({
   /* 强调软底＝**accent 的淡洗**（本套 accent 是墨黑 ⇒ 淡洗是一档浅暖灰）：必须与 `surface-2`（#f4f1ea）
      分得开，旧值**逐字节同色** ⇒ 空转（2026-09-24 由席位报出）。新值：`accent-text`／`accent` 对它 14.71:1。 */
   'accent-soft': '#e8e3d8',
+  /* #1113：本套比例条走本套强调色（＝页面原先经 `--blue` 读到的值），逐字节不变。 */
+  'bar-fill': '#14110d',
 
   /* 语义色当字的地板（判据：`test/skin.test.mjs` ②c）。本套三支**都动了**，因为三支的亮度
      原本挤在一起：`ok`／`warn` 只差 1.10:1、`ok`／`danger` 只差 1.16:1（地板 1.2）。
@@ -42,6 +44,9 @@ export const BROADSHEET_VALUES = Object.freeze({
   radius: '0',
   'radius-sm': '0',
   'radius-pill': '0',
+  /* #1113：直角那一套——卡面与标签都收到 0（本套主圆角／小圆角）。 */
+  'radius-card': '0',
+  'radius-tag': '0',
   shadow: 'none',
   'shadow-pop': '0 10px 30px rgba(20,17,13,.16)',
 

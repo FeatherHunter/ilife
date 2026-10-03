@@ -52,6 +52,8 @@ export const INK_VALUES = Object.freeze({
      `accent-soft` 是朱砂的淡洗（钤印那点淡色）：与 `surface-2` 拉开一档，否则选中片落在
      以 `surface-2` 为底的容器里没有底（旧值 #f7e6df 只差 7 个通道）。 */
   'accent-soft': '#f6ddd3',
+  /* #1113：本套比例条走本套强调色（朱砂，＝页面原先经 `--blue` 读到的值），逐字节不变。 */
+  'bar-fill': '#bf3a22',
 
   /* 语义色一律压暗、落在墨色调子里：纸面上放荧光色，整张纸就散了。
      **当字的地板**（判据：`test/skin.test.mjs` ②c）本套只有 `ok` 需要动：本套页底 `ground`（#e9e0cf）
@@ -70,6 +72,9 @@ export const INK_VALUES = Object.freeze({
   radius: '2px',
   'radius-sm': '1px',
   'radius-pill': '2px',
+  /* #1113：本套圆角一律收到 2px／1px；卡面＝本套主圆角、标签＝本套小圆角。 */
+  'radius-card': '2px',
+  'radius-tag': '1px',
   shadow: 'none',
   'shadow-pop': '0 6px 20px rgba(31,28,23,.16)',
 
