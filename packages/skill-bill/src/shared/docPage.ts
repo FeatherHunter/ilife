@@ -22,7 +22,7 @@
  *   ③ 桌面端不再由本件给「一条宽度补丁」——版心与分栏归 `pageUi` 的 ⑧ 段，本件只留一条表格宽度收口。
  */
 import { escapeHtml, pageUiCss } from 'base-paint';
-import { renderPageShell, sheetCss, skinClass, skinCss } from 'base-paint/blocks';
+import { renderPageShell, renderSheetHead, renderTicketSection, sheetCss, skinClass, skinCss } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
 
 /** 整页装配的入参。 */
@@ -258,9 +258,8 @@ const TICKET_CSS = [
  * 住共用位：写入域回执与查询域详情两页共用（第二个用法长出来之后收成这一处）。
  * 副题行（`sub`）缺省不出：回执两页不传，产物逐字节不动；查询域详情页传店头第三行。 */
 export function sheetHead(brand: string, titleHtml: string, sub = ''): string {
-  return '<header class="ilife-sheet-head"><p class="ilife-sheet-eyebrow">' + escapeHtml(brand)
-    + '</p><h1 class="ilife-sheet-title">' + titleHtml + '</h1>'
-    + (sub === '' ? '' : '<p class="ilife-sheet-sub">' + escapeHtml(sub) + '</p>') + '</header>';
+  // #1123：本函数是 base 件 `sheet-head` 的薄转出（默认档字节与改前逐字相同）。
+  return renderSheetHead({ brand, titleHtml, ...(sub === '' ? {} : { sub }) });
 }
 
 /** 段落之间的虚线分隔（原型 `hr.dashed`）。 */
@@ -270,10 +269,11 @@ export function ticketRule(): string {
 
 /** 一段（原型 `.sec`）：段标题（主色条 ＋ 右对齐英文标）＋ 段内容。 */
 export function ticketSection(input: { readonly title: string; readonly tag: string; readonly content: string; readonly tone?: 'danger' }): string {
-  return '<section class="ilife-ticket-sec"><div class="ilife-ticket-sec-heading'
-    + (input.tone === 'danger' ? ' is-danger' : '') + '">' + escapeHtml(input.title)
-    + '<span class="ilife-ticket-sec-no">' + escapeHtml(input.tag) + '</span></div>'
-    + input.content + '</section>';
+  // #1123：本函数是 base 件 `ticket-section` 的薄转出（默认档字节与改前逐字相同）。
+  return renderTicketSection({
+    title: input.title, tag: input.tag, content: input.content,
+    ...(input.tone === 'danger' ? { form: 'danger' as const } : {}),
+  });
 }
 
 /** 主数字块（原型 `.summary-head`）：公共层主数字头（票据纸版式）＋ 它下面那几行小字。 */

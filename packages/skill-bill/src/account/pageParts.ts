@@ -18,7 +18,7 @@
  */
 import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope, StatusKind } from 'base-paint';
-import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderEmptyBlock, renderPreBlock, renderTypeBadge } from 'base-paint/blocks';
 import type { DataTableColumn, DataTableRow, KpiCardInput, ParamFieldInput } from 'base-paint/blocks';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -134,15 +134,14 @@ export function badgeOf(input: {
   /** 下一步动作（整句；空串＝不出）。按句号分行，一句一行口径。 */
   readonly next: string;
 }): string {
-  const items = input.caliber === '' ? [{ text: input.word }] : [{ text: input.word }, { text: input.caliber }];
-  const parts = [renderChips({ items }), renderStatusBadge({ status: input.status, text: input.statusText })];
-  const next = input.next.trim();
-  if (next !== '') {
-    for (const line of next.split('。').map((s) => s.trim()).filter((s) => s !== '')) {
-      parts.push(renderCaliberLine(line + '。'));
-    }
-  }
-  return parts.join('');
+  // #1123：本函数是 base 件 `type-badge` 的薄转出（默认档字节与改前逐字相同）。
+  return renderTypeBadge({
+    pageKind: input.word,
+    caliber: input.caliber,
+    status: input.status,
+    statusText: input.statusText,
+    next: input.next,
+  });
 }
 
 /** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需／候选）。 */

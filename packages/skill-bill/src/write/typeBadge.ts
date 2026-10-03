@@ -28,7 +28,7 @@
  */
 import { renderStatusBadge } from 'base-paint';
 import type { StatusKind } from 'base-paint';
-import { renderCaliberLine, renderChipRow } from 'base-paint/blocks';
+import { renderCaliberLine, renderChipRow, renderTypeBadge } from 'base-paint/blocks';
 import { directionOf } from './summaryRow.js';
 import { statusNoteOf, wakeWordOf } from './userWording.js';
 
@@ -70,22 +70,13 @@ function caliberOf(kind: string): string {
  *  本就是「这一页现在什么样」那一组；裸 `<span>` 直接当正文子件时，宽屏栅格会把它们摊成一行一枚。 */
 export function typeBadge(input: TypeBadgeInput): string {
   const kind = typeof input.kind === 'string' ? input.kind : '';
-  const state = statusNoteOf(input.state);
-  const caliber = caliberOf(kind);
-  const pageKind = typeof input.pageKind === 'string' ? input.pageKind.trim() : '';
-  const items: { text: string }[] = [];
-  if (pageKind !== '') items.push({ text: pageKind });
-  if (caliber !== '') items.push({ text: caliber });
-  const parts = [
-    renderChipRow({
-      items,
-      tailHtml: renderStatusBadge(state === '' ? { status: input.status } : { status: input.status, text: state }),
-    }),
-  ];
-  const next = input.next.trim();
-  if (next !== '') {
-    const lines = next.split('。').map((s) => s.trim()).filter((s) => s !== '');
-    for (const line of lines) parts.push(renderCaliberLine(line + '。'));
-  }
-  return parts.join('');
+  // #1123：本函数是 base 件 `type-badge` 的薄转出（`form:'row'` 档；默认档字节与改前逐字相同）。
+  return renderTypeBadge({
+    pageKind: typeof input.pageKind === 'string' ? input.pageKind.trim() : '',
+    caliber: caliberOf(kind),
+    status: input.status,
+    statusText: statusNoteOf(input.state),
+    next: input.next,
+    form: 'row',
+  });
 }

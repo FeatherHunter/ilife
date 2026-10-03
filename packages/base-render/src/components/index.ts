@@ -243,3 +243,9 @@ export * from './entry-card/index.js';
    （判地 5 张采集页的主按钮带禁用态，公共层此前没有这一档）。样式段与 entry-card 同：
    **不在** `blocksCss()` 的 12 区块汇总里，调用方显式拼 `ticketButtonCss()`。**只加行、不重排**。 */
 export * from './ticket-button/index.js';
+/* #1123：B 四条（`1082-落地公共化清单.md` §3／§11／§12／§16）——纸头／段／对账行／徽章列。
+   四件都**只加行、不重排**；样式段（`*Css()`）由调用方显式拼，默认档字节与 skill 侧产出器逐字相同。 */
+export * from './sheet-head/index.js';
+export * from './ticket-section/index.js';
+export * from './check-row/index.js';
+export * from './type-badge/index.js';

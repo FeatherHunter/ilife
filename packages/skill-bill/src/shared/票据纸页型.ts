@@ -19,7 +19,7 @@
  *  **本件不出第二条样式通道**：颜色、圆角、内距一律由皮肤与 `assembleSheetPage` 那三段共用样式给。
  */
 import { escapeHtml } from 'base-paint';
-import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderCheckRow, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from './docPage.js';
 import { writeSection } from './writeParts.js';
 
@@ -112,14 +112,9 @@ function ledgerHtmlOf(title: string, rows: readonly TicketSheetRow[]): string {
   });
 }
 
-/** 对账那一段（浅绿卡 ＋ 圆点 ＋ 一句；与查询域详情页同一枚标记）。 */
+/** 对账那一段（浅绿卡 ＋ 圆点 ＋ 一句；形状走 base 件 `check-row`，默认档字节与改前逐字相同）。 */
 function checkHtmlOf(text: string): string {
-  return ticketSection({
-    title: '对账',
-    tag: 'CHECK',
-    content: '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
-      + '<span>' + escapeHtml(text) + '</span></div>',
-  });
+  return ticketSection({ title: '对账', tag: 'CHECK', content: renderCheckRow({ text }) });
 }
 
 /** 三张页型共用的收口：纸（含裁切线）＋ 机器标记段 ＋ 纸外页脚 ＋ 整页外壳。 */
