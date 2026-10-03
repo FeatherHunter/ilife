@@ -225,6 +225,9 @@ const TICKET_CSS = [
   '   那一枚字形把行盒抬到 23px ⇒ 12+23+12）；本仓的三角由 CSS 画、行盒只有 21px ⇒ 不钉就矮 2px，',
   '   连带下面的裁切线与页脚各上移 2px。只在本族根类之下生效。 */',
   '.ilife-ticket-actions { padding: 14px 0 4px; }',
+  '/* 复制区宽度：票据纸的复制钮一律收 340 居中（原型 overlay 的同一取值）。**一处定义**：' + 
+  '   setup 与 query 两域的票据纸都读这条，页面侧不再各写一条。 */',
+  '.ilife-bill-sheet-page .ilife-ticket-actions { max-width: 340px; margin-inline: auto; }',
   '/* 退出口那一行口径（原型 `.caliber`：12px、行高 1.7、居中、左右各 2px）。 */',
   '.ilife-ticket-actions .ilife-block-caliber { margin: 10px 2px 0; line-height: 1.7; text-align: center; color: var(--ilife-ink-2); }',
   '.ilife-ticket-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; padding: 12px 14px; border: 0; border-radius: var(--ilife-radius-sm); font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: .5px; line-height: normal; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }',
@@ -346,7 +349,6 @@ export function assembleSheetPage(input: { readonly docTitle: string; readonly b
  *  作用域限票据纸两片页型（`.ilife-ticket-receipt`／`.ilife-ticket-detail`）——本段只出现在本域产物里，
  *  别的域的纸不引本件，故不落共用位。 */
 export const TICKET_FURNITURE_CSS = [
-  '.ilife-ticket-receipt .ilife-ticket-actions, .ilife-ticket-detail .ilife-ticket-actions { max-width: 340px; margin-inline: auto; }',
   '.ilife-ticket-receipt .ilife-block-ledger-rows.is-mono-first .ilife-block-ledger-row:first-child .ilife-block-ledger-row-value, .ilife-ticket-detail .ilife-block-ledger-rows.is-mono-first .ilife-block-ledger-row:first-child .ilife-block-ledger-row-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; font-weight: 700; }',
   '.ilife-ticket-receipt .ilife-block-summary-head.is-warn-head .ilife-block-summary-head-eyebrow, .ilife-ticket-detail .ilife-block-summary-head.is-warn-head .ilife-block-summary-head-eyebrow { background: var(--ilife-warn-soft); border-color: #e8d3a8; color: var(--ilife-warn); }',
   '.ilife-ticket-receipt .ilife-block-summary-head.is-warn-head .ilife-block-summary-head-eyebrow::before, .ilife-ticket-detail .ilife-block-summary-head.is-warn-head .ilife-block-summary-head-eyebrow::before { background: #b97a1a; }',

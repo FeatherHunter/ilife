@@ -12,7 +12,6 @@ import { ACTION_BAR_DEFAULTS, TOAST_DEFAULTS } from '../../spec/index.js';
 
 export const copyButtonSection: (prefix: string) => string = (p) => [
   '.' + p + 'copy-btn {',
-  '  position: relative;',
   '  display: inline-flex;',
   '  align-items: center;',
   '  justify-content: center;',
@@ -115,13 +114,23 @@ export const copyButtonSection: (prefix: string) => string = (p) => [
   '}',
   // base 变体·字面 `▾` 常显：`::after` 不再用 `border` 画三角，直接打字面 `▾`（常显，不随开合旋转）——
   // 开着（`.copy-menu-open`）不旋转；日志按钮不在 `copy-menu-wrap` 内故无符。
-  // **用户 2026-10-03 口径**：按钮文字**居中**，`▾` **钉在右缘**（`right` 与按钮内距 14px 同值，
-  // 不新造取值）；箭头脱离行内流，故文字的居中不受它宽度影响。
+  // **用户 2026-10-03 口径**：`▾` 贴在**文字右侧**（不是按钮最右缘），且**文字本身居中**。
+  // 做法＝`::after` 行内紧跟文字（间距仍取基础 gap 6px），左侧再放一枚**同字同宽、`visibility: hidden`
+  // 的镜像**：两枚箭头等宽 ⇒ 居中算出来的中心落在文字上，箭头自然贴文字右缘。
+  // （与两钮左缘对齐那处用的是同一条「隐形占位」手法，不新造取值。）
+  '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::before {',
+  '  content: "▾";',
+  '  visibility: hidden;',
+  '  margin-right: 6px;',
+  '}',
   '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
   '  content: "▾";',
-  '  position: absolute;',
-  '  right: 14px;',
-  '  margin-left: 0;',
+  '  margin-left: 6px;',
+  '}',
+  // 复制完成后按钮文字换成「已复制 ✓」，符要收掉（否则两枚记号并排）——从查询域上浮到 base，
+  // 仍是唯一一处定义，页面侧不再各写一条。
+  '.' + p + 'copy-btn.copied::after {',
+  '  content: none;',
   '}',
   '.copy-menu-open.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
   '  transform: none;',

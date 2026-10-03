@@ -21,14 +21,13 @@ export const QUERY_EYEBROW = '记账｜查询域';
  *  写入域零命中（写入页指纹只随菜单文案变，CSS 文本不进写入产物）。
  *  详情 scale-note 同值收在此（原型 `.scale-note`）。 */
 export const QUERY_COPY_CSS = [
+  /* 箭头（`▾` 常显／`copied` 收符／开合不旋转）**只住 base 一处**（`components/style/copy-button.ts`）：
+     本域原先那四条 `::after` 覆盖会与 base 分叉（`" ▾"` 带空格、日志钮另发一枚隐形符），
+     已按「复制按钮复用、页面间零观感差」撤掉——本段只留本域的**版面**规则（宽 340 居中）。 */
   '.ilife-list .ilife-block-copy-block, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
   '.ilife-list .ilife-action-row-ghost, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
   '.ilife-list .ilife-copy-menu-wrap, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
   '.ilife-list .ilife-copy-btn, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
-  '.ilife-list .ilife-copy-menu-wrap > .ilife-copy-btn::after, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " ▾"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
-  '.ilife-list .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, .ilife-bill-sheet-page.ilife-ticket-detail .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
-  '.ilife-list [data-action-id="ilife-copy-log"]::after, .ilife-bill-sheet-page.ilife-ticket-detail [data-action-id="ilife-copy-log"]::after { content: " ▾"; visibility: hidden; margin-left: 6px; }',
-  '.ilife-list .ilife-copy-btn.copied::after, .ilife-bill-sheet-page.ilife-ticket-detail .ilife-copy-btn.copied::after { content: none !important; }',
   '.ilife-ticket-scale-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ilife-ink-2); line-height: 1.6; }',
 ].join('\n');
 
