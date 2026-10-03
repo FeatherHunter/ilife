@@ -145,7 +145,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
   lines.push('/* summary-head 票据纸版式：整块居中、眉标成药丸、印章钉右上角。 */');
   /* 判地（w01 v2.1 `.summary-head`）：整块内距 6px 0 16px；眉标底与字是一对**一次性字面**
      （规格 §1 授权照抄：`--pill:#f3ecdc` 药丸底、眉标字色 `#7a6f5e`），字距 2px；圆点色 `#2f9e5f`
-     （判地不在皮肤语义档里，照抄），外圈那一圈是它的 15% 同色环；主数字字距 -1.5px（判地字面）。 */
+     （判地不在皮肤语义档里，照抄），外圈那一圈是它的 15% 同色环 `rgba(47,158,95,.15)`（同上授权照抄）；主数字字距 -1.5px（判地字面）。 */
   lines.push(s + '.is-ticket { position: relative; align-items: center; text-align: center; gap: 0; padding: 6px 0 16px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-eyebrow {'
     + ' display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; max-width: 100%;'

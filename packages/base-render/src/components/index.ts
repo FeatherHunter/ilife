@@ -229,3 +229,8 @@ export * from './lookup-index/index.js';
 export * from './negative-bar/index.js';
 export * from './chart-placeholder/index.js';
 export * from './missing-badge/index.js';
+/* #1114 票据纸 SAY 家具两件（判地 `proto/say-collect/x01-记支出-采集-v2.3.html`）：
+   `say-field` 暖底输入格（标签 ＋ 控件，44px 触摸档）／`say-opt` 选填折叠组（`<details>` 常形）。
+   两件按判地几何逐条照抄，授权字面逐处带出处（见各件 `style.ts`）。**只加行、不重排**（并行席位的约定）。 */
+export * from './say-field/index.js';
+export * from './say-opt/index.js';

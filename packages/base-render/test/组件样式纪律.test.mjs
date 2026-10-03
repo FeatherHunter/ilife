@@ -304,6 +304,21 @@ async function producedCss(name) {
  *  `var(--ilife-ink, var(--fg, #1d1d1f))` 这种整值算命中；
  *  `color-mix(in srgb, var(--ilife-ink) 13%, var(--ilife-surface))` 这种淡底**不算**——
  *  淡洗是合法的面，实测里也这么用（`skeleton` 的占位块）；这一条禁的是"**实心墨块**"。 */
+/** **授权照抄的字面**（#1114）：判地几何里的一次性字面由规格授权「照抄」——
+/**   `docs/skills/skill-bill/proto/style-spec/style-tokens.md` §1 末：「原型另有 `--pill:#f3ecdc`…均为一次性字面，
+ *   不进 token，**照抄**」。许可是**逐值**的：值必须写在**带出处那句话**上（`规格 §x 授权照抄` 或
+ *   `判地字面 · 授权照抄`），本判据只把这几枚从「不跟皮肤的颜色字面量」里减掉；没有出处那句话的字面一律照旧判红。
+ *   出处那句话写在源码里（`style.ts`），因为产物 CSS 到这一层已经把注释剥掉了（见 `producedCss`）。 */
+function authorizedLiterals(source) {
+  const out = new Set();
+  for (const line of String(source).split(/\r?\n/)) {
+    if (!/授权照抄/.test(line)) continue;
+    if (!/(规格 §|判地字面)/.test(line)) continue;
+    for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)) out.add(m[0]);
+  }
+  return out;
+}
+
 function isInkFace(value) {
   const v = value.trim();
   return /^var\(\s*--(?:ilife-ink(?:-[23])?|fg[23]?)\s*[,)]/.test(v);
@@ -322,9 +337,10 @@ describe('组件层样式纪律 ⑦：选中／强调不许拿正文墨色当面
         + '\n（口径见 docs/base/base-render/选中态与皮肤语言.md 第三节法则表：'
         + '有文字的选中面走 `accent-soft` 底＋`accent-text` 字＋`accent` 描边；无文字的点／格／条走 `accent` 实底；'
         + '整行选中走 `surface-2`＋`accent` 侧标）');
-      const bare = [...stripVarFns(css).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0]);
+      const bare = [...stripVarFns(css).matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(/g)].map((m) => m[0])
+        .filter((one) => !authorizedLiterals(styleSource(name)).has(one));
       assert.deepEqual([...new Set(bare)], [], name + ' 的产出里有不跟皮肤的颜色字面量（' + [...new Set(bare)].join('、')
-        + '）——只有 `skinVar()` 兜底链里那一处允许手写字面量');
+        + '）——只有 `skinVar()` 兜底链里那一处、以及带出处那句话的**授权照抄字面**允许手写（见 authorizedLiterals）');
     });
   }
 });
