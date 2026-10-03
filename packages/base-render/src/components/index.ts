@@ -249,3 +249,5 @@ export * from './sheet-head/index.js';
 export * from './ticket-section/index.js';
 export * from './check-row/index.js';
 export * from './type-badge/index.js';
+/* #1124：票据纸族样式段（`ticketFamilyCss`／`ticketFurnitureCss`）从 skill 侧上移；只加行、不重排。 */
+export * from './style/ticket-family.js';

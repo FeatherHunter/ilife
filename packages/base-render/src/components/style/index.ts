@@ -6,3 +6,5 @@
 export { STYLE_PREFIX, STYLE_TOKENS, STYLE_VERSION, cx, token } from './tokens.js';
 export { buildStyleSheet } from './sheet.js';
 export type { StyleTokenName } from './tokens.js';
+/* #1124：票据纸族样式段从 skill 侧 docPage.ts 上移（按 #1082 §23）。只加行、不重排。 */
+export { ticketFamilyCss, ticketFurnitureCss, TICKET_FURNITURE_CSS } from './ticket-family.js';
