@@ -362,8 +362,65 @@ const TICKET_PAGE_CSS = [
   '.ilife-month-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
 ].join(LF);
 
-/** 票据纸族样式段全量（＝搬家前 docPage.ts 的 `TICKET_CSS`，逐字节相同：core ＋ 页面族块，按原顺序拼）。 */
-const TICKET_CSS = [TICKET_CSS_CORE, TICKET_PAGE_CSS].join(LF);
+/** 票据纸族·**复制区形状**（规格 §6）：从 `components/style/copy-button.ts` 的通用段**搬来**（#1114 H-10 返修）。
+ *
+ *  为什么搬：那次按钮圆角（13px）与菜单圆角（12px）是**票据纸族的一次性授权字面**，住在通用件段里会被
+ *  HELP 区的 radius 全集判据（H-10，`help-visual-lock-89.test.mjs`）算进 HELP 区——而它们只在
+ *  `.ilife-page-ui .ilife-skin-ticket` 之下生效、HELP 壳页（`.ilife-help-shell`）根本命中不到。
+ *  搬家后票据页经 `ticketFamilyCss()` 照旧拿得到（票据页恒注入本段），通用段回到干净集合。
+ *  选择器与声明逐字照搬，只把前缀拼接写成字面类名（本件全篇是字面类名口径）。 */
+const TICKET_CSS_COPY = [
+  '/* 规格 §6 授权照抄：次按钮形状（票据纸族；只在 .ilife-page-ui .ilife-skin-ticket 之下生效）。 */',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-btn {',
+  '  width: 100%;',
+  '  min-height: 44px;',
+  '  padding: 12px 14px;',
+  '  border: 1.5px solid #ddd0b6; /* 规格 §6 授权照抄：次按钮 1.5px 暖边 #ddd0b6 */',
+  '  border-radius: 13px; /* 规格 §6 授权照抄：radius 13px（主/次按钮同档） */',
+  '  background: #fff; /* 规格 §6 授权照抄：次按钮白底 #fff */',
+  '  color: #4a4236; /* 判地字面 · 授权照抄：#4a4236（次按钮字色） */',
+  '  font-size: 14.5px; /* 规格 §6 授权照抄：14.5px／w800 */',
+  '  font-weight: 800;',
+  '  letter-spacing: .5px;',
+  '  /* 判地 .btn 不写行高：46.3px ＝ 12+12 内距 ＋ 1.5+1.5 边 ＋ 19.3（14.5px 的 normal 行盒）。',
+  '     通用档写死 line-height:1（其余皮肤沿用）⇒ 这一档必须显式收回。 */',
+  '  line-height: 1.4; /* 判地字面 · 授权照抄：行高 1.4（判地按钮标签住 .btn-in，行盒 20.3px） */',
+  '}',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-menu {',
+  '  left: 0;',
+  '  right: 0;',
+  '  min-width: 0;',
+  '  max-width: none;',
+  '  padding: 6px;',
+  '  border: 1.5px solid #ddd0b6; /* 规格 §6 授权照抄：菜单 1.5px 暖边 #ddd0b6 */',
+  '  border-radius: 12px; /* 规格 §6 授权照抄：复制菜单圆角 12px */',
+  '  background: #fff; /* 规格 §6 授权照抄：浮层白底 #fff */',
+  '  box-shadow: var(--ilife-shadow-pop); /* 规格 §2 授权照抄：浮层投影 shadow-pop */',
+  '}',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-menu-item {',
+  '  min-height: 44px;',
+  '  padding: 10px 12px;',
+  '  border-radius: 8px;',
+  '  font-size: 13.5px; /* 规格 §6 授权照抄：菜项 13.5px／w700 */',
+  '  font-weight: 700;',
+  '}',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-menu-item:hover {',
+  '  background: #faf5e9; /* 判地字面 · 授权照抄：#faf5e9（菜项悬停底） */',
+  '}',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-menu-item > .ilife-copy-menu-label {',
+  '  font-size: 13.5px;',
+  '  font-weight: 700;',
+  '  color: var(--ilife-ink);',
+  '}',
+  '.ilife-page-ui .ilife-skin-ticket .ilife-copy-menu-item > .ilife-copy-menu-hint {',
+  '  font-size: 11.5px; /* 规格 §6 授权照抄：右注 11.5px／w600 */',
+  '  font-weight: 600;',
+  '  color: var(--ilife-ink-2);',
+  '}',
+].join(LF);
+
+/** 票据纸族样式段全量（＝搬家前 docPage.ts 的 `TICKET_CSS` ＋ #1114 搬来的复制区形状段）。 */
+const TICKET_CSS = [TICKET_CSS_CORE, TICKET_PAGE_CSS, TICKET_CSS_COPY].join(LF);
 
 /** 票据纸页内家具样式段（＝搬家前 docPage.ts 的 `TICKET_FURNITURE_CSS`，逐字节相同）。 */
 export const TICKET_FURNITURE_CSS = [
