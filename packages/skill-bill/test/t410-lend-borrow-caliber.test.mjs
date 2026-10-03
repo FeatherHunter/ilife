@@ -1,6 +1,10 @@
-// t410 第一刀护栏：scene-lend／scene-borrow 口径句对称去内部话。
-// 待裁定 4 已裁：“借贷走标签流转”与记借入同句，只改一半拆散对称，且属同类内部话。
-// 两件同改 `标签流转：…`，借出／借入各自 specifics 不动；只断言呈现，不碰行为。
+// t410 第一刀护栏：scene-lend／scene-borrow 采集页按判地三段（**D1＝B 终裁，负责人 2026-10-04**）。
+// 判据链：`proto/say-collect/x15-记借出-采集-v2.3.html`／`x17-记借入-采集-v2.3.html` 是 #1078 那 24 格里
+// verdict＝satisfied 的两格（判地已由负责人批准）；产物 vs 判地逐像素 ＝ 0（390×844，0／411450，页高 1055）；
+// 判地那页只有「还缺什么／已替你填好的／下一步怎么说」三段、**没有**老页那条口径行。
+// ⇒ 断言按判地改到新页：三段与本场景 specifics 须上屏；`标签流转`（口径行新串）与
+// `借贷走标签流转`（旧串）都不许上屏。口径行声明仍在 `scene-lend.ts:60`／`scene-borrow.ts:61`
+// （信息没丢，只是采集页不再出那一行块位）。只断言呈现，不碰行为。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -28,15 +32,23 @@ function collectHtml(params, name) {
   return readFileSync(file, 'utf8');
 }
 
-describe('t410 第一刀 · 借贷口径句对称去内部话', () => {
-  it('记借出采集页用新口径句，旧串消失', () => {
+describe('t410 第一刀 · 借贷采集页按判地三段（口径行不在新页）', () => {
+  it('记借出采集页：判地三段都在，口径行新旧串都不上屏', () => {
     const html = collectHtml({ kind: 'lend' }, 'lend-collect.html');
-    assert.ok(html.includes('标签流转：这一笔写「#借出 #借给（对象） #未还」'), '新口径句须上屏');
+    for (const seg of ['还缺什么', '已替你填好的', '下一步怎么说']) {
+      assert.ok(html.includes(seg), '判地三段之一须上屏：' + seg);
+    }
+    assert.ok(html.includes('借给谁'), '本场景 specifics 须上屏：借给谁');
+    assert.ok(!html.includes('标签流转'), '判地那页没有口径行 ⇒ 口径行新串不许上屏');
     assert.ok(!html.includes('借贷走标签流转'), '旧串须消失');
   });
-  it('记借入采集页用新口径句，旧串消失（与借出对称）', () => {
+  it('记借入采集页：与借出对称（判地三段 ＋ 向谁借）', () => {
     const html = collectHtml({ kind: 'borrow' }, 'borrow-collect.html');
-    assert.ok(html.includes('标签流转：这一笔写「#借入 #向（对象）借 #未还」'), '新口径句须上屏');
+    for (const seg of ['还缺什么', '已替你填好的', '下一步怎么说']) {
+      assert.ok(html.includes(seg), '判地三段之一须上屏：' + seg);
+    }
+    assert.ok(html.includes('向谁借'), '本场景 specifics 须上屏：向谁借');
+    assert.ok(!html.includes('标签流转'), '判地那页没有口径行 ⇒ 口径行新串不许上屏');
     assert.ok(!html.includes('借贷走标签流转'), '旧串须消失');
   });
 });
