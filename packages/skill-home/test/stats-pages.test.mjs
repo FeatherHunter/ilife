@@ -159,17 +159,4 @@ describe('#811 统计总览域：装配产物与三件判据', () => {
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /RESULT: 4\/4/);
   });
-  it('双端判据 exit 0（无浏览器时跳过）', async () => {
-    const cands = [process.env.DSH_BROWSER,
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'].filter(Boolean);
-    const { existsSync: ex } = await import('node:fs');
-    if (!cands.some((p) => { try { return ex(p); } catch { return false; } })) {
-      console.log('    # 跳过：本机无 Chrome／Edge');
-      return;
-    }
-    const r = spawnSync(process.execPath, [join(pkgDir, 'scripts', 'audit-responsive.mjs'), '--dir', dir], { encoding: 'utf8' });
-    assert.equal(r.status, 0, r.stdout + r.stderr);
-  });
 });

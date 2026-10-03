@@ -39,7 +39,6 @@
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
 | `scripts/build-help.mjs` | 38 | 46 | 未越线，在册备查 |
-| `scripts/check-listpage-empty-span.mjs` | 203 | 231 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
 | `scripts/gen-cli.render.mjs` | 105 | 105 | 未越线，在册备查 |

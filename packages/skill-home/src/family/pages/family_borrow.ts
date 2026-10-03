@@ -13,7 +13,7 @@
 //
 // 审计约束（票 6 三件判据）：长必需块原文（超 6 字）只出现在文末折叠对照区
 // 一次，避免重复句；可见正文不用英文、不用中点竖线分隔符；可点件高度不
-// 小于四十四像素（`audit-responsive.mjs`）。
+// 小于四十四像素。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';

@@ -25,7 +25,7 @@
  * `visibleText`（既有先例 `t867-dom-probe.mjs` 同方向引用）；渲染口径抽取自
  * `t834-渲染面探针.mjs`（无头跑完脚本＋隐藏剪除＋同套归一，形同；该件 `--dump-dom`
  * 串行化 DOM 天然不含伪元素文本——本票面①必须另取，故驱动走包内已有的 CDP 形
- * （与 `check-two-col-align.mjs` 同形，第二处用法；第三处出现即抽 `scripts/cdp-page.mjs`），
+ * （本包 CDP 用法现只此一处；再出现第二处即抽 `scripts/cdp-page.mjs`），
  * 不是另起管线）。
  *
  * 用法（仓根）：

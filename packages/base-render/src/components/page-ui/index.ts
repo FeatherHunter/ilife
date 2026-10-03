@@ -337,7 +337,7 @@ export function pageUiCss(input?: PageUiCssInput): string {
     // #919：这一型（窄档「一行一条事实」）原来左右内距是 0 —— 同一张表的标题有 10px（`blocks.ts` 640 档）、
     //   普通窄档形态的单元格也是 10px，只有它写成 0 ⇒ 行文字压在卡片边框上、与标题不在同一条竖线
     //   （实测：标题文字左缘与首格文字左缘差 10px，行文字到卡片边框左右各 1px）。
-    //   值取 10px，与同断点那两处同值；几何读数由 `scripts/check-two-col-align.mjs` 守（下限 8px）。
+    //   值取 10px，与同断点那两处同值。
     '    padding-left: 10px;',
     '    color: var(--fg2);',
     '    font-weight: 600;',

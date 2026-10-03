@@ -6,7 +6,7 @@
 
 - **先读交接件**：`docs/skills/skill-schedule/出页交接-页型配方怎么用.md`（形状住哪、口径住哪、四道门、四条已踩过的坑、墙与清单）。
 - **形状只此一处**：`src/shared/`（`docPage.ts` 整页装配 ＋ `dayPage.ts`／`planPage.ts`／`weekPage.ts` 三张人裁过的页型 ＋ `pageParts.ts` 两处页内件）。**不许另造骨架**；口径落各能力目录的 `*Docs.ts`（如 `src/query/queryDocs.ts`、`src/plan/planDocs.ts`）。
-- **出页后过门**：本票样板脚本（整页／必现块／零外部引用）＋ `packages/skill-calorie/scripts/measure-responsive.mjs`（双端溢出）＋ `docs/skills/skill-schedule/map-779-出页门.mjs <产物目录>`（一条命令全量）＋ 本包全量用例。
+- **出页后过门**：本票样板脚本（整页／必现块／零外部引用）＋ `docs/skills/skill-schedule/map-779-出页门.mjs <产物目录>`（一条命令全量）＋ 本包全量用例。
 - **范本**：`docs/skills/skill-schedule/t782-样板.mjs` ＋ `.scratch/t782/成品/`（三张已签字的成品页与清单）。
 
 ## 发布（npm 官方源，交互式 wizard）

@@ -1,7 +1,7 @@
 /** #946 · 写前预览页（`calorie.view.plan-write-preview`）验收用例 —— 一件内三条读数（`#944` 故障 1／3／8）。
  *
  * 票面判据（逐条对应，每条都要能真红）：
- *   ① **几何**：真起 headless Chrome（CDP 起法照 `scripts/measure-responsive.mjs`）量**改前表卡**与**页头三级**
+ *   ① **几何**：真起 headless Chrome（CDP 起法住本文件内）量**改前表卡**与**页头三级**
  *      的宽，绿＝两者都是 880px（容差 2px）。改前现场：表卡 1240、页头 880（归档页实测，本票票面「故障 1」表）。
  *   ② **载荷**：真跑交付出口（spawn `dist/cli/cmd_read.js`，口径照 `566-result-title.test.mjs`），读页上
  *      确认那颗按钮的 `data-t`：含**会改数据库的命令名**与**本次改后值**、不含空位记号 `____`；且（`t366` 口径）
@@ -220,7 +220,7 @@ function assertGeometry(rows, where) {
   return rows;
 }
 
-/* ── 真浏览器（headless Chrome ＋ CDP）：起法与探针照 `scripts/measure-responsive.mjs` ── */
+/* ── 真浏览器（headless Chrome ＋ CDP）：起法与探针住本文件 ── */
 
 const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
 
