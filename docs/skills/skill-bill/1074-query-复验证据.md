@@ -101,6 +101,8 @@ node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare
 ## 七、逐页骨架机检（按页族；机器读数，给人眼判定当配套，不替代人眼）
 
 > **判据口径（Lead 2026-10-03 裁决，本域要紧的一条）**：query 侧判地整套是**设计稿类名**（`sheet-frame`／`ledger-rows`／`sec`／`cut-line`／`summary-head`…，剥样式后 `ilife-*` 命中 **0**），产物整套是 **`ilife-*`** —— **「逐块对类名」在本域不成立**；本域判据只能是**像素 ＋ 可见文本块序**。故下面这些类名读数**只作产物侧自查**（自己的块位有没有缺、两种页族内部一不一致），**不拿它与判地逐块比**。
+>
+> **判据口径第二条（Lead 2026-10-03 广播）**：像素比对用 `vision_pixel_diff`，但**两侧图高不等时它会把候选图缩放到判地尺寸再比**，整页 ratio 因而混进「页高差」——**页高不等时 ratio 只作「存在差异」的证据，不作达标判据**；报 ratio＝0 必须附「两侧页高相等」。复跑按 §十 记两侧 fullPage 页高，详见 §八的仪器陷阱块。
 
 探针：`.scratch/1074-query/run-1074.mjs`（只读 17 份真跑产物，逐页读数落 `manifest.json`）。本域当刻**两种页族**，判据按族分判：
 
@@ -119,7 +121,10 @@ RESULT: 17/17 真跑成功；出问题的页 0    （GATE-RUN runId=806d00b7-456
 
 ## 八、像素基线读数（生成时 dist，待 #1114 落地后复跑）
 
-口径：两侧各取 **390×844 视口**截图（`vision_html_screenshot`，非 fullPage），再 `vision_pixel_diff(threshold=16)`；纯像素、可复跑。
+口径：两侧各取 **390×844 视口**截图（`vision_html_screenshot`，**非 fullPage**），再 `vision_pixel_diff(threshold=16)`；纯像素、可复跑。
+
+> **仪器陷阱（Lead 2026-10-03 广播，本表与复跑一律适用）**：`vision_pixel_diff` 在**两侧图高不等**时会把候选图**缩放到判地尺寸**再比 ⇒ **整页 ratio 里混进了「页高差」**，不能当「改一处拿了多少」的增量读数。三条后果：① 每次 pixel_diff **必须同时记两侧 fullPage 页高**；② 页高不等时 ratio 只能当「**存在差异**」的证据，**不能当达标判据**；③ 报「差异像素比 ＝ 0」时必须附「**两侧页高相等**」那一行，不等就写「非 0 且含页高差，逐块解释」。
+> **本表三行的适用边界（据实）**：这三行用的是**视口截图**（两侧同为 390×844，图高相等 ⇒ 无缩放），所以它们**只在首屏 844px 内**可比、且这里没有「页高差混进 ratio」的问题；**844px 以下的部分这三行说不了话**。复跑时改取 **fullPage** 并逐页记两侧页高（见 §十），届时按上面三条办。
 
 | 页 | 差异像素比 | 最差区块（8×8 网格） |
 |---|---|---|
@@ -152,7 +157,13 @@ node tooling/run-locked.mjs --ticket 1074 -- node .scratch/1074-query/make-bad-l
 node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单  compare-坏.html
 node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单2 compare-坏2.html
 node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html
+# 4. 像素读数（复跑口径，按 Lead 广播的三条边界）
+#    两侧各取 vision_html_screenshot({ width:390, height:844, fullPage:true })，**逐页记下 pageHeight（产物／原型各一）**，
+#    再 vision_pixel_diff(threshold=16)；页高不等 ⇒ ratio 只作「存在差异」证据、不作达标判据，并逐块解释；报 0 必须附「两侧页高相等」。
+#    逐页读数落表：页 ／ 产物页高 ／ 原型页高 ／ 差异像素比 ／ 是否「页高相等」／ 最差区块。
 ```
+
+**复跑时另有两处已入库的换件（见 §九 第 3 条）**：第 09 格右侧判地由 `query/w09-查分类-v2.1.html` 换 `w09/w09-查分类-v2.2.html`；判据侧登记面放宽到全部 95 件 proto 件。
 
 锁记录导出（协议 §2.3 第 4 条，受版本控制）：[1074-锁记录导出.log](./1074-锁记录导出.log)（ticket=1074 的全部 START／RUN 行，逐行原样）。
 
