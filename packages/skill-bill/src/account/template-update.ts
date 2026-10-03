@@ -8,21 +8,22 @@
  *   缺项／账户认不出来 ⇒ 出确认页（只读回显原账户 ＋ 变更预览 ＋ 缺项阻断）；
  *   齐了 ⇒ 写库出回执页（结果块给**改前改后对照**，正是老确认页那张 diff 表要用户核的东西）。
  *
- * **块位序列**（● 恒出、○ 有内容才出）：
- *   确认页（②）：类型徽章 ●（表序第 6 行）→ 结论条 ○（第 3 行）→ 缺项标签与阻断折叠 ●（第 16 行）
- *     → 口径说明行 ○（第 24 行）→ 只读明细段 ●（第 8 行，原账户现状）→ 字段变更对照 ○（第 9 行，变更预览）
- *     → 主表 ○（第 12 行，账户认不出来时出账户表供挑）→ 空态 ●（第 23 行）→ 字段卡 ●（第 7 行）
- *     → 复制指令块 ●（第 22 行）→ 复制区 ●（第 25 行）→ 来源脚注 ●（第 26 行）
- *   回执页（④）：类型徽章 ● → 页内导航 ●（第 4 行）→ 读数行 ●（第 5 行）→ 字段变更对照 ●（第 9 行，
- *     改前改后）→ 口径说明行 ○（第 24 行）→ 明细表 ●（第 12 行）→ 对账折叠区 ●（第 21 行）
- *     → 复制区 ● → 来源脚注 ●
- *   确认页是过程型（②）故不出页内导航；回执页是结果型（④）故恒出。
+ * **块位序列（#1118 起走票据纸三页型）**：差异值交给 `../shared/票据纸页型.js` 的
+ *  `collectSheetPage`／`receiptSheetPage`——
+ *  确认页（②）：店头 ● → 徽章列 ● → 主数字（待补槽位）● → 落点 LEDGER ● → 待填 ENTRY
+ *    （结论条 ○／阻断折叠 ●／口径行 ○／只读回显 ○／变更预览 ○／账户表与空态 ○／字段卡 ●／口令块 ●）●
+ *    → 对账 CHECK ● → 来源脚注 ● → 按钮区 ● → 纸外脚注 ●；确认页是过程型故不出页内导航。
+ *  回执页（④）：店头 ● → 徽章列 ● → 主数字（已记好）● → 落点 LEDGER ● → 页内导航 ●
+ *    → 明细 DETAIL（读数行 ●／改了什么 ●／口径行 ○／明细表 ●／对账折叠 ●）● → 对账 CHECK ●
+ *    → 来源脚注 ● → 按钮区 ● → 纸外脚注 ●。
  *
  * 谁在用（一个调用点，指名）：`src/account/scene-update.ts`——它的 `collect`／`receipt` 两格
  *  都是 `bindAccountUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { renderCaliberLine, renderChangeRows, renderConclusionBar, renderDataTable, renderKpiGrid, renderParamForm } from 'base-paint/blocks';
 import type { ChangeRowInput, KpiCardInput } from 'base-paint/blocks';
+import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
+import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
@@ -30,7 +31,7 @@ import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS, CHANGE_SLOT, textOf } from './params.js';
 import {
-  SOURCE_COLLECT, SOURCE_COLLECT_TEXT, SOURCE_WRITE, SOURCE_WRITE_TEXT, MISSING, accountPageShell, accountStyleTag, accountsTableOf,
+  SOURCE_COLLECT, SOURCE_COLLECT_TEXT, SOURCE_WRITE, SOURCE_WRITE_TEXT, MISSING, accountStyleTag, accountsTableOf,
   badgeOf, blockedCommandOf, blockedFoldOf, copyZoneOf, emptyOf, envelopeOf, promptBlockOf, reconcileOf,
   receiptStatusCard, slotFieldsOf, sourceNoteOf, textOrDash, timeOf,
 } from './pageParts.js';
@@ -106,6 +107,17 @@ function messageOf(word: string, blocked: readonly AccountBlocked[]): string {
     + '（已出确认页，补齐之后跟助手说一遍）';
 }
 
+/** 确认页那几行落点账本。 */
+function confirmLedgerOf(input: AccountCollectInput, target: AccountRow | null, at: string): readonly TicketSheetRow[] {
+  const name = textOf(input.params['name']);
+  return [
+    { label: '账户', value: target !== null ? target.name : name !== '' ? name + '（认不出来）' : '—（待填）' },
+    { label: '账本', value: '账户和账本' },
+    { label: '时间', value: at },
+    { label: '编号', value: '—（还没记）' },
+  ];
+}
+
 /** 过程型确认页（②）：只读回显 ＋ 变更预览 ＋ 缺项阻断；**不写库**。 */
 function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): string {
   const blocked = input.blocked;
@@ -114,17 +126,7 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   const preview = target === null ? [] : previewOf(input, target);
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, messageOf(spec.word, blocked));
-  const content = [
-    accountStyleTag(),
-    badgeOf({
-      word: spec.word,
-      caliber: spec.caliber,
-      status: missing > 0 ? 'danger' : 'warn',
-      statusText: missing > 0 ? '还没写进去' : '等你确认',
-      next: missing > 0
-        ? '还差 ' + String(missing) + ' 项：补齐了，再说一遍「' + spec.word + '」。'
-        : '这一页先不写库；看准了就照下面那句复制。',
-    }),
+  const entry = [
     missing === 0 ? '' : renderConclusionBar(spec.word + '还差 ' + String(missing) + ' 项，补齐就能写进去'),
     blockedFoldOf({ blocked, command: blockedCommandOf(input.key, input.params, blocked) }),
     spec.note === '' ? '' : renderCaliberLine(spec.note),
@@ -160,17 +162,41 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
       ))),
     }),
     promptBlockOf(spec.prompt(input, target)),
-    copyZoneOf({
+  ].join('');
+  return collectSheetPage({
+    docTitle: DOC_TITLE + '·改账户确认',
+    brand: '饼干记账 · ' + spec.word,
+    title: missing > 0 ? spec.word + '还差 ' + String(missing) + ' 项' : spec.word + '等你确认',
+    subtitle: spec.subtitle(input, target),
+    summary: {
+      eyebrow: missing > 0 ? '待补槽位' : '等你确认',
+      value: String(missing),
+      unit: '项',
+      note: missing > 0 ? '缺：' + blocked.map((b) => b.label).join('、') : '值都齐了，看准了就复制下面那句。',
+    },
+    headExtraHtml: badgeOf({
+      word: spec.word,
+      caliber: spec.caliber,
+      status: missing > 0 ? 'danger' : 'warn',
+      statusText: missing > 0 ? '还没写进去' : '等你确认',
+      next: missing > 0
+        ? '还差 ' + String(missing) + ' 项：补齐了，再说一遍「' + spec.word + '」。'
+        : '这一页先不写库；看准了就照下面那句复制。',
+    }),
+    ledgerTitle: '账户落点',
+    ledger: confirmLedgerOf(input, target, at),
+    entryTitle: '待填',
+    entryTag: 'ENTRY',
+    entryHtml: entry,
+    check: missing > 0 ? '还没记 ／ 共 0 条 ／ 没有异常' : '等你确认 ／ 共 0 条 ／ 没有异常',
+    tailHtml: sourceNoteOf({ sourceText: SOURCE_COLLECT_TEXT, start: at, end: at, count: 0 }),
+    actions: copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_COLLECT, detail: '没写库（确认页）', actionAt: input.actionAt,
     }),
-    sourceNoteOf({ sourceText: SOURCE_COLLECT_TEXT, start: at, end: at, count: 0 }),
-  ].join('');
-  return accountPageShell({
-    docTitle: DOC_TITLE + '·改账户确认',
-    title: spec.word,
-    subtitle: spec.subtitle(input, target),
-    slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, content,
+    foot: '饼干记账 · ' + spec.word + '确认',
+    styleHtml: accountStyleTag(),
+    slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
 
@@ -195,21 +221,48 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     }), 'sec-detail', '明细'),
     navBlock(reconcileOf({ actionAt: receipt.actionAt, changed: receipt.affectedRows, note: RECONCILE_NOTE }),
       'sec-reconcile', '对账'),
-    navBlock(copyZoneOf({
-      envelope, title: spec.word, key: input.key, params: input.params,
-      source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
-    }), 'sec-copy', '复制'),
-    { html: sourceNoteOf({ sourceText: SOURCE_WRITE_TEXT, start: at, end: at, count: receipt.affectedRows }) },
   ];
-  const content = accountStyleTag() + badgeOf({
-    word: spec.word, caliber: spec.caliber, status: 'ok', statusText: '已经写进去了',
-    next: '这一件事办完了，不用再做什么。',
-  }) + pageNav(blocks) + pageBody(blocks);
-  return accountPageShell({
+  const after = receipt.after;
+  return receiptSheetPage({
     docTitle: DOC_TITLE + '·写库回执',
+    brand: '饼干记账 · ' + spec.word,
     title: spec.word + ' · 回执',
     subtitle: receipt.summary,
-    slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, content,
+    summary: {
+      eyebrow: receipt.noChange ? '没改动' : '已记好',
+      value: String(receipt.affectedRows),
+      unit: '处',
+      note: receipt.summary,
+      ...(receipt.noChange ? {} : { stamp: '有效' }),
+    },
+    headExtraHtml: badgeOf({
+      word: spec.word, caliber: spec.caliber, status: 'ok', statusText: '已经写进去了',
+      next: '这一件事办完了，不用再做什么。',
+    }),
+    ledgerTitle: '账户落点',
+    ledger: [
+      {
+        label: '账户',
+        value: after === null
+          ? '账户表已更新'
+          : after.name + '（' + (after.type.trim() === '' ? MISSING : after.type) + '·' + (after.disabled ? '已停用' : '使用中') + '）',
+      },
+      { label: '账本', value: '账户和账本（已记好）' },
+      { label: '时间', value: at },
+      { label: '编号', value: receipt.renamedRows > 0 ? '—（连带 ' + String(receipt.renamedRows) + ' 笔流水改名）' : '—（账户域无小票编号）' },
+    ],
+    detailTitle: '改了什么',
+    detailTag: 'DETAIL',
+    blocks,
+    check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
+    tailHtml: sourceNoteOf({ sourceText: SOURCE_WRITE_TEXT, start: at, end: at, count: receipt.affectedRows }),
+    actions: copyZoneOf({
+      envelope, title: spec.word, key: input.key, params: input.params,
+      source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+    }),
+    foot: '饼干记账 · ' + spec.word + '回执',
+    styleHtml: accountStyleTag(),
+    slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
 

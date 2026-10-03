@@ -25,9 +25,11 @@
 import { renderCaliberLine, renderConclusionBar, renderDistributionRows, renderKpiGrid } from 'base-paint/blocks';
 import type { DistributionRowInput, KpiCardInput } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
+import { navBlock } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
-import { badgeOf, copyZoneOf, emptyOf, goalPageShell, goalStyleTag, listEnvelopeOf, reconcileOf, sourceNoteOf } from './pageParts.js';
+import { listSheetPage } from '../shared/票据纸页型.js';
+import type { TicketSheetRow } from '../shared/票据纸页型.js';
+import { badgeOf, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, reconcileOf, sourceNoteOf } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。 */
@@ -91,26 +93,65 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
       note: '这一页看了 ' + String(counts.records) + ' 条记录、' + String(counts.items) + ' 条' + spec.cardsTitle
         + '；只读，没有改动任何数据。',
     }), 'sec-reconcile', '对账'),
-    navBlock(copyZoneOf({
-      envelope, title: input.wakeWord, key: input.key, params: input.params,
-      source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
-    }), 'sec-copy', '复制'),
   ];
-  const content = goalStyleTag() + badgeOf({
-    word: input.wakeWord,
-    caliber: spec.caliber(input),
-    status: hasItems ? 'ok' : 'empty',
-    statusText: hasItems ? '查到了' : '一条都还没有',
-    next: '',
-  }) + renderConclusionBar(spec.conclusion(input))
-    + pageNav(blocks) + pageBody(blocks)
-    + sourceNoteOf({
-      sourceText: spec.sourceText, start: input.windowStart, end: input.windowEnd, count: counts.records,
-    });
-  return goalPageShell({
+  const kpi = hasItems ? spec.kpi(input) : [];
+  const head = kpi[0];
+  return listSheetPage({
     docTitle: DOC_TITLE + spec.docSuffix,
+    brand: '饼干记账 · ' + input.wakeWord,
     title: input.wakeWord,
     subtitle: spec.window(input),
-    slot: 'list', page: 'list', shape: 'list', key: input.key, content,
+    summary: {
+      eyebrow: hasItems ? '查到了' : '一条都还没有',
+      value: head === undefined || head.value === undefined || head.value === '' ? '0' : head.value,
+      ...(head === undefined || head.unit === undefined ? {} : { unit: head.unit }),
+      note: spec.conclusion(input),
+    },
+    headExtraHtml: badgeOf({
+      word: input.wakeWord,
+      caliber: spec.caliber(input),
+      status: hasItems ? 'ok' : 'empty',
+      statusText: hasItems ? '查到了' : '一条都还没有',
+      next: '',
+    }) + renderConclusionBar(spec.conclusion(input)),
+    ledgerTitle: input.budget === null ? '目标落点' : '预算落点',
+    ledger: ledgerOf(input, counts),
+    detailTitle: spec.cardsTitle,
+    detailTag: 'DETAIL',
+    blocks,
+    check: '共 ' + String(counts.items) + ' 条 · 看了 ' + String(counts.records) + ' 条记录 ／ 没有异常',
+    tailHtml: sourceNoteOf({
+      sourceText: spec.sourceText, start: input.windowStart, end: input.windowEnd, count: counts.records,
+    }),
+    actions: copyZoneOf({
+      envelope, title: input.wakeWord, key: input.key, params: input.params,
+      source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
+    }),
+    foot: '饼干记账 · ' + input.wakeWord,
+    styleHtml: goalStyleTag(),
+    slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
+}
+
+/** 这一页那几行落点账本（预算执行与目标进度各一套事实；两支里恰好一支非空）。 */
+function ledgerOf(
+  input: GoalProgressInput,
+  counts: { readonly items: number; readonly records: number },
+): readonly TicketSheetRow[] {
+  const month = typeof input.params['month'] === 'string' ? String(input.params['month']).trim() : '';
+  const end = input.windowEnd.trim() === '' ? '不限' : input.windowEnd;
+  if (input.budget !== null) {
+    return [
+      { label: '分类', value: '总预算' },
+      { label: '账本', value: '目标和当月支出' },
+      { label: '时间', value: month === '' ? '本月' : month },
+      { label: '编号', value: '预算 ' + String(counts.items) + ' 条' },
+    ];
+  }
+  return [
+    { label: '分类', value: '—（储蓄目标）' },
+    { label: '账本', value: '目标和账本累计' },
+    { label: '时间', value: '账本算到 ' + end },
+    { label: '编号', value: '目标 ' + String(counts.items) + ' 个' },
+  ];
 }

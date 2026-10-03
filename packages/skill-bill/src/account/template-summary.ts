@@ -20,12 +20,14 @@
 import { renderCaliberLine, renderConclusionBar, renderDataTable, renderDistributionRows, renderKpiGrid } from 'base-paint/blocks';
 import type { DataTableColumn, DataTableRow, KpiCardInput } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
+import { navBlock } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import type { AccountFlow, AccountSummary, AccountTotals } from './accounts.js';
 import { FLOW_LIMIT } from './accounts.js';
+import { listSheetPage } from '../shared/票据纸页型.js';
+import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import {
-  SOURCE_READ, SOURCE_READ_TEXT, accountPageShell, accountStyleTag, badgeOf, copyZoneOf, emptyOf, listEnvelopeOf, money, reconcileOf,
+  SOURCE_READ, SOURCE_READ_TEXT, accountStyleTag, badgeOf, copyZoneOf, emptyOf, listEnvelopeOf, money, reconcileOf,
   signedMoney, sourceNoteOf, textOrDash,
 } from './pageParts.js';
 
@@ -156,6 +158,23 @@ function disabledNote(s: AccountSummary): string {
   );
 }
 
+/** 这一页那几行落点账本（账户汇总的事实全在落点段里说清）。 */
+function ledgerOf(s: AccountSummary, input: AccountSummaryInput): readonly TicketSheetRow[] {
+  const last = s.flows.length === 0 ? '' : s.flows[0].time;
+  return [
+    { label: '分类', value: '—（按账户归堆）' },
+    { label: '账户', value: '共 ' + String(s.accounts.length) + ' 个（详见明细）' },
+    { label: '账本', value: '账户和账本' },
+    { label: '时间', value: last === '' ? '不限' : '截至 ' + last },
+    { label: '编号', value: '最近 ' + String(s.flow_count) + ' 笔流水' },
+  ];
+}
+
+/** 对账那一句（账户数 ＋ 参与汇总的流水笔数）。 */
+function checkOf(s: AccountSummary): string {
+  return String(s.accounts.length) + ' 账户 · 最近 ' + String(s.flow_count) + ' 笔参与汇总 ／ 没有异常';
+}
+
 /** 账户汇总页：一整页。块序在本件只写一份（`blocks` 既拼正文也派生页内导航）。
  *
  *  **账户表为空时不出读数卡**（照 #688 裁定 6 的同一条判法：没有账户就没有余额可报，五张全 0 的读数卡
@@ -196,26 +215,40 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
       actionAt: input.actionAt, changed: 0,
       note: '这一页看了 ' + String(s.records) + ' 条流水、' + String(s.accounts.length) + ' 个账户；只读，没有改动任何数据。',
     }), 'sec-reconcile', '对账'),
-    navBlock(copyZoneOf({
-      envelope, title: input.wakeWord, key: input.key, params: input.params,
-      source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
-    }), 'sec-copy', '复制'),
   ];
-  const content = accountStyleTag() + badgeOf({
-    word: input.wakeWord,
-    caliber: hasAccounts ? chipsOf(s) : '还没有账户',
-    status: hasAccounts ? 'ok' : 'empty',
-    statusText: hasAccounts ? '查到了' : '账户表是空的',
-    next: hasAccounts ? '' : '先说「新增账户」登记一个，余额就有地方算了。',
-  }) + renderConclusionBar(conclusionOf(s))
-    + pageNav(blocks) + pageBody(blocks)
-    + sourceNoteOf({
-      sourceText: SOURCE_READ_TEXT, start: input.windowStart, end: input.windowEnd, count: s.records,
-    });
-  return accountPageShell({
+  return listSheetPage({
     docTitle: DOC_TITLE + '·账户汇总',
+    brand: '饼干记账 · ' + input.wakeWord,
     title: input.wakeWord,
     subtitle: input.window,
-    slot: 'list', page: 'list', shape: 'list', key: input.key, content,
+    summary: {
+      eyebrow: hasAccounts ? '查到了' : '账户表是空的',
+      value: money(s.totals.balance),
+      unit: '元',
+      note: conclusionOf(s),
+    },
+    headExtraHtml: badgeOf({
+      word: input.wakeWord,
+      caliber: hasAccounts ? chipsOf(s) : '还没有账户',
+      status: hasAccounts ? 'ok' : 'empty',
+      statusText: hasAccounts ? '查到了' : '账户表是空的',
+      next: hasAccounts ? '' : '先说「新增账户」登记一个，余额就有地方算了。',
+    }) + renderConclusionBar(conclusionOf(s)),
+    ledgerTitle: '账户落点',
+    ledger: ledgerOf(s, input),
+    detailTitle: '各账户余额',
+    detailTag: 'DETAIL',
+    blocks,
+    check: checkOf(s),
+    tailHtml: sourceNoteOf({
+      sourceText: SOURCE_READ_TEXT, start: input.windowStart, end: input.windowEnd, count: s.records,
+    }),
+    actions: copyZoneOf({
+      envelope, title: input.wakeWord, key: input.key, params: input.params,
+      source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
+    }),
+    foot: '饼干记账 · ' + input.wakeWord,
+    styleHtml: accountStyleTag(),
+    slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }
