@@ -36,8 +36,8 @@ const cells = samples.items.map((it) => {
   const proto = join(ROOT, it.proto);
   return '<section class="cell"><h3>' + it.seq + ' ' + it.wake + (ok ? '' : '  <b>（产物缺失）</b>') + '</h3>'
     + '<div class="pair">'
-    + '<figure><figcaption>判地原型 v2.3</figcaption><iframe src="' + rel(OUT, proto) + '" width="' + WIDTH + '" height="1180" loading="lazy"></iframe></figure>'
-    + '<figure><figcaption>真跑产物</figcaption><iframe src="' + rel(OUT, product) + '" width="' + WIDTH + '" height="1180" loading="lazy"></iframe></figure>'
+    + '<figure><figcaption>判地原型 v2.3</figcaption><iframe src="' + rel(OUT, proto) + '" width="' + WIDTH + '" height="1180"></iframe></figure>'
+    + '<figure><figcaption>真跑产物</figcaption><iframe src="' + rel(OUT, product) + '" width="' + WIDTH + '" height="1180"></iframe></figure>'
     + '</div></section>';
 }).join('');
 
@@ -58,6 +58,25 @@ const html = '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">'
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, html, 'utf8');
+
+/** 落盘后自检（**改坏必红**）：墙是负责人唯一的判据界面，`loading="lazy"` 会让下半墙永远空白，
+ *  故「墙面 lazy 恒为 0」是一条硬断言——把 lazy 加回模板即当场红、且点名处数。
+ *  另核格数与 iframe 数（每格两侧各一个）。 */
+const lazyCount = html.split('loading="lazy"').length - 1;
+const cellCount = (html.match(/<section class="cell"/g) || []).length;
+const iframeCount = (html.match(/<iframe/g) || []).length;
+const wantCells = samples.items.length;
+const wantIframes = wantCells * 2;
+const red = [];
+if (lazyCount !== 0) red.push('墙面出现 loading="lazy" ' + String(lazyCount) + ' 处（下半墙会空白；本生成器不产出 lazy）');
+if (cellCount !== wantCells) red.push('格数 ' + String(cellCount) + ' != ' + String(wantCells));
+if (iframeCount !== wantIframes) red.push('iframe 数 ' + String(iframeCount) + ' != ' + String(wantIframes));
+if (missing !== 0) red.push('产物缺失 ' + String(missing) + ' 件');
 console.log('WALL: ' + OUT);
-console.log('RESULT: ' + (samples.items.length - missing) + '/' + samples.items.length + ' 格产物在位');
-process.exit(missing === 0 ? 0 : 1);
+console.log('RESULT: ' + (samples.items.length - missing) + '/' + samples.items.length + ' 格产物在位'
+  + '；lazy=' + String(lazyCount) + ' 格=' + String(cellCount) + ' iframe=' + String(iframeCount));
+if (red.length) {
+  console.log('RED ' + OUT + '：' + red.join('；'));
+  process.exit(1);
+}
+process.exit(0);
