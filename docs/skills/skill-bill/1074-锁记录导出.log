@@ -1,7 +1,7 @@
 # #1074 锁记录导出（协议 §2.3 第 4 条：本票声明过的运行条目抄录，供第三方复核）
 # 源：.scratch/locks/gate-runs.log（未受版本控制）→ 本件受版本控制
 # 抄录范围：ticket=1074 的全部 START／RUN 行（逐行原样，不改一字）
-# 行数：28
+# 行数：46
 START ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 pid=15076 at=2026-10-03T15:40:08.116Z
 RUN ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 exit=0 pid=15076 at=2026-10-03T15:40:10.598Z
 START ticket=1074 runId=806d00b7-456d-477a-97b2-7b7dbe6aa485 cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=1 pid=40052 at=2026-10-03T15:44:08.642Z
@@ -30,3 +30,21 @@ START ticket=1074 runId=e167ca8d-fb48-4679-b33d-1baf76cc4213 cmd="git commit -F 
 RUN ticket=1074 runId=e167ca8d-fb48-4679-b33d-1baf76cc4213 cmd="git commit -F .scratch/1074-query/commit-1074.txt -- docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=44724 at=2026-10-03T15:52:12.721Z
 START ticket=1074 runId=88c52f10-661e-4fba-a488-c0bbec8365c5 cmd="git push origin master" waitedMs=0 pid=75500 at=2026-10-03T15:52:19.739Z
 RUN ticket=1074 runId=88c52f10-661e-4fba-a488-c0bbec8365c5 cmd="git push origin master" waitedMs=0 exit=0 pid=75500 at=2026-10-03T15:52:22.162Z
+START ticket=1074 runId=7b30d905-485f-477f-974a-847b7d0eed89 cmd="git add docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=74600 at=2026-10-03T15:52:30.436Z
+RUN ticket=1074 runId=7b30d905-485f-477f-974a-847b7d0eed89 cmd="git add docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=74600 at=2026-10-03T15:52:30.485Z
+START ticket=1074 runId=2c69f75e-e600-4142-ad8d-829199f59a18 cmd="git commit -m \"chore(1074): 锁记录导出补录 git add/commit/push 三条（导出件覆盖本票全部运行条目）\" -- docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=64240 at=2026-10-03T15:52:30.535Z
+RUN ticket=1074 runId=2c69f75e-e600-4142-ad8d-829199f59a18 cmd="git commit -m \"chore(1074): 锁记录导出补录 git add/commit/push 三条（导出件覆盖本票全部运行条目）\" -- docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=64240 at=2026-10-03T15:52:30.627Z
+START ticket=1074 runId=7f975f9d-c751-487d-98d3-44c79be4e6ca cmd="git push origin master" waitedMs=0 pid=63304 at=2026-10-03T15:52:30.677Z
+RUN ticket=1074 runId=7f975f9d-c751-487d-98d3-44c79be4e6ca cmd="git push origin master" waitedMs=0 exit=0 pid=63304 at=2026-10-03T15:52:32.822Z
+START ticket=1074 runId=09f8b954-4952-41b9-b197-34d0e735467b cmd="git add docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md" waitedMs=0 pid=76328 at=2026-10-03T16:01:00.925Z
+RUN ticket=1074 runId=09f8b954-4952-41b9-b197-34d0e735467b cmd="git add docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md" waitedMs=0 exit=0 pid=76328 at=2026-10-03T16:01:00.970Z
+START ticket=1074 runId=b97f2275-a96d-41f7-afdf-974ebc07698d cmd="git commit -F .scratch/1074-query/commit-1074b.txt -- docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md" waitedMs=0 pid=44932 at=2026-10-03T16:01:01.052Z
+RUN ticket=1074 runId=b97f2275-a96d-41f7-afdf-974ebc07698d cmd="git commit -F .scratch/1074-query/commit-1074b.txt -- docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md" waitedMs=0 exit=0 pid=44932 at=2026-10-03T16:01:01.144Z
+START ticket=1074 runId=10183d4d-a870-4b91-819a-da5785391c0f cmd="git push origin master" waitedMs=0 pid=52860 at=2026-10-03T16:01:01.222Z
+RUN ticket=1074 runId=10183d4d-a870-4b91-819a-da5785391c0f cmd="git push origin master" waitedMs=0 exit=128 pid=52860 at=2026-10-03T16:01:01.675Z
+START ticket=1074 runId=6869572d-58ea-4b7a-996f-cd9aea49eee7 cmd="git push origin master" waitedMs=0 pid=20096 at=2026-10-03T16:01:06.565Z
+RUN ticket=1074 runId=6869572d-58ea-4b7a-996f-cd9aea49eee7 cmd="git push origin master" waitedMs=0 exit=128 pid=20096 at=2026-10-03T16:01:07.222Z
+START ticket=1074 runId=3659711f-ee68-4e10-9b63-9d5a8df34bf6 cmd="git push origin master" waitedMs=0 pid=78380 at=2026-10-03T16:01:16.500Z
+RUN ticket=1074 runId=3659711f-ee68-4e10-9b63-9d5a8df34bf6 cmd="git push origin master" waitedMs=0 exit=128 pid=78380 at=2026-10-03T16:01:18.797Z
+START ticket=1074 runId=9efc7de4-fe0a-463e-a28f-b71a4fbabd81 cmd="git push origin master" waitedMs=1 pid=48760 at=2026-10-03T16:01:27.243Z
+RUN ticket=1074 runId=9efc7de4-fe0a-463e-a28f-b71a4fbabd81 cmd="git push origin master" waitedMs=1 exit=0 pid=48760 at=2026-10-03T16:01:29.342Z
