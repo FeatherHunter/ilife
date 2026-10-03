@@ -32,7 +32,8 @@ import {
 } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
-import { envelopeOf } from './pageParts.js';
+import { duplicateNote, findDuplicates } from './duplicateNote.js';
+import { envelopeOf, probeOfReceipt } from './pageParts.js';
 import { exitCopyOf } from './receiptSheet.js';
 import { money2 } from './summaryRow.js';
 import { fieldLabelOf } from './userWording.js';
@@ -58,6 +59,10 @@ interface PaperWords {
   readonly plainTitle?: string;
   /** 「记到哪里」里额外那一行（借出／借入的标签行）；不给＝不出这一行。 */
   readonly extraRow?: { readonly label: string; readonly value: string };
+  /** 这一族回执页出不出「疑似重复」条件块（改前两族的旧回执页有这一支；批量录入与记分期没有）。
+   *  **条件块**：只有在近期记录里真撞上「同一天＋同金额＋同分类」时才上屏——判地 13 件样本都撞不上，
+   *  故它不参与像素判据；真撞上时它是安全提示，不许静默丢掉（负责人 2026-10-04 裁决）。 */
+  readonly duplicateNotice: boolean;
 }
 
 /** 「写进账本」那句里点名的字段（13 页里九页同句，故只写一份）。 */
@@ -86,25 +91,25 @@ function batchNote(receipt: BillReceipt): string {
 /** 13 行文案表：键＝这一件认的 `kind`（空串记 `plain`，与 `./scene.js` 的落点表同键）。
  *  **表里只放文案**——块序与块位拼装在本件下面的 `receiptPaper` 一处。 */
 const RECEIPT_PAPER: Readonly<Record<string, PaperWords>> = {
-  expense: { titleWord: '支出', eyebrowWord: '支出', note: commonNote },
-  income: { titleWord: '收入', eyebrowWord: '收入', note: commonNote },
-  photo: { titleWord: '账单', eyebrowWord: '支出', note: photoNote },
-  batch: { titleWord: '', eyebrowWord: '支出', note: batchNote, plainTitle: '这一批记好了' },
-  refund: { titleWord: '退款', eyebrowWord: '退款', note: commonNote },
-  reimburse: { titleWord: '报销', eyebrowWord: '支出', note: commonNote },
-  'reimburse-done': { titleWord: '到账', eyebrowWord: '收入', note: commonNote },
+  expense: { titleWord: '支出', eyebrowWord: '支出', note: commonNote, duplicateNotice: true },
+  income: { titleWord: '收入', eyebrowWord: '收入', note: commonNote, duplicateNotice: true },
+  photo: { titleWord: '账单', eyebrowWord: '支出', note: photoNote, duplicateNotice: true },
+  batch: { titleWord: '', eyebrowWord: '支出', note: batchNote, plainTitle: '这一批记好了', duplicateNotice: false },
+  refund: { titleWord: '退款', eyebrowWord: '退款', note: commonNote, duplicateNotice: true },
+  reimburse: { titleWord: '报销', eyebrowWord: '支出', note: commonNote, duplicateNotice: true },
+  'reimburse-done': { titleWord: '到账', eyebrowWord: '收入', note: commonNote, duplicateNotice: true },
   lend: {
-    titleWord: '借出', eyebrowWord: '支出', note: tagNote,
+    titleWord: '借出', eyebrowWord: '支出', note: tagNote, duplicateNotice: true,
     extraRow: { label: '标签', value: '#借出 #未还' },
   },
   borrow: {
-    titleWord: '借入', eyebrowWord: '收入', note: tagNote,
+    titleWord: '借入', eyebrowWord: '收入', note: tagNote, duplicateNotice: true,
     extraRow: { label: '标签', value: '#借入 #未还' },
   },
-  collect: { titleWord: '收回', eyebrowWord: '收入', note: commonNote },
-  repay: { titleWord: '偿还', eyebrowWord: '支出', note: commonNote },
-  installment: { titleWord: '分期', eyebrowWord: '支出', note: commonNote },
-  plain: { titleWord: '', eyebrowWord: '支出', note: commonNote, plainTitle: '这一笔记好了' },
+  collect: { titleWord: '收回', eyebrowWord: '收入', note: commonNote, duplicateNotice: true },
+  repay: { titleWord: '偿还', eyebrowWord: '支出', note: commonNote, duplicateNotice: true },
+  installment: { titleWord: '分期', eyebrowWord: '支出', note: commonNote, duplicateNotice: false },
+  plain: { titleWord: '', eyebrowWord: '支出', note: commonNote, plainTitle: '这一笔记好了', duplicateNotice: true },
 };
 
 /** 通用词那一行（`kind` 是空串，也接认不得的 `kind`——落点表把它们都交给「记一笔」那一件）。 */
@@ -145,6 +150,9 @@ export function receiptPaper(input: ReceiptPaperInput): string {
   const words = wordsOf(input.kind);
   const envelope = envelopeOf(key, true, receipt.summary);
   const exit = exitCopyOf('undo', receipt.recordId);
+  /** 「疑似重复」条件块：这一族出它、且真撞上时才非空（判地样本撞不上 ⇒ 不上屏）。 */
+  const probe = probeOfReceipt(input);
+  const duplicate = words.duplicateNotice ? duplicateNote(findDuplicates(input.recent, probe), probe, 'static') : '';
   const rows = [
     { label: '账户', value: pick(facts.account) },
     { label: '账本', value: pick(facts.ledger) },
@@ -164,6 +172,7 @@ export function receiptPaper(input: ReceiptPaperInput): string {
     + ticketSection({ title: '记到哪里', tag: '', content: renderLedgerRows({ rows, layout: 'ticket' }) })
     + ticketRule()
     + ticketSection({ title: '核对', tag: '', content: checkHtml(receipt.recordId) })
+    + (duplicate === '' ? '' : ticketRule() + duplicate)
     + ticketRule()
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit)) + copyArea({
       data: { envelope },

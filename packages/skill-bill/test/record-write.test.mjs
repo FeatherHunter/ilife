@@ -383,11 +383,13 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const h = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 13:00:00","category":"餐饮/外卖/午餐"}', '--html', hit]);
     assert.equal(h.status, 0, 'stderr=' + h.stderr);
     assert.equal(envOf(h).data.ok, true, JSON.stringify(envOf(h).data));
-    // #1117：回执页走票据纸（判地原型 x02…x26 上没有重复检测提示条）⇒ 这一块不再上回执页。
-    // 判定本身没丢：它仍由采集页那一支出（下一条用例照旧钉「分类未给不出条」）。
+    // #1117：回执页走票据纸后，这一块仍是**条件块**（只在真撞上时出）。判地 13 件样本都撞不上它，
+    // 故它不参与像素判据；本用例正是「真撞上」那一支，照旧逐条钉它（负责人 2026-10-04 裁决）。
     const hitText = pageOf(hit);
-    assert.ok(!hitText.includes('看着像重复'), '票据纸回执页不出重复检测提示条（判地原型无此块）');
-    assert.equal(envOf(h).data.receipt.recordId > 0, true, '这一笔照常写库（提示条退役不改行为）');
+    assert.ok(hitText.includes('看着像重复'), '同日同额同分类须报重复');
+    assert.ok(hitText.includes('记录编号 1'), '提示条须报出撞上的是哪几笔');
+    assert.ok(!hitText.includes('记录编号 ' + envOf(h).data.receipt.recordId + ' · ' + '2026-09-14 13:00:00'),
+      '本次自己那条不进提示条');
     const other = join(H2, 'dup-miss.html');
     const m = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-15 13:00:00","account":"支付宝"}', '--html', other]);
     assert.equal(m.status, 0, 'stderr=' + m.stderr);
