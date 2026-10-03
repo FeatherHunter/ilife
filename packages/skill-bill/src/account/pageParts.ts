@@ -20,7 +20,7 @@ import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope, StatusKind } from 'base-paint';
 import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderEmptyBlock, renderPreBlock, renderTypeBadge } from 'base-paint/blocks';
 import type { DataTableColumn, DataTableRow, KpiCardInput, ParamFieldInput } from 'base-paint/blocks';
-import { copyArea, copyLog } from '../shared/copyArea.js';
+import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
@@ -203,6 +203,7 @@ export function copyZoneOf(input: {
   readonly actionAt: string;
 }): string {
   return copyArea({
+      hints: COPY_HINTS.sayAcct,
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,

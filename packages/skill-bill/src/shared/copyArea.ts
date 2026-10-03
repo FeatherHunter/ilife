@@ -37,10 +37,19 @@ const COPY_EMPTY_TEXT = '本页没有可复制的数据';
 export function actionStamp(): string {
   return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
-/** 复制数据三格式菜单里三项的用途提示（纯文本／JSON／CSV，顺序＝`COPY_FORMATS`）。
- *  格式名保留（那是数据格式本来的样子，不是内部标识），只说清它拿去做什么。
- *  1056 查询 v2.1 短句（`.scratch/1019-p-query` 菜单 small 三句逐字）：查询与写入同走本件，故写入页指纹随之变，随后重录归因。 */
-const MENU_HINTS: readonly string[] = ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'];
+/** 复制数据三格式菜单里三项的用途提示（顺序＝`COPY_FORMATS`）。**三组 preset，逐字取自五族判地**：
+ *  `docs/skills/skill-bill/1075-write-复验证据.md` 的五族逐字表（提交 `1efa5687`）——
+ *    A＝write-receipt v2｜B＝say-collect v2.3 ＋ acct-goal v2.2｜C＝query v2.1 ＋ analysis v2.1。
+ *  写法与既有约定一致：`<格式名> <判地那一句 small 文案>`（格式名保留——它是数据格式本来的样子，不是内部标识）。 */
+export const COPY_HINTS = {
+  /** 组 A：write-receipt v2 判地。 */
+  receipt: ['纯文本 自己看或发给助手', 'JSON 存档用', 'CSV 表格用'],
+  /** 组 B：say-collect v2.3 ＋ acct-goal v2.2 判地。 */
+  sayAcct: ['纯文本 粘贴给助手或自己看', 'JSON 结构化存档', 'CSV 表格导入'],
+  /** 组 C：query v2.1 ＋ analysis v2.1 判地。**默认档**——不传 `hints` 就用这一组，
+   *  与 #1125 之前逐字节相同（零回归）。 */
+  queryAnalysis: ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'],
+} as const;
 
 /** `copyArea` 的可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {
@@ -52,6 +61,8 @@ interface CopyAreaInput {
   readonly log?: LogTextInput;
   /** 三样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
   readonly emptyText?: string;
+  /** 复制数据三格式菜单的三句用途提示（本族的 `COPY_HINTS` 那一组）；**不给＝组 C**（零回归）。 */
+  readonly hints?: readonly string[];
 }
 
 /** 复制日志的入参：本次执行的过程证据（第 1 段「场景标识」由 envelope 派生，不在这里填）。 */
@@ -111,7 +122,7 @@ export function copyArea(input: CopyAreaInput): string {
   }
   if (input.data !== undefined || input.log !== undefined) {
     parts.push(renderCopyBlock({
-      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data) }),
+      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data, input.hints) }),
       ...(input.log === undefined ? {} : { logText: buildLogText(input.log) }),
     }));
     return parts.join('');
@@ -123,7 +134,7 @@ export function copyArea(input: CopyAreaInput): string {
 /** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。
  *  上级裁定第 2 条：复制载荷头行 `【bill · record.add】` 算上屏一并改——`text` 那份显式给 `title`，
  *  不再让公共层按 `envelope.skill/key` 拼出命令名；`title` 只写用户说法，不带命令名与 `·`。 */
-function formatsOf(data: DataTextInput): {
+function formatsOf(data: DataTextInput, hints?: readonly string[]): {
   readonly text: string;
   readonly json: string;
   readonly csv: string;
@@ -137,7 +148,7 @@ function formatsOf(data: DataTextInput): {
     text: buildDataText({ ...data, format: 'text', title }),
     json: buildDataText({ ...data, format: 'json' }),
     csv: buildDataText({ ...data, format: 'csv' }),
-    hints: MENU_HINTS,
+    hints: hints ?? COPY_HINTS.queryAnalysis,
   };
 }
 

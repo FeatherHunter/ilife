@@ -22,7 +22,7 @@ import { escapeHtml, type SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
 import { diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -239,6 +239,7 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
     middleBlock(spec.middle, page, row, input),
     promptCopyArea(spec.prompt(page), '挑好记录后照这句跟助手说一遍'),
     copyArea({
+      hints: COPY_HINTS.sayAcct,
       data: { envelope },
       log: {
         envelope,
@@ -325,6 +326,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
     + ticketRule()
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit))
       + copyArea({
+      hints: COPY_HINTS.receipt,
         data: { envelope },
         log: {
           envelope,

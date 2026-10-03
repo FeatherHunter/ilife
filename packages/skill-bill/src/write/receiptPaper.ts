@@ -25,7 +25,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
-import { copyArea, copyLog } from '../shared/copyArea.js';
+import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { DOC_TITLE, docTitleOf } from '../shared/pageIdentity.js';
 import {
   assembleSheetPage, sheetHead, ticketActions, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary,
@@ -175,6 +175,7 @@ export function receiptPaper(input: ReceiptPaperInput): string {
     + (duplicate === '' ? '' : ticketRule() + duplicate)
     + ticketRule()
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit)) + copyArea({
+      hints: COPY_HINTS.receipt,
       data: { envelope },
       log: {
         envelope,

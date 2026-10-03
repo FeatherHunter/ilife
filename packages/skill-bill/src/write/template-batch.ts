@@ -35,7 +35,7 @@ import { DEFAULTS } from '../shared/category.js';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { sayCollectOut } from './saySheet.js';
@@ -213,6 +213,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
     promptCopyArea(promptOf(spec.word, rows.length, blocked), spec.promptTitle),
     collectSectionTitle({ no: 3, title: spec.section3 }),
     copyArea({
+      hints: COPY_HINTS.sayAcct,
       data: { envelope },
       log: {
         envelope,

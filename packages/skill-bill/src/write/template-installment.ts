@@ -36,7 +36,7 @@ import { renderChips, renderChipRow, renderDisclosure, renderFeedbackBlock, rend
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog } from '../shared/copyArea.js';
+import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { installmentPreview, installmentShares } from './installmentPreview.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
@@ -270,6 +270,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
       : '',
     blockedFold(spec.foldTitle, blocked, commandLine(key, filled)),
     copyArea({
+      hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt, label: blocked.length === 0 ? spec.promptLabel : spec.promptLabelBlocked },
       data: { envelope },
       log: {

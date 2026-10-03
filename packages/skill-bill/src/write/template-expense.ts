@@ -24,7 +24,7 @@ import { renderCaliberLine, renderDataTable, renderFeedbackBlock, renderKpiGrid 
 import type { DataTableColumn } from 'base-paint/blocks';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { docTitleOf } from '../shared/pageIdentity.js';
@@ -220,6 +220,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     promptCopyArea(spec.prompt(input, blocked), spec.promptTitle),
     spec.section3 === '' ? '' : collectSectionTitle({ no: 3, title: spec.section3 }),
     copyArea({
+      hints: COPY_HINTS.sayAcct,
       data: { envelope },
       log: {
         envelope,

@@ -23,7 +23,7 @@ import type { BlockedItem } from './blockedSlots.js';
 import { candidatePick, candidateRows } from './candidatePick.js';
 import type { CandidateItem } from './candidatePick.js';
 import { collectMissingTags } from './collectFrame.js';
-import { copyArea, copyLog } from '../shared/copyArea.js';
+import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -314,6 +314,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     flowSteps({ steps: stepsOf(spec, ctx) }),
     blockedFold(blocked, commandLine(key, filled)),
     copyArea({
+      hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt.text, label: prompt.label },
       data: { envelope },
       log: { envelope, copyLog: copyLog({
