@@ -20,7 +20,7 @@
  *   （本族 4 页全在 A 组，整族切）；`./ticket-b.ts`（B 组 12 页，复用下文 `ticketDoc` 装配）。
  *   本件不含块位序列（序列仍在各族模板件），只产票据纸段落。
  */
-import { renderLedgerRows, renderSummaryHead } from 'base-paint/blocks';
+import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import { assembleSheetPage, sheetHead, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { badgeOf, copyZoneOf, docTitleOf, money, NO_WINDOW, SOURCE_READ, SOURCE_READ_TEXT, sourceNoteOf } from './pageParts.js';
@@ -161,7 +161,7 @@ function ledgerCompare(rows: readonly { k: string; v: string }[], id: string): s
 /** 票据纸装配（A 组共用收口；1066 起导出给 `./ticket-b.ts` 复用，B 组同壳）：店头＋主数字＋落点＋明细＋口径＋复制＋来源＋导航，包进小票纸。
  *
  * 为保 t729 骨架判据（恰好一个导航＋一行来源脚注＋复制区），复制／来源／导航沿用老口径组件，
- * 只是包进 `assembleSheetPage`（ticket 纸）而不是 `analysisDocOf` 的页面壳。
+ * 只是包进 `assembleSheetPage`（ticket 纸）而不是 `analysisDocOf` 的页面壳；**#1119 起正文再包一层 `renderSheetFrame`（`cutLineText:'✂ 裁切线'`）**——改前只挂族根类、没挂纸面页框，25 页因此缺裁切线（判地 25/25 都有）。
  */
 export function ticketDoc(input: {
   readonly docTitle: string;
@@ -198,7 +198,7 @@ export function ticketDoc(input: {
     detail: input.detail,
     actionAt: input.actionAt,
   });
-  const body = head
+  const paper = renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: head
     + ticketRule()
     + summary
     + ticketRule()
@@ -221,8 +221,8 @@ export function ticketDoc(input: {
       start: input.windowStart,
       end: input.windowEnd,
       count: input.count,
-    });
-  return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: body, paper: 'receipt' });
+    }) });
+  return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: paper, paper: 'receipt' });
 }
 
 /** bars 族 A 组 4 页＋C 组 5 页的票据纸正文（明细沿用既有 barGroups，条宽逐字节不动；C 组另带 listCards／charts，A 组为空故无影响）。 */
