@@ -46,6 +46,13 @@ function pageOf(file) {
   assert.ok(text.includes('ilife-copy-btn'), '整页须有复制按钮（复制区）');
   return text;
 }
+/** 采集页的配置岛（`#say-cfg`）：那一段 prompt 模板（`template`）与三档复制载荷（`payloads`）
+ *  都收在这一座 JSON 里（#1079 起换的 SAY 采集页；回执页没有它）。 */
+function sayCfgOf(text) {
+  const m = /<script type="application\/json" id="say-cfg">([\s\S]*?)<\/script>/.exec(text);
+  assert.ok(m, '采集页须带 #say-cfg 配置岛');
+  return JSON.parse(m[1]);
+}
 
 describe('t406 · 记账写入域命令声明与注册表', () => {
   it('恰好两条命令，五件事齐全，形状一律 receipt', () => {
@@ -157,13 +164,24 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     assert.equal(env.data.message, '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）',
       'envelope 载荷与页内文案须同一句（同一件事实一处定义）');
     const text = pageOf(file);
+    // #1079 换页：老采集页那套「还没写库／还没发生／ilife-block-pre-block／ilife-block-param-form／
+    // 这一句可以直接复制」整批退役（新页是判地原型重装的 SAY 采集页）。同一件事改由新页这几处担：
+    // 页标记仍是 collect，缺项徽章列（`.slot miss`）＋ 提示行报出缺哪几项，模板收进 `#say-cfg`
+    // 的 `template` 字段，主话术钮 `#say-btn` 与复制数据／复制日志三枚按钮在位。
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-key="record.add"', 'data-shape="receipt"',
-      '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）', '还没写库', '还没发生',
-      '这一句可以直接复制', 'ilife-block-pre-block', 'ilife-block-param-form', '复制日志',
+      'data-slot="ilife:bill:collect"', 'data-key="record.add"', 'data-shape="receipt"', 'data-page="collect"',
+      'class="slot-row"', 'class="slot miss"', '>还缺什么<', '还差 2 项：分类、金额。',
+      'id="say-form"', 'id="say-hint"', 'id="say-btn"', 'id="say-data-btn"', 'id="say-log-btn"',
+      'id="say-cfg"', '复制日志',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
     }
+    const cfg = sayCfgOf(text);
+    assert.ok(cfg.template.includes('{{category}}') && cfg.template.includes('{{amount}}'),
+      'prompt 模板须收进 #say-cfg 的 template 字段（复制 prompt 区的新落点）');
+    // 「不写库」这三件：这一页标的是 collect、**没有**转成回执那一页、日志载荷照实说先不写库。
+    assert.ok(!text.includes('data-page="receipt"'), '缺槽位不得转回执页（这一页只采集，不写库）');
+    assert.ok(cfg.payloads.log.includes('这一页先不写库'), '日志载荷须照实说这一页先不写库');
     const after = envOf(run(['bill.record.today', '--params', '{"date":"2026-09-14"}'])).data.items.length;
     assert.equal(after, before, '采集页只采集：库里的条数不得变');
   });
@@ -227,9 +245,17 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.ok, false);
     assert.ok(env.data.message.includes('缺必需槽位：记录编号'), env.data.message);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:collect"', '缺必需槽位：记录编号', '照这句跟助手说一遍', 'ilife-block-param-form']) {
+    // #1079 换页：老那两处（「照这句跟助手说一遍」prompt 区、`ilife-block-param-form`）随老采集页退役；
+    // 同一件事改由新页的缺项徽章列（`.slot miss`）＋ 提示行 ＋ `#say-cfg` 的 `template` 字段 ＋ 主话术钮担。
+    for (const needle of [
+      'data-slot="ilife:bill:collect"', 'data-page="collect"', 'data-key="record.update"',
+      '缺必需槽位：记录编号', 'class="slot miss"', 'data-chip="rid"', '还差 1 项：记录编号。',
+      'id="say-form"', 'id="say-cfg"', 'id="say-btn"',
+    ]) {
       assert.ok(text.includes(needle), '改记录采集页缺：' + needle);
     }
+    assert.ok(sayCfgOf(text).template.includes('{{target}}'), 'prompt 模板须收进 #say-cfg 的 template 字段');
+    assert.ok(!text.includes('data-page="receipt"'), '缺 id 不得转回执页（这一页只采集，不写库）');
   });
 
   it('撤销带方向不合的 kind＋amount 也照撤销（方向判定只服务录入路径）', () => {
@@ -267,9 +293,10 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
   function rowsAt(date) {
     return envOf(run2(['bill.record.today', '--params', JSON.stringify({ date })])).data.items.length;
   }
-  /** 页上所有可复制文本（`data-t`）：用来核「该给的给、该拦的拦」。 */
+  /** 页上所有可复制文本：新采集页（#1079）把复制载荷整批收进 `#say-cfg` 的 `payloads`
+   *  —— `text`／`json`／`csv` 三档（复制数据）＋ `log` 一档（复制日志）；用来核「该给的给、该拦的拦」。 */
   function copyTexts(text) {
-    return [...text.matchAll(/data-t="([^"]*)"/g)].map((m) => m[1]);
+    return Object.values(sayCfgOf(text).payloads);
   }
 
   before(() => {
@@ -278,7 +305,7 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(envOf(r).data.receipt.recordId, 1);
   });
 
-  it('采集页十块齐全：类型徽章／摘要行／重复检测条／预填标注／缺项阻断条／表单三枚选择器／prompt 区／复制区', () => {
+  it('采集页十块齐全：容器标记／店头／缺项徽章列／已替你填好的／表单槽位／提示行／按钮区／配置岛／裁切线／复制区', () => {
     const before = rowsAt('2026-09-14');
     const file = join(H2, 'collect.html');
     const r = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 12:30:00"}', '--html', file]);
@@ -287,15 +314,34 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(env.data.ok, false, '采集页不写库，载荷照实说');
     assert.equal(env.data.receipt, undefined, '采集页没有回执事实');
     const text = pageOf(file);
+    // #1079 换页：判地原型（`docs/skills/skill-bill/proto/say-collect/*-v2.3.html`）重装的 SAY 采集页，
+    // 十块＝容器标记／店头／缺项徽章列／已替你填好的／表单／提示行／按钮区／配置岛／纸（裁切线）／复制区。
+    // 老那批（类型徽章、摘要行、预填标注「来自记录编号 1」、缺项阻断条「还缺 1 项，补齐再记」、
+    // `ilife-block-param-form`、口令复制块）都不在新页上了。
     for (const needle of [
-      'data-slot="ilife:bill:collect"', 'data-page="collect"', '记支出', '金额取负数',
-      '还缺什么', '还缺 1 项，补齐再记', '⛔ 先补齐（1 项）', 'ilife-action-btn ilife-action-btn-ghost',
-      '预填标注', '来自记录编号 1', 'ilife-block-param-form',
-      '这一句可以直接复制', 'ilife-block-copy-block', '写库：还没发生',
+      'data-slot="ilife:bill:collect"', 'data-page="collect"', 'data-shape="receipt"', 'data-key="record.add"',
+      '>饼干记账 · 记支出<', 'id="say-h2"', 'id="say-sub"',
+      'id="say-todo"', '>还缺什么<', 'class="slot-row"',
+      'data-chip="cat">分类 <small>待补</small>', 'data-chip="amt">金额 <small>已填</small>',
+      '>已替你填好的<', 'class="fill-line"', '>金额取负数<',
+      'id="say-form"', 'id="say-hint"', '还差 1 项：分类。',
+      'id="say-btn"', 'id="say-data-btn"', 'id="say-log-btn"', '>复制数据<', '>复制日志<',
+      'id="say-cfg"', 'class="cut-line"',
     ]) {
       assert.ok(text.includes(needle), '采集页缺：' + needle);
     }
-    assert.equal((text.match(/<select/g) ?? []).length, 3, '分类／账户／账本三枚选择器');
+    assert.ok(!text.includes('data-page="receipt"'), '采集页不得带回执页的 data-page');
+    // 「表单三枚选择器」换落点（#1079）：判地的槽位表＝分类／金额 ＋ 五格选填，共七格 `.say-field`；
+    // 页面表单一区里的 `data-slot` 集合逐格对上，选择器只剩分类那一枚（新页是固定候选表）。
+    const formStart = text.indexOf('<div class="say-form" id="say-form">');
+    const formEnd = text.indexOf('<p class="say-hint"', formStart);
+    assert.ok(formStart >= 0 && formEnd > formStart, '采集页须有 #say-form 表单与 #say-hint 提示行');
+    const form = text.slice(formStart, formEnd);
+    assert.equal((form.match(/class="say-field"/g) ?? []).length, 7, '判地那七格：分类／金额＋五格选填');
+    assert.deepEqual([...form.matchAll(/data-slot="([^"]+)"/g)].map((m) => m[1]),
+      ['cat', 'amt', 'opt_note', 'opt_time', 'opt_acct', 'opt_ledger', 'opt_cur'], '表单槽位＝判地那份槽位表');
+    assert.equal((form.match(/<select/g) ?? []).length, 1, '分类那一格是选择器');
+    assert.ok(sayCfgOf(text).template.includes('{{category}}'), 'prompt 模板须收进 #say-cfg 的 template 字段');
   });
 
   it('缺项阻断条真阻断：含占位符的写库指令整块不再上屏（#733）', () => {
@@ -304,18 +350,23 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal(r.status, 0, 'stderr=' + r.stderr);
     assert.equal(envOf(r).data.message, '缺必需槽位：分类、金额（已出采集页，补齐之后跟助手说一遍）');
     const text = pageOf(file);
-    assert.ok(text.includes('⛔ 先补齐（2 项）'), '置灰按钮须报出缺几项');
+    // #1079 换落点：老那枚「⛔ 先补齐（2 项）」置灰按钮随老采集页退役；同一件事＝**置灰的主话术钮**
+    // 与**报出缺几项的提示行**（新页这一对由 #say-btn 的 disabled 与 #say-hint 担）。
+    assert.match(text, /<button class="btn btn-primary" type="button" id="say-btn" disabled>/, '缺项时主话术钮须置灰');
+    assert.ok(text.includes('还差 2 项：分类、金额。'), '置灰按钮须报出缺几项');
     // #733 换口径：维护者 2026-09-19——「唤醒词／槽位是 prompt 模板的正常组成，**具体脚本**才是硬编码，
     // 页面与复制出去的 prompt 里都不该有」。那条带 `bill-cmd-read … --params '{…<分类>…}'` 的
-    // 「口令原文」块整个不再渲染 ⇒ 屏幕上与任何 data-t 里都不许再有具体脚本。
+    // 「口令原文」块整个不再渲染 ⇒ 屏幕上与任何可复制载荷里都不许再有具体脚本。
     assert.ok(!text.includes('口令原文'), '口令原文块（具体脚本）不许再上屏');
-    // 屏幕上＝`<pre>` 指令块那几处。日志载荷（`data-t` 的「调用链」那行）**不在这一条口径内**：
-    // 它是过程证据，不是 prompt 模板（见 #733 正文的「三个口子」一节）。
-    for (const m of text.matchAll(/<pre[^>]*class="[^"]*pre-block-code[^"]*"[^>]*>([\s\S]*?)<\/pre>/g)) {
-      assert.ok(!m[1].includes('bill-cmd-read'), '指令块里不许再印具体脚本：' + m[1].slice(0, 60));
-    }
+    // 屏幕上＝去掉 `<style>`／`<script>` 之后的那份标记。新采集页没有 `<pre class="pre-block-code">` 指令块，
+    // 故这条口径整片覆盖屏幕（今天是零命中，将来谁把具体脚本塞回屏幕任何一处都会红）。
+    // 日志载荷（`#say-cfg` 的「调用链」那行）**不在这一条口径内**：它是过程证据，不是 prompt 模板
+    // （见 #733 正文的「三个口子」一节）。
+    const onScreen = text.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '');
+    assert.ok(!onScreen.includes('bill-cmd-read'), '屏幕上不许再印具体脚本');
+    // 可复制载荷（复制数据三档 ＋ 复制日志一档）里不许出现尖括号占位符。
     for (const t of copyTexts(text)) {
-      assert.ok(!t.includes('&lt;'), '含占位符的写库口令不得可复制，却出现在 data-t：' + t.slice(0, 60));
+      assert.ok(!t.includes('<'), '含占位符的写库口令不得可复制，却出现在 #say-cfg 的载荷里：' + t.slice(0, 60));
     }
     assert.ok(copyTexts(text).some((t) => t.includes('这一页先不写库')),
       '这一区拷的是叙述句（不是可跑的写库口令）');

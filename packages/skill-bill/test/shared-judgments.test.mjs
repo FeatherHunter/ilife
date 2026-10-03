@@ -69,8 +69,13 @@ before(() => {
 
 describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps）', () => {
   it('撤销候选只列未删：软删那笔一个都不出现、条数按未撤销数报', () => {
-    for (const [tag, params] of [['缺省（改记录）', {}], ['撤销', { op: 'undo' }]]) {
-      const html = page(params);
+    // #1079 换页：新采集页（SAY）不再把候选记录铺进页面——改记录族这一格改成**人手填记录编号**，
+    // 页上只留一行形态口径。候选过筛这条判据的载体只剩 `pickerBlock` 本身，故这里改成直接读它
+    // （同一条判定、同一个数据源，判据一个字不放松，只是不再借页面转一手）；页面侧改断「新页对应处」：
+    // 那行随 op 翻的形态口径。
+    billConfigDir(DB);
+    for (const [tag, mode] of [['缺省（改记录）', 'update'], ['撤销', 'undo']]) {
+      const html = pickerBlock({ mode });
       assert.ok(html.includes('zzkeep1'), tag + '：未删的候选须列出来');
       assert.ok(html.includes('zzkeep2'), tag + '：未删的候选须列出来');
       assert.ok(html.includes('zzkeep3'), tag + '：未删的候选须列出来');
@@ -78,16 +83,22 @@ describe('t407 E1 · 撤销／恢复候选的过筛（recordPicker.ts 的 keeps�
       assert.ok(html.includes('库里共 3 条未撤销的记录'), tag + '：条数口径＝未撤销数（3）');
       assert.ok(html.includes('按时间倒序'), tag + '：须写明候选的次序口径');
     }
+    assert.ok(page({}).includes('>先给编号再改<'), '新采集页：改记录的形态行在位');
+    assert.ok(page({ op: 'undo' }).includes('>软删打标，不物理删<'), '新采集页：撤销的形态行在位');
   });
 
   it('恢复候选只列已软删：没打标的那三笔一个都不出现、条数按已打标数报', () => {
-    const html = page({ op: 'restore' });
+    // 与上一例同一条理由（#1079 换页）：候选不再上页面，判据改读它的载体 `pickerBlock`（一字不放宽）；
+    // 页面侧只留「新页对应处」那一行形态口径。
+    billConfigDir(DB);
+    const html = pickerBlock({ mode: 'restore' });
     assert.ok(html.includes('zzgone'), '已软删的那笔须出现在恢复候选里');
     assert.ok(!html.includes('zzkeep1'), '没过撤销的不许出现在恢复候选里');
     assert.ok(!html.includes('zzkeep2'), '没过撤销的不许出现在恢复候选里');
     assert.ok(!html.includes('zzkeep3'), '没过撤销的不许出现在恢复候选里');
     assert.ok(html.includes('库里共 1 条已打标撤销的记录'), '条数口径＝已打标撤销数（1）');
     assert.ok(html.includes('已打标撤销'), '恢复候选须说明这行为什么在列');
+    assert.ok(page({ op: 'restore' }).includes('>只恢复已撤销的<'), '新采集页：恢复的形态行在位');
   });
 
   it('三种过筛条件各归各位（op 落哪一档）', () => {
@@ -204,10 +215,16 @@ describe('t407 E1 · 取数共用位口径（recentPicks.ts）', () => {
     const r = run(['bill.record.add', '--params', P({}), '--html', f]);
     assert.equal(r.status, 0, r.stderr);
     const html = readFileSync(f, 'utf8');
-    const hits = html.match(/<option value="餐饮\/外卖\/午餐">/g) ?? [];
-    assert.equal(hits.length, 1, '同一分类在候选项里只许出现一次（按最近在先去重）');
-    const hits2 = html.match(/<option value="餐饮\/堂食\/晚餐">/g) ?? [];
-    assert.equal(hits2.length, 1, '另一条分类同样只出现一次');
+    // #1079 换页：新页改为**固定候选 ＋「其他（手填）」**，故不再有「最近候选去重」这回事
+    // —— 判据不放松，只换落点：断 #say-form 里那一枚分类选择器的 `<option value>` 无重复，
+    // 且候选恰是判地那份固定表（最近分类不再塞进候选）。
+    const sel = /<select data-slot="cat"[^>]*>([\s\S]*?)<\/select>/.exec(html);
+    assert.ok(sel, '采集页须有分类选择器：select[data-slot="cat"]');
+    const values = [...sel[1].matchAll(/<option value="([^"]*)"/g)].map((m) => m[1]);
+    assert.ok(values.length > 0, '分类候选不得为空');
+    assert.equal(new Set(values).size, values.length, '同一分类在候选项里只许出现一次：' + values.join('｜'));
+    assert.deepEqual(values, ['', '餐饮', '工资', '出行', '其他收入', '__other'],
+      '候选＝判地那几项固定表 ＋「其他（手填）…」（第 1 项是空占位）');
   });
 });
 
