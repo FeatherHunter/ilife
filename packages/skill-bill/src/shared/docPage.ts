@@ -228,6 +228,44 @@ export function assembleSheetPage(input: { readonly docTitle: string; readonly b
   });
 }
 
+
+/** 采集页主按钮的**运行时开关**（#1118 task-31；语义照判地 `if(primaryBtn)primaryBtn.disabled=miss.length>0;`）。
+ *
+ *  为什么要有它：主按钮的初始态由渲染期给（必需槽位缺 ⇒ `disabled`），但**没有运行时段**那颗钮就永久禁用、
+ *  口令永远复制不到（功能坏点）。本件产出两枚东西：
+ *    · `<script type="application/json" id="ilife-collect-cfg">`——按钮动作号、域声明的 `prompt_template`、
+ *      槽位表（字段名 → 模板占位符 → 是否必需）；
+ *    · 一枚运行时：在 `input`／`change`（捕获档）上重算——必需槽位空 ⇒ 按钮 `disabled` ＋ `aria-disabled`，
+ *      并把 `data-t` 重算成**当前填法**的口令原文（否则复制到的还是渲染当刻那份带 `____` 的旧文本）。
+ *  复制本身仍走公共层 helpers 的 `[data-action-id]` 委派（本件不碰复制通道）。
+ */
+export function ticketCollectRuntime(input: {
+  readonly buttonActionId: string;
+  /** 域声明的 `prompt_template` 原文（含 `{{占位符}}`）。 */
+  readonly template: string;
+  /** 槽位表：字段名（表单 `name`）→ 模板占位符 → 是否必需。 */
+  readonly slots: readonly { readonly name: string; readonly ph: string; readonly required: boolean }[];
+}): string {
+  const cfg = JSON.stringify({ actionId: input.buttonActionId, template: input.template, slots: input.slots });
+  const js = '(function(){'
+    + 'var el=document.getElementById("ilife-collect-cfg"); if(!el) return;'
+    + 'var C=JSON.parse(el.textContent||"{}");'
+    + 'var btn=document.querySelector("[data-action-id=\\"" + C.actionId + "\\"]"); if(!btn) return;'
+    + 'function val(n){ var i=document.querySelector("[name=\\"" + n + "\\"]"); return i? String(i.value||"").trim():""; }'
+    + 'function build(){ var out=C.template; (C.slots||[]).forEach(function(s){ var v=val(s.name);'
+    + ' out=out.split("{{"+s.ph+"}}").join(v===""?"____":v); }); return out.replace(/\\{\\{(\\w+)\\}\\}/g,"____"); }'
+    + 'function render(){ var miss=0; (C.slots||[]).forEach(function(s){ if(s.required && val(s.name)==="") miss+=1; });'
+    + ' btn.disabled = miss>0; btn.setAttribute("aria-disabled", miss>0?"true":"false");'
+    + ' btn.setAttribute("data-t", build()); }'
+    + 'document.addEventListener("input", render, true);'
+    + 'document.addEventListener("change", render, true);'
+    + 'render();'
+    + '})();';
+  return '<script type="application/json" id="ilife-collect-cfg">'
+    + cfg.replace(/</g, '\\u003c') + '</script>'
+    + '<script>' + js + '</script>';
+}
+
 /** 票据纸页内家具（**共用位**：第二片页型用上之后从 `setup/` 上浮到这里；随正文以 `<style>` 走，不进共用 `extraCss`）。
  *
  *  形状照 #1063 的 v2.4 七纸（`docs/skills/skill-bill/proto/setup-help/*-v2.4.html`）：

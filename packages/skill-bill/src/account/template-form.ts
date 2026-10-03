@@ -19,12 +19,13 @@
 import { buildDataText } from 'base-paint';
 import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
+import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -195,6 +196,20 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
     foot: '饼干记账 · ' + spec.word + '采集',
     styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
+  }) + ticketCollectRuntime({
+    buttonActionId: 'ilife-collect-prompt',
+    template: accountHelpTemplate(input.op === 'transfer' ? 'account_transfer' : 'account_add'),
+    slots: input.op === 'transfer'
+      ? [
+        { name: 'amount', ph: 'amount', required: true },
+        { name: 'from', ph: 'from_account', required: true },
+        { name: 'to', ph: 'to_account', required: true },
+        { name: 'time', ph: 'transfer_time', required: false },
+      ]
+      : [
+        { name: 'name', ph: 'account_name', required: true },
+        { name: 'type', ph: 'account_type', required: false },
+      ],
   });
 }
 

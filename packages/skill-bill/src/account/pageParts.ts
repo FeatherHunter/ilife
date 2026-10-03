@@ -37,6 +37,15 @@ export const EYEBROW = '记账｜账户域';
    （作用域 `section[data-key="account.write"]`／`account.query` 原样保留）。本件**不再自出样式段**：
    页面只拼装配函数，样式随 base 的族样式走 `extraCss`。 */
 
+/** 域声明里那条 `prompt_template` 的**原文**（含 `{{占位符}}`）——采集页运行时要拿它重算口令（#1118 task-31）。 */
+export function accountHelpTemplate(sceneId: 'account_add' | 'account_update' | 'account_transfer'): string {
+  for (const entry of ACCOUNT_DECLARATION.entries) {
+    const hit = entry.scenes.find((s) => s.id === sceneId);
+    if (hit !== undefined) return hit.prompt_template;
+  }
+  throw new Error('accountHelpTemplate 找不到场景 `' + sceneId + '`');
+}
+
 /** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份（沿 993 退出口径）。
  * 占位 `{{name}}` 填本次参数值，空填 `____`；`account_update` 的 `{{change}}` 取调用方给的合成句。 */
 export function accountHelpPrompt(

@@ -39,6 +39,15 @@ import { textOf } from './params.js';
 export const EYEBROW = '记账｜目标域';
 
 
+/** 域声明里那条 `prompt_template` 的**原文**（含 `{{占位符}}`）——采集页运行时要拿它重算口令（#1118 task-31）。 */
+export function goalHelpTemplate(sceneId: 'goal_set_budget' | 'goal_set_saving'): string {
+  for (const entry of GOAL_DECLARATION.entries) {
+    const hit = entry.scenes.find((s) => s.id === sceneId);
+    if (hit !== undefined) return hit.prompt_template;
+  }
+  throw new Error('goalHelpTemplate 找不到场景 `' + sceneId + '`');
+}
+
 /** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份。 */
 export function goalHelpPrompt(
   sceneId: 'goal_set_budget' | 'goal_set_saving',

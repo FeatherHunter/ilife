@@ -18,13 +18,14 @@
 import { buildDataText } from 'base-paint';
 import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { ChangeRowInput, EntryCardEntry } from 'base-paint/blocks';
+import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS, CHANGE_SLOT, textOf } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -107,7 +108,9 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
     : '已填齐，点上面那句复制带数据的口令。';
   // A 路（严格按判地）：待填段只列判地那两行——「账户」「改成什么」。
   // 「停用／启用」是本仓能力，命令侧照收（`ACCOUNT_SLOTS.update` 与 `./params.js` 一字未动），只是页上不再列出。
-  const shown = ACCOUNT_SLOTS[input.op].filter((s) => s.name === 'name' || s.name === CHANGE_SLOT.name);
+  // 判地那两行＝「账户」与「改成什么」；槽位表里后者叫 `new-name`（`CHANGE_SLOT.name` 是 `change`，
+  // 它只在缺项探针里用）——这里按**槽位表的真名**过滤，别按 CHANGE_SLOT.name（#1118 收尾修正）。
+  const shown = ACCOUNT_SLOTS[input.op].filter((s) => s.name === 'name' || s.name === 'new-name');
   const entry = renderParamForm({
     description: spec.fieldDescription,
     fields: slotFieldsOf(input.params, shown.map((s) => (
@@ -146,6 +149,13 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
     foot: '饼干记账 · ' + spec.word + '确认',
     styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
+  }) + ticketCollectRuntime({
+    buttonActionId: 'ilife-confirm-prompt',
+    template: accountHelpTemplate('account_update'),
+    slots: [
+      { name: 'name', ph: 'account', required: true },
+      { name: 'new-name', ph: 'change', required: true },
+    ],
   });
 }
 

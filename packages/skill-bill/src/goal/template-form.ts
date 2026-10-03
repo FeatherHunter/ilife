@@ -18,12 +18,13 @@
 import { buildDataText } from 'base-paint';
 import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
+import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { GoalBlocked } from './params.js';
 import { GOAL_WRITE_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, money, slotFieldsOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, goalHelpTemplate, money, slotFieldsOf } from './pageParts.js';
 import type { GoalCollectInput, GoalExistingTable, GoalReceiptInput, GoalReceiptResult, GoalWriteScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -175,6 +176,20 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
     foot: '饼干记账 · ' + spec.word + '采集',
     styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
+  }) + ticketCollectRuntime({
+    buttonActionId: 'ilife-collect-prompt',
+    template: goalHelpTemplate(input.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving'),
+    slots: input.op === 'set-budget'
+      ? [
+        { name: 'amount', ph: 'amount', required: true },
+        { name: 'month', ph: 'month', required: false },
+        { name: 'category', ph: 'category', required: false },
+      ]
+      : [
+        { name: 'name', ph: 'goal_name', required: true },
+        { name: 'amount', ph: 'amount', required: true },
+        { name: 'deadline', ph: 'deadline', required: false },
+      ],
   });
 }
 
