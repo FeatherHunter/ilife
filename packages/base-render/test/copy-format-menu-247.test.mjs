@@ -274,15 +274,21 @@ describe('#247 三格式菜单 · 产出面', () => {
     assert.equal(opener[1].includes(MENU_OPEN_ATTR + '="1"'), true, '开合器缺开合标记');
     assert.equal(opener[1].includes('aria-haspopup="menu"'), true, '开合器缺 aria-haspopup');
     assert.equal(opener[1].includes('aria-expanded="false"'), true, '开合器缺 aria-expanded 初值');
-    assert.equal(opener[1].includes('aria-label="复制数据（点开选格式）"'), true, '开合器缺 aria-label（#525 第二轮：可见的 ▾ 已删，语义改住这里）');
+    assert.equal(opener[1].includes('aria-label="复制数据（点开选格式）"'), true, '开合器缺 aria-label（语义住这里，字面 ▾ 由 CSS 常显）');
     assert.equal(opener[1].includes(DEFAULT_DATA_ATTR), false, '开合器不得带 data-t（点了不该直接复制）');
     assert.equal(opener[1].includes(ACTION_ID_ATTR), false, '开合器不是复制目标，不得占 data-action-id');
-    // #525 第二轮（用户裁定第 5 条「符号顶替了设计」）：可见文字里**不再**出现三角字符，
-    // 按钮文字就是 label 本身；三角改由 CSS 画（`style.ts` 的 `.copy-menu-wrap > .copy-btn::after`）。
-    assert.equal(opener[2].endsWith('▾'), false, '开合器不得把 ▾ 打上屏（#525 第二轮）：' + opener[2]);
+    // base 变体：字面 `▾` 由 CSS `::after` 常显（HTML 只留标签，不把字符打上屏）；open 不旋转。
     assert.equal(opener[2], '复制数据', '开合器可见文字只留标签：' + opener[2]);
-    assert.ok(/\.ilife-copy-menu-wrap > \.ilife-copy-btn::after\s*\{[^}]*border-top: 5px solid currentColor;/m.test(CSS),
-      'CSS 里必须有一条画三角的规则（border-top ＋ transparent 两条边）');
+    assert.equal(opener[2].endsWith('▾'), false, '字面 ▾ 走 CSS ::after，HTML 不得重复打上屏：' + opener[2]);
+    const after = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn::after')[0];
+    assert.ok(after !== undefined, '缺开合器字面 ▾ 规则块（.copy-menu-wrap > .copy-btn::after）');
+    assert.equal(declValue(after, 'content'), '"▾"', '字面 ▾ 必须由 content 打出来（常显）');
+    assert.equal(declValue(after, 'margin-left'), '6px', '字与符间距取基础 gap 同值 6px');
+    assert.equal(declValue(after, 'border-top'), null, '不得再用 border-top 画三角（旧口径已撤）');
+    assert.equal(after.decls.some((d) => d.startsWith('border')), false, '字面 ▾ 规则块不得再带任何 border 画法');
+    const openAfter = blocksOf('.' + MENU_OPEN_CLASS + '.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn::after')[0];
+    assert.ok(openAfter !== undefined, '缺开着不旋转规则块（.copy-menu-open.…::after）');
+    assert.equal(declValue(openAfter, 'transform'), 'none', 'open 不旋转');
   });
 
   it('S3 复制日志仍走冻结表：菜单形态不吞掉同一行的第二颗按钮', () => {
@@ -374,26 +380,39 @@ describe('#247 三格式菜单 · 产出面', () => {
     assert.ok(/\.ilife-copy-menu-item \{\s*min-height: 44px;/m.test(CSS) || CSS.includes('min-height: 44px'), '窄屏菜单项缺 44px');
   });
 
-  it('S9 复制按钮那一行**平分整行**（用户 2026-09-12 返修）：两列等宽 ＋ 两颗按钮都铺满各自那一格', () => {
-    // 反面（返修前的样子）：单列 → 复制数据缩成内容宽（实测 92.6px）、复制日志铺满 520px，一胖一瘦。
+  it('S9 多钮行左起（base 变体）：ghost flex 左起 ＋ 单颗保留铺满', () => {
+    // base 变体：不再平分整行，改 flex 左起横排（两颗宽高跟着内容走）；单颗铺满由 -single 分支保。
     const row = blocksOf('.' + STYLE_PREFIX + 'action-row-ghost')[0];
     assert.ok(row !== undefined, '缺 .ilife-action-row-ghost 规则块');
-    assert.equal(declValue(row, 'grid-template-columns'), 'repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))',
-      'ghost 行必须是两列等宽（列数取冻结 evenRowPairs）——单列会让一颗铺满、一颗缩成内容宽');
+    assert.equal(declValue(row, 'display'), 'flex', 'ghost 行改 flex');
+    assert.equal(declValue(row, 'justify-content'), 'flex-start', 'ghost 行左起');
+    assert.equal(declValue(row, 'align-items'), 'center', 'ghost 行纵向居中');
+    assert.equal(declValue(row, 'gap'), '8px', 'ghost 行间距 8px');
+    assert.equal(declValue(row, 'grid-template-columns'), null, 'ghost 行不得再写 grid 平分（旧 #247 口径已撤）');
 
-    // 菜单包裹层**不写** justify-self：网格项默认 stretch，写 start 会让整颗按钮缩成内容宽。
+    // 包裹层跟着内容走（不再铺满格子），开合器同口径左起。
     const wrap = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap')[0];
     assert.ok(wrap !== undefined, '缺 .ilife-copy-menu-wrap 规则块');
-    assert.equal(declValue(wrap, 'justify-self'), null, '包裹层不得写 justify-self（写 start 会把按钮收窄）');
-    assert.equal(declValue(wrap, 'width'), '100%', '包裹层必须铺满自己那一格');
+    assert.equal(declValue(wrap, 'display'), 'flex', '包裹层横排');
+    assert.equal(declValue(wrap, 'justify-content'), 'flex-start', '包裹层左起');
+    assert.equal(declValue(wrap, 'width'), 'auto', '包裹层跟着内容走（不再铺满格子）');
     const opener = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn')[0];
     assert.ok(opener !== undefined, '缺「包裹层里的开合器」规则块');
-    assert.equal(declValue(opener, 'width'), '100%', '开合器必须铺满自己那一格（否则又是那颗小按钮）');
+    assert.equal(declValue(opener, 'width'), 'auto', '开合器跟着内容走（不再铺满格子）');
 
-    // 单格式页（其余 45 张）同一行两颗：两颗都是普通按钮，靠网格项 stretch 自动等宽——无需额外规则。
+    // 单颗保留铺满：只有一颗真按钮时挂 -single，flex:1 ＋ width:100% 保铺满。
+    const single = blocksOf('.' + STYLE_PREFIX + 'action-row-ghost-single > .' + STYLE_PREFIX + 'copy-btn')[0];
+    assert.ok(single !== undefined, '缺单颗铺满规则块（.action-row-ghost-single > .copy-btn）');
+    assert.equal(declValue(single, 'flex'), '1 1 auto', '单颗 flex 保铺满');
+    assert.equal(declValue(single, 'width'), '100%', '单颗宽保铺满');
+
+    // 同一 ghost 行：两颗时同一行、两颗按钮且不挂单颗修饰类；单颗时挂修饰类。
     const plain = renderActionBar({ copyData: { actionId: 'cd', text: 'D' }, copyLog: { actionId: 'cl', text: 'L' } });
     assert.equal((plain.match(/ilife-action-row-ghost/g) ?? []).length, 1, '两颗必须在同一行（一处 ghost 行）');
     assert.equal((plain.match(/<button/g) ?? []).length, 2);
+    assert.equal(plain.includes('ilife-action-row-ghost-single'), false, '两颗时不得挂单颗修饰类');
+    const solo = renderActionBar({ copyData: { actionId: 'cd', text: 'D' } });
+    assert.ok(solo.includes('ilife-action-row-ghost-single'), '单颗必须挂单颗修饰类（保留铺满）');
   });
 
   it('S10 窄屏菜单的锚点是**整行**（#249 返修）：窄屏包裹层不定位、行定位、菜单左右归零', () => {

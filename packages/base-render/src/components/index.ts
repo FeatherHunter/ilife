@@ -221,3 +221,11 @@ export * from './reminder-setter/index.js';
    注：这里**不写「族」字**，也**不加汇总入口**（同前几件的口径）。
    **只加行、不重排**（并行席位的约定）。 */
 export * from './quick-capture/index.js';
+/* 缺口五件（1024 §8：G1 口令框／G2 速查索引／G3 负值条／G4 图表占位／G5 缺项徽章）。
+   prompt-box 由并行席位先落（本席只加行、不改其形）；其余四件本席新建。
+   **只加行、不重排**（并行席位的约定）。 */
+export * from './prompt-box/index.js';
+export * from './lookup-index/index.js';
+export * from './negative-bar/index.js';
+export * from './chart-placeholder/index.js';
+export * from './missing-badge/index.js';

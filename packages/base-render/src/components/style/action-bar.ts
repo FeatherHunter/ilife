@@ -41,10 +41,12 @@ export const actionBarSection: (prefix: string) => string = (p) => [
   '  gap: 8px;',
   '}',
   '.' + p + 'action-row-ghost {',
-  // 复制按钮那一行**平分整行**（#247 用户 2026-09-12 返修）：两列而不是单列——单列只在「一行一颗」时
-  // 才好看，一旦有第二颗（复制数据 ＋ 复制日志）就变成「一颗铺满、一颗缩成内容宽」。列数取冻结
-  // `ACTION_BAR_DEFAULTS.evenRowPairs`（既有「偶数一行 2 个」的口径，不是新拍的数字）。
-  '  grid-template-columns: repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr));',
+  // base 变体（多钮行左起）：不再平分整行，改 flex 左起横排（`justify-content: flex-start`）——
+  // 两颗宽高跟着内容走；单颗铺满另由下面的 `-single` 分支保（本行只管多钮）。
+  '  display: flex;',
+  '  justify-content: flex-start;',
+  '  align-items: center;',
+  '  gap: 8px;',
   '}',
   // #249：窄屏那档菜单**以整行做锚点**（同档 `copyButton` 区把包裹层改成 `position: static`）——
   // 行盒＝内容宽，菜单 `left:0; right:0` 落进去就恒在视口内，与那颗按钮落在左格还是右格无关。
@@ -63,8 +65,10 @@ export const actionBarSection: (prefix: string) => string = (p) => [
   // #654：ghost 行**只有一颗真按钮**时，让它在整行轨道里铺满——#336 当年靠「补一颗禁用态假按钮」
   // 凑第二格，为的就是保这个几何（不占半格、也不缩成内容宽）；现在列数跟着颗数走，假控件不再需要
   // （负责人 2026-09-16 验收：读页面底部那颗点不动的「复制日志」是缺陷）。
+  // base 变体：本行已改 flex 左起，单颗铺满改由 `flex: 1` 保（选择器原文不动）。
   '.' + p + 'action-row-ghost-single > .' + p + 'copy-btn {',
-  '  grid-column: 1 / -1;',
+  '  flex: 1 1 auto;',
+  '  width: 100%;',
   '}',
   '.' + p + 'action-btn {',
   '  display: inline-flex;',

@@ -100,36 +100,27 @@ export const copyButtonSection: (prefix: string) => string = (p) => [
   // 14px 是本仓既有卡片圆角（toast 同值），几何其余逐值不动（`bottom`／`right`／`min-width`／
   // `max-width`／`padding`／投影／项内距与字号全取老仓）。
   '.' + p + 'copy-menu-wrap {',
-  // 宽度**跟着轨道走**（#247 用户 2026-09-12 返修）：复制数据与复制日志在 ghost 行里**平分整行**
-  // （各占一格，见 `.action-row-ghost` 的两列），两颗宽高一致——不再出现「一颗铺满一行、一颗缩成
-  // 内容宽」的一胖一瘦。故这里**不写** `justify-self: start`（那会让本层缩成内容宽、连带按钮也缩）。
+  // base 变体（多钮行左起）：包裹层不再铺满格子，跟着内容走（`width: auto` ＋ 左起横排）——
+  // ghost 行已改 flex 左起，两颗宽高不再强制一致；窄档／`copy-btn-wide`／`copied`／禁用／44px 不动。
   '  position: relative;',
   '  display: flex;',
   '  align-items: center;',
-  '  width: 100%;',
+  '  justify-content: flex-start;',
+  '  width: auto;',
   '}',
-  // 开合器按钮铺满自己那一格：菜单的 `right: 0` 才贴着按钮右缘（== 格子右缘），两格时居中偏右。
+  // 开合器跟着内容走：不再铺满格子（`width: auto`），与包裹层同口径左起。
   '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn {',
-  '  width: 100%;',
+  '  width: auto;',
   '}',
-  // **#525 第二轮·三角用 CSS 画**（用户裁定第 5 条：符号顶替了设计）：
-  // 可见文字里的 `▾` 已从 `controls.ts` 的 `copyMenuHtml` 删掉（那句「可以选格式」改住 `aria-label`），
-  // 这里用 `border` 拼一个向下的小三角 ＋ `rotate(180deg)` 做开合态——**一个字符都不打**，
-  // 也就不会被字体／读屏／抓取器当成内容。画的规矩：零宽零高的盒子靠 `border-top` 出形，
-  // `margin-left: 6px` 与基础的 `gap: 6px` 同值（文字与三角的间距连两处取值都不新造）。
-  // 开合态由运行时加的 `.copy-menu-open` 落色（与菜单同一个类，不新增第二个开关）。
+  // base 变体·字面 `▾` 常显：`::after` 不再用 `border` 画三角，直接打字面 `▾`（常显，不随开合旋转）——
+  // 开着（`.copy-menu-open`）不旋转；日志按钮不在 `copy-menu-wrap` 内故无符。`margin-left: 6px`
+  // 与基础的 `gap: 6px` 同值（文字与符的间距不新造取值）。
   '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
-  '  content: "";',
-  '  width: 0;',
-  '  height: 0;',
+  '  content: "▾";',
   '  margin-left: 6px;',
-  '  border-left: 4px solid transparent;',
-  '  border-right: 4px solid transparent;',
-  '  border-top: 5px solid currentColor;',
-  '  transition: transform .16s ease-out;',
   '}',
   '.copy-menu-open.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
-  '  transform: rotate(180deg);',
+  '  transform: none;',
   '}',
   '.' + p + 'copy-menu {',
   '  position: absolute;',

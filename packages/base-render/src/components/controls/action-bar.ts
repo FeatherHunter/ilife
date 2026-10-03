@@ -154,10 +154,9 @@ function copyButtonHtml(button: NormalizedCopyButton): string {
  *  菜单容器**不加 `hidden`**：它是浮层，用 CSS 的 `opacity` 开合（`hidden` 的 `display:none` 会让浏览器
  *  把 `opacity` 过渡整个跳过，且开合时重排整页——手机档上会看到内容跳一下）。 */
 function copyMenuHtml(button: NormalizedCopyButton, formats: { readonly texts: readonly string[]; readonly hints: readonly string[] }): string {
-  // #525 第二轮：开合器**不再把 `▾` 打上屏**（用户裁定第 5 条「用符号简化了 UI 展示的设计」是债）。
-  // 这颗三角是「这里可以展开」的纯装饰，可见文字里删掉、改由 CSS 画（`style.ts` 的 copyButton 区
-  // `.ilife-copy-menu-wrap > .ilife-copy-btn::after`，`border` ＋ `transform: rotate`，一个字符都不打）。
-  // 删字符不能删语义：`aria-label` 里把那句「可以选格式」写成文字（读屏与无图形环境仍读得出）。
+  // base 变体：开合器 `▾` 以字面常显（CSS `::after` 的 `content: "▾"`，open 不旋转；
+  // 日志按钮不在 `copy-menu-wrap` 内故无符）。`aria-label` 仍带「可以选格式」
+  //（读屏与无图形环境仍读得出那句语义）。
   const openLabel = button.label;
   const items: string[] = [];
   for (let i = 0; i < COPY_FORMATS.length; i += 1) {

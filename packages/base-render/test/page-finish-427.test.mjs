@@ -2,7 +2,7 @@
 //
 // 覆盖（票面三缺口＋冻结值对齐；`dataTable` 的 `nowrap` 子项按对抗结论不做）：
 //   ① 动作条中档放开（641–820 不再钉 520）：`style.ts` 的 `actionBar` 区放开档由 821 降到 641；
-//   ② ghost 行窄屏单列（≤640 单列，桌面仍两列平分）；
+//   ② ghost 行 base 变体（各宽档 flex 左起，单颗保留铺满；旧两列平分已撤）；
 //   ③ KPI 网格窄屏单列（≤640 单列，基座 auto-fit 与 ≥1024 三列帽不动）；
 //   ④ 冻结值对齐（`ACTION_BAR_DEFAULTS.minHeightPx` 为 44，注释与实现一致）。
 // 未覆盖（另有归属）：11 个冻结变量与闭集类名（`style.test.mjs` 钉死，本件只断集合不变的副作用面）。
@@ -56,26 +56,25 @@ describe('#427 ① 动作条中档放开（641–820 铺满内容列）', () => 
   });
 });
 
-describe('#427 ② ghost 行排布（#654 后续撤回窄屏单列：各宽档恒两列并排）', () => {
-  it('桌面基座仍两列平分（#247 口径不动）', () => {
+describe('#427 ② ghost 行排布（base 变体：各宽档 flex 左起，单颗保留铺满）', () => {
+  it('桌面基座 flex 左起（旧两列平分已撤）', () => {
     const base = blocksOf(CSS, '.' + P + 'action-row-ghost')[0];
     assert.ok(base !== undefined, '缺 ghost 行基座规则块');
-    assert.equal(
-      declValue(base, 'grid-template-columns'),
-      'repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))',
-    );
+    assert.equal(declValue(base, 'display'), 'flex', 'ghost 行改 flex');
+    assert.equal(declValue(base, 'justify-content'), 'flex-start', 'ghost 行左起');
+    assert.equal(declValue(base, 'align-items'), 'center', 'ghost 行纵向居中');
+    assert.equal(declValue(base, 'gap'), '8px', 'ghost 行间距 8px');
+    assert.equal(declValue(base, 'grid-template-columns'), null, '不得再写 grid 平分（旧 #247 口径已撤）');
   });
 
-  it('#654 后续：**没有任何**把 ghost 行压成单列的覆盖（并排两颗是负责人裁决）', () => {
-    const oneCol = blocksOf(CSS, '.' + P + 'action-row-ghost')
-      .filter((b) => declValue(b, 'grid-template-columns') === 'minmax(0, 1fr)');
-    assert.equal(oneCol.length, 0,
-      '不许再有 ghost 行单列覆盖（负责人 2026-09-16：底部要并排两颗，与已验收的参考页一致）');
-    // 反向也要有牙：基座规则必须是两列，否则「并排」无从谈起。
-    assert.equal(
-      declValue(blocksOf(CSS, '.' + P + 'action-row-ghost')[0], 'grid-template-columns'),
-      'repeat(' + ACTION_BAR_DEFAULTS.evenRowPairs + ', minmax(0, 1fr))',
-    );
+  it('没有任何 grid 平分覆盖；单颗保留铺满', () => {
+    const grids = blocksOf(CSS, '.' + P + 'action-row-ghost')
+      .filter((b) => declValue(b, 'grid-template-columns') !== null);
+    assert.equal(grids.length, 0, 'ghost 行不许再有 grid 平分覆盖（已改 flex 左起）');
+    const single = blocksOf(CSS, '.' + P + 'action-row-ghost-single > .' + P + 'copy-btn')[0];
+    assert.ok(single !== undefined, '缺单颗铺满规则块（.action-row-ghost-single > .copy-btn）');
+    assert.equal(declValue(single, 'flex'), '1 1 auto', '单颗 flex 保铺满');
+    assert.equal(declValue(single, 'width'), '100%', '单颗保留铺满');
   });
 });
 
