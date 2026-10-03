@@ -102,10 +102,10 @@ node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare
 
 - **票据纸 16 页**（w01~w17）：8 主块位 `ilife-page-ui`／`ilife-bill-sheet-page`／`ilife-skin-ticket`／`ilife-block-sheet`／`ilife-sheet-title`／`ilife-block-summary-head`／`ilife-block-ledger-rows`／`ilife-ticket-rule` —— **16/16 全在（缺 0）**。
 - **回落老列表页 1 页**（w00）：8 主块位 `ilife-page-ui`／`ilife-block-page-shell`／`ilife-block-kpi-card`／`ilife-block-conclusion`／`ilife-block-copy-block`／`ilife-block-caliber`／`ilife-block-chip`／`ilife-block-empty-block` —— **8/8 全在（缺 0）**。
-- **页内导航**：票据纸 16 页 `ilife-block-toc` **0 个**、老列表页 w00 **1 个**——逐页与页族预期相符。
+- **页内导航**：票据纸 16 页 `ilife-block-toc` **0 个**、老列表页 w00 **1 个**——逐页与页族预期相符（**Lead 2026-10-03 已裁：跨页族级清单不作为单页判据，单页只认它自己那份判地；票据纸判地逐字可见「无 nav、无来源脚注」，故不算缺件**——见 §九 第 1、2 条）。
 - **来源脚注「数据来源」**：老列表页 w00 **1 处**；票据纸 16 页 **0 处**（该页型不上屏来源脚注，它的对应位是页脚 `饼干记账 · <唤醒词>`，16/16 各 1 处）。
 - **可见文本无 `undefined`／`NaN`**：17/17 为 0。**无 `loading="lazy"`**：17/17 为 0。**外部资源引用**：17/17 为 0。
-- **另记据实读数（不下判定）**：占比 SCALE 块 `ilife-block-dist-row` 16 页在、**w09 查分类不在**（该页占比区类名与其他票据页不同）；明细 DETAIL `ilife-ticket-entries` 17/17 在；复制区 `ilife-block-copy-block` 17/17 在；对账 CHECK 文本 16 票据页各 1 处（w00 老列表页 0）；`✂ 裁切线` 文本 16 票据页各 1 处（w00 老列表页 0）。
+- **另记据实读数（不下判定）**：占比 SCALE 块 `ilife-block-dist-row`（**判 DOM 元素，不数 `<style>` 里的 CSS 规则**）16 张票据页有、**w09 查分类 DOM 里 0 个**——w09 产物 `<style>` 里仍有 16 处 `.ilife-block-dist-row` 规则、DOM 里 0 个元素，占比区改走本页自有的 `ilife-category-bar`（DOM 2 个）；明细 DETAIL `ilife-ticket-entries` 17/17 在；复制区 `ilife-block-copy-block` 17/17 在；对账 CHECK 文本 16 票据页各 1 处（w00 老列表页 0）；`✂ 裁切线` 文本 16 票据页各 1 处（w00 老列表页 0）。
 
 ```
 RESULT: 17/17 真跑成功；出问题的页 0    （GATE-RUN runId=806d00b7-456d-477a-97b2-7b7dbe6aa485，exit 0）
@@ -127,9 +127,9 @@ RESULT: 17/17 真跑成功；出问题的页 0    （GATE-RUN runId=806d00b7-456
 
 ## 九、据实读数与偏差（不下判定，交负责人）
 
-1. **「页内导航恰一个」在本域不逐页成立**：票据纸 16 页 0 个、老列表页 1 个。票面／派单写「页内导航恰一个」，本席按**页族**分判（票据纸 0／列表页 1）并逐页照记读数；要不要把「票据纸 0 个」判成缺件，归负责人。
-2. **「来源脚注 ≥1」在票据纸页不成立**：该页型不上屏来源脚注（`src` 里票据页的 `SOURCE_TEXT_QUERY` 注释即写「回落老列表路时用」）；对应位是页脚 `饼干记账 · <唤醒词>`。本席按族分判：列表页判来源脚注、票据纸判页脚，读数逐页照记。
-3. **w09 查分类无 `ilife-block-dist-row`**：其余 15 张票据页都有；这一页的占比区用了另一套类名。据实记，不下判定。
+1. **「页内导航恰一个」（已裁：票据纸 16 页 0 个不算缺件）**：判地 `proto/query/w01-查今天-v2.1.html`／`w09-查分类-v2.1.html` 逐字可见票据纸页**无 nav 块**；产物的对应位是页脚 `饼干记账 · <唤醒词>`（16/16 各 1 处）。Lead 2026-10-03 裁决原文：「单页判据**只认它自己那份判地**——页内导航恰一个／来源脚注 ≥1 这类**跨页族级清单不作为单页判据**；判地有的块产物必须有、判地没有的产物不该有。」⇒ 本席按族分判（票据纸 0／老列表页 1）**放行**，逐页读数照记。
+2. **「来源脚注 ≥1」（已裁：票据纸 16 页 0 处不算缺件）**：同上裁决——该页型不上屏来源脚注（`src` 里票据页的 `SOURCE_TEXT_QUERY` 注释即写「回落老列表路时用」），判地也没有这一位。列表页（w00）判来源脚注（1 处）、票据纸判页脚，读数逐页照记。
+3. **w09 查分类与同类页的占比段不一致（记成偏差，不放松判据，交负责人验收时裁）**：其余 15 张票据页的占比段是 `ilife-block-dist-row`（DOM 元素），**w09 产物的占比段 DOM 里 0 个 dist-row 元素、改走本页自有的 `ilife-category-bar`**（`<style>` 里那 16 处 `.ilife-block-dist-row` 规则是残留，**判 DOM 时不计**；数 CSS 文本会把这一条读反）。**两条事实更正（供复核）**：① 「产物有 dist-row」若按整文件 grep 会命中 `<style>` 里的 CSS 规则，判 DOM 须先剥 `<style>`／`<script>`；② 本墙右侧用的是 `docs/skills/skill-bill/proto/query/w09-查分类-v2.1.html`（本票票面「判地原件在 `proto/query/`」；`proto/manifest.json` 的 `domain=query` 第 49 行那件），**不是** `proto/w09/w09-查分类-v2.2.html`（那是 `domain=w09` 的另一件、manifest seq 99）；两件都没有 `dist-row` 元素。**判地这一侧的类词汇是老一套**（`sheet-frame`／`ledger-rows`／`sec`，`ilife-*` 命中 0），故「判地有的块产物必须有」这条**无法按 `ilife-*` 类名逐块套到本域判地上**——据实记，不下判定。
 4. **w00 空态回落老列表页**（票面已知缺口）：零行不出一张票据纸空态纸，与原型 w00 不同族。据实记，不在本票修。
 5. **#1110 §六 ③ 的遗留**（判据问题，本席未改）：查今天对账分隔符实现半角 ` / `、判地原型全角 ` ／ `。本墙两侧各按各的样子呈现，判定归负责人。
 6. **判据侧目录名核对**：票面写原型在 `docs/skills/skill-bill/proto/query/`，实际**一致**（17 件，编号 w00/w01~w04/w06~w17；w05 查账单并入 w01，不单独出纸）——无偏差，记一条是为了与 #1077 的路径偏差区分。
