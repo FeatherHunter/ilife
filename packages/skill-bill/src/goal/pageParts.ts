@@ -38,24 +38,6 @@ import { textOf } from './params.js';
 /** 目标域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
 export const EYEBROW = '记账｜目标域';
 
-/** 1064 acct v2.2 新口径复制区＋填写 guards（同账户域，作用域限 goal 两 key，写入域零命中）。 */
-export const GOAL_COPY_CSS = [
-  'section[data-key="goal.write"] .ilife-block-copy-block, section[data-key="goal.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
-  'section[data-key="goal.write"] .ilife-action-row-ghost, section[data-key="goal.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
-  'section[data-key="goal.write"] .ilife-copy-menu-wrap, section[data-key="goal.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
-  'section[data-key="goal.write"] .ilife-copy-btn, section[data-key="goal.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
-  'section[data-key="goal.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
-  'section[data-key="goal.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
-  'section[data-key="goal.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="goal.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
-  'section[data-key="goal.write"] .ilife-copy-btn.copied::after, section[data-key="goal.query"] .ilife-copy-btn.copied::after { content: none !important; }',
-  'section[data-key="goal.write"] .ilife-block-param-form-input, section[data-key="goal.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; min-height: 44px; }',
-  'section[data-key="goal.write"] .ilife-block-param-form-field, section[data-key="goal.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',
-].join('\n');
-
-/** 目标页内嵌样式：把本域 CSS 以 `<style>` 随正文走（不进共用 `extraCss`，写入产物逐字节不动）。 */
-export function goalStyleTag(): string {
-  return '<style>' + GOAL_COPY_CSS + '</style>';
-}
 
 /** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份。 */
 export function goalHelpPrompt(

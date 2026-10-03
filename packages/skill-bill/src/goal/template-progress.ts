@@ -21,7 +21,7 @@ import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
-import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, money } from './pageParts.js';
+import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -170,7 +170,7 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: goalStyleTag() + '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

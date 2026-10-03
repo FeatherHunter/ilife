@@ -21,7 +21,7 @@ import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountSummary, AccountTotals } from './accounts.js';
-import { SOURCE_READ, accountStyleTag, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
+import { SOURCE_READ, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
 
 /** 出口载荷（＝envelope `data`）：`items` 是账户卡（`list` 形必填的那一格），其余是本域给页面与下游看的窗口事实。 */
 export type AccountSummaryData = {
@@ -136,7 +136,7 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
       source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

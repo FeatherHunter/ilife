@@ -129,6 +129,29 @@ const TICKET_CSS = [
   '  .ilife-sheet-title { font-size: 18px; }',
   '  .ilife-bill-sheet-page .ilife-block-ledger-row-value { max-width: 58%; }',
   '}',
+  /* #1124 §22：账户域复制区 guards 从页面搬来（逐字节，作用域原样保留）——页面侧不再自出这一段。 */
+  'section[data-key="account.write"] .ilife-block-copy-block, section[data-key="account.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
+  'section[data-key="account.write"] .ilife-action-row-ghost, section[data-key="account.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  'section[data-key="account.write"] .ilife-copy-menu-wrap, section[data-key="account.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
+  'section[data-key="account.write"] .ilife-copy-btn, section[data-key="account.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
+  'section[data-key="account.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
+  'section[data-key="account.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
+  'section[data-key="account.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="account.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
+  'section[data-key="account.write"] .ilife-copy-btn.copied::after, section[data-key="account.query"] .ilife-copy-btn.copied::after { content: none !important; }',
+  'section[data-key="account.write"] .ilife-block-param-form-input, section[data-key="account.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }',
+  'section[data-key="account.write"] .ilife-block-param-form-field, section[data-key="account.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',
+  'section[data-key="account.write"] select.ilife-block-param-form-input, section[data-key="account.query"] select.ilife-block-param-form-input { min-height: 44px; }',
+  /* #1124 §22：目标域复制区 guards 从页面搬来（逐字节，作用域原样保留）——页面侧不再自出这一段。 */
+  'section[data-key="goal.write"] .ilife-block-copy-block, section[data-key="goal.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
+  'section[data-key="goal.write"] .ilife-action-row-ghost, section[data-key="goal.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  'section[data-key="goal.write"] .ilife-copy-menu-wrap, section[data-key="goal.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
+  'section[data-key="goal.write"] .ilife-copy-btn, section[data-key="goal.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
+  'section[data-key="goal.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
+  'section[data-key="goal.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
+  'section[data-key="goal.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="goal.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
+  'section[data-key="goal.write"] .ilife-copy-btn.copied::after, section[data-key="goal.query"] .ilife-copy-btn.copied::after { content: none !important; }',
+  'section[data-key="goal.write"] .ilife-block-param-form-input, section[data-key="goal.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; min-height: 44px; }',
+  'section[data-key="goal.write"] .ilife-block-param-form-field, section[data-key="goal.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',
 ].join('\n');
 
 /** 票据纸页内家具样式段（＝搬家前 docPage.ts 的 `TICKET_FURNITURE_CSS`，逐字节相同）。 */

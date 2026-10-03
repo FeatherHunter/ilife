@@ -24,7 +24,7 @@ import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, accountStyleTag, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -193,7 +193,7 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
       source: SOURCE_COLLECT, detail: '没写库（采集页）', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '采集',
-    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
@@ -231,7 +231,7 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: accountStyleTag() + '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
