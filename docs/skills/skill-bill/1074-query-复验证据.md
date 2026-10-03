@@ -56,6 +56,8 @@
 
 **页族读数（票面要求「逐页记录该页跑出来的页族读数」）**：16 页走票据纸（`ilife-bill-sheet-page` 族），**w00 走回落老列表页**（`ilife-block-page-shell` 族）——零行那一支是已知空白缺口，本票**只记录不修**。
 
+**判地换件预告（Lead 2026-10-03 裁决）**：上表第 09 格右侧判地本次记的是 `query/w09-查分类-v2.1.html`（seq 49，旧版）；**复跑时换成 `w09/w09-查分类-v2.2.html`（seq 99）**——理由与脚本改动见 §九 第 3 条。
+
 ## 四、墙生成器读数（`docs/skills/skill-bill/1074-query-验收墙.mjs`，入仓）
 
 GATE-RUN runId=52677646-85c6-49b1-8823-016c4ed26d05 cmd=`node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html`
@@ -98,6 +100,8 @@ node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare
 
 ## 七、逐页骨架机检（按页族；机器读数，给人眼判定当配套，不替代人眼）
 
+> **判据口径（Lead 2026-10-03 裁决，本域要紧的一条）**：query 侧判地整套是**设计稿类名**（`sheet-frame`／`ledger-rows`／`sec`／`cut-line`／`summary-head`…，剥样式后 `ilife-*` 命中 **0**），产物整套是 **`ilife-*`** —— **「逐块对类名」在本域不成立**；本域判据只能是**像素 ＋ 可见文本块序**。故下面这些类名读数**只作产物侧自查**（自己的块位有没有缺、两种页族内部一不一致），**不拿它与判地逐块比**。
+
 探针：`.scratch/1074-query/run-1074.mjs`（只读 17 份真跑产物，逐页读数落 `manifest.json`）。本域当刻**两种页族**，判据按族分判：
 
 - **票据纸 16 页**（w01~w17）：8 主块位 `ilife-page-ui`／`ilife-bill-sheet-page`／`ilife-skin-ticket`／`ilife-block-sheet`／`ilife-sheet-title`／`ilife-block-summary-head`／`ilife-block-ledger-rows`／`ilife-ticket-rule` —— **16/16 全在（缺 0）**。
@@ -130,6 +134,8 @@ RESULT: 17/17 真跑成功；出问题的页 0    （GATE-RUN runId=806d00b7-456
 1. **「页内导航恰一个」（已裁：票据纸 16 页 0 个不算缺件）**：判地 `proto/query/w01-查今天-v2.1.html`／`w09-查分类-v2.1.html` 逐字可见票据纸页**无 nav 块**；产物的对应位是页脚 `饼干记账 · <唤醒词>`（16/16 各 1 处）。Lead 2026-10-03 裁决原文：「单页判据**只认它自己那份判地**——页内导航恰一个／来源脚注 ≥1 这类**跨页族级清单不作为单页判据**；判地有的块产物必须有、判地没有的产物不该有。」⇒ 本席按族分判（票据纸 0／老列表页 1）**放行**，逐页读数照记。
 2. **「来源脚注 ≥1」（已裁：票据纸 16 页 0 处不算缺件）**：同上裁决——该页型不上屏来源脚注（`src` 里票据页的 `SOURCE_TEXT_QUERY` 注释即写「回落老列表路时用」），判地也没有这一位。列表页（w00）判来源脚注（1 处）、票据纸判页脚，读数逐页照记。
 3. **w09 查分类与同类页的占比段不一致（记成偏差，不放松判据，交负责人验收时裁）**：其余 15 张票据页的占比段是 `ilife-block-dist-row`（DOM 元素），**w09 产物的占比段 DOM 里 0 个 dist-row 元素、改走本页自有的 `ilife-category-bar`**（`<style>` 里那 16 处 `.ilife-block-dist-row` 规则是残留，**判 DOM 时不计**；数 CSS 文本会把这一条读反）。**两条事实更正（供复核）**：① 「产物有 dist-row」若按整文件 grep 会命中 `<style>` 里的 CSS 规则，判 DOM 须先剥 `<style>`／`<script>`；② 本墙右侧用的是 `docs/skills/skill-bill/proto/query/w09-查分类-v2.1.html`（本票票面「判地原件在 `proto/query/`」；`proto/manifest.json` 的 `domain=query` 第 49 行那件），**不是** `proto/w09/w09-查分类-v2.2.html`（那是 `domain=w09` 的另一件、manifest seq 99）；两件都没有 `dist-row` 元素。**判地这一侧的类词汇是老一套**（`sheet-frame`／`ledger-rows`／`sec`，`ilife-*` 命中 0），故「判地有的块产物必须有」这条**无法按 `ilife-*` 类名逐块套到本域判地上**——据实记，不下判定。
+   **v2.1／v2.2 同页两版（Lead 2026-10-03 第二次裁决）**：`proto/w09/w09-查分类-v2.2.html`（manifest seq 99，`domain=w09`）是**负责人已批并已落地**的那一版（#1078 verdict 的 24 格里有它、落地走 #1080）；`proto/query/w09-查分类-v2.1.html`（seq 49）是**同一页的旧版**，「总账只许一行 w09、v2.1 不计行」已登记进 #1081。⇒ **第 09 格右侧判地改用 v2.2 件**（sha256 与 manifest 该件登记值相等），其余 16 格判地不动；该更正**并入 #1113 落地后的那次复跑**，不单独跑。
+   **本次提交同时改了脚本（复跑时才生效，产物与墙一字未动）**：`run-1074.mjs` 的 `PROTO_REL.w09` → `w09/w09-查分类-v2.2.html`、判地查找面放宽到全部 proto 件；`1074-query-验收墙.mjs` 的登记表同样放宽到全部 proto 件（否则 v2.2 那件会被判「判据侧未登记」）。**盘上现役墙仍是最初那版（右侧 v2.1）**，复跑后才是 v2.2。
 4. **w00 空态回落老列表页**（票面已知缺口）：零行不出一张票据纸空态纸，与原型 w00 不同族。据实记，不在本票修。
 5. **#1110 §六 ③ 的遗留**（判据问题，本席未改）：查今天对账分隔符实现半角 ` / `、判地原型全角 ` ／ `。本墙两侧各按各的样子呈现，判定归负责人。
 6. **判据侧目录名核对**：票面写原型在 `docs/skills/skill-bill/proto/query/`，实际**一致**（17 件，编号 w00/w01~w04/w06~w17；w05 查账单并入 w01，不单独出纸）——无偏差，记一条是为了与 #1077 的路径偏差区分。

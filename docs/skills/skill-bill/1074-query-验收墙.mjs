@@ -46,11 +46,15 @@ if (!existsSync(manifestPath)) {
 const raw = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const rows = raw.rows ?? [];
 
-/** 判据侧登记表：docs/skills/skill-bill/proto/manifest.json 的 domain=query 逐件 sha256。 */
+/** 判据侧登记表：docs/skills/skill-bill/proto/manifest.json 的**全部 proto 件**逐件 sha256（按 it.file 取）。
+ *  为什么不止 domain=query：Lead 2026-10-03 裁决——第 09 格（w09 查分类）右侧判地换成负责人已批已落地的
+ *  v2.2 件 `proto/w09/w09-查分类-v2.2.html`（manifest seq 99，domain=w09；同一页的 v2.1 是旧版、
+ *  `proto/query/w09-查分类-v2.1.html` 已登记进 #1081 不再计行）。登记面放宽到全部 proto 件，是为了这份
+ *  校验只回答「副本 sha256 与判据侧登记值相等」，不替 run-1074.mjs 决定哪一页用哪一件。 */
 const registered = new Map();
 if (existsSync(PROTO_MANIFEST)) {
   for (const it of (JSON.parse(readFileSync(PROTO_MANIFEST, 'utf8')).items ?? [])) {
-    if (it.domain === 'query' && it.kind === 'proto') registered.set(it.file, it.sha256);
+    if (it.kind === 'proto') registered.set(it.file, it.sha256);
   }
 }
 
