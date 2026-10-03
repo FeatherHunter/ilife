@@ -13,9 +13,7 @@
  *     按钮区（ticketActions）／纸（renderSheetFrame 的 ticket 版 ＋ 裁切线）／整页壳
  *     （assembleSheetPage）。复制区走 shared/copyArea（复制数据三格式 ＋ 复制日志）。
  *  3. **本页自有样式**（H02_CSS）只做一件事：把公共层速查索引的槽位摆成原型那一纸的样子。
- *     取值全走皮肤 token（--ilife-*），零自造变量、零 px 圆角、零手写投影——机器门禁
- *     scripts/check-base-reuse.mjs 的四条规则（甲自造变量／乙圆角写 px／丙手写投影／
- *     丁重写复制三件样式块）在本件零命中。
+ *     取值全走皮肤 token（--ilife-*），零自造变量、零 px 圆角、零手写投影。
  *
  * ## 与冻结原型的两处**已知且可判定**的差异（读数见 docs/skills/skill-bill/1080-h02-像素证据.md）
  *
