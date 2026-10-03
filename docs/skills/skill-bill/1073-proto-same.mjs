@@ -6,7 +6,7 @@
 //
 // 归一化六条规则（票面写死，本脚本只实现、不增、不删、不改）：
 //   1 删运行期属性：data-*-id／data-generated-at／data-seq／data-ticket-no／id="r-<数字>"
-//   2 文本节点数值占位（只替换可见文本，不碰属性值）：金额与数量 → #N#（后随单位一并吞）；
+//   2 数值占位（遮蔽面＝可见文本 ＋ 载荷文本，见下）：金额与数量 → #N#（后随单位一并吞）；
 //     日期时间 → #D#；百分比 → #P#
 //   3 枚举值占位：分类名／账户名／场景名 → #CAT#／#ACC#／#SCENE#（取值表从判地原型件里抽，不许手写）
 //   4 class 去 hash 后缀 -[0-9a-f]{6,}
@@ -15,6 +15,12 @@
 //
 // 实施口径（票面未写死处，取最窄的一种读法，逐条记在 proto/归一化规则.md）：
 //   · 「可见文本」＝不在 <script>／<style>／<title>／注释里的文本节点。
+//   · 规则 2 的遮蔽面（2026-10-03 由 #1085 裁定、施工 #1111）＝可见文本 ＋ **载荷文本**：
+//     ① <script> 载荷里的字符串字面量（脚本代码本身不遮）；② 多行属性值（值里含换行或
+//     &#10;／&#xA;——本仓这个形状只有承载复制日志的那一个属性）。class／style／id／on* 不进遮蔽面。
+//     这两个面同时是规则 3 的落点（脚本整段、多行属性值整值），枚举值与数值一律同等对待。
+//     理由：执行时刻这类「同一次执行必然变化、且不参与渲染」的字符原本落在遮蔽面外，
+//     真跑产物与冻结原型一比就红。本仓 gen-page-fingerprints 早就把时钟串换成 <TS> 再取指纹。
 //   · 规则 3 不带范围限定（票面只对规则 2 写了「只替换可见文本」），故规则 3 作用在
 //     文本节点与 <script> 载荷上，不碰属性值与 <style>——枚举取值表本身就住在 <script> 载荷里，
 //     排除 <script> 会让规则 3 够不着它自己点名的那些值。
@@ -121,17 +127,35 @@ function rule4StripClassHash(tagText) {
     (_, pre, q, v) => pre + q + v.split(/\s+/).map((t) => t.replace(/-[0-9a-f]{6,}$/i, '')).join(' ') + q);
 }
 
-/* ══ 规则 2 · 文本节点数值占位（票面写死的三条正则，逐字实现）══════════ */
-// 票面原文：「金额与数量 -?\d{1,3}(,\d{3})*(\.\d+)? → #N#（后随 元|笔|个月|天|条 时一并吞掉单位）」
-// 「后随」不限紧邻：原型正文里写的是「共 2 笔」「35.00 元」，数字与单位之间有空格，
-// 所以单位前允许一个可选空白。整数部分严格照票面写死 \d{1,3}（**不擅自扩成 \d{1,}**）——
-// 由此产生的「8000.00 → #N##N#」缺陷已记进票面遗留出口并开票，由人裁，本席不许私自加豁免。
+/* ══ 规则 2 · 数值占位（可见文本 ＋ 载荷文本）══════════════════════════ */
+// 2026-10-03 #1085 裁定、#1111 施工：
+//   · 金额正则由 `-?\d{1,3}(,\d{3})*(\.\d+)?` 改为 `-?\d[\d,]*(?:\.\d+)?`——原写法整数部分只吃
+//     三位，`8000.00` 被拆成 `#N##N#`，同一个值因写法不同掩蔽结果不同（旧读数见 proto/归一化规则.md）。
+//   · 遮蔽面从「可见文本」扩到脚本字面量与多行属性值（见文件头「遮蔽面」）。
+// 「后随单位」不限紧邻：原型正文里写的是「共 2 笔」「35.00 元」，数字与单位之间有空格，
+// 所以单位前允许一个可选空白。
 const RE_DATE = /\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?/g;
 const RE_PCT = /\d+(?:\.\d+)?%/g;
-const RE_AMT_UNIT = /-?\d{1,3}(?:,\d{3})*(?:\.\d+)?\s?(?:元|笔|个月|天|条)/g;
-const RE_AMT = /-?\d{1,3}(?:,\d{3})*(?:\.\d+)?/g;
+const RE_AMT_UNIT = /-?\d[\d,]*(?:\.\d+)?\s?(?:元|笔|个月|天|条)/g;
+const RE_AMT = /-?\d[\d,]*(?:\.\d+)?/g;
 function rule2Numbers(text) {
   return text.replace(RE_DATE, '#D#').replace(RE_PCT, '#P#').replace(RE_AMT_UNIT, '#N#').replace(RE_AMT, '#N#');
+}
+/* ══ 规则 2 的遮蔽面（#1085 裁定扩面）：脚本字面量 ＋ 多行属性值 ═══════════ */
+// 脚本只遮**字符串字面量**里的数值：代码本身（`setTimeout(…,1600)` 这类）是结构，不遮。
+const RE_JS_LITERAL = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+function rule2ScriptLiterals(body) {
+  return body.replace(RE_JS_LITERAL, (lit) => lit[0] + rule2Numbers(lit.slice(1, -1)) + lit[0]);
+}
+// 多行属性值＝承载载荷文本的属性（本仓只有复制日志那一个）。它是脚本载荷的另一个落点，
+// 故与脚本同款处理：规则 2（数值／日期）＋ 规则 3（枚举值）。结构属性一律不碰。
+const ATTR_NOT_PAYLOAD = /^(?:class|style|id|on[a-z]+)$/i;
+const ATTR_MULTILINE = /\n|&#10;|&#xA;/i;
+function rule23PayloadAttrs(tagText) {
+  return tagText.replace(/([^\s=/>]+)(\s*=\s*)(["'])([\s\S]*?)\3/g, (m, name, eq, q, val) => {
+    if (ATTR_NOT_PAYLOAD.test(name) || !ATTR_MULTILINE.test(val)) return m;
+    return `${name}${eq}${q}${rule3Enums(rule2Numbers(val))}${q}`;
+  });
 }
 /* ══ 规则 3 · 枚举值占位 ═══════════════════════════════════════════════ */
 function rule3Enums(text) {
@@ -195,12 +219,14 @@ function normalize(html) {
     if (g.t === 'tag') {
       let s = rule1DropRuntimeAttrs(g.s);   // 规则 1
       s = rule4StripClassHash(s);           // 规则 4
+      s = rule23PayloadAttrs(s);            // 规则 2＋3 的载荷属性面（多行属性值＝复制日志）
       // 规则 5 也要管 style="…" 内联样式
       s = s.replace(/(style\s*=\s*)(["'])([^"']*)\2/gi, (_, pre, q, v) => pre + q + sortCss(v) + q);
       return s;
     }
     if (g.t === 'style') return g.open + sortCss(g.body) + '</style>';   // 规则 5；规则 2/3 不进 <style>
-    if (g.t === 'script') return g.open + rule3Enums(g.body) + '</script>';   // 规则 3 覆盖 <script> 载荷（见文件头口径）
+    // 规则 2 的脚本面（字符串字面量）→ 规则 3 覆盖整个 <script> 载荷（见文件头口径）
+    if (g.t === 'script') return g.open + rule3Enums(rule2ScriptLiterals(g.body)) + '</script>';
     if (g.t === 'opaque') return g.s;       // 注释与 <title>：逐字保留
     const solo = /^\s+$/.test(g.s) && i > 0 && i < segs.length - 1
       && segs[i - 1].t === 'tag' && segs[i + 1].t === 'tag';
