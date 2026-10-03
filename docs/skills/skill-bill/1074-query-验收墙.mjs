@@ -82,6 +82,8 @@ const CSS = [
   'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}',
   '.wrap{padding:24px 20px 60px}h1{font-size:22px;font-weight:600;margin-bottom:6px}',
   '.sub{color:#6e6e73;font-size:13.5px;margin-bottom:18px;line-height:1.75;max-width:1500px}',
+  '.banner{background:#fff8e6;border:2px solid #8a6d3b;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;line-height:1.7;max-width:1500px;color:#3a2f1c}',
+  '.banner b{color:#8a2c0d}',
   '.sub code{background:#fff;border:1px solid #e8e8ed;border-radius:4px;padding:0 4px}',
   '.okbar{position:sticky;top:0;z-index:50;background:#fff;border:1px dashed #1d1d1f;border-radius:10px;padding:8px 10px;margin-bottom:14px;font-size:12.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
   '.okbar .cnt{font-weight:700;font-variant-numeric:tabular-nums}.okbar .msg{color:#6e6e73;font-size:12px}',
@@ -147,13 +149,14 @@ function render(kind) {
     ? '#1074 查询域 17 页 · 真跑产物 vs 冻结原型 · 手机墙'
     : '#1074 查询域 17 页 · 真跑产物 vs 冻结原型 · 桌面墙';
   const snap = raw.snapshot ?? {};
+  const banner = '<div class="banner"><b>两侧数据不同</b>：<b>左＝本仓 #729 夹具真跑产物</b>（' + String(raw.sample?.records ?? '') + ' 条，2025-05~2026-06，「今天」' + esc(raw.sample?.today ?? '') + '），<b>右＝判地原型内置的样本值</b>（原型那轮 2026-10，条数与行数都与左侧不同）。⇒ <b>本墙判「版式与件套」，不比数值</b>；两侧记录条数不同 ⇒ 明细行数不同 ⇒ 页高不同，逐页像素比里也就<b>含「数据差」</b>，本席不把它拆成「块位膨胀／实现错」。</div>';
   const sub = kind === 'mobile'
     ? '<b>左＝真跑产物</b>（隔离家目录 <code>' + esc(raw.sample?.isolatedHome ?? '') + '</code> ＋ 仓内 #729 合成记账库夹具 ' + String(raw.sample?.records ?? '') + ' 条记录，「今天」钉在 ' + esc(raw.sample?.today ?? '') + '），<b>右＝冻结原型</b>（同目录副本，逐件 sha256 与 <code>proto/manifest.json</code> 登记值对过）。两侧<b>数据不同</b>：左＝夹具合成库（2025-05~2026-06 真实流水），右＝原型内嵌样例值——<b>这一墙判版式与件套</b>（纸头／H2／主数字／落点 LEDGER／占比 SCALE／明细 DETAIL／对账 CHECK／✂ 裁切线／页脚），<b>不判数字</b>。快照：' + esc(String(snap.gitHead ?? '').slice(0, 8)) + ' ＋ dist ' + esc(String(snap.cmdReadDistSha256 ?? '').slice(0, 12)) + '（生成于 ' + esc(String(snap.at ?? '')) + '）。<b>据实一条</b>：16 张票据纸页<b>没有</b>页内导航块、来源脚注也不上屏（照实读数 0），只有 w00 零行回落的老列表页有页内导航 1 个＋「数据来源」脚注。每格「满意／不满意（原因必填）」，可导出 JSON 作为逐格结论原文。'
     : '同一格上下两张：<b>上＝真跑产物</b>（1280 宽）、<b>下＝冻结原型</b>（1280 宽）；与手机墙成对，编号／唤醒词／该确认什么完全一致。这一墙判版式与件套，不判数字。';
   return '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">' + String.fromCharCode(10)
     + '<meta name="viewport" content="width=device-width,initial-scale=1">' + String.fromCharCode(10)
     + '<title>' + h1 + '</title><style>' + CSS + gridCss + '</style></head>' + String.fromCharCode(10)
-    + '<body><div class="wrap"><h1>' + h1 + '</h1>' + String.fromCharCode(10) + '<div class="sub">' + sub + '</div>' + String.fromCharCode(10)
+    + '<body><div class="wrap"><h1>' + h1 + '</h1>' + String.fromCharCode(10) + banner + String.fromCharCode(10) + '<div class="sub">' + sub + '</div>' + String.fromCharCode(10)
     + bar() + String.fromCharCode(10) + '<div class="grid">' + String.fromCharCode(10) + cells + String.fromCharCode(10) + '</div></div>' + String.fromCharCode(10)
     + script(wallName) + '</body></html>' + String.fromCharCode(10);
 }
