@@ -1,0 +1,300 @@
+{
+  "ticket": 1078,
+  "wall": "1068-no24-26",
+  "carriedOverFrom": "1068-no24-24",
+  "total": 24,
+  "satisfied": 24,
+  "unsatisfied": 0,
+  "undecided": 0,
+  "note": "用户 verdict：seq17–22 来自 1068-no24-24 导出，seq1–16、23、24 来自 1068-no24-26 导出（18 条全 ok）；本轮 24/24 satisfied。domain 取墙 fam 口径。proto_sha 实测自冻结文件且与 1073 manifest 登记值逐件核对一致。",
+  "items": [
+    {
+      "seq": 1,
+      "domain": "write-采集",
+      "wake": "记支出",
+      "file": "docs/skills/skill-bill/proto/say-collect/x01-记支出-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 27595,
+        "sha256": "29ae80bd46b5656b7f2ac0204d98e7c00d44eeac27efec1e54ee1940888bdd3e"
+      }
+    },
+    {
+      "seq": 2,
+      "domain": "write-采集",
+      "wake": "记收入",
+      "file": "docs/skills/skill-bill/proto/say-collect/x03-记收入-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 27277,
+        "sha256": "c4c833d2996477423bd182b2bda17c135c7172f2081a4b638affa361beda0d1b"
+      }
+    },
+    {
+      "seq": 3,
+      "domain": "write-采集",
+      "wake": "拍账单",
+      "file": "docs/skills/skill-bill/proto/say-collect/x05-拍账单-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 24635,
+        "sha256": "21e18d2e79eb5f615dcde4a4604308c307f62191c771c80b1ff3aab88f195e31"
+      }
+    },
+    {
+      "seq": 4,
+      "domain": "write-采集",
+      "wake": "批量录入",
+      "file": "docs/skills/skill-bill/proto/say-collect/x07-批量录入-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26489,
+        "sha256": "a24328febf248a0c35136bb3ac914d21abb0cb34fd1b3d7a317ac108307d5146"
+      }
+    },
+    {
+      "seq": 5,
+      "domain": "write-采集",
+      "wake": "记退款",
+      "file": "docs/skills/skill-bill/proto/say-collect/x09-记退款-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26793,
+        "sha256": "93263af566743029925a00307f88fca3252caafd3cfd3da5ce335dc033e9a8ee"
+      }
+    },
+    {
+      "seq": 6,
+      "domain": "write-采集",
+      "wake": "记报销",
+      "file": "docs/skills/skill-bill/proto/say-collect/x11-记报销-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26597,
+        "sha256": "660198cc1965603b5b4cd97ef2fdfa837f15a07936a31348dba8c5ef53e48f2d"
+      }
+    },
+    {
+      "seq": 7,
+      "domain": "write-采集",
+      "wake": "报销到账",
+      "file": "docs/skills/skill-bill/proto/say-collect/x13-报销到账-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 25022,
+        "sha256": "42e572cf63eedddddd8a48630699169f125a57ac1d6fff59aed73ad6f9f97bda"
+      }
+    },
+    {
+      "seq": 8,
+      "domain": "write-采集",
+      "wake": "记借出",
+      "file": "docs/skills/skill-bill/proto/say-collect/x15-记借出-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26669,
+        "sha256": "4c5dbcdeed5bb2beb340b618781f4d5387314c8da3a42c34d8acd3dc31bb8fd2"
+      }
+    },
+    {
+      "seq": 9,
+      "domain": "write-采集",
+      "wake": "记借入",
+      "file": "docs/skills/skill-bill/proto/say-collect/x17-记借入-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26667,
+        "sha256": "ab407dd38a492cbd4d39b2dabc4aedc197939cb4fa243abdf8c06ad0ee9c8f7c"
+      }
+    },
+    {
+      "seq": 10,
+      "domain": "write-采集",
+      "wake": "记收回",
+      "file": "docs/skills/skill-bill/proto/say-collect/x19-记收回-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 24942,
+        "sha256": "d7a6b11dbf250266efa65dae37b65270eaea3438401f8cf091197d7ebcd08ce1"
+      }
+    },
+    {
+      "seq": 11,
+      "domain": "write-采集",
+      "wake": "记偿还",
+      "file": "docs/skills/skill-bill/proto/say-collect/x21-记偿还-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 24928,
+        "sha256": "5d41c64a2bce57a131e3457b1223966c28278ea464a320db2f8e5605e9001cac"
+      }
+    },
+    {
+      "seq": 12,
+      "domain": "write-采集",
+      "wake": "记分期",
+      "file": "docs/skills/skill-bill/proto/say-collect/x23-记分期-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 27729,
+        "sha256": "a197c644221cc2c5dcce334714787bc6cdbff18ed2a1266e7a27be4c9d343754"
+      }
+    },
+    {
+      "seq": 13,
+      "domain": "write-采集",
+      "wake": "记一笔",
+      "file": "docs/skills/skill-bill/proto/say-collect/x25-记一笔-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 26853,
+        "sha256": "26aef04303fb4635b1c37442c9b11481fa31dd320e38c043e4b580ecae544591"
+      }
+    },
+    {
+      "seq": 14,
+      "domain": "write-采集",
+      "wake": "改记录",
+      "file": "docs/skills/skill-bill/proto/say-collect/x27-改记录-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 24738,
+        "sha256": "9bcf4916693c0dc7d0a5bd2129af7f27f0d4a471cba4e8b019e935d874dfa991"
+      }
+    },
+    {
+      "seq": 15,
+      "domain": "write-采集",
+      "wake": "撤销",
+      "file": "docs/skills/skill-bill/proto/say-collect/x29-撤销-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 23866,
+        "sha256": "d743f9bb7735e7dc239d34593fdb035e6ec6d9ce1171c2cc2ce2aeb4cea31710"
+      }
+    },
+    {
+      "seq": 16,
+      "domain": "write-采集",
+      "wake": "恢复",
+      "file": "docs/skills/skill-bill/proto/say-collect/x31-恢复-采集-v2.3.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 23872,
+        "sha256": "7525345d928372be6f1f962a2b1a346a5b332824f5d6e795ae8e0d457a735548"
+      }
+    },
+    {
+      "seq": 17,
+      "domain": "analysis",
+      "wake": "查分类",
+      "file": "docs/skills/skill-bill/proto/w09/w09-查分类-v2.2.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 16369,
+        "sha256": "3605dbcefd89d3290dc11780847db4968b3906ea2ef8133955de41c2e9548788"
+      }
+    },
+    {
+      "seq": 18,
+      "domain": "setup-help",
+      "wake": "初始化",
+      "file": "docs/skills/skill-bill/proto/setup-help/s01-初始化-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 13223,
+        "sha256": "f64a6d11cc96e66a9a0e0701b0c5133e3fdac55d499365de2c06d0c0dc133eec"
+      }
+    },
+    {
+      "seq": 19,
+      "domain": "setup-help",
+      "wake": "初始化状态",
+      "file": "docs/skills/skill-bill/proto/setup-help/s02-初始化状态-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 11392,
+        "sha256": "156bc79cd514f552210faac3559f8fbb79ce456b0e6094d39a4d49fe5ad4c8ea"
+      }
+    },
+    {
+      "seq": 20,
+      "domain": "setup-help",
+      "wake": "备份",
+      "file": "docs/skills/skill-bill/proto/setup-help/s03-备份-一键备份-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 10825,
+        "sha256": "ee9fcd944729d2acd5888639ca8450e8fa7105e6c5c216d411a6fd6b4de1f4ae"
+      }
+    },
+    {
+      "seq": 21,
+      "domain": "setup-help",
+      "wake": "备份",
+      "file": "docs/skills/skill-bill/proto/setup-help/s04-备份-查看备份-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 11527,
+        "sha256": "fb4ae5d26f453b18aeb51ef59a79ffaa480e618260820471aa3d3d90c19eca46"
+      }
+    },
+    {
+      "seq": 22,
+      "domain": "setup-help",
+      "wake": "恢复备份",
+      "file": "docs/skills/skill-bill/proto/setup-help/s05-恢复备份-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 13612,
+        "sha256": "222d87a510caf298d97a8e5da1e2c47d5e26016823538dda8eba2ca4fe008aa4"
+      }
+    },
+    {
+      "seq": 23,
+      "domain": "setup-help",
+      "wake": "导入",
+      "file": "docs/skills/skill-bill/proto/setup-help/s06-导入-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 14706,
+        "sha256": "d9f9a26acd5b4ec1440988b5fb832da7a67b60d9059beaac3b6b2286ea344ed4"
+      }
+    },
+    {
+      "seq": 24,
+      "domain": "setup-help",
+      "wake": "速查表",
+      "file": "docs/skills/skill-bill/proto/setup-help/h02-速查表-v2.4.html",
+      "verdict": "satisfied",
+      "reason": "",
+      "proto_sha": {
+        "bytes": 20604,
+        "sha256": "7359283e3d389642059f194be8fbc3e56eaa97d1a4e8da7a5edc6aea32ac5e78"
+      }
+    }
+  ]
+}
