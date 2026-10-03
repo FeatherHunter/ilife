@@ -22,11 +22,9 @@
  */
 import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
-import { assembleSheetPage, sheetHead, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
-import { badgeOf, copyZoneOf, docTitleOf, money, NO_WINDOW, SOURCE_READ, SOURCE_READ_TEXT, sourceNoteOf } from './pageParts.js';
-import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
-import type { PageBlock } from '../shared/pageSections.js';
-import { renderCaliberLine, renderConclusionBar } from 'base-paint/blocks';
+import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
+import { renderCaliberLine } from 'base-paint/blocks';
+import { copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
 import { barGroupHtml, chartCardHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
 
@@ -107,16 +105,6 @@ function baselineOf(id: string): string {
   }
 }
 
-/** 落点 S（原型 CALIBER 段那句）：a01-a03 S1，总览 S1；a09-a13 S3（1021 落点）。 */
-function caliberTagOf(id: string): string {
-  switch (id) {
-    case 'monthly':
-    case 'yearly':
-    case 'overview': return '口径见基线原文，图形为占位，不重算；不断言数据对错。';
-    default: return '图只是示意排布，不用它读数；数字看上面和下面。';
-  }
-}
-
 /** 主数字（原型 summary-head：支出唯一，a09 笔数，a13 见明细；C 组 a04 本周支出／a05 总支出／a06-a08 见明细）。 */
 function summaryForBars(id: string, expense: number, count: number): { eyebrow: string; value: string; unit: string; note: string } {
   if (id === 'stats') {
@@ -158,71 +146,82 @@ function ledgerCompare(rows: readonly { k: string; v: string }[], id: string): s
   return renderLedgerRows({ rows: full, layout: 'ticket' });
 }
 
-/** 票据纸装配（A 组共用收口；1066 起导出给 `./ticket-b.ts` 复用，B 组同壳）：店头＋主数字＋落点＋明细＋口径＋复制＋来源＋导航，包进小票纸。
+/** 图形占位那一句（判地两版，与 `caliberTagOf` 同一分界）：a01-a03 说「不重算口径」，a04 起说「不用它读数」。 */
+function chartNoteOf(id: string): string {
+  switch (id) {
+    case 'monthly':
+    case 'yearly':
+    case 'overview': return '图形仅示意排布，不重算口径，不断言数据对错。读数以明细卡与复制区为准。';
+    default: return '图形仅示意排布，不用它读数，不断言数据对错。读数以明细卡与复制区为准。';
+  }
+}
+
+/** 判地头三张（a01／a02／a03）没有纸外页脚，a04 起每页都有：`饼干记账 · <唤醒词>`。 */
+const NO_FOOT_SCENES = ['monthly', 'yearly', 'overview'];
+
+/** 纸外页脚那一行（空串＝判地这一页不出脚注）。 */
+function footNoteOf(id: string, wakeWord: string): string {
+  return NO_FOOT_SCENES.includes(id) ? '' : '<p class="ilife-ticket-foot">' + escapeHtml('饼干记账 · ' + wakeWord) + '</p>';
+}
+
+/** 票据纸装配（A／B／C 三组 25 页共用收口）：**块位序列逐块照判地**（`proto/analysis/a01…a25` v2.1）——
+ *  店头（品牌／H2／窗口）→ 虚线 → 主数字（眉标／值／单位／说明／印章）→ 虚线 → 图形占位 CHART → 虚线 →
+ *  明细卡 DETAIL → 虚线 → 落点与口径 CALIBER → 虚线 → 动作区（复制区）→ ✂ 裁切线 → 纸外页脚。
  *
- * 为保 t729 骨架判据（恰好一个导航＋一行来源脚注＋复制区），复制／来源／导航沿用老口径组件，
- * 只是包进 `assembleSheetPage`（ticket 纸）而不是 `analysisDocOf` 的页面壳；**#1119 起正文再包一层 `renderSheetFrame`（`cutLineText:'✂ 裁切线'`）**——改前只挂族根类、没挂纸面页框，25 页因此缺裁切线（判地 25/25 都有）。
+ *  **#1120 对齐判地时删掉的块**（判地 25/25 没有，改前产物有）：页内导航、`pageBody` 的第二遍正文
+ *  （改前落点与明细各印两遍）、结论条、类型徽章、来源脚注。值、文案与复制载荷一处不动（只重排块位、删块）。
+ *  图形说明句与 `caliberTag` 由本件按场景 id 现算（住 `chartNoteOf`／`caliberTagOf` 一处），调用方不再各传一份。
  */
 export function ticketDoc(input: {
   readonly docTitle: string;
   readonly wakeWord: string;
+  readonly sceneId: string;
   readonly h2: string;
   readonly windowLabel: string;
   readonly summaryHtml: string;
   readonly summaryNote: string;
+  readonly caliber: string;
   readonly ledgerHtml: string;
   readonly detailHtml: string;
-  readonly caliber: string;
-  readonly caliberTag: string;
   readonly key: string;
   readonly params: Record<string, unknown>;
   readonly envelope: DocInput<BarsPage | ComparePage>['envelope'];
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
-  readonly windowStart: string;
-  readonly windowEnd: string;
-  readonly count: number;
-  readonly conclusion: string;
 }): string {
-  const head = sheetHead(brandOf(input.wakeWord), escapeHtml(input.h2))
-    + '<p class="shop-sub">' + escapeHtml(input.windowLabel) + '</p>';
-  const summary = ticketSummary(input.summaryHtml, '<p class="ilife-ticket-summary-note">' + escapeHtml(input.summaryNote) + '</p>');
-  const blocks: readonly PageBlock[] = input.detailHtml === '' ? [navBlock(input.ledgerHtml, 'sec-ledger', '落点')] : [navBlock(input.ledgerHtml, 'sec-ledger', '落点'), navBlock(input.detailHtml, 'sec-detail', '明细')];
-  const copyHtml = copyZoneOf({
-    envelope: input.envelope,
-    title: input.wakeWord,
-    key: input.key,
-    params: input.params,
-    source: input.source,
-    detail: input.detail,
-    actionAt: input.actionAt,
-  });
-  const paper = renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: head
+  const paper = sheetHead(brandOf(input.wakeWord), escapeHtml(input.h2), input.windowLabel)
     + ticketRule()
-    + summary
+    + ticketSummary(input.summaryHtml, '<p class="ilife-ticket-summary-note">' + escapeHtml(input.summaryNote) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: input.ledgerHtml })
-    + ticketRule()
-    + (input.detailHtml === '' ? '' : ticketSection({ title: '明细', tag: 'DETAIL', content: input.detailHtml }) + ticketRule())
     + ticketSection({
-      title: '落点与口径',
-      tag: 'CALIBER',
-      content: '<p class="caliber">' + escapeHtml(input.caliberTag) + '</p>'
-        + renderCaliberLine(input.caliber),
+      title: '图形占位', tag: 'CHART',
+      content: '<div class="ilife-ticket-card">' + escapeHtml(chartNoteOf(input.sceneId)) + '</div>',
     })
-    + renderConclusionBar(input.conclusion)
-    + badgeOf({ word: input.wakeWord, caliber: '', status: 'ok', statusText: '看完了', next: '' })
-    + pageNav(blocks)
-    + pageBody(blocks)
-    + navBlock(copyHtml, 'sec-copy', '复制').html
-    + sourceNoteOf({
-      sourceText: SOURCE_READ_TEXT,
-      start: input.windowStart,
-      end: input.windowEnd,
-      count: input.count,
-    }) });
-  return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: paper, paper: 'receipt' });
+    + ticketRule()
+    + (input.detailHtml === ''
+      ? ''
+      : ticketSection({ title: '明细卡', tag: 'DETAIL', content: '<div class="ilife-ticket-card">' + input.detailHtml + '</div>' }) + ticketRule())
+    + ticketSection({
+      title: '落点与口径', tag: 'CALIBER',
+      content: input.ledgerHtml + renderCaliberLine(input.caliber),
+    })
+    + ticketRule()
+    + ticketActions(copyZoneOf({
+      envelope: input.envelope,
+      title: input.wakeWord,
+      key: input.key,
+      params: input.params,
+      source: input.source,
+      detail: input.detail,
+      actionAt: input.actionAt,
+    }));
+  return assembleSheetPage({
+    docTitle: input.docTitle,
+    bodyHtml: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+      + footNoteOf(input.sceneId, input.wakeWord),
+    paper: 'receipt',
+  });
 }
 
 /** bars 族 A 组 4 页＋C 组 5 页的票据纸正文（明细沿用既有 barGroups，条宽逐字节不动；C 组另带 listCards／charts，A 组为空故无影响）。 */
@@ -234,7 +233,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     eyebrow: s.eyebrow,
     value: s.value,
     unit: s.unit,
-    note: s.note,
+    stamp: { text: '只读', tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
@@ -260,6 +259,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
   return ticketDoc({
     docTitle: docTitleOf(r.title),
     wakeWord: input.wakeWord,
+    sceneId,
     h2: h2For(sceneId, r.count, p.barGroups.length === 0 ? 0 : p.barGroups[0].rows.length),
     windowLabel: r.label,
     summaryHtml: summary,
@@ -267,17 +267,12 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     ledgerHtml,
     detailHtml,
     caliber: r.caliber,
-    caliberTag: caliberTagOf(sceneId),
     key: input.key,
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
     detail: '取到 ' + String(r.count) + ' 条记录',
     actionAt: input.actionAt,
-    windowStart: r.from === '' ? NO_WINDOW : r.from,
-    windowEnd: r.to === '' ? NO_WINDOW : r.to,
-    count: r.count,
-    conclusion: r.conclusion,
   });
 }
 
@@ -306,7 +301,7 @@ export function ticketCompareDoc(
     eyebrow: '分析域 · 对比',
     value: sceneId === 'cat_compare' ? '见明细' : money(firstSideExpense(p)),
     unit: sceneId === 'cat_compare' ? '' : '元',
-    note: sceneId === 'cat_compare' ? '结论 · 明细与复制区与基线一致' : '支出 · 明细与复制区与基线一致',
+    stamp: { text: '只读', tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
@@ -328,6 +323,7 @@ export function ticketCompareDoc(
   return ticketDoc({
     docTitle: docTitleOf(r.title),
     wakeWord: input.wakeWord,
+    sceneId,
     h2: h2For(sceneId, r.count, r.page.barGroups.length === 0 ? 0 : r.page.barGroups[0].rows.length),
     windowLabel: r.label,
     summaryHtml: summary,
@@ -335,16 +331,11 @@ export function ticketCompareDoc(
     ledgerHtml: ledgerCompare(ledgerRows, sceneId),
     detailHtml,
     caliber: r.caliber,
-    caliberTag: caliberTagOf(sceneId),
     key: input.key,
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
     detail: '取到 ' + String(r.count) + ' 条记录',
     actionAt: input.actionAt,
-    windowStart: r.from === '' ? NO_WINDOW : r.from,
-    windowEnd: r.to === '' ? NO_WINDOW : r.to,
-    count: r.count,
-    conclusion: r.conclusion,
   });
 }

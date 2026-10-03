@@ -148,13 +148,14 @@ export function toTicketB(input: {
     eyebrow: '分析域 · 趋势',
     value: input.summaryValue,
     unit: input.summaryUnit,
-    note: input.summaryNote,
+    stamp: { text: '只读', tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
   return ticketDoc({
     docTitle: input.docTitle,
     wakeWord: input.wakeWord,
+    sceneId: input.sceneId,
     h2: input.h2,
     windowLabel: input.windowLabel,
     summaryHtml: summary,
@@ -162,16 +163,11 @@ export function toTicketB(input: {
     ledgerHtml: ledgerB(input.ledgerRows, input.sceneId),
     detailHtml: input.detailHtml,
     caliber: input.caliber,
-    caliberTag: '图只是示意排布，不用它读数；数字看上面和下面。',
     key: input.key,
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
     detail: '取到 ' + String(input.count) + ' 条记录',
     actionAt: input.actionAt,
-    windowStart: input.windowStart,
-    windowEnd: input.windowEnd,
-    count: input.count,
-    conclusion: input.conclusion,
   });
 }

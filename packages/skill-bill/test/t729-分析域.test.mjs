@@ -133,10 +133,14 @@ describe('#729 · 图表四条（裁定 3）与页面骨架（裁定 1／2／7�
     }
   });
 
-  it('页面骨架：一个页内导航块 ＋ 来源脚注 ＋ 口径行 ＋ 复制区 ＋ 无内部标识', () => {
+  // #1120 换块位：本域 25 页按判地（proto/analysis v2.1）重排，判地没有的块整批删。
+  it('页面骨架：判地块序（图形占位／明细卡／落点与口径）＋ 口径行 ＋ 复制区 ＋ 无内部标识', () => {
     const { text } = page('bill.analysis.overview', { kind: 'yearly', year: 2026 }, 'yearly');
-    assert.equal([...text.matchAll(/<nav[^>]*aria-label="页内导航"/g)].length, 1, '页内导航块恰一个');
-    assert.ok(text.includes('数据来源'), '来源脚注（裁定 2）');
+    assert.equal([...text.matchAll(/<nav[^>]*aria-label="页内导航"/g)].length, 0, '#1120：判地没有页内导航，整块删');
+    assert.equal([...text.matchAll(/数据来源/g)].length, 0, '#1120：判地没有来源脚注，整块删');
+    for (const [what, s] of [['图形占位', '图形占位'], ['明细卡', '明细卡'], ['落点与口径', '落点与口径'], ['✂ 裁切线', '✂ 裁切线']]) {
+      assert.ok(text.includes(s), '判地块缺：' + what);
+    }
     assert.match(text, /ilife-block-caliber/, '口径说明行（裁定 2）');
     assert.match(text, /ilife-copy|ilife-block-copy/, '复制区（裁定 5）');
     for (const [what, re] of [['bill.', /bill\./g], ['.py', /\.py/g], ['scripts/', /scripts\//g], ['undefined', /undefined/g], ['NaN', /NaN/g]]) {
@@ -150,10 +154,11 @@ describe('#729 · 图表四条（裁定 3）与页面骨架（裁定 1／2／7�
 });
 
 describe('#729 · 空窗与空库两态（裁定 4）＋ 转账口径', () => {
-  it('窗口内零记录：照出完整页（标题 ＋ 空态 ＋ 引导句 ＋ 来源脚注）', () => {
+  it('窗口内零记录：照出完整页（标题 ＋ 空态 ＋ 引导句 ＋ 判地块序）', () => {
     const { text } = page('bill.analysis.overview', { kind: 'monthly', month: '2025-09' }, 'empty-window');
     assert.match(text, /还没有|没有记录|暂无/, '空态句');
-    assert.ok(text.includes('数据来源'), '空窗页仍有来源脚注');
+    assert.ok(text.includes('落点与口径'), '#1120：空窗页仍出判地的落点与口径段');
+    assert.ok(text.includes('✂ 裁切线'), '空窗页仍有裁切线');
   });
 
   it('库为空：仍是 exit 4（设计行为，本条不得改）', () => {
