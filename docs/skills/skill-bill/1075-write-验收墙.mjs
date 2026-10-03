@@ -49,6 +49,7 @@ const CSS = [
   'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}',
   '.wrap{padding:24px 20px 60px}h1{font-size:22px;font-weight:600;margin-bottom:6px}',
   '.sub{color:#6e6e73;font-size:13.5px;margin-bottom:18px;line-height:1.75;max-width:1500px}',
+  '.banner{background:#fff8e6;border:1px solid #e6c98a;border-left:6px solid #b4552d;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;font-weight:700;color:#5a3a12;line-height:1.7;max-width:1500px}',
   '.okbar{position:sticky;top:0;z-index:50;background:#fff;border:1px dashed #1d1d1f;border-radius:10px;padding:8px 10px;margin-bottom:14px;font-size:12.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
   '.okbar .cnt{font-weight:700;font-variant-numeric:tabular-nums}.okbar .msg{color:#6e6e73;font-size:12px}',
   '.okbar button{font:inherit;font-size:12px;background:#fff;border:1px solid #1d1d1f;border-radius:8px;padding:4px 10px;cursor:pointer}',
@@ -113,7 +114,9 @@ function render(kind) {
   return '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">\n'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
     + '<title>' + h1 + '</title><style>' + CSS + gridCss + '</style></head>\n'
-    + '<body><div class="wrap"><h1>' + h1 + '</h1>\n<div class="sub">' + sub + '</div>\n'
+    + '<body><div class="wrap"><h1>' + h1 + '</h1>\n'
+    + '<div class="banner">两侧数据不同：左＝本仓夹具真跑产物，右＝判地内置样本值；本墙判版式与件套，不比数值。</div>\n'
+    + '<div class="sub">' + sub + '</div>\n'
     + bar(wallName, rows.length) + '\n<div class="grid">\n' + cells + '\n</div></div>\n'
     + script(wallName) + '</body></html>\n';
 }

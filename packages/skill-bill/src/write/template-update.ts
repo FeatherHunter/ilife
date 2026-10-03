@@ -11,13 +11,14 @@
  *     第 2 段标题 ● → 缺项阻断条（折叠）● → 中段 ●（缺编号＝候选单选；选定＝只读回显 ＋ 一岔：
  *     diff 表／说明块／一行口径／不出）→ 复制 prompt 区 ● → 复制区 ● → 来源脚注 ●（#688 §五 第 26 行）
  *   回执页（一纸）：店头（品牌行＋改动结论标题）● → 主数字头 ●（金额唯一＋印章）→ 改后落点账目 ● →
- *     结果表 ○（撤销＝撤销标记对照、恢复＝标记现值；改记录不出）→ 退出口真按钮 ○ →
- *     复制区 ●（纸外页脚已按用户要求撤掉）。
+ *     结果表 ○（撤销＝撤销标记对照、恢复＝标记现值；改记录不出）→ 核对段 ●（编号＋异常）→
+ *     退出口真按钮 ○ → 复制区 ● → ✂ 裁切线 → 纸外页脚 ●（`饼干记账 · <词>回执`）。
+ *  **#1075 复跑补两块**（负责人 2026-10-04 裁）：核对段与纸外页脚 2026-10-02 按用户要求撤（`f44e4064`）、2026-10-03 `4cd7a1f6` 起查询域已放回 ⇒ 本件是最后没跟上处，补齐为 `./receiptPaper.js` 那 13 页同形。
  * 谁在用（三个调用点，指名）：`src/write/scene-{update,undo,restore}.ts`——各件的 `Scene.collect`／`Scene.receipt`
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { renderCaliberLine, renderDataTable, renderDisclosure, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
-import type { SerializableEnvelope } from 'base-paint';
+import { escapeHtml, type SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
@@ -294,9 +295,13 @@ function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
-/** 结果型回执页（一纸 #993 v5）：店头＋主数字＋落点账目＋结果表＋退出口真按钮＋复制区。
- *  页内导航、明细表、对账折叠与徽章行按一数一处撤掉（改动结论住店头，编号住落点账目行内）；
- *  纸外页脚（来源脚注＋编号）已按用户要求撤掉（用户 2026-10-02 点名删除）。 */
+/** 核对那一行（原型 `.check-mini`）：形状逐字照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
+function checkHtml(recordId: number | null): string {
+  const text = '编号 ' + (recordId === null ? '还没有' : String(recordId)) + ' ／ 异常：无';
+  return '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span><span>' + escapeHtml(text) + '</span></div>';
+}
+
+/** 结果型回执页（一纸 #993 v5）：店头＋主数字＋落点账目＋结果表＋核对段＋退出口真按钮＋复制区＋纸外页脚（页内导航／明细表／对账折叠／徽章行按一数一处撤掉，编号住核对段一行；两块见件头「#1075 复跑补两块」）。 */
 function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
@@ -315,6 +320,8 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
     + ticketSection({ title: '改后落点', tag: 'LEDGER', content: renderLedgerRows({ rows: landedRows(input.facts), layout: 'ticket' }) })
     + (result === '' ? '' : ticketRule() + result)
     + ticketRule()
+    + ticketSection({ title: '核对', tag: '', content: checkHtml(receipt.recordId) })
+    + ticketRule()
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit))
       + copyArea({
         data: { envelope },
@@ -331,7 +338,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
       + (spec.receiptExit === 'undo' ? renderCaliberLine(UNDO_CALIBER) : ''));
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }),
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }) + '<p class="ilife-ticket-foot">' + escapeHtml((spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake) + '回执') + '</p>',
   });
   return assembleSheetPage({
     docTitle: docTitleOf(spec.wake + ' 回执'),
