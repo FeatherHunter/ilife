@@ -54,10 +54,30 @@ export interface LookupIndexModel {
   readonly aliasMark: string;
   readonly extraClass?: string;
 }
+/** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
+const ROOT_KEYS: readonly string[] = ['anchors', 'groups', 'total', 'countNote', 'aliasMark', 'extraClass'];
+/** 一个锚点只许带的键。 */
+const ANCHOR_KEYS: readonly string[] = ['id', 'label'];
+/** 一组只许带的键。 */
+const GROUP_KEYS: readonly string[] = ['label', 'rows'];
+/** 组内一行只许带的键。 */
+const ROW_KEYS: readonly string[] = ['wake', 'goto', 'alias'];
+
+/** 总数量级上限：判据是「两笔同量级的读数相加会不会溢出」——`1e308` 是有限数，
+ *  可它与任何同量级的读数相加就成 `Infinity`，屏上写出 `1e+308` 这种读不出来的数。 */
+const LOOKUP_INDEX_MAGNITUDE_MAX = Number.MAX_VALUE;
+
+function assertKeys(value: object, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) badInput(field + ' 不认识这个键：' + key);
+  }
+}
+
 function reqAnchors(value: unknown): LookupIndexModel['anchors'] {
   if (!Array.isArray(value) || value.length === 0) badInput('renderLookupIndex: input.anchors 必须是非空数组');
   return value.map((a, i) => {
     assertPlainObject(a, 'renderLookupIndex: input.anchors[' + i + ']');
+    assertKeys(a as Record<string, unknown>, ANCHOR_KEYS, 'renderLookupIndex: input.anchors[' + i + ']');
     const r = a as Record<string, unknown>;
     return { id: reqText(r.id, 'renderLookupIndex: input.anchors[' + i + '].id'), label: reqText(r.label, 'renderLookupIndex: input.anchors[' + i + '].label') };
   });
@@ -66,11 +86,13 @@ function reqGroups(value: unknown): LookupIndexModel['groups'] {
   if (!Array.isArray(value) || value.length === 0) badInput('renderLookupIndex: input.groups 必须是非空数组');
   return value.map((g, i) => {
     assertPlainObject(g, 'renderLookupIndex: input.groups[' + i + ']');
+    assertKeys(g as Record<string, unknown>, GROUP_KEYS, 'renderLookupIndex: input.groups[' + i + ']');
     const r = g as Record<string, unknown>;
     const label = reqText(r.label, 'renderLookupIndex: input.groups[' + i + '].label');
     if (!Array.isArray(r.rows) || r.rows.length === 0) badInput('renderLookupIndex: input.groups[' + i + '].rows 必须是非空数组');
     const rows = (r.rows as unknown[]).map((row, j) => {
       assertPlainObject(row, 'renderLookupIndex: input.groups[' + i + '].rows[' + j + ']');
+      assertKeys(row as Record<string, unknown>, ROW_KEYS, 'renderLookupIndex: input.groups[' + i + '].rows[' + j + ']');
       const o = row as Record<string, unknown>;
       const alias = o.alias === undefined ? false : o.alias;
       if (typeof alias !== 'boolean') badInput('renderLookupIndex: input.groups[' + i + '].rows[' + j + '].alias 必须是布尔值');
@@ -84,8 +106,13 @@ export function normalizeLookupIndex(input: unknown): LookupIndexModel {
   assertPlainObject(input, 'renderLookupIndex: input');
   const raw = input as Record<string, unknown>;
   for (const k of Object.keys(raw)) if (/^on/i.test(k)) badInput('renderLookupIndex: input 不得含内联事件字段：' + k);
+  assertKeys(raw, ROOT_KEYS, 'renderLookupIndex: input');
   const total = raw.total;
   if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) badInput('renderLookupIndex: input.total 必须是非负有限数');
+  if (Math.abs(total) + Math.abs(total) > LOOKUP_INDEX_MAGNITUDE_MAX) {
+    badInput('renderLookupIndex: input.total 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+      + '（屏上会写出 `1e+308` 这类读不出来的数）');
+  }
   return {
     anchors: reqAnchors(raw.anchors),
     groups: reqGroups(raw.groups),

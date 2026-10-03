@@ -47,11 +47,21 @@ export interface ChartPlaceholderModel {
   readonly kind: ChartPlaceholderKind;
   readonly extraClass?: string;
 }
+/** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
+const ROOT_KEYS: readonly string[] = ['title', 'lines', 'needReal', 'kind', 'extraClass'];
+
+function assertKeys(value: object, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) badInput(field + ' 不认识这个键：' + key);
+  }
+}
+
 /** 入参归一化（唯一入口：`renderChartPlaceholder` 只吃它产出的模型）。 */
 export function normalizeChartPlaceholder(input: unknown): ChartPlaceholderModel {
   assertPlainObject(input, 'renderChartPlaceholder: input');
   const raw = input as Record<string, unknown>;
   for (const k of Object.keys(raw)) if (/^on/i.test(k)) badInput('renderChartPlaceholder: input 不得含内联事件字段：' + k);
+  assertKeys(raw, ROOT_KEYS, 'renderChartPlaceholder: input');
   const title = reqText(raw.title, 'renderChartPlaceholder: input.title');
   let lines: readonly string[] = CHART_PLACEHOLDER_DEFAULT_LINES;
   if (raw.lines !== undefined) {

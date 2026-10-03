@@ -52,11 +52,21 @@ export interface NegativeBarModel {
   readonly note: string;
   readonly extraClass?: string;
 }
+/** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
+const ROOT_KEYS: readonly string[] = ['value', 'label', 'pctText', 'mode', 'tone', 'note', 'extraClass'];
+
+function assertKeys(value: object, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) badInput(field + ' 不认识这个键：' + key);
+  }
+}
+
 /** 入参归一化（唯一入口：`renderNegativeBar` 只吃它产出的模型）。 */
 export function normalizeNegativeBar(input: unknown): NegativeBarModel {
   assertPlainObject(input, 'renderNegativeBar: input');
   const raw = input as Record<string, unknown>;
   for (const k of Object.keys(raw)) if (/^on/i.test(k)) badInput('renderNegativeBar: input 不得含内联事件字段：' + k);
+  assertKeys(raw, ROOT_KEYS, 'renderNegativeBar: input');
   const mode = raw.mode === undefined ? 'hollow' : raw.mode;
   if (!(NEGATIVE_BAR_MODES as readonly unknown[]).includes(mode)) {
     badInput('renderNegativeBar: input.mode 必须是 ' + NEGATIVE_BAR_MODES.join('／') + ' 之一');

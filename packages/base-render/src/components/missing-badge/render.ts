@@ -40,11 +40,21 @@ export interface MissingBadgeModel {
   readonly state: MissingBadgeState;
   readonly extraClass?: string;
 }
+/** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
+const ROOT_KEYS: readonly string[] = ['label', 'reason', 'state', 'extraClass'];
+
+function assertKeys(value: object, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) badInput(field + ' 不认识这个键：' + key);
+  }
+}
+
 /** 入参归一化（唯一入口：`renderMissingBadge` 只吃它产出的模型）。 */
 export function normalizeMissingBadge(input: unknown): MissingBadgeModel {
   assertPlainObject(input, 'renderMissingBadge: input');
   const raw = input as Record<string, unknown>;
   for (const k of Object.keys(raw)) if (/^on/i.test(k)) badInput('renderMissingBadge: input 不得含内联事件字段：' + k);
+  assertKeys(raw, ROOT_KEYS, 'renderMissingBadge: input');
   const state = raw.state === undefined ? 'missing' : raw.state;
   if (!(MISSING_BADGE_STATES as readonly unknown[]).includes(state)) {
     badInput('renderMissingBadge: input.state 必须是 ' + MISSING_BADGE_STATES.join('／') + ' 之一');
