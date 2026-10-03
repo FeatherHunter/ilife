@@ -1,0 +1,283 @@
+/** 查询域·查欠款票据纸（w14 专属，`bill.record.search` 的 `debt` 分支）。
+ *
+ * 原型（唯一判地）：`.scratch/1019-p-query/w14-查欠款-v2.1.html`（`*-v2*.html` 取版本号最高者）。
+ * 纸头 `饼干记账 · 查欠款` ＋ H2 `还欠着 N 笔，X 元` ＋ 副题 `还欠着的那些账` ＋
+ * 主数字（待还欠款 · N 笔／支出唯一）＋ 结论标准句 ＋ 落点 LEDGER（收入／净额／落点账本／币种）＋
+ * 分类占比 SCALE ＋ 明细 DETAIL（序号／备注／分类·账户·时刻·#编号／金额）＋
+ * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无）＋ 复制区（复制数据▾三格式＋复制日志）＋
+ * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查欠款`。口径句已删（1045 全删），本页无 scale-note。
+ *
+ * 谁在用（一个调用点，指名）：`./read.js` 的 `viewRecordSearch` 的 `debt` 分支（有数时）。
+ * 空结果（零行）走老 `listOut` 路——空态句与引导一字不动，本件不碰空态。
+ *
+ * 载荷一字不动：`data` 键＝`items／total／kind('debt')／kpi`（与搬迁前同形，经 `./list.js`
+ * 的 `listEnvelope` 出）；页面明细那份文本化只进明细行。KPI 与分类口径与 `./list.js`
+ * 的 `listOut` 同源（支出取绝对值合计，占比＝分类支出÷本页支出）。
+ * 呈现映射沿 `./detail.js`（#993 小票化）与 `./ticketRecent.js`（w04 票据纸先例）：
+ * 店头／主数字／段落／复制区走共用位与公共层组件，明细卡与对账行是本页自有标记
+ * （类名 `ilife-debt-*`，作用域限 `.ilife-ticket-detail`，详情页与最近页零命中）；
+ * 颜色与圆角一律读皮肤 token，不抄字面色。
+ */
+import { escapeHtml } from 'base-paint';
+import { renderCaliberLine, renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import type { BillRow } from '../fetch/index.js';
+import type { ViewOut } from '../shared/commandSpec.js';
+import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
+import { DB_FILENAME } from '../fetch/index.js';
+import { estimateBytes } from '../render/html.js';
+import { toBillItem } from './items.js';
+import { listEnvelope, queryListDoc } from './list.js';
+import type { QueryCategoryRow, QueryListData } from './list.js';
+import { queryStyleTag } from './pageParts.js';
+import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
+import { commandLine, writeSection } from '../shared/writeParts.js';
+
+/** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
+const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+
+/** 一整页的体积预算（字节，与 `./list.js` 的 `PAGE_BYTE_BUDGET` 同值：超了回落老列表路，不静默丢页）。 */
+const PAGE_BYTE_BUDGET = 240_000;
+
+/** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
+const CATEGORY_LIMIT = 8;
+
+/** w14 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，他页零命中）。 */
+const DEBT_TICKET_CSS = [
+  '.ilife-ticket-detail .ilife-debt-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }',
+  '.ilife-ticket-detail .ilife-debt-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
+  '.ilife-ticket-detail .ilife-debt-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
+  '.ilife-ticket-detail .ilife-debt-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; }',
+  '.ilife-ticket-detail .ilife-debt-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
+  '.ilife-ticket-detail .ilife-debt-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-debt-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
+].join('\n');
+
+/** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
+function sumText(n: number): string {
+  return (Number.isFinite(n) ? n : 0).toFixed(2);
+}
+
+/** 空值占位（落点账本／币种／备注无值即此符，不缺席）。 */
+const EMPTY_CELL = '—';
+
+/** 文本或占位（空串／全空格即占位，前后空格不进页）。 */
+function textOrDash(v: string): string {
+  return v.trim() === '' ? EMPTY_CELL : v;
+}
+
+/** 出现次数最多的那个值（并列取展示序里第一个；单账本／单币种时即该值）。 */
+function dominantOf(values: readonly string[]): string {
+  const count = new Map<string, number>();
+  for (const v of values) count.set(v, (count.get(v) ?? 0) + 1);
+  let best = values[0] ?? '';
+  let bestN = -1;
+  for (const v of values) {
+    const n = count.get(v) ?? 0;
+    if (n > bestN) { bestN = n; best = v; }
+  }
+  return textOrDash(best);
+}
+
+/** 结论标准句（与 `./list.js` 的 `conclusionOf` 同字：有支出取首类，无支出说清只有收入）。 */
+function conclusionOf(categories: readonly QueryCategoryRow[]): string {
+  const top = categories[0];
+  if (top === undefined) return '本页只有收入，没有支出。';
+  return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
+    + String(Math.round(top.pct)) + '%。';
+}
+
+/** KPI 与分类聚合（与 `./list.js` 的 `listOut` 同源：支出取绝对值合计，占比＝分类支出÷本页支出）。 */
+function kpiOf(records: readonly BillRow[]): { readonly expense: number; readonly income: number; readonly net: number } {
+  let expense = 0;
+  let income = 0;
+  for (const r of records) {
+    if (r.amount < 0) expense += -r.amount;
+    else income += r.amount;
+  }
+  return { expense, income, net: income - expense };
+}
+
+/** 分类聚合（支出按分类归堆，降序；收入不进占比）。 */
+function categoriesOf(records: readonly BillRow[], expense: number): readonly QueryCategoryRow[] {
+  if (expense === 0) return [];
+  const by = new Map<string, { total: number; count: number }>();
+  for (const r of records) {
+    if (r.amount >= 0) continue;
+    const e = by.get(r.category) ?? { total: 0, count: 0 };
+    e.total += -r.amount;
+    e.count += 1;
+    by.set(r.category, e);
+  }
+  return [...by.entries()]
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([label, v]) => ({ label, amount: v.total, count: v.count, pct: (v.total / expense) * 100 }));
+}
+
+/** 落点 LEDGER 四行（原型逐字：收入／净额／落点账本／币种；金额裸数不带单位）。 */
+function ledgerHtml(kpi: { readonly income: number; readonly net: number }, records: readonly BillRow[]): string {
+  return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({
+    rows: [
+      { label: '收入', value: sumText(kpi.income) },
+      { label: '净额', value: sumText(kpi.net) },
+      { label: '落点账本', value: dominantOf(records.map((r) => r.ledger)) },
+      { label: '币种', value: dominantOf(records.map((r) => r.currency)) },
+    ],
+    layout: 'ticket',
+  }) + '</div>';
+}
+
+/** 分类占比 SCALE（与列表页同一组件；超 8 类截断明示，不静默截）。 */
+function scaleHtml(categories: readonly QueryCategoryRow[]): string {
+  const shown = categories.slice(0, CATEGORY_LIMIT);
+  const hidden = categories.length - shown.length;
+  const rows = renderDistributionRows({
+    rows: shown.map((c) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: c.pct })),
+  });
+  return rows + (hidden > 0
+    ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
+    : '');
+}
+
+/** 明细 DETAIL（展示序即入参序：序号由卡片计数器出，备注首行，次行分类·账户·时刻·#编号，金额右对齐）。 */
+function entriesHtml(records: readonly BillRow[]): string {
+  return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + records.map((r) => {
+    const note = textOrDash(r.note);
+    const sub = textOrDash(r.category) + ' · ' + textOrDash(r.account) + ' · '
+      + '<span class="ilife-debt-mono">' + escapeHtml(r.time) + '</span> · #' + String(r.id);
+    return '<li><span class="ilife-ticket-entry-text">备注 · ' + escapeHtml(note)
+      + '<span class="ilife-debt-sub">' + sub + '</span></span>'
+      + '<span class="ilife-debt-amt">' + escapeHtml(r.amount.toFixed(2)) + '</span></li>';
+  }).join('') + '</ol></div>';
+}
+
+/** 对账 CHECK（原型逐字：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线与冒号）。 */
+function checkHtml(records: readonly BillRow[]): string {
+  const ids = records.map((r) => String(r.id)).join('、');
+  return '<div class="ilife-debt-check"><span class="ilife-debt-check-dot" aria-hidden="true"></span>'
+    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + String(records.length) + ' 笔 ／ 异常：无</span></div>';
+}
+
+/** 查欠款票据纸的入参（调用方 `./read.js` 的 debt 分支已按未还口径取好窗）。 */
+export interface DebtTicketInput {
+  readonly key: string;
+  readonly params: Record<string, unknown>;
+  readonly wakeWord: string;
+  readonly window: string;
+  readonly records: readonly BillRow[];
+}
+
+/** 查欠款票据纸：一整页（载荷与 `./list.js` 同形，呈现照 w14 v2.1 原型）。 */
+export function queryDebtTicketDoc(input: DebtTicketInput): string {
+  const records = [...input.records];
+  const kpi = kpiOf(records);
+  const categories = categoriesOf(records, kpi.expense);
+  const conclusion = records.length === 0
+    ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
+    : conclusionOf(categories);
+  const data: QueryListData = {
+    items: records.map(toBillItem),
+    total: records.length,
+    kind: 'debt',
+    kpi: { count: records.length, expense: kpi.expense, income: kpi.income, net: kpi.net },
+  };
+  const envelope = listEnvelope(input.key, data);
+  const paper = queryStyleTag() + '<style>' + DEBT_TICKET_CSS + '</style>'
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('还欠着 ' + String(records.length) + ' 笔，' + sumText(kpi.expense) + ' 元'))
+    + '<p class="ilife-debt-shop-sub">' + escapeHtml(input.window) + '</p>'
+    + ticketRule()
+    + ticketSummary(renderSummaryHead({
+      eyebrow: '待还欠款 · ' + String(records.length) + ' 笔',
+      value: sumText(kpi.expense),
+      unit: '元',
+      layout: 'ticket',
+    }), '<p class="ilife-ticket-summary-note">' + escapeHtml(conclusion) + '</p>')
+    + ticketRule()
+    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, records) })
+    + ticketRule()
+    + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(categories) })
+    + ticketRule()
+    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(records) })
+    + ticketRule()
+    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(records) })
+    + ticketRule()
+    + ticketActions(copyArea({
+      data: { envelope, title: input.wakeWord },
+      log: {
+        envelope,
+        copyLog: copyLog({
+          command: commandLine(input.key, input.params),
+          source: SOURCE_QUERY,
+          detail: '查到 ' + String(records.length) + ' 笔',
+          actionAt: actionStamp(),
+          version: DOC_VERSION,
+        }),
+      },
+    }));
+  const content = writeSection({
+    slot: 'list', page: 'list', shape: 'list', key: input.key,
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+      + '<div class="ilife-debt-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</div>',
+  });
+  return assembleSheetPage({
+    docTitle: DOC_TITLE + '·查询',
+    bodyHtml: content,
+    paper: 'detail',
+  });
+}
+
+/** debt 分支的出口：载荷与 `./list.js` 同形，页走本件票据纸；超体积回落老列表路（不静默丢页）。 */
+export function debtTicketOut(input: DebtTicketInput): ViewOut {
+  const html = queryDebtTicketDoc(input);
+  if (estimateBytes(html) <= PAGE_BYTE_BUDGET) {
+    const records = [...input.records];
+    const kpi = kpiOf(records);
+    const data: QueryListData = {
+      items: records.map(toBillItem),
+      total: records.length,
+      kind: 'debt',
+      kpi: { count: records.length, expense: kpi.expense, income: kpi.income, net: kpi.net },
+    };
+    return { data, page: { wakeWord: input.wakeWord, kind: 'single' }, html };
+  }
+  const rows = [...input.records].map((r) => ({
+    id: String(r.id),
+    time: r.time,
+    category: r.category,
+    amount: r.amount.toFixed(2),
+    account: r.account,
+    ledger: r.ledger,
+    note: r.note,
+  }));
+  const kpi = kpiOf(input.records);
+  const cats = categoriesOf(input.records, kpi.expense);
+  const data: QueryListData = {
+    items: [...input.records].map(toBillItem),
+    total: input.records.length,
+    kind: 'debt',
+    kpi: { count: input.records.length, expense: kpi.expense, income: kpi.income, net: kpi.net },
+  };
+  return {
+    data,
+    page: { wakeWord: input.wakeWord, kind: 'single' },
+    html: queryListDoc({
+      key: input.key,
+      params: input.params,
+      shape: 'list',
+      wakeWord: input.wakeWord,
+      window: input.window,
+      chips: ['共 ' + String(input.records.length) + ' 笔'],
+      rows,
+      kpi: { count: input.records.length, expense: kpi.expense, income: kpi.income, net: kpi.net },
+      categories: cats,
+      emptyText: '没有找到符合条件的记录',
+      emptyHint: '换个关键词试试，也可以看看「查最近」。',
+      envelope: listEnvelope(input.key, data),
+      source: SOURCE_QUERY,
+      sourceText: '记账库（只读）',
+      windowStart: '不限',
+      windowEnd: '不限',
+      actionAt: actionStamp(),
+    }),
+  };
+}

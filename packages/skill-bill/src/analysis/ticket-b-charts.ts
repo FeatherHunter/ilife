@@ -103,10 +103,15 @@ export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): 
     if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   const category = sceneId === 'cat_trend' ? (r.label.split(' · ')[0] ?? '') : '';
+  /* a21 本页段落：H2 计数＝明细项数（环比行＋暴涨行，含空态占位行），不是记录笔数；
+   * 原型 v2.1「异常共记 2 项」即 1 条环比＋1 条暴涨空态行；其余三页沿用 r.count。载荷键不动。 */
+  const h2Count = sceneId === 'anomaly'
+    ? (p.listCards[0]?.rows.length ?? 0) + (p.factCards[0]?.rows.length ?? 0)
+    : r.count;
   return toTicketB({
     docTitle: docTitleOf(r.title),
     wakeWord: input.wakeWord,
-    h2: h2ForB(sceneId, r.count, category),
+    h2: h2ForB(sceneId, h2Count, category),
     windowLabel: r.label,
     summaryValue,
     summaryUnit,

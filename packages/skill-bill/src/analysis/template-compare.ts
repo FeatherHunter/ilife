@@ -37,15 +37,51 @@ function sideExpense(side: ComparePage['sides'][number] | undefined): string {
   return '0.00';
 }
 
-/** compare 落点三行（原型 PAGES 表式，数字只搬家）：两段支出＋支出差／差最大＋合计差。 */
+/** compare 落点（原型 v2.1 PAGES 表式，数字只搬家）：a11 range 四行（前段／后段／支出差／差得最多），其余三页照旧。 */
 function ledgerRowsOfCompare(kind: unknown, p: ComparePage, conclusion: string): readonly { k: string; v: string }[] {
   if ((typeof kind === 'string' ? kind : '') === 'category') {
     const head = p.barGroups.length === 0 || p.barGroups[0].rows.length === 0 ? undefined : p.barGroups[0].rows[0];
-    const maxText = head === undefined ? '暂无' : head.label + ' ' + head.text.split('（')[0].trim();
+    const range = head === undefined ? '' : (head.text.split('·')[0] ?? '').trim();
+    const diffPart = head === undefined ? '' : (head.text.split('·')[1] ?? '').split('（')[0].trim();
+    const maxText = head === undefined ? '暂无' : head.label + ' ' + diffPart + ' 元（' + range + '）';
     const m = conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
     return [
       { k: '差最大', v: maxText },
       { k: '支出合计差', v: m === null ? '—' : m[1] },
+    ];
+  }
+  if ((typeof kind === 'string' ? kind : '') === 'range') {
+    const ra = p.sides[0];
+    const rb = p.sides[1];
+    const raw = p.change.text.replace(/^支出\s*/, '').split('·')[0].trim().replace(/^[↑↓→]\s*/, '');
+    const head = p.barGroups.length === 0 || p.barGroups[0].rows.length === 0 ? undefined : p.barGroups[0].rows[0];
+    let maxText = '暂无';
+    if (head !== undefined) {
+      const seg = head.text.split('·')[1]?.split('（')[0]?.trim() ?? '';
+      maxText = head.label + ' ' + seg + ' 元';
+    }
+    return [
+      { k: '前段支出', v: sideExpense(ra) + ' 元' },
+      { k: '后段支出', v: sideExpense(rb) + ' 元' },
+      { k: '支出差', v: raw === '' ? '—' : raw },
+      { k: '差得最多', v: maxText },
+    ];
+  }
+  /* a12 看同比：PAGES 表三行式（2026-10 支出／2025-10 支出／同比差＋55.00 元式），数字只搬家。 */
+  if ((typeof kind === 'string' ? kind : '') === 'yoy') {
+    const ya = p.sides[0];
+    const yb = p.sides[1];
+    const yMonthA = (ya === undefined ? '' : ya.title).replace(/ 今年$/, '');
+    const yMonthB = (yb === undefined ? '' : yb.title).replace(/ 去年$/, '');
+    const yExpA = Number(sideExpense(ya).replace(/,/g, ''));
+    const yExpB = Number(sideExpense(yb).replace(/,/g, ''));
+    const yDiff = Number.isFinite(yExpA) && Number.isFinite(yExpB) ? yExpA - yExpB : 0;
+    const ySigned = yDiff > 0 ? '+' + money(yDiff) : money(yDiff);
+    const yPct = (p.change.text.match(/（([^）]+)）/) ?? [])[1] ?? '—';
+    return [
+      { k: (yMonthA === '' ? '本期' : yMonthA) + ' 支出', v: sideExpense(ya) + ' 元' },
+      { k: (yMonthB === '' ? '对比期' : yMonthB) + ' 支出', v: sideExpense(yb) + ' 元' },
+      { k: '同比差', v: yPct === '—' ? '—' : ySigned + ' 元（' + yPct + '）' },
     ];
   }
   const a = p.sides[0];

@@ -71,7 +71,7 @@ export const sceneOverview: AnalysisScene = {
           title: '区间标注',
           rows: [
             { k: '期间', v: label },
-            { k: '日均支出', v: money(dailyAvg) + ' 元' },
+            { k: '日均支出', v: money(dailyAvg) + ' 元（' + String(days) + ' 天）' },
           ],
         }],
         empty: {

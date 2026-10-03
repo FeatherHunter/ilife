@@ -24,6 +24,19 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import { calcKpi } from '../shared/kpi.js';
 import { calcCategories } from '../analysis/index.js';
 import { toBillItem } from './items.js';
+import { somedayTicketOut } from './ticket-day.js';
+import { accountTicketOut } from './ticketAccount.js';
+import { categoryTicketOut } from './ticketCategory.js';
+import { ledgerTicketOut } from './ticketLedger.js';
+import { debtTicketOut } from './ticketDebt.js';
+import { installmentTicketOut } from './ticketInstallment.js';
+import { reimburseTicketOut } from './ticketReimburse.js';
+import { intervalTicketOut } from './ticketInterval.js';
+import { monthTicketOut } from './ticketMonth.js';
+import { recentTicketOut } from './ticketRecent.js';
+import { todayTicketOut } from './ticketToday.js';
+import { weekTicketOut } from './ticketWeek.js';
+import { yesterdayTicketOut } from './ticketYesterday.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
@@ -125,7 +138,8 @@ function todayWakeWord(params: Record<string, unknown>): string {
   return projectWakeWord({ key: 'bill.record.today', preset: params });
 }
 
-/** today 分支的空态四句（**唯一判地**）+ 查某天自指已摘（说「换个日子再查一次」而不是「查某天」）。 */
+/** today 分支的空态四句（**唯一判地**）+ 查某天自指已摘（说「换个日子再查一次」而不是「查某天」）。
+ *  w02 查昨天 v2.1（`w02-查昨天-v2.1.html`：窗口 `date + ' 这一天'`／结论标准句／单类 100%，载荷键不动）。 */
 function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
   if (params.date === 'yesterday') return { emptyText: '昨天还没有记录', emptyHint: '要补昨天那笔就说「记支出」。' };
   if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」。换个日子再查一次。' };
@@ -143,6 +157,12 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
     const records = fetchAll(db)
       .sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id)
       .slice(0, limit as number);
+    if (records.length > 0) {
+      return recentTicketOut({
+        key, params, wakeWord: todayWakeWord(params),
+        window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records, limit: limit as number,
+      });
+    }
     return listOut({
       key, params, wakeWord: todayWakeWord(params), window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records,
       extra: { date: 'recent' },
@@ -154,9 +174,37 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   }
   const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
   const records = listToday(db, date);
+  // w01 查今天 v2.1 票据纸（`w01-查今天-v2.1.html`）：唤醒词是查今天且有数时走本页票据；
+  // 查昨天／查某天／零行仍走老 `listOut` 路（各归各席，空态四句一字不动）。
+  const wakeWord = todayWakeWord(params);
+  if (wakeWord === '查今天' && records.length > 0) {
+    const ticket = todayTicketOut({
+      key, params, wakeWord, window: date + ' 这一天', date, records,
+      emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。',
+    });
+    if (ticket !== null) return ticket;
+  }
   const empty = todayEmpty(params);
+  // w02 查昨天 v2.1 票据纸（`w02-查昨天-v2.1.html`）：唤醒词是查昨天且有数时走本页票据；
+  // 查今天／查某天／零行仍走老路（各归各席，空态四句一字不动）。
+  if (wakeWord === '查昨天' && records.length > 0) {
+    const ticket = yesterdayTicketOut({
+      key, params, wakeWord, window: date + ' 这一天', date, records,
+      emptyText: empty.emptyText, emptyHint: empty.emptyHint,
+    });
+    if (ticket !== null) return ticket;
+  }
+  // w03 查某天 v2.1 票据纸（`w03-查某天-v2.1.html`）：唤醒词是查某天且有数时走本页票据；
+  // 查今天／查昨天／零行仍走老路（各归各席，空态四句一字不动）。
+  if (wakeWord === '查某天' && records.length > 0) {
+    const ticket = somedayTicketOut({
+      key, params, wakeWord, window: date + ' 这一天', date, records,
+      emptyText: empty.emptyText, emptyHint: empty.emptyHint,
+    });
+    if (ticket !== null) return ticket;
+  }
   return listOut({
-    key, params, wakeWord: todayWakeWord(params), window: date + ' 这一天', records,
+    key, params, wakeWord, window: date + ' 这一天', records,
     extra: { date },
     emptyText: empty.emptyText,
     emptyHint: empty.emptyHint,
@@ -211,29 +259,22 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   const cond = { category, account, ledger };
   if (params.range === 'week' || params.range === 'month') {
     const anchor = rangeAnchor(params);
-    const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor);
+    const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor); // w06 查周 v2.1 原型锚点：周一..锚点（本周）＋结论64%／占比64-36／载荷键不动（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
-    return listOut({
-      key, params, wakeWord: projectWakeWord({ key, preset: params }),
-      window: start + ' ~ ' + end + (params.range === 'week' ? '（本周）' : '（本月）'),
-      records, extra: { start, end },
-      emptyText: '这一段没有记录',
-      emptyHint: '换个起止日期再查一次。',
-      windowStart: start,
-      windowEnd: end,
-    });
+    const wakeWord = projectWakeWord({ key, preset: params });
+    const window = start + ' ~ ' + end + (params.range === 'week' ? '（本周）' : '（本月）');
+    if (params.range === 'month') {
+      return monthTicketOut({ key, params, wakeWord, window, records, start, end }); // w07 查月 v2.1 票据纸（.scratch/1019-p-query/w07-查月-v2.1.html manifest seq6）：结论64%／占比64-36／载荷键不动
+    }
+    return weekTicketOut({ key, params, wakeWord, window, records, start, end }); // w06 查周 v2.1 票据纸（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）：H2本周／主数字本周支出／结论64%／占比64-36／载荷键不动
   }
   if (params.start !== undefined || params.end !== undefined) {
     const { start, end } = resolveRange(params);
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
-    return listOut({
-      key, params, wakeWord: projectWakeWord({ key, preset: params }), window: start + ' ~ ' + end, records, extra: { start, end },
-      emptyText: '这一段没有记录',
-      emptyHint: '换个起止日期再查一次。',
-      windowStart: start,
-      windowEnd: end,
+    return intervalTicketOut({ // w08 查区间 v2.1 票据纸（.scratch/1019-p-query/w08-查区间-v2.1.html manifest seq7）：H2缩短／日期一处／结论41%／占比41-24-19-7-5-4／载荷键不动
+      key, params, wakeWord: projectWakeWord({ key, preset: params }), window: start + ' ~ ' + end, records, start, end,
     });
   }
   if (category !== undefined || account !== undefined || ledger !== undefined) {
@@ -241,8 +282,22 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', '条件无记录（缺失阻断，不返空统计）');
     const by = category !== undefined ? '分类' : account !== undefined ? '账户' : '账本';
     const value = String(category ?? account ?? ledger);
+    const wakeWord = projectWakeWord({ key, preset: params });
+    const window = by + '＝' + value + '（全部时间）';
+    if (account !== undefined && category === undefined && ledger === undefined) {
+      return accountTicketOut({ key, params, wakeWord, window, records, account }); // w10 查账户 v2.1 票据纸（原型 w10-查账户-v2.1.html：结论80%／占比80/10/7/3／载荷键不动）
+    }
+    if (ledger !== undefined && category === undefined && account === undefined) {
+      return ledgerTicketOut({ key, params, wakeWord, window, records, ledger }); // w11 查账本 v2.1 票据纸（原型 w11-查账本-v2.1.html：结论100%单条／载荷键不动）
+    }
+    if (category !== undefined && account === undefined && ledger === undefined) {
+      const mine = calcKpi([...records]).expense;
+      const all = calcKpi(fetchAll(db)).expense;
+      const sharePct = all === 0 ? 0 : Math.round((mine / all) * 100);
+      return categoryTicketOut({ key, params, wakeWord, window, records, category: value, sharePct }); // w09 查分类 v2.1 票据纸（原型 w09-查分类-v2.1.html manifest seq8：结论83%／占比83-17／占全部26%并入占比区／载荷键不动）
+    }
     return listOut({
-      key, params, wakeWord: projectWakeWord({ key, preset: params }), window: by + '＝' + value + '（全部时间）', records,
+      key, params, wakeWord, window, records,
       extra: { start: '', end: '' },
       extraChips: category === undefined ? [] : [shareChip(db, records)],
       emptyText: '这个条件没有记录',
@@ -312,6 +367,15 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   }
   // 这一页是哪条词（查标签／查欠款／查待报销／查分期／搜备注）由**域声明**按同一份入参算，本件不写第二处。
   const wakeWord = projectWakeWord({ key, preset: params });
+  if (kind === 'debt' && records.length > 0) {
+    return debtTicketOut({ key, params, wakeWord, window, records });
+  }
+  if (kind === 'installment' && records.length > 0) {
+    return installmentTicketOut({ key, params, wakeWord, window, records });
+  }
+  if (kind === 'reimburse' && records.length > 0) {
+    return reimburseTicketOut({ key, params, wakeWord, window, records });
+  }
   return listOut({
     key, params, wakeWord, window, records, extra: { kind: label },
     emptyText: '没有找到符合条件的记录',

@@ -12,6 +12,9 @@
  *   ③ **没有读数卡**（`kpis: []`）：老侧那一页本来就没有读数行——它报的是「分组的读数」，
  *      两个合计另立事实卡会与「看结构」那页重样，本页按老侧只出分组那两张卡；
  *   ④ 条长按**支出最多的那个账户**折算（老侧 `Math.max(...x.expense)`），占比＝占本期支出合计；
+ *      条文本按原型 `a06-看账户-v2.1.html` 明细卡逐字：无收入的户短式
+ *      （`35.00 元 · 1 笔 · 63.6%`），有收入的户长式
+ *      （`支出 0.00 元 · 收入 8000.00 元 · 1 笔 · 支出占比 0.0%`）；
  *   ⑤ 账户筛选不在本件（那属「看分类」的槽）；转账不入收支（#691），故四样里一笔转账都不算，
  *      本件不自己看金额正负，归堆走 `./agg.js` 的 `aggBy`；
  *   ⑥ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
@@ -93,8 +96,11 @@ export const sceneAccount: AnalysisScene = {
           title: '账户占比（' + String(rows.length) + ' 个账户）',
           rows: rows.map((x) => ({
             label: x.name,
-            text: money(x.expense) + ' 元 · ' + String(x.count) + ' 笔 · '
-              + pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100)),
+            text: x.income > 0
+              ? '支出 ' + money(x.expense) + ' 元 · 收入 ' + money(x.income) + ' 元 · ' + String(x.count) + ' 笔 · 支出占比 '
+                + pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100))
+              : money(x.expense) + ' 元 · ' + String(x.count) + ' 笔 · '
+                + pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100)),
             pct: max === 0 ? 0 : round1((x.expense / max) * 100),
           })),
           emptyText: '这段时间还没有账户记录',

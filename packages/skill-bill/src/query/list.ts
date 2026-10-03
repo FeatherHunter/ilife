@@ -29,17 +29,20 @@
  *   时间／分类／金额／账户／账本／备注／编号——「编号」列留着是为了说得出口的下一步：
  *   用户拿它就能说「查账单详情」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
  */
-import { renderCaliberLine, renderChips, renderConclusionBar, renderDataTable, renderDistributionRows, renderDisclosure, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChips, renderConclusionBar, renderDataTable, renderDistributionRows, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
+import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { queryPageShell as pageShell, queryStyleTag } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
-import { commandLine } from '../shared/writeParts.js';
+import { commandLine, writeSection } from '../shared/writeParts.js';
+import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { estimateBytes } from '../render/html.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
+import { isTagList, queryTagDoc } from './list-tag.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，
@@ -193,11 +196,29 @@ function conclusionOf(input: QueryListInput): string {
     + String(Math.round(top.pct)) + '%。';
 }
 
+/** w09 查分类占比注记（原型 SCALE 区那句用户侧话，括号内构造注不搬）：`其中餐饮类共 333.00 元，占全部支出约 26%。` */
+function categoryShareNote(input: QueryListInput): string {
+  if (input.key !== 'bill.record.range') return '';
+  const c = input.params['category'];
+  if (typeof c !== 'string' || c.trim() === '') return '';
+  const chip = input.chips.find((s) => s.startsWith('占全部支出'));
+  const m = chip === undefined ? null : /(\d+)%/.exec(chip);
+  if (m === null) return '';
+  return '<p class="ilife-ticket-scale-note">其中' + c.trim() + '类共 ' + sumText(input.kpi.expense) + ' 元，占全部支出约 ' + m[1] + '%。</p>';
+}
+
 /** 分类聚合卡的每一行：`名称 ｜ 占比条 ｜ 金额 · 笔数 · 均额`（老页 `categoryBar` 的四件事全在）。
  *  占比由条长承载；均额＝该分类支出合计 ÷ 笔数。类数上限在本件截（老页 `slice(0,8)` 同数），
  *  截掉了什么由紧跟其后那行口径说清——不静默截断。 */
 function categoryRows(input: QueryListInput): readonly PageBlock[] {
-  if (input.categories.length === 0) return [];
+  if (input.categories.length === 0) {
+    if (input.rows.length !== 0) return [];
+    return [{
+      nav: { anchor: 'sec-categories', navText: '分类聚合' },
+      heading: '分类聚合',
+      html: '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>',
+    }];
+  }
   const shown = input.categories.slice(0, CATEGORY_LIMIT);
   const hidden = input.categories.length - shown.length;
   const rows = shown.map((c) => {
@@ -211,7 +232,7 @@ function categoryRows(input: QueryListInput): readonly PageBlock[] {
   return [{
     nav: { anchor: 'sec-categories', navText: '分类聚合' },
     heading: '分类聚合',
-    html: renderDistributionRows({ rows }) + caliber,
+    html: renderDistributionRows({ rows }) + caliber + categoryShareNote(input),
   }];
 }
 
@@ -245,10 +266,156 @@ function pageEnvelopeOf(input: QueryListInput, shownCount: number): Serializable
   };
 }
 
+/** w12 搜备注票据纸段落（本页段落，其余页不动；载荷键一字不动，只改页面）。
+ *  原型 `.scratch/1019-p-query/w12-搜备注-v2.1.html`（manifest seq11：结论补占比／占比单条100%／
+ *  编号不换行；v21 按钮1039新口径＋口径句全删）：纸头 `饼干记账 · 搜备注`（`DOC_TITLE`＋唤醒词，
+ *  与 w01／w03 同式）／H2 `备注含「q」共 N 笔，支出 X 元`／副题 `备注里有「q」的记录`（即 window，
+ *  t411 钉着这一句）／主数字（`备注命中 · q`＋支出）／结论标准句／落点 LEDGER（收入／净额／
+ *  落点账本／币种）／分类占比 SCALE／明细 DETAIL（首行 `备注：`全角冒号＋次行分类·账户·时刻·#编号，
+ *  OCR 逐字核对）／对账 CHECK（`编号 序列 ／ 共 N 笔 ／ 异常：无`，全角斜线，OCR 逐字核对）／
+ *  复制区（`copyArea` 原样）／裁切线 `✂ 裁切线`／页脚 `饼干记账 · 搜备注`（`ilife-ticket-foot`，
+ *  与 w17 同件）。口径无（v2.1 已删，不另出）。
+ *  版式照 `./detail.ts` 票据纸一路（`assembleSheetPage`＋`renderSheetFrame ticket`＋
+ *  `ticket*` 段＋`copyArea`），共用样式只读（`.ilife-sheet-sub`／`.ilife-ticket-foot` 皆
+ *  `shared/docPage.ts` 既有，不添新类），公共层只读接口，不改 `base-*`。 */
+function isSearchTicket(input: QueryListInput): boolean {
+  if (input.key !== 'bill.record.search') return false;
+  const q = (input.params as Record<string, unknown>)['q'];
+  if (typeof q !== 'string' || q.trim() === '') return false;
+  const kind = (input.params as Record<string, unknown>)['kind'];
+  return kind === undefined || kind === null || String(kind).trim() === '';
+}
+
+function searchTicketQ(input: QueryListInput): string {
+  return String((input.params as Record<string, unknown>)['q']).trim();
+}
+
+function searchTicketTitle(input: QueryListInput, q: string): string {
+  return '备注含「' + q + '」共 ' + String(input.rows.length) + ' 笔，支出 ' + sumText(input.kpi.expense) + ' 元';
+}
+
+function searchTicketLedger(input: QueryListInput): string {
+  const ledgers = [...new Set(input.rows.map((r) => r.ledger))].join(' · ') || '—';
+  const data = input.envelope.data as QueryListData;
+  const items = (data.items as ReadonlyArray<Record<string, unknown>> | undefined) ?? [];
+  const currencies = [...new Set(items.map((x) => String(x['currency'] ?? '').trim()).filter((s) => s !== ''))];
+  const currency = currencies.length === 0 ? 'CNY' : currencies.join(' · ');
+  const rows = [
+    { label: '收入', value: sumText(input.kpi.income) },
+    { label: '净额', value: sumText(input.kpi.net) },
+    { label: '落点账本', value: ledgers },
+    { label: '币种', value: currency },
+  ];
+  return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({ rows, layout: 'ticket' }) + '</div>';
+}
+
+function searchTicketScale(input: QueryListInput): string {
+  if (input.categories.length === 0) return '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>';
+  const shown = input.categories.slice(0, CATEGORY_LIMIT);
+  const hidden = input.categories.length - shown.length;
+  const rows = shown.map((c) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: c.pct }));
+  return renderDistributionRows({ rows })
+    + (hidden > 0 ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列') : '');
+}
+
+function searchTicketDetail(input: QueryListInput, shown: readonly QueryTableRow[]): string {
+  if (input.rows.length === 0) return renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint });
+  const items = shown.map((r) => '<li><span class="ilife-ticket-entry-text">备注：' + escapeHtml(r.note.trim() === '' ? '—' : r.note)
+    + '<span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;color:var(--ilife-ink-2);line-height:1.6">'
+    + escapeHtml(r.category) + ' · ' + escapeHtml(r.account) + ' · ' + escapeHtml(r.time) + ' · #' + escapeHtml(r.id) + '</span></span>'
+    + '<span style="flex:none;white-space:nowrap;font-weight:800;font-variant-numeric:tabular-nums;">' + escapeHtml(r.amount) + '</span></li>').join('');
+  return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
+}
+
+function searchTicketCheck(input: QueryListInput): string {
+  const text = input.rows.length === 0
+    ? '笔数 0 ／ 查到 0 笔 ／ 异常：无'
+    : '编号 ' + input.rows.map((r) => r.id).join('、') + ' ／ 共 ' + String(input.rows.length) + ' 笔 ／ 异常：无';
+  return '<div class="ilife-ticket-card" style="border-color:color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft));background:var(--ilife-ok-soft);">'
+    + '<span style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.6;">'
+    + '<span aria-hidden="true" style="flex:none;width:8px;height:8px;margin-top:6px;border-radius:999px;background:var(--ilife-ok);"></span>'
+    + '<span>' + escapeHtml(text) + '</span></span></div>';
+}
+
+function searchTicketDoc(input: QueryListInput): string {
+  const ceiling = Math.min(input.rows.length, DISPLAY_LIMIT);
+  if (ceiling === 0) return renderSearchTicket(input, 0);
+  const drawIfFits = (n: number): string | null => {
+    const html = renderSearchTicket(input, n);
+    return estimateBytes(html) <= PAGE_BYTE_BUDGET ? html : null;
+  };
+  const atCeiling = drawIfFits(ceiling);
+  if (atCeiling !== null) return atCeiling;
+  let lo = 1;
+  let loHtml = drawIfFits(1);
+  let hi = ceiling;
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    const html = drawIfFits(mid);
+    if (html === null) hi = mid;
+    else { lo = mid; loHtml = html; }
+  }
+  return loHtml ?? renderSearchTicket(input, 1);
+}
+
+function renderSearchTicket(input: QueryListInput, shownCount: number): string {
+  const q = searchTicketQ(input);
+  const shown = input.rows.slice(0, shownCount);
+  const hidden = input.rows.length - shown.length;
+  const expenseText = sumText(input.kpi.expense);
+  const title = searchTicketTitle(input, q);
+  const conclusion = conclusionOf(input);
+  const pageEnvelope = pageEnvelopeOf(input, shownCount);
+  const copyHtml = copyArea({
+    data: { envelope: pageEnvelope, title: input.wakeWord },
+    log: {
+      envelope: pageEnvelope,
+      copyLog: copyLog({
+        command: commandLine(input.key, input.params),
+        source: input.source,
+        detail: '查到 ' + String(input.rows.length) + ' 笔',
+        actionAt: input.actionAt,
+        version: DOC_VERSION,
+      }),
+    },
+  });
+  const truncated = hidden <= 0 ? '' : ticketRule() + ticketSection({
+    title: '没显示的记录', tag: 'MORE', content: renderDisclosure({
+      title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownCount) + ' 条）',
+      contentHtml: renderCaliberLine('要看其余的，把关键词换得更准再搜一次；上面那句结论与分类占比不受影响，'
+        + '它们一直按本窗全部 ' + String(input.rows.length) + ' 条算'),
+    }) + renderCaliberLine('本页的明细与复制区都只带前面 ' + String(shownCount) + ' 条，'
+      + '其余 ' + String(hidden) + ' 条按上面那一块说得出口'),
+  });
+  const paper = queryStyleTag() + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(title), input.window)
+    + ticketRule()
+    + ticketSummary(renderSummaryHead({ eyebrow: '备注命中 · ' + q, value: expenseText, unit: '元', layout: 'ticket' }), '')
+    + renderConclusionBar(conclusion)
+    + ticketRule()
+    + ticketSection({ title: '落点', tag: 'LEDGER', content: searchTicketLedger(input) })
+    + ticketRule()
+    + ticketSection({ title: '分类占比', tag: 'SCALE', content: searchTicketScale(input) })
+    + ticketRule()
+    + ticketSection({ title: '明细', tag: 'DETAIL', content: searchTicketDetail(input, shown) })
+    + ticketRule()
+    + ticketSection({ title: '对账', tag: 'CHECK', content: searchTicketCheck(input) })
+    + truncated
+    + ticketRule()
+    + ticketActions(copyHtml);
+  const content = writeSection({
+    slot: 'list', page: 'list', shape: input.shape, key: input.key,
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+      + '<p class="ilife-ticket-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</p>',
+  });
+  return assembleSheetPage({ docTitle: DOC_TITLE + '·查询', bodyHtml: content, paper: 'detail' });
+}
+
 /** 通用查询列表页：一整页。块序在本件只写一份（`blocks` 既拼正文也派生导航）。
  *  **画多少条由体积算，不由死数定**（见 `PAGE_BYTE_BUDGET`）：判的是**真交付的那一串**，
- *  先试上限，放不下就二分找「放得下的最大条数」。 */
+ *  先试上限，放不下就二分找「放得下的最大条数」。
+ *  w12 搜备注走票据纸（`searchTicketDoc`，本件 w12 段落），其余仍走通用表。 */
 export function queryListDoc(input: QueryListInput): string {
+  if (isSearchTicket(input)) return searchTicketDoc(input);
   const ceiling = Math.min(input.rows.length, DISPLAY_LIMIT);
   if (ceiling === 0) return renderQueryList(input, 0);
   /** 画 n 条；放得下就把那一串给出来，放不下给 `null`。 */
@@ -276,6 +443,10 @@ export function queryListDoc(input: QueryListInput): string {
 function renderQueryList(input: QueryListInput, shownCount: number): string {
   const shown = input.rows.slice(0, shownCount);
   const hidden = input.rows.length - shown.length;
+  if (isTagList(input)) {
+    const tagHtml = queryTagDoc({ input, shown, conclusion: conclusionOf(input), envelope: pageEnvelopeOf(input, shownCount) });
+    if (tagHtml !== null) return tagHtml;
+  }
   const table = input.rows.length === 0
     ? renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint })
     : '<div class="bill-query-wide">' + renderDataTable({

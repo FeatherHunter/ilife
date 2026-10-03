@@ -121,7 +121,8 @@ const KV_CSS = [
 
 /** #993 票据纸两页（原型 `bill-993-proto-receipt-7222-v5.html` 与 `…-detail-7222-v7.html`）
  *  的**页面家具样式**：桌、店头、虚线分隔、段标题、主数字块、明细卡、按钮。
- *  （纸外页脚已按用户要求撤掉，`ticketFoot` 及其样式一并删除，不留死代码。）
+ *  （纸外页脚：回执两页按用户要求不出；查询域详情页按 w17 v2.1 出一行静态脚注，
+ *  见上 `.ilife-ticket-foot`，两页互不命中。）
  *
  *  为什么住本件：这些选择器全部由本包产出（`assembleSheetPage` 的族根类 ＋ `sheetHead`／
  *  `ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions` 这几个产出器），
@@ -166,6 +167,8 @@ const TICKET_CSS = [
   '.ilife-sheet-eyebrow { margin: 0; font-size: 11.5px; letter-spacing: 2px; color: var(--ilife-ink-2); font-weight: 700; }',
   '.ilife-sheet-title { margin: 8px 0 0; font-size: 19px; line-height: 1.4; letter-spacing: .2px; font-weight: 800; color: var(--ilife-ink); }',
   '.ilife-sheet-title .hl { color: var(--ilife-danger); }',
+  '/* 店头副题（原型 `.shop-sub`）：只查询域详情页出（`sheetHead` 第三参），回执两页零命中。 */',
+  '.ilife-sheet-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }',
   '/* 虚线分隔（原型 `hr.dashed`）：2px 虚线、左右各探出 8px。 */',
   '.ilife-ticket-rule { border: 0; border-top: 2px dashed var(--ilife-line); margin: 14px -8px; }',
   '/* 段（原型 `.sec`）＋ 段标题（4px 主色条 ＋ 右对齐英文标）。 */',
@@ -187,19 +190,22 @@ const TICKET_CSS = [
   '.ilife-ticket-summary-note { margin: 10px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--ilife-ink-2); }',
   '.ilife-ticket-summary-note b { color: var(--ilife-ink); }',
   '.ilife-ticket-summary-time { margin: 6px 0 0; font-size: 13.5px; line-height: 15px; color: var(--ilife-ink-2); }',
-  '/* 账目行：详情页那 7 行照原型抬到 44px 触摸档（回执页 4 行是 9px 行距、不抬）；',
+  '/* 账目行：详情页那几行照原型抬到 44px 触摸档（回执页 4 行是 9px 行距、不抬）；',
   '   两页的值列行高在原型里也不同：详情 1.55（可折行）、回执 1.4（单行紧排）。 */',
   '.ilife-ticket-detail .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row { min-height: 44px; }',
   '.ilife-ticket-receipt .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row-value { line-height: 1.4; font-variant-numeric: normal; }',
   '/* 回执行间那条**看不见的** 1px 上边线：原型写的就是 `1px dotted transparent`（不画线，只占 1px 行高），',
   '   不补它整块矮 3px、下面的段落跟着上移。 */',
   '.ilife-ticket-receipt .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row + .ilife-block-ledger-row { border-top: 1px dotted transparent; }',
-  '/* 状态那枚胶囊（原型 `.status`）：账目行的值位只收纯文本，故这一行由页面自己出（同一套行类）。',
-  '   行下那 1px：原型这一行的行盒是 45.6（胶囊按基线落位多出 1px），本页算出 44.6 ⇒ 补 1px 下内距，',
-  '   让状态行下面的段落与原型逐像素对齐（不补的话整块从这一行起上移 1px）。 */',
-  '.ilife-ticket-detail .ilife-block-ledger-rows.is-ticket .ilife-block-ledger-row.is-status { padding-bottom: 10px; }',
-  '.ilife-ticket-status { display: inline-block; padding: 3px 10px; border: 1px solid color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft)); border-radius: var(--ilife-radius-pill); background: var(--ilife-ok-soft); color: var(--ilife-ok); font-size: 12px; font-weight: 700; line-height: 1.55; }',
-  '.ilife-ticket-status.is-danger { border-color: color-mix(in srgb, var(--ilife-danger) 30%, var(--ilife-danger-soft)); background: var(--ilife-danger-soft); color: var(--ilife-danger); }',
+  '/* 落点状态行（w17 v2.1）：原型即纯文本、无胶囊，详情页不再发出 `.is-status` 行，',
+  '   下面两条状态胶囊样式随之删除（回执两页从未用过，删后零命中、不留死代码）。 */',
+  '/* 对账卡（w17 v2.1 CHECK 行）：浅绿卡＋圆点＋一行字；已撤销走危险档。只详情页发出。 */',
+  '.ilife-ticket-check { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 13px; border-radius: var(--ilife-radius-sm); background: var(--ilife-ok-soft); color: var(--ilife-ink); font-size: 13px; font-weight: 700; line-height: 1.6; }',
+  '.ilife-ticket-check-dot { flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-check.is-danger { background: var(--ilife-danger-soft); }',
+  '.ilife-ticket-check.is-danger .ilife-ticket-check-dot { background: var(--ilife-danger); }',
+  '/* 纸外脚注（w17 v2.1 foot-note）：纸外、页内居中一行小字；只详情页发出。 */',
+  '.ilife-bill-sheet-page .ilife-ticket-foot { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--ilife-ink-3); text-align: center; }',
   '/* 明细卡（原型 `.entry-card`／`.entry-rows`）：米黄卡 ＋ 编号胶囊 ＋ 实付行高亮。 */',
   '.ilife-ticket-card { background: var(--ilife-surface-2); border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-sm); padding: 12px 13px 11px; }',
   '.ilife-ticket-entries { list-style: none; margin: 0; padding: 0; counter-reset: ilife-ticket-row; }',
@@ -240,12 +246,14 @@ const TICKET_CSS = [
   '}',
 ].join('\n');
 
-/** 小票纸店头（#993）：品牌行＋结论标题。改动值那一段走重点色（见上 `TICKET_CSS` 的 `.hl`）。
+/** 小票纸店头（#993）：品牌行＋结论标题＋副题行。
  *
- * 住共用位：写入域回执与查询域详情两页共用（第二个用法长出来之后收成这一处）。 */
-export function sheetHead(brand: string, titleHtml: string): string {
+ * 住共用位：写入域回执与查询域详情两页共用（第二个用法长出来之后收成这一处）。
+ * 副题行（`sub`）缺省不出：回执两页不传，产物逐字节不动；查询域详情页传店头第三行。 */
+export function sheetHead(brand: string, titleHtml: string, sub = ''): string {
   return '<header class="ilife-sheet-head"><p class="ilife-sheet-eyebrow">' + escapeHtml(brand)
-    + '</p><h1 class="ilife-sheet-title">' + titleHtml + '</h1></header>';
+    + '</p><h1 class="ilife-sheet-title">' + titleHtml + '</h1>'
+    + (sub === '' ? '' : '<p class="ilife-sheet-sub">' + escapeHtml(sub) + '</p>') + '</header>';
 }
 
 /** 段落之间的虚线分隔（原型 `hr.dashed`）。 */

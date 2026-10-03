@@ -27,7 +27,7 @@ import { badgeOf, copyZoneOf, docTitleOf, money, NO_WINDOW, SOURCE_READ, SOURCE_
 import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { renderCaliberLine, renderConclusionBar } from 'base-paint/blocks';
-import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
+import { barGroupHtml, chartCardHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
 
 /** A 组 8 个场景 id（唯一定义地）：bars 4 ＋ compare 4。w09 不在此（查询域，1056）。 */
@@ -128,17 +128,19 @@ function summaryForBars(id: string, expense: number, count: number): { eyebrow: 
   if (id === 'category') {
     return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '总支出 · 明细与复制区与基线一致' };
   }
+  if (id === 'yearly') {
+    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '全年支出 · 明细与复制区与基线一致' };
+  }
   if (id === 'account' || id === 'ledger' || id === 'structure') {
     return { eyebrow: '分析域 · 总览', value: '见明细', unit: '', note: '结论 · 明细与复制区与基线一致' };
   }
-  return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '支出 · 明细与复制区与基线一致' };
+  return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '支出 · ' + (id === 'overview' ? '落点' : '明细') + '与复制区与基线一致' };
 }
 
-/** bars 落点账目（余数进落点，数字只搬家）：收入／净额／来源／基线，ovs 另加日均。 */
+/** bars 落点账目（余数进落点，数字只搬家）：收入／净额／来源／基线，ovs 另加日均；stats 例外不加收入／净额（原型 v2.1 六行）。 */
 function ledgerBars(id: string, income: number, net: number, extra: readonly { k: string; v: string }[]): string {
   const rows = [
-    { label: '收入', value: money(income) + ' 元' },
-    { label: '净额', value: money(net) + ' 元' },
+    ...(id === 'stats' ? [] : [{ label: '收入', value: money(income) + ' 元' }, { label: '净额', value: money(net) + ' 元' }]),
     ...extra.map((r) => ({ label: r.k, value: r.v })),
     { label: '来源', value: SOURCE_READ_TEXT },
     { label: '基线', value: baselineOf(id) },
@@ -186,10 +188,7 @@ export function ticketDoc(input: {
   const head = sheetHead(brandOf(input.wakeWord), escapeHtml(input.h2))
     + '<p class="shop-sub">' + escapeHtml(input.windowLabel) + '</p>';
   const summary = ticketSummary(input.summaryHtml, '<p class="ilife-ticket-summary-note">' + escapeHtml(input.summaryNote) + '</p>');
-  const blocks: readonly PageBlock[] = [
-    navBlock(input.ledgerHtml, 'sec-ledger', '落点'),
-    navBlock(input.detailHtml, 'sec-detail', '明细'),
-  ];
+  const blocks: readonly PageBlock[] = input.detailHtml === '' ? [navBlock(input.ledgerHtml, 'sec-ledger', '落点')] : [navBlock(input.ledgerHtml, 'sec-ledger', '落点'), navBlock(input.detailHtml, 'sec-detail', '明细')];
   const copyHtml = copyZoneOf({
     envelope: input.envelope,
     title: input.wakeWord,
@@ -205,8 +204,7 @@ export function ticketDoc(input: {
     + ticketRule()
     + ticketSection({ title: '落点', tag: 'LEDGER', content: input.ledgerHtml })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: input.detailHtml })
-    + ticketRule()
+    + (input.detailHtml === '' ? '' : ticketSection({ title: '明细', tag: 'DETAIL', content: input.detailHtml }) + ticketRule())
     + ticketSection({
       title: '落点与口径',
       tag: 'CALIBER',
@@ -254,11 +252,11 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
   for (const c of p.charts) {
     parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
   }
-  for (const c of p.factCards) {
+  for (const c of (sceneId === 'overview' ? [] : p.factCards)) {
     const html = factCardHtml(c);
     if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
-  const detailHtml = parts.length === 0 ? '<p>暂无明细</p>' : parts.join('');
+  const detailHtml = parts.length === 0 ? (sceneId === 'overview' ? '' : '<p>暂无明细</p>') : parts.join('');
   return ticketDoc({
     docTitle: docTitleOf(r.title),
     wakeWord: input.wakeWord,
@@ -307,18 +305,24 @@ export function ticketCompareDoc(
   const summary = renderSummaryHead({
     eyebrow: '分析域 · 对比',
     value: sceneId === 'cat_compare' ? '见明细' : money(firstSideExpense(p)),
-    unit: sceneId === 'cat_compare' ? '类' : '元',
+    unit: sceneId === 'cat_compare' ? '' : '元',
     note: sceneId === 'cat_compare' ? '结论 · 明细与复制区与基线一致' : '支出 · 明细与复制区与基线一致',
     layout: 'ticket',
     size: 'l',
   });
-  const parts: string[] = [];
+  const parts: string[] = [...(sceneId === 'range_compare' && p.sides.length !== 0 ? ['<p>两段对比</p>' + compareSidesHtml(p.sides)] : [])];
+  /* a12 看同比：明细含两段对比双卡（8 数只搬家，与原型 ol 同数；range 行不动）。 */
+  if (sceneId === 'yoy' && p.sides.length !== 0) parts.push('<p>两段对比</p>' + compareSidesHtml(p.sides));
   for (const g of p.barGroups) {
     parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g));
   }
   for (const c of p.factCards) {
     const html = factCardHtml(c);
     if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+  }
+  if (sceneId === 'cat_compare') {
+    const m = r.conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
+    if (m !== null) parts.push('<p>两段支出合计差 · ' + escapeHtml(m[1]) + '</p>');
   }
   const detailHtml = parts.length === 0 ? '<p>' + escapeHtml(r.conclusion) + '</p>' : parts.join('');
   return ticketDoc({

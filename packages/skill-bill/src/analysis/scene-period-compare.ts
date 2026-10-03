@@ -14,9 +14,9 @@
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { monthRange, weekRange } from '../shared/dateRange.js';
-import { compareTwo, kpiOf, prevMonth, thisMonth } from './agg.js';
+import { compareTwo, kpiOf, prevMonth, round2, thisMonth } from './agg.js';
 import { sideKpisOf } from './cards.js';
-import { money, pctText } from './pageParts.js';
+import { money, pctText, signedMoney } from './pageParts.js';
 import { needMonth } from './params.js';
 import type { AnalysisScene } from './scene.js';
 import { buildCompare } from './views.js';
@@ -128,7 +128,35 @@ export const scenePeriodCompare: AnalysisScene = {
           direction,
         },
         barGroups: [],
-        factCards: [],
+        /* 明细 9 行（原型 a10-看对比-v2.1逐像素：两侧各 4 行＋变化 1 行，只搬家不重算；
+           两侧取自 compareTwo 两侧 KPI（与 sides 同源），变化取 B-A 有符号差（与载荷 buildCompare 同向）；
+           票据纸明细经 ./template-compare.ts 的 factCards 支呈现，载荷键不动）。 */
+        factCards: [
+          {
+            title: winA.label,
+            rows: [
+              { k: '笔数', v: String(cmp.a.count) + ' 笔' },
+              { k: '支出', v: money(cmp.a.expense) + ' 元' },
+              { k: '收入', v: money(cmp.a.income) + ' 元' },
+              { k: '净额', v: money(cmp.a.net) + ' 元' },
+            ],
+          },
+          {
+            title: winB.label,
+            rows: [
+              { k: '笔数', v: String(cmp.b.count) + ' 笔' },
+              { k: '支出', v: money(cmp.b.expense) + ' 元' },
+              { k: '收入', v: money(cmp.b.income) + ' 元' },
+              { k: '净额', v: money(cmp.b.net) + ' 元' },
+            ],
+          },
+          {
+            title: '变化',
+            rows: [
+              { k: '支出变化', v: signedMoney(round2(cmp.b.expense - cmp.a.expense)) + ' 元（' + winA.label + '→' + winB.label + '）' },
+            ],
+          },
+        ],
         empty: {
           text: winA.label + ' 与 ' + winB.label + ' 两段都没有记录。',
           hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',

@@ -138,7 +138,7 @@ function extraLedgerOfBars(kind: unknown, input: DocInput<BarsPage>): readonly {
     const out: { k: string; v: string }[] = [];
     for (const kpi of p.kpis) {
       if (kpi.label === '记账天数') out.push({ k: '记账日', v: kpi.value + ' ' + (kpi.unit ?? '天') });
-      if (kpi.label === '日均笔数') out.push({ k: '日均', v: kpi.value + ' ' + (kpi.unit ?? '笔') });
+      if (kpi.label === '日均笔数') out.push({ k: '日均', v: kpi.value + ' 笔' });
     }
     for (const c of p.factCards) {
       for (const row of c.rows) {
