@@ -214,12 +214,15 @@ export function assembleDocPage(input: DocPageInput): string {
  *  皮肤（#993 像素对齐原型）：挂 `skinCss()` ＋ 祖先 `ilife-skin-ticket` 类，纸面材料色跟皮肤走；
  *  不挂皮肤类的老页零命中（加法式），故只包在这一路里。页型另挂一枚 `ilife-ticket-<页型>` 类，
  *  供"只详情页生效"的那两条几何用（44px 账目行）。 */
-export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string; readonly paper: 'receipt' | 'detail' }): string {
+export function assembleSheetPage(input: { readonly docTitle: string; readonly bodyHtml: string; readonly paper: 'receipt' | 'detail';
+  /** #1124 第三步：`false` ⇒ 族样式段**只注入 core**（HELP／速查表这类不属于任何页面族的页用；
+   *  页面族块的选择器都被各自页面族作用域锁着，这类页一个都用不上）。缺省 `true` ＝全量，票据页行为不变。 */
+  readonly familyPageCss?: boolean }): string {
   return renderDocShell({
     docTitle: input.docTitle,
     bodyHtml: '<div class="ilife-bill-sheet-page ilife-ticket-' + input.paper + ' ' + skinClass('ticket') + '">'
       + input.bodyHtml + '</div>',
-    extraCss: [sheetCss(), skinCss(), pageUiCss(), TICKET_CSS].join('\n'),
+    extraCss: [sheetCss(), skinCss(), pageUiCss(), input.familyPageCss === false ? ticketFamilyCss({ pageCss: false }) : TICKET_CSS].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
   });

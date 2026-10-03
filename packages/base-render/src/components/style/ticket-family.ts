@@ -14,8 +14,8 @@
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
 
-/** 票据纸族样式段（＝搬家前 docPage.ts 的 `TICKET_CSS`，逐字节相同）。 */
-const TICKET_CSS = [
+/** 票据纸族样式段·**core**（＝搬家前 docPage.ts 的 `TICKET_CSS` 里非页面族那部分；#1124 第三步拆块）。 */
+const TICKET_CSS_CORE = [
   '/* #993 桌：暖奶油底＋居中一列（原型 `body` 那一层；底色的两处浅深用 token 混出，不抄字面色）。 */',
   '.ilife-bill-sheet-page {',
   '  box-sizing: border-box;',
@@ -129,6 +129,14 @@ const TICKET_CSS = [
   '  .ilife-sheet-title { font-size: 18px; }',
   '  .ilife-bill-sheet-page .ilife-block-ledger-row-value { max-width: 58%; }',
   '}',
+].join(LF);
+
+/** 票据纸族样式段·**页面族块**（#1124 §20／§21／§22 从各页面逐字节搬来的整页 CSS）。
+ *
+ *  这些选择器全被各自页面族的作用域锁着（`.ilife-ticket-detail .ilife-today-*`／`.ilife-week-*`／
+ *  `.ilife-debt-*`… 与 `section[data-key="account.*"]`），**只有那一族的页会用上**；
+ *  不属于那些族的页（HELP／速查表）经 `ticketFamilyCss({ pageCss: false })` 不注入本段。#1124 第三步。 */
+const TICKET_PAGE_CSS = [
   /* #1124 §22：账户域复制区 guards 从页面搬来（逐字节，作用域原样保留）——页面侧不再自出这一段。 */
   'section[data-key="account.write"] .ilife-block-copy-block, section[data-key="account.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
   'section[data-key="account.write"] .ilife-action-row-ghost, section[data-key="account.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
@@ -352,7 +360,10 @@ const TICKET_CSS = [
   '.ilife-ticket-detail .ilife-month-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-month-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-month-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+].join(LF);
+
+/** 票据纸族样式段全量（＝搬家前 docPage.ts 的 `TICKET_CSS`，逐字节相同：core ＋ 页面族块，按原顺序拼）。 */
+const TICKET_CSS = [TICKET_CSS_CORE, TICKET_PAGE_CSS].join(LF);
 
 /** 票据纸页内家具样式段（＝搬家前 docPage.ts 的 `TICKET_FURNITURE_CSS`，逐字节相同）。 */
 export const TICKET_FURNITURE_CSS = [
@@ -370,9 +381,13 @@ export const TICKET_FURNITURE_CSS = [
   '.ilife-ticket-receipt .ilife-ticket-prompt .ilife-ticket-prompt-mono, .ilife-ticket-detail .ilife-ticket-prompt .ilife-ticket-prompt-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }',
 ].join('\n');
 
-/** 族样式段（调用方显式拼；`assembleSheetPage` 用它替掉原来的 `TICKET_CSS` 槽位）。 */
-export function ticketFamilyCss(): string {
-  return TICKET_CSS;
+/** 族样式段（调用方显式拼；`assembleSheetPage` 用它替掉原来的 `TICKET_CSS` 槽位）。
+ *
+ *  `pageCss: false` ⇒ **只出 core 段**（#1124 第三步，HELP／速查表这类页面族之外的页用）：
+ *  页面族块的选择器都被各自的页面族作用域锁着，这类页一个都用不上；不注入它们，页体积才回得到预算内。
+ *  缺省（不给参数）＝全量，与搬家前逐字节相同——票据页调用点行为不变。 */
+export function ticketFamilyCss(opts: { readonly pageCss?: boolean } = {}): string {
+  return opts.pageCss === false ? TICKET_CSS_CORE : TICKET_CSS;
 }
 
 /** 页内家具样式段（`ticketFurnitureStyleTag()` 的正文来源）。 */

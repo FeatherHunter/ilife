@@ -167,5 +167,8 @@ export function renderLookupPageHtml(): string {
     docTitle: DOC_TITLE + '·能力速查',
     bodyHtml: writeSection({ slot: 'list', page: 'list', shape: 'list', key: 'bill.help.lookup', content }),
     paper: 'detail',
+    // #1124 第三步：本页不属于 §20／§21／§22 那些页面族 ⇒ 族样式段只注入 core，页面族块（约 30KB）不注入。
+    // 那些选择器分别锁在 .ilife-ticket-detail .ilife-<页>-*／section[data-key="account.*"] 之下，本页零命中。
+    familyPageCss: false,
   });
 }
