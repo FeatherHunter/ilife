@@ -143,17 +143,20 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
      眉标成药丸（底＋描边＋圆点）、主数字居中、脚行居中、印章**钉在整块的右上角**并微斜。
      DOM 一字不差（还是那五个槽），差别全在这几条规则里 ⇒ 调用方只多传一个 `layout: 'ticket'`。 */
   lines.push('/* summary-head 票据纸版式：整块居中、眉标成药丸、印章钉右上角。 */');
-  lines.push(s + '.is-ticket { position: relative; align-items: center; text-align: center; gap: 0; }');
+  /* 判地（w01 v2.1 `.summary-head`）：整块内距 6px 0 16px；眉标底与字是一对**一次性字面**
+     （规格 §1 授权照抄：`--pill:#f3ecdc` 药丸底、眉标字色 `#7a6f5e`），字距 2px；圆点色 `#2f9e5f`
+     （判地不在皮肤语义档里，照抄），外圈那一圈是它的 15% 同色环；主数字字距 -1.5px（判地字面）。 */
+  lines.push(s + '.is-ticket { position: relative; align-items: center; text-align: center; gap: 0; padding: 6px 0 16px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-eyebrow {'
-    + ' display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;'
-    + ' border: 1px solid var(--line); border-radius: 999px; background: var(--soft);'
-    + ' color: var(--fg2); font-size: 12px; font-weight: 700; letter-spacing: .12em; }');
+    + ' display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; max-width: 100%;'
+    + ' border: 1px solid var(--line); border-radius: 999px; background: #f3ecdc;'
+    + ' color: #7a6f5e; font-size: 12px; font-weight: 700; letter-spacing: 2px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-eyebrow::before {'
-    + ' content: ""; width: 7px; height: 7px; border-radius: 50%; background: ' + ok + ';'
-    + ' box-shadow: 0 0 0 4px ' + mix(ok, 15) + '; }');
-  lines.push(s + '.is-ticket .' + p + 'block-summary-head-line { justify-content: center; margin-top: 12px; }');
-  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value { font-weight: 900; letter-spacing: -.03em; }');
-  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value small { margin-left: 6px; font-size: 18px; font-weight: 800; color: var(--fg2); }');
+    + ' content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2f9e5f;'
+    + ' box-shadow: 0 0 0 4px rgba(47,158,95,.15); }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-line { justify-content: center; gap: 6px; margin-top: 12px; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value { font-weight: 900; letter-spacing: -1.5px; }');
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-value small { margin-left: 6px; font-size: 18px; line-height: 1; font-weight: 800; color: var(--fg2); }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-foot { display: block; margin-top: 10px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-note { font-size: 13.5px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-stamp {'

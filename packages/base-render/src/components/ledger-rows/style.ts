@@ -92,6 +92,9 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  align-items: flex-end;',
     '  padding: 9px 0;',
     '  font-size: 14px;',
+    /* 判地 w01 `.ledger-rows li`：行高 1.4（14px ⇒ 19.6px）＋ 44px 触摸行高，两条都是判地字面。 */
+    '  line-height: 1.4;',
+    '  min-height: 44px;',
     '}',
     root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row + .' + p + 'block-ledger-row {',
     '  border-top: 0;',
@@ -101,12 +104,15 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '}',
     root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row-leader {',
     '  margin-bottom: 0;',
-    '  border-bottom: 2px dotted var(--line);',
+    /* 规格 §1 授权照抄：账目行的点线是一次性字面 #d9cdb4（与裁切虚线同色），比 `line` 深一档。 */
+    '  border-bottom: 2px dotted #d9cdb4;',
     '  transform: translateY(-5px);',
     '}',
     root + ' .' + p + 'block-ledger-rows.is-ticket .' + p + 'block-ledger-row-value {',
     '  max-width: 62%;',
-    '  line-height: 1.55;',
+    /* 判地 w01 `.ledger-rows .v`：行高随 li 的 1.4（不是 1.55）、不另收字距（家族缺省那 -.01em 在此关掉）。 */
+    '  line-height: 1.4;',
+    '  letter-spacing: normal;',
     '  overflow-wrap: anywhere;',
     '}',
   ].join(LF);

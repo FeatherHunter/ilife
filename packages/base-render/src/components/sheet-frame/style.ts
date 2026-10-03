@@ -64,10 +64,18 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '  background: ' + surface + ';',
     '  border: 0;',
     '  border-radius: ' + radius + ';',
-    '  box-shadow: ' + shadow + ';',
     '  padding: 22px 28px 10px;',
     '  overflow: hidden;',
     '}',
+    /* **票据纸不投影**：判地 `.sheet-wrap{filter:drop-shadow(var(--shadow))}` 里那条两层逗号写法
+       （`0 18px 50px …, 0 2px 0 …`）不是合法 CSS，浏览器整条丢掉 ⇒ 判地实测 `filter: none`、纸身 `box-shadow: none`。
+       判据是像素，故本档照判地**不出投影**（皮肤 `shadow` 仍归卡片与浮层用，不动）。
+       规格 §2 写的「两层柔和投影」若确要生效＝改判地＝另开原型票由人裁（已写进 #1114 遗留出口）。 */
+    /* 纸内距仍住纸身（＝判地 `.sheet-inner` 那个内距的等价位置）。
+       #1114 试过把它搬进正文层，好让纸尾锯齿与裁切线拿到纸幅整宽（判地 `.zigzag{margin:0 6px}` 在全宽上）；
+       但页面侧的皮肤覆写会给**纸身**再补一次内距 ⇒ 双内距（实测纸内文字 x 由 32 退到 60），
+       结构搬家要页面侧同时撤那条覆写，而页面写在 `packages/skill-bill/src/**`（本票写集禁入）⇒ 退回原位，
+       锯齿内缩那 28-6=22px 的差写进本票遗留出口（`docs/base/base-render/1114-票据纸保真证据.md` §5）。 */
     '/* 贯穿齿边：圆心落在纸边线上的一列半圆，用**桌面色**挖出来（与打孔同一个读法）。 */',
     s + '.is-ticket .' + p + 'block-sheet-edge {',
     '  position: absolute;',
@@ -111,7 +119,8 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '  height: 0;',
     '  border-radius: 0;',
     '  background: none;',
-    '  border-top: 2px dashed ' + edge + ';',
+    /* 规格 §1 授权照抄：裁切虚线是一次性字面 #d9cdb4（点线／裁切虚线共用的暖点线色），不进 token。 */
+    '  border-top: 2px dashed #d9cdb4;',
     '}',
     s + '-body {',
     '  min-width: 0;',

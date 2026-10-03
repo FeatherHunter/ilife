@@ -56,9 +56,15 @@ export function renderSheetFrame(input: SheetFrameInput): string {
   const isTicket = variant === 'ticket';
   const cutText = input.cutLineText === undefined || input.cutLineText === null
     ? undefined : optText(input.cutLineText, 'sheet-frame: input.cutLineText');
-  const parts: string[] = ['<section class="ilife-block-sheet is-' + variant
+  const cut = input.cutLine === true
+    ? '<div class="ilife-block-sheet-cut" aria-hidden="true">'
+      + (cutText === undefined ? '' : '<span class="ilife-block-sheet-cut-text">' + esc(cutText) + '</span>')
+      + '</div>'
+    : '';
+  const parts: string[] = [];
+  parts.push('<section class="ilife-block-sheet is-' + variant
     + (extra === undefined ? '' : ' ' + extra) + '"'
-    + (id === undefined ? '' : ' id="' + esc(id) + '"') + '>'];
+    + (id === undefined ? '' : ' id="' + esc(id) + '"') + '>');
   if (isTicket) {
     parts.push('<span class="ilife-block-sheet-edge is-left" aria-hidden="true"></span>');
     parts.push('<span class="ilife-block-sheet-edge is-right" aria-hidden="true"></span>');
@@ -67,11 +73,7 @@ export function renderSheetFrame(input: SheetFrameInput): string {
     parts.push('<span class="ilife-block-sheet-notch is-right" aria-hidden="true"></span>');
   }
   parts.push('<div class="ilife-block-sheet-body">' + input.content + '</div>');
-  if (input.cutLine === true) {
-    parts.push('<div class="ilife-block-sheet-cut" aria-hidden="true">'
-      + (cutText === undefined ? '' : '<span class="ilife-block-sheet-cut-text">' + esc(cutText) + '</span>')
-      + '</div>');
-  }
+  parts.push(cut);
   if (isTicket) parts.push('<span class="ilife-block-sheet-zigzag" aria-hidden="true"></span>');
   parts.push('</section>');
   return parts.join('');
