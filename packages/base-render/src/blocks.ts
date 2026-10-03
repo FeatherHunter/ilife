@@ -3214,7 +3214,8 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  background: var(--card);',
     '  color: var(--fg);',
     '  font-family: inherit;',
-    '  font-size: 13px;',
+    // #1001 第 2 期：文本录入控件字号下限 16px（WebKit 对 <16px 表单控件聚焦自动缩放；票面「单票承载」＝本类唯一承载处）。
+    '  font-size: 16px;',
     '}',
     // 占位符色：改前没有 `::placeholder` 规则，吃 UA 的 #757575 压在页底上是 4.23:1（不到 AA 4.5）。
     //   显式取 `--fg2`（压白底 4.94:1）。

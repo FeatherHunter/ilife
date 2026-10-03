@@ -405,7 +405,8 @@ export const helpShellSection: (prefix: string) => string = (p) => [
   '  background: var(--card);',
   '  color: var(--fg);',
   '  font-family: inherit;',
-  '  font-size: 13px;',
+  // #1001 第 2 期：文本录入控件字号下限 16px（WebKit 对 <16px 表单控件聚焦自动缩放；票面「单票承载」＝本类唯一承载处）。
+  '  font-size: 16px;',
   '}',
   focusRing('.' + p + 'help-shell-tab-search-input'),
   '.' + p + 'help-shell-tab-search-clear {',
@@ -482,7 +483,8 @@ export const helpShellSection: (prefix: string) => string = (p) => [
   '  background: var(--card);',
   '  color: var(--fg);',
   '  font-family: inherit;',
-  '  font-size: 13px;',
+  // #1001 第 2 期：文本录入控件字号下限 16px（WebKit 对 <16px 表单控件聚焦自动缩放；票面「单票承载」＝本类唯一承载处）。
+  '  font-size: 16px;',
   '}',
   focusRing('.' + p + 'help-shell-field-input'),
   // 回到顶部（视觉尺 H-19：42px 圆形、fixed bottom/right 24px、初始 opacity:0 ＋
