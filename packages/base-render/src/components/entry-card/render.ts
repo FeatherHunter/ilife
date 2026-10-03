@@ -84,7 +84,9 @@ function optBool(value: unknown, field: string): boolean | undefined {
 function normIndex(value: unknown, field: string): string | undefined {
   if (value === undefined) return undefined;
   if (typeof value === 'number') {
-    if (!Number.isInteger(value) || value < 1) badInput(field + ' 必须是 ≥1 的整数');
+    /* 安全整数：`Number.isInteger(1e308)` 为真，但它进 `String()` 会印成 `1e+308` ——
+       坏数扫描（`test/跨件不变量.test.mjs` ①）逐个把 ±1e308／Infinity／NaN 打进本字段，必须一律拒。 */
+    if (!Number.isSafeInteger(value) || value < 1) badInput(field + ' 必须是 ≥1 的整数');
     return String(value);
   }
   if (typeof value === 'string') {

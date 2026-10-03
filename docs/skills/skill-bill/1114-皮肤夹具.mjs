@@ -59,8 +59,10 @@ try {
   const mod = await import('file:///D:/ilife/packages/base-render/dist/components/entry-card/index.js');
   entries = mod.renderEntryCard({
     entries: [
-      { title: '备注 · 午饭', sub: '餐饮/外卖/午餐 · 微信 · 2026-10-02 12:00:00 · #1', amount: '-35.00' },
-      { title: '备注 · 9月工资', sub: '工资 · 招行卡 · 2026-10-02 18:00:00 · #2', amount: '8000.00' },
+      /* 次行整段透传：时间戳那一段在判地里是 `<span class="mono">`（等宽），
+         当纯文本传会让行盒矮 1px（实测 sub h=18.59 vs 判地 19.59）——数据要照判地取。 */
+      { title: '备注 · 午饭', subHtml: '餐饮/外卖/午餐 · 微信 · <span class="ilife-block-entry-card-mono">2026-10-02 12:00:00</span> · #1', amount: '-35.00' },
+      { title: '备注 · 9月工资', subHtml: '工资 · 招行卡 · <span class="ilife-block-entry-card-mono">2026-10-02 18:00:00</span> · #2', amount: '8000.00' },
     ],
   });
   entryState = '已立件';
@@ -89,6 +91,10 @@ const SHELL_CSS = [
   '.fixture-body * { box-sizing: border-box; }',
   /* 页面级窄档（判地 @media(max-width:390px) 那三处；产品侧同款写在 skill-bill 的 TICKET_CSS 里）：
      纸内距 18/22/8、主数字 50px、账目值列 58%。组件层禁视口媒体查询（件宽 ≠ 视口宽），故这一档由页面给。 */
+  /* 说明句在判地是**块**（`<p class="summary-note">`，满宽 326×43.19）；公共层那件把它渲成 `<span>`
+     （跨档 DOM 一字不差的既有契约），组件档里只给了 `align-self:stretch`。产品页自己按块处理
+     （实测 `summary` h=167.19 ＝ 判地），故这一条属**页面层**——夹具壳照判地补，不写进 packages/。 */
+  '.fixture-body .ilife-block-summary-head.is-ticket .ilife-block-summary-head-note { display: block; }',
   '@media (max-width: 400px) {',
   '  .fixture-body .ilife-block-sheet.is-ticket { padding: 18px 22px 8px; }',
   '  .fixture-body .ilife-block-summary-head.is-ticket.is-l .ilife-block-summary-head-value { font-size: 50px; }',
