@@ -238,3 +238,8 @@ export * from './say-opt/index.js';
    授权字面逐处带出处（见该件 `style.ts`）；`entry-card` 的样式段**不在** `blocksCss()` 的 12 区块汇总里，
    调用方要显式拼 `entryCardCss()`。**只加行、不重排**（并行席位的约定）。 */
 export * from './entry-card/index.js';
+/* #1113 追加：`ticket-button` 票据纸主按钮（判地 `proto/acct-goal/b01-新增账户-采集-v2.2.html`
+   的 `.btn`／`.btn-primary`／`.btn-primary:disabled`）。**#1113 新增的公开形状位是 `disabled`**
+   （判地 5 张采集页的主按钮带禁用态，公共层此前没有这一档）。样式段与 entry-card 同：
+   **不在** `blocksCss()` 的 12 区块汇总里，调用方显式拼 `ticketButtonCss()`。**只加行、不重排**。 */
+export * from './ticket-button/index.js';

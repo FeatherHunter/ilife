@@ -296,12 +296,19 @@ describe('#75 共享样式资产：8 个样式区（闭集）', () => {
     }
   });
 
+  /* 作用域类名（框架给的，不是区名）：页面作用域 `.ilife-page-ui`（住 `components/page-ui`）与皮肤类
+     `.ilife-skin-<名>`（住 `components/skin`）。#1114 起 `copyButton` 区里挂了**票据纸作用域**的按钮规则
+     （`.ilife-page-ui .ilife-skin-ticket …`），T9 的「类名都归属某个区」会把这两个作用域类误报成臆造类名
+     ⇒ 单列出来放行（放行的只是这两个作用域，别的一律照旧判红）。 */
+  const SCOPE_CLASSES = /^ilife-(page-ui|skin-[a-z]+)$/;
+
   it('T9 无臆造类名：产出 CSS 的每个 ilife- 类名都归属某个区', () => {
     const css = buildStyleSheet().css;
     const roots = CONTROL_STYLE_SECTIONS.map((s) => STYLE_PREFIX + SECTION_ROOTS[s].ns);
     const classes = [...new Set([...css.matchAll(/\.(ilife-[A-Za-z0-9_-]+)/g)].map((m) => m[1]))];
     assert.ok(classes.length > 100, '类名数量异常偏少：' + classes.length);
     for (const c of classes) {
+      if (SCOPE_CLASSES.test(c)) continue;
       assert.ok(roots.some((r) => c === r || c.startsWith(r)), '闭集外类名：' + c);
     }
   });
@@ -731,7 +738,10 @@ describe('#75 共享样式资产：同源与 extraCss 接缝', () => {
     const css = buildStyleSheet().css;
     assert.ok(!/(^|[},])\s*body\s*\{/.test(css), '不得产 body 规则（归 #104）');
     assert.ok(!/(^|[},])\s*html\s*\{/.test(css), '不得产 html 规则（归 #104）');
-    assert.ok(!css.includes('.ilife-page'), '不得产页面壳类名（归 #104）');
+    // 判的是**裸壳类选择器**（`.ilife-page` 自己那一档）；`.ilife-page-ui` 是页面作用域类
+    // （住 `components/page-ui`，票据作用域规则要用它当限定），不在此列——#1114 起本区有这类规则。
+    assert.ok(!/(^|[},])\s*\.ilife-page(?![A-Za-z0-9_:-])/.test(css),
+      '不得产 `.ilife-page` 壳规则（归 #104）');
     for (const alien of ['ilife-kpi', 'ilife-title', 'ilife-receipt', 'ilife-photo', 'ilife-section', 'ilife-bar']) {
       assert.ok(!css.includes('.' + alien), '闭集外类名（calorie 内容页命名空间，归 #104）：' + alien);
     }
