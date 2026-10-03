@@ -58,17 +58,7 @@ const CATEGORY_LIMIT = 8;
 /** 查今天别名注（w01 v2.1 原型逐字：副题第二行；`唤醒词／本纸` 字样已删，只留这一句）。 */
 const TODAY_ALIAS_NOTE = '查账单和查今天是一样的。';
 
-/** w01 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，详情页与其他票据页零命中）。 */
-const TODAY_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-today-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-today-alias { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--ilife-ink-3); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-today-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-today-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-today-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-today-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-today-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-today-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -212,7 +202,7 @@ export function queryTodayTicketDoc(input: TodayTicketInput): string {
     ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
     : conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + TODAY_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('今天共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-today-shop-sub">' + escapeHtml(input.window) + '</p>'
     + '<p class="ilife-today-alias">' + escapeHtml(TODAY_ALIAS_NOTE) + '</p>'

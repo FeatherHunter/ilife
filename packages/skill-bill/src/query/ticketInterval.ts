@@ -52,16 +52,7 @@ const PAGE_BYTE_BUDGET = 240_000;
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
 
-/** w08 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，详情页零命中）。 */
-const INTERVAL_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-interval-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-interval-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-interval-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-interval-amt { flex: none; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }',
-  '.ilife-ticket-detail .ilife-interval-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-interval-check-dot { flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); margin-top: 6px; }',
-  '.ilife-interval-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -208,7 +199,7 @@ export function queryIntervalTicketDoc(input: IntervalTicketInput): string {
   const { kpi, categories, data } = modelOf(input.records, input.start, input.end);
   const conclusion = conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + INTERVAL_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('区间共 ' + String(input.records.length) + ' 笔，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-interval-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()

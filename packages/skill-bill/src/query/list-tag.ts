@@ -49,16 +49,7 @@ export interface TagTicketArgs {
   readonly envelope: SerializableEnvelope;
 }
 
-/** w13 页内补丁（原型里技能侧没有对应组件的三处，作用域限本页纸 `ilife-taglist` 内）：
- *  店头副题／对账绿盒／明细次行与右对齐金额。落点／占比／主数字／复制区走技能已有组件，不另写。 */
-const TAG_CSS = [
-  '.ilife-taglist .shop-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--ilife-ink-2);text-align:center;overflow-wrap:anywhere}',
-  '.ilife-taglist .check-mini{display:flex;gap:8px;align-items:flex-start;background:#f4fbf6;border:1px solid #cfe6d6;border-radius:10px;padding:10px 12px;font-size:12.8px;line-height:1.6;color:#3e5a4a;margin-top:10px;overflow-wrap:anywhere}',
-  '.ilife-taglist .check-mini .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2f9e5f;margin-top:6px}',
-  '.ilife-taglist .ilife-ticket-entry-sub{display:block;font-size:12px;color:var(--ilife-ink-2);margin-top:2px}',
-  '.ilife-taglist .ilife-ticket-entry-amt{flex:none;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}',
-  '.ilife-taglist .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}',
-].join('\n');
+
 
 /** 去重（保首次出现序）：落点账本／币种多值并列用。 */
 function distinct(values: readonly string[]): string[] {
@@ -168,7 +159,7 @@ export function queryTagDoc(args: TagTicketArgs): string | null {
     renderSummaryHead({ eyebrow: '标签命中 · ' + tag, value: expense.toFixed(2), unit: '元', layout: 'ticket', size: 'l' }),
     '<p class="ilife-ticket-summary-note">' + escapeHtml(args.conclusion) + '</p>',
   );
-  const paper = queryStyleTag() + '<style>' + TAG_CSS + '</style>' + head
+  const paper = queryStyleTag() + head
     + ticketRule() + summary
     + ticketRule() + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(input) })
     + ticketRule() + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(input) })

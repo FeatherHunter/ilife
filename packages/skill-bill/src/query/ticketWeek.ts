@@ -52,16 +52,7 @@ const PAGE_BYTE_BUDGET = 240_000;
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
 
-/** w06 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，详情页与 w07 零命中）。 */
-const WEEK_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-week-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-week-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-week-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-week-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-week-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-week-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-week-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -201,7 +192,7 @@ export function queryWeekTicketDoc(input: WeekTicketInput): string {
   const notes = countNotes(input.records, kpi.count);
   const conclusion = conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + WEEK_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('本周共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-week-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()

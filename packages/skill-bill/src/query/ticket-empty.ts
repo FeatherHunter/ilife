@@ -56,13 +56,7 @@ const SCALE_NOTE = '本窗无支出，无占比。';
 /** 对账 CHECK 那一句（w00 判地逐字；分隔是全角斜线）。 */
 const CHECK_TEXT = '笔数 0 ／ 查到 0 笔 ／ 异常：无';
 
-/** 本页自有标记的样式（作用域限 `.ilife-ticket-detail`，与 `./ticket-day.js` 同一套手法）。 */
-const EMPTY_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-empty-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-empty-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-empty-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-empty-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join(String.fromCharCode(10));
+
 
 /** 空窗口票据纸的入参。 */
 export interface EmptyTicketInput {
@@ -88,7 +82,7 @@ function emptyData(date: string): QueryListData {
 export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
   const data = emptyData(input.date);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + EMPTY_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.window + '没有记录'))
     + '<p class="ilife-empty-shop-sub">' + escapeHtml(input.wakeWord + ' · 空窗') + '</p>'
     + ticketRule()

@@ -57,16 +57,7 @@ const CATEGORY_LIMIT = 8;
 /** 空值占位（落点行永不缺席，无值即此符）。 */
 const EMPTY_CELL = '—';
 
-/** w11 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，他页零命中）。 */
-const LEDGER_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-ledger-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-ledger-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-ledger-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-ledger-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-ledger-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-ledger-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-ledger-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -202,7 +193,7 @@ export function queryLedgerTicketDoc(input: LedgerTicketInput): string {
   const notes = countNotes(input.records, kpi.count);
   const conclusion = conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + LEDGER_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.ledger + '账本 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-ledger-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()

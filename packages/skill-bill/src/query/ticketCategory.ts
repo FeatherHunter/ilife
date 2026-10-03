@@ -71,16 +71,7 @@ const EMPTY_CELL = '—';
 /** 主数字小字的计数词（原型逐字 `四笔分类均餐饮开头` 的 `四`）：1–10 取中文数字，更大的数照数写。 */
 const COUNT_WORDS: readonly string[] = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
-/** w09 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，他页零命中）。 */
-const CATEGORY_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-category-bar { display: block; height: 6px; margin-top: 6px; border-radius: var(--ilife-radius-pill); background: var(--ilife-line); overflow: hidden; }',
-  /* #1113：占比条填充读皮肤号 `bar-fill`（票据纸＝判地 `.entry-text .bar i{background:#3f7fbf}`；
-     兜底到 `--blue` ⇒ 没挂皮肤／别的皮肤与改动前逐字节同）。 */
-  '.ilife-ticket-detail .ilife-category-bar > i { display: block; height: 100%; border-radius: var(--ilife-radius-pill); background: var(--ilife-bar-fill, var(--blue)); }',
-  '.ilife-ticket-detail .ilife-category-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-category-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-category-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -215,7 +206,7 @@ export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
   const notes = countNotes(input.records, kpi.count);
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const envelope = listEnvelope(input.key, data);
-  const paper = queryStyleTag() + '<style>' + CATEGORY_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(
       DOC_TITLE + ' · ' + input.wakeWord,
       escapeHtml(input.wakeWord + '共记 ' + notes.head),

@@ -56,16 +56,7 @@ const PAGE_BYTE_BUDGET = 240_000;
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
 
-/** w03 自有标记的样式（作用域限 `.ilife-ticket-detail` 内本页类名，详情页与其他票据页零命中）。 */
-const SOMEDAY_TICKET_CSS = [
-  '.ilife-ticket-detail .ilife-someday-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-someday-sub { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
-  '.ilife-ticket-detail .ilife-someday-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
-  '.ilife-ticket-detail .ilife-someday-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-someday-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-someday-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
-  '.ilife-someday-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
-].join('\n');
+
 
 /** 合计金额的文本（两位小数，与 `./list.js` 的 `sumText` 同口径：合计为 0 是真实读数）。 */
 function sumText(n: number): string {
@@ -209,7 +200,7 @@ export function querySomedayTicketDoc(input: SomedayTicketInput): string {
     ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
     : conclusionOf(categories);
   const envelope = listEnvelope(input.key, { ...data, items: ordered.map(toBillItem) });
-  const paper = queryStyleTag() + '<style>' + SOMEDAY_TICKET_CSS + '</style>'
+  const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-someday-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
