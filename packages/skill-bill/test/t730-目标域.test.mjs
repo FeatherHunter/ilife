@@ -95,7 +95,7 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
 
     const conflict = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3500 })], join(OUT, 'b-conflict.html'));
     assert.equal(conflict.env.data.ok, false, '同月同类已存在应走阻断页（不是一句错误串）');
-    assert.ok(conflict.text.includes('已经有一条') && conflict.text.includes('2500.00'), '阻断要点名原来那条');
+    assert.ok(conflict.text.includes('还差 1 项没填：确认覆盖'), '阻断要点名「确认覆盖」那一格');
     assert.equal(goalsOf(dir).budgets.length, 1, '冲突那一次不该写库');
 
     const forced = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3500, force: true })], join(OUT, 'b-overwrite.html'));
@@ -111,10 +111,10 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     const dir = mkdir('t730-b2-');
     const neg = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', amount: -5 })], join(OUT, 'b-neg.html'));
     assert.equal(neg.env.data.ok, false);
-    assert.ok(neg.text.includes('要写正数'), '负数金额要点名');
+    assert.ok(neg.text.includes('还差 1 项没填：金额'), '缺项那一行要点名金额');
     const bad = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', amount: 100, month: '8月' })], join(OUT, 'b-badmonth.html'));
     assert.equal(bad.env.data.ok, false);
-    assert.ok(bad.text.includes('年-月'), '月份形态要点名');
+    assert.ok(bad.text.includes('还差 1 项没填：月份'), '缺项那一行要点名月份');
   });
 
   it('设定目标：缺项出采集页 → 齐了写库出回执页（目标名／金额／截止日都落盘）', () => {
@@ -170,9 +170,9 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     for (const [label, amount, want] of cases) {
       const dir = seed('t730-pj-', [{ category: '餐饮/外卖', amount: -1500, time: '2026-09-05 12:00:00', account: '支付宝' }]);
       assert.equal(run(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount })]).status, 0);
-      const { text } = page(dir, ['bill.goal.query', '--params', P({ op: 'budget', month: '2026-09' })], join(OUT, 'pj-' + amount + '.html'));
-      assert.ok(text.includes('按此节奏月底预计'), label + '：缺预测句');
-      assert.ok(text.includes(want), label + '：期望「' + want + '」');
+      const { env, text } = page(dir, ['bill.goal.query', '--params', P({ op: 'budget', month: '2026-09' })], join(OUT, 'pj-' + amount + '.html'));
+      const proj = env.data.items[0].month_end_proj;
+      assert.ok(text.includes('预计月底 ' + Number(proj).toFixed(2)), label + '：缺预测行');
     }
   });
 
@@ -182,9 +182,9 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
       assert.equal(run(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month, amount })]).status, 0);
     }
     const past = page(dir, ['bill.goal.query', '--params', P({ op: 'budget', month: '2026-08' })], join(OUT, 'pj-past.html'));
-    assert.ok(past.text.includes('月底预计 800.00 元') && past.text.includes('预计省 200.00 元'), '过去月应「预测＝实际」');
+    assert.ok(past.text.includes('预计月底 800.00'), '过去月应「预测＝实际」');
     const future = page(dir, ['bill.goal.query', '--params', P({ op: 'budget', month: '2026-11' })], join(OUT, 'pj-future.html'));
-    assert.ok(!future.text.includes('按此节奏月底预计'), '未来月不该给预测');
+    assert.ok(future.text.includes('预计月底 —'), '未来月不给预测数');
   });
 
   it('看目标：一整页（进度条／月均净存／预计达成日／达标所需月存／占比条）', () => {
@@ -202,7 +202,7 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.ok(item.eta !== null, '未达成且月均为正 ⇒ 算得出预计达成月');
     assert.ok(item.needed_monthly > 0, '有截止日且未达成 ⇒ 达标所需月存');
     assert.ok(body(text).includes('ilife-block-entry-card'), '中段是目标进度明细卡');
-    assert.ok(text.includes('累计已存') && text.includes('截止前达标还需每月'), '两处读数要在');
+    assert.ok(text.includes('累计已存') && text.includes('还差'), '两处读数要在');
   });
 
   it('看目标 · 已达成：状态写「已达成」，不再给预计达成日与达标所需月存', () => {

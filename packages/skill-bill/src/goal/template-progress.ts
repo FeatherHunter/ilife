@@ -22,7 +22,7 @@ import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
-import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, money, monthEndHintOf } from './pageParts.js';
+import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, money } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -101,10 +101,7 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
         title: (b.remaining >= 0 ? '剩余 ' + money(b.remaining) : '超出 ' + money(Math.abs(b.remaining)) + ' 元')
           + (b.daily_avg === null ? '' : ' ｜ 日均 ' + money(b.daily_avg)),
       },
-      {
-        title: '预计月底 ' + (projection === '' ? '—' : projection),
-        ...(monthEndHintOf(b) === '' ? {} : { sub: monthEndHintOf(b) }),
-      },
+      { title: '预计月底 ' + (projection === '' ? '—' : projection), sub: '按当前日均推算，仅供参考' },
     ];
   }
   const s = input.saving;
@@ -113,11 +110,11 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
   return [
     { title: one.name + ' ｜ 总额 ' + money(one.amount), sub: '存够就算达成' },
     { title: '累计已存 ' + money(one.saved), sub: '相当于总额的进度见主数字' },
+    { title: '还差 ' + money(one.remaining) },
     {
-      title: '还差 ' + money(one.remaining),
-      ...(one.needed_monthly === null ? {} : { sub: '截止前达标还需每月 ' + money(one.needed_monthly) + ' 元' }),
+      title: String(s.count) + ' 个目标 · 已完成 ' + String(s.done_count) + ' 个',
+      sub: s.done_count === 0 ? '都没达成，再加把劲' : String(s.done_count) + ' 个已经达成',
     },
-    { title: String(s.count) + ' 个目标 · 已完成 ' + String(s.done_count) + ' 个', sub: '没达成的继续按账本累计' },
   ];
 }
 

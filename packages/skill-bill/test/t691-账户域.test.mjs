@@ -83,7 +83,7 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('新增账户 · 撞重名：出阻断页（exit 0、不写库、点名重名）', () => {
     const dup = page('bill.account.write', { op: 'add', name: '招行卡' }, 'add-dup');
     assert.equal(dup.env.data.ok, false);
-    assert.ok(dup.text.includes('已经有这个名字了'), '阻断条要点名重名');
+    assert.ok(dup.text.includes('还差 1 项没填：账户名'), '缺项那一行要点名账户名');
     assert.equal(goalsOf().accounts.length, 1, '重名不该再落一行');
   });
 
@@ -111,10 +111,10 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('账户转账 · 金额非正数与同账户：两条都进阻断表', () => {
     const neg = page('bill.account.write', { op: 'transfer', amount: -5, from: 'A', to: 'B' }, 'transfer-neg');
     assert.equal(neg.env.data.ok, false);
-    assert.ok(neg.text.includes('要写正数'), '负数金额要点名');
+    assert.ok(neg.text.includes('还差 1 项没填：金额'), '缺项那一行要点名金额');
     const same = page('bill.account.write', { op: 'transfer', amount: 5, from: 'A', to: 'A' }, 'transfer-same');
     assert.equal(same.env.data.ok, false);
-    assert.ok(same.text.includes('要和转出账户不同'), '同账户要点名');
+    assert.ok(same.text.includes('还差 1 项没填：到账户'), '缺项那一行要点名到账户');
   });
 
   it('改账户：缺「改成什么」出确认页 → 改名写库（级联历史流水）出回执页带改前改后', () => {
@@ -125,7 +125,7 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
 
     const miss = page('bill.account.write', { op: 'update', name: '不存在的卡', 'new-name': 'X' }, 'update-missing');
     assert.equal(miss.env.data.ok, false);
-    assert.ok(miss.text.includes('账户表里没有这个账户'), '认不出来要在缺项那一行点名');
+    assert.ok(miss.text.includes('还差 1 项没填：账户'), '认不出来要在缺项那一行点名「账户」');
 
     const done = page('bill.account.write', { op: 'update', name: '招行卡', 'new-name': '招行工资卡' }, 'update-receipt');
     assert.equal(done.env.data.ok, true);

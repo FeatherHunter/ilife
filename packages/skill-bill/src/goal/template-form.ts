@@ -142,7 +142,7 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
   const missing = blocked.length;
   const envelope = envelopeOf(input.key, false, blockedMessageOf(spec.word, blocked));
   const hint = missing > 0
-    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label + (b.why === '没给' ? '' : '（' + b.why + '）')).join('、') + '，填完才能复制。'
+    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
     : '已填齐，点上面那句复制带数据的口令。';
   const entry = renderParamForm({ description: spec.fieldDescription, fields: fieldsOf(input.op, input.params) })
     + '<p class="ilife-block-caliber">' + hint + '</p>';

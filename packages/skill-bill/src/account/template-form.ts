@@ -140,12 +140,19 @@ function receiptLedgerOf(input: AccountReceiptInput, at: string): readonly Ticke
   ];
 }
 
-/** 读数卡逐条转成明细行（判地中段那一串「标签 值 ＋ 说明」）。 */
-function rowsOfCards(cards: readonly { readonly label: string; readonly value: string; readonly detail?: string }[]): readonly EntryCardEntry[] {
-  return cards.map((c) => ({
-    title: c.label + ' ' + c.value,
-    ...(c.detail === undefined || c.detail === '' ? {} : { sub: c.detail }),
-  }));
+/** 回执页中段那几行（**判地逐页给的行**；A 路：不再由读数卡转写，读数卡那几项的多余信息不再上屏）。 */
+function receiptRowsOf(input: AccountReceiptInput): readonly EntryCardEntry[] {
+  if (input.receipt.op === 'transfer') {
+    return [
+      { title: '转出 · ' + textOrDash(input.params['from']), sub: '记负数（金额见主数字）' },
+      { title: '转入 · ' + textOrDash(input.params['to']), sub: '记正数（金额见主数字）' },
+    ];
+  }
+  return [
+    { title: '账户名 ' + textOrDash(input.params['name']), sub: '刚登记进来的' },
+    { title: '类型 ' + textOrDash(input.params['type']), sub: '随时可以改' },
+    { title: '状态 使用中', sub: '已可记账' },
+  ];
 }
 
 /** 过程型采集页（①）：缺项时出这一页（只采集、不写库）。 */
@@ -155,7 +162,7 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, blockedMessageOf(spec.word, blocked));
   const hint = missing > 0
-    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label + (b.why === '没给' ? '' : '（' + b.why + '）')).join('、') + '，填完才能复制。'
+    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
     : '已填齐，点上面那句复制带数据的口令。';
   const entry = renderParamForm({ description: spec.fieldDescription, fields: fieldsOf(input) })
     + '<p class="ilife-block-caliber">' + hint + '</p>';
@@ -209,7 +216,7 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
     ledger: receiptLedgerOf(input, at),
     detailTitle: isTransfer ? '两笔分录' : '明细',
     detailTag: 'DETAIL',
-    detailHtml: renderEntryCard({ entries: rowsOfCards(spec.receiptCards(input)) }),
+    detailHtml: renderEntryCard({ entries: receiptRowsOf(input) }),
     check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
     actions: ticketPrimaryButton({
       label: isTransfer ? '撤销这次转账（可恢复）' : '撤销这次新增（可恢复）',

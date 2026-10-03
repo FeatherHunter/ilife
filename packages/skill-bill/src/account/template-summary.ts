@@ -78,8 +78,7 @@ function detailRowsOf(s: AccountSummary): readonly EntryCardEntry[] {
     const marks = [a.type.trim() === '' ? '—' : a.type, a.disabled ? '已停用' : a.registered ? '已注册' : '没登记'];
     return {
       title: a.name + ' ｜ 余额 ' + money(a.balance),
-      sub: marks.join(' · ') + ' ｜ ' + String(a.count) + ' 笔'
-        + (a.last_time.trim() === '' ? '' : ' · 末笔 ' + a.last_time),
+      sub: marks.join(' · ') + ' ｜ ' + String(a.count) + ' 笔 · 末笔见落点时间',
     };
   });
   rows.push({

@@ -104,11 +104,14 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, messageOf(spec.word, blocked));
   const hint = missing > 0
-    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label + (b.why === '没给' ? '' : '（' + b.why + '）')).join('、') + '，填完才能复制。'
+    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
     : '已填齐，点上面那句复制带数据的口令。';
+  // A 路（严格按判地）：待填段只列判地那两行——「账户」「改成什么」。
+  // 「停用／启用」是本仓能力，命令侧照收（`ACCOUNT_SLOTS.update` 与 `./params.js` 一字未动），只是页上不再列出。
+  const shown = ACCOUNT_SLOTS[input.op].filter((s) => s.name === 'name' || s.name === CHANGE_SLOT.name);
   const entry = renderParamForm({
     description: spec.fieldDescription,
-    fields: slotFieldsOf(input.params, ACCOUNT_SLOTS[input.op].map((s) => (
+    fields: slotFieldsOf(input.params, shown.map((s) => (
       s.name === CHANGE_SLOT.name
         ? { name: 'new-name', label: CHANGE_SLOT.label, hint: CHANGE_SLOT.hint, required: true }
         : { name: s.name, label: s.label, hint: s.hint, required: s.required }
@@ -148,9 +151,22 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
   const at = timeOf(input.params, receipt.actionAt);
   const envelope = envelopeOf(input.key, true, receipt.summary);
   const changes = receipt.before === null || receipt.after === null ? [] : changeRowsOf(receipt.before, receipt.after);
-  const rows: readonly EntryCardEntry[] = changes.length === 0
+  const renamed = changes.find((c) => c.label === '账户名');
+  // A 路（严格按判地 b04）：中段就是「原名／现名／历史流水」三行；其余口子（停用／启用）判地没有，
+  // 但它们是真改动，照实出成一行（不是信息删减，是判地没覆盖到的那一支）。
+  const rows: readonly EntryCardEntry[] = [
+    ...(renamed === undefined ? [] : [
+      { title: '原名 ' + renamed.before, sub: '改之前的账户名' },
+      { title: '现名 ' + renamed.after, sub: '改之后的账户名' },
+    ]),
+    ...changes.filter((c) => c.label !== '账户名').map((c) => ({ title: c.label + ' ' + c.after, sub: '改之前 ' + c.before })),
+    ...(receipt.renamedRows > 0
+      ? [{ title: '历史流水 ' + String(receipt.renamedRows) + ' 笔跟着改名', sub: '记录上的旧名一起换过来' }]
+      : []),
+  ];
+  const detailRows = rows.length === 0
     ? [{ title: '这一次没有一处字段真的变了。', sub: '值与原值一致' }]
-    : changes.map((c) => ({ title: c.label + ' ' + c.after, sub: '改之前 ' + c.before }));
+    : rows;
   const after = receipt.after;
   return receiptSheetPage({
     docTitle: DOC_TITLE + '·写库回执',
@@ -178,7 +194,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     ],
     detailTitle: '改了什么',
     detailTag: 'DETAIL',
-    detailHtml: renderEntryCard({ entries: rows }),
+    detailHtml: renderEntryCard({ entries: detailRows }),
     check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
     actions: ticketPrimaryButton({
       label: '撤销这次改名（可恢复）',
