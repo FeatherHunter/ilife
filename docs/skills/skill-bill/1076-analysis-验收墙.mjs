@@ -49,6 +49,8 @@ const CSS = [
   'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f}',
   '.wrap{padding:24px 20px 60px}h1{font-size:22px;font-weight:600;margin-bottom:6px}',
   '.sub{color:#6e6e73;font-size:13.5px;margin-bottom:18px;line-height:1.75;max-width:1500px}',
+  '.banner{background:#fff8e6;border:2px solid #8a6d3b;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;line-height:1.75;max-width:1500px;color:#3a2f1c}',
+  '.banner b{color:#8a2c0d}.banner .li{margin-top:4px}',
   '.okbar{position:sticky;top:0;z-index:50;background:#fff;border:1px dashed #1d1d1f;border-radius:10px;padding:8px 10px;margin-bottom:14px;font-size:12.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
   '.okbar .cnt{font-weight:700;font-variant-numeric:tabular-nums}.okbar .msg{color:#6e6e73;font-size:12px}',
   '.okbar button{font:inherit;font-size:12px;background:#fff;border:1px solid #1d1d1f;border-radius:8px;padding:4px 10px;cursor:pointer}',
@@ -105,13 +107,18 @@ function render(kind) {
   const h1 = kind === 'mobile'
     ? '#1076 分析域 25 页 · 真跑产物 vs 冻结原型 · 手机墙'
     : '#1076 分析域 25 页 · 真跑产物 vs 冻结原型 · 桌面墙';
+  const banner = '<div class="banner">'
+    + '<div><b>两侧数据不同</b>：<b>左＝本仓 #729 夹具真跑产物</b>（39 条 ＋ 本票补的 1 条「今天」），<b>右＝判地内置样本值</b>（判地是手绘样本页）。⇒ <b>本墙判「版式与件套」，不比数值</b>。</div>'
+    + '<div class="li"><b>分析域特有</b>：判地是手绘样本页（a01／a05 只画 2 行），产物按<b>真实数据列</b>（a05 分类排行 8 行）⇒ <b>页高比 ≈ 行数比（均值 1.19×）</b>，属<b>内容体积</b>，<b>不是版式膨胀</b>；差额另有一摊是家具固定开销 6–10%（#1120 §四）。</div>'
+    + '<div class="li"><b>本票主判据（块位序列与判地一致）</b>：复跑读数 <b>25/25 页逐位相同</b>——店头 → 主数字（含「只读」印章）→ 图形占位 CHART → 明细卡 DETAIL → 落点 LEDGER → 口径 CALIBER → 动作区 → ✂ 裁切线 →（a04 起）纸外页脚；a01–a03 两侧都无页脚、a03 两侧都无 DETAIL 段。判地没有的块（页内导航／结论条／类型徽章／来源脚注）产物也一律没有。</div>'
+    + '</div>';
   const sub = kind === 'mobile'
     ? '<b>左＝真跑产物</b>（隔离家目录 $env:TEMP\\tick-1076 ＋ 仓内 #729 分析域夹具 39 条记录，「今天」钉在 ' + esc(raw.sample?.today ?? '') + '），<b>右＝ #1073 冻结原型</b>（同目录副本，逐件 sha256 与 manifest 对上）。两侧<b>数据不同</b>：左＝夹具合成库（2026-01~06），右＝原型内嵌样例值——<b>这一墙判版式与件套</b>（八件套、占比条按同组最大值折算、明细行、空态直写、结论句聚合），<b>不判数字</b>。快照：' + esc(String(raw.snapshot?.gitHead ?? '').slice(0, 8)) + ' ＋ dist ' + esc(String(raw.snapshot?.cmdReadDistSha256 ?? '').slice(0, 12)) + '。每格「满意／不满意（原因必填）」，可导出 JSON 作为逐格结论原文。'
     : '同一格上下两张：<b>上＝真跑产物</b>（1280 宽）、<b>下＝ #1073 冻结原型</b>（1280 宽）；与手机墙成对，编号／唤醒词／该确认什么完全一致。这一墙判版式与件套，不判数字。';
   return '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">\n'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
     + '<title>' + h1 + '</title><style>' + CSS + gridCss + '</style></head>\n'
-    + '<body><div class="wrap"><h1>' + h1 + '</h1>\n<div class="sub">' + sub + '</div>\n'
+    + '<body><div class="wrap"><h1>' + h1 + '</h1>\n' + banner + '\n<div class="sub">' + sub + '</div>\n'
     + bar(wallName, rows.length) + '\n<div class="grid">\n' + cells + '\n</div></div>\n'
     + script(wallName) + '</body></html>\n';
 }

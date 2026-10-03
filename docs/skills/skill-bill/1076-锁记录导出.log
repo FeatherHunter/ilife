@@ -1,0 +1,29 @@
+# #1076 锁记录导出（协议 §2.3.4：ticket=1076 的全部 START／RUN 行，逐行原样）
+# 源：.scratch/locks/gate-runs.log（未受版本控制）→ 本件受版本控制
+# 行数：26
+START ticket=1076 runId=803affc9-4408-4723-8728-38b3b63f6869 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 pid=56284 at=2026-10-03T11:08:08.776Z
+RUN ticket=1076 runId=803affc9-4408-4723-8728-38b3b63f6869 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 exit=0 pid=56284 at=2026-10-03T11:08:19.088Z
+START ticket=1076 runId=82a904c6-6b9b-46c0-bd68-cfb4fd9616bd cmd="node .scratch/1076-analysis/commit-1076.mjs" waitedMs=0 pid=48780 at=2026-10-03T11:13:02.150Z
+RUN ticket=1076 runId=82a904c6-6b9b-46c0-bd68-cfb4fd9616bd cmd="node .scratch/1076-analysis/commit-1076.mjs" waitedMs=0 exit=0 pid=48780 at=2026-10-03T11:13:02.441Z
+START ticket=1076 runId=f1e6eff7-0041-46aa-944b-25396ab63b0a cmd="git push origin master" waitedMs=0 pid=54808 at=2026-10-03T11:13:13.514Z
+RUN ticket=1076 runId=f1e6eff7-0041-46aa-944b-25396ab63b0a cmd="git push origin master" waitedMs=0 exit=0 pid=54808 at=2026-10-03T11:13:15.598Z
+START ticket=1076 runId=1c10a923-877d-4896-8fb2-e0b64c7b432d cmd="node .scratch/1076-analysis/commit-1076.mjs" waitedMs=0 pid=33596 at=2026-10-03T11:14:03.048Z
+RUN ticket=1076 runId=1c10a923-877d-4896-8fb2-e0b64c7b432d cmd="node .scratch/1076-analysis/commit-1076.mjs" waitedMs=0 exit=0 pid=33596 at=2026-10-03T11:14:03.265Z
+START ticket=1076 runId=a1eaa5d9-84d4-4732-b7dd-6e7e93eae5c1 cmd="git push origin master" waitedMs=0 pid=44064 at=2026-10-03T11:14:03.345Z
+RUN ticket=1076 runId=a1eaa5d9-84d4-4732-b7dd-6e7e93eae5c1 cmd="git push origin master" waitedMs=0 exit=0 pid=44064 at=2026-10-03T11:14:05.425Z
+START ticket=1076 runId=34a08175-6445-43a1-bb2e-437efb189d62 cmd="node .scratch/1076-analysis/commit-1076b.mjs" waitedMs=0 pid=42928 at=2026-10-03T11:43:21.954Z
+RUN ticket=1076 runId=34a08175-6445-43a1-bb2e-437efb189d62 cmd="node .scratch/1076-analysis/commit-1076b.mjs" waitedMs=0 exit=0 pid=42928 at=2026-10-03T11:43:22.189Z
+START ticket=1076 runId=ce35b582-4ede-4864-bba0-152c486c6643 cmd="git push origin master" waitedMs=0 pid=60820 at=2026-10-03T11:43:22.251Z
+RUN ticket=1076 runId=ce35b582-4ede-4864-bba0-152c486c6643 cmd="git push origin master" waitedMs=0 exit=0 pid=60820 at=2026-10-03T11:43:24.608Z
+START ticket=1076 runId=7cf123f3-13e7-484b-b7bc-80a704086270 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 pid=58912 at=2026-10-03T11:46:27.126Z
+RUN ticket=1076 runId=7cf123f3-13e7-484b-b7bc-80a704086270 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 exit=0 pid=58912 at=2026-10-03T11:46:29.225Z
+START ticket=1076 runId=b83cad53-c965-430a-863f-936a658a0ea7 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 pid=51664 at=2026-10-03T11:46:29.688Z
+RUN ticket=1076 runId=b83cad53-c965-430a-863f-936a658a0ea7 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 exit=0 pid=51664 at=2026-10-03T11:46:40.054Z
+START ticket=1076 runId=95b968fd-c77d-484c-80ff-68735064002c cmd="node .scratch/1076-analysis/commit-1076c.mjs" waitedMs=0 pid=50508 at=2026-10-03T11:47:56.210Z
+RUN ticket=1076 runId=95b968fd-c77d-484c-80ff-68735064002c cmd="node .scratch/1076-analysis/commit-1076c.mjs" waitedMs=0 exit=0 pid=50508 at=2026-10-03T11:47:58.454Z
+START ticket=1076 runId=b5e9364a-ebe7-4113-a874-4258d3980578 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 pid=76048 at=2026-10-03T17:09:36.031Z
+RUN ticket=1076 runId=b5e9364a-ebe7-4113-a874-4258d3980578 cmd="node .scratch/1076-analysis/run-1076.mjs" waitedMs=0 exit=0 pid=76048 at=2026-10-03T17:09:46.077Z
+START ticket=1076 runId=6b136028-3432-4184-86ef-f05717f5a3f4 cmd="node docs/skills/skill-bill/1081-页族总检.mjs --only a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25" waitedMs=10010 pid=38848 at=2026-10-03T17:12:12.858Z
+RUN ticket=1076 runId=6b136028-3432-4184-86ef-f05717f5a3f4 cmd="node docs/skills/skill-bill/1081-页族总检.mjs --only a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25" waitedMs=10010 exit=0 pid=38848 at=2026-10-03T17:12:23.075Z
+START ticket=1076 runId=aae640f1-a741-4131-a3a1-cd8e55add3f9 cmd="node docs/skills/skill-bill/1076-analysis-验收墙.mjs .scratch/1076-analysis compare-1076-analysis-25.html" waitedMs=1 pid=75800 at=2026-10-03T17:12:46.572Z
+RUN ticket=1076 runId=aae640f1-a741-4131-a3a1-cd8e55add3f9 cmd="node docs/skills/skill-bill/1076-analysis-验收墙.mjs .scratch/1076-analysis compare-1076-analysis-25.html" waitedMs=1 exit=0 pid=75800 at=2026-10-03T17:12:46.648Z
