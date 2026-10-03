@@ -24,6 +24,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const argv = process.argv.slice(2);
 const outArg = argv.indexOf('--out');
 const OUT = resolve(ROOT, outArg >= 0 && argv[outArg + 1] !== undefined ? argv[outArg + 1] : '.scratch/1075-write-receipt');
+// `--proto-root <目录>`：判地原件的解析根（缺省＝仓根）。只给变异演示用——把一份**改了字节的判地镜像**指进来，
+// 冻结原型 sha256 核对就会红并点名（真原型的字一个字都不动）。
+const protoArg = argv.indexOf('--proto-root');
+const PROTO_ROOT = protoArg >= 0 && argv[protoArg + 1] !== undefined ? resolve(ROOT, argv[protoArg + 1]) : ROOT;
 const SAMPLE = join(ROOT, 'docs/skills/skill-bill/1075-write-样本集.json');
 const PROTO_MANIFEST = join(ROOT, 'docs/skills/skill-bill/proto/manifest.json');
 const BIN = join(ROOT, 'packages/skill-bill/dist/cli/cmd_read.js');
@@ -44,11 +48,12 @@ function skeleton(html) {
   const count = (re) => (body.match(re) || []).length;
   const family = /ilife-bill-sheet-page/.test(body) ? 'sheet' : 'doc';
   const anchors = family === 'sheet'
-    ? {
-      店头: count(/ilife-sheet-title/g), 主数字: count(/ilife-ticket-summary/g),
-      落点: count(/ilife-block-ledger-rows/g), 明细: count(/ilife-block-data-table/g),
-      对账: count(/ilife-ticket-sec-heading/g), 复制区: count(/ilife-block-copy-block/g),
-      口径行: count(/ilife-block-caliber/g), 裁切线: count(/ilife-block-sheet-cut/g),
+    ? {   // 票据纸回执族（#1117 起 16 页全走这一族）：纸根／店头／主数字／落点／对账／虚线／复制区／✂ 裁切线／纸外页脚
+      纸根: count(/ilife-bill-sheet-page/g), 店头: count(/ilife-sheet-title/g),
+      主数字: count(/ilife-block-summary-head/g), 落点: count(/ilife-block-ledger-rows/g),
+      对账: count(/ilife-ticket-check/g), 虚线: count(/ilife-ticket-rule/g),
+      复制区: count(/ilife-block-copy-block/g), 裁切线: count(/✂ 裁切线/g),
+      页脚: count(/ilife-ticket-foot/g),
     }
     : {
       页头: count(/ilife-block-page-shell-title/g), 主数字: count(/ilife-block-kpi-card-grid/g),
@@ -62,7 +67,7 @@ function skeleton(html) {
     anchors,
     anchorsMissing: Object.entries(anchors).filter(([, v]) => v === 0).map(([k]) => k),
     nav: count(/ilife-block-toc/g),                       // 页内导航（doc 族恰一个；sheet 族不出这一块）
-    sourceNote: count(/数据来源/g) + count(/ilife-sheet-foot|基线/g),
+    sourceNote: count(/数据来源/g) + count(/ilife-ticket-foot|ilife-sheet-foot|基线/g),   // sheet 族的「来源」＝纸外页脚
     undefinedNaN: /undefined|NaN/.test(txt),
     loadingLazy: /loading\s*=\s*["']lazy/i.test(html),
     zigzagCut: count(/ilife-block-sheet-zigzag|ilife-block-sheet-cut/g),
@@ -110,7 +115,7 @@ const log = [...seedLog];
 for (const it of sample.items) {
   const proto = protoItems.find((p) => 'proto/' + p.rel === it.protoRel);
   if (!proto) throw new Error('冻结原型里没有 ' + it.protoRel);
-  const protoSrc = join(ROOT, proto.file);
+  const protoSrc = join(PROTO_ROOT, proto.file);
   const buf = readFileSync(protoSrc);
   const got = sha256(buf);
   if (got !== proto.sha256) throw new Error('冻结原型 sha256 不符：' + proto.file + ' got=' + got + ' want=' + proto.sha256);
