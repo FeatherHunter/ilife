@@ -22,6 +22,9 @@
  * 详情页与其他票据页零命中）；颜色与圆角一律读皮肤 token，不抄字面色。
  * 两处与 w01 不同的原型字面（各照各的原型，不统一）：① 明细首行 `备注 · ` 中点空格
  * （w01 全角冒号）；② 对账分隔全角 ` ／ `（w01 半角）；③ 明细展示序时间升序（w01 入参序）。
+ *
+ * 笔数口径（#1110 落地 #1084 裁定 C）：窗口无转账时本页字面与批准原型逐字节相同；有转账时 H2 的笔数
+ * 加「（不含转账）」、对账 CHECK 的笔数加「（含转账 K）」——两处片段都由 `./countLabel.js` 出，本件不另写一份口径。
  */
 import { escapeHtml } from 'base-paint';
 import { renderCaliberLine, renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
@@ -33,6 +36,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { estimateBytes } from '../render/html.js';
+import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope, queryListDoc } from './list.js';
 import type { QueryCategoryRow, QueryListData } from './list.js';
@@ -178,10 +182,10 @@ function entriesHtml(records: readonly BillRow[]): string {
 }
 
 /** 对账 CHECK（w03 原型字面：编号序列 ／ 共 N 笔 ／ 异常：无；分隔是全角斜线，见件头）。 */
-function checkHtml(records: readonly BillRow[]): string {
+function checkHtml(records: readonly BillRow[], countText: string): string {
   const ids = records.map((r) => String(r.id)).join('、');
   return '<div class="ilife-someday-check"><span class="ilife-someday-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + String(records.length) + ' 笔 ／ 异常：无</span></div>';
+    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
 }
 
 /** 查某天票据纸的入参（调用方 `./read.js` 的 date 分支已按当天取好窗；零行不进本件）。 */
@@ -200,12 +204,13 @@ export interface SomedayTicketInput {
 export function querySomedayTicketDoc(input: SomedayTicketInput): string {
   const ordered = displayOrder(input.records);
   const { kpi, categories, data } = modelOf(input.records, input.date);
+  const notes = countNotes(input.records, kpi.count);
   const conclusion = input.records.length === 0
     ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
     : conclusionOf(categories);
   const envelope = listEnvelope(input.key, { ...data, items: ordered.map(toBillItem) });
   const paper = queryStyleTag() + '<style>' + SOMEDAY_TICKET_CSS + '</style>'
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('共 ' + String(kpi.count) + ' 笔，支出 ' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-someday-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
@@ -221,7 +226,7 @@ export function querySomedayTicketDoc(input: SomedayTicketInput): string {
     + ticketRule()
     + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(ordered) })
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(ordered) })
+    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(ordered, notes.check) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },

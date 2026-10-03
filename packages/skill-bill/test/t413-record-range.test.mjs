@@ -126,7 +126,9 @@ describe('t413 ② 查月：锚点月初..锚点（截到锚点，非月末）',
     assert.ok(text.includes('饼干记账 · 查月'), '店头品牌行应为查月');
     // H1 的笔数与支出都取 kpi（收支口径，转账不计），不是 total／items——total 含转账笔，
     // 对账段的「共 N 笔」才是全行集口径（见下面 CHECK 段）。载荷断言一行未动。
-    assert.ok(text.includes('本月共 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), 'H2 本月句式（笔数与支出取 kpi）');
+    // #1110：本样本今天恒有两笔转账（转账/转出、转账/转入），今天恒在月窗内 ⇒ K＝2，两处各带注记。
+    assert.ok(text.includes('本月共 ' + env.data.kpi.count + ' 笔（不含转账），支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), 'H2 本月句式（笔数与支出取 kpi，含转账窗口带动注记）');
+    assert.ok(text.includes('共 ' + env.data.total + ' 笔（含转账 2） ／ 异常：无'), '对账 CHECK 笔数取全行集口径，注记带转账数 2');
     assert.ok(text.includes(m01 + ' ~ ' + today + '（本月）'), '窗口说清起止＋本月');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes('<span class="ilife-ticket-sec-no">LEDGER</span>'), '落点段');
@@ -193,7 +195,8 @@ describe('t413 ④ 查分类：三级（无 / 视为 L1）', () => {
     assert.ok(text.includes('饼干记账 · 查分类'), '店头品牌行应为查分类');
     assert.ok(text.includes('分类＝餐饮（全部时间）'), '窗口说清条件＋全部时间');
     // v2.2 判地（#1080 落地）：结论句只报笔数（金额进主数字），占比句搬进落点那一行的「占比」。
-    assert.ok(text.includes('查分类共记 ' + env.data.total + ' 笔'), '结论句（笔数）');
+    // 结论句笔数取 kpi.count（#1110；餐饮窗内无转账 ⇒ 无注记）。
+    assert.ok(text.includes('查分类共记 ' + env.data.kpi.count + ' 笔'), '结论句（笔数）');
     assert.ok(text.includes('占本页支出 '), '落点里的占比那一行');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes(SEC('SHARE')), '占比段');
@@ -226,7 +229,9 @@ describe('t413 ⑤ 查账户／查账本：只过滤（余额无关性探针）'
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes(SEC('LEDGER')), '落点段');
     assert.ok(text.includes(SEC('DETAIL')), '明细段');
-    assert.ok(text.includes('支付宝共 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句（取 kpi，非 total）');
+    // #1110：支付宝窗内含一笔转出（ledger 转账）⇒ K＝1，两处各带注记；不变量 3−2＝1。
+    assert.ok(text.includes('支付宝共 ' + env.data.kpi.count + ' 笔（不含转账），支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句（取 kpi，非 total，含转账窗口带动注记）');
+    assert.ok(text.includes('共 ' + env.data.total + ' 笔（含转账 1） ／ 异常：无'), '对账 CHECK 笔数取全行集口径，注记带转账数 1');
     assert.ok(text.includes('✂ 裁切线'), '裁切线');
     assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
@@ -242,7 +247,9 @@ describe('t413 ⑤ 查账户／查账本：只过滤（余额无关性探针）'
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes(SEC('LEDGER')), '落点段');
     assert.ok(text.includes(SEC('DETAIL')), '明细段');
-    assert.ok(text.includes('转账账本 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句：两笔全是转账 → 收支全零（取 kpi）');
+    // #1110 最难看的一页（#1084 §3.4）：K＝2、N＝0、M＝2 ⇒ H2「0 笔（不含转账）」、对账「2 笔（含转账 2）」，页头不再与明细打架。
+    assert.ok(text.includes('转账账本 ' + env.data.kpi.count + ' 笔（不含转账），支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句：两笔全是转账 → 收支全零（取 kpi）＋不含转账注记');
+    assert.ok(text.includes('共 ' + env.data.total + ' 笔（含转账 2） ／ 异常：无'), '对账 CHECK：两笔转账全在，注记带转账数 2');
     assert.ok(text.includes('✂ 裁切线'), '裁切线');
     assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });

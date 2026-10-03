@@ -31,6 +31,9 @@
  * 呈现映射沿 `./ticketAccount.js`（w10）与 `./ticketMonth.js`（w07）：店头／主数字／段落／
  * 复制区走共用位与公共层组件，占比条与对账是本页自有标记（类名 `ilife-category-*`，作用域限
  * `.ilife-ticket-detail`，他页零命中）；颜色与圆角一律读皮肤 token，不抄字面色。
+ *
+ * 笔数口径（#1110 落地 #1084 裁定 C）：窗口无转账时本页字面与批准原型逐字节相同；有转账时 H2 的笔数
+ * 加「（不含转账）」、对账 CHECK 的笔数加「（含转账 K）」——两处片段都由 `./countLabel.js` 出，本件不另写一份口径。
  */
 import { escapeHtml } from 'base-paint';
 import { renderCaliberLine, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
@@ -42,6 +45,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { estimateBytes } from '../render/html.js';
+import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope, queryListDoc } from './list.js';
 import type { QueryCategoryRow, QueryListData } from './list.js';
@@ -186,10 +190,10 @@ function notesHtml(records: readonly BillRow[], start: number): string {
 }
 
 /** 对账 CHECK（原型 `checkHTML` 同式：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
-function checkHtml(records: readonly BillRow[]): string {
+function checkHtml(records: readonly BillRow[], countText: string): string {
   const ids = records.map((r) => String(r.id)).join('、');
   return '<div class="ilife-category-check"><span class="ilife-category-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + String(records.length) + ' 笔 ／ 异常：无</span></div>';
+    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
 }
 
 /** 查分类票据纸的入参（调用方 `./read.js` 的条件分支已按分类取好窗；`sharePct` 与 `shareChip` 同口径）。 */
@@ -206,12 +210,13 @@ export interface CategoryTicketInput {
 /** 查分类票据纸：一整页（载荷与 `./list.js` 条件分支同形，呈现照 w09 v2.2 原型）。 */
 export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
   const { kpi, categories, data } = modelOf(input.records);
+  const notes = countNotes(input.records, kpi.count);
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const envelope = listEnvelope(input.key, data);
   const paper = queryStyleTag() + '<style>' + CATEGORY_TICKET_CSS + '</style>'
     + sheetHead(
       DOC_TITLE + ' · ' + input.wakeWord,
-      escapeHtml(input.wakeWord + '共记 ' + String(kpi.count) + ' 笔'),
+      escapeHtml(input.wakeWord + '共记 ' + notes.head),
       input.window,
     )
     + ticketRule()
@@ -228,7 +233,7 @@ export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
     + ticketRule()
     + ticketSection({ title: '备注', tag: 'NOTES', content: notesHtml(input.records, shown.length) })
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records) })
+    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records, notes.check) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },

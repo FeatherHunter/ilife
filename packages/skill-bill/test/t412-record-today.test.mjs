@@ -72,7 +72,8 @@ describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
     assert.equal(env.shape, 'list');
     assert.ok(env.data.date, '无参也回填 date（今天）');
     assert.ok(text.includes('饼干记账 · 查今天'), '店头品牌行应为查今天');
-    assert.ok(text.includes('今天共 ' + env.data.total + ' 笔，支出 '), 'H2 今天句式（含笔数与支出）');
+    // 笔数取值源＝kpi.count（收支口径，转账不计；#1110 起两处笔数各标口径，本样本无转账故无注记）。
+    assert.ok(text.includes('今天共 ' + env.data.kpi.count + ' 笔，支出 '), 'H2 今天句式（含笔数与支出）');
     assert.ok(text.includes('查账单和查今天是一样的。'), '别名注（w01 v2.1 逐字）');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes('复制数据'), '复制区');
@@ -91,7 +92,8 @@ describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
     const env = JSON.parse(stdout);
     assert.equal(env.data.date, ys, 'yesterday 应解析为昨天日期串');
     assert.ok(text.includes('饼干记账 · 查昨天'), '店头品牌行应为查昨天');
-    assert.ok(text.includes('昨天 ' + env.data.total + ' 笔，支出 '), 'H2 昨天句式（含笔数与支出）');
+    // 同查今天：笔数取 kpi.count（#1110），本样本无转账故字面不含注记。
+    assert.ok(text.includes('昨天 ' + env.data.kpi.count + ' 笔，支出 '), 'H2 昨天句式（含笔数与支出）');
     assert.ok(!text.includes('查账单和查今天是一样的。'), '无别名注（w02 原型无此行，w01 专属）');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes('复制数据'), '复制区');

@@ -20,6 +20,9 @@
  * 呈现映射沿 `./detail.js`（#993 小票化）与 `w07 ticketMonth.ts`：店头／主数字／段落／复制区走
  * 共用位与公共层组件，明细与对账是本页自有标记（类名 `ilife-account-*`，作用域限
  * `.ilife-ticket-detail`，他页零命中）；颜色与圆角一律读皮肤 token，不抄字面色。
+ *
+ * 笔数口径（#1110 落地 #1084 裁定 C）：窗口无转账时本页字面与批准原型逐字节相同；有转账时 H2 的笔数
+ * 加「（不含转账）」、对账 CHECK 的笔数加「（含转账 K）」——两处片段都由 `./countLabel.js` 出，本件不另写一份口径。
  */
 import { escapeHtml } from 'base-paint';
 import { renderCaliberLine, renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
@@ -31,6 +34,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { estimateBytes } from '../render/html.js';
+import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope, queryListDoc } from './list.js';
 import type { QueryCategoryRow, QueryListData } from './list.js';
@@ -176,10 +180,10 @@ function entriesHtml(records: readonly BillRow[]): string {
 }
 
 /** 对账 CHECK（原型逐字：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
-function checkHtml(records: readonly BillRow[]): string {
+function checkHtml(records: readonly BillRow[], countText: string): string {
   const ids = records.map((r) => String(r.id)).join('、');
   return '<div class="ilife-account-check"><span class="ilife-account-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + String(records.length) + ' 笔 ／ 异常：无</span></div>';
+    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
 }
 
 /** 查账户票据纸的入参（调用方 `./read.js` 的条件分支已按账户取好窗）。 */
@@ -195,10 +199,11 @@ export interface AccountTicketInput {
 /** 查账户票据纸：一整页（载荷与 `./list.js` 条件分支同形，呈现照 w10 v2.1 原型）。 */
 export function queryAccountTicketDoc(input: AccountTicketInput): string {
   const { kpi, categories, data } = modelOf(input.records);
+  const notes = countNotes(input.records, kpi.count);
   const conclusion = conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
   const paper = queryStyleTag() + '<style>' + ACCOUNT_TICKET_CSS + '</style>'
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.account + '共 ' + String(kpi.count) + ' 笔，支出 ' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.account + '共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-account-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
@@ -214,7 +219,7 @@ export function queryAccountTicketDoc(input: AccountTicketInput): string {
     + ticketRule()
     + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(input.records) })
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records) })
+    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records, notes.check) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
