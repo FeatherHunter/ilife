@@ -32,8 +32,12 @@ export function promptBoxSlot(slot: PromptBoxSlot, prefix = 'ilife-'): string {
   return prefix + 'block-prompt-box-' + slot;
 }
 
-/** 形态闭集：只落地 `card`（标题 ＋ 正文 ＋ 复制按钮一张卡）。 */
-export const PROMPT_BOX_FORMS = ['card'] as const;
+/** 形态闭集：
+ *  · `card`＝标题 ＋ 等宽正文 ＋ 复制按钮一张卡（本件原样）；
+ *  · `paper`＝**判地票据纸那枚暖底纯文本框**（`x01` 判地 `.prompt-box`：底 `#fbf7ec`、边 1px `--line`、
+ *    圆角 12px、内距 `12px 13px 11px`、13.5px／行高 1.7、字色 `#5f574a`、`white-space:pre-wrap`）——
+ *    没有标题、没有复制按钮（判地那枚就是一段留白文本）。 */
+export const PROMPT_BOX_FORMS = ['card', 'paper'] as const;
 export type PromptBoxForm = (typeof PROMPT_BOX_FORMS)[number];
 
 /** 根的发现锚（运行时的 `closest` 锚）。 */
@@ -73,7 +77,7 @@ function assertKeys(value: object, allowed: readonly string[], field: string): v
 }
 
 function reqForm(value: unknown): PromptBoxForm {
-  if (value === 'card') return value;
+  if (value === 'card' || value === 'paper') return value;
   badInput('form 必须是 ' + PROMPT_BOX_FORMS.join('／'));
 }
 
@@ -88,6 +92,16 @@ export function renderPromptBox(input: unknown): string {
   const hint = raw.hint === undefined ? undefined : optText(raw.hint, 'hint');
   const form = raw.form === undefined ? 'card' : reqForm(raw.form);
   const extra = raw.extraClass === undefined ? undefined : optExtraClass(raw.extraClass, 'extraClass');
+  // paper 形态**只出正文**：判地那枚没有标题与复制按钮；给这三样会被静默丢掉 ⇒ 当场拒，
+  // 免得调用方以为印了个按钮、页面上却没有（静默吞掉＝拼错字段名还绿）。
+  if (form === 'paper' && (label !== undefined || raw.copyText !== undefined || hint !== undefined)) {
+    badInput('form:paper 不带 label／copyText／hint（判地那枚是纯文本框）');
+  }
+  if (form === 'paper') {
+    return '<div class="' + PROMPT_BOX_CLASS + ' is-paper'
+      + (extra === undefined ? '' : ' ' + extra) + '" ' + PROMPT_BOX_ROOT_ATTR + '="1">'
+      + '<p class="' + promptBoxSlot('body') + '">' + esc(text) + '</p></div>';
+  }
   const head = label === undefined
     ? '' : '<p class="' + promptBoxSlot('head') + '">' + esc(label) + '</p>';
   const hintHtml = hint === undefined

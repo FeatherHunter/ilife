@@ -228,5 +228,58 @@ export const copyButtonSection: (prefix: string) => string = (p) => [
   '    max-width: none;',
   '  }',
   '}',
+  // ── 票据纸档（规格 §6「按钮与复制菜单形态」）────────────────────────────────
+  // 为什么住公共层：这一族的形状票据纸的**每一页**都要（采集页复制区、查询页动作区、设置页退出口），
+  // 页面侧各写一遍就是「共用件从第二个用法长出来」要收的那笔账（#1082 公共化）。
+  // 为什么挂两枚祖先类：`.copy-btn` 是全技能共用件，票据纸这套形状换到别的皮肤上会改别的技能的观感
+  // ⇒ 选择器写 `.ilife-page-ui .ilife-skin-ticket`，别的皮肤零命中；三枚类也压过页面侧那份
+  // `.ilife-bill-sheet-page .ilife-copy-btn`（同一套形状，页面那份成为死规则，交 #1082 收）。
+  // 出处＝`proto/style-spec/style-tokens.md` §6 第 85–90 行 ＋ 判地 w01 实测盒（`.btn` 46.3px）。
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-btn {',
+  '  width: 100%;',
+  '  min-height: 44px;',
+  '  padding: 12px 14px;',
+  '  border: 1.5px solid #ddd0b6; /* 规格 §6 授权照抄：次按钮 1.5px 暖边 #ddd0b6 */',
+  '  border-radius: 13px; /* 规格 §6 授权照抄：radius 13px（主/次按钮同档） */',
+  '  background: #fff; /* 规格 §6 授权照抄：次按钮白底 #fff */',
+  '  color: #4a4236; /* 判地字面 · 授权照抄：#4a4236（次按钮字色） */',
+  '  font-size: 14.5px; /* 规格 §6 授权照抄：14.5px／w800 */',
+  '  font-weight: 800;',
+  '  letter-spacing: .5px;',
+  // 判地 `.btn` 不写行高：46.3px ＝ 12+12 内距 ＋ 1.5+1.5 边 ＋ 19.3（14.5px 的 normal 行盒）。
+  // 基础档写死 `line-height:1`（其余皮肤沿用）⇒ 这一档必须显式收回 normal，否则整颗矮 1.3px。
+  '  line-height: 1.4; /* 判地字面 · 授权照抄：行高 1.4（判地按钮标签住 .btn-in，行盒 20.3px） */',
+  '}',
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-menu {',
+  '  left: 0;',
+  '  right: 0;',
+  '  min-width: 0;',
+  '  max-width: none;',
+  '  padding: 6px;',
+  '  border: 1.5px solid #ddd0b6; /* 规格 §6 授权照抄：菜单 1.5px 暖边 #ddd0b6 */',
+  '  border-radius: 12px; /* 规格 §6 授权照抄：复制菜单圆角 12px */',
+  '  background: #fff; /* 规格 §6 授权照抄：浮层白底 #fff */',
+  '  box-shadow: var(--ilife-shadow-pop); /* 规格 §2 授权照抄：浮层投影 shadow-pop */',
+  '}',
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-menu-item {',
+  '  min-height: 44px;',
+  '  padding: 10px 12px;',
+  '  border-radius: 8px;',
+  '  font-size: 13.5px; /* 规格 §6 授权照抄：菜项 13.5px／w700 */',
+  '  font-weight: 700;',
+  '}',
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-menu-item:hover {',
+  '  background: #faf5e9; /* 判地字面 · 授权照抄：#faf5e9（菜项悬停底） */',
+  '}',
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-menu-item > .' + p + 'copy-menu-label {',
+  '  font-size: 13.5px;',
+  '  font-weight: 700;',
+  '  color: var(--ilife-ink);',
+  '}',
+  '.' + p + 'page-ui .' + p + 'skin-ticket ' + ' .' + p + 'copy-menu-item > .' + p + 'copy-menu-hint {',
+  '  font-size: 11.5px; /* 规格 §6 授权照抄：右注 11.5px／w600 */',
+  '  font-weight: 600;',
+  '  color: var(--ilife-ink-2);',
+  '}',
   focusRing('.' + p + 'copy-btn'),
 ].join(LF)
