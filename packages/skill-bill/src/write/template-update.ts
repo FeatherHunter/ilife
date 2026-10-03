@@ -37,7 +37,7 @@ import { commandLine, writeSection } from '../shared/writeParts.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
-import { exitCopyOf, landedRows, receiptStamp, receiptTitle, UNDO_CALIBER } from './receiptSheet.js';
+import { exitCopyOf, landedRows, receiptStamp, receiptTitle } from './receiptSheet.js';   // UNDO_CALIBER 按判地不再上屏（该导出仍在 receiptSheet.ts，未删：本票写集只有本件）
 import { collectSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
@@ -264,11 +264,41 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
+/** 店头副句（判地 `.shop-sub`）：三支各一句，**逐字取判地原型**（x28「已经改好，不用再操作。」／x30「已经撤销，不用再操作。」／x32「已经恢复，不用再操作。」）。 */
+const SUB_OK: Readonly<Record<string, string>> = {
+  none: '已经改好，不用再操作。',
+  undo: '已经撤销，不用再操作。',
+  restore: '已经恢复，不用再操作。',
+};
+
 /** 摘要头那一句状态（判地 `.summary-note`）：撤销／恢复两支各一句，**逐字取判地原型**（x30「撤销标记已打上，记录保留、随时可恢复」／x32「撤销标记已清除，记录回到正常状态」）；改记录支判地没有这一句。 */
 const RESULT_NOTE: Readonly<Record<string, string>> = {
   undo: '撤销标记已打上，记录保留、随时可恢复',
   restore: '撤销标记已清除，记录回到正常状态',
 };
+
+/** 主数字头（判地 `.summary-head`）：**改记录支**判地是「改后落点 · <改的字段>／<改动笔数> 笔」（x28「改后落点 · 备注／1／笔」）；**撤销／恢复两支**判地是「<方向> · <分类>／金额 元」（x30「收入 · 工资／+8000.00／元」）。 */
+function summaryHeadOf(spec: UpdateSpec, input: ReceiptInput, receipt: BillReceipt) {
+  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项';
+  if (spec.receiptResult === 'none') {
+    return { eyebrow: '改后落点 · ' + fields, value: String(receipt.affectedRows), unit: '笔', stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
+  }
+  const category = input.facts.category.trim() === '' ? '未给' : input.facts.category;
+  return { eyebrow: directionWord(input.facts.amount) + ' · ' + category, value: money2(input.facts.amount), unit: '元', stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
+}
+
+/** 摘要头下面那句小字：改记录支判地是「<改的字段>已更新为最新内容，其余字段未动」（x28 逐字）；撤销／恢复支看法 `RESULT_NOTE`。 */
+function summaryNoteOf(spec: UpdateSpec, receipt: BillReceipt): string {
+  if (spec.receiptResult !== 'none') return RESULT_NOTE[spec.receiptResult] ?? '';
+  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项';
+  return fields + '已更新为最新内容，其余字段未动';
+}
+
+/** 落点账目行：**判地撤销／恢复两支不出「分类」行**（x30／x32 逐字只有账户／账本／时间），改记录支出（x28 分类在）；其余三行照 `./receiptSheet.js` 的 landedRows。 */
+function landedRowsOf(spec: UpdateSpec, input: ReceiptInput) {
+  const rows = landedRows(input.facts);
+  return spec.receiptResult === 'none' ? rows : rows.filter((r) => r.label !== '分类');
+}
 
 /** 核对那一行（原型 `.check-mini`）：形状逐字照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
 function checkHtml(recordId: number | null): string {
@@ -281,18 +311,12 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
   const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
-  const note = RESULT_NOTE[spec.receiptResult] ?? '';
-  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
+  const note = summaryNoteOf(spec, receipt);
+  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params), SUB_OK[spec.receiptResult] ?? '')
     + ticketRule()
-    + ticketSummary(renderSummaryHead({
-      eyebrow: '改后金额 · ' + directionWord(input.facts.amount),
-      value: money2(input.facts.amount),
-      unit: '元',
-      stamp: receiptStamp(spec.receiptResult, receipt),
-      layout: 'ticket',
-    }), note === '' ? '' : '<p class="ilife-ticket-summary-note">' + escapeHtml(note) + '</p>')
+    + ticketSummary(renderSummaryHead(summaryHeadOf(spec, input, receipt)), note === '' ? '' : '<p class="ilife-ticket-summary-note">' + escapeHtml(note) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '改后落点', tag: 'LEDGER', content: renderLedgerRows({ rows: landedRows(input.facts), layout: 'ticket' }) })
+    + ticketSection({ title: '记到哪里', tag: '', content: renderLedgerRows({ rows: landedRowsOf(spec, input), layout: 'ticket' }) })
     + ticketRule()
     + ticketSection({ title: '核对', tag: '', content: checkHtml(receipt.recordId) })
     + ticketRule()
@@ -308,8 +332,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
             actionAt: receipt.actionAt, version: DOC_VERSION,
           }),
         },
-      })
-      + (spec.receiptExit === 'undo' ? renderCaliberLine(UNDO_CALIBER) : ''));
+      }));
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
     content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }) + '<p class="ilife-ticket-foot">' + escapeHtml((spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake) + '回执') + '</p>',
