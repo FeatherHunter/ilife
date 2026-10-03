@@ -115,5 +115,7 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  letter-spacing: normal;',
     '  overflow-wrap: anywhere;',
     '}',
+    /* 窄档（判地 390 档把值列收到 58%）不在这里：同 sheet-frame，那是**页面级**补丁；
+       组件层禁 `@media (max-width…)`，件宽 ≠ 视口宽。 */
   ].join(LF);
 }

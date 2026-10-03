@@ -234,3 +234,7 @@ export * from './missing-badge/index.js';
    两件按判地几何逐条照抄，授权字面逐处带出处（见各件 `style.ts`）。**只加行、不重排**（并行席位的约定）。 */
 export * from './say-field/index.js';
 export * from './say-opt/index.js';
+/* #1114 第三件：`entry-card` 纸内明细卡（判地 w01 `.entry-card`／`.entry-rows`／`.idx`／`.amt`）。
+   授权字面逐处带出处（见该件 `style.ts`）；`entry-card` 的样式段**不在** `blocksCss()` 的 12 区块汇总里，
+   调用方要显式拼 `entryCardCss()`。**只加行、不重排**（并行席位的约定）。 */
+export * from './entry-card/index.js';

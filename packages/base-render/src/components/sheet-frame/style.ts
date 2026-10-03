@@ -67,6 +67,8 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '  padding: 22px 28px 10px;',
     '  overflow: hidden;',
     '}',
+    /* 窄档不在这里：判地 390 档的纸内距（18px 22px 8px）是**页面级**补丁（产品侧写在 skill-bill 的 TICKET_CSS 里）；
+       组件层禁 `@media (max-width…)`（件宽 ≠ 视口宽），故本层不掺这一档。 */
     /* **票据纸不投影**：判地 `.sheet-wrap{filter:drop-shadow(var(--shadow))}` 里那条两层逗号写法
        （`0 18px 50px …, 0 2px 0 …`）不是合法 CSS，浏览器整条丢掉 ⇒ 判地实测 `filter: none`、纸身 `box-shadow: none`。
        判据是像素，故本档照判地**不出投影**（皮肤 `shadow` 仍归卡片与浮层用，不动）。

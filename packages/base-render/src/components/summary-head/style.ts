@@ -157,8 +157,16 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-line { justify-content: center; gap: 6px; margin-top: 12px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-value { font-weight: 900; letter-spacing: -1.5px; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-value small { margin-left: 6px; font-size: 18px; line-height: 1; font-weight: 800; color: var(--fg2); }');
-  lines.push(s + '.is-ticket .' + p + 'block-summary-head-foot { display: block; margin-top: 10px; }');
-  lines.push(s + '.is-ticket .' + p + 'block-summary-head-note { font-size: 13.5px; }');
+  /* 窄档（判地 390 档把主数字收到 50px）不在这里：同 sheet-frame，那是**页面级**补丁；
+     组件层禁 `@media (max-width…)`，件宽 ≠ 视口宽。 */
+  /* 判地 w01：脚行那一段是满宽的一块（原型里它是 .summary-head 之外的兄弟块）——
+     本层脚行住在整块里，故把 flex 项拉满宽，否则它按内容收缩、换行点与判地不同。 */
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-foot { display: block; align-self: stretch; margin-top: 10px; }');
+  /* 判地 w01 `.summary-note`：13.5px／行高 1.6（票据纸档补上这一档；家族缺省那条不带行高）。 */
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-note { font-size: 13.5px; line-height: 1.6; }');
+  /* 判地 w01：说明句在原型里是满宽一块（`.summary-note` 是 .summary-head 的兄弟块）；
+     本层它是整块里的 flex 项，不许按内容收缩——撑满宽，居中由整块的 text-align 管。 */
+  lines.push(s + '.is-ticket .' + p + 'block-summary-head-note { align-self: stretch; }');
   lines.push(s + '.is-ticket .' + p + 'block-summary-head-stamp {'
     + ' position: absolute; right: 2px; top: 2px; padding: 5px 10px 4px 12px;'
     + ' border-width: 2.5px; border-radius: 8px; font-size: 13px; letter-spacing: 2px;'
