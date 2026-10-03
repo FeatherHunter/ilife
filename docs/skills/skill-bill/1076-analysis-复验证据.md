@@ -83,7 +83,20 @@
 - 每格「该确认什么」写在格子标题下面：前段是分析域专有判据（占比条按同组最大值折算、百分比行内有文案、明细卡序号＋单行文本＋44px 行高、空态直写「空」字、结论句「主要花在「X」，Y 元，占本页支出 Z%。」），后段是本页自己的读数点。
 - **本票只出墙与记录，不改任何代码**：发现不 ok 的页，逐条写进 #1076 的遗留出口并当场开票（一条判据一张票）。
 
-## 七、人眼判定（待回填）
+## 七、逐页骨架机检（机器读数，给人眼判定当配套，不替代人眼）
+
+探针：`node .scratch/1076-analysis/probe-1076-skeleton.mjs`（只读 25 份真跑产物）。逐页看八项：
+票据纸根类 `ilife-bill-sheet-page`／页头 `ilife-sheet-title`／结论块 `ilife-block-conclusion`／落点 `ilife-block-ledger`／图表卡 `ilife-block-chart-block`／复制区 `ilife-block-copy-block`／口径行 `ilife-block-caliber`／明细段 `ilife-block-detail-section`；
+另核：页内导航块**恰一个**、来源脚注「数据来源」≥1、可见文本无 `undefined`／`NaN`、无 `loading="lazy"`。
+
+```
+RESULT: 25/25 骨架判据全过  exit 0
+```
+
+25 页逐页读数全为：八项块位 **Y**、导航 **1**、来源 **1**、`undefined` **0**、`NaN` **0**、`lazy` **0**。
+**这份读数只证明「件套都在、骨架没坏」——它不回答「看起来像不像」**；像不像只有人眼那一道（下一节）。
+
+## 八、人眼判定（待回填）
 
 <!-- 用户逐格判完后：判定原文（导出的 JSON ＋ 逐格备注）落 docs/skills/skill-bill/1076-analysis-逐格结论.md，这里只留一行指针 -->
 - 待用户逐格判定；判定原文落 `docs/skills/skill-bill/1076-analysis-逐格结论.md`。
