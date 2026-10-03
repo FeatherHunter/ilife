@@ -43,12 +43,17 @@ export const PAGE_UI_VIEWPORT = 'width=device-width,initial-scale=1,viewport-fit
  *  · `touchMinPx`（44）＝ 可点控件的最小命中高度，与 `spec/controls.ts` 的
  *    `ACTION_BAR_DEFAULTS.minHeightPx` 是**同一个数、同一件事**（此处只引用，不重写）；
  *  · `textMinPx`（12）＝ 正文类字号下限，与下面 ⑥ 那条媒体查询**逐值同源**（同一个常量写进 CSS）；
+ *  · `textEntryMinPx`（16）＝ **文本录入控件**（`input`／`select`／`textarea`）字号下限；外部出处＝
+ *    WebKit 对 `font-size < 16px` 的表单控件**聚焦时自动放大页面**（iOS Safari 固有行为，不是本仓口味）。
+ *    同类的唯一承载票是 #1001（分期与落地清单见票面「单票承载」）；本值供判据侧读数，CSS 声明处仍直写
+ *    `16px`（与 `touchMinPx` 同处置：判据数值住这里、声明住各条规则）；
  *  · `breakpointsPx` ＝ 仓内既有断点集合，断点只许从这一份里取，不新造。
  *
  *  判分引擎住包内 `scripts/判分.mjs`，按包内相对路径取 `dist/pageUi.js` 的本件。 */
 export const PAGE_LIMITS = Object.freeze({
   touchMinPx: ACTION_BAR_DEFAULTS.minHeightPx,
   textMinPx: 12,
+  textEntryMinPx: 16,
   breakpointsPx: Object.freeze([400, 640, 820, 1001, 1200]),
 } as const);
 

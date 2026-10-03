@@ -23,12 +23,14 @@ import { test } from 'node:test';
 
 import { blocksCss } from '../dist/blocks.js';
 import { buildStyleSheet, STYLE_PREFIX } from '../dist/index.js';
+import { PAGE_LIMITS } from '../dist/pageUi.js';
 
 const SRC_BLOCKS = readFileSync(new URL('../src/blocks.ts', import.meta.url), 'utf8');
 const SRC_HELP_SHELL = readFileSync(new URL('../src/components/style/help-shell.ts', import.meta.url), 'utf8');
 
-/** 外部契约（WebKit 聚焦缩放阈值）。第 3 期收进 `PAGE_LIMITS.textEntryMinPx` 后改读常量。 */
-const TEXT_ENTRY_MIN_PX = 16;
+/** 判据数值的**唯一住处**（第 3 期收口）：`PAGE_LIMITS.textEntryMinPx`。
+ *  它的**外部出处**由下一条冻结断言钉住（16px ＝ WebKit 聚焦缩放阈值），不由本文件自说自话。 */
+const TEXT_ENTRY_MIN_PX = PAGE_LIMITS.textEntryMinPx;
 
 /** 三条「共享层文本录入控件」：源码选择器片段 ＋ 产物选择器 ＋ 产物 CSS 取处 ＋ 期望的规则体。 */
 const CASES = [
@@ -93,6 +95,15 @@ function srcFontSizeOf(srcText, anchor) {
   assert.ok(end > at, '选择器片段后没有规则收尾：' + anchor);
   return fontSizeOf(srcText.slice(at, end));
 }
+
+/* ── ⓪ 外部契约冻结：判据数不是自说自话 ───────────────────── */
+
+test('#1001 外部契约冻结：textEntryMinPx 恰为 16（WebKit 聚焦缩放阈值）', () => {
+  /* 生产者（CSS 声明）与校验者（本文件、#984 的锁）都读这一个常量 ⇒ 改常量时门禁会一起变绿。
+     故这里把**外部事实**写成第二份字面量：动这个数，必须先拿出新的外部读数（真机／平台文档）。 */
+  assert.equal(TEXT_ENTRY_MIN_PX, 16,
+    '外部契约：WebKit 对 font-size<16px 的表单控件聚焦自动缩放；改这个数须先有新的外部读数');
+});
 
 /* ── ① 源码侧：声明值就是下限 ─────────────────────────────── */
 

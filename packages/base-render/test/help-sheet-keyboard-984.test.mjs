@@ -11,6 +11,8 @@ import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
+import { PAGE_LIMITS } from '../dist/pageUi.js';
+
 const TEMPLATE = readFileSync(new URL('../assets/help-template.html', import.meta.url), 'utf8');
 
 /** 键盘纠正块的锚点（模板里 BEGIN/END 成对成注释，测试按锚取块，不写死行号）。 */
@@ -58,8 +60,10 @@ test('#984 A viewport meta：追加 interactive-widget，且不碰 viewport-fit'
 });
 
 test('#984 C 弹层输入字号 13px→16px（杀 iOS 聚焦自动缩放）', () => {
-  assert.equal(declOf(ruleOf('.sheet .pfield input'), 'font-size'), '16px');
-  assert.equal(declOf(ruleOf('.sheet .pfield select'), 'font-size'), '16px');
+  /* #1001 第 3 期：本票的 16px 与全类同一个判据数（`PAGE_LIMITS.textEntryMinPx`），不再各写一份字面量。 */
+  const minPx = PAGE_LIMITS.textEntryMinPx + 'px';
+  assert.equal(declOf(ruleOf('.sheet .pfield input'), 'font-size'), minPx);
+  assert.equal(declOf(ruleOf('.sheet .pfield select'), 'font-size'), minPx);
   /* 复制按钮不是输入控件，票面只许动「input／select」——锁住它没被顺手改 */
   assert.equal(declOf(ruleOf('.sheet .s-actions .copy-btn'), 'font-size'), '13px',
     '复制按钮字号不在本票范围，须保持 13px');
