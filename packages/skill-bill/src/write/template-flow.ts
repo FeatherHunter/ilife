@@ -14,7 +14,7 @@
  * 谁在用（六个调用点，指名）：`src/write/scene-{refund,reimburse-done,lend,borrow,collect,repay}.ts`——
  *  各件 `Scene.collect`／`Scene.receipt` 都是 `bindFlowPages(spec)` 的产物，本件不自己出页。
  */
-import { renderCaliberLine, renderChipRow, renderDataTable, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderChipRow, renderDisclosure, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import type { BillRow } from '../fetch/db.js';
@@ -23,20 +23,18 @@ import type { BlockedItem } from './blockedSlots.js';
 import { candidatePick, candidateRows } from './candidatePick.js';
 import type { CandidateItem } from './candidatePick.js';
 import { collectMissingTags } from './collectFrame.js';
-import { copyArea, copyLog, undoExit } from '../shared/copyArea.js';
+import { copyArea, copyLog } from '../shared/copyArea.js';
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { sayCollectOut } from './saySheet.js';
-import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { money2, summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
-import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
-import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
-import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
+import { collectSourceNote } from './sourceNote.js';
+import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
 
@@ -331,35 +329,10 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   });
 }
 
-/** 结果型回执页：写库成功后出这一页；块清单既拼正文也派生页内导航（块序见件头）。 */
+/** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。
+ *  **#1117 起这一页走票据纸那一族**：块序与文案住 `./receiptPaper.ts`（13 页共用**一处实现**），
+ *  本件只把这一件的唤醒词 `word` 与认的 `kind` 递进去——两格之外一字不差，13 页由此实例化。
+ *  改前那一版（文档壳：页内导航／读数／明细／对账四段）随本票撤掉。 */
 function receiptPage(spec: FlowSpec, input: ReceiptInput): string {
-  const { key, params, receipt } = input;
-  const envelope = envelopeOf(key, true, receipt.summary);
-  const blocks: readonly PageBlock[] = [
-    { html: renderFeedbackBlock({ toast: spec.receiptNote(input), staticNotice: true }) },
-    navBlock(renderKpiGrid([
-      ...summaryCards(input.facts), receiptStatusCard(receipt, input.writtenDetail), ...spec.receiptTail(input),
-    ]), 'sec-kpi', '读数'),
-    navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }], rows: input.detail, caption: '写进去的项与值',
-    }), 'sec-detail', '明细'),
-    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
-    { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },
-    navBlock(copyArea({
-      data: { envelope },
-      log: { envelope, copyLog: copyLog({
-        command: commandLine(key, params), source: receipt.source,
-        detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
-          + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
-        actionAt: receipt.actionAt, version: DOC_VERSION,
-      }) },
-    }), 'sec-copy', '复制'),
-    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
-  ];
-  const content = typeBadge({ kind: spec.kind, status: 'ok', state: '写库成功', pageKind: '回执', next: '这一笔已记下，撤销见下方按钮。' })
-    + pageNav(blocks) + pageBody(blocks);
-  return writeReceiptShell(spec.receiptEyebrow, {
-    docTitle: docTitleOf(spec.word + ' 回执'), title: spec.word, subtitle: receipt.summary,
-    slot: 'receipt', page: 'receipt', shape: envelope.shape, key, content,
-  });
+  return receiptPaper({ ...input, word: spec.word, kind: spec.kind });
 }

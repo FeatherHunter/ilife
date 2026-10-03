@@ -1,0 +1,400 @@
+{
+  "$comment": "生成器 1117-write-渲染16页.mjs 的输入。样本值取「对得上原型可见文本」的那一套：金额／分类／时间逐条照 docs/skills/skill-bill/proto/write-receipt/ 里 16 张原型；编号靠 seed 段把记录号顶到 11..23／1／2。",
+  "ticket": 1117,
+  "domain": "write-receipt",
+  "homeDirName": "tick-1117",
+  "homeNote": "隔离家目录 ＝ %TEMP%\\tick-1117（USERPROFILE／HOME 指过去），禁碰真实家目录的库。",
+  "prototypeDir": "docs/skills/skill-bill/proto",
+  "seed": [
+    {
+      "why": "记录 1 ＝ x28 改记录的目标（分类 餐饮/外卖/午餐／账户 微信／账本 日常／时间 2026-10-02 12:00:00）",
+      "params": {
+        "category": "餐饮/外卖/午餐",
+        "amount": -25,
+        "account": "微信",
+        "ledger": "日常",
+        "time": "2026-10-02 12:00:00",
+        "note": "午饭"
+      }
+    },
+    {
+      "why": "记录 2 ＝ x30／x32 撤销与恢复的目标（工资 +8000／招行卡／日常／2026-10-02 18:00:00）",
+      "params": {
+        "kind": "income",
+        "category": "工资",
+        "amount": 8000,
+        "account": "招行卡",
+        "ledger": "日常",
+        "time": "2026-10-02 18:00:00",
+        "note": "月薪"
+      }
+    },
+    {
+      "why": "记录 3..10 ＝ 垫位，让 x02 起从编号 11 落",
+      "params": {
+        "category": "餐饮",
+        "amount": -9.9,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 3"
+      }
+    },
+    {
+      "why": "垫位 4",
+      "params": {
+        "category": "餐饮",
+        "amount": -8.8,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 4"
+      }
+    },
+    {
+      "why": "垫位 5",
+      "params": {
+        "category": "餐饮",
+        "amount": -7.7,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 5"
+      }
+    },
+    {
+      "why": "垫位 6",
+      "params": {
+        "category": "餐饮",
+        "amount": -6.6,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 6"
+      }
+    },
+    {
+      "why": "垫位 7",
+      "params": {
+        "category": "餐饮",
+        "amount": -5.5,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 7"
+      }
+    },
+    {
+      "why": "垫位 8",
+      "params": {
+        "category": "餐饮",
+        "amount": -4.4,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 8"
+      }
+    },
+    {
+      "why": "垫位 9",
+      "params": {
+        "category": "餐饮",
+        "amount": -3.3,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 9"
+      }
+    },
+    {
+      "why": "垫位 10",
+      "params": {
+        "category": "餐饮",
+        "amount": -2.2,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "note": "垫位 10"
+      }
+    }
+  ],
+  "order": "渲染顺序＝items 顺序（不排序）：x02…x26 逐页写库，编号必须自 11 连到 23；x28／x30／x32 最后跑（目标记录是 seed 的 1／2）。x10 指 source_id=11、x14 指 16、x20 指 18、x22 指 19——先跑的那几页不落库就顶不到号。",
+  "items": [
+    {
+      "seq": 1,
+      "id": "x02",
+      "wake": "记支出",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "expense",
+        "category": "餐饮",
+        "amount": -12.5,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 11,
+      "protoRel": "proto/write-receipt/x02-记支出-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"expense\",\"category\":\"餐饮\",\"amount\":-12.5,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "主数字 −12.50 唯一；落点 账户「未给」／账本「生活」／时间 2026-09-14 12:00:00；核对 编号 11；退出口「撤销这一笔」；复制区三格式（纯文本／JSON／CSV）＋复制日志。"
+    },
+    {
+      "seq": 2,
+      "id": "x04",
+      "wake": "记收入",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "income",
+        "category": "工资",
+        "amount": 8000,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 12,
+      "protoRel": "proto/write-receipt/x04-记收入-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"income\",\"category\":\"工资\",\"amount\":8000,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "主数字 8000.00 唯一、方向是收入（+）；落点 账户「未给」／账本「生活」；核对 编号 12；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 3,
+      "id": "x06",
+      "wake": "拍账单",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "photo",
+        "category": "餐饮",
+        "amount": -30,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 13,
+      "protoRel": "proto/write-receipt/x06-拍账单-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"photo\",\"category\":\"餐饮\",\"amount\":-30,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "「三要素以外部识别为准」这句在；主数字 −30.00 唯一；核对 编号 13；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 4,
+      "id": "x08",
+      "wake": "批量录入",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "batch",
+        "category": "餐饮",
+        "amount": -10,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 14,
+      "protoRel": "proto/write-receipt/x08-批量录入-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"batch\",\"category\":\"餐饮\",\"amount\":-10,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "「这次只落了其中一笔」这句在；主数字 −10.00 唯一；核对 编号 14；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 5,
+      "id": "x10",
+      "wake": "记退款",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "refund",
+        "category": "退款/冲销",
+        "amount": 20,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "source_id": 11
+      },
+      "idExpect": 15,
+      "protoRel": "proto/write-receipt/x10-记退款-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"refund\",\"category\":\"退款/冲销\",\"amount\":20,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\",\"source_id\":11}",
+      "check": "主数字 +20.00 唯一；分类行写「退款/冲销」（原型印「退款 · 退款」）；核对 编号 15；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 6,
+      "id": "x12",
+      "wake": "记报销",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "reimburse",
+        "category": "出行",
+        "amount": -100,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 16,
+      "protoRel": "proto/write-receipt/x12-记报销-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"reimburse\",\"category\":\"出行\",\"amount\":-100,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "主数字 −100.00 唯一；打标回执条在（#待报销）；核对 编号 16；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 7,
+      "id": "x14",
+      "wake": "报销到账",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "reimburse-done",
+        "category": "其他收入/报销回款",
+        "amount": 100,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活",
+        "source_id": 16
+      },
+      "idExpect": 17,
+      "protoRel": "proto/write-receipt/x14-报销到账-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"reimburse-done\",\"category\":\"其他收入/报销回款\",\"amount\":100,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\",\"source_id\":16}",
+      "check": "主数字 +100.00 唯一；#待报销 换 #已报销 的流转句在；核对 编号 17；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 8,
+      "id": "x16",
+      "wake": "记借出",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "lend",
+        "category": "借贷/借出",
+        "amount": -500,
+        "who": "老王",
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 18,
+      "protoRel": "proto/write-receipt/x16-记借出-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"lend\",\"category\":\"借贷/借出\",\"amount\":-500,\"who\":\"老王\",\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "标签「#借出 #未还」在；主数字 −500.00 唯一；核对 编号 18；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 9,
+      "id": "x18",
+      "wake": "记借入",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "borrow",
+        "category": "借贷/借入",
+        "amount": 500,
+        "who": "小李",
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 19,
+      "protoRel": "proto/write-receipt/x18-记借入-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"borrow\",\"category\":\"借贷/借入\",\"amount\":500,\"who\":\"小李\",\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "标签「#借入 #未还」在；主数字 +500.00 唯一；核对 编号 19；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 10,
+      "id": "x20",
+      "wake": "记收回",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "collect",
+        "category": "借贷/收回",
+        "amount": 500,
+        "source_id": 18,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 20,
+      "protoRel": "proto/write-receipt/x20-记收回-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"collect\",\"category\":\"借贷/收回\",\"amount\":500,\"source_id\":18,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "原记录 #未还 换 #已还 的流转句在；主数字 +500.00 唯一；核对 编号 20；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 11,
+      "id": "x22",
+      "wake": "记偿还",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "repay",
+        "category": "借贷/偿还",
+        "amount": -500,
+        "source_id": 19,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 21,
+      "protoRel": "proto/write-receipt/x22-记偿还-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"repay\",\"category\":\"借贷/偿还\",\"amount\":-500,\"source_id\":19,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "原记录 #未还 换 #已还 的流转句在；主数字 −500.00 唯一；核对 编号 21；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 12,
+      "id": "x24",
+      "wake": "记分期",
+      "key": "bill.record.add",
+      "params": {
+        "kind": "installment",
+        "category": "分期/手机",
+        "amount": -1200,
+        "total": 1200,
+        "periods": 12,
+        "start_date": "2026-10-01",
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 22,
+      "protoRel": "proto/write-receipt/x24-记分期-回执-v2.html",
+      "window": "bill.record.add {\"kind\":\"installment\",\"category\":\"分期/手机\",\"amount\":-1200,\"total\":1200,\"periods\":12,\"start_date\":\"2026-10-01\",\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "分摊三格（总额／期数／首期日）在；主数字 −1200.00 唯一；核对 编号 22；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 13,
+      "id": "x26",
+      "wake": "记一笔",
+      "key": "bill.record.add",
+      "params": {
+        "category": "餐饮",
+        "amount": -12.5,
+        "time": "2026-09-14 12:00:00",
+        "ledger": "生活"
+      },
+      "idExpect": 23,
+      "protoRel": "proto/write-receipt/x26-记一笔-回执-v2.html",
+      "window": "bill.record.add {\"category\":\"餐饮\",\"amount\":-12.5,\"time\":\"2026-09-14 12:00:00\",\"ledger\":\"生活\"}",
+      "check": "无型名（通用词）：方向按金额符号判；主数字 −12.50 唯一；核对 编号 23；退出口「撤销这一笔」。"
+    },
+    {
+      "seq": 14,
+      "id": "x28",
+      "wake": "改记录",
+      "key": "bill.record.update",
+      "params": {
+        "id": 1,
+        "note": "改过"
+      },
+      "idExpect": 1,
+      "protoRel": "proto/write-receipt/x28-改记录-回执-v2.html",
+      "window": "bill.record.update {\"id\":1,\"note\":\"改过\"}",
+      "check": "改动结论句写「备注已改为 改过」；改后落点 分类「餐饮 ／ 外卖 ／ 午餐」／账户「微信」／账本「日常」／时间 2026-10-02 12:00:00；核对 编号 1。"
+    },
+    {
+      "seq": 15,
+      "id": "x30",
+      "wake": "撤销",
+      "key": "bill.record.update",
+      "params": {
+        "op": "undo",
+        "id": 2
+      },
+      "idExpect": 2,
+      "protoRel": "proto/write-receipt/x30-撤销-回执-v2.html",
+      "window": "bill.record.update {\"op\":\"undo\",\"id\":2}",
+      "check": "状态写「已撤销」；「撤销只打标、可恢复」口径句在；原记录（工资 +8000.00／招行卡／日常／2026-10-02 18:00:00）在；退出口「恢复这一笔」。"
+    },
+    {
+      "seq": 16,
+      "id": "x32",
+      "wake": "恢复",
+      "key": "bill.record.update",
+      "params": {
+        "op": "restore",
+        "id": 2
+      },
+      "idExpect": 2,
+      "protoRel": "proto/write-receipt/x32-恢复-回执-v2.html",
+      "window": "bill.record.update {\"op\":\"restore\",\"id\":2}",
+      "check": "状态写「已恢复」；撤销标记已清除那句在；原记录（工资 +8000.00／招行卡／日常／2026-10-02 18:00:00）在；退出口「撤销这一笔」。"
+    }
+  ],
+  "criteria": {
+    "domain": "票据纸八件套（handoff §4，逐格进墙标签）",
+    "list": [
+      "复制按钮块居中 ＋ 文本居中 ＋ 两行左缘对齐（内层等宽盒居中＋文本左对齐＋▾ 占位补偿）",
+      "复制区下方一律不挂句子",
+      "结论句聚合不换行",
+      "主数字唯一",
+      "落点 LEDGER／占比 SCALE／明细 DETAIL／对账 CHECK",
+      "裁切线 ✂ 裁切线",
+      "页脚只有场景名",
+      "▾ 字面常显、open 不旋转、永不由 CSS 画三角（一个字符都不打）"
+    ]
+  }
+}

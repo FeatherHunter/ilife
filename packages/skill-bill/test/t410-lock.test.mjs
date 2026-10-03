@@ -90,8 +90,10 @@ describe('t410 · 13条录入词真出口锁（唤醒词起点）', () => {
       const text = assertLanded(file, env.delivery);
       // 字段正确：H1＝唤醒词（t728 去重：页型不再与 H1 同串）、页型落在徽章上、
       // 摘要含降级/型名串；明细含分类与两位小数金额；回执三件齐。
-      assert.ok(text.includes('>' + c.word + '</h1>'), 'H1 须为唤醒词（页型不上 H1）：' + c.word);
-      assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：' + c.word);
+      // #1117 起这 13 页回执走票据纸（判地原型 x02…x26）：H1＝唤醒词与「回执」徽章行整批退役
+      // （改记录那三页 #993 已是同一形状），唤醒词改住店头品牌行、页型由族根类担。
+      assert.ok(text.includes('>饼干记账 · ' + c.word + '</p>'), '店头品牌行须写唤醒词：' + c.word);
+      assert.ok(text.includes('ilife-bill-sheet-page'), '须走票据纸族根类：' + c.word);
       if (c.summaryFrag !== null) assert.ok(env.data.receipt.summary.includes(c.summaryFrag), '摘要须含' + c.summaryFrag + '：' + env.data.receipt.summary);
       else {
         assert.ok(env.data.receipt.summary.includes('（记录编号'), '记一笔摘要须直接接记录编号：' + env.data.receipt.summary);
@@ -101,7 +103,7 @@ describe('t410 · 13条录入词真出口锁（唤醒词起点）', () => {
       assert.ok(text.includes(Number(c.amount).toFixed(2)), '页内金额须两位小数：' + Number(c.amount).toFixed(2));
       assert.ok(text.includes('data-slot="ilife:bill:receipt"'), '须有回执槽位');
       assert.equal((text.match(/data-page="receipt"/g) ?? []).length, 1, '整页只有一枚回执页标记');
-      for (const n of ['对账信息', '复制数据', '复制日志']) assert.ok(text.includes(n), '回执三件缺：' + n);
+      for (const n of ['记到哪里', '核对', '✂ 裁切线', '复制数据', '复制日志']) assert.ok(text.includes(n), '回执须在位：' + n);
     });
   }
 });
@@ -175,7 +177,7 @@ describe('t410 · photo/batch降级语义同步锁', () => {
     assert.ok(env.data.receipt.summary.includes('（三要素以外部识别为准）'), '摘要降级串须在：' + env.data.receipt.summary);
     assert.equal(env.data.receipt.affectedRows, 1, '降级仍单笔');
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('本仓之外'), '页内须说识别在本仓之外');
+    assert.ok(text.includes('三要素以外部识别为准'), '页内须同说外置识别（票据纸那一句）');
     assert.ok(text.includes('三要素'), '页内须说三要素');
   });
   it('批量录入降级：摘要+页内同说现阶段单笔化', () => {
@@ -187,6 +189,6 @@ describe('t410 · photo/batch降级语义同步锁', () => {
     assert.ok(env.data.receipt.summary.includes('（只落了其中一笔）'), '摘要降级串须在：' + env.data.receipt.summary);
     assert.equal(env.data.receipt.affectedRows, 1, '降级仍单笔');
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('一次只落'), '页内须说一次只落一笔');
+    assert.ok(text.includes('这次只落了其中一笔'), '页内须说单笔化（票据纸那一句）');
   });
 });

@@ -30,26 +30,24 @@
  *  都是 `bindBatchPages(spec)` 的产物，本件不自己出页。
  */
 import type { SerializableEnvelope } from 'base-paint';
-import { renderCaliberLine, renderDataTable, renderFeedbackBlock, renderKpiGrid } from 'base-paint/blocks';
+import { renderCaliberLine, renderFeedbackBlock } from 'base-paint/blocks';
 import { DEFAULTS } from '../shared/category.js';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
-import { copyArea, copyLog, promptCopyArea, undoExit } from '../shared/copyArea.js';
+import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
-import { writePageShell as pageShell, writeReceiptShell } from './pageParts.js';
+import { writePageShell as pageShell } from './pageParts.js';
 import { sayCollectOut } from './saySheet.js';
-import { receiptStatusCard, reconcileDisclosure } from './receiptParts.js';
 import { rowEditorTable } from './rowEditorTable.js';
 import type { RowEditorField } from './rowEditorTable.js';
 import { summaryCards } from './summaryRow.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { typeBadge } from './typeBadge.js';
-import { fieldLabelOf } from './userWording.js';
 import { commandLine } from '../shared/writeParts.js';
 import { collectBlockedFold } from './blockedFold.js';
-import { collectSourceNote, receiptSourceNote } from './sourceNote.js';
-import { navBlock, pageBody, pageNav, type PageBlock } from '../shared/pageSections.js';
+import { collectSourceNote } from './sourceNote.js';
+import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
 
@@ -251,60 +249,9 @@ function receiptCardsOf(facts: SummaryFacts): ReturnType<typeof summaryCards> {
 }
 
 /** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。
- *  块清单既拼正文也派生页内导航（共用位 `../shared/pageSections.js`）；块序见件头。 */
+ *  **#1117 起这一页走票据纸那一族**：块序与文案住 `./receiptPaper.ts`（13 页共用**一处实现**），
+ *  本件只把这一件的唤醒词 `word` 与认的 `kind` 递进去——两格之外一字不差，13 页由此实例化。
+ *  改前那一版（文档壳：页内导航／读数／明细／对账四段）随本票撤掉。 */
 function receiptPage(spec: BatchSpec, input: ReceiptInput): string {
-  const { key, params, receipt } = input;
-  const envelope = envelopeOf(key, true, receipt.summary);
-  const blocks: readonly PageBlock[] = [
-    navBlock(renderKpiGrid([
-      ...receiptCardsOf(input.facts),
-      receiptStatusCard(receipt, input.writtenDetail),
-      { label: spec.receiptRowsLabel, value: receipt.affectedRows + ' 笔' },
-      {
-        label: '写进去的项',
-        value: receipt.writtenFields.length + ' 项',
-        detail: '逐项见下面的明细表',
-      },
-    ]), 'sec-kpi', '读数'),
-    { html: renderCaliberLine(spec.receiptCaliber) },
-    navBlock(renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
-      rows: input.detail,
-      caption: spec.receiptCaption,
-    }), 'sec-detail', '明细'),
-    navBlock(reconcileDisclosure(receipt), 'sec-reconcile', '对账'),
-    { html: receipt.recordId === null ? '' : undoExit(receipt.recordId) },
-    navBlock(copyArea({
-      data: { envelope },
-      log: {
-        envelope,
-        copyLog: copyLog({
-          command: commandLine(key, params),
-          source: receipt.source,
-          detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
-            + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
-          actionAt: receipt.actionAt,
-          version: DOC_VERSION,
-        }),
-      },
-    }), 'sec-copy', '复制'),
-    { html: receiptSourceNote(input.facts.time, receipt.affectedRows) },
-  ];
-  const content = typeBadge({
-    kind: spec.kind,
-    pageKind: '回执',
-    status: 'ok',
-    state: spec.receiptState,
-    next: spec.receiptNext,
-  }) + pageNav(blocks) + pageBody(blocks);
-  return writeReceiptShell(spec.receiptEyebrow, {
-    docTitle: docTitleOf(spec.word + ' 回执'),
-    title: spec.word,
-    subtitle: receipt.summary,
-    slot: 'receipt',
-    page: 'receipt',
-    shape: envelope.shape,
-    key,
-    content,
-  });
+  return receiptPaper({ ...input, word: spec.word, kind: spec.kind });
 }

@@ -148,7 +148,13 @@ describe('t406 · 记一笔（bill.record.add）真跑', () => {
     assert.equal(env.data.receipt.affectedRows, 1, '影响行数＝total_changes 前后差');
     const text = pageOf(file);
     assert.ok(statSync(file).size > 10 * 1024, '走的是新装配的整页，不是老极简模板');
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-key="record.add"', 'data-shape="receipt"', '已改动', '这次记了几笔', '写进去的项', '对账信息']) {
+    // #1117 起记一笔回执走票据纸（判地原型 x26）：读数行／「对账信息」折叠区／页内导航整批退役，
+    // 同一件事改由票据纸这几处担：店头品牌行＋结论标题、主数字印章、落点账目行、核对一行、裁切线。
+    for (const needle of [
+      'data-slot="ilife:bill:receipt"', 'data-key="record.add"', 'data-shape="receipt"',
+      'ilife-bill-sheet-page', '>饼干记账 · 记一笔</p>', '>这一笔记好了<', '>有效<',
+      '记到哪里', '核对', '✂ 裁切线',
+    ]) {
       assert.ok(text.includes(needle), '回执整页缺：' + needle);
     }
   });
@@ -377,11 +383,11 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const h = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-14 13:00:00","category":"餐饮/外卖/午餐"}', '--html', hit]);
     assert.equal(h.status, 0, 'stderr=' + h.stderr);
     assert.equal(envOf(h).data.ok, true, JSON.stringify(envOf(h).data));
+    // #1117：回执页走票据纸（判地原型 x02…x26 上没有重复检测提示条）⇒ 这一块不再上回执页。
+    // 判定本身没丢：它仍由采集页那一支出（下一条用例照旧钉「分类未给不出条」）。
     const hitText = pageOf(hit);
-    assert.ok(hitText.includes('看着像重复'), '同日同额同分类须报重复');
-    assert.ok(hitText.includes('记录编号 1'), '提示条须报出撞上的是哪几笔');
-    assert.ok(!hitText.includes('记录编号 ' + envOf(h).data.receipt.recordId + ' · ' + '2026-09-14 13:00:00'),
-      '本次自己那条不进提示条');
+    assert.ok(!hitText.includes('看着像重复'), '票据纸回执页不出重复检测提示条（判地原型无此块）');
+    assert.equal(envOf(h).data.receipt.recordId > 0, true, '这一笔照常写库（提示条退役不改行为）');
     const other = join(H2, 'dup-miss.html');
     const m = run2(['bill.record.add', '--params', '{"kind":"expense","amount":-12.5,"time":"2026-09-15 13:00:00","account":"支付宝"}', '--html', other]);
     assert.equal(m.status, 0, 'stderr=' + m.stderr);
@@ -420,7 +426,13 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const env = envOf(r);
     assert.equal(env.data.ok, true);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-page="receipt"', '想反悔', '对账信息', '看着像重复', '复制数据', '复制日志', '记支出', '金额取负数']) {
+    // #1117 起记支出回执走票据纸（判地原型 x02）：页内导航／读数行／「对账信息」折叠区／重复检测
+    // 提示条与退出口 danger 标记整批退役，同一件事改由票据纸这几处担。
+    for (const needle of [
+      'data-slot="ilife:bill:receipt"', 'data-page="receipt"', 'ilife-bill-sheet-page',
+      '>饼干记账 · 记支出</p>', '>记好了：支出 12.50<', '>有效<', '记到哪里', '核对', '✂ 裁切线',
+      '复制数据', '复制日志',
+    ]) {
       assert.ok(text.includes(needle), '回执页缺：' + needle);
     }
     // 选页那两枚标记分家：data-shape 是信封形状契约（两页同为 receipt），data-page 才是哪一张页。
@@ -428,8 +440,11 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     assert.equal((text.match(/data-page=/g) ?? []).length, 1, '整页只有一枚 data-page');
     // #733 换口径：退出口改成一枚**非交互的 danger 标记**（原来是颗点了没反应的红钮）。
     // 判据＝页上必须有那枚标记；且页上**不许再出现任何「看着能点、点了没反应」的动作/复制按钮**。
-    assert.ok(text.includes('ilife-status-badge-danger'), '退出口须有危险色标记');
-    assert.ok(text.includes('想反悔（撤销这一笔）'), '退出口标记不见了');
+    // #1117 起退出口是**带复制载荷的真按钮**（#993 票据纸同款：`ticketPrimaryButton` ＋
+    // `[data-action-id]`／`data-t` 两条属性），不再是无载荷的 danger 标记。
+    assert.ok(text.includes('ilife-ticket-btn is-primary'), '退出口须是票据纸主按钮');
+    assert.ok(text.includes('data-action-id="ilife-undo-copy"'), '退出口须带撤销复制位');
+    assert.ok(text.includes('撤销这一笔'), '退出口文案不见了');
     assert.ok(!/<button[^>]*ilife-action-btn-red/.test(text), 'D2／#733：退出口不再出一颗点不动的红钮');
     assert.ok(!text.includes('ilife-exit-undo-copy'), 'D2 去重：退出口不再另带复制位（撤销指令走复制区）');
     assert.equal((text.match(/>复制数据</g) ?? []).length, 1, 'D2 去重：复制数据只剩复制区那一组');
