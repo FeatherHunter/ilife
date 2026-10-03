@@ -27,6 +27,9 @@ export function buildLookupIndexJs(): string {
     + '    var hit=scope.querySelector ? scope.querySelector(id) : doc.getElementById(id.slice(1));' + '\n'
     + '    if (!hit) return;' + '\n'
     + '    e.preventDefault();' + '\n'
+    /* #1122：折叠档的组是 `<details>`（默认收起）⇒ 点目录要先把它展开，否则跳过去是一片合着的壳。
+       判地同一句：`if(t&&t.tagName==="DETAILS"){ t.open=true; }`。常显档没有 DETAILS ⇒ 这一句零命中。 */
+    + '    if (hit.tagName === "DETAILS") hit.open = true;' + '\n'
     + '    if (hit.scrollIntoView) hit.scrollIntoView();' + '\n'
     + '    if (!hit.hasAttribute("tabindex")) hit.setAttribute("tabindex","-1");' + '\n'
     + '    hit.focus({preventScroll:true});' + '\n'

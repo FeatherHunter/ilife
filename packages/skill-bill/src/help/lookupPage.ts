@@ -17,9 +17,10 @@
  *
  * ## 与冻结原型的两处**已知且可判定**的差异（读数见 docs/skills/skill-bill/1080-h02-像素证据.md）
  *
- *  · **分组默认展开**：原型用 details 把 8 组折起来（页高 1258），G2 的形态是「锚 chips ＋
- *    组标题 ＋ 组内行」（页高 5957）。本票的用户可见结果要的是「77 行完整唤醒词索引」，故照 G2 的
- *    形态常显；要改成折叠得动 packages/base-render/ 的 lookup-index（本票禁区）。
+ *  · **分组默认折叠（#1122 收口）**：原型用 `<details>` 把 8 组折起来（页高 1258）。G2 的形态原为
+ *    「锚 chips ＋ 组标题 ＋ 组内行」常显（页高 5957）⇒ #1122 给 `lookup-index` 加了**折叠档**
+ *    （`form:'fold'`：`<details>` 默认折叠 ＋ 组头计数胶囊与箭头，形状照判地），本页改走折叠档；
+ *    常显档仍是缺省档、形状一字未动（零回归）。
  *  · **别名组三行取自 HELP 位的词条**：原型的别名三行（能做什么／饼干记账HELP／帮助）在仓内数据里
  *    没有对应源；本件按「一条词只有一个书写位」的规矩从 HELP_WAKE_WORDS 取，去掉代表词后取满
  *    三行，仍满 74＋3＝77。
@@ -28,6 +29,7 @@
  * （调用方 src/cli/cmd_read.ts 的 dispatchHelp 只多把本页塞进 deliver.html）。
  */
 import {
+  lookupIndexCss,
   renderLookupIndex,
   renderSheetFrame,
   renderSummaryHead,
@@ -51,6 +53,8 @@ const H02_SECTION_NO = '01';
 const CUT_LINE_TEXT = '✂ 裁切线';
 /** 别名组的组名（本页自有的一格，不是某个域）。 */
 const ALIAS_GROUP_LABEL = '别名';
+/** 折叠档说明行的类名（原型 `.fold-note` 那一句；#1122 起 8 组默认收起）。 */
+const H02_FOLD_NOTE_CLASS = 'ilife-h02-fold-note';
 /** 复制数据那份载荷的上屏标题（用户说法，不带命令名）。 */
 const COPY_TITLE = '能力速查';
 
@@ -67,6 +71,8 @@ const H02_CSS = [
   '.' + H02_INDEX_CLASS + ' .ilife-block-lookup-index-row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 0; border-top: 1px dotted var(--ilife-line); font-size: var(--ilife-fs-sm); }',
   '.' + H02_INDEX_CLASS + ' .ilife-block-lookup-index-wake { flex: none; padding: 2px 7px; border: 1px solid var(--ilife-edge); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface); color: var(--ilife-accent-text); font-family: var(--ilife-font-num); font-size: var(--ilife-fs-xs); font-weight: 700; }',
   '.' + H02_INDEX_CLASS + ' .ilife-block-lookup-index-goto { flex: 1 1 auto; color: var(--ilife-ink-2); font-size: var(--ilife-fs-xs); text-align: right; }',
+  '/* 折叠档的说明行（原型 .fold-note：12px／行高 1.6／ink-3／上下 2px 8px）——#1122 起 8 组默认收起。 */',
+  '.' + H02_FOLD_NOTE_CLASS + ' { margin: 2px 0 8px; font-size: var(--ilife-fs-xs); line-height: 1.6; color: var(--ilife-ink-3); }',
   '/* 自律条：原型 .check-mini 的浅绿卡（绿底＋一行字）。 */',
   '.' + H02_INDEX_CLASS + ' .ilife-block-lookup-index-note { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); background: var(--ilife-ok-soft); color: var(--ilife-ink-2); font-size: var(--ilife-fs-xs); line-height: 1.6; }',
 ].join('\n');
@@ -113,6 +119,14 @@ export function buildLookupIndexInput(): LookupIndexInput {
   };
 }
 
+/** 折叠档的说明行（原型那一句由脚本注入，这里**照字面写进标记**）：条数由组数派生，不写死。
+ *
+ *  为什么在页面侧：这句话说的是「这一页怎么用」（点组名展开、点目录跳组），不是索引件本身的形状。 */
+function foldNote(): string {
+  return '<p class="' + H02_FOLD_NOTE_CLASS + '">'
+    + String(buildLookupGroups().length) + '组默认收起 · 点组名展开，点上面目录可直接跳到那一组。</p>';
+}
+
 /** 速查表整页 HTML（mode 取 lookup 的落盘产物）。 */
 export function renderLookupPageHtml(): string {
   const index = buildLookupIndexInput();
@@ -131,7 +145,7 @@ export function renderLookupPageHtml(): string {
       '<p class="ilife-ticket-summary-note">' + String(sceneRows) + ' 场景唤醒词 ＋ ' + String(index.total - sceneRows) + ' 别名行</p>',
     )
     + ticketRule()
-    + ticketSection({ title: '按域速查', tag: H02_SECTION_NO, content: renderLookupIndex(index) })
+    + ticketSection({ title: '按域速查', tag: H02_SECTION_NO, content: foldNote() + renderLookupIndex({ ...index, form: 'fold' }) })
     + ticketActions(copyArea({
       data: { envelope, title: COPY_TITLE },
       log: {
@@ -145,7 +159,9 @@ export function renderLookupPageHtml(): string {
         }),
       },
     }));
-  const content = queryStyleTag() + '<style>' + H02_CSS + '</style>'
+  // 速查索引件的样式段**不在** `blocksCss()` 的区块汇总里（与 entry-card 同一条口径）⇒ 本页显式拼；
+  // 拼在 H02_CSS **之前**：同特指度的两条以本页那条为准（#1122 起折叠档那几条特指度更高，另算）。
+  const content = queryStyleTag() + '<style>' + lookupIndexCss() + H02_CSS + '</style>'
     + renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: CUT_LINE_TEXT, content: paper });
   return assembleSheetPage({
     docTitle: DOC_TITLE + '·能力速查',

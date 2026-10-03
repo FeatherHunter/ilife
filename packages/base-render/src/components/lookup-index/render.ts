@@ -20,8 +20,11 @@ export const LOOKUP_INDEX_BOUND_ATTR = 'data-lookup-bound';
 export const LOOKUP_INDEX_RUNTIME_ATTR = 'data-lookup-runtime';
 /** 别名标黄规则（别名行标黄、且不混入总数）。 */
 export const LOOKUP_INDEX_ALIAS_MARK = '别名标黄、不混数';
-/** 槽位闭集。 */
-export const LOOKUP_INDEX_SLOTS = ['nav', 'anchor', 'group', 'head', 'row', 'wake', 'goto', 'note'] as const;
+/** 形态闭集（**#1122 追加**）：`flat`＝常显（既有默认档，形状一字不动）／`fold`＝折叠档（`<details>` 默认折叠，组头带计数胶囊与箭头）。 */
+export const LOOKUP_INDEX_FORMS = ['flat', 'fold'] as const;
+export type LookupIndexForm = (typeof LOOKUP_INDEX_FORMS)[number];
+/** 槽位闭集（`count`／`rows` 是 #1122 折叠档追加的两格；既有八格与顺序一字不动）。 */
+export const LOOKUP_INDEX_SLOTS = ['nav', 'anchor', 'group', 'head', 'row', 'wake', 'goto', 'note', 'count', 'rows'] as const;
 export type LookupIndexSlot = (typeof LOOKUP_INDEX_SLOTS)[number];
 /** 槽类名（唯一拼法）。 */
 export function lookupIndexSlot(slot: LookupIndexSlot, prefix = 'ilife-'): string {
@@ -43,6 +46,8 @@ export interface LookupIndexInput {
   readonly countNote?: string;
   /** 别名说明（缺省“别名标黄、不混数”）。 */
   readonly aliasMark?: string;
+  /** **#1122 追加**：形态（缺省 `flat`＝常显，与改动前逐字节同；`fold`＝`<details>` 默认折叠）。 */
+  readonly form?: LookupIndexForm;
   readonly extraClass?: string;
 }
 /** 归一化后的入参（内部形态）。 */
@@ -52,10 +57,11 @@ export interface LookupIndexModel {
   readonly total: number;
   readonly countNote?: string;
   readonly aliasMark: string;
+  readonly form: LookupIndexForm;
   readonly extraClass?: string;
 }
 /** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
-const ROOT_KEYS: readonly string[] = ['anchors', 'groups', 'total', 'countNote', 'aliasMark', 'extraClass'];
+const ROOT_KEYS: readonly string[] = ['anchors', 'groups', 'total', 'countNote', 'aliasMark', 'form', 'extraClass'];
 /** 一个锚点只许带的键。 */
 const ANCHOR_KEYS: readonly string[] = ['id', 'label'];
 /** 一组只许带的键。 */
@@ -71,6 +77,15 @@ function assertKeys(value: object, allowed: readonly string[], field: string): v
   for (const key of Object.keys(value)) {
     if (!allowed.includes(key)) badInput(field + ' 不认识这个键：' + key);
   }
+}
+
+/** 形态：缺省 `flat`（＝改动前的常显档），闭集外一律拒。 */
+function reqForm(value: unknown): LookupIndexForm {
+  if (value === undefined) return 'flat';
+  if (typeof value !== 'string' || !(LOOKUP_INDEX_FORMS as readonly string[]).includes(value)) {
+    badInput('renderLookupIndex: input.form 只吃 ' + LOOKUP_INDEX_FORMS.join('／') + '（不给＝flat）');
+  }
+  return value as LookupIndexForm;
 }
 
 function reqAnchors(value: unknown): LookupIndexModel['anchors'] {
@@ -119,6 +134,7 @@ export function normalizeLookupIndex(input: unknown): LookupIndexModel {
     total,
     countNote: optText(raw.countNote, 'renderLookupIndex: input.countNote'),
     aliasMark: optText(raw.aliasMark, 'renderLookupIndex: input.aliasMark') ?? LOOKUP_INDEX_ALIAS_MARK,
+    form: reqForm(raw.form),
     extraClass: optExtraClass(raw.extraClass, 'renderLookupIndex: input.extraClass'),
   };
 }
@@ -126,7 +142,9 @@ export function normalizeLookupIndex(input: unknown): LookupIndexModel {
 export function renderLookupIndex(input: unknown): string {
   const m = normalizeLookupIndex(input);
   const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  const parts: string[] = ['<div class="' + LOOKUP_INDEX_CLASS + extra + '">'];
+  /* 折叠档在根上也挂一枚 `is-fold`：判地那一纸是**普通块流**（组间只靠 `.qgroup{margin-top:14px}`，
+     没有常显档那 12px 栅格间距）⇒ 折叠档的根改 `display:block`，外边距与判地一样自己塌陷。 */
+  const parts: string[] = ['<div class="' + LOOKUP_INDEX_CLASS + (m.form === 'fold' ? ' is-fold' : '') + extra + '">'];
   parts.push('<nav class="' + lookupIndexSlot('nav') + '" aria-label="速查锚点">');
   for (const a of m.anchors) {
     parts.push('<a class="' + lookupIndexSlot('anchor') + '" href="#' + esc(a.id) + '" ' + LOOKUP_INDEX_ANCHOR_ATTR + '="' + esc(a.id) + '">' + esc(a.label) + '</a>');
@@ -134,6 +152,23 @@ export function renderLookupIndex(input: unknown): string {
   parts.push('</nav>');
   for (const g of m.groups) {
     const gid = 'lookup-' + g.label;
+    if (m.form === 'fold') {
+      /* **#1122 折叠档**（判地 `proto/setup-help/h02-速查表-v2.4.html` 的 `<details class="qgroup">`）：
+         组＝`<details>`（**不写 `open`** ⇒ 默认折叠）；组头＝`<summary>`（计数胶囊那一格由 `count` 槽出，
+         箭头是样式的 `::after`）；行装进 `<ul>`（判地 `.qrows`）。`id` 与 `data-lookup-group` 与常显档
+         **同源同值** ⇒ 页内锚点（`href="#lookup-<组名>"`）与运行时照旧命中，不因折叠失效。 */
+      parts.push('<details class="' + lookupIndexSlot('group') + ' is-fold" id="' + esc(gid) + '" ' + LOOKUP_INDEX_GROUP_ATTR + '="' + esc(gid) + '">');
+      parts.push('<summary class="' + lookupIndexSlot('head') + '">' + esc(g.label)
+        + '<span class="' + lookupIndexSlot('count') + '">' + String(g.rows.length) + ' 行</span></summary>');
+      parts.push('<ul class="' + lookupIndexSlot('rows') + '">');
+      for (const r of g.rows) {
+        parts.push('<li class="' + lookupIndexSlot('row') + (r.alias ? ' is-alias' : '') + '">'
+          + '<span class="' + lookupIndexSlot('wake') + '">' + esc(r.wake) + '</span>'
+          + '<span class="' + lookupIndexSlot('goto') + (r.alias ? ' is-alias' : '') + '">' + esc(r.goto) + '</span></li>');
+      }
+      parts.push('</ul></details>');
+      continue;
+    }
     parts.push('<section class="' + lookupIndexSlot('group') + '" id="' + esc(gid) + '" ' + LOOKUP_INDEX_GROUP_ATTR + '="' + esc(gid) + '">');
     parts.push('<h3 class="' + lookupIndexSlot('head') + '">' + esc(g.label) + '</h3>');
     for (const r of g.rows) {
