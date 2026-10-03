@@ -17,13 +17,13 @@
  * 谁在用（三个调用点，指名）：`src/write/scene-{update,undo,restore}.ts`——各件的 `Scene.collect`／`Scene.receipt`
  *  都是 `bindUpdatePages(spec)` 的产物，本件不自己出页。
  */
-import { renderCaliberLine, renderDataTable, renderDisclosure, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderCaliberLine, renderDisclosure, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml, type SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea } from '../shared/copyArea.js';
-import { diffOf, diffTable } from './diffTable.js';
+import { diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { EYEBROW, writePageShell as pageShell } from './pageParts.js';
@@ -257,43 +257,18 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
   });
 }
 
-/** 回执页的结果表：改记录不出；撤销出「撤销标记」对照（写库后再读一次那一条），恢复出标记现值。 */
-function resultBlock(spec: UpdateSpec, receipt: BillReceipt): string {
-  if (spec.receiptResult === 'none') return '';
-  const after = receipt.recordId === null ? null : readRowById(receipt.recordId);
-  const readAt = after !== null && after.ok && after.row !== null ? after.row.deleted_at : undefined;
-  if (spec.receiptResult === 'restore') {
-    return renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
-      rows: [
-        { k: fieldLabelOf('id'), v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
-        { k: fieldLabelOf('deleted_at') + '现在是什么样', v: readAt === undefined
-          ? '这一页读不回这一条，以写库回执为准'
-          : readAt === null || String(readAt).trim() === '' ? '已清掉，这一笔已恢复正常' : '还带着：' + String(readAt) },
-        { k: '清掉之后', v: '这一笔回到查询和统计里。想再撤走就说「撤销」' },
-      ],
-      caption: '恢复结果',
-    });
-  }
-  const stamped = after !== null && after.ok && after.row !== null && after.row.deleted_at !== null
-    ? String(after.row.deleted_at) : '';
-  const rows = stamped === ''
-    ? []
-    : diffOf({ fields: ['撤销标记'], before: { 撤销标记: null }, after: { 撤销标记: stamped } });
-  if (rows.length > 0) return diffTable({ rows, caption: '改前改后对照　只动「撤销标记」这一项' });
-  return renderDataTable({
-    columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
-    rows: [
-      { k: fieldLabelOf('deleted_at'), v: '已打上（本页再读时已看不到这一条）' },
-      { k: '撤销后能不能找回来', v: '能：点「恢复」把它找回来' },
-    ],
-    caption: '撤销结果',
-  });
-}
+/** 回执页的「结果表」按判地删掉（负责人 2026-10-04 裁，A 口径：判地没有的不出；x28／x30／x32 三张判地原型
+ *  都没有结果表那一块）。判地那两页有的是摘要头里的一句状态（撤销标记已打上／已清除），见证据件的块位对照表。 */
 
 /** 小票纸取值小件住 `./receiptSheet.js`（块序与店头仍在本件，值加工在那一件）。 */
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
+
+/** 摘要头那一句状态（判地 `.summary-note`）：撤销／恢复两支各一句，**逐字取判地原型**（x30「撤销标记已打上，记录保留、随时可恢复」／x32「撤销标记已清除，记录回到正常状态」）；改记录支判地没有这一句。 */
+const RESULT_NOTE: Readonly<Record<string, string>> = {
+  undo: '撤销标记已打上，记录保留、随时可恢复',
+  restore: '撤销标记已清除，记录回到正常状态',
+};
 
 /** 核对那一行（原型 `.check-mini`）：形状逐字照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
 function checkHtml(recordId: number | null): string {
@@ -306,7 +281,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const { receipt } = input;
   const envelope = envelopeOf(spec.key, true, receipt.summary);
   const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
-  const result = resultBlock(spec, receipt);
+  const note = RESULT_NOTE[spec.receiptResult] ?? '';
   const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params))
     + ticketRule()
     + ticketSummary(renderSummaryHead({
@@ -315,10 +290,9 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
       unit: '元',
       stamp: receiptStamp(spec.receiptResult, receipt),
       layout: 'ticket',
-    }), '')
+    }), note === '' ? '' : '<p class="ilife-ticket-summary-note">' + escapeHtml(note) + '</p>')
     + ticketRule()
     + ticketSection({ title: '改后落点', tag: 'LEDGER', content: renderLedgerRows({ rows: landedRows(input.facts), layout: 'ticket' }) })
-    + (result === '' ? '' : ticketRule() + result)
     + ticketRule()
     + ticketSection({ title: '核对', tag: '', content: checkHtml(receipt.recordId) })
     + ticketRule()

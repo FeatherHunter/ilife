@@ -143,7 +143,7 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.ok(text.includes('>已撤销<'), '状态结论须住印章：撤销');
     assert.ok(env.data.receipt.summary.includes('已撤销'), '摘要须说已撤销');
     assert.ok(env.data.receipt.summary.includes('记录还在'), '摘要须说清记录还在（软删口径）');
-    assert.ok(text.includes('只动「撤销标记」这一项'), '对照表须说清只打标记、不删数据');
+    assert.ok(text.includes('撤销标记已打上，记录保留、随时可恢复'), '撤销页须说清只打标记、不删数据（判地 .summary-note，#1075 删对照表后改断这一句）');
     assert.ok(text.includes('恢复这一笔'), '撤销页须给恢复出口');
   });
   it('恢复：路由→落盘→字节如实→置空口径', () => {
@@ -163,7 +163,7 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.ok(text.includes('>已恢复<'), '状态结论须住印章：恢复');
     assert.ok(env.data.receipt.summary.includes('已恢复'), '摘要须说已恢复');
     assert.ok(text.includes('>已恢复记录 ' + id + '<'), '恢复页纸头须印记录编号');
-    assert.ok(text.includes('已清掉，这一笔已恢复正常'), '恢复结果须说清撤销标记已清');
+    assert.ok(text.includes('撤销标记已清除，记录回到正常状态'), '恢复页须说清撤销标记已清（判地 .summary-note，#1075 删结果表后改断这一句）');
   });
 });
 
