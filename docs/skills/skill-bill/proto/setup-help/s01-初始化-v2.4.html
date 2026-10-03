@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!-- 1063-v2.4: 1双钮补位左缘对齐(块居中+文本居中+左缘对齐+隐藏三角补位)/2h02版式重做(标题+行距+触摸44,折叠保留)/载荷data-t与结论逐字节原样 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>初始化完成，可以记账了 · 票据纸 v2.4 1063-s01</title>
+<style>
+:root{--bg:#efe9dd;--paper:#fffdf7;--paper-edge:#f7f1e3;--line:#e9dfcd;--ink:#2b2620;--ink2:#665f57;--ink3:#736755;--accent:#b4552d;--accent-soft:#fbe4d4;--ok:#1e784c;--ok-soft:#e7f5ec;--warn:#7b5010;--warn-soft:#fbf1dc;--danger:#8c2a1f;--danger-soft:#f9e8e4;--radius:16px;--shadow:0 18px 50px rgba(80,60,30,.18),0 2px 0 rgba(120,90,40,.08);--shadow-pop:0 12px 28px rgba(80,60,30,.18);--font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Noto Sans SC",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#f7f2e6 0%,var(--bg) 55%,#e6dcc8 100%);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 14px 48px}
+.page{width:100%;max-width:440px}
+.sheet-wrap{position:relative;filter:drop-shadow(var(--shadow))}
+.sheet-frame{position:relative;background:var(--paper);border-radius:var(--radius);overflow:hidden}
+.sheet-frame::before,.sheet-frame::after{content:"";position:absolute;top:0;bottom:0;width:14px;background-image:radial-gradient(circle at 7px 10px,var(--bg) 5.5px,transparent 6px);background-size:14px 20px;background-repeat:repeat-y;pointer-events:none}
+.sheet-frame::before{left:0}.sheet-frame::after{right:0;transform:scaleX(-1)}
+.sheet-inner{padding:22px 28px 10px;position:relative}
+.shop-head{text-align:center;padding:2px 0 0}
+.shop-brand{font-size:11.5px;letter-spacing:2px;color:var(--ink2);font-weight:700}
+.shop-head h2{margin:8px 0 0;font-size:19px;line-height:1.4;font-weight:800}
+.shop-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink2)}
+.summary-head{position:relative;text-align:center;padding:6px 0 16px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:2px;color:#7a6f5e;background:#f3ecdc;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:700}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:#2f9e5f;box-shadow:0 0 0 4px rgba(47,158,95,.15)}
+.eyebrow.warn i{background:#b97a1a;box-shadow:0 0 0 4px rgba(185,122,26,.15)}
+.amount{margin:12px 0 0;display:flex;align-items:baseline;justify-content:center;gap:6px;line-height:1}
+.amount .value{font-size:56px;font-weight:900;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.amount .unit{font-size:18px;font-weight:800;color:var(--ink2)}
+.summary-note{margin:10px 0 0;font-size:13.5px;line-height:1.6;color:#5f574a}
+.summary-time{margin:6px 0 0;font-size:13.5px;color:#5f574a;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dashed{border:0;border-top:2px dashed var(--line);margin:14px -8px}
+.sec{padding:2px 0 6px}
+.sec-heading{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:13px;font-weight:800;letter-spacing:1.5px;color:#6b6152}
+.sec-heading::before{content:"";width:4px;height:14px;border-radius:4px;background:var(--accent)}
+.sec-heading .no{margin-left:auto;font-weight:700;color:var(--ink3);letter-spacing:0}
+.ledger-rows{list-style:none;margin:0;padding:0}
+.ledger-rows li{display:flex;align-items:flex-end;gap:8px;padding:9px 0;font-size:14px;line-height:1.4;min-height:44px}
+.ledger-rows .k{flex:none;color:var(--ink2);white-space:nowrap}
+.ledger-rows .dots{flex:1 1 auto;min-width:14px;border-bottom:2px dotted #d9cdb4;transform:translateY(-5px)}
+.ledger-rows .v{flex:none;max-width:62%;text-align:right;font-weight:700;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ledger-rows .v.mono{font-family:var(--mono);font-size:12.5px}
+.entry-card{background:#fbf7ec;border:1px solid var(--line);border-radius:12px;padding:12px 13px 11px}
+.entry-rows{list-style:none;margin:0;padding:0}
+.entry-rows li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dotted #eee6d2;font-size:14px;min-height:44px;line-height:1.55}
+.entry-rows li:last-child{border-bottom:none}
+.idx{flex:0 0 22px;height:22px;margin-top:1px;border-radius:7px;background:#f4efe2;border:1px solid var(--line);color:#8a857a;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.idx.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.entry-text{flex:1 1 auto;overflow-wrap:anywhere}
+.entry-text small{display:block;color:var(--ink2);font-size:12px;font-weight:400}
+.check-mini{display:flex;gap:8px;align-items:flex-start;background:#f4fbf6;border:1px solid #cfe6d6;border-radius:10px;padding:10px 12px;font-size:12.8px;line-height:1.6;color:#3e5a4a;margin-top:10px}
+.check-mini.warn{background:var(--warn-soft);border-color:#e8d3a8;color:#5f4413}
+.check-mini.danger{background:var(--danger-soft);border-color:#ecc9c2;color:#6d2118}
+.check-mini .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2f9e5f;margin-top:6px}
+.check-mini.warn .dot{background:#b97a1a}.check-mini.danger .dot{background:var(--danger)}
+.actions{padding:14px 0 4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:13px;font-size:16px;font-weight:800;letter-spacing:.5px;border:0;padding:12px 14px;font-family:inherit;cursor:pointer}
+.btn-primary{background:linear-gradient(180deg,#d34a35,#b93222);color:#fff;box-shadow:0 8px 20px rgba(185,50,34,.28),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn-secondary{margin-top:10px;background:#fff;color:#4a4236;border:1.5px solid #ddd0b6;min-height:44px;font-size:14.5px}
+.copy-wrap{position:relative;margin-top:10px}
+.copy-wrap summary{list-style:none;display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;border-radius:13px;background:#fff;color:#4a4236;border:1.5px solid #ddd0b6;font-size:14.5px;font-weight:800;cursor:pointer}
+.copy-wrap summary::-webkit-details-marker{display:none}
+
+
+.copy-menu{background:#fff;border:1.5px solid #ddd0b6;border-radius:12px;box-shadow:var(--shadow-pop);padding:6px;margin-top:8px}
+.copy-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:none;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;cursor:pointer;text-align:left}
+.copy-item small{font-weight:600;color:var(--ink2);font-size:11.5px}
+.copy-item:hover{background:#faf5e9}
+.caliber{margin:10px 2px 0;font-size:12px;line-height:1.7;color:var(--ink2);text-align:center}
+.cut-line{display:flex;align-items:center;gap:10px;padding:14px 0 8px;color:var(--ink3);font-size:12px}
+.cut-line::before,.cut-line::after{content:"";flex:1;border-top:2px dashed #d9cdb4}
+.zigzag{height:12px;margin:0 6px;transform:rotate(180deg);background:linear-gradient(-45deg,transparent 8px,var(--paper) 0) 0 0/16px 16px repeat-x,linear-gradient(45deg,transparent 8px,var(--paper) 0) 8px 0/16px 16px repeat-x}
+.foot-note{text-align:center;color:var(--ink3);font-size:11.5px;padding:10px 0 2px;letter-spacing:.4px;line-height:1.7}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent-text);background:#fff;border:1px solid #f0d7c2;border-radius:999px;padding:3px 10px;margin:2px 4px 2px 0}
+@media (max-width:390px){body{padding:18px 10px 36px}.sheet-inner{padding:18px 22px 8px}.amount .value{font-size:50px}.shop-head h2{font-size:18px}.ledger-rows .v{max-width:58%}}
+/* v2.4-1063:双钮补位＋h02重做；其余沿v2.3不动；载荷结论不动 */.actions{display:flex!important;flex-direction:column;align-items:center!important;text-align:center!important}.actions .btn,.actions button.btn{width:100%!important;max-width:340px;margin-left:auto!important;margin-right:auto!important;justify-content:center!important;text-align:center!important}.copy-wrap{width:100%!important;max-width:340px;margin-left:auto!important;margin-right:auto!important}.copy-wrap summary,.copy-wrap summary.main{justify-content:center!important;text-align:center!important}.caliber{max-width:340px;margin-left:auto!important;margin-right:auto!important;text-align:center!important}.copy-item{justify-content:center!important;text-align:center!important}.tri-ph{visibility:hidden}</style>
+</head>
+<body>
+<div class="page">
+<div class="sheet-wrap"><div class="sheet-frame"><div class="sheet-inner">
+  <div class="shop-head">
+    <div class="shop-brand">饼干记账 · 初始化</div>
+    <h2>初始化完成，可以记账了</h2>
+    <p class="shop-sub">首次使用向导 · 不用选 · 自动检测 · 一次成功</p>
+  </div>
+  <div class="summary-head">
+    <span class="eyebrow"><i></i>已完成 · INIT OK</span>
+    <div class="amount"><span class="value">25</span><span class="unit">条</span></div>
+    <p class="summary-note">库里现有记录，一条不少</p>
+  </div>
+  <hr class="dashed">
+  <div class="sec">
+    <div class="sec-heading">四步走到哪儿了 <span class="no">01</span></div>
+    <div class="entry-card"><ol class="entry-rows">
+      <li><span class="idx done">1</span><span class="entry-text">环境检测 · 已完成<small>两项都过了</small></span></li>
+      <li><span class="idx done">2</span><span class="entry-text">数据目录确认 · 已完成<small>记账库目录就绪</small></span></li>
+      <li><span class="idx done">3</span><span class="entry-text">建库（自动配好） · 已完成<small>结构对上即沿用，不重建</small></span></li>
+      <li><span class="idx done">4</span><span class="entry-text">读取验证 · 已完成<small>库能打开，记录能数清</small></span></li>
+    </ol></div>
+  </div>
+  <hr class="dashed">
+  <div class="sec">
+    <div class="sec-heading">落点 <span class="no">02</span></div>
+    <ul class="ledger-rows">
+      <li><span class="k">库</span><span class="dots"></span><span class="v mono">biscuit_accountant.db</span></li>
+      <li><span class="k">结构</span><span class="dots"></span><span class="v">10 列齐</span></li>
+      <li><span class="k">唤醒词</span><span class="dots"></span><span class="v">初始化</span></li>
+    </ul>
+    <div class="check-mini"><span class="dot"></span><span>不用选：全程自动检测，不用你动手选。这次没有新建，沿用已有库。下一步说「记支出」，直接开始记第一笔。</span></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" type="button" data-t="请加载「饼干记账」技能，帮我记一笔支出（唤醒词：记支出）：&#10;&#10;分类：____（如：餐饮/午餐）&#10;金额：____（支出为负）&#10;备注：____（选填）">复制给助手：直接开始记第一笔</button>
+    <details class="copy-wrap">
+      <summary>复制数据▾</summary>
+      <div class="copy-menu">
+        <button class="copy-item" type="button" data-t="首次使用向导&#10;ok: true&#10;message: 已初始化：biscuit_accountant.db（10 列，现有记录 25 条）">纯文本 <small>粘贴给助手或自己看</small></button>
+        <button class="copy-item" type="button" data-t="{&#10;  &quot;op&quot;: &quot;init&quot;,&#10;  &quot;ok&quot;: true,&#10;  &quot;db&quot;: &quot;biscuit_accountant.db&quot;,&#10;  &quot;columns&quot;: 10,&#10;  &quot;records&quot;: 25,&#10;  &quot;created&quot;: false&#10;}">JSON <small>结构化存档</small></button>
+        <button class="copy-item" type="button" data-t="section,row&#10;status,ok: true&#10;message,已初始化：biscuit_accountant.db（10 列，现有记录 25 条）">CSV <small>表格导入</small></button>
+      </div>
+    </details>
+    <details class="copy-wrap">
+      <summary>复制日志<span class="tri-ph" aria-hidden="true">▾</span></summary>
+      <div class="copy-menu">
+        <button class="copy-item" type="button" data-t="场景标识&#10;bill.setup.run（receipt）&#10;调用链&#10;bill-cmd-read bill.setup.run --params '{&quot;op&quot;:&quot;init&quot;}' ｜ 环境检测通过，库已就绪&#10;时间戳版本&#10;2026-10-02 · 版本 2.0&#10;异常&#10;无">复制本页日志 <small>对账用</small></button>
+      </div>
+    </details>
+  </div>
+</div></div></div>
+<div class="cut-line">✂ 裁切线</div>
+<div class="zigzag"></div>
+</div>
+<script>(function(){document.addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(!b||b.dataset.done)return;var t=b.getAttribute('data-t');b.dataset.done='1';var old=b.innerHTML;function fin(ok){b.innerHTML=ok?'已复制 ✓':old;setTimeout(function(){b.innerHTML=old;delete b.dataset.done},600)}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){fin(true)},function(){fb()})}else fb();function fb(){var s=document.createElement('textarea');s.value=t;document.body.appendChild(s);s.select();try{document.execCommand('copy');fin(true)}catch(x){fin(false)}s.remove()}})})();</script>
+</body>
+</html>

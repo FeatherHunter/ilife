@@ -1,0 +1,24 @@
+START ticket=1073 runId=eae289db-ca58-40ec-a6d0-7750ba7be351 cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 pid=67888 at=2026-10-03T08:49:27.409Z
+RUN ticket=1073 runId=eae289db-ca58-40ec-a6d0-7750ba7be351 cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 exit=1 pid=67888 at=2026-10-03T08:49:27.605Z
+START ticket=1073 runId=622af455-ea88-4b46-9e9c-d0d1f641c5cb cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 pid=30180 at=2026-10-03T08:49:35.421Z
+RUN ticket=1073 runId=622af455-ea88-4b46-9e9c-d0d1f641c5cb cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 exit=1 pid=30180 at=2026-10-03T08:49:35.622Z
+START ticket=1073 runId=92eac2b5-ab92-432d-a406-0e801714b78a cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 pid=33744 at=2026-10-03T08:49:47.859Z
+RUN ticket=1073 runId=92eac2b5-ab92-432d-a406-0e801714b78a cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 exit=1 pid=33744 at=2026-10-03T08:49:48.051Z
+START ticket=1073 runId=821d2883-2940-4ac0-a918-c3e6c75aa584 cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 pid=59624 at=2026-10-03T08:50:00.251Z
+RUN ticket=1073 runId=821d2883-2940-4ac0-a918-c3e6c75aa584 cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 exit=1 pid=59624 at=2026-10-03T08:50:08.423Z
+START ticket=1073 runId=d252fba6-707e-456b-a7e3-46034cd174cc cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 pid=63676 at=2026-10-03T08:50:14.984Z
+RUN ticket=1073 runId=d252fba6-707e-456b-a7e3-46034cd174cc cmd="node .scratch/1073/mut-check.mjs" waitedMs=0 exit=0 pid=63676 at=2026-10-03T08:50:22.840Z
+START ticket=1073 runId=1dc0295f-4f4e-4c31-8f97-7497c4cef2de cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 pid=43024 at=2026-10-03T08:52:27.692Z
+RUN ticket=1073 runId=1dc0295f-4f4e-4c31-8f97-7497c4cef2de cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 exit=1 pid=43024 at=2026-10-03T08:52:28.973Z
+START ticket=1073 runId=ef88421e-aed7-41d9-bcb3-d10d0b7bf7c9 cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 pid=56384 at=2026-10-03T08:53:19.824Z
+RUN ticket=1073 runId=ef88421e-aed7-41d9-bcb3-d10d0b7bf7c9 cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 exit=1 pid=56384 at=2026-10-03T08:53:21.164Z
+START ticket=1073 runId=80374ba5-2631-4c9a-9561-573de923bf2c cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 pid=64472 at=2026-10-03T08:54:05.174Z
+RUN ticket=1073 runId=80374ba5-2631-4c9a-9561-573de923bf2c cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 exit=0 pid=64472 at=2026-10-03T08:54:06.497Z
+START ticket=1073 runId=7bc28e66-e4b9-499f-bba0-3f92adacf2b2 cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 pid=43080 at=2026-10-03T08:54:51.334Z
+RUN ticket=1073 runId=7bc28e66-e4b9-499f-bba0-3f92adacf2b2 cmd="node .scratch/1073/selftest-same.mjs" waitedMs=0 exit=0 pid=43080 at=2026-10-03T08:54:52.710Z
+START ticket=1073 runId=e8100e24-45d0-4e0c-b8b6-bc35c19787f6 cmd="node docs/skills/skill-bill/1073-proto-check.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 pid=53688 at=2026-10-03T08:57:35.329Z
+RUN ticket=1073 runId=e8100e24-45d0-4e0c-b8b6-bc35c19787f6 cmd="node docs/skills/skill-bill/1073-proto-check.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 exit=1 pid=53688 at=2026-10-03T08:57:35.410Z
+START ticket=1073 runId=8747a850-5943-4af8-9001-db7d9a3e6508 cmd="node docs/skills/skill-bill/1073-proto-check.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 pid=65484 at=2026-10-03T09:18:57.538Z
+RUN ticket=1073 runId=8747a850-5943-4af8-9001-db7d9a3e6508 cmd="node docs/skills/skill-bill/1073-proto-check.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 exit=0 pid=65484 at=2026-10-03T09:18:57.622Z
+START ticket=1073 runId=c0c5c98f-8ec6-48df-a4a6-3460d3b97417 cmd="node docs/skills/skill-bill/1073-proto-same.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 pid=35144 at=2026-10-03T09:19:09.897Z
+RUN ticket=1073 runId=c0c5c98f-8ec6-48df-a4a6-3460d3b97417 cmd="node docs/skills/skill-bill/1073-proto-same.mjs docs/skills/skill-bill/proto docs/skills/skill-bill/proto docs/skills/skill-bill/proto/manifest.json" waitedMs=0 exit=0 pid=35144 at=2026-10-03T09:19:10.160Z

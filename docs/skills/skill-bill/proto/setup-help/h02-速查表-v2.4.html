@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<!-- 1063-v2.4: 1双钮补位左缘对齐(块居中+文本居中+左缘对齐+隐藏三角补位)/2h02版式重做(标题+行距+触摸44,折叠保留)/载荷data-t与结论逐字节原样 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>能力速查 · 77 条唤醒词 · 票据纸 v2.4 1063-h02</title>
+<style>
+:root{--bg:#efe9dd;--paper:#fffdf7;--paper-edge:#f7f1e3;--line:#e9dfcd;--ink:#2b2620;--ink2:#665f57;--ink3:#736755;--accent:#b4552d;--accent-soft:#fbe4d4;--ok:#1e784c;--ok-soft:#e7f5ec;--warn:#7b5010;--warn-soft:#fbf1dc;--danger:#8c2a1f;--danger-soft:#f9e8e4;--radius:16px;--shadow:0 18px 50px rgba(80,60,30,.18),0 2px 0 rgba(120,90,40,.08);--shadow-pop:0 12px 28px rgba(80,60,30,.18);--font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Noto Sans SC",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#f7f2e6 0%,var(--bg) 55%,#e6dcc8 100%);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 14px 48px}
+.page{width:100%;max-width:440px}
+.sheet-wrap{position:relative;filter:drop-shadow(var(--shadow))}
+.sheet-frame{position:relative;background:var(--paper);border-radius:var(--radius);overflow:hidden}
+.sheet-frame::before,.sheet-frame::after{content:"";position:absolute;top:0;bottom:0;width:14px;background-image:radial-gradient(circle at 7px 10px,var(--bg) 5.5px,transparent 6px);background-size:14px 20px;background-repeat:repeat-y;pointer-events:none}
+.sheet-frame::before{left:0}.sheet-frame::after{right:0;transform:scaleX(-1)}
+.sheet-inner{padding:22px 28px 10px;position:relative}
+.shop-head{text-align:center;padding:2px 0 0}
+.shop-brand{font-size:11.5px;letter-spacing:2px;color:var(--ink2);font-weight:700}
+.shop-head h2{margin:8px 0 0;font-size:19px;line-height:1.4;font-weight:800}
+.shop-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink2)}
+.summary-head{position:relative;text-align:center;padding:6px 0 16px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:2px;color:#7a6f5e;background:#f3ecdc;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:700}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:#2f9e5f;box-shadow:0 0 0 4px rgba(47,158,95,.15)}
+.amount{margin:12px 0 0;display:flex;align-items:baseline;justify-content:center;gap:6px;line-height:1}
+.amount .value{font-size:56px;font-weight:900;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.amount .unit{font-size:18px;font-weight:800;color:var(--ink2)}
+.summary-note{margin:10px 0 0;font-size:13.5px;line-height:1.6;color:#5f574a}
+.dashed{border:0;border-top:2px dashed var(--line);margin:14px -8px}
+.sec{padding:2px 0 6px}
+.sec-heading{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:13px;font-weight:800;letter-spacing:1.5px;color:#6b6152}
+.sec-heading::before{content:"";width:4px;height:14px;border-radius:4px;background:var(--accent)}
+.sec-heading .no{margin-left:auto;font-weight:700;color:var(--ink3);letter-spacing:0}
+.toc-chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+.toc-chips a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1.5px solid #ddd0b6;border-radius:999px;background:#fff;color:#4a4236;font-size:13px;font-weight:800;text-decoration:none}
+ .fold-note{font-size:12px;line-height:1.6;color:var(--ink3);margin:2px 0 8px}
+.qgroup{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:#fbf7ec;overflow:hidden}
+.qgroup summary.qgroup-head{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:48px;padding:12px 14px;background:var(--paper-edge);font-size:15px;font-weight:800;letter-spacing:.5px}.qgroup summary.qgroup-head::-webkit-details-marker{display:none}.qgroup summary.qgroup-head::after{content:"";flex:none;width:9px;height:9px;margin-left:10px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}.qgroup[open] summary.qgroup-head::after{transform:rotate(45deg)}
+.qgroup-head .cnt{margin-left:auto;font-size:12px;color:var(--ink2);font-weight:700;white-space:nowrap;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.qrows{list-style:none;margin:0;padding:2px 14px 12px}
+.qrows li{display:flex;align-items:center;gap:10px;padding:10px 0;min-height:44px;border-top:1px dotted #eee6d2;font-size:13.5px;line-height:1.6}
+.qrows li:first-child{border-top:0}
+.wake{flex:none;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:#fff;border:1px solid #f0d7c2;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.goto{flex:1;color:var(--ink2);font-size:12px;overflow-wrap:anywhere;text-align:right}
+.goto.alias{color:var(--warn);font-weight:700}
+.check-mini{display:flex;gap:8px;align-items:flex-start;background:#f4fbf6;border:1px solid #cfe6d6;border-radius:10px;padding:10px 12px;font-size:12.8px;line-height:1.6;color:#3e5a4a;margin-top:10px}
+.check-mini .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2f9e5f;margin-top:6px}
+.actions{padding:14px 0 4px}
+.copy-wrap{position:relative;margin-top:10px}
+.copy-wrap summary.main{list-style:none;display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;border-radius:13px;background:#fff;color:#4a4236;border:1.5px solid #ddd0b6;font-size:14.5px;font-weight:800;cursor:pointer}
+.copy-wrap summary.main::-webkit-details-marker{display:none}
+
+
+.copy-menu{background:#fff;border:1.5px solid #ddd0b6;border-radius:12px;box-shadow:var(--shadow-pop);padding:6px;margin-top:8px}
+.copy-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:none;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;cursor:pointer;text-align:left}
+.copy-item small{font-weight:600;color:var(--ink2);font-size:11.5px}
+.copy-item:hover{background:#faf5e9}
+.caliber{margin:10px 2px 0;font-size:12px;line-height:1.7;color:var(--ink2);text-align:center}
+.cut-line{display:flex;align-items:center;gap:10px;padding:14px 0 8px;color:var(--ink3);font-size:12px}
+.cut-line::before,.cut-line::after{content:"";flex:1;border-top:2px dashed #d9cdb4}
+.zigzag{height:12px;margin:0 6px;transform:rotate(180deg);background:linear-gradient(-45deg,transparent 8px,var(--paper) 0) 0 0/16px 16px repeat-x,linear-gradient(45deg,transparent 8px,var(--paper) 0) 8px 0/16px 16px repeat-x}
+.foot-note{text-align:center;color:var(--ink3);font-size:11.5px;padding:10px 0 2px;letter-spacing:.4px;line-height:1.7}
+@media (max-width:390px){body{padding:18px 10px 36px}.sheet-inner{padding:18px 22px 8px}.amount .value{font-size:50px}.shop-head h2{font-size:18px}}
+/* v2.4-1063:双钮补位＋h02重做；其余沿v2.3不动；载荷结论不动 */.actions{display:flex!important;flex-direction:column;align-items:center!important;text-align:center!important}.actions .btn,.actions button.btn{width:100%!important;max-width:340px;margin-left:auto!important;margin-right:auto!important;justify-content:center!important;text-align:center!important}.copy-wrap{width:100%!important;max-width:340px;margin-left:auto!important;margin-right:auto!important}.copy-wrap summary,.copy-wrap summary.main{justify-content:center!important;text-align:center!important}.caliber{max-width:340px;margin-left:auto!important;margin-right:auto!important;text-align:center!important}.copy-item{justify-content:center!important;text-align:center!important}.tri-ph{visibility:hidden}</style>
+</head>
+<body>
+<div class="page">
+<div class="sheet-wrap"><div class="sheet-frame"><div class="sheet-inner">
+  <div class="shop-head">
+    <div class="shop-brand">饼干记账 · 能力速查</div>
+    <h2>77 条唤醒词，一句话直达</h2>
+    <p class="shop-sub">与 HELP 帮助页分名 · 照着唤醒词用</p>
+  </div>
+  <div class="summary-head">
+    <span class="eyebrow"><i></i>速查可用 · LOOKUP OK</span>
+    <div class="amount"><span class="value">77</span><span class="unit">条</span></div>
+    <p class="summary-note">74 场景唤醒词 ＋ 3 别名行</p>
+  </div>
+  <hr class="dashed">
+  <div class="sec">
+    <div class="sec-heading">按域速查 <span class="no">01</span></div>
+    <div class="toc-chips">
+      <a href="#q-write">记账</a><a href="#q-query">查询</a><a href="#q-analysis">分析</a><a href="#q-goal">目标</a><a href="#q-account">账户</a><a href="#q-link">联动</a><a href="#q-setup">开始使用</a><a href="#q-alias">别名</a>
+    </div>
+    <details class="qgroup" id="q-write"><summary class="qgroup-head">记账 <span class="cnt">16 行</span></summary><ul class="qrows">
+      <li><span class="wake">记支出</span><span class="goto">记账</span></li>
+      <li><span class="wake">记收入</span><span class="goto">记账</span></li>
+      <li><span class="wake">拍账单</span><span class="goto">记账</span></li>
+      <li><span class="wake">批量录入</span><span class="goto">记账</span></li>
+      <li><span class="wake">记一笔</span><span class="goto">记账</span></li>
+      <li><span class="wake">记退款</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记报销</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">报销到账</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记借出</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记借入</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记收回</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记偿还</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">记分期</span><span class="goto">特殊收支</span></li>
+      <li><span class="wake">改记录</span><span class="goto">修正</span></li>
+      <li><span class="wake">撤销</span><span class="goto">修正</span></li>
+      <li><span class="wake">恢复</span><span class="goto">修正</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-query"><summary class="qgroup-head">查询 <span class="cnt">17 行</span></summary><ul class="qrows">
+      <li><span class="wake">查今天</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查昨天</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查某天</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查最近</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查周</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查月</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查区间</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查账单</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查账单详情</span><span class="goto">查询 · 按时间</span></li>
+      <li><span class="wake">查分类</span><span class="goto">查询 · 按条件</span></li>
+      <li><span class="wake">搜备注</span><span class="goto">查询 · 按条件</span></li>
+      <li><span class="wake">查标签</span><span class="goto">查询 · 按条件</span></li>
+      <li><span class="wake">查账户</span><span class="goto">查询 · 按条件</span></li>
+      <li><span class="wake">查账本</span><span class="goto">查询 · 按条件</span></li>
+      <li><span class="wake">查欠款</span><span class="goto">查询 · 按状态</span></li>
+      <li><span class="wake">查待报销</span><span class="goto">查询 · 按状态</span></li>
+      <li><span class="wake">查分期</span><span class="goto">查询 · 按状态</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-analysis"><summary class="qgroup-head">分析 <span class="cnt">25 行</span></summary><ul class="qrows">
+      <li><span class="wake">看月度</span><span class="goto">分析 · 汇总</span></li>
+      <li><span class="wake">看年度</span><span class="goto">分析 · 汇总</span></li>
+      <li><span class="wake">看总览</span><span class="goto">分析 · 汇总</span></li>
+      <li><span class="wake">看周报</span><span class="goto">分析 · 汇总</span></li>
+      <li><span class="wake">看分类</span><span class="goto">分析 · 结构</span></li>
+      <li><span class="wake">看账户</span><span class="goto">分析 · 结构</span></li>
+      <li><span class="wake">看账本</span><span class="goto">分析 · 结构</span></li>
+      <li><span class="wake">看结构</span><span class="goto">分析 · 结构</span></li>
+      <li><span class="wake">看对比</span><span class="goto">分析 · 对比</span></li>
+      <li><span class="wake">看双区间</span><span class="goto">分析 · 对比</span></li>
+      <li><span class="wake">看同比</span><span class="goto">分析 · 对比</span></li>
+      <li><span class="wake">看分类对比</span><span class="goto">分析 · 对比</span></li>
+      <li><span class="wake">看趋势</span><span class="goto">分析 · 趋势</span></li>
+      <li><span class="wake">看分类趋势</span><span class="goto">分析 · 趋势</span></li>
+      <li><span class="wake">看大额</span><span class="goto">分析 · 金额</span></li>
+      <li><span class="wake">看高频</span><span class="goto">分析 · 金额</span></li>
+      <li><span class="wake">看分布</span><span class="goto">分析 · 金额</span></li>
+      <li><span class="wake">做统计</span><span class="goto">分析 · 统计洞察</span></li>
+      <li><span class="wake">看活跃</span><span class="goto">分析 · 统计洞察</span></li>
+      <li><span class="wake">看洞察</span><span class="goto">分析 · 统计洞察</span></li>
+      <li><span class="wake">看异常</span><span class="goto">分析 · 统计洞察</span></li>
+      <li><span class="wake">看借贷</span><span class="goto">分析 · 状态聚合</span></li>
+      <li><span class="wake">看报销</span><span class="goto">分析 · 状态聚合</span></li>
+      <li><span class="wake">看分期</span><span class="goto">分析 · 状态聚合</span></li>
+      <li><span class="wake">看退款</span><span class="goto">分析 · 状态聚合</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-goal"><summary class="qgroup-head">目标 <span class="cnt">4 行</span></summary><ul class="qrows">
+      <li><span class="wake">设定预算</span><span class="goto">目标 · 预算</span></li>
+      <li><span class="wake">看预算</span><span class="goto">目标 · 预算</span></li>
+      <li><span class="wake">设定目标</span><span class="goto">目标 · 目标</span></li>
+      <li><span class="wake">看目标</span><span class="goto">目标 · 目标</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-account"><summary class="qgroup-head">账户 <span class="cnt">4 行</span></summary><ul class="qrows">
+      <li><span class="wake">新增账户</span><span class="goto">账户 · 账户管理</span></li>
+      <li><span class="wake">改账户</span><span class="goto">账户 · 账户管理</span></li>
+      <li><span class="wake">账户转账</span><span class="goto">账户 · 账户管理</span></li>
+      <li><span class="wake">看账户汇总</span><span class="goto">账户 · 账户管理</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-link"><summary class="qgroup-head">联动 <span class="cnt">2 行</span></summary><ul class="qrows">
+      <li><span class="wake">买东西</span><span class="goto">联动 · 联动</span></li>
+      <li><span class="wake">吃饭</span><span class="goto">联动 · 联动</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-setup"><summary class="qgroup-head">开始使用 <span class="cnt">6 行</span></summary><ul class="qrows">
+      <li><span class="wake">初始化</span><span class="goto">开始使用 · 初始化</span></li>
+      <li><span class="wake">初始化状态</span><span class="goto">开始使用 · 初始化</span></li>
+      <li><span class="wake">备份</span><span class="goto">开始使用 · 备份恢复（一键备份）</span></li>
+      <li><span class="wake">备份</span><span class="goto">开始使用 · 备份恢复（查看备份）</span></li>
+      <li><span class="wake">恢复备份</span><span class="goto">开始使用 · 备份恢复</span></li>
+      <li><span class="wake">导入</span><span class="goto">开始使用 · 导入</span></li>
+    </ul></details>
+    <details class="qgroup" id="q-alias"><summary class="qgroup-head">别名 <span class="cnt">3 行</span></summary><ul class="qrows">
+      <li><span class="wake">能做什么</span><span class="goto alias">本页 · 速查入口</span></li>
+      <li><span class="wake">饼干记账HELP</span><span class="goto alias">帮助页 · 7 域 74 场景</span></li>
+      <li><span class="wake">帮助</span><span class="goto alias">帮助页 · 同上</span></li>
+    </ul></details>
+    <div class="check-mini"><span class="dot"></span><span>16＋17＋25＋4＋4＋2＋6＋3＝77；别名行标黄，不与场景行混数。</span></div>
+  </div>
+  <div class="actions">
+    <details class="copy-wrap">
+      <summary class="main">复制数据▾</summary>
+      <div class="copy-menu">
+        <button class="copy-item" type="button" data-t="能力速查&#10;77 条唤醒词（74 场景 ＋ 3 别名）&#10;入口：能做什么">纯文本 <small>粘贴给助手或自己看</small></button>
+        <button class="copy-item" type="button" data-t="{&#10;  &quot;mode&quot;: &quot;lookup&quot;,&#10;  &quot;rows&quot;: 77,&#10;  &quot;scenes&quot;: 74,&#10;  &quot;aliases&quot;: 3&#10;}">JSON <small>结构化存档</small></button>
+        <button class="copy-item" type="button" data-t="section,row&#10;status,ok&#10;message,77 条唤醒词（74 场景 ＋ 3 别名）">CSV <small>表格导入</small></button>
+      </div>
+    </details>
+    <details class="copy-wrap">
+      <summary class="main">复制日志<span class="tri-ph" aria-hidden="true">▾</span></summary>
+      <div class="copy-menu">
+        <button class="copy-item" type="button" data-t="场景标识&#10;bill.help.lookup（lookup）&#10;调用链&#10;bill-cmd-read bill.help.lookup --params '{&quot;mode&quot;:&quot;lookup&quot;}' ｜ 77 条唤醒词&#10;时间戳版本&#10;2026-10-02 · 版本 2.0&#10;异常&#10;无">复制本页日志 <small>对账用</small></button>
+      </div>
+    </details>
+  </div>
+</div></div></div>
+<div class="cut-line">✂ 裁切线</div>
+<div class="zigzag"></div>
+</div>
+<script>(function(){document.addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(!b||b.dataset.done)return;var t=b.getAttribute('data-t');b.dataset.done='1';var old=b.innerHTML;function fin(ok){b.innerHTML=ok?'已复制 ✓':old;setTimeout(function(){b.innerHTML=old;delete b.dataset.done},600)}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){fin(true)},function(){fb()})}else fb();function fb(){var s=document.createElement('textarea');s.value=t;document.body.appendChild(s);s.select();try{document.execCommand('copy');fin(true)}catch(x){fin(false)}s.remove()}})})();</script>
+<!-- 1078-修正:八组改默认折叠；点顶部目录 chip 会先展开目标组再跳转（否则折叠后 chip 成死链） -->
+<script>(function(){
+  var chips=document.querySelectorAll('.toc-chips a[href^="#"]');
+  Array.prototype.forEach.call(chips,function(a){
+    a.addEventListener('click',function(){
+      var id=a.getAttribute('href').slice(1);
+      var t=document.getElementById(id);
+      if(t&&t.tagName==='DETAILS'){ t.open=true; }
+    });
+  });
+  /* 折叠后「按域速查」下方全收起时，补一句状态说明，别让人以为页面没内容 */
+  var sec=document.querySelector('.sec-heading');
+  if(sec){
+    var d=document.createElement('div');
+    d.className='fold-note';
+    d.textContent='八组默认收起 · 点组名展开，点上面目录可直接跳到那一组。';
+    sec.parentNode.insertBefore(d,sec.nextSibling);
+  }
+})();</script>
+</body>
+</html>

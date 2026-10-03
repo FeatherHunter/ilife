@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!-- 1040-v2.1: 两钮1039新口径（块居中文本居中左缘对齐▾占位日志无符）＋文案专业化；结论明细占比条图表占位载荷不动 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>饼干记账·看分期·票据纸 v2.1</title>
+<style>
+:root{
+  --bg:#efe9dd; --paper:#fffdf7; --paper-edge:#f7f1e3;
+  --ink:#2b2620; --ink2:#665f57; --ink3:#736755; --line:#e9dfcd;
+  --accent:#b4552d; --accent-soft:#fbe4d4; --ok:#1e784c; --ok-soft:#e7f5ec;
+  --danger:#8c2a1f; --red-open:#c0392b;
+  --radius:16px;
+  --shadow:0 18px 50px rgba(80,60,30,.18),0 2px 0 rgba(120,90,40,.08);
+  --shadow-pop:0 12px 28px rgba(80,60,30,.18);
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Noto Sans SC",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%, #f7f2e6 0%, var(--bg) 55%, #e6dcc8 100%);
+  color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 14px 48px}
+.page{width:100%;max-width:440px}
+.sheet-wrap{position:relative;filter:drop-shadow(var(--shadow))}
+.sheet-frame{position:relative;background:var(--paper);border-radius:var(--radius);overflow:hidden}
+.sheet-frame::before,.sheet-frame::after{content:"";position:absolute;top:0;bottom:0;width:14px;
+  background-image:radial-gradient(circle at 7px 10px, var(--bg) 5.5px, transparent 6px);
+  background-size:14px 20px;background-repeat:repeat-y;pointer-events:none}
+.sheet-frame::before{left:0}
+.sheet-frame::after{right:0;transform:scaleX(-1)}
+.sheet-inner{padding:22px 28px 10px;position:relative}
+.shop-head{text-align:center;padding:2px 0 0}
+.shop-brand{font-size:11.5px;letter-spacing:2px;color:var(--ink2);font-weight:700}
+.shop-head h2{margin:8px 0 0;font-size:19px;line-height:1.4;font-weight:800;overflow-wrap:anywhere}
+.shop-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink2);overflow-wrap:anywhere}
+.summary-head{position:relative;text-align:center;padding:6px 0 16px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:2px;color:#7a6f5e;
+  background:#f3ecdc;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:700;max-width:100%}
+.eyebrow i{width:7px;height:7px;flex:none;border-radius:50%;background:#2f9e5f;box-shadow:0 0 0 4px rgba(47,158,95,.15)}
+.amount{margin:12px 0 0;display:flex;align-items:baseline;justify-content:center;gap:6px;line-height:1;flex-wrap:wrap;overflow-wrap:anywhere}
+.amount .value{font-size:56px;font-weight:900;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;max-width:100%}
+.amount .unit{font-size:18px;font-weight:800;color:var(--ink2)}
+.summary-note{margin:10px 0 0;font-size:13.5px;line-height:1.6;color:#5f574a;overflow-wrap:anywhere}
+.summary-time{margin:6px 0 0;font-size:13.5px;color:#5f574a;font-family:var(--mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stamp{position:absolute;right:2px;top:2px;font-size:13px;font-weight:900;letter-spacing:2px;color:var(--ok);
+  border:2.5px solid var(--ok);border-radius:8px;padding:5px 10px 4px 12px;transform:rotate(10deg);
+  background:rgba(31,122,77,.06);opacity:.92}
+.stamp::after{content:"";position:absolute;inset:2px;border:1px dashed rgba(31,122,77,.5);border-radius:5px}
+.stamp.readonly{color:var(--ink2);border-color:#b8ae9f;background:rgba(102,95,87,.06)}
+.stamp.readonly::after{border-color:rgba(102,95,87,.4)}
+.dashed{border:0;border-top:2px dashed var(--line);margin:14px -8px}
+.sec{padding:2px 0 6px}
+.sec-heading{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:13px;font-weight:800;
+  letter-spacing:1.5px;color:#6b6152}
+.sec-heading::before{content:"";flex:none;width:4px;height:14px;border-radius:4px;background:var(--accent)}
+.sec-heading .no{margin-left:auto;font-weight:700;color:var(--ink3);letter-spacing:0;flex:none}
+.ledger-rows{list-style:none;margin:0;padding:0}
+.ledger-rows li{display:flex;align-items:flex-end;gap:8px;padding:9px 0;font-size:14px;line-height:1.4;min-height:44px}
+.ledger-rows .k{flex:none;color:var(--ink2);white-space:nowrap}
+.ledger-rows .dots{flex:1 1 auto;min-width:14px;border-bottom:2px dotted #d9cdb4;transform:translateY(-5px)}
+.ledger-rows .v{flex:none;max-width:62%;text-align:right;font-weight:700;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ledger-rows .v.mono{font-family:var(--mono)}
+.entry-card{background:#fbf7ec;border:1px solid var(--line);border-radius:12px;padding:12px 13px 11px}
+.entry-rows{list-style:none;margin:0;padding:0}
+.entry-rows li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dotted #eee6d2;
+  font-size:14px;min-height:44px;line-height:1.55}
+.entry-rows li:last-child{border-bottom:none}
+.idx{flex:0 0 22px;height:22px;margin-top:1px;border-radius:7px;background:#f4efe2;border:1px solid var(--line);
+  color:#8a857a;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.entry-text{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.chart-ph{border:2px dashed #d9cdb4;border-radius:12px;background:#fbf7ec;padding:18px 14px;text-align:center;
+  color:var(--ink2);font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+.chart-ph b{display:block;font-size:13.5px;letter-spacing:1px;color:#6b6152}
+.actions{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0 4px;text-align:center}/*1040-v2.1:两钮块居中（沿1039，同宽max-width:340px居中）*/
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:13px;
+  font-size:16px;font-weight:800;letter-spacing:.5px;border:0;padding:12px 14px}
+.btn-secondary{margin-top:10px;background:#fff;color:#4a4236;border:1.5px solid #ddd0b6;min-height:44px;font-size:14.5px}
+.copy-wrap{position:relative;width:100%;max-width:340px;margin-inline:auto;display:flex;justify-content:center;text-align:center;margin-top:0}.actions .btn{justify-content:center;text-align:center}.actions #copyDataBtn{width:100%;margin-top:0}.actions #copyLogBtn{width:100%;max-width:340px;margin-inline:auto;margin-top:0}.actions .btn-secondary{margin-top:0}.actions .copy-log{margin-top:0}.actions .caliber{width:100%;max-width:340px;text-align:center}.btn-in{display:inline-block;text-align:left;line-height:1.4}#copyDataBtn::after{content:none!important}#copyLogBtn::after{content:none!important}#copyLogBtn .ph{visibility:hidden}.copy-wrap.open #copyDataBtn{transform:none}/*1040-v2.1:文本整体居中＋两行左缘对齐（内层等宽盒左对齐＋▾占宽补偿）＋open不旋转*/
+.copy-menu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:#fff;border:1.5px solid #ddd0b6;
+  border-radius:12px;box-shadow:var(--shadow-pop);padding:6px;display:none;z-index:5}
+.copy-wrap.open .copy-menu{display:block}
+.copy-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:44px;
+  padding:10px 12px;border:0;border-radius:8px;background:none;font-size:13.5px;font-weight:700;color:var(--ink)}
+.copy-item small{font-weight:600;color:var(--ink2);font-size:11.5px}
+.caliber{margin:10px 2px 0;font-size:12px;line-height:1.7;color:var(--ink2);text-align:center;overflow-wrap:anywhere}
+.cut-line{display:flex;align-items:center;gap:10px;padding:14px 0 8px;color:var(--ink3);font-size:12px}
+.cut-line::before,.cut-line::after{content:"";flex:1;border-top:2px dashed #d9cdb4}
+.zigzag{height:12px;margin:0 6px;transform:rotate(180deg);
+  background:linear-gradient(-45deg, transparent 8px, var(--paper) 0) 0 0/16px 16px repeat-x,
+    linear-gradient(45deg, transparent 8px, var(--paper) 0) 8px 0/16px 16px repeat-x}
+.foot-note{text-align:center;color:var(--ink3);font-size:11.5px;padding:10px 0 2px;letter-spacing:.4px;line-height:1.7;overflow-wrap:anywhere}
+
+.entry-text .bar{display:block;height:6px;border-radius:999px;background:#f0e7d3;margin-top:6px;overflow:hidden}
+.entry-text .bar i{display:block;height:100%;border-radius:999px;background:#3f7fbf}
+.entry-text .bar i.zero{background:#c9c0ad}
+.entry-head{display:flex;gap:8px;align-items:center;padding:10px 0 6px;font-size:12.5px;font-weight:800;color:#6b6152}
+.shop-head h2.single-line{white-space:nowrap;overflow:hidden;text-overflow:clip;word-break:keep-all;overflow-wrap:normal;}
+@media (max-width:390px){
+  body{padding:18px 10px 36px}
+  .sheet-inner{padding:18px 22px 8px}
+  .amount .value{font-size:50px}
+  .shop-head h2{font-size:18px}
+  .ledger-rows .v{max-width:58%}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet-wrap">
+    <div class="sheet-frame">
+      <div class="sheet-inner">
+        <div class="shop-head">
+          <div class="shop-brand">饼干记账 · 看分期</div>
+          <h2 class="single-line">分期共记 0 笔</h2>
+          <p class="shop-sub">全部时间</p>
+        </div>
+        <hr class="dashed">
+        <section class="summary-head" aria-label="主数字">
+          <span class="eyebrow"><i></i>分析域 · 趋势</span>
+          <div class="amount"><span class="value">0.00</span><span class="unit">元</span></div>
+          <p class="summary-note">剩余金额合计 · 明细与复制区与基线一致</p>
+          <div class="stamp readonly">备查</div>
+        </section>
+        <hr class="dashed">
+        <section class="sec">
+          <div class="sec-heading">图形占位 <span class="no">CHART</span></div>
+          <div class="chart-ph"><b>图表占位 · 只看排布</b>图形仅示意排布，不用它读数，不断言数据对错。<br>读数以明细卡与复制区为准。</div>
+        </section>
+        <hr class="dashed">
+        <section class="sec">
+          <div class="sec-heading">明细卡 <span class="no">DETAIL</span></div>
+          <div class="entry-card">
+            <ol class="entry-rows">
+              <li><span class="idx">1</span><span class="entry-text">暂无明细 · 见复制区（空态与基线一致）</span></li>
+            </ol>
+          </div>
+        </section>
+        <hr class="dashed">
+        <section class="sec">
+          <div class="sec-heading">落点 <span class="no">CALIBER</span></div>
+          <ul class="ledger-rows">
+            <li><span class="k">说明</span><span class="dots"></span><span class="v">全库还没有带 #分期 的记录</span></li>
+            <li><span class="k">来源</span><span class="dots"></span><span class="v">记账库</span></li>
+            <li><span class="k">基线</span><span class="dots"></span><span class="v mono">a24-看分期-proto.html</span></li>
+          </ul>
+          <p class="caliber">图只是示意排布，不用它读数；数字看上面和下面。</p>
+        </section>
+        <hr class="dashed">
+        <div class="actions">
+          <div class="copy-wrap" id="copyWrap">
+            <button class="btn btn-secondary" type="button" id="copyDataBtn" aria-expanded="false"><span class="btn-in">复制数据 ▾</span></button>
+            <div class="copy-menu" role="menu">
+              <button class="copy-item" type="button" data-fmt="text">纯文本 <small>自己看，发助手都行</small></button>
+              <button class="copy-item" type="button" data-fmt="json">JSON <small>以后查账用</small></button>
+              <button class="copy-item" type="button" data-fmt="csv">CSV <small>表格打开看</small></button>
+            </div>
+          </div>
+          <button class="btn btn-secondary copy-log" type="button" id="copyLogBtn"><span class="btn-in">复制日志<span class="ph" aria-hidden="true"> ▾</span></span></button>
+        </div>
+        <div class="cut-line">✂ 裁切线</div>
+      </div>
+      <div class="zigzag"></div>
+    </div>
+  </div>
+  <div class="foot-note">饼干记账 · 看分期</div>
+</div>
+<script>
+(function(){
+  var F = { text: "看分期\nsummary: installment：共 0 笔，。", json: "{\n  \"version\": \"0.1.0\",\n  \"skill\": \"bill\",\n  \"shape\": \"analysis\",\n  \"key\": \"analysis.trend\",\n  \"data\": {\n    \"summary\": \"installment：共 0 笔，。\"\n  }\n}", csv: "section,row\nsummary,summary: installment：共 0 笔，。" };
+  var L = "场景标识\nbill.analysis.trend（analysis）\nAI 思考链\n本页由本地渲染，无助手链\n数据结构\n记账库 · bills（只读：只取数与聚合，不改库）\n调用链\nbill-cmd-read bill.analysis.trend --params '{\"kind\":\"installment\"}' ｜ 取到 0 条记录\n时间戳版本\n2026-10-02 05:04:08 · 版本 0.1.0\n异常\n无";
+  var wrap = document.getElementById('copyWrap');
+  var dataBtn = document.getElementById('copyDataBtn');
+  var logBtn = document.getElementById('copyLogBtn');
+  function cp(t, btn){
+    var done = function(){ var o = btn.innerHTML; btn.textContent = '已复制 ✓'; setTimeout(function(){ btn.innerHTML = o; },1600); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, function(){ fb(); }); } else { fb(); }
+    function fb(){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); done(); }
+  }
+  dataBtn.addEventListener('click', function(e){ e.stopPropagation();
+    var open = wrap.classList.contains('open'); wrap.classList.toggle('open', !open);
+    dataBtn.setAttribute('aria-expanded', String(!open)); });
+  document.addEventListener('click', function(){ wrap.classList.remove('open'); dataBtn.setAttribute('aria-expanded','false'); });
+  var items = wrap.querySelectorAll('.copy-item');
+  for(var i = 0; i < items.length; i++){ items[i].addEventListener('click', function(e){ e.stopPropagation();
+    cp(F[this.getAttribute('data-fmt')], dataBtn); wrap.classList.remove('open'); }); }
+  logBtn.addEventListener('click', function(){ cp(L, logBtn); });
+})();
+</script>
+</body>
+</html>
