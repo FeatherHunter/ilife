@@ -94,6 +94,9 @@ const CSS = [
   'figcaption .c{color:#515154;font-weight:400;font-size:12px;margin-top:4px;line-height:1.6}',
   'figcaption .w{color:#86868b;font-weight:400;font-size:11.5px;margin-top:2px}',
   'figcaption .m{color:#8a6d3b;font-weight:400;font-size:11.5px;margin-top:2px}',
+  '.banner{background:#fff8e6;border:1px solid #f0d7a0;border-left:4px solid #b8860b;border-radius:8px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.7;color:#5c4708}',
+  '.banner b{font-weight:700}',
+  '.banner .l2{color:#7a6420;font-size:12px;margin-top:4px}',
   '.pair{display:flex;gap:8px;padding:8px;background:#f5f5f7}.stack{display:flex;flex-direction:column;gap:8px;padding:8px;background:#f5f5f7}',
   '.phone{background:#fff;border:1px solid #e8e8ed;border-radius:8px;overflow:hidden}',
   '.tag{font-size:11.5px;color:#86868b;padding:4px 8px;border-bottom:1px solid #e8e8ed}',
@@ -117,7 +120,7 @@ function caption(r) {
     + ' <button type="button" class="nobtn" data-seq="' + r.seq + '" data-wake="' + esc(r.wake) + '" data-prod="' + esc(r.file) + '" data-proto="' + esc(r.proto) + '" aria-pressed="false">不满意</button></div>'
     + '<div class="c">该确认什么：' + esc(r.check) + '</div>'
     + '<div class="w">窗口：' + esc(r.window) + ' ｜ 真跑字节 ' + String(r.bytes) + ' ｜ 原型 sha256 ' + esc(String(r.protoSha256).slice(0, 16)) + '…</div>'
-    + '<div class="m">机检：块位 ' + String((r.blocksExpected ?? []).length - (r.blocksMissing ?? []).length) + '/' + String((r.blocksExpected ?? []).length) + ' 在 ｜ 页内导航 ' + String(r.navCount) + ' 个 ｜ 来源脚注 ' + String(r.srcCount) + ' 处 ｜ 无 loading=lazy ｜ 无 undefined/NaN；票据纸族标记 ' + String((r.ticketMarkers ?? []).length) + '/' + String((r.ticketMarkers ?? []).length + (r.ticketMarkersMissing ?? []).length) + ' 在（据实读数，不下判定）</div>'
+    + '<div class="m">机检：票据纸八件套 ' + String((r.blocksExpected ?? []).length - (r.blocksMissing ?? []).length) + '/' + String((r.blocksExpected ?? []).length) + ' 在 ｜ 段落 ' + String(r.secCount ?? 0) + ' 个 ｜ 明细卡 ' + String(r.entryCard ?? 0) + ' 枚 ｜ 页内导航 ' + String(r.navCount ?? 0) + ' 个 ｜ 来源脚注 ' + String(r.srcCount ?? 0) + ' 处 ｜ 无 loading=lazy ｜ 无 undefined/NaN；旧产品族块位 ' + String((r.legacyMarkers ?? []).length) + ' 处（据实读数，不下判定）</div>'
     + '</figcaption>';
 }
 
@@ -141,10 +144,12 @@ function render(kind) {
   const sub = kind === 'mobile'
     ? '<b>左＝真跑产物</b>（隔离家目录 <code>' + esc(raw.sample?.isolatedHome ?? '') + '</code> ＋ 仓内 #729 合成记账库夹具 ' + String(raw.sample?.records ?? '') + ' 条记录，「今天」钉在 ' + esc(raw.sample?.today ?? '') + '），<b>右＝冻结原型</b>（同目录副本，逐件 sha256 与 <code>proto/manifest.json</code> 登记值对过）。两侧<b>数据不同</b>：左＝夹具合成库（2025-05~2026-06 真实流水），右＝原型内嵌样例值——<b>这一墙判版式与件套</b>（八件套、转账「→」双值行、落点空行裁剪、负值条 M5、复制钮块居中与 ▾ 字面），<b>不判数字</b>。快照：' + esc(String(snap.gitHead ?? '').slice(0, 8)) + ' ＋ dist ' + esc(String(snap.cmdReadDistSha256 ?? '').slice(0, 12)) + '（生成于 ' + esc(String(snap.at ?? '')) + '）。每格「满意／不满意（原因必填）」，可导出 JSON 作为逐格结论原文。'
     : '同一格上下两张：<b>上＝真跑产物</b>（1280 宽）、<b>下＝冻结原型</b>（1280 宽）；与手机墙成对，编号／唤醒词／该确认什么完全一致。这一墙判版式与件套，不判数字。';
+  const banner = '<div class="banner"><b>两侧数据不同：左＝本仓夹具真跑产物，右＝判地内置样本值；本墙判版式与件套，不比数值。</b>'
+    + '<div class="l2">页高不等时像素比含数据差，不据此判块位膨胀。</div></div>';
   return '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8">' + String.fromCharCode(10)
     + '<meta name="viewport" content="width=device-width,initial-scale=1">' + String.fromCharCode(10)
     + '<title>' + h1 + '</title><style>' + CSS + gridCss + '</style></head>' + String.fromCharCode(10)
-    + '<body><div class="wrap"><h1>' + h1 + '</h1>' + String.fromCharCode(10) + '<div class="sub">' + sub + '</div>' + String.fromCharCode(10)
+    + '<body><div class="wrap"><h1>' + h1 + '</h1>' + String.fromCharCode(10) + banner + String.fromCharCode(10) + '<div class="sub">' + sub + '</div>' + String.fromCharCode(10)
     + bar(wallName) + String.fromCharCode(10) + '<div class="grid">' + String.fromCharCode(10) + cells + String.fromCharCode(10) + '</div></div>' + String.fromCharCode(10)
     + script(wallName) + '</body></html>' + String.fromCharCode(10);
 }
