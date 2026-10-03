@@ -61,13 +61,10 @@ function pageOn(db, key, params, name, envExtra) {
 function page(key, params, name, envExtra) {
   return pageOn(DB, key, params, name, envExtra);
 }
-/** 整段开标签计数（禁裸子串）。 */
-function countTag(text, tag) {
-  return (text.split(tag).length - 1);
-}
-const H1 = (w) => '<h1 class="ilife-block-page-shell-title">' + w + '</h1>';
-const KPI_TAG = '<div class="ilife-block ilife-block-kpi-card">';
-const TABLE_TAG = '<table class="ilife-block-data-table-table">';
+/** 段标整段开标签（禁裸子串——CSS 里会出现同名选择器）。 */
+const SEC = (s) => '<span class="ilife-ticket-sec-no">' + s + '</span>';
+/** 票据纸四段：落点 LEDGER／占比 SCALE／明细 DETAIL／对账 CHECK。 */
+const TICKET_SECS = ['LEDGER', 'SCALE', 'DETAIL', 'CHECK'];
 
 before(() => {
   DB = mkdtempSync(join(tmpdir(), 't413-db-'));
@@ -86,17 +83,21 @@ before(() => {
 });
 
 describe('t413 ① 查周：锚点周一..锚点（截到锚点，非周日）', () => {
-  it('显式 today=今天：窗口 周一~今天（本周），有数', () => {
+  it('显式 today=今天：窗口 周一~今天（本周），有数（票据纸：店头＋四段＋裁切线，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.range', { range: 'week', today }, 't413-week');
     const env = JSON.parse(stdout);
     assert.equal(env.shape, 'list');
     assert.equal(env.data.start, monday);
     assert.equal(env.data.end, today);
     assert.ok(env.data.total >= 3, '今天三笔（L1＋转出＋转入）恒在窗内，实得 ' + env.data.total);
-    assert.ok(text.includes(H1('查周')), 'H1 应为查周');
+    assert.ok(text.includes('饼干记账 · 查周'), '店头品牌行应为查周');
     assert.ok(text.includes(monday + ' ~ ' + today + '（本周）'), '窗口说清起止＋本周');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格（整段开标签计数）');
-    assert.equal(countTag(text, TABLE_TAG), 1, '有数应有数据表一张');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('sheet-frame'), '纸框');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    for (const s of TICKET_SECS) assert.ok(text.includes(SEC(s)), '段标 ' + s + '（整段开标签）');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('截断锁定：today=周三 → end==周三（不是周日）', () => {
     const { text, stdout } = page('bill.record.range', { range: 'week', today: wed }, 't413-week-trunc');
@@ -116,15 +117,27 @@ describe('t413 ① 查周：锚点周一..锚点（截到锚点，非周日）',
 });
 
 describe('t413 ② 查月：锚点月初..锚点（截到锚点，非月末）', () => {
-  it('显式 today=今天：窗口 月初~今天（本月），有数', () => {
+  it('显式 today=今天：窗口 月初~今天（本月），有数（w07 票据纸 v2.1：店头＋H2 本月句式＋票据纸，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.range', { range: 'month', today }, 't413-month');
     const env = JSON.parse(stdout);
     assert.equal(env.data.start, m01);
     assert.equal(env.data.end, today);
     assert.ok(env.data.total >= 3, '今天三笔恒在窗内，实得 ' + env.data.total);
-    assert.ok(text.includes(H1('查月')), 'H1 应为查月');
+    assert.ok(text.includes('饼干记账 · 查月'), '店头品牌行应为查月');
+    // H1 的笔数与支出都取 kpi（收支口径，转账不计），不是 total／items——total 含转账笔，
+    // 对账段的「共 N 笔」才是全行集口径（见下面 CHECK 段）。载荷断言一行未动。
+    assert.ok(text.includes('本月共 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), 'H2 本月句式（笔数与支出取 kpi）');
     assert.ok(text.includes(m01 + ' ~ ' + today + '（本月）'), '窗口说清起止＋本月');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('<span class="ilife-ticket-sec-no">LEDGER</span>'), '落点段');
+    assert.ok(text.includes('<span class="ilife-ticket-sec-no">SCALE</span>'), '占比段');
+    assert.ok(text.includes('<span class="ilife-ticket-sec-no">DETAIL</span>'), '明细段');
+    assert.ok(text.includes('<span class="ilife-ticket-sec-no">CHECK</span>'), '对账段');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(text.includes('<div class="ilife-month-foot">饼干记账 · 查月</div>'), '页脚查月');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
+    for (const k of ['items', 'total', 'start', 'end', 'kpi']) assert.ok(k in env.data, '载荷键不动：' + k);
   });
   it('截断锁定：today=本月05 → end==05（不是月末）', () => {
     const { stdout } = page('bill.record.range', { range: 'month', today: m05 }, 't413-month-trunc');
@@ -136,16 +149,20 @@ describe('t413 ② 查月：锚点月初..锚点（截到锚点，非月末）',
 });
 
 describe('t413 ③ 查区间：同给真跑＋缺一阻断', () => {
-  it('start+end 同给：周一起~今天，有数且回填', () => {
+  it('start+end 同给：周一起~今天，有数且回填（票据纸：店头＋四段，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.range', { start: monday, end: today }, 't413-range');
     const env = JSON.parse(stdout);
     assert.equal(env.data.start, monday);
     assert.equal(env.data.end, today);
     assert.ok(env.data.total >= 2, '周一起与今天两笔恒在窗内，实得 ' + env.data.total);
-    assert.ok(text.includes(H1('查区间')), 'H1 应为查区间');
+    assert.ok(text.includes('饼干记账 · 查区间'), '店头品牌行应为查区间');
     assert.ok(text.includes(monday + ' ~ ' + today), '窗口说清起止');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格');
-    assert.equal(countTag(text, TABLE_TAG), 1, '有数应有数据表一张');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('sheet-frame'), '纸框');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    for (const s of TICKET_SECS) assert.ok(text.includes(SEC(s)), '段标 ' + s + '（整段开标签）');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('缺参阻断：只给 start → exit 2（stdout 不吐载荷）', () => {
     const r = run(['bill.record.range', '--params', P({ start: monday })]);
@@ -167,15 +184,22 @@ describe('t413 ③ 查区间：同给真跑＋缺一阻断', () => {
 });
 
 describe('t413 ④ 查分类：三级（无 / 视为 L1）', () => {
-  it('L1 无斜杠「餐饮」命中本级＋全部下级（3 笔）', () => {
+  it('L1 无斜杠「餐饮」命中本级＋全部下级（3 笔）（票据纸：结论句＋占比段＋明细段，载荷断言不动）', () => {
     const { text, stdout } = page('bill.record.range', { category: '餐饮' }, 't413-cat-l1');
     const env = JSON.parse(stdout);
     assert.equal(env.data.total, 3, '餐饮本级 1＋下级 2');
     assert.equal(env.data.start, '', '单条件支 start 回填空串');
     assert.equal(env.data.end, '', '单条件支 end 回填空串');
-    assert.ok(text.includes(H1('查分类')), 'H1 应为查分类');
+    assert.ok(text.includes('饼干记账 · 查分类'), '店头品牌行应为查分类');
     assert.ok(text.includes('分类＝餐饮（全部时间）'), '窗口说清条件＋全部时间');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格');
+    // 结论句：笔数取 total（无转账混进来时两者一致），金额取 kpi；占比句不给死百分比（随样本变）。
+    assert.ok(text.includes('餐饮共 ' + env.data.total + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '结论句（笔数与支出）');
+    assert.ok(text.includes('其中餐饮类共 ' + env.data.kpi.expense.toFixed(2) + ' 元，占全部支出约'), '占比结论句');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes(SEC('SCALE')), '占比段');
+    assert.ok(text.includes(SEC('DETAIL')), '明细段');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('L2「餐饮/外卖」命中子树（2 笔）', () => {
     const { stdout } = page('bill.record.range', { category: '餐饮/外卖' }, 't413-cat-l2');
@@ -195,8 +219,16 @@ describe('t413 ⑤ 查账户／查账本：只过滤（余额无关性探针）'
     assert.ok(env.data.items.every((x) => x.account === '支付宝'), '行集只含该账户');
     assert.deepEqual(env.data.kpi, { count: 2, expense: 55, income: 0, net: -55 }, 'KPI 是过滤窗内收支（转出 -100 除外），不是余额');
     assert.ok(!('balance' in env.data), '载荷无 balance 字段（余额另走 bill.account.query）');
-    assert.ok(text.includes(H1('查账户')), 'H1 应为查账户');
+    assert.ok(text.includes('饼干记账 · 查账户'), '店头品牌行应为查账户');
     assert.ok(text.includes('账户＝支付宝（全部时间）'), '窗口说清条件＋全部时间');
+    // 落点段 LEDGER ＋ 明细段 DETAIL；页头笔数与支出改从 env.data.kpi 读（载荷未动：
+    // 行集 total＝3 含转出那笔，但收支口径不计转账，故是 kpi.count＝2）。
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes(SEC('LEDGER')), '落点段');
+    assert.ok(text.includes(SEC('DETAIL')), '明细段');
+    assert.ok(text.includes('支付宝共 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句（取 kpi，非 total）');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('查账本：账本＝转账两笔全是转账 → KPI 全零（只过滤不重算）', () => {
     const { text, stdout } = page('bill.record.range', { ledger: '转账' }, 't413-ledger');
@@ -204,7 +236,15 @@ describe('t413 ⑤ 查账户／查账本：只过滤（余额无关性探针）'
     assert.equal(env.data.total, 2, '转账账本两笔');
     assert.deepEqual(env.data.kpi, { count: 0, expense: 0, income: 0, net: 0 }, '两笔全是转账：行集照出，收支全零');
     assert.ok(!('balance' in env.data), '载荷无 balance 字段');
-    assert.ok(text.includes(H1('查账本')), 'H1 应为查账本');
+    assert.ok(text.includes('饼干记账 · 查账本'), '店头品牌行应为查账本');
+    assert.ok(text.includes('账本＝转账（全部时间）'), '窗口说清条件＋全部时间');
+    // 同查账户：落点段 LEDGER ＋ 明细段 DETAIL；页头句的 kpi 四值仍全零（只过滤不重算）。
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes(SEC('LEDGER')), '落点段');
+    assert.ok(text.includes(SEC('DETAIL')), '明细段');
+    assert.ok(text.includes('转账账本 ' + env.data.kpi.count + ' 笔，支出 ' + env.data.kpi.expense.toFixed(2) + ' 元'), '页头句：两笔全是转账 → 收支全零（取 kpi）');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
 });
 

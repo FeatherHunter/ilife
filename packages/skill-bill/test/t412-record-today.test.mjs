@@ -66,16 +66,21 @@ before(() => {
 });
 
 describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
-  it('无参→查今天（H1 整段开标签）', () => {
+  it('无参→查今天（w01 票据纸 v2.1：店头＋H2 今天句式＋票据纸，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.today', {}, 't412-today');
     const env = JSON.parse(stdout);
     assert.equal(env.shape, 'list');
     assert.ok(env.data.date, '无参也回填 date（今天）');
-    assert.ok(text.includes('<h1 class="ilife-block-page-shell-title">查今天</h1>'), 'H1 应为查今天');
-    assert.equal(countTag(text, '<div class="ilife-block ilife-block-kpi-card">'), 4, 'KPI 行四格（整段开标签计数）');
-    assert.equal(countTag(text, '<table class="ilife-block-data-table-table">'), 1, '有数应有数据表一张');
+    assert.ok(text.includes('饼干记账 · 查今天'), '店头品牌行应为查今天');
+    assert.ok(text.includes('今天共 ' + env.data.total + ' 笔，支出 '), 'H2 今天句式（含笔数与支出）');
+    assert.ok(text.includes('查账单和查今天是一样的。'), '别名注（w01 v2.1 逐字）');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
+    for (const k of ['items', 'total', 'date', 'kpi']) assert.ok(k in env.data, '载荷键不动：' + k);
   });
-  it('date=yesterday→查昨天', () => {
+  it('date=yesterday→查昨天（w02 票据纸 v2.1：店头＋H2 昨天句式＋票据纸，载荷键不动）', () => {
     // 有数昨天：先补一笔昨天，再查昨天应为查昨天且有数
     const y = new Date();
     y.setDate(y.getDate() - 1);
@@ -85,26 +90,40 @@ describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
     const { text, stdout } = page('bill.record.today', { date: 'yesterday' }, 't412-yesterday');
     const env = JSON.parse(stdout);
     assert.equal(env.data.date, ys, 'yesterday 应解析为昨天日期串');
-    assert.ok(text.includes('<h1 class="ilife-block-page-shell-title">查昨天</h1>'), 'H1 应为查昨天');
+    assert.ok(text.includes('饼干记账 · 查昨天'), '店头品牌行应为查昨天');
+    assert.ok(text.includes('昨天 ' + env.data.total + ' 笔，支出 '), 'H2 昨天句式（含笔数与支出）');
+    assert.ok(!text.includes('查账单和查今天是一样的。'), '无别名注（w02 原型无此行，w01 专属）');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
+    for (const k of ['items', 'total', 'date', 'kpi']) assert.ok(k in env.data, '载荷键不动：' + k);
   });
   it('显式 date→查某天（GAP-T1）', () => {
     const { text, stdout } = page('bill.record.today', { date: '2026-09-06' }, 't412-someday');
     const env = JSON.parse(stdout);
     assert.equal(env.data.date, '2026-09-06');
     assert.equal(env.data.total, 2, '样本那天两笔');
-    assert.ok(text.includes('<h1 class="ilife-block-page-shell-title">查某天</h1>'), 'H1 应为查某天');
-    assert.equal(countTag(text, '<div class="ilife-block ilife-block-kpi-card">'), 4, 'KPI 行四格');
+    assert.ok(text.includes('饼干记账 · 查某天'), '店头品牌行应为查某天');
+    assert.ok(text.includes('共 2 笔'), 'H2 聚合句（如查某天共 2 笔）');
+    assert.ok(text.includes('sheet-frame'), '有数走票据纸');
   });
-  it('recent→查最近', () => {
+  it('recent→查最近（票据纸：店头＋窗口句＋票据纸，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.today', { recent: true, limit: 2 }, 't412-recent');
     assert.equal(JSON.parse(stdout).data.total, 2);
-    assert.ok(text.includes('<h1 class="ilife-block-page-shell-title">查最近</h1>'), 'H1 应为查最近');
+    assert.ok(text.includes('饼干记账 · 查最近'), '店头品牌行应为查最近');
     assert.ok(text.includes('最近 2 笔'), '窗口说清条数');
+    assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
+    assert.ok(text.includes('sheet-frame'), '有数走票据纸');
+    assert.ok(text.includes('复制数据'), '复制区');
+    assert.ok(text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(text.includes('<div class="ilife-recent-foot">饼干记账 · 查最近</div>'), '页脚查最近');
+    assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('查账单别名同页：同无参同标题查今天', () => {
     assert.equal(routeWakeword('帮我查账单').key, 'bill.record.today', '查账单路由到 today');
     const { text } = page('bill.record.today', {}, 't412-alias');
-    assert.ok(text.includes('<h1 class="ilife-block-page-shell-title">查今天</h1>'), '别名页标题仍为查今天（Q2 别名同页）');
+    assert.ok(text.includes('饼干记账 · 查今天'), '别名页仍为查今天票据纸（Q2 别名同页）');
   });
 });
 
@@ -151,8 +170,14 @@ describe('t412 ③ 回归锁定（详情不被吞／缺槽／越界／补时）'
     const id = JSON.parse(s.stdout).data.items[0].id;
     const d = page('bill.record.detail', { id }, 't412-detail');
     assert.equal(JSON.parse(d.stdout).data.item.id, id);
-    assert.ok(d.text.includes('<h1 class="ilife-block-page-shell-title">查账单详情</h1>'), '详情页标题');
     assert.ok(d.text.includes('data-shape="detail"'), '详情页形状仍是 detail');
+    assert.ok(d.text.includes('饼干记账 · 账单详情'), '店头品牌行应为账单详情');
+    assert.ok(d.text.includes('<section class="ilife-block-sheet is-ticket">'), '详情走票据纸（不被列表页吞）');
+    assert.ok(d.text.includes('sheet-frame'), '纸框');
+    assert.ok(d.text.includes('<span class="ilife-ticket-sec-no">DETAIL</span>'), '明细段');
+    assert.ok(d.text.includes('<span class="ilife-ticket-sec-no">CHECK</span>'), '对账段');
+    assert.ok(d.text.includes('✂ 裁切线'), '裁切线');
+    assert.ok(!d.text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
   it('查某天缺 date 路由抛（反问入口）', () => {
     assert.throws(() => routeWakeword('查某天', {}), /缺槽位 date/);

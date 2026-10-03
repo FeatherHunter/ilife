@@ -7,4 +7,5 @@ packages:
 linkWorkspacePackages: true
 minimumReleaseAgeExclude:
   - dsh-plugin-update@0.2.0
+  - dsh-life-pack@0.3.30
 preferWorkspacePackages: true

@@ -1,0 +1,58 @@
+# t1071 锁记录导出（对账源，§2.3 第 4 条：从 .scratch/locks/gate-runs.log 按票号 1071 抄录）
+# 抄录时刻：2026-10-03；本票全部加锁运行逐条列出，START/RUN 成对。
+# 条数：54
+
+START ticket=1071 runId=ff695e9b-4b1f-40d3-a0a4-3f5469117716 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill packages/base-render --force" waitedMs=1 pid=55368 at=2026-10-03T07:23:29.795Z
+RUN ticket=1071 runId=ff695e9b-4b1f-40d3-a0a4-3f5469117716 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill packages/base-render --force" waitedMs=1 exit=0 pid=55368 at=2026-10-03T07:23:34.580Z
+START ticket=1071 runId=9a2474da-e1f8-4526-bd70-875d283bfdf5 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=52316 at=2026-10-03T07:23:37.647Z
+RUN ticket=1071 runId=9a2474da-e1f8-4526-bd70-875d283bfdf5 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=52316 at=2026-10-03T07:23:46.892Z
+START ticket=1071 runId=ebd3e1e2-b68c-4272-9e6a-0518e87941df cmd="node .scratch\\t1071\\probe.mjs" waitedMs=0 pid=53616 at=2026-10-03T07:24:26.259Z
+RUN ticket=1071 runId=ebd3e1e2-b68c-4272-9e6a-0518e87941df cmd="node .scratch\\t1071\\probe.mjs" waitedMs=0 exit=0 pid=53616 at=2026-10-03T07:24:34.595Z
+START ticket=1071 runId=c4569740-7b1c-434a-a60c-6d05e432ead6 cmd="node --test packages/skill-bill/test/t412-record-today.test.mjs" waitedMs=1 pid=43352 at=2026-10-03T07:25:32.966Z
+RUN ticket=1071 runId=c4569740-7b1c-434a-a60c-6d05e432ead6 cmd="node --test packages/skill-bill/test/t412-record-today.test.mjs" waitedMs=1 exit=1 pid=43352 at=2026-10-03T07:25:41.869Z
+START ticket=1071 runId=5cd5f634-b5f2-4bdd-a287-a13000def85b cmd="node --test packages/skill-bill/test/t412-record-today.test.mjs" waitedMs=0 pid=62484 at=2026-10-03T07:25:47.312Z
+RUN ticket=1071 runId=5cd5f634-b5f2-4bdd-a287-a13000def85b cmd="node --test packages/skill-bill/test/t412-record-today.test.mjs" waitedMs=0 exit=0 pid=62484 at=2026-10-03T07:25:55.972Z
+START ticket=1071 runId=d108c866-ee6a-4638-b5c6-3bf05ad8e9d2 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=50212 at=2026-10-03T07:26:10.089Z
+RUN ticket=1071 runId=d108c866-ee6a-4638-b5c6-3bf05ad8e9d2 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=50212 at=2026-10-03T07:26:19.611Z
+START ticket=1071 runId=e7dee903-7a47-4c1d-890d-dbc954c399cd cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=59208 at=2026-10-03T07:26:28.489Z
+RUN ticket=1071 runId=e7dee903-7a47-4c1d-890d-dbc954c399cd cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=59208 at=2026-10-03T07:26:38.013Z
+START ticket=1071 runId=05fa2777-29c3-46c6-a068-2879b8ceaf02 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=68808 at=2026-10-03T07:26:44.453Z
+RUN ticket=1071 runId=05fa2777-29c3-46c6-a068-2879b8ceaf02 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=68808 at=2026-10-03T07:26:54.027Z
+START ticket=1071 runId=91b3baf1-a776-4048-aa74-a58f00d322c8 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=64540 at=2026-10-03T07:27:02.031Z
+RUN ticket=1071 runId=91b3baf1-a776-4048-aa74-a58f00d322c8 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=64540 at=2026-10-03T07:27:11.431Z
+START ticket=1071 runId=474d7d6c-e578-4a84-84c8-b69a1f6e0837 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=33672 at=2026-10-03T07:27:17.917Z
+RUN ticket=1071 runId=474d7d6c-e578-4a84-84c8-b69a1f6e0837 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=1 pid=33672 at=2026-10-03T07:27:27.477Z
+START ticket=1071 runId=903c411d-a79e-42dc-9e20-0076868a70a4 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=1 pid=43252 at=2026-10-03T07:27:33.201Z
+RUN ticket=1071 runId=903c411d-a79e-42dc-9e20-0076868a70a4 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=1 exit=0 pid=43252 at=2026-10-03T07:27:43.077Z
+START ticket=1071 runId=6c6e1d2e-5129-4fc0-9e8c-f1cd4d8e6607 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=9676 at=2026-10-03T07:27:53.622Z
+RUN ticket=1071 runId=6c6e1d2e-5129-4fc0-9e8c-f1cd4d8e6607 cmd="node --test packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=0 pid=9676 at=2026-10-03T07:28:03.227Z
+START ticket=1071 runId=d29fa455-b735-4f20-af16-59369b539da5 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=25424 at=2026-10-03T07:28:19.213Z
+RUN ticket=1071 runId=d29fa455-b735-4f20-af16-59369b539da5 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=25424 at=2026-10-03T07:28:19.315Z
+START ticket=1071 runId=ad5c8e2e-0230-4c55-9104-52a1554c20e6 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=59000 at=2026-10-03T07:28:22.187Z
+RUN ticket=1071 runId=ad5c8e2e-0230-4c55-9104-52a1554c20e6 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=59000 at=2026-10-03T07:28:22.307Z
+START ticket=1071 runId=ba16bc6a-05aa-4557-8f5a-01e929cece73 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=52268 at=2026-10-03T07:28:25.284Z
+RUN ticket=1071 runId=ba16bc6a-05aa-4557-8f5a-01e929cece73 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=0 pid=52268 at=2026-10-03T07:28:34.202Z
+START ticket=1071 runId=59417802-9748-4b5c-80a4-881ab28b110a cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=29780 at=2026-10-03T07:28:37.259Z
+RUN ticket=1071 runId=59417802-9748-4b5c-80a4-881ab28b110a cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=1 pid=29780 at=2026-10-03T07:28:56.605Z
+START ticket=1071 runId=b2ba8bbf-4853-4c3e-8c87-523e8bda0817 cmd="node .scratch\\t1071\\fp-attribute.mjs" waitedMs=0 pid=53092 at=2026-10-03T07:29:23.461Z
+RUN ticket=1071 runId=b2ba8bbf-4853-4c3e-8c87-523e8bda0817 cmd="node .scratch\\t1071\\fp-attribute.mjs" waitedMs=0 exit=1 pid=53092 at=2026-10-03T07:29:24.202Z
+START ticket=1071 runId=dd28875a-2471-421f-be87-e1a96e3d76de cmd="node .scratch\\t1071\\fp-attribute.mjs" waitedMs=0 pid=50796 at=2026-10-03T07:29:37.109Z
+RUN ticket=1071 runId=dd28875a-2471-421f-be87-e1a96e3d76de cmd="node .scratch\\t1071\\fp-attribute.mjs" waitedMs=0 exit=0 pid=50796 at=2026-10-03T07:29:38.330Z
+START ticket=1071 runId=c4768f9f-2e31-41d0-993e-802ac0256d4e cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --write --declare-layout-change 1071" waitedMs=0 pid=7784 at=2026-10-03T07:29:44.855Z
+RUN ticket=1071 runId=c4768f9f-2e31-41d0-993e-802ac0256d4e cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --write --declare-layout-change 1071" waitedMs=0 exit=0 pid=7784 at=2026-10-03T07:30:03.635Z
+START ticket=1071 runId=165ddd3a-10ea-47be-ae0b-7e1c031acf64 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=63664 at=2026-10-03T07:30:06.900Z
+RUN ticket=1071 runId=165ddd3a-10ea-47be-ae0b-7e1c031acf64 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=63664 at=2026-10-03T07:30:34.978Z
+START ticket=1071 runId=bdaed96a-73aa-4c39-b45e-069f5f380115 cmd="node .scratch\\t1071\\mutation.mjs" waitedMs=0 pid=68260 at=2026-10-03T07:30:51.194Z
+RUN ticket=1071 runId=bdaed96a-73aa-4c39-b45e-069f5f380115 cmd="node .scratch\\t1071\\mutation.mjs" waitedMs=0 exit=1 pid=68260 at=2026-10-03T07:31:23.647Z
+START ticket=1071 runId=fab7a7b9-1cb4-49e1-88d0-668b8bfca7b0 cmd="node .scratch\\t1071\\mutation.mjs" waitedMs=0 pid=40976 at=2026-10-03T07:31:32.756Z
+RUN ticket=1071 runId=fab7a7b9-1cb4-49e1-88d0-668b8bfca7b0 cmd="node .scratch\\t1071\\mutation.mjs" waitedMs=0 exit=0 pid=40976 at=2026-10-03T07:31:55.373Z
+START ticket=1071 runId=5cb82fb3-3592-499d-b37c-76e3a7eb9978 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill packages/base-render --force" waitedMs=1 pid=30752 at=2026-10-03T07:32:33.732Z
+RUN ticket=1071 runId=5cb82fb3-3592-499d-b37c-76e3a7eb9978 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill packages/base-render --force" waitedMs=1 exit=0 pid=30752 at=2026-10-03T07:32:45.210Z
+START ticket=1071 runId=c3f0843f-1495-4196-8653-d53c30a1cedb cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=65692 at=2026-10-03T07:32:45.268Z
+RUN ticket=1071 runId=c3f0843f-1495-4196-8653-d53c30a1cedb cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=65692 at=2026-10-03T07:32:45.441Z
+START ticket=1071 runId=dd513f7a-0eda-45cb-8bb6-553048830b1e cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=47052 at=2026-10-03T07:32:45.506Z
+RUN ticket=1071 runId=dd513f7a-0eda-45cb-8bb6-553048830b1e cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=47052 at=2026-10-03T07:32:46.022Z
+START ticket=1071 runId=65dec3b2-2005-4cb7-8f89-1e3c7e081b32 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 pid=68092 at=2026-10-03T07:32:49.596Z
+RUN ticket=1071 runId=65dec3b2-2005-4cb7-8f89-1e3c7e081b32 cmd="node --test packages/skill-bill/test/t411-query-skeleton.test.mjs packages/skill-bill/test/t412-record-today.test.mjs packages/skill-bill/test/t413-record-range.test.mjs" waitedMs=0 exit=0 pid=68092 at=2026-10-03T07:32:58.497Z
+START ticket=1071 runId=1daa2019-89df-4477-b4da-9acf0c945769 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=57788 at=2026-10-03T07:32:58.573Z
+RUN ticket=1071 runId=1daa2019-89df-4477-b4da-9acf0c945769 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=57788 at=2026-10-03T07:33:17.072Z

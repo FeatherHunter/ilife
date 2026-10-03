@@ -36,7 +36,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-bill:
         specifier: 0.3.30
         version: link:../skill-bill
@@ -55,7 +55,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-calorie:
         specifier: 0.3.30
         version: link:../skill-calorie
@@ -74,7 +74,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-chef:
         specifier: 0.3.30
         version: link:../skill-chef
@@ -93,7 +93,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-home:
         specifier: 0.3.30
         version: link:../skill-home
@@ -128,7 +128,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-memo-ilife:
         specifier: 0.3.30
         version: link:../skill-memo-ilife
@@ -147,7 +147,7 @@ importers:
     dependencies:
       dsh-life-pack:
         specifier: 0.3.30
-        version: link:../plugin-manager
+        version: 0.3.30
       skill-schedule:
         specifier: 0.3.30
         version: link:../skill-schedule
@@ -607,6 +607,10 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
+
+  dsh-life-pack@0.3.30:
+    resolution: {integrity: sha512-1f3XHqCyd2BP8tBT1CHEzYt3AgC3+0aKwMYOf+a/DBmkpm+j0lac3eEc6G+hCkDSuEhOQyWdVsoXR2ncTDKrkw==}
+    engines: {node: '>=22.13'}
 
   dsh-plugin-update@0.2.0:
     resolution: {integrity: sha512-Kc34GW6ao6in54QkJPfK2Wy/KLkkRx0ah+EPsnjrxKE6rE/id1XQO3h4mLVzK2tHszcjDo4rVZJ91N2H6+C6Vw==}
@@ -1355,6 +1359,10 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
+
+  dsh-life-pack@0.3.30:
+    dependencies:
+      dsh-plugin-update: 0.2.0
 
   dsh-plugin-update@0.2.0: {}
 
