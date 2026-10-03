@@ -587,8 +587,15 @@ export interface DistributionRowInput {
   readonly labelClass?: string;
 }
 
+/** 分布条行的版式闭集（#1114）：`plain`＝名称／条／数值一格三栏（老版面，逐字节不动）；
+ *  `ticket`＝票据纸占比行（标签行「名 · 值」＋ 右对齐百分比，下面一条 10px 圆角轨）。 */
+export const DISTRIBUTION_LAYOUTS = ['plain', 'ticket'] as const;
+export type DistributionLayout = (typeof DISTRIBUTION_LAYOUTS)[number];
+
 export interface DistributionRowsInput {
   readonly rows: readonly DistributionRowInput[];
+  /** 版式；缺省 `plain`（产物与加这一档之前逐字节相同）。 */
+  readonly layout?: DistributionLayout;
 }
 
 /** #421-2 分布条行：`名称 ｜ 条 ｜ 数值` 一格三栏，逐行拼出（行即件，不另加容器类）。
@@ -599,6 +606,7 @@ export function renderDistributionRows(input: DistributionRowsInput): string {
   assertNoInlineHandler(input, 'renderDistributionRows: input');
   const block = input as DistributionRowsInput;
   if (!Array.isArray(block.rows)) badInput('renderDistributionRows: input.rows 必须是数组');
+  const layout = optClosed(block.layout, DISTRIBUTION_LAYOUTS, 'renderDistributionRows: input.layout') ?? 'plain';
   if (block.rows.length === 0) return '';
   return block.rows.map((row, i) => {
     const field = 'renderDistributionRows: input.rows[' + i + ']';
@@ -609,6 +617,21 @@ export function renderDistributionRows(input: DistributionRowsInput): string {
     const pct = reqPct(item.pct, field + '.pct');
     const color = optColor(item.color, field + '.color');
     const extra = optExtraClass(item.labelClass, field + '.labelClass');
+    if (layout === 'ticket') {
+      /* 票据纸占比行（判地 w01 `.scale-rows li`）：标签行读「名 · 值」＋右对齐百分比，下面一条圆角轨。
+         值那一枚与标签同一行同一 span（判地就是这么排的，拆成两栏会改断行与省略号行为）。 */
+      const valueText = cellText(item.value, field + '.value');
+      return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + ' is-ticket">'
+        + '<div class="' + pageLevelPart(DIST_ROW_NAME, 'top') + '">'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
+        + esc(label) + (valueText === '' ? '' : ' · ' + valueText) + '</span>'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'pct') + '">' + String(pct) + '%</span>'
+        + '</div>'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'track') + '">'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'fill') + '" style="' + esc(fillDecls(pct, color)) + '"></span>'
+        + '</span>'
+        + '</div>';
+    }
     return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + '">'
       + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
       + esc(label) + '</span>'
@@ -2229,6 +2252,46 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-weight: 600;',
     '  font-variant-numeric: tabular-nums;',
     '  text-align: right;',
+    '}',
+    /* 票据纸占比行（#1114；判地 w01 `.scale-rows li`／`.scale-top`／`.scale-track`／`.scale-fill`）：
+       44px 行档、标签行 13px/700 两端对齐（左「名 · 值」、右百分比）、下面一条 10px 圆角轨。 */
+    '.' + p + 'block-dist-row.is-ticket {',
+    '  display: block;',
+    '  padding: 8px 0;',
+    '  min-height: 44px;',
+    '}',
+    '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-top {',
+    '  display: flex;',
+    '  justify-content: space-between;',
+    '  align-items: baseline;',
+    '  gap: 8px;',
+    '  font-size: 13px;',
+    '  font-weight: 700;',
+    '}',
+    '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-name {',
+    '  color: var(--fg);',
+    '  overflow: visible;',
+    '  white-space: normal;',
+    '}',
+    '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-pct {',
+    '  flex: none;',
+    '  color: var(--blue);',
+    '  font-variant-numeric: tabular-nums;',
+    '}',
+    '/* 判地字面 · 授权照抄：#f3ecdc（轨道底；与规格 §1 的 `--pill` 同一枚一次性字面） */',
+    '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-track {',
+    '  display: block;',
+    '  box-sizing: border-box;',
+    '  height: 10px;',
+    '  margin-top: 6px;',
+    '  border: 1px solid var(--line);',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: #f3ecdc;',
+    '  overflow: hidden;',
+    '}',
+    '/* 判地字面 · 授权照抄：#c96f3f（占比条渐变起点；出处＝判地 `.scale-fill`，规格 §1 未列，待并进皮肤） */',
+    '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-fill {',
+    '  background: linear-gradient(90deg, #c96f3f, var(--blue));',
     '}',
     // 12px 小字取 `--blue2`（压 `--soft` 约 5.4:1）；`--blue` 4.02:1 不到 AA 的 4.5:1（#179 口径）。
     // t728：`margin` 由每枚徽章自带改成**行容器**统一给（`row-gap` / `column-gap`）——改前靠
