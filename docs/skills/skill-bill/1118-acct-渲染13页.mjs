@@ -57,14 +57,14 @@ const TICKET_MARKERS = [
 ];
 /** 13 页共有块位（票据纸页型的三份块位序列都出这几块）。 */
 const COMMON_BLOCKS = [
-  'ilife-page-ui', 'ilife-block-copy-block', 'ilife-block-caliber', 'ilife-block-chip', 'ilife-status-badge',
+  'ilife-page-ui', 'ilife-block-copy-block',
   'ilife-block-ledger-rows', 'ilife-block-summary-head', 'ilife-ticket-check', 'ilife-ticket-rule', 'ilife-ticket-foot',
 ];
-/** 页型各自加挂的块位。 */
+/** 页型各自加挂的块位（判地那一套：采集页＝字段卡 ＋ 那行提示；回执／列表＝明细卡）。 */
 const KIND_BLOCKS = {
-  collect: ['ilife-block-param-form', 'ilife-block-pre-block', 'ilife-block-disclosure'],
-  receipt: ['ilife-block-kpi-card', 'ilife-block-data-table', 'ilife-block-disclosure'],
-  list: ['ilife-block-disclosure'],
+  collect: ['ilife-block-param-form', 'ilife-block-caliber'],
+  receipt: ['ilife-block-entry-card'],
+  list: ['ilife-block-entry-card'],
 };
 /** 旧文档壳的标记（改后必须 0 命中：切票据纸＝正文不再套 pageShell）。 */
 const OLD_SHELL = 'ilife-block-page-shell';
@@ -163,9 +163,10 @@ for (const p of PAGES) {
   if (sheetDiv !== 1) problems.push('ilife-bill-sheet-page 根 div 应恰 1 个，实得 ' + String(sheetDiv));
   if (cutLine < 1) problems.push('✂ 裁切线 不在');
   if (ruleCount < 5) problems.push('虚线分隔 ' + String(ruleCount) + ' 条（票据纸页型 ≥5：店头／主数字／落点／中段／对账／按钮区之间）');
-  const navExpect = p.kind === 'collect' ? 0 : 1;
+  // 判地十三件一件都没有页内导航 ⇒ 三张页型都是 0 个
+  const navExpect = 0;
   if (navCount !== navExpect) problems.push('页内导航 ' + String(navCount) + ' 个（' + p.kind + ' 页应为 ' + String(navExpect) + ' 个）');
-  if (srcCount < 1) problems.push('无来源脚注');
+  // 来源脚注：判地十三件一件都没有 ⇒ 不进必备位，只作据实读数记下来（要不要留由负责人裁）
   if (lazyCount > 0) problems.push('出现 loading=lazy ' + String(lazyCount) + ' 处');
   if (undefCount > 0) problems.push('可见文本出现 undefined ' + String(undefCount) + ' 处');
   if (nanCount > 0) problems.push('可见文本出现 NaN ' + String(nanCount) + ' 处');

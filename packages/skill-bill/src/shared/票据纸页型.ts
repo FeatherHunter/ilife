@@ -1,34 +1,26 @@
 /** 票据纸页型（**三份块位序列**：采集页／回执页／列表页）——账户与目标两域十三张页的唯一版式住所。
  *
  * 谁在用（两个能力，指名）：`src/account/`（账户表单页型、改账户页型、账户汇总页型）与
- *  `src/goal/`（设定表单页型、进度视图页型）——五件模板件都只给差异值（值、文案、哪一块出不出），
+ *  `src/goal/`（设定表单页型、进度视图页型）——五件模板件只给差异值（值、文案、中段那一串行），
  *  块位拼装一律走本件；改一次版式只动本件一处，十三张页同时跟着改。
  *
- * **为什么住 `src/shared/`**：本件是「同一形状的第二个能力用上之后长出来的共用件」——
- *  账户域与目标域语义上互不依赖，谁引谁都会长出一条跨能力直引的债（#1082 已记过一条同型的）；
- *  两个能力都要用，落点只能是共用位。十三张页的判地＝`docs/skills/skill-bill/proto/acct-goal/` 十三件
- *  v2.2 原型（只作判据、不作模板）。
+ * **块位序列＝判地的序列**（`docs/skills/skill-bill/proto/acct-goal/` 十三件 v2.2 原型逐页核过）：
+ *   店头（品牌行 ＋ 结论标题 ＋ 副题）→ 虚线 → 主数字（眉标药丸 ＋ 数 ＋ 单位 ＋ 小字 ＋ 印章 ○）
+ *   → 虚线 → 落点段 LEDGER（标签 ／ 点线 ／ 值）→ 虚线 → 中段（采集＝待填 ENTRY／其余＝明细 DETAIL）
+ *   → 虚线 → 对账段 CHECK（浅绿卡 ＋ 圆点 ＋ 一句）→ 虚线 → 按钮区（主按钮 ＋ 复制数据 ＋ 复制日志）
+ *   → 裁切线 `✂ 裁切线` → 纸外页脚。**十三页判地一件都没有页内导航**，故本件三份序列都不出它。
+ *   采集页与回执／列表页只差中段那一段与页型机器标记；回执页与列表页同序（判地同序），
+ *   各自写一份是为了改一页型时不动另一页型。
  *
- * **家具只用既有导出**（票面口径）：纸走 `renderSheetFrame`（`variant: 'ticket'`，页尾那一行「✂ 裁切线」
- *  由它的 `cutLineText` 出），店头／虚线／段／主数字／按钮区走 `./docPage.js` 的
- *  `sheetHead`／`ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions`，
- *  账目行走公共层 `renderLedgerRows({ layout: 'ticket' })`，主数字走 `renderSummaryHead({ layout: 'ticket' })`，
- *  页内导航与区块锚点走 `./pageSections.js`，机器标记走 `./writeParts.js` 的 `writeSection`，
- *  整页外壳走 `./docPage.js` 的 `assembleSheetPage`。**本件不出第二条样式通道**：
- *  颜色、圆角、内距一律由皮肤与 `assembleSheetPage` 那三段共用样式给（页面自抄一份＝把皮肤保真重做 N 遍）。
- *
- * 三份块位序列（● 恒出、○ 有内容才出）：
- *   采集页（过程型 ①）：店头 ● → 虚线 → 主数字（待补槽位）● → 虚线 → 落点段 LEDGER ● → 虚线 →
- *     待填段 ENTRY ● → 虚线 → 对账段 CHECK ● → 来源脚注 ○ → 虚线 → 按钮区 ● → 纸外脚注 ●；**不出页内导航**。
- *   回执页（结果型 ④）：店头 ● → 虚线 → 主数字（已记好，带印章 ○）● → 虚线 → 落点段 LEDGER ● → 虚线 →
- *     页内导航 ● → 明细段 DETAIL ● → 虚线 → 对账段 CHECK ● → 来源脚注 ● → 虚线 → 按钮区 ● → 纸外脚注 ●。
- *   列表页（结果型 ⑥）：与回执页同序，中段换成结果块（读数行／占比条／各表，块数按页给）；纸型走 `detail`。
+ * **家具只用既有导出**：纸走 `renderSheetFrame`（`variant: 'ticket'`，裁切线由它的 `cutLineText` 出），
+ *  店头／虚线／段／主数字／按钮区走 `./docPage.js`，账目行走公共层 `renderLedgerRows({layout:'ticket'})`，
+ *  主数字走 `renderSummaryHead({layout:'ticket'})`，中段那一串行由调用方给（明细卡走 `renderEntryCard`、
+ *  表单走 `renderParamForm`），整页外壳走 `assembleSheetPage`，机器标记走 `writeSection`。
+ *  **本件不出第二条样式通道**：颜色、圆角、内距一律由皮肤与 `assembleSheetPage` 那三段共用样式给。
  */
 import { escapeHtml } from 'base-paint';
 import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from './docPage.js';
-import { pageBody, pageNav } from './pageSections.js';
-import type { PageBlock } from './pageSections.js';
 import { writeSection } from './writeParts.js';
 
 /** 主数字那一段的差异值（眉标药丸、主读数、单位、下面那句小字、右上角印章）。 */
@@ -36,9 +28,12 @@ export interface TicketSheetSummary {
   readonly eyebrow: string;
   readonly value: string;
   readonly unit?: string;
+  /** 主数字下面那句小字（判地里就是结论句；空串＝不出）。 */
   readonly note?: string;
-  /** 右上角那枚印章（回执页恒出「有效」；列表页与采集页不出）。 */
+  /** 右上角那枚印章（回执页恒出「有效」；采集页与列表页不出）。 */
   readonly stamp?: string;
+  /** 眉标走警示档（判地采集页那枚红点；由公共层 `is-warn-head` 出）。 */
+  readonly warn?: boolean;
 }
 
 /** 落点账本的一行（标签 ＋ 值；值已是给人看的样子）。 */
@@ -62,15 +57,11 @@ interface TicketSheetCommon {
   readonly ledger: readonly TicketSheetRow[];
   /** 对账段那一句（三分句用全角斜线分隔）。 */
   readonly check: string;
-  /** 按钮区内容（复制区；由调用方给已装配好的标记）。 */
+  /** 按钮区内容（主按钮 ＋ 复制区；由调用方给已装配好的标记）。 */
   readonly actions: string;
   /** 纸外脚注（如 `饼干记账 · 新增账户采集`）。 */
   readonly foot: string;
-  /** 店头之后、主数字之前的裸块（类型徽章那一列；表序第 6 行「徽章列恒在最前」）。 */
-  readonly headExtraHtml?: string;
-  /** 对账段之后、按钮区之前的裸块（来源脚注那一行）。 */
-  readonly tailHtml?: string;
-  /** 页内样式段（本域自己的补充位；账户域与目标域的复制区 guards 走这一格）。 */
+  /** 页内样式段（本域自己的补充位；账户域与目标域的复制区与表单 guards 走这一格）。 */
   readonly styleHtml?: string;
   readonly slot: 'receipt' | 'collect' | 'list';
   readonly page: 'receipt' | 'collect' | 'list';
@@ -88,12 +79,12 @@ export interface CollectSheetPageInput extends TicketSheetCommon {
   readonly entryHtml: string;
 }
 
-/** 结果型两张页（回执／列表）的差异值（中段是一串带锚点的块，既拼正文也派生页内导航）。 */
+/** 结果型两张页（回执／列表）的差异值（中段是一张明细卡那一串行）。 */
 export interface ResultSheetPageInput extends TicketSheetCommon {
   /** 中段段标题（如 `明细`／`各账户余额`）。 */
   readonly detailTitle: string;
   readonly detailTag: string;
-  readonly blocks: readonly PageBlock[];
+  readonly detailHtml: string;
 }
 
 /** 主数字那一段（眉标药丸 ＋ 主数字 ＋ 下面那句小字 ＋ 可选印章）。 */
@@ -103,6 +94,7 @@ function summaryHtmlOf(summary: TicketSheetSummary): string {
     value: summary.value,
     ...(summary.unit === undefined ? {} : { unit: summary.unit }),
     ...(summary.stamp === undefined ? {} : { stamp: { text: summary.stamp, tone: 'ok' as const } }),
+    ...(summary.warn === true ? { extraClass: 'is-warn-head' } : {}),
     layout: 'ticket',
   });
   const note = summary.note === undefined || summary.note === ''
@@ -130,12 +122,7 @@ function checkHtmlOf(text: string): string {
   });
 }
 
-/** 纸外脚注那一行（与查询域详情页同字同枚）。 */
-function footHtmlOf(text: string): string {
-  return '<div class="ilife-ticket-foot">' + escapeHtml(text) + '</div>';
-}
-
-/** 三张页型共用的收口：纸 ＋ 机器标记段 ＋ 整页外壳。 */
+/** 三张页型共用的收口：纸（含裁切线）＋ 机器标记段 ＋ 纸外页脚 ＋ 整页外壳。 */
 function finish(input: TicketSheetCommon, parts: readonly string[]): string {
   const paper = renderSheetFrame({
     variant: 'ticket',
@@ -145,16 +132,15 @@ function finish(input: TicketSheetCommon, parts: readonly string[]): string {
   });
   const section = writeSection({
     slot: input.slot, page: input.page, shape: input.shape, key: input.key,
-    content: (input.styleHtml ?? '') + paper + footHtmlOf(input.foot),
+    content: (input.styleHtml ?? '') + paper + '<div class="ilife-ticket-foot">' + escapeHtml(input.foot) + '</div>',
   });
   return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: section, paper: input.paper });
 }
 
-/** 采集页（过程型 ①）：店头 → 主数字 → 落点 → 待填 → 对账 → 脚注 → 按钮区；无页内导航。 */
+/** 采集页（过程型 ①）：店头 → 主数字 → 落点 → 待填 → 对账 → 按钮区；**不出页内导航**（判地同）。 */
 export function collectSheetPage(input: CollectSheetPageInput): string {
   return finish(input, [
     sheetHead(input.brand, escapeHtml(input.title), input.subtitle),
-    input.headExtraHtml ?? '',
     ticketRule(),
     summaryHtmlOf(input.summary),
     ticketRule(),
@@ -163,47 +149,40 @@ export function collectSheetPage(input: CollectSheetPageInput): string {
     ticketSection({ title: input.entryTitle, tag: input.entryTag, content: input.entryHtml }),
     ticketRule(),
     checkHtmlOf(input.check),
-    input.tailHtml ?? '',
     ticketRule(),
     ticketActions(input.actions),
   ]);
 }
 
-/** 回执页（结果型 ④）：与采集页同序，落点之后插页内导航，中段是明细那一段。 */
+/** 回执页（结果型 ④）：店头 → 主数字（带印章）→ 落点 → 明细 → 对账 → 按钮区。 */
 export function receiptSheetPage(input: ResultSheetPageInput): string {
   return finish(input, [
     sheetHead(input.brand, escapeHtml(input.title), input.subtitle),
-    input.headExtraHtml ?? '',
     ticketRule(),
     summaryHtmlOf(input.summary),
     ticketRule(),
     ledgerHtmlOf(input.ledgerTitle, input.ledger),
     ticketRule(),
-    pageNav(input.blocks),
-    ticketSection({ title: input.detailTitle, tag: input.detailTag, content: pageBody(input.blocks) }),
+    ticketSection({ title: input.detailTitle, tag: input.detailTag, content: input.detailHtml }),
     ticketRule(),
     checkHtmlOf(input.check),
-    input.tailHtml ?? '',
     ticketRule(),
     ticketActions(input.actions),
   ]);
 }
 
-/** 列表页（结果型 ⑥）：与回执页同序；纸型走 `detail`（账目行 44px 触摸档、对账卡那两条只详情纸生效）。 */
+/** 列表页（结果型 ⑥）：与回执页同序（判地同序），纸型走 `detail`。 */
 export function listSheetPage(input: ResultSheetPageInput): string {
   return finish(input, [
     sheetHead(input.brand, escapeHtml(input.title), input.subtitle),
-    input.headExtraHtml ?? '',
     ticketRule(),
     summaryHtmlOf(input.summary),
     ticketRule(),
     ledgerHtmlOf(input.ledgerTitle, input.ledger),
     ticketRule(),
-    pageNav(input.blocks),
-    ticketSection({ title: input.detailTitle, tag: input.detailTag, content: pageBody(input.blocks) }),
+    ticketSection({ title: input.detailTitle, tag: input.detailTag, content: input.detailHtml }),
     ticketRule(),
     checkHtmlOf(input.check),
-    input.tailHtml ?? '',
     ticketRule(),
     ticketActions(input.actions),
   ]);

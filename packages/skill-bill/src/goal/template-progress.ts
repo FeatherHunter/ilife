@@ -1,65 +1,63 @@
-/** 目标域模板之二 · **进度视图页型**（`docs/skills/skill-bill/t685-按域页型表.md` §2.4 第 2 行／
- *  #688 §五 5.1 的 ⑥ 结果型汇总／进度／状态页）。
+/** 目标域模板之二 · **进度视图页型**（`t685-按域页型表.md` §2.4 第 2 行／#688 §五 5.1 的 ⑥ 结果型汇总／进度／状态页）。
  *
  * **本件是这一片页型的块位序列唯一住所**：块序、每块的出现条件、每块吃的数据都写在这里；
- *  场景件（`scene-{budget,saving}.ts`）只给差异值——结论句、读数卡、每条进度卡、占比条、空态句、口径行。
- *  改一次这一片页型的版式只动本件一处，两张结果页（预算执行／目标进度）同时跟着改。
+ *  场景件（`scene-{budget,saving}.ts`）只给差异值——结论句、空态句、来源、日志。改一次只动本件一处。
  *
- * 盖住的场景（老侧两张模板，本仓按「一族两件共用一份装配件」办）：
- *   看预算 `budget`（老 `目标/budget_view.html`）· 看目标 `saving`（老 `目标/saving_view.html`）。
+ * 盖住的场景：看预算 `budget` · 看目标 `saving`。
  *
- * **块位序列**（照 #688 §五 5.2 的 ⑥ 汇总／进度／状态 列；● 恒出、○ 有内容才出）：
- *   类型徽章 ●（表序第 6 行，结果胶囊在最前）→ 结论句 ●（第 3 行）→ 页内导航 ●（第 4 行）
- *     → 读数行 ●（第 5 行，有目标的那一格带完成度条）→ 每条进度卡 ●／空态 ●（第 12、23 行）
- *     → 占比条 ○（第 13 行）→ 口径说明行 ●（第 24 行）→ 对账折叠区 ●（第 21 行）
- *     → 复制区 ●（第 25 行）→ 来源脚注 ●（第 26 行）
- *   本页**不出**的两块（表序里点了 ⑥ 但这一域没有对应事实）：第 14 行图表（目标域零图表）、
- *   第 15 行的独立进度条区块（进度条由读数卡的 `bar` 槽承载，不另立一块——那是同一件事的第二处画法）。
- *
- * **空表时不出读数卡**（照 #688 裁定 6 的同一条判法：没有预算／没有目标就没有执行可报，
- *  四张全 0 的读数卡只是把「什么都没有」说四遍）——那一支出空态句 ＋ 引导句，页仍然是完整的。
+ * **块位序列＝判地的序列**（#1118 收官轮；判地 `proto/acct-goal/g05`／`g06`）：
+ *  店头 → 主数字（眉标药丸 ＋ 百分比 ＋ 结论句）→ 落点 LEDGER（分类／账本／时间／编号）
+ *  → 进度 DETAIL（预算：总预算／实际支出／剩余｜日均／预计月底；目标：目标｜总额／累计已存／还差／几个目标）
+ *  → 对账 CHECK → 按钮区（主按钮 ＋ 复制数据／复制日志）→ ✂ 裁切线 → 纸外脚注。
+ *  **判地没有的块一律不出**（页内导航／读数卡网格／占比条／口径行／对账折叠区／来源脚注）；
+ *  一条都没有时中段走空态块（判地没有空态那一页，空表仍要给整页）。
  *
  * 谁在用（两个调用点，指名）：`src/goal/scene-{budget,saving}.ts`——两件的 `view` 都是
  *  `bindGoalProgressPage(spec)` 的产物，本件不自己出页。
  */
-import { renderCaliberLine, renderConclusionBar, renderDistributionRows, renderKpiGrid } from 'base-paint/blocks';
-import type { DistributionRowInput, KpiCardInput } from 'base-paint/blocks';
+import { buildDataText } from 'base-paint';
+import { renderEntryCard } from 'base-paint/blocks';
+import type { EntryCardEntry } from 'base-paint/blocks';
+import { ticketPrimaryButton } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { navBlock } from '../shared/pageSections.js';
-import type { PageBlock } from '../shared/pageSections.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
-import { badgeOf, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, reconcileOf, sourceNoteOf } from './pageParts.js';
+import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, goalStyleTag, listEnvelopeOf, money, monthEndHintOf } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
-/** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。 */
+/** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
+ *
+ *  #1118 收官轮起**判地没有那些块**（读数卡网格／每条进度卡／占比条／口径行／对账折叠区）本件不再读；
+ *  对应字段留着不删（场景件随下一轮清理一起收），本件只读：`word`／`docSuffix`／`window`／`conclusion`／
+ *  `cardsTitle`（中段段标题）／`counts`／`empty`／`source`／`logDetail`。 */
 export interface GoalProgressSpec {
-  /** 唤醒词（页标题、徽章第一枚、复制日志的场景标识都读它）。 */
+  /** 唤醒词（页标题、复制日志的场景标识都读它）。 */
   readonly word: string;
   /** 文档标题的后缀（如「·预算执行」）。 */
   readonly docSuffix: string;
   /** 副标题（这一页看的是哪一段）。 */
   readonly window: (input: GoalProgressInput) => string;
-  /** 结论句一行（表序第 3 行）：说的不是读数卡那几个数，而是这批目标现在是什么局面。 */
+  /** 结论句一行（判地主数字下面那句小字）。 */
   readonly conclusion: (input: GoalProgressInput) => string;
-  /** 结果胶囊那几枚（第二枚胶囊那句：有几条、几条超支／几个已完成）。 */
+  /** 结果胶囊那几枚（**本件已不读**）。 */
   readonly caliber: (input: GoalProgressInput) => string;
-  /** 读数行（表序第 5 行）。 */
-  readonly kpi: (input: GoalProgressInput) => readonly KpiCardInput[];
-  /** 每条进度卡的标题（如「各条预算执行」）。 */
+  /** 读数行（**本件已不读**：主数字由域事实现算）。 */
+  readonly kpi: (input: GoalProgressInput) => readonly unknown[];
+  /** 中段段标题（判地：预算执行／目标进度）。 */
   readonly cardsTitle: string;
-  /** 每条进度卡：一条一张带进度条的读数卡。 */
-  readonly cards: (input: GoalProgressInput) => readonly KpiCardInput[];
-  /** 占比条的标题（如「各条预算占了多少」）与行。 */
-  readonly bars: (input: GoalProgressInput) => { readonly title: string; readonly rows: readonly DistributionRowInput[] };
-  /** 这一页有几条（进度卡张数）与看了几条记录（对账与脚注读它）。 */
+  /** 每条进度卡（**本件已不读**）。 */
+  readonly cards: (input: GoalProgressInput) => readonly unknown[];
+  /** 占比条（**本件已不读**）。 */
+  readonly bars: (input: GoalProgressInput) => { readonly title: string; readonly rows: readonly unknown[] };
+  /** 这一页有几条与看了几条记录（对账那一句与空态读它）。 */
   readonly counts: (input: GoalProgressInput) => { readonly items: number; readonly records: number };
   /** 一条都没有时那三句（空态句 ＋ 引导句 ＋ 图标）。 */
   readonly empty: (input: GoalProgressInput) => { readonly icon: string; readonly text: string; readonly next: string };
-  /** 口径说明行（表序第 24 行）。 */
+  /** 口径说明行（**本件已不读**）。 */
   readonly caliberLines: string;
-  /** 本次数据来源：复制日志第 3 段那句（可带载体名）与来源脚注那句（只写人话）。 */
+  /** 本次数据来源：复制日志第 3 段那句。 */
   readonly source: string;
+  /** 来源脚注那句（**本件已不读**：判地没有来源脚注）。 */
   readonly sourceText: string;
   /** 复制日志第 4 段后半（这一页干了什么）。 */
   readonly logDetail: (input: GoalProgressInput) => string;
@@ -70,81 +68,15 @@ export function bindGoalProgressPage(spec: GoalProgressSpec): Pick<GoalReadScene
   return { view: (input) => progressPage(spec, input) };
 }
 
-/** 进度视图整页（结果型 ⑥）：块序在本件只写一份（`blocks` 既拼正文也派生页内导航）。 */
-function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string {
-  const counts = spec.counts(input);
-  const hasItems = counts.items > 0;
-  const empty = spec.empty(input);
-  const envelope = listEnvelopeOf(input.key, input.data);
-  const bars = spec.bars(input);
-  const barHtml = bars.rows.length === 0 ? '' : renderConclusionBar(bars.title) + renderDistributionRows({ rows: bars.rows });
-  const blocks: readonly PageBlock[] = [
-    ...(hasItems
-      ? [
-        navBlock(renderKpiGrid(spec.kpi(input)), 'sec-kpi', '读数'),
-        navBlock(renderKpiGrid(spec.cards(input), { title: spec.cardsTitle }), 'sec-items', spec.cardsTitle),
-        { html: barHtml },
-      ]
-      : []),
-    ...(hasItems ? [] : [navBlock(emptyOf(empty), 'sec-empty', '现在的情况')]),
-    { html: renderCaliberLine(spec.caliberLines) },
-    navBlock(reconcileOf({
-      actionAt: input.actionAt, changed: 0,
-      note: '这一页看了 ' + String(counts.records) + ' 条记录、' + String(counts.items) + ' 条' + spec.cardsTitle
-        + '；只读，没有改动任何数据。',
-    }), 'sec-reconcile', '对账'),
-  ];
-  const kpi = hasItems ? spec.kpi(input) : [];
-  const head = kpi[0];
-  return listSheetPage({
-    docTitle: DOC_TITLE + spec.docSuffix,
-    brand: '饼干记账 · ' + input.wakeWord,
-    title: input.wakeWord,
-    subtitle: spec.window(input),
-    summary: {
-      eyebrow: hasItems ? '查到了' : '一条都还没有',
-      value: head === undefined || head.value === undefined || head.value === '' ? '0' : head.value,
-      ...(head === undefined || head.unit === undefined ? {} : { unit: head.unit }),
-      note: spec.conclusion(input),
-    },
-    headExtraHtml: badgeOf({
-      word: input.wakeWord,
-      caliber: spec.caliber(input),
-      status: hasItems ? 'ok' : 'empty',
-      statusText: hasItems ? '查到了' : '一条都还没有',
-      next: '',
-    }) + renderConclusionBar(spec.conclusion(input)),
-    ledgerTitle: input.budget === null ? '目标落点' : '预算落点',
-    ledger: ledgerOf(input, counts),
-    detailTitle: spec.cardsTitle,
-    detailTag: 'DETAIL',
-    blocks,
-    check: '共 ' + String(counts.items) + ' 条 · 看了 ' + String(counts.records) + ' 条记录 ／ 没有异常',
-    tailHtml: sourceNoteOf({
-      sourceText: spec.sourceText, start: input.windowStart, end: input.windowEnd, count: counts.records,
-    }),
-    actions: copyZoneOf({
-      envelope, title: input.wakeWord, key: input.key, params: input.params,
-      source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
-    }),
-    foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: goalStyleTag(),
-    slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
-  });
-}
-
-/** 这一页那几行落点账本（预算执行与目标进度各一套事实；两支里恰好一支非空）。 */
-function ledgerOf(
-  input: GoalProgressInput,
-  counts: { readonly items: number; readonly records: number },
-): readonly TicketSheetRow[] {
+/** 落点那几行（判地 g05／g06 各四行）。 */
+function ledgerOf(input: GoalProgressInput, counts: { readonly items: number }): readonly TicketSheetRow[] {
   const month = typeof input.params['month'] === 'string' ? String(input.params['month']).trim() : '';
   const end = input.windowEnd.trim() === '' ? '不限' : input.windowEnd;
   if (input.budget !== null) {
     return [
       { label: '分类', value: '总预算' },
       { label: '账本', value: '目标和当月支出' },
-      { label: '时间', value: month === '' ? '本月' : month },
+      { label: '时间', value: (month === '' ? input.budget.month : month) + '（已过 ' + String(input.budget.budgets[0]?.days_elapsed ?? 0) + ' 天）' },
       { label: '编号', value: '预算 ' + String(counts.items) + ' 条' },
     ];
   }
@@ -154,4 +86,95 @@ function ledgerOf(
     { label: '时间', value: '账本算到 ' + end },
     { label: '编号', value: '目标 ' + String(counts.items) + ' 个' },
   ];
+}
+
+/** 中段那一串行（判地：预算执行四行／目标进度四行）。 */
+function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
+  const e = input.budget;
+  if (e !== null && e.budgets.length > 0) {
+    const b = e.budgets[0];
+    const projection = b.month_end_proj === null ? '' : money(b.month_end_proj);
+    return [
+      { title: '总预算 ' + money(b.amount), sub: '上限（金额仅此一处）' },
+      { title: '实际支出 ' + money(b.actual) + ' ｜ ' + String(b.count) + ' 笔', sub: '当月所有支出都在内' },
+      {
+        title: (b.remaining >= 0 ? '剩余 ' + money(b.remaining) : '超出 ' + money(Math.abs(b.remaining)) + ' 元')
+          + (b.daily_avg === null ? '' : ' ｜ 日均 ' + money(b.daily_avg)),
+      },
+      {
+        title: '预计月底 ' + (projection === '' ? '—' : projection),
+        ...(monthEndHintOf(b) === '' ? {} : { sub: monthEndHintOf(b) }),
+      },
+    ];
+  }
+  const s = input.saving;
+  const one = s?.savings[0];
+  if (s === null || one === undefined) return [];
+  return [
+    { title: one.name + ' ｜ 总额 ' + money(one.amount), sub: '存够就算达成' },
+    { title: '累计已存 ' + money(one.saved), sub: '相当于总额的进度见主数字' },
+    {
+      title: '还差 ' + money(one.remaining),
+      ...(one.needed_monthly === null ? {} : { sub: '截止前达标还需每月 ' + money(one.needed_monthly) + ' 元' }),
+    },
+    { title: String(s.count) + ' 个目标 · 已完成 ' + String(s.done_count) + ' 个', sub: '没达成的继续按账本累计' },
+  ];
+}
+
+/** 对账那一句（判地：预算「N 条预算 · 状态」／目标「N 条记录参与累计」）。 */
+function checkOf(input: GoalProgressInput, counts: { readonly items: number; readonly records: number }): string {
+  const e = input.budget;
+  if (e !== null) {
+    const state = e.totals.over_count > 0 ? String(e.totals.over_count) + ' 条超支' : '都在预算内';
+    return String(counts.items) + ' 条预算 · ' + state + ' ／ 没有异常';
+  }
+  return String(counts.records) + ' 条记录参与累计 ／ 没有异常';
+}
+
+/** 进度视图整页（结果型 ⑥）。 */
+function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string {
+  const counts = spec.counts(input);
+  const hasItems = counts.items > 0;
+  const envelope = listEnvelopeOf(input.key, input.data);
+  const rows = detailRowsOf(input);
+  const detailHtml = hasItems && rows.length > 0
+    ? renderEntryCard({ entries: rows })
+    : emptyOf(spec.empty(input));
+  const e = input.budget;
+  const one = input.saving?.savings[0];
+  const eyebrow = e !== null
+    ? (e.totals.over_count > 0 ? '有超支' : '都在预算内')
+    : (one === undefined ? '暂无进度' : SAVING_STATUS_META[one.status].label);
+  const pct = e !== null
+    ? (e.totals.budget > 0 ? clampPct(e.totals.actual / e.totals.budget * 100) : 0)
+    : (one === undefined ? 0 : clampPct(one.pct));
+  return listSheetPage({
+    docTitle: DOC_TITLE + spec.docSuffix,
+    brand: '饼干记账 · ' + input.wakeWord,
+    title: input.wakeWord,
+    subtitle: spec.window(input),
+    summary: {
+      eyebrow: hasItems ? eyebrow : '一条都还没有',
+      value: hasItems ? pct.toFixed(1) : '0.0',
+      unit: '%',
+      note: spec.conclusion(input),
+    },
+    ledgerTitle: e !== null ? '预算落点' : '目标落点',
+    ledger: ledgerOf(input, counts),
+    detailTitle: spec.cardsTitle,
+    detailTag: 'DETAIL',
+    detailHtml,
+    check: checkOf(input, counts),
+    actions: ticketPrimaryButton({
+      label: e !== null ? '复制这份执行进度去对账' : '复制这份目标进度去对账',
+      actionId: 'ilife-copy-progress',
+      text: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
+    }) + copyZoneOf({
+      envelope, title: input.wakeWord, key: input.key, params: input.params,
+      source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
+    }),
+    foot: '饼干记账 · ' + input.wakeWord,
+    styleHtml: goalStyleTag(),
+    slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
+  });
 }

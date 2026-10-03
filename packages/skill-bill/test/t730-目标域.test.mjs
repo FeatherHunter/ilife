@@ -86,8 +86,8 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.equal(done.env.data.ok, true);
     assert.equal(done.env.data.receipt.affectedRows, 1, '目标表那一层报一处改动');
     assert.equal(done.env.data.receipt.overwritten, null, '首次设定没有覆盖');
-    assert.match(done.text, /<nav[^>]*aria-label="页内导航"/, '结果型回执页要出页内导航');
-    assert.ok(done.text.includes('数据来源'), '恒出来源脚注');
+    assert.ok(done.text.includes('ilife-block-entry-card'), '回执中段是明细卡（判地同形）');
+    assert.ok(done.text.includes('ilife-ticket-check'), '对账那一句要在');
     const g = goalsOf(dir);
     assert.equal(g.budgets.length, 1);
     assert.deepEqual([g.budgets[0].month, g.budgets[0].category, g.budgets[0].amount], ['2026-09', '', 2500]);
@@ -95,7 +95,7 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
 
     const conflict = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3500 })], join(OUT, 'b-conflict.html'));
     assert.equal(conflict.env.data.ok, false, '同月同类已存在应走阻断页（不是一句错误串）');
-    assert.ok(conflict.text.includes('同月同类预算已存在') && conflict.text.includes('2500.00'), '阻断要点名原来那条');
+    assert.ok(conflict.text.includes('已经有一条') && conflict.text.includes('2500.00'), '阻断要点名原来那条');
     assert.equal(goalsOf(dir).budgets.length, 1, '冲突那一次不该写库');
 
     const forced = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 3500, force: true })], join(OUT, 'b-overwrite.html'));
@@ -146,12 +146,10 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.equal(d.items[0].count, 2, '笔数只数支出那两笔');
     assert.equal(d.totals.budget, 2500);
     assert.equal(d.totals.over_count, 0, '没有超支项');
-    assert.ok(body(text).includes('ilife-block-kpi-card-bar-fill'), '要有进度条');
-    assert.ok(body(text).includes('ilife-block-dist-row'), '要有占比条');
-    assert.match(text, /<nav[^>]*aria-label="页内导航"/);
+    assert.ok(body(text).includes('ilife-block-entry-card'), '中段是预算执行明细卡');
+    assert.ok(body(text).includes('ilife-block-ledger-rows'), '落点账目行要在');
     // t728：脚注改成「三段并列」——来源／窗口／条数各一枚 <span>，段间那条细线由版式出，字符不进产物。
-    assert.match(text, /<span>数据来源 [^<]+<\/span> <span>[^<]+<\/span> <span>共 3 条<\/span>/, '来源脚注要写清来源、窗口与条数');
-    assert.ok(!text.includes('数据来源 · '), '来源脚注不得再用 `·` 串');
+    assert.ok(text.includes('预算 1 条'), '落点要写清几条预算');
   });
 
   it('看预算 · 判据 2：超支项为 0 出「✓ 无」；进度百分比双端夹取', () => {
@@ -161,12 +159,10 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     ]);
     assert.equal(run(dir, ['bill.goal.write', '--params', P({ op: 'set-budget', month: '2026-09', amount: 1000 })]).status, 0);
     const { text } = page(dir, ['bill.goal.query', '--params', P({ op: 'budget', month: '2026-09' })], join(OUT, 'b-over.html'));
-    assert.ok(text.includes('超过 100%'), '口径行要写清夹取口径');
-    assert.ok(text.includes('进度 100.0%'), '超支时上屏百分比应夹到 100.0%');
-    assert.ok(!text.includes('进度 150.0%'), '不该把 150% 直接上屏');
+    const shown = /ilife-block-summary-head-value">(\d+(?:\.\d+)?)</.exec(body(text));
+    assert.ok(shown !== null, '主数字要在');
+    assert.ok(Number(shown[1]) <= 100, '上屏百分比必须落在 0–100%（夹取口径）');
     assert.ok(text.includes('超出 500.00 元'), '夹取之后仍要说清超出多少');
-    const width = /class="ilife-block-kpi-card-bar-fill[^"]*" style="width:(\d+(?:\.\d+)?)%"/.exec(body(text));
-    assert.ok(width !== null && Number(width[1]) <= 100, '条宽必须落在 0–100%（负宽度那一类病不得回潮）');
   });
 
   it('看预算 · 判据 2：月底预测三态各自跑得出来（阈值 ±0.01）', () => {
@@ -205,8 +201,8 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.equal(item.status, 'on_track');
     assert.ok(item.eta !== null, '未达成且月均为正 ⇒ 算得出预计达成月');
     assert.ok(item.needed_monthly > 0, '有截止日且未达成 ⇒ 达标所需月存');
-    assert.ok(body(text).includes('ilife-block-kpi-card-bar-fill'), '目标卡要有进度条');
-    assert.ok(text.includes('月均净存') && text.includes('截止前达标还需每月'), '两处读数要在');
+    assert.ok(body(text).includes('ilife-block-entry-card'), '中段是目标进度明细卡');
+    assert.ok(text.includes('累计已存') && text.includes('截止前达标还需每月'), '两处读数要在');
   });
 
   it('看目标 · 已达成：状态写「已达成」，不再给预计达成日与达标所需月存', () => {
@@ -216,7 +212,7 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     assert.equal(env.data.done_count, 1);
     assert.equal(env.data.items[0].status, 'done');
     assert.equal(env.data.items[0].eta, null, '已达成不该有预计达成月');
-    assert.ok(text.includes('目标已达成'));
+    assert.ok(text.includes('已达成'));
     assert.ok(!text.includes('截止前达标还需每月'), '已达成不该再给达标所需月存');
   });
 
@@ -227,7 +223,7 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
       assert.equal(env.data.total, 0);
       assert.ok(text.includes(emptyWord), '缺空态句');
       assert.ok(text.includes('就能开始'), '空态后要有引导句');
-      assert.ok(text.includes('数据来源'), '空表也要有来源脚注');
+      assert.ok(text.includes('ilife-ticket-check'), '空表也要有对账那一句');
       assert.ok(!body(text).includes('ilife-block-kpi-card'), '空态不该画读数卡（裁定 6 同判法）');
     }
   });

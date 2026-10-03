@@ -69,7 +69,7 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
     const done = page('bill.account.write', { op: 'add', name: '招行卡', type: '银行卡' }, 'add-receipt');
     assert.equal(done.env.data.ok, true);
     assert.equal(done.env.data.receipt.affectedRows, 1, '账户表落一处');
-    assert.match(done.text, /<nav[^>]*aria-label="页内导航"/, '结果型回执页要出页内导航');
+    assert.ok(done.text.includes('ilife-block-entry-card'), '回执页中段是明细卡（判地同形）');
     assert.ok(done.text.includes('招行卡') && done.text.includes('银行卡'), '回执页要写清账户名与类型');
     const goals = goalsOf();
     assert.equal(goals.accounts.length, 1);
@@ -90,8 +90,8 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('账户转账：缺项出采集页（带操作预览）→ 落两笔、账本＝转账、不入收支统计', () => {
     const collect = page('bill.account.write', { op: 'transfer' }, 'transfer-collect');
     assert.equal(collect.env.data.ok, false);
-    assert.ok(collect.text.includes('将执行以下操作'), '转账采集页要出操作预览');
-    assert.ok(collect.text.includes('转账/转出') && collect.text.includes('转账/转入'), '预览要摊开两笔的分类');
+    assert.ok(collect.text.includes('ilife-block-param-form'), '转账采集页要有字段卡');
+    assert.ok(collect.text.includes('转账（记成转账）'), '落点要写清账本＝转账');
 
     const done = page('bill.account.write', { amount: 500, op: 'transfer', from: '支付宝', to: '招行卡' }, 'transfer-receipt');
     assert.equal(done.env.data.receipt.affectedRows, 2, '转账落两笔');
@@ -120,12 +120,12 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('改账户：缺「改成什么」出确认页 → 改名写库（级联历史流水）出回执页带改前改后', () => {
     const confirm = page('bill.account.write', { op: 'update', name: '招行卡' }, 'update-confirm');
     assert.equal(confirm.env.data.ok, false);
-    assert.ok(confirm.text.includes('要改的就是这个账户'), '确认页要只读回显原账户');
+    assert.ok(confirm.text.includes('招行卡'), '确认页要点名要改的那个账户');
     assert.ok(confirm.text.includes('改成什么'), '确认页要有「改成什么」那一格');
 
     const miss = page('bill.account.write', { op: 'update', name: '不存在的卡', 'new-name': 'X' }, 'update-missing');
     assert.equal(miss.env.data.ok, false);
-    assert.ok(miss.text.includes('这个账户认不出来') && miss.text.includes('账户表里挑一个'), '认不出来要给空态与账户表');
+    assert.ok(miss.text.includes('账户表里没有这个账户'), '认不出来要在缺项那一行点名');
 
     const done = page('bill.account.write', { op: 'update', name: '招行卡', 'new-name': '招行工资卡' }, 'update-receipt');
     assert.equal(done.env.data.ok, true);
@@ -158,10 +158,10 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
     assert.equal(only.registered, false, '只在流水里出现过的账户打未登记');
     assert.equal(only.balance, -500);
     assert.ok(sum.text.includes('各账户余额'), '要有账户卡区');
-    assert.ok(sum.text.includes('ilife-block-dist-row'), '要有占比条');
-    assert.ok(sum.text.includes('最近流水'), '要有流水表');
-    assert.match(sum.text, /<nav[^>]*aria-label="页内导航"/, '结果型页恒出页内导航');
-    assert.ok(sum.text.includes('数据来源'), '恒出来源脚注');
+    assert.ok(sum.text.includes('ilife-block-entry-card'), '中段是各账户余额明细卡');
+    assert.ok(sum.text.includes('笔流水'), '落点要写清最近几笔参与汇总');
+    assert.ok(sum.text.includes('ilife-ticket-check'), '对账那一句要在');
+    assert.ok(sum.text.includes('复制这份汇总去对账'), '按钮区要有主按钮');
     for (const re of [/bill\./g, /\.py\b/g, /scripts\//g, /undefined/g, /NaN/g]) {
       assert.equal([...visible(sum.text).matchAll(re)].length, 0, '可见文本里出现了 ' + re);
     }
@@ -174,7 +174,7 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
     assert.equal(r.status, 0, '空库不是故障：' + r.stderr);
     const text = readFileSync(file, 'utf8');
     assert.match(text, /<!doctype html>/i);
-    assert.ok(text.includes('数据来源'), '空库页也要有来源脚注');
+    assert.ok(text.includes('ilife-ticket-check'), '空库页也要有对账那一句');
     assert.ok(text.includes('账户表还是空的'), '空库要有空态句');
     assert.ok(text.includes('先说「新增账户」'), '空态后要有引导句');
   });
