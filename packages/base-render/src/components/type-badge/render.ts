@@ -10,6 +10,7 @@
  */
 import { renderCaliberLine, renderChips, renderChipRow } from '../../blocks.js';
 import { renderStatusBadge } from '../../controls.js';
+import { assertPlainObject, badInput } from '../shared/validate.js';
 import type { StatusKind } from '../../spec/controls.js';
 
 /** 本件的类名根（胶囊／徽章／口径行三枚零件各自的类名由 blocks 出，本件只出组合）。 */
@@ -45,16 +46,16 @@ const ROOT_KEYS: readonly string[] = ['pageKind', 'caliber', 'status', 'statusTe
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 /** 入参归一化（唯一入口）。 */
 export function normalizeTypeBadge(input: unknown): TypeBadgeModel {
-  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
-    throw new TypeError('type-badge: input 必须是普通对象');
-  }
+  // 抛错一律走公共层的 `badInput`（抛 `BlocksError`，与其余件同一类）；#1123 收尾：
+  // 跨件不变量 ③ 要求未知键抛 `BlocksError`，第一版抛的是 `TypeError`，本行是修法。
+  assertPlainObject(input, 'type-badge');
   const raw = input as Record<string, unknown>;
-  for (const k of Object.keys(raw)) if (!ROOT_KEYS.includes(k)) throw new TypeError('type-badge 不认识这个键：' + k);
+  for (const k of Object.keys(raw)) if (!ROOT_KEYS.includes(k)) badInput('type-badge 不认识这个键：' + k);
   const form = raw.form === undefined ? 'plain' : raw.form;
   if (!(TYPE_BADGE_FORMS as readonly unknown[]).includes(form)) {
-    throw new TypeError('type-badge.form 必须是 ' + TYPE_BADGE_FORMS.join('／') + ' 之一');
+    badInput('type-badge.form 必须是 ' + TYPE_BADGE_FORMS.join('／') + ' 之一');
   }
-  if (typeof raw.status !== 'string') throw new TypeError('type-badge.status 必须给');
+  if (typeof raw.status !== 'string') badInput('type-badge.status 必须给');
   return {
     pageKind: str(raw.pageKind),
     caliber: str(raw.caliber),
@@ -71,9 +72,12 @@ export function renderTypeBadge(input: unknown): string {
   if (m.pageKind !== '') items.push({ text: m.pageKind });
   if (m.caliber !== '') items.push({ text: m.caliber });
   const badge = m.statusText === '' ? renderStatusBadge({ status: m.status }) : renderStatusBadge({ status: m.status, text: m.statusText });
-  const parts = m.form === 'row'
-    ? [renderChipRow({ items, tailHtml: badge })]
-    : [renderChips({ items }), badge];
+  // 本件的**分组包裹节**：本件只做组合、零新视觉，故这一层从布局里退场（`display: contents`，
+  // 与 `docPage` 的 `.ilife-write` 同一手法）——它同时是本件样式段的真实选择器（皮肤矩阵 ②）。
+  const head = m.form === 'row'
+    ? renderChipRow({ items, tailHtml: badge })
+    : renderChips({ items }) + badge;
+  const parts = ['<div class="' + TYPE_BADGE_CLASS + '">' + head + '</div>'];
   if (m.next !== '') {
     for (const line of m.next.split('。').map((s) => s.trim()).filter((s) => s !== '')) {
       parts.push(renderCaliberLine(line + '。'));
