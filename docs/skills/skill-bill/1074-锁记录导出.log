@@ -1,7 +1,7 @@
 # #1074 锁记录导出（协议 §2.3 第 4 条：本票声明过的运行条目抄录，供第三方复核）
 # 源：.scratch/locks/gate-runs.log（未受版本控制）→ 本件受版本控制
 # 抄录范围：ticket=1074 的全部 START／RUN 行（逐行原样，不改一字）
-# 行数：20
+# 行数：28
 START ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 pid=15076 at=2026-10-03T15:40:08.116Z
 RUN ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 exit=0 pid=15076 at=2026-10-03T15:40:10.598Z
 START ticket=1074 runId=806d00b7-456d-477a-97b2-7b7dbe6aa485 cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=1 pid=40052 at=2026-10-03T15:44:08.642Z
@@ -22,3 +22,11 @@ START ticket=1074 runId=ca0a8a32-3ed4-49e0-9c67-37570f8f4899 cmd="node docs/skil
 RUN ticket=1074 runId=ca0a8a32-3ed4-49e0-9c67-37570f8f4899 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单2 compare-坏2.html" waitedMs=0 exit=1 pid=52252 at=2026-10-03T15:46:24.466Z
 START ticket=1074 runId=ecf5bdfe-8ec4-4166-be03-44e59a4ee964 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 pid=50236 at=2026-10-03T15:46:24.519Z
 RUN ticket=1074 runId=ecf5bdfe-8ec4-4166-be03-44e59a4ee964 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 exit=1 pid=50236 at=2026-10-03T15:46:24.969Z
+START ticket=1074 runId=8215fc38-9770-4cf8-a889-43a7185ed6dd cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=20023 pid=42400 at=2026-10-03T15:50:00.580Z
+RUN ticket=1074 runId=8215fc38-9770-4cf8-a889-43a7185ed6dd cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=20023 exit=0 pid=42400 at=2026-10-03T15:50:00.657Z
+START ticket=1074 runId=e31c72e3-490a-431a-8054-b3f900f075e6 cmd="git add docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=20080 at=2026-10-03T15:52:07.662Z
+RUN ticket=1074 runId=e31c72e3-490a-431a-8054-b3f900f075e6 cmd="git add docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=20080 at=2026-10-03T15:52:07.710Z
+START ticket=1074 runId=e167ca8d-fb48-4679-b33d-1baf76cc4213 cmd="git commit -F .scratch/1074-query/commit-1074.txt -- docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=44724 at=2026-10-03T15:52:12.644Z
+RUN ticket=1074 runId=e167ca8d-fb48-4679-b33d-1baf76cc4213 cmd="git commit -F .scratch/1074-query/commit-1074.txt -- docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=44724 at=2026-10-03T15:52:12.721Z
+START ticket=1074 runId=88c52f10-661e-4fba-a488-c0bbec8365c5 cmd="git push origin master" waitedMs=0 pid=75500 at=2026-10-03T15:52:19.739Z
+RUN ticket=1074 runId=88c52f10-661e-4fba-a488-c0bbec8365c5 cmd="git push origin master" waitedMs=0 exit=0 pid=75500 at=2026-10-03T15:52:22.162Z
