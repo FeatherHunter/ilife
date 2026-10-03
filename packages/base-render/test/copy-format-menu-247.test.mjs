@@ -283,7 +283,13 @@ describe('#247 三格式菜单 · 产出面', () => {
     const after = blocksOf('.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn::after')[0];
     assert.ok(after !== undefined, '缺开合器字面 ▾ 规则块（.copy-menu-wrap > .copy-btn::after）');
     assert.equal(declValue(after, 'content'), '"▾"', '字面 ▾ 必须由 content 打出来（常显）');
-    assert.equal(declValue(after, 'margin-left'), '6px', '字与符间距取基础 gap 同值 6px');
+    // 用户 2026-10-03 口径：按钮文字**居中**、`▾` **钉右缘**（`right` 与按钮内距 14px 同值）——
+    // 箭头脱离行内流，故 `margin-left` 归零、文字居中不再被箭头宽度推偏。
+    assert.equal(declValue(after, 'position'), 'absolute', '▾ 必须脱离行内流（钉右缘）');
+    assert.equal(declValue(after, 'right'), '14px', '▾ 钉在右缘，距离取按钮内距 14px');
+    assert.equal(declValue(after, 'margin-left'), '0', '钉右缘后不再用行内间距');
+    const btn = blocksOf('.' + STYLE_PREFIX + 'copy-btn')[0];
+    assert.equal(declValue(btn, 'position'), 'relative', '按钮要给绝对定位的 ▾ 留参照系');
     assert.equal(declValue(after, 'border-top'), null, '不得再用 border-top 画三角（旧口径已撤）');
     assert.equal(after.decls.some((d) => d.startsWith('border')), false, '字面 ▾ 规则块不得再带任何 border 画法');
     const openAfter = blocksOf('.' + MENU_OPEN_CLASS + '.' + STYLE_PREFIX + 'copy-menu-wrap > .' + STYLE_PREFIX + 'copy-btn::after')[0];

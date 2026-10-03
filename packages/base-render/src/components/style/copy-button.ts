@@ -12,6 +12,7 @@ import { ACTION_BAR_DEFAULTS, TOAST_DEFAULTS } from '../../spec/index.js';
 
 export const copyButtonSection: (prefix: string) => string = (p) => [
   '.' + p + 'copy-btn {',
+  '  position: relative;',
   '  display: inline-flex;',
   '  align-items: center;',
   '  justify-content: center;',
@@ -113,11 +114,14 @@ export const copyButtonSection: (prefix: string) => string = (p) => [
   '  width: auto;',
   '}',
   // base 变体·字面 `▾` 常显：`::after` 不再用 `border` 画三角，直接打字面 `▾`（常显，不随开合旋转）——
-  // 开着（`.copy-menu-open`）不旋转；日志按钮不在 `copy-menu-wrap` 内故无符。`margin-left: 6px`
-  // 与基础的 `gap: 6px` 同值（文字与符的间距不新造取值）。
+  // 开着（`.copy-menu-open`）不旋转；日志按钮不在 `copy-menu-wrap` 内故无符。
+  // **用户 2026-10-03 口径**：按钮文字**居中**，`▾` **钉在右缘**（`right` 与按钮内距 14px 同值，
+  // 不新造取值）；箭头脱离行内流，故文字的居中不受它宽度影响。
   '.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
   '  content: "▾";',
-  '  margin-left: 6px;',
+  '  position: absolute;',
+  '  right: 14px;',
+  '  margin-left: 0;',
   '}',
   '.copy-menu-open.' + p + 'copy-menu-wrap > .' + p + 'copy-btn::after {',
   '  transform: none;',
