@@ -52,22 +52,22 @@
 
 | # | id | 唤醒词 | 机器面骨架读数（九位） | 人眼判定（留空） | 备注 |
 |---|---|---|---|---|---|
-| 1 | x02 | 记支出 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 2 | x04 | 记收入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 3 | x06 | 拍账单 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 4 | x08 | 批量录入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 5 | x10 | 记退款 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 6 | x12 | 记报销 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 7 | x14 | 报销到账 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 8 | x16 | 记借出 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 9 | x18 | 记借入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 10 | x20 | 记收回 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 11 | x22 | 记偿还 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 12 | x24 | 记分期 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 13 | x26 | 记一笔 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 14 | x28 | 改记录 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 15 | x30 | 撤销 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
-| 16 | x32 | 恢复 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | | |
+| 1 | x02 | 记支出 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 2 | x04 | 记收入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 3 | x06 | 拍账单 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 4 | x08 | 批量录入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 5 | x10 | 记退款 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 6 | x12 | 记报销 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 7 | x14 | 报销到账 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 8 | x16 | 记借出 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 9 | x18 | 记借入 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 10 | x20 | 记收回 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 11 | x22 | 记偿还 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 12 | x24 | 记分期 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 13 | x26 | 记一笔 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 14 | x28 | 改记录 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 15 | x30 | 撤销 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
+| 16 | x32 | 恢复 | 页族 sheet；件套缺 无；导航 0；页脚／来源 1；undefined/NaN false；lazy false；外部资源 0 | 未判 | |
 
 **读数来源**：`docs/skills/skill-bill/1075-write-复验证据.md`；原始读数 `.scratch/1075-write-receipt/像素读数-fullpage.json`。
 **快照**：gitHead `b19e7664d79e4e62179494e55346c774ae8cdfa0`；`dist/cli/cmd_read.js` sha256 `aa562494e0c98c20…`；`dist/write/template-update.js` sha256 `39d16a6deae5b593…`。

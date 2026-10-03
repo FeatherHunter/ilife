@@ -70,7 +70,7 @@ const notOkBad = [];
 for (const r of rows) {
   if (!VERDICTS.has(r.verdict)) fieldBad.push(r.seq + '（verdict=' + r.verdict + '）');
   if (!DOMAINS.has(r.domain)) fieldBad.push(r.seq + '（domain=' + r.domain + '）');
-  const m = r.conclusion.match(/(docs\/[^\s（(]+\.(?:md|json))/);
+  const m = r.conclusion.match(/((?:docs|\.scratch|packages)\/[^\s（(；]+\.(?:md|json))/);
   if (!m) fieldBad.push(r.seq + '（conclusion 未给出结论件路径）');
   else if (!existsSync(join(resolve(HERE, '..', '..', '..'), m[1]))) conclMissing.push(r.seq + '（缺 ' + m[1] + '）');
   if (r.verdict === '不ok') {

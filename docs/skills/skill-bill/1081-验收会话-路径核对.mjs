@@ -26,6 +26,7 @@ for (const s of cand) {
     t = t.replace(/[\u3002\uff0c\uff1b\u3001\uff09\uff08\uff1a\uff5c]+$/u, '');
     t = t.replace(/[:\uff1a]\d+$/u, '');
 
+    if (/[<>]/.test(t)) continue; // 占位符（如 <墙名>）不是路径，不核
     if (t.length > 4) toks.add(t);
   }
 }
