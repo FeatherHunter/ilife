@@ -5,7 +5,7 @@
  *
  * 三条判据（票面原文）：
  *   ① 总账 94 行（manifest kind=proto 95 件去重 1 行）、seq 无重复无遗漏 → 否则 exit 1 并点名缺哪个 seq；
- *   ② 每行 verdict ∈ {ok,不ok,未判}；conclusion 指向的件在盘上；不ok 行必须有 if-not-ok 票号且该票存在 → 否则 exit 1 并点名该行；
+ *   ② 每行 verdict ∈ {ok,不ok,未判}；conclusion 指向的件在盘上，且**只认本域结论件**（路径须 `docs/skills/skill-bill/` 开头——门只收不放）；不ok 行必须有 if-not-ok 票号且该票存在 → 否则 exit 1 并点名该行；
  *   ③ 全部 verdict ＝ ok 才 exit 0；否则 exit 1 并打印「未判 N 页／不ok M 页」。
  *
  * 行数 94 的口径（票面 2026-10-04 登记）：manifest 的 kind=proto 共 95 件，其中
@@ -70,7 +70,7 @@ const notOkBad = [];
 for (const r of rows) {
   if (!VERDICTS.has(r.verdict)) fieldBad.push(r.seq + '（verdict=' + r.verdict + '）');
   if (!DOMAINS.has(r.domain)) fieldBad.push(r.seq + '（domain=' + r.domain + '）');
-  const m = r.conclusion.match(/((?:docs|\.scratch|packages)\/[^\s（(；]+\.(?:md|json))/);
+  const m = r.conclusion.match(/(docs\/skills\/skill-bill\/[^\s（(；]+\.(?:md|json))/);
   if (!m) fieldBad.push(r.seq + '（conclusion 未给出结论件路径）');
   else if (!existsSync(join(resolve(HERE, '..', '..', '..'), m[1]))) conclMissing.push(r.seq + '（缺 ' + m[1] + '）');
   if (r.verdict === '不ok') {

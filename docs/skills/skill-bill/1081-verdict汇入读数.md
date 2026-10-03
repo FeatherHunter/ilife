@@ -161,6 +161,26 @@ AUDIT 越界改动： 0 （0）
 
 即七件里**每一处**字节变化都落在判定列／症状列（或总账的 verdict／if-not-ok 列），**没有一处碰到别的列**。
 
+## 四·补、结论路径判据**收紧**（Lead 2026-10-04 03:4x 裁定：门只能收不能放）
+
+原实现一度把 95check 的结论路径正则从 `docs/` 放宽到「任意仓根相对路径」——**Lead 不认这条**，理由是放宽带不来任何好处、且 `docs/` 那层锚原本就挡住「结论列写了个任意仓内文件也算过」。已改成更严的一条：
+
+```js
+// 收紧后（95check 判据②）：结论列里的路径必须 docs/skills/skill-bill/ 开头，且仍在盘
+const m = r.conclusion.match(/(docs\/skills\/skill-bill\/[^\s（(；]+\.(?:md|json))/);
+```
+
+**收紧后复跑读数**：
+
+| 跑法 | 读数 |
+|---|---|
+| 真包（当刻 24 ok／70 未判） | `② 字段：verdict 合法 94/94；conclusion 在盘 94/94；不ok 行 0`；`③ ok 24/94；未判 70` ⇒ `RESULT: 未判 70 页／不ok 0 页 → 不可收`（exit 1，预期） |
+| ⑦ 变异（ok→no） | `VERDICTS: ok 93／不ok 1`；`③ ok 93/94；不ok 1` ⇒ `RESULT: 未判 0 页／不ok 1 页 → 不可收`（exit 1） |
+| ⑦ 还原 | `VERDICTS: ok 94／不ok 0`；`③ ok 94/94；未判 0；不ok 0`（夹具逐字节还原） |
+| ⑥ 全 ok 夹具（导出件落 canonical） | 把 F 夹具整份拷到 `docs/skills/skill-bill/1081-fixture-F/` 后 `--root` 指它：`② verdict 合法 94/94；conclusion 在盘 94/94` ⇒ `RESULT: 94 行；未判 0；不ok 0 → 本图可收`，**exit 0**（临时夹具跑完即删） |
+
+**一处如实说明**：夹具原落在 `.scratch/1081-收口/verdict-fixtures/`，收紧后它的引文（`.scratch/...`）会被判据②按新规点名——**这正是收紧的目的**（结论列只认本域结论件）。所以 ⑥ 用「导出件落在 `docs/skills/skill-bill/` 下」的那份夹具取证，读数见上表末行。
+
 ## 五、遗留出口
 
 1. **墙导出还没来**：当刻 `verdicts/` 只有 README —— 那 70 格保持 `未判` 是**正确状态**，等负责人在墙上勾完导出。
