@@ -1,10 +1,15 @@
 // t415 详情页锁：bill.record.detail 查账单详情（专属版式）
 // 判据五组：
-//   ① 存在 id 整页：字段 10 列全可见＋金额两位小数＝载荷数值＋金额卡＋状态卡（正常 ok）＋复制区＋页标记；
-//   ② 软删三态：同 id 正常→撤销后（整页＋已撤销 danger＋删除时间原值＋已撤销胶囊）→恢复后（正常）；
+//   ① 存在 id 整页：字段值全可见（编号／时间／分类／金额／账户／账本／币种／备注／状态）＋金额两位小数＝载荷数值
+//      ＋落点键值行六行＋明细卡两行＋复制区＋页标记；
+//   ② 软删三态：同 id 正常→撤销后（整页＋已撤销印章 danger＋删除时间原值＋落点七行）→恢复后（正常）；
 //   ③ 红线：缺 id／坏 id→exit 2 且 stdout 空，真无此号→exit 4 且 stdout 空（不冒充正常）；
 //   ④ 路由回归：查账单→today，查账单详情→detail，含两词的长句走长者（最长匹配）；
-//   ⑤ 真跑：每条 exit 0＋shape detail＋H1 查账单详情＋KPI 两格（整段开标签计数）＋字段表一张 11 行。
+//   ⑤ 真跑：每条 exit 0＋shape detail＋店头写账单详情＋落点键值行（整段开标签计数）。
+//
+// #1071 起查询域重建为票据纸（12 个场景页）：详情页＝票据纸＋落点账目行＋明细卡，唤醒词住店头
+// `.ilife-sheet-eyebrow`；原先断的 `ilife-block-page-shell-title`／KPI 卡／字段表 11 行／kv 列表是
+// 票据纸之前那版的 DOM，随重建失效（行为断言一字未动）。
 //
 // 计数纪律：判别性标记一律数整段开标签（t411 M1 假绿教训：裸子串会命中 CSS 选择器名）。
 // 红线：只读临时库；只往临时目录写 --html 产物。
@@ -45,11 +50,10 @@ function page(key, params, name) {
 function countTag(text, tag) {
   return (text.split(tag).length - 1);
 }
-const H1 = (w) => '<h1 class="ilife-block-page-shell-title">' + w + '</h1>';
-const KPI_TAG = '<div class="ilife-block ilife-block-kpi-card">';
-const TABLE_TAG = '<table class="ilife-block-data-table-table">';
-const BADGE_OK = '<span class="ilife-status-badge ilife-status-badge-ok">';
-const BADGE_DANGER = '<span class="ilife-status-badge ilife-status-badge-danger">';
+const EYEBROW = (w) => '<p class="ilife-sheet-eyebrow">饼干记账 · ' + w + '</p>';
+const LEDGER_ROW = '<div class="ilife-block-ledger-row">';
+/** 主数字头上那枚印章（改记录／撤销／恢复三支与详情页的「状态」都走它，tone 是公共层闭集）。 */
+const STAMP = (tone, word) => '<span class="ilife-block-summary-head-stamp is-' + tone + '">' + word + '</span>';
 
 let ID1 = 1;
 let ID2 = 2;
@@ -71,7 +75,7 @@ before(() => {
 });
 
 describe('t415 ① 存在 id 整页：字段全＋金额卡＋状态卡＋复制区', () => {
-  it('详情整页 10 列全可见，金额两位小数＝载荷数值，KPI 两格，表 11 行', () => {
+  it('详情整页字段值全可见，金额两位小数＝载荷数值，落点六行＋明细两行', () => {
     const { text, stdout } = page('bill.record.detail', { id: ID1 }, 't415-detail');
     const env = JSON.parse(stdout);
     assert.equal(env.shape, 'detail');
@@ -80,24 +84,22 @@ describe('t415 ① 存在 id 整页：字段全＋金额卡＋状态卡＋复制
     assert.equal(env.data.item.amount, -35.5);
     assert.equal(typeof env.data.item.created_at, 'string', '载荷应含 created_at（加法式）');
     assert.ok('deleted_at' in env.data.item, '载荷应含 deleted_at（加法式）');
-    assert.ok(text.includes(H1('查账单详情')), 'H1 应为查账单详情');
-    assert.ok(text.includes('2026-09-06 12:00:00'), '副标题说清时刻');
-    assert.ok(text.includes('>记录编号 ' + ID1 + '<'), '编号是胶囊（一枚独立形状）');
-    const sub = text.match(/<p class="ilife-block-page-shell-subtitle">([\s\S]*?)<\/p>/);
-    assert.ok(sub && !sub[1].includes('·'), '副标题不许有 ·（复制日志载荷里的 · 是机器文本，不算展示）');
-    assert.equal(countTag(text, KPI_TAG), 2, '金额卡＋状态卡两格（整段开标签计数）');
-    assert.equal(countTag(text, TABLE_TAG), 1, '字段表一张');
-    assert.equal(countTag(text, '<tr>'), 11, '表头一行＋字段十行');
-    for (const label of ['编号', '时间', '分类', '金额', '账户', '账本', '币种', '备注', '创建时间', '删除时间']) {
-      assert.ok(text.includes(label), '字段表该有：' + label);
+    assert.ok(text.includes(EYEBROW('账单详情')), '店头应写账单详情');
+    assert.ok(text.includes('2026-09-06 12:00:00'), '时间可见（主数字头那一行）');
+    assert.ok(text.includes('>#' + ID1 + '<'), '编号是落点行里的一格');
+    assert.ok(text.includes('>账单详情 · 单记录<'), '副题写页面身份');
+    assert.equal(countTag(text, LEDGER_ROW), 6, '落点六行：编号／账户／账本／币种／创建时间／状态');
+    for (const label of ['编号', '账户', '账本', '币种', '创建时间', '状态']) {
+      assert.ok(text.includes('>' + label + '<'), '落点该有：' + label);
     }
+    assert.equal(countTag(text, '<li'), 2, '明细卡两行：实付／备注');
     assert.ok(text.includes('-35.50'), '金额两位小数文案');
     assert.ok(text.includes('支付宝'), '账户可见');
     assert.ok(text.includes('人民币'), '币种可见（缺省也是读数）');
     assert.ok(text.includes('t415午饭'), '备注可见');
-    assert.ok(text.includes(BADGE_OK), '正常态徽 ok（整段开标签）');
-    assert.ok(text.includes('正常'), '正常态可见');
-    assert.equal(countTag(text, BADGE_DANGER), 0, '正常页无已撤销徽');
+    assert.ok(text.includes('>有效<'), '状态行写有效（正常态）');
+    assert.equal(countTag(text, STAMP('danger', '已撤销')), 0, '正常页无已撤销印章');
+    assert.ok(!text.includes('>删除时间<'), '正常页无删除时间行');
     for (const needle of [
       '复制数据',
       '复制日志',
@@ -128,24 +130,22 @@ describe('t415 ② 软删三态：同 id 正常→撤销后→恢复后', () => 
     assert.equal(env.shape, 'detail');
     assert.equal(env.data.item.id, ID1);
     assert.ok(env.data.item.deleted_at !== null && env.data.item.deleted_at !== '', '载荷 deleted_at 非空');
-    assert.ok(text.includes(BADGE_DANGER), '已撤销徽 danger（整段开标签）');
-    assert.ok(text.includes('已撤销'), '已撤销可见');
+    assert.ok(text.includes(STAMP('danger', '已撤销')), '已撤销印章 danger（整段开标签）');
     assert.ok(text.includes(String(env.data.item.deleted_at)), '删除时间原值可见');
-    assert.ok(text.includes('>记录编号 ' + ID1 + '<'), '编号胶囊在');
-    assert.ok(text.includes('>已撤销<'), '已撤销胶囊在（状态卡徽之外另有一枚）');
-    const subDel = text.match(/<p class="ilife-block-page-shell-subtitle">([\s\S]*?)<\/p>/);
-    assert.ok(subDel && !subDel[1].includes('·'), '副标题不许有 ·');
-    assert.ok(text.includes('详情 1 笔 · 记录编号 ' + ID1 + ' · 已撤销'), '复制日志同步已撤销');
-    assert.equal(countTag(text, KPI_TAG), 2, '已撤销页仍两格');
-    assert.equal(countTag(text, '<tr>'), 11, '已撤销页仍十行');
+    assert.ok(text.includes('>#' + ID1 + '<'), '编号落点行在');
+    assert.ok(text.includes('>已撤销<'), '状态行写已撤销');
+    assert.equal(countTag(text, LEDGER_ROW), 7, '已撤销页落点七行（多「删除时间」一行）');
+    assert.ok(text.includes('>删除时间<'), '删除时间那一行在');
+    assert.ok(text.includes('已撤销'), '已撤销可见');
   });
   it('恢复后回到正常态（徽 ok＋删除时间占位）', () => {
     assert.equal(run(['bill.record.update', '--params', P({ op: 'restore', id: ID1 })]).status, 0, '恢复应成功');
     const { text, stdout } = page('bill.record.detail', { id: ID1 }, 't415-detail-restored');
     const env = JSON.parse(stdout);
     assert.equal(env.data.item.deleted_at, null, '恢复后 deleted_at 回 NULL');
-    assert.ok(text.includes(BADGE_OK), '恢复后正常徽');
-    assert.equal(countTag(text, BADGE_DANGER), 0, '恢复后无已撤销徽');
+    assert.ok(text.includes('>有效<'), '恢复后状态行写有效');
+    assert.equal(countTag(text, STAMP('danger', '已撤销')), 0, '恢复后无已撤销印章');
+    assert.ok(!text.includes('>删除时间<'), '恢复后不再出删除时间行');
   });
 });
 

@@ -47,9 +47,11 @@ export const FROZEN = {
     'bill.data.query',
     'bill.data.schema',
   ],
-  /** 分派层两件的行数上限（**等于当刻实况**：改一行就同窗改这里，否则收紧守卫红）。 */
+  /** 分派层两件的行数上限（**等于当刻实况**：改一行就同窗改这里，否则收紧守卫红）。
+   *  #1091 下调 280→276：把 #905 的「非 HELP 命令缺省落支」那一摊从外壳搬进交付能力
+   *  （`src/delivery/landing.ts`）——外壳只认各域的门与交付能力的门，行数照搬迁同窗下调。 */
   lineCaps: {
-    'src/cli/cmd_read.ts': 280,
+    'src/cli/cmd_read.ts': 276,
     'src/render/envelope.ts': 56,
   },
 };

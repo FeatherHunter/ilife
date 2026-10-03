@@ -6,7 +6,11 @@
 //      子串#待报销单不计）／查分期（分期/分类或#分期/#分期中精确，子串#分期付款不计）；
 //   ④ 红线：{}→2 且 stdout 空、kind tag 缺 tag→2、q 空串/全空格→2、tag 空串→2（空查询不返全量）；
 //   ⑤ 空结果：tag 不存在的标签→exit 0＋total 0＋空态句＋空态块＋复制数据/日志＋命令原文＋data-key（不断言失败）；
-//   ⑥ 五词逐条真跑：每词 exit 0＋shape list＋H1 唤醒词＋KPI 四格（整段开标签计数）。
+//   ⑥ 五词逐条真跑：每词 exit 0＋shape list＋店头写唤醒词＋载荷 KPI 四格。
+//
+// #1071 起查询域重建为票据纸（12 个场景页；原型 w01..w12 冻结件）：唤醒词住店头 `.ilife-sheet-eyebrow`、
+// 结论住 `.ilife-sheet-title`、读数进载荷 `data.kpi`、明细是 `.ilife-ticket-entries`——本件原先断的
+// `ilife-block-page-shell-title`／KPI 卡／数据表是票据纸之前那版的 DOM，随重建失效（行为断言一字未动）。
 //
 // 计数纪律：判别性标记一律数整段开标签（t411 M1 假绿教训：裸子串会命中 CSS 选择器名）。
 // 红线：只读临时库；只往临时目录写 --html 产物。
@@ -46,10 +50,11 @@ function page(key, params, name) {
 function countTag(text, tag) {
   return (text.split(tag).length - 1);
 }
-const H1 = (w) => '<h1 class="ilife-block-page-shell-title">' + w + '</h1>';
-const KPI_TAG = '<div class="ilife-block ilife-block-kpi-card">';
-const TABLE_TAG = '<table class="ilife-block-data-table-table">';
+/** 票据纸时代的判别标记（#1071 重建）：唤醒词在店头、读数在载荷、明细是票据卡里的有序列表。 */
+const EYEBROW = (w) => '<p class="ilife-sheet-eyebrow">饼干记账 · ' + w + '</p>';
+const ENTRY_TAG = '<ol class="ilife-ticket-entries">';
 const EMPTY_TAG = '<section class="ilife-block ilife-block-empty-block">';
+const KPI_KEYS = ['count', 'expense', 'income', 'net'];
 
 before(() => {
   DB = mkdtempSync(join(tmpdir(), 't414-db-'));
@@ -81,16 +86,17 @@ before(() => {
 });
 
 describe('t414 ① 搜备注：token 与关系（AND）', () => {
-  it('单 token t414午饭命中 2 笔，kind 回填 search:，H1 搜备注', () => {
+  it('单 token t414午饭命中 2 笔，kind 回填 search:，店头写搜备注', () => {
     const { text, stdout } = page('bill.record.search', { q: 't414午饭' }, 't414-q');
     const env = JSON.parse(stdout);
     assert.equal(env.shape, 'list');
     assert.equal(env.data.total, 2);
     assert.equal(env.data.kind, 'search:t414午饭');
-    assert.ok(text.includes(H1('搜备注')), 'H1 应为搜备注');
-    assert.ok(text.includes('备注里有「t414午饭」的记录'), '窗口说清关键词');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格（整段开标签计数）');
-    assert.equal(countTag(text, TABLE_TAG), 1, '有数应有数据表一张');
+    assert.ok(text.includes(EYEBROW('搜备注')), '店头应写搜备注（唤醒词住店头，纸头不上 H1）');
+    assert.ok(text.includes('备注里有「t414午饭」的记录'), '副题说清关键词');
+    assert.deepEqual(Object.keys(env.data.kpi).sort(), KPI_KEYS, '载荷 KPI 四格');
+    assert.equal(countTag(text, ENTRY_TAG), 1, '有数应有明细卡一枚');
+    assert.equal(countTag(text, '<li>'), 2, '明细两条（命中两笔）');
   });
   it('双 token AND：t414午饭 工作餐只剩 1 笔（#工作餐那笔）', () => {
     const { stdout } = page('bill.record.search', { q: 't414午饭 工作餐' }, 't414-q-and');
@@ -108,9 +114,9 @@ describe('t414 ② 查标签：精确匹配双向回归（旅行 vs 旅行计划
     assert.equal(env.data.total, 1);
     assert.equal(env.data.kind, 'tag:旅行');
     assert.ok(String(env.data.items[0].note).includes('#旅行 门票'));
-    assert.ok(text.includes(H1('查标签')), 'H1 应为查标签');
-    assert.ok(text.includes('标签 旅行（精确匹配）'), '窗口说清精确匹配');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格');
+    assert.ok(text.includes(EYEBROW('查标签')), '店头应写查标签');
+    assert.ok(text.includes('标签 旅行（精确匹配）'), '副题说清精确匹配');
+    assert.deepEqual(Object.keys(env.data.kpi).sort(), KPI_KEYS, '载荷 KPI 四格');
   });
   it('tag 旅行计划只命中 #旅行计划（1 笔），不命中 #旅行', () => {
     const { stdout } = page('bill.record.search', { kind: 'tag', tag: '旅行计划' }, 't414-tag-long');
@@ -129,9 +135,9 @@ describe('t414 ③ 三支按 #tag 流转口径（欠款／待报销／分期）'
     assert.equal(env.data.total, 1, 'd1 唯一正例');
     assert.equal(env.data.kind, 'debt');
     assert.ok(String(env.data.items[0].note).includes('#未还'));
-    assert.ok(text.includes(H1('查欠款')), 'H1 应为查欠款');
-    assert.ok(text.includes('还欠着的那些账'), '窗口说清未还口径');
-    assert.equal(countTag(text, KPI_TAG), 4, 'KPI 行四格');
+    assert.ok(text.includes(EYEBROW('查欠款')), '店头应写查欠款');
+    assert.ok(text.includes('还欠着的那些账'), '副题说清未还口径');
+    assert.deepEqual(Object.keys(env.data.kpi).sort(), KPI_KEYS, '载荷 KPI 四格');
   });
   it('查待报销：只剩 #待报销那笔（1 笔）；#已报销与 #待报销单不计', () => {
     const { text, stdout } = page('bill.record.search', { kind: 'reimburse' }, 't414-reimburse');
@@ -140,7 +146,7 @@ describe('t414 ③ 三支按 #tag 流转口径（欠款／待报销／分期）'
     assert.equal(env.data.total, 1, 'r1 唯一正例');
     assert.equal(env.data.kind, 'reimburse');
     assert.ok(String(env.data.items[0].note).includes('#待报销'));
-    assert.ok(text.includes(H1('查待报销')), 'H1 应为查待报销');
+    assert.ok(text.includes(EYEBROW('查待报销')), '店头应写查待报销');
     assert.ok(text.includes('等着报销的那些账'), '窗口说清待报销口径');
   });
   it('查分期：分类＋#分期＋#分期中（3 笔）；#分期付款子串不计', () => {
@@ -149,7 +155,7 @@ describe('t414 ③ 三支按 #tag 流转口径（欠款／待报销／分期）'
     assert.equal(env.shape, 'list');
     assert.equal(env.data.total, 3, 'i1 分类＋i2 #分期＋i3 #分期中');
     assert.equal(env.data.kind, 'installment');
-    assert.ok(text.includes(H1('查分期')), 'H1 应为查分期');
+    assert.ok(text.includes(EYEBROW('查分期')), '店头应写查分期');
     assert.ok(text.includes('分期还款的那些账'), '窗口说清分期口径');
     const notes = env.data.items.map((x) => String(x.note)).join('\n');
     assert.ok(!notes.includes('#分期付款'), '子串对照不得混入');
@@ -189,8 +195,8 @@ describe('t414 ⑤ 空结果：exit 0 空态＋复制区正常出（不断言失
     assert.ok(text.includes('没有找到符合条件的记录'), '空态句');
     assert.ok(text.includes('换个关键词'), '空态引导');
     assert.equal(countTag(text, EMPTY_TAG), 1, '空态块一枚（整段开标签计数）');
-    assert.equal(countTag(text, KPI_TAG), 4, '零行仍有 KPI 行四格');
-    assert.equal(countTag(text, TABLE_TAG), 0, '零行无数据表');
+    assert.deepEqual(Object.keys(env.data.kpi).sort(), KPI_KEYS, '零行载荷仍四格 KPI');
+    assert.equal(countTag(text, ENTRY_TAG), 0, '零行无明细卡');
     for (const needle of [
       '复制数据',
       '复制日志',

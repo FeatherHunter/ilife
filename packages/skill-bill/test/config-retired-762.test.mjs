@@ -2,11 +2,16 @@
  * #762 · 记账这一家的端到端验收：**真老配置文件**在删键之后仍能用，且一次保存就把死键清掉。
  *
  * 验收目的（票面《验收命令》第 2、3 条）：
- *   ① 把维护者本机那份 `~/.ilife/bill.yaml`（#677 那版落下来的、含 `html.helpStem`／`html.quickRefStem`
- *      两个已退休键）**逐字拷进沙盒**（`家目录注入（测试跑在临时家目录里）` 指临时目录）⇒ 跑一条记账命令 **exit 0**；
- *   ② 再走一次配置保存（`bill.config.write`，与面板「保存」同一条代码路径）⇒ 那两个死键消失、
+ *   ① 把维护者本机那份 `~/.ilife/bill.yaml`（#677 那版落下来的）**逐字拷进沙盒**
+ *      （`家目录注入（测试跑在临时家目录里）` 指临时目录）⇒ 跑一条记账命令 **exit 0**；
+ *   ② 再走一次配置保存（`bill.config.write`，与面板「保存」同一条代码路径）⇒ 两个已退休键消失、
  *      **其余取值逐字不变**；
  *   ③ 反例：往沙盒那份 yaml 加一个**名单外**的键 ⇒ 仍 `CONFIG_UNKNOWN_KEY`、exit 1，并点名那一行。
+ *
+ * **素材怎么来（#1091 说明）**：真件里 `html.helpStem`／`html.quickRefStem` 这两行**已经没有了**——
+ * 正是本票 ② 的那次保存把它们清掉的（维护者真件上真跑过一次）。故沙盒＝真件当刻全文 ＋ 按老写法
+ * **补回那两行**（`withRetiredKeys`）：其余每一行逐字取自真件，读容忍／写即清这两条判据一字不松，
+ * 只是不再依赖「真件恰好还留着死键」这个一次性的机器状态（它被本条验收自己消灭，不可复现）。
  *
  * 隔离：全程把**家目录**（win32 `USERPROFILE`／POSIX `HOME`，见 `test/helpers/home-test-base.mjs`）
  * 指到临时目录，沙盒＝`<临时家目录>/.ilife/`；维护者那份真配置**只读**（`readFileSync`），
@@ -17,7 +22,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,15 +55,25 @@ function runBill(key, params) {
 const sandboxFile = () => join(configDirOf(home), 'bill.yaml');
 const sandboxText = () => readFileSync(sandboxFile(), 'utf8');
 
+/** 把两个已退休键按老文件的写法补进沙盒那份（补在 `html:` 组末尾，别的行一字不动）。
+ *  取值取 #762 当刻那两个常量（`饼干记账_HELP`／`饼干记账_速查`），判据只看「在不在」与「写即清」。 */
+function withRetiredKeys(text) {
+  const lines = text.split('\n');
+  const head = lines.findIndex((l) => /^html:\s*$/.test(l));
+  assert.ok(head >= 0, '真配置文件里应有 html 组（本票素材的落点）：' + REAL_YAML);
+  let end = head + 1;
+  while (end < lines.length && (lines[end].trim() === '' || /^\s/.test(lines[end]))) end += 1;
+  return [...lines.slice(0, end), '  helpStem: 饼干记账_HELP', '  quickRefStem: 饼干记账_速查', ...lines.slice(end)].join('\n');
+}
+
 before(() => {
   const real = readFileSync(REAL_YAML, 'utf8');
-  assert.match(real, /helpStem:/, '真配置文件里应有已退休键 html.helpStem（不然这条验收没素材）：' + REAL_YAML);
   home = mkdtempSync(join(tmpdir(), 'bill-762-home-'));
   sandbox = configDirOf(home);
   mkdirSync(sandbox, { recursive: true });
   useHome(home);
   requireIsolatedHome(home); // 基座自证：当刻家目录必须是临时那一份
-  copyFileSync(REAL_YAML, sandboxFile());
+  writeFileSync(sandboxFile(), withRetiredKeys(real), 'utf8');
 });
 
 after(() => {
@@ -104,8 +119,10 @@ describe('#762 记账：真老配置文件 ＋ 已退休键', () => {
     delete bLive.html.helpStem;
     delete bLive.html.quickRefStem;
     assert.equal(b.html.helpStem, '饼干记账_HELP', '老文件里死键的取值确实在（本票的素材）');
-    assert.equal(b.db.dir, '', '老文件里那一格原本是空串（这条读数才有意义）');
-    assert.equal(a.db.dir, dataDir, '可改落点那一格落的是算出来的绝对路径（＝数据目录）');
+    // #749 写盘口径：`db.dir` 是「可改落点」那一格。老文件里是空串（＝按默认落点）⇒ 保存落算出来的
+    // 绝对路径（`configPaths(stem).dataDir`）；真件里已经写死过一个具体路径 ⇒ 保存逐字保留它。两种都算过。
+    if (b.db.dir === '') assert.equal(a.db.dir, dataDir, '空串那一格保存后落绝对路径（#749）');
+    else assert.equal(a.db.dir, b.db.dir, '真件里已写死的落点保存后逐字不变');
     assert.deepEqual(
       { ...a, db: { ...a.db, dir: '' } },
       { ...bLive, db: { ...bLive.db, dir: '' } },
@@ -120,10 +137,11 @@ describe('#762 记账：真老配置文件 ＋ 已退休键', () => {
   it('③ 反例：加一个名单外的键 ⇒ 仍硬失败、exit 1，且点名那一行', () => {
     const text = sandboxText();
     writeFileSync(sandboxFile(), text.replace('  name: biscuit_accountant.db', '  dirr: typo\n  name: biscuit_accountant.db'), 'utf8');
+    const lineNo = sandboxText().slice(0, sandboxText().indexOf('  dirr: typo')).split('\n').length;
     const r = runBill('bill.config.read', {});
     assert.equal(r.code, 1, '护栏没被拆：集合外的未知键照旧硬失败');
     assert.match(r.stderr, /不认识的配置项「db\.dirr」/);
-    assert.match(r.stderr, /第 3 行/);
+    assert.match(r.stderr, new RegExp('第 ' + lineNo + ' 行'), '报错须点名那一行');
     assert.match(r.stderr, /bill\.yaml/);
   });
 });

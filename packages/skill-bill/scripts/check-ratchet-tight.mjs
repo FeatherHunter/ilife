@@ -46,11 +46,16 @@ function report(problems, title) {
 
 if (SELFTEST) {
   // 判据鉴别力自证：合成读数喂 `ratchetProblems`，四种松法都要被抓、恒等要放行。
+  // 合成读数的形状要与真包同构：注册表含**程序面**那两条（#960 起），词表＝非程序面注册表 ∪ 未搬迁。
+  // 旧夹具把 16 条都当用户键、又按 16 算总数，于是基线自己就红（`totalKeyCount` 18≠16）——
+  // #1091 按 `t686-收紧守卫.test.mjs` 的 `makeFixture` 同一口径修：程序面键在注册表里、不进词表。
+  const PROGRAM = [...(FROZEN.programKeys ?? [])];
+  const registryKeys = [...PROGRAM, ...Array.from({ length: FROZEN.registryKeyCount - PROGRAM.length }, (_, i) => 'bill.x' + i)];
   const base = {
     dispatchKeys: [...FROZEN.dispatchKeys],
     legacyKeys: [...FROZEN.legacyKeys],
-    registryKeys: Array.from({ length: FROZEN.registryKeyCount }, (_, i) => 'bill.x' + i),
-    wakeKeys: [...new Set([...FROZEN.legacyKeys, ...Array.from({ length: FROZEN.registryKeyCount }, (_, i) => 'bill.x' + i)])].sort(),
+    registryKeys,
+    wakeKeys: [...new Set([...FROZEN.legacyKeys, ...registryKeys.filter((k) => !PROGRAM.includes(k))])].sort(),
     lines: { ...FROZEN.lineCaps },
   };
   const cases = [

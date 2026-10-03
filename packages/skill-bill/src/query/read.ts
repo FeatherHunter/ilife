@@ -138,6 +138,12 @@ function todayWakeWord(params: Record<string, unknown>): string {
   return projectWakeWord({ key: 'bill.record.today', preset: params });
 }
 
+/** 三个单日支的词（**本件不写字面量**：按域声明投影算回，判据见 `test/t721-判据与摘要锁.test.mjs`）。
+ *  探针就是各支「靠什么认出来」：空参＝通用词那一支、`date:'yesterday'`＝昨天那一支；
+ *  某天那一支的探针是**本次已解出的具体日期**（声明里那一支靠 `needs:['date']` 认），在 `viewRecordToday` 里按当次 `date` 算。 */
+const DAY_WAKE_TODAY = projectWakeWord({ key: 'bill.record.today' });
+const DAY_WAKE_YESTERDAY = projectWakeWord({ key: 'bill.record.today', preset: { date: 'yesterday' } });
+
 /** today 分支的空态四句（**唯一判地**）+ 查某天自指已摘（说「换个日子再查一次」而不是「查某天」）。
  *  w02 查昨天 v2.1（`w02-查昨天-v2.1.html`：窗口 `date + ' 这一天'`／结论标准句／单类 100%，载荷键不动）。 */
 function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
@@ -177,7 +183,8 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   // w01 查今天 v2.1 票据纸（`w01-查今天-v2.1.html`）：唤醒词是查今天且有数时走本页票据；
   // 查昨天／查某天／零行仍走老 `listOut` 路（各归各席，空态四句一字不动）。
   const wakeWord = todayWakeWord(params);
-  if (wakeWord === '查今天' && records.length > 0) {
+  const somedayWord = projectWakeWord({ key: 'bill.record.today', preset: { date } });
+  if (wakeWord === DAY_WAKE_TODAY && records.length > 0) {
     const ticket = todayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。',
@@ -187,7 +194,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   const empty = todayEmpty(params);
   // w02 查昨天 v2.1 票据纸（`w02-查昨天-v2.1.html`）：唤醒词是查昨天且有数时走本页票据；
   // 查今天／查某天／零行仍走老路（各归各席，空态四句一字不动）。
-  if (wakeWord === '查昨天' && records.length > 0) {
+  if (wakeWord === DAY_WAKE_YESTERDAY && records.length > 0) {
     const ticket = yesterdayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
@@ -196,7 +203,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   }
   // w03 查某天 v2.1 票据纸（`w03-查某天-v2.1.html`）：唤醒词是查某天且有数时走本页票据；
   // 查今天／查昨天／零行仍走老路（各归各席，空态四句一字不动）。
-  if (wakeWord === '查某天' && records.length > 0) {
+  if (wakeWord === somedayWord && records.length > 0) {
     const ticket = somedayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,

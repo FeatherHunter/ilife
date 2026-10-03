@@ -186,7 +186,8 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '>改记录</h1>', '>回执</span>', '已改动', '这次记了几笔']) {
+    // #993 起改记录回执重装为票据纸：唤醒词住店头、改动结论住纸头标题与印章（旧 H1＝唤醒词／「回执」徽章行已撤）。
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '>饼干记账 · 改记录</p>', '>备注已改为', '>已改动<', '改后落点', '撤销这一笔']) {
       assert.ok(text.includes(needle), '改记录回执缺：' + needle);
     }
   });
@@ -199,8 +200,10 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.equal(env.data.receipt.noChange, true, '值与改前一致时 noChange 须为真');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
-    assert.ok(text.includes('无改动'), '无改动那一格须照实说');
-    assert.ok(text.includes('值与改前一致'), '无改动须带依据');
+    assert.ok(text.includes('<span class="ilife-block-summary-head-stamp is-warn">无改动</span>'), '无改动印章（warn 档）');
+    // 「值与改前一致」那句随 #993 票据纸回执退役：改前改后对照落在写库前的采集面（`scene-update` 的
+    // `receiptResult:'none'`），回执只报结论。「改前值取自库内那一行」这条依据仍由上面 `receipt.noChange` 担。
+    assert.ok(!text.includes('值与改前一致'), '老那句话不该再出现在票据纸回执上');
   });
 
   it('撤销与恢复各出一页（软删口径不得写成可恢复承诺）', () => {

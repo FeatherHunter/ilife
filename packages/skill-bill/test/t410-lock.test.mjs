@@ -119,8 +119,9 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'update');
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('>改记录</h1>'), 'H1 须为唤醒词（页型不上 H1）：改记录');
-    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：改记录');
+    // #993 起改记录回执是票据纸：唤醒词住店头（纸头不上 H1），改动结论住印章；「回执」徽章行已按一数一处撤。
+    assert.ok(text.includes('>饼干记账 · 改记录</p>'), '店头须写唤醒词：改记录');
+    assert.ok(text.includes('>已改动<'), '改动结论须住印章：改记录');
     assert.ok(env.data.receipt.summary.includes('已修改'), '摘要须说已修改：' + env.data.receipt.summary);
     assert.ok(text.includes(String(id)), '页内须印记录编号');
   });
@@ -136,10 +137,12 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'undo');
     assert.deepEqual(env.data.receipt.writtenFields, ['deleted_at']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('>撤销</h1>'), 'H1 须为唤醒词（页型不上 H1）：撤销');
-    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：撤销');
+    assert.ok(text.includes('>饼干记账 · 撤销</p>'), '店头须写唤醒词：撤销');
+    assert.ok(text.includes('>已撤销<'), '状态结论须住印章：撤销');
     assert.ok(env.data.receipt.summary.includes('已撤销'), '摘要须说已撤销');
-    assert.ok(text.includes('记录还在'), '撤销页须说清记录还在');
+    assert.ok(env.data.receipt.summary.includes('记录还在'), '摘要须说清记录还在（软删口径）');
+    assert.ok(text.includes('只动「撤销标记」这一项'), '对照表须说清只打标记、不删数据');
+    assert.ok(text.includes('恢复这一笔'), '撤销页须给恢复出口');
   });
   it('恢复：路由→落盘→字节如实→置空口径', () => {
     const id = seedAdd();
@@ -154,10 +157,11 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.equal(env.data.receipt.op, 'restore');
     assert.deepEqual(env.data.receipt.writtenFields, ['deleted_at']);
     const text = assertLanded(file, env.delivery);
-    assert.ok(text.includes('>恢复</h1>'), 'H1 须为唤醒词（页型不上 H1）：恢复');
-    assert.ok(text.includes('>回执</span>'), '页型徽章须写回执：恢复');
+    assert.ok(text.includes('>饼干记账 · 恢复</p>'), '店头须写唤醒词：恢复');
+    assert.ok(text.includes('>已恢复<'), '状态结论须住印章：恢复');
     assert.ok(env.data.receipt.summary.includes('已恢复'), '摘要须说已恢复');
-    assert.ok(text.includes('已恢复（记录编号 ' + id), '恢复页须印记录编号');
+    assert.ok(text.includes('>已恢复记录 ' + id + '<'), '恢复页纸头须印记录编号');
+    assert.ok(text.includes('已清掉，这一笔已恢复正常'), '恢复结果须说清撤销标记已清');
   });
 });
 
