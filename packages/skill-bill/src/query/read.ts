@@ -25,6 +25,7 @@ import { calcKpi } from '../shared/kpi.js';
 import { calcCategories } from '../analysis/index.js';
 import { toBillItem } from './items.js';
 import { somedayTicketOut } from './ticket-day.js';
+import { emptyTicketOut } from './ticket-empty.js';
 import { accountTicketOut } from './ticketAccount.js';
 import { categoryTicketOut } from './ticketCategory.js';
 import { ledgerTicketOut } from './ticketLedger.js';
@@ -169,22 +170,29 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
         window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records, limit: limit as number,
       });
     }
-    return listOut({
-      key, params, wakeWord: todayWakeWord(params), window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records,
-      extra: { date: 'recent' },
+    // 零行不再回落老列表路：走票据纸空态（形状照 w00 判地，空态句一字不动）。
+    return emptyTicketOut({
+      key, params, wakeWord: todayWakeWord(params), window: '最近 ' + String(limit) + ' 笔（按时间倒序）',
+      date: 'recent',
       emptyText: '库里还没有记录',
       emptyHint: '要记一笔就说「记支出」。',
-      windowStart: NO_WINDOW,
-      windowEnd: NO_WINDOW,
     });
   }
   const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
   const records = listToday(db, date);
-  // w01 查今天 v2.1 票据纸（`w01-查今天-v2.1.html`）：唤醒词是查今天且有数时走本页票据；
-  // 查昨天／查某天／零行仍走老 `listOut` 路（各归各席，空态四句一字不动）。
   const wakeWord = todayWakeWord(params);
   const somedayWord = projectWakeWord({ key: 'bill.record.today', preset: { date } });
-  if (wakeWord === DAY_WAKE_TODAY && records.length > 0) {
+  // 零行：五个场景（查今天／查昨天／查某天／查最近／查账单）同收口到**票据纸空态**（形状照 w00 判地
+  // `proto/query/w00-空态-查某天无记录-v2.1.html`；空态四句一字不动，走 `./ticket-empty.js`）。
+  if (records.length === 0) {
+    const empty = todayEmpty(params);
+    return emptyTicketOut({
+      key, params, wakeWord, window: date + ' 这一天', date,
+      emptyText: empty.emptyText, emptyHint: empty.emptyHint,
+    });
+  }
+  // w01 查今天 v2.1 票据纸（`w01-查今天-v2.1.html`）：唤醒词是查今天（有数）走本页票据。
+  if (wakeWord === DAY_WAKE_TODAY) {
     const ticket = todayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。',
@@ -192,24 +200,23 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
     if (ticket !== null) return ticket;
   }
   const empty = todayEmpty(params);
-  // w02 查昨天 v2.1 票据纸（`w02-查昨天-v2.1.html`）：唤醒词是查昨天且有数时走本页票据；
-  // 查今天／查某天／零行仍走老路（各归各席，空态四句一字不动）。
-  if (wakeWord === DAY_WAKE_YESTERDAY && records.length > 0) {
+  // w02 查昨天 v2.1 票据纸（`w02-查昨天-v2.1.html`）：唤醒词是查昨天（有数）走本页票据。
+  if (wakeWord === DAY_WAKE_YESTERDAY) {
     const ticket = yesterdayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
     });
     if (ticket !== null) return ticket;
   }
-  // w03 查某天 v2.1 票据纸（`w03-查某天-v2.1.html`）：唤醒词是查某天且有数时走本页票据；
-  // 查今天／查昨天／零行仍走老路（各归各席，空态四句一字不动）。
-  if (wakeWord === somedayWord && records.length > 0) {
+  // w03 查某天 v2.1 票据纸（`w03-查某天-v2.1.html`）：唤醒词是查某天（有数）走本页票据。
+  if (wakeWord === somedayWord) {
     const ticket = somedayTicketOut({
       key, params, wakeWord, window: date + ' 这一天', date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
     });
     if (ticket !== null) return ticket;
   }
+  // 兜底只服务「超体积」（上面三条票据出口各自按体积回 null）：零行已在上面收口，不到这里。
   return listOut({
     key, params, wakeWord, window: date + ' 这一天', records,
     extra: { date },

@@ -181,10 +181,14 @@ describe('t417 UI 打磨锁：窗口住副题、笔数进主数字眉标', () =>
     assert.equal(ticketSubOf(text), '账单详情 · 单记录', '副题写页面身份');
     assert.ok(text.includes('>#' + id + '<'), '编号落点行在');
   });
-  it('空态页：仍是老外壳，胶囊共 0 笔，副标题无 ·', () => {
-    const { text } = page('bill.record.today', { date: '2020-01-01' }, 'u-empty');
-    assert.ok(text.includes('>共 0 笔<'), '空态也有笔数胶囊');
-    assert.ok(!subtitleOf(text).includes('·'), '副标题不许有 ·');
+  it('空态页：走票据纸空态（族根 ＋ 裁切线 ＋ 副题写场景），不再回落老外壳', () => {
+    const { text, env } = page('bill.record.today', { date: '2020-01-01' }, 'u-empty');
+    assert.equal(env.data.total, 0, '零行载荷不变');
+    assert.equal(text.split('<div class="ilife-bill-sheet-page').length - 1, 1, '族根恰一枚（#1121：零行切票据纸）');
+    assert.ok(text.includes('✂ 裁切线'), '票据纸空态带裁切线');
+    assert.ok(text.includes('空态 · 0 笔'), '主数字眉标写空态（原「共 0 笔」胶囊随老外壳退役）');
+    assert.equal(ticketSubOf(text), '查某天 · 空窗', '副题写「唤醒词 · 空窗」（形状照 w00 判地）');
+    assert.ok(!text.includes('<p class="ilife-block-page-shell-subtitle">'), '不再出老外壳副题元素（样式表里的选择器不算）');
   });
 });
   it('阻断：空查询 exit 2、空区间 exit 4、无此号 exit 4、缺 id exit 2', () => {

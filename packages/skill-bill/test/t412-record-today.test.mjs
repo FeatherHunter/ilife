@@ -137,7 +137,11 @@ describe('t412 ② 空态四句（空库上四态各一句）', () => {
     assert.ok(text.includes('今天还没有记录'), '今天空文案');
     assert.ok(text.includes('要记一笔就说「记支出」。'), '今天空 hint');
     assert.equal(countTag(text, '<section class="ilife-block ilife-block-empty-block">'), 1, '空态块恰一枚（整段开标签）');
-    assert.equal(countTag(text, '<div class="ilife-block ilife-block-kpi-card">'), 4, '空态页仍有 KPI 行四格');
+    // #1121：零行不再回落老外壳——空态页也是**票据纸**（族根 ＋ 裁切线），老外壳那 4 格 KPI 行与数据表一律不出。
+    assert.equal(countTag(text, '<div class="ilife-bill-sheet-page'), 1, '空态页走票据纸族根');
+    assert.equal(countTag(text, '✂ 裁切线'), 1, '票据纸空态带裁切线');
+    assert.equal(countTag(text, '<div class="ilife-block ilife-block-kpi-card">'), 0, '老外壳 KPI 行不再出现（原断言 4 格）');
+    assert.equal(countTag(text, '<h1 class="ilife-block-page-shell-title">'), 0, '空态页不出老列表 H1');
     assert.equal(countTag(text, '<table class="ilife-block-data-table-table">'), 0, '空态页无数据表');
   });
   it('昨天空：昨天还没有记录', () => {
