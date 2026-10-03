@@ -1,7 +1,7 @@
 # #1074 锁记录导出（协议 §2.3 第 4 条：本票声明过的运行条目抄录，供第三方复核）
 # 源：.scratch/locks/gate-runs.log（未受版本控制）→ 本件受版本控制
 # 抄录范围：ticket=1074 的全部 START／RUN 行（逐行原样，不改一字）
-# 行数：84
+# 行数：114
 START ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 pid=15076 at=2026-10-03T15:40:08.116Z
 RUN ticket=1074 runId=f57dea6c-5c22-44e8-9fe4-e99c866ae7c3 cmd="node .scratch/1074-query/probe-classes.mjs" waitedMs=90072 exit=0 pid=15076 at=2026-10-03T15:40:10.598Z
 START ticket=1074 runId=806d00b7-456d-477a-97b2-7b7dbe6aa485 cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=1 pid=40052 at=2026-10-03T15:44:08.642Z
@@ -86,3 +86,33 @@ START ticket=1074 runId=49f6abea-5d73-4f80-9a15-aebc8b13c5ba cmd="git push origi
 RUN ticket=1074 runId=49f6abea-5d73-4f80-9a15-aebc8b13c5ba cmd="git push origin master" waitedMs=0 exit=0 pid=80036 at=2026-10-03T16:46:39.514Z
 START ticket=1074 runId=aec7a4a7-a6ae-4420-abc8-8c865dc13448 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 pid=78852 at=2026-10-03T16:48:25.408Z
 RUN ticket=1074 runId=aec7a4a7-a6ae-4420-abc8-8c865dc13448 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 exit=0 pid=78852 at=2026-10-03T16:48:25.482Z
+START ticket=1074 runId=a669a77e-5819-47a7-9fa6-6ffe88560843 cmd="git add docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=48448 at=2026-10-03T16:48:41.258Z
+RUN ticket=1074 runId=a669a77e-5819-47a7-9fa6-6ffe88560843 cmd="git add docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=48448 at=2026-10-03T16:48:41.312Z
+START ticket=1074 runId=f5f4429d-c5fe-468b-8084-766dcbb7ccd1 cmd="git commit -F .scratch/1074-query/commit-1074f.txt -- docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 pid=51684 at=2026-10-03T16:48:41.388Z
+RUN ticket=1074 runId=f5f4429d-c5fe-468b-8084-766dcbb7ccd1 cmd="git commit -F .scratch/1074-query/commit-1074f.txt -- docs/skills/skill-bill/1074-query-验收墙.mjs docs/skills/skill-bill/1074-query-复验证据.md docs/skills/skill-bill/1074-query-逐格结论.md docs/skills/skill-bill/1074-锁记录导出.log" waitedMs=0 exit=0 pid=51684 at=2026-10-03T16:48:41.473Z
+START ticket=1074 runId=c0051bf5-c500-4490-87ef-71af74f5fcca cmd="git push origin master" waitedMs=0 pid=72160 at=2026-10-03T16:48:41.528Z
+RUN ticket=1074 runId=c0051bf5-c500-4490-87ef-71af74f5fcca cmd="git push origin master" waitedMs=0 exit=0 pid=72160 at=2026-10-03T16:48:43.710Z
+START ticket=1074 runId=92435b70-15f1-4f25-854c-7c3db715dca4 cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=0 pid=78796 at=2026-10-03T17:20:32.289Z
+RUN ticket=1074 runId=92435b70-15f1-4f25-854c-7c3db715dca4 cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=0 exit=1 pid=78796 at=2026-10-03T17:20:39.559Z
+START ticket=1074 runId=e24387c9-2170-4e12-8f77-9310f6ff8f0e cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 pid=81012 at=2026-10-03T17:20:39.658Z
+RUN ticket=1074 runId=e24387c9-2170-4e12-8f77-9310f6ff8f0e cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 exit=1 pid=81012 at=2026-10-03T17:20:40.287Z
+START ticket=1074 runId=939929f4-a49c-49ec-a40e-de848bcb8531 cmd="node .scratch/1074-query/make-bad-lists.mjs" waitedMs=0 pid=58768 at=2026-10-03T17:20:40.340Z
+RUN ticket=1074 runId=939929f4-a49c-49ec-a40e-de848bcb8531 cmd="node .scratch/1074-query/make-bad-lists.mjs" waitedMs=0 exit=0 pid=58768 at=2026-10-03T17:20:40.463Z
+START ticket=1074 runId=884730a2-acbe-4c15-887f-2afb76d2ee2f cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单 compare-坏.html" waitedMs=0 pid=62796 at=2026-10-03T17:20:40.514Z
+RUN ticket=1074 runId=884730a2-acbe-4c15-887f-2afb76d2ee2f cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单 compare-坏.html" waitedMs=0 exit=1 pid=62796 at=2026-10-03T17:20:41.093Z
+START ticket=1074 runId=5b9fdc6e-465d-447e-b766-2d691abfbe9b cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 pid=2396 at=2026-10-03T17:20:41.147Z
+RUN ticket=1074 runId=5b9fdc6e-465d-447e-b766-2d691abfbe9b cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 exit=1 pid=2396 at=2026-10-03T17:20:41.692Z
+START ticket=1074 runId=0f520077-9a26-400f-b54f-c34922b8509b cmd="node docs/skills/skill-bill/1081-页族总检.mjs --only w00" waitedMs=0 pid=43272 at=2026-10-03T17:20:41.751Z
+RUN ticket=1074 runId=0f520077-9a26-400f-b54f-c34922b8509b cmd="node docs/skills/skill-bill/1081-页族总检.mjs --only w00" waitedMs=0 exit=0 pid=43272 at=2026-10-03T17:20:42.348Z
+START ticket=1074 runId=8eb94343-c9e8-40dd-8d76-3279337e565e cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=0 pid=36416 at=2026-10-03T17:21:07.806Z
+RUN ticket=1074 runId=8eb94343-c9e8-40dd-8d76-3279337e565e cmd="node .scratch/1074-query/run-1074.mjs" waitedMs=0 exit=0 pid=36416 at=2026-10-03T17:21:14.945Z
+START ticket=1074 runId=d3c147d8-b628-4ffd-a09e-b653086f498d cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 pid=15756 at=2026-10-03T17:21:15.032Z
+RUN ticket=1074 runId=d3c147d8-b628-4ffd-a09e-b653086f498d cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query compare-1074-query-17.html" waitedMs=0 exit=0 pid=15756 at=2026-10-03T17:21:15.655Z
+START ticket=1074 runId=a162994c-f4cd-4c94-9e63-99068548284c cmd="node .scratch/1074-query/make-bad-lists.mjs" waitedMs=0 pid=68916 at=2026-10-03T17:21:15.711Z
+RUN ticket=1074 runId=a162994c-f4cd-4c94-9e63-99068548284c cmd="node .scratch/1074-query/make-bad-lists.mjs" waitedMs=0 exit=0 pid=68916 at=2026-10-03T17:21:15.832Z
+START ticket=1074 runId=4a84b58d-b490-446f-95bf-1f7e3872ff6e cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单 compare-坏.html" waitedMs=0 pid=25716 at=2026-10-03T17:21:15.894Z
+RUN ticket=1074 runId=4a84b58d-b490-446f-95bf-1f7e3872ff6e cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单 compare-坏.html" waitedMs=0 exit=1 pid=25716 at=2026-10-03T17:21:16.394Z
+START ticket=1074 runId=5a725ab0-117a-47b4-ba4e-444a45148501 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单2 compare-坏2.html" waitedMs=0 pid=71920 at=2026-10-03T17:21:16.445Z
+RUN ticket=1074 runId=5a725ab0-117a-47b4-ba4e-444a45148501 cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单2 compare-坏2.html" waitedMs=0 exit=1 pid=71920 at=2026-10-03T17:21:16.966Z
+START ticket=1074 runId=c35a6b33-12b8-4b95-a778-638766a1f65f cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 pid=59824 at=2026-10-03T17:21:17.016Z
+RUN ticket=1074 runId=c35a6b33-12b8-4b95-a778-638766a1f65f cmd="node docs/skills/skill-bill/1074-query-验收墙.mjs .scratch/1074-query/坏清单3 compare-坏3.html" waitedMs=0 exit=1 pid=59824 at=2026-10-03T17:21:17.482Z
