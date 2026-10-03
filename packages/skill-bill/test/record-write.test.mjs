@@ -211,7 +211,7 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     assert.deepEqual(env.data.receipt.writtenFields, ['note']);
     const text = pageOf(file);
     // #993 起改记录回执重装为票据纸：唤醒词住店头、改动结论住纸头标题与印章（旧 H1＝唤醒词／「回执」徽章行已撤）。
-    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '>饼干记账 · 改记录</p>', '>备注已改为', '>已改动<', '改后落点', '撤销这一笔']) {
+    for (const needle of ['data-slot="ilife:bill:receipt"', 'data-shape="receipt"', '>饼干记账 · 改记录</p>', '>改好了<', '>已改动<', '改后落点', '撤销这一笔']) {   // #1075：纸头标题改断判地固定句「改好了」（原「>备注已改为」是固定句＋数据的混写，判地不要）
       assert.ok(text.includes(needle), '改记录回执缺：' + needle);
     }
   });

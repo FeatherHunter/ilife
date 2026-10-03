@@ -37,7 +37,7 @@ import { commandLine, writeSection } from '../shared/writeParts.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketPrimaryButton, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
-import { exitCopyOf, landedRows, receiptStamp, receiptTitle } from './receiptSheet.js';   // UNDO_CALIBER 按判地不再上屏（该导出仍在 receiptSheet.ts，未删：本票写集只有本件）
+import { exitCopyOf, landedRows, receiptStamp } from './receiptSheet.js';   // 按判地不再上屏：`receiptTitle`（判地要固定句）与 `UNDO_CALIBER`（判地没有）——两个导出仍在 receiptSheet.ts，未删：本票写集只有本件
 import { collectSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
@@ -264,6 +264,9 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
+/** 纸头标题（判地 `h1`）：三支都是**固定句**（x28「改好了」／x30「已撤销」／x32「已恢复」）；「已撤销记录 2」式混写不要，**记录编号归核对段**（判地核对段就印「编号 N ／ 异常：无」）。 */
+const TITLE_OK: Readonly<Record<string, string>> = { none: '改好了', undo: '已撤销', restore: '已恢复' };   // 逐字取判地
+
 /** 店头副句（判地 `.shop-sub`）：三支各一句，**逐字取判地原型**（x28「已经改好，不用再操作。」／x30「已经撤销，不用再操作。」／x32「已经恢复，不用再操作。」）。 */
 const SUB_OK: Readonly<Record<string, string>> = {
   none: '已经改好，不用再操作。',
@@ -312,7 +315,7 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const envelope = envelopeOf(spec.key, true, receipt.summary);
   const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
   const note = summaryNoteOf(spec, receipt);
-  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, receiptTitle(spec.receiptResult, receipt, input.detail, input.params), SUB_OK[spec.receiptResult] ?? '')
+  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, TITLE_OK[spec.receiptResult] ?? '改好了', SUB_OK[spec.receiptResult] ?? '')
     + ticketRule()
     + ticketSummary(renderSummaryHead(summaryHeadOf(spec, input, receipt)), note === '' ? '' : '<p class="ilife-ticket-summary-note">' + escapeHtml(note) + '</p>')
     + ticketRule()

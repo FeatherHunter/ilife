@@ -162,7 +162,7 @@ describe('t410 · 3条修正词真出口锁（唤醒词起点）', () => {
     assert.ok(text.includes('>饼干记账 · 恢复</p>'), '店头须写唤醒词：恢复');
     assert.ok(text.includes('>已恢复<'), '状态结论须住印章：恢复');
     assert.ok(env.data.receipt.summary.includes('已恢复'), '摘要须说已恢复');
-    assert.ok(text.includes('>已恢复记录 ' + id + '<'), '恢复页纸头须印记录编号');
+    assert.ok(text.includes('>已恢复<') && text.includes('编号 ' + id + ' ／ 异常：无'), '恢复页须印记录编号（#1075 标题改判地固定句后，编号归核对段「编号 N ／ 异常：无」）');
     assert.ok(text.includes('撤销标记已清除，记录回到正常状态'), '恢复页须说清撤销标记已清（判地 .summary-note，#1075 删结果表后改断这一句）');
   });
 });
