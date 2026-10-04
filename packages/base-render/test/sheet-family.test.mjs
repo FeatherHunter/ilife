@@ -120,8 +120,11 @@ describe('单据族 ② 形状（主数字头）', () => {
   });
 
   it('仅给一种脚行槽也出脚行；但**两槽都缺**时不出（避免空容器）', () => {
-    assert.match(renderSummaryHead({ value: '1', note: 'n' }), /-foot">/);
+    // #1133：脚行里**有说明句**时多挂一枚判别子 `has-note`（票据族样式段按它给那段白）；
+    // 只有印章时不挂（产物与加这一支之前逐字节相同）。
+    assert.match(renderSummaryHead({ value: '1', note: 'n' }), /-foot has-note">/);
     assert.match(renderSummaryHead({ value: '1', stamp: { text: 's' } }), /-foot">/);
+    assert.equal(renderSummaryHead({ value: '1', stamp: { text: 's' } }).includes('has-note'), false, '只有印章时不挂判别子');
   });
 
   it('边界：value 必填非空；非法 size／face／tone／非对象 ⇒ BlocksError', () => {

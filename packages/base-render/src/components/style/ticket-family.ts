@@ -62,7 +62,11 @@ const TICKET_CSS_CORE = [
   '.ilife-ticket-summary { padding: 0 0 16px; text-align: center; }',
   '.ilife-ticket-summary .ilife-block-summary-head.is-ticket { padding: 6px 0 0; }',
   '/* 脚行距：公共层列向 flex 的 4px gap 之外补 9px ⇒ 与原型 note 距主数字 10px 同距（实测三档视口一致）。 */',
-  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot { margin-top: 9px; }',
+  /* #1133：那 9px 是**说明句**距主数字的那段白（与原型 note 的 10px 同距）——只给「脚行里有说明句」的行。
+     脚行里只有印章时（印章是绝对定位的）不留这段白：`:not(.has-note)` 显式压 0，压过公共层那条 10px。
+     判别子由 summary-head 渲染器挂（`has-note`），页面件一字不动。 */
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot.has-note { margin-top: 9px; }',
+  '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot:not(.has-note) { margin-top: 0; }',
   '/* 没有脚行小字时，那一枚空槽不占版面（印章是绝对定位的，仍钉在右上角）。 */',
   '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-foot > span:empty { display: none; }',
   '.ilife-ticket-summary .ilife-block-summary-head.is-ticket .ilife-block-summary-head-stamp { font-weight: 900; opacity: .92; }',

@@ -103,7 +103,10 @@ export function renderSummaryHead(input: SummaryHeadInput): string {
       + (tone === undefined ? '' : ' is-' + tone) + '">' + esc(stampText) + '</span>';
   }
   if (note !== undefined || stampHtml !== '') {
-    parts.push('<span class="ilife-block-summary-head-foot">');
+    /* #1133：脚行里**有没有说明句**是一枚判别子（`has-note`）——票据族样式段按它给不留白：
+       只有印章时不占那 9px（判地那枚印章是绝对定位、本来不占位）。**没有说明句时不挂类**
+       （那一路的产物与加这一支之前逐字节相同）。 */
+    parts.push('<span class="ilife-block-summary-head-foot' + (note === undefined ? '' : ' has-note') + '">');
     parts.push(note === undefined ? '<span></span>' : '<span class="ilife-block-summary-head-note">' + esc(note) + '</span>');
     parts.push(stampHtml);
     parts.push('</span>');
