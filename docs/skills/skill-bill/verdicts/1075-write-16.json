@@ -1,0 +1,153 @@
+{
+  "wall": "1075-write-16",
+  "total": 16,
+  "ok": 16,
+  "no": 0,
+  "unjudged": 0,
+  "items": [
+    {
+      "wall": "1075-write-16",
+      "seq": 1,
+      "wake": "记支出",
+      "prod": "x02-真跑.html",
+      "proto": "x02-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 2,
+      "wake": "记收入",
+      "prod": "x04-真跑.html",
+      "proto": "x04-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 3,
+      "wake": "拍账单",
+      "prod": "x06-真跑.html",
+      "proto": "x06-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 4,
+      "wake": "批量录入",
+      "prod": "x08-真跑.html",
+      "proto": "x08-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 5,
+      "wake": "记退款",
+      "prod": "x10-真跑.html",
+      "proto": "x10-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 6,
+      "wake": "记报销",
+      "prod": "x12-真跑.html",
+      "proto": "x12-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 7,
+      "wake": "报销到账",
+      "prod": "x14-真跑.html",
+      "proto": "x14-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 8,
+      "wake": "记借出",
+      "prod": "x16-真跑.html",
+      "proto": "x16-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 9,
+      "wake": "记借入",
+      "prod": "x18-真跑.html",
+      "proto": "x18-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 10,
+      "wake": "记收回",
+      "prod": "x20-真跑.html",
+      "proto": "x20-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 11,
+      "wake": "记偿还",
+      "prod": "x22-真跑.html",
+      "proto": "x22-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 12,
+      "wake": "记分期",
+      "prod": "x24-真跑.html",
+      "proto": "x24-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 13,
+      "wake": "记一笔",
+      "prod": "x26-真跑.html",
+      "proto": "x26-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 14,
+      "wake": "改记录",
+      "prod": "x28-真跑.html",
+      "proto": "x28-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 15,
+      "wake": "撤销",
+      "prod": "x30-真跑.html",
+      "proto": "x30-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1075-write-16",
+      "seq": 16,
+      "wake": "恢复",
+      "prod": "x32-真跑.html",
+      "proto": "x32-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    }
+  ]
+}
