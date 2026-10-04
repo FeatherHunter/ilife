@@ -94,7 +94,10 @@ const TICKET_CSS_CORE = [
   '.ilife-ticket-entries > li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dotted var(--ilife-line); font-size: 14px; min-height: 44px; line-height: 1.55; }',
   '.ilife-ticket-entries > li:last-child { border-bottom: 0; }',
   '.ilife-ticket-entries > li::before { counter-increment: ilife-ticket-row; content: counter(ilife-ticket-row); flex: 0 0 22px; height: 22px; margin-top: 1px; border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-tag, var(--ilife-radius-sm)); background: var(--ilife-surface-2); color: var(--ilife-ink-3); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }',
-  '.ilife-ticket-entry-text { flex: 1 1 auto; overflow-wrap: anywhere; word-break: break-all; }',
+  // #1126：明细行文本不收缩＝flex 子项 min-width:auto 的自动最小尺寸在撑，长「备注 · …」被右缘裁掉。
+  // 照判地原型同位置那份写法定死（`proto/query/w03-查某天-v2.1.html` 的 `.entry-text{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}`）：
+  // 补 `min-width: 0`（告警线口径：一处规则一处改，别自创别的招）。
+  '.ilife-ticket-entry-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; word-break: break-all; }',
   '.ilife-ticket-entries > li.is-pay { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-sm); background: var(--ilife-surface); }',
   '.ilife-ticket-entries > li.is-pay .ilife-ticket-entry-text { font-size: 15px; font-weight: 800; }',
   '.ilife-ticket-entries > li.is-pay::before { background: var(--ilife-ink); border-color: var(--ilife-ink); color: var(--ilife-surface); }',
