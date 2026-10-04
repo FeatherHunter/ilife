@@ -1,0 +1,126 @@
+{
+  "wall": "1077-acct-13",
+  "total": 13,
+  "ok": 0,
+  "no": 13,
+  "unjudged": 0,
+  "items": [
+    {
+      "wall": "1077-acct-13",
+      "seq": 1,
+      "wake": "新增账户-采集",
+      "prod": "b01-真跑.html",
+      "proto": "b01-原型.html",
+      "verdict": "no",
+      "reason": "待填区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 2,
+      "wake": "新增账户-回执",
+      "prod": "b02-真跑.html",
+      "proto": "b02-原型.html",
+      "verdict": "no",
+      "reason": "明细 DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 3,
+      "wake": "改账户-采集",
+      "prod": "b03-真跑.html",
+      "proto": "b03-原型.html",
+      "verdict": "no",
+      "reason": "待填区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 4,
+      "wake": "改账户-回执",
+      "prod": "b04-真跑.html",
+      "proto": "b04-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 5,
+      "wake": "账户转账-采集",
+      "prod": "b05-真跑.html",
+      "proto": "b05-原型.html",
+      "verdict": "no",
+      "reason": "待填区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 6,
+      "wake": "账户转账-回执",
+      "prod": "b06-真跑.html",
+      "proto": "b06-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 7,
+      "wake": "看账户汇总",
+      "prod": "b07-真跑.html",
+      "proto": "b07-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 8,
+      "wake": "设定预算-采集",
+      "prod": "g01-真跑.html",
+      "proto": "g01-原型.html",
+      "verdict": "no",
+      "reason": "待填区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 9,
+      "wake": "设定预算-回执",
+      "prod": "g02-真跑.html",
+      "proto": "g02-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 10,
+      "wake": "设定目标-采集",
+      "prod": "g03-真跑.html",
+      "proto": "g03-原型.html",
+      "verdict": "no",
+      "reason": "待填区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 11,
+      "wake": "设定目标-回执",
+      "prod": "g04-真跑.html",
+      "proto": "g04-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 12,
+      "wake": "看预算",
+      "prod": "g05-真跑.html",
+      "proto": "g05-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    },
+    {
+      "wall": "1077-acct-13",
+      "seq": 13,
+      "wake": "看目标",
+      "prod": "g06-真跑.html",
+      "proto": "g06-原型.html",
+      "verdict": "no",
+      "reason": "DETAIL 区域不够还原"
+    }
+  ]
+}

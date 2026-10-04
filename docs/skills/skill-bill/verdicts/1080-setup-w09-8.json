@@ -1,0 +1,81 @@
+{
+  "wall": "#1080-setup-w09-8",
+  "total": 8,
+  "ok": 8,
+  "no": 0,
+  "unjudged": 0,
+  "items": [
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s01",
+      "wake": "初始化",
+      "prod": "s01-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s01-初始化-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s02",
+      "wake": "初始化状态",
+      "prod": "s02-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s02-初始化状态-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s03",
+      "wake": "一键备份",
+      "prod": "s03-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s03-一键备份-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s04",
+      "wake": "查看备份",
+      "prod": "s04-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s04-查看备份-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s05",
+      "wake": "恢复备份",
+      "prod": "s05-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s05-恢复备份-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "s06",
+      "wake": "导入",
+      "prod": "s06-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/s06-导入-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "h02",
+      "wake": "速查表",
+      "prod": "h02-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/setup-help/h02-速查表-v2.4.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "#1080-setup-w09-8",
+      "seq": "w09",
+      "wake": "查分类",
+      "prod": "w09-真跑.html",
+      "proto": "../../../docs/skills/skill-bill/proto/w09/w09-查分类-v2.2.html",
+      "verdict": "ok",
+      "reason": ""
+    }
+  ]
+}

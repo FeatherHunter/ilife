@@ -1,0 +1,234 @@
+{
+  "wall": "1076-analysis-25",
+  "total": 25,
+  "ok": 12,
+  "no": 13,
+  "unjudged": 0,
+  "items": [
+    {
+      "wall": "1076-analysis-25",
+      "seq": 1,
+      "wake": "看月度",
+      "prod": "a01-真跑.html",
+      "proto": "a01-原型.html",
+      "verdict": "no",
+      "reason": "明细卡 的 进度条 左侧空白有些大了。"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 2,
+      "wake": "看年度",
+      "prod": "a02-真跑.html",
+      "proto": "a02-原型.html",
+      "verdict": "no",
+      "reason": "明细卡 进度条左侧空白有些大了，可以截图你视觉评审下感受下问题在哪儿"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 3,
+      "wake": "看总览",
+      "prod": "a03-真跑.html",
+      "proto": "a03-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 4,
+      "wake": "看周报",
+      "prod": "a04-真跑.html",
+      "proto": "a04-原型.html",
+      "verdict": "no",
+      "reason": "明新卡的进度条都完全看不见了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 5,
+      "wake": "看分类",
+      "prod": "a05-真跑.html",
+      "proto": "a05-原型.html",
+      "verdict": "no",
+      "reason": "明新卡的进度条都完全看不见了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 6,
+      "wake": "看账户",
+      "prod": "a06-真跑.html",
+      "proto": "a06-原型.html",
+      "verdict": "no",
+      "reason": "明新卡的进度条都完全看不见了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 7,
+      "wake": "看账本",
+      "prod": "a07-真跑.html",
+      "proto": "a07-原型.html",
+      "verdict": "no",
+      "reason": "明新卡的进度条都完全看不见了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 8,
+      "wake": "看结构",
+      "prod": "a08-真跑.html",
+      "proto": "a08-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 9,
+      "wake": "做统计",
+      "prod": "a09-真跑.html",
+      "proto": "a09-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 10,
+      "wake": "看对比",
+      "prod": "a10-真跑.html",
+      "proto": "a10-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 11,
+      "wake": "看双区间",
+      "prod": "a11-真跑.html",
+      "proto": "a11-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 12,
+      "wake": "看同比",
+      "prod": "a12-真跑.html",
+      "proto": "a12-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 13,
+      "wake": "看分类对比",
+      "prod": "a13-真跑.html",
+      "proto": "a13-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 14,
+      "wake": "看趋势",
+      "prod": "a14-真跑.html",
+      "proto": "a14-原型.html",
+      "verdict": "no",
+      "reason": "走势图的曲线图的x轴文字折叠了，看看是否可以做成，这个折线图可以交互，比如点某个点，可以看到x轴文字？或者高亮？你自己思考，从设计师角度"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 15,
+      "wake": "看分类趋势",
+      "prod": "a15-真跑.html",
+      "proto": "a15-原型.html",
+      "verdict": "no",
+      "reason": "餐饮 逐月支出 这个 柱状图 左侧空白太大，导致页面利用率低"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 16,
+      "wake": "看大额",
+      "prod": "a16-真跑.html",
+      "proto": "a16-原型.html",
+      "verdict": "no",
+      "reason": "没折线图"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 17,
+      "wake": "看高频",
+      "prod": "a17-真跑.html",
+      "proto": "a17-原型.html",
+      "verdict": "no",
+      "reason": "没折线图"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 18,
+      "wake": "看分布",
+      "prod": "a18-真跑.html",
+      "proto": "a18-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 19,
+      "wake": "看活跃",
+      "prod": "a19-真跑.html",
+      "proto": "a19-原型.html",
+      "verdict": "no",
+      "reason": "明细卡 的 进度条 左侧空白有些太大了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 20,
+      "wake": "看洞察",
+      "prod": "a20-真跑.html",
+      "proto": "a20-原型.html",
+      "verdict": "no",
+      "reason": "明细卡 的 进度条 左侧空白有些太大了"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 21,
+      "wake": "看异常",
+      "prod": "a21-真跑.html",
+      "proto": "a21-原型.html",
+      "verdict": "no",
+      "reason": "折线图的页面都一个问题"
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 22,
+      "wake": "看借贷",
+      "prod": "a22-真跑.html",
+      "proto": "a22-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 23,
+      "wake": "看报销",
+      "prod": "a23-真跑.html",
+      "proto": "a23-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 24,
+      "wake": "看分期",
+      "prod": "a24-真跑.html",
+      "proto": "a24-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1076-analysis-25",
+      "seq": 25,
+      "wake": "看退款",
+      "prod": "a25-真跑.html",
+      "proto": "a25-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    }
+  ]
+}
