@@ -72,7 +72,8 @@ export const SCENE: AccountWriteScene = {
       rows: transferRows(input.params),
       note: '要核对就去账本里看这两笔：分类「转账/转出」与「转账/转入」，备注里带着对方账户名。',
     }),
-    receiptNote: '',
+    /* #1131：判地主数字下那一行是固定句（转账口径）——逐字 `转出与转入各记一笔 · 转账不计入收支`。 */
+    receiptNote: () => '转出与转入各记一笔 · 转账不计入收支',
     detailCaption: '写进去的项',
     logDetail: (input) => '转账 ' + textOrDash(input.params['from']) + ' → ' + textOrDash(input.params['to'])
       + '，落了两笔（转出负数 ＋ 转入正数），账本记成「转账」',

@@ -50,7 +50,10 @@ export const SCENE: AccountWriteScene = {
       { label: '现在一共有几个账户', value: String(input.receipt.accountCount) + ' 个', detail: '都在账户表里' },
     ],
     result: () => null,
-    receiptNote: '',
+    /* #1131：判地主数字下那一行是「账户已新增 ＋ 类型」；类型按数据投影（判地逐字：`账户已新增 · 银行卡`）。 */
+    receiptNote: (input) => '账户已新增'
+      + (input.receipt.after === null ? ''
+        : ' · ' + (input.receipt.after.type.trim() === '' ? '—' : input.receipt.after.type)),
     detailCaption: '写进去的账户',
     logDetail: (input) => '新增账户 ' + textOrDash(input.params['name'])
       + '，账户表现在 ' + String(input.receipt.accountCount) + ' 个',

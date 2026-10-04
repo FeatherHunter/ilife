@@ -26,7 +26,8 @@ import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS } from './params.js';
 import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
-import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
+import { textOf } from '../shared/params.js';
+import type { AccountCollectInput, AccountReceipt, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -62,8 +63,9 @@ export interface AccountFormSpec {
     readonly rows: readonly { readonly k: string; readonly v: string }[];
     readonly note: string;
   } | null;
-  /** 回执页主数字那一段的小字（判地逐页一句）。 */
-  readonly receiptNote: string;
+  /** 回执页主数字那一段的小字（判地逐页一句）。**按数据投影**时就写成函数（#1131：新增页要带类型；
+   *  与改账户页同一手法，判地那两句都是逐页固定句）。 */
+  readonly receiptNote: (input: AccountReceiptInput) => string;
   /** 回执页明细表的标题（**本件已不读**：段标题按页型给）。 */
   readonly detailCaption: string;
   /** 回执页复制日志第 4 段后半（这一页干了什么）。 */
@@ -213,6 +215,25 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
   });
 }
 
+/** 回执页**店头那一行**（判地 H2）——#1131：按判地给**固定句**，与载荷那句话各按各的。
+ *
+ *  判地两处本来就不是同一句：店头是短句（`已新增账户「招行卡」`／`已转账 支付宝 → 招行工资卡`），
+ *  而**复制区／载荷 `message` 是长句**（带「账户表现在 N 个」／带金额与「转出与转入各一笔，不算进收支」）。
+ *  本件因此只改**上屏那一行**：`envelope`／`buildDataText` 仍读 `receipt.summary`（长句）——事实一项不丢。
+ *
+ *  - `add`：`已新增账户「<名>」`；账户总数不进店头（它住在载荷 `message` 与复制日志里，判地同款）；
+ *  - `transfer`：`已转账 <转出> → <转入>`；金额在主数字段、口径句在载荷 `message`；
+ *  - 其余 op（含 `update` 已收的改名句）与加这一支之前**逐字节相同**：原样用 `receipt.summary`。 */
+function receiptHeadline(receipt: AccountReceipt, params: Record<string, unknown>): string {
+  if (receipt.op === 'add' && receipt.after !== null) return '已新增账户「' + receipt.after.name + '」';
+  if (receipt.op === 'transfer') {
+    const from = textOf(params['from']);
+    const to = textOf(params['to']);
+    if (from !== '' && to !== '') return '已转账 ' + from + ' → ' + to;
+  }
+  return receipt.summary;
+}
+
 /** 结果型回执页（④）：写库成功后出这一页（写库那一半在 `./write.js`）。 */
 function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string {
   const { receipt } = input;
@@ -222,13 +243,13 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
   return receiptSheetPage({
     docTitle: DOC_TITLE + '·写库回执',
     brand: '饼干记账 · ' + spec.word,
-    title: receipt.summary,
+    title: receiptHeadline(receipt, input.params),
     subtitle: spec.word + ' · 回执',
     summary: {
       eyebrow: receipt.noChange ? '没改动' : '已记好',
       value: isTransfer ? money(Number(input.params['amount'])) : String(receipt.affectedRows),
       unit: isTransfer ? '元' : '处',
-      note: spec.receiptNote,
+      note: spec.receiptNote(input),
       ...(receipt.noChange ? {} : { stamp: '有效' }),
     },
     ledgerTitle: '账户落点',
