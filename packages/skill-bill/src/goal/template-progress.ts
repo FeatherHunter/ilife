@@ -16,7 +16,7 @@
  *  `bindGoalProgressPage(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
@@ -94,7 +94,8 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
     const b = e.budgets[0];
     const projection = b.month_end_proj === null ? '' : money(b.month_end_proj);
     return [
-      { title: '总预算 ' + money(b.amount), sub: '上限（金额仅此一处）' },
+      // 判地：首行一枚占比条＝当月已用比例（与主数字同一个百分数）。
+      { title: '总预算 ' + money(b.amount), sub: '上限（金额仅此一处）', bar: { pct: b.amount <= 0 ? 0 : Math.round((b.actual / b.amount) * 1000) / 10 } },
       { title: '实际支出 ' + money(b.actual) + ' ｜ ' + String(b.count) + ' 笔', sub: '当月所有支出都在内' },
       {
         title: (b.remaining >= 0 ? '剩余 ' + money(b.remaining) : '超出 ' + money(Math.abs(b.remaining)) + ' 元')
@@ -107,7 +108,8 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
   const one = s?.savings[0];
   if (s === null || one === undefined) return [];
   return [
-    { title: one.name + ' ｜ 总额 ' + money(one.amount), sub: '存够就算达成' },
+    // 判地：首行一枚占比条＝已存进度（与主数字同一个百分数）。
+    { title: one.name + ' ｜ 总额 ' + money(one.amount), sub: '存够就算达成', bar: { pct: one.amount <= 0 ? 0 : Math.round((one.saved / one.amount) * 1000) / 10 } },
     { title: '累计已存 ' + money(one.saved), sub: '相当于总额的进度见主数字' },
     { title: '还差 ' + money(one.remaining) },
     {
@@ -170,7 +172,7 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

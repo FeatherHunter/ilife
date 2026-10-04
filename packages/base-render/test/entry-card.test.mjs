@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  ENTRY_CARD_BAR_PX,
   ENTRY_CARD_CLASS,
   ENTRY_CARD_IDX_BOX_PX,
   ENTRY_CARD_IDX_RADIUS_PX,
@@ -99,8 +100,9 @@ function stripVarFns(css) {
 const hexesOf = (css) => [...new Set([...stripVarFns(stripComments(css)).matchAll(/#[0-9a-fA-F]{3,8}\b/g)]
   .map((m) => m[0]))].sort();
 
-/** 判地授权照抄的那 6 颗色（#1114 逐处授权；每一处的上一行必须压着那句注释）。 */
-const AUTHORIZED_HEX = ['#fbf7ec', '#eee6d2', '#fff8ee', '#f0d9bd', '#f4efe2', '#8a857a'];
+/** 判地授权照抄的那 7 颗色（#1114 逐处授权；#1131 增 `#d9cdb4`＝负值条的虚线空框；
+ *  每一处的上一行必须压着那句注释）。 */
+const AUTHORIZED_HEX = ['#fbf7ec', '#eee6d2', '#fff8ee', '#f0d9bd', '#f4efe2', '#8a857a', '#d9cdb4'];
 /** 判地那支等宽栈（原型 `--mono` 的取值；规格 §5 第 5 组「照原型抄」）。 */
 const MONO_FROM_JUDGE = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
 
@@ -149,7 +151,7 @@ const EVIL = '<img src=x onerror=alert(1)>&"\'<>';
 
 describe('entry-card ① 渲染契约', () => {
   it('一张卡 ＝ `<div>` 抱住 `<ol>`；一行 ＝ 编号胶囊 ＋ 正文（主行 ＋ 次行）＋ 金额', () => {
-    assert.deepEqual([...ENTRY_CARD_SLOTS], ['rows', 'row', 'pay', 'idx', 'text', 'sub', 'mono', 'amt']);
+    assert.deepEqual([...ENTRY_CARD_SLOTS], ['rows', 'row', 'pay', 'idx', 'text', 'sub', 'mono', 'amt', 'bar', 'bar-neg']);
     const html = renderEntryCard(FULL);
     assert.ok(html.startsWith('<div class="' + ENTRY_CARD_CLASS + '"><ol class="' + entryCardSlot('rows') + '">'),
       '根是卡 div ＋ 表 ol');
@@ -284,7 +286,7 @@ describe('entry-card ② 样式与零 DOM 纪律', () => {
   it('皮肤只经 `skinVar()` 读：产物里每处 `var(--ilife-…)` 都在名单里、且都带兜底链', () => {
     const code = stripComments(entryCardCss());
     const names = [...new Set([...code.matchAll(/var\(--ilife-([a-z0-9-]+)/g)].map((m) => m[1]))].sort();
-    assert.deepEqual(names, ['ink-2', 'line', 'radius-card', 'radius-tag'],
+    assert.deepEqual(names, ['accent', 'ink-2', 'line', 'radius-card', 'radius-tag'],
       '本件读的就是这四支（边线 ＋ 次行字色 ＋ 卡底圆角 ＋ 编号胶囊圆角；后两支 #1113 起从\n       「授权照抄」字面改成皮肤读法）');
     for (const n of names) {
       assert.ok(SKIN_TOKEN_NAMES.includes(n), '名单外的 token：' + n);
@@ -384,14 +386,15 @@ describe('entry-card ④ 判地几何', () => {
     console.log('读数：授权照抄的字面 ' + String(hits) + ' 处（' + AUTHORIZED_HEX.join('、') + '），逐处上头都有授权那句话');
   });
 
-  it('圆角只有判地那三档（12 ／ 10 ／ 7），没有第四个数', () => {
+  it('圆角只有判地那几档（12 ／ 10 ／ 7 ／ 999），没有多余的数', () => {
     const css = stripComments(entryCardCss());
     const radii = [...css.matchAll(/border-radius:\s*([^;]+);/g)].map((m) => m[1].trim());
     /* #1113：卡底与编号胶囊两档改读皮肤号（`radius-card`／`radius-tag`），实付行仍是"授权照抄"字面；
-       三处的**判定值**仍是判地那三档——判地值由下面那条向皮肤取值表对账。 */
-    assert.deepEqual(radii, [skinVar('radius-card'), ENTRY_CARD_PAY_RADIUS_PX + 'px', skinVar('radius-tag')],
-      '圆角三处：卡底 ／ 实付行 ／ 编号胶囊');
-    console.log('读数：圆角三处 —— ' + radii.join(' ／ '));
+       #1131：bar 槽两处 999px（判地 `.pbar{border-radius:999px}` 的轨与填充）——第四档。
+       各档的**判定值**仍与判地逐条对账：前两档走皮肤取值表、后三档是授权字面。 */
+    assert.deepEqual(radii, [skinVar('radius-card'), ENTRY_CARD_PAY_RADIUS_PX + 'px', skinVar('radius-tag'), '999px', '999px'],
+      '圆角五处：卡底 ／ 实付行 ／ 编号胶囊 ／ bar 轨 ／ bar 填充');
+    console.log('读数：圆角五处 —— ' + radii.join(' ／ '));
   });
 
   it('#1113：`radius-card`／`radius-tag` 的票据纸取值与判地逐字节同（12px／7px），兜底尾巴也是它们', () => {

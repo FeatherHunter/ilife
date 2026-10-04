@@ -32,6 +32,8 @@ export const ENTRY_CARD_IDX_RADIUS_PX = 7;
 export const ENTRY_CARD_RADIUS_PX = 12;
 /** 实付行圆角（px）：判地 `.entry-rows li.pay{border-radius:10px}`（同理，逐字照抄）。 */
 export const ENTRY_CARD_PAY_RADIUS_PX = 10;
+/** 占比条／负值条的高度（px）：判地 `.pbar{height:8px}`。 */
+export const ENTRY_CARD_BAR_PX = 8;
 /** 判地那支等宽栈（原型 `--mono`）：规格 §5 第 5 组「照原型抄」——`.amt` 与时间戳走它。 */
 export const ENTRY_CARD_MONO_STACK = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
 
@@ -119,6 +121,29 @@ export function entryCardCss(input?: { readonly prefix?: string }): string {
     '/* 判地 `.entry-sub .mono{font-family:var(--mono)}`：次行里的等宽片段（规格 §5 第 5 组：照原型抄）。 */',
     s('sub') + ' > ' + b('mono') + ' {',
     '  font-family: ' + ENTRY_CARD_MONO_STACK + ';',
+    '}',
+    '/* 判地 `.pbar`：正文列底下那一枚占比条（8px 轨 ＋ 圆头填充）；位置在 `-sub` 之后、同住 `-text`。 */',
+    s('bar') + ' {',
+    '  height: ' + String(ENTRY_CARD_BAR_PX) + 'px;',
+    '  border-radius: 999px;',
+    '  background: ' + skinVar('line') + ';',
+    '  overflow: hidden;',
+    '  margin-top: 8px;',
+    '}',
+    s('bar') + ' > i {',
+    '  display: block;',
+    '  height: 100%;',
+    '  border-radius: 999px;',
+    '  background: ' + skinVar('accent') + ';',
+    '}',
+    '/* 判地 `.pbar.neg`：余额为负那一档——底透明 ＋ 虚线空框，**实条不画**（M5「负值不画实条，只留数」）。 */',
+    s('bar') + b('bar-neg') + ' {',
+    '  background: transparent;',
+    '  /* 判地字面 · 授权照抄：#d9cdb4（负值条的虚线空框） */',
+    '  border: 1px dashed #d9cdb4;',
+    '}',
+    s('bar') + b('bar-neg') + ' > i {',
+    '  background: none;',
     '}',
     s('amt') + ' {',
     '  font-family: ' + ENTRY_CARD_MONO_STACK + ';',

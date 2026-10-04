@@ -21,7 +21,7 @@ import { assertDenseArray, assertPlainObject, badInput, optText, reqText } from 
 /** 本件的类名根（**常量只住这里**：样式从这里取，不各写一份）。 */
 export const ENTRY_CARD_CLASS = 'ilife-block-entry-card';
 /** 槽位闭集（表 ・ 行 ・ 实付行 ・ 编号胶囊 ・ 正文 ・ 次行 ・ 等宽片段 ・ 金额）。 */
-export const ENTRY_CARD_SLOTS = ['rows', 'row', 'pay', 'idx', 'text', 'sub', 'mono', 'amt'] as const;
+export const ENTRY_CARD_SLOTS = ['rows', 'row', 'pay', 'idx', 'text', 'sub', 'mono', 'amt', 'bar', 'bar-neg'] as const;
 export type EntryCardSlot = (typeof ENTRY_CARD_SLOTS)[number];
 /** 槽类名（唯一拼法）。 */
 export function entryCardSlot(slot: EntryCardSlot, prefix = 'ilife-'): string {
@@ -44,6 +44,15 @@ export interface EntryCardEntry {
   readonly amount?: string;
   /** 实付那一行：整行出一层高亮底 ＋ 描边（判地 `li.pay`）。 */
   readonly pay?: boolean;
+  /** 那一行正文列底下的一枚**占比条／负值条**（判地 `.pbar`）：`pct` 由调用方按本页口径算好
+   *  （一位小数，与判地同法），本件只管画；`neg` ＝ 余额为负那一档（判地 `.pbar.neg`：
+   *  虚线空框、不画实条——M5「负值不画实条，只留数」）。不给＝不出这一枚（老调用方逐字节不变）。 */
+  readonly bar?: EntryCardBar;
+}
+/** 占比条（`-bar` 槽）的取值：`pct` 是百分比数（如 18.5 ＝ `width:18.5%`）。 */
+export interface EntryCardBar {
+  readonly pct: number;
+  readonly neg?: boolean;
 }
 /** entry-card 入参（一位：一串明细）。 */
 export interface EntryCardInput {
@@ -59,6 +68,7 @@ export interface EntryCardEntryModel {
   readonly subHtml?: string;
   readonly amount?: string;
   readonly pay: boolean;
+  readonly bar?: { readonly pct: number; readonly neg: boolean };
 }
 /** 归一化后的入参（内部形态）。 */
 export interface EntryCardModel {
@@ -67,7 +77,9 @@ export interface EntryCardModel {
 /** 根对象只许带的键（未知键一律拒：静默吞掉＝调用方拼错字段名还绿）。 */
 const ROOT_KEYS: readonly string[] = ['entries'];
 /** 一条明细只许带的键。 */
-const ENTRY_KEYS: readonly string[] = ['index', 'title', 'sub', 'subMono', 'subHtml', 'amount', 'pay'];
+const ENTRY_KEYS: readonly string[] = ['index', 'title', 'sub', 'subMono', 'subHtml', 'amount', 'pay', 'bar'];
+/** `bar` 只许带的键。 */
+const BAR_KEYS: readonly string[] = ['pct', 'neg'];
 
 function assertKeys(value: object, allowed: readonly string[], field: string): void {
   for (const key of Object.keys(value)) {
@@ -115,6 +127,7 @@ function normalizeEntry(one: unknown, i: number): EntryCardEntryModel {
     const closed = /<\/(?:li|ol|div)\b/i.exec(subHtml);
     if (closed !== null) badInput(at + '.subHtml 不许含 ' + closed[0] + '（那会把外层标签提前关掉）');
   }
+  const bar = normBar(raw.bar, at + '.bar');
   return {
     index: normIndex(raw.index, at + '.index') ?? String(i + 1),
     title: reqText(raw.title, at + '.title'),
@@ -123,6 +136,7 @@ function normalizeEntry(one: unknown, i: number): EntryCardEntryModel {
     subHtml,
     amount: optText(raw.amount, at + '.amount'),
     pay: optBool(raw.pay, at + '.pay') === true,
+    ...(bar === undefined ? {} : { bar }),
   };
 }
 /** 入参归一化（唯一入口：`renderEntryCard` 只吃它产出的模型）。 */
@@ -139,6 +153,21 @@ export function normalizeEntryCard(input: unknown): EntryCardModel {
   const entries = (list as readonly unknown[]).map((one, i) => normalizeEntry(one, i));
   return { entries };
 }
+/** 占比条（`bar` 那一格）：`pct` 须是**有限非负数**（0 合法＝空条；>100 照画、由条的 `overflow` 裁掉）；
+ *  `neg` 须是布尔或缺省；对象里出现别的键一律拒（静默吞掉＝调用方拼错字段名还绿）。 */
+function normBar(value: unknown, field: string): { readonly pct: number; readonly neg: boolean } | undefined {
+  if (value === undefined) return undefined;
+  assertPlainObject(value, field);
+  const raw = value as Record<string, unknown>;
+  for (const k of Object.keys(raw)) if (/^on/i.test(k)) badInput(field + ' 不得含内联事件字段：' + k);
+  assertKeys(raw, BAR_KEYS, field);
+  const pct = raw.pct;
+  if (typeof pct !== 'number' || !Number.isFinite(pct) || pct < 0) {
+    badInput(field + '.pct 必须是有限的非负数（百分比，如 18.5）：' + JSON.stringify(pct));
+  }
+  return { pct, neg: optBool(raw.neg, field + '.neg') === true };
+}
+
 /** 次行那一格（纯文本 ＋ 等宽片段，或整段透传；三样都不给就不出这一格）。 */
 function subLine(e: EntryCardEntryModel): string {
   if (e.subHtml !== undefined) return '<span class="' + entryCardSlot('sub') + '">' + e.subHtml + '</span>';
@@ -148,6 +177,13 @@ function subLine(e: EntryCardEntryModel): string {
   return '<span class="' + entryCardSlot('sub') + '">'
     + (e.sub === undefined ? '' : esc(e.sub)) + mono + '</span>';
 }
+/** 占比条那一枚（判地 `<div class="pbar[ neg]"><i style="width:X%">`；位置在 `-sub` **之后同层**、都住 `-text` 里）。 */
+function barLine(e: EntryCardEntryModel): string {
+  if (e.bar === undefined) return '';
+  const cls = entryCardSlot('bar') + (e.bar.neg ? ' ' + entryCardSlot('bar-neg') : '');
+  return '<div class="' + cls + '"><i style="width:' + String(e.bar.pct) + '%"></i></div>';
+}
+
 /** 渲染一张卡（纯函数：同样入参恒产同样字节；只有读数面经 `esc`，`subHtml` 原样透传）。 */
 export function renderEntryCard(input: unknown): string {
   const m = normalizeEntryCard(input);
@@ -155,7 +191,7 @@ export function renderEntryCard(input: unknown): string {
     const cls = entryCardSlot('row') + (e.pay ? ' ' + entryCardSlot('pay') : '');
     return '<li class="' + cls + '">'
       + '<span class="' + entryCardSlot('idx') + '">' + esc(e.index) + '</span>'
-      + '<span class="' + entryCardSlot('text') + '">' + esc(e.title) + subLine(e) + '</span>'
+      + '<span class="' + entryCardSlot('text') + '">' + esc(e.title) + subLine(e) + barLine(e) + '</span>'
       + (e.amount === undefined ? '' : '<span class="' + entryCardSlot('amt') + '">' + esc(e.amount) + '</span>')
       + '</li>';
   }).join('');

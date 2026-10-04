@@ -15,6 +15,7 @@ export {
   renderEntryCard,
 } from './render.js';
 export type {
+  EntryCardBar,
   EntryCardEntry,
   EntryCardEntryModel,
   EntryCardInput,
@@ -22,6 +23,7 @@ export type {
   EntryCardSlot,
 } from './render.js';
 export {
+  ENTRY_CARD_BAR_PX,
   ENTRY_CARD_IDX_BOX_PX,
   ENTRY_CARD_IDX_RADIUS_PX,
   ENTRY_CARD_MONO_STACK,

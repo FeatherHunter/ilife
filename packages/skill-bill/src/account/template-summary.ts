@@ -15,7 +15,7 @@
  * 谁在用（一个调用点，指名）：`src/account/read.ts`——`viewAccountSummary` 装配入参后调 `accountSummaryDoc`。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
@@ -73,11 +73,15 @@ function ledgerOf(s: AccountSummary): readonly TicketSheetRow[] {
 
 /** 中段那一串行（判地：每户一行「账户 ｜ 余额 X」＋ 说明；末尾两行总收入／总支出）。 */
 function detailRowsOf(s: AccountSummary): readonly EntryCardEntry[] {
+  /** 占比条的分母＝本页余额绝对值最大那一户（判地 M4「相对最大户口径」；全 0 时不画实条）。 */
+  const maxAbs = s.accounts.reduce((m, a) => Math.max(m, Math.abs(a.balance)), 0);
   const rows: EntryCardEntry[] = s.accounts.map((a) => {
     const marks = [a.type.trim() === '' ? '—' : a.type, a.disabled ? '已停用' : a.registered ? '已注册' : '没登记'];
     return {
       title: a.name + ' ｜ 余额 ' + money(a.balance),
       sub: marks.join(' · ') + ' ｜ ' + String(a.count) + ' 笔 · 末笔见落点时间',
+      // 判地：每户一枚占比条；余额为负那一档走 neg（虚线空框、不画实条，M5）。
+      bar: { pct: maxAbs <= 0 ? 0 : Math.round((Math.abs(a.balance) / maxAbs) * 1000) / 10, neg: a.balance < 0 },
     };
   });
   rows.push({
@@ -136,7 +140,7 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
       source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
     }),
     foot: '饼干记账 · ' + input.wakeWord,
-    styleHtml: '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });
 }

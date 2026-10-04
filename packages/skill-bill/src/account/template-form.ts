@@ -17,11 +17,11 @@
  *  都是 `bindAccountFormPages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
+import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS } from './params.js';
@@ -79,7 +79,7 @@ export function bindAccountFormPages(spec: AccountFormSpec): Pick<AccountWriteSc
 function fieldsOf(input: AccountCollectInput): ReturnType<typeof slotFieldsOf> {
   const names = input.accounts.map((a) => a.name);
   return slotFieldsOf(input.params, ACCOUNT_SLOTS[input.op].map((s) => ({
-    name: s.name, label: s.label, hint: s.hint, required: s.required,
+    name: s.name, label: s.label, hint: s.hint, note: s.note, required: s.required,
     ...((s.name === 'from' || s.name === 'to') && names.length > 0 ? { options: names } : {}),
   })));
 }
@@ -164,8 +164,8 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
   const hint = missing > 0
     ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
     : '已填齐，点上面那句复制带数据的口令。';
-  const entry = renderParamForm({ description: spec.fieldDescription, fields: fieldsOf(input) })
-    + '<p class="ilife-block-caliber">' + hint + '</p>';
+  /* #1130：待填区按判地做成「编号 → 标签 → 右侧输入框」的横向行 ＋ 每格下面一行灰提示（共享件一处实现）。 */
+  const entry = collectEntryCard(fieldsOf(input), { text: hint, ready: missing === 0 });
   return collectSheetPage({
     docTitle: DOC_TITLE + '·采集页',
     brand: '饼干记账 · ' + spec.word,
@@ -246,7 +246,7 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }

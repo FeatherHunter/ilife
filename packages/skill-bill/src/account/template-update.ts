@@ -16,11 +16,11 @@
  *  都是 `bindAccountUpdatePages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { ChangeRowInput, EntryCardEntry } from 'base-paint/blocks';
 import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
+import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
@@ -111,14 +111,12 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   // 判地那两行＝「账户」与「改成什么」；槽位表里后者叫 `new-name`（`CHANGE_SLOT.name` 是 `change`，
   // 它只在缺项探针里用）——这里按**槽位表的真名**过滤，别按 CHANGE_SLOT.name（#1118 收尾修正）。
   const shown = ACCOUNT_SLOTS[input.op].filter((s) => s.name === 'name' || s.name === 'new-name');
-  const entry = renderParamForm({
-    description: spec.fieldDescription,
-    fields: slotFieldsOf(input.params, shown.map((s) => (
-      s.name === CHANGE_SLOT.name
-        ? { name: 'new-name', label: CHANGE_SLOT.label, hint: CHANGE_SLOT.hint, required: true }
-        : { name: s.name, label: s.label, hint: s.hint, required: s.required }
-    ))),
-  }) + '<p class="ilife-block-caliber">' + hint + '</p>';
+  /* #1130：待填区走共享件（编号 → 标签 → 右侧输入框 ＋ 每格一行灰提示），判地 b03 那两行逐字照抄。 */
+  const entry = collectEntryCard(slotFieldsOf(input.params, shown.map((s) => (
+    s.name === CHANGE_SLOT.name
+      ? { name: 'new-name', label: CHANGE_SLOT.label, hint: CHANGE_SLOT.hint, note: CHANGE_SLOT.note, required: true }
+      : { name: s.name, label: s.label, hint: s.hint, note: s.note, required: s.required }
+  ))), { text: hint, ready: missing === 0 });
   return collectSheetPage({
     docTitle: DOC_TITLE + '·改账户确认',
     brand: '饼干记账 · ' + spec.word,
@@ -219,7 +217,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }

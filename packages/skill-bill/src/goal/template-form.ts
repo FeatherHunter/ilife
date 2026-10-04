@@ -16,11 +16,11 @@
  *  都是 `bindGoalFormPages(spec)` 的产物，本件不自己出页。
  */
 import { buildDataText } from 'base-paint';
-import { renderEntryCard, renderParamForm, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { ticketCollectRuntime } from '../shared/docPage.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
-import { collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
+import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { GoalBlocked } from './params.js';
 import { GOAL_WRITE_SLOTS } from './params.js';
@@ -64,9 +64,13 @@ export function bindGoalFormPages(spec: GoalFormSpec): Pick<GoalWriteScene, 'col
   return { collect: (input) => collectPage(spec, input), receipt: (input) => receiptPage(spec, input) };
 }
 
-/** 采集页字段卡的格子：一律取本次参数。 */
-function fieldsOf(op: GoalCollectInput['op'], params: Record<string, unknown>): ReturnType<typeof slotFieldsOf> {
-  return slotFieldsOf(params, GOAL_WRITE_SLOTS[op]);
+/** 采集页字段卡的格子：一律取本次参数；占位里的 `{{month}}` 按当次时间代入（判地冻结在 2026-10）。 */
+function fieldsOf(op: GoalCollectInput['op'], params: Record<string, unknown>, actionAt: string): ReturnType<typeof slotFieldsOf> {
+  const month = actionAt.length >= 7 ? actionAt.slice(0, 7) : new Date().toISOString().slice(0, 7);
+  const fill = (s: string): string => s.split('{{month}}').join(month);
+  return slotFieldsOf(params, GOAL_WRITE_SLOTS[op].map((s) => ({
+    name: s.name, label: s.label, hint: fill(s.hint), note: fill(s.note), required: s.required,
+  })));
 }
 
 /** 采集页那一条载荷说明（envelope 的 `message`）：说清缺什么、还没写库。 */
@@ -144,8 +148,8 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
   const hint = missing > 0
     ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
     : '已填齐，点上面那句复制带数据的口令。';
-  const entry = renderParamForm({ description: spec.fieldDescription, fields: fieldsOf(input.op, input.params) })
-    + '<p class="ilife-block-caliber">' + hint + '</p>';
+  /* #1130：待填区走共享件（编号 → 标签 → 右侧输入框 ＋ 每格一行灰提示），判地 g01／g03 逐字照抄。 */
+  const entry = collectEntryCard(fieldsOf(input.op, input.params, input.actionAt), { text: hint, ready: missing === 0 });
   return collectSheetPage({
     docTitle: DOC_TITLE + '·采集页',
     brand: '饼干记账 · ' + spec.word,
@@ -226,7 +230,7 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
-    styleHtml: '<style>' + ticketButtonCss() + '</style>',
+    styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
 }
