@@ -588,8 +588,11 @@ export interface DistributionRowInput {
 }
 
 /** 分布条行的版式闭集（#1114）：`plain`＝名称／条／数值一格三栏（老版面，逐字节不动）；
- *  `ticket`＝票据纸占比行（标签行「名 · 值」＋ 右对齐百分比，下面一条 10px 圆角轨）。 */
-export const DISTRIBUTION_LAYOUTS = ['plain', 'ticket'] as const;
+ *  `ticket`＝票据纸占比行（标签行「名 · 值」＋ 右对齐百分比，下面一条 10px 圆角轨）；
+ *  `stacked`＝**文字下方整行一条**（#1127：判地分析域明细卡 `.entry-text .bar` 的形制——
+ *  「名 · 值」一行、条挂在它下面、条宽＝占本组最大值之比；不另出右对齐百分比那一栏）。加这一档是
+ *  **加法**：`plain`／`ticket` 两条既有分支一字不动，不给 `layout` 的调用方逐字节不变。 */
+export const DISTRIBUTION_LAYOUTS = ['plain', 'ticket', 'stacked'] as const;
 export type DistributionLayout = (typeof DISTRIBUTION_LAYOUTS)[number];
 
 export interface DistributionRowsInput {
@@ -617,6 +620,19 @@ export function renderDistributionRows(input: DistributionRowsInput): string {
     const pct = reqPct(item.pct, field + '.pct');
     const color = optColor(item.color, field + '.color');
     const extra = optExtraClass(item.labelClass, field + '.labelClass');
+    if (layout === 'stacked') {
+      /* #1127 判地形制（`proto/analysis/a01-看月度-v2.1.html` 逐字）：
+         `<li><span class="idx">1</span><span class="entry-text">名 · 值 · 占比<span class="bar"><i style="width:100%"></i></span></span></li>`
+         ——一行「名 · 值」＋它下面一条整行宽的条；条宽由调用方按「占本组最大值之比」给（本件只摆位）。 */
+      const valueText = cellText(item.value, field + '.value');
+      return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + ' is-stacked">'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
+        + esc(label) + (valueText === '' ? '' : ' · ' + valueText) + '</span>'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'bar') + '">'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'fill') + '" style="' + esc(fillDecls(pct, color)) + '"></span>'
+        + '</span>'
+        + '</div>';
+    }
     if (layout === 'ticket') {
       /* 票据纸占比行（判地 w01 `.scale-rows li`）：标签行读「名 · 值」＋右对齐百分比，下面一条圆角轨。
          值那一枚与标签同一行同一 span（判地就是这么排的，拆成两栏会改断行与省略号行为）。 */
@@ -2252,6 +2268,30 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-weight: 600;',
     '  font-variant-numeric: tabular-nums;',
     '  text-align: right;',
+    '}',
+    /* #1127：判地形制「文字下方整行一条」（判地 `.entry-text .bar{display:block;height:6px;
+        border-radius:999px;background:#f0e7d3;margin-top:6px;overflow:hidden}`）——高度与挂法照判地，
+        颜色读皮肤号（轨＝`line`、填充＝`bar-fill`；票据纸皮肤 `bar-fill` 就是判地那支中性蓝）。 */
+    '.' + p + 'block-dist-row.is-stacked {',
+    '  display: block;',
+    '  padding: 6px 0;',
+    '}',
+    '.' + p + 'block-dist-row.is-stacked .' + p + 'block-dist-row-name {',
+    '  display: block;',
+    '  color: var(--fg);',
+    '  overflow: visible;',
+    '  white-space: normal;',
+    '}',
+    '.' + p + 'block-dist-row.is-stacked .' + p + 'block-dist-row-bar {',
+    '  display: block;',
+    '  height: 6px;',
+    '  margin-top: 6px;',
+    '  border-radius: ' + RADIUS_PILL + 'px;',
+    '  background: ' + skinVar('line') + ';',
+    '  overflow: hidden;',
+    '}',
+    '.' + p + 'block-dist-row.is-stacked .' + p + 'block-dist-row-fill {',
+    '  background: ' + skinVar('bar-fill') + ';',
     '}',
     /* 票据纸占比行（#1114；判地 w01 `.scale-rows li`／`.scale-top`／`.scale-track`／`.scale-fill`）：
        44px 行档、标签行 13px/700 两端对齐（左「名 · 值」、右百分比）、下面一条 10px 圆角轨。 */

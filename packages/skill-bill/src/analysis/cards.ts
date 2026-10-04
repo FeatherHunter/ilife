@@ -30,7 +30,10 @@ function emptyCard(text: string): string {
 /** 条卡组（一组占比条）：行即条；零行出这一组自己的空态句。 */
 export function barGroupHtml(group: BarGroup): string {
   if (group.rows.length === 0) return emptyCard(group.emptyText);
+  // #1127：版式＝`stacked`（判地形制「一行『名 · 值』＋它下面一条整行宽的条」）。
+  // 判地那条 `.entry-text .bar` 在分析域 25 页里逐页核过：条宽＝占**本组最大值**之比（`r.pct` 由场景算好）。
   return renderDistributionRows({
+    layout: 'stacked',
     rows: group.rows.map((r) => ({ label: r.label, value: r.text, pct: r.pct })),
   });
 }
