@@ -87,7 +87,8 @@ const TICKET_CSS_CORE = [
   '.ilife-ticket-check.is-danger { border-color: #ecc9c2; background: var(--ilife-danger-soft); color: #6d2118; }',
   '.ilife-ticket-check.is-danger .ilife-ticket-check-dot { background: var(--ilife-danger); }',
   '/* 纸外脚注（w17 v2.1 foot-note）：纸外、页内居中一行小字；只详情页发出。 */',
-  '.ilife-bill-sheet-page .ilife-ticket-foot { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--ilife-ink-3); text-align: center; }',
+  /* #1132：按判地 `.foot-note` 对齐（11.5px／行高 1.7／字距 .4／内距 10 0 2／无上距）——族级取值，全票据页共用。 */
+  '.ilife-bill-sheet-page .ilife-ticket-foot { margin: 0; padding: 10px 0 2px; font-size: 11.5px; line-height: 1.7; letter-spacing: .4px; color: var(--ilife-ink-3); text-align: center; }',
   '/* 明细卡（原型 `.entry-card`／`.entry-rows`）：米黄卡 ＋ 编号胶囊 ＋ 实付行高亮。 */',
   '.ilife-ticket-card { background: var(--ilife-surface-2); border: 1px solid var(--ilife-line); border-radius: var(--ilife-radius-card, var(--ilife-radius-sm)); padding: 12px 13px 11px; }',
   '.ilife-ticket-entries { list-style: none; margin: 0; padding: 0; counter-reset: ilife-ticket-row; }',
@@ -141,8 +142,11 @@ const TICKET_CSS_CORE = [
  *  不属于那些族的页（HELP／速查表）经 `ticketFamilyCss({ pageCss: false })` 不注入本段。#1124 第三步。 */
 const TICKET_PAGE_CSS = [
   /* #1124 §22：账户域复制区 guards 从页面搬来（逐字节，作用域原样保留）——页面侧不再自出这一段。 */
-  'section[data-key="account.write"] .ilife-block-copy-block, section[data-key="account.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
-  'section[data-key="account.write"] .ilife-action-row-ghost, section[data-key="account.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  /* #1132：账户／目标两族的判地把复制钮标签包在 `.btn-in` 里（行高 1.4 ⇒ 盒高 47），查询／分析族不带那一层（46.3）
+    ——按族给盒高，别一把梭到全族。 */
+ '.ilife-skin-ticket section[data-key="account.write"] .ilife-copy-btn, .ilife-skin-ticket section[data-key="account.query"] .ilife-copy-btn, .ilife-skin-ticket section[data-key="goal.write"] .ilife-copy-btn, .ilife-skin-ticket section[data-key="goal.query"] .ilife-copy-btn { min-height: 47px; }',
+ 'section[data-key="account.write"] .ilife-block-copy-block, section[data-key="account.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
+  'section[data-key="account.write"] .ilife-action-row-ghost, section[data-key="account.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 0; }',
   'section[data-key="account.write"] .ilife-copy-menu-wrap, section[data-key="account.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
   'section[data-key="account.write"] .ilife-copy-btn, section[data-key="account.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
   'section[data-key="account.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
@@ -154,7 +158,7 @@ const TICKET_PAGE_CSS = [
   'section[data-key="account.write"] select.ilife-block-param-form-input, section[data-key="account.query"] select.ilife-block-param-form-input { min-height: 44px; }',
   /* #1124 §22：目标域复制区 guards 从页面搬来（逐字节，作用域原样保留）——页面侧不再自出这一段。 */
   'section[data-key="goal.write"] .ilife-block-copy-block, section[data-key="goal.query"] .ilife-block-copy-block { max-width: 340px; margin-inline: auto; text-align: center; }',
-  'section[data-key="goal.write"] .ilife-action-row-ghost, section[data-key="goal.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 8px; }',
+  'section[data-key="goal.write"] .ilife-action-row-ghost, section[data-key="goal.query"] .ilife-action-row-ghost { display: flex; flex-direction: column; align-items: center; gap: 0; }',
   'section[data-key="goal.write"] .ilife-copy-menu-wrap, section[data-key="goal.query"] .ilife-copy-menu-wrap { width: 100%; max-width: 340px; margin-inline: auto; justify-content: center; }',
   'section[data-key="goal.write"] .ilife-copy-btn, section[data-key="goal.query"] .ilife-copy-btn { width: 100%; max-width: 340px; justify-content: center; text-align: center; }',
   'section[data-key="goal.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
