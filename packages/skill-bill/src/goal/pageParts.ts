@@ -167,11 +167,13 @@ export function badgeOf(input: {
   });
 }
 
-/** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需）。 */
+/** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需／控件下面那一行灰提示）。 */
 export interface GoalField {
   readonly name: string;
   readonly label: string;
   readonly hint: string;
+  /** 控件下面那一行灰提示（判地 `.entry-sub`）；空串＝不出这一行。 */
+  readonly note?: string;
   readonly required: boolean;
 }
 
@@ -185,6 +187,7 @@ export function slotFieldsOf(params: Record<string, unknown>, fields: readonly G
       name: f.name,
       label: f.label,
       hint: f.hint,
+      ...(f.note === undefined || f.note === '' ? {} : { helpText: f.note }),
       ...(f.required ? { required: true } : {}),
       ...(value === '' ? {} : { value }),
     };

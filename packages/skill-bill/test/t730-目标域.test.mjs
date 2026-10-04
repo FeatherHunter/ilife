@@ -77,7 +77,8 @@ describe('#730 · goal 域：4 条唤醒词端到端', () => {
     ]);
     const collect = page(dir, ['bill.goal.write', '--params', P({ op: 'set-budget' })], join(OUT, 'b-collect.html'));
     assert.equal(collect.env.data.ok, false, '缺项那一次 ok 应为 false');
-    assert.ok(body(collect.text).includes('ilife-block-param-form'), '采集页要有字段卡');
+    /* #1130：采集页的待填区按判地换成待填卡（编号 ＋ 横向「标签 → 输入框」＋ 每格一行灰提示）。 */
+    assert.ok(body(collect.text).includes('ilife-ticket-card is-entry') && body(collect.text).includes('ilife-ticket-fill-input'), '采集页要有待填卡与输入框');
     assert.ok(collect.text.includes('还差 1 项'), '缺项数应点名');
     assert.ok(!/<nav[^>]*aria-label="页内导航"/.test(collect.text), '过程型采集页不出页内导航');
     assert.ok(!existsSync(join(dir, 'goals.json')), '缺项那一次不该落预算表');

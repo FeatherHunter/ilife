@@ -67,11 +67,14 @@ export function parseGoalReadOp(params: Record<string, unknown>): GoalReadOp {
   throw new BillPolicyError('POLICY_BAD_INPUT', 'op 非法（只认 budget／saving）：' + JSON.stringify(op));
 }
 
-/** 一个槽位：参数名／中文名／怎么给／是否必需。 */
+/** 一个槽位：参数名／中文名／怎么给／是否必需／控件下面那一行灰提示。
+ *  `hint`＝占位（判地 `placeholder`），`note`＝控件下面那行灰提示（判地 `.entry-sub`）；两条都逐页照判地抄（#1130）。
+ *  占位里出现 `{{month}}` 的，由调用方按当次时间代入（判地冻结在 2026-10，产品按当刻月算）。 */
 export interface GoalSlot {
   readonly name: string;
   readonly label: string;
   readonly hint: string;
+  readonly note: string;
   readonly required: boolean;
 }
 
@@ -82,26 +85,28 @@ export interface GoalBlocked {
   readonly why: string;
 }
 
-function slot(name: string, label: string, hint: string, required: boolean): GoalSlot {
-  return { name, label, hint, required };
+function slot(name: string, label: string, hint: string, required: boolean, note: string): GoalSlot {
+  return { name, label, hint, required, note };
 }
 
 /** 「确认覆盖」那一格：老侧 `cli.py:143` 的 `--force`。它不是一个用户填的槽位，
  *  而是「同月同类预算已存在」这件事的出口，故单立一格（同账户域 `CHANGE_SLOT` 的处置）。 */
-export const FORCE_SLOT: GoalSlot = slot('force', '确认覆盖', '已经有同月同类的预算时，要覆盖它就把这一格给上', true);
+export const FORCE_SLOT: GoalSlot = slot('force', '确认覆盖', '已经有同月同类的预算时，要覆盖它就把这一格给上', true, '（判地页上不列这一行）');
 
 /** 写命令两支操作的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
  *  中文名照老侧表单页的字段题头（`budget_form.html:58-68`／`saving_form.html:57-63`）。 */
 export const GOAL_WRITE_SLOTS: Readonly<Record<GoalWriteOp, readonly GoalSlot[]>> = {
   'set-budget': [
-    slot('amount', '金额', '每月的预算上限，写正数，如 3000', true),
-    slot('month', '月份', '选填，如 2026-09；不填就是本月起', false),
-    slot('category', '分类', '选填，如 餐饮；不填 = 全月总预算', false),
+    /* 标签／占位／提示逐字照判地 g01（`proto/acct-goal/g01-设定预算-采集-v2.2.html` 的 `.fill-label`／`placeholder`／`.entry-sub`）。 */
+    slot('amount', '金额', '如 3000', true, '每月上限，如 3000'),
+    slot('month', '月份（选填）', '缺省当月，如 {{month}}', false, '缺省当月，如 {{month}}'),
+    slot('category', '分类（选填）', '留空即全月总预算', false, '填了就是该类的上限，子类计入'),
   ],
   'set-saving': [
-    slot('name', '目标', '想存钱买什么，一句话说清，如 换手机', true),
-    slot('amount', '金额', '目标总额，写正数，如 10000', true),
-    slot('deadline', '截止日期', '选填，如 2026-12-31；不填 = 无截止日期', false),
+    /* 判地 g03 三行。 */
+    slot('name', '目标', '如换手机', true, '如换手机'),
+    slot('amount', '金额', '如 10000', true, '存够这么多算达成'),
+    slot('deadline', '截止日期（选填）', '不限可留空', false, '不限可留空'),
   ],
 };
 

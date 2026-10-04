@@ -60,11 +60,13 @@ export function parseAccountOp(params: Record<string, unknown>): AccountOp {
   throw new BillPolicyError('POLICY_BAD_INPUT', 'op 非法（只认 add／update／transfer）：' + JSON.stringify(op));
 }
 
-/** 一个槽位：参数名／中文名／怎么给／是否必需。 */
+/** 一个槽位：参数名／中文名／怎么给／是否必需／控件下面那一行灰提示。
+ *  `hint`＝占位（判地 `placeholder`），`note`＝控件下面那行灰提示（判地 `.entry-sub`）；两条都逐页照判地抄（#1130）。 */
 export interface AccountSlot {
   readonly name: string;
   readonly label: string;
   readonly hint: string;
+  readonly note: string;
   readonly required: boolean;
 }
 
@@ -75,31 +77,36 @@ export interface AccountBlocked {
   readonly why: string;
 }
 
-function slot(name: string, label: string, hint: string, required: boolean): AccountSlot {
-  return { name, label, hint, required };
+function slot(name: string, label: string, hint: string, required: boolean, note: string): AccountSlot {
+  return { name, label, hint, required, note };
 }
 
 /** 「改成什么」那一格：老侧改账户要求 `--new-name`／`--disable`／`--enable` 至少给一个
  *  （`cli.py:186-187` 的「没有可执行的变更」）。它不是一个参数名，故单立一格。 */
-export const CHANGE_SLOT: AccountSlot = slot('change', '改成什么', '如 改名「招行工资卡」／停用／启用', true);
+export const CHANGE_SLOT: AccountSlot = slot('change', '改成什么', '如招行工资卡', true, '改后的名字，如招行工资卡');
 
 /** 三支操作的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。 */
 export const ACCOUNT_SLOTS: Readonly<Record<AccountOp, readonly AccountSlot[]>> = {
   add: [
-    slot('name', '账户名', '如 招行卡 / 花呗', true),
-    slot('type', '类型', '选填，如 银行卡 / 支付 / 信用', false),
+    /* 标签／占位／提示逐字照判地 b01（`proto/acct-goal/b01-新增账户-采集-v2.2.html` 的 `.fill-label`／`placeholder`／`.entry-sub`）。 */
+    slot('name', '账户名', '如招行卡', true, '写清就行，如招行卡'),
+    slot('type', '类型（选填）', '如银行卡，留空也行', false, '如银行卡，留空也能记好'),
   ],
   update: [
-    slot('name', '账户', '要改的那个账户，如 招行卡', true),
-    slot('new-name', '改成什么名字', '改名后的新账户名，如 招行工资卡', false),
-    slot('disable', '停用', '停用后不再算进总余额，历史记录保留', false),
-    slot('enable', '启用', '把停用的账户恢复使用', false),
+    /* 判地 b03：只列「账户」「改成什么」两行（本表另两格是命令侧能力，页上不列）。 */
+    slot('name', '账户', '如招行卡', true, '要改哪一个，如招行卡'),
+    /* 这一格的 `required` 保持 false：命令侧「改成什么」可由 停用／启用 顶上（`hasChange` 那条闸门），
+       页面上那枚 `*` 由 template-update 按判地单独给（判地 b03 两行都带 `*`）。 */
+    slot('new-name', '改成什么', '如招行工资卡', false, '改后的名字，如招行工资卡'),
+    slot('disable', '停用', '停用后不再算进总余额，历史记录保留', false, '（判地页上不列这一行）'),
+    slot('enable', '启用', '把停用的账户恢复使用', false, '（判地页上不列这一行）'),
   ],
   transfer: [
-    slot('amount', '金额', '转多少，写正数，如 500', true),
-    slot('from', '从账户', '钱从哪个账户转出，如 支付宝', true),
-    slot('to', '到账户', '钱转到哪个账户，如 招行卡', true),
-    slot('time', '时间', '选填，不填就是现在；要写就写 2026-09-14 12:00:00 这样', false),
+    /* 判地 b05：金额／从账户／到账户／时间（选填）四行；时间那一格判地不带占位。 */
+    slot('amount', '金额', '如 500', true, '转多少，如 500'),
+    slot('from', '从账户', '如支付宝', true, '钱从哪出，如支付宝'),
+    slot('to', '到账户', '如招行工资卡', true, '钱到哪去，如招行工资卡'),
+    slot('time', '时间（选填）', '', false, '不填记现在'),
   ],
 };
 

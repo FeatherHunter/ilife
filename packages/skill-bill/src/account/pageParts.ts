@@ -136,11 +136,13 @@ export function badgeOf(input: {
   });
 }
 
-/** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需／候选）。 */
+/** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需／候选／控件下面那一行灰提示）。 */
 export interface AccountField {
   readonly name: string;
   readonly label: string;
   readonly hint: string;
+  /** 控件下面那一行灰提示（判地 `.entry-sub`）；空串＝不出这一行。 */
+  readonly note?: string;
   readonly required: boolean;
   /** 选中即填的候选项（给了即渲染下拉）。 */
   readonly options?: readonly string[];
@@ -156,6 +158,7 @@ export function slotFieldsOf(params: Record<string, unknown>, fields: readonly A
       name: f.name,
       label: f.label,
       hint: f.hint,
+      ...(f.note === undefined || f.note === '' ? {} : { helpText: f.note }),
       ...(f.options === undefined || f.options.length === 0 ? {} : { options: f.options }),
       ...(f.required ? { required: true } : {}),
       ...(value === '' ? {} : { value }),

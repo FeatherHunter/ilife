@@ -132,9 +132,99 @@ function finish(input: TicketSheetCommon, parts: readonly string[]): string {
   return assembleSheetPage({ docTitle: input.docTitle, bodyHtml: section, paper: input.paper });
 }
 
+
+/** 待填卡的一格（判地 \`.fill-field\` 那一行：编号在左、标签居中、输入框占右半）。 */
+export interface CollectEntryField {
+  /** 表单名（运行时段按 \`[name=…]\` 取值；#1118 的主按钮开关读的就是它）。 */
+  readonly name: string;
+  /** 标签文字（判地逐页给，含「（选填）」这种尾注）。 */
+  readonly label: string;
+  /** 占位文字（与 base ParamFieldInput.hint 同一语义；不给＝不带 placeholder）。 */
+  readonly hint?: string;
+  /** 控件下面那一行灰提示（判地 .entry-sub；与 base ParamFieldInput.helpText 同一语义）。 */
+  readonly helpText?: string;
+  /** 候选项（非空即出 select，首项＝hint 那句占位；账户域的从／到账户走它）。
+   *  形态与 base `ParamFieldInput.options` 同（串或 `{ value, label }`）。 */
+  readonly options?: readonly (string | { readonly value: string; readonly label?: string })[];
+  /** 必需：出 \`*\` ＋ \`required\`／\`data-required\`。 */
+  readonly required?: boolean;
+  /** 已给的值（回显；不给＝空）。 */
+  readonly value?: string;
+  /** 输入提示（如 \`decimal\`）。 */
+  readonly inputmode?: string;
+}
+
+/** 待填卡那一族的样式段（判地 \`.fill-field\`／\`.fill-label\`／\`.req\`／输入框四条，逐值照抄）。
+ *
+ *  为什么住这里而不是公共层：这四条只服务「票据纸采集页的待填卡」这一处形状，
+ *  公共层没有对应件（#1130 判据：一处实现、五张采集页共用）；容器与行仍走公共层已有的
+ *  \`.ilife-ticket-card\`／\`.ilife-ticket-entries\`（判地 \`.entry-card\`／\`.entry-rows\` 同形）。
+ *  编号方块那一枚：判地 \`.idx\` 是 22×22／圆角 7px／底 \`#f4efe2\`／字 \`#8a857a\`，
+ *  公共层票据族的 \`::before\` 取的是另一档（\`radius-sm\`／\`surface-2\`／\`ink-3\`）⇒
+ *  在 \`.is-entry\` 之下按判地覆盖（回执页 DETAIL 卡不在本票，留给 #1131）。 */
+export function collectEntryCss(): string {
+  return [
+    '.ilife-ticket-card.is-entry .ilife-ticket-entries > li::before { border-radius: 7px; background: #f4efe2; color: #8a857a; }',
+    '.ilife-ticket-fill { display: flex; align-items: center; gap: 10px; min-height: 44px; width: 100%; max-width: 100%; min-width: 0; }',
+    '.ilife-ticket-fill-label { flex: none; min-width: 64px; color: var(--ilife-ink-2); font-weight: 700; white-space: nowrap; font-size: 14px; }',
+    '.ilife-ticket-fill-req { color: var(--ilife-danger); font-style: normal; font-weight: 900; }',
+    '.ilife-ticket-fill-input { flex: 1 1 0; min-width: 0; max-width: 100%; box-sizing: border-box; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-size: 15px; font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }',
+    '.ilife-ticket-fill-input:focus { outline: 2px solid var(--ilife-accent); outline-offset: 1px; border-color: var(--ilife-accent); }',
+    '.ilife-ticket-fill-input.is-bad { border-color: var(--ilife-danger); outline: 2px solid var(--ilife-danger); }',
+    /* 每格下面那一行灰提示（判地 `.entry-sub`：块级、12px、`ink-2`、上距 2px）。
+       公共层那份只在 `.ilife-ticket-receipt`／`.ilife-ticket-detail` 之下，采集页的卡按本段自带一份。 */
+    '.ilife-ticket-card.is-entry .ilife-ticket-entry-sub { display: block; color: var(--ilife-ink-2); font-size: 12px; font-weight: 400; margin-top: 2px; }',
+    /* 卡里那一行「还差 N 项没填」（判地 `.help-hint`：8px 上距、12.5px／行高 1.7、危险档 w700；齐了转绿）。 */
+    '.ilife-ticket-fill-hint { margin: 8px 2px 0; font-size: 12.5px; line-height: 1.7; color: var(--ilife-danger); font-weight: 700; }',
+    '.ilife-ticket-fill-hint.is-ready { color: var(--ilife-ok); }',
+  ].join(String.fromCharCode(10));
+}
+
+/** 待填卡（判地：\`.entry-card\` 容器 ＋ 逐行「编号 → 标签 → 右侧输入框」＋ 每格下面一行灰提示）。
+ *
+ *  一处实现：五张采集页（账户 add／update／transfer ＋ 目标 budget／goal）都调它，
+ *  差异只在传进来的格子数据（标签／占位／提示逐页照判地）。 */
+export function collectEntryCard(fields: readonly CollectEntryField[], hint?: { readonly text: string; readonly ready?: boolean }): string {
+  const rows = fields.map((f) => {
+    const ph = f.hint === undefined || f.hint === '' ? '' : f.hint;
+    const required = f.required === true;
+    const value = f.value === undefined ? '' : f.value;
+    const opts = f.options === undefined ? [] : f.options;
+    /* 有候选项＝下拉（账户域的从／到账户）：首项是 hint 那句占位（空值、禁选），与 base 既有口径一致。 */
+    const control = opts.length > 0
+      ? '<select class="ilife-ticket-fill-input" name="' + escapeHtml(f.name) + '" aria-label="' + escapeHtml(f.label) + '"'
+        + (required ? ' data-required="1" required' : '') + '>'
+        + '<option value=""' + (value === '' ? ' selected' : '') + (ph === '' ? '' : ' disabled') + '>' + escapeHtml(ph) + '</option>'
+        + opts.map((o) => {
+          const v = typeof o === 'string' ? o : o.value;
+          const t = typeof o === 'string' ? o : (o.label === undefined ? o.value : o.label);
+          return '<option value="' + escapeHtml(v) + '"' + (v === value ? ' selected' : '') + '>' + escapeHtml(t) + '</option>';
+        }).join('')
+        + '</select>'
+      : '<input class="ilife-ticket-fill-input" type="text" name="' + escapeHtml(f.name) + '"'
+        + (f.inputmode === undefined || f.inputmode === '' ? '' : ' inputmode="' + escapeHtml(f.inputmode) + '"')
+        + ' value="' + escapeHtml(value) + '"'
+        + (ph === '' ? '' : ' placeholder="' + escapeHtml(ph) + '"')
+        + ' aria-label="' + escapeHtml(f.label) + '"'
+        + (required ? ' data-required="1" required' : '') + '>';
+    const label = '<span class="ilife-ticket-fill-label">' + escapeHtml(f.label)
+      + (required ? ' <i class="ilife-ticket-fill-req" aria-hidden="true">*</i>' : '') + '</span>';
+    const note = f.helpText === undefined || f.helpText === '' ? ''
+      : '<span class="ilife-ticket-entry-sub">' + escapeHtml(f.helpText) + '</span>';
+    return '<li><span class="ilife-ticket-entry-text">'
+      + '<label class="ilife-ticket-fill">' + label + control + '</label>' + note
+      + '</span></li>';
+  }).join('');
+  const hintHtml = hint === undefined || hint.text === '' ? ''
+    : '<p class="ilife-ticket-fill-hint' + (hint.ready === true ? ' is-ready' : '') + '" id="helpHint">' + escapeHtml(hint.text) + '</p>';
+  return '<div class="ilife-ticket-card is-entry"><ol class="ilife-ticket-entries" id="helpForm">' + rows + '</ol>' + hintHtml + '</div>';
+}
+
 /** 采集页（过程型 ①）：店头 → 主数字 → 落点 → 待填 → 对账 → 按钮区；**不出页内导航**（判地同）。 */
 export function collectSheetPage(input: CollectSheetPageInput): string {
-  return finish(input, [
+  return finish(
+    { ...input, styleHtml: (input.styleHtml ?? '') + '<style>' + collectEntryCss() + '</style>' },
+    [
     sheetHead(input.brand, escapeHtml(input.title), input.subtitle),
     ticketRule(),
     summaryHtmlOf(input.summary),

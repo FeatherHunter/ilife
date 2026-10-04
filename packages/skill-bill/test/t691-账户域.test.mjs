@@ -62,7 +62,8 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('新增账户：缺项出采集页（不写库）→ 齐了写库出回执页', () => {
     const collect = page('bill.account.write', { op: 'add' }, 'add-collect');
     assert.equal(collect.env.data.ok, false, '缺项那一次 ok 应为 false');
-    assert.ok(collect.text.includes('ilife-block-param-form'), '采集页要有字段卡');
+    /* #1130：采集页的待填区按判地换成待填卡（编号 ＋ 横向「标签 → 输入框」＋ 每格一行灰提示）。 */
+    assert.ok(collect.text.includes('ilife-ticket-card is-entry') && collect.text.includes('ilife-ticket-fill-input'), '采集页要有待填卡与输入框');
     assert.ok(!/<nav[^>]*aria-label="页内导航"/.test(collect.text), '过程型采集页不出页内导航');
     assert.ok(!existsSync(join(DB, 'goals.json')), '缺项那一次不该落账户表');
 
@@ -90,7 +91,7 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
   it('账户转账：缺项出采集页（带操作预览）→ 落两笔、账本＝转账、不入收支统计', () => {
     const collect = page('bill.account.write', { op: 'transfer' }, 'transfer-collect');
     assert.equal(collect.env.data.ok, false);
-    assert.ok(collect.text.includes('ilife-block-param-form'), '转账采集页要有字段卡');
+    assert.ok(collect.text.includes('ilife-ticket-card is-entry') && collect.text.includes('ilife-ticket-fill-input'), '转账采集页要有待填卡与输入框');
     assert.ok(collect.text.includes('转账（记成转账）'), '落点要写清账本＝转账');
 
     const done = page('bill.account.write', { amount: 500, op: 'transfer', from: '支付宝', to: '招行卡' }, 'transfer-receipt');
