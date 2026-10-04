@@ -24,7 +24,7 @@ import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { GoalBlocked } from './params.js';
 import { GOAL_WRITE_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, goalHelpTemplate, money, slotFieldsOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, copyZoneOf, envelopeOf, goalHelpPrompt, goalHelpTemplate, money, slotFieldsOf } from './pageParts.js';
 import type { GoalCollectInput, GoalExistingTable, GoalReceiptInput, GoalReceiptResult, GoalWriteScene } from './scene.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -229,6 +229,8 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+      // #1136：回执的口令走 HELP 形态（与采集页 `spec.prompt` 同一句话，填本次实参）。
+      promptText: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params),
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

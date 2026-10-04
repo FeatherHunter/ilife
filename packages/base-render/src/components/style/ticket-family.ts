@@ -156,6 +156,10 @@ const TICKET_PAGE_CSS = [
   'section[data-key="account.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
   'section[data-key="account.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="account.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
   'section[data-key="account.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="account.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
+  /* #1137 E 类：复制日志按钮的文字往左偏 12px——它只有隐藏的 ::after（占位）、没有 ::before，
+     与基座「::before 隐藏＋::after 可见」对称配平的手法不对称。补上同样的隐藏 ::before，
+     两边对称后文字回到正中（真机读数：横偏 -12px → 0px）。 */
+  'section[data-key="account.write"] [data-action-id="ilife-copy-log"]::before, section[data-key="account.query"] [data-action-id="ilife-copy-log"]::before { content: "\\25BE"; visibility: hidden; margin-right: 6px; }',
   'section[data-key="account.write"] .ilife-copy-btn.copied::after, section[data-key="account.query"] .ilife-copy-btn.copied::after { content: none !important; }',
   'section[data-key="account.write"] .ilife-block-param-form-input, section[data-key="account.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }',
   'section[data-key="account.write"] .ilife-block-param-form-field, section[data-key="account.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',
@@ -168,6 +172,8 @@ const TICKET_PAGE_CSS = [
   'section[data-key="goal.write"] .ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .ilife-copy-menu-wrap > .ilife-copy-btn::after { content: " \\25BE"; border: none !important; width: auto; height: auto; margin-left: 6px; transform: none !important; }',
   'section[data-key="goal.write"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after, section[data-key="goal.query"] .copy-menu-open.ilife-copy-menu-wrap > .ilife-copy-btn::after { transform: none !important; }',
   'section[data-key="goal.write"] [data-action-id="ilife-copy-log"]::after, section[data-key="goal.query"] [data-action-id="ilife-copy-log"]::after { content: " \\25BE"; visibility: hidden; margin-left: 6px; }',
+  /* #1137 E 类：同 account.write 那一条（复制日志按钮文字左偏 12px，补对称隐藏 ::before）。 */
+  'section[data-key="goal.write"] [data-action-id="ilife-copy-log"]::before, section[data-key="goal.query"] [data-action-id="ilife-copy-log"]::before { content: "\\25BE"; visibility: hidden; margin-right: 6px; }',
   'section[data-key="goal.write"] .ilife-copy-btn.copied::after, section[data-key="goal.query"] .ilife-copy-btn.copied::after { content: none !important; }',
   'section[data-key="goal.write"] .ilife-block-param-form-input, section[data-key="goal.query"] .ilife-block-param-form-input { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; min-height: 44px; }',
   'section[data-key="goal.write"] .ilife-block-param-form-field, section[data-key="goal.query"] .ilife-block-param-form-field { min-width: 0; max-width: 100%; }',

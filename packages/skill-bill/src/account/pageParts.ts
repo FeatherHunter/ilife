@@ -213,9 +213,13 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
+  /* #1136：回执页的 HELP 形态口令（与采集页 `spec.prompt` 同一句话，填的是本次实参）。
+     不给＝只有数据位＋日志位（改前形态，逐字节不变）；给了＝前面多出 prompt 块。 */
+  readonly promptText?: string;
 }): string {
   return copyArea({
       hints: COPY_HINTS.sayAcct,
+    ...(input.promptText === undefined ? {} : { prompt: input.promptText }),
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,
@@ -299,6 +303,17 @@ export const SOURCE_READ_TEXT = '账户表与账本（只读）';
 export function timeOf(params: Record<string, unknown>, fallback: string): string {
   const t = params['time'];
   return typeof t === 'string' && t.trim() !== '' ? t.trim() : fallback;
+}
+
+/** 用户想改成什么（改名／停用／启用三口子任给其一；采集页口令与回执页口令都读它）。
+ *  #1136：原来住 `scene-update.ts`（不导出），回执页也要读同一句才搬到这里——两边不许各写一份。 */
+export function changeTextOf(params: Record<string, unknown>): string {
+  const parts: string[] = [];
+  const next = textOf(params['new-name']);
+  if (next !== '') parts.push('改名「' + next + '」');
+  if (params['disable'] === true) parts.push('停用');
+  if (params['enable'] === true) parts.push('启用');
+  return parts.join('、');
 }
 
 /** 采集页／确认页复制口令那一段（「照这句跟助手说一遍」）：说清是哪条词、每一格填什么。

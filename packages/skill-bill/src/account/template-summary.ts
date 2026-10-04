@@ -14,8 +14,7 @@
  *
  * 谁在用（一个调用点，指名）：`src/account/read.ts`——`viewAccountSummary` 装配入参后调 `accountSummaryDoc`。
  */
-import { buildDataText } from 'base-paint';
-import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
@@ -131,11 +130,9 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
     detailTag: 'DETAIL',
     detailHtml,
     check: checkOf(s),
-    actions: renderTicketButton({
-      label: '复制这份汇总去对账',
-      actionId: 'ilife-copy-summary',
-      copyText: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
-    }) + copyZoneOf({
+    // #1137 D 类：删「复制这份汇总去对账」按钮——复制区里的「复制数据」按钮载的是同一份载荷
+    // （同是 buildDataText 的 text 格式），留两个是语义重复。负责人 2026-10-05 原话点名删除。
+    actions: copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
     }),

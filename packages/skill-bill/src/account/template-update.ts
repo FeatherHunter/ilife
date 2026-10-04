@@ -25,7 +25,7 @@ import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS, CHANGE_SLOT, textOf } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpPrompt, accountHelpTemplate, changeTextOf, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
@@ -215,6 +215,8 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+      // #1136：回执的口令走 HELP 形态（与采集页 `spec.prompt` 同一句话，填本次实参）。
+      promptText: accountHelpPrompt('account_update', input.params, changeTextOf(input.params)),
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

@@ -162,7 +162,10 @@ describe('#691 · account 域：4 条唤醒词端到端', () => {
     assert.ok(sum.text.includes('ilife-block-entry-card'), '中段是各账户余额明细卡');
     assert.ok(sum.text.includes('笔流水'), '落点要写清最近几笔参与汇总');
     assert.ok(sum.text.includes('ilife-ticket-check'), '对账那一句要在');
-    assert.ok(sum.text.includes('复制这份汇总去对账'), '按钮区要有主按钮');
+    /* #1137 D 类：删「复制这份汇总去对账」按钮（与复制区的「复制数据」语义重复，负责人 2026-10-05 原话点名删除）。
+       按钮区只剩复制区：复制数据按钮必须在（载荷与删掉那颗同源），冗余按钮必须不在。 */
+    assert.ok(!sum.text.includes('复制这份汇总去对账'), '冗余按钮还在（应已删除）');
+    assert.ok(sum.text.includes('复制数据'), '复制区的复制数据按钮必须在（删掉那颗的载荷由它承载）');
     for (const re of [/bill\./g, /\.py\b/g, /scripts\//g, /undefined/g, /NaN/g]) {
       assert.equal([...visible(sum.text).matchAll(re)].length, 0, '可见文本里出现了 ' + re);
     }

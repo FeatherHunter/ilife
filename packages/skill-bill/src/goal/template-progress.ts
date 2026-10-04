@@ -15,8 +15,7 @@
  * 谁在用（两个调用点，指名）：`src/goal/scene-{budget,saving}.ts`——两件的 `view` 都是
  *  `bindGoalProgressPage(spec)` 的产物，本件不自己出页。
  */
-import { buildDataText } from 'base-paint';
-import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
+import { entryCardCss, renderEntryCard, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
@@ -163,11 +162,8 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
     detailTag: 'DETAIL',
     detailHtml,
     check: checkOf(input, counts),
-    actions: renderTicketButton({
-      label: e !== null ? '复制这份执行进度去对账' : '复制这份目标进度去对账',
-      actionId: 'ilife-copy-progress',
-      copyText: buildDataText({ envelope, title: input.wakeWord, format: 'text' }),
-    }) + copyZoneOf({
+    // #1137 D 类：删「复制这份…去对账」按钮——复制区里的「复制数据」按钮载的是同一份载荷，留两个是语义重复。
+    actions: copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
     }),

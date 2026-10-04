@@ -25,7 +25,7 @@ import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
 import { ACCOUNT_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpPrompt, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
 import { textOf } from '../shared/params.js';
 import type { AccountCollectInput, AccountReceipt, AccountReceiptInput, AccountWriteScene } from './scene.js';
 
@@ -265,6 +265,9 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+      // #1136：回执的口令走 HELP 形态（与采集页 `spec.prompt` 同一句话，填本次实参），
+      // 不再只剩裸 envelope（`新增账户 ok: true message: …`）。本模板只服务 add／transfer 两支，op 即判据。
+      promptText: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params),
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

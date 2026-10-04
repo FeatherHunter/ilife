@@ -135,7 +135,18 @@ export const sceneCatTrend: AnalysisScene = {
           kind: 'bar',
           input: barInputOf(series, '有支出的月不到 2 个，画不出逐月柱子；合计与峰值看上面那排读数。'),
         }],
-        listCards: [],
+        /* #1138：DETAIL 段那 5 行（判地 entry-rows 逐字对）：总额 1 行 ＋ 有支出的月各 1 行 ＋ 峰值月 1 行 ＋ 月均 1 行。
+           月份集合与图卡取同一批（`bars`＝支出>0 的月），两处不走散；序号由装配点的行序计数器给（#1135）。 */
+        listCards: kpi.count === 0 ? [] : [{
+          title: '逐月明细',
+          rows: [
+            { left: '总额', main: '「' + category + '」近 ' + String(series.length) + ' 个月 · 共 ' + String(kpi.count) + ' 笔', right: money(totalExpense) + ' 元' },
+            ...bars.map((p) => ({ left: p.month, main: String(p.count) + ' 笔', right: money(p.expense) + ' 元' })),
+            { left: '峰值月', main: peakMonth, right: money(peak) + ' 元' },
+            { left: '月均', main: '近 ' + String(series.length) + ' 个月', right: money(avg) + ' 元' },
+          ],
+          emptyText: '「' + category + '」近 ' + String(months) + ' 个月还没有记录。',
+        }],
         factCards: [],
         empty: {
           text: '近 ' + String(months) + ' 个月里「' + category + '」还没有记录。',

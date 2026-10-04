@@ -9,22 +9,14 @@
  */
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { textOf } from './params.js';
-import { accountHelpPrompt, textOrDash } from './pageParts.js';
+import { accountHelpPrompt, changeTextOf, textOrDash } from './pageParts.js';
 import type { AccountCollectInput, AccountWriteScene } from './scene.js';
 import { afterCardOf, bindAccountUpdatePages, renamedCardOf } from './template-update.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.account.write', op: 'update' });
 const KEY = 'bill.account.write' as const;
 
-/** 用户想改成什么（三个口子任给其一；口令那一段与页上那句都读它）。 */
-function changeTextOf(params: Record<string, unknown>): string {
-  const parts: string[] = [];
-  const next = textOf(params['new-name']);
-  if (next !== '') parts.push('改名「' + next + '」');
-  if (params['disable'] === true) parts.push('停用');
-  if (params['enable'] === true) parts.push('启用');
-  return parts.join('、');
-}
+
 
 /** 采集页副标题：账户认不出来时说哪一件，其余报缺几项。 */
 function subtitleOf(input: AccountCollectInput, target: unknown): string {
