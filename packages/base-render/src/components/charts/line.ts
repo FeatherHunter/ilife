@@ -662,7 +662,7 @@ export function renderLine(raw: LineChartInput): ChartOutput {
     + marksSvg
     + valuesSvg
     + markPointSvg
-    + xLabelsSvg(line, frame, items, 'peak', undefined, LINE_LABEL_GAP, line.labelEvery)
+    + xLabelsSvg(line, frame, items, 'peak', undefined, LINE_LABEL_GAP, line.labelEvery, LINE_TEXT_MOBILE.xlabel)
     + '</svg></div>';
   return { kind: 'line', html, empty: points === 0, points };
 }

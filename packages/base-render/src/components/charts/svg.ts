@@ -8,6 +8,7 @@
  */
 
 import { GRID_COLOR, GRID_LINES, MUTED_COLOR, esc, fmtValue, n1, round2 } from './shared.js';
+import { textWidthUnits } from './coords.js';
 import { LabelsMode, ResolvedCommon, ShowValuesMode } from './options.js';
 import { Frame, xAt, yAt } from './coords.js';
 import { charts } from './dispatch.js';
@@ -95,6 +96,40 @@ function labelIndexes(mode: LabelsMode, items: readonly ChartItem[], select: 'pe
 /* t-chartfix：X 标签的 x 标度缺省与折线点同一 `xAt` 点标度；柱族（bar／combo）
  * 的柱列中心走 band 标度 `x0 + slot*(i+0.5)`——点标度会把首尾标签钉在绘图区
  * 左右边缘（3 柱时偏差 48.7 单位），与柱错位。调用方按自家几何传入。 */
+/** #1128 刻度文字自适应（**一处实现，折线／柱族共用**）：**先抽稀、仍挤再斜排 30°**。
+ *
+ *  不重叠**由构造保证**：从左到右保留标签，下一枚的估算左沿若压到上一枚的右沿（+2 单位间隙）就抽掉它；
+ *  抽稀后若还剩不到 3 枚而候选 ≥5 枚，改用斜排 30°（水平占宽缩到 `w·cos30 + 字高·sin30`）再看能不能多留几枚。
+ *  估算宽度走 `textWidthUnits(label, fontUnits)`——`fontUnits` 由调用方按**本族真实字号**给：
+ *  折线族给移动档（19.4，留白双端共用取大档），柱族给 9.5（柱族 tick 不随移动档放大）。 */
+export function fitXLabels(
+  items: readonly ChartItem[],
+  picked: readonly number[],
+  xOf: (index: number, count: number) => number,
+  fontUnits: number,
+): { readonly indexes: readonly number[]; readonly rotate: number; readonly anchor: 'middle' | 'end' } {
+  const widthOf = (i: number): number => textWidthUnits(items[i].label, fontUnits);
+  const keep = (rot: number): number[] => {
+    const cos = Math.cos((rot * Math.PI) / 180);
+    const sin = Math.abs(Math.sin((rot * Math.PI) / 180));
+    const out: number[] = [];
+    let lastRight = -Infinity;
+    for (const i of picked) {
+      const w = widthOf(i) * cos + fontUnits * sin * 1.2;
+      const x = xOf(i, items.length);
+      const left = rot === 0 ? x - w / 2 : x - w;
+      if (left < lastRight + 2) continue;
+      out.push(i);
+      lastRight = left + w;
+    }
+    return out;
+  };
+  const flat = keep(0);
+  if (picked.length < 5 || flat.length >= Math.min(3, picked.length)) return { indexes: flat, rotate: 0, anchor: 'middle' };
+  const slanted = keep(-30);
+  return slanted.length > flat.length ? { indexes: slanted, rotate: -30, anchor: 'end' } : { indexes: flat, rotate: 0, anchor: 'middle' };
+}
+
 export function xLabelsSvg(
   common: ResolvedCommon,
   frame: Frame,
@@ -103,14 +138,21 @@ export function xLabelsSvg(
   xOf: (index: number, count: number) => number = (i, n) => xAt(frame, i, n),
   gap?: number,
   every?: number,
+  fontUnits = 10,
 ): string {
   if (common.labels === 'none') return '';
   const baseY = frame.y1 + (gap ?? (common.compact ? 9 : 12));
-  return labelIndexes(common.labels, items, select, every).map((i) => {
+  const picked = labelIndexes(common.labels, items, select, every);
+  /* 调用方显式给了 labelRotate（≠0）＝那一族自己定了斜排，不再自适应；否则按 fitXLabels 的决定走。 */
+  const explicit = common.labelRotate !== 0;
+  const fit = explicit
+    ? { indexes: picked, rotate: common.labelRotate, anchor: (common.labelRotate < 0 ? 'end' : 'middle') as 'middle' | 'end' }
+    : fitXLabels(items, picked, xOf, fontUnits);
+  return fit.indexes.map((i) => {
     const x = xOf(i, items.length);
-    const rotate = common.labelRotate === 0 ? '' : ' transform="rotate(' + common.labelRotate + ' ' + n1(x) + ' ' + n1(baseY) + ')"';
+    const rotate = fit.rotate === 0 ? '' : ' transform="rotate(' + fit.rotate + ' ' + n1(x) + ' ' + n1(baseY) + ')"';
     return '<text class="' + STYLE_PREFIX + 'charts-xlabel" x="' + n1(x) + '" y="' + n1(baseY)
-      + '" text-anchor="middle"' + rotate + ' fill="' + MUTED_COLOR + '">' + esc(items[i].label) + '</text>';
+      + '" text-anchor="' + fit.anchor + '"' + rotate + ' fill="' + MUTED_COLOR + '">' + esc(items[i].label) + '</text>';
   }).join('');
 }
 

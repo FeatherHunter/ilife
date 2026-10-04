@@ -12,6 +12,11 @@ import { ResolvedCommon, actionAttrs, belowMinPoints, containerOpen, emptyOutput
 import { LINE_TEXT_MOBILE, LINE_TICK_TOP_MIN, domainOf, insetsFor, makeFrame, textWidthUnits, tickCount, yAt } from './coords.js';
 import { gridSvg, legendHtml, ticksSvg, valueIndexes, xLabelsSvg } from './svg.js';
 import { charts } from './dispatch.js';
+
+/** 柱族刻度／横轴文字字号（**用户单位**）：基规则 `.charts-tick{font-size:9.5px}`；**柱族不随移动档放大**
+ *  （移动档那条 `font-size:19.4px` 只挂在 `.charts-line` 之下）——#1128 前这里的左内距按折线的移动档估，
+ *  于是「轴与首柱之间」比刻度文字实宽多留了一倍空白（实测 a15 左内距 83.7px）。 */
+const BAR_TICK_FONT_UNITS = 9.5;
 import { STYLE_PREFIX } from '../../style.js';
 import { BarChartInput, BarChartOptions, CHART_BREAKPOINTS, CHART_PALETTE, ChartItem, ChartOutput } from '../../spec/index.js';
 
@@ -100,7 +105,7 @@ export function renderBar(raw: BarChartInput): ChartOutput {
   if (barTicks >= 2) {
     for (let i = 0; i < barTicks; i += 1) {
       const tv = lo + ((hi - lo) * i) / (barTicks - 1);
-      tickTextW = Math.max(tickTextW, textWidthUnits(fmtValue(round2(tv), common.format), LINE_TEXT_MOBILE.tick));
+      tickTextW = Math.max(tickTextW, textWidthUnits(fmtValue(round2(tv), common.format), BAR_TICK_FONT_UNITS));
     }
   }
   const frame = makeFrame(common, insetsFor(common, {
@@ -243,7 +248,7 @@ export function renderBar(raw: BarChartInput): ChartOutput {
     + valuesSvg
     + ticksSvg(frame, lo, hi, barTicks, common.format)
     /* t-chartfix：柱标签取柱列中心（与 `barsSvg` 同一 band 标度），不得用点标度。 */
-    + xLabelsSvg(common, frame, items, 'edge', (i, n) => frame.x0 + (frame.w / n) * (i + 0.5))
+    + xLabelsSvg(common, frame, items, 'edge', (i, n) => frame.x0 + (frame.w / n) * (i + 0.5), undefined, undefined, BAR_TICK_FONT_UNITS)
     + '</svg></div>';
   return { kind: 'bar', html, empty: points === 0, points };
 }
