@@ -15,7 +15,6 @@ import type { GoalCollectInput, GoalReceiptInput, GoalWriteScene } from './scene
 import { bindGoalFormPages } from './template-form.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.goal.write', op: 'set-budget' });
-const READ_WORD: string = projectWakeWord({ key: 'bill.goal.query', op: 'budget' });
 const KEY = 'bill.goal.write' as const;
 
 /** 这一页管的是哪个月：参数给的月份归一得了就用它，归一不了按本月（那一格另有缺项标签点名）。 */
@@ -90,7 +89,8 @@ export const SCENE: GoalWriteScene = {
         note: '覆盖＝把原来那条删掉、按新的值重记一条；同一个月份同一层分类只留一条。',
       };
     },
-    receiptNote: '预算与实际支出都只算当月：要月度执行情况就看「' + READ_WORD + '」那一页。',
+    /* #1131：判地主数字下那一行是固定口径句。 */
+    receiptNote: () => '覆盖全部支出 · 按自然月统计',
     detailCaption: '写进去的这份预算',
     logDetail: (input) => '设定预算 ' + monthOf(input.params) + ' ' + (textOf(input.params['category']) || '全月总预算')
       + ' ' + money(Number(input.params['amount'])) + ' 元'

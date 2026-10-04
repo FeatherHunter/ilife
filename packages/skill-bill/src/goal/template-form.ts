@@ -52,7 +52,8 @@ export interface GoalFormSpec {
   /** 回执页的结果块（覆盖那一路的对照行；`null`＝没覆盖）。 */
   readonly result: (input: GoalReceiptInput) => GoalReceiptResult | null;
   /** 回执页主数字那一段的小字。 */
-  readonly receiptNote: string;
+  /** 回执页主数字下那句小字（#1131 起按数据投影：截止档随数据变）。 */
+  readonly receiptNote: (input: GoalReceiptInput) => string;
   /** 回执页明细表的标题（**本件已不读**：段标题按页型给）。 */
   readonly detailCaption: string;
   /** 回执页复制日志第 4 段后半（这一页干了什么）。 */
@@ -212,7 +213,7 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
       eyebrow: '已记好',
       value: money(Number.isFinite(amount) ? amount : 0),
       unit: '元',
-      note: spec.receiptNote,
+      note: spec.receiptNote(input),
       stamp: '有效',
     },
     ledgerTitle: receipt.op === 'set-budget' ? '预算落点' : '目标落点',

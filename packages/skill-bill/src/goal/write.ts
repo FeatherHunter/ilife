@@ -125,8 +125,9 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
     const label = category === '' ? ALL_CATEGORY_CN : category;
     return finish({
       key, op, params, scene, goals, at,
-      summary: '已设定预算：' + month + ' ' + label + ' ' + money(amount) + ' 元'
-        + (before === null ? '' : '（覆盖了原来的 ' + money(before.amount) + ' 元）'),
+      /* #1131：判地店头那一行是**固定句**「已设定 <月> <分类>」；金额在主数字段（3000.00 元）、
+         覆盖那件事在明细的「原来的金额」行与复制日志里，都不丢。 */
+      summary: '已设定 ' + month + ' ' + label,
       detail: [
         { k: '月份', v: month },
         { k: '分类', v: label },
@@ -141,7 +142,8 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
   saveGoals(goalsPath, goals);
   return finish({
     key, op, params, scene, goals, at,
-    summary: '已设定目标「' + name + '」' + money(amount) + ' 元' + (deadline === null ? '' : '（截止 ' + deadline + '）'),
+    /* #1131：判地店头那一行只留目标名；金额在主数字段、截止日在明细行，都不丢。 */
+    summary: '已设定目标「' + name + '」',
     detail: [
       { k: '目标', v: name },
       { k: '目标金额', v: money(amount) + ' 元' },

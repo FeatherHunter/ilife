@@ -161,7 +161,11 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
     if (changes.length === 0) changes.push('没有任何一处真的变了');
     return finish({
       key, op, params, scene, db, before, goalsAccounts: accountsOf(goals),
-      summary: '已修改账户「' + applied.after.name + '」：' + changes.join('；'),
+      /* #1131：判地店头那一行只写改名这一件（「已改名「旧」→「新」」）；
+         连带笔数在核对段「编号」行、停用／启用的说法在明细与复制日志里，都不丢。 */
+      summary: applied.before.name !== applied.after.name
+        ? '已改名「' + applied.before.name + '」→「' + applied.after.name + '」'
+        : '已修改账户「' + applied.after.name + '」：' + changes.join('；'),
       detail: accountDetail(applied.after),
       noChange: applied.before.name === applied.after.name && applied.before.type === applied.after.type
         && applied.before.disabled === applied.after.disabled,

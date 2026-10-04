@@ -48,8 +48,8 @@ export interface AccountUpdateSpec {
   readonly subtitle: (input: AccountCollectInput, target: AccountRow | null) => string;
   /** 回执页读数卡（**中段明细行的取值面之一**：改名那一路由改动行出，其余读数走这里）。 */
   readonly receiptCards: (input: AccountReceiptInput) => readonly { readonly label: string; readonly value: string; readonly detail?: string }[];
-  /** 回执页主数字那一段的小字。 */
-  readonly receiptNote: string;
+  /** 回执页主数字那一段的小字（#1131 起按数据投影：类型／状态随数据变）。 */
+  readonly receiptNote: (input: AccountReceiptInput) => string;
   /** 回执页明细表的标题（**本件已不读**：段标题按页型给）。 */
   readonly detailCaption: string;
   /** 回执页复制日志第 4 段后半。 */
@@ -189,7 +189,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
       eyebrow: receipt.noChange ? '没改动' : '已记好',
       value: String(receipt.renamedRows > 0 ? receipt.renamedRows : receipt.affectedRows),
       unit: receipt.renamedRows > 0 ? '笔' : '处',
-      note: spec.receiptNote,
+      note: spec.receiptNote(input),
       ...(receipt.noChange ? {} : { stamp: '有效' }),
     },
     ledgerTitle: '账户落点',

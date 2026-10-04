@@ -14,7 +14,6 @@ import type { GoalCollectInput, GoalReceiptInput, GoalWriteScene } from './scene
 import { bindGoalFormPages } from './template-form.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.goal.write', op: 'set-saving' });
-const READ_WORD: string = projectWakeWord({ key: 'bill.goal.query', op: 'saving' });
 const KEY = 'bill.goal.write' as const;
 
 /** 采集页副标题：缺什么就写清缺几项。 */
@@ -62,7 +61,9 @@ export const SCENE: GoalWriteScene = {
       { label: '现在一共有几个目标', value: String(input.receipt.savingCount) + ' 个', detail: '都在目标表里' },
     ],
     result: () => null,
-    receiptNote: '想看存了多少、还差多少、大概什么时候能达成，就看「' + READ_WORD + '」那一页。',
+    /* #1131：判地主数字下那一行是口径句 ＋ 截止档；引导句按 #1118 手法不再上屏。 */
+    receiptNote: (input: GoalReceiptInput) => '达到目标金额即达成 · '
+      + (textOf(input.params['deadline']) === '' ? '无截止日期' : '截止 ' + textOf(input.params['deadline'])),
     detailCaption: '写进去的这个目标',
     logDetail: (input: GoalReceiptInput) => '设定目标 ' + textOrDash(input.params['name'])
       + ' ' + money(Number(input.params['amount'])) + ' 元'

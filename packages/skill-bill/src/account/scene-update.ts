@@ -48,7 +48,11 @@ export const SCENE: AccountWriteScene = {
       ...(input.receipt.after === null ? [] : [afterCardOf(input.receipt.after)]),
       renamedCardOf(input.receipt.renamedRows),
     ],
-    receiptNote: '改名会同步更新这个账户的历史流水；停用只是不再算进总余额，记录都还在。',
+    /* #1131：判地主数字下那一行是「同步更新 ＋ 类型 ＋ 状态」；类型／状态按数据投影。 */
+    receiptNote: (input) => '相关历史流水已同步更新'
+      + (input.receipt.after === null ? ''
+        : ' · ' + (input.receipt.after.type.trim() === '' ? '—' : input.receipt.after.type)
+          + ' · ' + (input.receipt.after.disabled ? '已停用' : '使用中')),
     detailCaption: '写进去的项',
     logDetail: (input) => '改账户 ' + textOrDash(input.params['name']) + '：' + changeTextOf(input.params)
       + '；账户表现在 ' + String(input.receipt.accountCount) + ' 个',
