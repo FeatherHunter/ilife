@@ -1,0 +1,162 @@
+{
+  "wall": "1074-query-17",
+  "total": 17,
+  "ok": 6,
+  "no": 11,
+  "unjudged": 0,
+  "items": [
+    {
+      "wall": "1074-query-17",
+      "seq": 1,
+      "wake": "查某天",
+      "prod": "w00-真跑.html",
+      "proto": "w00-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 2,
+      "wake": "查今天",
+      "prod": "w01-真跑.html",
+      "proto": "w01-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 3,
+      "wake": "查昨天",
+      "prod": "w02-真跑.html",
+      "proto": "w02-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 4,
+      "wake": "查某天",
+      "prod": "w03-真跑.html",
+      "proto": "w03-原型.html",
+      "verdict": "no",
+      "reason": "明细 改区域的文本超过了容器，你可以截图看。"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 5,
+      "wake": "查最近",
+      "prod": "w04-真跑.html",
+      "proto": "w04-原型.html",
+      "verdict": "no",
+      "reason": "明细 改区域的文本超过了容器，你可以截图看。"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 6,
+      "wake": "查周",
+      "prod": "w06-真跑.html",
+      "proto": "w06-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 7,
+      "wake": "查月",
+      "prod": "w07-真跑.html",
+      "proto": "w07-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 8,
+      "wake": "查区间",
+      "prod": "w08-真跑.html",
+      "proto": "w08-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 9,
+      "wake": "查分类",
+      "prod": "w09-真跑.html",
+      "proto": "w09-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 10,
+      "wake": "查账户",
+      "prod": "w10-真跑.html",
+      "proto": "w10-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 11,
+      "wake": "查账本",
+      "prod": "w11-真跑.html",
+      "proto": "w11-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 12,
+      "wake": "搜备注",
+      "prod": "w12-真跑.html",
+      "proto": "w12-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 13,
+      "wake": "查标签",
+      "prod": "w13-真跑.html",
+      "proto": "w13-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 14,
+      "wake": "查欠款",
+      "prod": "w14-真跑.html",
+      "proto": "w14-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 15,
+      "wake": "查待报销",
+      "prod": "w15-真跑.html",
+      "proto": "w15-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 16,
+      "wake": "查分期",
+      "prod": "w16-真跑.html",
+      "proto": "w16-原型.html",
+      "verdict": "no",
+      "reason": "明细 的 内容超过了容器右侧"
+    },
+    {
+      "wall": "1074-query-17",
+      "seq": 17,
+      "wake": "账单详情",
+      "prod": "w17-真跑.html",
+      "proto": "w17-原型.html",
+      "verdict": "ok",
+      "reason": ""
+    }
+  ]
+}
