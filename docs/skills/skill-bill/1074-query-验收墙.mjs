@@ -101,6 +101,8 @@ const CSS = [
   'figcaption .c{color:#515154;font-weight:400;font-size:12px;margin-top:4px;line-height:1.6}',
   'figcaption .w{color:#86868b;font-weight:400;font-size:11.5px;margin-top:2px}',
   'figcaption .m{color:#8a6d3b;font-weight:400;font-size:11.5px;margin-top:2px}',
+  /* #1074 诊断：逐格「行数注记」（小字灰色，只住 caption，不动左右两侧 iframe 里任何像素）。 */
+  'figcaption .n{color:#6e6e73;font-weight:400;font-size:11.5px;margin-top:3px;line-height:1.6}',
   '.pair{display:flex;gap:8px;padding:8px;background:#f5f5f7}.stack{display:flex;flex-direction:column;gap:8px;padding:8px;background:#f5f5f7}',
   '.phone{background:#fff;border:1px solid #e8e8ed;border-radius:8px;overflow:hidden}',
   '.tag{font-size:11.5px;color:#86868b;padding:4px 8px;border-bottom:1px solid #e8e8ed}',
@@ -117,6 +119,31 @@ const CSS = [
 
 const FAMILY_CN = { ticket: '票据纸', list: '回落老列表页' };
 
+/** #1074 诊断 · 逐格「行数注记」（负责人复判用）：判地是**手绘样本**、产物按**真实数据**，行数差是内容体积、
+ *  不是形制塌了。数据出处＝`.scratch/1074-诊断/读数.md`（探针 `.scratch/1074-诊断/seq-batch.mjs`／`detail-batch.mjs`
+ *  逐格实测）：**明细行数按段量**（判地 `.entry-rows li` ／产物 `.ilife-ticket-entries li`），行高取该段直系子件**中位**；
+ *  占比行数＝判地 `.scale-rows li` ／产物 `ilife-block-dist-row`。**重测**：重跑那两个探针（list.json 的容器选择器即上列）。
+ *  注记缺失即自检红并点名（见文件末自检段）——不许某一格没有注记就发墙。 */
+const ROW_FACTS = {
+  w00: '明细：判地样本 0 行 ｜ 产物 0 行（两侧都是空态，没有明细行）',
+  w01: '明细：判地样本 2 行 ｜ 产物 1 行（行高中位 判地 64.28 ／ 产物 63.28）· 占比：判地 3 行 vs 产物 1 行',
+  w02: '明细：判地样本 1 行 ｜ 产物 1 行（两侧同为 63.28）· 占比：判地 2 行 vs 产物 1 行',
+  w03: '明细：判地样本 2 行 ｜ 产物 1 行（判地 64.28 ／ 产物 63.28）· 占比：判地 4 行 vs 产物 1 行',
+  w04: '明细：判地样本 3 行 ｜ 产物 10 行（两侧同为 64.28）· 占比：判地 5 行 vs 产物 4 行',
+  w06: '明细：判地样本 3 行 ｜ 产物 5 行（两侧同为 64.28）· 占比：判地 5 行 vs 产物 3 行',
+  w07: '明细：判地样本 3 行 ｜ 产物 7 行（两侧同为 64.28）· 占比：判地 5 行 vs 产物 3 行',
+  w08: '明细：判地样本 7 行 ｜ 产物 14 行（两侧同为 64.28）· 占比：判地 13 行 vs 产物 8 行',
+  w09: '明细：判地样本 2 行 ｜ 产物 2 行（行高中位 判地 76.38 ／ 产物 54.69：判地那两行文本更宽、折行更多）',
+  w10: '明细：判地样本 4 行 ｜ 产物 13 行（两侧同为 64.28；产物 2 行因备注长折行 85.97）· 占比：判地 8 行 vs 产物 3 行',
+  w11: '明细：判地样本 1 行 ｜ 产物 3 行（判地 63.28 ／ 产物 64.28）· 占比：判地 2 行 vs 产物 3 行',
+  w12: '明细：判地样本 2 行 ｜ 产物 9 行（判地 64.28 ／ 产物 62.69）· 占比：判地 3 行 vs 产物 1 行',
+  w13: '明细：判地样本 1 行 ｜ 产物 2 行（判地 63.28 ／ 产物 105.56：备注文本更长、行内折行）· 占比：判地 2 行 vs 产物 1 行',
+  w14: '明细：判地样本 1 行 ｜ 产物 2 行（判地 63.28 ／ 产物 85.97：同上折行）· 占比：判地 2 行 vs 产物 1 行',
+  w15: '明细：判地样本 1 行 ｜ 产物 1 行（两侧同为 63.28）· 占比：判地 2 行 vs 产物 1 行',
+  w16: '明细：判地样本 1 行 ｜ 产物 3 行（判地 63.28 ／ 产物 64.28）· 占比：判地 2 行 vs 产物 1 行',
+  w17: '明细：判地样本 1 行 ｜ 产物 2 行（判地 65.28 ／ 产物 45.25）· 占比：判地 2 行 vs 产物 1 行',
+};
+
 function caption(r) {
   const blocksAll = (r.blocksExpected ?? []).length;
   const blocksOk = blocksAll - (r.blocksMissing ?? []).length;
@@ -127,6 +154,7 @@ function caption(r) {
     + ' <button type="button" class="okbtn" data-seq="' + r.seq + '" data-wake="' + esc(r.wake) + '" data-prod="' + esc(r.file) + '" data-proto="' + esc(r.proto) + '" aria-pressed="false">满意</button>'
     + ' <button type="button" class="nobtn" data-seq="' + r.seq + '" data-wake="' + esc(r.wake) + '" data-prod="' + esc(r.file) + '" data-proto="' + esc(r.proto) + '" aria-pressed="false">不满意</button></div>'
     + '<div class="c">该确认什么：' + esc(r.check) + '</div>'
+    + '<div class="n">' + esc(ROW_FACTS[r.id] ?? '（缺行数注记）') + '</div>'
     + '<div class="w">窗口：' + esc(r.window) + ' ｜ 真跑字节 ' + String(r.bytes) + ' ｜ 原型 sha256 ' + esc(String(r.protoSha256).slice(0, 16)) + '…</div>'
     + '<div class="m">机检：块位 ' + String(blocksOk) + '/' + String(blocksAll) + ' 在 ｜ 页内导航 ' + String(r.navCount) + '/' + String(r.navExpected) + ' 个 ｜ 来源脚注 ' + String(r.srcCount) + ' 处 ｜ 页脚 ' + String(r.footText) + ' 处 ｜ 无 undefined/NaN／无 loading=lazy ｜ 外链 ' + String((r.externalRefs ?? []).length) + ' 处；另记：占比 SCALE ' + String(!!(r.extras ?? {})['ilife-block-dist-row']) + ' ／ 明细 DETAIL ' + String(!!(r.extras ?? {})['ilife-ticket-entries']) + ' ／ 复制区 ' + String(!!(r.extras ?? {})['ilife-block-copy-block']) + ' ／ 对账 CHECK 文本 ' + String(r.checkText) + ' ／ ✂ 裁切线 ' + String(r.cutText) + '</div>'
     + '</figcaption>';
@@ -232,6 +260,12 @@ writeFileSync(join(SRC, deskName), render('desktop'), 'utf8');
 const refs = [...mobile.matchAll(/(?:src|href)="([^"#]+\.html)"/g)].map((m) => m[1]);
 const dead = refs.filter((r) => !existsSync(join(SRC, decodeURIComponent(r))));
 const clean = dead.length === 0;
+/* #1074 诊断注记自检：每格必须有注记，缺一即红并点名（变异「删某一格注记」就红在这里）。 */
+const noteCount = (mobile.match(/class="n">/g) ?? []).length;
+const noNote = rows.filter((r) => (ROW_FACTS[r.id] ?? '').trim() === '').map((r) => r.id);
+const noteClean = noNote.length === 0 && noteCount === rows.length;
+console.log('行数注记 ' + String(noteCount) + '/' + String(rows.length) + ' 格'
+  + (noteClean ? '（逐格都有）' : '；RED 缺注记：' + (noNote.length ? noNote.join('、') : '（注记数对不上格数）')));
 console.log('墙 ' + OUT + '：' + rows.length + ' 格；链接 ' + refs.length + ' 条；'
   + (clean ? '缺失 0 -> ' + OUT + ' 可发（桌面墙同出：' + deskName + '）' : '缺 ' + dead.length + ' 件 -> ' + dead.join('、')));
-process.exit(clean ? 0 : 1);
+process.exit(clean && noteClean ? 0 : 1);
