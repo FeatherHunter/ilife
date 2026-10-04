@@ -79,9 +79,11 @@ export function ticketTablesBDoc(input: DocInput<TablesPage>, sceneId: string): 
   for (const t of p.tables) {
     parts.push('<p>' + escapeHtml(t.title) + '</p>' + tableCardHtml(t));
   }
+  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径；本页只有事实卡一种行）。
+  let n = 0;
   for (const c of p.factCards) {
-    const html = factCardHtml(c);
-    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+    const html = factCardHtml(c, n);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
   }
   return toTicketB({
     docTitle: docTitleOf(r.title),

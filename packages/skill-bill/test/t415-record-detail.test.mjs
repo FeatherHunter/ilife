@@ -46,9 +46,14 @@ function page(key, params, name) {
   assert.ok(existsSync(file), '产物应落盘：' + file);
   return { text: readFileSync(file, 'utf8'), stdout: r.stdout, file };
 }
-/** 整段开标签计数（禁裸子串）。 */
+/** 整段开标签计数（禁裸子串）。
+ *  **只数标记、少数脚本**：`#1134` 起票据纸页内会带一段运行时 JS（气泡卡片），那段源码里
+ *  出现过 `i<list.length` 这类**含 `<li` 的比较式**——直接数整页文本会把它当成一枚 `<li`
+ *  （与 t411 M1「裸子串命中 CSS 选择器名」同一类假绿／假红）。故先剥掉 `<script>`／`<style>`
+ *  的**内容**再数：数的是**标记里真有的开标签**，脚本不算。 */
 function countTag(text, tag) {
-  return (text.split(tag).length - 1);
+  const markup = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+  return (markup.split(tag).length - 1);
 }
 const EYEBROW = (w) => '<p class="ilife-sheet-eyebrow">饼干记账 · ' + w + '</p>';
 const LEDGER_ROW = '<div class="ilife-block-ledger-row">';

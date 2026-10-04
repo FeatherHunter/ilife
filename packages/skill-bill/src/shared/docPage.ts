@@ -201,6 +201,9 @@ export function assembleDocPage(input: DocPageInput): string {
     extraCss: [DESKTOP_CSS, TOAST_CSS, KV_CSS, pageUiCss()].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
+    // #1134 A 类根因（长详情被裁成省略号）：公共层 popover 件在这**一处**接上，
+    // 本包所有页一次接线即生效——各场景件一个字不用改（判据见 .scratch/lead-verify/ab-class-probe.mjs）。
+    popoverFullText: true,
   });
 }
 
@@ -225,6 +228,8 @@ export function assembleSheetPage(input: { readonly docTitle: string; readonly b
     extraCss: [sheetCss(), skinCss(), pageUiCss(), input.familyPageCss === false ? ticketFamilyCss({ pageCss: false }) : TICKET_CSS].join('\n'),
     doctypeCase: 'upper',
     pageUi: true,
+    // #1134：同 assembleDocPage 那一条（票据纸族的长文本落点全在这一支里）。
+    popoverFullText: true,
   });
 }
 

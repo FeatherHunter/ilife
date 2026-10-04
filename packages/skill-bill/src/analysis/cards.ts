@@ -27,26 +27,36 @@ function emptyCard(text: string): string {
   return renderEmptyBlock({ text });
 }
 
-/** 条卡组（一组占比条）：行即条；零行出这一组自己的空态句。 */
-export function barGroupHtml(group: BarGroup): string {
+/** 条卡组（一组占比条）：行即条；零行出这一组自己的空态句。
+ *
+ *  `from`（#1135）：**DETAIL 段里这张卡之前已经排过几行**——序号是 DETAIL 段内**整段连续的行序**
+ *  （判地 `.idx` 逐页核过：a19 判地 14 枚跨两组连续 1..14，a16 判地无条的 `TOP5 合计` 也照样拿序号）。
+ *  不给 `from` ＝不出序号（加法式，产物与 #1135 之前逐字节相同）；序号本身是**行序**、不掺业务键。 */
+export function barGroupHtml(group: BarGroup, from?: number): string {
   if (group.rows.length === 0) return emptyCard(group.emptyText);
-  // #1127：版式＝`stacked`（判地形制「一行『名 · 值』＋它下面一条整行宽的条」）。
+  // #1127：版式＝`stacked`（判地形制「一行『名 · 值』＋它下面一条整行宽的 条」）。
   // 判地那条 `.entry-text .bar` 在分析域 25 页里逐页核过：条宽＝占**本组最大值**之比（`r.pct` 由场景算好）。
   return renderDistributionRows({
     layout: 'stacked',
-    rows: group.rows.map((r) => ({ label: r.label, value: r.text, pct: r.pct })),
+    rows: group.rows.map((r, i) => ({
+      label: r.label,
+      value: r.text,
+      pct: r.pct,
+      ...(from === undefined ? {} : { index: from + i + 1 }),
+    })),
   });
 }
 
-/** 列表卡：`左 ｜ 主文 ｜ 右`，零行出这一张卡的空态句。 */
-export function listCardHtml(card: ListCard): string {
+/** 列表卡：`左 ｜ 主文 ｜ 右`，零行出这一张卡的空态句。`from` 同 `barGroupHtml`（DETAIL 段内行序，跨卡连续）。 */
+export function listCardHtml(card: ListCard, from?: number): string {
   if (card.rows.length === 0) return emptyCard(card.emptyText);
   return renderListRows({
-    items: card.rows.map((r) => ({
+    items: card.rows.map((r, i) => ({
       left: r.left,
       main: r.main,
       right: r.right,
       ...(r.done === true ? { done: true } : {}),
+      ...(from === undefined ? {} : { index: from + i + 1 }),
     })),
   });
 }
@@ -61,10 +71,13 @@ export function tableCardHtml(card: TableCard): string {
   });
 }
 
-/** 事实卡：`键 ｜ 值` 两栏（`renderListRows` 的右栏对齐），零行不出（调用方按 `rows.length` 决定要不要这张卡）。 */
-export function factCardHtml(card: FactCard): string {
+/** 事实卡：`键 ｜ 值` 两栏（`renderListRows` 的右栏对齐），零行不出（调用方按 `rows.length` 决定要不要这张卡）。
+ *  `from` 同 `barGroupHtml`（DETAIL 段内行序，跨卡连续）。 */
+export function factCardHtml(card: FactCard, from?: number): string {
   if (card.rows.length === 0) return '';
-  return renderListRows({ items: card.rows.map((r) => ({ main: r.k, right: textOrDash(r.v) })) });
+  return renderListRows({
+    items: card.rows.map((r, i) => ({ main: r.k, right: textOrDash(r.v), ...(from === undefined ? {} : { index: from + i + 1 }) })),
+  });
 }
 
 /** 给图数据补 `labelFit: true`（本域口径；入参原样，只多这一位）。 */

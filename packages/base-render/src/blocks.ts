@@ -46,6 +46,7 @@ import {
   STYLE_FORBIDDEN_TOKENS,
   TOAST_DEFAULTS,
 } from './spec/index.js';
+import { ENTRY_INDEX_BOX_PX, entryIndexCss, entryIndexSlot } from './components/style/entry-index.js';
 import { skinVar } from './components/skin/contract.js';
 import { STYLE_PREFIX } from './style.js';
 import type {
@@ -114,6 +115,22 @@ function reqText(value: unknown, field: string): string {
   return value;
 }
 
+/** 序号位（#1135）的取值归一：≥1 的安全整数，或非空串。
+ *  不给＝不出这一枚（加法式：旧调用方逐字节不变）。
+ *  口径（行序 1..n 还是业务键）**由调用方决定**：本件只计数、不推断，
+ *  给了就照抄（判地 `.idx` 那一枚）。 */
+function optIndex(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value) || value < 1) badInput(field + ' 必须是 ≥1 的安全整数');
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    if (value === '') badInput(field + ' 不能是空串（不给这一位就是不出序号）');
+    return value;
+  }
+  badInput(field + ' 必须是整数或字符串');
+}
 function optText(value: unknown): string | undefined {
   return typeof value === 'string' && value !== '' ? value : undefined;
 }
@@ -585,6 +602,10 @@ export interface DistributionRowInput {
   readonly color?: string;
   /** 名称栏的附加类名（空格分隔）：调用方按域标色，区块不认领域。 */
   readonly labelClass?: string;
+  /** 行序方块里的序号（#1135）：`stacked` 档给它左侧出一枚 22×22 的方块（判地 `.idx`）。
+   *  取值口径（行序 1..n 还是业务键）**由调用方决定**，本件只照抄。
+   *  不给＝不出这一枚且行的标记逐字节不变（加法式）。 */
+  readonly index?: number | string;
 }
 
 /** 分布条行的版式闭集（#1114）：`plain`＝名称／条／数值一格三栏（老版面，逐字节不动）；
@@ -623,14 +644,22 @@ export function renderDistributionRows(input: DistributionRowsInput): string {
     if (layout === 'stacked') {
       /* #1127 判地形制（`proto/analysis/a01-看月度-v2.1.html` 逐字）：
          `<li><span class="idx">1</span><span class="entry-text">名 · 值 · 占比<span class="bar"><i style="width:100%"></i></span></span></li>`
-         ——一行「名 · 值」＋它下面一条整行宽的条；条宽由调用方按「占本组最大值之比」给（本件只摆位）。 */
+         ——一行「名 · 值」＋它下面一条整行宽的条；条宽由调用方按「占本组最大值之比」给（本件只摆位）。
+         #1135：判地那一段里的 `<span class="idx">` 是**序号位**，它在左、右边是一个
+         纵向体的文字列（名 · 值 与它下面那条条）——给了 `index` 才拼那个体。 */
       const valueText = cellText(item.value, field + '.value');
-      return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + ' is-stacked">'
-        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
+      const idx = optIndex(item.index, field + '.index');
+      const nameSpan = '<span class="' + pageLevelPart(DIST_ROW_NAME, 'name') + (extra === undefined ? '' : ' ' + extra) + '">'
         + esc(label) + (valueText === '' ? '' : ' · ' + valueText) + '</span>'
         + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'bar') + '">'
         + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'fill') + '" style="' + esc(fillDecls(pct, color)) + '"></span>'
-        + '</span>'
+        + '</span>';
+      if (idx === undefined) {
+        return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + ' is-stacked">' + nameSpan + '</div>';
+      }
+      return '<div class="' + pageLevelBlock(DIST_ROW_NAME) + ' is-stacked is-indexed">'
+        + '<span class="' + entryIndexSlot() + '">' + esc(idx) + '</span>'
+        + '<span class="' + pageLevelPart(DIST_ROW_NAME, 'text') + '">' + nameSpan + '</span>'
         + '</div>';
     }
     if (layout === 'ticket') {
@@ -1289,6 +1318,10 @@ export interface ListRowInput {
   /** 右侧读数的单位（小一号灰字；如 `卡`／`km`）。只在 `'two-line'` 形态下生效；
    *  `'one-line'` 下给了 → `bad-input`。非串 → `bad-input`。 */
   readonly unit?: string;
+  /** 行序方块里的序号（#1135）：给它行的最左侧出一枚 22×22 的方块（判地 `.idx`）。
+   *  取值口径（行序 1..n 还是业务键）**由调用方决定**，本件只照抄。
+   *  不给：行的标记与标记类逐字节不变（加法式）。 */
+  readonly index?: number | string;
 }
 
 /** 条目行组排面闭集（不给＝`'one-line'`，即改前三槽一行）。 */
@@ -1339,9 +1372,13 @@ export function renderListRows(input: ListRowsInput): string {
     // 没给 `left` 时**不占那一列**：`44px` 那列是给 `▲`／`▼`／`—` 这类标记用的，而栅格是自动排布——
     // 若仍按三列排，`main` 会落进 44px 那列、被 `nowrap` ＋ `ellipsis` 截断（#154 实测：备注标签
     // 「晨起空腹」显示成「晨起…」）。修饰类只改列定义，不动任何既有行。
+    // #1135：行序方块里的序号（判地 `.idx`）——给了才在行最左侧多出那一枚，
+    // 并且行多一列格（不给时行的标记与标记类逐字节不变）。
+    const idx = optIndex(row.index, field + '.index');
     const cls = blockPart('listRows', 'row')
       + (done ? ' ' + blockPart('listRows', 'row-done') : '')
-      + (left === undefined ? ' ' + blockPart('listRows', 'row-no-left') : '');
+      + (left === undefined ? ' ' + blockPart('listRows', 'row-no-left') : '')
+      + (idx === undefined ? '' : ' ' + blockPart('listRows', 'row-indexed'));
     // #950：两行式的中间槽恒出 `-main-line`（形态定骨架），`note` 缺则不出 `-note`（槽定内容）；
     // `'one-line'` 里仍是裸文本（判据钉死：不许顺手把 `-main-line` 也加进既有形态）。
     const mainHtml = twoLine
@@ -1353,6 +1390,7 @@ export function renderListRows(input: ListRowsInput): string {
       + (unit === undefined ? '' : '<span class="' + blockPart('listRows', 'unit') + '">' + esc(unit) + '</span>')
       + '</span>';
     return '<div class="' + cls + '">'
+      + (idx === undefined ? '' : '<span class="' + entryIndexSlot() + '">' + esc(idx) + '</span>')
       + (left === undefined ? '' : '<span class="' + blockPart('listRows', 'left') + '">' + esc(left) + '</span>')
       + '<span class="' + blockPart('listRows', 'main') + '">' + mainHtml + '</span>'
       + rightHtml
@@ -2293,6 +2331,18 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-dist-row.is-stacked .' + p + 'block-dist-row-fill {',
     '  background: ' + skinVar('bar-fill') + ';',
     '}',
+    /* #1135：序号位在左时，行改成判地 `.entry-rows li` 那把横向体（`gap:12px`、
+       顶对齐），右边那个纵向体的文字列取名 `-text`（名 · 值 与它下面那条条）。
+       未给 `index` 的行不打这个修饰类、也不多那个体、产物逐字节不变。 */
+    '.' + p + 'block-dist-row.is-stacked.is-indexed {',
+    '  display: flex;',
+    '  gap: 12px;',
+    '  align-items: flex-start;',
+    '}',
+    '.' + p + 'block-dist-row.is-stacked .' + p + 'block-dist-row-text {',
+    '  flex: 1 1 auto;',
+    '  min-width: 0;',
+    '}',
     /* 票据纸占比行（#1114；判地 w01 `.scale-rows li`／`.scale-top`／`.scale-track`／`.scale-fill`）：
        44px 行档、标签行 13px/700 两端对齐（左「名 · 值」、右百分比）、下面一条 10px 圆角轨。 */
     '.' + p + 'block-dist-row.is-ticket {',
@@ -3090,6 +3140,15 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '.' + p + 'block-list-rows-row-no-left {',
     '  grid-template-columns: minmax(0, 1fr) auto;',
     '}',
+    /* #1135：序号位在最左这一列（判地 `.idx`）——有 `left` 时四轨、没 `left` 时三轨；
+       只改列定义，不动任何既有行（不给 `index` 的行不打这个修饰类）。 */
+    '.' + p + 'block-list-rows-row-indexed {',
+    '  grid-template-columns: ' + String(ENTRY_INDEX_BOX_PX) + 'px minmax(44px, auto) minmax(0, 1fr) auto;',
+    '  align-items: flex-start;',
+    '}',
+    '.' + p + 'block-list-rows-row-indexed.' + p + 'block-list-rows-row-no-left {',
+    '  grid-template-columns: ' + String(ENTRY_INDEX_BOX_PX) + 'px minmax(0, 1fr) auto;',
+    '}',
     '.' + p + 'block-list-rows-left {',
     '  color: var(--fg3);',
     '  font-variant-numeric: tabular-nums;',
@@ -3551,6 +3610,10 @@ export function blocksCss(input?: BlocksCssInput): string {
     parts.push('/* block-' + sectionSlug(section) + ' */');
     parts.push(BLOCK_SECTION_BUILDERS[section](prefix));
   }
+  /* #1135：序号位的样式段拼在 12 区之后——不新增样式区（`BLOCK_STYLE_SECTIONS`
+     闭集由 `test/blocks.test.mjs` 钉死 12 项），也让序号位在每张页上都有样式，
+     调用方不需要另行拼一段。 */
+  parts.push(entryIndexCss({ prefix }));
   return parts.join(LF);
 }
 

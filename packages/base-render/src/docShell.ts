@@ -18,6 +18,7 @@
 import { blocksCss } from './blocks.js';
 import { buildChartsHelpersJs } from './charts.js';
 import { buildEditableValueJs, editableValueCss } from './components/index.js';
+import { buildPopoverFullTextJs, popoverFullTextCss, popoverNoScriptHtml } from './components/popover/index.js';
 import { buildSharedHelpersJs } from './controls.js';
 import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT } from './pageUi.js';
 import { buildStyleSheet } from './style.js';
@@ -56,6 +57,14 @@ export interface DocShellInput {
    *  为什么是 opt-in 而不是默认带上：组件自带运行时（数 KB），只有用到它的页才该付这份字节；
    *  不给／给假 ⇒ 产物与不启用时**逐字节相同**（照 `charts`／`pageUi` 同一条口径）。 */
   readonly editableValue?: boolean;
+  /** **#1134 气泡卡片（长文本全文）**：为真时把本组件的样式段拼进共享样式槽、运行时拼进共享 helpers 槽。
+   *
+   *  与 `editableValue` 同一条口径：不加标记位、不改模板，只往两个既有资产串尾巴上接；
+   *  不给／给假 ⇒ 产物与不启用时**逐字节相同**。
+   *
+   *  **接上之后页面会变什么**：长文本不再被单行省略号裁掉——点它弹一张气泡卡片看全文；
+   *  运行时没跑时那处**整行折行显示**，一个字都不丢。 */
+  readonly popoverFullText?: boolean;
 }
 
 /** 文档模板（裸标记 ＋ CONTENT 槽；标记不得预包裹，资产由 `fillTemplate` 按 `ASSET_WRAPPERS` 自己包）。
@@ -63,13 +72,20 @@ export interface DocShellInput {
  *  `pageUi` 只改两处、都在启用时才发生：viewport 串加 `viewport-fit=cover`
  *  （`env(safe-area-inset-*)` 在 iOS 上不写它恒取 0）＋版面根多一颗 `ilife-page-ui`。
  *  `charts` 只在启用时才多出 `<!--CHARTS-HELPERS-->` 那一行（位置与两侧现状件逐字一致）。 */
-function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctypeCase: DocShellDoctypeCase): string {
+function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctypeCase: DocShellDoctypeCase, popoverFullText: boolean): string {
   const viewport = pageUi ? PAGE_UI_VIEWPORT : 'width=device-width,initial-scale=1';
   const wrapClass = 'wrap ilife-page' + (pageUi ? ' ' + PAGE_UI_CLASS : '');
   const chartsSlot = charts ? '<!--CHARTS-HELPERS-->\n' : '';
+  /* #1134 无 JS 降级走 `<noscript>`：**只有脚本被禁用时这段 <style> 才生效**。
+     早前那版把降级规则塞进主样式段、靠特异度与「就绪层」互相压制——实测压不住明细卡
+     自己那些 `text-overflow:ellipsis` 的行规则（w12 漏 6 处、a20 漏 3 处），上 !important 又会
+     连就绪层一起压掉（a06 反过来冒出 1 处）。`<noscript>` 让两者**根本不在同一条竞争链上**：
+     有脚本 ⇒ 这段不解析，降级层不存在；无脚本 ⇒ 主样式段里的就绪层也就不生效，全文摊开。 */
+  const popoverSlot = popoverFullText ? '\n' + popoverNoScriptHtml() : '';
   return DOCTYPE_HTML5[doctypeCase] + '\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
     + '<meta name="viewport" content="' + viewport + '">\n'
-    + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->\n</head>\n<body>\n'
+    + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->' + popoverSlot
+    + '\n</head>\n<body>\n'
     + '<div class="' + wrapClass + '">\n<!--CONTENT-->\n</div>\n<!--SHARED-HELPERS-->\n'
     + chartsSlot
     + '</body>\n</html>';
@@ -83,16 +99,19 @@ export function renderDocShell(input: DocShellInput): string {
   const charts = input.charts === true;
   const pageUi = input.pageUi === true;
   const editableValue = input.editableValue === true;
+  const popoverFullText = input.popoverFullText === true;
   const doctypeCase: DocShellDoctypeCase = input.doctypeCase === 'upper' ? 'upper' : 'lower';
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
     sharedCssText: buildStyleSheet().css + '\n' + blocksCss()
       + (editableValue ? '\n' + editableValueCss() : '')
+      + (popoverFullText ? '\n' + popoverFullTextCss() : '')
       + (input.extraCss ? '\n' + input.extraCss : ''),
-    sharedHelpersJs: buildSharedHelpersJs() + (editableValue ? '\n' + buildEditableValueJs() : ''),
+    sharedHelpersJs: buildSharedHelpersJs() + (editableValue ? '\n' + buildEditableValueJs() : '')
+      + (popoverFullText ? '\n' + buildPopoverFullTextJs() : ''),
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
   return fillTemplate({
-    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase),
+    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase, popoverFullText),
     assets,
     content: input.bodyHtml,
   }).html;

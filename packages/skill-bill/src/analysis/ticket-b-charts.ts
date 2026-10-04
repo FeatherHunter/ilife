@@ -92,16 +92,18 @@ export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): 
       ? '峰值支出 · 明细与复制区与基线一致'
       : '结论 · 明细与复制区与基线一致';
   const parts: string[] = [];
+  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径）；图卡不占号（判地图上没有序号）。
+  let n = 0;
   for (const c of p.charts) {
     parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
   }
   for (const c of p.listCards) {
-    const html = listCardHtml(c);
-    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+    const html = listCardHtml(c, n);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
   }
   for (const c of p.factCards) {
-    const html = factCardHtml(c);
-    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+    const html = factCardHtml(c, n);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
   }
   const category = sceneId === 'cat_trend' ? (r.label.split(' · ')[0] ?? '') : '';
   /* a21 本页段落：H2 计数＝明细项数（环比行＋暴涨行，含空态占位行），不是记录笔数；

@@ -74,19 +74,23 @@ export function ticketBarsBDoc(input: DocInput<BarsPage>, sceneId: string): stri
   const r = input.result;
   const p = r.page;
   const parts: string[] = [];
+  // #1135：DETAIL 段内**整段连续的行序**（判地 `.idx` 口径）。`n`＝已经排过几行；
+  // 出卡的顺序（条卡组 → 列表卡 → 图卡 → 事实卡）就是计数的顺序，图卡不占号（判地图上没有序号）。
+  let n = 0;
   for (const g of p.barGroups) {
-    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g));
+    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, n));
+    n += g.rows.length;
   }
   for (const c of p.listCards) {
-    const html = listCardHtml(c);
-    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+    const html = listCardHtml(c, n);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
   }
   for (const c of p.charts) {
     parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
   }
   for (const c of p.factCards) {
-    const html = factCardHtml(c);
-    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
+    const html = factCardHtml(c, n);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
   }
   return toTicketB({
     docTitle: docTitleOf(r.title),
