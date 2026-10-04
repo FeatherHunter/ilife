@@ -147,6 +147,25 @@ function ledgerCompare(rows: readonly { k: string; v: string }[], id: string): s
   return renderLedgerRows({ rows: full, layout: 'ticket' });
 }
 
+/** #1128 ④ 折线点选高亮 ＋ 读数气泡（**一处注入，25 页共用**）。
+ *  渐进增强：没有这段 JS 时这一页仍是一张静态折线图（点标记只是多了 `role`／`tabindex`）。
+ *  交互：点一个点 ⇒ 该点高亮（`.is-on`）＋ 气泡贴在该点上，文案取该点 `data-tip`（＝「X 轴文字: 数值」）；
+ *  再点同一点或点空白、或按 Esc ⇒ 取消。触屏可用（走 click，不依赖 hover）。 */
+const LINE_TAP_JS = '<' + 'script>(function(){'
+  /* 出码里**一个双引号都不打**：上游装配会把 " 转义成 \" 写进页面，故选择器与样式值一律走字符码。 */
+  + 'var QQ=String.fromCharCode(34),LB=String.fromCharCode(91),RB=String.fromCharCode(93),PX=String.fromCharCode(112,120);'
+  + 'var wrap=document.querySelector(LB+\'data-chart-kind=\'+QQ+\'line\'+QQ+RB);if(!wrap)return;'
+  + 'var tip=document.createElement(\'div\');tip.className=\'ilife-charts-tip\';tip.hidden=true;wrap.appendChild(tip);'
+  + 'var on=null;'
+  + 'function close(){if(on){on.classList.remove(\'is-on\');on=null;}tip.hidden=true;}'
+  + 'wrap.addEventListener(\'click\',function(e){var d=e.target&&e.target.closest?e.target.closest(\'.ilife-charts-dot\'):null;'
+  + '  if(!d){close();return;}if(d===on){close();return;}close();on=d;d.classList.add(\'is-on\');'
+  + '  tip.textContent=d.getAttribute(\'data-tip\')||\'\';tip.hidden=false;'
+  + '  var a=d.getBoundingClientRect(),b=wrap.getBoundingClientRect();'
+  + '  tip.style.left=Math.round(a.left-b.left+a.width/2)+PX;tip.style.top=Math.round(a.top-b.top-6)+PX;});'
+  + 'document.addEventListener(\'keydown\',function(e){if(e.key===\'Escape\')close();});'
+  + '})();<' + '/script>';
+
 /** 图形占位那一句（判地两版，与 `caliberTagOf` 同一分界）：a01-a03 说「不重算口径」，a04 起说「不用它读数」。 */
 function chartNoteOf(id: string): string {
   switch (id) {
@@ -202,7 +221,7 @@ export function ticketDoc(input: {
          撑不起图的页退回判地那句占位说明（判地本段只有占位文字，这是本票记在票面的判地变更）。 */
       content: input.chartHtml === ''
         ? '<div class="ilife-ticket-card">' + escapeHtml(chartNoteOf(input.sceneId)) + '</div>'
-        : input.chartHtml,
+        : input.chartHtml + (input.chartHtml.includes('data-chart-kind="line"') ? LINE_TAP_JS : ''),
     })
     + ticketRule()
     + (input.detailHtml === ''

@@ -69,6 +69,9 @@ export function chartsCss(prefix: string): string {
     /* 文本字号（旧 `charts.js:55,67,70,79,87,90,92,96,102-103,113,122` 逐值）：
      * 缺了这些规则 SVG 文本会继承页面字号（14–16 用户单位），比旧版大 30%–60%（R2-N12）。 */
     '.' + p + 'charts-tick{font-size:9.5px}',
+    /* #1128 ④：点选高亮与读数气泡（气泡贴在点上，点第二次或点别处取消；无 JS 时不出现）。 */
+    '.' + p + 'charts-dot.is-on{fill:var(--fg,#1d1d1f);stroke-width:2.5}',
+    '.' + p + 'charts-tip{position:absolute;transform:translate(-50%,-100%);background:#1d1d1f;color:#fff;font-size:11.5px;line-height:1.5;padding:4px 8px;border-radius:8px;white-space:nowrap;pointer-events:none;z-index:3}',
     '.' + p + 'charts-xlabel{font-size:10px}',
     '.' + p + 'charts-value{font-size:10px}',
     '.' + p + 'charts-value-last{font-size:10.5px;font-weight:700}',

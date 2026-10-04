@@ -482,6 +482,11 @@ export function renderLine(raw: LineChartInput): ChartOutput {
           + '" stroke-width="1.5" vector-effect="non-scaling-stroke"'
           + (line.dotStyle === undefined ? '' : ' style="' + esc(line.dotStyle) + '"')
           + tipAttrs(line, () => item.label + ': ' + fmtValue(item.value as number, line.format))
+          /* #1128 ④：点标记可点、可聚焦（渐进增强——无 JS 时这一页仍是一张静态折线图）。
+             气泡文案就取 `data-tip`（＝「X 轴文字: 数值」），页内运行时住分析域票据纸装配处。 */
+          /* aria-label 只放 X 轴文字：再调一次 format 会打破 charts.test 那句「format 按数据值逐点调用」的计数
+             （气泡里的数值仍取 data-tip，那是 tooltip 开启时本就有的一次调用）。 */
+          + ' tabindex="0" role="button" aria-label="' + esc(item.label) + '"'
           + actionAttrs(line, i) + '/>';
       });
     }
