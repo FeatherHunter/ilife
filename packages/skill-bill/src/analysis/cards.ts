@@ -12,7 +12,7 @@
  *   - 图一律走公共层图表（#688 §二 C5：技能侧零 SVG 副本、零样式副本；本域的环／柱／折线／直方四图都在闭集里）。
  */
 import { renderChartBlock, renderChips, renderDataTable, renderDistributionRows, renderEmptyBlock, renderKpiGrid, renderListRows } from 'base-paint/blocks';
-import type { KpiCardInput } from 'base-paint/blocks';
+import type { ChartBlockChartInput, KpiCardInput } from 'base-paint/blocks';
 import type { PageBlock } from '../shared/pageSections.js';
 import type { BarGroup, ChartCard, EmptySpec, FactCard, ListCard, TableCard } from './scene.js';
 import { textOrDash } from './pageParts.js';
@@ -67,9 +67,18 @@ export function factCardHtml(card: FactCard): string {
   return renderListRows({ items: card.rows.map((r) => ({ main: r.k, right: textOrDash(r.v) })) });
 }
 
-/** 图卡：kind ＋ 数据 ＋ 标题全交给公共层图表件（技能侧零 SVG 副本）。 */
+/** 给图数据补 `labelFit: true`（本域口径；入参原样，只多这一位）。 */
+function fitOn(input: ChartBlockChartInput): ChartBlockChartInput {
+  return { ...input, options: { ...(input.options ?? {}), labelFit: true } } as ChartBlockChartInput;
+}
+
+/** 图卡：kind ＋ 数据 ＋ 标题全交给公共层图表件（技能侧零 SVG 副本）。
+ *  **本域开刻度自适应**（`labelFit: true`，#1128 契约回归修）：X 轴标签放不下时抽稀／斜排。
+ *  base 公共件那一档缺省 `false`（既有调用方逐字节不变），故这枚开关必须由本域自己挂；
+ *  本件是分析域图卡的**唯一出口**（各族模板与 `chartFor` 都走它）⇒ 挂在这一处即 25 页一起吃到，
+ *  不逐页打补丁、也不许别处再各写一份。 */
 export function chartCardHtml(card: ChartCard): string {
-  return renderChartBlock({ kind: card.kind, input: card.input, title: card.title });
+  return renderChartBlock({ kind: card.kind, input: fitOn(card.input), title: card.title });
 }
 
 /** 对比的一侧（一段期间的四格读数）：卡区标题即这段期间的标签。 */

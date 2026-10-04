@@ -86,6 +86,10 @@ export interface ChartCommonOptions {
    *  `'last'` 与折线 `highlightLast` 同开时只出一枚（末值文本不双印，见 `charts.ts`）。 */
   readonly showValues?: boolean | 'edge' | 'last';
   readonly labelRotate?: number;
+  /** X 轴刻度**自适应**（#1128）：标签放不下时按需抽稀／斜排（两处决策都住 `components/charts/svg.ts`）。
+   *  **缺省 `false`＝既有调用方逐字节不变**（base 公共件硬契约：新件不得让既有调用方回归）；
+   *  要自适应的那一族**自己显式开**（分析域在 `analysis/cards.ts` 一处开）。 */
+  readonly labelFit?: boolean;
   readonly yMin?: number;
   readonly yMax?: number;
   readonly grid?: boolean;

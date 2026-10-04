@@ -144,8 +144,10 @@ export function xLabelsSvg(
   const baseY = frame.y1 + (gap ?? (common.compact ? 9 : 12));
   const picked = labelIndexes(common.labels, items, select, every);
   /* 调用方显式给了 labelRotate（≠0）＝那一族自己定了斜排，不再自适应；否则按 fitXLabels 的决定走。 */
+  /* **默认档逐字节不变**（base 公共件硬契约：新件不得让既有调用方回归）：不传 `labelFit: true` 时
+     走原路——`labelIndexes` 抽出的就是全量，只有调用方显式开了才做自适应抽稀／斜排。 */
   const explicit = common.labelRotate !== 0;
-  const fit = explicit
+  const fit = !common.labelFit || explicit
     ? { indexes: picked, rotate: common.labelRotate, anchor: (common.labelRotate < 0 ? 'end' : 'middle') as 'middle' | 'end' }
     : fitXLabels(items, picked, xOf, fontUnits);
   return fit.indexes.map((i) => {

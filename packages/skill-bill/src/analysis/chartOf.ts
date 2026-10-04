@@ -38,6 +38,7 @@ export function chartFor(
   },
 ): string {
   const charts = page.charts ?? [];
+  /* 刻度自适应（`labelFit`）由 `cards.chartCardHtml` 一处开（本域口径）：这里与各族模板同走那一件。 */
   if (charts.length > 0) return chartCardHtml(charts[0]);
   const moneyOf = (v: string): number | null => moneyOfText(v);
   const rowsOf = (): readonly { label: string; value: number }[] => {
@@ -81,7 +82,7 @@ export function chartFor(
     title: '',
     input: {
       items: rows,
-      options: { singleColor: true, yTicks: 4, format: money, labels: 'all', showValues: false },
+      options: { singleColor: true, yTicks: 4, format: money, labels: 'all', showValues: false, labelFit: true },
     },
   });
 }

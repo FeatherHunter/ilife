@@ -36,6 +36,8 @@ export interface ResolvedCommon {
   readonly grid: boolean;
   readonly actionId: string | undefined;
   readonly tooltip: boolean;
+  /** #1128 契约回归修：刻度自适应（抽稀／斜排）**显式开关**，缺省 false＝既有调用方逐字节不变。 */
+  readonly labelFit: boolean;
 }
 
 interface CommonDefaults {
@@ -67,6 +69,7 @@ export function resolveCommon(raw: unknown, def: CommonDefaults): ResolvedCommon
     grid: o === undefined || o.grid !== false,
     actionId: o !== undefined && typeof o.actionId === 'string' && o.actionId !== '' ? o.actionId : undefined,
     tooltip: o !== undefined && o.tooltip === true,
+    labelFit: o !== undefined && (o as { readonly labelFit?: unknown }).labelFit === true,
   };
 }
 
