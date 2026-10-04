@@ -12,7 +12,7 @@
       "prod": "a01-真跑.html",
       "proto": "a01-原型.html",
       "verdict": "no",
-      "reason": "明细卡 的 进度条 左侧空白有些大了。"
+      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -21,7 +21,7 @@
       "prod": "a02-真跑.html",
       "proto": "a02-原型.html",
       "verdict": "no",
-      "reason": "明细卡 进度条左侧空白有些大了，可以截图你视觉评审下感受下问题在哪儿"
+      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -39,7 +39,7 @@
       "prod": "a04-真跑.html",
       "proto": "a04-原型.html",
       "verdict": "no",
-      "reason": "明新卡的进度条都完全看不见了"
+      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -48,7 +48,7 @@
       "prod": "a05-真跑.html",
       "proto": "a05-原型.html",
       "verdict": "no",
-      "reason": "明新卡的进度条都完全看不见了"
+      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -57,7 +57,7 @@
       "prod": "a06-真跑.html",
       "proto": "a06-原型.html",
       "verdict": "no",
-      "reason": "明新卡的进度条都完全看不见了"
+      "reason": "“9 笔 招行卡 支出 5063.40 ／ 收入 13759.00”---这句话显示不全有省略号。HTML需要避免省略号，需要巧妙的方式将信息展示全。"
     },
     {
       "wall": "1076-analysis-25",
@@ -66,7 +66,7 @@
       "prod": "a07-真跑.html",
       "proto": "a07-原型.html",
       "verdict": "no",
-      "reason": "明新卡的进度条都完全看不见了"
+      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -129,7 +129,7 @@
       "prod": "a14-真跑.html",
       "proto": "a14-原型.html",
       "verdict": "no",
-      "reason": "走势图的曲线图的x轴文字折叠了，看看是否可以做成，这个折线图可以交互，比如点某个点，可以看到x轴文字？或者高亮？你自己思考，从设计师角度"
+      "reason": "逐月明细-中出现了省略号，应该能显示全，不能显示全的可以考虑一些比较好的HTML技术的空间可以展示全"
     },
     {
       "wall": "1076-analysis-25",
@@ -138,7 +138,7 @@
       "prod": "a15-真跑.html",
       "proto": "a15-原型.html",
       "verdict": "no",
-      "reason": "餐饮 逐月支出 这个 柱状图 左侧空白太大，导致页面利用率低"
+      "reason": "detail中的信息也变成了逐月支出的柱状图，这个改出问题了，需要恢复detail区域部分和原型一致"
     },
     {
       "wall": "1076-analysis-25",
@@ -147,7 +147,7 @@
       "prod": "a16-真跑.html",
       "proto": "a16-原型.html",
       "verdict": "no",
-      "reason": "没折线图"
+      "reason": "detai中需要和原型一样有好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -156,7 +156,7 @@
       "prod": "a17-真跑.html",
       "proto": "a17-原型.html",
       "verdict": "no",
-      "reason": "没折线图"
+      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -174,7 +174,7 @@
       "prod": "a19-真跑.html",
       "proto": "a19-原型.html",
       "verdict": "no",
-      "reason": "明细卡 的 进度条 左侧空白有些太大了"
+      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等"
     },
     {
       "wall": "1076-analysis-25",
@@ -183,7 +183,7 @@
       "prod": "a20-真跑.html",
       "proto": "a20-原型.html",
       "verdict": "no",
-      "reason": "明细卡 的 进度条 左侧空白有些太大了"
+      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等。 第二点 不能出现省略号，可能出现省略号的地方应该有巧妙的控件可以展示全，或者用户点击什么可以看全。"
     },
     {
       "wall": "1076-analysis-25",
@@ -192,7 +192,7 @@
       "prod": "a21-真跑.html",
       "proto": "a21-原型.html",
       "verdict": "no",
-      "reason": "折线图的页面都一个问题"
+      "reason": "detail的月度序号这下年度出问题了，应该是其他信息而不是重复月度序列"
     },
     {
       "wall": "1076-analysis-25",
