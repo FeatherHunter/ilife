@@ -7,6 +7,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, kpiValue, parseAmount, peakBarRow, toTicketB } from './ticket-b.js';
+import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf, money } from './pageParts.js';
 import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, DocInput } from './scene.js';
@@ -98,6 +99,7 @@ export function ticketBarsBDoc(input: DocInput<BarsPage>, sceneId: string): stri
     ledgerRows: ledgerRowsOfBarsB(sceneId, input),
     sceneId,
     detailHtml: detailOf(parts, p.empty.text),
+    chartHtml: chartFor(sceneId, p),
     caliber: r.caliber,
     key: input.key,
     params: input.params,

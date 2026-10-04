@@ -7,6 +7,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, toTicketB } from './ticket-b.js';
+import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf, money } from './pageParts.js';
 import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { DocInput, InsightPage } from './scene.js';
@@ -70,6 +71,7 @@ export function ticketInsightBDoc(input: DocInput<InsightPage>, sceneId: string)
     ledgerRows: ledgerRowsOfInsightB(input),
     sceneId,
     detailHtml: detailOf(parts, p.empty.text),
+    chartHtml: chartFor(sceneId, p),
     caliber: r.caliber,
     key: input.key,
     params: input.params,

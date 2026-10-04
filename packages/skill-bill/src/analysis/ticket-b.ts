@@ -134,6 +134,7 @@ export function toTicketB(input: {
   readonly ledgerRows: readonly { k: string; v: string }[];
   readonly sceneId: string;
   readonly detailHtml: string;
+  readonly chartHtml: string;
   readonly caliber: string;
   readonly key: string;
   readonly params: Record<string, unknown>;
@@ -162,6 +163,7 @@ export function toTicketB(input: {
     summaryNote: input.summaryNote,
     ledgerHtml: ledgerB(input.ledgerRows, input.sceneId),
     detailHtml: input.detailHtml,
+    chartHtml: input.chartHtml,
     caliber: input.caliber,
     key: input.key,
     params: input.params,

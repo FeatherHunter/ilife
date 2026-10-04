@@ -20,12 +20,13 @@
  *   （本族 4 页全在 A 组，整族切）；`./ticket-b.ts`（B 组 12 页，复用下文 `ticketDoc` 装配）。
  *   本件不含块位序列（序列仍在各族模板件），只产票据纸段落。
  */
-import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderChartBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { renderCaliberLine } from 'base-paint/blocks';
 import { copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
 import { barGroupHtml, chartCardHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
+import { chartFor } from './chartOf.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
 
 /** A 组 8 个场景 id（唯一定义地）：bars 4 ＋ compare 4。w09 不在此（查询域，1056）。 */
@@ -183,6 +184,7 @@ export function ticketDoc(input: {
   readonly caliber: string;
   readonly ledgerHtml: string;
   readonly detailHtml: string;
+  readonly chartHtml: string;
   readonly key: string;
   readonly params: Record<string, unknown>;
   readonly envelope: DocInput<BarsPage | ComparePage>['envelope'];
@@ -196,7 +198,11 @@ export function ticketDoc(input: {
     + ticketRule()
     + ticketSection({
       title: '图形占位', tag: 'CHART',
-      content: '<div class="ilife-ticket-card">' + escapeHtml(chartNoteOf(input.sceneId)) + '</div>',
+      /* #1128：#1076 负责人判 5 格 no（a14／a15／a16／a17／a21 要真图）⇒ 有数据就出真图；
+         撑不起图的页退回判地那句占位说明（判地本段只有占位文字，这是本票记在票面的判地变更）。 */
+      content: input.chartHtml === ''
+        ? '<div class="ilife-ticket-card">' + escapeHtml(chartNoteOf(input.sceneId)) + '</div>'
+        : input.chartHtml,
     })
     + ticketRule()
     + (input.detailHtml === ''
@@ -266,6 +272,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     summaryNote: s.note,
     ledgerHtml,
     detailHtml,
+    chartHtml: chartFor(sceneId, p),
     caliber: r.caliber,
     key: input.key,
     params: input.params,
@@ -330,6 +337,7 @@ export function ticketCompareDoc(
     summaryNote: sceneId === 'cat_compare' ? '结论 · 明细与复制区与基线一致' : '支出 · 明细与复制区与基线一致',
     ledgerHtml: ledgerCompare(ledgerRows, sceneId),
     detailHtml,
+    chartHtml: chartFor(sceneId, p),
     caliber: r.caliber,
     key: input.key,
     params: input.params,

@@ -7,6 +7,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, kpiValue, parseCount, toTicketB } from './ticket-b.js';
+import { chartFor } from './chartOf.js';
 import { MISSING, NO_WINDOW, docTitleOf, money } from './pageParts.js';
 import { chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { ChartsPage, DocInput } from './scene.js';
@@ -119,6 +120,7 @@ export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): 
     ledgerRows: ledgerRowsOfChartsB(sceneId, input),
     sceneId,
     detailHtml: detailOf(parts, p.empty.text),
+    chartHtml: chartFor(sceneId, p),
     caliber: r.caliber,
     key: input.key,
     params: input.params,
