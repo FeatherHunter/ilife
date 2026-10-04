@@ -13,7 +13,7 @@
  */
 import { buildDataText, buildLogText, escapeHtml } from "base-paint";
 import type { DataTextInput, LogTextInput } from "base-paint";
-import { assembleSheetPage } from "../shared/docPage.js";
+import { assembleSheetPage, ticketCollectRuntime } from "../shared/docPage.js";
 import { WRITE_DECLARATION } from "./declaration.js";
 import { writeSection } from "../shared/writeParts.js";
 import { SAY_WORDS } from "./sayWords.js";
@@ -127,13 +127,14 @@ function fieldHtml(f: SayFieldSpec, value: string, disabled = false): string {
   if (f.kind === "select") {
     const opts = (f.options ?? []).map((o) => '<option value="' + escapeHtml(o.value) + '"'
       + (value !== "" && o.value === value ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>").join("");
-    control = '<select data-slot="' + escapeHtml(f.slot) + '"' + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">' + opts + "</select>";
+    control = '<select data-slot="' + escapeHtml(f.slot) + '" name="' + escapeHtml(f.slot) + '"' + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">' + opts + "</select>";
   } else {
     const type = f.kind === "date" ? "date" : "text";
     const mode = f.slot === "amt" ? ' inputmode="decimal"' : "";
     const ph = f.placeholder === undefined ? "" : ' placeholder="' + escapeHtml(f.placeholder) + '"';
     const v = value === "" ? "" : ' value="' + escapeHtml(value) + '"';
-    control = '<input type="' + type + '"' + mode + ' data-slot="' + escapeHtml(f.slot) + '"' + ph + v + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">';
+    // #1129：`name` 与 `data-slot` 同名（共用件 ticketCollectRuntime 按 `name` 找格子；SAY 自己的运行时按 `data-slot`）。
+    control = '<input type="' + type + '"' + mode + ' data-slot="' + escapeHtml(f.slot) + '" name="' + escapeHtml(f.slot) + '"' + ph + v + (disabled ? " disabled" : "") + ' aria-label="' + aria + '">';
   }
   return '<label class="say-field"><span>' + escapeHtml(f.label) + " " + star + "</span>" + control + "</label>";
 }
@@ -181,7 +182,7 @@ function fillsHtml(spec: SayWordSpec): string {
 /** 按钮区（判地 .actions：主话术钮 ＋ 复制数据 ＋ 复制日志）。 */
 function actionsHtml(ready: boolean): string {
   return '<div class="actions">'
-    + '<button class="btn btn-primary" type="button" id="say-btn"' + (ready ? "" : " disabled") + ">复制这句话去跟助手说</button>"
+    + '<button class="btn btn-primary" type="button" id="say-btn" data-action-id="ilife-say-prompt"' + (ready ? "" : " disabled") + ">复制这句话去跟助手说</button>"
     + '<div class="copy-wrap" id="say-copy-wrap">'
     + '<button class="btn btn-secondary" type="button" id="say-data-btn" aria-expanded="false"><span class="btn-in">复制数据<span class="tri"> ▾</span></span></button>'
     + '<div class="copy-menu" role="menu">'
@@ -297,7 +298,7 @@ export function sayCollectRuntimeJs(): string {
     '  if(tagEl) tagEl.textContent = ready ? C.todo.tagReady : C.todo.tagWait;',
     '  if(hint){ hint.classList.toggle("ready", ready);',
     '    hint.textContent = ready ? "已填齐，可以复制去说了。" : ("还差 " + miss.length + " 项：" + miss.join("、") + "。"); }',
-    '  if(btn) btn.disabled = !ready;',
+    '  /* 主按钮的禁用档与 data-t 由共用件 ticketCollectRuntime 拥有（#1129：一处实现），本件不再动它。 */',
     '  return build(V); }',
     'function cp(t, node){ function done(){ if(node.getAttribute("data-label") === null) node.setAttribute("data-label", node.textContent); var o = node.getAttribute("data-label"); node.textContent = "已复制 ✓"; setTimeout(function(){ node.textContent = o; }, 1600); }',
     '  function fb(){ var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(e){} document.body.removeChild(ta); done(); }',
@@ -307,11 +308,11 @@ export function sayCollectRuntimeJs(): string {
     'document.addEventListener("click", function(){ if(wrap){ wrap.classList.remove("open"); if(db) db.setAttribute("aria-expanded", "false"); } });',
     'if(wrap){ Array.prototype.forEach.call(wrap.querySelectorAll(".copy-item"), function(it){ it.addEventListener("click", function(e){ e.stopPropagation(); cp((C.payloads || {})[this.getAttribute("data-fmt")] || "", db); wrap.classList.remove("open"); }); }); }',
     'var lb = document.getElementById("say-log-btn"); if(lb) lb.addEventListener("click", function(){ cp((C.payloads || {}).log || "", lb); });',
-    'if(btn) btn.addEventListener("click", function(e){ e.stopPropagation(); if(btn.disabled) return; var t = render(); if(btn.disabled) return; cp(t, btn); });',
+    '/* 复制走公共层 helpers 的 [data-action-id] 委派（读 data-t），本件不再自己复制。 */',
     'if(form){ form.addEventListener("input", render); form.addEventListener("change", render); }',
     'render();',
     '})();',
-  ].join("\\n");
+  ].join("\n");
 }
 
 /** 采集页整页：纸 ＋ 店头 ＋ 三段 ＋ 按钮区 ＋ 裁切线（结构照判地，逐层层数一致）。 */
@@ -349,6 +350,12 @@ export function sayCollectDoc(input: SayCollectInput): string {
   const section = writeSection({ slot: "collect", page: "collect", shape: input.shape, key: input.key, content: page });
   const body = section;
   return assembleSheetPage({ docTitle: s.titleWait, bodyHtml: body, paper: "detail" })
-    + "<script>" + sayCollectRuntimeJs() + "</script>";
+    + "<script>" + sayCollectRuntimeJs() + "</script>"
+    // #1129：主按钮的禁用档与 data-t 走共用件 ticketCollectRuntime（一处实现，16 页同一套）。
+    + ticketCollectRuntime({
+      buttonActionId: 'ilife-say-prompt',
+      template: sayTemplateOf(input.word),
+      slots: s.cfg.map((c) => ({ name: c.key, ph: c.ph === undefined ? "" : c.ph, required: c.opt !== true })),
+    });
 }
 

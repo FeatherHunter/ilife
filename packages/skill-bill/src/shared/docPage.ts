@@ -254,7 +254,9 @@ export function ticketCollectRuntime(input: {
     + 'function val(n){ var i=document.querySelector("[name=\\"" + n + "\\"]"); return i? String(i.value||"").trim():""; }'
     + 'function build(){ var out=C.template; (C.slots||[]).forEach(function(s){ var v=val(s.name);'
     + ' out=out.split("{{"+s.ph+"}}").join(v===""?"____":v); }); return out.replace(/\\{\\{(\\w+)\\}\\}/g,"____"); }'
-    + 'function render(){ var miss=0; (C.slots||[]).forEach(function(s){ if(s.required && val(s.name)==="") miss+=1; });'
+    // 置灰的格子**不参与缺项**（SAY 的 `needs` 门控语义：#1079 证据「空依赖时这一格置灰、不参与缺项」）。
+    // 页上没有这一格的槽位不参与缺项（只有「渲染出来的格子」才谈得上填没填）。
+    + 'function render(){ var miss=0; (C.slots||[]).forEach(function(s){ var i=document.getElementsByName(s.name)[0]; if(!i||i.disabled) return; if(s.required && val(s.name)==="") miss+=1; });'
     + ' btn.disabled = miss>0; btn.setAttribute("aria-disabled", miss>0?"true":"false");'
     + ' btn.setAttribute("data-t", build()); }'
     + 'document.addEventListener("input", render, true);'
