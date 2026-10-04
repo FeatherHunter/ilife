@@ -358,7 +358,9 @@ describe('t407 · 记支出代表页（页面积木与三个缺口块）', () =>
     const text = pageOf(file);
     // #1079 换落点：老那枚「⛔ 先补齐（2 项）」置灰按钮随老采集页退役；同一件事＝**置灰的主话术钮**
     // 与**报出缺几项的提示行**（新页这一对由 #say-btn 的 disabled 与 #say-hint 担）。
-    assert.match(text, /<button class="btn btn-primary" type="button" id="say-btn" disabled>/, '缺项时主话术钮须置灰');
+    // #1129：主按钮多了一枚 `data-action-id`（复制改走公共层 helpers 的委派）⇒ 断言改成等价形式
+    // （同一条判据：缺项时主话术钮须置灰）。
+    assert.match(text, /<button class="btn btn-primary" type="button" id="say-btn"[^>]*\bdisabled\b[^>]*>/, '缺项时主话术钮须置灰');
     assert.ok(text.includes('还差 2 项：分类、金额。'), '置灰按钮须报出缺几项');
     // #733 换口径：维护者 2026-09-19——「唤醒词／槽位是 prompt 模板的正常组成，**具体脚本**才是硬编码，
     // 页面与复制出去的 prompt 里都不该有」。那条带 `bill-cmd-read … --params '{…<分类>…}'` 的
