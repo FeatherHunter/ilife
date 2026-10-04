@@ -62,7 +62,9 @@ const COMMON_BLOCKS = [
 ];
 /** 页型各自加挂的块位（判地那一套：采集页＝字段卡 ＋ 那行提示；回执／列表＝明细卡）。 */
 const KIND_BLOCKS = {
-  collect: ['ilife-block-param-form', 'ilife-block-caliber'],
+  // 采集页不再要求旧壳块位：`ilife-block-param-form`／`ilife-block-caliber` 是 base-paint 页壳时代的块位，
+  // #1130 起采集页中段是共享「待填卡」（`ilife-ticket-fill*`）——那两项留着会让 5 页机检列误打「缺块位」。
+  collect: [],
   receipt: ['ilife-block-entry-card'],
   list: ['ilife-block-entry-card'],
 };
