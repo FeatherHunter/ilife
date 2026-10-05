@@ -1,8 +1,8 @@
 {
   "wall": "1076-analysis-25",
   "total": 25,
-  "ok": 12,
-  "no": 13,
+  "ok": 19,
+  "no": 6,
   "unjudged": 0,
   "items": [
     {
@@ -11,8 +11,8 @@
       "wake": "看月度",
       "prod": "a01-真跑.html",
       "proto": "a01-原型.html",
-      "verdict": "no",
-      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -20,8 +20,8 @@
       "wake": "看年度",
       "prod": "a02-真跑.html",
       "proto": "a02-原型.html",
-      "verdict": "no",
-      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -38,8 +38,8 @@
       "wake": "看周报",
       "prod": "a04-真跑.html",
       "proto": "a04-原型.html",
-      "verdict": "no",
-      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -47,8 +47,8 @@
       "wake": "看分类",
       "prod": "a05-真跑.html",
       "proto": "a05-原型.html",
-      "verdict": "no",
-      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -57,7 +57,7 @@
       "prod": "a06-真跑.html",
       "proto": "a06-原型.html",
       "verdict": "no",
-      "reason": "“9 笔 招行卡 支出 5063.40 ／ 收入 13759.00”---这句话显示不全有省略号。HTML需要避免省略号，需要巧妙的方式将信息展示全。"
+      "reason": "各账户汇总（3 个）里面序号应该还是1、2、3 这种、 第二个问题 “各账户汇总（3 个）”下面的支付宝、微信这两个文字左侧的空白区域太大了，需要缩小70%"
     },
     {
       "wall": "1076-analysis-25",
@@ -65,8 +65,8 @@
       "wake": "看账本",
       "prod": "a07-真跑.html",
       "proto": "a07-原型.html",
-      "verdict": "no",
-      "reason": "detail中的进度条左侧需要有原型那个好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -129,7 +129,7 @@
       "prod": "a14-真跑.html",
       "proto": "a14-原型.html",
       "verdict": "no",
-      "reason": "逐月明细-中出现了省略号，应该能显示全，不能显示全的可以考虑一些比较好的HTML技术的空间可以展示全"
+      "reason": "detail中重复了一遍逐月收支走势图！"
     },
     {
       "wall": "1076-analysis-25",
@@ -138,7 +138,7 @@
       "prod": "a15-真跑.html",
       "proto": "a15-原型.html",
       "verdict": "no",
-      "reason": "detail中的信息也变成了逐月支出的柱状图，这个改出问题了，需要恢复detail区域部分和原型一致"
+      "reason": "餐饮 逐月支出在detail中重复了。"
     },
     {
       "wall": "1076-analysis-25",
@@ -146,8 +146,8 @@
       "wake": "看大额",
       "prod": "a16-真跑.html",
       "proto": "a16-原型.html",
-      "verdict": "no",
-      "reason": "detai中需要和原型一样有好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -155,8 +155,8 @@
       "wake": "看高频",
       "prod": "a17-真跑.html",
       "proto": "a17-原型.html",
-      "verdict": "no",
-      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -174,7 +174,7 @@
       "prod": "a19-真跑.html",
       "proto": "a19-原型.html",
       "verdict": "no",
-      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等"
+      "reason": "周几分布（周一 ~ 周日）和时段分布 是两套序号。时段分布的应该从0开始"
     },
     {
       "wall": "1076-analysis-25",
@@ -183,7 +183,7 @@
       "prod": "a20-真跑.html",
       "proto": "a20-原型.html",
       "verdict": "no",
-      "reason": "detail中需要和原型一样的好看的序号1、2、3、4等等。 第二点 不能出现省略号，可能出现省略号的地方应该有巧妙的控件可以展示全，或者用户点击什么可以看全。"
+      "reason": "这批数的事实和消费习惯各自从1开始加序号。“月度走势（近 6 个月）”图重复了两遍。第三个问题“大额支出 TOP 10”序号从1开始"
     },
     {
       "wall": "1076-analysis-25",
@@ -192,7 +192,7 @@
       "prod": "a21-真跑.html",
       "proto": "a21-原型.html",
       "verdict": "no",
-      "reason": "detail的月度序号这下年度出问题了，应该是其他信息而不是重复月度序列"
+      "reason": "月度序列图重复两遍。月度环比和分类暴涨各自序号从1开始。"
     },
     {
       "wall": "1076-analysis-25",
