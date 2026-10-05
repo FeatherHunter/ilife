@@ -1,4 +1,5 @@
 import type { UserConfig } from 'tsdown';
+import { fileURLToPath } from 'node:url';
 
 /** dsh-chef client 打包：loader 工厂包（browser/CJS ＋ 注册包装）。
  * 逐项对标 cookbook「产物配方」（每项出处见 docs/agents/dsh-client-contract.md §2）；
@@ -22,6 +23,9 @@ const CLIENT_EXTERNALS = [
 
 const clientBundle: UserConfig = {
   entry: { client: 'src/client.ts' },
+  // 三印根因止血：把 dsh-life-pack 指回工作区新鲜源码，不经陈旧 node_modules（0.3.34）。
+  // 不改 externals（契约要求其余一律打进包），只换解析落点；指到 src 真源，不依赖 manager 先构建。
+  alias: { 'dsh-life-pack/config-panel': fileURLToPath(new URL('../plugin-manager/src/config-panel-api.ts', import.meta.url)) },
   outDir: 'dist',
   format: 'cjs',
   platform: 'browser',
