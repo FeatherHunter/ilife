@@ -1,8 +1,8 @@
 {
   "wall": "1076-analysis-25",
   "total": 25,
-  "ok": 19,
-  "no": 6,
+  "ok": 25,
+  "no": 0,
   "unjudged": 0,
   "items": [
     {
@@ -56,8 +56,8 @@
       "wake": "看账户",
       "prod": "a06-真跑.html",
       "proto": "a06-原型.html",
-      "verdict": "no",
-      "reason": "各账户汇总（3 个）里面序号应该还是1、2、3 这种、 第二个问题 “各账户汇总（3 个）”下面的支付宝、微信这两个文字左侧的空白区域太大了，需要缩小70%"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -128,8 +128,8 @@
       "wake": "看趋势",
       "prod": "a14-真跑.html",
       "proto": "a14-原型.html",
-      "verdict": "no",
-      "reason": "detail中重复了一遍逐月收支走势图！"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -137,8 +137,8 @@
       "wake": "看分类趋势",
       "prod": "a15-真跑.html",
       "proto": "a15-原型.html",
-      "verdict": "no",
-      "reason": "餐饮 逐月支出在detail中重复了。"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -173,8 +173,8 @@
       "wake": "看活跃",
       "prod": "a19-真跑.html",
       "proto": "a19-原型.html",
-      "verdict": "no",
-      "reason": "周几分布（周一 ~ 周日）和时段分布 是两套序号。时段分布的应该从0开始"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -182,8 +182,8 @@
       "wake": "看洞察",
       "prod": "a20-真跑.html",
       "proto": "a20-原型.html",
-      "verdict": "no",
-      "reason": "这批数的事实和消费习惯各自从1开始加序号。“月度走势（近 6 个月）”图重复了两遍。第三个问题“大额支出 TOP 10”序号从1开始"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
@@ -191,8 +191,8 @@
       "wake": "看异常",
       "prod": "a21-真跑.html",
       "proto": "a21-原型.html",
-      "verdict": "no",
-      "reason": "月度序列图重复两遍。月度环比和分类暴涨各自序号从1开始。"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1076-analysis-25",
