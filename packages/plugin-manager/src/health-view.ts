@@ -9,6 +9,7 @@ import * as React from 'react';
 import { countByStatus, worstStatus } from './health-contract.js';
 import type { HealthItem, HealthReport, HealthStatus } from './health-contract.js';
 import { TitleBlock } from './title-seal.js';
+import { interactionCss } from './config-panel-view.js';
 
 /** 三档的配色（绿走主题别名；红黄用实色，理由见下）。
  *
@@ -345,9 +346,15 @@ export function HealthSummaryLine(props: {
        // 「只看不改」那三条口径从屏上撤下来了（它原先和两排圆点的图例挤在一行），
         // 但它**仍然要说出口**：按钮悬停是它能待的地方（票 #732；测试按产物里的字符串守着）。
         title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置、不自动重置）',
+        // #1163 T4：体检按钮复用共享交互缝（按压＋悬停＋焦点＋禁用＋长按纯视觉环），tokens 只引共享层。
+        // 长按纯视觉：CSS 驱动 0→100%（0.5s），零回调零状态，不进状态机分支；折叠／复制／提示／液态本面不适用。
+        'data-ilife-press': 'health-run',
+        'data-ilife-longpress': 'health-run',
       },
       props.running ? '体检中…' : '体检一次',
     ),
+    // #1163 T4：同一生成处 interactionCss()，一枚 style 罩本行内两类属性；更新面无渲染点（见票内豁免证据）。
+    React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
   );
 }
 

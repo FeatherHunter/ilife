@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// T1+T2 pixel seam (#1160 base, #1161 extended): shared single-route snapshot vs prototype params.
+// T1+T2+T4 pixel seam (#1160 base, #1161 extended, #1163 health reuses same chain): shared single-route snapshot vs prototype params.
 // T2 reuses this same chain (no second chain per ticket): T1 14 checks stay byte-identical, T2 appends its own.
 // No browser in node --test, so this locks key params; image part is manual same-viewport check.
 // Truth: .scratch/1155-real-panel-prototype.html (same as branch proto/1155-interaction-v1).
@@ -13,16 +13,20 @@ const ROOT = join(HERE, '..');
 const PROTO = join(ROOT, '..', '..', '.scratch', '1155-real-panel-prototype.html');
 const CONTRACT = join(ROOT, 'src', 'config-panel-contract.ts');
 const VIEW = join(ROOT, 'src', 'config-panel-view.ts');
+const HEALTH_VIEW = join(ROOT, 'src', 'health-view.ts');
+const UPDATE_CONTRACT = join(ROOT, 'src', 'update-contract.ts');
 function fail(lines, ratio) {
   for (const l of lines) console.log(l);
   console.log('PIXEL_T1_DIFF_RATIO=' + ratio.toFixed(3));
   console.log('PIXEL_T1_RESULT=FAIL threshold=0.01');
   process.exit(1);
 }
-let proto, contract, view;
+let proto, contract, view, healthView, updateContract;
 try { proto = readFileSync(PROTO, 'utf8'); } catch { fail(['PIXEL_T1_PARAM proto=missing'], 1); }
 try { contract = readFileSync(CONTRACT, 'utf8'); } catch { fail(['PIXEL_T1_PARAM contract=missing'], 1); }
 try { view = readFileSync(VIEW, 'utf8'); } catch { fail(['PIXEL_T1_PARAM view=missing'], 1); }
+try { healthView = readFileSync(HEALTH_VIEW, 'utf8'); } catch { fail(['PIXEL_T1_PARAM health-view=missing'], 1); }
+try { updateContract = readFileSync(UPDATE_CONTRACT, 'utf8'); } catch { fail(['PIXEL_T1_PARAM update-contract=missing'], 1); }
 const protoPress = /body\[data-v="V1"\] \.btn:active\{transform:scale\(([\d.]+)\)\}/.exec(proto)?.[1];
 const protoFocus = /\.btn:focus-visible[^}]*box-shadow:0 0 0 (\d+)px [^,]+,0 0 0 (\d+)px var\(--focus\)/.exec(proto);
 const protoThemes = ['#f6ad55', '#0a84ff', '#30d158'].map((c) => proto.includes(c) ? c : null);
@@ -70,6 +74,11 @@ const checks = [
   ['t2-proto-longpress-500', proto.includes('(Date.now()-t0)/500') && proto.includes('.lp{') && proto.includes('height:3px')],
   ['t2-prod-longpress-500', t2contract('LONGPRESS_MS', '500') && t2contract('LONGPRESS_RING_HEIGHT_PX', '3') && cssAll.includes('ilifeLongRing')],
   ['t2-view-seam', cssAll.includes('data-ilife-longpress') && cssAll.includes('@media (hover:none)') && cssAll.includes('@media (prefers-reduced-motion:reduce)') && !/#0a84ff/.test(cssAll)],
+  ['t4-health-reuses-shared-seam', healthView.includes("import { interactionCss } from './config-panel-view.js'") && healthView.includes("React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss())")],
+  ['t4-health-button-press-longpress', healthView.includes("'data-ilife-press': 'health-run'") && healthView.includes("'data-ilife-longpress': 'health-run'")],
+  ['t4-health-no-second-tokens', !/export const (PRESS_SCALE|HOVER_WASH_PERCENT|LONGPRESS_MS)/.test(healthView)],
+  ['t4-health-no-hard-blue', !/#0a84ff/.test(healthView)],
+  ['t4-update-face-absent', updateContract.includes('更新代码已全部移除')],
 ];
 const bad = checks.filter((pair) => !pair[1]);
 const ratio = bad.length / checks.length;
