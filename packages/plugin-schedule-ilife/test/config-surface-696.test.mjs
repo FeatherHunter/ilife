@@ -364,7 +364,7 @@ describe('#696 作息设置页 · 配置面', () => {
       const props = registeredConfig().props;
       // #909 起设置页本体就交给共用面板这几格——多一格就是多一条取数口；行表本身只有配置项。
       assert.deepEqual(Object.keys(props).sort(),
-        ['channel', 'extra', 'followKeysOf', 'getCall', 'getService', 'items', 'title'],
+        ['channel', 'extra', 'followKeysOf', 'getCall', 'getService', 'items', 'seals', 'title'], // 1145
         '设置页的接入面超出「行表 ＋ 通道名 ＋ 三个可选钩子 ＋ 取数接线」');
       assert.deepEqual([...props.items], [...CONFIG_ITEMS], '设置页只画本家那张配置行表');
       assert.equal(JSON.stringify(props).includes("schedule.record"), false, '设置页的接入面里不该出现干活命令的 key：' + "schedule.record");

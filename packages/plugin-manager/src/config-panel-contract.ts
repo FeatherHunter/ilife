@@ -108,3 +108,23 @@ export function isRpcResult(raw: unknown): raw is RpcReply {
   if (typeof raw !== 'object' || raw === null) return false;
   return (raw as { ok?: unknown }).ok === true || (raw as { ok?: unknown }).ok === false;
 }
+
+/** 印章角色：skill＝技能横条／help＝HELP 旧版／plugin＝插件双铆（定义只此一处）。 */
+export type SealRole = 'skill' | 'help' | 'plugin';
+
+/** 印章档位：copper＝铜／silver＝银／gold＝金（定义只此一处）。 */
+export type SealTier = 'copper' | 'silver' | 'gold';
+
+/** 面板上的一枚签：角色×档位＋印文＋卷轴三段文案（各家交自家三枚，六家以外不许有第四枚）。 */
+export interface SealInstance {
+  readonly role: SealRole;
+  readonly tier: SealTier;
+  /** 印文那一行（技能／某 HELP／插件）。 */
+  readonly label: string;
+  /** 卷轴进展。 */
+  readonly progress: string;
+  /** 卷轴状态。 */
+  readonly status: string;
+  /** 卷轴计划。 */
+  readonly plan: string;
+}

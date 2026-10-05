@@ -38,7 +38,10 @@ import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js'
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
 import type { DirectoryRowEntry } from './directory-browser-api.js';
-import { Seal, TitleBlock } from './title-seal.js';
+import { TitleBlock } from './title-seal.js';
+import { SealStamp } from './seal-stamp.js';
+import { SealFilterDefs, SealScrollDialog } from './seal-scroll.js';
+import type { SealInstance } from './config-panel-contract.js';
 
 /** 面板的样式表：取值逐项照 v3.1（颜色走 DSH 主题别名，写死值只做回退；字号一律相对单位 em）。
  *
@@ -83,6 +86,8 @@ const S = {
    *  #996：加 `flexWrap:wrap`——标题（`TitleBlock`，`flex:1 1 auto`＋`minWidth:9em`）与签
    *  （`flex-shrink:0`）在 390 宽下换行不挤（原型 A 行尾悬签）；`gap`／`minHeight` 照 v3.1 不动。 */
   head: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, minHeight: 22 } as React.CSSProperties,
+  /** 右区三枚签：自由错落、无行列、可带微倾（倾角按下标固定三档，墙可复验）。 */
+  sealRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75em' } as React.CSSProperties,
   /** `.ic-title{font-size:13.5px;font-weight:640}`——字号按 60 行那条锚点换算成 `1.08em`。
    *  #996：卡片标题行改用 `TitleBlock`（见 `title-seal.ts`，原型 A 锁 1.15em／700＋0.85em／400），
    *  这一格保留供附加块（`ConfigStyles` 键名不许改），头部本身不再用它。 */
@@ -710,8 +715,14 @@ export type PanelState =
 export interface PanelBodyProps {
   /** 卡片标题（各家自己的产品名）。 */
   readonly title: string | undefined;
-  /** 印章书签印文（#996：显示形一律带空格大写 HELP（产品名＋空格＋HELP）；不给＝只印标题，997 接线六家）。 */
-  readonly sealText?: string | undefined;
+  /** 右区三枚签（1145：各家交自家三枚 HELP＋技能＋插件；缺席＝一行都不印，现红签已退役）。 */
+  readonly seals?: readonly SealInstance[] | undefined;
+  /** 点开的那枚下标（弹卷开合住状态层，本件只读；缺席＝全关）。 */
+  readonly selectedSeal?: number | null | undefined;
+  /** 点章（本件只回调，状态在 `config-panel.ts`）。 */
+  readonly onSealSelect?: ((index: number) => void) | undefined;
+  /** 关卷。 */
+  readonly onSealClose?: (() => void) | undefined;
   readonly items: readonly ConfigItem[];
   readonly state: PanelState;
   readonly draft: Readonly<Record<string, string>>;
@@ -767,7 +778,25 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const { state, title } = props;
   const surface = state.kind === 'ready' ? state.surface : null;
   const product = title ?? '';
-  const seal = props.sealText === undefined || props.sealText === '' ? null : React.createElement(Seal, { sealText: props.sealText });
+  const seals = props.seals ?? [];
+  const tiltOf = (index: number): string => index % 3 === 0 ? '-2deg' : index % 3 === 1 ? '1.5deg' : '-1deg';
+  const sealRow = seals.length === 0 ? null : React.createElement(
+    'div',
+    { style: S.sealRow },
+    ...seals.map((seal, index) => React.createElement(
+      'span',
+      { key: seal.role + ':' + seal.tier, style: { display: 'inline-flex', transform: 'rotate(' + tiltOf(index) + ')' } },
+      React.createElement(SealStamp, { role: seal.role, tier: seal.tier, label: seal.label }),
+    )),
+  );
+  const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
+  const dialog = openSeal === null ? null : React.createElement(SealScrollDialog, {
+    open: true, onClose: props.onSealClose ?? (() => undefined),
+    role: openSeal.role, tier: openSeal.tier, title: openSeal.label,
+    progress: openSeal.progress, status: openSeal.status, plan: openSeal.plan,
+  });
+  /** 滤镜每根挂一次：六家是六个独立根，同文档下多份 identical 定义由首个生效（定义逐字节同，无分歧）。 */
+  const filters = seals.length === 0 ? null : React.createElement(SealFilterDefs, {});
   const headDataDir = surface === null ? '' : surface.resolved?.['dbDir'] ?? surface.dataDir;
   const ready = state.kind === 'ready';
   const dirtyCount = ready ? props.dirtyKeys.length : 0;
@@ -783,8 +812,10 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     'div',
     { style: S.head },
     React.createElement(TitleBlock, { product, purpose: '配置' }),
-    seal,
+    sealRow,
     React.createElement(PanelBadgeView, { kind: badge, dirtyCount }),
+    filters,
+    dialog,
   );
   /** #939：这一块的高度由**客户端常量**决定、不由回执时序决定——加载期就把两行连标签一起画出来，
    *  值位画骨架条（`.ic-sk`），回执到了**原地填值** ⇒ 回执零位移（原先加载期只画一行小灰字、

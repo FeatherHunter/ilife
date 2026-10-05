@@ -140,7 +140,7 @@ function bodyProps(over = {}) {
 }
 
 describe('#908 共用配置面板：出口面', () => {
-  it('出口对外给的名字就是那几个（运行时三个值 ＋ 源码面五个类型）', () => {
+  it('出口对外给的名字就是那几个（运行时三个值 ＋ 源码面六个类型）', () => {
     // 运行时：类型不进模块表，所以这里只该看到那三个值。
     // #936：`StatusBlock`（状态行）成为第三个值——备忘／作息两家各有一段"不是配置项的状态"要画，
     // 这是第二个用法 ⇒ 形状收进共用件，两家只交数据。
@@ -157,7 +157,7 @@ describe('#908 共用配置面板：出口面', () => {
     }
     assert.deepEqual(
       [...names].sort(),
-      ['ConfigControl', 'ConfigItem', 'ConfigPanel', 'ConfigTier', 'Row', 'StatusBlock', 'StatusBlockProps', 'StatusTone'],
+      ['ConfigControl', 'ConfigItem', 'ConfigPanel', 'ConfigTier', 'Row', 'SealInstance', 'StatusBlock', 'StatusBlockProps', 'StatusTone'], // 1145 ⑦：六家取档位文案类型
       '出口对外给的名字对不上：' + [...names].join('、'),
     );
   });
