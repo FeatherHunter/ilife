@@ -78,6 +78,11 @@ export const ADVANCED_GROUP_TITLE = '高级' as const;
 /** 请求超时毫秒：与宿主侧 SPAWN_TIMEOUT_MS 同级，界面永不无限转圈。 */
 export const READ_TIMEOUT_MS = 20_000 as const;
 
+/** 快路径首帧有界重试表（#1142，照 #982 更新目标表同值：瞬时未就绪不再整面失败）。
+ *
+ * 有界、调用方负责卸载清理（见 `config-panel.ts` 的取数），不是无界轮询；仅读整面用，保存／重置永不自动重试。 */
+export const CONFIG_READ_RETRY_MS: readonly number[] = [1000, 3000, 8000];
+
 /** 复制那一枚按钮就地变「已复制」之后，多久变回「复制」（定稿 v3 第三条：1.5 秒，不弹提示）。 */
 export const COPY_FEEDBACK_MS = 1500 as const;
 

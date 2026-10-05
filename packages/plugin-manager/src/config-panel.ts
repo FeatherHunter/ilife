@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { COPY_FEEDBACK_MS, DIRECTORY_PICKER_REFUSED, REMOTE_DIRECTORY_PICKER } from './config-panel-contract.js';
+import { CONFIG_READ_RETRY_MS, COPY_FEEDBACK_MS, DIRECTORY_PICKER_REFUSED, REMOTE_DIRECTORY_PICKER } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import {
   dirtyKeysOf,
@@ -146,17 +146,44 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     [],
   );
 
-  /** 挂载期读一次整面：卸载之后回来的回执丢掉（不许往已经没了的页面上写）。 */
+  /** 取数退避的计时器登记（#1142，照 #982 同形）：卸载即清，不留挂起的等待；仅读整面用，保存／重置永不自动重试。 */
+  const retryTimers = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  React.useEffect(
+    () => () => {
+      for (const id of retryTimers.current) clearTimeout(id);
+      retryTimers.current = [];
+    },
+    [],
+  );
+  /** 在途去重：快速连点只跑一次，迟到回执不覆盖（#1142）。 */
+  const inflight = React.useRef(false);
+
+  /** 挂载期读一次整面（#1142 首帧有界重试）：瞬时未就绪不再整面失败；卸载之后回来的回执丢掉。 */
   React.useEffect(() => {
     let alive = true;
+    const sleep = (ms: number): Promise<void> =>
+      new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          clearTimeout(timer);
+          resolve();
+        }, ms);
+        retryTimers.current.push(timer);
+      });
     void (async () => {
-      const r = await fetchConfigSurface(props.getCall(), props.channel);
+      const r = await fetchConfigSurface(props.getCall(), props.channel, {
+        delays: CONFIG_READ_RETRY_MS,
+        sleep,
+        isAlive: () => alive,
+      });
+      for (const id of retryTimers.current) clearTimeout(id);
+      retryTimers.current = [];
       if (!alive) return;
       if (r.ok) {
         setState({ kind: 'ready', surface: r.surface });
         setDraft(toDraft(props.items, r.surface.values, r.surface));
       } else {
         setState({ kind: 'failed', message: r.message });
+        console.warn('[dsh-life-pack] config surface load failed: ' + props.channel + ' ' + r.message);
       }
     })();
     return () => {
@@ -173,12 +200,21 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   };
 
   const load = async (): Promise<void> => {
+    if (inflight.current) return;
+    inflight.current = true;
     setNotice(null);
     setWriteError(null);
     setError(null);
-    const r = await fetchConfigSurface(props.getCall(), props.channel);
-    if (r.ok) apply(r.surface);
-    else setState({ kind: 'failed', message: r.message });
+    try {
+      const r = await fetchConfigSurface(props.getCall(), props.channel);
+      if (r.ok) apply(r.surface);
+      else {
+        setState({ kind: 'failed', message: r.message });
+        console.warn('[dsh-life-pack] config surface reload failed: ' + props.channel + ' ' + r.message);
+      }
+    } finally {
+      inflight.current = false;
+    }
   };
 
   /** 写完（保存／重置）之后重新读一份整面：写回执只有 `{path, values}`、重置回执只有

@@ -23,7 +23,7 @@
  */
 import * as React from 'react';
 import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
-import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
+import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
 import type { InstalledVersions, LarkState } from './contract.js';
 import { SLOT_TITLE } from './slot.js';
 import { CONFIG_ITEMS } from './settings.js';
@@ -38,6 +38,53 @@ export const inject = ['slots', 'connection'];
 
 /** 调用口取用器：每次取数时现取（connection 后到也不永久缺席）。 */
 export type GetCall = () => unknown;
+
+/** 体检请求超时毫秒：与 host 侧 SPAWN_TIMEOUT_MS 同级，UI 永不无限转圈（#1142 快慢分离：慢槽独立超时，不挡表单）。 */
+export const HEALTH_TIMEOUT_MS = 20_000 as const;
+
+/** 体检回执 / 失败落字（附加块那一通电话；永不抛）。 */
+export type HealthOutcome =
+  | { readonly ok: true; readonly report: unknown }
+  | { readonly ok: false; readonly message: string };
+
+/** 读一次配置体检（只读；判据由技能侧出，本包只透传，不重写一个字）。 */
+export async function fetchHealthSurface(call: unknown): Promise<HealthOutcome> {
+  if (typeof call !== 'function') return { ok: false, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  try {
+    const raw: unknown = await (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_CONFIG_CHECK, payload: {} }, AbortSignal.timeout(HEALTH_TIMEOUT_MS));
+    if (!isRpcResult(raw)) return { ok: false, message: '回执信封异常（非 ok 信封）' };
+    if (!raw.ok) return { ok: false, message: raw.error?.message ?? '体检回执被拒（宿主未给报文）' };
+    return { ok: true, report: raw.value };
+  } catch (e) {
+    if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
+      return { ok: false, message: `体检请求超时（${Math.round(HEALTH_TIMEOUT_MS / 1000)}s）：宿主未回，点重新检测` };
+    }
+    return { ok: false, message: `体检失败：${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+/** 体检报告里 `lark.cli` 那一项的最小形状（面板只读这四格，不认全报告）。 */
+export interface HealthLarkItem {
+  readonly id: string;
+  readonly status: string;
+  readonly message: string;
+  readonly action: string;
+}
+
+/** 从体检报告里挑出 `lark.cli` 那一项；形状不对回 null（不抛）。 */
+export function larkItemOf(report: unknown): HealthLarkItem | null {
+  if (typeof report !== 'object' || report === null) return null;
+  const items = (report as { items?: unknown }).items;
+  if (!Array.isArray(items)) return null;
+  for (const it of items) {
+    if (typeof it !== 'object' || it === null) continue;
+    const rec = it as Record<string, unknown>;
+    if (rec['id'] !== 'lark.cli') continue;
+    if (typeof rec['id'] !== 'string' || typeof rec['status'] !== 'string' || typeof rec['message'] !== 'string') return null;
+    return { id: rec['id'], status: rec['status'], message: rec['message'], action: typeof rec['action'] === 'string' ? rec['action'] : '' };
+  }
+  return null;
+}
 
 /** **技能功能页**（sidebar 槽那张卡）的视觉。设置页的样式表不在这里——它收进了共用件
  * `dsh-life-pack/config-panel`（#909）。这张表只服务本家自己的功能页，故不参与六家同形面。 */
@@ -326,30 +373,108 @@ function larkOf(reply: unknown): LarkState | undefined {
   return typeof lark === 'object' && lark !== null ? (lark as LarkState) : undefined;
 }
 
-/** 自家附加块（设置页那张卡的插槽）：「飞书 CLI」状态行。
+/** 自家附加块（设置页那张卡的插槽）：「飞书 CLI」状态行（#1142 快慢分离：check 优先、read 回退）。
  *
- * #934 起**这里不再有版本行**（维护者裁定：面板内那行 `总管 …· 版本` 整条撤掉；
- * 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到）。
- * 状态行住这里的原因：飞书状态是本家回执多带的那一格（共用面板不认识它），复制回执也住在本家——
- * 组件自己持这点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。 */
+ * #934 起**这里不再有版本行**（维护者裁定：面板内那行 `总管 …· 版本` 整条撤掉）。
+ * 状态行住这里的原因：飞书状态是本家自己的那通体检电话（共用面板不认识 `config.check` 的回执），
+ * 组件自己持读数与复制回执两点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。
+ * 新技能的 `config.read` 不再带 `lark` 格（#1142），本块经 `config.check` 独立取数；旧技能的回执 `lark` 格仅作回退——
+ * 体检没回来之前先画回退，体检到了以体检为准，体检失败则回落到回退，绝不把慢槽的失败变成整面失败。 */
 function MemoExtras(props: {
   /** 整面读到了没有：状态行照改版前的形状只在就绪态画，读取中／读取失败那两屏不占这一行。 */
   readonly hasReply: boolean;
-  readonly lark: LarkState | undefined;
+  /** 旧回执的 `lark` 格（新技能缺席，仅作回退：路径／版本胶囊／复制 prompt 的来源）。 */
+  readonly fallback: LarkState | undefined;
   readonly styles: PanelStyleSlots;
-  /** 取数口：版本行自己那通电话走它（`apply` 现取现给，connection 后到也照样取）。 */
+  /** 取数口（`apply` 现取现给，connection 后到也照样取）。 */
   readonly getCall: GetCall;
 }): React.ReactElement {
+  const [health, setHealth] = React.useState<{ readonly kind: 'loading' } | { readonly kind: 'ready'; readonly item: HealthLarkItem } | { readonly kind: 'failed'; readonly message: string }>({ kind: 'loading' });
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
+  const loadHealth = React.useCallback(async (): Promise<void> => {
+    setHealth({ kind: 'loading' });
+    const r = await fetchHealthSurface(props.getCall());
+    if (!r.ok) {
+      setHealth({ kind: 'failed', message: r.message });
+      return;
+    }
+    const item = larkItemOf(r.report);
+    setHealth(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item });
+  }, [props.getCall]);
+  React.useEffect(() => {
+    if (props.hasReply) void loadHealth();
+  }, [props.hasReply, loadHealth]);
   const onCopy = (prompt: string): void => {
     void copyPrompt(prompt).then((ok) => setCopied(ok ? 'done' : 'failed'));
   };
+  const copyNote = copied === 'done'
+    ? React.createElement('div', { style: props.styles.okText }, '已复制，去粘贴给 AI')
+    : copied === 'failed'
+      ? React.createElement('div', { style: props.styles.error }, '复制失败，长按选择下方文本手动复制')
+      : null;
+  if (!props.hasReply) return React.createElement('div', null, copyNote);
+  const fallback = props.fallback;
+  const copyAction = (prompt: string | undefined): Array<{ readonly text: string; readonly onPress: () => void }> =>
+    prompt === undefined || prompt === '' ? [] : [{ text: '复制安装指引', onPress: () => onCopy(prompt) }];
+  if (health.kind === 'ready') {
+    const item = health.item;
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(StatusBlock, {
+        name: '飞书 CLI',
+        tone: item.status === 'green' ? 'ok' : item.status === 'red' ? 'bad' : 'warn',
+        text: item.message,
+        path: fallback?.cliPath ?? '',
+        version: fallback?.version ?? null,
+        actions: [...copyAction(fallback?.prompt), { text: '重新检测', onPress: () => void loadHealth() }],
+        link: fallback === undefined ? undefined : { text: fallback.websiteLine, href: fallback.websiteUrl },
+      }),
+      copyNote,
+    );
+  }
+  if (health.kind === 'loading' && fallback !== undefined) {
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      copyNote,
+    );
+  }
+  if (health.kind === 'loading') {
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(StatusBlock, {
+        name: '飞书 CLI',
+        tone: 'pending',
+        text: '检测中',
+        path: null,
+        version: null,
+        actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+      }),
+      copyNote,
+    );
+  }
+  if (fallback !== undefined) {
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      copyNote,
+    );
+  }
   return React.createElement(
     'div',
     null,
-    props.hasReply ? React.createElement(LarkStatus, { lark: props.lark, onCopy, styles: props.styles }) : null,
-    copied === 'done' ? React.createElement('div', { style: props.styles.okText }, '已复制，去粘贴给 AI') : null,
-    copied === 'failed' ? React.createElement('div', { style: props.styles.error }, '复制失败，长按选择下方文本手动复制') : null,
+    React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      tone: 'bad',
+      text: health.message,
+      path: '',
+      actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+    }),
+    copyNote,
   );
 }
 
@@ -391,7 +516,7 @@ export function apply(ctx: ClientCtx): void {
         followKeysOf,
         extra: (parts) => React.createElement(MemoExtras, {
           hasReply: parts.reply !== null,
-          lark: larkOf(parts.reply),
+          fallback: larkOf(parts.reply),
           styles: parts.styles,
           getCall,
         }),
