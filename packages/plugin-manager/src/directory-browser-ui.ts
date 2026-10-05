@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react';
-import { rowsOf, targetOf } from './directory-browser-state.js';
+import { canGoUp, rowsOf, targetOf } from './directory-browser-state.js';
 import type { BrowseState, DirectoryRowBrowser } from './directory-browser-state.js';
 import { hiddenCount } from './directory-browser-contract.js';
 import type { DirectoryListing } from './directory-browser-contract.js';
@@ -42,6 +42,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
   const target = targetOf(state);
   const listing = state.listing ?? EMPTY_LISTING;
   const hidden = hiddenCount(listing);
+  // #1164 T5：对话框组 V1 全量（复用共享 interactionCss，不另起 tokens／链路）。
+  // 按钮一律按压＋长按纯视觉环（只做视觉标记，不注册动作回调、不进状态机分支）；
+  // 输入框／复选框只给焦点双环（不收缩、无长按环）；禁用态摇头＋禁止指针走共享 CSS。
+  const upOff = !canGoUp(state);
+  const goOff = state.draft.trim() === '';
+  const pickOff = target === null;
   const body: React.ReactNode[] = [];
   body.push(crumbRow(state, props.onEnter));
   body.push(rootsRow(state, props.onEnter));
@@ -54,13 +60,37 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
         value: state.draft,
         placeholder: labels.pathPlaceholder,
         'aria-label': labels.pathPlaceholder,
+        // #1164 T5：路径框只给焦点双环（与主面板输入框同口径）。
+        'data-ilife-focus': 'dialog-input',
         onChange: (event: React.ChangeEvent<HTMLInputElement>) => props.onDraft(event.currentTarget.value),
         onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
           if (event.key === 'Enter') props.onCommitDraft();
         },
       }),
-      React.createElement('button', { type: 'button', style: S.button, onClick: props.onUp }, labels.up),
-      React.createElement('button', { type: 'button', style: S.button, onClick: props.onCommitDraft }, labels.go),
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          style: S.button,
+          disabled: upOff,
+          'data-ilife-press': 'dialog-up',
+          'data-ilife-longpress': 'dialog-up',
+          onClick: props.onUp,
+        },
+        labels.up,
+      ),
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          style: S.button,
+          disabled: goOff,
+          'data-ilife-press': 'dialog-go',
+          'data-ilife-longpress': 'dialog-go',
+          onClick: props.onCommitDraft,
+        },
+        labels.go,
+      ),
     ),
   );
   body.push(
@@ -81,12 +111,29 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
         ? React.createElement(
             'label',
             { style: { fontSize: 12, cursor: 'pointer', marginRight: 10 } },
-            React.createElement('input', { type: 'checkbox', checked: state.showHidden, onChange: props.onToggleHidden }),
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: state.showHidden,
+              // #1164 T5：复选框只给焦点双环（不收缩、无长按环）。
+              'data-ilife-focus': 'dialog-check',
+              onChange: props.onToggleHidden,
+            }),
             ' ' + labels.showHidden(hidden),
           )
         : null,
       state.creating === null
-        ? React.createElement('button', { type: 'button', style: { ...S.chromeButton, textDecoration: 'underline' }, onClick: () => props.onCreatingChange('') }, labels.newFolder)
+        ? React.createElement(
+            'button',
+            {
+              type: 'button',
+              style: { ...S.chromeButton, textDecoration: 'underline' },
+              // #1164 T5：新建入口与普通按钮同口径。
+              'data-ilife-press': 'dialog-newfolder',
+              'data-ilife-longpress': 'dialog-newfolder',
+              onClick: () => props.onCreatingChange(''),
+            },
+            labels.newFolder,
+          )
         : null,
       state.notice !== null ? React.createElement('div', { style: S.error }, state.notice) : null,
       state.phase === 'failed' && state.failure !== null
@@ -101,10 +148,29 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
       React.createElement('span', { style: S.target, title: target ?? '' }, target === null ? '' : labels.willPick + target),
       React.createElement(
         'button',
-        { type: 'button', style: { ...S.button, ...(target === null ? S.buttonOff : {}) }, onClick: props.onPick },
+        {
+          type: 'button',
+          style: { ...S.button, ...(pickOff ? S.buttonOff : {}) },
+          disabled: pickOff,
+          // #1164 T5：无目标时不可点（禁用态摇头＋禁止指针）；有目标时与普通按钮同口径。
+          'data-ilife-press': 'dialog-pick',
+          'data-ilife-longpress': 'dialog-pick',
+          onClick: props.onPick,
+        },
         labels.open,
       ),
-      React.createElement('button', { type: 'button', style: S.button, onClick: props.onClose }, labels.cancel),
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          style: S.button,
+          // #1164 T5：取消与普通按钮同口径（常可用）。
+          'data-ilife-press': 'dialog-cancel',
+          'data-ilife-longpress': 'dialog-cancel',
+          onClick: props.onClose,
+        },
+        labels.cancel,
+      ),
     ),
   );
   return React.createElement(
@@ -127,7 +193,16 @@ export function DirectoryBrowser(props: DirectoryBrowserProps): React.ReactEleme
         // 而盘符那行也要地方——头一行越干净越好（#744 第三轮现场反馈）。
         React.createElement(
           'button',
-          { type: 'button', style: { ...S.button, marginLeft: 'auto' }, 'aria-label': labels.close, title: labels.close, onClick: props.onClose },
+          {
+            type: 'button',
+            style: { ...S.button, marginLeft: 'auto' },
+            'aria-label': labels.close,
+            title: labels.close,
+            // #1164 T5：标题栏关闭与普通按钮同口径。
+            'data-ilife-press': 'dialog-close',
+            'data-ilife-longpress': 'dialog-close',
+            onClick: props.onClose,
+          },
           '✕',
         ),
       ),

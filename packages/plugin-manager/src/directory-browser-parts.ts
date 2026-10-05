@@ -165,6 +165,11 @@ export function crumbRow(state: BrowseState, onEnter: (path: string) => void): R
           type: 'button',
           style: { ...S.chromeButton, fontWeight: isCurrent ? 700 : 400 },
           title: crumb.path,
+          // #1164 T5：对话框组 V1 全量（复用共享 interactionCss，不另起 tokens／链路）。
+          // 面包屑与普通按钮同口径：悬停聚光＋淡洗＋辉光＋上浮、按下收缩、焦点双环、
+          // 长按 500ms 纯视觉环（只做视觉标记，不注册动作回调、不进状态机分支）。
+          'data-ilife-press': 'dialog-crumb',
+          'data-ilife-longpress': 'dialog-crumb',
           onClick: () => onEnter(crumb.path),
         },
         // 每一格都写**它自己那一层的名字**：第一格是文件系统根（`C:\`），不是「上一级」——
@@ -188,6 +193,9 @@ export function rootsRow(state: BrowseState, onEnter: (path: string) => void): R
         type: 'button',
         style: { ...S.chromeButton, ...S.rootButton },
         title: ROOT_KIND_TEXT[root.kind] ?? ROOT_KIND_TEXT.other,
+        // #1164 T5：同上（根跳转与普通按钮同口径）。
+        'data-ilife-press': 'dialog-root',
+        'data-ilife-longpress': 'dialog-root',
         onClick: () => onEnter(root.path),
       },
       root.path,
@@ -209,7 +217,14 @@ export function entryRow(
     { key: entry.path, style: { ...S.row, padding: 0, ...(selected ? S.rowSelected : {}) } },
     React.createElement(
       'button',
-      { type: 'button', style: { ...S.row, flex: 1, border: 'none' }, onClick: () => onEnter(entry.path) },
+      {
+        type: 'button',
+        style: { ...S.row, flex: 1, border: 'none' },
+        // #1164 T5：条目进入与普通按钮同口径（按压＋焦点双环＋长按纯视觉环）。
+        'data-ilife-press': 'dialog-entry',
+        'data-ilife-longpress': 'dialog-entry',
+        onClick: () => onEnter(entry.path),
+      },
       '📁 ' + entry.name,
     ),
     React.createElement(
@@ -219,6 +234,9 @@ export function entryRow(
         style: { ...S.button, marginRight: 8, padding: '2px 8px' },
         'aria-pressed': selected,
         title: selected ? labels.selected : labels.select,
+        // #1164 T5：条目选中与普通按钮同口径。
+        'data-ilife-press': 'dialog-select',
+        'data-ilife-longpress': 'dialog-select',
         onClick: () => onToggleSelect(entry.path),
       },
       selected ? '✓' : labels.select,
@@ -235,6 +253,8 @@ export function createRow(
   creatingName: string | null,
 ): React.ReactElement | null {
   if (creatingName === null) return null;
+  // #1164 T5：空名不可点（禁用态摇头＋禁止指针）；非空才可建（validateFolderName 的其余非法名仍走 notice 人话）。
+  const createEmpty = creatingName.trim() === '';
   return React.createElement(
     'div',
     { style: { ...S.pathRow, borderTop: '1px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.25))' } },
@@ -243,13 +263,38 @@ export function createRow(
       value: creatingName,
       placeholder: labels.newFolder,
       'aria-label': labels.newFolder,
+      // #1164 T5：文本框只给焦点双环（不收缩、无长按环，与主面板输入框同口径）。
+      'data-ilife-focus': 'dialog-input',
       onChange: (event: React.ChangeEvent<HTMLInputElement>) => onName(event.currentTarget.value),
       onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') onCreate(creatingName);
         if (event.key === 'Escape') onCancel();
       },
     }),
-    React.createElement('button', { type: 'button', style: S.button, onClick: () => onCreate(creatingName) }, labels.createConfirm),
-    React.createElement('button', { type: 'button', style: S.button, onClick: onCancel }, labels.createCancel),
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        style: S.button,
+        disabled: createEmpty,
+        // #1164 T5：创建确认与普通按钮同口径；禁用时摇头＋禁止指针（共享 interactionCss）。
+        'data-ilife-press': 'dialog-create',
+        'data-ilife-longpress': 'dialog-create',
+        onClick: () => onCreate(creatingName),
+      },
+      labels.createConfirm,
+    ),
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        style: S.button,
+        // #1164 T5：创建取消与普通按钮同口径（常可用）。
+        'data-ilife-press': 'dialog-create-cancel',
+        'data-ilife-longpress': 'dialog-create-cancel',
+        onClick: onCancel,
+      },
+      labels.createCancel,
+    ),
   );
 }
