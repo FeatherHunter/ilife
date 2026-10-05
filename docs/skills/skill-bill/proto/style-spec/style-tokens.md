@@ -1,7 +1,7 @@
 # 票据纸设计语言 · style-tokens（地图 1003 / 子票 1005）
 
-来源（冻结）：根目录 `bill-993-proto-receipt-7222-v5.html`（下称 receipt-v5）、
-`bill-993-proto-detail-7222-v7.html`（下称 detail-v7）；
+来源（冻结）：`docs/skills/skill-bill/t993-过程/bill-993-proto-receipt-7222-v5.html`（下称 receipt-v5）、
+同目录 `bill-993-proto-detail-7222-v7.html`（下称 detail-v7）；
 皮肤实现 `packages/base-render/src/components/skin/skins/ticket.ts`（下称 ticket.ts）；
 `docs/agents/视觉验收墙.md` §6.3 是手机墙生成器形制（iframe 真产物／成对出／整体缩／几十格舒适区），
 与票据纸形制无关，本文件不转录，只记此结论。

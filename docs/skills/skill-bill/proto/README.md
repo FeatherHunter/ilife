@@ -23,7 +23,7 @@
 | `w09` | 1 | v2.2 | `w09/` | `.scratch/1068-no24/compare-manifest-24.json` 的 `breakdown`（24 页判地表） |
 | `setup-help` | 7 | v2.4 | `setup-help/` | `.scratch/1023-p-setup/manifest-p-setup-v2.4.json` |
 | **小计** | **95** | | | |
-| `frozen-993` | 2 | v5 回执／v7 详情 | `frozen-993/` | 仓根 `bill-993-proto-*.html`（已在版本库，取各 `v` 号最大的一份） |
+| `frozen-993` | 2 | v5 回执／v7 详情 | `frozen-993/` | `docs/skills/skill-bill/t993-过程/bill-993-proto-*.html`（已在版本库，取各 `v` 号最大的一份） |
 | `style-spec` | 2 | 1005 | `style-spec/` | `.scratch/1005-style/`（34 token ＋ 七段规格页） |
 | `superseded/write-collect-v2` | 16 | v2（**已被取代**） | `superseded/write-collect-v2/` | `.scratch/1020-p-write/manifest-v2.json` 的采集侧 |
 

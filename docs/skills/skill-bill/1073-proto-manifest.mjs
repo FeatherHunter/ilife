@@ -140,16 +140,17 @@ const GROUPS = [
     noManifest: true,
     version: () => '993',
     files: () => {
-      // 两份 993 冻结原型已在版本库（git ls-files），各取 v 号最大的一份
-      const tracked = execFileSync('git', ['ls-files', '--', 'bill-993-proto-*.html'], { cwd: REPO, encoding: 'utf8' })
+      // 两份 993 冻结原型已归档（git ls-files），各取 v 号最大的一份
+      const seat = 'docs/skills/skill-bill/t993-过程';
+      const tracked = execFileSync('git', ['-c', 'core.quotePath=false', 'ls-files', '--', `${seat}/bill-993-proto-*.html`], { cwd: REPO, encoding: 'utf8' })
         .split('\n').map((s) => s.trim()).filter(Boolean);
       const pick = (kind) => tracked
-        .filter((f) => new RegExp(`^bill-993-proto-${kind}-7222-v(\\d+)\\.html$`).test(f))
+        .filter((f) => new RegExp(`^${seat}/bill-993-proto-${kind}-7222-v(\\d+)\\.html$`).test(f))
         .sort((a, b) => Number(/v(\d+)\.html$/.exec(b)[1]) - Number(/v(\d+)\.html$/.exec(a)[1]))[0];
       return ['receipt', 'detail'].map((kind) => {
         const f = pick(kind);
-        if (!f) fail(`版本库里找不到 bill-993-proto-${kind}-7222-vN.html`);
-        return { file: f, rel: f, wake: kind === 'receipt' ? '回执' : '详情' };
+        if (!f) fail(`版本库里找不到 ${seat}/bill-993-proto-${kind}-7222-vN.html`);
+        return { file: f.split('/').pop(), seat, wake: kind === 'receipt' ? '回执' : '详情' };
       });
     },
   },

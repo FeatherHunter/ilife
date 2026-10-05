@@ -493,7 +493,7 @@
       "kind": "frozen",
       "rel": "frozen-993/bill-993-proto-detail-7222-v7.html",
       "file": "docs/skills/skill-bill/proto/frozen-993/bill-993-proto-detail-7222-v7.html",
-      "source": "bill-993-proto-detail-7222-v7.html",
+      "source": "docs/skills/skill-bill/t993-过程/bill-993-proto-detail-7222-v7.html",
       "bytes": 15976,
       "sha256": "d02e095eadc945ed2fbbd31378d0897596a6d85c2bfaeb904e342dbb69964380"
     },
@@ -505,7 +505,7 @@
       "kind": "frozen",
       "rel": "frozen-993/bill-993-proto-receipt-7222-v5.html",
       "file": "docs/skills/skill-bill/proto/frozen-993/bill-993-proto-receipt-7222-v5.html",
-      "source": "bill-993-proto-receipt-7222-v5.html",
+      "source": "docs/skills/skill-bill/t993-过程/bill-993-proto-receipt-7222-v5.html",
       "bytes": 14625,
       "sha256": "b6921cdad55d3ec2a55f21954e80b9d904241e78c30e1f18078a609030d56a0d"
     },
@@ -1010,8 +1010,8 @@
       "rel": "style-spec/style-tokens.md",
       "file": "docs/skills/skill-bill/proto/style-spec/style-tokens.md",
       "source": ".scratch/1005-style/style-tokens.md",
-      "bytes": 8567,
-      "sha256": "e14326d5c3a1060f4fa9907305554b355dadd4766ad2c667b7318711e3ddfcac"
+      "bytes": 8602,
+      "sha256": "89235b72b9f55a3dc5d3b2e35e5a6f48ebd2a677a73a2236942ac9519ddf3b7c"
     },
     {
       "seq": 83,
