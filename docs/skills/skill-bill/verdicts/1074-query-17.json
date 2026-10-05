@@ -1,8 +1,8 @@
 {
   "wall": "1074-query-17",
   "total": 17,
-  "ok": 6,
-  "no": 11,
+  "ok": 17,
+  "no": 0,
   "unjudged": 0,
   "items": [
     {
@@ -38,8 +38,8 @@
       "wake": "查某天",
       "prod": "w03-真跑.html",
       "proto": "w03-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -47,8 +47,8 @@
       "wake": "查最近",
       "prod": "w04-真跑.html",
       "proto": "w04-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -56,8 +56,8 @@
       "wake": "查周",
       "prod": "w06-真跑.html",
       "proto": "w06-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -65,8 +65,8 @@
       "wake": "查月",
       "prod": "w07-真跑.html",
       "proto": "w07-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -74,8 +74,8 @@
       "wake": "查区间",
       "prod": "w08-真跑.html",
       "proto": "w08-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -92,8 +92,8 @@
       "wake": "查账户",
       "prod": "w10-真跑.html",
       "proto": "w10-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -101,8 +101,8 @@
       "wake": "查账本",
       "prod": "w11-真跑.html",
       "proto": "w11-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -110,8 +110,8 @@
       "wake": "搜备注",
       "prod": "w12-真跑.html",
       "proto": "w12-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -128,8 +128,8 @@
       "wake": "查欠款",
       "prod": "w14-真跑.html",
       "proto": "w14-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -137,8 +137,8 @@
       "wake": "查待报销",
       "prod": "w15-真跑.html",
       "proto": "w15-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
@@ -146,8 +146,8 @@
       "wake": "查分期",
       "prod": "w16-真跑.html",
       "proto": "w16-原型.html",
-      "verdict": "no",
-      "reason": "对DETAIL的UI很满意 但是遗憾是详情变成了省略号，需要一个优雅的前端技术可以解决这个问题，而且不破坏当前的美感"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1074-query-17",
