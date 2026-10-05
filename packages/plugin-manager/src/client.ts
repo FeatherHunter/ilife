@@ -21,6 +21,8 @@ import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
+import { tabInteractionCss } from './config-panel-view.js';
+import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
@@ -358,6 +360,65 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     setActiveId(next.plugin);
     tabRefs.current[nextIndex]?.focus();
   }
+  /** T6 液态彗星式滑移（#1165）：glider 在下层走 pill，页签自身透明（选中态内联透明＋CSS 兜底）。
+   *
+   * 原型 `liquidTo` 原式：时长 200＋距离×0.35、夹 220–380ms、缓动 cubic-bezier(.3,1.1,.4,1)；
+   * 滑移中 glider 在 45% 处拉伸 1.28/.86（Web Animations，失败则 CSS 过渡仍送到位）；
+   * ghost 影子留在起点、180ms 消散（彗星式，非桥接残影）。首挂只摆位不动。
+   * 无 document/window/process：只经 refs 量量（offset*）与写样式；减少动态由 CSS 媒体查询接管（本 effect 不判断）。 */
+  const gliderRef = React.useRef<HTMLSpanElement | null>(null);
+  const ghostRef = React.useRef<HTMLSpanElement | null>(null);
+  const prevTabRect = React.useRef<{ readonly left: number; readonly top: number; readonly width: number; readonly height: number } | null>(null);
+  React.useEffect(() => {
+    const index = MANAGER_TABS.findIndex((tab) => tab.plugin === active);
+    const el = index < 0 ? null : tabRefs.current[index];
+    const glider = gliderRef.current;
+    const ghost = ghostRef.current;
+    if (el === null || el === undefined || glider === null || ghost === null) return;
+    const next = { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight };
+    const prev = prevTabRect.current;
+    prevTabRect.current = next;
+    const place = (rect: { readonly left: number; readonly top: number; readonly width: number; readonly height: number }): void => {
+      glider.style.left = String(rect.left) + 'px';
+      glider.style.top = String(rect.top) + 'px';
+      glider.style.width = String(rect.width) + 'px';
+      glider.style.height = String(rect.height) + 'px';
+    };
+    if (prev === null || (prev.left === next.left && prev.top === next.top && prev.width === next.width)) {
+      place(next);
+      return;
+    }
+    const dist = Math.abs(next.left - prev.left);
+    const dur = Math.min(LIQUID_MAX_MS, Math.max(LIQUID_MIN_MS, LIQUID_BASE_MS + dist * LIQUID_DIST_FACTOR));
+    ghost.style.transition = 'none';
+    ghost.style.left = String(prev.left) + 'px';
+    ghost.style.top = String(prev.top) + 'px';
+    ghost.style.width = String(prev.width) + 'px';
+    ghost.style.height = String(prev.height) + 'px';
+    ghost.style.opacity = '1';
+    void ghost.offsetWidth;
+    ghost.style.transition = 'opacity ' + String(LIQUID_GHOST_MS / 1000) + 's ease';
+    ghost.style.opacity = '0';
+    glider.style.transition = 'none';
+    place(prev);
+    void glider.offsetWidth;
+    glider.style.transition =
+      'left ' + String(dur) + 'ms ' + LIQUID_EASE + ',top ' + String(dur) + 'ms ' + LIQUID_EASE + ',width ' + String(dur) + 'ms ' + LIQUID_EASE;
+    place(next);
+    try {
+      glider.animate(
+        [
+          { transform: 'scaleX(1) scaleY(1)' },
+          { transform: 'scaleX(' + String(LIQUID_STRETCH_X) + ') scaleY(' + String(LIQUID_STRETCH_Y) + ')', offset: 0.45 },
+          { transform: 'scaleX(1) scaleY(1)', offset: 0.8 },
+          { transform: 'scaleX(1) scaleY(1)' },
+        ],
+        { duration: dur, easing: 'ease-out' },
+      );
+    } catch {
+      // 无 Web Animations 也无妨：left/top/width 的 CSS 过渡仍把滑移送到位
+    }
+  }, [active]);
   return React.createElement(
     'div',
     null,
@@ -386,7 +447,39 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     }),
     React.createElement(
       'div',
-      { role: 'tablist', 'aria-label': '爱生活技能页签', style: S.tablist },
+      { role: 'tablist', 'aria-label': '爱生活技能页签', style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },
+      // T6（#1165）：一枚页签样式＋goo 滤镜＋glider 滑块层；页签按钮本身仍按 slot 账本＋MANAGER_TABS 映射（机制不动，只加表现）。
+      React.createElement('style', { 'data-ilife-tabs': 't6' }, tabInteractionCss()),
+      React.createElement(
+        'svg',
+        { width: 0, height: 0, style: { position: 'absolute' }, 'aria-hidden': 'true' },
+        React.createElement(
+          'defs',
+          null,
+          React.createElement(
+            'filter',
+            { id: 'ilife-goo' },
+            React.createElement('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: 6, result: 'b' }),
+            React.createElement('feColorMatrix', { in: 'b', values: '1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 22 -11' }),
+          ),
+        ),
+      ),
+      React.createElement(
+        'span',
+        { 'data-ilife-glider-layer': 't6', 'aria-hidden': 'true' },
+        React.createElement('span', {
+          'data-ilife-ghost': 't6',
+          ref: (element: HTMLSpanElement | null) => {
+            ghostRef.current = element;
+          },
+        }),
+        React.createElement('span', {
+          'data-ilife-glider': 't6',
+          ref: (element: HTMLSpanElement | null) => {
+            gliderRef.current = element;
+          },
+        }),
+      ),
       MANAGER_TABS.map((tab, index) => {
         const selected = tab.plugin === active;
         const light = lightOf(tab.plugin);
@@ -406,10 +499,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             id: tabsId + '-tab-' + tab.plugin,
             type: 'button',
             role: 'tab',
+            'data-ilife-tab': 'tab',
             'aria-selected': selected,
             'aria-controls': tabsId + '-panel-' + tab.plugin,
             tabIndex: selected ? 0 : -1,
-            style: selected ? { ...S.tab, ...S.tabActive } : S.tab,
+            // T6（#1165）：选中态自身透明、glider 在下层给 pill（原型 V1 同形）；减少动态时 CSS 以 !important 回实心 pill。
+            style: selected ? { ...S.tab, ...S.tabActive, background: 'transparent', borderColor: 'transparent' } : S.tab,
             onClick: () => {
               setActiveId(tab.plugin);
             },

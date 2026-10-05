@@ -83,10 +83,10 @@ export const READ_TIMEOUT_MS = 20_000 as const;
  * 有界、调用方负责卸载清理（见 `config-panel.ts` 的取数），不是无界轮询；仅读整面用，保存／重置永不自动重试。 */
 export const CONFIG_READ_RETRY_MS: readonly number[] = [1000, 3000, 8000];
 
-/** 复制那一枚按钮就地变「已复制」之后，多久变回「复制」（定稿 v3 第三条：1.5 秒，不弹提示）。
+/** 复制那一枚按钮就地变「已复制」之后，多久变回「复制」（定稿 v3 第三条：终值 900ms，不弹提示）。
  *
- * #1160：本票不动（终值 900ms 归 #1162），这里保持现状值。 */
-export const COPY_FEEDBACK_MS = 1500 as const;
+ * #1162 差值终结：由现状 1500 切到终值 900（真相源 #1159 参数表＋原型 `},900)`）；老期望变红属预期，见 #1162。 */
+export const COPY_FEEDBACK_MS = 900 as const;
 
 /** T1 交互 tokens（#1160，唯一定义地，真相源 #1159 参数表）。
  *
@@ -128,6 +128,49 @@ export const DISABLED_OPACITY = 0.4 as const;
 export const DISABLED_SHAKE_MS = 300 as const;
 export const LONGPRESS_MS = 500 as const;
 export const LONGPRESS_RING_HEIGHT_PX = 3 as const;
+
+/** T3 展开与结果 tokens（#1162，唯一定义地，真相源 #1159 参数表＋原型 V1）。
+ *
+ * 高级组：220ms 分级展开（`.advbody{transition:max-height .22s ease,opacity .22s ease}`，
+ * 开态 cap 300px 即 `.open{max-height:300px;opacity:1}`；原生 details 开关离散、过渡跑不起来，
+ * 故生产侧取等价形态 `ilifeFoldIn` 关键帧 0→300＋0→1 同 .22s）＋箭头旋转
+ * （`.chev{transition:transform .2s}`、开态 `rotate(90deg)`）＋悬停箭头右移 2px 并跟焦点色
+ * （`:hover .chev{translateX(2px)}`）。页签 12%／按钮 13% 淡洗各归其票，这里只定高级头。
+ *
+ * 轻提示：渐显 .18s（`.toast{transition:opacity .18s ease,transform .18s ease}`，
+ * 入场位移 8px 即 `translateY(8px)→0`；生产侧 `notice` 条件挂载，进场即跑 `ilifeToastIn`）。
+ *
+ * 复制变勾只切时长（字面「已复制」由 #920／#908 锁死不改，见 #1162 进展）。
+ * 液态拉伸影子消散与时长公式归 #1165（本工作区已落地 LIQUID_*，本票不另起第二套）；
+ * 低端机模糊降级无静态常量（`@media (update: slow)` 即定义，见两处 CSS 函数尾部）。
+ * 颜色全走主题变量、永不写死蓝。 */
+export const ADVANCED_OPEN_MS = 220 as const;
+export const ADVANCED_CHEV_MS = 200 as const;
+export const ADVANCED_CHEV_SHIFT_PX = 2 as const;
+export const ADVANCED_OPEN_MAX_PX = 300 as const;
+export const NOTICE_FADE_MS = 180 as const;
+export const NOTICE_RISE_PX = 8 as const;
+
+/** T6 页签与液态 tokens（#1165，唯一定义地，真相源 #1159 参数表＋原型 V1）。
+ *
+ * 页签悬停淡洗 12%（原型 V1 `.tab:hover{background:color-mix(…12%…)}`，按钮 13% 不串用）；
+ * 圆点呼吸 .8s（`dotPulseV1`：scale 1→1.5、opacity 1→.6，悬停驱动）；
+ * 液态彗星式：拉伸 1.28/.86（45% 处）＋影子 180ms 消散（ghost opacity .18s），
+ * 滑移时长 200＋距离×0.35、夹 220–380ms、缓动 cubic-bezier(.3,1.1,.4,1)（原型 `liquidTo` 原式）；
+ * 页签过渡只 background＋border-color 各 .15s（不带 transform：页签不收缩，滑移由 glider 走）。
+ * 颜色全走主题变量（`--ilife-focus` 退品牌色、缺席退橙，永不写死蓝）；触屏／减少动态无静态常量（媒体查询即定义，见视图 `tabInteractionCss`）。
+ * 共用位第二个用法：配置面板按钮（T1/T2）＋爱生活页签条（本票）共用同一契约。 */
+export const TAB_HOVER_WASH_PERCENT = 12 as const;
+export const TAB_DOT_PULSE_MS = 800 as const;
+export const TAB_TRANSITION = 'background .15s ease,border-color .15s ease' as const;
+export const LIQUID_STRETCH_X = 1.28 as const;
+export const LIQUID_STRETCH_Y = 0.86 as const;
+export const LIQUID_GHOST_MS = 180 as const;
+export const LIQUID_MIN_MS = 220 as const;
+export const LIQUID_MAX_MS = 380 as const;
+export const LIQUID_BASE_MS = 200 as const;
+export const LIQUID_DIST_FACTOR = 0.35 as const;
+export const LIQUID_EASE = 'cubic-bezier(.3,1.1,.4,1)' as const;
 
 /** 宿主给「这是哪一种目录选择能力」时用的那两格原语的名字（软依赖：按名字现取，缺席即没有入口）。 */
 export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;

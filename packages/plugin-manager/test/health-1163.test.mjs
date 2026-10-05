@@ -15,12 +15,12 @@ const health = await import('../dist/health-view.js');
 const SRC_HEALTH = readFileSync(join(PKG, 'src', 'health-view.ts'), 'utf8');
 const SRC_UPDATE_CONTRACT = readFileSync(join(PKG, 'src', 'update-contract.ts'), 'utf8');
 
-describe('#1163 T4: shared tokens no regress (T1 four + T2 ten + COPY 1500)', () => {
-  it('T1 four cells (.97 / 2+5) + COPY untouched', () => {
+describe('#1163 T4: shared tokens no regress (T1 four + T2 ten + COPY 900 #1162终值)', () => {
+  it('T1 four cells (.97 / 2+5) + COPY final 900 (#1162差值终结)', () => {
     assert.equal(contract.PRESS_SCALE, 0.97);
     assert.equal(contract.FOCUS_RING_GAP_PX, 2);
     assert.equal(contract.FOCUS_RING_WIDTH_PX, 5);
-    assert.equal(contract.COPY_FEEDBACK_MS, 1500);
+    assert.equal(contract.COPY_FEEDBACK_MS, 900);
   });
   it('T2 ten cells (hover 120/13/55+25/1px/22/180 + disabled .4/300 + longpress 500/3)', () => {
     assert.equal(contract.HOVER_SPOTLIGHT_RADIUS_PX, 120);

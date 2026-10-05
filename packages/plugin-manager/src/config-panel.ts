@@ -284,7 +284,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     if (opened === undefined || (await opened) === 'refused') await openNative(key);
   };
 
-  /** 复制一行（定稿 v3 第三条）：写完就地变「已复制」（写不进去就地变「复制失败」），1.5 秒后复位，不弹提示。 */
+  /** 复制一行（定稿 v3 第三条）：写完就地变「已复制」（写不进去就地变「复制失败」），900ms 后复位，不弹提示（#1162 差值终结：终值 900ms，行为跟 COPY_FEEDBACK_MS 走）。 */
   const onCopy = (key: string, text: string): void => {
     void writeClipboard(text).then((ok) => {
       setCopy({ key, ok });

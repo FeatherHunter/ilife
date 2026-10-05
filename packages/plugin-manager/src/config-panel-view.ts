@@ -33,7 +33,7 @@
  */
 
 import * as React from 'react';
-import { ADVANCED_GROUP_TITLE, DISABLED_OPACITY, DISABLED_SHAKE_MS, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, HOVER_GLOW_EDGE_PERCENT, HOVER_GLOW_SOFT_PERCENT, HOVER_LIFT_PX, HOVER_SPOTLIGHT_RADIUS_PX, HOVER_WASH_PERCENT, INTERACTION_TRANSITION, LONGPRESS_MS, LONGPRESS_RING_HEIGHT_PX, PRESS_SCALE, SPOTLIGHT_FADE_MS, SPOTLIGHT_PEAK_PERCENT } from './config-panel-contract.js';
+import { ADVANCED_CHEV_MS, ADVANCED_CHEV_SHIFT_PX, ADVANCED_GROUP_TITLE, ADVANCED_OPEN_MAX_PX, ADVANCED_OPEN_MS, DISABLED_OPACITY, DISABLED_SHAKE_MS, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, HOVER_GLOW_EDGE_PERCENT, HOVER_GLOW_SOFT_PERCENT, HOVER_LIFT_PX, HOVER_SPOTLIGHT_RADIUS_PX, HOVER_WASH_PERCENT, INTERACTION_TRANSITION, LIQUID_GHOST_MS, LONGPRESS_MS, LONGPRESS_RING_HEIGHT_PX, NOTICE_FADE_MS, NOTICE_RISE_PX, PRESS_SCALE, SPOTLIGHT_FADE_MS, SPOTLIGHT_PEAK_PERCENT, TAB_DOT_PULSE_MS, TAB_HOVER_WASH_PERCENT, TAB_TRANSITION } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
@@ -78,7 +78,11 @@ const PANEL_SKELETON_FILL = inkMix(21);
  * 悬停／长按／折叠／复制变勾／提示／液态归后票，本函数只出按压与焦点。
  *
  * T2 追加（#1161）：悬停聚光＋淡洗＋辉光＋上浮、禁用摇头＋禁止指针、长按 500ms 纯视觉环＋回弹、
- * 无障碍三约束（触屏降级、键盘焦点可见、减少动态静态替代）——数值全引契约 T2 十格，详见函数内注释。 */
+ * 无障碍三约束（触屏降级、键盘焦点可见、减少动态静态替代）——数值全引契约 T2 十格，详见函数内注释。
+ *
+ * T3 追加（#1162）：高级折叠（220ms 分级入场＋箭头旋转 200ms＋悬停右移 2px）＋轻提示渐显
+ * （180ms 上浮 8px）＋低端机（update: slow）静态兜底——数值全引契约 T3 六格；
+ * 液态拉伸影子消散归 #1165（本函数不动页签，页签静态层见 tabInteractionCss）。 */
 // T2 焦点色变量（与 T1 行内字面逐字同值；T1 那一行保持字面不变——像素脚本按源码窗口断言它，改动会误报）。
 const T2_FOCUS_VAR = 'var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))';
 export function interactionCss(): string {
@@ -112,10 +116,65 @@ export function interactionCss(): string {
     'background:' + T2_FOCUS_VAR + ';pointer-events:none}' +
     '[data-ilife-longpress]:active:not(:disabled)::after{animation:ilifeLongRing ' + String(LONGPRESS_MS / 1000) + 's linear forwards}' +
     '@keyframes ilifeLongRing{from{width:0}to{width:100%}}' +
+    '[data-ilife-advanced="head"]{transition:' + INTERACTION_TRANSITION + '}' +
+    '[data-ilife-advanced="mark"]{display:inline-block;transition:transform ' + String(ADVANCED_CHEV_MS / 1000) + 's ease}' +
+    '[data-ilife-advanced="group"][open] [data-ilife-advanced="mark"]{transform:rotate(90deg)}' +
+    '[data-ilife-advanced="head"]:hover [data-ilife-advanced="mark"]{color:' + T2_FOCUS_VAR + ';transform:translateX(' + String(ADVANCED_CHEV_SHIFT_PX) + 'px)}' +
+    '[data-ilife-advanced="group"][open] [data-ilife-advanced="body"]{animation:ilifeFoldIn ' + String(ADVANCED_OPEN_MS / 1000) + 's ease}' +
+    '@keyframes ilifeFoldIn{from{max-height:0;opacity:0}to{max-height:' + String(ADVANCED_OPEN_MAX_PX) + 'px;opacity:1}}' +
+    '[data-ilife-notice="line"]{animation:ilifeToastIn ' + String(NOTICE_FADE_MS / 1000) + 's ease}' +
+    '@keyframes ilifeToastIn{from{opacity:0;transform:translateY(' + String(NOTICE_RISE_PX) + 'px)}to{opacity:1;transform:none}}' +
     '@media (hover:none){[data-ilife-press]:hover:not(:disabled){transform:none}[data-ilife-press]::before{display:none}}' +
     '@media (prefers-reduced-motion:reduce){[data-ilife-press],[data-ilife-focus]{transition:none}' +
     '[data-ilife-press]:disabled:hover{animation:none}' +
-    '[data-ilife-longpress]:active:not(:disabled)::after{animation:none;width:100%}}'
+    '[data-ilife-longpress]:active:not(:disabled)::after{animation:none;width:100%}' +
+    '[data-ilife-advanced="mark"]{transition:none}' +
+    '[data-ilife-advanced="group"][open] [data-ilife-advanced="body"]{animation:none}' +
+    '[data-ilife-notice="line"]{animation:none}}' +
+    '@media (update: slow){[data-ilife-press],[data-ilife-focus]{transition:none}' +
+    '[data-ilife-press]::before{display:none}' +
+    '[data-ilife-press]:disabled:hover{animation:none}' +
+    '[data-ilife-longpress]:active:not(:disabled)::after{animation:none;width:100%}' +
+    '[data-ilife-advanced="mark"]{transition:none}' +
+    '[data-ilife-advanced="group"][open] [data-ilife-advanced="body"]{animation:none}' +
+    '[data-ilife-notice="line"]{animation:none}}'
+  );
+}
+
+/** T6 页签条交互（#1165，唯一生成处；载体 `client.ts` 页签条消费，不自画）。
+ *
+ * 原型 V1 页签四件：悬停淡洗 12%＋辉光边框（无上浮、无聚光，按钮那套不串用）、圆点呼吸 .8s
+ *（悬停驱动，scale 1→1.5／opacity 1→.6）、焦点双环（沿用 T1 2px＋5px，跟主题色，同色页签可见）、
+ * 选中态透明（glider 在下层给 pill，页签自身透明；减少动态时 CSS 以 !important 回实心 pill）。
+ * 液态彗星式由载体 `liquidTo` 驱动（拉伸＋影子消散＋时长公式见契约 T6 tokens），本函数只出静态层：
+ * glider-layer 定位＋goo 滤镜引用、ghost 影子过渡（180ms）、glider/ghost 底色（主题变量）。
+ * 数值全引契约 T6 四格（淡洗／呼吸／过渡／影子），颜色永不写死蓝（缺席退橙 #f6ad55）。
+ * 低端机模糊降级（#1162）：update: slow 下 glider 层（含 goo 模糊）关闭、选中态回实心 pill（与减少动态同形）。 */
+export function tabInteractionCss(): string {
+  return (
+    '[data-ilife-tablist]{position:relative;isolation:isolate}' +
+    '[data-ilife-glider-layer]{position:absolute;inset:0;z-index:0;filter:url(#ilife-goo);pointer-events:none}' +
+    '[data-ilife-glider],[data-ilife-ghost]{position:absolute;top:0;left:0;border-radius:999px;background:' + T2_FOCUS_VAR + '}' +
+    '[data-ilife-ghost]{opacity:0}' +
+    '[data-ilife-tab]{position:relative;z-index:1;transition:' + TAB_TRANSITION + '}' +
+    '[data-ilife-tab]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(TAB_HOVER_WASH_PERCENT) + '%, transparent);' +
+    'border-color:' + T2_FOCUS_VAR + '}' +
+    '[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:ilifeDotPulse ' + String(TAB_DOT_PULSE_MS / 1000) + 's ease infinite}' +
+    '@keyframes ilifeDotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}' +
+    '[data-ilife-tab]:focus-visible{outline:none;' +
+    'box-shadow:0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
+    '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + T2_FOCUS_VAR + '}' +
+    '[data-ilife-tab][aria-selected="true"]{background:transparent;border-color:transparent}' +
+    '[data-ilife-ghost]{transition:opacity ' + String(LIQUID_GHOST_MS / 1000) + 's ease}' +
+    '@media (hover:none){[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:none}}' +
+    '@media (prefers-reduced-motion:reduce){[data-ilife-tablist] [data-ilife-glider-layer]{display:none}' +
+    '[data-ilife-tab]{transition:none}' +
+    '[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:none}' +
+    '[data-ilife-tab][aria-selected="true"]{background:var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))!important;border-color:transparent!important}}' +
+    '@media (update: slow){[data-ilife-tablist] [data-ilife-glider-layer]{display:none}' +
+    '[data-ilife-tab]{transition:none}' +
+    '[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:none}' +
+    '[data-ilife-tab][aria-selected="true"]{background:var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))!important;border-color:transparent!important}}'
   );
 }
 
@@ -1003,16 +1062,16 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       ? null
       : React.createElement(
           'details',
-          { style: S.advanced },
+          { style: S.advanced, 'data-ilife-advanced': 'group' },
           React.createElement(
             'summary',
-            { style: S.summary },
-            React.createElement('span', { style: S.groupMark }, '›'),
+            { style: S.summary, 'data-ilife-advanced': 'head' },
+            React.createElement('span', { style: S.groupMark, 'data-ilife-advanced': 'mark' }, '›'),
             ADVANCED_GROUP_TITLE,
           ),
           React.createElement(
             'div',
-            { style: S.groupBody },
+            { style: S.groupBody, 'data-ilife-advanced': 'body' },
             advanced.map((item, index) => renderRow(item, index === advancedLast)),
           ),
         ),
@@ -1045,7 +1104,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       ? React.createElement('div', { style: S.error, role: 'alert' }, props.writeError)
       : null,
     props.error !== null ? React.createElement('div', { style: S.error }, props.error) : null,
-    props.notice !== null ? React.createElement('div', { style: S.okText }, props.notice) : null,
+    props.notice !== null ? React.createElement('div', { style: S.okText, 'data-ilife-notice': 'line' }, props.notice) : null,
     overlay,
     // #1160 T1：按压＋焦点双环的样式只此一枚 <style>，放末位（首位会顶掉 kidsOf(card)[0]===head 的既有判据）。
     React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// T1+T2+T4+T5+T6 pixel seam (#1160 base, #1161 extended, #1163 health reuses same chain, #1164 dialog appends, #1165 tabs appends): shared single-route snapshot vs prototype params.
+// T1+T2+T3+T4+T5+T6 pixel seam (#1160 base, #1161 extended, #1162 result appends, #1163 health reuses same chain, #1164 dialog appends, #1165 tabs appends): shared single-route snapshot vs prototype params.
 // T2 reuses this same chain (no second chain per ticket): T1 14 checks stay byte-identical, T2 appends its own.
 // No browser in node --test, so this locks key params; image part is manual same-viewport check.
 // Truth: .scratch/1155-real-panel-prototype.html (same as branch proto/1155-interaction-v1).
@@ -70,7 +70,7 @@ const checks = [
   ['view-press-attrs>=5', viewPressAttr >= 5],
   ['view-styletag>=2', viewStyleTag >= 2],
   ['no-hard-blue', noHardBlue],
-  ['copy-ms-untouched-1500', /export const COPY_FEEDBACK_MS = 1500 as const/.test(contract)],
+  ['t3-copy-final-900', /export const COPY_FEEDBACK_MS = 900 as const/.test(contract)],
   ['t2-proto-hover-wash-13', protoHoverRule.includes('13%')],
   ['t2-prod-hover-wash-13', t2contract('HOVER_WASH_PERCENT', '13')],
   ['t2-proto-glow-55-25', protoHoverRule.includes('55%') && protoHoverRule.includes('25%')],
@@ -113,6 +113,16 @@ const checks = [
   ['t5-ui-no-longpress-logic', !/onLongpress/.test(dialogUi) && !/onLongpress/.test(dialogParts) && !/longpressTimer/.test(dialogUi) && !/longpressTimer/.test(dialogParts) && !/setLongpress/.test(dialogUi) && !/setLongpress/.test(dialogParts) && !/addEventListener/.test(dialogUi) && !/addEventListener/.test(dialogParts)],
   ['t5-readonly-keep', view.includes('只读行的目录按钮不画')],
   ['t5-reuses-shared-seam', !/function interactionCss/.test(dialogUi) && !/function interactionCss/.test(dialogParts) && !/data-ilife-interaction/.test(dialogUi) && !/data-ilife-interaction/.test(dialogParts)],
+  ['t3-proto-fold-220-cap300', proto.includes('body[data-v="V1"] .advbody{transition:max-height .22s ease,opacity .22s ease}') && proto.includes('.advbody.open{max-height:300px;opacity:1}')],
+  ['t3-prod-fold-220-cap300', /export const ADVANCED_OPEN_MS = 220 as const/.test(contract) && /export const ADVANCED_OPEN_MAX_PX = 300 as const/.test(contract) && view.includes('String(ADVANCED_OPEN_MS / 1000)') && view.includes('ilifeFoldIn') && view.includes('String(ADVANCED_OPEN_MAX_PX)') && view.includes('data-ilife-advanced')],
+  ['t3-proto-chev-200-90-2', proto.includes('.advhead .chev') && proto.includes('transition:transform .2s') && proto.includes('[aria-expanded="true"] .chev{transform:rotate(90deg)}') && proto.includes('.advhead:hover .chev{color:var(--focus);transform:translateX(2px)}')],
+  ['t3-prod-chev-200-90-2', /export const ADVANCED_CHEV_MS = 200 as const/.test(contract) && /export const ADVANCED_CHEV_SHIFT_PX = 2 as const/.test(contract) && view.includes('rotate(90deg)') && view.includes('String(ADVANCED_CHEV_SHIFT_PX)')],
+  ['t3-proto-copy-900', proto.includes('},900)')],
+  ['t3-prod-copy-900', /export const COPY_FEEDBACK_MS = 900 as const/.test(contract)],
+  ['t3-proto-toast-180-8', proto.includes('transition:opacity .18s ease,transform .18s ease') && proto.includes('translateY(8px)')],
+  ['t3-prod-toast-180-8', /export const NOTICE_FADE_MS = 180 as const/.test(contract) && /export const NOTICE_RISE_PX = 8 as const/.test(contract) && view.includes('ilifeToastIn') && view.includes('String(NOTICE_FADE_MS / 1000)') && view.includes('data-ilife-notice')],
+  ['t3-prod-lowfx-update-slow', view.includes('@media (update: slow)') && tabCssAll.includes('@media (update: slow)') && tabCssAll.includes('[data-ilife-glider-layer]{display:none}')],
+  ['t3-view-no-hard-blue', !/#0a84ff/.test(view)],
 ];
 const bad = checks.filter((pair) => !pair[1]);
 const ratio = bad.length / checks.length;

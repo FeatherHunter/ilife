@@ -21,8 +21,8 @@ describe('#1160 T1: press + focus tokens (single definition)', () => {
     assert.match(contract.INTERACTION_TRANSITION, /box-shadow .*\.15s/);
     assert.match(contract.INTERACTION_TRANSITION, /border-color .*\.15s/);
   });
-  it('COPY_FEEDBACK_MS untouched this ticket (still 1500, T3 cuts to 900)', () => {
-    assert.equal(contract.COPY_FEEDBACK_MS, 1500);
+  it('COPY_FEEDBACK_MS final 900 (#1162差值终结：1500→900，老期望已更新)', () => {
+    assert.equal(contract.COPY_FEEDBACK_MS, 900);
   });
   it('interactionCss carries press scale + focus 2+5 + theme var, no hard blue', () => {
     assert.equal(typeof view.interactionCss, 'function');

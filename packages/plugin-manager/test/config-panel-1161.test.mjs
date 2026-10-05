@@ -32,11 +32,11 @@ describe('#1161 T2: contract ten cells equal spec V1 + prototype', () => {
     assert.equal(contract.LONGPRESS_MS, 500);
     assert.equal(contract.LONGPRESS_RING_HEIGHT_PX, 3);
   });
-  it('T1 four cells + COPY untouched (no regress: .97 / 2+5 / 1500)', () => {
+  it('T1 four cells + COPY final 900 (no regress: .97 / 2+5 / #1162终值900)', () => {
     assert.equal(contract.PRESS_SCALE, 0.97);
     assert.equal(contract.FOCUS_RING_GAP_PX, 2);
     assert.equal(contract.FOCUS_RING_WIDTH_PX, 5);
-    assert.equal(contract.COPY_FEEDBACK_MS, 1500);
+    assert.equal(contract.COPY_FEEDBACK_MS, 900);
   });
 });
 
