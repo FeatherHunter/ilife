@@ -4,7 +4,6 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchConfigSurface, saveConfigSurface, resetConfigSurface } from '../dist/config-panel-value.js';
 import { CONFIG_READ_RETRY_MS } from '../dist/config-panel-contract.js';
-import { LOAD_RETRY_MS } from '../dist/update-contract.js';
 
 const okSurface = () => ({ path: '/c/memo.yaml', dataDir: '/c/data', created: false, values: {}, resolved: {} });
 const okEnvelope = () => ({ ok: true, value: okSurface() });
@@ -18,9 +17,8 @@ const scriptCall = (seen, steps) => async () => {
 const fakeSleep = (seen) => (ms) => { seen.sleeps.push(ms); return Promise.resolve(); };
 
 describe('#1142 退避表', () => {
-  it('与 #982 同值镜像（故意同值：同为宿主瞬时未就绪退避，改一处须改另一处，合一另立项）', () => {
-    assert.deepEqual([...CONFIG_READ_RETRY_MS], [...LOAD_RETRY_MS]);
-  });
+  // 票 1168 缺席态：更新侧退避表已随更新代码删除，本条镜像判据退役。
+
   it('有界正序：非空、每项为正、非递减', () => {
     assert.ok(CONFIG_READ_RETRY_MS.length > 0);
     for (const ms of CONFIG_READ_RETRY_MS) assert.ok(ms > 0);

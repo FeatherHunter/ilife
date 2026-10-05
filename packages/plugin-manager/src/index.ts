@@ -1,24 +1,36 @@
-/** dsh-life-pack host 半（六边形：host 侧；总管机制范围此前无 RPC，现在是面板的取数与动作口）。
+/** dsh-life-pack host 半（票 1168 缺席态：更新区藏入口，仅保留根清单电话）。
  *
  * 形态：cordis 插件（name/inject/apply）+ dsh.bundle.patch 装配行。
- * 本包无单品依赖、无单品 import。对外只保留纯数据口径（nav）与安装口径（install）。
- *
- * 本文件做两件事：
- * 1. 建电话表（`buildUpdatePhoneTable`：七组更新电话 ＋ 三个总管自有电话——装缺席包、更新目标表、本机根清单）；
- * 2. 把电话表挂到 DSH 公开的 `/api` 载体上（`connection.fetch.register`，样板：
- *    `packages/plugin-calorie/src/index.ts:51-88`，即 #80 的迁移写法）。
- *
- * 信封与卡路里/备忘录同形：客户端发 `{type:'client-request', rpcId, method:'<通道名>',
- * payload:{method, payload}}`，宿主回 `{type:'server-response', rpcId, result}`，
- * `result` 是 `{ok:true,value}` 或 `{ok:false,error:{code,message,details}}`（cookbook §6）。
+ * 更新电话已全部移除，面板不再调更新能力；宿主电话表仅应答 roots，其余回 bad-request。
+ * wire 票 1170 在此基础上重建 0.5.1 接线。
  */
-import { MANAGER_RPC, reasonText } from './update-contract.js';
-import { buildUpdatePhoneTable } from './update-host.js';
-import type { ManagerReply } from './update-host.js';
+import { MANAGER_ACTIONS, MANAGER_RPC, reasonText } from './update-contract.js';
+import { rootsReply } from './roots.js';
 import type { HostCtx } from './dsh-ctx.js';
 
 export const name = 'dsh-life-pack';
 export const inject: readonly string[] = ['connection'];
+
+export type ManagerReply =
+  | { readonly ok: true; readonly value: unknown }
+  | { readonly ok: false; readonly error: { readonly code: string; readonly message: string; readonly details: Record<string, unknown> } };
+
+export interface UpdatePhoneTable {
+  call(method: string, args: Record<string, unknown>): Promise<ManagerReply>;
+}
+
+function failure(code: string, details: Record<string, unknown> = {}): ManagerReply {
+  return { ok: false, error: { code, message: reasonText(code), details } };
+}
+
+export function buildUpdatePhoneTable(_ctx: unknown): UpdatePhoneTable {
+  return {
+    async call(method: string, _args: Record<string, unknown>): Promise<ManagerReply> {
+      if (method === MANAGER_ACTIONS.roots) return rootsReply() as Promise<ManagerReply>;
+      return failure('bad-request', { method });
+    },
+  };
+}
 
 interface HostLogger {
   info?(...args: unknown[]): void;
@@ -33,15 +45,7 @@ function loggerOf(ctx: HostCtx): HostLogger {
 
 export function apply(ctx: HostCtx): void {
   const logger = loggerOf(ctx);
-  // 安装留痕（票 #988）：装的动作走哪条落点、失败原文是什么，都要落到宿主日志里——
-  // 此前失败只剩面板上一句「安装没有完成」，真因无处可查（本票的现象正是这么来的）。
-  const log = (level: string, event: string, fields: Record<string, unknown>): void => {
-    const line = '[dsh-life-pack] ' + event + ' ' + JSON.stringify(fields);
-    if (level === 'error') logger.error?.(line);
-    else if (level === 'warn') logger.warn?.(line);
-    else logger.info?.(line);
-  };
-  const table = buildUpdatePhoneTable(ctx, { log });
+  const table = buildUpdatePhoneTable(ctx);
   const reply = (rpcId: string, result: ManagerReply): Response => Response.json({ type: 'server-response', rpcId, result });
   const fail = (rpcId: string, code: string, details: Record<string, unknown> = {}): Response =>
     reply(rpcId, { ok: false, error: { code, message: reasonText(code), details } });
@@ -80,7 +84,6 @@ export function apply(ctx: HostCtx): void {
     });
     ctx.effect(() => () => dispose(), 'dsh-life-pack: fetch route cleanup');
   } catch (error) {
-    // 通道是宿主共享单例：重装配时上一实例可能已注册，此时退让（照抄卡路里样板），他错重抛。
     if (/already registered|duplicate prefix route/.test(String((error as Error)?.message ?? error))) {
       logger.warn?.('[dsh-life-pack] fetch route ' + MANAGER_RPC.path + ' already registered by another instance; yielding');
       return;
@@ -91,10 +94,7 @@ export function apply(ctx: HostCtx): void {
 
 export { MANAGER_TABS, tabsForPresence } from './nav.js';
 export { MANAGER_PACKAGE, SINGLE_PLUGINS, reconcileBundles, assertDualBundles, assertNegativeSingleOnly } from './install.js';
-export { UPDATE_TARGETS } from './update-targets.js';
-export { MANAGER_ACTIONS, MANAGER_RPC, manualInstallCommand, reasonText } from './update-contract.js';
-/** 本机「根」清单（#744）：宿主半取数，六家的目录浏览器经 `ilife-manager.roots` 取用。 */
+export { MANAGER_ACTIONS, MANAGER_RPC, reasonText } from './update-contract.js';
 export { clearRootsCache, listRoots, parseDriveRows, rootsReply } from './roots.js';
 export type { RootsDeps } from './roots.js';
-/** #918：读**任意装机包**版本的那一处唯一定义（备忘宿主侧取用；卡路里那份随后迁移）。 */
 export { installedVersionOf } from './manager-version.js';

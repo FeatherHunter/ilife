@@ -39,19 +39,18 @@ const ADVANCED_GROUP_TITLE = contract.ADVANCED_GROUP_TITLE;
 
 /** 视图半的源码：样式表取值与「按字符数估宽」那类痕迹都只在这里读得到。 */
 const VIEW_SRC = readFileSync(join(PKG, 'src', 'config-panel-view.ts'), 'utf8');
-/** 壳半与更新面板半的源码（#931／#933／#937 的判据落在这两件上）。 */
+/** 壳半的源码（#931／#933／#937 的判据落在这里；更新面板半已随票 1168 删除）。 */
 const CLIENT_SRC = readFileSync(join(PKG, 'src', 'client.ts'), 'utf8');
-const UPDATE_SRC = readFileSync(join(PKG, 'src', 'update-panel.ts'), 'utf8');
 
 describe('#931／#933／#937：三条票面判据（静态面，改坏必红）', () => {
-  it('#931 品牌底上的前景一律取配对别名，三处都不许再写死 `#fff`', () => {
-    // 三处：壳半的页签选中态、更新面板的页签选中态与行内主按钮。
-    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-panel.ts', UPDATE_SRC]]) {
+  it('#931 品牌底上的前景一律取配对别名，壳半不许再写死 `#fff`', () => {
+    // 票 1168 缺席态：更新面板半已删除，仅守壳半。
+    for (const [name, src] of [['client.ts', CLIENT_SRC]]) {
       const hits = [...src.matchAll(/color:\s*'var\(--dsw-alias-label-primary-foreground/g)].length;
       assert.ok(hits >= 1, name + ' 里品牌底上的前景没有取配对别名');
     }
-    // 反向：这两件里不许再出现"品牌底 ＋ 写死白字"那一对。
-    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-panel.ts', UPDATE_SRC]]) {
+    // 反向：壳半里不许再出现"品牌底 ＋ 写死白字"那一对。
+    for (const [name, src] of [['client.ts', CLIENT_SRC]]) {
       const brandBlocks = [...src.matchAll(/background:\s*'var\(--dsw-alias-brand-primary[^}]*}/g)].map((m) => m[0]);
       for (const block of brandBlocks) {
         assert.doesNotMatch(block, /color:\s*'#fff'/, name + ' 里品牌底上还写着死白字（深色下 1.045:1、读不出）');

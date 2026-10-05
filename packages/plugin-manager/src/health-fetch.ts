@@ -14,10 +14,10 @@
 import { HEALTH_ENDPOINT, isHealthReport } from './health-contract.js';
 import type { HealthReport } from './health-contract.js';
 import { CARRIER_BASE } from './update-contract.js';
-import type { CallFace } from './update-client.js';
+import type { RpcCallFace } from './dsh-ctx.js';
 
-/** 传输口：与更新面**同一张脸**（`connection.rpc.call` 的四参形状，cookbook §6）——一张脸一处定义。 */
-export type HealthCallFace = CallFace;
+/** 传输口：与面板共用同一张脸（`connection.rpc.call` 的四参形状，见 dsh-ctx 的 RpcCallFace）。 */
+export type HealthCallFace = RpcCallFace;
 
 /** 一家的电话名：通道名去掉前导斜杠那一段（各家宿主半注册在 `/api` ＋ 通道名，信封 `method` 就是它）。 */
 export function phoneOf(channel: string): string {

@@ -16,8 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// 电话名从总管的契约件取（唯一定义地），替身不另抄一份字符串。
-import { MANAGER_ACTIONS } from '../../packages/plugin-manager/dist/update-contract.js';
+// 票 1168 缺席态：更新目标表电话已删除，桩传输口一律回 bad-request，不再点名电话名。
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MANAGER_DIR = join(HERE, '..', '..', 'packages', 'plugin-manager');
@@ -143,11 +142,9 @@ function collectTabLabels(tree) {
 export async function renderManagerPanel(options = {}) {
   const { tabs = [] } = options;
   const react = makeReact();
-  /** 桩传输口：方法名从 `payload.method` 读（面板取数口形状见 `update-client.ts`）。 */
-  const call = async (_channel, _endpoint, payload) => {
-    const method = payload?.method;
-    if (method === MANAGER_ACTIONS.targets) return { ok: true, value: { targets: [], pollMs: 1000 } };
-    return { ok: false, error: { code: 'bad-request', message: '渲染替身只答更新目标表这一条', details: {} } };
+  /** 桩传输口：票 1168 藏入口后面板不再取更新目标表，一律回 bad-request（体检走自家通道，不经此处）。 */
+  const call = async () => {
+    return { ok: false, error: { code: 'bad-request', message: '渲染替身不发电话', details: {} } };
   };
 
   const exports = materialize(MANAGER_DIR, react);

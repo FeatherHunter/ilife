@@ -24,7 +24,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderConfigTab, renderManagerPanel } from '../../../test/helpers/panel-render.mjs';
 import { MANAGER_TABS } from '../dist/nav.js';
-import { UPDATE_TARGETS } from '../dist/update-targets.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
@@ -113,13 +112,7 @@ describe('票 #738 ② 屏上页签条印产品名（真产物渲两次）', () 
   });
 });
 
-describe('票 #738 ③ 更新列表行首与页签名同值', () => {
-  it('六行的行首就是六个产品名（那一行取的是导航表那格）', () => {
-    const bySkill = new Map(UPDATE_TARGETS.map((target) => [target.key, target.title]));
-    assert.equal(bySkill.get('life-pack'), '爱生活', '总管自己那一行仍是「爱生活」');
-    assert.deepEqual(MANAGER_TABS.map((tab) => bySkill.get(tab.skill)), PRODUCT_NAMES);
-  });
-});
+// 票 1168 缺席态：更新列表已随更新代码删除，本条判据退役（页签名仅由导航表与各家注册保证，前两条已覆盖）。
 
 describe('票 #738 ④ 那行静态文本', () => {
   it('屏上不再出现（真产物渲一次，整页文本里搜不到）', async () => {

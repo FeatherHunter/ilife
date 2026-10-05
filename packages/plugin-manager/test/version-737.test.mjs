@@ -35,8 +35,7 @@ const CLIENT = readFileSync(join(PKG_DIR, 'dist', 'client.js'), 'utf8');
 const CLIENT_SRC = readFileSync(join(PKG_DIR, 'src', 'client.ts'), 'utf8');
 const BUILDCONF_SRC = readFileSync(join(PKG_DIR, 'tsdown.config.ts'), 'utf8');
 const CONTRACT_SRC = readFileSync(join(PKG_DIR, 'src', 'update-contract.ts'), 'utf8');
-const UPDATE_CLIENT_SRC = readFileSync(join(PKG_DIR, 'src', 'update-client.ts'), 'utf8');
-const HOST_SRC = readFileSync(join(PKG_DIR, 'src', 'update-host.ts'), 'utf8');
+const HOST_SRC = readFileSync(join(PKG_DIR, 'src', 'index.ts'), 'utf8');
 const HOST_VERSION_SRC = readFileSync(join(PKG_DIR, 'src', 'manager-version.ts'), 'utf8');
 /** 宿主产物（电话名的定义地）：删掉的那条电话不许在产物里留下名字。 */
 const CONTRACT_DIST = readFileSync(join(PKG_DIR, 'dist', 'update-contract.js'), 'utf8');
@@ -86,7 +85,8 @@ describe('票 #986 ② 屏上真值：胶囊里就是包版本那一串（真产
 
 describe('票 #986 ③ 删掉的机制不许回来（它们是「慢」的来源与配套）', () => {
   it('面板半：三态状态机、退避表、取版本函数都不在', () => {
-    for (const [name, src] of [['client.ts', CLIENT_SRC], ['update-client.ts', UPDATE_CLIENT_SRC]]) {
+    // 票 1168 缺席态：update-client.ts 已删除，仅守 client.ts。
+    for (const [name, src] of [['client.ts', CLIENT_SRC]]) {
       assert.doesNotMatch(src, /useManagerVersion|VERSION_RETRY_MS|VERSION_MISSING_TEXT|VERSION_PENDING_TEXT|loadManagerVersion/, name + ' 里又出现了问宿主要版本的那套机制');
     }
   });
@@ -100,6 +100,7 @@ describe('票 #986 ③ 删掉的机制不许回来（它们是「慢」的来源
   it('宿主半：派发处不再挂这条电话，读自己版本那函数也删了', () => {
     assert.doesNotMatch(HOST_SRC, /readManagerVersion|MANAGER_ACTIONS\.version/, '宿主派发处还挂着版本电话');
     assert.doesNotMatch(HOST_VERSION_SRC, /readManagerVersion|managerPackageJsonPath/, '读自己版本那函数又回来了');
+    assert.doesNotMatch(HOST_SRC, /update-host|UPDATE_TARGETS/, '宿主里更新电话表又回来了（票 1168 藏入口）');
   });
 });
 

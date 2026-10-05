@@ -20,8 +20,6 @@
 import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
-import { AbsentCard, CheckUpdateButton, UpdateResults, useUpdateRows } from './update-panel.js';
-import type { CallFace } from './update-client.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
@@ -30,6 +28,7 @@ import type {
   ClientCtx,
   ConfigTabRow,
   LifePackSectionProps,
+  RpcCallFace,
   SlotLedgerEntry,
 } from './dsh-ctx.js';
 
@@ -182,8 +181,7 @@ const S = {
   } as React.CSSProperties,
 };
 
-/** 缺席卡的画法与流程住 `update-panel.ts`（票 #678：一句人话 ＋「装上」按钮 ＋ 可复制命令），
- *  `recoFor` 的补装命令仍是卡里那条辅助展示（B11 口径不变）。 */
+/** 缺席态（票 1168 藏入口）：更新区已移除，缺席页签仅显示静态推荐（recoFor 的补装命令），不设安装动作。 */
 
 /** 标签解析（resolveSlotLabel 同形：thunk 跟活，无则空字串；见 slots lib:27-29）。 */
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
@@ -286,12 +284,11 @@ declare const __LIFE_PACK_VERSION__: string;
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
-function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace | null }): React.ReactElement {
+function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallFace | null }): React.ReactElement {
   const tabsId = React.useId();
   const tabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const rows: ConfigTabRow[] = props.useTabs((value) => value);
   const present = new Set(rows.map((r) => r.id));
-  const face = useUpdateRows(props.getCall);
   // 配置体检（#706）：一张表六份报告，顶部那行汇总与各家那张表都从它读（同一份数据）。
   // 通道名的来源见 CHANNEL_BY_PLUGIN（#735：账本那一格读不到，改取导航表那份镜像）。
   const healthTabs = React.useMemo(
@@ -346,9 +343,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;
   }
-  function targetForTab(tab: ManagerTab) {
-    return face.targets.find((t) => t.packageName === tab.plugin) ?? null;
-  }
+  void 0;
   function onTabKeyDown(event: React.KeyboardEvent, index: number): void {
     let nextIndex: number | undefined;
     switch (event.key) {
@@ -376,15 +371,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
         { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
         MANAGER_VERSION_TEXT,
       ),
-      // 三件并排：本票的「检查更新」在左，隔壁票（#679）的星与气泡在右，整组靠右（窄窗口折行）。
       React.createElement(
         'div',
         { style: S.headActions },
-        React.createElement(CheckUpdateButton, { face }),
         React.createElement(PanelActions, null),
       ),
     ),
-    React.createElement(UpdateResults, { face }),
     React.createElement(HealthSummaryLine, {
       lights,
       running: health.running,
@@ -485,13 +477,15 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
                 error: health.rows[tab.plugin]?.error ?? null,
               }),
             )
-          : React.createElement(AbsentCard, {
-              target: targetForTab(tab),
-              fallbackCommand: recoFor(tab).installCmd,
-              // 账本事实与装机读数分开给：缺席卡按两处事实分三态，不许互相顶替（见 update-view.ts 的 slotStateOf）。
-              inLedger: present.has(tab.plugin),
-              face,
-            }),
+          : (() => {
+              const reco = recoFor(tab);
+              return React.createElement(
+                'div',
+                { style: S.reco },
+                reco.hint,
+                React.createElement('span', { style: S.cmd }, reco.installCmd),
+              );
+            })(),
       );
     }),
     React.createElement(MorePluginsCard, null),
@@ -500,7 +494,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => CallFace
 
 export function apply(ctx: ClientCtx): void {
   // 调用口取用器：每次取数时现取（connection 后到也不永久缺席），透传给面板组件。
-  const getCall = (): CallFace | null => (ctx.connection?.rpc?.call as CallFace | undefined) ?? null;
+  const getCall = (): RpcCallFace | null => (ctx.connection?.rpc?.call as RpcCallFace | undefined) ?? null;
   // ledger 观测源（settings-plugins:1744-1767 同形；无 locale 面声明，故只订 ledger）。
   let tabsVersion = -1;
   let tabs: ConfigTabRow[] = [];
