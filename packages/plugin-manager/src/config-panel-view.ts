@@ -33,7 +33,7 @@
  */
 
 import * as React from 'react';
-import { ADVANCED_GROUP_TITLE } from './config-panel-contract.js';
+import { ADVANCED_GROUP_TITLE, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, INTERACTION_TRANSITION, PRESS_SCALE } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
@@ -68,6 +68,24 @@ const PANEL_SUNKEN_FILL = inkMix(9, 'var(--dsw-alias-bg-layer-1, #232324)');
 const PANEL_FIELD_EDGE = inkMix(24);
 /** 骨架条：浅色 ≈`#c9ccd2`（1.6:1）⇔ 深色 ≈`#404143`。 */
 const PANEL_SKELETON_FILL = inkMix(21);
+
+/** T1 按压与焦点（#1160）：原型 V1 的两个真实行为，样式只此一处生成。
+ *
+ * 用法：按钮加 `data-ilife-press`（按压＋焦点双环），输入框加 `data-ilife-focus`
+ *（仅焦点双环，文本框不收缩）。`PanelBody` 在卡片首位挂一枚 `<style>`，选择器按属性名收敛、
+ * 只罩本卡内的这两类，不漏到宿主别的按钮上。数值全引契约四格（按压／隔离／宽度／过渡），
+ * 颜色全走主题变量（隔离环取卡面底，焦点环取 `--ilife-focus` 退品牌色，永不写死蓝）。
+ * 悬停／长按／折叠／复制变勾／提示／液态归后票，本函数只出按压与焦点。 */
+export function interactionCss(): string {
+  return (
+    '[data-ilife-press]{transition:' + INTERACTION_TRANSITION + '}' +
+    '[data-ilife-focus]{transition:' + INTERACTION_TRANSITION + '}' +
+    '[data-ilife-press]:active{transform:scale(' + String(PRESS_SCALE) + ')}' +
+    '[data-ilife-press]:focus-visible,[data-ilife-focus]:focus-visible{outline:none;' +
+    'box-shadow:0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
+    '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))}'
+  );
+}
 
 const S = {
   /** `.ic-card`：`background:var(--ic-surface)`（＝bg-layer-1）＋`border:1px solid var(--ic-line-strong)`
@@ -626,6 +644,8 @@ export function Row(props: RowProps): React.ReactElement {
       style: S.btnPick,
       type: 'button',
       disabled: props.onCopy === undefined,
+      // #1160 T1：按压收缩＋焦点双环（纯视觉，不进状态机；禁用态浏览器不触发 :active）。
+      'data-ilife-press': 'copy',
       onClick: () => props.onCopy?.(item.key, props.value),
     },
     copyLabelOf(props.copyState),
@@ -661,6 +681,8 @@ export function Row(props: RowProps): React.ReactElement {
           style: S.checkbox,
           checked: props.value === 'true',
           disabled,
+          // #1160 T1：键盘焦点双环（文本框不收缩，只给焦点）。
+          'data-ilife-focus': 'input',
           onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
             props.onChange(item.key, e.target.checked ? 'true' : 'false'),
         })
@@ -670,6 +692,8 @@ export function Row(props: RowProps): React.ReactElement {
           value: props.value,
           disabled,
           spellCheck: false,
+          // #1160 T1：键盘焦点双环（文本框不收缩，只给焦点）。
+          'data-ilife-focus': 'input',
           onChange,
         });
   /** 目录入口：只读行不画（定稿 v3 ①），供不了（`none`／缺席）也不画。 */
@@ -682,6 +706,8 @@ export function Row(props: RowProps): React.ReactElement {
             style: S.btnPick,
             type: 'button',
             disabled,
+            // #1160 T1：按压收缩＋焦点双环（只读行不画本枚，见定稿 v3 ①）。
+            'data-ilife-press': 'browse',
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
@@ -887,9 +913,12 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       React.createElement(
         'div',
         { style: S.bar },
-        React.createElement('button', { style: S.btn, type: 'button', onClick: props.onRetry }, '重试'),
-        React.createElement('button', { style: S.btn, type: 'button', onClick: props.onReset }, '重置为默认'),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'retry', onClick: props.onRetry }, '重试'),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'reset', onClick: props.onReset }, '重置为默认'),
       ),
+      // #1160 T1：按压＋焦点双环的样式只此一枚 <style>，罩本卡内 data-ilife-press／focus 两类。
+      // 放末位：首位会把既有形状判据 kidsOf(card)[0]===head 顶掉（920 红），末位不影响任何既有断言。
+      React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
     );
   }
 
@@ -957,11 +986,11 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       { style: S.bar },
       React.createElement(
         'button',
-        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, onClick: props.onSave },
+        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, 'data-ilife-press': 'save', onClick: props.onSave },
         props.busy ? '处理中' : dirty ? `保存（${dirtyCount} 项未保存）` : '保存',
       ),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, onClick: props.onReset }, '重置为默认'),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, onClick: props.onRetry }, '重新读取'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'reset', onClick: props.onReset }, '重置为默认'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'retry', onClick: props.onRetry }, '重新读取'),
       // 那半句话是**最后一个孩子**：v3.1 的 `.ic-bar .ic-note{margin-left:auto}` 靠它把说明顶到行尾，
       // 三枚按钮留在左边（顺序反了就会成「说明靠左、按钮靠右」，与真源相反）。
       dirty
@@ -982,6 +1011,8 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     props.error !== null ? React.createElement('div', { style: S.error }, props.error) : null,
     props.notice !== null ? React.createElement('div', { style: S.okText }, props.notice) : null,
     overlay,
+    // #1160 T1：按压＋焦点双环的样式只此一枚 <style>，放末位（首位会顶掉 kidsOf(card)[0]===head 的既有判据）。
+    React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
   );
 }
 
@@ -1040,6 +1071,8 @@ export function StatusBlock(props: StatusBlockProps): React.ReactElement {
             key: action.text,
             style: index === 0 ? { ...S.btnPick, marginLeft: 'auto' } : S.btnPick,
             type: 'button',
+            // #1160 T1：按压收缩＋焦点双环（状态行动作钮同口径）。
+            'data-ilife-press': 'status-action',
             onClick: action.onPress,
           },
           action.text,
@@ -1061,7 +1094,14 @@ export function StatusBlock(props: StatusBlockProps): React.ReactElement {
       ? null
       : React.createElement(
           'a',
-          { style: S.statusUrl, href: props.link.href, target: '_blank', rel: 'noreferrer' },
+          {
+            style: S.statusUrl,
+            href: props.link.href,
+            target: '_blank',
+            rel: 'noreferrer',
+            // #1160 T1：键盘焦点双环（链接只给焦点，不收缩）。
+            'data-ilife-focus': 'status-link',
+          },
           props.link.text,
         ),
   );

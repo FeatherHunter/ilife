@@ -481,7 +481,9 @@ describe('#908 配置面：人话报错四类 · 一次读不无限转圈', () =
     assert.match(refused.message, /删掉页面上没有的行/);
 
     const thrown = await fetchConfigSurface(() => Promise.reject(new Error('传输炸了')), '/ilife-probe');
-    assert.match(thrown.message, /配置失败：传输炸了/);
+    // #1160 对齐：生产文案自 #1142 起带通道与重试指引（`配置失败（通道 X）：原因，点重试重新读取`），
+    // 旧期望 `配置失败：传输炸了` 为 stale（HEAD 已是长格式，与本票改动无关）。不断言标点，只锁“落字且带因”。
+    assert.match(thrown.message, /配置失败.*传输炸了/);
   });
 
   it('保存与读取走的是同一条通道，靠端点名分发', async () => {

@@ -329,7 +329,8 @@ export function SealScrollDialog(
     React.createElement(
       'div',
       { style: S.popInner },
-      React.createElement('button', { type: 'button', style: S.close, onClick: props.onClose }, '关闭'),
+      // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
+      React.createElement('button', { type: 'button', style: S.close, 'data-ilife-press': 'seal-close', onClick: props.onClose }, '关闭'),
       React.createElement(SealScroll, scroll),
     ),
   );

@@ -83,8 +83,25 @@ export const READ_TIMEOUT_MS = 20_000 as const;
  * 有界、调用方负责卸载清理（见 `config-panel.ts` 的取数），不是无界轮询；仅读整面用，保存／重置永不自动重试。 */
 export const CONFIG_READ_RETRY_MS: readonly number[] = [1000, 3000, 8000];
 
-/** 复制那一枚按钮就地变「已复制」之后，多久变回「复制」（定稿 v3 第三条：1.5 秒，不弹提示）。 */
+/** 复制那一枚按钮就地变「已复制」之后，多久变回「复制」（定稿 v3 第三条：1.5 秒，不弹提示）。
+ *
+ * #1160：本票不动（终值 900ms 归 #1162），这里保持现状值。 */
 export const COPY_FEEDBACK_MS = 1500 as const;
+
+/** T1 交互 tokens（#1160，唯一定义地，真相源 #1159 参数表）。
+ *
+ * 按压 .97、焦点隔离 2px＋主题色 5px、过渡 .15s——取值逐字照原型 V1
+ *（`.scratch/1155-real-panel-prototype.html`：`btn:active{transform:scale(.97)}`、
+ * `btn:focus-visible{box-shadow:0 0 0 2px #0b0b0d,0 0 0 5px var(--focus)}`、
+ * 主题橙 #f6ad55／蓝 #0a84ff／绿 #30d158、过渡 background／transform／box-shadow／border-color 各 .15s）。
+ *
+ * 颜色全走主题变量、永不写死蓝：隔离环取卡面底（深浅自适应），焦点环取
+ * `--ilife-focus`（缺席时退到宿主品牌色，宿主品牌色本身跟主题走）。
+ * 悬停／长按／折叠／复制变勾／提示／液态归后票，本件只定按压与焦点四格。 */
+export const PRESS_SCALE = 0.97 as const;
+export const FOCUS_RING_GAP_PX = 2 as const;
+export const FOCUS_RING_WIDTH_PX = 5 as const;
+export const INTERACTION_TRANSITION = 'background .15s ease,transform .15s ease,box-shadow .15s ease,border-color .15s ease' as const;
 
 /** 宿主给「这是哪一种目录选择能力」时用的那两格原语的名字（软依赖：按名字现取，缺席即没有入口）。 */
 export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
