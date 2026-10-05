@@ -130,17 +130,25 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(frame.props.style.filter, 'url(#dshLifeSealRoughFrame)');
   });
 
-  it('open 为假不渲染；为真出遮罩、关闭钮与标题', () => {
+  it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {
     assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
     const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));
     const text = textsOf(tree).join('|');
     assert.ok(text.includes('关闭'), '关闭钮');
     assert.ok(text.includes(PROPS.title) && text.includes('进展'), '卷轴本体也要在');
     const dialog = nodesOf(tree, (node) => node.props?.role === 'dialog');
-    assert.equal(dialog.length, 1, '弹层要有 dialog 语义');
-    assert.equal(dialog[0].props['aria-modal'], true);
+    assert.equal(dialog.length, 1, '浮层要有 dialog 语义');
+    assert.equal(dialog[0].props['aria-modal'], false, 'popover 非 modal');
+    assert.equal(dialog[0].props.style.position, 'absolute', '浮层钉在卡片内，不走 viewport 居中');
     const mask = nodesOf(tree, (node) => node.props?.role === 'presentation');
-    assert.equal(mask.length, 1, '遮罩一处');
+    assert.equal(mask.length, 0, '无遮罩');
+  });
+
+  it('纸面自带底色墨色（深色下也不跟主题变黑）', () => {
+    const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'help', tier: 'gold' }));
+    const styles = stylesOf(tree).map((s) => JSON.stringify(s)).join('\n');
+    assert.ok(styles.includes('#fdfaf2'), '纸底应是羊皮纸色');
+    assert.ok(!styles.includes('dsw-alias'), '纸面四色不许引用宿主主题变量');
   });
 
   it('九档材质互不相同（不能退化成同一套）', () => {

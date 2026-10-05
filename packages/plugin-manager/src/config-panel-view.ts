@@ -784,8 +784,11 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const seals = props.seals ?? [];
   /** 18 枚倾角各不同（1158）：家下标×3＋位序，步进错开。 */
   const TILT18 = [-4, -2.5, -1, -3, 1.5, 3, -1.5, 2, 4, -3.5, 0.5, 2.5, -4.5, 1, -2, 3.5, -0.5, 4.5];
-  /** 三枚落位（相对覆盖层右上：HELP 右上／技能左中／插件右下，互不遮挡）。 */
-  const SPOT = [{ left: '45%', top: '0.3em' }, { left: '5%', top: '2.8em' }, { left: '50%', top: '5em' }];
+  /** 三枚落位（卡片坐标：右上／左中／右下三处，互不遮挡）。右上与右下两枚按右钉死——
+   *  HELP 是单行最长的一枚，左钉会在窄卡上整体飞出面板右侧，右钉则右边界天然收敛；
+   *  左中那枚按左钉（左钉的章向右长，左边界天然收敛）。 */
+  const SPOT: readonly { readonly left?: string; readonly right?: string; readonly top: string }[] =
+    [{ right: '0.2em', top: '0.3em' }, { left: '2%', top: '3.2em' }, { right: '6%', top: '5.6em' }];
   const seed = props.sealSeed ?? 0;
   /** 槽位轮排（1158：六家同形不同位；HELP 永远 z 最上）。 */
   const ORDER = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
@@ -798,8 +801,10 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     React.createElement(SealFilterDefs, {}),
     ...order.map((dataIndex, slot) => React.createElement(
       'span',
-      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', left: SPOT[slot].left, top: SPOT[slot].top, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
-      React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) }),
+      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', top: SPOT[slot].top, ...(SPOT[slot].left === undefined ? { right: SPOT[slot].right as string } : { left: SPOT[slot].left as string }), zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
+      // 章面缩到 80%：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
+      React.createElement('span', { style: { fontSize: '0.8em', display: 'inline-flex' } },
+        React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
    )),
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;

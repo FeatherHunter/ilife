@@ -334,7 +334,8 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     seals: props.seals,
     sealSeed: props.sealSeed,
     selectedSeal,
-    onSealSelect: (index: number) => setSelectedSeal(index),
+    // popover 开合：点章置下标、再点同一枚即收起（无遮罩可点，故章本身就是开关）。
+    onSealSelect: (index: number) => setSelectedSeal((prev) => (prev === index ? null : index)),
     onSealClose: () => setSelectedSeal(null),
     items: props.items,
     state,

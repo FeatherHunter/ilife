@@ -43,10 +43,12 @@ interface Material {
   readonly rivet?: React.CSSProperties;
 }
 
-const PAPER_BG = 'var(--dsw-alias-bg-layer-2, #fdfaf2)';
-const PAPER_EDGE = 'var(--dsw-alias-border-l1, #e6d9bd)';
-const LABEL_MAIN = 'var(--dsw-alias-label-primary, #42506b)';
-const LABEL_SUB = 'var(--dsw-alias-label-secondary, #4b4335)';
+/** 纸面四色是印自带的（羊皮纸底＋ availability 墨色），不跟宿主主题跑——
+ *  深色下宿主变量会把纸染黑，故这里写死定稿值；字族仍继承（定稿零字族）。 */
+const PAPER_BG = '#fdfaf2';
+const PAPER_EDGE = '#e6d9bd';
+const LABEL_MAIN = '#42506b';
+const LABEL_SUB = '#4b4335';
 
 /** 九档材质（3 角色 × 3 档）。键就是原型里的 `role`／`tier`。 */
 const MATERIALS: Record<string, Record<string, Material>> = {
@@ -194,10 +196,11 @@ const S = {
     letterSpacing: '0.02em',
     color: LABEL_SUB,
   } as React.CSSProperties,
-  /** 弹层遮罩。 */
-  mask: { position: 'fixed', inset: 0, background: '#241f1966', zIndex: 40 } as React.CSSProperties,
-  /** 弹层本体：居中，宽度按 em 给（16px 下≈25em）。 */
-  dialog: { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: '25em', zIndex: 50 } as React.CSSProperties,
+  /** 卷轴浮层：卡片内绝对定位（卡片 `S.card` 是 relative 定位祖先），上沿悬在三枚章之下、左右各留半 em——
+   *  不是 modal：无遮罩、不锁滚动，点章切换、点「关闭」收起。 */
+  dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
+  /** 浮层内框：宽按 em 给（16px 下≈25em），窄卡上收满可用宽，永不捅破卡片。 */
+  popInner: { position: 'relative', width: '25em', maxWidth: '100%' } as React.CSSProperties,
   close: {
     position: 'absolute',
     right: '-0.375em',
@@ -307,7 +310,7 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
   );
 }
 
-/** 弹层：遮罩 ＋ 居中卷轴 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
+/** 卷轴浮层：无遮罩 popover ＋ 卷轴 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
 export function SealScrollDialog(
   props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void },
 ): React.ReactElement | null {
@@ -321,12 +324,11 @@ export function SealScrollDialog(
     plan: props.plan,
   };
   return React.createElement(
-    React.Fragment,
-    null,
-    React.createElement('div', { style: S.mask, onClick: props.onClose, role: 'presentation' }),
+    'div',
+    { style: S.dialog, role: 'dialog', 'aria-modal': false, 'aria-label': props.title },
     React.createElement(
       'div',
-      { style: S.dialog, role: 'dialog', 'aria-modal': true, 'aria-label': props.title },
+      { style: S.popInner },
       React.createElement('button', { type: 'button', style: S.close, onClick: props.onClose }, '关闭'),
       React.createElement(SealScroll, scroll),
     ),
