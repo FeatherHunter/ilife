@@ -35,8 +35,8 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-bill:
         specifier: 0.3.34
         version: link:../skill-bill
@@ -54,8 +54,8 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-calorie:
         specifier: 0.3.34
         version: link:../skill-calorie
@@ -73,8 +73,8 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-chef:
         specifier: 0.3.34
         version: link:../skill-chef
@@ -92,8 +92,8 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-home:
         specifier: 0.3.34
         version: link:../skill-home
@@ -109,10 +109,6 @@ importers:
         version: 0.22.14(typescript@5.9.2)
 
   packages/plugin-manager:
-    dependencies:
-      dsh-plugin-update:
-        specifier: ^0.2.0
-        version: 0.2.0
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -127,8 +123,8 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.3.34
         version: link:../skill-memo-ilife
@@ -146,8 +142,8 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.34
-        version: 0.3.34
+        specifier: 0.3.39
+        version: link:../plugin-manager
       skill-schedule:
         specifier: 0.3.34
         version: link:../skill-schedule
@@ -607,14 +603,6 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
-
-  dsh-life-pack@0.3.34:
-    resolution: {integrity: sha512-1tch8ZkFgzL5WMClKK6S/Ep3dihezl77AH1Kmq6ZkIHX4Ub2b6vTksrgo00xhxwfhbGwcU5gBp8KlpkbaiXI4g==}
-    engines: {node: '>=22.13'}
-
-  dsh-plugin-update@0.2.0:
-    resolution: {integrity: sha512-Kc34GW6ao6in54QkJPfK2Wy/KLkkRx0ah+EPsnjrxKE6rE/id1XQO3h4mLVzK2tHszcjDo4rVZJ91N2H6+C6Vw==}
-    engines: {node: '>=22'}
 
   dts-resolver@3.0.0:
     resolution: {integrity: sha512-1T1f+z+4tl9XD+m+0HBgWoL/nm0bOIffyWaUuUSBlFg/86IWvfx+wjNaO/ybU0AJzG9/Mi5hBUgGV6zCmWEN7Q==}
@@ -1359,12 +1347,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  dsh-life-pack@0.3.34:
-    dependencies:
-      dsh-plugin-update: 0.2.0
-
-  dsh-plugin-update@0.2.0: {}
 
   dts-resolver@3.0.0: {}
 
