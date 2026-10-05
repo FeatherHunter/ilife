@@ -18,7 +18,7 @@
 
 import * as React from 'react';
 import { CONFIG_READ_RETRY_MS, COPY_FEEDBACK_MS, DIRECTORY_PICKER_REFUSED, REMOTE_DIRECTORY_PICKER } from './config-panel-contract.js';
-import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
+import type { ConfigItem, ConfigSurfaceReply, SealInstance } from './config-panel-contract.js';
 import {
   dirtyKeysOf,
   fetchConfigSurface,
@@ -92,8 +92,8 @@ export interface ConfigPanelProps {
   readonly items: readonly ConfigItem[];
   /** 卡片标题（钩子之一，各家的产品名）；不给就只写「配置」。 */
   readonly title?: string | undefined;
-  /** 印章书签印文（#996：六家经 `title` 同路交 `sealText`，997 接线；本件只透传，不拼串）。 */
-  readonly sealText?: string | undefined;
+  /** 右区三枚签（1145：六家交自家三枚；本件只透传，不拼串）。 */
+  readonly seals?: readonly SealInstance[] | undefined;
   /** 跟随映射（钩子之一）：脏键 → 要显示「将跟随更新」的只读行；不给＝一行都不跟随。 */
   readonly followKeysOf?: ((dirtyKeys: readonly string[]) => readonly string[]) | undefined;
   /** 自家附加块（钩子之一：版本行／状态行）：画在面板主体之后、动作条之前。 */
@@ -132,6 +132,8 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   const [error, setError] = React.useState<string | null>(null);
   const [browseRow, setBrowseRow] = React.useState<DirectoryRowBrowser | null>(null);
   const [copy, setCopy] = React.useState<{ readonly key: string; readonly ok: boolean } | null>(null);
+  /** 弹卷开合：点章置下标、关卷置空（纯 UI 状态，不进脏基线）。 */
+  const [selectedSeal, setSelectedSeal] = React.useState<number | null>(null);
 
   /** 复制回执的复位定时器：**一次性 UI 回执**，不是数据轮询——点一次起一个，到点自我复位，
    *  下一次点击先清掉旧的，卸载时也清掉（下面那个清扫 effect 就是那一半）。 */
@@ -170,6 +172,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
         retryTimers.current.push(timer);
       });
     void (async () => {
+      const t0 = Date.now();
       const r = await fetchConfigSurface(props.getCall(), props.channel, {
         delays: CONFIG_READ_RETRY_MS,
         sleep,
@@ -183,7 +186,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
         setDraft(toDraft(props.items, r.surface.values, r.surface));
       } else {
         setState({ kind: 'failed', message: r.message });
-        console.warn('[dsh-life-pack] config surface load failed: ' + props.channel + ' ' + r.message);
+        console.warn('[dsh-life-pack] config surface load failed: ' + props.channel + ' elapsedMs=' + String(Date.now() - t0) + ' ' + r.message);
       }
     })();
     return () => {
@@ -206,11 +209,12 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     setWriteError(null);
     setError(null);
     try {
+      const t0 = Date.now();
       const r = await fetchConfigSurface(props.getCall(), props.channel);
       if (r.ok) apply(r.surface);
       else {
         setState({ kind: 'failed', message: r.message });
-        console.warn('[dsh-life-pack] config surface reload failed: ' + props.channel + ' ' + r.message);
+        console.warn('[dsh-life-pack] config surface reload failed: ' + props.channel + ' elapsedMs=' + String(Date.now() - t0) + ' ' + r.message);
       }
     } finally {
       inflight.current = false;
@@ -325,7 +329,10 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
 
   return React.createElement(PanelBody, {
     title: props.title,
-    sealText: props.sealText,
+    seals: props.seals,
+    selectedSeal,
+    onSealSelect: (index: number) => setSelectedSeal(index),
+    onSealClose: () => setSelectedSeal(null),
     items: props.items,
     state,
     draft,

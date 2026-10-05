@@ -78,6 +78,13 @@ function dirVerdictUncached(dir: string): DirVerdict {
   return { exists: true, writable: probe.ok, reason: probe.reason };
 }
 
+/** 目录判据的人话（#1142 快慢共用同一口径：完整体检与 read 轻量告警都调它，不各写一遍）。 */
+export function dbDirMessage(dir: string, verdict: DirVerdict): string {
+  if (!verdict.exists) return '不在：' + p(dir) + (verdict.reason !== '' ? '（' + verdict.reason + '）' : '');
+  if (verdict.writable) return '在且能写：' + p(dir) + '。';
+  return '在，但写不进去：' + p(dir) + '（' + verdict.reason + '）。';
+}
+
 /** 模板件数：把 `templates/` 数一遍（只数 `.html`，含子目录；读不出来的子树按 0 计）。
  *  报文里给这个数，是为了让「包内模板目录在不在」这句话能自证——件数对不上就是包装不完整。 */
 export function templateFileCount(dir: string): number {

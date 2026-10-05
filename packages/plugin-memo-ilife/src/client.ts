@@ -71,6 +71,18 @@ export interface HealthLarkItem {
   readonly action: string;
 }
 
+/** 从体检报告里取复制指引三件（#1142：报告自带，面板只消费不另拼；缺席即 undefined，由旧回执回退）。 */
+export function reportPromptOf(report: unknown): string | undefined {
+  const v = (report as { prompt?: unknown }).prompt;
+  return typeof v === 'string' && v !== '' ? v : undefined;
+}
+
+export function reportWebsiteOf(report: unknown): { readonly line: string; readonly url: string } | undefined {
+  const rec = report as { websiteLine?: unknown; websiteUrl?: unknown };
+  if (typeof rec.websiteLine !== 'string' || rec.websiteLine === '' || typeof rec.websiteUrl !== 'string' || rec.websiteUrl === '') return undefined;
+  return { line: rec.websiteLine, url: rec.websiteUrl };
+}
+
 /** 从体检报告里挑出 `lark.cli` 那一项；形状不对回 null（不抛）。 */
 export function larkItemOf(report: unknown): HealthLarkItem | null {
   if (typeof report !== 'object' || report === null) return null;
@@ -389,7 +401,7 @@ function MemoExtras(props: {
   /** 取数口（`apply` 现取现给，connection 后到也照样取）。 */
   readonly getCall: GetCall;
 }): React.ReactElement {
-  const [health, setHealth] = React.useState<{ readonly kind: 'loading' } | { readonly kind: 'ready'; readonly item: HealthLarkItem } | { readonly kind: 'failed'; readonly message: string }>({ kind: 'loading' });
+  const [health, setHealth] = React.useState<{ readonly kind: 'loading' } | { readonly kind: 'ready'; readonly item: HealthLarkItem; readonly report: unknown } | { readonly kind: 'failed'; readonly message: string }>({ kind: 'loading' });
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
   const loadHealth = React.useCallback(async (): Promise<void> => {
     setHealth({ kind: 'loading' });
@@ -399,7 +411,7 @@ function MemoExtras(props: {
       return;
     }
     const item = larkItemOf(r.report);
-    setHealth(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item });
+    setHealth(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item, report: r.report });
   }, [props.getCall]);
   React.useEffect(() => {
     if (props.hasReply) void loadHealth();
@@ -418,6 +430,8 @@ function MemoExtras(props: {
     prompt === undefined || prompt === '' ? [] : [{ text: '复制安装指引', onPress: () => onCopy(prompt) }];
   if (health.kind === 'ready') {
     const item = health.item;
+    const prompt = reportPromptOf(health.report) ?? fallback?.prompt;
+    const site = reportWebsiteOf(health.report) ?? (fallback === undefined ? undefined : { line: fallback.websiteLine, url: fallback.websiteUrl });
     return React.createElement(
       'div',
       null,
@@ -427,8 +441,8 @@ function MemoExtras(props: {
         text: item.message,
         path: fallback?.cliPath ?? '',
         version: fallback?.version ?? null,
-        actions: [...copyAction(fallback?.prompt), { text: '重新检测', onPress: () => void loadHealth() }],
-        link: fallback === undefined ? undefined : { text: fallback.websiteLine, href: fallback.websiteUrl },
+        actions: [...copyAction(prompt), { text: '重新检测', onPress: () => void loadHealth() }],
+        link: site === undefined ? undefined : { text: site.line, href: site.url },
       }),
       copyNote,
     );
@@ -511,8 +525,12 @@ export function apply(ctx: ClientCtx): void {
         channel: RPC_CHANNEL,
         items: CONFIG_ITEMS,
         title: SLOT_TITLE,
-        // #997：印文由标题推导（显示形带空格大写 HELP，纯展示不可点；不另立常量）。
-        sealText: SLOT_TITLE + ' HELP',
+        // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
+        seals: [
+          { role: 'help', tier: 'silver', label: SLOT_TITLE + ' HELP', progress: '完成度 50%', status: '全打通', plan: '将所有功能和场景全部打通' },
+          { role: 'skill', tier: 'copper', label: '技能', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
+          { role: 'plugin', tier: 'copper', label: '插件', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
+        ],
         followKeysOf,
         extra: (parts) => React.createElement(MemoExtras, {
           hasReply: parts.reply !== null,

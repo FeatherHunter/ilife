@@ -30,6 +30,19 @@ after(() => {
   process.env.PATH = savedPath;
 });
 
+describe('#1142 体检报告自带指引（read 不再带 lark 格）', () => {
+  it('health 报告带 prompt 三件，lark 文案无断链', async () => {
+    const { buildMemoHealthReport } = await import('../dist/cli/health/index.js');
+    const report = buildMemoHealthReport();
+    assert.equal(typeof report.prompt, 'string');
+    assert.ok(report.prompt.length > 100, 'prompt 全文须在报告里');
+    assert.ok(report.websiteUrl.includes('feishu'), '官网须在报告里');
+    const lark = report.items.find((e) => e.id === 'lark.cli');
+    assert.ok(lark, 'lark.cli 项仍在');
+    assert.equal(String(lark.action).includes('memo.config.read'), false, '动作不得再指已删的 read 回执字段：' + lark.action);
+  });
+});
+
 describe('#1142 read 快路径预算', () => {
   it('hang 住 lark-cli 时 read 仍秒回且不带 lark 格', async () => {
     const { runConfigKey } = await import('../dist/cli/config.js');

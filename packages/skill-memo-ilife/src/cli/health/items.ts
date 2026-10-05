@@ -24,6 +24,7 @@ import { mediaDirOf } from '../../shared/paths.js';
 import { projectOnDefaults, readMemoConfigReadOnly, readValue, sourceOf, textOf } from './configRead.js';
 import {
   DB_TABLE_THRESHOLD,
+  dbDirMessage,
   dirVerdict,
   findLarkCli,
   larkTier,
@@ -33,6 +34,7 @@ import {
   tableCount,
   templateFileCount,
 } from './probe.js';
+import { larkSetupInfo, LARK_WEBSITE_URL } from '../../sync/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -51,6 +53,11 @@ export interface MemoHealthReport {
   readonly configPath: string;
   readonly dataDir: string;
   readonly items: readonly HealthItem[];
+  /** 复制安装指引全文（#1142：read 不再带 lark 格，面板改从这份体检报告取；定稿 #759，唯一真相在 `src/sync/feishu.ts`）。 */
+  readonly prompt: string;
+  /** 官网行与跳转目标（与 prompt 同源，不另拼）。 */
+  readonly websiteLine: string;
+  readonly websiteUrl: string;
 }
 
 const SKILL = 'memo' as const;
@@ -98,11 +105,7 @@ export function buildMemoHealthReport(): MemoHealthReport {
   items.push({
     id: 'db.dir', title: '数据目录',
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
-    message: !dataDirVerdict.exists
-      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
-      : dataDirVerdict.writable
-        ? '在且能写：' + p(dataDir) + '。'
-        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+    message: dbDirMessage(dataDir, dataDirVerdict),
     action: !dataDirVerdict.exists
       ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
       : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
@@ -205,8 +208,8 @@ export function buildMemoHealthReport(): MemoHealthReport {
         ? '找得到 lark-cli，但还没登录或没拿到 task 域授权：飞书同步用不了。'
         : '已登录且 task 域可写：' + larkWhere + '。',
     action: tier === 'missing'
-      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是僵尸包，别装）。飞书CLI官网为：https://www.feishu.cn/feishu-cli。完整安装指引（含复制给 AI 的 prompt）见 memo.config.read 回执的 lark.prompt，面板「飞书 CLI」状态行有同一个复制按钮。'
-      : tier === 'partial' ? '补授权：照 memo.config.read 回执 lark.prompt 里那段做（登录后要能过 lark-cli auth check --scope task）。' : '',
+      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是僵尸包，别装）。完整安装指引见面板「飞书 CLI」状态行的复制按钮。'
+      : tier === 'partial' ? '补授权：点面板「飞书 CLI」状态行的「复制安装指引」，照那段做（登录后要能过 lark-cli auth check --scope task）。' : '',
     source: '默认值',
   });
 
@@ -223,5 +226,6 @@ export function buildMemoHealthReport(): MemoHealthReport {
     action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
   });
 
-  return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };
+  const setup = larkSetupInfo();
+  return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items, prompt: setup.prompt, websiteLine: setup.websiteLine, websiteUrl: LARK_WEBSITE_URL };
 }

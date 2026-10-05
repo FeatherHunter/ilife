@@ -17,7 +17,7 @@ import { MEMO_CONFIG_STEM, loadMemoConfig, resetMemoConfig, saveMemoConfig } fro
 import { resolvedMemoPaths } from '../shared/paths.js';
 import type { MemoResolvedPaths } from '../shared/paths.js';
 import { readMemoConfigReadOnly } from './health/configRead.js';
-import { dirVerdict } from './health/probe.js';
+import { dbDirMessage, dirVerdict } from './health/probe.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-memo-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -83,11 +83,6 @@ function withHumanError<T>(run: () => T): T {
  * 本读路径只做本地文件与目录判定，lark 一格不再经这里返回（旧技能带它是兼容，面板读 check 优先、read 回退）。
  */
 
-/** 人话路径一律正斜杠（与体检探针同口径）。 */
-function p(path: string): string {
-  return path.replace(/\\/g, '/');
-}
-
 /**
  * #915 第二步 + #1142 快路径：只给 `db.dir` 的行告警（本家唯一体检判红的格）。
  *
@@ -105,9 +100,7 @@ function memoAlerts(): Record<string, { readonly code: string; readonly message:
   const dataDir = configured !== '' ? configured : configPaths(MEMO_CONFIG_STEM).dataDir;
   const verdict = withHumanError(() => dirVerdict(dataDir));
   if (verdict.exists && verdict.writable) return undefined;
-  const message = !verdict.exists
-    ? '不在：' + p(dataDir) + (verdict.reason !== '' ? '（' + verdict.reason + '）' : '')
-    : '在，但写不进去：' + p(dataDir) + '（' + verdict.reason + '）。';
+  const message = withHumanError(() => dbDirMessage(dataDir, verdict));
   const code = message.startsWith('不在') || message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
   return { 'db.dir': { code, message } };
 }
