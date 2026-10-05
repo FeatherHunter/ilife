@@ -1,149 +1,110 @@
-/** #1001 第 2 期 · 共享层文本录入控件字号下限 16px · 契约锁。
+/** #1001 · 文本录入控件字号下限 16px · **静态契约锁**（架构收口版）。
  *
- *  **为什么要有这一条**：字号是一条声明，而这条声明有两个落点——**源码**（TS 里的字符串数组）
- *  与**编译产物**（`dist/` 里真正被页面吃进去的 CSS）。只锁源码，漏「改了源码忘了重编译」；
- *  只锁产物，漏「产物被手改／源码被改回去」。故两处同锁（同第 1 期 `help-search-font-1001`）。
+ *  架构一句话：全仓曾有 22 处手写 `font-size`（12.5／13／13.5／14／15px），全是 `class + element` 形态
+ *  `(0,1,1)` —— 同一个概念 22 个定义地。收口成「**一处定义 ＋ 每页族一条发射**」：
+ *   · 定义＝`page-ui` 的 `textEntryFloorCss()`（值取 `PAGE_LIMITS.textEntryMinPx`，排除集取
+ *     `NON_ENTRY_INPUT_TYPES`）；
+ *   · 发射＝`pageUiCss()`（`.ilife-page-ui`）／`helpShellSection`（`.ilife-help-shell`）／
+ *     `renderDocShell()`（`.ilife-page`，与是否启用 `pageUi` 无关）；
+ *   · 那 22 处声明**删掉**（不是改值）——赛道上没有对手，地板自然生效。
  *
- *  **为什么是 16px**：外部行为，不是本仓口味——WebKit 对 `font-size < 16px` 的表单控件
- *  （input／select／textarea）在聚焦时自动放大页面，页面版式随之错位。票面 #1001「单票承载」
- *  是本类的唯一承载处（第 3 期把这个数收进 `PAGE_LIMITS.textEntryMinPx`，本条届时改读常量）。
+ *  为什么地板整条塞进 `:where()`：特异度只由页根贡献 `(0,1,0)` ⇒ 合法的**上调**随手就赢它，
+ *  任何**下调**由产物面计算值门禁（`text-entry-computed-1001.test.mjs`）抓——**CSS 表达不了「≥」，
+ *  不等式交给门禁，不交给级联**。
  *
- *  **范围锁**：本期只许动 `font-size` 一个声明，三条规则体里其余声明（盒模型／触控高度／
- *  内边距／圆角／描边／底色／字栈）逐字冻结——防「顺手改」把触控 44／圆角语言带跑。
- *  比对前把空白归一（产物是缩进过的多行 CSS；缩进不是行为）。
- *
- *  **变异自证**：把产物里那条 `font-size: 16px` 改回 `13px`，判式必须真的读出 13px 并判红；
- *  否则说明这条判式没咬住东西（绿而无鉴别力）。
+ *  本件锁三样：① 三条发射点都在、值都来自常量；② 排除集与 `NON_ENTRY_INPUT_TYPES` 同源；
+ *  ③ 三条历史选择器**不再自带** `font-size`（防回潮）。外加一条**外部契约冻结**与**判式自证**。
  *
  *  运行：`node --test packages/base-render/test/text-entry-min-font-1001.test.mjs`
  */
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { blocksCss } from '../dist/blocks.js';
-import { buildStyleSheet, STYLE_PREFIX } from '../dist/index.js';
-import { PAGE_LIMITS } from '../dist/pageUi.js';
+import { buildStyleSheet, pageUiCss, STYLE_PREFIX } from '../dist/index.js';
+import { renderDocShell } from '../dist/docShell.js';
+import { NON_ENTRY_INPUT_TYPES, PAGE_LIMITS } from '../dist/pageUi.js';
 
-const SRC_BLOCKS = readFileSync(new URL('../src/blocks.ts', import.meta.url), 'utf8');
-const SRC_HELP_SHELL = readFileSync(new URL('../src/components/style/help-shell.ts', import.meta.url), 'utf8');
+const MIN_PX = PAGE_LIMITS.textEntryMinPx;
 
-/** 判据数值的**唯一住处**（第 3 期收口）：`PAGE_LIMITS.textEntryMinPx`。
- *  它的**外部出处**由下一条冻结断言钉住（16px ＝ WebKit 聚焦缩放阈值），不由本文件自说自话。 */
-const TEXT_ENTRY_MIN_PX = PAGE_LIMITS.textEntryMinPx;
-
-/** 三条「共享层文本录入控件」：源码选择器片段 ＋ 产物选择器 ＋ 产物 CSS 取处 ＋ 期望的规则体。 */
-const CASES = [
-  {
-    label: '通用参数表单输入框',
-    srcText: SRC_BLOCKS,
-    srcAnchor: "'block-param-form-input {'",
-    css: () => blocksCss({ prefix: STYLE_PREFIX }),
-    selector: '.' + STYLE_PREFIX + 'block-param-form-input',
-    rest: 'box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px;'
-      + ' border: 1px solid var(--line); border-radius: 8px; background: var(--card);'
-      + ' color: var(--fg); font-family: inherit;',
-  },
-  {
-    label: 'HELP 速查台搜索框',
-    srcText: SRC_HELP_SHELL,
-    srcAnchor: "'help-shell-tab-search-input {'",
-    css: () => buildStyleSheet().css,
-    selector: '.' + STYLE_PREFIX + 'help-shell-tab-search-input',
-    rest: 'flex: 1 1 200px; min-width: 0; min-height: 36px; padding: 0 14px;'
-      + ' border: 1px solid var(--line); border-radius: 999px; background: var(--card);'
-      + ' color: var(--fg); font-family: inherit;',
-  },
-  {
-    label: 'HELP 速查台参数字段输入框',
-    srcText: SRC_HELP_SHELL,
-    srcAnchor: "'help-shell-field-input {'",
-    css: () => buildStyleSheet().css,
-    selector: '.' + STYLE_PREFIX + 'help-shell-field-input',
-    rest: 'flex: 1 1 120px; min-width: 0; min-height: 32px; padding: 0 10px;'
-      + ' border: 1px solid var(--line); border-radius: 8px; background: var(--card);'
-      + ' color: var(--fg); font-family: inherit;',
-  },
-];
-
-/** 产物 CSS 里某选择器的规则体（选择器与 `{` 之间的空白容错；取首条，同选择器多档是既有写法）。 */
-function ruleBodyOf(css, selector) {
-  const m = new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{').exec(css);
-  assert.ok(m, '产物 CSS 里找不到选择器：' + selector);
-  const end = css.indexOf('}', m.index);
-  assert.ok(end > m.index, '选择器后没有规则体收尾：' + selector);
-  return css.slice(m.index + m[0].length, end);
+/** 从任意 CSS 文本里取某页根的地板规则体（取不到即抛，不静默）。 */
+function floorBodyOf(css, root) {
+  const m = new RegExp(root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:where\\([\\s\\S]*?\\)\\s*\\{\\s*([^}]*)\\}').exec(css);
+  assert.ok(m, '找不到页根 ' + root + ' 的字号地板规则');
+  return m[1];
 }
 
-/** 规则体里的 `font-size` 值（声明恰一条，缺／重复都抛）。 */
+/** 规则体里的 font-size 值（声明恰一条）。 */
 function fontSizeOf(body) {
   const hits = [...body.matchAll(/font-size\s*:\s*([^;}]+)/g)].map((m) => m[1].trim());
   assert.equal(hits.length, 1, '规则体里的 font-size 声明条数应为 1，实得 ' + hits.length + '：' + body);
   return hits[0];
 }
 
-/** 规则体归一：去掉 font-size 声明、压平空白（缩进不是行为）。 */
-function restOf(body) {
-  return body.replace(/font-size\s*:\s*[^;}]+;?/, '').replace(/\s+/g, ' ').trim();
+/** 某选择器的基座规则体（产物 CSS；取不到返回 null）。 */
+function ruleBodyOf(css, selector) {
+  const m = new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{').exec(css);
+  if (!m) return null;
+  return css.slice(m.index + m[0].length, css.indexOf('}', m.index));
 }
 
-/** 源码里某选择器片段之后那一段（到下一个 `}` 收尾的 TS 数组项）里的 font-size 值。 */
-function srcFontSizeOf(srcText, anchor) {
-  const at = srcText.indexOf(anchor);
-  assert.ok(at >= 0, '源码里找不到选择器片段：' + anchor);
-  const end = srcText.indexOf('}', at);
-  assert.ok(end > at, '选择器片段后没有规则收尾：' + anchor);
-  return fontSizeOf(srcText.slice(at, end));
-}
+const PAGE_UI_CSS = pageUiCss({ prefix: STYLE_PREFIX });
+const SHEET_CSS = buildStyleSheet().css;
+const DOC_HTML = renderDocShell({ docTitle: '锁', bodyHtml: '<p>x</p>' });
 
 /* ── ⓪ 外部契约冻结：判据数不是自说自话 ───────────────────── */
 
 test('#1001 外部契约冻结：textEntryMinPx 恰为 16（WebKit 聚焦缩放阈值）', () => {
-  /* 生产者（CSS 声明）与校验者（本文件、#984 的锁）都读这一个常量 ⇒ 改常量时门禁会一起变绿。
-     故这里把**外部事实**写成第二份字面量：动这个数，必须先拿出新的外部读数（真机／平台文档）。 */
-  assert.equal(TEXT_ENTRY_MIN_PX, 16,
-    '外部契约：WebKit 对 font-size<16px 的表单控件聚焦自动缩放；改这个数须先有新的外部读数');
+  /* 生产者（地板规则）与校验者（本文件、#984 的锁、门禁）都读同一个常量 ⇒ 改常量会一起变绿。
+     故这里把**外部事实**写成第二份字面量：动这个数，必须先拿出新的外部读数。 */
+  assert.equal(MIN_PX, 16, '外部契约：WebKit 对 font-size<16px 的表单控件聚焦自动缩放；改这个数须先有新的外部读数');
 });
 
-/* ── ① 源码侧：声明值就是下限 ─────────────────────────────── */
+/* ── ① 三条发射点：地板在、值来自常量 ─────────────────────── */
 
-for (const c of CASES) {
-  test('#1001 ' + c.label + '（源码）字号 = ' + TEXT_ENTRY_MIN_PX + 'px', () => {
-    assert.equal(parseFloat(srcFontSizeOf(c.srcText, c.srcAnchor)), TEXT_ENTRY_MIN_PX);
+test('#1001 页族地板：.ilife-page-ui（pageUiCss）值 = textEntryMinPx', () => {
+  assert.equal(fontSizeOf(floorBodyOf(PAGE_UI_CSS, '.' + STYLE_PREFIX + 'page-ui')), MIN_PX + 'px');
+});
+
+test('#1001 页族地板：.ilife-help-shell（共享样式表）值 = textEntryMinPx', () => {
+  assert.equal(fontSizeOf(floorBodyOf(SHEET_CSS, '.' + STYLE_PREFIX + 'help-shell')), MIN_PX + 'px');
+});
+
+test('#1001 页族地板：.ilife-page（文档壳，与 pageUi 开关无关）值 = textEntryMinPx', () => {
+  assert.equal(fontSizeOf(floorBodyOf(DOC_HTML, '.' + STYLE_PREFIX + 'page')), MIN_PX + 'px');
+});
+
+/* ── ② 排除集与常量同源 ───────────────────────────────────── */
+
+test('#1001 地板选择器的排除集逐项来自 NON_ENTRY_INPUT_TYPES', () => {
+  /* 取 `:where(...)` 里的整段选择器列表：**非贪婪到「右括号＋{」**才算收尾
+     （列表里有 N 个 `:not([type=x])` 的内层右括号，取第一个右括号会截断成只剩第一项）。 */
+  const m = new RegExp('\\.' + STYLE_PREFIX + 'page-ui\\s*:where\\(([\\s\\S]*?)\\)\\s*\\{').exec(PAGE_UI_CSS);
+  assert.ok(m, '找不到地板选择器');
+  const selector = m[1];
+  for (const type of NON_ENTRY_INPUT_TYPES) {
+    assert.ok(selector.includes(':not([type=' + type + '])'), '地板选择器缺排除项：' + type);
+  }
+  assert.ok(/\bselect\b/.test(selector) && /\btextarea\b/.test(selector), '地板须同时覆盖 select／textarea');
+});
+
+/* ── ③ 三条历史选择器不再自带字号（防回潮） ────────────────── */
+
+for (const [label, css, selector] of [
+  ['通用参数表单输入框', PAGE_UI_CSS + SHEET_CSS + DOC_HTML, '.' + STYLE_PREFIX + 'block-param-form-input'],
+  ['HELP 速查台搜索框', SHEET_CSS, '.' + STYLE_PREFIX + 'help-shell-tab-search-input'],
+  ['HELP 速查台字段输入框', SHEET_CSS, '.' + STYLE_PREFIX + 'help-shell-field-input'],
+]) {
+  test('#1001 ' + label + '：不再自带 font-size（字号归页族地板）', () => {
+    const body = ruleBodyOf(css, selector);
+    assert.ok(body !== null, '找不到规则：' + selector);
+    assert.ok(!/font-size/.test(body), selector + ' 又写回了 font-size —— 同一个概念只许一处定义地：' + body);
   });
 }
 
-/* ── ② 产物侧：编译出来的 CSS 就是下限（改了源码必须重编译） ── */
+/* ── ④ 判式自证：判式本身有鉴别力 ─────────────────────────── */
 
-for (const c of CASES) {
-  test('#1001 ' + c.label + '（产物）字号 = ' + TEXT_ENTRY_MIN_PX + 'px', () => {
-    assert.equal(
-      parseFloat(fontSizeOf(ruleBodyOf(c.css(), c.selector))),
-      TEXT_ENTRY_MIN_PX,
-      '产物里不是下限值——源码改了却没重编译？',
-    );
-  });
-}
-
-/* ── ③ 范围锁：除字号外逐字冻结 ───────────────────────────── */
-
-for (const c of CASES) {
-  test('#1001 ' + c.label + '：除 font-size 外一行不动', () => {
-    assert.equal(restOf(ruleBodyOf(c.css(), c.selector)), c.rest, '本期只许动 font-size，其余声明不许被顺手改');
-  });
-}
-
-/* ── ④ 变异自证：判式本身有鉴别力 ─────────────────────────── */
-
-for (const c of CASES) {
-  test('#1001 ' + c.label + '：变异自证（改回 13px 必须判红）', () => {
-    const css = c.css();
-    const body = ruleBodyOf(css, c.selector);
-    const mutated = css.replace(
-      c.selector + ' {' + body + '}',
-      c.selector + ' {' + body.replace('font-size: ' + TEXT_ENTRY_MIN_PX + 'px', 'font-size: 13px') + '}',
-    );
-    assert.notEqual(mutated, css, '变异没落上：产物里找不到要改的那一段');
-    assert.equal(parseFloat(fontSizeOf(ruleBodyOf(mutated, c.selector))), 13, '判式应读出被改小的 13px');
-  });
-}
+test('#1001 判式自证：把地板字号改回 13px，判式必须读出 13px', () => {
+  const mutated = PAGE_UI_CSS.replace('font-size: ' + MIN_PX + 'px', 'font-size: 13px');
+  assert.notEqual(mutated, PAGE_UI_CSS, '变异没落上：产物里找不到要改的那一段');
+  assert.equal(fontSizeOf(floorBodyOf(mutated, '.' + STYLE_PREFIX + 'page-ui')), '13px');
+});

@@ -10,6 +10,7 @@
 import { LF, focusRing } from './parts.js';
 import { BODY_FONT_STACK } from '../../font.js';
 import { ACTION_BAR_DEFAULTS } from '../../spec/index.js';
+import { textEntryFloorCss } from '../page-ui/index.js';
 
 /** helpShell —— 类名产出者 `src/help.ts:380-599`（`cls()` ＝ `ilife-help-shell-<suffix>`）
  *  ＋ `src/controls.ts` 的 `buildSharedHelpersJs`（#88 S4 运行时注入：卡级复制按钮／搜索／高亮／
@@ -26,6 +27,9 @@ export const helpShellSection: (prefix: string) => string = (p) => [
   '  font-family: ' + BODY_FONT_STACK + ';',
   '  font-feature-settings: "tnum";',
   '}',
+  // #1001 文本录入控件字号地板：**HELP 速查台这一页族**的发射点，根＝`.ilife-help-shell`
+  // （模板恒写它）。定义与理由住 `components/page-ui/index.ts` 的 `textEntryFloorCss()`。
+  textEntryFloorCss('.' + p + 'help-shell'),
   '.' + p + 'help-shell-hero {',
   '  margin-bottom: 20px;',
   '}',
@@ -405,8 +409,7 @@ export const helpShellSection: (prefix: string) => string = (p) => [
   '  background: var(--card);',
   '  color: var(--fg);',
   '  font-family: inherit;',
-  // #1001 第 2 期：文本录入控件字号下限 16px（WebKit 对 <16px 表单控件聚焦自动缩放；票面「单票承载」＝本类唯一承载处）。
-  '  font-size: 16px;',
+  // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
   '}',
   focusRing('.' + p + 'help-shell-tab-search-input'),
   '.' + p + 'help-shell-tab-search-clear {',
@@ -483,8 +486,7 @@ export const helpShellSection: (prefix: string) => string = (p) => [
   '  background: var(--card);',
   '  color: var(--fg);',
   '  font-family: inherit;',
-  // #1001 第 2 期：文本录入控件字号下限 16px（WebKit 对 <16px 表单控件聚焦自动缩放；票面「单票承载」＝本类唯一承载处）。
-  '  font-size: 16px;',
+  // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
   '}',
   focusRing('.' + p + 'help-shell-field-input'),
   // 回到顶部（视觉尺 H-19：42px 圆形、fixed bottom/right 24px、初始 opacity:0 ＋

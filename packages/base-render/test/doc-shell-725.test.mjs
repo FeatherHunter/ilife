@@ -3,7 +3,8 @@
 // 它守什么：骨架件这一族（`*Shell.ts` ＝某类文档的壳）的**外观与口径**，逐条对票面判据：
 //   ① 骨架逐字：`<!doctype html>` 起、`</html>` 止；head 的 charset→viewport→title 序；
 //      head 样式槽 → 正文槽 → shared helpers 槽 的位次（判据 3：删掉本件，调用方就得各自再写这一圈）；
-//   ② 资产口径：`buildStyleSheet().css + '\n' + blocksCss()` 起头，`extraCss` 接在后头（空串不多出段）；
+//   ② 资产口径：`buildStyleSheet().css + '\n' + blocksCss()` ＋ **#1001 起的字号地板** 起头，
+//      `extraCss` 接在后头（空串不多出段）；
 //   ③ 两位：`charts`（多一个资源位＋资产）与 `pageUi`（viewport 串＋版面根类），不给＝与不启用逐字节同；
 //   ④ 判据 4「公共层零领域词」的机器形态：件里不出现任何技能名——**清单从 `packages/` 派生，不手写**
 //      （手写清单会过期；派生清单随目录增减自动跟上）；
@@ -15,9 +16,14 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT, buildChartsHelpersJs, buildStyleSheet } from '../dist/index.js';
+import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT, buildChartsHelpersJs, buildStyleSheet, STYLE_PREFIX } from '../dist/index.js';
 import { blocksCss } from '../dist/blocks.js';
 import { renderDocShell } from '../dist/docShell.js';
+import { textEntryFloorCss } from '../dist/pageUi.js';
+
+/** 共享样式段的起头（#1001 起多一段「文本录入控件字号地板」，仍是**共享段**、仍在 extraCss 之前）。 */
+const SHARED_CSS_HEAD = buildStyleSheet().css + '\n' + blocksCss()
+  + '\n' + textEntryFloorCss('.' + STYLE_PREFIX + 'page');
 
 const DOC_TITLE = '文本标题';
 const BODY = '<section class="ilife-block ilife-block-page-shell"><h1>标题</h1></section>';
@@ -50,13 +56,13 @@ describe('#725 文档骨架件：骨架逐字与槽位序', () => {
 describe('#725 文档骨架件：资产口径', () => {
   it('共享样式起头、extraCss 接在后头', () => {
     const html = renderDocShell({ ...BASE, extraCss: '.probe-patch{}' });
-    assert.ok(html.includes(buildStyleSheet().css + '\n' + blocksCss() + '\n' + '.probe-patch{}'),
-      '资产拼接口径必须逐字节是 style + \\n + blocksCss + \\n + extraCss');
+    assert.ok(html.includes(SHARED_CSS_HEAD + '\n' + '.probe-patch{}'),
+      '资产拼接口径必须逐字节是 style + \\n + blocksCss + \\n + 字号地板 + \\n + extraCss（#1001 起多那段地板，仍是共享段）');
   });
 
-  it('空 extraCss＝不多出空段（样式槽恰好在 blocksCss 之后收尾）', () => {
+  it('空 extraCss＝不多出空段（样式槽恰好在字号地板之后收尾）', () => {
     const html = renderDocShell({ ...BASE });
-    assert.ok(html.includes(buildStyleSheet().css + '\n' + blocksCss() + '</style>'),
+    assert.ok(html.includes(SHARED_CSS_HEAD + '</style>'),
       '空 extraCss 不得多出一个换行段');
   });
 });

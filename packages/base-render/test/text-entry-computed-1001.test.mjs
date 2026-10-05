@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { buildSharedHelpersJs, buildStyleSheet, pageUiCss, STYLE_PREFIX } from '../dist/index.js';
 import { blocksCss, renderParamForm } from '../dist/blocks.js';
 import { skinCss } from '../dist/components/skin/index.js';
-import { PAGE_LIMITS } from '../dist/pageUi.js';
+import { NON_ENTRY_INPUT_TYPES, PAGE_LIMITS } from '../dist/pageUi.js';
 import { startControlsPage } from './input-controls-probe.mjs';
 
 /** 产物 CSS 的唯一拼法：皮肤段 ＋ 页面级配方 ＋ 共享样式表 ＋ 区块样式资产（与页面装配同源）。 */
@@ -71,13 +71,15 @@ const PAGES = [
   { name: 'HELP 速查台页', body: helpShellBody() },
 ];
 
-/** 页内读数：枚举可聚焦文本录入控件 ＋ 逐枚取计算字号。 */
+/** 页内读数：枚举可聚焦文本录入控件 ＋ 逐枚取计算字号。
+ *  **排除集与地板选择器同源**（`NON_ENTRY_INPUT_TYPES`）——一个概念只许一处定义。 */
+const EXCLUDED_TYPES = JSON.stringify(NON_ENTRY_INPUT_TYPES.map((t) => t.toLowerCase()));
 const MEASURE = '(function(){'
-  + 'var TEXTY={text:1,search:1,number:1,date:1,time:1,week:1,month:1,email:1,tel:1,url:1,password:1};'
+  + 'var NON=' + EXCLUDED_TYPES + ';'
   + 'function isEntry(el){'
   + 'if(el.tagName==="TEXTAREA"||el.tagName==="SELECT")return true;'
   + 'var t=(el.getAttribute("type")||"text").toLowerCase();'
-  + 'return !!TEXTY[t];}'
+  + 'return NON.indexOf(t)<0;}'
   + 'var all=[].slice.call(document.querySelectorAll("input,select,textarea"));'
   + 'return all.filter(isEntry).map(function(el){'
   + 'var cs=getComputedStyle(el);'

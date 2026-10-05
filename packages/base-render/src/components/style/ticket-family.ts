@@ -217,7 +217,7 @@ const TICKET_PAGE_CSS = [
   ".say-page .say-field { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px; background: #fbf7ec; border: 1px solid var(--ilife-line); border-radius: 12px; padding: 8px 12px; font-size: 14px; }",
   ".say-page .say-field > span:first-child { flex: none; min-width: 76px; color: var(--ilife-ink-2); font-weight: 700; white-space: nowrap; }",
   ".say-page .say-field .req { color: var(--ilife-danger); font-style: normal; font-weight: 900; }",
-  ".say-page .say-field input, .say-page .say-field select { flex: 1 1 0; min-width: 0; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-size: 15px; font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }",
+  ".say-page .say-field input, .say-page .say-field select { flex: 1 1 0; min-width: 0; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }",
   ".say-page .say-field input:focus, .say-page .say-field select:focus { outline: 2px solid var(--ilife-accent); outline-offset: 1px; border-color: var(--ilife-accent); }",
   ".say-page .say-field input:disabled { background: #f4efe2; color: #a39c8e; }",
   "/* 选填组（判地 .say-opt） */",

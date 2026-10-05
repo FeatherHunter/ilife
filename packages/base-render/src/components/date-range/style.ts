@@ -125,7 +125,7 @@ export function dateRangeCss(input?: { readonly prefix?: string }): string {
     '  background: ' + skinVar('surface') + ';',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font-num') + ';',
-    '  font-size: ' + skinVar('fs-sm') + ';',
+    // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
     '  font-variant-numeric: tabular-nums;',
     '  cursor: pointer;',
     '}',

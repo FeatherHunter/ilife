@@ -20,8 +20,9 @@ import { buildChartsHelpersJs } from './charts.js';
 import { buildEditableValueJs, editableValueCss } from './components/index.js';
 import { buildPopoverFullTextJs, popoverFullTextCss, popoverNoScriptHtml } from './components/popover/index.js';
 import { buildSharedHelpersJs } from './controls.js';
+import { textEntryFloorCss } from './components/page-ui/index.js';
 import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT } from './pageUi.js';
-import { buildStyleSheet } from './style.js';
+import { buildStyleSheet, STYLE_PREFIX } from './style.js';
 import { fillTemplate } from './template.js';
 
 /** 文档版本声明（doctype）的两种写法：**本件是唯一书写位**，调用方只给名字、不给字面量。
@@ -103,6 +104,10 @@ export function renderDocShell(input: DocShellInput): string {
   const doctypeCase: DocShellDoctypeCase = input.doctypeCase === 'upper' ? 'upper' : 'lower';
   const assets: { sharedCssText: string; sharedHelpersJs: string; chartsHelpersJs?: string } = {
     sharedCssText: buildStyleSheet().css + '\n' + blocksCss()
+      /* #1001 文本录入控件字号地板：**文档壳这一页族**的发射点，根＝`.ilife-page`
+         （docTemplate 恒写它，与是否启用 `pageUi` 无关 ⇒ 每一张文档壳页都吃得到）。
+         定义与理由住 `components/page-ui/index.ts` 的 `textEntryFloorCss()`。 */
+      + '\n' + textEntryFloorCss('.' + STYLE_PREFIX + 'page')
       + (editableValue ? '\n' + editableValueCss() : '')
       + (popoverFullText ? '\n' + popoverFullTextCss() : '')
       + (input.extraCss ? '\n' + input.extraCss : ''),

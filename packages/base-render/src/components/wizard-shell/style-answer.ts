@@ -190,7 +190,7 @@ export function wizardShellAnswersCss(input?: { readonly prefix?: string }): str
     '  background: ' + skinVar('ground') + ';',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font') + ';',
-    '  font-size: ' + skinVar('fs-sm') + ';',
+    // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
     '}',
     s('fld-input') + ':focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',

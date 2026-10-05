@@ -68,7 +68,7 @@ export function searchFieldCss(): string {
     R + '-box:focus-within{border-bottom-color:' + accent + '}',
     R + '-ico{flex:0 0 auto;margin-right:-4px;color:' + ink3 + ';font-size:' + fsBody + ';line-height:1}',
     R + '-input{flex:1 1 auto;min-width:0;box-sizing:border-box;min-height:' + T + ';padding:0;border:0;',
-    '  background:transparent;color:' + ink + ';font:inherit;font-size:' + fsBody + '}',
+    '  background:transparent;color:' + ink + ';font-family:inherit}',
     R + '-input::placeholder{color:' + ink3 + '}',
     R + '-input:focus-visible{outline:2px solid ' + accent + ';outline-offset:1px}',
     R + '-input[disabled]{color:' + ink3 + ';cursor:not-allowed}',

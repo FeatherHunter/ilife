@@ -45,8 +45,8 @@ export const PAGE_UI_VIEWPORT = 'width=device-width,initial-scale=1,viewport-fit
  *  · `textMinPx`（12）＝ 正文类字号下限，与下面 ⑥ 那条媒体查询**逐值同源**（同一个常量写进 CSS）；
  *  · `textEntryMinPx`（16）＝ **文本录入控件**（`input`／`select`／`textarea`）字号下限；外部出处＝
  *    WebKit 对 `font-size < 16px` 的表单控件**聚焦时自动放大页面**（iOS Safari 固有行为，不是本仓口味）。
- *    同类的唯一承载票是 #1001（分期与落地清单见票面「单票承载」）；本值供判据侧读数，CSS 声明处仍直写
- *    `16px`（与 `touchMinPx` 同处置：判据数值住这里、声明住各条规则）；
+ *    同类的唯一承载票是 #1001；**本值同时是发射源**——页面根之下的字号地板由 `textEntryFloorCss()`
+ *    从本值生成（不许在别处再写一份 `16px`）；
  *  · `breakpointsPx` ＝ 仓内既有断点集合，断点只许从这一份里取，不新造。
  *
  *  判分引擎住包内 `scripts/判分.mjs`，按包内相对路径取 `dist/pageUi.js` 的本件。 */
@@ -56,6 +56,45 @@ export const PAGE_LIMITS = Object.freeze({
   textEntryMinPx: 16,
   breakpointsPx: Object.freeze([400, 640, 820, 1001, 1200]),
 } as const);
+
+/** 「**不是**文本录入控件」的 `input[type]` 排除集（**唯一一处定义地**）：其余 `input`（含不写
+ *  `type` 属性者）与 `select`／`textarea` 一律算文本录入控件。
+ *
+ *  为什么用**排除**而不是**穷举**：新出现的 `type`（含引擎将来加的）默认落到「算」这一侧——宁可多算一个
+ *  （多一条 16px 的地板，视觉上只是字大一点），不可漏算一个（漏算＝那一枚控件在 iOS 上聚焦即缩放）。
+ *  这份清单**同时**供两侧派生：CSS 地板的选择器（`textEntryFloorCss()`）与判据侧的枚举器
+ *  （`test/text-entry-computed-1001.test.mjs` 的页内读数）——一个概念只留一处定义。 */
+export const NON_ENTRY_INPUT_TYPES = Object.freeze([
+  'button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'image', 'hidden',
+] as const);
+
+/** 文本录入控件字号地板：把「`root` 之下所有文本录入控件 ≥ `PAGE_LIMITS.textEntryMinPx`」写成一条规则。
+ *
+ *  **为什么整条塞进 `:where()`**：`:where()` 的特异度恒为 0 ⇒ 这条规则的特异度**只由页根贡献**
+ *  （`(0,1,0)`）。于是「某控件想做成 18px」这种**合法的上调**随手就赢它，而「写回 13px」这种**下调**
+ *  由产物面计算值门禁抓——**CSS 表达不了「≥」，不等式交给门禁，不交给级联**（这是 #1001 的架构结论）。
+ *
+ *  **为什么要它而不是逐处声明**：全仓曾有 22 处手写 `font-size`（12.5／13／13.5／14／15px），
+ *  全是 `class + element` 形态 `(0,1,1)` —— 同一个概念 22 个定义地。收成「一处定义 ＋ 每页族一条发射」，
+ *  删掉那 22 处之后，这条地板自然生效（赛道上没有对手了）。
+ *
+ *  `root` 是**页族根选择器**（如 `'.ilife-page'`／`'.ilife-help-shell'`）；每多一个页族就多一次发射，
+ *  但定义仍只有这一处。 */
+export function textEntryFloorCss(root: string): string {
+  /* 一个 `input` ＋ N 个 `:not()` 复合（不是 N 个 `input…` 连写——那会拼出 `input…input…` 这种非法选择器；
+     `:where()` 的选择器列表是**宽容解析**：非法项被**静默丢掉**，规则照样生效但漏掉整类控件——
+     实测踩过一次：连写时 `input` 全被丢、只有 `select` 吃到了地板，产物面门禁当场读出来）。 */
+  const inputs = 'input' + NON_ENTRY_INPUT_TYPES.map((type) => ':not([type=' + type + '])').join('');
+  return [
+    root + ' :where(',
+    '  ' + inputs + ',',
+    '  select,',
+    '  textarea',
+    ') {',
+    '  font-size: ' + PAGE_LIMITS.textEntryMinPx + 'px;',
+    '}',
+  ].join(LF);
+}
 
 /** #950 C1 正文列宽四档（闭集）：**缺省 `centered` ＝ 改前行为**。
  *  · `centered`：正文 880 居中 ＋ 满铺白名单（表／图／卡排／键值行满铺）；
@@ -199,6 +238,9 @@ export function pageUiCss(input?: PageUiCssInput): string {
     root + ' .' + p + 'block-toc a {',
     '  min-height: ' + PAGE_LIMITS.touchMinPx + 'px;',
     '}',
+    '/* 文本录入控件字号地板（#1001）：本页族根之下所有文本录入控件 ≥ `PAGE_LIMITS.textEntryMinPx`。',
+    '   定义与理由住 `textEntryFloorCss()`；本处只是它在「页面级配方」这个页族上的发射点。 */',
+    textEntryFloorCss(root),
     '/* 页内导航按胶囊排（inline 元素上 min-height 不生效，须转 inline-flex）。 */',
     root + ' .' + p + 'block-toc a {',
     '  display: inline-flex;',

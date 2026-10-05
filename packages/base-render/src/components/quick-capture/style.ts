@@ -104,7 +104,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '  background: none;',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font') + ';',
-    '  font-size: ' + skinVar('fs-body') + ';',
+    // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
     '}',
     '/* 「分开填」＝第二颗看得见的按钮，但**降一档重量**（无底、发丝线、次字色）：主次靠重量分，不靠字号。 */',
     s('more') + ' {',
