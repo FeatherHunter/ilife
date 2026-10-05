@@ -21,7 +21,9 @@ import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
+import { managerCallAdapter, mountLifeBatchPanel, mountLifeUpdateEntry } from './update-dialog.js';
 import { tabInteractionCss } from './config-panel-view.js';
+import { interactionCss } from './config-panel-view.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
@@ -181,9 +183,49 @@ const S = {
     display: 'inline-flex',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
   } as React.CSSProperties,
+  /** 更新入口挂点：只占位，按钮本体由上游入口件渲染（票 1170）。 */
+  updateEntrySlot: {
+    display: 'inline-flex',
+    alignItems: 'center',
+  } as React.CSSProperties,
+  /** 批量弹窗遮罩（自家壳：颜色走主题变量，按钮复用 interactionCss 同一缝）。 */
+  updateBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    background: 'rgba(0, 0, 0, 0.45)',
+    zIndex: 1000,
+  } as React.CSSProperties,
+  updateBox: {
+    position: 'relative',
+    width: 'min(720px, 92vw)',
+    maxHeight: '84vh',
+    overflow: 'auto',
+    borderRadius: 12,
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
+    background: 'var(--dsw-alias-bg-layer-1, #232324)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    padding: '12px 12px 16px',
+  } as React.CSSProperties,
+  updateClose: {
+    position: 'sticky',
+    top: 0,
+    float: 'right',
+    marginLeft: 8,
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
+    background: 'transparent',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    borderRadius: 999,
+    padding: '4px 12px',
+    fontSize: 13,
+    cursor: 'pointer',
+  } as React.CSSProperties,
 };
 
-/** 缺席态（票 1168 藏入口）：更新区已移除，缺席页签仅显示静态推荐（recoFor 的补装命令），不设安装动作。 */
+/** 更新区（票 1170 薄接线）：标题行挂入口按钮，弹窗里是七目标批量面板；缺席页签仍显示静态推荐，不进批量 targets。 */
 
 /** 标签解析（resolveSlotLabel 同形：thunk 跟活，无则空字串；见 slots lib:27-29）。 */
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
@@ -308,6 +350,44 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   );
   const lightOf = (id: string) => lights.find((light) => light.id === id);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
+  /** 批量弹窗开关（票 1170）：入口件 onActivate 置真，自家关闭按钮与 Esc 置假。 */
+  const [batchOpen, setBatchOpen] = React.useState(false);
+  const entryRef = React.useRef<HTMLSpanElement | null>(null);
+  const dialogRef = React.useRef<HTMLDivElement | null>(null);
+  const callReady = props.getCall() !== null;
+  /** 入口件挂载：连接后到才挂（取用器现取），卸载即 unmount（只停入口轮询）。 */
+  React.useEffect(() => {
+    const mount = entryRef.current;
+    if (mount === null || !callReady) return;
+    const entry = mountLifeUpdateEntry(mount, managerCallAdapter(props.getCall()), () => {
+      setBatchOpen(true);
+    });
+    return () => {
+      entry.unmount();
+    };
+    // getCall 本身是取用器（引用稳定），只跟连接就绪态重跑。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callReady]);
+  /** 批量面板挂载：弹窗开才挂，关即 unmount（只停轮询，宿主侧安装继续跑）。 */
+  React.useEffect(() => {
+    const mount = dialogRef.current;
+    if (mount === null || !batchOpen || !callReady) return;
+    const panel = mountLifeBatchPanel(mount, managerCallAdapter(props.getCall()));
+    return () => {
+      panel.unmount();
+    };
+    // 同上。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchOpen, callReady]);
+  function closeBatch(): void {
+    setBatchOpen(false);
+  }
+  function onDialogKeyDown(event: React.KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      setBatchOpen(false);
+    }
+  }
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
     ? (activeId as string)
@@ -435,6 +515,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       React.createElement(
         'div',
         { style: S.headActions },
+        React.createElement('span', {
+          style: S.updateEntrySlot,
+          ref: (element: HTMLSpanElement | null) => {
+            entryRef.current = element;
+          },
+        }),
         React.createElement(PanelActions, null),
       ),
     ),
@@ -583,6 +669,39 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             })(),
       );
     }),
+    batchOpen
+      ? React.createElement(
+        'div',
+        {
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': '批量更新',
+          style: S.updateBackdrop,
+          onKeyDown: onDialogKeyDown,
+        },
+        React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
+        React.createElement(
+          'div',
+          { style: S.updateBox },
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              'data-ilife-press': '',
+              style: S.updateClose,
+              'aria-label': '关闭更新面板（批量推进在宿主侧继续跑）',
+              onClick: closeBatch,
+            },
+            '关闭',
+          ),
+          React.createElement('div', {
+            ref: (element: HTMLDivElement | null) => {
+              dialogRef.current = element;
+            },
+          }),
+        ),
+      )
+      : null,
     React.createElement(MorePluginsCard, null),
   );
 }

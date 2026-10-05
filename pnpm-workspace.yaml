@@ -9,4 +9,5 @@ minimumReleaseAgeExclude:
   - dsh-plugin-update@0.2.0
   - dsh-life-pack@0.3.30
   - dsh-life-pack@0.3.34
+  - dsh-plugin-update@0.5.1
 preferWorkspacePackages: true

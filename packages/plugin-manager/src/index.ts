@@ -1,4 +1,4 @@
-/** dsh-life-pack host 半（票 1168 缺席态：更新区藏入口，仅保留根清单电话）。
+/** dsh-life-pack host 半（票 1170 薄接线：根清单 + 批量五电话与各目标单电话，均经批量宿主能力登记）。
  *
  * 形态：cordis 插件（name/inject/apply）+ dsh.bundle.patch 装配行。
  * 更新电话已全部移除，面板不再调更新能力；宿主电话表仅应答 roots，其余回 bad-request。
@@ -6,6 +6,7 @@
  */
 import { MANAGER_ACTIONS, MANAGER_RPC, reasonText } from './update-contract.js';
 import { rootsReply } from './roots.js';
+import { getBatchHost } from './update-batch.js';
 import type { HostCtx } from './dsh-ctx.js';
 
 export const name = 'dsh-life-pack';
@@ -23,11 +24,25 @@ function failure(code: string, details: Record<string, unknown> = {}): ManagerRe
   return { ok: false, error: { code, message: reasonText(code), details } };
 }
 
-export function buildUpdatePhoneTable(_ctx: unknown): UpdatePhoneTable {
+export function buildUpdatePhoneTable(ctx: unknown): UpdatePhoneTable {
   return {
-    async call(method: string, _args: Record<string, unknown>): Promise<ManagerReply> {
+    async call(method: string, args: Record<string, unknown>): Promise<ManagerReply> {
       if (method === MANAGER_ACTIONS.roots) return rootsReply() as Promise<ManagerReply>;
-      return failure('bad-request', { method });
+      let host: { handlers: Record<string, ((callArgs?: Record<string, unknown>) => Promise<unknown>) | undefined> };
+      try {
+        host = await getBatchHost(ctx);
+      } catch (error) {
+        return failure('internal', { detail: String((error as Error)?.message ?? error) });
+      }
+      const handler = host.handlers[method];
+      if (typeof handler !== 'function') return failure('bad-request', { method });
+      let raw: unknown;
+      try {
+        raw = await handler(args ?? {});
+      } catch (error) {
+        return failure('internal', { detail: String((error as Error)?.message ?? error) });
+      }
+      return { ok: true, value: raw };
     },
   };
 }

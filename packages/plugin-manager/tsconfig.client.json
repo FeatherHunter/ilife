@@ -7,6 +7,8 @@
   "include": [
     "src/client.ts",
     "src/update-contract.ts",
+    "src/update-dialog.ts",
+    "src/update-targets.ts",
     "src/nav.ts",
     "src/dsh-ctx.ts",
     "src/directory-browser-contract.ts",
