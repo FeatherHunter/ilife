@@ -1,0 +1,155 @@
+// 印章卷轴公共组件（`src/seal-scroll.ts`）的渲染回路：九档材质、三段内容、糙边滤镜、弹层。
+//
+// 为什么这样读：本件是纯函数、不用任何 hook，所以直接把源码转成 CJS 载进来、
+// 自带一个极小的树展开器就能读屏（本仓没装 react-dom，仓根 `test/helpers/panel-render.mjs`
+// 的替身只认产物束，不认单件源码）。四条读数都在下面 `it` 里指名。
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import Module from 'node:module';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import * as React from 'react';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const SOURCE = join(HERE, '..', 'src', 'seal-scroll.ts');
+
+/** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。 */
+function loadSource() {
+  const code = ts.transpileModule(readFileSync(SOURCE, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+    fileName: SOURCE,
+  }).outputText;
+  const instance = new Module(SOURCE, null);
+  instance.filename = SOURCE;
+  instance.paths = Module._nodeModulePaths(dirname(SOURCE));
+  instance._compile(code, SOURCE);
+  return instance.exports;
+}
+
+const { SealFilterDefs, SealScroll, SealScrollDialog } = loadSource();
+
+/** 展开元素树：函数组件当场调（本件无 hook），宿主节点留 `{type, props, children}`。 */
+function expand(node) {
+  if (node === null || node === undefined || node === false || node === true) return null;
+  if (typeof node === 'string' || typeof node === 'number') return { type: '#text', text: String(node) };
+  if (Array.isArray(node)) return node.map(expand).filter((child) => child !== null);
+  if (typeof node.type === 'function') return expand(node.type(node.props));
+  if (node.type === React.Fragment) return expand(node.props.children);
+  return { type: node.type, props: node.props, children: expand(node.props?.children) };
+}
+
+function textsOf(node, out = []) {
+  if (!node) return out;
+  if (node.type === '#text') { out.push(node.text); return out; }
+  if (Array.isArray(node)) { for (const child of node) textsOf(child, out); return out; }
+  textsOf(node.children, out);
+  return out;
+}
+
+function nodesOf(node, pred, out = []) {
+  if (!node || node.type === '#text') return out;
+  if (Array.isArray(node)) { for (const child of node) nodesOf(child, pred, out); return out; }
+  if (pred(node)) out.push(node);
+  nodesOf(node.children, pred, out);
+  return out;
+}
+
+/** 树里所有宿主节点的 `style` 合起来（读材质用的）。 */
+function stylesOf(node, out = []) {
+  if (!node || node.type === '#text') return out;
+  if (Array.isArray(node)) { for (const child of node) stylesOf(child, out); return out; }
+  if (node.props?.style) out.push(node.props.style);
+  stylesOf(node.children, out);
+  return out;
+}
+
+const TIER_CHAR = { copper: '铜', silver: '银', gold: '金' };
+const ROLES = ['skill', 'help', 'plugin'];
+const TIERS = ['copper', 'silver', 'gold'];
+
+/** 九档逐档的形状（原型定稿 9.1 那张表的后半段：底色是照抄印的，不是一圈金属色）。 */
+const EXPECTED = {
+  'skill-copper': { bg: '#8a4a28', border: '3px solid #a5652f', rivets: 0 },
+  'skill-silver': { bg: '#b73124', border: '3px double #eef3f6', rivets: 0 },
+  'skill-gold': { bg: '#d34a35', border: '3px double #f5d97a', rivets: 0 },
+  'help-copper': { bg: '#b06a3a', border: '3px solid #a5652f', rivets: 0 },
+  'help-silver': { bg: '#8f979e', border: '3px double #e8eef2', rivets: 0 },
+  'help-gold': { bg: '#c63d2a', border: '3px double #f5d97a', rivets: 0 },
+  'plugin-copper': { bg: '#b4773c', border: null, rivets: 4 },
+  'plugin-silver': { bg: '#d8dee3', border: null, rivets: 4 },
+  'plugin-gold': { bg: '#f2dc86', border: null, rivets: 4 },
+};
+
+const PROPS = { title: '饼干记账 HELP', progress: '进展一句', status: '能用，有已知坑', plan: '修导入的阻塞' };
+
+describe('印章卷轴 · 九档材质逐档对得上', () => {
+  for (const role of ROLES) {
+    for (const tier of TIERS) {
+      it(role + '／' + tier, () => {
+        const want = EXPECTED[role + '-' + tier];
+        const tree = expand(React.createElement(SealScroll, { ...PROPS, role, tier }));
+        const frame = nodesOf(tree, (node) => typeof node.props?.style?.filter === 'string' && node.props.style.filter.includes('dshLifeSealRoughFrame'));
+        assert.equal(frame.length, 1, '外框那一层应恰好一处（挂糙边滤镜的那层）');
+        const style = frame[0].props.style;
+        assert.ok(String(style.background).includes(want.bg), '外框底色应是印的底色：要含 ' + want.bg + '，实到 ' + style.background);
+        if (want.border) assert.equal(style.border, want.border, '外框边线应逐字照抄印');
+        else assert.equal(style.border, undefined, '插件那三档没有边线，靠 boxShadow 描边');
+        const rivets = nodesOf(tree, (node) => node.props?.style?.borderRadius === '50%' && typeof node.props?.style?.background === 'string' && String(node.props.style.background).includes('radial-gradient'));
+        assert.equal(rivets.length, want.rivets, '四角铆钉数');
+      });
+    }
+  }
+});
+
+describe('印章卷轴 · 三段内容与档位字', () => {
+  for (const role of ROLES) {
+    for (const tier of TIERS) {
+      it(role + '／' + tier + ' 屏上三段齐', () => {
+        const tree = expand(React.createElement(SealScroll, { ...PROPS, role, tier }));
+        const text = textsOf(tree).join('|');
+        for (const name of ['进展', '状态', '计划']) assert.ok(text.includes(name), '缺这段：' + name);
+        assert.ok(text.includes(PROPS.title), '缺标题');
+        assert.ok(text.includes(TIER_CHAR[tier]), '缺档位字：' + TIER_CHAR[tier]);
+        assert.ok(text.includes(PROPS.progress) && text.includes(PROPS.status) && text.includes(PROPS.plan), '三段正文都要在屏上');
+      });
+    }
+  }
+});
+
+describe('印章卷轴 · 糙边滤镜与弹层', () => {
+  it('滤镜定义两条都在，且外框引用的就是卷轴那条', () => {
+    const defs = expand(React.createElement(SealFilterDefs, {}));
+    const ids = nodesOf(defs, (node) => node.type === 'filter').map((node) => node.props.id);
+    assert.deepEqual(ids.sort(), ['dshLifeSealRoughEdge', 'dshLifeSealRoughFrame']);
+    const scales = nodesOf(defs, (node) => node.type === 'feDisplacementMap').map((node) => node.props.scale);
+    assert.deepEqual(scales, [2.2, 5], '印用 2.2、卷轴外框用 5（同一条在大块上会被稀释）');
+    const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'skill', tier: 'gold' }));
+    const frame = nodesOf(tree, (node) => typeof node.props?.style?.filter === 'string')[0];
+    assert.equal(frame.props.style.filter, 'url(#dshLifeSealRoughFrame)');
+  });
+
+  it('open 为假不渲染；为真出遮罩、关闭钮与标题', () => {
+    assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
+    const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));
+    const text = textsOf(tree).join('|');
+    assert.ok(text.includes('关闭'), '关闭钮');
+    assert.ok(text.includes(PROPS.title) && text.includes('进展'), '卷轴本体也要在');
+    const dialog = nodesOf(tree, (node) => node.props?.role === 'dialog');
+    assert.equal(dialog.length, 1, '弹层要有 dialog 语义');
+    assert.equal(dialog[0].props['aria-modal'], true);
+    const mask = nodesOf(tree, (node) => node.props?.role === 'presentation');
+    assert.equal(mask.length, 1, '遮罩一处');
+  });
+
+  it('九档材质互不相同（不能退化成同一套）', () => {
+    const seen = new Set();
+    for (const role of ROLES) for (const tier of TIERS) {
+      const tree = expand(React.createElement(SealScroll, { ...PROPS, role, tier }));
+      const frame = nodesOf(tree, (node) => typeof node.props?.style?.filter === 'string')[0];
+      seen.add(JSON.stringify(frame.props.style));
+    }
+    assert.equal(seen.size, 9, '九档外框必须两两不同，实到 ' + seen.size + ' 种');
+  });
+});

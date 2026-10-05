@@ -1,0 +1,55 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>v5 + 插件双铆金银铜</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3efe6;color:#2b2620;font:14px/1.6 system-ui,"Songti SC","Noto Serif SC",serif;padding:28px}
+h1{font-size:20px;margin:0}.sub{color:#7a7264;margin:4px 0 16px}
+.sec{background:#fffdf7;border:1px solid #e8dfcc;border-radius:14px;padding:20px;margin:14px 0;max-width:1040px}
+.sec h2{margin:0 0 2px;font-size:16px}.sec p{margin:0 0 12px;font-size:12px;color:#8a8172}
+.row{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.cell{text-align:center}.cap{font-size:12px;color:#8a8172;margin-top:8px}.cap b{color:#4a4438}
+.seal{display:inline-flex;align-items:center;cursor:pointer;letter-spacing:.14em;font-weight:800;border:none;font-size:21px;padding:10px 28px;filter:url(#roughA)}
+.skill.cu{background:linear-gradient(180deg,#8a4a28,#6e3418);color:#f8f1e2;border:3px solid #a5652f;border-radius:3px;box-shadow:inset 0 0 0 1px #f8f1e2aa}
+.skill.ag{background:linear-gradient(180deg,#b73124,#8e1f14);color:#f8f1e2;border:3px double #eef3f6;border-radius:3px;box-shadow:inset 0 0 0 1px #fff}
+.skill.au{background:linear-gradient(180deg,#d34a35,#a32216);color:#fff8e0;border:3px double #f5d97a;border-radius:3px;box-shadow:inset 0 0 0 1px #fff8,0 4px 16px #c9a22755}
+.helpold{color:#f8f1e2;border-radius:3px;font-size:17px}
+.helpold.cu{background:linear-gradient(180deg,#b06a3a,#7e3f1d);border:3px solid #a5652f}
+.helpold.ag{background:linear-gradient(180deg,#8f979e,#5f666d);border:3px double #e8eef2}
+.helpold.au{background:linear-gradient(180deg,#c63d2a,#a32216);border:3px double #f5d97a}
+.plug2{position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:#2e2114;letter-spacing:.18em;font-size:21px;padding:12px 36px}
+.plug2 .band{position:absolute;top:-1px;bottom:-1px;left:-1px;right:-1px;z-index:1;border-radius:4px}
+.plug2 .lbl{position:relative;z-index:2;text-shadow:0 1px 0 #ffffff66}
+.plug2 .rv{position:absolute;z-index:3;width:8px;height:8px;border-radius:50%;top:50%;transform:translateY(-50%)}
+.plug2 .rv.l{left:8px}.plug2 .rv.r{right:8px}
+.plug2.cu .band{background:linear-gradient(180deg,#b4773c,#7e3f1d 60%,#66300f);box-shadow:inset 0 1px 0 #d99a5e88,inset 0 -2px 5px #0006,0 0 0 1px #5e2c12}
+.plug2.cu .rv{background:radial-gradient(circle at 34% 28%,#f0c088,#a5652f 55%,#6a3216);box-shadow:inset 0 -1px 1px #00000055,0 1px 2px #00000088}
+.plug2.ag .band{background:linear-gradient(180deg,#d8dee3,#a7aeb4 55%,#818990);box-shadow:inset 0 1px 0 #ffffffdd,inset 0 -2px 5px #0005,0 0 0 1px #6f767c}
+.plug2.ag .rv{background:radial-gradient(circle at 34% 28%,#ffffff,#c3cad0 50%,#7d848b);box-shadow:inset 0 -1px 1px #00000044,0 1px 2px #00000077}
+.plug2.au .band{background:linear-gradient(180deg,#f2dc86,#c9a227 55%,#9c7d16);box-shadow:inset 0 1px 0 #fff8d8dd,inset 0 -2px 5px #0005,0 0 0 1px #8a6a15,0 3px 14px #c9a22766}
+.plug2.au .rv{background:radial-gradient(circle at 34% 28%,#fffbe0,#e3c565 50%,#a5841d);box-shadow:inset 0 -1px 1px #00000044,0 1px 2px #00000077,0 0 6px #c9a22788}
+.mask{position:fixed;inset:0;background:#0006;display:none;z-index:9}
+.pop{position:fixed;left:50%;top:10%;transform:translateX(-50%);width:360px;background:linear-gradient(180deg,#fff8e6,#f0dfb2);border:1px solid #d8c99a;display:none;z-index:10;border-radius:4px}
+.pop .rod{height:14px;background:linear-gradient(180deg,#8a5a2e,#5e3a1a);border-radius:7px;margin:8px}
+.pop .body{padding:10px 20px 16px}.pop h4{margin:0 0 6px}.pop p{margin:6px 0;font-size:13px}
+</style>
+<h1>v5 同尺寸 / 2B边缘 / 插件双铆金银铜</h1><div class=sub>技能与 HELP 原样保留 · 第三节换成箍带双铆，只换金属</div>
+<svg width=0 height=0><filter id=roughA><feTurbulence baseFrequency=.9 numOctaves=2 result=n /><feDisplacementMap in=SourceGraphic in2=n scale=2.2 /></filter></svg>
+<div class=sec><h2>1 技能 横条 同尺寸</h2><p>同字号同 padding，铜深赭单线 / 银双白线 / 金双金线+微光，边缘都是2B同款糙边</p><div class=row>
+<div class=cell><button class="seal skill cu" data-k=skill-cu>技能 铜</button><div class=cap><b>铜</b> 暗赭</div></div>
+<div class=cell><button class="seal skill ag" data-k=skill-ag>技能 银</button><div class=cap><b>银</b> 双白线</div></div>
+<div class=cell><button class="seal skill au" data-k=skill-au>技能 金</button><div class=cap><b>金</b> 双金线</div></div>
+</div></div>
+<div class=sec><h2>2b HELP 旧版 铜银金</h2><p>保留不动 对照基准</p><div class=row>
+<div class=cell><button class="seal helpold cu" data-k=helpold-cu>饼干记账 HELP</button><div class=cap><b>铜</b></div></div>
+<div class=cell><button class="seal helpold ag" data-k=helpold-ag>饼干记账 HELP</button><div class=cap><b>银</b></div></div>
+<div class=cell><button class="seal helpold au" data-k=helpold-au>饼干记账 HELP</button><div class=cap><b>金</b></div></div>
+</div></div>
+<div class=sec><h2>3 插件 双铆 铜银金</h2><p>沿用你定的银箍双铆：整面金属带 + 左右两颗铆钉，尺寸字号三档完全相同，只换金属。点章出卷轴</p><div class=row>
+<div class=cell><button class="seal plug2 cu" data-k=plug2-cu><span class=band></span><span class="rv l"></span><span class="rv r"></span><span class=lbl>插件</span></button><div class=cap><b>铜</b> · 能用，有坑</div></div>
+<div class=cell><button class="seal plug2 ag" data-k=plug2-ag><span class=band></span><span class="rv l"></span><span class="rv r"></span><span class=lbl>插件</span></button><div class=cap><b>银</b> · 已跑通</div></div>
+<div class=cell><button class="seal plug2 au" data-k=plug2-au><span class=band></span><span class="rv l"></span><span class="rv r"></span><span class=lbl>插件</span></button><div class=cap><b>金</b> · 打磨完</div></div>
+</div></div>
+<div class=mask id=mask></div><div class=pop id=pop><div class=rod></div><div class=body><h4 id=pt></h4><p id=p1></p><p id=p2></p><p id=p3></p><p style=color:#999>点空白关闭</p></div><div class=rod></div></div>
+<script>
+var info={"skill-cu":["技能 铜","状态: 可用，有坑","人话: 能用先顶着","下一步: 修阻塞"],"skill-ag":["技能 银","状态: 已跑通","人话: 全链路走通","下一步: 打磨"],"skill-au":["技能 金","状态: 打磨完","人话: 直接用","下一步: 无"],"helpold-cu":["HELP旧 铜","状态: 对照","人话: 原模糊铜","下一步: 切新"],"helpold-ag":["HELP旧 银","状态: 对照","人话: 原模糊银","下一步: 切新"],"helpold-au":["HELP旧 金","状态: 对照","人话: 原模糊金","下一步: 切新"],"plug2-cu":["插件 铜","状态: 能装，有已知坑","人话: 铜带箍住能用，边角还有点毛","下一步: 补兼容、修边"],"plug2-ag":["插件 银","状态: 已跑通","人话: 银带压得实，插拔稳当","下一步: 抛光收口"],"plug2-au":["插件 金","状态: 打磨完","人话: 金带完整，可以直接交付","下一步: 无"]};
+var mask=document.getElementById("mask"),pop=document.getElementById("pop");
+document.addEventListener("click",function(e){var s=e.target.closest(".seal");if(s){var v=info[s.dataset.k];document.getElementById("pt").textContent=v[0];document.getElementById("p1").textContent=v[1];document.getElementById("p2").textContent=v[2];document.getElementById("p3").textContent=v[3];mask.style.display="block";pop.style.display="block"}else{mask.style.display="none";pop.style.display="none"}});
+</script>

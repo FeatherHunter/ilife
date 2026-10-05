@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>饼干记账 HELP 意见追问清单</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#1a1d21;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 40px}
+.card{background:#fff;border-radius:14px;padding:16px 15px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+h1{font-size:20px;margin:6px 0 4px}h2{font-size:16px;margin:0 0 8px}.sub{color:#5b6470;font-size:13px}
+.q{border-top:1px solid #eef0f3;padding:12px 0}.q:first-of-type{border-top:none}
+.qtitle{font-weight:700;font-size:15px;margin:0 0 4px}.qtitle .no{display:inline-block;min-width:34px;background:#1677ff;color:#fff;border-radius:8px;text-align:center;margin-right:8px;font-size:13px;padding:1px 6px}
+.ctx{font-size:13px;color:#5b6470;background:#f3f6ff;border-radius:8px;padding:8px 10px;margin:6px 0}
+.ask{font-size:14px;background:#fff7e6;border-left:4px solid #fa8c16;padding:8px 10px;border-radius:0 8px 8px 0;margin:8px 0}
+.opt{font-size:13px;color:#333;margin:4px 0}.opt b{color:#1677ff}
+.pri{font-size:13px;color:#333}.pri li{margin:4px 0}
+.footer{font-size:12px;color:#8a93a3;text-align:center;margin-top:16px}
+a{color:#1677ff}
+</style>
+</head>
+<body><div class="wrap">
+<h1>饼干记账 HELP 意见追问清单</h1>
+<div class="sub">共 21 题，按你的 26 条意见归纳。精简但覆盖全部，直接回 Q 编号即可。图片编号对应你发的 21 张截图。</div>
+
+<div class="card"><h2>先对齐 4 条原理（你确认即锁死）</h2>
+<ol class="pri">
+<li><b>P1 快照：</b>HELP 是静态文件，一天复用一次。凡“已有/预置/所选一”都是生成时刻快照，一天内新建的查不到，只能“快照+手动输入兜底”。</li>
+<li><b>P2 校验：</b>真校验在 skill 侧。HELP 的复制/阻断/toast/动画只为少跑一趟，不能替代校验。</li>
+<li><b>P3 类型：</b>查看（只读）不应有新建；采集（写入）才有新建；选择（改存量）才有选已有。查询页加新建都是例外，要单批。</li>
+<li><b>P4 归一：</b>时间/分类/账户/账本/标签本质是归一成固定格式，picker 只是可视化，不能发明新语义。</li>
+</ol>
+<div class="ask">这 4 条如无异议，后面即按此收敛。如有异议请直接说哪条不对。</div>
+</div>
+
+<div class="card"><h2>一、场景语义（4 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">Q1</span>查账单到底是什么？</p>
+<div class="ctx">对应：记录01（查某天 vs 查账单是否重复）。两者都调同一命令，区别仅日期必填/选填。</div>
+<div class="ask">一句话定义查账单：和查某天一样（则合并），还是对账视图（则保留）？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q2</span>查账单详情 id 怎么让用户拿到？</p>
+<div class="ctx">对应：记录07。当前必填记录 id，hint 写“从查账单/查今天列表里取”，本质两步走。</div>
+<div class="ask">是否接受改成“从列表点选一条看详情”，不让用户手填 id？或支持从历史/剪贴板自动带入？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q3</span>账本一句话是什么？</p>
+<div class="ctx">对应：记录13（查某账本没看懂）。账户/分类/账本三者关系没讲清。</div>
+<div class="ask">账本定义是什么？是否在弹窗加一句说明？时间选择器是否与账户流水共用同一套 period 组件？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q4</span>查分期要加哪些选项？</p>
+<div class="ctx">对应：记录15（选项很少）。当前 skill 只支持按名目过滤。</div>
+<div class="ask">要加的是名目多选一就够，还是要期数/状态/金额？前者 HELP 改，后者要补 skill 能力。</div></div>
+</div>
+
+<div class="card"><h2>二、时间选择器（5 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">Q5</span>所有日期入口统一吗？</p>
+<div class="ctx">对应：记录02、06（查某天/查任意时间段入口不好看）。空白下拉+小箭头，无日历隐喻。</div>
+<div class="ask">是否把所有 date 统一成同一日期入口？用原生 date picker 还是文本+示例？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q6</span>周/月保留相对说法吗？</p>
+<div class="ctx">对应：记录05。当前是文本（本周/上周/5月第2周，本月/上月/3月），原生 picker 表达不了。</div>
+<div class="ask"><span class="opt"><b>A</b> 相对快捷+日历双轨</span><br><span class="opt"><b>B</b> 只留严格自然月/周，相对说法不要了</span></div></div>
+<div class="q"><p class="qtitle"><span class="no">Q7</span>账户/账本/分类的时间做成统一组件吗？</p>
+<div class="ctx">对应：记录12、13。月/周/日/区间四种写法本质是 period 的四种形式。</div>
+<div class="ask">是否做成统一 period 组件：月/周/日/区间四段，选一段出一段 picker，三处共用？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q8</span>预算的两个月份共用吗？</p>
+<div class="ctx">对应：记录17、18（设预算月份、看预算执行月份）。都是 month 文本。</div>
+<div class="ask">两个月份共用同一组件吗？相对表达（本月/8月）保留快捷还是只留日历月？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q9</span>储蓄截止日期允不允许空？</p>
+<div class="ctx">对应：记录19。deadline 文本（12月底），归一成 YYYY-MM-DD。</div>
+<div class="ask">是否“不限（空）+日期 picker”并存？12月底这类相对说法保留吗？</div></div>
+</div>
+
+<div class="card"><h2>三、枚举/新建（7 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">Q10</span>查询页新建例外锁死吗？</p>
+<div class="ctx">对应：记录09（查询多选一一般不新建）。这是 P3 的推论。</div>
+<div class="ask">例外是否只有分类/账户/账本？标签、时间永远不新建？我按此锁死可以吗？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q11</span>分类/账户/账本的“已有+新建”怎么做？</p>
+<div class="ctx">对应：记录10、17。查询页出现新建违反 P3，且快照一天过期，开关归属不清。</div>
+<div class="ask">①新建在查询页直接建，还是跳到记账/设置去建？②开关是全局还是按字段？③一天内新增查不到，接受手动输入兜底吗？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q12</span>标签预置来源是什么？</p>
+<div class="ctx">对应：记录11。标签 # 精确匹配，预置多选一，一天复用只保一天前。</div>
+<div class="ask">预置是生成时刻全库去重，还是固定常用？一天内新标签查不到，接受手动输入兜底吗？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q13</span>欠款对象/账户来源是什么？</p>
+<div class="ctx">对应：记录12（账户所选一）、14（欠款要选择）。</div>
+<div class="ask">账户是否就是账户表快照？欠款对象是借贷对手方去重还是固定名单？空=全部保留吗？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q14</span>账户三处细节确认</p>
+<div class="ctx">对应：记录21、22、23（新增类型多选一、改账户选已有或手输、从/到账户已有+自定义）。</div>
+<div class="ask">①新增类型清单固定哪几个？单选？允许自定义吗？②“改成什么”是否也要做选择（新名输入+停用固定动作）？③转账防从=到吗？自定义新账户自动建还是报错？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q15</span>备份恢复显示什么？</p>
+<div class="ctx">对应：记录24。从已有备份选。</div>
+<div class="ask">来源是 backup.dir 文件列表吗？显示时间+大小吗？选中直接恢复还是先预览？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q16</span>新增感知的 prompt 怎么做？</p>
+<div class="ctx">对应：记录20（1～14新增要在 prompt 让 AI 知道）。必须区分“选已有”vs“点新建”。</div>
+<div class="ask">新建是同步建（点了即调 skill 建）还是仅在 prompt 声明意图让 AI 去建？若 AI 侧无对应新建能力，是否先补 skill？</div></div>
+</div>
+
+<div class="card"><h2>四、视觉与复制（2 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">Q17</span>查最近三框怎么改？</p>
+<div class="ctx">对应：记录03。本质条数 vs 近几天二选一+排序，三框等重违反互斥。</div>
+<div class="ask">是否改成“条数/近几天二选一”分段+排序，而不是三个输入框？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q18</span>复制与必填反馈规则？</p>
+<div class="ctx">对应：记录04、08。场景页复制模板 vs 详情页复制成品，两级不同；动画不能替阻断。</div>
+<div class="ask">①模板空位标记用 ____ 还是 &lt;待填&gt;？②toast 列出缺哪几项还是统一话术？③动画抖动+红框还是仅红框？是否所有必填统一？</div></div>
+</div>
+
+<div class="card"><h2>五、长文本/版本/新场景（3 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">Q19</span>列映射 hint 怎么展示？</p>
+<div class="ctx">对应：记录25。占位放不下长示例被截断。</div>
+<div class="ask"><span class="opt"><b>A</b> hint 横向滚动</span><span class="opt"><b>B</b> 点开展示完整示例</span><span class="opt"><b>C</b> 占位缩短，完整语法放提示词预览</span></div></div>
+<div class="q"><p class="qtitle"><span class="no">Q20</span>关于页版本显示几个值？</p>
+<div class="ctx">对应：记录16。饼干 v2.0 OK，不要 HELP 模板 v4。</div>
+<div class="ask">只显示 skill 版本单值，还是 skill+模板双值（后者对排查有用）？</div></div>
+<div class="q"><p class="qtitle"><span class="no">Q21</span>配置场景是看还是改？</p>
+<div class="ctx">对应：记录26（开始使用加配 json 如 db 路径）。HELP 可分享，路径敏感。</div>
+<div class="ask">只读回显还是可写？哪些字段允许进 HELP？要不要脱敏？</div></div>
+</div>
+
+<div class="card"><h2>附带确认（不计入 21 题）</h2>
+<div class="q"><p class="qtitle"><span class="no">附</span>储蓄金额占位 1000C？</p>
+<div class="ctx">图片14金额占位显示“如 1000C”，声明里是“如 10000”，疑似渲染把 0 显示成 C。</div>
+<div class="ask">确认是 10000 吗？我按 10000 修显示问题记录。</div></div>
+<div class="q"><p class="qtitle"><span class="no">补</span>买东西/吃饭分类是否共用？</p>
+<div class="ctx">对应：记录27、28。两者缺省不同（空=居家/家电 vs 空=餐饮）。</div>
+<div class="ask">是否与查分类共用同一分类组件？缺省保留吗？采集页的新建要不要？</div></div>
+</div>
+
+<div class="footer">回法：直接回 Q 编号，如 Q1=A，Q11=①跳走②按字段③接受兜底。不确定的写“你定”。</div>
+</div></body></html>
