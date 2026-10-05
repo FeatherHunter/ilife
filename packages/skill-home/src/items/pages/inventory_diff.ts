@@ -73,7 +73,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + '.act{border:1.5px solid #d2d2d7;background:#fff;border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer;min-height:44px}'
 + '.act.on{background:#007aff;color:#fff;border-color:#007aff}'
 + '.actline{margin:8px 0 0;font-size:13px}'
-+ '.actline input{padding:9px 12px;border:1px solid #d2d2d7;border-radius:10px;font-size:13px;min-width:170px;min-height:44px}'
++ '.actline input{padding:9px 12px;border:1px solid #d2d2d7;border-radius:10px;min-width:170px;min-height:44px}'
 + '.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
 + '.btn.ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'

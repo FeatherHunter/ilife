@@ -83,7 +83,7 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f6fbf7);border-radius
 + '.tri[data-v="不在"].on{background:#ff3b30;border-color:#ff3b30}'
 + '.tri[data-v="不确定"].on{background:#ff9500;border-color:#ff9500}'
 + '.frow{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;color:#1d1d1f;flex-wrap:wrap}'
-+ '.frow input,.frow select{padding:9px 12px;border:1.5px solid #d2d2d7;border-radius:10px;font-size:14px;background:#fff;color:#1d1d1f;min-height:44px}'
++ '.frow input,.frow select{padding:9px 12px;border:1.5px solid #d2d2d7;border-radius:10px;background:#fff;color:#1d1d1f;min-height:44px}'
 + '.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}'
 + '.btn{border:none;background:#007aff;color:#fff;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;font-size:13.5px;min-height:44px}'
 + '.btn.ghost{background:#fff;color:#007aff;border:1.5px solid #007aff}'

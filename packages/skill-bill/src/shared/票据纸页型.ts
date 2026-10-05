@@ -168,7 +168,7 @@ export function collectEntryCss(): string {
     '.ilife-ticket-fill { display: flex; align-items: center; gap: 10px; min-height: 44px; width: 100%; max-width: 100%; min-width: 0; }',
     '.ilife-ticket-fill-label { flex: none; min-width: 64px; color: var(--ilife-ink-2); font-weight: 700; white-space: nowrap; font-size: 14px; }',
     '.ilife-ticket-fill-req { color: var(--ilife-danger); font-style: normal; font-weight: 900; }',
-    '.ilife-ticket-fill-input { flex: 1 1 0; min-width: 0; max-width: 100%; box-sizing: border-box; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-size: 15px; font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }',
+    '.ilife-ticket-fill-input { flex: 1 1 0; min-width: 0; max-width: 100%; box-sizing: border-box; min-height: 44px; border: 1.5px solid #ddd0b6; border-radius: 10px; background: #fff; color: var(--ilife-ink); font-weight: 700; padding: 8px 10px; font-family: var(--ilife-font); }',
     '.ilife-ticket-fill-input:focus { outline: 2px solid var(--ilife-accent); outline-offset: 1px; border-color: var(--ilife-accent); }',
     '.ilife-ticket-fill-input.is-bad { border-color: var(--ilife-danger); outline: 2px solid var(--ilife-danger); }',
     /* 每格下面那一行灰提示（判地 `.entry-sub`：块级、12px、`ink-2`、上距 2px）。

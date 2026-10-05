@@ -85,7 +85,7 @@ export const PLAN_EDITOR_CSS = `
 .pe-tag.is-goal{background:var(--soft);color:var(--blue2);border-color:transparent}
 .pe-params{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pe-param{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--fg2)}
-.pe-param input{width:60px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12.5px;font-family:inherit;font-variant-numeric:tabular-nums;color:var(--fg);background:var(--card);text-align:right}
+.pe-param input{width:60px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-family:inherit;font-variant-numeric:tabular-nums;color:var(--fg);background:var(--card);text-align:right}
 .pe-param input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
 .pe-param-u{color:var(--fg3)}
 .pe-mode{min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--blue);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -118,7 +118,7 @@ export const PLAN_EDITOR_CSS = `
 .pe-slotpick .pe-slot-set .pe-slot{min-height:40px}
 /* 起止时间两格：跟动作参数同一套输入形状，窄屏自动换行（段头已是 flex-wrap）。 */
 .pe-time{display:inline-flex;align-items:center;gap:4px}
-.pe-time input{min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12.5px;font-family:inherit;color:var(--fg);background:var(--card);font-variant-numeric:tabular-nums}
+.pe-time input{min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-family:inherit;color:var(--fg);background:var(--card);font-variant-numeric:tabular-nums}
 .pe-time input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
 .pe-time-to{font-size:12px;color:var(--fg3)}
 /* 产物区 */
