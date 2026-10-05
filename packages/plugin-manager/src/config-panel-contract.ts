@@ -103,6 +103,32 @@ export const FOCUS_RING_GAP_PX = 2 as const;
 export const FOCUS_RING_WIDTH_PX = 5 as const;
 export const INTERACTION_TRANSITION = 'background .15s ease,transform .15s ease,box-shadow .15s ease,border-color .15s ease' as const;
 
+/** T2 指针与按住 tokens（#1161，唯一定义地，真相源 #1159 参数表＋原型 V1）。
+ *
+ * 悬停：聚光半径 120、淡洗 13%、辉光内圈 55%＋外发光 25%、上浮 1px——逐字照原型 V1
+ *（`.scratch/1155-real-panel-prototype.html`：`.btn:hover{background:color-mix(…13%…);…box-shadow:0 0 0 1px …55%…,0 4px 16px …25%…;transform:translateY(-1px)}`、
+ * `::before{background:radial-gradient(120px circle at var(--mx) var(--my),…22%…,transparent 65%)}`）。
+ * 页签 12%／高级行 10%不归本票（页签见 #1165，高级见 #1162），这里只定按钮 13% 一档。
+ *
+ * 禁用：摇头 ±2px／.3s、禁止指针、不透明度 .4——照原型（`shakeV1`＋`.btn:disabled{cursor:not-allowed;opacity:.4}`）。
+ *
+ * 长按：500ms 纯视觉环（底边 3px 主题色条，`:active` 驱动 0→100%，永不触发动作、不进状态机分支）＋
+ * 回弹（沿用 T1 按压释放 .15s 回弹，不另起回弹曲线）。原型环色 `#30d158` 在生产侧换成主题变量。
+ *
+ * 颜色全走主题变量、永不写死蓝：悬停／辉光／聚光／环一律取 `--ilife-focus` 退品牌色。
+ * 触屏降级与减少动态无静态常量（媒体查询即定义，见视图 `interactionCss`）。 */
+export const HOVER_SPOTLIGHT_RADIUS_PX = 120 as const;
+export const HOVER_WASH_PERCENT = 13 as const;
+export const HOVER_GLOW_EDGE_PERCENT = 55 as const;
+export const HOVER_GLOW_SOFT_PERCENT = 25 as const;
+export const HOVER_LIFT_PX = 1 as const;
+export const SPOTLIGHT_PEAK_PERCENT = 22 as const;
+export const SPOTLIGHT_FADE_MS = 180 as const;
+export const DISABLED_OPACITY = 0.4 as const;
+export const DISABLED_SHAKE_MS = 300 as const;
+export const LONGPRESS_MS = 500 as const;
+export const LONGPRESS_RING_HEIGHT_PX = 3 as const;
+
 /** 宿主给「这是哪一种目录选择能力」时用的那两格原语的名字（软依赖：按名字现取，缺席即没有入口）。 */
 export const REMOTE_DIRECTORY_PICKER = 'remote.directoryPicker' as const;
 

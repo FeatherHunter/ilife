@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// T1 pixel seam minimal (#1160): shared single-route snapshot vs prototype params.
+// T1+T2 pixel seam (#1160 base, #1161 extended): shared single-route snapshot vs prototype params.
+// T2 reuses this same chain (no second chain per ticket): T1 14 checks stay byte-identical, T2 appends its own.
 // No browser in node --test, so this locks key params; image part is manual same-viewport check.
 // Truth: .scratch/1155-real-panel-prototype.html (same as branch proto/1155-interaction-v1).
 // Prod: src/config-panel-contract.ts (4 consts) + src/config-panel-view.ts (interactionCss).
@@ -36,6 +37,11 @@ const viewStyleTag = (view.match(/data-ilife-interaction/g) ?? []).length;
 const cssStart = view.indexOf('export function interactionCss()');
 const cssBlock = view.slice(cssStart, cssStart + 1200);
 const noHardBlue = !/#0a84ff/.test(cssBlock) && cssBlock.includes('--ilife-focus') && cssBlock.includes('--dsw-alias-brand-primary');
+const protoHoverRule = /body\[data-v="V1"\] \.btn:hover[^\{]*\{([^}]+)\}/.exec(proto)?.[1] ?? '';
+const protoSpotRule = /body\[data-v="V1"\] \.btn::before\{([^}]+)\}/.exec(proto)?.[1] ?? '';
+const protoShakeRule = /@keyframes shakeV1\{[^}]+\}[^}]+\}[^}]+\}/.exec(proto)?.[0] ?? '';
+const t2contract = (name, want) => new RegExp('export const ' + name + ' = ' + want + ' as const').test(contract);
+const cssAll = view.slice(cssStart, cssStart + 6000);
 const checks = [
   ['proto-press=.97', protoPress === '0.97' || protoPress === '.97'],
   ['prod-press=.97', prodPress === '0.97'],
@@ -51,6 +57,19 @@ const checks = [
   ['view-styletag>=2', viewStyleTag >= 2],
   ['no-hard-blue', noHardBlue],
   ['copy-ms-untouched-1500', /export const COPY_FEEDBACK_MS = 1500 as const/.test(contract)],
+  ['t2-proto-hover-wash-13', protoHoverRule.includes('13%')],
+  ['t2-prod-hover-wash-13', t2contract('HOVER_WASH_PERCENT', '13')],
+  ['t2-proto-glow-55-25', protoHoverRule.includes('55%') && protoHoverRule.includes('25%')],
+  ['t2-prod-glow-55-25', t2contract('HOVER_GLOW_EDGE_PERCENT', '55') && t2contract('HOVER_GLOW_SOFT_PERCENT', '25')],
+  ['t2-proto-lift-1px', protoHoverRule.includes('translateY(-1px)')],
+  ['t2-prod-lift-1px', t2contract('HOVER_LIFT_PX', '1') && cssAll.includes("translateY(-' + String(HOVER_LIFT_PX)")],
+  ['t2-proto-spot-120-22-65', protoSpotRule.includes('120px') && protoSpotRule.includes('22%') && protoSpotRule.includes('65%')],
+  ['t2-prod-spot-120-22', t2contract('HOVER_SPOTLIGHT_RADIUS_PX', '120') && t2contract('SPOTLIGHT_PEAK_PERCENT', '22') && cssAll.includes('var(--mx,50%)')],
+  ['t2-proto-disabled-shake', proto.includes('.btn:disabled{cursor:not-allowed;opacity:.4}') && proto.includes('.btn:disabled:hover{animation:shakeV1 .3s ease') && protoShakeRule.includes('-2px')],
+  ['t2-prod-disabled-shake', t2contract('DISABLED_OPACITY', '0.4') && t2contract('DISABLED_SHAKE_MS', '300') && cssAll.includes('ilifeShake')],
+  ['t2-proto-longpress-500', proto.includes('(Date.now()-t0)/500') && proto.includes('.lp{') && proto.includes('height:3px')],
+  ['t2-prod-longpress-500', t2contract('LONGPRESS_MS', '500') && t2contract('LONGPRESS_RING_HEIGHT_PX', '3') && cssAll.includes('ilifeLongRing')],
+  ['t2-view-seam', cssAll.includes('data-ilife-longpress') && cssAll.includes('@media (hover:none)') && cssAll.includes('@media (prefers-reduced-motion:reduce)') && !/#0a84ff/.test(cssAll)],
 ];
 const bad = checks.filter((pair) => !pair[1]);
 const ratio = bad.length / checks.length;

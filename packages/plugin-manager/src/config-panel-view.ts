@@ -33,7 +33,7 @@
  */
 
 import * as React from 'react';
-import { ADVANCED_GROUP_TITLE, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, INTERACTION_TRANSITION, PRESS_SCALE } from './config-panel-contract.js';
+import { ADVANCED_GROUP_TITLE, DISABLED_OPACITY, DISABLED_SHAKE_MS, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, HOVER_GLOW_EDGE_PERCENT, HOVER_GLOW_SOFT_PERCENT, HOVER_LIFT_PX, HOVER_SPOTLIGHT_RADIUS_PX, HOVER_WASH_PERCENT, INTERACTION_TRANSITION, LONGPRESS_MS, LONGPRESS_RING_HEIGHT_PX, PRESS_SCALE, SPOTLIGHT_FADE_MS, SPOTLIGHT_PEAK_PERCENT } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
@@ -75,7 +75,12 @@ const PANEL_SKELETON_FILL = inkMix(21);
  *（仅焦点双环，文本框不收缩）。`PanelBody` 在卡片首位挂一枚 `<style>`，选择器按属性名收敛、
  * 只罩本卡内的这两类，不漏到宿主别的按钮上。数值全引契约四格（按压／隔离／宽度／过渡），
  * 颜色全走主题变量（隔离环取卡面底，焦点环取 `--ilife-focus` 退品牌色，永不写死蓝）。
- * 悬停／长按／折叠／复制变勾／提示／液态归后票，本函数只出按压与焦点。 */
+ * 悬停／长按／折叠／复制变勾／提示／液态归后票，本函数只出按压与焦点。
+ *
+ * T2 追加（#1161）：悬停聚光＋淡洗＋辉光＋上浮、禁用摇头＋禁止指针、长按 500ms 纯视觉环＋回弹、
+ * 无障碍三约束（触屏降级、键盘焦点可见、减少动态静态替代）——数值全引契约 T2 十格，详见函数内注释。 */
+// T2 焦点色变量（与 T1 行内字面逐字同值；T1 那一行保持字面不变——像素脚本按源码窗口断言它，改动会误报）。
+const T2_FOCUS_VAR = 'var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))';
 export function interactionCss(): string {
   return (
     '[data-ilife-press]{transition:' + INTERACTION_TRANSITION + '}' +
@@ -83,7 +88,34 @@ export function interactionCss(): string {
     '[data-ilife-press]:active{transform:scale(' + String(PRESS_SCALE) + ')}' +
     '[data-ilife-press]:focus-visible,[data-ilife-focus]:focus-visible{outline:none;' +
     'box-shadow:0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
-    '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))}'
+    '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))}' +
+    '[data-ilife-press]{position:relative;overflow:hidden}' +
+    '[data-ilife-press]:hover:not(:disabled){background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_WASH_PERCENT) + '%, transparent);' +
+    'border-color:' + T2_FOCUS_VAR + ';' +
+    'box-shadow:0 0 0 1px color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_GLOW_EDGE_PERCENT) + '%, transparent),' +
+    '0 4px 16px color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_GLOW_SOFT_PERCENT) + '%, transparent);' +
+    'transform:translateY(-' + String(HOVER_LIFT_PX) + 'px)}' +
+    '[data-ilife-press]:active:hover:not(:disabled){transform:scale(' + String(PRESS_SCALE) + ')}' +
+    '[data-ilife-press]:focus-visible:hover:not(:disabled){box-shadow:0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
+    '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + T2_FOCUS_VAR + ',' +
+    '0 4px 16px color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_GLOW_SOFT_PERCENT) + '%, transparent)}' +
+    '[data-ilife-press]::before{content:"";position:absolute;inset:0;' +
+    'background:radial-gradient(' + String(HOVER_SPOTLIGHT_RADIUS_PX) + 'px circle at var(--mx,50%) var(--my,50%),' +
+    'color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(SPOTLIGHT_PEAK_PERCENT) + '%, transparent),transparent 65%);' +
+    'opacity:0;transition:opacity ' + String(SPOTLIGHT_FADE_MS / 1000) + 's ease;pointer-events:none}' +
+    '[data-ilife-press]:hover:not(:disabled)::before{opacity:1}' +
+    '[data-ilife-press]:disabled{cursor:not-allowed;opacity:' + String(DISABLED_OPACITY) + '}' +
+    '[data-ilife-press]:disabled:hover{animation:ilifeShake ' + String(DISABLED_SHAKE_MS / 1000) + 's ease}' +
+    '@keyframes ilifeShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}' +
+    '[data-ilife-longpress]{position:relative;overflow:hidden}' +
+    '[data-ilife-longpress]::after{content:"";position:absolute;left:0;bottom:0;height:' + String(LONGPRESS_RING_HEIGHT_PX) + 'px;width:0;' +
+    'background:' + T2_FOCUS_VAR + ';pointer-events:none}' +
+    '[data-ilife-longpress]:active:not(:disabled)::after{animation:ilifeLongRing ' + String(LONGPRESS_MS / 1000) + 's linear forwards}' +
+    '@keyframes ilifeLongRing{from{width:0}to{width:100%}}' +
+    '@media (hover:none){[data-ilife-press]:hover:not(:disabled){transform:none}[data-ilife-press]::before{display:none}}' +
+    '@media (prefers-reduced-motion:reduce){[data-ilife-press],[data-ilife-focus]{transition:none}' +
+    '[data-ilife-press]:disabled:hover{animation:none}' +
+    '[data-ilife-longpress]:active:not(:disabled)::after{animation:none;width:100%}}'
   );
 }
 
@@ -645,7 +677,9 @@ export function Row(props: RowProps): React.ReactElement {
       type: 'button',
       disabled: props.onCopy === undefined,
       // #1160 T1：按压收缩＋焦点双环（纯视觉，不进状态机；禁用态浏览器不触发 :active）。
+      // #1161 T2：长按 500ms 纯视觉环（只做视觉标记，不注册任何动作回调、不进状态机分支）。
       'data-ilife-press': 'copy',
+      'data-ilife-longpress': 'copy',
       onClick: () => props.onCopy?.(item.key, props.value),
     },
     copyLabelOf(props.copyState),
@@ -707,7 +741,9 @@ export function Row(props: RowProps): React.ReactElement {
             type: 'button',
             disabled,
             // #1160 T1：按压收缩＋焦点双环（只读行不画本枚，见定稿 v3 ①）。
+            // #1161 T2：长按纯视觉环（同上）。
             'data-ilife-press': 'browse',
+            'data-ilife-longpress': 'browse',
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
@@ -913,8 +949,8 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       React.createElement(
         'div',
         { style: S.bar },
-        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'retry', onClick: props.onRetry }, '重试'),
-        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'reset', onClick: props.onReset }, '重置为默认'),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, '重试'),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, '重置为默认'),
       ),
       // #1160 T1：按压＋焦点双环的样式只此一枚 <style>，罩本卡内 data-ilife-press／focus 两类。
       // 放末位：首位会把既有形状判据 kidsOf(card)[0]===head 顶掉（920 红），末位不影响任何既有断言。
@@ -986,11 +1022,11 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       { style: S.bar },
       React.createElement(
         'button',
-        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, 'data-ilife-press': 'save', onClick: props.onSave },
+        { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, 'data-ilife-press': 'save', 'data-ilife-longpress': 'save', onClick: props.onSave },
         props.busy ? '处理中' : dirty ? `保存（${dirtyCount} 项未保存）` : '保存',
       ),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'reset', onClick: props.onReset }, '重置为默认'),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'retry', onClick: props.onRetry }, '重新读取'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, '重置为默认'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, '重新读取'),
       // 那半句话是**最后一个孩子**：v3.1 的 `.ic-bar .ic-note{margin-left:auto}` 靠它把说明顶到行尾，
       // 三枚按钮留在左边（顺序反了就会成「说明靠左、按钮靠右」，与真源相反）。
       dirty
@@ -1073,6 +1109,7 @@ export function StatusBlock(props: StatusBlockProps): React.ReactElement {
             type: 'button',
             // #1160 T1：按压收缩＋焦点双环（状态行动作钮同口径）。
             'data-ilife-press': 'status-action',
+            'data-ilife-longpress': 'status-action',
             onClick: action.onPress,
           },
           action.text,
