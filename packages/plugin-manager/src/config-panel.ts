@@ -94,6 +94,8 @@ export interface ConfigPanelProps {
   readonly title?: string | undefined;
   /** 右区三枚签（1145：六家交自家三枚；本件只透传，不拼串）。 */
   readonly seals?: readonly SealInstance[] | undefined;
+  /** 家下标（1158：决定三枚倾角；本件只透传）。 */
+  readonly sealSeed?: number | undefined;
   /** 跟随映射（钩子之一）：脏键 → 要显示「将跟随更新」的只读行；不给＝一行都不跟随。 */
   readonly followKeysOf?: ((dirtyKeys: readonly string[]) => readonly string[]) | undefined;
   /** 自家附加块（钩子之一：版本行／状态行）：画在面板主体之后、动作条之前。 */
@@ -330,6 +332,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
   return React.createElement(PanelBody, {
     title: props.title,
     seals: props.seals,
+    sealSeed: props.sealSeed,
     selectedSeal,
     onSealSelect: (index: number) => setSelectedSeal(index),
     onSealClose: () => setSelectedSeal(null),

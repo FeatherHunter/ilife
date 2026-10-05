@@ -61,6 +61,7 @@ export function apply(ctx: ClientCtx): void {
           { role: 'skill', tier: 'copper', label: '技能', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
           { role: 'plugin', tier: 'copper', label: '插件', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
         ],
+        sealSeed: 3,
         followKeysOf,
         getCall,
         getService,

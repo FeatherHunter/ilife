@@ -74,6 +74,7 @@ const S = {
    *  ＋`border-radius:12px`＋`padding:14px`＋`box-shadow:inset 0 1px 0 rgba(255,255,255,.06)`。
    *  基准字号**不钉在卡片上**（#739 ⑤：跟着宿主走）。 */
   card: {
+    position: 'relative',
     padding: 14,
     borderRadius: 12,
     // #941：卡片的边界在浅色下原本等于没有（四层底同白）⇒ 改成按墨色派生的可见描边。
@@ -86,8 +87,8 @@ const S = {
    *  #996：加 `flexWrap:wrap`——标题（`TitleBlock`，`flex:1 1 auto`＋`minWidth:9em`）与签
    *  （`flex-shrink:0`）在 390 宽下换行不挤（原型 A 行尾悬签）；`gap`／`minHeight` 照 v3.1 不动。 */
   head: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, minHeight: 22 } as React.CSSProperties,
-  /** 右区三枚签：自由错落、无行列、可带微倾（倾角按下标固定三档，墙可复验）。 */
-  sealRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75em' } as React.CSSProperties,
+  /** 印覆盖层（1158 红框区）：卡片右上绝对区，只罩标题＋头两行（底栏永远罩不到）；本身镂空穿透，印各自可点、缝隙漏过。 */
+  sealOverlay: { position: 'absolute', top: 0, right: 0, width: '38%', height: '9em', pointerEvents: 'none', zIndex: 5 } as React.CSSProperties,
   /** `.ic-title{font-size:13.5px;font-weight:640}`——字号按 60 行那条锚点换算成 `1.08em`。
    *  #996：卡片标题行改用 `TitleBlock`（见 `title-seal.ts`，原型 A 锁 1.15em／700＋0.85em／400），
    *  这一格保留供附加块（`ConfigStyles` 键名不许改），头部本身不再用它。 */
@@ -717,6 +718,8 @@ export interface PanelBodyProps {
   readonly title: string | undefined;
   /** 右区三枚签（1145：各家交自家三枚 HELP＋技能＋插件；缺席＝一行都不印，现红签已退役）。 */
   readonly seals?: readonly SealInstance[] | undefined;
+  /** 家下标（1158：六家各取 0-5 之一，决定自家三枚倾角与槽位）。 */
+  readonly sealSeed?: number | undefined;
   /** 点开的那枚下标（弹卷开合住状态层，本件只读；缺席＝全关）。 */
   readonly selectedSeal?: number | null | undefined;
   /** 点章（本件只回调，状态在 `config-panel.ts`）。 */
@@ -779,15 +782,25 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const surface = state.kind === 'ready' ? state.surface : null;
   const product = title ?? '';
   const seals = props.seals ?? [];
-  const tiltOf = (index: number): string => index % 3 === 0 ? '-2deg' : index % 3 === 1 ? '1.5deg' : '-1deg';
-  const sealRow = seals.length === 0 ? null : React.createElement(
+  /** 18 枚倾角各不同（1158）：家下标×3＋位序，步进错开。 */
+  const TILT18 = [-4, -2.5, -1, -3, 1.5, 3, -1.5, 2, 4, -3.5, 0.5, 2.5, -4.5, 1, -2, 3.5, -0.5, 4.5];
+  /** 三枚落位（相对覆盖层右上：HELP 右上／技能左中／插件右下，互不遮挡）。 */
+  const SPOT = [{ left: '45%', top: '0.3em' }, { left: '5%', top: '2.8em' }, { left: '50%', top: '5em' }];
+  const seed = props.sealSeed ?? 0;
+  /** 槽位轮排（1158：六家同形不同位；HELP 永远 z 最上）。 */
+  const ORDER = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+  const order = ORDER[seed % 6];
+  const tiltOfSlot = (slot: number): string => String(TILT18[(seed * 3 + slot) % 18]);
+  const zOfRole = (role: string): number => role === 'help' ? 4 : role === 'skill' ? 3 : 2;
+  const overlay = seals.length === 0 ? null : React.createElement(
     'div',
-    { style: S.sealRow },
-    ...seals.map((seal, index) => React.createElement(
+    { style: S.sealOverlay },
+    React.createElement(SealFilterDefs, {}),
+    ...order.map((dataIndex, slot) => React.createElement(
       'span',
-      { key: seal.role + ':' + seal.tier, style: { display: 'inline-flex', transform: 'rotate(' + tiltOf(index) + ')' } },
-      React.createElement(SealStamp, { role: seal.role, tier: seal.tier, label: seal.label }),
-    )),
+      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', left: SPOT[slot].left, top: SPOT[slot].top, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
+      React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) }),
+   )),
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
   const dialog = openSeal === null ? null : React.createElement(SealScrollDialog, {
@@ -795,8 +808,6 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     role: openSeal.role, tier: openSeal.tier, title: openSeal.label,
     progress: openSeal.progress, status: openSeal.status, plan: openSeal.plan,
   });
-  /** 滤镜每根挂一次：六家是六个独立根，同文档下多份 identical 定义由首个生效（定义逐字节同，无分歧）。 */
-  const filters = seals.length === 0 ? null : React.createElement(SealFilterDefs, {});
   const headDataDir = surface === null ? '' : surface.resolved?.['dbDir'] ?? surface.dataDir;
   const ready = state.kind === 'ready';
   const dirtyCount = ready ? props.dirtyKeys.length : 0;
@@ -812,9 +823,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     'div',
     { style: S.head },
     React.createElement(TitleBlock, { product, purpose: '配置' }),
-    sealRow,
     React.createElement(PanelBadgeView, { kind: badge, dirtyCount }),
-    filters,
     dialog,
   );
   /** #939：这一块的高度由**客户端常量**决定、不由回执时序决定——加载期就把两行连标签一起画出来，
@@ -869,6 +878,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       fileLines,
       React.createElement('div', { style: S.error }, state.message),
       extra,
+      overlay,
       React.createElement(
         'div',
         { style: S.bar },
@@ -966,6 +976,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
       : null,
     props.error !== null ? React.createElement('div', { style: S.error }, props.error) : null,
     props.notice !== null ? React.createElement('div', { style: S.okText }, props.notice) : null,
+    overlay,
   );
 }
 

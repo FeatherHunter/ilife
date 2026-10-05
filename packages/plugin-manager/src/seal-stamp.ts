@@ -25,13 +25,14 @@ export interface SealStampProps {
   readonly tier: SealTier;
   /** 印文那一行（技能／某 HELP／插件）。 */
   readonly label: string;
+  readonly onSelect?: (() => void) | undefined;
 }
 
 /** 三角色底座（字号 padding 随角色，材质随档位）。 */
 const ROLE_BASE: Record<SealRole, React.CSSProperties> = {
-  skill: { fontSize: '1.3125em', padding: '0.625em 1.75em', letterSpacing: '.14em', borderRadius: '3px' },
-  help: { fontSize: '1.0625em', padding: '0.625em 1.75em', letterSpacing: '.14em', borderRadius: '3px', color: '#f8f1e2' },
-  plugin: { position: 'relative', justifyContent: 'center', fontSize: '1.3125em', padding: '0.75em 2.25em', letterSpacing: '.18em', borderRadius: '4px', color: '#2e2114' },
+  skill: { fontSize: '1.0625em', padding: '0.5em 1.75em', letterSpacing: '.14em', borderRadius: '3px' },
+  help: { fontSize: '1.0625em', padding: '0.5em 1em', letterSpacing: '.14em', borderRadius: '3px', color: '#f8f1e2' },
+  plugin: { position: 'relative', justifyContent: 'center', fontSize: '1.0625em', padding: '0.5em 2em', letterSpacing: '.18em', borderRadius: '4px', color: '#f8f1e2' },
 };
 
 /** 九档印面（底色加边线都照抄对应那枚印，不许简化）。 */
@@ -76,11 +77,13 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     alignItems: 'center',
     cursor: 'pointer',
     fontWeight: 800,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
     filter: 'url(#' + SEAL_ROUGH_EDGE_ID + ')',
     ...ROLE_BASE[props.role],
     ...face,
   };
-  const buttonProps = { type: 'button' as const, style, 'aria-label': props.label, 'aria-haspopup': 'dialog' as const };
+  const buttonProps = { type: 'button' as const, style, 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, onClick: props.onSelect };
   if (props.role !== 'plugin') return React.createElement('button', buttonProps, props.label);
   const band: React.CSSProperties = { position: 'absolute', top: '-1px', bottom: '-1px', left: '-1px', right: '-1px', zIndex: 1, borderRadius: '4px', ...BAND_EDGE[props.tier] };
   const rivet: React.CSSProperties = { position: 'absolute', zIndex: 3, width: '0.5em', height: '0.5em', borderRadius: '50%', top: '50%', transform: 'translateY(-50%)', ...RIVET[props.tier] };
@@ -88,6 +91,6 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     React.createElement('span', { style: { ...band, background: (face.background as string) }, 'data-seal-band': '1' }),
     React.createElement('span', { style: { ...rivet, left: '0.5em' }, 'data-seal-rivet': 'left' }),
     React.createElement('span', { style: { ...rivet, right: '0.5em' }, 'data-seal-rivet': 'right' }),
-    React.createElement('span', { style: { position: 'relative', zIndex: 2, textShadow: '0 1px 0 #ffffff66' } }, props.label),
+    React.createElement('span', { style: { position: 'relative', zIndex: 2, textShadow: '0 1px 2px #00000088' } }, props.label),
   );
 }

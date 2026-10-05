@@ -79,4 +79,48 @@ describe('1147 右区三枚签接线', () => {
     const seals = buttons(PanelBody(bodyProps({ seals: undefined })));
     assert.equal(seals.filter((b) => b.props['aria-haspopup'] === 'dialog').length, 0);
   });
+  it('18 枚倾角各不同（两家六枚互异）', () => {
+    const tilts = [];
+    for (const seed of [0, 1]) {
+      const flat = expand(PanelBody(bodyProps({ sealSeed: seed })));
+      const walk = (n) => {
+        if (n === null || n === undefined || typeof n !== 'object') return;
+        if (Array.isArray(n)) { for (const c of n) walk(c); return; }
+        const t = n.props && n.props.style && n.props.style.transform;
+        if (typeof t === 'string' && t.indexOf('rotate(') === 0) tilts.push(t);
+        walk(n.props.children);
+      };
+      walk(flat);
+    }
+    assert.equal(tilts.length, 6);
+    assert.equal(new Set(tilts).size, 6, '倾角必须互异：' + tilts.join(','));
+  });
+  it('六家槽位轮排不同（seed 0 与 seed 1 首枚不同）', () => {
+    const firstOf = (seed) => {
+      const flat = expand(PanelBody(bodyProps({ sealSeed: seed })));
+      const out = [];
+      const walk = (n) => {
+        if (n === null || n === undefined || typeof n !== 'object') return;
+        if (Array.isArray(n)) { for (const c of n) walk(c); return; }
+        if (n.type === 'button' && n.props && n.props['aria-haspopup'] === 'dialog') out.push(n.props['aria-label']);
+        walk(n.props.children);
+      };
+      walk(flat);
+      return out;
+    };
+    const a = firstOf(0);
+    const b = firstOf(1);
+    assert.equal(a.length, 3);
+    assert.equal(b.length, 3);
+    assert.notEqual(a.join('|'), b.join('|'));
+  });
+  it('点章回调带自家下标（点 HELP 回 0）', () => {
+    let got = -1;
+    const flat = expand(PanelBody(bodyProps({ sealSeed: 0, onSealSelect: (i) => { got = i; } })));
+    const btns = buttons(flat).filter((x) => x.props['aria-haspopup'] === 'dialog');
+    const help = btns.find((x) => x.props['aria-label'] === '饼干记账 HELP');
+    assert.notEqual(help, undefined);
+    help.props.onClick();
+    assert.equal(got, 0);
+  });
 });

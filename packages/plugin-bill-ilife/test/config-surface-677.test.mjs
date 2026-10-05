@@ -317,7 +317,7 @@ describe('#677 记账设置页 · 配置面', () => {
       const { props } = registeredConfig();
       // 交给共用面板的就这几格——多一格就是多一条取数口；行表本身只有配置项。
       assert.deepEqual(Object.keys(props).sort(),
-        ['channel', 'followKeysOf', 'getCall', 'getService', 'items', 'seals', 'title'], // 1145
+        ['channel', 'followKeysOf', 'getCall', 'getService', 'items', 'sealSeed', 'seals', 'title'], // 1145
         '设置页的接入面超出「行表 ＋ 通道名 ＋ 取数接线」');
       assert.deepEqual([...props.items], [...CONFIG_ITEMS], '设置页只画本家那张配置行表');
     });

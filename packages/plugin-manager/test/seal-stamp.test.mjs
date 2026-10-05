@@ -114,6 +114,22 @@ describe('seal-stamp 九档', () => {
     const btn = nodesOf(tree, (n) => n.type === 'button')[0];
     assert.ok(String(btn.props.style.filter).includes('dshLifeSealRoughEdge'));
   });
+  it('三章等高（字号与上下垫同值）', () => {
+    const specs = [];
+    for (const role of ['skill', 'help', 'plugin']) {
+      const tree = expand(React.createElement(SealStamp, { role, tier: 'gold', label: 'x' }));
+      specs.push(nodesOf(tree, (n) => n.type === 'button')[0].props.style);
+    }
+    assert.equal(new Set(specs.map((s) => s.fontSize)).size, 1, '字号必须一致');
+    assert.equal(new Set(specs.map((s) => String(s.padding).split(' ')[0])).size, 1, '上下垫必须一致');
+  });
+  it('HELP 横向收窄（左右垫小于技能）', () => {
+    const inlineOf = (role) => {
+      const tree = expand(React.createElement(SealStamp, { role, tier: 'gold', label: 'x' }));
+      return parseFloat(String(nodesOf(tree, (n) => n.type === 'button')[0].props.style.padding).split(' ')[1]);
+    };
+    assert.ok(inlineOf('help') < inlineOf('skill'));
+  });
   it('未知组合抛错', () => {
     assert.throws(() => expand(React.createElement(SealStamp, { role: 'skill', tier: 'diamond', label: '技能' })));
   });

@@ -347,7 +347,7 @@ describe('#696 大厨设置页 · 配置面', () => {
       const props = registeredConfig().props;
       // #909 起设置页本体就交给共用面板这几格——多一格就是多一条取数口；行表本身只有配置项。
       assert.deepEqual(Object.keys(props).sort(),
-        ['channel', 'followKeysOf', 'getCall', 'getService', 'items', 'seals', 'title'], // 1145：三枚签是展示数据，随 title 同列
+        ['channel', 'followKeysOf', 'getCall', 'getService', 'items', 'sealSeed', 'seals', 'title'], // 1145：三枚签是展示数据，随 title 同列
         '设置页的接入面超出「行表 ＋ 通道名 ＋ 取数接线」');
       assert.deepEqual([...props.items], [...CONFIG_ITEMS], '设置页只画本家那张配置行表');
       assert.equal(JSON.stringify(props).includes("chef.recipe"), false, '设置页的接入面里不该出现干活命令的 key：' + "chef.recipe");

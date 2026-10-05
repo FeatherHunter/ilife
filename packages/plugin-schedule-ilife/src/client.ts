@@ -313,6 +313,7 @@ export function apply(ctx: ClientCtx): void {
           { role: 'skill', tier: 'copper', label: '技能', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
           { role: 'plugin', tier: 'copper', label: '插件', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
         ],
+        sealSeed: 5,
         followKeysOf,
         // 状态行只在读到整面之后画（照改版前的形状：读取中／读取失败那两屏不占这一行）。
         extra: (parts) => (parts.reply === null ? null : React.createElement(LarkLine, { getCall, styles: parts.styles })),

@@ -310,6 +310,7 @@ export function apply(ctx: ClientCtx): void {
           { role: 'skill', tier: 'silver', label: '技能', progress: '完成度 80%', status: '全打通', plan: '将所有功能和场景全部打通' },
           { role: 'plugin', tier: 'copper', label: '插件', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
         ],
+        sealSeed: 1,
         followKeysOf,
         // #934：原先这里挂了一行版本行（`CalorieVersionLine`）——维护者裁定整条撤掉；
         // 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到。
