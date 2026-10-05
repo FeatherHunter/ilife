@@ -9,7 +9,7 @@ import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf, money } from './pageParts.js';
-import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
+import { barGroupHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { DocInput, InsightPage } from './scene.js';
 
 /** B insight 1 页的落点行（PAGES 表 a20；花得最多与偏离月从明细卡搬家）。 */
@@ -46,22 +46,17 @@ export function ticketInsightBDoc(input: DocInput<InsightPage>, sceneId: string)
   const r = input.result;
   const p = r.page;
   const parts: string[] = [];
-  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径）；出卡顺序即计数顺序，图卡不占号。
-  let n = 0;
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**；图卡**不出 DETAIL**（#G）。
   for (const c of p.factCards) {
-    const html = factCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   for (const g of p.barGroups) {
-    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, n));
-    n += g.rows.length;
-  }
-  for (const c of p.charts) {
-    parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
+    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, 0));
   }
   for (const c of p.listCards) {
-    const html = listCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = listCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   return toTicketB({
     docTitle: docTitleOf(r.title),

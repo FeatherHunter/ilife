@@ -9,7 +9,7 @@ import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, kpiValue, parseAmount, peakBarRow, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf, money } from './pageParts.js';
-import { barGroupHtml, chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
+import { barGroupHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, DocInput } from './scene.js';
 
 /** B bars 4 页的落点行（PAGES 表 a16／a17／a19／a25；空页走说明行）。 */
@@ -74,23 +74,18 @@ export function ticketBarsBDoc(input: DocInput<BarsPage>, sceneId: string): stri
   const r = input.result;
   const p = r.page;
   const parts: string[] = [];
-  // #1135：DETAIL 段内**整段连续的行序**（判地 `.idx` 口径）。`n`＝已经排过几行；
-  // 出卡的顺序（条卡组 → 列表卡 → 图卡 → 事实卡）就是计数的顺序，图卡不占号（判地图上没有序号）。
-  let n = 0;
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**，不再整段连续；
+  // 图卡**不出 DETAIL**（#G：图只住 CHART 段）。`from=0` 即「本卡从 1 起」。
   for (const g of p.barGroups) {
-    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, n));
-    n += g.rows.length;
+    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, 0));
   }
   for (const c of p.listCards) {
-    const html = listCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
-  }
-  for (const c of p.charts) {
-    parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
+    const html = listCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   for (const c of p.factCards) {
-    const html = factCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   return toTicketB({
     docTitle: docTitleOf(r.title),

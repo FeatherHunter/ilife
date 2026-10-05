@@ -25,7 +25,7 @@ import { escapeHtml } from 'base-paint';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { renderCaliberLine } from 'base-paint/blocks';
 import { copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
-import { barGroupHtml, chartCardHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
+import { barGroupHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
 import { chartFor } from './chartOf.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
 
@@ -266,22 +266,17 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     ? ledgerCompare(extraLedger, sceneId)
     : ledgerBars(sceneId, r.kpi.income, r.kpi.net, extraLedger);
   const parts: string[] = [];
-  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径）；图卡不占号（判地图上没有序号）。
-  let n = 0;
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**；图卡**不出 DETAIL**（#G）。
   for (const g of p.barGroups) {
-    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, n));
-    n += g.rows.length;
+    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, 0));
   }
   for (const c of p.listCards) {
-    const html = listCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
-  }
-  for (const c of p.charts) {
-    parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
+    const html = listCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   for (const c of (sceneId === 'overview' ? [] : p.factCards)) {
-    const html = factCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   const detailHtml = parts.length === 0 ? (sceneId === 'overview' ? '' : '<p>暂无明细</p>') : parts.join('');
   return ticketDoc({
@@ -337,15 +332,13 @@ export function ticketCompareDoc(
   const parts: string[] = [...(sceneId === 'range_compare' && p.sides.length !== 0 ? ['<p>两段对比</p>' + compareSidesHtml(p.sides)] : [])];
   /* a12 看同比：明细含两段对比双卡（8 数只搬家，与原型 ol 同数；range 行不动）。 */
   if (sceneId === 'yoy' && p.sides.length !== 0) parts.push('<p>两段对比</p>' + compareSidesHtml(p.sides));
-  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径）。
-  let nCompare = 0;
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**。
   for (const g of p.barGroups) {
-    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, nCompare));
-    nCompare += g.rows.length;
+    parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, 0));
   }
   for (const c of p.factCards) {
-    const html = factCardHtml(c, nCompare);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); nCompare += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); }
   }
   if (sceneId === 'cat_compare') {
     const m = r.conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);

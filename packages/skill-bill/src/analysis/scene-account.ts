@@ -107,10 +107,13 @@ export const sceneAccount: AnalysisScene = {
         }],
         listCards: [{
           title: '各账户汇总（' + String(rows.length) + ' 个）',
+          /* #I（a06 返工）：判地这三行是 `idx ＋ 整句`（无 left 列）——之前把「N 笔」塞进 left 槽，
+             顶出一大截空白，负责人点名缩小。整句并进 main，left／right 给空串（公共层 `optText`
+             视为空＝不出那一列，行拿 `row-no-left`，一字不占位）。长句的截断由 #1134 popover 兜。 */
           rows: rows.map((x) => ({
-            left: String(x.count) + ' 笔',
-            main: x.name,
-            right: '支出 ' + money(x.expense) + ' ／ 收入 ' + money(x.income),
+            left: '',
+            main: x.name + ' · ' + String(x.count) + ' 笔 · 支出 ' + money(x.expense) + ' ／ 收入 ' + money(x.income),
+            right: '',
           })),
           emptyText: '这段时间还没有账户记录',
         }],

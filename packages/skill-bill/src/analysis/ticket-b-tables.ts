@@ -79,11 +79,10 @@ export function ticketTablesBDoc(input: DocInput<TablesPage>, sceneId: string): 
   for (const t of p.tables) {
     parts.push('<p>' + escapeHtml(t.title) + '</p>' + tableCardHtml(t));
   }
-  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径；本页只有事实卡一种行）。
-  let n = 0;
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**（本页只有事实卡一种行）。
   for (const c of p.factCards) {
-    const html = factCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); }
   }
   return toTicketB({
     docTitle: docTitleOf(r.title),

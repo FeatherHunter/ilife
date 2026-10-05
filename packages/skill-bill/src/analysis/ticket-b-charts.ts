@@ -9,7 +9,7 @@ import { escapeHtml } from 'base-paint';
 import { detailOf, h2ForB, kpiValue, parseCount, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { MISSING, NO_WINDOW, docTitleOf, money } from './pageParts.js';
-import { chartCardHtml, factCardHtml, listCardHtml } from './cards.js';
+import { factCardHtml, listCardHtml } from './cards.js';
 import type { ChartsPage, DocInput } from './scene.js';
 
 /** B charts 4 页的落点行（PAGES 表 a14／a15／a18／a21）。 */
@@ -92,18 +92,16 @@ export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): 
       ? '峰值支出 · 明细与复制区与基线一致'
       : '结论 · 明细与复制区与基线一致';
   const parts: string[] = [];
-  // #1135：DETAIL 段内整段连续的行序（判地 `.idx` 口径）；图卡不占号（判地图上没有序号）。
-  let n = 0;
-  for (const c of p.charts) {
-    parts.push('<p>' + escapeHtml(c.title) + '</p>' + chartCardHtml(c));
-  }
+  // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**（a20「事实／习惯各自从1」、
+  // a21「环比／暴涨各自从1」、a19「两套序号」），不再整段连续。图卡**不出 DETAIL**（#G：判地 DETAIL
+  // 本来就没有图，图只住 CHART 段；a14／a15／a20／a21 原话点名 DETAIL 里图重复了）。
   for (const c of p.listCards) {
-    const html = listCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = listCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   for (const c of p.factCards) {
-    const html = factCardHtml(c, n);
-    if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); n += c.rows.length; }
+    const html = factCardHtml(c, 0);
+    if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
   const category = sceneId === 'cat_trend' ? (r.label.split(' · ')[0] ?? '') : '';
   /* a21 本页段落：H2 计数＝明细项数（环比行＋暴涨行，含空态占位行），不是记录笔数；

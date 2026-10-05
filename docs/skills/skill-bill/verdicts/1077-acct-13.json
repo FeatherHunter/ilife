@@ -1,8 +1,8 @@
 {
   "wall": "1077-acct-13",
   "total": 13,
-  "ok": 3,
-  "no": 10,
+  "ok": 8,
+  "no": 5,
   "unjudged": 0,
   "items": [
     {
@@ -21,7 +21,7 @@
       "prod": "b02-真跑.html",
       "proto": "b02-原型.html",
       "verdict": "no",
-      "reason": "“新增账户 ok: true message: 已新增账户「招行工资卡」（账户表现在 1 个）” prompt为这个不符合类似HELP HTML的PROMPT那种形式"
+      "reason": "“复制给助手：这一句可以直接复制 点右边的按钮复制，发给助手就行。 复制给助手：这一句可以直接复制” 把这部分文本和按钮 莫名其妙的多出来了！原来是正常的"
     },
     {
       "wall": "1077-acct-13",
@@ -39,7 +39,7 @@
       "prod": "b04-真跑.html",
       "proto": "b04-原型.html",
       "verdict": "no",
-      "reason": "prompt“改账户 ok: true message: 已改名「招行工资卡」→「招行主卡」” 不符合HELP HTML prompt那种形式，需要整改"
+      "reason": "“复制给助手：这一句可以直接复制 点右边的按钮复制，发给助手就行。 复制给助手：这一句可以直接复制” 莫名其妙多出来了！没让加这个！"
     },
     {
       "wall": "1077-acct-13",
@@ -57,7 +57,7 @@
       "prod": "b06-真跑.html",
       "proto": "b06-原型.html",
       "verdict": "no",
-      "reason": "“账户转账 ok: true message: 已转账：招行主卡 → 支付宝 500.00 元（转出与转入各一笔，不算进收支）” prompt需要整改成HELP HTML  prompt形式的"
+      "reason": "“撤销这次转账（可恢复） 复制给助手：这一句可以直接复制 点右边的按钮复制，发给助手就行。 复制给助手：这一句可以直接复制”莫名其妙多出来了，没让加这个！"
     },
     {
       "wall": "1077-acct-13",
@@ -65,8 +65,8 @@
       "wake": "看账户汇总",
       "prod": "b07-真跑.html",
       "proto": "b07-原型.html",
-      "verdict": "no",
-      "reason": "已经有复制数据按钮了，不再需要那个“复制这份汇总去对账”这个按钮，此外复制数据和复制日志这两个按钮的文本没有完全居中"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1077-acct-13",
@@ -74,8 +74,8 @@
       "wake": "设定预算-采集",
       "prod": "g01-真跑.html",
       "proto": "g01-原型.html",
-      "verdict": "no",
-      "reason": "复制数据和复制日志 这两个按钮的文本没有完全居中对齐"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1077-acct-13",
@@ -84,7 +84,7 @@
       "prod": "g02-真跑.html",
       "proto": "g02-原型.html",
       "verdict": "no",
-      "reason": "“设定预算 ok: true message: 已设定 2026-06 全月总预算” 需要和HELP HTML PROMPT形式一致。第二 复制数据和复制日志按钮的文字没有完全对齐"
+      "reason": "“撤销这次转账（可恢复） 复制给助手：这一句可以直接复制 点右边的按钮复制，发给助手就行。 复制给助手：这一句可以直接复制”莫名其妙多出来了，没让加这个！"
     },
     {
       "wall": "1077-acct-13",
@@ -92,8 +92,8 @@
       "wake": "设定目标-采集",
       "prod": "g03-真跑.html",
       "proto": "g03-原型.html",
-      "verdict": "no",
-      "reason": "复制数据和复制日志按钮没有完全对齐，文本居中对齐"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1077-acct-13",
@@ -102,7 +102,7 @@
       "prod": "g04-真跑.html",
       "proto": "g04-原型.html",
       "verdict": "no",
-      "reason": "“设定目标 ok: true message: 已设定目标「旅行基金」” prompt形式需要和HELP HTML的prompt形式一致，第二 复制数据和复制日志按钮的文本没有完全居中对齐。"
+      "reason": "“撤销这次转账（可恢复） 复制给助手：这一句可以直接复制 点右边的按钮复制，发给助手就行。 复制给助手：这一句可以直接复制”莫名其妙多出来了，没让加这个！"
     },
     {
       "wall": "1077-acct-13",
@@ -110,8 +110,8 @@
       "wake": "看预算",
       "prod": "g05-真跑.html",
       "proto": "g05-原型.html",
-      "verdict": "no",
-      "reason": "“复制这份执行进度去对账”按钮删除。2、复制数据和复制日志按钮的文本居中对齐"
+      "verdict": "ok",
+      "reason": ""
     },
     {
       "wall": "1077-acct-13",
@@ -119,8 +119,8 @@
       "wake": "看目标",
       "prod": "g06-真跑.html",
       "proto": "g06-原型.html",
-      "verdict": "no",
-      "reason": "“复制这份xxxx”按钮删除。2、复制数据和复制日志按钮的文本居中对齐"
+      "verdict": "ok",
+      "reason": ""
     }
   ]
 }
