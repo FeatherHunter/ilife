@@ -57,6 +57,9 @@ interface CopyAreaInput {
   readonly prompt?: string | { readonly text: string; readonly label?: string };
   /** 给了就出「复制数据」（三格式菜单），内部走 `buildDataText`。 */
   readonly data?: DataTextInput;
+  /** #1136：只换「纯文本」那一份的文案（JSON／CSV／日志不动）。回执页用它把 envelope 行换成 HELP 句；
+     不给＝三份全走 `buildDataText`（改前形态，逐字节不变）。 */
+  readonly dataText?: string;
   /** 给了就出「复制日志」，内部走 `buildLogText`。 */
   readonly log?: LogTextInput;
   /** 三样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
@@ -122,7 +125,7 @@ export function copyArea(input: CopyAreaInput): string {
   }
   if (input.data !== undefined || input.log !== undefined) {
     parts.push(renderCopyBlock({
-      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data, input.hints) }),
+      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data, input.hints, input.dataText) }),
       ...(input.log === undefined ? {} : { logText: buildLogText(input.log) }),
     }));
     return parts.join('');
@@ -134,7 +137,7 @@ export function copyArea(input: CopyAreaInput): string {
 /** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。
  *  上级裁定第 2 条：复制载荷头行 `【bill · record.add】` 算上屏一并改——`text` 那份显式给 `title`，
  *  不再让公共层按 `envelope.skill/key` 拼出命令名；`title` 只写用户说法，不带命令名与 `·`。 */
-function formatsOf(data: DataTextInput, hints?: readonly string[]): {
+function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?: string): {
   readonly text: string;
   readonly json: string;
   readonly csv: string;
@@ -145,7 +148,7 @@ function formatsOf(data: DataTextInput, hints?: readonly string[]): {
     ? (data as { title: string }).title
     : '记账数据';
   return {
-    text: buildDataText({ ...data, format: 'text', title }),
+    text: textOverride ?? buildDataText({ ...data, format: 'text', title }),
     json: buildDataText({ ...data, format: 'json' }),
     csv: buildDataText({ ...data, format: 'csv' }),
     hints: hints ?? COPY_HINTS.queryAnalysis,

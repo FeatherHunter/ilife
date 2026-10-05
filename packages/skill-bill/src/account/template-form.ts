@@ -16,7 +16,6 @@
  * 谁在用（两个调用点，指名）：`src/account/scene-{add,transfer}.ts`——两件的 `collect`／`receipt`
  *  都是 `bindAccountFormPages(spec)` 的产物，本件不自己出页。
  */
-import { buildDataText } from 'base-paint';
 import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { ticketCollectRuntime } from '../shared/docPage.js';
@@ -261,13 +260,13 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
     actions: renderTicketButton({
       label: isTransfer ? '撤销这次转账（可恢复）' : '撤销这次新增（可恢复）',
       actionId: 'ilife-undo-' + receipt.op,
-      copyText: buildDataText({ envelope, title: spec.word, format: 'text' }),
+      // #1136（返工）：复制出去的纯文本走 HELP 句（与采集页 `spec.prompt` 同一句话，填本次实参），
+      // 不再是裸 envelope 行。JSON／CSV／日志不动；页上不增块。本模板只服务 add／transfer 两支，op 即判据。
+      copyText: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
-      // #1136：回执的口令走 HELP 形态（与采集页 `spec.prompt` 同一句话，填本次实参），
-      // 不再只剩裸 envelope（`新增账户 ok: true message: …`）。本模板只服务 add／transfer 两支，op 即判据。
-      promptText: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params),
+      dataText: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params),
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

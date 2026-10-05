@@ -237,13 +237,12 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
-  /* #1136：回执页的 HELP 形态口令（与采集页 `spec.prompt` 同一句话，填的是本次实参）。
-     不给＝只有数据位＋日志位（改前形态，逐字节不变）；给了＝前面多出 prompt 块。 */
-  readonly promptText?: string;
+  /* #1136（返工）：同 account/pageParts.ts 那一条（换载荷不加块）。 */
+  readonly dataText?: string;
 }): string {
   return copyArea({
       hints: COPY_HINTS.sayAcct,
-    ...(input.promptText === undefined ? {} : { prompt: input.promptText }),
+    ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,

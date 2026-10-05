@@ -15,7 +15,6 @@
  * 谁在用（两个调用点，指名）：`src/goal/scene-set-{budget,saving}.ts`——两件的 `collect`／`receipt`
  *  都是 `bindGoalFormPages(spec)` 的产物，本件不自己出页。
  */
-import { buildDataText } from 'base-paint';
 import { entryCardCss, renderEntryCard, renderTicketButton, ticketButtonCss } from 'base-paint/blocks';
 import type { EntryCardEntry } from 'base-paint/blocks';
 import { ticketCollectRuntime } from '../shared/docPage.js';
@@ -225,12 +224,12 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
     actions: renderTicketButton({
       label: '撤销这次设定（可恢复）',
       actionId: 'ilife-undo-' + receipt.op,
-      copyText: buildDataText({ envelope, title: spec.word, format: 'text' }),
+      // #1136（返工）：同 account/template-form.ts 那一条（复制出去的纯文本走 HELP 句）。
+      copyText: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
-      // #1136：回执的口令走 HELP 形态（与采集页 `spec.prompt` 同一句话，填本次实参）。
-      promptText: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params),
+      dataText: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params),
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
