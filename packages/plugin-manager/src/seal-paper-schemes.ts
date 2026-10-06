@@ -14,6 +14,8 @@ import * as React from 'react';
 import { SEAL_ROUGH_INK_ID, SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
 // 档位级两个色从调色板引（一份定义）；本件自己的纸面三色（绦带朱砂／飘尾亮朱砂／印泥大红）住本件。
 import { TIER_EDGE, TIER_METAL } from './seal-palette.js';
+// 三段小标题与关闭钮字也是设计语言（源 `seals.yaml` 的 vocabulary 段）。
+import { CLOSE_LABEL, SECTION_LABEL } from './seal-vocabulary.generated.js';
 
 /** 关闭钮的样子：样式 ＋ 字面 ＋ 可选装饰件。 */
 export interface CloseLook {
@@ -68,7 +70,7 @@ export function closeLook(tierKey: string): CloseLook {
     // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。
     React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '0.5px', borderRadius: '0 0 0.15625em 0.15625em', background: TAIL_FILL } }));
   return {
-    label: crisp('收卷', {
+    label: crisp(CLOSE_LABEL, {
       fontFamily: KAI, fontSize: '0.8125em', letterSpacing: '0.22em', textIndent: '0.22em',
       color: '#f8f1e2', textShadow: '0 1px 2px #000000aa',
     }),
@@ -136,8 +138,9 @@ function ornament(st: PaperStyles, ruler: string): React.ReactNode {
 /** 行首那枚朱砂小印（进／状／计）：**两层**——材质层过印那条糙边滤镜（印泥压出来的毛边与斑驳），
  *  字独立成层保持清晰；方块各带一点歪斜（真印章不会次次压得方正）。
  *  外框仍是 0.7em 字／1.6 行高／左右 0.375em 垫——换的是质感，版面逐值不动。 */
-function inkMark(name: string): React.ReactElement {
-  const tilt = name === '进展' ? -2.4 : name === '状态' ? 1.6 : -1.2;
+function inkMark(section: string, name: string): React.ReactElement {
+  // 倾角按段名区分（与标签文案无关，故用稳定的 key 判），三枚小印不会歪成一个样。
+  const tilt = section === 'progress' ? -2.4 : section === 'status' ? 1.6 : -1.2;
   return React.createElement('span', {
     style: { position: 'relative', flex: '0 0 auto', fontSize: '0.7em', lineHeight: 1.6, padding: '0 0.375em', transform: 'rotate(' + tilt + 'deg)' },
   },
@@ -166,14 +169,14 @@ function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
     React.createElement(
       'div',
       { key, style: { margin: last ? '0 0 -0.5em' : '0 0 0.5em', display: 'flex', alignItems: 'baseline', gap: '0.5em' } },
-      inkMark(name),
+      inkMark(key, name),
       React.createElement('span', { style: { ...st.label, flex: '0 0 auto', display: 'inline', marginBottom: 0, fontSize: '0.8em', color: ctx.accent } }, name + '：'),
       React.createElement('span', { style: { ...st.text, flex: '1 1 auto', display: 'inline', margin: 0, fontSize: '0.9em' } }, text),
     );
   return React.createElement(React.Fragment, null,
-    one('progress', '进展', ctx.progress),
-    one('status', '状态', ctx.status),
-    one('plan', '计划', ctx.plan, true));
+    one('progress', SECTION_LABEL.progress, ctx.progress),
+    one('status', SECTION_LABEL.status, ctx.status),
+    one('plan', SECTION_LABEL.plan, ctx.plan, true));
 }
 
 /** 档位语（一行）：该档金属渐变压进字里。 */

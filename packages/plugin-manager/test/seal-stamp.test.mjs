@@ -19,6 +19,8 @@ const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
 const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
 const PALETTE_TS = join(HERE, '..', 'src', 'seal-palette.ts');
 const PALETTE_JS = join(HERE, '..', 'src', 'seal-palette.js');
+const VOCAB_TS = join(HERE, '..', 'src', 'seal-vocabulary.generated.ts');
+const VOCAB_JS = join(HERE, '..', 'src', 'seal-vocabulary.generated.js');
 
 /** 源码转 CJS 载入（与 `seal-scroll.test.mjs` 同形）：卷轴与印渲染期互引，编译前先占缓存位，循环不断链。 */
 function compileAs(tsPath, jsKey) {
@@ -42,6 +44,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
   if (request === './seal-palette.js') return compileAs(PALETTE_TS, PALETTE_JS);
+  if (request === './seal-vocabulary.generated.js') return compileAs(VOCAB_TS, VOCAB_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 

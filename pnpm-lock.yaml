@@ -17,6 +17,9 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   packages/base-combos:
     dependencies:
@@ -986,6 +989,11 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yuku-ast@0.8.7:
     resolution: {integrity: sha512-h6+4bDfyootiMB9vckk5uKo5r5j0GHrkr17FQTDNfEsFT3DWlN9uu1HJwQwc64pgmLCI945fWM3lbTIqxjT3GQ==}
 
@@ -1662,6 +1670,8 @@ snapshots:
   which@2.0.1:
     dependencies:
       isexe: 2.0.0
+
+  yaml@2.9.1: {}
 
   yuku-ast@0.8.7:
     dependencies:

@@ -1,142 +1,86 @@
-# 六家 × 三枚章的状态表 · **唯一可编辑处**。
-# 改某家的章状态（tier）或卷轴里的三段文案（progress／status／plan）只改这里，
-# 然后跑：node tooling/gen-seals.mjs  →  各插件 src/seal-states.generated.ts 重出。
+# ============================================================================
+# 印章卷轴 · 唯一可编辑处：六家 × 三枚章（HELP／技能／插件）的状态与**全部文字**
 #
-# 支持的写法（够用就好，别写花活）：两级缩进（2 空格）＋ `键: 值`；不支持列表、多行、锚点。
-#   tier     铜=copper／银=silver／金=gold（决定章与外框的材质，以及悬停气泡那句档位话）
-#   label    印文；写 {product} 表示运行时用该家产品名（HELP 那枚＝`{product} HELP`）
-#   seed     倾角与右间距的种子（0..9，各家错开用）
-version: 1
+# 效力  构建期生效：改完跑 `node tooling/gen-seals.mjs`，再重打＋重发受影响的包。
+# 边界  只驱动「档位与文字」；控件形状（章按钮／卷轴／绦带关闭钮）由组件定稿锁死，本表不选控件。
+# 合并  逐叶子覆盖：某家写了哪个键就覆盖哪个键，没写的继承 vocabulary。
+# 校验  未知键／未知角色／未知档位／越界 seed／占位符放错地方，生成器直接报错，绝不静默吞。
+# 占位符 {product} 只允许出现在 label 里，运行时代入该家产品名。
+# ============================================================================
+
+# ── vocabulary：设计语言（六家共用）→ 生成到总管，组件直接用 ──────────────────
+vocabulary:
+  # 档位话：卷轴标题下那一行，同时就是鼠标悬停章的气泡（同一句话，两处渲染）。
+  tierText:
+    gold: 精雕细琢中
+    silver: 全场景打通中
+    copper: 基础建设中
+  # 卷轴三段的小标题；行首朱砂小印取**首字**（进展→进／状态→状／计划→计）。
+  sections:
+    progress: 进展
+    status: 状态
+    plan: 计划
+  # 三枚章的印文约定；它同时是**卷轴里的标题**（卷轴标题就是同一枚章）。
+  label:
+    help: '{product} HELP'
+    skill: 技能
+    plugin: 插件
+  # 关闭钮（右上角绦带）上的字。
+  close: 收卷
+
+# ── plugins：各家的章状态与卷轴正文 ──────────────────────────────────────────
 plugins:
-  dsh-bill-ilife:
-    dir: plugin-bill-ilife
-    seed: 0
+
+  dsh-bill-ilife:                    # 饼干记账（目录按约定推：dsh-x → packages/plugin-x）
+    layout: { seed: 0 }              # 视觉用（倾角／右间距错开），0..9，一般别动
     seals:
       help:
-        tier: gold
-        label: {product} HELP
-        progress: 完成度 30%
+        tier: gold                   # gold=金／silver=银／copper=铜：章面、卷轴外框、档位语金属都跟它走
+        progress: '完成度 30%'
         status: 精磨
         plan: 将所有功能和页面打磨至完美
       skill:
         tier: silver
-        label: 技能
-        progress: 完成度 80%
+        progress: '完成度 80%'
         status: 全打通
         plan: 将所有功能和场景全部打通
       plugin:
         tier: copper
-        label: 插件
-        progress: 完成度 60%
+        progress: '完成度 60%'
         status: 基本可用
         plan: 修复明显bug并将未打通场景打通
-  dsh-calorie:
-    dir: plugin-calorie
-    seed: 1
+
+  dsh-calorie:                       # 卡路里
+    layout: { seed: 1 }
     seals:
-      help:
-        tier: silver
-        label: {product} HELP
-        progress: 完成度 50%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      skill:
-        tier: silver
-        label: 技能
-        progress: 完成度 80%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      plugin:
-        tier: copper
-        label: 插件
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-  dsh-chef:
-    dir: plugin-chef
-    seed: 2
+      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      skill:  { tier: silver, progress: '完成度 80%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+
+  dsh-chef:                          # 私家大厨
+    layout: { seed: 2 }
     seals:
-      help:
-        tier: silver
-        label: {product} HELP
-        progress: 完成度 50%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      skill:
-        tier: copper
-        label: 技能
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-      plugin:
-        tier: copper
-        label: 插件
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-  dsh-home-ilife:
-    dir: plugin-home-ilife
-    seed: 3
+      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+
+  dsh-home-ilife:                    # 居家管家
+    layout: { seed: 3 }
     seals:
-      help:
-        tier: silver
-        label: {product} HELP
-        progress: 完成度 50%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      skill:
-        tier: copper
-        label: 技能
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-      plugin:
-        tier: copper
-        label: 插件
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-  dsh-memo-ilife:
-    dir: plugin-memo-ilife
-    seed: 4
+      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+
+  dsh-memo-ilife:                    # 备忘录
+    layout: { seed: 4 }
     seals:
-      help:
-        tier: silver
-        label: {product} HELP
-        progress: 完成度 50%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      skill:
-        tier: copper
-        label: 技能
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-      plugin:
-        tier: copper
-        label: 插件
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-  dsh-schedule-ilife:
-    dir: plugin-schedule-ilife
-    seed: 5
+      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+
+  dsh-schedule-ilife:                # 作息管家
+    layout: { seed: 5 }
     seals:
-      help:
-        tier: silver
-        label: {product} HELP
-        progress: 完成度 50%
-        status: 全打通
-        plan: 将所有功能和场景全部打通
-      skill:
-        tier: copper
-        label: 技能
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
-      plugin:
-        tier: copper
-        label: 插件
-        progress: 完成度 60%
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
+      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
+      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }

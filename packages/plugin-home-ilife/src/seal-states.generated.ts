@@ -1,7 +1,7 @@
 /** 自动生成 · **勿手改**：源 `seals.yaml`（仓库根），生成器 `node tooling/gen-seals.mjs`。 */
 export const SEAL_SEED = 3;
 
-/** 三枚章（HELP／技能／插件；面板按角色定序）：label 里的 {product} 由调用方代入本家产品名。 */
+/** 三枚章（HELP／技能／插件；面板按角色定序）。label 用 `seals.yaml` 的 vocabulary.label 约定。 */
 export function sealStates(product: string) {
   return [
     { role: 'help' as const, tier: 'silver' as const, label: product + ' HELP', progress: '完成度 50%', status: '全打通', plan: '将所有功能和场景全部打通' },
