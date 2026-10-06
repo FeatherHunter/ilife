@@ -126,12 +126,13 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
       { role: 'help', tier: 'silver', label: 'h', progress: 'p', status: 's', plan: 'p' },
       { role: 'plugin', tier: 'gold', label: 'g', progress: 'p', status: 's', plan: 'p' },
     ];
+    // seals 这份数组给的是 技能／HELP／插件（乱序）。面板按角色定序 ⇒ 槽位：HELP=0、技能=1、插件=2。
     const dialogAt = (sel) => flat(expandTree(view.PanelBody(bodyProps({ seals, sealSeed: 0, selectedSeal: sel, onSealSelect: () => {}, onSealClose: () => {} }))))
       .filter((n) => n.props?.role === 'dialog')[0];
-    const first = dialogAt(0), mid = dialogAt(1), third = dialogAt(2);
-    assert.equal(first.props.style.top, 'calc(0.3em + 1.9em)', '第一行：贴在 HELP 章下方');
-    assert.equal(mid.props.style.top, 'calc(3.4em + 1.9em)', '第二行：贴在技能章下方');
-    assert.equal(third.props.style.top, 'calc(6.2em + 1.9em)', '第三行：贴在插件章下方');
+    const first = dialogAt(1), mid = dialogAt(0), third = dialogAt(2);
+    assert.equal(first.props.style.top, 'calc(0.3em + 1.9em)', 'HELP（第一行）下方');
+    assert.equal(mid.props.style.top, 'calc(3.4em + 1.9em)', '技能（第二行）下方');
+    assert.equal(third.props.style.top, 'calc(6.2em + 1.9em)', '插件（第三行）下方');
     assert.equal(first.props.style.left, 'auto', '不再两边撑满居中');
     assert.equal(first.props.style.justifyContent, 'flex-end', '内框贴右缘');
     // sealSeed=0 时三行的右间距是 0.38／0.92／0.38em（槽位哈希），逐值对上才算「跟着那枚章」。
@@ -141,6 +142,28 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     assert.ok(Math.abs(padOf(mid.props.style.right) - 0.92) < 1e-9, '第二行右间距 0.92em');
     assert.ok(Math.abs(padOf(third.props.style.right) - 0.38) < 1e-9, '第三行右间距 0.38em');
     assert.ok(String(first.props.style.maxWidth).startsWith('calc(100% - 0.38'), '窄卡兜底：扣掉右让位与绦带');
+  });
+
+  it('三枚签按角色定序、少给几枚不炸（调用方给的顺序无关）', () => {
+    const seals = [
+      { role: 'skill', tier: 'copper', label: 's', progress: 'p', status: 's', plan: 'p' },
+      { role: 'help', tier: 'silver', label: 'h', progress: 'p', status: 's', plan: 'p' },
+      { role: 'plugin', tier: 'gold', label: 'g', progress: 'p', status: 's', plan: 'p' },
+    ];
+    // 乱序给（插件／技能／HELP）：面板自己按 help→skill→plugin 排，屏幕上仍应是 h、s、g
+    const tree = expandTree(view.PanelBody(bodyProps({ seals: [seals[2], seals[0], seals[1]], sealSeed: 0, selectedSeal: null })));
+    const domOrder = flat(tree).filter((n) => n.type === 'button' && ['h', 's', 'g'].includes(n.props['aria-label'])).map((n) => n.props['aria-label']);
+    assert.deepEqual(domOrder, ['h', 's', 'g'], '按角色定序，不看调用方给的顺序');
+    // 只给两枚：不炸，且第二枚落在第二行（浮层锚点跟着那一行）
+    for (const subset of [[seals[1], seals[0]], [seals[1]], []]) {
+      const t2 = expandTree(view.PanelBody(bodyProps({ seals: subset, sealSeed: 0, selectedSeal: subset.length > 1 ? 0 : null })));
+      // flat() 会把函数组件连"元素本身＋展开结果"各记一次，去重后再数。
+      const marks = new Set(flat(t2).filter((n) => n.type === 'button' && ['h', 's', 'g'].includes(n.props['aria-label'])).map((n) => n.props['aria-label']));
+      assert.equal(marks.size, subset.length, '给几枚画几枚：' + subset.length);
+    }
+    const two = expandTree(view.PanelBody(bodyProps({ seals: [seals[1], seals[0]], sealSeed: 0, selectedSeal: 0 })));
+    const dialog2 = flat(two).filter((n) => n.props?.role === 'dialog')[0];
+    assert.equal(dialog2.props.style.top, 'calc(0.3em + 1.9em)', '只两枚时，选中的那枚仍在第一行');
   });
 
   it('StatusBlock actions press, link focuses (no shrink on links)', () => {

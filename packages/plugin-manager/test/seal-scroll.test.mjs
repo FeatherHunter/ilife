@@ -19,8 +19,8 @@ const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
 const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
 const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
-const MATS_TS = join(HERE, '..', 'src', 'seal-materials.ts');
-const MATS_JS = join(HERE, '..', 'src', 'seal-materials.js');
+const PALETTE_TS = join(HERE, '..', 'src', 'seal-palette.ts');
+const PALETTE_JS = join(HERE, '..', 'src', 'seal-palette.js');
 
 /** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。
  *  卷轴与印是渲染期互引（`seal-scroll ⇄ seal-stamp`，模块求值期无交叉）：编译前先占缓存位，
@@ -45,7 +45,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
-  if (request === './seal-materials.js') return compileAs(MATS_TS, MATS_JS);
+  if (request === './seal-palette.js') return compileAs(PALETTE_TS, PALETTE_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 
@@ -217,6 +217,19 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(rims[0].ribbon.includes('0 0 0 1px #5c110a59'), '边外还有一道暗线（不然压在框上看不出）');
     assert.ok(rims[0].tail.includes('0 0 0 1.5px #f5d97acc') && rims[2].tail.includes('0 0 0 1.5px #a5652fcc'), '两条飘尾也随档取边');
     assert.ok(rims.every((r) => r.ribbonBg.includes('#c63d2a')), '边换了，主体三档都仍是朱砂');
+  });
+
+  it('档位语三档金属渐变逐值锁死（鎏金／冷银／暖铜，改色先红）', () => {
+    const want = {
+      gold: 'linear-gradient(180deg,#f6e27a 0%,#d9b53c 45%,#a5811b 100%)',
+      silver: 'linear-gradient(180deg,#f7fafc 0%,#c3ccd3 45%,#8b959d 100%)',
+      copper: 'linear-gradient(180deg,#f0bd8e 0%,#c07b45 45%,#8a4a24 100%)',
+    };
+    for (const tier of ['gold', 'silver', 'copper']) {
+      const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'help', tier }));
+      const phrase = nodesOf(tree, (node) => node.props?.style?.backgroundClip === 'text')[0];
+      assert.equal(phrase.props.style.backgroundImage, want[tier], tier + ' 档位语渐变');
+    }
   });
 
   it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {

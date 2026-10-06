@@ -904,8 +904,12 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const product = title ?? '';
   const seals = props.seals ?? [];
   const seed = props.sealSeed ?? 0;
-  /** 三行定序（六家一致：HELP 上／技能中／插件下；HELP 永远 z 最上）。 */
-  const order = [0, 1, 2];
+  /** 三行定序：**由面板按角色定**（HELP 上／技能中／插件下；HELP 永远 z 最上）。
+   *  调用方给的数组顺序无关紧要，缺哪一枚就只画剩下的（位置顺次上移）——
+   *  少给一枚不该把整块面板炸掉（旧写法按位置取 `seals[2]`，两枚时直接 TypeError）。 */
+  const order = ['help', 'skill', 'plugin']
+    .map((role) => seals.findIndex((s) => s.role === role))
+    .filter((index) => index >= 0);
 /** 三行槽位几何 · **唯一出处**：章的落位与卷轴浮层的锚点都从这里取，免得两处各写一套数字。
  *  行高（上／中／下；纵向净空各留约 10px，糙边抖动也碰不到）／轻微倾角（±0.5°～±2.5°，家下标×槽位哈希，
  *  纯函数每次同值）／右间距（三枚全部居右收敛，各家各行 0.2em～1.1em 错开，永不出面板右边界）。
@@ -944,8 +948,8 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
   /** 卷轴浮层跟着**被点的那枚章**：锚点与章的落位同出一处（`slotGeom`），两处不会各自漂。 */
-  const openSlot = props.selectedSeal ?? -1;
-  const anchor: React.CSSProperties | undefined = openSlot < 0 || openSlot >= order.length ? undefined : slotGeom(openSlot, seed).dialog;
+  const openSlot = props.selectedSeal === null || props.selectedSeal === undefined ? -1 : order.indexOf(props.selectedSeal);
+  const anchor: React.CSSProperties | undefined = openSlot < 0 ? undefined : slotGeom(openSlot, seed).dialog;
   const dialog = openSeal === null ? null : React.createElement(SealScrollDialog, {
     open: true, onClose: props.onSealClose ?? (() => undefined),
     role: openSeal.role, tier: openSeal.tier, title: openSeal.label,

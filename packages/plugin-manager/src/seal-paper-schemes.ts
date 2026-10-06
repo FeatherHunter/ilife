@@ -12,8 +12,8 @@
  */
 import * as React from 'react';
 import { SEAL_ROUGH_INK_ID, SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
-// 档位级两个色也只有一份定义：改色改 `seal-materials.ts`。
-import { TIER_EDGE, TIER_METAL } from './seal-materials.js';
+// 档位级两个色从调色板引（一份定义）；本件自己的纸面三色（绦带朱砂／飘尾亮朱砂／印泥大红）住本件。
+import { TIER_EDGE, TIER_METAL } from './seal-palette.js';
 
 /** 关闭钮的样子：样式 ＋ 字面 ＋ 可选装饰件。 */
 export interface CloseLook {

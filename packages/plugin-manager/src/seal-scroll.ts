@@ -28,8 +28,8 @@ import type { SealRole, SealTier } from './config-panel-contract.js';
 import { SealStamp } from './seal-stamp.js';
 // 定稿的纸面字排与关闭钮样子（原型期方案已删，只此一件）。
 import { closeLook, paperParts } from './seal-paper-schemes.js';
-// 九档材质只有一份定义（印面／外框／纸面共用）：改色改 `seal-materials.ts`。
-import { SEAL_MATERIALS } from './seal-materials.js';
+// 底色与边线从调色板取（与印面同一份取值）；下面那张 `FRAME_INSET` 是**外框自己的排法**。
+import { SEAL_PALETTE, SEAL_RIVET } from './seal-palette.js';
 
 /** 糙边滤镜 id（文档作用域，故每页只许挂一次 `SealFilterDefs`）。 */
 const ROUGH_EDGE = 'dshLifeSealRoughEdge';
@@ -190,15 +190,35 @@ export interface SealScrollProps {
   readonly plan: string;
 }
 
-/** 取一档材质：底色与边线从九档总表来（与印共用一份取值），外框专有的内阴影在这里合成。 */
+/** 外框专有的内阴影（随档；底色与边线不在这张表里，从调色板来）。
+ *  外框比印面大得多，同一圈金色在小章上够、在几百像素的框上会被稀释，故这一层是外框自己的排法。 */
+const FRAME_INSET: Record<SealScrollProps['role'], Record<SealScrollProps['tier'], string>> = {
+  skill: {
+    copper: 'inset 0 0 0 1px #f8f1e2aa, inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d',
+    silver: 'inset 0 0 0 1px #fff, inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d',
+    gold: 'inset 0 0 0 1px #fff8, inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d',
+  },
+  help: {
+    copper: 'inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d',
+    silver: 'inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d',
+    gold: 'inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d',
+  },
+  plugin: {
+    copper: 'inset 0 1px 0 #d99a5e88, inset 0 -2px 5px #0006, 0 0 0 1px #5e2c12, inset 0 2px 0 #ffffff26',
+    silver: 'inset 0 1px 0 #ffffffdd, inset 0 -2px 5px #0005, 0 0 0 1px #6f767c, inset 0 2px 0 #ffffff33',
+    gold: 'inset 0 1px 0 #fff8d8dd, inset 0 -2px 5px #0005, 0 0 0 1px #8a6a15',
+  },
+};
+
+/** 取一档材质：底色与边线从调色板来（与印共用一份取值），外框专有的内阴影与铆钉在这里合成。 */
 function materialOf(role: SealScrollProps['role'], tier: SealScrollProps['tier']): Material {
-  const m = SEAL_MATERIALS[role]?.[tier];
-  if (m === undefined) throw new Error('未知的印档：' + role + '／' + tier);
+  const palette = SEAL_PALETTE[role]?.[tier];
+  if (palette === undefined) throw new Error('未知的印档：' + role + '／' + tier);
   return {
-    frame: { background: m.background, ...(m.border === undefined ? {} : { border: m.border }), ...(m.frame ?? {}) },
-    accent: m.accent,
-    ruler: m.ruler,
-    rivet: m.rivet,
+    frame: { background: palette.background, ...(palette.border === undefined ? {} : { border: palette.border }), boxShadow: FRAME_INSET[role][tier] },
+    accent: palette.accent,
+    ruler: palette.ruler,
+    rivet: role === 'plugin' ? SEAL_RIVET[tier] : undefined,
   };
 }
 

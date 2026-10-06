@@ -17,8 +17,8 @@ const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
 const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
 const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
-const MATS_TS = join(HERE, '..', 'src', 'seal-materials.ts');
-const MATS_JS = join(HERE, '..', 'src', 'seal-materials.js');
+const PALETTE_TS = join(HERE, '..', 'src', 'seal-palette.ts');
+const PALETTE_JS = join(HERE, '..', 'src', 'seal-palette.js');
 
 /** 源码转 CJS 载入（与 `seal-scroll.test.mjs` 同形）：卷轴与印渲染期互引，编译前先占缓存位，循环不断链。 */
 function compileAs(tsPath, jsKey) {
@@ -41,7 +41,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
-  if (request === './seal-materials.js') return compileAs(MATS_TS, MATS_JS);
+  if (request === './seal-palette.js') return compileAs(PALETTE_TS, PALETTE_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 

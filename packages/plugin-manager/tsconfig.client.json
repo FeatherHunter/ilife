@@ -23,6 +23,8 @@
     "src/config-panel-api.ts",
     "src/title-seal.ts",
     "src/seal-scroll.ts",
-    "src/seal-stamp.ts"
+    "src/seal-stamp.ts",
+    "src/seal-palette.ts",
+    "src/seal-paper-schemes.ts"
   ]
 }
