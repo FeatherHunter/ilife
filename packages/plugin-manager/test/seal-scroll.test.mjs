@@ -193,6 +193,9 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes('[data-ilife-press][data-ilife-close]::before{display:none}'), '方形聚光要摘掉');
     assert.ok(css.includes('.dshLifeSealBtn[data-ilife-close]:hover{filter:none}'), '悬停的糙边滤镜不许碰绦带钮（字会碎、菱形四角会被滤镜区域裁掉）');
     assert.ok(css.includes('[data-ilife-close-glow]{opacity:0') && css.includes('[data-ilife-close]:hover [data-ilife-close-glow]'), '辉光改挂菱形那层，悬停淡入');
+    assert.ok(css.includes('[data-ilife-close-ribbon],[data-ilife-close-tail]{filter:url(#dshLifeSealRoughMetal)}'), '绦带两层的糙边住 CSS（不是行内）');
+    assert.ok(css.includes('{filter:url(#dshLifeSealRoughMetal) brightness(1.12)}'), '悬停提亮 12%：糙边 url 原样带上（另写会把它冲掉）');
+    assert.ok(css.includes('[data-ilife-close]:focus-visible [data-ilife-close-ribbon]'), '键盘焦点也提亮');
     assert.ok(css.includes('[data-ilife-close]:focus-visible [data-ilife-close-glow]'), '键盘焦点也要亮（不是只给鼠标）');
     // "聚焦＋悬停"那一档：面板的 `:focus-visible:hover` 与上面那条同为 0-4-0，而面板 <style> 在卡片末位（平局判给它）
     // ⇒ 必须另有一条 0-5-0 的，只摘辉光、把两道焦点环原样留着（焦点可见是硬要求）。
@@ -218,6 +221,13 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(glow[0].props.style.transform, 'rotate(45deg)', '辉光与绦带同角度');
     assert.equal(glow[0].props.style.borderRadius, '0.375em', '圆角与绦带一致');
     assert.equal(glow[0].props.style.pointerEvents, 'none', '辉光不吃鼠标事件');
+    // 绦带材质两层的糙边滤镜**住 CSS**（悬停要"糙边＋提亮"一起写，而 filter 是单属性）：行内那份会把悬停规则盖掉。
+    const ribbonLayer = nodesOf(tree, (node) => node.props?.['data-ilife-close-ribbon'] !== undefined)[0];
+    assert.ok(ribbonLayer, '菱形那层要挂 data-ilife-close-ribbon');
+    assert.equal(ribbonLayer.props.style.filter, undefined, '菱形的滤镜不许写行内（会盖掉悬停提亮）');
+    const tailLayers = nodesOf(tree, (node) => node.props?.['data-ilife-close-tail'] !== undefined);
+    assert.equal(tailLayers.length, 2, '两条飘尾各挂一个 data-ilife-close-tail');
+    assert.ok(tailLayers.every((n) => n.props.style.filter === undefined), '飘尾的滤镜也住 CSS');
   });
 
   it('行首三枚朱砂小印有印泥质感：材质层过印那条糙边滤镜、字独立成层', () => {
@@ -244,7 +254,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
       const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier, open: true, onClose: () => {} }));
       const ribbon = nodesOf(tree, (n) => n.props?.style?.transform === 'rotate(45deg)')[0];
       const tail = nodesOf(tree, (n) => n.props?.style?.transform === 'rotate(26deg)')[0];
-      const tailLayer = kidsOf(tail).find((c) => typeof c !== 'string' && String(c.props?.style?.filter ?? '').includes('RoughMetal'));
+      const tailLayer = kidsOf(tail).find((c) => typeof c !== 'string' && c.props?.['data-ilife-close-tail'] !== undefined);
       return { ribbon: String(ribbon.props.style.boxShadow), ribbonBg: String(ribbon.props.style.background), tail: String(tailLayer.props.style.boxShadow) };
     });
     assert.ok(rims[0].ribbon.includes('inset 0 0 0 2px #f5d97a'), '金档绦带：2px 金边');

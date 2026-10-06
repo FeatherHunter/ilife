@@ -260,6 +260,12 @@ export function SealFilterDefs(): React.ReactElement {
       '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + FOCUS_VAR + '}' +
       '[data-ilife-press][data-ilife-close]::before{display:none}' +
       '.dshLifeSealBtn[data-ilife-close]:hover{filter:none}' +
+      // 绦带材质那两层（菱形＋两条飘尾）的糙边滤镜住这里、不住行内：`filter` 是单属性，悬停要
+      // "糙边＋提亮"一起写——行内那份会把这条悬停规则整个盖掉。提亮 12% 与印章那条悬停高亮同一档。
+      '[data-ilife-close-ribbon],[data-ilife-close-tail]{filter:url(#' + ROUGH_METAL + ')}' +
+      '[data-ilife-close]:hover [data-ilife-close-ribbon],[data-ilife-close]:focus-visible [data-ilife-close-ribbon],' +
+      '[data-ilife-close]:hover [data-ilife-close-tail],[data-ilife-close]:focus-visible [data-ilife-close-tail]' +
+      '{filter:url(#' + ROUGH_METAL + ') brightness(1.12)}' +
       '[data-ilife-close-glow]{opacity:0;transition:opacity 160ms ease;' +
       'background:color-mix(in srgb, ' + FOCUS_VAR + ' 14%, transparent);' +
       'box-shadow:0 0 0 1px color-mix(in srgb, ' + FOCUS_VAR + ' 65%, transparent),' +

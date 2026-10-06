@@ -5,13 +5,15 @@
  *       末行吃回 0.5em 行距（不然底比顶空一截）；饰线上距加宽到 `0.5em 0 0.75em`；纸底与头部沿用原样式。
  *   档位语：该档金属渐变压进字里（金＝鎏金／银＝冷银／铜＝暖铜），不再一律金。
  *   关闭钮：右上角斜披的朱砂菱形绦带（正立「收卷」字独立成层），两条飘尾沿菱形两条下边各向底尖收，
- *          各自朝外 26°（左尾朝左下、右尾朝右下）；尾是两层——外层过糙边出毛边，内层纯色芯不受滤镜。
+ *          各自朝外 26°（左尾朝左下、右尾朝右下）；尾是两层——外层过糙边出毛边，内层纯色芯不受滤镜；
+ *          糙边滤镜住 `SealFilterDefs` 的 CSS（按 `data-ilife-close-ribbon`／`data-ilife-close-tail` 挂），
+ *          因为悬停要"糙边＋提亮"一起写而 `filter` 是单属性。
  *
  * 为什么单独一件：`seal-scroll.ts` 已接近告警线（外框／纸／浮层／滤镜都住那里），纸面字排与关闭钮住这里。
  * 本件是纯函数：吃 ctx 回五件，不留状态、不取数。原型期的二十余档方案已按「定稿后只留胜出那一档」删除。
  */
 import * as React from 'react';
-import { SEAL_ROUGH_INK_ID, SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
+import { SEAL_ROUGH_INK_ID } from './seal-scroll.js';
 // 档位级两个色从调色板引（一份定义）；本件自己的纸面三色（绦带朱砂／飘尾亮朱砂／印泥大红）住本件。
 import { TIER_EDGE, TIER_METAL } from './seal-palette.js';
 // 三段小标题与关闭钮字也是设计语言（源 `seals.yaml` 的 vocabulary 段）。
@@ -26,8 +28,8 @@ export interface CloseLook {
 }
 
 /** 材质底层：**糙边滤镜只挂这一层**——文字住在它外面，所以字是清晰的（照插件章「金属带＋印文」的老做法）。 */
-function bgLayer(style: React.CSSProperties, children?: React.ReactNode): React.ReactElement {
-  return React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: 0, ...style } }, children ?? null);
+function bgLayer(style: React.CSSProperties, children?: React.ReactNode, attrs?: Record<string, string>): React.ReactElement {
+  return React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: 0, ...style }, ...(attrs ?? {}) }, children ?? null);
 }
 
 /** 清晰字面：压在材质层之上，不参与任何滤镜。 */
@@ -48,8 +50,11 @@ export function closeLook(tierKey: string): CloseLook {
   const edge = edgeOf(tierKey);
   const ribbon = bgLayer(
     // 边要压得住：2px 实色金属边（1px 半透明那版看不出档）+ 外圈一道暗线把边从框上切出来。
-    { borderRadius: '0.375em', background: crimson, boxShadow: '0 0 0 1px #5c110a59, 0 2px 8px #3d241066, inset 0 0 0 2px ' + edge, transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
+    // 糙边滤镜**不写行内**：悬停要"糙边＋提亮"一起写（`filter` 是单属性），行内那份会把悬停规则整个盖掉。
+    // 滤镜改住 `SealFilterDefs` 的 CSS，按 `data-ilife-close-ribbon` 挂。
+    { borderRadius: '0.375em', background: crimson, boxShadow: '0 0 0 1px #5c110a59, 0 2px 8px #3d241066, inset 0 0 0 2px ' + edge, transform: 'rotate(45deg)' },
     null,
+    { 'data-ilife-close-ribbon': 'tie' },
   );
   /** 尾色＝绦带上亮一档的朱砂（悬在纸上也不发灰、不发黑）：两条尾同色。 */
   const TAIL_FILL = 'linear-gradient(180deg,#e8573c 0%,#c33a24 55%,#a52612 100%)';
@@ -66,8 +71,7 @@ export function closeLook(tierKey: string): CloseLook {
       // 只留一道暗红描边把尾从纸面/暗底上切出来；**不给金边**——尾只有 6px 宽，
       // 1px 金边被糙边滤镜一搅会把整条尾染成金灰（左尾「不够亮」就是这么来的）。
       boxShadow: '0 0 0 1.5px ' + edge + 'cc, 0 1px 3px #00000055',
-      filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')',
-    }),
+    }, undefined, { 'data-ilife-close-tail': 'tie' }),
     // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。
     React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '0.5px', borderRadius: '0 0 0.15625em 0.15625em', background: TAIL_FILL } }));
   /** 悬停辉光：与绦带**同角度、同圆角、不过滤镜**的一层。形状与颜色全在 CSS（`SealFilterDefs` 的
