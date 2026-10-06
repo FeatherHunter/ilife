@@ -149,7 +149,7 @@ export function interactionCss(): string {
 
 /** T6 页签条交互（#1165，唯一生成处；载体 `client.ts` 页签条消费，不自画）。
  *
- * 原型 V1 页签四件：悬停淡洗 12%＋辉光边框（无上浮、无聚光，按钮那套不串用）、圆点呼吸 .8s
+ * 原型 V1 页签四件（#1175 去辉光边框：悬停只留淡洗 12%，边框一律基线，避免非焦点分裂两档）：悬停淡洗 12%（无上浮、无聚光，按钮那套不串用）、圆点呼吸 .8s
  *（悬停驱动，scale 1→1.5／opacity 1→.6）、焦点双环（沿用 T1 2px＋5px，跟主题色，同色页签可见）、
  * 选中态透明（glider 在下层给 pill，页签自身透明；减少动态时 CSS 以 !important 回实心 pill）。
  * 液态彗星式由载体 `liquidTo` 驱动（拉伸＋影子消散＋时长公式见契约 T6 tokens），本函数只出静态层：
@@ -163,9 +163,8 @@ export function tabInteractionCss(): string {
     '[data-ilife-glider],[data-ilife-ghost]{position:absolute;top:0;left:0;border-radius:999px;background:' + T2_FOCUS_VAR + '}' +
     '[data-ilife-ghost]{opacity:0}' +
     '[data-ilife-tab]{position:relative;z-index:1;transition:' + TAB_TRANSITION + '}' +
-    // #1174 Q1：页签按 V1 修到可见——洗色与边框必须压过 `S.tab` 行内基线（与 press 相同的行内遮挡问题）。
-    '[data-ilife-tab]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(TAB_HOVER_WASH_PERCENT) + '%, transparent)!important;' +
-    'border-color:' + T2_FOCUS_VAR + '!important}' +
+    // #1175：非焦点统一样式——悬停只给淡洗（压过行内基线），边框一律留基线 dim 灰，不跟悬停变亮（覆盖 #1174 Q1 的辉光边框）。
+    '[data-ilife-tab]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(TAB_HOVER_WASH_PERCENT) + '%, transparent)!important}' +
     '[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:ilifeDotPulse ' + String(TAB_DOT_PULSE_MS / 1000) + 's ease infinite}' +
     '@keyframes ilifeDotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}' +
     '[data-ilife-tab]:focus-visible{outline:none;' +

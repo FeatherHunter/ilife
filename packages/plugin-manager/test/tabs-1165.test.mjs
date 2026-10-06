@@ -49,12 +49,13 @@ describe('#1165 T6: contract cells equal spec V1 + prototype', () => {
 });
 
 describe('#1165 T6: tabInteractionCss hover + dot + focus + selected (theme vars, no hard blue)', () => {
-  it('hover wash 12% + focus-color border (buttons 13% untouched)', () => {
+  it('hover wash 12% without border change, unified dim baseline (#1175)', () => {
     const css = view.tabInteractionCss();
     assert.match(css, /12%/);
     assert.match(css, /\[data-ilife-tab\]:hover\{background:color-mix/);
-    assert.match(css, /border-color:var\(--ilife-focus/);
     assert.match(css, /--ilife-focus/);
+    const hover = css.match(/\[data-ilife-tab\]:hover\{[^}]*\}/)?.[0] ?? '';
+    assert.doesNotMatch(hover, /border-color/);
   });
   it('dot breathes .8s scale 1.5 opacity .6 on hover only', () => {
     const css = view.tabInteractionCss();

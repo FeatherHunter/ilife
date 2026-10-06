@@ -46,11 +46,12 @@ describe('#1174 悬停穿透行内基线（复制卡顿／页签弱的根因）'
     assert.match(css, /\[data-ilife-press\]:hover:not\(\:disabled\)\{background:[^}]*!important;/);
     assert.match(css, /border-color:var\(--ilife-focus[^;]*!important;/);
   });
-  it('页签悬停洗色与边框带 !important（V1 12% 可见，不上 V2）', () => {
+  it('页签悬停洗色带 !important 且边框不动（#1175 非焦点统一 dim 基线）', () => {
     assert.equal(contract.TAB_HOVER_WASH_PERCENT, 12);
     const css = view.tabInteractionCss();
-    assert.match(css, /\[data-ilife-tab\]:hover\{background:[^}]*12%[^}]*!important;/);
-    assert.match(css, /\[data-ilife-tab\]:hover\{background:[^}]*border-color:[^}]*!important\}/);
+    assert.match(css, /\[data-ilife-tab\]:hover\{background:[^}]*12%[^}]*!important\}/);
+    const hover = css.match(/\[data-ilife-tab\]:hover\{[^}]*\}/)?.[0] ?? '';
+    assert.doesNotMatch(hover, /border-color/);
   });
 });
 
