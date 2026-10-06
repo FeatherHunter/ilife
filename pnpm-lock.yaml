@@ -35,8 +35,8 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-bill:
         specifier: 0.3.34
         version: link:../skill-bill
@@ -54,8 +54,8 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-calorie:
         specifier: 0.3.34
         version: link:../skill-calorie
@@ -73,8 +73,8 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-chef:
         specifier: 0.3.34
         version: link:../skill-chef
@@ -92,8 +92,8 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-home:
         specifier: 0.3.34
         version: link:../skill-home
@@ -127,8 +127,8 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.3.34
         version: link:../skill-memo-ilife
@@ -146,8 +146,8 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.40
-        version: 0.3.40
+        specifier: 0.3.42
+        version: link:../plugin-manager
       skill-schedule:
         specifier: 0.3.34
         version: link:../skill-schedule
@@ -607,14 +607,6 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
-
-  dsh-life-pack@0.3.40:
-    resolution: {integrity: sha512-rRzYsr4f7wa57X0xhNfbhfVUoKHg7IM71IKRJuwsG+k0M8ovowoT6G3KTq5aCA/BOifE8InKoVeaBLSkkhdmDw==}
-    engines: {node: '>=22.13'}
-
-  dsh-plugin-update@0.5.4:
-    resolution: {integrity: sha512-ngINlnbHfxeDapF87nC4uknjhdo6BmHZd75PqoXWJZJLv51HQNaaUE2EH/bVt0HwozMLzUw3WfeImoRG250lJQ==}
-    engines: {node: '>=22'}
 
   dsh-plugin-update@0.5.8:
     resolution: {integrity: sha512-M2att93Y98p0YAJ+lGgLqYoQXSS2h1u7C41Vn1cCeNrMVxZlxCGVjP+euqygI5AlJxk/Aq85dufjmMxZeZ9Vww==}
@@ -1363,12 +1355,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  dsh-life-pack@0.3.40:
-    dependencies:
-      dsh-plugin-update: 0.5.4
-
-  dsh-plugin-update@0.5.4: {}
 
   dsh-plugin-update@0.5.8: {}
 
