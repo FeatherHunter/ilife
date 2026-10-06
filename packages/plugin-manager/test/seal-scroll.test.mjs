@@ -17,6 +17,8 @@ const SCROLL_TS = join(HERE, '..', 'src', 'seal-scroll.ts');
 const STAMP_TS = join(HERE, '..', 'src', 'seal-stamp.ts');
 const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
 const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
+const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
+const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
 
 /** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。
  *  卷轴与印是渲染期互引（`seal-scroll ⇄ seal-stamp`，模块求值期无交叉）：编译前先占缓存位，
@@ -40,6 +42,7 @@ const ORIG_LOAD = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
+  if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 
@@ -139,9 +142,14 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
   it('滤镜定义两条都在，且外框引用的就是卷轴那条', () => {
     const defs = expand(React.createElement(SealFilterDefs, {}));
     const ids = nodesOf(defs, (node) => node.type === 'filter').map((node) => node.props.id);
-    assert.deepEqual(ids.sort(), ['dshLifeSealRoughEdge', 'dshLifeSealRoughFrame']);
+    assert.deepEqual(ids.sort(), ['dshLifeSealRoughEdge', 'dshLifeSealRoughFrame', 'dshLifeSealRoughMetal']);
     const scales = nodesOf(defs, (node) => node.type === 'feDisplacementMap').map((node) => node.props.scale);
-    assert.deepEqual(scales, [2.2, 5], '印用 2.2、卷轴外框用 5（同一条在大块上会被稀释）');
+    assert.deepEqual(scales, [2.2, 6.5, 3.2], '印 2.2／外框 6.5（大块会被稀释，故单给一档）／中等件 3.2（关闭钮那几件）');
+    // 外框那条的颗粒配方：低频底噪＋3 倍频（斑块感），纯高频会退化成一条细金粉线。
+    const frameFilter = nodesOf(defs, (node) => node.type === 'filter' && node.props.id === 'dshLifeSealRoughFrame')[0];
+    const turb = nodesOf(frameFilter, (node) => node.type === 'feTurbulence')[0];
+    assert.equal(turb.props.baseFrequency, 0.6, '外框底噪频率');
+    assert.equal(turb.props.numOctaves, 3, '外框倍频数：斑块大小要有层次');
     const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'skill', tier: 'gold' }));
     const frame = nodesOf(tree, (node) => typeof node.props?.style?.filter === 'string')[0];
     assert.equal(frame.props.style.filter, 'url(#dshLifeSealRoughFrame)');
@@ -156,6 +164,19 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes(':focus-visible'), '焦点环');
     assert.ok(css.includes('attr(data-tip)'), 'tooltip 读 data-tip');
   });
+  it('绦带关闭钮：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
+    const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {}, closeVariant: 'tie' }));
+    // 飘尾＝挂在 calc(50%…) 上、且带 rotate 的那两个（绦带本体的 45° 旋转不算）。
+    const tails = nodesOf(tree, (node) => typeof node.props?.style?.transform === 'string'
+      && node.props.style.transform.startsWith('rotate(') && String(node.props.style.left ?? '').startsWith('calc(50%'));
+    assert.deepEqual(tails.map((n) => n.props.style.left), ['calc(50% - 1.125em)', 'calc(50% + 0.75em)'], '左尾挂左、右尾挂右');
+    assert.deepEqual(tails.map((n) => n.props.style.transform), ['rotate(26deg)', 'rotate(-26deg)'], '左尾朝左下（+26°）、右尾朝右下（−26°）');
+    const FILL = 'linear-gradient(180deg,#c63d2a,#a32216 55%,#7e1a10)';
+    const fills = tails.map((n) => n.children.filter((c) => typeof c !== 'string').map((c) => c.props?.style?.background).filter(Boolean));
+    assert.deepEqual(fills.map((f) => f.length), [2, 2], '每条尾两层：过滤镜的材质层＋不受滤镜的纯色芯');
+    assert.deepEqual([...fills[0], ...fills[1]], [FILL, FILL, FILL, FILL], '两条尾同色，且＝绦带底色');
+  });
+
   it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {
     assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
     const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));

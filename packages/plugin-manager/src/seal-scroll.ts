@@ -26,13 +26,23 @@ import type { SealRole, SealTier } from './config-panel-contract.js';
 // 卷轴标题直接复用印本体（与外面那枚同组件同 props，UI 天然一致）。
 // 与 `seal-stamp.ts` 是渲染期互引（双方只在组件函数体内用对方，无模块求值期依赖）。
 import { SealStamp } from './seal-stamp.js';
+// 纸面字排方案（原型选型件：定稿后只留胜出那一档，其余删除）。
+import { closeLook, paperSchemeParts } from './seal-paper-schemes.js';
+import type { CloseVariant, PaperScheme } from './seal-paper-schemes.js';
+export type { PaperScheme, CloseVariant } from './seal-paper-schemes.js';
 
 /** 糙边滤镜 id（文档作用域，故每页只许挂一次 `SealFilterDefs`）。 */
 const ROUGH_EDGE = 'dshLifeSealRoughEdge';
 const ROUGH_FRAME = 'dshLifeSealRoughFrame';
+/** 中等件（轴杆／纸筒／绦带这类几十像素宽的件）那条糙边：2.2 太细、5 会抖过头。 */
+const ROUGH_METAL = 'dshLifeSealRoughMetal';
 
 /** 印那条糙边滤镜 id（`seal-stamp.ts` 引用，定义只此一处）。 */
 export const SEAL_ROUGH_EDGE_ID = ROUGH_EDGE;
+
+/** 中等件那条糙边 id（关闭钮原型引用；定义只此一处）。 */
+export const SEAL_ROUGH_METAL_ID = ROUGH_METAL;
+
 
 /** 档位话：标题下那一行不再印档位字，直接说档位所处的阶段（渲染期用，顶层可放行）。 */
 export const TIER_TEXT: Record<SealTier, string> = {
@@ -167,7 +177,8 @@ const S = {
   } as React.CSSProperties,
   inner: {
     position: 'relative',
-    padding: '1.75em 2em 1.875em',
+    // 上下内垫同值（28px）：底比顶多 2px 会读成“底部空一截”，三段内容也不需要对位字基线。
+    padding: '1.75em 2em',
   } as React.CSSProperties,
   head: { textAlign: 'center', marginBottom: '0.5em' } as React.CSSProperties,
   /** 档位语（标题下那一行）：档位字退役，改说档位话（金＝精雕细琢中／银＝全打通中／铜＝基础建设中）。 */
@@ -206,9 +217,10 @@ const S = {
   /** 卷轴浮层：卡片内绝对定位（卡片 `S.card` 是 relative 定位祖先），上沿悬在三枚章之下、左右各留半 em——
    *  不是 modal：无遮罩、不锁滚动，点章切换、点「关闭」收起。 */
   dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8.8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
-  /** 浮层内框：宽按 em 给（16px 下≈25em），窄卡上收满可用宽，永不捅破卡片；
+  /** 浮层内框：**宽随内容**（`max-content`，正好包住最长那一行；不是固定 25em 那块大纸）。
+   *  `maxWidth:100%` 是窄卡的兜底（收满可用宽、永不捅破卡片），此时长行换行、高度自己长。
    *  挂卷轴展开动画（从上而下舒卷，240ms；纯声明式，无 hook，纯函数可直测）。 */
-  popInner: { position: 'relative', width: '25em', maxWidth: '100%', transformOrigin: '50% 0', animation: UNROLL_ANIMATION + ' 240ms ease-out' } as React.CSSProperties,
+  popInner: { position: 'relative', width: 'max-content', maxWidth: '100%', transformOrigin: '50% 0', animation: UNROLL_ANIMATION + ' 240ms ease-out' } as React.CSSProperties,
   close: {
     position: 'absolute',
     right: '-0.375em',
@@ -230,6 +242,8 @@ export interface SealScrollProps {
   readonly role: SealRole;
   /** 档位（决定外框材质）。 */
   readonly tier: SealTier;
+  /** 纸面字排（缺席＝classic，线上行为不变）。 */
+  readonly paperScheme?: PaperScheme | undefined;
   /** 标题（印文那一行，如 `技能`／`饼干记账 HELP`／`插件`）。 */
   readonly title: string;
   /** 进展。 */
@@ -275,8 +289,17 @@ export function SealFilterDefs(): React.ReactElement {
     React.createElement(
       'filter',
       { id: ROUGH_FRAME, key: ROUGH_FRAME, x: '-6%', y: '-6%', width: '112%', height: '112%' },
+      // 0.6 ＋ 3 倍频：一条低频底噪叠两层细纹 ⇒ 金边碎成大小不一的斑块（颗粒感、斑点感）。
+      // 位移 6.5 让四边四角碎到同一档；斑块感来自那条低频，纯高频（0.9/2）只会得到一条细金粉线。
+      React.createElement('feTurbulence', { baseFrequency: 0.6, numOctaves: 3, result: 'n' }),
+      React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 6.5 }),
+    ),
+    // 中等件（轴杆／纸筒／绦带）：同一套湍流，位移取 3.2。
+    React.createElement(
+      'filter',
+      { id: ROUGH_METAL, key: ROUGH_METAL, x: '-8%', y: '-14%', width: '116%', height: '128%' },
       React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
-      React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 5 }),
+      React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 3.2 }),
     ),
     ),
   );
@@ -285,6 +308,8 @@ export function SealFilterDefs(): React.ReactElement {
 /** 一卷：外框材质 ＋ 纯纸 ＋ 进展／状态／计划三段。 */
 export function SealScroll(props: SealScrollProps): React.ReactElement {
   const material = materialOf(props.role, props.tier);
+  // 【已还原】框面噪点层（grain/fleck）撤掉：它们整体提亮了红底，框色与原版不一致。
+  // 需要“碎金”效果时再按需加回（原型留档见 .scratch）。
   const frameChildren =
     props.role === 'plugin' && material.rivet
       ? [
@@ -306,26 +331,41 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
       React.createElement('div', { style: { ...S.label, color: material.accent } }, name),
       React.createElement('p', { style: S.text }, text),
     );
+  /** 纸面字排：方案件直出五件（原型选型期；赢家落定后收敛成一处常量）。 */
+  const scheme = props.paperScheme ?? 'classic';
+  const parts = paperSchemeParts({
+    scheme,
+    tierKey: props.tier,
+    tierText: TIER_TEXT[props.tier],
+    progress: props.progress,
+    status: props.status,
+    plan: props.plan,
+    accent: material.accent,
+    ruler: material.ruler,
+    paperEdge: PAPER_EDGE,
+    styles: {
+      head: S.head, paper: S.paper, tier: S.tier, orn: S.orn, ornLine: S.ornLine, ornDot: S.ornDot,
+      block: S.block, blockDivided: S.blockDivided, blockLast: S.blockLast, label: S.label, text: S.text,
+    },
+  });
   return React.createElement(
     'div',
     { style: S.scroll },
     React.createElement('div', { style: { ...S.frame, ...material.frame } }, ...frameChildren),
     React.createElement(
       'div',
-      { style: S.paper },
+      { style: parts.paper === undefined ? S.paper : parts.paper },
       React.createElement(
         'div',
         { style: S.inner },
         React.createElement(
           'div',
-          { style: S.head },
+          { style: parts.head === undefined ? S.head : parts.head },
           React.createElement(SealStamp, { role: props.role, tier: props.tier, label: props.title }),
-          React.createElement('div', { style: { ...S.tier, color: material.accent } }, TIER_TEXT[props.tier]),
+          parts.tier,
         ),
-        React.createElement('div', { style: S.orn }, line('l', '90'), React.createElement('i', { style: { ...S.ornDot, background: material.accent } }), line('r', '270')),
-        block('progress', '进展', props.progress, false),
-        block('status', '状态', props.status, true),
-        block('plan', '计划', props.plan, true, true),
+        parts.orn,
+        parts.body,
       ),
     ),
   );
@@ -333,12 +373,14 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
 
 /** 卷轴浮层：popover ＋ 点击别处关闭 ＋ 卷轴展开动画 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
 export function SealScrollDialog(
-  props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void },
+  props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void; readonly closeVariant?: CloseVariant | undefined },
 ): React.ReactElement | null {
   if (!props.open) return null;
   const scroll: SealScrollProps = {
     role: props.role,
     tier: props.tier,
+    // 原型选型期：纸面方案必须一起透传（漏了它弹层里一律回落 classic，效果全丢）。
+    paperScheme: props.paperScheme,
     title: props.title,
     progress: props.progress,
     status: props.status,
@@ -358,7 +400,12 @@ export function SealScrollDialog(
         'div',
         { style: S.popInner },
         // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
-        React.createElement('button', { type: 'button', style: S.close, 'data-ilife-press': 'seal-close', onClick: props.onClose }, '关闭'),
+        // 原型选型期：关闭钮外观走 `closeVariant`（缺席＝线上深色胶囊）。
+        (() => {
+          const look = closeLook(props.closeVariant ?? 'classic', S.close);
+          // zIndex 20：关闭钮要压在卷轴（框＋纸）之上，否则骑在边上的那几档会被红框吃掉半边。
+          return React.createElement('button', { type: 'button', className: 'dshLifeSealBtn', style: { zIndex: 20, ...look.style }, 'data-ilife-press': 'seal-close', 'data-ilife-close': props.closeVariant ?? 'classic', onClick: props.onClose }, look.decor ?? null, look.label);
+        })(),
         React.createElement(SealScroll, scroll),
       ),
     ),
