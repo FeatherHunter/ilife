@@ -386,7 +386,12 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
 
 /** 卷轴浮层：popover ＋ 点击别处关闭 ＋ 卷轴展开动画 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
 export function SealScrollDialog(
-  props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void },
+  props: SealScrollProps & {
+    readonly open: boolean;
+    readonly onClose: () => void;
+    /** 锚点覆盖（面板传：贴在点击那枚章的下方）；缺席＝整卡居中那套老样子。 */
+    readonly anchor?: React.CSSProperties | undefined;
+  },
 ): React.ReactElement | null {
   if (!props.open) return null;
   const scroll: SealScrollProps = {
@@ -404,7 +409,7 @@ export function SealScrollDialog(
     React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 9, background: 'transparent' }, 'aria-hidden': true, onClick: props.onClose }),
     React.createElement(
       'div',
-      { style: S.dialog, role: 'dialog', 'aria-modal': false, 'aria-label': props.title },
+      { style: props.anchor === undefined ? S.dialog : { ...S.dialog, ...props.anchor }, role: 'dialog', 'aria-modal': false, 'aria-label': props.title },
       // 展开关键帧住在这里（scoped 名，宿主无样式表可借时唯一一条纯声明式动画路）。
       React.createElement('style', null, '@keyframes ' + UNROLL_ANIMATION + '{from{opacity:0;transform:translateY(-10px) scaleY(.7)}to{opacity:1;transform:none}}'),
       React.createElement(

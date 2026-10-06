@@ -120,6 +120,29 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     assert.equal(close.length, 1);
     assert.equal(close[0].props['data-ilife-press'], 'seal-close');
   });
+  it('卷轴浮层跟着被点的章走：贴该行下方、右缘与那枚章对齐（不再整卡居中）', () => {
+    const seals = [
+      { role: 'skill', tier: 'copper', label: 's', progress: 'p', status: 's', plan: 'p' },
+      { role: 'help', tier: 'silver', label: 'h', progress: 'p', status: 's', plan: 'p' },
+      { role: 'plugin', tier: 'gold', label: 'g', progress: 'p', status: 's', plan: 'p' },
+    ];
+    const dialogAt = (sel) => flat(expandTree(view.PanelBody(bodyProps({ seals, sealSeed: 0, selectedSeal: sel, onSealSelect: () => {}, onSealClose: () => {} }))))
+      .filter((n) => n.props?.role === 'dialog')[0];
+    const first = dialogAt(0), mid = dialogAt(1), third = dialogAt(2);
+    assert.equal(first.props.style.top, 'calc(0.3em + 1.9em)', '第一行：贴在 HELP 章下方');
+    assert.equal(mid.props.style.top, 'calc(3.4em + 1.9em)', '第二行：贴在技能章下方');
+    assert.equal(third.props.style.top, 'calc(6.2em + 1.9em)', '第三行：贴在插件章下方');
+    assert.equal(first.props.style.left, 'auto', '不再两边撑满居中');
+    assert.equal(first.props.style.justifyContent, 'flex-end', '内框贴右缘');
+    // sealSeed=0 时三行的右间距是 0.38／0.92／0.38em（槽位哈希），逐值对上才算「跟着那枚章」。
+    // （槽位哈希是浮点乘加，字符串可能有 0.9199999… 的尾巴，比数值不比字面。）
+    const padOf = (style) => Number(/calc\(([\d.]+)em \+ 1\.25em\)/.exec(String(style))[1]);
+    assert.ok(Math.abs(padOf(first.props.style.right) - 0.38) < 1e-9, '第一行右间距 0.38em');
+    assert.ok(Math.abs(padOf(mid.props.style.right) - 0.92) < 1e-9, '第二行右间距 0.92em');
+    assert.ok(Math.abs(padOf(third.props.style.right) - 0.38) < 1e-9, '第三行右间距 0.38em');
+    assert.ok(String(first.props.style.maxWidth).startsWith('calc(100% - 0.38'), '窄卡兜底：扣掉右让位与绦带');
+  });
+
   it('StatusBlock actions press, link focuses (no shrink on links)', () => {
     const sb = view.StatusBlock({ name: 'n', tone: 'ok', text: 't', path: 'C:/p', actions: [{ text: 'go', onPress: () => {} }], link: { text: 'site', href: 'https://example.com' } });
     const btns = flat(sb).filter((n) => n.type === 'button');

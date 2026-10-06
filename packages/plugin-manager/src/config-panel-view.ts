@@ -929,10 +929,21 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
    )),
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
+  /** 卷轴浮层跟着**被点的那枚章**：贴在该行下方一小段（1.9em ＝ 章高约 1.5em ＋ 0.4em 缝），
+   *  右缘与那枚章的右缘对齐，再往左让 1.25em 给绦带（关闭钮骑在浮层右上方，不让它越出卡片）。 */
+  const openSlot = props.selectedSeal ?? -1;
+  const anchor = openSlot < 0 || openSlot >= order.length ? undefined : {
+    top: 'calc(' + TOPS[openSlot] + ' + 1.9em)',
+    right: 'calc(' + padRightOfSlot(openSlot) + ' + 1.25em)',
+    left: 'auto',
+    justifyContent: 'flex-end',
+    maxWidth: 'calc(100% - ' + padRightOfSlot(openSlot) + ' - 1.75em)',
+  } as React.CSSProperties;
   const dialog = openSeal === null ? null : React.createElement(SealScrollDialog, {
     open: true, onClose: props.onSealClose ?? (() => undefined),
     role: openSeal.role, tier: openSeal.tier, title: openSeal.label,
     progress: openSeal.progress, status: openSeal.status, plan: openSeal.plan,
+    anchor,
   });
   const headDataDir = surface === null ? '' : surface.resolved?.['dbDir'] ?? surface.dataDir;
   const ready = state.kind === 'ready';
