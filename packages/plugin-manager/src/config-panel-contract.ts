@@ -135,7 +135,8 @@ export const LONGPRESS_RING_HEIGHT_PX = 3 as const;
  * 开态 cap 300px 即 `.open{max-height:300px;opacity:1}`；原生 details 开关离散、过渡跑不起来，
  * 故生产侧取等价形态 `ilifeFoldIn` 关键帧 0→300＋0→1 同 .22s）＋箭头旋转
  * （`.chev{transition:transform .2s}`、开态 `rotate(90deg)`）＋悬停箭头右移 2px 并跟焦点色
- * （`:hover .chev{translateX(2px)}`）。页签 12%／按钮 13% 淡洗各归其票，这里只定高级头。
+ * （`:hover .chev{translateX(2px)}`）。页签 12%／按钮 13% 淡洗各归其票；高级头叠加与按钮同档的 13% 洗色
+ * （#1174 T1 拍板：只叠加不删动画，复用 `HOVER_WASH_PERCENT`，不另起 token，见视图 `interactionCss`）。
  *
  * 轻提示：渐显 .18s（`.toast{transition:opacity .18s ease,transform .18s ease}`，
  * 入场位移 8px 即 `translateY(8px)→0`；生产侧 `notice` 条件挂载，进场即跑 `ilifeToastIn`）。

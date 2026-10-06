@@ -95,11 +95,11 @@ export function openManagerTab(port: HasTabsPort, slotId: string, sessionId?: st
   port.openTab({ type: slotId, path: slotId }, sessionId ? { sessionId } : undefined);
 }
 
-/** 面板右上角一个入口：图标 ＋ 悬停说明 ＋ 目标网址。 */
+/** 面板右上角一个入口：SVG 图标 ＋ 悬停说明 ＋ 目标网址。 */
 export interface PanelLinkRow {
   readonly key: 'star' | 'feedback';
-  /** 图标字形（照参照实现 dsh-mattpocock-skills-deck，星星只留 ⭐、反馈只留 💬）。 */
-  readonly glyph: string;
+  /** 图标（#1174 起为 SVG：星星实心星、气泡描边气泡，与行尾外链图标同线形语言；emoji 字形已退役）。 */
+  readonly icon: { readonly path: string; readonly filled: boolean };
   /** 鼠标悬停给出的说明文字。 */
   readonly tip: string;
   readonly url: string;
@@ -112,8 +112,8 @@ export interface PanelLinkRow {
  * 三件并排里的第三件「检查更新」住隔壁票（#678），本表不管它。
  */
 export const PANEL_LINKS: readonly PanelLinkRow[] = [
-  { key: 'star', glyph: '⭐', tip: '你的🌟是我夜空中最亮的星。', url: 'https://github.com/FeatherHunter/ilife' },
-  { key: 'feedback', glyph: '💬', tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
+  { key: 'star', icon: { path: 'M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6-5.9-3.2-5.9 3.2 1.3-6.6L2.5 9.5l6.6-.8z', filled: true }, tip: '你的🌟是我夜空中最亮的星。', url: 'https://github.com/FeatherHunter/ilife' },
+  { key: 'feedback', icon: { path: 'M5 4h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-7.5L7 18v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z', filled: false }, tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
 ];
 
 /** 底部「作者其他插件」卡里的一行：包名 ＋ 一句说明 ＋ 行尾外链图标指向的仓库。 */

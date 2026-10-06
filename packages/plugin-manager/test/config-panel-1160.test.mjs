@@ -188,7 +188,7 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     assert.ok(overlay, '印覆盖层 z 15：高过卡片内容、低于浮层 20');
   });
 
-  it('StatusBlock actions press, link focuses (no shrink on links)', () => {
+  it('StatusBlock actions press, link focuses + press (#1174 Q2 可点即有反馈：press 语言统一，含按压)', () => {
     const sb = view.StatusBlock({ name: 'n', tone: 'ok', text: 't', path: 'C:/p', actions: [{ text: 'go', onPress: () => {} }], link: { text: 'site', href: 'https://example.com' } });
     const btns = flat(sb).filter((n) => n.type === 'button');
     assert.equal(btns.length, 1);
@@ -196,7 +196,7 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     const links = flat(sb).filter((n) => n.type === 'a');
     assert.equal(links.length, 1);
     assert.equal(links[0].props['data-ilife-focus'], 'status-link');
-    assert.equal(links[0].props['data-ilife-press'], undefined);
+    assert.equal(links[0].props['data-ilife-press'], 'status-link');
   });
   it('pixel seam script exits 0 with PASS + ratio line (single-route minimal)', () => {
     const out = execFileSync(process.execPath, [join(PKG, 'scripts', 'pixel-t1-compare.mjs')], { encoding: 'utf8' });

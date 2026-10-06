@@ -32,8 +32,12 @@ describe('票 #679 面板头部与底部', () => {
     assert.equal(feedback.url, 'https://github.com/FeatherHunter/ilife/issues/new');
     for (const link of PANEL_LINKS) {
       assert.ok(link.tip.length > 0, link.key + ' 缺悬停说明');
-      assert.ok(link.glyph.length > 0, link.key + ' 缺图标');
+      assert.ok(link.icon.path.length > 8, link.key + ' 缺图标');
+      assert.equal(typeof link.icon.filled, 'boolean', link.key + ' 图标须标明实心/描边');
+      assert.ok(!('glyph' in link), link.key + ' emoji 字形已退役（#1174）');
     }
+    assert.equal(star.icon.filled, true, '星星须实心填色');
+    assert.equal(feedback.icon.filled, false, '气泡须描边');
   });
 
   it('底部四行：包名与文案（不写数字、不自指，用户 2026-09-18 定的口径）', () => {

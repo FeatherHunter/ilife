@@ -94,8 +94,10 @@ export function interactionCss(): string {
     'box-shadow:0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
     '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))}' +
     '[data-ilife-press]{position:relative;overflow:hidden}' +
-    '[data-ilife-press]:hover:not(:disabled){background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_WASH_PERCENT) + '%, transparent);' +
-    'border-color:' + T2_FOCUS_VAR + ';' +
+    // #1174：悬停洗色与边框必须压过行内基线（`S.btn*` 的行内 background／border 特异度高于样式表，
+    // 无 `!important` 时行内基线挡住悬停洗色与边框，只剩阴影与位移）。`box-shadow`／`transform` 无行内冲突，不加。
+    '[data-ilife-press]:hover:not(:disabled){background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_WASH_PERCENT) + '%, transparent)!important;' +
+    'border-color:' + T2_FOCUS_VAR + '!important;' +
     'box-shadow:0 0 0 1px color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_GLOW_EDGE_PERCENT) + '%, transparent),' +
     '0 4px 16px color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_GLOW_SOFT_PERCENT) + '%, transparent);' +
     'transform:translateY(-' + String(HOVER_LIFT_PX) + 'px)}' +
@@ -116,7 +118,9 @@ export function interactionCss(): string {
     'background:' + T2_FOCUS_VAR + ';pointer-events:none}' +
     '[data-ilife-longpress]:active:not(:disabled)::after{animation:ilifeLongRing ' + String(LONGPRESS_MS / 1000) + 's linear forwards}' +
     '@keyframes ilifeLongRing{from{width:0}to{width:100%}}' +
-    '[data-ilife-advanced="head"]{transition:' + INTERACTION_TRANSITION + '}' +
+    '[data-ilife-advanced="head"]{transition:' + INTERACTION_TRANSITION + ';border-radius:8px}' +
+    // #1174 T1：高级头叠加与复制同档的背景洗色（折叠／箭头／右移保留，只叠加不删减）。
+    '[data-ilife-advanced="head"]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(HOVER_WASH_PERCENT) + '%, transparent)!important}' +
     '[data-ilife-advanced="mark"]{display:inline-block;transition:transform ' + String(ADVANCED_CHEV_MS / 1000) + 's ease}' +
     '[data-ilife-advanced="group"][open] [data-ilife-advanced="mark"]{transform:rotate(90deg)}' +
     '[data-ilife-advanced="head"]:hover [data-ilife-advanced="mark"]{color:' + T2_FOCUS_VAR + ';transform:translateX(' + String(ADVANCED_CHEV_SHIFT_PX) + 'px)}' +
@@ -157,8 +161,9 @@ export function tabInteractionCss(): string {
     '[data-ilife-glider],[data-ilife-ghost]{position:absolute;top:0;left:0;border-radius:999px;background:' + T2_FOCUS_VAR + '}' +
     '[data-ilife-ghost]{opacity:0}' +
     '[data-ilife-tab]{position:relative;z-index:1;transition:' + TAB_TRANSITION + '}' +
-    '[data-ilife-tab]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(TAB_HOVER_WASH_PERCENT) + '%, transparent);' +
-    'border-color:' + T2_FOCUS_VAR + '}' +
+    // #1174 Q1：页签按 V1 修到可见——洗色与边框必须压过 `S.tab` 行内基线（与 press 相同的行内遮挡问题）。
+    '[data-ilife-tab]:hover{background:color-mix(in srgb, ' + T2_FOCUS_VAR + ' ' + String(TAB_HOVER_WASH_PERCENT) + '%, transparent)!important;' +
+    'border-color:' + T2_FOCUS_VAR + '!important}' +
     '[data-ilife-tab]:hover [data-ilife-health="tab-dot"]{animation:ilifeDotPulse ' + String(TAB_DOT_PULSE_MS / 1000) + 's ease infinite}' +
     '@keyframes ilifeDotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}' +
     '[data-ilife-tab]:focus-visible{outline:none;' +
@@ -1228,8 +1233,9 @@ export function StatusBlock(props: StatusBlockProps): React.ReactElement {
             href: props.link.href,
             target: '_blank',
             rel: 'noreferrer',
-            // #1160 T1：键盘焦点双环（链接只给焦点，不收缩）。
+            // #1160 T1：键盘焦点双环；#1174 Q2：补悬停洗色（只做反馈，不收缩、不挂长按环）。
             'data-ilife-focus': 'status-link',
+            'data-ilife-press': 'status-link',
           },
           props.link.text,
         ),

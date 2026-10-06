@@ -219,7 +219,27 @@ function ExternalIcon(): React.ReactElement {
   );
 }
 
-/** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），悬停出说明文字。
+/** 标题行入口图标（#1174：星星实心填色、气泡描边，与行尾外链图标同线形语言；语义仍在链接的 title／aria-label 上）。 */
+function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string }): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 24 24',
+      width: 14,
+      height: 14,
+      fill: props.filled ? 'currentColor' : 'none',
+      stroke: props.filled ? 'none' : 'currentColor',
+      strokeWidth: 1.9,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      'aria-hidden': 'true',
+      focusable: 'false',
+    },
+    React.createElement('path', { d: props.path }),
+  );
+}
+
+/** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），SVG 图标＋悬停说明＋按压反馈（#1174）。
  *
  * 三件并排里的第三件「检查更新」住隔壁票（#678）：本票只留位子——它就接在本组件之前，
  * 不画一个点了没反应的假按钮。窄窗口靠 headRow 的 flexWrap 折到标题下方，
@@ -240,8 +260,10 @@ function PanelActions(): React.ReactElement {
           title: link.tip,
           'aria-label': link.tip,
           style: S.iconLink,
+          // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；长按环不挂，链接只做反馈不做标记）。
+          'data-ilife-press': link.key,
         },
-        React.createElement('span', { 'aria-hidden': 'true' }, link.glyph),
+        React.createElement(PanelLinkIcon, { filled: link.icon.filled, path: link.icon.path }),
       ),
     ),
   );
@@ -266,6 +288,8 @@ function MorePluginsCard(): React.ReactElement {
           rel: 'noreferrer',
           title: row.pkg + ' 的 GitHub 仓库',
           style: S.moreRow,
+          // #1174 Q2：引流行的悬停与按压反馈（整行可点就整行有反馈）。
+          'data-ilife-press': 'more',
         },
         React.createElement('span', { style: S.morePkg }, row.pkg),
         React.createElement('span', { style: S.moreDesc }, row.desc),
