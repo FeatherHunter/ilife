@@ -37,11 +37,14 @@ describe('1170 批量宿主', () => {
     assert.equal(batch.phoneNames.status, 'life.batchStatus');
     assert.equal(batch.phoneNames.check, 'life.batchCheck');
   });
-  it('一次登记 33 个电话：批量 5 + 七目标各 4 单电话', async () => {
+  it('一次登记：批量电话（上游声明几支就几支）＋七目标各 4 单电话，无重复', async () => {
     resetBatchHostForTests();
     const batch = await getBatchHost({});
     const names = Object.keys(batch.handlers);
-    assert.equal(names.length, 5 + 7 * 4);
+    // 批量那几支的数量**跟上游的声明走**（0.7.0 起是 7 支：多了 batchPrefs／batchPrefsSave）——
+    // 写死 5 会在上游发版当天变红，而这条用例真正要咬的是「每支只登记一次、七目标各 4 支」。
+    assert.equal(names.length, Object.keys(batch.phoneNames).length + 7 * 4);
+    assert.equal(new Set(names).size, names.length, '不许重复登记');
     assert.ok(names.includes('life.batchStatus'));
     assert.ok(names.includes('ilife-bill.updateStatus'));
     assert.ok(names.includes('ilife-life-pack.updateStatus'));
