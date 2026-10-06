@@ -47,7 +47,8 @@ export function closeLook(tierKey: string): CloseLook {
   /** 档位金属边（铜／银／金）：绦带**只借这一条**——主体恒朱砂，边随档走，跟章「红底＋金属边」同构。 */
   const edge = TIER_EDGE[tierKey] ?? TIER_EDGE['gold']!;
   const ribbon = bgLayer(
-    { borderRadius: '0.375em', background: crimson, boxShadow: '0 2px 8px #3d241066, inset 0 0 0 1px ' + edge + '66', transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
+    // 边要压得住：2px 实色金属边（1px 半透明那版看不出档）+ 外圈一道暗线把边从框上切出来。
+    { borderRadius: '0.375em', background: crimson, boxShadow: '0 0 0 1px #5c110a59, 0 2px 8px #3d241066, inset 0 0 0 2px ' + edge, transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
     null,
   );
   /** 尾色＝绦带上亮一档的朱砂（悬在纸上也不发灰、不发黑）：两条尾同色。 */
@@ -64,7 +65,7 @@ export function closeLook(tierKey: string): CloseLook {
       background: TAIL_FILL,
       // 只留一道暗红描边把尾从纸面/暗底上切出来；**不给金边**——尾只有 6px 宽，
       // 1px 金边被糙边滤镜一搅会把整条尾染成金灰（左尾「不够亮」就是这么来的）。
-      boxShadow: '0 0 0 1px ' + edge + '73, 0 1px 3px #00000055',
+      boxShadow: '0 0 0 1.5px ' + edge + 'cc, 0 1px 3px #00000055',
       filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')',
     }),
     // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。

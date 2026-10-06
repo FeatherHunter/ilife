@@ -202,10 +202,11 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
       const tailLayer = kidsOf(tail).find((c) => typeof c !== 'string' && String(c.props?.style?.filter ?? '').includes('RoughMetal'));
       return { ribbon: String(ribbon.props.style.boxShadow), ribbonBg: String(ribbon.props.style.background), tail: String(tailLayer.props.style.boxShadow) };
     });
-    assert.ok(rims[0].ribbon.includes('#f5d97a66'), '金档绦带：金边');
-    assert.ok(rims[1].ribbon.includes('#d8dee366'), '银档绦带：银边');
-    assert.ok(rims[2].ribbon.includes('#a5652f66'), '铜档绦带：铜边');
-    assert.ok(rims[0].tail.includes('#f5d97a73') && rims[2].tail.includes('#a5652f73'), '两条飘尾也随档取边');
+    assert.ok(rims[0].ribbon.includes('inset 0 0 0 2px #f5d97a'), '金档绦带：2px 金边');
+    assert.ok(rims[1].ribbon.includes('inset 0 0 0 2px #d8dee3'), '银档绦带：2px 银边');
+    assert.ok(rims[2].ribbon.includes('inset 0 0 0 2px #a5652f'), '铜档绦带：2px 铜边');
+    assert.ok(rims[0].ribbon.includes('0 0 0 1px #5c110a59'), '边外还有一道暗线（不然压在框上看不出）');
+    assert.ok(rims[0].tail.includes('0 0 0 1.5px #f5d97acc') && rims[2].tail.includes('0 0 0 1.5px #a5652fcc'), '两条飘尾也随档取边');
     assert.ok(rims.every((r) => r.ribbonBg.includes('#c63d2a')), '边换了，主体三档都仍是朱砂');
   });
 
