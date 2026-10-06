@@ -108,3 +108,41 @@ describe('#1174 Q2 全量可点击审计（可点即有反馈）', () => {
     for (const i of inputs) assert.equal(i.props['data-ilife-press'], undefined);
   });
 });
+
+const value1174 = await import('../dist/config-panel-value.js');
+const { toDraft: toDraft1174 } = value1174;
+
+function expandTree1174(tree) {
+  if (tree === null || tree === undefined || typeof tree === 'boolean') return tree;
+  if (Array.isArray(tree)) return tree.map(expandTree1174);
+  if (typeof tree === 'object' && tree.props !== undefined) {
+    if (typeof tree.type === 'function') { try { return expandTree1174(tree.type(tree.props)); } catch { return tree; } }
+    return { type: tree.type, props: { ...tree.props, children: expandTree1174(tree.props.children) } };
+  }
+  return tree;
+}
+const ITEMS_ADV = [
+  { key: 'db.name', title: 'db file', tier: 'common', control: 'text', readonly: true, resolveFrom: 'dbFile', hint: 'h' },
+  { key: 'db.adv', title: 'adv item', tier: 'advanced', control: 'text', hint: 'h' },
+];
+const SURFACE_ADV = { path: 'C:/x.yaml', dataDir: 'C:/d', created: false, values: {}, resolved: {} };
+function bodyPropsAdv(over = {}) {
+  return { title: 't', items: ITEMS_ADV, state: { kind: 'ready', surface: SURFACE_ADV }, draft: toDraft1174(ITEMS_ADV, SURFACE_ADV.values, SURFACE_ADV), busy: false, notice: null, writeError: null, error: null, picking: false, browseRow: null, rowEntry: null, dirtyKeys: [], followKeys: [], copy: null, onCopy: () => {}, onChange: () => {}, onSave: () => {}, onReset: () => {}, onRetry: () => {}, ...over };
+}
+
+describe('#1174 追修：高级头焦点贴内容＋开态箭头朝下', () => {
+  it('summary 头收成内容宽度（洗色不铺满整行，锁格不动）', () => {
+    const tree = expandTree1174(view.PanelBody(bodyPropsAdv()));
+    const heads = flat(tree).filter((n) => n.type === 'summary');
+    assert.equal(heads.length, 1);
+    assert.equal(heads[0].props.style.width, 'fit-content');
+    assert.equal(heads[0].props.style.padding, '2px 0');
+    assert.equal(heads[0].props.style.cursor, 'pointer');
+    assert.equal(heads[0].props.style.listStyle, 'none');
+  });
+  it('开态悬停旋转与右移共存（箭头保持朝下）', () => {
+    const css = view.interactionCss();
+    assert.match(css, /\[data-ilife-advanced="group"\]\[open\] \[data-ilife-advanced="head"\]:hover \[data-ilife-advanced="mark"\]\{[^}]*rotate\(90deg\)\}/);
+    assert.match(css, /translateX\(2px\) rotate\(90deg\)/);
+  });
+});

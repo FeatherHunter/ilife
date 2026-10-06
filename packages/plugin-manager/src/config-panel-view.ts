@@ -124,6 +124,8 @@ export function interactionCss(): string {
     '[data-ilife-advanced="mark"]{display:inline-block;transition:transform ' + String(ADVANCED_CHEV_MS / 1000) + 's ease}' +
     '[data-ilife-advanced="group"][open] [data-ilife-advanced="mark"]{transform:rotate(90deg)}' +
     '[data-ilife-advanced="head"]:hover [data-ilife-advanced="mark"]{color:' + T2_FOCUS_VAR + ';transform:translateX(' + String(ADVANCED_CHEV_SHIFT_PX) + 'px)}' +
+    // #1174 追修：开态悬停旋转与右移共存（等特异度下悬停在后会吃掉 rotate，箭头弹回朝右；右移在外、旋转在内）。
+    '[data-ilife-advanced="group"][open] [data-ilife-advanced="head"]:hover [data-ilife-advanced="mark"]{color:' + T2_FOCUS_VAR + ';transform:translateX(' + String(ADVANCED_CHEV_SHIFT_PX) + 'px) rotate(90deg)}' +
     '[data-ilife-advanced="group"][open] [data-ilife-advanced="body"]{animation:ilifeFoldIn ' + String(ADVANCED_OPEN_MS / 1000) + 's ease}' +
     '@keyframes ilifeFoldIn{from{max-height:0;opacity:0}to{max-height:' + String(ADVANCED_OPEN_MAX_PX) + 'px;opacity:1}}' +
     '[data-ilife-notice="line"]{animation:ilifeToastIn ' + String(NOTICE_FADE_MS / 1000) + 's ease}' +
@@ -489,6 +491,8 @@ const S = {
    *  font-weight:600;padding:2px 0}`——字号**不写**（#739 ④：`summary` 该继承宿主字号）。 */
   summary: {
     display: 'flex',
+    // #1174 追修：头收成内容宽度——悬停洗色贴着内容走，不铺满整行（padding／cursor／listStyle 锁不动）。
+    width: 'fit-content',
     alignItems: 'center',
     gap: 8,
     cursor: 'pointer',
