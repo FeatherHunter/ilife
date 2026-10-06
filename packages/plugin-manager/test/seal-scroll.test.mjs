@@ -169,9 +169,9 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     // 飘尾＝挂在 calc(50%…) 上、且带 rotate 的那两个（绦带本体的 45° 旋转不算）。
     const tails = nodesOf(tree, (node) => typeof node.props?.style?.transform === 'string'
       && node.props.style.transform.startsWith('rotate(') && String(node.props.style.left ?? '').startsWith('calc(50%'));
-    assert.deepEqual(tails.map((n) => n.props.style.left), ['calc(50% - 1.125em)', 'calc(50% + 0.75em)'], '左尾挂左、右尾挂右');
+    assert.deepEqual(tails.map((n) => n.props.style.left), ['calc(50% - 0.8125em)', 'calc(50% + 0.4375em)'], '左尾挂左、右尾挂右');
     assert.deepEqual(tails.map((n) => n.props.style.transform), ['rotate(26deg)', 'rotate(-26deg)'], '左尾朝左下（+26°）、右尾朝右下（−26°）');
-    const FILL = 'linear-gradient(180deg,#c63d2a,#a32216 55%,#7e1a10)';
+    const FILL = 'linear-gradient(180deg,#d2442e 0%,#ad2a1c 58%,#8c1c11 100%)';
     const fills = tails.map((n) => n.children.filter((c) => typeof c !== 'string').map((c) => c.props?.style?.background).filter(Boolean));
     assert.deepEqual(fills.map((f) => f.length), [2, 2], '每条尾两层：过滤镜的材质层＋不受滤镜的纯色芯');
     assert.deepEqual([...fills[0], ...fills[1]], [FILL, FILL, FILL, FILL], '两条尾同色，且＝绦带底色');

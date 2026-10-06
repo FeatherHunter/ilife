@@ -64,8 +64,8 @@ export function closeLook(variant: CloseVariant, base: React.CSSProperties): Clo
       { borderRadius: '0.375em', background: crimson, boxShadow: '0 2px 8px #3d241066, inset 0 0 0 1px #f5d97a66', transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
       null,
     );
-    /** 尾色＝绦带底色（两条尾同色；不许一条偏金、一条偏暗红）。 */
-    const TAIL_FILL = 'linear-gradient(180deg,#c63d2a,#a32216 55%,#7e1a10)';
+    /** 尾色＝绦带底色但提亮一档（悬在纸上也不发灰）：两条尾同色，不许一条偏金、一条偏暗红。 */
+    const TAIL_FILL = 'linear-gradient(180deg,#d2442e 0%,#ad2a1c 58%,#8c1c11 100%)';
     /** 飘尾：屏幕坐标（不随菱形旋转）——左尾往左下、右尾往右下，两条对外张开（CSS 正角＝尾梢往左）。
      *  两层：外层过糙边滤镜出毛边，内层纯色芯不受滤镜像影响——尾悬在纸上还是悬在暗底上都是同一色，
      *  不会因背后是纸而被穿出一片浅斑（照「材质层＋清晰层」的老做法）。 */
@@ -77,7 +77,8 @@ export function closeLook(variant: CloseVariant, base: React.CSSProperties): Clo
       bgLayer({
         borderRadius: '0 0 0.1875em 0.1875em',
         background: TAIL_FILL,
-        boxShadow: 'inset 0 0 0 1px #f5d97a66, 0 1px 3px #00000055',
+        // 外圈一道暗红线把尾从纸面/暗底上切出来（不然悬在米纸上的那条会糊），内圈金边照绦带。
+        boxShadow: '0 0 0 1px #6d150c66, inset 0 0 0 1px #f5d97a99, 0 1px 3px #00000055',
         filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')',
       }),
       React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '1px', borderRadius: '0 0 0.125em 0.125em', background: TAIL_FILL } }));
@@ -88,8 +89,9 @@ export function closeLook(variant: CloseVariant, base: React.CSSProperties): Clo
       }),
       decor: React.createElement(React.Fragment, null,
         // 尾根压在带面之下（top 取在菱形内），梢头各自朝外：tL +26° ⇒ 尾梢往左，tR −26° ⇒ 尾梢往右。
-        loose('tL', 'calc(50% - 1.125em)', 26, '2em', '2.5em'),
-        loose('tR', 'calc(50% + 0.75em)', -26, '2em', '2.5em'),
+        // 两条尾沿菱形下边各向底尖挪 0.3125em（左尾往右下、右尾往左下各 45°），挪完仍压在带面之下。
+        loose('tL', 'calc(50% - 0.8125em)', 26, '2em', '2.8125em'),
+        loose('tR', 'calc(50% + 0.4375em)', -26, '2em', '2.8125em'),
         ribbon),
       style: {
         boxSizing: 'border-box', padding: 0, position: 'absolute', right: '-1.5em', top: '-1.5em', width: '3.25em', height: '3.25em',
