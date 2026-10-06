@@ -184,9 +184,9 @@ export function tabInteractionCss(): string {
   );
 }
 
-/** 三枚章的整体缩放（定：当前显示大小 × 0.7）。**一个系数管全簇**——章面字号、三行落位、右间距、
+/** 三枚章的整体缩放（定：当前显示大小 × 0.77＝0.7×1.1，#1176 放大 10%）。**一个系数管全簇**——章面字号、三行落位、右间距、
  *  浮层锚点全乘它：只缩章不缩槽位，三行之间会空出一截；只缩槽位不缩章，章会互相压上。 */
-const SEAL_SCALE = 0.7;
+const SEAL_SCALE = 0.77;
 /** 卡面 em 值（乘缩放后收 4 位小数：0.3×0.7 在浮点里是 0.21000000000000002，直接拼串会带尾巴）。 */
 const sealEm = (n: number): string => String(Math.round(n * SEAL_SCALE * 1e4) / 1e4) + 'em';
 
@@ -958,10 +958,10 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
       // 槽位包裹层：**不过滤镜**，气泡挂这一层（字才清晰）＋ 悬停整枚抬起（盖得住卡片内容）。
       { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, className: 'dshLifeSealSlot', 'data-tip': sealTipOf(seals[dataIndex].tier), style: ((): React.CSSProperties => { const g = slotGeom(slot, seed); return { position: 'absolute', top: g.top, right: g.padRight, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + g.tilt + 'deg)' }; })() },
       // 章面按簇缩放：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
-      // 0.56em ＝ 0.8em（原用法字号）× SEAL_SCALE。这里必须是**em 字面量**：全仓门禁 panel-type-739 逐条扫
+      // 0.616em ＝ 0.8em（原用法字号）× SEAL_SCALE（0.77，#1176 放大 10%）。这里必须是**em 字面量**：全仓门禁 panel-type-739 逐条扫
       // 共用件的 fontSize，只认 '\d.em'（"字号一律相对单位、不出现 px 绝对量"）；写成 sealEm(0.8) 那种调用式会被它判红。
       // 两个数的一致性由 config-panel-1160 用例咬住：它同时锁这一格与三行落位（改 SEAL_SCALE 落位先红）。
-      React.createElement('span', { style: { fontSize: '0.56em', display: 'inline-flex' } },
+      React.createElement('span', { style: { fontSize: '0.616em', display: 'inline-flex' } },
         React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
    )),
   );

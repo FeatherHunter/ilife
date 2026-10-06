@@ -90,3 +90,41 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     React.createElement('span', { style: { position: 'relative', zIndex: 2, textShadow: '0 1px 2px #00000088' } }, props.label),
   );
 }
+
+export interface SealTitleProps {
+  readonly role: SealRole;
+  readonly tier: SealTier;
+  readonly label: string;
+}
+
+/** 卷轴标题（静态展示，与印同外观但无按钮语义）：无 button、无 data-tip、无悬停上浮、无焦点环。
+ *
+ * 为何另起一件而不复用 SealStamp：SealStamp 恒为 button 且自带 data-tip（悬停气泡），
+ * 卷轴内标题只做展示文本，复用会把开关语义与气泡一起带进来（#1176）。
+ * 外观与印同源：底色边线走 SEAL_PALETTE，排法走 ROLE_BASE／FACE_EXTRA／BAND_EDGE，同档同色。 */
+export function SealTitle(props: SealTitleProps): React.ReactElement {
+  const palette = SEAL_PALETTE[props.role]?.[props.tier];
+  if (palette === undefined) throw new Error('未知印章组合：' + String(props.role) + '/' + String(props.tier));
+  const style: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    cursor: 'default',
+    fontWeight: 800,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
+    filter: 'url(#' + SEAL_ROUGH_EDGE_ID + ')',
+    ...ROLE_BASE[props.role],
+    background: palette.background,
+    ...(palette.border === undefined ? {} : { border: palette.border }),
+    ...FACE_EXTRA[props.role][props.tier],
+  };
+  if (props.role !== 'plugin') return React.createElement('span', { style }, props.label);
+  const band: React.CSSProperties = { position: 'absolute', top: '-1px', bottom: '-1px', left: '-1px', right: '-1px', zIndex: 1, borderRadius: '4px', boxShadow: BAND_EDGE[props.tier], background: palette.background };
+  const rivet: React.CSSProperties = { position: 'absolute', zIndex: 3, width: '0.5em', height: '0.5em', borderRadius: '50%', top: '50%', transform: 'translateY(-50%)', ...SEAL_RIVET[props.tier] };
+  return React.createElement('span', { style },
+    React.createElement('span', { style: band, 'data-seal-band': '1' }),
+    React.createElement('span', { style: { ...rivet, left: '0.5em' }, 'data-seal-rivet': 'left' }),
+    React.createElement('span', { style: { ...rivet, right: '0.5em' }, 'data-seal-rivet': 'right' }),
+    React.createElement('span', { style: { position: 'relative', zIndex: 2, textShadow: '0 1px 2px #00000088' } }, props.label),
+  );
+}

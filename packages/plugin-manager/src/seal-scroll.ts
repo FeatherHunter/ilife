@@ -25,9 +25,9 @@ import * as React from 'react';
 // 焦点环两个尺寸从面板契约引（与 `interactionCss` 同一份定义）：本件要在"聚焦＋悬停"那一档把两道环原样重述。
 import { FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX } from './config-panel-contract.js';
 import type { SealRole, SealTier } from './config-panel-contract.js';
-// 卷轴标题直接复用印本体（与外面那枚同组件同 props，UI 天然一致）。
+// 卷轴标题与外面那枚同外观但为静态文本（SealTitle，无按钮语义、无气泡，#1176）。
 // 与 `seal-stamp.ts` 是渲染期互引（双方只在组件函数体内用对方，无模块求值期依赖）。
-import { SealStamp } from './seal-stamp.js';
+import { SealTitle } from './seal-stamp.js';
 // 定稿的纸面字排与关闭钮样子（原型期方案已删，只此一件）。
 import { closeLook, paperParts } from './seal-paper-schemes.js';
 // 底色与边线从调色板取（与印面同一份取值）；下面那张 `FRAME_INSET` 是**外框自己的排法**。
@@ -381,7 +381,7 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
         React.createElement(
           'div',
           { style: parts.head === undefined ? S.head : parts.head },
-          React.createElement(SealStamp, { role: props.role, tier: props.tier, label: props.title }),
+          React.createElement(SealTitle, { role: props.role, tier: props.tier, label: props.title }),
           parts.tier,
         ),
         parts.orn,

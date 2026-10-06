@@ -141,8 +141,12 @@ describe('印章卷轴 · 三段内容与档位话', () => {
         assert.ok(text.includes(PROPS.title), '缺标题');
         assert.ok(text.includes(TIER_TEXT[tier]), '缺档位话：' + TIER_TEXT[tier]);
         assert.ok(text.includes(PROPS.progress) && text.includes(PROPS.status) && text.includes(PROPS.plan), '三段正文都要在屏上');
-        const titleSeal = nodesOf(tree, (node) => node.type === 'button' && node.props?.['aria-label'] === PROPS.title);
-        assert.equal(titleSeal.length, 1, '卷轴标题须是与外面同一枚章（同组件），不是普通字');
+        const titleButtons = nodesOf(tree, (node) => node.type === 'button' && node.props?.['aria-label'] === PROPS.title);
+        assert.equal(titleButtons.length, 0, '卷轴标题不许是按钮（#1176 展示文本，不可点）');
+        const tips = nodesOf(tree, (node) => node.props?.['data-tip'] !== undefined);
+        assert.equal(tips.length, 0, '卷轴标题不许带悬浮气泡（无 data-tip）');
+        const titleSeals = nodesOf(tree, (node) => typeof node.props?.style?.filter === 'string' && String(node.props.style.filter).includes('dshLifeSealRoughEdge') && textsOf(node).join('').includes(PROPS.title));
+        assert.ok(titleSeals.length >= 1, '卷轴标题仍在屏上且与印同外观（过糙边滤镜的那层）');
       });
     }
   }
