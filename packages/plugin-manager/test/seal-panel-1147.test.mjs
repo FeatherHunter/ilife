@@ -79,7 +79,7 @@ describe('1147 右区三枚签接线', () => {
     const seals = buttons(PanelBody(bodyProps({ seals: undefined })));
     assert.equal(seals.filter((b) => b.props['aria-haspopup'] === 'dialog').length, 0);
   });
-  it('18 枚倾角各不同（两家六枚互异）', () => {
+  it('倾角轻微且方向随机（两家六枚互异，幅度不超 2.5°）', () => {
     const tilts = [];
     for (const seed of [0, 1]) {
       const flat = expand(PanelBody(bodyProps({ sealSeed: seed })));
@@ -94,25 +94,32 @@ describe('1147 右区三枚签接线', () => {
     }
     assert.equal(tilts.length, 6);
     assert.equal(new Set(tilts).size, 6, '倾角必须互异：' + tilts.join(','));
+    const degs = tilts.map((t) => Number(t.slice(7, -4)));
+    for (const d of degs) assert.ok(Math.abs(d) <= 2.5 && Math.abs(d) >= 0.5, '倾角须轻微（0.5°～2.5°），实到 ' + d);
+    assert.ok(Math.min(...degs) < 0 && Math.max(...degs) > 0, '倾斜方向须有正有负');
   });
-  it('六家槽位轮排不同（seed 0 与 seed 1 首枚不同）', () => {
-    const firstOf = (seed) => {
+  it('三行定序且居右（HELP 上／技能中／插件下；各家右间距不同）', () => {
+    const rowsOf = (seed) => {
       const flat = expand(PanelBody(bodyProps({ sealSeed: seed })));
-      const out = [];
+      const labels = [];
+      const rights = [];
       const walk = (n) => {
         if (n === null || n === undefined || typeof n !== 'object') return;
         if (Array.isArray(n)) { for (const c of n) walk(c); return; }
-        if (n.type === 'button' && n.props && n.props['aria-haspopup'] === 'dialog') out.push(n.props['aria-label']);
+        if (n.type === 'button' && n.props && n.props['aria-haspopup'] === 'dialog') labels.push(n.props['aria-label']);
+        const s = n.props && n.props.style;
+        if (s && s.position === 'absolute' && typeof s.right === 'string' && typeof s.transform === 'string' && s.transform.indexOf('rotate(') === 0) rights.push(s.right);
         walk(n.props.children);
       };
       walk(flat);
-      return out;
+      return { labels, rights };
     };
-    const a = firstOf(0);
-    const b = firstOf(1);
-    assert.equal(a.length, 3);
-    assert.equal(b.length, 3);
-    assert.notEqual(a.join('|'), b.join('|'));
+    const a = rowsOf(0);
+    const b = rowsOf(1);
+    assert.deepEqual(a.labels, ['饼干记账 HELP', '技能', '插件']);
+    assert.deepEqual(b.labels, ['饼干记账 HELP', '技能', '插件']);
+    assert.equal(a.rights.length, 3);
+    assert.notDeepEqual(a.rights, b.rights, '各家右间距须错开');
   });
   it('点章回调带自家下标（点 HELP 回 0）', () => {
     let got = -1;

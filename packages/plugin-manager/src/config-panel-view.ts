@@ -903,18 +903,18 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const surface = state.kind === 'ready' ? state.surface : null;
   const product = title ?? '';
   const seals = props.seals ?? [];
-  /** 18 枚倾角各不同（1158）：家下标×3＋位序，步进错开。 */
-  const TILT18 = [-4, -2.5, -1, -3, 1.5, 3, -1.5, 2, 4, -3.5, 0.5, 2.5, -4.5, 1, -2, 3.5, -0.5, 4.5];
-  /** 三枚落位（卡片坐标：右上／左中／右下三处，互不遮挡）。右上与右下两枚按右钉死——
-   *  HELP 是单行最长的一枚，左钉会在窄卡上整体飞出面板右侧，右钉则右边界天然收敛；
-   *  左中那枚按左钉（左钉的章向右长，左边界天然收敛）。 */
-  const SPOT: readonly { readonly left?: string; readonly right?: string; readonly top: string }[] =
-    [{ right: '0.2em', top: '0.3em' }, { left: '2%', top: '3.2em' }, { right: '6%', top: '5.6em' }];
   const seed = props.sealSeed ?? 0;
-  /** 槽位轮排（1158：六家同形不同位；HELP 永远 z 最上）。 */
-  const ORDER = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
-  const order = ORDER[seed % 6];
-  const tiltOfSlot = (slot: number): string => String(TILT18[(seed * 3 + slot) % 18]);
+  /** 三行定序（六家一致：HELP 上／技能中／插件下；HELP 永远 z 最上）。 */
+  const order = [0, 1, 2];
+  /** 三行行高（上／中／下；纵向净空各留约 10px，糙边抖动也碰不到）。 */
+  const TOPS = ['0.3em', '3.4em', '6.2em'];
+  /** 轻微倾角（±0.5°～±2.5°，方向随机）：家下标×槽位哈希，纯函数、每次同值，不过大。 */
+  const tiltOfSlot = (slot: number): string => {
+    const q = (seed * 5 + slot * 11 + 3) % 10;
+    return String((q % 2 === 0 ? -1 : 1) * (0.5 + Math.floor(q / 2) * 0.5));
+  };
+  /** 右间距（三枚全部居右收敛，各家各行 0.2em～1.1em 错开，永不出面板右边界）。 */
+  const padRightOfSlot = (slot: number): string => String(0.2 + ((seed * 7 + slot * 3 + 1) % 6) * 0.18) + 'em';
   const zOfRole = (role: string): number => role === 'help' ? 4 : role === 'skill' ? 3 : 2;
   const overlay = seals.length === 0 ? null : React.createElement(
     'div',
@@ -922,7 +922,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     React.createElement(SealFilterDefs, {}),
     ...order.map((dataIndex, slot) => React.createElement(
       'span',
-      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', top: SPOT[slot].top, ...(SPOT[slot].left === undefined ? { right: SPOT[slot].right as string } : { left: SPOT[slot].left as string }), zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
+      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', top: TOPS[slot], right: padRightOfSlot(slot), zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
       // 章面缩到 80%：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
       React.createElement('span', { style: { fontSize: '0.8em', display: 'inline-flex' } },
         React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),

@@ -198,7 +198,7 @@ const S = {
   } as React.CSSProperties,
   /** 卷轴浮层：卡片内绝对定位（卡片 `S.card` 是 relative 定位祖先），上沿悬在三枚章之下、左右各留半 em——
    *  不是 modal：无遮罩、不锁滚动，点章切换、点「关闭」收起。 */
-  dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
+  dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8.8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
   /** 浮层内框：宽按 em 给（16px 下≈25em），窄卡上收满可用宽，永不捅破卡片。 */
   popInner: { position: 'relative', width: '25em', maxWidth: '100%' } as React.CSSProperties,
   close: {
