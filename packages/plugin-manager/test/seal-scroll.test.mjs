@@ -86,7 +86,7 @@ function stylesOf(node, out = []) {
   return out;
 }
 
-const TIER_TEXT = { copper: '基础建设中', silver: '全打通中', gold: '精雕细琢中' };
+const TIER_TEXT = { copper: '基础建设中', silver: '全场景打通中', gold: '精雕细琢中' };
 const ROLES = ['skill', 'help', 'plugin'];
 const TIERS = ['copper', 'silver', 'gold'];
 

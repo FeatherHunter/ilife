@@ -53,7 +53,7 @@ export const SEAL_ROUGH_INK_ID = ROUGH_INK;
 /** 档位话：标题下那一行不再印档位字，直接说档位所处的阶段（渲染期用，顶层可放行）。 */
 export const TIER_TEXT: Record<SealTier, string> = {
   gold: '精雕细琢中',
-  silver: '全打通中',
+  silver: '全场景打通中',
   copper: '基础建设中',
 };
 

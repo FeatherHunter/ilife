@@ -1,0 +1,142 @@
+# 六家 × 三枚章的状态表 · **唯一可编辑处**。
+# 改某家的章状态（tier）或卷轴里的三段文案（progress／status／plan）只改这里，
+# 然后跑：node tooling/gen-seals.mjs  →  各插件 src/seal-states.generated.ts 重出。
+#
+# 支持的写法（够用就好，别写花活）：两级缩进（2 空格）＋ `键: 值`；不支持列表、多行、锚点。
+#   tier     铜=copper／银=silver／金=gold（决定章与外框的材质，以及悬停气泡那句档位话）
+#   label    印文；写 {product} 表示运行时用该家产品名（HELP 那枚＝`{product} HELP`）
+#   seed     倾角与右间距的种子（0..9，各家错开用）
+version: 1
+plugins:
+  dsh-bill-ilife:
+    dir: plugin-bill-ilife
+    seed: 0
+    seals:
+      help:
+        tier: gold
+        label: {product} HELP
+        progress: 完成度 30%
+        status: 精磨
+        plan: 将所有功能和页面打磨至完美
+      skill:
+        tier: silver
+        label: 技能
+        progress: 完成度 80%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+  dsh-calorie:
+    dir: plugin-calorie
+    seed: 1
+    seals:
+      help:
+        tier: silver
+        label: {product} HELP
+        progress: 完成度 50%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      skill:
+        tier: silver
+        label: 技能
+        progress: 完成度 80%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+  dsh-chef:
+    dir: plugin-chef
+    seed: 2
+    seals:
+      help:
+        tier: silver
+        label: {product} HELP
+        progress: 完成度 50%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      skill:
+        tier: copper
+        label: 技能
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+  dsh-home-ilife:
+    dir: plugin-home-ilife
+    seed: 3
+    seals:
+      help:
+        tier: silver
+        label: {product} HELP
+        progress: 完成度 50%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      skill:
+        tier: copper
+        label: 技能
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+  dsh-memo-ilife:
+    dir: plugin-memo-ilife
+    seed: 4
+    seals:
+      help:
+        tier: silver
+        label: {product} HELP
+        progress: 完成度 50%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      skill:
+        tier: copper
+        label: 技能
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+  dsh-schedule-ilife:
+    dir: plugin-schedule-ilife
+    seed: 5
+    seals:
+      help:
+        tier: silver
+        label: {product} HELP
+        progress: 完成度 50%
+        status: 全打通
+        plan: 将所有功能和场景全部打通
+      skill:
+        tier: copper
+        label: 技能
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通
+      plugin:
+        tier: copper
+        label: 插件
+        progress: 完成度 60%
+        status: 基本可用
+        plan: 修复明显bug并将未打通场景打通

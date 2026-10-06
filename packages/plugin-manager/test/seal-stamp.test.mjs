@@ -122,7 +122,7 @@ describe('seal-stamp 九档', () => {
     }
   });
   it('级别 tooltip：九档 data-tip 讲清档位话', () => {
-    const want = { copper: '铜章 · 基础建设中', silver: '银章 · 全打通中', gold: '金章 · 精雕细琢中' };
+    const want = { copper: '基础建设中', silver: '全场景打通中', gold: '精雕细琢中' };
     for (const role of ROLES) for (const tier of TIERS) {
       const tree = expand(React.createElement(SealStamp, { role, tier, label: LABEL[role] }));
       const btn = nodesOf(tree, (n) => n.type === 'button')[0];

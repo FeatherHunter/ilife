@@ -56,10 +56,9 @@ const BAND_EDGE: Record<SealTier, string> = {
   gold: 'inset 0 1px 0 #fff8d8dd,inset 0 -2px 5px #0005,0 0 0 1px #8a6a15,0 3px 14px #c9a22766',
 };
 
-/** 级别 tooltip 那一句（印本体与面板槽位共用一份定义）：档位名 ＋ 档位话。 */
+/** 级别 tooltip 那一句（印本体与面板槽位共用一份定义）：**只说档位话**（金＝精雕细琢中／银＝全场景打通中／铜＝基础建设中）。 */
 export function sealTipOf(tier: SealTier): string {
-  const tierName = tier === 'copper' ? '铜' : tier === 'silver' ? '银' : '金';
-  return tierName + '章 · ' + TIER_TEXT[tier];
+  return TIER_TEXT[tier];
 }
 
 /** 一枚印章（button，点章弹卷）。未知组合直接抛错，不静默退化。 */

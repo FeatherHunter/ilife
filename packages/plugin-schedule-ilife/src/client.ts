@@ -20,6 +20,7 @@ import * as React from 'react';
 import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_CHECK, isRpcResult } from './contract.js';
 import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
+import { SEAL_SEED, sealStates } from './seal-states.generated.js';
 import { CONFIG_ITEMS } from './settings.js';
 import type { ClientCtx, RpcCallFace } from './dsh-ctx.js';
 
@@ -308,12 +309,8 @@ export function apply(ctx: ClientCtx): void {
         items: CONFIG_ITEMS,
         title: SLOT_TITLE,
         // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
-        seals: [
-          { role: 'help', tier: 'silver', label: SLOT_TITLE + ' HELP', progress: '完成度 50%', status: '全打通', plan: '将所有功能和场景全部打通' },
-          { role: 'skill', tier: 'copper', label: '技能', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
-          { role: 'plugin', tier: 'copper', label: '插件', progress: '完成度 60%', status: '基本可用', plan: '修复明显bug并将未打通场景打通' },
-        ],
-        sealSeed: 5,
+        seals: sealStates(SLOT_TITLE),
+        sealSeed: SEAL_SEED,
         followKeysOf,
         // 状态行只在读到整面之后画（照改版前的形状：读取中／读取失败那两屏不占这一行）。
         extra: (parts) => (parts.reply === null ? null : React.createElement(LarkLine, { getCall, styles: parts.styles })),

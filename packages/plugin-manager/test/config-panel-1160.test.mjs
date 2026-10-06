@@ -167,7 +167,7 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     // 槽位包裹层：气泡挂这里（不过滤镜⇒字清晰），整层 z 要盖得住卡片内容
     const slot = flat(tree).filter((n) => n.props?.className === 'dshLifeSealSlot')[0];
     assert.ok(slot, '槽位包裹层要有类名');
-    assert.equal(slot.props['data-tip'], '银章 · 全打通中', '气泡文案＝档位名＋档位话（与印本体同一份定义）');
+    assert.equal(slot.props['data-tip'], '全场景打通中', '气泡文案＝档位话（与印本体同一份定义）');
     const overlay = flat(tree).filter((n) => n.props?.style?.zIndex === 15 && n.props.style.position === 'absolute')[0];
     assert.ok(overlay, '印覆盖层 z 15：高过卡片内容、低于浮层 20');
   });
