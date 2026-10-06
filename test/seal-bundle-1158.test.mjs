@@ -24,7 +24,7 @@ describe('三印产物门：seals 与 sealOverlay 同在', () => {
       // 印本体那几件也要咬住产物：只验 seals／sealOverlay 挡不住「面板新、印本体旧」这一层。
       assert.ok(s.includes('baseFrequency: .6') && s.includes('numOctaves: 3') && s.includes('scale: 6.5'), p + ' 束里外框金粉仍是旧配方（缺 0.6／3 倍频／6.5 位移）');
       assert.ok(s.includes('calc(50% - 0.8125em)') && s.includes('calc(50% + 0.4375em)'), p + ' 束里绦带两条飘尾位置是旧的');
-      assert.ok(s.includes('#d2442e 0%,#ad2a1c 58%'), p + ' 束里飘尾不是那档提亮红（两层材质的填充串缺）');
+      assert.ok(s.includes('#e8573c 0%,#c33a24 55%'), p + ' 束里飘尾不是那档提亮朱砂（两层材质的填充串缺）');
     });
     it(p + ' 束不捆陈旧总管', () => {
       const m = join(HERE, '..', 'packages', p, 'dist', 'client.js.map');
