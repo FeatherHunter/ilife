@@ -103,7 +103,7 @@ export const PLAN_EDITOR_CSS = `
 .pe-sheet-filters{padding:12px 18px 0;display:flex;flex-wrap:wrap;gap:6px}
 .pe-filter{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg2);font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .pe-filter.is-on{background:var(--blue);border-color:var(--blue);color:#fff}
-.pe-search{margin:12px 18px 0;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit;color:var(--fg)}
+.pe-search{margin:12px 18px 0;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font-family:inherit;color:var(--fg)}
 .pe-search:focus{outline:none;border-color:var(--blue)}
 .pe-lib{list-style:none;margin:12px 0 0;padding:0 12px 14px;overflow:auto}
 .pe-lib-row{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:8px 10px;border:1px solid transparent;border-radius:12px;background:transparent;text-align:left;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}

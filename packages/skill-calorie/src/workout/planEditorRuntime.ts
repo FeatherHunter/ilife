@@ -49,6 +49,7 @@ export const PLAN_EDITOR_JS = `
   var slotPick = null;   // 新建时间段选时段：null＝没在选，否则＝正在选的那天（0基）
   var filt = { part: null, kind: null, equip: null };
   var query = '';
+  var composing = false;
 
   function esc(x){
     return String(x == null ? '' : x).replace(/[&<>"']/g, function(c){
@@ -247,6 +248,38 @@ export const PLAN_EDITOR_JS = `
     var on = filt[dim] === v;
     return '<button type="button" class="pe-filter' + (on ? ' is-on' : '') + '" data-act="filter" data-dim="' + dim + '" data-v="' + esc(v) + '">' + esc(v) + '</button>';
   }
+  /* 动作库列表只跟 filt 与 query 走：typing 只刷这一块，输入框元素不动，焦点与光标与组字全保留。 */
+  function libListHtml(){
+    var used = day(picker.d).sessions[picker.s].moves.length;
+    var rows = [], i, m;
+    for (i = 0; i < LIB.length; i++){
+      m = LIB[i];
+      if (filt.part !== null && m.part !== filt.part) continue;
+      if (filt.kind !== null && m.kind !== filt.kind) continue;
+      if (filt.equip !== null && m.equip !== filt.equip) continue;
+      if (query && m.name.toLowerCase().indexOf(query) < 0 && m.part.indexOf(query) < 0) continue;
+      rows.push('<li><button type="button" class="pe-lib-row" data-act="pick" data-name="' + esc(m.name) + '"' + (used >= MAXM ? ' disabled' : '') + '>'
+        + '<span class="pe-lib-nm">' + esc(m.name) + '</span>'
+        + '<span class="pe-lib-tags"><span class="pe-tag">' + esc(m.part) + '</span><span class="pe-tag">' + esc(m.kind) + '</span>'
+        + (m.equip ? '<span class="pe-tag">' + esc(m.equip) + '</span>' : '') + '</span>'
+        + '</button></li>');
+    }
+    return rows.length ? '<ul class="pe-lib">' + rows.join('') + '</ul>'
+      : '<p class="pe-lib-empty">这个筛选下没有动作。换个筛选，或把搜索词清掉。</p>';
+  }
+  /* typing 只换列表节点：不重建输入框，不调 focus。结构变化仍走全量 render。 */
+  function updateLib(){
+    if (!picker) return;
+    var box = root.querySelector('.pe-sheet-box');
+    if (!box) return;
+    var old = box.querySelector('.pe-lib,.pe-lib-empty');
+    if (!old) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = libListHtml();
+    var fresh = tmp.firstChild;
+    if (!fresh) return;
+    box.replaceChild(fresh, old);
+  }
   function pickerHtml(){
     if (!picker) return '';
     var ps = [], ks = [], es = [], seenP = {}, seenK = {}, seenE = {}, i, m0;
@@ -262,21 +295,7 @@ export const PLAN_EDITOR_JS = `
     for (i = 0; i < ks.length; i++) chips.push(fchip('kind', ks[i]));
     for (i = 0; i < es.length; i++) chips.push(fchip('equip', es[i]));
     var used = day(picker.d).sessions[picker.s].moves.length;
-    var rows = [];
-    for (i = 0; i < LIB.length; i++){
-      var m = LIB[i];
-      if (filt.part !== null && m.part !== filt.part) continue;
-      if (filt.kind !== null && m.kind !== filt.kind) continue;
-      if (filt.equip !== null && m.equip !== filt.equip) continue;
-      if (query && m.name.toLowerCase().indexOf(query) < 0 && m.part.indexOf(query) < 0) continue;
-      rows.push('<li><button type="button" class="pe-lib-row" data-act="pick" data-name="' + esc(m.name) + '"' + (used >= MAXM ? ' disabled' : '') + '>'
-        + '<span class="pe-lib-nm">' + esc(m.name) + '</span>'
-        + '<span class="pe-lib-tags"><span class="pe-tag">' + esc(m.part) + '</span><span class="pe-tag">' + esc(m.kind) + '</span>'
-        + (m.equip ? '<span class="pe-tag">' + esc(m.equip) + '</span>' : '') + '</span>'
-        + '</button></li>');
-    }
-    var list = rows.length ? '<ul class="pe-lib">' + rows.join('') + '</ul>'
-      : '<p class="pe-lib-empty">这个筛选下没有动作。换个筛选，或把搜索词清掉。</p>';
+    var list = libListHtml();
     return '<div class="pe-sheet">'
       + '<div class="pe-sheet-box">'
       +   '<div class="pe-sheet-head"><span class="pe-sheet-t">选动作</span>'
@@ -376,7 +395,13 @@ export const PLAN_EDITOR_JS = `
   root.addEventListener('input', function(e){
     var el = e.target, act = el.getAttribute && el.getAttribute('data-act');
     if (!act) return;
-    if (act === 'search'){ query = String(el.value || '').trim().toLowerCase(); render(); return; }
+    if (act === 'search'){
+      if (e.isComposing) return;
+      if (composing) return;
+      query = String(el.value || '').trim().toLowerCase();
+      updateLib();
+      return;
+    }
     /* 起止时间是参数：锁周不拦（与组数／次数同口径），只写回状态并刷新产物，不整页重渲（焦点不丢）。 */
     if (act === 'set-tstart' || act === 'set-tend'){
       var td = Number(el.getAttribute('data-d')), ts = Number(el.getAttribute('data-s'));
@@ -396,6 +421,15 @@ export const PLAN_EDITOR_JS = `
     if (act === 'set-load') mv.load = v;
     if (act === 'set-min') mv.minutes = v;
     syncCopy();
+  });
+  root.addEventListener('compositionstart', function(){ composing = true; });
+  root.addEventListener('compositionend', function(e){
+    composing = false;
+    var el = e.target;
+    if (el && el.getAttribute && el.getAttribute('data-act') === 'search'){
+      query = String(el.value || '').trim().toLowerCase();
+      updateLib();
+    }
   });
   root.addEventListener('keydown', function(e){
     if (e.key === 'Escape' && picker){ picker = null; render(); }
