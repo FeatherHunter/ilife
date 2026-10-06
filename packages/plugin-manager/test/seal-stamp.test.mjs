@@ -11,45 +11,35 @@ import ts from 'typescript';
 import * as React from 'react';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SOURCE = join(HERE, '..', 'src', 'seal-stamp.ts');
-
-function loadSource() {
-  const code = ts.transpileModule(readFileSync(SOURCE, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
-    fileName: SOURCE,
-  }).outputText;
-  const instance = new Module(SOURCE, null);
-  instance.filename = SOURCE;
-  instance.paths = Module._nodeModulePaths(dirname(SOURCE));
-  instance._compile(code, SOURCE);
-  return instance.exports;
-}
-
+const SCROLL_TS = join(HERE, '..', 'src', 'seal-scroll.ts');
+const STAMP_TS = join(HERE, '..', 'src', 'seal-stamp.ts');
 const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
+const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 
-/** 兄弟件先转 CJS 进缓存：`seal-stamp.ts` 引 `./seal-scroll.js`，源码目录里只有 `.ts`，直载会 ENOENT。 */
-function preloadScroll() {
-  const src = join(HERE, '..', 'src', 'seal-scroll.ts');
-  const code = ts.transpileModule(readFileSync(src, 'utf8'), {
+/** 源码转 CJS 载入（与 `seal-scroll.test.mjs` 同形）：卷轴与印渲染期互引，编译前先占缓存位，循环不断链。 */
+function compileAs(tsPath, jsKey) {
+  const hit = Module._cache[jsKey];
+  if (hit) return hit.exports;
+  const code = ts.transpileModule(readFileSync(tsPath, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
-    fileName: src,
+    fileName: tsPath,
   }).outputText;
-  const instance = new Module(SCROLL_JS, null);
-  instance.filename = SCROLL_JS;
-  instance.paths = Module._nodeModulePaths(dirname(src));
-  instance._compile(code, SCROLL_JS);
-  Module._cache[SCROLL_JS] = instance;
+  const instance = new Module(jsKey, null);
+  instance.filename = jsKey;
+  instance.paths = Module._nodeModulePaths(dirname(tsPath));
+  Module._cache[jsKey] = instance;
+  instance._compile(code, jsKey);
   return instance.exports;
 }
 
-const SCROLL_EXPORTS = preloadScroll();
 const ORIG_LOAD = Module._load;
 Module._load = function (request, parent, isMain) {
-  if (request === './seal-scroll.js' && parent !== null && parent !== undefined && String(parent.filename).endsWith('seal-stamp.ts')) return SCROLL_EXPORTS;
+  if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
+  if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 
-const { SealStamp } = loadSource();
+const { SealStamp } = compileAs(STAMP_TS, STAMP_JS);
 
 function expand(node) {
   if (node === null || node === undefined || node === false || node === true) return null;

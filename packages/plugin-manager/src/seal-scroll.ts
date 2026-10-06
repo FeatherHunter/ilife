@@ -23,6 +23,9 @@
 
 import * as React from 'react';
 import type { SealRole, SealTier } from './config-panel-contract.js';
+// 卷轴标题直接复用印本体（与外面那枚同组件同 props，UI 天然一致）。
+// 与 `seal-stamp.ts` 是渲染期互引（双方只在组件函数体内用对方，无模块求值期依赖）。
+import { SealStamp } from './seal-stamp.js';
 
 /** 糙边滤镜 id（文档作用域，故每页只许挂一次 `SealFilterDefs`）。 */
 const ROUGH_EDGE = 'dshLifeSealRoughEdge';
@@ -30,6 +33,16 @@ const ROUGH_FRAME = 'dshLifeSealRoughFrame';
 
 /** 印那条糙边滤镜 id（`seal-stamp.ts` 引用，定义只此一处）。 */
 export const SEAL_ROUGH_EDGE_ID = ROUGH_EDGE;
+
+/** 档位话：标题下那一行不再印档位字，直接说档位所处的阶段（渲染期用，顶层可放行）。 */
+export const TIER_TEXT: Record<SealTier, string> = {
+  gold: '精雕细琢中',
+  silver: '全打通中',
+  copper: '基础建设中',
+};
+
+/** 卷轴展开动画名（文档作用域，印前缀防撞；`S.popInner` 求值期即用，必须住 `S` 之前）。 */
+const UNROLL_ANIMATION = 'dshLifeSealUnroll';
 
 /** 一档材质：外框那一份是固定色（印），档位字色也是固定色。 */
 interface Material {
@@ -156,14 +169,8 @@ const S = {
     position: 'relative',
     padding: '1.75em 2em 1.875em',
   } as React.CSSProperties,
-  head: { textAlign: 'center' } as React.CSSProperties,
-  title: {
-    margin: 0,
-    fontSize: '1em',
-    fontWeight: 600,
-    letterSpacing: '0.16em',
-    color: LABEL_MAIN,
-  } as React.CSSProperties,
+  head: { textAlign: 'center', marginBottom: '0.5em' } as React.CSSProperties,
+  /** 档位语（标题下那一行）：档位字退役，改说档位话（金＝精雕细琢中／银＝全打通中／铜＝基础建设中）。 */
   tier: {
     marginTop: '0.4375em',
     fontSize: '0.66em',
@@ -199,8 +206,9 @@ const S = {
   /** 卷轴浮层：卡片内绝对定位（卡片 `S.card` 是 relative 定位祖先），上沿悬在三枚章之下、左右各留半 em——
    *  不是 modal：无遮罩、不锁滚动，点章切换、点「关闭」收起。 */
   dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8.8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
-  /** 浮层内框：宽按 em 给（16px 下≈25em），窄卡上收满可用宽，永不捅破卡片。 */
-  popInner: { position: 'relative', width: '25em', maxWidth: '100%' } as React.CSSProperties,
+  /** 浮层内框：宽按 em 给（16px 下≈25em），窄卡上收满可用宽，永不捅破卡片；
+   *  挂卷轴展开动画（从上而下舒卷，240ms；纯声明式，无 hook，纯函数可直测）。 */
+  popInner: { position: 'relative', width: '25em', maxWidth: '100%', transformOrigin: '50% 0', animation: UNROLL_ANIMATION + ' 240ms ease-out' } as React.CSSProperties,
   close: {
     position: 'absolute',
     right: '-0.375em',
@@ -298,8 +306,8 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
         React.createElement(
           'div',
           { style: S.head },
-          React.createElement('h4', { style: S.title }, props.title),
-          React.createElement('div', { style: { ...S.tier, color: material.accent } }, props.tier === 'copper' ? '铜' : props.tier === 'silver' ? '银' : '金'),
+          React.createElement(SealStamp, { role: props.role, tier: props.tier, label: props.title }),
+          React.createElement('div', { style: { ...S.tier, color: material.accent } }, TIER_TEXT[props.tier]),
         ),
         React.createElement('div', { style: S.orn }, line('l', '90'), React.createElement('i', { style: { ...S.ornDot, background: material.accent } }), line('r', '270')),
         block('progress', '进展', props.progress, false),
@@ -310,7 +318,7 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
   );
 }
 
-/** 卷轴浮层：无遮罩 popover ＋ 卷轴 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
+/** 卷轴浮层：popover ＋ 点击别处关闭 ＋ 卷轴展开动画 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
 export function SealScrollDialog(
   props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void },
 ): React.ReactElement | null {
@@ -324,14 +332,22 @@ export function SealScrollDialog(
     plan: props.plan,
   };
   return React.createElement(
-    'div',
-    { style: S.dialog, role: 'dialog', 'aria-modal': false, 'aria-label': props.title },
+    React.Fragment,
+    null,
+    // 收卷层：全屏透明，只收“点别处即关”，不 dim、不锁滚动（无 role，不算 modal 遮罩）。
+    React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 9, background: 'transparent' }, 'aria-hidden': true, onClick: props.onClose }),
     React.createElement(
       'div',
-      { style: S.popInner },
-      // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
-      React.createElement('button', { type: 'button', style: S.close, 'data-ilife-press': 'seal-close', onClick: props.onClose }, '关闭'),
-      React.createElement(SealScroll, scroll),
+      { style: S.dialog, role: 'dialog', 'aria-modal': false, 'aria-label': props.title },
+      // 展开关键帧住在这里（scoped 名，宿主无样式表可借时唯一一条纯声明式动画路）。
+      React.createElement('style', null, '@keyframes ' + UNROLL_ANIMATION + '{from{opacity:0;transform:translateY(-10px) scaleY(.7)}to{opacity:1;transform:none}}'),
+      React.createElement(
+        'div',
+        { style: S.popInner },
+        // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
+        React.createElement('button', { type: 'button', style: S.close, 'data-ilife-press': 'seal-close', onClick: props.onClose }, '关闭'),
+        React.createElement(SealScroll, scroll),
+      ),
     ),
   );
 }

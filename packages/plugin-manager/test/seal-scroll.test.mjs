@@ -13,22 +13,37 @@ import ts from 'typescript';
 import * as React from 'react';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SOURCE = join(HERE, '..', 'src', 'seal-scroll.ts');
+const SCROLL_TS = join(HERE, '..', 'src', 'seal-scroll.ts');
+const STAMP_TS = join(HERE, '..', 'src', 'seal-stamp.ts');
+const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
+const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 
-/** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。 */
-function loadSource() {
-  const code = ts.transpileModule(readFileSync(SOURCE, 'utf8'), {
+/** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。
+ *  卷轴与印是渲染期互引（`seal-scroll ⇄ seal-stamp`，模块求值期无交叉）：编译前先占缓存位，
+ *  循环 require 拿到在途半成品也不炸（双方只在组件函数体内用对方）。 */
+function compileAs(tsPath, jsKey) {
+  const hit = Module._cache[jsKey];
+  if (hit) return hit.exports;
+  const code = ts.transpileModule(readFileSync(tsPath, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
-    fileName: SOURCE,
+    fileName: tsPath,
   }).outputText;
-  const instance = new Module(SOURCE, null);
-  instance.filename = SOURCE;
-  instance.paths = Module._nodeModulePaths(dirname(SOURCE));
-  instance._compile(code, SOURCE);
+  const instance = new Module(jsKey, null);
+  instance.filename = jsKey;
+  instance.paths = Module._nodeModulePaths(dirname(tsPath));
+  Module._cache[jsKey] = instance;
+  instance._compile(code, jsKey);
   return instance.exports;
 }
 
-const { SealFilterDefs, SealScroll, SealScrollDialog } = loadSource();
+const ORIG_LOAD = Module._load;
+Module._load = function (request, parent, isMain) {
+  if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
+  if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
+  return ORIG_LOAD.call(this, request, parent, isMain);
+};
+
+const { SealFilterDefs, SealScroll, SealScrollDialog } = compileAs(SCROLL_TS, SCROLL_JS);
 
 /** 展开元素树：函数组件当场调（本件无 hook），宿主节点留 `{type, props, children}`。 */
 function expand(node) {
@@ -65,7 +80,7 @@ function stylesOf(node, out = []) {
   return out;
 }
 
-const TIER_CHAR = { copper: '铜', silver: '银', gold: '金' };
+const TIER_TEXT = { copper: '基础建设中', silver: '全打通中', gold: '精雕细琢中' };
 const ROLES = ['skill', 'help', 'plugin'];
 const TIERS = ['copper', 'silver', 'gold'];
 
@@ -77,9 +92,9 @@ const EXPECTED = {
   'help-copper': { bg: '#b06a3a', border: '3px solid #a5652f', rivets: 0 },
   'help-silver': { bg: '#8f979e', border: '3px double #e8eef2', rivets: 0 },
   'help-gold': { bg: '#c63d2a', border: '3px double #f5d97a', rivets: 0 },
-  'plugin-copper': { bg: '#b4773c', border: null, rivets: 4 },
-  'plugin-silver': { bg: '#d8dee3', border: null, rivets: 4 },
-  'plugin-gold': { bg: '#f2dc86', border: null, rivets: 4 },
+  'plugin-copper': { bg: '#b4773c', border: null, rivets: 6 },
+  'plugin-silver': { bg: '#d8dee3', border: null, rivets: 6 },
+  'plugin-gold': { bg: '#f2dc86', border: null, rivets: 6 },
 };
 
 const PROPS = { title: '饼干记账 HELP', progress: '进展一句', status: '能用，有已知坑', plan: '修导入的阻塞' };
@@ -97,13 +112,13 @@ describe('印章卷轴 · 九档材质逐档对得上', () => {
         if (want.border) assert.equal(style.border, want.border, '外框边线应逐字照抄印');
         else assert.equal(style.border, undefined, '插件那三档没有边线，靠 boxShadow 描边');
         const rivets = nodesOf(tree, (node) => node.props?.style?.borderRadius === '50%' && typeof node.props?.style?.background === 'string' && String(node.props.style.background).includes('radial-gradient'));
-        assert.equal(rivets.length, want.rivets, '四角铆钉数');
+        assert.equal(rivets.length, want.rivets, '铆钉数（插件档＝外框四角 4＋标题章左右 2）');
       });
     }
   }
 });
 
-describe('印章卷轴 · 三段内容与档位字', () => {
+describe('印章卷轴 · 三段内容与档位话', () => {
   for (const role of ROLES) {
     for (const tier of TIERS) {
       it(role + '／' + tier + ' 屏上三段齐', () => {
@@ -111,8 +126,10 @@ describe('印章卷轴 · 三段内容与档位字', () => {
         const text = textsOf(tree).join('|');
         for (const name of ['进展', '状态', '计划']) assert.ok(text.includes(name), '缺这段：' + name);
         assert.ok(text.includes(PROPS.title), '缺标题');
-        assert.ok(text.includes(TIER_CHAR[tier]), '缺档位字：' + TIER_CHAR[tier]);
+        assert.ok(text.includes(TIER_TEXT[tier]), '缺档位话：' + TIER_TEXT[tier]);
         assert.ok(text.includes(PROPS.progress) && text.includes(PROPS.status) && text.includes(PROPS.plan), '三段正文都要在屏上');
+        const titleSeal = nodesOf(tree, (node) => node.type === 'button' && node.props?.['aria-label'] === PROPS.title);
+        assert.equal(titleSeal.length, 1, '卷轴标题须是与外面同一枚章（同组件），不是普通字');
       });
     }
   }
@@ -142,6 +159,13 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(dialog[0].props.style.position, 'absolute', '浮层钉在卡片内，不走 viewport 居中');
     const mask = nodesOf(tree, (node) => node.props?.role === 'presentation');
     assert.equal(mask.length, 0, '无遮罩');
+    const catcher = nodesOf(tree, (node) => node.props?.style?.position === 'fixed' && node.props?.style?.background === 'transparent');
+    assert.equal(catcher.length, 1, '点别处关闭层一处（透明 fixed，不 dim）');
+    assert.equal(typeof catcher[0].props.onClick, 'function', '收卷层可点');
+    const styleTags = nodesOf(tree, (node) => node.type === 'style');
+    assert.ok(styleTags.some((n) => String(n.children?.[0]?.text ?? n.props?.children ?? '').includes('@keyframes dshLifeSealUnroll')), '展开关键帧在屏上');
+    const inner = nodesOf(tree, (node) => typeof node.props?.style?.animation === 'string');
+    assert.ok(inner.some((n) => n.props.style.animation.includes('dshLifeSealUnroll')), '内框挂展开动画');
   });
 
   it('纸面自带底色墨色（深色下也不跟主题变黑）', () => {
