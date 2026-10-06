@@ -1,7 +1,7 @@
-/** 面板薄包装（票 1170，浏览器侧：无 node 内建，可进 client 束）。
+/** 面板薄包装（票 1170，浏览器侧：无 node 内建，可进 client 束；完全上游 UI，本包零自家样式）。
  *
  * 只定死三组参数，不自建文案与样式：入口形态 button、打开策略 manual（点击交由 onOpen 打开批量弹窗）、
- * 皮肤 archive；批量面板内嵌形态（弹窗壳由本包自家 overlay 提供，关闭由自家按钮收）+ 皮肤 archive；
+ * 皮肤 archive；批量面板弹窗形态由上游提供（overlay + 关闭按钮 + Esc，全 `archive` 同一套），本包只留挂载位；
  * 轮询与更新日志沿上游缺省，中文标题沿目标表（不传 titles 覆盖）。
  */
 import { mountUpdateBatchPanel } from 'dsh-plugin-update/panel-batch';
@@ -77,7 +77,53 @@ export function mountLifeUpdateEntry(
   });
 }
 
-/** 挂批量面板（内嵌形态进自家弹窗壳，离开时 unmount 只停轮询）。 */
-export function mountLifeBatchPanel(container: BatchPanelContainer, call: LifePanelCall): BatchPanelController {
-  return mountUpdateBatchPanel(container, { prefix: BATCH_PREFIX, call, theme: 'archive', mode: 'embedded' });
+/** 挂批量面板（完全上游 UI：弹窗壳/关闭按钮/Esc 全由上游 dialog 提供，离开时 unmount 只停轮询）。
+ *
+ * 上游批量面板 dialog 关闭时只停轮询、不通知调用方（单面板才有 `onCloseRequested`，批量 0.5.1 还没有）；
+ * 故这里用容器级事件把“关闭/Esc”同步成 `onClose`——只做挂载态同步，不画任何 UI。上游改了 `data-act`
+ * 即不同步（不抛，下一次点入口强制重挂兜底）。
+ */
+export function mountLifeBatchPanel(
+  container: BatchPanelContainer,
+  call: LifePanelCall,
+  onClose?: () => void,
+): BatchPanelController {
+  const panel = mountUpdateBatchPanel(container, { prefix: BATCH_PREFIX, call, theme: 'archive', mode: 'dialog' });
+  if (onClose === undefined) return panel;
+  const fire = (): void => { onClose(); };
+  const onClick = (ev: unknown): void => {
+    try {
+      const target = (ev as { target?: { closest?: (selectors: string) => { getAttribute?: (name: string) => string | null } | null } | null }).target;
+      const hit = target?.closest?.('[data-act]');
+      if (hit?.getAttribute?.('data-act') === 'close') fire();
+    } catch {
+      // 上游属性改名即不同步，不抛。
+    }
+  };
+  const onKeyDown = (ev: unknown): void => {
+    try {
+      if ((ev as { key?: unknown }).key === 'Escape') fire();
+    } catch {
+      // 同上。
+    }
+  };
+  try { container.addEventListener?.('click', onClick); } catch {
+    // 测试替身无事件口即跳过。
+  }
+  try { container.addEventListener?.('keydown', onKeyDown); } catch {
+    // 同上。
+  }
+  const rawUnmount = panel.unmount;
+  return {
+    ...panel,
+    unmount(): void {
+      try { container.removeEventListener?.('click', onClick); } catch {
+        // 同上。
+      }
+      try { container.removeEventListener?.('keydown', onKeyDown); } catch {
+        // 同上。
+      }
+      rawUnmount();
+    },
+  };
 }

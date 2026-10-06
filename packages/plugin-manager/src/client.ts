@@ -23,7 +23,6 @@ import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchPanel, mountLifeUpdateEntry } from './update-dialog.js';
 import { tabInteractionCss } from './config-panel-view.js';
-import { interactionCss } from './config-panel-view.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
@@ -183,49 +182,14 @@ const S = {
     display: 'inline-flex',
     color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
   } as React.CSSProperties,
-  /** 更新入口挂点：只占位，按钮本体由上游入口件渲染（票 1170）。 */
+  /** 更新入口挂点：只占位，按钮本体由上游入口件渲染（票 1170）；批量弹窗壳亦由上游提供，本包零自家样式。 */
   updateEntrySlot: {
     display: 'inline-flex',
     alignItems: 'center',
   } as React.CSSProperties,
-  /** 批量弹窗遮罩（自家壳：颜色走主题变量，按钮复用 interactionCss 同一缝）。 */
-  updateBackdrop: {
-    position: 'fixed',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    background: 'rgba(0, 0, 0, 0.45)',
-    zIndex: 1000,
-  } as React.CSSProperties,
-  updateBox: {
-    position: 'relative',
-    width: 'min(720px, 92vw)',
-    maxHeight: '84vh',
-    overflow: 'auto',
-    borderRadius: 12,
-    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
-    background: 'var(--dsw-alias-bg-layer-1, #232324)',
-    color: 'var(--dsw-alias-label-primary, inherit)',
-    padding: '12px 12px 16px',
-  } as React.CSSProperties,
-  updateClose: {
-    position: 'sticky',
-    top: 0,
-    float: 'right',
-    marginLeft: 8,
-    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
-    background: 'transparent',
-    color: 'var(--dsw-alias-label-primary, inherit)',
-    borderRadius: 999,
-    padding: '4px 12px',
-    fontSize: 13,
-    cursor: 'pointer',
-  } as React.CSSProperties,
 };
 
-/** 更新区（票 1170 薄接线）：标题行挂入口按钮，弹窗里是七目标批量面板；缺席页签仍显示静态推荐，不进批量 targets。 */
+/** 更新区（票 1170 薄接线，完全上游 UI）：标题行挂上游入口按钮，点开即上游 dialog 七目标批量面板；缺席页签仍显示静态推荐，不进批量 targets。 */
 
 /** 标签解析（resolveSlotLabel 同形：thunk 跟活，无则空字串；见 slots lib:27-29）。 */
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
@@ -350,7 +314,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   );
   const lightOf = (id: string) => lights.find((light) => light.id === id);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
-  /** 批量弹窗开关（票 1170）：入口件 onActivate 置真，自家关闭按钮与 Esc 置假。 */
+  /** 批量面板挂载态（完全上游 UI：弹窗壳/关闭/Esc 全由上游 dialog 提供，本包只留挂载位与开关态）。 */
   const [batchOpen, setBatchOpen] = React.useState(false);
   const entryRef = React.useRef<HTMLSpanElement | null>(null);
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
@@ -360,7 +324,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     const mount = entryRef.current;
     if (mount === null || !callReady) return;
     const entry = mountLifeUpdateEntry(mount, managerCallAdapter(props.getCall()), () => {
-      setBatchOpen(true);
+      // 弹窗正常经上游关闭同步回假；此分支只在同步漏掉（上游改属性名）的兜底时才走到：先撤再挂，强制重挂一次。
+      // 正常流程点不着（dialog 打开时入口在遮罩下点不到），故无闪烁。
+      setBatchOpen((previous) => {
+        if (!previous) return true;
+        queueMicrotask(() => { setBatchOpen(true); });
+        return false;
+      });
     });
     return () => {
       entry.unmount();
@@ -368,26 +338,19 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     // getCall 本身是取用器（引用稳定），只跟连接就绪态重跑。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callReady]);
-  /** 批量面板挂载：弹窗开才挂，关即 unmount（只停轮询，宿主侧安装继续跑）。 */
+  /** 批量面板挂载：开才挂上游 dialog，关即 unmount（只停轮询，宿主侧安装继续跑）；上游关闭经 onClose 同步开关态。 */
   React.useEffect(() => {
     const mount = dialogRef.current;
     if (mount === null || !batchOpen || !callReady) return;
-    const panel = mountLifeBatchPanel(mount, managerCallAdapter(props.getCall()));
+    const panel = mountLifeBatchPanel(mount, managerCallAdapter(props.getCall()), () => {
+      setBatchOpen(false);
+    });
     return () => {
       panel.unmount();
     };
     // 同上。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchOpen, callReady]);
-  function closeBatch(): void {
-    setBatchOpen(false);
-  }
-  function onDialogKeyDown(event: React.KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      setBatchOpen(false);
-    }
-  }
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
     ? (activeId as string)
@@ -670,37 +633,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       );
     }),
     batchOpen
-      ? React.createElement(
-        'div',
-        {
-          role: 'dialog',
-          'aria-modal': 'true',
-          'aria-label': '批量更新',
-          style: S.updateBackdrop,
-          onKeyDown: onDialogKeyDown,
+      ? React.createElement('div', {
+        ref: (element: HTMLDivElement | null) => {
+          dialogRef.current = element;
         },
-        React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
-        React.createElement(
-          'div',
-          { style: S.updateBox },
-          React.createElement(
-            'button',
-            {
-              type: 'button',
-              'data-ilife-press': '',
-              style: S.updateClose,
-              'aria-label': '关闭更新面板（批量推进在宿主侧继续跑）',
-              onClick: closeBatch,
-            },
-            '关闭',
-          ),
-          React.createElement('div', {
-            ref: (element: HTMLDivElement | null) => {
-              dialogRef.current = element;
-            },
-          }),
-        ),
-      )
+      })
       : null,
     React.createElement(MorePluginsCard, null),
   );
