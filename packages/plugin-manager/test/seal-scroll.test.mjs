@@ -189,7 +189,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     // 真机缺陷（收卷钮）：按钮本体是个**透明方框**，看得见的是里面那枚 rotate 45° 的菱形 ⇒ 面板给的
     // 方框阴影与方形聚光从菱形四个角漏出来，读成"正方形发光"；悬停的糙边滤镜还把"收卷"两个字抖成破碎版。
     // 两条都得有用例咬住（选择器权重也要对：面板那条是 0-3-0，这几条必须更高才压得住）。
-    assert.ok(css.includes('[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none}'), '悬停不许再往方框上打阴影（正方形发光）');
+    assert.ok(css.includes('[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none;background:transparent!important}'), '悬停不许再往方框上打阴影或洗色（正方形发光；1174 那条 !important 洗色也须被压掉）');
     assert.ok(css.includes('[data-ilife-press][data-ilife-close]::before{display:none}'), '方形聚光要摘掉');
     assert.ok(css.includes('.dshLifeSealBtn[data-ilife-close]:hover{filter:none}'), '悬停的糙边滤镜不许碰绦带钮（字会碎、菱形四角会被滤镜区域裁掉）');
     assert.ok(css.includes('[data-ilife-close-glow]{opacity:0') && css.includes('[data-ilife-close]:hover [data-ilife-close-glow]'), '辉光改挂菱形那层，悬停淡入');
@@ -200,6 +200,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     // "聚焦＋悬停"那一档：面板的 `:focus-visible:hover` 与上面那条同为 0-4-0，而面板 <style> 在卡片末位（平局判给它）
     // ⇒ 必须另有一条 0-5-0 的，只摘辉光、把两道焦点环原样留着（焦点可见是硬要求）。
     assert.ok(css.includes('[data-ilife-press][data-ilife-close]:focus-visible:hover:not(:disabled){box-shadow:0 0 0 2px var(--dsw-alias-bg-layer-1, #232324),0 0 0 5px var(--ilife-focus'), '聚焦＋悬停：两道焦点环留着、辉光摘掉');
+    assert.ok(css.includes('#f6ad55));background:transparent!important}'), '聚焦＋悬停那一档的方形洗色也要压掉');
     assert.ok(!/\[data-ilife-press\]\[data-ilife-close\]:focus-visible:hover:not\(:disabled\)\{box-shadow:[^}]*0 4px 16px/.test(css), '方框辉光不许从这一档溜回来');
     assert.ok(css.includes('@media (prefers-reduced-motion:reduce){[data-ilife-close-glow]{transition:none}}'), '减少动态：淡入直接切');
   });

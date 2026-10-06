@@ -251,13 +251,16 @@ export function SealFilterDefs(): React.ReactElement {
       // ② 悬停的糙边滤镜挂在整钮上，会把"收卷"两个字抖成破碎版（字本是清晰层，不进滤镜）；
       // ③ 悬停一律不许给按钮上 filter：滤镜区域默认只有边框盒的 120%，而菱形四角与两条飘尾都骑在框外，
       // 一上滤镜就连形状一起裁掉。提亮与发光改由菱形那层（同角度、同圆角、不过滤镜）出。
-      '[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none}' +
+      // 票 1174 把面板那条的 background／border-color 升成 !important（它要压过 S.btn* 的行内基线）：
+      // !important 连**行内**的 `background:transparent` 一起压掉 ⇒ 方形洗色从菱形四角漏回来。
+      // 故中和这条也升 !important（同为 !important 时按权重判：本件 0-4-0 压面板 0-3-0）。
+      '[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none;background:transparent!important}' +
       // "聚焦＋悬停"是单独一档：面板那条 `[data-ilife-press]:focus-visible:hover:not(:disabled)` 也是 0-4-0，
       // 而面板那枚 <style> 挂在卡片**末位**（见 config-panel-view.ts），平局判给它 ⇒ 方框辉光会回来。
       // 这一条取 0-5-0 稳压：只摘辉光（`0 4px 16px`），两道焦点环原样留着——焦点可见是硬要求，不许一起摘。
       '[data-ilife-press][data-ilife-close]:focus-visible:hover:not(:disabled){box-shadow:' +
       '0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
-      '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + FOCUS_VAR + '}' +
+      '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + FOCUS_VAR + ';background:transparent!important}' +
       '[data-ilife-press][data-ilife-close]::before{display:none}' +
       '.dshLifeSealBtn[data-ilife-close]:hover{filter:none}' +
       // 绦带材质那两层（菱形＋两条飘尾）的糙边滤镜住这里、不住行内：`filter` 是单属性，悬停要
