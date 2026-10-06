@@ -147,15 +147,15 @@ function inkMark(name: string): React.ReactElement {
   // 印泥层：中心偏亮（按下去的那一下）、四周吃墨更深，再压一道内影当「厚」
   React.createElement('span', { 'aria-hidden': true, style: {
     position: 'absolute', inset: 0, borderRadius: '0.1875em',
-    // 大红色（真印泥的朱砂）：边上只略微吃墨，不许发暗发褐——一暗就成"过期印泥"。
-    background: 'radial-gradient(circle at 36% 30%,#f4593a 0%,#d92b1c 52%,#be1d10 100%)',
-    boxShadow: 'inset 0 0 0 0.5px #ffffff2e, inset 0 -1px 2px #00000033',
+    // 平涂朱砂（大红色）：**不给中心高光、不给白色内圈**——那是塑料的读法；
+    // 墨色浓淡全部交给滤镜里那层噪点蒙版。
+    background: '#d92b1c',
     filter: 'url(#' + SEAL_ROUGH_INK_ID + ')',
   } },
-  // 墨色不匀：三团深浅斑＋一道斜向留白（印泥压不匀、边上吃不到墨的常态）
+  // 只在同色系里做浓淡：浅的＝纸没吃透（偏橘红），深的＝墨厚（偏暗红）。不许再用白色（白了就是高光）。
   React.createElement('span', { 'aria-hidden': true, style: {
     position: 'absolute', inset: 0, borderRadius: 'inherit',
-    background: 'radial-gradient(circle at 74% 78%,#00000024 0%,#0000 56%), radial-gradient(circle at 18% 64%,#ffffff33 0%,#0000 46%), radial-gradient(circle at 52% 14%,#ffffff24 0%,#0000 40%), linear-gradient(118deg,#0000 42%,#ffffff1f 52%,#0000 62%)',
+    background: 'radial-gradient(circle at 72% 76%,#a81a0e33 0%,#0000 58%), radial-gradient(circle at 20% 62%,#f0715a3d 0%,#0000 52%), radial-gradient(circle at 52% 12%,#ee6a5233 0%,#0000 46%)',
   } })),
   // 字层：不参与滤镜（小方印上的字一糊就白做了）
   React.createElement('span', { style: { position: 'relative', color: '#fdf7ea', opacity: 0.95 } }, name.slice(0, 1)));

@@ -146,6 +146,8 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     const scales = nodesOf(defs, (node) => node.type === 'feDisplacementMap').map((node) => node.props.scale);
     assert.deepEqual(scales, [2.2, 6.5, 3.2, 2.2], '印 2.2／外框 6.5／中等件 3.2／印泥 2.2＋洇开');
     assert.equal(nodesOf(defs, (node) => node.type === 'feGaussianBlur').length, 1, '印泥那条末尾要有一次洇开（高斯模糊）');
+    assert.equal(nodesOf(defs, (node) => node.type === 'feColorMatrix').length, 1, '印泥那条要有墨色蒙版（吃墨不匀）');
+    assert.equal(nodesOf(defs, (node) => node.type === 'feComposite').length, 1, '蒙版要真的用 in 压到墨上');
     // 外框那条的颗粒配方：低频底噪＋3 倍频（斑块感），纯高频会退化成一条细金粉线。
     const frameFilter = nodesOf(defs, (node) => node.type === 'filter' && node.props.id === 'dshLifeSealRoughFrame')[0];
     const turb = nodesOf(frameFilter, (node) => node.type === 'feTurbulence')[0];
@@ -186,8 +188,12 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     // expand 对独子不包成数组，统一成列再查。
     const kidsOf = (n) => (Array.isArray(n.children) ? n.children : n.children ? [n.children] : []);
     for (const m of marks) {
-      assert.ok(String(m.props.style.background).startsWith('radial-gradient'), '印泥层是朱砂渐变（不是一块平色）');
-      assert.ok(kidsOf(m).some((c) => typeof c !== 'string' && String(c.props?.style?.background ?? '').includes('radial-gradient')), '再叠一层墨色不匀');
+      // 印泥是平涂＋噪点蒙版：**不许有高光读法**（中心亮斑、白色内圈、白色斑块都不许出现）。
+      assert.equal(m.props.style.background, '#d92b1c', '印泥层是平涂朱砂（大红色）');
+      assert.ok(!String(m.props.style.boxShadow ?? '').includes('ffffff'), '印泥层不许加白色内圈（那是塑料高光）');
+      const mot = kidsOf(m).find((c) => typeof c !== 'string' && String(c.props?.style?.background ?? '').includes('radial-gradient'));
+      assert.ok(mot, '再叠一层墨色不匀');
+      assert.ok(!String(mot.props.style.background).includes('#ffffff'), '墨色不匀只许用同色系深浅，不许用白');
     }
     const glyphs = nodesOf(tree, (node) => node.props?.style?.color === '#fdf7ea');
     assert.deepEqual(glyphs.map((n) => textsOf(n).join('')), ['进', '状', '计'], '字住在滤镜之外（清晰层）');

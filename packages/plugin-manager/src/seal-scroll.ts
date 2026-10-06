@@ -303,13 +303,18 @@ export function SealFilterDefs(): React.ReactElement {
       React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
       React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 3.2 }),
     ),
-    // 印泥：相同的抖动 ＋ 0.35px 洇开（只给小印用，字不在这层里）。
+    // 印泥：抖动（毛边）→ 洇开（纸上晕）→ **噪点蒙版**（吃墨不匀，有几处纸没吃透）。
+    // 最后那步是「像印泥」的关键：平涂＋高光只会读成塑料，真正像泥的是浓淡不匀的覆盖率。
     React.createElement(
       'filter',
-      { id: ROUGH_INK, key: ROUGH_INK, x: '-20%', y: '-20%', width: '140%', height: '140%' },
-      React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
+      { id: ROUGH_INK, key: ROUGH_INK, x: '-25%', y: '-25%', width: '150%', height: '150%' },
+      React.createElement('feTurbulence', { type: 'fractalNoise', baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
       React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 2.2, result: 'd' }),
-      React.createElement('feGaussianBlur', { in: 'd', stdDeviation: 0.35 }),
+      React.createElement('feGaussianBlur', { in: 'd', stdDeviation: 0.3, result: 'b' }),
+      React.createElement('feTurbulence', { type: 'fractalNoise', baseFrequency: 0.75, numOctaves: 3, result: 'g' }),
+      // 覆盖率底数 .35：不满不满也不到透——印泥是「吃墨不匀」，不是「纱网」。
+      React.createElement('feColorMatrix', { in: 'g', type: 'matrix', values: '0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .7 .45 0 0 .35', result: 'mask' }),
+      React.createElement('feComposite', { in: 'b', in2: 'mask', operator: 'in' }),
     ),
     ),
   );
