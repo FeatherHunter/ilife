@@ -164,8 +164,9 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes(':focus-visible'), '焦点环');
     assert.ok(css.includes('attr(data-tip)'), 'tooltip 读 data-tip');
   });
-  it('绦带关闭钮：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
-    const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {}, closeVariant: 'tie' }));
+  it('关闭钮＝绦带（定稿默认样子）：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
+    // 不传任何开关：定稿后这就是唯一一版关闭钮，用例咬住默认路径。
+    const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));
     // 飘尾＝挂在 calc(50%…) 上、且带 rotate 的那两个（绦带本体的 45° 旋转不算）。
     const tails = nodesOf(tree, (node) => typeof node.props?.style?.transform === 'string'
       && node.props.style.transform.startsWith('rotate(') && String(node.props.style.left ?? '').startsWith('calc(50%'));
@@ -181,7 +182,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
     const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));
     const text = textsOf(tree).join('|');
-    assert.ok(text.includes('关闭'), '关闭钮');
+    assert.ok(text.includes('收卷'), '关闭钮（绦带上的收卷字）');
     assert.ok(text.includes(PROPS.title) && text.includes('进展'), '卷轴本体也要在');
     const dialog = nodesOf(tree, (node) => node.props?.role === 'dialog');
     assert.equal(dialog.length, 1, '浮层要有 dialog 语义');

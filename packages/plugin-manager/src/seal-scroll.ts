@@ -26,10 +26,8 @@ import type { SealRole, SealTier } from './config-panel-contract.js';
 // 卷轴标题直接复用印本体（与外面那枚同组件同 props，UI 天然一致）。
 // 与 `seal-stamp.ts` 是渲染期互引（双方只在组件函数体内用对方，无模块求值期依赖）。
 import { SealStamp } from './seal-stamp.js';
-// 纸面字排方案（原型选型件：定稿后只留胜出那一档，其余删除）。
-import { closeLook, paperSchemeParts } from './seal-paper-schemes.js';
-import type { CloseVariant, PaperScheme } from './seal-paper-schemes.js';
-export type { PaperScheme, CloseVariant } from './seal-paper-schemes.js';
+// 定稿的纸面字排与关闭钮样子（原型期方案已删，只此一件）。
+import { closeLook, paperParts } from './seal-paper-schemes.js';
 
 /** 糙边滤镜 id（文档作用域，故每页只许挂一次 `SealFilterDefs`）。 */
 const ROUGH_EDGE = 'dshLifeSealRoughEdge';
@@ -242,8 +240,6 @@ export interface SealScrollProps {
   readonly role: SealRole;
   /** 档位（决定外框材质）。 */
   readonly tier: SealTier;
-  /** 纸面字排（缺席＝classic，线上行为不变）。 */
-  readonly paperScheme?: PaperScheme | undefined;
   /** 标题（印文那一行，如 `技能`／`饼干记账 HELP`／`插件`）。 */
   readonly title: string;
   /** 进展。 */
@@ -331,10 +327,8 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
       React.createElement('div', { style: { ...S.label, color: material.accent } }, name),
       React.createElement('p', { style: S.text }, text),
     );
-  /** 纸面字排：方案件直出五件（原型选型期；赢家落定后收敛成一处常量）。 */
-  const scheme = props.paperScheme ?? 'classic';
-  const parts = paperSchemeParts({
-    scheme,
+  /** 纸面字排：定稿件直出五件。 */
+  const parts = paperParts({
     tierKey: props.tier,
     tierText: TIER_TEXT[props.tier],
     progress: props.progress,
@@ -373,14 +367,12 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
 
 /** 卷轴浮层：popover ＋ 点击别处关闭 ＋ 卷轴展开动画 ＋ 关闭。`open` 为假时不渲染（纯函数，不收自己的状态）。 */
 export function SealScrollDialog(
-  props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void; readonly closeVariant?: CloseVariant | undefined },
+  props: SealScrollProps & { readonly open: boolean; readonly onClose: () => void },
 ): React.ReactElement | null {
   if (!props.open) return null;
   const scroll: SealScrollProps = {
     role: props.role,
     tier: props.tier,
-    // 原型选型期：纸面方案必须一起透传（漏了它弹层里一律回落 classic，效果全丢）。
-    paperScheme: props.paperScheme,
     title: props.title,
     progress: props.progress,
     status: props.status,
@@ -400,11 +392,10 @@ export function SealScrollDialog(
         'div',
         { style: S.popInner },
         // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
-        // 原型选型期：关闭钮外观走 `closeVariant`（缺席＝线上深色胶囊）。
         (() => {
-          const look = closeLook(props.closeVariant ?? 'classic', S.close);
+          const look = closeLook();
           // zIndex 20：关闭钮要压在卷轴（框＋纸）之上，否则骑在边上的那几档会被红框吃掉半边。
-          return React.createElement('button', { type: 'button', className: 'dshLifeSealBtn', style: { zIndex: 20, ...look.style }, 'data-ilife-press': 'seal-close', 'data-ilife-close': props.closeVariant ?? 'classic', onClick: props.onClose }, look.decor ?? null, look.label);
+          return React.createElement('button', { type: 'button', className: 'dshLifeSealBtn', style: { zIndex: 20, ...look.style }, 'data-ilife-press': 'seal-close', 'data-ilife-close': 'tie', onClick: props.onClose }, look.decor ?? null, look.label);
         })(),
         React.createElement(SealScroll, scroll),
       ),

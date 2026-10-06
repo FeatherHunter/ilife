@@ -116,7 +116,7 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
       { role: 'plugin', tier: 'gold', label: 'g', progress: 'p', status: 's', plan: 'p' },
     ];
     const tree = expandTree(view.PanelBody(bodyProps({ seals, sealSeed: 0, selectedSeal: 0, onSealSelect: () => {}, onSealClose: () => {} })));
-    const close = flat(tree).filter((n) => n.type === 'button' && textOf(n) === '关闭');
+    const close = flat(tree).filter((n) => n.type === 'button' && textOf(n) === '收卷');
     assert.equal(close.length, 1);
     assert.equal(close[0].props['data-ilife-press'], 'seal-close');
   });
