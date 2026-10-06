@@ -121,15 +121,15 @@ function gatePre() {
     assertSameVersionLine(plug, 'dsh-life-pack', dep['dsh-life-pack']);
     assertSameVersionLine(plug, skill, dep[skill]);
   }
-  // #988＋1166（0.5.x 迁移）：更新系统包版本门——总管必须依赖 dsh-plugin-update ^0.5.4（caret：用户装／更新
-  // dsh-life-pack 时自动拿到 0.5.x 最新版），锁文件必须已解析到 0.5.4（否则打包出去的仍是旧版）。
+  // #988＋1166（0.5.x 迁移）：更新系统包版本门——总管必须依赖 dsh-plugin-update ^0.5.8（caret：用户装／更新
+  // dsh-life-pack 时自动拿到 0.5.x 最新版），锁文件必须已解析到 0.5.8（否则打包出去的仍是旧版）。
   if (inScope('dsh-life-pack')) {
     const range = (pkgJson('dsh-life-pack').dependencies || {})['dsh-plugin-update'];
-    if (range === '^0.5.4') ok('dsh-life-pack 依赖 dsh-plugin-update ^0.5.4（随装自动取 0.5.x 最新）');
-    else fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^0.5.4（用户装／更新才自动拿到 0.5.4），现为「' + range + '」');
+    if (range === '^0.5.8') ok('dsh-life-pack 依赖 dsh-plugin-update ^0.5.8（随装自动取 0.5.x 最新）');
+    else fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^0.5.8（用户装／更新才自动拿到 0.5.8），现为「' + range + '」');
     const lock = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
-    if (/^\s*dsh-plugin-update@0\.5\.4:/m.test(lock)) ok('pnpm-lock 已解析 dsh-plugin-update@0.5.4（打包带最新更新包）');
-    else fail('pnpm-lock 未见 dsh-plugin-update@0.5.4（锁仍钉旧版：先跑 pnpm install 刷新再打包）');
+    if (/^\s*dsh-plugin-update@0\.5\.8:/m.test(lock)) ok('pnpm-lock 已解析 dsh-plugin-update@0.5.8（打包带最新更新包）');
+    else fail('pnpm-lock 未见 dsh-plugin-update@0.5.8（锁仍钉旧版：先跑 pnpm install 刷新再打包）');
     // 线上最新比对（#988：0.2.1 出来后锁仍钉 0.2.0 即红——"每次打包用最新"落在这条，不靠人记）。
     const locked = (lock.match(/  packages\/plugin-manager:\n(?:.*\n)*?      dsh-plugin-update:\n        specifier: (\S+)\n        version: ([^\s(]+)/) || [])[2] || '';
     let latest = '';
@@ -354,12 +354,12 @@ function gatePost() {
     if (!shown) continue;
     if (JSON.stringify(shown).includes('workspace:')) fail(name + '@' + local.version + ' registry 仍含 workspace:');
     else ok(name + '@' + local.version + ' registry 无 workspace:');
-    // #988＋1166（0.5.x 迁移）：线上复核——发出去的 dsh-life-pack 必须带 dsh-plugin-update ^0.5.4，
+    // #988＋1166（0.5.x 迁移）：线上复核——发出去的 dsh-life-pack 必须带 dsh-plugin-update ^0.5.8，
     // 用户装／更新最新版时才自动用上最新的 0.5.x 更新系统。
     if (name === 'dsh-life-pack') {
       const dep = (shown || {})['dsh-plugin-update'];
-      if (dep === '^0.5.4') ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ^0.5.4');
-      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ^0.5.4，现为「' + dep + '」');
+      if (dep === '^0.5.8') ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ^0.5.8');
+      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ^0.5.8，现为「' + dep + '」');
     }
   }
 }
