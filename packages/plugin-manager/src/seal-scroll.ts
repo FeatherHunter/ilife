@@ -80,7 +80,7 @@ const MATERIALS: Record<string, Record<string, Material>> = {
       frame: {
         background: 'linear-gradient(180deg,#8a4a28,#6e3418)',
         border: '3px solid #a5652f',
-        boxShadow: 'inset 0 0 0 1px #f8f1e2aa, inset 0 2px 0 #ffffff26, inset 0 -3px 6px #00000014',
+        boxShadow: 'inset 0 0 0 1px #f8f1e2aa, inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d',
       },
       accent: '#9a5f2a',
       ruler: '#c08145b3',
@@ -89,7 +89,7 @@ const MATERIALS: Record<string, Record<string, Material>> = {
       frame: {
         background: 'linear-gradient(180deg,#b73124,#8e1f14)',
         border: '3px double #eef3f6',
-        boxShadow: 'inset 0 0 0 1px #fff, inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #00000014',
+        boxShadow: 'inset 0 0 0 1px #fff, inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d',
       },
       accent: '#6f767c',
       ruler: '#9aa0a6b3',
@@ -98,7 +98,7 @@ const MATERIALS: Record<string, Record<string, Material>> = {
       frame: {
         background: 'linear-gradient(180deg,#d34a35,#a32216)',
         border: '3px double #f5d97a',
-        boxShadow: 'inset 0 0 0 1px #fff8, inset 0 2px 0 #ffffff33, inset 0 -3px 6px #00000014',
+        boxShadow: 'inset 0 0 0 1px #fff8, inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d',
       },
       accent: '#9c7a16',
       ruler: '#d8b338b3',
@@ -106,24 +106,24 @@ const MATERIALS: Record<string, Record<string, Material>> = {
   },
   help: {
     copper: {
-      frame: { background: 'linear-gradient(180deg,#b06a3a,#7e3f1d)', border: '3px solid #a5652f', boxShadow: 'inset 0 2px 0 #ffffff26, inset 0 -3px 6px #00000014' },
+      frame: { background: 'linear-gradient(180deg,#b06a3a,#7e3f1d)', border: '3px solid #a5652f', boxShadow: 'inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d' },
       accent: '#9a5f2a',
       ruler: '#c08145b3',
     },
     silver: {
-      frame: { background: 'linear-gradient(180deg,#8f979e,#5f666d)', border: '3px double #e8eef2', boxShadow: 'inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #00000014' },
+      frame: { background: 'linear-gradient(180deg,#8f979e,#5f666d)', border: '3px double #e8eef2', boxShadow: 'inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d' },
       accent: '#6f767c',
       ruler: '#9aa0a6b3',
     },
     gold: {
-      frame: { background: 'linear-gradient(180deg,#c63d2a,#a32216)', border: '3px double #f5d97a', boxShadow: 'inset 0 2px 0 #ffffff33, inset 0 -3px 6px #00000014' },
+      frame: { background: 'linear-gradient(180deg,#c63d2a,#a32216)', border: '3px double #f5d97a', boxShadow: 'inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d' },
       accent: '#9c7a16',
       ruler: '#d8b338b3',
     },
   },
   plugin: {
     copper: {
-      frame: { background: 'linear-gradient(180deg,#b4773c,#7e3f1d 60%,#66300f)', boxShadow: 'inset 0 1px 0 #d99a5e88, inset 0 -2px 5px #00000026, 0 0 0 1px #5e2c12, inset 0 2px 0 #ffffff26' },
+      frame: { background: 'linear-gradient(180deg,#b4773c,#7e3f1d 60%,#66300f)', boxShadow: 'inset 0 1px 0 #d99a5e88, inset 0 -2px 5px #0006, 0 0 0 1px #5e2c12, inset 0 2px 0 #ffffff26' },
       accent: '#9a5f2a',
       ruler: '#c08145b3',
       rivet: { background: 'radial-gradient(circle at 34% 28%,#f0c088,#a5652f 55%,#6a3216)', boxShadow: 'inset 0 -1px 1px #00000055,0 1px 2px #00000088' },
@@ -144,15 +144,6 @@ const MATERIALS: Record<string, Record<string, Material>> = {
 };
 
 const S = {
-  /** 外框衬底（`.frameBase`）：与 `.frame` 同材质但**不过滤镜**。
-   *  滤镜那层被噪点咬开的口子由它兜住——边缘只剩金粉撒出去，不会露出背后的暗底
-   *  （底部那圈「红里的黑斑」就是咬开的口子透出背景）。 */
-  frameBase: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: '1em',
-    zIndex: 0,
-  } as React.CSSProperties,
   /** 外框（`.frame`）：绝对铺满，挂糙边滤镜；纸压在它上面，只露一圈。 */
   frame: {
     position: 'absolute',
@@ -360,8 +351,6 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
   return React.createElement(
     'div',
     { style: S.scroll },
-    // 衬底在前、糙边层在后：口子透出的是同色材质，不是背景。
-    React.createElement('div', { style: { ...S.frameBase, ...material.frame } }),
     React.createElement('div', { style: { ...S.frame, ...material.frame } }, ...frameChildren),
     React.createElement(
       'div',
