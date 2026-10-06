@@ -13,7 +13,7 @@
  */
 
 import * as React from 'react';
-import { SEAL_ROUGH_EDGE_ID } from './seal-scroll.js';
+import { SEAL_ROUGH_EDGE_ID, TIER_TEXT } from './seal-scroll.js';
 import type { SealRole, SealTier } from './config-panel-contract.js';
 
 /** 印的角色与档位见 `config-panel-contract.ts`（定义只那一处，此处引用）。 */
@@ -83,7 +83,9 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     ...ROLE_BASE[props.role],
     ...face,
   };
-  const buttonProps = { type: 'button' as const, style, 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, onClick: props.onSelect };
+  // 悬停 tooltip 讲清级别含义（档位话即完善进度）；样式住 `SealFilterDefs` 旁那枚 scoped `<style>`，纯 CSS、无 hook。
+  const tierName = props.tier === 'copper' ? '铜' : props.tier === 'silver' ? '银' : '金';
+  const buttonProps = { type: 'button' as const, style, className: 'dshLifeSealBtn', 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, 'data-tip': tierName + '章 · ' + TIER_TEXT[props.tier], onClick: props.onSelect };
   if (props.role !== 'plugin') return React.createElement('button', buttonProps, props.label);
   const band: React.CSSProperties = { position: 'absolute', top: '-1px', bottom: '-1px', left: '-1px', right: '-1px', zIndex: 1, borderRadius: '4px', ...BAND_EDGE[props.tier] };
   const rivet: React.CSSProperties = { position: 'absolute', zIndex: 3, width: '0.5em', height: '0.5em', borderRadius: '50%', top: '50%', transform: 'translateY(-50%)', ...RIVET[props.tier] };

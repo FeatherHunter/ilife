@@ -93,6 +93,15 @@ describe('seal-stamp 九档', () => {
       assert.equal(rivets.length, role === 'plugin' ? 2 : 0, role + '/' + tier);
     }
   });
+  it('级别 tooltip：九档 data-tip 讲清档位话', () => {
+    const want = { copper: '铜章 · 基础建设中', silver: '银章 · 全打通中', gold: '金章 · 精雕细琢中' };
+    for (const role of ROLES) for (const tier of TIERS) {
+      const tree = expand(React.createElement(SealStamp, { role, tier, label: LABEL[role] }));
+      const btn = nodesOf(tree, (n) => n.type === 'button')[0];
+      assert.equal(btn.props.className, 'dshLifeSealBtn', '交互类名');
+      assert.equal(btn.props['data-tip'], want[tier], role + '/' + tier + ' tooltip 须讲清级别含义');
+    }
+  });
   it('按钮语义：可点＋弹卷＋印文标签', () => {
     const tree = expand(React.createElement(SealStamp, { role: 'help', tier: 'gold', label: '饼干记账 HELP' }));
     const btn = nodesOf(tree, (n) => n.type === 'button')[0];

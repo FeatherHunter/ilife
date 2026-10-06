@@ -249,9 +249,21 @@ function materialOf(role: SealScrollProps['role'], tier: SealScrollProps['tier']
 
 /** 糙边滤镜定义：两条分开（印用 edge，卷轴外框用 frame），每页只挂一次。
  *
- * 挂在文档任意位置都行（`width/height=0` 不占位），同页重复挂会撞 id。 */
+ * 挂在文档任意位置都行（`width/height=0` 不占位），同页重复挂会撞 id。
+ * 印章交互（悬停上浮高亮／按压回缩／焦点环／级别 tooltip）也住这里：scoped 类名，纯 CSS、无 hook。
+ * 悬停高亮须把糙边 url 原样带上（filter 单属性，另写会把糙边冲掉）。 */
 export function SealFilterDefs(): React.ReactElement {
   return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement('style', null,
+      '.dshLifeSealBtn{position:relative;transition:transform 160ms ease-out,filter 160ms ease-out}' +
+      '.dshLifeSealBtn:hover{transform:translateY(-2px);filter:url(#' + ROUGH_EDGE + ') brightness(1.12)}' +
+      '.dshLifeSealBtn:active{transform:translateY(0) scale(.96)}' +
+      '.dshLifeSealBtn:focus-visible{outline:2px solid #f5d97a;outline-offset:2px}' +
+      '.dshLifeSealBtn::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#241f19ee;color:#f8f1e2;font-size:.72em;letter-spacing:.1em;padding:.4em .9em;border-radius:.5em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 150ms ease;z-index:30}' +
+      '.dshLifeSealBtn:hover::after,.dshLifeSealBtn:focus-visible::after{opacity:1}'),
+    React.createElement(
     'svg',
     { width: 0, height: 0, 'aria-hidden': true, focusable: false, style: { position: 'absolute' } },
     React.createElement(
@@ -265,6 +277,7 @@ export function SealFilterDefs(): React.ReactElement {
       { id: ROUGH_FRAME, key: ROUGH_FRAME, x: '-6%', y: '-6%', width: '112%', height: '112%' },
       React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
       React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 5 }),
+    ),
     ),
   );
 }

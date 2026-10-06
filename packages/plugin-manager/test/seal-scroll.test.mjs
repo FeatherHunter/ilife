@@ -147,6 +147,15 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(frame.props.style.filter, 'url(#dshLifeSealRoughFrame)');
   });
 
+  it('印章交互样式与滤镜同处（悬停／按压／焦点环／tooltip）', () => {
+    const defs = expand(React.createElement(SealFilterDefs, {}));
+    const css = nodesOf(defs, (node) => node.type === 'style').map((n) => JSON.stringify(n.children)).join('\n');
+    assert.ok(css.includes('.dshLifeSealBtn:hover'), '悬停规则');
+    assert.ok(css.includes('brightness(1.12)') && css.includes('dshLifeSealRoughEdge'), '悬停高亮须带上糙边（另写会冲掉它）');
+    assert.ok(css.includes(':active') && css.includes('scale(.96)'), '按压回缩');
+    assert.ok(css.includes(':focus-visible'), '焦点环');
+    assert.ok(css.includes('attr(data-tip)'), 'tooltip 读 data-tip');
+  });
   it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {
     assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
     const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));
