@@ -121,25 +121,20 @@ function gatePre() {
     assertSameVersionLine(plug, 'dsh-life-pack', dep['dsh-life-pack']);
     assertSameVersionLine(plug, skill, dep[skill]);
   }
-  // #988＋1166（0.6.x 迁移）：更新系统包版本门——总管必须依赖 dsh-plugin-update ^0.6.0（caret：用户装／更新
-  // dsh-life-pack 时自动拿到 0.6.x 最新版），锁文件必须已解析到 0.6.0（否则打包出去的仍是旧版）。
+  // 更新系统包版本门（#988＋1166）：**期望值从线上取，不写死**——写死就得每次更新包发版都来改门，
+  // 改慢了门就红（0.5.8→0.6.0→0.7.0 三连踩过）。判据只有一条：总管声明的 caret 与锁解析的版本都等于线上最新。
   if (inScope('dsh-life-pack')) {
-    const range = (pkgJson('dsh-life-pack').dependencies || {})['dsh-plugin-update'];
-    if (range === '^0.6.0') ok('dsh-life-pack 依赖 dsh-plugin-update ^0.6.0（随装自动取 0.6.x 最新）');
-    else fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^0.6.0（用户装／更新才自动拿到 0.6.0），现为「' + range + '」');
-    const lock = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
-    if (/^\s*dsh-plugin-update@0\.6\.0:/m.test(lock)) ok('pnpm-lock 已解析 dsh-plugin-update@0.6.0（打包带最新更新包）');
-    else fail('pnpm-lock 未见 dsh-plugin-update@0.6.0（锁仍钉旧版：先跑 pnpm install 刷新再打包）');
-    // 线上最新比对（#988：0.2.1 出来后锁仍钉 0.2.0 即红——"每次打包用最新"落在这条，不靠人记）。
-    const locked = (lock.match(/  packages\/plugin-manager:\n(?:.*\n)*?      dsh-plugin-update:\n        specifier: (\S+)\n        version: ([^\s(]+)/) || [])[2] || '';
     let latest = '';
     try {
       latest = execFileSync(NPM, ['view', 'dsh-plugin-update', 'version', '--registry=' + REGISTRY], { encoding: 'utf8', shell: NPSH }).trim();
     } catch { latest = ''; }
-    if (!latest) console.log('WARN: 更新包线上最新查不到（离线？），跳过最新比对');
-    else if (!locked) fail('pnpm-lock 里找不到总管的 dsh-plugin-update 落版本（解析失败）');
-    else if (locked === latest) ok('更新包锁版本与线上最新一致：' + locked);
-    else fail('更新包锁版本 ' + locked + ' 落后于线上最新 ' + latest + '：跑 pnpm up dsh-plugin-update@latest 刷新再打包');
+    const lock = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
+    const range = (pkgJson('dsh-life-pack').dependencies || {})['dsh-plugin-update'];
+    const locked = (lock.match(/  packages\/plugin-manager:\n(?:.*\n)*?      dsh-plugin-update:\n        specifier: (\S+)\n        version: ([^\s(]+)/) || [])[2] || '';
+    if (!latest) console.log('WARN: 更新包线上最新查不到（离线？），跳过更新包门');
+    else if (range !== '^' + latest) fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^' + latest + '（线上最新），现为「' + range + '」：跑 pnpm up dsh-plugin-update@latest 再打包');
+    else if (locked !== latest) fail('pnpm-lock 的 dsh-plugin-update 落版本是「' + (locked || '解析失败') + '」，线上最新 ' + latest + '：跑 pnpm up dsh-plugin-update@latest 刷新再打包');
+    else ok('更新包：声明 ^' + latest + ' 且锁已解析 ' + locked + '（与线上最新一致）');
   }
 }
 
@@ -354,12 +349,16 @@ function gatePost() {
     if (!shown) continue;
     if (JSON.stringify(shown).includes('workspace:')) fail(name + '@' + local.version + ' registry 仍含 workspace:');
     else ok(name + '@' + local.version + ' registry 无 workspace:');
-    // #988＋1166（0.6.x 迁移）：线上复核——发出去的 dsh-life-pack 必须带 dsh-plugin-update ^0.6.0，
-    // 用户装／更新最新版时才自动用上最新的 0.6.x 更新系统。
+    // 线上复核（#988＋1166）：发出去的总管必须带 dsh-plugin-update ^<线上最新>——期望同样从线上取，不写死。
     if (name === 'dsh-life-pack') {
+      let latest = '';
+      try {
+        latest = execFileSync(NPM, ['view', 'dsh-plugin-update', 'version', '--registry=' + REGISTRY], { encoding: 'utf8', shell: NPSH }).trim();
+      } catch { latest = ''; }
       const dep = (shown || {})['dsh-plugin-update'];
-      if (dep === '^0.6.0') ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ^0.6.0');
-      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ^0.6.0，现为「' + dep + '」');
+      if (!latest) console.log('WARN: 更新包线上最新查不到（离线？），跳过这条复核');
+      else if (dep === '^' + latest) ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ^' + latest);
+      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ^' + latest + '，现为「' + dep + '」');
     }
   }
 }
