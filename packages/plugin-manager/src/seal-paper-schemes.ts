@@ -64,24 +64,26 @@ export function closeLook(variant: CloseVariant, base: React.CSSProperties): Clo
       { borderRadius: '0.375em', background: crimson, boxShadow: '0 2px 8px #3d241066, inset 0 0 0 1px #f5d97a66', transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
       null,
     );
-    /** 尾色＝绦带底色但提亮一档（悬在纸上也不发灰）：两条尾同色，不许一条偏金、一条偏暗红。 */
-    const TAIL_FILL = 'linear-gradient(180deg,#d2442e 0%,#ad2a1c 58%,#8c1c11 100%)';
+    /** 尾色＝绦带上亮一档的朱砂（悬在纸上也不发灰、不发黑）：两条尾同色，不许一条偏金、一条偏暗红。 */
+    const TAIL_FILL = 'linear-gradient(180deg,#e8573c 0%,#c33a24 55%,#a52612 100%)';
     /** 飘尾：屏幕坐标（不随菱形旋转）——左尾往左下、右尾往右下，两条对外张开（CSS 正角＝尾梢往左）。
      *  两层：外层过糙边滤镜出毛边，内层纯色芯不受滤镜像影响——尾悬在纸上还是悬在暗底上都是同一色，
      *  不会因背后是纸而被穿出一片浅斑（照「材质层＋清晰层」的老做法）。 */
     const loose = (key: string, left: string, deg: number, len: string, top: string): React.ReactElement =>
       React.createElement('span', {
         key, 'aria-hidden': true,
-        style: { position: 'absolute', left, top, width: '0.375em', height: len, transformOrigin: 'top center', transform: 'rotate(' + deg + 'deg)' },
+        style: { position: 'absolute', left, top, width: '0.4375em', height: len, transformOrigin: 'top center', transform: 'rotate(' + deg + 'deg)' },
       },
       bgLayer({
         borderRadius: '0 0 0.1875em 0.1875em',
         background: TAIL_FILL,
-        // 外圈一道暗红线把尾从纸面/暗底上切出来（不然悬在米纸上的那条会糊），内圈金边照绦带。
-        boxShadow: '0 0 0 1px #6d150c66, inset 0 0 0 1px #f5d97a99, 0 1px 3px #00000055',
+        // 只留一道暗红描边把尾从纸面/暗底上切出来；**不给金边**——尾只有 6px 宽，
+        // 1px 金边被糙边滤镜一搅会把整条尾染成金灰（左尾「不够亮」就是这么来的）。
+        boxShadow: '0 0 0 1px #6d150c40, 0 1px 3px #00000055',
         filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')',
       }),
-      React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '1px', borderRadius: '0 0 0.125em 0.125em', background: TAIL_FILL } }));
+      // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。
+      React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '0.5px', borderRadius: '0 0 0.15625em 0.15625em', background: TAIL_FILL } }));
     return {
       label: crisp('收卷', {
         fontFamily: '"Kaiti SC","KaiTi","STKaiti",serif', fontSize: '0.8125em', letterSpacing: '0.22em', textIndent: '0.22em',
