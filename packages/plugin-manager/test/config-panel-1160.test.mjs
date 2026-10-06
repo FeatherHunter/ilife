@@ -130,18 +130,34 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     const dialogAt = (sel) => flat(expandTree(view.PanelBody(bodyProps({ seals, sealSeed: 0, selectedSeal: sel, onSealSelect: () => {}, onSealClose: () => {} }))))
       .filter((n) => n.props?.role === 'dialog')[0];
     const first = dialogAt(1), mid = dialogAt(0), third = dialogAt(2);
-    assert.equal(first.props.style.top, 'calc(0.3em + 1.9em)', 'HELP（第一行）下方');
-    assert.equal(mid.props.style.top, 'calc(3.4em + 1.9em)', '技能（第二行）下方');
-    assert.equal(third.props.style.top, 'calc(6.2em + 1.9em)', '插件（第三行）下方');
+    // 整簇缩放（SEAL_SCALE＝0.7）：三行落位与浮层那道缝一起乘 0.7 ⇒ 0.21／2.38／4.34em ＋ 1.33em。
+    assert.equal(first.props.style.top, 'calc(0.21em + 1.33em)', 'HELP（第一行）下方');
+    assert.equal(mid.props.style.top, 'calc(2.38em + 1.33em)', '技能（第二行）下方');
+    assert.equal(third.props.style.top, 'calc(4.34em + 1.33em)', '插件（第三行）下方');
     assert.equal(first.props.style.left, 'auto', '不再两边撑满居中');
     assert.equal(first.props.style.justifyContent, 'flex-end', '内框贴右缘');
-    // sealSeed=0 时三行的右间距是 0.38／0.92／0.38em（槽位哈希），逐值对上才算「跟着那枚章」。
-    // （槽位哈希是浮点乘加，字符串可能有 0.9199999… 的尾巴，比数值不比字面。）
-    const padOf = (style) => Number(/calc\(([\d.]+)em \+ 1\.25em\)/.exec(String(style))[1]);
-    assert.ok(Math.abs(padOf(first.props.style.right) - 0.38) < 1e-9, '第一行右间距 0.38em');
-    assert.ok(Math.abs(padOf(mid.props.style.right) - 0.92) < 1e-9, '第二行右间距 0.92em');
-    assert.ok(Math.abs(padOf(third.props.style.right) - 0.38) < 1e-9, '第三行右间距 0.38em');
-    assert.ok(String(first.props.style.maxWidth).startsWith('calc(100% - 0.38'), '窄卡兜底：扣掉右让位与绦带');
+    // sealSeed=0 时三行的右间距是 0.38／0.92／0.38em（槽位哈希）×0.7 ＝ 0.266／0.644／0.266em，
+    // 逐值对上才算「跟着那枚章」。（槽位哈希是浮点乘加，比数值不比字面。）
+    const padOf = (style) => Number(/calc\(([\d.]+)em \+ 0\.875em\)/.exec(String(style))[1]);
+    assert.ok(Math.abs(padOf(first.props.style.right) - 0.266) < 1e-9, '第一行右间距 0.266em');
+    assert.ok(Math.abs(padOf(mid.props.style.right) - 0.644) < 1e-9, '第二行右间距 0.644em');
+    assert.ok(Math.abs(padOf(third.props.style.right) - 0.266) < 1e-9, '第三行右间距 0.266em');
+    assert.ok(String(first.props.style.maxWidth).startsWith('calc(100% - 0.266'), '窄卡兜底：扣掉右让位与绦带');
+  });
+
+  it('三枚章整簇缩到 70%：章面字号与三行落位同乘一个系数（缩放只此一处）', () => {
+    const seals = [
+      { role: 'help', tier: 'silver', label: 'h', progress: 'p', status: 's', plan: 'p' },
+      { role: 'skill', tier: 'copper', label: 's', progress: 'p', status: 's', plan: 'p' },
+      { role: 'plugin', tier: 'gold', label: 'g', progress: 'p', status: 's', plan: 'p' },
+    ];
+    const tree = flat(view.PanelBody(bodyProps({ seals, sealSeed: 0, selectedSeal: null })));
+    const wrap = tree.filter((n) => n.props?.style?.fontSize === '0.56em');
+    assert.equal(wrap.length, 3, '章面用法字号 0.8em×0.7＝0.56em（印本体九档锁死值不动）');
+    const tops = tree.filter((n) => n.props?.className === 'dshLifeSealSlot').map((n) => n.props.style.top);
+    assert.deepEqual(tops, ['0.21em', '2.38em', '4.34em'], '三行落位同乘 0.7（只缩章不缩槽位会空出一截）');
+    const overlay = tree.filter((n) => n.props?.style?.zIndex === 15 && n.props.style.position === 'absolute')[0];
+    assert.equal(overlay.props.style.height, '6.3em', '覆盖层高度同乘 0.7');
   });
 
   it('三枚签按角色定序、少给几枚不炸（调用方给的顺序无关）', () => {
@@ -163,7 +179,7 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     }
     const two = expandTree(view.PanelBody(bodyProps({ seals: [seals[1], seals[0]], sealSeed: 0, selectedSeal: 0 })));
     const dialog2 = flat(two).filter((n) => n.props?.role === 'dialog')[0];
-    assert.equal(dialog2.props.style.top, 'calc(0.3em + 1.9em)', '只两枚时，选中的那枚仍在第一行');
+    assert.equal(dialog2.props.style.top, 'calc(0.21em + 1.33em)', '只两枚时，选中的那枚仍在第一行');
     // 槽位包裹层：气泡挂这里（不过滤镜⇒字清晰），整层 z 要盖得住卡片内容
     const slot = flat(tree).filter((n) => n.props?.className === 'dshLifeSealSlot')[0];
     assert.ok(slot, '槽位包裹层要有类名');

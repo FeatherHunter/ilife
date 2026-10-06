@@ -178,6 +178,12 @@ export function tabInteractionCss(): string {
   );
 }
 
+/** 三枚章的整体缩放（定：当前显示大小 × 0.7）。**一个系数管全簇**——章面字号、三行落位、右间距、
+ *  浮层锚点全乘它：只缩章不缩槽位，三行之间会空出一截；只缩槽位不缩章，章会互相压上。 */
+const SEAL_SCALE = 0.7;
+/** 卡面 em 值（乘缩放后收 4 位小数：0.3×0.7 在浮点里是 0.21000000000000002，直接拼串会带尾巴）。 */
+const sealEm = (n: number): string => String(Math.round(n * SEAL_SCALE * 1e4) / 1e4) + 'em';
+
 const S = {
   /** `.ic-card`：`background:var(--ic-surface)`（＝bg-layer-1）＋`border:1px solid var(--ic-line-strong)`
    *  ＋`border-radius:12px`＋`padding:14px`＋`box-shadow:inset 0 1px 0 rgba(255,255,255,.06)`。
@@ -197,7 +203,7 @@ const S = {
    *  （`flex-shrink:0`）在 390 宽下换行不挤（原型 A 行尾悬签）；`gap`／`minHeight` 照 v3.1 不动。 */
   head: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, minHeight: 22 } as React.CSSProperties,
   /** 印覆盖层（1158 红框区）：卡片右上绝对区，只罩标题＋头两行（底栏永远罩不到）；本身镂空穿透，印各自可点、缝隙漏过。 */
-  sealOverlay: { position: 'absolute', top: 0, right: 0, width: '38%', height: '9em', pointerEvents: 'none', zIndex: 15 } as React.CSSProperties,
+  sealOverlay: { position: 'absolute', top: 0, right: 0, width: '38%', height: sealEm(9), pointerEvents: 'none', zIndex: 15 } as React.CSSProperties,
   /** `.ic-title{font-size:13.5px;font-weight:640}`——字号按 60 行那条锚点换算成 `1.08em`。
    *  #996：卡片标题行改用 `TitleBlock`（见 `title-seal.ts`，原型 A 锁 1.15em／700＋0.85em／400），
    *  这一格保留供附加块（`ConfigStyles` 键名不许改），头部本身不再用它。 */
@@ -911,25 +917,26 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     .map((role) => seals.findIndex((s) => s.role === role))
     .filter((index) => index >= 0);
 /** 三行槽位几何 · **唯一出处**：章的落位与卷轴浮层的锚点都从这里取，免得两处各写一套数字。
- *  行高（上／中／下；纵向净空各留约 10px，糙边抖动也碰不到）／轻微倾角（±0.5°～±2.5°，家下标×槽位哈希，
- *  纯函数每次同值）／右间距（三枚全部居右收敛，各家各行 0.2em～1.1em 错开，永不出面板右边界）。
- *  `dialog` 是卷轴浮层那一份：贴该行下方 1.9em（章高约 1.5em ＋ 0.4em 缝），右缘与那枚章对齐，
+ *  下列数字是**设计基准**（未缩放）：行高上／中／下 0.3／3.4／6.2em（纵向净空各留约 10px，糙边抖动也碰不到）、
+ *  轻微倾角 ±0.5°～±2.5°（家下标×槽位哈希，纯函数每次同值）、右间距 0.2em～1.1em（三枚全部居右收敛，
+ *  各家各行错开，永不出面板右边界）。整簇一律乘 `SEAL_SCALE` 落到卡面（`sealEm`）——缩放只此一处。
+ *  `dialog` 是卷轴浮层那一份：贴该行下方 1.9em（章高 ＋ 缝），右缘与那枚章对齐，
  *  再往左让 1.25em 给绦带（关闭钮骑在浮层右上方，不让它越出卡片）。 */
 const slotGeom = (slot: number, seed: number): { readonly top: string; readonly tilt: string; readonly padRight: string; readonly dialog: React.CSSProperties } => {
-  const top = ['0.3em', '3.4em', '6.2em'][slot] ?? '0.3em';
+  const top = sealEm([0.3, 3.4, 6.2][slot] ?? 0.3);
   const q = (seed * 5 + slot * 11 + 3) % 10;
   const tilt = String((q % 2 === 0 ? -1 : 1) * (0.5 + Math.floor(q / 2) * 0.5));
-  const padRight = String(0.2 + ((seed * 7 + slot * 3 + 1) % 6) * 0.18) + 'em';
+  const padRight = sealEm(0.2 + ((seed * 7 + slot * 3 + 1) % 6) * 0.18);
   return {
     top,
     tilt,
     padRight,
     dialog: {
-      top: 'calc(' + top + ' + 1.9em)',
-      right: 'calc(' + padRight + ' + 1.25em)',
+      top: 'calc(' + top + ' + ' + sealEm(1.9) + ')',
+      right: 'calc(' + padRight + ' + ' + sealEm(1.25) + ')',
       left: 'auto',
       justifyContent: 'flex-end',
-      maxWidth: 'calc(100% - ' + padRight + ' - 1.75em)',
+      maxWidth: 'calc(100% - ' + padRight + ' - ' + sealEm(1.75) + ')',
     },
   };
 };
@@ -942,8 +949,8 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
       'span',
       // 槽位包裹层：**不过滤镜**，气泡挂这一层（字才清晰）＋ 悬停整枚抬起（盖得住卡片内容）。
       { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, className: 'dshLifeSealSlot', 'data-tip': sealTipOf(seals[dataIndex].tier), style: ((): React.CSSProperties => { const g = slotGeom(slot, seed); return { position: 'absolute', top: g.top, right: g.padRight, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + g.tilt + 'deg)' }; })() },
-      // 章面缩到 80%：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
-      React.createElement('span', { style: { fontSize: '0.8em', display: 'inline-flex' } },
+      // 章面按簇缩放：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
+      React.createElement('span', { style: { fontSize: sealEm(0.8), display: 'inline-flex' } },
         React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
    )),
   );
