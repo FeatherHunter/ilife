@@ -21,7 +21,7 @@ import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
-import { managerCallAdapter, mountLifeBatchPanel, mountLifeUpdateEntry } from './update-dialog.js';
+import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
 import { tabInteractionCss } from './config-panel-view.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
@@ -314,43 +314,20 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   );
   const lightOf = (id: string) => lights.find((light) => light.id === id);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
-  /** 批量面板挂载态（完全上游 UI：弹窗壳/关闭/Esc 全由上游 dialog 提供，本包只留挂载位与开关态）。 */
-  const [batchOpen, setBatchOpen] = React.useState(false);
+  /** 批量入口挂载位（一颗按钮看七家聚合；0.5.4 #49 到达，弹窗 dialog 由入口件内置，开关态亦归上游）。 */
   const entryRef = React.useRef<HTMLSpanElement | null>(null);
-  const dialogRef = React.useRef<HTMLDivElement | null>(null);
   const callReady = props.getCall() !== null;
   /** 入口件挂载：连接后到才挂（取用器现取），卸载即 unmount（只停入口轮询）。 */
   React.useEffect(() => {
     const mount = entryRef.current;
     if (mount === null || !callReady) return;
-    const entry = mountLifeUpdateEntry(mount, managerCallAdapter(props.getCall()), () => {
-      // 弹窗正常经上游关闭同步回假；此分支只在同步漏掉（上游改属性名）的兜底时才走到：先撤再挂，强制重挂一次。
-      // 正常流程点不着（dialog 打开时入口在遮罩下点不到），故无闪烁。
-      setBatchOpen((previous) => {
-        if (!previous) return true;
-        queueMicrotask(() => { setBatchOpen(true); });
-        return false;
-      });
-    });
+    const entry = mountLifeBatchEntry(mount, managerCallAdapter(props.getCall()));
     return () => {
       entry.unmount();
     };
     // getCall 本身是取用器（引用稳定），只跟连接就绪态重跑。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callReady]);
-  /** 批量面板挂载：开才挂上游 dialog，关即 unmount（只停轮询，宿主侧安装继续跑）；上游关闭经 onClose 同步开关态。 */
-  React.useEffect(() => {
-    const mount = dialogRef.current;
-    if (mount === null || !batchOpen || !callReady) return;
-    const panel = mountLifeBatchPanel(mount, managerCallAdapter(props.getCall()), () => {
-      setBatchOpen(false);
-    });
-    return () => {
-      panel.unmount();
-    };
-    // 同上。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchOpen, callReady]);
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
   const active = MANAGER_TABS.some((t) => t.plugin === activeId)
     ? (activeId as string)
@@ -632,13 +609,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             })(),
       );
     }),
-    batchOpen
-      ? React.createElement('div', {
-        ref: (element: HTMLDivElement | null) => {
-          dialogRef.current = element;
-        },
-      })
-      : null,
     React.createElement(MorePluginsCard, null),
   );
 }

@@ -1,30 +1,18 @@
-/** 面板薄包装（票 1170，浏览器侧：无 node 内建，可进 client 束；完全上游 UI，本包零自家样式）。
+/** 面板薄包装（票 1170 起，浏览器侧：无 node 内建，可进 client 束；完全上游 UI，本包零自家样式）。
  *
- * 只定死三组参数，不自建文案与样式：入口形态 button、打开策略 manual（点击交由 onOpen 打开批量弹窗）、
- * 皮肤 archive；批量面板弹窗形态由上游提供（overlay + 关闭按钮 + Esc，全 `archive` 同一套），本包只留挂载位；
+ * 只定死三组参数，不自建文案与样式：批量入口形态 button、皮肤 archive、打开策略沿上游缺省 always
+ *（查完总是开批量面板；0.5.4 #49 到达，manual 桥接已删）；弹窗 dialog 由入口件内置（含关闭落地）；
  * 轮询与更新日志沿上游缺省，中文标题沿目标表（不传 titles 覆盖）。
  */
-import { mountUpdateBatchPanel } from 'dsh-plugin-update/panel-batch';
-import type { BatchPanelController, BatchPanelContainer } from 'dsh-plugin-update/panel-batch';
-import { mountUpdateEntry } from 'dsh-plugin-update/entry';
-import type { UpdateEntryController, UpdateEntryOptions } from 'dsh-plugin-update/entry';
+import { mountUpdateBatchEntry } from 'dsh-plugin-update/entry-batch';
+import type { UpdateBatchEntryController, UpdateBatchEntryOptions } from 'dsh-plugin-update/entry-batch';
+import type { BatchPanelContainer } from 'dsh-plugin-update/panel-batch';
 import { MANAGER_RPC } from './update-contract.js';
-import { BATCH_PREFIX, MANAGER_TARGET_KEY, UPDATE_TARGETS } from './update-targets.js';
+import { BATCH_PREFIX } from './update-targets.js';
 import type { RpcCallFace } from './dsh-ctx.js';
 
 /** 面板调宿主： upstream 面板唯一的宿主接触面（电话名 + 参数）。 */
 export type LifePanelCall = (name: string, args: Record<string, unknown>) => Promise<unknown>;
-
-/** 总管自己那一行的电话名前缀（入口件状态源，取自目标表，不手写字面量）。 */
-function managerPrefix(): string {
-  const row = UPDATE_TARGETS.find((target) => target.key === MANAGER_TARGET_KEY);
-  return row !== undefined ? row.phonePrefix : 'ilife-life-pack';
-}
-
-/** 总管自己在批量内的插件标识（与宿主侧上游缺省 batchPrefix-key 同口径）。 */
-function managerPluginId(): string {
-  return BATCH_PREFIX + '-' + MANAGER_TARGET_KEY;
-}
 
 /** 把 RpcCallFace 收成面板要的一参形状：上游回包原样透传（含失败回包的 errorKind 与 diag）。
  *
@@ -57,73 +45,21 @@ export function managerCallAdapter(call: RpcCallFace | null): LifePanelCall {
   };
 }
 
-/** 挂入口按钮（点击打开批量弹窗，状态取总管自己一行的只读快照）。 */
-export function mountLifeUpdateEntry(
+/** 挂批量入口（一颗按钮看七家聚合，弹窗 dialog 由入口件内置，关闭落地自带）。
+ *
+ * 0.5.4 #49 到达：`prefix: life` 直调批量五电话，徽标与面板总账同一份数法；manual 桥接与容器事件同步已整段删除。
+ */
+export function mountLifeBatchEntry(
   container: BatchPanelContainer,
   call: LifePanelCall,
-  onOpen: () => void,
-  overrides?: Partial<Pick<UpdateEntryOptions, 'autoCheck' | 'label'>> | undefined,
-): UpdateEntryController {
-  return mountUpdateEntry(container, {
-    pluginId: managerPluginId(),
-    prefix: managerPrefix(),
+  overrides?: Partial<Pick<UpdateBatchEntryOptions, 'autoCheck' | 'label'>> | undefined,
+): UpdateBatchEntryController {
+  return mountUpdateBatchEntry(container, {
+    prefix: BATCH_PREFIX,
     call,
     variant: 'button',
-    openOn: 'manual',
     theme: 'archive',
     autoCheck: overrides?.autoCheck ?? 'mount',
     label: overrides?.label,
-    onActivate: () => { onOpen(); },
   });
-}
-
-/** 挂批量面板（完全上游 UI：弹窗壳/关闭按钮/Esc 全由上游 dialog 提供，离开时 unmount 只停轮询）。
- *
- * 上游批量面板 dialog 关闭时只停轮询、不通知调用方（单面板才有 `onCloseRequested`，批量 0.5.1 还没有）；
- * 故这里用容器级事件把“关闭/Esc”同步成 `onClose`——只做挂载态同步，不画任何 UI。上游改了 `data-act`
- * 即不同步（不抛，下一次点入口强制重挂兜底）。
- */
-export function mountLifeBatchPanel(
-  container: BatchPanelContainer,
-  call: LifePanelCall,
-  onClose?: () => void,
-): BatchPanelController {
-  const panel = mountUpdateBatchPanel(container, { prefix: BATCH_PREFIX, call, theme: 'archive', mode: 'dialog' });
-  if (onClose === undefined) return panel;
-  const fire = (): void => { onClose(); };
-  const onClick = (ev: unknown): void => {
-    try {
-      const target = (ev as { target?: { closest?: (selectors: string) => { getAttribute?: (name: string) => string | null } | null } | null }).target;
-      const hit = target?.closest?.('[data-act]');
-      if (hit?.getAttribute?.('data-act') === 'close') fire();
-    } catch {
-      // 上游属性改名即不同步，不抛。
-    }
-  };
-  const onKeyDown = (ev: unknown): void => {
-    try {
-      if ((ev as { key?: unknown }).key === 'Escape') fire();
-    } catch {
-      // 同上。
-    }
-  };
-  try { container.addEventListener?.('click', onClick); } catch {
-    // 测试替身无事件口即跳过。
-  }
-  try { container.addEventListener?.('keydown', onKeyDown); } catch {
-    // 同上。
-  }
-  const rawUnmount = panel.unmount;
-  return {
-    ...panel,
-    unmount(): void {
-      try { container.removeEventListener?.('click', onClick); } catch {
-        // 同上。
-      }
-      try { container.removeEventListener?.('keydown', onKeyDown); } catch {
-        // 同上。
-      }
-      rawUnmount();
-    },
-  };
 }
