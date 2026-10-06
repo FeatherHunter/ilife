@@ -179,6 +179,9 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes('[data-tip]:hover::after'), '气泡由包裹层的悬停触发');
     assert.ok(css.includes('.dshLifeSealSlot .dshLifeSealBtn::after{content:none}'), '槽位里不许再出第二个气泡');
     assert.ok(css.includes('z-index:60'), '气泡层级要压得住卡片内容');
+    // 真机缺陷回归：槽位各成层叠上下文，气泡只在槽位内生效 ⇒ 悬停时必须把整枚槽位抬起来，
+    // 否则下一行的气泡会被上面两行的章盖住。槽位 z 是行内样式，故这条必须 !important。
+    assert.ok(css.includes('[data-tip]:hover,[data-tip]:focus-within{z-index:40 !important}'), '悬停要把整枚槽位抬到最上（不然气泡被别的章挡）');
   });
   it('关闭钮＝绦带（定稿默认样子）：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
     // 不传任何开关：定稿后这就是唯一一版关闭钮，用例咬住默认路径。

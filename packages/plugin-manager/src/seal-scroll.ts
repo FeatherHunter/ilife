@@ -245,6 +245,10 @@ export function SealFilterDefs(): React.ReactElement {
       '[data-tip]{position:relative}' +
       '[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#241f19ee;color:#f8f1e2;font-size:.72em;letter-spacing:.1em;padding:.4em .9em;border-radius:.5em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 150ms ease;z-index:60}' +
       '[data-tip]:hover::after,[data-tip]:focus-within::after{opacity:1}' +
+      // 真机缺陷：槽位带 transform 与行内 z（HELP 4／技能 3／插件 2），各自成层叠上下文，
+      // 气泡的 z 60 只在**本槽位内**生效 ⇒ 下一行的气泡被上面两行的章盖住（"精雕细琢中"被挡）。
+      // 悬停时把整枚槽位抬到最上（槽位 z 是行内样式，故这里必须 !important）。
+      '[data-tip]:hover,[data-tip]:focus-within{z-index:40 !important}' +
       // 槽位里那枚印不再自带气泡（同一句话会在包裹层上出一次）
       '.dshLifeSealSlot .dshLifeSealBtn::after{content:none}'),
     React.createElement(
