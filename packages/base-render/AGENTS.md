@@ -42,3 +42,8 @@ npm install skill-memo-ilife --registry=https://registry.npmjs.org --prefer-onli
 判据：解析到的 `base-paint` 版本＝刚发的版本。**本机默认源是镜像 `registry.npmmirror.com`**（查新版本滞后），务必显式 `--registry=`，必要时 `--prefer-online`（否则可能装到旧版本）。
 
 本机两个坑（实测）：① 镜像源滞后；② `pnpm store` 曾被外部工具清空（`@changesets/*` 只剩空壳）→ 报 `ERR_PNPM_MODIFIED_DEPENDENCY` 时**不要自行安装**，按协议 §2.1.1／§2.1.5 停手上报。
+
+## HELP 产物不入仓（#999 立）
+
+HELP 页面是各技能命令按需生成的运行时输出，不提交进版本库：`packages/*/deliver-*.html` 一律不入库（`.gitignore` 已拦截）。
+例外：`fixtures/help-instances/` 是 #94 冻结的旧版对照区，只读归档，不受本条约束。
