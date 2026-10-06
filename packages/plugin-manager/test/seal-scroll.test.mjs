@@ -182,6 +182,15 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     // 真机缺陷回归：槽位各成层叠上下文，气泡只在槽位内生效 ⇒ 悬停时必须把整枚槽位抬起来，
     // 否则下一行的气泡会被上面两行的章盖住。槽位 z 是行内样式，故这条必须 !important。
     assert.ok(css.includes('[data-tip]:hover,[data-tip]:focus-within{z-index:40 !important}'), '悬停要把整枚槽位抬到最上（不然气泡被别的章挡）');
+    // 真机缺陷（收卷钮）：按钮本体是个**透明方框**，看得见的是里面那枚 rotate 45° 的菱形 ⇒ 面板给的
+    // 方框阴影与方形聚光从菱形四个角漏出来，读成"正方形发光"；悬停的糙边滤镜还把"收卷"两个字抖成破碎版。
+    // 两条都得有用例咬住（选择器权重也要对：面板那条是 0-3-0，这几条必须更高才压得住）。
+    assert.ok(css.includes('[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none}'), '悬停不许再往方框上打阴影（正方形发光）');
+    assert.ok(css.includes('[data-ilife-press][data-ilife-close]::before{display:none}'), '方形聚光要摘掉');
+    assert.ok(css.includes('.dshLifeSealBtn[data-ilife-close]:hover{filter:none}'), '悬停的糙边滤镜不许碰绦带钮（字会碎、菱形四角会被滤镜区域裁掉）');
+    assert.ok(css.includes('[data-ilife-close-glow]{opacity:0') && css.includes('[data-ilife-close]:hover [data-ilife-close-glow]'), '辉光改挂菱形那层，悬停淡入');
+    assert.ok(css.includes('[data-ilife-close]:focus-visible [data-ilife-close-glow]'), '键盘焦点也要亮（不是只给鼠标）');
+    assert.ok(css.includes('@media (prefers-reduced-motion:reduce){[data-ilife-close-glow]{transition:none}}'), '减少动态：淡入直接切');
   });
   it('关闭钮＝绦带（定稿默认样子）：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
     // 不传任何开关：定稿后这就是唯一一版关闭钮，用例咬住默认路径。
@@ -195,6 +204,12 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     const fills = tails.map((n) => n.children.filter((c) => typeof c !== 'string').map((c) => c.props?.style?.background).filter(Boolean));
     assert.deepEqual(fills.map((f) => f.length), [2, 2], '每条尾两层：过滤镜的材质层＋不受滤镜的纯色芯');
     assert.deepEqual([...fills[0], ...fills[1]], [FILL, FILL, FILL, FILL], '两条尾同色，且＝绦带底色');
+    // 悬停辉光是**与绦带同角度同圆角**的一层（形状＝菱形，不是按钮那个方框）：几何在这里，颜色／淡入在 CSS。
+    const glow = nodesOf(tree, (node) => node.props?.['data-ilife-close-glow'] !== undefined);
+    assert.equal(glow.length, 1, '辉光只一层');
+    assert.equal(glow[0].props.style.transform, 'rotate(45deg)', '辉光与绦带同角度');
+    assert.equal(glow[0].props.style.borderRadius, '0.375em', '圆角与绦带一致');
+    assert.equal(glow[0].props.style.pointerEvents, 'none', '辉光不吃鼠标事件');
   });
 
   it('行首三枚朱砂小印有印泥质感：材质层过印那条糙边滤镜、字独立成层', () => {

@@ -225,6 +225,10 @@ function materialOf(role: SealScrollProps['role'], tier: SealScrollProps['tier']
  * 挂在文档任意位置都行（`width/height=0` 不占位），同页重复挂会撞 id。
  * 印章交互（悬停上浮高亮／按压回缩／焦点环／级别 tooltip）也住这里：scoped 类名，纯 CSS、无 hook。
  * 悬停高亮须把糙边 url 原样带上（filter 单属性，另写会把糙边冲掉）。 */
+/** 面板交互那枚焦点色（`config-panel-view.ts` 的 `interactionCss` 用的是同一个变量）：
+ *  绦带钮的悬停辉光走它。只写变量引用、不引模块——`config-panel-view.ts` 已 import 本件，反向 import 会成环。 */
+const FOCUS_VAR = 'var(--ilife-focus, var(--dsw-alias-brand-primary, #f6ad55))';
+
 export function SealFilterDefs(): React.ReactElement {
   return React.createElement(
     React.Fragment,
@@ -240,6 +244,20 @@ export function SealFilterDefs(): React.ReactElement {
       // 可绦带那枚关闭钮的菱形与两条飘尾本来就骑在按钮方框外——一裁就成"被正方形切掉"。
       // 这一条专给关闭钮开个口子（两属性选择器，权重高过面板那条）。
       '[data-ilife-press][data-ilife-close]{overflow:visible}' +
+      // 绦带钮（收卷）三处真机缺陷：① 按钮本体是**透明方框**，看得见的是里面那枚 rotate 45° 的菱形，
+      // 面板给的方框阴影与方形聚光会从菱形四个角漏出来 ⇒ 读成"正方形发光"，两条一律摘掉；
+      // ② 悬停的糙边滤镜挂在整钮上，会把"收卷"两个字抖成破碎版（字本是清晰层，不进滤镜）；
+      // ③ 悬停一律不许给按钮上 filter：滤镜区域默认只有边框盒的 120%，而菱形四角与两条飘尾都骑在框外，
+      // 一上滤镜就连形状一起裁掉。提亮与发光改由菱形那层（同角度、同圆角、不过滤镜）出。
+      '[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none}' +
+      '[data-ilife-press][data-ilife-close]::before{display:none}' +
+      '.dshLifeSealBtn[data-ilife-close]:hover{filter:none}' +
+      '[data-ilife-close-glow]{opacity:0;transition:opacity 160ms ease;' +
+      'background:color-mix(in srgb, ' + FOCUS_VAR + ' 14%, transparent);' +
+      'box-shadow:0 0 0 1px color-mix(in srgb, ' + FOCUS_VAR + ' 65%, transparent),' +
+      '0 0 12px 4px color-mix(in srgb, ' + FOCUS_VAR + ' 45%, transparent)}' +
+      '[data-ilife-close]:hover [data-ilife-close-glow],[data-ilife-close]:focus-visible [data-ilife-close-glow]{opacity:1}' +
+      '@media (prefers-reduced-motion:reduce){[data-ilife-close-glow]{transition:none}}' +
       // 气泡改挂**槽位包裹层**（不过糙边滤镜的那一层）：挂在印本体里，字会被滤镜抖糊；
       // 抬到 z-index 60，并让整枚槽位在悬停时一起抬起来，免得被卡片里后面的内容盖住。
       '[data-tip]{position:relative}' +

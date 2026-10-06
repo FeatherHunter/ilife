@@ -40,7 +40,8 @@ const edgeOf = (tierKey: string): string => (TIER_EDGE as Record<string, string>
 const metalOf = (tierKey: string): { readonly flat: string; readonly gradient: string } => (TIER_METAL as Record<string, { readonly flat: string; readonly gradient: string }>)[tierKey] ?? TIER_METAL.gold;
 const KAI = '"Kaiti SC","KaiTi","STKaiti",serif';
 
-/** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。 */
+/** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。
+ *  悬停／焦点时**菱形那层**淡入一圈辉光——按钮方框是透明的，反馈的形状必须跟菱形走（见 `SealFilterDefs`）。 */
 export function closeLook(tierKey: string): CloseLook {
   const crimson = 'linear-gradient(135deg,#c63d2a 8%,#a32216 50%,#7e1a10)';
   /** 档位金属边（铜／银／金）：绦带**只借这一条**——主体恒朱砂，边随档走，跟章「红底＋金属边」同构。 */
@@ -69,6 +70,12 @@ export function closeLook(tierKey: string): CloseLook {
     }),
     // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。
     React.createElement('span', { 'aria-hidden': true, style: { position: 'absolute', inset: '0.5px', borderRadius: '0 0 0.15625em 0.15625em', background: TAIL_FILL } }));
+  /** 悬停辉光：与绦带**同角度、同圆角、不过滤镜**的一层。形状与颜色全在 CSS（`SealFilterDefs` 的
+   *  `[data-ilife-close-glow]`，悬停／焦点淡入）；这里只给几何。画在绦带之后 ⇒ 顺带压一层暖洗色（读成提亮）。 */
+  const glow = React.createElement('span', {
+    key: 'glow', 'aria-hidden': true, 'data-ilife-close-glow': 'tie',
+    style: { position: 'absolute', inset: 0, borderRadius: '0.375em', transform: 'rotate(45deg)', pointerEvents: 'none' },
+  });
   return {
     label: crisp(CLOSE_LABEL, {
       fontFamily: KAI, fontSize: '0.8125em', letterSpacing: '0.22em', textIndent: '0.22em',
@@ -78,7 +85,8 @@ export function closeLook(tierKey: string): CloseLook {
       // 尾根压在带面之下（top 取在菱形内），梢头各自朝外：tL +26° ⇒ 尾梢往左，tR −26° ⇒ 尾梢往右。
       loose('tL', 'calc(50% - 0.8125em)', 26, '2em', '2.8125em'),
       loose('tR', 'calc(50% + 0.4375em)', -26, '2em', '2.8125em'),
-      ribbon),
+      ribbon,
+      glow),
     style: {
       boxSizing: 'border-box', padding: 0, position: 'absolute', right: '-1.5em', top: '-1.5em', width: '3.25em', height: '3.25em',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
