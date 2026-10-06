@@ -23,6 +23,9 @@ const PALETTE_TS = join(HERE, '..', 'src', 'seal-palette.ts');
 const PALETTE_JS = join(HERE, '..', 'src', 'seal-palette.js');
 const VOCAB_TS = join(HERE, '..', 'src', 'seal-vocabulary.generated.ts');
 const VOCAB_JS = join(HERE, '..', 'src', 'seal-vocabulary.generated.js');
+// 焦点环两个尺寸住在面板契约里（`seal-scroll.ts` 要原样重述"聚焦＋悬停"那一档的两道环）——一并编进来。
+const CONTRACT_TS = join(HERE, '..', 'src', 'config-panel-contract.ts');
+const CONTRACT_JS = join(HERE, '..', 'src', 'config-panel-contract.js');
 
 /** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。
  *  卷轴与印是渲染期互引（`seal-scroll ⇄ seal-stamp`，模块求值期无交叉）：编译前先占缓存位，
@@ -49,6 +52,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
   if (request === './seal-palette.js') return compileAs(PALETTE_TS, PALETTE_JS);
   if (request === './seal-vocabulary.generated.js') return compileAs(VOCAB_TS, VOCAB_JS);
+  if (request === './config-panel-contract.js') return compileAs(CONTRACT_TS, CONTRACT_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 
@@ -190,6 +194,10 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes('.dshLifeSealBtn[data-ilife-close]:hover{filter:none}'), '悬停的糙边滤镜不许碰绦带钮（字会碎、菱形四角会被滤镜区域裁掉）');
     assert.ok(css.includes('[data-ilife-close-glow]{opacity:0') && css.includes('[data-ilife-close]:hover [data-ilife-close-glow]'), '辉光改挂菱形那层，悬停淡入');
     assert.ok(css.includes('[data-ilife-close]:focus-visible [data-ilife-close-glow]'), '键盘焦点也要亮（不是只给鼠标）');
+    // "聚焦＋悬停"那一档：面板的 `:focus-visible:hover` 与上面那条同为 0-4-0，而面板 <style> 在卡片末位（平局判给它）
+    // ⇒ 必须另有一条 0-5-0 的，只摘辉光、把两道焦点环原样留着（焦点可见是硬要求）。
+    assert.ok(css.includes('[data-ilife-press][data-ilife-close]:focus-visible:hover:not(:disabled){box-shadow:0 0 0 2px var(--dsw-alias-bg-layer-1, #232324),0 0 0 5px var(--ilife-focus'), '聚焦＋悬停：两道焦点环留着、辉光摘掉');
+    assert.ok(!/\[data-ilife-press\]\[data-ilife-close\]:focus-visible:hover:not\(:disabled\)\{box-shadow:[^}]*0 4px 16px/.test(css), '方框辉光不许从这一档溜回来');
     assert.ok(css.includes('@media (prefers-reduced-motion:reduce){[data-ilife-close-glow]{transition:none}}'), '减少动态：淡入直接切');
   });
   it('关闭钮＝绦带（定稿默认样子）：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {

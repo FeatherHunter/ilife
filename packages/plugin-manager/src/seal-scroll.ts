@@ -22,6 +22,8 @@
  */
 
 import * as React from 'react';
+// 焦点环两个尺寸从面板契约引（与 `interactionCss` 同一份定义）：本件要在"聚焦＋悬停"那一档把两道环原样重述。
+import { FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX } from './config-panel-contract.js';
 import type { SealRole, SealTier } from './config-panel-contract.js';
 // 卷轴标题直接复用印本体（与外面那枚同组件同 props，UI 天然一致）。
 // 与 `seal-stamp.ts` 是渲染期互引（双方只在组件函数体内用对方，无模块求值期依赖）。
@@ -250,6 +252,12 @@ export function SealFilterDefs(): React.ReactElement {
       // ③ 悬停一律不许给按钮上 filter：滤镜区域默认只有边框盒的 120%，而菱形四角与两条飘尾都骑在框外，
       // 一上滤镜就连形状一起裁掉。提亮与发光改由菱形那层（同角度、同圆角、不过滤镜）出。
       '[data-ilife-press][data-ilife-close]:hover:not(:disabled){box-shadow:none}' +
+      // "聚焦＋悬停"是单独一档：面板那条 `[data-ilife-press]:focus-visible:hover:not(:disabled)` 也是 0-4-0，
+      // 而面板那枚 <style> 挂在卡片**末位**（见 config-panel-view.ts），平局判给它 ⇒ 方框辉光会回来。
+      // 这一条取 0-5-0 稳压：只摘辉光（`0 4px 16px`），两道焦点环原样留着——焦点可见是硬要求，不许一起摘。
+      '[data-ilife-press][data-ilife-close]:focus-visible:hover:not(:disabled){box-shadow:' +
+      '0 0 0 ' + String(FOCUS_RING_GAP_PX) + 'px var(--dsw-alias-bg-layer-1, #232324),' +
+      '0 0 0 ' + String(FOCUS_RING_WIDTH_PX) + 'px ' + FOCUS_VAR + '}' +
       '[data-ilife-press][data-ilife-close]::before{display:none}' +
       '.dshLifeSealBtn[data-ilife-close]:hover{filter:none}' +
       '[data-ilife-close-glow]{opacity:0;transition:opacity 160ms ease;' +
