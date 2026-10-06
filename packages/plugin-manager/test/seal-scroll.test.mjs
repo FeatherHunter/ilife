@@ -142,9 +142,10 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
   it('滤镜定义两条都在，且外框引用的就是卷轴那条', () => {
     const defs = expand(React.createElement(SealFilterDefs, {}));
     const ids = nodesOf(defs, (node) => node.type === 'filter').map((node) => node.props.id);
-    assert.deepEqual(ids.sort(), ['dshLifeSealRoughEdge', 'dshLifeSealRoughFrame', 'dshLifeSealRoughMetal']);
+    assert.deepEqual(ids.sort(), ['dshLifeSealInkEdge', 'dshLifeSealRoughEdge', 'dshLifeSealRoughFrame', 'dshLifeSealRoughMetal']);
     const scales = nodesOf(defs, (node) => node.type === 'feDisplacementMap').map((node) => node.props.scale);
-    assert.deepEqual(scales, [2.2, 6.5, 3.2], '印 2.2／外框 6.5（大块会被稀释，故单给一档）／中等件 3.2（关闭钮那几件）');
+    assert.deepEqual(scales, [2.2, 6.5, 3.2, 2.2], '印 2.2／外框 6.5／中等件 3.2／印泥 2.2＋洇开');
+    assert.equal(nodesOf(defs, (node) => node.type === 'feGaussianBlur').length, 1, '印泥那条末尾要有一次洇开（高斯模糊）');
     // 外框那条的颗粒配方：低频底噪＋3 倍频（斑块感），纯高频会退化成一条细金粉线。
     const frameFilter = nodesOf(defs, (node) => node.type === 'filter' && node.props.id === 'dshLifeSealRoughFrame')[0];
     const turb = nodesOf(frameFilter, (node) => node.type === 'feTurbulence')[0];
@@ -176,6 +177,20 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     const fills = tails.map((n) => n.children.filter((c) => typeof c !== 'string').map((c) => c.props?.style?.background).filter(Boolean));
     assert.deepEqual(fills.map((f) => f.length), [2, 2], '每条尾两层：过滤镜的材质层＋不受滤镜的纯色芯');
     assert.deepEqual([...fills[0], ...fills[1]], [FILL, FILL, FILL, FILL], '两条尾同色，且＝绦带底色');
+  });
+
+  it('行首三枚朱砂小印有印泥质感：材质层过印那条糙边滤镜、字独立成层', () => {
+    const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'help', tier: 'gold' }));
+    const marks = nodesOf(tree, (node) => node.props?.['aria-hidden'] === true && typeof node.props?.style?.filter === 'string' && node.props.style.filter.includes('dshLifeSealInkEdge'));
+    assert.equal(marks.length, 3, '进／状／计 三枚，各带一层过糙边滤镜的印泥');
+    // expand 对独子不包成数组，统一成列再查。
+    const kidsOf = (n) => (Array.isArray(n.children) ? n.children : n.children ? [n.children] : []);
+    for (const m of marks) {
+      assert.ok(String(m.props.style.background).startsWith('radial-gradient'), '印泥层是朱砂渐变（不是一块平色）');
+      assert.ok(kidsOf(m).some((c) => typeof c !== 'string' && String(c.props?.style?.background ?? '').includes('radial-gradient')), '再叠一层墨色不匀');
+    }
+    const glyphs = nodesOf(tree, (node) => node.props?.style?.color === '#fdf7ea');
+    assert.deepEqual(glyphs.map((n) => textsOf(n).join('')), ['进', '状', '计'], '字住在滤镜之外（清晰层）');
   });
 
   it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {

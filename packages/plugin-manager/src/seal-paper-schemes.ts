@@ -11,7 +11,7 @@
  * 本件是纯函数：吃 ctx 回五件，不留状态、不取数。原型期的二十余档方案已按「定稿后只留胜出那一档」删除。
  */
 import * as React from 'react';
-import { SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
+import { SEAL_ROUGH_INK_ID, SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
 
 /** 关闭钮的样子：样式 ＋ 字面 ＋ 可选装饰件。 */
 export interface CloseLook {
@@ -38,7 +38,6 @@ export const TIER_METAL: Record<string, { readonly flat: string; readonly gradie
   copper: { flat: '#a8663a', gradient: 'linear-gradient(180deg,#f0bd8e 0%,#c07b45 45%,#8a4a24 100%)' },
 };
 const KAI = '"Kaiti SC","KaiTi","STKaiti",serif';
-const RED = '#b73124';
 
 /** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。 */
 export function closeLook(): CloseLook {
@@ -132,6 +131,30 @@ function ornament(st: PaperStyles, ruler: string): React.ReactNode {
     line('l', '90'), React.createElement('i', { style: { ...st.ornDot, background: ruler } }), line('r', '270'));
 }
 
+/** 行首那枚朱砂小印（进／状／计）：**两层**——材质层过印那条糙边滤镜（印泥压出来的毛边与斑驳），
+ *  字独立成层保持清晰；方块各带一点歪斜（真印章不会次次压得方正）。
+ *  外框仍是 0.7em 字／1.6 行高／左右 0.375em 垫——换的是质感，版面逐值不动。 */
+function inkMark(name: string): React.ReactElement {
+  const tilt = name === '进展' ? -2.4 : name === '状态' ? 1.6 : -1.2;
+  return React.createElement('span', {
+    style: { position: 'relative', flex: '0 0 auto', fontSize: '0.7em', lineHeight: 1.6, padding: '0 0.375em', transform: 'rotate(' + tilt + 'deg)' },
+  },
+  // 印泥层：中心偏亮（按下去的那一下）、四周吃墨更深，再压一道内影当「厚」
+  React.createElement('span', { 'aria-hidden': true, style: {
+    position: 'absolute', inset: 0, borderRadius: '0.1875em',
+    background: 'radial-gradient(circle at 36% 30%,#c8543f 0%,#a8281c 58%,#7c1a12 100%)',
+    boxShadow: 'inset 0 0 0 0.5px #ffffff2e, inset 0 -1px 2px #00000033',
+    filter: 'url(#' + SEAL_ROUGH_INK_ID + ')',
+  } },
+  // 墨色不匀：三团深浅斑＋一道斜向留白（印泥压不匀、边上吃不到墨的常态）
+  React.createElement('span', { 'aria-hidden': true, style: {
+    position: 'absolute', inset: 0, borderRadius: 'inherit',
+    background: 'radial-gradient(circle at 74% 78%,#00000033 0%,#0000 56%), radial-gradient(circle at 18% 64%,#ffffff2e 0%,#0000 46%), radial-gradient(circle at 52% 14%,#ffffff1f 0%,#0000 40%), linear-gradient(118deg,#0000 42%,#ffffff1a 52%,#0000 62%)',
+  } })),
+  // 字层：不参与滤镜（小方印上的字一糊就白做了）
+  React.createElement('span', { style: { position: 'relative', color: '#fdf7ea', opacity: 0.95 } }, name.slice(0, 1)));
+}
+
 /** 三段：一行紧凑（行首朱砂小方印＋标签＋正文同一基线）。 */
 function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
   // 末行吃回半个行距：行高 1.9 会在字形下留 ~6px 半行距，叠在纸底内垫上就是“底比顶空一截”。
@@ -140,7 +163,7 @@ function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
     React.createElement(
       'div',
       { key, style: { margin: last ? '0 0 -0.5em' : '0 0 0.5em', display: 'flex', alignItems: 'baseline', gap: '0.5em' } },
-      React.createElement('span', { style: { flex: '0 0 auto', background: RED, color: '#f8f1e2', fontSize: '0.7em', lineHeight: 1.6, padding: '0 0.375em', borderRadius: '0.1875em' } }, name.slice(0, 1)),
+      inkMark(name),
       React.createElement('span', { style: { ...st.label, flex: '0 0 auto', display: 'inline', marginBottom: 0, fontSize: '0.8em', color: ctx.accent } }, name + '：'),
       React.createElement('span', { style: { ...st.text, flex: '1 1 auto', display: 'inline', margin: 0, fontSize: '0.9em' } }, text),
     );

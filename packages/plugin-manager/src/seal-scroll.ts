@@ -34,12 +34,18 @@ const ROUGH_EDGE = 'dshLifeSealRoughEdge';
 const ROUGH_FRAME = 'dshLifeSealRoughFrame';
 /** 中等件（轴杆／纸筒／绦带这类几十像素宽的件）那条糙边：2.2 太细、5 会抖过头。 */
 const ROUGH_METAL = 'dshLifeSealRoughMetal';
+/** 印泥那条（行首那几枚小印）：同 2.2 的抖动，末尾再加一点高斯模糊——印泥压在纸上边缘会洇开，
+ *  光有抖动边只会读成「毛边贴纸」。字住在滤镜之外，所以糊的只有泥、不是字。 */
+const ROUGH_INK = 'dshLifeSealInkEdge';
 
 /** 印那条糙边滤镜 id（`seal-stamp.ts` 引用，定义只此一处）。 */
 export const SEAL_ROUGH_EDGE_ID = ROUGH_EDGE;
 
-/** 中等件那条糙边 id（关闭钮原型引用；定义只此一处）。 */
+/** 中等件那条糙边 id（关闭钮引用；定义只此一处）。 */
 export const SEAL_ROUGH_METAL_ID = ROUGH_METAL;
+
+/** 印泥那条糙边 id（纸面行首小印引用；定义只此一处）。 */
+export const SEAL_ROUGH_INK_ID = ROUGH_INK;
 
 
 /** 档位话：标题下那一行不再印档位字，直接说档位所处的阶段（渲染期用，顶层可放行）。 */
@@ -296,6 +302,14 @@ export function SealFilterDefs(): React.ReactElement {
       { id: ROUGH_METAL, key: ROUGH_METAL, x: '-8%', y: '-14%', width: '116%', height: '128%' },
       React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
       React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 3.2 }),
+    ),
+    // 印泥：相同的抖动 ＋ 0.35px 洇开（只给小印用，字不在这层里）。
+    React.createElement(
+      'filter',
+      { id: ROUGH_INK, key: ROUGH_INK, x: '-20%', y: '-20%', width: '140%', height: '140%' },
+      React.createElement('feTurbulence', { baseFrequency: 0.9, numOctaves: 2, result: 'n' }),
+      React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 2.2, result: 'd' }),
+      React.createElement('feGaussianBlur', { in: 'd', stdDeviation: 0.35 }),
     ),
     ),
   );
