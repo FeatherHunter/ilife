@@ -37,13 +37,17 @@ export const TIER_METAL: Record<string, { readonly flat: string; readonly gradie
   silver: { flat: '#8b959d', gradient: 'linear-gradient(180deg,#f7fafc 0%,#c3ccd3 45%,#8b959d 100%)' },
   copper: { flat: '#a8663a', gradient: 'linear-gradient(180deg,#f0bd8e 0%,#c07b45 45%,#8a4a24 100%)' },
 };
+/** 档位金属边（铜／银／金）：章与绦带共用这一份取值。 */
+const TIER_EDGE: Record<string, string> = { gold: '#f5d97a', silver: '#d8dee3', copper: '#a5652f' };
 const KAI = '"Kaiti SC","KaiTi","STKaiti",serif';
 
 /** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。 */
-export function closeLook(): CloseLook {
+export function closeLook(tierKey: string): CloseLook {
   const crimson = 'linear-gradient(135deg,#c63d2a 8%,#a32216 50%,#7e1a10)';
+  /** 档位金属边（铜／银／金）：绦带**只借这一条**——主体恒朱砂，边随档走，跟章「红底＋金属边」同构。 */
+  const edge = TIER_EDGE[tierKey] ?? TIER_EDGE['gold']!;
   const ribbon = bgLayer(
-    { borderRadius: '0.375em', background: crimson, boxShadow: '0 2px 8px #3d241066, inset 0 0 0 1px #f5d97a66', transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
+    { borderRadius: '0.375em', background: crimson, boxShadow: '0 2px 8px #3d241066, inset 0 0 0 1px ' + edge + '66', transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
     null,
   );
   /** 尾色＝绦带上亮一档的朱砂（悬在纸上也不发灰、不发黑）：两条尾同色。 */
@@ -60,7 +64,7 @@ export function closeLook(): CloseLook {
       background: TAIL_FILL,
       // 只留一道暗红描边把尾从纸面/暗底上切出来；**不给金边**——尾只有 6px 宽，
       // 1px 金边被糙边滤镜一搅会把整条尾染成金灰（左尾「不够亮」就是这么来的）。
-      boxShadow: '0 0 0 1px #6d150c40, 0 1px 3px #00000055',
+      boxShadow: '0 0 0 1px ' + edge + '73, 0 1px 3px #00000055',
       filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')',
     }),
     // 纯色芯几乎铺满（只留 0.5px 给毛边），这样尾的观感＝上面那档朱砂，不被滤镜的破洞拉灰。
@@ -142,14 +146,15 @@ function inkMark(name: string): React.ReactElement {
   // 印泥层：中心偏亮（按下去的那一下）、四周吃墨更深，再压一道内影当「厚」
   React.createElement('span', { 'aria-hidden': true, style: {
     position: 'absolute', inset: 0, borderRadius: '0.1875em',
-    background: 'radial-gradient(circle at 36% 30%,#c8543f 0%,#a8281c 58%,#7c1a12 100%)',
+    // 大红色（真印泥的朱砂）：边上只略微吃墨，不许发暗发褐——一暗就成"过期印泥"。
+    background: 'radial-gradient(circle at 36% 30%,#f4593a 0%,#d92b1c 52%,#be1d10 100%)',
     boxShadow: 'inset 0 0 0 0.5px #ffffff2e, inset 0 -1px 2px #00000033',
     filter: 'url(#' + SEAL_ROUGH_INK_ID + ')',
   } },
   // 墨色不匀：三团深浅斑＋一道斜向留白（印泥压不匀、边上吃不到墨的常态）
   React.createElement('span', { 'aria-hidden': true, style: {
     position: 'absolute', inset: 0, borderRadius: 'inherit',
-    background: 'radial-gradient(circle at 74% 78%,#00000033 0%,#0000 56%), radial-gradient(circle at 18% 64%,#ffffff2e 0%,#0000 46%), radial-gradient(circle at 52% 14%,#ffffff1f 0%,#0000 40%), linear-gradient(118deg,#0000 42%,#ffffff1a 52%,#0000 62%)',
+    background: 'radial-gradient(circle at 74% 78%,#00000024 0%,#0000 56%), radial-gradient(circle at 18% 64%,#ffffff33 0%,#0000 46%), radial-gradient(circle at 52% 14%,#ffffff24 0%,#0000 40%), linear-gradient(118deg,#0000 42%,#ffffff1f 52%,#0000 62%)',
   } })),
   // 字层：不参与滤镜（小方印上的字一糊就白做了）
   React.createElement('span', { style: { position: 'relative', color: '#fdf7ea', opacity: 0.95 } }, name.slice(0, 1)));

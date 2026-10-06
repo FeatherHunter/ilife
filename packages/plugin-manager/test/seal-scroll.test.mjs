@@ -193,6 +193,22 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.deepEqual(glyphs.map((n) => textsOf(n).join('')), ['进', '状', '计'], '字住在滤镜之外（清晰层）');
   });
 
+  it('绦带只借档位金属那一条边：主体恒朱砂，边随金／银／铜走', () => {
+    const kidsOf = (n) => (Array.isArray(n.children) ? n.children : n.children ? [n.children] : []);
+    const rims = ['gold', 'silver', 'copper'].map((tier) => {
+      const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier, open: true, onClose: () => {} }));
+      const ribbon = nodesOf(tree, (n) => n.props?.style?.transform === 'rotate(45deg)')[0];
+      const tail = nodesOf(tree, (n) => n.props?.style?.transform === 'rotate(26deg)')[0];
+      const tailLayer = kidsOf(tail).find((c) => typeof c !== 'string' && String(c.props?.style?.filter ?? '').includes('RoughMetal'));
+      return { ribbon: String(ribbon.props.style.boxShadow), ribbonBg: String(ribbon.props.style.background), tail: String(tailLayer.props.style.boxShadow) };
+    });
+    assert.ok(rims[0].ribbon.includes('#f5d97a66'), '金档绦带：金边');
+    assert.ok(rims[1].ribbon.includes('#d8dee366'), '银档绦带：银边');
+    assert.ok(rims[2].ribbon.includes('#a5652f66'), '铜档绦带：铜边');
+    assert.ok(rims[0].tail.includes('#f5d97a73') && rims[2].tail.includes('#a5652f73'), '两条飘尾也随档取边');
+    assert.ok(rims.every((r) => r.ribbonBg.includes('#c63d2a')), '边换了，主体三档都仍是朱砂');
+  });
+
   it('open 为假不渲染；为真出 popover（无遮罩）、关闭钮与标题', () => {
     assert.equal(SealScrollDialog({ ...PROPS, role: 'help', tier: 'copper', open: false, onClose: () => {} }), null);
     const tree = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'copper', open: true, onClose: () => {} }));

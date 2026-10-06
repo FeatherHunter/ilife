@@ -407,7 +407,7 @@ export function SealScrollDialog(
         { style: S.popInner },
         // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
         (() => {
-          const look = closeLook();
+          const look = closeLook(props.tier);
           // zIndex 20：关闭钮要压在卷轴（框＋纸）之上，否则骑在边上的那几档会被红框吃掉半边。
           return React.createElement('button', { type: 'button', className: 'dshLifeSealBtn', style: { zIndex: 20, ...look.style }, 'data-ilife-press': 'seal-close', 'data-ilife-close': 'tie', onClick: props.onClose }, look.decor ?? null, look.label);
         })(),
