@@ -19,6 +19,8 @@ const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
 const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
 const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
+const MATS_TS = join(HERE, '..', 'src', 'seal-materials.ts');
+const MATS_JS = join(HERE, '..', 'src', 'seal-materials.js');
 
 /** 把源码件转成 CJS 载进来（不进产物、不碰 src 目录）。
  *  卷轴与印是渲染期互引（`seal-scroll ⇄ seal-stamp`，模块求值期无交叉）：编译前先占缓存位，
@@ -43,6 +45,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
+  if (request === './seal-materials.js') return compileAs(MATS_TS, MATS_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 

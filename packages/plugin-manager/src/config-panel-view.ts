@@ -906,15 +906,29 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const seed = props.sealSeed ?? 0;
   /** 三行定序（六家一致：HELP 上／技能中／插件下；HELP 永远 z 最上）。 */
   const order = [0, 1, 2];
-  /** 三行行高（上／中／下；纵向净空各留约 10px，糙边抖动也碰不到）。 */
-  const TOPS = ['0.3em', '3.4em', '6.2em'];
-  /** 轻微倾角（±0.5°～±2.5°，方向随机）：家下标×槽位哈希，纯函数、每次同值，不过大。 */
-  const tiltOfSlot = (slot: number): string => {
-    const q = (seed * 5 + slot * 11 + 3) % 10;
-    return String((q % 2 === 0 ? -1 : 1) * (0.5 + Math.floor(q / 2) * 0.5));
+/** 三行槽位几何 · **唯一出处**：章的落位与卷轴浮层的锚点都从这里取，免得两处各写一套数字。
+ *  行高（上／中／下；纵向净空各留约 10px，糙边抖动也碰不到）／轻微倾角（±0.5°～±2.5°，家下标×槽位哈希，
+ *  纯函数每次同值）／右间距（三枚全部居右收敛，各家各行 0.2em～1.1em 错开，永不出面板右边界）。
+ *  `dialog` 是卷轴浮层那一份：贴该行下方 1.9em（章高约 1.5em ＋ 0.4em 缝），右缘与那枚章对齐，
+ *  再往左让 1.25em 给绦带（关闭钮骑在浮层右上方，不让它越出卡片）。 */
+const slotGeom = (slot: number, seed: number): { readonly top: string; readonly tilt: string; readonly padRight: string; readonly dialog: React.CSSProperties } => {
+  const top = ['0.3em', '3.4em', '6.2em'][slot] ?? '0.3em';
+  const q = (seed * 5 + slot * 11 + 3) % 10;
+  const tilt = String((q % 2 === 0 ? -1 : 1) * (0.5 + Math.floor(q / 2) * 0.5));
+  const padRight = String(0.2 + ((seed * 7 + slot * 3 + 1) % 6) * 0.18) + 'em';
+  return {
+    top,
+    tilt,
+    padRight,
+    dialog: {
+      top: 'calc(' + top + ' + 1.9em)',
+      right: 'calc(' + padRight + ' + 1.25em)',
+      left: 'auto',
+      justifyContent: 'flex-end',
+      maxWidth: 'calc(100% - ' + padRight + ' - 1.75em)',
+    },
   };
-  /** 右间距（三枚全部居右收敛，各家各行 0.2em～1.1em 错开，永不出面板右边界）。 */
-  const padRightOfSlot = (slot: number): string => String(0.2 + ((seed * 7 + slot * 3 + 1) % 6) * 0.18) + 'em';
+};
   const zOfRole = (role: string): number => role === 'help' ? 4 : role === 'skill' ? 3 : 2;
   const overlay = seals.length === 0 ? null : React.createElement(
     'div',
@@ -922,23 +936,16 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
     React.createElement(SealFilterDefs, {}),
     ...order.map((dataIndex, slot) => React.createElement(
       'span',
-      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: { position: 'absolute', top: TOPS[slot], right: padRightOfSlot(slot), zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + tiltOfSlot(slot) + 'deg)' } },
+      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, style: ((): React.CSSProperties => { const g = slotGeom(slot, seed); return { position: 'absolute', top: g.top, right: g.padRight, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + g.tilt + 'deg)' }; })() },
       // 章面缩到 80%：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
       React.createElement('span', { style: { fontSize: '0.8em', display: 'inline-flex' } },
         React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
    )),
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
-  /** 卷轴浮层跟着**被点的那枚章**：贴在该行下方一小段（1.9em ＝ 章高约 1.5em ＋ 0.4em 缝），
-   *  右缘与那枚章的右缘对齐，再往左让 1.25em 给绦带（关闭钮骑在浮层右上方，不让它越出卡片）。 */
+  /** 卷轴浮层跟着**被点的那枚章**：锚点与章的落位同出一处（`slotGeom`），两处不会各自漂。 */
   const openSlot = props.selectedSeal ?? -1;
-  const anchor = openSlot < 0 || openSlot >= order.length ? undefined : {
-    top: 'calc(' + TOPS[openSlot] + ' + 1.9em)',
-    right: 'calc(' + padRightOfSlot(openSlot) + ' + 1.25em)',
-    left: 'auto',
-    justifyContent: 'flex-end',
-    maxWidth: 'calc(100% - ' + padRightOfSlot(openSlot) + ' - 1.75em)',
-  } as React.CSSProperties;
+  const anchor: React.CSSProperties | undefined = openSlot < 0 || openSlot >= order.length ? undefined : slotGeom(openSlot, seed).dialog;
   const dialog = openSeal === null ? null : React.createElement(SealScrollDialog, {
     open: true, onClose: props.onSealClose ?? (() => undefined),
     role: openSeal.role, tier: openSeal.tier, title: openSeal.label,

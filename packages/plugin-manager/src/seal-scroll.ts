@@ -28,6 +28,8 @@ import type { SealRole, SealTier } from './config-panel-contract.js';
 import { SealStamp } from './seal-stamp.js';
 // 定稿的纸面字排与关闭钮样子（原型期方案已删，只此一件）。
 import { closeLook, paperParts } from './seal-paper-schemes.js';
+// 九档材质只有一份定义（印面／外框／纸面共用）：改色改 `seal-materials.ts`。
+import { SEAL_MATERIALS } from './seal-materials.js';
 
 /** 糙边滤镜 id（文档作用域，故每页只许挂一次 `SealFilterDefs`）。 */
 const ROUGH_EDGE = 'dshLifeSealRoughEdge';
@@ -77,75 +79,7 @@ const PAPER_EDGE = '#e6d9bd';
 const LABEL_MAIN = '#42506b';
 const LABEL_SUB = '#4b4335';
 
-/** 九档材质（3 角色 × 3 档）。键就是原型里的 `role`／`tier`。 */
-const MATERIALS: Record<string, Record<string, Material>> = {
-  skill: {
-    copper: {
-      frame: {
-        background: 'linear-gradient(180deg,#8a4a28,#6e3418)',
-        border: '3px solid #a5652f',
-        boxShadow: 'inset 0 0 0 1px #f8f1e2aa, inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d',
-      },
-      accent: '#9a5f2a',
-      ruler: '#c08145b3',
-    },
-    silver: {
-      frame: {
-        background: 'linear-gradient(180deg,#b73124,#8e1f14)',
-        border: '3px double #eef3f6',
-        boxShadow: 'inset 0 0 0 1px #fff, inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d',
-      },
-      accent: '#6f767c',
-      ruler: '#9aa0a6b3',
-    },
-    gold: {
-      frame: {
-        background: 'linear-gradient(180deg,#d34a35,#a32216)',
-        border: '3px double #f5d97a',
-        boxShadow: 'inset 0 0 0 1px #fff8, inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d',
-      },
-      accent: '#9c7a16',
-      ruler: '#d8b338b3',
-    },
-  },
-  help: {
-    copper: {
-      frame: { background: 'linear-gradient(180deg,#b06a3a,#7e3f1d)', border: '3px solid #a5652f', boxShadow: 'inset 0 2px 0 #ffffff26, inset 0 -3px 6px #0000004d' },
-      accent: '#9a5f2a',
-      ruler: '#c08145b3',
-    },
-    silver: {
-      frame: { background: 'linear-gradient(180deg,#8f979e,#5f666d)', border: '3px double #e8eef2', boxShadow: 'inset 0 2px 0 #ffffff2e, inset 0 -3px 6px #0000004d' },
-      accent: '#6f767c',
-      ruler: '#9aa0a6b3',
-    },
-    gold: {
-      frame: { background: 'linear-gradient(180deg,#c63d2a,#a32216)', border: '3px double #f5d97a', boxShadow: 'inset 0 2px 0 #ffffff33, inset 0 -3px 6px #0000004d' },
-      accent: '#9c7a16',
-      ruler: '#d8b338b3',
-    },
-  },
-  plugin: {
-    copper: {
-      frame: { background: 'linear-gradient(180deg,#b4773c,#7e3f1d 60%,#66300f)', boxShadow: 'inset 0 1px 0 #d99a5e88, inset 0 -2px 5px #0006, 0 0 0 1px #5e2c12, inset 0 2px 0 #ffffff26' },
-      accent: '#9a5f2a',
-      ruler: '#c08145b3',
-      rivet: { background: 'radial-gradient(circle at 34% 28%,#f0c088,#a5652f 55%,#6a3216)', boxShadow: 'inset 0 -1px 1px #00000055,0 1px 2px #00000088' },
-    },
-    silver: {
-      frame: { background: 'linear-gradient(180deg,#d8dee3,#a7aeb4 55%,#818990)', boxShadow: 'inset 0 1px 0 #ffffffdd, inset 0 -2px 5px #0005, 0 0 0 1px #6f767c, inset 0 2px 0 #ffffff33' },
-      accent: '#6f767c',
-      ruler: '#9aa0a6b3',
-      rivet: { background: 'radial-gradient(circle at 34% 28%,#ffffff,#c3cad0 50%,#7d848b)', boxShadow: 'inset 0 -1px 1px #00000044,0 1px 2px #00000077' },
-    },
-    gold: {
-      frame: { background: 'linear-gradient(180deg,#f2dc86,#c9a227 55%,#9c7d16)', boxShadow: 'inset 0 1px 0 #fff8d8dd, inset 0 -2px 5px #0005, 0 0 0 1px #8a6a15' },
-      accent: '#9c7a16',
-      ruler: '#d8b338b3',
-      rivet: { background: 'radial-gradient(circle at 34% 28%,#fffbe0,#e3c565 50%,#a5841d)', boxShadow: 'inset 0 -1px 1px #00000044,0 1px 2px #00000077,0 0 6px #c9a22788' },
-    },
-  },
-};
+
 
 const S = {
   /** 外框（`.frame`）：绝对铺满，挂糙边滤镜；纸压在它上面，只露一圈。 */
@@ -256,11 +190,16 @@ export interface SealScrollProps {
   readonly plan: string;
 }
 
+/** 取一档材质：底色与边线从九档总表来（与印共用一份取值），外框专有的内阴影在这里合成。 */
 function materialOf(role: SealScrollProps['role'], tier: SealScrollProps['tier']): Material {
-  const byTier = MATERIALS[role];
-  const found = byTier?.[tier];
-  if (!found) throw new Error('未知的印档：' + role + '／' + tier);
-  return found;
+  const m = SEAL_MATERIALS[role]?.[tier];
+  if (m === undefined) throw new Error('未知的印档：' + role + '／' + tier);
+  return {
+    frame: { background: m.background, ...(m.border === undefined ? {} : { border: m.border }), ...(m.frame ?? {}) },
+    accent: m.accent,
+    ruler: m.ruler,
+    rivet: m.rivet,
+  };
 }
 
 /** 糙边滤镜定义：两条分开（印用 edge，卷轴外框用 frame），每页只挂一次。

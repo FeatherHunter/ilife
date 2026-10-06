@@ -12,6 +12,8 @@
  */
 import * as React from 'react';
 import { SEAL_ROUGH_INK_ID, SEAL_ROUGH_METAL_ID } from './seal-scroll.js';
+// 档位级两个色也只有一份定义：改色改 `seal-materials.ts`。
+import { TIER_EDGE, TIER_METAL } from './seal-materials.js';
 
 /** 关闭钮的样子：样式 ＋ 字面 ＋ 可选装饰件。 */
 export interface CloseLook {
@@ -31,21 +33,16 @@ function crisp(text: React.ReactNode, style?: React.CSSProperties): React.ReactE
   return React.createElement('span', { style: { position: 'relative', zIndex: 1, ...style } }, text);
 }
 
-/** 档位语三档金属（鎏金／冷银／暖铜）：主色＋渐变（`backgroundClip:text` 描出金属光泽）。 */
-export const TIER_METAL: Record<string, { readonly flat: string; readonly gradient: string }> = {
-  gold: { flat: '#b8912a', gradient: 'linear-gradient(180deg,#f6e27a 0%,#d9b53c 45%,#a5811b 100%)' },
-  silver: { flat: '#8b959d', gradient: 'linear-gradient(180deg,#f7fafc 0%,#c3ccd3 45%,#8b959d 100%)' },
-  copper: { flat: '#a8663a', gradient: 'linear-gradient(180deg,#f0bd8e 0%,#c07b45 45%,#8a4a24 100%)' },
-};
-/** 档位金属边（铜／银／金）：章与绦带共用这一份取值。 */
-const TIER_EDGE: Record<string, string> = { gold: '#f5d97a', silver: '#d8dee3', copper: '#a5652f' };
+/** 档位级两个色（金属边、档位语金属渐变）从九档总表引，本件不再各写一份。 */
+const edgeOf = (tierKey: string): string => (TIER_EDGE as Record<string, string>)[tierKey] ?? TIER_EDGE.gold;
+const metalOf = (tierKey: string): { readonly flat: string; readonly gradient: string } => (TIER_METAL as Record<string, { readonly flat: string; readonly gradient: string }>)[tierKey] ?? TIER_METAL.gold;
 const KAI = '"Kaiti SC","KaiTi","STKaiti",serif';
 
 /** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。 */
 export function closeLook(tierKey: string): CloseLook {
   const crimson = 'linear-gradient(135deg,#c63d2a 8%,#a32216 50%,#7e1a10)';
   /** 档位金属边（铜／银／金）：绦带**只借这一条**——主体恒朱砂，边随档走，跟章「红底＋金属边」同构。 */
-  const edge = TIER_EDGE[tierKey] ?? TIER_EDGE['gold']!;
+  const edge = edgeOf(tierKey);
   const ribbon = bgLayer(
     // 边要压得住：2px 实色金属边（1px 半透明那版看不出档）+ 外圈一道暗线把边从框上切出来。
     { borderRadius: '0.375em', background: crimson, boxShadow: '0 0 0 1px #5c110a59, 0 2px 8px #3d241066, inset 0 0 0 2px ' + edge, transform: 'rotate(45deg)', filter: 'url(#' + SEAL_ROUGH_METAL_ID + ')' },
@@ -181,7 +178,7 @@ function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
 
 /** 档位语（一行）：该档金属渐变压进字里。 */
 function tierNode(ctx: PaperCtx): React.ReactNode {
-  const metal = TIER_METAL[ctx.tierKey] ?? TIER_METAL['gold']!;
+  const metal = metalOf(ctx.tierKey);
   return React.createElement('div', {
     style: {
       ...ctx.styles.tier,

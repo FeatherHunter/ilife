@@ -17,6 +17,8 @@ const SCROLL_JS = join(HERE, '..', 'src', 'seal-scroll.js');
 const STAMP_JS = join(HERE, '..', 'src', 'seal-stamp.js');
 const SCHEMES_TS = join(HERE, '..', 'src', 'seal-paper-schemes.ts');
 const SCHEMES_JS = join(HERE, '..', 'src', 'seal-paper-schemes.js');
+const MATS_TS = join(HERE, '..', 'src', 'seal-materials.ts');
+const MATS_JS = join(HERE, '..', 'src', 'seal-materials.js');
 
 /** 源码转 CJS 载入（与 `seal-scroll.test.mjs` 同形）：卷轴与印渲染期互引，编译前先占缓存位，循环不断链。 */
 function compileAs(tsPath, jsKey) {
@@ -39,6 +41,7 @@ Module._load = function (request, parent, isMain) {
   if (request === './seal-stamp.js') return compileAs(STAMP_TS, STAMP_JS);
   if (request === './seal-scroll.js') return compileAs(SCROLL_TS, SCROLL_JS);
   if (request === './seal-paper-schemes.js') return compileAs(SCHEMES_TS, SCHEMES_JS);
+  if (request === './seal-materials.js') return compileAs(MATS_TS, MATS_JS);
   return ORIG_LOAD.call(this, request, parent, isMain);
 };
 
@@ -69,6 +72,19 @@ function nodesOf(node, pred, out = []) {
   return out;
 }
 
+/** 九档印面逐值（底色／边线）：与卷轴外框同出一份总表（`src/seal-materials.ts`）。
+ *  这张表是**锁**：总表被谁改了，这里先红——章与卷的材质不许各漂各的。 */
+const EXPECTED_FACE = {
+  'skill:copper': ['linear-gradient(180deg,#8a4a28,#6e3418)', '3px solid #a5652f'],
+  'skill:silver': ['linear-gradient(180deg,#b73124,#8e1f14)', '3px double #eef3f6'],
+  'skill:gold': ['linear-gradient(180deg,#d34a35,#a32216)', '3px double #f5d97a'],
+  'help:copper': ['linear-gradient(180deg,#b06a3a,#7e3f1d)', '3px solid #a5652f'],
+  'help:silver': ['linear-gradient(180deg,#8f979e,#5f666d)', '3px double #e8eef2'],
+  'help:gold': ['linear-gradient(180deg,#c63d2a,#a32216)', '3px double #f5d97a'],
+  'plugin:copper': ['linear-gradient(180deg,#b4773c,#7e3f1d 60%,#66300f)', undefined],
+  'plugin:silver': ['linear-gradient(180deg,#d8dee3,#a7aeb4 55%,#818990)', undefined],
+  'plugin:gold': ['linear-gradient(180deg,#f2dc86,#c9a227 55%,#9c7d16)', undefined],
+};
 const ROLES = ['skill', 'help', 'plugin'];
 const TIERS = ['copper', 'silver', 'gold'];
 const LABEL = { skill: '技能', help: '饼干记账 HELP', plugin: '插件' };
@@ -78,6 +94,15 @@ describe('seal-stamp 九档', () => {
     for (const role of ROLES) for (const tier of TIERS) {
       const tree = expand(React.createElement(SealStamp, { role, tier, label: LABEL[role] }));
       assert.ok(textsOf(tree).includes(LABEL[role]), role + '/' + tier + ' 印文缺席');
+    }
+  });
+  it('九档印面逐值对得上（底色与边线＝总表那一份，与卷轴外框同源）', () => {
+    for (const role of ROLES) for (const tier of TIERS) {
+      const tree = expand(React.createElement(SealStamp, { role, tier, label: LABEL[role] }));
+      const btn = nodesOf(tree, (n) => n.type === 'button')[0];
+      const want = EXPECTED_FACE[role + ':' + tier];
+      assert.equal(btn.props.style.background, want[0], role + '/' + tier + ' 底色');
+      assert.equal(btn.props.style.border, want[1], role + '/' + tier + ' 边线');
     }
   });
   it('九档底色两两不同', () => {
