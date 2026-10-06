@@ -154,7 +154,7 @@ const S = {
   } as React.CSSProperties,
   /** 卷轴浮层：卡片内绝对定位（卡片 `S.card` 是 relative 定位祖先），上沿悬在三枚章之下、左右各留半 em——
    *  不是 modal：无遮罩、不锁滚动，点章切换、点「关闭」收起。 */
-  dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8.8em', zIndex: 10, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
+  dialog: { position: 'absolute', left: '0.5em', right: '0.5em', top: '8.8em', zIndex: 20, display: 'flex', justifyContent: 'center', pointerEvents: 'auto' } as React.CSSProperties,
   /** 浮层内框：**宽随内容**（`max-content`，正好包住最长那一行；不是固定 25em 那块大纸）。
    *  `maxWidth:100%` 是窄卡的兜底（收满可用宽、永不捅破卡片），此时长行换行、高度自己长。
    *  挂卷轴展开动画（从上而下舒卷，240ms；纯声明式，无 hook，纯函数可直测）。 */
@@ -237,7 +237,18 @@ export function SealFilterDefs(): React.ReactElement {
       '.dshLifeSealBtn:active{transform:translateY(0) scale(.96)}' +
       '.dshLifeSealBtn:focus-visible{outline:2px solid #f5d97a;outline-offset:2px}' +
       '.dshLifeSealBtn::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#241f19ee;color:#f8f1e2;font-size:.72em;letter-spacing:.1em;padding:.4em .9em;border-radius:.5em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 150ms ease;z-index:30}' +
-      '.dshLifeSealBtn:hover::after,.dshLifeSealBtn:focus-visible::after{opacity:1}'),
+      '.dshLifeSealBtn:hover::after,.dshLifeSealBtn:focus-visible::after{opacity:1}' +
+      // 面板那套交互 CSS 给 [data-ilife-press] 加了 overflow:hidden（按压反馈要裁），
+      // 可绦带那枚关闭钮的菱形与两条飘尾本来就骑在按钮方框外——一裁就成"被正方形切掉"。
+      // 这一条专给关闭钮开个口子（两属性选择器，权重高过面板那条）。
+      '[data-ilife-press][data-ilife-close]{overflow:visible}' +
+      // 气泡改挂**槽位包裹层**（不过糙边滤镜的那一层）：挂在印本体里，字会被滤镜抖糊；
+      // 抬到 z-index 60，并让整枚槽位在悬停时一起抬起来，免得被卡片里后面的内容盖住。
+      '[data-tip]{position:relative}' +
+      '[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#241f19ee;color:#f8f1e2;font-size:.72em;letter-spacing:.1em;padding:.4em .9em;border-radius:.5em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 150ms ease;z-index:60}' +
+      '[data-tip]:hover::after,[data-tip]:focus-within::after{opacity:1}' +
+      // 槽位里那枚印不再自带气泡（同一句话会在包裹层上出一次）
+      '.dshLifeSealSlot .dshLifeSealBtn::after{content:none}'),
     React.createElement(
     'svg',
     { width: 0, height: 0, 'aria-hidden': true, focusable: false, style: { position: 'absolute' } },

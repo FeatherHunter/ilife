@@ -164,6 +164,12 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     const two = expandTree(view.PanelBody(bodyProps({ seals: [seals[1], seals[0]], sealSeed: 0, selectedSeal: 0 })));
     const dialog2 = flat(two).filter((n) => n.props?.role === 'dialog')[0];
     assert.equal(dialog2.props.style.top, 'calc(0.3em + 1.9em)', '只两枚时，选中的那枚仍在第一行');
+    // 槽位包裹层：气泡挂这里（不过滤镜⇒字清晰），整层 z 要盖得住卡片内容
+    const slot = flat(tree).filter((n) => n.props?.className === 'dshLifeSealSlot')[0];
+    assert.ok(slot, '槽位包裹层要有类名');
+    assert.equal(slot.props['data-tip'], '银章 · 全打通中', '气泡文案＝档位名＋档位话（与印本体同一份定义）');
+    const overlay = flat(tree).filter((n) => n.props?.style?.zIndex === 15 && n.props.style.position === 'absolute')[0];
+    assert.ok(overlay, '印覆盖层 z 15：高过卡片内容、低于浮层 20');
   });
 
   it('StatusBlock actions press, link focuses (no shrink on links)', () => {

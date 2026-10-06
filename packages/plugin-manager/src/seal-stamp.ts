@@ -56,6 +56,12 @@ const BAND_EDGE: Record<SealTier, string> = {
   gold: 'inset 0 1px 0 #fff8d8dd,inset 0 -2px 5px #0005,0 0 0 1px #8a6a15,0 3px 14px #c9a22766',
 };
 
+/** 级别 tooltip 那一句（印本体与面板槽位共用一份定义）：档位名 ＋ 档位话。 */
+export function sealTipOf(tier: SealTier): string {
+  const tierName = tier === 'copper' ? '铜' : tier === 'silver' ? '银' : '金';
+  return tierName + '章 · ' + TIER_TEXT[tier];
+}
+
 /** 一枚印章（button，点章弹卷）。未知组合直接抛错，不静默退化。 */
 export function SealStamp(props: SealStampProps): React.ReactElement {
   const palette = SEAL_PALETTE[props.role]?.[props.tier];
@@ -74,8 +80,7 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     ...FACE_EXTRA[props.role][props.tier],
   };
   // 悬停 tooltip 讲清级别含义（档位话即完善进度）；样式住 `SealFilterDefs` 旁那枚 scoped `<style>`，纯 CSS、无 hook。
-  const tierName = props.tier === 'copper' ? '铜' : props.tier === 'silver' ? '银' : '金';
-  const buttonProps = { type: 'button' as const, style, className: 'dshLifeSealBtn', 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, 'data-tip': tierName + '章 · ' + TIER_TEXT[props.tier], onClick: props.onSelect };
+  const buttonProps = { type: 'button' as const, style, className: 'dshLifeSealBtn', 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, 'data-tip': sealTipOf(props.tier), onClick: props.onSelect };
   if (props.role !== 'plugin') return React.createElement('button', buttonProps, props.label);
   const band: React.CSSProperties = { position: 'absolute', top: '-1px', bottom: '-1px', left: '-1px', right: '-1px', zIndex: 1, borderRadius: '4px', boxShadow: BAND_EDGE[props.tier], background: palette.background };
   const rivet: React.CSSProperties = { position: 'absolute', zIndex: 3, width: '0.5em', height: '0.5em', borderRadius: '50%', top: '50%', transform: 'translateY(-50%)', ...SEAL_RIVET[props.tier] };

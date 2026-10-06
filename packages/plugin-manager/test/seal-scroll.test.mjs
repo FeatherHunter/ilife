@@ -169,6 +169,13 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.ok(css.includes(':active') && css.includes('scale(.96)'), '按压回缩');
     assert.ok(css.includes(':focus-visible'), '焦点环');
     assert.ok(css.includes('attr(data-tip)'), 'tooltip 读 data-tip');
+    // 真机两条：① 面板给 [data-ilife-press] 加了 overflow:hidden，绦带骑在方框外会被切成方块；
+    // ② 气泡若挂在印本体里会被糙边滤镜抖糊。两条都得有用例咬住。
+    assert.ok(css.includes('[data-ilife-press][data-ilife-close]{overflow:visible}'), '关闭钮要开 overflow 口子（否则绦带被方框裁掉）');
+    assert.ok(css.includes('[data-tip]::after'), '气泡挂槽位包裹层（不过滤镜那一层）');
+    assert.ok(css.includes('[data-tip]:hover::after'), '气泡由包裹层的悬停触发');
+    assert.ok(css.includes('.dshLifeSealSlot .dshLifeSealBtn::after{content:none}'), '槽位里不许再出第二个气泡');
+    assert.ok(css.includes('z-index:60'), '气泡层级要压得住卡片内容');
   });
   it('关闭钮＝绦带（定稿默认样子）：两条飘尾对外张开（左尾朝左下、右尾朝右下），且与绦带同一份材质', () => {
     // 不传任何开关：定稿后这就是唯一一版关闭钮，用例咬住默认路径。
@@ -242,6 +249,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
     assert.equal(dialog.length, 1, '浮层要有 dialog 语义');
     assert.equal(dialog[0].props['aria-modal'], false, 'popover 非 modal');
     assert.equal(dialog[0].props.style.position, 'absolute', '浮层钉在卡片内，不走 viewport 居中');
+    assert.equal(dialog[0].props.style.zIndex, 20, '浮层要高过印覆盖层（15）');
     const mask = nodesOf(tree, (node) => node.props?.role === 'presentation');
     assert.equal(mask.length, 0, '无遮罩');
     const catcher = nodesOf(tree, (node) => node.props?.style?.position === 'fixed' && node.props?.style?.background === 'transparent');
