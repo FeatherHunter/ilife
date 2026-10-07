@@ -8,15 +8,17 @@
  * 判地那几处公共层没有的档（12px／13px 圆角、按钮字面投影、点线色 #d9cdb4 等）按真值写。
  *
  * 谁在用（五个调用点，指名）：src/write/template-{expense,flow,batch,installment,update}.ts 的采集页，各在算出信封后调
- * `sayCollectOut`（本词有数据出这一页，没有返 null 走老的通用页面壳）。复制载荷仍走 base-paint 的 buildDataText／buildLogText，
+ * sayCollectOut（本词有数据出这一页，没有返 null 走老的通用页面壳）。复制三份走采集人话门／buildLogText，
  * 整页外壳走 shared/docPage 的 assembleSheetPage。
  */
-import { buildDataText, buildLogText, escapeHtml } from "base-paint";
+import { buildLogText, escapeHtml } from "base-paint";
 import type { DataTextInput, LogTextInput } from "base-paint";
 import { assembleSheetPage, ticketCollectRuntime } from "../shared/docPage.js";
 import { WRITE_DECLARATION } from "./declaration.js";
 import { writeSection } from "../shared/writeParts.js";
 import { SAY_WORDS } from "./sayWords.js";
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
+import type { CollectCopyFacts, CollectExtra } from "./collectCopyText.js";
 
 /** 这一页的 SAY prompt 模板：**逐字取域声明的 `prompt_template`**，本件不抄第二份。 */
 function sayTemplateOf(word: string): string {
@@ -90,6 +92,7 @@ export interface SayCollectInput {
   /** 本次信封的形状（契约枚，与老采集页同一枚）。 */
   readonly shape: string;
   readonly spec: SayWordSpec;
+  readonly sayKey: string;
   /** 已经给了值的槽位（键＝槽位 key，值＝已给的原文）；不给＝一件没给（判地里那一态）。 */
   readonly values?: Readonly<Record<string, string>>;
   readonly data: DataTextInput;
@@ -117,6 +120,36 @@ function missingLabels(spec: SayWordSpec, values: Readonly<Record<string, string
   return spec.cfg
     .filter((s) => s.opt !== true && !disabledOf(spec, values, s.key) && valueOf(values, s.key) === "")
     .map((s) => s.label);
+}
+function sayFactsOf(spec: SayWordSpec, values: Readonly<Record<string, string>>): { facts: CollectCopyFacts; extra: CollectExtra[] } {
+  let category = "";
+  let amount: number | null = null;
+  let time = "";
+  let account = "";
+  let ledger = "";
+  let note = "";
+  let currency = "";
+  const extra: CollectExtra[] = [];
+  for (const c of spec.cfg) {
+    const raw = values[c.key];
+    const t = typeof raw === "string" ? raw.trim() : "";
+    if (c.ph === "category") { category = t; continue; }
+    if (c.ph === "amount") { const n = t === "" ? NaN : Number(t); amount = Number.isFinite(n) ? n : null; continue; }
+    if (c.ph === "record_time" || c.ph === "time") { time = t; continue; }
+    if (c.ph === "account") { account = t; continue; }
+    if (c.ph === "ledger") { ledger = t; continue; }
+    if (c.ph === "note") { note = t; continue; }
+    if (c.ph === "currency") { currency = t; continue; }
+    if (t !== "") extra.push({ label: c.label, value: t });
+  }
+  const miss = missingLabels(spec, values);
+  const facts: CollectCopyFacts = { category, amount, time, account, ledger, note, currency, missing: miss };
+  return { facts, extra };
+}
+function sayKindOf(sayKey: string): string {
+  if (sayKey === "plain") return "";
+  if (sayKey.indexOf("update:") === 0) return "";
+  return sayKey;
 }
 
 /** 一个表单字段的标记（标签 ＋ 输入件）。 */
@@ -196,6 +229,8 @@ function actionsHtml(ready: boolean): string {
 
 /** 这一页要用的浏览器侧数据（判地两个 window 全局的等价物）。 */
 function sayConfigJson(input: SayCollectInput): string {
+  const built = sayFactsOf(input.spec, input.values ?? {});
+  const kind = sayKindOf(input.sayKey);
   const json = JSON.stringify({
     title: { wait: input.spec.titleWait, ready: input.spec.titleReady },
     sub: { wait: input.spec.subWait, ready: input.spec.subReady },
@@ -203,9 +238,9 @@ function sayConfigJson(input: SayCollectInput): string {
     template: sayTemplateOf(input.word),
     slots: input.spec.cfg,
     payloads: {
-      text: buildDataText({ ...input.data, format: "text" }),
-      json: buildDataText({ ...input.data, format: "json" }),
-      csv: buildDataText({ ...input.data, format: "csv" }),
+      text: buildCollectCopyText(input.word, kind, built.facts, built.extra),
+      json: buildCollectCopyJson(input.word, kind, input.key, built.facts, built.extra),
+      csv: buildCollectCopyCsv(input.word, kind, built.facts, built.extra),
       log: buildLogText(input.log),
     },
   });
@@ -255,7 +290,7 @@ export function sayCollectOut(input: {
     const raw = input.params[slot.ph];
     values[slot.key] = typeof raw === "string" ? raw : (typeof raw === "number" ? String(raw) : "");
   }
-  return sayCollectDoc({ word: w, key: input.key, shape: input.shape, spec, values, data: input.data, log: input.log });
+  return sayCollectDoc({ word: w, key: input.key, shape: input.shape, spec, values, data: input.data, log: input.log, sayKey: input.sayKey });
 }
 
 /** 这一页的家具样式：判地那套声明的逐条转写（token 只在取值逐字相等处用）。 */
@@ -358,4 +393,3 @@ export function sayCollectDoc(input: SayCollectInput): string {
       slots: s.cfg.map((c) => ({ name: c.key, ph: c.ph === undefined ? "" : c.ph, required: c.opt !== true })),
     });
 }
-

@@ -25,6 +25,7 @@ import type { DataTableColumn } from 'base-paint/blocks';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { docTitleOf } from '../shared/pageIdentity.js';
@@ -122,7 +123,7 @@ export function bindExpensePages(spec: ExpenseSpec): Pick<Scene, 'collect' | 're
 
 /** 本族多数场景共用的复制 prompt 那段话（记支出／记收入／记一笔三件同句）：说清缺什么、先不写库、补齐后说哪句。 */
 export function plainPrompt(word: string, blocked: readonly BlockedLine[]): string {
-  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join('、')
+  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join(String.fromCharCode(10))
     + '。这一页先不写库。补齐后跟助手说一遍「' + word + '」。';
 }
 
@@ -141,7 +142,7 @@ export function missingSubtitle(input: CollectInput, blocked: readonly BlockedLi
  *  `key` 保留在签名里：调用方按同一形状喂，删参数要连带改四处调用点，不属本票写集。 */
 export function sharedPrompt(key: string, blocked: readonly BlockedLine[]): string {
   return '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
+    + blocked.map((i) => i.label + '（' + i.why + '）').join(String.fromCharCode(10))
     + '。\n这一页先不写库。补齐之后跟助手说一遍。';
 }
 
@@ -179,6 +180,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   }
   // 读数行「有内容才出」：用户真给了值才出（#688 裁定 6：采集页不画同形空卡）。
   const grid = spec.factsGrid && hasAnyFact(facts) ? renderKpiGrid(summaryCards(facts)) : '';
+    const collectFacts = { category: facts.category, amount: facts.amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: typeof params.note === "string" ? params.note : "", currency: typeof params.currency === "string" ? params.currency : "", missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind,
@@ -222,6 +224,9 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     copyArea({
       hints: COPY_HINTS.sayAcct,
       data: { envelope },
+      dataText: buildCollectCopyText(spec.word, spec.kind, collectFacts),
+      dataJson: buildCollectCopyJson(spec.word, spec.kind, input.key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: {
         envelope,
         copyLog: copyLog({

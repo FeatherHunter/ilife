@@ -37,6 +37,7 @@ import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { installmentPreview, installmentShares } from './installmentPreview.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
@@ -232,6 +233,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     + '账本：' + (facts.ledger || '<账本>') + '\n'
     + (shares.length === 0 ? '分摊预览还没算出来，三样齐了才算。' : '分摊预览见上面那张表。')
     + '\n每期按上面那张表逐期记，尾差归最后一期。';
+    const collectFacts = { category: facts.category, amount: amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: textOf(params.note), currency: textOf(params.currency), missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind,
@@ -273,6 +275,9 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
       hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt, label: blocked.length === 0 ? spec.promptLabel : spec.promptLabelBlocked },
       data: { envelope },
+      dataText: buildCollectCopyText(spec.word, spec.kind, collectFacts),
+      dataJson: buildCollectCopyJson(spec.word, spec.kind, key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: {
         envelope,
         copyLog: copyLog({

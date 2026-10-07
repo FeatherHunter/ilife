@@ -36,6 +36,7 @@ import { blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
 import { writePageShell as pageShell } from './pageParts.js';
 import { sayCollectOut } from './saySheet.js';
@@ -146,7 +147,7 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
 function promptOf(word: string, lines: number, blocked: readonly BlockedItem[]): string {
   const head = '本批一次只落一笔，这一屏 ' + lines + ' 行。';
   const tail = blocked.length > 0
-    ? '还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join('、')
+    ? '还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join(String.fromCharCode(10))
       + '。补齐后跟助手说一遍「' + word + '」。'
     : '这一批照实说一遍「' + word + '」即落库。';
   return head + tail;
@@ -184,6 +185,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
   if (sayOut !== null) return sayOut;
   const names = slots.map((s) => s.name);
   const rows = rowsOf(params, names);
+    const collectFacts = { category: textOf(params.category), amount: typeof params.amount === "number" ? params.amount : (typeof params.amount === "string" && params.amount.trim() !== "" && Number.isFinite(Number(params.amount.trim())) ? Number(params.amount.trim()) : null), time: textOf(params.time), account: textOf(params.account), ledger: textOf(params.ledger), note: textOf(params.note), currency: textOf(params.currency), missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind,
@@ -215,6 +217,9 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
     copyArea({
       hints: COPY_HINTS.sayAcct,
       data: { envelope },
+      dataText: buildCollectCopyText(spec.word, spec.kind, collectFacts),
+      dataJson: buildCollectCopyJson(spec.word, spec.kind, key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: {
         envelope,
         copyLog: copyLog({
