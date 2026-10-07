@@ -30,6 +30,7 @@
  */
 import {
   lookupIndexCss,
+  renderEmptyBlock,
   renderLookupIndex,
   renderSheetFrame,
   renderSummaryHead,
@@ -44,6 +45,8 @@ import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from '../query/pageParts.js';
 import { buildHelpLookup } from './lookup.js';
 import { buildHelpItems } from './items.js';
+import { HELP_EMPTY_NEXT, buildHelpCopyCsv, buildHelpCopyJson, buildHelpCopyText } from './copyTextHelp.js';
+import type { HelpCopyFacts } from './copyTextHelp.js';
 
 /** 页内速查索引的根类名（本页自有样式只挂在它下面，他页零命中）。 */
 const H02_INDEX_CLASS = 'ilife-h02-index';
@@ -127,7 +130,7 @@ function foldNote(): string {
     + String(buildLookupGroups().length) + '组默认收起 · 点组名展开，点上面目录可直接跳到那一组。</p>';
 }
 
-/** 速查表整页 HTML（mode 取 lookup 的落盘产物）。 */
+/** 速查表整页 HTML（mode 取 lookup 的落盘产物；复制三份走人话门，空态有下一步）。 */
 export function renderLookupPageHtml(): string {
   const index = buildLookupIndexInput();
   const hits = buildHelpItems(buildHelpLookup(), undefined);
@@ -139,15 +142,27 @@ export function renderLookupPageHtml(): string {
     data: { items: hits.items.map((h) => ({ phrase: h.phrase, key: h.key, cli: h.cli })), total: hits.total },
   };
   const sceneRows = index.groups.slice(0, WAKE_GROUPS.length).reduce((n, g) => n + g.rows.length, 0);
-  const paper = sheetHead(DOC_TITLE + ' · 能力速查', String(index.total) + ' 条唤醒词，一句话直达', '与 HELP 帮助页分名 · 照着唤醒词用')
+  const empty = index.total === 0;
+  const facts: HelpCopyFacts = { title: COPY_TITLE, total: index.total, groups: index.groups };
+  const copyText = buildHelpCopyText(facts);
+  const copyJson = buildHelpCopyJson(facts);
+  const copyCsv = buildHelpCopyCsv(facts);
+  const indexBlock = empty
+    ? renderEmptyBlock({ text: '还没有可查的唤醒词', hint: HELP_EMPTY_NEXT })
+    : foldNote() + renderLookupIndex({ ...index, form: 'fold' });
+  const paper = sheetHead(DOC_TITLE + ' · 能力速查', empty ? '还没有可查的唤醒词' : String(index.total) + ' 条唤醒词，一句话直达', '与 HELP 帮助页分名 · 照着唤醒词用')
     + ticketSummary(
-      renderSummaryHead({ eyebrow: '速查可用 · LOOKUP OK', value: String(index.total), unit: '条', layout: 'ticket' }),
+      renderSummaryHead({ eyebrow: empty ? '还没有 · 空列表' : '速查可用 · LOOKUP OK', value: String(index.total), unit: '条', layout: 'ticket' }),
       '<p class="ilife-ticket-summary-note">' + String(sceneRows) + ' 场景唤醒词 ＋ ' + String(index.total - sceneRows) + ' 别名行</p>',
     )
     + ticketRule()
-    + ticketSection({ title: '按域速查', tag: H02_SECTION_NO, content: foldNote() + renderLookupIndex({ ...index, form: 'fold' }) })
+    + ticketSection({ title: '按域速查', tag: H02_SECTION_NO, content: indexBlock })
     + ticketActions(copyArea({
+      hints: ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'],
       data: { envelope, title: COPY_TITLE },
+      dataText: copyText,
+      dataJson: copyJson,
+      dataCsv: copyCsv,
       log: {
         envelope,
         copyLog: copyLog({

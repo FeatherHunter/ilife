@@ -30,10 +30,13 @@
  *   用户拿它就能说「查账单详情」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
  */
 import { renderCaliberLine, renderChips, renderConclusionBar, renderDataTable, renderDistributionRows, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
-import type { DataTableColumn, KpiCardInput } from 'base-paint/blocks';
+import type { KpiCardInput } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { buildListCopyCsv, buildListCopyJson, buildListCopyText, COLUMNS } from './list-copy.js';
+
+export { COLUMNS };
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { queryPageShell as pageShell, queryStyleTag } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
@@ -139,16 +142,7 @@ export interface QueryListInput {
   readonly actionAt: string;
 }
 
-/** 数据表的列（**唯一定义地**）：表头文本、列序与对齐档。 */
-const COLUMNS: readonly DataTableColumn[] = [
-  { key: 'time', label: '时间' },
-  { key: 'category', label: '分类' },
-  { key: 'amount', label: '金额', align: 'right' },
-  { key: 'account', label: '账户' },
-  { key: 'ledger', label: '账本' },
-  { key: 'note', label: '备注' },
-  { key: 'id', label: '编号' },
-];
+/** 数据表的列：唯一定义地已移至 `./list-copy.js` 的 `COLUMNS`（表头与复制行同源），本件 import 后复出口。 */
 
 /** 一张表最多画多少条（**上限**，老侧 `query_view.html:524` 的 `slice(0,200)` 同数）。
  *  真正的约束在 `PAGE_BYTE_BUDGET`：这个数是天花板，实际画多少由体积算出来（见 `queryListDoc`）。 */
@@ -358,6 +352,20 @@ function searchTicketDoc(input: QueryListInput): string {
   return loHtml ?? renderSearchTicket(input, 1);
 }
 
+/** 复制三份（1182）：已显示行＋窗口元数据（调用方传已截后 shown，全量只进元数据）。 */
+function listCopyTriple(title: string, window: string, total: number, shown: readonly QueryTableRow[]): {
+  readonly dataText: string;
+  readonly dataJson: string;
+  readonly dataCsv: string;
+} {
+  const input = { title, window, total, shown };
+  return {
+    dataText: buildListCopyText(input),
+    dataJson: buildListCopyJson(input),
+    dataCsv: buildListCopyCsv(input),
+  };
+}
+
 function renderSearchTicket(input: QueryListInput, shownCount: number): string {
   const q = searchTicketQ(input);
   const shown = input.rows.slice(0, shownCount);
@@ -366,8 +374,12 @@ function renderSearchTicket(input: QueryListInput, shownCount: number): string {
   const title = searchTicketTitle(input, q);
   const conclusion = conclusionOf(input);
   const pageEnvelope = pageEnvelopeOf(input, shownCount);
+  const copyTriple = listCopyTriple(input.wakeWord, input.window, input.rows.length, shown);
   const copyHtml = copyArea({
     data: { envelope: pageEnvelope, title: input.wakeWord },
+    dataText: copyTriple.dataText,
+    dataJson: copyTriple.dataJson,
+    dataCsv: copyTriple.dataCsv,
     log: {
       envelope: pageEnvelope,
       copyLog: copyLog({
@@ -472,6 +484,7 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
 /** 正文块清单（**块序唯一定义地**）：结论句与页内导航之外的七块（1056 删 sec-caliber 口径块）。导航由本清单派生（见 `../shared/pageSections.js`）。 */
 function blocksOf(input: QueryListInput, table: string, hidden: number, shownCount: number): readonly PageBlock[] {
   const pageEnvelope = pageEnvelopeOf(input, shownCount);
+  const copyTriple = listCopyTriple(input.wakeWord, input.window, input.rows.length, input.rows.slice(0, shownCount));
   return [
     {
       html: renderChips({ items: input.chips.map((text) => ({ text })) }),
@@ -484,6 +497,9 @@ function blocksOf(input: QueryListInput, table: string, hidden: number, shownCou
     {
       html: copyArea({
         data: { envelope: pageEnvelope, title: input.wakeWord },
+        dataText: copyTriple.dataText,
+        dataJson: copyTriple.dataJson,
+        dataCsv: copyTriple.dataCsv,
         log: {
           envelope: pageEnvelope,
           copyLog: copyLog({

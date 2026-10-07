@@ -213,15 +213,14 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
-  /* #1136（返工）：回执页「纯文本」那一份换成 HELP 句。第一版错加了一个可见 prompt 块
-     （负责人：莫名其妙多出来，没让加）——已撤掉。正确做法是换载荷：点复制后粘出来的 text
-     从 envelope 行换成 HELP 句；JSON／CSV／日志不动；页上不增不减一个块。
-     不给＝三份全走 buildDataText（改前形态，逐字节不变）。 */
+  /* #1136换text载荷不加块；#1180加dataJson/dataCsv两覆写（缺省走buildDataText零回归）。 */
   readonly dataText?: string;
+  readonly dataJson?: string;
+  readonly dataCsv?: string;
 }): string {
   return copyArea({
       hints: COPY_HINTS.sayAcct,
-    ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
+    ...(input.dataText === undefined ? {} : { dataText: input.dataText }), ...(input.dataJson === undefined ? {} : { dataJson: input.dataJson }), ...(input.dataCsv === undefined ? {} : { dataCsv: input.dataCsv }),
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,

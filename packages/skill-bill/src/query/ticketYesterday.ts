@@ -34,6 +34,7 @@ import type { BillRow } from '../fetch/index.js';
 import { DB_FILENAME } from '../fetch/index.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { estimateBytes } from '../render/html.js';
@@ -201,6 +202,7 @@ export function queryYesterdayTicketDoc(input: YesterdayTicketInput): string {
     ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
     : conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
+  const listCopy = ticketCopyOf(input.wakeWord, input.window, input.records);
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('昨天 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-yesterday-shop-sub">' + escapeHtml(input.window) + '</p>'
@@ -222,6 +224,9 @@ export function queryYesterdayTicketDoc(input: YesterdayTicketInput): string {
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
+      dataText: listCopy.text,
+      dataJson: listCopy.json,
+      dataCsv: listCopy.csv,
       log: {
         envelope,
         copyLog: copyLog({

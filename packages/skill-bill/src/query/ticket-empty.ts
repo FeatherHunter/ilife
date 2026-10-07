@@ -25,6 +25,7 @@ import { DB_FILENAME } from '../fetch/index.js';
 import { renderEmptyBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { listEnvelope } from './list.js';
@@ -82,6 +83,7 @@ function emptyData(date: string): QueryListData {
 export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
   const data = emptyData(input.date);
   const envelope = listEnvelope(input.key, data);
+  const listCopy = ticketCopyOf(input.wakeWord, input.window, []);
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.window + '没有记录'))
     + '<p class="ilife-empty-shop-sub">' + escapeHtml(input.wakeWord + ' · 空窗') + '</p>'
@@ -113,6 +115,9 @@ export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
+      dataText: listCopy.text,
+      dataJson: listCopy.json,
+      dataCsv: listCopy.csv,
       log: {
         envelope,
         copyLog: copyLog({

@@ -25,6 +25,7 @@ import { escapeHtml } from 'base-paint';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { renderCaliberLine } from 'base-paint/blocks';
 import { copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
+import type { AnalysisCopy } from './copyTextAnalysis.js';
 import { barGroupHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
 import { chartFor } from './chartOf.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
@@ -210,6 +211,7 @@ export function ticketDoc(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
+  readonly copy?: AnalysisCopy;
 }): string {
   const paper = sheetHead(brandOf(input.wakeWord), escapeHtml(input.h2), input.windowLabel)
     + ticketRule()
@@ -240,6 +242,7 @@ export function ticketDoc(input: {
       source: input.source,
       detail: input.detail,
       actionAt: input.actionAt,
+      ...(input.copy === undefined ? {} : { copy: input.copy }),
     }));
   return assembleSheetPage({
     docTitle: input.docTitle,
@@ -297,6 +300,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     source: SOURCE_READ,
     detail: '取到 ' + String(r.count) + ' 条记录',
     actionAt: input.actionAt,
+    ...(r.copy === undefined ? {} : { copy: r.copy }),
   });
 }
 
@@ -363,5 +367,6 @@ export function ticketCompareDoc(
     source: SOURCE_READ,
     detail: '取到 ' + String(r.count) + ' 条记录',
     actionAt: input.actionAt,
+    ...(r.copy === undefined ? {} : { copy: r.copy }),
   });
 }

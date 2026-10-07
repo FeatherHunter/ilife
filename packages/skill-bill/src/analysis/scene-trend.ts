@@ -24,6 +24,7 @@ import { allRecords, kpiOf, monthOf, monthSeries, round2 } from './agg.js';
 import type { MonthPoint } from './agg.js';
 import { MISSING, NO_WINDOW, money, windowLabel } from './pageParts.js';
 import type { AnalysisScene, ChartCard } from './scene.js';
+import { buildAnalysisCopy } from './copyTextAnalysis.js';
 import { buildTrend } from './views.js';
 
 /** 正整数型参数（缺＝缺省值）。老侧 `args.months or 12` 的严格版：形态不对即报参数错，不悄悄退回缺省。 */
@@ -129,6 +130,12 @@ export const sceneTrend: AnalysisScene = {
       chips: [],
       payload: buildTrend('trend', [...all], { limit: 12 }),
       kpi,
+      copy: buildAnalysisCopy({
+        kind: 'trend', word: '看趋势', months, kpi, avg, peakMonth, peak,
+        points: recorded.map((p) => ({
+          month: p.month, count: p.count, expense: p.expense, income: p.income,
+        })),
+      }),
       page: {
         kpis: [
           { label: '峰值月', value: peakMonth },
