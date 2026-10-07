@@ -1,0 +1,36 @@
+START ticket=1187 runId=9898b89e-0c4d-4b4f-aea2-04bc0806625a cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=24168 at=2026-10-07T19:45:37.813Z
+RUN ticket=1187 runId=9898b89e-0c4d-4b4f-aea2-04bc0806625a cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=1 pid=24168 at=2026-10-07T19:45:40.856Z
+START ticket=1187 runId=f5078359-4531-46cc-b8c6-49f56cd44651 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 pid=51372 at=2026-10-07T19:46:10.431Z
+RUN ticket=1187 runId=f5078359-4531-46cc-b8c6-49f56cd44651 cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill" waitedMs=0 exit=0 pid=51372 at=2026-10-07T19:46:12.153Z
+START ticket=1187 runId=7599d0d6-c381-4a1d-87ae-f2c9ab194f43 cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 pid=12768 at=2026-10-07T19:46:20.408Z
+RUN ticket=1187 runId=7599d0d6-c381-4a1d-87ae-f2c9ab194f43 cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 exit=1 pid=12768 at=2026-10-07T19:47:12.044Z
+START ticket=1187 runId=eaa7df61-b4c6-4dcc-bfc6-cbf0e66cdf0f cmd="node --test packages/skill-bill/test/t749-设置页收窄.test.mjs" waitedMs=0 pid=59992 at=2026-10-07T19:47:22.270Z
+RUN ticket=1187 runId=eaa7df61-b4c6-4dcc-bfc6-cbf0e66cdf0f cmd="node --test packages/skill-bill/test/t749-设置页收窄.test.mjs" waitedMs=0 exit=1 pid=59992 at=2026-10-07T19:47:22.411Z
+START ticket=1187 runId=943fee6d-75a0-4dbe-b424-0db2c1a70a52 cmd="node node_modules/typescript/bin/tsc -b packages/base-link-core" waitedMs=0 pid=48052 at=2026-10-07T19:47:36.581Z
+RUN ticket=1187 runId=943fee6d-75a0-4dbe-b424-0db2c1a70a52 cmd="node node_modules/typescript/bin/tsc -b packages/base-link-core" waitedMs=0 exit=0 pid=48052 at=2026-10-07T19:47:37.576Z
+START ticket=1187 runId=73e42bab-f654-4cf8-a73c-f457dc8b1bd5 cmd="node node_modules/typescript/bin/tsc -b packages/base-render" waitedMs=0 pid=22848 at=2026-10-07T19:47:37.645Z
+RUN ticket=1187 runId=73e42bab-f654-4cf8-a73c-f457dc8b1bd5 cmd="node node_modules/typescript/bin/tsc -b packages/base-render" waitedMs=0 exit=1 pid=22848 at=2026-10-07T19:47:47.720Z
+START ticket=1187 runId=c6d0ae00-bd1f-4bb8-b78e-d6bf938d6996 cmd="node node_modules/typescript/bin/tsc -b packages/base-render" waitedMs=0 pid=63392 at=2026-10-07T19:47:51.386Z
+RUN ticket=1187 runId=c6d0ae00-bd1f-4bb8-b78e-d6bf938d6996 cmd="node node_modules/typescript/bin/tsc -b packages/base-render" waitedMs=0 exit=0 pid=63392 at=2026-10-07T19:47:52.859Z
+START ticket=1187 runId=738c27f4-1781-44a0-bce8-d72be206470d cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 pid=67736 at=2026-10-07T19:47:58.478Z
+RUN ticket=1187 runId=738c27f4-1781-44a0-bce8-d72be206470d cmd="node node_modules/typescript/bin/tsc -b packages/skill-bill --force" waitedMs=0 exit=0 pid=67736 at=2026-10-07T19:48:00.281Z
+START ticket=1187 runId=7ad10a6d-11db-460f-984e-27ab0e01a652 cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 pid=25560 at=2026-10-07T19:48:02.608Z
+RUN ticket=1187 runId=7ad10a6d-11db-460f-984e-27ab0e01a652 cmd="node --test packages/skill-bill/test/*.test.mjs" waitedMs=0 exit=1 pid=25560 at=2026-10-07T19:48:54.876Z
+START ticket=1187 runId=672629fb-7627-4507-923e-86fffa46a202 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 pid=12900 at=2026-10-07T19:50:04.230Z
+RUN ticket=1187 runId=672629fb-7627-4507-923e-86fffa46a202 cmd="node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check" waitedMs=0 exit=0 pid=12900 at=2026-10-07T19:50:28.589Z
+START ticket=1187 runId=cacceab6-81d1-4a15-9eba-9a88828d44d6 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 pid=40532 at=2026-10-07T19:50:28.672Z
+RUN ticket=1187 runId=cacceab6-81d1-4a15-9eba-9a88828d44d6 cmd="node packages/skill-bill/scripts/check-warning-line.mjs" waitedMs=0 exit=0 pid=40532 at=2026-10-07T19:50:28.765Z
+START ticket=1187 runId=194b2b0f-3f22-4503-92c4-f7108e230a15 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 pid=63980 at=2026-10-07T19:50:34.041Z
+RUN ticket=1187 runId=194b2b0f-3f22-4503-92c4-f7108e230a15 cmd="node packages/skill-bill/scripts/check-scene-shape.mjs" waitedMs=0 exit=0 pid=63980 at=2026-10-07T19:50:34.153Z
+START ticket=1187 runId=d4b90b92-0e71-4cec-a4b9-b5ad9cef8f7b cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 pid=33660 at=2026-10-07T19:50:34.226Z
+RUN ticket=1187 runId=d4b90b92-0e71-4cec-a4b9-b5ad9cef8f7b cmd="node packages/skill-bill/scripts/gen-cli.mjs --check" waitedMs=0 exit=0 pid=33660 at=2026-10-07T19:50:34.550Z
+START ticket=1187 runId=7da2b511-65c6-4102-9349-3e666ed88ff8 cmd="node --test packages/skill-bill/test/t1180-receipt-copy.test.mjs packages/skill-bill/test/t1181-collect-copy.test.mjs packages/skill-bill/test/t1182-list-copy.test.mjs packages/skill-bill/test/t1183-detail-copy.test.mjs packages/skill-bill/test/t1184-analysis-copy.test.mjs packages/skill-bill/test/t1185-acct-goal-copy.test.mjs packages/skill-bill/test/t1186-setup-help.test.mjs" waitedMs=0 pid=41288 at=2026-10-07T19:50:37.836Z
+RUN ticket=1187 runId=7da2b511-65c6-4102-9349-3e666ed88ff8 cmd="node --test packages/skill-bill/test/t1180-receipt-copy.test.mjs packages/skill-bill/test/t1181-collect-copy.test.mjs packages/skill-bill/test/t1182-list-copy.test.mjs packages/skill-bill/test/t1183-detail-copy.test.mjs packages/skill-bill/test/t1184-analysis-copy.test.mjs packages/skill-bill/test/t1185-acct-goal-copy.test.mjs packages/skill-bill/test/t1186-setup-help.test.mjs" waitedMs=0 exit=0 pid=41288 at=2026-10-07T19:50:38.280Z
+START ticket=1187 runId=c3f365c0-a141-4110-bdc3-dfe82787e31e cmd="node --test packages/skill-bill/test/t686-告警线门.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t689-scene-shape.test.mjs" waitedMs=0 pid=29568 at=2026-10-07T19:50:41.136Z
+RUN ticket=1187 runId=c3f365c0-a141-4110-bdc3-dfe82787e31e cmd="node --test packages/skill-bill/test/t686-告警线门.test.mjs packages/skill-bill/test/t689-page-fingerprint.test.mjs packages/skill-bill/test/t689-scene-shape.test.mjs" waitedMs=0 exit=0 pid=29568 at=2026-10-07T19:51:32.626Z
+START ticket=1187 runId=eee824a0-b08a-47ec-bb99-66b5516468b3 cmd="node --test packages/skill-bill/test/t1187-verify.test.mjs" waitedMs=1 pid=65732 at=2026-10-07T19:53:14.126Z
+RUN ticket=1187 runId=eee824a0-b08a-47ec-bb99-66b5516468b3 cmd="node --test packages/skill-bill/test/t1187-verify.test.mjs" waitedMs=1 exit=0 pid=65732 at=2026-10-07T19:53:14.280Z
+START ticket=1187 runId=1c74bc9c-8b79-4665-9dfe-8ca3fd833551 cmd="node --test packages/skill-bill/test/record-write.test.mjs" waitedMs=0 pid=44600 at=2026-10-07T19:53:22.560Z
+RUN ticket=1187 runId=1c74bc9c-8b79-4665-9dfe-8ca3fd833551 cmd="node --test packages/skill-bill/test/record-write.test.mjs" waitedMs=0 exit=1 pid=44600 at=2026-10-07T19:53:37.161Z
+START ticket=1187 runId=90ffcaae-28b1-4b19-ab5c-2bdb0fb93fbc cmd="pnpm doctor" waitedMs=0 pid=49736 at=2026-10-07T19:53:44.305Z
+RUN ticket=1187 runId=90ffcaae-28b1-4b19-ab5c-2bdb0fb93fbc cmd="pnpm doctor" waitedMs=0 exit=1 pid=49736 at=2026-10-07T19:53:46.041Z
