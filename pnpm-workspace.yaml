@@ -5,7 +5,8 @@ packages:
 # prefer-workspace-packages 已被移除，link-workspace-packages 亦只认 CLI flag），
 # 唯 pnpm-workspace.yaml 内 linkWorkspacePackages 才全局生效（含 CI），锁文件永保 link:。
 linkWorkspacePackages: true
-# TRANSIENT-UPDATE-080（临时松绑约24h年龄门以升 0.8.0，用完即删，不进终版）
+# 维护者 2026-10-07 定：全跟最新，年龄门永久放开（minimumReleaseAge: 0）。
+# 白名单 minimumReleaseAgeExclude 保留作记录（verify 路径实测不清白名单，只认此值）。
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:
   - dsh-plugin-update@0.2.0
