@@ -21,6 +21,7 @@ import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope, StatusKind } from 'base-paint';
 import { renderCaliberLine, renderChips, renderConclusionBar, renderEmptyBlock } from 'base-paint/blocks';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import type { AnalysisCopy } from './copyTextAnalysis.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { navBlock, pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
@@ -122,9 +123,14 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
+  /** t1184 人话三份：给了即覆写纯文本／JSON／CSV（英文键只进后两者键位）；不给＝旧投影。 */
+  readonly copy?: AnalysisCopy;
 }): string {
   return copyArea({
     data: { envelope: input.envelope, title: input.title },
+    ...(input.copy === undefined ? {} : {
+      dataText: input.copy.text, dataJson: input.copy.json, dataCsv: input.copy.csv,
+    }),
     log: {
       envelope: input.envelope,
       copyLog: copyLog({
