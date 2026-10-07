@@ -25,6 +25,7 @@ import type { SerializableEnvelope } from 'base-paint';
 import type { BillDb } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import type { Kpi } from './agg.js';
+import type { AnalysisCopy } from './copyTextAnalysis.js';
 import { sceneAccount } from './scene-account.js';
 import { sceneActivity } from './scene-activity.js';
 import { sceneAnomaly } from './scene-anomaly.js';
@@ -209,7 +210,11 @@ export interface PageFacts {
 
 /** 一次取值的结果：与族无关的那一半（`PageFacts`）＋ 这一族的那一份卡（`page`）。
  *  载荷与页面同源不同形：载荷给机器（形状由 key 定，过 `base-link-core` 的守卫），页面给人。 */
-export type SceneResult<F extends FamilyPage> = PageFacts & { readonly page: F };
+export type SceneResult<F extends FamilyPage> = PageFacts & {
+  readonly page: F;
+  /** 复制区人话三份（t1184：三场景自带同一份 kpi／agg，其余场景缺省走旧投影）。 */
+  readonly copy?: AnalysisCopy;
+};
 
 /** 一件场景件跑起来要的现场：本次参数、库句柄、命令名、老侧 `type`。 */
 export interface SceneInput {
