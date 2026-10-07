@@ -237,12 +237,14 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
-  /* #1136（返工）：同 account/pageParts.ts 那一条（换载荷不加块）。 */
+  /* #1136换text不加块；#1180加dataJson/dataCsv两覆写（缺省零回归）。 */
   readonly dataText?: string;
+  readonly dataJson?: string;
+  readonly dataCsv?: string;
 }): string {
   return copyArea({
       hints: COPY_HINTS.sayAcct,
-    ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
+    ...(input.dataText === undefined ? {} : { dataText: input.dataText }), ...(input.dataJson === undefined ? {} : { dataJson: input.dataJson }), ...(input.dataCsv === undefined ? {} : { dataCsv: input.dataCsv }),
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,
