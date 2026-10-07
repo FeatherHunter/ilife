@@ -26,6 +26,7 @@ import type { BackupEntry } from './backups.js';
 import type { ColumnMap, CsvFile, ImportPlan } from './importer.js';
 import {
   SOURCE_FILE, SOURCE_READ, SOURCE_WRITE, copyZoneOf, setupCheck, setupEntryCard, setupPromptBox, } from './pageParts.js';
+import { buildSetupCopyCsv, buildSetupCopyJson, buildSetupCopyText } from './copyTextSetup.js';
 import type { SetupRowInput } from './pageParts.js';
 import type { SetupScene } from './scene.js';
 import type { SetupBlocked } from './params.js';
@@ -82,33 +83,40 @@ function wakeOf(key: string, op: 'init' | 'init-status' | 'backup-create' | 'bac
   return projectWakeWord({ key: key as BillKey, op });
 }
 
-/** 四步那一行：状态字照原型（done／current／todo／blocked），主行 `步骤名 · 状态字`。 */
-function stepRows(steps: readonly WizardStep[], subs: readonly string[], words?: readonly string[]): readonly SetupRowInput[] {
-  return steps.map((s, i) => {
+/** 四步那一行：人话行（第N步+标题+状态+现状数，显示与复制同源，只读 steps.detail）。 */
+function stepRows(steps: readonly WizardStep[]): readonly SetupRowInput[] {
+  return steps.map((s) => {
     const tone: SetupRowInput['tone'] = s.state === 'done' ? 'done' : s.state === 'current' ? 'now' : s.state === 'blocked' ? 'bad' : 'todo';
     return {
       no: String(s.no),
-      text: s.label + ' · ' + (words === undefined ? STEP_STATE_TEXT[s.state] : (words[i] as string)),
-      sub: subs[i] as string,
+      text: s.label + ' · ' + STEP_STATE_TEXT[s.state],
+      sub: s.detail,
       tone,
     };
   });
 }
 
-/** 四步段（三页同形，段号由调用方给）。 */
-function stepsSection(steps: readonly WizardStep[], subs: readonly string[], tag: string, words?: readonly string[]): string {
-  return ticketSection({ title: '四步走到哪儿了', tag, content: setupEntryCard(stepRows(steps, subs, words)) });
+/** 四步段（三页同形，段号由调用方给；空steps出空态不断言假绿）。 */
+function stepsSection(steps: readonly WizardStep[], tag: string): string {
+  if (steps.length === 0) {
+    return ticketSection({ title: '四步走到哪儿了', tag, content: setupCheck('这一页没有步骤可报，换一条唤醒词再说一遍。', 'warn') });
+  }
+  return ticketSection({ title: '四步走到哪儿了', tag, content: setupEntryCard(stepRows(steps)) });
 }
 
-/** 初始化页：四步 ＋ 落点。 */
+/** 向导复制三份（人话门覆写，复制恒等于已显示行；hints与回执同组）。 */
+function wizardCopyOf(op: 'init' | 'restore' | 'import', title: string, steps: readonly WizardStep[]): { readonly text: string; readonly json: string; readonly csv: string } {
+  const facts = { op, title, steps } as const;
+  return { text: buildSetupCopyText(facts), json: buildSetupCopyJson(facts), csv: buildSetupCopyCsv(facts) };
+}
+
+/** 向导复制提示（三份用途，与回执同字）。 */
+const WIZARD_COPY_HINTS: readonly string[] = ['纯文本 自己看或发给助手', 'JSON 存档用', 'CSV 表格用'];
+
+/** 初始化页：四步 ＋ 落点（四步现状数只读 steps.detail，不另写一套）。 */
 function initBody(input: InitWizardInput): string {
   const ok = input.ready;
-  const subs = [
-    input.envChecks.every((c) => c.ok) ? '两项都过了' : '有没过的项',
-    input.envChecks[1]?.ok === true ? '记账库目录就绪' : '目录还不可写',
-    '结构对上即沿用，不重建',
-    '库能打开，记录能数清',
-  ];
+  const copy = wizardCopyOf('init', input.scene.title, input.steps);
   return ticketFurnitureStyleTag()
     + sheetHead(DOC_TITLE + ' · 初始化', ok ? '初始化完成，可以记账了' : '初始化还没走完', input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
@@ -119,7 +127,7 @@ function initBody(input: InitWizardInput): string {
       layout: 'ticket',
     }), '')
     + ticketRule()
-    + stepsSection(input.steps, subs, '01')
+    + stepsSection(input.steps, '01')
     + ticketRule()
     + ticketSection({
       title: '落点',
@@ -143,6 +151,7 @@ function initBody(input: InitWizardInput): string {
       }) + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_WRITE, detail: '环境检测通过，库已就绪', actionAt: input.actionAt,
+        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
       }),
     );
 }
@@ -151,12 +160,7 @@ function initBody(input: InitWizardInput): string {
 function restoreBody(input: RestoreWizardInput): string {
   const sel = input.selected;
   const name = sel === null ? '（备份目录里还没有备份）' : sel.file;
-  const subs = [
-    sel === null ? '备份目录里还没有备份' : '就是纸头这份',
-    '把下面的确认口令说给助手',
-    '自动做，不用你动手',
-    '完了会数一遍记录',
-  ];
+  const copy = wizardCopyOf('restore', input.scene.title, input.steps);
   return ticketFurnitureStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.scene.title, '要恢复的是这份，确认之后才覆盖', input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
@@ -175,7 +179,7 @@ function restoreBody(input: RestoreWizardInput): string {
       content: setupCheck('恢复会覆盖当前库。覆盖之前会自动备份现状，所以现状不会丢——但这一步仍要你亲口确认。', 'danger'),
     })
     + ticketRule()
-    + stepsSection(input.steps, subs, '02')
+    + stepsSection(input.steps, '02')
     + ticketRule()
     + ticketSection({
       title: '确认口令',
@@ -194,6 +198,7 @@ function restoreBody(input: RestoreWizardInput): string {
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_READ, detail: '预览，等确认', actionAt: input.actionAt,
+        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
       }),
     );
 }
@@ -205,20 +210,8 @@ function importBody(input: ImportWizardInput): string {
   const newRows = plan === null ? 0 : plan.newRows;
   const dup = plan === null ? 0 : plan.duplicates.length;
   const bad = plan === null ? 0 : plan.bad.length;
-  const cols = Object.keys(input.map).length;
   const mapped = input.map.time !== undefined && input.map.amount !== undefined && input.map.category !== undefined;
-  const subs = [
-    csv === null ? '还没给 CSV 文件路径' : csv.name + '，' + String(csv.rows.length) + ' 行',
-    '自动识别，对不上可以改',
-    '新增 ' + String(newRows) + ' 行，重号 ' + String(dup) + ' 行不写',
-    '先备份再记好，真正记好由助手完成',
-  ];
-  const words = [
-    csv === null ? '还没读' : '已读',
-    mapped ? '已认 ' + String(cols) + ' 列' : '还缺必填列',
-    '等你点头',
-    '待执行',
-  ];
+  const copy = wizardCopyOf('import', input.scene.title, input.steps);
   const preview = (plan === null ? [] : [...plan.rows].slice(0, 3)).map((r, i) => ({
     no: String(i + 1),
     text: r.time.slice(5, 10) + ' ' + r.category + ' ' + r.amount.toFixed(2),
@@ -235,7 +228,7 @@ function importBody(input: ImportWizardInput): string {
       layout: 'ticket',
     }), '')
     + ticketRule()
-    + stepsSection(input.steps, subs, '01', words)
+    + stepsSection(input.steps, '01')
     + ticketRule()
     + ticketSection({
       title: '列映射与预览',
@@ -260,6 +253,7 @@ function importBody(input: ImportWizardInput): string {
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_FILE, detail: '预览导入计划 ' + String(newRows) + ' 行，等确认', actionAt: input.actionAt,
+        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
       }),
     );
 }
