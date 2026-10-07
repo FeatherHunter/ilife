@@ -10,6 +10,7 @@
  * 空分组不硬凑行：文本空态有下一步，JSON空数组，CSV仅表头。
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
 
 /** 帮助复制事实：标题/总数/分组（**三个**）。 */
 export interface HelpCopyFacts {
@@ -39,16 +40,13 @@ function pageLine(title: string): string {
   return DOC_TITLE + ' ' + (t === '' ? '能力速查' : t);
 }
 
-/** 单行化（CR/LF压空格）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
 
-/** 一行人话：唤醒词 + 去向（复制恒等于已显示行）。 */
+
+/** 一行人话：唤醒词 + 去向（复制恒等于已显示行；门特有行式保留）。 */
 function rowLine(r: HelpCopyRow): string {
   const w = typeof r.wake === 'string' ? oneLine(r.wake) : '';
   const g = typeof r.goto === 'string' ? oneLine(r.goto) : '';
-  return '唤醒词 ' + (w === '' ? '—' : w) + ' ｜ 去向 ' + (g === '' ? '—' : g);
+  return '唤醒词 ' + (w === '' ? EMPTY_CELL : w) + ' ｜ 去向 ' + (g === '' ? EMPTY_CELL : g);
 }
 
 /** 纯文本（LF，无尾换行）：页身份/总数/每行一条；空出空态有下一步。 */
@@ -86,21 +84,13 @@ export function buildHelpCopyJson(facts: HelpCopyFacts): string {
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV格（RFC4180）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  const flat = v.replace(/\r\n|\r|\n/g, ' ');
-  if (flat.includes(',') || flat.includes('"') || flat.includes('\r') || flat.includes('\n')) {
-    return '"' + flat.split('"').join('""') + '"';
-  }
-  return flat;
-}
+
 
 /** CSV表（表头wake,goto；空仅表头，不硬凑行）。 */
 export function buildHelpCopyCsv(facts: HelpCopyFacts): string {
   const lines = ['wake,goto'];
   for (const g of facts.groups ?? []) for (const r of g.rows ?? []) {
-    lines.push(csvCell(r.wake) + ',' + csvCell(r.goto));
+    lines.push(csvCell(r.wake, true) + ',' + csvCell(r.goto, true));
   }
   return lines.join('\n');
 }

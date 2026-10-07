@@ -5,7 +5,7 @@
  * 不再经 buildDataText。复用 1180 口径：标签空格值/未给统一/CSV RFC4180/JSON 数仍数/无尾换行。
  *
  * 谁在用（一处，指名）：`src/account/template-summary.ts`——汇总页复制区
- * （dataText + dataJson/dataCsv 三覆写，经 `./pageParts.js` 的 `copyZoneOf` 透传）。
+ * （经 `./pageParts.js` 的 `copyZoneOf` 的 `copy` 单对象透传）。
  * 后票跨能力经本件公开接口取卡片行与合计行口径，不另抄一份。
  *
  * 口径出处：判地 `proto/acct-goal/b07-看账户汇总-v2.2.html`（卡片行每户一行＋合计行）与
@@ -15,19 +15,23 @@
  * 复制行与显示行同源（金额两位、户名单行化，见 `accountCardLineOf`）。
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { MISSING, csvCell, oneLine } from '../shared/copyText.js';
 import type { AccountCard, AccountSummary } from './accounts.js';
 
-/** 缺省统一词（文本/CSV 空值口径；JSON 空值走原文空串，金额空走 null，见各 builder）。 */
-const MISSING = '未给';
+/** 账户复制三份（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位；缺省走薄信封零回归）。 */
+export interface AccountCopy {
+  readonly text?: string;
+  readonly json?: string;
+  readonly csv?: string;
+}
+
+
 
 /** 金额单位与币种（只一处定义；库默认人民币，账户卡无币种列故取统一币种）。 */
 const UNIT = '元';
 const CURRENCY = '人民币';
 
-/** 单行化（CR/LF 压成空格，前后去空；复制每行恒单行，照 base sanitizeLine 同口径）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 户名取值（空走未给，否则单行化；与纸面 title 同源）。 */
 function pickName(v: string): string {
@@ -97,14 +101,7 @@ export function buildAccountCopyJson(wakeWord: string, summary: AccountSummary):
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180 引号；卡片每户一行＋合计行恒在）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180 引号；卡片每户一行＋合计行恒在；格复用共用件）。 */
 
 /** CSV 行（结论/卡片每户一行/合计/余额合计数/流水笔数，值与文本同源）。 */
 export function buildAccountCopyCsv(wakeWord: string, summary: AccountSummary): string {
@@ -116,4 +113,9 @@ export function buildAccountCopyCsv(wakeWord: string, summary: AccountSummary): 
   lines.push(csvCell('余额合计') + ',' + csvCell(money2(summary.totals.balance)));
   lines.push(csvCell('流水笔数') + ',' + csvCell(String(summary.flow_count)));
   return lines.join('\n');
+}
+
+/** 账户三份一次取齐（汇总页经 `copy` 单对象透传；采集／回执单文本经 `{ text }` 透传，JSON／CSV 缺省零回归）。 */
+export function buildAccountCopy(wakeWord: string, summary: AccountSummary): AccountCopy {
+  return { text: buildAccountCopyText(wakeWord, summary), json: buildAccountCopyJson(wakeWord, summary), csv: buildAccountCopyCsv(wakeWord, summary) };
 }

@@ -3,7 +3,7 @@
  * base 冻结面不动（`buildDataText` 的 thin 一坨 JSON／旧表头不动），bill 内查询列表的复制三份
  * 从此只走本门：调用方经 `copyArea` 的 `dataText／dataJson／dataCsv` 覆写位传入（`copyArea` 本体不动）。
  * 地基复用（t1180 §七）：单行化／截断计数（Array.from）／CSV RFC4180／JSON 数仍数（金额按显示串原样）
- * 与回执门 `copyTextReceipt` 同口径，不另抄。
+ * 口径见 `../shared/copyText.js`（唯一定义地），本件只喂行式。
  *
  * 三份同源：文本／JSON／CSV 的行值同一次算出（金额原串、备注同一次截断、空值同一占位），
  * 行数＝已显示行（调用方传已截后的 `shown`，全量 `total` 只进元数据不进行）。
@@ -13,6 +13,7 @@
  * 键序 时间／分类／金额／账户／账本／备注／编号，文案同上。
  */
 import type { DataTableColumn } from 'base-paint/blocks';
+import { EMPTY_CELL, csvCell, oneLine, truncate } from '../shared/copyText.js';
 
 /** 表格列（唯一定义地）：表头文本、列序；复制行标签与 CSV 表头同源于此。 */
 export const COLUMNS: readonly DataTableColumn[] = [
@@ -28,8 +29,7 @@ export const COLUMNS: readonly DataTableColumn[] = [
 /** 备注截断上限（字数按 Array.from 计，CJK 一字一数；回执 200，列表一行须更紧，取 30）。 */
 export const NOTE_TRUNC_LIMIT = 30;
 
-/** 空值占位（与票据纸 DETAIL／空态同字 `—`，复制恒等于已显示行的人话面）。 */
-const EMPTY_CELL = '—';
+
 
 /** 已显示行（一律文本化串；金额是 `toFixed(2)` 后的串，三份原样用，不二次格式化）。 */
 export interface ListCopyRow {
@@ -61,10 +61,7 @@ export interface ListCopyInput {
   readonly shown: readonly ListCopyRow[];
 }
 
-/** 单行化（CR／LF 压成空格，前后去空；复制每行恒单行，与回执门同口径）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 文本格（空走占位，否则单行化）。 */
 function cell(v: string): string {
@@ -73,14 +70,11 @@ function cell(v: string): string {
   return flat === '' ? EMPTY_CELL : flat;
 }
 
-/** 备注格（空走占位，否则单行化后超限截断＋拖尾 `…（省略N字）`，N＝省掉的字数）。 */
+/** 备注格（空走占位，否则单行化后超限截断＋拖尾 `…（省略N字）`，N＝省掉的字数；门特有行式保留，口径复用共用件）。 */
 export function truncateNote(note: string): string {
   const t = typeof note === 'string' ? note : '';
-  const flat = oneLine(t);
-  if (flat === '') return EMPTY_CELL;
-  const chars = Array.from(flat);
-  if (chars.length <= NOTE_TRUNC_LIMIT) return flat;
-  return chars.slice(0, NOTE_TRUNC_LIMIT).join('') + '…（省略' + String(chars.length - NOTE_TRUNC_LIMIT) + '字）';
+  if (oneLine(t) === '') return EMPTY_CELL;
+  return truncate(t, NOTE_TRUNC_LIMIT, true);
 }
 
 /** 一行的七格（固定列序，与 COLUMNS 同序；备注走截断，其余走 cell）。 */
@@ -126,20 +120,13 @@ export function buildListCopyJson(input: ListCopyInput): string {
   }, null, 2);
 }
 
-/** CSV 格（RFC4180：含逗号／引号／换行时包引号，内引号双写；与回执门同口径）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+
 
 /** CSV：真表头列名行＋一笔一行（值与文本同源；LF，无尾换行）。 */
 export function buildListCopyCsv(input: ListCopyInput): string {
   const lines = [COLUMNS.map((c) => String(c.label)).join(',')];
   for (const r of input.shown) {
-    lines.push(rowCells(r).map(csvCell).join(','));
+    lines.push(rowCells(r).map((v) => csvCell(v)).join(','));
   }
   return lines.join('\n');
 }

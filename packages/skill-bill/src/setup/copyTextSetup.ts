@@ -3,13 +3,14 @@
  * 为什么单立一门：base 冻结面不动，bill 内向导口径从此只住这一件。
  * 薄信封（ok/message）仍走 base 作日志场景标识；复制三份一律走本门，不再经 buildDataText。
  *
- * 谁在用（一处，指名）：`src/setup/template-wizard.js`——三片向导复制区（dataText + dataJson + dataCsv 覆写）。
+ * 谁在用（一处，指名）：`src/setup/template-wizard.js`——三片向导复制区（经 `copy` 单对象透传）。
  * 后票（帮助）走 `src/help/copyTextHelp.js`，不抄本件。
  *
  * 规则：页身份二段/进度共N步/每步人话行（第N步+标题+状态+现状数）/未给统一/CSV RFC4180/JSON数仍数。
  * 空steps不硬凑行：文本空态有下一步，JSON空数组，CSV仅表头。
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
 import { STEP_STATE_TEXT } from './steps.js';
 import type { WizardStep } from './steps.js';
 
@@ -18,6 +19,14 @@ export interface SetupCopyFacts {
   readonly op: 'init' | 'restore' | 'import';
   readonly title: string;
   readonly steps: readonly WizardStep[];
+}
+
+/** 向导复制三份＋提示（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位；hints 与三份同对象，缺省走默认档零回归）。 */
+export interface SetupCopy {
+  readonly text?: string;
+  readonly json?: string;
+  readonly csv?: string;
+  readonly hints?: readonly string[];
 }
 
 /** 空态下一步（文本与JSON共用同一句，页面空态同源）。 */
@@ -29,15 +38,12 @@ function pageLine(title: string): string {
   return DOC_TITLE + ' ' + (t === '' ? '向导' : t);
 }
 
-/** 单行化（CR/LF压成空格，前后去空；复制文本每行恒单行）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
 
-/** 明细值（空走—，否则单行化；与页面 textOrDash 同口径，复制恒等于已显示行）。 */
+
+/** 明细值（空走—，否则单行化；与页面 textOrDash 同口径，复制恒等于已显示行；门特有行式保留）。 */
 function pickDetail(v: string): string {
   const t = typeof v === 'string' ? v : '';
-  return t.trim() === '' ? '—' : oneLine(t);
+  return t.trim() === '' ? EMPTY_CELL : oneLine(t);
 }
 
 /** 一步人话行：第N步 + 标题 + 状态 + 现状数（显示与复制同源）。 */
@@ -77,15 +83,7 @@ export function buildSetupCopyJson(facts: SetupCopyFacts): string {
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV格（RFC4180引号；空值原样，换行压空格）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  const flat = v.replace(/\r\n|\r|\n/g, ' ');
-  if (flat.includes(',') || flat.includes('"') || flat.includes('\r') || flat.includes('\n')) {
-    return '"' + flat.split('"').join('""') + '"';
-  }
-  return flat;
-}
+
 
 /** CSV纵表（表头step,label,state,detail；空steps仅表头，不硬凑行）。 */
 export function buildSetupCopyCsv(facts: SetupCopyFacts): string {
@@ -93,7 +91,12 @@ export function buildSetupCopyCsv(facts: SetupCopyFacts): string {
   const lines = ['step,label,state,detail'];
   for (const s of steps) {
     const step = '第 ' + String(s.no) + ' 步';
-    lines.push(csvCell(step) + ',' + csvCell(s.label) + ',' + csvCell(STEP_STATE_TEXT[s.state]) + ',' + csvCell(s.detail));
+    lines.push(csvCell(step, true) + ',' + csvCell(s.label, true) + ',' + csvCell(STEP_STATE_TEXT[s.state], true) + ',' + csvCell(s.detail, true));
   }
   return lines.join('\n');
+}
+
+/** 向导三份一次取齐（向导三页经 `copy` 单对象透传，hints 同对象；空页经 `{}` 透传走默认档）。 */
+export function buildSetupCopy(facts: SetupCopyFacts): SetupCopy {
+  return { text: buildSetupCopyText(facts), json: buildSetupCopyJson(facts), csv: buildSetupCopyCsv(facts) };
 }

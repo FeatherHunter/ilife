@@ -215,7 +215,7 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
-      dataText: accountHelpPrompt('account_update', input.params, changeTextOf(input.params)),
+      copy: { text: accountHelpPrompt('account_update', input.params, changeTextOf(input.params)) },
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

@@ -229,7 +229,7 @@ function receiptPage(spec: GoalFormSpec, input: GoalReceiptInput): string {
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
       source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
-      dataText: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params),
+      copy: { text: goalHelpPrompt(receipt.op === 'set-budget' ? 'goal_set_budget' : 'goal_set_saving', input.params) },
     }),
     foot: '饼干记账 · ' + spec.word + '回执',
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',

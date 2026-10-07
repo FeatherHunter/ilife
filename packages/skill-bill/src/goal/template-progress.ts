@@ -20,7 +20,7 @@ import type { EntryCardEntry } from 'base-paint/blocks';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
-import { buildGoalCopyCsv, buildGoalCopyJson, buildGoalCopyText } from './copyTextGoal.js';
+import { buildGoalCopy } from './copyTextGoal.js';
 import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 
@@ -167,9 +167,7 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
     actions: copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
-      dataText: buildGoalCopyText(input.wakeWord, input.budget, input.saving),
-      dataJson: buildGoalCopyJson(input.wakeWord, input.budget, input.saving),
-      dataCsv: buildGoalCopyCsv(input.wakeWord, input.budget, input.saving),
+      copy: buildGoalCopy(input.wakeWord, input.budget, input.saving),
     }),
     foot: '饼干记账 · ' + input.wakeWord,
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
