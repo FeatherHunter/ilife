@@ -23,6 +23,7 @@ import { renderCaliberLine, renderDistributionRows, renderLedgerRows, renderShee
 import type { BillRow } from '../fetch/index.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { ticketCopyOf } from './list-copy.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { DB_FILENAME } from '../fetch/index.js';
 import { estimateBytes } from '../render/html.js';
@@ -173,6 +174,7 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
     kpi: { count: records.length, expense: kpi.expense, income: kpi.income, net: kpi.net },
   };
   const envelope = listEnvelope(input.key, data);
+  const listCopy = ticketCopyOf(input.wakeWord, input.window, records);
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('还欠着 ' + String(records.length) + ' 笔，' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-debt-shop-sub">' + escapeHtml(input.window) + '</p>'
@@ -194,6 +196,9 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
+      dataText: listCopy.text,
+      dataJson: listCopy.json,
+      dataCsv: listCopy.csv,
       log: {
         envelope,
         copyLog: copyLog({

@@ -31,6 +31,7 @@ import {
 } from 'base-paint/blocks';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
+import { buildListCopyCsv, buildListCopyJson, buildListCopyText } from './list-copy.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from './pageParts.js';
@@ -167,6 +168,9 @@ export function queryTagDoc(args: TagTicketArgs): string | null {
     + ticketRule() + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input) })
     + ticketRule() + ticketActions(copyArea({
       data: { envelope: args.envelope, title: input.wakeWord },
+      dataText: buildListCopyText({ title: input.wakeWord, window: input.window, total: input.rows.length, shown: args.shown }),
+      dataJson: buildListCopyJson({ title: input.wakeWord, window: input.window, total: input.rows.length, shown: args.shown }),
+      dataCsv: buildListCopyCsv({ title: input.wakeWord, window: input.window, total: input.rows.length, shown: args.shown }),
       log: {
         envelope: args.envelope,
         copyLog: copyLog({
