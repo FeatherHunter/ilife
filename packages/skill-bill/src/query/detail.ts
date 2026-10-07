@@ -25,6 +25,7 @@ import { queryStyleTag } from './pageParts.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
+import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
 import type { BillRow } from '../fetch/index.js';
 
 /** 详情页的入参：这一页是谁（命令名／唤醒词）＋ 查到哪一条 ＋ 复制日志的取数（来源与时刻只进复制日志，不上屏）。 */
@@ -45,8 +46,7 @@ export interface QueryDetailInput {
   readonly actionAt: string;
 }
 
-/** 空值占位（字段行永不缺席，无值即此符，空行不算交代）。 */
-const EMPTY_CELL = '—';
+
 
 /** 文本或占位（空串／全空格即占位，前后空格不进页）。 */
 function textOrDash(v: string): string {
@@ -125,7 +125,7 @@ function checkCard(row: BillRow, deleted: boolean): string {
 /** 详情人话门（1183，纸面不动、复制展开）：10 列＋备注（已撤销加删除时间）的人话三份。
  *
  * 为什么住本件：写域只许动本件（禁碰 `copyTextReceipt`／`copyArea` 本体），10 列事实全是本页
- *   已显示行（复制恒等于已显示行）；机制照回执门（单行化／统一占位／RFC4180／数仍数），
+ *   已显示行（复制恒等于已显示行）；机制复用共用件 `../shared/copyText.js`（单行化／统一占位／RFC4180／数仍数），
  *   字段不同（回执 8 格，详情 10 列＋备注＋删除时间）。占位沿纸面 `—`（落点行永不缺席），
  *   备注不截行（纸面印全文，截了就不是已显示行）。薄 envelope 不动：仍作复制日志的场景
  *   标识（shape detail／key 场景名），三份全覆写后旧 thin 零产出。
@@ -134,10 +134,7 @@ function checkCard(row: BillRow, deleted: boolean): string {
 /** 复制 JSON 的场景键（`sceneKeyOf('bill.record.detail')` 的值，照回执 `record.add` 硬字面量的先例）。 */
 const DETAIL_COPY_KEY = 'record.detail';
 
-/** 单行化（CR／LF 压成空格，前后去空；复制文本每行恒单行，照回执门同口径）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 纸面同值的单行文本（空走纸面占位，见 `EMPTY_CELL`，否则单行化；与落点行同值）。 */
 function dashOne(v: string): string {
@@ -204,14 +201,7 @@ export function buildDetailCopyJson(row: BillRow): string {
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV 字段编码（RFC4180：含逗号／引号／换行加引号，内引号双写；照回执门同制）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+
 
 /** CSV 纵表（表头 field,value，LF，无尾换行；金额保留符号，方向单列）。 */
 export function buildDetailCopyCsv(row: BillRow): string {

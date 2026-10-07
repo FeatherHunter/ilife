@@ -1,8 +1,9 @@
 // 采集页人话门：已给还差下一步分行，三份人话。
 // base 冻结不动，bill 内采集口径只住这一件。
-// SAY 与回落壳共用本门，复用回执门方向词与压行口径，不另立第二套。
+// SAY 与回落壳共用本门，复用回执门方向词与共用件单行化／CSV／截断口径。
 // 用处：saySheet 采集载荷与五模板回落壳复制区三份覆写经公开接口调。
 import { DOC_TITLE, sceneKeyOf } from '../shared/pageIdentity.js';
+import { MISSING, csvCell, oneLine, truncate } from '../shared/copyText.js';
 import { copyDirectionOf } from './copyTextReceipt.js';
 export interface CollectCopyFacts {
   readonly category: string;
@@ -14,18 +15,12 @@ export interface CollectCopyFacts {
   readonly currency: string;
   readonly missing: readonly string[];
 }
-const MISSING = '未给';
 const PAGE_TAIL = '采集';
 const GIVEN_EMPTY = '无';
 const MISSING_EMPTY = '无';
 const NOTE_LIMIT = 200;
 const NEXT_READY = '已填齐，可以复制去说了。';
-function oneLine(s: string): string {
-  const a = String.fromCharCode(13, 10);
-  const b = String.fromCharCode(13);
-  const c = String.fromCharCode(10);
-  return s.split(a).join(' ').split(b).join(' ').split(c).join(' ').trim();
-}
+
 function pickText(v: string): string {
   const t = typeof v === 'string' ? v : '';
   return t.trim() === '' ? MISSING : oneLine(t);
@@ -33,16 +28,12 @@ function pickText(v: string): string {
 function noteText(v: string): string {
   const t = typeof v === 'string' ? v : '';
   if (t.trim() === '') return MISSING;
-  const flat = oneLine(t);
-  const chars = Array.from(flat);
-  return chars.length <= NOTE_LIMIT ? flat : chars.slice(0, NOTE_LIMIT).join('');
+  return truncate(t, NOTE_LIMIT, false);
 }
 function noteJson(v: string): string | null {
   const t = typeof v === 'string' ? v : '';
   if (t.trim() === '') return null;
-  const flat = oneLine(t);
-  const chars = Array.from(flat);
-  return chars.length <= NOTE_LIMIT ? flat : chars.slice(0, NOTE_LIMIT).join('');
+  return truncate(t, NOTE_LIMIT, false);
 }
 function signed2(amount: number | null): string {
   if (amount === null || !Number.isFinite(amount) || amount === 0) return MISSING;
@@ -135,16 +126,7 @@ export function buildCollectCopyJson(word: string, kind: string, key: string, fa
   };
   return JSON.stringify(payload, null, 2);
 }
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s);
-  const dq = String.fromCharCode(34);
-  const cr = String.fromCharCode(13);
-  const lf = String.fromCharCode(10);
-  if (v.includes(',') || v.includes(dq) || v.includes(cr) || v.includes(lf)) {
-    return dq + v.split(dq).join(dq + dq) + dq;
-  }
-  return v;
-}
+
 export function buildCollectCopyCsv(word: string, kind: string, facts: CollectCopyFacts, extra?: readonly CollectExtra[]): string {
   const w = typeof word === 'string' ? word : '';
   const k = typeof kind === 'string' ? kind : '';

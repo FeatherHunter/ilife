@@ -5,7 +5,7 @@
  * 复用 1180 口径：标签空格值/未给统一/CSV RFC4180/JSON 数仍数/无尾换行；百分比一位（老侧 fmtPct）。
  *
  * 谁在用（一处，指名）：`src/goal/template-progress.ts`——进度页复制区
- * （dataText + dataJson/dataCsv 三覆写，经 `./pageParts.js` 的 `copyZoneOf` 透传）。
+ * （经 `./pageParts.js` 的 `copyZoneOf` 的 `copy` 单对象透传）。
  * 预算与目标两支共一门（同域两套进度口径，新侧取双端夹取后的值；卡片行与合计行各走各行式）。
  *
  * 口径出处：判地 `proto/acct-goal/g05-看预算-v2.2.html`／`g06-看目标-v2.2.html`与
@@ -15,19 +15,23 @@
  * 复制行与显示行同源（金额两位、百分比一位、名目单行化）。
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { MISSING, csvCell, oneLine } from '../shared/copyText.js';
 import type { BudgetExecution, BudgetItem, SavingItem, SavingProgress } from './goalData.js';
+
+/** 目标复制三份（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位）。 */
+export interface GoalCopy {
+  readonly text?: string;
+  readonly json?: string;
+  readonly csv?: string;
+}
 import { clampPct } from './pageParts.js';
 
-/** 缺省统一词（文本/CSV 空值口径）。 */
-const MISSING = '未给';
+
 
 /** 单位（只一处定义）。 */
 const UNIT = '元';
 
-/** 单行化（CR/LF 压成空格，前后去空；复制每行恒单行）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 名目取值（空走未给，否则单行化）。 */
 function pickName(v: string): string {
@@ -132,14 +136,7 @@ export function buildGoalCopyJson(wakeWord: string, budget: BudgetExecution | nu
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180；进度每条一行＋合计恒在）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180；进度每条一行＋合计恒在；格复用共用件）。 */
 
 /** CSV 行（结论/进度每条一行/合计，值与文本同源）。 */
 export function buildGoalCopyCsv(wakeWord: string, budget: BudgetExecution | null, saving: SavingProgress | null): string {
@@ -160,4 +157,9 @@ export function buildGoalCopyCsv(wakeWord: string, budget: BudgetExecution | nul
   lines.push(csvCell('目标个数') + ',' + csvCell(String(p.count)));
   lines.push(csvCell('流水笔数') + ',' + csvCell(String(p.records)));
   return lines.join('\n');
+}
+
+/** 目标三份一次取齐（进度页经 `copy` 单对象透传；采集／回执单文本经 `{ text }` 透传）。 */
+export function buildGoalCopy(wakeWord: string, budget: BudgetExecution | null, saving: SavingProgress | null): GoalCopy {
+  return { text: buildGoalCopyText(wakeWord, budget, saving), json: buildGoalCopyJson(wakeWord, budget, saving), csv: buildGoalCopyCsv(wakeWord, budget, saving) };
 }

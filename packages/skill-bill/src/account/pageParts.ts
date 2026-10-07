@@ -26,6 +26,7 @@ import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
+import type { AccountCopy } from './copyTextAccount.js';
 import { ACCOUNT_DECLARATION } from './declaration.js';
 import { textOf } from './params.js';
 
@@ -204,7 +205,8 @@ export function promptBlockOf(prompt: string, label = '复制给助手：这一�
 
 /** 复制区（数据位 ＋ 日志位；三格式与双按钮由共用件给）。
  *  复制文本那一行的抬头由调用方给的 `title` 决定（`copyArea` 的 `title` 位）——**不往 envelope 里塞标题**：
- *  envelope 是机器契约（形状与载荷一对一），往里加一个只为上屏用的字段就把它撑成两种用法。 */
+ *  envelope 是机器契约（形状与载荷一对一），往里加一个只为上屏用的字段就把它撑成两种用法。
+ *  人话三份由调用方经 `copy` 单对象透传（照分析域 `copyZoneOf` 单 `copy` 收敛范例；缺省走薄信封零回归）。 */
 export function copyZoneOf(input: {
   readonly envelope: SerializableEnvelope;
   readonly title: string;
@@ -213,14 +215,12 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
-  /* #1136换text载荷不加块；#1180加dataJson/dataCsv两覆写（缺省走buildDataText零回归）。 */
-  readonly dataText?: string;
-  readonly dataJson?: string;
-  readonly dataCsv?: string;
+  /** 人话三份单对象（给了即覆写纯文本／JSON／CSV；不给＝旧投影；单文本经 `{ text }` 透传）。 */
+  readonly copy?: AccountCopy;
 }): string {
   return copyArea({
       hints: COPY_HINTS.sayAcct,
-    ...(input.dataText === undefined ? {} : { dataText: input.dataText }), ...(input.dataJson === undefined ? {} : { dataJson: input.dataJson }), ...(input.dataCsv === undefined ? {} : { dataCsv: input.dataCsv }),
+    ...(input.copy?.text === undefined ? {} : { dataText: input.copy.text }), ...(input.copy?.json === undefined ? {} : { dataJson: input.copy.json }), ...(input.copy?.csv === undefined ? {} : { dataCsv: input.copy.csv }),
     data: { envelope: input.envelope, title: input.title },
     log: {
       envelope: input.envelope,

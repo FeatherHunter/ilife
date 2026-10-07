@@ -11,6 +11,7 @@
  * 纸面一致（receiptPaper 行一致）；规则：标签空格值/方向词代符号/未给统一/备注压行200字/CSV RFC4180/JSON数仍数。
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
+import { MISSING, csvCell, oneLine, truncate } from '../shared/copyText.js';
 import { wakeWordOf } from './userWording.js';
 
 /** 回执复制事实：票面同等 8 格（**不多于八个**）。kind/word 不进本型（kind 走参，word 由 kind 经 HELP 算回）。 */
@@ -28,8 +29,7 @@ export interface ReceiptCopyFacts {
 /** 结论动作（**只一处定义**，13 种共用同一动作，方向另走 copyDirectionOf）。 */
 const ACTION = '已记好';
 
-/** 缺省统一词（文本/CSV 空值口径；JSON 空值走 null/原文，见各 builder）。 */
-const MISSING = '未给';
+
 
 /** 页身份尾段与金额单位（只一处定义）。 */
 const PAGE_TAIL = '回执';
@@ -66,10 +66,7 @@ export function copyDirectionOf(kind: string, amount: number | null): string {
   return '支出';
 }
 
-/** 单行化（CR/LF 压成空格，前后去空；复制文本每行恒单行，照 base sanitizeLine 同口径）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 文本值（空走未给，否则单行化；纸面 pick 同口径，复制恒等于已显示行）。 */
 function pickText(v: string): string {
@@ -77,22 +74,18 @@ function pickText(v: string): string {
   return t.trim() === '' ? MISSING : oneLine(t);
 }
 
-/** 备注值（空走未给，否则单行化后截 200 字）。 */
+/** 备注值（空走未给，否则单行化后截 200 字；门特有行式保留，截断复用共用件）。 */
 function noteText(v: string): string {
   const t = typeof v === 'string' ? v : '';
   if (t.trim() === '') return MISSING;
-  const flat = oneLine(t);
-  const chars = Array.from(flat);
-  return chars.length <= NOTE_LIMIT ? flat : chars.slice(0, NOTE_LIMIT).join('');
+  return truncate(t, NOTE_LIMIT, false);
 }
 
 /** JSON 备注（空走 null，否则同 noteText 的截后值；数仍数，空不造未给字符串）。 */
 function noteJson(v: string): string | null {
   const t = typeof v === 'string' ? v : '';
   if (t.trim() === '') return null;
-  const flat = oneLine(t);
-  const chars = Array.from(flat);
-  return chars.length <= NOTE_LIMIT ? flat : chars.slice(0, NOTE_LIMIT).join('');
+  return truncate(t, NOTE_LIMIT, false);
 }
 
 /** 绝对值两位（文本结论用；空/非有限/零走未给，本仓不记零）。 */
@@ -159,14 +152,7 @@ export function buildReceiptCopyJson(kind: string, facts: ReceiptCopyFacts): str
   return JSON.stringify(payload, null, 2);
 }
 
-/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180 引号；金额保留符号，方向单列）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+/** CSV 纵表（表头 field,value，LF，无尾换行，RFC4180 引号；金额保留符号，方向单列；格复用共用件）。 */
 
 /** CSV 9 行（结论/分类/金额/方向/时间/账户/账本/备注/编号，值与文本同源，纸面一致）。 */
 export function buildReceiptCopyCsv(kind: string, facts: ReceiptCopyFacts): string {

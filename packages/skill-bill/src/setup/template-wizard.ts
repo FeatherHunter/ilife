@@ -26,7 +26,8 @@ import type { BackupEntry } from './backups.js';
 import type { ColumnMap, CsvFile, ImportPlan } from './importer.js';
 import {
   SOURCE_FILE, SOURCE_READ, SOURCE_WRITE, copyZoneOf, setupCheck, setupEntryCard, setupPromptBox, } from './pageParts.js';
-import { buildSetupCopyCsv, buildSetupCopyJson, buildSetupCopyText } from './copyTextSetup.js';
+import { buildSetupCopy } from './copyTextSetup.js';
+import type { SetupCopy } from './copyTextSetup.js';
 import type { SetupRowInput } from './pageParts.js';
 import type { SetupScene } from './scene.js';
 import type { SetupBlocked } from './params.js';
@@ -104,10 +105,11 @@ function stepsSection(steps: readonly WizardStep[], tag: string): string {
   return ticketSection({ title: '四步走到哪儿了', tag, content: setupEntryCard(stepRows(steps)) });
 }
 
-/** 向导复制三份（人话门覆写，复制恒等于已显示行；hints与回执同组）。 */
-function wizardCopyOf(op: 'init' | 'restore' | 'import', title: string, steps: readonly WizardStep[]): { readonly text: string; readonly json: string; readonly csv: string } {
+/** 向导复制三份＋提示（人话门覆写，复制恒等于已显示行；hints与回执同组；经 `copy` 单对象透传）。 */
+function wizardCopyOf(op: 'init' | 'restore' | 'import', title: string, steps: readonly WizardStep[]): SetupCopy {
   const facts = { op, title, steps } as const;
-  return { text: buildSetupCopyText(facts), json: buildSetupCopyJson(facts), csv: buildSetupCopyCsv(facts) };
+  const triple = buildSetupCopy(facts);
+  return { ...triple, hints: WIZARD_COPY_HINTS };
 }
 
 /** 向导复制提示（三份用途，与回执同字）。 */
@@ -151,7 +153,7 @@ function initBody(input: InitWizardInput): string {
       }) + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_WRITE, detail: '环境检测通过，库已就绪', actionAt: input.actionAt,
-        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
+        copy,
       }),
     );
 }
@@ -198,7 +200,7 @@ function restoreBody(input: RestoreWizardInput): string {
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_READ, detail: '预览，等确认', actionAt: input.actionAt,
-        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
+        copy,
       }),
     );
 }
@@ -253,7 +255,7 @@ function importBody(input: ImportWizardInput): string {
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
         source: SOURCE_FILE, detail: '预览导入计划 ' + String(newRows) + ' 行，等确认', actionAt: input.actionAt,
-        dataText: copy.text, dataJson: copy.json, dataCsv: copy.csv, hints: WIZARD_COPY_HINTS,
+        copy,
       }),
     );
 }

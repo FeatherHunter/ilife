@@ -7,14 +7,15 @@
  * 各自把**同一份 kpi／agg 结果**（页面已经在用的那一份，只搬家不重算）组装成事实，调本门一次
  * 得三份；模板经 copyZoneOf 的覆写位把三份送进复制区（缺省仍走 buildDataText，余下 22 页零回归）。
  *
- * 口径出处（照抄不另立第二套）：
+ * 口径出处：
  *   - 金额两位／百分比一位／缺值 —／带符号差：本域 ./pageParts.ts 的 money／pctText／signedMoney／MISSING；
- *   - 文本绝对值＋方向词、CSV 保留符号、JSON 数仍数、CSV RFC4180、单行化压空格：
- *     写域 ../write/copyTextReceipt.ts（本件只引用口径，不 import 写域件，分析侧零跨域引用）；
+ *   - 单行化／CSV RFC4180：共用件 `../shared/copyText.js`（唯一定义地），本件只喂分析行式；
+ *   - 文本绝对值＋方向词、CSV 保留符号、JSON 数仍数照写域口径，不另抄第二套；
  *   - 纯文本无英文键：metrics 原键（count／expense／income／net／l1.*）与分类键只进 JSON／CSV 键位，
  *     不进纯文本行；对比／趋势不断行（一行一期／一类／一月）。
  */
 import type { Kpi } from './agg.js';
+import { csvCell, oneLine } from '../shared/copyText.js';
 import { MISSING, money, pctText, signedMoney } from './pageParts.js';
 
 /** 单期事实（看月度；kpi 即场景给页面的同一份，top 即条卡头一名，无支出类即 null）。 */
@@ -92,10 +93,7 @@ function pageLine(word: string): string {
   return '饼干记账 ' + word;
 }
 
-/** 单行化（CR／LF 压成空格；照 copyTextReceipt 同口径，复制每行恒单行）。 */
-function oneLine(s: string): string {
-  return s.replace(/\r\n|\r|\n/g, ' ').trim();
-}
+
 
 /** 标签值（空走缺值占位，否则单行化；分类键与期间标签都经它，不裸奔）。 */
 function pickLabel(s: string): string {
@@ -103,14 +101,7 @@ function pickLabel(s: string): string {
   return t === '' ? MISSING : t;
 }
 
-/** CSV 一格（RFC4180：含逗号／引号／换行加引号，内引号双写；照 copyTextReceipt 同口径）。 */
-function csvCell(s: string): string {
-  const v = typeof s === 'string' ? s : String(s ?? '');
-  if (v.includes(',') || v.includes('"') || v.includes('\r') || v.includes('\n')) {
-    return '"' + v.split('"').join('""') + '"';
-  }
-  return v;
-}
+
 
 /* ── 看月度（单期人话行） ─────────────────────────────── */
 
