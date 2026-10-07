@@ -173,7 +173,7 @@ export function promptBlockOf(prompt: string, label = '复制给助手：这一�
   });
 }
 
-/** 复制区（数据位 ＋ 日志位；三格式与双按钮由共用件给）。 */
+/** 复制区（数据位 ＋ 日志位；三格式与双按钮由共用件给）。人话三份由调用方经 dataText/dataJson/dataCsv 覆写（缺省走薄信封）。 */
 export function copyZoneOf(input: {
   readonly envelope: SerializableEnvelope;
   readonly title: string;
@@ -182,9 +182,17 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
+  readonly dataText?: string;
+  readonly dataJson?: string;
+  readonly dataCsv?: string;
+  readonly hints?: readonly string[];
 }): string {
   return copyArea({
+    ...(input.hints === undefined ? {} : { hints: input.hints }),
     data: { envelope: input.envelope, title: input.title },
+    ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
+    ...(input.dataJson === undefined ? {} : { dataJson: input.dataJson }),
+    ...(input.dataCsv === undefined ? {} : { dataCsv: input.dataCsv }),
     log: {
       envelope: input.envelope,
       copyLog: copyLog({
